@@ -13,5 +13,9 @@ declare global {
       }
     }
     __H5_GAME_ON_COCOS_MESSAGE__?: (raw: string) => void
+    H5LobbyHost?: {
+      mount?: (container?: string) => void
+      unmount?: () => void
+    }
   }
 }

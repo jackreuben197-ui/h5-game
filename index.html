@@ -2,12 +2,73 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
+    <title>PokerQueen H5 Host</title>
+    <meta
+      name="viewport"
+      content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="renderer" content="webkit" />
+    <meta name="force-rendering" content="webkit" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    <meta name="full-screen" content="yes" />
+    <meta name="x5-fullscreen" content="true" />
+    <meta name="360-fullscreen" content="true" />
+    <meta name="x5-page-mode" content="app" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>H5 Game</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+      }
+
+      /* Cocos 牌桌画布层：在最底层 */
+      #GameCanvas {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+      }
+
+      /* H5 业务层：覆盖在 Cocos 之上 */
+      #app {
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+      }
+
+      #drawCanvas {
+        display: none;
+      }
+
+      #splash {
+        display: none;
+      }
+    </style>
   </head>
   <body>
+    <!-- Cocos 运行节点（与 build-templates/web-mobile 对齐） -->
+    <canvas id="GameCanvas" oncontextmenu="event.preventDefault()" tabindex="0"></canvas>
+    <canvas id="drawCanvas"></canvas>
+    <div id="splash"></div>
+    <input id="OpenImageFile" type="file" accept=".png,.jpg,.jpeg" style="visibility: hidden" />
+
+    <!-- H5 挂载节点 -->
     <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
+
+    <!-- Cocos 注入区：后续打包时在这里注入 settings/main/engine 等脚本 -->
+    <!-- COCOS_SCRIPT_INJECT_START -->
+    <!-- COCOS_SCRIPT_INJECT_END -->
+
+    <!-- H5 独立入口：可被 Cocos 统一模板复用 -->
+    <script type="module" src="/src/entry/cocos-h5-entry.ts"></script>
   </body>
 </html>

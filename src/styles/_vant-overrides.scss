@@ -1,0 +1,22 @@
+// Global Vant overrides to align with project tokens.
+.van-nav-bar {
+  border-radius: 0.3733rem;
+  overflow: hidden;
+}
+
+.van-cell-group--inset {
+  margin: 0 !important;
+}
+
+.van-cell {
+  padding-top: var(--font-size-cell-padding-y);
+  padding-bottom: var(--font-size-cell-padding-y);
+}
+
+.van-field__label {
+  width: var(--field-label-width);
+}
+
+.van-button {
+  min-height: var(--space-button-min-height);
+}

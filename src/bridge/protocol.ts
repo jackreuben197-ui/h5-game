@@ -1,3 +1,4 @@
+// H5 与 Cocos 共用的桥接动作定义。
 export const BRIDGE_ACTION = {
   ENTER_TABLE: 'enterTable',
   EXIT_TABLE: 'exitTable',
@@ -7,25 +8,28 @@ export const BRIDGE_ACTION = {
 
 export type BridgeAction = (typeof BRIDGE_ACTION)[keyof typeof BRIDGE_ACTION]
 
+// 请求进入牌桌时发送给 Cocos 的负载。
 export interface EnterTablePayload {
-  tableId: string
-  roomId: string
-  gameCode: string
+  userName: string
+  userId: string
   token: string
   from: 'h5-lobby'
 }
 
+// 用户信息变化后的可选同步负载。
 export interface SyncUserPayload {
   uid: string
   nickname: string
   avatar?: string
 }
 
+// Cocos 回执通用负载。
 export interface CocosAckPayload {
   ok: boolean
   message: string
 }
 
+// 所有桥接消息统一信封结构。
 export interface BridgeMessage<TPayload = unknown> {
   action: BridgeAction | string
   payload: TPayload
@@ -33,6 +37,7 @@ export interface BridgeMessage<TPayload = unknown> {
   timestamp: number
 }
 
+// 生成带 requestId 和 timestamp 的标准消息，便于排查与去重。
 export function createBridgeMessage<TPayload>(
   action: BridgeAction,
   payload: TPayload,
@@ -45,10 +50,12 @@ export function createBridgeMessage<TPayload>(
   }
 }
 
+// 将桥接消息序列化成可传输字符串。
 export function toBridgeRaw(message: BridgeMessage): string {
   return JSON.stringify(message)
 }
 
+// 解析 scheme 形式数据，例如 cocos://bridge?data=<encoded-json>。
 function parseSchemeRaw(raw: string): string {
   if (!raw.startsWith('cocos://')) {
     return raw
@@ -67,6 +74,7 @@ function parseSchemeRaw(raw: string): string {
   }
 }
 
+// 将原始字符串解析为合法的桥接消息对象。
 export function parseBridgeRaw(raw: string): BridgeMessage | null {
   if (!raw) {
     return null

@@ -6,12 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "build:debug": "vue-tsc -b && VITE_BUILD_SOURCEMAP=true vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "@vueuse/core": "^14.2.1",
     "axios": "^1.15.0",
     "dayjs": "^1.11.20",
+    "js-md5": "^0.8.3",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
     "vant": "^4.9.24",
@@ -20,10 +22,13 @@
   },
   "devDependencies": {
     "@types/node": "^24.12.2",
+    "@vant/auto-import-resolver": "^1.3.0",
     "@vitejs/plugin-legacy": "^8.0.1",
     "@vitejs/plugin-vue": "^6.0.5",
     "@vue/tsconfig": "^0.9.1",
+    "sass": "^1.99.0",
     "typescript": "~6.0.2",
+    "unplugin-vue-components": "^32.0.0",
     "vite": "^8.0.4",
     "vue-tsc": "^3.2.6"
   }

@@ -1,0 +1,66 @@
+// Design tokens (375 draft, 1rem = 37.5px at draft width).
+// Keep shared values here to avoid hard-coded sizes in page styles.
+$font-family-sans:
+  'PingFang SC',
+  'Noto Sans SC',
+  'Hiragino Sans GB',
+  'Helvetica Neue',
+  Arial,
+  sans-serif;
+
+$font-family-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+
+$color-primary: #0a67c2;
+$color-primary-press: #0a4e92;
+$color-bg-top: #f6fafe;
+$color-bg-bottom: #e9f2ff;
+$color-text-main: #1c2735;
+$color-text-secondary: #5f6d80;
+$color-border-soft: rgba(147, 172, 206, 0.42);
+$color-card-bg: rgba(255, 255, 255, 0.92);
+
+:root {
+  // Typography
+  --font-family-sans: #{$font-family-sans};
+  --font-family-mono: #{$font-family-mono};
+
+  // Brand + semantic colors
+  --color-primary: #{$color-primary};
+  --color-primary-press: #{$color-primary-press};
+  --color-bg-top: #{$color-bg-top};
+  --color-bg-bottom: #{$color-bg-bottom};
+  --color-text-main: #{$color-text-main};
+  --color-text-secondary: #{$color-text-secondary};
+  --color-border-soft: #{$color-border-soft};
+  --color-card-bg: #{$color-card-bg};
+
+  // Radius + shadow
+  --radius-card: 0.4267rem;
+  --radius-input: 0.32rem;
+  --shadow-card: 0 12px 28px rgba(42, 67, 98, 0.08);
+
+  // Layout spacing
+  --app-max-width: 10rem;
+  --app-side-padding: 0.32rem;
+  --app-top-padding: 0.32rem;
+  --app-bottom-padding: 0.54rem;
+  --section-gap: 0.2667rem;
+  --space-card-padding: 0.32rem;
+  --space-button-min-height: 1.12rem;
+
+  // Type scale + form metrics
+  --font-size-title: 0.4267rem;
+  --font-size-info: 0.3467rem;
+  --font-size-cell-padding-y: 0.32rem;
+  --field-label-width: 1.9733rem;
+
+  // Vant theme bridge
+  --van-primary-color: #{$color-primary};
+  --van-danger-color: #d84b3e;
+  --van-success-color: #159f67;
+  --van-text-color: #{$color-text-main};
+  --van-text-color-2: #{$color-text-secondary};
+  --van-background-2: #{$color-card-bg};
+  --van-border-color: #{$color-border-soft};
+  --van-radius-lg: 0.32rem;
+}

@@ -1,0 +1,43 @@
+// Shared application blocks and utility classes.
+.section-card {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-card-padding);
+  margin-top: var(--section-gap);
+}
+
+.page-shell > .section-card:first-of-type {
+  // Keeps first card from sticking to the nav bar.
+  margin-top: 0.32rem;
+}
+
+.section-title {
+  margin: 0 0 0.32rem;
+  font-size: var(--font-size-title);
+  font-weight: 600;
+  color: var(--color-text-main);
+}
+
+.info-line {
+  margin: 0.16rem 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-info);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2667rem;
+  margin-top: 0.3733rem;
+}
+
+.quick-account-list {
+  // Horizontal wrap list for quick account shortcuts.
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2133rem;
+}

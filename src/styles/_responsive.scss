@@ -1,0 +1,25 @@
+@use './mixins' as *;
+
+// Tablet and up overrides.
+@include up(md) {
+  :root {
+    --app-max-width: 11.2rem;
+    --field-label-width: 2.4533rem;
+  }
+
+  .page-shell {
+    padding-top: max(var(--app-top-padding), 0.48rem);
+  }
+}
+
+// Compact landscape tuning for low-height devices.
+@media (orientation: landscape) and (max-height: 500px) {
+  .page-shell {
+    padding-top: 0.2667rem;
+  }
+
+  .section-card {
+    margin-top: 0.2133rem;
+    padding: 0.2667rem;
+  }
+}

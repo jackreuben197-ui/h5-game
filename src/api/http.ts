@@ -1,25 +1,7 @@
 import axios, { type AxiosError } from 'axios'
 import { showFailToast } from 'vant'
-
-const STORE_KEY = 'h5-game-store'
-
-function readPersistedToken(): string {
-  if (typeof localStorage === 'undefined') {
-    return ''
-  }
-
-  const raw = localStorage.getItem(STORE_KEY)
-  if (!raw) {
-    return ''
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as { sessionToken?: string }
-    return parsed.sessionToken ?? ''
-  } catch {
-    return ''
-  }
-}
+import { useGameStore } from '@/stores/game'
+import { pinia } from '@/stores/pinia'
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
@@ -27,9 +9,12 @@ const http = axios.create({
 })
 
 http.interceptors.request.use((config) => {
-  const token = readPersistedToken()
+  const gameStore = useGameStore(pinia)
+  const token = gameStore.sessionToken
+  config.headers['Content-Type'] = 'application/json'
+
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+    config.headers.Md5at = token
   }
   return config
 })

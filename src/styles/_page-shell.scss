@@ -1,0 +1,16 @@
+@use './mixins' as *;
+
+// App root height should follow dynamic viewport on mobile.
+#app {
+  min-height: 100dvh;
+}
+
+// Shared page container used by all major views.
+.page-shell {
+  width: min(100%, var(--app-max-width));
+  margin: 0 auto;
+  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top));
+  padding-left: var(--app-side-padding);
+  padding-right: var(--app-side-padding);
+  @include safe-bottom-padding(var(--app-bottom-padding));
+}

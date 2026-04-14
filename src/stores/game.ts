@@ -4,6 +4,9 @@ import type { EnterTablePayload } from '@/bridge/protocol'
 
 interface GameState {
   sessionToken: string
+  loginAccount: string
+  loginNickname: string
+  loginUserId: string
   lastEnterTable: EnterTablePayload | null
   lastEnterAt: number
   lastBridgeAck: string
@@ -15,6 +18,9 @@ export const useGameStore = defineStore(
   {
     state: (): GameState => ({
       sessionToken: '',
+      loginAccount: '',
+      loginNickname: '',
+      loginUserId: '',
       lastEnterTable: null,
       lastEnterAt: 0,
       lastBridgeAck: '',
@@ -23,6 +29,17 @@ export const useGameStore = defineStore(
     actions: {
       setSessionToken(token: string): void {
         this.sessionToken = token
+      },
+      setLoginUser(payload: { account: string; nickname: string; userId: string }): void {
+        this.loginAccount = payload.account
+        this.loginNickname = payload.nickname
+        this.loginUserId = payload.userId
+      },
+      clearLogin(): void {
+        this.sessionToken = ''
+        this.loginAccount = ''
+        this.loginNickname = ''
+        this.loginUserId = ''
       },
       setLastEnterTable(payload: EnterTablePayload): void {
         this.lastEnterTable = payload
@@ -36,7 +53,14 @@ export const useGameStore = defineStore(
     persist: {
       key: 'h5-game-store',
       storage: localStorage,
-      pick: ['sessionToken', 'lastEnterTable', 'lastEnterAt'],
+      pick: [
+        'sessionToken',
+        'loginAccount',
+        'loginNickname',
+        'loginUserId',
+        'lastEnterTable',
+        'lastEnterAt',
+      ],
     },
   },
 )

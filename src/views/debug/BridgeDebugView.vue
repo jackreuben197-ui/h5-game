@@ -46,20 +46,20 @@ function backLobby(): void {
 
 <template>
   <div class="page-shell">
-    <van-nav-bar title="Bridge 调试" left-text="返回" left-arrow @click-left="backLobby" />
+    <VanNavBar title="Bridge 调试" left-text="返回" left-arrow @click-left="backLobby" />
 
     <section class="section-card">
       <h2 class="section-title">调试操作</h2>
       <div class="actions">
-        <van-button type="primary" block @click="sendExitMessage">发送 exitTable</van-button>
-        <van-button type="success" block @click="sendMockAck">模拟 Cocos 回执</van-button>
+        <VanButton type="primary" block @click="sendExitMessage">发送 exitTable</VanButton>
+        <VanButton type="success" block @click="sendMockAck">模拟 Cocos 回执</VanButton>
       </div>
     </section>
 
-    <section class="section-card" style="margin-top: 12px">
+    <section class="section-card">
       <h2 class="section-title">最近消息日志</h2>
-      <van-empty v-if="!logs.length" description="暂无消息" />
-      <van-field
+      <VanEmpty v-if="!logs.length" description="暂无消息" />
+      <VanField
         v-else
         :model-value="logLines"
         type="textarea"

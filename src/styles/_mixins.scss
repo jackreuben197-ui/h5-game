@@ -1,0 +1,28 @@
+@use 'sass:map';
+
+// Shared breakpoints for global and page-level media rules.
+$breakpoints: (
+  sm: 375px,
+  md: 768px,
+  lg: 1024px,
+  xl: 1280px,
+);
+
+// Use: @include up(md) { ... }
+@mixin up($size) {
+  @media (min-width: map.get($breakpoints, $size)) {
+    @content;
+  }
+}
+
+// Use: @include down(md) { ... }
+@mixin down($size) {
+  @media (max-width: map.get($breakpoints, $size)) {
+    @content;
+  }
+}
+
+// Adds iOS safe-area bottom padding for fixed/bottom sections.
+@mixin safe-bottom-padding($padding) {
+  padding-bottom: calc(#{$padding} + env(safe-area-inset-bottom));
+}

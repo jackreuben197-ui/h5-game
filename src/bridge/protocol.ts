@@ -4,6 +4,7 @@ export const BRIDGE_ACTION = {
   EXIT_TABLE: 'exitTable',
   SYNC_USER: 'syncUser',
   COCOS_ACK: 'cocosAck',
+  SHOW_TOAST: 'showToast',
 } as const
 
 export type BridgeAction = (typeof BRIDGE_ACTION)[keyof typeof BRIDGE_ACTION]
@@ -14,6 +15,10 @@ export interface EnterTablePayload {
   userId: string
   token: string
   from: 'h5-lobby'
+  // 点击的目标房间 ID，方便 Cocos 精确切桌；Cocos 不需要时可忽略。
+  roomId?: string
+  // 点击的目标房间名称，主要用于日志/埋点排查。
+  roomName?: string
 }
 
 // 用户信息变化后的可选同步负载。
@@ -27,6 +32,16 @@ export interface SyncUserPayload {
 export interface CocosAckPayload {
   ok: boolean
   message: string
+}
+
+// Cocos -> H5 的全局 toast 消息负载。
+export interface CocosToastPayload {
+  // success: 成功提示；danger: 失败/风险提示。
+  type: 'success' | 'danger'
+  // 展示文案。
+  message: string
+  // 可选显示时长（毫秒）。
+  duration?: number
 }
 
 // 所有桥接消息统一信封结构。
@@ -87,11 +102,21 @@ export function parseBridgeRaw(raw: string): BridgeMessage | null {
       : schemeHandled
 
   try {
-    const parsed = JSON.parse(maybeDecoded) as BridgeMessage
-    if (!parsed.action || parsed.timestamp === undefined) {
+    const parsed = JSON.parse(maybeDecoded) as Partial<BridgeMessage>
+    if (!parsed || typeof parsed !== 'object' || !parsed.action) {
       return null
     }
-    return parsed
+
+    // 兼容 Cocos 简化消息：如果没带 requestId/timestamp，则由 H5 自动补齐。
+    return {
+      action: String(parsed.action),
+      payload: parsed.payload,
+      requestId:
+        typeof parsed.requestId === 'string'
+          ? parsed.requestId
+          : `cocos_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+      timestamp: typeof parsed.timestamp === 'number' ? parsed.timestamp : Date.now(),
+    }
   } catch {
     return null
   }

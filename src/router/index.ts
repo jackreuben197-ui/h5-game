@@ -87,7 +87,7 @@ const router = createRouter({
     },
     {
       path: '/gameList',
-      name: 'bridge-debug',
+      name: 'game-list',
       component: () => import('@/views/home/gameList.vue'),
       meta: { requiresAuth: true },
     },

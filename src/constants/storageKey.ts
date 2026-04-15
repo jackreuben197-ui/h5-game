@@ -6,6 +6,8 @@ export default class StorageKey {
   static LOGIN_DATA = 'LOGIN_DATA'
   // token 字符串。
   static TOKEN = 'TOKEN'
+  // 牌局列表缓存（用于页面秒开 + 静默刷新）。
+  static ROOM_LIST_CACHE = 'ROOM_LIST_CACHE'
   // token 有效期。
   static TOKEN_EXPIREAT = 'TOKEN_EXPIREAT'
   // 电话区号（保持原拼写 AERA，与 Cocos 对齐）。

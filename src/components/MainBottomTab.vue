@@ -99,23 +99,6 @@ function onTabClick(tab: TabItem): void {
   overflow: visible;
 }
 
-/* 激活项的大背景：通过伪元素做“向上凸起”的胶囊块。 */
-.bottom-tab::before {
-  content: '';
-  position: absolute;
-  top: -0.18rem;
-  left: calc(0.18rem + ((100% - 0.36rem) / 5) * var(--active-index));
-  width: calc((100% - 0.36rem) / 5 - 0.08rem);
-  height: 1.82rem;
-  border-radius: 0.58rem;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.12) 100%);
-  border: 0.02rem solid rgba(255, 255, 255, 0.32);
-  box-shadow:
-    0 0.14rem 0.3rem rgba(0, 22, 38, 0.26),
-    0 -0.04rem 0.18rem rgba(194, 228, 255, 0.34) inset;
-  transition: left 0.28s ease;
-  pointer-events: none;
-}
 
 .tab-button {
   position: relative;
@@ -136,7 +119,7 @@ function onTabClick(tab: TabItem): void {
 }
 
 .tab-button.is-active {
-  color: #ffffff;
+  color: red;
 }
 
 .tab-icon {

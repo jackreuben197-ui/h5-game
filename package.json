@@ -4,6 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "sync:i18n": "node scripts/sync-i18n-txt.mjs",
+    "predev": "pnpm sync:i18n",
+    "prebuild": "pnpm sync:i18n",
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "build:debug": "vue-tsc -b && VITE_BUILD_SOURCEMAP=true vite build",

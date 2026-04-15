@@ -168,3 +168,52 @@ Cocos 回调 H5：
 ```js
 window.__H5_GAME_ON_COCOS_MESSAGE__(rawJsonOrSchemeUrl)
 ```
+
+## 10. 多语言（TXT）用法
+
+当前多语言使用 Cocos 同源 `txt` 文件，不依赖 `vue-i18n`：
+
+- Cocos 源目录（单一来源）：`../pokerqueen/assets/resources/config/USER_*.txt`
+- H5 运行目录（同步产物）：`public/assets/resources/config/USER_*.txt`
+- 启动/打包前自动执行同步：`predev`、`prebuild`
+- 可手动执行：`pnpm sync:i18n`
+- 解析器：`src/i18n/parser.ts`（`key=value` + `\n` 转义 + `{0}` 占位符）
+- 核心模块：`src/i18n/index.ts`
+- 组合式 API：`src/i18n/useTextI18n.ts`
+
+示例（`<script setup lang="ts">`）：
+
+```ts
+import { useTextI18n } from '@/i18n/useTextI18n'
+
+const { t, setLocale, locale, supportedLocales } = useTextI18n()
+
+setLocale('en')
+const text = t('Wallet_AddItem7', 100, 12)
+// => Recharge 100 UV cost 12 yuan
+```
+
+示例（Options API / 模板）：
+
+```vue
+<template>
+  <div>{{ $txt('error999') }}</div>
+  <div>{{ $txt('Wallet_AddItem7', 100, 12) }}</div>
+</template>
+```
+
+语言切换与默认规则：
+
+- 支持：`zh | tw | en | pt`
+- 优先读取 `localStorage(dzpk_Language)`
+- 无缓存时按浏览器语言推断
+- 语言文件按需加载（`fetch public/assets/resources/config/*.txt`），避免主包体积暴涨
+- 如果你的 Cocos 项目不在默认相对路径，可在执行命令前设置：
+  - `COCOS_I18N_SOURCE_DIR=/your/cocos/assets/resources/config pnpm dev`
+
+本地存储统一约定（与 Cocos 对齐）：
+
+- 前缀：`dzpk_`
+- 语言 key：`Language`（最终存储项为 `dzpk_Language`）
+- 登录态 key：`LOGIN_DATA`（最终存储项为 `dzpk_LOGIN_DATA`）
+- token key：`TOKEN`（最终存储项为 `dzpk_TOKEN`）

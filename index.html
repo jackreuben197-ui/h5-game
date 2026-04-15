@@ -19,22 +19,32 @@
     <meta name="360-fullscreen" content="true" />
     <meta name="x5-page-mode" content="app" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
     <style>
       html,
       body {
         margin: 0;
         width: 100%;
-        height: 100%;
+        height: 100vh;
+        height: 100dvh;
         overflow: hidden;
-        background: #000;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
       }
 
       /* Cocos 牌桌画布层：在最底层 */
       #GameCanvas {
         position: fixed;
         inset: 0;
-        width: 100%;
-        height: 100%;
+        width: 100% !important;
+        height: 100vh !important;
+        height: 100dvh !important;
         z-index: 1;
       }
 
@@ -64,9 +74,62 @@
     <!-- H5 挂载节点 -->
     <div id="app"></div>
 
-    <!-- Cocos 注入区：后续打包时在这里注入 settings/main/engine 等脚本 -->
-    <!-- COCOS_SCRIPT_INJECT_START -->
-    <!-- COCOS_SCRIPT_INJECT_END -->
+    <!-- Cocos 引擎加载（与旧模板一致） -->
+    <script src="src/settings.js" charset="utf-8"></script>
+    <script src="vconsole.min.js"></script>
+    <script src="main.js" charset="utf-8"></script>
+    <script src="bottom-bar.js" charset="utf-8"></script>
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
+
+    <!-- Cocos 启动脚本：兼容纯 H5 开发场景（无 Cocos 资源时直接跳过） -->
+    <script type="text/javascript">
+      ;(function () {
+        if (!window._CCSettings) {
+          return
+        }
+
+        var debug = window._CCSettings.debug
+        var splash = document.getElementById('splash')
+        if (splash) {
+          splash.style.display = 'block'
+        }
+
+        function loadScript(moduleName, cb) {
+          function scriptLoaded() {
+            document.body.removeChild(domScript)
+            domScript.removeEventListener('load', scriptLoaded, false)
+            cb && cb()
+          }
+          var domScript = document.createElement('script')
+          domScript.async = true
+          domScript.src = moduleName
+          domScript.addEventListener('load', scriptLoaded, false)
+          document.body.appendChild(domScript)
+        }
+
+        loadScript(debug ? 'cocos2d-js.js' : 'cocos2d-js-min.js', function () {
+          var hasPhysics = window.CC_PHYSICS_BUILTIN || window.CC_PHYSICS_CANNON
+          if (hasPhysics) {
+            loadScript(debug ? 'physics.js' : 'physics-min.js', window.boot)
+          } else if (typeof window.boot === 'function') {
+            window.boot()
+          }
+        })
+      })()
+    </script>
+
+    <!-- Telegram 初始化 -->
+    <script>
+      ;(function () {
+        if (window.Telegram && window.Telegram.WebApp) {
+          var tg = window.Telegram.WebApp
+          tg.ready()
+          if (typeof tg.expand === 'function') {
+            tg.expand()
+          }
+        }
+      })()
+    </script>
 
     <!-- H5 独立入口：可被 Cocos 统一模板复用 -->
     <script type="module" src="/src/entry/cocos-h5-entry.ts"></script>

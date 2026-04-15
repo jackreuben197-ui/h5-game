@@ -128,6 +128,7 @@ async function onLogout(): Promise<void> {
 
     <section class="section-card">
       <h2 class="section-title">运行状态</h2>
+      <p>{{ $txt('Wallet_AddItem7') }}</p>
       <p class="info-line">当前时间：{{ nowText }}</p>
       <p class="info-line">当前登录：{{ loginUserText }}</p>
       <p class="info-line">当前用户ID：{{ gameStore.loginUserId || '-' }}</p>

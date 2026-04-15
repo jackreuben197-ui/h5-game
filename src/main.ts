@@ -5,6 +5,7 @@ import './bridge/bridge'
 import './styles/main.scss'
 import { setupRem } from './utils/rem'
 import { pinia } from './stores/pinia'
+import { textI18nPlugin } from './i18n'
 
 let app: VueApp<Element> | null = null
 
@@ -29,6 +30,7 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
 
   app = createApp(App)
   app.use(pinia)
+  app.use(textI18nPlugin)
   app.use(router)
   app.mount(mountTarget)
   return app

@@ -16,7 +16,8 @@
 
 ## 2. 环境要求
 
-- Node.js `20.20.0`（见 `.nvmrc`）
+- Node.js `>=20.19`
+- 推荐 Node.js `24 LTS`
 - pnpm `10.x`（建议）
 - macOS / Windows / Linux 均可
 
@@ -35,18 +36,31 @@ pnpm -v
 cd /Users/wangjie/web/cocos/h5-game
 ```
 
-切换 Node 版本（推荐 nvm）：
+### 3.1 安装并切换 Node（推荐 nvm）
 
 ```bash
-nvm use
+
+# 安装 24
+nvm install 24
+
+# 切换到 24
+nvm use 24
+
+# 可选：设置默认版本（新终端自动生效）
+nvm alias default 24
 ```
 
-如果你本机没有 pnpm，先安装：
+如果你看到 `N/A: version "v24" is not yet installed`，先执行 `nvm install 24` 再 `nvm use 22`。
+
+### 3.2 启用 pnpm（corepack）
 
 ```bash
 corepack enable
-corepack prepare pnpm@10.28.1 --activate
+corepack prepare pnpm@latest --activate
+pnpm -v
 ```
+
+### 3.3 安装依赖并启动
 
 安装依赖：
 
@@ -61,6 +75,14 @@ pnpm dev
 ```
 
 浏览器访问终端输出的地址（通常是 `http://localhost:5173`）。
+
+首次安装如果看到：
+
+```text
+Ignored build scripts: @parcel/watcher, core-js
+```
+
+这是 pnpm 10 的安全提示，当前项目可正常开发和构建；如需放开再按需执行 `pnpm approve-builds`。
 
 ## 4. 环境变量
 

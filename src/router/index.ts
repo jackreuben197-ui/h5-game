@@ -12,6 +12,7 @@ const router = createRouter({
     },
     {
       path: '/',
+
       component: () => import('@/views/main/MainLayoutView.vue'),
       meta: { requiresAuth: true },
       redirect: '/home',
@@ -19,32 +20,53 @@ const router = createRouter({
         {
           path: 'home',
           name: 'lobby',
+
           component: () => import('@/views/home/HomeIndexView.vue'),
-          meta: { requiresAuth: true, tabKey: 'home', moduleTitle: '首页' },
+          meta: {
+            requiresAuth: true,
+            tabKey: 'home',
+            moduleTitle: '首页',
+          },
         },
         {
           path: 'club',
           name: 'club',
           component: () => import('@/views/club/ClubIndexView.vue'),
-          meta: { requiresAuth: true, tabKey: 'club', moduleTitle: '俱乐部' },
+          meta: {
+            requiresAuth: true,
+            tabKey: 'club',
+            moduleTitle: '俱乐部',
+          },
         },
         {
           path: 'recharge',
           name: 'recharge',
           component: () => import('@/views/recharge/RechargeIndexView.vue'),
-          meta: { requiresAuth: true, tabKey: 'recharge', moduleTitle: '充值' },
+          meta: {
+            requiresAuth: true,
+            tabKey: 'recharge',
+            moduleTitle: '充值',
+          },
         },
         {
           path: 'message',
           name: 'message',
           component: () => import('@/views/message/MessageIndexView.vue'),
-          meta: { requiresAuth: true, tabKey: 'message', moduleTitle: '消息' },
+          meta: {
+            requiresAuth: true,
+            tabKey: 'message',
+            moduleTitle: '消息',
+          },
         },
         {
           path: 'mine',
           name: 'mine',
           component: () => import('@/views/mine/MineIndexView.vue'),
-          meta: { requiresAuth: true, tabKey: 'mine', moduleTitle: '我的' },
+          meta: {
+            requiresAuth: true,
+            tabKey: 'mine',
+            moduleTitle: '我的',
+          },
         },
       ],
     },
@@ -77,12 +99,6 @@ const router = createRouter({
       path: '/mine/settings',
       name: 'mine-settings',
       component: () => import('@/views/mine/MineSettingsView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/bridge-debug',
-      name: 'bridge-debug',
-      component: () => import('@/views/debug/BridgeDebugView.vue'),
       meta: { requiresAuth: true },
     },
     {

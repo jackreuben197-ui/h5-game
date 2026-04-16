@@ -3,6 +3,7 @@ import App from './App.vue'
 import router from './router'
 import './bridge/bridge'
 import { setupGlobalBridgeToastChannel } from './bridge/globalToast'
+import { setupWsProxyBridgeChannel } from './bridge/wsBridge'
 import LoginSession from './session/loginSession'
 import './styles/main.scss'
 import { setupRem } from './utils/rem'
@@ -11,6 +12,7 @@ import { textI18nPlugin } from './i18n'
 
 let app: VueApp<Element> | null = null
 let stopBridgeToastChannel: (() => void) | null = null
+let stopWsProxyBridgeChannel: (() => void) | null = null
 
 export function mountH5App(container: string | Element = '#app'): VueApp<Element> | null {
   if (typeof window === 'undefined') {
@@ -35,8 +37,12 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
   app.use(pinia)
   app.use(textI18nPlugin)
   app.use(router)
-  // 启动时尝试补发 Register：若本地已有 token + ws 端口，可快速同步 Cocos 会话状态。
-  LoginSession.SendRegisterToCocos()
+  // 启动时优先根据本地缓存补齐 WS/Register，保证刷新后也能尽快恢复桥接通道。
+  void LoginSession.EnsureWS().catch(() => {
+    // 无 token 或端口未就绪时忽略；登录成功后会再次走 SyncWS/EnsureWS。
+  })
+  // 启动 WS 代理通道：Cocos 发指令给 H5，由 H5 执行 websocket 收发并回传结果。
+  stopWsProxyBridgeChannel = setupWsProxyBridgeChannel()
   // 启动全局桥接 toast：接收 Cocos 消息后统一弹窗。
   stopBridgeToastChannel = setupGlobalBridgeToastChannel()
   app.mount(mountTarget)
@@ -50,6 +56,8 @@ export function unmountH5App(): void {
   // 卸载时释放桥接订阅，避免重复监听。
   stopBridgeToastChannel?.()
   stopBridgeToastChannel = null
+  stopWsProxyBridgeChannel?.()
+  stopWsProxyBridgeChannel = null
   app.unmount()
   app = null
 }

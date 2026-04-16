@@ -91,7 +91,7 @@ async function handleLogin(): Promise<void> {
 		try {
 			await LoginSession.SyncWS()
 		} catch (wsError) {
-			// 不阻塞登录流程：大厅初始化阶段还会再次尝试 SyncWS。
+			// 不阻塞登录流程：大厅初始化阶段还会再次 EnsureWS。
 			console.warn('[login] sync ws failed:', wsError)
 		}
 		gameStore.setLoginUser({

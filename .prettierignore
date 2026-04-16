@@ -1,0 +1,6 @@
+node_modules
+dist
+.DS_Store
+coverage
+components.d.ts
+public/assets/resources/config

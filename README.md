@@ -30,11 +30,7 @@ pnpm -v
 
 ## 3. 首次拉取后完整运行流程
 
-进入项目目录：
-
-```bash
-cd /Users/wangjie/web/cocos/h5-game
-```
+进入项目目录
 
 ### 3.1 安装并切换 Node（推荐 nvm）
 
@@ -117,7 +113,6 @@ VITE_API_BASE_URL=https://your-api-domain pnpm dev
 - 这样浏览器端不再直接跨域到后端，登录接口可正常调用
 - 注意：生产环境若仍是跨域访问，仍需要服务端配置 CORS 或走同域网关
 
-
 ## 5. 自适应方案（当前实现）
 
 当前采用 `rem + 动态根字体` 方案（基于 375 设计稿）：
@@ -143,7 +138,7 @@ pnpm build
 pnpm preview
 ```
 
-构建产物目录：`dist/`。  
+构建产物目录：`dist/`。
 把 `dist/` 内容放到 Cocos WebView 资源目录，再打 Cocos 最终包。
 
 ## 7. 目录结构（关键）
@@ -161,17 +156,152 @@ pnpm preview
 - 业务局部样式放在页面 SFC，通用样式放 `src/styles/`
 
 备注：
+
 - 375 设计稿下，`1rem = 37.5px(设计稿)`，优先按设计稿标注换算到 rem
 - 页面内避免硬编码十进制长小数，优先使用 tokens 变量
 - 新增通用样式时，先放 `src/styles/`，避免重复复制到多个页面
 
+## 9. Cocos Bridge 与 WS 协作规范
 
-## 9. Cocos Bridge
+### 9.1 统一消息信封
 
-H5 发送入口：`src/bridge/bridge.ts`。  
-核心动作：`enterTable`。
+H5 与 Cocos 双向消息统一使用 JSON 信封：
 
-示例：
+```json
+{
+  "action": "wsSend",
+  "payload": {},
+  "requestId": "cocos_1744780000000_xxx",
+  "timestamp": 1744780000000
+}
+```
+
+- `action`：动作名
+- `payload`：动作参数
+- `requestId` / `timestamp`：建议携带，便于排查链路
+
+Cocos 回调 H5 的统一入口：
+
+```js
+window.__H5_GAME_ON_COCOS_MESSAGE__(rawJsonOrSchemeUrl)
+```
+
+### 9.2 职责边界（当前约定）
+
+- 牌桌内（Cocos 主导）：
+  - Cocos 负责 WS 协议编解码（心跳、进桌、退桌等）
+  - H5 只负责建立连接、透传二进制、回传服务端消息
+- 牌桌外（H5 业务可自管）：
+  - H5 可独立发送 WS 查询类请求并等待回包（例如战绩）
+- WS 连接策略：
+  - 默认主流程：H5 在登录阶段主动建立连接
+  - `wsConnect` 仅作为 Cocos 侧可选兼容入口（重连/兜底时可用）
+- `REGISTER(code=1)`：
+  - H5 默认不自动发送
+  - 仅在后端要求握手时，H5 才手动调用（可调用多次）
+  - 查询请求本身要使用各自业务 `query code`，不是固定 `REGISTER`
+
+### 9.3 Cocos -> H5 动作规范
+
+1. `wsConnect`（可选）：建立/复用 websocket
+
+```json
+{
+  "action": "wsConnect",
+  "payload": {
+    "port": 25201
+  }
+}
+```
+
+或
+
+```json
+{
+  "action": "wsConnect",
+  "payload": {
+    "url": "wss://test2.awanptest.com:25201"
+  }
+}
+```
+
+2. `wsSend`：发送 websocket 消息（仅支持 `text` 与 `binary-base64`）
+
+```json
+{
+  "action": "wsSend",
+  "payload": {
+    "dataType": "binary-base64",
+    "data": "WU0AAv//////////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAIQ..."
+  }
+}
+```
+
+3. `wsClose`：关闭 websocket
+
+```json
+{
+  "action": "wsClose",
+  "payload": {
+    "code": 1000,
+    "reason": "leave gameplay"
+  }
+}
+```
+
+### 9.4 H5 -> Cocos 回传规范
+
+1. `wsOpen`：连接成功
+2. `wsMessage`：收到服务端消息（文本或二进制 base64）
+3. `wsError`：错误
+4. `wsClosed`：连接关闭
+
+示例（收到 WS 二进制后回传）：
+
+```json
+{
+  "action": "wsMessage",
+  "payload": {
+    "dataType": "binary-base64",
+    "data": "WU0AAv//////////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAIQ..."
+  }
+}
+```
+
+### 9.5 牌桌外 H5 自发 WS 示例
+
+H5 可直接使用 `src/bridge/wsBridge.ts` 暴露的能力处理查询类请求：
+
+```ts
+import {
+  ensureWsProxyConnected,
+  h5SendRegisterPacket,
+  h5SendHoldemPacket,
+  waitH5WsPacket,
+} from '@/bridge/wsBridge'
+
+// 1) 确保已连接
+ensureWsProxyConnected({ port: 25201 })
+
+// 2) 仅在后端要求握手时，手动 REGISTER（可选）
+h5SendRegisterPacket()
+
+// 3) 发送查询包（code 必须是业务查询协议号，不是 REGISTER）
+h5SendHoldemPacket({
+  code: 1300,
+  roomId: 0,
+  matchId: 0,
+  bodyBase64: 'CgQxMjM0',
+})
+
+// 4) 等待指定协议号回包
+const packet = await waitH5WsPacket(1300, { timeoutMs: 5000 })
+console.log(packet.code, packet.roomId, packet.matchId, packet.body)
+```
+
+### 9.6 进入牌桌动作（H5 -> Cocos）
+
+H5 点击牌桌后只通知 Cocos 业务意图，不直接发送 EnterRoom WS 包：
 
 ```json
 {
@@ -180,15 +310,12 @@ H5 发送入口：`src/bridge/bridge.ts`。
     "userName": "玩家昵称",
     "userId": "10001",
     "token": "xxx",
-    "from": "h5-lobby"
+    "websocketPort": 25201,
+    "from": "h5-lobby",
+    "roomId": "90547896",
+    "roomName": "NLH 2/4"
   }
 }
-```
-
-Cocos 回调 H5：
-
-```js
-window.__H5_GAME_ON_COCOS_MESSAGE__(rawJsonOrSchemeUrl)
 ```
 
 ## 10. 多语言（TXT）用法

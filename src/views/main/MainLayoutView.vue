@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue'
-import { showFailToast,  } from 'vant'
-import { RouterView, useRoute,  } from 'vue-router'
+import { showFailToast } from 'vant'
+import { RouterView, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { getUserInfoApi } from '@/api/auth'
 import LoginSession from '@/session/loginSession'
@@ -60,7 +60,6 @@ watch(
   { immediate: true },
 )
 
-
 function resolveLanguageCode(user: Record<string, unknown>): string {
   const languageKeys = ['language', 'client_language', 'system_language', 'lt']
   for (const key of languageKeys) {
@@ -103,7 +102,8 @@ onMounted(() => {
   position: relative;
   z-index: 2;
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.62rem) 0.48rem calc(env(safe-area-inset-bottom) + 2.72rem);
+  padding: calc(env(safe-area-inset-top) + 0.62rem) 0.48rem
+    calc(env(safe-area-inset-bottom) + 2.72rem);
 }
 .module-slot {
   margin-top: 0.42rem;

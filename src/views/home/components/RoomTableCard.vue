@@ -210,8 +210,16 @@ function formatDuration(seconds: number): string {
           :class="{ empty: !seatUser }"
           :style="seatStyle(idx)"
         >
-          <img v-if="seatUser?.avatar" :src="String(seatUser.avatar)" alt="avatar" loading="lazy" decoding="async" />
-          <span v-else>{{ shortName(typeof seatUser?.name === 'string' ? seatUser.name : '') }}</span>
+          <img
+            v-if="seatUser?.avatar"
+            :src="String(seatUser.avatar)"
+            alt="avatar"
+            loading="lazy"
+            decoding="async"
+          />
+          <span v-else>{{
+            shortName(typeof seatUser?.name === 'string' ? seatUser.name : '')
+          }}</span>
         </div>
       </div>
 
@@ -271,7 +279,9 @@ function formatDuration(seconds: number): string {
 .table-name.themeType2 {
   background: rgba(116, 98, 110, 0.12);
   border: 0.0133rem solid rgba(255, 255, 255, 0.44);
-  box-shadow: inset 0 0.0133rem 0.04rem rgba(255, 255, 255, 0.3), 0 0.04rem 0.1rem rgba(45, 33, 40, 0.22);
+  box-shadow:
+    inset 0 0.0133rem 0.04rem rgba(255, 255, 255, 0.3),
+    0 0.04rem 0.1rem rgba(45, 33, 40, 0.22);
   backdrop-filter: blur(0.08rem) saturate(1.01);
 }
 

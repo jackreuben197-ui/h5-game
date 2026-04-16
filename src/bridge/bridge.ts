@@ -5,8 +5,6 @@ import {
   toBridgeRaw,
   type BridgeAction,
   type BridgeMessage,
-  type CocosAckPayload,
-  type RegisterPayload,
   type EnterTablePayload,
 } from './protocol'
 
@@ -110,7 +108,38 @@ function postToCocos(raw: string): void {
     return
   }
 
-  console.info('[bridge] no cocos channel found, message dropped:', raw)
+  // 开发期没有 Cocos 容器时，避免打印整段 base64 造成刷屏。
+  console.warn('[bridge] no cocos channel found, message dropped:', briefBridgeRaw(raw))
+}
+
+function briefBridgeRaw(raw: string): string {
+  try {
+    const parsed = JSON.parse(raw) as {
+      action?: string
+      payload?: { dataType?: string; data?: string }
+      requestId?: string
+      timestamp?: number
+    }
+    const action = parsed.action || 'unknown'
+
+    if (action === 'wsMessage') {
+      const dataType = parsed.payload?.dataType || 'unknown'
+      const dataLength = typeof parsed.payload?.data === 'string' ? parsed.payload.data.length : 0
+      return JSON.stringify({
+        action,
+        payload: {
+          dataType,
+          data: `<base64 length=${dataLength}>`,
+        },
+        requestId: parsed.requestId,
+        timestamp: parsed.timestamp,
+      })
+    }
+
+    return raw
+  } catch {
+    return raw
+  }
 }
 
 // 暴露当前命中的通道，供调试页展示。
@@ -143,30 +172,15 @@ export function sendBridgeMessage<TPayload>(
   return message
 }
 
-// 业务快捷方法：登录后向 Cocos 发送 Register，同步 token + websocketPort。
-export function registerToCocos(payload: RegisterPayload): BridgeMessage<RegisterPayload> {
-  return sendBridgeMessage(BRIDGE_ACTION.REGISTER, payload)
-}
-
 // 业务快捷方法：请求 Cocos 进入牌桌。
 export function enterTable(payload: EnterTablePayload): BridgeMessage<EnterTablePayload> {
   return sendBridgeMessage(BRIDGE_ACTION.ENTER_TABLE, payload)
-}
-
-// 业务快捷方法：请求 Cocos 退出牌桌。
-export function sendExitTable(payload: Record<string, unknown>): BridgeMessage<Record<string, unknown>> {
-  return sendBridgeMessage(BRIDGE_ACTION.EXIT_TABLE, payload)
 }
 
 // 订阅 Cocos -> H5 的回调消息。
 export function subscribeCocosMessages(handler: MessageHandler): () => void {
   handlers.add(handler)
   return () => handlers.delete(handler)
-}
-
-// 调试页用的本地回执模拟方法。
-export function mockCocosAck(payload: CocosAckPayload): void {
-  emit(createBridgeMessage(BRIDGE_ACTION.COCOS_ACK, payload))
 }
 
 // 解析原始入站消息，合法则分发。

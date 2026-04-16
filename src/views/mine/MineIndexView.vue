@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { computed, } from 'vue'
+import { computed } from 'vue'
 import { showSuccessToast } from 'vant'
-import {useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import LoginSession from '@/session/loginSession'
 
 const route = useRoute()
 const router = useRouter()
 const gameStore = useGameStore()
-
 
 function goToSettings(): void {
   void router.push('/mine/settings')
@@ -44,11 +43,11 @@ async function onLogout(): Promise<void> {
 
 <template>
   <header class="main-header">
-        <p class="main-sub-title">牌桌外大厅</p>
-        <h1 class="main-title">{{ moduleTitle }}</h1>
-        <p class="main-user">当前登录：{{ loginUserText }}</p>
-        <VanButton plain round size="small" class="logout-btn" @click="onLogout">退出登录</VanButton>
-      </header>
+    <p class="main-sub-title">牌桌外大厅</p>
+    <h1 class="main-title">{{ moduleTitle }}</h1>
+    <p class="main-user">当前登录：{{ loginUserText }}</p>
+    <VanButton plain round size="small" class="logout-btn" @click="onLogout">退出登录</VanButton>
+  </header>
   <div class="module-card">
     <h2 class="module-title">我的模块</h2>
     <p class="module-desc">个人资料、资产、战绩、设置入口。</p>
@@ -102,6 +101,4 @@ async function onLogout(): Promise<void> {
   top: 0.08rem;
   right: 0;
 }
-
-
 </style>

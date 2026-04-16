@@ -43,7 +43,7 @@ function goToGameList(): void {
   line-height: 1.6;
   color: rgba(235, 245, 255, 0.9);
 }
-.button{
+.button {
   margin-top: 5px;
 }
 </style>

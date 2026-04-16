@@ -1,19 +1,72 @@
 // H5 与 Cocos 共用的桥接动作定义。
 export const BRIDGE_ACTION = {
-  REGISTER: 'register',
   ENTER_TABLE: 'enterTable',
-  EXIT_TABLE: 'exitTable',
   SYNC_USER: 'syncUser',
-  COCOS_ACK: 'cocosAck',
   SHOW_TOAST: 'showToast',
+  // Cocos -> H5：要求 H5 建立/发送/关闭 websocket。
+  WS_CONNECT: 'wsConnect',
+  WS_SEND: 'wsSend',
+  WS_CLOSE: 'wsClose',
+  // H5 -> Cocos：同步 websocket 生命周期与消息。
+  WS_OPEN: 'wsOpen',
+  WS_MESSAGE: 'wsMessage',
+  WS_ERROR: 'wsError',
+  WS_CLOSED: 'wsClosed',
 } as const
 
 export type BridgeAction = (typeof BRIDGE_ACTION)[keyof typeof BRIDGE_ACTION]
 
-// 登录后同步给 Cocos 的注册负载。
-export interface RegisterPayload {
-  token: string
-  websocketPort: number
+// Cocos -> H5：连接 websocket 请求。
+export interface WsConnectPayload {
+  // 优先使用完整 URL。
+  url?: string
+  // 或者传端口，H5 根据模板拼接（如 wss://host{0}）。
+  port?: number
+}
+
+// Cocos -> H5：发送 websocket 文本消息。
+export interface WsSendTextPayload {
+  dataType: 'text'
+  text?: string
+}
+
+// Cocos -> H5：发送 websocket 二进制（base64）消息。
+export interface WsSendBinaryPayload {
+  dataType: 'binary-base64'
+  data?: string
+}
+
+// Cocos -> H5：通用 websocket 发送负载。
+export type WsSendPayload = WsSendTextPayload | WsSendBinaryPayload
+
+// Cocos -> H5：关闭 websocket 请求。
+export interface WsClosePayload {
+  code?: number
+  reason?: string
+}
+
+// H5 -> Cocos：websocket 已连接。
+export interface WsOpenPayload {
+  url: string
+}
+
+// H5 -> Cocos：websocket 收到消息。
+export interface WsMessagePayload {
+  dataType: 'text' | 'binary-base64'
+  text?: string
+  data?: string
+}
+
+// H5 -> Cocos：websocket 错误消息。
+export interface WsErrorPayload {
+  message: string
+}
+
+// H5 -> Cocos：websocket 已关闭。
+export interface WsClosedPayload {
+  code?: number
+  reason?: string
+  wasClean?: boolean
 }
 
 // 请求进入牌桌时发送给 Cocos 的负载。

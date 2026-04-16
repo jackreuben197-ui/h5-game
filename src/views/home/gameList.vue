@@ -98,7 +98,8 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
   return Object.values(groupedMap)
     .map((group) => {
       const playerCount = group.rooms.reduce((sum, room) => {
-        const roomPlayers = Number(room.roomers) || (Array.isArray(room.users) ? room.users.length : 0)
+        const roomPlayers =
+          Number(room.roomers) || (Array.isArray(room.users) ? room.users.length : 0)
         return sum + roomPlayers
       }, 0)
 
@@ -132,7 +133,8 @@ function bootstrapRoomList(): void {
 async function fetchRooms(options: { silent?: boolean } = {}): Promise<void> {
   try {
     const idRes = await getRoomIdsApi({})
-    const idRecords = Number(idRes.code) === 0 && Array.isArray(idRes.data?.records) ? idRes.data.records : []
+    const idRecords =
+      Number(idRes.code) === 0 && Array.isArray(idRes.data?.records) ? idRes.data.records : []
 
     const roomIds = idRecords
       .map((item) => Number(item?.rid))
@@ -150,7 +152,10 @@ async function fetchRooms(options: { silent?: boolean } = {}): Promise<void> {
       room_type: 0,
     })
 
-    const records = Number(detailRes.code) === 0 && Array.isArray(detailRes.data?.records) ? detailRes.data.records : []
+    const records =
+      Number(detailRes.code) === 0 && Array.isArray(detailRes.data?.records)
+        ? detailRes.data.records
+        : []
     sourceRecords.value = Array.isArray(records) ? records : []
     persistRoomListCache(sourceRecords.value)
     resetExpandedMap()
@@ -281,7 +286,11 @@ function formatChip(value: number): string {
 </script>
 
 <template>
-  <div class="room-list-page" :class="{ themeType1: !themeType, themeType2: themeType }" :style="pageStyle">
+  <div
+    class="room-list-page"
+    :class="{ themeType1: !themeType, themeType2: themeType }"
+    :style="pageStyle"
+  >
     <div class="bg-overlay" />
 
     <header class="top-bar">

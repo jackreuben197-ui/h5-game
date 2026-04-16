@@ -1,6 +1,5 @@
 import { getUserWsApi } from '@/api/auth'
-import { registerToCocos } from '@/bridge/bridge'
-import type { RegisterPayload } from '@/bridge/protocol'
+import { closeWsProxy, ensureWsProxyConnected } from '@/bridge/wsBridge'
 import StorageKey from '@/constants/storageKey'
 import { useGameStore } from '@/stores/game'
 import { pinia } from '@/stores/pinia'
@@ -9,7 +8,6 @@ import { localStore } from '@/utils/localStore'
 // 与 Cocos LoginSession 保持同名职责：管理登录会话相关的 websocket 端口同步。
 export default class LoginSession {
   private static _wsPort = 0
-  private static _lastRegisterSignature = ''
 
   // 当前缓存的 websocket 端口（优先内存，其次本地存储）。
   static get WSPort(): number {
@@ -47,8 +45,8 @@ export default class LoginSession {
     }
 
     this.WSPort = port
-    // 对齐需求：拿到端口后立即向 Cocos 发送 Register（token + websocketPort）。
-    this.SendRegisterToCocos()
+    // 对齐最新流程：登录阶段拿到端口后，H5 直接主动建连，不再等待 Cocos 下发 wsConnect。
+    ensureWsProxyConnected({ port: this.WSPort })
     return this.WSPort
   }
 
@@ -56,40 +54,17 @@ export default class LoginSession {
   static async EnsureWS(): Promise<number> {
     const cached = this.WSPort
     if (cached > 0) {
-      // 命中缓存时也尝试补发 Register，防止 Cocos 侧状态重置后未同步。
-      this.SendRegisterToCocos()
+      // 命中缓存时也主动建连，避免刷新后 Cocos/H5 侧连接状态不一致。
+      ensureWsProxyConnected({ port: cached })
       return cached
     }
     return this.SyncWS()
   }
 
-  // 向 Cocos 发送 Register：携带 token + websocketPort。
-  static SendRegisterToCocos(force = false): boolean {
-    const gameStore = useGameStore(pinia)
-    const token = (gameStore.sessionToken || localStore.getItem<string>(StorageKey.TOKEN, '') || '').trim()
-    const websocketPort = Number(gameStore.websocketPort || this.WSPort || 0)
-
-    if (!token || !Number.isFinite(websocketPort) || websocketPort <= 0) {
-      return false
-    }
-
-    const signature = `${token}@${websocketPort}`
-    if (!force && signature === this._lastRegisterSignature) {
-      return true
-    }
-
-    const payload: RegisterPayload = {
-      token,
-      websocketPort,
-    }
-    registerToCocos(payload)
-    this._lastRegisterSignature = signature
-    return true
-  }
-
   // 退出登录时清空 websocket 端口缓存。
   static ClearWS(): void {
+    // 清空登录态时主动关闭 WS，避免旧会话残留。
+    closeWsProxy({ code: 1000, reason: 'login session cleared' })
     this.WSPort = 0
-    this._lastRegisterSignature = ''
   }
 }

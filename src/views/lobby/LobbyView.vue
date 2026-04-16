@@ -117,16 +117,24 @@ onMounted(() => {
             <path d="M3 10.5 12 3l9 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5v-9Z" />
           </svg>
           <svg v-else-if="tab.key === 'club'" viewBox="0 0 24 24" fill="currentColor">
-            <path d="m4 6 4.8 4.2L12 6l3.2 4.2L20 6l-1.7 12.2A2 2 0 0 1 16.3 20H7.7a2 2 0 0 1-2-1.8L4 6Z" />
+            <path
+              d="m4 6 4.8 4.2L12 6l3.2 4.2L20 6l-1.7 12.2A2 2 0 0 1 16.3 20H7.7a2 2 0 0 1-2-1.8L4 6Z"
+            />
             <circle cx="12" cy="13.3" r="1.9" fill="#1e5d74" />
           </svg>
           <svg v-else-if="tab.key === 'recharge'" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h13A2.5 2.5 0 0 1 21 8.5v7A2.5 2.5 0 0 1 18.5 18h-13A2.5 2.5 0 0 1 3 15.5v-7Z" />
+            <path
+              d="M3 8.5A2.5 2.5 0 0 1 5.5 6h13A2.5 2.5 0 0 1 21 8.5v7A2.5 2.5 0 0 1 18.5 18h-13A2.5 2.5 0 0 1 3 15.5v-7Z"
+            />
             <circle cx="17.2" cy="12" r="2.4" fill="#1e5d74" />
           </svg>
           <svg v-else-if="tab.key === 'message'" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3 8a5 5 0 0 1 5-5h8a5 5 0 0 1 0 10h-1.5l-3.6 2.6a1 1 0 0 1-1.58-.81V13H8a5 5 0 0 1-5-5Z" />
-            <path d="M12 13h4a4 4 0 0 1 0 8h-1.2l-2.8 2a1 1 0 0 1-1.58-.81V21H9a4 4 0 0 1-4-4v-.4A6.9 6.9 0 0 0 8 17h4v-4Z" />
+            <path
+              d="M3 8a5 5 0 0 1 5-5h8a5 5 0 0 1 0 10h-1.5l-3.6 2.6a1 1 0 0 1-1.58-.81V13H8a5 5 0 0 1-5-5Z"
+            />
+            <path
+              d="M12 13h4a4 4 0 0 1 0 8h-1.2l-2.8 2a1 1 0 0 1-1.58-.81V21H9a4 4 0 0 1-4-4v-.4A6.9 6.9 0 0 0 8 17h4v-4Z"
+            />
           </svg>
           <svg v-else viewBox="0 0 24 24" fill="currentColor">
             <circle cx="12" cy="8" r="4" />
@@ -199,7 +207,12 @@ onMounted(() => {
   border: 0.03rem solid rgba(236, 244, 255, 0.45);
   border-radius: 99rem;
   background:
-    linear-gradient(92deg, rgba(129, 70, 124, 0.55) 0%, rgba(42, 123, 164, 0.62) 55%, rgba(24, 111, 146, 0.7) 100%),
+    linear-gradient(
+      92deg,
+      rgba(129, 70, 124, 0.55) 0%,
+      rgba(42, 123, 164, 0.62) 55%,
+      rgba(24, 111, 146, 0.7) 100%
+    ),
     rgba(12, 32, 56, 0.35);
   box-shadow:
     0 -0.06rem 0.4rem rgba(145, 205, 250, 0.16) inset,

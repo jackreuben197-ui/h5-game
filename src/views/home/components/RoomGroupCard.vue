@@ -45,28 +45,60 @@ function handleTableClick(room: RoomRecord): void {
 
 <template>
   <section class="group-item">
-    <div class="group-summary" @click="toggleGroup">
+    <div
+      class="group-summary"
+      @click="toggleGroup"
+    >
       <div class="summary-left">
         <div class="game-icon-wrap">
-          <img class="game-icon-img" :src="group.iconImage" alt="game-type" />
-          <span class="icon-tag">{{ group.gameName }}</span>
+          <img
+            class="game-icon-img"
+            :src="group.iconImage"
+            alt="game-type"
+          >
+          <span class="icon-tag">
+            {{ group.gameName }}
+          </span>
         </div>
 
         <div class="summary-content">
-          <p class="blind-text">{{ group.blindText }}</p>
+          <p class="blind-text">
+            {{ group.blindText }}
+          </p>
           <p class="count-text">
-            <span><img class="count-icon" :src="iconTable" alt="table" /> {{ group.tableCount }}桌</span>
-            <span><img class="count-icon" :src="iconPeople" alt="people" /> {{ group.playerCount }}人</span>
+            <span>
+              <img
+                class="count-icon"
+                :src="iconTable"
+                alt="table"
+              >{{ group.tableCount }}桌
+            </span>
+            <span>
+              <img
+                class="count-icon"
+                :src="iconPeople"
+                alt="people"
+              >{{
+                group.playerCount
+              }}人
+            </span>
           </p>
         </div>
       </div>
 
-      <button type="button" class="toggle-btn" @click.stop="toggleGroup">
+      <button
+        type="button"
+        class="toggle-btn"
+        @click.stop="toggleGroup"
+      >
         <VanIcon :name="expanded ? 'arrow-up' : 'arrow-down'" />
       </button>
     </div>
 
-    <div class="table-grid-wrap" :class="expandClass">
+    <div
+      class="table-grid-wrap"
+      :class="expandClass"
+    >
       <div class="table-grid-inner">
         <div class="table-grid">
           <RoomTableCard
@@ -181,7 +213,10 @@ function handleTableClick(room: RoomRecord): void {
   grid-template-rows: 0fr;
   opacity: 0;
   transform: translateY(-0.2rem);
-  transition: grid-template-rows 0.45s ease, opacity 0.35s ease, transform 0.35s ease;
+  transition:
+    grid-template-rows 0.45s ease,
+    opacity 0.35s ease,
+    transform 0.35s ease;
 }
 
 .table-grid-wrap.is-expanded {

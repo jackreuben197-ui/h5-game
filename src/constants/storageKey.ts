@@ -6,6 +6,10 @@ export default class StorageKey {
   static LOGIN_DATA = 'LOGIN_DATA'
   // token 字符串。
   static TOKEN = 'TOKEN'
+  // websocket 端口（对应 Cocos LoginSession.SyncWS 的 data.port）。
+  static WS_PORT = 'WS_PORT'
+  // websocket 端口更新时间（毫秒时间戳）。
+  static WS_PORT_UPDATED_AT = 'WS_PORT_UPDATED_AT'
   // 牌局列表缓存（用于页面秒开 + 静默刷新）。
   static ROOM_LIST_CACHE = 'ROOM_LIST_CACHE'
   // token 有效期。

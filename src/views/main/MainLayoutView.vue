@@ -4,6 +4,7 @@ import { showFailToast, showSuccessToast } from 'vant'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { getUserInfoApi } from '@/api/auth'
+import LoginSession from '@/session/loginSession'
 import MainBottomTab from '@/components/MainBottomTab.vue'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
 import { useGameStore } from '@/stores/game'
@@ -61,6 +62,9 @@ async function fetchUserInfoOnEnter(): Promise<void> {
     // 读取后端语言字段；如果没有定义，则按英文兜底。
     const languageCode = resolveLanguageCode(user)
     setLocale(languageCode || 'en')
+
+    // 对齐 Cocos ProcedureEnterLobby：用户信息后同步 websocket 端口。
+    await LoginSession.SyncWS()
   } catch (error) {
     const message = error instanceof Error ? error.message : '获取用户信息失败'
     showFailToast(message)

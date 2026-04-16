@@ -1,5 +1,6 @@
 // H5 与 Cocos 共用的桥接动作定义。
 export const BRIDGE_ACTION = {
+  REGISTER: 'register',
   ENTER_TABLE: 'enterTable',
   EXIT_TABLE: 'exitTable',
   SYNC_USER: 'syncUser',
@@ -9,11 +10,19 @@ export const BRIDGE_ACTION = {
 
 export type BridgeAction = (typeof BRIDGE_ACTION)[keyof typeof BRIDGE_ACTION]
 
+// 登录后同步给 Cocos 的注册负载。
+export interface RegisterPayload {
+  token: string
+  websocketPort: number
+}
+
 // 请求进入牌桌时发送给 Cocos 的负载。
 export interface EnterTablePayload {
   userName: string
   userId: string
   token: string
+  // websocket 端口（来自 /api/user/ws 的 data.port）。
+  websocketPort: number
   from: 'h5-lobby'
   // 点击的目标房间 ID，方便 Cocos 精确切桌；Cocos 不需要时可忽略。
   roomId?: string

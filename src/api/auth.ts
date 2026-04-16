@@ -1,41 +1,14 @@
 import http from '@/api/http'
+import type {
+  LoginRequest,
+  LoginResponse,
+  UserInfoData,
+  UserInfoResponse,
+  UserWsData,
+  UserWsResponse,
+} from '@/api/models/auth'
 
-export interface LoginRequest {
-  phone: string
-  password: string
-  area: string
-}
-
-export interface LoginResponse {
-  token: string
-  [key: string]: unknown
-}
-
-export interface UserInfoResponse {
-  code: number
-  data: UserInfoData
-  message: string
-  [key: string]: unknown
-}
-
-export interface UserInfoData {
-  closeChatTime?: number
-  muteList: Array<Record<string, unknown>>
-  openChat: boolean
-  user: UserInfoUser
-  [key: string]: unknown
-}
-
-export interface UserInfoUser {
-  nickname: string
-  unid?: number
-  userid?: number
-  id?: number
-  wUid?: number
-  pUid?: number
-  [key: string]: unknown
-}
-
+// 登录：返回 token 等登录态信息。
 export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
   const res = await http.post<{ data?: LoginResponse; token?: string }>('/user/login', payload)
   const token = res.data?.data?.token ?? res.data?.token
@@ -47,6 +20,7 @@ export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
   return { ...res.data?.data, ...res.data, token }
 }
 
+// 用户信息：用于大厅初始化与用户态同步。
 export async function getUserInfoApi(): Promise<UserInfoData> {
   const res = await http.post<UserInfoResponse>('/user/info')
 
@@ -60,4 +34,14 @@ export async function getUserInfoApi(): Promise<UserInfoData> {
   }
 
   return body.data
+}
+
+// 同步 websocket 端口：对应 Cocos LoginSession.SyncWS。
+export async function getUserWsApi(): Promise<UserWsData> {
+  const res = await http.post<UserWsResponse>('/user/ws')
+  const body = res.data
+  if (body.code !== 0) {
+    throw new Error(body.message || '获取 websocket 端口失败')
+  }
+  return body.data || {}
 }

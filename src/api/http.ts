@@ -24,11 +24,8 @@ async function forceToLogin(): Promise<void> {
 
   const currentRoute = router.currentRoute.value
   if (currentRoute.name !== 'login') {
-    const redirect = currentRoute.fullPath || '/'
-    await router.replace({
-      name: 'login',
-      query: { redirect },
-    })
+    // 登录失效后统一回登录页，不携带 redirect 参数。
+    await router.replace({ name: 'login' })
   }
 
   authRedirecting = false

@@ -6,6 +6,7 @@ import { dzpkPersistStorage, localStore } from '@/utils/localStore'
 
 interface GameState {
   sessionToken: string
+  websocketPort: number
   loginAccount: string
   loginNickname: string
   loginUserId: string
@@ -21,6 +22,8 @@ export const useGameStore = defineStore(
     state: (): GameState => ({
       // 启动时从 dzpk_TOKEN 恢复 token，保证与 Cocos 键名一致。
       sessionToken: localStore.getItem<string>(StorageKey.TOKEN, '') || '',
+      // 启动时恢复 websocket 端口缓存，对齐 Cocos LoginSession 的 SyncWS 能力。
+      websocketPort: Number(localStore.getItem<number | string>(StorageKey.WS_PORT, 0)) || 0,
       loginAccount: '',
       loginNickname: '',
       loginUserId: '',
@@ -35,6 +38,17 @@ export const useGameStore = defineStore(
         // 双写到本地存储，便于非 Pinia 场景也能读取同一 token key。
         localStore.setItem(StorageKey.TOKEN, token)
       },
+      setWebsocketPort(port: number): void {
+        const safePort = Number.isFinite(port) && port > 0 ? Math.floor(port) : 0
+        this.websocketPort = safePort
+        if (safePort > 0) {
+          localStore.setItem(StorageKey.WS_PORT, safePort)
+          localStore.setItem(StorageKey.WS_PORT_UPDATED_AT, Date.now())
+          return
+        }
+        localStore.removeItem(StorageKey.WS_PORT)
+        localStore.removeItem(StorageKey.WS_PORT_UPDATED_AT)
+      },
       setLoginUser(payload: { account: string; nickname: string; userId: string }): void {
         this.loginAccount = payload.account
         this.loginNickname = payload.nickname
@@ -42,11 +56,14 @@ export const useGameStore = defineStore(
       },
       clearLogin(): void {
         this.sessionToken = ''
+        this.websocketPort = 0
         this.loginAccount = ''
         this.loginNickname = ''
         this.loginUserId = ''
         // 退出登录时同步清理 dzpk_TOKEN。
         localStore.removeItem(StorageKey.TOKEN)
+        localStore.removeItem(StorageKey.WS_PORT)
+        localStore.removeItem(StorageKey.WS_PORT_UPDATED_AT)
       },
       setLastEnterTable(payload: EnterTablePayload): void {
         this.lastEnterTable = payload
@@ -63,6 +80,7 @@ export const useGameStore = defineStore(
       storage: dzpkPersistStorage,
       pick: [
         'sessionToken',
+        'websocketPort',
         'loginAccount',
         'loginNickname',
         'loginUserId',

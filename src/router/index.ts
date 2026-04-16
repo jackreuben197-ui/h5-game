@@ -99,12 +99,8 @@ router.beforeEach((to) => {
   const token = gameStore.sessionToken
 
   if (to.meta.requiresAuth && !token) {
-    return {
-      name: 'login',
-      query: {
-        redirect: to.fullPath,
-      },
-    }
+    // 未登录统一进入登录页；登录成功后固定回首页，不做业务页重定向。
+    return { name: 'login' }
   }
 
   if (to.name === 'login' && token) {

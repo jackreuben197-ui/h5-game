@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import iconTable from '@/assets/icons/icon_table.png'
 import iconPeople from '@/assets/icons/icon_people.png'
 import RoomTableCard from './RoomTableCard.vue'
-import type { RoomRecord } from '@/api/room'
+import type { RoomRecord } from '@/api/models/room'
 
 interface RoomGroupViewModel {
   groupKey: string

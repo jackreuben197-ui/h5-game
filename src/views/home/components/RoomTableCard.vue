@@ -4,7 +4,7 @@ import iconPeople from '@/assets/icons/icon_people.png'
 import iconTime from '@/assets/icons/icon_time.png'
 import iconChips from '@/assets/icons/icon_chips.png'
 import nameBg from '@/assets/icons/name_bg.png'
-import type { RoomRecord, RoomUser } from '@/api/room'
+import type { RoomRecord, RoomUser } from '@/api/models/room'
 
 interface Props {
   room: RoomRecord

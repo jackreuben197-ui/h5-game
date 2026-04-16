@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { md5 } from 'js-md5'
 import { computed, reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import {
 	showFailToast,
 	showLoadingToast,
@@ -14,9 +14,9 @@ import {
 	DEFAULT_DEBUG_ACCOUNT,
 	type DebugAccount,
 } from '@/constants/debugAccounts'
+import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
 
-const route = useRoute()
 const router = useRouter()
 const gameStore = useGameStore()
 
@@ -64,14 +64,6 @@ function onPickerCancel(): void {
 	pickerVisible.value = false
 }
 
-function resolveRedirectPath(): string {
-	const redirect = route.query.redirect
-	if (typeof redirect === 'string' && redirect.startsWith('/')) {
-		return redirect
-	}
-	return '/'
-}
-
 async function handleLogin(): Promise<void> {
 	if (!form.account.trim() || !form.password.trim()) {
 		showFailToast('账号和密码不能为空')
@@ -95,6 +87,8 @@ async function handleLogin(): Promise<void> {
 		token = res.token
 
 		gameStore.setSessionToken(token)
+		// 登录成功后先尝试发送 Register（若本地已有 websocketPort 可立即同步给 Cocos）。
+		LoginSession.SendRegisterToCocos()
 		gameStore.setLoginUser({
 			account: form.account.trim(),
 			nickname: form.nickname.trim() || form.account.trim(),
@@ -103,7 +97,8 @@ async function handleLogin(): Promise<void> {
 
 		closeToast()
 		showSuccessToast('登录成功')
-		await router.replace(resolveRedirectPath())
+		// 登录成功后固定进入首页，不做来源页重定向。
+		await router.replace({ name: 'lobby' })
 	} catch (error) {
 		closeToast()
 		const message = error instanceof Error ? error.message : '登录失败'

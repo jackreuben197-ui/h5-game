@@ -6,6 +6,7 @@ import {
   type BridgeAction,
   type BridgeMessage,
   type CocosAckPayload,
+  type RegisterPayload,
   type EnterTablePayload,
 } from './protocol'
 
@@ -133,6 +134,11 @@ export function sendBridgeMessage<TPayload>(
   const message = createBridgeMessage(action, payload)
   postToCocos(toBridgeRaw(message))
   return message
+}
+
+// 业务快捷方法：登录后向 Cocos 发送 Register，同步 token + websocketPort。
+export function registerToCocos(payload: RegisterPayload): BridgeMessage<RegisterPayload> {
+  return sendBridgeMessage(BRIDGE_ACTION.REGISTER, payload)
 }
 
 // 业务快捷方法：请求 Cocos 进入牌桌。

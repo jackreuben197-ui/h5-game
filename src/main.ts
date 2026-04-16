@@ -3,6 +3,7 @@ import App from './App.vue'
 import router from './router'
 import './bridge/bridge'
 import { setupGlobalBridgeToastChannel } from './bridge/globalToast'
+import LoginSession from './session/loginSession'
 import './styles/main.scss'
 import { setupRem } from './utils/rem'
 import { pinia } from './stores/pinia'
@@ -34,6 +35,8 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
   app.use(pinia)
   app.use(textI18nPlugin)
   app.use(router)
+  // 启动时尝试补发 Register：若本地已有 token + ws 端口，可快速同步 Cocos 会话状态。
+  LoginSession.SendRegisterToCocos()
   // 启动全局桥接 toast：接收 Cocos 消息后统一弹窗。
   stopBridgeToastChannel = setupGlobalBridgeToastChannel()
   app.mount(mountTarget)

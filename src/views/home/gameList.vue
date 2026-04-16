@@ -3,10 +3,12 @@ import { computed, onMounted, reactive, ref, type CSSProperties } from 'vue'
 import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
 import RoomGroupCard from './components/RoomGroupCard.vue'
-import { getRoomIdsApi, getRoomsDetailApi, type RoomRecord } from '@/api/room'
+import { getRoomIdsApi, getRoomsDetailApi } from '@/api/room'
 import { enterTable } from '@/bridge/bridge'
 import type { EnterTablePayload } from '@/bridge/protocol'
 import StorageKey from '@/constants/storageKey'
+import LoginSession from '@/session/loginSession'
+import type { RoomRecord } from '@/api/models/room'
 import { useGameStore } from '@/stores/game'
 import { localStore } from '@/utils/localStore'
 import serviceIcon from '@/assets/icons/icon_server.png'
@@ -199,10 +201,22 @@ function handleTodoClick(): void {
   themeType.value = !themeType.value
 }
 
-function handleTableClick(room: RoomRecord): void {
+async function handleTableClick(room: RoomRecord): Promise<void> {
   if (!gameStore.sessionToken) {
     showFailToast('登录状态已失效，请重新登录')
     return
+  }
+
+  let wsPort = Number(gameStore.websocketPort) || 0
+  if (!wsPort) {
+    try {
+      // 对齐 Cocos ProcedureEnterLobby：进入大厅阶段同步 websocket 端口。
+      wsPort = await LoginSession.EnsureWS()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '获取 websocket 端口失败'
+      showFailToast(message)
+      return
+    }
   }
 
   // 进入牌桌参数固定：名称 + 用户ID + token；附带房间信息用于切桌定位。
@@ -210,6 +224,7 @@ function handleTableClick(room: RoomRecord): void {
     userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',
     userId: gameStore.loginUserId || gameStore.loginAccount || '',
     token: gameStore.sessionToken,
+    websocketPort: wsPort,
     from: 'h5-lobby',
     roomId: String(room.rid ?? ''),
     roomName: String(room.name ?? ''),

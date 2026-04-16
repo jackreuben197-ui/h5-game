@@ -79,7 +79,14 @@ function postByWindowMessage(raw: string): boolean {
 
 // 简单 UA 判断：在疑似原生环境优先走 scheme。
 function shouldUseScheme(): boolean {
-  if (typeof navigator === 'undefined') {
+  if (typeof navigator === 'undefined' || typeof window === 'undefined') {
+    return false
+  }
+
+  // 本地开发环境（localhost）不走 scheme，避免浏览器控制台大量告警。
+  const host = window.location.hostname
+  const isLocalDevHost = host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0'
+  if (isLocalDevHost) {
     return false
   }
 

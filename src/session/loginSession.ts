@@ -48,7 +48,7 @@ export default class LoginSession {
 
     this.WSPort = port
     // 对齐需求：拿到端口后立即向 Cocos 发送 Register（token + websocketPort）。
-    this.SendRegisterToCocos(true)
+    this.SendRegisterToCocos()
     return this.WSPort
   }
 

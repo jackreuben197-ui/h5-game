@@ -87,8 +87,13 @@ async function handleLogin(): Promise<void> {
 		token = res.token
 
 		gameStore.setSessionToken(token)
-		// 登录成功后先尝试发送 Register（若本地已有 websocketPort 可立即同步给 Cocos）。
-		LoginSession.SendRegisterToCocos()
+		// 登录成功后主动同步 websocket 端口并发送 Register，避免首次登录时漏发。
+		try {
+			await LoginSession.SyncWS()
+		} catch (wsError) {
+			// 不阻塞登录流程：大厅初始化阶段还会再次尝试 SyncWS。
+			console.warn('[login] sync ws failed:', wsError)
+		}
 		gameStore.setLoginUser({
 			account: form.account.trim(),
 			nickname: form.nickname.trim() || form.account.trim(),
@@ -113,35 +118,38 @@ async function handleLogin(): Promise<void> {
 
 		<section class="section-card">
 			<h2 class="section-title">账号信息</h2>
-			<VanCellGroup inset>
-				<VanField
-					v-model="form.account"
-					readonly
-					label="账号"
-					placeholder="点击选择测试账号"
-					@click="openAccountPicker"
-				/>
-				<VanField
-					v-model="form.nickname"
-					label="昵称"
-					placeholder="可修改显示昵称"
-				/>
-				<VanField
-					v-model="form.password"
-					type="password"
-					label="密码"
-					placeholder="请输入登录密码"
-				/>
-				<VanField
-					v-model="form.area"
-					label="区号"
-					placeholder="默认 55"
-				/>
-			</VanCellGroup>
+			<!-- 使用 form 包裹密码输入，避免浏览器 Password field 警告。 -->
+			<form class="login-form" @submit.prevent="handleLogin">
+				<VanCellGroup inset>
+					<VanField
+						v-model="form.account"
+						readonly
+						label="账号"
+						placeholder="点击选择测试账号"
+						@click="openAccountPicker"
+					/>
+					<VanField
+						v-model="form.nickname"
+						label="昵称"
+						placeholder="可修改显示昵称"
+					/>
+					<VanField
+						v-model="form.password"
+						type="password"
+						label="密码"
+						placeholder="请输入登录密码"
+					/>
+					<VanField
+						v-model="form.area"
+						label="区号"
+						placeholder="默认 55"
+					/>
+				</VanCellGroup>
 
-			<div class="actions">
-				<VanButton type="primary" block @click="handleLogin">登录</VanButton>
-			</div>
+				<div class="actions">
+					<VanButton type="primary" native-type="submit" block>登录</VanButton>
+				</div>
+			</form>
 		</section>
 
 		<section class="section-card">

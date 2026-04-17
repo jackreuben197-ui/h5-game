@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import iconTable from '@/assets/icons/icon_table.png'
 import iconPeople from '@/assets/icons/icon_people.png'
+import iconDropDown from '@/assets/icons/icon_drop_down.png'
 import RoomTableCard from './RoomTableCard.vue'
 import type { RoomRecord } from '@/api/models/room'
 
@@ -21,7 +22,6 @@ interface RoomGroupViewModel {
 interface Props {
   group: RoomGroupViewModel
   expanded: boolean
-  themeType: boolean
 }
 
 const props = defineProps<Props>()
@@ -63,7 +63,12 @@ function handleTableClick(room: RoomRecord): void {
 
         <div class="summary-content">
           <p class="blind-text">
-            {{ group.blindText }}
+            <span class="blind-label">
+              盲注
+            </span>
+            <span>
+              {{ group.blindText }}
+            </span>
           </p>
           <p class="count-text">
             <span>
@@ -85,14 +90,14 @@ function handleTableClick(room: RoomRecord): void {
           </p>
         </div>
       </div>
-
-      <button
-        type="button"
-        class="toggle-btn"
-        @click.stop="toggleGroup"
-      >
-        <VanIcon :name="expanded ? 'arrow-up' : 'arrow-down'" />
-      </button>
+      <div @click.stop="toggleGroup">
+        <img
+          class="toggle-icon"
+          :class="{ 'is-expanded': expanded }"
+          :src="iconDropDown"
+          alt="toggle"
+        >
+      </div>
     </div>
 
     <div
@@ -105,7 +110,6 @@ function handleTableClick(room: RoomRecord): void {
             v-for="room in group.rooms"
             :key="String(room.rid)"
             :room="room"
-            :theme-type="themeType"
             @click="handleTableClick"
           />
         </div>
@@ -117,27 +121,28 @@ function handleTableClick(room: RoomRecord): void {
 <style scoped lang="scss">
 .group-item {
   border-bottom: 0.5px solid rgba(255, 255, 255, 0.5);
-  padding: 0.2667rem 0 0.5rem;
+  padding: 0.2667rem 0 0.45rem;
 }
 
 .group-summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0 0.1rem;
   gap: 0.2667rem;
 }
 
 .summary-left {
   display: flex;
   align-items: center;
-  gap: 0.2667rem;
+  gap: 0.35rem;
   min-width: 0;
 }
 
 .game-icon-wrap {
-  width: 1.77rem;
-  height: 1.86rem;
-  border-radius: 0.3733rem;
+  width: 1.62rem;
+  height: 1.71rem;
+  border-radius: 0.441rem;
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(0.24rem);
   position: relative;
@@ -153,23 +158,34 @@ function handleTableClick(room: RoomRecord): void {
 .icon-tag {
   position: absolute;
   left: 50%;
-  bottom: 0.0533rem;
-  width: 1.32rem;
-  height: 0.47rem;
+  bottom: 0.15rem;
+  width: 1.2rem;
+  height: 0.43rem;
   transform: translateX(-50%);
   border-radius: 999px;
   text-align: center;
-  font-size: 0.22rem;
-  line-height: 0.47rem;
-  background: rgba(10, 10, 10, 0.19);
+  font-size: 0.21rem;
+  line-height: 0.38rem;
+  font-weight: 400;
+  text-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+  background: rgba(10, 10, 10, 0.29);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   border: 0.0133rem solid rgba(255, 255, 255, 0.34);
+}
+
+.summary-content{
+  padding: .5rem 0 0;
 }
 
 .blind-text {
   margin: 0;
-  font-size: 0.4267rem;
+  font-size: 0.35rem;
   line-height: 0.5333rem;
-  font-weight: 600;
+  font-weight: 400;
+  .blind-label{
+    margin-right: .3rem;
+  }
 }
 
 .count-text {
@@ -178,6 +194,7 @@ function handleTableClick(room: RoomRecord): void {
   align-items: center;
   gap: 0.32rem;
   font-size: 0.3467rem;
+  font-weight: 400;
   color: rgba(255, 255, 255, 0.86);
 }
 
@@ -188,23 +205,21 @@ function handleTableClick(room: RoomRecord): void {
 }
 
 .count-icon {
-  width: 0.3rem;
-  height: 0.3rem;
+  width: 0.4rem;
+  height: 0.4rem;
   object-fit: contain;
 }
 
-.toggle-btn {
-  width: 0.9067rem;
-  height: 0.9067rem;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(0.2133rem);
+.toggle-icon {
+  width: 0.956rem;
+  height: 0.956rem;
+  margin-top: 0.4rem;
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+.toggle-icon.is-expanded {
+  transform: rotate(180deg);
 }
 
 /* 用 grid-template-rows 做展开收起，避免冗长 JS 过渡钩子。 */
@@ -233,6 +248,6 @@ function handleTableClick(room: RoomRecord): void {
   margin-top: 0.32rem;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.2667rem;
+  gap: 0.55rem;
 }
 </style>

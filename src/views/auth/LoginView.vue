@@ -106,9 +106,14 @@ async function handleLogin(): Promise<void> {
     <VanNavBar title="H5 登录" />
 
     <section class="section-card">
-      <h2 class="section-title">账号信息</h2>
+      <h2 class="section-title">
+        账号信息
+      </h2>
       <!-- 使用 form 包裹密码输入，避免浏览器 Password field 警告。 -->
-      <form class="login-form" @submit.prevent="handleLogin">
+      <form
+        class="login-form"
+        @submit.prevent="handleLogin"
+      >
         <VanCellGroup inset>
           <VanField
             v-model="form.account"
@@ -117,24 +122,40 @@ async function handleLogin(): Promise<void> {
             placeholder="点击选择测试账号"
             @click="openAccountPicker"
           />
-          <VanField v-model="form.nickname" label="昵称" placeholder="可修改显示昵称" />
+          <VanField
+            v-model="form.nickname"
+            label="昵称"
+            placeholder="可修改显示昵称"
+          />
           <VanField
             v-model="form.password"
             type="password"
             label="密码"
             placeholder="请输入登录密码"
           />
-          <VanField v-model="form.area" label="区号" placeholder="默认 55" />
+          <VanField
+            v-model="form.area"
+            label="区号"
+            placeholder="默认 55"
+          />
         </VanCellGroup>
 
         <div class="actions">
-          <VanButton type="primary" native-type="submit" block>登录</VanButton>
+          <VanButton
+            type="primary"
+            native-type="submit"
+            block
+          >
+            登录
+          </VanButton>
         </div>
       </form>
     </section>
 
     <section class="section-card">
-      <h2 class="section-title">常用测试账号</h2>
+      <h2 class="section-title">
+        常用测试账号
+      </h2>
       <div class="quick-account-list">
         <VanButton
           v-for="item in quickAccounts"
@@ -147,10 +168,16 @@ async function handleLogin(): Promise<void> {
           {{ item.account }}
         </VanButton>
       </div>
-      <p class="info-line">完整账号列表可点击上方“账号”字段选择。</p>
+      <p class="info-line">
+        完整账号列表可点击上方“账号”字段选择。
+      </p>
     </section>
 
-    <VanPopup v-model:show="pickerVisible" round position="bottom">
+    <VanPopup
+      v-model:show="pickerVisible"
+      round
+      position="bottom"
+    >
       <VanPicker
         title="请选择测试账号"
         :columns="pickerColumns"

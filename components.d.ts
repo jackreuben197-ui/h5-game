@@ -11,9 +11,13 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    GameTypeTabbar: typeof import('./src/components/GameTypeTabbar.vue')['default']
+    HeaderBack: typeof import('./src/components/HeaderBack.vue')['default']
     MainBottomTab: typeof import('./src/components/MainBottomTab.vue')['default']
+    PageBackHeader: typeof import('./src/components/PageBackHeader.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    TopActionButton: typeof import('./src/components/TopActionButton.vue')['default']
     VanButton: typeof import('vant/es')['Button']
     VanCellGroup: typeof import('vant/es')['CellGroup']
     VanField: typeof import('vant/es')['Field']

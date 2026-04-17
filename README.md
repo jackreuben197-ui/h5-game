@@ -171,6 +171,7 @@ H5 与 Cocos 双向消息统一使用 JSON 信封：
 {
   "action": "wsSend",
   "payload": {},
+  "msgtype": 1,
   "requestId": "cocos_1744780000000_xxx",
   "timestamp": 1744780000000
 }
@@ -178,7 +179,19 @@ H5 与 Cocos 双向消息统一使用 JSON 信封：
 
 - `action`：动作名
 - `payload`：动作参数
+- `msgtype`：消息处理层级（`0=转发层`，`1=H5 业务层`）
 - `requestId` / `timestamp`：建议携带，便于排查链路
+
+`msgtype` 约定（当前实现）：
+
+- Cocos -> H5：
+  - `msgtype=0` 或未携带：按“转发层”处理（如 WS 透传）
+  - `msgtype=1`：按“H5 业务层”处理（如 toast、ready 握手）
+- H5 -> Cocos：
+  - `msgtype=1`：H5 业务层主动发送
+  - `msgtype=0`：H5 代发/回传的网络透传消息（WS 生命周期、WS 消息）
+- 兼容说明：
+  - 入站消息若未携带 `msgtype`，H5 侧按 `0` 处理，兼容旧协议
 
 Cocos 回调 H5 的统一入口：
 
@@ -202,6 +215,8 @@ window.__H5_GAME_ON_COCOS_MESSAGE__(rawJsonOrSchemeUrl)
   - 查询请求本身要使用各自业务 `query code`，不是固定 `REGISTER`
 
 ### 9.3 Cocos -> H5 动作规范
+
+说明：本节动作默认 `msgtype=0`（转发层）。
 
 1. `wsConnect`（可选）：建立/复用 websocket
 
@@ -233,7 +248,8 @@ window.__H5_GAME_ON_COCOS_MESSAGE__(rawJsonOrSchemeUrl)
   "payload": {
     "dataType": "binary-base64",
     "data": "WU0AAv//////////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAIQ..."
-  }
+  },
+  "msgtype": 0
 }
 ```
 
@@ -256,6 +272,8 @@ window.__H5_GAME_ON_COCOS_MESSAGE__(rawJsonOrSchemeUrl)
 3. `wsError`：错误
 4. `wsClosed`：连接关闭
 
+说明：本节动作默认 `msgtype=0`（转发层）。
+
 示例（收到 WS 二进制后回传）：
 
 ```json
@@ -264,7 +282,8 @@ window.__H5_GAME_ON_COCOS_MESSAGE__(rawJsonOrSchemeUrl)
   "payload": {
     "dataType": "binary-base64",
     "data": "WU0AAv//////////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAIQ..."
-  }
+  },
+  "msgtype": 0
 }
 ```
 
@@ -314,9 +333,63 @@ H5 点击牌桌后只通知 Cocos 业务意图，不直接发送 EnterRoom WS �
     "from": "h5-lobby",
     "roomId": "90547896",
     "roomName": "NLH 2/4"
-  }
+  },
+  "msgtype": 1
 }
 ```
+
+### 9.7 H5 / Cocos Ready 握手规范
+
+为避免 H5 与 Cocos 异步加载导致消息丢失，双方在“可接收消息”后执行 ready 握手。
+
+1. H5 侧
+  - Bridge 入站监听初始化完成后设置：`window.__H5_READY__ = true`
+  - 若检测到 `window.__CC_READY__ === true`，发送：
+
+```json
+{
+  "action": "h5Ready",
+  "payload": {},
+  "msgtype": 1
+}
+```
+
+  - 收到 `ccReady` 后立即回复：
+
+```json
+{
+  "action": "h5Ack",
+  "payload": {},
+  "msgtype": 1
+}
+```
+
+2. Cocos 侧（约定）
+  - Cocos 可接收消息后设置：`window.__CC_READY__ = true`
+  - 若检测到 `window.__H5_READY__ === true`，发送：
+
+```json
+{
+  "action": "ccReady",
+  "payload": {},
+  "msgtype": 1
+}
+```
+
+  - 收到 `h5Ready` 后回复：
+
+```json
+{
+  "action": "ccAck",
+  "payload": {},
+  "msgtype": 1
+}
+```
+
+3. 动作说明
+  - `ccReady`：Cocos 宣告“我可接收消息”
+  - `h5Ready`：H5 宣告“我可接收消息”
+  - `h5Ack` / `ccAck`：对方 ready 消息回执
 
 ## 10. 多语言（TXT）用法
 

@@ -1,6 +1,6 @@
 import { showFailToast, showSuccessToast } from 'vant'
 import { subscribeCocosMessages } from './bridge'
-import { BRIDGE_ACTION, type BridgeMessage, type CocosToastPayload } from './protocol'
+import { BRIDGE_ACTION, BRIDGE_MSG_TYPE, type BridgeMessage, type CocosToastPayload } from './protocol'
 
 let stopBridgeToastListener: (() => void) | null = null
 
@@ -76,7 +76,9 @@ export function setupGlobalBridgeToastChannel(): () => void {
     return stopBridgeToastListener
   }
 
-  const unsubscribe = subscribeCocosMessages(onCocosMessage)
+  const unsubscribe = subscribeCocosMessages(onCocosMessage, {
+    msgtype: BRIDGE_MSG_TYPE.H5,
+  })
   stopBridgeToastListener = () => {
     unsubscribe()
     stopBridgeToastListener = null

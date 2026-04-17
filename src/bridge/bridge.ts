@@ -1,25 +1,50 @@
 import {
   BRIDGE_ACTION,
+  BRIDGE_MSG_TYPE,
   createBridgeMessage,
   parseBridgeRaw,
   toBridgeRaw,
   type BridgeAction,
+  type BridgeMsgType,
   type BridgeMessage,
   type EnterTablePayload,
 } from './protocol'
 
 type MessageHandler = (message: BridgeMessage) => void
+type MessageRoute = 'all' | 'forward' | 'h5'
+
+interface MessageHandlerEntry {
+  handler: MessageHandler
+  route: MessageRoute
+}
+
+export interface SubscribeCocosMessagesOptions {
+  // all: 全量回调；forward: msgtype=0；h5: msgtype=1。
+  msgtype?: MessageRoute | BridgeMsgType
+}
+
+export interface SendBridgeMessageOptions {
+  msgtype?: BridgeMsgType
+}
 
 // 桥接传输相关标识。
 const BRIDGE_SCHEME = 'cocos'
 const BRIDGE_HOST = 'bridge'
 const H5_SOURCE = 'h5-game'
 const COCOS_SOURCE = 'cocos-game'
-const handlers = new Set<MessageHandler>()
+const handlerEntries = new Set<MessageHandlerEntry>()
+
+let h5ReadySent = false
 
 // 向所有订阅者分发消息。
 function emit(message: BridgeMessage): void {
-  handlers.forEach((handler) => handler(message))
+  const route: MessageRoute = message.msgtype === BRIDGE_MSG_TYPE.H5 ? 'h5' : 'forward'
+  handlerEntries.forEach((entry) => {
+    if (entry.route !== 'all' && entry.route !== route) {
+      return
+    }
+    entry.handler(message)
+  })
 }
 
 // 通道1：原生注入对象（如 Android 注入 CocosBridge）。
@@ -116,6 +141,7 @@ function briefBridgeRaw(raw: string): string {
   try {
     const parsed = JSON.parse(raw) as {
       action?: string
+      msgtype?: number
       payload?: { dataType?: string; data?: string }
       requestId?: string
       timestamp?: number
@@ -131,6 +157,7 @@ function briefBridgeRaw(raw: string): string {
           dataType,
           data: `<base64 length=${dataLength}>`,
         },
+        msgtype: parsed.msgtype,
         requestId: parsed.requestId,
         timestamp: parsed.timestamp,
       })
@@ -164,29 +191,87 @@ export function getBridgeChannelName(): string {
 
 // 统一发送入口：封装消息并下发到 Cocos。
 export function sendBridgeMessage<TPayload>(
-  action: BridgeAction,
+  action: BridgeAction | string,
   payload: TPayload,
+  options: SendBridgeMessageOptions = {},
 ): BridgeMessage<TPayload> {
-  const message = createBridgeMessage(action, payload)
+  const message = createBridgeMessage(action, payload, options)
   postToCocos(toBridgeRaw(message))
   return message
 }
 
 // 业务快捷方法：请求 Cocos 进入牌桌。
 export function enterTable(payload: EnterTablePayload): BridgeMessage<EnterTablePayload> {
-  return sendBridgeMessage(BRIDGE_ACTION.ENTER_TABLE, payload)
+  return sendBridgeMessage(BRIDGE_ACTION.ENTER_TABLE, payload, {
+    msgtype: BRIDGE_MSG_TYPE.H5,
+  })
 }
 
 // 订阅 Cocos -> H5 的回调消息。
-export function subscribeCocosMessages(handler: MessageHandler): () => void {
-  handlers.add(handler)
-  return () => handlers.delete(handler)
+export function subscribeCocosMessages(
+  handler: MessageHandler,
+  options: SubscribeCocosMessagesOptions = {},
+): () => void {
+  const entry: MessageHandlerEntry = {
+    handler,
+    route: normalizeMessageRoute(options.msgtype),
+  }
+  handlerEntries.add(entry)
+  return () => {
+    handlerEntries.delete(entry)
+  }
+}
+
+function normalizeMessageRoute(raw: SubscribeCocosMessagesOptions['msgtype']): MessageRoute {
+  if (raw === 'h5' || raw === BRIDGE_MSG_TYPE.H5) {
+    return 'h5'
+  }
+  if (raw === 'forward' || raw === BRIDGE_MSG_TYPE.FORWARD) {
+    return 'forward'
+  }
+  return 'all'
+}
+
+function maybeSendH5Ready(): void {
+  if (typeof window === 'undefined' || h5ReadySent) {
+    return
+  }
+
+  if (window.__H5_READY__ !== true || window.__CC_READY__ !== true) {
+    return
+  }
+
+  sendBridgeMessage(BRIDGE_ACTION.H5_READY, {}, { msgtype: BRIDGE_MSG_TYPE.H5 })
+  h5ReadySent = true
+}
+
+function markCcReady(): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+  window.__CC_READY__ = true
+}
+
+function handleHandshakeMessage(message: BridgeMessage): void {
+  if (message.action === BRIDGE_ACTION.CC_READY) {
+    markCcReady()
+    // CC 主动声明 ready 时，H5 需回 h5Ack。
+    sendBridgeMessage(BRIDGE_ACTION.H5_ACK, {}, { msgtype: BRIDGE_MSG_TYPE.H5 })
+    maybeSendH5Ready()
+    return
+  }
+
+  if (message.action === BRIDGE_ACTION.CC_ACK) {
+    markCcReady()
+    return
+  }
 }
 
 // 解析原始入站消息，合法则分发。
 function handleIncomingRaw(raw: string): void {
   const parsed = parseBridgeRaw(raw)
   if (parsed) {
+    handleHandshakeMessage(parsed)
     emit(parsed)
   }
 }
@@ -221,8 +306,16 @@ if (typeof window !== 'undefined') {
     }
 
     const maybeMessage = (data as { message?: BridgeMessage }).message
-    if (maybeMessage) {
-      emit(maybeMessage)
+    if (maybeMessage && typeof maybeMessage === 'object') {
+      const normalized = parseBridgeRaw(JSON.stringify(maybeMessage))
+      if (normalized) {
+        handleHandshakeMessage(normalized)
+        emit(normalized)
+      }
     }
   })
+
+  // H5 Bridge 入站监听已完成，标记就绪并尝试握手。
+  window.__H5_READY__ = true
+  maybeSendH5Ready()
 }

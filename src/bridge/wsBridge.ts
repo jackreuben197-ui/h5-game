@@ -1,5 +1,6 @@
 import {
   BRIDGE_ACTION,
+  BRIDGE_MSG_TYPE,
   type BridgeMessage,
   type WsClosePayload,
   type WsConnectPayload,
@@ -80,20 +81,28 @@ function resolveWsUrl(payload: WsConnectPayload): string {
 
 function emitWsOpen(url: string): void {
   const payload: WsOpenPayload = { url }
-  sendBridgeMessage(BRIDGE_ACTION.WS_OPEN, payload)
+  sendBridgeMessage(BRIDGE_ACTION.WS_OPEN, payload, {
+    msgtype: BRIDGE_MSG_TYPE.FORWARD,
+  })
 }
 
 function emitWsMessage(payload: WsMessagePayload): void {
-  sendBridgeMessage(BRIDGE_ACTION.WS_MESSAGE, payload)
+  sendBridgeMessage(BRIDGE_ACTION.WS_MESSAGE, payload, {
+    msgtype: BRIDGE_MSG_TYPE.FORWARD,
+  })
 }
 
 function emitWsError(message: string): void {
   const payload: WsErrorPayload = { message }
-  sendBridgeMessage(BRIDGE_ACTION.WS_ERROR, payload)
+  sendBridgeMessage(BRIDGE_ACTION.WS_ERROR, payload, {
+    msgtype: BRIDGE_MSG_TYPE.FORWARD,
+  })
 }
 
 function emitWsClosed(payload: WsClosedPayload): void {
-  sendBridgeMessage(BRIDGE_ACTION.WS_CLOSED, payload)
+  sendBridgeMessage(BRIDGE_ACTION.WS_CLOSED, payload, {
+    msgtype: BRIDGE_MSG_TYPE.FORWARD,
+  })
 }
 
 // 分发给 H5 业务层订阅者（例如战绩、排行榜等模块自管请求）。
@@ -504,7 +513,9 @@ export function setupWsProxyBridgeChannel(): () => void {
     return stopWsBridgeListener
   }
 
-  const unsubscribe = subscribeCocosMessages(onCocosBridgeMessage)
+  const unsubscribe = subscribeCocosMessages(onCocosBridgeMessage, {
+    msgtype: BRIDGE_MSG_TYPE.FORWARD,
+  })
   stopWsBridgeListener = () => {
     unsubscribe()
     closeWs()

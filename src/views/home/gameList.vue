@@ -294,19 +294,47 @@ function formatChip(value: number): string {
     <div class="bg-overlay" />
 
     <header class="top-bar">
-      <div class="title-wrap" @click="handleBack">
-        <VanIcon name="arrow-left" class="back-icon" />
-        <span class="title">扑克专区</span>
+      <div
+        class="title-wrap"
+        @click="handleBack"
+      >
+        <VanIcon
+          name="arrow-left"
+          class="back-icon"
+        />
+        <span class="title">
+          扑克专区
+        </span>
       </div>
 
       <div class="action-wrap">
-        <button class="action-btn" type="button" @click="handleTodoClick">
-          <span class="action-label">切换</span>
-          <img class="action-icon" :src="walletIcon" alt="wallet" />
+        <button
+          class="action-btn"
+          type="button"
+          @click="handleTodoClick"
+        >
+          <span class="action-label">
+            切换
+          </span>
+          <img
+            class="action-icon"
+            :src="walletIcon"
+            alt="wallet"
+          >
         </button>
-        <button class="action-btn" type="button" @click="handleTodoClick">
-          <span class="action-label">风格</span>
-          <img class="action-icon" :src="serviceIcon" alt="service" />
+        <button
+          class="action-btn"
+          type="button"
+          @click="handleTodoClick"
+        >
+          <span class="action-label">
+            风格
+          </span>
+          <img
+            class="action-icon"
+            :src="serviceIcon"
+            alt="service"
+          >
         </button>
       </div>
     </header>
@@ -323,7 +351,12 @@ function formatChip(value: number): string {
       title-inactive-color="rgba(255, 255, 255, 0.65)"
       class="room-tabs"
     >
-      <VanTab v-for="tab in TAB_OPTIONS" :key="tab.name" :name="tab.name" :title="tab.title" />
+      <VanTab
+        v-for="tab in TAB_OPTIONS"
+        :key="tab.name"
+        :name="tab.name"
+        :title="tab.title"
+      />
     </VanTabs>
 
     <section class="group-list">
@@ -337,9 +370,14 @@ function formatChip(value: number): string {
         @table-click="handleTableClick"
       />
 
-      <div v-if="!groupedRecords.length" class="empty-wrap">
+      <div
+        v-if="!groupedRecords.length"
+        class="empty-wrap"
+      >
         <VanIcon name="search" />
-        <span>暂无牌桌</span>
+        <span>
+          暂无牌桌
+        </span>
       </div>
     </section>
   </div>
@@ -493,5 +531,6 @@ function formatChip(value: number): string {
   backdrop-filter: blur(0.3533rem) saturate(1.02);
   mask: center bottom / 100% 100% no-repeat;
   mask-image: var(--tab-bg);
+  border:1px solid red;
 }
 </style>

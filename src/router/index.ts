@@ -84,6 +84,18 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/club/room/history',
+      name: 'club-room-history-list',
+      component: () => import('@/views/club/ClubRoomHistoryListView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/room/history/detail',
+      name: 'club-room-history-detail',
+      component: () => import('@/views/club/ClubRoomHistoryDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/recharge/records',
       name: 'recharge-records',
       component: () => import('@/views/recharge/RechargeRecordsView.vue'),

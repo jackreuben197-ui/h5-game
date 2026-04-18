@@ -107,7 +107,47 @@ export default [
           after: true,
         },
       ],
+      indent: [
+        'error',
+        2,
+        {
+          SwitchCase: 1,
+        },
+      ],
+      'key-spacing': [
+        'error',
+        {
+          beforeColon: false,
+          afterColon: true,
+          mode: 'strict',
+        },
+      ],
+      'space-infix-ops': 'error',
+      'comma-spacing': [
+        'error',
+        {
+          before: false,
+          after: true,
+        },
+      ],
+      'object-curly-spacing': ['error', 'always'],
+      'array-bracket-spacing': ['error', 'never'],
+      'arrow-spacing': [
+        'error',
+        {
+          before: true,
+          after: true,
+        },
+      ],
+      'keyword-spacing': [
+        'error',
+        {
+          before: true,
+          after: true,
+        },
+      ],
       'space-in-parens': ['error', 'never'],
+      'no-multi-spaces': 'error',
       'no-trailing-spaces': 'error',
       // 关键规则：避免 <span><img/>text</span> 这种内联挤在一行。
       'vue/singleline-html-element-content-newline': [

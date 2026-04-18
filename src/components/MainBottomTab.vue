@@ -1,108 +1,330 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
+import iconHome from '@/assets/icons/tabbar_home.png'
+import iconClub from '@/assets/icons/tabbar_club.png'
+import iconRecharge from '@/assets/icons/tabbar_recharge.png'
+import iconMessage from '@/assets/icons/tabbar_message.png'
+import iconMine from '@/assets/icons/tabbar_mine.png'
 
 interface TabItem {
   key: MainTabKey
   label: string
   path: string
+  icon: string
 }
 
 // 底部 5 个主模块入口与路由路径。
 const tabs: TabItem[] = [
-  { key: 'home', label: '首页', path: '/home' },
-  { key: 'club', label: '俱乐部', path: '/club' },
-  { key: 'recharge', label: '充值', path: '/recharge' },
-  { key: 'message', label: '消息', path: '/message' },
-  { key: 'mine', label: '我的', path: '/mine' },
+  { key: 'home', label: '首页', path: '/home', icon: iconHome },
+  { key: 'club', label: '俱乐部', path: '/club', icon: iconClub },
+  { key: 'recharge', label: '充值', path: '/recharge', icon: iconRecharge },
+  { key: 'message', label: '消息', path: '/message', icon: iconMessage },
+  { key: 'mine', label: '我的', path: '/mine', icon: iconMine },
 ]
 
 const router = useRouter()
 const tabsStore = useMainTabsStore()
 
-// 当前激活项索引，用于计算“凸起背景”的横向位置。
+// 当前激活项索引：用于驱动顶部凸起在 5 个 tab 间平滑移动。
 const activeIndex = computed(() => {
   const index = tabs.findIndex((item) => item.key === tabsStore.activeTab)
   return index >= 0 ? index : 0
 })
 
-// 把激活项索引挂到 CSS 变量，让伪元素可平滑移动。
-const tabStyle = computed(() => ({
-  '--active-index': String(activeIndex.value),
-}))
+const svgRef = ref<SVGSVGElement | null>(null)
+const fillPath = ref('')
+const strokePath = ref('')
+
+const BASE_HEIGHT_REM = 1.75
+const BUMP_HEIGHT_REM = 0.25
+const TOTAL_HEIGHT_REM = BASE_HEIGHT_REM + BUMP_HEIGHT_REM
+const TABBAR_WIDTH_REM = 9
+const TABBAR_SIDE_PADDING_REM = 0.72
+const TAB_COUNT = tabs.length
+const BUMP_WIDTH_IN_TAB = 0.9
+const TABBAR_Y_OFFSET_REM = 0.08
+const BUMP_SIDE_CTRL_RATIO = 0.24
+const BUMP_APEX_CTRL_X_RATIO = 0.16
+const ANIM_DURATION = 220
+
+let currentCenter: number | null = null
+let animFrom = 0
+let animTo = 0
+let animStart: number | null = null
+let rafId: number | null = null
+
+function easeInOutQuart(t: number): number {
+  if (t < 0.5) {
+    return 8 * t * t * t * t
+  }
+  return 1 - Math.pow(-2 * t + 2, 4) / 2
+}
+
+function getSvgSize(): { width: number; height: number } {
+  const rect = svgRef.value?.getBoundingClientRect()
+  return {
+    width: rect?.width || 360,
+    height: rect?.height || 84,
+  }
+}
+
+function indexToCenter(index: number): number {
+  const { width } = getSvgSize()
+  const inset = width * (TABBAR_SIDE_PADDING_REM / TABBAR_WIDTH_REM)
+  const availableWidth = Math.max(width - inset * 2, 1)
+  const tabWidth = availableWidth / TAB_COUNT
+  return inset + tabWidth * index + tabWidth / 2
+}
+
+// 参考 tabbar-bump.html：构建“底板 + 顶部弧形凸起”的路径。
+function buildTabbarPath(bumpCenterX: number): string {
+  const { width, height } = getSvgSize()
+  const bumpHeight = height * (BUMP_HEIGHT_REM / TOTAL_HEIGHT_REM)
+  const yOffset = height * (TABBAR_Y_OFFSET_REM / TOTAL_HEIGHT_REM)
+  const apexY = yOffset
+  const topY = bumpHeight + yOffset
+  const bodyHeight = height - topY
+  const cornerRadius = bodyHeight / 2
+  const inset = width * (TABBAR_SIDE_PADDING_REM / TABBAR_WIDTH_REM)
+  const availableWidth = Math.max(width - inset * 2, 1)
+  const bumpWidth = (availableWidth / TAB_COUNT) * BUMP_WIDTH_IN_TAB
+  // 凸起中心约束按“tab 有效宽度”计算，避免首尾被圆角挤压导致偏移。
+  const minCenter = inset + bumpWidth / 2
+  const maxCenter = width - inset - bumpWidth / 2
+  const clampedCenter = Math.min(Math.max(bumpCenterX, minCenter), maxCenter)
+  const bumpLeft = clampedCenter - bumpWidth / 2
+  const bumpRight = clampedCenter + bumpWidth / 2
+  const sideControlOffset = bumpWidth * BUMP_SIDE_CTRL_RATIO
+  const apexControlOffsetX = bumpWidth * BUMP_APEX_CTRL_X_RATIO
+
+  const safeLeft = Math.max(cornerRadius, bumpLeft)
+  const safeRight = Math.min(width - cornerRadius, bumpRight)
+
+  let d = `M ${cornerRadius} ${topY}`
+  d += ` L ${safeLeft} ${topY}`
+  d += ` C ${bumpLeft + sideControlOffset} ${topY}, ${clampedCenter - apexControlOffsetX} ${apexY}, ${clampedCenter} ${apexY}`
+  d += ` C ${clampedCenter + apexControlOffsetX} ${apexY}, ${bumpRight - sideControlOffset} ${topY}, ${safeRight} ${topY}`
+  d += ` L ${width - cornerRadius} ${topY}`
+  d += ` Q ${width} ${topY} ${width} ${topY + cornerRadius}`
+  d += ` L ${width} ${height - cornerRadius}`
+  d += ` Q ${width} ${height} ${width - cornerRadius} ${height}`
+  d += ` L ${cornerRadius} ${height}`
+  d += ` Q 0 ${height} 0 ${height - cornerRadius}`
+  d += ` L 0 ${topY + cornerRadius}`
+  d += ` Q 0 ${topY} ${cornerRadius} ${topY}`
+  d += ' Z'
+  return d
+}
+
+function renderPath(bumpCenterX: number): void {
+  const path = buildTabbarPath(bumpCenterX)
+  fillPath.value = path
+  strokePath.value = path
+  currentCenter = bumpCenterX
+}
+
+function stopAnimation(): void {
+  if (rafId !== null) {
+    cancelAnimationFrame(rafId)
+    rafId = null
+  }
+  animStart = null
+}
+
+function animatePathFrame(now: number): void {
+  if (animStart === null) return
+  const progress = Math.min((now - animStart) / ANIM_DURATION, 1)
+  const easedProgress = easeInOutQuart(progress)
+  const center = animFrom + (animTo - animFrom) * easedProgress
+
+  renderPath(center)
+
+  if (progress < 1) {
+    rafId = requestAnimationFrame(animatePathFrame)
+    return
+  }
+
+  stopAnimation()
+}
+
+function startPathAnimation(targetIndex: number): void {
+  const targetCenter = indexToCenter(targetIndex)
+  const fromCenter = currentCenter ?? targetCenter
+
+  if (Math.abs(targetCenter - fromCenter) < 0.5) {
+    renderPath(targetCenter)
+    return
+  }
+
+  animFrom = fromCenter
+  animTo = targetCenter
+  animStart = performance.now()
+  stopAnimation()
+  animStart = performance.now()
+  rafId = requestAnimationFrame(animatePathFrame)
+}
+
+function refreshPathByCurrentTab(): void {
+  renderPath(indexToCenter(activeIndex.value))
+}
 
 function onTabClick(tab: TabItem): void {
   tabsStore.setActiveTab(tab.key)
   void router.push(tab.path)
 }
+
+function handleWindowResize(): void {
+  stopAnimation()
+  refreshPathByCurrentTab()
+}
+
+watch(activeIndex, (newIndex) => {
+  if (!svgRef.value) return
+  startPathAnimation(newIndex)
+})
+
+onMounted(async () => {
+  await nextTick()
+  refreshPathByCurrentTab()
+  window.addEventListener('resize', handleWindowResize)
+})
+
+onBeforeUnmount(() => {
+  stopAnimation()
+  window.removeEventListener('resize', handleWindowResize)
+})
 </script>
 
 <template>
-  <nav class="bottom-tab" :style="tabStyle" aria-label="底部切换栏">
-    <button
-      v-for="tab in tabs"
-      :key="tab.key"
-      type="button"
-      class="tab-button"
-      :class="{ 'is-active': tabsStore.activeTab === tab.key }"
-      @click="onTabClick(tab)"
+  <nav
+    class="bottom-tab"
+    aria-label="底部切换栏"
+  >
+    <svg
+      ref="svgRef"
+      class="tabbar-svg"
+      xmlns="http://www.w3.org/2000/svg"
+      preserveAspectRatio="none"
+      aria-hidden="true"
     >
-      <span class="tab-icon" aria-hidden="true">
-        <svg v-if="tab.key === 'home'" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M3 10.5 12 3l9 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5v-9Z" />
-        </svg>
-        <svg v-else-if="tab.key === 'club'" viewBox="0 0 24 24" fill="currentColor">
-          <path d="m4 6 4.8 4.2L12 6l3.2 4.2L20 6l-1.7 12.2A2 2 0 0 1 16.3 20H7.7a2 2 0 0 1-2-1.8L4 6Z" />
-          <circle cx="12" cy="13.3" r="1.9" fill="#1e5d74" />
-        </svg>
-        <svg v-else-if="tab.key === 'recharge'" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h13A2.5 2.5 0 0 1 21 8.5v7A2.5 2.5 0 0 1 18.5 18h-13A2.5 2.5 0 0 1 3 15.5v-7Z" />
-          <circle cx="17.2" cy="12" r="2.4" fill="#1e5d74" />
-        </svg>
-        <svg v-else-if="tab.key === 'message'" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M3 8a5 5 0 0 1 5-5h8a5 5 0 0 1 0 10h-1.5l-3.6 2.6a1 1 0 0 1-1.58-.81V13H8a5 5 0 0 1-5-5Z" />
-          <path d="M12 13h4a4 4 0 0 1 0 8h-1.2l-2.8 2a1 1 0 0 1-1.58-.81V21H9a4 4 0 0 1-4-4v-.4A6.9 6.9 0 0 0 8 17h4v-4Z" />
-        </svg>
-        <svg v-else viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="12" cy="8" r="4" />
-          <path d="M4 20a8 8 0 0 1 16 0v1H4v-1Z" />
-        </svg>
-      </span>
-      <span class="tab-label">{{ tab.label }}</span>
-    </button>
+      <defs>
+        <linearGradient
+          id="tabbar-fill-gradient"
+          x1="0%"
+          y1="0%"
+          x2="100%"
+          y2="100%"
+        >
+          <stop
+            offset="0%"
+            class="tabbar-fill-stop-start"
+          />
+          <stop
+            offset="74.34%"
+            class="tabbar-fill-stop-end"
+          />
+          <stop
+            offset="100%"
+            class="tabbar-fill-stop-end"
+          />
+        </linearGradient>
+      </defs>
+      <path
+        :d="fillPath"
+        class="tabbar-fill"
+      />
+      <path
+        :d="strokePath"
+        class="tabbar-stroke"
+      />
+    </svg>
+
+    <div class="tabs-row">
+      <button
+        v-for="tab in tabs"
+        :key="tab.key"
+        type="button"
+        class="tab-button"
+        :class="{ 'is-active': tabsStore.activeTab === tab.key }"
+        @click="onTabClick(tab)"
+      >
+        <span
+          class="tab-icon"
+          aria-hidden="true"
+        >
+          <img
+            class="tab-icon-image"
+            :src="tab.icon"
+            :alt="tab.label"
+          >
+        </span>
+        <span class="tab-label">
+          {{ tab.label }}
+        </span>
+      </button>
+    </div>
   </nav>
 </template>
 
 <style scoped lang="scss">
 .bottom-tab {
   position: fixed;
-  left: 0.3rem;
-  right: 0.3rem;
-  bottom: calc(env(safe-area-inset-bottom) + 0.28rem);
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 0.58rem);
+  transform: translateX(-50%);
   z-index: 24;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.08rem;
-  height: 2.08rem;
-  padding: 0.16rem 0.18rem;
-  border: 0.03rem solid rgba(236, 244, 255, 0.45);
-  border-radius: 99rem;
-  background:
-    linear-gradient(92deg, rgba(129, 70, 124, 0.55) 0%, rgba(42, 123, 164, 0.62) 55%, rgba(24, 111, 146, 0.7) 100%),
-    rgba(12, 32, 56, 0.35);
-  box-shadow:
-    0 -0.06rem 0.4rem rgba(145, 205, 250, 0.16) inset,
-    0 0.14rem 0.4rem rgba(0, 26, 40, 0.32);
-  backdrop-filter: blur(0.14rem);
+  width: 9rem;
+  height: 2.05rem;
   overflow: visible;
 }
 
+.tabbar-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.tabbar-fill {
+  fill: url('#tabbar-fill-gradient');
+  filter: drop-shadow(0 -0.04rem 0.12rem rgba(249, 249, 249, 0.18))
+    drop-shadow(0 0.1rem 0.2rem rgba(0, 26, 40, 0.24));
+}
+
+.tabbar-stroke {
+  fill: none;
+  stroke: var(--stroke-nav, rgba(249, 249, 249, 0.4));
+  stroke-width: 0.451px;
+}
+
+.tabbar-fill-stop-start {
+  stop-color: var(--bg-new-nav-start, rgba(7, 17, 95, 0.4));
+}
+
+.tabbar-fill-stop-end {
+  stop-color: var(--bg-new-nav-end, rgba(18, 18, 18, 0.12));
+}
+
+.tabs-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1.75rem;
+  padding: 0 0.72rem;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-end;
+  z-index: 1;
+}
 
 .tab-button {
   position: relative;
-  z-index: 1;
   flex: 1;
   min-width: 0;
   border: 0;
@@ -111,33 +333,42 @@ function onTabClick(tab: TabItem): void {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.12rem;
+  gap: 0.34rem;
   color: rgba(250, 252, 255, 0.84);
-  padding: 0.08rem 0.06rem;
+  padding: 0 0.06rem 0.2rem;
   border-radius: 0.44rem;
   -webkit-tap-highlight-color: transparent;
 }
 
 .tab-button.is-active {
-  color: red;
+  color: #fff;
 }
 
 .tab-icon {
-  width: 0.68rem;
-  height: 0.68rem;
+  width: 0.8rem; /* 固定最终尺寸 */
+  height: 0.8rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
+  transform-origin: center calc(100% + 0.3rem);
+  transform: scale(0.625); /* 0.5 / 0.8 = 0.625 */
+  transition: transform 0.22s ease;
 }
 
-.tab-icon svg {
+.tab-button.is-active .tab-icon {
+  transform: scale(1);
+}
+
+.tab-icon-image {
   width: 100%;
   height: 100%;
+  object-fit: contain;
 }
 
 .tab-label {
-  font-size: 0.42rem;
+  font-size: 0.27rem;
   line-height: 1;
-  font-weight: 500;
+  font-weight: 400;
 }
 </style>

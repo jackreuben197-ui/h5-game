@@ -8,7 +8,6 @@ import type { RoomRecord, RoomUser } from '@/api/models/room'
 
 interface Props {
   room: RoomRecord
-  themeType: boolean
 }
 
 const props = defineProps<Props>()
@@ -76,64 +75,64 @@ const bringInText = computed(() => {
 const seatPositionList = computed(() => {
   const seatPosMap: Record<number, Array<{ x: number; y: number }>> = {
     2: [
-      { x: 90, y: 50 },
-      { x: 10, y: 50 },
+      { x: 92, y: 40 },
+      { x: 9, y: 40 },
     ],
     3: [
-      { x: 90, y: 50 },
-      { x: 50, y: 82 },
-      { x: 50, y: 18 },
+      { x: 92, y: 40 },
+      { x: 31, y: 75 },
+      { x: 31, y: 4 },
     ],
     4: [
-      { x: 90, y: 50 },
-      { x: 50, y: 82 },
-      { x: 10, y: 50 },
-      { x: 50, y: 18 },
+      { x: 92, y: 40 },
+      { x: 51, y: 75 },
+      { x: 9, y: 40 },
+      { x: 51, y: 4 },
     ],
     5: [
-      { x: 90, y: 50 },
-      { x: 50, y: 81 },
-      { x: 14, y: 62 },
-      { x: 14, y: 38 },
-      { x: 50, y: 19 },
+      { x: 92, y: 40 },
+      { x: 51, y: 75 },
+      { x: 9, y: 56 },
+      { x: 9, y: 24 },
+      { x: 51, y: 4 },
     ],
     6: [
-      { x: 90, y: 50 },
-      { x: 57, y: 76 },
-      { x: 43, y: 76 },
-      { x: 14, y: 50 },
-      { x: 43, y: 24 },
-      { x: 57, y: 24 },
+      { x: 92, y: 40 },
+      { x: 51, y: 75 },
+      { x: 36, y: 75 },
+      { x: 9, y: 40 },
+      { x: 51, y: 4 },
+      { x: 66, y: 4 },
     ],
     7: [
-      { x: 90, y: 50 },
-      { x: 61, y: 76 },
-      { x: 39, y: 76 },
-      { x: 14, y: 62 },
-      { x: 14, y: 38 },
-      { x: 39, y: 24 },
-      { x: 61, y: 24 },
+      { x: 92, y: 40 },
+      { x: 66, y: 75 },
+      { x: 36, y: 75 },
+      { x: 9, y: 56 },
+      { x: 9, y: 24 },
+      { x: 36, y: 4 },
+      { x: 66, y: 4 },
     ],
     8: [
-      { x: 92, y: 50 },
-      { x: 67, y: 82 },
-      { x: 50, y: 84 },
-      { x: 33, y: 82 },
-      { x: 9, y: 50 },
-      { x: 33, y: 18 },
-      { x: 50, y: 16 },
-      { x: 67, y: 18 },
+      { x: 92, y: 40 },
+      { x: 71, y: 75 },
+      { x: 51, y: 75 },
+      { x: 31, y: 75 },
+      { x: 9, y: 40 },
+      { x: 31, y: 4 },
+      { x: 51, y: 4 },
+      { x: 71, y: 4 },
     ],
     9: [
-      { x: 92, y: 50 },
-      { x: 67, y: 82 },
-      { x: 50, y: 84 },
-      { x: 33, y: 82 },
-      { x: 9, y: 63 },
-      { x: 9, y: 37 },
-      { x: 33, y: 18 },
-      { x: 50, y: 16 },
-      { x: 67, y: 18 },
+      { x: 92, y: 40 },
+      { x: 71, y: 75 },
+      { x: 51, y: 75 },
+      { x: 31, y: 75 },
+      { x: 9, y: 56 },
+      { x: 9, y: 24 },
+      { x: 31, y: 4 },
+      { x: 51, y: 4 },
+      { x: 71, y: 4 },
     ],
   }
 
@@ -189,17 +188,28 @@ function formatDuration(seconds: number): string {
 </script>
 
 <template>
-  <article class="table-card" :style="{ '--name-bg': `url(${nameBg})` }" @click="handleClick">
-    <div class="table-name" :class="{ themeType1: !props.themeType, themeType2: props.themeType }">
+  <article
+    class="table-card"
+    @click="handleClick"
+  >
+    <div class="table-name">
       {{ room.name || 'Poker Game Name' }}
     </div>
 
     <div class="table-main">
       <div class="seat-area">
-        <div class="table-bg" :style="{ backgroundImage: `url(${nameBg})` }">
+        <div
+          class="table-bg"
+        >
           <div class="table-center">
-            <img class="meta-icon people-center-icon" :src="iconPeople" alt="people" />
-            <span>{{ roomers }}/{{ seatCount }}</span>
+            <img
+              class="meta-icon people-center-icon"
+              :src="iconPeople"
+              alt="people"
+            >
+            <span>
+              {{ roomers }}/{{ seatCount }}
+            </span>
           </div>
         </div>
 
@@ -216,21 +226,38 @@ function formatDuration(seconds: number): string {
             alt="avatar"
             loading="lazy"
             decoding="async"
-          />
-          <span v-else>{{
-            shortName(typeof seatUser?.name === 'string' ? seatUser.name : '')
-          }}</span>
+          >
+          <span
+            v-else
+            class="seat-name"
+          >
+            {{
+              shortName(typeof seatUser?.name === 'string' ? seatUser.name : '')
+            }}
+          </span>
         </div>
       </div>
 
       <div class="table-footer">
         <p>
-          <img class="meta-icon" :src="iconTime" alt="time" />
-          <span>{{ elapsedText }}/{{ totalText }}</span>
+          <img
+            class="meta-icon"
+            :src="iconTime"
+            alt="time"
+          >
+          <span>
+            {{ elapsedText }}/{{ totalText }}
+          </span>
         </p>
         <p>
-          <img class="meta-icon" :src="iconChips" alt="chips" />
-          <span>{{ bringInText }}</span>
+          <img
+            class="meta-icon"
+            :src="iconChips"
+            alt="chips"
+          >
+          <span>
+            {{ bringInText }}
+          </span>
         </p>
       </div>
     </div>
@@ -240,87 +267,72 @@ function formatDuration(seconds: number): string {
 <style scoped lang="scss">
 .table-card {
   position: relative;
-  padding-top: 0.36rem;
+  padding-top: 0.15rem;
 }
 
 .table-main {
-  min-height: 5.28rem;
   border-radius: 0.48rem;
   padding: 0.56rem 0.24rem 0.26rem;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.14);
-  border: 0.0267rem solid rgba(255, 255, 255, 0.24);
-  box-shadow: inset 0 0.0267rem 0 rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(0.32rem) saturate(1.02);
+  width: 4.378rem;
+  height: 4.378rem;
+  background: url('@/assets/images/game_list_card_bg.png') no-repeat center /100% 100%;
   position: relative;
-  overflow: hidden;
+  // overflow: hidden;
 }
 
 .table-name {
   position: absolute;
-  top: 0.36rem;
+  top: 0.15rem;
   left: 50%;
+  width: 2.6rem;
+  height: 0.47rem;
   transform: translate(-50%, -50%);
-  max-width: 78%;
-  padding: 0.06rem 0.24rem;
-  border-radius: 0.2667rem;
-  font-size: 0.4rem;
+  padding: 0.06rem 0rem;
+  text-align: center;
+  font-size: 0.26rem;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
   z-index: 4;
+  border-radius: 0.24rem;
+  background: linear-gradient(rgba(255,255,255,0.1), rgba(255,255,255,0.1)) ,url('@/assets/images/game_list_card_title_bg.png') no-repeat center / 100% 100%;
 }
 
-.table-name.themeType1 {
-  background: center / 100% 100% no-repeat;
-  background-image: var(--name-bg);
-}
-
-.table-name.themeType2 {
-  background: rgba(116, 98, 110, 0.12);
-  border: 0.0133rem solid rgba(255, 255, 255, 0.44);
-  box-shadow:
-    inset 0 0.0133rem 0.04rem rgba(255, 255, 255, 0.3),
-    0 0.04rem 0.1rem rgba(45, 33, 40, 0.22);
-  backdrop-filter: blur(0.08rem) saturate(1.01);
-}
 
 .seat-area {
   margin-top: 0.1rem;
-  height: 3.18rem;
+  height: 2.6rem;
   position: relative;
 }
 
 .table-bg {
-  width: 3.62rem;
-  height: 1.92rem;
-  border-radius: 1rem;
-  margin: 0 auto;
-  background: center / 100% 100% no-repeat;
+  width: 4rem;
+  height: 2.7rem;
+  margin: .3rem auto 0;
+  background:  url('@/assets/images/game_list_card_table_bg.png') center / 100% 100% no-repeat;
   position: relative;
 }
 
 .table-center {
-  width: 2.04rem;
-  height: 0.85rem;
+  width: 1.9rem;
+  height: 0.78rem;
   border-radius: 0.425rem;
   background: rgba(249, 249, 249, 0.1);
-  border: 0.0267rem solid rgba(255, 255, 255, 0.24);
   position: absolute;
   left: 50%;
-  top: 50%;
+  top: 38%;
+  padding: 0.09rem 0.17rem;
   transform: translate(-50%, -50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.0533rem;
-  font-size: 0.52rem;
-  backdrop-filter: blur(0.2667rem) saturate(1.04);
+  font-size: 0.45rem;
 }
 
 .seat-avatar {
-  width: 0.67rem;
-  height: 0.67rem;
+  width: 0.6127rem;
+  height: 0.6127rem;
   border-radius: 50%;
   position: absolute;
   transform: translate(-50%, -50%);
@@ -344,13 +356,17 @@ function formatDuration(seconds: number): string {
   height: 100%;
   object-fit: cover;
 }
+.seat-name{
+  font-size: 0.3rem ;
+}
 
 .table-footer {
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
+  padding: 0 0.05rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.3rem;
+  font-size: 0.29rem;
 }
 
 .table-footer p {
@@ -361,13 +377,14 @@ function formatDuration(seconds: number): string {
 }
 
 .meta-icon {
-  width: 0.42rem;
-  height: 0.42rem;
+  width: 0.33rem;
+  height: 0.33rem;
   object-fit: contain;
 }
 
 .people-center-icon {
-  width: 0.44rem;
-  height: 0.44rem;
+  width: 0.61rem;
+  height: 0.61rem;
+  margin-right: .2rem;
 }
 </style>

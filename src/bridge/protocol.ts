@@ -3,6 +3,11 @@ export const BRIDGE_ACTION = {
   ENTER_TABLE: 'enterTable',
   SYNC_USER: 'syncUser',
   SHOW_TOAST: 'showToast',
+  // H5/CC 就绪握手动作。
+  H5_READY: 'h5Ready',
+  CC_READY: 'ccReady',
+  H5_ACK: 'h5Ack',
+  CC_ACK: 'ccAck',
   // Cocos -> H5：要求 H5 建立/发送/关闭 websocket。
   WS_CONNECT: 'wsConnect',
   WS_SEND: 'wsSend',
@@ -15,6 +20,15 @@ export const BRIDGE_ACTION = {
 } as const
 
 export type BridgeAction = (typeof BRIDGE_ACTION)[keyof typeof BRIDGE_ACTION]
+
+export const BRIDGE_MSG_TYPE = {
+  // 0：网络透传链路（默认值，兼容旧协议未带 msgtype 的场景）。
+  FORWARD: 0,
+  // 1：H5 业务层处理链路（例如 toast、ready 握手等）。
+  H5: 1,
+} as const
+
+export type BridgeMsgType = (typeof BRIDGE_MSG_TYPE)[keyof typeof BRIDGE_MSG_TYPE]
 
 // Cocos -> H5：连接 websocket 请求。
 export interface WsConnectPayload {
@@ -110,18 +124,30 @@ export interface CocosToastPayload {
 export interface BridgeMessage<TPayload = unknown> {
   action: BridgeAction | string
   payload: TPayload
+  msgtype: BridgeMsgType
   requestId: string
   timestamp: number
 }
 
+export interface CreateBridgeMessageOptions {
+  msgtype?: BridgeMsgType
+}
+
+export function normalizeBridgeMsgType(raw: unknown): BridgeMsgType {
+  return Number(raw) === BRIDGE_MSG_TYPE.H5 ? BRIDGE_MSG_TYPE.H5 : BRIDGE_MSG_TYPE.FORWARD
+}
+
 // 生成带 requestId 和 timestamp 的标准消息，便于排查与去重。
 export function createBridgeMessage<TPayload>(
-  action: BridgeAction,
+  action: BridgeAction | string,
   payload: TPayload,
+  options: CreateBridgeMessageOptions = {},
 ): BridgeMessage<TPayload> {
   return {
     action,
     payload,
+    msgtype:
+      options.msgtype === undefined ? BRIDGE_MSG_TYPE.H5 : normalizeBridgeMsgType(options.msgtype),
     requestId: `h5_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
     timestamp: Date.now(),
   }
@@ -164,7 +190,9 @@ export function parseBridgeRaw(raw: string): BridgeMessage | null {
       : schemeHandled
 
   try {
-    const parsed = JSON.parse(maybeDecoded) as Partial<BridgeMessage>
+    const parsed = JSON.parse(maybeDecoded) as Partial<BridgeMessage> & {
+      msgtype?: unknown
+    }
     if (!parsed || typeof parsed !== 'object' || !parsed.action) {
       return null
     }
@@ -173,6 +201,7 @@ export function parseBridgeRaw(raw: string): BridgeMessage | null {
     return {
       action: String(parsed.action),
       payload: parsed.payload,
+      msgtype: normalizeBridgeMsgType(parsed.msgtype),
       requestId:
         typeof parsed.requestId === 'string'
           ? parsed.requestId

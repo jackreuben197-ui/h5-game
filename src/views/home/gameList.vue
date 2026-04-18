@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, type CSSProperties } from 'vue'
 import { showFailToast, showSuccessToast } from 'vant'
-import { useRouter } from 'vue-router'
 import RoomGroupCard from './components/RoomGroupCard.vue'
+import GameTypeTabbar from '@/components/GameTypeTabbar.vue'
+import PageBackHeader from '@/components/HeaderBack.vue'
+import TopActionButton from '@/components/TopActionButton.vue'
 import { getRoomIdsApi, getRoomsDetailApi } from '@/api/room'
 import { enterTable } from '@/bridge/bridge'
 import type { EnterTablePayload } from '@/bridge/protocol'
@@ -18,10 +20,7 @@ import gameTypeNlh from '@/assets/icons/game_type_nlh.png'
 import gameTypePlo from '@/assets/icons/game_type_plo.png'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
 
-interface TabOption {
-  name: 'all' | 'texas' | 'omaha' | 'sixPlus'
-  title: string
-}
+type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
 
 interface RoomGroupViewModel {
   groupKey: string
@@ -42,20 +41,19 @@ interface RoomListCachePayload {
   records: RoomRecord[]
 }
 
-const TAB_OPTIONS: TabOption[] = [
-  { name: 'all', title: '全部' },
-  { name: 'texas', title: '德州' },
-  { name: 'omaha', title: '奥马哈' },
-  { name: 'sixPlus', title: '6+' },
-]
-const ROOM_LIST_CACHE_VERSION = 1
+interface RoomGroupExpandedCachePayload {
+  version: number
+  updatedAt: number
+  expandedMap: Record<string, boolean>
+}
 
-const router = useRouter()
+const ROOM_LIST_CACHE_VERSION = 1
+const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
+
 const gameStore = useGameStore()
 
 // 顶部右侧切换风格开关：和旧版保持一致。
-const themeType = ref(false)
-const activeTab = ref<TabOption['name']>('all')
+const activeTab = ref<GameTypeTabName>('all')
 const sourceRecords = ref<RoomRecord[]>([])
 const expandedMap = reactive<Record<string, boolean>>({})
 const pageStyle = computed<CSSProperties>(() => ({
@@ -126,6 +124,8 @@ onMounted(() => {
 // 进入页面先用缓存秒开，再静默刷新最新数据。
 function bootstrapRoomList(): void {
   restoreRoomListCache()
+  restoreRoomGroupExpandedCache()
+  syncExpandedMapWithRecords(sourceRecords.value)
   void fetchRooms({ silent: true })
 }
 
@@ -143,7 +143,8 @@ async function fetchRooms(options: { silent?: boolean } = {}): Promise<void> {
     if (!roomIds.length) {
       sourceRecords.value = []
       persistRoomListCache([])
-      resetExpandedMap()
+      syncExpandedMapWithRecords([])
+      persistRoomGroupExpandedCache()
       return
     }
 
@@ -158,7 +159,8 @@ async function fetchRooms(options: { silent?: boolean } = {}): Promise<void> {
         : []
     sourceRecords.value = Array.isArray(records) ? records : []
     persistRoomListCache(sourceRecords.value)
-    resetExpandedMap()
+    syncExpandedMapWithRecords(sourceRecords.value)
+    persistRoomGroupExpandedCache()
   } catch (error) {
     // 静默刷新失败时保留旧列表，避免页面闪空。
     if (!options.silent) {
@@ -192,18 +194,62 @@ function restoreRoomListCache(): void {
   sourceRecords.value = cached.records
 }
 
-function resetExpandedMap(): void {
+// 缓存分组展开状态，避免静默刷新后折叠状态丢失。
+function persistRoomGroupExpandedCache(): void {
+  const payload: RoomGroupExpandedCachePayload = {
+    version: ROOM_GROUP_EXPANDED_CACHE_VERSION,
+    updatedAt: Date.now(),
+    expandedMap: { ...expandedMap },
+  }
+  localStore.setItem(StorageKey.ROOM_GROUP_EXPANDED_CACHE, payload)
+}
+
+// 恢复上次分组展开状态（按 groupKey 记忆）。
+function restoreRoomGroupExpandedCache(): void {
+  const cached = localStore.getItem<RoomGroupExpandedCachePayload | null>(
+    StorageKey.ROOM_GROUP_EXPANDED_CACHE,
+    null,
+  )
+  if (!cached || typeof cached !== 'object') {
+    return
+  }
+  if (
+    cached.version !== ROOM_GROUP_EXPANDED_CACHE_VERSION ||
+    !cached.expandedMap ||
+    typeof cached.expandedMap !== 'object'
+  ) {
+    return
+  }
+
   Object.keys(expandedMap).forEach((key) => {
     delete expandedMap[key]
   })
+  Object.entries(cached.expandedMap).forEach(([key, value]) => {
+    expandedMap[key] = value === true
+  })
 }
 
-function handleBack(): void {
-  router.back()
+// 只保留当前列表存在的分组 key，避免缓存越积越多。
+function syncExpandedMapWithRecords(records: RoomRecord[]): void {
+  const validGroupKeySet = new Set<string>()
+  records
+    .filter((room) => Number(room.game_type) < 6)
+    .forEach((room) => {
+      validGroupKeySet.add(buildGroupKey(room))
+    })
+
+  Object.keys(expandedMap).forEach((groupKey) => {
+    if (!validGroupKeySet.has(groupKey)) {
+      delete expandedMap[groupKey]
+    }
+  })
 }
 
-function handleTodoClick(): void {
-  themeType.value = !themeType.value
+function buildGroupKey(room: RoomRecord): string {
+  const gameType = Number(room.game_type) || 0
+  const pokerType = Number(room.poker_type) || 0
+  const sb = Number(room.sb) || 0
+  return `${gameType}_${pokerType}_${sb}`
 }
 
 async function handleTableClick(room: RoomRecord): Promise<void> {
@@ -241,11 +287,12 @@ async function handleTableClick(room: RoomRecord): Promise<void> {
 }
 
 function handleToggleGroup(groupKey: string): void {
-  const expanded = expandedMap[groupKey] !== false
+  const expanded = expandedMap[groupKey] === true
   expandedMap[groupKey] = !expanded
+  persistRoomGroupExpandedCache()
 }
 
-function matchTabRoom(room: RoomRecord, tabName: TabOption['name']): boolean {
+function matchTabRoom(room: RoomRecord, tabName: GameTypeTabName): boolean {
   const gameType = Number(room.game_type) || 0
   const pokerType = Number(room.poker_type) || 0
 
@@ -272,7 +319,7 @@ function getGameIconImage(gameType: number, pokerType: number): string {
 function formatBlind(sb: number): string {
   const smallBlind = Number(sb) || 0
   const bigBlind = smallBlind * 2
-  return `盲注 ${formatChip(smallBlind)}/${formatChip(bigBlind)}`
+  return `${formatChip(smallBlind)} / ${formatChip(bigBlind)}`
 }
 
 function formatChip(value: number): string {
@@ -287,59 +334,47 @@ function formatChip(value: number): string {
 
 <template>
   <div
-    class="room-list-page"
-    :class="{ themeType1: !themeType, themeType2: themeType }"
+    class="room-list-page themeType2"
     :style="pageStyle"
   >
     <div class="bg-overlay" />
+    <PageBackHeader title="扑克专区">
+      <template #right>
+        <div class="action-wrap">
+          <TopActionButton
+            name="充值"
+            :icon="walletIcon"
+            icon-alt="wallet"
+          />
+          <TopActionButton
+            name="客服"
+            :icon="serviceIcon"
+            icon-alt="service"
+          />
+        </div>
+      </template>
+    </PageBackHeader>
 
-    <header class="top-bar">
-      <div class="title-wrap" @click="handleBack">
-        <VanIcon name="arrow-left" class="back-icon" />
-        <span class="title">扑克专区</span>
-      </div>
-
-      <div class="action-wrap">
-        <button class="action-btn" type="button" @click="handleTodoClick">
-          <span class="action-label">切换</span>
-          <img class="action-icon" :src="walletIcon" alt="wallet" />
-        </button>
-        <button class="action-btn" type="button" @click="handleTodoClick">
-          <span class="action-label">风格</span>
-          <img class="action-icon" :src="serviceIcon" alt="service" />
-        </button>
-      </div>
-    </header>
-
-    <VanTabs
-      v-model:active="activeTab"
-      :border="false"
-      line-width="0"
-      line-height="0"
-      animated
-      color="#ffffff"
-      background="transparent"
-      title-active-color="#ffffff"
-      title-inactive-color="rgba(255, 255, 255, 0.65)"
-      class="room-tabs"
-    >
-      <VanTab v-for="tab in TAB_OPTIONS" :key="tab.name" :name="tab.name" :title="tab.title" />
-    </VanTabs>
+    <GameTypeTabbar v-model="activeTab" />
 
     <section class="group-list">
       <RoomGroupCard
         v-for="group in groupedRecords"
         :key="group.groupKey"
         :group="group"
-        :theme-type="themeType"
-        :expanded="expandedMap[group.groupKey] !== false"
+        :expanded="expandedMap[group.groupKey] === true"
         @toggle="handleToggleGroup"
         @table-click="handleTableClick"
       />
 
-      <div v-if="!groupedRecords.length" class="empty-wrap">
+      <div
+        v-if="!groupedRecords.length"
+        class="empty-wrap"
+      >
         <VanIcon name="search" />
-        <span>暂无牌桌</span>
+        <span>
+          暂无牌桌
+        </span>
       </div>
     </section>
   </div>
@@ -347,9 +382,6 @@ function formatChip(value: number): string {
 
 <style scoped lang="scss">
 .room-list-page {
-  --glass-bg: rgba(255, 255, 255, 0.15);
-  --glass-border: rgba(255, 255, 255, 0.34);
-
   position: relative;
   min-height: 100dvh;
   color: #fff;
@@ -367,33 +399,7 @@ function formatChip(value: number): string {
     radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
 }
 
-.top-bar {
-  position: relative;
-  z-index: 1;
-  min-height: 1.1733rem;
-  padding: 0.48rem 0.4267rem 0.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
 
-.title-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.16rem;
-}
-
-.back-icon {
-  font-size: 0.5rem;
-  color: rgba(255, 255, 255, 0.95);
-}
-
-.title {
-  font-size: 0.7rem;
-  line-height: 1rem;
-  font-weight: 600;
-  text-shadow: 0 0.22rem 0.5rem rgba(0, 0, 0, 0.35);
-}
 
 .action-wrap {
   display: flex;
@@ -401,68 +407,13 @@ function formatChip(value: number): string {
   gap: 0.26rem;
 }
 
-.action-btn {
-  width: 1.75rem;
-  height: 0.67rem;
-  padding: 0 0.15rem;
-  border: 0.0267rem solid var(--glass-border);
-  border-radius: 0.4267rem;
-  color: #fff;
-  background: var(--glass-bg);
-  backdrop-filter: blur(0.35rem) saturate(1.02);
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.25rem;
-}
-
-.action-icon {
-  width: 0.45rem;
-  height: 0.45rem;
-  object-fit: contain;
-}
-
-.room-tabs {
-  position: relative;
-  z-index: 1;
-}
-
-:deep(.room-tabs .van-tabs__wrap) {
-  margin: 0 0 0 0.5rem;
-  overflow: visible;
-}
-
-:deep(.room-tabs .van-tabs__nav) {
-  background: transparent;
-  overflow: visible;
-}
-
-:deep(.room-tabs .van-tab) {
-  height: 0.85rem;
-  font-size: 0.389rem;
-  font-weight: 600;
-}
-
-:deep(.room-tabs .van-tab__text) {
-  width: 100%;
-  height: 0.85rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-:deep(.room-tabs .van-tabs__line) {
-  display: none !important;
-}
-
 .group-list {
   position: relative;
   z-index: 1;
-  margin-top: -0.0133rem;
-  max-height: calc(100dvh - 3.2rem);
+  margin-top: 0;
+  max-height: calc(100dvh - 2rem);
   overflow-y: auto;
-  padding: 0 0.55rem 0.5333rem;
+  padding: 0 0.38rem 0.5333rem;
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(0.3533rem) saturate(1.04);
 }
@@ -477,21 +428,4 @@ function formatChip(value: number): string {
   color: rgba(255, 255, 255, 0.82);
 }
 
-/* 主题 1：激活 tab 使用原始底图。 */
-.themeType1 :deep(.room-tabs .van-tab--active .van-tab__text) {
-  background: center bottom / 100% 100% no-repeat;
-  background-image: var(--tab-bg);
-  font-weight: 700;
-}
-
-/* 主题 2：激活 tab 使用毛玻璃遮罩版本。 */
-.themeType2 :deep(.room-tabs .van-tab--active .van-tab__text::before) {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(0.3533rem) saturate(1.02);
-  mask: center bottom / 100% 100% no-repeat;
-  mask-image: var(--tab-bg);
-}
 </style>

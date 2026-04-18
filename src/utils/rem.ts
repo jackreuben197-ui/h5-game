@@ -1,5 +1,5 @@
 const DESIGN_WIDTH = 375
-const MAX_WIDTH = 375
+const MAX_WIDTH = Infinity
 const BASE_REM_AT_DESIGN = 37.5
 
 function refreshRem(): void {

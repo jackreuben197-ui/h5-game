@@ -12,6 +12,8 @@ export default class StorageKey {
   static WS_PORT_UPDATED_AT = 'WS_PORT_UPDATED_AT'
   // 牌局列表缓存（用于页面秒开 + 静默刷新）。
   static ROOM_LIST_CACHE = 'ROOM_LIST_CACHE'
+  // 牌局分组展开状态缓存（key 为 groupKey，value 为是否展开）。
+  static ROOM_GROUP_EXPANDED_CACHE = 'ROOM_GROUP_EXPANDED_CACHE'
   // token 有效期。
   static TOKEN_EXPIREAT = 'TOKEN_EXPIREAT'
   // 电话区号（保持原拼写 AERA，与 Cocos 对齐）。

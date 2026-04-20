@@ -351,7 +351,6 @@ function handleHandshakeMessage (message: BridgeMessage): void {
 }
 
 function logCcIncomingAction (message: BridgeMessage, messageSource?: string): void {
-  console.info({ messageSource, message })
   if (messageSource !== CC_WINDOW_SOURCE) {
     return
   }
@@ -363,7 +362,7 @@ function logCcIncomingAction (message: BridgeMessage, messageSource?: string): v
     source: messageSource,
   }
 
-  if (message.action === BRIDGE_ACTION.WS_MESSAGE) {
+  if (message.action === BRIDGE_ACTION.WS_SEND) {
     const payload = message.payload as {
       dataType?: unknown
       text?: unknown

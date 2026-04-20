@@ -25,7 +25,9 @@ let ws: WebSocket | null = null
 let wsUrl = ''
 let stopWsBridgeListener: (() => void) | null = null
 let lastHeartbeatLogAt = 0
+let heartbeatTimer: number | null = null
 const h5WsMessageHandlers = new Set<(event: H5WsIncomingEvent) => void>()
+const HEARTBEAT_INTERVAL_MS = 5000
 
 const HOLDEN_CODE_NAME: Record<number, string> = {
   [HOLDEM_CODE.REGISTER]: 'REGISTER',
@@ -140,6 +142,47 @@ function isWsOpen(): boolean {
 
 function getSessionToken(): string {
   return (localStore.getItem<string>(StorageKey.TOKEN, '') || '').trim()
+}
+
+function stopHeartbeatLoop(): void {
+  if (heartbeatTimer === null) {
+    return
+  }
+  window.clearInterval(heartbeatTimer)
+  heartbeatTimer = null
+}
+
+function sendHeartbeatPacket(): boolean {
+  const token = getSessionToken()
+  if (!token) {
+    // 登录态失效时避免心跳错误刷屏，等待下次登录恢复。
+    return false
+  }
+
+  const packet = encodeHoldemPacket({
+    code: HOLDEM_CODE.HEARTBEAT,
+    token,
+    roomId: 0,
+    matchId: 0,
+    body: new Uint8Array(0),
+  })
+  return sendWsRaw(packet)
+}
+
+function startHeartbeatLoop(): void {
+  stopHeartbeatLoop()
+  if (!isWsOpen()) {
+    return
+  }
+
+  // 对齐旧 Cocos 逻辑：连接稳定后固定间隔发送心跳保活。
+  heartbeatTimer = window.setInterval(() => {
+    if (!isWsOpen()) {
+      stopHeartbeatLoop()
+      return
+    }
+    sendHeartbeatPacket()
+  }, HEARTBEAT_INTERVAL_MS)
 }
 
 // websocket 原始发送入口：统一处理“未连接”报错。
@@ -293,6 +336,7 @@ function cleanWsHandlers(): void {
 }
 
 function closeWs(payload?: WsClosePayload): void {
+  stopHeartbeatLoop()
   if (!ws) {
     return
   }
@@ -347,6 +391,9 @@ function connectWs(payload: WsConnectPayload): void {
   ws.onopen = () => {
     emitWsOpen(targetUrl)
     // 纯透传默认不自动 REGISTER；需要时由业务显式调用 h5SendRegisterPacket。
+    // 但心跳仍由 H5 统一维护，避免桥接空档导致长连接被服务端回收。
+    sendHeartbeatPacket()
+    startHeartbeatLoop()
   }
 
   ws.onerror = () => {
@@ -354,6 +401,7 @@ function connectWs(payload: WsConnectPayload): void {
   }
 
   ws.onclose = (event: CloseEvent) => {
+    stopHeartbeatLoop()
     emitWsClosed({
       code: event.code,
       reason: event.reason,
@@ -519,6 +567,7 @@ export function setupWsProxyBridgeChannel(): () => void {
   stopWsBridgeListener = () => {
     unsubscribe()
     closeWs()
+    stopHeartbeatLoop()
     cleanWsHandlers()
     ws = null
     wsUrl = ''

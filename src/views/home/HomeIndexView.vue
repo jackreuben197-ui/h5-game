@@ -1,12 +1,99 @@
 <script setup lang="ts">
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
+import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
-import { ref } from 'vue'
+import { getUserClubApi } from '@/api/auth'
+import { getCowboyRoomListApi } from '@/api/gc'
+import { getMttListApi } from '@/api/mtt'
+import type { RoomRecord } from '@/api/models/room'
+import { getRoomIdsApi, getRoomsDetailApi } from '@/api/room'
+import homeHeaderFallback from '@/assets/images/home_header_1.png'
+import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
+import { t } from '@/i18n'
 
 const router = useRouter()
+const userInfoStore = useUserInfoStore()
 
 const balanceVisible = ref(true)
-const balance = ref('0.00')
-const noticeText = ref('欢迎来到扑克俱乐部，祝您游戏愉快！...欢迎来到扑克俱乐部，祝您游戏愉快！')
+const noticeScrollRef = ref<HTMLElement | null>(null)
+const noticeItemRef = ref<HTMLElement | null>(null)
+const shouldScrollNotice = ref(false)
+const noticeDistancePx = ref(0)
+const noticeDurationSec = ref(0)
+
+const NOTICE_SPEED_PX_PER_SEC = 40
+const NOTICE_GAP_PX = 48
+
+let noticeResizeObserver: ResizeObserver | null = null
+
+interface ZoneStats {
+  tables: number
+  players: number
+}
+
+interface HomeZoneStats {
+  poker: ZoneStats
+  miniGame: ZoneStats
+  mahjong: ZoneStats
+  mtt: ZoneStats
+}
+
+const homeRoomStats = ref<HomeZoneStats>({
+  poker: { tables: 0, players: 0 },
+  miniGame: { tables: 0, players: 0 },
+  mahjong: { tables: 0, players: 0 },
+  mtt: { tables: 0, players: 0 },
+})
+
+const currentClub = computed<ClubInfo | null>(() => {
+  if (userInfoStore.currentClub) {
+    return userInfoStore.currentClub
+  }
+  return userInfoStore.clubList[0] || null
+})
+
+const clubBannerUrl = computed(() => toSafeString(currentClub.value?.banner) || homeHeaderFallback)
+const noticeText = computed(() => {
+  return toSafeString(currentClub.value?.prologue)
+})
+const noticeTrackStyle = computed<CSSProperties>(() => ({
+  '--notice-gap': `${NOTICE_GAP_PX}px`,
+  '--notice-distance': `${noticeDistancePx.value}px`,
+  '--notice-duration': `${noticeDurationSec.value}s`,
+}))
+const clubNameText = computed(() => toSafeString(currentClub.value?.club_name) || '俱乐部')
+
+const clubGoldText = computed(() => toSafeNumber(currentClub.value?.user_gold) / 100)
+const pokerTablesText = computed(() => `${homeRoomStats.value.poker.tables}`)
+const pokerPlayersText = computed(() => `${homeRoomStats.value.poker.players}`)
+const miniGamePlayersText = computed(() => `${homeRoomStats.value.miniGame.players}`)
+const mahjongTablesText = computed(() => `${homeRoomStats.value.mahjong.tables}`)
+const mahjongPlayersText = computed(() => `${homeRoomStats.value.mahjong.players}`)
+const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
+const mttPlayersText = computed(() => `${homeRoomStats.value.mtt.players}`)
+
+function toSafeString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function toSafeNumber(value: unknown): number {
+  const num = Number(value)
+  return Number.isFinite(num) ? num : 0
+}
+
+async function ensureClubDataReady(): Promise<void> {
+  if (!userInfoStore.clubList.length) {
+    // 首页阶段俱乐部信息静默同步，避免阻塞渲染和打断用户操作。
+    void getUserClubApi().catch((error) => {
+      console.warn('[home] sync club list failed:', error)
+    })
+    return
+  }
+  // 登录后默认取第一个俱乐部信息。
+  if (!userInfoStore.currentClub && userInfoStore.clubList.length) {
+    userInfoStore.setCurrentClub(userInfoStore.clubList[0] || null)
+  }
+}
 
 function goToGameList(): void {
   void router.push('/gameList')
@@ -16,28 +103,261 @@ function toggleBalance(): void {
   balanceVisible.value = !balanceVisible.value
 }
 
-function refreshBalance(): void {
-  // 刷新余额
+async function refreshBalance(): Promise<void> {
+  try {
+    await getUserClubApi()
+    showSuccessToast('已刷新')
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '刷新余额失败'
+    showFailToast(message)
+  }
 }
 
 function goToRecharge(): void {
   void router.push('/recharge')
 }
+
+function createEmptyZoneStats(): HomeZoneStats {
+  return {
+    poker: { tables: 0, players: 0 },
+    miniGame: { tables: 0, players: 0 },
+    mahjong: { tables: 0, players: 0 },
+    mtt: { tables: 0, players: 0 },
+  }
+}
+
+function getRoomPlayers(room: RoomRecord): number {
+  return Number(room.roomers) || (Array.isArray(room.users) ? room.users.length : 0)
+}
+
+function classifyRoomToZone(room: RoomRecord): 'poker' | 'mahjong' | null {
+  const gameType = Number(room.game_type)
+  if (!Number.isFinite(gameType)) {
+    return null
+  }
+  if (gameType <= 4) return 'poker'
+  if (gameType === 6) return 'mahjong'
+  return null
+}
+
+// 首页玩法统计：先拿 ids，再批量拿牌桌详情并按 game_type 分类。
+async function fetchHomeRoomStats(): Promise<void> {
+  const nextStats = createEmptyZoneStats()
+
+  const idRes = await getRoomIdsApi({})
+  const idRecords =
+    Number(idRes.code) === 0 && Array.isArray(idRes.data?.records) ? idRes.data.records : []
+  const roomIds = idRecords
+    .map((item) => Number(item?.rid))
+    .filter((id) => Number.isFinite(id) && id > 0)
+
+  if (!roomIds.length) {
+    homeRoomStats.value = {
+      ...homeRoomStats.value,
+      poker: nextStats.poker,
+      mahjong: nextStats.mahjong,
+    }
+    return
+  }
+
+  const detailRes = await getRoomsDetailApi({
+    room_ids: roomIds,
+    room_type: 0,
+  })
+
+  const records =
+    Number(detailRes.code) === 0 && Array.isArray(detailRes.data?.records)
+      ? detailRes.data.records
+      : []
+
+  records.forEach((room) => {
+    const zone = classifyRoomToZone(room)
+    if (!zone) {
+      return
+    }
+
+    nextStats[zone].tables += 1
+    const playersNum = getRoomPlayers(room)
+    nextStats[zone].players += playersNum
+  })
+
+  homeRoomStats.value = {
+    ...homeRoomStats.value,
+    poker: nextStats.poker,
+    mahjong: nextStats.mahjong,
+  }
+}
+
+// 从牛仔列表响应中提取在线人数：优先使用 data.online，其次汇总 records[*].online。
+function extractCowboyOnlineCount(raw: unknown): number {
+  if (!raw || typeof raw !== 'object') {
+    return 0
+  }
+  const data = raw as Record<string, unknown>
+  // 服务端直接返回 online 时，首页只使用这个字段。
+  if ('online' in data) {
+    return toSafeNumber(data.online)
+  }
+
+  const records = Array.isArray(data.records) ? data.records : []
+  if (records.length) {
+    return records.reduce((total, item) => {
+      const record = item as Record<string, unknown>
+      return total + toSafeNumber(record.online)
+    }, 0)
+  }
+
+  // 兼容 data.data 的嵌套结构。
+  return extractCowboyOnlineCount(data.data)
+}
+
+// 首页小游戏统计：使用 /api/gc/cowboy/room/list，仅取 online 字段。
+async function fetchHomeMiniGameStats(): Promise<void> {
+  const response = await getCowboyRoomListApi({
+    limit: 100,
+    offset: 0,
+  })
+  const online = Number(response.code) === 0 ? extractCowboyOnlineCount(response.data) : 0
+
+  homeRoomStats.value = {
+    ...homeRoomStats.value,
+    miniGame: {
+      tables: 0,
+      players: online,
+    },
+  }
+}
+
+// 首页 MTT 统计：使用 /api/roomcenter/mtt/list 聚合桌数与参赛人数。
+async function fetchHomeMttStats(): Promise<void> {
+  const nextMtt = { tables: 0, players: 0 }
+  const limit = 100
+  let offset = 0
+  let page = 0
+  const maxPages = 10
+
+  while (page < maxPages) {
+    const response = await getMttListApi({
+      limit,
+      offset,
+      status: [0, 1],
+      game_type: [0, 1, 2, 3],
+      order: ['start_asc'],
+    })
+
+    const records =
+      Number(response.code) === 0 && Array.isArray(response.data?.records)
+        ? response.data.records
+        : []
+    records.forEach((item) => {
+      nextMtt.tables += toSafeNumber(item.rooms)
+      nextMtt.players += toSafeNumber(item.participants)
+    })
+
+    const total = toSafeNumber(response.data?.total)
+    const loadedCount = offset + records.length
+    if (!records.length || loadedCount >= total || records.length < limit) {
+      break
+    }
+
+    offset += limit
+    page += 1
+  }
+
+  homeRoomStats.value = {
+    ...homeRoomStats.value,
+    mtt: nextMtt,
+  }
+}
+
+async function updateNoticeMarquee(): Promise<void> {
+  await nextTick()
+
+  const containerWidth = noticeScrollRef.value?.clientWidth || 0
+  const itemWidth = noticeItemRef.value?.scrollWidth || 0
+  if (!containerWidth || !itemWidth) {
+    shouldScrollNotice.value = false
+    noticeDistancePx.value = 0
+    noticeDurationSec.value = 0
+    return
+  }
+
+  // 文本较短时保持静态展示，不触发滚动。
+  if (itemWidth <= containerWidth) {
+    shouldScrollNotice.value = false
+    noticeDistancePx.value = 0
+    noticeDurationSec.value = 0
+    return
+  }
+
+  // 固定速度滚动：根据总位移距离自动算时长，保证长短文本速度一致。
+  const distance = itemWidth + NOTICE_GAP_PX
+  noticeDistancePx.value = distance
+  noticeDurationSec.value = Number((distance / NOTICE_SPEED_PX_PER_SEC).toFixed(3))
+  shouldScrollNotice.value = true
+}
+
+watch(noticeText, () => {
+  void updateNoticeMarquee()
+})
+
+onMounted(() => {
+  void ensureClubDataReady()
+  void fetchHomeRoomStats().catch((error) => {
+    console.warn('[home] fetch room stats failed:', error)
+  })
+  void fetchHomeMiniGameStats().catch((error) => {
+    console.warn('[home] fetch mini game stats failed:', error)
+  })
+  void fetchHomeMttStats().catch((error) => {
+    console.warn('[home] fetch mtt stats failed:', error)
+  })
+  void updateNoticeMarquee()
+
+  if (typeof ResizeObserver !== 'undefined') {
+    noticeResizeObserver = new ResizeObserver(() => {
+      void updateNoticeMarquee()
+    })
+    if (noticeScrollRef.value) {
+      noticeResizeObserver.observe(noticeScrollRef.value)
+    }
+  }
+})
+
+onBeforeUnmount(() => {
+  if (noticeResizeObserver) {
+    noticeResizeObserver.disconnect()
+    noticeResizeObserver = null
+  }
+})
 </script>
 
 <template>
   <div class="home-page">
     <!-- 1. 顶部俱乐部介绍图 -->
     <div class="home-header">
-      <img class="home-header-img" src="@/assets/images/home_header_1.png" alt="俱乐部介绍" />
+      <img class="home-header-img" :src="clubBannerUrl" alt="俱乐部介绍" />
     </div>
 
     <!-- 2. 公告栏 -->
     <div class="notice-bar">
       <img class="notice-icon" src="@/assets/icons/icon_notice.png" alt="公告" />
       <div class="notice-marquee">
-        <span class="notice-label"> 公告消息： </span>
-        <van-text-ellipsis class="notice-text" :content="noticeText" />
+        <span class="notice-label mr-4"> {{ $txt('Serverbulletin') }}: </span>
+        <div ref="noticeScrollRef" class="notice-scroll">
+          <div
+            class="notice-track"
+            :class="{ 'is-scroll': shouldScrollNotice }"
+            :style="noticeTrackStyle"
+          >
+            <span ref="noticeItemRef" class="notice-item">
+              {{ noticeText }}
+            </span>
+            <span v-if="shouldScrollNotice" class="notice-item" aria-hidden="true">
+              {{ noticeText }}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -46,7 +366,7 @@ function goToRecharge(): void {
       <!-- 左侧：客服 + 余额 + 刷新 + 充值 -->
       <div class="club-left">
         <div class="club-service-row">
-          <span class="service-label"> 客服 </span>
+          <span class="service-label"> {{ clubNameText }} </span>
           <img
             class="icon-sm icon-eye"
             src="@/assets/icons/icon_eye_open.png"
@@ -57,7 +377,7 @@ function goToRecharge(): void {
         <div class="club-balance-row">
           <img class="icon-sm" src="@/assets/icons/icon_balance.png" alt="余额" />
           <span class="balance-amount">
-            {{ balanceVisible ? balance : '****' }}
+            {{ balanceVisible ? clubGoldText : '****' }}
           </span>
           <img
             class="icon-sm icon-refresh"
@@ -65,7 +385,9 @@ function goToRecharge(): void {
             alt="刷新"
             @click="refreshBalance"
           />
-          <button class="recharge-btn" @click="goToRecharge">充值</button>
+          <button class="recharge-btn" @click="goToRecharge">
+            {{ t('OpCodeString_RECHARGE') }}
+          </button>
         </div>
       </div>
 
@@ -80,11 +402,11 @@ function goToRecharge(): void {
         </div>
         <div class="contact-item">
           <img class="contact-icon" src="@/assets/icons/icon_service_2.png" alt="邮箱" />
-          <span class="contact-label"> @game </span>
+          <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>
         <div class="contact-item">
           <img class="contact-icon" src="@/assets/icons/icon_service_3.png" alt="IM客服" />
-          <span class="contact-label"> 客服 </span>
+          <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
         </div>
       </div>
     </div>
@@ -102,16 +424,20 @@ function goToRecharge(): void {
           />
           <img class="zone-mini-icon" src="@/assets/icons/game_zone_mahjong_mini.png" alt="" />
           <div class="zone-info">
-            <span class="zone-title"> 麻将专区 </span>
-            <p class="zone-desc">推倒胡 血战到底 血流成河</p>
-            <p class="zone-sub-desc">真金真人对战</p>
+            <span class="zone-title"> {{ t('UIHomeMahjongArea') }} </span>
+            <p class="zone-desc">
+              <span class="mr-4"> {{ t('Mahjong_BloodFight') }}</span>
+              <span class="mr-4"> {{ t('Mahjong_BloodRiver') }}</span>
+              <span class="mr-4"> {{ t('Mahjong_Standard') }}</span>
+            </p>
+            <p class="zone-sub-desc">{{ t('UIHomeMahjongAreaTip') }}</p>
           </div>
           <div class="zone-online-bar">
-            <span class="online-text"> 在线 </span>
+            <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
             <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
-            <span class="online-num"> 108桌 </span>
+            <span class="online-num"> {{ mahjongTablesText }} </span>
             <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> 384人 </span>
+            <span class="online-num"> {{ mahjongPlayersText }} </span>
           </div>
         </div>
 
@@ -124,16 +450,19 @@ function goToRecharge(): void {
           />
           <img class="zone-mini-icon" src="@/assets/icons/game_zone_mtt_mini.png" alt="" />
           <div class="zone-info">
-            <span class="zone-title"> 赛事专区 </span>
-            <p class="zone-desc">扑克多人比赛 麻将多人比赛</p>
-            <p class="zone-sub-desc">获取海量线下门票</p>
+            <span class="zone-title"> {{ t('UIHomeMttArea') }} </span>
+            <p class="zone-desc">
+              <span>{{ t('UIHomeMttPokerTip') }}</span>
+              <span>{{ t('UIHomeMttMahjongTip') }}</span>
+            </p>
+            <p class="zone-sub-desc">{{ t('UIHomeMttAreaTip') }}</p>
           </div>
           <div class="zone-online-bar">
-            <span class="online-text"> 在线 </span>
+            <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
             <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
-            <span class="online-num"> 887545 </span>
+            <span class="online-num"> {{ mttTablesText }} </span>
             <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> 384人 </span>
+            <span class="online-num"> {{ mttPlayersText }} </span>
           </div>
         </div>
 
@@ -146,13 +475,13 @@ function goToRecharge(): void {
           />
           <img class="zone-mini-icon" src="@/assets/icons/game_zone_minigame_mini.png" alt="" />
           <div class="zone-info">
-            <span class="zone-title"> 小游戏专区 </span>
-            <p class="zone-desc">德州牛仔</p>
+            <span class="zone-title"> {{ t('UIHomeMinigameArea') }} </span>
+            <p class="zone-desc">{{ t('UIData_YGvXd5iXr_011') }}</p>
           </div>
           <div class="zone-online-bar">
-            <span class="online-text"> 在线 </span>
+            <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
             <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> 384人 </span>
+            <span class="online-num"> {{ miniGamePlayersText }} </span>
           </div>
         </div>
       </div>
@@ -169,20 +498,20 @@ function goToRecharge(): void {
             alt=""
           />
           <div class="zone-info poker-info">
-            <span class="zone-title"> 扑克专区 </span>
+            <span class="zone-title"> {{ t('UIHomePokerArea') }} </span>
             <div class="poker-desc-area">
-              <p class="zone-sub-desc text-left">德州扑克</p>
-              <p class="zone-sub-desc text-right">奥马哈</p>
-              <p class="zone-sub-desc text-left">短牌</p>
-              <p class="zone-sub-desc">真金真人对战</p>
+              <p class="zone-sub-desc text-left">{{ t('UITexasRule_texas') }}</p>
+              <p class="zone-sub-desc text-right">{{ t('UITexasRule_omaha') }}</p>
+              <p class="zone-sub-desc text-left">{{ t('PokerType_2') }}</p>
+              <p class="zone-sub-desc">{{ t('UIHomeMahjongAreaTip') }}</p>
             </div>
           </div>
           <div class="zone-online-bar">
-            <span class="online-text"> 在线 </span>
+            <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
             <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
-            <span class="online-num"> 88场比赛 </span>
+            <span class="online-num"> {{ pokerTablesText }} </span>
             <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> 384人 </span>
+            <span class="online-num"> {{ pokerPlayersText }} </span>
           </div>
         </div>
 
@@ -194,7 +523,7 @@ function goToRecharge(): void {
             alt="即将开放"
           />
           <div class="coming-soon-overlay"></div>
-          <span class="coming-soon-text"> 即将开放 </span>
+          <span class="coming-soon-text"> {{ t('UIHomeComingSoon') }}</span>
         </div>
       </div>
     </div>
@@ -208,7 +537,7 @@ function goToRecharge(): void {
           alt="即将开放"
         />
         <div class="coming-soon-small-overlay"></div>
-        <span class="coming-soon-small-text"> 即将开放 </span>
+        <span class="coming-soon-small-text"> {{ t('UIHomeComingSoon') }}</span>
       </div>
     </div>
   </div>
@@ -268,8 +597,8 @@ function goToRecharge(): void {
 .notice-marquee {
   display: flex;
   align-items: center;
-  overflow: hidden;
   flex: 1;
+  min-width: 0;
 }
 
 .notice-label {
@@ -279,13 +608,40 @@ function goToRecharge(): void {
   flex-shrink: 0;
 }
 
-.notice-text {
+.notice-scroll {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.notice-track {
+  display: inline-flex;
+  align-items: center;
+  min-width: max-content;
+  gap: var(--notice-gap, 48px);
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.notice-track.is-scroll {
+  animation: notice-scroll var(--notice-duration, 16s) linear infinite;
+}
+
+.notice-item {
   font-size: 0.28rem;
   color: rgba(255, 255, 255, 1);
   font-weight: 400;
-  overflow: hidden;
   white-space: nowrap;
-  text-overflow: ellipsis;
+}
+
+@keyframes notice-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-1 * var(--notice-distance, 0px)));
+  }
 }
 
 /* ===== 3. 俱乐部控件 ===== */
@@ -354,6 +710,11 @@ function goToRecharge(): void {
   min-width: 0.9rem;
 }
 
+.usdt-amount {
+  font-size: 0.24rem;
+  opacity: 0.9;
+}
+
 .recharge-btn {
   width: 1.3rem;
   padding: 0.06rem 0rem;
@@ -397,6 +758,10 @@ function goToRecharge(): void {
   font-size: 0.2rem;
   color: #fff;
   text-align: center;
+  max-width: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ===== 4. 游戏模块 ===== */
@@ -433,6 +798,7 @@ function goToRecharge(): void {
   justify-content: space-between;
   cursor: pointer;
   min-height: 2.69rem;
+  max-width: 4.45rem;
 
   &:active {
     opacity: 0.85;
@@ -445,10 +811,10 @@ function goToRecharge(): void {
   pointer-events: none;
   z-index: 3;
 }
-.game-card-mahjong{
+.game-card-mahjong {
   background: url('@/assets/images/left_card_bg_1.png') center/cover no-repeat;
 }
-.game-card-mtt{
+.game-card-mtt {
   background: url('@/assets/images/left_card_bg_2.png') center/cover no-repeat;
 }
 .game-card-minigame {
@@ -495,7 +861,7 @@ function goToRecharge(): void {
   display: block;
   margin-bottom: 0.4rem;
 }
-.poker-desc-area{
+.poker-desc-area {
   height: 3rem;
   display: flex;
   flex-direction: column;
@@ -552,6 +918,7 @@ function goToRecharge(): void {
 .poker-card {
   flex: 1;
   min-height: 5.54rem;
+  overflow: hidden;
 }
 
 .poker-bg {

@@ -202,8 +202,9 @@ window.__H5_GAME_ON_COCOS_MESSAGE__(rawJsonOrSchemeUrl)
 ### 9.2 职责边界（当前约定）
 
 - 牌桌内（Cocos 主导）：
-  - Cocos 负责 WS 协议编解码（心跳、进桌、退桌等）
+  - Cocos 负责 WS 协议编解码（进桌、退桌等业务包）
   - H5 只负责建立连接、透传二进制、回传服务端消息
+  - WS 心跳由 H5 统一保活维护（默认每 5 秒发送 `HEARTBEAT(code=2)`）
 - 牌桌外（H5 业务可自管）：
   - H5 可独立发送 WS 查询类请求并等待回包（例如战绩）
 - WS 连接策略：
@@ -213,6 +214,9 @@ window.__H5_GAME_ON_COCOS_MESSAGE__(rawJsonOrSchemeUrl)
   - H5 默认不自动发送
   - 仅在后端要求握手时，H5 才手动调用（可调用多次）
   - 查询请求本身要使用各自业务 `query code`，不是固定 `REGISTER`
+- `HEARTBEAT(code=2)`：
+  - H5 在 websocket `open` 后自动发送一次并开启定时心跳
+  - websocket 关闭/重连/主动断连时自动停止旧心跳
 
 ### 9.3 Cocos -> H5 动作规范
 

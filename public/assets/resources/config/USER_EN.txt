@@ -7185,6 +7185,15 @@ UICreateMahjongMttAutoHost=
 UICreateMahjongMttTips19=
 UIMatchProgress=
 Spinner_Tip=Syncing cloud data...
+UIHomeMahjongArea=麻将专区
+UIHomeMahjongAreaTip=真金真人对战
+UIHomePokerArea=扑克专区
+UIHomeMttArea=赛事专区
+UIHomeMttPokerTip=扑克多人比赛
+UIHomeMttMahjongTip=麻将多人比赛
+UIHomeMttAreaTip=获取海量线下门票
+UIHomeMinigameArea=小游戏专区
+UIHomeComingSoon=即将开放
 
 
 

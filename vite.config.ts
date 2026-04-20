@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
 import { fileURLToPath, URL } from 'node:url'
 import { extname } from 'node:path'
 import { readFileSync } from 'node:fs'
@@ -6,6 +6,21 @@ import vue from '@vitejs/plugin-vue'
 import legacy from '@vitejs/plugin-legacy'
 import Components from 'unplugin-vue-components/vite'
 import { VantResolver } from '@vant/auto-import-resolver'
+
+// 监听 public/assets/resources/config 下的 txt 文件变化，触发整页刷新。
+function i18nHotReloadPlugin(): Plugin {
+  return {
+    name: 'i18n-hot-reload',
+    configureServer(server) {
+      server.watcher.add('public/assets/resources/config/*.txt')
+      server.watcher.on('change', (file) => {
+        if (file.includes('resources/config') && file.endsWith('.txt')) {
+          server.ws.send({ type: 'full-reload' })
+        }
+      })
+    },
+  }
+}
 
 interface PackageJsonLike {
   name?: string
@@ -54,6 +69,7 @@ export default defineConfig(({ mode, command }) => {
     },
     plugins: [
       vue(),
+      i18nHotReloadPlugin(),
       Components({
         dts: true,
         resolvers: [VantResolver()],

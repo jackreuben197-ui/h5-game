@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import tabMaskImage from '@/assets/icons/game_type_tab_bg.png'
+import tabActiveBg from '@/assets/icons/game_type_tab_active_bg.svg?url'
 
 interface TabOption {
   name: 'all' | 'texas' | 'omaha' | 'sixPlus'
@@ -25,7 +25,7 @@ const TAB_OPTIONS: TabOption[] = [
 ]
 
 const tabbarStyle = {
-  '--default-tab-mask': `url(${tabMaskImage})`,
+  '--tab-active-bg': `url("${tabActiveBg}")`,
 }
 
 function handleUpdate(value: string | number): void {
@@ -59,8 +59,9 @@ function handleUpdate(value: string | number): void {
 
 <style lang="scss">
 .room-tabs {
+  --tab-active-bg: none;
   --tab-base-height: 0.9rem;
-  --tab-top-cut: 0.15rem;
+  --tab-top-cut: 0.25rem;
   --tab-bottom-overlap: 0.13rem;
   --tab-item-padding-x: 0.06rem;
   --tab-text-padding-x: 0.12rem;
@@ -105,11 +106,20 @@ function handleUpdate(value: string | number): void {
   display: none !important;
 }
 
+/* 旧版激活态背景（遮罩实现，暂时注释保留） */
+/*
 .themeType2 .room-tabs .van-tab--active .van-tab__text {
   background: rgba(255, 255, 255, 0.15);
   -webkit-mask: center bottom / 100% 100% no-repeat;
   -webkit-mask-image: var(--tab-bg, var(--default-tab-mask));
   mask: center bottom / 100% 100% no-repeat;
   mask-image: var(--tab-bg, var(--default-tab-mask));
+}
+*/
+
+/* 新版激活态背景（SVG 形状背景，不遮挡文字） */
+.themeType2 .room-tabs .van-tab--active .van-tab__text {
+  background: center bottom / 100% 100% no-repeat;
+  background-image: var(--tab-active-bg);
 }
 </style>

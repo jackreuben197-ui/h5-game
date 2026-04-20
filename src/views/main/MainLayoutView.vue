@@ -3,7 +3,7 @@ import { computed, onMounted, watch } from 'vue'
 import { showFailToast } from 'vant'
 import { RouterView, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import { getUserInfoApi } from '@/api/auth'
+import { getUserClubApi, getUserInfoApi } from '@/api/auth'
 import LoginSession from '@/session/loginSession'
 import MainBottomTab from '@/components/MainBottomTab.vue'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
@@ -40,6 +40,11 @@ async function fetchUserInfoOnEnter(): Promise<void> {
     // 读取后端语言字段；如果没有定义，则按英文兜底。
     const languageCode = resolveLanguageCode(user)
     setLocale(languageCode || 'en')
+
+    // 俱乐部信息同步给 Cocos，失败不影响主流程。
+    void getUserClubApi().catch((clubError) => {
+      console.warn('[main-layout] sync user club failed:', clubError)
+    })
 
     // 对齐 Cocos ProcedureEnterLobby：用户信息后确保 websocket 已就绪。
     await LoginSession.EnsureWS()

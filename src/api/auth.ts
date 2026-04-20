@@ -7,6 +7,8 @@ import type {
   UserWsData,
   UserWsResponse,
 } from '@/api/models/auth'
+import type { ApiResponse } from '@/api/models/common'
+import { forwardUserClubToCocos, forwardUserInfoToCocos } from '@/bridge/httpSync'
 
 // 登录：返回 token 等登录态信息。
 export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
@@ -33,7 +35,21 @@ export async function getUserInfoApi(): Promise<UserInfoData> {
     throw new Error('用户信息为空')
   }
 
+  // 与 Cocos 同步登录用户信息（msgtype=1）。
+  forwardUserInfoToCocos(body.data)
   return body.data
+}
+
+// 俱乐部信息：供 H5/CC 对齐用户俱乐部状态。
+export async function getUserClubApi(): Promise<ApiResponse<unknown>> {
+  const res = await http.post<ApiResponse<unknown>>('/org/club/user_club')
+  const body = res.data
+  if (body.code !== 0) {
+    throw new Error(body.message || '获取俱乐部信息失败')
+  }
+  // 把 club 接口响应转发到 Cocos（msgtype=1）。
+  forwardUserClubToCocos(body)
+  return body
 }
 
 // 同步 websocket 端口：对应 Cocos LoginSession.SyncWS。

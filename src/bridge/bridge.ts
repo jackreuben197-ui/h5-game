@@ -30,8 +30,11 @@ export interface SendBridgeMessageOptions {
 // 桥接传输相关标识。
 const BRIDGE_SCHEME = 'cocos'
 const BRIDGE_HOST = 'bridge'
-const H5_SOURCE = 'h5-game'
-const COCOS_SOURCE = 'cocos-game'
+const H5_WINDOW_SOURCE = 'h5'
+const CC_WINDOW_SOURCE = 'cc'
+// 兼容历史字段。
+const H5_LEGACY_SOURCE = 'h5-game'
+const COCOS_LEGACY_SOURCE = 'cocos-game'
 const handlerEntries = new Set<MessageHandlerEntry>()
 
 let h5ReadySent = false
@@ -96,7 +99,7 @@ function postByWindowMessage(raw: string): boolean {
     return false
   }
 
-  window.parent.postMessage({ source: H5_SOURCE, payload: raw }, '*')
+  window.parent.postMessage({ source: H5_WINDOW_SOURCE, payload: raw }, '*')
   return true
 }
 
@@ -141,6 +144,7 @@ function briefBridgeRaw(raw: string): string {
   try {
     const parsed = JSON.parse(raw) as {
       action?: string
+      source?: string
       msgtype?: number
       payload?: { dataType?: string; data?: string }
       requestId?: string
@@ -157,6 +161,7 @@ function briefBridgeRaw(raw: string): string {
           dataType,
           data: `<base64 length=${dataLength}>`,
         },
+        source: parsed.source,
         msgtype: parsed.msgtype,
         requestId: parsed.requestId,
         timestamp: parsed.timestamp,
@@ -271,6 +276,10 @@ function handleHandshakeMessage(message: BridgeMessage): void {
 function handleIncomingRaw(raw: string): void {
   const parsed = parseBridgeRaw(raw)
   if (parsed) {
+    // 约定：CC 下发可带 source='cc'；若显式标记为其它来源则忽略。
+    if (parsed.source && parsed.source !== CC_WINDOW_SOURCE) {
+      return
+    }
     handleHandshakeMessage(parsed)
     emit(parsed)
   }
@@ -295,7 +304,12 @@ if (typeof window !== 'undefined') {
     }
 
     const messageSource = (data as { source?: string }).source
-    if (messageSource !== COCOS_SOURCE && messageSource !== H5_SOURCE) {
+    // 先忽略自己发出的 postMessage 回流，避免自消费。
+    if (messageSource === H5_WINDOW_SOURCE || messageSource === H5_LEGACY_SOURCE) {
+      return
+    }
+    // 只接收 CC 来源（兼容历史 cocos-game 标记）。
+    if (messageSource && messageSource !== CC_WINDOW_SOURCE && messageSource !== COCOS_LEGACY_SOURCE) {
       return
     }
 

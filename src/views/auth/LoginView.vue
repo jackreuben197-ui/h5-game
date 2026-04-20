@@ -3,7 +3,7 @@ import { md5 } from 'js-md5'
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast, showLoadingToast, showSuccessToast, closeToast } from 'vant'
-import { loginApi } from '@/api/auth'
+import { getUserClubApi, getUserInfoApi, loginApi } from '@/api/auth'
 import { DEBUG_ACCOUNTS, DEFAULT_DEBUG_ACCOUNT, type DebugAccount } from '@/constants/debugAccounts'
 import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
@@ -76,6 +76,29 @@ async function handleLogin(): Promise<void> {
     token = res.token
 
     gameStore.setSessionToken(token)
+
+    let syncedUser = false
+    // 登录后主动拉取 user/info，确保第一时间触发 SYNC_USER 给 Cocos。
+    try {
+      const userInfo = await getUserInfoApi()
+      const user = userInfo.user as Record<string, unknown>
+      const userId = String(user.p_u_id ?? user.pUid ?? user.userid ?? '')
+      const userName = String(user.nickname ?? (form.nickname.trim() || form.account.trim()))
+      gameStore.setLoginUser({
+        account: form.account.trim(),
+        nickname: userName,
+        userId,
+      })
+      syncedUser = true
+    } catch (userInfoError) {
+      console.warn('[login] sync user info failed:', userInfoError)
+    }
+
+    // 俱乐部接口不阻塞登录流程，失败时仅记录日志。
+    void getUserClubApi().catch((clubError) => {
+      console.warn('[login] sync user club failed:', clubError)
+    })
+
     // 登录成功后主动同步 websocket 端口并发送 Register，避免首次登录时漏发。
     try {
       await LoginSession.SyncWS()
@@ -83,11 +106,13 @@ async function handleLogin(): Promise<void> {
       // 不阻塞登录流程：大厅初始化阶段还会再次 EnsureWS。
       console.warn('[login] sync ws failed:', wsError)
     }
-    gameStore.setLoginUser({
-      account: form.account.trim(),
-      nickname: form.nickname.trim() || form.account.trim(),
-      userId: '',
-    })
+    if (!syncedUser) {
+      gameStore.setLoginUser({
+        account: form.account.trim(),
+        nickname: form.nickname.trim() || form.account.trim(),
+        userId: '',
+      })
+    }
 
     closeToast()
     showSuccessToast('登录成功')

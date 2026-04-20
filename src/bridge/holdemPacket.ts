@@ -119,7 +119,7 @@ export function decodeHoldemPacket(raw: ArrayBufferLike): HoldemPacketDecodeResu
   const view = new DataView(raw)
   const code = view.getUint16(base + 2, false)
   const tokenBytes = bytes.slice(base + 4, base + 4 + TOKEN_LENGTH)
-  const token = textDecoder.decode(tokenBytes).replace(/\u0000+$/g, '')
+  const token = textDecoder.decode(tokenBytes).replace(/\0+$/, '')
   const roomId = readUint64BE(view, base + 36)
   const matchId = readUint64BE(view, base + 44)
   const protoVersion = bytes[base + 52] || 0
@@ -134,7 +134,6 @@ export function decodeHoldemPacket(raw: ArrayBufferLike): HoldemPacketDecodeResu
     body,
   }
 }
-
 
 function decodeVarint(bytes: Uint8Array, offset: number): { value: bigint; offset: number } | null {
   let result = 0n

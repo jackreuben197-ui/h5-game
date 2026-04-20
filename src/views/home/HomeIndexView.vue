@@ -15,10 +15,27 @@ function goToGameList(): void {
 
 <template>
   <div class="module-card">
-    <h2 class="module-title">首页模块</h2>
-    <p class="module-desc">这里可以放首页 Banner、活动卡片、公告入口等内容。</p>
-    <VanButton type="primary" block @click="goToTaskPage">进入首页子页面</VanButton>
-    <VanButton type="primary" class="button" block @click="goToGameList">扑克专区</VanButton>
+    <h2 class="module-title">
+      首页模块
+    </h2>
+    <p class="module-desc">
+      这里可以放首页 Banner、活动卡片、公告入口等内容。
+    </p>
+    <VanButton
+      type="primary"
+      block
+      @click="goToTaskPage"
+    >
+      进入首页子页面
+    </VanButton>
+    <VanButton
+      type="primary"
+      class="button"
+      block
+      @click="goToGameList"
+    >
+      扑克专区
+    </VanButton>
   </div>
 </template>
 

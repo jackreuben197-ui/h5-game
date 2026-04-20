@@ -414,7 +414,7 @@ function formatChip(value: number): string {
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
   padding: 0 0.38rem 0.5333rem;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.24);
   backdrop-filter: blur(0.3533rem) saturate(1.04);
 }
 

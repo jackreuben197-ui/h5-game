@@ -310,12 +310,15 @@ function logHoldemPacket(buffer: ArrayBufferLike): void {
 function handleBinaryIncoming(buffer: ArrayBufferLike): void {
   const packet = decodeHoldemPacket(buffer)
   logHoldemPacket(buffer)
-
   const base64 = arrayBufferToBase64(buffer)
-  emitWsMessage({
-    dataType: 'binary-base64',
-    data: base64,
-  })
+
+  // 心跳包由 H5 自维护，不回传给 Cocos，避免无意义桥接噪音。
+  if (!packet || packet.code !== HOLDEM_CODE.HEARTBEAT) {
+    emitWsMessage({
+      dataType: 'binary-base64',
+      data: base64,
+    })
+  }
 
   emitH5WsIncoming({
     dataType: 'binary-base64',

@@ -62,9 +62,12 @@ function handleUpdate(value: string | number): void {
   --tab-active-bg: none;
   --tab-base-height: 0.9rem;
   --tab-top-cut: 0.25rem;
-  --tab-bottom-overlap: 0.13rem;
+  --tab-bottom-overlap: 0.01rem;
   --tab-item-padding-x: 0.06rem;
   --tab-text-padding-x: 0.12rem;
+  --tab-active-offset-y: 1px;
+  --tab-active-overscan: 0px;
+  --tab-active-height: 108%;
 
   position: relative;
   z-index: 1;
@@ -72,17 +75,20 @@ function handleUpdate(value: string | number): void {
 }
 
 .room-tabs .van-tabs__wrap {
+  height: var(--tab-base-height);
   margin: 0 0.12rem;
   overflow: visible;
 }
 
 .room-tabs .van-tabs__nav {
+  height: 100%;
   background: transparent;
   overflow: visible;
 }
 
 .room-tabs .van-tab {
-  height: var(--tab-base-height);
+  height: 100%;
+  line-height: 1;
   padding: 0 var(--tab-item-padding-x);
   display: flex;
   align-items: flex-end;
@@ -99,6 +105,7 @@ function handleUpdate(value: string | number): void {
   align-items: center;
   justify-content: center;
   position: relative;
+  line-height: 1;
   white-space: nowrap;
 }
 
@@ -119,7 +126,9 @@ function handleUpdate(value: string | number): void {
 
 /* 新版激活态背景（SVG 形状背景，不遮挡文字） */
 .themeType2 .room-tabs .van-tab--active .van-tab__text {
-  background: center bottom / 100% 100% no-repeat;
+  background:
+    center calc(100% + var(--tab-active-offset-y)) /
+    100% var(--tab-active-height) no-repeat;
   background-image: var(--tab-active-bg);
 }
 </style>

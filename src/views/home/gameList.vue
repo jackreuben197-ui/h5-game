@@ -337,7 +337,7 @@ function formatChip(value: number): string {
     class="room-list-page themeType2"
     :style="pageStyle"
   >
-    <div class="bg-overlay" />
+    <div class="bg-overlay"></div>
     <PageBackHeader title="扑克专区">
       <template #right>
         <div class="action-wrap">
@@ -411,9 +411,12 @@ function formatChip(value: number): string {
   position: relative;
   z-index: 1;
   margin-top: 0;
+  padding-top: 0;
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
-  padding: 0 0.38rem 0.5333rem;
+  padding-right: 0.38rem;
+  padding-bottom: 0.5333rem;
+  padding-left: 0.38rem;
   background: rgba(255, 255, 255, 0.24);
   backdrop-filter: blur(0.3533rem) saturate(1.04);
 }

@@ -74,6 +74,27 @@ function readUint64BE(view: DataView, offset: number): number {
   return value <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(value) : Number.MAX_SAFE_INTEGER
 }
 
+function decodeTokenDisplay(tokenBytes: Uint8Array): string {
+  let end = tokenBytes.length
+  while (end > 0 && tokenBytes[end - 1] === 0) {
+    end -= 1
+  }
+  if (end <= 0) {
+    return ''
+  }
+
+  const trimmed = tokenBytes.slice(0, end)
+  const printableAscii = trimmed.every((byte) => byte >= 0x20 && byte <= 0x7e)
+  if (printableAscii) {
+    return String.fromCharCode(...trimmed)
+  }
+
+  const hex = Array.from(trimmed)
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('')
+  return `0x${hex}`
+}
+
 // 生成客户端发送包：含 dataLength + YM + code + token + room/match + protoVersion + body。
 export function encodeHoldemPacket(input: HoldemPacketEncodeInput): ArrayBuffer {
   const body = input.body || new Uint8Array(0)
@@ -94,36 +115,46 @@ export function encodeHoldemPacket(input: HoldemPacketEncodeInput): ArrayBuffer 
   return buffer
 }
 
-// 解析服务端回包：兼容“无 dataLength 前缀”和“有 dataLength 前缀”两种格式。
+// 只解析协议号：用于高频路径快速分流（例如心跳过滤）。
+export function decodeHoldemCode(raw: ArrayBufferLike): number | null {
+  const bytes = new Uint8Array(raw)
+  if (bytes.length < 4) {
+    return null
+  }
+  if (bytes[0] !== CHARS_FLAG[0] || bytes[1] !== CHARS_FLAG[1]) {
+    return null
+  }
+  return new DataView(raw).getUint16(2, false)
+}
+
+// 解析服务端回包：对齐 Cocos ProtocolAgency.Receive 的头格式。
 export function decodeHoldemPacket(raw: ArrayBufferLike): HoldemPacketDecodeResult | null {
   const bytes = new Uint8Array(raw)
   if (!bytes.length) {
     return null
   }
 
-  let base = -1
-  if (bytes.length >= FIX_HEAD_LENGTH && bytes[0] === CHARS_FLAG[0] && bytes[1] === CHARS_FLAG[1]) {
-    base = 0
-  } else if (
-    bytes.length >= HEAD_LENGTH &&
-    bytes[4] === CHARS_FLAG[0] &&
-    bytes[5] === CHARS_FLAG[1]
-  ) {
-    base = 4
-  }
+  const view = new DataView(raw)
 
-  if (base < 0) {
+  // Cocos 入站格式（ProtocolAgency.Receive）：
+  // [0:2] YM
+  // [2:4] code(uint16)
+  // [4:36] token(32)
+  // [36:44] roomId(uint64)
+  // [44:52] matchId(uint64)
+  // [52] protoVersion
+  // [53:] pb body
+  if (bytes.length < FIX_HEAD_LENGTH || bytes[0] !== CHARS_FLAG[0] || bytes[1] !== CHARS_FLAG[1]) {
     return null
   }
 
-  const view = new DataView(raw)
-  const code = view.getUint16(base + 2, false)
-  const tokenBytes = bytes.slice(base + 4, base + 4 + TOKEN_LENGTH)
-  const token = textDecoder.decode(tokenBytes).replace(/\0+$/, '')
-  const roomId = readUint64BE(view, base + 36)
-  const matchId = readUint64BE(view, base + 44)
-  const protoVersion = bytes[base + 52] || 0
-  const body = bytes.slice(base + 53)
+  const code = view.getUint16(2, false)
+  const tokenBytes = bytes.slice(4, 4 + TOKEN_LENGTH)
+  const token = decodeTokenDisplay(tokenBytes)
+  const roomId = readUint64BE(view, 36)
+  const matchId = readUint64BE(view, 44)
+  const protoVersion = bytes[52] || 0
+  const body = bytes.slice(53)
 
   return {
     code,

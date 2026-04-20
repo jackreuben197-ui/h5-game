@@ -4,11 +4,17 @@ export interface WsOpenPayload {
 }
 
 // H5 -> Cocos：websocket 收到消息。
-export interface WsMessagePayload {
-  dataType: 'text' | 'binary-base64'
+export interface WsMessageTextPayload {
+  dataType: 'text'
   text?: string
-  data?: string
 }
+
+export interface WsMessageBinaryPayload {
+  dataType: 'binary'
+  data?: ArrayBuffer | ArrayBufferView | Blob
+}
+
+export type WsMessagePayload = WsMessageTextPayload | WsMessageBinaryPayload
 
 // H5 -> Cocos：websocket 错误消息。
 export interface WsErrorPayload {

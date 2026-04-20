@@ -12,10 +12,10 @@ export interface WsSendTextPayload {
   text?: string
 }
 
-// Cocos -> H5：发送 websocket 二进制（base64）消息。
+// Cocos -> H5：发送 websocket 二进制（原始 binary，推荐）。
 export interface WsSendBinaryPayload {
-  dataType: 'binary-base64'
-  data?: string
+  dataType: 'binary'
+  data?: ArrayBuffer | ArrayBufferView | Blob
 }
 
 // Cocos -> H5：通用 websocket 发送负载。

@@ -1,18 +1,36 @@
 export {}
 
 declare global {
+  type BridgeReceiveFn = (
+    type: string,
+    payload?: unknown,
+    msgtype?: number,
+    requestId?: string,
+    timestamp?: number,
+    source?: string,
+  ) => void
+
   interface Window {
     CocosBridge?: {
-      postMessage?: (raw: string) => void
+      sendMessage?: BridgeReceiveFn
+      onMessgeRecv?: BridgeReceiveFn
+      onMessageRecv?: BridgeReceiveFn
+      postMessage?: (raw: unknown) => void
+    }
+    H5Bridge?: {
+      onMessgeRecv?: BridgeReceiveFn
+      onMessageRecv?: BridgeReceiveFn
     }
     webkit?: {
       messageHandlers?: {
         cocosBridge?: {
-          postMessage?: (raw: string) => void
+          postMessage?: (raw: unknown) => void
         }
       }
     }
-    __H5_GAME_ON_COCOS_MESSAGE__?: (raw: string) => void
+    onMessgeRecv?: BridgeReceiveFn
+    onMessageRecv?: BridgeReceiveFn
+    __H5_GAME_ON_COCOS_MESSAGE__?: (incoming: unknown) => void
     __H5_READY__?: boolean
     __CC_READY__?: boolean
     H5LobbyHost?: {

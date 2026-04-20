@@ -15,6 +15,7 @@ import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 import {
   HOLDEM_CODE,
+  decodeHoldemCode,
   decodeHoldemPacket,
   decodeProtoDebugFields,
   encodeHoldemPacket,
@@ -40,9 +41,9 @@ const HOLDEN_CODE_NAME: Record<number, string> = {
 }
 
 export interface H5WsIncomingEvent {
-  dataType: 'text' | 'binary-base64'
+  dataType: 'text' | 'binary'
   text?: string
-  data?: string
+  data?: ArrayBufferLike
   rawBuffer?: ArrayBufferLike
   packet?: HoldemPacketDecodeResult | null
 }
@@ -114,7 +115,7 @@ function emitH5WsIncoming(event: H5WsIncomingEvent): void {
   })
 }
 
-// 把 ArrayBuffer 转成 base64，便于桥接 JSON 传输。
+// 把 ArrayBuffer 转成 base64（仅用于日志预览）。
 function arrayBufferToBase64(buffer: ArrayBufferLike): string {
   const bytes = new Uint8Array(buffer)
   const chunkSize = 0x8000
@@ -124,6 +125,14 @@ function arrayBufferToBase64(buffer: ArrayBufferLike): string {
     binary += String.fromCharCode(...chunk)
   }
   return btoa(binary)
+}
+
+function uint8ArrayToBase64Preview(bytes: Uint8Array, maxBytes = 96): string {
+  if (!bytes.length) {
+    return ''
+  }
+  const preview = bytes.subarray(0, Math.min(bytes.length, maxBytes))
+  return arrayBufferToBase64(preview.buffer.slice(preview.byteOffset, preview.byteOffset + preview.byteLength))
 }
 
 // 把 base64 还原成 ArrayBuffer，用于透传到 websocket。
@@ -142,6 +151,73 @@ function isWsOpen(): boolean {
 
 function getSessionToken(): string {
   return (localStore.getItem<string>(StorageKey.TOKEN, '') || '').trim()
+}
+
+function toBufferLike(data: ArrayBuffer | ArrayBufferView | Blob): ArrayBufferLike | null {
+  if (data instanceof ArrayBuffer) {
+    return data
+  }
+  if (ArrayBuffer.isView(data)) {
+    const view = data as ArrayBufferView
+    return view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength)
+  }
+  return null
+}
+
+function logWsOutgoing(data: string | ArrayBuffer | ArrayBufferView | Blob, context: string): void {
+  if (typeof data === 'string') {
+    console.info('[wsSend][text]', {
+      context,
+      length: data.length,
+      preview: data.slice(0, 120),
+    })
+    return
+  }
+
+  if (data instanceof Blob) {
+    console.info('[wsSend][binary]', {
+      context,
+      byteLength: data.size,
+      note: 'blob',
+    })
+    return
+  }
+
+  const raw = toBufferLike(data)
+  if (!raw) {
+    console.info('[wsSend][binary]', {
+      context,
+      note: 'unknown-buffer-like',
+    })
+    return
+  }
+
+  const packet = decodeHoldemPacket(raw)
+  if (packet) {
+    const codeName = HOLDEN_CODE_NAME[packet.code] || 'UNKNOWN'
+    console.info('[wsSend][packet]', {
+      context,
+      code: packet.code,
+      codeName,
+      token: packet.token,
+      roomId: packet.roomId,
+      matchId: packet.matchId,
+      protoVersion: packet.protoVersion,
+      bodyLen: packet.body.length,
+      protoFields: packet.body.length ? decodeProtoDebugFields(packet.body, 8) : [],
+    })
+    return
+  }
+
+  const bytes = new Uint8Array(raw)
+  const headPreview = Array.from(bytes.slice(0, 16))
+    .map((value) => value.toString(16).padStart(2, '0'))
+    .join(' ')
+  console.info('[wsSend][binary]', {
+    context,
+    byteLength: bytes.length,
+    headPreview,
+  })
 }
 
 function stopHeartbeatLoop(): void {
@@ -166,7 +242,7 @@ function sendHeartbeatPacket(): boolean {
     matchId: 0,
     body: new Uint8Array(0),
   })
-  return sendWsRaw(packet)
+  return sendWsRaw(packet, 'h5-heartbeat')
 }
 
 function startHeartbeatLoop(): void {
@@ -186,12 +262,16 @@ function startHeartbeatLoop(): void {
 }
 
 // websocket 原始发送入口：统一处理“未连接”报错。
-function sendWsRaw(data: string | ArrayBuffer): boolean {
+function sendWsRaw(
+  data: string | ArrayBuffer | ArrayBufferView | Blob,
+  context = 'unknown',
+): boolean {
   if (!isWsOpen() || !ws) {
     emitWsError('wsSend 失败：websocket 未连接')
     return false
   }
-  ws.send(data)
+  logWsOutgoing(data, context)
+  ws.send(data as string | Blob | BufferSource)
   return true
 }
 
@@ -211,7 +291,7 @@ export function h5SendRegisterPacket(): boolean {
     body: new Uint8Array(0),
   })
 
-  const sent = sendWsRaw(packet)
+  const sent = sendWsRaw(packet, 'h5-register')
   if (sent) {
     console.info('[ws] send register packet (h5 manual)')
   }
@@ -220,7 +300,7 @@ export function h5SendRegisterPacket(): boolean {
 
 // H5 业务层主动发送文本 WS（不经过 Cocos）。
 export function h5SendWsText(text: string): boolean {
-  return sendWsRaw(text || '')
+  return sendWsRaw(text || '', 'h5-text')
 }
 
 // H5 业务层主动发送 base64 二进制 WS（不经过 Cocos）。
@@ -231,7 +311,7 @@ export function h5SendWsBinaryBase64(data: string): boolean {
   }
 
   try {
-    return sendWsRaw(base64ToArrayBuffer(data))
+    return sendWsRaw(base64ToArrayBuffer(data), 'h5-binary-base64')
   } catch {
     emitWsError('h5SendWsBinaryBase64 失败：base64 解析失败')
     return false
@@ -274,57 +354,64 @@ export function h5SendHoldemPacket(payload: H5SendHoldemPacketPayload): boolean 
     body,
   })
 
-  return sendWsRaw(packet)
+  return sendWsRaw(packet, 'h5-holdem-packet')
 }
 
-// 开发日志：仅用于调试观察，不参与协议业务决策。
-function logHoldemPacket(buffer: ArrayBufferLike): void {
-  const packet = decodeHoldemPacket(buffer)
-  if (!packet) {
-    return
+// 开发日志：仅解析 code 供观测与分流，不参与转发数据构造。
+function logHoldemPacket(buffer: ArrayBufferLike): number | null {
+  const code = decodeHoldemCode(buffer)
+  if (code === null) {
+    const bytes = new Uint8Array(buffer)
+    const headPreview = Array.from(bytes.slice(0, 16))
+      .map((value) => value.toString(16).padStart(2, '0'))
+      .join(' ')
+    console.warn('[wsRecv][packet] code decode failed', {
+      byteLength: bytes.length,
+      headPreview,
+    })
+    return null
   }
 
-  const codeName = HOLDEN_CODE_NAME[packet.code] || 'UNKNOWN'
-  const isHeartbeat = packet.code === HOLDEM_CODE.HEARTBEAT
+  const bytes = new Uint8Array(buffer)
+  const body = bytes.length > 53 ? bytes.slice(53) : new Uint8Array(0)
+  const codeName = HOLDEN_CODE_NAME[code] || 'UNKNOWN'
+  const isHeartbeat = code === HOLDEM_CODE.HEARTBEAT
 
   // 心跳包非常高频，限制日志频率，避免刷屏。
   if (isHeartbeat) {
     const now = Date.now()
     if (now - lastHeartbeatLogAt < 5000) {
-      return
+      return code
     }
     lastHeartbeatLogAt = now
   }
 
-  console.info('[ws][packet]', {
-    code: packet.code,
+  console.info('[wsRecv][packet]', {
+    code,
     codeName,
-    roomId: packet.roomId,
-    matchId: packet.matchId,
-    bodyLen: packet.body.length,
-    protoFields: packet.body.length ? decodeProtoDebugFields(packet.body, 8) : [],
+    bodyLen: body.length,
+    bodyBase64Preview: uint8ArrayToBase64Preview(body),
   })
+  return code
 }
 
 // 二进制入站统一处理：解析日志 + 同步给 Cocos + 分发给 H5 业务层。
 function handleBinaryIncoming(buffer: ArrayBufferLike): void {
-  const packet = decodeHoldemPacket(buffer)
-  logHoldemPacket(buffer)
-  const base64 = arrayBufferToBase64(buffer)
+  const code = logHoldemPacket(buffer)
+  const passthroughBuffer = new Uint8Array(buffer).slice().buffer
 
-  // 心跳包由 H5 自维护，不回传给 Cocos，避免无意义桥接噪音。
-  if (!packet || packet.code !== HOLDEM_CODE.HEARTBEAT) {
+  // 心跳包由 H5 自维护，不回传给 Cocos；其余一律透传服务器原始字节。
+  if (code !== HOLDEM_CODE.HEARTBEAT) {
     emitWsMessage({
-      dataType: 'binary-base64',
-      data: base64,
+      dataType: 'binary',
+      data: passthroughBuffer,
     })
   }
 
   emitH5WsIncoming({
-    dataType: 'binary-base64',
-    data: base64,
-    rawBuffer: buffer,
-    packet,
+    dataType: 'binary',
+    data: passthroughBuffer,
+    rawBuffer: passthroughBuffer,
   })
 }
 
@@ -480,12 +567,17 @@ export function waitH5WsPacket(
 
   return new Promise((resolve, reject) => {
     const unsubscribe = subscribeH5WsMessages((event) => {
-      if (!event.packet) {
+      if (!event.rawBuffer) {
         return
       }
 
-      const packet = event.packet
-      if (packet.code !== targetCode) {
+      const packetCode = decodeHoldemCode(event.rawBuffer)
+      if (packetCode !== targetCode) {
+        return
+      }
+
+      const packet = decodeHoldemPacket(event.rawBuffer)
+      if (!packet) {
         return
       }
       if (targetRoomId > 0 && packet.roomId !== targetRoomId) {
@@ -509,20 +601,22 @@ export function waitH5WsPacket(
 
 function sendWs(payload: WsSendPayload): void {
   if (payload.dataType === 'text') {
-    sendWsRaw(payload.text || '')
+    sendWsRaw(payload.text || '', 'bridge-wsSend-text')
     return
   }
 
-  if (payload.dataType === 'binary-base64') {
-    if (!payload.data) {
-      emitWsError('wsSend 失败：binary-base64 数据为空')
+  if (payload.dataType === 'binary') {
+    const data = payload.data
+    if (
+      !(data instanceof ArrayBuffer) &&
+      !ArrayBuffer.isView(data) &&
+      !(data instanceof Blob)
+    ) {
+      emitWsError('wsSend 失败：binary 数据为空或类型无效')
       return
     }
-    try {
-      sendWsRaw(base64ToArrayBuffer(payload.data))
-    } catch {
-      emitWsError('wsSend 失败：binary-base64 解析失败')
-    }
+    // 直发 Cocos 原始二进制，不做中间解析/重建。
+    sendWsRaw(data, 'bridge-wsSend-binary')
     return
   }
 
@@ -548,7 +642,7 @@ function onCocosBridgeMessage(message: BridgeMessage): void {
   }
 
   if (message.action === 'exitTable') {
-    // 纯透传模式：离桌消息仅做日志，具体离桌协议包由 Cocos 发送 wsSend(binary-base64)。
+    // 纯透传模式：离桌消息仅做日志，具体离桌协议包由 Cocos 发送 wsSend(binary)。
     console.info('[ws] exitTable received (passthrough mode), no websocket packet is sent by H5')
   }
 }

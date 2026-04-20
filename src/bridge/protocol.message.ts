@@ -20,6 +20,10 @@ export interface CreateBridgeMessageOptions {
   msgtype?: BridgeMsgType
 }
 
+type PartialBridgeMessage = Partial<BridgeMessage> & {
+  msgtype?: unknown
+}
+
 // 生成带 requestId 和 timestamp 的标准消息，便于排查与去重。
 export function createBridgeMessage<TPayload>(
   action: BridgeAction | string,
@@ -73,26 +77,36 @@ export function parseBridgeRaw(raw: string): BridgeMessage | null {
       : schemeHandled
 
   try {
-    const parsed = JSON.parse(maybeDecoded) as Partial<BridgeMessage> & {
-      msgtype?: unknown
-    }
-    if (!parsed || typeof parsed !== 'object' || !parsed.action) {
-      return null
-    }
-
-    // 兼容 Cocos 简化消息：如果没带 requestId/timestamp，则由 H5 自动补齐。
-    return {
-      action: String(parsed.action),
-      payload: parsed.payload,
-      source: typeof parsed.source === 'string' ? parsed.source : undefined,
-      msgtype: normalizeBridgeMsgType(parsed.msgtype),
-      requestId:
-        typeof parsed.requestId === 'string'
-          ? parsed.requestId
-          : `cocos_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
-      timestamp: typeof parsed.timestamp === 'number' ? parsed.timestamp : Date.now(),
-    }
+    const parsed = JSON.parse(maybeDecoded) as PartialBridgeMessage
+    return normalizeBridgeMessage(parsed)
   } catch {
     return null
+  }
+}
+
+// 将对象消息解析为合法的桥接消息对象（保留 payload 的原始对象/二进制）。
+export function parseBridgeObject(raw: unknown): BridgeMessage | null {
+  if (!raw || typeof raw !== 'object') {
+    return null
+  }
+  return normalizeBridgeMessage(raw as PartialBridgeMessage)
+}
+
+function normalizeBridgeMessage(parsed: PartialBridgeMessage): BridgeMessage | null {
+  if (!parsed.action) {
+    return null
+  }
+
+  // 兼容 Cocos 简化消息：如果没带 requestId/timestamp，则由 H5 自动补齐。
+  return {
+    action: String(parsed.action),
+    payload: parsed.payload,
+    source: typeof parsed.source === 'string' ? parsed.source : undefined,
+    msgtype: normalizeBridgeMsgType(parsed.msgtype),
+    requestId:
+      typeof parsed.requestId === 'string'
+        ? parsed.requestId
+        : `cocos_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+    timestamp: typeof parsed.timestamp === 'number' ? parsed.timestamp : Date.now(),
   }
 }

@@ -2,6 +2,8 @@ import {
   BRIDGE_ACTION,
   BRIDGE_MSG_TYPE,
   createBridgeMessage,
+  normalizeBridgeMsgType,
+  parseBridgeObject,
   parseBridgeRaw,
   toBridgeRaw,
   type BridgeAction,
@@ -12,6 +14,14 @@ import {
 
 type MessageHandler = (message: BridgeMessage) => void
 type MessageRoute = 'all' | 'forward' | 'h5'
+type DirectBridgeFn = (
+  type: string,
+  payload?: unknown,
+  msgtype?: number,
+  requestId?: string,
+  timestamp?: number,
+  source?: string,
+) => void
 
 interface MessageHandlerEntry {
   handler: MessageHandler
@@ -51,35 +61,79 @@ function emit(message: BridgeMessage): void {
   })
 }
 
-// 通道1：原生注入对象（如 Android 注入 CocosBridge）。
-function postByInjectedBridge(raw: string): boolean {
+function getCocosDirectBridgeFn(): DirectBridgeFn | null {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const bridge = window.CocosBridge
+  const fn =
+    bridge?.sendMessage ||
+    bridge?.onMessgeRecv ||
+    bridge?.onMessageRecv ||
+    null
+
+  return typeof fn === 'function' ? (fn as DirectBridgeFn) : null
+}
+
+// 通道1：函数直调（推荐，避免 JSON 包装）。
+function postByDirectBridge(message: BridgeMessage): boolean {
+  const directFn = getCocosDirectBridgeFn()
+  if (!directFn) {
+    return false
+  }
+
+  directFn.call(
+    window.CocosBridge,
+    message.action,
+    message.payload,
+    message.msgtype,
+    message.requestId,
+    message.timestamp,
+    message.source,
+  )
+  return true
+}
+
+// 通道2：原生注入对象（兼容 legacy postMessage）。
+function postByInjectedBridge(message: BridgeMessage): boolean {
   if (typeof window === 'undefined') {
     return false
   }
 
   if (typeof window.CocosBridge?.postMessage === 'function') {
-    window.CocosBridge.postMessage(raw)
+    window.CocosBridge.postMessage(message)
     return true
   }
 
   return false
 }
 
-// 通道2：iOS WKWebView 的 messageHandlers。
-function postByWebkitBridge(raw: string): boolean {
+// 通道3：iOS WKWebView 的 messageHandlers。
+function postByWebkitBridge(message: BridgeMessage): boolean {
   if (typeof window === 'undefined') {
     return false
   }
 
   if (typeof window.webkit?.messageHandlers?.cocosBridge?.postMessage === 'function') {
-    window.webkit.messageHandlers.cocosBridge.postMessage(raw)
+    window.webkit.messageHandlers.cocosBridge.postMessage(message)
     return true
   }
 
   return false
 }
 
-// 通道3：原生 WebView 场景下的 scheme 兜底通道。
+// 通道4：浏览器/容器场景下的 postMessage 兜底。
+function postByWindowMessage(message: BridgeMessage): boolean {
+  if (typeof window === 'undefined' || window.parent === window) {
+    return false
+  }
+
+  window.parent.postMessage(message, '*')
+  return true
+}
+
+// 通道5：原生 WebView 场景下的 scheme 兜底（仅兼容 legacy）。
 function postByScheme(raw: string): boolean {
   if (typeof window === 'undefined') {
     return false
@@ -94,24 +148,12 @@ function postByScheme(raw: string): boolean {
   return true
 }
 
-// 通道4：浏览器/容器场景下的 postMessage 兜底。
-function postByWindowMessage(raw: string): boolean {
-  if (typeof window === 'undefined' || window.parent === window) {
-    return false
-  }
-
-  // 约定：H5 侧发出时 source 保持 undefined；CC 发出时 source='cc'。
-  window.parent.postMessage({ payload: raw }, '*')
-  return true
-}
-
-// 简单 UA 判断：在疑似原生环境优先走 scheme。
+// 简单 UA 判断：在疑似原生环境允许 scheme 兜底。
 function shouldUseScheme(): boolean {
   if (typeof navigator === 'undefined' || typeof window === 'undefined') {
     return false
   }
 
-  // 本地开发环境（localhost）不走 scheme，避免浏览器控制台大量告警。
   const host = window.location.hostname
   const isLocalDevHost = host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0'
   if (isLocalDevHost) {
@@ -123,57 +165,65 @@ function shouldUseScheme(): boolean {
 }
 
 // 按优先级依次尝试发送通道，命中一个即返回。
-function postToCocos(raw: string): void {
-  if (postByInjectedBridge(raw)) {
+function postToCocos(message: BridgeMessage): void {
+  if (postByDirectBridge(message)) {
     return
   }
-  if (postByWebkitBridge(raw)) {
+  if (postByInjectedBridge(message)) {
+    return
+  }
+  if (postByWebkitBridge(message)) {
+    return
+  }
+  if (postByWindowMessage(message)) {
     return
   }
   if (shouldUseScheme()) {
-    postByScheme(raw)
-    return
-  }
-  if (postByWindowMessage(raw)) {
+    postByScheme(toBridgeRaw(message))
     return
   }
 
-  // 开发期没有 Cocos 容器时，避免打印整段 base64 造成刷屏。
-  console.warn('[bridge] no cocos channel found, message dropped:', briefBridgeRaw(raw))
+  console.warn('[bridge] no cocos channel found, message dropped:', briefBridgeObject(message))
 }
 
-function briefBridgeRaw(raw: string): string {
-  try {
-    const parsed = JSON.parse(raw) as {
-      action?: string
-      source?: string
-      msgtype?: number
-      payload?: { dataType?: string; data?: string }
-      requestId?: string
-      timestamp?: number
-    }
-    const action = parsed.action || 'unknown'
-
-    if (action === 'wsMessage') {
-      const dataType = parsed.payload?.dataType || 'unknown'
-      const dataLength = typeof parsed.payload?.data === 'string' ? parsed.payload.data.length : 0
-      return JSON.stringify({
-        action,
-        payload: {
-          dataType,
-          data: `<base64 length=${dataLength}>`,
-        },
-        source: parsed.source,
-        msgtype: parsed.msgtype,
-        requestId: parsed.requestId,
-        timestamp: parsed.timestamp,
-      })
-    }
-
-    return raw
-  } catch {
-    return raw
+function briefBridgeObject(message: BridgeMessage): string {
+  if (message.action !== BRIDGE_ACTION.WS_MESSAGE) {
+    return JSON.stringify({
+      action: message.action,
+      source: message.source,
+      msgtype: message.msgtype,
+      requestId: message.requestId,
+      timestamp: message.timestamp,
+    })
   }
+
+  const payload = message.payload as {
+    dataType?: string
+    text?: string
+    data?: unknown
+  }
+  const data = payload?.data
+  let byteLength = 0
+  if (data instanceof ArrayBuffer) {
+    byteLength = data.byteLength
+  } else if (ArrayBuffer.isView(data)) {
+    byteLength = data.byteLength
+  } else if (data instanceof Blob) {
+    byteLength = data.size
+  }
+
+  return JSON.stringify({
+    action: message.action,
+    payload: {
+      dataType: payload?.dataType || 'unknown',
+      textLength: typeof payload?.text === 'string' ? payload.text.length : 0,
+      data: `<binary length=${byteLength}>`,
+    },
+    source: message.source,
+    msgtype: message.msgtype,
+    requestId: message.requestId,
+    timestamp: message.timestamp,
+  })
 }
 
 // 暴露当前命中的通道，供调试页展示。
@@ -181,17 +231,20 @@ export function getBridgeChannelName(): string {
   if (typeof window === 'undefined') {
     return 'unknown'
   }
+  if (getCocosDirectBridgeFn()) {
+    return 'direct-call'
+  }
   if (typeof window.CocosBridge?.postMessage === 'function') {
     return 'injected'
   }
   if (typeof window.webkit?.messageHandlers?.cocosBridge?.postMessage === 'function') {
     return 'webkit'
   }
-  if (shouldUseScheme()) {
-    return 'scheme'
-  }
   if (window.parent !== window) {
     return 'postMessage'
+  }
+  if (shouldUseScheme()) {
+    return 'scheme'
   }
   return 'none'
 }
@@ -203,7 +256,7 @@ export function sendBridgeMessage<TPayload>(
   options: SendBridgeMessageOptions = {},
 ): BridgeMessage<TPayload> {
   const message = createBridgeMessage(action, payload, options)
-  postToCocos(toBridgeRaw(message))
+  postToCocos(message)
   return message
 }
 
@@ -288,7 +341,6 @@ function markCcReady(): void {
 function handleHandshakeMessage(message: BridgeMessage): void {
   if (message.action === BRIDGE_ACTION.CC_READY) {
     markCcReady()
-    // CC 主动声明 ready 时，H5 需回 h5Ack。
     sendBridgeMessage(BRIDGE_ACTION.H5_ACK, {}, { msgtype: BRIDGE_MSG_TYPE.H5 })
     markBridgeHandshakeDone()
     maybeSendH5Ready()
@@ -302,30 +354,89 @@ function handleHandshakeMessage(message: BridgeMessage): void {
   }
 }
 
-// 解析原始入站消息，合法则分发。
+function handleIncomingMessage(message: BridgeMessage, fallbackSource?: string): void {
+  const messageSource = message.source || fallbackSource
+  if (messageSource !== CC_WINDOW_SOURCE && messageSource !== COCOS_LEGACY_SOURCE) {
+    return
+  }
+
+  handleHandshakeMessage(message)
+  emit(message)
+}
+
 function handleIncomingRaw(raw: string, fallbackSource?: string): void {
   const parsed = parseBridgeRaw(raw)
   if (parsed) {
-    const messageSource = parsed.source || fallbackSource
-    // 仅接收 CC 消息，避免自己 postMessage 回流被自消费。
-    if (messageSource !== CC_WINDOW_SOURCE && messageSource !== COCOS_LEGACY_SOURCE) {
-      return
-    }
-    handleHandshakeMessage(parsed)
-    emit(parsed)
+    handleIncomingMessage(parsed, fallbackSource)
   }
 }
 
+function handleIncomingDirect(
+  type: unknown,
+  payload?: unknown,
+  msgtype?: unknown,
+  requestId?: unknown,
+  timestamp?: unknown,
+  source?: unknown,
+): void {
+  if (typeof type !== 'string') {
+    return
+  }
+
+  const message: BridgeMessage = {
+    action: type,
+    payload,
+    source: typeof source === 'string' ? source : undefined,
+    msgtype: normalizeBridgeMsgType(msgtype),
+    requestId:
+      typeof requestId === 'string'
+        ? requestId
+        : `cocos_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+    timestamp: typeof timestamp === 'number' ? timestamp : Date.now(),
+  }
+
+  handleIncomingMessage(message, CC_WINDOW_SOURCE)
+}
+
 if (typeof window !== 'undefined') {
-  // 原生可直接调用该函数，把消息推入 H5。
-  window.__H5_GAME_ON_COCOS_MESSAGE__ = (raw: string): void => {
-    handleIncomingRaw(raw)
+  const onMessgeRecv: DirectBridgeFn = (
+    type,
+    payload,
+    msgtype,
+    requestId,
+    timestamp,
+    source,
+  ): void => {
+    handleIncomingDirect(type, payload, msgtype, requestId, timestamp, source)
+  }
+
+  window.H5Bridge = {
+    ...(window.H5Bridge || {}),
+    onMessgeRecv,
+    onMessageRecv: onMessgeRecv,
+  }
+
+  ;(window as { onMessgeRecv?: DirectBridgeFn }).onMessgeRecv = onMessgeRecv
+  ;(window as { onMessageRecv?: DirectBridgeFn }).onMessageRecv = onMessgeRecv
+
+  // 兼容老入口：Cocos 仍可传对象或字符串。
+  window.__H5_GAME_ON_COCOS_MESSAGE__ = (incoming: unknown): void => {
+    if (typeof incoming === 'string') {
+      handleIncomingRaw(incoming, CC_WINDOW_SOURCE)
+      return
+    }
+
+    const parsed = parseBridgeObject(incoming)
+    if (parsed) {
+      handleIncomingMessage(parsed, CC_WINDOW_SOURCE)
+    }
   }
 
   // Web 兜底：接收来自父窗口/容器的 postMessage。
   window.addEventListener('message', (event: MessageEvent<unknown>) => {
     const data = event.data
     const messageSource = (data as { source?: string } | null)?.source
+
     if (typeof data === 'string') {
       handleIncomingRaw(data, messageSource)
       return
@@ -335,7 +446,6 @@ if (typeof window !== 'undefined') {
       return
     }
 
-    // 只接收 CC 来源（兼容历史 cocos-game 标记）；不带 source 的对象消息统一忽略。
     if (messageSource !== CC_WINDOW_SOURCE && messageSource !== COCOS_LEGACY_SOURCE) {
       return
     }
@@ -346,20 +456,19 @@ if (typeof window !== 'undefined') {
       return
     }
 
-    const maybeMessage = (data as { message?: BridgeMessage }).message
-    if (maybeMessage && typeof maybeMessage === 'object') {
-      const normalized = parseBridgeRaw(JSON.stringify(maybeMessage))
-      if (normalized) {
-        if (normalized.source && normalized.source !== CC_WINDOW_SOURCE) {
-          return
-        }
-        handleHandshakeMessage(normalized)
-        emit(normalized)
-      }
+    const directMessage = parseBridgeObject(data)
+    if (directMessage) {
+      handleIncomingMessage(directMessage, messageSource)
+      return
+    }
+
+    const maybeMessage = (data as { message?: unknown }).message
+    const normalized = parseBridgeObject(maybeMessage)
+    if (normalized) {
+      handleIncomingMessage(normalized, messageSource)
     }
   })
 
-  // H5 Bridge 入站监听已完成，标记就绪并尝试握手。
   window.__H5_READY__ = true
   maybeSendH5Ready()
 }

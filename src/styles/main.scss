@@ -1,8 +1,9 @@
 // Global style entry: import order is important.
-// 1) tokens -> 2) reset -> 3) layout/components -> 4) responsive overrides.
+// 1) tokens -> 2) reset -> 3) layout/components -> 4) responsive overrides -> 5) utilities.
 @use './tokens';
 @use './reset';
 @use './page-shell';
 @use './app-components';
 @use './vant-overrides';
 @use './responsive';
+@use './utilities';

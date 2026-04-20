@@ -2,6 +2,7 @@ import dayjs from 'dayjs'
 import { defineStore } from 'pinia'
 import type { EnterTablePayload } from '@/bridge/protocol'
 import StorageKey from '@/constants/storageKey'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { dzpkPersistStorage, localStore } from '@/utils/localStore'
 
 interface GameState {
@@ -60,6 +61,9 @@ export const useGameStore = defineStore(
         this.loginAccount = ''
         this.loginNickname = ''
         this.loginUserId = ''
+        // 登录态清空时，同步清理全局共享缓存。
+        const userInfoStore = useUserInfoStore()
+        userInfoStore.clearInfo()
         // 退出登录时同步清理 dzpk_TOKEN。
         localStore.removeItem(StorageKey.TOKEN)
         localStore.removeItem(StorageKey.WS_PORT)

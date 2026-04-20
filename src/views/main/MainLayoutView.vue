@@ -107,10 +107,10 @@ onMounted(() => {
   position: relative;
   z-index: 2;
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.62rem) 0.48rem
+  padding: calc(env(safe-area-inset-top) + 0.62rem) 0.0rem
     calc(env(safe-area-inset-bottom) + 2.72rem);
 }
 .module-slot {
-  margin-top: 0.42rem;
+  margin-top: 0.5rem;
 }
 </style>

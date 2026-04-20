@@ -1,4 +1,4 @@
-import { sendBridgeMessage } from './bridge'
+import { isBridgeHandshakeDone, onBridgeHandshakeDone, sendBridgeMessage } from './bridge'
 import {
   BRIDGE_ACTION,
   BRIDGE_MSG_TYPE,
@@ -12,6 +12,44 @@ import type { RoomDetailData, RoomDetailRequest } from '@/api/models/room'
 
 function emitH5BusinessMessage<TPayload>(action: string, payload: TPayload): void {
   sendBridgeMessage(action, payload, { msgtype: BRIDGE_MSG_TYPE.H5 })
+}
+
+const pendingHandshakeSyncMap = new Map<string, unknown>()
+
+let stopHandshakeDoneListener: (() => void) | null = null
+
+function ensureHandshakeSyncListener(): void {
+  if (stopHandshakeDoneListener) {
+    return
+  }
+  stopHandshakeDoneListener = onBridgeHandshakeDone(() => {
+    flushHandshakeSyncMessages()
+    stopHandshakeDoneListener?.()
+    stopHandshakeDoneListener = null
+  })
+}
+
+function queueSyncUntilHandshake<TPayload>(action: string, payload: TPayload): void {
+  if (isBridgeHandshakeDone()) {
+    emitH5BusinessMessage(action, payload)
+    return
+  }
+
+  // 握手前仅保留每个 action 的最新快照，避免重复下发旧数据。
+  pendingHandshakeSyncMap.set(action, payload)
+  ensureHandshakeSyncListener()
+}
+
+function flushHandshakeSyncMessages(): void {
+  if (!isBridgeHandshakeDone() || !pendingHandshakeSyncMap.size) {
+    return
+  }
+
+  const entries = Array.from(pendingHandshakeSyncMap.entries())
+  pendingHandshakeSyncMap.clear()
+  entries.forEach(([action, payload]) => {
+    emitH5BusinessMessage(action, payload)
+  })
 }
 
 function resolveUserField(user: Record<string, unknown>, keys: string[]): string {
@@ -32,14 +70,14 @@ export function forwardUserInfoToCocos(data: UserInfoData): void {
     avatar: resolveUserField(user, ['avatar', 'headimg']) || undefined,
     raw: data,
   }
-  emitH5BusinessMessage(BRIDGE_ACTION.SYNC_USER, payload)
+  queueSyncUntilHandshake(BRIDGE_ACTION.SYNC_USER, payload)
 }
 
 export function forwardUserClubToCocos(response: ApiResponse<unknown>): void {
   const payload: SyncUserClubPayload = {
     response,
   }
-  emitH5BusinessMessage(BRIDGE_ACTION.SYNC_USER_CLUB, payload)
+  queueSyncUntilHandshake(BRIDGE_ACTION.SYNC_USER_CLUB, payload)
 }
 
 export function forwardRoomsListToCocos(

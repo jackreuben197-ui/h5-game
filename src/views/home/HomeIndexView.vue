@@ -1,66 +1,660 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { ref } from 'vue'
 
 const router = useRouter()
 
-// 首页模块的示例子页面入口。
-function goToTaskPage(): void {
-  void router.push('/home/task')
-}
-// 跳转到牌局列表
+const balanceVisible = ref(true)
+const balance = ref('0.00')
+const noticeText = ref('欢迎来到扑克俱乐部，祝您游戏愉快！...欢迎来到扑克俱乐部，祝您游戏愉快！')
+
 function goToGameList(): void {
   void router.push('/gameList')
+}
+
+function toggleBalance(): void {
+  balanceVisible.value = !balanceVisible.value
+}
+
+function refreshBalance(): void {
+  // 刷新余额
+}
+
+function goToRecharge(): void {
+  void router.push('/recharge')
 }
 </script>
 
 <template>
-  <div class="module-card">
-    <h2 class="module-title">
-      首页模块
-    </h2>
-    <p class="module-desc">
-      这里可以放首页 Banner、活动卡片、公告入口等内容。
-    </p>
-    <VanButton
-      type="primary"
-      block
-      @click="goToTaskPage"
-    >
-      进入首页子页面
-    </VanButton>
-    <VanButton
-      type="primary"
-      class="button"
-      block
-      @click="goToGameList"
-    >
-      扑克专区
-    </VanButton>
+  <div class="home-page">
+    <!-- 1. 顶部俱乐部介绍图 -->
+    <div class="home-header">
+      <img class="home-header-img" src="@/assets/images/home_header_1.png" alt="俱乐部介绍" />
+    </div>
+
+    <!-- 2. 公告栏 -->
+    <div class="notice-bar">
+      <img class="notice-icon" src="@/assets/icons/icon_notice.png" alt="公告" />
+      <div class="notice-marquee">
+        <span class="notice-label"> 公告消息： </span>
+        <van-text-ellipsis class="notice-text" :content="noticeText" />
+      </div>
+    </div>
+
+    <!-- 3. 俱乐部控件 -->
+    <div class="club-panel">
+      <!-- 左侧：客服 + 余额 + 刷新 + 充值 -->
+      <div class="club-left">
+        <div class="club-service-row">
+          <span class="service-label"> 客服 </span>
+          <img
+            class="icon-sm icon-eye"
+            src="@/assets/icons/icon_eye_open.png"
+            alt="显示/隐藏"
+            @click="toggleBalance"
+          />
+        </div>
+        <div class="club-balance-row">
+          <img class="icon-sm" src="@/assets/icons/icon_balance.png" alt="余额" />
+          <span class="balance-amount">
+            {{ balanceVisible ? balance : '****' }}
+          </span>
+          <img
+            class="icon-sm icon-refresh"
+            src="@/assets/icons/icon_refresh.png"
+            alt="刷新"
+            @click="refreshBalance"
+          />
+          <button class="recharge-btn" @click="goToRecharge">充值</button>
+        </div>
+      </div>
+
+      <!-- 分割线 -->
+      <div class="club-divider"></div>
+
+      <!-- 右侧：联系方式 -->
+      <div class="club-right">
+        <div class="contact-item">
+          <img class="contact-icon" src="@/assets/icons/icon_service_1.png" alt="Telegram" />
+          <span class="contact-label"> @game </span>
+        </div>
+        <div class="contact-item">
+          <img class="contact-icon" src="@/assets/icons/icon_service_2.png" alt="邮箱" />
+          <span class="contact-label"> @game </span>
+        </div>
+        <div class="contact-item">
+          <img class="contact-icon" src="@/assets/icons/icon_service_3.png" alt="IM客服" />
+          <span class="contact-label"> 客服 </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. 游戏模块 -->
+    <div class="game-zones">
+      <!-- 左侧：麻将 + MTT + 小游戏 -->
+      <div class="game-zone-left">
+        <!-- 麻将专区 -->
+        <div class="game-card game-card-mahjong" @click="goToGameList">
+          <img
+            class="zone-lg-icon zone-lg-icon-mahjong"
+            src="@/assets/icons/game_zone_mahjong_lg.png"
+            alt="麻将"
+          />
+          <img class="zone-mini-icon" src="@/assets/icons/game_zone_mahjong_mini.png" alt="" />
+          <div class="zone-info">
+            <span class="zone-title"> 麻将专区 </span>
+            <p class="zone-desc">推倒胡 血战到底 血流成河</p>
+            <p class="zone-sub-desc">真金真人对战</p>
+          </div>
+          <div class="zone-online-bar">
+            <span class="online-text"> 在线 </span>
+            <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
+            <span class="online-num"> 108桌 </span>
+            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
+            <span class="online-num"> 384人 </span>
+          </div>
+        </div>
+
+        <!-- MTT赛事专区 -->
+        <div class="game-card game-card-mtt" @click="goToGameList">
+          <img
+            class="zone-lg-icon zone-lg-icon-mtt"
+            src="@/assets/icons/game_zone_mtt_lg.png"
+            alt="MTT"
+          />
+          <img class="zone-mini-icon" src="@/assets/icons/game_zone_mtt_mini.png" alt="" />
+          <div class="zone-info">
+            <span class="zone-title"> 赛事专区 </span>
+            <p class="zone-desc">扑克多人比赛 麻将多人比赛</p>
+            <p class="zone-sub-desc">获取海量线下门票</p>
+          </div>
+          <div class="zone-online-bar">
+            <span class="online-text"> 在线 </span>
+            <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
+            <span class="online-num"> 887545 </span>
+            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
+            <span class="online-num"> 384人 </span>
+          </div>
+        </div>
+
+        <!-- 小游戏专区 -->
+        <div class="game-card game-card-minigame" @click="goToGameList">
+          <img
+            class="zone-lg-icon zone-lg-icon-minigame"
+            src="@/assets/icons/game_zone_minigame_lg.png"
+            alt="小游戏"
+          />
+          <img class="zone-mini-icon" src="@/assets/icons/game_zone_minigame_mini.png" alt="" />
+          <div class="zone-info">
+            <span class="zone-title"> 小游戏专区 </span>
+            <p class="zone-desc">德州牛仔</p>
+          </div>
+          <div class="zone-online-bar">
+            <span class="online-text"> 在线 </span>
+            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
+            <span class="online-num"> 384人 </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：扑克专区 + 即将开放 -->
+      <div class="game-zone-right">
+        <!-- 扑克专区 -->
+        <div class="game-card poker-card" @click="goToGameList">
+          <img class="poker-bg" src="@/assets/images/home_game_zone_poker.png" alt="扑克背景" />
+          <div class="poker-overlay"></div>
+          <img
+            class="zone-mini-icon poker-mini"
+            src="@/assets/icons/game_zone_poker_mini.png"
+            alt=""
+          />
+          <div class="zone-info poker-info">
+            <span class="zone-title"> 扑克专区 </span>
+            <div class="poker-desc-area">
+              <p class="zone-sub-desc text-left">德州扑克</p>
+              <p class="zone-sub-desc text-right">奥马哈</p>
+              <p class="zone-sub-desc text-left">短牌</p>
+              <p class="zone-sub-desc">真金真人对战</p>
+            </div>
+          </div>
+          <div class="zone-online-bar">
+            <span class="online-text"> 在线 </span>
+            <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
+            <span class="online-num"> 88场比赛 </span>
+            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
+            <span class="online-num"> 384人 </span>
+          </div>
+        </div>
+
+        <!-- 即将开放（右侧下方）-->
+        <div class="game-card coming-soon-card coming-soon-right">
+          <img
+            class="coming-soon-bg"
+            src="@/assets/images/home_comming_soon_1.png"
+            alt="即将开放"
+          />
+          <div class="coming-soon-overlay"></div>
+          <span class="coming-soon-text"> 即将开放 </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. 底部4个即将开放 -->
+    <div class="coming-soon-row">
+      <div v-for="i in 4" :key="i" class="coming-soon-small">
+        <img
+          class="coming-soon-small-bg"
+          src="@/assets/images/home_comming_soon_2.png"
+          alt="即将开放"
+        />
+        <div class="coming-soon-small-overlay"></div>
+        <span class="coming-soon-small-text"> 即将开放 </span>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
-.module-card {
-  padding: 0.44rem;
-  border-radius: 0.34rem;
-  background: rgba(5, 21, 38, 0.55);
-  border: 0.02rem solid rgba(216, 232, 255, 0.32);
-  backdrop-filter: blur(0.12rem);
+.home-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0.24rem;
+  padding: 0 0.4rem 4rem; // 底部留出 tabbar 高度
+  background: transparent;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  // 隐藏滚动条但保留滚动功能
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-.module-title {
+/* ===== 1. 顶部 Header ===== */
+.home-header {
+  width: 100%;
+  border-radius: 0.42rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.home-header-img {
+  width: 100%;
+  height: 3.7rem;
+  object-fit: cover;
+  display: block;
+}
+
+/* ===== 2. 公告栏 ===== */
+.notice-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.06rem;
+  padding: 0rem 0.18rem;
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 1rem;
+  height: 0.5rem;
+  min-height: 0.5rem;
+}
+
+.notice-icon {
+  width: 0.43rem;
+  height: 0.43rem;
+  flex-shrink: 0;
+}
+
+.notice-marquee {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  flex: 1;
+}
+
+.notice-label {
+  font-size: 0.28rem;
+  color: #fff;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.notice-text {
+  font-size: 0.28rem;
+  color: rgba(255, 255, 255, 1);
+  font-weight: 400;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ===== 3. 俱乐部控件 ===== */
+.club-panel {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.17);
+  border-radius: 1rem;
+  padding: 0.1rem 0.6rem;
+  min-height: 1.54rem;
+  gap: 0;
+  box-shadow:
+  /* 左上高光 */ inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
+    /* 右下高光 */ inset -1px -1px 0px 0px rgba(255, 255, 255, 0.35);
+}
+
+.club-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  flex: 1;
+}
+
+.club-service-row {
+  display: flex;
+  align-items: center;
+  gap: 0.12rem;
+}
+
+.icon-service {
+  width: 0.36rem;
+  height: 0.36rem;
+}
+
+.service-label {
+  font-size: 0.3rem;
+  color: #fff;
+}
+
+.club-balance-row {
+  display: flex;
+  align-items: center;
+  gap: 0.12rem;
+}
+
+.icon-sm {
+  width: 0.4rem;
+  height: 0.4rem;
+  flex-shrink: 0;
+}
+
+.icon-eye {
+  width: 0.453rem;
+  height: 0.347rem;
+}
+.icon-eye,
+.icon-refresh {
+  cursor: pointer;
+  margin-right: 0.1rem;
+}
+
+.balance-amount {
+  font-size: 0.38rem;
+  color: #fff;
+  font-weight: 500;
+  min-width: 0.9rem;
+}
+
+.recharge-btn {
+  width: 1.3rem;
+  padding: 0.06rem 0rem;
+  background: rgba(93, 4, 40, 0.25);
+  border: none;
+  border-radius: 1rem;
+  color: #fff;
+  font-size: 0.28rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.club-divider {
+  width: 0.02rem;
+  height: 1.2rem;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0 0.28rem;
+  flex-shrink: 0;
+}
+
+.club-right {
+  display: flex;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.contact-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.contact-icon {
+  width: 0.8rem;
+  height: 0.8rem;
+  object-fit: contain;
+}
+
+.contact-label {
+  font-size: 0.2rem;
+  color: #fff;
+  text-align: center;
+}
+
+/* ===== 4. 游戏模块 ===== */
+.game-zones {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.game-zone-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.16rem;
+  flex: 1;
+}
+
+.game-zone-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0.16rem;
+  flex: 1;
+}
+
+/* 游戏卡片通用 */
+.game-card {
+  position: relative;
+  // background: rgba(0, 0, 0, 0.22);
+  border-radius: 0.56rem;
+  border: 0.02rem solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(6px);
+  // overflow: hidden;
+  padding: 0.14rem 0.24rem 0.14rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  min-height: 2.69rem;
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
+.zone-lg-icon {
+  position: absolute;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 3;
+}
+.game-card-mahjong{
+  background: url('@/assets/images/left_card_bg_1.png') center/cover no-repeat;
+}
+.game-card-mtt{
+  background: url('@/assets/images/left_card_bg_2.png') center/cover no-repeat;
+}
+.game-card-minigame {
+  overflow: hidden;
+  background: url('@/assets/images/left_card_bg_3.png') center/cover no-repeat;
+}
+.zone-lg-icon-mahjong {
+  width: 1.8rem;
+  height: 1.7rem;
+  left: -0.45rem;
+  top: -0.55rem;
+}
+.zone-lg-icon-mtt {
+  width: 0.96rem;
+  height: 0.96rem;
+  left: -0.05rem;
+  top: -0.2rem;
+  bottom: 0.26rem;
+}
+.zone-lg-icon-minigame {
+  width: 1.4rem;
+  height: 1.6rem;
+  left: -0.05rem;
+  bottom: -0.1rem;
+}
+
+.zone-mini-icon {
+  position: absolute;
+  top: 0.26rem;
+  right: 0.24rem;
+  width: 0.35rem;
+  height: 0.27rem;
+  object-fit: contain;
+}
+
+.zone-info {
+  text-align: center;
+}
+
+.zone-title {
+  font-size: 0.4rem;
+  font-weight: 800;
+  color: #fff;
+  display: block;
+  margin-bottom: 0.4rem;
+}
+.poker-desc-area{
+  height: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.zone-desc {
+  font-size: 0.22rem;
+  font-weight: 400;
+  color: #fff;
   margin: 0;
-  font-size: 0.54rem;
-  color: #ffffff;
+  line-height: 1.5;
 }
 
-.module-desc {
-  margin: 0.24rem 0 0.36rem;
-  font-size: 0.34rem;
-  line-height: 1.6;
-  color: rgba(235, 245, 255, 0.9);
+.zone-sub-desc {
+  font-size: 0.22rem;
+  font-weight: 400;
+  color: #fff;
+  margin: 0.06rem 0 0;
 }
-.button {
-  margin-top: 5px;
+
+.zone-online-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  background: rgba(200, 200, 200, 0.25);
+  border-radius: 1rem;
+  padding: 0.06rem 0.2rem;
+  margin-top: 0.18rem;
+  height: 0.4rem;
+  width: 100%;
+  z-index: 2;
+}
+
+.online-text {
+  font-size: 0.22rem;
+  color: #fff;
+}
+
+.online-icon {
+  width: 0.22rem;
+  height: 0.22rem;
+  margin-left: 0.1rem;
+  object-fit: contain;
+}
+
+.online-num {
+  font-size: 0.22rem;
+  color: #fff;
+}
+
+/* 扑克专区特殊样式 */
+.poker-card {
+  flex: 1;
+  min-height: 5.54rem;
+}
+
+.poker-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.poker-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.poker-mini {
+  z-index: 1;
+}
+
+.poker-info {
+  position: relative;
+  z-index: 1;
+  padding-left: 0;
+  flex: 1;
+}
+
+/* 即将开放（右侧下方）*/
+.coming-soon-card {
+  min-height: 2.7rem;
+  padding: 0;
+}
+
+.coming-soon-right {
+  position: relative;
+  border-radius: 0.56rem;
+  overflow: hidden;
+}
+
+.coming-soon-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.coming-soon-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.coming-soon-text {
+  position: relative;
+  z-index: 1;
+  display: block;
+  text-align: center;
+  font-size: 0.36rem;
+  font-weight: 700;
+  color: #fff;
+  margin: auto;
+  padding: 1rem 0;
+  width: 100%;
+}
+
+/* ===== 5. 底部4个即将开放 ===== */
+.coming-soon-row {
+  display: flex;
+  gap: 0.12rem;
+}
+
+.coming-soon-small {
+  position: relative;
+  flex: 1;
+  width: 2.165rem;
+  height: 2.293rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  aspect-ratio: 81 / 86;
+}
+
+.coming-soon-small-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.coming-soon-small-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.coming-soon-small-text {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 0.293rem;
+  font-weight: 400;
+  color: #fff;
 }
 </style>

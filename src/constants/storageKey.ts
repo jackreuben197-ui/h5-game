@@ -4,6 +4,8 @@ export default class StorageKey {
   static CLEAN_ALL_FLAG = 'CLEAN_ALL_FLAG'
   // 登录数据（H5 侧 Pinia 持久化主键）。
   static LOGIN_DATA = 'LOGIN_DATA'
+  // 全局共享缓存（userInfo / clubList / currentClubId）。
+  static USER_DATA = 'USER_DATA'
   // token 字符串。
   static TOKEN = 'TOKEN'
   // websocket 端口（对应 Cocos LoginSession.SyncWS 的 data.port）。

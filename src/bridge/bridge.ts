@@ -17,6 +17,7 @@ interface MessageHandlerEntry {
   handler: MessageHandler
   route: MessageRoute
 }
+type HandshakeDoneHandler = () => void
 
 export interface SubscribeCocosMessagesOptions {
   // all: 全量回调；forward: msgtype=0；h5: msgtype=1。
@@ -30,14 +31,14 @@ export interface SendBridgeMessageOptions {
 // 桥接传输相关标识。
 const BRIDGE_SCHEME = 'cocos'
 const BRIDGE_HOST = 'bridge'
-const H5_WINDOW_SOURCE = 'h5'
 const CC_WINDOW_SOURCE = 'cc'
 // 兼容历史字段。
-const H5_LEGACY_SOURCE = 'h5-game'
 const COCOS_LEGACY_SOURCE = 'cocos-game'
 const handlerEntries = new Set<MessageHandlerEntry>()
+const handshakeDoneHandlers = new Set<HandshakeDoneHandler>()
 
 let h5ReadySent = false
+let bridgeHandshakeDone = false
 
 // 向所有订阅者分发消息。
 function emit(message: BridgeMessage): void {
@@ -99,7 +100,8 @@ function postByWindowMessage(raw: string): boolean {
     return false
   }
 
-  window.parent.postMessage({ source: H5_WINDOW_SOURCE, payload: raw }, '*')
+  // 约定：H5 侧发出时 source 保持 undefined；CC 发出时 source='cc'。
+  window.parent.postMessage({ payload: raw }, '*')
   return true
 }
 
@@ -237,6 +239,32 @@ function normalizeMessageRoute(raw: SubscribeCocosMessagesOptions['msgtype']): M
   return 'all'
 }
 
+function markBridgeHandshakeDone(): void {
+  if (bridgeHandshakeDone) {
+    return
+  }
+  bridgeHandshakeDone = true
+  handshakeDoneHandlers.forEach((handler) => handler())
+}
+
+// 当前是否已完成 H5/CC 握手（以收到 CC ready/ack 为准）。
+export function isBridgeHandshakeDone(): boolean {
+  return bridgeHandshakeDone
+}
+
+// 握手完成回调；若已完成则立即回调一次。
+export function onBridgeHandshakeDone(handler: HandshakeDoneHandler): () => void {
+  if (bridgeHandshakeDone) {
+    handler()
+    return () => undefined
+  }
+
+  handshakeDoneHandlers.add(handler)
+  return () => {
+    handshakeDoneHandlers.delete(handler)
+  }
+}
+
 function maybeSendH5Ready(): void {
   if (typeof window === 'undefined' || h5ReadySent) {
     return
@@ -262,22 +290,25 @@ function handleHandshakeMessage(message: BridgeMessage): void {
     markCcReady()
     // CC 主动声明 ready 时，H5 需回 h5Ack。
     sendBridgeMessage(BRIDGE_ACTION.H5_ACK, {}, { msgtype: BRIDGE_MSG_TYPE.H5 })
+    markBridgeHandshakeDone()
     maybeSendH5Ready()
     return
   }
 
   if (message.action === BRIDGE_ACTION.CC_ACK) {
     markCcReady()
+    markBridgeHandshakeDone()
     return
   }
 }
 
 // 解析原始入站消息，合法则分发。
-function handleIncomingRaw(raw: string): void {
+function handleIncomingRaw(raw: string, fallbackSource?: string): void {
   const parsed = parseBridgeRaw(raw)
   if (parsed) {
-    // 约定：CC 下发可带 source='cc'；若显式标记为其它来源则忽略。
-    if (parsed.source && parsed.source !== CC_WINDOW_SOURCE) {
+    const messageSource = parsed.source || fallbackSource
+    // 仅接收 CC 消息，避免自己 postMessage 回流被自消费。
+    if (messageSource !== CC_WINDOW_SOURCE && messageSource !== COCOS_LEGACY_SOURCE) {
       return
     }
     handleHandshakeMessage(parsed)
@@ -294,8 +325,9 @@ if (typeof window !== 'undefined') {
   // Web 兜底：接收来自父窗口/容器的 postMessage。
   window.addEventListener('message', (event: MessageEvent<unknown>) => {
     const data = event.data
+    const messageSource = (data as { source?: string } | null)?.source
     if (typeof data === 'string') {
-      handleIncomingRaw(data)
+      handleIncomingRaw(data, messageSource)
       return
     }
 
@@ -303,19 +335,14 @@ if (typeof window !== 'undefined') {
       return
     }
 
-    const messageSource = (data as { source?: string }).source
-    // 先忽略自己发出的 postMessage 回流，避免自消费。
-    if (messageSource === H5_WINDOW_SOURCE || messageSource === H5_LEGACY_SOURCE) {
-      return
-    }
-    // 只接收 CC 来源（兼容历史 cocos-game 标记）。
-    if (messageSource && messageSource !== CC_WINDOW_SOURCE && messageSource !== COCOS_LEGACY_SOURCE) {
+    // 只接收 CC 来源（兼容历史 cocos-game 标记）；不带 source 的对象消息统一忽略。
+    if (messageSource !== CC_WINDOW_SOURCE && messageSource !== COCOS_LEGACY_SOURCE) {
       return
     }
 
     const payload = (data as { payload?: unknown }).payload
     if (typeof payload === 'string') {
-      handleIncomingRaw(payload)
+      handleIncomingRaw(payload, messageSource)
       return
     }
 
@@ -323,6 +350,9 @@ if (typeof window !== 'undefined') {
     if (maybeMessage && typeof maybeMessage === 'object') {
       const normalized = parseBridgeRaw(JSON.stringify(maybeMessage))
       if (normalized) {
+        if (normalized.source && normalized.source !== CC_WINDOW_SOURCE) {
+          return
+        }
         handleHandshakeMessage(normalized)
         emit(normalized)
       }

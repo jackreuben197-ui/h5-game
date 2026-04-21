@@ -22,7 +22,23 @@ export interface RoomRecord {
   name?: string
   game_type: number
   poker_type: number
+  /**
+   * 限注类型：2 表示 AOF（与 Unity _limitBetType 判定一致）。
+   */
+  limit_bet_type?: number
   sb: number
+  /**
+   * 蘑菇模式：>0 显示 mushroom 标识。
+   */
+  mushroom_mode?: number
+  /**
+   * 鱿鱼模式：=1 显示 squid 标识。
+   */
+  squid_on?: number
+  /**
+   * 暴击模式：=1 显示 critical 标识。
+   */
+  critical_hit?: number
   roomers?: number
   seat_count?: number
   users?: RoomUser[]

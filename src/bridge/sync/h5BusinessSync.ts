@@ -92,5 +92,6 @@ export function forwardRoomsListToCocos(
     request,
     response,
   }
-  emitH5BusinessMessage(BRIDGE_ACTION.SYNC_ROOMS_LIST, payload)
+  // 对齐 syncUser/syncUserClub：握手未完成时先缓存，完成后补发最新快照。
+  queueSyncUntilHandshake(BRIDGE_ACTION.SYNC_ROOMS_LIST, payload)
 }

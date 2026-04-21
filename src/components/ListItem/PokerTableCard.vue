@@ -3,6 +3,10 @@ import { computed, type CSSProperties } from 'vue'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconTime from '@/assets/icons/icon_time.png'
 import iconChips from '@/assets/icons/icon_chips.png'
+import iconAof from '@/assets/icons/table_icon_Aof.png'
+import iconCritical from '@/assets/icons/table_icon_critical.png'
+import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
+import iconSquid from '@/assets/icons/table_icon_squid.png'
 import type { RoomRecord, RoomUser } from '@/api/models/room'
 
 interface Props {
@@ -14,6 +18,51 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   click: [room: RoomRecord]
 }>()
+
+interface FeatureIconItem {
+  key: 'aof' | 'mushroom' | 'squid' | 'critical'
+  src: string
+  alt: string
+}
+
+// 对齐 Unity 判定：只处理 AOF / Mushroom / Squid / Critical 这 4 个玩法标记。
+const featureIcons = computed<FeatureIconItem[]>(() => {
+  const room = props.room as Record<string, unknown>
+  const result: FeatureIconItem[] = []
+
+  if (Number(room.limit_bet_type) === 2) {
+    result.push({
+      key: 'aof',
+      src: iconAof,
+      alt: 'aof',
+    })
+  }
+
+  if (Number(room.mushroom_mode) > 0) {
+    result.push({
+      key: 'mushroom',
+      src: iconMushroom,
+      alt: 'mushroom',
+    })
+  }
+
+  if (Number(room.squid_on) === 1) {
+    result.push({
+      key: 'squid',
+      src: iconSquid,
+      alt: 'squid',
+    })
+  }
+
+  if (Number(room.critical_hit) === 1) {
+    result.push({
+      key: 'critical',
+      src: iconCritical,
+      alt: 'critical',
+    })
+  }
+  return result
+})
 
 // 当前牌桌人数。
 const roomers = computed(() => {
@@ -224,6 +273,20 @@ function formatRoomTime(seconds: number): string {
     </div>
 
     <div class="table-main">
+      <div
+        v-if="featureIcons.length"
+        class="feature-icons"
+      >
+        <img
+          v-for="item in featureIcons"
+          :key="item.key"
+          class="feature-icon"
+          :class="'icon-'+item.alt"
+          :src="item.src"
+          :alt="item.alt"
+        />
+      </div>
+
       <div class="seat-area">
         <div
           class="table-bg"
@@ -305,6 +368,26 @@ function formatRoomTime(seconds: number): string {
   background: url('@/assets/images/game_list_card_bg.png') no-repeat center /100% 100%;
   position: relative;
   // overflow: hidden;
+}
+
+/* 右上角玩法标识：仅显示 AOF / Mushroom / Squid / Critical。 */
+.feature-icons {
+  position: absolute;
+  top: -0.4rem;
+  right: -0.1rem;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.08rem;
+}
+.icon-aof{
+  margin-right: 0.15rem;
+}
+
+.feature-icon {
+  width: 1.3rem;
+  height: 1.3rem;
+  object-fit: contain;
 }
 
 .table-name {

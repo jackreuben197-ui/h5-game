@@ -33,6 +33,7 @@ declare global {
     __H5_GAME_ON_COCOS_MESSAGE__?: (incoming: unknown) => void
     __H5_READY__?: boolean
     __CC_READY__?: boolean
+    __H5_VISIBLE__?: boolean
     H5LobbyHost?: {
       mount?: (container?: string) => void
       unmount?: () => void

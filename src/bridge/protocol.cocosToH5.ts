@@ -36,3 +36,24 @@ export interface CocosToastPayload {
   // 可选显示时长（毫秒）。
   duration?: number
 }
+
+// Cocos -> H5：控制 H5 根节点显隐（显示 Cocos 画布时可下发 h5Hide）。
+export interface H5VisibilityPayload {
+  // 可选附加原因，仅用于日志。
+  reason?: string
+}
+
+// Cocos -> H5：路由跳转控制。
+export interface H5NavigatePayload {
+  // 二选一：path 或 name 至少传一个。
+  path?: string
+  name?: string
+  // 路由参数（按 Vue Router 规范透传）。
+  params?: Record<string, unknown>
+  query?: Record<string, unknown>
+  hash?: string
+  // true: replace；false/undefined: push。
+  replace?: boolean
+  // 可选：跳转前先显示 H5 层。
+  ensureVisible?: boolean
+}

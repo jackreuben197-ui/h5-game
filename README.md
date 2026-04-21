@@ -202,6 +202,11 @@ window.H5Bridge.onMessgeRecv(type, payload, msgtype, requestId, timestamp, sourc
 
 ### 9.2 职责边界（当前约定）
 
+- 层级关系（同页融合）：
+  - `#GameCanvas`（Cocos）在底层，`z-index: 1`
+  - `#app`（H5）在上层，`z-index: 10`
+  - 需要露出 Cocos 画面时，由 Cocos 下发 `h5Hide`，H5 隐藏 `#app`
+  - 需要恢复 H5 时，下发 `h5Show`
 - 牌桌内（Cocos 主导）：
   - Cocos 负责 WS 协议编解码（进桌、退桌等业务包）
   - H5 只负责建立连接、透传二进制、回传服务端消息
@@ -221,7 +226,10 @@ window.H5Bridge.onMessgeRecv(type, payload, msgtype, requestId, timestamp, sourc
 
 ### 9.3 Cocos -> H5 动作规范
 
-说明：本节动作默认 `msgtype=0`（转发层）。
+说明：
+
+- `wsConnect/wsSend/wsClose` 默认 `msgtype=0`（转发层）
+- `h5Hide/h5Show/h5Navigate` 使用 `msgtype=1`（H5 业务层）
 
 1. `wsConnect`（可选）：建立/复用 websocket
 
@@ -252,6 +260,41 @@ sendMessage(
 
 ```ts
 sendMessage('wsClose', { code: 1000, reason: 'leave gameplay' }, 0)
+```
+
+4. `h5Hide` / `h5Show`：控制 H5 根层显隐（`msgtype=1`）
+
+```ts
+sendMessage('h5Hide', {}, 1) // 隐藏 H5，露出 Cocos 画布
+sendMessage('h5Show', {}, 1) // 恢复显示 H5
+```
+
+5. `h5Navigate`：让 H5 执行路由跳转（`msgtype=1`）
+
+```ts
+sendMessage(
+  'h5Navigate',
+  {
+    path: '/club/members',
+    query: { clubId: 41, from: 'cocos' },
+    replace: false,
+    ensureVisible: true,
+  },
+  1,
+)
+```
+
+也支持按路由名跳转：
+
+```ts
+sendMessage(
+  'h5Navigate',
+  {
+    name: 'club-members',
+    params: { id: '41' },
+  },
+  1,
+)
 ```
 
 ### 9.4 H5 -> Cocos 回传规范

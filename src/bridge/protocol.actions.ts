@@ -16,6 +16,9 @@ export const BRIDGE_ACTION = {
   WS_CLOSED: 'wsClosed',
   // Cocos -> H5
   SHOW_TOAST: 'showToast',
+  H5_HIDE: 'h5Hide',
+  H5_SHOW: 'h5Show',
+  H5_NAVIGATE: 'h5Navigate',
   // H5 -> Cocos
   SYNC_USER: 'syncUser',
   SYNC_USER_CLUB: 'syncUserClub',

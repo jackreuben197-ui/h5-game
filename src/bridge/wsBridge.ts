@@ -27,7 +27,6 @@ let wsUrl = ''
 let stopWsBridgeListener: (() => void) | null = null
 let lastHeartbeatLogAt = 0
 let lastSendHeartbeatLogAt = 0
-let heartbeatDiffLogged = false
 let heartbeatTimer: number | null = null
 let reconnectTimer: number | null = null
 let reconnectAttempts = 0
@@ -46,21 +45,6 @@ const HOLDEN_CODE_NAME: Record<number, string> = {
   135: 'CACHE_DATA_UPDATE',
   140: 'ROOM_CHANGE_NOTIFY',
   1108: 'ACTION_ALL',
-}
-
-const HEARTBEAT_DIFF_VS_COCOS = {
-  registerBeforeHeartbeat: {
-    h5: 'auto-send REGISTER(code=1) on ws open',
-    cocos: 'auto-send REGISTER(code=1) on ws open',
-  },
-  heartbeatInterval: {
-    h5: `${HEARTBEAT_INTERVAL_MS / 1000}s fixed`,
-    cocos: 'lobby=5s, gameplay=1s',
-  },
-  tokenWriteMode: {
-    h5: 'token fixed to 32 bytes (truncate/pad)',
-    cocos: 'write string bytes directly',
-  },
 }
 
 export interface H5WsIncomingEvent {
@@ -155,7 +139,9 @@ function uint8ArrayToBase64Preview(bytes: Uint8Array, maxBytes = 96): string {
     return ''
   }
   const preview = bytes.subarray(0, Math.min(bytes.length, maxBytes))
-  return arrayBufferToBase64(preview.buffer.slice(preview.byteOffset, preview.byteOffset + preview.byteLength))
+  return arrayBufferToBase64(
+    preview.buffer.slice(preview.byteOffset, preview.byteOffset + preview.byteLength),
+  )
 }
 
 // 把 base64 还原成 ArrayBuffer，用于透传到 websocket。
@@ -224,19 +210,6 @@ function logWsOutgoing(data: string | ArrayBuffer | ArrayBufferView | Blob, cont
         return
       }
       lastSendHeartbeatLogAt = now
-      console.info('[wsSend][heartbeat]', {
-        context,
-        code: packet.code,
-        codeName: HOLDEN_CODE_NAME[packet.code] || 'UNKNOWN',
-        token: packet.token,
-        roomId: packet.roomId,
-        matchId: packet.matchId,
-        protoVersion: packet.protoVersion,
-        bodyLen: packet.body.length,
-        protoFields: packet.body.length ? decodeProtoDebugFields(packet.body, 8) : [],
-        bodyBase64Preview: uint8ArrayToBase64Preview(packet.body),
-      })
-      return
     }
 
     const codeName = HOLDEN_CODE_NAME[packet.code] || 'UNKNOWN'
@@ -259,14 +232,6 @@ function logWsOutgoing(data: string | ArrayBuffer | ArrayBufferView | Blob, cont
     context,
     byteLength: bytes.length,
   })
-}
-
-function logHeartbeatDiffWithCocosOnce(): void {
-  if (heartbeatDiffLogged) {
-    return
-  }
-  heartbeatDiffLogged = true
-  console.info('[wsHeartbeat][diff-vs-cocos]', HEARTBEAT_DIFF_VS_COCOS)
 }
 
 function clearReconnectTimer(): void {
@@ -326,7 +291,6 @@ function sendHeartbeatPacket(): boolean {
     matchId: 0,
     body: new Uint8Array(0),
   })
-  logHeartbeatDiffWithCocosOnce()
   return sendWsRaw(packet, 'h5-heartbeat')
 }
 
@@ -465,18 +429,6 @@ function logHoldemPacket(buffer: ArrayBufferLike): number | null {
       return code
     }
     lastHeartbeatLogAt = now
-    console.info('[wsRecv][heartbeat]', {
-      code,
-      codeName,
-      token: packet.token,
-      roomId: packet.roomId,
-      matchId: packet.matchId,
-      protoVersion: packet.protoVersion,
-      bodyLen: body.length,
-      protoFields: body.length ? decodeProtoDebugFields(body, 8) : [],
-      bodyBase64Preview: uint8ArrayToBase64Preview(body),
-    })
-    return code
   }
 
   console.info('[wsRecv][packet]', {
@@ -708,11 +660,7 @@ function sendWs(payload: WsSendPayload): void {
 
   if (payload.dataType === 'binary') {
     const data = payload.data
-    if (
-      !(data instanceof ArrayBuffer) &&
-      !ArrayBuffer.isView(data) &&
-      !(data instanceof Blob)
-    ) {
+    if (!(data instanceof ArrayBuffer) && !ArrayBuffer.isView(data) && !(data instanceof Blob)) {
       emitWsError('wsSend 失败：binary 数据为空或类型无效')
       return
     }

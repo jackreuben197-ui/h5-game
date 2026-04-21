@@ -1,0 +1,144 @@
+import { subscribeCocosMessages } from './bridge'
+import { BRIDGE_ACTION, BRIDGE_MSG_TYPE, type BridgeMessage, type H5NavigatePayload } from './protocol'
+import router from '@/router'
+import type { RouteLocationRaw } from 'vue-router'
+
+let stopH5VisibilityListener: (() => void) | null = null
+
+function getH5Root(): HTMLElement | null {
+  if (typeof document === 'undefined') {
+    return null
+  }
+  return document.getElementById('app')
+}
+
+export function setH5Visible(visible: boolean): void {
+  const root = getH5Root()
+  if (!root) {
+    return
+  }
+
+  // 只控制 H5 根节点可见性，Cocos 画布层保持不变。
+  root.style.display = visible ? '' : 'none'
+  if (typeof window !== 'undefined') {
+    window.__H5_VISIBLE__ = visible
+  }
+
+  console.info('[bridge][h5-visibility]', {
+    visible,
+    action: visible ? BRIDGE_ACTION.H5_SHOW : BRIDGE_ACTION.H5_HIDE,
+  })
+}
+
+function isRecord(raw: unknown): raw is Record<string, unknown> {
+  return Boolean(raw) && typeof raw === 'object' && !Array.isArray(raw)
+}
+
+function normalizeNavigateTarget(payload: unknown): {
+  route: RouteLocationRaw
+  replace: boolean
+  ensureVisible: boolean
+} | null {
+  if (typeof payload === 'string' && payload.trim()) {
+    return {
+      route: { path: payload.trim() },
+      replace: false,
+      ensureVisible: false,
+    }
+  }
+
+  if (!isRecord(payload)) {
+    return null
+  }
+
+  const raw = payload as H5NavigatePayload
+  const path = typeof raw.path === 'string' ? raw.path.trim() : ''
+  const hasPath = Boolean(path)
+  const hasName = typeof raw.name === 'string' && raw.name.trim().length > 0
+  if (!hasPath && !hasName) {
+    return null
+  }
+
+  const routeObject: Record<string, unknown> = hasPath
+    ? { path }
+    : {
+      name: (raw.name as string).trim(),
+    }
+  if (isRecord(raw.params)) {
+    routeObject.params = raw.params
+  }
+  if (isRecord(raw.query)) {
+    routeObject.query = raw.query
+  }
+  if (typeof raw.hash === 'string' && raw.hash) {
+    routeObject.hash = raw.hash
+  }
+
+  return {
+    route: routeObject as RouteLocationRaw,
+    replace: raw.replace === true,
+    ensureVisible: raw.ensureVisible === true,
+  }
+}
+
+async function navigateH5(payload: unknown): Promise<void> {
+  const normalized = normalizeNavigateTarget(payload)
+  if (!normalized) {
+    console.warn('[bridge][h5-navigate] invalid payload:', payload)
+    return
+  }
+
+  if (normalized.ensureVisible) {
+    setH5Visible(true)
+  }
+
+  try {
+    await router.isReady()
+    const failure = normalized.replace
+      ? await router.replace(normalized.route)
+      : await router.push(normalized.route)
+    if (failure) {
+      console.warn('[bridge][h5-navigate] navigation failed:', failure)
+      return
+    }
+
+    console.info('[bridge][h5-navigate] done', {
+      mode: normalized.replace ? 'replace' : 'push',
+      target: normalized.route,
+    })
+  } catch (error) {
+    console.warn('[bridge][h5-navigate] navigation error:', error)
+  }
+}
+
+function onCocosMessage(message: BridgeMessage): void {
+  if (message.action === BRIDGE_ACTION.H5_HIDE) {
+    setH5Visible(false)
+    return
+  }
+
+  if (message.action === BRIDGE_ACTION.H5_SHOW) {
+    setH5Visible(true)
+    return
+  }
+
+  if (message.action === BRIDGE_ACTION.H5_NAVIGATE) {
+    void navigateH5(message.payload)
+  }
+}
+
+export function setupH5VisibilityBridgeChannel(): () => void {
+  if (stopH5VisibilityListener) {
+    return stopH5VisibilityListener
+  }
+
+  const unsubscribe = subscribeCocosMessages(onCocosMessage, {
+    msgtype: BRIDGE_MSG_TYPE.H5,
+  })
+  stopH5VisibilityListener = () => {
+    unsubscribe()
+    stopH5VisibilityListener = null
+  }
+
+  return stopH5VisibilityListener
+}

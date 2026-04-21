@@ -146,6 +146,15 @@ export default [
           after: true,
         },
       ],
+      // 与 Prettier 对齐：匿名 function 保留空格，命名 function 不加空格。
+      'space-before-function-paren': [
+        'error',
+        {
+          anonymous: 'always',
+          named: 'never',
+          asyncArrow: 'always',
+        },
+      ],
       'space-in-parens': ['error', 'never'],
       'no-multi-spaces': 'error',
       'no-trailing-spaces': 'error',

@@ -163,6 +163,8 @@ pnpm preview
 
 ## 9. Cocos Bridge 与 WS 协作规范
 
+目录分层说明见：`src/bridge/README.md`。
+
 ### 9.1 统一调用协议
 
 H5 与 Cocos 双向交互统一使用函数直调，不再要求 JSON 字符串包裹：
@@ -325,7 +327,7 @@ onMessgeRecv(
 
 ### 9.5 牌桌外 H5 自发 WS 示例
 
-H5 可直接使用 `src/bridge/wsBridge.ts` 暴露的能力处理查询类请求：
+H5 可直接使用 `src/bridge/ws/wsProxy.ts` 暴露的能力处理查询类请求：
 
 ```ts
 import {
@@ -333,7 +335,7 @@ import {
   h5SendRegisterPacket,
   h5SendHoldemPacket,
   waitH5WsPacket,
-} from '@/bridge/wsBridge'
+} from '@/bridge/ws'
 
 // 1) 确保已连接
 ensureWsProxyConnected({ port: 25201 })

@@ -1,11 +1,15 @@
-import { isBridgeHandshakeDone, onBridgeHandshakeDone, sendBridgeMessage } from './bridge'
+import {
+  isBridgeHandshakeDone,
+  onBridgeHandshakeDone,
+  sendBridgeMessage,
+} from '../core/cocosBridgeChannel'
 import {
   BRIDGE_ACTION,
   BRIDGE_MSG_TYPE,
   type SyncRoomsListPayload,
   type SyncUserClubPayload,
   type SyncUserPayload,
-} from './protocol'
+} from '../protocol'
 import type { UserInfoData } from '@/api/models/auth'
 import type { ApiResponse } from '@/api/models/common'
 import type { RoomDetailData, RoomDetailRequest } from '@/api/models/room'

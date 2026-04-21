@@ -1,5 +1,5 @@
 import { getUserWsApi } from '@/api/auth'
-import { closeWsProxy, ensureWsProxyConnected } from '@/bridge/wsBridge'
+import { closeWsProxy, ensureWsProxyConnected } from '@/bridge/ws'
 import StorageKey from '@/constants/storageKey'
 import { useGameStore } from '@/stores/game'
 import { pinia } from '@/stores/pinia'

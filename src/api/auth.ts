@@ -8,7 +8,7 @@ import type {
   UserWsResponse,
 } from '@/api/models/auth'
 import type { ApiResponse } from '@/api/models/common'
-import { forwardUserClubToCocos, forwardUserInfoToCocos } from '@/bridge/httpSync'
+import { forwardUserClubToCocos, forwardUserInfoToCocos } from '@/bridge/sync'
 import { pinia } from '@/stores/pinia'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
 

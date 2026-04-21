@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, type CSSProperties } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, type CSSProperties } from 'vue'
 import { showFailToast, showSuccessToast } from 'vant'
 import RoomGroupCard from './components/RoomGroupCard.vue'
 import GameTypeTabbar from '@/components/GameTypeTabbar.vue'
 import PageBackHeader from '@/components/HeaderBack.vue'
 import TopActionButton from '@/components/TopActionButton.vue'
 import { getRoomIdsApi, getRoomsDetailApi } from '@/api/room'
-import { enterTable } from '@/bridge/bridge'
+import { WS_NOTIFY_CODE, subscribeH5WsCode } from '@/bridge/ws'
+import { enterTable } from '@/bridge/core'
 import type { EnterTablePayload } from '@/bridge/protocol'
 import StorageKey from '@/constants/storageKey'
 import LoginSession from '@/session/loginSession'
@@ -51,6 +52,9 @@ const ROOM_LIST_CACHE_VERSION = 1
 const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
 
 const gameStore = useGameStore()
+let stopRoomChangeNotifyListener: (() => void) | null = null
+let roomListRefreshTimer: number | null = null
+let roomListRefreshing = false
 
 // 顶部右侧切换风格开关：和旧版保持一致。
 const activeTab = ref<GameTypeTabName>('all')
@@ -118,7 +122,19 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
 })
 
 onMounted(() => {
+  stopRoomChangeNotifyListener = subscribeH5WsCode(WS_NOTIFY_CODE.ROOM_CHANGE_NOTIFY, () => {
+    scheduleRoomListRefreshByWs()
+  })
   bootstrapRoomList()
+})
+
+onBeforeUnmount(() => {
+  stopRoomChangeNotifyListener?.()
+  stopRoomChangeNotifyListener = null
+  if (roomListRefreshTimer !== null) {
+    window.clearTimeout(roomListRefreshTimer)
+    roomListRefreshTimer = null
+  }
 })
 
 // 进入页面先用缓存秒开，再静默刷新最新数据。
@@ -168,6 +184,29 @@ async function fetchRooms(options: { silent?: boolean } = {}): Promise<void> {
       showFailToast(message)
     }
   }
+}
+
+function scheduleRoomListRefreshByWs(): void {
+  if (roomListRefreshTimer !== null) {
+    window.clearTimeout(roomListRefreshTimer)
+  }
+
+  // 合并短时间内的房间变更通知，避免接口风暴。
+  roomListRefreshTimer = window.setTimeout(() => {
+    roomListRefreshTimer = null
+    if (roomListRefreshing) {
+      return
+    }
+
+    roomListRefreshing = true
+    void fetchRooms({ silent: true })
+      .catch((error) => {
+        console.warn('[game-list] ws room-change refresh failed:', error)
+      })
+      .finally(() => {
+        roomListRefreshing = false
+      })
+  }, 300)
 }
 
 // 把最新牌局列表写入本地缓存。

@@ -7,6 +7,7 @@ import { getCowboyRoomListApi } from '@/api/gc'
 import { getMttListApi } from '@/api/mtt'
 import type { RoomRecord } from '@/api/models/room'
 import { getRoomIdsApi, getRoomsDetailApi } from '@/api/room'
+import { WS_NOTIFY_CODE, subscribeH5WsCode } from '@/bridge/ws'
 import homeHeaderFallback from '@/assets/images/home_header_1.png'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
@@ -25,6 +26,9 @@ const NOTICE_SPEED_PX_PER_SEC = 40
 const NOTICE_GAP_PX = 48
 
 let noticeResizeObserver: ResizeObserver | null = null
+let stopRoomChangeNotifyListener: (() => void) | null = null
+let roomStatsRefreshTimer: number | null = null
+let roomStatsRefreshing = false
 
 interface ZoneStats {
   tables: number
@@ -188,6 +192,29 @@ async function fetchHomeRoomStats(): Promise<void> {
   }
 }
 
+function scheduleHomeRoomStatsRefreshByWs(): void {
+  if (roomStatsRefreshTimer !== null) {
+    window.clearTimeout(roomStatsRefreshTimer)
+  }
+
+  // 房间更新推送可能很密集，合并短时间内多条通知后再刷新一次 HTTP。
+  roomStatsRefreshTimer = window.setTimeout(() => {
+    roomStatsRefreshTimer = null
+    if (roomStatsRefreshing) {
+      return
+    }
+
+    roomStatsRefreshing = true
+    void fetchHomeRoomStats()
+      .catch((error) => {
+        console.warn('[home] ws room-change refresh failed:', error)
+      })
+      .finally(() => {
+        roomStatsRefreshing = false
+      })
+  }, 300)
+}
+
 // 从牛仔列表响应中提取在线人数：优先使用 data.online，其次汇总 records[*].online。
 function extractCowboyOnlineCount(raw: unknown): number {
   if (!raw || typeof raw !== 'object') {
@@ -302,6 +329,10 @@ watch(noticeText, () => {
 })
 
 onMounted(() => {
+  stopRoomChangeNotifyListener = subscribeH5WsCode(WS_NOTIFY_CODE.ROOM_CHANGE_NOTIFY, () => {
+    scheduleHomeRoomStatsRefreshByWs()
+  })
+
   void ensureClubDataReady()
   void fetchHomeRoomStats().catch((error) => {
     console.warn('[home] fetch room stats failed:', error)
@@ -325,6 +356,13 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  stopRoomChangeNotifyListener?.()
+  stopRoomChangeNotifyListener = null
+  if (roomStatsRefreshTimer !== null) {
+    window.clearTimeout(roomStatsRefreshTimer)
+    roomStatsRefreshTimer = null
+  }
+
   if (noticeResizeObserver) {
     noticeResizeObserver.disconnect()
     noticeResizeObserver = null

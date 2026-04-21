@@ -72,12 +72,6 @@ const router = createRouter({
     },
     // 子页面独立路由：按业务需要决定是否复用 MainLayoutView。
     {
-      path: '/home/task',
-      name: 'home-task',
-      component: () => import('@/views/home/HomeTaskView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
       path: '/club/members',
       name: 'club-members',
       component: () => import('@/views/club/ClubMembersView.vue'),

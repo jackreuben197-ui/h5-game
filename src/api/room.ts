@@ -1,7 +1,7 @@
 import http from '@/api/http'
 import type { ApiResponse } from '@/api/models/common'
 import type { RoomDetailData, RoomDetailRequest, RoomIdsData } from '@/api/models/room'
-import { forwardRoomsListToCocos } from '@/bridge/httpSync'
+import { forwardRoomsListToCocos } from '@/bridge/sync'
 
 // 请求所有可见牌桌 ID。
 export async function getRoomIdsApi(payload: Record<string, unknown>): Promise<ApiResponse<RoomIdsData>> {

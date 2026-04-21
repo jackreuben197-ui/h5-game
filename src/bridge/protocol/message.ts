@@ -3,7 +3,7 @@ import {
   normalizeBridgeMsgType,
   type BridgeAction,
   type BridgeMsgType,
-} from './protocol.actions'
+} from './actions'
 
 // 所有桥接消息统一信封结构。
 export interface BridgeMessage<TPayload = unknown> {

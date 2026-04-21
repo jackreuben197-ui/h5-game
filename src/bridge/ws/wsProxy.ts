@@ -9,8 +9,8 @@ import {
   type WsMessagePayload,
   type WsOpenPayload,
   type WsSendPayload,
-} from './protocol'
-import { sendBridgeMessage, subscribeCocosMessages } from './bridge'
+} from '../protocol'
+import { sendBridgeMessage, subscribeCocosMessages } from '../core/cocosBridgeChannel'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 import {

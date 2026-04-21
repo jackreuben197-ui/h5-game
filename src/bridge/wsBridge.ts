@@ -26,9 +26,17 @@ let ws: WebSocket | null = null
 let wsUrl = ''
 let stopWsBridgeListener: (() => void) | null = null
 let lastHeartbeatLogAt = 0
+let lastSendHeartbeatLogAt = 0
+let heartbeatDiffLogged = false
 let heartbeatTimer: number | null = null
+let reconnectTimer: number | null = null
+let reconnectAttempts = 0
+let shouldAutoReconnect = false
 const h5WsMessageHandlers = new Set<(event: H5WsIncomingEvent) => void>()
 const HEARTBEAT_INTERVAL_MS = 5000
+const HEARTBEAT_LOG_INTERVAL_MS = 10000
+const WS_RECONNECT_BASE_DELAY_MS = 1000
+const WS_RECONNECT_MAX_DELAY_MS = 10000
 
 const HOLDEN_CODE_NAME: Record<number, string> = {
   [HOLDEM_CODE.REGISTER]: 'REGISTER',
@@ -38,6 +46,21 @@ const HOLDEN_CODE_NAME: Record<number, string> = {
   135: 'CACHE_DATA_UPDATE',
   140: 'ROOM_CHANGE_NOTIFY',
   1108: 'ACTION_ALL',
+}
+
+const HEARTBEAT_DIFF_VS_COCOS = {
+  registerBeforeHeartbeat: {
+    h5: 'auto-send REGISTER(code=1) on ws open',
+    cocos: 'auto-send REGISTER(code=1) on ws open',
+  },
+  heartbeatInterval: {
+    h5: `${HEARTBEAT_INTERVAL_MS / 1000}s fixed`,
+    cocos: 'lobby=5s, gameplay=1s',
+  },
+  tokenWriteMode: {
+    h5: 'token fixed to 32 bytes (truncate/pad)',
+    cocos: 'write string bytes directly',
+  },
 }
 
 export interface H5WsIncomingEvent {
@@ -194,6 +217,28 @@ function logWsOutgoing(data: string | ArrayBuffer | ArrayBufferView | Blob, cont
 
   const packet = decodeHoldemPacket(raw)
   if (packet) {
+    const isHeartbeat = packet.code === HOLDEM_CODE.HEARTBEAT
+    if (isHeartbeat) {
+      const now = Date.now()
+      if (now - lastSendHeartbeatLogAt < HEARTBEAT_LOG_INTERVAL_MS) {
+        return
+      }
+      lastSendHeartbeatLogAt = now
+      console.info('[wsSend][heartbeat]', {
+        context,
+        code: packet.code,
+        codeName: HOLDEN_CODE_NAME[packet.code] || 'UNKNOWN',
+        token: packet.token,
+        roomId: packet.roomId,
+        matchId: packet.matchId,
+        protoVersion: packet.protoVersion,
+        bodyLen: packet.body.length,
+        protoFields: packet.body.length ? decodeProtoDebugFields(packet.body, 8) : [],
+        bodyBase64Preview: uint8ArrayToBase64Preview(packet.body),
+      })
+      return
+    }
+
     const codeName = HOLDEN_CODE_NAME[packet.code] || 'UNKNOWN'
     console.info('[wsSend][packet]', {
       context,
@@ -210,14 +255,53 @@ function logWsOutgoing(data: string | ArrayBuffer | ArrayBufferView | Blob, cont
   }
 
   const bytes = new Uint8Array(raw)
-  const headPreview = Array.from(bytes.slice(0, 16))
-    .map((value) => value.toString(16).padStart(2, '0'))
-    .join(' ')
   console.info('[wsSend][binary]', {
     context,
     byteLength: bytes.length,
-    headPreview,
   })
+}
+
+function logHeartbeatDiffWithCocosOnce(): void {
+  if (heartbeatDiffLogged) {
+    return
+  }
+  heartbeatDiffLogged = true
+  console.info('[wsHeartbeat][diff-vs-cocos]', HEARTBEAT_DIFF_VS_COCOS)
+}
+
+function clearReconnectTimer(): void {
+  if (reconnectTimer === null) {
+    return
+  }
+  window.clearTimeout(reconnectTimer)
+  reconnectTimer = null
+}
+
+function getReconnectDelay(attempt: number): number {
+  const expDelay = WS_RECONNECT_BASE_DELAY_MS * Math.pow(2, Math.max(0, attempt - 1))
+  return Math.min(expDelay, WS_RECONNECT_MAX_DELAY_MS)
+}
+
+function scheduleReconnect(): void {
+  if (!shouldAutoReconnect || !wsUrl || reconnectTimer !== null) {
+    return
+  }
+
+  reconnectAttempts += 1
+  const delay = getReconnectDelay(reconnectAttempts)
+  console.info('[ws] reconnect scheduled', {
+    attempt: reconnectAttempts,
+    delayMs: delay,
+    url: wsUrl,
+  })
+
+  reconnectTimer = window.setTimeout(() => {
+    reconnectTimer = null
+    if (!shouldAutoReconnect || !wsUrl) {
+      return
+    }
+    connectWs({ url: wsUrl })
+  }, delay)
 }
 
 function stopHeartbeatLoop(): void {
@@ -242,6 +326,7 @@ function sendHeartbeatPacket(): boolean {
     matchId: 0,
     body: new Uint8Array(0),
   })
+  logHeartbeatDiffWithCocosOnce()
   return sendWsRaw(packet, 'h5-heartbeat')
 }
 
@@ -293,7 +378,7 @@ export function h5SendRegisterPacket(): boolean {
 
   const sent = sendWsRaw(packet, 'h5-register')
   if (sent) {
-    console.info('[ws] send register packet (h5 manual)')
+    console.info('[ws] send register packet')
   }
   return sent
 }
@@ -359,31 +444,39 @@ export function h5SendHoldemPacket(payload: H5SendHoldemPacketPayload): boolean 
 
 // 开发日志：仅解析 code 供观测与分流，不参与转发数据构造。
 function logHoldemPacket(buffer: ArrayBufferLike): number | null {
-  const code = decodeHoldemCode(buffer)
-  if (code === null) {
+  const packet = decodeHoldemPacket(buffer)
+  if (!packet) {
     const bytes = new Uint8Array(buffer)
-    const headPreview = Array.from(bytes.slice(0, 16))
-      .map((value) => value.toString(16).padStart(2, '0'))
-      .join(' ')
     console.warn('[wsRecv][packet] code decode failed', {
       byteLength: bytes.length,
-      headPreview,
     })
     return null
   }
 
-  const bytes = new Uint8Array(buffer)
-  const body = bytes.length > 53 ? bytes.slice(53) : new Uint8Array(0)
+  const code = packet.code
+  const body = packet.body
   const codeName = HOLDEN_CODE_NAME[code] || 'UNKNOWN'
   const isHeartbeat = code === HOLDEM_CODE.HEARTBEAT
 
   // 心跳包非常高频，限制日志频率，避免刷屏。
   if (isHeartbeat) {
     const now = Date.now()
-    if (now - lastHeartbeatLogAt < 5000) {
+    if (now - lastHeartbeatLogAt < HEARTBEAT_LOG_INTERVAL_MS) {
       return code
     }
     lastHeartbeatLogAt = now
+    console.info('[wsRecv][heartbeat]', {
+      code,
+      codeName,
+      token: packet.token,
+      roomId: packet.roomId,
+      matchId: packet.matchId,
+      protoVersion: packet.protoVersion,
+      bodyLen: body.length,
+      protoFields: body.length ? decodeProtoDebugFields(body, 8) : [],
+      bodyBase64Preview: uint8ArrayToBase64Preview(body),
+    })
+    return code
   }
 
   console.info('[wsRecv][packet]', {
@@ -426,6 +519,8 @@ function cleanWsHandlers(): void {
 }
 
 function closeWs(payload?: WsClosePayload): void {
+  shouldAutoReconnect = false
+  clearReconnectTimer()
   stopHeartbeatLoop()
   if (!ws) {
     return
@@ -453,13 +548,16 @@ function connectWs(payload: WsConnectPayload): void {
     return
   }
 
+  shouldAutoReconnect = true
+  clearReconnectTimer()
+
   // URL 相同且已经在连接/已连接时直接复用。
   if (
     ws &&
     wsUrl === targetUrl &&
     (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)
   ) {
-    // 已连接则直接复用；是否 REGISTER 由业务显式调用 h5SendRegisterPacket 决定。
+    // 已连接则直接复用；REGISTER 会在新连接 open 时自动发送。
     return
   }
 
@@ -479,9 +577,11 @@ function connectWs(payload: WsConnectPayload): void {
   ws.binaryType = 'arraybuffer'
 
   ws.onopen = () => {
+    clearReconnectTimer()
+    reconnectAttempts = 0
     emitWsOpen(targetUrl)
-    // 纯透传默认不自动 REGISTER；需要时由业务显式调用 h5SendRegisterPacket。
-    // 但心跳仍由 H5 统一维护，避免桥接空档导致长连接被服务端回收。
+    // 对齐 Cocos：连接建立后先发 REGISTER，再启动心跳。
+    h5SendRegisterPacket()
     sendHeartbeatPacket()
     startHeartbeatLoop()
   }
@@ -499,6 +599,7 @@ function connectWs(payload: WsConnectPayload): void {
     })
     cleanWsHandlers()
     ws = null
+    scheduleReconnect()
   }
 
   ws.onmessage = (event: MessageEvent) => {
@@ -663,6 +764,8 @@ export function setupWsProxyBridgeChannel(): () => void {
   })
   stopWsBridgeListener = () => {
     unsubscribe()
+    shouldAutoReconnect = false
+    clearReconnectTimer()
     closeWs()
     stopHeartbeatLoop()
     cleanWsHandlers()

@@ -212,8 +212,8 @@ window.H5Bridge.onMessgeRecv(type, payload, msgtype, requestId, timestamp, sourc
   - 默认主流程：H5 在登录阶段主动建立连接
   - `wsConnect` 仅作为 Cocos 侧可选兼容入口（重连/兜底时可用）
 - `REGISTER(code=1)`：
-  - H5 默认不自动发送
-  - 仅在后端要求握手时，H5 才手动调用（可调用多次）
+  - H5 在 websocket `open` 后自动发送一次（对齐 Cocos）
+  - 业务层仍可手动调用补发（可调用多次）
   - 查询请求本身要使用各自业务 `query code`，不是固定 `REGISTER`
 - `HEARTBEAT(code=2)`：
   - H5 在 websocket `open` 后自动发送一次并开启定时心跳
@@ -295,7 +295,7 @@ import {
 // 1) 确保已连接
 ensureWsProxyConnected({ port: 25201 })
 
-// 2) 仅在后端要求握手时，手动 REGISTER（可选）
+// 2) H5 在 WS open 后会自动 REGISTER，这里保留手动补发能力（可选）
 h5SendRegisterPacket()
 
 // 3) 发送查询包（code 必须是业务查询协议号，不是 REGISTER）

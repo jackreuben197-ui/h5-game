@@ -205,7 +205,7 @@ function formatDuration(seconds: number): string {
               class="meta-icon people-center-icon"
               :src="iconPeople"
               alt="people"
-            >
+            />
             <span>
               {{ roomers }}/{{ seatCount }}
             </span>
@@ -225,7 +225,7 @@ function formatDuration(seconds: number): string {
             alt="avatar"
             loading="lazy"
             decoding="async"
-          >
+          />
           <span
             v-else
             class="seat-name"
@@ -243,7 +243,7 @@ function formatDuration(seconds: number): string {
             class="meta-icon"
             :src="iconTime"
             alt="time"
-          >
+          />
           <span>
             {{ elapsedText }}/{{ totalText }}
           </span>
@@ -253,7 +253,7 @@ function formatDuration(seconds: number): string {
             class="meta-icon"
             :src="iconChips"
             alt="chips"
-          >
+          />
           <span>
             {{ bringInText }}
           </span>

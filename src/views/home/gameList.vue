@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, type CSSProperties } from 'vue'
 import { showFailToast, showSuccessToast } from 'vant'
-import RoomGroupCard from './components/RoomGroupCard.vue'
-import GameTypeTabbar from '@/components/GameTypeTabbar.vue'
-import PageBackHeader from '@/components/HeaderBack.vue'
-import TopActionButton from '@/components/TopActionButton.vue'
 import { getRoomIdsApi, getRoomsDetailApi } from '@/api/room'
 import { WS_NOTIFY_CODE, subscribeH5WsCode } from '@/bridge/ws'
 import { enterTable } from '@/bridge/core'
@@ -397,7 +393,7 @@ function formatChip(value: number): string {
     <GameTypeTabbar v-model="activeTab" />
 
     <section class="group-list">
-      <RoomGroupCard
+      <PokerTableGroupCard
         v-for="group in groupedRecords"
         :key="group.groupKey"
         :group="group"

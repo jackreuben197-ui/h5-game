@@ -30,7 +30,7 @@ function handleClick(event: MouseEvent): void {
       class="action-icon"
       :src="icon"
       :alt="iconAlt || 'icon'"
-    >
+    />
   </button>
 </template>
 

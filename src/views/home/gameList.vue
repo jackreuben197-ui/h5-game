@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref, type CSSProperties } from 'vue'
-import { showFailToast, showSuccessToast } from 'vant'
-import { getRoomIdsApi, getRoomsDetailApi } from '@/api/room'
-import { WS_NOTIFY_CODE, subscribeH5WsCode } from '@/bridge/ws'
+import { computed, onMounted, reactive, ref, watch, type CSSProperties } from 'vue'
+import { showFailToast } from 'vant'
 import { enterTable } from '@/bridge/core'
 import type { EnterTablePayload } from '@/bridge/protocol'
 import StorageKey from '@/constants/storageKey'
 import LoginSession from '@/session/loginSession'
 import type { RoomRecord } from '@/api/models/room'
 import { useGameStore } from '@/stores/game'
+import { useRoomListStore } from '@/stores/roomList'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
+import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
 import gameType6Plus from '@/assets/icons/game_type_6+.png'
@@ -33,37 +34,35 @@ interface RoomGroupViewModel {
   playerCount: number
 }
 
-interface RoomListCachePayload {
-  version: number
-  updatedAt: number
-  records: RoomRecord[]
-}
-
 interface RoomGroupExpandedCachePayload {
   version: number
   updatedAt: number
   expandedMap: Record<string, boolean>
 }
 
-const ROOM_LIST_CACHE_VERSION = 1
 const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
 
 const gameStore = useGameStore()
-let stopRoomChangeNotifyListener: (() => void) | null = null
-let roomListRefreshTimer: number | null = null
-let roomListRefreshing = false
+const roomListStore = useRoomListStore()
+const userInfoStore = useUserInfoStore()
 
 // 顶部右侧切换风格开关：和旧版保持一致。
 const activeTab = ref<GameTypeTabName>('all')
-const sourceRecords = ref<RoomRecord[]>([])
 const expandedMap = reactive<Record<string, boolean>>({})
 const pageStyle = computed<CSSProperties>(() => ({
   '--tab-bg': `url(${tabBg})`,
 }))
+const selectedClubId = computed(() => toSafeInt(userInfoStore.currentClub?.club_id))
+const selectedTribeId = computed(() =>
+  toSafeInt((userInfoStore.currentClub as Record<string, unknown> | null)?.tribe_id),
+)
 
 const filteredRecords = computed(() => {
-  const baseList = sourceRecords.value.filter((room) => Number(room.game_type) < 6)
-  return baseList.filter((room) => matchTabRoom(room, activeTab.value))
+  const baseList = roomListStore.records.filter((room) => Number(room.game_type) < 6)
+  const scopedList = baseList.filter((room) =>
+    checkIsShowForClubAndTribe(room, selectedClubId.value, selectedTribeId.value),
+  )
+  return scopedList.filter((room) => matchTabRoom(room, activeTab.value))
 })
 
 // 按 game_type + poker_type + 小盲分组，生成分组卡片展示模型。
@@ -119,116 +118,27 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
 })
 
 onMounted(() => {
-  stopRoomChangeNotifyListener = subscribeH5WsCode(WS_NOTIFY_CODE.ROOM_CHANGE_NOTIFY, () => {
-    scheduleRoomListRefreshByWs()
-  })
   bootstrapRoomList()
-})
-
-onBeforeUnmount(() => {
-  stopRoomChangeNotifyListener?.()
-  stopRoomChangeNotifyListener = null
-  if (roomListRefreshTimer !== null) {
-    window.clearTimeout(roomListRefreshTimer)
-    roomListRefreshTimer = null
-  }
 })
 
 // 进入页面先用缓存秒开，再静默刷新最新数据。
 function bootstrapRoomList(): void {
-  restoreRoomListCache()
+  roomListStore.bootstrapRoomList()
   restoreRoomGroupExpandedCache()
-  syncExpandedMapWithRecords(sourceRecords.value)
-  void fetchRooms({ silent: true })
+  syncExpandedMapWithRecords(roomListStore.records)
 }
 
-// 拉取牌桌列表：先拿 room id，再批量拿详情。
-async function fetchRooms(options: { silent?: boolean } = {}): Promise<void> {
-  try {
-    const idRes = await getRoomIdsApi({})
-    const idRecords =
-      Number(idRes.code) === 0 && Array.isArray(idRes.data?.records) ? idRes.data.records : []
-
-    const roomIds = idRecords
-      .map((item) => Number(item?.rid))
-      .filter((id) => Number.isFinite(id) && id > 0)
-
-    if (!roomIds.length) {
-      sourceRecords.value = []
-      persistRoomListCache([])
-      syncExpandedMapWithRecords([])
-      persistRoomGroupExpandedCache()
-      return
-    }
-
-    const detailRes = await getRoomsDetailApi({
-      room_ids: roomIds,
-      room_type: 0,
-    })
-
-    const records =
-      Number(detailRes.code) === 0 && Array.isArray(detailRes.data?.records)
-        ? detailRes.data.records
-        : []
-    sourceRecords.value = Array.isArray(records) ? records : []
-    persistRoomListCache(sourceRecords.value)
-    syncExpandedMapWithRecords(sourceRecords.value)
+watch(
+  () => roomListStore.records,
+  (records) => {
+    syncExpandedMapWithRecords(records)
+    // 房间结构变化后同步一次展开状态缓存，防止无效 key 累积。
     persistRoomGroupExpandedCache()
-  } catch (error) {
-    // 静默刷新失败时保留旧列表，避免页面闪空。
-    if (!options.silent) {
-      const message = error instanceof Error ? error.message : '牌局列表刷新失败'
-      showFailToast(message)
-    }
-  }
-}
-
-function scheduleRoomListRefreshByWs(): void {
-  if (roomListRefreshTimer !== null) {
-    window.clearTimeout(roomListRefreshTimer)
-  }
-
-  // 合并短时间内的房间变更通知，避免接口风暴。
-  roomListRefreshTimer = window.setTimeout(() => {
-    roomListRefreshTimer = null
-    if (roomListRefreshing) {
-      return
-    }
-
-    roomListRefreshing = true
-    void fetchRooms({ silent: true })
-      .catch((error) => {
-        console.warn('[game-list] ws room-change refresh failed:', error)
-      })
-      .finally(() => {
-        roomListRefreshing = false
-      })
-  }, 300)
-}
-
-// 把最新牌局列表写入本地缓存。
-function persistRoomListCache(records: RoomRecord[]): void {
-  const payload: RoomListCachePayload = {
-    version: ROOM_LIST_CACHE_VERSION,
-    updatedAt: Date.now(),
-    records,
-  }
-  localStore.setItem(StorageKey.ROOM_LIST_CACHE, payload)
-}
-
-// 恢复上次牌局列表缓存，保证进入页面可秒开。
-function restoreRoomListCache(): void {
-  const cached = localStore.getItem<RoomListCachePayload | null>(StorageKey.ROOM_LIST_CACHE, null)
-  if (!cached || typeof cached !== 'object') {
-    return
-  }
-
-  if (cached.version !== ROOM_LIST_CACHE_VERSION || !Array.isArray(cached.records)) {
-    return
-  }
-
-  sourceRecords.value = cached.records
-}
+  },
+  {
+    deep: false,
+  },
+)
 
 // 缓存分组展开状态，避免静默刷新后折叠状态丢失。
 function persistRoomGroupExpandedCache(): void {
@@ -353,18 +263,38 @@ function getGameIconImage(gameType: number, pokerType: number): string {
 }
 
 function formatBlind(sb: number): string {
+  // 对齐 Unity：房间盲注服务端单位是“分”，展示时统一 /100。
   const smallBlind = Number(sb) || 0
   const bigBlind = smallBlind * 2
-  return `${formatChip(smallBlind)} / ${formatChip(bigBlind)}`
+  return `${formatBlindChipByUnity(smallBlind)} / ${formatBlindChipByUnity(bigBlind)}`
 }
 
-function formatChip(value: number): string {
-  const num = Number(value) || 0
-  if (num >= 1000) {
-    const text = (num / 1000).toFixed(num % 1000 === 0 ? 0 : 1)
-    return `${text}k`
+function formatBlindChipByUnity(rawValue: number): string {
+  const safeRaw = Number(rawValue) || 0
+  // 对齐 LanguageUtility.GetFormatLongNumberThousand：
+  // 原值 >= 100000 时，先 /1000 再进入 /100 格式化，最终得到 xk。
+  if (safeRaw >= 100000) {
+    return `${formatBlindChipBaseByUnity(safeRaw / 1000)}k`
   }
-  return `${num}`
+  return formatBlindChipBaseByUnity(safeRaw)
+}
+
+function formatBlindChipBaseByUnity(rawValue: number): string {
+  const displayValue = rawValue / 100
+  if (!Number.isFinite(displayValue)) {
+    return '0'
+  }
+
+  // 对齐 C# 的 "0.##"：最多保留 2 位小数并去掉尾随 0。
+  return displayValue.toFixed(2).replace(/\.?0+$/, '')
+}
+
+function toSafeInt(value: unknown): number {
+  const num = Number(value)
+  if (!Number.isFinite(num)) {
+    return 0
+  }
+  return Math.floor(num)
 }
 </script>
 

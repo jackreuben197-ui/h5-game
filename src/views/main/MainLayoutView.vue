@@ -19,35 +19,40 @@ const backgroundStyle = computed(() => ({
 }))
 
 async function fetchUserInfoOnEnter(): Promise<void> {
-  if (!gameStore.sessionToken) {
+  const token = gameStore.sessionToken.trim()
+  if (!token) {
     return
   }
 
-  // 后台静默同步：不阻塞首页渲染，不打断用户操作。
-  void getUserInfoApi()
-    .then((userInfo) => {
-      const user = userInfo.user as Record<string, unknown>
-      const userId = String(user.p_u_id ?? user.pUid ?? user.userid ?? '')
-      const userName = String(user.nickname ?? gameStore.loginAccount ?? '')
+  // 同一 token 在当前应用会话内只同步一次 userinfo / club。
+  if (gameStore.shouldSyncProfile(token)) {
 
-      gameStore.setLoginUser({
-        account: gameStore.loginAccount || userName,
-        nickname: userName,
-        userId,
+    // 后台静默同步：不阻塞首页渲染，不打断用户操作。
+    void getUserInfoApi()
+      .then((userInfo) => {
+        const user = userInfo.user as Record<string, unknown>
+        const userId = String(user.p_u_id ?? user.pUid ?? user.userid ?? '')
+        const userName = String(user.nickname ?? gameStore.loginAccount ?? '')
+
+        gameStore.setLoginUser({
+          account: gameStore.loginAccount || userName,
+          nickname: userName,
+          userId,
+        })
+
+        // 读取后端语言字段；如果没有定义，则按英文兜底。
+        const languageCode = resolveLanguageCode(user)
+        setLocale(languageCode || 'en')
+      })
+      .catch((error) => {
+        console.warn('[main-layout] sync user info failed:', error)
       })
 
-      // 读取后端语言字段；如果没有定义，则按英文兜底。
-      const languageCode = resolveLanguageCode(user)
-      setLocale(languageCode || 'en')
+    // 俱乐部信息静默同步，失败仅记日志。
+    void getUserClubApi().catch((error) => {
+      console.warn('[main-layout] sync user club failed:', error)
     })
-    .catch((error) => {
-      console.warn('[main-layout] sync user info failed:', error)
-    })
-
-  // 俱乐部信息静默同步，失败仅记日志。
-  void getUserClubApi().catch((error) => {
-    console.warn('[main-layout] sync user club failed:', error)
-  })
+  }
 
   // websocket 就绪逻辑同样走后台，不阻塞首页进入。
   void LoginSession.EnsureWS().catch((error) => {

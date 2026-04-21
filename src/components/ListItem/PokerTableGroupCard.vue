@@ -4,6 +4,7 @@ import iconTable from '@/assets/icons/icon_table.png'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconDropDown from '@/assets/icons/icon_drop_down.png'
 import type { RoomRecord } from '@/api/models/room'
+import { t } from '@/i18n'
 
 interface RoomGroupViewModel {
   groupKey: string
@@ -63,7 +64,7 @@ function handleTableClick(room: RoomRecord): void {
         <div class="summary-content">
           <p class="blind-text">
             <span class="blind-label">
-              盲注
+              {{ t('UIMTT_Howtoplay_blind') }}
             </span>
             <span>
               {{ group.blindText }}

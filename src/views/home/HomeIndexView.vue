@@ -6,14 +6,17 @@ import { getUserClubApi } from '@/api/auth'
 import { getCowboyRoomListApi } from '@/api/gc'
 import { getMttListApi } from '@/api/mtt'
 import type { RoomRecord } from '@/api/models/room'
-import { getRoomIdsApi, getRoomsDetailApi } from '@/api/room'
-import { WS_NOTIFY_CODE, subscribeH5WsCode } from '@/bridge/ws'
+import StorageKey from '@/constants/storageKey'
 import homeHeaderFallback from '@/assets/images/home_header_1.png'
+import { useRoomListStore } from '@/stores/roomList'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
+import { localStore } from '@/utils/localStore'
+import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
+const roomListStore = useRoomListStore()
 
 const balanceVisible = ref(true)
 const noticeScrollRef = ref<HTMLElement | null>(null)
@@ -26,9 +29,6 @@ const NOTICE_SPEED_PX_PER_SEC = 40
 const NOTICE_GAP_PX = 48
 
 let noticeResizeObserver: ResizeObserver | null = null
-let stopRoomChangeNotifyListener: (() => void) | null = null
-let roomStatsRefreshTimer: number | null = null
-let roomStatsRefreshing = false
 
 interface ZoneStats {
   tables: number
@@ -42,12 +42,83 @@ interface HomeZoneStats {
   mtt: ZoneStats
 }
 
-const homeRoomStats = ref<HomeZoneStats>({
-  poker: { tables: 0, players: 0 },
-  miniGame: { tables: 0, players: 0 },
-  mahjong: { tables: 0, players: 0 },
-  mtt: { tables: 0, players: 0 },
-})
+interface HomeRoomStatsCachePayload {
+  version: number
+  updatedAt: number
+  stats: HomeZoneStats
+}
+
+const HOME_ROOM_STATS_CACHE_VERSION = 1
+
+function createEmptyZoneStats(): HomeZoneStats {
+  return {
+    poker: { tables: 0, players: 0 },
+    miniGame: { tables: 0, players: 0 },
+    mahjong: { tables: 0, players: 0 },
+    mtt: { tables: 0, players: 0 },
+  }
+}
+
+// 兜底清洗每个玩法统计，避免脏缓存导致页面展示异常。
+function normalizeZoneStats(raw: unknown): ZoneStats {
+  const data = (raw || {}) as Record<string, unknown>
+  return {
+    tables: toSafeNumber(data.tables),
+    players: toSafeNumber(data.players),
+  }
+}
+
+// 从 unknown 恢复 HomeZoneStats，缺字段时回落到 0。
+function normalizeHomeZoneStats(raw: unknown): HomeZoneStats {
+  const data = (raw || {}) as Record<string, unknown>
+  return {
+    poker: normalizeZoneStats(data.poker),
+    miniGame: normalizeZoneStats(data.miniGame),
+    mahjong: normalizeZoneStats(data.mahjong),
+    mtt: normalizeZoneStats(data.mtt),
+  }
+}
+
+// 首屏优先读取缓存，避免从 0 闪到真实值。
+function restoreHomeRoomStatsCache(): HomeZoneStats | null {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const cached = localStore.getItem<HomeRoomStatsCachePayload | null>(
+    StorageKey.HOME_ROOM_STATS_CACHE,
+    null,
+  )
+  if (!cached || typeof cached !== 'object') {
+    return null
+  }
+
+  if (cached.version !== HOME_ROOM_STATS_CACHE_VERSION) {
+    return null
+  }
+
+  return normalizeHomeZoneStats(cached.stats)
+}
+
+// 玩法统计更新后写入缓存，供下次进入首页秒开。
+function persistHomeRoomStatsCache(stats: HomeZoneStats): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const payload: HomeRoomStatsCachePayload = {
+    version: HOME_ROOM_STATS_CACHE_VERSION,
+    updatedAt: Date.now(),
+    stats,
+  }
+  localStore.setItem(StorageKey.HOME_ROOM_STATS_CACHE, payload)
+}
+
+const homeRoomStats = ref<HomeZoneStats>(restoreHomeRoomStatsCache() || createEmptyZoneStats())
+const selectedClubId = computed(() => toSafeInt(userInfoStore.currentClub?.club_id))
+const selectedTribeId = computed(() =>
+  toSafeInt((userInfoStore.currentClub as Record<string, unknown> | null)?.tribe_id),
+)
 
 const currentClub = computed<ClubInfo | null>(() => {
   if (userInfoStore.currentClub) {
@@ -85,15 +156,16 @@ function toSafeNumber(value: unknown): number {
   return Number.isFinite(num) ? num : 0
 }
 
-async function ensureClubDataReady(): Promise<void> {
-  if (!userInfoStore.clubList.length) {
-    // 首页阶段俱乐部信息静默同步，避免阻塞渲染和打断用户操作。
-    void getUserClubApi().catch((error) => {
-      console.warn('[home] sync club list failed:', error)
-    })
-    return
+function toSafeInt(value: unknown): number {
+  const num = Number(value)
+  if (!Number.isFinite(num)) {
+    return 0
   }
-  // 登录后默认取第一个俱乐部信息。
+  return Math.floor(num)
+}
+
+function ensureClubDataReady(): void {
+  // 仅消费 store 已有俱乐部数据，不在首页回流时触发 user/club 请求。
   if (!userInfoStore.currentClub && userInfoStore.clubList.length) {
     userInfoStore.setCurrentClub(userInfoStore.clubList[0] || null)
   }
@@ -121,15 +193,6 @@ function goToRecharge(): void {
   void router.push('/recharge')
 }
 
-function createEmptyZoneStats(): HomeZoneStats {
-  return {
-    poker: { tables: 0, players: 0 },
-    miniGame: { tables: 0, players: 0 },
-    mahjong: { tables: 0, players: 0 },
-    mtt: { tables: 0, players: 0 },
-  }
-}
-
 function getRoomPlayers(room: RoomRecord): number {
   return Number(room.roomers) || (Array.isArray(room.users) ? room.users.length : 0)
 }
@@ -144,37 +207,15 @@ function classifyRoomToZone(room: RoomRecord): 'poker' | 'mahjong' | null {
   return null
 }
 
-// 首页玩法统计：先拿 ids，再批量拿牌桌详情并按 game_type 分类。
-async function fetchHomeRoomStats(): Promise<void> {
+// 首页扑克/麻将统计直接复用共享牌桌列表，避免和 gameList 数据源分叉。
+function refreshHomePokerMahjongStatsFromStore(): void {
   const nextStats = createEmptyZoneStats()
-
-  const idRes = await getRoomIdsApi({})
-  const idRecords =
-    Number(idRes.code) === 0 && Array.isArray(idRes.data?.records) ? idRes.data.records : []
-  const roomIds = idRecords
-    .map((item) => Number(item?.rid))
-    .filter((id) => Number.isFinite(id) && id > 0)
-
-  if (!roomIds.length) {
-    homeRoomStats.value = {
-      ...homeRoomStats.value,
-      poker: nextStats.poker,
-      mahjong: nextStats.mahjong,
+  roomListStore.records.forEach((room) => {
+    // 对齐 C# RequestTableDataListForClubOrTribe：先按俱乐部/联盟关系过滤可见牌桌。
+    if (!checkIsShowForClubAndTribe(room, selectedClubId.value, selectedTribeId.value)) {
+      return
     }
-    return
-  }
 
-  const detailRes = await getRoomsDetailApi({
-    room_ids: roomIds,
-    room_type: 0,
-  })
-
-  const records =
-    Number(detailRes.code) === 0 && Array.isArray(detailRes.data?.records)
-      ? detailRes.data.records
-      : []
-
-  records.forEach((room) => {
     const zone = classifyRoomToZone(room)
     if (!zone) {
       return
@@ -190,29 +231,7 @@ async function fetchHomeRoomStats(): Promise<void> {
     poker: nextStats.poker,
     mahjong: nextStats.mahjong,
   }
-}
-
-function scheduleHomeRoomStatsRefreshByWs(): void {
-  if (roomStatsRefreshTimer !== null) {
-    window.clearTimeout(roomStatsRefreshTimer)
-  }
-
-  // 房间更新推送可能很密集，合并短时间内多条通知后再刷新一次 HTTP。
-  roomStatsRefreshTimer = window.setTimeout(() => {
-    roomStatsRefreshTimer = null
-    if (roomStatsRefreshing) {
-      return
-    }
-
-    roomStatsRefreshing = true
-    void fetchHomeRoomStats()
-      .catch((error) => {
-        console.warn('[home] ws room-change refresh failed:', error)
-      })
-      .finally(() => {
-        roomStatsRefreshing = false
-      })
-  }, 300)
+  persistHomeRoomStatsCache(homeRoomStats.value)
 }
 
 // 从牛仔列表响应中提取在线人数：优先使用 data.online，其次汇总 records[*].online。
@@ -253,6 +272,7 @@ async function fetchHomeMiniGameStats(): Promise<void> {
       players: online,
     },
   }
+  persistHomeRoomStatsCache(homeRoomStats.value)
 }
 
 // 首页 MTT 统计：使用 /api/roomcenter/mtt/list 聚合桌数与参赛人数。
@@ -295,6 +315,7 @@ async function fetchHomeMttStats(): Promise<void> {
     ...homeRoomStats.value,
     mtt: nextMtt,
   }
+  persistHomeRoomStatsCache(homeRoomStats.value)
 }
 
 async function updateNoticeMarquee(): Promise<void> {
@@ -328,15 +349,21 @@ watch(noticeText, () => {
   void updateNoticeMarquee()
 })
 
-onMounted(() => {
-  stopRoomChangeNotifyListener = subscribeH5WsCode(WS_NOTIFY_CODE.ROOM_CHANGE_NOTIFY, () => {
-    scheduleHomeRoomStatsRefreshByWs()
-  })
+watch(
+  [() => roomListStore.records, selectedClubId, selectedTribeId],
+  () => {
+    refreshHomePokerMahjongStatsFromStore()
+  },
+  {
+    deep: false,
+  },
+)
 
+onMounted(() => {
   void ensureClubDataReady()
-  void fetchHomeRoomStats().catch((error) => {
-    console.warn('[home] fetch room stats failed:', error)
-  })
+  // 首页和列表页共用同一个 room store，进入首页时启动共享数据流。
+  roomListStore.bootstrapRoomList()
+  refreshHomePokerMahjongStatsFromStore()
   void fetchHomeMiniGameStats().catch((error) => {
     console.warn('[home] fetch mini game stats failed:', error)
   })
@@ -356,13 +383,6 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  stopRoomChangeNotifyListener?.()
-  stopRoomChangeNotifyListener = null
-  if (roomStatsRefreshTimer !== null) {
-    window.clearTimeout(roomStatsRefreshTimer)
-    roomStatsRefreshTimer = null
-  }
-
   if (noticeResizeObserver) {
     noticeResizeObserver.disconnect()
     noticeResizeObserver = null

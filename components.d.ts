@@ -14,7 +14,6 @@ declare module 'vue' {
     GameTypeTabbar: typeof import('./src/components/Tabbar/GameTypeTabbar.vue')['default']
     HeaderBack: typeof import('./src/components/HeaderBack/HeaderBack.vue')['default']
     MainBottomTab: typeof import('./src/components/Tabbar/MainBottomTab.vue')['default']
-    MttCard: typeof import('./src/components/ListItem/MttCard.vue')['default']
     PokerTableCard: typeof import('./src/components/ListItem/PokerTableCard.vue')['default']
     PokerTableGroupCard: typeof import('./src/components/ListItem/PokerTableGroupCard.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
@@ -29,6 +28,5 @@ declare module 'vue' {
     VanPopup: typeof import('vant/es')['Popup']
     VanTab: typeof import('vant/es')['Tab']
     VanTabs: typeof import('vant/es')['Tabs']
-    VanTextEllipsis: typeof import('vant/es')['TextEllipsis']
   }
 }

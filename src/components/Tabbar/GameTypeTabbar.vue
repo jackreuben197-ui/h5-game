@@ -1,36 +1,36 @@
 <script setup lang="ts">
 import tabActiveBg from '@/assets/icons/game_type_tab_active_bg.svg?url'
 
-interface TabOption {
-  name: 'all' | 'texas' | 'omaha' | 'sixPlus'
+export interface TabOption {
+  name: string
   title: string
 }
 
 interface Props {
-  modelValue: TabOption['name']
+  modelValue: string
+  tabs: TabOption[]
 }
 
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  'update:modelValue': [value: TabOption['name']]
+  'update:modelValue': [value: string]
 }>()
 
-// 牌局筛选固定为 4 个类型，组件内统一维护。
-const TAB_OPTIONS: TabOption[] = [
-  { name: 'all', title: '全部' },
-  { name: 'texas', title: '德州' },
-  { name: 'omaha', title: '奥马哈' },
-  { name: 'sixPlus', title: '6+' },
-]
+const tabOptions = computed(() => props.tabs)
 
 const tabbarStyle = {
   '--tab-active-bg': `url("${tabActiveBg}")`,
 }
 
 function handleUpdate(value: string | number): void {
-  emit('update:modelValue', value as TabOption['name'])
+  emit('update:modelValue', String(value))
 }
+</script>
+
+<script lang="ts">
+import { computed } from 'vue'
+export default { name: 'GameTypeTabbar' }
 </script>
 
 <template>
@@ -49,7 +49,7 @@ function handleUpdate(value: string | number): void {
     @update:model-value="handleUpdate"
   >
     <VanTab
-      v-for="tab in TAB_OPTIONS"
+      v-for="tab in tabOptions"
       :key="tab.name"
       :name="tab.name"
       :title="tab.title"
@@ -112,17 +112,6 @@ function handleUpdate(value: string | number): void {
 .room-tabs .van-tabs__line {
   display: none !important;
 }
-
-/* 旧版激活态背景（遮罩实现，暂时注释保留） */
-/*
-.themeType2 .room-tabs .van-tab--active .van-tab__text {
-  background: rgba(255, 255, 255, 0.15);
-  -webkit-mask: center bottom / 100% 100% no-repeat;
-  -webkit-mask-image: var(--tab-bg, var(--default-tab-mask));
-  mask: center bottom / 100% 100% no-repeat;
-  mask-image: var(--tab-bg, var(--default-tab-mask));
-}
-*/
 
 /* 新版激活态背景（SVG 形状背景，不遮挡文字） */
 .themeType2 .room-tabs .van-tab--active .van-tab__text {

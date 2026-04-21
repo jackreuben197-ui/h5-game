@@ -16,6 +16,7 @@ import gameType6Plus from '@/assets/icons/game_type_6+.png'
 import gameTypeNlh from '@/assets/icons/game_type_nlh.png'
 import gameTypePlo from '@/assets/icons/game_type_plo.png'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
+import { t } from '@/i18n'
 
 type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
 
@@ -289,7 +290,7 @@ function buildGroupKey(room: RoomRecord): string {
 
 async function handleTableClick(room: RoomRecord): Promise<void> {
   if (!gameStore.sessionToken) {
-    showFailToast('登录状态已失效，请重新登录')
+    showFailToast(t('tokenFail'))
     return
   }
 
@@ -318,7 +319,7 @@ async function handleTableClick(room: RoomRecord): Promise<void> {
 
   enterTable(payload)
   gameStore.setLastEnterTable(payload)
-  showSuccessToast(`已请求进入牌桌：${room.name || room.rid}`)
+  // showSuccessToast(`已请求进入牌桌：${room.name || room.rid}`)
 }
 
 function handleToggleGroup(groupKey: string): void {
@@ -339,10 +340,10 @@ function matchTabRoom(room: RoomRecord, tabName: GameTypeTabName): boolean {
 }
 
 function getGameName(gameType: number, pokerType: number): string {
-  if (gameType === 6 || pokerType === 1) return '6+'
-  if ([1, 2, 3].includes(gameType)) return '奥马哈'
-  if (gameType === 0) return '德州扑克'
-  return '扑克'
+  if (gameType === 6 || pokerType === 1) return t('6+')
+  if ([1, 2, 3].includes(gameType)) return t('UITexasInfo_Omaha')
+  if (gameType === 0) return t('UITexasInfo_Texas')
+  return '--'
 }
 
 function getGameIconImage(gameType: number, pokerType: number): string {
@@ -373,24 +374,31 @@ function formatChip(value: number): string {
     :style="pageStyle"
   >
     <div class="bg-overlay"></div>
-    <PageBackHeader title="扑克专区">
+    <HeaderBack :title="t('UIHomePokerArea')">
       <template #right>
         <div class="action-wrap">
           <TopActionButton
-            name="充值"
+            :name="t('UIGuildFund_RechargeText')"
             :icon="walletIcon"
             icon-alt="wallet"
           />
           <TopActionButton
-            name="客服"
+            :name="t('UIMineMain01')"
             :icon="serviceIcon"
             icon-alt="service"
           />
         </div>
       </template>
-    </PageBackHeader>
-
-    <GameTypeTabbar v-model="activeTab" />
+    </HeaderBack>
+    <GameTypeTabbar
+      v-model="activeTab"
+      :tabs="[
+        { name: 'all', title: t('UIMatch_GtO8YEdb') },
+        { name: 'texas', title: t('UITexasInfo_Texas') },
+        { name: 'omaha', title: t('UITexasInfo_Omaha') },
+        { name: 'sixPlus', title: t('6+') },
+      ]"
+    />
 
     <section class="group-list">
       <PokerTableGroupCard
@@ -408,7 +416,7 @@ function formatChip(value: number): string {
       >
         <VanIcon name="search" />
         <span>
-          暂无牌桌
+          {{ t('UINoGameTip') }}
         </span>
       </div>
     </section>

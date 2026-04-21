@@ -11,14 +11,15 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    GameTypeTabbar: typeof import('./src/components/tabbar/GameTypeTabbar.vue')['default']
-    HeaderBack: typeof import('./src/components/headerBack/HeaderBack.vue')['default']
-    MainBottomTab: typeof import('./src/components/tabbar/MainBottomTab.vue')['default']
-    PokerTableCard: typeof import('./src/components/listItem/PokerTableCard.vue')['default']
-    PokerTableGroupCard: typeof import('./src/components/listItem/PokerTableGroupCard.vue')['default']
+    GameTypeTabbar: typeof import('./src/components/Tabbar/GameTypeTabbar.vue')['default']
+    HeaderBack: typeof import('./src/components/HeaderBack/HeaderBack.vue')['default']
+    MainBottomTab: typeof import('./src/components/Tabbar/MainBottomTab.vue')['default']
+    MttCard: typeof import('./src/components/ListItem/MttCard.vue')['default']
+    PokerTableCard: typeof import('./src/components/ListItem/PokerTableCard.vue')['default']
+    PokerTableGroupCard: typeof import('./src/components/ListItem/PokerTableGroupCard.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    TopActionButton: typeof import('./src/components/button/TopActionButton.vue')['default']
+    TopActionButton: typeof import('./src/components/Button/TopActionButton.vue')['default']
     VanButton: typeof import('vant/es')['Button']
     VanCellGroup: typeof import('vant/es')['CellGroup']
     VanField: typeof import('vant/es')['Field']

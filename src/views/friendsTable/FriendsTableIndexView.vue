@@ -1,18 +1,11 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
 
-const router = useRouter()
-
-function goToRecords(): void {
-  void router.push('/recharge/records')
-}
 </script>
 
 <template>
   <div class="module-card">
-    <h2 class="module-title">充值模块</h2>
-    <p class="module-desc">充值入口、支付方式、快捷金额与活动优惠。</p>
-    <VanButton type="primary" block @click="goToRecords">进入充值子页面</VanButton>
+    <h2 class="module-title">朋友桌模块</h2>
+    <p class="module-desc">朋友桌入口</p>
   </div>
 </template>
 

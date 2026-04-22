@@ -4,9 +4,10 @@ import { useRouter } from 'vue-router'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
 import iconHome from '@/assets/icons/tabbar_home.png'
 import iconClub from '@/assets/icons/tabbar_club.png'
-import iconRecharge from '@/assets/icons/tabbar_recharge.png'
+import iconFriendsTable from '@/assets/icons/tabbar_friends_table.png'
 import iconMessage from '@/assets/icons/tabbar_message.png'
 import iconMine from '@/assets/icons/tabbar_mine.png'
+import { t } from '@/i18n'
 
 interface TabItem {
   key: MainTabKey
@@ -17,11 +18,11 @@ interface TabItem {
 
 // 底部 5 个主模块入口与路由路径。
 const tabs: TabItem[] = [
-  { key: 'home', label: '首页', path: '/home', icon: iconHome },
-  { key: 'club', label: '俱乐部', path: '/club', icon: iconClub },
-  { key: 'recharge', label: '充值', path: '/recharge', icon: iconRecharge },
-  { key: 'message', label: '消息', path: '/message', icon: iconMessage },
-  { key: 'mine', label: '我的', path: '/mine', icon: iconMine },
+  { key: 'home', label: t('UITabbarHome'), path: '/home', icon: iconHome },
+  { key: 'club', label: t('UIClub_Info'), path: '/club', icon: iconClub },
+  { key: 'friendsTable', label: t('UIMessage_Default'), path: '/friendsTable', icon: iconFriendsTable },
+  { key: 'message', label: t('UIMine_MsgSystemContent'), path: '/message', icon: iconMessage },
+  { key: 'mine', label: t('UIMine_title'), path: '/mine', icon: iconMine },
 ]
 
 const router = useRouter()
@@ -46,7 +47,7 @@ const TAB_COUNT = tabs.length
 const BUMP_WIDTH_IN_TAB = 0.9
 const TABBAR_Y_OFFSET_REM = 0.08
 const BUMP_SIDE_CTRL_RATIO = 0.24
-const BUMP_APEX_CTRL_X_RATIO = 0.16
+const BUMP_APEX_CTRL_X_RATIO = 0.22
 const ANIM_DURATION = 220
 
 let currentCenter: number | null = null
@@ -107,13 +108,14 @@ function buildTabbarPath(bumpCenterX: number): string {
   d += ` C ${bumpLeft + sideControlOffset} ${topY}, ${clampedCenter - apexControlOffsetX} ${apexY}, ${clampedCenter} ${apexY}`
   d += ` C ${clampedCenter + apexControlOffsetX} ${apexY}, ${bumpRight - sideControlOffset} ${topY}, ${safeRight} ${topY}`
   d += ` L ${width - cornerRadius} ${topY}`
-  d += ` Q ${width} ${topY} ${width} ${topY + cornerRadius}`
+  d += ` A ${cornerRadius} ${cornerRadius} 0 0 1 ${width} ${topY + cornerRadius}`
   d += ` L ${width} ${height - cornerRadius}`
-  d += ` Q ${width} ${height} ${width - cornerRadius} ${height}`
+  d += ` A ${cornerRadius} ${cornerRadius} 0 0 1 ${width - cornerRadius} ${height}`
   d += ` L ${cornerRadius} ${height}`
-  d += ` Q 0 ${height} 0 ${height - cornerRadius}`
+  // 左侧同样使用精确圆弧，保证两端圆度一致。
+  d += ` A ${cornerRadius} ${cornerRadius} 0 0 1 0 ${height - cornerRadius}`
   d += ` L 0 ${topY + cornerRadius}`
-  d += ` Q 0 ${topY} ${cornerRadius} ${topY}`
+  d += ` A ${cornerRadius} ${cornerRadius} 0 0 1 ${cornerRadius} ${topY}`
   d += ' Z'
   return d
 }
@@ -326,16 +328,17 @@ onBeforeUnmount(() => {
 .tab-button {
   position: relative;
   flex: 1;
+  height: 100%;
   min-width: 0;
   border: 0;
   background: transparent;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.34rem;
+  justify-content: flex-start;
+  gap: 0;
   color: rgba(250, 252, 255, 0.84);
-  padding: 0 0.06rem 0.2rem;
+  padding: 0.0rem 0.06rem 0.08rem;
   border-radius: 0.44rem;
   -webkit-tap-highlight-color: transparent;
 }
@@ -345,14 +348,14 @@ onBeforeUnmount(() => {
 }
 
 .tab-icon {
-  width: 0.8rem; /* 固定最终尺寸 */
-  height: 0.8rem;
+  width: 1rem; /* 固定最终尺寸 */
+  height: 1rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  transform-origin: center calc(100% + 0.3rem);
-  transform: scale(0.625); /* 0.5 / 0.8 = 0.625 */
+  transform-origin: center calc(100% + 0.25rem);
+  transform: scale(0.6); /* 0.5 / 0.8 = 0.625 */
   transition: transform 0.22s ease;
 }
 
@@ -367,8 +370,18 @@ onBeforeUnmount(() => {
 }
 
 .tab-label {
+  width: 100%;
+  height: 0.62rem;
+  margin-top: 0.12rem;
+  display: grid;
+  place-items: center;
+  text-align: center;
   font-size: 0.27rem;
-  line-height: 1;
+  line-height: 1.15;
   font-weight: 400;
+  white-space: normal;
+  word-break: break-word;
+  overflow: hidden;
+  text-wrap: balance;
 }
 </style>

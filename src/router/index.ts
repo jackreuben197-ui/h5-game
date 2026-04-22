@@ -39,13 +39,13 @@ const router = createRouter({
           },
         },
         {
-          path: 'recharge',
-          name: 'recharge',
-          component: () => import('@/views/recharge/RechargeIndexView.vue'),
+          path: 'friendsTable',
+          name: 'friendsTable',
+          component: () => import('@/views/friendsTable/FriendsTableIndexView.vue'),
           meta: {
             requiresAuth: true,
-            tabKey: 'recharge',
-            moduleTitle: '充值',
+            tabKey: 'friendsTable',
+            moduleTitle: '朋友桌',
           },
         },
         {
@@ -99,12 +99,6 @@ const router = createRouter({
       path: '/club/room/history/detail',
       name: 'club-room-history-detail',
       component: () => import('@/views/club/ClubRoomHistoryDetailView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/recharge/records',
-      name: 'recharge-records',
-      component: () => import('@/views/recharge/RechargeRecordsView.vue'),
       meta: { requiresAuth: true },
     },
     {

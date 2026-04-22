@@ -435,12 +435,10 @@ const text = t('Wallet_AddItem7', 100, 12)
 
 语言切换与默认规则：
 
-- 支持：`zh | tw | en | pt`
+- 支持：`en | pt | zh | cn`
 - 优先读取 `localStorage(dzpk_Language)`
 - 无缓存时按浏览器语言推断
 - 语言文件按需加载（`fetch public/assets/resources/config/*.txt`），避免主包体积暴涨
-- 如果你的 Cocos 项目不在默认相对路径，可在执行命令前设置：
-  - `COCOS_I18N_SOURCE_DIR=/your/cocos/assets/resources/config pnpm dev`
 
 本地存储统一约定（与 Cocos 对齐）：
 

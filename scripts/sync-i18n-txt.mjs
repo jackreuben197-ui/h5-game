@@ -7,47 +7,21 @@ const __dirname = path.dirname(__filename)
 const projectRoot = path.resolve(__dirname, '..')
 
 const files = ['USER_ZH.txt', 'USER_TW.txt', 'USER_EN.txt', 'USER_PT.txt']
-const defaultSourceDir = path.resolve(projectRoot, '../pokerqueen/assets/resources/config')
-const sourceDir = process.env.COCOS_I18N_SOURCE_DIR
-  ? path.resolve(process.cwd(), process.env.COCOS_I18N_SOURCE_DIR)
-  : defaultSourceDir
 const targetDir = path.resolve(projectRoot, 'public/assets/resources/config')
 
 ensureDir(targetDir)
 
-let copiedCount = 0
+let checkedCount = 0
 for (const file of files) {
-  const sourcePath = path.join(sourceDir, file)
   const targetPath = path.join(targetDir, file)
-
-  if (!fs.existsSync(sourcePath)) {
-    if (fs.existsSync(targetPath)) {
-      console.warn(`[sync:i18n] source not found, keep existing file: ${sourcePath}`)
-      continue
-    }
-
-    console.error(`[sync:i18n] missing source file: ${sourcePath}`)
-    console.error(
-      '[sync:i18n] set COCOS_I18N_SOURCE_DIR to your Cocos config directory if project location differs.',
-    )
+  if (!fs.existsSync(targetPath)) {
+    console.error(`[sync:i18n] missing h5 source file: ${targetPath}`)
     process.exit(1)
   }
-
-  // 若目标文件已存在且比源文件更新，说明本地有手动修改，跳过覆盖。
-  if (fs.existsSync(targetPath)) {
-    const srcMtime = fs.statSync(sourcePath).mtimeMs
-    const dstMtime = fs.statSync(targetPath).mtimeMs
-    if (dstMtime >= srcMtime) {
-      console.log(`[sync:i18n] skip (local is newer): ${file}`)
-      continue
-    }
-  }
-
-  fs.copyFileSync(sourcePath, targetPath)
-  copiedCount += 1
+  checkedCount += 1
 }
 
-console.log(`[sync:i18n] completed: ${copiedCount}/${files.length} files -> ${targetDir}`)
+console.log(`[sync:i18n] completed: ${checkedCount}/${files.length} files -> ${targetDir}`)
 
 function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) {

@@ -14,7 +14,7 @@
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
   "[vue]": {
-    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": false,
     "editor.codeActionsOnSave": {
       "source.fixAll.eslint": "always"
@@ -36,5 +36,6 @@
   "[css]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
-  }
+  },
+  "svn.ignoreMissingSvnWarning": true
 }

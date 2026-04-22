@@ -31,7 +31,7 @@ const router = createRouter({
         {
           path: 'club',
           name: 'club',
-          component: () => import('@/views/club/ClubIndexView.vue'),
+          component: () => import('@/views/club/ClubListView.vue'),
           meta: {
             requiresAuth: true,
             tabKey: 'club',
@@ -72,9 +72,33 @@ const router = createRouter({
     },
     // 子页面独立路由：按业务需要决定是否复用 MainLayoutView。
     {
+      path: '/club/index',
+      name: 'club-index',
+      component: () => import('@/views/club/ClubIndexView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/detail',
+      name: 'club-detail',
+      component: () => import('@/views/club/ClubDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/club/members',
       name: 'club-members',
       component: () => import('@/views/club/ClubMembersView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/room/history',
+      name: 'club-room-history-list',
+      component: () => import('@/views/club/ClubRoomHistoryListView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/room/history/detail',
+      name: 'club-room-history-detail',
+      component: () => import('@/views/club/ClubRoomHistoryDetailView.vue'),
       meta: { requiresAuth: true },
     },
     {

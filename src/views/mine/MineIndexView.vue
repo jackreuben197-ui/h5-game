@@ -139,7 +139,7 @@ async function onLogout(): Promise<void> {
 </template>
 
 <style scoped lang="scss">
-@import '@/styles/messages_mine.scss';
+@use '@/styles/messages_mine.scss' as *;
 
 .mine-page {
   .card-bg-highlight{

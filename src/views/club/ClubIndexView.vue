@@ -1,906 +1,1038 @@
 <script setup lang="ts">
+import { computed, onMounted, reactive, ref, type CSSProperties } from 'vue'
 import { useRouter } from 'vue-router'
-import imgSearch from '@/assets/icons/club/search.svg'
-import imgPokerSpade from '@/assets/icons/club/poker_spade.svg'
-import imgPokerHeart from '@/assets/icons/club/poker_heart.svg'
-import imgPokerClub from '@/assets/icons/club/poker_club.svg'
-import imgPokerDiamond from '@/assets/icons/club/poker_diamond.svg'
-import imgTable from '@/assets/icons/icon_table.png'
-import imgPeople from '@/assets/icons/icon_people.png'
-import imgBalance from '@/assets/icons/icon_balance.png'
-import imgChips from '@/assets/icons/icon_chips.png'
-import imgClubRoleIcon from '@/assets/images/club/figma/club_role_icon.png'
-import imgQuickActionCreateBg from '@/assets/images/club/figma/quick-actions/qa_create_club_bg_shape.svg'
-import imgQuickActionCreateShield from '@/assets/images/club/figma/quick-actions/qa_create_club_shield.svg'
-import imgQuickActionBoardBg from '@/assets/images/club/figma/quick-actions/qa_data_board_bg_shape.svg'
-import imgQuickActionBoardChart from '@/assets/images/club/figma/quick-actions/qa_data_board_chart.svg'
-import imgQuickActionUnionSwash from '@/assets/images/club/figma/quick-actions/qa_union_swash.svg'
-import imgQuickActionUnionClubSmall from '@/assets/images/club/figma/quick-actions/qa_union_club_small.svg'
-import imgQuickActionUnionClubLarge from '@/assets/images/club/figma/quick-actions/qa_union_club_large.svg'
-import imgClubBannerFigma from '@/assets/images/club/figma/club_banner_bg.png'
-import imgClubCoverFigma from '@/assets/images/club/figma/club_cover_avatar.png'
-import imgClubCoverB from '@/assets/images/home_comming_soon_1.png'
-import imgClubCoverC from '@/assets/images/home_comming_soon_2.png'
-import imgBannerBgB from '@/assets/images/game_type_card_bg.png'
-import imgBannerBgC from '@/assets/images/game_list_card_table_bg.png'
+import { showFailToast, showSuccessToast } from 'vant'
+import RoomGroupCard from '../home/components/RoomGroupCard.vue'
+import GameTypeTabbar from '@/components/GameTypeTabbar.vue'
+import { getRoomIdsApi, getRoomsDetailApi } from '@/api/room'
+import { enterTable } from '@/bridge/bridge'
+import type { EnterTablePayload } from '@/bridge/protocol'
+import StorageKey from '@/constants/storageKey'
+import LoginSession from '@/session/loginSession'
+import type { RoomRecord } from '@/api/models/room'
+import { useGameStore } from '@/stores/game'
+import { localStore } from '@/utils/localStore'
+import serviceIcon from '@/assets/icons/icon_server.png'
+import walletIcon from '@/assets/icons/icon_wallet.png'
+import clubCoverAvatar from '@/assets/images/club_cover_avatar.png'
+import imgQuickActionCreateBg from '@/assets/images/club_qa_create_club_bg_shape.svg'
+import imgQuickActionBoardBg from '@/assets/images/club_qa_data_board_bg_shape.svg'
+import quickSafetyBg from '@/assets/images/club_header_quick_safety.jpg'
+import quickRankingBg from '@/assets/images/club_header_quick_ranking.png'
+import gameType6Plus from '@/assets/icons/game_type_6+.png'
+import gameTypeNlh from '@/assets/icons/game_type_nlh.png'
+import gameTypePlo from '@/assets/icons/game_type_plo.png'
+import tabBg from '@/assets/icons/game_type_tab_bg.png'
 
-type QuickActionKind = 'create-club' | 'club-panel' | 'create-union'
+type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
+type ClubHeaderTabName = 'poker' | 'mahjong' | 'event'
 
-interface QuickActionItem {
-  id: number
-  title: string
-  kind: QuickActionKind
-  hidden?: boolean
-}
-
-interface ClubItem {
-  id: number
-  name: string
-  clubId: string
-  role: string
-  activeCount: number
-  chipsCount: number
+interface RoomGroupViewModel {
+  groupKey: string
+  gameType: number
+  pokerType: number
+  sb: number
+  rooms: RoomRecord[]
+  blindText: string
+  gameName: string
+  iconImage: string
   tableCount: number
-  memberCount: number
-  cover: string
-  bannerBg: string
+  playerCount: number
 }
 
+interface RoomListCachePayload {
+  version: number
+  updatedAt: number
+  records: RoomRecord[]
+}
+
+interface RoomGroupExpandedCachePayload {
+  version: number
+  updatedAt: number
+  expandedMap: Record<string, boolean>
+}
+
+const ROOM_LIST_CACHE_VERSION = 1
+const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
+
+const gameStore = useGameStore()
 const router = useRouter()
 
-const quickActions: QuickActionItem[] = [
-  { id: 1, title: '创建俱乐部', kind: 'create-club' },
-  { id: 2, title: '创建俱乐部', kind: 'club-panel' },
-  { id: 3, title: '创建联盟', kind: 'create-union', hidden: true },
-]
+// 顶部右侧切换风格开关：和旧版保持一致。
+const activeTab = ref<GameTypeTabName>('all')
+const clubHeaderTab = ref<ClubHeaderTabName>('poker')
+const sourceRecords = ref<RoomRecord[]>([])
+const expandedMap = reactive<Record<string, boolean>>({})
+const pageStyle = computed<CSSProperties>(() => ({
+  '--tab-bg': `url(${tabBg})`,
+}))
 
-const clubList: ClubItem[] = [
-  {
-    id: 1,
-    name: 'Club Poker, ALC',
-    clubId: '8677650585',
-    role: '管理员',
-    activeCount: 1923,
-    chipsCount: 19231,
-    tableCount: 360,
-    memberCount: 145,
-    cover: imgClubCoverFigma,
-    bannerBg: imgClubBannerFigma,
-  },
-  {
-    id: 2,
-    name: 'Holdem Prime',
-    clubId: '4201982251',
-    role: '发牌员',
-    activeCount: 876,
-    chipsCount: 9231,
-    tableCount: 198,
-    memberCount: 89,
-    cover: imgClubCoverB,
-    bannerBg: imgBannerBgB,
-  },
-  {
-    id: 3,
-    name: 'Royal Shark Union',
-    clubId: '5900221187',
-    role: '管理员',
-    activeCount: 2368,
-    chipsCount: 45210,
-    tableCount: 420,
-    memberCount: 176,
-    cover: imgClubCoverC,
-    bannerBg: imgBannerBgC,
-  },
-]
+const filteredRecords = computed(() => {
+  const baseList = sourceRecords.value.filter((room) => Number(room.game_type) < 6)
+  return baseList.filter((room) => matchTabRoom(room, activeTab.value))
+})
 
-function formatCount(value: number): string {
-  return value.toLocaleString('en-US')
+const clubDisplayName = computed(() => {
+  const nickname = String(gameStore.loginNickname || '').trim()
+  if (nickname) return `${nickname}俱乐部`
+  return 'xx俱乐部'
+})
+
+const clubDisplayId = computed(() => {
+  return String(gameStore.loginUserId || gameStore.loginAccount || '8677650585')
+})
+
+const clubMemberCount = computed(() => {
+  const count = sourceRecords.value.reduce((sum, room) => {
+    const roomPlayers = Number(room.roomers) || (Array.isArray(room.users) ? room.users.length : 0)
+    return sum + roomPlayers
+  }, 0)
+  return String(count || 0)
+})
+
+// 按 game_type + poker_type + 小盲分组，生成分组卡片展示模型。
+const groupedRecords = computed<RoomGroupViewModel[]>(() => {
+  const groupedMap: Record<string, RoomGroupViewModel> = {}
+
+  filteredRecords.value.forEach((room) => {
+    const gameType = Number(room.game_type) || 0
+    const pokerType = Number(room.poker_type) || 0
+    const sb = Number(room.sb) || 0
+    const groupKey = `${gameType}_${pokerType}_${sb}`
+
+    if (!groupedMap[groupKey]) {
+      groupedMap[groupKey] = {
+        groupKey,
+        gameType,
+        pokerType,
+        sb,
+        rooms: [],
+        blindText: '',
+        gameName: '',
+        iconImage: '',
+        tableCount: 0,
+        playerCount: 0,
+      }
+    }
+
+    groupedMap[groupKey].rooms.push(room)
+  })
+
+  return Object.values(groupedMap)
+    .map((group) => {
+      const playerCount = group.rooms.reduce((sum, room) => {
+        const roomPlayers =
+          Number(room.roomers) || (Array.isArray(room.users) ? room.users.length : 0)
+        return sum + roomPlayers
+      }, 0)
+
+      return {
+        ...group,
+        blindText: formatBlind(group.sb),
+        gameName: getGameName(group.gameType, group.pokerType),
+        iconImage: getGameIconImage(group.gameType, group.pokerType),
+        tableCount: group.rooms.length,
+        playerCount,
+      }
+    })
+    .sort((a, b) => {
+      if (a.gameType !== b.gameType) return a.gameType - b.gameType
+      if (a.pokerType !== b.pokerType) return a.pokerType - b.pokerType
+      return a.sb - b.sb
+    })
+})
+
+onMounted(() => {
+  bootstrapRoomList()
+})
+
+// 进入页面先用缓存秒开，再静默刷新最新数据。
+function bootstrapRoomList(): void {
+  restoreRoomListCache()
+  restoreRoomGroupExpandedCache()
+  syncExpandedMapWithRecords(sourceRecords.value)
+  void fetchRooms({ silent: true })
+}
+
+// 拉取牌桌列表：先拿 room id，再批量拿详情。
+async function fetchRooms(options: { silent?: boolean } = {}): Promise<void> {
+  try {
+    const idRes = await getRoomIdsApi({})
+    const idRecords =
+      Number(idRes.code) === 0 && Array.isArray(idRes.data?.records) ? idRes.data.records : []
+
+    const roomIds = idRecords
+      .map((item) => Number(item?.rid))
+      .filter((id) => Number.isFinite(id) && id > 0)
+
+    if (!roomIds.length) {
+      sourceRecords.value = []
+      persistRoomListCache([])
+      syncExpandedMapWithRecords([])
+      persistRoomGroupExpandedCache()
+      return
+    }
+
+    const detailRes = await getRoomsDetailApi({
+      room_ids: roomIds,
+      room_type: 0,
+    })
+
+    const records =
+      Number(detailRes.code) === 0 && Array.isArray(detailRes.data?.records)
+        ? detailRes.data.records
+        : []
+    sourceRecords.value = Array.isArray(records) ? records : []
+    persistRoomListCache(sourceRecords.value)
+    syncExpandedMapWithRecords(sourceRecords.value)
+    persistRoomGroupExpandedCache()
+  } catch (error) {
+    // 静默刷新失败时保留旧列表，避免页面闪空。
+    if (!options.silent) {
+      const message = error instanceof Error ? error.message : '牌局列表刷新失败'
+      showFailToast(message)
+    }
+  }
+}
+
+// 把最新牌局列表写入本地缓存。
+function persistRoomListCache(records: RoomRecord[]): void {
+  const payload: RoomListCachePayload = {
+    version: ROOM_LIST_CACHE_VERSION,
+    updatedAt: Date.now(),
+    records,
+  }
+  localStore.setItem(StorageKey.ROOM_LIST_CACHE, payload)
+}
+
+// 恢复上次牌局列表缓存，保证进入页面可秒开。
+function restoreRoomListCache(): void {
+  const cached = localStore.getItem<RoomListCachePayload | null>(StorageKey.ROOM_LIST_CACHE, null)
+  if (!cached || typeof cached !== 'object') {
+    return
+  }
+
+  if (cached.version !== ROOM_LIST_CACHE_VERSION || !Array.isArray(cached.records)) {
+    return
+  }
+
+  sourceRecords.value = cached.records
+}
+
+// 缓存分组展开状态，避免静默刷新后折叠状态丢失。
+function persistRoomGroupExpandedCache(): void {
+  const payload: RoomGroupExpandedCachePayload = {
+    version: ROOM_GROUP_EXPANDED_CACHE_VERSION,
+    updatedAt: Date.now(),
+    expandedMap: { ...expandedMap },
+  }
+  localStore.setItem(StorageKey.ROOM_GROUP_EXPANDED_CACHE, payload)
+}
+
+// 恢复上次分组展开状态（按 groupKey 记忆）。
+function restoreRoomGroupExpandedCache(): void {
+  const cached = localStore.getItem<RoomGroupExpandedCachePayload | null>(
+    StorageKey.ROOM_GROUP_EXPANDED_CACHE,
+    null,
+  )
+  if (!cached || typeof cached !== 'object') {
+    return
+  }
+  if (
+    cached.version !== ROOM_GROUP_EXPANDED_CACHE_VERSION ||
+    !cached.expandedMap ||
+    typeof cached.expandedMap !== 'object'
+  ) {
+    return
+  }
+
+  Object.keys(expandedMap).forEach((key) => {
+    delete expandedMap[key]
+  })
+  Object.entries(cached.expandedMap).forEach(([key, value]) => {
+    expandedMap[key] = value === true
+  })
+}
+
+// 只保留当前列表存在的分组 key，避免缓存越积越多。
+function syncExpandedMapWithRecords(records: RoomRecord[]): void {
+  const validGroupKeySet = new Set<string>()
+  records
+    .filter((room) => Number(room.game_type) < 6)
+    .forEach((room) => {
+      validGroupKeySet.add(buildGroupKey(room))
+    })
+
+  Object.keys(expandedMap).forEach((groupKey) => {
+    if (!validGroupKeySet.has(groupKey)) {
+      delete expandedMap[groupKey]
+    }
+  })
+}
+
+function buildGroupKey(room: RoomRecord): string {
+  const gameType = Number(room.game_type) || 0
+  const pokerType = Number(room.poker_type) || 0
+  const sb = Number(room.sb) || 0
+  return `${gameType}_${pokerType}_${sb}`
+}
+
+async function handleTableClick(room: RoomRecord): Promise<void> {
+  if (!gameStore.sessionToken) {
+    showFailToast('登录状态已失效，请重新登录')
+    return
+  }
+
+  let wsPort = Number(gameStore.websocketPort) || 0
+  if (!wsPort) {
+    try {
+      // 对齐 Cocos ProcedureEnterLobby：进入大厅阶段同步 websocket 端口。
+      wsPort = await LoginSession.EnsureWS()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '获取 websocket 端口失败'
+      showFailToast(message)
+      return
+    }
+  }
+
+  // 进入牌桌参数固定：名称 + 用户ID + token；附带房间信息用于切桌定位。
+  const payload: EnterTablePayload = {
+    userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',
+    userId: gameStore.loginUserId || gameStore.loginAccount || '',
+    token: gameStore.sessionToken,
+    websocketPort: wsPort,
+    from: 'h5-lobby',
+    roomId: String(room.rid ?? ''),
+    roomName: String(room.name ?? ''),
+  }
+
+  enterTable(payload)
+  gameStore.setLastEnterTable(payload)
+  showSuccessToast(`已请求进入牌桌：${room.name || room.rid}`)
+}
+
+function handleToggleGroup(groupKey: string): void {
+  const expanded = expandedMap[groupKey] === true
+  expandedMap[groupKey] = !expanded
+  persistRoomGroupExpandedCache()
+}
+
+function handleTopActionClick(action: 'recharge' | 'service'): void {
+  if (action === 'recharge') {
+    showFailToast('充值功能开发中')
+    return
+  }
+  showFailToast('客服功能开发中')
+}
+
+function handleClubHeaderTabClick(tab: ClubHeaderTabName): void {
+  clubHeaderTab.value = tab
+  if (tab === 'mahjong') {
+    showFailToast('麻将专区开发中')
+    return
+  }
+  if (tab === 'event') {
+    showFailToast('赛事开发中')
+  }
+}
+
+function handleQuickActionClick(action: 'safety' | 'ranking'): void {
+  if (action === 'safety') {
+    showFailToast('安全卫士功能开发中')
+    return
+  }
+  showFailToast('排行榜功能开发中')
+}
+
+function handleCreateTableClick(): void {
+  showFailToast('创建牌桌功能开发中')
+}
+
+function handleFloatingMenuClick(): void {
+  goToClubDetail()
 }
 
 function goToClubDetail(): void {
   void router.push('/club/detail')
 }
 
-function goToRoomHistory(): void {
-  void router.push('/club/room/history')
+function handleBack(): void {
+  router.back()
 }
 
-function onQuickAction(itemId: number): void {
-  if (itemId === 2) {
-    goToRoomHistory()
-    return
-  }
+function matchTabRoom(room: RoomRecord, tabName: GameTypeTabName): boolean {
+  const gameType = Number(room.game_type) || 0
+  const pokerType = Number(room.poker_type) || 0
 
-  goToClubDetail()
+  if (tabName === 'all') return true
+  if (tabName === 'texas') return gameType === 0 && pokerType === 0
+  if (tabName === 'omaha') return [1, 2, 3].includes(gameType) && pokerType === 0
+  if (tabName === 'sixPlus') return gameType === 6 || pokerType === 1
+  return true
+}
+
+function getGameName(gameType: number, pokerType: number): string {
+  if (gameType === 6 || pokerType === 1) return '6+'
+  if ([1, 2, 3].includes(gameType)) return '奥马哈'
+  if (gameType === 0) return '德州扑克'
+  return '扑克'
+}
+
+function getGameIconImage(gameType: number, pokerType: number): string {
+  if (gameType === 6 || pokerType === 1) return gameType6Plus
+  if ([1, 2, 3].includes(gameType)) return gameTypePlo
+  return gameTypeNlh
+}
+
+function formatBlind(sb: number): string {
+  const smallBlind = Number(sb) || 0
+  const bigBlind = smallBlind * 2
+  return `${formatChip(smallBlind)} / ${formatChip(bigBlind)}`
+}
+
+function formatChip(value: number): string {
+  const num = Number(value) || 0
+  if (num >= 1000) {
+    const text = (num / 1000).toFixed(num % 1000 === 0 ? 0 : 1)
+    return `${text}k`
+  }
+  return `${num}`
 }
 </script>
 
 <template>
-  <div class="page-shell club-index">
-    <section class="search-row">
-      <div class="search-shell" aria-label="俱乐部搜索">
-        <button type="button" class="search-trigger">
-          <img class="search-icon" :src="imgSearch" alt="" />
-          <span class="search-placeholder">搜索俱乐部</span>
-        </button>
-        <button type="button" class="search-btn">
-          <span class="search-btn-label">搜索</span>
-        </button>
-      </div>
-    </section>
+  <div
+    class="room-list-page themeType2"
+    :style="pageStyle"
+  >
+    <div class="bg-overlay" />
+    <header class="club-header">
+      <div class="club-header-row">
+        <div class="club-identity">
+          <button
+            class="header-back-btn"
+            type="button"
+            aria-label="返回"
+            @click="handleBack"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 7 12"
+              fill="none"
+            >
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M6.31419 0.26268C6.66443 0.61292 6.66443 1.18077 6.31419 1.53101L2.16518 5.68002L6.31419 9.82903C6.66443 10.1793 6.66443 10.7471 6.31419 11.0974C5.96395 11.4476 5.39609 11.4476 5.04585 11.0974L0.26268 6.31419C-0.08756 5.96395 -0.08756 5.3961 0.26268 5.04586L5.04585 0.26268C5.39609 -0.08756 5.96395 -0.08756 6.31419 0.26268Z"
+                fill="white"
+              />
+            </svg>
+          </button>
 
-    <section class="quick-actions">
-      <button
-        v-for="item in quickActions"
-        :key="item.id"
-        type="button"
-        class="quick-item"
-        :class="[`quick-item--${item.kind}`, { 'quick-item--hidden': item.hidden }]"
-        @click="onQuickAction(item.id)"
-      >
-        <span class="action-icon">
-          <template v-if="item.kind === 'create-club'">
-            <img class="icon-create-bg" :src="imgQuickActionCreateBg" alt="" aria-hidden="true" />
-            <img class="icon-create-shield" :src="imgQuickActionCreateShield" alt="" />
-          </template>
-          <template v-else-if="item.kind === 'club-panel'">
-            <img class="icon-board-bg" :src="imgQuickActionBoardBg" alt="" aria-hidden="true" />
-            <img class="icon-board-chart" :src="imgQuickActionBoardChart" alt="" />
-          </template>
-          <template v-else>
-            <img class="icon-union-swash" :src="imgQuickActionUnionSwash" alt="" aria-hidden="true" />
-            <img class="icon-union-club-small" :src="imgQuickActionUnionClubSmall" alt="" aria-hidden="true" />
-            <img class="icon-union-club-large" :src="imgQuickActionUnionClubLarge" alt="" />
-          </template>
-        </span>
-        <span class="action-text">{{ item.title }}</span>
-      </button>
-    </section>
+          <div class="club-avatar">
+            <img
+              :src="clubCoverAvatar"
+              alt="club avatar"
+            >
+          </div>
 
-    <section class="cards-divider">
-      <span class="divider-line" />
-      <div class="cards-icons" aria-hidden="true">
-        <img :src="imgPokerSpade" alt="" />
-        <img :src="imgPokerHeart" alt="" />
-        <img :src="imgPokerClub" alt="" />
-        <img :src="imgPokerDiamond" alt="" />
-      </div>
-      <span class="divider-line" />
-    </section>
-
-    <section class="club-list">
-      <article v-for="club in clubList" :key="club.id" class="club-banner" @click="goToClubDetail">
-        <!-- <img class="club-banner-bg" :src="club.bannerBg" alt="" aria-hidden="true" /> -->
-        <!-- <div class="club-banner-overlay" aria-hidden="true" /> -->
-
-        <div class="club-main">
-          <div class="club-identity">
-            <img class="club-cover" :src="club.cover" alt="" />
-
-            <div class="club-meta">
-              <h2 class="club-name">{{ club.name }}</h2>
-              <p class="club-id">
+          <div class="club-meta">
+            <p class="club-name">
+              {{ clubDisplayName }}
+            </p>
+            <div class="club-sub-meta">
+              <div class="club-id-wrap">
                 <span class="club-id-tag">ID</span>
-                <span class="club-id-value">{{ club.clubId }}</span>
-              </p>
-              <div class="club-top-metrics" aria-hidden="true">
-                <span class="top-metric-item">
-                  <img :src="imgBalance" alt="" />
-                  <span>{{ formatCount(club.activeCount) }}</span>
-                </span>
-                <span class="top-metric-item">
-                  <img :src="imgChips" alt="" />
-                  <span>{{ formatCount(club.chipsCount) }}</span>
-                </span>
+                <span class="club-id-text">{{ clubDisplayId }}</span>
+              </div>
+              <div class="club-member-wrap">
+                <span class="club-member-dot" />
+                <span>{{ clubMemberCount }}</span>
               </div>
             </div>
           </div>
+        </div>
 
-          <button type="button" class="enter-btn" @click.stop="goToClubDetail">
-            <span class="enter-btn-label">进入</span>
+        <div class="action-wrap">
+          <button
+            class="head-action-btn"
+            type="button"
+            @click="handleTopActionClick('recharge')"
+          >
+            <span class="head-action-label">充值</span>
+            <img
+              class="head-action-icon"
+              :src="walletIcon"
+              alt="wallet"
+            >
+          </button>
+          <button
+            class="head-action-btn"
+            type="button"
+            @click="handleTopActionClick('service')"
+          >
+            <span class="head-action-label">客服</span>
+            <img
+              class="head-action-icon"
+              :src="serviceIcon"
+              alt="service"
+            >
           </button>
         </div>
-        <div class="club-stats-shell" aria-hidden="true">
-          <div class="club-stats-inline">
-            <span class="stat-item stat-item--role">
-              <img :src="imgClubRoleIcon" alt="" />
-              <span>{{ club.role }}</span>
-            </span>
-            <span class="stat-item">
-              <img :src="imgTable" alt="" />
-              <span>{{ club.tableCount }}桌</span>
-            </span>
-            <span class="stat-item">
-              <img :src="imgPeople" alt="" />
-              <span>{{ club.memberCount }}人</span>
-            </span>
-          </div>
-        </div>
-      </article>
+      </div>
+
+      <button
+        class="announce-bar"
+        type="button"
+      >
+        <span class="announce-text">xxxxxx俱乐部公告</span>
+        <span class="announce-arrow">›</span>
+      </button>
+
+      <div class="club-header-tabs">
+        <button
+          class="club-header-tab"
+          :class="{ 'club-header-tab--active': clubHeaderTab === 'poker' }"
+          type="button"
+          @click="handleClubHeaderTabClick('poker')"
+        >
+          扑克专区
+        </button>
+        <button
+          class="club-header-tab"
+          :class="{ 'club-header-tab--active': clubHeaderTab === 'mahjong' }"
+          type="button"
+          @click="handleClubHeaderTabClick('mahjong')"
+        >
+          麻将专区
+        </button>
+        <button
+          class="club-header-tab"
+          :class="{ 'club-header-tab--active': clubHeaderTab === 'event' }"
+          type="button"
+          @click="handleClubHeaderTabClick('event')"
+        >
+          赛事
+        </button>
+      </div>
+
+      <div class="club-quick-actions">
+        <button
+          class="club-quick-card club-quick-card--safety"
+          type="button"
+          @click="handleQuickActionClick('safety')"
+        >
+          <img
+            class="quick-card-photo quick-card-photo--safety"
+            :src="quickSafetyBg"
+            alt=""
+            aria-hidden="true"
+          >
+          <img
+            class="quick-card-layer quick-card-layer--safety-bg"
+            :src="imgQuickActionCreateBg"
+            alt=""
+            aria-hidden="true"
+          >
+          <span class="quick-card-title">安全卫士</span>
+        </button>
+
+        <button
+          class="club-quick-card club-quick-card--ranking"
+          type="button"
+          @click="handleQuickActionClick('ranking')"
+        >
+          <img
+            class="quick-card-photo quick-card-photo--ranking"
+            :src="quickRankingBg"
+            alt=""
+            aria-hidden="true"
+          >
+          <img
+            class="quick-card-layer quick-card-layer--ranking-bg"
+            :src="imgQuickActionBoardBg"
+            alt=""
+            aria-hidden="true"
+          >
+          <span class="quick-card-title">排行榜</span>
+        </button>
+      </div>
+    </header>
+
+    <GameTypeTabbar v-model="activeTab" />
+
+    <section class="group-list">
+      <RoomGroupCard
+        v-for="group in groupedRecords"
+        :key="group.groupKey"
+        :group="group"
+        :expanded="expandedMap[group.groupKey] === true"
+        @toggle="handleToggleGroup"
+        @table-click="handleTableClick"
+      />
+
+      <div
+        v-if="!groupedRecords.length"
+        class="empty-wrap"
+      >
+        <VanIcon name="search" />
+        <span>
+          暂无牌桌
+        </span>
+      </div>
     </section>
+
+    <div class="floating-action-area">
+      <button
+        class="create-table-btn"
+        type="button"
+        @click="handleCreateTableClick"
+      >
+        创建牌桌
+      </button>
+      <button
+        class="floating-menu-btn"
+        type="button"
+        aria-label="更多操作"
+        @click="handleFloatingMenuClick"
+      >
+        <span />
+        <span />
+        <span />
+      </button>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
-.club-index-bg {
+.room-list-page {
   position: relative;
   min-height: 100dvh;
-  background-color: #0f122f;
+  color: #fff;
+  overflow: hidden;
+  background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
 }
 
-.bg-image {
-  position: absolute;
-  pointer-events: none;
-  user-select: none;
-}
-
-.bg-image--main {
-  width: 7.46rem;
-  height: 16.28rem;
-  left: -0.05rem;
-  top: 0;
-  object-fit: cover;
-  opacity: 0.6;
-}
-
-.bg-shade {
+.bg-overlay {
   position: absolute;
   inset: 0;
+  pointer-events: none;
   background:
-    radial-gradient(
-      120% 64% at 50% -8%,
-      rgba(89, 36, 151, 0.44),
-      rgba(23, 12, 53, 0.82) 46%,
-      rgba(8, 11, 35, 0.95)
-    ),
-    linear-gradient(180deg, rgba(18, 12, 49, 0.62), rgba(8, 12, 37, 0.98));
+    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
+    radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
+    radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
 }
 
-.bg-shine {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    60% 26% at 12% 10%,
-    rgba(239, 107, 226, 0.16),
-    rgba(239, 107, 226, 0)
-  );
-}
-
-.halo {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(1.1rem);
-  opacity: 0.55;
-  pointer-events: none;
-}
-
-.halo--top {
-  width: 2.76rem;
-  height: 2.76rem;
-  right: -0.88rem;
-  top: -0.7rem;
-  background: rgba(220, 72, 199, 0.52);
-}
-
-.halo--left {
-  width: 2.3rem;
-  height: 2.3rem;
-  left: -0.78rem;
-  top: 4.68rem;
-  background: rgba(63, 103, 255, 0.44);
-}
-
-.club-index {
+.club-header {
   position: relative;
   z-index: 2;
-  display: flex;
-  flex-direction: column;
-  gap: 0.24rem;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.24rem);
+  padding:
+    calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.09rem)
+    clamp(0.24rem, 4.4vw, 0.36rem)
+    clamp(0.12rem, 2.4vw, 0.16rem);
 }
 
-.search-row {
-  padding: 0;
-}
-
-.search-shell {
-  position: relative;
+.club-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 0.99rem;
-  border-radius: 0.79rem;
-  padding: 0.09rem 0.15rem 0.09rem 0.34rem;
-  background: rgba(14, 14, 14, 0.15);
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    backdrop-filter: blur(0.004rem);
-    mix-blend-mode: overlay;
-    pointer-events: none;
-  }
+  gap: clamp(0.06rem, 1.6vw, 0.12rem);
 }
 
-.search-trigger {
-  position: relative;
-  z-index: 1;
+.club-identity {
+  min-width: 0;
   flex: 1;
-  min-height: 0.8rem;
-  border: 0;
-  border-radius: 999px;
-  padding: 0;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.16rem;
-  justify-content: flex-start;
+  gap: clamp(0.05rem, 1.6vw, 0.08rem);
+}
+
+.header-back-btn {
+  width: clamp(0.44rem, 7vw, 0.56rem);
+  height: clamp(0.44rem, 7vw, 0.56rem);
+  border: 0;
+  padding: 0;
   background: transparent;
-  color: #fff;
-}
-
-.search-icon {
-  flex: 0 0 auto;
-  width: 0.34rem;
-  height: 0.34rem;
-}
-
-.search-placeholder {
-  font-family: 'HONOR Sans CN', 'PingFang SC', sans-serif;
-  font-size: 0.3rem;
-  line-height: 1.4;
-  color: #fff;
-  opacity: 0.96;
-}
-
-.search-btn {
-  position: relative;
-  z-index: 1;
-  flex: 0 0 auto;
-  width: 1.54rem;
-  min-height: 0.82rem;
-  border-radius: 1.26rem;
-  border: 0.009rem solid rgba(242, 242, 242, 0.4);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  background: rgba(165, 165, 165, 0.8);
-  box-shadow:
-    0.018rem 0.022rem 0.036rem rgba(0, 0, 0, 0.25),
-    inset 0 0 0.045rem rgba(0, 0, 0, 1),
-    inset 0.006rem 0.006rem 0.045rem rgba(0, 0, 0, 1),
-    inset 0 0 0.09rem rgba(242, 242, 242, 0.9);
+}
+
+.header-back-btn svg {
+  width: clamp(0.12rem, 2.1vw, 0.16rem);
+  height: clamp(0.22rem, 3.6vw, 0.28rem);
+}
+
+.club-avatar {
+  width: clamp(0.42rem, 6.6vw, 0.52rem);
+  height: clamp(0.42rem, 6.6vw, 0.52rem);
+  border-radius: 50%;
   overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    backdrop-filter: blur(0.143rem);
-    mix-blend-mode: hard-light;
-    pointer-events: none;
-  }
+  border: 0.01rem solid rgba(255, 255, 255, 0.22);
 }
 
-.search-btn-label {
-  position: relative;
-  z-index: 1;
-  font-family: 'SF Pro', 'PingFang SC', sans-serif;
-  font-size: 0.28rem;
-  font-weight: 400;
+.club-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.club-meta {
+  min-width: 0;
+}
+
+.club-name {
+  margin: 0;
+  max-width: min(2.08rem, 34vw);
+  font-size: clamp(0.17rem, 3.2vw, 0.22rem);
+  font-weight: 700;
   line-height: 0.95;
-  letter-spacing: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.quick-actions {
-  margin-top: 0.03rem;
-  padding: 0;
+.club-sub-meta {
+  margin-top: clamp(0.04rem, 1vw, 0.06rem);
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 0.475rem;
+  gap: clamp(0.06rem, 1.4vw, 0.12rem);
+  font-size: clamp(0.12rem, 2.2vw, 0.16rem);
+  opacity: 0.94;
 }
 
-.quick-item {
-  flex: 0 0 auto;
-  width: 1.216rem;
+.club-id-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.05rem;
+}
+
+.club-id-tag {
+  height: clamp(0.18rem, 3.4vw, 0.22rem);
+  min-width: clamp(0.2rem, 3.2vw, 0.24rem);
+  border-radius: 0.06rem;
+  padding: 0 clamp(0.04rem, 0.9vw, 0.06rem);
+  background: rgba(255, 255, 255, 0.4);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(0.1rem, 1.9vw, 0.14rem);
+}
+
+.club-id-text {
+  opacity: 0.95;
+}
+
+.club-member-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.05rem;
+}
+
+.club-member-dot {
+  width: clamp(0.08rem, 1.5vw, 0.1rem);
+  height: clamp(0.08rem, 1.5vw, 0.1rem);
+  border-radius: 0.02rem;
+  background: linear-gradient(180deg, #ffd771 0%, #f59f37 100%);
+}
+
+
+
+.action-wrap {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.04rem, 1.1vw, 0.06rem);
+  flex-shrink: 0;
+}
+
+.head-action-btn {
+  width: clamp(0.94rem, 18vw, 1.31rem);
+  height: clamp(0.4rem, 7.3vw, 0.49rem);
+  padding: 0 clamp(0.06rem, 1.6vw, 0.1rem);
+  border: 0.006rem solid rgba(255, 255, 255, 0.28);
+  border-radius: clamp(0.24rem, 4.6vw, 0.3rem);
+  background: rgba(255, 255, 255, 0.21);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  backdrop-filter: blur(0.08rem);
+  box-shadow: 0 0.06rem 0.18rem rgba(0, 0, 0, 0.24);
+}
+
+.head-action-label {
+  font-size: clamp(0.13rem, 2.5vw, 0.18rem);
+  line-height: 1.2;
+  text-shadow: 0 0.03rem 0.12rem rgba(0, 0, 0, 0.32);
+}
+
+.head-action-icon {
+  width: clamp(0.16rem, 3vw, 0.22rem);
+  height: clamp(0.16rem, 3vw, 0.22rem);
+  object-fit: contain;
+}
+
+.announce-bar {
+  margin-top: clamp(0.12rem, 2.4vw, 0.15rem);
+  width: 100%;
+  height: clamp(0.44rem, 8vw, 0.54rem);
+  border: 0;
+  border-radius: clamp(0.32rem, 6vw, 0.4rem);
+  padding: 0 clamp(0.1rem, 2.8vw, 0.16rem);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(34, 34, 34, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(0.24rem);
+}
+
+.announce-text {
+  min-width: 0;
+  font-size: clamp(0.14rem, 2.7vw, 0.2rem);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.announce-arrow {
+  margin-left: 0.08rem;
+  font-size: clamp(0.2rem, 3.8vw, 0.26rem);
+  line-height: 1;
+  opacity: 0.88;
+}
+
+.club-quick-actions {
+  margin-top: clamp(0.13rem, 2.7vw, 0.18rem);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.09rem, 2.4vw, 0.16rem);
+}
+
+.club-header-tabs {
+  margin-top: clamp(0.12rem, 2.5vw, 0.16rem);
+  display: flex;
+  align-items: center;
+  gap: clamp(0.18rem, 4.8vw, 0.26rem);
+  padding-left: clamp(0.02rem, 0.8vw, 0.05rem);
+}
+
+.club-header-tab {
+  position: relative;
   border: 0;
   background: transparent;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.088rem;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: clamp(0.16rem, 3.1vw, 0.2rem);
+  line-height: 1;
+  font-weight: 500;
+  padding: 0 0 clamp(0.06rem, 1.4vw, 0.08rem);
+  opacity: 0.92;
 }
 
-.quick-item--hidden {
-  opacity: 0;
+.club-header-tab--active {
+  color: #fff;
+  font-weight: 700;
+}
+
+.club-header-tab--active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0.02rem;
+  border-radius: 999px;
+  background: rgba(234, 234, 234, 0.92);
+  box-shadow: 0 0 0.06rem rgba(255, 255, 255, 0.45);
+}
+
+.club-quick-card {
+  position: relative;
+  height: clamp(1.7rem, 14.5vw, 0.84rem);
+  border: 0.01rem solid rgba(255, 255, 255, 0.36);
+  border-radius: clamp(0.2rem, 4.8vw, 0.3rem);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: linear-gradient(140deg, rgba(90, 167, 230, 0.24), rgba(10, 40, 65, 0.56));
+  box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.26);
+}
+
+.club-quick-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(97deg, rgba(16, 25, 38, 0.08) 8%, rgba(10, 18, 34, 0.55) 72%);
+  z-index: 1;
   pointer-events: none;
 }
 
-.action-icon {
-  position: relative;
-  width: 1.216rem;
-  height: 1.216rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border: 0.01rem solid rgba(255, 255, 255, 0.78);
-  border-radius: 0.331rem;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.action-icon img {
+.club-quick-card::after {
+  content: '';
   position: absolute;
-  max-width: none;
-  object-fit: contain;
+  inset: -0.01rem;
+  border-radius: inherit;
+  border: 0.01rem solid rgba(255, 255, 255, 0.58);
+  box-shadow:
+    inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
+    inset 0 0 0.2rem rgba(255, 255, 255, 0.14),
+    0 0 0.08rem rgba(255, 255, 255, 0.18);
+  filter: blur(0.002rem);
+  pointer-events: none;
+  z-index: 4;
 }
 
-.icon-create-bg {
-  width: 1.9rem;
-  height: 1.46rem;
-  left: -0.7rem;
-  top: 0.03rem;
+.club-quick-card--safety {
+  background: linear-gradient(145deg, rgba(83, 187, 245, 0.3), rgba(41, 71, 108, 0.68));
 }
 
-.icon-create-shield {
-  width: 0.69rem;
-  height: 0.69rem;
-  left: 0.265rem;
-  top: 0.27rem;
+.club-quick-card--ranking {
+  background: linear-gradient(145deg, rgba(245, 172, 90, 0.26), rgba(74, 36, 24, 0.7));
 }
 
-.icon-board-bg {
-  width: 1.26rem;
-  height: 1.19rem;
-  left: -0.57rem;
-  top: 0;
-}
-
-.icon-board-chart {
-  width: 0.68rem;
-  height: 0.68rem;
-  left: 0.275rem;
-  top: 0.264rem;
-}
-
-.quick-item--create-union {
-  width: 1.269rem;
-}
-
-.quick-item--create-union .action-icon {
-  width: 1.269rem;
-  height: 1.269rem;
-  border: 0.006rem solid rgba(255, 255, 255, 0.44);
-  border-radius: 0.331rem;
-  background: linear-gradient(160.93deg, rgba(0, 255, 246, 0.71) 10.97%, rgba(0, 189, 214, 0.71) 87.16%);
-}
-
-.icon-union-swash {
-  width: 2.15rem;
-  height: 2.3rem;
-  left: -0.43rem;
-  top: -0.04rem;
-  transform: rotate(15deg);
-}
-
-.icon-union-club-small {
-  width: 0.61rem;
-  height: 0.65rem;
-  left: 0.52rem;
-  top: 0.29rem;
-  transform: rotate(15deg);
-}
-
-.icon-union-club-large {
-  width: 0.82rem;
-  height: 0.88rem;
-  left: 0.03rem;
-  top: 0.31rem;
-  transform: rotate(15deg);
-}
-
-.action-text {
-  width: 100%;
-  font-size: 0.228rem;
-  line-height: 1;
-  font-weight: 500;
-  color: #fff;
-  text-align: center;
-  text-shadow: 0 0.025rem 0.317rem rgba(0, 0, 0, 0.6);
-  white-space: nowrap;
-}
-
-.cards-divider {
-  margin-top: 0.02rem;
-  display: flex;
-  align-items: center;
-  gap: 0.14rem;
-}
-
-.divider-line {
-  flex: 1;
-  height: 0.02rem;
-  background: rgba(249, 249, 249, 0.42);
-}
-
-.cards-icons {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.06rem;
-}
-
-.cards-icons img {
-  width: 0.32rem;
-  height: 0.32rem;
-  object-fit: contain;
-}
-
-.club-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  padding-bottom: 0.44rem;
-}
-
-.club-banner {
-  position: relative;
-  min-height: 2.78rem;
-  border-radius: 0.46rem;
-  overflow: hidden;
-  isolation: isolate;
-  border: 0;
-  // background: rgba(84, 73, 106, 0.22);
-  // box-shadow:
-  //   0 0.16rem 0.32rem rgba(6, 10, 26, 0.34),
-  //   inset 0 0 0.03rem rgba(255, 255, 255, 0.24);
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0.07rem;
-    border-radius: 0.38rem;
-    border: 0.07rem solid rgba(238, 236, 249, 0.3);
-    box-shadow:
-      0 0 0.02rem rgba(255, 255, 255, 0.2),
-      inset 0 0 0.03rem rgba(255, 255, 255, 0.12);
-    pointer-events: none;
-    z-index: 4;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0.09rem;
-    border-radius: 0.36rem;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
-    pointer-events: none;
-    z-index: 2;
-  }
-}
-
-.club-main {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.16rem;
-  padding: 0.3rem 0.28rem 0;
-}
-
-.club-banner-bg {
+.quick-card-photo {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.82;
+  pointer-events: none;
 }
 
-.club-banner-overlay {
+.quick-card-photo--safety,
+.quick-card-photo--ranking {
+  transform: scale(1.04);
+}
+
+.quick-card-photo--safety {
+  object-position: 42% 55%;
+}
+
+.quick-card-photo--ranking {
+  object-position: center 58%;
+}
+
+.quick-card-layer {
   position: absolute;
-  inset: 0;
-  z-index: 2;
-  background:
-    linear-gradient(180deg, rgba(30, 27, 43, 0.08), rgba(17, 17, 25, 0.5)),
-    radial-gradient(108% 88% at 12% -18%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0)),
-    radial-gradient(86% 62% at 100% 100%, rgba(116, 155, 255, 0.22), rgba(116, 155, 255, 0));
-  backdrop-filter: blur(0.17rem);
-}
-
-.club-identity {
-  display: flex;
-  align-items: center;
-  gap: 0.18rem;
-}
-
-.club-cover {
-  width: 1.4rem;
-  height: 1.4rem;
-  border-radius: 0.24rem;
-  object-fit: cover;
-  border: 0.01rem solid rgba(255, 255, 255, 0.28);
-  box-shadow:
-    0 0.08rem 0.22rem rgba(8, 8, 8, 0.3),
-    inset 0 0 0.02rem rgba(255, 255, 255, 0.24);
-}
-
-.club-meta {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-height: 1.4rem;
-}
-
-.club-name {
-  margin: 0;
-  font-size: 0.36rem;
-  line-height: 1.08;
-  font-weight: 500;
-  color: rgba(249, 249, 249, 0.98);
-}
-
-.club-id {
-  margin: 0.11rem 0 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.08rem;
-}
-
-.club-id-tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0.36rem;
-  height: 0.28rem;
-  border-radius: 0.1rem;
-  font-size: 0.18rem;
-  font-weight: 600;
-  color: #444;
-  background: rgba(255, 255, 255, 0.56);
-}
-
-.club-id-value {
-  font-size: 0.24rem;
-  font-weight: 300;
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.club-top-metrics {
-  margin-top: 0.1rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.22rem;
-}
-
-.top-metric-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.04rem;
-  color: rgba(255, 255, 255, 0.95);
-  font-size: 0.22rem;
-  font-weight: 300;
-  line-height: 1;
-}
-
-.top-metric-item img {
-  width: 0.28rem;
-  height: 0.28rem;
+  pointer-events: none;
   object-fit: contain;
+  z-index: 2;
 }
 
-.club-stats-inline {
+.quick-card-layer--safety-bg {
+  width: clamp(0.95rem, 24vw, 1.3rem);
+  height: clamp(0.78rem, 20vw, 1.04rem);
+  left: clamp(-0.42rem, -3vw, -0.26rem);
+  top: clamp(-0.08rem, -0.7vw, -0.04rem);
+  opacity: 0.5;
+}
+
+.quick-card-layer--ranking-bg {
+  width: clamp(0.9rem, 23vw, 1.24rem);
+  height: clamp(0.88rem, 22vw, 1.22rem);
+  left: clamp(-0.38rem, -2.8vw, -0.24rem);
+  top: clamp(-0.08rem, -0.7vw, -0.04rem);
+  opacity: 0.52;
+}
+
+.quick-card-title {
   position: relative;
   z-index: 3;
-  margin: 0;
-  width: 100%;
-  min-height: 0.56rem;
-  padding: 0 0.26rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.28rem;
+  margin-left: clamp(0.3rem, 7vw, 0.44rem);
+  font-size: clamp(0.16rem, 3.8vw, 0.24rem);
+  font-weight: 700;
+  letter-spacing: 0.01rem;
+  color: #fff;
+  text-shadow: 0 0.03rem 0.16rem rgba(0, 0, 0, 0.54);
 }
 
-.stat-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.05rem;
-  font-size: 0.2rem;
-  line-height: 0.95;
-  color: rgba(251, 251, 251, 0.95);
-}
+@media (max-width: 360px) {
+  .club-name {
+    max-width: min(1.78rem, 30vw);
+  }
 
-.stat-item img {
-  width: 0.28rem;
-  height: 0.28rem;
-  object-fit: contain;
-}
+  .head-action-btn {
+    width: min(0.86rem, 17vw);
+  }
 
-.stat-item--role {
-  gap: 0.04rem;
-}
-
-.stat-item--role img {
-  width: 0.3rem;
-  height: 0.3rem;
-}
-
-.stat-item span {
-  letter-spacing: 0.006rem;
-  white-space: nowrap;
-}
-
-.stat-item--role span {
-  letter-spacing: 0;
-  line-height: 1;
-}
-
-.enter-btn {
-  position: relative;
-  overflow: hidden;
-  flex-shrink: 0;
-  border: 0.01rem solid rgba(242, 242, 242, 0.4);
-  min-width: 1.56rem;
-  min-height: 0.72rem;
-  margin-top: 0.36rem;
-  border-radius: 0.34rem;
-  font-size: 0.3rem;
-  font-weight: 500;
-  color: rgba(249, 249, 249, 0.98);
-  background: transparent;
-  box-shadow:
-    0.02rem 0.025rem 0.04rem rgba(0, 0, 0, 0.25),
-    inset 0 0 0.05rem rgba(0, 0, 0, 1),
-    inset 0.007rem 0.007rem 0.05rem rgba(0, 0, 0, 1),
-    inset 0 0 0.1rem rgba(242, 242, 242, 0.9);
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    backdrop-filter: blur(0.14rem);
-    background: rgba(165, 165, 165, 0.8);
-    mix-blend-mode: hard-light;
-    pointer-events: none;
+  .quick-card-title {
+    margin-left: clamp(0.26rem, 7.2vw, 0.34rem);
   }
 }
 
-.enter-btn-label {
+.group-list {
   position: relative;
   z-index: 1;
+  margin-top: 0;
+  max-height: calc(100dvh - 3.1rem);
+  overflow-y: auto;
+  padding: 0 0.38rem 2.2rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(0.3533rem) saturate(1.04);
 }
 
-.club-stats-shell {
-  position: absolute;
-  z-index: 4;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: -0.06rem;
-  width: 4.36rem;
-  height: 0.72rem;
-  border-radius: 0.29rem 0.29rem 0.04rem 0.04rem;
-  border: 0.01rem solid rgba(236, 236, 247, 0.24);
-  background:
-    linear-gradient(180deg, rgba(123, 118, 139, 0.36), rgba(83, 79, 99, 0.22)),
-    rgba(48, 44, 64, 0.32);
-  backdrop-filter: blur(0.18rem);
-  box-shadow:
-    inset 0 0.02rem 0.06rem rgba(255, 255, 255, 0.12),
-    0 0.06rem 0.12rem rgba(11, 10, 18, 0.22);
+.floating-action-area {
+  position: fixed;
+  left: 0.4rem;
+  right: 0.32rem;
+  bottom: 0.48rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
 }
 
-.club-stats-shell::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(120% 130% at 50% -22%, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0));
-  pointer-events: none;
+.create-table-btn {
+  flex: 1;
+  height: 1.12rem;
+  border: 0.0133rem solid rgba(242, 242, 242, 0.8);
+  border-radius: 0.8rem;
+  background-image: linear-gradient(168deg, #05e7ae 7.55%, #027a5c 71.92%);
+  color: #fbfbfb;
+  font-size: 0.4rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  backdrop-filter: blur(0.08rem);
+  box-shadow: 0 0.16rem 0.32rem rgba(0, 0, 0, 0.22);
 }
 
-.club-stats-shell::after {
-  content: '';
-  position: absolute;
-  inset: 0.01rem;
-  border-radius: inherit;
-  border: 0.01rem solid rgba(255, 255, 255, 0.18);
-  pointer-events: none;
+.floating-menu-btn {
+  margin-left: -0.62rem;
+  width: 0.88rem;
+  height: 0.88rem;
+  border: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, #056a57 0%, #01382f 75%);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.08rem;
+  box-shadow: 0 0.14rem 0.3rem rgba(0, 0, 0, 0.38);
+  z-index: 99;
 }
 
-@media (max-width: 340px) {
-  .quick-actions {
-    gap: 0.32rem;
-  }
-
-  .action-icon {
-    width: 1.08rem;
-    height: 1.08rem;
-  }
-
-  .quick-item {
-    width: 1.08rem;
-  }
-
-  .quick-item--create-union,
-  .quick-item--create-union .action-icon {
-    width: 1.12rem;
-    height: 1.12rem;
-  }
-
-  .action-text {
-    font-size: 0.22rem;
-  }
-
-  .search-btn {
-    width: 1.36rem;
-    min-width: 1.36rem;
-  }
-
-  .club-banner {
-    min-height: 2.7rem;
-    border-radius: 0.4rem;
-
-    &::before {
-      inset: 0.06rem;
-      border-radius: 0.33rem;
-    }
-
-    &::after {
-      inset: 0.08rem;
-      border-radius: 0.31rem;
-    }
-  }
-
-  .club-main {
-    padding-left: 0.18rem;
-    padding-right: 0.18rem;
-  }
-
-  .club-name {
-    font-size: 0.3rem;
-  }
-
-  .club-id-value,
-  .top-metric-item {
-    font-size: 0.2rem;
-  }
-
-  .club-cover {
-    width: 1.2rem;
-    height: 1.2rem;
-  }
-
-  .club-meta {
-    min-height: 1.2rem;
-  }
-
-  .club-stats-shell {
-    width: 4rem;
-    height: 0.68rem;
-  }
-
-  .club-stats-inline {
-    padding: 0 0.18rem;
-    gap: 0.1rem;
-  }
-
-  .stat-item {
-    font-size: 0.18rem;
-  }
-
-  .enter-btn {
-    min-width: 1.4rem;
-    min-height: 0.66rem;
-    font-size: 0.28rem;
-  }
+.floating-menu-btn span {
+  width: 0.26rem;
+  height: 0.06rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
 }
+
+.empty-wrap {
+  margin-top: 1.4933rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2133rem;
+  font-size: 0.3467rem;
+  color: rgba(255, 255, 255, 0.82);
+}
+
 </style>

@@ -104,7 +104,7 @@ const historyList: RoomHistoryItem[] = [
 ]
 
 function backToClub(): void {
-  void router.push('/club')
+  void router.push('/club/detail')
 }
 function toDetail(): void {
   void router.push('/club/room/history/detail')

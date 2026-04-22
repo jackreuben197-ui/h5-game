@@ -31,7 +31,7 @@ const router = createRouter({
         {
           path: 'club',
           name: 'club',
-          component: () => import('@/views/club/ClubIndexView.vue'),
+          component: () => import('@/views/club/ClubListView.vue'),
           meta: {
             requiresAuth: true,
             tabKey: 'club',
@@ -75,6 +75,12 @@ const router = createRouter({
       path: '/home/task',
       name: 'home-task',
       component: () => import('@/views/home/HomeTaskView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/index',
+      name: 'club-index',
+      component: () => import('@/views/club/ClubIndexView.vue'),
       meta: { requiresAuth: true },
     },
     {

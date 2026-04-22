@@ -1,1034 +1,626 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, type CSSProperties } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { showFailToast, showSuccessToast } from 'vant'
-import RoomGroupCard from '../home/components/RoomGroupCard.vue'
-import GameTypeTabbar from '@/components/GameTypeTabbar.vue'
-import { getRoomIdsApi, getRoomsDetailApi } from '@/api/room'
-import { enterTable } from '@/bridge/bridge'
-import type { EnterTablePayload } from '@/bridge/protocol'
-import StorageKey from '@/constants/storageKey'
-import LoginSession from '@/session/loginSession'
-import type { RoomRecord } from '@/api/models/room'
-import { useGameStore } from '@/stores/game'
-import { localStore } from '@/utils/localStore'
-import serviceIcon from '@/assets/icons/icon_server.png'
-import walletIcon from '@/assets/icons/icon_wallet.png'
-import clubCoverAvatar from '@/assets/images/club/figma/club_cover_avatar.png'
-import imgQuickActionCreateBg from '@/assets/images/club/figma/quick-actions/qa_create_club_bg_shape.svg'
-import imgQuickActionBoardBg from '@/assets/images/club/figma/quick-actions/qa_data_board_bg_shape.svg'
-import quickSafetyBg from '@/assets/images/club/figma/header/header_quick_safety.jpg'
-import quickRankingBg from '@/assets/images/club/figma/header/header_quick_ranking.png'
-import gameType6Plus from '@/assets/icons/game_type_6+.png'
-import gameTypeNlh from '@/assets/icons/game_type_nlh.png'
-import gameTypePlo from '@/assets/icons/game_type_plo.png'
-import tabBg from '@/assets/icons/game_type_tab_bg.png'
+import imgClubCover from '@/assets/images/club_cover_avatar.png'
+import imgBalance from '@/assets/icons/icon_balance.png'
+import imgChips from '@/assets/icons/icon_chips.png'
+import imgPeople from '@/assets/icons/icon_people.png'
+import imgQuickSafety from '@/assets/images/club_header_quick_safety.jpg'
+import imgQuickRanking from '@/assets/images/club_header_quick_ranking.png'
 
-type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
-type ClubHeaderTabName = 'poker' | 'mahjong' | 'event'
-
-interface RoomGroupViewModel {
-  groupKey: string
-  gameType: number
-  pokerType: number
-  sb: number
-  rooms: RoomRecord[]
-  blindText: string
-  gameName: string
-  iconImage: string
-  tableCount: number
-  playerCount: number
+interface QuickActionItem {
+	id: number
+	title: string
+	cover: string
 }
 
-interface RoomListCachePayload {
-  version: number
-  updatedAt: number
-  records: RoomRecord[]
+type SettingItemKind = 'text' | 'arrow' | 'switch' | 'level' | 'founder' | 'copy'
+
+interface SettingItem {
+	id: number
+	label: string
+	kind: SettingItemKind
+	value?: string
+	switchKey?: 'allowSearch' | 'joinWithoutApproval'
 }
 
-interface RoomGroupExpandedCachePayload {
-  version: number
-  updatedAt: number
-  expandedMap: Record<string, boolean>
-}
-
-const ROOM_LIST_CACHE_VERSION = 1
-const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
-
-const gameStore = useGameStore()
 const router = useRouter()
 
-// 顶部右侧切换风格开关：和旧版保持一致。
-const activeTab = ref<GameTypeTabName>('all')
-const clubHeaderTab = ref<ClubHeaderTabName>('poker')
-const sourceRecords = ref<RoomRecord[]>([])
-const expandedMap = reactive<Record<string, boolean>>({})
-const pageStyle = computed<CSSProperties>(() => ({
-  '--tab-bg': `url(${tabBg})`,
-}))
+const imgQuickFund = 'https://www.figma.com/api/mcp/asset/9a7731a8-09f1-45c7-8292-70162e10dc50'
 
-const filteredRecords = computed(() => {
-  const baseList = sourceRecords.value.filter((room) => Number(room.game_type) < 6)
-  return baseList.filter((room) => matchTabRoom(room, activeTab.value))
-})
+const quickActions: QuickActionItem[] = [
+	{ id: 1, title: '活动管理', cover: imgQuickSafety },
+	{ id: 2, title: '牌局记录', cover: imgQuickRanking },
+	{ id: 3, title: '基金', cover: imgQuickFund },
+]
 
-const clubDisplayName = computed(() => {
-  const nickname = String(gameStore.loginNickname || '').trim()
-  if (nickname) return `${nickname}俱乐部`
-  return 'xx俱乐部'
-})
+const settings: SettingItem[] = [
+	{ id: 1, label: '创始人', kind: 'founder', value: 'User Name' },
+	{ id: 2, label: '邀请分享', kind: 'arrow' },
+	{ id: 3, label: '联盟', kind: 'text', value: 'Guildxxxxx' },
+	{ id: 4, label: '当前俱乐部等级', kind: 'level', value: 'LV. 9' },
+	{ id: 5, label: '允许其他人搜索俱乐部', kind: 'switch', switchKey: 'allowSearch' },
+	{ id: 6, label: '入会无需审批', kind: 'switch', switchKey: 'joinWithoutApproval' },
+	{ id: 7, label: '创建时间', kind: 'text', value: '03/01/2024' },
+	{ id: 8, label: '复制俱乐部', kind: 'copy' },
+]
 
-const clubDisplayId = computed(() => {
-  return String(gameStore.loginUserId || gameStore.loginAccount || '8677650585')
-})
+const allowSearch = ref(true)
+const joinWithoutApproval = ref(false)
 
-const clubMemberCount = computed(() => {
-  const count = sourceRecords.value.reduce((sum, room) => {
-    const roomPlayers = Number(room.roomers) || (Array.isArray(room.users) ? room.users.length : 0)
-    return sum + roomPlayers
-  }, 0)
-  return String(count || 0)
-})
-
-// 按 game_type + poker_type + 小盲分组，生成分组卡片展示模型。
-const groupedRecords = computed<RoomGroupViewModel[]>(() => {
-  const groupedMap: Record<string, RoomGroupViewModel> = {}
-
-  filteredRecords.value.forEach((room) => {
-    const gameType = Number(room.game_type) || 0
-    const pokerType = Number(room.poker_type) || 0
-    const sb = Number(room.sb) || 0
-    const groupKey = `${gameType}_${pokerType}_${sb}`
-
-    if (!groupedMap[groupKey]) {
-      groupedMap[groupKey] = {
-        groupKey,
-        gameType,
-        pokerType,
-        sb,
-        rooms: [],
-        blindText: '',
-        gameName: '',
-        iconImage: '',
-        tableCount: 0,
-        playerCount: 0,
-      }
-    }
-
-    groupedMap[groupKey].rooms.push(room)
-  })
-
-  return Object.values(groupedMap)
-    .map((group) => {
-      const playerCount = group.rooms.reduce((sum, room) => {
-        const roomPlayers =
-          Number(room.roomers) || (Array.isArray(room.users) ? room.users.length : 0)
-        return sum + roomPlayers
-      }, 0)
-
-      return {
-        ...group,
-        blindText: formatBlind(group.sb),
-        gameName: getGameName(group.gameType, group.pokerType),
-        iconImage: getGameIconImage(group.gameType, group.pokerType),
-        tableCount: group.rooms.length,
-        playerCount,
-      }
-    })
-    .sort((a, b) => {
-      if (a.gameType !== b.gameType) return a.gameType - b.gameType
-      if (a.pokerType !== b.pokerType) return a.pokerType - b.pokerType
-      return a.sb - b.sb
-    })
-})
-
-onMounted(() => {
-  bootstrapRoomList()
-})
-
-// 进入页面先用缓存秒开，再静默刷新最新数据。
-function bootstrapRoomList(): void {
-  restoreRoomListCache()
-  restoreRoomGroupExpandedCache()
-  syncExpandedMapWithRecords(sourceRecords.value)
-  void fetchRooms({ silent: true })
+function formatCount(value: number): string {
+	return value.toLocaleString('en-US')
 }
 
-// 拉取牌桌列表：先拿 room id，再批量拿详情。
-async function fetchRooms(options: { silent?: boolean } = {}): Promise<void> {
-  try {
-    const idRes = await getRoomIdsApi({})
-    const idRecords =
-      Number(idRes.code) === 0 && Array.isArray(idRes.data?.records) ? idRes.data.records : []
-
-    const roomIds = idRecords
-      .map((item) => Number(item?.rid))
-      .filter((id) => Number.isFinite(id) && id > 0)
-
-    if (!roomIds.length) {
-      sourceRecords.value = []
-      persistRoomListCache([])
-      syncExpandedMapWithRecords([])
-      persistRoomGroupExpandedCache()
-      return
-    }
-
-    const detailRes = await getRoomsDetailApi({
-      room_ids: roomIds,
-      room_type: 0,
-    })
-
-    const records =
-      Number(detailRes.code) === 0 && Array.isArray(detailRes.data?.records)
-        ? detailRes.data.records
-        : []
-    sourceRecords.value = Array.isArray(records) ? records : []
-    persistRoomListCache(sourceRecords.value)
-    syncExpandedMapWithRecords(sourceRecords.value)
-    persistRoomGroupExpandedCache()
-  } catch (error) {
-    // 静默刷新失败时保留旧列表，避免页面闪空。
-    if (!options.silent) {
-      const message = error instanceof Error ? error.message : '牌局列表刷新失败'
-      showFailToast(message)
-    }
-  }
+function goBack(): void {
+	void router.push('/club/index')
 }
 
-// 把最新牌局列表写入本地缓存。
-function persistRoomListCache(records: RoomRecord[]): void {
-  const payload: RoomListCachePayload = {
-    version: ROOM_LIST_CACHE_VERSION,
-    updatedAt: Date.now(),
-    records,
-  }
-  localStore.setItem(StorageKey.ROOM_LIST_CACHE, payload)
+function onQuickAction(actionId: number): void {
+	if (actionId === 2) {
+		void router.push('/club/room/history')
+		return
+	}
+
+	if (actionId === 1) {
+		void router.push('/club/members')
+		return
+	}
+
+	void router.push('/recharge')
 }
 
-// 恢复上次牌局列表缓存，保证进入页面可秒开。
-function restoreRoomListCache(): void {
-  const cached = localStore.getItem<RoomListCachePayload | null>(StorageKey.ROOM_LIST_CACHE, null)
-  if (!cached || typeof cached !== 'object') {
-    return
-  }
+function onSettingClick(item: SettingItem): void {
+	if (item.kind === 'switch' || item.kind === 'text' || item.kind === 'founder') {
+		return
+	}
 
-  if (cached.version !== ROOM_LIST_CACHE_VERSION || !Array.isArray(cached.records)) {
-    return
-  }
+	if (item.label === '邀请分享') {
+		return
+	}
 
-  sourceRecords.value = cached.records
+	if (item.label === '复制俱乐部') {
+		return
+	}
 }
 
-// 缓存分组展开状态，避免静默刷新后折叠状态丢失。
-function persistRoomGroupExpandedCache(): void {
-  const payload: RoomGroupExpandedCachePayload = {
-    version: ROOM_GROUP_EXPANDED_CACHE_VERSION,
-    updatedAt: Date.now(),
-    expandedMap: { ...expandedMap },
-  }
-  localStore.setItem(StorageKey.ROOM_GROUP_EXPANDED_CACHE, payload)
-}
+function toggleSwitch(key: 'allowSearch' | 'joinWithoutApproval'): void {
+	if (key === 'allowSearch') {
+		allowSearch.value = !allowSearch.value
+		return
+	}
 
-// 恢复上次分组展开状态（按 groupKey 记忆）。
-function restoreRoomGroupExpandedCache(): void {
-  const cached = localStore.getItem<RoomGroupExpandedCachePayload | null>(
-    StorageKey.ROOM_GROUP_EXPANDED_CACHE,
-    null,
-  )
-  if (!cached || typeof cached !== 'object') {
-    return
-  }
-  if (
-    cached.version !== ROOM_GROUP_EXPANDED_CACHE_VERSION ||
-    !cached.expandedMap ||
-    typeof cached.expandedMap !== 'object'
-  ) {
-    return
-  }
-
-  Object.keys(expandedMap).forEach((key) => {
-    delete expandedMap[key]
-  })
-  Object.entries(cached.expandedMap).forEach(([key, value]) => {
-    expandedMap[key] = value === true
-  })
-}
-
-// 只保留当前列表存在的分组 key，避免缓存越积越多。
-function syncExpandedMapWithRecords(records: RoomRecord[]): void {
-  const validGroupKeySet = new Set<string>()
-  records
-    .filter((room) => Number(room.game_type) < 6)
-    .forEach((room) => {
-      validGroupKeySet.add(buildGroupKey(room))
-    })
-
-  Object.keys(expandedMap).forEach((groupKey) => {
-    if (!validGroupKeySet.has(groupKey)) {
-      delete expandedMap[groupKey]
-    }
-  })
-}
-
-function buildGroupKey(room: RoomRecord): string {
-  const gameType = Number(room.game_type) || 0
-  const pokerType = Number(room.poker_type) || 0
-  const sb = Number(room.sb) || 0
-  return `${gameType}_${pokerType}_${sb}`
-}
-
-async function handleTableClick(room: RoomRecord): Promise<void> {
-  if (!gameStore.sessionToken) {
-    showFailToast('登录状态已失效，请重新登录')
-    return
-  }
-
-  let wsPort = Number(gameStore.websocketPort) || 0
-  if (!wsPort) {
-    try {
-      // 对齐 Cocos ProcedureEnterLobby：进入大厅阶段同步 websocket 端口。
-      wsPort = await LoginSession.EnsureWS()
-    } catch (error) {
-      const message = error instanceof Error ? error.message : '获取 websocket 端口失败'
-      showFailToast(message)
-      return
-    }
-  }
-
-  // 进入牌桌参数固定：名称 + 用户ID + token；附带房间信息用于切桌定位。
-  const payload: EnterTablePayload = {
-    userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',
-    userId: gameStore.loginUserId || gameStore.loginAccount || '',
-    token: gameStore.sessionToken,
-    websocketPort: wsPort,
-    from: 'h5-lobby',
-    roomId: String(room.rid ?? ''),
-    roomName: String(room.name ?? ''),
-  }
-
-  enterTable(payload)
-  gameStore.setLastEnterTable(payload)
-  showSuccessToast(`已请求进入牌桌：${room.name || room.rid}`)
-}
-
-function handleToggleGroup(groupKey: string): void {
-  const expanded = expandedMap[groupKey] === true
-  expandedMap[groupKey] = !expanded
-  persistRoomGroupExpandedCache()
-}
-
-function handleTopActionClick(action: 'recharge' | 'service'): void {
-  if (action === 'recharge') {
-    showFailToast('充值功能开发中')
-    return
-  }
-  showFailToast('客服功能开发中')
-}
-
-function handleClubHeaderTabClick(tab: ClubHeaderTabName): void {
-  clubHeaderTab.value = tab
-  if (tab === 'mahjong') {
-    showFailToast('麻将专区开发中')
-    return
-  }
-  if (tab === 'event') {
-    showFailToast('赛事开发中')
-  }
-}
-
-function handleQuickActionClick(action: 'safety' | 'ranking'): void {
-  if (action === 'safety') {
-    showFailToast('安全卫士功能开发中')
-    return
-  }
-  showFailToast('排行榜功能开发中')
-}
-
-function handleCreateTableClick(): void {
-  showFailToast('创建牌桌功能开发中')
-}
-
-function handleFloatingMenuClick(): void {
-  showFailToast('悬浮菜单功能开发中')
-}
-
-function handleBack(): void {
-  router.back()
-}
-
-function matchTabRoom(room: RoomRecord, tabName: GameTypeTabName): boolean {
-  const gameType = Number(room.game_type) || 0
-  const pokerType = Number(room.poker_type) || 0
-
-  if (tabName === 'all') return true
-  if (tabName === 'texas') return gameType === 0 && pokerType === 0
-  if (tabName === 'omaha') return [1, 2, 3].includes(gameType) && pokerType === 0
-  if (tabName === 'sixPlus') return gameType === 6 || pokerType === 1
-  return true
-}
-
-function getGameName(gameType: number, pokerType: number): string {
-  if (gameType === 6 || pokerType === 1) return '6+'
-  if ([1, 2, 3].includes(gameType)) return '奥马哈'
-  if (gameType === 0) return '德州扑克'
-  return '扑克'
-}
-
-function getGameIconImage(gameType: number, pokerType: number): string {
-  if (gameType === 6 || pokerType === 1) return gameType6Plus
-  if ([1, 2, 3].includes(gameType)) return gameTypePlo
-  return gameTypeNlh
-}
-
-function formatBlind(sb: number): string {
-  const smallBlind = Number(sb) || 0
-  const bigBlind = smallBlind * 2
-  return `${formatChip(smallBlind)} / ${formatChip(bigBlind)}`
-}
-
-function formatChip(value: number): string {
-  const num = Number(value) || 0
-  if (num >= 1000) {
-    const text = (num / 1000).toFixed(num % 1000 === 0 ? 0 : 1)
-    return `${text}k`
-  }
-  return `${num}`
+	joinWithoutApproval.value = !joinWithoutApproval.value
 }
 </script>
 
 <template>
-  <div
-    class="room-list-page themeType2"
-    :style="pageStyle"
-  >
-    <div class="bg-overlay" />
-    <header class="club-header">
-      <div class="club-header-row">
-        <div class="club-identity">
-          <button
-            class="header-back-btn"
-            type="button"
-            aria-label="返回"
-            @click="handleBack"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 7 12"
-              fill="none"
-            >
-              <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
-                d="M6.31419 0.26268C6.66443 0.61292 6.66443 1.18077 6.31419 1.53101L2.16518 5.68002L6.31419 9.82903C6.66443 10.1793 6.66443 10.7471 6.31419 11.0974C5.96395 11.4476 5.39609 11.4476 5.04585 11.0974L0.26268 6.31419C-0.08756 5.96395 -0.08756 5.3961 0.26268 5.04586L5.04585 0.26268C5.39609 -0.08756 5.96395 -0.08756 6.31419 0.26268Z"
-                fill="white"
-              />
-            </svg>
-          </button>
+	<div class="club-detail-bg">
+		<div class="bg-blur bg-blur--pink" aria-hidden="true" />
+		<div class="bg-blur bg-blur--cyan" aria-hidden="true" />
 
-          <div class="club-avatar">
-            <img
-              :src="clubCoverAvatar"
-              alt="club avatar"
-            >
-          </div>
+		<div class="page-shell club-detail">
+			<header class="top-bar">
+				<button type="button" class="back-btn" @click="goBack">
+					<span class="back-icon" aria-hidden="true" />
+					<span class="back-title">俱乐部管理</span>
+				</button>
+			</header>
 
-          <div class="club-meta">
-            <p class="club-name">
-              {{ clubDisplayName }}
-            </p>
-            <div class="club-sub-meta">
-              <div class="club-id-wrap">
-                <span class="club-id-tag">ID</span>
-                <span class="club-id-text">{{ clubDisplayId }}</span>
-              </div>
-              <div class="club-member-wrap">
-                <span class="club-member-dot" />
-                <span>{{ clubMemberCount }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+			<section class="club-header-card">
+				<div class="club-header-main">
+					<img class="club-avatar" :src="imgClubCover" alt="俱乐部头像" />
 
-        <div class="action-wrap">
-          <button
-            class="head-action-btn"
-            type="button"
-            @click="handleTopActionClick('recharge')"
-          >
-            <span class="head-action-label">充值</span>
-            <img
-              class="head-action-icon"
-              :src="walletIcon"
-              alt="wallet"
-            >
-          </button>
-          <button
-            class="head-action-btn"
-            type="button"
-            @click="handleTopActionClick('service')"
-          >
-            <span class="head-action-label">客服</span>
-            <img
-              class="head-action-icon"
-              :src="serviceIcon"
-              alt="service"
-            >
-          </button>
-        </div>
-      </div>
+					<div class="club-summary">
+						<h1 class="club-name">俱乐部名称</h1>
+						<p class="club-id-row">
+							<span class="id-tag">ID</span>
+							<span class="id-text">8677650585</span>
+						</p>
 
-      <button
-        class="announce-bar"
-        type="button"
-      >
-        <span class="announce-text">xxxxxx俱乐部公告</span>
-        <span class="announce-arrow">›</span>
-      </button>
+						<p class="metric-line">
+							<img :src="imgBalance" alt="" aria-hidden="true" />
+							<span>{{ formatCount(1923) }}</span>
+						</p>
+						<p class="metric-line">
+							<img :src="imgChips" alt="" aria-hidden="true" />
+							<span>{{ formatCount(19231) }}</span>
+						</p>
+					</div>
+				</div>
 
-      <div class="club-header-tabs">
-        <button
-          class="club-header-tab"
-          :class="{ 'club-header-tab--active': clubHeaderTab === 'poker' }"
-          type="button"
-          @click="handleClubHeaderTabClick('poker')"
-        >
-          扑克专区
-        </button>
-        <button
-          class="club-header-tab"
-          :class="{ 'club-header-tab--active': clubHeaderTab === 'mahjong' }"
-          type="button"
-          @click="handleClubHeaderTabClick('mahjong')"
-        >
-          麻将专区
-        </button>
-        <button
-          class="club-header-tab"
-          :class="{ 'club-header-tab--active': clubHeaderTab === 'event' }"
-          type="button"
-          @click="handleClubHeaderTabClick('event')"
-        >
-          赛事
-        </button>
-      </div>
+				<div class="club-size-pill" aria-label="俱乐部人数">
+					<span class="size-text">500/1000</span>
+					<img :src="imgPeople" alt="" aria-hidden="true" />
+				</div>
+			</section>
 
-      <div class="club-quick-actions">
-        <button
-          class="club-quick-card club-quick-card--safety"
-          type="button"
-          @click="handleQuickActionClick('safety')"
-        >
-          <img
-            class="quick-card-photo quick-card-photo--safety"
-            :src="quickSafetyBg"
-            alt=""
-            aria-hidden="true"
-          >
-          <img
-            class="quick-card-layer quick-card-layer--safety-bg"
-            :src="imgQuickActionCreateBg"
-            alt=""
-            aria-hidden="true"
-          >
-          <span class="quick-card-title">安全卫士</span>
-        </button>
+			<section class="quick-actions">
+				<button
+					v-for="item in quickActions"
+					:key="item.id"
+					type="button"
+					class="quick-card"
+					@click="onQuickAction(item.id)"
+				>
+					<span class="quick-image-wrap">
+						<img :src="item.cover" :alt="item.title" />
+					</span>
+					<span class="quick-title">{{ item.title }}</span>
+				</button>
+			</section>
 
-        <button
-          class="club-quick-card club-quick-card--ranking"
-          type="button"
-          @click="handleQuickActionClick('ranking')"
-        >
-          <img
-            class="quick-card-photo quick-card-photo--ranking"
-            :src="quickRankingBg"
-            alt=""
-            aria-hidden="true"
-          >
-          <img
-            class="quick-card-layer quick-card-layer--ranking-bg"
-            :src="imgQuickActionBoardBg"
-            alt=""
-            aria-hidden="true"
-          >
-          <span class="quick-card-title">排行榜</span>
-        </button>
-      </div>
-    </header>
+			<section class="intro-card">
+				<span>俱乐部简介</span>
+				<button type="button" class="intro-edit" aria-label="编辑俱乐部简介">
+					<span class="edit-pen" />
+				</button>
+			</section>
 
-    <GameTypeTabbar v-model="activeTab" />
+			<section class="settings-card">
+				<button
+					v-for="item in settings"
+					:key="item.id"
+					type="button"
+					class="settings-row"
+					:class="[
+						`settings-row--${item.kind}`,
+						{
+							'settings-row--clickable': item.kind === 'arrow' || item.kind === 'level' || item.kind === 'copy',
+						},
+					]"
+					@click="onSettingClick(item)"
+				>
+					<div class="label-wrap">
+						<span>{{ item.label }}</span>
+						<span v-if="item.kind === 'copy'" class="info-dot">i</span>
+					</div>
 
-    <section class="group-list">
-      <RoomGroupCard
-        v-for="group in groupedRecords"
-        :key="group.groupKey"
-        :group="group"
-        :expanded="expandedMap[group.groupKey] === true"
-        @toggle="handleToggleGroup"
-        @table-click="handleTableClick"
-      />
+					<div class="right-wrap">
+						<template v-if="item.kind === 'founder'">
+							<span class="muted-text">{{ item.value }}</span>
+							<img class="mini-avatar" :src="imgClubCover" alt="创始人头像" />
+						</template>
 
-      <div
-        v-if="!groupedRecords.length"
-        class="empty-wrap"
-      >
-        <VanIcon name="search" />
-        <span>
-          暂无牌桌
-        </span>
-      </div>
-    </section>
+						<template v-else-if="item.kind === 'text'">
+							<span class="muted-text">{{ item.value }}</span>
+						</template>
 
-    <div class="floating-action-area">
-      <button
-        class="create-table-btn"
-        type="button"
-        @click="handleCreateTableClick"
-      >
-        创建牌桌
-      </button>
-      <button
-        class="floating-menu-btn"
-        type="button"
-        aria-label="更多操作"
-        @click="handleFloatingMenuClick"
-      >
-        <span />
-        <span />
-        <span />
-      </button>
-    </div>
-  </div>
+						<template v-else-if="item.kind === 'level'">
+							<span class="level-pill">{{ item.value }}</span>
+							<span class="chevron" aria-hidden="true" />
+						</template>
+
+						<template v-else-if="item.kind === 'switch' && item.switchKey">
+							<button
+								type="button"
+								class="switch"
+								:class="{
+									'switch--on': item.switchKey === 'allowSearch' ? allowSearch : joinWithoutApproval,
+								}"
+								:aria-label="item.label"
+								@click.stop="toggleSwitch(item.switchKey)"
+							>
+								<span class="switch-knob" />
+							</button>
+						</template>
+
+						<template v-else>
+							<span class="chevron" aria-hidden="true" />
+						</template>
+					</div>
+				</button>
+			</section>
+
+			<section class="danger-zone">
+				<button type="button" class="danger-btn">删除俱乐部</button>
+			</section>
+		</div>
+	</div>
 </template>
 
 <style scoped lang="scss">
-.room-list-page {
-  position: relative;
-  min-height: 100dvh;
-  color: #fff;
-  overflow: hidden;
-  background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
+.club-detail-bg {
+	position: relative;
+	min-height: 100dvh;
+	background:
+		radial-gradient(140% 84% at 50% -6%, rgba(216, 146, 131, 0.64), rgba(142, 82, 128, 0.6) 42%, rgba(29, 124, 153, 0.82) 100%),
+		linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
+	overflow: hidden;
 }
 
-.bg-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
-    radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
-    radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
+.bg-blur {
+	position: absolute;
+	border-radius: 999px;
+	filter: blur(0.9rem);
+	opacity: 0.5;
+	pointer-events: none;
 }
 
-.club-header {
-  position: relative;
-  z-index: 2;
-  padding:
-    calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.09rem)
-    clamp(0.24rem, 4.4vw, 0.36rem)
-    clamp(0.12rem, 2.4vw, 0.16rem);
+.bg-blur--pink {
+	width: 2.6rem;
+	height: 2.6rem;
+	top: 3.8rem;
+	left: -0.8rem;
+	background: rgba(217, 32, 116, 0.56);
 }
 
-.club-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: clamp(0.06rem, 1.6vw, 0.12rem);
+.bg-blur--cyan {
+	width: 2.3rem;
+	height: 2.3rem;
+	right: -0.7rem;
+	bottom: 2.6rem;
+	background: rgba(36, 212, 255, 0.52);
 }
 
-.club-identity {
-  min-width: 0;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: clamp(0.05rem, 1.6vw, 0.08rem);
+.club-detail {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 0.22rem;
+	padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
 }
 
-.header-back-btn {
-  width: clamp(0.44rem, 7vw, 0.56rem);
-  height: clamp(0.44rem, 7vw, 0.56rem);
-  border: 0;
-  padding: 0;
-  background: transparent;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.top-bar {
+	min-height: 0.7rem;
 }
 
-.header-back-btn svg {
-  width: clamp(0.12rem, 2.1vw, 0.16rem);
-  height: clamp(0.22rem, 3.6vw, 0.28rem);
+.back-btn {
+	border: 0;
+	background: transparent;
+	color: #f9f9f9;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.16rem;
+	padding: 0;
+}
+
+.back-icon {
+	width: 0.18rem;
+	height: 0.18rem;
+	border-left: 0.03rem solid rgba(249, 249, 249, 0.95);
+	border-bottom: 0.03rem solid rgba(249, 249, 249, 0.95);
+	transform: rotate(45deg);
+}
+
+.back-title {
+	font-size: 0.4rem;
+	line-height: 1;
+	font-weight: 500;
+}
+
+.club-header-card {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 0.18rem;
+	min-height: 2.16rem;
+	padding: 0.2rem 0.26rem 0.2rem 0.22rem;
+	border-radius: 0.42rem;
+	background: rgba(0, 0, 0, 0.22);
+	backdrop-filter: blur(0.2rem);
+}
+
+.club-header-main {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.18rem;
 }
 
 .club-avatar {
-  width: clamp(0.42rem, 6.6vw, 0.52rem);
-  height: clamp(0.42rem, 6.6vw, 0.52rem);
-  border-radius: 50%;
-  overflow: hidden;
-  border: 0.01rem solid rgba(255, 255, 255, 0.22);
+	width: 1.08rem;
+	height: 1.08rem;
+	border-radius: 999px;
+	object-fit: cover;
+	border: 0.01rem solid rgba(255, 255, 255, 0.35);
 }
 
-.club-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.club-meta {
-  min-width: 0;
+.club-summary {
+	display: flex;
+	flex-direction: column;
+	min-height: 1.08rem;
 }
 
 .club-name {
-  margin: 0;
-  max-width: min(2.08rem, 34vw);
-  font-size: clamp(0.17rem, 3.2vw, 0.22rem);
-  font-weight: 700;
-  line-height: 0.95;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+	margin: 0;
+	color: #f9f9f9;
+	font-size: 0.46rem;
+	line-height: 1;
+	font-weight: 700;
 }
 
-.club-sub-meta {
-  margin-top: clamp(0.04rem, 1vw, 0.06rem);
-  display: flex;
-  align-items: center;
-  gap: clamp(0.06rem, 1.4vw, 0.12rem);
-  font-size: clamp(0.12rem, 2.2vw, 0.16rem);
-  opacity: 0.94;
+.club-id-row {
+	margin: 0.08rem 0 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.08rem;
 }
 
-.club-id-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.05rem;
+.id-tag {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 0.3rem;
+	height: 0.24rem;
+	border-radius: 0.06rem;
+	font-size: 0.16rem;
+	color: #fff;
+	background: rgba(255, 255, 255, 0.28);
 }
 
-.club-id-tag {
-  height: clamp(0.18rem, 3.4vw, 0.22rem);
-  min-width: clamp(0.2rem, 3.2vw, 0.24rem);
-  border-radius: 0.06rem;
-  padding: 0 clamp(0.04rem, 0.9vw, 0.06rem);
-  background: rgba(255, 255, 255, 0.4);
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(0.1rem, 1.9vw, 0.14rem);
+.id-text {
+	font-size: 0.22rem;
+	color: rgba(249, 249, 249, 0.95);
 }
 
-.club-id-text {
-  opacity: 0.95;
+.metric-line {
+	margin: 0.02rem 0 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.06rem;
+	color: #f9f9f9;
+	font-size: 0.27rem;
+	line-height: 1.2;
+	font-weight: 600;
 }
 
-.club-member-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.05rem;
+.metric-line img {
+	width: 0.26rem;
+	height: 0.26rem;
+	object-fit: contain;
 }
 
-.club-member-dot {
-  width: clamp(0.08rem, 1.5vw, 0.1rem);
-  height: clamp(0.08rem, 1.5vw, 0.1rem);
-  border-radius: 0.02rem;
-  background: linear-gradient(180deg, #ffd771 0%, #f59f37 100%);
+.club-size-pill {
+	flex: 0 0 auto;
+	min-height: 0.62rem;
+	padding: 0 0.16rem 0 0.2rem;
+	border-radius: 0.36rem;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.08rem;
+	background: rgba(255, 255, 255, 0.2);
 }
 
-
-
-.action-wrap {
-  display: flex;
-  align-items: center;
-  gap: clamp(0.04rem, 1.1vw, 0.06rem);
-  flex-shrink: 0;
+.size-text {
+	color: #f9f9f9;
+	font-size: 0.36rem;
+	line-height: 1;
+	font-weight: 500;
 }
 
-.head-action-btn {
-  width: clamp(0.94rem, 18vw, 1.31rem);
-  height: clamp(0.4rem, 7.3vw, 0.49rem);
-  padding: 0 clamp(0.06rem, 1.6vw, 0.1rem);
-  border: 0.006rem solid rgba(255, 255, 255, 0.28);
-  border-radius: clamp(0.24rem, 4.6vw, 0.3rem);
-  background: rgba(255, 255, 255, 0.21);
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  backdrop-filter: blur(0.08rem);
-  box-shadow: 0 0.06rem 0.18rem rgba(0, 0, 0, 0.24);
+.club-size-pill img {
+	width: 0.34rem;
+	height: 0.34rem;
+	object-fit: contain;
+	opacity: 0.94;
 }
 
-.head-action-label {
-  font-size: clamp(0.13rem, 2.5vw, 0.18rem);
-  line-height: 1.2;
-  text-shadow: 0 0.03rem 0.12rem rgba(0, 0, 0, 0.32);
+.quick-actions {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 0.1rem;
 }
 
-.head-action-icon {
-  width: clamp(0.16rem, 3vw, 0.22rem);
-  height: clamp(0.16rem, 3vw, 0.22rem);
-  object-fit: contain;
+.quick-card {
+	border: 0;
+	padding: 0;
+	background: transparent;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.08rem;
+	color: #f9f9f9;
 }
 
-.announce-bar {
-  margin-top: clamp(0.12rem, 2.4vw, 0.15rem);
-  width: 100%;
-  height: clamp(0.44rem, 8vw, 0.54rem);
-  border: 0;
-  border-radius: clamp(0.32rem, 6vw, 0.4rem);
-  padding: 0 clamp(0.1rem, 2.8vw, 0.16rem);
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(34, 34, 34, 0.35);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(0.24rem);
+.quick-image-wrap {
+	width: 100%;
+	aspect-ratio: 1 / 1;
+	border-radius: 0.36rem;
+	border: 0.01rem solid rgba(255, 255, 255, 0.6);
+	overflow: hidden;
+	background: rgba(255, 255, 255, 0.26);
 }
 
-.announce-text {
-  min-width: 0;
-  font-size: clamp(0.14rem, 2.7vw, 0.2rem);
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.quick-image-wrap img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
 }
 
-.announce-arrow {
-  margin-left: 0.08rem;
-  font-size: clamp(0.2rem, 3.8vw, 0.26rem);
-  line-height: 1;
-  opacity: 0.88;
+.quick-title {
+	font-size: 0.27rem;
+	line-height: 1;
+	text-align: center;
 }
 
-.club-quick-actions {
-  margin-top: clamp(0.13rem, 2.7vw, 0.18rem);
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(0.09rem, 2.4vw, 0.16rem);
+.intro-card {
+	min-height: 0.96rem;
+	padding: 0 0.26rem;
+	border-radius: 0.42rem;
+	background: rgba(0, 0, 0, 0.24);
+	backdrop-filter: blur(0.12rem);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	color: rgba(249, 249, 249, 0.96);
+	font-size: 0.35rem;
 }
 
-.club-header-tabs {
-  margin-top: clamp(0.12rem, 2.5vw, 0.16rem);
-  display: flex;
-  align-items: center;
-  gap: clamp(0.18rem, 4.8vw, 0.26rem);
-  padding-left: clamp(0.02rem, 0.8vw, 0.05rem);
+.intro-edit {
+	border: 0;
+	width: 0.46rem;
+	height: 0.46rem;
+	border-radius: 50%;
+	background: linear-gradient(145deg, #15ddb2, #00ca98);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
 }
 
-.club-header-tab {
-  position: relative;
-  border: 0;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: clamp(0.16rem, 3.1vw, 0.2rem);
-  line-height: 1;
-  font-weight: 500;
-  padding: 0 0 clamp(0.06rem, 1.4vw, 0.08rem);
-  opacity: 0.92;
+.edit-pen {
+	position: relative;
+	width: 0.21rem;
+	height: 0.21rem;
 }
 
-.club-header-tab--active {
-  color: #fff;
-  font-weight: 700;
+.edit-pen::before {
+	content: '';
+	position: absolute;
+	left: 0.03rem;
+	top: 0.06rem;
+	width: 0.14rem;
+	height: 0.06rem;
+	border: 0.02rem solid #fff;
+	border-radius: 0.03rem;
+	transform: rotate(-38deg);
 }
 
-.club-header-tab--active::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 0.02rem;
-  border-radius: 999px;
-  background: rgba(234, 234, 234, 0.92);
-  box-shadow: 0 0 0.06rem rgba(255, 255, 255, 0.45);
+.settings-card {
+	padding: 0.12rem 0.16rem;
+	border-radius: 0.42rem;
+	background:
+		radial-gradient(80% 100% at 100% 100%, rgba(51, 169, 206, 0.26), rgba(51, 169, 206, 0)),
+		rgba(0, 0, 0, 0.24);
+	backdrop-filter: blur(0.15rem);
 }
 
-.club-quick-card {
-  position: relative;
-  height: clamp(1.7rem, 14.5vw, 0.84rem);
-  border: 0.01rem solid rgba(255, 255, 255, 0.36);
-  border-radius: clamp(0.2rem, 4.8vw, 0.3rem);
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  background: linear-gradient(140deg, rgba(90, 167, 230, 0.24), rgba(10, 40, 65, 0.56));
-  box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.26);
+.settings-row {
+	width: 100%;
+	border: 0;
+	background: transparent;
+	padding: 0.06rem 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.16rem;
+	color: #f1f1f1;
+	font-size: 0.34rem;
 }
 
-.club-quick-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(97deg, rgba(16, 25, 38, 0.08) 8%, rgba(10, 18, 34, 0.55) 72%);
-  z-index: 1;
-  pointer-events: none;
+.label-wrap {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.08rem;
+	min-width: 0;
+	text-align: left;
 }
 
-.club-quick-card::after {
-  content: '';
-  position: absolute;
-  inset: -0.01rem;
-  border-radius: inherit;
-  border: 0.01rem solid rgba(255, 255, 255, 0.58);
-  box-shadow:
-    inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
-    inset 0 0 0.2rem rgba(255, 255, 255, 0.14),
-    0 0 0.08rem rgba(255, 255, 255, 0.18);
-  filter: blur(0.002rem);
-  pointer-events: none;
-  z-index: 4;
+.right-wrap {
+	display: inline-flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.12rem;
 }
 
-.club-quick-card--safety {
-  background: linear-gradient(145deg, rgba(83, 187, 245, 0.3), rgba(41, 71, 108, 0.68));
+.muted-text {
+	color: rgba(228, 228, 228, 0.7);
+	font-size: 0.34rem;
 }
 
-.club-quick-card--ranking {
-  background: linear-gradient(145deg, rgba(245, 172, 90, 0.26), rgba(74, 36, 24, 0.7));
+.mini-avatar {
+	width: 0.42rem;
+	height: 0.42rem;
+	border-radius: 999px;
+	object-fit: cover;
 }
 
-.quick-card-photo {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  pointer-events: none;
+.chevron {
+	width: 0.14rem;
+	height: 0.14rem;
+	border-top: 0.02rem solid rgba(237, 237, 237, 0.85);
+	border-right: 0.02rem solid rgba(237, 237, 237, 0.85);
+	transform: rotate(45deg);
 }
 
-.quick-card-photo--safety,
-.quick-card-photo--ranking {
-  transform: scale(1.04);
+.level-pill {
+	display: inline-flex;
+	align-items: center;
+	min-height: 0.36rem;
+	padding: 0 0.16rem;
+	border-radius: 999px;
+	font-size: 0.24rem;
+	font-weight: 700;
+	color: #f9f9f9;
+	background: linear-gradient(152deg, #05e7ae 8%, #027a5c 72%);
 }
 
-.quick-card-photo--safety {
-  object-position: 42% 55%;
+.switch {
+	width: 0.92rem;
+	height: 0.44rem;
+	border: 0;
+	padding: 0.03rem;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.22);
+	display: inline-flex;
+	align-items: center;
 }
 
-.quick-card-photo--ranking {
-  object-position: center 58%;
+.switch--on {
+	justify-content: flex-end;
+	background: #05e7ae;
 }
 
-.quick-card-layer {
-  position: absolute;
-  pointer-events: none;
-  object-fit: contain;
-  z-index: 2;
+.switch:not(.switch--on) {
+	justify-content: flex-start;
 }
 
-.quick-card-layer--safety-bg {
-  width: clamp(0.95rem, 24vw, 1.3rem);
-  height: clamp(0.78rem, 20vw, 1.04rem);
-  left: clamp(-0.42rem, -3vw, -0.26rem);
-  top: clamp(-0.08rem, -0.7vw, -0.04rem);
-  opacity: 0.5;
+.switch-knob {
+	width: 0.38rem;
+	height: 0.38rem;
+	border-radius: 50%;
+	background: #fff;
+	box-shadow: 0 0.02rem 0.04rem rgba(0, 0, 0, 0.22);
 }
 
-.quick-card-layer--ranking-bg {
-  width: clamp(0.9rem, 23vw, 1.24rem);
-  height: clamp(0.88rem, 22vw, 1.22rem);
-  left: clamp(-0.38rem, -2.8vw, -0.24rem);
-  top: clamp(-0.08rem, -0.7vw, -0.04rem);
-  opacity: 0.52;
+.info-dot {
+	width: 0.22rem;
+	height: 0.22rem;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.24);
+	color: #fff;
+	font-size: 0.16rem;
+	line-height: 0.22rem;
+	text-align: center;
 }
 
-.quick-card-title {
-  position: relative;
-  z-index: 3;
-  margin-left: clamp(0.3rem, 7vw, 0.44rem);
-  font-size: clamp(0.16rem, 3.8vw, 0.24rem);
-  font-weight: 700;
-  letter-spacing: 0.01rem;
-  color: #fff;
-  text-shadow: 0 0.03rem 0.16rem rgba(0, 0, 0, 0.54);
+.danger-zone {
+	margin-top: 0.06rem;
+	padding: 0 0.12rem;
+	padding-bottom: 0.24rem;
 }
 
-@media (max-width: 360px) {
-  .club-name {
-    max-width: min(1.78rem, 30vw);
-  }
-
-  .head-action-btn {
-    width: min(0.86rem, 17vw);
-  }
-
-  .quick-card-title {
-    margin-left: clamp(0.26rem, 7.2vw, 0.34rem);
-  }
+.danger-btn {
+	width: 100%;
+	min-height: 0.9rem;
+	border: 0;
+	border-radius: 0.52rem;
+	color: #f9f9f9;
+	font-size: 0.46rem;
+	font-weight: 500;
+	background: linear-gradient(90deg, rgba(73, 29, 86, 0.8), rgba(19, 95, 125, 0.84));
 }
 
-.group-list {
-  position: relative;
-  z-index: 1;
-  margin-top: 0;
-  max-height: calc(100dvh - 3.1rem);
-  overflow-y: auto;
-  padding: 0 0.38rem 2.2rem;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(0.3533rem) saturate(1.04);
-}
+@media (max-width: 340px) {
+	.club-name {
+		font-size: 0.38rem;
+	}
 
-.floating-action-area {
-  position: fixed;
-  left: 0.4rem;
-  right: 0.32rem;
-  bottom: 0.48rem;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-}
+	.size-text {
+		font-size: 0.31rem;
+	}
 
-.create-table-btn {
-  flex: 1;
-  height: 1.12rem;
-  border: 0.0133rem solid rgba(242, 242, 242, 0.8);
-  border-radius: 0.8rem;
-  background-image: linear-gradient(168deg, #05e7ae 7.55%, #027a5c 71.92%);
-  color: #fbfbfb;
-  font-size: 0.4rem;
-  font-weight: 500;
-  line-height: 1.2;
-  text-align: center;
-  backdrop-filter: blur(0.08rem);
-  box-shadow: 0 0.16rem 0.32rem rgba(0, 0, 0, 0.22);
-}
+	.settings-row {
+		font-size: 0.3rem;
+	}
 
-.floating-menu-btn {
-  margin-left: -0.62rem;
-  width: 0.88rem;
-  height: 0.88rem;
-  border: none;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 25%, #056a57 0%, #01382f 75%);
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.08rem;
-  box-shadow: 0 0.14rem 0.3rem rgba(0, 0, 0, 0.38);
-  z-index: 99;
-}
+	.muted-text {
+		font-size: 0.3rem;
+	}
 
-.floating-menu-btn span {
-  width: 0.26rem;
-  height: 0.06rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.95);
+	.danger-btn {
+		font-size: 0.4rem;
+	}
 }
-
-.empty-wrap {
-  margin-top: 1.4933rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2133rem;
-  font-size: 0.3467rem;
-  color: rgba(255, 255, 255, 0.82);
-}
-
 </style>

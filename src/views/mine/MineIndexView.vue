@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { showSuccessToast } from 'vant'
-import {  useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import LoginSession from '@/session/loginSession'
@@ -69,11 +69,11 @@ async function onLogout(): Promise<void> {
       <div class="title">钱包</div>
       <div class="currency-info">
         <div class="icon-diamond">
-          <img :src="iconDiamond" alt="钻石">
+          <img :src="iconDiamond" alt="钻石" />
         </div>
         <div class="num"> {{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" alt="充值">
+          <img :src="iconAdd" alt="充值" />
         </div>
       </div>
     </div>
@@ -82,7 +82,7 @@ async function onLogout(): Promise<void> {
         <div class="card-bg-innner">
           <div class="card-line1">
             <div class="left-avatar">
-              <img :src="String(displayUser.avatar)" alt="头像">
+              <img :src="String(displayUser.avatar)" alt="头像" />
             </div>
             <div class="right-box">
               <div class="name">{{ displayUser.nickname }}</div>
@@ -95,34 +95,46 @@ async function onLogout(): Promise<void> {
           <div class="card-line2">
             <div class="left-board">
               <div class="currency">
-                <img class="icon-currency" :src="iconChip" alt="gold">
+                <img class="icon-currency" :src="iconChip" alt="gold" />
                 <div class="num">{{ displayUser.gold.toLocaleString() }}</div>
               </div>
               <div class="currency">
-                <img class="icon-currency" :src="iconDiamond" alt="diamond">
+                <img class="icon-currency" :src="iconDiamond" alt="diamond" />
                 <div class="num">{{ displayUser.diamond.toLocaleString() }}</div>
               </div>
             </div>
             <div class="button">
               <div class="text">我的商城</div>
               <div class="round-icon">
-                <img :src="iconShop" alt="我的商城">
+                <img :src="iconShop" alt="我的商城" />
               </div>
             </div>
-
           </div>
         </div>
       </div>
     </div>
     <div class="box-gallery">
-      <div class="box-item" v-for="box in boxList" :key="box.text" @click="goToSettings(box.route)">
+      <div
+        v-for="box in boxList"
+        :key="box.text"
+        class="box-item"
+        @click="goToSettings(box.route)"
+      >
         <div class="img">
-          <img :src="box.icon" alt="消息">
+          <img :src="box.icon" alt="消息" />
         </div>
         <div class="text">{{ box.text }}</div>
       </div>
     </div>
-    <VanButton plain round size="small" class="logout-btn" @click="onLogout">退出登录</VanButton>
+    <VanButton
+      plain
+      round
+      size="small"
+      class="logout-btn"
+      @click="onLogout"
+    >
+      退出登录
+    </VanButton>
   </div>
 </template>
 

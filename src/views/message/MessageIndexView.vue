@@ -43,7 +43,7 @@ const displayUser = computed(() => {
 const router = useRouter()
 
 function goToDetail(path: string): void {
-  void router.push(path);
+  void router.push(path)
 }
 </script>
 
@@ -53,11 +53,11 @@ function goToDetail(path: string): void {
       <div class="title">消息</div>
       <div class="currency-info">
         <div class="icon-diamond">
-          <img :src="iconDiamond" alt="钻石">
+          <img :src="iconDiamond" alt="钻石" />
         </div>
         <div class="num"> {{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" alt="充值">
+          <img :src="iconAdd" alt="充值" />
         </div>
       </div>
     </div>
@@ -67,15 +67,15 @@ function goToDetail(path: string): void {
           <div class="card-line1">
             <div class="left-text">MESSAGES</div>
             <div class="right-icon">
-              <img :src="iconMessages" alt="消息">
-              <img class="icon-ding" :src="iconDing" alt="铃铛">
+              <img :src="iconMessages" alt="消息" />
+              <img class="icon-ding" :src="iconDing" alt="铃铛" />
             </div>
           </div>
           <div class="card-line2">
             <div class="button">
               <div class="text">信用额度申请</div>
               <div class="round-icon">
-                <img :src="iconPoker" alt="申请">
+                <img :src="iconPoker" alt="申请" />
               </div>
             </div>
             <div class="button">
@@ -87,15 +87,19 @@ function goToDetail(path: string): void {
       </div>
     </div>
     <div class="box-gallery">
-      <div class="box-item" v-for="box in boxList" :key="box.text" @click="goToDetail(box.route)">
+      <div
+        v-for="box in boxList"
+        :key="box.text"
+        class="box-item"
+        @click="goToDetail(box.route)"
+      >
         <div class="img">
-          <img :src="box.icon" alt="消息">
+          <img :src="box.icon" alt="消息" />
         </div>
         <div class="text">{{ box.text }}</div>
       </div>
     </div>
   </div>
-
 </template>
 
 <style scoped lang="scss">

@@ -1,6 +1,9 @@
 import { createApp, type App as VueApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+// 函数式 Toast 不会自动按模板组件注入样式，这里在入口统一引入。
+import 'vant/es/toast/style'
+import 'vant/es/icon/style'
 import './bridge/core'
 import { setupGlobalBridgeToastChannel, setupH5VisibilityBridgeChannel } from './bridge/channels'
 import { setupWsProxyBridgeChannel } from './bridge/ws'

@@ -12,6 +12,11 @@ import {
 } from '../protocol'
 import { sendBridgeMessage, subscribeCocosMessages } from '../core/cocosBridgeChannel'
 import StorageKey from '@/constants/storageKey'
+import { t } from '@/i18n'
+import { showFailToast } from 'vant'
+import router from '@/router'
+import { useGameStore } from '@/stores/game'
+import { pinia } from '@/stores/pinia'
 import { localStore } from '@/utils/localStore'
 import {
   HOLDEM_CODE,
@@ -31,6 +36,7 @@ let heartbeatTimer: number | null = null
 let reconnectTimer: number | null = null
 let reconnectAttempts = 0
 let shouldAutoReconnect = false
+let authRedirecting = false
 const h5WsMessageHandlers = new Set<(event: H5WsIncomingEvent) => void>()
 const HEARTBEAT_INTERVAL_MS = 5000
 const HEARTBEAT_LOG_INTERVAL_MS = 10000
@@ -162,6 +168,45 @@ function getSessionToken(): string {
   return (localStore.getItem<string>(StorageKey.TOKEN, '') || '').trim()
 }
 
+function hasSessionToken(): boolean {
+  return Boolean(getSessionToken())
+}
+
+// websocket 链路统一鉴权兜底：发现 token 缺失时，清理状态并强制回登录页。
+async function forceToLoginFromWs(reason: string): Promise<void> {
+  if (authRedirecting) {
+    return
+  }
+  authRedirecting = true
+  console.warn('[ws] force to login:', reason)
+
+  shouldAutoReconnect = false
+  clearReconnectTimer()
+  stopHeartbeatLoop()
+  cleanWsHandlers()
+  if (ws) {
+    try {
+      ws.close(1000, 'auth invalid')
+    } catch {
+      // 忽略关闭异常，保证后续清理流程继续执行。
+    }
+    ws = null
+  }
+  wsUrl = ''
+
+  const gameStore = useGameStore(pinia)
+  gameStore.clearLogin()
+
+  const currentRoute = router.currentRoute.value
+  if (currentRoute.name !== 'login') {
+    // 登录态失效时给出明确提示，避免用户误以为是页面卡死。
+    showFailToast(t('tokenFail'))
+    await router.replace({ name: 'login' })
+  }
+
+  authRedirecting = false
+}
+
 function toBufferLike(data: ArrayBuffer | ArrayBufferView | Blob): ArrayBufferLike | null {
   if (data instanceof ArrayBuffer) {
     return data
@@ -280,7 +325,8 @@ function stopHeartbeatLoop(): void {
 function sendHeartbeatPacket(): boolean {
   const token = getSessionToken()
   if (!token) {
-    // 登录态失效时避免心跳错误刷屏，等待下次登录恢复。
+    // 心跳阶段发现登录态丢失时，直接回登录，避免 WS 与页面状态不一致。
+    void forceToLoginFromWs('heartbeat token empty')
     return false
   }
 
@@ -329,6 +375,7 @@ export function h5SendRegisterPacket(): boolean {
   const token = getSessionToken()
   if (!token) {
     emitWsError('register skipped: token 为空')
+    void forceToLoginFromWs('register token empty')
     return false
   }
 
@@ -382,6 +429,7 @@ export function h5SendHoldemPacket(payload: H5SendHoldemPacketPayload): boolean 
   const token = (typeof payload.token === 'string' ? payload.token : getSessionToken()).trim()
   if (!token) {
     emitWsError('h5SendHoldemPacket 失败：token 为空')
+    void forceToLoginFromWs('h5SendHoldemPacket token empty')
     return false
   }
 
@@ -500,6 +548,13 @@ function connectWs(payload: WsConnectPayload): void {
     return
   }
 
+  // 无 token 时不建立 websocket，避免进入“已连接但无法 REGISTER”的半可用状态。
+  if (!hasSessionToken()) {
+    console.info('[ws] wsConnect skipped: token empty, waiting login')
+    void forceToLoginFromWs('wsConnect token empty')
+    return
+  }
+
   shouldAutoReconnect = true
   clearReconnectTimer()
 
@@ -533,7 +588,16 @@ function connectWs(payload: WsConnectPayload): void {
     reconnectAttempts = 0
     emitWsOpen(targetUrl)
     // 对齐 Cocos：连接建立后先发 REGISTER，再启动心跳。
-    h5SendRegisterPacket()
+    const registerSent = h5SendRegisterPacket()
+    if (!registerSent) {
+      emitWsError('ws open 后 REGISTER 发送失败：token 为空或连接异常')
+      try {
+        ws?.close(1008, 'register failed')
+      } catch {
+        // 忽略关闭异常，交由 onclose/reconnect 接管。
+      }
+      return
+    }
     sendHeartbeatPacket()
     startHeartbeatLoop()
   }

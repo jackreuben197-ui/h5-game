@@ -258,7 +258,7 @@ onBeforeUnmount(() => {
             class="tab-icon-image"
             :src="tab.icon"
             :alt="tab.label"
-          >
+          />
         </span>
         <span class="tab-label">
           {{ tab.label }}

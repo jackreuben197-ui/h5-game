@@ -33,6 +33,16 @@ for (const file of files) {
     process.exit(1)
   }
 
+  // 若目标文件已存在且比源文件更新，说明本地有手动修改，跳过覆盖。
+  if (fs.existsSync(targetPath)) {
+    const srcMtime = fs.statSync(sourcePath).mtimeMs
+    const dstMtime = fs.statSync(targetPath).mtimeMs
+    if (dstMtime >= srcMtime) {
+      console.log(`[sync:i18n] skip (local is newer): ${file}`)
+      continue
+    }
+  }
+
   fs.copyFileSync(sourcePath, targetPath)
   copiedCount += 1
 }

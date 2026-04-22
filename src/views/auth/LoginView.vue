@@ -5,7 +5,6 @@ import { useRouter } from 'vue-router'
 import { showFailToast, showLoadingToast, showSuccessToast, closeToast } from 'vant'
 import { loginApi } from '@/api/auth'
 import { DEBUG_ACCOUNTS, DEFAULT_DEBUG_ACCOUNT, type DebugAccount } from '@/constants/debugAccounts'
-import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
 
 const router = useRouter()
@@ -66,23 +65,13 @@ async function handleLogin(): Promise<void> {
   })
 
   try {
-    let token = ''
-
     const res = await loginApi({
       phone: form.account.trim(),
       password: md5(form.password.trim()),
       area: form.area.trim() || '55',
     })
-    token = res.token
-
-    gameStore.setSessionToken(token)
-    // 登录成功后主动同步 websocket 端口并发送 Register，避免首次登录时漏发。
-    try {
-      await LoginSession.SyncWS()
-    } catch (wsError) {
-      // 不阻塞登录流程：大厅初始化阶段还会再次 EnsureWS。
-      console.warn('[login] sync ws failed:', wsError)
-    }
+    gameStore.setSessionToken(res.token)
+    // 先写入本地登录信息，保证首页秒开时有可用展示数据。
     gameStore.setLoginUser({
       account: form.account.trim(),
       nickname: form.nickname.trim() || form.account.trim(),
@@ -91,7 +80,7 @@ async function handleLogin(): Promise<void> {
 
     closeToast()
     showSuccessToast('登录成功')
-    // 登录成功后固定进入首页，不做来源页重定向。
+    // 登录成功后立即进入首页；userinfo / clublist 在首页容器静默同步。
     await router.replace({ name: 'lobby' })
   } catch (error) {
     closeToast()

@@ -2,6 +2,7 @@ import dayjs from 'dayjs'
 import { defineStore } from 'pinia'
 import type { EnterTablePayload } from '@/bridge/protocol'
 import StorageKey from '@/constants/storageKey'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { dzpkPersistStorage, localStore } from '@/utils/localStore'
 
 interface GameState {
@@ -10,6 +11,7 @@ interface GameState {
   loginAccount: string
   loginNickname: string
   loginUserId: string
+  syncedProfileToken: string
   lastEnterTable: EnterTablePayload | null
   lastEnterAt: number
   lastBridgeAck: string
@@ -27,6 +29,7 @@ export const useGameStore = defineStore(
       loginAccount: '',
       loginNickname: '',
       loginUserId: '',
+      syncedProfileToken: '',
       lastEnterTable: null,
       lastEnterAt: 0,
       lastBridgeAck: '',
@@ -54,16 +57,35 @@ export const useGameStore = defineStore(
         this.loginNickname = payload.nickname
         this.loginUserId = payload.userId
       },
+      // 同一 token 在当前应用会话内只允许同步一次用户/俱乐部资料。
+      shouldSyncProfile(token: string): boolean {
+        const safeToken = token.trim()
+        if (!safeToken) {
+          return false
+        }
+        if (this.syncedProfileToken === safeToken) {
+          return false
+        }
+        this.syncedProfileToken = safeToken
+        return true
+      },
       clearLogin(): void {
         this.sessionToken = ''
         this.websocketPort = 0
         this.loginAccount = ''
         this.loginNickname = ''
         this.loginUserId = ''
+        this.syncedProfileToken = ''
+        // 登录态清空时，同步清理全局共享缓存。
+        const userInfoStore = useUserInfoStore()
+        userInfoStore.clearInfo()
         // 退出登录时同步清理 dzpk_TOKEN。
         localStore.removeItem(StorageKey.TOKEN)
         localStore.removeItem(StorageKey.WS_PORT)
         localStore.removeItem(StorageKey.WS_PORT_UPDATED_AT)
+        // 登录态清空时同步清理房间相关缓存，避免下个账号看到旧牌桌。
+        localStore.removeItem(StorageKey.ROOM_LIST_CACHE)
+        localStore.removeItem(StorageKey.HOME_ROOM_STATS_CACHE)
       },
       setLastEnterTable(payload: EnterTablePayload): void {
         this.lastEnterTable = payload

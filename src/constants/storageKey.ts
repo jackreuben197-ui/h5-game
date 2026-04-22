@@ -4,6 +4,8 @@ export default class StorageKey {
   static CLEAN_ALL_FLAG = 'CLEAN_ALL_FLAG'
   // 登录数据（H5 侧 Pinia 持久化主键）。
   static LOGIN_DATA = 'LOGIN_DATA'
+  // 全局共享缓存（userInfo / clubList / currentClubId）。
+  static USER_DATA = 'USER_DATA'
   // token 字符串。
   static TOKEN = 'TOKEN'
   // websocket 端口（对应 Cocos LoginSession.SyncWS 的 data.port）。
@@ -14,6 +16,8 @@ export default class StorageKey {
   static ROOM_LIST_CACHE = 'ROOM_LIST_CACHE'
   // 牌局分组展开状态缓存（key 为 groupKey，value 为是否展开）。
   static ROOM_GROUP_EXPANDED_CACHE = 'ROOM_GROUP_EXPANDED_CACHE'
+  // 首页玩法统计缓存（扑克/麻将/小游戏/MTT）。
+  static HOME_ROOM_STATS_CACHE = 'HOME_ROOM_STATS_CACHE'
   // token 有效期。
   static TOKEN_EXPIREAT = 'TOKEN_EXPIREAT'
   // 电话区号（保持原拼写 AERA，与 Cocos 对齐）。

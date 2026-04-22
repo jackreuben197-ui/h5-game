@@ -3,7 +3,10 @@ import { computed, type CSSProperties } from 'vue'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconTime from '@/assets/icons/icon_time.png'
 import iconChips from '@/assets/icons/icon_chips.png'
-import nameBg from '@/assets/icons/name_bg.png'
+import iconAof from '@/assets/icons/table_icon_Aof.png'
+import iconCritical from '@/assets/icons/table_icon_critical.png'
+import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
+import iconSquid from '@/assets/icons/table_icon_squid.png'
 import type { RoomRecord, RoomUser } from '@/api/models/room'
 
 interface Props {
@@ -15,6 +18,51 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   click: [room: RoomRecord]
 }>()
+
+interface FeatureIconItem {
+  key: 'aof' | 'mushroom' | 'squid' | 'critical'
+  src: string
+  alt: string
+}
+
+// 对齐 Unity 判定：只处理 AOF / Mushroom / Squid / Critical 这 4 个玩法标记。
+const featureIcons = computed<FeatureIconItem[]>(() => {
+  const room = props.room as Record<string, unknown>
+  const result: FeatureIconItem[] = []
+
+  if (Number(room.limit_bet_type) === 2) {
+    result.push({
+      key: 'aof',
+      src: iconAof,
+      alt: 'aof',
+    })
+  }
+
+  if (Number(room.mushroom_mode) > 0) {
+    result.push({
+      key: 'mushroom',
+      src: iconMushroom,
+      alt: 'mushroom',
+    })
+  }
+
+  if (Number(room.squid_on) === 1) {
+    result.push({
+      key: 'squid',
+      src: iconSquid,
+      alt: 'squid',
+    })
+  }
+
+  if (Number(room.critical_hit) === 1) {
+    result.push({
+      key: 'critical',
+      src: iconCritical,
+      alt: 'critical',
+    })
+  }
+  return result
+})
 
 // 当前牌桌人数。
 const roomers = computed(() => {
@@ -47,18 +95,18 @@ const seatUsers = computed(() => {
   return seats
 })
 
-// 开始到现在的时长文案。
-const elapsedText = computed(() => {
-  const start = new Date(String(props.room.start_time || '')).getTime()
-  if (!start || Number.isNaN(start)) {
-    return '0m'
-  }
-  const elapsedSec = Math.max(0, Math.floor((Date.now() - start) / 1000))
-  return formatDuration(elapsedSec)
-})
+// 对齐客户端：显示“剩余时长/总时长”。
+const timeText = computed(() => {
+  const totalSeconds = Number(props.room.play_duration) || 0
+  const startTimestamp = parseStartTimestampSeconds(props.room.start_time)
+  let leftSeconds = totalSeconds
 
-// 后端给出的总对局时长文案。
-const totalText = computed(() => formatDuration(Number(props.room.play_duration) || 0))
+  if (startTimestamp > 0) {
+    leftSeconds = startTimestamp + totalSeconds - getCurrentUtcSeconds()
+  }
+
+  return `${formatRoomTime(leftSeconds)}/${formatRoomTime(totalSeconds)}`
+})
 
 // 买入文案：根据最小倍率和小盲计算。
 const bringInText = computed(() => {
@@ -76,7 +124,7 @@ const seatPositionList = computed(() => {
   const seatPosMap: Record<number, Array<{ x: number; y: number }>> = {
     2: [
       { x: 92, y: 40 },
-      { x: 9, y: 40 },
+      { x: 10, y: 40 },
     ],
     3: [
       { x: 92, y: 40 },
@@ -86,21 +134,21 @@ const seatPositionList = computed(() => {
     4: [
       { x: 92, y: 40 },
       { x: 51, y: 75 },
-      { x: 9, y: 40 },
+      { x: 10, y: 40 },
       { x: 51, y: 4 },
     ],
     5: [
       { x: 92, y: 40 },
       { x: 51, y: 75 },
-      { x: 9, y: 56 },
-      { x: 9, y: 24 },
+      { x: 10, y: 56 },
+      { x: 10, y: 24 },
       { x: 51, y: 4 },
     ],
     6: [
       { x: 92, y: 40 },
       { x: 51, y: 75 },
       { x: 36, y: 75 },
-      { x: 9, y: 40 },
+      { x: 10, y: 40 },
       { x: 51, y: 4 },
       { x: 66, y: 4 },
     ],
@@ -108,8 +156,8 @@ const seatPositionList = computed(() => {
       { x: 92, y: 40 },
       { x: 66, y: 75 },
       { x: 36, y: 75 },
-      { x: 9, y: 56 },
-      { x: 9, y: 24 },
+      { x: 10, y: 56 },
+      { x: 10, y: 24 },
       { x: 36, y: 4 },
       { x: 66, y: 4 },
     ],
@@ -118,7 +166,7 @@ const seatPositionList = computed(() => {
       { x: 71, y: 75 },
       { x: 51, y: 75 },
       { x: 31, y: 75 },
-      { x: 9, y: 40 },
+      { x: 10, y: 40 },
       { x: 31, y: 4 },
       { x: 51, y: 4 },
       { x: 71, y: 4 },
@@ -128,8 +176,8 @@ const seatPositionList = computed(() => {
       { x: 71, y: 75 },
       { x: 51, y: 75 },
       { x: 31, y: 75 },
-      { x: 9, y: 56 },
-      { x: 9, y: 24 },
+      { x: 10, y: 56 },
+      { x: 10, y: 24 },
       { x: 31, y: 4 },
       { x: 51, y: 4 },
       { x: 71, y: 4 },
@@ -173,17 +221,45 @@ function shortName(name?: string): string {
   return `${name}`.slice(0, 1)
 }
 
-function formatDuration(seconds: number): string {
-  const safeSec = Math.max(0, Math.floor(seconds))
-  const hour = Math.floor(safeSec / 3600)
-  const minute = Math.floor((safeSec % 3600) / 60)
-  if (!hour) {
-    return `${minute}m`
+// 解析 start_time 到秒级 UTC 时间戳（兼容 RFC3339 字符串与数字）。
+function parseStartTimestampSeconds(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    if (value > 1e12) {
+      return Math.floor(value / 1000)
+    }
+    return Math.floor(value)
   }
-  if (!minute) {
+
+  if (typeof value !== 'string' || !value.trim()) {
+    return 0
+  }
+
+  const timeMs = new Date(value).getTime()
+  if (!Number.isFinite(timeMs) || timeMs <= 0) {
+    return 0
+  }
+  return Math.floor(timeMs / 1000)
+}
+
+function getCurrentUtcSeconds(): number {
+  return Math.floor(Date.now() / 1000)
+}
+
+// 对齐 C# GameRoomComponent.GetTime 规则：>=3600 显示 h/m，>=60 显示 m，其余显示 s。
+function formatRoomTime(seconds: number): string {
+  const safeSeconds = Number.isFinite(seconds) ? Math.trunc(seconds) : 0
+  if (safeSeconds >= 3600) {
+    const hour = Math.trunc(safeSeconds / 3600)
+    const minute = Math.trunc((safeSeconds % 3600) / 60)
+    if (minute > 0) {
+      return `${hour}h${minute}m`
+    }
     return `${hour}h`
   }
-  return `${hour}h${minute}m`
+  if (safeSeconds >= 60) {
+    return `${Math.trunc(safeSeconds / 60)}m`
+  }
+  return `${safeSeconds}s`
 }
 </script>
 
@@ -197,6 +273,20 @@ function formatDuration(seconds: number): string {
     </div>
 
     <div class="table-main">
+      <div
+        v-if="featureIcons.length"
+        class="feature-icons"
+      >
+        <img
+          v-for="item in featureIcons"
+          :key="item.key"
+          class="feature-icon"
+          :class="'icon-'+item.alt"
+          :src="item.src"
+          :alt="item.alt"
+        />
+      </div>
+
       <div class="seat-area">
         <div
           class="table-bg"
@@ -206,7 +296,7 @@ function formatDuration(seconds: number): string {
               class="meta-icon people-center-icon"
               :src="iconPeople"
               alt="people"
-            >
+            />
             <span>
               {{ roomers }}/{{ seatCount }}
             </span>
@@ -226,7 +316,7 @@ function formatDuration(seconds: number): string {
             alt="avatar"
             loading="lazy"
             decoding="async"
-          >
+          />
           <span
             v-else
             class="seat-name"
@@ -244,9 +334,9 @@ function formatDuration(seconds: number): string {
             class="meta-icon"
             :src="iconTime"
             alt="time"
-          >
+          />
           <span>
-            {{ elapsedText }}/{{ totalText }}
+            {{ timeText }}
           </span>
         </p>
         <p>
@@ -254,7 +344,7 @@ function formatDuration(seconds: number): string {
             class="meta-icon"
             :src="iconChips"
             alt="chips"
-          >
+          />
           <span>
             {{ bringInText }}
           </span>
@@ -280,6 +370,26 @@ function formatDuration(seconds: number): string {
   // overflow: hidden;
 }
 
+/* 右上角玩法标识：仅显示 AOF / Mushroom / Squid / Critical。 */
+.feature-icons {
+  position: absolute;
+  top: -0.4rem;
+  right: -0.1rem;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.08rem;
+}
+.icon-aof{
+  margin-right: 0.15rem;
+}
+
+.feature-icon {
+  width: 1.3rem;
+  height: 1.3rem;
+  object-fit: contain;
+}
+
 .table-name {
   position: absolute;
   top: 0.15rem;
@@ -287,7 +397,7 @@ function formatDuration(seconds: number): string {
   width: 2.6rem;
   height: 0.47rem;
   transform: translate(-50%, -50%);
-  padding: 0.06rem 0rem;
+  padding: 0.04rem 0rem;
   text-align: center;
   font-size: 0.26rem;
   white-space: nowrap;

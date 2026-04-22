@@ -131,7 +131,9 @@ function normalizeLocale(input: string | null | undefined): LocaleCode | null {
 
 async function loadLocaleDictionary(locale: LocaleCode): Promise<void> {
   const url = localeAssetUrls[locale]
-  const response = await fetch(url, { cache: 'force-cache' })
+  // 开发环境禁用缓存，方便实时修改 txt 即时生效；生产环境使用强缓存。
+  const cacheMode = import.meta.env.DEV ? 'no-cache' : 'force-cache'
+  const response = await fetch(url, { cache: cacheMode })
   if (!response.ok) {
     console.warn('[i18n] locale file load failed:', locale, response.status)
     return

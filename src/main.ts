@@ -1,9 +1,9 @@
 import { createApp, type App as VueApp } from 'vue'
 import App from './App.vue'
 import router from './router'
-import './bridge/bridge'
-import { setupGlobalBridgeToastChannel } from './bridge/globalToast'
-import { setupWsProxyBridgeChannel } from './bridge/wsBridge'
+import './bridge/core'
+import { setupGlobalBridgeToastChannel, setupH5VisibilityBridgeChannel } from './bridge/channels'
+import { setupWsProxyBridgeChannel } from './bridge/ws'
 import LoginSession from './session/loginSession'
 import './styles/main.scss'
 import { setupRem } from './utils/rem'
@@ -13,6 +13,7 @@ import { textI18nPlugin } from './i18n'
 let app: VueApp<Element> | null = null
 let stopBridgeToastChannel: (() => void) | null = null
 let stopWsProxyBridgeChannel: (() => void) | null = null
+let stopH5VisibilityBridgeChannel: (() => void) | null = null
 
 export function mountH5App(container: string | Element = '#app'): VueApp<Element> | null {
   if (typeof window === 'undefined') {
@@ -45,6 +46,8 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
   stopWsProxyBridgeChannel = setupWsProxyBridgeChannel()
   // 启动全局桥接 toast：接收 Cocos 消息后统一弹窗。
   stopBridgeToastChannel = setupGlobalBridgeToastChannel()
+  // 启动 H5 UI 桥接：接收 Cocos 下发的 h5Hide/h5Show/h5Navigate。
+  stopH5VisibilityBridgeChannel = setupH5VisibilityBridgeChannel()
   app.mount(mountTarget)
   return app
 }
@@ -58,6 +61,8 @@ export function unmountH5App(): void {
   stopBridgeToastChannel = null
   stopWsProxyBridgeChannel?.()
   stopWsProxyBridgeChannel = null
+  stopH5VisibilityBridgeChannel?.()
+  stopH5VisibilityBridgeChannel = null
   app.unmount()
   app = null
 }

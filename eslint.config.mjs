@@ -146,18 +146,20 @@ export default [
           after: true,
         },
       ],
+      // 与 Prettier 对齐：匿名 function 保留空格，命名 function 不加空格。
+      'space-before-function-paren': [
+        'error',
+        {
+          anonymous: 'always',
+          named: 'never',
+          asyncArrow: 'always',
+        },
+      ],
       'space-in-parens': ['error', 'never'],
       'no-multi-spaces': 'error',
       'no-trailing-spaces': 'error',
-      // 关键规则：避免 <span><img/>text</span> 这种内联挤在一行。
-      'vue/singleline-html-element-content-newline': [
-        'error',
-        {
-          ignoreWhenNoAttributes: false,
-          ignoreWhenEmpty: true,
-          ignores: ['pre', 'textarea'],
-        },
-      ],
+      // 允许 <span>文字</span> 单行写法，与 Prettier 风格一致。
+      'vue/singleline-html-element-content-newline': 'off',
       'vue/multiline-html-element-content-newline': [
         'error',
         {
@@ -166,11 +168,26 @@ export default [
         },
       ],
       'vue/html-indent': ['error', 2],
+      // 与 Prettier singleAttributePerLine:false 保持一致，不强制每个属性独占一行。
+      'vue/max-attributes-per-line': ['error', { singleline: { max: 3 }, multiline: { max: 1 } }],
       'vue/html-closing-bracket-newline': [
         'error',
         {
           singleline: 'never',
           multiline: 'always',
+        },
+      ],
+      // void 元素（img/input 等）允许自闭合 <img />，非 void 元素不允许。
+      'vue/html-self-closing': [
+        'warn',
+        {
+          html: {
+            void: 'always',
+            normal: 'never',
+            component: 'always',
+          },
+          svg: 'always',
+          math: 'always',
         },
       ],
       'local/sibling-tag-newline': 'error',

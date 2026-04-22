@@ -30,7 +30,7 @@ function handleClick(event: MouseEvent): void {
       class="action-icon"
       :src="icon"
       :alt="iconAlt || 'icon'"
-    >
+    />
   </button>
 </template>
 
@@ -48,6 +48,7 @@ function handleClick(event: MouseEvent): void {
   justify-content: space-between;
   font-size: 0.225rem;
   border: none;
+  line-height: 0.2rem;
   box-shadow:
   /* 左上高光 */
   inset  1px  1px 0px  0px rgba(255, 255, 255, 0.85),

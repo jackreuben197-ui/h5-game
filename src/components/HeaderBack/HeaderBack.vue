@@ -74,14 +74,14 @@ function handleBack(event: MouseEvent): void {
       v-if="headerMode === 'full-slot'"
       class="full-slot-wrap"
     >
-      <slot />
+      <slot></slot>
     </div>
 
     <div
       v-else-if="headerMode === 'title-right'"
       class="right-slot-wrap"
     >
-      <slot name="right" />
+      <slot name="right"></slot>
     </div>
   </div>
 </template>

@@ -2,16 +2,15 @@
 import { computed, onMounted, reactive, ref, type CSSProperties } from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
-import RoomGroupCard from '../home/components/RoomGroupCard.vue'
-import GameTypeTabbar from '@/components/GameTypeTabbar.vue'
 import { getRoomIdsApi, getRoomsDetailApi } from '@/api/room'
-import { enterTable } from '@/bridge/bridge'
+import { enterTable } from '@/bridge/core'
 import type { EnterTablePayload } from '@/bridge/protocol'
 import StorageKey from '@/constants/storageKey'
 import LoginSession from '@/session/loginSession'
 import type { RoomRecord } from '@/api/models/room'
 import { useGameStore } from '@/stores/game'
 import { localStore } from '@/utils/localStore'
+import { t } from '@/i18n'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
 import clubCoverAvatar from '@/assets/images/club_cover_avatar.png'
@@ -357,7 +356,7 @@ function goToClubDetail(): void {
 }
 
 function handleBack(): void {
-  router.back()
+  void router.push('/club')
 }
 
 function matchTabRoom(room: RoomRecord, tabName: GameTypeTabName): boolean {
@@ -559,10 +558,18 @@ function formatChip(value: number): string {
       </div>
     </header>
 
-    <GameTypeTabbar v-model="activeTab" />
+    <GameTypeTabbar
+      v-model="activeTab"
+      :tabs="[
+        { name: 'all', title: t('UIMatch_GtO8YEdb') },
+        { name: 'texas', title: t('UITexasInfo_Texas') },
+        { name: 'omaha', title: t('UITexasInfo_Omaha') },
+        { name: 'sixPlus', title: t('6+') },
+      ]"
+    />
 
     <section class="group-list">
-      <RoomGroupCard
+      <PokerTableGroupCard
         v-for="group in groupedRecords"
         :key="group.groupKey"
         :group="group"
@@ -577,7 +584,7 @@ function formatChip(value: number): string {
       >
         <VanIcon name="search" />
         <span>
-          暂无牌桌
+          {{ t('UINoGameTip') }}
         </span>
       </div>
     </section>

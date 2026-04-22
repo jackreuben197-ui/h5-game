@@ -163,24 +163,22 @@ pnpm preview
 
 ## 9. Cocos Bridge 与 WS 协作规范
 
-### 9.1 统一消息信封
+目录分层说明见：`src/bridge/README.md`。
 
-H5 与 Cocos 双向消息统一使用 JSON 信封：
+### 9.1 统一调用协议
 
-```json
-{
-  "action": "wsSend",
-  "payload": {},
-  "msgtype": 1,
-  "requestId": "cocos_1744780000000_xxx",
-  "timestamp": 1744780000000
-}
+H5 与 Cocos 双向交互统一使用函数直调，不再要求 JSON 字符串包裹：
+
+```ts
+sendMessage(type, payload, msgtype?, requestId?, timestamp?, source?)
+onMessgeRecv(type, payload, msgtype?, requestId?, timestamp?, source?)
 ```
 
-- `action`：动作名
+- `type`：动作名（如 `wsSend`、`wsMessage`、`ccReady`）
 - `payload`：动作参数
 - `msgtype`：消息处理层级（`0=转发层`，`1=H5 业务层`）
-- `requestId` / `timestamp`：建议携带，便于排查链路
+- `requestId` / `timestamp`：可选链路追踪字段
+- `source`：可选来源字段（CC 建议传 `cc`）
 
 `msgtype` 约定（当前实现）：
 
@@ -193,82 +191,118 @@ H5 与 Cocos 双向消息统一使用 JSON 信封：
 - 兼容说明：
   - 入站消息若未携带 `msgtype`，H5 侧按 `0` 处理，兼容旧协议
 
-Cocos 回调 H5 的统一入口：
+Cocos 回调 H5 的推荐入口：
 
 ```js
-window.__H5_GAME_ON_COCOS_MESSAGE__(rawJsonOrSchemeUrl)
+window.H5Bridge.onMessgeRecv(type, payload, msgtype, requestId, timestamp, source)
 ```
+
+兼容入口（legacy）：
+
+- `window.__H5_GAME_ON_COCOS_MESSAGE__(rawOrObject)`
+- `window.postMessage(messageObject, '*')`
 
 ### 9.2 职责边界（当前约定）
 
+- 层级关系（同页融合）：
+  - `#GameCanvas`（Cocos）在底层，`z-index: 1`
+  - `#app`（H5）在上层，`z-index: 10`
+  - 需要露出 Cocos 画面时，由 Cocos 下发 `h5Hide`，H5 隐藏 `#app`
+  - 需要恢复 H5 时，下发 `h5Show`
 - 牌桌内（Cocos 主导）：
-  - Cocos 负责 WS 协议编解码（心跳、进桌、退桌等）
+  - Cocos 负责 WS 协议编解码（进桌、退桌等业务包）
   - H5 只负责建立连接、透传二进制、回传服务端消息
+  - WS 心跳由 H5 统一保活维护（默认每 5 秒发送 `HEARTBEAT(code=2)`）
 - 牌桌外（H5 业务可自管）：
   - H5 可独立发送 WS 查询类请求并等待回包（例如战绩）
 - WS 连接策略：
   - 默认主流程：H5 在登录阶段主动建立连接
   - `wsConnect` 仅作为 Cocos 侧可选兼容入口（重连/兜底时可用）
 - `REGISTER(code=1)`：
-  - H5 默认不自动发送
-  - 仅在后端要求握手时，H5 才手动调用（可调用多次）
+  - H5 在 websocket `open` 后自动发送一次（对齐 Cocos）
+  - 业务层仍可手动调用补发（可调用多次）
   - 查询请求本身要使用各自业务 `query code`，不是固定 `REGISTER`
+- `HEARTBEAT(code=2)`：
+  - H5 在 websocket `open` 后自动发送一次并开启定时心跳
+  - websocket 关闭/重连/主动断连时自动停止旧心跳
 
 ### 9.3 Cocos -> H5 动作规范
 
-说明：本节动作默认 `msgtype=0`（转发层）。
+说明：
+
+- `wsConnect/wsSend/wsClose` 默认 `msgtype=0`（转发层）
+- `h5Hide/h5Show/h5Navigate` 使用 `msgtype=1`（H5 业务层）
 
 1. `wsConnect`（可选）：建立/复用 websocket
 
-```json
-{
-  "action": "wsConnect",
-  "payload": {
-    "port": 25201
-  }
-}
+```ts
+sendMessage('wsConnect', { port: 25201 }, 0)
+// 或
+sendMessage('wsConnect', { url: 'wss://test2.awanptest.com:25201' }, 0)
 ```
 
-或
+2. `wsSend`：发送 websocket 消息（仅支持 `text`、`binary`）
 
-```json
-{
-  "action": "wsConnect",
-  "payload": {
-    "url": "wss://test2.awanptest.com:25201"
-  }
-}
-```
-
-2. `wsSend`：发送 websocket 消息（仅支持 `text` 与 `binary-base64`）
-
-```json
-{
-  "action": "wsSend",
-  "payload": {
-    "dataType": "binary-base64",
-    "data": "WU0AAv//////////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAIQ..."
+```ts
+sendMessage(
+  'wsSend',
+  {
+    dataType: 'binary',
+    data: buffer, // ArrayBuffer / Uint8Array / Blob
   },
-  "msgtype": 0
-}
+  0,
+)
 ```
+
+说明：
+
+- `dataType="binary"`
 
 3. `wsClose`：关闭 websocket
 
-```json
-{
-  "action": "wsClose",
-  "payload": {
-    "code": 1000,
-    "reason": "leave gameplay"
-  }
-}
+```ts
+sendMessage('wsClose', { code: 1000, reason: 'leave gameplay' }, 0)
+```
+
+4. `h5Hide` / `h5Show`：控制 H5 根层显隐（`msgtype=1`）
+
+```ts
+sendMessage('h5Hide', {}, 1) // 隐藏 H5，露出 Cocos 画布
+sendMessage('h5Show', {}, 1) // 恢复显示 H5
+```
+
+5. `h5Navigate`：让 H5 执行路由跳转（`msgtype=1`）
+
+```ts
+sendMessage(
+  'h5Navigate',
+  {
+    path: '/club/members',
+    query: { clubId: 41, from: 'cocos' },
+    replace: false,
+    ensureVisible: true,
+  },
+  1,
+)
+```
+
+也支持按路由名跳转：
+
+```ts
+sendMessage(
+  'h5Navigate',
+  {
+    name: 'club-members',
+    params: { id: '41' },
+  },
+  1,
+)
 ```
 
 ### 9.4 H5 -> Cocos 回传规范
 
 1. `wsOpen`：连接成功
-2. `wsMessage`：收到服务端消息（文本或二进制 base64）
+2. `wsMessage`：收到服务端消息（文本或二进制）
 3. `wsError`：错误
 4. `wsClosed`：连接关闭
 
@@ -276,20 +310,24 @@ window.__H5_GAME_ON_COCOS_MESSAGE__(rawJsonOrSchemeUrl)
 
 示例（收到 WS 二进制后回传）：
 
-```json
-{
-  "action": "wsMessage",
-  "payload": {
-    "dataType": "binary-base64",
-    "data": "WU0AAv//////////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAIQ..."
+```ts
+onMessgeRecv(
+  'wsMessage',
+  {
+    dataType: 'binary',
+    data: buffer, // 原始 websocket 字节
   },
-  "msgtype": 0
-}
+  0,
+)
 ```
+
+说明：
+
+- `wsMessage` 二进制回传为原始 binary（structured clone），不再经过 base64 中转。
 
 ### 9.5 牌桌外 H5 自发 WS 示例
 
-H5 可直接使用 `src/bridge/wsBridge.ts` 暴露的能力处理查询类请求：
+H5 可直接使用 `src/bridge/ws/wsProxy.ts` 暴露的能力处理查询类请求：
 
 ```ts
 import {
@@ -297,12 +335,12 @@ import {
   h5SendRegisterPacket,
   h5SendHoldemPacket,
   waitH5WsPacket,
-} from '@/bridge/wsBridge'
+} from '@/bridge/ws'
 
 // 1) 确保已连接
 ensureWsProxyConnected({ port: 25201 })
 
-// 2) 仅在后端要求握手时，手动 REGISTER（可选）
+// 2) H5 在 WS open 后会自动 REGISTER，这里保留手动补发能力（可选）
 h5SendRegisterPacket()
 
 // 3) 发送查询包（code 必须是业务查询协议号，不是 REGISTER）
@@ -322,20 +360,20 @@ console.log(packet.code, packet.roomId, packet.matchId, packet.body)
 
 H5 点击牌桌后只通知 Cocos 业务意图，不直接发送 EnterRoom WS 包：
 
-```json
-{
-  "action": "enterTable",
-  "payload": {
-    "userName": "玩家昵称",
-    "userId": "10001",
-    "token": "xxx",
-    "websocketPort": 25201,
-    "from": "h5-lobby",
-    "roomId": "90547896",
-    "roomName": "NLH 2/4"
+```ts
+sendMessage(
+  'enterTable',
+  {
+    userName: '玩家昵称',
+    userId: '10001',
+    token: 'xxx',
+    websocketPort: 25201,
+    from: 'h5-lobby',
+    roomId: '90547896',
+    roomName: 'NLH 2/4',
   },
-  "msgtype": 1
-}
+  1,
+)
 ```
 
 ### 9.7 H5 / Cocos Ready 握手规范
@@ -345,48 +383,16 @@ H5 点击牌桌后只通知 Cocos 业务意图，不直接发送 EnterRoom WS �
 1. H5 侧
 
 - Bridge 入站监听初始化完成后设置：`window.__H5_READY__ = true`
-- 若检测到 `window.__CC_READY__ === true`，发送：
+- 若检测到 `window.__CC_READY__ === true`，发送：`sendMessage('h5Ready', {}, 1)`
 
-```json
-{
-  "action": "h5Ready",
-  "payload": {},
-  "msgtype": 1
-}
-```
-
-- 收到 `ccReady` 后立即回复：
-
-```json
-{
-  "action": "h5Ack",
-  "payload": {},
-  "msgtype": 1
-}
-```
+- 收到 `ccReady` 后立即回复：`sendMessage('h5Ack', {}, 1)`
 
 2. Cocos 侧（约定）
 
 - Cocos 可接收消息后设置：`window.__CC_READY__ = true`
-- 若检测到 `window.__H5_READY__ === true`，发送：
+- 若检测到 `window.__H5_READY__ === true`，发送：`onMessgeRecv('ccReady', {}, 1)`
 
-```json
-{
-  "action": "ccReady",
-  "payload": {},
-  "msgtype": 1
-}
-```
-
-- 收到 `h5Ready` 后回复：
-
-```json
-{
-  "action": "ccAck",
-  "payload": {},
-  "msgtype": 1
-}
-```
+- 收到 `h5Ready` 后回复：`onMessgeRecv('ccAck', {}, 1)`
 
 3. 动作说明
 

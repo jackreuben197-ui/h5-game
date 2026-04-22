@@ -6,7 +6,6 @@ import { getUserInfoApi } from '@/api/auth'
 import { useGameStore } from '@/stores/game'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import MainBottomTab from '@/components/MainBottomTab.vue'
 
 const router = useRouter()
 const gameStore = useGameStore()

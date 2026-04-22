@@ -1,14 +1,12 @@
 // Design tokens (375 draft, 1rem = 37.5px at draft width).
 // Keep shared values here to avoid hard-coded sizes in page styles.
 $font-family-sans:
-  'PingFang SC',
-  'Noto Sans SC',
-  'Hiragino Sans GB',
-  'Helvetica Neue',
-  Arial,
-  sans-serif;
+  'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', 'Helvetica Neue', Arial, sans-serif;
 
 $font-family-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+
+$font-family-SF:
+  'SF Pro', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', 'Helvetica Neue', Arial, sans-serif;
 
 $color-primary: #0a67c2;
 $color-primary-press: #0a4e92;
@@ -18,11 +16,14 @@ $color-text-main: #1c2735;
 $color-text-secondary: #5f6d80;
 $color-border-soft: rgba(147, 172, 206, 0.42);
 $color-card-bg: rgba(255, 255, 255, 0.92);
+$color-text-main2: #fff;
+$color-bg-shadow: rgba(0, 0, 0, 0.2);
 
 :root {
   // Typography
   --font-family-sans: #{$font-family-sans};
   --font-family-mono: #{$font-family-mono};
+  --font-family-SF: #{$font-family-SF};
 
   // Brand + semantic colors
   --color-primary: #{$color-primary};
@@ -33,6 +34,8 @@ $color-card-bg: rgba(255, 255, 255, 0.92);
   --color-text-secondary: #{$color-text-secondary};
   --color-border-soft: #{$color-border-soft};
   --color-card-bg: #{$color-card-bg};
+  --color-text-main2: #{$color-text-main2};
+  --color-bg-shadow: #{$color-bg-shadow};
 
   // Radius + shadow
   --radius-card: 0.4267rem;

@@ -3,8 +3,8 @@ import { computed } from 'vue'
 import iconTable from '@/assets/icons/icon_table.png'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconDropDown from '@/assets/icons/icon_drop_down.png'
-import RoomTableCard from './RoomTableCard.vue'
 import type { RoomRecord } from '@/api/models/room'
+import { t } from '@/i18n'
 
 interface RoomGroupViewModel {
   groupKey: string
@@ -55,7 +55,7 @@ function handleTableClick(room: RoomRecord): void {
             class="game-icon-img"
             :src="group.iconImage"
             alt="game-type"
-          >
+          />
           <span class="icon-tag">
             {{ group.gameName }}
           </span>
@@ -64,7 +64,7 @@ function handleTableClick(room: RoomRecord): void {
         <div class="summary-content">
           <p class="blind-text">
             <span class="blind-label">
-              盲注
+              {{ t('UIMTT_Howtoplay_blind') }}
             </span>
             <span>
               {{ group.blindText }}
@@ -76,14 +76,14 @@ function handleTableClick(room: RoomRecord): void {
                 class="count-icon"
                 :src="iconTable"
                 alt="table"
-              >{{ group.tableCount }}桌
+              />{{ group.tableCount }}桌
             </span>
             <span>
               <img
                 class="count-icon"
                 :src="iconPeople"
                 alt="people"
-              >{{
+              />{{
                 group.playerCount
               }}人
             </span>
@@ -96,7 +96,7 @@ function handleTableClick(room: RoomRecord): void {
           :class="{ 'is-expanded': expanded }"
           :src="iconDropDown"
           alt="toggle"
-        >
+        />
       </div>
     </div>
 
@@ -106,7 +106,7 @@ function handleTableClick(room: RoomRecord): void {
     >
       <div class="table-grid-inner">
         <div class="table-grid">
-          <RoomTableCard
+          <PokerTableCard
             v-for="room in group.rooms"
             :key="String(room.rid)"
             :room="room"

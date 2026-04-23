@@ -608,9 +608,8 @@ onBeforeUnmount(() => {
   gap: 0.24rem;
   padding: 0 0.4rem 4rem; // 底部留出 tabbar 高度
   background: transparent;
-  height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
+  // 由 MainLayoutView 统一滚动，这里不再单独设滚动容器。
+  min-height: max-content;
   box-sizing: border-box;
   // 隐藏滚动条但保留滚动功能
   scrollbar-width: none;

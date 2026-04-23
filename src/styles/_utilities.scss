@@ -342,3 +342,26 @@ $spacing: (0: 0, 1: 0.04rem, 2: 0.08rem, 3: 0.12rem, 4: 0.16rem, 5: 0.2rem,
 // ---------------------------------------------------------------------------
 .box-border  { box-sizing: border-box; }
 .box-content { box-sizing: content-box; }
+
+// ---------------------------------------------------------------------------
+// Page scroll helpers (for pages that may overflow on real devices)
+// ---------------------------------------------------------------------------
+.app-scroll-page {
+  width: 100%;
+  min-height: max-content;
+  box-sizing: border-box;
+}
+
+.app-scroll-page > * {
+  flex-shrink: 0;
+}
+
+// 独立路由页面（未复用 MainLayout）使用该类创建稳定滚动视口。
+.app-scroll-standalone {
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
+}

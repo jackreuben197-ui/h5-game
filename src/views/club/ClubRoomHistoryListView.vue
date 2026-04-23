@@ -112,14 +112,14 @@ function toDetail(): void {
 </script>
 
 <template>
-  <div class="club-room-history-bg">
+  <div class="club-room-history-bg ">
     <img class="bg-image bg-image--large" :src="imgImage12" alt="" />
     <img class="bg-image bg-image--overlay" :src="imgImage13" alt="" />
-    <div class="glow glow--pink" />
-    <div class="glow glow--blue" />
+    <div class="glow glow--pink"></div>
+    <div class="glow glow--blue"></div>
 
-    <div class="page-shell club-room-history">
-      <VanNavBar title="牌局记录" left-arrow @click-left="backToClub" />
+    <div class="page-shell club-room-history app-scroll-standalone ">
+      <VanNavBar title="牌局1记录" left-arrow @click-left="backToClub" />
 
       <div class="coin-tabs">
         <button type="button" class="coin-tab coin-tab--active">联盟币</button>
@@ -131,7 +131,7 @@ function toDetail(): void {
             <img class="icon-xs" :src="imgCalendar" alt="" />
             <span>11/03/2024</span>
           </button>
-          <span class="date-sep" />
+          <span class="date-sep"></span>
           <button type="button" class="date-btn">
             <img class="icon-xs" :src="imgCalendar" alt="" />
             <span>11/03/2024</span>
@@ -175,14 +175,19 @@ function toDetail(): void {
           <div class="mode-oval">
             <div class="mode-badge">{{ item.mode }}</div>
           </div>
-          <div class="base-blur-20" />
+          <div class="base-blur-20"></div>
 
           <div class="history-main">
             <div class="history-left">
               <div class="title-line">
                 <div class="title-with-logo">
                   <h3 class="history-title">{{ item.title }}</h3>
-                  <img v-if="item.hasSquidLogo" class="squid-logo" :src="imgSquidLogo" alt="" />
+                  <img
+                    v-if="item.hasSquidLogo"
+                    class="squid-logo"
+                    :src="imgSquidLogo"
+                    alt=""
+                  />
                 </div>
               </div>
 
@@ -211,7 +216,12 @@ function toDetail(): void {
             </div>
           </div>
 
-          <img class="card-arrow" :src="imgArrow" alt="" @click="toDetail" />
+          <img
+            class="card-arrow"
+            :src="imgArrow"
+            alt=""
+            @click="toDetail"
+          />
         </article>
       </section>
     </div>

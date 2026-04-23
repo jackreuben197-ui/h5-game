@@ -1,36 +1,123 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import ava2 from '@/assets/images/wallet/avatars/ava2.png'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import AppBar from '@/components/wallet/AppBar.vue'
+import UserCard from '@/components/wallet/UserCard.vue'
+import TransactionItem from '@/components/wallet/TransactionItem.vue'
+import { t } from '@/i18n'
 
-const router = useRouter()
-
-function backToRecharge(): void {
-  void router.push('/recharge')
+interface Transaction {
+  kind: 'in' | 'out'
+  type: string
+  gameName: string
+  userId: string
+  amount: string
+  positive: boolean
+  time: string
+  chipAmount: string
 }
+
+const transactions: Transaction[] = [
+  {
+    kind: 'in',
+    type: t('Wallet_TxGameIn'),
+    gameName: t('Wallet_TxGameName'),
+    userId: '8677650585',
+    amount: '1,000',
+    positive: true,
+    time: '22:56',
+    chipAmount: '55,555,555',
+  },
+  {
+    kind: 'out',
+    type: t('Wallet_TxWithdraw'),
+    gameName: t('Wallet_TxGameName'),
+    userId: '8677650585',
+    amount: '1,000',
+    positive: false,
+    time: '22:56',
+    chipAmount: '55,555,555',
+  },
+  {
+    kind: 'in',
+    type: t('Wallet_TxRecharge'),
+    gameName: '',
+    userId: '',
+    amount: '1,000',
+    positive: true,
+    time: '22:56',
+    chipAmount: '55,555,555',
+  },
+  {
+    kind: 'out',
+    type: t('Wallet_TxWithdraw'),
+    gameName: '',
+    userId: '',
+    amount: '1,000',
+    positive: false,
+    time: '22:56',
+    chipAmount: '55,555,555',
+  },
+]
 </script>
 
 <template>
-  <div class="module-card">
-    <h2 class="module-title">充值子页面</h2>
-    <p class="module-desc">示例：充值记录、订单状态、支付结果查询。</p>
-    <VanButton plain block @click="backToRecharge">返回充值模块</VanButton>
+  <div
+    class="wallet-history-screen"
+    :style="{ backgroundImage: `url(${mainBgUrl})` }"
+  >
+    <AppBar
+      :title="t('Wallet_Title')"
+      :show-actions="false"
+    >
+      <template #actions>
+        <span></span>
+      </template>
+    </AppBar>
+
+    <div class="content">
+      <UserCard
+        variant="expanded"
+        :avatar="ava2"
+        name="Carter Torff"
+        user-id="8677650585"
+        balance="123,456,78"
+      />
+
+      <div class="list">
+        <TransactionItem
+          v-for="(tx, i) in transactions"
+          :key="i"
+          v-bind="tx"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
-.module-card {
-  padding: 0.44rem;
-  border-radius: 0.34rem;
-  background: rgba(9, 40, 71, 0.62);
-  border: 0.02rem solid rgba(216, 232, 255, 0.32);
+.wallet-history-screen {
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
-.module-title {
-  margin: 0;
-  font-size: 0.5rem;
-  color: #fff;
+
+.content {
+  padding: clamp(6px, 2vw, 10px) clamp(14px, 4.55vw, 17px) calc(env(safe-area-inset-bottom) + clamp(20px, 6.4vw, 28px));
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 3.1vw, 12px);
 }
-.module-desc {
-  margin: 0.2rem 0 0.34rem;
-  font-size: 0.34rem;
-  color: rgba(235, 245, 255, 0.9);
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 2.15vw, 8px);
 }
 </style>

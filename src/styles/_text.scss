@@ -1,0 +1,93 @@
+// Global typography utility classes.
+// Use `t-*` classes in templates instead of per-component font-size/weight/line-height.
+// Extend carefully — keep the set small and semantic.
+
+:root {
+  --font-cn: 'HONOR Sans CN', 'PingFang SC', system-ui, sans-serif;
+  --font-num: 'Poppins', 'SF Pro Display', system-ui, sans-serif;
+  --font-display: 'Keania One', system-ui, sans-serif;
+
+  --text-shadow-title: 0 3px 6.6px rgba(0, 0, 0, 0.25);
+  --text-shadow-soft: 0 1px 4px rgba(0, 0, 0, 0.32);
+  --text-shadow-tiny: 0 1px 2px rgba(0, 0, 0, 0.3);
+
+  --color-primary: #05e7ae;
+  --color-primary-dark: #027a5c;
+  --color-danger: #ff132b;
+  --grad-primary: linear-gradient(168deg, #05e7ae 7%, #027a5c 72%);
+  --glass-bg: rgba(0, 0, 0, 0.2);
+  --glass-border: rgba(255, 255, 255, 0.31);
+  --glass-border-soft: rgba(242, 242, 242, 0.4);
+}
+
+.t-title {
+  font-family: var(--font-cn);
+  font-weight: 500;
+  font-size: clamp(22px, 6.4vw, 26px);
+  line-height: 1.2;
+  color: #fff;
+  text-shadow: var(--text-shadow-title);
+}
+
+.t-subtitle {
+  font-family: var(--font-cn);
+  font-weight: 500;
+  font-size: clamp(16px, 4.8vw, 20px);
+  line-height: 1.2;
+  color: #fff;
+  text-shadow: var(--text-shadow-soft);
+}
+
+.t-body {
+  font-family: var(--font-cn);
+  font-weight: 500;
+  font-size: clamp(12px, 3.52vw, 14.5px);
+  line-height: 1.2;
+  color: #fff;
+  text-shadow: var(--text-shadow-soft);
+}
+
+.t-caption {
+  font-family: var(--font-cn);
+  font-weight: 500;
+  font-size: clamp(9px, 2.67vw, 11px);
+  line-height: 1.2;
+  color: #fff;
+  text-shadow: var(--text-shadow-tiny);
+}
+
+.t-button {
+  font-family: var(--font-cn);
+  font-weight: 500;
+  font-size: clamp(8px, 2.24vw, 9.6px);
+  line-height: 1.2;
+  color: #fff;
+  text-shadow: var(--text-shadow-soft);
+}
+
+.t-badge {
+  font-family: var(--font-cn);
+  font-weight: 600;
+  font-size: clamp(7px, 2.08vw, 9px);
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+}
+
+.t-rank {
+  font-family: var(--font-num);
+  font-weight: 700;
+  font-size: clamp(14px, 4.27vw, 18px);
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+
+.t-display {
+  font-family: var(--font-num);
+  font-weight: 700;
+  font-size: clamp(28px, 9.07vw, 38px);
+  line-height: 1;
+  letter-spacing: -0.5px;
+  color: #fff;
+  text-shadow: var(--text-shadow-title);
+}

@@ -39,16 +39,6 @@ const router = createRouter({
           },
         },
         {
-          path: 'recharge',
-          name: 'recharge',
-          component: () => import('@/views/recharge/RechargeIndexView.vue'),
-          meta: {
-            requiresAuth: true,
-            tabKey: 'recharge',
-            moduleTitle: '充值',
-          },
-        },
-        {
           path: 'message',
           name: 'message',
           component: () => import('@/views/message/MessageIndexView.vue'),
@@ -78,9 +68,27 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/recharge',
+      name: 'recharge',
+      component: () => import('@/views/recharge/RechargeIndexView.vue'),
+      meta: { requiresAuth: true, tabKey: 'recharge' },
+    },
+    {
       path: '/recharge/records',
       name: 'recharge-records',
       component: () => import('@/views/recharge/RechargeRecordsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/recharge/orders',
+      name: 'recharge-orders',
+      component: () => import('@/views/recharge/RechargeOrdersView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/recharge/order/:id',
+      name: 'recharge-order',
+      component: () => import('@/views/recharge/OrderDetailsView.vue'),
       meta: { requiresAuth: true },
     },
     {

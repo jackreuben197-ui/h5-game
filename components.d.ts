@@ -11,14 +11,31 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AmountTile: typeof import('./src/components/wallet/AmountTile.vue')['default']
+    AppBar: typeof import('./src/components/wallet/AppBar.vue')['default']
+    BellButton: typeof import('./src/components/wallet/BellButton.vue')['default']
+    CryptoChip: typeof import('./src/components/wallet/CryptoChip.vue')['default']
     GameTypeTabbar: typeof import('./src/components/Tabbar/GameTypeTabbar.vue')['default']
+    GlassButton: typeof import('./src/components/wallet/GlassButton.vue')['default']
+    GlassCard: typeof import('./src/components/wallet/GlassCard.vue')['default']
     HeaderBack: typeof import('./src/components/HeaderBack/HeaderBack.vue')['default']
     MainBottomTab: typeof import('./src/components/Tabbar/MainBottomTab.vue')['default']
+    NumericKeypad: typeof import('./src/components/wallet/NumericKeypad.vue')['default']
+    PaymentMethodStrip: typeof import('./src/components/wallet/PaymentMethodStrip.vue')['default']
+    PillButton: typeof import('./src/components/wallet/PillButton.vue')['default']
     PokerTableCard: typeof import('./src/components/ListItem/PokerTableCard.vue')['default']
     PokerTableGroupCard: typeof import('./src/components/ListItem/PokerTableGroupCard.vue')['default']
+    PresetAmountGrid: typeof import('./src/components/wallet/PresetAmountGrid.vue')['default']
+    PrimaryButton: typeof import('./src/components/wallet/PrimaryButton.vue')['default']
+    RecordItem: typeof import('./src/components/wallet/RecordItem.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SegmentedToggle: typeof import('./src/components/wallet/SegmentedToggle.vue')['default']
+    TagPill: typeof import('./src/components/wallet/TagPill.vue')['default']
+    TogglePillGroup: typeof import('./src/components/wallet/TogglePillGroup.vue')['default']
     TopActionButton: typeof import('./src/components/Button/TopActionButton.vue')['default']
+    TransactionItem: typeof import('./src/components/wallet/TransactionItem.vue')['default']
+    UserCard: typeof import('./src/components/wallet/UserCard.vue')['default']
     VanButton: typeof import('vant/es')['Button']
     VanCellGroup: typeof import('vant/es')['CellGroup']
     VanField: typeof import('vant/es')['Field']
@@ -28,5 +45,6 @@ declare module 'vue' {
     VanPopup: typeof import('vant/es')['Popup']
     VanTab: typeof import('vant/es')['Tab']
     VanTabs: typeof import('vant/es')['Tabs']
+    WithdrawForm: typeof import('./src/components/wallet/WithdrawForm.vue')['default']
   }
 }

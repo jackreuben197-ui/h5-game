@@ -104,7 +104,7 @@ function goToDetail(path: string): void {
 
 <style scoped lang="scss">
 
-@import '@/styles/messages_mine.scss';
+@use '@/styles/messages_mine.scss';
 .message-page {
   .card-bg-highlight{
     .card-bg-outter {

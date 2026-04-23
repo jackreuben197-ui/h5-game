@@ -8063,3 +8063,45 @@ UIHomeComingSoon=即将开放
 
 
 
+Wallet_Title=Wallet
+Wallet_Deposit=Deposit
+Wallet_Withdraw=Withdraw
+Wallet_Records=Records
+Wallet_Details=Details
+Wallet_Balance=UC Balance
+Wallet_BalanceLabel=Balance:
+Wallet_PayNow=Pay Now {0}
+Wallet_SubmitWithdraw=Withdraw Now
+Wallet_RecipientLabel=Recipient:
+Wallet_RemarkLabel=Remark:
+Wallet_AvailableUc=Available UC: {0}
+Wallet_Rate=Rate: 1USDT=1UC
+Wallet_InputPlaceholder=Enter UC amount to withdraw
+Wallet_CustomAmount=Custom amount
+Wallet_KeypadPlaceholder=Enter amount between {0}-{1}
+Wallet_Cancel=Cancel
+Wallet_Confirm=Confirm
+Wallet_PaySuffix=Pay
+Wallet_MethodCard=Bank card
+Wallet_AppBarRecharge=Recharge
+Wallet_AppBarSupport=Support
+Wallet_OrderTitle=Order Details
+Wallet_OrderId=Order ID
+Wallet_OrderAmount=Recharge amount
+Wallet_OrderFee=Fee
+Wallet_OrderPayAmount=Payment
+Wallet_OrderPayAddr=Payment address
+Wallet_OrderRecvName=Recipient name
+Wallet_OrderRecvAddr=Recipient address
+Wallet_OrderTime=Time
+Wallet_OrderStatus=Status
+Wallet_StatusPending=Pending
+Wallet_TxGameIn=Game buy-in
+Wallet_TxWithdraw=Withdraw
+Wallet_TxRecharge=Recharge
+Wallet_TxGameName=Game name
+Wallet_OrdersTitle=Records
+Wallet_OrdersDeposit=Deposit records
+Wallet_OrdersWithdraw=Withdraw records
+Wallet_ApplyTime=Applied at
+Wallet_StatusCancelled=Cancelled

@@ -8093,3 +8093,45 @@ Spinner_Tip=
 
 
 
+Wallet_Title=Carteira
+Wallet_Deposit=Depositar
+Wallet_Withdraw=Sacar
+Wallet_Records=Registros
+Wallet_Details=Detalhes
+Wallet_Balance=Saldo UC
+Wallet_BalanceLabel=Saldo:
+Wallet_PayNow=Pagar Agora {0}
+Wallet_SubmitWithdraw=Sacar Agora
+Wallet_RecipientLabel=Destinatário:
+Wallet_RemarkLabel=Observação:
+Wallet_AvailableUc=UC disponível: {0}
+Wallet_Rate=Taxa: 1USDT=1UC
+Wallet_InputPlaceholder=Digite o valor de UC a sacar
+Wallet_CustomAmount=Valor personalizado
+Wallet_KeypadPlaceholder=Digite um valor entre {0}-{1}
+Wallet_Cancel=Cancelar
+Wallet_Confirm=Confirmar
+Wallet_PaySuffix=Pagar
+Wallet_MethodCard=Cartão
+Wallet_AppBarRecharge=Recarga
+Wallet_AppBarSupport=Suporte
+Wallet_OrderTitle=Detalhes do pedido
+Wallet_OrderId=ID do pedido
+Wallet_OrderAmount=Valor da recarga
+Wallet_OrderFee=Taxa
+Wallet_OrderPayAmount=Pagamento
+Wallet_OrderPayAddr=Endereço de pagamento
+Wallet_OrderRecvName=Nome do destinatário
+Wallet_OrderRecvAddr=Endereço do destinatário
+Wallet_OrderTime=Horário
+Wallet_OrderStatus=Status
+Wallet_StatusPending=Pendente
+Wallet_TxGameIn=Entrada em jogo
+Wallet_TxWithdraw=Saque
+Wallet_TxRecharge=Recarga
+Wallet_TxGameName=Nome do jogo
+Wallet_OrdersTitle=Registros
+Wallet_OrdersDeposit=Depósitos
+Wallet_OrdersWithdraw=Saques
+Wallet_ApplyTime=Solicitado
+Wallet_StatusCancelled=Cancelado

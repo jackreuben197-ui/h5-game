@@ -6,7 +6,7 @@ import { formatTxtMessage, parseTxtLanguage, type TxtLanguageMap } from './parse
 
 export type LocaleCode = 'zh' | 'tw' | 'en' | 'pt'
 
-const DEFAULT_LOCALE: LocaleCode = 'en'
+const DEFAULT_LOCALE: LocaleCode = 'zh'
 const SHARED_I18N_BASE = 'assets/resources/config'
 
 export const SUPPORTED_LOCALES: LocaleCode[] = ['zh', 'tw', 'en', 'pt']

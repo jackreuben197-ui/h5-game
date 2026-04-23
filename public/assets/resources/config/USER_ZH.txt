@@ -8054,3 +8054,45 @@ Spinner_Tip=同步云端数据中...
 
 
 
+Wallet_Title=钱包
+Wallet_Deposit=充值
+Wallet_Withdraw=回收
+Wallet_Records=记录
+Wallet_Details=明细
+Wallet_Balance=UC余额
+Wallet_BalanceLabel=Balance:
+Wallet_PayNow=立即支付{0}
+Wallet_SubmitWithdraw=立即提现
+Wallet_RecipientLabel=收款名称:
+Wallet_RemarkLabel=备注信息:
+Wallet_AvailableUc=可回收UC: {0}
+Wallet_Rate=汇率：1USDT=1UC
+Wallet_InputPlaceholder=输入需要回收的UC数量
+Wallet_CustomAmount=自定义金额
+Wallet_KeypadPlaceholder=请输入{0}-{1}区间的金额
+Wallet_Cancel=取消
+Wallet_Confirm=确定
+Wallet_PaySuffix=支付
+Wallet_MethodCard=银行卡
+Wallet_AppBarRecharge=充值
+Wallet_AppBarSupport=客服
+Wallet_OrderTitle=订单详情
+Wallet_OrderId=订单号
+Wallet_OrderAmount=充值联盟币
+Wallet_OrderFee=手续费
+Wallet_OrderPayAmount=支付金额
+Wallet_OrderPayAddr=付款地址
+Wallet_OrderRecvName=收款名称
+Wallet_OrderRecvAddr=收款地
+Wallet_OrderTime=充值时间
+Wallet_OrderStatus=状态
+Wallet_StatusPending=申请中
+Wallet_TxGameIn=小游戏带入
+Wallet_TxWithdraw=回收
+Wallet_TxRecharge=充值
+Wallet_TxGameName=游戏名称
+Wallet_OrdersTitle=记录
+Wallet_OrdersDeposit=充值记录
+Wallet_OrdersWithdraw=回收记录
+Wallet_ApplyTime=申请时间
+Wallet_StatusCancelled=取消申请

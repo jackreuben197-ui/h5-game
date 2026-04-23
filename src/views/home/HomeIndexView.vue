@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
-import { showFailToast, showSuccessToast } from 'vant'
+import { showFailToast, } from 'vant'
 import { useRouter } from 'vue-router'
 import { getUserClubApi } from '@/api/auth'
 import { getCowboyRoomListApi } from '@/api/gc'
@@ -174,6 +174,9 @@ function ensureClubDataReady(): void {
 function goToGameList(): void {
   void router.push('/gameList')
 }
+function goToMttList(): void {
+  void router.push('/mttList')
+}
 
 function toggleBalance(): void {
   balanceVisible.value = !balanceVisible.value
@@ -182,7 +185,6 @@ function toggleBalance(): void {
 async function refreshBalance(): Promise<void> {
   try {
     await getUserClubApi()
-    showSuccessToast('已刷新')
   } catch (error) {
     const message = error instanceof Error ? error.message : '刷新余额失败'
     showFailToast(message)
@@ -500,7 +502,7 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- MTT赛事专区 -->
-        <div class="game-card game-card-mtt" @click="goToGameList">
+        <div class="game-card game-card-mtt" @click="goToMttList">
           <img
             class="zone-lg-icon zone-lg-icon-mtt"
             src="@/assets/icons/game_zone_mtt_lg.png"
@@ -869,14 +871,14 @@ onBeforeUnmount(() => {
   z-index: 3;
 }
 .game-card-mahjong {
-  background: url('@/assets/images/left_card_bg_1.png') center/cover no-repeat;
+  background: url('@/assets/images/home_left_card_bg_1.png') center/cover no-repeat;
 }
 .game-card-mtt {
-  background: url('@/assets/images/left_card_bg_2.png') center/cover no-repeat;
+  background: url('@/assets/images/home_left_card_bg_2.png') center/cover no-repeat;
 }
 .game-card-minigame {
   overflow: hidden;
-  background: url('@/assets/images/left_card_bg_3.png') center/cover no-repeat;
+  background: url('@/assets/images/home_left_card_bg_3.png') center/cover no-repeat;
 }
 .zone-lg-icon-mahjong {
   width: 1.8rem;

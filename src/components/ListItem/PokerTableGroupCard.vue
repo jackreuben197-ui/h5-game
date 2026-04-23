@@ -45,17 +45,10 @@ function handleTableClick(room: RoomRecord): void {
 
 <template>
   <section class="group-item">
-    <div
-      class="group-summary"
-      @click="toggleGroup"
-    >
+    <div class="group-summary" @click="toggleGroup">
       <div class="summary-left">
         <div class="game-icon-wrap">
-          <img
-            class="game-icon-img"
-            :src="group.iconImage"
-            alt="game-type"
-          />
+          <img class="game-icon-img" :src="group.iconImage" alt="game-type" />
           <span class="icon-tag">
             {{ group.gameName }}
           </span>
@@ -72,20 +65,10 @@ function handleTableClick(room: RoomRecord): void {
           </p>
           <p class="count-text">
             <span>
-              <img
-                class="count-icon"
-                :src="iconTable"
-                alt="table"
-              />{{ group.tableCount }}桌
+              <img class="count-icon" :src="iconTable" alt="table" />{{ group.tableCount }}桌
             </span>
             <span>
-              <img
-                class="count-icon"
-                :src="iconPeople"
-                alt="people"
-              />{{
-                group.playerCount
-              }}人
+              <img class="count-icon" :src="iconPeople" alt="people" />{{ group.playerCount }}人
             </span>
           </p>
         </div>
@@ -100,10 +83,7 @@ function handleTableClick(room: RoomRecord): void {
       </div>
     </div>
 
-    <div
-      class="table-grid-wrap"
-      :class="expandClass"
-    >
+    <div class="table-grid-wrap" :class="expandClass">
       <div class="table-grid-inner">
         <div class="table-grid">
           <PokerTableCard
@@ -174,8 +154,8 @@ function handleTableClick(room: RoomRecord): void {
   border: 0.0133rem solid rgba(255, 255, 255, 0.34);
 }
 
-.summary-content{
-  padding: .5rem 0 0;
+.summary-content {
+  padding: 0.5rem 0 0;
 }
 
 .blind-text {
@@ -183,8 +163,8 @@ function handleTableClick(room: RoomRecord): void {
   font-size: 0.35rem;
   line-height: 0.5333rem;
   font-weight: 400;
-  .blind-label{
-    margin-right: .3rem;
+  .blind-label {
+    margin-right: 0.3rem;
   }
 }
 
@@ -228,10 +208,7 @@ function handleTableClick(room: RoomRecord): void {
   grid-template-rows: 0fr;
   opacity: 0;
   transform: translateY(-0.2rem);
-  transition:
-    grid-template-rows 0.45s ease,
-    opacity 0.35s ease,
-    transform 0.35s ease;
+  transition: grid-template-rows 0.45s ease, opacity 0.35s ease, transform 0.35s ease;
 }
 
 .table-grid-wrap.is-expanded {

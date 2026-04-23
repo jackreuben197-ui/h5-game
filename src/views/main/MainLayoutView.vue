@@ -123,7 +123,7 @@ onMounted(() => {
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   overscroll-behavior-y: contain;
-  padding: calc(env(safe-area-inset-top) + 0.62rem) 0.0rem
+  padding: calc(env(safe-area-inset-top) + 0.4rem) 0.0rem
     calc(env(safe-area-inset-bottom) + 2.72rem);
 }
 

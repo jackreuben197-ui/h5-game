@@ -119,6 +119,12 @@ const router = createRouter({
       component: () => import('@/views/home/gameList.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/mttList',
+      name: 'mtt-list',
+      component: () => import('@/views/home/mttList.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 

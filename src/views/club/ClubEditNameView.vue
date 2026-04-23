@@ -1,0 +1,347 @@
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import imgDiamond from '@/assets/icons/icon_diamond.png'
+
+const router = useRouter()
+
+const nameInput = ref('')
+const isSubmitting = ref(false)
+
+const maxNameLength = 10
+const diamondBalance = 100
+const renameCost = 12345
+
+const nameLength = computed(() => {
+	return nameInput.value.trim().length
+})
+
+const canConfirm = computed(() => {
+	return nameLength.value > 0 && !isSubmitting.value
+})
+
+function goBack(): void {
+	void router.push('/club/detail')
+}
+
+function goRecharge(): void {
+	void router.push('/recharge')
+}
+
+async function onConfirm(): Promise<void> {
+	if (!canConfirm.value) {
+		return
+	}
+
+	isSubmitting.value = true
+
+	try {
+		await router.push('/club/detail')
+	} finally {
+		isSubmitting.value = false
+	}
+}
+</script>
+
+<template>
+	<div class="club-edit-name-bg">
+		<div class="bg-blur bg-blur--pink" aria-hidden="true" />
+		<div class="bg-blur bg-blur--cyan" aria-hidden="true" />
+
+		<div class="page-shell club-edit-name">
+			<header class="top-bar">
+				<button type="button" class="back-btn" @click="goBack">
+					<span class="back-icon" aria-hidden="true" />
+					<span class="back-title">修改名称</span>
+				</button>
+			</header>
+
+			<section class="editor-block">
+				<div class="hint-row">
+					<p class="hint-text">*首次更改昵称免费,之后每次消耗0钻石</p>
+					<span class="count-text">{{ nameLength }}/{{ maxNameLength }}</span>
+				</div>
+
+				<div class="name-shell">
+					<input
+						v-model.trim="nameInput"
+						type="text"
+						:maxlength="maxNameLength"
+						placeholder="Name here"
+						autocomplete="off"
+					/>
+				</div>
+
+				<div class="wallet-row">
+					<div class="wallet-info">
+						<img :src="imgDiamond" alt="钻石" />
+						<span class="wallet-label">钻石余额:</span>
+						<span class="wallet-value">{{ diamondBalance }}</span>
+					</div>
+					<button type="button" class="recharge-btn" @click="goRecharge">去充值</button>
+				</div>
+			</section>
+
+			<section class="footer-actions">
+				<p class="cost-line" aria-label="改名消耗说明">
+					<span>消费</span>
+					<img :src="imgDiamond" alt="钻石" />
+					<span class="cost-value">{{ renameCost }}</span>
+				</p>
+
+				<button
+					type="button"
+					class="confirm-btn"
+					:class="{ 'confirm-btn--disabled': !canConfirm }"
+					:disabled="!canConfirm"
+					@click="onConfirm"
+				>
+					{{ isSubmitting ? '提交中...' : '确定' }}
+				</button>
+			</section>
+		</div>
+	</div>
+</template>
+
+<style scoped lang="scss">
+.club-edit-name-bg {
+	position: relative;
+	min-height: 100dvh;
+	background:
+		radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.68), rgba(154, 97, 145, 0.66) 45%, rgba(33, 136, 168, 0.86) 100%),
+		linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
+	overflow: hidden;
+}
+
+.bg-blur {
+	position: absolute;
+	border-radius: 999px;
+	filter: blur(1rem);
+	opacity: 0.54;
+	pointer-events: none;
+}
+
+.bg-blur--pink {
+	width: 2.7rem;
+	height: 2.7rem;
+	left: -0.9rem;
+	top: 4.1rem;
+	background: rgba(224, 52, 127, 0.52);
+}
+
+.bg-blur--cyan {
+	width: 3rem;
+	height: 3rem;
+	right: -1.1rem;
+	bottom: 1.2rem;
+	background: rgba(42, 222, 255, 0.55);
+}
+
+.club-edit-name {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	min-height: 100dvh;
+	gap: 0.18rem;
+	padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
+	padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
+}
+
+.top-bar {
+	min-height: 0.7rem;
+	display: flex;
+	align-items: center;
+}
+
+.back-btn {
+	border: 0;
+	background: transparent;
+	color: #f9f9f9;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.16rem;
+	padding: 0;
+}
+
+.back-icon {
+	width: 0.18rem;
+	height: 0.18rem;
+	border-left: 0.03rem solid rgba(249, 249, 249, 0.95);
+	border-bottom: 0.03rem solid rgba(249, 249, 249, 0.95);
+	transform: rotate(45deg);
+}
+
+.back-title {
+	font-size: 0.48rem;
+	line-height: 1;
+	font-weight: 500;
+}
+
+.editor-block {
+	display: flex;
+	flex-direction: column;
+	gap: 0.12rem;
+	padding-top: 0.06rem;
+}
+
+.hint-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.12rem;
+}
+
+.hint-text {
+	margin: 0;
+	font-size: 0.26rem;
+	line-height: 1.35;
+	color: #f3f3f3;
+	font-weight: 500;
+}
+
+.count-text {
+	font-size: 0.24rem;
+	line-height: 1;
+	color: rgba(243, 243, 243, 0.95);
+	white-space: nowrap;
+}
+
+.name-shell {
+	min-height: 0.94rem;
+	border: 0.01rem solid rgba(249, 249, 249, 0.58);
+	border-radius: 0.54rem;
+	padding: 0 0.22rem;
+	background:
+		radial-gradient(90% 120% at 6% 50%, rgba(255, 201, 161, 0.45), rgba(255, 201, 161, 0)),
+		radial-gradient(85% 120% at 64% 48%, rgba(186, 78, 157, 0.36), rgba(186, 78, 157, 0)),
+		rgba(255, 255, 255, 0.18);
+	backdrop-filter: blur(0.3rem);
+	display: flex;
+	align-items: center;
+}
+
+input {
+	width: 100%;
+	border: 0;
+	outline: none;
+	background: transparent;
+	font-family: inherit;
+	font-size: 0.31rem;
+	line-height: 1.4;
+	font-weight: 500;
+	color: #f9f9f9;
+}
+
+input::placeholder {
+	color: rgba(255, 255, 255, 0.7);
+}
+
+.wallet-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.16rem;
+}
+
+.wallet-info {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.06rem;
+	min-width: 0;
+}
+
+.wallet-info img {
+	width: 0.26rem;
+	height: 0.26rem;
+	object-fit: contain;
+}
+
+.wallet-label {
+	font-size: 0.29rem;
+	line-height: 1;
+	color: #f9f9f9;
+}
+
+.wallet-value {
+	font-size: 0.29rem;
+	line-height: 1;
+	font-weight: 700;
+	color: #05e7ae;
+}
+
+.recharge-btn {
+	border: 0;
+	padding: 0 0.2rem;
+	min-height: 0.52rem;
+	border-radius: 0.28rem;
+	font-size: 0.23rem;
+	line-height: 1;
+	color: #f1f1f1;
+	background: rgba(0, 0, 0, 0.24);
+	backdrop-filter: blur(0.08rem);
+}
+
+.footer-actions {
+	margin-top: auto;
+	padding: 0 0.06rem;
+	padding-bottom: 0.1rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.16rem;
+}
+
+.cost-line {
+	margin: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.06rem;
+	font-size: 0.29rem;
+	line-height: 1;
+	color: #f9f9f9;
+}
+
+.cost-line img {
+	width: 0.26rem;
+	height: 0.26rem;
+	object-fit: contain;
+}
+
+.cost-value {
+	color: #05e7ae;
+	font-weight: 700;
+}
+
+.confirm-btn {
+	width: 100%;
+	min-height: 0.9rem;
+	border: 0;
+	border-radius: 0.52rem;
+	background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
+	color: #f9f9f9;
+	font-size: 0.46rem;
+	font-weight: 500;
+	box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.2);
+	transition: opacity 0.2s ease;
+}
+
+.confirm-btn--disabled {
+	opacity: 0.56;
+}
+
+@media (max-width: 340px) {
+	.back-title {
+		font-size: 0.4rem;
+	}
+
+	.hint-text,
+	.count-text {
+		font-size: 0.22rem;
+	}
+
+	.confirm-btn {
+		font-size: 0.4rem;
+	}
+}
+</style>

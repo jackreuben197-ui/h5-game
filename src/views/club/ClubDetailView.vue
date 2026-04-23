@@ -7,6 +7,7 @@ import imgChips from '@/assets/icons/icon_chips.png'
 import imgPeople from '@/assets/icons/icon_people.png'
 import imgQuickSafety from '@/assets/images/club_header_quick_safety.jpg'
 import imgQuickRanking from '@/assets/images/club_header_quick_ranking.png'
+import { showFailToast } from 'vant'
 
 interface QuickActionItem {
 	id: number
@@ -56,6 +57,14 @@ function goBack(): void {
 	void router.push('/club/index')
 }
 
+function goEditDescription(): void {
+	void router.push('/club/edit-description')
+}
+
+function goEditName(): void {
+	void router.push('/club/edit-name')
+}
+
 function onQuickAction(actionId: number): void {
 	if (actionId === 2) {
 		void router.push('/club/room/history')
@@ -63,11 +72,11 @@ function onQuickAction(actionId: number): void {
 	}
 
 	if (actionId === 1) {
-		void router.push('/club/members')
+  		showFailToast('创建牌桌功能开发中')
 		return
 	}
 
-	void router.push('/recharge')
+	void router.push('/club/members')
 }
 
 function onSettingClick(item: SettingItem): void {
@@ -112,7 +121,10 @@ function toggleSwitch(key: 'allowSearch' | 'joinWithoutApproval'): void {
 					<img class="club-avatar" :src="imgClubCover" alt="俱乐部头像" />
 
 					<div class="club-summary">
-						<h1 class="club-name">俱乐部名称</h1>
+						<button type="button" class="club-name-edit" @click="goEditName">
+							<h1 class="club-name">俱乐部名称</h1>
+							<span class="name-edit-icon" aria-hidden="true" />
+						</button>
 						<p class="club-id-row">
 							<span class="id-tag">ID</span>
 							<span class="id-text">8677650585</span>
@@ -152,7 +164,7 @@ function toggleSwitch(key: 'allowSearch' | 'joinWithoutApproval'): void {
 
 			<section class="intro-card">
 				<span>俱乐部简介</span>
-				<button type="button" class="intro-edit" aria-label="编辑俱乐部简介">
+				<button type="button" class="intro-edit" aria-label="编辑俱乐部简介" @click="goEditDescription">
 					<span class="edit-pen" />
 				</button>
 			</section>
@@ -322,12 +334,42 @@ function toggleSwitch(key: 'allowSearch' | 'joinWithoutApproval'): void {
 	min-height: 1.08rem;
 }
 
+.club-name-edit {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.08rem;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	max-width: 100%;
+}
+
 .club-name {
 	margin: 0;
 	color: #f9f9f9;
 	font-size: 0.46rem;
 	line-height: 1;
 	font-weight: 700;
+}
+
+.name-edit-icon {
+	position: relative;
+	width: 0.2rem;
+	height: 0.2rem;
+	flex: 0 0 auto;
+}
+
+.name-edit-icon::before {
+	content: '';
+	position: absolute;
+	left: 0.03rem;
+	top: 0.06rem;
+	width: 0.14rem;
+	height: 0.06rem;
+	border: 0.02rem solid rgba(249, 249, 249, 0.92);
+	border-radius: 0.03rem;
+	transform: rotate(-38deg);
 }
 
 .club-id-row {

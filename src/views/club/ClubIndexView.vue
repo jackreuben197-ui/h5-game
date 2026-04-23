@@ -635,15 +635,15 @@ function formatChip(value: number): string {
   z-index: 2;
   padding:
     calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.09rem)
-    clamp(0.24rem, 4.4vw, 0.36rem)
-    clamp(0.12rem, 2.4vw, 0.16rem);
+    0.36rem
+    0.16rem;
 }
 
 .club-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: clamp(0.06rem, 1.6vw, 0.12rem);
+  gap: 0.12rem;
 }
 
 .club-identity {
@@ -651,12 +651,12 @@ function formatChip(value: number): string {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: clamp(0.05rem, 1.6vw, 0.08rem);
+  gap: 0.08rem;
 }
 
 .header-back-btn {
-  width: clamp(0.44rem, 7vw, 0.56rem);
-  height: clamp(0.44rem, 7vw, 0.56rem);
+  width: 0.56rem;
+  height: 0.56rem;
   border: 0;
   padding: 0;
   background: transparent;
@@ -666,13 +666,13 @@ function formatChip(value: number): string {
 }
 
 .header-back-btn svg {
-  width: clamp(0.12rem, 2.1vw, 0.16rem);
-  height: clamp(0.22rem, 3.6vw, 0.28rem);
+  width: 0.16rem;
+  height: 0.28rem;
 }
 
 .club-avatar {
-  width: clamp(0.42rem, 6.6vw, 0.52rem);
-  height: clamp(0.42rem, 6.6vw, 0.52rem);
+  width: 0.52rem;
+  height: 0.52rem;
   border-radius: 50%;
   overflow: hidden;
   border: 0.01rem solid rgba(255, 255, 255, 0.22);
@@ -691,7 +691,7 @@ function formatChip(value: number): string {
 .club-name {
   margin: 0;
   max-width: min(2.08rem, 34vw);
-  font-size: clamp(0.17rem, 3.2vw, 0.22rem);
+  font-size: 0.22rem;
   font-weight: 700;
   line-height: 0.95;
   white-space: nowrap;
@@ -700,11 +700,11 @@ function formatChip(value: number): string {
 }
 
 .club-sub-meta {
-  margin-top: clamp(0.04rem, 1vw, 0.06rem);
+  margin-top: 0.06rem;
   display: flex;
   align-items: center;
-  gap: clamp(0.06rem, 1.4vw, 0.12rem);
-  font-size: clamp(0.12rem, 2.2vw, 0.16rem);
+  gap: 0.12rem;
+  font-size: 0.16rem;
   opacity: 0.94;
 }
 
@@ -715,16 +715,16 @@ function formatChip(value: number): string {
 }
 
 .club-id-tag {
-  height: clamp(0.18rem, 3.4vw, 0.22rem);
-  min-width: clamp(0.2rem, 3.2vw, 0.24rem);
+  height: 0.22rem;
+  min-width: 0.24rem;
   border-radius: 0.06rem;
-  padding: 0 clamp(0.04rem, 0.9vw, 0.06rem);
+  padding: 0 0.06rem;
   background: rgba(255, 255, 255, 0.4);
   color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(0.1rem, 1.9vw, 0.14rem);
+  font-size: 0.14rem;
 }
 
 .club-id-text {
@@ -738,8 +738,8 @@ function formatChip(value: number): string {
 }
 
 .club-member-dot {
-  width: clamp(0.08rem, 1.5vw, 0.1rem);
-  height: clamp(0.08rem, 1.5vw, 0.1rem);
+  width: 0.1rem;
+  height: 0.1rem;
   border-radius: 0.02rem;
   background: linear-gradient(180deg, #ffd771 0%, #f59f37 100%);
 }
@@ -749,16 +749,16 @@ function formatChip(value: number): string {
 .action-wrap {
   display: flex;
   align-items: center;
-  gap: clamp(0.04rem, 1.1vw, 0.06rem);
+  gap: 0.06rem;
   flex-shrink: 0;
 }
 
 .head-action-btn {
-  width: clamp(0.94rem, 18vw, 1.31rem);
-  height: clamp(0.4rem, 7.3vw, 0.49rem);
-  padding: 0 clamp(0.06rem, 1.6vw, 0.1rem);
+  width: 1.31rem;
+  height: 0.49rem;
+  padding: 0 0.1rem;
   border: 0.006rem solid rgba(255, 255, 255, 0.28);
-  border-radius: clamp(0.24rem, 4.6vw, 0.3rem);
+  border-radius: 0.3rem;
   background: rgba(255, 255, 255, 0.21);
   color: #fff;
   display: inline-flex;
@@ -769,24 +769,24 @@ function formatChip(value: number): string {
 }
 
 .head-action-label {
-  font-size: clamp(0.13rem, 2.5vw, 0.18rem);
+  font-size: 0.18rem;
   line-height: 1.2;
   text-shadow: 0 0.03rem 0.12rem rgba(0, 0, 0, 0.32);
 }
 
 .head-action-icon {
-  width: clamp(0.16rem, 3vw, 0.22rem);
-  height: clamp(0.16rem, 3vw, 0.22rem);
+  width: 0.22rem;
+  height: 0.22rem;
   object-fit: contain;
 }
 
 .announce-bar {
-  margin-top: clamp(0.12rem, 2.4vw, 0.15rem);
+  margin-top: 0.15rem;
   width: 100%;
-  height: clamp(0.44rem, 8vw, 0.54rem);
+  height: 0.54rem;
   border: 0;
-  border-radius: clamp(0.32rem, 6vw, 0.4rem);
-  padding: 0 clamp(0.1rem, 2.8vw, 0.16rem);
+  border-radius: 0.4rem;
+  padding: 0 0.16rem;
   color: #fff;
   display: inline-flex;
   align-items: center;
@@ -798,7 +798,7 @@ function formatChip(value: number): string {
 
 .announce-text {
   min-width: 0;
-  font-size: clamp(0.14rem, 2.7vw, 0.2rem);
+  font-size: 0.2rem;
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
@@ -807,24 +807,24 @@ function formatChip(value: number): string {
 
 .announce-arrow {
   margin-left: 0.08rem;
-  font-size: clamp(0.2rem, 3.8vw, 0.26rem);
+  font-size: 0.26rem;
   line-height: 1;
   opacity: 0.88;
 }
 
 .club-quick-actions {
-  margin-top: clamp(0.13rem, 2.7vw, 0.18rem);
+  margin-top: 0.18rem;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(0.09rem, 2.4vw, 0.16rem);
+  gap: 0.16rem;
 }
 
 .club-header-tabs {
-  margin-top: clamp(0.12rem, 2.5vw, 0.16rem);
+  margin-top: 0.16rem;
   display: flex;
   align-items: center;
-  gap: clamp(0.18rem, 4.8vw, 0.26rem);
-  padding-left: clamp(0.02rem, 0.8vw, 0.05rem);
+  gap: 0.26rem;
+  padding-left: 0.05rem;
 }
 
 .club-header-tab {
@@ -832,10 +832,10 @@ function formatChip(value: number): string {
   border: 0;
   background: transparent;
   color: rgba(255, 255, 255, 0.72);
-  font-size: clamp(0.16rem, 3.1vw, 0.2rem);
+  font-size: 0.2rem;
   line-height: 1;
   font-weight: 500;
-  padding: 0 0 clamp(0.06rem, 1.4vw, 0.08rem);
+  padding: 0 0 0.08rem;
   opacity: 0.92;
 }
 
@@ -858,9 +858,9 @@ function formatChip(value: number): string {
 
 .club-quick-card {
   position: relative;
-  height: clamp(1.7rem, 14.5vw, 0.84rem);
+  height: 1.7rem;
   border: 0.01rem solid rgba(255, 255, 255, 0.36);
-  border-radius: clamp(0.2rem, 4.8vw, 0.3rem);
+  border-radius: 0.3rem;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -933,26 +933,26 @@ function formatChip(value: number): string {
 }
 
 .quick-card-layer--safety-bg {
-  width: clamp(0.95rem, 24vw, 1.3rem);
-  height: clamp(0.78rem, 20vw, 1.04rem);
-  left: clamp(-0.42rem, -3vw, -0.26rem);
-  top: clamp(-0.08rem, -0.7vw, -0.04rem);
+  width: 1.3rem;
+  height: 1.04rem;
+  left: -0.26rem;
+  top: -0.04rem;
   opacity: 0.5;
 }
 
 .quick-card-layer--ranking-bg {
-  width: clamp(0.9rem, 23vw, 1.24rem);
-  height: clamp(0.88rem, 22vw, 1.22rem);
-  left: clamp(-0.38rem, -2.8vw, -0.24rem);
-  top: clamp(-0.08rem, -0.7vw, -0.04rem);
+  width: 1.24rem;
+  height: 1.22rem;
+  left: -0.24rem;
+  top: -0.04rem;
   opacity: 0.52;
 }
 
 .quick-card-title {
   position: relative;
   z-index: 3;
-  margin-left: clamp(0.3rem, 7vw, 0.44rem);
-  font-size: clamp(0.16rem, 3.8vw, 0.24rem);
+  margin-left: 0.44rem;
+  font-size: 0.24rem;
   font-weight: 700;
   letter-spacing: 0.01rem;
   color: #fff;
@@ -969,7 +969,7 @@ function formatChip(value: number): string {
   }
 
   .quick-card-title {
-    margin-left: clamp(0.26rem, 7.2vw, 0.34rem);
+    margin-left: 0.34rem;
   }
 }
 

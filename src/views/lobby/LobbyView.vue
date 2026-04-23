@@ -6,6 +6,7 @@ import { getUserInfoApi } from '@/api/auth'
 import { useGameStore } from '@/stores/game'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { t } from '@/i18n'
 
 const router = useRouter()
 const gameStore = useGameStore()
@@ -32,13 +33,13 @@ const loginUserText = computed(() => {
 
 const activeTabLabel = computed(() => {
   const tabLabelMap: Record<MainTabKey, string> = {
-    home: '首页',
-    club: '俱乐部',
-    recharge: '充值',
-    message: '消息',
-    mine: '我的',
+    home: t('UITabbarHome'),
+    club: t('UIClub_Info'),
+    friendsTable: t('UIMessage_Default'),
+    message: t('UIMine_MsgSystemContent'),
+    mine: t('UIMine_title'),
   }
-  return tabLabelMap[tabsStore.activeTab] || '首页'
+  return tabLabelMap[tabsStore.activeTab] || t('UITabbarHome')
 })
 
 async function fetchUserInfoOnEnter(): Promise<void> {

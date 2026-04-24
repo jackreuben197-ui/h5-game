@@ -13,7 +13,7 @@ import { localStore } from '@/utils/localStore'
 import { t } from '@/i18n'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
-import clubCoverAvatar from '@/assets/images/club_cover_avatar.png'
+import clubCoverAvatar from '@/assets/images/default_avatar.png'
 import imgQuickActionCreateBg from '@/assets/images/club_qa_create_club_bg_shape.svg'
 import imgQuickActionBoardBg from '@/assets/images/club_qa_data_board_bg_shape.svg'
 import quickSafetyBg from '@/assets/images/club_header_quick_safety.jpg'
@@ -559,6 +559,7 @@ function formatChip(value: number): string {
     </header>
 
     <GameTypeTabbar
+      class="club-game-tabs"
       v-model="activeTab"
       :tabs="[
         { name: 'all', title: t('UIMatch_GtO8YEdb') },
@@ -633,17 +634,14 @@ function formatChip(value: number): string {
 .club-header {
   position: relative;
   z-index: 2;
-  padding:
-    calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.09rem)
-    clamp(0.24rem, 4.4vw, 0.36rem)
-    clamp(0.12rem, 2.4vw, 0.16rem);
+  padding: calc(env(safe-area-inset-top) + 0.457rem) 0.456rem 0.22rem;
 }
 
 .club-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: clamp(0.06rem, 1.6vw, 0.12rem);
+  gap: 0.16rem;
 }
 
 .club-identity {
@@ -651,12 +649,12 @@ function formatChip(value: number): string {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: clamp(0.05rem, 1.6vw, 0.08rem);
+  gap: 0.096rem;
 }
 
 .header-back-btn {
-  width: clamp(0.44rem, 7vw, 0.56rem);
-  height: clamp(0.44rem, 7vw, 0.56rem);
+  width: 0.765rem;
+  height: 0.765rem;
   border: 0;
   padding: 0;
   background: transparent;
@@ -666,16 +664,16 @@ function formatChip(value: number): string {
 }
 
 .header-back-btn svg {
-  width: clamp(0.12rem, 2.1vw, 0.16rem);
-  height: clamp(0.22rem, 3.6vw, 0.28rem);
+  width: 0.189rem;
+  height: 0.322rem;
 }
 
 .club-avatar {
-  width: clamp(0.42rem, 6.6vw, 0.52rem);
-  height: clamp(0.42rem, 6.6vw, 0.52rem);
+  width: 0.9rem;
+  height: 0.9rem;
   border-radius: 50%;
   overflow: hidden;
-  border: 0.01rem solid rgba(255, 255, 255, 0.22);
+  border: 0.0133rem solid rgba(255, 255, 255, 0.24);
 }
 
 .club-avatar img {
@@ -690,41 +688,41 @@ function formatChip(value: number): string {
 
 .club-name {
   margin: 0;
-  max-width: min(2.08rem, 34vw);
-  font-size: clamp(0.17rem, 3.2vw, 0.22rem);
+  max-width: min(2.9rem, 42vw);
+  font-size: 0.345rem;
   font-weight: 700;
-  line-height: 0.95;
+  line-height: 0.83;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .club-sub-meta {
-  margin-top: clamp(0.04rem, 1vw, 0.06rem);
+  margin-top: 0.08rem;
   display: flex;
   align-items: center;
-  gap: clamp(0.06rem, 1.4vw, 0.12rem);
-  font-size: clamp(0.12rem, 2.2vw, 0.16rem);
+  gap: 0.1446rem;
+  font-size: 0.257rem;
   opacity: 0.94;
 }
 
 .club-id-wrap {
   display: inline-flex;
   align-items: center;
-  gap: 0.05rem;
+  gap: 0.0655rem;
 }
 
 .club-id-tag {
-  height: clamp(0.18rem, 3.4vw, 0.22rem);
-  min-width: clamp(0.2rem, 3.2vw, 0.24rem);
-  border-radius: 0.06rem;
-  padding: 0 clamp(0.04rem, 0.9vw, 0.06rem);
+  height: 0.306rem;
+  min-width: 0.36rem;
+  border-radius: 0.112rem;
+  padding: 0 0.089rem;
   background: rgba(255, 255, 255, 0.4);
   color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(0.1rem, 1.9vw, 0.14rem);
+  font-size: 0.216rem;
 }
 
 .club-id-text {
@@ -734,13 +732,13 @@ function formatChip(value: number): string {
 .club-member-wrap {
   display: inline-flex;
   align-items: center;
-  gap: 0.05rem;
+  gap: 0.08rem;
 }
 
 .club-member-dot {
-  width: clamp(0.08rem, 1.5vw, 0.1rem);
-  height: clamp(0.08rem, 1.5vw, 0.1rem);
-  border-radius: 0.02rem;
+  width: 0.249rem;
+  height: 0.211rem;
+  border-radius: 0.053rem;
   background: linear-gradient(180deg, #ffd771 0%, #f59f37 100%);
 }
 
@@ -749,82 +747,85 @@ function formatChip(value: number): string {
 .action-wrap {
   display: flex;
   align-items: center;
-  gap: clamp(0.04rem, 1.1vw, 0.06rem);
+  gap: 0.08rem;
   flex-shrink: 0;
 }
 
 .head-action-btn {
-  width: clamp(0.94rem, 18vw, 1.31rem);
-  height: clamp(0.4rem, 7.3vw, 0.49rem);
-  padding: 0 clamp(0.06rem, 1.6vw, 0.1rem);
-  border: 0.006rem solid rgba(255, 255, 255, 0.28);
-  border-radius: clamp(0.24rem, 4.6vw, 0.3rem);
+  width: 1.564rem;
+  height: 0.586rem;
+  padding: 0 0.14rem;
+  border: 0.008rem solid rgba(255, 255, 255, 0.28);
+  border-radius: 0.401rem;
   background: rgba(255, 255, 255, 0.21);
   color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
   backdrop-filter: blur(0.08rem);
-  box-shadow: 0 0.06rem 0.18rem rgba(0, 0, 0, 0.24);
+  box-shadow: 0 0.05rem 0.15rem rgba(0, 0, 0, 0.24);
 }
 
 .head-action-label {
-  font-size: clamp(0.13rem, 2.5vw, 0.18rem);
+  font-size: 0.2246rem;
   line-height: 1.2;
   text-shadow: 0 0.03rem 0.12rem rgba(0, 0, 0, 0.32);
 }
 
 .head-action-icon {
-  width: clamp(0.16rem, 3vw, 0.22rem);
-  height: clamp(0.16rem, 3vw, 0.22rem);
+  width: 0.399rem;
+  height: 0.399rem;
   object-fit: contain;
 }
 
 .announce-bar {
-  margin-top: clamp(0.12rem, 2.4vw, 0.15rem);
+  margin-top: 0.217rem;
   width: 100%;
-  height: clamp(0.44rem, 8vw, 0.54rem);
+  height: 1.0557rem;
   border: 0;
-  border-radius: clamp(0.32rem, 6vw, 0.4rem);
-  padding: 0 clamp(0.1rem, 2.8vw, 0.16rem);
+  border-radius: 1.0557rem;
+  padding: 0 0.289rem;
   color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
   background: rgba(34, 34, 34, 0.1);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(0.24rem);
+  box-shadow: inset 0 0 0 0.0133rem rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(0.8133rem);
 }
 
 .announce-text {
   min-width: 0;
-  font-size: clamp(0.14rem, 2.7vw, 0.2rem);
-  line-height: 1.2;
+  font-size: 0.3454rem;
+  line-height: 0.83;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: center;
+  flex: 1;
 }
 
 .announce-arrow {
   margin-left: 0.08rem;
-  font-size: clamp(0.2rem, 3.8vw, 0.26rem);
+  font-size: 0.42rem;
   line-height: 1;
   opacity: 0.88;
 }
 
 .club-quick-actions {
-  margin-top: clamp(0.13rem, 2.7vw, 0.18rem);
+  margin-top: 0.4177rem;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(0.09rem, 2.4vw, 0.16rem);
+  gap: 0.3293rem;
 }
 
 .club-header-tabs {
-  margin-top: clamp(0.12rem, 2.5vw, 0.16rem);
+  margin-top: 0.4177rem;
   display: flex;
   align-items: center;
-  gap: clamp(0.18rem, 4.8vw, 0.26rem);
-  padding-left: clamp(0.02rem, 0.8vw, 0.05rem);
+  gap: 0.6587rem;
+  padding: 0 0.4562rem;
+  height: 0.6483rem;
 }
 
 .club-header-tab {
@@ -832,10 +833,10 @@ function formatChip(value: number): string {
   border: 0;
   background: transparent;
   color: rgba(255, 255, 255, 0.72);
-  font-size: clamp(0.16rem, 3.1vw, 0.2rem);
-  line-height: 1;
+  font-size: 0.3521rem;
+  line-height: 0.95;
   font-weight: 500;
-  padding: 0 0 clamp(0.06rem, 1.4vw, 0.08rem);
+  padding: 0 0 0.03rem;
   opacity: 0.92;
 }
 
@@ -850,7 +851,7 @@ function formatChip(value: number): string {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 0.02rem;
+  height: 0.032rem;
   border-radius: 999px;
   background: rgba(234, 234, 234, 0.92);
   box-shadow: 0 0 0.06rem rgba(255, 255, 255, 0.45);
@@ -858,9 +859,9 @@ function formatChip(value: number): string {
 
 .club-quick-card {
   position: relative;
-  height: clamp(1.7rem, 14.5vw, 0.84rem);
-  border: 0.01rem solid rgba(255, 255, 255, 0.36);
-  border-radius: clamp(0.2rem, 4.8vw, 0.3rem);
+  height: 1.9357rem;
+  border: 0.0107rem solid rgba(255, 255, 255, 0.36);
+  border-radius: 0.6105rem;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -883,9 +884,9 @@ function formatChip(value: number): string {
 .club-quick-card::after {
   content: '';
   position: absolute;
-  inset: -0.01rem;
+  inset: -0.0107rem;
   border-radius: inherit;
-  border: 0.01rem solid rgba(255, 255, 255, 0.58);
+  border: 0.0107rem solid rgba(255, 255, 255, 0.58);
   box-shadow:
     inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
     inset 0 0 0.2rem rgba(255, 255, 255, 0.14),
@@ -933,43 +934,67 @@ function formatChip(value: number): string {
 }
 
 .quick-card-layer--safety-bg {
-  width: clamp(0.95rem, 24vw, 1.3rem);
-  height: clamp(0.78rem, 20vw, 1.04rem);
-  left: clamp(-0.42rem, -3vw, -0.26rem);
-  top: clamp(-0.08rem, -0.7vw, -0.04rem);
+  width: 1.52rem;
+  height: 1.2rem;
+  left: -0.26rem;
+  top: -0.04rem;
   opacity: 0.5;
 }
 
 .quick-card-layer--ranking-bg {
-  width: clamp(0.9rem, 23vw, 1.24rem);
-  height: clamp(0.88rem, 22vw, 1.22rem);
-  left: clamp(-0.38rem, -2.8vw, -0.24rem);
-  top: clamp(-0.08rem, -0.7vw, -0.04rem);
+  width: 1.46rem;
+  height: 1.42rem;
+  left: -0.24rem;
+  top: -0.04rem;
   opacity: 0.52;
 }
 
 .quick-card-title {
   position: relative;
   z-index: 3;
-  margin-left: clamp(0.3rem, 7vw, 0.44rem);
-  font-size: clamp(0.16rem, 3.8vw, 0.24rem);
+  margin-left: 0;
+  font-size: 0.4177rem;
   font-weight: 700;
-  letter-spacing: 0.01rem;
+  letter-spacing: 0.002rem;
   color: #fff;
   text-shadow: 0 0.03rem 0.16rem rgba(0, 0, 0, 0.54);
 }
 
+:deep(.club-game-tabs.room-tabs) {
+  --tab-base-height: 0.8193rem;
+  --tab-top-cut: 0.171rem;
+  --tab-item-padding-x: 0.08rem;
+  --tab-text-padding-x: 0;
+  --tab-active-offset-y: 0;
+  --tab-active-height: 100%;
+
+  margin: 0.106rem 0 0;
+}
+
+:deep(.club-game-tabs.room-tabs .van-tabs__wrap) {
+  margin: 0 0.4562rem;
+}
+
+:deep(.club-game-tabs.room-tabs .van-tab) {
+  font-size: 0.3521rem;
+  font-weight: 500;
+}
+
+:deep(.themeType2 .club-game-tabs.room-tabs .van-tab--active) {
+  font-weight: 700;
+}
+
 @media (max-width: 360px) {
   .club-name {
-    max-width: min(1.78rem, 30vw);
+    max-width: min(2.2rem, 36vw);
   }
 
   .head-action-btn {
-    width: min(0.86rem, 17vw);
+    width: min(1.38rem, 21vw);
   }
 
   .quick-card-title {
-    margin-left: clamp(0.26rem, 7.2vw, 0.34rem);
+    font-size: 0.36rem;
   }
 }
 
@@ -977,18 +1002,20 @@ function formatChip(value: number): string {
   position: relative;
   z-index: 1;
   margin-top: 0;
-  max-height: calc(100dvh - 3.1rem);
+  max-height: calc(100dvh - 7.85rem);
   overflow-y: auto;
-  padding: 0 0.38rem 2.2rem;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(0.3533rem) saturate(1.04);
+  padding: 0.34rem 0.38rem 2.2rem;
+  background: rgba(255, 255, 255, 0.22);
+  border-top-left-radius: 0.498rem;
+  border-top-right-radius: 0.498rem;
+  backdrop-filter: blur(0.8032rem) saturate(1.04);
 }
 
 .floating-action-area {
   position: fixed;
-  left: 0.4rem;
-  right: 0.32rem;
-  bottom: 0.48rem;
+  left: 0.44rem;
+  right: 0.36rem;
+  bottom: calc(0.3rem + env(safe-area-inset-bottom));
   z-index: 10;
   display: flex;
   align-items: center;
@@ -996,12 +1023,12 @@ function formatChip(value: number): string {
 
 .create-table-btn {
   flex: 1;
-  height: 1.12rem;
+  height: 1.25rem;
   border: 0.0133rem solid rgba(242, 242, 242, 0.8);
-  border-radius: 0.8rem;
+  border-radius: 0.958rem;
   background-image: linear-gradient(168deg, #05e7ae 7.55%, #027a5c 71.92%);
   color: #fbfbfb;
-  font-size: 0.4rem;
+  font-size: 0.46rem;
   font-weight: 500;
   line-height: 1.2;
   text-align: center;
@@ -1010,9 +1037,9 @@ function formatChip(value: number): string {
 }
 
 .floating-menu-btn {
-  margin-left: -0.62rem;
-  width: 0.88rem;
-  height: 0.88rem;
+  margin-left: -0.58rem;
+  width: 0.92rem;
+  height: 0.92rem;
   border: none;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 25%, #056a57 0%, #01382f 75%);
@@ -1026,7 +1053,7 @@ function formatChip(value: number): string {
 }
 
 .floating-menu-btn span {
-  width: 0.26rem;
+  width: 0.25rem;
   height: 0.06rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.95);

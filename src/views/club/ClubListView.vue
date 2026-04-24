@@ -111,7 +111,7 @@ function onQuickAction(itemId: number): void {
     return
   }
 
-  goToClubDetail()
+  void router.push('/club/create')
 }
 </script>
 

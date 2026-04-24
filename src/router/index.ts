@@ -72,6 +72,12 @@ const router = createRouter({
     },
     // 子页面独立路由：按业务需要决定是否复用 MainLayoutView。
     {
+      path: '/club/create',
+      name: 'club-create',
+      component: () => import('@/views/club/ClubCreateView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/club/index',
       name: 'club-index',
       component: () => import('@/views/club/ClubIndexView.vue'),
@@ -84,9 +90,63 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/club/level',
+      name: 'club-level',
+      component: () => import('@/views/club/ClubLevelView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/edit-description',
+      name: 'club-edit-description',
+      component: () => import('@/views/club/ClubEditDesView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/edit-name',
+      name: 'club-edit-name',
+      component: () => import('@/views/club/ClubEditNameView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/club/members',
       name: 'club-members',
       component: () => import('@/views/club/ClubMembersView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/member/:memberId',
+      name: 'club-member-detail',
+      component: () => import('@/views/club/member/MemberDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/member/:memberId/agent-profit',
+      name: 'club-member-agent-profit',
+      component: () => import('@/views/club/member/AgentProfitSettingView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/member/:memberId/offline-players',
+      name: 'club-member-offline-players',
+      component: () => import('@/views/club/member/AgentOfflinePlayersView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/member/:memberId/vip-statistics',
+      name: 'club-member-vip-statistics',
+      component: () => import('@/views/club/member/AgentVipStatisticsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/member/:memberId/bind-agent',
+      name: 'club-member-bind-agent',
+      component: () => import('@/views/club/member/MemberBindAgentView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/wallet/logs',
+      name: 'club-wallet-logs',
+      component: () => import('@/views/club/ClubWalletLogsView.vue'),
       meta: { requiresAuth: true },
     },
     {

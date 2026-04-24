@@ -138,15 +138,9 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/club/member/:memberId/bind-agent',
-      name: 'club-member-bind-agent',
+      path: '/club/member/:memberId/agent-binding',
+      name: 'club-member-agent-binding',
       component: () => import('@/views/club/member/MemberBindAgentView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/club/member/:memberId/unbind-agent',
-      name: 'club-member-unbind-agent',
-      component: () => import('@/views/club/member/MemberUnbindAgentView.vue'),
       meta: { requiresAuth: true },
     },
     {

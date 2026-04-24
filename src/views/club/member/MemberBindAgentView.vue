@@ -8,6 +8,8 @@ const route = useRoute()
 const router = useRouter()
 
 const context = computed(() => getMemberRouteContext(route))
+const isUnbindMode = computed(() => context.value.isBoundAgent)
+
 const rows = ref([
   { id: '12345678', name: 'Player Name', checked: true },
   { id: '12345679', name: 'Player Name', checked: false },
@@ -16,18 +18,30 @@ const rows = ref([
   { id: '12345682', name: 'Player Name', checked: false },
 ])
 
+const selectedRow = computed(() => rows.value.find((row) => row.checked) ?? rows.value[0])
+
+const pageTitle = computed(() => (isUnbindMode.value ? 'Unbind Agents' : 'Bind Agents'))
+const confirmText = computed(() => (isUnbindMode.value ? 'Unbind Agents' : 'Bind Agents'))
+
 function goBack(): void {
   void router.back()
 }
 
+function selectRow(rowId: string): void {
+  rows.value.forEach((row) => {
+    row.checked = row.id === rowId
+  })
+}
+
 function onConfirm(): void {
-  const selected = rows.value.find((row) => row.checked)
+  const selected = selectedRow.value
+
   void router.push({
     path: `/club/member/${context.value.memberId}`,
     query: {
       identity: 'player',
-      bound: '1',
-      name: selected?.name || context.value.name,
+      bound: isUnbindMode.value ? '0' : '1',
+      name: isUnbindMode.value ? context.value.name : selected?.name || context.value.name,
       uid: context.value.uid,
     },
   })
@@ -39,21 +53,45 @@ function onConfirm(): void {
     <div class="page-shell sub-page">
       <header class="header">
         <button type="button" class="back" @click="goBack">返回</button>
-        <h1>Bind Agents</h1>
+        <h1>{{ pageTitle }}</h1>
       </header>
 
-      <section class="cards">
-        <article v-for="row in rows" :key="row.id" class="glass card" @click="rows.forEach((x) => (x.checked = x.id === row.id))">
+      <section v-if="!isUnbindMode" class="cards">
+        <article v-for="row in rows" :key="row.id" class="glass card" @click="selectRow(row.id)">
           <img :src="imgAvatar" :alt="row.name" />
           <div class="meta">
             <p>{{ row.name }}</p>
             <small>ID {{ row.id }}</small>
           </div>
-          <button class="dot" :class="{ on: row.checked }" />
+          <button type="button" class="dot" :class="{ on: row.checked }" />
         </article>
       </section>
 
-      <button type="button" class="confirm" @click="onConfirm">Bind Agents</button>
+      <section v-else class="cards cards--unbind">
+        <article class="glass card card--unbind">
+          <img :src="imgAvatar" :alt="context.name" />
+          <div class="meta">
+            <p>{{ context.name || 'Player Name' }}</p>
+            <small>ID {{ context.uid || '12345678' }}</small>
+          </div>
+          <i class="badge" />
+        </article>
+
+        <div class="link">🔗</div>
+
+        <article class="glass card card--unbind">
+          <img :src="imgAvatar" alt="agent" />
+          <div class="meta">
+            <p>{{ selectedRow?.name || 'Agent Name' }}</p>
+            <small>ID {{ selectedRow?.id || '12345678' }}</small>
+          </div>
+          <i class="badge" />
+        </article>
+      </section>
+
+      <p v-if="isUnbindMode" class="hint">Do you want to unlink this agent?</p>
+
+      <button type="button" class="confirm" @click="onConfirm">{{ confirmText }}</button>
     </div>
   </div>
 </template>
@@ -91,7 +129,6 @@ function onConfirm(): void {
   display: flex;
   align-items: center;
   gap: figma-rem(9.602);
-
 }
 
 .header h1 {
@@ -112,6 +149,11 @@ function onConfirm(): void {
   gap: figma-rem(7.282);
 }
 
+.cards--unbind {
+  margin-top: figma-rem(2);
+  gap: figma-rem(3);
+}
+
 .glass {
   border-radius: figma-rem(170.596);
   background: rgba(0, 0, 0, 0.2);
@@ -124,7 +166,10 @@ function onConfirm(): void {
   display: flex;
   align-items: center;
   gap: figma-rem(8.64);
+}
 
+.card--unbind {
+  border-radius: figma-rem(30);
 }
 
 .card img {
@@ -159,6 +204,26 @@ function onConfirm(): void {
 
 .dot.on {
   background: #2ce3d3;
+}
+
+.badge {
+  margin-left: auto;
+  width: figma-rem(30);
+  height: figma-rem(30);
+  border-radius: 50%;
+  background: linear-gradient(168deg, #ffd77a 8%, #e8a22f 72%);
+}
+
+.link {
+  align-self: center;
+  color: #fff;
+  font-size: figma-rem(32.51);
+}
+
+.hint {
+  margin: auto auto 0;
+  color: rgba(249, 249, 249, 0.86);
+  font-size: figma-rem(11.534);
 }
 
 .confirm {

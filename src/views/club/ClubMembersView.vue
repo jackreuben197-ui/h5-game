@@ -9,6 +9,7 @@ import imgBalance from '@/assets/icons/icon_balance.png'
 
 type TabKey = 'account' | 'record'
 type MemberRole = '管理员' | '代理人' | '成员'
+type MemberIdentity = 'founder' | 'admin' | 'agent' | 'player'
 type FundAssetTab = 'coin' | 'quota' | 'diamond'
 type FundActionTab = 'grant' | 'recycle'
 type QuotaEditField = 'disposable' | 'review'
@@ -25,6 +26,8 @@ interface MemberItem {
   name: string
   uid: string
   role: MemberRole
+  identityType: MemberIdentity
+  isBoundAgent: boolean
   diamond: number
   uc: number
   freeLimit: string
@@ -115,11 +118,11 @@ const summaryBottom: SummaryItem[] = [
 ]
 
 const members = ref<MemberItem[]>([
-  { id: 1, name: '成员名字', uid: '8677650585', role: '管理员', diamond: 500, uc: 500, freeLimit: '1000/1000', agentName: 'Gregory' },
-  { id: 2, name: '成员名字', uid: '8677650585', role: '管理员', diamond: 500, uc: 500, freeLimit: '1000/1000', agentName: 'Gregory' },
-  { id: 3, name: '成员名字', uid: '8677650585', role: '代理人', diamond: 500, uc: 500, freeLimit: '1000/1000', agentName: 'Gregory' },
-  { id: 4, name: '成员名字', uid: '8677650585', role: '成员', diamond: 500, uc: 500, freeLimit: '1000/1000', agentName: 'Gregory' },
-  { id: 5, name: '成员名字', uid: '8677650585', role: '代理人', diamond: 500, uc: 500, freeLimit: '1000/1000', agentName: 'Gregory' },
+  { id: 1, name: '创始人A', uid: '8677650585', role: '管理员', identityType: 'founder', isBoundAgent: false, diamond: 500, uc: 500, freeLimit: '1000/1000', agentName: 'Gregory' },
+  { id: 2, name: '管理员B', uid: '8677650586', role: '管理员', identityType: 'admin', isBoundAgent: false, diamond: 320, uc: 720, freeLimit: '800/1000', agentName: 'Gregory' },
+  { id: 3, name: '代理人C', uid: '8677650587', role: '代理人', identityType: 'agent', isBoundAgent: false, diamond: 260, uc: 1600, freeLimit: '1200/1200', agentName: 'Self' },
+  { id: 4, name: '普通玩家D', uid: '8677650588', role: '成员', identityType: 'player', isBoundAgent: false, diamond: 140, uc: 280, freeLimit: '100/300', agentName: '-' },
+  { id: 5, name: '普通玩家E', uid: '8677650589', role: '成员', identityType: 'player', isBoundAgent: true, diamond: 620, uc: 2400, freeLimit: '900/1000', agentName: 'Gregory' },
 ])
 
 const recordRanges: RecordRangeItem[] = [
@@ -199,6 +202,18 @@ function switchTab(tab: TabKey): void {
 
 function onIncomeQuery(): void {
   void router.push('/club/wallet/logs')
+}
+
+function openMemberDetail(member: MemberItem): void {
+  void router.push({
+    path: `/club/member/${member.id}`,
+    query: {
+      identity: member.identityType,
+      bound: member.isBoundAgent ? '1' : '0',
+      name: member.name,
+      uid: member.uid,
+    },
+  })
 }
 
 function openFundSheet(member: MemberItem): void {
@@ -411,7 +426,7 @@ function roleClass(role: MemberRole): string {
             <div class="member-left">
               <img class="member-avatar" :src="imgAvatar" :alt="`${member.name}头像`" />
               <div class="member-base">
-                <p class="member-name">{{ member.name }}</p>
+                <button type="button" class="member-name" @click="openMemberDetail(member)">{{ member.name }}</button>
                 <p class="member-id-row">
                   <span class="id-pill">ID</span>
                   <span>{{ member.uid }}</span>
@@ -720,11 +735,15 @@ function roleClass(role: MemberRole): string {
 <style scoped lang="scss">
 .club-members-bg {
   position: relative;
+  height: 100dvh;
   min-height: 100dvh;
   background:
     radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.66), rgba(154, 97, 145, 0.64) 45%, rgba(33, 136, 168, 0.84) 100%),
     linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
 .bg-blur {
@@ -756,7 +775,7 @@ function roleClass(role: MemberRole): string {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: 100%;
   padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.3rem);
   padding-bottom: calc(0.3rem + env(safe-area-inset-bottom));
   gap: 0.34538rem;
@@ -1273,6 +1292,10 @@ function roleClass(role: MemberRole): string {
 
 .member-name {
   margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
   font-size: 0.30522rem;
   line-height: 1;
   font-weight: 700;

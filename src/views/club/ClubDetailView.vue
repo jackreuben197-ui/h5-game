@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import imgClubCover from '@/assets/images/club_cover_avatar.png'
+import imgClubCover from '@/assets/images/default_avatar.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgPeople from '@/assets/icons/icon_people.png'
-import imgQuickSafety from '@/assets/images/club_header_quick_safety.jpg'
-import imgQuickRanking from '@/assets/images/club_header_quick_ranking.png'
-import { showFailToast } from 'vant'
+import imgQuickSafety from '@/assets/images/club_quick_activity.png'
+import imgQuickRanking from '@/assets/images/club_quick_room_history.png'
+import { showFailToast, showSuccessToast } from 'vant'
 
 interface QuickActionItem {
 	id: number
@@ -28,6 +28,10 @@ interface SettingItem {
 const router = useRouter()
 
 const imgQuickFund = 'https://www.figma.com/api/mcp/asset/9a7731a8-09f1-45c7-8292-70162e10dc50'
+const imgInviteCover = 'https://www.figma.com/api/mcp/asset/788e1bce-ddc2-4682-a337-4421aefcbb64'
+const imgInviteQr = 'https://www.figma.com/api/mcp/asset/f01dee7f-e8ef-4fe8-8e82-da2412a0040b'
+const imgInviteHeart = 'https://www.figma.com/api/mcp/asset/65e10a58-a9e9-4b72-9616-e013be298979'
+const imgModalClose = 'https://www.figma.com/api/mcp/asset/48528ead-0f8b-41cd-8ffc-359a64018378'
 
 const quickActions: QuickActionItem[] = [
 	{ id: 1, title: '活动管理', cover: imgQuickSafety },
@@ -48,6 +52,12 @@ const settings: SettingItem[] = [
 
 const allowSearch = ref(true)
 const joinWithoutApproval = ref(false)
+const showInvitePopup = ref(false)
+const showCopyPopup = ref(false)
+
+const clubName = '俱乐部名称'
+const clubAlias = 'XXXX'
+const clubId = '867765056'
 
 function formatCount(value: number): string {
 	return value.toLocaleString('en-US')
@@ -85,10 +95,17 @@ function onSettingClick(item: SettingItem): void {
 	}
 
 	if (item.label === '邀请分享') {
+		showInvitePopup.value = true
 		return
 	}
 
 	if (item.label === '复制俱乐部') {
+		showCopyPopup.value = true
+		return
+	}
+
+	if (item.kind === 'level') {
+		void router.push('/club/level')
 		return
 	}
 }
@@ -100,6 +117,24 @@ function toggleSwitch(key: 'allowSearch' | 'joinWithoutApproval'): void {
 	}
 
 	joinWithoutApproval.value = !joinWithoutApproval.value
+}
+
+function closeInvitePopup(): void {
+	showInvitePopup.value = false
+}
+
+function closeCopyPopup(): void {
+	showCopyPopup.value = false
+}
+
+function saveInviteShare(): void {
+	showSuccessToast('已保存分享图')
+	closeInvitePopup()
+}
+
+function submitCopyRequest(): void {
+	showSuccessToast('已提交复制申请')
+	closeCopyPopup()
 }
 </script>
 
@@ -228,6 +263,50 @@ function toggleSwitch(key: 'allowSearch' | 'joinWithoutApproval'): void {
 				<button type="button" class="danger-btn">删除俱乐部</button>
 			</section>
 		</div>
+
+		<div v-if="showInvitePopup" class="club-modal-mask" @click="closeInvitePopup">
+			<section class="invite-modal" @click.stop>
+				<header class="invite-modal__head">
+					<h3>邀请链接</h3>
+					<button type="button" class="invite-modal__close" aria-label="关闭" @click="closeInvitePopup">
+						<img :src="imgModalClose" alt="" aria-hidden="true" />
+					</button>
+				</header>
+
+				<div class="invite-modal__body">
+					<p class="invite-modal__subtitle">开启你的竞技之旅</p>
+					<div class="invite-modal__cover-wrap">
+						<img class="invite-modal__cover" :src="imgInviteCover" alt="邀请海报" />
+					</div>
+					<p class="invite-modal__club-name">{{ clubName }}</p>
+					<p class="invite-modal__club-alias">{{ clubAlias }}</p>
+					<p class="invite-modal__id-row">
+						<span class="invite-modal__id-tag">ID</span>
+						<span>{{ clubId }}</span>
+					</p>
+				</div>
+
+				<div class="invite-modal__qr-wrap">
+					<img class="invite-modal__qr" :src="imgInviteQr" alt="扫码加入俱乐部" />
+					<span class="invite-modal__qr-heart">
+						<img :src="imgInviteHeart" alt="" aria-hidden="true" />
+					</span>
+				</div>
+				<p class="invite-modal__qr-tip">扫码加入，一键开启</p>
+
+				<button type="button" class="modal-primary-btn" @click="saveInviteShare">保存分享</button>
+			</section>
+		</div>
+
+		<div v-if="showCopyPopup" class="club-modal-mask" @click="closeCopyPopup">
+			<section class="copy-modal" @click.stop>
+				<p>暂无，申请复制俱乐部需要等待审核，是否现在提交申请</p>
+				<div class="copy-modal__actions">
+					<button type="button" class="modal-secondary-btn" @click="closeCopyPopup">取消</button>
+					<button type="button" class="modal-primary-btn" @click="submitCopyRequest">确定</button>
+				</div>
+			</section>
+		</div>
 	</div>
 </template>
 
@@ -318,6 +397,8 @@ function toggleSwitch(key: 'allowSearch' | 'joinWithoutApproval'): void {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.28112rem;
+    bottom: 0.5rem;
+    position: relative;
 }
 
 .club-avatar {
@@ -422,6 +503,9 @@ function toggleSwitch(key: 'allowSearch' | 'joinWithoutApproval'): void {
 	align-items: center;
 	gap: 0.05622rem;
 	background: rgba(255, 255, 255, 0.2);
+	right: 0.5rem;
+	bottom: 0.3rem;
+    position: absolute;
 }
 
 .size-text {
@@ -647,7 +731,254 @@ function toggleSwitch(key: 'allowSearch' | 'joinWithoutApproval'): void {
 	background: linear-gradient(90deg, rgba(73, 29, 86, 0.8), rgba(19, 95, 125, 0.84));
 }
 
+.club-modal-mask {
+	position: fixed;
+	inset: 0;
+	padding: 0.4rem;
+	background: rgba(12, 12, 12, 0.6);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 80;
+}
+
+.invite-modal,
+.copy-modal {
+	width: min(9.1rem, 100%);
+	border-radius: 0.97035rem;
+	border: 0.0255rem solid rgba(242, 242, 242, 0.4);
+	background: linear-gradient(121deg, rgba(142, 142, 142, 0.2) 3%, rgba(73, 73, 73, 0.38) 89%);
+	backdrop-filter: blur(0.20216rem);
+	box-shadow:
+		0 0 0.22981rem rgba(0, 0, 0, 0.85) inset,
+		0.05672rem 0.11344rem 0.45908rem rgba(242, 242, 242, 0.5) inset,
+		0.09192rem 0.11491rem 0.18384rem rgba(0, 0, 0, 0.28);
+	color: #f9f9f9;
+}
+
+.invite-modal {
+	padding: 0.42rem 0.42rem 0.62rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.22rem;
+}
+
+.invite-modal__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.invite-modal__head h3 {
+	margin: 0;
+	flex: 1;
+	text-align: center;
+	font-size: 0.41866rem;
+	font-weight: 500;
+	line-height: 1.4;
+	padding-left: 0.48rem;
+}
+
+.invite-modal__close {
+	width: 0.96rem;
+	height: 0.96rem;
+	border: 0;
+	background: transparent;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.invite-modal__close img {
+	width: 0.66rem;
+	height: 0.66rem;
+	object-fit: contain;
+}
+
+.invite-modal__body {
+	padding: 0.35rem 0.42rem 0.24rem;
+	border-radius: 0.72464rem;
+	background: linear-gradient(100deg, rgba(255, 255, 255, 0.08), rgba(230, 230, 230, 0.12));
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.08rem;
+}
+
+.invite-modal__subtitle {
+	margin: 0;
+	font-size: 0.35565rem;
+	line-height: 1.35;
+}
+
+.invite-modal__cover-wrap {
+	width: 100%;
+	height: 2.3752rem;
+	border-radius: 0.58rem;
+	overflow: hidden;
+	border: 0.01778rem solid rgba(255, 255, 255, 0.14);
+	margin-top: 0.06rem;
+}
+
+.invite-modal__cover {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.invite-modal__club-name {
+	margin: 0.16rem 0 0;
+	font-size: 0.35565rem;
+	line-height: 1.35;
+}
+
+.invite-modal__club-alias {
+	margin: 0;
+	font-size: 0.48309rem;
+	line-height: 1.2;
+	font-weight: 700;
+}
+
+.invite-modal__id-row {
+	margin: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.09333rem;
+	font-size: 0.32293rem;
+	line-height: 1;
+	font-weight: 600;
+}
+
+.invite-modal__id-tag {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 0.46rem;
+	height: 0.3rem;
+	padding: 0 0.12rem;
+	border-radius: 0.13rem;
+	background: rgba(255, 255, 255, 0.3);
+	font-size: 0.23111rem;
+	color: #444;
+	font-weight: 600;
+}
+
+.invite-modal__qr-wrap {
+	position: relative;
+	width: 3.33333rem;
+	height: 3.33333rem;
+	margin: 0.04rem auto 0;
+	border-radius: 0.30747rem;
+	background: #fff;
+	padding: 0.10667rem;
+	border: 0.10067rem solid #00b184;
+	overflow: hidden;
+}
+
+.invite-modal__qr {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.invite-modal__qr-heart {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	width: 0.9888rem;
+	height: 0.9888rem;
+	border-radius: 50%;
+	background: #fff;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.invite-modal__qr-heart img {
+	width: 0.64rem;
+	height: 0.64rem;
+	object-fit: contain;
+}
+
+.invite-modal__qr-tip {
+	margin: 0;
+	text-align: center;
+	font-size: 0.314rem;
+	font-weight: 500;
+	line-height: 1.3;
+}
+
+.modal-primary-btn,
+.modal-secondary-btn {
+	width: 100%;
+	min-height: 1.43581rem;
+	border: 0;
+	border-radius: 1.05574rem;
+	font-size: 0.4rem;
+	font-weight: 500;
+	color: #fff;
+	line-height: 1.2;
+	padding: 0.2rem 0.4rem;
+}
+
+.modal-primary-btn {
+	border: 0.01333rem solid rgba(242, 242, 242, 0.8);
+	background: linear-gradient(153deg, #05e7ae 8%, #027a5c 72%);
+	box-shadow: inset 0 -0.16rem 0.3rem rgba(0, 0, 0, 0.14);
+}
+
+.copy-modal {
+	width: min(8.25283rem, 100%);
+	padding: 0.82rem 0.42rem 0.55rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.copy-modal p {
+	margin: 0;
+	text-align: center;
+	font-size: 0.36232rem;
+	line-height: 1.3;
+}
+
+.copy-modal__actions {
+	display: flex;
+	gap: 0.25339rem;
+}
+
+.copy-modal__actions > button {
+	flex: 1;
+	min-width: 0;
+}
+
+.modal-secondary-btn {
+	background: rgba(0, 0, 0, 0.34);
+	box-shadow: inset 0 -0.2rem 0.24rem rgba(0, 0, 0, 0.24);
+}
+
 @media (max-width: 340px) {
+	.invite-modal,
+	.copy-modal {
+		padding-left: 0.3rem;
+		padding-right: 0.3rem;
+	}
+
+	.invite-modal__head h3 {
+		font-size: 0.36rem;
+	}
+
+	.copy-modal p {
+		font-size: 0.32rem;
+	}
+
+	.modal-primary-btn,
+	.modal-secondary-btn {
+		font-size: 0.35rem;
+	}
+
 	.club-name {
 		font-size: 0.38rem;
 	}

@@ -90,6 +90,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/club/level',
+      name: 'club-level',
+      component: () => import('@/views/club/ClubLevelView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/club/edit-description',
       name: 'club-edit-description',
       component: () => import('@/views/club/ClubEditDesView.vue'),
@@ -105,6 +111,42 @@ const router = createRouter({
       path: '/club/members',
       name: 'club-members',
       component: () => import('@/views/club/ClubMembersView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/member/:memberId',
+      name: 'club-member-detail',
+      component: () => import('@/views/club/member/MemberDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/member/:memberId/agent-profit',
+      name: 'club-member-agent-profit',
+      component: () => import('@/views/club/member/AgentProfitSettingView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/member/:memberId/offline-players',
+      name: 'club-member-offline-players',
+      component: () => import('@/views/club/member/AgentOfflinePlayersView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/member/:memberId/vip-statistics',
+      name: 'club-member-vip-statistics',
+      component: () => import('@/views/club/member/AgentVipStatisticsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/member/:memberId/bind-agent',
+      name: 'club-member-bind-agent',
+      component: () => import('@/views/club/member/MemberBindAgentView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/member/:memberId/unbind-agent',
+      name: 'club-member-unbind-agent',
+      component: () => import('@/views/club/member/MemberUnbindAgentView.vue'),
       meta: { requiresAuth: true },
     },
     {

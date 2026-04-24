@@ -212,7 +212,6 @@ function confirmUpgrade(): void {
 	width: 100%;
 	height: 100%;
 	object-fit: contain;
-	drop-shadow: 0 0.2rem 0.34rem rgba(0, 0, 0, 0.35);
 }
 
 .club-medal__ribbon {

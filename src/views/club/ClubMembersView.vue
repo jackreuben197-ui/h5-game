@@ -786,6 +786,7 @@ function roleClass(role: MemberRole): string {
   align-items: center;
   justify-content: space-between;
   min-height: 1.05rem;
+	padding-left: 0.32rem;
 }
 
 .back-btn {

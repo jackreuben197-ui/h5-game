@@ -98,12 +98,12 @@ function onActionClick(key: string): void {
   }
 
   if (key === 'bind') {
-    pushWithContext(`/club/member/${memberId}/agent-binding`)
+    pushWithContext(`/club/member/${memberId}/bind-agent`)
     return
   }
 
   if (key === 'unbind') {
-    pushWithContext(`/club/member/${memberId}/agent-binding`)
+    pushWithContext(`/club/member/${memberId}/unbind-agent`)
     return
   }
 

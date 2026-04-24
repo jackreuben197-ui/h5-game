@@ -138,8 +138,8 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/club/member/:memberId/agent-binding',
-      name: 'club-member-agent-binding',
+      path: '/club/member/:memberId/bind-agent',
+      name: 'club-member-bind-agent',
       component: () => import('@/views/club/member/MemberBindAgentView.vue'),
       meta: { requiresAuth: true },
     },

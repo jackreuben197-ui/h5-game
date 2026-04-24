@@ -355,6 +355,7 @@ function submitCopyRequest(): void {
 
 .top-bar {
 	min-height: 0.72215rem;
+	padding-left: 0.32rem;
 }
 
 .back-btn {
@@ -658,7 +659,7 @@ function submitCopyRequest(): void {
 
 .chevron {
 	width: 0.26656rem;
-	height: 0.4798rem;
+	height: 0.26656rem;
 	border-top: 0.02rem solid rgba(237, 237, 237, 0.85);
 	border-right: 0.02rem solid rgba(237, 237, 237, 0.85);
 	transform: rotate(45deg);

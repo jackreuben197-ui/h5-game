@@ -152,6 +152,7 @@ async function onConfirm(): Promise<void> {
 	min-height: 0.7rem;
 	display: flex;
 	align-items: center;
+	padding-left: 0.32rem;
 }
 
 .back-btn {
@@ -173,8 +174,8 @@ async function onConfirm(): Promise<void> {
 }
 
 .back-title {
-	font-size: 0.48rem;
-	line-height: 1;
+	font-size: 0.65rem;
+	line-height: 1.2;
 	font-weight: 500;
 }
 
@@ -194,24 +195,24 @@ async function onConfirm(): Promise<void> {
 
 .hint-text {
 	margin: 0;
-	font-size: 0.26rem;
+	font-size: 0.35rem;
 	line-height: 1.35;
 	color: #f3f3f3;
 	font-weight: 500;
 }
 
 .count-text {
-	font-size: 0.24rem;
+	font-size: 0.32rem;
 	line-height: 1;
 	color: rgba(243, 243, 243, 0.95);
 	white-space: nowrap;
 }
 
 .name-shell {
-	min-height: 0.94rem;
+	min-height: 1.66rem;
 	border: 0.01rem solid rgba(249, 249, 249, 0.58);
-	border-radius: 0.54rem;
-	padding: 0 0.22rem;
+	border-radius: 1.48rem;
+	padding: 0 0.56rem;
 	background:
 		radial-gradient(90% 120% at 6% 50%, rgba(255, 201, 161, 0.45), rgba(255, 201, 161, 0)),
 		radial-gradient(85% 120% at 64% 48%, rgba(186, 78, 157, 0.36), rgba(186, 78, 157, 0)),
@@ -227,14 +228,14 @@ input {
 	outline: none;
 	background: transparent;
 	font-family: inherit;
-	font-size: 0.31rem;
+	font-size: 0.39rem;
 	line-height: 1.4;
 	font-weight: 500;
 	color: #f9f9f9;
 }
 
 input::placeholder {
-	color: rgba(255, 255, 255, 0.7);
+	color: rgba(255, 255, 255, 0.71);
 }
 
 .wallet-row {
@@ -252,19 +253,19 @@ input::placeholder {
 }
 
 .wallet-info img {
-	width: 0.26rem;
-	height: 0.26rem;
+	width: 0.4rem;
+	height: 0.32rem;
 	object-fit: contain;
 }
 
 .wallet-label {
-	font-size: 0.29rem;
+	font-size: 0.36rem;
 	line-height: 1;
 	color: #f9f9f9;
 }
 
 .wallet-value {
-	font-size: 0.29rem;
+	font-size: 0.36rem;
 	line-height: 1;
 	font-weight: 700;
 	color: #05e7ae;
@@ -272,10 +273,10 @@ input::placeholder {
 
 .recharge-btn {
 	border: 0;
-	padding: 0 0.2rem;
-	min-height: 0.52rem;
-	border-radius: 0.28rem;
-	font-size: 0.23rem;
+	padding: 0 0.27rem;
+	min-height: 0.3rem;
+	border-radius: 0.72rem;
+	font-size: 0.3rem;
 	line-height: 1;
 	color: #f1f1f1;
 	background: rgba(0, 0, 0, 0.24);
@@ -296,15 +297,15 @@ input::placeholder {
 	margin: 0;
 	display: inline-flex;
 	align-items: center;
-	gap: 0.06rem;
-	font-size: 0.29rem;
+	gap: 0.15rem;
+	font-size: 0.36rem;
 	line-height: 1;
 	color: #f9f9f9;
 }
 
 .cost-line img {
-	width: 0.26rem;
-	height: 0.26rem;
+	width: 0.4rem;
+	height: 0.32rem;
 	object-fit: contain;
 }
 
@@ -315,12 +316,12 @@ input::placeholder {
 
 .confirm-btn {
 	width: 100%;
-	min-height: 0.9rem;
+	min-height: 1.44rem;
 	border: 0;
-	border-radius: 0.52rem;
+	border-radius: 1.06rem;
 	background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
 	color: #f9f9f9;
-	font-size: 0.46rem;
+	font-size: 0.51rem;
 	font-weight: 500;
 	box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.2);
 	transition: opacity 0.2s ease;
@@ -332,16 +333,16 @@ input::placeholder {
 
 @media (max-width: 340px) {
 	.back-title {
-		font-size: 0.4rem;
+		font-size: 0.54rem;
 	}
 
 	.hint-text,
 	.count-text {
-		font-size: 0.22rem;
+		font-size: 0.28rem;
 	}
 
 	.confirm-btn {
-		font-size: 0.4rem;
+		font-size: 0.44rem;
 	}
 }
 </style>

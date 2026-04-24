@@ -119,6 +119,7 @@ async function onConfirm(): Promise<void> {
 	min-height: 0.7rem;
 	display: flex;
 	align-items: center;
+	padding-left: 0.32rem;
 }
 
 .back-btn {
@@ -140,30 +141,30 @@ async function onConfirm(): Promise<void> {
 }
 
 .back-title {
-	font-size: 0.48rem;
-	line-height: 1;
+	font-size: 0.65rem;
+	line-height: 1.2;
 	font-weight: 500;
 }
 
 .editor-block {
 	display: flex;
 	flex-direction: column;
-	gap: 0.14rem;
+	gap: 0.43rem;
 	padding-top: 0.06rem;
 }
 
 .field-label {
-	font-size: 0.36rem;
-	line-height: 1.3;
+	font-size: 0.48rem;
+	line-height: 1.4;
 	font-weight: 500;
 	color: #f7f7f7;
 }
 
 .field-shell {
-	min-height: 4.72rem;
+	min-height: 6.32rem;
 	border: 0.01rem solid rgba(249, 249, 249, 0.58);
-	border-radius: 0.42rem;
-	padding: 0.2rem 0.22rem;
+	border-radius: 0.72rem;
+	padding: 0.54rem 0.54rem;
 	background:
 		radial-gradient(90% 70% at 14% 20%, rgba(255, 199, 160, 0.46), rgba(255, 199, 160, 0)),
 		radial-gradient(82% 74% at 64% 49%, rgba(185, 76, 157, 0.4), rgba(185, 76, 157, 0)),
@@ -175,20 +176,20 @@ async function onConfirm(): Promise<void> {
 
 textarea {
 	width: 100%;
-	min-height: 4.18rem;
+	min-height: 5.78rem;
 	resize: none;
 	border: 0;
 	outline: none;
 	background: transparent;
 	font-family: inherit;
-	font-size: 0.3rem;
+	font-size: 0.39rem;
 	line-height: 1.4;
 	font-weight: 500;
 	color: #f9f9f9;
 }
 
 textarea::placeholder {
-	color: rgba(255, 255, 255, 0.7);
+	color: rgba(255, 255, 255, 0.71);
 }
 
 .footer-actions {
@@ -199,12 +200,12 @@ textarea::placeholder {
 
 .confirm-btn {
 	width: 100%;
-	min-height: 0.9rem;
+	min-height: 1.44rem;
 	border: 0;
-	border-radius: 0.52rem;
+	border-radius: 1.06rem;
 	background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
 	color: #f9f9f9;
-	font-size: 0.46rem;
+	font-size: 0.51rem;
 	font-weight: 500;
 	box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.2);
 	transition: opacity 0.2s ease;
@@ -216,15 +217,15 @@ textarea::placeholder {
 
 @media (max-width: 340px) {
 	.back-title {
-		font-size: 0.4rem;
+		font-size: 0.54rem;
 	}
 
 	.field-label {
-		font-size: 0.32rem;
+		font-size: 0.4rem;
 	}
 
 	.confirm-btn {
-		font-size: 0.4rem;
+		font-size: 0.44rem;
 	}
 }
 </style>

@@ -144,6 +144,7 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
   min-height: 0.7rem;
   display: flex;
   align-items: center;
+	padding-left: 0.32rem;
 }
 
 .back-btn {

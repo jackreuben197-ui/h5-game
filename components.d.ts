@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    FilterTabbar: typeof import('./src/components/Tabbar/FilterTabbar.vue')['default']
     GameTypeTabbar: typeof import('./src/components/Tabbar/GameTypeTabbar.vue')['default']
     HeaderBack: typeof import('./src/components/HeaderBack/HeaderBack.vue')['default']
     MainBottomTab: typeof import('./src/components/Tabbar/MainBottomTab.vue')['default']

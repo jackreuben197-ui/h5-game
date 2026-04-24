@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import imgClubCover from '@/assets/images/club_cover_avatar.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
@@ -9,6 +9,11 @@ const router = useRouter()
 const clubName = ref('')
 const clubIntro = ref('')
 const isSubmitting = ref(false)
+const avatarSheetVisible = ref(false)
+const avatarSource = ref<'camera' | 'gallery'>('gallery')
+const galleryInputRef = ref<HTMLInputElement | null>(null)
+const cameraInputRef = ref<HTMLInputElement | null>(null)
+const avatarPreviewUrl = ref('')
 
 const createCostOriginal = 500
 const createCostCurrent = 100
@@ -17,13 +22,54 @@ const canCreate = computed(() => {
 	return clubName.value.trim().length > 0 && !isSubmitting.value
 })
 
+const avatarImage = computed(() => avatarPreviewUrl.value || imgClubCover)
+
 function goBack(): void {
 	void router.push('/club')
 }
 
 function chooseAvatar(): void {
-	// 预留头像上传入口，当前版本先保留交互反馈。
+	avatarSheetVisible.value = true
 }
+
+function closeAvatarSheet(): void {
+	avatarSheetVisible.value = false
+}
+
+function selectAvatarSource(source: 'camera' | 'gallery'): void {
+	avatarSource.value = source
+}
+
+function triggerAvatarPicker(): void {
+	const targetInput = avatarSource.value === 'camera' ? cameraInputRef.value : galleryInputRef.value
+	if (!targetInput) {
+		return
+	}
+	closeAvatarSheet()
+	targetInput.click()
+}
+
+function updateAvatarFile(event: Event): void {
+	const target = event.target as HTMLInputElement | null
+	const file = target?.files?.[0]
+	if (!file) {
+		return
+	}
+
+	if (avatarPreviewUrl.value) {
+		URL.revokeObjectURL(avatarPreviewUrl.value)
+	}
+	avatarPreviewUrl.value = URL.createObjectURL(file)
+	if (target) {
+		target.value = ''
+	}
+}
+
+onUnmounted(() => {
+	if (avatarPreviewUrl.value) {
+		URL.revokeObjectURL(avatarPreviewUrl.value)
+	}
+})
 
 async function onCreateClub(): Promise<void> {
 	if (!canCreate.value) {
@@ -44,6 +90,21 @@ async function onCreateClub(): Promise<void> {
 	<div class="club-create-bg">
 		<div class="bg-blur bg-blur--pink" aria-hidden="true" />
 		<div class="bg-blur bg-blur--cyan" aria-hidden="true" />
+		<input
+			ref="galleryInputRef"
+			class="avatar-file-input"
+			type="file"
+			accept="image/*"
+			@change="updateAvatarFile"
+		/>
+		<input
+			ref="cameraInputRef"
+			class="avatar-file-input"
+			type="file"
+			accept="image/*"
+			capture="environment"
+			@change="updateAvatarFile"
+		/>
 
 		<div class="club-create">
 			<header class="top-bar">
@@ -55,7 +116,7 @@ async function onCreateClub(): Promise<void> {
 
 			<section class="avatar-card">
 				<button type="button" class="avatar-trigger" aria-label="选择俱乐部头像" @click="chooseAvatar">
-					<img class="avatar-image" :src="imgClubCover" alt="俱乐部头像" />
+					<img class="avatar-image" :src="avatarImage" alt="俱乐部头像" />
 					<span class="add-badge" aria-hidden="true">+</span>
 				</button>
 			</section>
@@ -107,6 +168,29 @@ async function onCreateClub(): Promise<void> {
 				</p>
 			</section>
 		</div>
+
+		<div v-if="avatarSheetVisible" class="avatar-sheet-mask" @click="closeAvatarSheet">
+			<div class="avatar-sheet" role="dialog" aria-label="选择头像来源" @click.stop>
+				<button
+					type="button"
+					class="avatar-sheet-option"
+					:class="{ 'avatar-sheet-option--active': avatarSource === 'camera' }"
+					@click="selectAvatarSource('camera')"
+				>
+					拍照
+				</button>
+				<div class="avatar-sheet-divider" aria-hidden="true" />
+				<button
+					type="button"
+					class="avatar-sheet-option"
+					:class="{ 'avatar-sheet-option--active': avatarSource === 'gallery' }"
+					@click="selectAvatarSource('gallery')"
+				>
+					画廊
+				</button>
+				<button type="button" class="avatar-sheet-confirm" @click="triggerAvatarPicker">确认</button>
+			</div>
+		</div>
 	</div>
 </template>
 
@@ -143,6 +227,14 @@ async function onCreateClub(): Promise<void> {
 	right: -1.12rem;
 	bottom: 1.5rem;
 	background: rgba(36, 212, 255, 0.55);
+}
+
+.avatar-file-input {
+	position: fixed;
+	width: 0;
+	height: 0;
+	opacity: 0;
+	pointer-events: none;
 }
 
 .club-create {
@@ -360,6 +452,67 @@ textarea::placeholder {
 .cost-current {
 	color: #05e7ae;
 	font-weight: 700;
+}
+
+.avatar-sheet-mask {
+	position: fixed;
+	inset: 0;
+	z-index: 30;
+	background: rgba(12, 12, 12, 0.6);
+	display: flex;
+	align-items: flex-end;
+}
+
+.avatar-sheet {
+	width: min(100%, var(--app-max-width));
+	margin: 0 auto;
+	padding: 0.6426rem 0.5321rem calc(0.7872rem + env(safe-area-inset-bottom));
+	border-top-left-radius: 0.8446rem;
+	border-top-right-radius: 0.8446rem;
+	background: rgba(0, 0, 0, 0.2);
+	backdrop-filter: blur(0.9733rem);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.34rem;
+	color: #f9f9f9;
+}
+
+.avatar-sheet-option {
+	width: 100%;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-size: 0.5493rem;
+	line-height: 0.7324rem;
+	font-weight: 500;
+	text-align: center;
+	opacity: 0.92;
+	transition: opacity 0.18s ease;
+}
+
+.avatar-sheet-option--active {
+	opacity: 1;
+}
+
+.avatar-sheet-divider {
+	width: 100%;
+	height: 0.01rem;
+	background: rgba(249, 249, 249, 0.28);
+}
+
+.avatar-sheet-confirm {
+	margin-top: 0.08rem;
+	width: 8.9358rem;
+	height: 1.4716rem;
+	border: 0.0134rem solid rgba(242, 242, 242, 0.8);
+	border-radius: 1.082rem;
+	background: linear-gradient(168.09deg, #05e7ae 7.55%, #027a5c 71.92%);
+	color: #fff;
+	font-size: 0.5063rem;
+	line-height: 1.2;
+	font-weight: 500;
 }
 
 @media (max-width: 340px) {

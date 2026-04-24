@@ -7195,6 +7195,7 @@ UIHomeMttMahjongTip=麻将多人比赛
 UIHomeMttAreaTip=获取海量线下门票
 UIHomeMinigameArea=小游戏专区
 UIHomeComingSoon=即将开放
+UIMTTLatestRegister=最晚报名
 
 
 

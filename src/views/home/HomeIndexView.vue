@@ -4,10 +4,10 @@ import { showFailToast, } from 'vant'
 import { useRouter } from 'vue-router'
 import { getUserClubApi } from '@/api/auth'
 import { getCowboyRoomListApi } from '@/api/gc'
-import { getMttListApi } from '@/api/mtt'
 import type { RoomRecord } from '@/api/models/room'
 import StorageKey from '@/constants/storageKey'
 import homeHeaderFallback from '@/assets/images/home_header_1.png'
+import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
@@ -17,6 +17,7 @@ import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const roomListStore = useRoomListStore()
+const mttListStore = useMttListStore()
 
 const balanceVisible = ref(true)
 const noticeScrollRef = ref<HTMLElement | null>(null)
@@ -277,41 +278,13 @@ async function fetchHomeMiniGameStats(): Promise<void> {
   persistHomeRoomStatsCache(homeRoomStats.value)
 }
 
-// 首页 MTT 统计：使用 /api/roomcenter/mtt/list 聚合桌数与参赛人数。
-async function fetchHomeMttStats(): Promise<void> {
+// 首页 MTT 统计：直接复用共享 MTT 列表 store，避免首页和列表页分叉取数。
+function refreshHomeMttStatsFromStore(): void {
   const nextMtt = { tables: 0, players: 0 }
-  const limit = 100
-  let offset = 0
-  let page = 0
-  const maxPages = 10
-
-  while (page < maxPages) {
-    const response = await getMttListApi({
-      limit,
-      offset,
-      status: [0, 1],
-      game_type: [0, 1, 2, 3],
-      order: ['start_asc'],
-    })
-
-    const records =
-      Number(response.code) === 0 && Array.isArray(response.data?.records)
-        ? response.data.records
-        : []
-    records.forEach((item) => {
-      nextMtt.tables += toSafeNumber(item.rooms)
-      nextMtt.players += toSafeNumber(item.participants)
-    })
-
-    const total = toSafeNumber(response.data?.total)
-    const loadedCount = offset + records.length
-    if (!records.length || loadedCount >= total || records.length < limit) {
-      break
-    }
-
-    offset += limit
-    page += 1
-  }
+  mttListStore.records.forEach((item) => {
+    nextMtt.tables += toSafeNumber(item.rooms)
+    nextMtt.players += toSafeNumber(item.participants)
+  })
 
   homeRoomStats.value = {
     ...homeRoomStats.value,
@@ -361,16 +334,26 @@ watch(
   },
 )
 
+watch(
+  () => mttListStore.records,
+  () => {
+    refreshHomeMttStatsFromStore()
+  },
+  {
+    deep: false,
+  },
+)
+
 onMounted(() => {
   void ensureClubDataReady()
   // 首页和列表页共用同一个 room store，进入首页时启动共享数据流。
   roomListStore.bootstrapRoomList()
+  // 首页和 MTT 列表页共用同一个 mtt store，避免重复请求。
+  mttListStore.bootstrapMttList()
   refreshHomePokerMahjongStatsFromStore()
+  refreshHomeMttStatsFromStore()
   void fetchHomeMiniGameStats().catch((error) => {
     console.warn('[home] fetch mini game stats failed:', error)
-  })
-  void fetchHomeMttStats().catch((error) => {
-    console.warn('[home] fetch mtt stats failed:', error)
   })
   void updateNoticeMarquee()
 

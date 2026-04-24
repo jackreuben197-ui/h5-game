@@ -172,28 +172,27 @@ async function onCreateClub(): Promise<void> {
 }
 
 .back-icon {
-	width: 0.18rem;
-	height: 0.18rem;
+	width: 0.77rem;
+	height: 0.77rem;
 	border-left: 0.03rem solid rgba(249, 249, 249, 0.95);
 	border-bottom: 0.03rem solid rgba(249, 249, 249, 0.95);
 	transform: rotate(45deg);
 }
 
 .back-title {
-	font-size: 0.4rem;
-	line-height: 1;
+	font-size: 0.64rem;
+	line-height: 1.2;
 	font-weight: 500;
 }
 
 .avatar-card {
-	padding: 0.08rem 0;
-	min-height: 2rem;
-	border-radius: 0.42rem;
+	padding: 0.13rem 0.58rem;
+	min-height: 3.24rem;
+	border-radius: 3.96rem;
 	background: rgba(0, 0, 0, 0.2);
 	backdrop-filter: blur(0.16rem);
 	display: flex;
 	align-items: center;
-	padding-left: 0.22rem;
 }
 
 .avatar-trigger {
@@ -201,8 +200,8 @@ async function onCreateClub(): Promise<void> {
 	border: 0;
 	padding: 0;
 	background: transparent;
-	width: 1.08rem;
-	height: 1.08rem;
+	width: 1.79rem;
+	height: 1.79rem;
 	border-radius: 50%;
 	overflow: visible;
 }
@@ -217,15 +216,15 @@ async function onCreateClub(): Promise<void> {
 
 .add-badge {
 	position: absolute;
-	right: -0.05rem;
-	bottom: -0.05rem;
-	width: 0.34rem;
-	height: 0.34rem;
+	right: -0.07rem;
+	bottom: -0.07rem;
+	width: 0.72rem;
+	height: 0.72rem;
 	border-radius: 50%;
 	background: linear-gradient(165deg, #05e7ae 10%, #027a5c 75%);
 	color: #fff;
-	font-size: 0.28rem;
-	line-height: 0.34rem;
+	font-size: 0.72rem;
+	line-height: 0.72rem;
 	font-weight: 500;
 	text-align: center;
 	box-shadow: 0 0.02rem 0.08rem rgba(0, 0, 0, 0.2);
@@ -246,31 +245,31 @@ async function onCreateClub(): Promise<void> {
 }
 
 .field-label {
-	font-size: 0.36rem;
-	line-height: 1.2;
+	font-size: 0.48rem;
+	line-height: 1.4;
 	font-weight: 500;
 	color: #fbfbfb;
 }
 
 .field-shell {
 	border: 0.01rem solid rgba(249, 249, 249, 0.6);
-	border-radius: 0.56rem;
+	border-radius: 1.48rem;
 	background: rgba(255, 255, 255, 0.18);
 	backdrop-filter: blur(0.3rem);
 	overflow: hidden;
 }
 
 .field-shell--single {
-	height: 0.94rem;
+	height: 1.66rem;
 	display: flex;
 	align-items: center;
-	padding: 0 0.22rem;
+	padding: 0 0.56rem;
 }
 
 .field-shell--multi {
-	min-height: 4.2rem;
-	border-radius: 0.42rem;
-	padding: 0.2rem 0.22rem;
+	min-height: 6.32rem;
+	border-radius: 0.72rem;
+	padding: 0.54rem 0.54rem;
 	background:
 		radial-gradient(95% 82% at 15% 30%, rgba(255, 193, 158, 0.44), rgba(255, 193, 158, 0)),
 		radial-gradient(82% 78% at 60% 54%, rgba(185, 70, 151, 0.35), rgba(185, 70, 151, 0)),
@@ -285,20 +284,20 @@ textarea {
 	outline: none;
 	background: transparent;
 	color: #f9f9f9;
-	font-size: 0.3rem;
+	font-size: 0.39rem;
 	font-weight: 500;
-	line-height: 1.35;
+	line-height: 1.4;
 	font-family: inherit;
 }
 
 textarea {
 	resize: none;
-	min-height: 3.6rem;
+	min-height: 6.32rem;
 }
 
 input::placeholder,
 textarea::placeholder {
-	color: rgba(255, 255, 255, 0.68);
+	color: rgba(255, 255, 255, 0.71);
 }
 
 .footer-actions {
@@ -306,17 +305,17 @@ textarea::placeholder {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 0.18rem;
-	padding-top: 0.1rem;
+	gap: 0.29rem;
+	padding-top: 0.14rem;
 }
 
 .create-btn {
 	width: 100%;
-	min-height: 0.9rem;
+	min-height: 1.44rem;
 	border: 0;
-	border-radius: 0.5rem;
+	border-radius: 1.06rem;
 	color: #f9f9f9;
-	font-size: 0.46rem;
+	font-size: 0.51rem;
 	font-weight: 500;
 	background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
 	box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.18);
@@ -331,15 +330,15 @@ textarea::placeholder {
 	margin: 0;
 	display: inline-flex;
 	align-items: center;
-	gap: 0.07rem;
-	font-size: 0.27rem;
-	line-height: 1;
+	gap: 0.15rem;
+	font-size: 0.36rem;
+	line-height: 1.4;
 	color: #f9f9f9;
 }
 
 .cost-line img {
-	width: 0.26rem;
-	height: 0.26rem;
+	width: 0.32rem;
+	height: 0.32rem;
 	object-fit: contain;
 }
 
@@ -357,15 +356,15 @@ textarea::placeholder {
 
 @media (max-width: 340px) {
 	.back-title {
-		font-size: 0.34rem;
+		font-size: 0.54rem;
 	}
 
 	.field-label {
-		font-size: 0.32rem;
+		font-size: 0.4rem;
 	}
 
 	.create-btn {
-		font-size: 0.4rem;
+		font-size: 0.44rem;
 	}
 }
 </style>

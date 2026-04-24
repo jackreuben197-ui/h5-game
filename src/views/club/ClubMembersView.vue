@@ -730,24 +730,24 @@ function roleClass(role: MemberRole): string {
 .bg-blur {
   position: absolute;
   border-radius: 999px;
-  filter: blur(1rem);
+  filter: blur(1.5rem);
   opacity: 0.5;
   pointer-events: none;
 }
 
 .bg-blur--pink {
-  width: 2.8rem;
-  height: 2.8rem;
-  top: 3.4rem;
-  left: -0.9rem;
+  width: 4.2rem;
+  height: 4.2rem;
+  top: 5.1rem;
+  left: -1.35rem;
   background: rgba(221, 50, 131, 0.5);
 }
 
 .bg-blur--cyan {
-  width: 3rem;
-  height: 3rem;
-  right: -1.1rem;
-  bottom: 2.2rem;
+  width: 4.5rem;
+  height: 4.5rem;
+  right: -1.65rem;
+  bottom: 3.3rem;
   background: rgba(45, 214, 255, 0.55);
 }
 
@@ -757,16 +757,16 @@ function roleClass(role: MemberRole): string {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
-  padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
-  gap: 0.14rem;
+  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.3rem);
+  padding-bottom: calc(0.3rem + env(safe-area-inset-bottom));
+  gap: 0.34538rem;
 }
 
 .top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 0.7rem;
+  min-height: 1.05rem;
 }
 
 .back-btn {
@@ -775,27 +775,27 @@ function roleClass(role: MemberRole): string {
   color: #f9f9f9;
   display: inline-flex;
   align-items: center;
-  gap: 0.16rem;
+  gap: 0.24rem;
   padding: 0;
 }
 
 .back-icon {
-  width: 0.18rem;
-  height: 0.18rem;
-  border-left: 0.03rem solid rgba(249, 249, 249, 0.95);
-  border-bottom: 0.03rem solid rgba(249, 249, 249, 0.95);
+  width: 0.27rem;
+  height: 0.27rem;
+  border-left: 0.045rem solid rgba(249, 249, 249, 0.95);
+  border-bottom: 0.045rem solid rgba(249, 249, 249, 0.95);
   transform: rotate(45deg);
 }
 
 .back-title {
-  font-size: 0.4rem;
+  font-size: 0.50933rem;
   line-height: 1;
   font-weight: 500;
 }
 
 .member-total {
   margin: 0;
-  font-size: 0.29rem;
+  font-size: 0.34503rem;
   line-height: 1;
   color: rgba(243, 243, 243, 0.9);
 }
@@ -808,17 +808,17 @@ function roleClass(role: MemberRole): string {
 .member-tabs {
   display: inline-flex;
   align-self: center;
-  gap: 0.56rem;
-  min-height: 0.42rem;
+  gap: 1.60643rem;
+  min-height: 0.68166rem;
 }
 
 .tab-btn {
   position: relative;
   border: 0;
   background: transparent;
-  padding: 0 0.02rem 0.06rem;
+  padding: 0 0.03rem 0.09rem;
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.31rem;
+  font-size: 0.37029rem;
   line-height: 1;
   font-weight: 500;
 }
@@ -834,25 +834,25 @@ function roleClass(role: MemberRole): string {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 0.03rem;
+  height: 0.045rem;
   border-radius: 999px;
   background: rgba(234, 234, 234, 0.95);
 }
 
 .summary-card {
-  padding: 0.16rem 0.18rem;
-  border-radius: 0.42rem;
+  padding: 0.43919rem;
+  border-radius: 1.05574rem;
   background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.16rem);
+  backdrop-filter: blur(0.24rem);
   display: flex;
   flex-direction: column;
-  gap: 0.12rem;
+  gap: 0.39696rem;
 }
 
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.08rem;
+  gap: 0.80321rem;
 }
 
 .summary-grid--bottom {
@@ -862,12 +862,12 @@ function roleClass(role: MemberRole): string {
 .summary-item {
   display: flex;
   flex-direction: column;
-  gap: 0.04rem;
+  gap: 0.06rem;
 }
 
 .summary-label {
   margin: 0;
-  font-size: 0.24rem;
+  font-size: 0.32013rem;
   line-height: 1.2;
   color: #f3f3f3;
 }
@@ -876,69 +876,69 @@ function roleClass(role: MemberRole): string {
   margin: 0;
   display: inline-flex;
   align-items: center;
-  gap: 0.03rem;
-  font-size: 0.38rem;
+  gap: 0.045rem;
+  font-size: 0.43204rem;
   line-height: 1;
   font-weight: 700;
   color: #f9f9f9;
 }
 
 .summary-value img {
-  width: 0.28rem;
-  height: 0.28rem;
+  width: 0.42rem;
+  height: 0.42rem;
   object-fit: contain;
 }
 
 .income-btn {
-  min-height: 0.64rem;
+  min-height: 0.96rem;
   border: 0;
-  border-radius: 0.34rem;
+  border-radius: 0.51rem;
   background: rgba(180, 178, 178, 0.18);
   color: #f3f3f3;
-  font-size: 0.23rem;
+  font-size: 0.32013rem;
   line-height: 1;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.04rem;
+  gap: 0.06rem;
 }
 
 .income-icon {
   position: relative;
-  width: 0.16rem;
-  height: 0.16rem;
-  border: 0.02rem solid rgba(243, 243, 243, 0.9);
-  border-radius: 0.03rem;
+  width: 0.24rem;
+  height: 0.24rem;
+  border: 0.03rem solid rgba(243, 243, 243, 0.9);
+  border-radius: 0.045rem;
 }
 
 .income-icon::after {
   content: '';
   position: absolute;
-  left: 0.02rem;
-  top: -0.07rem;
-  width: 0.07rem;
-  height: 0.07rem;
-  border: 0.02rem solid rgba(243, 243, 243, 0.9);
+  left: 0.03rem;
+  top: -0.105rem;
+  width: 0.105rem;
+  height: 0.105rem;
+  border: 0.03rem solid rgba(243, 243, 243, 0.9);
   border-bottom: 0;
-  border-radius: 0.03rem 0.03rem 0 0;
+  border-radius: 0.045rem 0.045rem 0 0;
 }
 
 .search-card {
-  min-height: 0.78rem;
-  padding: 0 0.2rem;
-  border-radius: 0.39rem;
+  min-height: 1.06827rem;
+  padding: 0.12669rem 0.2027rem 0.12669rem 0.44763rem;
+  border-radius: 1.05574rem;
   background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.15rem);
+  backdrop-filter: blur(0.225rem);
   display: flex;
   align-items: center;
-  gap: 0.12rem;
+  gap: 0.16649rem;
 }
 
 .search-icon {
-  width: 0.24rem;
-  height: 0.24rem;
-  border: 0.03rem solid rgba(248, 248, 248, 0.94);
+  width: 0.36rem;
+  height: 0.36rem;
+  border: 0.045rem solid rgba(248, 248, 248, 0.94);
   border-radius: 50%;
   position: relative;
   flex: 0 0 auto;
@@ -947,13 +947,13 @@ function roleClass(role: MemberRole): string {
 .search-icon::after {
   content: '';
   position: absolute;
-  width: 0.12rem;
-  height: 0.03rem;
+  width: 0.18rem;
+  height: 0.045rem;
   background: rgba(248, 248, 248, 0.94);
   transform: rotate(45deg);
   transform-origin: left center;
-  right: -0.1rem;
-  bottom: -0.02rem;
+  right: -0.15rem;
+  bottom: -0.03rem;
 }
 
 .search-card input {
@@ -962,7 +962,7 @@ function roleClass(role: MemberRole): string {
   border: 0;
   outline: none;
   background: transparent;
-  font-size: 0.34rem;
+  font-size: 0.41338rem;
   line-height: 1;
   color: #fff;
   font-family: inherit;
@@ -975,19 +975,19 @@ function roleClass(role: MemberRole): string {
 .members-list {
   display: flex;
   flex-direction: column;
-  gap: 0.12rem;
-  padding-bottom: 0.14rem;
+  gap: 0.27027rem;
+  padding-bottom: 0.21rem;
 }
 
 .record-panel {
   position: relative;
-  border-radius: 0.42rem;
+  border-radius: 0.76013rem;
   background: rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(0.15rem);
-  padding: 0.14rem 0.14rem 0.1rem;
+  backdrop-filter: blur(0.225rem);
+  padding: 0.36318rem 0.43919rem;
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.22727rem;
   min-height: 0;
 }
 
@@ -995,29 +995,30 @@ function roleClass(role: MemberRole): string {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.22rem;
+  font-size: 0.25862rem;
   line-height: 1;
   color: rgba(249, 249, 249, 0.68);
-  padding: 0 0.08rem;
+  padding: 0;
 }
 
 .range-tabs {
-  min-height: 0.78rem;
-  border-radius: 0.42rem;
-  padding: 0.06rem;
+  min-height: 1.44426rem;
+  border-radius: 0.8rem;
+  padding: 0;
   background: rgba(164, 143, 161, 0.3);
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.04rem;
+  gap: 0.26667rem;
 }
 
 .range-tab {
   border: 0;
-  border-radius: 0.34rem;
+  border-radius: 1.38441rem;
   background: transparent;
   color: #f9f9f9;
-  font-size: 0.31rem;
+  font-size: 0.36197rem;
   line-height: 1;
+  padding: 0.11075rem 0.12rem;
 }
 
 .range-tab--active {
@@ -1027,25 +1028,25 @@ function roleClass(role: MemberRole): string {
 .record-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.08rem;
-  padding: 0 0.02rem;
+  gap: 0.09028rem;
+  padding: 0;
 }
 
 .record-stat-item {
   display: flex;
   flex-direction: column;
-  gap: 0.02rem;
+  gap: 0.07356rem;
 }
 
 .record-stat-label {
   margin: 0;
-  font-size: 0.25rem;
+  font-size: 0.28213rem;
   color: rgba(249, 249, 249, 0.82);
 }
 
 .record-stat-value {
   margin: 0;
-  font-size: 0.5rem;
+  font-size: 0.54054rem;
   line-height: 1;
   color: #f9f9f9;
 }
@@ -1054,20 +1055,20 @@ function roleClass(role: MemberRole): string {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.08rem;
+  gap: 0.15674rem;
   min-height: 0;
 }
 
 .record-table-head {
-  min-height: 0.5rem;
-  border-radius: 0.25rem;
+  min-height: 0.77586rem;
+  border-radius: 0.375rem;
   background: linear-gradient(180deg, #23ddad 0%, #02b487 100%);
   display: grid;
   grid-template-columns: 1.2fr 1fr 1fr 1fr 1.2fr;
   align-items: center;
-  padding: 0 0.14rem;
+  padding: 0 0.16rem;
   color: #f9f9f9;
-  font-size: 0.22rem;
+  font-size: 0.27429rem;
   line-height: 1;
   font-weight: 500;
 }
@@ -1081,28 +1082,28 @@ function roleClass(role: MemberRole): string {
   line-height: inherit;
   display: inline-flex;
   align-items: center;
-  gap: 0.04rem;
+  gap: 0.06757rem;
 }
 
 .tiny-arrow {
-  width: 0.09rem;
-  height: 0.09rem;
-  border-left: 0.02rem solid rgba(249, 249, 249, 0.85);
-  border-bottom: 0.02rem solid rgba(249, 249, 249, 0.85);
+  width: 0.135rem;
+  height: 0.135rem;
+  border-left: 0.03rem solid rgba(249, 249, 249, 0.85);
+  border-bottom: 0.03rem solid rgba(249, 249, 249, 0.85);
   transform: rotate(-45deg);
 }
 
 .type-dropdown {
   position: absolute;
-  top: 0.58rem;
+  top: 0.9rem;
   left: 0.08rem;
-  width: 1.52rem;
-  max-height: 6.8rem;
+  width: 3.9899rem;
+  max-height: 10.2633rem;
   overflow: auto;
-  border-radius: 0.16rem;
-  padding: 0.08rem 0.14rem;
+  border-radius: 0.42929rem;
+  padding: 0.36195rem 0.43771rem;
   background: rgba(0, 0, 0, 0.42);
-  backdrop-filter: blur(0.12rem);
+  backdrop-filter: blur(0.18rem);
   z-index: 5;
 }
 
@@ -1110,12 +1111,12 @@ function roleClass(role: MemberRole): string {
   width: 100%;
   border: 0;
   background: transparent;
-  padding: 0.06rem 0;
+  padding: 0.15189rem 0;
   text-align: left;
   color: rgba(249, 249, 249, 0.92);
-  font-size: 0.22rem;
+  font-size: 0.304rem;
   line-height: 1.3;
-  border-bottom: 0.01rem solid rgba(255, 255, 255, 0.2);
+  border-bottom: 0.015rem solid rgba(255, 255, 255, 0.2);
 }
 
 .type-option:last-child {
@@ -1130,31 +1131,31 @@ function roleClass(role: MemberRole): string {
 .record-list {
   display: flex;
   flex-direction: column;
-  gap: 0.08rem;
-  max-height: 8.1rem;
+  gap: 0.07837rem;
+  max-height: 12.45384rem;
   overflow: auto;
-  padding-right: 0.02rem;
+  padding-right: 0;
 }
 
 .record-row {
-  border-radius: 0.24rem;
+  border-radius: 0.37751rem;
   background: rgba(0, 0, 0, 0.22);
-  padding: 0.06rem 0.12rem;
+  padding: 0.08rem 0.12rem;
   display: flex;
   flex-direction: column;
-  gap: 0.03rem;
+  gap: 0.06rem;
 }
 
 .from-chip {
   align-self: flex-start;
-  border-radius: 0.2rem;
+  border-radius: 0.42929rem;
   background: rgba(5, 231, 174, 0.2);
-  padding: 0.04rem 0.1rem;
+  padding: 0.08rem 0.16rem;
   display: inline-flex;
   align-items: center;
-  gap: 0.04rem;
+  gap: 0.09rem;
   color: rgba(249, 249, 249, 0.75);
-  font-size: 0.17rem;
+  font-size: 0.224rem;
 }
 
 .from-label {
@@ -1162,9 +1163,9 @@ function roleClass(role: MemberRole): string {
 }
 
 .from-id-pill {
-  border-radius: 0.06rem;
+  border-radius: 0.18153rem;
   background: rgba(255, 255, 255, 0.3);
-  padding: 0 0.05rem;
+  padding: 0 0.08rem;
   color: #fff;
 }
 
@@ -1172,13 +1173,13 @@ function roleClass(role: MemberRole): string {
   display: grid;
   grid-template-columns: 1.2fr 1fr 1fr 1fr 1.2fr;
   align-items: center;
-  gap: 0.04rem;
+  gap: 0.08rem;
   color: #fff;
 }
 
 .record-main-grid p {
   margin: 0;
-  font-size: 0.2rem;
+  font-size: 0.26167rem;
   line-height: 1.15;
 }
 
@@ -1186,48 +1187,48 @@ function roleClass(role: MemberRole): string {
 .remark-cell {
   display: flex;
   flex-direction: column;
-  gap: 0.01rem;
+  gap: 0.03rem;
 }
 
 .sub-line {
-  font-size: 0.17rem;
+  font-size: 0.22727rem;
   color: rgba(249, 249, 249, 0.55);
 }
 
 .quantity-cell {
-  border-radius: 0.2rem;
+  border-radius: 0.37751rem;
   background: rgba(255, 255, 255, 0.15);
-  min-height: 0.34rem;
+  min-height: 0.51rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 0.06rem;
+  padding: 0 0.16rem;
 }
 
 .member-card {
   position: relative;
-  padding: 0.12rem 0.16rem 0.12rem;
-  border-radius: 0.4rem;
+  padding: 0.16064rem 0.43919rem 0.28112rem;
+  border-radius: 1.05574rem;
   background:
     radial-gradient(78% 88% at 12% 34%, rgba(188, 117, 151, 0.5), rgba(188, 117, 151, 0)),
     radial-gradient(94% 88% at 92% 74%, rgba(47, 161, 212, 0.46), rgba(47, 161, 212, 0)),
     rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(0.14rem);
+  backdrop-filter: blur(0.21rem);
 }
 
 .role-badge {
   position: absolute;
-  top: -0.1rem;
-  left: 0.02rem;
-  padding: 0 0.1rem;
-  min-height: 0.3rem;
-  border-radius: 0.15rem;
+  top: -0.15rem;
+  left: 0.03rem;
+  padding: 0 0.15rem;
+  min-height: 0.45rem;
+  border-radius: 0.225rem;
   display: inline-flex;
   align-items: center;
-  font-size: 0.2rem;
+  font-size: 0.24738rem;
   font-weight: 600;
   color: #fff;
-  box-shadow: 0 0.02rem 0.06rem rgba(0, 0, 0, 0.25);
+  box-shadow: 0 0.03rem 0.09rem rgba(0, 0, 0, 0.25);
 }
 
 .role-badge--admin {
@@ -1246,19 +1247,19 @@ function roleClass(role: MemberRole): string {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.16rem;
+  gap: 0.24rem;
 }
 
 .member-left {
   display: inline-flex;
   align-items: center;
-  gap: 0.12rem;
+  gap: 0.32095rem;
   min-width: 0;
 }
 
 .member-avatar {
-  width: 0.78rem;
-  height: 0.78rem;
+  width: 1.03614rem;
+  height: 1.03614rem;
   border-radius: 999px;
   object-fit: cover;
 }
@@ -1266,13 +1267,13 @@ function roleClass(role: MemberRole): string {
 .member-base {
   display: flex;
   flex-direction: column;
-  gap: 0.08rem;
+  gap: 0.25338rem;
   min-width: 0;
 }
 
 .member-name {
   margin: 0;
-  font-size: 0.3rem;
+  font-size: 0.30522rem;
   line-height: 1;
   font-weight: 700;
   color: #fff;
@@ -1282,8 +1283,8 @@ function roleClass(role: MemberRole): string {
   margin: 0;
   display: inline-flex;
   align-items: center;
-  gap: 0.05rem;
-  font-size: 0.22rem;
+  gap: 0.06552rem;
+  font-size: 0.25661rem;
   line-height: 1;
   color: rgba(249, 249, 249, 0.92);
 }
@@ -1292,10 +1293,10 @@ function roleClass(role: MemberRole): string {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 0.26rem;
-  height: 0.18rem;
-  border-radius: 0.05rem;
-  font-size: 0.14rem;
+  min-width: 0.50208rem;
+  height: 0.30976rem;
+  border-radius: 0.075rem;
+  font-size: 0.21595rem;
   background: rgba(255, 255, 255, 0.3);
   color: #fff;
 }
@@ -1304,28 +1305,28 @@ function roleClass(role: MemberRole): string {
   margin: 0;
   display: inline-flex;
   align-items: center;
-  gap: 0.07rem;
-  font-size: 0.3rem;
+  gap: 0.16851rem;
+  font-size: 0.30522rem;
   line-height: 1;
   font-weight: 700;
   color: #fff;
 }
 
 .member-diamond img {
-  width: 0.3rem;
-  height: 0.24rem;
+  width: 0.53333rem;
+  height: 0.42786rem;
   object-fit: contain;
 }
 
 .member-data-strip {
-  margin-top: 0.08rem;
-  padding: 0.08rem 0.2rem;
-  border-radius: 0.5rem;
+  margin-top: 0.16064rem;
+  padding: 0.11824rem 0.58277rem;
+  border-radius: 1.44001rem;
   background: rgba(34, 34, 34, 0.62);
-  backdrop-filter: blur(0.3rem);
+  backdrop-filter: blur(1.60643rem);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.14rem;
+  gap: 0.21rem;
   cursor: pointer;
 }
 
@@ -1342,27 +1343,27 @@ function roleClass(role: MemberRole): string {
   bottom: 0;
   transform: translateX(-50%);
   width: min(100%, 10rem);
-  border-radius: 0.844rem 0.844rem 0 0;
-  padding: 0.643rem 0.532rem calc(0.547rem + env(safe-area-inset-bottom));
+  border-radius: 0.84459rem 0.84459rem 0 0;
+  padding: 0.64257rem 0.53209rem calc(0.5472rem + env(safe-area-inset-bottom));
   background: linear-gradient(90deg, rgba(0, 8, 20, 0.95) 0%, rgba(5, 5, 5, 0.95) 52%, rgba(0, 8, 20, 0.95) 100%);
   box-shadow: 0 -0.16rem 0.53rem rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
-  gap: 0.434rem;
+  gap: 0.43373rem;
   z-index: 41;
 }
 
 .fund-tabs {
   display: flex;
   justify-content: center;
-  gap: 1.285rem;
+  gap: 1.28514rem;
 }
 
 .fund-tab {
   border: 0;
   background: transparent;
   color: rgba(249, 249, 249, 0.7);
-  font-size: 0.379rem;
+  font-size: 0.37951rem;
   padding: 0;
   line-height: 0.95;
 }
@@ -1374,13 +1375,13 @@ function roleClass(role: MemberRole): string {
 
 .fund-action-switch {
   align-self: center;
-  width: 8.088rem;
-  min-height: 1.357rem;
+  width: 8.08835rem;
+  min-height: 1.35743rem;
   border-radius: 4.223rem;
   background: rgba(255, 255, 255, 0.2);
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  padding: 0.095rem;
+  padding: 0.09521rem;
 }
 
 .action-tab {
@@ -1388,7 +1389,7 @@ function roleClass(role: MemberRole): string {
   border-radius: 4.223rem;
   background: transparent;
   color: #f9f9f9;
-  font-size: 0.405rem;
+  font-size: 0.40541rem;
 }
 
 .action-tab--active {
@@ -1486,18 +1487,18 @@ function roleClass(role: MemberRole): string {
 }
 
 .quota-editor {
-  border-radius: 0.44rem;
-  padding: 0.28rem;
+  border-radius: 0.44053rem;
+  padding: 0.56rem;
   background: rgba(255, 255, 255, 0.06);
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.33467rem;
 }
 
 .quota-mode-row {
   display: flex;
   align-items: center;
-  gap: 0.28rem;
+  gap: 0.26667rem;
 }
 
 .quota-mode {
@@ -1529,10 +1530,10 @@ function roleClass(role: MemberRole): string {
 }
 
 .quota-input-pill {
-  min-height: 1.027rem;
-  border-radius: 0.685rem;
+  min-height: 0.88rem;
+  border-radius: 0.68472rem;
   background: rgba(0, 0, 0, 0.2);
-  padding: 0 0.347rem;
+  padding: 0.24rem 0.34667rem;
   display: flex;
   align-items: center;
   color: rgba(249, 249, 249, 0.95);
@@ -1542,22 +1543,22 @@ function roleClass(role: MemberRole): string {
 .fund-keypad {
   display: flex;
   flex-direction: column;
-  gap: 0.206rem;
+  gap: 0.20587rem;
 }
 
 .fund-keypad-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.153rem;
+  gap: 0.15261rem;
 }
 
 .keypad-btn {
-  min-height: 1.354rem;
-  border: 0.019rem solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.377rem;
+  min-height: 1.35393rem;
+  border: 0.01907rem solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.37751rem;
   background: rgba(255, 255, 255, 0.14);
   color: #fff;
-  font-size: 0.61rem;
+  font-size: 0.61044rem;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
@@ -1570,7 +1571,7 @@ function roleClass(role: MemberRole): string {
 }
 
 .keypad-btn--del {
-  font-size: 0.533rem;
+  font-size: 0.61044rem;
 }
 
 .del-icon {
@@ -1609,13 +1610,13 @@ function roleClass(role: MemberRole): string {
 .sheet-footer-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.253rem;
+  gap: 0.25291rem;
 }
 
 .sheet-footer-btn {
-  min-height: 1.436rem;
+  min-height: 1.4372rem;
   border: 0;
-  border-radius: 1.056rem;
+  border-radius: 1.05761rem;
   background: rgba(0, 0, 0, 0.35);
   color: #fff;
   font-size: 0.4rem;
@@ -1629,14 +1630,14 @@ function roleClass(role: MemberRole): string {
 .data-item {
   display: flex;
   flex-direction: column;
-  gap: 0.05rem;
+  gap: 0.075rem;
   min-width: 0;
 }
 
 .data-label,
 .data-value {
   margin: 0;
-  font-size: 0.2rem;
+  font-size: 0.25703rem;
   line-height: 1.1;
   color: #fff;
 }
@@ -1645,12 +1646,12 @@ function roleClass(role: MemberRole): string {
   opacity: 0.7;
   display: inline-flex;
   align-items: center;
-  gap: 0.03rem;
+  gap: 0.045rem;
 }
 
 .data-label img {
-  width: 0.16rem;
-  height: 0.16rem;
+  width: 0.24rem;
+  height: 0.24rem;
   object-fit: contain;
 }
 
@@ -1661,8 +1662,8 @@ function roleClass(role: MemberRole): string {
 
 .data-label--agent::before {
   content: '';
-  width: 0.13rem;
-  height: 0.13rem;
+  width: 0.195rem;
+  height: 0.195rem;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.85);
   flex: 0 0 auto;
@@ -1670,31 +1671,31 @@ function roleClass(role: MemberRole): string {
 
 @media (max-width: 340px) {
   .back-title {
-    font-size: 0.34rem;
+    font-size: 0.51rem;
   }
 
   .member-total {
-    font-size: 0.24rem;
+    font-size: 0.32013rem;
   }
 
   .tab-btn {
-    font-size: 0.27rem;
+    font-size: 0.405rem;
   }
 
   .summary-value {
-    font-size: 0.3rem;
+    font-size: 0.34504rem;
   }
 
   .member-name {
-    font-size: 0.28rem;
-  }
-
-  .record-stat-value {
     font-size: 0.42rem;
   }
 
+  .record-stat-value {
+    font-size: 0.63rem;
+  }
+
   .record-main-grid p {
-    font-size: 0.18rem;
+    font-size: 0.27rem;
   }
 }
 </style>

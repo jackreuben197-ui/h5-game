@@ -24,19 +24,20 @@ const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
 
 interface BoxItem {
+  key: string
   icon: string
   text: string
   route: string
 }
 
 const boxList = ref<BoxItem[]>([
-  { icon: iconBoxClubT, text: '系统消息', route: '/mine/settings' },
-  { icon: iconBoxFriendT, text: '钱包消息', route: '/mine/settings' },
-  { icon: iconBoxDiamond, text: '钱包消息', route: '/mine/settings' },
-  { icon: iconBoxSave, text: '钱包消息', route: '/mine/settings' },
-  { icon: iconBoxBag, text: '背包消息', route: '/mine/settings' },
-  { icon: iconBoxComment, text: '俱乐部信息', route: '/mine/settings' },
-  { icon: iconBoxSetting, text: '联盟信息', route: '/mine/settings' },
+  { key: 'club-career', icon: iconBoxClubT, text: '俱乐部生涯', route: '/mine/club-career' },
+  { key: 'friends-career', icon: iconBoxFriendT, text: '朋友桌生涯', route: '/mine/friends-career' },
+  { key: 'my-bill', icon: iconBoxDiamond, text: '我的账单', route: '/mine/bill' },
+  { key: 'hand-history', icon: iconBoxSave, text: '牌谱收藏', route: '/mine/hand-collection' },
+  { key: 'bag', icon: iconBoxBag, text: '我的背包', route: '/mine/backpack' },
+  { key: 'message-board', icon: iconBoxComment, text: '留言板', route: '/mine/message-board' },
+  { key: 'settings', icon: iconBoxSetting, text: '设置', route: '/mine/settings' },
 ])
 
 
@@ -116,7 +117,7 @@ async function onLogout(): Promise<void> {
     <div class="box-gallery">
       <div
         v-for="box in boxList"
-        :key="box.text"
+        :key="box.key"
         class="box-item"
         @click="goToSettings(box.route)"
       >

@@ -1,36 +1,107 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
+import { useGameStore } from '@/stores/game'
+import { useUserInfoStore } from '@/stores/userInfo'
 
 const router = useRouter()
-const route = useRoute()
 
-const tab = computed<'phone' | 'email'>(() => (route.query.tab === 'email' ? 'email' : 'phone'))
-const isPhone = computed(() => tab.value === 'phone')
+const gameStore = useGameStore()
+const userInfoStore = useUserInfoStore()
 
-const phone = ref('')
-const email = ref('')
+function readFirstString(source: Record<string, unknown>, keys: string[]): string {
+  for (const key of keys) {
+    const value = source[key]
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim()
+    }
+  }
+  return ''
+}
+
+const userRecord = computed<Record<string, unknown>>(() => {
+  const user = userInfoStore.userInfo?.user
+  return user && typeof user === 'object' ? (user as Record<string, unknown>) : {}
+})
+
+const rootRecord = computed<Record<string, unknown>>(() => {
+  const root = userInfoStore.userInfo
+  return root && typeof root === 'object' ? (root as Record<string, unknown>) : {}
+})
+
+const phone = computed(() => {
+  const fromUser = readFirstString(userRecord.value, [
+    'phone',
+    'mobile',
+    'mobile_phone',
+    'phone_number',
+    'bind_phone',
+    'tel',
+  ])
+  if (fromUser) {
+    return fromUser
+  }
+
+  const fromRoot = readFirstString(rootRecord.value, ['phone', 'mobile', 'bind_phone'])
+  if (fromRoot) {
+    return fromRoot
+  }
+
+  const account = gameStore.loginAccount.trim()
+  if (account && !account.includes('@')) {
+    return account
+  }
+
+  return ''
+})
+
+const email = computed(() => {
+  const fromUser = readFirstString(userRecord.value, ['email', 'mail', 'bind_email', 'email_address'])
+  if (fromUser) {
+    return fromUser
+  }
+
+  const fromRoot = readFirstString(rootRecord.value, ['email', 'mail', 'bind_email'])
+  if (fromRoot) {
+    return fromRoot
+  }
+
+  const account = gameStore.loginAccount.trim()
+  if (account.includes('@')) {
+    return account
+  }
+
+  return ''
+})
+
+const isPhone = computed(() => Boolean(phone.value))
+const isEmail = computed(() => !phone.value && Boolean(email.value))
+const firstContactPlaceholder = computed(() => (isPhone.value ? '0000000000' : 'Enter your Mail Id'))
+const firstContactValue = computed(() => phone.value)
+const pageTitle = computed(() => (isPhone.value ? 'Security code verification' : '注销账户'))
+const otpButtonText = computed(() => (otpCountdown.value > 0 ? `${otpCountdown.value}s` : 'GET OTP'))
+const zoneCode = computed(() => {
+  const fromUser = readFirstString(userRecord.value, ['area', 'area_code', 'country_code'])
+  const pure = fromUser.replace(/[^\d]/g, '')
+  return pure || '11'
+})
+
 const otp = ref('')
-const password = ref('')
-const showPassword = ref(false)
+const emailDraft = ref('')
 const otpCountdown = ref(0)
 const showConfirm = ref(false)
+
+const emailFieldValue = computed({
+  get: () => email.value || emailDraft.value,
+  set: (value: string) => {
+    emailDraft.value = value.trim()
+  },
+})
 
 let otpTimer: number | null = null
 
 function goBack(): void {
   router.back()
-}
-
-function switchTab(nextTab: 'phone' | 'email'): void {
-  if (nextTab === tab.value) {
-    return
-  }
-
-  void router.replace({
-    path: '/mine/settings/cancel-account',
-    query: { tab: nextTab },
-  })
 }
 
 function requestOtp(): void {
@@ -80,61 +151,53 @@ onBeforeUnmount(() => {
   <div class="cancel-account-page">
     <header class="page-header">
       <button class="back-btn" type="button" @click="goBack">‹</button>
-      <h1>注销账号</h1>
+      <h1>{{ pageTitle }}</h1>
       <div class="header-placeholder" />
     </header>
 
-    <section class="tab-switch">
-      <button class="tab-btn" :class="{ active: isPhone }" type="button" @click="switchTab('phone')">手机</button>
-      <button class="tab-btn" :class="{ active: !isPhone }" type="button" @click="switchTab('email')">邮箱</button>
-    </section>
-
     <section class="form-stack">
+      <div class="form-label">Passcode</div>
       <div class="form-row">
         <span class="row-icon" :class="isPhone ? 'icon-phone' : 'icon-mail'" />
         <div class="row-main">
           <template v-if="isPhone">
-            <span class="prefix">+11</span>
+            <span class="prefix">+{{ zoneCode }}</span>
             <input
-              v-model.trim="phone"
+              :value="firstContactValue"
               class="input-field"
               type="tel"
               inputmode="numeric"
-              placeholder="请输入手机号码"
+              :placeholder="firstContactPlaceholder"
+              readonly
             />
           </template>
           <template v-else>
             <input
-              v-model.trim="email"
+              v-model.trim="emailFieldValue"
               class="input-field"
               type="email"
               inputmode="email"
-              placeholder="请输入邮箱"
+              :placeholder="firstContactPlaceholder"
+              :readonly="isEmail"
             />
           </template>
           <button class="otp-btn" :class="{ countdown: otpCountdown > 0 }" type="button" @click="requestOtp">
-            {{ otpCountdown > 0 ? `${otpCountdown}s` : 'GET OTP' }}
+            {{ otpButtonText }}
           </button>
         </div>
       </div>
 
+      <div class="form-label">Passcode</div>
       <div class="form-row">
         <span class="row-icon icon-lock" />
         <div class="row-main single">
-          <input v-model.trim="otp" class="input-field" type="text" inputmode="numeric" placeholder="输入验证码" />
-        </div>
-      </div>
-
-      <div class="form-row">
-        <span class="row-icon icon-key" />
-        <div class="row-main single">
           <input
-            v-model="password"
+            v-model.trim="otp"
             class="input-field"
-            :type="showPassword ? 'text' : 'password'"
-            placeholder="输入登录密码"
+            type="text"
+            inputmode="numeric"
+            placeholder="Enter Passcode"
           />
-          <button class="eye" type="button" @click="showPassword = !showPassword" />
         </div>
       </div>
     </section>
@@ -157,7 +220,9 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .cancel-account-page {
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.48rem) 0.4533rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  padding: calc(env(safe-area-inset-top) + 0.48rem) 0.4533rem calc(env(safe-area-inset-bottom) + 1.0667rem);
   color: #f9f9f9;
   background:
     radial-gradient(60% 42% at 20% 10%, rgba(226, 163, 133, 0.62) 0%, rgba(226, 163, 133, 0) 100%),
@@ -178,6 +243,7 @@ onBeforeUnmount(() => {
     font-weight: 400;
     line-height: 1.2;
     color: #fff;
+    white-space: nowrap;
   }
 }
 
@@ -195,43 +261,26 @@ onBeforeUnmount(() => {
   line-height: 1;
 }
 
-.tab-switch {
-  margin-top: 0.62rem;
-  display: flex;
-  border-radius: 0.8rem;
-  background: rgba(255, 255, 255, 0.17);
-  overflow: hidden;
-  height: 1.4443rem;
-}
-
-.tab-btn {
-  flex: 1;
-  border: 0;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.84);
-  font-family: var(--font-family-sans);
-  font-size: 0.4152rem;
-}
-
-.tab-btn.active {
-  color: #fff;
-  font-weight: 600;
-  border: 0.0133rem solid rgba(255, 255, 255, 0.7);
-  border-radius: 1.3844rem;
-  background: linear-gradient(158deg, #05e7ae 7.55%, #027a5c 71.92%);
-}
-
 .form-stack {
-  margin-top: 0.2933rem;
+  margin-top: 0.3552rem;
   display: flex;
   flex-direction: column;
-  gap: 0.2933rem;
+  gap: 0.2133rem;
+}
+
+.form-label {
+  font-family: var(--font-family-sans);
+  font-size: 0.36rem;
+  line-height: 0.48rem;
+  color: rgba(255, 255, 255, 0.92);
+  margin-top: 0.1333rem;
 }
 
 .form-row {
   height: 1.4376rem;
   border-radius: 1.6913rem;
-  background: rgba(0, 0, 0, 0.22);
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(0.5566rem);
   display: flex;
   align-items: center;
   padding-left: 0.4144rem;
@@ -295,30 +344,6 @@ onBeforeUnmount(() => {
   border-radius: 0.2rem 0.2rem 0 0;
 }
 
-.icon-key::before,
-.icon-key::after {
-  content: '';
-  position: absolute;
-}
-
-.icon-key::before {
-  width: 0.2rem;
-  height: 0.2rem;
-  border: 0.04rem solid rgba(255, 255, 255, 0.95);
-  border-radius: 50%;
-  left: 0.02rem;
-  top: 0.12rem;
-}
-
-.icon-key::after {
-  left: 0.22rem;
-  right: 0.04rem;
-  top: 0.19rem;
-  height: 0.06rem;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 0.04rem;
-}
-
 .row-main {
   height: 100%;
   flex: 1;
@@ -331,7 +356,7 @@ onBeforeUnmount(() => {
 }
 
 .row-main.single {
-  justify-content: space-between;
+  justify-content: flex-start;
   padding-right: 0.3733rem;
 }
 
@@ -385,24 +410,9 @@ onBeforeUnmount(() => {
   color: #ff132b;
 }
 
-.eye {
-  width: 0.5669rem;
-  height: 0.5443rem;
-  border: 0;
-  background: transparent;
-  position: relative;
-}
-
-.eye::before {
-  content: '';
-  position: absolute;
-  inset: 0.11rem 0.08rem;
-  border: 0.04rem solid rgba(0, 0, 0, 0.54);
-  border-radius: 50%;
-}
-
 .submit-btn {
-  margin-top: 0.48rem;
+  margin-top: auto;
+  min-height: 1.4376rem;
   width: 100%;
   height: 1.4376rem;
   border: 0;

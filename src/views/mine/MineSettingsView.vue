@@ -47,7 +47,7 @@ function onRowClick(item: SettingItem): void {
   }
 
   if (item.key === 'cancel') {
-    void router.push('/mine/settings/cancel-account?tab=phone')
+    void router.push('/mine/settings/cancel-account')
     return
   }
 

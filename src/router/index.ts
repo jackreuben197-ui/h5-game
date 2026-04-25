@@ -216,9 +216,57 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/mine/club-data',
+      name: 'mine-club-data',
+      component: () => import('@/views/mine/MineClubDataView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/mine/club-cowboy',
+      name: 'mine-club-cowboy',
+      component: () => import('@/views/mine/MineClubCowboyView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/mine/club-cowboy/detail',
+      name: 'mine-club-cowboy-detail',
+      component: () => import('@/views/mine/MineClubCowboyDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/mine/club-mahjong',
+      name: 'mine-club-mahjong',
+      component: () => import('@/views/mine/MineClubMahjongView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/mine/club-mahjong/detail',
+      name: 'mine-club-mahjong-detail',
+      component: () => import('@/views/mine/MineClubMahjongDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/mine/club-mahjong/hand',
+      name: 'mine-club-mahjong-hand',
+      component: () => import('@/views/mine/MineClubMahjongHandView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/mine/friends-career',
       name: 'mine-friends-career',
       component: () => import('@/views/mine/MineFriendsCareerView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/mine/friends-data',
+      name: 'mine-friends-data',
+      component: () => import('@/views/mine/MineFriendsDataView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/mine/friends-record',
+      name: 'mine-friends-record',
+      component: () => import('@/views/mine/MineFriendsRecordView.vue'),
       meta: { requiresAuth: true },
     },
     {

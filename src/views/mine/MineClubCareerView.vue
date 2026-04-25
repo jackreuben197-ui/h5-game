@@ -42,10 +42,10 @@ const metrics: CareerMetric[] = [
 const menuList: CareerMenuItem[] = [
   { key: 'record', label: '战绩', icon: iconBoxClubT, route: '/mine/club-record' },
   { key: 'mtt', label: 'MTT', icon: iconBoxDiamond, route: '/mine/club-mtt' },
-  { key: 'cowboy', label: 'Cowboy', icon: iconBoxFriendT },
-  { key: 'mahjong', label: 'Mahjong', icon: iconBoxBag },
+  { key: 'cowboy', label: 'Cowboy', icon: iconBoxFriendT, route: '/mine/club-cowboy' },
+  { key: 'mahjong', label: 'Mahjong', icon: iconBoxBag, route: '/mine/club-mahjong' },
   { key: 'mahjong-mtt', label: '麻将MTT战绩', icon: iconBoxSave },
-  { key: 'data', label: '数据', icon: iconBoxSetting },
+  { key: 'data', label: '数据', icon: iconBoxSetting, route: '/mine/club-data' },
 ]
 
 const currentClubText = computed(() => selectedClub.value)

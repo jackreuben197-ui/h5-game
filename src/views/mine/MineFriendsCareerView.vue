@@ -13,6 +13,7 @@ interface DataRow {
 interface MenuItem {
   key: string
   text: string
+  route?: string
 }
 
 const rows: DataRow[] = [
@@ -23,8 +24,8 @@ const rows: DataRow[] = [
 ]
 
 const menuList: MenuItem[] = [
-  { key: 'data', text: '数据' },
-  { key: 'record', text: '战绩' },
+  { key: 'data', text: '数据', route: '/mine/friends-data' },
+  { key: 'record', text: '战绩', route: '/mine/friends-record' },
   { key: 'mahjong', text: 'Mahjong' },
   { key: 'sng', text: 'SNG战绩' },
   { key: 'mahjong-mtt', text: '麻将MTT战绩' },
@@ -34,6 +35,13 @@ const title = ref('数据')
 
 function goBack(): void {
   void router.push('/mine')
+}
+
+function handleMenuClick(item: MenuItem): void {
+  if (!item.route) {
+    return
+  }
+  void router.push(item.route)
 }
 </script>
 
@@ -59,7 +67,7 @@ function goBack(): void {
     </section>
 
     <section class="glass-card list-card">
-      <button v-for="item in menuList" :key="item.key" type="button" class="line-item">
+      <button v-for="item in menuList" :key="item.key" type="button" class="line-item" @click="handleMenuClick(item)">
         <span>{{ item.text }}</span>
         <span class="arrow">›</span>
       </button>

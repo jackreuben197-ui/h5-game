@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -37,8 +36,33 @@ function goBack(): void {
 }
 
 function onRowClick(item: SettingItem): void {
-  if (item.key === 'logout') {
-    showSuccessToast('请在我的页面点击退出登录')
+  if (item.key === 'language') {
+    void router.push('/mine/settings/language')
+    return
+  }
+
+  if (item.key === 'account') {
+    void router.push('/mine/settings/account')
+    return
+  }
+
+  if (item.key === 'cancel') {
+    void router.push('/mine/settings/cancel-account?tab=phone')
+    return
+  }
+
+  if (item.key === 'about') {
+    void router.push('/mine/settings/doc/about')
+    return
+  }
+
+  if (item.key === 'agreement') {
+    void router.push('/mine/settings/doc/agreement')
+    return
+  }
+
+  if (item.key === 'privacy') {
+    void router.push('/mine/settings/doc/privacy')
   }
 }
 </script>

@@ -45,6 +45,14 @@ function goToSettings(path: string): void {
   void router.push(path)
 }
 
+function goToProfileEdit(): void {
+  void router.push('/mine/profile/edit')
+}
+
+function goToMineShop(): void {
+  void router.push('/mine/shop')
+}
+
 const displayUser = computed(() => {
   return {
     nickname: userInfoStore.userInfo?.user.nickname || gameStore.loginNickname || '-',
@@ -82,11 +90,11 @@ async function onLogout(): Promise<void> {
       <div class="card-bg-outter">
         <div class="card-bg-innner">
           <div class="card-line1">
-            <div class="left-avatar">
+            <button class="left-avatar" type="button" @click="goToProfileEdit">
               <img :src="String(displayUser.avatar)" alt="头像" />
-            </div>
+            </button>
             <div class="right-box">
-              <div class="name">{{ displayUser.nickname }}</div>
+              <button class="name" type="button" @click="goToProfileEdit">{{ displayUser.nickname }}</button>
               <div class="idbox">
                 <div class="id-label">ID</div>
                 <div class="id-value">{{ displayUser.userID }}</div>
@@ -104,12 +112,12 @@ async function onLogout(): Promise<void> {
                 <div class="num">{{ displayUser.diamond.toLocaleString() }}</div>
               </div>
             </div>
-            <div class="button">
+            <button class="button" type="button" @click="goToMineShop">
               <div class="text">我的商城</div>
               <div class="round-icon">
                 <img :src="iconShop" alt="我的商城" />
               </div>
-            </div>
+            </button>
           </div>
         </div>
       </div>
@@ -156,6 +164,9 @@ async function onLogout(): Promise<void> {
             height: 2.32rem;
             border-radius: 50%;
             overflow: hidden;
+            border: 0;
+            background: transparent;
+            padding: 0;
             img {
               width: 100%;
               height: 100%;
@@ -167,6 +178,11 @@ async function onLogout(): Promise<void> {
             justify-content: center;
             gap: 0.3rem;
             .name {
+              border: 0;
+              background: transparent;
+              padding: 0;
+              text-align: left;
+              color: #fff;
               margin-top:0.2rem;
               font-size: 0.6rem;
               line-height: 100%;
@@ -219,6 +235,8 @@ async function onLogout(): Promise<void> {
             }
           }
           .button {
+            border: 0;
+            cursor: pointer;
             .round-icon {
               img {
                 width: 0.32rem;

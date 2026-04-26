@@ -59,7 +59,6 @@ function handleMenuClick(item: MenuItem): void {
           <TopActionButton
             name="数据统计"
             icon-alt="wallet"
-            text-style="justify-content:center"
           />
         </div>
       </template>

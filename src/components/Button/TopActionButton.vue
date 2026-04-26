@@ -3,10 +3,9 @@ interface Props {
   name: string
   icon?: string
   iconAlt?: string
-  textStyle?: string
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 const emit = defineEmits<{
   click: [event: MouseEvent]
@@ -20,19 +19,18 @@ function handleClick(event: MouseEvent): void {
 
 <template>
   <button
-    :style="textStyle"
-    class="action-btn"
+    :class="['action-btn', { 'action-btn--with-icon': Boolean(props.icon) }]"
     type="button"
     @click="handleClick"
   >
     <span class="action-label">
-      {{ name }}
+      {{ props.name }}
     </span>
     <img
-      v-if="icon"
+      v-if="props.icon"
       class="action-icon"
-      :src="icon"
-      :alt="iconAlt || 'icon'"
+      :src="props.icon"
+      :alt="props.iconAlt || 'icon'"
     />
   </button>
 </template>
@@ -48,7 +46,7 @@ function handleClick(event: MouseEvent): void {
   backdrop-filter: blur(0.35rem) saturate(1.02);
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   font-size: 0.225rem;
   border: none;
   line-height: 0.2rem;
@@ -69,6 +67,9 @@ function handleClick(event: MouseEvent): void {
   inset  0    0   2px      rgba(0, 0, 0, 0.80);
 }
 
+.action-btn--with-icon {
+  justify-content: space-between;
+}
 
 .action-icon {
   width: 0.399rem;

@@ -18,6 +18,7 @@ declare module 'vue' {
     MttCard: typeof import('./src/components/ListItem/MttCard.vue')['default']
     PokerTableCard: typeof import('./src/components/ListItem/PokerTableCard.vue')['default']
     PokerTableGroupCard: typeof import('./src/components/ListItem/PokerTableGroupCard.vue')['default']
+    PrimaryButton: typeof import('./src/components/Button/PrimaryButton.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     TopActionButton: typeof import('./src/components/Button/TopActionButton.vue')['default']

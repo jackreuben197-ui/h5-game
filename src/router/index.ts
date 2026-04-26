@@ -368,7 +368,13 @@ const router = createRouter({
     {
       path: '/mttList',
       name: 'mtt-list',
-      component: () => import('@/views/home/mttList.vue'),
+      component: () => import('@/views/mtt/mttList.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/mtt/detail',
+      name: 'mtt-detail',
+      component: () => import('@/views/mtt/MttDetailView.vue'),
       meta: { requiresAuth: true },
     },
   ],

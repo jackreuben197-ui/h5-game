@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import type { MttItem, MttActionType } from '@/components/ListItem/MttCard.vue'
 import type { MttIdInfoRecord, MttListRecord, MttSeriesInfoRecord } from '@/api/models/mtt'
 import type { RoomRecord } from '@/api/models/room'
@@ -18,6 +19,7 @@ import {
   resolveTemplateTextByKey,
 } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, formatTodayAwareTimeLabel, toTimestampMs } from '@/utils/time'
+
 type MttTabName = 'all' | 'poker' | 'mahjong'
 type MttCategory = 'poker' | 'mahjong' | 'unknown'
 type MttStage = 'upcoming' | 'registering' | 'late' | 'running' | 'finished'
@@ -156,8 +158,9 @@ function handleCardAction(item: MttItem): void {
   console.log('[MTT] action:', item)
 }
 
+const router = useRouter()
 function handleCardClick(item: MttItem): void {
-  console.log('[MTT] click:', item)
+  router.push({ name: 'mtt-detail', params: { item: item as any } })
 }
 
 // 组头“查看全部/收起”。

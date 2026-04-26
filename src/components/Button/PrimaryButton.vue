@@ -1,0 +1,89 @@
+<script setup lang="ts">
+interface Props {
+  text: string
+  disabled?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  disabled: false,
+})
+
+const emit = defineEmits<{
+  click: [event: MouseEvent]
+}>()
+
+function handleClick(event: MouseEvent): void {
+  if (props.disabled) return
+  emit('click', event)
+}
+</script>
+
+<template>
+  <button
+    :class="['primary-btn', { 'primary-btn--disabled': props.disabled }]"
+    type="button"
+    :disabled="props.disabled"
+    @click="handleClick"
+  >
+    <span class="primary-btn__text">{{ props.text }}</span>
+  </button>
+</template>
+
+<style scoped lang="scss">
+.primary-btn {
+  width: 100%;
+  height: 1.47rem;
+  border: none;
+  border-radius: 1.08rem;
+  background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+  color: #fff;
+  font-size: 0.5rem;
+  font-weight: 500;
+  font-family: 'HONOR Sans CN', sans-serif;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* 内嵌高光边框效果 */
+  box-shadow:
+    inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
+    inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.34px;
+    background: linear-gradient(
+      135deg,
+      rgba(242, 242, 242, 0.8) 0%,
+      rgba(255, 255, 255, 0) 44.5%,
+      rgba(255, 255, 255, 0.5) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  &:active:not(:disabled) {
+    opacity: 0.92;
+    transform: scale(0.985);
+  }
+}
+
+.primary-btn--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.primary-btn__text {
+  position: relative;
+  z-index: 1;
+}
+</style>

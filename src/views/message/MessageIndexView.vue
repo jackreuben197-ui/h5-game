@@ -7,7 +7,7 @@ import iconAdd from '@/assets/icons/icon_add.svg'
 import iconMessages from '@/assets/icons/icon_messages.png'
 import iconDing from '@/assets/icons/icon_ding.png'
 import iconPoker from '@/assets/icons/game_zone_poker_mini.png'
-
+import { t } from '@/i18n'
 import iconBoxSystem from '@/assets/icons/icon_box_system.png'
 import iconBoxWallet from '@/assets/icons/icon_box_wallet.png'
 import iconBoxBag from '@/assets/icons/icon_box_bag.png'
@@ -23,11 +23,11 @@ interface BoxItem {
 const userInfoStore = useUserInfoStore()
 
 const boxList = ref<BoxItem[]>([
-  { icon: iconBoxSystem, text: '系统消息', type: 'system' },
-  { icon: iconBoxWallet, text: '钱包消息', type: 'other' },
-  { icon: iconBoxBag, text: '背包消息', type: 'other' },
-  { icon: iconBoxClub, text: '俱乐部信息', type: 'other' },
-  { icon: iconBoxTribe, text: '联盟信息', type: 'other' },
+  { icon: iconBoxSystem, text: t('Msg3'), type: 'system' },
+  { icon: iconBoxWallet, text: t('Msg4'), type: 'other' },
+  { icon: iconBoxBag, text: t('Msg6'), type: 'other' },
+  { icon: iconBoxClub, text: t('Msg1'), type: 'other' },
+  { icon: iconBoxTribe, text: t('Msg2'), type: 'other' },
 ])
 
 const displayUser = computed(() => {
@@ -56,7 +56,7 @@ function goToMessagePage(type: 'system' | 'credit' | 'uc' | 'other', title: stri
 <template>
   <div class="message-page">
     <div class="title-bar">
-      <div class="title">消息</div>
+      <div class="title">{{ t('UIMine_MsgSystemContent') }}</div>
       <div class="currency-info">
         <div class="icon-diamond">
           <img :src="iconDiamond" alt="钻石" />
@@ -79,13 +79,13 @@ function goToMessagePage(type: 'system' | 'credit' | 'uc' | 'other', title: stri
           </div>
           <div class="card-line2">
             <button class="button" type="button" @click="goToMessagePage('credit', '买入申请')">
-              <div class="text">信用额度申请</div>
+              <div class="text">{{ t('PageMessageApplyForCreditLimit') }}</div>
               <div class="round-icon">
                 <img :src="iconPoker" alt="申请" />
               </div>
             </button>
             <button class="button" type="button" @click="goToMessagePage('uc', 'UC申请')">
-              <div class="text">联盟币申请</div>
+              <div class="text">{{ t('PageMessageApplyForUC') }}</div>
               <div class="round-icon num">16</div>
             </button>
           </div>

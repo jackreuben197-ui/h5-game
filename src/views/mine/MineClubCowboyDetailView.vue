@@ -1,6 +1,11 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import iconTime from '@/assets/icons/icon_time.png'
+
+const title = computed(() => '牛仔战绩')
 
 interface CowboyRecordItem {
   id: string
@@ -12,6 +17,11 @@ interface CowboyRecordItem {
 }
 
 const router = useRouter()
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 
 const records: CowboyRecordItem[] = [
   { id: '1', name: 'Player Name', uid: '11440454', time: '19/03 12:00', amount: '+123,456', positive: true },
@@ -30,80 +40,54 @@ function goBack(): void {
 </script>
 
 <template>
-  <div class="cowboy-page">
-    <header class="page-head">
-      <button class="back-btn" type="button" @click="goBack">‹</button>
-      <h1>牛仔战绩</h1>
-      <div class="head-spacer" />
-    </header>
+  <div class="cowboy-page" :style="backgroundStyle">
+    <HeaderBack :title="title" />
 
-    <section class="list-wrap">
-      <button
-        v-for="item in records"
-        :key="item.id"
-        type="button"
-        class="record-card"
-      >
-        <div class="left">
-          <div class="avatar-wrap">
-            <span class="cowboy-hat" aria-hidden="true">⌒</span>
+    <div class="content-wrap">
+      <section class="list-wrap">
+        <button
+          v-for="item in records"
+          :key="item.id"
+          type="button"
+          class="record-card"
+        >
+          <div class="left">
+            <div class="avatar-wrap">
+              <span class="cowboy-hat" aria-hidden="true">⌒</span>
+            </div>
+            <div class="info">
+              <div class="name">{{ item.name }}</div>
+              <div class="uid">ID: {{ item.uid }}</div>
+            </div>
           </div>
-          <div class="info">
-            <div class="name">{{ item.name }}</div>
-            <div class="uid">ID: {{ item.uid }}</div>
-          </div>
-        </div>
 
-        <div class="right">
-          <div class="time-row">
-            <img :src="iconTime" alt="time" />
-            <span>{{ item.time }}</span>
+          <div class="right">
+            <div class="time-row">
+              <img :src="iconTime" alt="time" />
+              <span>{{ item.time }}</span>
+            </div>
+            <div class="amount" :class="item.positive ? 'up' : 'down'">{{ item.amount }}</div>
           </div>
-          <div class="amount" :class="item.positive ? 'up' : 'down'">{{ item.amount }}</div>
-        </div>
-      </button>
-    </section>
+        </button>
+      </section>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .cowboy-page {
+  position: relative;
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.46rem) 0.63rem 0.74rem;
+  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.74rem;
   color: #f9f9f9;
-  background:
-    radial-gradient(58% 45% at 18% 12%, rgba(232, 166, 140, 0.56) 0%, rgba(232, 166, 140, 0) 100%),
-    radial-gradient(54% 44% at 24% 83%, rgba(215, 89, 173, 0.56) 0%, rgba(215, 89, 173, 0) 100%),
-    radial-gradient(44% 38% at 86% 84%, rgba(0, 180, 215, 0.62) 0%, rgba(0, 180, 215, 0) 100%),
-    linear-gradient(162deg, #b88da6 0%, #93678f 52%, #5d3f78 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  h1 {
-    margin: 0;
-    font-size: 0.82rem;
-    line-height: 1.2;
-    font-weight: 400;
-  }
-}
-
-.back-btn {
-  width: 0.76rem;
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 0.72rem;
-  line-height: 1;
-  text-align: left;
-  padding: 0;
-}
-
-.head-spacer {
-  width: 0.76rem;
+.content-wrap {
+  position: relative;
+  padding: 0 0.49rem;
 }
 
 .list-wrap {

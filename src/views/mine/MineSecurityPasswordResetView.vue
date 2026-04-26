@@ -1,10 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
 
 type OverlayType = 'none' | 'loading' | 'error-soft' | 'error-hard'
 
 const router = useRouter()
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 const digits = ref('666666')
 const overlayType = ref<OverlayType>('none')
 const failedAttempts = ref(0)

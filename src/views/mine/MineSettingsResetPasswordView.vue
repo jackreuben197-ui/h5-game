@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
 const router = useRouter()
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 const route = useRoute()
 
 const tab = computed<'phone' | 'email'>(() => {
@@ -80,125 +87,116 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="reset-password-page">
-    <header class="page-header">
-      <button class="back-btn" type="button" @click="goBack">‹</button>
-      <h1>{{ headerTitle }}</h1>
-      <div class="header-placeholder" />
-    </header>
+  <div class="reset-password-page" :style="backgroundStyle">
+    <HeaderBack :title="headerTitle" />
 
-    <section class="tab-switch">
-      <button class="tab-btn" :class="{ active: isPhone }" type="button" @click="switchTab('phone')">手机</button>
-      <button class="tab-btn" :class="{ active: !isPhone }" type="button" @click="switchTab('email')">邮箱</button>
-    </section>
+    <div class="content-wrap">
+      <section class="tab-switch">
+        <button
+          class="tab-btn"
+          :class="{ active: isPhone }"
+          type="button"
+          @click="switchTab('phone')"
+        >
+          手机
+        </button>
+        <button
+          class="tab-btn"
+          :class="{ active: !isPhone }"
+          type="button"
+          @click="switchTab('email')"
+        >
+          邮箱
+        </button>
+      </section>
 
-    <section class="form-stack">
-      <div class="form-row" :class="formRowClass">
-        <span class="row-icon" :class="isPhone ? 'icon-phone' : 'icon-mail'" />
-        <div class="row-main">
-          <template v-if="isPhone">
-            <span class="prefix">+11</span>
+      <section class="form-stack">
+        <div class="form-row" :class="formRowClass">
+          <span class="row-icon" :class="isPhone ? 'icon-phone' : 'icon-mail'"></span>
+          <div class="row-main">
+            <template v-if="isPhone">
+              <span class="prefix">+11</span>
+              <input
+                v-model.trim="phoneNumber"
+                class="input-field"
+                type="tel"
+                inputmode="numeric"
+                placeholder="0000000000"
+              />
+            </template>
+            <template v-else>
+              <input
+                v-model.trim="email"
+                class="input-field"
+                type="email"
+                inputmode="email"
+                placeholder="电子邮箱"
+              />
+            </template>
+            <button
+              class="otp-btn"
+              :class="{ countdown: isFilledPreview }"
+              type="button"
+              @click="requestOtp"
+            >
+              {{ isFilledPreview ? `${otpCountdown}s` : 'GET OTP' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="form-row" :class="formRowClass">
+          <span class="row-icon icon-lock"></span>
+          <div class="row-main single">
             <input
-              v-model.trim="phoneNumber"
+              v-model.trim="otp"
               class="input-field"
-              type="tel"
+              type="text"
               inputmode="numeric"
-              placeholder="0000000000"
+              placeholder="输入验证码"
             />
-          </template>
-          <template v-else>
+          </div>
+        </div>
+
+        <div class="form-row" :class="formRowClass">
+          <span class="row-icon icon-key"></span>
+          <div class="row-main single">
             <input
-              v-model.trim="email"
+              v-model="password"
               class="input-field"
-              type="email"
-              inputmode="email"
-              placeholder="电子邮箱"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="输入密码"
             />
-          </template>
-          <button class="otp-btn" :class="{ countdown: isFilledPreview }" type="button" @click="requestOtp">
-            {{ isFilledPreview ? `${otpCountdown}s` : 'GET OTP' }}
-          </button>
+            <button class="eye" type="button" @click="showPassword = !showPassword"></button>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="form-row" :class="formRowClass">
-        <span class="row-icon icon-lock" />
-        <div class="row-main single">
-          <input
-            v-model.trim="otp"
-            class="input-field"
-            type="text"
-            inputmode="numeric"
-            placeholder="输入验证码"
-          />
-        </div>
-      </div>
+      <label class="policy-row">
+        <span class="policy-check" :class="{ checked: acceptedPolicy }" @click="acceptedPolicy = !acceptedPolicy"></span>
+        <span class="policy-text">
+          By Signing up, you agree to our
+          <span class="policy-link">《Terms & Privacy Policy》.</span>
+        </span>
+      </label>
 
-      <div class="form-row" :class="formRowClass">
-        <span class="row-icon icon-key" />
-        <div class="row-main single">
-          <input
-            v-model="password"
-            class="input-field"
-            :type="showPassword ? 'text' : 'password'"
-            placeholder="输入密码"
-          />
-          <button class="eye" type="button" @click="showPassword = !showPassword" />
-        </div>
-      </div>
-    </section>
-
-    <label class="policy-row">
-      <span class="policy-check" :class="{ checked: acceptedPolicy }" @click="acceptedPolicy = !acceptedPolicy" />
-      <span class="policy-text">
-        By Signing up, you agree to our
-        <span class="policy-link">《Terms & Privacy Policy》.</span>
-      </span>
-    </label>
-
-    <button class="submit-btn" type="button">{{ submitText }}</button>
+      <button class="submit-btn" type="button">{{ submitText }}</button>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .reset-password-page {
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.48rem) 0.4533rem 0.8rem;
+  padding-top: calc(env(safe-area-inset-top) + 0.48rem);
+  padding-bottom: 0.8rem;
   color: #f9f9f9;
-  background:
-    radial-gradient(60% 42% at 20% 10%, rgba(226, 163, 133, 0.62) 0%, rgba(226, 163, 133, 0) 100%),
-    radial-gradient(55% 45% at 26% 84%, rgba(206, 107, 160, 0.58) 0%, rgba(206, 107, 160, 0) 100%),
-    radial-gradient(45% 38% at 88% 84%, rgba(0, 183, 212, 0.56) 0%, rgba(0, 183, 212, 0) 100%),
-    linear-gradient(160deg, #b58eb1 0%, #8d668d 54%, #6f5988 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  h1 {
-    margin: 0;
-    font-family: var(--font-family-SF);
-    font-size: 0.6424rem;
-    font-weight: 400;
-    line-height: 1.2;
-    color: #fff;
-  }
-}
-
-.back-btn,
-.header-placeholder {
-  width: 0.72rem;
-  height: 0.72rem;
-}
-
-.back-btn {
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 0.72rem;
-  line-height: 1;
+.content-wrap {
+  padding: 0 0.4533rem;
 }
 
 .tab-switch {

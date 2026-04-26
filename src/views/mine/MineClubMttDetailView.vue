@@ -1,11 +1,20 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import iconTicket from '@/assets/icons/icon_ticket.png'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 
 const route = useRoute()
 const router = useRouter()
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
+const title = computed(() => 'MTT')
 
 interface RankPlayerV1 {
   id: string
@@ -70,143 +79,132 @@ function goBack(): void {
 </script>
 
 <template>
-  <div class="club-mtt-detail-page">
-    <header class="page-head">
-      <button class="back-btn" type="button" @click="goBack">‹</button>
-      <h1>MTT</h1>
-      <button class="head-action" type="button">筛选</button>
-    </header>
+  <div class="club-mtt-detail-page" :style="backgroundStyle">
+    <HeaderBack :title="title" />
 
-    <template v-if="variant === 'v1'">
-      <section class="glass-card top-card">
-        <div class="title-row">
-          <div>
-            <div class="title">Hand Name</div>
-            <div class="sub">ID: 11440454</div>
-          </div>
-          <div class="time">29/12 14:00</div>
-        </div>
-        <div class="metrics-row">
-          <div v-for="(item, index) in headMetrics" :key="item.label" class="metric" :class="{ split: index > 0 }">
-            <div class="label">{{ item.label }}</div>
-            <div class="value">{{ item.value }}</div>
-          </div>
-        </div>
-      </section>
-
-      <section class="list-wrap">
-        <article
-          v-for="item in rankPlayers"
-          :key="item.id"
-          class="glass-card rank-row"
-        >
-          <div class="left">
-            <div class="avatar" />
+    <div class="content-wrap">
+      <template v-if="variant === 'v1'">
+        <section class="glass-card top-card">
+          <div class="title-row">
             <div>
-              <div class="name">{{ item.name }}</div>
-              <div class="sub">ID: {{ item.uid }}</div>
+              <div class="title">Hand Name</div>
+              <div class="sub">ID: 11440454</div>
             </div>
+            <div class="time">29/12 14:00</div>
           </div>
-          <div class="right">
-            <div class="right-item">
-              <img :src="iconTicket" alt="ticket" />
-              <span>{{ item.tickets }}</span>
-            </div>
-            <span class="plus">+</span>
-            <div class="right-item">
-              <img :src="iconDiamond" alt="diamond" />
-              <span>{{ item.reward }}</span>
-            </div>
-          </div>
-        </article>
-      </section>
-    </template>
-
-    <template v-else>
-      <section class="glass-card top-card top-card--v2">
-        <div class="title-row title-row--v2">
-          <div>
-            <div class="title">Hand Name</div>
-            <div class="sub">ID: 11440454</div>
-          </div>
-          <div class="time">29/12 14:00-29/12 15:00</div>
-        </div>
-
-        <div class="metrics-wrap-v2">
-          <div class="top-metrics-v2">
-            <div v-for="(item, index) in topMetricsV2" :key="item.label" class="metric v2" :class="{ split: index > 0 }">
+          <div class="metrics-row">
+            <div
+              v-for="(item, index) in headMetrics"
+              :key="item.label"
+              class="metric"
+              :class="{ split: index > 0 }"
+            >
               <div class="label">{{ item.label }}</div>
               <div class="value">{{ item.value }}</div>
             </div>
           </div>
-          <div class="bottom-metrics-v2">
-            <div v-for="(item, index) in sideMetricsV2" :key="item.label" class="metric v2" :class="{ split: index > 0 }">
-              <div class="label">{{ item.label }}</div>
-              <div class="value">{{ item.value }}</div>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="list-wrap list-wrap--v2">
-        <article v-for="item in rankPlayersV2" :key="item.id" class="glass-card rank-row rank-row--v2">
-          <div class="left">
-            <div class="avatar" />
+        <section class="list-wrap">
+          <article
+            v-for="item in rankPlayers"
+            :key="item.id"
+            class="glass-card rank-row"
+          >
+            <div class="left">
+              <div class="avatar"></div>
+              <div>
+                <div class="name">{{ item.name }}</div>
+                <div class="sub">ID: {{ item.uid }}</div>
+              </div>
+            </div>
+            <div class="right">
+              <div class="right-item">
+                <img :src="iconTicket" alt="ticket" />
+                <span>{{ item.tickets }}</span>
+              </div>
+              <span class="plus">+</span>
+              <div class="right-item">
+                <img :src="iconDiamond" alt="diamond" />
+                <span>{{ item.reward }}</span>
+              </div>
+            </div>
+          </article>
+        </section>
+      </template>
+
+      <template v-else>
+        <section class="glass-card top-card top-card--v2">
+          <div class="title-row title-row--v2">
             <div>
-              <div class="name">{{ item.name }}</div>
-              <div class="sub">ID: {{ item.uid }}</div>
+              <div class="title">Hand Name</div>
+              <div class="sub">ID: 11440454</div>
+            </div>
+            <div class="time">29/12 14:00-29/12 15:00</div>
+          </div>
+
+          <div class="metrics-wrap-v2">
+            <div class="top-metrics-v2">
+              <div
+                v-for="(item, index) in topMetricsV2"
+                :key="item.label"
+                class="metric v2"
+                :class="{ split: index > 0 }"
+              >
+                <div class="label">{{ item.label }}</div>
+                <div class="value">{{ item.value }}</div>
+              </div>
+            </div>
+            <div class="bottom-metrics-v2">
+              <div
+                v-for="(item, index) in sideMetricsV2"
+                :key="item.label"
+                class="metric v2"
+                :class="{ split: index > 0 }"
+              >
+                <div class="label">{{ item.label }}</div>
+                <div class="value">{{ item.value }}</div>
+              </div>
             </div>
           </div>
-          <div class="right right--v2">
-            <div class="right-item right-item--inline">
-              <img :src="iconDiamond" alt="diamond" />
-              <span>{{ item.reward }}</span>
+        </section>
+
+        <section class="list-wrap list-wrap--v2">
+          <article v-for="item in rankPlayersV2" :key="item.id" class="glass-card rank-row rank-row--v2">
+            <div class="left">
+              <div class="avatar"></div>
+              <div>
+                <div class="name">{{ item.name }}</div>
+                <div class="sub">ID: {{ item.uid }}</div>
+              </div>
             </div>
-          </div>
-        </article>
-      </section>
-    </template>
+            <div class="right right--v2">
+              <div class="right-item right-item--inline">
+                <img :src="iconDiamond" alt="diamond" />
+                <span>{{ item.reward }}</span>
+              </div>
+            </div>
+          </article>
+        </section>
+      </template>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .club-mtt-detail-page {
+  position: relative;
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.46rem) 0.45rem 0.8rem;
+  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
   color: #f9f9f9;
-  background:
-    radial-gradient(60% 42% at 20% 10%, rgba(226, 163, 133, 0.6) 0%, rgba(226, 163, 133, 0) 100%),
-    radial-gradient(55% 45% at 25% 85%, rgba(206, 107, 160, 0.6) 0%, rgba(206, 107, 160, 0) 100%),
-    radial-gradient(45% 38% at 88% 84%, rgba(0, 183, 212, 0.58) 0%, rgba(0, 183, 212, 0) 100%),
-    linear-gradient(160deg, #b58eb1 0%, #8d668d 54%, #6f5988 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  h1 {
-    margin: 0;
-    font-size: 0.66rem;
-    font-weight: 500;
-  }
-}
-
-.back-btn {
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 0.72rem;
-}
-
-.head-action {
-  border: 0;
-  border-radius: 0.26rem;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-size: 0.3rem;
-  padding: 0.08rem 0.2rem;
+.content-wrap {
+  position: relative;
+  padding: 0 0.49rem;
 }
 
 .glass-card {

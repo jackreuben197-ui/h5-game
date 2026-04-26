@@ -2,13 +2,14 @@
 import { computed, ref } from 'vue'
 import { showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import LoginSession from '@/session/loginSession'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import iconAdd from '@/assets/icons/icon_add.svg'
 import iconChip from '@/assets/icons/icon_chips.png'
-
+import { t } from '@/i18n'
 import iconBoxClubT from '@/assets/icons/icon_box_club_t.png'
 import iconBoxFriendT from '@/assets/icons/icon_box_friend_t.png'
 import iconBoxDiamond from '@/assets/icons/icon_box_diamond.png'
@@ -20,6 +21,11 @@ import iconShop from '@/assets/icons/icon_shop.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 
 const router = useRouter()
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
 
@@ -31,17 +37,17 @@ interface BoxItem {
 }
 
 const boxList = ref<BoxItem[]>([
-  { key: 'club-career', icon: iconBoxClubT, text: '俱乐部生涯', route: '/mine/club-career' },
-  { key: 'friends-career', icon: iconBoxFriendT, text: '朋友桌生涯', route: '/mine/friends-career' },
-  { key: 'my-bill', icon: iconBoxDiamond, text: '我的账单', route: '/mine/bill' },
-  { key: 'hand-history', icon: iconBoxSave, text: '牌谱收藏', route: '/mine/hand-collection' },
-  { key: 'bag', icon: iconBoxBag, text: '我的背包', route: '/mine/backpack' },
-  { key: 'message-board', icon: iconBoxComment, text: '留言板', route: '/mine/message-board' },
-  { key: 'settings', icon: iconBoxSetting, text: '设置', route: '/mine/settings' },
+  { key: 'club-career', icon: iconBoxClubT, text: t('PageMineClubCareer'), route: '/mine/club-career' },
+  { key: 'friends-career', icon: iconBoxFriendT, text: t('PageMineFriendTableCareer'), route: '/mine/friends-career' },
+  { key: 'my-bill', icon: iconBoxDiamond, text: t('UIMine_Bill'), route: '/mine/bill' },
+  { key: 'hand-history', icon: iconBoxSave, text: t('UIMine_btn_paipu'), route: '/mine/hand-collection' },
+  { key: 'bag', icon: iconBoxBag, text: t('UIMine_btn_backpack'), route: '/mine/backpack' },
+  { key: 'message-board', icon: iconBoxComment, text: t('PageMineMessageBoard'), route: '/mine/message-board' },
+  { key: 'settings', icon: iconBoxSetting, text: t('UIMine_btn_setting'), route: '/mine/settings' },
 ])
 
 
-function goToSettings(path: string): void {
+function goToNextPage(path: string): void {
   void router.push(path)
 }
 
@@ -75,7 +81,7 @@ async function onLogout(): Promise<void> {
 <template>
   <div class="mine-page">
     <div class="title-bar">
-      <div class="title">钱包</div>
+      <div class="title">{{ t('UIMine_title') }}</div>
       <div class="currency-info">
         <div class="icon-diamond">
           <img :src="iconDiamond" alt="钻石" />
@@ -113,7 +119,7 @@ async function onLogout(): Promise<void> {
               </div>
             </div>
             <button class="button" type="button" @click="goToMineShop">
-              <div class="text">我的商城</div>
+              <div class="text">{{ t('UIHappyShop_ActivityShop') }}</div>
               <div class="round-icon">
                 <img :src="iconShop" alt="我的商城" />
               </div>
@@ -127,7 +133,7 @@ async function onLogout(): Promise<void> {
         v-for="box in boxList"
         :key="box.key"
         class="box-item"
-        @click="goToSettings(box.route)"
+        @click="goToNextPage(box.route)"
       >
         <div class="img">
           <img :src="box.icon" alt="消息" />

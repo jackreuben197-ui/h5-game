@@ -1,9 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 
 const router = useRouter()
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
+const title = computed(() => '我的账单')
 
 const tabs = ['UC', 'Club记分牌', '朋友桌记分牌', '钻石']
 const activeTab = ref(tabs[0])
@@ -58,99 +67,79 @@ function goBack(): void {
 </script>
 
 <template>
-  <div class="mine-glass-page bill-page">
-    <header class="page-head">
-      <button class="back-btn" type="button" @click="goBack">‹</button>
-      <h1>我的账单</h1>
-      <div class="placeholder" />
-    </header>
+  <div class="mine-glass-page bill-page" :style="backgroundStyle">
+    <HeaderBack :title="title" />
 
-    <p class="hint">只支持查询最近三个月数据</p>
+    <div class="content-wrap">
+      <p class="hint">只支持查询最近三个月数据</p>
 
-    <div class="bill-tabs">
-      <button
-        v-for="item in tabs"
-        :key="item"
-        type="button"
-        :class="['tab', { active: activeTab === item }]"
-        @click="activeTab = item"
-      >
-        {{ item }}
-      </button>
-    </div>
-
-    <section class="glass-card total-card">
-      <div class="label">UC总余额</div>
-      <div class="amount-row">
-        <img :src="iconDiamond" alt="chip" />
-        <strong>123,456,789</strong>
+      <div class="bill-tabs">
+        <button
+          v-for="item in tabs"
+          :key="item"
+          type="button"
+          :class="['tab', { active: activeTab === item }]"
+          @click="activeTab = item"
+        >
+          {{ item }}
+        </button>
       </div>
-      <button class="detail-btn" type="button">查看明细</button>
-    </section>
 
-    <section class="timeline">
-      <article v-for="(card, index) in flowCards" :key="card.id" class="timeline-item">
-        <div class="date-col">
-          <div class="date">{{ dayList[index]?.day }}</div>
-          <div class="month">{{ dayList[index]?.month }}</div>
-          <span class="dot" />
+      <section class="glass-card total-card">
+        <div class="label">UC总余额</div>
+        <div class="amount-row">
+          <img :src="iconDiamond" alt="chip" />
+          <strong>123,456,789</strong>
         </div>
+        <button class="detail-btn" type="button">查看明细</button>
+      </section>
 
-        <div class="glass-card flow-card">
-          <div class="flow-head">
-            <div>
-              <div class="title">{{ card.title }} <small>(ID: 11440454)</small></div>
-              <div class="sub">{{ card.club }}</div>
-              <div class="sub">总带入:{{ card.inAmount }}</div>
-            </div>
-            <div class="sub right">总带出: {{ card.outAmount }}</div>
+      <section class="timeline">
+        <article v-for="(card, index) in flowCards" :key="card.id" class="timeline-item">
+          <div class="date-col">
+            <div class="date">{{ dayList[index]?.day }}</div>
+            <div class="month">{{ dayList[index]?.month }}</div>
+            <span class="dot"></span>
           </div>
 
-          <div v-for="row in card.records" :key="`${card.id}-${row.time}-${row.amount}`" class="flow-row">
-            <div>
-              <div class="name">{{ row.name }}</div>
-              <div class="time">{{ row.time }}</div>
+          <div class="glass-card flow-card">
+            <div class="flow-head">
+              <div>
+                <div class="title">{{ card.title }} <small>(ID: 11440454)</small></div>
+                <div class="sub">{{ card.club }}</div>
+                <div class="sub">总带入:{{ card.inAmount }}</div>
+              </div>
+              <div class="sub right">总带出: {{ card.outAmount }}</div>
             </div>
-            <div :class="['money', { positive: row.positive }]">{{ row.amount }}</div>
+
+            <div v-for="row in card.records" :key="`${card.id}-${row.time}-${row.amount}`" class="flow-row">
+              <div>
+                <div class="name">{{ row.name }}</div>
+                <div class="time">{{ row.time }}</div>
+              </div>
+              <div :class="['money', { positive: row.positive }]">{{ row.amount }}</div>
+            </div>
           </div>
-        </div>
-      </article>
-    </section>
+        </article>
+      </section>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .mine-glass-page {
+  position: relative;
   min-height: 100dvh;
+  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
   color: #f3f3f3;
-  background:
-    radial-gradient(60% 42% at 20% 10%, rgba(226, 163, 133, 0.6) 0%, rgba(226, 163, 133, 0) 100%),
-    radial-gradient(55% 45% at 25% 85%, rgba(206, 107, 160, 0.6) 0%, rgba(206, 107, 160, 0) 100%),
-    radial-gradient(45% 38% at 88% 84%, rgba(0, 183, 212, 0.58) 0%, rgba(0, 183, 212, 0) 100%),
-    linear-gradient(160deg, #b58eb1 0%, #8d668d 54%, #6f5988 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.bill-page {
-  padding: calc(env(safe-area-inset-top) + 0.46rem) 0.45rem 0.7rem;
-}
-
-.page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  h1 {
-    margin: 0;
-    font-size: 0.66rem;
-    font-weight: 500;
-  }
-}
-
-.back-btn {
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 0.72rem;
+.content-wrap {
+  position: relative;
+  padding: 0 0.49rem;
 }
 
 .placeholder {

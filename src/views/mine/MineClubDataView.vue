@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+
+const title = computed(() => 'Data')
 
 type MainTabKey = 'personal' | 'opponent' | 'allin' | 'deck'
 
@@ -23,6 +27,11 @@ type DeckRow = {
 }
 
 const router = useRouter()
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 
 const mainTabs: Array<{ key: MainTabKey; label: string }> = [
   { key: 'personal', label: '个人' },
@@ -99,75 +108,101 @@ function profitClass(value: number): string {
 </script>
 
 <template>
-  <div class="club-data-page">
-    <header class="page-head">
-      <button class="back-btn" type="button" @click="goBack">‹</button>
-      <h1>Data</h1>
-      <div class="head-spacer" />
-    </header>
+  <div class="club-data-page" :style="backgroundStyle">
+    <HeaderBack :title="title" />
 
-    <div class="main-tabs">
-      <button
-        v-for="tab in mainTabs"
-        :key="tab.key"
-        type="button"
-        class="main-tab"
-        :class="{ active: selectedMainTab === tab.key }"
-        @click="setMainTab(tab.key)"
-      >
-        {{ tab.label }}
-      </button>
-    </div>
-
-    <template v-if="selectedMainTab === 'personal'">
-      <div class="segmented game-segmented">
+    <div class="content-wrap">
+      <div class="main-tabs">
         <button
-          v-for="tab in personalGameTabs"
-          :key="tab"
+          v-for="tab in mainTabs"
+          :key="tab.key"
           type="button"
-          class="segment"
-          :class="{ active: selectedPersonalGame === tab }"
-          @click="selectedPersonalGame = tab"
+          class="main-tab"
+          :class="{ active: selectedMainTab === tab.key }"
+          @click="setMainTab(tab.key)"
         >
-          {{ tab }}
+          {{ tab.label }}
         </button>
       </div>
 
-      <template v-if="personalHasData">
-        <section class="ring-grid">
-          <article
-            v-for="ring in personalRings"
-            :key="ring.key"
-            class="ring-card"
-            :style="{ '--ring-color': ring.color, '--ring-progress': ring.value + '%' }"
+      <template v-if="selectedMainTab === 'personal'">
+        <div class="segmented game-segmented">
+          <button
+            v-for="tab in personalGameTabs"
+            :key="tab"
+            type="button"
+            class="segment"
+            :class="{ active: selectedPersonalGame === tab }"
+            @click="selectedPersonalGame = tab"
           >
-            <div class="ring-donut">
-              <div class="ring-inner">
-                <div class="ring-value">{{ ring.value }}%</div>
-                <div class="ring-label">{{ ring.label }}</div>
+            {{ tab }}
+          </button>
+        </div>
+
+        <template v-if="personalHasData">
+          <section class="ring-grid">
+            <article
+              v-for="ring in personalRings"
+              :key="ring.key"
+              class="ring-card"
+              :style="{ '--ring-color': ring.color, '--ring-progress': ring.value + '%' }"
+            >
+              <div class="ring-donut">
+                <div class="ring-inner">
+                  <div class="ring-value">{{ ring.value }}%</div>
+                  <div class="ring-label">{{ ring.label }}</div>
+                </div>
               </div>
+            </article>
+          </section>
+
+          <section class="glass-pill title-pill">
+            <span>近3个月内玩牌数据统计</span>
+            <span class="pie-icon" aria-hidden="true"></span>
+          </section>
+
+          <section class="glass-card biggest-card">
+            <div class="biggest-title">Possible Biggest Hand</div>
+            <div class="card-row">
+              <div class="poker-card">A ♣</div>
+              <div class="poker-card red">J ♥</div>
+              <div class="poker-card">10 ◆</div>
+              <div class="poker-card back"></div>
+              <div class="poker-card back"></div>
             </div>
-          </article>
-        </section>
+          </section>
+        </template>
 
-        <section class="glass-pill title-pill">
-          <span>近3个月内玩牌数据统计</span>
-          <span class="pie-icon" aria-hidden="true" />
-        </section>
+        <template v-else>
+          <section class="title-row">
+            <div class="title-text">Statistics of the week</div>
+            <button class="sort-btn" type="button">
+              Descending
+              <span class="arrow">▾</span>
+            </button>
+          </section>
 
-        <section class="glass-card biggest-card">
-          <div class="biggest-title">Possible Biggest Hand</div>
-          <div class="card-row">
-            <div class="poker-card">A ♣</div>
-            <div class="poker-card red">J ♥</div>
-            <div class="poker-card">10 ◆</div>
-            <div class="poker-card back" />
-            <div class="poker-card back" />
-          </div>
-        </section>
+          <section class="empty-wrap">
+            <div class="empty-icon" aria-hidden="true">✕</div>
+            <div class="empty-text">暂无数据</div>
+          </section>
+        </template>
       </template>
 
-      <template v-else>
+      <template v-else-if="selectedMainTab === 'opponent'">
+        <div class="segmented period-segmented">
+          <button
+            v-for="tab in opponentPeriodTabs"
+            :key="tab"
+            type="button"
+            class="segment"
+            :class="{ active: selectedOpponentPeriod === tab }"
+            @click="selectedOpponentPeriod = tab"
+          >
+            {{ tab }}
+          </button>
+        </div>
+
         <section class="title-row">
           <div class="title-text">Statistics of the week</div>
           <button class="sort-btn" type="button">
@@ -176,183 +211,147 @@ function profitClass(value: number): string {
           </button>
         </section>
 
-        <section class="empty-wrap">
-          <div class="empty-icon" aria-hidden="true">✕</div>
-          <div class="empty-text">暂无数据</div>
+        <section class="glass-card table-card">
+          <header class="table-head">
+            <span>玩家</span>
+            <span>手数</span>
+            <span>负</span>
+            <span>胜</span>
+            <span>盈利</span>
+          </header>
+
+          <article v-for="row in opponentRows" :key="row.id" class="table-row">
+            <div class="player-cell">
+              <span class="avatar" aria-hidden="true"></span>
+              <span class="name">{{ row.name }}</span>
+            </div>
+            <span>{{ row.hands }}</span>
+            <span>{{ row.lose }}</span>
+            <span>{{ row.win }}</span>
+            <span :class="profitClass(row.profit)">{{ formatProfit(row.profit) }}</span>
+          </article>
         </section>
       </template>
-    </template>
 
-    <template v-else-if="selectedMainTab === 'opponent'">
-      <div class="segmented period-segmented">
-        <button
-          v-for="tab in opponentPeriodTabs"
-          :key="tab"
-          type="button"
-          class="segment"
-          :class="{ active: selectedOpponentPeriod === tab }"
-          @click="selectedOpponentPeriod = tab"
-        >
-          {{ tab }}
-        </button>
-      </div>
-
-      <section class="title-row">
-        <div class="title-text">Statistics of the week</div>
-        <button class="sort-btn" type="button">
-          Descending
-          <span class="arrow">▾</span>
-        </button>
-      </section>
-
-      <section class="glass-card table-card">
-        <header class="table-head">
-          <span>玩家</span>
-          <span>手数</span>
-          <span>负</span>
-          <span>胜</span>
-          <span>盈利</span>
-        </header>
-
-        <article v-for="row in opponentRows" :key="row.id" class="table-row">
-          <div class="player-cell">
-            <span class="avatar" aria-hidden="true" />
-            <span class="name">{{ row.name }}</span>
+      <template v-else-if="selectedMainTab === 'allin'">
+        <section class="glass-card allin-summary-card">
+          <div class="allin-mode-grid">
+            <button
+              v-for="mode in allInModeTabs"
+              :key="mode"
+              type="button"
+              class="mode-chip"
+              :class="{ active: selectedAllInMode === mode }"
+              @click="selectedAllInMode = mode"
+            >
+              {{ mode }}
+            </button>
           </div>
-          <span>{{ row.hands }}</span>
-          <span>{{ row.lose }}</span>
-          <span>{{ row.win }}</span>
-          <span :class="profitClass(row.profit)">{{ formatProfit(row.profit) }}</span>
-        </article>
-      </section>
-    </template>
 
-    <template v-else-if="selectedMainTab === 'allin'">
-      <section class="glass-card allin-summary-card">
-        <div class="allin-mode-grid">
-          <button
-            v-for="mode in allInModeTabs"
-            :key="mode"
-            type="button"
-            class="mode-chip"
-            :class="{ active: selectedAllInMode === mode }"
-            @click="selectedAllInMode = mode"
-          >
-            {{ mode }}
-          </button>
-        </div>
-
-        <div class="section-title">
-          <span>近3个月内玩牌数据统计</span>
-          <span class="pie-icon" aria-hidden="true" />
-        </div>
-
-        <div class="summary-list">
-          <div v-for="item in allInSummary" :key="item.label" class="summary-row">
-            <span>{{ item.label }}</span>
-            <span :class="item.highlight === 'up' ? 'profit-up' : ''">{{ item.value }}</span>
+          <div class="section-title">
+            <span>近3个月内玩牌数据统计</span>
+            <span class="pie-icon" aria-hidden="true"></span>
           </div>
-        </div>
-      </section>
 
-      <section class="glass-card radar-card">
-        <div class="section-title">
-          <span>ALL IN 胜率分布图</span>
-          <span class="pie-icon" aria-hidden="true" />
-        </div>
-
-        <div class="radar-wrap">
-          <div class="tag tag-top">rate<br />80%</div>
-          <div class="tag tag-left">Passive<br />80%</div>
-          <div class="tag tag-right">Backward<br />80%</div>
-          <div class="tag tag-bottom">Leading<br />80%</div>
-          <div class="radar-core">
-            <div class="diamond d1" />
-            <div class="diamond d2" />
-            <div class="diamond d3" />
-            <div class="diamond d4" />
-            <div class="diamond fill" />
-          </div>
-        </div>
-      </section>
-    </template>
-
-    <template v-else>
-      <section class="glass-card deck-tabs-card">
-        <div class="deck-tab-grid">
-          <button
-            v-for="mode in deckModeTabs"
-            :key="mode"
-            type="button"
-            class="mode-chip deck-mode-chip"
-            :class="{ active: selectedDeckMode === mode }"
-            @click="selectedDeckMode = mode"
-          >
-            {{ mode }}
-          </button>
-        </div>
-      </section>
-
-      <section class="deck-title">近三个月内玩牌数据统计</section>
-
-      <section class="glass-card table-card deck-table-card">
-        <header class="table-head deck-head">
-          <span>hand type</span>
-          <span>获胜</span>
-          <span class="sortable-head">
-            总手数
-            <span class="sort-caret" aria-hidden="true" />
-          </span>
-          <span class="sortable-head">
-            胜率
-            <span class="sort-caret" aria-hidden="true" />
-          </span>
-          <span>盈利</span>
-        </header>
-
-        <article v-for="row in deckRows" :key="row.id" class="table-row deck-row">
-          <div class="deck-hand-cell">
-            <div class="mini-card">
-              <span class="rank">{{ row.cards[0].slice(0, -1) }}</span>
-              <span class="suit">{{ row.cards[0].slice(-1) }}</span>
-            </div>
-            <div class="mini-card red">
-              <span class="rank">{{ row.cards[1].slice(0, -1) }}</span>
-              <span class="suit">{{ row.cards[1].slice(-1) }}</span>
+          <div class="summary-list">
+            <div v-for="item in allInSummary" :key="item.label" class="summary-row">
+              <span>{{ item.label }}</span>
+              <span :class="item.highlight === 'up' ? 'profit-up' : ''">{{ item.value }}</span>
             </div>
           </div>
-          <span>{{ row.winCount }}</span>
-          <span>{{ row.totalHands }}</span>
-          <span>{{ row.winRate }}</span>
-          <span :class="profitClass(row.profit)">{{ formatProfit(row.profit) }}</span>
-        </article>
-      </section>
-    </template>
+        </section>
+
+        <section class="glass-card radar-card">
+          <div class="section-title">
+            <span>ALL IN 胜率分布图</span>
+            <span class="pie-icon" aria-hidden="true"></span>
+          </div>
+
+          <div class="radar-wrap">
+            <div class="tag tag-top">rate<br />80%</div>
+            <div class="tag tag-left">Passive<br />80%</div>
+            <div class="tag tag-right">Backward<br />80%</div>
+            <div class="tag tag-bottom">Leading<br />80%</div>
+            <div class="radar-core">
+              <div class="diamond d1"></div>
+              <div class="diamond d2"></div>
+              <div class="diamond d3"></div>
+              <div class="diamond d4"></div>
+              <div class="diamond fill"></div>
+            </div>
+          </div>
+        </section>
+      </template>
+
+      <template v-else>
+        <section class="glass-card deck-tabs-card">
+          <div class="deck-tab-grid">
+            <button
+              v-for="mode in deckModeTabs"
+              :key="mode"
+              type="button"
+              class="mode-chip deck-mode-chip"
+              :class="{ active: selectedDeckMode === mode }"
+              @click="selectedDeckMode = mode"
+            >
+              {{ mode }}
+            </button>
+          </div>
+        </section>
+
+        <section class="deck-title">近三个月内玩牌数据统计</section>
+
+        <section class="glass-card table-card deck-table-card">
+          <header class="table-head deck-head">
+            <span>hand type</span>
+            <span>获胜</span>
+            <span class="sortable-head">
+              总手数
+              <span class="sort-caret" aria-hidden="true"></span>
+            </span>
+            <span class="sortable-head">
+              胜率
+              <span class="sort-caret" aria-hidden="true"></span>
+            </span>
+            <span>盈利</span>
+          </header>
+
+          <article v-for="row in deckRows" :key="row.id" class="table-row deck-row">
+            <div class="deck-hand-cell">
+              <div class="mini-card">
+                <span class="rank">{{ row.cards[0].slice(0, -1) }}</span>
+                <span class="suit">{{ row.cards[0].slice(-1) }}</span>
+              </div>
+              <div class="mini-card red">
+                <span class="rank">{{ row.cards[1].slice(0, -1) }}</span>
+                <span class="suit">{{ row.cards[1].slice(-1) }}</span>
+              </div>
+            </div>
+            <span>{{ row.winCount }}</span>
+            <span>{{ row.totalHands }}</span>
+            <span>{{ row.winRate }}</span>
+            <span :class="profitClass(row.profit)">{{ formatProfit(row.profit) }}</span>
+          </article>
+        </section>
+      </template>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .club-data-page {
+  position: relative;
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.46rem) 0.45rem 0.72rem;
+  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.72rem;
   color: #f9f9f9;
-  background:
-    radial-gradient(60% 45% at 14% 10%, rgba(233, 196, 148, 0.55) 0%, rgba(233, 196, 148, 0) 100%),
-    radial-gradient(60% 45% at 35% 84%, rgba(216, 89, 170, 0.62) 0%, rgba(216, 89, 170, 0) 100%),
-    radial-gradient(48% 38% at 84% 86%, rgba(0, 193, 225, 0.65) 0%, rgba(0, 193, 225, 0) 100%),
-    linear-gradient(160deg, #bd97b7 0%, #9a6d92 52%, #6f4b88 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  h1 {
-    margin: 0;
-    font-size: 0.66rem;
-    font-weight: 500;
-  }
+.content-wrap {
+  position: relative;
+  padding: 0 0.49rem;
 }
 
 .back-btn {

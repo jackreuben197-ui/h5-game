@@ -2,11 +2,20 @@
 import { computed, ref } from 'vue'
 import { showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 
 const router = useRouter()
+
+const title = computed(() => 'Personal Details')
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
 
@@ -53,13 +62,10 @@ function onConfirmGender(): void {
 </script>
 
 <template>
-  <div class="profile-edit-page">
-    <header class="profile-header">
-      <button class="back-btn" type="button" @click="goBack">‹</button>
-      <h1>Personal Details</h1>
-      <span class="header-placeholder" />
-    </header>
+  <div class="profile-edit-page" :style="backgroundStyle">
+    <HeaderBack :title="title" />
 
+    <div class="content-wrap">
     <section class="profile-card">
       <div class="profile-card__inner">
         <button class="avatar-wrap" type="button" @click="openAvatarPopup">
@@ -119,49 +125,23 @@ function onConfirmGender(): void {
         <button class="sheet-confirm" type="button" @click="onConfirmGender">赠送</button>
       </div>
     </VanPopup>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .profile-edit-page {
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.4598rem) 0.48rem 0.8rem;
+  padding-top: calc(env(safe-area-inset-top) + 0.4598rem);
+  padding-bottom: 0.8rem;
   color: #f9f9f9;
-  background:
-    radial-gradient(60% 44% at 20% 14%, rgba(231, 175, 141, 0.66) 0%, rgba(231, 175, 141, 0) 100%),
-    radial-gradient(54% 46% at 36% 86%, rgba(207, 111, 160, 0.7) 0%, rgba(207, 111, 160, 0) 100%),
-    radial-gradient(44% 38% at 92% 84%, rgba(0, 182, 212, 0.62) 0%, rgba(0, 182, 212, 0) 100%),
-    linear-gradient(158deg, #b68d9f 0%, #92698f 54%, #6a5d87 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.profile-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  h1 {
-    margin: 0;
-    font-family: 'Afacad', var(--font-family-sans);
-    font-size: 0.6503rem;
-    line-height: 1.2;
-    font-weight: 500;
-    color: #fff;
-  }
-}
-
-.back-btn,
-.header-placeholder {
-  width: 0.7685rem;
-  height: 0.7685rem;
-}
-
-.back-btn {
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 0.7685rem;
-  line-height: 1;
-  padding: 0;
+.content-wrap {
+  padding: 0 0.48rem;
 }
 
 .profile-card {

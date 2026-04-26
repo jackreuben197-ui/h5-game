@@ -1,7 +1,17 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+
+const title = computed(() => 'Result')
 
 const router = useRouter()
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 
 interface HandRow {
   id: string
@@ -27,90 +37,68 @@ function goReport(): void {
 </script>
 
 <template>
-  <div class="record-hand-page">
-    <header class="page-head">
-      <button class="back-btn" type="button" @click="goBack">‹</button>
-      <h1>Result</h1>
-      <button class="head-action" type="button" @click="goReport">report</button>
-    </header>
+  <div class="record-hand-page" :style="backgroundStyle">
+    <HeaderBack :title="title" />
 
-    <section class="glass-card overview-card">
-      <div class="left-user">
-        <div class="avatar" />
-        <div>
-          <div class="name">Player Name</div>
-          <div class="hands">Hands 123</div>
+    <div class="content-wrap">
+      <section class="glass-card overview-card">
+        <div class="left-user">
+          <div class="avatar"></div>
+          <div>
+            <div class="name">Player Name</div>
+            <div class="hands">Hands 123</div>
+          </div>
         </div>
-      </div>
-      <div class="right-info">
-        <div class="title">牌局名称</div>
-        <div class="sub">ID: 11440454</div>
-      </div>
-    </section>
+        <div class="right-info">
+          <div class="title">牌局名称</div>
+          <div class="sub">ID: 11440454</div>
+        </div>
+      </section>
 
-    <section class="list-wrap">
-      <article v-for="item in handRows" :key="item.id" class="glass-card hand-card" @click="goReport">
-        <div class="top-row">
-          <div class="poker-pair">
-            <div class="poker">10</div>
-            <div class="poker red">J</div>
+      <section class="list-wrap">
+        <article
+          v-for="item in handRows"
+          :key="item.id"
+          class="glass-card hand-card"
+          @click="goReport"
+        >
+          <div class="top-row">
+            <div class="poker-pair">
+              <div class="poker">10</div>
+              <div class="poker red">J</div>
+            </div>
+            <div class="title">{{ item.title }}</div>
           </div>
-          <div class="title">{{ item.title }}</div>
-        </div>
-        <div class="line" />
-        <div class="bottom-row">
-          <div class="meta">
-            <div>Hand ID: {{ item.handId }}</div>
-            <div>Pot: {{ item.pot }}</div>
+          <div class="line"></div>
+          <div class="bottom-row">
+            <div class="meta">
+              <div>Hand ID: {{ item.handId }}</div>
+              <div>Pot: {{ item.pot }}</div>
+            </div>
+            <div class="profit" :class="{ positive: item.profit.startsWith('+') }">
+              <div class="money">{{ item.profit }}</div>
+              <div class="hands-count">Hands: {{ item.hands }}</div>
+            </div>
           </div>
-          <div class="profit" :class="{ positive: item.profit.startsWith('+') }">
-            <div class="money">{{ item.profit }}</div>
-            <div class="hands-count">Hands: {{ item.hands }}</div>
-          </div>
-        </div>
-      </article>
-    </section>
+        </article>
+      </section>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .record-hand-page {
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.46rem) 0.45rem 0.8rem;
+  padding-top: calc(env(safe-area-inset-top) + 0.46rem);
+  padding-bottom: 0.8rem;
   color: #f9f9f9;
-  background:
-    radial-gradient(60% 42% at 20% 10%, rgba(226, 163, 133, 0.6) 0%, rgba(226, 163, 133, 0) 100%),
-    radial-gradient(55% 45% at 25% 85%, rgba(206, 107, 160, 0.6) 0%, rgba(206, 107, 160, 0) 100%),
-    radial-gradient(45% 38% at 88% 84%, rgba(0, 183, 212, 0.58) 0%, rgba(0, 183, 212, 0) 100%),
-    linear-gradient(160deg, #b58eb1 0%, #8d668d 54%, #6f5988 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  h1 {
-    margin: 0;
-    font-size: 0.66rem;
-    font-weight: 500;
-  }
-}
-
-.back-btn {
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 0.72rem;
-}
-
-.head-action {
-  border: 0;
-  border-radius: 0.26rem;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-size: 0.3rem;
-  padding: 0.08rem 0.2rem;
+.content-wrap {
+  padding: 0 0.45rem;
 }
 
 .glass-card {

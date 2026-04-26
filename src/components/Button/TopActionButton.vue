@@ -1,8 +1,9 @@
 <script setup lang="ts">
 interface Props {
   name: string
-  icon: string
+  icon?: string
   iconAlt?: string
+  textStyle?: string
 }
 
 defineProps<Props>()
@@ -19,6 +20,7 @@ function handleClick(event: MouseEvent): void {
 
 <template>
   <button
+    :style="textStyle"
     class="action-btn"
     type="button"
     @click="handleClick"
@@ -27,6 +29,7 @@ function handleClick(event: MouseEvent): void {
       {{ name }}
     </span>
     <img
+      v-if="icon"
       class="action-icon"
       :src="icon"
       :alt="iconAlt || 'icon'"

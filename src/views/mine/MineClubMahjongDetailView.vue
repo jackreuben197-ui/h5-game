@@ -1,5 +1,10 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+
+const title = computed(() => '战绩详情')
 
 interface SeatPlayer {
   name: string
@@ -21,6 +26,11 @@ interface PlayerResult {
 }
 
 const router = useRouter()
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 
 const seatPlayers: SeatPlayer[] = [
   { name: 'Hanna', chips: '120', tag: '土豪' },
@@ -70,112 +80,95 @@ function goToHands(): void {
 </script>
 
 <template>
-  <div class="record-detail-page">
-    <header class="page-head">
-      <button class="back-btn" type="button" @click="goBack">‹</button>
-      <h1>战绩详情</h1>
-      <button class="head-action" type="button">筛选</button>
-    </header>
+  <div class="record-detail-page" :style="backgroundStyle">
+    <HeaderBack :title="title" />
 
-    <section class="glass-card sort-bar">
-      <span>按结束时间</span>
-      <span class="arrow">▾</span>
-    </section>
+    <div class="content-wrap">
+      <section class="glass-card sort-bar">
+        <span>按结束时间</span>
+        <span class="arrow">▾</span>
+      </section>
 
-    <section class="glass-card table-section">
-      <div class="seat-row">
-        <article v-for="(item, index) in seatPlayers" :key="item.name + index" class="seat" :class="{ highlight: item.highlight }">
-          <div class="avatar" />
-          <div class="tag" v-if="item.tag">{{ item.tag }}</div>
-          <div class="name">{{ item.name }}</div>
-          <div class="chips">{{ item.chips }}</div>
-        </article>
-      </div>
-
-      <div class="hand-summary">
-        <div class="name-line">
-          <div>
-            <div class="title">Hand Name</div>
-            <div class="sub">ID: 11440454</div>
-          </div>
-          <div class="time">29/12 14:00 - 3/1 15:00</div>
+      <section class="glass-card table-section">
+        <div class="seat-row">
+          <article
+            v-for="(item, index) in seatPlayers"
+            :key="item.name + index"
+            class="seat"
+            :class="{ highlight: item.highlight }"
+          >
+            <div class="avatar"></div>
+            <div v-if="item.tag" class="tag">{{ item.tag }}</div>
+            <div class="name">{{ item.name }}</div>
+            <div class="chips">{{ item.chips }}</div>
+          </article>
         </div>
-        <div class="summary-grid">
-          <div v-for="item in summaryItems" :key="item.label" class="summary-item">
-            <span class="label">{{ item.label }}</span>
-            <span class="value">{{ item.value }}</span>
-          </div>
-        </div>
-      </div>
-    </section>
 
-    <section class="glass-card result-section">
-      <div class="section-head">
-        <div>牌局结算</div>
-        <div class="total">+1200</div>
-      </div>
-
-      <article v-for="item in playerResults" :key="item.id" class="result-row" @click="goToHands">
-        <div class="top">
-          <div class="left">
-            <div class="avatar small" />
+        <div class="hand-summary">
+          <div class="name-line">
             <div>
-              <div class="name">{{ item.name }}</div>
-              <div class="sub">ID: {{ item.uid }}</div>
+              <div class="title">Hand Name</div>
+              <div class="sub">ID: 11440454</div>
+            </div>
+            <div class="time">29/12 14:00 - 3/1 15:00</div>
+          </div>
+          <div class="summary-grid">
+            <div v-for="item in summaryItems" :key="item.label" class="summary-item">
+              <span class="label">{{ item.label }}</span>
+              <span class="value">{{ item.value }}</span>
             </div>
           </div>
-          <div class="amount" :class="{ minus: item.amount.startsWith('-') }">{{ item.amount }}</div>
         </div>
-        <div class="stats-row">
-          <span>自摸:{{ item.selfDraw }}</span>
-          <span>接炮:{{ item.catchWin }}</span>
-          <span>点炮:{{ item.discardLose }}</span>
-          <span>暗杠:{{ item.concealedKong }}</span>
-          <span>明杠:{{ item.exposedKong }}</span>
+      </section>
+
+      <section class="glass-card result-section">
+        <div class="section-head">
+          <div>牌局结算</div>
+          <div class="total">+1200</div>
         </div>
-      </article>
-    </section>
+
+        <article
+          v-for="item in playerResults"
+          :key="item.id"
+          class="result-row"
+          @click="goToHands"
+        >
+          <div class="top">
+            <div class="left">
+              <div class="avatar small"></div>
+              <div>
+                <div class="name">{{ item.name }}</div>
+                <div class="sub">ID: {{ item.uid }}</div>
+              </div>
+            </div>
+            <div class="amount" :class="{ minus: item.amount.startsWith('-') }">{{ item.amount }}</div>
+          </div>
+          <div class="stats-row">
+            <span>自摸:{{ item.selfDraw }}</span>
+            <span>接炮:{{ item.catchWin }}</span>
+            <span>点炮:{{ item.discardLose }}</span>
+            <span>暗杠:{{ item.concealedKong }}</span>
+            <span>明杠:{{ item.exposedKong }}</span>
+          </div>
+        </article>
+      </section>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .record-detail-page {
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.46rem) 0.45rem 0.8rem;
+  padding-top: calc(env(safe-area-inset-top) + 0.46rem);
+  padding-bottom: 0.8rem;
   color: #f9f9f9;
-  background:
-    radial-gradient(60% 42% at 20% 10%, rgba(226, 163, 133, 0.6) 0%, rgba(226, 163, 133, 0) 100%),
-    radial-gradient(55% 45% at 25% 85%, rgba(206, 107, 160, 0.6) 0%, rgba(206, 107, 160, 0) 100%),
-    radial-gradient(45% 38% at 88% 84%, rgba(0, 183, 212, 0.58) 0%, rgba(0, 183, 212, 0) 100%),
-    linear-gradient(160deg, #b58eb1 0%, #8d668d 54%, #6f5988 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  h1 {
-    margin: 0;
-    font-size: 0.66rem;
-    font-weight: 500;
-  }
-}
-
-.back-btn {
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 0.72rem;
-}
-
-.head-action {
-  border: 0;
-  border-radius: 0.26rem;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-size: 0.3rem;
-  padding: 0.08rem 0.2rem;
+.content-wrap {
+  padding: 0 0.45rem;
 }
 
 .glass-card {

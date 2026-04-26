@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import avatarDefault from '@/assets/images/default_avatar.png'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconBalance from '@/assets/icons/icon_balance.png'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import mainBgUrl from '@/assets/images/main_bg.webp'
 
 type MessagePageType = 'system' | 'credit' | 'uc' | 'other'
 type CreditStatus = 'pending' | 'rejected' | 'approved-by-user' | 'approved'
@@ -66,6 +68,10 @@ const pageTitle = computed(() => {
   if (pageType.value === 'uc') return 'UC申请'
   return '消息'
 })
+
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 
 const systemMessages: SystemMessageItem[] = [
   {
@@ -191,123 +197,126 @@ function backToMessage(): void {
 </script>
 
 <template>
-  <div class="message-detail-page">
-    <header class="message-head">
-      <button class="back-btn" type="button" @click="backToMessage">‹</button>
-      <h1>{{ pageTitle }}</h1>
-      <div class="placeholder" />
-    </header>
+  <div class="message-detail-page" :style="backgroundStyle">
+    <HeaderBack :title="pageTitle" />
 
-    <section v-if="pageType === 'system'" class="system-list">
-      <article v-for="item in systemMessages" :key="`${item.content}-${item.time}`" class="system-card">
-        <p class="system-content">{{ item.content }}</p>
-        <p class="system-time">{{ item.time }}</p>
-      </article>
-    </section>
+    <div class="content-wrap">
+      <section v-if="pageType === 'system'" class="system-list">
+        <article v-for="item in systemMessages" :key="`${item.content}-${item.time}`" class="system-card">
+          <p class="system-content">{{ item.content }}</p>
+          <p class="system-time">{{ item.time }}</p>
+        </article>
+      </section>
 
-    <section v-else-if="pageType === 'credit'" class="request-list">
-      <article v-for="(item, index) in creditMessages" :key="`credit-${index}`" class="request-card">
-        <div class="request-top request-top--credit">
-          <p class="meta-left">{{ item.texasId }}</p>
-          <p class="meta-time">{{ item.time }}</p>
-          <div class="meta-club">
-            <img :src="avatarDefault" alt="club" />
-            <span>{{ item.clubName }}</span>
-          </div>
-        </div>
-
-        <div class="request-body" :class="[`status-${item.status}`]">
-          <div class="player-block">
-            <img class="player-avatar" :src="avatarDefault" alt="avatar" />
-            <div class="player-text">
-              <p class="player-name">{{ item.playerName }}</p>
-              <p class="player-id">ID: {{ item.playerId }}</p>
+      <section v-else-if="pageType === 'credit'" class="request-list">
+        <article v-for="(item, index) in creditMessages" :key="`credit-${index}`" class="request-card">
+          <div class="request-top request-top--credit">
+            <p class="meta-left">{{ item.texasId }}</p>
+            <p class="meta-time">{{ item.time }}</p>
+            <div class="meta-club">
+              <img :src="avatarDefault" alt="club" />
+              <span>{{ item.clubName }}</span>
             </div>
           </div>
 
-          <div v-if="item.status === 'pending'" class="pending-actions">
-            <button class="action-btn action-btn--ok" type="button">✓</button>
-            <button class="action-btn action-btn--deny" type="button">✕</button>
+          <div class="request-body" :class="[`status-${item.status}`]">
+            <div class="player-block">
+              <img class="player-avatar" :src="avatarDefault" alt="avatar" />
+              <div class="player-text">
+                <p class="player-name">{{ item.playerName }}</p>
+                <p class="player-id">ID: {{ item.playerId }}</p>
+              </div>
+            </div>
+
+            <div v-if="item.status === 'pending'" class="pending-actions">
+              <button class="action-btn action-btn--ok" type="button">✓</button>
+              <button class="action-btn action-btn--deny" type="button">✕</button>
+            </div>
+
+            <p v-else-if="item.status === 'rejected'" class="state-text">已拒绝</p>
+
+            <div v-else-if="item.status === 'approved-by-user'" class="approver-block">
+              <p class="approver-line">{{ item.approverName }}</p>
+              <p class="approver-line">ID: {{ item.approverId }}</p>
+              <p class="state-text">已通过</p>
+            </div>
+
+            <p v-else class="state-text">已通过</p>
           </div>
 
-          <p v-else-if="item.status === 'rejected'" class="state-text">已拒绝</p>
+          <div class="request-footer">
+            <img :src="iconBalance" alt="balance" />
+            <p>买入申请：{{ item.amount }}</p>
+          </div>
+        </article>
+      </section>
 
-          <div v-else-if="item.status === 'approved-by-user'" class="approver-block">
-            <p class="approver-line">{{ item.approverName }}</p>
-            <p class="approver-line">ID: {{ item.approverId }}</p>
-            <p class="state-text">已通过</p>
+      <section v-else-if="pageType === 'uc'" class="request-list">
+        <article v-for="(item, index) in ucMessages" :key="`uc-${index}`" class="request-card">
+          <div class="request-top">
+            <div class="meta-club meta-club--lead">
+              <img :src="avatarDefault" alt="club" />
+              <span>{{ item.clubName }}</span>
+            </div>
+            <p class="meta-time">{{ item.time }}</p>
           </div>
 
-          <p v-else class="state-text">已通过</p>
-        </div>
+          <div class="request-body status-pending">
+            <div class="player-block">
+              <img class="player-avatar" :src="avatarDefault" alt="avatar" />
+              <div class="player-text">
+                <p class="player-name">{{ item.playerName }}</p>
+                <p class="player-id">ID: {{ item.playerId }}</p>
+              </div>
+            </div>
 
-        <div class="request-footer">
-          <img :src="iconBalance" alt="balance" />
-          <p>买入申请：{{ item.amount }}</p>
-        </div>
-      </article>
-    </section>
-
-    <section v-else-if="pageType === 'uc'" class="request-list">
-      <article v-for="(item, index) in ucMessages" :key="`uc-${index}`" class="request-card">
-        <div class="request-top">
-          <div class="meta-club meta-club--lead">
-            <img :src="avatarDefault" alt="club" />
-            <span>{{ item.clubName }}</span>
-          </div>
-          <p class="meta-time">{{ item.time }}</p>
-        </div>
-
-        <div class="request-body status-pending">
-          <div class="player-block">
-            <img class="player-avatar" :src="avatarDefault" alt="avatar" />
-            <div class="player-text">
-              <p class="player-name">{{ item.playerName }}</p>
-              <p class="player-id">ID: {{ item.playerId }}</p>
+            <div class="pending-actions">
+              <button class="action-btn action-btn--ok" type="button">✓</button>
+              <button class="action-btn action-btn--deny" type="button">✕</button>
             </div>
           </div>
 
-          <div class="pending-actions">
-            <button class="action-btn action-btn--ok" type="button">✓</button>
-            <button class="action-btn action-btn--deny" type="button">✕</button>
+          <div class="request-footer request-footer--uc">
+            <img :src="iconPeople" alt="uc" />
+            <p>申请充值：{{ item.amount }}</p>
           </div>
-        </div>
+        </article>
+      </section>
 
-        <div class="request-footer request-footer--uc">
-          <img :src="iconPeople" alt="uc" />
-          <p>申请充值：{{ item.amount }}</p>
-        </div>
-      </article>
-    </section>
+      <section v-else class="other-list">
+        <article
+          v-for="(item, index) in otherMessages"
+          :key="`other-${index}`"
+          class="other-item"
+          :class="{ 'other-item--first': index === 0 }"
+        >
+          <div class="other-banner" :class="{ 'other-banner--wrap': item.wrap }">
+            <img
+              class="other-banner-bg"
+              :src="index === 0 ? otherBannerBgFirst : otherBannerBgDefault"
+              alt=""
+              aria-hidden="true"
+            />
+            <p class="other-title" :class="{ 'other-title--wrap': item.wrap }">
+              {{ item.text }}
+              <span v-if="item.highlight" class="highlight" :class="`highlight--${item.highlightTone ?? 'green'}`">{{ item.highlight }}</span>
+            </p>
 
-    <section v-else class="other-list">
-      <article v-for="(item, index) in otherMessages" :key="`other-${index}`" class="other-item" :class="{ 'other-item--first': index === 0 }">
-        <div class="other-banner" :class="{ 'other-banner--wrap': item.wrap }">
-          <img
-            class="other-banner-bg"
-            :src="index === 0 ? otherBannerBgFirst : otherBannerBgDefault"
-            alt=""
-            aria-hidden="true"
-          />
-          <p class="other-title" :class="{ 'other-title--wrap': item.wrap }">
-            {{ item.text }}
-            <span v-if="item.highlight" class="highlight" :class="`highlight--${item.highlightTone ?? 'green'}`">{{ item.highlight }}</span>
-          </p>
-
-        <button class="sender-btn" type="button" aria-label="sender">
-          <img :src="otherSenderBtnBg" alt="sender" />
-        </button>
-        </div>
-
-        <div class="other-meta-row">
-          <div class="other-meta-club">
-            <img :src="avatarDefault" alt="club" />
-            <span>{{ item.clubName }}</span>
+            <button class="sender-btn" type="button" aria-label="sender">
+              <img :src="otherSenderBtnBg" alt="sender" />
+            </button>
           </div>
-          <p class="other-time">{{ item.time }}</p>
-        </div>
-      </article>
-    </section>
+
+          <div class="other-meta-row">
+            <div class="other-meta-club">
+              <img :src="avatarDefault" alt="club" />
+              <span>{{ item.clubName }}</span>
+            </div>
+            <p class="other-time">{{ item.time }}</p>
+          </div>
+        </article>
+      </section>
+    </div>
   </div>
 </template>
 
@@ -315,41 +324,16 @@ function backToMessage(): void {
 .message-detail-page {
   min-height: 100dvh;
   color: #f3f3f3;
-  padding: calc(env(safe-area-inset-top) + 0.46rem) 0.456rem calc(env(safe-area-inset-bottom) + 0.7rem);
-  background:
-    radial-gradient(60% 42% at 20% 10%, rgba(226, 163, 133, 0.6) 0%, rgba(226, 163, 133, 0) 100%),
-    radial-gradient(55% 45% at 25% 85%, rgba(206, 107, 160, 0.6) 0%, rgba(206, 107, 160, 0) 100%),
-    radial-gradient(45% 38% at 88% 84%, rgba(0, 183, 212, 0.58) 0%, rgba(0, 183, 212, 0) 100%),
-    linear-gradient(160deg, #b58eb1 0%, #8d668d 54%, #6f5988 100%);
+  padding-top: calc(env(safe-area-inset-top) + 0.46rem);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 0.7rem);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   box-sizing: border-box;
 }
 
-.message-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  h1 {
-    margin: 0;
-    font-size: 0.65rem;
-    font-weight: 500;
-    line-height: 1.2;
-    color: #fff;
-    text-shadow: 0 0.22rem 0.5rem rgba(0, 0, 0, 0.35);
-  }
-}
-
-.back-btn {
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 0.7rem;
-  line-height: 1;
-  padding: 0.04rem 0.1rem;
-}
-
-.placeholder {
-  width: 0.72rem;
+.content-wrap {
+  padding: 0 0.456rem;
 }
 
 .system-list,

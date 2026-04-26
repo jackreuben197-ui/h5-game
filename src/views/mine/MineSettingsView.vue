@@ -1,8 +1,17 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+
+const title = computed(() => '设置')
 
 const router = useRouter()
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 const soundEnabled = ref(true)
 
 interface SettingItem {
@@ -68,80 +77,85 @@ function onRowClick(item: SettingItem): void {
 </script>
 
 <template>
-  <div class="mine-glass-page">
-    <header class="page-head">
-      <button class="back-btn" type="button" @click="goBack">‹</button>
-      <h1>设置</h1>
-      <div class="placeholder" />
-    </header>
+  <div class="mine-glass-page" :style="backgroundStyle">
+    <HeaderBack :title="title" />
 
-    <section class="glass-card section-card">
-      <button v-for="item in sectionTop" :key="item.key" type="button" class="line-item" @click="onRowClick(item)">
-        <span>{{ item.label }}</span>
-        <div class="right">
-          <span v-if="item.rightText" class="light">{{ item.rightText }}</span>
-          <span class="arrow">›</span>
-        </div>
-      </button>
-    </section>
-
-    <section class="glass-card section-card">
-      <button v-for="item in sectionMiddle" :key="item.key" type="button" class="line-item" @click="onRowClick(item)">
-        <span>{{ item.label }}</span>
-        <div class="right">
-          <template v-if="item.toggle">
-            <button type="button" class="switch" :class="{ on: soundEnabled }" @click.stop="soundEnabled = !soundEnabled">
-              <span class="dot" />
-            </button>
-          </template>
-          <template v-else>
+    <div class="content-wrap">
+      <section class="glass-card section-card">
+        <button
+          v-for="item in sectionTop"
+          :key="item.key"
+          type="button"
+          class="line-item"
+          @click="onRowClick(item)"
+        >
+          <span>{{ item.label }}</span>
+          <div class="right">
             <span v-if="item.rightText" class="light">{{ item.rightText }}</span>
             <span class="arrow">›</span>
-          </template>
-        </div>
-      </button>
-    </section>
+          </div>
+        </button>
+      </section>
 
-    <section class="glass-card section-card">
-      <button v-for="item in sectionBottom" :key="item.key" type="button" class="line-item" @click="onRowClick(item)">
-        <span>{{ item.label }}</span>
-        <span class="arrow">›</span>
-      </button>
-    </section>
+      <section class="glass-card section-card">
+        <button
+          v-for="item in sectionMiddle"
+          :key="item.key"
+          type="button"
+          class="line-item"
+          @click="onRowClick(item)"
+        >
+          <span>{{ item.label }}</span>
+          <div class="right">
+            <template v-if="item.toggle">
+              <button
+                type="button"
+                class="switch"
+                :class="{ on: soundEnabled }"
+                @click.stop="soundEnabled = !soundEnabled"
+              >
+                <span class="dot"></span>
+              </button>
+            </template>
+            <template v-else>
+              <span v-if="item.rightText" class="light">{{ item.rightText }}</span>
+              <span class="arrow">›</span>
+            </template>
+          </div>
+        </button>
+      </section>
+
+      <section class="glass-card section-card">
+        <button
+          v-for="item in sectionBottom"
+          :key="item.key"
+          type="button"
+          class="line-item"
+          @click="onRowClick(item)"
+        >
+          <span>{{ item.label }}</span>
+          <span class="arrow">›</span>
+        </button>
+      </section>
+    </div>
   </div>
 </template>
+
 
 <style scoped lang="scss">
 .mine-glass-page {
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.46rem) 0.45rem 0.8rem;
+  padding-top: calc(env(safe-area-inset-top) + 0.46rem);
+  padding-bottom: 0.8rem;
   color: #f9f9f9;
-  background:
-    radial-gradient(60% 42% at 20% 10%, rgba(226, 163, 133, 0.6) 0%, rgba(226, 163, 133, 0) 100%),
-    radial-gradient(55% 45% at 25% 85%, rgba(206, 107, 160, 0.6) 0%, rgba(206, 107, 160, 0) 100%),
-    radial-gradient(45% 38% at 88% 84%, rgba(0, 183, 212, 0.58) 0%, rgba(0, 183, 212, 0) 100%),
-    linear-gradient(160deg, #b58eb1 0%, #8d668d 54%, #6f5988 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  h1 {
-    margin: 0;
-    font-size: 0.66rem;
-    font-weight: 500;
-  }
+.content-wrap {
+  padding: 0 0.45rem;
 }
-
-.back-btn {
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 0.72rem;
-}
-
 .placeholder {
   width: 0.72rem;
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
 
 import iconTime from '@/assets/icons/icon_time.png'
 import iconChips from '@/assets/icons/icon_chips.png'
@@ -22,6 +23,11 @@ interface PlayerItem {
 }
 
 const router = useRouter()
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 
 const gameTabs = ['德州', '麻将', '其他']
 const activeGameTab = ref(gameTabs[0])
@@ -226,136 +232,172 @@ function endOfDay(date: Date): Date {
 </script>
 
 <template>
-  <div class="friends-data-page">
-    <header class="page-head">
-      <button class="back-btn" type="button" @click="goBack">‹</button>
-      <h1>{{ title }}</h1>
-      <div class="head-space" />
-    </header>
+  <div class="friends-data-page" :style="backgroundStyle">
+    <HeaderBack :title="title" />
 
-    <nav class="game-tabs" aria-label="玩法切换">
-      <button
-        v-for="tab in gameTabs"
-        :key="tab"
-        type="button"
-        class="game-tab"
-        :class="{ active: activeGameTab === tab }"
-        @click="activeGameTab = tab"
-      >
-        {{ tab }}
-      </button>
-    </nav>
-
-    <section class="glass-card summary-card">
-      <div class="date-range">
-        <button type="button" class="date-pill" @click="openDatePicker('start')">
-          <span class="date">{{ startDateText }}</span>
-          <span class="time-line">
-            <img :src="iconTime" alt="时间" />
-            <span>{{ startTime }}</span>
-          </span>
+    <div class="content-wrap">
+      <nav class="game-tabs" aria-label="玩法切换">
+        <button
+          v-for="tab in gameTabs"
+          :key="tab"
+          type="button"
+          class="game-tab"
+          :class="{ active: activeGameTab === tab }"
+          @click="activeGameTab = tab"
+        >
+          {{ tab }}
         </button>
+      </nav>
 
-        <span class="dash" aria-hidden="true">—</span>
-
-        <button type="button" class="date-pill" @click="openDatePicker('end')">
-          <span class="date">{{ endDateText }}</span>
-          <span class="time-line">
-            <img :src="iconTime" alt="时间" />
-            <span>{{ endTime }}</span>
-          </span>
-        </button>
-      </div>
-
-      <div class="metrics">
-        <div v-for="(item, index) in summary" :key="item.label" class="metric">
-          <p class="metric-label">{{ item.label }}</p>
-          <p class="metric-value">{{ item.value }}</p>
-          <span v-if="index < summary.length - 1" class="metric-divider" aria-hidden="true" />
-        </div>
-      </div>
-    </section>
-
-    <section class="list-head">
-      <span>用户</span>
-      <span>盈亏</span>
-    </section>
-
-    <section class="player-list">
-      <article v-for="item in players" :key="item.id" class="player-card">
-        <div class="player-left">
-          <img class="avatar" :src="item.avatar" :alt="item.name" />
-          <div class="player-meta">
-            <p class="name">{{ item.name }}</p>
-            <p class="id">ID: {{ item.userId }}</p>
-          </div>
-        </div>
-
-        <div class="player-right">
-          <span class="profit" :class="item.profitType === 'green' ? 'profit-green' : 'profit-red'">
-            {{ item.profit }}
-          </span>
-          <img class="chip" :src="iconChips" alt="筹码" />
-        </div>
-      </article>
-    </section>
-
-    <div v-if="isDatePickerVisible" class="date-picker-mask" @click="closeDatePicker">
-      <div class="date-picker-sheet" @click.stop>
-        <header class="picker-tip">
-          <p>只支持查询最近三个月数据</p>
-          <button type="button" class="picker-close" @click="closeDatePicker">×</button>
-        </header>
-
-        <div class="picker-range-row">
-          <button type="button" class="picker-date-btn" :class="{ active: pickingTarget === 'start' }" @click="pickingTarget = 'start'">
-            <span class="calendar-icon" aria-hidden="true" />
-            <span>{{ startDateText }}</span>
+      <section class="glass-card summary-card">
+        <div class="date-range">
+          <button type="button" class="date-pill" @click="openDatePicker('start')">
+            <span class="date">{{ startDateText }}</span>
+            <span class="time-line">
+              <img :src="iconTime" alt="时间" />
+              <span>{{ startTime }}</span>
+            </span>
           </button>
-          <button type="button" class="picker-date-btn" :class="{ active: pickingTarget === 'end' }" @click="pickingTarget = 'end'">
-            <span class="calendar-icon" aria-hidden="true" />
-            <span>{{ endDateText }}</span>
+
+          <span class="dash" aria-hidden="true">—</span>
+
+          <button type="button" class="date-pill" @click="openDatePicker('end')">
+            <span class="date">{{ endDateText }}</span>
+            <span class="time-line">
+              <img :src="iconTime" alt="时间" />
+              <span>{{ endTime }}</span>
+            </span>
           </button>
         </div>
 
-        <div class="picker-month-row">
-          <div class="month-arrows">
-            <button type="button" class="arrow-btn" aria-label="上一年" @click="goPrevYear">«</button>
-            <button type="button" class="arrow-btn" aria-label="上一月" @click="goPrevMonth">‹</button>
-          </div>
-          <p class="month-title">{{ monthTitle }}</p>
-          <div class="month-arrows">
-            <button type="button" class="arrow-btn" aria-label="下一月" @click="goNextMonth">›</button>
-            <button type="button" class="arrow-btn" aria-label="下一年" @click="goNextYear">»</button>
+        <div class="metrics">
+          <div v-for="(item, index) in summary" :key="item.label" class="metric">
+            <p class="metric-label">{{ item.label }}</p>
+            <p class="metric-value">{{ item.value }}</p>
+            <span v-if="index < summary.length - 1" class="metric-divider" aria-hidden="true"></span>
           </div>
         </div>
+      </section>
 
-        <div class="calendar-wrap">
-          <div class="weekday-row">
-            <span v-for="(label, idx) in weekLabels" :key="`${label}-${idx}`">{{ label }}</span>
+      <section class="list-head">
+        <span>用户</span>
+        <span>盈亏</span>
+      </section>
+
+      <section class="player-list">
+        <article v-for="item in players" :key="item.id" class="player-card">
+          <div class="player-left">
+            <img class="avatar" :src="item.avatar" :alt="item.name" />
+            <div class="player-meta">
+              <p class="name">{{ item.name }}</p>
+              <p class="id">ID: {{ item.userId }}</p>
+            </div>
           </div>
 
-          <div class="day-grid">
+          <div class="player-right">
+            <span class="profit" :class="item.profitType === 'green' ? 'profit-green' : 'profit-red'">
+              {{ item.profit }}
+            </span>
+            <img class="chip" :src="iconChips" alt="筹码" />
+          </div>
+        </article>
+      </section>
+
+      <div v-if="isDatePickerVisible" class="date-picker-mask" @click="closeDatePicker">
+        <div class="date-picker-sheet" @click.stop>
+          <header class="picker-tip">
+            <p>只支持查询最近三个月数据</p>
+            <button type="button" class="picker-close" @click="closeDatePicker">×</button>
+          </header>
+
+          <div class="picker-range-row">
             <button
-              v-for="cell in calendarCells"
-              :key="cell.date.toISOString()"
               type="button"
-              class="day-cell"
-              :class="{
-                muted: !cell.inCurrentMonth,
-                disabled: isDisabledDay(cell.date),
-                'in-range': isInRange(cell.date),
-                'range-start': isRangeStart(cell.date),
-                'range-end': isRangeEnd(cell.date),
-              }"
-              @click="selectDay(cell.date)"
+              class="picker-date-btn"
+              :class="{ active: pickingTarget === 'start' }"
+              @click="pickingTarget = 'start'"
             >
-              <span>{{ String(cell.day).padStart(2, '0') }}</span>
+              <span class="calendar-icon" aria-hidden="true"></span>
+              <span>{{ startDateText }}</span>
+            </button>
+            <button
+              type="button"
+              class="picker-date-btn"
+              :class="{ active: pickingTarget === 'end' }"
+              @click="pickingTarget = 'end'"
+            >
+              <span class="calendar-icon" aria-hidden="true"></span>
+              <span>{{ endDateText }}</span>
             </button>
           </div>
-        </div>
 
-        <button type="button" class="picker-ok" @click="confirmDatePicker">OK</button>
+          <div class="picker-month-row">
+            <div class="month-arrows">
+              <button
+                type="button"
+                class="arrow-btn"
+                aria-label="上一年"
+                @click="goPrevYear"
+              >
+                «
+              </button>
+              <button
+                type="button"
+                class="arrow-btn"
+                aria-label="上一月"
+                @click="goPrevMonth"
+              >
+                ‹
+              </button>
+            </div>
+            <p class="month-title">{{ monthTitle }}</p>
+            <div class="month-arrows">
+              <button
+                type="button"
+                class="arrow-btn"
+                aria-label="下一月"
+                @click="goNextMonth"
+              >
+                ›
+              </button>
+              <button
+                type="button"
+                class="arrow-btn"
+                aria-label="下一年"
+                @click="goNextYear"
+              >
+                »
+              </button>
+            </div>
+          </div>
+
+          <div class="calendar-wrap">
+            <div class="weekday-row">
+              <span v-for="(label, idx) in weekLabels" :key="`${label}-${idx}`">{{ label }}</span>
+            </div>
+
+            <div class="day-grid">
+              <button
+                v-for="cell in calendarCells"
+                :key="cell.date.toISOString()"
+                type="button"
+                class="day-cell"
+                :class="{
+                  muted: !cell.inCurrentMonth,
+                  disabled: isDisabledDay(cell.date),
+                  'in-range': isInRange(cell.date),
+                  'range-start': isRangeStart(cell.date),
+                  'range-end': isRangeEnd(cell.date),
+                }"
+                @click="selectDay(cell.date)"
+              >
+                <span>{{ String(cell.day).padStart(2, '0') }}</span>
+              </button>
+            </div>
+          </div>
+
+          <button type="button" class="picker-ok" @click="confirmDatePicker">OK</button>
+        </div>
       </div>
     </div>
   </div>
@@ -363,36 +405,18 @@ function endOfDay(date: Date): Date {
 
 <style scoped lang="scss">
 .friends-data-page {
+  position: relative;
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.459rem) 0.359rem 0.8rem;
-  color: #f3f3f3;
-  background:
-    radial-gradient(58% 43% at 18% 10%, rgba(230, 170, 142, 0.58) 0%, rgba(230, 170, 142, 0) 100%),
-    radial-gradient(62% 52% at 32% 74%, rgba(191, 87, 153, 0.68) 0%, rgba(191, 87, 153, 0) 100%),
-    radial-gradient(48% 42% at 86% 84%, rgba(0, 169, 201, 0.7) 0%, rgba(0, 169, 201, 0) 100%),
-    linear-gradient(160deg, #b58899 0%, #9f7da4 40%, #86639d 70%, #6b518f 100%);
+  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
+  color: #f9f9f9;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  h1 {
-    margin: 0;
-    font-size: 0.64237rem;
-    font-weight: 400;
-    line-height: 1;
-  }
-}
-
-.back-btn {
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 0.758rem;
-  line-height: 1;
-  padding: 0;
+.content-wrap {
+  position: relative;
+  padding: 0 0.49rem;
 }
 
 .head-space {

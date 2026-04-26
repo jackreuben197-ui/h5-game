@@ -1,8 +1,17 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+
+const title = computed(() => '确认付款')
 
 const router = useRouter()
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 const route = useRoute()
 
 const imgQr = 'https://www.figma.com/api/mcp/asset/1aabef25-95a5-4300-9235-709ff3c1d16a'
@@ -22,14 +31,10 @@ function onCopyAddress(): void {
 
 <template>
   <div class="shop-pay-page">
-    <div class="mask" />
+    <div class="mask"></div>
 
     <section class="pay-card">
-      <header class="pay-head">
-        <p class="title">确认付款</p>
-        <p class="unit">当前参考单价:1钻石=0.025USDT</p>
-        <button class="close" type="button" @click="closePage">×</button>
-      </header>
+      <HeaderBack :title="title" />
 
       <div class="amount-box">{{ price.toFixed(2) }}</div>
       <p class="amount-label">付款金额</p>

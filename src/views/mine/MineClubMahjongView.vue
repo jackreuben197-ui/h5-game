@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
 interface SummaryMetric {
   label: string
@@ -20,6 +22,13 @@ interface RecordCard {
 }
 
 const router = useRouter()
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
+const title = computed(() => '麻将战绩')
 
 const timeTabs = ['今天', '7天', '30天', '生涯']
 const selectedTime = ref(timeTabs[0])
@@ -86,130 +95,109 @@ function goDetail(): void {
 </script>
 
 <template>
-  <div class="mahjong-page">
-    <header class="page-head">
-      <button class="back-btn" type="button" @click="goBack">‹</button>
-      <h1>麻将战绩</h1>
-      <div class="head-icons">
-        <span class="icon-dot">聊</span>
-        <span class="icon-dot">表</span>
-      </div>
-    </header>
+  <div class="mahjong-page" :style="backgroundStyle">
+    <HeaderBack :title="title" />
 
-    <section class="glass-card stats-card">
-      <div class="time-tabs">
-        <button
-          v-for="item in timeTabs"
-          :key="item"
-          type="button"
-          class="time-tab"
-          :class="{ active: selectedTime === item }"
-          @click="selectedTime = item"
-        >
-          {{ item }}
-        </button>
-      </div>
-
-      <div class="main-metrics">
-        <div class="metric-col">
-          <div v-for="item in leftMetrics" :key="item.label" class="metric-item">
-            <span class="metric-label">{{ item.label }}</span>
-            <span class="metric-value">{{ item.value }}</span>
-          </div>
+    <div class="content-wrap">
+      <section class="glass-card stats-card">
+        <div class="time-tabs">
+          <button
+            v-for="item in timeTabs"
+            :key="item"
+            type="button"
+            class="time-tab"
+            :class="{ active: selectedTime === item }"
+            @click="selectedTime = item"
+          >
+            {{ item }}
+          </button>
         </div>
 
-        <div class="profit-box">
-          <div class="profit-title">今日收益 <span class="info-dot">i</span></div>
-          <div class="profit-value">+2500</div>
-        </div>
-
-        <div class="metric-col right">
-          <div v-for="item in rightMetrics" :key="item.label" class="metric-item">
-            <span class="metric-label">{{ item.label }}</span>
-            <span class="metric-value">{{ item.value }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="bottom-metrics">
-        <div v-for="item in bottomMetrics" :key="item.label" class="bottom-item">
-          <span class="metric-label">{{ item.label }}</span>
-          <span class="metric-value">{{ item.value }}</span>
-        </div>
-      </div>
-    </section>
-
-    <section class="list-wrap">
-      <article v-for="item in records" :key="item.id" class="glass-card record-card" @click="goDetail">
-        <div class="timeline">{{ item.month }}</div>
-        <div class="card-content">
-          <div class="card-head">
-            <div>{{ item.playerName }}</div>
-            <div class="id">ID: {{ item.playerId }}</div>
-          </div>
-          <div class="line" />
-          <div class="card-body">
-            <div class="meta">
-              <div><span>盲注级别:</span><span>{{ item.blind }}</span></div>
-              <div><span>手数:</span><span>{{ item.hands }}</span></div>
-              <div><span>时长:</span><span>{{ item.duration }}</span></div>
-              <div><span>结束时间:</span><span>{{ item.endAt }}</span></div>
+        <div class="main-metrics">
+          <div class="metric-col">
+            <div v-for="item in leftMetrics" :key="item.label" class="metric-item">
+              <span class="metric-label">{{ item.label }}</span>
+              <span class="metric-value">{{ item.value }}</span>
             </div>
-            <div class="profit" :class="{ pos: item.profit.startsWith('+') }">{{ item.profit }}</div>
+          </div>
+
+          <div class="profit-box">
+            <div class="profit-title">今日收益 <span class="info-dot">i</span></div>
+            <div class="profit-value">+2500</div>
+          </div>
+
+          <div class="metric-col right">
+            <div v-for="item in rightMetrics" :key="item.label" class="metric-item">
+              <span class="metric-label">{{ item.label }}</span>
+              <span class="metric-value">{{ item.value }}</span>
+            </div>
           </div>
         </div>
-      </article>
-    </section>
+
+        <div class="bottom-metrics">
+          <div v-for="item in bottomMetrics" :key="item.label" class="bottom-item">
+            <span class="metric-label">{{ item.label }}</span>
+            <span class="metric-value">{{ item.value }}</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="list-wrap">
+        <article
+          v-for="item in records"
+          :key="item.id"
+          class="glass-card record-card"
+          @click="goDetail"
+        >
+          <div class="timeline">{{ item.month }}</div>
+          <div class="card-content">
+            <div class="card-head">
+              <div>{{ item.playerName }}</div>
+              <div class="id">ID: {{ item.playerId }}</div>
+            </div>
+            <div class="line"></div>
+            <div class="card-body">
+              <div class="meta">
+                <div>
+                  <span>盲注级别:</span>
+                  <span>{{ item.blind }}</span>
+                </div>
+                <div>
+                  <span>手数:</span>
+                  <span>{{ item.hands }}</span>
+                </div>
+                <div>
+                  <span>时长:</span>
+                  <span>{{ item.duration }}</span>
+                </div>
+                <div>
+                  <span>结束时间:</span>
+                  <span>{{ item.endAt }}</span>
+                </div>
+              </div>
+              <div class="profit" :class="{ pos: item.profit.startsWith('+') }">{{ item.profit }}</div>
+            </div>
+          </div>
+        </article>
+      </section>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .mahjong-page {
+  position: relative;
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.46rem) 0.45rem 0.8rem;
+  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
   color: #f9f9f9;
-  background:
-    radial-gradient(60% 42% at 20% 10%, rgba(226, 163, 133, 0.6) 0%, rgba(226, 163, 133, 0) 100%),
-    radial-gradient(55% 45% at 25% 85%, rgba(206, 107, 160, 0.6) 0%, rgba(206, 107, 160, 0) 100%),
-    radial-gradient(45% 38% at 88% 84%, rgba(0, 183, 212, 0.58) 0%, rgba(0, 183, 212, 0) 100%),
-    linear-gradient(160deg, #b58eb1 0%, #8d668d 54%, #6f5988 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  h1 {
-    margin: 0;
-    font-size: 0.66rem;
-    font-weight: 500;
-  }
-}
-
-.back-btn {
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 0.72rem;
-  line-height: 1;
-}
-
-.head-icons {
-  display: flex;
-  align-items: center;
-  gap: 0.14rem;
-
-  .icon-dot {
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.16);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.22rem;
-  }
+.content-wrap {
+  position: relative;
+  padding: 0 0.49rem;
 }
 
 .glass-card {

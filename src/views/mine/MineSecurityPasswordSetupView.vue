@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
 
 type SetupPhase = 'first' | 'confirm'
 type OverlayType = 'none' | 'loading' | 'success'
 
 const router = useRouter()
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 const phase = ref<SetupPhase>('first')
 const digits = ref('')
 const firstInput = ref('')
@@ -87,7 +93,13 @@ function closeOverlay(): void {
           <span v-if="idx <= digits.length" class="digit">6</span>
         </span>
       </div>
-      <button v-if="showSubmit" class="submit-btn" :class="{ active: canSubmit }" type="button" @click="handleSubmit">
+      <button
+        v-if="showSubmit"
+        class="submit-btn"
+        :class="{ active: canSubmit }"
+        type="button"
+        @click="handleSubmit"
+      >
         完成
       </button>
     </section>
@@ -110,10 +122,17 @@ function closeOverlay(): void {
 
     <div v-if="overlayType !== 'none'" class="overlay-mask">
       <div class="overlay-card">
-        <div v-if="overlayType === 'loading'" class="loader" />
+        <div v-if="overlayType === 'loading'" class="loader"></div>
         <div v-else class="success-icon">✓</div>
         <p>{{ overlayType === 'loading' ? '请稍后' : '已开启' }}</p>
-        <button v-if="overlayType === 'success'" class="overlay-confirm" type="button" @click="closeOverlay">知道了</button>
+        <button
+          v-if="overlayType === 'success'"
+          class="overlay-confirm"
+          type="button"
+          @click="closeOverlay"
+        >
+          知道了
+        </button>
       </div>
     </div>
   </div>

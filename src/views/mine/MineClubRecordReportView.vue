@@ -2,8 +2,17 @@
 import { computed, ref } from 'vue'
 import { showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
 const router = useRouter()
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
+const title = computed(() => 'Result')
 
 const reason = ref('')
 const selectedPreset = ref('异常操作')
@@ -23,12 +32,10 @@ function submitReport(): void {
 </script>
 
 <template>
-  <div class="record-report-page">
-    <header class="page-head">
-      <button class="back-btn" type="button" @click="goBack">‹</button>
-      <h1>Result</h1>
-      <div class="placeholder" />
-    </header>
+  <div class="record-report-page" :style="backgroundStyle">
+    <HeaderBack :title="title" />
+
+    <div class="content-wrap">
 
     <section class="glass-card option-card">
       <button
@@ -54,42 +61,24 @@ function submitReport(): void {
     </section>
 
     <VanButton round type="primary" class="submit-btn" @click="submitReport">提交</VanButton>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .record-report-page {
+  position: relative;
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.46rem) 0.45rem 2.2rem;
+  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 2.2rem;
   color: #f9f9f9;
-  background:
-    radial-gradient(60% 42% at 20% 10%, rgba(226, 163, 133, 0.6) 0%, rgba(226, 163, 133, 0) 100%),
-    radial-gradient(55% 45% at 25% 85%, rgba(206, 107, 160, 0.6) 0%, rgba(206, 107, 160, 0) 100%),
-    radial-gradient(45% 38% at 88% 84%, rgba(0, 183, 212, 0.58) 0%, rgba(0, 183, 212, 0) 100%),
-    linear-gradient(160deg, #b58eb1 0%, #8d668d 54%, #6f5988 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  h1 {
-    margin: 0;
-    font-size: 0.66rem;
-    font-weight: 500;
-  }
-}
-
-.back-btn {
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 0.72rem;
-}
-
-.placeholder {
-  width: 0.72rem;
+.content-wrap {
+  position: relative;
+  padding: 0 0.49rem;
 }
 
 .glass-card {

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
 import iconTime from '@/assets/icons/icon_time.png'
 
@@ -24,6 +26,13 @@ interface RecordItem {
 }
 
 const router = useRouter()
+
+const title = computed(() => '数捕管理')
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 
 const filterTabs = ['今天', '14天', '7天', 'Customize']
 const activeFilter = ref(filterTabs[0])
@@ -327,13 +336,10 @@ function openRecordDetail(_item: RecordItem): void {
 </script>
 
 <template>
-  <div class="friends-record-page">
-    <header class="page-head">
-      <button class="back-btn" type="button" @click="goBack">‹</button>
-      <h1>数捕管理</h1>
-      <div class="head-space" />
-    </header>
+  <div class="friends-record-page" :style="backgroundStyle">
+    <HeaderBack :title="title" />
 
+    <div class="content-wrap">
     <section class="summary-card">
       <div class="filter-tabs">
         <button
@@ -460,26 +466,16 @@ function openRecordDetail(_item: RecordItem): void {
 <style scoped lang="scss">
 .friends-record-page {
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.459rem) 0.4392rem 0.8rem;
+  padding-top: calc(env(safe-area-inset-top) + 0.459rem);
+  padding-bottom: 0.8rem;
   color: #f9f9f9;
-  background:
-    radial-gradient(58% 43% at 18% 10%, rgba(230, 170, 142, 0.58) 0%, rgba(230, 170, 142, 0) 100%),
-    radial-gradient(62% 52% at 32% 74%, rgba(191, 87, 153, 0.68) 0%, rgba(191, 87, 153, 0) 100%),
-    radial-gradient(48% 42% at 86% 84%, rgba(0, 169, 201, 0.7) 0%, rgba(0, 169, 201, 0) 100%),
-    linear-gradient(160deg, #b58899 0%, #9f7da4 40%, #86639d 70%, #6b518f 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  h1 {
-    margin: 0;
-    font-size: 0.65035rem;
-    line-height: 1.2;
-    font-weight: 500;
-  }
+.content-wrap {
+  padding: 0 0.4392rem;
 }
 
 .back-btn {

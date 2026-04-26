@@ -7,7 +7,7 @@ import { formatTxtMessage, parseTxtLanguage, type TxtLanguageMap } from './parse
 // 与 Cocos 保持一致：cn(简中) / zh(繁中) / en / pt。
 export type LocaleCode = 'cn' | 'zh' | 'en' | 'pt'
 
-const DEFAULT_LOCALE: LocaleCode = 'en'
+const DEFAULT_LOCALE: LocaleCode = 'cn'
 const SHARED_I18N_BASE = 'assets/resources/config'
 
 export const SUPPORTED_LOCALES: LocaleCode[] = ['en', 'pt', 'zh', 'cn']

@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
 interface AccountActionItem {
   key: string
@@ -10,6 +12,13 @@ interface AccountActionItem {
 }
 
 const router = useRouter()
+
+const title = computed(() => '账号管理')
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 const route = useRoute()
 const securityPasswordEnabled = ref(false)
 
@@ -49,93 +58,55 @@ function openSecurityPasswordFlow(): void {
 </script>
 
 <template>
-  <div class="settings-page settings-page--account">
-    <header class="settings-header">
-      <button class="back-button" type="button" @click="goBack">
-        <span class="back-icon">‹</span>
-      </button>
-      <h1>账号管理</h1>
-      <div class="header-placeholder" />
-    </header>
+  <div class="settings-page settings-page--account" :style="backgroundStyle">
+    <HeaderBack :title="title" />
 
-    <section class="account-card">
-      <button
-        v-for="item in rows"
-        :key="item.key"
-        type="button"
-        class="account-row"
-        @click="onRowClick(item)"
-      >
-        <div class="left-wrap">
-          <span class="row-icon" :class="item.iconClass" />
-          <span class="label">{{ item.label }}</span>
-        </div>
+    <div class="content-wrap">
+      <section class="account-card">
+        <button
+          v-for="item in rows"
+          :key="item.key"
+          type="button"
+          class="account-row"
+          @click="onRowClick(item)"
+        >
+          <div class="left-wrap">
+            <span class="row-icon" :class="item.iconClass"></span>
+            <span class="label">{{ item.label }}</span>
+          </div>
 
-        <div class="right-wrap">
-          <span
-            v-if="item.key === 'security-password'"
-            class="switch"
-            :class="{ on: securityPasswordEnabled }"
-            @click.stop="openSecurityPasswordFlow"
-            role="switch"
-            :aria-checked="securityPasswordEnabled"
-          >
-            <span class="dot" />
-          </span>
-          <span v-else-if="item.arrow" class="arrow">›</span>
-        </div>
-      </button>
-    </section>
+          <div class="right-wrap">
+            <span
+              v-if="item.key === 'security-password'"
+              class="switch"
+              :class="{ on: securityPasswordEnabled }"
+              role="switch"
+              :aria-checked="securityPasswordEnabled"
+              @click.stop="openSecurityPasswordFlow"
+            >
+              <span class="dot"></span>
+            </span>
+            <span v-else-if="item.arrow" class="arrow">›</span>
+          </div>
+        </button>
+      </section>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .settings-page {
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.48rem) 0.4533rem 0.8rem;
+  padding-top: calc(env(safe-area-inset-top) + 0.48rem);
+  padding-bottom: 0.8rem;
   color: #f9f9f9;
-  background:
-    radial-gradient(60% 42% at 20% 10%, rgba(226, 163, 133, 0.62) 0%, rgba(226, 163, 133, 0) 100%),
-    radial-gradient(55% 45% at 26% 84%, rgba(206, 107, 160, 0.58) 0%, rgba(206, 107, 160, 0) 100%),
-    radial-gradient(45% 38% at 88% 84%, rgba(0, 183, 212, 0.56) 0%, rgba(0, 183, 212, 0) 100%),
-    linear-gradient(160deg, #b58eb1 0%, #8d668d 54%, #6f5988 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.settings-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  h1 {
-    margin: 0;
-    font-family: var(--font-family-SF);
-    font-size: 0.6424rem;
-    font-weight: 400;
-    line-height: 1.2;
-    color: #fff;
-  }
-}
-
-.back-button {
-  width: 0.72rem;
-  height: 0.72rem;
-  border: 0;
-  background: transparent;
-  color: #fff;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.back-icon {
-  font-size: 0.72rem;
-  line-height: 1;
-}
-
-.header-placeholder {
-  width: 0.72rem;
-  height: 0.72rem;
+.content-wrap {
+  padding: 0 0.4533rem;
 }
 
 .account-card {

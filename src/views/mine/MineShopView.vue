@@ -1,9 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
 import { useUserInfoStore } from '@/stores/userInfo'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+
+const title = computed(() => '我的商城')
 
 const router = useRouter()
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 const userInfoStore = useUserInfoStore()
 
 const imgChestA = 'https://www.figma.com/api/mcp/asset/0d034649-1d4c-4fdc-86c8-27dc3f19c760'
@@ -59,46 +68,48 @@ function goPay(item: ShopItem): void {
 </script>
 
 <template>
-  <div class="mine-shop-page">
-    <header class="shop-header">
-      <button class="back-btn" type="button" @click="goBack">‹</button>
-      <h1>我的商城</h1>
-      <span class="header-placeholder" />
-    </header>
+  <div class="mine-shop-page" :style="backgroundStyle">
+    <HeaderBack :title="title" />
 
-    <section class="shop-grid">
-      <button
-        v-for="item in items"
-        :key="item.id"
-        type="button"
-        class="shop-card"
-        :class="{ auditing: item.auditing }"
-        @click="goPay(item)"
-      >
-        <span v-if="item.wholesaleOnly" class="wholesale-tag">批发商专属</span>
-        <img class="chest" :src="item.image" :alt="item.title" />
-        <p class="title">{{ item.title }}</p>
-        <p class="desc">{{ item.diamondsText }}</p>
+    <div class="content-wrap">
+      <section class="shop-grid">
+        <button
+          v-for="item in items"
+          :key="item.id"
+          type="button"
+          class="shop-card"
+          :class="{ auditing: item.auditing }"
+          @click="goPay(item)"
+        >
+          <span v-if="item.wholesaleOnly" class="wholesale-tag">批发商专属</span>
+          <img class="chest" :src="item.image" :alt="item.title" />
+          <p class="title">{{ item.title }}</p>
+          <p class="desc">{{ item.diamondsText }}</p>
 
-        <div class="price-pill">
-          <span>{{ item.auditing ? '审核中' : item.price.toFixed(2) }}</span>
-          <img :src="imgCoin" alt="coin" />
-        </div>
-      </button>
-    </section>
+          <div class="price-pill">
+            <span>{{ item.auditing ? '审核中' : item.price.toFixed(2) }}</span>
+            <img :src="imgCoin" alt="coin" />
+          </div>
+        </button>
+      </section>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .mine-shop-page {
+  position: relative;
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.46rem) 0.365rem 0.72rem;
+  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
   color: #f9f9f9;
-  background:
-    radial-gradient(60% 44% at 20% 14%, rgba(231, 175, 141, 0.66) 0%, rgba(231, 175, 141, 0) 100%),
-    radial-gradient(54% 46% at 36% 86%, rgba(207, 111, 160, 0.7) 0%, rgba(207, 111, 160, 0) 100%),
-    radial-gradient(44% 38% at 92% 84%, rgba(0, 182, 212, 0.62) 0%, rgba(0, 182, 212, 0) 100%),
-    linear-gradient(158deg, #b68d9f 0%, #92698f 54%, #6a5d87 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.content-wrap {
+  position: relative;
+  padding: 0 0.49rem;
 }
 
 .shop-header {

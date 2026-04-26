@@ -2,11 +2,20 @@
 import { computed, ref } from 'vue'
 import { showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 
 const router = useRouter()
+
+const title = computed(() => 'Nickname')
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
 
@@ -30,40 +39,38 @@ function onSave(): void {
 </script>
 
 <template>
-  <div class="nickname-page">
-    <header class="nickname-header">
-      <button class="back-btn" type="button" @click="goBack">‹</button>
-      <h1>Nickname</h1>
-      <span class="header-placeholder" />
-    </header>
+  <div class="nickname-page" :style="backgroundStyle">
+    <HeaderBack :title="title" />
 
-    <section class="nickname-content">
-      <input
-        v-model="inputName"
-        class="name-input"
-        type="text"
-        maxlength="20"
-        placeholder="Name here"
-      />
-      <p class="input-hint">Enter your Account Name</p>
+    <div class="content-wrap">
+      <section class="nickname-content">
+        <input
+          v-model="inputName"
+          class="name-input"
+          type="text"
+          maxlength="20"
+          placeholder="Name here"
+        />
+        <p class="input-hint">Enter your Account Name</p>
 
-      <div class="cost-row">
-        <span class="label">Cost</span>
-        <img class="diamond" :src="iconDiamond" alt="diamond" />
-        <span class="origin">500</span>
-        <span class="current">100</span>
-        <span class="info">!</span>
+        <div class="cost-row">
+          <span class="label">Cost</span>
+          <img class="diamond" :src="iconDiamond" alt="diamond" />
+          <span class="origin">500</span>
+          <span class="current">100</span>
+          <span class="info">!</span>
+        </div>
+
+        <div class="cost-row balance-row">
+          <span class="label">Diamond Balance</span>
+          <img class="diamond" :src="iconDiamond" alt="diamond" />
+          <span class="balance">{{ displayUser.diamond }}</span>
+        </div>
+      </section>
+
+      <div class="save-wrap">
+        <button class="save-btn" type="button" @click="onSave">Save</button>
       </div>
-
-      <div class="cost-row balance-row">
-        <span class="label">Diamond Balance</span>
-        <img class="diamond" :src="iconDiamond" alt="diamond" />
-        <span class="balance">{{ displayUser.diamond }}</span>
-      </div>
-    </section>
-
-    <div class="save-wrap">
-      <button class="save-btn" type="button" @click="onSave">Save</button>
     </div>
   </div>
 </template>
@@ -71,48 +78,16 @@ function onSave(): void {
 <style scoped lang="scss">
 .nickname-page {
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.4598rem) 0.48rem 1.04rem;
+  padding-top: calc(env(safe-area-inset-top) + 0.4598rem);
+  padding-bottom: 1.04rem;
   color: #f9f9f9;
-  background:
-    radial-gradient(60% 44% at 20% 14%, rgba(231, 175, 141, 0.66) 0%, rgba(231, 175, 141, 0) 100%),
-    radial-gradient(54% 46% at 36% 86%, rgba(207, 111, 160, 0.7) 0%, rgba(207, 111, 160, 0) 100%),
-    radial-gradient(44% 38% at 92% 84%, rgba(0, 182, 212, 0.62) 0%, rgba(0, 182, 212, 0) 100%),
-    linear-gradient(158deg, #b68d9f 0%, #92698f 54%, #6a5d87 100%);
-  display: flex;
-  flex-direction: column;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.nickname-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  h1 {
-    margin: 0;
-    font-family: 'Afacad', var(--font-family-sans);
-    font-size: 0.6503rem;
-    line-height: 1.2;
-    font-weight: 500;
-    color: #fff;
-  }
-}
-
-.back-btn,
-.header-placeholder {
-  width: 0.7685rem;
-  height: 0.7685rem;
-}
-
-.back-btn {
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 0.7685rem;
-  line-height: 1;
-  padding: 0;
-}
-
-.nickname-content {
+.content-wrap {
+  padding: 0 0.48rem;
   margin-top: 0.6228rem;
 }
 

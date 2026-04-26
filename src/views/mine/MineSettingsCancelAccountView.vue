@@ -3,6 +3,8 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
 const router = useRouter()
 
@@ -86,6 +88,11 @@ const zoneCode = computed(() => {
   return pure || '11'
 })
 
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 const otp = ref('')
 const emailDraft = ref('')
 const otpCountdown = ref(0)
@@ -148,71 +155,74 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="cancel-account-page">
-    <header class="page-header">
-      <button class="back-btn" type="button" @click="goBack">‹</button>
-      <h1>{{ pageTitle }}</h1>
-      <div class="header-placeholder" />
-    </header>
+  <div class="cancel-account-page" :style="backgroundStyle">
+    <HeaderBack :title="pageTitle" />
 
-    <section class="form-stack">
-      <div class="form-label">Passcode</div>
-      <div class="form-row">
-        <span class="row-icon" :class="isPhone ? 'icon-phone' : 'icon-mail'" />
-        <div class="row-main">
-          <template v-if="isPhone">
-            <span class="prefix">+{{ zoneCode }}</span>
+    <div class="content-wrap">
+      <section class="form-stack">
+        <div class="form-label">Passcode</div>
+        <div class="form-row">
+          <span class="row-icon" :class="isPhone ? 'icon-phone' : 'icon-mail'"></span>
+          <div class="row-main">
+            <template v-if="isPhone">
+              <span class="prefix">+{{ zoneCode }}</span>
+              <input
+                :value="firstContactValue"
+                class="input-field"
+                type="tel"
+                inputmode="numeric"
+                :placeholder="firstContactPlaceholder"
+                readonly
+              />
+            </template>
+            <template v-else>
+              <input
+                v-model.trim="emailFieldValue"
+                class="input-field"
+                type="email"
+                inputmode="email"
+                :placeholder="firstContactPlaceholder"
+                :readonly="isEmail"
+              />
+            </template>
+            <button
+              class="otp-btn"
+              :class="{ countdown: otpCountdown > 0 }"
+              type="button"
+              @click="requestOtp"
+            >
+              {{ otpButtonText }}
+            </button>
+          </div>
+        </div>
+
+        <div class="form-label">Passcode</div>
+        <div class="form-row">
+          <span class="row-icon icon-lock"></span>
+          <div class="row-main single">
             <input
-              :value="firstContactValue"
+              v-model.trim="otp"
               class="input-field"
-              type="tel"
+              type="text"
               inputmode="numeric"
-              :placeholder="firstContactPlaceholder"
-              readonly
+              placeholder="Enter Passcode"
             />
-          </template>
-          <template v-else>
-            <input
-              v-model.trim="emailFieldValue"
-              class="input-field"
-              type="email"
-              inputmode="email"
-              :placeholder="firstContactPlaceholder"
-              :readonly="isEmail"
-            />
-          </template>
-          <button class="otp-btn" :class="{ countdown: otpCountdown > 0 }" type="button" @click="requestOtp">
-            {{ otpButtonText }}
-          </button>
-        </div>
-      </div>
-
-      <div class="form-label">Passcode</div>
-      <div class="form-row">
-        <span class="row-icon icon-lock" />
-        <div class="row-main single">
-          <input
-            v-model.trim="otp"
-            class="input-field"
-            type="text"
-            inputmode="numeric"
-            placeholder="Enter Passcode"
-          />
-        </div>
-      </div>
-    </section>
-
-    <button class="submit-btn" type="button" @click="onSubmit">注销账号</button>
-
-    <div v-if="showConfirm" class="dialog-mask">
-      <section class="dialog-card">
-        <p class="dialog-title">确认要注销当前账号吗？</p>
-        <p class="dialog-desc">注销后账号信息将无法恢复，请谨慎操作。</p>
-        <div class="dialog-actions">
-          <button class="dialog-btn ghost" type="button" @click="cancelDialog">取消</button>
-          <button class="dialog-btn primary" type="button" @click="confirmDialog">确认注销</button>
+          </div>
         </div>
       </section>
+
+      <button class="submit-btn" type="button" @click="onSubmit">注销账号</button>
+
+      <div v-if="showConfirm" class="dialog-mask">
+        <section class="dialog-card">
+          <p class="dialog-title">确认要注销当前账号吗？</p>
+          <p class="dialog-desc">注销后账号信息将无法恢复，请谨慎操作。</p>
+          <div class="dialog-actions">
+            <button class="dialog-btn ghost" type="button" @click="cancelDialog">取消</button>
+            <button class="dialog-btn primary" type="button" @click="confirmDialog">确认注销</button>
+          </div>
+        </section>
+      </div>
     </div>
   </div>
 </template>
@@ -222,43 +232,16 @@ onBeforeUnmount(() => {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: calc(env(safe-area-inset-top) + 0.48rem) 0.4533rem calc(env(safe-area-inset-bottom) + 1.0667rem);
+  padding-top: calc(env(safe-area-inset-top) + 0.48rem);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 1.0667rem);
   color: #f9f9f9;
-  background:
-    radial-gradient(60% 42% at 20% 10%, rgba(226, 163, 133, 0.62) 0%, rgba(226, 163, 133, 0) 100%),
-    radial-gradient(55% 45% at 26% 84%, rgba(206, 107, 160, 0.58) 0%, rgba(206, 107, 160, 0) 100%),
-    radial-gradient(45% 38% at 88% 84%, rgba(0, 183, 212, 0.56) 0%, rgba(0, 183, 212, 0) 100%),
-    linear-gradient(160deg, #b58eb1 0%, #8d668d 54%, #6f5988 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  h1 {
-    margin: 0;
-    font-family: var(--font-family-SF);
-    font-size: 0.6424rem;
-    font-weight: 400;
-    line-height: 1.2;
-    color: #fff;
-    white-space: nowrap;
-  }
-}
-
-.back-btn,
-.header-placeholder {
-  width: 0.72rem;
-  height: 0.72rem;
-}
-
-.back-btn {
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 0.72rem;
-  line-height: 1;
+.content-wrap {
+  padding: 0 0.4533rem;
 }
 
 .form-stack {

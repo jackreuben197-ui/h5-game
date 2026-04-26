@@ -21,8 +21,9 @@ export interface MttListRecord {
   rooms?: number
   participants?: number
   seat_count?: number
-  start_time?: string | null
-  apply_start_time?: string | null
+  // HTTP 通常是 RFC3339 字符串；WS 增量通知可能是秒级时间戳（number）。
+  start_time?: string | number | null
+  apply_start_time?: string | number | null
   upblind_interval?: number
   max_delay_apply_bl?: number
   apply_fee_pool?: number

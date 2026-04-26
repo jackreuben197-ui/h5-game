@@ -3,6 +3,9 @@ import { subscribeH5WsMessages, type H5WsIncomingEvent } from './wsProxy'
 
 export const WS_NOTIFY_CODE = {
   ROOM_CHANGE_NOTIFY: 140,
+  USER_MTT_CHANGE_NOTIFY: 151,
+  USER_SNG_CHANGE_NOTIFY: 152,
+  MTT_SERIES_NOTIFY: 153,
 } as const
 
 export interface H5WsDecodedMessage {

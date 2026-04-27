@@ -12,6 +12,11 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     FilterTabbar: typeof import('./src/components/Tabbar/FilterTabbar.vue')['default']
+    GameTable: typeof import('./src/components/Table/GameTable.vue')['default']
+    GameTableCell: typeof import('./src/components/Table/GameTableCell.vue')['default']
+    GameTableColumn: typeof import('./src/components/Table/GameTableColumn.vue')['default']
+    GameTableHeader: typeof import('./src/components/Table/GameTableHeader.vue')['default']
+    GameTableRow: typeof import('./src/components/Table/GameTableRow.vue')['default']
     GameTypeTabbar: typeof import('./src/components/Tabbar/GameTypeTabbar.vue')['default']
     HeaderBack: typeof import('./src/components/HeaderBack/HeaderBack.vue')['default']
     MainBottomTab: typeof import('./src/components/Tabbar/MainBottomTab.vue')['default']
@@ -26,6 +31,7 @@ declare module 'vue' {
     VanCellGroup: typeof import('vant/es')['CellGroup']
     VanField: typeof import('vant/es')['Field']
     VanIcon: typeof import('vant/es')['Icon']
+    VanLoading: typeof import('vant/es')['Loading']
     VanNavBar: typeof import('vant/es')['NavBar']
     VanPicker: typeof import('vant/es')['Picker']
     VanPopup: typeof import('vant/es')['Popup']

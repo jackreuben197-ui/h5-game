@@ -559,3 +559,180 @@ Slots：
   </div>
 </PageBackHeader>
 ```
+
+## 12. GameTable 组件
+
+位置：`src/components/Table/`
+
+文件结构：
+
+```
+Table/
+├── index.ts              # 统一导出
+├── types.ts              # 类型定义 + InjectionKey
+├── GameTable.vue         # 主容器，管理排序状态，provide 列注册上下文
+├── GameTableColumn.vue   # 列定义（不渲染，onMounted 通过 inject 向父级注册配置）
+├── GameTableHeader.vue   # 统一 header 条（pill 胶囊样式）
+├── GameTableRow.vue      # 单行卡片
+└── GameTableCell.vue     # 单元格内容，支持 formatter 和自定义 slot
+```
+
+### 12.1 GameTable Props
+
+| Prop | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `data` | `Record<string, any>[]` | — | 表格数据 |
+| `showHeader` | `boolean` | `true` | 是否显示表头 |
+| `defaultSort` | `{ prop: string; order: 'asc'\|'desc'\|'' }` | — | 默认排序状态 |
+| `height` | `string` | — | body 固定高度（如 `'10rem'`），超出后滚动；不设则随内容撑开 |
+| `v-model:loading` | `boolean` | `false` | 加载中状态，true 时不触发新的 load；父组件请求完成后置为 false |
+| `finished` | `boolean` | `false` | 全部加载完毕，不再触发 load |
+| `disabled` | `boolean` | `false` | 禁用滚动加载 |
+| `offset` | `number` | `50` | 距底部多少 px 时触发 load |
+
+### 12.2 GameTable Events
+
+| Event | 参数 | 说明 |
+|-------|------|------|
+| `sortChange` | `(col, order)` | 点击排序触发，order 循环 asc → desc → '' |
+| `load` | — | 滚动触底时触发，父组件应请求下一页数据并在完成后将 `loading` 置为 false |
+| `selectChange` | `(col, option)` | 下拉选择触发 |
+| `rowClick` | `(row)` | 行点击触发 |
+
+### 12.3 GameTableColumn Props
+
+| Prop | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `prop` | `string` | — | 数据字段名 |
+| `label` | `string` | — | 表头显示文字 |
+| `flex` | `number` | `1` | flex 权重，设置 `width` 后失效 |
+| `width` | `string` | — | 固定列宽，如 `'1.5rem'`、`'25%'` |
+| `sortable` | `boolean` | `false` | 是否启用排序 |
+| `select` | `{ text: string; value: any }[]` | — | 下拉筛选选项，有值则显示下拉箭头 |
+| `align` | `'left'\|'center'\|'right'` | `'center'` | 内容对齐 |
+| `fixed` | `boolean` | `false` | 固定列（预留，暂不处理横向滚动） |
+| `formatter` | `(value, row) => any` | 原值 | 自定义格式化显示值 |
+
+### 12.4 自定义 slot 渲染
+
+`GameTableColumn` 的默认 slot 接收 `{ row, value }` 作用域，可自定义单元格内容：
+
+```vue
+<GameTableColumn prop="name" label="玩家" :flex="2">
+  <template #default="{ row, value }">
+    <img :src="row.avatar" class="avatar" />
+    <span>{{ value }}</span>
+  </template>
+</GameTableColumn>
+```
+
+### 12.5 完整示例
+
+```vue
+<script setup lang="ts">
+import { GameTable, GameTableColumn } from '@/components/Table'
+
+const data = [
+  { rank: 1, name: '玩家A', score: 9800, type: 'NLH' },
+  { rank: 2, name: '玩家B', score: 8700, type: 'PLO' },
+]
+
+function onSortChange(col, order) {
+  console.log('sort', col.prop, order) // 向服务端传参重新拉取数据
+}
+
+function onSelectChange(col, option) {
+  console.log('filter', col.prop, option.value)
+}
+</script>
+
+<template>
+  <GameTable
+    :data="data"
+    :show-header="true"
+    :default-sort="{ prop: 'score', order: 'desc' }"
+    @sort-change="onSortChange"
+    @select-change="onSelectChange"
+    @row-click="(row) => console.log(row)"
+  >
+    <!-- 固定宽度列 -->
+    <GameTableColumn prop="rank" label="排名" width="1rem" />
+
+    <!-- 自定义 slot 列 -->
+    <GameTableColumn prop="name" label="玩家" :flex="2">
+      <template #default="{ row, value }">
+        <img :src="row.avatar" style="width:0.6rem;height:0.6rem;border-radius:50%" />
+        <span style="margin-left:0.12rem">{{ value }}</span>
+      </template>
+    </GameTableColumn>
+
+    <!-- 排序列 + formatter -->
+    <GameTableColumn
+      prop="score"
+      label="积分"
+      :sortable="true"
+      :formatter="(v) => v.toLocaleString()"
+    />
+
+    <!-- 下拉筛选列 -->
+    <GameTableColumn
+      prop="type"
+      label="类型"
+      :select="[
+        { text: '全部', value: '' },
+        { text: 'NLH', value: 'nlh' },
+        { text: 'PLO', value: 'plo' },
+      ]"
+    />
+  </GameTable>
+</template>
+```
+
+### 12.6 分页滚动加载示例
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { GameTable, GameTableColumn } from '@/components/Table'
+
+const data = ref<any[]>([])
+const loading = ref(false)
+const finished = ref(false)
+let page = 1
+
+async function onLoad() {
+  const res = await fetchTableData({ page: page++ })
+  data.value.push(...res.list)
+  loading.value = false             // 必须置为 false，否则不会触发下一次 load
+  if (data.value.length >= res.total) finished.value = true
+}
+</script>
+
+<template>
+  <GameTable
+    :data="data"
+    height="12rem"
+    v-model:loading="loading"
+    :finished="finished"
+    @load="onLoad"
+  >
+    <GameTableColumn prop="rank" label="排名" width="1rem" />
+    <GameTableColumn prop="name" label="玩家" />
+    <GameTableColumn prop="score" label="积分" :sortable="true" />
+  </GameTable>
+</template>
+```
+
+**注意事项：**
+- `height` 必须设置，否则 body 不是滚动容器，无法触发 `load`
+- `load` 触发后组件自动将 `loading` 设为 true，请求完成后父组件**必须**将其置为 false
+- 数据不足一屏时组件会在 `loading` 变 false 后自动再次检查并触发 `load`，直到内容溢出或 `finished` 为 true
+- 自定义底部状态可通过 `#loading` / `#finished` slot 覆盖默认样式
+
+### 12.7 样式说明
+
+- **Header**：整体为一个 pill 胶囊条，样式与 `FilterTabbar--pill` 激活态完全一致（外层白色内阴影环 + 内层绿色填充 + 绿色 glow）
+- **Row**：每行为一个独立圆角卡片（`border-radius: 0.425rem`，`background: rgba(0,0,0,0.2)`），最小高度 `0.85rem`，行间有 `0.12rem` 间距
+- **下拉面板**：`background: rgba(0,0,0,0.37)` + `backdrop-filter: blur(0.16rem)`
+- **排序图标**：上下箭头对（Vant `arrow-up` / `arrow-down`），激活态变白色，后续可替换为自定义 SVG
+- **下拉箭头**：Vant `arrow-down`，展开时旋转 180°

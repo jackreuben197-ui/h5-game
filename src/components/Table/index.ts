@@ -1,0 +1,6 @@
+export { default as GameTable } from './GameTable.vue'
+export { default as GameTableColumn } from './GameTableColumn.vue'
+export { default as GameTableHeader } from './GameTableHeader.vue'
+export { default as GameTableRow } from './GameTableRow.vue'
+export { default as GameTableCell } from './GameTableCell.vue'
+export type { ColumnConfig, SelectOption, SortOrder } from './types'

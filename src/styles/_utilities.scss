@@ -138,6 +138,16 @@
 .overflow-y-auto  { overflow-y: auto; }
 .overflow-y-hidden { overflow-y: hidden; }
 
+// 隐藏滚动条但保留滚动能力（兼容 WebKit / Firefox / IE）
+.scrollbar-hide {
+  scrollbar-width: none;       // Firefox
+  -ms-overflow-style: none;   // IE / Edge legacy
+
+  &::-webkit-scrollbar {
+    display: none;             // Chrome / Safari / WebKit
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Width
 // ---------------------------------------------------------------------------

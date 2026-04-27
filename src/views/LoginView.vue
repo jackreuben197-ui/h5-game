@@ -3,7 +3,7 @@ import { md5 } from 'js-md5'
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast, showLoadingToast, showSuccessToast, closeToast } from 'vant'
-import { loginApi } from '@/api/auth'
+import { loginApi } from '@/api/user'
 import { DEBUG_ACCOUNTS, DEFAULT_DEBUG_ACCOUNT, type DebugAccount } from '@/constants/debugAccounts'
 import { useGameStore } from '@/stores/game'
 

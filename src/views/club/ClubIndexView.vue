@@ -2,12 +2,12 @@
 import { computed, onMounted, reactive, ref, type CSSProperties } from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
-import { getRoomIdsApi, getRoomsDetailApi } from '@/api/room'
+import { getRoomIdsApi, getRoomsDetailApi } from '@/api/roomcenter'
 import { enterTable } from '@/bridge/core'
 import type { EnterTablePayload } from '@/bridge/protocol'
 import StorageKey from '@/constants/storageKey'
 import LoginSession from '@/session/loginSession'
-import type { RoomRecord } from '@/api/models/room'
+import type { RoomRecord } from '@/api/models/roomcenter'
 import { useGameStore } from '@/stores/game'
 import { localStore } from '@/utils/localStore'
 import { t } from '@/i18n'
@@ -303,6 +303,7 @@ async function handleTableClick(room: RoomRecord): Promise<void> {
     from: 'h5-lobby',
     roomId: String(room.rid ?? ''),
     roomName: String(room.name ?? ''),
+    roomInfo: room,
   }
 
   enterTable(payload)

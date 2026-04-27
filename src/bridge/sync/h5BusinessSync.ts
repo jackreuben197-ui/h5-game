@@ -10,9 +10,9 @@ import {
   type SyncUserClubPayload,
   type SyncUserPayload,
 } from '../protocol'
-import type { UserInfoData } from '@/api/models/auth'
+import type { UserInfoData } from '@/api/models/user'
 import type { ApiResponse } from '@/api/models/common'
-import type { RoomDetailData, RoomDetailRequest } from '@/api/models/room'
+import type { RoomDetailData, RoomDetailRequest } from '@/api/models/roomcenter'
 
 function emitH5BusinessMessage<TPayload>(action: string, payload: TPayload): void {
   sendBridgeMessage(action, payload, { msgtype: BRIDGE_MSG_TYPE.H5 })

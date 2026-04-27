@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import avatarDefault from '@/assets/images/default_avatar.png'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconBalance from '@/assets/icons/icon_balance.png'
@@ -44,7 +44,6 @@ interface OtherMessageItem {
   wrap?: boolean
 }
 
-const router = useRouter()
 const route = useRoute()
 
 const otherBannerBgFirst = 'https://www.figma.com/api/mcp/asset/694b9873-5869-4789-991f-f75c25a01cad'
@@ -191,9 +190,6 @@ const otherMessages: OtherMessageItem[] = [
   },
 ]
 
-function backToMessage(): void {
-  void router.push('/message')
-}
 </script>
 
 <template>

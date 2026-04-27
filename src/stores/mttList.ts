@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { getAllMttSngIdsApi, getMttListApi } from '@/api/mtt'
+import { getAllMttSngIdsApi, getMttListApi } from '@/api/roomcenter'
 import { WS_NOTIFY_CODE, subscribeH5WsCodes } from '@/bridge/ws'
 import {
   decodeMttSeriesNotifyFromRawPacket,
@@ -17,7 +17,7 @@ import type {
   MttListRecord,
   MttSeriesInfoRecord,
   SngIdInfoRecord,
-} from '@/api/models/mtt'
+} from '@/api/models/roomcenter'
 import StorageKey from '@/constants/storageKey'
 import { useGameStore } from '@/stores/game'
 import { localStore } from '@/utils/localStore'

@@ -1,0 +1,2464 @@
+// 该文件由迁移脚本从 cocos Request 自动生成并做结构化转换。
+// 前缀: /api/org
+
+// /api/org/club/{id} (OrgClubId)
+export interface OrgClubIdRequest {
+  [key: string]: unknown
+}
+
+export interface OrgClubIdResponseData {
+
+    data?: OrgClubIdData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubIdData {
+
+    club_name?: string;
+    logo?: string;
+    random_id?: number;
+    upper_limit?: number;
+    club_members?: number;
+    area_id?: string;
+    club_type?: number;
+    member_type?: number;
+    create_time?: string;
+    is_official?: number;
+    club_status?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/club/{id}/join (OrgClubIdJoin)
+export interface OrgClubIdJoinRequest {
+  [key: string]: unknown
+}
+
+export interface OrgClubIdJoinResponseData {
+
+    data?: OrgClubIdJoinData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubIdJoinData {
+  [key: string]: unknown
+}
+
+// /api/org/club/admin/add_admin (OrgClubAddAdmin)
+export interface OrgClubAddAdminRequest {
+
+  //     user_id: number,  //
+  // 
+  [key: string]: unknown
+}
+
+export interface OrgClubAddAdminResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/admin/create_room_switch (OrgClubCreateRoomChange)
+export interface OrgClubCreateRoomChangeRequest {
+
+  //     user_id: number,  //
+  //     create_room: number //
+  // 
+  [key: string]: unknown
+}
+
+export interface OrgClubCreateRoomChangeResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/admin/del_admin (OrgClubDelAdmin)
+export interface OrgClubDelAdminRequest {
+
+  //     user_id: number,  //
+  // 
+  [key: string]: unknown
+}
+
+export interface OrgClubDelAdminResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/admin/delele/user (DeleleUser)
+export interface DeleleUserRequest {
+
+  //     user_id: number;
+  // 
+  [key: string]: unknown
+}
+
+export interface DeleleUserResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/admin/has (OrgClubIsManger)
+export interface OrgClubIsMangerRequest {
+
+  //     club_id: null;
+  // 
+  [key: string]: unknown
+}
+
+export interface OrgClubIsMangerResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/admin/list (OrgMangerList)
+export interface OrgMangerListRequest {
+  [key: string]: unknown
+}
+
+export interface OrgMangerListResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/admin/lock/user (LockUser)
+export interface LockUserRequest {
+
+  //     user_id: number;
+  // 
+  [key: string]: unknown
+}
+
+export interface LockUserResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/admin/permission_switch (OrgClubAdminPermissionSwitch)
+export interface OrgClubAdminPermissionSwitchRequest {
+
+    club_id?: number;
+    user_id?: number;
+    create_room?: number;
+    club_manage?: number;
+    member_manage?: number;
+    fund_manage?: number;
+    get_data?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubAdminPermissionSwitchResponseData {
+
+    data?: OrgClubAdminPermissionSwitchData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubAdminPermissionSwitchInfo {
+
+    create_room?: number;
+    club_manage?: number;
+    member_manage?: number;
+    fund_manage?: number;
+    get_data?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubAdminPermissionSwitchData {
+
+    info?: OrgClubAdminPermissionSwitchInfo;
+
+  [key: string]: unknown
+}
+
+// /api/org/club/admin/unlock/user (UnlockUser)
+export interface UnlockUserRequest {
+
+  //     user_id: number;
+  // 
+  [key: string]: unknown
+}
+
+export interface UnlockUserResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/agent/credit/balance (OrgClubAgentCreditBalaNce)
+export interface OrgClubAgentCreditBalaNceRequest {
+
+    user_id?: number;
+    gold_type?: number;
+    amount?: number;
+    is_reset?: boolean;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubAgentCreditBalaNceResponseData {
+
+    data?: OrgClubAgentCreditBalaNceData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubAgentCreditBalaNceData {
+  [key: string]: unknown
+}
+
+// /api/org/club/agent/credit/limit (OrgClubAgentCreditLimit)
+export interface OrgClubAgentCreditLimitRequest {
+
+    user_id?: number;
+    gold_type?: number;
+    amount?: number;
+    is_reset?: boolean;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubAgentCreditLimitResponseData {
+
+    data?: OrgClubAgentCreditLimitData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubAgentCreditLimitData {
+  [key: string]: unknown
+}
+
+// /api/org/club/agent/invitation (OrgClubAgentInviTation)
+export interface OrgClubAgentInviTationRequest {
+
+    user_id?: number;
+    club_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubAgentInviTationResponseData {
+
+    data?: OrgClubAgentInviTationData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubAgentInviTationData {
+  [key: string]: unknown
+}
+
+// /api/org/club/agent/list (ClubAgentList)
+export interface ClubAgentListRequest {
+  [key: string]: unknown
+}
+
+export interface ClubAgentListResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/agent/ratio/info (OrgClubAgentRatioInfo)
+export interface OrgClubAgentRatioInfoRequest {
+
+    user_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubAgentRatioInfoResponseData {
+
+    data?: OrgClubAgentRatioInfoData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubAgentRatioInfoData {
+
+    info?: OrgClubAgentRatioInfoInfo;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubAgentRatioInfoInfo {
+
+    agent_service_ratio?: number;
+    agent_insur_ratio?: number;
+    agent_cowboy_ratio?: number;
+    agent_mtt_ratio?: number;
+    agent_jackpot_ratio?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/club/agent/ratio/update (OrgClubAgentRatioUpdate)
+export interface OrgClubAgentRatioUpdateRequest {
+
+    user_id?: number;
+    agent_service_ratio?: number;
+    agent_insur_ratio?: number;
+    agent_cowboy_ratio?: number;
+    agent_mtt_ratio?: number;
+    agent_jackpot_ratio?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubAgentRatioUpdateResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/agent/user_list (ClubAgentUserList)
+export interface ClubAgentUserListRequest {
+  [key: string]: unknown
+}
+
+export interface ClubAgentUserListResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/agent/user_list_cover (ClubAgentUserListCover)
+export interface ClubAgentUserListCoverRequest {
+  [key: string]: unknown
+}
+
+export interface ClubAgentUserListCoverResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/clone/apply (OrgClubCloneApply)
+export interface OrgClubCloneApplyRequest {
+
+    club_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubCloneApplyResponseData {
+
+    data?: OrgClubCloneApplyData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubCloneApplyData {
+  [key: string]: unknown
+}
+
+// /api/org/club/club_user/wallet (ClubUserWallet)
+export interface ClubUserWalletRequest {
+  [key: string]: unknown
+}
+
+export interface ClubUserWalletResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/club_wallet/stats (OrgClubClubWalletStats)
+export interface OrgClubClubWalletStatsRequest {
+
+    gold_type?: number;
+    start_time?: number;
+    end_time?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubClubWalletStatsResponseData {
+
+    data?: OrgClubClubWalletStatsData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubClubWalletStatsData {
+
+    gold_before?: number;
+    gold_after?: number;
+    to_user?: number;
+    recover_user?: number;
+    to_club?: number;
+    recover_club?: number;
+    room_profit?: number;
+    mtt_profit?: number;
+    insurance?: number;
+    sng_profit?: number;
+    jackpot_profit?: number;
+    mini_game_profit?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/club/create (OrgClubCreate)
+export interface OrgClubCreateRequest {
+
+  //     area_id: null,
+  //     club_name: null,
+  //     desc: null,
+  //     logo: null,
+  // 
+  [key: string]: unknown
+}
+
+export interface OrgClubCreateResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/create/is_first (OrgClubCreateIsFirst)
+export interface OrgClubCreateIsFirstRequest {
+  [key: string]: unknown
+}
+
+export interface OrgClubCreateIsFirstResponseData {
+
+    data?: OrgClubCreateIsFirstData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubCreateIsFirstData {
+
+    is_first?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/club/credit/balance (OrgClubCreditBalaNce)
+export interface OrgClubCreditBalaNceRequest {
+
+    user_id?: number;
+    gold_type?: number;
+    amount?: number;
+    is_reset?: boolean;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubCreditBalaNceResponseData {
+
+    data?: OrgClubCreditBalaNceData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubCreditBalaNceData {
+  [key: string]: unknown
+}
+
+// /api/org/club/credit/limit (OrgClubCreditLimit)
+export interface OrgClubCreditLimitRequest {
+
+    user_id?: number;
+    gold_type?: number;
+    amount?: number;
+    is_reset?: boolean;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubCreditLimitResponseData {
+
+    data?: OrgClubCreditLimitData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubCreditLimitData {
+  [key: string]: unknown
+}
+
+// /api/org/club/credit/log (OrgClubCreditLog)
+export interface OrgClubCreditLogRequest {
+
+    limit?: number;
+    offset?: number;
+    gold_type?: number;
+    op_codes?: string[];
+    start_time?: number;
+    end_time?: number;
+    sort_type?: number;
+    order_type?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubCreditLogResponseData {
+
+    data?: OrgClubCreditLogData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubCreditLogData {
+
+    limit?: number;
+    total?: number;
+    offset?: number;
+    data?: OrgClubCreditLogCreditData[];
+    credit_info?: OrgClubCreditLogCreditInfo;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubCreditLogCreditInfo {
+
+    club_credit_limit_total?: number;
+    club_credit_limit_increase_total?: number;
+    club_credit_limit_decrease_total?: number;
+    club_credit_total?: number;
+    club_credit_increase_total?: number;
+    club_credit_decrease_total?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubCreditLogCreditData {
+
+    credit_change?: number;
+    credit_after?: number;
+    create_time?: string;
+    op_code?: string;
+    credit_limit?: number;
+    user_random_id?: number;
+    user_name?: string;
+
+  [key: string]: unknown
+}
+
+// /api/org/club/delay_room_audit_switch/update (OrgClubDelayRoomAuditSwitchUpdate)
+export interface OrgClubDelayRoomAuditSwitchUpdateRequest {
+
+    delay_room_audit_switch?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubDelayRoomAuditSwitchUpdateResponseData {
+
+    data?: OrgClubDelayRoomAuditSwitchUpdateData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubDelayRoomAuditSwitchUpdateData {
+  [key: string]: unknown
+}
+
+// /api/org/club/disband (OrgClubDisbAnd)
+export interface OrgClubDisbAndRequest {
+  [key: string]: unknown
+}
+
+export interface OrgClubDisbAndResponseData {
+
+    data?: OrgClubDisbAndData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubDisbAndData {
+  [key: string]: unknown
+}
+
+// /api/org/club/fund/detail (OrgClubGold)
+export interface OrgClubGoldRequest {
+
+  //     club_random_id: number
+  // 
+  [key: string]: unknown
+}
+
+export interface OrgClubGoldResponseData {
+
+  //     org_id: number, // 公会ID
+  //     gold: number, // 公会金豆数
+  //     gold_lock: number, // 公会被锁定的金豆数
+  //     forbidden: boolean, // 是否冻结 true已冻结，false未冻结
+  //     club_name: string,   //公会名字
+  // 
+  [key: string]: unknown
+}
+
+// /api/org/club/fund/gold_change/log (ClubFundChangeLog)
+export interface ClubFundChangeLogRequest {
+
+  //     club_random_id: number
+  // 
+  [key: string]: unknown
+}
+
+export interface ClubFundChangeLogResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/info (OrgClubSearchById)
+export interface OrgClubSearchByIdRequest {
+
+  //     club_random_id: null;
+  // 
+  [key: string]: unknown
+}
+
+export interface OrgClubSearchByIdResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/invitation (OrgClubInviTation)
+export interface OrgClubInviTationRequest {
+
+    club_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubInviTationResponseData {
+
+    data?: OrgClubInviTationData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubInviTationData {
+  [key: string]: unknown
+}
+
+// /api/org/club/jackpot/recharge (OrgClubJackpotRecharge)
+export interface OrgClubJackpotRechargeRequest {
+
+    jackpot_id?: number;
+    amount?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubJackpotRechargeResponseData {
+
+    data?: OrgClubJackpotRechargeData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubJackpotRechargeData {
+  [key: string]: unknown
+}
+
+// /api/org/club/jackpot/template/create (OrgClubJackpotTemplateCreate)
+export interface OrgClubJackpotTemplateCreateRequest {
+
+    name?: string;
+    gold?: number;
+    nlh_switch?: number;
+    nlh_setting?: OrgClubJackpotTemplateCreateJackpotSetting;
+    plo_switch?: number;
+    plo_setting?: OrgClubJackpotTemplateCreateJackpotSetting;
+    six_plus_switch?: number;
+    six_plus_setting?: OrgClubJackpotTemplateCreateJackpotSetting;
+    bombpot_switch?: number;
+    bombpot_setting?: OrgClubJackpotTemplateCreateJackpotSetting;
+    aof_switch?: number;
+    aof_setting?: OrgClubJackpotTemplateCreateJackpotSetting;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubJackpotTemplateCreateResponseData {
+
+    data?: OrgClubJackpotTemplateCreateData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubJackpotTemplateCreateJackpotSetting {
+
+    game_play_ratio?: number;
+    blind_setting?: OrgClubJackpotTemplateCreateBlindsSetting[];
+    royal_flush_switch?: number;
+    royal_flush_ratio?: number;
+    straight_flush_switch?: number;
+    straight_flush_ratio?: number;
+    four_ofa_kind_switch?: number;
+    four_ofa_kind_ratio?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubJackpotTemplateCreateBlindsSetting {
+
+    sb?: number;
+    status?: number;
+    blind_type?: number;
+    prize_ratio?: number;
+    contribute_pot_switch?: number;
+    contribute_pot_limit?: number;
+    award_bet_switch?: number;
+    award_bet_limit?: number;
+    award_other_switch?: number;
+    award_other_ratio?: number;
+    award_round_type?: number;
+    contribute_type?: number;
+    contribute_fixed_limit?: number;
+    contribute_fixed_rate?: number;
+    contribute_ratio?: number;
+    contribute_pot_ratio?: number;
+    mars_earth_ratio?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubJackpotTemplateCreateData {
+  [key: string]: unknown
+}
+
+// /api/org/club/jackpot/template/del (OrgClubJackpotTemplateDel)
+export interface OrgClubJackpotTemplateDelRequest {
+
+    jackpot_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubJackpotTemplateDelResponseData {
+
+    data?: OrgClubJackpotTemplateDelData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubJackpotTemplateDelData {
+  [key: string]: unknown
+}
+
+// /api/org/club/jackpot/template/list (OrgClubJackpotTemplateList)
+export interface OrgClubJackpotTemplateListRequest {
+
+    nlh_switch?: number;
+    plo_switch?: number;
+    six_plus_switch?: number;
+    bombpot_switch?: number;
+    aof_switch?: number;
+    limit?: number;
+    offset?: number;
+    ids?: number[];
+
+  [key: string]: unknown
+}
+
+export interface OrgClubJackpotTemplateListResponseData {
+
+    data?: OrgClubJackpotTemplateListData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubJackpotTemplateListData {
+
+    limit?: number;
+    offset?: number;
+    items?: unknown[];
+
+  [key: string]: unknown
+}
+
+// /api/org/club/jackpot/template/update (OrgClubJackpotTemplateUpdate)
+export interface OrgClubJackpotTemplateUpdateRequest {
+
+    name?: string;
+    jackpot_id?: number;
+    nlh_switch?: number;
+    nlh_setting?: unknown;
+    plo_switch?: number;
+    plo_setting?: unknown;
+    six_plus_switch?: number;
+    six_plus_setting?: unknown;
+    bombpot_switch?: number;
+    bombpot_setting?: unknown;
+    aof_switch?: number;
+    aof_setting?: unknown;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubJackpotTemplateUpdateResponseData {
+
+    data?: OrgClubJackpotTemplateUpdateData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubJackpotTemplateUpdateData {
+  [key: string]: unknown
+}
+
+// /api/org/club/jackpot/withdraw (OrgClubJackpotWithdraw)
+export interface OrgClubJackpotWithdrawRequest {
+
+    jackpot_id?: number;
+    amount?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubJackpotWithdrawResponseData {
+
+    data?: OrgClubJackpotWithdrawData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubJackpotWithdrawData {
+  [key: string]: unknown
+}
+
+// /api/org/club/join/list (OrgClubGetJoinlList)
+export interface OrgClubGetJoinlListRequest {
+  [key: string]: unknown
+}
+
+export interface OrgClubGetJoinlListResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/level_benefit (OrgClubLevelBenefit)
+export interface OrgClubLevelBenefitRequest {
+  [key: string]: unknown
+}
+
+export interface OrgClubLevelBenefitResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/level_cost (OrgClubLevelCost)
+export interface OrgClubLevelCostRequest {
+  [key: string]: unknown
+}
+
+export interface OrgClubLevelCostResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/level_info (OrgClubLevelInfo)
+export interface OrgClubLevelInfoRequest {
+  [key: string]: unknown
+}
+
+export interface OrgClubLevelInfoResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/level_up (OrgClubUpLevel)
+export interface OrgClubUpLevelRequest {
+  [key: string]: unknown
+}
+
+export interface OrgClubUpLevelResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/list (OrgClubList)
+export interface OrgClubListRequest {
+
+    club_random_ids?: string;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubListResponseData {
+
+    data?: OrgClubListData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubListData {
+  [key: string]: unknown
+}
+
+export interface OrgClubListClubData {
+
+    club_name?: string;
+    logo?: string;
+
+  [key: string]: unknown
+}
+
+// /api/org/club/master/slave_club/list (OrgClubMasterSlaveClubList)
+export interface OrgClubMasterSlaveClubListRequest {
+
+    search?: string;
+    sort_type?: number;
+    order_type?: number;
+    limit?: number;
+    offset?: number;
+    filter_type?: number;
+    club_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubMasterSlaveClubListResponseData {
+
+    data?: OrgClubMasterSlaveClubListData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubMasterSlaveClubListData {
+
+    limit?: number;
+    offset?: number;
+    total?: number;
+    total_info?: OrgClubMasterSlaveClubListTotalInfo;
+    data?: OrgClubMasterSlaveClubListRecord[];
+
+  [key: string]: unknown
+}
+
+export interface OrgClubMasterSlaveClubListRecord {
+
+    club_id?: number;
+    club_name?: string;
+    logo?: string;
+    random_id?: number;
+    club_members?: number;
+    master_service_ratio?: number;
+    master_insur_ratio?: number;
+    master_mtt_ratio?: number;
+    master_jackpot_ratio?: number;
+    remark_name?: string;
+    profit_total?: number;
+    club_gold?: number;
+    user_gold?: number;
+    remark_desc?: string;
+    slave_create_time?: string;
+    club_subscription_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubMasterSlaveClubListTotalInfo {
+
+    member_total?: number;
+    profit_total?: number;
+    total_gold?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/club/master/slave_club/ratio (OrgClubMasterSlaveClubRatio)
+export interface OrgClubMasterSlaveClubRatioRequest {
+
+    slave_club_id?: number;
+    master_service_ratio?: number;
+    master_insur_ratio?: number;
+    master_mtt_ratio?: number;
+    master_jackpot_ratio?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubMasterSlaveClubRatioResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/master/slave_club/remark (OrgClubMasterSlaveClubRemark)
+export interface OrgClubMasterSlaveClubRemarkRequest {
+
+    slave_club_id?: number;
+    remark_name?: string;
+    remark_desc?: string;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubMasterSlaveClubRemarkResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/member/list (OrgMemberList)
+export interface OrgMemberListRequest {
+
+  //     club_id: null;
+  // 
+  [key: string]: unknown
+}
+
+export interface OrgMemberListResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/member/ordinary_list (OrgClubMember)
+export interface OrgClubMemberRequest {
+
+  //     club_random_id: number,  //
+  // 
+  [key: string]: unknown
+}
+
+export interface OrgClubMemberResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/member/rake_back (OrgClubMemberRakeBack)
+export interface OrgClubMemberRakeBackRequest {
+
+    gold_type?: number;
+    limit?: number;
+    offset?: number;
+    sort_type?: number;
+    order_type?: number;
+    start_time?: number;
+    end_time?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubMemberRakeBackResponseData {
+
+    data?: OrgClubMemberRakeBackData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubMemberRakeBackData {
+
+    limit?: number;
+    offset?: number;
+    total?: number;
+    data?: OrgClubMemberRakeBackWallet[];
+    total_info?: OrgClubMemberRakeBackTotalInfo;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubMemberRakeBackTotalInfo {
+
+    rake_back_all?: number;
+    rake_back_payed?: number;
+    rake_back_unpay?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubMemberRakeBackWallet {
+
+    random_num?: number;
+    nick_name?: string;
+    remark_name?: string;
+    total_room_game_results?: number;
+    total_service_profit?: number;
+    freeze_status?: number;
+    user_service_ratio?: number;
+    user_mtt_ratio?: number;
+    rb?: number;
+    club_name?: string;
+    club_remark_name?: string;
+    club_remark_color?: string;
+    rb_type?: number;
+    rb_interval_type?: number;
+    rb_interval_no?: number;
+    unpay_rb?: number;
+    payed_rb?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/club/modify/club_desc (OrgClubModifyClubDesc)
+export interface OrgClubModifyClubDescRequest {
+
+    club_id?: number;
+    desc?: string;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubModifyClubDescResponseData {
+
+    data?: OrgClubModifyClubDescData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubModifyClubDescData {
+  [key: string]: unknown
+}
+
+// /api/org/club/modify/club_info (OrgchaNgeClubData)
+export interface OrgchaNgeClubDataRequest {
+  [key: string]: unknown
+}
+
+export interface OrgchaNgeClubDataResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/modify/digital_wallet_address (ModifyDigitalWalletAddress)
+export interface ModifyDigitalWalletAddressRequest {
+  [key: string]: unknown
+}
+
+export interface ModifyDigitalWalletAddressResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/my_create_clubs (OrgClubMyCreateClubs)
+export interface OrgClubMyCreateClubsRequest {
+
+    club_random_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubMyCreateClubsResponseData {
+
+    data?: OrgClubMyCreateClubsData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubMyCreateClubsData {
+
+    list?: OrgClubMyCreateClubsInfo[];
+
+  [key: string]: unknown
+}
+
+export interface OrgClubMyCreateClubsInfo {
+
+    club_logo?: string;
+    club_id?: number;
+    random_id?: number;
+    club_name?: string;
+    pretty_id?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/club/role_change (OrgClubUserRoleChange)
+export interface OrgClubUserRoleChangeRequest {
+  [key: string]: unknown
+}
+
+export interface OrgClubUserRoleChangeResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/search_info (OrgClubSearchInfo)
+export interface OrgClubSearchInfoRequest {
+
+    club_random_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubSearchInfoResponseData {
+
+    data?: OrgClubSearchInfoData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubSearchInfoData {
+
+    club_id?: number;
+    club_name?: string;
+    logo?: string;
+    random_id?: number;
+    club_members?: number;
+    user_status?: number;
+    pretty_id?: number;
+    club_subscription_id?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/club/set/time_zone (OrgClubSetTimeZone)
+export interface OrgClubSetTimeZoneRequest {
+
+    time_zone?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubSetTimeZoneResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/set/user/uc_advance (OrgClubSetUserUcadvaNce)
+export interface OrgClubSetUserUcadvaNceRequest {
+
+    user_id?: number;
+    status?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubSetUserUcadvaNceResponseData {
+
+    data?: OrgClubSetUserUcadvaNceData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubSetUserUcadvaNceData {
+  [key: string]: unknown
+}
+
+// /api/org/club/subscription/buy (OrgClubSubscrIptionBuy)
+export interface OrgClubSubscrIptionBuyRequest {
+
+    subscription_id?: number;
+    price_type?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubSubscrIptionBuyResponseData {
+
+    data?: OrgClubSubscrIptionBuyData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubSubscrIptionBuyData {
+  [key: string]: unknown
+}
+
+// /api/org/club/subscription/list (OrgClubSubscrIptionList)
+export interface OrgClubSubscrIptionListRequest {
+
+    subscription_id?: number;
+    subscription_status?: number;
+    equity_comparison?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubSubscrIptionListResponseData {
+
+    data?: OrgClubSubscrIptionListData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubSubscrIptionListData {
+
+    list?: OrgClubSubscrIptionListVIPEquityData[];
+
+  [key: string]: unknown
+}
+
+export interface OrgClubSubscrIptionListVIPEquityData {
+
+    id?: number;
+    name?: string;
+    logo?: string;
+    price_configs?: OrgClubSubscrIptionListPriceConfigs[];
+    subscription_type?: number;
+    status?: number;
+    equity_comparison?: number;
+    top_club_level?: number;
+    max_slave_club_num?: number;
+    max_club_agent_num?: number;
+    max_share_table_num?: number;
+    max_table_template_num?: number;
+    create_max_table_num?: number;
+    im_service_permission?: number;
+    timing_download_permission?: number;
+    manager_patrol_table_permission?: number;
+    welcome_message_permission?: number;
+    pop_window_permission?: number;
+    photo_announce_permission?: number;
+    join_club_auto_audit_permission?: number;
+    free_anti_cheating_audio?: number;
+    free_anti_cheating_video?: number;
+    free_anti_cheating_face?: number;
+    free_up_table_num?: number;
+    game_limit_ip_permission?: number;
+    game_limit_gps_permission?: number;
+    game_limit_safe_permission?: number;
+    self_game_permission?: number;
+    aof_permission?: number;
+    auto_shut_table_permission?: number;
+    straddle_permission?: number;
+    second_public_card_permission?: number;
+    insurance_permission?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubSubscrIptionListPriceConfigs {
+
+    price_type?: number;
+    raw_price?: number;
+    pay_price?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/club/user_club (OrgClubGet)
+export interface OrgClubGetRequest {
+
+  // 
+  [key: string]: unknown
+}
+
+export interface OrgClubGetResponseData {
+
+  //     // random_id: number,
+  //     // club_name: string,
+  //     // more_contact: string,
+  //     // club_id: number,
+  //     // level: number,
+  //     // upper_limit: number,
+  //     // search_switch: any
+  //     // auto_audit_switch: any
+  // 
+  [key: string]: unknown
+}
+
+// /api/org/club/user/add_agent (ClubAgentAdd)
+export interface ClubAgentAddRequest {
+  [key: string]: unknown
+}
+
+export interface ClubAgentAddResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/user/admin/has (GuildAdminHas)
+export interface GuildAdminHasRequest {
+  [key: string]: unknown
+}
+
+export interface GuildAdminHasResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/user/del_agent (ClubAgentDel)
+export interface ClubAgentDelRequest {
+  [key: string]: unknown
+}
+
+export interface ClubAgentDelResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/user/info (OrgClubUserInfo)
+export interface OrgClubUserInfoRequest {
+  [key: string]: unknown
+}
+
+export interface OrgClubUserInfoResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/user/join/apply (OrgClubJoin)
+export interface OrgClubJoinRequest {
+  [key: string]: unknown
+}
+
+export interface OrgClubJoinResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/user/join/audit (OrgClubApproValJoin)
+export interface OrgClubApproValJoinRequest {
+
+  //     "apply_id": ''
+  //     "audit_op": ''
+  // 
+  [key: string]: unknown
+}
+
+export interface OrgClubApproValJoinResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/user/join/cancel (OrgClubCancleJoinClub)
+export interface OrgClubCancleJoinClubRequest {
+
+  //     apply_id: null;
+  // 
+  [key: string]: unknown
+}
+
+export interface OrgClubCancleJoinClubResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/user/join/list (OrgClubPlayerApplyList)
+export interface OrgClubPlayerApplyListRequest {
+  [key: string]: unknown
+}
+
+export interface OrgClubPlayerApplyListResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/user/join/list (ClubJoinList)
+export interface ClubJoinListRequest {
+
+  //     "limit": number,
+  //     "offset": number
+  // 
+  [key: string]: unknown
+}
+
+export interface ClubJoinListResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/user/page/active (OrgClubUserPageActive)
+export interface OrgClubUserPageActiveRequest {
+  [key: string]: unknown
+}
+
+export interface OrgClubUserPageActiveResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/user/quit (OrgClubQuit)
+export interface OrgClubQuitRequest {
+
+  //     club_id: null;
+  // 
+  [key: string]: unknown
+}
+
+export interface OrgClubQuitResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/user/quit/log (ClubQuitList)
+export interface ClubQuitListRequest {
+
+  //     "limit": number,
+  //     "offset": number
+  // 
+  [key: string]: unknown
+}
+
+export interface ClubQuitListResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/user/update (OrgClubUserRemaRks)
+export interface OrgClubUserRemaRksRequest {
+  [key: string]: unknown
+}
+
+export interface OrgClubUserRemaRksResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/club/user/wallet/relation/grant (OrgClubUserWalletRelationGrant)
+export interface OrgClubUserWalletRelationGrantRequest {
+
+    user_ids?: number[];
+    amount?: number;
+    gold_type?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubUserWalletRelationGrantResponseData {
+  [key: string]: unknown
+}
+
+export interface OrgClubUserWalletRelationGrantData {
+  [key: string]: unknown
+}
+
+// /api/org/club/user/wallet/relation/list (OrgClubUserWalletRelationList)
+export interface OrgClubUserWalletRelationListRequest {
+
+    limit?: number;
+    offset?: number;
+    club_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubUserWalletRelationListResponseData {
+
+    data?: OrgClubUserWalletRelationListData;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubUserWalletRelationListData {
+
+    data?: OrgClubUserWalletRelationListUserData[];
+
+  [key: string]: unknown
+}
+
+export interface OrgClubUserWalletRelationListUserData {
+  [key: string]: unknown
+}
+
+// /api/org/jackpot/template/info (OrgJackpotTemplateInfo)
+export interface OrgJackpotTemplateInfoRequest {
+
+    jackpot_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgJackpotTemplateInfoResponseData {
+
+    data?: OrgJackpotTemplateInfoData;
+
+  [key: string]: unknown
+}
+
+export interface OrgJackpotTemplateInfoCombineData {
+
+    total?: number;
+    items?: unknown[];
+
+  [key: string]: unknown
+}
+
+export interface OrgJackpotTemplateInfoData {
+
+    item?: unknown;
+
+  [key: string]: unknown
+}
+
+// /api/org/tribe/apply_list (OrgTribeApplyList)
+export interface OrgTribeApplyListRequest {
+
+    limit?: number;
+    offset?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeApplyListResponseData {
+
+    data?: OrgTribeApplyListData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeApplyListData {
+
+    offset?: number;
+    total?: number;
+    list?: OrgTribeApplyListClubInfo[];
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeApplyListClubInfo {
+
+    id?: number;
+    club_name?: string;
+    club_random_id?: number;
+    tribe_name?: string;
+    club_logo?: string;
+    tribe_random_id?: number;
+    club_subscription_id?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/tribe/apply_upgrade (OrgTribeApplyUpgrAde)
+export interface OrgTribeApplyUpgrAdeRequest {
+
+    tribe_phone_area?: string;
+    tribe_phone?: string;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeApplyUpgrAdeResponseData {
+
+    data?: OrgTribeApplyUpgrAdeData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeApplyUpgrAdeData {
+  [key: string]: unknown
+}
+
+// /api/org/tribe/audit/apply (OrgTribeAuditApply)
+export interface OrgTribeAuditApplyRequest {
+
+    id?: number;
+    audit_op?: number;
+    description?: string;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeAuditApplyResponseData {
+
+    data?: OrgTribeAuditApplyData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeAuditApplyData {
+  [key: string]: unknown
+}
+
+// /api/org/tribe/black/user/list (OrgTribeBlackUserList)
+export interface OrgTribeBlackUserListRequest {
+
+    offset?: number;
+    limit?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeBlackUserListResponseData {
+
+    data?: OrgTribeBlackUserListData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeBlackUserListData {
+
+    offset?: number;
+    total?: number;
+    data?: OrgTribeBlackUserListInfo[];
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeBlackUserListInfo {
+
+    id?: number;
+    create_time?: string;
+    public_reason?: string;
+    user_random_id?: number;
+    user_name?: string;
+    user_avatar?: string;
+
+  [key: string]: unknown
+}
+
+// /api/org/tribe/check_upgrade (OrgTribeCheckUpgrAde)
+export interface OrgTribeCheckUpgrAdeRequest {
+  [key: string]: unknown
+}
+
+export interface OrgTribeCheckUpgrAdeResponseData {
+
+    data?: OrgTribeCheckUpgrAdeData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeCheckUpgrAdeData {
+
+    config?: OrgTribeCheckUpgrAdeConfig;
+    check_club_count?: number;
+    check_member_count?: number;
+    check_room_count?: number;
+    tribe_phone_area?: string;
+    tribe_phone?: string;
+    tribe_phone_create_time?: string;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeCheckUpgrAdeConfig {
+
+    upgrade_switch?: number;
+    club_count?: number;
+    member_count?: number;
+    day_count?: number;
+    room_count?: number;
+    hand_count?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/tribe/club/fund/gold_change/log (OrgTribeClubFundGoldChangeLog)
+export interface OrgTribeClubFundGoldChangeLogRequest {
+
+    limit?: number;
+    offset?: number;
+    club_id?: number;
+    gold_type?: number;
+    op_codes?: string[];
+    start_time?: number;
+    end_time?: number;
+    sort_type?: number;
+    order_type?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubFundGoldChangeLogResponseData {
+
+    data?: OrgTribeClubFundGoldChangeLogData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubFundGoldChangeLogData {
+
+    offset?: number;
+    list?: OrgTribeClubFundGoldChangeLogRecord[];
+    total_info?: OrgTribeClubFundGoldChangeLogTotalInfo;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubFundGoldChangeLogTotalInfo {
+
+    grant_amount?: number;
+    recover_amount?: number;
+    profit_amount?: number;
+    change_amount?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubFundGoldChangeLogRecord {
+
+    gold_change?: number;
+    gold_after?: number;
+    create_time?: string;
+    op_code?: string;
+    name?: string;
+    user_random_num?: number;
+    user_nick_name?: string;
+    src_room_id?: number;
+    src_match_id?: number;
+    admin_nick_name?: string;
+    multi_lang_names_obj?: unknown;
+
+  [key: string]: unknown
+}
+
+// /api/org/tribe/club/join/apply (OrgJoinTrip)
+export interface OrgJoinTripRequest {
+  [key: string]: unknown
+}
+
+export interface OrgJoinTripResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/tribe/club/join/apply_list (OrgClubApplyTribeList)
+export interface OrgClubApplyTribeListRequest {
+  [key: string]: unknown
+}
+
+export interface OrgClubApplyTribeListResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/tribe/club/join/cancel_apply (OrgClubCancleJoinTribe)
+export interface OrgClubCancleJoinTribeRequest {
+  [key: string]: unknown
+}
+
+export interface OrgClubCancleJoinTribeResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/tribe/club/kickout (OrgTribeClubKickOut)
+export interface OrgTribeClubKickOutRequest {
+
+    club_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubKickOutResponseData {
+
+    data?: OrgTribeClubKickOutData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubKickOutData {
+  [key: string]: unknown
+}
+
+// /api/org/tribe/club/list (OrgTribeClubList)
+export interface OrgTribeClubListRequest {
+
+    search?: string;
+    sort_type?: number;
+    order_type?: number;
+    limit?: number;
+    offset?: number;
+    filter_type?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubListResponseData {
+
+    data?: OrgTribeClubListData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubListData {
+
+    limit?: number;
+    offset?: number;
+    total?: number;
+    total_info?: OrgTribeClubListTotalInfo;
+    data?: OrgTribeClubListRecord[];
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubListRecord {
+
+    club_id?: number;
+    club_name?: string;
+    logo?: string;
+    random_id?: number;
+    club_members?: number;
+    club_status?: number;
+    room_game_ratio?: number;
+    room_insur_ratio?: number;
+    room_mtt_ratio?: number;
+    jackpot_ratio?: number;
+    profit_total?: number;
+    club_gold?: number;
+    user_gold?: number;
+    tribe_create_time?: string;
+    club_subscription_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubListTotalInfo {
+
+    member_total?: number;
+    profit_total?: number;
+    total_gold?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/tribe/club/list/all (OrgTribeClubListAll)
+export interface OrgTribeClubListAllRequest {
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubListAllResponseData {
+
+    data?: OrgTribeClubListAllData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubListAllData {
+
+    data?: OrgTribeClubListAllRecord[];
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubListAllRecord {
+
+    club_id?: number;
+    club_name?: string;
+
+  [key: string]: unknown
+}
+
+// /api/org/tribe/club/lock (OrgTribeClubLock)
+export interface OrgTribeClubLockRequest {
+
+    club_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubLockResponseData {
+
+    data?: OrgTribeClubLockData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubLockData {
+  [key: string]: unknown
+}
+
+// /api/org/tribe/club/remark (OrgTribeClubRemark)
+export interface OrgTribeClubRemarkRequest {
+
+    club_id?: number;
+    remark_name?: string;
+    remark_desc?: string;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubRemarkResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/tribe/club/remark/list (OrgTribeClubRemarkList)
+export interface OrgTribeClubRemarkListRequest {
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubRemarkListResponseData {
+
+    data?: OrgTribeClubRemarkListData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubRemarkListData {
+
+    list?: OrgTribeClubRemarkListInfo[];
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubRemarkListInfo {
+
+    club_id?: number;
+    remark_name?: string;
+    remark_desc?: string;
+
+  [key: string]: unknown
+}
+
+// /api/org/tribe/club/unlock (OrgTribeClubUnlock)
+export interface OrgTribeClubUnlockRequest {
+
+    club_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubUnlockResponseData {
+
+    data?: OrgTribeClubUnlockData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeClubUnlockData {
+  [key: string]: unknown
+}
+
+// /api/org/tribe/create (OrgTribeCreate)
+export interface OrgTribeCreateRequest {
+
+    tribe_name?: string;
+    logo?: string;
+    currency?: string;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeCreateResponseData {
+
+    data?: OrgTribeCreateData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeCreateData {
+  [key: string]: unknown
+}
+
+// /api/org/tribe/create/is_first (OrgTribeCreateIsFirst)
+export interface OrgTribeCreateIsFirstRequest {
+  [key: string]: unknown
+}
+
+export interface OrgTribeCreateIsFirstResponseData {
+
+    data?: OrgTribeCreateIsFirstData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeCreateIsFirstData {
+
+    is_first?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/tribe/fund/gold_change/log (OrgTribeFundGoldChangeLog)
+export interface OrgTribeFundGoldChangeLogRequest {
+
+    limit?: number;
+    offset?: number;
+    gold_type?: number;
+    op_codes?: string[];
+    start_time?: number;
+    end_time?: number;
+    sort_type?: number;
+    order_type?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeFundGoldChangeLogResponseData {
+
+    data?: OrgTribeFundGoldChangeLogData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeFundGoldChangeLogData {
+
+    limit?: number;
+    offset?: number;
+    total?: number;
+    list?: OrgTribeFundGoldChangeLogRecord[];
+    total_info?: OrgTribeFundGoldChangeLogTotalInfo;
+    diamond_info?: OrgTribeFundGoldChangeLogDiamondinfo;
+    ratio_info?: OrgTribeFundGoldChangeLogRatioInfo;
+    random_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeFundGoldChangeLogDiamondinfo {
+
+    consume_amount?: number;
+    trans_to_tribe_amount?: number;
+    trans_to_user_amount?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeFundGoldChangeLogTotalInfo {
+
+    grant_amount?: number;
+    recover_amount?: number;
+    profit_amount?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeFundGoldChangeLogRatioInfo {
+
+    service_ratio?: number;
+    insur_ratio?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeFundGoldChangeLogRecord {
+
+    gold_change?: number;
+    gold_after?: number;
+    create_time?: string;
+    op_code?: string;
+    name?: string;
+    club_name?: string;
+    club_random_num?: number;
+    user_random_num?: number;
+    user_nick_name?: string;
+    src_room_id?: number;
+    src_match_id?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/tribe/info (OrgTribeSearchById)
+export interface OrgTribeSearchByIdRequest {
+  [key: string]: unknown
+}
+
+export interface OrgTribeSearchByIdResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/tribe/info_by_club (OrgTribeInfoByClub)
+export interface OrgTribeInfoByClubRequest {
+
+    tribe_random_id?: number;
+    club_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeInfoByClubResponseData {
+
+    data?: OrgTribeInfoByClubData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeInfoByClubData {
+
+    tribe_base?: OrgTribeInfoByClubInfo;
+    club_relation?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeInfoByClubInfo {
+
+    name?: string;
+    random_id?: number;
+    logo?: string;
+
+  [key: string]: unknown
+}
+
+// /api/org/tribe/list (OrgTribeList)
+export interface OrgTribeListRequest {
+
+    tribe_random_id?: number;
+    sort_type?: number;
+    order_type?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeListResponseData {
+
+    data?: OrgTribeListData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeListData {
+
+    list?: OrgTribeListCommunityData[];
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeListCommunityData {
+
+    id?: number;
+    random_id?: number;
+    name?: string;
+    logo?: string;
+    pretty_id?: number;
+    members?: number;
+    room_count?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/tribe/room_permissions (APIOrgTribeRoomPermissions)
+export interface APIOrgTribeRoomPermissionsRequest {
+  [key: string]: unknown
+}
+
+export interface APIOrgTribeRoomPermissionsResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/tribe/room_permissions (OrgTribeRoomPermissionS)
+export interface OrgTribeRoomPermissionSRequest {
+
+    club_id?: number;
+    tribe_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeRoomPermissionSResponseData {
+
+    data?: OrgTribeRoomPermissionSData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeRoomPermissionSData {
+
+    room_permissions?: unknown;
+
+  [key: string]: unknown
+}
+
+// /api/org/tribe/set/time_zone (OrgTribeSetTimeZone)
+export interface OrgTribeSetTimeZoneRequest {
+
+    time_zone?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeSetTimeZoneResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/tribe/setting/club_profit_ratio (OrgTribeSettIngClubProfitRatio)
+export interface OrgTribeSettIngClubProfitRatioRequest {
+
+    club_id?: number;
+    room_game_ratio?: number;
+    room_insur_ratio?: number;
+    room_mtt_ratio?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeSettIngClubProfitRatioResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/tribe/wallet (OrgTribeWallet)
+export interface OrgTribeWalletRequest {
+  [key: string]: unknown
+}
+
+export interface OrgTribeWalletResponseData {
+
+    data?: OrgTribeWalletData;
+
+  [key: string]: unknown
+}
+
+export interface OrgTribeWalletData {
+
+    gold?: number;
+    gold_lock?: number;
+    forbidden?: boolean;
+    usdt?: number;
+    usdt_lock?: number;
+    diamonds?: number;
+    diamonds_lock?: number;
+    random_id?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/user/admin/favorite (OrgUserAdminFavorIte)
+export interface OrgUserAdminFavorIteRequest {
+
+    club_id?: number;
+    tribe_id?: number;
+    favorite?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgUserAdminFavorIteResponseData {
+
+    data?: OrgUserAdminFavorIteData;
+
+  [key: string]: unknown
+}
+
+export interface OrgUserAdminFavorIteData {
+  [key: string]: unknown
+}
+
+// /api/org/user/check/org (OrgUserCheckOrg)
+export interface OrgUserCheckOrgRequest {
+
+    club_id?: number;
+    tribe_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgUserCheckOrgResponseData {
+
+    data?: OrgUserCheckOrgData;
+
+  [key: string]: unknown
+}
+
+export interface OrgUserCheckOrgData {
+
+    is_in_club?: boolean;
+    is_in_tribe?: boolean;
+
+  [key: string]: unknown
+}
+
+// /api/org/user/club/admin/list (OrgUserClubAdminList)
+export interface OrgUserClubAdminListRequest {
+  [key: string]: unknown
+}
+
+export interface OrgUserClubAdminListResponseData {
+
+    data?: OrgUserClubAdminListData;
+
+  [key: string]: unknown
+}
+
+export interface OrgUserClubAdminListData {
+
+    clubs?: OrgUserClubAdminListClubData[];
+
+  [key: string]: unknown
+}
+
+export interface OrgUserClubAdminListClubData {
+
+    id?: number;
+    club_name?: string;
+    logo?: string;
+    random_id?: number;
+    club_members?: number;
+    tribe_id?: number;
+    tribe_random_id?: number;
+    user_level?: number;
+    favorite?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/user/new_label/read (APIOrgUserNewLabelRead)
+export interface APIOrgUserNewLabelReadRequest {
+  [key: string]: unknown
+}
+
+export interface APIOrgUserNewLabelReadResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/user/new_label/read (OrgUserNewLabelRead)
+export interface OrgUserNewLabelReadRequest {
+
+    tribe_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgUserNewLabelReadResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/user/new_label/read/num (APIOrgUserNewLabelReadNum)
+export interface APIOrgUserNewLabelReadNumRequest {
+  [key: string]: unknown
+}
+
+export interface APIOrgUserNewLabelReadNumResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/user/new_label/read/num (OrgUserNewLabelReadNum)
+export interface OrgUserNewLabelReadNumRequest {
+
+    tribe_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgUserNewLabelReadNumResponseData {
+
+    data?: OrgUserNewLabelReadNumData;
+
+  [key: string]: unknown
+}
+
+export interface OrgUserNewLabelReadNumData {
+
+    user_new_label_num?: unknown;
+
+  [key: string]: unknown
+}
+
+// /api/org/user/self_profit/bill_notify/confim (OrgUserSelfProfitBillNotifyConfim)
+export interface OrgUserSelfProfitBillNotifyConfimRequest {
+
+    bill_ids?: number[];
+
+  [key: string]: unknown
+}
+
+export interface OrgUserSelfProfitBillNotifyConfimResponseData {
+  [key: string]: unknown
+}
+
+// /api/org/user/self_profit/bill_unnotify (OrgUserSelfProfitBillUnnotIfy)
+export interface OrgUserSelfProfitBillUnnotIfyRequest {
+  [key: string]: unknown
+}
+
+export interface OrgUserSelfProfitBillUnnotIfyResponseData {
+
+    data?: OrgUserSelfProfitBillUnnotIfyData;
+
+  [key: string]: unknown
+}
+
+export interface OrgUserSelfProfitBillUnnotIfyData {
+
+    data?: OrgUserSelfProfitBillUnnotIfyBillData[];
+
+  [key: string]: unknown
+}
+
+export interface OrgUserSelfProfitBillUnnotIfyBillData {
+
+    amount?: number;
+    bill_id?: number;
+
+  [key: string]: unknown
+}
+
+// /api/org/user/self_profit/unpay_records (OrgUserSelfProfitUnpayRecords)
+export interface OrgUserSelfProfitUnpayRecordsRequest {
+  [key: string]: unknown
+}
+
+export interface OrgUserSelfProfitUnpayRecordsResponseData {
+
+    data?: OrgUserSelfProfitUnpayRecordsData;
+
+  [key: string]: unknown
+}
+
+export interface OrgUserSelfProfitUnpayRecordsData {
+
+    data?: OrgUserSelfProfitUnpayRecordsRecord[];
+    amount_total_uc?: number;
+    latest_pay_time?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgUserSelfProfitUnpayRecordsRecord {
+
+    amount?: number;
+    pay_time?: number;
+    club_name?: string;
+    club_rid?: number;
+    club_logo?: string;
+
+  [key: string]: unknown
+}
+
+// /api/org/user/tribe/admin/list (OrgUserTribeAdminList)
+export interface OrgUserTribeAdminListRequest {
+  [key: string]: unknown
+}
+
+export interface OrgUserTribeAdminListResponseData {
+
+    data?: OrgUserTribeAdminListData;
+
+  [key: string]: unknown
+}
+
+export interface OrgUserTribeAdminListData {
+
+    tribes?: OrgUserTribeAdminListCommunityData[];
+
+  [key: string]: unknown
+}
+
+export interface OrgUserTribeAdminListCommunityData {
+
+    id?: number;
+    random_id?: number;
+    name?: string;
+    club_count?: number;
+    logo?: string;
+    favorite?: number;
+
+  [key: string]: unknown
+}

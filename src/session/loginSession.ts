@@ -1,4 +1,4 @@
-import { getUserWsApi } from '@/api/auth'
+import { getUserWsApi } from '@/api/user'
 import { closeWsProxy, ensureWsProxyConnected } from '@/bridge/ws'
 import StorageKey from '@/constants/storageKey'
 import { useGameStore } from '@/stores/game'

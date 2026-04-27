@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import type { RoomRecord } from '@/api/models/room'
-import { getRoomIdsApi, getRoomsDetailApi } from '@/api/room'
+import type { RoomRecord } from '@/api/models/roomcenter'
+import { getRoomIdsApi, getRoomsDetailApi } from '@/api/roomcenter'
 import { WS_NOTIFY_CODE, subscribeH5WsCode } from '@/bridge/ws'
 import {
   decodeRoomChangeNotifyFromRawPacket,

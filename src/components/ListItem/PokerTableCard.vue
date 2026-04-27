@@ -7,7 +7,7 @@ import iconAof from '@/assets/icons/table_icon_Aof.png'
 import iconCritical from '@/assets/icons/table_icon_critical.png'
 import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
 import iconSquid from '@/assets/icons/table_icon_squid.png'
-import type { RoomRecord, RoomUser } from '@/api/models/room'
+import type { RoomRecord, RoomUser } from '@/api/models/roomcenter'
 
 interface Props {
   room: RoomRecord

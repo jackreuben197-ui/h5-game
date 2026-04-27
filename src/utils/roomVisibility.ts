@@ -1,4 +1,4 @@
-import type { RoomRecord } from '@/api/models/room'
+import type { RoomRecord } from '@/api/models/roomcenter'
 
 // 与 C# RoomOriginType 对齐：1 平台，2 联盟，3 俱乐部，4 朋友桌。
 export const ROOM_ORIGIN_TYPE = {

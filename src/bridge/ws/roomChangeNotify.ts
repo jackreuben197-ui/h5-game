@@ -1,4 +1,4 @@
-import type { RoomRecord } from '@/api/models/room'
+import type { RoomRecord } from '@/api/models/roomcenter'
 import { decodeHoldemPacket } from './holdemPacket'
 
 export const ROOM_CHANGE_NOTIFY_CODE = 140

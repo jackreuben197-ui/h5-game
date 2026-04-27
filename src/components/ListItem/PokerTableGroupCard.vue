@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import iconTable from '@/assets/icons/icon_table.png'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconDropDown from '@/assets/icons/icon_drop_down.png'
-import type { RoomRecord } from '@/api/models/room'
+import type { RoomRecord } from '@/api/models/roomcenter'
 import { t } from '@/i18n'
 
 interface RoomGroupViewModel {

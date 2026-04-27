@@ -2,7 +2,7 @@
 import { computed, onMounted, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import { getUserClubApi, getUserInfoApi } from '@/api/auth'
+import { getUserClubApi, getUserInfoApi } from '@/api/user'
 import LoginSession from '@/session/loginSession'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
 import { useGameStore } from '@/stores/game'

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { UserInfoData } from '@/api/models/auth'
+import type { UserInfoData } from '@/api/models/user'
 import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
 

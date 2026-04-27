@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
-
+import bannerBgUrl from '@/assets/images/wallet/banner_bg.png'
 import AppBar from '@/components/wallet/AppBar.vue'
 import ava1 from '@/assets/images/wallet/avatars/ava1.png'
 import iconChips from '@/assets/icons/icon_chips.png'
@@ -75,7 +75,7 @@ const transactions = ref<Transaction[]>([
     <div class="details-content">
       <div class="user-card-wrapper">
         <div class="user-card">
-          <div class="card__bg-blur" :style="{ backgroundImage: `url(${sharpBgUrl})` }"></div>
+          <div class="user-card__banner-bg" :style="{ backgroundImage: `url(${bannerBgUrl})` }"></div>
           <div class="user-card-inner">
             <div class="user-info-section">
               <div class="avatar-box">
@@ -247,9 +247,19 @@ const transactions = ref<Transaction[]>([
   }
 }
 
-.user-card > *:not(.card__bg-blur) {
+.user-card > *:not(.card__bg-blur):not(.user-card__banner-bg) {
   position: relative;
   z-index: 2;
+}
+
+.user-card__banner-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+  opacity: 0.65;
 }
 
 .user-card-inner {
@@ -376,10 +386,10 @@ const transactions = ref<Transaction[]>([
 .transaction-card {
   position: relative;
   display: flex;
-  padding: 0.4rem 0.7467rem;
+  padding: 0.3rem 0.6rem;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.2667rem;
+  gap: 0.01rem;
   align-self: stretch;
   border-radius: 0.9962rem;
   backdrop-filter: blur(16.5px);

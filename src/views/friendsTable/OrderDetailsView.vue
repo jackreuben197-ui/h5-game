@@ -35,8 +35,8 @@ function close(): void {
     :style="{ backgroundImage: `url(${sharpBgUrl})` }"
     @click.self="close"
   >
-    <div class="card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
-      <div class="card__bg"></div>
+    <div class="card">
+      <div class="card__bg" :style="{ backgroundImage: `url(${sharpBgUrl})` }"></div>
       <h2 class="card__title">{{ t('Wallet_OrderTitle') }}</h2>
       <div class="card__rows">
         <div
@@ -82,9 +82,6 @@ function close(): void {
   position: relative;
   z-index: 1;
   width: 100%;
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
   max-width: clamp(280px, 84.5vw, 317px);
   padding: clamp(14px, 4.6vw, 17px);
   border: 0.96px solid rgba(242, 242, 242, 0.4);
@@ -101,24 +98,29 @@ function close(): void {
 
 .card__bg {
   position: absolute;
-  inset: 0;
+  inset: -12px;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  filter: blur(10px);
   pointer-events: none;
+  z-index: 0;
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
   border-radius: inherit;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  // background-image: linear-gradient(
-  //   106.9deg,
-  //   rgba(142, 142, 142, 0.3) 3%,
-  //   rgba(103, 103, 103, 0.4) 44%,
-  //   rgba(73, 73, 73, 0.5) 90%
-  // );
-  mix-blend-mode: hard-light;
+  background: rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .card__title,
 .card__rows {
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 
 .card__title {

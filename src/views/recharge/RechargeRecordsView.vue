@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ava2 from '@/assets/images/wallet/avatars/ava2.png'
-import mainBgUrl from '@/assets/images/main_bg.webp'
+import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import AppBar from '@/components/wallet/AppBar.vue'
 import UserCard from '@/components/wallet/UserCard.vue'
 import TransactionItem from '@/components/wallet/TransactionItem.vue'
@@ -64,7 +64,7 @@ const transactions: Transaction[] = [
 <template>
   <div
     class="wallet-history-screen"
-    :style="{ backgroundImage: `url(${mainBgUrl})` }"
+    :style="{ backgroundImage: `url(${sharpBgUrl})` }"
   >
     <AppBar
       :title="t('Wallet_Title')"

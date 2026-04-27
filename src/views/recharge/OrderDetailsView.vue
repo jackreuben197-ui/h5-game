@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import mainBgUrl from '@/assets/images/main_bg.webp'
+import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import { t } from '@/i18n'
 
 const router = useRouter()
@@ -38,11 +38,11 @@ function close(): void {
 <template>
   <div
     class="overlay"
-    :style="{ backgroundImage: `url(${mainBgUrl})` }"
     @click.self="close"
   >
     <div
-      class="overlay__dim"
+      class="overlay__bg"
+      :style="{ backgroundImage: `url(${sharpBgUrl})` }"
       @click="close"
     ></div>
     <div class="card">
@@ -71,15 +71,16 @@ function close(): void {
   align-items: center;
   justify-content: center;
   padding: clamp(20px, 7vw, 28px);
+  overflow: hidden;
+}
+
+.overlay__bg {
+  position: absolute;
+  inset: -24px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-}
-
-.overlay__dim {
-  position: absolute;
-  inset: 0;
-  background: rgba(12, 12, 12, 0.6);
+  filter: blur(14px);
   cursor: pointer;
 }
 

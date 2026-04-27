@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import GlassCard from './GlassCard.vue'
 import TagPill from './TagPill.vue'
 
@@ -11,6 +12,14 @@ interface Props {
 }
 
 defineProps<Props>()
+
+const sharpBgStyle = {
+  backgroundImage: `url(${sharpBgUrl})`,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat',
+  backgroundAttachment: 'fixed',
+}
 </script>
 
 <template>
@@ -18,6 +27,10 @@ defineProps<Props>()
     tag="button"
     class="record"
   >
+    <div
+      class="record__bg"
+      :style="sharpBgStyle"
+    ></div>
     <div class="record__col record__col--left">
       <TagPill
         :label="type"
@@ -45,6 +58,35 @@ defineProps<Props>()
   width: 100%;
   cursor: pointer;
   box-shadow: none;
+  overflow: hidden;
+}
+
+.record__bg {
+  position: absolute;
+  inset: -12px;
+  border-radius: inherit;
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.record::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.record > *:not(.record__bg) {
+  position: relative;
+  z-index: 2;
+}
+
+.record.record::before {
+  z-index: 3;
 }
 
 .record__col {

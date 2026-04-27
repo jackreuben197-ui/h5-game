@@ -67,10 +67,8 @@ const featureIcons = computed<FeatureIconItem[]>(() => {
 // 当前牌桌人数。
 const roomers = computed(() => {
   const fromCount = Number(props.room.roomers)
-  if (Number.isFinite(fromCount) && fromCount > 0) {
-    return fromCount
-  }
-  return Array.isArray(props.room.users) ? props.room.users.length : 0
+  const valid = (Number.isFinite(fromCount) && fromCount > 0)
+  return Array.isArray(props.room.users) ? props.room.users.length : valid ? fromCount : 0
 })
 
 // 座位数，兜底为 9 人桌。

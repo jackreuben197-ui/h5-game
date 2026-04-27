@@ -4,18 +4,19 @@ import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 import { formatTxtMessage, parseTxtLanguage, type TxtLanguageMap } from './parser'
 
-export type LocaleCode = 'zh' | 'tw' | 'en' | 'pt'
+// 与 Cocos 保持一致：cn(简中) / zh(繁中) / en / pt。
+export type LocaleCode = 'cn' | 'zh' | 'en' | 'pt'
 
-const DEFAULT_LOCALE: LocaleCode = 'zh'
+const DEFAULT_LOCALE: LocaleCode = 'cn'
 const SHARED_I18N_BASE = 'assets/resources/config'
 
-export const SUPPORTED_LOCALES: LocaleCode[] = ['zh', 'tw', 'en', 'pt']
+export const SUPPORTED_LOCALES: LocaleCode[] = ['en', 'pt', 'zh', 'cn']
 
 const localeAssetUrls: Record<LocaleCode, string> = {
-  zh: resolveSharedLocaleUrl('USER_ZH.txt'),
-  tw: resolveSharedLocaleUrl('USER_TW.txt'),
   en: resolveSharedLocaleUrl('USER_EN.txt'),
   pt: resolveSharedLocaleUrl('USER_PT.txt'),
+  zh: resolveSharedLocaleUrl('USER_TW.txt'),
+  cn: resolveSharedLocaleUrl('USER_ZH.txt'),
 }
 const dictionaries: Partial<Record<LocaleCode, TxtLanguageMap>> = {}
 const loadingTasks = new Map<LocaleCode, Promise<void>>()
@@ -115,10 +116,21 @@ function normalizeLocale(input: string | null | undefined): LocaleCode | null {
     normalized.startsWith('zh-tw') ||
     normalized.startsWith('zh-hk')
   ) {
-    return 'tw'
-  }
-  if (normalized === 'cn' || normalized === 'zh-hans' || normalized.startsWith('zh')) {
     return 'zh'
+  }
+  if (
+    normalized === 'cn' ||
+    normalized === 'zh-cn' ||
+    normalized === 'zh-hans' ||
+    normalized.startsWith('zh-cn')
+  ) {
+    return 'cn'
+  }
+  if (normalized === 'zh') {
+    return 'zh'
+  }
+  if (normalized.startsWith('zh')) {
+    return 'cn'
   }
   if (normalized === 'br' || normalized.startsWith('pt')) {
     return 'pt'

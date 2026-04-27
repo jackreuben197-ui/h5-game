@@ -63,6 +63,15 @@ export default [
     ignores: ['dist/**', 'node_modules/**', 'components.d.ts'],
   },
   js.configs.recommended,
+  {
+    files: ['scripts/**/*.{js,mjs,cjs}'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+      },
+    },
+  },
   ...vuePlugin.configs['flat/recommended'],
   {
     files: ['**/*.{ts,tsx,vue}'],

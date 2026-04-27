@@ -161,6 +161,33 @@ pnpm preview
 - 页面内避免硬编码十进制长小数，优先使用 tokens 变量
 - 新增通用样式时，先放 `src/styles/`，避免重复复制到多个页面
 
+### 8.1 页面滚动公共类
+
+为避免真机与浏览器模拟器滚动行为不一致，项目提供两个滚动辅助类（定义在 `src/styles/_utilities.scss`）：
+
+- `app-scroll-page`：内容撑高辅助类（用于页面内容可能超高的场景）
+- `app-scroll-standalone`：独立路由页面滚动视口类（用于不复用 `MainLayoutView` 的页面）
+
+使用规则：
+
+1. 页面复用 `MainLayoutView`（如首页/俱乐部/消息/我的主模块页面）：
+- 视口滚动由 `MainLayoutView` 统一负责。
+- 页面根节点可按需补 `app-scroll-page`，用于避免内容被 flex 压缩。
+
+2. 页面不复用 `MainLayoutView`（独立详情页/列表页）：
+- 页面根节点必须加 `app-scroll-standalone`，创建稳定滚动视口。
+- 若页面内部存在复杂 flex 结构，建议同时加 `app-scroll-page`。
+
+示例：
+
+```vue
+<!-- 复用 MainLayoutView 的页面 -->
+<div class="message-page app-scroll-page">...</div>
+
+<!-- 独立路由页面（不走 MainLayoutView） -->
+<div class="club-room-history-bg app-scroll-standalone app-scroll-page">...</div>
+```
+
 ## 9. Cocos Bridge 与 WS 协作规范
 
 目录分层说明见：`src/bridge/README.md`。
@@ -435,12 +462,10 @@ const text = t('Wallet_AddItem7', 100, 12)
 
 语言切换与默认规则：
 
-- 支持：`zh | tw | en | pt`
+- 支持：`en | pt | zh | cn`
 - 优先读取 `localStorage(dzpk_Language)`
 - 无缓存时按浏览器语言推断
 - 语言文件按需加载（`fetch public/assets/resources/config/*.txt`），避免主包体积暴涨
-- 如果你的 Cocos 项目不在默认相对路径，可在执行命令前设置：
-  - `COCOS_I18N_SOURCE_DIR=/your/cocos/assets/resources/config pnpm dev`
 
 本地存储统一约定（与 Cocos 对齐）：
 

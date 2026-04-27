@@ -6,11 +6,7 @@
   },
   "eslint.format.enable": true,
   "eslint.useFlatConfig": true,
-  "eslint.validate": [
-    "javascript",
-    "typescript",
-    "vue"
-  ],
+  "eslint.validate": ["javascript", "typescript", "vue"],
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
   "[vue]": {
@@ -36,5 +32,6 @@
   "[css]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
-  }
+  },
+  "svn.ignoreMissingSvnWarning": true
 }

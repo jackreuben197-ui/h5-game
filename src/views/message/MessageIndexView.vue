@@ -7,7 +7,7 @@ import iconAdd from '@/assets/icons/icon_add.svg'
 import iconMessages from '@/assets/icons/icon_messages.png'
 import iconDing from '@/assets/icons/icon_ding.png'
 import iconPoker from '@/assets/icons/game_zone_poker_mini.png'
-
+import { t } from '@/i18n'
 import iconBoxSystem from '@/assets/icons/icon_box_system.png'
 import iconBoxWallet from '@/assets/icons/icon_box_wallet.png'
 import iconBoxBag from '@/assets/icons/icon_box_bag.png'
@@ -17,17 +17,17 @@ import iconBoxTribe from '@/assets/icons/icon_box_tribe.png'
 interface BoxItem {
   icon: string
   text: string
-  route: string
+  type: 'system' | 'other'
 }
 
 const userInfoStore = useUserInfoStore()
 
 const boxList = ref<BoxItem[]>([
-  { icon: iconBoxSystem, text: '系统消息', route: '/message/detail' },
-  { icon: iconBoxWallet, text: '钱包消息', route: '/message/detail' },
-  { icon: iconBoxBag, text: '背包消息', route: '/message/detail' },
-  { icon: iconBoxClub, text: '俱乐部信息', route: '/message/detail' },
-  { icon: iconBoxTribe, text: '联盟信息', route: '/message/detail' },
+  { icon: iconBoxSystem, text: t('Msg3'), type: 'system' },
+  { icon: iconBoxWallet, text: t('Msg4'), type: 'other' },
+  { icon: iconBoxBag, text: t('Msg6'), type: 'other' },
+  { icon: iconBoxClub, text: t('Msg1'), type: 'other' },
+  { icon: iconBoxTribe, text: t('Msg2'), type: 'other' },
 ])
 
 const displayUser = computed(() => {
@@ -42,15 +42,21 @@ const displayUser = computed(() => {
 
 const router = useRouter()
 
-function goToDetail(path: string): void {
-  void router.push(path)
+function goToMessagePage(type: 'system' | 'credit' | 'uc' | 'other', title: string): void {
+  void router.push({
+    path: '/message/detail',
+    query: {
+      type,
+      title,
+    },
+  })
 }
 </script>
 
 <template>
   <div class="message-page">
     <div class="title-bar">
-      <div class="title">消息</div>
+      <div class="title">{{ t('UIMine_MsgSystemContent') }}</div>
       <div class="currency-info">
         <div class="icon-diamond">
           <img :src="iconDiamond" alt="钻石" />
@@ -72,16 +78,16 @@ function goToDetail(path: string): void {
             </div>
           </div>
           <div class="card-line2">
-            <div class="button">
-              <div class="text">信用额度申请</div>
+            <button class="button" type="button" @click="goToMessagePage('credit', '买入申请')">
+              <div class="text">{{ t('PageMessageApplyForCreditLimit') }}</div>
               <div class="round-icon">
                 <img :src="iconPoker" alt="申请" />
               </div>
-            </div>
-            <div class="button">
-              <div class="text">联盟币申请</div>
+            </button>
+            <button class="button" type="button" @click="goToMessagePage('uc', 'UC申请')">
+              <div class="text">{{ t('PageMessageApplyForUC') }}</div>
               <div class="round-icon num">16</div>
-            </div>
+            </button>
           </div>
         </div>
       </div>
@@ -91,7 +97,7 @@ function goToDetail(path: string): void {
         v-for="box in boxList"
         :key="box.text"
         class="box-item"
-        @click="goToDetail(box.route)"
+        @click="goToMessagePage(box.type, box.text)"
       >
         <div class="img">
           <img :src="box.icon" alt="消息" />
@@ -104,7 +110,7 @@ function goToDetail(path: string): void {
 
 <style scoped lang="scss">
 
-@use '@/styles/messages_mine.scss';
+@use '@/styles/messages_mine.scss' as *;
 .message-page {
   .card-bg-highlight{
     .card-bg-outter {
@@ -134,6 +140,10 @@ function goToDetail(path: string): void {
         }
         .card-line2 {
           padding: 0 0.4rem 0 0.45rem;
+          .button {
+            border: 0;
+            cursor: pointer;
+          }
         }
       }
     }

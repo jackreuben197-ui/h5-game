@@ -50,6 +50,74 @@ const handshakeDoneHandlers = new Set<HandshakeDoneHandler>()
 let h5ReadySent = false
 let bridgeHandshakeDone = false
 
+function isNonForwardMessage(message: BridgeMessage): boolean {
+  return normalizeBridgeMsgType(message.msgtype) === BRIDGE_MSG_TYPE.H5
+}
+
+function getBinaryByteLength(raw: unknown): number {
+  if (raw instanceof ArrayBuffer) {
+    return raw.byteLength
+  }
+  if (ArrayBuffer.isView(raw)) {
+    return raw.byteLength
+  }
+  if (raw instanceof Blob) {
+    return raw.size
+  }
+  return 0
+}
+
+function payloadForNonForwardLog(payload: unknown): unknown {
+  if (payload === null || payload === undefined) {
+    return payload
+  }
+
+  const rootBinaryBytes = getBinaryByteLength(payload)
+  if (rootBinaryBytes > 0) {
+    return {
+      kind: 'binary',
+      binaryBytes: rootBinaryBytes,
+    }
+  }
+
+  if (typeof payload !== 'object') {
+    return payload
+  }
+
+  if (Array.isArray(payload)) {
+    return payload
+  }
+
+  const raw = payload as Record<string, unknown>
+  if (!('data' in raw)) {
+    return payload
+  }
+
+  const binaryBytes = getBinaryByteLength(raw.data)
+  if (binaryBytes <= 0) {
+    return payload
+  }
+
+  return {
+    ...raw,
+    data: `<binary length=${binaryBytes}>`,
+  }
+}
+
+function logH5OutgoingNonForwardAction(message: BridgeMessage): void {
+  if (!isNonForwardMessage(message)) {
+    return
+  }
+
+  console.info('[bridge][h5->cc][non-forward]', {
+    action: message.action,
+    msgtype: message.msgtype,
+    requestId: message.requestId,
+    timestamp: message.timestamp,
+    payload: payloadForNonForwardLog(message.payload),
+  })
+}
+
 // 向所有订阅者分发消息。
 function emit(message: BridgeMessage): void {
   const route: MessageRoute = message.msgtype === BRIDGE_MSG_TYPE.H5 ? 'h5' : 'forward'
@@ -252,6 +320,7 @@ export function sendBridgeMessage<TPayload>(
   options: SendBridgeMessageOptions = {},
 ): BridgeMessage<TPayload> {
   const message = createBridgeMessage(action, payload, options)
+  logH5OutgoingNonForwardAction(message)
   postToCocos(message)
   return message
 }
@@ -351,43 +420,21 @@ function handleHandshakeMessage(message: BridgeMessage): void {
 }
 
 function logCcIncomingAction(message: BridgeMessage, messageSource?: string): void {
-  if (messageSource !== CC_WINDOW_SOURCE) {
+  if (messageSource !== CC_WINDOW_SOURCE && messageSource !== COCOS_LEGACY_SOURCE) {
+    return
+  }
+  if (!isNonForwardMessage(message)) {
     return
   }
 
-  const base = {
+  console.info('[bridge][cc->h5][non-forward]', {
     action: message.action,
     msgtype: message.msgtype,
     requestId: message.requestId,
     source: messageSource,
-  }
-
-  if (message.action === BRIDGE_ACTION.WS_SEND) {
-    const payload = message.payload as {
-      dataType?: unknown
-      text?: unknown
-      data?: unknown
-    }
-    const binary = payload?.data
-    let binaryBytes = 0
-    if (binary instanceof ArrayBuffer) {
-      binaryBytes = binary.byteLength
-    } else if (ArrayBuffer.isView(binary)) {
-      binaryBytes = binary.byteLength
-    } else if (binary instanceof Blob) {
-      binaryBytes = binary.size
-    }
-
-    console.info('[bridge][cc->h5]', {
-      ...base,
-      dataType: payload?.dataType,
-      textLength: typeof payload?.text === 'string' ? payload.text.length : 0,
-      binaryBytes,
-    })
-    return
-  }
-
-  console.info('[bridge][cc->h5]', base)
+    timestamp: message.timestamp,
+    payload: payloadForNonForwardLog(message.payload),
+  })
 }
 
 function handleIncomingMessage(message: BridgeMessage, fallbackSource?: string): void {

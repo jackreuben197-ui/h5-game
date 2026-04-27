@@ -1,17 +1,24 @@
 <script setup lang="ts">
-import tabActiveBg from '@/assets/icons/game_type_tab_active_bg.svg?url'
+import tabActiveBg from '@/assets/images/game_type_tab_active_bg.svg?url'
+import tabActiveLgBg from '@/assets/images/game_type_tab_active_lg_bg.svg?url'
 
 export interface TabOption {
   name: string
   title: string
 }
 
+export type GameTypeTabbarSize = 'md' | 'lg'
+
 interface Props {
   modelValue: string
   tabs: TabOption[]
+  size?: GameTypeTabbarSize
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  // 默认普通尺寸，不传 size 时保持现有页面行为不变。
+  size: 'md',
+})
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
@@ -19,9 +26,13 @@ const emit = defineEmits<{
 
 const tabOptions = computed(() => props.tabs)
 
-const tabbarStyle = {
-  '--tab-active-bg': `url("${tabActiveBg}")`,
-}
+const tabbarStyle = computed<Record<string, string>>(() => {
+  // 根据 size 切换激活态背景图：普通版 / 大号版。
+  const activeBg = props.size === 'lg' ? tabActiveLgBg : tabActiveBg
+  return {
+    '--tab-active-bg': `url("${activeBg}")`,
+  }
+})
 
 function handleUpdate(value: string | number): void {
   emit('update:modelValue', String(value))
@@ -44,7 +55,7 @@ export default { name: 'GameTypeTabbar' }
     background="transparent"
     title-active-color="#ffffff"
     title-inactive-color="rgba(255, 255, 255, 0.65)"
-    class="room-tabs"
+    :class="['room-tabs', props.size === 'lg' ? 'room-tabs--lg' : '']"
     :style="tabbarStyle"
     @update:model-value="handleUpdate"
   >

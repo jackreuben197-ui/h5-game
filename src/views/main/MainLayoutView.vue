@@ -112,8 +112,24 @@ onMounted(() => {
 .main-layout-content {
   position: relative;
   z-index: 2;
+  // 统一作为“页面滚动容器”：在 html/body fixed 的场景下也可稳定滚动。
+  height: 100dvh;
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.62rem) 0.0rem
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
+  padding: calc(env(safe-area-inset-top) + 0.4rem) 0.0rem
     calc(env(safe-area-inset-bottom) + 2.72rem);
+}
+
+.module-slot {
+  // 子页面容器只负责承载内容，不再单独接管滚动。
+  flex: 1;
+  min-height: 0;
 }
 </style>

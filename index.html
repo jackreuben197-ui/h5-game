@@ -21,9 +21,6 @@
     <meta name="x5-page-mode" content="app" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-    <!-- Telegram Web App SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
     <style>
       html,
       body {
@@ -118,16 +115,35 @@
       })()
     </script>
 
-    <!-- Telegram 初始化 -->
+    <!-- Telegram 初始化（异步按需加载，网络不可达时不阻塞页面） -->
     <script>
       ;(function () {
-        if (window.Telegram && window.Telegram.WebApp) {
+        function initTelegramWebApp() {
+          if (!window.Telegram || !window.Telegram.WebApp) {
+            return
+          }
           var tg = window.Telegram.WebApp
           tg.ready()
           if (typeof tg.expand === 'function') {
             tg.expand()
           }
         }
+
+        // 先尝试直接初始化（例如容器已注入 Telegram 对象）。
+        initTelegramWebApp()
+
+        // 再异步加载官方 SDK，避免 head 同步脚本在弱网/不可达场景卡住首屏。
+        var script = document.createElement('script')
+        script.src = 'https://telegram.org/js/telegram-web-app.js'
+        script.async = true
+        script.defer = true
+        script.crossOrigin = 'anonymous'
+        script.referrerPolicy = 'no-referrer'
+        script.onload = initTelegramWebApp
+        script.onerror = function () {
+          console.warn('[telegram] sdk load failed, continue without telegram bridge')
+        }
+        document.head.appendChild(script)
       })()
     </script>
 

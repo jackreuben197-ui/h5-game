@@ -67,10 +67,8 @@ const featureIcons = computed<FeatureIconItem[]>(() => {
 // 当前牌桌人数。
 const roomers = computed(() => {
   const fromCount = Number(props.room.roomers)
-  if (Number.isFinite(fromCount) && fromCount > 0) {
-    return fromCount
-  }
-  return Array.isArray(props.room.users) ? props.room.users.length : 0
+  const valid = (Number.isFinite(fromCount) && fromCount > 0)
+  return Array.isArray(props.room.users) ? props.room.users.length : valid ? fromCount : 0
 })
 
 // 座位数，兜底为 9 人桌。
@@ -264,10 +262,7 @@ function formatRoomTime(seconds: number): string {
 </script>
 
 <template>
-  <article
-    class="table-card"
-    @click="handleClick"
-  >
+  <article class="table-card" @click="handleClick">
     <div class="table-name">
       {{ room.name || 'Poker Game Name' }}
     </div>
@@ -288,18 +283,10 @@ function formatRoomTime(seconds: number): string {
       </div>
 
       <div class="seat-area">
-        <div
-          class="table-bg"
-        >
+        <div class="table-bg">
           <div class="table-center">
-            <img
-              class="meta-icon people-center-icon"
-              :src="iconPeople"
-              alt="people"
-            />
-            <span>
-              {{ roomers }}/{{ seatCount }}
-            </span>
+            <img class="meta-icon people-center-icon" :src="iconPeople" alt="people" />
+            <span> {{ roomers }}/{{ seatCount }} </span>
           </div>
         </div>
 
@@ -317,13 +304,8 @@ function formatRoomTime(seconds: number): string {
             loading="lazy"
             decoding="async"
           />
-          <span
-            v-else
-            class="seat-name"
-          >
-            {{
-              shortName(typeof seatUser?.name === 'string' ? seatUser.name : '')
-            }}
+          <span v-else class="seat-name">
+            {{ shortName(typeof seatUser?.name === 'string' ? seatUser.name : '') }}
           </span>
         </div>
       </div>
@@ -340,11 +322,7 @@ function formatRoomTime(seconds: number): string {
           </span>
         </p>
         <p>
-          <img
-            class="meta-icon"
-            :src="iconChips"
-            alt="chips"
-          />
+          <img class="meta-icon" :src="iconChips" alt="chips" />
           <span>
             {{ bringInText }}
           </span>
@@ -365,7 +343,7 @@ function formatRoomTime(seconds: number): string {
   padding: 0.56rem 0.24rem 0.26rem;
   width: 4.378rem;
   height: 4.378rem;
-  background: url('@/assets/images/game_list_card_bg.png') no-repeat center /100% 100%;
+  background: url('@/assets/images/game_list_card_bg.png') no-repeat center / 100% 100%;
   position: relative;
   // overflow: hidden;
 }
@@ -405,9 +383,9 @@ function formatRoomTime(seconds: number): string {
   overflow: hidden;
   z-index: 4;
   border-radius: 0.24rem;
-  background: linear-gradient(rgba(255,255,255,0.1), rgba(255,255,255,0.1)) ,url('@/assets/images/game_list_card_title_bg.png') no-repeat center / 100% 100%;
+  background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)),
+    url('@/assets/images/game_list_card_title_bg.png') no-repeat center / 100% 100%;
 }
-
 
 .seat-area {
   margin-top: 0.1rem;
@@ -418,8 +396,8 @@ function formatRoomTime(seconds: number): string {
 .table-bg {
   width: 4rem;
   height: 2.7rem;
-  margin: .3rem auto 0;
-  background:  url('@/assets/images/game_list_card_table_bg.png') center / 100% 100% no-repeat;
+  margin: 0.3rem auto 0;
+  background: url('@/assets/images/game_list_card_table_bg.png') center / 100% 100% no-repeat;
   position: relative;
 }
 
@@ -466,8 +444,8 @@ function formatRoomTime(seconds: number): string {
   height: 100%;
   object-fit: cover;
 }
-.seat-name{
-  font-size: 0.3rem ;
+.seat-name {
+  font-size: 0.3rem;
 }
 
 .table-footer {
@@ -495,6 +473,6 @@ function formatRoomTime(seconds: number): string {
 .people-center-icon {
   width: 0.61rem;
   height: 0.61rem;
-  margin-right: .2rem;
+  margin-right: 0.2rem;
 }
 </style>

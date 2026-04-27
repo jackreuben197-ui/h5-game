@@ -38,8 +38,8 @@ export interface EnterTablePayload {
   from: 'h5-lobby'
   // 点击的目标房间 ID，方便 Cocos 精确切桌；Cocos 不需要时可忽略。
   roomId?: string
-  // 点击的目标房间名称，主要用于日志/埋点排查。
   roomName?: string
+  roomInfo: any
 }
 
 // 用户信息变化后的同步负载。

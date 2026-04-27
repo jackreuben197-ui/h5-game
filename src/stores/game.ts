@@ -85,6 +85,7 @@ export const useGameStore = defineStore(
         localStore.removeItem(StorageKey.WS_PORT_UPDATED_AT)
         // 登录态清空时同步清理房间相关缓存，避免下个账号看到旧牌桌。
         localStore.removeItem(StorageKey.ROOM_LIST_CACHE)
+        localStore.removeItem(StorageKey.MTT_LIST_CACHE)
         localStore.removeItem(StorageKey.HOME_ROOM_STATS_CACHE)
       },
       setLastEnterTable(payload: EnterTablePayload): void {

@@ -303,6 +303,7 @@ async function handleTableClick(room: RoomRecord): Promise<void> {
     from: 'h5-lobby',
     roomId: String(room.rid ?? ''),
     roomName: String(room.name ?? ''),
+    roomInfo: room,
   }
 
   enterTable(payload)

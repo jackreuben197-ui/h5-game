@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import AppBar from '@/components/wallet/AppBar.vue'
 import TogglePillGroup from '@/components/wallet/TogglePillGroup.vue'
 import RecordItem from '@/components/wallet/RecordItem.vue'
+import OrderDetailsView from './OrderDetailsView.vue'
 import { t } from '@/i18n'
 
-const router = useRouter()
 const activeTab = ref(0)
+const selectedOrderId = ref<string | null>(null)
 
 interface Record {
   id: string
@@ -19,17 +19,20 @@ interface Record {
   status: string
 }
 
-const records: Record[] = Array.from({ length: 5 }, (_, i) => ({
-  id: `rec-${i + 1}`,
-  type: t('Wallet_OrderAmount'),
-  amount: 500,
-  payAmount: 500,
-  time: '25/12/11 11:07',
-  status: t('Wallet_StatusCancelled'),
-}))
+const records = computed<Record[]>(() => {
+  const typeKey = activeTab.value === 0 ? 'Wallet_OrderAmountDeposit' : 'Wallet_OrderAmountWithdraw'
+  return Array.from({ length: 5 }, (_, i) => ({
+    id: `rec-${i + 1}`,
+    type: t(typeKey),
+    amount: 500,
+    payAmount: 500,
+    time: '25/12/11 11:07',
+    status: t('Wallet_StatusCancelled'),
+  }))
+})
 
 function open(id: string): void {
-  void router.push(`/recharge/order/${id}`)
+  selectedOrderId.value = id
 }
 
 const tabs = [t('Wallet_OrdersDeposit'), t('Wallet_OrdersWithdraw')]
@@ -60,6 +63,12 @@ const tabs = [t('Wallet_OrdersDeposit'), t('Wallet_OrdersWithdraw')]
         @click="open(r.id)"
       />
     </div>
+
+    <OrderDetailsView
+      v-if="selectedOrderId"
+      :order-id="selectedOrderId"
+      @close="selectedOrderId = null"
+    />
   </div>
 </template>
 
@@ -83,8 +92,8 @@ const tabs = [t('Wallet_OrdersDeposit'), t('Wallet_OrdersWithdraw')]
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(34px);
+  -webkit-backdrop-filter: blur(34px);
   background: rgba(0, 0, 0, 0.15);
 }
 

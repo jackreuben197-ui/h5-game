@@ -360,6 +360,24 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/wallet',
+      name: 'wallet',
+      component: () => import('@/views/wallet/WalletIndexView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/wallet/orders',
+      name: 'wallet-orders',
+      component: () => import('@/views/friendsTable/RechargeOrdersView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/wallet/details',
+      name: 'wallet-details',
+      component: () => import('@/views/wallet/WalletDetailsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/gameList',
       name: 'game-list',
       component: () => import('@/views/home/gameList.vue'),

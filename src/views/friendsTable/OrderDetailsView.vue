@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import { t } from '@/i18n'
 
-const router = useRouter()
-const route = useRoute()
-
-const orderId = computed(() => String(route.params.id ?? ''))
+const props = defineProps<{ orderId: string }>()
+const emit = defineEmits<{ close: [] }>()
 
 interface Row {
   label: string
@@ -15,7 +12,7 @@ interface Row {
 }
 
 const rows = computed<Row[]>(() => [
-  { label: t('Wallet_OrderId'), value: orderId.value || '87sdf55dfsd' },
+  { label: t('Wallet_OrderId'), value: props.orderId || '87sdf55dfsd' },
   { label: t('Wallet_OrderAmount'), value: '100.01' },
   { label: t('Wallet_OrderFee'), value: '0' },
   { label: t('Wallet_OrderPayAmount'), value: '13.8014' },
@@ -27,25 +24,18 @@ const rows = computed<Row[]>(() => [
 ])
 
 function close(): void {
-  if (window.history.state?.back) {
-    router.back()
-    return
-  }
-  void router.push('/recharge/records')
+  emit('close')
 }
 </script>
 
 <template>
+  <Teleport to="body">
   <div
     class="overlay"
+    :style="{ backgroundImage: `url(${sharpBgUrl})` }"
     @click.self="close"
   >
-    <div
-      class="overlay__bg"
-      :style="{ backgroundImage: `url(${sharpBgUrl})` }"
-      @click="close"
-    ></div>
-    <div class="card">
+    <div class="card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
       <div class="card__bg"></div>
       <h2 class="card__title">{{ t('Wallet_OrderTitle') }}</h2>
       <div class="card__rows">
@@ -60,6 +50,7 @@ function close(): void {
       </div>
     </div>
   </div>
+  </Teleport>
 </template>
 
 <style scoped lang="scss">
@@ -71,22 +62,29 @@ function close(): void {
   align-items: center;
   justify-content: center;
   padding: clamp(20px, 7vw, 28px);
-  overflow: hidden;
-}
-
-.overlay__bg {
-  position: absolute;
-  inset: -24px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  filter: blur(14px);
-  cursor: pointer;
+}
+
+.overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  backdrop-filter: blur(34px);
+  -webkit-backdrop-filter: blur(34px);
+  background: rgba(0, 0, 0, 0.15);
 }
 
 .card {
   position: relative;
+  z-index: 1;
   width: 100%;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   max-width: clamp(280px, 84.5vw, 317px);
   padding: clamp(14px, 4.6vw, 17px);
   border: 0.96px solid rgba(242, 242, 242, 0.4);
@@ -106,14 +104,14 @@ function close(): void {
   inset: 0;
   pointer-events: none;
   border-radius: inherit;
-  backdrop-filter: blur(7.6px);
-  -webkit-backdrop-filter: blur(7.6px);
-  background-image: linear-gradient(
-    106.9deg,
-    rgba(142, 142, 142, 0.3) 3%,
-    rgba(103, 103, 103, 0.4) 44%,
-    rgba(73, 73, 73, 0.5) 90%
-  );
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  // background-image: linear-gradient(
+  //   106.9deg,
+  //   rgba(142, 142, 142, 0.3) 3%,
+  //   rgba(103, 103, 103, 0.4) 44%,
+  //   rgba(73, 73, 73, 0.5) 90%
+  // );
   mix-blend-mode: hard-light;
 }
 

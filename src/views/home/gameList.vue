@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch, type CSSProperties } from 'vue'
+import { useRouter } from 'vue-router'
 import { showFailToast } from 'vant'
 import { enterTable } from '@/bridge/core'
 import type { EnterTablePayload } from '@/bridge/protocol'
@@ -42,6 +43,7 @@ interface RoomGroupExpandedCachePayload {
 
 const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
 
+const router = useRouter()
 const gameStore = useGameStore()
 const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
@@ -312,6 +314,7 @@ function toSafeInt(value: unknown): number {
             :name="t('UIGuildFund_RechargeText')"
             :icon="walletIcon"
             icon-alt="wallet"
+            @click="router.push('/wallet')"
           />
           <TopActionButton
             :name="t('UIMineMain01')"

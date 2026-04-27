@@ -12,11 +12,13 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     FilterTabbar: typeof import('./src/components/Tabbar/FilterTabbar.vue')['default']
+    GameDialog: typeof import('./src/components/Dialog/GameDialog.vue')['default']
     GameTable: typeof import('./src/components/Table/GameTable.vue')['default']
     GameTableCell: typeof import('./src/components/Table/GameTableCell.vue')['default']
     GameTableColumn: typeof import('./src/components/Table/GameTableColumn.vue')['default']
     GameTableHeader: typeof import('./src/components/Table/GameTableHeader.vue')['default']
     GameTableRow: typeof import('./src/components/Table/GameTableRow.vue')['default']
+    GameToast: typeof import('./src/components/Toast/GameToast.vue')['default']
     GameTypeTabbar: typeof import('./src/components/Tabbar/GameTypeTabbar.vue')['default']
     HeaderBack: typeof import('./src/components/HeaderBack/HeaderBack.vue')['default']
     MainBottomTab: typeof import('./src/components/Tabbar/MainBottomTab.vue')['default']
@@ -29,6 +31,7 @@ declare module 'vue' {
     TopActionButton: typeof import('./src/components/Button/TopActionButton.vue')['default']
     VanButton: typeof import('vant/es')['Button']
     VanCellGroup: typeof import('vant/es')['CellGroup']
+    VanDialog: typeof import('vant/es')['Dialog']
     VanField: typeof import('vant/es')['Field']
     VanIcon: typeof import('vant/es')['Icon']
     VanLoading: typeof import('vant/es')['Loading']

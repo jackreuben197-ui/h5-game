@@ -736,3 +736,151 @@ async function onLoad() {
 - **下拉面板**：`background: rgba(0,0,0,0.37)` + `backdrop-filter: blur(0.16rem)`
 - **排序图标**：上下箭头对（Vant `arrow-up` / `arrow-down`），激活态变白色，后续可替换为自定义 SVG
 - **下拉箭头**：Vant `arrow-down`，展开时旋转 180°
+
+## 13. GameDialog 组件
+
+位置：`src/components/Dialog/`
+
+二次封装 `van-dialog`，保留其 overlay/teleport/lockScroll 等底层能力，完全替换视觉 UI。
+
+### 13.1 Props
+
+| Prop | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `v-model:show` | `boolean` | — | 控制显示/隐藏 |
+| `title` | `string` | — | 标题文字 |
+| `message` | `string` | — | 内容文字 |
+| `showCancelButton` | `boolean` | `false` | 是否显示取消按钮 |
+| `cancelButtonText` | `string` | `'取消'` | 取消按钮文字 |
+| `confirmButtonText` | `string` | `'确认'` | 确认按钮文字 |
+| `confirmButtonDisabled` | `boolean` | `false` | 确认按钮是否禁用 |
+| `beforeClose` | `(action) => boolean\|Promise<boolean>` | — | 关闭前回调，return false 阻止关闭 |
+
+其余 `van-dialog` 原生属性（`overlay`、`teleport`、`closeOnClickOverlay` 等）均通过 `v-bind="$attrs"` 透传。
+
+### 13.2 Slots
+
+| Slot | 说明 |
+|------|------|
+| `#title` | 自定义标题内容，覆盖 `title` prop |
+| `#default` | 自定义 body 内容，覆盖 `message` prop |
+
+### 13.3 Events
+
+| Event | 说明 |
+|-------|------|
+| `confirm` | 点击确认按钮 |
+| `cancel` | 点击取消按钮 |
+| `close` | 弹窗关闭 |
+
+### 13.4 示例
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { GameDialog } from '@/components/Dialog'
+
+const show = ref(false)
+</script>
+
+<template>
+  <!-- 文字版 -->
+  <GameDialog
+    v-model:show="show"
+    title="提示"
+    message="确定要退出房间吗？"
+    :show-cancel-button="true"
+    @confirm="handleConfirm"
+    @cancel="show = false"
+  />
+
+  <!-- 自定义内容 -->
+  <GameDialog v-model:show="show" title="规则说明">
+    <template #default>
+      <div style="text-align:left; color:#fff">自定义内容...</div>
+    </template>
+  </GameDialog>
+</template>
+```
+
+### 13.5 样式说明
+
+- **背景**：`component_dialog_bg.png`，`background-size: 100% auto` 从顶部裁切，内容多高显示多高，不拉伸
+- **内阴影**：`inset 2.12px 4.24px 17.23px rgba(242,242,242,0.9)` + 四角高光
+- **尺寸**：宽 `9rem`，最小高 `2rem`，圆角 `0.97rem`，内边距 `0.5rem`
+- **body**：最大高 `12rem`，超出滚动（隐藏滚动条）
+- **确认按钮**：`PrimaryButton`（`:shadow="false"` 关闭高光阴影）
+- **取消按钮**：`rgba(0,0,0,0.3)` + `backdrop-filter: blur(0.05rem)`
+- **遮罩**：`rgba(12,12,12,0.6)`，同时写入 `_vant-overrides.scss` 全局生效
+
+---
+
+## 14. GameToast 组件
+
+位置：`src/components/Toast/`
+
+二次封装 `van-toast`，保留其定时关闭/位置/遮罩能力，完全替换视觉 UI。
+
+### 14.1 Props
+
+| Prop | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `v-model:show` | `boolean` | — | 控制显示/隐藏 |
+| `message` | `string\|number` | — | 提示文字 |
+| `duration` | `number` | `2000` | 展示时长(ms)，`0` 不自动关闭 |
+| `overlay` | `boolean` | `false` | 是否显示遮罩 |
+| `closeOnClick` | `boolean` | `false` | 点击 toast 本身关闭 |
+| `closeOnClickOverlay` | `boolean` | `false` | 点击遮罩关闭 |
+| `forbidClick` | `boolean` | `false` | 是否禁止背景点击穿透 |
+| `position` | `'top'\|'middle'\|'bottom'` | `'middle'` | 展示位置 |
+
+其余 `van-toast` 原生属性通过 `v-bind="$attrs"` 透传。
+
+### 14.2 Slots
+
+| Slot | 说明 |
+|------|------|
+| `#default` | 自定义内容，覆盖 `message` prop，可放任意节点 |
+
+### 14.3 Events
+
+| Event | 说明 |
+|-------|------|
+| `close` | toast 关闭时触发 |
+
+### 14.4 示例
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { GameToast } from '@/components/Toast'
+
+const show = ref(false)
+
+function showTip() {
+  show.value = true
+}
+</script>
+
+<template>
+  <!-- 文字版 -->
+  <GameToast v-model:show="show" message="操作成功" />
+
+  <!-- 自定义内容 -->
+  <GameToast v-model:show="show" :duration="0" :close-on-click="true">
+    <div style="display:flex;align-items:center;gap:0.2rem">
+      <van-icon name="success" size="0.5rem" color="#05e7ae" />
+      <span style="color:#fff;font-size:0.43rem">充值成功</span>
+    </div>
+  </GameToast>
+</template>
+```
+
+### 14.5 样式说明
+
+- **背景**：与 GameDialog 相同，`component_dialog_bg.png` 顶部裁切不拉伸
+- **内阴影**：与 GameDialog 完全一致
+- **尺寸**：宽 `8.45rem`，最小高 `1.6rem`，圆角 `0.9rem`
+- **内边距**：上下 `0.6rem`，左右 `0.4rem`
+- **字体**：`0.43rem`，白色，支持自动换行
+- **遮罩**：默认不开启（`overlay: false`），开启后颜色 `rgba(12,12,12,0.6)`

@@ -2,10 +2,13 @@
 interface Props {
   text: string
   disabled?: boolean
+  /** 是否显示内嵌高光边框阴影，默认 true */
+  shadow?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   disabled: false,
+  shadow: true,
 })
 
 const emit = defineEmits<{
@@ -20,7 +23,7 @@ function handleClick(event: MouseEvent): void {
 
 <template>
   <button
-    :class="['primary-btn', { 'primary-btn--disabled': props.disabled }]"
+    :class="['primary-btn', { 'primary-btn--disabled': props.disabled, 'primary-btn--no-shadow': !props.shadow }]"
     type="button"
     :disabled="props.disabled"
     @click="handleClick"
@@ -50,6 +53,10 @@ function handleClick(event: MouseEvent): void {
   box-shadow:
     inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
     inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
+
+  &.primary-btn--no-shadow {
+    box-shadow: none;
+  }
 
   &::before {
     content: '';

@@ -31,7 +31,7 @@ const emit = defineEmits<{
 .tpg {
   display: inline-flex;
   align-items: center;
-  gap: clamp(6px, 2.2vw, 8px);
+  gap: 0.22rem;
 }
 
 .tpg__pill {
@@ -39,9 +39,9 @@ const emit = defineEmits<{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 clamp(12px, 4.8vw, 18px);
-  height: clamp(22px, 7.5vw, 28px);
-  border-radius: clamp(20px, 7.4vw, 27.8px);
+  padding: 0 0.48rem;
+  height: 0.75rem;
+  border-radius: 0.74rem;
   backdrop-filter: blur(22.4px);
   -webkit-backdrop-filter: blur(22.4px);
   cursor: pointer;
@@ -76,7 +76,7 @@ const emit = defineEmits<{
 .tpg__label {
   font-family: var(--wallet-font-cn);
   font-weight: 400;
-  font-size: clamp(7px, 2.15vw, 8px);
+  font-size: 0.215rem;
   color: #fff;
 }
 </style>

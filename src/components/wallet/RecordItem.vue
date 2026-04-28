@@ -94,7 +94,7 @@ const sharpBgStyle = {
   flex: 1;
   flex-direction: column;
   align-items: flex-start;
-  gap: clamp(4px, 1.3vw, 5px);
+  gap: 0.13rem;
   justify-content: center;
   min-width: 0;
 }
@@ -107,7 +107,7 @@ const sharpBgStyle = {
 .record__value {
   font-family: var(--wallet-font-num);
   font-weight: 500;
-  font-size: clamp(10px, 3vw, 11.2px);
+  font-size: 0.3rem;
   color: #fff;
   line-height: 1.4;
   white-space: nowrap;

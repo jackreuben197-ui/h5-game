@@ -76,9 +76,9 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(48px, 19.8vw, 74px);
-  padding: 0 clamp(14px, 5.9vw, 22px);
-  height: clamp(26px, 8.4vw, 31.6px);
+  gap: 1.98rem;
+  padding: 0 0.59rem;
+  height: 0.84rem;
 }
 
 .seg__indicator {
@@ -108,7 +108,7 @@ watch(
 
 .seg__label {
   font-family: var(--wallet-font-cn);
-  font-size: clamp(14px, 4.6vw, 17.2px);
+  font-size: 0.46rem;
   line-height: 0.95;
   color: #fff;
   font-weight: 500;

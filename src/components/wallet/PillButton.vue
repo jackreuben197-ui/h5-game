@@ -34,10 +34,10 @@ withDefaults(defineProps<Props>(), {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(4px, 1.6vw, 6px);
-  min-width: clamp(50px, 15.73vw, 62px);
-  height: clamp(18px, 5.87vw, 24px);
-  padding: 0 clamp(6px, 2.13vw, 10px);
+  gap: 0.16rem;
+  min-width: 1.573rem;
+  height: 0.587rem;
+  padding: 0 0.213rem;
   white-space: nowrap;
 }
 
@@ -55,7 +55,7 @@ withDefaults(defineProps<Props>(), {
 
 .pill__icon {
   position: relative;
-  width: clamp(12px, 4vw, 16px);
-  height: clamp(12px, 4vw, 16px);
+  width: 0.4rem;
+  height: 0.4rem;
 }
 </style>

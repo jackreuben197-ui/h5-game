@@ -25,7 +25,7 @@ withDefaults(defineProps<Props>(), {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(1.5px, 0.6vw, 2.8px) clamp(6px, 2.4vw, 9px);
+  padding: 0.06rem 0.24rem;
   border-radius: 31px;
   line-height: 1.4;
   white-space: nowrap;
@@ -42,14 +42,14 @@ withDefaults(defineProps<Props>(), {
 
 .tagpill--id {
   background: rgba(255, 255, 255, 0.2);
-  padding: 0 clamp(3.5px, 1.3vw, 4.9px);
-  border-radius: clamp(3.3px, 1.21vw, 4.62px);
+  padding: 0 0.13rem;
+  border-radius: 0.121rem;
 }
 
 .tagpill__label {
   font-family: var(--wallet-font-cn);
   font-weight: 500;
-  font-size: clamp(9px, 2.8vw, 11.2px);
+  font-size: 0.28rem;
   color: #fff;
   letter-spacing: 0.1px;
 }
@@ -57,6 +57,6 @@ withDefaults(defineProps<Props>(), {
 .tagpill--id .tagpill__label {
   font-family: var(--wallet-font-num);
   font-weight: 600;
-  font-size: clamp(7px, 2.15vw, 8.1px);
+  font-size: 0.215rem;
 }
 </style>

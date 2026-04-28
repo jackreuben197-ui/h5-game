@@ -109,6 +109,7 @@ function handleConfirm() {
     :show="show"
     :title="t('UIMTTSignDialogBuyTitle')"
     :confirm-button-text="t('UICowboy_JoinGame')"
+    :close-on-click-overlay="true"
     @confirm="handleConfirm"
     @update:show="emit('update:show', $event)"
   >
@@ -311,29 +312,6 @@ function handleConfirm() {
 
   &--active {
     background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
-  }
-}
-
-.radio-circle {
-  width: 0.48rem;
-  height: 0.48rem;
-  border-radius: 50%;
-  border: 0.027rem solid rgba(255, 255, 255, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-
-  &--checked {
-
-    &::after {
-      content: '';
-      width: 0.34rem;
-      height: 0.34rem;
-      border-radius: 50%;
-      border: 0.05rem solid #05e7ae;
-      background: transparent;
-    }
   }
 }
 

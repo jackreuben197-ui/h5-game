@@ -333,7 +333,7 @@ export interface MiscBannerListResponseData {
     limit: number; //条目
     offset: number; //开始下标。例子（offset=0，limit=10，0-9。）
     total: number; //总条数
-    list: MiscBannerListBannerInfo[]; // Banner列表
+    list: MiscBannerListBannerInfo[]; //Banner列表
     data?: MiscBannerListData;
 
   [key: string]: unknown

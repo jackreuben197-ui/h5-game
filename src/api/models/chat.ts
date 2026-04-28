@@ -5,13 +5,11 @@
 export interface DelmsgTemplateRequest {
 
   //     id: number
-  // 
   [key: string]: unknown
 }
 
 export interface DelmsgTemplateResponseData {
 
-  // 
   [key: string]: unknown
 }
 
@@ -29,13 +27,11 @@ export interface SetmsgTemplateRequest {
 
   //     template_name: string, //名称,
   //     content: string, //内容
-  // 
   [key: string]: unknown
 }
 
 export interface SetmsgTemplateResponseData {
 
-  // 
   [key: string]: unknown
 }
 
@@ -46,7 +42,6 @@ export interface OrggetMessListRequest {
   //     "last_id": number, // 查最新，大于此ID的消息
   //     "limit": 10,
   //     "offset": 0
-  // 
   [key: string]: unknown
 }
 
@@ -58,7 +53,6 @@ export interface OrggetMessListResponseData {
 export interface OrggetNewMessNumRequest {
 
   //     "msg_id": number
-  // 
   [key: string]: unknown
 }
 
@@ -74,7 +68,6 @@ export interface SendMsgRequest {
   //     "standings_user_id": number, // 消息类型为 3战绩分享 时，分享的玩家ID
   //     "game_round_id": number,// 消息类型为 4牌谱分享 时，牌谱ID
   //     "amount": number
-  // 
   [key: string]: unknown
 }
 
@@ -89,7 +82,6 @@ export interface OrgSendMessRequest {
   //     "message_type": number,  // 消息类型 1 普通消息 2 会长公告 3 战绩分享 4 牌谱分享
   //     "standings_user_id": number, // 消息类型为 3战绩分享 时，分享的玩家ID
   //     "game_round_id": number// 消息类型为 4牌谱分享 时，牌谱ID
-  // 
   [key: string]: unknown
 }
 

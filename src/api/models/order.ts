@@ -6,9 +6,7 @@ export interface ClubFundAuditRequest {
   [key: string]: unknown
 }
 
-export interface ClubFundAuditResponseData {
-    data?: ClubFundAuditData;
-
+export interface ClubFundAuditResponseData extends ClubFundAuditData {
   [key: string]: unknown
 }
 
@@ -17,9 +15,7 @@ export interface ClubFundExchangeRequest {
   [key: string]: unknown
 }
 
-export interface ClubFundExchangeResponseData {
-    data?: ClubFundExchangeData;
-
+export interface ClubFundExchangeResponseData extends ClubFundExchangeData {
   [key: string]: unknown
 }
 
@@ -37,9 +33,7 @@ export interface ClubFundApplyListRequest {
   [key: string]: unknown
 }
 
-export interface ClubFundApplyListResponseData {
-    data?: ClubFundApplyListData;
-
+export interface ClubFundApplyListResponseData extends ClubFundApplyListData {
   [key: string]: unknown
 }
 
@@ -62,9 +56,7 @@ export interface ClubFundOrderListRequest {
   [key: string]: unknown
 }
 
-export interface ClubFundOrderListResponseData {
-    data?: ClubFundOrderListData;
-
+export interface ClubFundOrderListResponseData extends ClubFundOrderListData {
   [key: string]: unknown
 }
 
@@ -77,9 +69,7 @@ export interface RechargeGoldClubRequest {
   [key: string]: unknown
 }
 
-export interface RechargeGoldClubResponseData {
-    data?: RechargeGoldClubData;
-
+export interface RechargeGoldClubResponseData extends RechargeGoldClubData {
   [key: string]: unknown
 }
 
@@ -92,9 +82,7 @@ export interface TiquGoldClubRequest {
   [key: string]: unknown
 }
 
-export interface TiquGoldClubResponseData {
-    data?: TiquGoldClubData;
-
+export interface TiquGoldClubResponseData extends TiquGoldClubData {
   [key: string]: unknown
 }
 
@@ -107,10 +95,7 @@ export interface OrderTribeOrderListRequest {
   [key: string]: unknown
 }
 
-export interface OrderTribeOrderListResponseData {
-
-    data?: OrderTribeOrderListData;
-
+export interface OrderTribeOrderListResponseData extends OrderTribeOrderListData {
   [key: string]: unknown
 }
 
@@ -149,10 +134,7 @@ export interface OrderTribeOrderAuditRequest {
   [key: string]: unknown
 }
 
-export interface OrderTribeOrderAuditResponseData {
-
-    data?: OrderTribeOrderAuditData;
-
+export interface OrderTribeOrderAuditResponseData extends OrderTribeOrderAuditData {
   [key: string]: unknown
 }
 
@@ -187,10 +169,7 @@ export interface OrderTribeRechargeGoldRequest {
   [key: string]: unknown
 }
 
-export interface OrderTribeRechargeGoldResponseData {
-
-    data?: OrderTribeRechargeGoldData;
-
+export interface OrderTribeRechargeGoldResponseData extends OrderTribeRechargeGoldData {
   [key: string]: unknown
 }
 
@@ -206,10 +185,7 @@ export interface OrderTribeTransFerDiamondToTribeRequest {
   [key: string]: unknown
 }
 
-export interface OrderTribeTransFerDiamondToTribeResponseData {
-
-    data?: OrderTribeTransFerDiamondToTribeData;
-
+export interface OrderTribeTransFerDiamondToTribeResponseData extends OrderTribeTransFerDiamondToTribeData {
   [key: string]: unknown
 }
 
@@ -225,10 +201,7 @@ export interface OrderTribeTransFerDiamondToUserRequest {
   [key: string]: unknown
 }
 
-export interface OrderTribeTransFerDiamondToUserResponseData {
-
-    data?: OrderTribeTransFerDiamondToUserData;
-
+export interface OrderTribeTransFerDiamondToUserResponseData extends OrderTribeTransFerDiamondToUserData {
   [key: string]: unknown
 }
 
@@ -281,9 +254,7 @@ export interface ClubPlayerOrderRecordRequest {
   [key: string]: unknown
 }
 
-export interface ClubPlayerOrderRecordResponseData {
-    data?: ClubPlayerOrderRecordData;
-
+export interface ClubPlayerOrderRecordResponseData extends ClubPlayerOrderRecordData {
   [key: string]: unknown
 }
 
@@ -292,9 +263,7 @@ export interface RechargeGoldRequest {
   [key: string]: unknown
 }
 
-export interface RechargeGoldResponseData {
-    data?: RechargeGoldData;
-
+export interface RechargeGoldResponseData extends RechargeGoldData {
   [key: string]: unknown
 }
 
@@ -307,10 +276,7 @@ export interface OrderUserRechargeNoRequest {
   [key: string]: unknown
 }
 
-export interface OrderUserRechargeNoResponseData {
-
-    data?: OrderUserRechargeNoData;
-
+export interface OrderUserRechargeNoResponseData extends OrderUserRechargeNoData {
   [key: string]: unknown
 }
 
@@ -331,10 +297,7 @@ export interface OrderUserUsdtOrderListRequest {
   [key: string]: unknown
 }
 
-export interface OrderUserUsdtOrderListResponseData {
-
-    data?: OrderUserUsdtOrderListData;
-
+export interface OrderUserUsdtOrderListResponseData extends OrderUserUsdtOrderListData {
   [key: string]: unknown
 }
 
@@ -370,10 +333,7 @@ export interface OrderUserUsdtRechargeRequest {
   [key: string]: unknown
 }
 
-export interface OrderUserUsdtRechargeResponseData {
-
-    data?: OrderUserUsdtRechargeData;
-
+export interface OrderUserUsdtRechargeResponseData extends OrderUserUsdtRechargeData {
   [key: string]: unknown
 }
 
@@ -408,9 +368,7 @@ export interface TiquGoldRequest {
   [key: string]: unknown
 }
 
-export interface TiquGoldResponseData {
-    data?: TiquGoldData;
-
+export interface TiquGoldResponseData extends TiquGoldData {
   [key: string]: unknown
 }
 

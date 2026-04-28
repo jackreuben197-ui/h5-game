@@ -6,10 +6,7 @@ export interface OrgClubIdRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubIdResponseData {
-
-    data?: OrgClubIdData;
-
+export interface OrgClubIdResponseData extends OrgClubIdData {
   [key: string]: unknown
 }
 
@@ -35,10 +32,7 @@ export interface OrgClubIdJoinRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubIdJoinResponseData {
-
-    data?: OrgClubIdJoinData;
-
+export interface OrgClubIdJoinResponseData extends OrgClubIdJoinData {
   [key: string]: unknown
 }
 
@@ -91,9 +85,7 @@ export interface DeleleUserRequest {
   [key: string]: unknown
 }
 
-export interface DeleleUserResponseData {
-    data?: DeleleUserData;
-
+export interface DeleleUserResponseData extends DeleleUserData {
   [key: string]: unknown
 }
 
@@ -105,9 +97,7 @@ export interface OrgClubIsMangerRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubIsMangerResponseData {
-    data?: OrgClubIsMangerData;
-
+export interface OrgClubIsMangerResponseData extends OrgClubIsMangerData {
   [key: string]: unknown
 }
 
@@ -128,9 +118,7 @@ export interface LockUserRequest {
   [key: string]: unknown
 }
 
-export interface LockUserResponseData {
-    data?: LockUserData;
-
+export interface LockUserResponseData extends LockUserData {
   [key: string]: unknown
 }
 
@@ -148,10 +136,7 @@ export interface OrgClubAdminPermissionSwitchRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubAdminPermissionSwitchResponseData {
-
-    data?: OrgClubAdminPermissionSwitchData;
-
+export interface OrgClubAdminPermissionSwitchResponseData extends OrgClubAdminPermissionSwitchData {
   [key: string]: unknown
 }
 
@@ -181,9 +166,7 @@ export interface UnlockUserRequest {
   [key: string]: unknown
 }
 
-export interface UnlockUserResponseData {
-    data?: UnlockUserData;
-
+export interface UnlockUserResponseData extends UnlockUserData {
   [key: string]: unknown
 }
 
@@ -198,10 +181,7 @@ export interface OrgClubAgentCreditBalaNceRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubAgentCreditBalaNceResponseData {
-
-    data?: OrgClubAgentCreditBalaNceData;
-
+export interface OrgClubAgentCreditBalaNceResponseData extends OrgClubAgentCreditBalaNceData {
   [key: string]: unknown
 }
 
@@ -220,10 +200,7 @@ export interface OrgClubAgentCreditLimitRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubAgentCreditLimitResponseData {
-
-    data?: OrgClubAgentCreditLimitData;
-
+export interface OrgClubAgentCreditLimitResponseData extends OrgClubAgentCreditLimitData {
   [key: string]: unknown
 }
 
@@ -240,10 +217,7 @@ export interface OrgClubAgentInviTationRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubAgentInviTationResponseData {
-
-    data?: OrgClubAgentInviTationData;
-
+export interface OrgClubAgentInviTationResponseData extends OrgClubAgentInviTationData {
   [key: string]: unknown
 }
 
@@ -268,10 +242,7 @@ export interface OrgClubAgentRatioInfoRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubAgentRatioInfoResponseData {
-
-    data?: OrgClubAgentRatioInfoData;
-
+export interface OrgClubAgentRatioInfoResponseData extends OrgClubAgentRatioInfoData {
   [key: string]: unknown
 }
 
@@ -315,9 +286,7 @@ export interface ClubAgentUserListRequest {
   [key: string]: unknown
 }
 
-export interface ClubAgentUserListResponseData {
-    data?: ClubAgentUserListData;
-
+export interface ClubAgentUserListResponseData extends ClubAgentUserListData {
   [key: string]: unknown
 }
 
@@ -326,9 +295,7 @@ export interface ClubAgentUserListCoverRequest {
   [key: string]: unknown
 }
 
-export interface ClubAgentUserListCoverResponseData {
-    data?: ClubAgentUserListCoverData;
-
+export interface ClubAgentUserListCoverResponseData extends ClubAgentUserListCoverData {
   [key: string]: unknown
 }
 
@@ -340,10 +307,7 @@ export interface OrgClubCloneApplyRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubCloneApplyResponseData {
-
-    data?: OrgClubCloneApplyData;
-
+export interface OrgClubCloneApplyResponseData extends OrgClubCloneApplyData {
   [key: string]: unknown
 }
 
@@ -356,9 +320,7 @@ export interface ClubUserWalletRequest {
   [key: string]: unknown
 }
 
-export interface ClubUserWalletResponseData {
-    data?: ClubUserWalletData;
-
+export interface ClubUserWalletResponseData extends ClubUserWalletData {
   [key: string]: unknown
 }
 
@@ -372,10 +334,7 @@ export interface OrgClubClubWalletStatsRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubClubWalletStatsResponseData {
-
-    data?: OrgClubClubWalletStatsData;
-
+export interface OrgClubClubWalletStatsResponseData extends OrgClubClubWalletStatsData {
   [key: string]: unknown
 }
 
@@ -408,9 +367,7 @@ export interface OrgClubCreateRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubCreateResponseData {
-    data?: OrgClubCreateData;
-
+export interface OrgClubCreateResponseData extends OrgClubCreateData {
   [key: string]: unknown
 }
 
@@ -419,10 +376,7 @@ export interface OrgClubCreateIsFirstRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubCreateIsFirstResponseData {
-
-    data?: OrgClubCreateIsFirstData;
-
+export interface OrgClubCreateIsFirstResponseData extends OrgClubCreateIsFirstData {
   [key: string]: unknown
 }
 
@@ -444,10 +398,7 @@ export interface OrgClubCreditBalaNceRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubCreditBalaNceResponseData {
-
-    data?: OrgClubCreditBalaNceData;
-
+export interface OrgClubCreditBalaNceResponseData extends OrgClubCreditBalaNceData {
   [key: string]: unknown
 }
 
@@ -466,10 +417,7 @@ export interface OrgClubCreditLimitRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubCreditLimitResponseData {
-
-    data?: OrgClubCreditLimitData;
-
+export interface OrgClubCreditLimitResponseData extends OrgClubCreditLimitData {
   [key: string]: unknown
 }
 
@@ -492,10 +440,7 @@ export interface OrgClubCreditLogRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubCreditLogResponseData {
-
-    data?: OrgClubCreditLogData;
-
+export interface OrgClubCreditLogResponseData extends OrgClubCreditLogData {
   [key: string]: unknown
 }
 
@@ -543,10 +488,7 @@ export interface OrgClubDelayRoomAuditSwitchUpdateRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubDelayRoomAuditSwitchUpdateResponseData {
-
-    data?: OrgClubDelayRoomAuditSwitchUpdateData;
-
+export interface OrgClubDelayRoomAuditSwitchUpdateResponseData extends OrgClubDelayRoomAuditSwitchUpdateData {
   [key: string]: unknown
 }
 
@@ -559,10 +501,7 @@ export interface OrgClubDisbAndRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubDisbAndResponseData {
-
-    data?: OrgClubDisbAndData;
-
+export interface OrgClubDisbAndResponseData extends OrgClubDisbAndData {
   [key: string]: unknown
 }
 
@@ -578,16 +517,7 @@ export interface OrgClubGoldRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubGoldResponseData {
-
-  //     org_id: number, // 公会ID
-  //     gold: number, // 公会金豆数
-  //     gold_lock: number, // 公会被锁定的金豆数
-  //     forbidden: boolean, // 是否冻结 true已冻结，false未冻结
-  //     club_name: string,   //公会名字
-  //
-    data?: OrgClubGoldData;
-
+export interface OrgClubGoldResponseData extends OrgClubGoldData {
   [key: string]: unknown
 }
 
@@ -599,22 +529,80 @@ export interface ClubFundChangeLogRequest {
   [key: string]: unknown
 }
 
-export interface ClubFundChangeLogResponseData {
-    data?: ClubFundChangeLogData;
-
+export interface ClubFundChangeLogResponseData extends ClubFundChangeLogData {
   [key: string]: unknown
 }
 
 // /api/org/club/info (OrgClubSearchById)
 export interface OrgClubSearchByIdRequest {
-
-  //     club_random_id: null;
-  //
-  [key: string]: unknown
+  club_random_id: number;
 }
 
 export interface OrgClubSearchByIdResponseData {
-    data?: OrgClubSearchByIdData;
+    club_id?: number;
+    club_name?: string;
+    logo?: string;
+    random_id?: number;
+    upper_limit?: number;
+    club_members?: number;
+    area_id?: string;
+    create_time?: string;
+    desc?: string;
+    more_contact?: string;
+    level?: number;
+    tables?: number;
+    club_creator_random_id?: number;
+    club_creator_avatar?: string;
+    club_creator_nickname?: string;
+    tribe_name?: string;
+    search_switch?: number;
+    auto_audit_switch?: number;
+    show_contact_switch?: number;
+    show_notice_switch?: number;
+    user_level?: number;
+    tribe_id?: number;
+    tribe_random_id?: number;
+    tribe_logo?: string;
+    contact_info?: OrgClubSearchByIdContactInfo;
+    user_gold?: number;
+    user_ustd?: number;
+    friend_total?: number;
+    digital_wallet_switch?: number;
+    digital_wallet_erc?: string;
+    digital_wallet_trc?: string;
+    grant_switch?: number;
+    pretty_id?: number;
+    first_update_name?: number;
+    last_update_name_time?: string;
+    welcomes?: string;
+    welcomes_switch?: number;
+    max_user_service_ratio?: number;
+    max_user_mtt_ratio?: number;
+    member_detail_type?: number;
+    currency_exchange?: number;
+    currency?: string;
+    master_type?: number;
+    banner?: string;
+    fantasy_room_switch?: number;
+    uc_deposit_advance?: number;
+    banner_audit?: number;
+    club_subscription_id?: number;
+    club_subscription?: OrgClubSearchByIdClubVipInfo;
+    member_type?: number;
+    user_credit?: number;
+    club_gold_credit_limit?: number;
+    user_club_forbidden?: boolean;
+    room_permissions?: unknown;
+    new_labels?: unknown;
+    club_user_wallet_switch?: number;
+    prologue?: string;
+    prologue_switch?: number;
+    agent_uc_switch?: number;
+    support_im_rid?: string;
+    support_user_id?: number;
+    deposit_switch?: number;
+    security_deposit?: number;
+    freeze_status?: number;
 
   [key: string]: unknown
 }
@@ -627,10 +615,7 @@ export interface OrgClubInviTationRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubInviTationResponseData {
-
-    data?: OrgClubInviTationData;
-
+export interface OrgClubInviTationResponseData extends OrgClubInviTationData {
   [key: string]: unknown
 }
 
@@ -647,10 +632,7 @@ export interface OrgClubJackpotRechargeRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubJackpotRechargeResponseData {
-
-    data?: OrgClubJackpotRechargeData;
-
+export interface OrgClubJackpotRechargeResponseData extends OrgClubJackpotRechargeData {
   [key: string]: unknown
 }
 
@@ -677,10 +659,7 @@ export interface OrgClubJackpotTemplateCreateRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubJackpotTemplateCreateResponseData {
-
-    data?: OrgClubJackpotTemplateCreateData;
-
+export interface OrgClubJackpotTemplateCreateResponseData extends OrgClubJackpotTemplateCreateData {
   [key: string]: unknown
 }
 
@@ -733,10 +712,7 @@ export interface OrgClubJackpotTemplateDelRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubJackpotTemplateDelResponseData {
-
-    data?: OrgClubJackpotTemplateDelData;
-
+export interface OrgClubJackpotTemplateDelResponseData extends OrgClubJackpotTemplateDelData {
   [key: string]: unknown
 }
 
@@ -759,10 +735,7 @@ export interface OrgClubJackpotTemplateListRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubJackpotTemplateListResponseData {
-
-    data?: OrgClubJackpotTemplateListData;
-
+export interface OrgClubJackpotTemplateListResponseData extends OrgClubJackpotTemplateListData {
   [key: string]: unknown
 }
 
@@ -794,10 +767,7 @@ export interface OrgClubJackpotTemplateUpdateRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubJackpotTemplateUpdateResponseData {
-
-    data?: OrgClubJackpotTemplateUpdateData;
-
+export interface OrgClubJackpotTemplateUpdateResponseData extends OrgClubJackpotTemplateUpdateData {
   [key: string]: unknown
 }
 
@@ -814,10 +784,7 @@ export interface OrgClubJackpotWithdrawRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubJackpotWithdrawResponseData {
-
-    data?: OrgClubJackpotWithdrawData;
-
+export interface OrgClubJackpotWithdrawResponseData extends OrgClubJackpotWithdrawData {
   [key: string]: unknown
 }
 
@@ -830,10 +797,8 @@ export interface OrgClubGetJoinlListRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubGetJoinlListResponseData {
-    offset?: number;
-    data?: OrgClubGetJoinlListData;
-
+export interface OrgClubGetJoinlListResponseData extends OrgClubGetJoinlListData {
+offset?: number;
   [key: string]: unknown
 }
 
@@ -842,9 +807,7 @@ export interface OrgClubLevelBenefitRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubLevelBenefitResponseData {
-    data?: OrgClubLevelBenefitData;
-
+export interface OrgClubLevelBenefitResponseData extends OrgClubLevelBenefitData {
   [key: string]: unknown
 }
 
@@ -862,9 +825,7 @@ export interface OrgClubLevelInfoRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubLevelInfoResponseData {
-    data?: OrgClubLevelInfoData;
-
+export interface OrgClubLevelInfoResponseData extends OrgClubLevelInfoData {
   [key: string]: unknown
 }
 
@@ -873,9 +834,7 @@ export interface OrgClubUpLevelRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubUpLevelResponseData {
-    data?: OrgClubUpLevelData;
-
+export interface OrgClubUpLevelResponseData extends OrgClubUpLevelData {
   [key: string]: unknown
 }
 
@@ -887,10 +846,7 @@ export interface OrgClubListRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubListResponseData {
-
-    data?: OrgClubListData;
-
+export interface OrgClubListResponseData extends OrgClubListData {
   [key: string]: unknown
 }
 
@@ -920,10 +876,7 @@ export interface OrgClubMasterSlaveClubListRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubMasterSlaveClubListResponseData {
-
-    data?: OrgClubMasterSlaveClubListData;
-
+export interface OrgClubMasterSlaveClubListResponseData extends OrgClubMasterSlaveClubListData {
   [key: string]: unknown
 }
 
@@ -1007,9 +960,7 @@ export interface OrgMemberListRequest {
   [key: string]: unknown
 }
 
-export interface OrgMemberListResponseData {
-    data?: OrgMemberListData;
-
+export interface OrgMemberListResponseData extends OrgMemberListData {
   [key: string]: unknown
 }
 
@@ -1039,10 +990,7 @@ export interface OrgClubMemberRakeBackRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubMemberRakeBackResponseData {
-
-    data?: OrgClubMemberRakeBackData;
-
+export interface OrgClubMemberRakeBackResponseData extends OrgClubMemberRakeBackData {
   [key: string]: unknown
 }
 
@@ -1098,10 +1046,7 @@ export interface OrgClubModifyClubDescRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubModifyClubDescResponseData {
-
-    data?: OrgClubModifyClubDescData;
-
+export interface OrgClubModifyClubDescResponseData extends OrgClubModifyClubDescData {
   [key: string]: unknown
 }
 
@@ -1114,9 +1059,7 @@ export interface OrgchaNgeClubDataRequest {
   [key: string]: unknown
 }
 
-export interface OrgchaNgeClubDataResponseData {
-    data?: OrgchaNgeClubDataData;
-
+export interface OrgchaNgeClubDataResponseData extends OrgchaNgeClubDataData {
   [key: string]: unknown
 }
 
@@ -1125,9 +1068,7 @@ export interface ModifyDigitalWalletAddressRequest {
   [key: string]: unknown
 }
 
-export interface ModifyDigitalWalletAddressResponseData {
-    data?: ModifyDigitalWalletAddressData;
-
+export interface ModifyDigitalWalletAddressResponseData extends ModifyDigitalWalletAddressData {
   [key: string]: unknown
 }
 
@@ -1139,10 +1080,7 @@ export interface OrgClubMyCreateClubsRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubMyCreateClubsResponseData {
-
-    data?: OrgClubMyCreateClubsData;
-
+export interface OrgClubMyCreateClubsResponseData extends OrgClubMyCreateClubsData {
   [key: string]: unknown
 }
 
@@ -1169,9 +1107,7 @@ export interface OrgClubUserRoleChangeRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubUserRoleChangeResponseData {
-    data?: OrgClubUserRoleChangeData;
-
+export interface OrgClubUserRoleChangeResponseData extends OrgClubUserRoleChangeData {
   [key: string]: unknown
 }
 
@@ -1183,10 +1119,7 @@ export interface OrgClubSearchInfoRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubSearchInfoResponseData {
-
-    data?: OrgClubSearchInfoData;
-
+export interface OrgClubSearchInfoResponseData extends OrgClubSearchInfoData {
   [key: string]: unknown
 }
 
@@ -1225,10 +1158,7 @@ export interface OrgClubSetUserUcadvaNceRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubSetUserUcadvaNceResponseData {
-
-    data?: OrgClubSetUserUcadvaNceData;
-
+export interface OrgClubSetUserUcadvaNceResponseData extends OrgClubSetUserUcadvaNceData {
   [key: string]: unknown
 }
 
@@ -1245,10 +1175,7 @@ export interface OrgClubSubscrIptionBuyRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubSubscrIptionBuyResponseData {
-
-    data?: OrgClubSubscrIptionBuyData;
-
+export interface OrgClubSubscrIptionBuyResponseData extends OrgClubSubscrIptionBuyData {
   [key: string]: unknown
 }
 
@@ -1266,10 +1193,7 @@ export interface OrgClubSubscrIptionListRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubSubscrIptionListResponseData {
-
-    data?: OrgClubSubscrIptionListData;
-
+export interface OrgClubSubscrIptionListResponseData extends OrgClubSubscrIptionListData {
   [key: string]: unknown
 }
 
@@ -1335,30 +1259,14 @@ export interface OrgClubGetRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubGetResponseData {
-
-  //     // random_id: number,
-  //     // club_name: string,
-  //     // more_contact: string,
-  //     // club_id: number,
-  //     // level: number,
-  //     // upper_limit: number,
-  //     // search_switch: any
-  //     // auto_audit_switch: any
-  //
-    data?: unknown[];
-
-  [key: string]: unknown
-}
+export type OrgClubGetResponseData = OrgClubData[]
 
 // /api/org/club/user/add_agent (ClubAgentAdd)
 export interface ClubAgentAddRequest {
   [key: string]: unknown
 }
 
-export interface ClubAgentAddResponseData {
-    data?: ClubAgentAddData;
-
+export interface ClubAgentAddResponseData extends ClubAgentAddData {
   [key: string]: unknown
 }
 
@@ -1367,20 +1275,14 @@ export interface GuildAdminHasRequest {
   [key: string]: unknown
 }
 
-export interface GuildAdminHasResponseData {
-    data?: boolean;
-
-  [key: string]: unknown
-}
+export type GuildAdminHasResponseData = boolean
 
 // /api/org/club/user/del_agent (ClubAgentDel)
 export interface ClubAgentDelRequest {
   [key: string]: unknown
 }
 
-export interface ClubAgentDelResponseData {
-    data?: ClubAgentDelData;
-
+export interface ClubAgentDelResponseData extends ClubAgentDelData {
   [key: string]: unknown
 }
 
@@ -1389,20 +1291,16 @@ export interface OrgClubUserInfoRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubUserInfoResponseData {
-    data?: OrgClubUserInfoData;
-
+export interface OrgClubUserInfoResponseData extends OrgClubUserInfoData {
   [key: string]: unknown
 }
 
 // /api/org/club/user/join/apply (OrgClubJoin)
 export interface OrgClubJoinRequest {
-  [key: string]: unknown
+  club_id: number;
 }
 
-export interface OrgClubJoinResponseData {
-    data?: OrgClubJoinData;
-
+export interface OrgClubJoinResponseData extends OrgClubJoinData {
   [key: string]: unknown
 }
 
@@ -1415,9 +1313,7 @@ export interface OrgClubApproValJoinRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubApproValJoinResponseData {
-    data?: OrgClubApproValJoinData;
-
+export interface OrgClubApproValJoinResponseData extends OrgClubApproValJoinData {
   [key: string]: unknown
 }
 
@@ -1429,9 +1325,7 @@ export interface OrgClubCancleJoinClubRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubCancleJoinClubResponseData {
-    data?: OrgClubCancleJoinClubData;
-
+export interface OrgClubCancleJoinClubResponseData extends OrgClubCancleJoinClubData {
   [key: string]: unknown
 }
 
@@ -1440,9 +1334,7 @@ export interface OrgClubPlayerApplyListRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubPlayerApplyListResponseData {
-    data?: OrgClubPlayerApplyListData;
-
+export interface OrgClubPlayerApplyListResponseData extends OrgClubPlayerApplyListData {
   [key: string]: unknown
 }
 
@@ -1455,9 +1347,7 @@ export interface ClubJoinListRequest {
   [key: string]: unknown
 }
 
-export interface ClubJoinListResponseData {
-    data?: ClubJoinListData;
-
+export interface ClubJoinListResponseData extends ClubJoinListData {
   [key: string]: unknown
 }
 
@@ -1478,9 +1368,7 @@ export interface OrgClubQuitRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubQuitResponseData {
-    data?: OrgClubQuitData;
-
+export interface OrgClubQuitResponseData extends OrgClubQuitData {
   [key: string]: unknown
 }
 
@@ -1534,10 +1422,7 @@ export interface OrgClubUserWalletRelationListRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubUserWalletRelationListResponseData {
-
-    data?: OrgClubUserWalletRelationListData;
-
+export interface OrgClubUserWalletRelationListResponseData extends OrgClubUserWalletRelationListData {
   [key: string]: unknown
 }
 
@@ -1560,10 +1445,7 @@ export interface OrgJackpotTemplateInfoRequest {
   [key: string]: unknown
 }
 
-export interface OrgJackpotTemplateInfoResponseData {
-
-    data?: OrgJackpotTemplateInfoData;
-
+export interface OrgJackpotTemplateInfoResponseData extends OrgJackpotTemplateInfoData {
   [key: string]: unknown
 }
 
@@ -1591,10 +1473,7 @@ export interface OrgTribeApplyListRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeApplyListResponseData {
-
-    data?: OrgTribeApplyListData;
-
+export interface OrgTribeApplyListResponseData extends OrgTribeApplyListData {
   [key: string]: unknown
 }
 
@@ -1629,10 +1508,7 @@ export interface OrgTribeApplyUpgrAdeRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeApplyUpgrAdeResponseData {
-
-    data?: OrgTribeApplyUpgrAdeData;
-
+export interface OrgTribeApplyUpgrAdeResponseData extends OrgTribeApplyUpgrAdeData {
   [key: string]: unknown
 }
 
@@ -1650,10 +1526,7 @@ export interface OrgTribeAuditApplyRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeAuditApplyResponseData {
-
-    data?: OrgTribeAuditApplyData;
-
+export interface OrgTribeAuditApplyResponseData extends OrgTribeAuditApplyData {
   [key: string]: unknown
 }
 
@@ -1670,10 +1543,7 @@ export interface OrgTribeBlackUserListRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeBlackUserListResponseData {
-
-    data?: OrgTribeBlackUserListData;
-
+export interface OrgTribeBlackUserListResponseData extends OrgTribeBlackUserListData {
   [key: string]: unknown
 }
 
@@ -1703,10 +1573,7 @@ export interface OrgTribeCheckUpgrAdeRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeCheckUpgrAdeResponseData {
-
-    data?: OrgTribeCheckUpgrAdeData;
-
+export interface OrgTribeCheckUpgrAdeResponseData extends OrgTribeCheckUpgrAdeData {
   [key: string]: unknown
 }
 
@@ -1751,10 +1618,7 @@ export interface OrgTribeClubFundGoldChangeLogRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeClubFundGoldChangeLogResponseData {
-
-    data?: OrgTribeClubFundGoldChangeLogData;
-
+export interface OrgTribeClubFundGoldChangeLogResponseData extends OrgTribeClubFundGoldChangeLogData {
   [key: string]: unknown
 }
 
@@ -1799,9 +1663,7 @@ export interface OrgJoinTripRequest {
   [key: string]: unknown
 }
 
-export interface OrgJoinTripResponseData {
-    data?: OrgJoinTripData;
-
+export interface OrgJoinTripResponseData extends OrgJoinTripData {
   [key: string]: unknown
 }
 
@@ -1810,9 +1672,7 @@ export interface OrgClubApplyTribeListRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubApplyTribeListResponseData {
-    data?: OrgClubApplyTribeListData;
-
+export interface OrgClubApplyTribeListResponseData extends OrgClubApplyTribeListData {
   [key: string]: unknown
 }
 
@@ -1821,9 +1681,7 @@ export interface OrgClubCancleJoinTribeRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubCancleJoinTribeResponseData {
-    data?: OrgClubCancleJoinTribeData;
-
+export interface OrgClubCancleJoinTribeResponseData extends OrgClubCancleJoinTribeData {
   [key: string]: unknown
 }
 
@@ -1835,10 +1693,7 @@ export interface OrgTribeClubKickOutRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeClubKickOutResponseData {
-
-    data?: OrgTribeClubKickOutData;
-
+export interface OrgTribeClubKickOutResponseData extends OrgTribeClubKickOutData {
   [key: string]: unknown
 }
 
@@ -1859,10 +1714,7 @@ export interface OrgTribeClubListRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeClubListResponseData {
-
-    data?: OrgTribeClubListData;
-
+export interface OrgTribeClubListResponseData extends OrgTribeClubListData {
   [key: string]: unknown
 }
 
@@ -1912,10 +1764,7 @@ export interface OrgTribeClubListAllRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeClubListAllResponseData {
-
-    data?: OrgTribeClubListAllData;
-
+export interface OrgTribeClubListAllResponseData extends OrgTribeClubListAllData {
   [key: string]: unknown
 }
 
@@ -1942,10 +1791,7 @@ export interface OrgTribeClubLockRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeClubLockResponseData {
-
-    data?: OrgTribeClubLockData;
-
+export interface OrgTribeClubLockResponseData extends OrgTribeClubLockData {
   [key: string]: unknown
 }
 
@@ -1972,10 +1818,7 @@ export interface OrgTribeClubRemarkListRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeClubRemarkListResponseData {
-
-    data?: OrgTribeClubRemarkListData;
-
+export interface OrgTribeClubRemarkListResponseData extends OrgTribeClubRemarkListData {
   [key: string]: unknown
 }
 
@@ -2003,10 +1846,7 @@ export interface OrgTribeClubUnlockRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeClubUnlockResponseData {
-
-    data?: OrgTribeClubUnlockData;
-
+export interface OrgTribeClubUnlockResponseData extends OrgTribeClubUnlockData {
   [key: string]: unknown
 }
 
@@ -2024,10 +1864,7 @@ export interface OrgTribeCreateRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeCreateResponseData {
-
-    data?: OrgTribeCreateData;
-
+export interface OrgTribeCreateResponseData extends OrgTribeCreateData {
   [key: string]: unknown
 }
 
@@ -2040,10 +1877,7 @@ export interface OrgTribeCreateIsFirstRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeCreateIsFirstResponseData {
-
-    data?: OrgTribeCreateIsFirstData;
-
+export interface OrgTribeCreateIsFirstResponseData extends OrgTribeCreateIsFirstData {
   [key: string]: unknown
 }
 
@@ -2069,10 +1903,7 @@ export interface OrgTribeFundGoldChangeLogRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeFundGoldChangeLogResponseData {
-
-    data?: OrgTribeFundGoldChangeLogData;
-
+export interface OrgTribeFundGoldChangeLogResponseData extends OrgTribeFundGoldChangeLogData {
   [key: string]: unknown
 }
 
@@ -2138,9 +1969,7 @@ export interface OrgTribeSearchByIdRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeSearchByIdResponseData {
-    data?: OrgTribeSearchByIdData;
-
+export interface OrgTribeSearchByIdResponseData extends OrgTribeSearchByIdData {
   [key: string]: unknown
 }
 
@@ -2153,10 +1982,7 @@ export interface OrgTribeInfoByClubRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeInfoByClubResponseData {
-
-    data?: OrgTribeInfoByClubData;
-
+export interface OrgTribeInfoByClubResponseData extends OrgTribeInfoByClubData {
   [key: string]: unknown
 }
 
@@ -2187,10 +2013,7 @@ export interface OrgTribeListRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeListResponseData {
-
-    data?: OrgTribeListData;
-
+export interface OrgTribeListResponseData extends OrgTribeListData {
   [key: string]: unknown
 }
 
@@ -2219,11 +2042,7 @@ export interface APIOrgTribeRoomPermissionsRequest {
   [key: string]: unknown
 }
 
-export interface APIOrgTribeRoomPermissionsResponseData {
-    data?: unknown;
-
-  [key: string]: unknown
-}
+export type APIOrgTribeRoomPermissionsResponseData = unknown
 
 // /api/org/tribe/room_permissions (OrgTribeRoomPermissionS)
 export interface OrgTribeRoomPermissionSRequest {
@@ -2234,10 +2053,7 @@ export interface OrgTribeRoomPermissionSRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeRoomPermissionSResponseData {
-
-    data?: OrgTribeRoomPermissionSData;
-
+export interface OrgTribeRoomPermissionSResponseData extends OrgTribeRoomPermissionSData {
   [key: string]: unknown
 }
 
@@ -2280,10 +2096,7 @@ export interface OrgTribeWalletRequest {
   [key: string]: unknown
 }
 
-export interface OrgTribeWalletResponseData {
-
-    data?: OrgTribeWalletData;
-
+export interface OrgTribeWalletResponseData extends OrgTribeWalletData {
   [key: string]: unknown
 }
 
@@ -2311,10 +2124,7 @@ export interface OrgUserAdminFavorIteRequest {
   [key: string]: unknown
 }
 
-export interface OrgUserAdminFavorIteResponseData {
-
-    data?: OrgUserAdminFavorIteData;
-
+export interface OrgUserAdminFavorIteResponseData extends OrgUserAdminFavorIteData {
   [key: string]: unknown
 }
 
@@ -2331,10 +2141,7 @@ export interface OrgUserCheckOrgRequest {
   [key: string]: unknown
 }
 
-export interface OrgUserCheckOrgResponseData {
-
-    data?: OrgUserCheckOrgData;
-
+export interface OrgUserCheckOrgResponseData extends OrgUserCheckOrgData {
   [key: string]: unknown
 }
 
@@ -2351,10 +2158,7 @@ export interface OrgUserClubAdminListRequest {
   [key: string]: unknown
 }
 
-export interface OrgUserClubAdminListResponseData {
-
-    data?: OrgUserClubAdminListData;
-
+export interface OrgUserClubAdminListResponseData extends OrgUserClubAdminListData {
   [key: string]: unknown
 }
 
@@ -2406,9 +2210,7 @@ export interface APIOrgUserNewLabelReadNumRequest {
   [key: string]: unknown
 }
 
-export interface APIOrgUserNewLabelReadNumResponseData {
-    data?: APIOrgUserNewLabelReadNumData;
-
+export interface APIOrgUserNewLabelReadNumResponseData extends APIOrgUserNewLabelReadNumData {
   [key: string]: unknown
 }
 
@@ -2420,10 +2222,7 @@ export interface OrgUserNewLabelReadNumRequest {
   [key: string]: unknown
 }
 
-export interface OrgUserNewLabelReadNumResponseData {
-
-    data?: OrgUserNewLabelReadNumData;
-
+export interface OrgUserNewLabelReadNumResponseData extends OrgUserNewLabelReadNumData {
   [key: string]: unknown
 }
 
@@ -2451,10 +2250,7 @@ export interface OrgUserSelfProfitBillUnnotIfyRequest {
   [key: string]: unknown
 }
 
-export interface OrgUserSelfProfitBillUnnotIfyResponseData {
-
-    data?: OrgUserSelfProfitBillUnnotIfyData;
-
+export interface OrgUserSelfProfitBillUnnotIfyResponseData extends OrgUserSelfProfitBillUnnotIfyData {
   [key: string]: unknown
 }
 
@@ -2478,10 +2274,7 @@ export interface OrgUserSelfProfitUnpayRecordsRequest {
   [key: string]: unknown
 }
 
-export interface OrgUserSelfProfitUnpayRecordsResponseData {
-
-    data?: OrgUserSelfProfitUnpayRecordsData;
-
+export interface OrgUserSelfProfitUnpayRecordsResponseData extends OrgUserSelfProfitUnpayRecordsData {
   [key: string]: unknown
 }
 
@@ -2510,10 +2303,7 @@ export interface OrgUserTribeAdminListRequest {
   [key: string]: unknown
 }
 
-export interface OrgUserTribeAdminListResponseData {
-
-    data?: OrgUserTribeAdminListData;
-
+export interface OrgUserTribeAdminListResponseData extends OrgUserTribeAdminListData {
   [key: string]: unknown
 }
 
@@ -2690,7 +2480,7 @@ export interface ClubFundChangeLogRecord {
   [key: string]: unknown
 }
 
-export interface OrgClubSearchByIdData {
+export interface OrgClubData {
     club_id?: number;
     club_name?: string;
     logo?: string;

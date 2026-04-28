@@ -10,10 +10,7 @@ export interface ChromedpQrCodeVideoFileRequest {
   [key: string]: unknown
 }
 
-export interface ChromedpQrCodeVideoFileResponseData {
-
-    data?: ChromedpQrCodeVideoFileData;
-
+export interface ChromedpQrCodeVideoFileResponseData extends ChromedpQrCodeVideoFileData {
   [key: string]: unknown
 }
 

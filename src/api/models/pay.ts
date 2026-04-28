@@ -11,10 +11,7 @@ export interface PayAppleOrderRechargeRequest {
   [key: string]: unknown
 }
 
-export interface PayAppleOrderRechargeResponseData {
-
-    data?: PayAppleOrderRechargeData;
-
+export interface PayAppleOrderRechargeResponseData extends PayAppleOrderRechargeData {
   [key: string]: unknown
 }
 

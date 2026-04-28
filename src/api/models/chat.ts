@@ -125,10 +125,7 @@ export interface ChatRoomMessageSyncRequest {
   [key: string]: unknown
 }
 
-export interface ChatRoomMessageSyncResponseData {
-
-    data?: ChatRoomMessageSyncData;
-
+export interface ChatRoomMessageSyncResponseData extends ChatRoomMessageSyncData {
   [key: string]: unknown
 }
 
@@ -157,10 +154,7 @@ export interface ChatSupportChannelListRequest {
   [key: string]: unknown
 }
 
-export interface ChatSupportChannelListResponseData {
-
-    data?: ChatSupportChannelListData;
-
+export interface ChatSupportChannelListResponseData extends ChatSupportChannelListData {
   [key: string]: unknown
 }
 
@@ -206,10 +200,7 @@ export interface ChatSupportMessageListRequest {
   [key: string]: unknown
 }
 
-export interface ChatSupportMessageListResponseData {
-
-    data?: ChatSupportMessageListData;
-
+export interface ChatSupportMessageListResponseData extends ChatSupportMessageListData {
   [key: string]: unknown
 }
 
@@ -305,10 +296,7 @@ export interface ChatSupportMessageSendRequest {
   [key: string]: unknown
 }
 
-export interface ChatSupportMessageSendResponseData {
-
-    data?: ChatSupportMessageSendData;
-
+export interface ChatSupportMessageSendResponseData extends ChatSupportMessageSendData {
   [key: string]: unknown
 }
 

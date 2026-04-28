@@ -28,10 +28,7 @@ export interface CmsExtActivityClubAdminListRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtActivityClubAdminListResponseData {
-
-    data?: CmsExtActivityClubAdminListData;
-
+export interface CmsExtActivityClubAdminListResponseData extends CmsExtActivityClubAdminListData {
   [key: string]: unknown
 }
 
@@ -69,10 +66,7 @@ export interface CmsExtActivityClubMyListRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtActivityClubMyListResponseData {
-
-    data?: CmsExtActivityClubMyListData;
-
+export interface CmsExtActivityClubMyListResponseData extends CmsExtActivityClubMyListData {
   [key: string]: unknown
 }
 
@@ -117,9 +111,7 @@ export interface OrgClubNoticeRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubNoticeResponseData {
-    data?: OrgClubNoticeData;
-
+export interface OrgClubNoticeResponseData extends OrgClubNoticeData {
   [key: string]: unknown
 }
 
@@ -128,9 +120,7 @@ export interface OrgClubNoticeGetRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubNoticeGetResponseData {
-    data?: OrgClubNoticeGetData;
-
+export interface OrgClubNoticeGetResponseData extends OrgClubNoticeGetData {
   [key: string]: unknown
 }
 
@@ -139,9 +129,7 @@ export interface OrgClubNoticeUpdateRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubNoticeUpdateResponseData {
-    data?: OrgClubNoticeUpdateData;
-
+export interface OrgClubNoticeUpdateResponseData extends OrgClubNoticeUpdateData {
   [key: string]: unknown
 }
 
@@ -154,10 +142,7 @@ export interface CmsExtClubShare0ListRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtClubShare0ListResponseData {
-
-    data?: CmsExtClubShare0ListData;
-
+export interface CmsExtClubShare0ListResponseData extends CmsExtClubShare0ListData {
   [key: string]: unknown
 }
 
@@ -225,9 +210,7 @@ export interface OrgClubShareAuditRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubShareAuditResponseData {
-    data?: OrgClubShareAuditData;
-
+export interface OrgClubShareAuditResponseData extends OrgClubShareAuditData {
   [key: string]: unknown
 }
 
@@ -245,9 +228,7 @@ export interface OrgClubNoticeIgnoreRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubNoticeIgnoreResponseData {
-    data?: OrgClubNoticeIgnoreData;
-
+export interface OrgClubNoticeIgnoreResponseData extends OrgClubNoticeIgnoreData {
   [key: string]: unknown
 }
 
@@ -277,10 +258,7 @@ export interface CmsExtHotUpdateTemplateListRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtHotUpdateTemplateListResponseData {
-
-    data?: CmsExtHotUpdateTemplateListData;
-
+export interface CmsExtHotUpdateTemplateListResponseData extends CmsExtHotUpdateTemplateListData {
   [key: string]: unknown
 }
 
@@ -302,10 +280,7 @@ export interface CmsExtImServiceLinkRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtImServiceLinkResponseData {
-
-    data?: CmsExtImServiceLinkData;
-
+export interface CmsExtImServiceLinkResponseData extends CmsExtImServiceLinkData {
   [key: string]: unknown
 }
 
@@ -324,12 +299,7 @@ export interface CmsExtImServiceListRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtImServiceListResponseData {
-
-    data?: CmsExtImServiceListData[];
-
-  [key: string]: unknown
-}
+export type CmsExtImServiceListResponseData = CmsExtImServiceListData[]
 
 export interface CmsExtImServiceListData {
 
@@ -349,10 +319,7 @@ export interface CmsExtMiniGameClubConfigCreateRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtMiniGameClubConfigCreateResponseData {
-
-    data?: CmsExtMiniGameClubConfigCreateData;
-
+export interface CmsExtMiniGameClubConfigCreateResponseData extends CmsExtMiniGameClubConfigCreateData {
   [key: string]: unknown
 }
 
@@ -369,10 +336,7 @@ export interface CmsExtMiniGameConfigCreateRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtMiniGameConfigCreateResponseData {
-
-    data?: CmsExtMiniGameConfigCreateData;
-
+export interface CmsExtMiniGameConfigCreateResponseData extends CmsExtMiniGameConfigCreateData {
   [key: string]: unknown
 }
 
@@ -393,10 +357,7 @@ export interface CmsExtMiniGameTribeConfigCreateRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtMiniGameTribeConfigCreateResponseData {
-
-    data?: CmsExtMiniGameTribeConfigCreateData;
-
+export interface CmsExtMiniGameTribeConfigCreateResponseData extends CmsExtMiniGameTribeConfigCreateData {
   [key: string]: unknown
 }
 
@@ -478,10 +439,7 @@ export interface CmsExtMttTemplateListRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtMttTemplateListResponseData {
-
-    data?: CmsExtMttTemplateListData;
-
+export interface CmsExtMttTemplateListResponseData extends CmsExtMttTemplateListData {
   [key: string]: unknown
 }
 
@@ -529,20 +487,14 @@ export interface OrgRoomBatchCreateRequest {
   [key: string]: unknown
 }
 
-export interface OrgRoomBatchCreateResponseData {
-    data?: number;
-
-  [key: string]: unknown
-}
+export type OrgRoomBatchCreateResponseData = number
 
 // /api/cmsext/room/club/config/create (OrgRoomClubCreate)
 export interface OrgRoomClubCreateRequest {
   [key: string]: unknown
 }
 
-export interface OrgRoomClubCreateResponseData {
-    data?: OrgRoomClubCreateData;
-
+export interface OrgRoomClubCreateResponseData extends OrgRoomClubCreateData {
   [key: string]: unknown
 }
 
@@ -551,9 +503,7 @@ export interface OrgRoomConfigCreateRequest {
   [key: string]: unknown
 }
 
-export interface OrgRoomConfigCreateResponseData {
-    data?: OrgRoomConfigCreateData;
-
+export interface OrgRoomConfigCreateResponseData extends OrgRoomConfigCreateData {
   [key: string]: unknown
 }
 
@@ -562,9 +512,7 @@ export interface OrgRoomCreateRequest {
   [key: string]: unknown
 }
 
-export interface OrgRoomCreateResponseData {
-    data?: OrgRoomCreateData;
-
+export interface OrgRoomCreateResponseData extends OrgRoomCreateData {
   [key: string]: unknown
 }
 
@@ -582,12 +530,7 @@ export interface CmsExtRoomSmallBlindAnteRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtRoomSmallBlindAnteResponseData {
-
-    data?: CmsExtRoomSmallBlindAnteData[];
-
-  [key: string]: unknown
-}
+export type CmsExtRoomSmallBlindAnteResponseData = CmsExtRoomSmallBlindAnteData[]
 
 export interface CmsExtRoomSmallBlindAnteData {
 
@@ -602,10 +545,7 @@ export interface CmsExtRoomTemplate0Request {
   [key: string]: unknown
 }
 
-export interface CmsExtRoomTemplate0ResponseData {
-
-    data?: CmsExtRoomTemplate0Data;
-
+export interface CmsExtRoomTemplate0ResponseData extends CmsExtRoomTemplate0Data {
   [key: string]: unknown
 }
 
@@ -630,9 +570,7 @@ export interface OrgTemplateDeleteRequest {
   [key: string]: unknown
 }
 
-export interface OrgTemplateDeleteResponseData {
-    data?: OrgTemplateDeleteData;
-
+export interface OrgTemplateDeleteResponseData extends OrgTemplateDeleteData {
   [key: string]: unknown
 }
 
@@ -641,9 +579,7 @@ export interface OrggetTemplateRequest {
   [key: string]: unknown
 }
 
-export interface OrggetTemplateResponseData {
-    data?: OrggetTemplateData;
-
+export interface OrggetTemplateResponseData extends OrggetTemplateData {
   [key: string]: unknown
 }
 
@@ -656,10 +592,7 @@ export interface CmsExtRoomTemplateStatusRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtRoomTemplateStatusResponseData {
-
-    data?: CmsExtRoomTemplateStatusData;
-
+export interface CmsExtRoomTemplateStatusResponseData extends CmsExtRoomTemplateStatusData {
   [key: string]: unknown
 }
 
@@ -672,9 +605,7 @@ export interface OrgUpdateTemplateRequest {
   [key: string]: unknown
 }
 
-export interface OrgUpdateTemplateResponseData {
-    data?: OrgUpdateTemplateData;
-
+export interface OrgUpdateTemplateResponseData extends OrgUpdateTemplateData {
   [key: string]: unknown
 }
 
@@ -687,10 +618,7 @@ export interface CmsExtRoomTribeConfigCreateRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtRoomTribeConfigCreateResponseData {
-
-    data?: CmsExtRoomTribeConfigCreateData;
-
+export interface CmsExtRoomTribeConfigCreateResponseData extends CmsExtRoomTribeConfigCreateData {
   [key: string]: unknown
 }
 
@@ -707,12 +635,7 @@ export interface CmsExtRoomUserBatchCreateRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtRoomUserBatchCreateResponseData {
-
-    data?: number;
-
-  [key: string]: unknown
-}
+export type CmsExtRoomUserBatchCreateResponseData = number
 
 export interface CmsExtRoomUserBatchCreateInfo {
 
@@ -735,10 +658,7 @@ export interface CmsExtRoomUserTemplateListRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtRoomUserTemplateListResponseData {
-
-    data?: CmsExtRoomUserTemplateListData;
-
+export interface CmsExtRoomUserTemplateListResponseData extends CmsExtRoomUserTemplateListData {
   [key: string]: unknown
 }
 
@@ -791,10 +711,7 @@ export interface CmsExtSngConfigCreateRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtSngConfigCreateResponseData {
-
-    data?: CmsExtSngConfigCreateData;
-
+export interface CmsExtSngConfigCreateResponseData extends CmsExtSngConfigCreateData {
   [key: string]: unknown
 }
 
@@ -835,10 +752,7 @@ export interface CmsExtUserComplaIntReportRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtUserComplaIntReportResponseData {
-
-    data?: CmsExtUserComplaIntReportData;
-
+export interface CmsExtUserComplaIntReportResponseData extends CmsExtUserComplaIntReportData {
   [key: string]: unknown
 }
 
@@ -861,10 +775,7 @@ export interface CmsExtWheelTemplateListRequest {
   [key: string]: unknown
 }
 
-export interface CmsExtWheelTemplateListResponseData {
-
-    data?: CmsExtWheelTemplateListData;
-
+export interface CmsExtWheelTemplateListResponseData extends CmsExtWheelTemplateListData {
   [key: string]: unknown
 }
 

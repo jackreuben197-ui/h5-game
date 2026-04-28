@@ -15,10 +15,7 @@ export interface StatsClientClickLogRequest {
   [key: string]: unknown
 }
 
-export interface StatsClientClickLogResponseData {
-
-        data?: StatsClientClickLogData;
-
+export interface StatsClientClickLogResponseData extends StatsClientClickLogData {
   [key: string]: unknown
 }
 
@@ -35,9 +32,7 @@ export interface ClubDataStatsDataRequest {
   [key: string]: unknown
 }
 
-export interface ClubDataStatsDataResponseData {
-    data?: ClubDataStatsDataData;
-
+export interface ClubDataStatsDataResponseData extends ClubDataStatsDataData {
   [key: string]: unknown
 }
 
@@ -46,9 +41,7 @@ export interface ClubDataStatsDataDetailRequest {
   [key: string]: unknown
 }
 
-export interface ClubDataStatsDataDetailResponseData {
-    data?: ClubDataStatsDataDetailData;
-
+export interface ClubDataStatsDataDetailResponseData extends ClubDataStatsDataDetailData {
   [key: string]: unknown
 }
 
@@ -57,9 +50,7 @@ export interface ClubDataStatsDataDetailInfoRequest {
   [key: string]: unknown
 }
 
-export interface ClubDataStatsDataDetailInfoResponseData {
-    data?: ClubDataStatsDataDetailInfoData;
-
+export interface ClubDataStatsDataDetailInfoResponseData extends ClubDataStatsDataDetailInfoData {
   [key: string]: unknown
 }
 
@@ -77,10 +68,7 @@ export interface StatsClubDataStatsDataDetailDownLoadRequest {
   [key: string]: unknown
 }
 
-export interface StatsClubDataStatsDataDetailDownLoadResponseData {
-
-        data?: StatsClubDataStatsDataDetailDownLoadData;
-
+export interface StatsClubDataStatsDataDetailDownLoadResponseData extends StatsClubDataStatsDataDetailDownLoadData {
   [key: string]: unknown
 }
 
@@ -97,9 +85,7 @@ export interface ClubDataStatsDataInfoRequest {
   [key: string]: unknown
 }
 
-export interface ClubDataStatsDataInfoResponseData {
-    data?: ClubDataStatsDataInfoData;
-
+export interface ClubDataStatsDataInfoResponseData extends ClubDataStatsDataInfoData {
   [key: string]: unknown
 }
 
@@ -117,10 +103,7 @@ export interface StatsClubDataStatsUserDetailRequest {
   [key: string]: unknown
 }
 
-export interface StatsClubDataStatsUserDetailResponseData {
-
-        data?: StatsClubDataStatsUserDetailData;
-
+export interface StatsClubDataStatsUserDetailResponseData extends StatsClubDataStatsUserDetailData {
   [key: string]: unknown
 }
 
@@ -156,9 +139,7 @@ export interface GuildDataVipInfoRequest {
   [key: string]: unknown
 }
 
-export interface GuildDataVipInfoResponseData {
-    data?: GuildDataVipInfoData;
-
+export interface GuildDataVipInfoResponseData extends GuildDataVipInfoData {
   [key: string]: unknown
 }
 
@@ -170,10 +151,7 @@ export interface StatsClubDataStatsVipUserRequest {
   [key: string]: unknown
 }
 
-export interface StatsClubDataStatsVipUserResponseData {
-
-        data?: StatsClubDataStatsVipUserData;
-
+export interface StatsClubDataStatsVipUserResponseData extends StatsClubDataStatsVipUserData {
   [key: string]: unknown
 }
 
@@ -201,10 +179,7 @@ export interface StatsClubDataStatsWeeklyReportRequest {
   [key: string]: unknown
 }
 
-export interface StatsClubDataStatsWeeklyReportResponseData {
-
-        data?: StatsClubDataStatsWeeklyReportData;
-
+export interface StatsClubDataStatsWeeklyReportResponseData extends StatsClubDataStatsWeeklyReportData {
   [key: string]: unknown
 }
 
@@ -301,10 +276,7 @@ export interface StatsCowboyHistoryRoomDetailRequest {
   [key: string]: unknown
 }
 
-export interface StatsCowboyHistoryRoomDetailResponseData {
-
-        data?: StatsCowboyHistoryRoomDetailDataObj;
-
+export interface StatsCowboyHistoryRoomDetailResponseData extends StatsCowboyHistoryRoomDetailDataObj {
   [key: string]: unknown
 }
 
@@ -341,9 +313,7 @@ export interface FriendRoomStatsRequest {
   [key: string]: unknown
 }
 
-export interface FriendRoomStatsResponseData {
-    data?: FriendRoomStatsData;
-
+export interface FriendRoomStatsResponseData extends FriendRoomStatsData {
   [key: string]: unknown
 }
 
@@ -352,9 +322,7 @@ export interface FriendRoomStatsDataRequest {
   [key: string]: unknown
 }
 
-export interface FriendRoomStatsDataResponseData {
-    data?: FriendRoomStatsDataData;
-
+export interface FriendRoomStatsDataResponseData extends FriendRoomStatsDataData {
   [key: string]: unknown
 }
 
@@ -363,9 +331,7 @@ export interface FriendRoomStatsDataDetailRequest {
   [key: string]: unknown
 }
 
-export interface FriendRoomStatsDataDetailResponseData {
-    data?: FriendRoomStatsDataDetailData;
-
+export interface FriendRoomStatsDataDetailResponseData extends FriendRoomStatsDataDetailData {
   [key: string]: unknown
 }
 
@@ -374,9 +340,7 @@ export interface FriendRoomStatsDataDetailInfoRequest {
   [key: string]: unknown
 }
 
-export interface FriendRoomStatsDataDetailInfoResponseData {
-    data?: FriendRoomStatsDataDetailInfoData;
-
+export interface FriendRoomStatsDataDetailInfoResponseData extends FriendRoomStatsDataDetailInfoData {
   [key: string]: unknown
 }
 
@@ -385,9 +349,7 @@ export interface FriendRoomStatsDataInfoRequest {
   [key: string]: unknown
 }
 
-export interface FriendRoomStatsDataInfoResponseData {
-    data?: FriendRoomStatsDataInfoData;
-
+export interface FriendRoomStatsDataInfoResponseData extends FriendRoomStatsDataInfoData {
   [key: string]: unknown
 }
 
@@ -476,10 +438,7 @@ export interface StatsFriendStatsDataRequest {
   [key: string]: unknown
 }
 
-export interface StatsFriendStatsDataResponseData {
-
-        data?: StatsFriendStatsDataData;
-
+export interface StatsFriendStatsDataResponseData extends StatsFriendStatsDataData {
   [key: string]: unknown
 }
 
@@ -527,10 +486,7 @@ export interface StatsJackpotAwardLogsRequest {
   [key: string]: unknown
 }
 
-export interface StatsJackpotAwardLogsResponseData {
-
-        data?: StatsJackpotAwardLogsData;
-
+export interface StatsJackpotAwardLogsResponseData extends StatsJackpotAwardLogsData {
   [key: string]: unknown
 }
 
@@ -580,10 +536,7 @@ export interface StatsJackpotGoldChangeLogsRequest {
   [key: string]: unknown
 }
 
-export interface StatsJackpotGoldChangeLogsResponseData {
-
-        data?: StatsJackpotGoldChangeLogsData;
-
+export interface StatsJackpotGoldChangeLogsResponseData extends StatsJackpotGoldChangeLogsData {
   [key: string]: unknown
 }
 
@@ -658,10 +611,7 @@ export interface StatsMttRoomDetailData {
   [key: string]: unknown
 }
 
-export interface StatsMttRoomDetailResponseData {
-
-        data?: StatsMttRoomDetailData;
-
+export interface StatsMttRoomDetailResponseData extends StatsMttRoomDetailData {
   [key: string]: unknown
 }
 
@@ -670,9 +620,7 @@ export interface StatsMttRoomDetailApiRequest {
   [key: string]: unknown
 }
 
-export interface StatsMttRoomDetailApiResponseData {
-    data?: StatsMttRoomDetailApiData;
-
+export interface StatsMttRoomDetailApiResponseData extends StatsMttRoomDetailApiData {
   [key: string]: unknown
 }
 
@@ -689,10 +637,7 @@ export interface StatsMttHistoryListRequest {
   [key: string]: unknown
 }
 
-export interface StatsMttHistoryListResponseData {
-
-        data?: StatsMttHistoryListData;
-
+export interface StatsMttHistoryListResponseData extends StatsMttHistoryListData {
   [key: string]: unknown
 }
 
@@ -784,10 +729,7 @@ export interface StatsProfitDataStatsDataByDateRequest {
   [key: string]: unknown
 }
 
-export interface StatsProfitDataStatsDataByDateResponseData {
-
-        data?: StatsProfitDataStatsDataByDateData;
-
+export interface StatsProfitDataStatsDataByDateResponseData extends StatsProfitDataStatsDataByDateData {
   [key: string]: unknown
 }
 
@@ -842,10 +784,7 @@ export interface StatsProfitDataStatsDataInfoRequest {
   [key: string]: unknown
 }
 
-export interface StatsProfitDataStatsDataInfoResponseData {
-
-        data?: StatsProfitDataStatsDataInfoData;
-
+export interface StatsProfitDataStatsDataInfoResponseData extends StatsProfitDataStatsDataInfoData {
   [key: string]: unknown
 }
 
@@ -885,10 +824,7 @@ export interface StatsProfitDataStatsUserByDateRequest {
   [key: string]: unknown
 }
 
-export interface StatsProfitDataStatsUserByDateResponseData {
-
-        data?: StatsProfitDataStatsUserByDateData;
-
+export interface StatsProfitDataStatsUserByDateResponseData extends StatsProfitDataStatsUserByDateData {
   [key: string]: unknown
 }
 
@@ -999,10 +935,7 @@ export interface StatsRoomDetailData {
   [key: string]: unknown
 }
 
-export interface StatsRoomDetailResponseData {
-
-        data?: StatsRoomDetailData;
-
+export interface StatsRoomDetailResponseData extends StatsRoomDetailData {
   [key: string]: unknown
 }
 
@@ -1050,10 +983,7 @@ export interface StatsRoomInsuranceDataRequest {
   [key: string]: unknown
 }
 
-export interface StatsRoomInsuranceDataResponseData {
-
-        data?: StatsRoomInsuranceDataData;
-
+export interface StatsRoomInsuranceDataResponseData extends StatsRoomInsuranceDataData {
   [key: string]: unknown
 }
 
@@ -1095,10 +1025,7 @@ export interface StatsTribeStatsCurrentRequest {
   [key: string]: unknown
 }
 
-export interface StatsTribeStatsCurrentResponseData {
-
-        data?: StatsTribeStatsCurrentData;
-
+export interface StatsTribeStatsCurrentResponseData extends StatsTribeStatsCurrentData {
   [key: string]: unknown
 }
 
@@ -1145,10 +1072,7 @@ export interface StatsTribeStatsDataByDateRequest {
   [key: string]: unknown
 }
 
-export interface StatsTribeStatsDataByDateResponseData {
-
-        data?: StatsTribeStatsDataByDateData;
-
+export interface StatsTribeStatsDataByDateResponseData extends StatsTribeStatsDataByDateData {
   [key: string]: unknown
 }
 
@@ -1208,10 +1132,7 @@ export interface StatsTribeStatsDataDetailRequest {
   [key: string]: unknown
 }
 
-export interface StatsTribeStatsDataDetailResponseData {
-
-        data?: StatsTribeStatsDataDetailData;
-
+export interface StatsTribeStatsDataDetailResponseData extends StatsTribeStatsDataDetailData {
   [key: string]: unknown
 }
 
@@ -1233,10 +1154,7 @@ export interface StatsTribeStatsDataDetailInfoRequest {
   [key: string]: unknown
 }
 
-export interface StatsTribeStatsDataDetailInfoResponseData {
-
-        data?: StatsTribeStatsDataDetailInfoData;
-
+export interface StatsTribeStatsDataDetailInfoResponseData extends StatsTribeStatsDataDetailInfoData {
   [key: string]: unknown
 }
 
@@ -1261,10 +1179,7 @@ export interface StatsTribeStatsDataInfoRequest {
   [key: string]: unknown
 }
 
-export interface StatsTribeStatsDataInfoResponseData {
-
-        data?: StatsTribeStatsDataInfoData;
-
+export interface StatsTribeStatsDataInfoResponseData extends StatsTribeStatsDataInfoData {
   [key: string]: unknown
 }
 
@@ -1299,10 +1214,7 @@ export interface StatsTribeStatsDownLoadRequest {
   [key: string]: unknown
 }
 
-export interface StatsTribeStatsDownLoadResponseData {
-
-        data?: StatsTribeStatsDownLoadData;
-
+export interface StatsTribeStatsDownLoadResponseData extends StatsTribeStatsDownLoadData {
   [key: string]: unknown
 }
 
@@ -1383,10 +1295,7 @@ export interface StatsUserStatsData {
   [key: string]: unknown
 }
 
-export interface StatsUserStatsResponseData {
-
-        data?: StatsUserStatsData;
-
+export interface StatsUserStatsResponseData extends StatsUserStatsData {
   [key: string]: unknown
 }
 
@@ -1413,10 +1322,7 @@ export interface StatsUserStatsAllinRequest {
   [key: string]: unknown
 }
 
-export interface StatsUserStatsAllinResponseData {
-
-        data?: StatsUserStatsAllinData;
-
+export interface StatsUserStatsAllinResponseData extends StatsUserStatsAllinData {
   [key: string]: unknown
 }
 
@@ -1462,10 +1368,7 @@ export interface StatsUserStatsCardTypeRequest {
   [key: string]: unknown
 }
 
-export interface StatsUserStatsCardTypeResponseData {
-
-        data?: StatsUserStatsCardTypeData;
-
+export interface StatsUserStatsCardTypeResponseData extends StatsUserStatsCardTypeData {
   [key: string]: unknown
 }
 
@@ -1505,10 +1408,7 @@ export interface StatsUserStatsRivalRoomStatsRequest {
   [key: string]: unknown
 }
 
-export interface StatsUserStatsRivalRoomStatsResponseData {
-
-        data?: StatsUserStatsRivalRoomStatsData;
-
+export interface StatsUserStatsRivalRoomStatsResponseData extends StatsUserStatsRivalRoomStatsData {
   [key: string]: unknown
 }
 
@@ -1552,10 +1452,7 @@ export interface StatsUserGameRecordListRequest {
   [key: string]: unknown
 }
 
-export interface StatsUserGameRecordListResponseData {
-
-        data?: StatsUserGameRecordListData;
-
+export interface StatsUserGameRecordListResponseData extends StatsUserGameRecordListData {
   [key: string]: unknown
 }
 

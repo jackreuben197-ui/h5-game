@@ -38,7 +38,7 @@ import type {
   OrgClubUserInfoRequest,
   OrgClubUserInfoData,
   OrgClubSearchByIdRequest,
-  OrgClubSearchByIdData,
+  OrgClubData,
   OrgClubGoldRequest,
   OrgClubGoldData,
   OrgClubMasterSlaveClubListRequest,
@@ -83,12 +83,7 @@ export interface MiscAgoraTokenRequest {
   [key: string]: unknown
 }
 
-export interface MiscAgoraTokenResponseData {
-
-    data?: string;
-
-  [key: string]: unknown
-}
+export type MiscAgoraTokenResponseData = string
 
 // /api/misc/article/{id} (MiscArtiCleId)
 export interface MiscArtiCleIdRequest {
@@ -99,10 +94,7 @@ export interface MiscArtiCleIdRequest {
   [key: string]: unknown
 }
 
-export interface MiscArtiCleIdResponseData {
-
-    data?: MiscArtiCleIdData;
-
+export interface MiscArtiCleIdResponseData extends MiscArtiCleIdData {
   [key: string]: unknown
 }
 
@@ -137,10 +129,7 @@ export interface MiscArtiCleInfoRequest {
   [key: string]: unknown
 }
 
-export interface MiscArtiCleInfoResponseData {
-
-    data?: MiscArtiCleInfoData;
-
+export interface MiscArtiCleInfoResponseData extends MiscArtiCleInfoData {
   [key: string]: unknown
 }
 
@@ -176,10 +165,7 @@ export interface MiscArtiCleListRequest {
   [key: string]: unknown
 }
 
-export interface MiscArtiCleListResponseData {
-
-    data?: MiscArtiCleListData;
-
+export interface MiscArtiCleListResponseData extends MiscArtiCleListData {
   [key: string]: unknown
 }
 
@@ -246,10 +232,7 @@ export interface MiscArtiClePushListRequest {
   [key: string]: unknown
 }
 
-export interface MiscArtiClePushListResponseData {
-
-    data?: MiscArtiClePushListData;
-
+export interface MiscArtiClePushListResponseData extends MiscArtiClePushListData {
   [key: string]: unknown
 }
 
@@ -293,10 +276,7 @@ export interface MiscBannerLobbyRequest {
   [key: string]: unknown
 }
 
-export interface MiscBannerLobbyResponseData {
-
-    data?: MiscBannerLobbyData;
-
+export interface MiscBannerLobbyResponseData extends MiscBannerLobbyData {
   [key: string]: unknown
 }
 
@@ -328,14 +308,11 @@ export interface MiscBannerListRequest {
   [key: string]: unknown
 }
 
-export interface MiscBannerListResponseData {
-
-    limit: number; //条目
+export interface MiscBannerListResponseData extends MiscBannerListData {
+limit: number; //条目
     offset: number; //开始下标。例子（offset=0，limit=10，0-9。）
     total: number; //总条数
     list: MiscBannerListBannerInfo[]; //Banner列表
-    data?: MiscBannerListData;
-
   [key: string]: unknown
 }
 
@@ -404,10 +381,7 @@ export interface MiscCombineRequest {
   [key: string]: unknown
 }
 
-export interface MiscCombineResponseData {
-
-    data?: MiscCombineData;
-
+export interface MiscCombineResponseData extends MiscCombineData {
   [key: string]: unknown
 }
 
@@ -430,7 +404,7 @@ export interface MiscCombineData {
     club_notice_resp?: OrgClubNoticeRecord;
     club_user_wallet_resp?: ClubUserWalletData;
     club_user_info_resp?: OrgClubUserInfoData;
-    club_info_resp?: OrgClubSearchByIdData;
+    club_info_resp?: OrgClubData;
     club_fund_detail_resp?: OrgClubGoldData;
     mall_goods_list_resp?: PropMallGoodsListData;
     sign_in_activity_resp?: PropSignInActivityDetailData;
@@ -539,10 +513,7 @@ export interface MiscCurrencyExchAgeRateRequest {
   [key: string]: unknown
 }
 
-export interface MiscCurrencyExchAgeRateResponseData {
-
-    data?: MiscCurrencyExchAgeRateData;
-
+export interface MiscCurrencyExchAgeRateResponseData extends MiscCurrencyExchAgeRateData {
   [key: string]: unknown
 }
 
@@ -563,10 +534,7 @@ export interface MiscCurrencyExchAgeRateListRequest {
   [key: string]: unknown
 }
 
-export interface MiscCurrencyExchAgeRateListResponseData {
-
-    data?: MiscCurrencyExchAgeRateListData;
-
+export interface MiscCurrencyExchAgeRateListResponseData extends MiscCurrencyExchAgeRateListData {
   [key: string]: unknown
 }
 
@@ -720,12 +688,7 @@ export interface MiscFaceRecogRoomLastRequest {
   [key: string]: unknown
 }
 
-export interface MiscFaceRecogRoomLastResponseData {
-
-    data?: MiscFaceRecogRoomLastData[];
-
-  [key: string]: unknown
-}
+export type MiscFaceRecogRoomLastResponseData = MiscFaceRecogRoomLastData[]
 
 export interface MiscFaceRecogRoomLastData {
 
@@ -757,10 +720,7 @@ export interface MiscFaceSaveLimitRequest {
   [key: string]: unknown
 }
 
-export interface MiscFaceSaveLimitResponseData {
-
-    data?: MiscFaceSaveLimitData;
-
+export interface MiscFaceSaveLimitResponseData extends MiscFaceSaveLimitData {
   [key: string]: unknown
 }
 
@@ -817,11 +777,7 @@ export interface MiscGameRoundStatusRequest {
   [key: string]: unknown
 }
 
-export interface MiscGameRoundStatusResponseData {
-
-  //
-    data?: MiscGameRoundStatusData;
-
+export interface MiscGameRoundStatusResponseData extends MiscGameRoundStatusData {
   [key: string]: unknown
 }
 
@@ -841,9 +797,7 @@ export interface MiscGameRecordRoundRequest {
   [key: string]: unknown
 }
 
-export interface MiscGameRecordRoundResponseData {
-    data?: MiscGameRecordRoundData;
-
+export interface MiscGameRecordRoundResponseData extends MiscGameRecordRoundData {
   [key: string]: unknown
 }
 
@@ -857,9 +811,7 @@ export interface MiscGameRemoveRoundRequest {
   [key: string]: unknown
 }
 
-export interface MiscGameRemoveRoundResponseData {
-    data?: MiscGameRemoveRoundData;
-
+export interface MiscGameRemoveRoundResponseData extends MiscGameRemoveRoundData {
   [key: string]: unknown
 }
 
@@ -889,10 +841,7 @@ export interface MiscGameRoundListDataByRoomRequest {
   [key: string]: unknown
 }
 
-export interface MiscGameRoundListDataByRoomResponseData {
-
-    data?: MiscGameRoundListDataByRoomData;
-
+export interface MiscGameRoundListDataByRoomResponseData extends MiscGameRoundListDataByRoomData {
   [key: string]: unknown
 }
 
@@ -980,12 +929,7 @@ export interface MiscTranslateRequest {
   [key: string]: unknown
 }
 
-export interface MiscTranslateResponseData {
-
-    data?: string;
-
-  [key: string]: unknown
-}
+export type MiscTranslateResponseData = string
 
 export interface MiscTranslateData {
   [key: string]: unknown

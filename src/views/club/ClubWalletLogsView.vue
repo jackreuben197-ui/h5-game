@@ -39,13 +39,13 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
 
 <template>
   <div class="club-wallet-logs-bg">
-    <div class="bg-blur bg-blur--pink" aria-hidden="true" />
-    <div class="bg-blur bg-blur--cyan" aria-hidden="true" />
+    <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
+    <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
 
     <div class="page-shell club-wallet-logs">
       <header class="top-bar">
         <button type="button" class="back-btn" @click="goBack">
-          <span class="back-icon" aria-hidden="true" />
+          <span class="back-icon" aria-hidden="true"></span>
           <span class="back-title">收益管理</span>
         </button>
       </header>
@@ -53,12 +53,12 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
       <section class="range-card">
         <div class="date-row">
           <button type="button" class="date-pill">
-            <span class="calendar-icon" aria-hidden="true" />
+            <span class="calendar-icon" aria-hidden="true"></span>
             <span>{{ dateStart }}</span>
           </button>
-          <span class="range-divider" aria-hidden="true" />
+          <span class="range-divider" aria-hidden="true"></span>
           <button type="button" class="date-pill">
-            <span class="calendar-icon" aria-hidden="true" />
+            <span class="calendar-icon" aria-hidden="true"></span>
             <span>{{ dateEnd }}</span>
           </button>
         </div>
@@ -68,7 +68,7 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
             <p class="balance-label">初始基金余额</p>
             <p class="balance-value">123456</p>
           </div>
-          <span class="balance-split" aria-hidden="true" />
+          <span class="balance-split" aria-hidden="true"></span>
           <div class="balance-col">
             <p class="balance-label">实时基金余额</p>
             <p class="balance-value">123456</p>

@@ -29,10 +29,7 @@ export interface PropChatPropListRequest {
   [key: string]: unknown
 }
 
-export interface PropChatPropListResponseData {
-
-    data?: PropChatPropListData;
-
+export interface PropChatPropListResponseData extends PropChatPropListData {
   [key: string]: unknown
 }
 
@@ -86,10 +83,7 @@ export interface PropGoldPriceListRequest {
   [key: string]: unknown
 }
 
-export interface PropGoldPriceListResponseData {
-
-    data?: PropGoldPriceListData;
-
+export interface PropGoldPriceListResponseData extends PropGoldPriceListData {
   [key: string]: unknown
 }
 
@@ -147,10 +141,7 @@ export interface PropListRequest {
   [key: string]: unknown
 }
 
-export interface PropListResponseData {
-
-    data?: PropListData;
-
+export interface PropListResponseData extends PropListData {
   [key: string]: unknown
 }
 
@@ -210,10 +201,7 @@ export interface PropMallGoodsBuyRequest {
   [key: string]: unknown
 }
 
-export interface PropMallGoodsBuyResponseData {
-
-    data?: PropMallGoodsBuyData;
-
+export interface PropMallGoodsBuyResponseData extends PropMallGoodsBuyData {
   [key: string]: unknown
 }
 
@@ -229,10 +217,7 @@ export interface PropMallGoodsDetailRequest {
   [key: string]: unknown
 }
 
-export interface PropMallGoodsDetailResponseData {
-
-    data?: PropMallGoodsDetailData;
-
+export interface PropMallGoodsDetailResponseData extends PropMallGoodsDetailData {
   [key: string]: unknown
 }
 
@@ -288,10 +273,7 @@ export interface PropMallGoodsListRequest {
   [key: string]: unknown
 }
 
-export interface PropMallGoodsListResponseData {
-
-    data?: PropMallGoodsListData;
-
+export interface PropMallGoodsListResponseData extends PropMallGoodsListData {
   [key: string]: unknown
 }
 
@@ -334,10 +316,7 @@ export interface PropMallPrettyIdBuyRequest {
   [key: string]: unknown
 }
 
-export interface PropMallPrettyIdBuyResponseData {
-
-    data?: PropMallPrettyIdBuyData;
-
+export interface PropMallPrettyIdBuyResponseData extends PropMallPrettyIdBuyData {
   [key: string]: unknown
 }
 
@@ -357,10 +336,7 @@ export interface PropMallPrettyIdListRequest {
   [key: string]: unknown
 }
 
-export interface PropMallPrettyIdListResponseData {
-
-    data?: PropMallPrettyIdListData;
-
+export interface PropMallPrettyIdListResponseData extends PropMallPrettyIdListData {
   [key: string]: unknown
 }
 
@@ -388,10 +364,7 @@ export interface PropMallPrettyIdTotalRequest {
   [key: string]: unknown
 }
 
-export interface PropMallPrettyIdTotalResponseData {
-
-    data?: PropMallPrettyIdTotalData;
-
+export interface PropMallPrettyIdTotalResponseData extends PropMallPrettyIdTotalData {
   [key: string]: unknown
 }
 
@@ -417,10 +390,7 @@ export interface PropShareContEntRequest {
   [key: string]: unknown
 }
 
-export interface PropShareContEntResponseData {
-
-    data?: PropShareContEntData;
-
+export interface PropShareContEntResponseData extends PropShareContEntData {
   [key: string]: unknown
 }
 
@@ -449,9 +419,7 @@ export interface ShareUsableRequest {
   [key: string]: unknown
 }
 
-export interface ShareUsableResponseData {
-    data?: ShareUsableData;
-
+export interface ShareUsableResponseData extends ShareUsableData {
   [key: string]: unknown
 }
 
@@ -465,10 +433,7 @@ export interface PropShopPingAppleVerifyReceIptRequest {
   [key: string]: unknown
 }
 
-export interface PropShopPingAppleVerifyReceIptResponseData {
-
-    data?: PropShopPingAppleVerifyReceIptData;
-
+export interface PropShopPingAppleVerifyReceIptResponseData extends PropShopPingAppleVerifyReceIptData {
   [key: string]: unknown
 }
 
@@ -484,9 +449,7 @@ export interface MallBuyRequest {
   [key: string]: unknown
 }
 
-export interface MallBuyResponseData {
-    data?: MallBuyData;
-
+export interface MallBuyResponseData extends MallBuyData {
   [key: string]: unknown
 }
 
@@ -495,9 +458,7 @@ export interface MallShopListRequest {
   [key: string]: unknown
 }
 
-export interface MallShopListResponseData {
-    data?: MallShopListData;
-
+export interface MallShopListResponseData extends MallShopListData {
   [key: string]: unknown
 }
 
@@ -511,10 +472,7 @@ export interface PropShopPingGoogleVerifyOrderRequest {
   [key: string]: unknown
 }
 
-export interface PropShopPingGoogleVerifyOrderResponseData {
-
-    data?: PropShopPingGoogleVerifyOrderData;
-
+export interface PropShopPingGoogleVerifyOrderResponseData extends PropShopPingGoogleVerifyOrderData {
   [key: string]: unknown
 }
 
@@ -527,10 +485,7 @@ export interface PropSignInActivityDetailRequest {
   [key: string]: unknown
 }
 
-export interface PropSignInActivityDetailResponseData {
-
-    data?: PropSignInActivityDetailData;
-
+export interface PropSignInActivityDetailResponseData extends PropSignInActivityDetailData {
   [key: string]: unknown
 }
 
@@ -580,10 +535,7 @@ export interface PropSignInActivitySignInRequest {
   [key: string]: unknown
 }
 
-export interface PropSignInActivitySignInResponseData {
-
-    data?: PropSignInActivitySignInData;
-
+export interface PropSignInActivitySignInResponseData extends PropSignInActivitySignInData {
   [key: string]: unknown
 }
 
@@ -631,10 +583,7 @@ export interface PropTestSignInActivityResetRequest {
   [key: string]: unknown
 }
 
-export interface PropTestSignInActivityResetResponseData {
-
-    data?: PropTestSignInActivityResetData;
-
+export interface PropTestSignInActivityResetResponseData extends PropTestSignInActivityResetData {
   [key: string]: unknown
 }
 
@@ -651,10 +600,7 @@ export interface PropTribeGoldPriceListRequest {
   [key: string]: unknown
 }
 
-export interface PropTribeGoldPriceListResponseData {
-
-    data?: PropTribeGoldPriceListData;
-
+export interface PropTribeGoldPriceListResponseData extends PropTribeGoldPriceListData {
   [key: string]: unknown
 }
 
@@ -695,10 +641,7 @@ export interface PropUserPropGroupListRequest {
   [key: string]: unknown
 }
 
-export interface PropUserPropGroupListResponseData {
-
-    data?: PropUserPropGroupListData;
-
+export interface PropUserPropGroupListResponseData extends PropUserPropGroupListData {
   [key: string]: unknown
 }
 
@@ -724,11 +667,7 @@ export interface PropUserPropListRequest {
   [key: string]: unknown
 }
 
-export interface PropUserPropListResponseData {
-
-  //
-    data?: PropUserPropListData;
-
+export interface PropUserPropListResponseData extends PropUserPropListData {
   [key: string]: unknown
 }
 
@@ -737,12 +676,7 @@ export interface RoomCenterMttGetdisCountSRequest {
   [key: string]: unknown
 }
 
-export interface RoomCenterMttGetdisCountSResponseData {
-
-    data: RoomCenterMttGetdisCountSData[];
-
-  [key: string]: unknown
-}
+export type RoomCenterMttGetdisCountSResponseData = RoomCenterMttGetdisCountSData[]
 
 export interface RoomCenterMttGetdisCountSData {
 
@@ -799,9 +733,7 @@ export interface PropUserPropUsedRequest {
   [key: string]: unknown
 }
 
-export interface PropUserPropUsedResponseData {
-    data?: PropUserPropUsedData;
-
+export interface PropUserPropUsedResponseData extends PropUserPropUsedData {
   [key: string]: unknown
 }
 
@@ -814,12 +746,7 @@ export interface PropUserBuyPropRequest {
   [key: string]: unknown
 }
 
-export interface PropUserBuyPropResponseData {
-
-    data: PropUserBuyPropData[];
-
-  [key: string]: unknown
-}
+export type PropUserBuyPropResponseData = PropUserBuyPropData[]
 
 export interface PropUserBuyPropData {
   [key: string]: unknown
@@ -833,12 +760,7 @@ export interface PropUserCheckPropInfoRequest {
   [key: string]: unknown
 }
 
-export interface PropUserCheckPropInfoResponseData {
-
-    data: PropUserCheckPropInfoData[];
-
-  [key: string]: unknown
-}
+export type PropUserCheckPropInfoResponseData = PropUserCheckPropInfoData[]
 
 export interface PropUserCheckPropInfoData {
 
@@ -858,10 +780,7 @@ export interface PropUserOfflInetIcketsRequest {
   [key: string]: unknown
 }
 
-export interface PropUserOfflInetIcketsResponseData {
-
-    data?: PropUserOfflInetIcketsData;
-
+export interface PropUserOfflInetIcketsResponseData extends PropUserOfflInetIcketsData {
   [key: string]: unknown
 }
 
@@ -919,10 +838,7 @@ export interface PropUserOfflInetIcketsGainRequest {
   [key: string]: unknown
 }
 
-export interface PropUserOfflInetIcketsGainResponseData {
-
-    data?: PropUserOfflInetIcketsGainData;
-
+export interface PropUserOfflInetIcketsGainResponseData extends PropUserOfflInetIcketsGainData {
   [key: string]: unknown
 }
 
@@ -939,10 +855,7 @@ export interface PropUserOfflInetIcketsTransFerRequest {
   [key: string]: unknown
 }
 
-export interface PropUserOfflInetIcketsTransFerResponseData {
-
-    data?: PropUserOfflInetIcketsTransFerData;
-
+export interface PropUserOfflInetIcketsTransFerResponseData extends PropUserOfflInetIcketsTransFerData {
   [key: string]: unknown
 }
 
@@ -958,10 +871,7 @@ export interface PropUserPropInfoRequest {
   [key: string]: unknown
 }
 
-export interface PropUserPropInfoResponseData {
-
-    data?: PropUserPropInfoData;
-
+export interface PropUserPropInfoResponseData extends PropUserPropInfoData {
   [key: string]: unknown
 }
 
@@ -988,10 +898,7 @@ export interface PropWheelLottEryRequest {
   [key: string]: unknown
 }
 
-export interface PropWheelLottEryResponseData {
-
-    data?: PropWheelLottEryData;
-
+export interface PropWheelLottEryResponseData extends PropWheelLottEryData {
   [key: string]: unknown
 }
 
@@ -1020,10 +927,7 @@ export interface PropWheelLottEryListRequest {
   [key: string]: unknown
 }
 
-export interface PropWheelLottEryListResponseData {
-
-    data?: PropWheelLottEryListData;
-
+export interface PropWheelLottEryListResponseData extends PropWheelLottEryListData {
   [key: string]: unknown
 }
 
@@ -1060,10 +964,7 @@ export interface PropWheelUserHandNumRequest {
   [key: string]: unknown
 }
 
-export interface PropWheelUserHandNumResponseData {
-
-    data?: PropWheelUserHandNumData;
-
+export interface PropWheelUserHandNumResponseData extends PropWheelUserHandNumData {
   [key: string]: unknown
 }
 

@@ -1,13 +1,10 @@
 import { defineStore } from 'pinia'
 import type { UserInfoData } from '@/api/models/user'
+import type { OrgClubData } from '@/api/models/org'
 import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
 
-export interface ClubInfo {
-  club_id: number | string
-  club_name?: string
-  [key: string]: unknown
-}
+export type ClubInfo = OrgClubData
 
 interface UserInfoState {
   userInfo: UserInfoData | null
@@ -83,7 +80,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       return true
     },
     setCurrentClub(club: ClubInfo | null): boolean {
-      if (!club) {
+      if (!club || club.club_id === undefined || club.club_id === null) {
         return false
       }
       return this.setCurrentClubById(club.club_id)

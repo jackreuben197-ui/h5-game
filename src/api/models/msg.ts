@@ -6,9 +6,7 @@ export interface MsgMessageUnreadClearRequest {
   [key: string]: unknown
 }
 
-export interface MsgMessageUnreadClearResponseData {
-    data?: MsgMessageUnreadClearData;
-
+export interface MsgMessageUnreadClearResponseData extends MsgMessageUnreadClearData {
   [key: string]: unknown
 }
 
@@ -49,10 +47,7 @@ export interface MsgMessageReadRequest {
   [key: string]: unknown
 }
 
-export interface MsgMessageReadResponseData {
-
-    data?: MsgMessageReadData;
-
+export interface MsgMessageReadResponseData extends MsgMessageReadData {
   [key: string]: unknown
 }
 
@@ -65,23 +60,14 @@ export interface MessageRednumRequest {
   [key: string]: unknown
 }
 
-export interface MessageRednumResponseData {
-    data?: MessageRednumData[];
-
-  [key: string]: unknown
-}
+export type MessageRednumResponseData = MessageRednumData[]
 
 // /api/msg/message/system/broadcast/num (MsgMessageSystemBroadcastNum)
 export interface MsgMessageSystemBroadcastNumRequest {
   [key: string]: unknown
 }
 
-export interface MsgMessageSystemBroadcastNumResponseData {
-
-    data?: MsgMessageSystemBroadcastNumMsgInfo[];
-
-  [key: string]: unknown
-}
+export type MsgMessageSystemBroadcastNumResponseData = MsgMessageSystemBroadcastNumMsgInfo[]
 
 export interface MsgMessageSystemBroadcastNumMsgInfo {
 
@@ -97,12 +83,7 @@ export interface MsgMessageTodoRequest {
   [key: string]: unknown
 }
 
-export interface MsgMessageTodoResponseData {
-
-    data?: MsgMessageTodoData[];
-
-  [key: string]: unknown
-}
+export type MsgMessageTodoResponseData = MsgMessageTodoData[]
 
 export interface MsgMessageTodoData {
 
@@ -120,10 +101,7 @@ export interface MsgMessageTodoAllInfoRequest {
   [key: string]: unknown
 }
 
-export interface MsgMessageTodoAllInfoResponseData {
-
-    data?: MsgMessageTodoAllInfoData;
-
+export interface MsgMessageTodoAllInfoResponseData extends MsgMessageTodoAllInfoData {
   [key: string]: unknown
 }
 
@@ -155,17 +133,14 @@ export interface MsgMessageUnreadRequest {
   [key: string]: unknown
 }
 
-export interface MsgMessageUnreadResponseData {
-
-    msg_main_type: number; //消息类型:1-bag,2-club,3-money,4-system,5-tribe,6-带入
+export type MsgMessageUnreadResponseData = MsgMessageUnreadData[] & {
+msg_main_type: number; //消息类型:1-bag,2-club,3-money,4-system,5-tribe,6-带入
     num: number; //未读消息数量
     title: string;
     content: string;
     remark: string;
     msg_type: number; //消息类型 MessageSubType
     create_time: string; //创建时间
-    data?: MsgMessageUnreadData[];
-
   [key: string]: unknown
 }
 

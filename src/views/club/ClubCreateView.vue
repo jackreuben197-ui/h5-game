@@ -19,179 +19,189 @@ const createCostOriginal = 500
 const createCostCurrent = 100
 
 const canCreate = computed(() => {
-	return clubName.value.trim().length > 0 && !isSubmitting.value
+  return clubName.value.trim().length > 0 && !isSubmitting.value
 })
 
 const avatarImage = computed(() => avatarPreviewUrl.value || imgClubCover)
 
 function goBack(): void {
-	void router.push('/club')
+  void router.push('/club')
 }
 
 function chooseAvatar(): void {
-	avatarSheetVisible.value = true
+  avatarSheetVisible.value = true
 }
 
 function closeAvatarSheet(): void {
-	avatarSheetVisible.value = false
+  avatarSheetVisible.value = false
 }
 
 function selectAvatarSource(source: 'camera' | 'gallery'): void {
-	avatarSource.value = source
+  avatarSource.value = source
 }
 
 function triggerAvatarPicker(): void {
-	const targetInput = avatarSource.value === 'camera' ? cameraInputRef.value : galleryInputRef.value
-	if (!targetInput) {
-		return
-	}
-	closeAvatarSheet()
-	targetInput.click()
+  const targetInput = avatarSource.value === 'camera' ? cameraInputRef.value : galleryInputRef.value
+  if (!targetInput) {
+    return
+  }
+  closeAvatarSheet()
+  targetInput.click()
 }
 
 function updateAvatarFile(event: Event): void {
-	const target = event.target as HTMLInputElement | null
-	const file = target?.files?.[0]
-	if (!file) {
-		return
-	}
+  const target = event.target as HTMLInputElement | null
+  const file = target?.files?.[0]
+  if (!file) {
+    return
+  }
 
-	if (avatarPreviewUrl.value) {
-		URL.revokeObjectURL(avatarPreviewUrl.value)
-	}
-	avatarPreviewUrl.value = URL.createObjectURL(file)
-	if (target) {
-		target.value = ''
-	}
+  if (avatarPreviewUrl.value) {
+    URL.revokeObjectURL(avatarPreviewUrl.value)
+  }
+  avatarPreviewUrl.value = URL.createObjectURL(file)
+  if (target) {
+    target.value = ''
+  }
 }
 
 onUnmounted(() => {
-	if (avatarPreviewUrl.value) {
-		URL.revokeObjectURL(avatarPreviewUrl.value)
-	}
+  if (avatarPreviewUrl.value) {
+    URL.revokeObjectURL(avatarPreviewUrl.value)
+  }
 })
 
 async function onCreateClub(): Promise<void> {
-	if (!canCreate.value) {
-		return
-	}
+  if (!canCreate.value) {
+    return
+  }
 
-	isSubmitting.value = true
+  isSubmitting.value = true
 
-	try {
-		await router.push('/club/detail')
-	} finally {
-		isSubmitting.value = false
-	}
+  try {
+    await router.push('/club/detail')
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
 <template>
-	<div class="club-create-bg">
-		<div class="bg-blur bg-blur--pink" aria-hidden="true" />
-		<div class="bg-blur bg-blur--cyan" aria-hidden="true" />
-		<input
-			ref="galleryInputRef"
-			class="avatar-file-input"
-			type="file"
-			accept="image/*"
-			@change="updateAvatarFile"
-		/>
-		<input
-			ref="cameraInputRef"
-			class="avatar-file-input"
-			type="file"
-			accept="image/*"
-			capture="environment"
-			@change="updateAvatarFile"
-		/>
+  <div class="club-create-bg">
+    <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
+    <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
+    <input
+      ref="galleryInputRef"
+      class="avatar-file-input"
+      type="file"
+      accept="image/*"
+      @change="updateAvatarFile"
+    />
+    <input
+      ref="cameraInputRef"
+      class="avatar-file-input"
+      type="file"
+      accept="image/*"
+      capture="environment"
+      @change="updateAvatarFile"
+    />
 
-		<div class="club-create">
-			<header class="top-bar">
-				<button type="button" class="back-btn" @click="goBack">
-					<span class="back-icon" aria-hidden="true" />
-					<span class="back-title">创建俱乐部</span>
-				</button>
-			</header>
+    <div class="club-create">
+      <header class="top-bar">
+        <button type="button" class="back-btn" @click="goBack">
+          <span class="back-icon" aria-hidden="true"></span>
+          <span class="back-title">创建俱乐部</span>
+        </button>
+      </header>
 
-			<section class="avatar-card">
-				<button type="button" class="avatar-trigger" aria-label="选择俱乐部头像" @click="chooseAvatar">
-					<img class="avatar-image" :src="avatarImage" alt="俱乐部头像" />
-					<span class="add-badge" aria-hidden="true">+</span>
-				</button>
-			</section>
+      <section class="avatar-card">
+        <button
+          type="button"
+          class="avatar-trigger"
+          aria-label="选择俱乐部头像"
+          @click="chooseAvatar"
+        >
+          <img class="avatar-image" :src="avatarImage" alt="俱乐部头像" />
+          <span class="add-badge" aria-hidden="true">+</span>
+        </button>
+      </section>
 
-			<section class="form-card">
-				<label class="field-block" for="club-name-input">
-					<span class="field-label">俱乐部名称</span>
-					<div class="field-shell field-shell--single">
-						<input
-							id="club-name-input"
-							v-model.trim="clubName"
-							type="text"
-							maxlength="30"
-							placeholder="请输入俱乐部名称"
-							autocomplete="off"
-						/>
-					</div>
-				</label>
+      <section class="form-card">
+        <label class="field-block" for="club-name-input">
+          <span class="field-label">俱乐部名称</span>
+          <div class="field-shell field-shell--single">
+            <input
+              id="club-name-input"
+              v-model.trim="clubName"
+              type="text"
+              maxlength="30"
+              placeholder="请输入俱乐部名称"
+              autocomplete="off"
+            />
+          </div>
+        </label>
 
-				<label class="field-block" for="club-intro-input">
-					<span class="field-label">俱乐部简介</span>
-					<div class="field-shell field-shell--multi">
-						<textarea
-							id="club-intro-input"
-							v-model.trim="clubIntro"
-							maxlength="300"
-							placeholder="请输入简介"
-						/>
-					</div>
-				</label>
-			</section>
+        <label class="field-block" for="club-intro-input">
+          <span class="field-label">俱乐部简介</span>
+          <div class="field-shell field-shell--multi">
+            <textarea
+              id="club-intro-input"
+              v-model.trim="clubIntro"
+              maxlength="300"
+              placeholder="请输入简介"
+            ></textarea>
+          </div>
+        </label>
+      </section>
 
-			<section class="footer-actions">
-				<button
-					type="button"
-					class="create-btn"
-					:class="{ 'create-btn--disabled': !canCreate }"
-					:disabled="!canCreate"
-					@click="onCreateClub"
-				>
-					{{ isSubmitting ? '创建中...' : '创建' }}
-				</button>
+      <section class="footer-actions">
+        <button
+          type="button"
+          class="create-btn"
+          :class="{ 'create-btn--disabled': !canCreate }"
+          :disabled="!canCreate"
+          @click="onCreateClub"
+        >
+          {{ isSubmitting ? '创建中...' : '创建' }}
+        </button>
 
-				<p class="cost-line" aria-label="创建费用说明">
-					<span>共计</span>
-					<img :src="imgDiamond" alt="钻石" />
-					<span class="cost-original">{{ createCostOriginal }}</span>
-					<span class="cost-current">{{ createCostCurrent }}</span>
-				</p>
-			</section>
-		</div>
+        <p class="cost-line" aria-label="创建费用说明">
+          <span>共计</span>
+          <img :src="imgDiamond" alt="钻石" />
+          <span class="cost-original">{{ createCostOriginal }}</span>
+          <span class="cost-current">{{ createCostCurrent }}</span>
+        </p>
+      </section>
+    </div>
 
-		<div v-if="avatarSheetVisible" class="avatar-sheet-mask" @click="closeAvatarSheet">
-			<div class="avatar-sheet" role="dialog" aria-label="选择头像来源" @click.stop>
-				<button
-					type="button"
-					class="avatar-sheet-option"
-					:class="{ 'avatar-sheet-option--active': avatarSource === 'camera' }"
-					@click="selectAvatarSource('camera')"
-				>
-					拍照
-				</button>
-				<div class="avatar-sheet-divider" aria-hidden="true" />
-				<button
-					type="button"
-					class="avatar-sheet-option"
-					:class="{ 'avatar-sheet-option--active': avatarSource === 'gallery' }"
-					@click="selectAvatarSource('gallery')"
-				>
-					画廊
-				</button>
-				<button type="button" class="avatar-sheet-confirm" @click="triggerAvatarPicker">确认</button>
-			</div>
-		</div>
-	</div>
+    <div v-if="avatarSheetVisible" class="avatar-sheet-mask" @click="closeAvatarSheet">
+      <div
+        class="avatar-sheet"
+        role="dialog"
+        aria-label="选择头像来源"
+        @click.stop
+      >
+        <button
+          type="button"
+          class="avatar-sheet-option"
+          :class="{ 'avatar-sheet-option--active': avatarSource === 'camera' }"
+          @click="selectAvatarSource('camera')"
+        >
+          拍照
+        </button>
+        <div class="avatar-sheet-divider" aria-hidden="true"></div>
+        <button
+          type="button"
+          class="avatar-sheet-option"
+          :class="{ 'avatar-sheet-option--active': avatarSource === 'gallery' }"
+          @click="selectAvatarSource('gallery')"
+        >
+          画廊
+        </button>
+        <button type="button" class="avatar-sheet-confirm" @click="triggerAvatarPicker">确认</button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped lang="scss">

@@ -7252,3 +7252,4 @@ UIMatchBreakTime=休息時間
 UIMatchPerTableCount=單桌人數
 UIMatchTotalTables=牌桌總數
 UIMatchGuaranteedTag=保底賽
+UIMatchSelectClubBuyin=選擇買入的俱樂部

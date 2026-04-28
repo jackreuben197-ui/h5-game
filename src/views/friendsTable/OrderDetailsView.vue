@@ -35,8 +35,8 @@ function close(): void {
     :style="{ backgroundImage: `url(${sharpBgUrl})` }"
     @click.self="close"
   >
-    <div class="card">
-      <div class="card__bg" :style="{ backgroundImage: `url(${sharpBgUrl})` }"></div>
+    <div class="card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
+      <!-- <div class="card__bg" ></div> -->
       <h2 class="card__title">{{ t('Wallet_OrderTitle') }}</h2>
       <div class="card__rows">
         <div
@@ -75,7 +75,8 @@ function close(): void {
   pointer-events: none;
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
-  background: rgba(0, 0, 0, 0.15);
+  // background: rgba(0, 0, 0, 0.15);
+  background: rgba(12, 12, 12, 0.60);
 }
 
 .card {
@@ -96,16 +97,16 @@ function close(): void {
   overflow: hidden;
 }
 
-.card__bg {
-  position: absolute;
-  inset: -12px;
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  filter: blur(10px);
-  pointer-events: none;
-  z-index: 0;
-}
+// .card__bg {
+//   position: absolute;
+//   inset: -12px;
+//   background-size: cover;
+//   background-position: center;
+//   background-attachment: fixed;
+//   filter: blur(10px);
+//   pointer-events: none;
+//   z-index: 0;
+// }
 
 .card::after {
   content: '';
@@ -113,10 +114,31 @@ function close(): void {
   inset: 0;
   border-radius: inherit;
   background: rgba(0, 0, 0, 0.28);
+  background: rgba(0, 0, 0, 0.70);
+   box-shadow:
+    0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
+    0 0 0.2298rem 0 #000 inset,
+    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.90) inset;
+  backdrop-filter: blur(7.580729961395264px);
+  -webkit-backdrop-filter: blur(7.580729961395264px);
   pointer-events: none;
   z-index: 1;
 }
 
+.card::before {
+  content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 0.0255rem;
+    background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+
+}
 .card__title,
 .card__rows {
   position: relative;

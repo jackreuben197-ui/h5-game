@@ -945,19 +945,19 @@ export interface MttRebuyRequest {
 }
 
 // MttPlayerStatus 枚举（与 Unity MttPlayerStatus.cs 对齐）。
-export const enum MttPlayerStatus {
-  WAITING_APPLY = 0,
-  CAN_APPLY_NOT_START = 1,
-  CAN_APPLY_DELAY = 2,
-  APPLIED_NOT_START = 3,
-  CAN_JOIN = 4,
-  CANNOT_APPLY_STARTED = 5,
-  LOSE_CAN_REBUY = 6,
-  LOSE = 7,
-  JOIN_COMPLETE = 8,
-  NOT_JOIN_COMPLETE = 9,
-  CANNOT_JOIN_OVERTIME = 10,
-}
+export const MttPlayerStatus = {
+  WAITING_APPLY: 0,
+  CAN_APPLY_NOT_START: 1,
+  CAN_APPLY_DELAY: 2,
+  APPLIED_NOT_START: 3,
+  CAN_JOIN: 4,
+  CANNOT_APPLY_STARTED: 5,
+  LOSE_CAN_REBUY: 6,
+  LOSE: 7,
+  JOIN_COMPLETE: 8,
+  NOT_JOIN_COMPLETE: 9,
+  CANNOT_JOIN_OVERTIME: 10,
+} as const
 
 // /roomcenter/user/all/mtt/sng/ids 响应 data。
 export interface AllMttSngIdsData {

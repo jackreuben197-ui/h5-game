@@ -340,124 +340,168 @@ function openRecordDetail(_item: RecordItem): void {
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
-    <section class="summary-card">
-      <div class="filter-tabs">
-        <button
-          v-for="tab in filterTabs"
-          :key="tab"
-          type="button"
-          class="filter-tab"
-          :class="{ active: activeFilter === tab, 'is-customize': tab === 'Customize' }"
-          @click="onFilterClick(tab)"
+      <section class="summary-card">
+        <div class="filter-tabs">
+          <button
+            v-for="tab in filterTabs"
+            :key="tab"
+            type="button"
+            class="filter-tab"
+            :class="{ active: activeFilter === tab, 'is-customize': tab === 'Customize' }"
+            @click="onFilterClick(tab)"
+          >
+            {{ tab }}
+          </button>
+        </div>
+
+        <div class="metrics-row">
+          <div v-for="(item, idx) in metrics" :key="item.label" class="metric-item">
+            <p class="metric-label">{{ item.label }}</p>
+            <p class="metric-value">{{ item.value }}</p>
+            <span v-if="idx < metrics.length - 1" class="metric-divider" aria-hidden="true"></span>
+          </div>
+        </div>
+      </section>
+
+      <p class="timezone-text">时区：UTC+0</p>
+
+      <section class="record-list">
+        <article
+          v-for="item in records"
+          :key="item.id"
+          class="record-row"
+          @click="openRecordDetail(item)"
         >
-          {{ tab }}
-        </button>
-      </div>
+          <div class="game-badge">{{ item.game }}</div>
 
-      <div class="metrics-row">
-        <div v-for="(item, idx) in metrics" :key="item.label" class="metric-item">
-          <p class="metric-label">{{ item.label }}</p>
-          <p class="metric-value">{{ item.value }}</p>
-          <span v-if="idx < metrics.length - 1" class="metric-divider" aria-hidden="true" />
-        </div>
-      </div>
-    </section>
+          <div class="record-card">
+            <div class="record-main">
+              <p class="record-title">{{ item.title }}</p>
 
-    <p class="timezone-text">时区：UTC+0</p>
-
-    <section class="record-list">
-      <article v-for="item in records" :key="item.id" class="record-row" @click="openRecordDetail(item)">
-        <div class="game-badge">{{ item.game }}</div>
-
-        <div class="record-card">
-          <div class="record-main">
-            <p class="record-title">{{ item.title }}</p>
-
-            <div class="record-meta">
-              <div class="meta-top">
-                <span>{{ item.subtitle }}</span>
-                <span v-if="item.extra" class="extra">{{ item.extra }}</span>
-              </div>
-              <div class="meta-time">
-                <img :src="iconTime" alt="时间" />
-                <span>{{ item.time }}</span>
+              <div class="record-meta">
+                <div class="meta-top">
+                  <span>{{ item.subtitle }}</span>
+                  <span v-if="item.extra" class="extra">{{ item.extra }}</span>
+                </div>
+                <div class="meta-time">
+                  <img :src="iconTime" alt="时间" />
+                  <span>{{ item.time }}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="record-right">
-            <div class="fee-chip">
-              <div class="fee-line">
-                <span>{{ item.feeText }}</span>
-                <span :class="item.feePositive ? 'value-up' : 'value-down'">{{ item.feeValue }}</span>
+            <div class="record-right">
+              <div class="fee-chip">
+                <div class="fee-line">
+                  <span>{{ item.feeText }}</span>
+                  <span :class="item.feePositive ? 'value-up' : 'value-down'">{{ item.feeValue }}</span>
+                </div>
+                <div v-if="item.insuranceLabel && item.insuranceValue" class="fee-line">
+                  <span>{{ item.insuranceLabel }}</span>
+                  <span class="value-down">{{ item.insuranceValue }}</span>
+                </div>
               </div>
-              <div v-if="item.insuranceLabel && item.insuranceValue" class="fee-line">
-                <span>{{ item.insuranceLabel }}</span>
-                <span class="value-down">{{ item.insuranceValue }}</span>
-              </div>
+              <span class="chevron">›</span>
             </div>
-            <span class="chevron">›</span>
           </div>
-        </div>
-      </article>
-    </section>
+        </article>
+      </section>
 
-    <div v-if="isDatePickerVisible" class="date-picker-mask" @click="closeDatePicker">
-      <div class="date-picker-sheet" @click.stop>
-        <header class="picker-tip">
-          <p>只支持查询最近三个月数据</p>
-          <button type="button" class="picker-close" @click="closeDatePicker">×</button>
-        </header>
+      <div v-if="isDatePickerVisible" class="date-picker-mask" @click="closeDatePicker">
+        <div class="date-picker-sheet" @click.stop>
+          <header class="picker-tip">
+            <p>只支持查询最近三个月数据</p>
+            <button type="button" class="picker-close" @click="closeDatePicker">×</button>
+          </header>
 
-        <div class="picker-range-row">
-          <button type="button" class="picker-date-btn" :class="{ active: pickingTarget === 'start' }" @click="pickingTarget = 'start'">
-            <span class="calendar-icon" aria-hidden="true" />
-            <span>{{ startDateText }}</span>
-          </button>
-          <button type="button" class="picker-date-btn" :class="{ active: pickingTarget === 'end' }" @click="pickingTarget = 'end'">
-            <span class="calendar-icon" aria-hidden="true" />
-            <span>{{ endDateText }}</span>
-          </button>
-        </div>
-
-        <div class="picker-month-row">
-          <div class="month-arrows">
-            <button type="button" class="arrow-btn" aria-label="上一年" @click="goPrevYear">«</button>
-            <button type="button" class="arrow-btn" aria-label="上一月" @click="goPrevMonth">‹</button>
-          </div>
-          <p class="month-title">{{ monthTitle }}</p>
-          <div class="month-arrows">
-            <button type="button" class="arrow-btn" aria-label="下一月" @click="goNextMonth">›</button>
-            <button type="button" class="arrow-btn" aria-label="下一年" @click="goNextYear">»</button>
-          </div>
-        </div>
-
-        <div class="calendar-wrap">
-          <div class="weekday-row">
-            <span v-for="(label, idx) in weekLabels" :key="`${label}-${idx}`">{{ label }}</span>
-          </div>
-
-          <div class="day-grid">
+          <div class="picker-range-row">
             <button
-              v-for="cell in calendarCells"
-              :key="cell.date.toISOString()"
               type="button"
-              class="day-cell"
-              :class="{
-                muted: !cell.inCurrentMonth,
-                disabled: isDisabledDay(cell.date),
-                'in-range': isInRange(cell.date),
-                'range-start': isRangeStart(cell.date),
-                'range-end': isRangeEnd(cell.date),
-              }"
-              @click="selectDay(cell.date)"
+              class="picker-date-btn"
+              :class="{ active: pickingTarget === 'start' }"
+              @click="pickingTarget = 'start'"
             >
-              <span>{{ String(cell.day).padStart(2, '0') }}</span>
+              <span class="calendar-icon" aria-hidden="true"></span>
+              <span>{{ startDateText }}</span>
+            </button>
+            <button
+              type="button"
+              class="picker-date-btn"
+              :class="{ active: pickingTarget === 'end' }"
+              @click="pickingTarget = 'end'"
+            >
+              <span class="calendar-icon" aria-hidden="true"></span>
+              <span>{{ endDateText }}</span>
             </button>
           </div>
-        </div>
 
-        <button type="button" class="picker-ok" @click="confirmDatePicker">OK</button>
+          <div class="picker-month-row">
+            <div class="month-arrows">
+              <button
+                type="button"
+                class="arrow-btn"
+                aria-label="上一年"
+                @click="goPrevYear"
+              >
+                «
+              </button>
+              <button
+                type="button"
+                class="arrow-btn"
+                aria-label="上一月"
+                @click="goPrevMonth"
+              >
+                ‹
+              </button>
+            </div>
+            <p class="month-title">{{ monthTitle }}</p>
+            <div class="month-arrows">
+              <button
+                type="button"
+                class="arrow-btn"
+                aria-label="下一月"
+                @click="goNextMonth"
+              >
+                ›
+              </button>
+              <button
+                type="button"
+                class="arrow-btn"
+                aria-label="下一年"
+                @click="goNextYear"
+              >
+                »
+              </button>
+            </div>
+          </div>
+
+          <div class="calendar-wrap">
+            <div class="weekday-row">
+              <span v-for="(label, idx) in weekLabels" :key="`${label}-${idx}`">{{ label }}</span>
+            </div>
+
+            <div class="day-grid">
+              <button
+                v-for="cell in calendarCells"
+                :key="cell.date.toISOString()"
+                type="button"
+                class="day-cell"
+                :class="{
+                  muted: !cell.inCurrentMonth,
+                  disabled: isDisabledDay(cell.date),
+                  'in-range': isInRange(cell.date),
+                  'range-start': isRangeStart(cell.date),
+                  'range-end': isRangeEnd(cell.date),
+                }"
+                @click="selectDay(cell.date)"
+              >
+                <span>{{ String(cell.day).padStart(2, '0') }}</span>
+              </button>
+            </div>
+          </div>
+
+          <button type="button" class="picker-ok" @click="confirmDatePicker">OK</button>
+        </div>
       </div>
     </div>
   </div>

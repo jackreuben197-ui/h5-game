@@ -1,4 +1,5 @@
 import http from '@/api/http'
+import type { AxiosRequestConfig } from 'axios'
 import type { ApiResponse } from '@/api/models/common'
 import type {
   AllMttSngIdsData,
@@ -45,7 +46,7 @@ import type {
 } from '@/api/models/roomcenter'
 import { forwardRoomsListToCocos } from '@/bridge/sync'
 
-export interface RoomcenterRequestOptions {
+export interface RoomcenterRequestOptions extends AxiosRequestConfig {
   suppressBusinessToast?: boolean
   suppressBusinessCodes?: number[]
 }

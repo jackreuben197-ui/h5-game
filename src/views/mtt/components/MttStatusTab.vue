@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import hunterIcon from '@/assets/icons/icon_mtt_hunter.png'
+import chipsIcon from '@/assets/icons/icon_chips.png'
 import type { RoomcenterMttDetailData } from '@/api/models/roomcenter'
-import { formatDateTime, formatDurationBySeconds, toUnixSeconds } from '@/utils/time'
+import { formatDateTime, toUnixSeconds } from '@/utils/time'
 import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 
@@ -54,9 +55,9 @@ function fmtBlinds(sb: number | undefined, ante: number | undefined): string {
 /* ===== 状态卡片 ===== */
 const statusLabel = computed(() => {
   const s = mtt.value?.status
-  if (s === 0) return '报名中'
-  if (s === 1) return '进行中'
-  if (s === 2) return '已结束'
+  if (s === 0) return t('MTT-Applying')
+  if (s === 1) return t('MTT-Processing')
+  if (s === 2) return t('Mtt_Complete')
   return '-'
 })
 
@@ -97,14 +98,29 @@ const centerTimerSeconds = computed(() => {
   return remaining
 })
 
-const levelTimeLeftLabel = computed(() => formatDurationBySeconds(centerTimerSeconds.value))
+function fmtMMSS(totalSeconds: number, maxSeconds = 99 * 60 + 59): string {
+  const capped = Math.min(Math.max(0, Math.floor(totalSeconds)), maxSeconds)
+  const m = Math.floor(capped / 60)
+  const s = capped % 60
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+}
+
+const levelTimeLeftLabel = computed(() => {
+  const sec = centerTimerSeconds.value
+  // 开赛前超过1小时：直接显示开赛时刻（HH:mm）
+  if (isPreStart.value && sec > 3600) return startTimeLabel.value
+  // 开赛前1小时内：倒计时，最大 59:59
+  if (isPreStart.value) return fmtMMSS(sec, 59 * 60 + 59)
+  // 盲注级别倒计时：最大 99:59
+  return fmtMMSS(sec)
+})
 const blindsLabel = computed(() => fmtBlinds(more.value?.sb, more.value?.ante))
 const nextBlindsLabel = computed(() => fmtBlinds(more.value?.nsb, more.value?.nante))
 
 /* ===== 数据统计面板 — 右列 ===== */
 const remainingPlayers = computed(() => {
   const alive = props.data?.alive
-  const total = realPrize.value?.participants
+  const total = props.data?.enter_total
   if (alive === undefined || alive === null) return '-'
   return `${alive}/${total ?? '-'}`
 })
@@ -155,10 +171,10 @@ const matchInfo = computed(() => {
     ? `${fmtMoney(m.initial_score)} (${((m.initial_score ?? 0) / (sb.value * 2)).toFixed(0)}BB)`
     : fmtMoney(m.initial_score)
   const enterTimeLabel = m.enter_time
-    ? `${formatDateTime(m.enter_time, 'DD/MM HH:mm')} (级别${m.max_delay_apply_bl ?? '-'})`
+    ? `${formatDateTime(m.enter_time, 'DD/MM HH:mm')} (${t('UITexasReport_Text_BlindLevelTip')}${m.max_delay_apply_bl ?? '-'})`
     : '-'
   const holdTimeLabel = m.force_close_time
-    ? `${Math.ceil(m.force_close_time / 60)}分钟`
+    ? `${Math.ceil(m.force_close_time / 60)}${t('UIClubData_Text_time')}`
     : '-'
 
   let buyLimitLabel: string
@@ -173,23 +189,26 @@ const matchInfo = computed(() => {
     buyLimitLabel = t('MTT_State_CannotDelay')
   }
 
+  const limitBetType = m.limit_bet_type ?? 0
+  const betTypeLabel = t(`BetType_${limitBetType}`)
+
   return [
-    { label: '赛事名称', value: resolveName(m.name) },
-    { label: '比赛类型', value: '无限注德州扑克' },
-    { label: '游戏类型', value: gameTypeName.value, icon: (m.hunter_on ?? 0) > 0 ? hunterIcon : undefined },
-    { label: '开始时间', value: formatDateTime(m.start_time, 'DD/MM/YYYY-HH:mm') },
-    { label: '买入', value: buyInLabel.value },
+    { label: t('UIMatchName'), value: resolveName(m.name) },
+    { label: t('MTT_State_gametype'), value: betTypeLabel },
+    { label: t('UI_GameType'), value: gameTypeName.value, icon: (m.hunter_on ?? 0) > 0 ? hunterIcon : undefined },
+    { label: t('UIMTT_ListdistancestartText'), value: formatDateTime(m.start_time, 'DD/MM/YYYY-HH:mm') },
+    { label: t('MTT_xq_buy'), value: buyInLabel.value },
     { label: t('MTT_State_ShangXian'), value: buyLimitLabel, tip: true },
-    { label: '重购', value: fmtNum(m.rebuy_times) },
-    { label: '保底奖池', value: fmtMoney(m.prize_base_pool) },
-    { label: '起始筹码', value: initialBB },
-    { label: '延迟报名', value: enterTimeLabel },
-    { label: '预计赛程时长', value: holdTimeLabel },
-    { label: '盲注间距', value: interval > 0 ? `${Math.floor(interval / 60)}分钟` : '-' },
-    { label: '牌桌类型', value: m.seat_count ? `${m.seat_count}人桌` : '-' },
-    { label: '最少/最多玩家', value: `${m.limit_min ?? '-'}~${realPrize.value?.participants ?? '-'}` },
-    { label: '开赛条件', value: '-' },
-    { label: '休息时间', value: '-' },
+    { label: t('MTT_Rebuy'), value: fmtNum(m.rebuy_times) },
+    { label: t('UIMatchGuaranteedPool'), value: fmtMoney(m.prize_base_pool) },
+    { label: t('UIMTT_chouma1'), value: initialBB },
+    { label: t('MTT_State_DelayApply'), value: enterTimeLabel },
+    { label: t('UIMatchEstimatedDuration'), value: holdTimeLabel },
+    { label: t('UIMatchBlindInterval'), value: interval > 0 ? `${Math.floor(interval / 60)}${t('UIClubData_Text_time')}` : '-' },
+    { label: t('UITexas_TableType'), value: m.seat_count ? t('UIMatch_PersonTable', m.seat_count) : '-' },
+    { label: t('UIMatchMinMaxPlayers'), value: `${m.limit_min ?? '-'}~${realPrize.value?.participants ?? '-'}` },
+    { label: t('UIMatchStartCondition'), value: '-' },
+    { label: t('UIMatchBreakTime'), value: '-' },
   ]
 })
 </script>
@@ -206,13 +225,13 @@ const matchInfo = computed(() => {
       <div class="status-badge">{{ statusLabel }}</div>
       <div class="status-meta">
         <div class="meta-row">
-          <span class="meta-label">开赛时间:</span>
+          <span class="meta-label">{{ t('MTT-Start Time') }}</span>
           <span class="meta-value">{{ startTimeLabel }}</span>
         </div>
         <div class="meta-row">
-          <span class="meta-label">买入:</span>
+          <span class="meta-label">{{ t('MTT_xq_buy') }}:</span>
           <div class="meta-value-with-icon">
-            <img :src="hunterIcon" class="meta-icon" alt="coin" />
+            <img :src="chipsIcon" class="meta-icon" alt="coin" />
             <span>{{ fmtMoney(buyInTotal) }}</span>
           </div>
         </div>
@@ -225,37 +244,37 @@ const matchInfo = computed(() => {
         <!-- 左列 -->
         <div class="stats-col">
           <div class="stat-item">
-            <div class="stat-label">总奖金</div>
+            <div class="stat-label">{{ t('UIMTT_zongjiangjin') }}</div>
             <div class="stat-value">{{ prizePool }}</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">冠军</div>
+            <div class="stat-label">{{ t('UIMatchChampion') }}</div>
             <div class="stat-value">{{ championPrize }}</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">未破保金额</div>
+            <div class="stat-label">{{ t('UIMTT_weipobao') }}</div>
             <div class="stat-value">{{ unbrokenGuarantee }}</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">下一级奖金</div>
+            <div class="stat-label">{{ t('UIMatchNextLevelPrize') }}</div>
             <div class="stat-value">{{ nextPrize }}</div>
           </div>
         </div>
 
         <!-- 中列 -->
-        <div class="stats-col stats-col--center">
+        <div class="stats-col--center">
           <div class="level-card">
             <div class="level-label">{{ isPreStart ? '距离开始' : `级别 ${currentLevel}` }}</div>
             <div class="level-timer">{{ levelTimeLeftLabel }}</div>
-            <div v-if="!isPreStart" class="level-break">下一次休息 -</div>
+            <div v-if="!isPreStart" class="level-break">{{ t('UIMatchNextBreak') }} -</div>
           </div>
           <div class="blind-info">
             <div class="blind-row">
-              <div class="blind-label">盲注</div>
+              <div class="blind-label">{{ t('adaptation20006') }}</div>
               <div class="blind-value">{{ blindsLabel }}</div>
             </div>
             <div class="blind-row">
-              <div class="blind-label">下-级</div>
+              <div class="blind-label">{{ t('UIMTT_xiayijibie') }}</div>
               <div class="blind-value">{{ nextBlindsLabel }}</div>
             </div>
           </div>
@@ -264,19 +283,19 @@ const matchInfo = computed(() => {
         <!-- 右列 -->
         <div class="stats-col">
           <div class="stat-item">
-            <div class="stat-label">剩余玩家</div>
+            <div class="stat-label">{{ t('UIMTT_shengyuwanjia') }}</div>
             <div class="stat-value">{{ remainingPlayers }}</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">买入/重购</div>
+            <div class="stat-label">{{ t('UIMTT_maichong') }}</div>
             <div class="stat-value">{{ rebuyCount }}</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">钱圈名额</div>
+            <div class="stat-label">{{ t('UIMTT_qianquanmingci') }}</div>
             <div class="stat-value">{{ moneyBubble }}</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">我的排名</div>
+            <div class="stat-label">{{ t('UITexasReportMTT_MyRank_Tip') }}</div>
             <div class="stat-value">{{ myRank }}</div>
           </div>
         </div>
@@ -289,22 +308,22 @@ const matchInfo = computed(() => {
       <!-- 筹码统计 -->
       <div class="chips-row">
         <div class="chip-item">
-          <div class="chip-label">最高筹码</div>
+          <div class="chip-label">{{ t('UIMTT_chouma5') }}</div>
           <div class="chip-value">{{ fmtMoney(highestChips) }}</div>
           <div class="chip-bb">{{ highestChipsBB }}</div>
         </div>
         <div class="chip-item">
-          <div class="chip-label">平均筹码</div>
+          <div class="chip-label">{{ t('UIMTT_chouma2') }}</div>
           <div class="chip-value">{{ fmtMoney(avgChips) }}</div>
           <div class="chip-bb">{{ avgChipsBB }}</div>
         </div>
         <div class="chip-item">
-          <div class="chip-label">最低筹码</div>
+          <div class="chip-label">{{ t('UIMTT_chouma3') }}</div>
           <div class="chip-value">{{ fmtMoney(lowestChips) }}</div>
           <div class="chip-bb">{{ lowestChipsBB }}</div>
         </div>
         <div class="chip-item">
-          <div class="chip-label">初始筹码</div>
+          <div class="chip-label">{{ t('UIMTT_chouma1') }}</div>
           <div class="chip-value">{{ fmtMoney(initialChips) }}</div>
           <div class="chip-bb">{{ initialChipsBB }}</div>
         </div>
@@ -341,27 +360,28 @@ const matchInfo = computed(() => {
 /* ===== 介绍图 banner ===== */
 .game-banner {
   width: 100%;
-  border-radius: 0.5rem;
+  max-height: 4.8rem;
+  border-radius: 0.46rem;
   overflow: hidden;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.2rem;
 }
 
 .game-banner__img {
   width: 100%;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 /* ===== 状态卡片 ===== */
 .status-card {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.5rem;
   padding: 0.22rem 0.27rem;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0.66rem;
   box-shadow: 0 -0.21rem 0.54rem rgba(10, 184, 247, 0.54) inset;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.2rem;
 }
 
 .status-badge {
@@ -382,7 +402,7 @@ const matchInfo = computed(() => {
 .status-meta {
   display: flex;
   flex-direction: column;
-  gap: 0.18rem;
+  gap: 0.05rem;
 }
 
 .meta-row {
@@ -411,8 +431,8 @@ const matchInfo = computed(() => {
 }
 
 .meta-icon {
-  width: 0.5rem;
-  height: 0.5rem;
+  width: 0.42rem;
+  height: 0.42rem;
   object-fit: contain;
 }
 
@@ -420,8 +440,8 @@ const matchInfo = computed(() => {
 .stats-panel {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0.77rem;
-  padding: 0.37rem 0.45rem;
-  margin-bottom: 0.3rem;
+  padding: 0.30rem 0rem;
+  margin-bottom: 0.2rem;
 }
 
 .stats-grid {
@@ -451,7 +471,6 @@ const matchInfo = computed(() => {
   color: #fcfcfc;
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
-  margin-bottom: 0.12rem;
 }
 
 .stat-value {
@@ -464,11 +483,12 @@ const matchInfo = computed(() => {
 /* 级别卡片 */
 .level-card {
   width: 100%;
+  height: 2.7rem;
   background: linear-gradient(158deg, rgba(255, 255, 255, 0.1) 0%, rgba(230, 230, 230, 0.1) 100%);
   border-radius: 0.77rem;
-  padding: 0.2rem 0.15rem 0.15rem;
+  padding: 0.1rem 0.15rem 0.15rem;
   text-align: center;
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.24rem;
 }
 
 .level-label {
@@ -482,7 +502,7 @@ const matchInfo = computed(() => {
   font-size: 1.1rem;
   color: #fff;
   font-weight: 400;
-  font-family: 'Keania One', 'HONOR Sans CN', sans-serif;
+  font-family: 'Keania One';
   line-height: 1.2;
   margin: 0.1rem 0;
 }
@@ -499,7 +519,7 @@ const matchInfo = computed(() => {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.48rem;
 }
 
 .blind-row {
@@ -511,7 +531,6 @@ const matchInfo = computed(() => {
   color: #fcfcfc;
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
-  margin-bottom: 0.12rem;
 }
 
 .blind-value {
@@ -526,7 +545,8 @@ const matchInfo = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0.3rem 0;
+  margin: 0rem 0.4rem;
+  opacity: 0.5;
   position: relative;
 
   &::before,
@@ -541,12 +561,13 @@ const matchInfo = computed(() => {
 .divider-icon {
   width: 0.5rem;
   height: 0.5rem;
-  margin: 0 0.2rem;
+  margin: 0 0.3rem;
   object-fit: contain;
 }
 
 /* 筹码统计 */
 .chips-row {
+  margin: 0.4rem 0 0;
   display: flex;
   justify-content: space-between;
   gap: 0.2rem;
@@ -562,13 +583,14 @@ const matchInfo = computed(() => {
   color: #fcfcfc;
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
-  margin-bottom: 0.12rem;
 }
 
 .chip-value {
   font-size: 0.39rem;
   color: #fefefe;
   font-weight: 600;
+  height: 0.4rem;
+  line-height: 0.4rem;
   font-family: 'HONOR Sans CN', sans-serif;
 }
 
@@ -577,21 +599,20 @@ const matchInfo = computed(() => {
   color: #b6b6b6;
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
-  margin-top: 0.08rem;
 }
 
 /* ===== 赛事信息 ===== */
 .info-section {
   display: flex;
   flex-direction: column;
-  gap: 0.12rem;
+  gap: 0.1rem;
 }
 
 .info-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.18rem 0.45rem;
+  padding: 0.10rem 0.45rem;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0.77rem;
   min-height: 0.72rem;

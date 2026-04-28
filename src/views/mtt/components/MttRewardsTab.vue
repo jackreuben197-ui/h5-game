@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { GameTable, GameTableColumn } from '@/components/Table'
 import chipIcon from '@/assets/icons/icon_chips.png'
 import type { RoomcenterMttDetailData, RoomcenterMttRealPrize, RoomcenterMttPrize } from '@/api/models/roomcenter'
-import { postRoomcenterMttRealPrizeApi } from '@/api/roomcenter'
 import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 
@@ -15,10 +14,13 @@ interface RewardRecord {
 const props = defineProps<{
   data: RoomcenterMttDetailData | null
   matchId: number
+  rewardData: RoomcenterMttRealPrize | null
+  loading: boolean
 }>()
 
-const loading = ref(false)
-const rewardData = ref<RoomcenterMttRealPrize | null>(null)
+const emit = defineEmits<{
+  refresh: []
+}>()
 
 const mtt = computed(() => props.data?.mtt)
 const isDiamond = computed(() => (mtt.value?.gold_type ?? 1) === 4)
@@ -67,18 +69,18 @@ function formatReward(item: RoomcenterMttPrize): string {
 }
 
 const prizePool = computed(() => {
-  const value = rewardData.value?.award ?? props.data?.real_prize?.award
+  const value = props.rewardData?.award ?? props.data?.real_prize?.award
   return fmtMoney(value)
 })
 
 const paidPlaces = computed(() => {
-  const value = rewardData.value?.award_num ?? props.data?.real_prize?.award_num
+  const value = props.rewardData?.award_num ?? props.data?.real_prize?.award_num
   if (value === undefined || value === null) return '-'
   return value.toLocaleString()
 })
 
 const rewardList = computed<RewardRecord[]>(() => {
-  const list = rewardData.value?.prizes ?? props.data?.real_prize?.prizes ?? []
+  const list = props.rewardData?.prizes ?? props.data?.real_prize?.prizes ?? []
   return list.map((item) => {
     const min = item.min ?? 0
     const max = item.max ?? 0
@@ -88,35 +90,6 @@ const rewardList = computed<RewardRecord[]>(() => {
     }
   })
 })
-
-async function loadRewards(): Promise<void> {
-  if (!props.matchId) {
-    rewardData.value = null
-    return
-  }
-
-  loading.value = true
-  try {
-    const response = await postRoomcenterMttRealPrizeApi(props.matchId)
-    if (Number(response.code) === 0 && response.data) {
-      rewardData.value = response.data
-      return
-    }
-    rewardData.value = null
-  } catch {
-    rewardData.value = null
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(() => {
-  void loadRewards()
-})
-
-watch(() => props.matchId, () => {
-  void loadRewards()
-})
 </script>
 
 <template>
@@ -124,14 +97,14 @@ watch(() => props.matchId, () => {
     <!-- 顶部统计 -->
     <div class="rewards-stats-card">
       <div class="rewards-stat-row">
-        <div class="rewards-stat-label">总奖金</div>
+        <div class="rewards-stat-label">{{ t('UIMTT_zongjiangjin') }}</div>
         <div class="rewards-stat-value">
           <img :src="chipIcon" class="stat-chip-icon" alt="chip" />
           <span>{{ prizePool }}</span>
         </div>
       </div>
       <div class="rewards-stat-row">
-        <div class="rewards-stat-label">奖励圈</div>
+        <div class="rewards-stat-label">{{ t('MTT_State_RewardCircle') }}</div>
         <div class="rewards-stat-value">
           <span>{{ paidPlaces }}</span>
         </div>
@@ -142,13 +115,13 @@ watch(() => props.matchId, () => {
     <GameTable :data="rewardList" :loading="loading" height="7.2rem">
       <GameTableColumn
         prop="rank"
-        label="名次"
+        :label="t('UI_Rank')"
         :flex="1"
         align="center"
       />
       <GameTableColumn
         prop="reward"
-        label="奖励"
+        :label="t('MTT_State_Reward')"
         :flex="2"
         align="center"
       >
@@ -180,7 +153,7 @@ watch(() => props.matchId, () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0.4rem;
+  padding: 0 1.8rem;
   height: 1.2rem;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 3.9rem;
@@ -188,6 +161,7 @@ watch(() => props.matchId, () => {
 }
 
 .rewards-stat-label {
+  text-align: center;
   font-size: 0.36rem;
   font-family: 'SF Pro', 'HONOR Sans CN', sans-serif;
   font-weight: 700;
@@ -207,6 +181,8 @@ watch(() => props.matchId, () => {
 .stat-chip-icon {
   width: 0.42rem;
   height: 0.42rem;
+  vertical-align: top;
+
   object-fit: contain;
 }
 

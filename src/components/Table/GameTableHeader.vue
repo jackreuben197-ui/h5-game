@@ -160,7 +160,7 @@ export default { name: 'GameTableHeader' }
 
 .game-table__header-label {
   font-size: 0.36rem;
-  font-weight: 700;
+  // font-weight: 700;
   color: #fff;
   white-space: nowrap;
   line-height: 1;

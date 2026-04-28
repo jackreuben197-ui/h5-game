@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { showToast } from 'vant'
 import { GameTable, GameTableColumn } from '@/components/Table'
 import peopleIcon from '@/assets/icons/icon_people.png'
@@ -9,7 +9,6 @@ import type {
   RoomcenterMttRoomPlayer,
   RoomcenterMttRoomRecord,
 } from '@/api/models/roomcenter'
-import { postRoomcenterMttRoomsApi } from '@/api/roomcenter'
 import { t } from '@/i18n'
 
 interface TableRecord {
@@ -23,14 +22,20 @@ interface TableRecord {
 const props = defineProps<{
   data: RoomcenterMttDetailData | null
   matchId: number
+  roomList: RoomcenterMttRoomRecord[]
+  loading: boolean
 }>()
 
-const loading = ref(false)
-const roomList = ref<RoomcenterMttRoomRecord[]>([])
+const emit = defineEmits<{
+  refresh: []
+}>()
 
-function formatNum(n: number | undefined | null): string {
+const isDiamond = computed(() => (props.data?.mtt?.gold_type ?? 1) === 4)
+
+function formatMoney(n: number | undefined | null): string {
   if (n === undefined || n === null) return '-'
-  return n.toLocaleString()
+  const val = isDiamond.value ? n : n / 100
+  return val.toLocaleString()
 }
 
 function getRoomMinMax(roomers: RoomcenterMttRoomPlayer[] | undefined): [number, number] {
@@ -50,7 +55,7 @@ function getRoomMinMax(roomers: RoomcenterMttRoomPlayer[] | undefined): [number,
 }
 
 const tableList = computed<TableRecord[]>(() => {
-  return roomList.value.map((room) => {
+  return props.roomList.map((room) => {
     const rid = Number(room.rid ?? 0)
     const roomers = Array.isArray(room.roomers) ? room.roomers : []
     const [minChip, maxChip] = getRoomMinMax(roomers)
@@ -58,8 +63,8 @@ const tableList = computed<TableRecord[]>(() => {
     return {
       tableNo: rid > 0 ? String(rid) : '-',
       players: roomers.length,
-      minChips: roomers.length ? formatNum(minChip) : '-',
-      maxChips: roomers.length ? formatNum(maxChip) : '-',
+      minChips: roomers.length ? formatMoney(minChip) : '-',
+      maxChips: roomers.length ? formatMoney(maxChip) : '-',
       rid,
     }
   })
@@ -89,39 +94,6 @@ function handleRowClick(row: Record<string, unknown>): void {
   // TODO: 等 Gameplay 联调完成后，接入真正的观战/入桌路由
   showToast(`准备进入牌桌 ${rid}`)
 }
-
-async function loadRooms(): Promise<void> {
-  if (!props.matchId) {
-    roomList.value = []
-    return
-  }
-
-  loading.value = true
-  try {
-    const response = await postRoomcenterMttRoomsApi(
-      props.matchId,
-      { limit: 200, offset: 0 },
-      { suppressBusinessToast: true },
-    )
-    if (Number(response.code) === 0 && response.data) {
-      roomList.value = Array.isArray(response.data.records) ? response.data.records : []
-      return
-    }
-    roomList.value = []
-  } catch {
-    roomList.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(() => {
-  void loadRooms()
-})
-
-watch(() => props.matchId, () => {
-  void loadRooms()
-})
 </script>
 
 <template>
@@ -129,14 +101,14 @@ watch(() => props.matchId, () => {
     <!-- 顶部统计 -->
     <div class="tables-stats-card">
       <div class="tables-stat-row">
-        <div class="tables-stat-label">单桌人数</div>
+        <div class="tables-stat-label">{{ t('UIMatchPerTableCount') }}</div>
         <div class="tables-stat-value">
           <img :src="peopleIcon" class="stat-icon" alt="people" />
           <span>{{ seatsPerTable }}</span>
         </div>
       </div>
       <div class="tables-stat-row">
-        <div class="tables-stat-label">牌桌总数</div>
+        <div class="tables-stat-label">{{ t('UIMatchTotalTables') }}</div>
         <div class="tables-stat-value">
           <img :src="tableIcon" class="stat-icon" alt="table" />
           <span>{{ totalTables }}</span>
@@ -153,25 +125,25 @@ watch(() => props.matchId, () => {
     >
       <GameTableColumn
         prop="tableNo"
-        label="桌号"
+        :label="t('UITexasReport_Text_DeskNumTip')"
         :flex="1"
         align="center"
       />
       <GameTableColumn
         prop="players"
-        label="人数"
+        :label="t('UITexasReport_Text_DeskPlayerCountTip')"
         :flex="1"
         align="center"
       />
       <GameTableColumn
         prop="minChips"
-        label="最小筹码"
+        :label="t('UIMTT_chouma3')"
         :flex="2"
         align="center"
       />
       <GameTableColumn
         prop="maxChips"
-        label="最大筹码"
+        :label="t('UIMTT_chouma5')"
         :flex="2"
         align="center"
       />
@@ -196,7 +168,7 @@ watch(() => props.matchId, () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0.4rem;
+  padding: 0 1.8rem;
   height: 1.2rem;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 3.9rem;
@@ -204,6 +176,7 @@ watch(() => props.matchId, () => {
 }
 
 .tables-stat-label {
+  text-align: center;
   font-size: 0.36rem;
   font-family: 'SF Pro', 'HONOR Sans CN', sans-serif;
   font-weight: 700;

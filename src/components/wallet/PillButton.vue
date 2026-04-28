@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import buttonTopBg from '@/assets/icons/wallet/button_top.svg'
+import buttonTopBg from '@/assets/images/button_top.svg'
 
 interface Props {
   label: string

@@ -4,7 +4,7 @@ import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import bannerBgUrl from '@/assets/images/wallet/banner_bg.png'
 import AppBar from '@/components/wallet/AppBar.vue'
 import ava1 from '@/assets/images/wallet/avatars/ava1.png'
-import iconChips from '@/assets/icons/icon_chips.png'
+import iconChips from '@/assets/icons/wallet/ic_coins.png'
 
 interface Transaction {
   id: number

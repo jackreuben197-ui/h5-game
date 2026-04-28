@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
-import keypadBgUrl from '@/assets/icons/wallet/keyboard_numbers_bg.svg'
+import keypadBgUrl from '@/assets/images/wallet/keyboard_numbers_bg.svg'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import PrimaryButton from './PrimaryButton.vue'
+import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import { t } from '@/i18n'
 
 interface Props {
@@ -139,7 +139,7 @@ function confirm(): void {
             {{ t('Wallet_Cancel') }}
           </button>
           <PrimaryButton
-            :label="t('Wallet_Confirm')"
+            :text="t('Wallet_Confirm')"
             class="kp__confirm"
             @click="confirm"
           />
@@ -177,12 +177,12 @@ function confirm(): void {
   background-color: rgba(0, 0, 0, 0.34);
   border: 0.96px solid rgba(242, 242, 242, 0.4);
   border-bottom: none;
-  border-top-left-radius: clamp(24px, 8.5vw, 31.7px);
-  border-top-right-radius: clamp(24px, 8.5vw, 31.7px);
-  padding: clamp(24px, 6.8vw, 30px) clamp(30px, 5.3vw, 34px) clamp(18px, 5.5vw, 22px);
+  border-top-left-radius: 0.85rem;
+  border-top-right-radius: 0.85rem;
+  padding: 0.68rem 0.53rem 0.55rem;
   display: flex;
   flex-direction: column;
-  gap: clamp(14px, 4.5vw, 18px);
+  gap: 0.45rem;
   box-shadow:
     3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25),
     0 0 8.6px #000 inset,
@@ -216,14 +216,14 @@ function confirm(): void {
 .kp__header {
   display: flex;
   flex-direction: column;
-  gap: clamp(3px, 1.2vw, 4.5px);
+  gap: 0.12rem;
   width: 100%;
 }
 
 .kp__title {
   font-family: var(--wallet-font-cn);
   font-weight: 400;
-  font-size: clamp(12px, 3.55vw, 13.3px);
+  font-size: 0.355rem;
   color: #f9f9f9;
   line-height: 1.2;
 }
@@ -231,10 +231,10 @@ function confirm(): void {
 .kp__input {
   width: 100%;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: clamp(16px, 5.9vw, 22px);
-  padding: clamp(10px, 3.4vw, 12.8px) clamp(8px, 2.6vw, 9.6px);
+  border-radius: 0.59rem;
+  padding: 0.34rem 0.26rem;
   text-align: center;
-  min-height: clamp(38px, 12.8vw, 48px);
+  min-height: 1.28rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -244,7 +244,7 @@ function confirm(): void {
 .kp__value {
   font-family: var(--wallet-font-cn);
   font-weight: 500;
-  font-size: clamp(13px, 4vw, 15px);
+  font-size: 0.4rem;
   line-height: 1.4;
 }
 
@@ -259,7 +259,7 @@ function confirm(): void {
 .kp__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: clamp(6px, 2.2vw, 8.4px);
+  gap: 0.22rem;
 }
 
 .kp__key {
@@ -271,10 +271,10 @@ function confirm(): void {
   justify-content: center;
   background-color: rgba(255, 255, 255, 0.1);
   border: none;
-  border-radius: clamp(11px, 3.8vw, 14.2px);
+  border-radius: 0.38rem;
   font-family: var(--wallet-font-num);
   font-weight: 500;
-  font-size: clamp(18px, 6.1vw, 22.9px);
+  font-size: 0.61rem;
   color: #fff;
   cursor: pointer;
 }
@@ -282,7 +282,7 @@ function confirm(): void {
 .kp__key--accent {
   background: rgba(4, 209, 157, 0.24);
   border: none;
-  border-radius: clamp(42px, 13.5vw, 60px);
+  border-radius: 1.35rem;
 }
 
 .kp__icon {
@@ -292,21 +292,21 @@ function confirm(): void {
 
 .kp__actions {
   display: flex;
-  gap: clamp(6px, 2.5vw, 9.5px);
-  padding: 0 clamp(4px, 2vw, 14px);
-  margin-top: clamp(4px, 1.3vw, 5px);
+  gap: 0.25rem;
+  padding: 0 0.2rem;
+  margin-top: 0.13rem;
 }
 
 .kp__cancel {
   flex: 1;
-  height: clamp(44px, 14.4vw, 54px);
-  border-radius: clamp(28px, 10.5vw, 39.6px);
+  height: 1.44rem;
+  border-radius: 1.05rem;
   background: rgba(0, 0, 0, 0.55);
   border: none;
   color: #fff;
   font-family: var(--wallet-font-cn);
   font-weight: 500;
-  font-size: clamp(13px, 4vw, 15px);
+  font-size: 0.4rem;
   cursor: pointer;
 }
 

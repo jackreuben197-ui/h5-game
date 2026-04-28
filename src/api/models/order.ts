@@ -7,6 +7,8 @@ export interface ClubFundAuditRequest {
 }
 
 export interface ClubFundAuditResponseData {
+    data?: ClubFundAuditData;
+
   [key: string]: unknown
 }
 
@@ -16,6 +18,8 @@ export interface ClubFundExchangeRequest {
 }
 
 export interface ClubFundExchangeResponseData {
+    data?: ClubFundExchangeData;
+
   [key: string]: unknown
 }
 
@@ -34,6 +38,8 @@ export interface ClubFundApplyListRequest {
 }
 
 export interface ClubFundApplyListResponseData {
+    data?: ClubFundApplyListData;
+
   [key: string]: unknown
 }
 
@@ -52,11 +58,13 @@ export interface ClubFundOrderListRequest {
   //     order_type: number,
   //     limit?: number,
   //     offset?: number
-  // 
+  //
   [key: string]: unknown
 }
 
 export interface ClubFundOrderListResponseData {
+    data?: ClubFundOrderListData;
+
   [key: string]: unknown
 }
 
@@ -65,11 +73,13 @@ export interface RechargeGoldClubRequest {
 
   //     amount: number,
   //     gold_type: number // 1 联盟币 2 usdt
-  // 
+  //
   [key: string]: unknown
 }
 
 export interface RechargeGoldClubResponseData {
+    data?: RechargeGoldClubData;
+
   [key: string]: unknown
 }
 
@@ -78,11 +88,13 @@ export interface TiquGoldClubRequest {
 
   //     amount: number,
   //     gold_type: number,
-  // 
+  //
   [key: string]: unknown
 }
 
 export interface TiquGoldClubResponseData {
+    data?: TiquGoldClubData;
+
   [key: string]: unknown
 }
 
@@ -270,6 +282,8 @@ export interface ClubPlayerOrderRecordRequest {
 }
 
 export interface ClubPlayerOrderRecordResponseData {
+    data?: ClubPlayerOrderRecordData;
+
   [key: string]: unknown
 }
 
@@ -279,6 +293,8 @@ export interface RechargeGoldRequest {
 }
 
 export interface RechargeGoldResponseData {
+    data?: RechargeGoldData;
+
   [key: string]: unknown
 }
 
@@ -393,5 +409,143 @@ export interface TiquGoldRequest {
 }
 
 export interface TiquGoldResponseData {
+    data?: TiquGoldData;
+
   [key: string]: unknown
 }
+
+export interface ClubFundApplyListData {
+    limit?: number;
+    offset?: number;
+    total?: number;
+    list?: ClubFundApplyListOrderInfo[];
+
+  [key: string]: unknown
+}
+
+export interface ClubFundApplyListOrderInfo {
+    club_id?: number;
+    order_no?: string;
+    order_type?: number;
+    gold_num?: number;
+    amount?: number;
+    dest_gold_type?: number;
+    dest_amount?: number;
+    gold_type?: number;
+    user_random_id?: number;
+    nickname?: string;
+    avatar?: string;
+    club_name?: string;
+    user_desc?: string;
+    club_logo?: string;
+    currency?: string;
+
+  [key: string]: unknown
+}
+
+export interface ClubFundOrderListData {
+    limit?: number;
+    offset?: number;
+    total?: number;
+    list?: ClubFundOrderListOrderInfo[];
+
+  [key: string]: unknown
+}
+
+export interface ClubFundOrderListOrderInfo {
+    order_no?: string;
+    gold_num?: number;
+    status?: number;
+    create_time?: string;
+    dest_gold_type?: number;
+    dest_amount?: number;
+    gold_type?: number;
+    pay_price?: number;
+    pay_price_fee?: number;
+    fee_rate?: number;
+    fee_type?: number;
+    pay_type_name?: string;
+    pay_type_address?: string;
+    pay_address?: string;
+
+  [key: string]: unknown
+}
+
+export interface RechargeGoldClubData {
+    more_contact?: string;
+
+  [key: string]: unknown
+}
+
+export interface ClubPlayerOrderRecordData {
+    limit?: number;
+    offset?: number;
+    total?: number;
+    list?: ClubPlayerOrderRecordOrderInfo[];
+
+  [key: string]: unknown
+}
+
+export interface ClubPlayerOrderRecordOrderInfo {
+    id?: number;
+    user_id?: number;
+    club_id?: number;
+    tribe_id?: number;
+    order_no?: string;
+    order_type?: number;
+    gold_num?: number;
+    status?: number;
+    audit_time?: string;
+    audit_user_id?: number;
+    audit_type?: number;
+    create_time?: string;
+    update_time?: string;
+    desc?: string;
+    user_random_id?: number;
+    nickname?: string;
+    club_random_id?: number;
+    club_name?: string;
+    tribe_random_id?: number;
+    tribe_name?: string;
+    amount?: number;
+    change_id?: number;
+    dest_gold_type?: number;
+    exchange_rate?: number;
+    dest_amount?: number;
+    gold_type?: number;
+    avatar?: string;
+    user_desc?: string;
+
+  [key: string]: unknown
+}
+
+export interface RechargeGoldData {
+    more_contact?: string;
+    digital_wallet_erc?: string;
+    digital_wallet_trc?: string;
+    tribe_name?: string;
+    order_no?: string;
+    usdt_address?: OrderUserUsdtRechargePayInfo;
+    order?: OrderUserUsdtRechargeOrderInfo;
+
+  [key: string]: unknown
+}
+
+export interface TiquGoldData {
+    api_type?: number;
+
+  [key: string]: unknown
+}
+
+export interface ClubFundAuditData {
+  [key: string]: unknown
+}
+
+export interface ClubFundExchangeData {
+  [key: string]: unknown
+}
+
+export interface TiquGoldClubData {
+  [key: string]: unknown
+}
+

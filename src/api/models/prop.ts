@@ -450,6 +450,8 @@ export interface ShareUsableRequest {
 }
 
 export interface ShareUsableResponseData {
+    data?: ShareUsableData;
+
   [key: string]: unknown
 }
 
@@ -483,6 +485,8 @@ export interface MallBuyRequest {
 }
 
 export interface MallBuyResponseData {
+    data?: MallBuyData;
+
   [key: string]: unknown
 }
 
@@ -492,6 +496,8 @@ export interface MallShopListRequest {
 }
 
 export interface MallShopListResponseData {
+    data?: MallShopListData;
+
   [key: string]: unknown
 }
 
@@ -592,7 +598,7 @@ export interface PropTaskListRequest {
   //     timezone: number, // 时区 0-巴西 1-utc
   //     limit: number,
   //     offset: number,
-  // 
+  //
   [key: string]: unknown
 }
 
@@ -605,13 +611,13 @@ export interface PropTaskReceIveRequest {
 
   //     task_id: number,
   //     timezone: number,
-  // 
+  //
   [key: string]: unknown
 }
 
 export interface PropTaskReceIveResponseData {
 
-  // 
+  //
   [key: string]: unknown
 }
 
@@ -676,7 +682,7 @@ export interface PropTribeGoldPriceListInfo {
 export interface BagCurrentPendantListRequest {
 
   //     prop_type: number,
-  // 
+  //
   [key: string]: unknown
 }
 
@@ -714,13 +720,15 @@ export interface PropUserPropListRequest {
   //     prop_type: number,//道具类型(prop_type):0-全部;1-mtt门票，2-实物，3-电话卡，4-购物卡，5-代金卷 6-线下门票 7-免服务费代金券 8-充值代金券 9-金豆券 10-一元购活动券 11-道具代替劵
   //     limit: number,//条目
   //     offset: number,//开始下标。例子（offset=0，limit=10，0-9。）
-  // 
+  //
   [key: string]: unknown
 }
 
 export interface PropUserPropListResponseData {
 
-  // 
+  //
+    data?: PropUserPropListData;
+
   [key: string]: unknown
 }
 
@@ -750,13 +758,13 @@ export interface RoomCenterMttGetdisCountSData {
 export interface BagpAndantDownRequest {
 
   //     prop_id: number, //道具id
-  // 
+  //
   [key: string]: unknown
 }
 
 export interface BagpAndantDownResponseData {
 
-  // 
+  //
   [key: string]: unknown
 }
 
@@ -764,7 +772,7 @@ export interface BagpAndantDownResponseData {
 export interface BagPendantListRequest {
 
   //     prop_type: number,
-  // 
+  //
   [key: string]: unknown
 }
 
@@ -776,13 +784,13 @@ export interface BagPendantListResponseData {
 export interface BagpandantupRequest {
 
   //     prop_id: number, //道具id
-  // 
+  //
   [key: string]: unknown
 }
 
 export interface BagpandantupResponseData {
 
-  // 
+  //
   [key: string]: unknown
 }
 
@@ -792,6 +800,8 @@ export interface PropUserPropUsedRequest {
 }
 
 export interface PropUserPropUsedResponseData {
+    data?: PropUserPropUsedData;
+
   [key: string]: unknown
 }
 
@@ -1092,3 +1102,75 @@ export interface PropWheelUserHandNumRewardData {
 
   [key: string]: unknown
 }
+
+export interface ShareUsableData {
+    usable?: boolean;
+
+  [key: string]: unknown
+}
+
+export interface MallBuyData {
+    order_id?: string;
+
+  [key: string]: unknown
+}
+
+export interface MallShopListData {
+    list?: MallShopListItems[];
+    limit?: number;
+    offset?: number;
+    total?: number;
+
+  [key: string]: unknown
+}
+
+export interface MallShopListItems {
+    id?: number;
+    picture?: string;
+    num?: number;
+    price?: number;
+    discount?: number;
+    product_id?: string;
+
+  [key: string]: unknown
+}
+
+export interface PropUserPropListData {
+    limit?: number;
+    offset?: number;
+    total?: number;
+    list?: PropUserPropListRecord[];
+
+  [key: string]: unknown
+}
+
+export interface PropUserPropListRecord {
+    id?: number;
+    prop_id?: number;
+    prop_amount?: number;
+    prop_type?: number;
+    use_status?: number;
+    club_id?: number;
+    tribe_id?: number;
+    club_name?: string;
+    tribe_name?: string;
+    game_prop?: PropUserPropListGameProp;
+    expired_time?: string;
+
+  [key: string]: unknown
+}
+
+export interface PropUserPropListGameProp {
+    id?: number;
+    prop_name?: string;
+    prop_type?: number;
+    prop_icon?: string;
+    prop_value?: number;
+
+  [key: string]: unknown
+}
+
+export interface PropUserPropUsedData {
+  [key: string]: unknown
+}
+

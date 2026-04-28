@@ -22,3 +22,4 @@ export interface UserProxyImAuthUserTokenData {
 
   [key: string]: unknown
 }
+

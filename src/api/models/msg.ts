@@ -7,6 +7,8 @@ export interface MsgMessageUnreadClearRequest {
 }
 
 export interface MsgMessageUnreadClearResponseData {
+    data?: MsgMessageUnreadClearData;
+
   [key: string]: unknown
 }
 
@@ -16,14 +18,14 @@ export interface MsgMessageListRequest {
   //     msg_type: number,//消息类型
   //     limit: number,//条目
   //     offset: number,//开始下标。例子（offset=0，limit=10，0-9。）
-  // 
+  //
   [key: string]: unknown
 }
 
 export interface MsgMessageListResponseData {
 
   //     data?: MsgMessageListData,
-  // 
+  //
   [key: string]: unknown
 }
 
@@ -32,7 +34,9 @@ export interface MsgMessageListData {
   //     offset: number,//开始下标。例子（offset=0，limit=10，0-9。）
   //     total: number,//总条目数
   //     list: MsgMessageListMsgInfo,
-  // 
+  //
+    limit?: number;
+
   [key: string]: unknown
 }
 
@@ -62,6 +66,8 @@ export interface MessageRednumRequest {
 }
 
 export interface MessageRednumResponseData {
+    data?: MessageRednumData[];
+
   [key: string]: unknown
 }
 
@@ -158,6 +164,54 @@ export interface MsgMessageUnreadResponseData {
     remark: string;
     msg_type: number; //消息类型 MessageSubType
     create_time: string; //创建时间
+    data?: MsgMessageUnreadData[];
 
   [key: string]: unknown
 }
+
+export interface MsgMessageListMsgInfo {
+    msg_id?: number;
+    title?: string;
+    content?: string;
+    remark?: string;
+    msg_type?: number;
+    create_time?: string;
+    game_type?: number;
+    multi_language_id?: string;
+    sender_name?: string;
+    sender_icon?: string;
+    object_string?: string;
+    msg_status?: number;
+    member_icon?: string;
+    member_name?: string;
+    member_id?: number;
+
+  [key: string]: unknown
+}
+
+export interface MessageRednumResponseData2 {
+    red_num_list?: MessageRednumData[];
+
+  [key: string]: unknown
+}
+
+export interface MessageRednumData {
+    num?: number;
+    type?: number;
+
+  [key: string]: unknown
+}
+
+export interface MsgMessageUnreadData {
+    msg_main_type?: number;
+    num?: number;
+    msg_type?: number;
+    create_time?: string;
+
+  [key: string]: unknown
+}
+
+export interface MsgMessageUnreadClearData {
+  [key: string]: unknown
+}
+

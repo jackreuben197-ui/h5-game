@@ -104,7 +104,7 @@ export interface OrgClubActivityCreateRequest {
   //     activity_type: number,  //
   //     description: string,
   //     img_url: string,
-  // 
+  //
   [key: string]: unknown
 }
 
@@ -118,6 +118,8 @@ export interface OrgClubNoticeRequest {
 }
 
 export interface OrgClubNoticeResponseData {
+    data?: OrgClubNoticeData;
+
   [key: string]: unknown
 }
 
@@ -127,6 +129,8 @@ export interface OrgClubNoticeGetRequest {
 }
 
 export interface OrgClubNoticeGetResponseData {
+    data?: OrgClubNoticeGetData;
+
   [key: string]: unknown
 }
 
@@ -136,6 +140,8 @@ export interface OrgClubNoticeUpdateRequest {
 }
 
 export interface OrgClubNoticeUpdateResponseData {
+    data?: OrgClubNoticeUpdateData;
+
   [key: string]: unknown
 }
 
@@ -220,6 +226,8 @@ export interface OrgClubShareAuditRequest {
 }
 
 export interface OrgClubShareAuditResponseData {
+    data?: OrgClubShareAuditData;
+
   [key: string]: unknown
 }
 
@@ -238,6 +246,8 @@ export interface OrgClubNoticeIgnoreRequest {
 }
 
 export interface OrgClubNoticeIgnoreResponseData {
+    data?: OrgClubNoticeIgnoreData;
+
   [key: string]: unknown
 }
 
@@ -251,7 +261,7 @@ export interface TicketCreateRequest {
   //     ticket_type: number,// 问题类型
   //     description: string,//  问题描述
   //     img_url: string,//  图片描述
-  // 
+  //
   [key: string]: unknown
 }
 
@@ -520,6 +530,8 @@ export interface OrgRoomBatchCreateRequest {
 }
 
 export interface OrgRoomBatchCreateResponseData {
+    data?: number;
+
   [key: string]: unknown
 }
 
@@ -529,6 +541,8 @@ export interface OrgRoomClubCreateRequest {
 }
 
 export interface OrgRoomClubCreateResponseData {
+    data?: OrgRoomClubCreateData;
+
   [key: string]: unknown
 }
 
@@ -538,6 +552,8 @@ export interface OrgRoomConfigCreateRequest {
 }
 
 export interface OrgRoomConfigCreateResponseData {
+    data?: OrgRoomConfigCreateData;
+
   [key: string]: unknown
 }
 
@@ -547,6 +563,8 @@ export interface OrgRoomCreateRequest {
 }
 
 export interface OrgRoomCreateResponseData {
+    data?: OrgRoomCreateData;
+
   [key: string]: unknown
 }
 
@@ -613,6 +631,8 @@ export interface OrgTemplateDeleteRequest {
 }
 
 export interface OrgTemplateDeleteResponseData {
+    data?: OrgTemplateDeleteData;
+
   [key: string]: unknown
 }
 
@@ -622,6 +642,8 @@ export interface OrggetTemplateRequest {
 }
 
 export interface OrggetTemplateResponseData {
+    data?: OrggetTemplateData;
+
   [key: string]: unknown
 }
 
@@ -651,6 +673,8 @@ export interface OrgUpdateTemplateRequest {
 }
 
 export interface OrgUpdateTemplateResponseData {
+    data?: OrgUpdateTemplateData;
+
   [key: string]: unknown
 }
 
@@ -853,3 +877,110 @@ export interface CmsExtWheelTemplateListData {
 
   [key: string]: unknown
 }
+
+export interface OrgClubNoticeData {
+    info?: OrgClubNoticeRecord;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubNoticeRecord {
+    id?: number;
+    club_id?: number;
+    title?: string;
+    content?: string;
+    start_time?: string;
+    end_time?: string;
+    tribe_id?: number;
+    tribe_name?: string;
+    tribe_notice_switch?: number;
+    tribe_notice_title?: string;
+    tribe_notice?: string;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubNoticeGetData {
+    info?: OrgClubNoticeGetRecord;
+
+  [key: string]: unknown
+}
+
+export interface OrgClubNoticeGetRecord {
+    id?: number;
+    club_id?: number;
+    title?: string;
+    content?: string;
+    start_time?: string;
+    end_time?: string;
+
+  [key: string]: unknown
+}
+
+export interface OrgRoomBatchCreateInfo {
+    template_id?: number;
+    count?: number;
+    ante?: number;
+    sb?: number;
+
+  [key: string]: unknown
+}
+
+export interface OrgRoomClubCreateData {
+    room_id?: number;
+    room_config?: RoomConfigResponse;
+
+  [key: string]: unknown
+}
+
+export interface OrgRoomConfigCreateData {
+    room_id?: number;
+    room_config?: RoomConfigResponse;
+
+  [key: string]: unknown
+}
+
+export interface OrgRoomCreateData {
+    room_id?: number;
+    room_config?: RoomConfigResponse;
+
+  [key: string]: unknown
+}
+
+export interface OrggetTemplateData {
+    limit?: number;
+    offset?: number;
+    total?: number;
+    data?: RoomConfigRequest[];
+
+  [key: string]: unknown
+}
+
+export interface OrgClubNoticeUpdateData {
+  [key: string]: unknown
+}
+
+export interface OrgClubShareAuditData {
+  [key: string]: unknown
+}
+
+export interface OrgClubNoticeIgnoreData {
+  [key: string]: unknown
+}
+
+export interface OrgTemplateDeleteData {
+  [key: string]: unknown
+}
+
+export interface OrgUpdateTemplateData {
+  [key: string]: unknown
+}
+
+export interface RoomConfigResponse {
+  [key: string]: unknown
+}
+
+export interface RoomConfigRequest {
+  [key: string]: unknown
+}
+

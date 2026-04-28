@@ -1,6 +1,79 @@
 // 该文件由迁移脚本从 cocos Request 自动生成并做结构化转换。
 // 前缀: /api/misc
 
+import type {
+  MsgMessageSystemBroadcastNumMsgInfo,
+  MsgMessageSystemBroadcastNumRequest,
+  MsgMessageTodoData,
+  MsgMessageUnreadData,
+  MsgMessageUnreadRequest,
+  MessageRednumData,
+  MessageRednumRequest,
+} from '@/api/models/msg'
+import type {
+  StatsOtherUserStatsRequest,
+  StatsOtherUserStatsData,
+  FriendRoomStatsDataRequest,
+  FriendRoomStatsDataData,
+  FriendRoomStatsDataInfoRequest,
+  FriendRoomStatsDataInfoData,
+  StatsUserStatsRequest,
+  StatsUserStatsData,
+  StatsUserStatsRivalRoomStatsRequest,
+  StatsUserStatsRivalRoomStatsData,
+  StatsUserStatsAllinRequest,
+  StatsUserStatsAllinData,
+  StatsUserStatsCardTypeRequest,
+  StatsUserStatsCardTypeData,
+  ClubDataStatsDataInfoRequest,
+  ClubDataStatsDataInfoData,
+  ClubDataStatsDataRequest,
+  ClubDataStatsDataData,
+  StatsUserGameRecordListRequest,
+  StatsUserGameRecordListData,
+} from '@/api/models/stats'
+import type {
+  ClubUserWalletRequest,
+  ClubUserWalletData,
+  OrgClubUserInfoRequest,
+  OrgClubUserInfoData,
+  OrgClubSearchByIdRequest,
+  OrgClubSearchByIdData,
+  OrgClubGoldRequest,
+  OrgClubGoldData,
+  OrgClubMasterSlaveClubListRequest,
+  OrgClubMasterSlaveClubListData,
+  OrgClubIsMangerRequest,
+  OrgClubIsMangerData,
+  ClubFundChangeLogRequest,
+  ClubFundChangeLogData,
+  OrgClubUserWalletRelationListRequest,
+  OrgClubUserWalletRelationListData,
+  OrgClubGetRequest,
+  OrgClubGetResponseData,
+  OrgTribeBlackUserListRequest,
+  OrgTribeBlackUserListData,
+  OrgUserSelfProfitUnpayRecordsData,
+} from '@/api/models/org'
+import type {
+  PropMallGoodsListRequest,
+  PropMallGoodsListData,
+  PropSignInActivityDetailData,
+  PropChatPropListRequest,
+  PropChatPropListData,
+} from '@/api/models/prop'
+import type {
+  ChatSupportChannelListRequest,
+  ChatSupportChannelListData,
+} from '@/api/models/chat'
+import type {
+  OrgClubNoticeRequest,
+  OrgClubNoticeRecord,
+  CmsExtWheelTemplateListData,
+} from '@/api/models/cmsext'
+import type { UserMuteListData } from '@/api/models/user'
+import type { UserWhitelistInfoInnerData } from '@/api/models/config'
+
 // /api/misc/agora/token (MiscAgoraToken)
 export interface MiscAgoraTokenRequest {
 
@@ -261,6 +334,7 @@ export interface MiscBannerListResponseData {
     offset: number; //开始下标。例子（offset=0，limit=10，0-9。）
     total: number; //总条数
     list: MiscBannerListBannerInfo[]; // Banner列表
+    data?: MiscBannerListData;
 
   [key: string]: unknown
 }
@@ -273,6 +347,9 @@ export interface MiscBannerListBannerInfo {
     image_url: string; //Banner图片连接
     redirect_url: string; //跳转连接
     description: string; //描述
+    resource_type?: number;
+    video_url?: string;
+    video_cover_url?: string;
 
   [key: string]: unknown
 }
@@ -280,71 +357,49 @@ export interface MiscBannerListBannerInfo {
 // /api/misc/combine (MiscCombine)
 export interface MiscCombineRequest {
 
-    api_list?: Array<
-      (MiscCombineApiType)[keyof MiscCombineApiType]
-    >;
-    popup_newer_req?: RequestParamsOf<typeof MiscPopupNewer>;
-    banner_lobby_req?: RequestParamsOf<typeof MiscBannerLobby>;
-    article_list_req?: RequestParamsOf<typeof MiscArtiCleList>;
-    msg_unread_req?: RequestParamsOf<typeof MsgMessageUnread>;
-    msg_broadcast_num_req?: RequestParamsOf<
-      typeof MsgMessageSystemBroadcastNum
-    >;
-    msg_red_num_req?: RequestParamsOf<typeof MessageRednum>;
+    api_list?: number[];
+    popup_newer_req?: MiscPopupNewerRequest;
+    banner_lobby_req?: MiscBannerLobbyRequest;
+    article_list_req?: MiscArtiCleListRequest;
+    msg_unread_req?: MsgMessageUnreadRequest;
+    msg_broadcast_num_req?: MsgMessageSystemBroadcastNumRequest;
+    msg_red_num_req?: MessageRednumRequest;
     user_info_by_rid_req?: {
       user_id?: number;
     };
-    user_stats_by_user_rid_req?: RequestParamsOf<typeof StatsOtherUserStats>;
-    banner_list_req?: RequestParamsOf<typeof MiscBannerList>;
-    club_notice_req?: {
-      club_id?: number;
+    user_stats_by_user_rid_req?: StatsOtherUserStatsRequest;
+    banner_list_req?: MiscBannerListRequest;
+    club_notice_req?: OrgClubNoticeRequest;
+    club_user_wallet_req?: ClubUserWalletRequest;
+    club_user_info_req?: OrgClubUserInfoRequest;
+    club_info_req?: OrgClubSearchByIdRequest;
+    club_fund_detail_req?: OrgClubGoldRequest;
+    mall_goods_list_req?: PropMallGoodsListRequest;
+    friend_room_stats_data_req?: FriendRoomStatsDataRequest;
+    friend_room_stats_data_info_req?: FriendRoomStatsDataInfoRequest;
+    stats_user_stats_req?: StatsUserStatsRequest;
+    user_rival_room_stats_req?: StatsUserStatsRivalRoomStatsRequest;
+    user_allin_room_stats_req?: StatsUserStatsAllinRequest;
+    user_card_type_room_stats_req?: StatsUserStatsCardTypeRequest;
+    club_data_stats_data_info_req?: ClubDataStatsDataInfoRequest;
+    club_data_stats_data_req?: ClubDataStatsDataRequest;
+    user_game_record_list_req?: StatsUserGameRecordListRequest;
+    game_round_list_data_by_room_req?: MiscGameRoundListDataByRoomRequest;
+    master_slave_club_list_req?: OrgClubMasterSlaveClubListRequest;
+    club_admin_has_req?: OrgClubIsMangerRequest;
+    club_gold_change_log_req?: ClubFundChangeLogRequest;
+    club_user_wallet_relation_req?: OrgClubUserWalletRelationListRequest;
+    save_client_info_req?: {
+      [key: string]: unknown;
     };
-    club_user_wallet_req?: RequestParamsOf<typeof ClubUserWallet>;
-    club_user_info_req?: RequestParamsOf<typeof OrgClubUserInfo>;
-    club_info_req?: RequestParamsOf<typeof OrgClubSearchById>;
-    club_fund_detail_req?: RequestParamsOf<typeof OrgClubGold>;
-    mall_goods_list_req?: RequestParamsOf<typeof PropMallGoodsList>;
-    friend_room_stats_data_req?: RequestParamsOf<typeof FriendRoomStatsData>;
-    friend_room_stats_data_info_req?: RequestParamsOf<
-      typeof FriendRoomStatsDataInfo
-    >;
-    stats_user_stats_req?: RequestParamsOf<typeof StatsUserStats>;
-    user_rival_room_stats_req?: RequestParamsOf<
-      typeof StatsUserStatsRivalRoomStats
-    >;
-    user_allin_room_stats_req?: RequestParamsOf<typeof StatsUserStatsAllin>;
-    user_card_type_room_stats_req?: RequestParamsOf<
-      typeof StatsUserStatsCardType
-    >;
-    club_data_stats_data_info_req?: RequestParamsOf<
-      typeof ClubDataStatsDataInfo
-    >;
-    club_data_stats_data_req?: RequestParamsOf<typeof ClubDataStatsData>;
-    user_game_record_list_req?: RequestParamsOf<
-      typeof StatsUserGameRecordList
-    >;
-    game_round_list_data_by_room_req?: RequestParamsOf<
-      typeof MiscGameRoundListDataByRoom
-    >;
-    master_slave_club_list_req?: RequestParamsOf<
-      typeof OrgClubMasterSlaveClubList
-    >;
-    club_admin_has_req?: RequestParamsOf<typeof OrgClubIsManger>;
-    club_gold_change_log_req?: RequestParamsOf<typeof ClubFundChangeLog>;
-    club_user_wallet_relation_req?: RequestParamsOf<
-      typeof OrgClubUserWalletRelationList
-    >;
-    save_client_info_req?: RequestParamsOf<typeof UserSendInfo>;
-    support_channel_list_req?: RequestParamsOf<
-      typeof ChatSupportChannelList
-    >;
-    user_club_req?: RequestParamsOf<typeof OrgClubGet>;
-    get_user_mute_list_req?: RequestParamsOf<typeof UserMuteList>;
-    get_chat_shop_prop_list_req?: RequestParamsOf<typeof PropChatPropList>;
-    get_tribe_black_user_list_req?: RequestParamsOf<
-      typeof OrgTribeBlackUserList
-    >;
-    user_club_info_req?: RequestParamsOf<typeof OrgClubSearchById>;
+    support_channel_list_req?: ChatSupportChannelListRequest;
+    user_club_req?: OrgClubGetRequest;
+    get_user_mute_list_req?: {
+      [key: string]: unknown;
+    };
+    get_chat_shop_prop_list_req?: PropChatPropListRequest;
+    get_tribe_black_user_list_req?: OrgTribeBlackUserListRequest;
+    user_club_info_req?: OrgClubGetRequest;
 
   [key: string]: unknown
 }
@@ -358,81 +413,53 @@ export interface MiscCombineResponseData {
 
 export interface MiscCombineData {
 
-    popup?: ResponseDataOf<typeof MiscPopupNewer>;
-    banner_lobby_resp?: ResponseDataOf<typeof MiscBannerLobby>;
-    article_list_resp?: ResponseDataOf<typeof MiscArtiCleList>;
+    popup?: MiscPopupNewerData;
+    banner_lobby_resp?: MiscBannerLobbyResponseData;
+    article_list_resp?: MiscArtiCleListResponseData;
     msg_unread_resp?: MiscCombineMsgUnreadResp;
     msg_broadcast_num_resp?: MiscCombineBroadcastNumResp;
     msg_todo_num_resp?: MiscCombineMsgTodoNumResp;
-    org_self_profit_unpay_record_resp?: ResponseDataOf<
-      typeof OrgUserSelfProfitUnpayRecords
-    >;
-    msg_red_num_resp?: ResponseDataOf<typeof MessageRednum>;
+    org_self_profit_unpay_record_resp?: OrgUserSelfProfitUnpayRecordsData;
+    msg_red_num_resp?: MessageRednumData[];
     org_self_profit_unnotify_resp?: unknown;
-    user_wallet_total_resp?: ResponseDataOf<typeof WalletTotal>;
+    user_wallet_total_resp?: unknown;
     mtt_platform_stats_resp?: MiscCombineMTTData;
     user_info_by_rid_resp?: unknown[];
-    user_stats_by_user_rid_resp?: ResponseDataOf<typeof StatsOtherUserStats>;
-    banner_list_resp?: ResponseDataOf<typeof MiscBannerList>;
-    club_notice_resp?: unknown;
-    club_user_wallet_resp?: ResponseDataOf<typeof ClubUserWallet>;
-    club_user_info_resp?: ResponseDataOf<typeof OrgClubUserInfo>;
-    club_info_resp?: ResponseDataOf<typeof OrgClubSearchById>;
-    club_fund_detail_resp?: ResponseDataOf<typeof OrgClubGold>;
-    mall_goods_list_resp?: ResponseDataOf<typeof PropMallGoodsList>;
-    sign_in_activity_resp?: ResponseDataOf<typeof PropSignInActivityDetail>;
-    friend_room_stats_data_resp?: ResponseDataOf<typeof FriendRoomStatsData>;
-    friend_room_stats_data_info_resp?: ResponseDataOf<
-      typeof FriendRoomStatsDataInfo
-    >;
-    stats_user_stats_resp?: ResponseDataOf<typeof StatsUserStats>;
-    user_rival_room_stats_resp?: ResponseDataOf<
-      typeof StatsUserStatsRivalRoomStats
-    >;
-    user_allin_room_stats_resp?: ResponseDataOf<typeof StatsUserStatsAllin>;
-    user_card_type_room_stats_resp?: ResponseDataOf<
-      typeof StatsUserStatsCardType
-    >;
-    club_data_stats_data_info_resp?: ResponseDataOf<
-      typeof ClubDataStatsDataInfo
-    >;
-    club_data_stats_data_resp?: ResponseDataOf<typeof ClubDataStatsData>;
-    user_game_record_list_resp?: ResponseDataOf<
-      typeof StatsUserGameRecordList
-    >;
-    game_round_list_data_by_room_resp?: ResponseDataOf<
-      typeof MiscGameRoundListDataByRoom
-    >;
-    master_slave_club_list_resp?: ResponseDataOf<
-      typeof OrgClubMasterSlaveClubList
-    >;
-    club_admin_has_resp?: ResponseDataOf<typeof OrgClubIsManger>;
-    club_gold_change_log_resp?: ResponseDataOf<typeof ClubFundChangeLog>;
-    club_user_wallet_relation_resp?: ResponseDataOf<
-      typeof OrgClubUserWalletRelationList
-    >;
+    user_stats_by_user_rid_resp?: StatsOtherUserStatsData[];
+    banner_list_resp?: MiscBannerListData;
+    club_notice_resp?: OrgClubNoticeRecord;
+    club_user_wallet_resp?: ClubUserWalletData;
+    club_user_info_resp?: OrgClubUserInfoData;
+    club_info_resp?: OrgClubSearchByIdData;
+    club_fund_detail_resp?: OrgClubGoldData;
+    mall_goods_list_resp?: PropMallGoodsListData;
+    sign_in_activity_resp?: PropSignInActivityDetailData;
+    friend_room_stats_data_resp?: FriendRoomStatsDataData;
+    friend_room_stats_data_info_resp?: FriendRoomStatsDataInfoData;
+    stats_user_stats_resp?: StatsUserStatsData;
+    user_rival_room_stats_resp?: StatsUserStatsRivalRoomStatsData;
+    user_allin_room_stats_resp?: StatsUserStatsAllinData;
+    user_card_type_room_stats_resp?: StatsUserStatsCardTypeData;
+    club_data_stats_data_info_resp?: ClubDataStatsDataInfoData;
+    club_data_stats_data_resp?: ClubDataStatsDataData;
+    user_game_record_list_resp?: StatsUserGameRecordListData;
+    game_round_list_data_by_room_resp?: MiscGameRoundListDataByRoomData;
+    master_slave_club_list_resp?: OrgClubMasterSlaveClubListData;
+    club_admin_has_resp?: OrgClubIsMangerData;
+    club_gold_change_log_resp?: ClubFundChangeLogData;
+    club_user_wallet_relation_resp?: OrgClubUserWalletRelationListData;
     user_white_list_info_resp?: MiscCombineUserWhiteListInfoResp;
-    user_action_remaind_resp?: ResponseDataOf<typeof UserActionRemaind>;
-    get_view_public_cards_free_count_resp?: ResponseDataOf<
-      typeof RoomCenterHistoryViewPublicCardsFreeCount
-    >;
-    user_game_watch_pay_record_notice_resp?: ResponseDataOf<
-      typeof RoomCenterGameWatchUnreadList
-    >;
-    support_channel_list_resp?: ResponseDataOf<
-      typeof ChatSupportChannelList
-    >;
-    user_club_resp?: ResponseDataOf<typeof OrgClubGet>;
+    user_action_remaind_resp?: unknown;
+    get_view_public_cards_free_count_resp?: unknown;
+    user_game_watch_pay_record_notice_resp?: unknown;
+    support_channel_list_resp?: ChatSupportChannelListData;
+    user_club_resp?: OrgClubGetResponseData;
     user_jackpot_template_resp?: unknown;
-    user_wheel_template_list_resp?: ResponseDataOf<
-      typeof CmsExtWheelTemplateList
-    >;
-    get_user_mute_list_resp?: ResponseDataOf<typeof UserMuteList>;
-    get_chat_shop_prop_list_resp?: ResponseDataOf<typeof PropChatPropList>;
-    get_tribe_black_user_list_resp?: ResponseDataOf<
-      typeof OrgTribeBlackUserList
-    >;
-    user_club_info_resp?: ResponseDataOf<typeof OrgClubSearchById>;
+    user_wheel_template_list_resp?: CmsExtWheelTemplateListData;
+    get_user_mute_list_resp?: UserMuteListData;
+    get_chat_shop_prop_list_resp?: PropChatPropListData;
+    get_tribe_black_user_list_resp?: OrgTribeBlackUserListData;
+    user_club_info_resp?: OrgClubGetResponseData;
     user_club_admin_resp?: unknown;
 
   [key: string]: unknown
@@ -440,7 +467,7 @@ export interface MiscCombineData {
 
 export interface MiscCombineUserWhiteListInfoResp {
 
-    data?: ResponseDataOf<typeof ConfigUserWhitelistInfo>;
+  data?: UserWhitelistInfoInnerData;
 
   [key: string]: unknown
 }
@@ -458,21 +485,21 @@ export interface MiscCombineMTTData {
 
 export interface MiscCombineMsgTodoNumResp {
 
-    todo_num_list?: unknown[];
+  todo_num_list?: MsgMessageTodoData[];
 
   [key: string]: unknown
 }
 
 export interface MiscCombineBroadcastNumResp {
 
-    broadcast_num_list?: unknown[];
+  broadcast_num_list?: MsgMessageSystemBroadcastNumMsgInfo[];
 
   [key: string]: unknown
 }
 
 export interface MiscCombineMsgUnreadResp {
 
-    unreade_list?: ResponseDataOf<typeof MsgMessageUnread>[];
+  unreade_list?: MsgMessageUnreadData[];
 
   [key: string]: unknown
 }
@@ -662,10 +689,6 @@ export interface MiscFaceRecogRequestResponseData {
   [key: string]: unknown
 }
 
-export interface MiscFaceRecogRequestData {
-  [key: string]: unknown
-}
-
 // /api/misc/face/recog/result (MiscFaceRecogResult)
 export interface MiscFaceRecogResultRequest {
 
@@ -790,13 +813,15 @@ export interface MiscGameRoundStatusRequest {
   //     room_id: number, //普通牌局，
   //     room_unique_id: string, // room唯一标识
   //     hand_num: number, //手数
-  // 
+  //
   [key: string]: unknown
 }
 
 export interface MiscGameRoundStatusResponseData {
 
-  // 
+  //
+    data?: MiscGameRoundStatusData;
+
   [key: string]: unknown
 }
 
@@ -812,11 +837,13 @@ export interface MiscGameRecordRoundRequest {
   //     change: number, // 金币变动值
   //     type: number, // 类型
   //     open: number, // 是否公开
-  // 
+  //
   [key: string]: unknown
 }
 
 export interface MiscGameRecordRoundResponseData {
+    data?: MiscGameRecordRoundData;
+
   [key: string]: unknown
 }
 
@@ -826,11 +853,13 @@ export interface MiscGameRemoveRoundRequest {
   //     room_id: number, // 普通牌局，
   //     room_unique_id: string, // room唯一标识
   //     hand_num: number, // 手数
-  // 
+  //
   [key: string]: unknown
 }
 
 export interface MiscGameRemoveRoundResponseData {
+    data?: MiscGameRemoveRoundData;
+
   [key: string]: unknown
 }
 
@@ -839,7 +868,7 @@ export interface MiscGameRoundListRequest {
 
   //     limit: number,
   //     offset: number,
-  // 
+  //
   [key: string]: unknown
 }
 
@@ -959,5 +988,48 @@ export interface MiscTranslateResponseData {
 }
 
 export interface MiscTranslateData {
+  [key: string]: unknown
+}
+
+export interface MiscBannerListData {
+    limit?: number;
+    offset?: number;
+    total?: number;
+    list?: MiscBannerListBannerInfo[];
+
+  [key: string]: unknown
+}
+
+export interface MiscGameRoundStatusData {
+    records?: MiscGameRoundStatusRecord[];
+
+  [key: string]: unknown
+}
+
+export interface MiscGameRoundStatusRecord {
+    remove?: number;
+
+  [key: string]: unknown
+}
+
+export interface MiscGameRecordRoundData {
+  [key: string]: unknown
+}
+
+export interface MiscGameRemoveRoundData {
+  [key: string]: unknown
+}
+
+export interface MiscPopupNewerData {
+    popup?: MiscPopupNewerPopup;
+
+  [key: string]: unknown
+}
+
+export interface MiscPopupNewerPopup {
+    redirect_url?: string;
+    type?: number;
+    url?: string;
+
   [key: string]: unknown
 }

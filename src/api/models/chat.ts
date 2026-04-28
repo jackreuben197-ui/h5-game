@@ -326,3 +326,4 @@ export interface ChatSupportMessageSendData {
 
   [key: string]: unknown
 }
+

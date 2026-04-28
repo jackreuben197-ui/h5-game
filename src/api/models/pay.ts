@@ -36,3 +36,4 @@ export interface PayAppleOrderRechargeRechargeData {
 
   [key: string]: unknown
 }
+

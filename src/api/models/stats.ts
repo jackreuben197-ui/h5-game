@@ -36,6 +36,8 @@ export interface ClubDataStatsDataRequest {
 }
 
 export interface ClubDataStatsDataResponseData {
+    data?: ClubDataStatsDataData;
+
   [key: string]: unknown
 }
 
@@ -45,6 +47,8 @@ export interface ClubDataStatsDataDetailRequest {
 }
 
 export interface ClubDataStatsDataDetailResponseData {
+    data?: ClubDataStatsDataDetailData;
+
   [key: string]: unknown
 }
 
@@ -54,6 +58,8 @@ export interface ClubDataStatsDataDetailInfoRequest {
 }
 
 export interface ClubDataStatsDataDetailInfoResponseData {
+    data?: ClubDataStatsDataDetailInfoData;
+
   [key: string]: unknown
 }
 
@@ -92,6 +98,8 @@ export interface ClubDataStatsDataInfoRequest {
 }
 
 export interface ClubDataStatsDataInfoResponseData {
+    data?: ClubDataStatsDataInfoData;
+
   [key: string]: unknown
 }
 
@@ -149,6 +157,8 @@ export interface GuildDataVipInfoRequest {
 }
 
 export interface GuildDataVipInfoResponseData {
+    data?: GuildDataVipInfoData;
+
   [key: string]: unknown
 }
 
@@ -332,6 +342,8 @@ export interface FriendRoomStatsRequest {
 }
 
 export interface FriendRoomStatsResponseData {
+    data?: FriendRoomStatsData;
+
   [key: string]: unknown
 }
 
@@ -341,6 +353,8 @@ export interface FriendRoomStatsDataRequest {
 }
 
 export interface FriendRoomStatsDataResponseData {
+    data?: FriendRoomStatsDataData;
+
   [key: string]: unknown
 }
 
@@ -350,6 +364,8 @@ export interface FriendRoomStatsDataDetailRequest {
 }
 
 export interface FriendRoomStatsDataDetailResponseData {
+    data?: FriendRoomStatsDataDetailData;
+
   [key: string]: unknown
 }
 
@@ -359,6 +375,8 @@ export interface FriendRoomStatsDataDetailInfoRequest {
 }
 
 export interface FriendRoomStatsDataDetailInfoResponseData {
+    data?: FriendRoomStatsDataDetailInfoData;
+
   [key: string]: unknown
 }
 
@@ -368,6 +386,8 @@ export interface FriendRoomStatsDataInfoRequest {
 }
 
 export interface FriendRoomStatsDataInfoResponseData {
+    data?: FriendRoomStatsDataInfoData;
+
   [key: string]: unknown
 }
 
@@ -545,7 +565,7 @@ export interface StatsJackpotAwardLogsJackpotConfig {
         ante?: number;
         user_avatar?: string;
         mars_earth?: number;
-
+          mushroom_amount?: number;
   [key: string]: unknown
 }
 
@@ -633,6 +653,7 @@ export interface StatsMttRoomDetailRoomData {
 export interface StatsMttRoomDetailData {
 
         room_data: StatsMttRoomDetailRoomData;
+    mtt_room_data?: StatsMttRoomDetailRoomData;
 
   [key: string]: unknown
 }
@@ -650,6 +671,8 @@ export interface StatsMttRoomDetailApiRequest {
 }
 
 export interface StatsMttRoomDetailApiResponseData {
+    data?: StatsMttRoomDetailApiData;
+
   [key: string]: unknown
 }
 
@@ -720,6 +743,9 @@ export interface StatsOtherUserStatsRoomData {
         cbet?: number; //4Flop持续下注率
         wtsd?: number; //摊牌胜率
         allinWins?: number; //全下胜率
+    in_pool_cnt?: number;
+    in_pool_win_cnt?: number;
+    prf_cnt?: number;
 
   [key: string]: unknown
 }
@@ -728,6 +754,15 @@ export interface StatsOtherUserStatsData {
 
         mtt_room_data?: StatsOtherUserStatsMTTRoomData[]; //mtt数据
         room_data?: StatsOtherUserStatsRoomData[]; //普通牌局数据
+    user_random_id?: number;
+    fantasy_data?: StatsOtherUserStatsFantasyData;
+    allin_data?: unknown;
+    pool_rate?: number;
+    mahjong_data?: unknown;
+    sng_room_data?: StatsOtherUserStatsMTTRoomData;
+    guandan_data?: unknown;
+    room_total_hand?: number;
+    room_in_pool_cnt?: number;
 
   [key: string]: unknown
 }
@@ -915,6 +950,19 @@ export interface StatsRoomDetailUserInfo {
         insurance_profit: number; //保险收入
         insurance_sum: number; //保险合计
         insurance_original: number; //原始保险
+    mushroom_count?: number;
+    mushroom_amount?: number;
+    in_pool_cnt?: number;
+    mj_win_self_draw_count?: number;
+    mj_win_discard_count?: number;
+    mj_lose_discard_count?: number;
+    mj_concealed_kong_count?: number;
+    mj_exposed_kong_count?: number;
+    cb_wins?: number;
+    gd_rank_1?: number;
+    gd_rank_2?: number;
+    gd_rank_3?: number;
+    gd_rank_4?: number;
 
   [key: string]: unknown
 }
@@ -936,6 +984,10 @@ export interface StatsRoomDetailRoomData {
         insurance_total: number; //牌局保险总计
         end_time: string; //结束时间
         user_list: StatsRoomDetailUserInfo; //玩家列表
+    multi_lang_names_obj?: unknown;
+    start_time?: string;
+    max_bet_pot?: number;
+    all_bet_pot?: number;
 
   [key: string]: unknown
 }
@@ -961,7 +1013,7 @@ export interface RoomCenterHistoryListRequest {
     //     limit?: number,         //条目
     //     offset?: number,        //开始下标。例子（offset=0，limit=10，0-9。）
     //     game_type?: number,     //游戏类型，对应客户端 枚举 GameType
-    // 
+    //
   [key: string]: unknown
 }
 
@@ -974,7 +1026,7 @@ export interface RoomCenterHistoryListRecords {
     //     Time: string,//开始时间
     //     Change: number,//筹码变动
     //     Count: number,//总手数
-    // 
+    //
   [key: string]: unknown
 }
 
@@ -984,7 +1036,7 @@ export interface RoomCenterHistoryListData {
     //     offset: number,
     //     total: number,// //总条数
     //     records: RoomCenterHistoryListRecords,
-    // 
+    //
   [key: string]: unknown
 }
 
@@ -1303,6 +1355,22 @@ export interface StatsUserStatsRoomData {
         cbet: number; //4Flop持续下注率
         wtsd: number; //摊牌胜率
         allinWins: number; //全下胜率
+    fantasy_count?: number;
+    nuts?: number;
+    full_win?: number;
+    max_card_data?: string;
+    mj_win_self_draw_count?: number;
+    mj_win_discard_count?: number;
+    mj_lose_discard_count?: number;
+    mj_concealed_kong_count?: number;
+    mj_exposed_kong_count?: number;
+    cb_wins?: number;
+    cb_bet?: number;
+    gd_rank1?: number;
+    gd_rank2?: number;
+    gd_rank3?: number;
+    gd_rank4?: number;
+    gd_rank1_rate?: number;
 
   [key: string]: unknown
 }
@@ -1594,10 +1662,251 @@ export interface ClubStandiNgsRequest {
     //     "game_type": number,
     //     "time_type": number,
     //     "time_long": number
-    // 
+    //
   [key: string]: unknown
 }
 
 export interface ClubStandiNgsResponseData {
   [key: string]: unknown
 }
+
+export interface ClubDataStatsDataData {
+    list?: ClubDataStatsDataRecord[];
+
+  [key: string]: unknown
+}
+
+export interface ClubDataStatsDataRecord {
+    room_id?: number;
+    match_id?: number;
+    game_start_time?: string;
+    date?: string;
+    game_type?: number;
+    poker_types?: number;
+    sb?: number;
+    buy_in?: number;
+    buy_in_times?: number;
+    fee?: number;
+    game_status?: number;
+    match_player_num?: number;
+    is_match?: number;
+    start_time?: number;
+    start_time_str?: string;
+    insurance?: number;
+    ante?: number;
+
+  [key: string]: unknown
+}
+
+export interface ClubDataStatsDataDetailData {
+  list?: DataRecord[];
+    offset?: number;
+    room_info?: ClubDataStatsDataDetailRoomInfo;
+
+  [key: string]: unknown
+}
+
+export interface ClubDataStatsDataDetailRoomInfo {
+    jackpot?: number;
+
+  [key: string]: unknown
+}
+
+export interface ClubDataStatsDataDetailInfoData {
+  info?: DataTotalData;
+
+  [key: string]: unknown
+}
+
+export interface ClubDataStatsDataInfoData {
+    info?: ClubDataStatsDataInfoTotalData;
+
+  [key: string]: unknown
+}
+
+export interface ClubDataStatsDataInfoTotalData {
+    game_num?: number;
+    hand_num?: number;
+    profit?: number;
+    fee?: number;
+    insurence?: number;
+    club_total_profit?: number;
+    jackpot?: number;
+    mini_game?: number;
+
+  [key: string]: unknown
+}
+
+export interface GuildDataVipInfoData {
+    list?: GuildDataVipInfoTotalData[];
+
+  [key: string]: unknown
+}
+
+export interface GuildDataVipInfoTotalData {
+    filter_time?: number;
+    game_type?: number;
+    hand_num?: number;
+    profit?: number;
+    fee?: number;
+
+  [key: string]: unknown
+}
+
+export interface DataRecord {
+  [key: string]: unknown
+}
+
+export interface DataTotalData {
+  [key: string]: unknown
+}
+
+export interface FriendRoomStatsData {
+    friend_room_stats_6?: FriendRoomStatsRecord;
+    friend_room_stats_nlh?: FriendRoomStatsRecord;
+    friend_room_stats_plo?: FriendRoomStatsRecord;
+    friend_room_stats_fantasy?: FriendRoomStatsRecord;
+    friend_room_stats_mj?: FriendRoomStatsRecord;
+
+  [key: string]: unknown
+}
+
+export interface FriendRoomStatsRecord {
+    game_type?: number;
+    game_num?: number;
+    hand_num?: number;
+
+  [key: string]: unknown
+}
+
+export interface FriendRoomStatsDataData {
+    list?: FriendRoomStatsDataRecord[];
+    limit?: number;
+    offset?: number;
+    total?: number;
+
+  [key: string]: unknown
+}
+
+export interface FriendRoomStatsDataRecord {
+    room_id?: number;
+    game_start_time?: string;
+    date?: string;
+    game_type?: number;
+    poker_type?: number;
+    sb?: number;
+    buy_in?: number;
+    fee?: number;
+    game_status?: number;
+    start_time_str?: string;
+    bombpot?: number;
+    mushroom_mode?: number;
+    squid_on?: number;
+
+  [key: string]: unknown
+}
+
+export interface FriendRoomStatsDataDetailData {
+    list?: FriendRoomStatsDataDetailRecord[];
+    limit?: number;
+    offset?: number;
+    total?: number;
+
+  [key: string]: unknown
+}
+
+export interface FriendRoomStatsDataDetailRecord {
+    avatar?: string;
+    nick_name?: string;
+    random_id?: number;
+    win?: number;
+    fee?: number;
+    buy_in?: number;
+    hand_num?: number;
+
+  [key: string]: unknown
+}
+
+export interface FriendRoomStatsDataDetailInfoData {
+    info?: FriendRoomStatsDataDetailInfoTotalData;
+
+  [key: string]: unknown
+}
+
+export interface FriendRoomStatsDataDetailInfoTotalData {
+    game_status?: number;
+    creator_id?: number;
+    creator_name?: string;
+    name?: string;
+    sb?: number;
+    min_buy_in?: number;
+    max_buy_in?: number;
+    fee_ratio?: number;
+    total_fee?: number;
+    insurance?: number;
+    player_num?: number;
+
+  [key: string]: unknown
+}
+
+export interface FriendRoomStatsDataInfoData {
+    info?: FriendRoomStatsDataInfoTotalData;
+
+  [key: string]: unknown
+}
+
+export interface FriendRoomStatsDataInfoTotalData {
+    game_num?: number;
+    hand_num?: number;
+    profit?: number;
+    fee?: number;
+
+  [key: string]: unknown
+}
+
+export interface StatsMttRoomDetailApiData {
+    mtt_room_data?: StatsMttRoomDetailApiRoomData;
+
+  [key: string]: unknown
+}
+
+export interface StatsMttRoomDetailApiRoomData {
+    game_type?: number;
+    game_room_name?: string;
+    room_id?: number;
+    start_time?: string;
+    end_time?: string;
+    player_count?: number;
+    buy_in_count?: number;
+    limit?: number;
+    user_list?: StatsMttRoomDetailApiUserInfo[];
+
+  [key: string]: unknown
+}
+
+export interface StatsMttRoomDetailApiUserInfo {
+    user_random_id?: number;
+    nick_name?: string;
+    avatar?: string;
+    award?: number;
+    hunter_award?: number;
+    goods_awrd?: StatsMttRoomDetailApiGoods[];
+
+  [key: string]: unknown
+}
+
+export interface StatsMttRoomDetailApiGoods {
+    n?: number;
+
+  [key: string]: unknown
+}
+
+export interface StatsOtherUserStatsFantasyData {
+    total_game_cnt?: number;
+    nuts?: number;
+    wins?: number;
+    fantasy_count?: number;
+
+  [key: string]: unknown
+}
+

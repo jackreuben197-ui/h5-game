@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { t } from '@/i18n'
 import mttBannerSm from '@/assets/images/mtt_banner_sm.png'
 import mttBannerMd from '@/assets/images/mtt_banner_md.png'
 import mttBannerLg from '@/assets/images/mtt_banner_lg.png'
@@ -100,13 +101,13 @@ const showVideoIcon = computed<boolean>(() => props.item.antiCheatType === 3)
 function resolveActionLabel(): string {
   if (props.item.actionLabel) return props.item.actionLabel
   const map: Record<MttActionType, string> = {
-    register: '报名',
-    join: '进入',
-    late: '延迟报名',
-    inProgress: '等待开赛',
-    full: '不可操作',
+    register: t('MTT-Apply'),
+    join: t('mtt_btn_enter'),
+    late: t('mtt_btn_delay'),
+    inProgress: t('mtt_btn_waiting_start'),
+    full: t('mtt_btn_sign_up_deadline'),
   }
-  return map[props.item.actionType ?? 'register'] ?? '报名'
+  return map[props.item.actionType ?? 'register'] ?? t('MTT-Apply')
 }
 
 function resolveActionClass(): string {
@@ -251,7 +252,7 @@ function formatCentAmount(value: number): string {
           <span> {{ item.registeredCount }}/{{ item.maxCount }}</span>
         </div>
         <div class="mtt-card__count">
-          <span v-if="showGuaranteeTag" class="mtt-card-prize-type">保底赛</span>
+          <span v-if="showGuaranteeTag" class="mtt-card-prize-type">{{ t('UIMatchGuaranteedTag') }}</span>
           <span v-if="showAddonTag" class="ml-4 mtt-rebuy">A</span>
           <span v-if="showRebuyTag" class="ml-4 mtt-addon">R</span>
           <img
@@ -455,7 +456,7 @@ function formatCentAmount(value: number): string {
   }
 
   &--progress {
-    background: rgba(122, 183, 255, 0.3);
+    background: rgba(231, 174, 5, 0.80);;
     color: rgba(255, 255, 255, 0.75);
   }
 

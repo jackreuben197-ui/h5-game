@@ -188,6 +188,38 @@ pnpm preview
 <div class="club-room-history-bg app-scroll-standalone app-scroll-page">...</div>
 ```
 
+### 8.2 字体接入规范
+
+当前项目字体接入约定如下：
+
+1. 字体文件统一放在 `public/assets/fonts/`。
+2. 全局 `@font-face` 统一写在 `src/styles/_fonts.scss`。
+3. 全局默认字体链在 `src/styles/_tokens.scss` 的 `$font-family-sans` 配置。
+4. 页面局部特殊字体（例如 MTT 倒计时）在对应 SFC 局部样式中覆盖。
+
+当前已接入示例：
+
+- `HONOR Sans CN`：`public/assets/fonts/HONORSansCN-Regular.woff2`
+- `Keania One`：`public/assets/fonts/KeaniaOne-Regular.woff2`
+
+`@font-face` 示例（见 `src/styles/_fonts.scss`）：
+
+```scss
+@font-face {
+  font-family: 'HONOR Sans CN';
+  src: url('/assets/fonts/HONORSansCN-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+```
+
+注意：
+
+- 仅写 `font-family` 不会自动下载字体；必须有 `@font-face + 对应文件`。
+- 推荐优先使用 `woff2`；文件较大时建议做子集化，避免首屏性能损耗。
+- 改完字体文件后建议硬刷新（`Cmd + Shift + R`）并在 Network 中确认字体请求返回 `200`。
+
 ## 9. Cocos Bridge 与 WS 协作规范
 
 目录分层说明见：`src/bridge/README.md`。

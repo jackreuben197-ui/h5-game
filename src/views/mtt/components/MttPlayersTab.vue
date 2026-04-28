@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { showToast } from 'vant'
 import { GameTable, GameTableColumn } from '@/components/Table'
 import defaultAvatar from '@/assets/icons/icon_mtt_avatar.png'
@@ -8,7 +8,6 @@ import type {
   RoomcenterMttHunterRanksData,
   RoomcenterMttRanksData,
 } from '@/api/models/roomcenter'
-import { postRoomcenterMttHunterRanksApi, postRoomcenterMttRanksApi } from '@/api/roomcenter'
 import { t } from '@/i18n'
 
 interface PlayerRecord {
@@ -26,20 +25,32 @@ type PlayersMode = 'rank' | 'hunter'
 const props = defineProps<{
   data: RoomcenterMttDetailData | null
   matchId: number
+  rankData: RoomcenterMttRanksData | null
+  hunterData: RoomcenterMttHunterRanksData | null
+  loading: boolean
+  playerRequestCode: number | null
 }>()
 
-const loading = ref(false)
+const emit = defineEmits<{
+  refresh: [mode: PlayersMode]
+}>()
+
 const mode = ref<PlayersMode>('rank')
-const rankData = ref<RoomcenterMttRanksData | null>(null)
-const hunterData = ref<RoomcenterMttHunterRanksData | null>(null)
-const playerRequestCode = ref<number | null>(null)
 
 const showHunterMode = computed(() => (props.data?.mtt?.hunter_on ?? 0) === 1)
-const showPlayerNullTips = computed(() => playerRequestCode.value === 10001 && !loading.value)
+const showPlayerNullTips = computed(() => props.playerRequestCode === 10001 && !props.loading)
+
+const isDiamond = computed(() => (props.data?.mtt?.gold_type ?? 1) === 4)
 
 function formatNum(n: number | undefined | null): string {
   if (n === undefined || n === null) return '-'
   return n.toLocaleString()
+}
+
+function formatMoney(n: number | undefined | null): string {
+  if (n === undefined || n === null) return '-'
+  const val = isDiamond.value ? n : n / 100
+  return val.toLocaleString()
 }
 
 function formatBb(chip: number, sb: number): string {
@@ -50,13 +61,13 @@ function formatBb(chip: number, sb: number): string {
 }
 
 const currentSb = computed(() => {
-  if (mode.value === 'hunter') return Number(hunterData.value?.sb ?? 0)
-  return Number(rankData.value?.sb ?? 0)
+  if (mode.value === 'hunter') return Number(props.hunterData?.sb ?? 0)
+  return Number(props.rankData?.sb ?? 0)
 })
 
 const playerList = computed<PlayerRecord[]>(() => {
   if (mode.value === 'hunter') {
-    const list = hunterData.value?.records ?? []
+    const list = props.hunterData?.records ?? []
     return list.map((item) => ({
       rank: item.rank ? String(item.rank) : '-',
       name: item.name ?? '-',
@@ -68,46 +79,41 @@ const playerList = computed<PlayerRecord[]>(() => {
     }))
   }
 
-  const list = rankData.value?.records ?? []
+  const list = props.rankData?.records ?? []
   const sb = currentSb.value
   return list.map((item) => {
     const chip = Number(item.chip ?? 0)
+    const rawAvatar = (item as Record<string, unknown>).avatar
+    const avatarUrl = typeof rawAvatar === 'string' && rawAvatar ? rawAvatar : defaultAvatar
     return {
       rank: item.rank ? String(item.rank) : '-',
       name: item.name ?? '-',
-      avatar: defaultAvatar,
+      avatar: avatarUrl,
       rebuy: (item.rebuy ?? 0) > 0 ? String(item.rebuy) : '--',
-      chips: chip > 0 ? `${formatNum(chip)}(${formatBb(chip, sb)})` : '--',
+      chips: chip > 0 ? `${formatMoney(chip)}(${formatBb(chip, sb)})` : '--',
       hunter: '--',
       rid: Number(item.rid ?? 0),
     }
   })
 })
 
-function emptyRankData(): RoomcenterMttRanksData {
-  return { alive: 0, total: 0, sb: 0, limit: 0, offset: 0, records: [] }
-}
-
-function emptyHunterData(): RoomcenterMttHunterRanksData {
-  return { total: 0, sb: 0, limit: 0, offset: 0, records: [] }
-}
-
 const remaining = computed(() => {
   if (showPlayerNullTips.value) return '0/0'
-  const alive = rankData.value?.alive ?? props.data?.alive
-  const total = rankData.value?.total ?? props.data?.real_prize?.participants
+  const alive = props.rankData?.alive ?? props.data?.alive
+  const total = props.rankData?.total ?? props.data?.enter_total
   if (alive === undefined || alive === null) return '-'
   return `${alive}/${total ?? '-'}`
 })
 
 const participants = computed(() => {
   if (showPlayerNullTips.value) return '0'
-  const total = rankData.value?.total ?? hunterData.value?.total ?? props.data?.mtt?.participants
+  const total = props.rankData?.total ?? props.hunterData?.total ?? props.data?.enter_total
   return formatNum(total)
 })
 
-const registered = computed(() => formatNum(props.data?.enter_total ?? props.data?.mtt?.participants))
-const rankRecords = computed(() => (Array.isArray(rankData.value?.records) ? rankData.value?.records : []))
+const registered = computed(() => formatNum(props.data?.mtt?.participants))
+
+const rankRecords = computed(() => (Array.isArray(props.rankData?.records) ? props.rankData?.records : []))
 
 const rebuyCount = computed(() => {
   const count = rankRecords.value.reduce((sum, item) => {
@@ -140,87 +146,13 @@ function handleRowClick(row: Record<string, unknown>): void {
   showToast(`准备进入牌桌 ${rid}`)
 }
 
-async function loadRankList(): Promise<void> {
-  if (!props.matchId) {
-    rankData.value = emptyRankData()
-    playerRequestCode.value = null
-    return
-  }
-
-  const response = await postRoomcenterMttRanksApi(
-    props.matchId,
-    { limit: 200, offset: 0 },
-    { suppressBusinessCodes: [10001] },
-  )
-  const code = Number(response.code ?? -1)
-  if (Number(response.code) === 0 && response.data) {
-    rankData.value = response.data
-    playerRequestCode.value = null
-    return
-  }
-  rankData.value = emptyRankData()
-  playerRequestCode.value = Number.isFinite(code) ? code : -1
+function handleRefresh(): void {
+  emit('refresh', mode.value)
 }
 
-async function loadHunterList(): Promise<void> {
-  if (!props.matchId || !showHunterMode.value) {
-    hunterData.value = emptyHunterData()
-    playerRequestCode.value = null
-    return
-  }
-
-  const response = await postRoomcenterMttHunterRanksApi(
-    props.matchId,
-    { limit: 200, offset: 0 },
-    { suppressBusinessCodes: [10001] },
-  )
-  const code = Number(response.code ?? -1)
-  if (Number(response.code) === 0 && response.data) {
-    hunterData.value = response.data
-    playerRequestCode.value = null
-    return
-  }
-  hunterData.value = emptyHunterData()
-  playerRequestCode.value = Number.isFinite(code) ? code : -1
-}
-
-async function loadCurrentList(): Promise<void> {
-  if (!props.matchId) {
-    rankData.value = emptyRankData()
-    hunterData.value = emptyHunterData()
-    playerRequestCode.value = null
-    return
-  }
-
-  loading.value = true
-  try {
-    if (mode.value === 'hunter') {
-      await loadHunterList()
-    } else {
-      await loadRankList()
-    }
-  } catch {
-    if (mode.value === 'hunter') {
-      hunterData.value = emptyHunterData()
-    } else {
-      rankData.value = emptyRankData()
-    }
-    playerRequestCode.value = null
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(() => {
-  void loadCurrentList()
-})
-
-watch(() => props.matchId, () => {
-  void loadCurrentList()
-})
-
+// 切换模式时通知父组件刷新对应数据
 watch(mode, () => {
-  void loadCurrentList()
+  handleRefresh()
 })
 
 watch(showHunterMode, (enabled) => {
@@ -247,25 +179,25 @@ watch(showHunterMode, (enabled) => {
       <div class="stats-row">
         <div class="stat-item">
           <div class="stat-num">{{ remaining }}</div>
-          <div class="stat-desc">比赛剩余人数</div>
+          <div class="stat-desc">{{ t('UIMatchRemainingPlayersCount') }}</div>
         </div>
         <div class="stat-item">
           <div class="stat-num">{{ participants }}</div>
-          <div class="stat-desc">参赛人次</div>
+          <div class="stat-desc">{{ t('MTT_Player_Participants') }}</div>
         </div>
         <div class="stat-item">
           <div class="stat-num">{{ registered }}</div>
-          <div class="stat-desc">报名人次</div>
+          <div class="stat-desc">{{ t('UIMatchSignupCount') }}</div>
         </div>
       </div>
       <div class="stats-row stats-row--second">
         <div class="stat-item">
           <div class="stat-num">{{ rebuyCount }}</div>
-          <div class="stat-desc">重购人次</div>
+          <div class="stat-desc">{{ t('UIMatchRebuyCount') }}</div>
         </div>
         <div class="stat-item">
           <div class="stat-num">{{ addonCount }}</div>
-          <div class="stat-desc">增购人次</div>
+          <div class="stat-desc">{{ t('UIMatchAddonCount') }}</div>
         </div>
       </div>
     </div>
@@ -279,13 +211,13 @@ watch(showHunterMode, (enabled) => {
     >
       <GameTableColumn
         prop="rank"
-        label="名次"
+        :label="t('UI_Rank')"
         :flex="1"
         align="center"
       />
       <GameTableColumn
         prop="name"
-        label="玩家"
+        :label="t('UITexasReport_player')"
         :flex="2"
         align="center"
       >
@@ -299,21 +231,21 @@ watch(showHunterMode, (enabled) => {
       <GameTableColumn
         v-if="mode === 'rank'"
         prop="rebuy"
-        label="重购"
+        :label="t('UITexas_Rebuy')"
         :flex="1"
         align="center"
       />
       <GameTableColumn
         v-if="mode === 'rank'"
         prop="chips"
-        label="筹码(BB)"
+        :label="t('UIChipsBB')"
         :flex="3"
         align="center"
       />
       <GameTableColumn
         v-if="mode === 'hunter'"
         prop="hunter"
-        label="赏金"
+        :label="t('UIReward_Bounty')"
         :flex="2"
         align="center"
       />
@@ -326,9 +258,7 @@ watch(showHunterMode, (enabled) => {
 </template>
 
 <style scoped lang="scss">
-.mtt-players-tab {
-  padding-top: 0.2rem;
-}
+
 
 .mode-switch {
   display: flex;
@@ -358,7 +288,7 @@ watch(showHunterMode, (enabled) => {
 .players-stats-card {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0.76rem;
-  padding: 0.4rem 0.5rem;
+  padding: 0.6rem 1rem;
   margin-bottom: 0.4rem;
   backdrop-filter: blur(0.16px);
 }
@@ -370,8 +300,8 @@ watch(showHunterMode, (enabled) => {
 
   &--second {
     justify-content: center;
-    gap: 1.2rem;
-    margin-top: 0.3rem;
+    gap: 2.2rem;
+    margin-top: 0.6rem;
   }
 }
 
@@ -379,7 +309,6 @@ watch(showHunterMode, (enabled) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.05rem;
 }
 
 .stat-num {

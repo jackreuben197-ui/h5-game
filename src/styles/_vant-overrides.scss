@@ -25,3 +25,29 @@
 .van-overlay {
   background-color: rgba(12, 12, 12, 0.6) !important;
 }
+
+// 程序化 GameToast 样式（通过 showGameToast 触发）
+.game-toast-msg.van-toast {
+  background-image: url('@/assets/images/component_dialog_bg.png');
+  background-size: 100% auto;
+  background-position: top center;
+  background-repeat: no-repeat;
+  background-color: transparent;
+  border-radius: 0.9rem;
+  width: 8.45rem;
+  // min-height: 1.6rem;
+  padding: 0.6rem 0.4rem;
+  box-shadow: inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
+    inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.85),
+    inset 2px 2px 0px -2px rgba(255, 255, 255, 0.3),
+    inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.85),
+    inset -2px -2px 0px -2px rgba(255, 255, 255, 0.3);
+
+  .van-toast__text {
+    font-size: 0.43rem;
+    font-weight: 400;
+    color: #fff;
+    font-family: 'HONOR Sans CN', sans-serif;
+    word-break: break-word;
+  }
+}

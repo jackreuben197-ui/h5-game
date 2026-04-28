@@ -160,7 +160,7 @@ function handleCardAction(item: MttItem): void {
 
 const router = useRouter()
 function handleCardClick(item: MttItem): void {
-  router.push({ name: 'mtt-detail', params: { item: item as any } })
+  router.push({ name: 'mtt-detail', query: { id: String(item.id) } })
 }
 
 // 组头“查看全部/收起”。

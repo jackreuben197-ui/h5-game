@@ -173,6 +173,11 @@ export default { name: 'GameTable' }
   padding: 0 0.12rem;
 }
 
+/* 固定高度滚动时，避免 flex 子项被压缩导致行高变小 */
+.game-table__body > * {
+  flex-shrink: 0;
+}
+
 .game-table__status {
   display: flex;
   justify-content: center;

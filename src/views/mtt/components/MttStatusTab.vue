@@ -1,74 +1,219 @@
 <script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import hunterIcon from '@/assets/icons/icon_mtt_hunter.png'
+import type { RoomcenterMttDetailData } from '@/api/models/roomcenter'
+import { formatDateTime, formatDurationBySeconds, toUnixSeconds } from '@/utils/time'
+import { getLocale, t } from '@/i18n'
+import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 
-/* ===== 赛况数据（mock，后续对接接口） ===== */
-const matchStatus = {
-  state: 'running',
-  stateLabel: '运行',
-  startTime: '12:34',
-  buyIn: 12345,
-  prizePool: 509,
-  championPrize: 36570,
-  unbrokenGuarantee: 8457,
-  nextPrize: 650,
-  level: 10,
-  levelTimeLeft: '01:23',
-  nextBreak: '36:17',
-  blinds: '150 / 300 (35)',
-  nextBlinds: '150 / 300 (35)',
-  remainingPlayers: '46/509',
-  rebuyCount: '5/100(15)',
-  moneyBubble: '20,000',
-  myRank: '6/120',
-  highestChips: 23925,
-  highestChipsBB: '3.7BB',
-  avgChips: 23925,
-  avgChipsBB: '3.7BB',
-  lowestChips: 23925,
-  lowestChipsBB: '3.7BB',
-  initialChips: 23925,
-  initialChipsBB: '3.7BB',
+const props = defineProps<{
+  data: RoomcenterMttDetailData | null
+}>()
+
+/* ===== 倒计时 tick ===== */
+const timerTick = ref(0)
+let timerInterval: ReturnType<typeof setInterval> | null = null
+onMounted(() => { timerInterval = setInterval(() => { timerTick.value++ }, 1000) })
+onUnmounted(() => { if (timerInterval) clearInterval(timerInterval) })
+
+/* ===== 数据快捷引用 ===== */
+const mtt = computed(() => props.data?.mtt)
+const more = computed(() => props.data?.more)
+const realPrize = computed(() => props.data?.real_prize)
+
+/* ===== 工具函数 ===== */
+function fmtNum(n: number | undefined | null): string {
+  if (n === undefined || n === null) return '-'
+  return n.toLocaleString()
 }
 
-const activityDesc =
-  'xxxxxxx这是MTT赛事活动详情简介 xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxx xxxxxxxx xxxxxxxxxx xx x x x x x            xxxxxxxxxxxxxxxxxxx'
+const isDiamond = computed(() => (mtt.value?.gold_type ?? 1) === 4)
 
-/* ===== 赛事信息（mock，后续对接接口） ===== */
-const matchInfo = [
-  { label: '赛事名称', value: 'MTT福利赛 赢大奖 送手机' },
-  { label: '比赛类型', value: '无限注德州扑克' },
-  { label: '游戏类型', value: '猎人赛', icon: hunterIcon },
-  { label: '开始时间', value: '十一月14,2025-19:30' },
-  { label: '买入', value: '88+88+88' },
-  { label: '买入上限', value: '12,345', tip: true },
-  { label: '重购', value: '10' },
-  { label: '保底奖池', value: '200,000' },
-  { label: '起始筹码', value: '10,000 (33.3BB)' },
-  { label: '延迟报名', value: '02月09日  19:37 (级别7)' },
-  { label: '预计赛程时长', value: '7小时32分钟' },
-  { label: '盲注间距', value: '10分钟' },
-  { label: '牌桌类型', value: '9人桌' },
-  { label: '最少/最多玩家', value: '2~10000' },
-  { label: '开赛条件', value: '6,000(120 BB)' },
-  { label: '休息时间', value: '每55分钟~6分钟' },
-]
+function fmtMoney(n: number | undefined | null): string {
+  if (n === undefined || n === null) return '-'
+  const val = isDiamond.value ? n : n / 100
+  return val.toLocaleString()
+}
+
+function resolveName(rawName: string | undefined | null): string {
+  if (!rawName) return '-'
+  return resolveTemplateTextByKey(rawName, getLocale()) || t(rawName) || rawName
+}
+
+function calcBB(chip: number | undefined | null, sb: number | undefined | null): string {
+  if (!chip || !sb) return '(-BB)'
+  return `(${(chip / (sb * 2)).toFixed(0)}BB)`
+}
+
+function fmtBlinds(sb: number | undefined, ante: number | undefined): string {
+  if (!sb) return '-'
+  const base = `${fmtMoney(sb)}/${fmtMoney(sb * 2)}`
+  return ante ? `${base} (${fmtMoney(ante)})` : base
+}
+
+/* ===== 状态卡片 ===== */
+const statusLabel = computed(() => {
+  const s = mtt.value?.status
+  if (s === 0) return '报名中'
+  if (s === 1) return '进行中'
+  if (s === 2) return '已结束'
+  return '-'
+})
+
+const startTimeLabel = computed(() => formatDateTime(mtt.value?.start_time, 'HH:mm'))
+
+const buyInTotal = computed(() => {
+  const pool = mtt.value?.apply_fee_pool ?? 0
+  const svc = mtt.value?.apply_fee_service ?? 0
+  const hunter = mtt.value?.apply_fee_hunter ?? 0
+  return pool + svc + hunter
+})
+
+/* ===== 数据统计面板 — 左列 ===== */
+const prizePool = computed(() => fmtMoney(more.value?.prize_pool ?? realPrize.value?.award))
+const championPrize = computed(() => fmtMoney(realPrize.value?.prizes?.[0]?.award))
+const unbrokenGuarantee = computed(() => fmtMoney(mtt.value?.prize_base_pool))
+const nextPrize = computed(() => fmtMoney(realPrize.value?.prizes?.[1]?.award))
+
+/* ===== 数据统计面板 — 中列 ===== */
+const currentLevel = computed(() => more.value?.bl ?? 0)
+const isPreStart = computed(() => (mtt.value?.status ?? -1) === 0)
+
+const centerTimerSeconds = computed(() => {
+  void timerTick.value
+  if (isPreStart.value) {
+    const startTimeSec = toUnixSeconds(mtt.value?.start_time)
+    if (!startTimeSec) return 0
+    const remaining = startTimeSec - Math.floor(Date.now() / 1000)
+    return remaining > 0 ? remaining : 0
+  }
+  const interval = mtt.value?.upblind_interval ?? 0
+  const nu = more.value?.nu ?? 0
+  if (!nu) return interval
+  const nowSec = Math.floor(Date.now() / 1000)
+  let remaining = interval - (nowSec - nu)
+  if (remaining > interval) remaining = remaining % interval || interval
+  if (remaining <= 0) return interval
+  return remaining
+})
+
+const levelTimeLeftLabel = computed(() => formatDurationBySeconds(centerTimerSeconds.value))
+const blindsLabel = computed(() => fmtBlinds(more.value?.sb, more.value?.ante))
+const nextBlindsLabel = computed(() => fmtBlinds(more.value?.nsb, more.value?.nante))
+
+/* ===== 数据统计面板 — 右列 ===== */
+const remainingPlayers = computed(() => {
+  const alive = props.data?.alive
+  const total = realPrize.value?.participants
+  if (alive === undefined || alive === null) return '-'
+  return `${alive}/${total ?? '-'}`
+})
+
+const rebuyCount = computed(() => {
+  const buyin = mtt.value?.total_buyin_times
+  const rebuy = mtt.value?.total_rebuy_times
+  return `${buyin ?? '-'}/${rebuy ?? '-'}`
+})
+
+const moneyBubble = computed(() => fmtNum(realPrize.value?.award_num))
+const myRank = computed(() => '-')
+
+/* ===== 筹码统计 ===== */
+const sb = computed(() => more.value?.sb)
+const highestChips = computed(() => more.value?.max_chip ?? 0)
+const highestChipsBB = computed(() => calcBB(highestChips.value, sb.value))
+const avgChips = computed(() => more.value?.avg_chip ?? 0)
+const avgChipsBB = computed(() => calcBB(avgChips.value, sb.value))
+const lowestChips = computed(() => more.value?.min_chip ?? 0)
+const lowestChipsBB = computed(() => calcBB(lowestChips.value, sb.value))
+const initialChips = computed(() => mtt.value?.initial_score ?? 0)
+const initialChipsBB = computed(() => calcBB(initialChips.value, sb.value))
+
+/* ===== 赛事信息列表 ===== */
+const GAME_TYPE_NAMES = ['NLH', 'PLO4', 'PLO5', 'PLO6']
+const SIX_PLUS_GAME_TYPE_NAMES = ['NLH 6+', 'PLO4 6+', 'PLO5 6+', 'PLO6 6+']
+
+const gameTypeName = computed(() => {
+  const gt = mtt.value?.game_type ?? 0
+  return (mtt.value?.poker_type === 2 ? SIX_PLUS_GAME_TYPE_NAMES : GAME_TYPE_NAMES)[gt] ?? '-'
+})
+
+const buyInLabel = computed(() => {
+  const pool = mtt.value?.apply_fee_pool ?? 0
+  const svc = mtt.value?.apply_fee_service ?? 0
+  const hunter = mtt.value?.apply_fee_hunter ?? 0
+  return (mtt.value?.hunter_on ?? 0) > 0
+    ? `${fmtMoney(pool)}+${fmtMoney(svc)}+${fmtMoney(hunter)}`
+    : `${fmtMoney(pool)}+${fmtMoney(svc)}`
+})
+
+const matchInfo = computed(() => {
+  const m = mtt.value
+  if (!m) return []
+  const interval = m.upblind_interval ?? 0
+  const initialBB = sb.value
+    ? `${fmtMoney(m.initial_score)} (${((m.initial_score ?? 0) / (sb.value * 2)).toFixed(0)}BB)`
+    : fmtMoney(m.initial_score)
+  const enterTimeLabel = m.enter_time
+    ? `${formatDateTime(m.enter_time, 'DD/MM HH:mm')} (级别${m.max_delay_apply_bl ?? '-'})`
+    : '-'
+  const holdTimeLabel = m.force_close_time
+    ? `${Math.ceil(m.force_close_time / 60)}分钟`
+    : '-'
+
+  let buyLimitLabel: string
+  const bl = more.value?.bl ?? 0
+  const maxDelayBl = m.max_delay_apply_bl ?? 0
+  if (maxDelayBl > bl) {
+    const limitStr = (m.limit_total_buy_times ?? 0) >= 1000
+      ? t('UIMTT_wuxianzhi')
+      : fmtNum(m.limit_total_buy_times)
+    buyLimitLabel = t('MTT_State_DelayDetailNoAddOn', limitStr, String(maxDelayBl))
+  } else {
+    buyLimitLabel = t('MTT_State_CannotDelay')
+  }
+
+  return [
+    { label: '赛事名称', value: resolveName(m.name) },
+    { label: '比赛类型', value: '无限注德州扑克' },
+    { label: '游戏类型', value: gameTypeName.value, icon: (m.hunter_on ?? 0) > 0 ? hunterIcon : undefined },
+    { label: '开始时间', value: formatDateTime(m.start_time, 'DD/MM/YYYY-HH:mm') },
+    { label: '买入', value: buyInLabel.value },
+    { label: t('MTT_State_ShangXian'), value: buyLimitLabel, tip: true },
+    { label: '重购', value: fmtNum(m.rebuy_times) },
+    { label: '保底奖池', value: fmtMoney(m.prize_base_pool) },
+    { label: '起始筹码', value: initialBB },
+    { label: '延迟报名', value: enterTimeLabel },
+    { label: '预计赛程时长', value: holdTimeLabel },
+    { label: '盲注间距', value: interval > 0 ? `${Math.floor(interval / 60)}分钟` : '-' },
+    { label: '牌桌类型', value: m.seat_count ? `${m.seat_count}人桌` : '-' },
+    { label: '最少/最多玩家', value: `${m.limit_min ?? '-'}~${realPrize.value?.participants ?? '-'}` },
+    { label: '开赛条件', value: '-' },
+    { label: '休息时间', value: '-' },
+  ]
+})
 </script>
 
 <template>
   <div class="mtt-status-tab">
+    <!-- 介绍图 banner -->
+    <div v-if="mtt?.game_icon" class="game-banner">
+      <img :src="mtt.game_icon" class="game-banner__img" alt="" />
+    </div>
+
     <!-- 状态卡片 -->
     <div class="status-card">
-      <div class="status-badge">{{ matchStatus.stateLabel }}</div>
+      <div class="status-badge">{{ statusLabel }}</div>
       <div class="status-meta">
         <div class="meta-row">
           <span class="meta-label">开赛时间:</span>
-          <span class="meta-value">{{ matchStatus.startTime }}</span>
+          <span class="meta-value">{{ startTimeLabel }}</span>
         </div>
         <div class="meta-row">
           <span class="meta-label">买入:</span>
           <div class="meta-value-with-icon">
             <img :src="hunterIcon" class="meta-icon" alt="coin" />
-            <span>{{ matchStatus.buyIn }}</span>
+            <span>{{ fmtMoney(buyInTotal) }}</span>
           </div>
         </div>
       </div>
@@ -81,37 +226,37 @@ const matchInfo = [
         <div class="stats-col">
           <div class="stat-item">
             <div class="stat-label">总奖金</div>
-            <div class="stat-value">{{ matchStatus.prizePool }}</div>
+            <div class="stat-value">{{ prizePool }}</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">冠军</div>
-            <div class="stat-value">{{ matchStatus.championPrize }}</div>
+            <div class="stat-value">{{ championPrize }}</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">未破保金额</div>
-            <div class="stat-value">{{ matchStatus.unbrokenGuarantee }}</div>
+            <div class="stat-value">{{ unbrokenGuarantee }}</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">下一级奖金</div>
-            <div class="stat-value">{{ matchStatus.nextPrize }}</div>
+            <div class="stat-value">{{ nextPrize }}</div>
           </div>
         </div>
 
         <!-- 中列 -->
         <div class="stats-col stats-col--center">
           <div class="level-card">
-            <div class="level-label">级别 {{ matchStatus.level }}</div>
-            <div class="level-timer">{{ matchStatus.levelTimeLeft }}</div>
-            <div class="level-break">下一次休息 {{ matchStatus.nextBreak }}</div>
+            <div class="level-label">{{ isPreStart ? '距离开始' : `级别 ${currentLevel}` }}</div>
+            <div class="level-timer">{{ levelTimeLeftLabel }}</div>
+            <div v-if="!isPreStart" class="level-break">下一次休息 -</div>
           </div>
           <div class="blind-info">
             <div class="blind-row">
               <div class="blind-label">盲注</div>
-              <div class="blind-value">{{ matchStatus.blinds }}</div>
+              <div class="blind-value">{{ blindsLabel }}</div>
             </div>
             <div class="blind-row">
               <div class="blind-label">下-级</div>
-              <div class="blind-value">{{ matchStatus.nextBlinds }}</div>
+              <div class="blind-value">{{ nextBlindsLabel }}</div>
             </div>
           </div>
         </div>
@@ -120,58 +265,49 @@ const matchInfo = [
         <div class="stats-col">
           <div class="stat-item">
             <div class="stat-label">剩余玩家</div>
-            <div class="stat-value">{{ matchStatus.remainingPlayers }}</div>
+            <div class="stat-value">{{ remainingPlayers }}</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">买入/重购</div>
-            <div class="stat-value">{{ matchStatus.rebuyCount }}</div>
+            <div class="stat-value">{{ rebuyCount }}</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">钱圈名额</div>
-            <div class="stat-value">{{ matchStatus.moneyBubble }}</div>
+            <div class="stat-value">{{ moneyBubble }}</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">我的排名</div>
-            <div class="stat-value">{{ matchStatus.myRank }}</div>
+            <div class="stat-value">{{ myRank }}</div>
           </div>
         </div>
       </div>
 
       <!-- 分隔线 -->
       <div class="stats-divider">
-        <img :src="hunterIcon" class="divider-icon" alt="divider" />
       </div>
 
       <!-- 筹码统计 -->
       <div class="chips-row">
         <div class="chip-item">
           <div class="chip-label">最高筹码</div>
-          <div class="chip-value">{{ matchStatus.highestChips.toLocaleString() }}</div>
-          <div class="chip-bb">（{{ matchStatus.highestChipsBB }}）</div>
+          <div class="chip-value">{{ fmtMoney(highestChips) }}</div>
+          <div class="chip-bb">{{ highestChipsBB }}</div>
         </div>
         <div class="chip-item">
           <div class="chip-label">平均筹码</div>
-          <div class="chip-value">{{ matchStatus.avgChips.toLocaleString() }}</div>
-          <div class="chip-bb">（{{ matchStatus.avgChipsBB }}）</div>
+          <div class="chip-value">{{ fmtMoney(avgChips) }}</div>
+          <div class="chip-bb">{{ avgChipsBB }}</div>
         </div>
         <div class="chip-item">
           <div class="chip-label">最低筹码</div>
-          <div class="chip-value">{{ matchStatus.lowestChips.toLocaleString() }}</div>
-          <div class="chip-bb">（{{ matchStatus.lowestChipsBB }}）</div>
+          <div class="chip-value">{{ fmtMoney(lowestChips) }}</div>
+          <div class="chip-bb">{{ lowestChipsBB }}</div>
         </div>
         <div class="chip-item">
           <div class="chip-label">初始筹码</div>
-          <div class="chip-value">{{ matchStatus.initialChips.toLocaleString() }}</div>
-          <div class="chip-bb">（{{ matchStatus.initialChipsBB }}）</div>
+          <div class="chip-value">{{ fmtMoney(initialChips) }}</div>
+          <div class="chip-bb">{{ initialChipsBB }}</div>
         </div>
-      </div>
-    </div>
-
-    <!-- 活动详情 -->
-    <div class="activity-section">
-      <div class="section-title">活动详情</div>
-      <div class="activity-card">
-        <p class="activity-text">{{ activityDesc }}</p>
       </div>
     </div>
 
@@ -183,7 +319,12 @@ const matchInfo = [
           <VanIcon v-if="item.tip" name="question-o" class="info-tip" />
         </div>
         <div class="info-value">
-          <img v-if="item.icon" :src="item.icon" class="info-icon" alt="icon" />
+          <img
+            v-if="item.icon"
+            :src="item.icon"
+            class="info-icon"
+            alt="icon"
+          />
           <span>{{ item.value }}</span>
         </div>
       </div>
@@ -195,6 +336,20 @@ const matchInfo = [
 .mtt-status-tab {
   display: flex;
   flex-direction: column;
+}
+
+/* ===== 介绍图 banner ===== */
+.game-banner {
+  width: 100%;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin-bottom: 0.3rem;
+}
+
+.game-banner__img {
+  width: 100%;
+  display: block;
+  object-fit: cover;
 }
 
 /* ===== 状态卡片 ===== */
@@ -423,35 +578,6 @@ const matchInfo = [
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
   margin-top: 0.08rem;
-}
-
-/* ===== 活动详情 ===== */
-.activity-section {
-  margin-bottom: 0.3rem;
-}
-
-.section-title {
-  font-size: 0.38rem;
-  font-weight: 600;
-  color: #fff;
-  font-family: 'HONOR Sans CN', sans-serif;
-  margin-bottom: 0.2rem;
-  padding-left: 0.15rem;
-}
-
-.activity-card {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 0.52rem;
-  padding: 0.25rem 0.4rem;
-}
-
-.activity-text {
-  font-size: 0.33rem;
-  color: rgba(255, 255, 255, 0.7);
-  font-weight: 400;
-  font-family: 'HONOR Sans CN', sans-serif;
-  line-height: 1.5;
-  word-break: break-all;
 }
 
 /* ===== 赛事信息 ===== */

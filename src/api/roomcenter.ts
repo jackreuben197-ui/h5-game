@@ -3,6 +3,8 @@ import type { ApiResponse } from '@/api/models/common'
 import type {
   AllMttSngIdsData,
   AllMttSngIdsRequest,
+  MttBuyInRequest,
+  MttRebuyRequest,
   MttListData,
   MttListRequest,
   RoomDetailData,
@@ -18,8 +20,16 @@ import type {
   RoomcenterGroupsRequest,
   RoomcenterMttDetailData,
   RoomcenterMttDetailRequest,
+  RoomcenterMttHunterRanksData,
+  RoomcenterMttHunterRanksRequest,
   RoomcenterMttListData,
   RoomcenterMttListRequest,
+  RoomcenterMttRanksData,
+  RoomcenterMttRanksRequest,
+  RoomcenterMttRealPrize,
+  RoomcenterMttRealPrizeRequest,
+  RoomcenterMttRoomsData,
+  RoomcenterMttRoomsRequest,
   RoomcenterRandomEnterData,
   RoomcenterRandomEnterRequest,
   RoomcenterRoomBlindsData,
@@ -34,6 +44,11 @@ import type {
   RoomcenterUserAllRoomsRequest,
 } from '@/api/models/roomcenter'
 import { forwardRoomsListToCocos } from '@/bridge/sync'
+
+export interface RoomcenterRequestOptions {
+  suppressBusinessToast?: boolean
+  suppressBusinessCodes?: number[]
+}
 
 // 对齐 cocos WebRoomCenterGroups.API。
 export async function postRoomcenterGroupsApi(
@@ -143,6 +158,49 @@ export async function getRoomcenterMttDetailApi(
   return response.data
 }
 
+// 对齐 cocos /api/roomcenter/mtt/{id}/ranks。
+export async function postRoomcenterMttRanksApi(
+  mttId: number | string,
+  payload: RoomcenterMttRanksRequest = {},
+  requestOptions: RoomcenterRequestOptions = {},
+): Promise<ApiResponse<RoomcenterMttRanksData>> {
+  const endpoint = `/roomcenter/mtt/${mttId}/ranks`
+  const response = await http.post<ApiResponse<RoomcenterMttRanksData>>(endpoint, payload, requestOptions)
+  return response.data
+}
+
+// 对齐 cocos /api/roomcenter/mtt/{id}/hranks。
+export async function postRoomcenterMttHunterRanksApi(
+  mttId: number | string,
+  payload: RoomcenterMttHunterRanksRequest = {},
+  requestOptions: RoomcenterRequestOptions = {},
+): Promise<ApiResponse<RoomcenterMttHunterRanksData>> {
+  const endpoint = `/roomcenter/mtt/${mttId}/hranks`
+  const response = await http.post<ApiResponse<RoomcenterMttHunterRanksData>>(endpoint, payload, requestOptions)
+  return response.data
+}
+
+// 对齐 cocos /api/roomcenter/mtt/{id}/real_prize。
+export async function postRoomcenterMttRealPrizeApi(
+  mttId: number | string,
+  payload: RoomcenterMttRealPrizeRequest = {},
+): Promise<ApiResponse<RoomcenterMttRealPrize>> {
+  const endpoint = `/roomcenter/mtt/${mttId}/real_prize`
+  const response = await http.post<ApiResponse<RoomcenterMttRealPrize>>(endpoint, payload)
+  return response.data
+}
+
+// 对齐 cocos /api/roomcenter/mtt/{id}/rooms。
+export async function postRoomcenterMttRoomsApi(
+  mttId: number | string,
+  payload: RoomcenterMttRoomsRequest = {},
+  requestOptions: RoomcenterRequestOptions = {},
+): Promise<ApiResponse<RoomcenterMttRoomsData>> {
+  const endpoint = `/roomcenter/mtt/${mttId}/rooms`
+  const response = await http.post<ApiResponse<RoomcenterMttRoomsData>>(endpoint, payload, requestOptions)
+  return response.data
+}
+
 // 对齐 cocos /api/roomcenter/user/all/rooms。
 export async function postRoomcenterUserAllRoomsApi(
   payload: RoomcenterUserAllRoomsRequest = {},
@@ -183,5 +241,29 @@ export async function getAllMttSngIdsApi(
     '/roomcenter/user/all/mtt/sng/ids',
     payload,
   )
+  return response.data
+}
+
+// 对齐 cocos /api/roomcenter/mtt/{id}/buyin。
+export async function mttBuyInApi(
+  mttId: number | string,
+  payload: MttBuyInRequest = {},
+): Promise<ApiResponse<unknown>> {
+  const response = await http.post<ApiResponse<unknown>>(`/roomcenter/mtt/${mttId}/buyin`, payload)
+  return response.data
+}
+
+// 对齐 cocos /api/roomcenter/mtt/{id}/quit。
+export async function mttQuitApi(mttId: number | string): Promise<ApiResponse<unknown>> {
+  const response = await http.post<ApiResponse<unknown>>(`/roomcenter/mtt/${mttId}/quit`, {})
+  return response.data
+}
+
+// 对齐 cocos /api/roomcenter/mtt/{id}/rebuy。
+export async function mttRebuyApi(
+  mttId: number | string,
+  payload: MttRebuyRequest = {},
+): Promise<ApiResponse<unknown>> {
+  const response = await http.post<ApiResponse<unknown>>(`/roomcenter/mtt/${mttId}/rebuy`, payload)
   return response.data
 }

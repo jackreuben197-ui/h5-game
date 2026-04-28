@@ -475,11 +475,14 @@ export interface RoomcenterMttDetailRequest {
 // /roomcenter/mtt/{id}/detail 奖励道具。
 export interface RoomcenterMttPrizeGoods {
   na?: string
+  n?: number
   [key: string]: unknown
 }
 
 // /roomcenter/mtt/{id}/detail 奖励项。
 export interface RoomcenterMttPrize {
+  min?: number
+  max?: number
   award?: number
   goods?: RoomcenterMttPrizeGoods[]
   [key: string]: unknown
@@ -518,6 +521,13 @@ export interface RoomcenterMttPlayerState {
   store?: number
   init_score?: number
   partial_enable?: boolean
+  [key: string]: unknown
+}
+
+// /roomcenter/mtt/{id}/detail 盲注级别加时配置项。
+export interface RoomcenterMttBlindLevelDelay {
+  level?: number
+  delay_times?: number
   [key: string]: unknown
 }
 
@@ -615,7 +625,7 @@ export interface RoomcenterMttDetails {
   force_video_close_time?: number
   force_video_start_time?: string
   force_close_time?: number
-  blind_level_delay_time_table?: unknown[]
+  blind_level_delay_time_table?: RoomcenterMttBlindLevelDelay[]
   club_id?: number
   // RoomCenterMttIdDetail 额外字段。
   total_buyin_times?: number
@@ -653,6 +663,97 @@ export interface RoomcenterMttDetailData {
   more?: RoomcenterMttMore
   // 实际奖池信息。
   real_prize?: RoomcenterMttRealPrize
+  [key: string]: unknown
+}
+
+// /roomcenter/mtt/{id}/ranks 请求参数。
+export interface RoomcenterMttRanksRequest {
+  limit?: number
+  offset?: number
+  [key: string]: unknown
+}
+
+// /roomcenter/mtt/{id}/ranks 玩家项。
+export interface RoomcenterMttRankPlayer {
+  rank?: number
+  chip?: number
+  alive?: boolean
+  rid?: number
+  urid?: number
+  rebuy?: number
+  addon?: boolean
+  name?: string
+  hn?: number
+  [key: string]: unknown
+}
+
+// /roomcenter/mtt/{id}/ranks 响应 data。
+export interface RoomcenterMttRanksData {
+  limit?: number
+  offset?: number
+  alive?: number
+  total?: number
+  sb?: number
+  records?: RoomcenterMttRankPlayer[]
+  [key: string]: unknown
+}
+
+// /roomcenter/mtt/{id}/hranks 请求参数。
+export interface RoomcenterMttHunterRanksRequest {
+  limit?: number
+  offset?: number
+  [key: string]: unknown
+}
+
+// /roomcenter/mtt/{id}/hranks 玩家项。
+export interface RoomcenterMttHunterRankPlayer {
+  rank?: number
+  h?: number
+  award?: number
+  rid?: number
+  name?: string
+  urid?: number
+  [key: string]: unknown
+}
+
+// /roomcenter/mtt/{id}/hranks 响应 data。
+export interface RoomcenterMttHunterRanksData {
+  limit?: number
+  offset?: number
+  total?: number
+  sb?: number
+  records?: RoomcenterMttHunterRankPlayer[]
+  [key: string]: unknown
+}
+
+// /roomcenter/mtt/{id}/real_prize 请求参数。
+export interface RoomcenterMttRealPrizeRequest {
+  [key: string]: unknown
+}
+
+// /roomcenter/mtt/{id}/rooms 请求参数。
+export interface RoomcenterMttRoomsRequest {
+  limit?: number
+  offset?: number
+  [key: string]: unknown
+}
+
+// /roomcenter/mtt/{id}/rooms 玩家项。
+export interface RoomcenterMttRoomPlayer {
+  chip?: number
+  [key: string]: unknown
+}
+
+// /roomcenter/mtt/{id}/rooms 牌桌项。
+export interface RoomcenterMttRoomRecord {
+  rid?: number
+  roomers?: RoomcenterMttRoomPlayer[]
+  [key: string]: unknown
+}
+
+// /roomcenter/mtt/{id}/rooms 响应 data。
+export interface RoomcenterMttRoomsData {
+  records?: RoomcenterMttRoomRecord[]
   [key: string]: unknown
 }
 
@@ -825,6 +926,37 @@ export interface MttSeriesInfoRecord {
 export interface AllMttSngIdsRequest {
   room_ids?: number[]
   [key: string]: unknown
+}
+
+// /roomcenter/mtt/{id}/buyin 请求体。
+export interface MttBuyInRequest {
+  ticket?: boolean
+  ratio?: number
+  use_free?: boolean
+  club_id?: number
+}
+
+// /roomcenter/mtt/{id}/rebuy 请求体。
+export interface MttRebuyRequest {
+  ticket?: boolean
+  ratio?: number
+  use_free?: boolean
+  club_id?: number
+}
+
+// MttPlayerStatus 枚举（与 Unity MttPlayerStatus.cs 对齐）。
+export const enum MttPlayerStatus {
+  WAITING_APPLY = 0,
+  CAN_APPLY_NOT_START = 1,
+  CAN_APPLY_DELAY = 2,
+  APPLIED_NOT_START = 3,
+  CAN_JOIN = 4,
+  CANNOT_APPLY_STARTED = 5,
+  LOSE_CAN_REBUY = 6,
+  LOSE = 7,
+  JOIN_COMPLETE = 8,
+  NOT_JOIN_COMPLETE = 9,
+  CANNOT_JOIN_OVERTIME = 10,
 }
 
 // /roomcenter/user/all/mtt/sng/ids 响应 data。

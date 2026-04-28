@@ -1,13 +1,20 @@
-import axios, { type AxiosError } from 'axios'
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { showFailToast } from 'vant'
 import { useGameStore } from '@/stores/game'
 import { pinia } from '@/stores/pinia'
 import router from '@/router'
+import { showGameToast } from '@/components/Toast'
+import { t } from '@/i18n'
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   timeout: 10000,
 })
+
+interface HttpRequestConfigExt extends InternalAxiosRequestConfig {
+  suppressBusinessToast?: boolean
+  suppressBusinessCodes?: number[]
+}
 
 let authRedirecting = false
 
@@ -56,10 +63,23 @@ http.interceptors.request.use((config) => {
 http.interceptors.response.use(
   (response) => {
     const businessCode = (response.data as { code?: number } | undefined)?.code
+    const requestConfig = response.config as HttpRequestConfigExt
+    const suppressCodes = Array.isArray(requestConfig.suppressBusinessCodes)
+      ? requestConfig.suppressBusinessCodes
+      : []
+    const suppressToast =
+      requestConfig.suppressBusinessToast === true ||
+      (businessCode !== undefined && suppressCodes.includes(Number(businessCode)))
+
     // 服务端返回 90010：token 失效，强制回登录页。
     if (businessCode === 90010) {
       void forceToLogin()
       return Promise.reject(new Error('登录已失效，请重新登录'))
+    }
+    // 业务码非 0：弹出多语言错误提示。
+    if (businessCode !== undefined && businessCode !== 0 && !suppressToast) {
+      const msg = t(`ServerErrorCode_${businessCode}`) || `error: ${businessCode}`
+      showGameToast(msg)
     }
     return response
   },

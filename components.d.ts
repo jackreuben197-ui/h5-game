@@ -57,6 +57,7 @@ declare module 'vue' {
     VanPopup: typeof import('vant/es')['Popup']
     VanTab: typeof import('vant/es')['Tab']
     VanTabs: typeof import('vant/es')['Tabs']
+    VanToast: typeof import('vant/es')['Toast']
     WithdrawForm: typeof import('./src/components/wallet/WithdrawForm.vue')['default']
   }
 }

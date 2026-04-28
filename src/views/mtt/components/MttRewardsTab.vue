@@ -1,27 +1,122 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { GameTable, GameTableColumn } from '@/components/Table'
 import chipIcon from '@/assets/icons/icon_chips.png'
+import type { RoomcenterMttDetailData, RoomcenterMttRealPrize, RoomcenterMttPrize } from '@/api/models/roomcenter'
+import { postRoomcenterMttRealPrizeApi } from '@/api/roomcenter'
+import { getLocale, t } from '@/i18n'
+import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 
 interface RewardRecord {
-  rank: number
+  rank: string
   reward: string
 }
 
-/* ===== 顶部统计 ===== */
-const stats = ref({
-  prizePool: 509,
-  paidPlaces: 200,
+const props = defineProps<{
+  data: RoomcenterMttDetailData | null
+  matchId: number
+}>()
+
+const loading = ref(false)
+const rewardData = ref<RoomcenterMttRealPrize | null>(null)
+
+const mtt = computed(() => props.data?.mtt)
+const isDiamond = computed(() => (mtt.value?.gold_type ?? 1) === 4)
+
+function fmtMoney(n: number | undefined | null): string {
+  if (n === undefined || n === null) return '-'
+  const val = isDiamond.value ? n : n / 100
+  return val.toLocaleString()
+}
+
+function resolveName(rawName: string | undefined | null): string {
+  if (!rawName) return ''
+  return resolveTemplateTextByKey(rawName, getLocale()) || t(rawName) || rawName
+}
+
+function formatReward(item: RoomcenterMttPrize): string {
+  const award = item.award ?? 0
+  const goods = Array.isArray(item.goods) ? item.goods : []
+  const awardStr = award > 0 ? fmtMoney(award) : ''
+
+  let goodsStr = ''
+  goods.forEach((good, index) => {
+    const name = resolveName(good.na)
+    const count = good.n ?? 0
+    if (!name) return
+    const segment = `${name} x${count}`
+    if (index === 0 && award <= 0) {
+      goodsStr += segment
+    } else {
+      goodsStr += `+${segment}`
+    }
+  })
+
+  const isHunterOn = (mtt.value?.hunter_on ?? 0) > 0
+  const bountyStr = t('UIReward_Bounty')
+
+  if (!isHunterOn) {
+    if (award > 0) return `${awardStr}${goodsStr}`
+    return goodsStr || '-'
+  }
+
+  if (award > 0 || goodsStr) {
+    return `${awardStr}${goodsStr}+${bountyStr}`
+  }
+  return bountyStr
+}
+
+const prizePool = computed(() => {
+  const value = rewardData.value?.award ?? props.data?.real_prize?.award
+  return fmtMoney(value)
 })
 
-/* ===== 奖励列表 mock 数据 ===== */
-const rewardList = ref<RewardRecord[]>([
-  { rank: 1, reward: '150,000' },
-  { rank: 2, reward: '150,000' },
-  { rank: 3, reward: '150,000' },
-  { rank: 4, reward: '150,000' },
-  { rank: 5, reward: '150,000' },
-])
+const paidPlaces = computed(() => {
+  const value = rewardData.value?.award_num ?? props.data?.real_prize?.award_num
+  if (value === undefined || value === null) return '-'
+  return value.toLocaleString()
+})
+
+const rewardList = computed<RewardRecord[]>(() => {
+  const list = rewardData.value?.prizes ?? props.data?.real_prize?.prizes ?? []
+  return list.map((item) => {
+    const min = item.min ?? 0
+    const max = item.max ?? 0
+    return {
+      rank: min > 0 ? (min === max || max <= 0 ? String(min) : `${min}-${max}`) : '-',
+      reward: formatReward(item),
+    }
+  })
+})
+
+async function loadRewards(): Promise<void> {
+  if (!props.matchId) {
+    rewardData.value = null
+    return
+  }
+
+  loading.value = true
+  try {
+    const response = await postRoomcenterMttRealPrizeApi(props.matchId)
+    if (Number(response.code) === 0 && response.data) {
+      rewardData.value = response.data
+      return
+    }
+    rewardData.value = null
+  } catch {
+    rewardData.value = null
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  void loadRewards()
+})
+
+watch(() => props.matchId, () => {
+  void loadRewards()
+})
 </script>
 
 <template>
@@ -32,21 +127,31 @@ const rewardList = ref<RewardRecord[]>([
         <div class="rewards-stat-label">总奖金</div>
         <div class="rewards-stat-value">
           <img :src="chipIcon" class="stat-chip-icon" alt="chip" />
-          <span>{{ stats.prizePool }}</span>
+          <span>{{ prizePool }}</span>
         </div>
       </div>
       <div class="rewards-stat-row">
         <div class="rewards-stat-label">奖励圈</div>
         <div class="rewards-stat-value">
-          <span>{{ stats.paidPlaces }}</span>
+          <span>{{ paidPlaces }}</span>
         </div>
       </div>
     </div>
 
     <!-- 奖励表格 -->
-    <GameTable :data="rewardList">
-      <GameTableColumn prop="rank" label="名次" :flex="1" align="center" />
-      <GameTableColumn prop="reward" label="奖励" :flex="1" align="center">
+    <GameTable :data="rewardList" :loading="loading" height="7.2rem">
+      <GameTableColumn
+        prop="rank"
+        label="名次"
+        :flex="1"
+        align="center"
+      />
+      <GameTableColumn
+        prop="reward"
+        label="奖励"
+        :flex="2"
+        align="center"
+      >
         <template #default="{ row }">
           <div class="reward-cell">
             <img :src="chipIcon" class="cell-chip-icon" alt="chip" />

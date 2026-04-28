@@ -252,8 +252,8 @@ function formatCentAmount(value: number): string {
         </div>
         <div class="mtt-card__count">
           <span v-if="showGuaranteeTag" class="mtt-card-prize-type">保底赛</span>
-          <span v-if="showRebuyTag" class="ml-4 mtt-addon">A</span>
-          <span v-if="showAddonTag" class="ml-4 mtt-rebuy">R</span>
+          <span v-if="showAddonTag" class="ml-4 mtt-rebuy">A</span>
+          <span v-if="showRebuyTag" class="ml-4 mtt-addon">R</span>
           <img
             v-if="showVideoIcon"
             class="mtt-card-info-icon ml-3"

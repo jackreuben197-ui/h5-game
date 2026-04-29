@@ -10,7 +10,7 @@ export const localStore = {
     window.localStorage.setItem(this.keyPre + key, JSON.stringify(safeValue))
   },
 
-  
+
   getItem<T = unknown>(key: string, defaultValue: T | null = null): T | null {
     const prefixedKey = this.keyPre + key
     const raw = window.localStorage.getItem(prefixedKey)

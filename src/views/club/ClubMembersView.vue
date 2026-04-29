@@ -348,13 +348,13 @@ function roleClass(role: MemberRole): string {
 
 <template>
   <div class="club-members-bg">
-    <div class="bg-blur bg-blur--pink" aria-hidden="true" />
-    <div class="bg-blur bg-blur--cyan" aria-hidden="true" />
+    <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
+    <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
 
     <div class="page-shell club-members">
       <header class="top-bar">
         <button type="button" class="back-btn" @click="goBack">
-          <span class="back-icon" aria-hidden="true" />
+          <span class="back-icon" aria-hidden="true"></span>
           <span class="back-title">基金管理</span>
         </button>
 
@@ -381,177 +381,177 @@ function roleClass(role: MemberRole): string {
       </nav>
 
       <template v-if="activeTab === 'account'">
-      <section class="summary-card">
-        <div class="summary-grid summary-grid--top">
-          <div v-for="item in summaryTop" :key="item.label" class="summary-item">
-            <p class="summary-label">{{ item.label }}</p>
-            <p class="summary-value">
-              <img :src="iconByType(item.icon)" alt="" aria-hidden="true" />
-              <span>{{ formatCount(item.value) }}</span>
-            </p>
-          </div>
-        </div>
-
-        <div class="summary-grid summary-grid--bottom">
-          <div v-for="item in summaryBottom" :key="item.label" class="summary-item">
-            <p class="summary-label">{{ item.label }}</p>
-            <p class="summary-value">
-              <img :src="iconByType(item.icon)" alt="" aria-hidden="true" />
-              <span>{{ formatCount(item.value) }}</span>
-            </p>
+        <section class="summary-card">
+          <div class="summary-grid summary-grid--top">
+            <div v-for="item in summaryTop" :key="item.label" class="summary-item">
+              <p class="summary-label">{{ item.label }}</p>
+              <p class="summary-value">
+                <img :src="iconByType(item.icon)" alt="" aria-hidden="true" />
+                <span>{{ formatCount(item.value) }}</span>
+              </p>
+            </div>
           </div>
 
-          <button type="button" class="income-btn" @click="onIncomeQuery">
-            <span>收益查询</span>
-            <span class="income-icon" aria-hidden="true" />
-          </button>
-        </div>
-      </section>
+          <div class="summary-grid summary-grid--bottom">
+            <div v-for="item in summaryBottom" :key="item.label" class="summary-item">
+              <p class="summary-label">{{ item.label }}</p>
+              <p class="summary-value">
+                <img :src="iconByType(item.icon)" alt="" aria-hidden="true" />
+                <span>{{ formatCount(item.value) }}</span>
+              </p>
+            </div>
 
-      <section class="search-card">
-        <span class="search-icon" aria-hidden="true" />
-        <input
-          v-model.trim="searchKeyword"
-          type="text"
-          placeholder="玩家查询"
-          @keydown.enter="onSearchSubmit"
-        />
-      </section>
+            <button type="button" class="income-btn" @click="onIncomeQuery">
+              <span>收益查询</span>
+              <span class="income-icon" aria-hidden="true"></span>
+            </button>
+          </div>
+        </section>
 
-      <section class="members-list" aria-label="成员列表">
-        <article v-for="member in members" :key="member.id" class="member-card">
-          <span class="role-badge" :class="roleClass(member.role)">{{ member.role }}</span>
+        <section class="search-card">
+          <span class="search-icon" aria-hidden="true"></span>
+          <input
+            v-model.trim="searchKeyword"
+            type="text"
+            placeholder="玩家查询"
+            @keydown.enter="onSearchSubmit"
+          />
+        </section>
 
-          <div class="member-main">
-            <div class="member-left">
-              <img class="member-avatar" :src="imgAvatar" :alt="`${member.name}头像`" />
-              <div class="member-base">
-                <button type="button" class="member-name" @click="openMemberDetail(member)">{{ member.name }}</button>
-                <p class="member-id-row">
-                  <span class="id-pill">ID</span>
-                  <span>{{ member.uid }}</span>
+        <section class="members-list" aria-label="成员列表">
+          <article v-for="member in members" :key="member.id" class="member-card">
+            <span class="role-badge" :class="roleClass(member.role)">{{ member.role }}</span>
+
+            <div class="member-main">
+              <div class="member-left">
+                <img class="member-avatar" :src="imgAvatar" :alt="`${member.name}头像`" />
+                <div class="member-base">
+                  <button type="button" class="member-name" @click="openMemberDetail(member)">{{ member.name }}</button>
+                  <p class="member-id-row">
+                    <span class="id-pill">ID</span>
+                    <span>{{ member.uid }}</span>
+                  </p>
+                </div>
+              </div>
+
+              <p class="member-diamond">
+                <img :src="imgDiamond" alt="" aria-hidden="true" />
+                <span>{{ member.diamond }}</span>
+              </p>
+            </div>
+
+            <div class="member-data-strip" @click="openFundSheet(member)">
+              <div class="data-item">
+                <p class="data-label">
+                  <img :src="imgChips" alt="" aria-hidden="true" />
+                  <span>UC</span>
                 </p>
+                <p class="data-value">{{ member.uc }}</p>
+              </div>
+
+              <div class="data-item">
+                <p class="data-label">
+                  <img :src="imgBalance" alt="" aria-hidden="true" />
+                  <span>免审额</span>
+                </p>
+                <p class="data-value">{{ member.freeLimit }}</p>
+              </div>
+
+              <div class="data-item">
+                <p class="data-label data-label--agent">
+                  <span>所属代理</span>
+                </p>
+                <p class="data-value">{{ member.agentName }}</p>
               </div>
             </div>
-
-            <p class="member-diamond">
-              <img :src="imgDiamond" alt="" aria-hidden="true" />
-              <span>{{ member.diamond }}</span>
-            </p>
-          </div>
-
-          <div class="member-data-strip" @click="openFundSheet(member)">
-            <div class="data-item">
-              <p class="data-label">
-                <img :src="imgChips" alt="" aria-hidden="true" />
-                <span>UC</span>
-              </p>
-              <p class="data-value">{{ member.uc }}</p>
-            </div>
-
-            <div class="data-item">
-              <p class="data-label">
-                <img :src="imgBalance" alt="" aria-hidden="true" />
-                <span>免审额</span>
-              </p>
-              <p class="data-value">{{ member.freeLimit }}</p>
-            </div>
-
-            <div class="data-item">
-              <p class="data-label data-label--agent">
-                <span>所属代理</span>
-              </p>
-              <p class="data-value">{{ member.agentName }}</p>
-            </div>
-          </div>
-        </article>
-      </section>
+          </article>
+        </section>
       </template>
 
       <template v-else>
-      <section class="record-panel">
-        <header class="record-head">
-          <span>支持查询三个月数据</span>
-          <span>时区 UTC+0</span>
-        </header>
+        <section class="record-panel">
+          <header class="record-head">
+            <span>支持查询三个月数据</span>
+            <span>时区 UTC+0</span>
+          </header>
 
-        <div class="range-tabs">
-          <button
-            v-for="item in recordRanges"
-            :key="item.key"
-            type="button"
-            class="range-tab"
-            :class="{ 'range-tab--active': activeRange === item.key }"
-            @click="switchRange(item.key)"
-          >
-            {{ item.label }}
-          </button>
-        </div>
-
-        <div class="record-stats">
-          <article v-for="stat in recordStats" :key="stat.id" class="record-stat-item">
-            <p class="record-stat-label">{{ stat.label }}</p>
-            <p class="record-stat-value">{{ stat.value }}</p>
-          </article>
-        </div>
-
-        <div class="record-table-wrap">
-          <div class="record-table-head">
-            <button type="button" class="head-cell head-cell--time">
-              <span>time</span>
-              <span class="tiny-arrow" aria-hidden="true" />
-            </button>
-            <button type="button" class="head-cell head-cell--type" @click="toggleTypeMenu">
-              <span>type</span>
-              <span class="tiny-arrow" aria-hidden="true" />
-            </button>
-            <span class="head-cell">Quantity</span>
-            <span class="head-cell">Balance</span>
-            <span class="head-cell">Remarks</span>
-          </div>
-
-          <div v-if="showTypeMenu" class="type-dropdown">
+          <div class="range-tabs">
             <button
-              v-for="option in recordTypeOptions"
-              :key="option"
+              v-for="item in recordRanges"
+              :key="item.key"
               type="button"
-              class="type-option"
-              :class="{ 'type-option--active': selectedRecordType === option }"
-              @click="chooseType(option)"
+              class="range-tab"
+              :class="{ 'range-tab--active': activeRange === item.key }"
+              @click="switchRange(item.key)"
             >
-              {{ option }}
+              {{ item.label }}
             </button>
           </div>
 
-          <section class="record-list">
-            <article v-for="row in filteredRecordRows" :key="row.id" class="record-row">
-              <div v-if="row.fromName && row.fromId" class="from-chip">
-                <span class="from-label">From</span>
-                <span>{{ row.fromName }}</span>
-                <span class="from-id-pill">ID</span>
-                <span>{{ row.fromId }}</span>
-              </div>
-
-              <div class="record-main-grid">
-                <p class="time-cell">
-                  <span>{{ row.time }}</span>
-                  <span class="sub-line">{{ row.date }}</span>
-                </p>
-                <p class="type-cell">{{ row.type }}</p>
-                <p class="quantity-cell">{{ row.quantity }}</p>
-                <p class="balance-cell">{{ row.balance }}</p>
-                <p class="remark-cell">
-                  <span>{{ row.remark }}</span>
-                  <span class="sub-line">ID: {{ row.remarkId }}</span>
-                </p>
-              </div>
+          <div class="record-stats">
+            <article v-for="stat in recordStats" :key="stat.id" class="record-stat-item">
+              <p class="record-stat-label">{{ stat.label }}</p>
+              <p class="record-stat-value">{{ stat.value }}</p>
             </article>
-          </section>
-        </div>
-      </section>
+          </div>
+
+          <div class="record-table-wrap">
+            <div class="record-table-head">
+              <button type="button" class="head-cell head-cell--time">
+                <span>time</span>
+                <span class="tiny-arrow" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="head-cell head-cell--type" @click="toggleTypeMenu">
+                <span>type</span>
+                <span class="tiny-arrow" aria-hidden="true"></span>
+              </button>
+              <span class="head-cell">Quantity</span>
+              <span class="head-cell">Balance</span>
+              <span class="head-cell">Remarks</span>
+            </div>
+
+            <div v-if="showTypeMenu" class="type-dropdown">
+              <button
+                v-for="option in recordTypeOptions"
+                :key="option"
+                type="button"
+                class="type-option"
+                :class="{ 'type-option--active': selectedRecordType === option }"
+                @click="chooseType(option)"
+              >
+                {{ option }}
+              </button>
+            </div>
+
+            <section class="record-list">
+              <article v-for="row in filteredRecordRows" :key="row.id" class="record-row">
+                <div v-if="row.fromName && row.fromId" class="from-chip">
+                  <span class="from-label">From</span>
+                  <span>{{ row.fromName }}</span>
+                  <span class="from-id-pill">ID</span>
+                  <span>{{ row.fromId }}</span>
+                </div>
+
+                <div class="record-main-grid">
+                  <p class="time-cell">
+                    <span>{{ row.time }}</span>
+                    <span class="sub-line">{{ row.date }}</span>
+                  </p>
+                  <p class="type-cell">{{ row.type }}</p>
+                  <p class="quantity-cell">{{ row.quantity }}</p>
+                  <p class="balance-cell">{{ row.balance }}</p>
+                  <p class="remark-cell">
+                    <span>{{ row.remark }}</span>
+                    <span class="sub-line">ID: {{ row.remarkId }}</span>
+                  </p>
+                </div>
+              </article>
+            </section>
+          </div>
+        </section>
       </template>
 
-      <div v-if="showFundSheet" class="fund-sheet-mask" @click="closeFundSheet" />
+      <div v-if="showFundSheet" class="fund-sheet-mask" @click="closeFundSheet"></div>
 
       <section v-if="showFundSheet && activeMember" class="fund-sheet" @click.stop>
         <div class="fund-tabs" role="tablist" aria-label="基金资产类型">
@@ -718,7 +718,7 @@ function roleClass(role: MemberRole): string {
               @click="onKeypadPress(key)"
             >
               <span v-if="key !== 'DEL'">{{ key }}</span>
-              <span v-else class="del-icon" aria-hidden="true" />
+              <span v-else class="del-icon" aria-hidden="true"></span>
             </button>
           </div>
         </div>

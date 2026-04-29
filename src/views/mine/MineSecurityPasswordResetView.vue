@@ -86,7 +86,14 @@ function closeOverlay(): void {
           <span v-if="idx <= digits.length" class="digit">6</span>
         </span>
       </div>
-      <button class="submit-btn" :class="{ active: canSubmit }" type="button" @click="submitReset">完成</button>
+      <button
+        class="submit-btn"
+        :class="{ active: canSubmit }"
+        type="button"
+        @click="submitReset"
+      >
+        完成
+      </button>
     </section>
 
     <section class="keyboard-wrap">
@@ -107,7 +114,7 @@ function closeOverlay(): void {
 
     <div v-if="overlayType !== 'none'" class="overlay-mask">
       <div class="overlay-card" :class="{ wide: overlayType !== 'loading' }">
-        <div v-if="overlayType === 'loading'" class="loader" />
+        <div v-if="overlayType === 'loading'" class="loader"></div>
         <p v-if="overlayType === 'loading'">请稍后</p>
         <template v-else>
           <p class="multiline">{{ modalText }}</p>

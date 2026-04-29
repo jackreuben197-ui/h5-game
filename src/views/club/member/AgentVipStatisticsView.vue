@@ -59,9 +59,18 @@ function goBack(): void {
       <section class="cards">
         <article v-for="row in rows" :key="row.label" class="glass stat-card">
           <div class="left"><img :src="imgCard" alt="" /> {{ row.label }}</div>
-          <div class="metric"><b>{{ row.total }}</b><span>Total</span></div>
-          <div class="metric"><b>{{ row.today }}</b><span>Today</span></div>
-          <div class="metric"><b>{{ row.week }}</b><span>Past 7 days</span></div>
+          <div class="metric">
+            <b>{{ row.total }}</b>
+            <span>Total</span>
+          </div>
+          <div class="metric">
+            <b>{{ row.today }}</b>
+            <span>Today</span>
+          </div>
+          <div class="metric">
+            <b>{{ row.week }}</b>
+            <span>Past 7 days</span>
+          </div>
         </article>
       </section>
     </div>

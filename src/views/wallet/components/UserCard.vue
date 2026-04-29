@@ -2,6 +2,8 @@
 import bannerBgUrl from '@/assets/images/wallet/banner_bg.png'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
 import TagPill from '@/components/wallet/TagPill.vue'
+import { computed } from 'vue'
+import { useUserInfoStore } from '@/stores/userInfo'
 
 type Variant = 'compact' | 'expanded'
 
@@ -13,10 +15,16 @@ interface Props {
   variant?: Variant
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   balance: '',
   variant: 'compact',
 })
+
+const userInfoStore = useUserInfoStore()
+const displayAvatar = computed(() => userInfoStore.userInfo?.user?.avatar || props.avatar)
+const displayName = computed(() => userInfoStore.userInfo?.user?.nickname || props.name)
+const displayUserId = computed(() => userInfoStore.userInfo?.user?.un_id || props.userId)
+
 
 const bannerBg = `url(${bannerBgUrl})`
 </script>
@@ -28,18 +36,18 @@ const bannerBg = `url(${bannerBgUrl})`
   >
     <div class="usercard__head">
       <img
-        :src="avatar"
+        :src="displayAvatar"
         alt=""
         class="usercard__avatar"
       />
       <div class="usercard__info">
-        <div class="usercard__name">{{ name }}</div>
+        <div class="usercard__name">{{ displayName }}</div>
         <div class="usercard__id">
           <TagPill
             label="ID"
             variant="id"
           />
-          <span class="usercard__id-value">{{ userId }}</span>
+          <span class="usercard__id-value">{{ displayUserId }}</span>
         </div>
       </div>
       <div

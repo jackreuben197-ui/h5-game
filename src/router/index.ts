@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useGameStore } from '@/stores/game'
+import { useWalletStore } from '@/stores/wallet'
 import { pinia } from '@/stores/pinia'
 
 const router = createRouter({
@@ -364,6 +365,10 @@ const router = createRouter({
       name: 'wallet',
       component: () => import('@/views/wallet/WalletIndexView.vue'),
       meta: { requiresAuth: true },
+      beforeEnter: async () => {
+        const walletStore = useWalletStore(pinia)
+        await walletStore.loadPriceList()
+      },
     },
     {
       path: '/wallet/orders',

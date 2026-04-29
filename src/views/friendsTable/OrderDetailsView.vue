@@ -30,26 +30,26 @@ function close(): void {
 
 <template>
   <Teleport to="body">
-  <div
-    class="overlay"
-    :style="{ backgroundImage: `url(${sharpBgUrl})` }"
-    @click.self="close"
-  >
-    <div class="card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
-      <!-- <div class="card__bg" ></div> -->
-      <h2 class="card__title">{{ t('Wallet_OrderTitle') }}</h2>
-      <div class="card__rows">
-        <div
-          v-for="r in rows"
-          :key="r.label"
-          class="card__row"
-        >
-          <span class="card__key">{{ r.label }}</span>
-          <span class="card__val">{{ r.value }}</span>
+    <div
+      class="overlay"
+      :style="{ backgroundImage: `url(${sharpBgUrl})` }"
+      @click.self="close"
+    >
+      <div class="card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
+        <!-- <div class="card__bg" ></div> -->
+        <h2 class="card__title">{{ t('Wallet_OrderTitle') }}</h2>
+        <div class="card__rows">
+          <div
+            v-for="r in rows"
+            :key="r.label"
+            class="card__row"
+          >
+            <span class="card__key">{{ r.label }}</span>
+            <span class="card__val">{{ r.value }}</span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
   </Teleport>
 </template>
 

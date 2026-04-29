@@ -22,7 +22,7 @@ import type {
 const formatPath = (
   template: string,
   pathParams: Record<string, string | number>,
-): string => template.replace(/\{([^}]+)\}/g, (_, key) => encodeURIComponent(String(pathParams[key] ?? "")))
+): string => template.replace(/\{([^}]+)\}/g, (_, key) => encodeURIComponent(String(pathParams[key] ?? '')))
 void formatPath
 
 // 对齐 cocos WebMsgMessageUnreadClear.API

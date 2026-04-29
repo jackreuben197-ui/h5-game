@@ -16,94 +16,119 @@ const imgStarSide = 'https://www.figma.com/api/mcp/asset/a71c836e-9cae-4e91-81db
 const imgRankBadge = 'https://www.figma.com/api/mcp/asset/c0f17701-06af-4af8-8755-f9cac9eff9a0'
 
 function goBack(): void {
-	void router.push('/club/detail')
+  void router.push('/club/detail')
 }
 
 function openUpgradeConfirm(): void {
-	showUpgradeConfirm.value = true
+  showUpgradeConfirm.value = true
 }
 
 function closeUpgradeConfirm(): void {
-	showUpgradeConfirm.value = false
+  showUpgradeConfirm.value = false
 }
 
 function confirmUpgrade(): void {
-	showUpgradeConfirm.value = false
-	showSuccessToast('已提交升级申请')
+  showUpgradeConfirm.value = false
+  showSuccessToast('已提交升级申请')
 }
 </script>
 
 <template>
-	<div class="club-level-page">
-		<div class="club-level-bg" aria-hidden="true">
-			<img :src="imgBgBase" alt="" />
-			<img class="club-level-bg__overlay" :src="imgBgOverlay" alt="" />
-		</div>
+  <div class="club-level-page">
+    <div class="club-level-bg" aria-hidden="true">
+      <img :src="imgBgBase" alt="" />
+      <img class="club-level-bg__overlay" :src="imgBgOverlay" alt="" />
+    </div>
 
-		<header class="club-level-header">
-			<button type="button" class="club-level-back" @click="goBack">
-				<span class="club-level-back__icon" aria-hidden="true" />
-				<span>Club Level</span>
-			</button>
-			<div class="club-level-diamond">
-				<img :src="imgDiamond" alt="钻石" />
-				<span>500</span>
-			</div>
-		</header>
+    <header class="club-level-header">
+      <button type="button" class="club-level-back" @click="goBack">
+        <span class="club-level-back__icon" aria-hidden="true"></span>
+        <span>Club Level</span>
+      </button>
+      <div class="club-level-diamond">
+        <img :src="imgDiamond" alt="钻石" />
+        <span>500</span>
+      </div>
+    </header>
 
-		<main class="club-level-main">
-			<section class="club-medal">
-				<div class="club-medal__coin">
-					<img class="club-medal__coin-bg" :src="imgMedal" alt="勋章" />
-					<img class="club-medal__star club-medal__star--main" :src="imgStarMain" alt="" aria-hidden="true" />
-					<img class="club-medal__star club-medal__star--left" :src="imgStarSide" alt="" aria-hidden="true" />
-					<img class="club-medal__star club-medal__star--right" :src="imgStarSide" alt="" aria-hidden="true" />
-				</div>
-				<img class="club-medal__ribbon" :src="imgRibbon" alt="" aria-hidden="true" />
-				<div class="club-medal__level-pill">LEVEL 1</div>
-			</section>
+    <main class="club-level-main">
+      <section class="club-medal">
+        <div class="club-medal__coin">
+          <img class="club-medal__coin-bg" :src="imgMedal" alt="勋章" />
+          <img
+            class="club-medal__star club-medal__star--main"
+            :src="imgStarMain"
+            alt=""
+            aria-hidden="true"
+          />
+          <img
+            class="club-medal__star club-medal__star--left"
+            :src="imgStarSide"
+            alt=""
+            aria-hidden="true"
+          />
+          <img
+            class="club-medal__star club-medal__star--right"
+            :src="imgStarSide"
+            alt=""
+            aria-hidden="true"
+          />
+        </div>
+        <img
+          class="club-medal__ribbon"
+          :src="imgRibbon"
+          alt=""
+          aria-hidden="true"
+        />
+        <div class="club-medal__level-pill">LEVEL 1</div>
+      </section>
 
-			<section class="club-upgrade-card">
-				<p class="club-upgrade-card__date">有效日期至：30/08/2024 04:00</p>
+      <section class="club-upgrade-card">
+        <p class="club-upgrade-card__date">有效日期至：30/08/2024 04:00</p>
 
-				<div class="club-upgrade-progress" aria-label="升级进度">
-					<div class="club-upgrade-progress__line" />
-					<div class="club-upgrade-progress__line club-upgrade-progress__line--rest" />
-					<span v-for="idx in 9" :key="idx" class="club-upgrade-progress__dot" :class="{ 'club-upgrade-progress__dot--active': idx <= 6 }" />
-					<span class="club-upgrade-progress__thumb" />
-				</div>
+        <div class="club-upgrade-progress" aria-label="升级进度">
+          <div class="club-upgrade-progress__line"></div>
+          <div class="club-upgrade-progress__line club-upgrade-progress__line--rest"></div>
+          <span
+            v-for="idx in 9"
+            :key="idx"
+            class="club-upgrade-progress__dot"
+            :class="{ 'club-upgrade-progress__dot--active': idx <= 6 }"
+          ></span>
+          <span class="club-upgrade-progress__thumb"></span>
+        </div>
 
-				<div class="club-upgrade-cost">
-					<p>升级至2级俱乐部需消耗钻石</p>
-					<div class="club-upgrade-cost__value">
-						<span class="club-upgrade-cost__badge">
-							<img :src="imgRankBadge" alt="" aria-hidden="true" />
-							<i>2</i>
-						</span>
-						<span>500</span>
-						<img :src="imgDiamond" alt="钻石" />
-					</div>
-				</div>
+        <div class="club-upgrade-cost">
+          <p>升级至2级俱乐部需消耗钻石</p>
+          <div class="club-upgrade-cost__value">
+            <span class="club-upgrade-cost__badge">
+              <img :src="imgRankBadge" alt="" aria-hidden="true" />
+              <i>2</i>
+            </span>
+            <span>500</span>
+            <img :src="imgDiamond" alt="钻石" />
+          </div>
+        </div>
 
-				<p class="club-upgrade-card__desc">成员上限人数临时提升至200人</p>
-				<p class="club-upgrade-card__desc">有效期：30天</p>
-			</section>
-		</main>
+        <p class="club-upgrade-card__desc">成员上限人数临时提升至200人</p>
+        <p class="club-upgrade-card__desc">有效期：30天</p>
+      </section>
+    </main>
 
-		<footer class="club-level-footer">
-			<button type="button" class="club-upgrade-btn" @click="openUpgradeConfirm">Upgrade Level</button>
-		</footer>
+    <footer class="club-level-footer">
+      <button type="button" class="club-upgrade-btn" @click="openUpgradeConfirm">Upgrade Level</button>
+    </footer>
 
-		<div v-if="showUpgradeConfirm" class="club-level-mask" @click="closeUpgradeConfirm">
-			<section class="club-level-confirm" @click.stop>
-				<p>确定花费9980钻石购买Level 9(30天)?</p>
-				<div class="club-level-confirm__actions">
-					<button type="button" class="club-level-confirm__cancel" @click="closeUpgradeConfirm">取消</button>
-					<button type="button" class="club-level-confirm__ok" @click="confirmUpgrade">确定</button>
-				</div>
-			</section>
-		</div>
-	</div>
+    <div v-if="showUpgradeConfirm" class="club-level-mask" @click="closeUpgradeConfirm">
+      <section class="club-level-confirm" @click.stop>
+        <p>确定花费9980钻石购买Level 9(30天)?</p>
+        <div class="club-level-confirm__actions">
+          <button type="button" class="club-level-confirm__cancel" @click="closeUpgradeConfirm">取消</button>
+          <button type="button" class="club-level-confirm__ok" @click="confirmUpgrade">确定</button>
+        </div>
+      </section>
+    </div>
+  </div>
 </template>
 
 <style scoped lang="scss">

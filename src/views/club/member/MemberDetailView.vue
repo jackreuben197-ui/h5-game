@@ -122,7 +122,7 @@ function togglePermission(index: number): void {
     <div class="page-shell member-detail-page">
       <header class="detail-header">
         <button type="button" class="header-back" @click="goBack">
-          <span class="back-icon" aria-hidden="true" />
+          <span class="back-icon" aria-hidden="true"></span>
           <span>{{ detailTitle }}</span>
         </button>
       </header>
@@ -137,9 +137,18 @@ function togglePermission(index: number): void {
           </div>
         </div>
         <div class="asset-stack">
-          <p><span>20,000</span><img :src="imgChips" alt="" /></p>
-          <p><span>20,000</span><img :src="imgBalance" alt="" /></p>
-          <p><span>20,000</span><img :src="imgDiamond" alt="" /></p>
+          <p>
+            <span>20,000</span>
+            <img :src="imgChips" alt="" />
+          </p>
+          <p>
+            <span>20,000</span>
+            <img :src="imgBalance" alt="" />
+          </p>
+          <p>
+            <span>20,000</span>
+            <img :src="imgDiamond" alt="" />
+          </p>
         </div>
       </section>
 
@@ -186,8 +195,8 @@ function togglePermission(index: number): void {
 
       <section v-if="showAgentActions" class="glass-card link-list">
         <button class="link-item" @click="onActionClick('offline')">Total Offline Players <span>9999</span></button>
-        <button class="link-item" @click="onActionClick('vip')">VIP Statistics <span class="arrow" /></button>
-        <button class="link-item" @click="onActionClick('profit')">代理收益设置 <span class="arrow" /></button>
+        <button class="link-item" @click="onActionClick('vip')">VIP Statistics <span class="arrow"></span></button>
+        <button class="link-item" @click="onActionClick('profit')">代理收益设置 <span class="arrow"></span></button>
       </section>
 
       <section v-if="showBindRow" class="glass-card link-list">
@@ -201,8 +210,13 @@ function togglePermission(index: number): void {
       <section v-if="showAdminPermissions" class="glass-card switch-list">
         <article v-for="(item, index) in adminPermissions" :key="item.label" class="switch-row">
           <span>{{ item.label }}</span>
-          <button type="button" class="switch" :class="{ on: item.enabled }" @click="togglePermission(index)">
-            <i />
+          <button
+            type="button"
+            class="switch"
+            :class="{ on: item.enabled }"
+            @click="togglePermission(index)"
+          >
+            <i></i>
           </button>
         </article>
       </section>

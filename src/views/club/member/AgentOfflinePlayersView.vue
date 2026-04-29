@@ -55,7 +55,7 @@ function onSave(): void {
 
       <section class="cards">
         <article v-for="row in rows" :key="row.id" class="glass card">
-          <button class="check" :class="{ on: row.checked }" @click="row.checked = !row.checked" />
+          <button class="check" :class="{ on: row.checked }" @click="row.checked = !row.checked"></button>
           <img :src="imgAvatar" :alt="row.name" />
           <div class="meta">
             <p>{{ row.name }}</p>

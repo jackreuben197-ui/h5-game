@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import ava1 from '@/assets/images/wallet/avatars/ava1.png'
@@ -15,13 +15,12 @@ import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import NumericKeypad from '@/views/wallet/components/NumericKeypad.vue'
 import WithdrawForm from '@/views/wallet/components/WithdrawForm.vue'
 import { t } from '@/i18n'
+import { useWalletStore } from '@/stores/wallet'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { postPropGoldPriceListApi } from '@/api/prop'
-import type { PropGoldPriceListData } from '@/api/models/prop'
 
 const router = useRouter()
+const walletStore = useWalletStore()
 const userInfoStore = useUserInfoStore()
-const currentClub = computed(() => userInfoStore.currentClub || userInfoStore.clubList[0])
 
 const activeTab = ref(0)
 const activePreset = ref(0)
@@ -29,21 +28,19 @@ const activeMethod = ref(0)
 const keypadOpen = ref(false)
 const customAmount = ref('')
 
-const goldPriceData = ref<PropGoldPriceListData | null>(null)
 
-// payment method strip — one entry per pay_type
 const methods = computed<PaymentMethod[]>(() =>
-  (goldPriceData.value?.pay_types ?? []).map(pt => ({
+  (walletStore.goldPriceData?.pay_types ?? []).map(pt => ({
     icon: pt.image ?? '',
     primary: pt.name ?? '',
     secondary: '',
   }))
 )
 
-// amount grid — use selected pay_type's price_list; fallback to global list
-// if pay_type has neither price_ids nor price_list, return [] so only the custom tile shows
+// if pay_type have no price_ids or price_list then empty tile will show and default is custom amount tile will show.
+
 const presets = computed<Preset[]>(() => {
-  const payTypes = goldPriceData.value?.pay_types ?? []
+  const payTypes = walletStore.goldPriceData?.pay_types ?? []
   const selected = payTypes[activeMethod.value]
   const hasPriceIds = (selected?.price_ids?.length ?? 0) > 0
   const hasPriceList = (selected?.price_list?.length ?? 0) > 0
@@ -52,26 +49,11 @@ const presets = computed<Preset[]>(() => {
   }
   const list = hasPriceList
     ? selected!.price_list!
-    : (goldPriceData.value?.list ?? [])
+    : (walletStore.goldPriceData?.list ?? [])
   return list.map(item => ({
-    amount: (item.gold_count ?? 0).toLocaleString(),
-    chip: (item.give_gold_count ?? 0) > 0
-      ? `+${(item.give_gold_count!).toLocaleString()}`
-      : '',
+    amount: String((item.gold_count ?? 0) / 100),
+    chip: ((item.gold_count ?? 0) / 100).toLocaleString(),
   }))
-})
-
-async function loadPriceList(): Promise<void> {
-  const res = await postPropGoldPriceListApi({
-    club_id: currentClub.value?.club_id,
-    source_type: 0,
-    gold_types: [],
-  })
-  goldPriceData.value = res.data ?? null
-}
-
-onMounted(() => {
-  loadPriceList()
 })
 
 function onCustom(): void {
@@ -81,7 +63,15 @@ function onCustom(): void {
 function onKeypadSubmit(v: number): void {
   customAmount.value = String(v)
   keypadOpen.value = false
+  activePreset.value = -1
 }
+
+const selectedAmount = computed(() => {
+  if (activePreset.value === -1) {
+    return customAmount.value || '0'
+  }
+  return presets.value[activePreset.value]?.amount || '0'
+})
 
 const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
 </script>
@@ -96,7 +86,7 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
       :show-actions="false"
     />
 
-    <div class="wallet-screen__content">
+    <div class="wallet-screen__content-top">
       <div class="tabs-row">
         <SegmentedToggle
           v-model="activeTab"
@@ -104,8 +94,11 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
         />
         <BellButton class="tabs-row__bell" />
       </div>
+    </div>
 
-      <UserCard
+    <div class="wallet-scrollable">
+      <div class="wallet-screen__content">
+        <UserCard
         class="wallet-banner"
         :avatar="ava1"
         name="Cooper&#10;Korsgaard"
@@ -124,7 +117,7 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
         <template #extra>
           <div class="balance-row">
             <div class="balance-chip">
-              <span class="balance-chip__value">19,231</span>
+              <span class="balance-chip__value">{{ (userInfoStore.userInfo?.user?.gold ?? 0).toLocaleString() }}</span>
               <img
                 :src="icCoins"
                 alt=""
@@ -137,30 +130,33 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
       </UserCard>
 
       <template v-if="activeTab === 0">
-        <div class="presets-card">
-          <PresetAmountGrid
-            :presets="presets"
-            :active-index="activePreset"
-            @select="activePreset = $event"
-            @custom="onCustom"
+        <div class="recharge-content">
+          <div class="presets-card">
+            <PresetAmountGrid
+              :presets="presets"
+              :active-index="activePreset"
+              @select="activePreset = $event"
+              @custom="onCustom"
+            />
+          </div>
+
+          <PaymentMethodStrip
+            :methods="methods"
+            :active-index="activeMethod"
+            @select="activeMethod = $event"
           />
         </div>
 
-        <PaymentMethodStrip
-          :methods="methods"
-          :active-index="activeMethod"
-          @select="activeMethod = $event"
-        />
-
         <PrimaryButton
-          :text="t('Wallet_PayNow', '999')"
+          :text="`立即支付 ${selectedAmount}`"
           class="pay-cta"
         />
       </template>
 
-      <template v-else>
-        <WithdrawForm />
-      </template>
+        <template v-else>
+          <WithdrawForm />
+        </template>
+      </div>
     </div>
 
     <NumericKeypad
@@ -175,14 +171,26 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
 .wallet-screen {
   height: 100vh;
   height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.wallet-scrollable {
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   padding-bottom: calc(env(safe-area-inset-bottom) + 0.64rem);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+}
+
+.wallet-screen__content-top {
+  padding: 0 0.455rem;
+  margin-top: 0.2rem;
 }
 
 .wallet-screen__content {
@@ -209,6 +217,15 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
 
 .wallet-banner {
   margin: 0 22px;
+  position: sticky;
+  top: 0.2rem;
+  z-index: 0;
+}
+
+.recharge-content {
+  position: relative;
+  z-index: 1;
+  padding-bottom: 2.5rem;
 }
 
 .presets-card {
@@ -292,6 +309,10 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
 }
 
 .pay-cta {
-  margin-top: 0.2rem;
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom) + 0.6rem);
+  left: 0.455rem;
+  width: calc(100% - 0.91rem);
+  z-index: 10;
 }
 </style>

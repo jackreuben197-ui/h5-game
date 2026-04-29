@@ -405,7 +405,7 @@ function formatChip(value: number): string {
     class="room-list-page themeType2"
     :style="pageStyle"
   >
-    <div class="bg-overlay" />
+    <div class="bg-overlay"></div>
     <header class="club-header">
       <div class="club-header-row">
         <div class="club-identity">
@@ -433,7 +433,7 @@ function formatChip(value: number): string {
             <img
               :src="clubCoverAvatar"
               alt="club avatar"
-            >
+            />
           </div>
 
           <div class="club-meta">
@@ -446,7 +446,7 @@ function formatChip(value: number): string {
                 <span class="club-id-text">{{ clubDisplayId }}</span>
               </div>
               <div class="club-member-wrap">
-                <span class="club-member-dot" />
+                <span class="club-member-dot"></span>
                 <span>{{ clubMemberCount }}</span>
               </div>
             </div>
@@ -464,7 +464,7 @@ function formatChip(value: number): string {
               class="head-action-icon"
               :src="walletIcon"
               alt="wallet"
-            >
+            />
           </button>
           <button
             class="head-action-btn"
@@ -476,7 +476,7 @@ function formatChip(value: number): string {
               class="head-action-icon"
               :src="serviceIcon"
               alt="service"
-            >
+            />
           </button>
         </div>
       </div>
@@ -527,13 +527,13 @@ function formatChip(value: number): string {
             :src="quickSafetyBg"
             alt=""
             aria-hidden="true"
-          >
+          />
           <img
             class="quick-card-layer quick-card-layer--safety-bg"
             :src="imgQuickActionCreateBg"
             alt=""
             aria-hidden="true"
-          >
+          />
           <span class="quick-card-title">安全卫士</span>
         </button>
 
@@ -547,21 +547,21 @@ function formatChip(value: number): string {
             :src="quickRankingBg"
             alt=""
             aria-hidden="true"
-          >
+          />
           <img
             class="quick-card-layer quick-card-layer--ranking-bg"
             :src="imgQuickActionBoardBg"
             alt=""
             aria-hidden="true"
-          >
+          />
           <span class="quick-card-title">排行榜</span>
         </button>
       </div>
     </header>
 
     <GameTypeTabbar
-      class="club-game-tabs"
       v-model="activeTab"
+      class="club-game-tabs"
       :tabs="[
         { name: 'all', title: t('UIMatch_GtO8YEdb') },
         { name: 'texas', title: t('UITexasInfo_Texas') },
@@ -605,9 +605,9 @@ function formatChip(value: number): string {
         aria-label="更多操作"
         @click="handleFloatingMenuClick"
       >
-        <span />
-        <span />
-        <span />
+        <span></span>
+        <span></span>
+        <span></span>
       </button>
     </div>
   </div>

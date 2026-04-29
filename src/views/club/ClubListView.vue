@@ -140,16 +140,36 @@ function onQuickAction(itemId: number): void {
       >
         <span class="action-icon">
           <template v-if="item.kind === 'create-club'">
-            <img class="icon-create-bg" :src="imgQuickActionCreateBg" alt="" aria-hidden="true" />
+            <img
+              class="icon-create-bg"
+              :src="imgQuickActionCreateBg"
+              alt=""
+              aria-hidden="true"
+            />
             <img class="icon-create-shield" :src="imgQuickActionCreateShield" alt="" />
           </template>
           <template v-else-if="item.kind === 'club-panel'">
-            <img class="icon-board-bg" :src="imgQuickActionBoardBg" alt="" aria-hidden="true" />
+            <img
+              class="icon-board-bg"
+              :src="imgQuickActionBoardBg"
+              alt=""
+              aria-hidden="true"
+            />
             <img class="icon-board-chart" :src="imgQuickActionBoardChart" alt="" />
           </template>
           <template v-else>
-            <img class="icon-union-swash" :src="imgQuickActionUnionSwash" alt="" aria-hidden="true" />
-            <img class="icon-union-club-small" :src="imgQuickActionUnionClubSmall" alt="" aria-hidden="true" />
+            <img
+              class="icon-union-swash"
+              :src="imgQuickActionUnionSwash"
+              alt=""
+              aria-hidden="true"
+            />
+            <img
+              class="icon-union-club-small"
+              :src="imgQuickActionUnionClubSmall"
+              alt=""
+              aria-hidden="true"
+            />
             <img class="icon-union-club-large" :src="imgQuickActionUnionClubLarge" alt="" />
           </template>
         </span>
@@ -158,18 +178,23 @@ function onQuickAction(itemId: number): void {
     </section>
 
     <section class="cards-divider">
-      <span class="divider-line" />
+      <span class="divider-line"></span>
       <div class="cards-icons" aria-hidden="true">
         <img :src="imgPokerSpade" alt="" />
         <img :src="imgPokerHeart" alt="" />
         <img :src="imgPokerClub" alt="" />
         <img :src="imgPokerDiamond" alt="" />
       </div>
-      <span class="divider-line" />
+      <span class="divider-line"></span>
     </section>
 
     <section class="club-list">
-      <article v-for="club in clubList" :key="club.id" class="club-banner" @click="goToClubDetail">
+      <article
+        v-for="club in clubList"
+        :key="club.id"
+        class="club-banner"
+        @click="goToClubDetail"
+      >
         <!-- <img class="club-banner-bg" :src="club.bannerBg" alt="" aria-hidden="true" /> -->
         <!-- <div class="club-banner-overlay" aria-hidden="true" /> -->
 

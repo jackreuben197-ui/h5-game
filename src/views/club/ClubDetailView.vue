@@ -34,20 +34,20 @@ const imgInviteHeart = 'https://www.figma.com/api/mcp/asset/65e10a58-a9e9-4b72-9
 const imgModalClose = 'https://www.figma.com/api/mcp/asset/48528ead-0f8b-41cd-8ffc-359a64018378'
 
 const quickActions: QuickActionItem[] = [
-	{ id: 1, title: '活动管理', cover: imgQuickSafety },
-	{ id: 2, title: '牌局记录', cover: imgQuickRanking },
-	{ id: 3, title: '基金', cover: imgQuickFund },
+  { id: 1, title: '活动管理', cover: imgQuickSafety },
+  { id: 2, title: '牌局记录', cover: imgQuickRanking },
+  { id: 3, title: '基金', cover: imgQuickFund },
 ]
 
 const settings: SettingItem[] = [
-	{ id: 1, label: '创始人', kind: 'founder', value: 'User Name' },
-	{ id: 2, label: '邀请分享', kind: 'arrow' },
-	{ id: 3, label: '联盟', kind: 'text', value: 'Guildxxxxx' },
-	{ id: 4, label: '当前俱乐部等级', kind: 'level', value: 'LV. 9' },
-	{ id: 5, label: '允许其他人搜索俱乐部', kind: 'switch', switchKey: 'allowSearch' },
-	{ id: 6, label: '入会无需审批', kind: 'switch', switchKey: 'joinWithoutApproval' },
-	{ id: 7, label: '创建时间', kind: 'text', value: '03/01/2024' },
-	{ id: 8, label: '复制俱乐部', kind: 'copy' },
+  { id: 1, label: '创始人', kind: 'founder', value: 'User Name' },
+  { id: 2, label: '邀请分享', kind: 'arrow' },
+  { id: 3, label: '联盟', kind: 'text', value: 'Guildxxxxx' },
+  { id: 4, label: '当前俱乐部等级', kind: 'level', value: 'LV. 9' },
+  { id: 5, label: '允许其他人搜索俱乐部', kind: 'switch', switchKey: 'allowSearch' },
+  { id: 6, label: '入会无需审批', kind: 'switch', switchKey: 'joinWithoutApproval' },
+  { id: 7, label: '创建时间', kind: 'text', value: '03/01/2024' },
+  { id: 8, label: '复制俱乐部', kind: 'copy' },
 ]
 
 const allowSearch = ref(true)
@@ -60,254 +60,264 @@ const clubAlias = 'XXXX'
 const clubId = '867765056'
 
 function formatCount(value: number): string {
-	return value.toLocaleString('en-US')
+  return value.toLocaleString('en-US')
 }
 
 function goBack(): void {
-	void router.push('/club/index')
+  void router.push('/club/index')
 }
 
 function goEditDescription(): void {
-	void router.push('/club/edit-description')
+  void router.push('/club/edit-description')
 }
 
 function goEditName(): void {
-	void router.push('/club/edit-name')
+  void router.push('/club/edit-name')
 }
 
 function onQuickAction(actionId: number): void {
-	if (actionId === 2) {
-		void router.push('/club/room/history')
-		return
-	}
+  if (actionId === 2) {
+    void router.push('/club/room/history')
+    return
+  }
 
-	if (actionId === 1) {
+  if (actionId === 1) {
   		showFailToast('创建牌桌功能开发中')
-		return
-	}
+    return
+  }
 
-	void router.push('/club/members')
+  void router.push('/club/members')
 }
 
 function onSettingClick(item: SettingItem): void {
-	if (item.kind === 'switch' || item.kind === 'text' || item.kind === 'founder') {
-		return
-	}
+  if (item.kind === 'switch' || item.kind === 'text' || item.kind === 'founder') {
+    return
+  }
 
-	if (item.label === '邀请分享') {
-		showInvitePopup.value = true
-		return
-	}
+  if (item.label === '邀请分享') {
+    showInvitePopup.value = true
+    return
+  }
 
-	if (item.label === '复制俱乐部') {
-		showCopyPopup.value = true
-		return
-	}
+  if (item.label === '复制俱乐部') {
+    showCopyPopup.value = true
+    return
+  }
 
-	if (item.kind === 'level') {
-		void router.push('/club/level')
-		return
-	}
+  if (item.kind === 'level') {
+    void router.push('/club/level')
+    return
+  }
 }
 
 function toggleSwitch(key: 'allowSearch' | 'joinWithoutApproval'): void {
-	if (key === 'allowSearch') {
-		allowSearch.value = !allowSearch.value
-		return
-	}
+  if (key === 'allowSearch') {
+    allowSearch.value = !allowSearch.value
+    return
+  }
 
-	joinWithoutApproval.value = !joinWithoutApproval.value
+  joinWithoutApproval.value = !joinWithoutApproval.value
 }
 
 function closeInvitePopup(): void {
-	showInvitePopup.value = false
+  showInvitePopup.value = false
 }
 
 function closeCopyPopup(): void {
-	showCopyPopup.value = false
+  showCopyPopup.value = false
 }
 
 function saveInviteShare(): void {
-	showSuccessToast('已保存分享图')
-	closeInvitePopup()
+  showSuccessToast('已保存分享图')
+  closeInvitePopup()
 }
 
 function submitCopyRequest(): void {
-	showSuccessToast('已提交复制申请')
-	closeCopyPopup()
+  showSuccessToast('已提交复制申请')
+  closeCopyPopup()
 }
 </script>
 
 <template>
-	<div class="club-detail-bg">
-		<div class="bg-blur bg-blur--pink" aria-hidden="true" />
-		<div class="bg-blur bg-blur--cyan" aria-hidden="true" />
+  <div class="club-detail-bg">
+    <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
+    <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
 
-		<div class="page-shell club-detail">
-			<header class="top-bar">
-				<button type="button" class="back-btn" @click="goBack">
-					<span class="back-icon" aria-hidden="true" />
-					<span class="back-title">俱乐部管理</span>
-				</button>
-			</header>
+    <div class="page-shell club-detail">
+      <header class="top-bar">
+        <button type="button" class="back-btn" @click="goBack">
+          <span class="back-icon" aria-hidden="true"></span>
+          <span class="back-title">俱乐部管理</span>
+        </button>
+      </header>
 
-			<section class="club-header-card">
-				<div class="club-header-main">
-					<img class="club-avatar" :src="imgClubCover" alt="俱乐部头像" />
+      <section class="club-header-card">
+        <div class="club-header-main">
+          <img class="club-avatar" :src="imgClubCover" alt="俱乐部头像" />
 
-					<div class="club-summary">
-						<button type="button" class="club-name-edit" @click="goEditName">
-							<h1 class="club-name">俱乐部名称</h1>
-							<span class="name-edit-icon" aria-hidden="true" />
-						</button>
-						<p class="club-id-row">
-							<span class="id-tag">ID</span>
-							<span class="id-text">8677650585</span>
-						</p>
+          <div class="club-summary">
+            <button type="button" class="club-name-edit" @click="goEditName">
+              <h1 class="club-name">俱乐部名称</h1>
+              <span class="name-edit-icon" aria-hidden="true"></span>
+            </button>
+            <p class="club-id-row">
+              <span class="id-tag">ID</span>
+              <span class="id-text">8677650585</span>
+            </p>
 
-						<p class="metric-line">
-							<img :src="imgBalance" alt="" aria-hidden="true" />
-							<span>{{ formatCount(1923) }}</span>
-						</p>
-						<p class="metric-line">
-							<img :src="imgChips" alt="" aria-hidden="true" />
-							<span>{{ formatCount(19231) }}</span>
-						</p>
-					</div>
-				</div>
+            <p class="metric-line">
+              <img :src="imgBalance" alt="" aria-hidden="true" />
+              <span>{{ formatCount(1923) }}</span>
+            </p>
+            <p class="metric-line">
+              <img :src="imgChips" alt="" aria-hidden="true" />
+              <span>{{ formatCount(19231) }}</span>
+            </p>
+          </div>
+        </div>
 
-				<div class="club-size-pill" aria-label="俱乐部人数">
-					<span class="size-text">500/1000</span>
-					<img :src="imgPeople" alt="" aria-hidden="true" />
-				</div>
-			</section>
+        <div class="club-size-pill" aria-label="俱乐部人数">
+          <span class="size-text">500/1000</span>
+          <img :src="imgPeople" alt="" aria-hidden="true" />
+        </div>
+      </section>
 
-			<section class="quick-actions">
-				<button
-					v-for="item in quickActions"
-					:key="item.id"
-					type="button"
-					class="quick-card"
-					@click="onQuickAction(item.id)"
-				>
-					<span class="quick-image-wrap">
-						<img :src="item.cover" :alt="item.title" />
-					</span>
-					<span class="quick-title">{{ item.title }}</span>
-				</button>
-			</section>
+      <section class="quick-actions">
+        <button
+          v-for="item in quickActions"
+          :key="item.id"
+          type="button"
+          class="quick-card"
+          @click="onQuickAction(item.id)"
+        >
+          <span class="quick-image-wrap">
+            <img :src="item.cover" :alt="item.title" />
+          </span>
+          <span class="quick-title">{{ item.title }}</span>
+        </button>
+      </section>
 
-			<section class="intro-card">
-				<span>俱乐部简介</span>
-				<button type="button" class="intro-edit" aria-label="编辑俱乐部简介" @click="goEditDescription">
-					<span class="edit-pen" />
-				</button>
-			</section>
+      <section class="intro-card">
+        <span>俱乐部简介</span>
+        <button
+          type="button"
+          class="intro-edit"
+          aria-label="编辑俱乐部简介"
+          @click="goEditDescription"
+        >
+          <span class="edit-pen"></span>
+        </button>
+      </section>
 
-			<section class="settings-card">
-				<button
-					v-for="item in settings"
-					:key="item.id"
-					type="button"
-					class="settings-row"
-					:class="[
-						`settings-row--${item.kind}`,
-						{
-							'settings-row--clickable': item.kind === 'arrow' || item.kind === 'level' || item.kind === 'copy',
-						},
-					]"
-					@click="onSettingClick(item)"
-				>
-					<div class="label-wrap">
-						<span>{{ item.label }}</span>
-						<span v-if="item.kind === 'copy'" class="info-dot">i</span>
-					</div>
+      <section class="settings-card">
+        <button
+          v-for="item in settings"
+          :key="item.id"
+          type="button"
+          class="settings-row"
+          :class="[
+            `settings-row--${item.kind}`,
+            {
+              'settings-row--clickable': item.kind === 'arrow' || item.kind === 'level' || item.kind === 'copy',
+            },
+          ]"
+          @click="onSettingClick(item)"
+        >
+          <div class="label-wrap">
+            <span>{{ item.label }}</span>
+            <span v-if="item.kind === 'copy'" class="info-dot">i</span>
+          </div>
 
-					<div class="right-wrap">
-						<template v-if="item.kind === 'founder'">
-							<span class="muted-text">{{ item.value }}</span>
-							<img class="mini-avatar" :src="imgClubCover" alt="创始人头像" />
-						</template>
+          <div class="right-wrap">
+            <template v-if="item.kind === 'founder'">
+              <span class="muted-text">{{ item.value }}</span>
+              <img class="mini-avatar" :src="imgClubCover" alt="创始人头像" />
+            </template>
 
-						<template v-else-if="item.kind === 'text'">
-							<span class="muted-text">{{ item.value }}</span>
-						</template>
+            <template v-else-if="item.kind === 'text'">
+              <span class="muted-text">{{ item.value }}</span>
+            </template>
 
-						<template v-else-if="item.kind === 'level'">
-							<span class="level-pill">{{ item.value }}</span>
-							<span class="chevron" aria-hidden="true" />
-						</template>
+            <template v-else-if="item.kind === 'level'">
+              <span class="level-pill">{{ item.value }}</span>
+              <span class="chevron" aria-hidden="true"></span>
+            </template>
 
-						<template v-else-if="item.kind === 'switch' && item.switchKey">
-							<button
-								type="button"
-								class="switch"
-								:class="{
-									'switch--on': item.switchKey === 'allowSearch' ? allowSearch : joinWithoutApproval,
-								}"
-								:aria-label="item.label"
-								@click.stop="toggleSwitch(item.switchKey)"
-							>
-								<span class="switch-knob" />
-							</button>
-						</template>
+            <template v-else-if="item.kind === 'switch' && item.switchKey">
+              <button
+                type="button"
+                class="switch"
+                :class="{
+                  'switch--on': item.switchKey === 'allowSearch' ? allowSearch : joinWithoutApproval,
+                }"
+                :aria-label="item.label"
+                @click.stop="toggleSwitch(item.switchKey)"
+              >
+                <span class="switch-knob"></span>
+              </button>
+            </template>
 
-						<template v-else>
-							<span class="chevron" aria-hidden="true" />
-						</template>
-					</div>
-				</button>
-			</section>
+            <template v-else>
+              <span class="chevron" aria-hidden="true"></span>
+            </template>
+          </div>
+        </button>
+      </section>
 
-			<section class="danger-zone">
-				<button type="button" class="danger-btn">删除俱乐部</button>
-			</section>
-		</div>
+      <section class="danger-zone">
+        <button type="button" class="danger-btn">删除俱乐部</button>
+      </section>
+    </div>
 
-		<div v-if="showInvitePopup" class="club-modal-mask" @click="closeInvitePopup">
-			<section class="invite-modal" @click.stop>
-				<header class="invite-modal__head">
-					<h3>邀请链接</h3>
-					<button type="button" class="invite-modal__close" aria-label="关闭" @click="closeInvitePopup">
-						<img :src="imgModalClose" alt="" aria-hidden="true" />
-					</button>
-				</header>
+    <div v-if="showInvitePopup" class="club-modal-mask" @click="closeInvitePopup">
+      <section class="invite-modal" @click.stop>
+        <header class="invite-modal__head">
+          <h3>邀请链接</h3>
+          <button
+            type="button"
+            class="invite-modal__close"
+            aria-label="关闭"
+            @click="closeInvitePopup"
+          >
+            <img :src="imgModalClose" alt="" aria-hidden="true" />
+          </button>
+        </header>
 
-				<div class="invite-modal__body">
-					<p class="invite-modal__subtitle">开启你的竞技之旅</p>
-					<div class="invite-modal__cover-wrap">
-						<img class="invite-modal__cover" :src="imgInviteCover" alt="邀请海报" />
-					</div>
-					<p class="invite-modal__club-name">{{ clubName }}</p>
-					<p class="invite-modal__club-alias">{{ clubAlias }}</p>
-					<p class="invite-modal__id-row">
-						<span class="invite-modal__id-tag">ID</span>
-						<span>{{ clubId }}</span>
-					</p>
-				</div>
+        <div class="invite-modal__body">
+          <p class="invite-modal__subtitle">开启你的竞技之旅</p>
+          <div class="invite-modal__cover-wrap">
+            <img class="invite-modal__cover" :src="imgInviteCover" alt="邀请海报" />
+          </div>
+          <p class="invite-modal__club-name">{{ clubName }}</p>
+          <p class="invite-modal__club-alias">{{ clubAlias }}</p>
+          <p class="invite-modal__id-row">
+            <span class="invite-modal__id-tag">ID</span>
+            <span>{{ clubId }}</span>
+          </p>
+        </div>
 
-				<div class="invite-modal__qr-wrap">
-					<img class="invite-modal__qr" :src="imgInviteQr" alt="扫码加入俱乐部" />
-					<span class="invite-modal__qr-heart">
-						<img :src="imgInviteHeart" alt="" aria-hidden="true" />
-					</span>
-				</div>
-				<p class="invite-modal__qr-tip">扫码加入，一键开启</p>
+        <div class="invite-modal__qr-wrap">
+          <img class="invite-modal__qr" :src="imgInviteQr" alt="扫码加入俱乐部" />
+          <span class="invite-modal__qr-heart">
+            <img :src="imgInviteHeart" alt="" aria-hidden="true" />
+          </span>
+        </div>
+        <p class="invite-modal__qr-tip">扫码加入，一键开启</p>
 
-				<button type="button" class="modal-primary-btn" @click="saveInviteShare">保存分享</button>
-			</section>
-		</div>
+        <button type="button" class="modal-primary-btn" @click="saveInviteShare">保存分享</button>
+      </section>
+    </div>
 
-		<div v-if="showCopyPopup" class="club-modal-mask" @click="closeCopyPopup">
-			<section class="copy-modal" @click.stop>
-				<p>暂无，申请复制俱乐部需要等待审核，是否现在提交申请</p>
-				<div class="copy-modal__actions">
-					<button type="button" class="modal-secondary-btn" @click="closeCopyPopup">取消</button>
-					<button type="button" class="modal-primary-btn" @click="submitCopyRequest">确定</button>
-				</div>
-			</section>
-		</div>
-	</div>
+    <div v-if="showCopyPopup" class="club-modal-mask" @click="closeCopyPopup">
+      <section class="copy-modal" @click.stop>
+        <p>暂无，申请复制俱乐部需要等待审核，是否现在提交申请</p>
+        <div class="copy-modal__actions">
+          <button type="button" class="modal-secondary-btn" @click="closeCopyPopup">取消</button>
+          <button type="button" class="modal-primary-btn" @click="submitCopyRequest">确定</button>
+        </div>
+      </section>
+    </div>
+  </div>
 </template>
 
 <style scoped lang="scss">

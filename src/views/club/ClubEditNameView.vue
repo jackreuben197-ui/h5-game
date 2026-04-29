@@ -13,94 +13,94 @@ const diamondBalance = 100
 const renameCost = 12345
 
 const nameLength = computed(() => {
-	return nameInput.value.trim().length
+  return nameInput.value.trim().length
 })
 
 const canConfirm = computed(() => {
-	return nameLength.value > 0 && !isSubmitting.value
+  return nameLength.value > 0 && !isSubmitting.value
 })
 
 function goBack(): void {
-	void router.push('/club/detail')
+  void router.push('/club/detail')
 }
 
 function goRecharge(): void {
-	void router.push('/recharge')
+  void router.push('/recharge')
 }
 
 async function onConfirm(): Promise<void> {
-	if (!canConfirm.value) {
-		return
-	}
+  if (!canConfirm.value) {
+    return
+  }
 
-	isSubmitting.value = true
+  isSubmitting.value = true
 
-	try {
-		await router.push('/club/detail')
-	} finally {
-		isSubmitting.value = false
-	}
+  try {
+    await router.push('/club/detail')
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
 <template>
-	<div class="club-edit-name-bg">
-		<div class="bg-blur bg-blur--pink" aria-hidden="true" />
-		<div class="bg-blur bg-blur--cyan" aria-hidden="true" />
+  <div class="club-edit-name-bg">
+    <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
+    <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
 
-		<div class="page-shell club-edit-name">
-			<header class="top-bar">
-				<button type="button" class="back-btn" @click="goBack">
-					<span class="back-icon" aria-hidden="true" />
-					<span class="back-title">修改名称</span>
-				</button>
-			</header>
+    <div class="page-shell club-edit-name">
+      <header class="top-bar">
+        <button type="button" class="back-btn" @click="goBack">
+          <span class="back-icon" aria-hidden="true"></span>
+          <span class="back-title">修改名称</span>
+        </button>
+      </header>
 
-			<section class="editor-block">
-				<div class="hint-row">
-					<p class="hint-text">*首次更改昵称免费,之后每次消耗0钻石</p>
-					<span class="count-text">{{ nameLength }}/{{ maxNameLength }}</span>
-				</div>
+      <section class="editor-block">
+        <div class="hint-row">
+          <p class="hint-text">*首次更改昵称免费,之后每次消耗0钻石</p>
+          <span class="count-text">{{ nameLength }}/{{ maxNameLength }}</span>
+        </div>
 
-				<div class="name-shell">
-					<input
-						v-model.trim="nameInput"
-						type="text"
-						:maxlength="maxNameLength"
-						placeholder="Name here"
-						autocomplete="off"
-					/>
-				</div>
+        <div class="name-shell">
+          <input
+            v-model.trim="nameInput"
+            type="text"
+            :maxlength="maxNameLength"
+            placeholder="Name here"
+            autocomplete="off"
+          />
+        </div>
 
-				<div class="wallet-row">
-					<div class="wallet-info">
-						<img :src="imgDiamond" alt="钻石" />
-						<span class="wallet-label">钻石余额:</span>
-						<span class="wallet-value">{{ diamondBalance }}</span>
-					</div>
-					<button type="button" class="recharge-btn" @click="goRecharge">去充值</button>
-				</div>
-			</section>
+        <div class="wallet-row">
+          <div class="wallet-info">
+            <img :src="imgDiamond" alt="钻石" />
+            <span class="wallet-label">钻石余额:</span>
+            <span class="wallet-value">{{ diamondBalance }}</span>
+          </div>
+          <button type="button" class="recharge-btn" @click="goRecharge">去充值</button>
+        </div>
+      </section>
 
-			<section class="footer-actions">
-				<p class="cost-line" aria-label="改名消耗说明">
-					<span>消费</span>
-					<img :src="imgDiamond" alt="钻石" />
-					<span class="cost-value">{{ renameCost }}</span>
-				</p>
+      <section class="footer-actions">
+        <p class="cost-line" aria-label="改名消耗说明">
+          <span>消费</span>
+          <img :src="imgDiamond" alt="钻石" />
+          <span class="cost-value">{{ renameCost }}</span>
+        </p>
 
-				<button
-					type="button"
-					class="confirm-btn"
-					:class="{ 'confirm-btn--disabled': !canConfirm }"
-					:disabled="!canConfirm"
-					@click="onConfirm"
-				>
-					{{ isSubmitting ? '提交中...' : '确定' }}
-				</button>
-			</section>
-		</div>
-	</div>
+        <button
+          type="button"
+          class="confirm-btn"
+          :class="{ 'confirm-btn--disabled': !canConfirm }"
+          :disabled="!canConfirm"
+          @click="onConfirm"
+        >
+          {{ isSubmitting ? '提交中...' : '确定' }}
+        </button>
+      </section>
+    </div>
+  </div>
 </template>
 
 <style scoped lang="scss">

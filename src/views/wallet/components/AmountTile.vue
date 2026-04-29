@@ -34,7 +34,6 @@ withDefaults(defineProps<Props>(), {
         <span class="tile__amount">*{{ amount }}</span>
       </div>
       <CryptoChip
-        v-if="chip !== ''"
         :amount="chip"
         class="tile__chip"
       />

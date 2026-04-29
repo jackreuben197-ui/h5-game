@@ -8,66 +8,66 @@ const intro = ref('')
 const isSubmitting = ref(false)
 
 const canConfirm = computed(() => {
-	return intro.value.trim().length > 0 && !isSubmitting.value
+  return intro.value.trim().length > 0 && !isSubmitting.value
 })
 
 function goBack(): void {
-	void router.push('/club/detail')
+  void router.push('/club/detail')
 }
 
 async function onConfirm(): Promise<void> {
-	if (!canConfirm.value) {
-		return
-	}
+  if (!canConfirm.value) {
+    return
+  }
 
-	isSubmitting.value = true
+  isSubmitting.value = true
 
-	try {
-		await router.push('/club/detail')
-	} finally {
-		isSubmitting.value = false
-	}
+  try {
+    await router.push('/club/detail')
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
 <template>
-	<div class="club-edit-des-bg">
-		<div class="bg-blur bg-blur--pink" aria-hidden="true" />
-		<div class="bg-blur bg-blur--cyan" aria-hidden="true" />
+  <div class="club-edit-des-bg">
+    <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
+    <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
 
-		<div class="page-shell club-edit-des">
-			<header class="top-bar">
-				<button type="button" class="back-btn" @click="goBack">
-					<span class="back-icon" aria-hidden="true" />
-					<span class="back-title">编辑简介</span>
-				</button>
-			</header>
+    <div class="page-shell club-edit-des">
+      <header class="top-bar">
+        <button type="button" class="back-btn" @click="goBack">
+          <span class="back-icon" aria-hidden="true"></span>
+          <span class="back-title">编辑简介</span>
+        </button>
+      </header>
 
-			<section class="editor-block">
-				<label class="field-label" for="club-intro-edit-input">俱乐部简介</label>
-				<div class="field-shell">
-					<textarea
-						id="club-intro-edit-input"
-						v-model.trim="intro"
-						maxlength="300"
-						placeholder="请输入简介"
-					/>
-				</div>
-			</section>
+      <section class="editor-block">
+        <label class="field-label" for="club-intro-edit-input">俱乐部简介</label>
+        <div class="field-shell">
+          <textarea
+            id="club-intro-edit-input"
+            v-model.trim="intro"
+            maxlength="300"
+            placeholder="请输入简介"
+          ></textarea>
+        </div>
+      </section>
 
-			<section class="footer-actions">
-				<button
-					type="button"
-					class="confirm-btn"
-					:class="{ 'confirm-btn--disabled': !canConfirm }"
-					:disabled="!canConfirm"
-					@click="onConfirm"
-				>
-					{{ isSubmitting ? '提交中...' : '确定' }}
-				</button>
-			</section>
-		</div>
-	</div>
+      <section class="footer-actions">
+        <button
+          type="button"
+          class="confirm-btn"
+          :class="{ 'confirm-btn--disabled': !canConfirm }"
+          :disabled="!canConfirm"
+          @click="onConfirm"
+        >
+          {{ isSubmitting ? '提交中...' : '确定' }}
+        </button>
+      </section>
+    </div>
+  </div>
 </template>
 
 <style scoped lang="scss">

@@ -43,13 +43,18 @@ function onConfirm(): void {
       </header>
 
       <section class="cards">
-        <article v-for="row in rows" :key="row.id" class="glass card" @click="rows.forEach((x) => (x.checked = x.id === row.id))">
+        <article
+          v-for="row in rows"
+          :key="row.id"
+          class="glass card"
+          @click="rows.forEach((x) => (x.checked = x.id === row.id))"
+        >
           <img :src="imgAvatar" :alt="row.name" />
           <div class="meta">
             <p>{{ row.name }}</p>
             <small>ID {{ row.id }}</small>
           </div>
-          <button class="dot" :class="{ on: row.checked }" />
+          <button class="dot" :class="{ on: row.checked }"></button>
         </article>
       </section>
 

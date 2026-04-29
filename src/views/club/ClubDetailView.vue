@@ -368,12 +368,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="club-detail-bg">
+  <div class="club-detail-bg ">
     <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
     <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
     <HeaderBack :title="'俱乐部信息'" />
 
-    <div v-loading="loading" class="page-shell club-detail">
+    <div v-loading="loading" class="page-shell club-detail app-scroll-standalone">
       <section class="club-header-card">
         <div class="club-header-main">
           <img class="club-avatar" :src="displayClub?.logo || imgClubCover" alt="俱乐部头像" />

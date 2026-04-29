@@ -1010,29 +1010,6 @@ function formatChip(value: number): string {
   text-shadow: 0 0.03rem 0.16rem rgba(0, 0, 0, 0.54);
 }
 
-:deep(.club-game-tabs.room-tabs) {
-  --tab-base-height: 0.8193rem;
-  --tab-top-cut: 0.171rem;
-  --tab-item-padding-x: 0.08rem;
-  --tab-text-padding-x: 0;
-  --tab-active-offset-y: 0;
-  --tab-active-height: 100%;
-
-  margin: 0.106rem 0 0;
-}
-
-:deep(.club-game-tabs.room-tabs .van-tabs__wrap) {
-  margin: 0 0.4562rem;
-}
-
-:deep(.club-game-tabs.room-tabs .van-tab) {
-  font-size: 0.3521rem;
-  font-weight: 500;
-}
-
-:deep(.themeType2 .club-game-tabs.room-tabs .van-tab--active) {
-  font-weight: 700;
-}
 
 @media (max-width: 360px) {
   .club-name {
@@ -1056,8 +1033,6 @@ function formatChip(value: number): string {
   overflow-y: auto;
   padding: 0.34rem 0.38rem 2.2rem;
   background: rgba(255, 255, 255, 0.22);
-  border-top-left-radius: 0.498rem;
-  border-top-right-radius: 0.498rem;
   backdrop-filter: blur(0.8032rem) saturate(1.04);
 }
 

@@ -409,6 +409,7 @@ function handlePlayersRefresh(mode: 'rank' | 'hunter'): void {
     <MttBuyinModal
       v-model:show="showBuyinModal"
       :mtt="detailData?.mtt"
+      :mtt-id="matchId"
       @confirm="handleBuyinConfirm"
     />
   </div>

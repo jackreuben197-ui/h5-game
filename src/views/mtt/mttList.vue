@@ -14,7 +14,6 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { getLocale, t } from '@/i18n'
 import { checkIsShowForClubAndTribe, ROOM_ORIGIN_TYPE } from '@/utils/roomVisibility'
 import {
-  ensureMultiLanguageTemplateLoaded,
   multiLanguageTemplateVersion,
   resolveTemplateTextByKey,
 } from '@/utils/multiLanguageTemplate'
@@ -84,8 +83,6 @@ const mttTabs = computed<TabOption[]>(() => [
 onMounted(() => {
   // 与首页共用同一个 MTT 数据源：先读缓存秒开，再静默刷新。
   mttListStore.bootstrapMttList()
-  // 对齐 Unity：进入列表时确保模板多语言映射已就绪。
-  void ensureMultiLanguageTemplateLoaded()
   ticker = window.setInterval(() => {
     nowMs.value = Date.now()
   }, 1000)

@@ -68,7 +68,7 @@ import type {
   PropUserPropGroupListRequest,
   PropUserPropGroupListResponseData,
   PropUserPropInfoRequest,
-  PropUserPropInfoResponseData,
+  PropUserPropInfoData,
   PropUserPropListRequest,
   PropUserPropListResponseData,
   PropUserPropUsedRequest,
@@ -88,7 +88,7 @@ import type {
 const formatPath = (
   template: string,
   pathParams: Record<string, string | number>,
-): string => template.replace(/\{([^}]+)\}/g, (_, key) => encodeURIComponent(String(pathParams[key] ?? "")))
+): string => template.replace(/\{([^}]+)\}/g, (_, key) => encodeURIComponent(String(pathParams[key] ?? '')))
 void formatPath
 
 // 对齐 cocos WebPropBuy.API
@@ -427,9 +427,9 @@ export async function postPropUserOfflInetIcketsTransFerApi(
 // 对齐 cocos WebPropUserPropInfo.API
 export async function postPropUserPropInfoApi(
   payload: PropUserPropInfoRequest = {} as PropUserPropInfoRequest
-): Promise<ApiResponse<PropUserPropInfoResponseData>> {
+): Promise<ApiResponse<PropUserPropInfoData>> {
   const endpoint = '/prop/user/prop_info'
-  const response = await http.post<ApiResponse<PropUserPropInfoResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<PropUserPropInfoData>>(endpoint, payload)
   return response.data
 }
 

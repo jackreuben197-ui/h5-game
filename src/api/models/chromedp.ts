@@ -4,8 +4,8 @@
 // /api/chromedp/qrcode/video_file (ChromedpQrCodeVideoFile)
 export interface ChromedpQrCodeVideoFileRequest {
 
-    room_id?: number;
-    qr_code_content?: string;
+    room_id?: number; // 房间Id
+    qr_code_content?: string; // 生成二维码的URL
 
   [key: string]: unknown
 }
@@ -16,7 +16,7 @@ export interface ChromedpQrCodeVideoFileResponseData extends ChromedpQrCodeVideo
 
 export interface ChromedpQrCodeVideoFileData {
 
-    video_url?: string;
+    video_url?: string; // 视频下载链接
 
   [key: string]: unknown
 }

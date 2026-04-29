@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { postOrgClubModifyClubDescApi } from '@/api/org'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { showFailToast, showSuccessToast } from 'vant'
 
 const router = useRouter()
+const userInfoStore = useUserInfoStore()
 
-const intro = ref('')
+const intro = ref(String(userInfoStore.currentClub?.desc || '').trim())
 const isSubmitting = ref(false)
 
 const canConfirm = computed(() => {
@@ -20,10 +24,37 @@ async function onConfirm(): Promise<void> {
     return
   }
 
+  const clubId = Number(userInfoStore.currentClub?.club_id)
+  if (!clubId) {
+    showFailToast('未找到俱乐部信息')
+    return
+  }
+
   isSubmitting.value = true
 
   try {
+    const response = await postOrgClubModifyClubDescApi({
+      club_id: clubId,
+      desc: intro.value.trim(),
+    })
+
+    if (response.code !== 0) {
+      const fallback = (response.msg ?? response.message) as unknown
+      throw new Error(typeof fallback === 'string' ? fallback : '修改简介失败')
+    }
+
+    if (userInfoStore.currentClub) {
+      userInfoStore.setCurrentClub({
+        ...userInfoStore.currentClub,
+        desc: intro.value.trim(),
+      })
+    }
+
+    showSuccessToast('修改成功')
     await router.push('/club/detail')
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '修改简介失败'
+    showFailToast(message)
   } finally {
     isSubmitting.value = false
   }
@@ -72,160 +103,160 @@ async function onConfirm(): Promise<void> {
 
 <style scoped lang="scss">
 .club-edit-des-bg {
-	position: relative;
-	min-height: 100dvh;
-	background:
-		radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.68), rgba(154, 97, 145, 0.66) 45%, rgba(33, 136, 168, 0.86) 100%),
-		linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
-	overflow: hidden;
+  position: relative;
+  min-height: 100dvh;
+  background:
+    radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.68), rgba(154, 97, 145, 0.66) 45%, rgba(33, 136, 168, 0.86) 100%),
+    linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
+  overflow: hidden;
 }
 
 .bg-blur {
-	position: absolute;
-	border-radius: 999px;
-	filter: blur(1rem);
-	opacity: 0.54;
-	pointer-events: none;
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(1rem);
+  opacity: 0.54;
+  pointer-events: none;
 }
 
 .bg-blur--pink {
-	width: 2.7rem;
-	height: 2.7rem;
-	left: -0.9rem;
-	top: 4.1rem;
-	background: rgba(224, 52, 127, 0.52);
+  width: 2.7rem;
+  height: 2.7rem;
+  left: -0.9rem;
+  top: 4.1rem;
+  background: rgba(224, 52, 127, 0.52);
 }
 
 .bg-blur--cyan {
-	width: 3rem;
-	height: 3rem;
-	right: -1.1rem;
-	bottom: 1.2rem;
-	background: rgba(42, 222, 255, 0.55);
+  width: 3rem;
+  height: 3rem;
+  right: -1.1rem;
+  bottom: 1.2rem;
+  background: rgba(42, 222, 255, 0.55);
 }
 
 .club-edit-des {
-	position: relative;
-	z-index: 1;
-	display: flex;
-	flex-direction: column;
-	min-height: 100dvh;
-	gap: 0.22rem;
-	padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
-	padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  gap: 0.22rem;
+  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
+  padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
 }
 
 .top-bar {
-	min-height: 0.7rem;
-	display: flex;
-	align-items: center;
-	padding-left: 0.32rem;
+  min-height: 0.7rem;
+  display: flex;
+  align-items: center;
+  padding-left: 0.32rem;
 }
 
 .back-btn {
-	border: 0;
-	background: transparent;
-	color: #f9f9f9;
-	display: inline-flex;
-	align-items: center;
-	gap: 0.16rem;
-	padding: 0;
+  border: 0;
+  background: transparent;
+  color: #f9f9f9;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.16rem;
+  padding: 0;
 }
 
 .back-icon {
-	width: 0.18rem;
-	height: 0.18rem;
-	border-left: 0.03rem solid rgba(249, 249, 249, 0.95);
-	border-bottom: 0.03rem solid rgba(249, 249, 249, 0.95);
-	transform: rotate(45deg);
+  width: 0.18rem;
+  height: 0.18rem;
+  border-left: 0.03rem solid rgba(249, 249, 249, 0.95);
+  border-bottom: 0.03rem solid rgba(249, 249, 249, 0.95);
+  transform: rotate(45deg);
 }
 
 .back-title {
-	font-size: 0.65rem;
-	line-height: 1.2;
-	font-weight: 500;
+  font-size: 0.65rem;
+  line-height: 1.2;
+  font-weight: 500;
 }
 
 .editor-block {
-	display: flex;
-	flex-direction: column;
-	gap: 0.43rem;
-	padding-top: 0.06rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.43rem;
+  padding-top: 0.06rem;
 }
 
 .field-label {
-	font-size: 0.48rem;
-	line-height: 1.4;
-	font-weight: 500;
-	color: #f7f7f7;
+  font-size: 0.48rem;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #f7f7f7;
 }
 
 .field-shell {
-	min-height: 6.32rem;
-	border: 0.01rem solid rgba(249, 249, 249, 0.58);
-	border-radius: 0.72rem;
-	padding: 0.54rem 0.54rem;
-	background:
-		radial-gradient(90% 70% at 14% 20%, rgba(255, 199, 160, 0.46), rgba(255, 199, 160, 0)),
-		radial-gradient(82% 74% at 64% 49%, rgba(185, 76, 157, 0.4), rgba(185, 76, 157, 0)),
-		radial-gradient(82% 78% at 86% 75%, rgba(121, 146, 206, 0.38), rgba(121, 146, 206, 0)),
-		rgba(255, 255, 255, 0.2);
-	backdrop-filter: blur(0.3rem);
-	overflow: hidden;
+  min-height: 6.32rem;
+  border: 0.01rem solid rgba(249, 249, 249, 0.58);
+  border-radius: 0.72rem;
+  padding: 0.54rem 0.54rem;
+  background:
+    radial-gradient(90% 70% at 14% 20%, rgba(255, 199, 160, 0.46), rgba(255, 199, 160, 0)),
+    radial-gradient(82% 74% at 64% 49%, rgba(185, 76, 157, 0.4), rgba(185, 76, 157, 0)),
+    radial-gradient(82% 78% at 86% 75%, rgba(121, 146, 206, 0.38), rgba(121, 146, 206, 0)),
+    rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(0.3rem);
+  overflow: hidden;
 }
 
 textarea {
-	width: 100%;
-	min-height: 5.78rem;
-	resize: none;
-	border: 0;
-	outline: none;
-	background: transparent;
-	font-family: inherit;
-	font-size: 0.39rem;
-	line-height: 1.4;
-	font-weight: 500;
-	color: #f9f9f9;
+  width: 100%;
+  min-height: 5.78rem;
+  resize: none;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.39rem;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #f9f9f9;
 }
 
 textarea::placeholder {
-	color: rgba(255, 255, 255, 0.71);
+  color: rgba(255, 255, 255, 0.71);
 }
 
 .footer-actions {
-	margin-top: auto;
-	padding: 0 0.06rem;
-	padding-bottom: 0.1rem;
+  margin-top: auto;
+  padding: 0 0.06rem;
+  padding-bottom: 0.1rem;
 }
 
 .confirm-btn {
-	width: 100%;
-	min-height: 1.44rem;
-	border: 0;
-	border-radius: 1.06rem;
-	background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
-	color: #f9f9f9;
-	font-size: 0.51rem;
-	font-weight: 500;
-	box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.2);
-	transition: opacity 0.2s ease;
+  width: 100%;
+  min-height: 1.44rem;
+  border: 0;
+  border-radius: 1.06rem;
+  background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
+  color: #f9f9f9;
+  font-size: 0.51rem;
+  font-weight: 500;
+  box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.2);
+  transition: opacity 0.2s ease;
 }
 
 .confirm-btn--disabled {
-	opacity: 0.56;
+  opacity: 0.56;
 }
 
 @media (max-width: 340px) {
-	.back-title {
-		font-size: 0.54rem;
-	}
+  .back-title {
+    font-size: 0.54rem;
+  }
 
-	.field-label {
-		font-size: 0.4rem;
-	}
+  .field-label {
+    font-size: 0.4rem;
+  }
 
-	.confirm-btn {
-		font-size: 0.44rem;
-	}
+  .confirm-btn {
+    font-size: 0.44rem;
+  }
 }
 </style>

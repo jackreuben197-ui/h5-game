@@ -84,7 +84,7 @@ const clubList = computed<ClubCardItem[]>(() => {
       source: club,
       name: toSafeString(club.club_name) || '未命名俱乐部',
       clubIdText: displayId || '--',
-      roleText: getMemberRoleText(club.member_type),
+      roleText: getMemberRoleText(club.user_level),
       activeCount: toSafeNumber(club.user_gold),
       chipsCount: toSafeNumber(club.user_credit),
       tableCount: toSafeNumber(club.tables),
@@ -127,8 +127,9 @@ function toSafeNumber(value: unknown): number {
 
 function getMemberRoleText(value: unknown): string {
   const role = Number(value)
-  if (role === 2) return '管理员'
-  if (role === 3) return '创建者'
+  if (role === 1) return '会长'
+  if (role === 2) return '副会长'
+  if (role === 3) return '管理员'
   if (role === 4) return '代理'
   return '成员'
 }

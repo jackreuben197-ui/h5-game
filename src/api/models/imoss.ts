@@ -12,7 +12,7 @@ export interface ImossGameClientUploadAudioResponseData {
 
 export interface ImossGameClientUploadAudioData {
 
-    fileUrl?: string;
+    fileUrl?: string; // 音频地址
 
   [key: string]: unknown
 }
@@ -28,7 +28,7 @@ export interface ImossGameClientUploadImageResponseData {
 
 export interface ImossGameClientUploadImageData {
 
-    fileUrl?: string;
+    fileUrl?: string; // 文件地址
 
   [key: string]: unknown
 }

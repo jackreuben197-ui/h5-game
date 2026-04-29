@@ -84,9 +84,21 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/club/table/create',
+      name: 'club-table-create',
+      component: () => import('@/views/club/ClubTableCreateView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/club/detail',
       name: 'club-detail',
       component: () => import('@/views/club/ClubDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/downline-members',
+      name: 'club-downline-members',
+      component: () => import('@/views/club/ClubDownlineMembersView.vue'),
       meta: { requiresAuth: true },
     },
     {

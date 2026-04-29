@@ -10,6 +10,7 @@ import {
   type BridgeMsgType,
   type BridgeMessage,
   type EnterTablePayload,
+  type EnterMttPayload,
 } from '../protocol'
 import { createLogger } from '@/utils/logger'
 
@@ -330,9 +331,16 @@ export function sendBridgeMessage<TPayload>(
   return message
 }
 
-// 业务快捷方法：请求 Cocos 进入牌桌。
+// 业务快捷方法：请求 Cocos 进入普通牌桌。
 export function enterTable(payload: EnterTablePayload): BridgeMessage<EnterTablePayload> {
   return sendBridgeMessage(BRIDGE_ACTION.ENTER_TABLE, payload, {
+    msgtype: BRIDGE_MSG_TYPE.H5,
+  })
+}
+
+// 业务快捷方法：请求 Cocos 进入 MTT 赛事牌桌。
+export function enterMtt(payload: EnterMttPayload): BridgeMessage<EnterMttPayload> {
+  return sendBridgeMessage(BRIDGE_ACTION.ENTER_MTT, payload, {
     msgtype: BRIDGE_MSG_TYPE.H5,
   })
 }

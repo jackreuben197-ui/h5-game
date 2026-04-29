@@ -33,14 +33,21 @@ import {
 import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import { toUnixSeconds } from '@/utils/time'
+import { enterMtt } from '@/bridge/core'
+import type { EnterMttPayload } from '@/bridge/protocol'
+import { useGameStore } from '@/stores/game'
+import LoginSession from '@/session/loginSession'
 
 type DetailTabName = 'status' | 'players' | 'rewards' | 'tables' | 'blinds'
 
 const route = useRoute()
+const gameStore = useGameStore()
 const activeTab = ref<DetailTabName>('status')
 const detailData = ref<RoomcenterMttDetailData | null>(null)
 const btnLoading = ref(false)
 const showBuyinModal = ref(false)
+const buyinModalTitle = ref<string | undefined>(undefined)
+const buyinJoinMode = ref<'apply' | 'rebuy' | 'addon'>('apply')
 const tick = ref(0)
 let tickTimer: ReturnType<typeof setInterval> | null = null
 
@@ -294,33 +301,58 @@ onUnmounted(() => {
 async function handleBtnClick(): Promise<void> {
   if (!btnConfig.value.active || btnLoading.value) return
   const s = stateCode.value
-  // 报名场景：弹出买入弹窗
+
+  // 报名：弹买入弹窗
   if (s === MttPlayerStatus.CAN_APPLY_NOT_START || s === MttPlayerStatus.CAN_APPLY_DELAY) {
+    buyinJoinMode.value = 'apply'
+    buyinModalTitle.value = undefined // 使用默认 UIMTTSignDialogBuyTitle
     showBuyinModal.value = true
     return
   }
-  // 非报名场景：继续原逻辑
-  const id = matchId.value
-  const clubId = detailData.value?.mtt?.club_id ?? 0
-  btnLoading.value = true
-  try {
-    let res: { code?: number } | null = null
-    switch (s) {
-      case MttPlayerStatus.APPLIED_NOT_START:
-        res = await mttQuitApi(id)
-        break
-      case MttPlayerStatus.LOSE_CAN_REBUY:
-        res = await mttRebuyApi(id, { ticket: false, ratio: 0, use_free: false, club_id: clubId })
-        break
-      case MttPlayerStatus.CAN_JOIN:
-        showToast(t('mtt_btn_enter'))
-        return
+
+  // 重购：先校验次数，弹买入弹窗（对齐 Unity MttRebuyAsync availableTimes < 1 检查）
+  if (s === MttPlayerStatus.LOSE_CAN_REBUY) {
+    const leftTimes = detailData.value?.state?.left_rebuy_times ?? 0
+    if (leftTimes < 1) {
+      // 按钮不可点时不应到达此处，防御性兜底
+      return
     }
-    if (res && res.code === 0) {
-      await loadDetail()
+    buyinJoinMode.value = 'rebuy'
+    buyinModalTitle.value = t('MTT_Rebuy')
+    showBuyinModal.value = true
+    return
+  }
+
+  // 进入牌桌：通知 Cocos 进入 MTT 房间（对齐 Unity ShowGameplayUI + EnterForegroundAsync）
+  if (s === MttPlayerStatus.CAN_JOIN) {
+    btnLoading.value = true
+    try {
+      const wsPort = await LoginSession.EnsureWS().catch(() => 0)
+      const mttData = detailData.value?.mtt
+      const payload: EnterMttPayload = {
+        userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',
+        userId: gameStore.loginUserId || gameStore.loginAccount || '',
+        websocketPort: typeof wsPort === 'number' ? wsPort : 0,
+        from: 'h5-lobby',
+        matchId: matchId.value,
+        matchInfo: mttData ?? {},
+      }
+      enterMtt(payload)
+    } finally {
+      btnLoading.value = false
     }
-  } finally {
-    btnLoading.value = false
+    return
+  }
+
+  // 取消报名
+  if (s === MttPlayerStatus.APPLIED_NOT_START) {
+    btnLoading.value = true
+    try {
+      const res = await mttQuitApi(matchId.value)
+      if (res && res.code === 0) await loadDetail()
+    } finally {
+      btnLoading.value = false
+    }
   }
 }
 
@@ -329,12 +361,16 @@ async function handleBuyinConfirm(payload: { ticket: boolean; ratio: number; use
   const id = matchId.value
   btnLoading.value = true
   try {
-    const res = await mttBuyInApi(id, {
+    const isRebuy = buyinJoinMode.value === 'rebuy'
+    const apiPayload = {
       ticket: payload.ticket,
       ratio: payload.ratio,
       use_free: payload.useFree,
       club_id: payload.clubId ?? detailData.value?.mtt?.club_id ?? 0,
-    })
+    }
+    const res = isRebuy
+      ? await mttRebuyApi(id, apiPayload)
+      : await mttBuyInApi(id, apiPayload)
     if (res && res.code === 0) {
       await loadDetail()
     }
@@ -405,11 +441,13 @@ function handlePlayersRefresh(mode: 'rank' | 'hunter'): void {
       />
     </div>
 
-    <!-- 买入弹窗 -->
+    <!-- 买入弹窗（报名/重购复用，join-mode 控制费用计算，title 控制标题） -->
     <MttBuyinModal
       v-model:show="showBuyinModal"
       :mtt="detailData?.mtt"
       :mtt-id="matchId"
+      :join-mode="buyinJoinMode"
+      :title="buyinModalTitle"
       @confirm="handleBuyinConfirm"
     />
   </div>

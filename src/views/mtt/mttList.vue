@@ -142,7 +142,7 @@ const renderGroups = computed<MttRenderGroup[]>(() =>
 )
 
 function handleCardAction(item: MttItem): void {
-  console.log('[MTT] action:', item)
+  router.push({ name: 'mtt-detail', query: { id: String(item.id) } })
 }
 
 const router = useRouter()
@@ -489,7 +489,7 @@ function getDefaultGameIcon(category: MttCategory): string {
 </script>
 
 <template>
-  <div class="mtt-list-page themeType2">
+  <div class="mtt-list-page themeType2 ">
     <div class="bg-overlay"></div>
 
     <HeaderBack :title="t('UIHomeMttArea')">
@@ -504,7 +504,7 @@ function getDefaultGameIcon(category: MttCategory): string {
       v-model="activeTab"
       :tabs="mttTabs"
     />
-    <section class="mtt-content">
+    <section class="mtt-content ">
       <template v-if="renderGroups.length">
         <div v-for="group in renderGroups" :key="group.groupId" class="mtt-group">
           <!-- 分组标题 -->
@@ -595,7 +595,7 @@ function getDefaultGameIcon(category: MttCategory): string {
   z-index: 1;
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
-  padding: 0.4rem 0.38rem 0.5333rem;
+  padding: 0.4rem 0.38rem 2.5333rem;
   // background: rgba(255, 255, 255, 0.24);
   backdrop-filter: blur(0.3533rem) saturate(1.04);
 }

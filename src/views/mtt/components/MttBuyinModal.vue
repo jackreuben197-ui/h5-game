@@ -23,6 +23,7 @@ const props = defineProps<{
   mtt?: RoomcenterMttDetails
   mttId?: number
   joinMode?: MttJoinMode
+  title?: string
   /** 重购倒计时用，来自服务端 rebuyData */
   rebuyData?: {
     upblindInterval: number // 升盲间隔（秒）
@@ -331,7 +332,7 @@ function handleConfirm() {
 <template>
   <GameDialog
     :show="show"
-    :title="t('UIMTTSignDialogBuyTitle')"
+    :title="props.title ?? t('UIMTTSignDialogBuyTitle')"
     :confirm-button-text="t('UICowboy_JoinGame')"
     :confirm-button-disabled="!canConfirm && (mtt?.gold_type ?? 1) !== 1"
     :close-on-click-overlay="true"
@@ -455,7 +456,7 @@ function handleConfirm() {
             <!-- <span v-if="isFreeJoin" class="cost-item-free">FREE</span> -->
             <!-- <span v-else class="cost-item-value">{{ feeBreakdown.displayTotal }}</span> -->
             <!-- 记录费 -->
-            <span v-if="recordFee.hasDiscount" class="record-original">{{ recordFee.original }}</span>
+            <span v-if="recordFee.hasDiscount" class="record-original mx-2">{{ recordFee.original }}</span>
             <span class="record-final">{{ recordFee.final }}</span>
           </div>
         </div>
@@ -475,7 +476,7 @@ function handleConfirm() {
 .buyin-modal {
   display: flex;
   flex-direction: column;
-  gap: 0.28rem;
+  gap: 0.4rem;
 }
 
 /* ===== 倒计时 ===== */
@@ -490,7 +491,7 @@ function handleConfirm() {
 .buyin-options {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0.62rem;
-  padding: 0.32rem 0.38rem;
+  padding: 0.3rem 0.3rem;
   display: flex;
   flex-direction: column;
   gap: 0.32rem;
@@ -522,7 +523,6 @@ function handleConfirm() {
   font-size: 0.33rem;
   font-weight: 700;
   color: #fff;
-  font-family: 'HONOR Sans CN', sans-serif;
   word-break: break-all;
 
   &--none {
@@ -544,7 +544,7 @@ function handleConfirm() {
 .buyin-option-actions {
   display: flex;
   align-items: center;
-  gap: 0.24rem;
+  gap: 0.8rem;
   flex-shrink: 0;
   margin-left: 0.16rem;
 }
@@ -575,7 +575,7 @@ function handleConfirm() {
     padding: 0.013rem;
     background: linear-gradient(
       135deg,
-      rgba(242, 242, 242, 0.8) 0%,
+      // rgba(242, 242, 242, 0.8) 0%,
       rgba(255, 255, 255, 0) 44.5%,
       rgba(255, 255, 255, 0.5) 100%
     );
@@ -604,7 +604,7 @@ function handleConfirm() {
   font-size: 0.32rem;
   font-weight: 500;
   color: #fff;
-  font-family: 'HONOR Sans CN', sans-serif;
+  text-align: left;
 }
 
 .wallet-list {
@@ -622,7 +622,7 @@ function handleConfirm() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.2rem 0.38rem;
+  padding: 0.2rem 0.3rem;
   cursor: pointer;
 
   &--selected {
@@ -633,7 +633,6 @@ function handleConfirm() {
 .wallet-item-name {
   font-size: 0.33rem;
   color: #fff;
-  font-family: 'HONOR Sans CN', sans-serif;
 }
 
 .wallet-item-right {
@@ -650,7 +649,6 @@ function handleConfirm() {
 .wallet-item-gold {
   font-size: 0.30rem;
   color: rgba(255, 255, 255, 0.8);
-  font-family: 'HONOR Sans CN', sans-serif;
 }
 
 .wallet-item-check {
@@ -682,7 +680,6 @@ function handleConfirm() {
   font-size: 0.38rem;
   font-weight: 800;
   color: #fff;
-  font-family: 'HONOR Sans CN', sans-serif;
 }
 
 .cost-refresh {
@@ -706,7 +703,6 @@ function handleConfirm() {
 .cost-label {
   font-size: 0.32rem;
   color: rgba(255, 255, 255, 0.8);
-  font-family: 'HONOR Sans CN', sans-serif;
 }
 
 .cost-item {
@@ -724,14 +720,12 @@ function handleConfirm() {
   font-size: 0.33rem;
   font-weight: 800;
   color: #fff;
-  font-family: 'HONOR Sans CN', sans-serif;
 }
 
 .cost-item-free {
   font-size: 0.33rem;
   font-weight: 800;
   color: #05e7ae;
-  font-family: 'HONOR Sans CN', sans-serif;
 }
 
 /* ===== 记录费 ===== */
@@ -756,7 +750,6 @@ function handleConfirm() {
 .record-fee-label {
   font-size: 0.32rem;
   color: rgba(255, 255, 255, 0.8);
-  font-family: 'HONOR Sans CN', sans-serif;
 }
 
 .record-tip-icon {
@@ -770,22 +763,16 @@ function handleConfirm() {
   gap: 0.06rem;
 }
 
-.record-fee-icon {
-  width: 0.32rem;
-  height: 0.32rem;
-}
 
 .record-original {
   font-size: 0.3rem;
   color: rgba(255, 255, 255, 0.4);
   text-decoration: line-through;
-  font-family: 'HONOR Sans CN', sans-serif;
 }
 
 .record-final {
   font-size: 0.33rem;
   font-weight: 700;
   color: #fff;
-  font-family: 'HONOR Sans CN', sans-serif;
 }
 </style>

@@ -7252,3 +7252,4 @@ UIMatchBreakTime=Break Time
 UIMatchPerTableCount=Per Table
 UIMatchTotalTables=Total Tables
 UIMatchGuaranteedTag=Guaranteed
+UIMatchSelectClubBuyin=Select the Club for Buy-in request

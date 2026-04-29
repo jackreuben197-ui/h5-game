@@ -18,6 +18,7 @@ import router from '@/router'
 import { useGameStore } from '@/stores/game'
 import { pinia } from '@/stores/pinia'
 import { localStore } from '@/utils/localStore'
+import { createLogger } from '@/utils/logger'
 import {
   HOLDEM_CODE,
   decodeHoldemCode,
@@ -26,6 +27,10 @@ import {
   encodeHoldemPacket,
   type HoldemPacketDecodeResult,
 } from './holdemPacket'
+
+const log = createLogger('[ws]')
+const logSend = createLogger('[wsSend]')
+const logRecv = createLogger('[wsRecv]')
 
 let ws: WebSocket | null = null
 let wsUrl = ''
@@ -181,7 +186,7 @@ async function forceToLoginFromWs(reason: string): Promise<void> {
     return
   }
   authRedirecting = true
-  console.warn('[ws] force to login:', reason)
+  log.warn('force to login:', reason)
 
   shouldAutoReconnect = false
   clearReconnectTimer()
@@ -223,29 +228,18 @@ function toBufferLike(data: ArrayBuffer | ArrayBufferView | Blob): ArrayBufferLi
 
 function logWsOutgoing(data: string | ArrayBuffer | ArrayBufferView | Blob, context: string): void {
   if (typeof data === 'string') {
-    console.info('[wsSend][text]', {
-      context,
-      length: data.length,
-      preview: data.slice(0, 120),
-    })
+    logSend.debug({ context, length: data.length, preview: data.slice(0, 120) })
     return
   }
 
   if (data instanceof Blob) {
-    console.info('[wsSend][binary]', {
-      context,
-      byteLength: data.size,
-      note: 'blob',
-    })
+    logSend.debug({ context, byteLength: data.size, note: 'blob' })
     return
   }
 
   const raw = toBufferLike(data)
   if (!raw) {
-    console.info('[wsSend][binary]', {
-      context,
-      note: 'unknown-buffer-like',
-    })
+    logSend.debug({ context, note: 'unknown-buffer-like' })
     return
   }
 
@@ -261,7 +255,7 @@ function logWsOutgoing(data: string | ArrayBuffer | ArrayBufferView | Blob, cont
     }
 
     const codeName = HOLDEN_CODE_NAME[packet.code] || 'UNKNOWN'
-    console.info('[wsSend][packet]', {
+    logSend.debug({
       context,
       code: packet.code,
       codeName,
@@ -276,10 +270,7 @@ function logWsOutgoing(data: string | ArrayBuffer | ArrayBufferView | Blob, cont
   }
 
   const bytes = new Uint8Array(raw)
-  console.info('[wsSend][binary]', {
-    context,
-    byteLength: bytes.length,
-  })
+  logSend.debug({ context, byteLength: bytes.length })
 }
 
 function clearReconnectTimer(): void {
@@ -302,11 +293,7 @@ function scheduleReconnect(): void {
 
   reconnectAttempts += 1
   const delay = getReconnectDelay(reconnectAttempts)
-  console.info('[ws] reconnect scheduled', {
-    attempt: reconnectAttempts,
-    delayMs: delay,
-    url: wsUrl,
-  })
+  log.info('reconnect scheduled', { attempt: reconnectAttempts, delayMs: delay, url: wsUrl })
 
   reconnectTimer = window.setTimeout(() => {
     reconnectTimer = null
@@ -392,7 +379,7 @@ export function h5SendRegisterPacket(): boolean {
 
   const sent = sendWsRaw(packet, 'h5-register')
   if (sent) {
-    console.info('[ws] send register packet')
+    log.info('send register packet')
   }
   return sent
 }
@@ -462,9 +449,7 @@ function logHoldemPacket(buffer: ArrayBufferLike): number | null {
   const packet = decodeHoldemPacket(buffer)
   if (!packet) {
     const bytes = new Uint8Array(buffer)
-    console.warn('[wsRecv][packet] code decode failed', {
-      byteLength: bytes.length,
-    })
+    logRecv.warn('code decode failed', { byteLength: bytes.length })
     return null
   }
 
@@ -482,12 +467,7 @@ function logHoldemPacket(buffer: ArrayBufferLike): number | null {
     lastHeartbeatLogAt = now
   }
 
-  console.info('[wsRecv][packet]', {
-    code,
-    codeName,
-    bodyLen: body.length,
-    bodyBase64Preview: uint8ArrayToBase64Preview(body),
-  })
+  logRecv.debug({ code, codeName, bodyLen: body.length, bodyBase64Preview: uint8ArrayToBase64Preview(body) })
   return code
 }
 
@@ -553,7 +533,7 @@ function connectWs(payload: WsConnectPayload): void {
 
   // 无 token 时不建立 websocket，避免进入“已连接但无法 REGISTER”的半可用状态。
   if (!hasSessionToken()) {
-    console.info('[ws] wsConnect skipped: token empty, waiting login')
+    log.info('wsConnect skipped: token empty, waiting login')
     void forceToLoginFromWs('wsConnect token empty')
     return
   }
@@ -759,7 +739,7 @@ function onCocosBridgeMessage(message: BridgeMessage): void {
 
   if (message.action === 'exitTable') {
     // 纯透传模式：离桌消息仅做日志，具体离桌协议包由 Cocos 发送 wsSend(binary)。
-    console.info('[ws] exitTable received (passthrough mode), no websocket packet is sent by H5')
+    log.info('exitTable received (passthrough mode), no websocket packet is sent by H5')
   }
 }
 

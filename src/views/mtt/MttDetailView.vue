@@ -10,6 +10,7 @@ import MttPlayersTab from './components/MttPlayersTab.vue'
 import MttRewardsTab from './components/MttRewardsTab.vue'
 import MttTablesTab from './components/MttTablesTab.vue'
 import MttBlindsTab from './components/MttBlindsTab.vue'
+import MttBuyinModal from './components/MttBuyinModal.vue'
 import type { FilterTabOption } from '@/components/Tabbar/FilterTabbar.vue'
 import {
   MttPlayerStatus,
@@ -39,6 +40,7 @@ const route = useRoute()
 const activeTab = ref<DetailTabName>('status')
 const detailData = ref<RoomcenterMttDetailData | null>(null)
 const btnLoading = ref(false)
+const showBuyinModal = ref(false)
 const tick = ref(0)
 let tickTimer: ReturnType<typeof setInterval> | null = null
 
@@ -291,16 +293,19 @@ onUnmounted(() => {
 
 async function handleBtnClick(): Promise<void> {
   if (!btnConfig.value.active || btnLoading.value) return
+  const s = stateCode.value
+  // 报名场景：弹出买入弹窗
+  if (s === MttPlayerStatus.CAN_APPLY_NOT_START || s === MttPlayerStatus.CAN_APPLY_DELAY) {
+    showBuyinModal.value = true
+    return
+  }
+  // 非报名场景：继续原逻辑
   const id = matchId.value
   const clubId = detailData.value?.mtt?.club_id ?? 0
   btnLoading.value = true
   try {
     let res: { code?: number } | null = null
-    switch (stateCode.value) {
-      case MttPlayerStatus.CAN_APPLY_NOT_START:
-      case MttPlayerStatus.CAN_APPLY_DELAY:
-        res = await mttBuyInApi(id, { ticket: false, ratio: 0, use_free: false, club_id: clubId })
-        break
+    switch (s) {
       case MttPlayerStatus.APPLIED_NOT_START:
         res = await mttQuitApi(id)
         break
@@ -311,6 +316,25 @@ async function handleBtnClick(): Promise<void> {
         showToast(t('mtt_btn_enter'))
         return
     }
+    if (res && res.code === 0) {
+      await loadDetail()
+    }
+  } finally {
+    btnLoading.value = false
+  }
+}
+
+async function handleBuyinConfirm(payload: { ticket: boolean; ratio: number; useFree: boolean; clubId?: number }): Promise<void> {
+  showBuyinModal.value = false
+  const id = matchId.value
+  btnLoading.value = true
+  try {
+    const res = await mttBuyInApi(id, {
+      ticket: payload.ticket,
+      ratio: payload.ratio,
+      use_free: payload.useFree,
+      club_id: payload.clubId ?? detailData.value?.mtt?.club_id ?? 0,
+    })
     if (res && res.code === 0) {
       await loadDetail()
     }
@@ -380,6 +404,13 @@ function handlePlayersRefresh(mode: 'rank' | 'hunter'): void {
         @click="handleBtnClick"
       />
     </div>
+
+    <!-- 买入弹窗 -->
+    <MttBuyinModal
+      v-model:show="showBuyinModal"
+      :mtt="detailData?.mtt"
+      @confirm="handleBuyinConfirm"
+    />
   </div>
 </template>
 

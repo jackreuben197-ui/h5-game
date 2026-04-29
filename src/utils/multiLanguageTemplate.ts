@@ -5,6 +5,9 @@ import StorageKey from '@/constants/storageKey'
 import type { LocaleCode } from '@/i18n'
 import { getLocale } from '@/i18n'
 import { localStore } from '@/utils/localStore'
+import { createLogger } from '@/utils/logger'
+
+const log = createLogger('[i18n]')
 
 interface MultiLanguageTemplateCachePayload {
   version: number
@@ -39,7 +42,7 @@ export async function ensureMultiLanguageTemplateLoaded(): Promise<void> {
 
   loadingTask = fetchAndCacheTemplates()
     .catch((error) => {
-      console.warn('[multiLanguageTemplate] load failed:', error)
+      log.warn('multiLanguageTemplate load failed:', error)
     })
     .finally(() => {
       hasLoaded = true

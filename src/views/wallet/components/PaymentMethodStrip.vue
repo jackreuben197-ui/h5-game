@@ -55,8 +55,8 @@ const emit = defineEmits<{
 .strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  column-gap: clamp(4px, 1.6vw, 6px);
-  row-gap: clamp(6px, 2.1vw, 8px);
+  column-gap: 0.16rem;
+  row-gap: 0.21rem;
   width: 100%;
   justify-items: center;
 }
@@ -73,8 +73,8 @@ const emit = defineEmits<{
 }
 
 .method__coin {
-  width: clamp(48px, 15vw, 56px);
-  height: clamp(48px, 15vw, 56px);
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 50%;
   overflow: hidden;
   position: relative;
@@ -91,13 +91,13 @@ const emit = defineEmits<{
 }
 
 .method__label {
-  margin-top: clamp(-12px, -4.5vw, -12px);
-  padding: clamp(18px, 5.5vw, 21px) clamp(4px, 1.5vw, 6px) clamp(3px, 1vw, 4px);
-  width: clamp(54px, 17.5vw, 65.4px);
-  height: clamp(38px, 12.4vw, 46.4px);
+  margin-top: -0.45rem;
+  padding: 0.55rem 0.15rem 0.1rem;
+  width: 1.75rem;
+  height: 1.24rem;
   background: rgba(47, 47, 47, 0.24);
   border: 0.18px solid rgba(153, 153, 153, 0.6);
-  border-radius: clamp(7px, 2.5vw, 9.3px);
+  border-radius: 0.25rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -117,7 +117,7 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(2px, 0.7vw, 2.5px);
+  gap: 0.07rem;
   line-height: 1.4;
   white-space: nowrap;
 }
@@ -125,19 +125,19 @@ const emit = defineEmits<{
 .method__label-primary {
   font-family: var(--wallet-font-num);
   font-weight: 500;
-  font-size: clamp(9px, 3vw, 11.24px);
+  font-size: 0.3rem;
 }
 
 .method__label-suffix {
   font-family: var(--wallet-font-cn);
   font-weight: 400;
-  font-size: clamp(7px, 2.25vw, 8.4px);
+  font-size: 0.225rem;
 }
 
 .method__label-secondary {
   font-family: var(--wallet-font-num);
   font-weight: 500;
-  font-size: clamp(7px, 2.2vw, 8.2px);
+  font-size: 0.22rem;
   line-height: 1.4;
 }
 </style>

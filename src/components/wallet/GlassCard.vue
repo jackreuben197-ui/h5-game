@@ -7,8 +7,8 @@ interface Props {
 
 withDefaults(defineProps<Props>(), {
   tag: 'div',
-  radius: 'clamp(28px, 10vw, 37.4px)',
-  padding: 'clamp(12px, 4vw, 15px) clamp(20px, 7.5vw, 28px)',
+  radius: '1rem',
+  padding: '0.4rem 0.75rem',
 })
 </script>
 

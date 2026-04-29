@@ -41,3 +41,31 @@
   flex-wrap: wrap;
   gap: 0.2133rem;
 }
+
+// Radio circle indicator (outer ring + optional inner ring when checked)
+.radio-circle {
+  width: 0.48rem;
+  height: 0.48rem;
+  border-radius: 50%;
+  border: 0.027rem solid rgba(255, 255, 255, 0.3);
+  box-shadow:
+    /* 左上高光 */ inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.85),
+    /* 右下高光 */ inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  &--checked {
+    // border-color: #05e7ae;
+
+    &::after {
+      content: '';
+      width: 0.32rem;
+      height: 0.32rem;
+      border-radius: 50%;
+      border: 0.05rem solid #05e7ae;
+      background: transparent;
+    }
+  }
+}

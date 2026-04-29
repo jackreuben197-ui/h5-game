@@ -3,6 +3,9 @@ import { ref } from 'vue'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 import { formatTxtMessage, parseTxtLanguage, type TxtLanguageMap } from './parser'
+import { createLogger } from '@/utils/logger'
+
+const log = createLogger('[i18n]')
 
 // 与 Cocos 保持一致：cn(简中) / zh(繁中) / en / pt。
 export type LocaleCode = 'cn' | 'zh' | 'en' | 'pt'
@@ -147,7 +150,7 @@ async function loadLocaleDictionary(locale: LocaleCode): Promise<void> {
   const cacheMode = import.meta.env.DEV ? 'no-cache' : 'force-cache'
   const response = await fetch(url, { cache: cacheMode })
   if (!response.ok) {
-    console.warn('[i18n] locale file load failed:', locale, response.status)
+    log.warn('locale file load failed:', locale, response.status)
     return
   }
   const raw = await response.text()

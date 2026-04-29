@@ -16,20 +16,20 @@ import icNotification from '@/assets/icons/wallet/ic_notification.svg'
 <style scoped lang="scss">
 .bell {
   position: relative;
-  width: clamp(44px, 14vw, 52.5px);
-  height: clamp(44px, 14vw, 52.5px);
+  width: 1.4rem;
+  height: 1.4rem;
   border-radius: 50%;
   background: linear-gradient(128deg, rgba(5, 231, 174, 0.4) 7%, rgba(2, 122, 92, 0.4) 72%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: clamp(3px, 1.1vw, 4.2px);
+  padding: 0.11rem;
 }
 
 .bell__icon {
-  width: clamp(26px, 8.5vw, 32px);
-  height: clamp(26px, 8.5vw, 32px);
+  width: 0.85rem;
+  height: 0.85rem;
   display: flex;
   align-items: center;
   justify-content: center;

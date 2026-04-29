@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import icRoundedArrowRight from '@/assets/icons/wallet/ic_rounded_arrow_right.svg'
-import PrimaryButton from './PrimaryButton.vue'
+import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import { t } from '@/i18n'
 
 interface Props {
@@ -77,7 +77,7 @@ const amount = ref('')
     </div>
 
     <PrimaryButton
-      :label="$txt('Wallet_SubmitWithdraw')"
+      :text="$txt('Wallet_SubmitWithdraw')"
       @click="emit('submit', { recipient, remark, amount })"
     />
   </div>
@@ -87,22 +87,22 @@ const amount = ref('')
 .wf {
   display: flex;
   flex-direction: column;
-  gap: clamp(10px, 3.2vw, 14px);
+  gap: 0.32rem;
   width: 100%;
 }
 
 .wf__card {
   position: relative;
-  padding: clamp(16px, 5.5vw, 22px) clamp(12px, 4.2vw, 15px);
+  padding: 0.55rem 0.42rem;
   background: rgba(0, 0, 0, 0.01);
   backdrop-filter: blur(16.6px);
   -webkit-backdrop-filter: blur(16.6px);
   border: 0.18px solid rgba(255, 255, 255, 0.3);
-  border-radius: clamp(28px, 10vw, 37.4px);
+  border-radius: 1rem;
   box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
-  gap: clamp(8px, 3vw, 11px);
+  gap: 0.3rem;
   overflow: hidden;
   z-index: 1;
 }
@@ -137,20 +137,20 @@ const amount = ref('')
 .wf__field {
   display: flex;
   flex-direction: column;
-  gap: clamp(3px, 1.2vw, 4.5px);
+  gap: 0.12rem;
 }
 
 .wf__label {
   font-family: var(--wallet-font-cn);
   font-weight: 400;
-  font-size: clamp(9px, 2.85vw, 10.3px);
+  font-size: 0.285rem;
   color: #f9f9f9;
-  padding-left: clamp(2px, 1vw, 4px);
+  padding-left: 0.1rem;
 }
 
 .wf__row {
   display: flex;
-  gap: clamp(4px, 1.3vw, 5px);
+  gap: 0.13rem;
   align-items: center;
 }
 
@@ -158,12 +158,12 @@ const amount = ref('')
   flex: 1;
   min-width: 0;
   background: rgba(0, 0, 0, 0.26);
-  border-radius: clamp(16px, 6vw, 22.1px);
-  padding: clamp(10px, 3.6vw, 12.8px) clamp(8px, 2.8vw, 10px);
+  border-radius: 0.6rem;
+  padding: 0.36rem 0.28rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: clamp(38px, 12vw, 45px);
+  min-height: 1.2rem;
 }
 
 .wf__input--select {
@@ -173,7 +173,7 @@ const amount = ref('')
 .wf__input-text {
   font-family: var(--wallet-font-cn);
   font-weight: 500;
-  font-size: clamp(13px, 4vw, 15px);
+  font-size: 0.4rem;
   color: rgba(255, 255, 255, 0.65);
   line-height: 1.4;
 }
@@ -185,7 +185,7 @@ const amount = ref('')
   outline: none;
   font-family: var(--wallet-font-cn);
   font-weight: 500;
-  font-size: clamp(13px, 4vw, 15px);
+  font-size: 0.4rem;
   color: #fff;
   text-align: center;
 }
@@ -197,11 +197,11 @@ const amount = ref('')
 .wf__pill {
   display: flex;
   align-items: center;
-  gap: clamp(3px, 1.5vw, 5.6px);
-  padding: clamp(5px, 1.9vw, 7.2px) clamp(5px, 1.9vw, 7.2px) clamp(5px, 1.9vw, 7.2px) clamp(9px, 3.3vw, 12.4px);
+  gap: 0.15rem;
+  padding: 0.19rem 0.19rem 0.19rem 0.33rem;
   background: rgba(255, 255, 255, 0.2);
   border: 0.4px solid rgba(242, 242, 242, 0.4);
-  border-radius: clamp(36px, 13.7vw, 51.3px);
+  border-radius: 1.37rem;
   box-shadow: 0.8px 1px 1.6px rgba(0, 0, 0, 0.25);
   cursor: pointer;
   white-space: nowrap;
@@ -211,28 +211,28 @@ const amount = ref('')
 .wf__pill span {
   font-family: var(--wallet-font-num);
   font-weight: 510;
-  font-size: clamp(10px, 3.2vw, 12px);
+  font-size: 0.32rem;
   color: #fff;
   line-height: 1.4;
 }
 
 .wf__pill-icon {
-  width: clamp(12px, 3.8vw, 14px);
-  height: clamp(12px, 3.8vw, 14px);
+  width: 0.38rem;
+  height: 0.38rem;
 }
 
 .wf__balance {
   display: flex;
   justify-content: center;
-  padding: clamp(8px, 2.6vw, 10px) clamp(12px, 4vw, 15px);
+  padding: 0.26rem 0.4rem;
   background: rgba(0, 0, 0, 0.2);
-  border-radius: clamp(22px, 8vw, 30px);
+  border-radius: 0.8rem;
 }
 
 .wf__balance-label {
   font-family: var(--wallet-font-cn);
   font-weight: 600;
-  font-size: clamp(13px, 4.15vw, 15.6px);
+  font-size: 0.415rem;
   color: #fff;
   line-height: 1.4;
 }
@@ -245,7 +245,7 @@ const amount = ref('')
   text-align: center;
   font-family: var(--wallet-font-cn);
   font-weight: 400;
-  font-size: clamp(9px, 2.9vw, 10.7px);
+  font-size: 0.29rem;
   color: #fff;
   line-height: 1.2;
 }

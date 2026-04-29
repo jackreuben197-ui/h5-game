@@ -3,8 +3,8 @@ import icIncome from '@/assets/icons/wallet/ic_income.svg'
 import icOutcome from '@/assets/icons/wallet/ic_outcome.svg'
 import icTime from '@/assets/icons/wallet/ic_time.svg'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
-import GlassCard from './GlassCard.vue'
-import TagPill from './TagPill.vue'
+import GlassCard from '@/components/wallet/GlassCard.vue'
+import TagPill from '@/components/wallet/TagPill.vue'
 
 type Kind = 'in' | 'out'
 
@@ -89,7 +89,7 @@ withDefaults(defineProps<Props>(), {
 .tx {
   display: flex;
   flex-direction: column;
-  gap: clamp(8px, 2.7vw, 10px);
+  gap: 0.27rem;
   background: rgba(0, 0, 0, 0.14);
   box-shadow: none;
 }
@@ -97,12 +97,12 @@ withDefaults(defineProps<Props>(), {
 .tx__head {
   display: flex;
   align-items: center;
-  gap: clamp(7px, 2.4vw, 9px);
+  gap: 0.24rem;
 }
 
 .tx__kind-icon {
-  width: clamp(20px, 6.75vw, 25.3px);
-  height: clamp(20px, 6.75vw, 25.3px);
+  width: 0.675rem;
+  height: 0.675rem;
   flex-shrink: 0;
 }
 
@@ -111,14 +111,14 @@ withDefaults(defineProps<Props>(), {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: clamp(2px, 0.8vw, 3px);
+  gap: 0.08rem;
   min-width: 0;
 }
 
 .tx__game {
   font-family: var(--wallet-font-cn);
   font-weight: 600;
-  font-size: clamp(10.5px, 3.3vw, 12.2px);
+  font-size: 0.33rem;
   color: #fff;
   line-height: 1.4;
 }
@@ -126,20 +126,20 @@ withDefaults(defineProps<Props>(), {
 .tx__id {
   display: flex;
   align-items: center;
-  gap: clamp(1.5px, 0.65vw, 2.5px);
+  gap: 0.065rem;
 }
 
 .tx__id-value {
   font-family: var(--wallet-font-num);
   font-weight: 600;
-  font-size: clamp(8px, 2.5vw, 9.6px);
+  font-size: 0.25rem;
   color: #fff;
 }
 
 .tx__amount {
   font-family: var(--wallet-font-num);
   font-weight: 800;
-  font-size: clamp(14px, 4.3vw, 16px);
+  font-size: 0.43rem;
   line-height: 1.4;
   white-space: nowrap;
 }
@@ -167,36 +167,36 @@ withDefaults(defineProps<Props>(), {
 .tx__time {
   display: flex;
   align-items: center;
-  gap: clamp(4px, 1.6vw, 6px);
+  gap: 0.16rem;
   font-family: var(--wallet-font-cn);
   font-weight: 400;
-  font-size: clamp(10px, 3.2vw, 12px);
+  font-size: 0.32rem;
   color: #fff;
   letter-spacing: 0.24px;
   line-height: 0.78;
 }
 
 .tx__time-icon {
-  width: clamp(16px, 5.3vw, 20px);
-  height: clamp(16px, 5.3vw, 20px);
+  width: 0.53rem;
+  height: 0.53rem;
 }
 
 .tx__chip {
   display: flex;
   align-items: center;
-  gap: clamp(3px, 1.15vw, 4.3px);
+  gap: 0.115rem;
 }
 
 .tx__chip-value {
   font-family: var(--wallet-font-num);
   font-weight: 600;
-  font-size: clamp(11px, 3.6vw, 13.4px);
+  font-size: 0.36rem;
   color: #f9f9f9;
   line-height: 1.4;
 }
 
 .tx__chip-icon {
-  width: clamp(24px, 8vw, 30px);
-  height: clamp(24px, 8vw, 30px);
+  width: 0.8rem;
+  height: 0.8rem;
 }
 </style>

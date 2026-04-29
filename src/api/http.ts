@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { showFailToast } from 'vant'
 import { useGameStore } from '@/stores/game'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { pinia } from '@/stores/pinia'
 import router from '@/router'
 import { showGameToast } from '@/components/Toast'
@@ -14,9 +15,53 @@ const http = axios.create({
 interface HttpRequestConfigExt extends InternalAxiosRequestConfig {
   suppressBusinessToast?: boolean
   suppressBusinessCodes?: number[]
+  xClub?: string | number | false
 }
 
 let authRedirecting = false
+
+function shouldAttachXClub(url: string): boolean {
+  return /^\/?(?:org|cmsext)\/club\//.test(url)
+}
+
+function readClubIdFromPayload(payload: unknown): string {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return ''
+  }
+
+  const record = payload as Record<string, unknown>
+  const keys = ['club_id', 'clubId']
+  for (const key of keys) {
+    const value = record[key]
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      return String(value).trim()
+    }
+  }
+  return ''
+}
+
+function resolveXClub(config: HttpRequestConfigExt): string {
+  if (config.xClub === false) {
+    return ''
+  }
+
+  if (config.xClub !== undefined && config.xClub !== null && String(config.xClub).trim() !== '') {
+    return String(config.xClub).trim()
+  }
+
+  const fromData = readClubIdFromPayload(config.data)
+  if (fromData) {
+    return fromData
+  }
+
+  const fromParams = readClubIdFromPayload(config.params)
+  if (fromParams) {
+    return fromParams
+  }
+
+  const userInfoStore = useUserInfoStore(pinia)
+  return String(userInfoStore.currentClubId || '').trim()
+}
 
 // 统一处理登录失效：清理登录态并强制跳转到登录页。
 async function forceToLogin(): Promise<void> {
@@ -39,6 +84,7 @@ async function forceToLogin(): Promise<void> {
 }
 
 http.interceptors.request.use((config) => {
+  const extConfig = config as HttpRequestConfigExt
   const gameStore = useGameStore(pinia)
   const token = gameStore.sessionToken
   const requestUrl = config.url || ''
@@ -55,6 +101,15 @@ http.interceptors.request.use((config) => {
   if (token) {
     // 与服务端约定：使用 Md5at 请求头传 token。
     config.headers.Md5at = token
+  }
+
+  // 对齐 Unity：俱乐部相关接口需要携带 X-Club。
+  const normalizedUrl = requestUrl.startsWith('/') ? requestUrl.slice(1) : requestUrl
+  if (shouldAttachXClub(normalizedUrl)) {
+    const xClub = resolveXClub(extConfig)
+    if (xClub) {
+      config.headers['X-Club'] = xClub
+    }
   }
 
   return config

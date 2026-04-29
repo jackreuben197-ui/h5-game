@@ -4,8 +4,8 @@
 // /api/userproxy/im/auth/user_token (UserProxyImAuthUserToken)
 export interface UserProxyImAuthUserTokenRequest {
 
-    platform?: number;
-    operatio_id?: string;
+    platform?: number; // 平台
+    operatio_id?: string; // 时间戳 秒
 
   [key: string]: unknown
 }
@@ -16,9 +16,9 @@ export interface UserProxyImAuthUserTokenResponseData {
 
 export interface UserProxyImAuthUserTokenData {
 
-    userID?: string;
-    token?: string;
-    expiredTime?: number;
+    userID?: string; // IM用户ID
+    token?: string; // 令牌
+    expiredTime?: number; // 过期时间
 
   [key: string]: unknown
 }

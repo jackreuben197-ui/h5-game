@@ -84,9 +84,21 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/club/table/create',
+      name: 'club-table-create',
+      component: () => import('@/views/club/ClubTableCreateView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/club/detail',
       name: 'club-detail',
       component: () => import('@/views/club/ClubDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/downline-members',
+      name: 'club-downline-members',
+      component: () => import('@/views/club/ClubDownlineMembersView.vue'),
       meta: { requiresAuth: true },
     },
     {
@@ -116,31 +128,31 @@ const router = createRouter({
     {
       path: '/club/member/:memberId',
       name: 'club-member-detail',
-      component: () => import('@/views/club/member/MemberDetailView.vue'),
+      component: () => import('@/views/club/ClubMemberDetailView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/club/member/:memberId/agent-profit',
       name: 'club-member-agent-profit',
-      component: () => import('@/views/club/member/AgentProfitSettingView.vue'),
+      component: () => import('@/views/club/ClubAgentProfitSettingView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/club/member/:memberId/offline-players',
       name: 'club-member-offline-players',
-      component: () => import('@/views/club/member/AgentOfflinePlayersView.vue'),
+      component: () => import('@/views/club/ClubAgentOfflinePlayersView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/club/member/:memberId/vip-statistics',
       name: 'club-member-vip-statistics',
-      component: () => import('@/views/club/member/AgentVipStatisticsView.vue'),
+      component: () => import('@/views/club/ClubAgentVipStatisticsView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/club/member/:memberId/bind-agent',
       name: 'club-member-bind-agent',
-      component: () => import('@/views/club/member/MemberBindAgentView.vue'),
+      component: () => import('@/views/club/ClubMemberBindAgentView.vue'),
       meta: { requiresAuth: true },
     },
     {

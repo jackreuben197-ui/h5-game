@@ -138,8 +138,8 @@ function backToHistory(): void {
   <div class="club-room-history-detail-bg">
     <img class="bg-image bg-image--base" :src="imgImage11" alt="" />
     <img class="bg-image bg-image--overlay" :src="imgImage12" alt="" />
-    <div class="fx-glow fx-glow--pink" />
-    <div class="fx-glow fx-glow--cyan" />
+    <div class="fx-glow fx-glow--pink"></div>
+    <div class="fx-glow fx-glow--cyan"></div>
 
     <div class="page-shell club-room-history-detail">
       <VanNavBar title="数据详情" left-arrow @click-left="backToHistory" />
@@ -179,7 +179,7 @@ function backToHistory(): void {
           </div>
         </div>
 
-        <div class="summary-divider" />
+        <div class="summary-divider"></div>
 
         <div class="summary-row summary-row--three">
           <div
@@ -192,7 +192,7 @@ function backToHistory(): void {
           </div>
         </div>
 
-        <div class="summary-divider" />
+        <div class="summary-divider"></div>
 
         <div class="summary-row summary-row--single">
           <div class="metric-item">
@@ -204,7 +204,7 @@ function backToHistory(): void {
 
       <section class="record-board">
         <div class="board-head-wrap">
-          <div class="board-head-strip" />
+          <div class="board-head-strip"></div>
           <div class="board-head board-grid">
             <span
               v-for="header in tableHeaders"

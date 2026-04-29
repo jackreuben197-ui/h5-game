@@ -229,8 +229,8 @@ import type {
   OrgUserSelfProfitUnpayRecordsResponseData,
   OrgUserTribeAdminListRequest,
   OrgUserTribeAdminListResponseData,
-  OrgchaNgeClubDataRequest,
-  OrgchaNgeClubDataResponseData,
+  OrgChangeClubDataRequest,
+  OrgChangeClubDataResponseData,
   UnlockUserRequest,
   UnlockUserResponseData,
 } from '@/api/models/org'
@@ -238,7 +238,7 @@ import type {
 const formatPath = (
   template: string,
   pathParams: Record<string, string | number>,
-): string => template.replace(/\{([^}]+)\}/g, (_, key) => encodeURIComponent(String(pathParams[key] ?? "")))
+): string => template.replace(/\{([^}]+)\}/g, (_, key) => encodeURIComponent(String(pathParams[key] ?? '')))
 void formatPath
 
 // 对齐 cocos WebOrgClubId.API
@@ -247,7 +247,11 @@ export async function postOrgClubIdApi(
   pathParams: Record<string, string | number> = {},
 ): Promise<ApiResponse<OrgClubIdResponseData>> {
   const endpoint = formatPath('/org/club/{id}', pathParams)
-  const response = await http.post<ApiResponse<OrgClubIdResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<OrgClubIdResponseData>>(endpoint, payload, {
+    headers: {
+      'X-Club': String(pathParams.id ?? ''),
+    },
+  })
   return response.data
 }
 
@@ -257,7 +261,11 @@ export async function postOrgClubIdJoinApi(
   pathParams: Record<string, string | number> = {},
 ): Promise<ApiResponse<OrgClubIdJoinResponseData>> {
   const endpoint = formatPath('/org/club/{id}/join', pathParams)
-  const response = await http.post<ApiResponse<OrgClubIdJoinResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<OrgClubIdJoinResponseData>>(endpoint, payload, {
+    headers: {
+      'X-Club': String(pathParams.id ?? ''),
+    },
+  })
   return response.data
 }
 
@@ -713,10 +721,10 @@ export async function postOrgClubModifyClubDescApi(
 
 // 对齐 cocos WebOrgchaNgeClubData.API
 export async function postOrgchaNgeClubDataApi(
-  payload: OrgchaNgeClubDataRequest = {} as OrgchaNgeClubDataRequest
-): Promise<ApiResponse<OrgchaNgeClubDataResponseData>> {
+  payload: OrgChangeClubDataRequest = {} as OrgChangeClubDataRequest
+): Promise<ApiResponse<OrgChangeClubDataResponseData>> {
   const endpoint = '/org/club/modify/club_info'
-  const response = await http.post<ApiResponse<OrgchaNgeClubDataResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<OrgChangeClubDataResponseData>>(endpoint, payload)
   return response.data
 }
 

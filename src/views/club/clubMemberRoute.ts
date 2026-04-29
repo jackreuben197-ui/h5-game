@@ -3,11 +3,11 @@ import type { RouteLocationNormalizedLoaded } from 'vue-router'
 export type MemberIdentity = 'founder' | 'admin' | 'agent' | 'player'
 
 export interface MemberRouteContext {
-  memberId: string
-  identity: MemberIdentity
-  isBoundAgent: boolean
-  name: string
-  uid: string
+	memberId: string
+	identity: MemberIdentity
+	isBoundAgent: boolean
+	name: string
+	uid: string
 }
 
 function normalizeIdentity(value: unknown): MemberIdentity {

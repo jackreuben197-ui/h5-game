@@ -21,9 +21,9 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const userInfoStore = useUserInfoStore()
-const displayAvatar = computed(() => userInfoStore.userInfo?.user?.avatar || props.avatar)
-const displayName = computed(() => userInfoStore.userInfo?.user?.nickname || props.name)
-const displayUserId = computed(() => userInfoStore.userInfo?.user?.un_id || props.userId)
+const displayAvatar = computed(() => (userInfoStore.userInfo?.user?.avatar as string) || props.avatar)
+const displayName = computed(() => (userInfoStore.userInfo?.user?.nickname as string) || props.name)
+const displayUserId = computed(() => (userInfoStore.userInfo?.user?.un_id as string | number) || props.userId)
 
 
 const bannerBg = `url(${bannerBgUrl})`

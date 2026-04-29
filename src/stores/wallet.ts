@@ -11,7 +11,7 @@ export const useWalletStore = defineStore('wallet', () => {
     const userInfoStore = useUserInfoStore()
     const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
     const res = await postPropGoldPriceListApi({
-      club_id: currentClub?.club_id,
+      club_id: currentClub?.club_id ? Number(currentClub.club_id) : undefined,
       source_type: 0,
       gold_types: [],
     })

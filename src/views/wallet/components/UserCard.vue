@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import bannerBgUrl from '@/assets/images/wallet/banner_bg.png'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
-import TagPill from './TagPill.vue'
+import TagPill from '@/components/wallet/TagPill.vue'
 
 type Variant = 'compact' | 'expanded'
 
@@ -71,14 +71,14 @@ const bannerBg = `url(${bannerBgUrl})`
 .usercard {
   position: relative;
   overflow: hidden;
-  border-radius: clamp(22px, 8vw, 29.2px);
-  padding: clamp(7px, 2.5vw, 9.3px) clamp(10px, 3.7vw, 14px);
+  border-radius: 0.8rem;
+  padding: 0.25rem 0.37rem;
 }
 
 .usercard--expanded {
-  height: clamp(128px, 41.3vw, 155px);
-  border-radius: clamp(30px, 10.4vw, 39px);
-  padding: clamp(14px, 5vw, 18px) clamp(14px, 5vw, 18px);
+  height: 4.13rem;
+  border-radius: 1.04rem;
+  padding: 0.5rem 0.5rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -87,7 +87,7 @@ const bannerBg = `url(${bannerBgUrl})`
 
 .usercard--compact {
   background: rgba(0, 0, 0, 0.2);
-  border-radius: clamp(22px, 8vw, 29.2px);
+  border-radius: 0.8rem;
 }
 
 .usercard__head {
@@ -95,16 +95,16 @@ const bannerBg = `url(${bannerBgUrl})`
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: clamp(8px, 2.85vw, 10.7px);
+  gap: 0.285rem;
 }
 
 .usercard--expanded .usercard__head {
-  gap: clamp(16px, 5.7vw, 21.4px);
+  gap: 0.57rem;
 }
 
 .usercard__avatar {
-  width: clamp(52px, 17.1vw, 65px);
-  height: clamp(52px, 17.1vw, 65px);
+  width: 1.71rem;
+  height: 1.71rem;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
@@ -112,8 +112,8 @@ const bannerBg = `url(${bannerBgUrl})`
 }
 
 .usercard--expanded .usercard__avatar {
-  width: clamp(60px, 19vw, 71px);
-  height: clamp(60px, 19vw, 71px);
+  width: 1.9rem;
+  height: 1.9rem;
 }
 
 .usercard__info {
@@ -121,44 +121,44 @@ const bannerBg = `url(${bannerBgUrl})`
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: clamp(3px, 1vw, 3.75px);
+  gap: 0.1rem;
 }
 
 .usercard__name {
   font-family: var(--wallet-font-num);
   font-weight: 700;
-  font-size: clamp(16px, 5.3vw, 20px);
+  font-size: 0.53rem;
   color: #fff;
   line-height: 1.05;
   white-space: pre-line;
 }
 
 .usercard--expanded .usercard__name {
-  font-size: clamp(18px, 5.96vw, 22.4px);
+  font-size: 0.596rem;
 }
 
 .usercard__id {
   display: flex;
   align-items: center;
-  gap: clamp(1.5px, 0.6vw, 2.2px);
+  gap: 0.06rem;
 }
 
 .usercard__id-value {
   font-family: var(--wallet-font-num);
   font-weight: 400;
-  font-size: clamp(7.5px, 2.3vw, 8.5px);
+  font-size: 0.23rem;
   color: #fff;
 }
 
 .usercard--expanded .usercard__id-value {
-  font-size: clamp(8px, 2.5vw, 9.6px);
+  font-size: 0.25rem;
   font-weight: 600;
 }
 
 .usercard__actions {
   display: flex;
   flex-direction: column;
-  gap: clamp(8px, 3.2vw, 12px);
+  gap: 0.32rem;
   align-items: stretch;
   margin-top: 18px;
   align-self: flex-start;
@@ -170,25 +170,25 @@ const bannerBg = `url(${bannerBgUrl})`
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: clamp(3px, 1.1vw, 4.2px);
+  gap: 0.11rem;
   color: #f9f9f9;
-  padding-right: clamp(14px, 4.8vw, 18px);
+  padding-right: 0.48rem;
 }
 
 .usercard__balance-label {
   font-family: var(--wallet-font-num);
   font-weight: 400;
-  font-size: clamp(10px, 3vw, 11.3px);
+  font-size: 0.3rem;
 }
 
 .usercard__balance-value {
   font-family: var(--wallet-font-num);
   font-weight: 600;
-  font-size: clamp(14px, 4.35vw, 16.3px);
+  font-size: 0.435rem;
 }
 
 .usercard__balance-chip {
-  width: clamp(24px, 7.73vw, 29px);
-  height: clamp(24px, 7.73vw, 29px);
+  width: 0.773rem;
+  height: 0.773rem;
 }
 </style>

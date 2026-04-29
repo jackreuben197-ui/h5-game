@@ -5,15 +5,15 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import ava1 from '@/assets/images/wallet/avatars/ava1.png'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
 import AppBar from '@/components/wallet/AppBar.vue'
-import SegmentedToggle from '@/components/wallet/SegmentedToggle.vue'
-import UserCard from '@/components/wallet/UserCard.vue'
-import GlassButton from '@/components/wallet/GlassButton.vue'
-import BellButton from '@/components/wallet/BellButton.vue'
-import PresetAmountGrid, { type Preset } from '@/components/wallet/PresetAmountGrid.vue'
-import PaymentMethodStrip, { type PaymentMethod } from '@/components/wallet/PaymentMethodStrip.vue'
-import PrimaryButton from '@/components/wallet/PrimaryButton.vue'
-import NumericKeypad from '@/components/wallet/NumericKeypad.vue'
-import WithdrawForm from '@/components/wallet/WithdrawForm.vue'
+import SegmentedToggle from '@/views/wallet/components/SegmentedToggle.vue'
+import UserCard from '@/views/wallet/components/UserCard.vue'
+import GlassButton from '@/components/Button/GlassButton.vue'
+import BellButton from '@/components/Button/BellButton.vue'
+import PresetAmountGrid, { type Preset } from '@/views/wallet/components/PresetAmountGrid.vue'
+import PaymentMethodStrip, { type PaymentMethod } from '@/views/wallet/components/PaymentMethodStrip.vue'
+import PrimaryButton from '@/components/Button/PrimaryButton.vue'
+import NumericKeypad from '@/views/wallet/components/NumericKeypad.vue'
+import WithdrawForm from '@/views/wallet/components/WithdrawForm.vue'
 import { t } from '@/i18n'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { postPropGoldPriceListApi } from '@/api/prop'
@@ -153,7 +153,7 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
         />
 
         <PrimaryButton
-          :label="t('Wallet_PayNow', '999')"
+          :text="t('Wallet_PayNow', '999')"
           class="pay-cta"
         />
       </template>
@@ -179,7 +179,7 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  padding-bottom: calc(env(safe-area-inset-bottom) + clamp(20px, 6.4vw, 28px));
+  padding-bottom: calc(env(safe-area-inset-bottom) + 0.64rem);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -188,9 +188,9 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
 .wallet-screen__content {
   display: flex;
   flex-direction: column;
-  gap: clamp(8px, 2.6vw, 10px);
-  padding: 0 clamp(14px, 4.55vw, 17px);
-  margin-top: clamp(6px, 2vw, 10px);
+  gap: 0.26rem;
+  padding: 0 0.455rem;
+  margin-top: 0.2rem;
 }
 
 .tabs-row {
@@ -213,12 +213,12 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
 
 .presets-card {
   position: relative;
-  padding: clamp(20px, 7vw, 25px) clamp(14px, 4.8vw, 18px) clamp(16px, 5.5vw, 20px);
+  padding: 0.7rem 0.48rem 0.55rem;
   background: rgba(0, 0, 0, 0.01);
   backdrop-filter: blur(16.6px);
   -webkit-backdrop-filter: blur(16.6px);
   border: 0.18px solid rgba(255, 255, 255, 0.3);
-  border-radius: clamp(28px, 10vw, 39px);
+  border-radius: 1rem;
   box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   margin-top: -20px;
@@ -253,45 +253,45 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(2px, 0.95vw, 3.6px);
-  margin-top: clamp(6px, 2.1vw, 8px);
-  margin-bottom: clamp(16px, 5.4vw, 24px);
+  gap: 0.095rem;
+  margin-top: 0.21rem;
+  margin-bottom: 0.54rem;
   margin-left: 54px;
 }
 
 .balance-chip {
   display: inline-flex;
   align-items: center;
-  gap: clamp(3px, 1.4vw, 5.6px);
+  gap: 0.14rem;
   background: rgba(0, 0, 0, 0.22);
   border: 0.4px solid rgba(242, 242, 242, 0.4);
-  border-radius: clamp(12px, 4vw, 15px);
-  padding: clamp(5px, 1.8vw, 7.2px) clamp(7px, 2.1vw, 7.2px) clamp(5px, 1.8vw, 7.2px) clamp(10px, 3.3vw, 12.3px);
+  border-radius: 0.4rem;
+  padding: 0.18rem 0.21rem 0.18rem 0.33rem;
   box-shadow: 0.8px 1px 1.6px rgba(0, 0, 0, 0.25);
-  height: clamp(26px, 8.5vw, 32px);
+  height: 0.85rem;
 }
 
 .balance-chip__value {
   font-family: var(--wallet-font-num);
   font-weight: 600;
-  font-size: clamp(13px, 4.3vw, 16px);
+  font-size: 0.43rem;
   color: #f9f9f9;
   line-height: 1.4;
 }
 
 .balance-chip__icon {
-  width: clamp(22px, 7vw, 26px);
-  height: clamp(22px, 7vw, 26px);
+  width: 0.7rem;
+  height: 0.7rem;
 }
 
 .balance-label {
   font-family: var(--wallet-font-num);
   font-weight: 600;
-  font-size: clamp(8px, 2.4vw, 9px);
+  font-size: 0.24rem;
   color: #f8f8f8;
 }
 
 .pay-cta {
-  margin-top: clamp(6px, 2vw, 8px);
+  margin-top: 0.2rem;
 }
 </style>

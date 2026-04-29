@@ -916,3 +916,92 @@ function showTip() {
 - **内边距**：上下 `0.6rem`，左右 `0.4rem`
 - **字体**：`0.43rem`，白色，支持自动换行
 - **遮罩**：默认不开启（`overlay: false`），开启后颜色 `rgba(12,12,12,0.6)`
+
+---
+
+## 15. 日志系统
+
+位置：`src/utils/logger.ts`
+
+统一封装 `console.log/info/warn/error`，支持全局 level 控制和单 logger 独立开关。
+
+### 15.1 Level 说明
+
+| Level | 输出内容 |
+|-------|---------|
+| `debug` | debug / info / warn / error |
+| `info` | info / warn / error |
+| `warn` | warn / error |
+| `error` | error |
+| `silent` | 全部静默 |
+
+开发环境默认 `debug`，生产环境默认 `warn`（可被 `VITE_DROP_CONSOLE=true` 在构建时彻底抹除）。
+
+### 15.2 在模块中使用
+
+```ts
+import { createLogger } from '@/utils/logger'
+
+const log = createLogger('[myModule]')
+
+log.debug('详细数据', { key: value })  // 仅 debug level 输出
+log.info('状态变更')
+log.warn('异常降级:', error)
+log.error('致命错误:', error)
+```
+
+同 tag 多次调用 `createLogger` 返回同一实例（注册表单例）。
+
+### 15.3 已注册的 logger 及职责
+
+| Tag | 文件 | 职责 |
+|-----|------|------|
+| `[ws]` | `bridge/ws/wsProxy.ts` | WS 连接状态、重连、鉴权 |
+| `[wsSend]` | `bridge/ws/wsProxy.ts` | WS 发包（每个 packet 详情） |
+| `[wsRecv]` | `bridge/ws/wsProxy.ts` | WS 收包（每个 packet 详情） |
+| `[bridge][h5->cc]` | `bridge/core/cocosBridgeChannel.ts` | H5 发给 Cocos 的非转发消息 |
+| `[bridge][cc->h5]` | `bridge/core/cocosBridgeChannel.ts` | Cocos 发给 H5 的非转发消息 |
+| `[bridge]` | `bridge/channels/uiChannel.ts` | navigate / visibility 等 bridge UI 事件 |
+| `[roomList]` | `stores/roomList.ts` | 房间列表拉取与 WS 推送 |
+| `[mttList]` | `stores/mttList.ts` | MTT 列表拉取与 WS 推送 |
+| `[i18n]` | `i18n/index.ts` / `utils/multiLanguageTemplate.ts` | 语言包加载 |
+| `[h5]` | `main.ts` | 应用挂载 |
+
+### 15.4 运行时动态控制
+
+项目在 `window.__log` 上暴露了三个方法，可直接在浏览器控制台调用：
+
+```js
+// 查看所有 logger 及当前 level
+__log.list()
+
+// 全局静默 debug/info（常用：关掉 WS/Bridge 刷屏）
+__log.setGlobalLevel('warn')
+
+// 单独控制某个 logger
+__log.setLevel('[wsSend]', 'silent')      // 关掉 WS 发包日志
+__log.setLevel('[wsRecv]', 'silent')      // 关掉 WS 收包日志
+__log.setLevel('[bridge][h5->cc]', 'silent')  // 关掉 H5→Cocos 消息
+__log.setLevel('[bridge][cc->h5]', 'silent')  // 关掉 Cocos→H5 消息
+
+// 恢复某个 logger 跟随全局
+__log.setLevel('[wsSend]', null)
+```
+
+### 15.5 在组件生命周期中临时调试
+
+需要调试某个页面时，在生命周期内临时提升特定 logger 的 level，离开时恢复：
+
+```ts
+import { setLoggerLevel } from '@/utils/logger'
+import { onMounted, onUnmounted } from 'vue'
+
+onMounted(() => {
+  setLoggerLevel('[ws]', 'debug')
+  setLoggerLevel('[wsSend]', 'debug')
+})
+onUnmounted(() => {
+  setLoggerLevel('[ws]', null)    // null = 恢复跟随全局
+  setLoggerLevel('[wsSend]', null)
+})
+```

@@ -10,6 +10,9 @@ import { setupWsProxyBridgeChannel } from './bridge/ws'
 import LoginSession from './session/loginSession'
 import './styles/main.scss'
 import { setupRem } from './utils/rem'
+import { createLogger } from './utils/logger'
+
+const log = createLogger('[h5]')
 import { pinia } from './stores/pinia'
 import { textI18nPlugin } from './i18n'
 
@@ -31,7 +34,7 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
     typeof container === 'string' ? document.querySelector(container) : container
 
   if (!mountTarget) {
-    console.warn('[h5] mount target not found:', container)
+    log.warn('mount target not found:', container)
     return null
   }
 

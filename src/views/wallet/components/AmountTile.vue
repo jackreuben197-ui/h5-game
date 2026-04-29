@@ -49,9 +49,9 @@ withDefaults(defineProps<Props>(), {
   align-items: center;
   justify-content: space-between;
   aspect-ratio: 1 / 1;
-  padding: clamp(12px, 4.8vw, 18px) clamp(5px, 2.75vw, 10.3px) clamp(6px, 2.85vw, 10.7px);
+  padding: 0.48rem 0.275rem 0.285rem;
   background: rgba(0, 0, 0, 0.12);
-  border-radius: clamp(18px, 6.4vw, 24px);
+  border-radius: 0.64rem;
   width: 100%;
   min-width: 0;
   cursor: pointer;
@@ -64,7 +64,7 @@ withDefaults(defineProps<Props>(), {
   border-right: 0.134px solid rgba(242, 242, 242, 0.3);
   border-bottom: 0.134px solid rgba(242, 242, 242, 0.3);
   border-left: 0.134px solid rgba(242, 242, 242, 0.3);
-  border-radius: clamp(22px, 7.8vw, 29.2px);
+  border-radius: 0.78rem;
   box-shadow: 0.9px 1.1px 1.8px rgba(0, 0, 0, 0.25);
 }
 
@@ -76,22 +76,22 @@ withDefaults(defineProps<Props>(), {
 .tile__head {
   display: flex;
   align-items: center;
-  gap: clamp(1px, 0.7vw, 2.6px);
-  margin-top: clamp(4px, 3.6vw, 12px);
+  gap: 0.07rem;
+  margin-top: 0.36rem;
   min-width: 0;
   max-width: 100%;
 }
 
 .tile__icon {
-  width: clamp(9px, 3.6vw, 18px);
-  height: clamp(9px, 3.6vw, 18px);
+  width: 0.36rem;
+  height: 0.36rem;
   flex-shrink: 0;
 }
 
 .tile__amount {
   font-family: var(--wallet-font-num);
   font-weight: 700;
-  font-size: clamp(9px, 3.4vw, 16px);
+  font-size: 0.34rem;
   color: #f9f9f9;
   line-height: 1.4;
   white-space: nowrap;
@@ -105,7 +105,7 @@ withDefaults(defineProps<Props>(), {
 .tile__custom-label {
   font-family: var(--wallet-font-num);
   font-weight: 700;
-  font-size: clamp(9px, 2.9vw, 10.7px);
+  font-size: 0.29rem;
   color: #f9f9f9;
   line-height: 1.4;
 }

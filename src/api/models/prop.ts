@@ -78,59 +78,63 @@ export interface PropChatPropUsedProp {
 
 // /api/prop/gold/price/list (PropGoldPriceList)
 export interface PropGoldPriceListRequest {
-
-    source_type?: number;
-    club_id?: number;
-    gold_types?: number[];
-
-  [key: string]: unknown
-}
-
-export interface PropGoldPriceListResponseData {
-
-    data?: PropGoldPriceListData;
-
+  source_type?: number;
+  club_id?: number;
+  gold_types?: number[];
   [key: string]: unknown
 }
 
 export interface PropGoldPriceListData {
-
-    limit?: number;
-    offset?: number;
-    total?: number;
-    list?: PropGoldPriceListGoldInfo[];
-    pay_types?: PropGoldPriceListPayType[];
-
+  from_tribe?: boolean;
+  limit?: number;
+  offset?: number;
+  total?: number;
+  list?: PropGoldPriceListGoldInfo[];
+  pay_types?: PropGoldPriceListPayType[];
   [key: string]: unknown
 }
 
 export interface PropGoldPriceListGoldInfo {
+  id?: number;
+  gold_count?: number;
+  raw_price?: number;
+  pay_price?: number;
+  op_id?: number;
+  gold_type?: number;
+  pay_gold_type?: number;
+  status?: number;
+  sort?: number;
+  source_type?: number;
+  trader_type?: number;
+  give_gold_count?: number;
+  club_id?: number;
+  tribe_id?: number;
+  create_time?: string;
+  update_time?: string;
+  [key: string]: unknown
+}
 
-    gold_count?: number;
-    pay_price?: number;
-    id?: number;
-    trader_type?: unknown;
-    give_gold_count?: number;
-
+export interface PropGoldPriceListWalletAddress {
+  address?: string;
+  qr_code?: string;
   [key: string]: unknown
 }
 
 export interface PropGoldPriceListPayType {
-
-    id?: number;
-    name?: string;
-    image?: string;
-    rate?: number;
-    discount?: number;
-    type?: number;
-    fee_type?: number;
-    fee_rate?: number;
-    user_recharge_min?: number;
-    user_recharge_max?: number;
-    increase_interval?: number;
-    price_list?: PropGoldPriceListGoldInfo[];
-    wallet_addresses?: unknown[];
-
+  id?: number;
+  name?: string;
+  image?: string;
+  rate?: number;
+  discount?: number;
+  type?: number;
+  fee_type?: number;
+  fee_rate?: number;
+  user_recharge_min?: number;
+  user_recharge_max?: number;
+  increase_interval?: number;
+  price_ids?: number[] | null;
+  price_list?: PropGoldPriceListGoldInfo[];
+  wallet_addresses?: PropGoldPriceListWalletAddress[] | null;
   [key: string]: unknown
 }
 

@@ -115,23 +115,28 @@ const emit = defineEmits<{
 
 .method__label-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: clamp(2px, 0.7vw, 2.5px);
-  line-height: 1.4;
-  white-space: nowrap;
+  gap: clamp(1px, 0.4vw, 2px);
+  line-height: 1.3;
+  text-align: center;
+  width: 100%;
 }
 
 .method__label-primary {
   font-family: var(--wallet-font-num);
   font-weight: 500;
-  font-size: clamp(9px, 3vw, 11.24px);
+  font-size: clamp(8px, 2.7vw, 10px);
+  word-break: break-all;
+  text-align: center;
 }
 
 .method__label-suffix {
   font-family: var(--wallet-font-cn);
   font-weight: 400;
   font-size: clamp(7px, 2.25vw, 8.4px);
+  white-space: nowrap;
 }
 
 .method__label-secondary {

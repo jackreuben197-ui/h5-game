@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import ava1 from '@/assets/images/wallet/avatars/ava1.png'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
-import icUsdt from '@/assets/icons/wallet/ic_usdt.svg'
-import icBtc from '@/assets/icons/wallet/ic_btc.svg'
-import icEth from '@/assets/icons/wallet/ic_eth.svg'
-import icCard from '@/assets/icons/wallet/ic_card.svg'
 import AppBar from '@/components/wallet/AppBar.vue'
 import SegmentedToggle from '@/components/wallet/SegmentedToggle.vue'
 import UserCard from '@/components/wallet/UserCard.vue'
@@ -19,14 +15,64 @@ import PrimaryButton from '@/components/wallet/PrimaryButton.vue'
 import NumericKeypad from '@/components/wallet/NumericKeypad.vue'
 import WithdrawForm from '@/components/wallet/WithdrawForm.vue'
 import { t } from '@/i18n'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { postPropGoldPriceListApi } from '@/api/prop'
+import type { PropGoldPriceListData } from '@/api/models/prop'
 
 const router = useRouter()
+const userInfoStore = useUserInfoStore()
+const currentClub = computed(() => userInfoStore.currentClub || userInfoStore.clubList[0])
 
 const activeTab = ref(0)
 const activePreset = ref(0)
 const activeMethod = ref(0)
 const keypadOpen = ref(false)
 const customAmount = ref('')
+
+const goldPriceData = ref<PropGoldPriceListData | null>(null)
+
+// payment method strip — one entry per pay_type
+const methods = computed<PaymentMethod[]>(() =>
+  (goldPriceData.value?.pay_types ?? []).map(pt => ({
+    icon: pt.image ?? '',
+    primary: pt.name ?? '',
+    secondary: '',
+  }))
+)
+
+// amount grid — use selected pay_type's price_list; fallback to global list
+// if pay_type has neither price_ids nor price_list, return [] so only the custom tile shows
+const presets = computed<Preset[]>(() => {
+  const payTypes = goldPriceData.value?.pay_types ?? []
+  const selected = payTypes[activeMethod.value]
+  const hasPriceIds = (selected?.price_ids?.length ?? 0) > 0
+  const hasPriceList = (selected?.price_list?.length ?? 0) > 0
+  if (selected && !hasPriceIds && !hasPriceList) {
+    return []
+  }
+  const list = hasPriceList
+    ? selected!.price_list!
+    : (goldPriceData.value?.list ?? [])
+  return list.map(item => ({
+    amount: (item.gold_count ?? 0).toLocaleString(),
+    chip: (item.give_gold_count ?? 0) > 0
+      ? `+${(item.give_gold_count!).toLocaleString()}`
+      : '',
+  }))
+})
+
+async function loadPriceList(): Promise<void> {
+  const res = await postPropGoldPriceListApi({
+    club_id: currentClub.value?.club_id,
+    source_type: 0,
+    gold_types: [],
+  })
+  goldPriceData.value = res.data ?? null
+}
+
+onMounted(() => {
+  loadPriceList()
+})
 
 function onCustom(): void {
   keypadOpen.value = true
@@ -36,22 +82,6 @@ function onKeypadSubmit(v: number): void {
   customAmount.value = String(v)
   keypadOpen.value = false
 }
-
-const presets: Preset[] = [
-  { amount: '100000', chip: '300,000' },
-  { amount: '100000', chip: '300,000' },
-  { amount: '100000', chip: '300,000' },
-  { amount: '100000', chip: '300,000' },
-  { amount: '100000', chip: '300,000' },
-]
-
-const methods: PaymentMethod[] = [
-  { icon: icUsdt, primary: 'USDT', secondary: 'TRC20' },
-  { icon: icUsdt, primary: 'USDT', secondary: 'TRC20' },
-  { icon: icBtc, primary: 'BTC', secondary: '' },
-  { icon: icEth, primary: 'ETH', secondary: '' },
-  { icon: icCard, primary: t('Wallet_MethodCard'), secondary: '' },
-]
 
 const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
 </script>

@@ -4,11 +4,11 @@
 // /api/prop/buy (PropBuy)
 export interface PropBuyRequest {
 
-    prop_id?: number;
-    valid_date?: number;
-    pay_price?: number;
-    count?: number;
-    fram_mall?: boolean;
+    prop_id?: number; // 道具ID 1 视频特效 2 头像聊天框 3 表情 4 弹幕框 5 互动道具 6 静态桌布 7 头像 8 动态桌布
+    valid_date?: number; // 有效期天数
+    pay_price?: number; // 支付价格
+    count?: number; // 购买数量
+    fram_mall?: boolean; // 是否从商城购买
 
   [key: string]: unknown
 }
@@ -20,19 +20,16 @@ export interface PropBuyResponseData {
 // /api/prop/chat/prop/list (PropChatPropList)
 export interface PropChatPropListRequest {
 
-    limit?: number;
-    offset?: number;
-    prop_type?: number;
-    prop_types?: number[];
-    user_type?: number;
+    limit?: number; // 数据数量
+    offset?: number; // 当前偏移值
+    prop_type?: number; // 道具类型：1 表情，2 弹幕，3 聊天框
+    prop_types?: number[]; // 道具类型：1 表情，2 弹幕，3 聊天框
+    user_type?: number; // 用户类型排序方式： 0 默认（创建时间倒序） 1 常用 2 最近使用 3 创建时间正序 4 价格正序 5 价格倒序
 
   [key: string]: unknown
 }
 
-export interface PropChatPropListResponseData {
-
-    data?: PropChatPropListData;
-
+export interface PropChatPropListResponseData extends PropChatPropListData {
   [key: string]: unknown
 }
 
@@ -78,19 +75,26 @@ export interface PropChatPropUsedProp {
 
 // /api/prop/gold/price/list (PropGoldPriceList)
 export interface PropGoldPriceListRequest {
-  source_type?: number;
-  club_id?: number;
-  gold_types?: number[];
+
+    source_type?: number; // 来源类型：1-联盟，2-玩家
+    club_id?: number; // 俱乐部ID
+    gold_types?: number[]; // 币种列表
+
+  [key: string]: unknown
+}
+
+export interface PropGoldPriceListResponseData extends PropGoldPriceListData {
   [key: string]: unknown
 }
 
 export interface PropGoldPriceListData {
-  from_tribe?: boolean;
-  limit?: number;
-  offset?: number;
-  total?: number;
-  list?: PropGoldPriceListGoldInfo[];
-  pay_types?: PropGoldPriceListPayType[];
+
+    limit?: number; // 条目数
+    offset?: number; // 起始下标
+    total?: number; // 总条目数
+    list?: PropGoldPriceListGoldInfo[]; // 金币信息列表
+    pay_types?: PropGoldPriceListPayType[]; // 支付方式列表
+
   [key: string]: unknown
 }
 
@@ -117,44 +121,48 @@ export interface PropGoldPriceListGoldInfo {
 export interface PropGoldPriceListWalletAddress {
   address?: string;
   qr_code?: string;
+    gold_count?: number; // 金币数量
+    pay_price?: number; // 支付价格
+    id?: number; // 唯一ID
+    trader_type?: unknown; // 交易方类型：1-普通玩家，2-批发商
+    give_gold_count?: number; // 赠送金额
+
   [key: string]: unknown
 }
 
 export interface PropGoldPriceListPayType {
-  id?: number;
-  name?: string;
-  image?: string;
-  rate?: number;
-  discount?: number;
-  type?: number;
-  fee_type?: number;
-  fee_rate?: number;
-  user_recharge_min?: number;
-  user_recharge_max?: number;
-  increase_interval?: number;
-  price_ids?: number[] | null;
-  price_list?: PropGoldPriceListGoldInfo[];
-  wallet_addresses?: PropGoldPriceListWalletAddress[] | null;
+
+    id?: number; // 唯一ID
+    name?: string; // 名称
+    image?: string; // 图标
+    rate?: number; // 汇率（例如：0.0001 表示 1钻石/UC = 0.0001 货币，精确到4位小数）
+    discount?: number; // 折扣优惠（例如：0.0001 表示总额减少 0.01%，精确到4位小数）
+    type?: number; // 类型：1-数字钱包，2-API 3-客服撮合
+    fee_type?: number; // 手续费类型：0-无手续费，1-俱乐部出，2-玩家出
+    fee_rate?: number; // 手续费率（精确到0.0001）
+    user_recharge_min?: number; // 玩家最小充值额度
+    user_recharge_max?: number; // 玩家最大充值额度
+    increase_interval?: number; // 唯一识别金额，大于0表示开启
+    price_list?: PropGoldPriceListGoldInfo[]; // 金币信息列表
+    wallet_addresses?: unknown[]; // 钱包地址列表； 这里有用信息的是qr_code, 为的是提前预缓存二维码图片
+
   [key: string]: unknown
 }
 
 // /api/prop/list (PropList)
 export interface PropListRequest {
 
-    limit?: number;
-    offset?: number;
-    prop_type?: number;
-    prop_type_category?: number[];
-    has_bag_info?: boolean;
-    game_type?: number[];
+    limit?: number; // 条目数
+    offset?: number; // 开始下标。例子（offset=0，limit=10，0-9。）
+    prop_type?: number; // 道具类型（17-视频特效）
+    prop_type_category?: number[]; // 道具分类列表（0-所有）
+    has_bag_info?: boolean; // 是否包含背包信息
+    game_type?: number[]; // 游戏类型列表
 
   [key: string]: unknown
 }
 
-export interface PropListResponseData {
-
-    data?: PropListData;
-
+export interface PropListResponseData extends PropListData {
   [key: string]: unknown
 }
 
@@ -179,27 +187,27 @@ export interface PropListCategory {
 
 export interface PropListProp {
 
-    id?: number;
-    prop_name?: string;
-    prop_icon?: string;
-    price?: PropListPrice[];
-    prop_type_category?: number;
-    special_effect_code?: string;
-    prop_amount?: number;
-    expired_time?: number;
-    subscription_status?: number;
-    subscription_ids?: number[];
-    prop_property_type?: number;
-    subscription_name?: string;
+    id?: number; // 道具ID
+    prop_name?: string; // 道具名称
+    prop_icon?: string; // 道具图标
+    price?: PropListPrice[]; // 价格列表
+    prop_type_category?: number; // 对应 Category 里的 ID
+    special_effect_code?: string; // 特效编号，例如：2_0
+    prop_amount?: number; // 背包数量
+    expired_time?: number; // 到期时间
+    subscription_status?: number; // 会员专属（1 是，2 不是）
+    subscription_ids?: number[]; // 会员 ID 列表
+    prop_property_type?: number; // 道具属性类型（3 静态桌布；4 动态桌布）
+    subscription_name?: string; // 会员名称
 
   [key: string]: unknown
 }
 
 export interface PropListPrice {
 
-    raw_price?: number;
-    pay_price?: number;
-    valid_date?: number;
+    raw_price?: number; // 原价
+    pay_price?: number; // 支付价格
+    valid_date?: number; // 有效期（单位：天）
 
   [key: string]: unknown
 }
@@ -207,17 +215,14 @@ export interface PropListPrice {
 // /api/prop/mall/goods/buy (PropMallGoodsBuy)
 export interface PropMallGoodsBuyRequest {
 
-    goods_id?: number;
-    days?: number;
-    count?: number;
+    goods_id?: number; // 商品ID，用于指定购买的商品
+    days?: number; // 选择的有效期（天数）
+    count?: number; // 购买数量，默认为 1
 
   [key: string]: unknown
 }
 
-export interface PropMallGoodsBuyResponseData {
-
-    data?: PropMallGoodsBuyData;
-
+export interface PropMallGoodsBuyResponseData extends PropMallGoodsBuyData {
   [key: string]: unknown
 }
 
@@ -228,55 +233,52 @@ export interface PropMallGoodsBuyData {
 // /api/prop/mall/goods/detail (PropMallGoodsDetail)
 export interface PropMallGoodsDetailRequest {
 
-    goods_id?: number;
+    goods_id?: number; // 商品ID
 
   [key: string]: unknown
 }
 
-export interface PropMallGoodsDetailResponseData {
-
-    data?: PropMallGoodsDetailData;
-
+export interface PropMallGoodsDetailResponseData extends PropMallGoodsDetailData {
   [key: string]: unknown
 }
 
 export interface PropMallGoodsDetailData {
 
-    detail?: PropMallGoodsDetailGoods;
-    items?: PropMallGoodsDetailItem[];
+    detail?: PropMallGoodsDetailGoods; // 商品详情
+    items?: PropMallGoodsDetailItem[]; // 道具明细列表
 
   [key: string]: unknown
 }
 
 export interface PropMallGoodsDetailGoods {
 
-    id?: number;
-    banner_picture?: string;
-    price?: PropMallGoodsDetailPrice[];
+    id?: number; // 商品ID
+    banner_picture?: string; // 商品Banner图片地址
+    price?: PropMallGoodsDetailPrice[]; // 商品价格列表
 
   [key: string]: unknown
 }
 
 export interface PropMallGoodsDetailItem {
 
-    prop_type?: number;
-    id?: number;
-    chat_prop_id?: number;
-    subscription_ids?: number[];
-    special_effect_code?: string;
-    num?: number;
-    valid_date?: number;
-    prop_icon?: string;
-    chat_prop_code?: string;
+    prop_type?: number; // 道具类型
+    id?: number; // id
+    chat_prop_id?: number; // 聊天道具Id
+    subscription_ids?: number[]; // 适用的会员ID列表
+    special_effect_code?: string; // 商品编号（特效代码）
+    num?: number; // 数量
+    valid_date?: number; // 有效天数
+    prop_icon?: string; // 道具图标
+    chat_prop_code?: string; // 聊天道具编码
 
   [key: string]: unknown
 }
 
 export interface PropMallGoodsDetailPrice {
 
-    raw_price?: number;
-    pay_price?: number;
-    valid_date?: number;
+    raw_price?: number; // 原价
+    pay_price?: number; // 支付价格
+    valid_date?: number; // 有效期（单位：天）
 
   [key: string]: unknown
 }
@@ -284,47 +286,44 @@ export interface PropMallGoodsDetailPrice {
 // /api/prop/mall/goods/list (PropMallGoodsList)
 export interface PropMallGoodsListRequest {
 
-    goods_type?: number;
-    recommend?: number;
-    limit?: number;
-    offset?: number;
+    goods_type?: number; // 商品分类：1 视频特效 2 头像聊天框 3 表情 4 弹幕框 5 互动道具 6 静态桌布 7 头像 8 动态桌布 9 活动道具
+    recommend?: number; // 是否推荐，1 是；2 否
+    limit?: number; // 条目数
+    offset?: number; // 开始下标
 
   [key: string]: unknown
 }
 
-export interface PropMallGoodsListResponseData {
-
-    data?: PropMallGoodsListData;
-
+export interface PropMallGoodsListResponseData extends PropMallGoodsListData {
   [key: string]: unknown
 }
 
 export interface PropMallGoodsListData {
 
-    limit?: number;
-    offset?: number;
-    total?: number;
-    list?: PropMallGoodsListGoods[];
+    limit?: number; // 条目数
+    offset?: number; // 开始下标
+    total?: number; // 总条数
+    list?: PropMallGoodsListGoods[]; // 商品列表
 
   [key: string]: unknown
 }
 
 export interface PropMallGoodsListGoods {
 
-    id?: number;
-    banner_picture?: string;
-    name?: string;
-    goods_type?: number;
-    price?: PropMallGoodsListPrice[];
-    subscription_status?: number;
+    id?: number; // 商品ID
+    banner_picture?: string; // Banner图片地址
+    name?: string; // 商品名称
+    goods_type?: number; // 商品分类
+    price?: PropMallGoodsListPrice[]; // 商品价格列表
+    subscription_status?: number; // 订阅状态，1是 2非
 
   [key: string]: unknown
 }
 
 export interface PropMallGoodsListPrice {
 
-    raw_price?: number;
-    pay_price?: number;
+    raw_price?: number; // 原价
+    pay_price?: number; // 支付价格
 
   [key: string]: unknown
 }
@@ -332,16 +331,13 @@ export interface PropMallGoodsListPrice {
 // /api/prop/mall/pretty_id/buy (PropMallPrettyIdBuy)
 export interface PropMallPrettyIdBuyRequest {
 
-    goods_id?: number;
-    club_id?: number;
+    goods_id?: number; // 靓号
+    club_id?: number; // 俱乐部ID
 
   [key: string]: unknown
 }
 
-export interface PropMallPrettyIdBuyResponseData {
-
-    data?: PropMallPrettyIdBuyData;
-
+export interface PropMallPrettyIdBuyResponseData extends PropMallPrettyIdBuyData {
   [key: string]: unknown
 }
 
@@ -352,37 +348,34 @@ export interface PropMallPrettyIdBuyData {
 // /api/prop/mall/pretty_id/list (PropMallPrettyIdList)
 export interface PropMallPrettyIdListRequest {
 
-    pretty_type?: number;
-    limit?: number;
-    offset?: number;
-    length_type?: number;
-    search?: string;
+    pretty_type?: number; // 靓号类型： 1 "AAAAB" 2 "ABBBB" 3 "AAABB" 4 "AABBB" 5 "A顺子" 6 "顺子A" 7 "豹子" 8 "顺子"
+    limit?: number; // 条目数
+    offset?: number; // 开始下标
+    length_type?: number; // 靓号长度类型
+    search?: string; // 搜索关键字
 
   [key: string]: unknown
 }
 
-export interface PropMallPrettyIdListResponseData {
-
-    data?: PropMallPrettyIdListData;
-
+export interface PropMallPrettyIdListResponseData extends PropMallPrettyIdListData {
   [key: string]: unknown
 }
 
 export interface PropMallPrettyIdListData {
 
-    list?: PropMallPrettyIdListInfo[];
-    limit?: number;
-    offset?: number;
-    total?: number;
+    list?: PropMallPrettyIdListInfo[]; // 靓号信息列表
+    limit?: number; // 条目数
+    offset?: number; // 开始下标
+    total?: number; // 总条目数
 
   [key: string]: unknown
 }
 
 export interface PropMallPrettyIdListInfo {
 
-    id?: number;
-    pretty_id?: number;
-    pay_price?: number;
+    id?: number; // 唯一ID
+    pretty_id?: number; // 靓号ID
+    pay_price?: number; // 支付金额
 
   [key: string]: unknown
 }
@@ -392,10 +385,7 @@ export interface PropMallPrettyIdTotalRequest {
   [key: string]: unknown
 }
 
-export interface PropMallPrettyIdTotalResponseData {
-
-    data?: PropMallPrettyIdTotalData;
-
+export interface PropMallPrettyIdTotalResponseData extends PropMallPrettyIdTotalData {
   [key: string]: unknown
 }
 
@@ -416,22 +406,19 @@ export interface PropMallPrettyIdTotalItem {
 // /api/prop/share/content (PropShareContEnt)
 export interface PropShareContEntRequest {
 
-    entry_type?: number;
+    entry_type?: number; // 入口类型： 1 - MTT赛事结果 2 - 牌桌界面牌普 3 - 牌普详情界面 4 - 牌桌界面邀请 5 - 任务列表 6 - 一元购任务列表 7 - 一元购我的奖品
 
   [key: string]: unknown
 }
 
-export interface PropShareContEntResponseData {
-
-    data?: PropShareContEntData;
-
+export interface PropShareContEntResponseData extends PropShareContEntData {
   [key: string]: unknown
 }
 
 export interface PropShareContEntData {
 
-    url?: string;
-    type?: string;
+    url?: string; // 分享的图片
+    type?: string; // 分享类型：link 链接；picture 图片
 
   [key: string]: unknown
 }
@@ -439,7 +426,7 @@ export interface PropShareContEntData {
 // /api/prop/share/done (PropShareDone)
 export interface PropShareDoneRequest {
 
-    entry_type?: number;
+    entry_type?: number; // 1 mtt赛事结果 2牌桌界面牌普 3牌普详情界面 4牌桌界面邀请 5任务列表 6一元购任务列表 7一元购我的奖品
 
   [key: string]: unknown
 }
@@ -450,12 +437,12 @@ export interface PropShareDoneResponseData {
 
 // /api/prop/share/usable (ShareUsable)
 export interface ShareUsableRequest {
+    entry_type?: number; // 入口类型： 1 - MTT赛事结果 2 - 牌桌界面牌普 3 - 牌普详情界面 4 - 牌桌界面邀请 5 - 任务列表 6 - 一元购任务列表 7 - 一元购我的奖品
+
   [key: string]: unknown
 }
 
-export interface ShareUsableResponseData {
-    data?: ShareUsableData;
-
+export interface ShareUsableResponseData extends ShareUsableData {
   [key: string]: unknown
 }
 
@@ -469,10 +456,7 @@ export interface PropShopPingAppleVerifyReceIptRequest {
   [key: string]: unknown
 }
 
-export interface PropShopPingAppleVerifyReceIptResponseData {
-
-    data?: PropShopPingAppleVerifyReceIptData;
-
+export interface PropShopPingAppleVerifyReceIptResponseData extends PropShopPingAppleVerifyReceIptData {
   [key: string]: unknown
 }
 
@@ -485,23 +469,24 @@ export interface PropShopPingAppleVerifyReceIptData {
 
 // /api/prop/shopping/goods_buy (MallBuy)
 export interface MallBuyRequest {
+    goods_id?: number; // 商品ID
+
   [key: string]: unknown
 }
 
-export interface MallBuyResponseData {
-    data?: MallBuyData;
-
+export interface MallBuyResponseData extends MallBuyData {
   [key: string]: unknown
 }
 
 // /api/prop/shopping/goods_list (MallShopList)
 export interface MallShopListRequest {
+    channel?: number; // 渠道：1 - iOS渠道
+    shopping_type_id?: number; // 商品类型：1 - 钻石
+
   [key: string]: unknown
 }
 
-export interface MallShopListResponseData {
-    data?: MallShopListData;
-
+export interface MallShopListResponseData extends MallShopListData {
   [key: string]: unknown
 }
 
@@ -515,10 +500,7 @@ export interface PropShopPingGoogleVerifyOrderRequest {
   [key: string]: unknown
 }
 
-export interface PropShopPingGoogleVerifyOrderResponseData {
-
-    data?: PropShopPingGoogleVerifyOrderData;
-
+export interface PropShopPingGoogleVerifyOrderResponseData extends PropShopPingGoogleVerifyOrderData {
   [key: string]: unknown
 }
 
@@ -531,28 +513,25 @@ export interface PropSignInActivityDetailRequest {
   [key: string]: unknown
 }
 
-export interface PropSignInActivityDetailResponseData {
-
-    data?: PropSignInActivityDetailData;
-
+export interface PropSignInActivityDetailResponseData extends PropSignInActivityDetailData {
   [key: string]: unknown
 }
 
 export interface PropSignInActivityDetailData {
 
-    sign_in_activity?: PropSignInActivityDetailSignInActivity;
-    user_sign_in_log?: PropSignInActivityDetailUserSignInLog[];
+    sign_in_activity?: PropSignInActivityDetailSignInActivity; // 活动签到
+    user_sign_in_log?: PropSignInActivityDetailUserSignInLog[]; // 用户签到详情
 
   [key: string]: unknown
 }
 
 export interface PropSignInActivityDetailUserSignInLog {
 
-    activity_id?: number;
-    activity_day?: number;
-    sign_in_day?: number;
-    sign_in_time?: number;
-    user_sign_in_status?: unknown;
+    activity_id?: number; // 活动ID
+    activity_day?: number; // 第几天
+    sign_in_day?: number; // 日期
+    sign_in_time?: number; // 真实签到时间
+    user_sign_in_status?: unknown; // 签到状态
 
   [key: string]: unknown
 }
@@ -567,9 +546,9 @@ export interface PropSignInActivityDetailActivityDetail {
 
 export interface PropSignInActivityDetailProp {
 
-    prop_name?: string;
-    quantity?: number;
-    prop_icon?: string;
+    prop_name?: string; // 道具的名称
+    quantity?: number; // 道具的数量
+    prop_icon?: string; // 道具图标
     multi_lang_names_obj?: unknown;
 
   [key: string]: unknown
@@ -578,16 +557,13 @@ export interface PropSignInActivityDetailProp {
 // /api/prop/sign_in/activity/sign_in (PropSignInActivitySignIn)
 export interface PropSignInActivitySignInRequest {
 
-    activity_id?: number;
-    activity_day?: number;
+    activity_id?: number; // 签到活动id
+    activity_day?: number; // 签到第几天
 
   [key: string]: unknown
 }
 
-export interface PropSignInActivitySignInResponseData {
-
-    data?: PropSignInActivitySignInData;
-
+export interface PropSignInActivitySignInResponseData extends PropSignInActivitySignInData {
   [key: string]: unknown
 }
 
@@ -628,17 +604,14 @@ export interface PropTaskReceIveResponseData {
 // /api/prop/test/sign_in/activity/reset (PropTestSignInActivityReset)
 export interface PropTestSignInActivityResetRequest {
 
-    activity_id?: number;
-    begin_date?: string;
-    signin_day?: number;
+    activity_id?: number; // 签到活动id
+    begin_date?: string; // 签到第一天
+    signin_day?: number; // 签到第几天
 
   [key: string]: unknown
 }
 
-export interface PropTestSignInActivityResetResponseData {
-
-    data?: PropTestSignInActivityResetData;
-
+export interface PropTestSignInActivityResetResponseData extends PropTestSignInActivityResetData {
   [key: string]: unknown
 }
 
@@ -649,16 +622,13 @@ export interface PropTestSignInActivityResetData {
 // /api/prop/tribe_gold/price/list (PropTribeGoldPriceList)
 export interface PropTribeGoldPriceListRequest {
 
-    limit?: number;
-    offset?: number;
+    limit?: number; // 条目数量
+    offset?: number; // 开始下标
 
   [key: string]: unknown
 }
 
-export interface PropTribeGoldPriceListResponseData {
-
-    data?: PropTribeGoldPriceListData;
-
+export interface PropTribeGoldPriceListResponseData extends PropTribeGoldPriceListData {
   [key: string]: unknown
 }
 
@@ -674,10 +644,10 @@ export interface PropTribeGoldPriceListData {
 
 export interface PropTribeGoldPriceListInfo {
 
-    price_id?: number;
-    gold_count?: number;
-    raw_price?: number;
-    pay_price?: number;
+    price_id?: number; // 价格ID
+    gold_count?: number; // 金币数量
+    raw_price?: number; // 原始价格
+    pay_price?: number; // 支付价格
 
   [key: string]: unknown
 }
@@ -699,10 +669,7 @@ export interface PropUserPropGroupListRequest {
   [key: string]: unknown
 }
 
-export interface PropUserPropGroupListResponseData {
-
-    data?: PropUserPropGroupListData;
-
+export interface PropUserPropGroupListResponseData extends PropUserPropGroupListData {
   [key: string]: unknown
 }
 
@@ -712,8 +679,8 @@ export interface PropUserPropGroupListData {
 
 export interface PropUserPropGroupListPropInfo {
 
-    prop_type?: number;
-    bag_num?: number;
+    prop_type?: number; // 道具类型
+    bag_num?: number; // 数量
 
   [key: string]: unknown
 }
@@ -725,14 +692,12 @@ export interface PropUserPropListRequest {
   //     limit: number,//条目
   //     offset: number,//开始下标。例子（offset=0，limit=10，0-9。）
   //
+    prop_types?: number[]; // 道具类型数组（券类用此字段） 24=转盘抽奖钻石兑换券 25=转盘抽奖UC兑换券 26=转盘抽奖手机兑换券 27=转盘抽奖电脑兑换券
+
   [key: string]: unknown
 }
 
-export interface PropUserPropListResponseData {
-
-  //
-    data?: PropUserPropListData;
-
+export interface PropUserPropListResponseData extends PropUserPropListData {
   [key: string]: unknown
 }
 
@@ -741,12 +706,7 @@ export interface RoomCenterMttGetdisCountSRequest {
   [key: string]: unknown
 }
 
-export interface RoomCenterMttGetdisCountSResponseData {
-
-    data: RoomCenterMttGetdisCountSData[];
-
-  [key: string]: unknown
-}
+export type RoomCenterMttGetdisCountSResponseData = RoomCenterMttGetdisCountSData[]
 
 export interface RoomCenterMttGetdisCountSData {
 
@@ -789,6 +749,8 @@ export interface BagpandantupRequest {
 
   //     prop_id: number, //道具id
   //
+    game_type?: number; // 游戏类型 0 - 德州（包括德州、OMAHA4、OMAHA5、OMAHA6） 4 - Fantasy 6 - 麻将 7 - 掼蛋
+
   [key: string]: unknown
 }
 
@@ -800,12 +762,18 @@ export interface BagpandantupResponseData {
 
 // /api/prop/user_prop/used (PropUserPropUsed)
 export interface PropUserPropUsedRequest {
+    prop_id?: number; // 道具唯一标识ID
+    quantity?: number; // 道具操作数量（必须大于0）
+    type?: number; // 道具操作类型： 2 - 转换为UC币 3 - 转换为平台货币 4 - 转换为IM钱包余额
+    prop_bag_id?: number; // 玩家背包中道具的唯一标识ID
+    recipient_name?: string; // 收货人姓名（实物道具兑换时必填）
+    recipient_contact?: string; // 收货人联系方式（实物道具兑换时必填）
+    recipient_address?: string; // 收货地址（实物道具兑换时必填）
+
   [key: string]: unknown
 }
 
-export interface PropUserPropUsedResponseData {
-    data?: PropUserPropUsedData;
-
+export interface PropUserPropUsedResponseData extends PropUserPropUsedData {
   [key: string]: unknown
 }
 
@@ -818,12 +786,7 @@ export interface PropUserBuyPropRequest {
   [key: string]: unknown
 }
 
-export interface PropUserBuyPropResponseData {
-
-    data: PropUserBuyPropData[];
-
-  [key: string]: unknown
-}
+export type PropUserBuyPropResponseData = PropUserBuyPropData[]
 
 export interface PropUserBuyPropData {
   [key: string]: unknown
@@ -837,12 +800,7 @@ export interface PropUserCheckPropInfoRequest {
   [key: string]: unknown
 }
 
-export interface PropUserCheckPropInfoResponseData {
-
-    data: PropUserCheckPropInfoData[];
-
-  [key: string]: unknown
-}
+export type PropUserCheckPropInfoResponseData = PropUserCheckPropInfoData[]
 
 export interface PropUserCheckPropInfoData {
 
@@ -857,33 +815,30 @@ export interface PropUserCheckPropInfoData {
 // /api/prop/user/offline_tickets (PropUserOfflInetIckets)
 export interface PropUserOfflInetIcketsRequest {
 
-    prop_id?: number;
+    prop_id?: number; // 道具id
 
   [key: string]: unknown
 }
 
-export interface PropUserOfflInetIcketsResponseData {
-
-    data?: PropUserOfflInetIcketsData;
-
+export interface PropUserOfflInetIcketsResponseData extends PropUserOfflInetIcketsData {
   [key: string]: unknown
 }
 
 export interface PropUserOfflInetIcketsData {
 
-    prop_name?: string;
-    offline_tickets?: PropUserOfflInetIcketsOffline_tickets_Datails;
+    prop_name?: string; // 门票名字
+    offline_tickets?: PropUserOfflInetIcketsOffline_tickets_Datails; // 线下门票详细信息
 
   [key: string]: unknown
 }
 
 export interface PropUserOfflInetIcketsOffline_tickets_Datails {
 
-    google_addr?: string;
-    waze_addr?: string;
-    site?: string;
-    area?: string;
-    phone?: string;
+    google_addr?: string; // 谷歌地图地址 URL
+    waze_addr?: string; // Waze 地址 URL
+    site?: string; // 站点名称
+    area?: string; // 区域
+    phone?: string; // 联系电话
     entry_certificate?: PropUserOfflInetIcketsEntry_certificate;
     announcements?: string;
     sectional_seat_list?: PropUserOfflInetIcketsSectional_seat[];
@@ -915,18 +870,15 @@ export interface PropUserOfflInetIcketsSectional_seat {
 // /api/prop/user/offline_tickets/gain (PropUserOfflInetIcketsGain)
 export interface PropUserOfflInetIcketsGainRequest {
 
-    prop_id?: number;
-    sectional_seat_id?: number;
-    certificate_type?: number;
-    certificate?: string;
+    prop_id?: number; // 道具 ID
+    sectional_seat_id?: number; // 所选组别 ID
+    certificate_type?: number; // 所选凭证类型
+    certificate?: string; // 联系方式
 
   [key: string]: unknown
 }
 
-export interface PropUserOfflInetIcketsGainResponseData {
-
-    data?: PropUserOfflInetIcketsGainData;
-
+export interface PropUserOfflInetIcketsGainResponseData extends PropUserOfflInetIcketsGainData {
   [key: string]: unknown
 }
 
@@ -943,10 +895,7 @@ export interface PropUserOfflInetIcketsTransFerRequest {
   [key: string]: unknown
 }
 
-export interface PropUserOfflInetIcketsTransFerResponseData {
-
-    data?: PropUserOfflInetIcketsTransFerData;
-
+export interface PropUserOfflInetIcketsTransFerResponseData extends PropUserOfflInetIcketsTransFerData {
   [key: string]: unknown
 }
 
@@ -957,29 +906,26 @@ export interface PropUserOfflInetIcketsTransFerData {
 // /api/prop/user/prop_info (PropUserPropInfo)
 export interface PropUserPropInfoRequest {
 
-    prop_id?: number;
+    prop_id?: number; // 道具ID
 
   [key: string]: unknown
 }
 
-export interface PropUserPropInfoResponseData {
-
-    data?: PropUserPropInfoData;
-
+export interface PropUserPropInfoResponseData extends PropUserPropInfoData {
   [key: string]: unknown
 }
 
 export interface PropUserPropInfoData {
 
-    info?: PropUserPropInfoInfo;
-    prop_amount?: number;
+    info?: PropUserPropInfoInfo; // 道具详细信息
+    prop_amount?: number; // 道具数量
 
   [key: string]: unknown
 }
 
 export interface PropUserPropInfoInfo {
 
-    prop_name?: string;
+    prop_name?: string; // 道具名字（多语言）
 
   [key: string]: unknown
 }
@@ -987,15 +933,12 @@ export interface PropUserPropInfoInfo {
 // /api/prop/wheel/lottery (PropWheelLottEry)
 export interface PropWheelLottEryRequest {
 
-    wheel_template_id?: number;
+    wheel_template_id?: number; // 轮盘模版id
 
   [key: string]: unknown
 }
 
-export interface PropWheelLottEryResponseData {
-
-    data?: PropWheelLottEryData;
-
+export interface PropWheelLottEryResponseData extends PropWheelLottEryData {
   [key: string]: unknown
 }
 
@@ -1008,7 +951,7 @@ export interface PropWheelLottEryData {
 
 export interface PropWheelLottEryPropInfo {
 
-    prop_type?: number;
+    prop_type?: number; // 道具类型
 
   [key: string]: unknown
 }
@@ -1016,18 +959,15 @@ export interface PropWheelLottEryPropInfo {
 // /api/prop/wheel/lottery/list (PropWheelLottEryList)
 export interface PropWheelLottEryListRequest {
 
-    wheel_template_id?: number;
-    scope_type?: number;
-    limit?: number;
-    offset?: number;
+    wheel_template_id?: number; // 轮盘模版ID
+    scope_type?: number; // 查询范围类型 0 = 全部 1 = 只查询当前玩家记录
+    limit?: number; // 每页条数
+    offset?: number; // 开始下标
 
   [key: string]: unknown
 }
 
-export interface PropWheelLottEryListResponseData {
-
-    data?: PropWheelLottEryListData;
-
+export interface PropWheelLottEryListResponseData extends PropWheelLottEryListData {
   [key: string]: unknown
 }
 
@@ -1044,13 +984,13 @@ export interface PropWheelLottEryListData {
 
 export interface PropWheelLottEryListRecord {
 
-    user_name?: string;
-    u_random_id?: number;
-    id?: number;
-    wheel_template_id?: number;
-    avatar?: string;
-    prop_type?: number;
-    create_time?: string;
+    user_name?: string; // 用户名称
+    u_random_id?: number; // 玩家随机Id
+    id?: number; // id
+    wheel_template_id?: number; // 转盘Id
+    avatar?: string; // 玩家头像
+    prop_type?: number; // 道具类型
+    create_time?: string; // 创建时间
 
   [key: string]: unknown
 }
@@ -1058,16 +998,13 @@ export interface PropWheelLottEryListRecord {
 // /api/prop/wheel/user/handnum (PropWheelUserHandNum)
 export interface PropWheelUserHandNumRequest {
 
-    wheel_template_id?: number;
-    club_id?: number;
+    wheel_template_id?: number; // 轮盘模板ID
+    club_id?: number; // 钱包俱乐部ID
 
   [key: string]: unknown
 }
 
-export interface PropWheelUserHandNumResponseData {
-
-    data?: PropWheelUserHandNumData;
-
+export interface PropWheelUserHandNumResponseData extends PropWheelUserHandNumData {
   [key: string]: unknown
 }
 
@@ -1082,94 +1019,94 @@ export interface PropWheelUserHandNumData {
 
 export interface PropWheelUserHandNumTemplateInfo {
 
-    id?: number;
-    club_id?: number;
-    tribe_id?: number;
-    status?: number;
-    reset_type?: number;
-    all_room_template?: number;
-    all_manual_room?: number;
-    name?: string;
-    lottery_hande_num?: number;
-    start_time?: number;
-    end_time?: number;
-    wheel_props?: PropWheelUserHandNumRewardData[];
+    id?: number; // 模板ID
+    club_id?: number; // 俱乐部ID
+    tribe_id?: number; // 联盟Id
+    status?: number; // 轮盘状态 1.上架 2.下架
+    reset_type?: number; // 重置时间类型 1.不重置 2.每月1日重置 3.每周周一重置 4.每天0点重置
+    all_room_template?: number; // 支持所有牌桌模版 1.开 2.关
+    all_manual_room?: number; // 支持所有手动开桌房间
+    name?: string; // 模板名称
+    lottery_hande_num?: number; // 抽奖所需手数
+    start_time?: number; // 活动开始时间（Unix时间戳，毫秒级）
+    end_time?: number; // 活动结束时间（Unix时间戳，毫秒级）
+    wheel_props?: PropWheelUserHandNumRewardData[]; // 抽奖道具
 
   [key: string]: unknown
 }
 
 export interface PropWheelUserHandNumRewardData {
 
-    prop_type?: number;
-    prop_icon?: string;
-    prop_value?: number;
+    prop_type?: number; // 道具类型
+    prop_icon?: string; // 道具图标URL
+    prop_value?: number; // 道具数量
 
   [key: string]: unknown
 }
 
 export interface ShareUsableData {
-    usable?: boolean;
+    usable?: boolean; // false关闭 true打开
 
   [key: string]: unknown
 }
 
 export interface MallBuyData {
-    order_id?: string;
+    order_id?: string; // 订单ID
 
   [key: string]: unknown
 }
 
 export interface MallShopListData {
-    list?: MallShopListItems[];
-    limit?: number;
-    offset?: number;
-    total?: number;
+    list?: MallShopListItems[]; // 商品列表
+    limit?: number; // 条目数
+    offset?: number; // 开始下标
+    total?: number; // 总条数
 
   [key: string]: unknown
 }
 
 export interface MallShopListItems {
-    id?: number;
-    picture?: string;
-    num?: number;
-    price?: number;
-    discount?: number;
-    product_id?: string;
+    id?: number; // 商品ID
+    picture?: string; // 商品图片
+    num?: number; // 商品数量
+    price?: number; // 价格
+    discount?: number; // 折扣，1-100；0表示不显示
+    product_id?: string; // 商品编号，苹果使用
 
   [key: string]: unknown
 }
 
 export interface PropUserPropListData {
-    limit?: number;
-    offset?: number;
-    total?: number;
-    list?: PropUserPropListRecord[];
+    limit?: number; // 数据数量
+    offset?: number; // 当前偏移值
+    total?: number; // 总条数
+    list?: PropUserPropListRecord[]; // 道具记录列表
 
   [key: string]: unknown
 }
 
 export interface PropUserPropListRecord {
-    id?: number;
-    prop_id?: number;
-    prop_amount?: number;
-    prop_type?: number;
-    use_status?: number;
-    club_id?: number;
-    tribe_id?: number;
-    club_name?: string;
-    tribe_name?: string;
-    game_prop?: PropUserPropListGameProp;
-    expired_time?: string;
+    id?: number; // 记录id
+    prop_id?: number; // 道具ID
+    prop_amount?: number; // 道具数量
+    prop_type?: number; // 道具类型
+    use_status?: number; // 使用状态（1=待使用，2=已使用，3=已退还，4=兑换中）
+    club_id?: number; // 俱乐部ID
+    tribe_id?: number; // 联盟ID
+    club_name?: string; // 俱乐部名称
+    tribe_name?: string; // 联盟名称
+    game_prop?: PropUserPropListGameProp; // 道具详情
+    expired_time?: string; // 道具失效时间
 
   [key: string]: unknown
 }
 
 export interface PropUserPropListGameProp {
-    id?: number;
-    prop_name?: string;
-    prop_type?: number;
-    prop_icon?: string;
-    prop_value?: number;
+    id?: number; // 道具ID
+    prop_name?: string; // 道具名称
+    prop_type?: number; // 道具类型 1=mtt门票，2=实物，3=电话卡，4=购物卡，5=代金卷，6=线下门票
+    prop_icon?: string; // 道具图标
+    prop_value?: number; // 道具实际价值
 
   [key: string]: unknown
 }

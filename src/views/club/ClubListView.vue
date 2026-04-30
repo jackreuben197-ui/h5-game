@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
+import { postOrgClubGetApi, postOrgClubJoinApi, postOrgClubSearchByIdApi } from '@/api/org'
 import imgSearch from '@/assets/icons/club_search.svg'
 import imgPokerSpade from '@/assets/icons/club_poker_spade.svg'
 import imgPokerHeart from '@/assets/icons/club_poker_heart.svg'
@@ -23,6 +26,8 @@ import imgClubCoverB from '@/assets/images/home_comming_soon_1.png'
 import imgClubCoverC from '@/assets/images/home_comming_soon_2.png'
 import imgBannerBgB from '@/assets/images/game_type_card_bg.png'
 import imgBannerBgC from '@/assets/images/game_list_card_table_bg.png'
+import type { ClubInfo } from '@/stores/userInfo'
+import { useUserInfoStore } from '@/stores/userInfo'
 
 type QuickActionKind = 'create-club' | 'club-panel' | 'create-union'
 
@@ -33,11 +38,12 @@ interface QuickActionItem {
   hidden?: boolean
 }
 
-interface ClubItem {
-  id: number
+interface ClubCardItem {
+  key: string
+  source: ClubInfo
   name: string
-  clubId: string
-  role: string
+  clubIdText: string
+  roleText: string
   activeCount: number
   chipsCount: number
   tableCount: number
@@ -47,6 +53,17 @@ interface ClubItem {
 }
 
 const router = useRouter()
+const userInfoStore = useUserInfoStore()
+
+const searchKeyword = ref('')
+const loadingMyClubs = ref(false)
+const searchLoading = ref(false)
+const showJoinModal = ref(false)
+const joinLoading = ref(false)
+const searchedClub = ref<ClubInfo | null>(null)
+
+const fallbackCovers = [imgClubCoverFigma, imgClubCoverB, imgClubCoverC]
+const fallbackBanners = [imgClubBannerFigma, imgBannerBgB, imgBannerBgC]
 
 const quickActions: QuickActionItem[] = [
   { id: 1, title: '创建俱乐部', kind: 'create-club' },
@@ -54,50 +71,73 @@ const quickActions: QuickActionItem[] = [
   { id: 3, title: '创建联盟', kind: 'create-union', hidden: true },
 ]
 
-const clubList: ClubItem[] = [
-  {
-    id: 1,
-    name: 'Club Poker, ALC',
-    clubId: '8677650585',
-    role: '管理员',
-    activeCount: 1923,
-    chipsCount: 19231,
-    tableCount: 360,
-    memberCount: 145,
-    cover: imgClubCoverFigma,
-    bannerBg: imgClubBannerFigma,
-  },
-  {
-    id: 2,
-    name: 'Holdem Prime',
-    clubId: '4201982251',
-    role: '发牌员',
-    activeCount: 876,
-    chipsCount: 9231,
-    tableCount: 198,
-    memberCount: 89,
-    cover: imgClubCoverB,
-    bannerBg: imgBannerBgB,
-  },
-  {
-    id: 3,
-    name: 'Royal Shark Union',
-    clubId: '5900221187',
-    role: '管理员',
-    activeCount: 2368,
-    chipsCount: 45210,
-    tableCount: 420,
-    memberCount: 176,
-    cover: imgClubCoverC,
-    bannerBg: imgBannerBgC,
-  },
-]
+const clubList = computed<ClubCardItem[]>(() => {
+  return userInfoStore.clubList.map((club, index) => {
+    const fallbackCover = fallbackCovers[index % fallbackCovers.length]
+    const fallbackBanner = fallbackBanners[index % fallbackBanners.length]
+    const displayId = normalizeClubId(club.random_id ?? club.club_id)
+    const clubId = normalizeClubId(club.club_id)
+    const key = `${clubId || displayId || index}`
+
+    return {
+      key,
+      source: club,
+      name: toSafeString(club.club_name) || '未命名俱乐部',
+      clubIdText: displayId || '--',
+      roleText: getMemberRoleText(club.user_level),
+      activeCount: toSafeNumber(club.user_gold),
+      chipsCount: toSafeNumber(club.user_credit),
+      tableCount: toSafeNumber(club.tables),
+      memberCount: toSafeNumber(club.club_members),
+      cover: toSafeString(club.logo) || fallbackCover,
+      bannerBg: toSafeString(club.banner) || fallbackBanner,
+    }
+  })
+})
+
+const searchedClubDisplayId = computed(() =>
+  normalizeClubId(searchedClub.value?.random_id ?? searchedClub.value?.club_id) || '--',
+)
+
+const searchedClubName = computed(() => toSafeString(searchedClub.value?.club_name) || '俱乐部名称')
+
+const searchedClubMembers = computed(() => toSafeNumber(searchedClub.value?.club_members))
+
+const searchedClubLogo = computed(() => {
+  const logo = toSafeString(searchedClub.value?.logo)
+  return logo || imgClubCoverFigma
+})
 
 function formatCount(value: number): string {
   return value.toLocaleString('en-US')
 }
 
-function goToClubDetail(): void {
+function normalizeClubId(value: unknown): string {
+  return value === undefined || value === null ? '' : String(value).trim()
+}
+
+function toSafeString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function toSafeNumber(value: unknown): number {
+  const num = Number(value)
+  return Number.isFinite(num) ? num : 0
+}
+
+function getMemberRoleText(value: unknown): string {
+  const role = Number(value)
+  if (role === 1) return '会长'
+  if (role === 2) return '副会长'
+  if (role === 3) return '管理员'
+  if (role === 4) return '代理'
+  return '成员'
+}
+
+function goToClubDetail(club?: ClubInfo): void {
+  if (club) {
+    userInfoStore.setCurrentClub(club)
+  }
   void router.push('/club/index')
 }
 
@@ -113,18 +153,161 @@ function onQuickAction(itemId: number): void {
 
   void router.push('/club/create')
 }
+
+function onSearchInput(value: string): void {
+  searchKeyword.value = value.replace(/\D+/g, '')
+}
+
+function onSearchInputEvent(event: Event): void {
+  const target = event.target as HTMLInputElement | null
+  onSearchInput(target?.value || '')
+}
+
+function findClubInMine(target: ClubInfo): ClubInfo | null {
+  const targetClubId = normalizeClubId(target.club_id)
+  const targetRandomId = normalizeClubId(target.random_id)
+
+  return (
+    userInfoStore.clubList.find((club) => {
+      const clubId = normalizeClubId(club.club_id)
+      const randomId = normalizeClubId(club.random_id)
+      if (targetClubId && clubId === targetClubId) {
+        return true
+      }
+      if (targetRandomId && randomId === targetRandomId) {
+        return true
+      }
+      return false
+    }) || null
+  )
+}
+
+async function loadMyClubList(force = false): Promise<void> {
+  if (!force && userInfoStore.clubList.length) {
+    return
+  }
+
+  loadingMyClubs.value = true
+  try {
+    const response = await postOrgClubGetApi()
+    if (Number(response.code) !== 0) {
+      throw new Error(response.message || '获取俱乐部失败')
+    }
+
+    const list = Array.isArray(response.data) ? response.data : []
+    userInfoStore.setClubList(list)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '获取俱乐部失败'
+    showFailToast(message)
+  } finally {
+    loadingMyClubs.value = false
+  }
+}
+
+async function onSearchClub(): Promise<void> {
+  const keyword = searchKeyword.value.trim()
+  if (!keyword) {
+    showFailToast('请输入俱乐部ID')
+    return
+  }
+
+  if (searchLoading.value) {
+    return
+  }
+
+  searchLoading.value = true
+  try {
+    const response = await postOrgClubSearchByIdApi({ club_random_id: Number(keyword) })
+    if (Number(response.code) !== 0) {
+      throw new Error(response.message || '查询俱乐部失败')
+    }
+
+    const targetClub = response.data
+    if (!targetClub) {
+      showFailToast('未找到俱乐部')
+      return
+    }
+
+    const mine = findClubInMine(targetClub)
+    if (mine) {
+      goToClubDetail(mine)
+      return
+    }
+
+    searchedClub.value = targetClub
+    showJoinModal.value = true
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '查询俱乐部失败'
+    showFailToast(message)
+  } finally {
+    searchLoading.value = false
+  }
+}
+
+function closeJoinModal(): void {
+  showJoinModal.value = false
+}
+
+async function onJoinClub(): Promise<void> {
+  if (!searchedClub.value || joinLoading.value) {
+    return
+  }
+
+  const clubId = Number(searchedClub.value.club_id)
+  if (!Number.isFinite(clubId) || clubId <= 0) {
+    showFailToast('俱乐部信息异常，无法加入')
+    return
+  }
+
+  joinLoading.value = true
+  try {
+    const response = await postOrgClubJoinApi({ club_id: clubId })
+    if (Number(response.code) !== 0) {
+      throw new Error(response.message || '加入俱乐部失败')
+    }
+
+    showSuccessToast(response.message || '加入申请已提交')
+    showJoinModal.value = false
+    await loadMyClubList(true)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '加入俱乐部失败'
+    showFailToast(message)
+  } finally {
+    joinLoading.value = false
+  }
+}
+
+onMounted(() => {
+  void loadMyClubList()
+})
 </script>
 
 <template>
   <div class="page-shell club-index">
     <section class="search-row">
       <div class="search-shell" aria-label="俱乐部搜索">
-        <button type="button" class="search-trigger">
+        <label class="search-trigger" for="club-search-input">
           <img class="search-icon" :src="imgSearch" alt="" />
-          <span class="search-placeholder">搜索俱乐部</span>
-        </button>
-        <button type="button" class="search-btn">
-          <span class="search-btn-label">搜索</span>
+          <input
+            id="club-search-input"
+            class="search-input"
+            :value="searchKeyword"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            maxlength="6"
+            placeholder="搜索俱乐部ID"
+            @input="onSearchInputEvent"
+            @keyup.enter="onSearchClub"
+          />
+        </label>
+        <button
+          type="button"
+          class="search-btn"
+          :disabled="searchLoading"
+          @click="onSearchClub"
+        >
+          <span class="search-btn-label">{{ searchLoading ? '搜索中' : '搜索' }}</span>
         </button>
       </div>
     </section>
@@ -189,13 +372,20 @@ function onQuickAction(itemId: number): void {
     </section>
 
     <section class="club-list">
+      <p v-if="loadingMyClubs" class="club-empty-text">正在加载俱乐部...</p>
+      <p v-else-if="!clubList.length" class="club-empty-text">暂无俱乐部，先去创建一个吧</p>
       <article
         v-for="club in clubList"
-        :key="club.id"
+        :key="club.key"
         class="club-banner"
-        @click="goToClubDetail"
+        @click="goToClubDetail(club.source)"
       >
-        <!-- <img class="club-banner-bg" :src="club.bannerBg" alt="" aria-hidden="true" /> -->
+        <img
+          class="club-banner-bg"
+          :src="club.bannerBg"
+          alt=""
+          aria-hidden="true"
+        />
         <!-- <div class="club-banner-overlay" aria-hidden="true" /> -->
 
         <div class="club-main">
@@ -206,7 +396,7 @@ function onQuickAction(itemId: number): void {
               <h2 class="club-name">{{ club.name }}</h2>
               <p class="club-id">
                 <span class="club-id-tag">ID</span>
-                <span class="club-id-value">{{ club.clubId }}</span>
+                <span class="club-id-value">{{ club.clubIdText }}</span>
               </p>
               <div class="club-top-metrics" aria-hidden="true">
                 <span class="top-metric-item">
@@ -221,7 +411,7 @@ function onQuickAction(itemId: number): void {
             </div>
           </div>
 
-          <button type="button" class="enter-btn" @click.stop="goToClubDetail">
+          <button type="button" class="enter-btn" @click.stop="goToClubDetail(club.source)">
             <span class="enter-btn-label">进入</span>
           </button>
         </div>
@@ -229,7 +419,7 @@ function onQuickAction(itemId: number): void {
           <div class="club-stats-inline">
             <span class="stat-item stat-item--role">
               <img :src="imgClubRoleIcon" alt="" />
-              <span>{{ club.role }}</span>
+              <span>{{ club.roleText }}</span>
             </span>
             <span class="stat-item">
               <img :src="imgTable" alt="" />
@@ -243,6 +433,41 @@ function onQuickAction(itemId: number): void {
         </div>
       </article>
     </section>
+
+    <div v-if="showJoinModal" class="join-modal-mask" @click="closeJoinModal">
+      <section class="join-modal" @click.stop>
+        <div class="join-modal-card">
+          <img class="join-modal-logo" :src="searchedClubLogo" alt="俱乐部头像" />
+          <h3 class="join-modal-name">{{ searchedClubName }}</h3>
+          <p class="join-modal-id-row">
+            <span class="join-modal-id-tag">ID</span>
+            <span>{{ searchedClubDisplayId }}</span>
+          </p>
+          <p class="join-modal-member-row">
+            <img :src="imgPeople" alt="" aria-hidden="true" />
+            <span>{{ searchedClubMembers }}人</span>
+          </p>
+        </div>
+
+        <div class="join-modal-actions">
+          <button
+            type="button"
+            class="join-modal-btn join-modal-btn--cancel"
+            @click="closeJoinModal"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            class="join-modal-btn join-modal-btn--confirm"
+            :disabled="joinLoading"
+            @click="onJoinClub"
+          >
+            {{ joinLoading ? '提交中' : '加入' }}
+          </button>
+        </div>
+      </section>
+    </div>
   </div>
 </template>
 
@@ -380,6 +605,22 @@ function onQuickAction(itemId: number): void {
   opacity: 0.96;
 }
 
+.search-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #fff;
+  font-family: 'HONOR Sans CN', 'PingFang SC', sans-serif;
+  font-size: 0.3rem;
+  line-height: 1.4;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .search-btn {
   position: relative;
   z-index: 1;
@@ -409,6 +650,10 @@ function onQuickAction(itemId: number): void {
     mix-blend-mode: hard-light;
     pointer-events: none;
   }
+}
+
+.search-btn:disabled {
+  opacity: 0.7;
 }
 
 .search-btn-label {
@@ -572,6 +817,14 @@ function onQuickAction(itemId: number): void {
   flex-direction: column;
   gap: 0.3rem;
   padding-bottom: 0.44rem;
+}
+
+.club-empty-text {
+  margin: 0;
+  padding: 0.24rem 0;
+  text-align: center;
+  font-size: 0.28rem;
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .club-banner {
@@ -839,6 +1092,135 @@ function onQuickAction(itemId: number): void {
   border-radius: inherit;
   border: 0.01rem solid rgba(255, 255, 255, 0.18);
   pointer-events: none;
+}
+
+.join-modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(12, 12, 12, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.72rem;
+}
+
+.join-modal {
+  width: 8.454rem;
+  max-width: 100%;
+  padding: 0.42rem;
+  border-radius: 0.97rem;
+  border: 0.025rem solid rgba(255, 255, 255, 0.38);
+  background:
+    linear-gradient(126deg, rgba(142, 142, 142, 0.6) 0%, rgba(72, 72, 72, 0.92) 100%),
+    rgba(30, 30, 30, 0.65);
+  box-shadow:
+    0.09rem 0.11rem 0.18rem rgba(0, 0, 0, 0.25),
+    inset 0.05rem 0.1rem 0.4rem rgba(242, 242, 242, 0.25),
+    inset 0 0 0.23rem rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(0.4rem);
+}
+
+.join-modal-card {
+  min-height: 5.02rem;
+  border-radius: 0.834rem;
+  border: 0.026rem solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.5rem 0.42rem;
+}
+
+.join-modal-logo {
+  width: 1.893rem;
+  height: 1.813rem;
+  object-fit: cover;
+  border-radius: 0.26rem;
+}
+
+.join-modal-name {
+  margin: 0;
+  font-family: 'SF Pro', 'PingFang SC', sans-serif;
+  font-size: 0.597rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #fff;
+  text-align: center;
+}
+
+.join-modal-id-row {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-family: 'SF Pro', 'PingFang SC', sans-serif;
+  font-size: 0.256rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.join-modal-id-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.445rem;
+  height: 0.316rem;
+  border-radius: 0.075rem;
+  background: rgba(255, 255, 255, 0.25);
+  font-size: 0.216rem;
+}
+
+.join-modal-member-row {
+  margin: 0;
+  height: 0.88rem;
+  padding: 0 0.3rem;
+  border-radius: 0.667rem;
+  background: rgba(0, 0, 0, 0.31);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.12rem;
+  font-size: 0.427rem;
+  color: #f9f9f9;
+}
+
+.join-modal-member-row img {
+  width: 0.453rem;
+  height: 0.453rem;
+}
+
+.join-modal-actions {
+  margin-top: 0.48rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+}
+
+.join-modal-btn {
+  flex: 1;
+  min-height: 1.436rem;
+  border-radius: 1.055rem;
+  border: 0;
+  color: #fff;
+  font-family: 'Afacad', 'PingFang SC', sans-serif;
+  font-size: 0.4rem;
+  font-weight: 500;
+}
+
+.join-modal-btn--cancel {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.join-modal-btn--confirm {
+  background: linear-gradient(180deg, #05e7ae 0%, #027a5b 100%);
+  border: 0.013rem solid rgba(255, 255, 255, 0.5);
+}
+
+.join-modal-btn:disabled {
+  opacity: 0.72;
 }
 
 @media (max-width: 340px) {

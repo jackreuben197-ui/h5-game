@@ -9,7 +9,9 @@ import StorageKey from '@/constants/storageKey'
 import LoginSession from '@/session/loginSession'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import { useGameStore } from '@/stores/game'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
+import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { t } from '@/i18n'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
@@ -55,6 +57,7 @@ const ROOM_LIST_CACHE_VERSION = 1
 const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
 
 const gameStore = useGameStore()
+const userInfoStore = useUserInfoStore()
 const router = useRouter()
 
 // 顶部右侧切换风格开关：和旧版保持一致。
@@ -62,26 +65,68 @@ const activeTab = ref<GameTypeTabName>('all')
 const clubHeaderTab = ref<ClubHeaderTabName>('poker')
 const sourceRecords = ref<RoomRecord[]>([])
 const expandedMap = reactive<Record<string, boolean>>({})
+const announceExpanded = ref(false)
 const pageStyle = computed<CSSProperties>(() => ({
   '--tab-bg': `url(${tabBg})`,
 }))
 
+const currentClub = computed(() => {
+  return userInfoStore.currentClub || null
+})
+
+const selectedClubId = computed(() => toSafeInt(currentClub.value?.club_id))
+const selectedTribeId = computed(() => toSafeInt(currentClub.value?.tribe_id))
+
+const canCreateTable = computed(() => {
+  const userLevel = toSafeInt(currentClub.value?.user_level)
+  // 1=会长，2=副会长，3=管理员 均允许创建牌桌。
+  return userLevel >= 1 && userLevel <= 3
+})
+
 const filteredRecords = computed(() => {
-  const baseList = sourceRecords.value.filter((room) => Number(room.game_type) < 6)
+  const baseList = sourceRecords.value.filter((room) => {
+    if (Number(room.game_type) >= 6) {
+      return false
+    }
+    return checkIsShowForClubAndTribe(room, selectedClubId.value, selectedTribeId.value)
+  })
+
   return baseList.filter((room) => matchTabRoom(room, activeTab.value))
 })
 
 const clubDisplayName = computed(() => {
-  const nickname = String(gameStore.loginNickname || '').trim()
-  if (nickname) return `${nickname}俱乐部`
+  const name = String(currentClub.value?.club_name || '').trim()
+  if (name) return name
   return 'xx俱乐部'
 })
 
 const clubDisplayId = computed(() => {
-  return String(gameStore.loginUserId || gameStore.loginAccount || '8677650585')
+  const randomId = String(currentClub.value?.random_id || '').trim()
+  if (randomId) return randomId
+  const clubId = String(currentClub.value?.club_id || '').trim()
+  if (clubId) return clubId
+  return '--'
+})
+
+const clubCoverUrl = computed(() => {
+  const logo = String(currentClub.value?.logo || '').trim()
+  return logo || clubCoverAvatar
+})
+
+const clubNoticeText = computed(() => {
+  const text = String(currentClub.value?.prologue || '').trim()
+  if (text) {
+    return text
+  }
+  return '暂未设置俱乐部公告'
 })
 
 const clubMemberCount = computed(() => {
+  const countFromClub = toSafeInt(currentClub.value?.club_members)
+  if (countFromClub > 0) {
+    return String(countFromClub)
+  }
+
   const count = sourceRecords.value.reduce((sum, room) => {
     const roomPlayers = Number(room.roomers) || (Array.isArray(room.users) ? room.users.length : 0)
     return sum + roomPlayers
@@ -142,6 +187,15 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
 })
 
 onMounted(() => {
+  if (!userInfoStore.currentClub && userInfoStore.clubList.length) {
+    userInfoStore.setCurrentClub(userInfoStore.clubList[0] || null)
+  }
+
+  if (!userInfoStore.currentClub || !String(userInfoStore.currentClub.club_id || '').trim()) {
+    void router.replace('/club')
+    return
+  }
+
   bootstrapRoomList()
 })
 
@@ -317,14 +371,6 @@ function handleToggleGroup(groupKey: string): void {
   persistRoomGroupExpandedCache()
 }
 
-function handleTopActionClick(action: 'recharge' | 'service'): void {
-  if (action === 'recharge') {
-    showFailToast('充值功能开发中')
-    return
-  }
-  showFailToast('客服功能开发中')
-}
-
 function handleClubHeaderTabClick(tab: ClubHeaderTabName): void {
   clubHeaderTab.value = tab
   if (tab === 'mahjong') {
@@ -345,7 +391,12 @@ function handleQuickActionClick(action: 'safety' | 'ranking'): void {
 }
 
 function handleCreateTableClick(): void {
-  showFailToast('创建牌桌功能开发中')
+  if (!canCreateTable.value) {
+    showFailToast('仅管理员或创始人可创建牌桌')
+    return
+  }
+
+  void router.push('/club/table/create')
 }
 
 function handleFloatingMenuClick(): void {
@@ -356,8 +407,16 @@ function goToClubDetail(): void {
   void router.push('/club/detail')
 }
 
-function handleBack(): void {
-  void router.push('/club')
+function toggleAnnounceExpanded(): void {
+  announceExpanded.value = !announceExpanded.value
+}
+
+function toSafeInt(value: unknown): number {
+  const num = Number(value)
+  if (!Number.isFinite(num)) {
+    return 0
+  }
+  return Math.floor(num)
 }
 
 function matchTabRoom(room: RoomRecord, tabName: GameTypeTabName): boolean {
@@ -406,87 +465,55 @@ function formatChip(value: number): string {
     :style="pageStyle"
   >
     <div class="bg-overlay"></div>
-    <header class="club-header">
-      <div class="club-header-row">
-        <div class="club-identity">
-          <button
-            class="header-back-btn"
-            type="button"
-            aria-label="返回"
-            @click="handleBack"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 7 12"
-              fill="none"
-            >
-              <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
-                d="M6.31419 0.26268C6.66443 0.61292 6.66443 1.18077 6.31419 1.53101L2.16518 5.68002L6.31419 9.82903C6.66443 10.1793 6.66443 10.7471 6.31419 11.0974C5.96395 11.4476 5.39609 11.4476 5.04585 11.0974L0.26268 6.31419C-0.08756 5.96395 -0.08756 5.3961 0.26268 5.04586L5.04585 0.26268C5.39609 -0.08756 5.96395 -0.08756 6.31419 0.26268Z"
-                fill="white"
-              />
-            </svg>
-          </button>
+    <HeaderBack>
+      <div class="club-identity">
+        <div class="club-avatar">
+          <img
+            :src="clubCoverUrl"
+            alt="club avatar"
+          />
+        </div>
 
-          <div class="club-avatar">
-            <img
-              :src="clubCoverAvatar"
-              alt="club avatar"
-            />
-          </div>
-
-          <div class="club-meta">
-            <p class="club-name">
-              {{ clubDisplayName }}
-            </p>
-            <div class="club-sub-meta">
-              <div class="club-id-wrap">
-                <span class="club-id-tag">ID</span>
-                <span class="club-id-text">{{ clubDisplayId }}</span>
-              </div>
-              <div class="club-member-wrap">
-                <span class="club-member-dot"></span>
-                <span>{{ clubMemberCount }}</span>
-              </div>
+        <div class="club-meta">
+          <p class="club-name">
+            {{ clubDisplayName }}
+          </p>
+          <div class="club-sub-meta">
+            <div class="club-id-wrap">
+              <span class="club-id-tag">ID</span>
+              <span class="club-id-text">{{ clubDisplayId }}</span>
+            </div>
+            <div class="club-member-wrap">
+              <span class="club-member-dot"></span>
+              <span>{{ clubMemberCount }}</span>
             </div>
           </div>
         </div>
-
-        <div class="action-wrap">
-          <button
-            class="head-action-btn"
-            type="button"
-            @click="handleTopActionClick('recharge')"
-          >
-            <span class="head-action-label">充值</span>
-            <img
-              class="head-action-icon"
-              :src="walletIcon"
-              alt="wallet"
-            />
-          </button>
-          <button
-            class="head-action-btn"
-            type="button"
-            @click="handleTopActionClick('service')"
-          >
-            <span class="head-action-label">客服</span>
-            <img
-              class="head-action-icon"
-              :src="serviceIcon"
-              alt="service"
-            />
-          </button>
-        </div>
       </div>
 
+      <div class="action-wrap">
+        <TopActionButton
+          :name="t('UIGuildFund_RechargeText')"
+          :icon="walletIcon"
+          icon-alt="wallet"
+          @click="router.push('/wallet')"
+        />
+        <TopActionButton
+          :name="t('UIMineMain01')"
+          :icon="serviceIcon"
+          icon-alt="service"
+        />
+      </div>
+    </HeaderBack>
+    <header class="club-header">
       <button
         class="announce-bar"
+        :class="{ 'announce-bar--expanded': announceExpanded }"
         type="button"
+        @click="toggleAnnounceExpanded"
       >
-        <span class="announce-text">xxxxxx俱乐部公告</span>
-        <span class="announce-arrow">›</span>
+        <span class="announce-text">{{ clubNoticeText }}</span>
+        <span class="announce-arrow" :class="{ 'announce-arrow--expanded': announceExpanded }">›</span>
       </button>
 
       <div class="club-header-tabs">
@@ -593,6 +620,7 @@ function formatChip(value: number): string {
 
     <div class="floating-action-area">
       <button
+        v-if="canCreateTable"
         class="create-table-btn"
         type="button"
         @click="handleCreateTableClick"
@@ -600,6 +628,7 @@ function formatChip(value: number): string {
         创建牌桌
       </button>
       <button
+        :class="{ 'floating-menu-btn--solo': !canCreateTable }"
         class="floating-menu-btn"
         type="button"
         aria-label="更多操作"
@@ -782,28 +811,42 @@ function formatChip(value: number): string {
 .announce-bar {
   margin-top: 0.217rem;
   width: 100%;
-  height: 1.0557rem;
+  min-height: 1.0577rem;
   border: 0;
-  border-radius: 1.0557rem;
-  padding: 0 0.289rem;
+  border-radius: 0.4016rem;
+  padding: 0.1847rem 0.3936rem;
   color: #fff;
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  background: rgba(34, 34, 34, 0.1);
+  gap: 0.2rem;
+  background: rgba(34, 34, 34, 0.39);
   box-shadow: inset 0 0 0 0.0133rem rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(0.8133rem);
+  transition: min-height 0.2s ease;
+}
+
+.announce-bar--expanded {
+  min-height: 3.25rem;
 }
 
 .announce-text {
   min-width: 0;
   font-size: 0.3454rem;
-  line-height: 0.83;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: center;
+  line-height: 1.4;
+  text-align: left;
   flex: 1;
+  line-clamp: 2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.announce-bar--expanded .announce-text {
+  line-clamp: 6;
+  -webkit-line-clamp: 6;
 }
 
 .announce-arrow {
@@ -811,6 +854,12 @@ function formatChip(value: number): string {
   font-size: 0.42rem;
   line-height: 1;
   opacity: 0.88;
+  transform: rotate(90deg);
+  transition: transform 0.2s ease;
+}
+
+.announce-arrow--expanded {
+  transform: rotate(-90deg);
 }
 
 .club-quick-actions {
@@ -961,29 +1010,6 @@ function formatChip(value: number): string {
   text-shadow: 0 0.03rem 0.16rem rgba(0, 0, 0, 0.54);
 }
 
-:deep(.club-game-tabs.room-tabs) {
-  --tab-base-height: 0.8193rem;
-  --tab-top-cut: 0.171rem;
-  --tab-item-padding-x: 0.08rem;
-  --tab-text-padding-x: 0;
-  --tab-active-offset-y: 0;
-  --tab-active-height: 100%;
-
-  margin: 0.106rem 0 0;
-}
-
-:deep(.club-game-tabs.room-tabs .van-tabs__wrap) {
-  margin: 0 0.4562rem;
-}
-
-:deep(.club-game-tabs.room-tabs .van-tab) {
-  font-size: 0.3521rem;
-  font-weight: 500;
-}
-
-:deep(.themeType2 .club-game-tabs.room-tabs .van-tab--active) {
-  font-weight: 700;
-}
 
 @media (max-width: 360px) {
   .club-name {
@@ -1007,8 +1033,6 @@ function formatChip(value: number): string {
   overflow-y: auto;
   padding: 0.34rem 0.38rem 2.2rem;
   background: rgba(255, 255, 255, 0.22);
-  border-top-left-radius: 0.498rem;
-  border-top-right-radius: 0.498rem;
   backdrop-filter: blur(0.8032rem) saturate(1.04);
 }
 
@@ -1051,6 +1075,10 @@ function formatChip(value: number): string {
   gap: 0.08rem;
   box-shadow: 0 0.14rem 0.3rem rgba(0, 0, 0, 0.38);
   z-index: 99;
+}
+
+.floating-menu-btn--solo {
+  margin-left: auto;
 }
 
 .floating-menu-btn span {

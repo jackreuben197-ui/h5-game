@@ -1,18 +1,16 @@
 import { defineStore } from 'pinia'
 import type { UserInfoData } from '@/api/models/user'
+import type { OrgClubData } from '@/api/models/org'
 import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
 
-export interface ClubInfo {
-  club_id: number | string
-  club_name?: string
-  [key: string]: unknown
-}
+export type ClubInfo = OrgClubData
 
 interface UserInfoState {
   userInfo: UserInfoData | null
   clubList: ClubInfo[]
   currentClubId: string
+  clubAgentInvitations: Record<string, string>
 }
 
 function normalizeClubId(value: unknown): string {
@@ -24,6 +22,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
     userInfo: null,
     clubList: [],
     currentClubId: '',
+    clubAgentInvitations: {},
   }),
   getters: {
     currentClub(state): ClubInfo | null {
@@ -83,7 +82,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       return true
     },
     setCurrentClub(club: ClubInfo | null): boolean {
-      if (!club) {
+      if (!club || club.club_id === undefined || club.club_id === null) {
         return false
       }
       return this.setCurrentClubById(club.club_id)
@@ -92,11 +91,34 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       this.userInfo = null
       this.clubList = []
       this.currentClubId = ''
+      this.clubAgentInvitations = {}
+    },
+    setClubAgentInvitation(clubRandomId: number | string | null | undefined, link: string): void {
+      const cacheKey = normalizeClubId(clubRandomId)
+      if (!cacheKey) {
+        return
+      }
+
+      const normalized = (link || '').trim()
+      if (!normalized) {
+        delete this.clubAgentInvitations[cacheKey]
+        return
+      }
+
+      this.clubAgentInvitations[cacheKey] = normalized
+    },
+    getClubAgentInvitation(clubRandomId: number | string | null | undefined): string {
+      const cacheKey = normalizeClubId(clubRandomId)
+      if (!cacheKey) {
+        return ''
+      }
+
+      return this.clubAgentInvitations[cacheKey] || ''
     },
   },
   persist: {
     key: StorageKey.USER_DATA,
     storage: dzpkPersistStorage,
-    pick: ['userInfo', 'clubList', 'currentClubId'],
+    pick: ['userInfo', 'clubList', 'currentClubId', 'clubAgentInvitations'],
   },
 })

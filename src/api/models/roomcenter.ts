@@ -966,3 +966,33 @@ export interface AllMttSngIdsData {
   mtt_series_list?: MttSeriesInfoRecord[]
   [key: string]: unknown
 }
+
+// /roomcenter/mtt/{id}/user_wallet 钱包项（对齐 Unity HttpRoomBringOutProtocol.Wallet）。
+export interface MttWallet {
+  club_id: number
+  tribe_id?: number
+  gold: number
+  gold_type: number
+  club_name: string
+  club_random_id?: number
+  club_logo?: string
+  // 道具替代买入类型：0 不支持，1 仅道具，2 道具或货币
+  prop_buy_type: number
+  buy_prop_id: number
+  [key: string]: unknown
+}
+
+// /roomcenter/mtt/{id}/user_wallet 免费次数限制。
+export interface MttWalletFreeLimit {
+  buyin: number
+  rebuy: number
+  addon: number
+  multi: number
+}
+
+// /roomcenter/mtt/{id}/user_wallet 响应 data。
+export interface MttUserWalletData {
+  wallet: MttWallet[]
+  free?: MttWalletFreeLimit
+  [key: string]: unknown
+}

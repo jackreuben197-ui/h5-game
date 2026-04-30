@@ -6,6 +6,7 @@ import type {
   AllMttSngIdsRequest,
   MttBuyInRequest,
   MttRebuyRequest,
+  MttUserWalletData,
   MttListData,
   MttListRequest,
   RoomDetailData,
@@ -241,6 +242,17 @@ export async function getAllMttSngIdsApi(
   const response = await http.post<ApiResponse<AllMttSngIdsData>>(
     '/roomcenter/user/all/mtt/sng/ids',
     payload,
+  )
+  return response.data
+}
+
+// 对齐 Unity HttpMTTUserWalletProtocol.API。
+export async function getMttUserWalletApi(
+  mttId: number | string,
+): Promise<ApiResponse<MttUserWalletData>> {
+  const response = await http.post<ApiResponse<MttUserWalletData>>(
+    `/roomcenter/mtt/${mttId}/user_wallet`,
+    {},
   )
   return response.data
 }

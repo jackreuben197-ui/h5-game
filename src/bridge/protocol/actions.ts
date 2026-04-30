@@ -24,6 +24,7 @@ export const BRIDGE_ACTION = {
   SYNC_USER_CLUB: 'syncUserClub',
   SYNC_ROOMS_LIST: 'syncRoomsList',
   ENTER_TABLE: 'enterTable',
+  ENTER_MTT: 'enterMtt',
 } as const
 
 export type BridgeAction = (typeof BRIDGE_ACTION)[keyof typeof BRIDGE_ACTION]

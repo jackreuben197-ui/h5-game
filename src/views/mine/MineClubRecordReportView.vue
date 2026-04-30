@@ -36,31 +36,37 @@ function submitReport(): void {
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
+      <section class="glass-card option-card">
+        <button
+          v-for="item in presetList"
+          :key="item"
+          type="button"
+          class="option-row"
+          @click="selectedPreset = item"
+        >
+          <span>{{ item }}</span>
+          <span class="check" :class="{ active: selectedPreset === item }">✔</span>
+        </button>
+      </section>
 
-    <section class="glass-card option-card">
-      <button
-        v-for="item in presetList"
-        :key="item"
-        type="button"
-        class="option-row"
-        @click="selectedPreset = item"
+      <section class="glass-card input-card">
+        <div class="input-title">请输入举报原因 {{ reasonCount }}/100</div>
+        <textarea
+          v-model="reason"
+          class="reason-input"
+          maxlength="100"
+          placeholder="请详细描述问题..."
+        ></textarea>
+      </section>
+
+      <VanButton
+        round
+        type="primary"
+        class="submit-btn"
+        @click="submitReport"
       >
-        <span>{{ item }}</span>
-        <span class="check" :class="{ active: selectedPreset === item }">✔</span>
-      </button>
-    </section>
-
-    <section class="glass-card input-card">
-      <div class="input-title">请输入举报原因 {{ reasonCount }}/100</div>
-      <textarea
-        v-model="reason"
-        class="reason-input"
-        maxlength="100"
-        placeholder="请详细描述问题..."
-      />
-    </section>
-
-    <VanButton round type="primary" class="submit-btn" @click="submitReport">提交</VanButton>
+        提交
+      </VanButton>
     </div>
   </div>
 </template>

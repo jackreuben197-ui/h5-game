@@ -3,7 +3,7 @@ interface Props {
   amount: string | number
 }
 
-defineProps<Props>()
+withDefaults(defineProps<Props>(), {})
 </script>
 
 <template>
@@ -22,7 +22,10 @@ defineProps<Props>()
   padding: 0.15rem 0.1rem;
   min-width: 0;
   max-width: 100%;
+  gap: 0.04rem;
 }
+
+
 
 .chip__amount {
   font-family: var(--wallet-font-num);

@@ -20,7 +20,7 @@ import type {
   PropChatPropUsedRequest,
   PropChatPropUsedResponseData,
   PropGoldPriceListRequest,
-  PropGoldPriceListResponseData,
+  PropGoldPriceListData,
   PropListRequest,
   PropListResponseData,
   PropMallGoodsBuyRequest,
@@ -121,9 +121,9 @@ export async function postPropChatPropUsedApi(
 // 对齐 cocos WebPropGoldPriceList.API
 export async function postPropGoldPriceListApi(
   payload: PropGoldPriceListRequest = {} as PropGoldPriceListRequest
-): Promise<ApiResponse<PropGoldPriceListResponseData>> {
+): Promise<ApiResponse<PropGoldPriceListData>> {
   const endpoint = '/prop/gold/price/list'
-  const response = await http.post<ApiResponse<PropGoldPriceListResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<PropGoldPriceListData>>(endpoint, payload)
   return response.data
 }
 

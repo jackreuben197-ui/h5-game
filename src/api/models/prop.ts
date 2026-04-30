@@ -99,7 +99,28 @@ export interface PropGoldPriceListData {
 }
 
 export interface PropGoldPriceListGoldInfo {
+  id?: number;
+  gold_count?: number;
+  raw_price?: number;
+  pay_price?: number;
+  op_id?: number;
+  gold_type?: number;
+  pay_gold_type?: number;
+  status?: number;
+  sort?: number;
+  source_type?: number;
+  trader_type?: number;
+  give_gold_count?: number;
+  club_id?: number;
+  tribe_id?: number;
+  create_time?: string;
+  update_time?: string;
+  [key: string]: unknown
+}
 
+export interface PropGoldPriceListWalletAddress {
+  address?: string;
+  qr_code?: string;
     gold_count?: number; // 金币数量
     pay_price?: number; // 支付价格
     id?: number; // 唯一ID

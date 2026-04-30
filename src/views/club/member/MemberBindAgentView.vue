@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getMemberRouteContext } from './memberRoute'
+import { getMemberRouteContext } from '../clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar.png'
 
 const route = useRoute()

@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
-import { postOrgchaNgeClubDataApi } from '@/api/org'
+import { postOrgChangeClubDataApi } from '@/api/org'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { showFailToast, showSuccessToast } from 'vant'
 
@@ -46,7 +46,7 @@ async function onConfirm(): Promise<void> {
   isSubmitting.value = true
 
   try {
-    const response = await postOrgchaNgeClubDataApi({
+    const response = await postOrgChangeClubDataApi({
       club_id: clubId,
       club_name: nameInput.value.trim(),
     })

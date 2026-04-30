@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { showFailToast, showToast } from 'vant'
-import { postOrgClubJackpotTemplateListApi } from '@/api/org'
+import { showFailToast, showSuccessToast } from 'vant'
+import {
+  postOrgClubJackpotTemplateDelApi,
+  postOrgClubJackpotTemplateListApi,
+} from '@/api/org'
 import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
 
 interface JackpotTemplateItem {
@@ -16,6 +19,11 @@ const router = useRouter()
 const loading = ref(false)
 const templates = ref<JackpotTemplateItem[]>([])
 
+// ---- delete dialog state ----
+const showDeleteDialog = ref(false)
+const deletingItem = ref<JackpotTemplateItem | null>(null)
+const deleting = ref(false)
+
 const hasItems = computed(() => templates.value.length > 0)
 
 onMounted(() => {
@@ -26,7 +34,7 @@ async function fetchJackpotTemplates(): Promise<void> {
   loading.value = true
   try {
     const response = await postOrgClubJackpotTemplateListApi({
-      limit: 50,
+      limit: 10,
       offset: 0,
     })
 
@@ -92,11 +100,45 @@ function formatAmount(value: unknown): string {
 }
 
 function onEdit(item: JackpotTemplateItem): void {
-  showToast(`编辑 ${item.name} 功能开发中`)
+  void router.push(`/club/jackpot/create?id=${encodeURIComponent(item.id)}`)
 }
 
 function onDelete(item: JackpotTemplateItem): void {
-  showToast(`删除 ${item.name} 功能开发中`)
+  deletingItem.value = item
+  showDeleteDialog.value = true
+}
+
+async function confirmDelete(): Promise<void> {
+  if (!deletingItem.value) return
+
+  deleting.value = true
+  try {
+    const response = await postOrgClubJackpotTemplateDelApi({
+      jackpot_id: Number(deletingItem.value.id),
+    })
+
+    if (Number(response.code) !== 0) {
+      const message = typeof response.msg === 'string' ? response.msg : '删除失败'
+      throw new Error(message)
+    }
+
+    showSuccessToast('删除成功')
+    showDeleteDialog.value = false
+    deletingItem.value = null
+
+    // 重新拉取列表
+    void fetchJackpotTemplates()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '删除失败'
+    showFailToast(message)
+  } finally {
+    deleting.value = false
+  }
+}
+
+function cancelDelete(): void {
+  showDeleteDialog.value = false
+  deletingItem.value = null
 }
 
 function goCreateJackpot(): void {
@@ -183,13 +225,49 @@ function goPoolReward(): void {
     <div class="footer-action">
       <button type="button" class="create-btn" @click="goCreateJackpot">Create Jackpot Table</button>
     </div>
+
+    <!-- 删除确认弹窗 (Figma node-id=1451-5725, 1rem=37.5px) -->
+    <teleport to="body">
+      <transition name="dialog-fade">
+        <div
+          v-if="showDeleteDialog"
+          class="delete-dialog-overlay"
+          @click.self="cancelDelete"
+        >
+          <div class="delete-dialog-card">
+            <p class="delete-dialog-title">
+              Are you sure you want to delete this game table?
+            </p>
+
+            <div class="delete-dialog-actions">
+              <button
+                type="button"
+                class="delete-btn delete-btn--cancel"
+                :disabled="deleting"
+                @click="cancelDelete"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                class="delete-btn delete-btn--confirm"
+                :disabled="deleting"
+                @click="confirmDelete"
+              >
+                {{ deleting ? 'Deleting...' : 'Delete' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </transition>
+    </teleport>
   </div>
 </template>
 
 <style scoped lang="scss">
 .club-jackpot-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding-bottom: calc(2.2rem + env(safe-area-inset-bottom));
   background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
   overflow-x: hidden;
@@ -483,5 +561,143 @@ function goPoolReward(): void {
     inset 0 0.04rem 0.2rem rgba(255, 255, 255, 0.25),
     0 0.16rem 0.36rem rgba(0, 120, 100, 0.45);
   cursor: pointer;
+}
+
+/* ===== 删除确认弹窗 (Figma node-id=1451-5725, 1rem=37.5px) ===== */
+
+/* Overlay: 全屏 60% 黑色 + 背景模糊 */
+.delete-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(0.4043rem); // 15.16px
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Card: 317.03×150.06px → 8.454×4.002rem, corner 36.39px → 0.97rem */
+.delete-dialog-card {
+  width: 8.454rem; // 317.03px
+  border-radius: 0.9704rem; // 36.39px
+  padding: 0.792rem 0.4107rem 0.3573rem; // top=29.7, h=15.4, bottom=13.4
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5099rem; // 19.12px
+  overflow: hidden;
+
+  /* 渐变背景: grey 从浅到深, opacity 0.2 */
+  background:
+    linear-gradient(
+      135deg,
+      rgba(142, 142, 142, 0.2) 0%,
+      rgba(103, 103, 103, 0.2) 46.8%,
+      rgba(73, 73, 73, 0.2) 100%
+    );
+
+  /* 渐变描边: 白色, 透明度从 0.4→0→0.5 */
+  border: 0.0267rem solid transparent;
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 0.0267rem;
+    background:
+      linear-gradient(
+        120deg,
+        rgba(242, 242, 242, 0.4) 0%,
+        rgba(255, 255, 255, 0) 44.5%,
+        rgba(255, 255, 255, 0.5) 100%
+      );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* 内阴影: 白色上高光 */
+  box-shadow:
+    inset 0.0566rem 0.1132rem 0.4596rem rgba(242, 242, 242, 0.9),
+    inset 0 0 0.2292rem rgba(203, 110, 125, 0.25),
+    inset 0 0 0.2292rem rgba(0, 0, 0, 0.6),
+    0.0919rem 0.1149rem 0.1838rem rgba(0, 0, 0, 0.25);
+}
+
+/* Title: 16px → 0.4267rem, HONOR Sans CN Regular, white, line-height 124% */
+.delete-dialog-title {
+  margin: 0;
+  font-size: 0.4267rem; // 16px
+  font-family: 'HONOR Sans CN', sans-serif;
+  font-weight: 400;
+  color: #fff;
+  text-align: center;
+  line-height: 1.24;
+}
+
+/* Button row: HORIZONTAL, CENTER, gap 9.5px → 0.253rem */
+.delete-dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2533rem; // 9.5px
+}
+
+/* Shared button base: 138.37×53.84px → 3.690×1.436rem, corner 39.59px → 1.056rem */
+.delete-btn {
+  width: 3.690rem; // 138.37px
+  height: 1.4358rem; // 53.84px
+  border-radius: 1.0557rem; // 39.59px (pill)
+  border: 0;
+  font-size: 0.4rem; // 15px
+  font-family: 'Afacad', sans-serif;
+  font-weight: 500;
+  color: #fff;
+  cursor: pointer;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* Cancel: black 30% + glass blur */
+.delete-btn--cancel {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(0.0197rem); // 0.74px
+}
+
+/* Delete: green gradient #05E7AE → #027A5C + stroke */
+.delete-btn--confirm {
+  border: 0.0267rem solid rgba(242, 242, 242, 0.8);
+  background: linear-gradient(157.77deg, #05e7ae 7.55%, #027a5c 71.92%);
+  backdrop-filter: blur(0.0591rem); // 2.22px
+}
+
+/* Fade transition */
+.dialog-fade-enter-active,
+.dialog-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.dialog-fade-enter-from,
+.dialog-fade-leave-to {
+  opacity: 0;
 }
 </style>

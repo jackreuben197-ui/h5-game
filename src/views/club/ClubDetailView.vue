@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   postOrgClubSearchByIdApi,
-  postOrgchaNgeClubDataApi,
+  postOrgChangeClubDataApi,
   postOrgClubAgentInviTationApi,
 } from '@/api/org'
 import type {
@@ -264,7 +264,7 @@ async function updateClubSwitch(key: 'allowSearch' | 'joinWithoutApproval'): Pro
   }
 
   try {
-    const response = await postOrgchaNgeClubDataApi({
+    const response = await postOrgChangeClubDataApi({
       club_id: clubId,
       search_switch: nextAllowSearch ? 1 : 2,
       auto_audit_switch: nextAutoAudit ? 1 : 2,

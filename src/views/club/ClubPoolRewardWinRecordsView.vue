@@ -92,7 +92,7 @@ const records: RewardRecord[] = [
 
 .record-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding: 0 0.3467rem 0.64rem;
   background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
   overflow-x: hidden;

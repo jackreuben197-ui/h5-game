@@ -114,7 +114,7 @@ function onOpenRecord(item: PoolRewardItem): void {
 <style scoped lang="scss">
 .pool-reward-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding: 0 0.4267rem calc(2.88rem + env(safe-area-inset-bottom));
   background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
   overflow-x: hidden;

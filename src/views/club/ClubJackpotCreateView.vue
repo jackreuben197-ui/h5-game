@@ -1,7 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { showToast } from 'vant'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast, showSuccessToast, showToast } from 'vant'
+import { useRoute, useRouter } from 'vue-router'
+import {
+  postOrgClubJackpotTemplateCreateApi,
+  postOrgClubJackpotTemplateUpdateApi,
+  postOrgJackpotTemplateInfoApi,
+} from '@/api/org'
 
 interface OptionItem {
   id: string
@@ -17,12 +22,20 @@ interface ConfigRow {
   checked?: boolean
 }
 
+const route = useRoute()
 const router = useRouter()
 
-const gameModes = ['NLH', 'PLO', '6+', 'Bombpot', 'AOF']
-const stakeLevels = ['Micro', 'Small', 'Medium', 'Large']
+const isEditMode = computed(() => !!route.query.id)
+const editJackpotId = computed(() => Number(route.query.id) || 0)
 
-const activeGameMode = ref('NLH')
+const loading = ref(false)
+const jackpotName = ref('Jackpot')
+
+const gameModes = ['NLH', 'PLO', '6+', 'Bombpot', 'AOF'] as const
+type GameMode = (typeof gameModes)[number]
+const stakeLevels = ['Micro', 'Small', 'Medium', 'Large'] as const
+
+const activeGameMode = ref<GameMode>('NLH')
 const activeStakeLevel = ref('Micro')
 
 const jackpotRows = ref<ConfigRow[]>([
@@ -50,40 +63,193 @@ const blindOptions = ref<OptionItem[]>([
   { id: 'b5', label: '0.3/0.6', selected: false },
 ])
 
-const poolSettings = [
-  { id: 'royal', title: 'Royal Flush' },
-  { id: 'straight', title: 'Straight flush' },
-  { id: 'four', title: 'Four of a kind' },
-]
+const poolSettings = ref([
+  { id: 'royal', title: 'Royal Flush', checked: false, ratio: '' },
+  { id: 'straight', title: 'Straight flush', checked: false, ratio: '' },
+  { id: 'four', title: 'Four of a kind', checked: false, ratio: '' },
+])
 
 function onCancel(): void {
   router.back()
 }
 
-function onConfirm(): void {
-  showToast('创建 Jackpot 功能开发中')
+async function onConfirm(): Promise<void> {
+  if (!jackpotName.value.trim()) {
+    showToast('请输入牌局名称')
+    return
+  }
+
+  loading.value = true
+  try {
+    const modeSwitches: Record<GameMode, number> = {
+      NLH: 1,
+      PLO: 1,
+      '6+': 1,
+      Bombpot: 1,
+      AOF: 1,
+    }
+    void modeSwitches // 预留切换逻辑
+
+    // 构建当前模式的 setting
+    const setting = {
+      game_play_ratio: Number(jackpotRows.value[0]?.value) || 0,
+      blind_setting: blindOptions.value.map((b) => {
+        const [sb] = b.label.split('/').map(Number)
+        return {
+          sb: sb || 0,
+          status: b.selected ? 1 : 0,
+          blind_type: blindOptions.value.indexOf(b) + 1,
+          prize_ratio: 0,
+          contribute_pot_switch: contributionRows.value.find((r) => r.id === 'pot-trigger')?.checked ? 1 : 2,
+          contribute_pot_limit: 0,
+          award_bet_switch: contributionRows.value.find((r) => r.id === 'put-in')?.checked ? 1 : 2,
+          award_bet_limit: 0,
+          award_other_switch: contributionRows.value.find((r) => r.id === 'all-table')?.checked ? 1 : 2,
+          award_other_ratio: 0,
+        }
+      }),
+      royal_flush_switch: poolSettings.value.find((p) => p.id === 'royal')?.checked ? 1 : 0,
+      royal_flush_ratio: Number(poolSettings.value.find((p) => p.id === 'royal')?.ratio) || 0,
+      straight_flush_switch: poolSettings.value.find((p) => p.id === 'straight')?.checked ? 1 : 0,
+      straight_flush_ratio: Number(poolSettings.value.find((p) => p.id === 'straight')?.ratio) || 0,
+      four_ofa_kind_switch: poolSettings.value.find((p) => p.id === 'four')?.checked ? 1 : 0,
+      four_ofa_kind_ratio: Number(poolSettings.value.find((p) => p.id === 'four')?.ratio) || 0,
+    }
+
+    const basePayload = {
+      name: jackpotName.value.trim(),
+      [`${activeGameMode.value.toLowerCase()}_switch` as string]: 1,
+      [`${activeGameMode.value.toLowerCase()}_setting` as string]: setting,
+    }
+
+    let response
+    if (isEditMode.value) {
+      response = await postOrgClubJackpotTemplateUpdateApi({
+        jackpot_id: editJackpotId.value,
+        ...basePayload,
+      } as Parameters<typeof postOrgClubJackpotTemplateUpdateApi>[0])
+    } else {
+      response = await postOrgClubJackpotTemplateCreateApi(
+        basePayload as Parameters<typeof postOrgClubJackpotTemplateCreateApi>[0],
+      )
+    }
+
+    if (Number(response.code) !== 0) {
+      const message = typeof response.msg === 'string' ? response.msg : '操作失败'
+      throw new Error(message)
+    }
+
+    showSuccessToast(isEditMode.value ? '编辑成功' : '创建成功')
+    router.back()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '操作失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
 }
 
-function onDelete(): void {
-  showToast('删除模板功能开发中')
+async function fetchTemplateInfo(): Promise<void> {
+  if (!isEditMode.value) return
+
+  loading.value = true
+  try {
+    const response = await postOrgJackpotTemplateInfoApi({
+      jackpot_id: editJackpotId.value,
+    })
+
+    if (Number(response.code) !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '获取模板信息失败')
+    }
+
+    const data = response.data?.item as Record<string, unknown> | undefined
+    if (!data) return
+
+    // 填充名称
+    if (typeof data.name === 'string') {
+      jackpotName.value = data.name
+    }
+
+    // 填充游戏模式开关
+    if (data.nlh_switch === 1) activeGameMode.value = 'NLH'
+    else if (data.plo_switch === 1) activeGameMode.value = 'PLO'
+    else if (data.six_plus_switch === 1) activeGameMode.value = '6+'
+    else if (data.bombpot_switch === 1) activeGameMode.value = 'Bombpot'
+    else if (data.aof_switch === 1) activeGameMode.value = 'AOF'
+
+    // 获取当前模式的 setting
+    const modeKey = activeGameMode.value.toLowerCase()
+    const modeSetting = data[`${modeKey}_setting`] as Record<string, unknown> | undefined
+
+    if (modeSetting) {
+      if (typeof modeSetting.game_play_ratio === 'number') {
+        jackpotRows.value[0].value = String(modeSetting.game_play_ratio)
+      }
+
+      // 盲注设置
+      const blindSettings = modeSetting.blind_setting as
+        | Record<string, unknown>[]
+        | undefined
+      if (Array.isArray(blindSettings) && blindSettings.length > 0) {
+        blindOptions.value = blindSettings.map((bs, i) => ({
+          id: `b${i + 1}`,
+          label: `${bs.sb ?? 0}/${(Number(bs.sb) || 0) * 2}`,
+          selected: bs.status === 1,
+        }))
+      }
+
+      // Pool settings
+      if (typeof modeSetting.royal_flush_switch === 'number') {
+        const royal = poolSettings.value.find((p) => p.id === 'royal')
+        if (royal) {
+          royal.checked = modeSetting.royal_flush_switch === 1
+          royal.ratio = String(modeSetting.royal_flush_ratio ?? '')
+        }
+      }
+      if (typeof modeSetting.straight_flush_switch === 'number') {
+        const straight = poolSettings.value.find((p) => p.id === 'straight')
+        if (straight) {
+          straight.checked = modeSetting.straight_flush_switch === 1
+          straight.ratio = String(modeSetting.straight_flush_ratio ?? '')
+        }
+      }
+      if (typeof modeSetting.four_ofa_kind_switch === 'number') {
+        const four = poolSettings.value.find((p) => p.id === 'four')
+        if (four) {
+          four.checked = modeSetting.four_ofa_kind_switch === 1
+          four.ratio = String(modeSetting.four_ofa_kind_ratio ?? '')
+        }
+      }
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '获取模板信息失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
 }
 
-function onEdit(): void {
-  showToast('编辑模板功能开发中')
-}
+onMounted(() => {
+  void fetchTemplateInfo()
+})
 </script>
 
 <template>
   <div class="jackpot-create-page">
     <div class="page-overlay" aria-hidden="true"></div>
 
-    <HeaderBack :title="'Jackpot'" />
+    <HeaderBack :title="isEditMode ? 'Edit Jackpot' : 'Jackpot'" />
 
     <section class="create-content">
       <div class="name-input-pill">
         <span class="pill-label">牌局名称</span>
-        <span class="pill-value">Jackpot</span>
-        <span class="pill-count">0/20</span>
+        <input
+          v-model="jackpotName"
+          class="pill-input"
+          maxlength="20"
+          placeholder="Jackpot"
+        />
+        <span class="pill-count">{{ jackpotName.length }}/20</span>
       </div>
 
       <div class="glass-card summary-card">
@@ -93,11 +259,6 @@ function onEdit(): void {
             <i class="icon-info" aria-hidden="true">i</i>
           </div>
           <p class="summary-amount">0.2/0.4</p>
-        </div>
-
-        <div class="summary-actions">
-          <button type="button" class="mini-btn mini-btn--ghost" @click="onDelete">Delete</button>
-          <button type="button" class="mini-btn mini-btn--primary" @click="onEdit">Edit</button>
         </div>
       </div>
 
@@ -215,7 +376,11 @@ function onEdit(): void {
         <div v-for="item in poolSettings" :key="item.id" class="pool-row">
           <div class="pool-left">
             <div class="row-label">
-              <i class="dot" :class="{ 'dot--active': item.id === 'royal' }"></i>
+              <i
+                class="dot"
+                :class="{ 'dot--active': item.checked }"
+                @click="item.checked = !item.checked"
+              ></i>
               <span>{{ item.title }}</span>
             </div>
 
@@ -231,7 +396,11 @@ function onEdit(): void {
           <div class="pool-right">
             <span>Award ratio (%)</span>
             <div class="value-input value-input--narrow">
-              <span>BB amount</span>
+              <input
+                v-model="item.ratio"
+                class="inline-input"
+                placeholder="BB amount"
+              />
             </div>
           </div>
         </div>
@@ -239,8 +408,21 @@ function onEdit(): void {
     </section>
 
     <div class="bottom-actions">
-      <button type="button" class="action-btn action-btn--cancel" @click="onCancel">取消</button>
-      <button type="button" class="action-btn action-btn--confirm" @click="onConfirm">确定</button>
+      <button
+        type="button"
+        class="action-btn action-btn--cancel"
+        @click="onCancel"
+      >
+        取消
+      </button>
+      <button
+        type="button"
+        class="action-btn action-btn--confirm"
+        :disabled="loading"
+        @click="onConfirm"
+      >
+        {{ loading ? '提交中...' : '确定' }}
+      </button>
     </div>
   </div>
 </template>
@@ -248,7 +430,7 @@ function onEdit(): void {
 <style scoped lang="scss">
 .jackpot-create-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding: 0 0.3733rem calc(2.0267rem + env(safe-area-inset-bottom));
   background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
   overflow-x: hidden;
@@ -297,11 +479,22 @@ function onEdit(): void {
 .pill-count {
   font-size: 0.3733rem;
   line-height: 1.4;
+  flex-shrink: 0;
 }
 
-.pill-value {
+.pill-input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: #fff;
   font-size: 0.4054rem;
   line-height: 1.2;
+  text-align: center;
+  outline: none;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
 }
 
 .pill-count {
@@ -348,29 +541,6 @@ function onEdit(): void {
   font-size: 0.5333rem;
   line-height: 1.4;
   font-weight: 700;
-}
-
-.summary-actions {
-  display: flex;
-  gap: 0.1067rem;
-}
-
-.mini-btn {
-  width: 2.08rem;
-  height: 1.0133rem;
-  border-radius: 1.1101rem;
-  font-size: 0.3733rem;
-  color: #fff;
-  border: 0;
-}
-
-.mini-btn--ghost {
-  background: rgba(0, 0, 0, 0.3);
-}
-
-.mini-btn--primary {
-  border: 0.0107rem solid rgba(242, 242, 242, 0.8);
-  background: linear-gradient(151.54deg, #05e7ae 7.55%, #027a5c 71.92%);
 }
 
 .section-card {
@@ -618,5 +788,24 @@ function onEdit(): void {
 .action-btn--confirm {
   border: 0.0133rem solid rgba(242, 242, 242, 0.8);
   background: linear-gradient(157.77deg, #05e7ae 7.55%, #027a5c 71.92%);
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.inline-input {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: inherit;
+  line-height: inherit;
+  width: 100%;
+  text-align: center;
+  outline: none;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
 }
 </style>

@@ -90,6 +90,36 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/club/jackpot/create',
+      name: 'club-jackpot-create',
+      component: () => import('@/views/club/ClubJackpotCreateView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/jackpot',
+      name: 'club-jackpot',
+      component: () => import('@/views/club/ClubJackpotListView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/jackpot/pool-reward',
+      name: 'club-jackpot-pool-reward',
+      component: () => import('@/views/club/ClubPoolRewardView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/jackpot/pool-reward/reward-records',
+      name: 'club-jackpot-pool-reward-reward-records',
+      component: () => import('@/views/club/ClubPoolRewardWinRecordsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/jackpot/pool-reward/contribution-records',
+      name: 'club-jackpot-pool-reward-contribution-records',
+      component: () => import('@/views/club/ClubPoolRewardContributionRecordsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/club/detail',
       name: 'club-detail',
       component: () => import('@/views/club/ClubDetailView.vue'),

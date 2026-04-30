@@ -14,6 +14,7 @@ import PaymentMethodStrip, { type PaymentMethod } from '@/views/wallet/component
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import NumericKeypad from '@/views/wallet/components/NumericKeypad.vue'
 import WithdrawForm from '@/views/wallet/components/WithdrawForm.vue'
+import UsdtPaymentPopup from '@/views/wallet/components/UsdtPaymentPopup.vue'
 import { t } from '@/i18n'
 import { useWalletStore } from '@/stores/wallet'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -27,6 +28,12 @@ const activePreset = ref(0)
 const activeMethod = ref(0)
 const keypadOpen = ref(false)
 const customAmount = ref('')
+const usdtPopupOpen = ref(false)
+const usdtPopupProps = ref({
+  goldCount: 0,
+  rate: 0,
+  feeRate: 0,
+})
 
 
 const methods = computed<PaymentMethod[]>(() =>
@@ -39,6 +46,30 @@ const methods = computed<PaymentMethod[]>(() =>
 
 // if pay_type have no price_ids or price_list then empty tile will show and default is custom amount tile will show.
 
+function calculateUsdtPrice(goldCount: number, rate: number, feeRate: number) {
+  let base = goldCount / 100;
+  let price = base * rate;
+  price = Math.round(price * 10000) / 10000;
+  if (feeRate > 0) {
+    price = price * (1 + feeRate);
+    price = Math.round(price * 10000) / 10000;
+  }
+  return Number(price.toFixed(6));
+}
+
+const formatUsdtPrice = (price: number): string => {
+  if (price === 0) return "0";
+  const rounded = Math.round(price * 100) / 100;
+  const nearestInteger = Math.round(rounded);
+  if (Math.abs(rounded - nearestInteger) < 0.01) {
+    return nearestInteger.toString();
+  }
+  if (Number.isInteger(rounded)) {
+    return rounded.toString();
+  }
+  return rounded.toString().replace(/\.?0+$/, "");
+};
+
 const presets = computed<Preset[]>(() => {
   const payTypes = walletStore.goldPriceData?.pay_types ?? []
   const selected = payTypes[activeMethod.value]
@@ -50,10 +81,23 @@ const presets = computed<Preset[]>(() => {
   const list = hasPriceList
     ? selected!.price_list!
     : (walletStore.goldPriceData?.list ?? [])
-  return list.map(item => ({
-    amount: String((item.gold_count ?? 0) / 100),
-    chip: ((item.gold_count ?? 0) / 100).toLocaleString(),
-  }))
+    
+  const isUsdt = selected?.type === 1;
+  const rate = selected?.rate ?? 1;
+  const feeRate = selected?.fee_rate ?? 0;
+
+  return list.map(item => {
+    const goldCount = item.gold_count ?? 0;
+    const amountStr = String(goldCount / 100);
+    const chipStr = isUsdt 
+      ? formatUsdtPrice(calculateUsdtPrice(goldCount, rate, feeRate))
+      : (goldCount / 100).toLocaleString();
+
+    return {
+      amount: amountStr,
+      chip: chipStr,
+    }
+  })
 })
 
 function onCustom(): void {
@@ -73,7 +117,43 @@ const selectedAmount = computed(() => {
   return presets.value[activePreset.value]?.amount || '0'
 })
 
+const displayPayAmount = computed(() => {
+  const payTypes = walletStore.goldPriceData?.pay_types ?? []
+  const selected = payTypes[activeMethod.value]
+  const amount = Number(selectedAmount.value)
+  
+  if (selected?.type === 1) { // USDT
+    const goldCount = amount * 100
+    const rate = selected.rate ?? 1
+    const feeRate = selected.fee_rate ?? 0
+    return formatUsdtPrice(calculateUsdtPrice(goldCount, rate, feeRate))
+  }
+  
+  return selectedAmount.value
+})
+
 const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
+
+function onPayClick() {
+  const payTypes = walletStore.goldPriceData?.pay_types ?? []
+  const selectedPayType = payTypes[activeMethod.value]
+
+  if (selectedPayType?.type === 1) {
+    usdtPopupProps.value = {
+      goldCount: Number(selectedAmount.value) * 100,
+      rate: selectedPayType.rate ?? 1,
+      feeRate: selectedPayType.fee_rate ?? 0,
+    }
+    usdtPopupOpen.value = true
+  } else {
+    // Normal pay
+  }
+}
+
+function onUsdtSubmit(type: number) {
+  usdtPopupOpen.value = false
+  // TODO: submit transaction
+}
 </script>
 
 <template>
@@ -148,8 +228,9 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
         </div>
 
         <PrimaryButton
-          :text="`立即支付 ${selectedAmount}`"
+          :text="`立即支付 ${displayPayAmount}`"
           class="pay-cta"
+          @click="onPayClick"
         />
       </template>
 
@@ -163,6 +244,15 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
       :open="keypadOpen"
       @close="keypadOpen = false"
       @submit="onKeypadSubmit"
+    />
+
+    <UsdtPaymentPopup
+      v-if="usdtPopupOpen"
+      :gold-count="usdtPopupProps.goldCount"
+      :rate="usdtPopupProps.rate"
+      :fee-rate="usdtPopupProps.feeRate"
+      @close="usdtPopupOpen = false"
+      @submit="onUsdtSubmit"
     />
   </div>
 </template>

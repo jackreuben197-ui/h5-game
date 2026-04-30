@@ -383,6 +383,28 @@ async function handleBuyinConfirm(payload: { ticket: boolean; ratio: number; use
 function handlePlayersRefresh(mode: 'rank' | 'hunter'): void {
   void loadPlayersData(mode)
 }
+
+async function handleEnterTable(rid: number): Promise<void> {
+  if (btnLoading.value) return
+  btnLoading.value = true
+  try {
+    const wsPort = await LoginSession.EnsureWS().catch(() => 0)
+    const mttData = detailData.value?.mtt
+    const payload: EnterMttPayload = {
+      userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',
+      userId: gameStore.loginUserId || gameStore.loginAccount || '',
+      websocketPort: typeof wsPort === 'number' ? wsPort : 0,
+      from: 'h5-lobby',
+      matchId: matchId.value,
+      matchInfo: mttData ?? {},
+      roomId: rid,
+      isLookOn: true,
+    }
+    enterMtt(payload)
+  } finally {
+    btnLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -428,6 +450,7 @@ function handlePlayersRefresh(mode: 'rank' | 'hunter'): void {
         :room-list="roomList"
         :loading="tablesLoading"
         @refresh="loadRoomsData"
+        @enter-table="handleEnterTable"
       />
       <MttBlindsTab v-else-if="activeTab === 'blinds'" :data="detailData" :match-id="matchId" />
     </div>

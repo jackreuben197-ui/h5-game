@@ -28,6 +28,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   refresh: []
+  enterTable: [rid: number]
 }>()
 
 const isDiamond = computed(() => (props.data?.mtt?.gold_type ?? 1) === 4)
@@ -91,8 +92,7 @@ function handleRowClick(row: Record<string, unknown>): void {
     return
   }
 
-  // TODO: 等 Gameplay 联调完成后，接入真正的观战/入桌路由
-  showToast(`准备进入牌桌 ${rid}`)
+  emit('enterTable', rid)
 }
 </script>
 

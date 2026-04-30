@@ -66,65 +66,77 @@ function onConfirmGender(): void {
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
-    <section class="profile-card">
-      <div class="profile-card__inner">
-        <button class="avatar-wrap" type="button" @click="openAvatarPopup">
-          <img :src="String(displayUser.avatar)" alt="avatar" />
-          <span class="edit-chip">Edit</span>
-        </button>
+      <section class="profile-card">
+        <div class="profile-card__inner">
+          <button class="avatar-wrap" type="button" @click="openAvatarPopup">
+            <img :src="String(displayUser.avatar)" alt="avatar" />
+            <span class="edit-chip">Edit</span>
+          </button>
 
-        <div class="user-box">
-          <div class="user-name">{{ displayUser.nickname }}</div>
-          <div class="user-id-row">
-            <span class="id-tag">ID</span>
-            <span class="id-value">{{ displayUser.userId }}</span>
-            <span class="id-copy" aria-hidden="true">◌</span>
+          <div class="user-box">
+            <div class="user-name">{{ displayUser.nickname }}</div>
+            <div class="user-id-row">
+              <span class="id-tag">ID</span>
+              <span class="id-value">{{ displayUser.userId }}</span>
+              <span class="id-copy" aria-hidden="true">◌</span>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="field-group">
-      <button class="glass-input" type="button" @click="goNicknamePage">
-        {{ nickname || 'Name here' }}
-      </button>
-      <p class="input-hint">Enter your Account Name</p>
-    </section>
-
-    <section class="gender-select" @click="openGenderPopup">
-      <button class="gender-option" type="button">
-        <span class="radio" :class="{ active: selectedGender === 'male' }" />
-        <span>Male</span>
-      </button>
-      <button class="gender-option" type="button">
-        <span class="radio" :class="{ active: selectedGender === 'female' }" />
-        <span>Female</span>
-      </button>
-    </section>
-
-    <VanPopup v-model:show="showAvatarPopup" round position="bottom" class="sheet-popup" :overlay-style="{ background: 'rgba(12,12,12,0.6)' }">
-      <div class="sheet-body">
-        <button class="sheet-row" type="button" @click="onAvatarAction('album')">相册</button>
-        <div class="sheet-divider" />
-        <button class="sheet-row" type="button" @click="onAvatarAction('camera')">相机</button>
-        <button class="sheet-confirm" type="button" @click="onAvatarAction('album')">加入</button>
-      </div>
-    </VanPopup>
-
-    <VanPopup v-model:show="showGenderPopup" round position="bottom" class="sheet-popup" :overlay-style="{ background: 'rgba(12,12,12,0.6)' }">
-      <div class="sheet-body">
-        <button class="sheet-row gender-row" type="button" @click="popupGender = 'male'">
-          <span class="radio" :class="{ active: popupGender === 'male' }" />
-          <span>男</span>
+      <section class="field-group">
+        <button class="glass-input" type="button" @click="goNicknamePage">
+          {{ nickname || 'Name here' }}
         </button>
-        <div class="sheet-divider" />
-        <button class="sheet-row gender-row" type="button" @click="popupGender = 'female'">
-          <span class="radio" :class="{ active: popupGender === 'female' }" />
-          <span>女</span>
+        <p class="input-hint">Enter your Account Name</p>
+      </section>
+
+      <section class="gender-select" @click="openGenderPopup">
+        <button class="gender-option" type="button">
+          <span class="radio" :class="{ active: selectedGender === 'male' }"></span>
+          <span>Male</span>
         </button>
-        <button class="sheet-confirm" type="button" @click="onConfirmGender">赠送</button>
-      </div>
-    </VanPopup>
+        <button class="gender-option" type="button">
+          <span class="radio" :class="{ active: selectedGender === 'female' }"></span>
+          <span>Female</span>
+        </button>
+      </section>
+
+      <VanPopup
+        v-model:show="showAvatarPopup"
+        round
+        position="bottom"
+        class="sheet-popup"
+        :overlay-style="{ background: 'rgba(12,12,12,0.6)' }"
+      >
+        <div class="sheet-body">
+          <button class="sheet-row" type="button" @click="onAvatarAction('album')">相册</button>
+          <div class="sheet-divider"></div>
+          <button class="sheet-row" type="button" @click="onAvatarAction('camera')">相机</button>
+          <button class="sheet-confirm" type="button" @click="onAvatarAction('album')">加入</button>
+        </div>
+      </VanPopup>
+
+      <VanPopup
+        v-model:show="showGenderPopup"
+        round
+        position="bottom"
+        class="sheet-popup"
+        :overlay-style="{ background: 'rgba(12,12,12,0.6)' }"
+      >
+        <div class="sheet-body">
+          <button class="sheet-row gender-row" type="button" @click="popupGender = 'male'">
+            <span class="radio" :class="{ active: popupGender === 'male' }"></span>
+            <span>男</span>
+          </button>
+          <div class="sheet-divider"></div>
+          <button class="sheet-row gender-row" type="button" @click="popupGender = 'female'">
+            <span class="radio" :class="{ active: popupGender === 'female' }"></span>
+            <span>女</span>
+          </button>
+          <button class="sheet-confirm" type="button" @click="onConfirmGender">赠送</button>
+        </div>
+      </VanPopup>
     </div>
   </div>
 </template>

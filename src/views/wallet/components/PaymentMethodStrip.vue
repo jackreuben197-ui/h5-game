@@ -115,10 +115,11 @@ const emit = defineEmits<{
 
 .method__label-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 0.07rem;
-  line-height: 1.4;
+  gap: 0.09rem;
+  line-height: 0.9;
   white-space: nowrap;
 }
 

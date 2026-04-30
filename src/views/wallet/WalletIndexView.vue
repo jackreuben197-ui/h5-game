@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import ava1 from '@/assets/images/wallet/avatars/ava1.png'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
-import icUsdt from '@/assets/icons/wallet/ic_usdt.svg'
-import icBtc from '@/assets/icons/wallet/ic_btc.svg'
-import icEth from '@/assets/icons/wallet/ic_eth.svg'
-import icCard from '@/assets/icons/wallet/ic_card.svg'
 import AppBar from '@/components/wallet/AppBar.vue'
 import SegmentedToggle from '@/views/wallet/components/SegmentedToggle.vue'
 import UserCard from '@/views/wallet/components/UserCard.vue'
@@ -18,15 +14,91 @@ import PaymentMethodStrip, { type PaymentMethod } from '@/views/wallet/component
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import NumericKeypad from '@/views/wallet/components/NumericKeypad.vue'
 import WithdrawForm from '@/views/wallet/components/WithdrawForm.vue'
+import UsdtPaymentPopup from '@/views/wallet/components/UsdtPaymentPopup.vue'
 import { t } from '@/i18n'
+import { useWalletStore } from '@/stores/wallet'
+import { useUserInfoStore } from '@/stores/userInfo'
 
 const router = useRouter()
+const walletStore = useWalletStore()
+const userInfoStore = useUserInfoStore()
 
 const activeTab = ref(0)
 const activePreset = ref(0)
 const activeMethod = ref(0)
 const keypadOpen = ref(false)
 const customAmount = ref('')
+const usdtPopupOpen = ref(false)
+const usdtPopupProps = ref({
+  goldCount: 0,
+  rate: 0,
+  feeRate: 0,
+})
+
+
+const methods = computed<PaymentMethod[]>(() =>
+  (walletStore.goldPriceData?.pay_types ?? []).map(pt => ({
+    icon: pt.image ?? '',
+    primary: pt.name ?? '',
+    secondary: '',
+  }))
+)
+
+// if pay_type have no price_ids or price_list then empty tile will show and default is custom amount tile will show.
+
+function calculateUsdtPrice(goldCount: number, rate: number, feeRate: number) {
+  let base = goldCount / 100;
+  let price = base * rate;
+  price = Math.round(price * 10000) / 10000;
+  if (feeRate > 0) {
+    price = price * (1 + feeRate);
+    price = Math.round(price * 10000) / 10000;
+  }
+  return Number(price.toFixed(6));
+}
+
+const formatUsdtPrice = (price: number): string => {
+  if (price === 0) return "0";
+  const rounded = Math.round(price * 100) / 100;
+  const nearestInteger = Math.round(rounded);
+  if (Math.abs(rounded - nearestInteger) < 0.01) {
+    return nearestInteger.toString();
+  }
+  if (Number.isInteger(rounded)) {
+    return rounded.toString();
+  }
+  return rounded.toString().replace(/\.?0+$/, "");
+};
+
+const presets = computed<Preset[]>(() => {
+  const payTypes = walletStore.goldPriceData?.pay_types ?? []
+  const selected = payTypes[activeMethod.value]
+  const hasPriceIds = (selected?.price_ids?.length ?? 0) > 0
+  const hasPriceList = (selected?.price_list?.length ?? 0) > 0
+  if (selected && !hasPriceIds && !hasPriceList) {
+    return []
+  }
+  const list = hasPriceList
+    ? selected!.price_list!
+    : (walletStore.goldPriceData?.list ?? [])
+    
+  const isUsdt = selected?.type === 1;
+  const rate = selected?.rate ?? 1;
+  const feeRate = selected?.fee_rate ?? 0;
+
+  return list.map(item => {
+    const goldCount = item.gold_count ?? 0;
+    const amountStr = String(goldCount / 100);
+    const chipStr = isUsdt 
+      ? formatUsdtPrice(calculateUsdtPrice(goldCount, rate, feeRate))
+      : (goldCount / 100).toLocaleString();
+
+    return {
+      amount: amountStr,
+      chip: chipStr,
+    }
+  })
+})
 
 function onCustom(): void {
   keypadOpen.value = true
@@ -35,25 +107,53 @@ function onCustom(): void {
 function onKeypadSubmit(v: number): void {
   customAmount.value = String(v)
   keypadOpen.value = false
+  activePreset.value = -1
 }
 
-const presets: Preset[] = [
-  { amount: '100000', chip: '300,000' },
-  { amount: '100000', chip: '300,000' },
-  { amount: '100000', chip: '300,000' },
-  { amount: '100000', chip: '300,000' },
-  { amount: '100000', chip: '300,000' },
-]
+const selectedAmount = computed(() => {
+  if (activePreset.value === -1) {
+    return customAmount.value || '0'
+  }
+  return presets.value[activePreset.value]?.amount || '0'
+})
 
-const methods: PaymentMethod[] = [
-  { icon: icUsdt, primary: 'USDT', secondary: 'TRC20' },
-  { icon: icUsdt, primary: 'USDT', secondary: 'TRC20' },
-  { icon: icBtc, primary: 'BTC', secondary: '' },
-  { icon: icEth, primary: 'ETH', secondary: '' },
-  { icon: icCard, primary: t('Wallet_MethodCard'), secondary: '' },
-]
+const displayPayAmount = computed(() => {
+  const payTypes = walletStore.goldPriceData?.pay_types ?? []
+  const selected = payTypes[activeMethod.value]
+  const amount = Number(selectedAmount.value)
+  
+  if (selected?.type === 1) { // USDT
+    const goldCount = amount * 100
+    const rate = selected.rate ?? 1
+    const feeRate = selected.fee_rate ?? 0
+    return formatUsdtPrice(calculateUsdtPrice(goldCount, rate, feeRate))
+  }
+  
+  return selectedAmount.value
+})
 
 const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
+
+function onPayClick() {
+  const payTypes = walletStore.goldPriceData?.pay_types ?? []
+  const selectedPayType = payTypes[activeMethod.value]
+
+  if (selectedPayType?.type === 1) {
+    usdtPopupProps.value = {
+      goldCount: Number(selectedAmount.value) * 100,
+      rate: selectedPayType.rate ?? 1,
+      feeRate: selectedPayType.fee_rate ?? 0,
+    }
+    usdtPopupOpen.value = true
+  } else {
+    // Normal pay
+  }
+}
+
+function onUsdtSubmit(type: number) {
+  usdtPopupOpen.value = false
+  // TODO: submit transaction
+}
 </script>
 
 <template>
@@ -66,7 +166,7 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
       :show-actions="false"
     />
 
-    <div class="wallet-screen__content">
+    <div class="wallet-screen__content-top">
       <div class="tabs-row">
         <SegmentedToggle
           v-model="activeTab"
@@ -74,8 +174,11 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
         />
         <BellButton class="tabs-row__bell" />
       </div>
+    </div>
 
-      <UserCard
+    <div class="wallet-scrollable">
+      <div class="wallet-screen__content">
+        <UserCard
         class="wallet-banner"
         :avatar="ava1"
         name="Cooper&#10;Korsgaard"
@@ -94,7 +197,7 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
         <template #extra>
           <div class="balance-row">
             <div class="balance-chip">
-              <span class="balance-chip__value">19,231</span>
+              <span class="balance-chip__value">{{ (userInfoStore.userInfo?.user?.gold ?? 0).toLocaleString() }}</span>
               <img
                 :src="icCoins"
                 alt=""
@@ -107,36 +210,49 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
       </UserCard>
 
       <template v-if="activeTab === 0">
-        <div class="presets-card">
-          <PresetAmountGrid
-            :presets="presets"
-            :active-index="activePreset"
-            @select="activePreset = $event"
-            @custom="onCustom"
+        <div class="recharge-content">
+          <div class="presets-card">
+            <PresetAmountGrid
+              :presets="presets"
+              :active-index="activePreset"
+              @select="activePreset = $event"
+              @custom="onCustom"
+            />
+          </div>
+
+          <PaymentMethodStrip
+            :methods="methods"
+            :active-index="activeMethod"
+            @select="activeMethod = $event"
           />
         </div>
 
-        <PaymentMethodStrip
-          :methods="methods"
-          :active-index="activeMethod"
-          @select="activeMethod = $event"
-        />
-
         <PrimaryButton
-          :text="t('Wallet_PayNow', '999')"
+          :text="`立即支付 ${displayPayAmount}`"
           class="pay-cta"
+          @click="onPayClick"
         />
       </template>
 
-      <template v-else>
-        <WithdrawForm />
-      </template>
+        <template v-else>
+          <WithdrawForm />
+        </template>
+      </div>
     </div>
 
     <NumericKeypad
       :open="keypadOpen"
       @close="keypadOpen = false"
       @submit="onKeypadSubmit"
+    />
+
+    <UsdtPaymentPopup
+      v-if="usdtPopupOpen"
+      :gold-count="usdtPopupProps.goldCount"
+      :rate="usdtPopupProps.rate"
+      :fee-rate="usdtPopupProps.feeRate"
+      @close="usdtPopupOpen = false"
+      @submit="onUsdtSubmit"
     />
   </div>
 </template>
@@ -145,14 +261,26 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
 .wallet-screen {
   height: 100vh;
   height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.wallet-scrollable {
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   padding-bottom: calc(env(safe-area-inset-bottom) + 0.64rem);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+}
+
+.wallet-screen__content-top {
+  padding: 0 0.455rem;
+  margin-top: 0.2rem;
 }
 
 .wallet-screen__content {
@@ -179,6 +307,15 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
 
 .wallet-banner {
   margin: 0 22px;
+  position: sticky;
+  top: 0.2rem;
+  z-index: 0;
+}
+
+.recharge-content {
+  position: relative;
+  z-index: 1;
+  padding-bottom: 2.5rem;
 }
 
 .presets-card {
@@ -262,6 +399,10 @@ const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
 }
 
 .pay-cta {
-  margin-top: 0.2rem;
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom) + 0.6rem);
+  left: 0.455rem;
+  width: calc(100% - 0.91rem);
+  z-index: 10;
 }
 </style>

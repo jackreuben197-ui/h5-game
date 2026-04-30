@@ -23,7 +23,6 @@ import {
   HOLDEM_CODE,
   decodeHoldemCode,
   decodeHoldemPacket,
-  decodeProtoDebugFields,
   encodeHoldemPacket,
   type HoldemPacketDecodeResult,
 } from './holdemPacket'
@@ -264,7 +263,6 @@ function logWsOutgoing(data: string | ArrayBuffer | ArrayBufferView | Blob, cont
       matchId: packet.matchId,
       protoVersion: packet.protoVersion,
       bodyLen: packet.body.length,
-      protoFields: packet.body.length ? decodeProtoDebugFields(packet.body, 8) : [],
     })
     return
   }

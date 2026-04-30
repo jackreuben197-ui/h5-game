@@ -7,6 +7,58 @@ import legacy from '@vitejs/plugin-legacy'
 import Components from 'unplugin-vue-components/vite'
 import { VantResolver } from '@vant/auto-import-resolver'
 
+// 将 pb 目录下 protoc-gen-js 生成的 CommonJS 文件在 Vite ESM 环境中正确运行。
+// 策略：保留原始 .js 不修改（与 Cocos/Unity 同源），在 transform 阶段注入 ESM 兼容头。
+function pbCjsToEsmPlugin(): Plugin {
+  return {
+    name: 'pb-cjs-to-esm',
+    transform(code: string, id: string) {
+      if (!id.includes('/bridge/ws/pb/') || !id.endsWith('.js')) return null
+
+      const isDefine = id.endsWith('/define_pb.js')
+
+      // 从 goog.exportSymbol 调用中提取顶层导出符号名（Def.Action 这类嵌套只取 Def）
+      const symbols = [
+        ...new Set(
+          [...code.matchAll(/goog\.exportSymbol\('proto\.holdem\.pb\.(\w+)'/g)].map((m) => m[1]),
+        ),
+      ]
+
+      // ESM 前置：用 import 替代 require，保留 goog/global 变量名不变
+      const preamble = [
+        `import jspb from 'google-protobuf';`,
+        `var goog = jspb;`,
+        `var global = Function('return this')();`,
+        ...(isDefine ? [] : [`import * as protobuf_holdem_define_pb from './define_pb.js';`]),
+        '',
+      ].join('\n')
+
+      // 剥离 CJS 头部（require 语句已被 preamble 中的 import 取代）
+      let body = code
+        .replace(/^var jspb = require\('google-protobuf'\);\r?\n/m, '')
+        .replace(/^var goog = jspb;\r?\n/m, '')
+        .replace(/^var global = Function\('return this'\)\(\);\r?\n/m, '')
+        .replace(/^goog\.object\.extend\(exports, proto\.holdem\.pb\);\r?\n?/m, '')
+
+      if (!isDefine) {
+        body = body.replace(
+          /^var protobuf_holdem_define_pb = require\('\.\.\/\.\.\/protobuf\/holdem\/define_pb\.js'\);\r?\n/m,
+          '',
+        )
+      }
+
+      // 模块代码执行完毕后，从 global.proto.holdem.pb 上捕获类并导出为具名 ESM export
+      const footer = [
+        '',
+        ...symbols.map((sym) => `var _e_${sym} = proto.holdem.pb.${sym};`),
+        `export { ${symbols.map((sym) => `_e_${sym} as ${sym}`).join(', ')} };`,
+      ].join('\n')
+
+      return { code: preamble + body + footer, map: null }
+    },
+  }
+}
+
 // 监听 public/assets/resources/config 下的 txt 文件变化，触发整页刷新。
 function i18nHotReloadPlugin(): Plugin {
   return {
@@ -68,6 +120,7 @@ export default defineConfig(({ mode, command }) => {
       __APP_INFO__: JSON.stringify(appInfo),
     },
     plugins: [
+      pbCjsToEsmPlugin(),
       vue(),
       i18nHotReloadPlugin(),
       Components({
@@ -113,6 +166,13 @@ export default defineConfig(({ mode, command }) => {
           // 三方依赖采用稳定分组，避免按包名切分造成过多小文件请求。
           manualChunks: (id) => {
             const normalizedId = id.replace(/\\/g, '/')
+
+            // pb 生成文件单独成 chunk：体积大（define_pb ~1MB），且通过动态 import
+            // 懒加载，不应进入主 bundle。
+            if (normalizedId.includes('/bridge/ws/pb/')) {
+              return 'pb-holdem'
+            }
+
             if (!normalizedId.includes('/node_modules/')) {
               return
             }

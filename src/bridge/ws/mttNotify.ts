@@ -1,3 +1,13 @@
+import type {
+  RoomTribeClubRelate as PbRoomTribeClubRelate,
+  UserMttRecord as PbUserMttRecord,
+  UserMttRecordChange as PbUserMttRecordChange,
+  UserSNGRecord as PbUserSNGRecord,
+  UserSNGRecordChange as PbUserSNGRecordChange,
+} from './pb/protobuf/holdem/define_pb'
+import type { ServerMessageMttSeriesNotify as PbServerMessageMttSeriesNotify } from './pb/protobuf/holdem/recv_g_mtt_series_notify_pb'
+import type { ServerMessageUserMttChangeNotify as PbServerMessageUserMttChangeNotify } from './pb/protobuf/holdem/recv_g_user_mtt_change_notify_pb'
+import type { ServerMessageUserSngChangeNotify as PbServerMessageUserSngChangeNotify } from './pb/protobuf/holdem/recv_g_user_sng_change_notify_pb'
 import { decodeHoldemPacket } from './holdemPacket'
 
 // 对齐 Unity GameMatchMttMessageController.RegisterMsgHandler 的 3 个通知协议号。
@@ -102,629 +112,196 @@ export interface WsMttSeriesNotifyPayload {
   create_time: number
 }
 
-interface VarintResult {
-  value: bigint
-  nextOffset: number
+// pb 模块三个文件共享 define_pb（~1 MB），合并为一次并行加载。
+// 在本模块首次 import 时立即后台加载，WS 建立前 pb 通常已就绪。
+type MttPbClasses = {
+  userMttChangeNotify: typeof PbServerMessageUserMttChangeNotify
+  userSngChangeNotify: typeof PbServerMessageUserSngChangeNotify
+  mttSeriesNotify: typeof PbServerMessageMttSeriesNotify
 }
-
-interface FieldHeaderResult {
-  fieldNo: number
-  wireType: number
-  nextOffset: number
-}
-
-interface LengthDelimitedResult {
-  bytes: Uint8Array
-  nextOffset: number
-}
-
-const textDecoder = new TextDecoder()
-
-function clampToSafeNumber(value: bigint): number {
-  if (value > BigInt(Number.MAX_SAFE_INTEGER)) {
-    return Number.MAX_SAFE_INTEGER
+let mttPbClasses: MttPbClasses | null = null
+void Promise.all([
+  import('./pb/protobuf/holdem/recv_g_user_mtt_change_notify_pb'),
+  import('./pb/protobuf/holdem/recv_g_user_sng_change_notify_pb'),
+  import('./pb/protobuf/holdem/recv_g_mtt_series_notify_pb'),
+]).then(([mttMod, sngMod, seriesMod]) => {
+  mttPbClasses = {
+    userMttChangeNotify: mttMod.ServerMessageUserMttChangeNotify,
+    userSngChangeNotify: sngMod.ServerMessageUserSngChangeNotify,
+    mttSeriesNotify: seriesMod.ServerMessageMttSeriesNotify,
   }
-  return Number(value)
+})
+
+function toSafeInt(value: unknown): number {
+  const num = Number(value)
+  if (!Number.isFinite(num)) return 0
+  return Math.floor(num)
 }
 
-function decodeVarint(bytes: Uint8Array, offset: number): VarintResult | null {
-  let result = 0n
-  let shift = 0n
-  let cursor = offset
-
-  while (cursor < bytes.length) {
-    const byte = BigInt(bytes[cursor])
-    result |= (byte & 0x7fn) << shift
-    cursor += 1
-
-    if ((byte & 0x80n) === 0n) {
-      return {
-        value: result,
-        nextOffset: cursor,
-      }
-    }
-
-    shift += 7n
-    if (shift > 70n) {
-      return null
-    }
-  }
-
-  return null
-}
-
-function decodeFieldHeader(bytes: Uint8Array, offset: number): FieldHeaderResult | null {
-  const varint = decodeVarint(bytes, offset)
-  if (!varint) {
-    return null
-  }
-
-  const raw = varint.value
+function mapTribeClubRelate(item: PbRoomTribeClubRelate): WsRoomTribeClubRelate {
   return {
-    fieldNo: Number(raw >> 3n),
-    wireType: Number(raw & 0x07n),
-    nextOffset: varint.nextOffset,
+    tribe_id: toSafeInt(item.getTribeId()),
+    club_ids: item.getClubIdsList().map((id) => toSafeInt(id)),
   }
 }
 
-function decodeLengthDelimited(bytes: Uint8Array, offset: number): LengthDelimitedResult | null {
-  const lenVarint = decodeVarint(bytes, offset)
-  if (!lenVarint) {
-    return null
-  }
-
-  const length = clampToSafeNumber(lenVarint.value)
-  const start = lenVarint.nextOffset
-  const end = start + length
-  if (end > bytes.length) {
-    return null
-  }
-
+function mapUserMttRecord(record: PbUserMttRecord): WsUserMttRecord {
   return {
-    bytes: bytes.slice(start, end),
-    nextOffset: end,
+    match_id: toSafeInt(record.getMatchId()),
+    start_time: toSafeInt(record.getStartTime()),
+    status: toSafeInt(record.getStatus()),
+    upblind_interval: toSafeInt(record.getUpblindInterval()),
+    apply_fee_pool: toSafeInt(record.getApplyFeePool()),
+    prize_base_pool: toSafeInt(record.getPrizeBasePool()),
+    name: record.getName() || '',
+    game_type: toSafeInt(record.getGameType()),
+    poker_type: toSafeInt(record.getPokerType()),
+    participants: toSafeInt(record.getParticipants()),
+    apply_start_time: toSafeInt(record.getApplyStartTime()),
+    max_delay_apply_bl: toSafeInt(record.getMaxDelayApplyBl()),
+    rebuy_times: toSafeInt(record.getRebuyTimes()),
+    addon_begin_bl: toSafeInt(record.getAddonBeginBl()),
+    addon_end_bl: toSafeInt(record.getAddonEndBl()),
+    prize_type: toSafeInt(record.getPrizeType()),
+    anti_cheat_type: toSafeInt(record.getAntiCheatType()),
+    mtt_banner_url: record.getMttBannerUrl() || '',
+    game_icon: record.getGameIcon() || '',
+    origin_type: toSafeInt(record.getOriginType()),
+    series_id: toSafeInt(record.getSeriesId()),
+    pinned_time: toSafeInt(record.getPinnedTime()),
+    // protobuf 版本差异兼容：UserMttRecord 在部分版本没有 limit_participants 字段。
+    limit_participants: toSafeInt(record.getParticipants()),
+    create_time: toSafeInt(record.getCreateTime()),
+    relate_club_ids: record.getRelateClubIdsList().map((id) => toSafeInt(id)),
+    relate_tribe_club_list: record
+      .getRelateTribeClubListList()
+      .map((item) => mapTribeClubRelate(item)),
   }
 }
 
-function skipUnknownWire(bytes: Uint8Array, offset: number, wireType: number): number {
-  if (wireType === 0) {
-    const varint = decodeVarint(bytes, offset)
-    return varint ? varint.nextOffset : bytes.length
+function mapUserMttRecordChange(record: PbUserMttRecordChange): WsUserMttRecordChange {
+  return {
+    match_id: toSafeInt(record.getMatchId()),
+    status: toSafeInt(record.getStatus()),
+    participants: toSafeInt(record.getParticipants()),
+    series_id: toSafeInt(record.getSeriesId()),
+    pinned_time: toSafeInt(record.getPinnedTime()),
   }
-  if (wireType === 1) {
-    return Math.min(bytes.length, offset + 8)
-  }
-  if (wireType === 2) {
-    const block = decodeLengthDelimited(bytes, offset)
-    return block ? block.nextOffset : bytes.length
-  }
-  if (wireType === 5) {
-    return Math.min(bytes.length, offset + 4)
-  }
-  return bytes.length
 }
 
-function decodeUtf8(bytes: Uint8Array): string {
-  if (!bytes.length) {
-    return ''
+function mapUserSngRecord(record: PbUserSNGRecord): WsUserSngRecord {
+  return {
+    sng_id: toSafeInt(record.getSngId()),
+    status: toSafeInt(record.getStatus()),
+    origin_type: toSafeInt(record.getOriginType()),
+    series_id: toSafeInt(record.getSeriesId()),
+    pinned_time: toSafeInt(record.getPinnedTime()),
+    relate_club_ids: record.getRelateClubIdsList().map((id) => toSafeInt(id)),
+    relate_tribe_club_list: record
+      .getRelateTribeClubListList()
+      .map((item) => mapTribeClubRelate(item)),
   }
-  return textDecoder.decode(bytes)
 }
 
-function decodePackedUint64(bytes: Uint8Array): number[] {
-  const result: number[] = []
-  let offset = 0
-
-  while (offset < bytes.length) {
-    const varint = decodeVarint(bytes, offset)
-    if (!varint) {
-      break
-    }
-    result.push(clampToSafeNumber(varint.value))
-    offset = varint.nextOffset
+function mapUserSngRecordChange(record: PbUserSNGRecordChange): WsUserSngRecordChange {
+  return {
+    sng_id: toSafeInt(record.getSngId()),
+    status: toSafeInt(record.getStatus()),
+    series_id: toSafeInt(record.getSeriesId()),
+    pinned_time: toSafeInt(record.getPinnedTime()),
   }
-
-  return result
-}
-
-function parseRoomTribeClubRelate(bytes: Uint8Array): WsRoomTribeClubRelate {
-  const result: WsRoomTribeClubRelate = {
-    tribe_id: 0,
-    club_ids: [],
-  }
-
-  let offset = 0
-  while (offset < bytes.length) {
-    const header = decodeFieldHeader(bytes, offset)
-    if (!header) {
-      break
-    }
-    offset = header.nextOffset
-
-    if (header.fieldNo === 1 && header.wireType === 0) {
-      const value = decodeVarint(bytes, offset)
-      if (!value) break
-      result.tribe_id = clampToSafeNumber(value.value)
-      offset = value.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 2 && header.wireType === 2) {
-      const packed = decodeLengthDelimited(bytes, offset)
-      if (!packed) break
-      result.club_ids = decodePackedUint64(packed.bytes)
-      offset = packed.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 2 && header.wireType === 0) {
-      const value = decodeVarint(bytes, offset)
-      if (!value) break
-      result.club_ids.push(clampToSafeNumber(value.value))
-      offset = value.nextOffset
-      continue
-    }
-
-    offset = skipUnknownWire(bytes, offset, header.wireType)
-  }
-
-  return result
-}
-
-// 解析 UserMttRecord（仅取 H5 大厅/MTT 列表实际会用到的字段）。
-function parseUserMttRecord(bytes: Uint8Array): WsUserMttRecord {
-  const result: WsUserMttRecord = {
-    match_id: 0,
-    start_time: 0,
-    status: 0,
-    upblind_interval: 0,
-    apply_fee_pool: 0,
-    prize_base_pool: 0,
-    name: '',
-    game_type: 0,
-    poker_type: 0,
-    participants: 0,
-    apply_start_time: 0,
-    max_delay_apply_bl: 0,
-    rebuy_times: 0,
-    addon_begin_bl: 0,
-    addon_end_bl: 0,
-    prize_type: 0,
-    anti_cheat_type: 0,
-    mtt_banner_url: '',
-    game_icon: '',
-    origin_type: 0,
-    series_id: 0,
-    pinned_time: 0,
-    limit_participants: 0,
-    create_time: 0,
-    relate_club_ids: [],
-    relate_tribe_club_list: [],
-  }
-
-  let offset = 0
-  while (offset < bytes.length) {
-    const header = decodeFieldHeader(bytes, offset)
-    if (!header) {
-      break
-    }
-    offset = header.nextOffset
-
-    if (header.wireType === 0) {
-      const value = decodeVarint(bytes, offset)
-      if (!value) break
-      const safeValue = clampToSafeNumber(value.value)
-
-      if (header.fieldNo === 1) result.match_id = safeValue
-      if (header.fieldNo === 2) result.start_time = safeValue
-      if (header.fieldNo === 3) result.status = safeValue
-      if (header.fieldNo === 4) result.upblind_interval = safeValue
-      if (header.fieldNo === 6) result.apply_fee_pool = safeValue
-      if (header.fieldNo === 9) result.prize_base_pool = safeValue
-      if (header.fieldNo === 11) result.anti_cheat_type = safeValue
-      if (header.fieldNo === 14) result.limit_participants = safeValue
-      if (header.fieldNo === 26) result.game_type = safeValue
-      if (header.fieldNo === 27) result.poker_type = safeValue
-      if (header.fieldNo === 29) result.participants = safeValue
-      if (header.fieldNo === 31) result.apply_start_time = safeValue
-      if (header.fieldNo === 32) result.max_delay_apply_bl = safeValue
-      if (header.fieldNo === 33) result.rebuy_times = safeValue
-      if (header.fieldNo === 34) result.addon_begin_bl = safeValue
-      if (header.fieldNo === 35) result.addon_end_bl = safeValue
-      if (header.fieldNo === 36) result.prize_type = safeValue
-      if (header.fieldNo === 54) result.origin_type = safeValue
-      if (header.fieldNo === 55) result.series_id = safeValue
-      if (header.fieldNo === 56) result.pinned_time = safeValue
-      if (header.fieldNo === 57) result.create_time = safeValue
-
-      // repeated uint64 relate_club_ids: packed 或 unpacked 都兼容。
-      if (header.fieldNo === 52) {
-        result.relate_club_ids.push(safeValue)
-      }
-
-      offset = value.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 25 && header.wireType === 2) {
-      const value = decodeLengthDelimited(bytes, offset)
-      if (!value) break
-      result.name = decodeUtf8(value.bytes)
-      offset = value.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 21 && header.wireType === 2) {
-      const value = decodeLengthDelimited(bytes, offset)
-      if (!value) break
-      result.game_icon = decodeUtf8(value.bytes)
-      offset = value.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 50 && header.wireType === 2) {
-      const value = decodeLengthDelimited(bytes, offset)
-      if (!value) break
-      result.mtt_banner_url = decodeUtf8(value.bytes)
-      offset = value.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 52 && header.wireType === 2) {
-      const packed = decodeLengthDelimited(bytes, offset)
-      if (!packed) break
-      result.relate_club_ids = decodePackedUint64(packed.bytes)
-      offset = packed.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 53 && header.wireType === 2) {
-      const value = decodeLengthDelimited(bytes, offset)
-      if (!value) break
-      result.relate_tribe_club_list.push(parseRoomTribeClubRelate(value.bytes))
-      offset = value.nextOffset
-      continue
-    }
-
-    offset = skipUnknownWire(bytes, offset, header.wireType)
-  }
-
-  return result
-}
-
-function parseUserMttRecordChange(bytes: Uint8Array): WsUserMttRecordChange {
-  const result: WsUserMttRecordChange = {
-    match_id: 0,
-    status: 0,
-    participants: 0,
-    series_id: 0,
-    pinned_time: 0,
-  }
-
-  let offset = 0
-  while (offset < bytes.length) {
-    const header = decodeFieldHeader(bytes, offset)
-    if (!header) {
-      break
-    }
-    offset = header.nextOffset
-
-    if (header.wireType === 0) {
-      const value = decodeVarint(bytes, offset)
-      if (!value) break
-      const safeValue = clampToSafeNumber(value.value)
-      if (header.fieldNo === 1) result.match_id = safeValue
-      if (header.fieldNo === 2) result.status = safeValue
-      if (header.fieldNo === 3) result.participants = safeValue
-      if (header.fieldNo === 4) result.series_id = safeValue
-      if (header.fieldNo === 5) result.pinned_time = safeValue
-      offset = value.nextOffset
-      continue
-    }
-
-    offset = skipUnknownWire(bytes, offset, header.wireType)
-  }
-
-  return result
-}
-
-function parseUserSngRecord(bytes: Uint8Array): WsUserSngRecord {
-  const result: WsUserSngRecord = {
-    sng_id: 0,
-    status: 0,
-    origin_type: 0,
-    series_id: 0,
-    pinned_time: 0,
-    relate_club_ids: [],
-    relate_tribe_club_list: [],
-  }
-
-  let offset = 0
-  while (offset < bytes.length) {
-    const header = decodeFieldHeader(bytes, offset)
-    if (!header) {
-      break
-    }
-    offset = header.nextOffset
-
-    if (header.wireType === 0) {
-      const value = decodeVarint(bytes, offset)
-      if (!value) break
-      const safeValue = clampToSafeNumber(value.value)
-      if (header.fieldNo === 1) result.sng_id = safeValue
-      if (header.fieldNo === 12) result.origin_type = safeValue
-      if (header.fieldNo === 27) result.status = safeValue
-      if (header.fieldNo === 30) result.series_id = safeValue
-      if (header.fieldNo === 31) result.pinned_time = safeValue
-      if (header.fieldNo === 28) {
-        result.relate_club_ids.push(safeValue)
-      }
-      offset = value.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 28 && header.wireType === 2) {
-      const packed = decodeLengthDelimited(bytes, offset)
-      if (!packed) break
-      result.relate_club_ids = decodePackedUint64(packed.bytes)
-      offset = packed.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 29 && header.wireType === 2) {
-      const value = decodeLengthDelimited(bytes, offset)
-      if (!value) break
-      result.relate_tribe_club_list.push(parseRoomTribeClubRelate(value.bytes))
-      offset = value.nextOffset
-      continue
-    }
-
-    offset = skipUnknownWire(bytes, offset, header.wireType)
-  }
-
-  return result
-}
-
-function parseUserSngRecordChange(bytes: Uint8Array): WsUserSngRecordChange {
-  const result: WsUserSngRecordChange = {
-    sng_id: 0,
-    status: 0,
-    series_id: 0,
-    pinned_time: 0,
-  }
-
-  let offset = 0
-  while (offset < bytes.length) {
-    const header = decodeFieldHeader(bytes, offset)
-    if (!header) {
-      break
-    }
-    offset = header.nextOffset
-
-    if (header.wireType === 0) {
-      const value = decodeVarint(bytes, offset)
-      if (!value) break
-      const safeValue = clampToSafeNumber(value.value)
-      if (header.fieldNo === 1) result.sng_id = safeValue
-      if (header.fieldNo === 2) result.status = safeValue
-      if (header.fieldNo === 3) result.series_id = safeValue
-      if (header.fieldNo === 4) result.pinned_time = safeValue
-      offset = value.nextOffset
-      continue
-    }
-
-    offset = skipUnknownWire(bytes, offset, header.wireType)
-  }
-
-  return result
-}
-
-function parseUserMttChangeNotifyBody(body: Uint8Array): WsUserMttChangeNotifyPayload | null {
-  const result: WsUserMttChangeNotifyPayload = {
-    changeType: 0,
-    sendTimestamp: 0,
-  }
-
-  let offset = 0
-  while (offset < body.length) {
-    const header = decodeFieldHeader(body, offset)
-    if (!header) {
-      break
-    }
-    offset = header.nextOffset
-
-    if (header.fieldNo === 1 && header.wireType === 2) {
-      const block = decodeLengthDelimited(body, offset)
-      if (!block) break
-      result.mtt = parseUserMttRecord(block.bytes)
-      offset = block.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 2 && header.wireType === 0) {
-      const value = decodeVarint(body, offset)
-      if (!value) break
-      result.sendTimestamp = clampToSafeNumber(value.value)
-      offset = value.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 3 && header.wireType === 2) {
-      const block = decodeLengthDelimited(body, offset)
-      if (!block) break
-      result.mttChange = parseUserMttRecordChange(block.bytes)
-      offset = block.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 4 && header.wireType === 0) {
-      const value = decodeVarint(body, offset)
-      if (!value) break
-      result.changeType = clampToSafeNumber(value.value)
-      offset = value.nextOffset
-      continue
-    }
-
-    offset = skipUnknownWire(body, offset, header.wireType)
-  }
-
-  if (!result.changeType) {
-    return null
-  }
-  return result
-}
-
-function parseUserSngChangeNotifyBody(body: Uint8Array): WsUserSngChangeNotifyPayload | null {
-  const result: WsUserSngChangeNotifyPayload = {
-    changeType: 0,
-    sendTimestamp: 0,
-  }
-
-  let offset = 0
-  while (offset < body.length) {
-    const header = decodeFieldHeader(body, offset)
-    if (!header) {
-      break
-    }
-    offset = header.nextOffset
-
-    if (header.fieldNo === 1 && header.wireType === 2) {
-      const block = decodeLengthDelimited(body, offset)
-      if (!block) break
-      result.sng = parseUserSngRecord(block.bytes)
-      offset = block.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 2 && header.wireType === 0) {
-      const value = decodeVarint(body, offset)
-      if (!value) break
-      result.sendTimestamp = clampToSafeNumber(value.value)
-      offset = value.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 3 && header.wireType === 2) {
-      const block = decodeLengthDelimited(body, offset)
-      if (!block) break
-      result.sngChange = parseUserSngRecordChange(block.bytes)
-      offset = block.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 4 && header.wireType === 0) {
-      const value = decodeVarint(body, offset)
-      if (!value) break
-      result.changeType = clampToSafeNumber(value.value)
-      offset = value.nextOffset
-      continue
-    }
-
-    offset = skipUnknownWire(body, offset, header.wireType)
-  }
-
-  if (!result.changeType) {
-    return null
-  }
-  return result
-}
-
-function parseMttSeriesNotifyBody(body: Uint8Array): WsMttSeriesNotifyPayload | null {
-  const result: WsMttSeriesNotifyPayload = {
-    id: 0,
-    name: '',
-    type: 0,
-    tribe_id: 0,
-    create_time: 0,
-  }
-
-  let offset = 0
-  while (offset < body.length) {
-    const header = decodeFieldHeader(body, offset)
-    if (!header) {
-      break
-    }
-    offset = header.nextOffset
-
-    if (header.fieldNo === 1 && header.wireType === 0) {
-      const value = decodeVarint(body, offset)
-      if (!value) break
-      result.id = clampToSafeNumber(value.value)
-      offset = value.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 2 && header.wireType === 2) {
-      const value = decodeLengthDelimited(body, offset)
-      if (!value) break
-      result.name = decodeUtf8(value.bytes)
-      offset = value.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 3 && header.wireType === 0) {
-      const value = decodeVarint(body, offset)
-      if (!value) break
-      result.type = clampToSafeNumber(value.value)
-      offset = value.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 4 && header.wireType === 0) {
-      const value = decodeVarint(body, offset)
-      if (!value) break
-      result.tribe_id = clampToSafeNumber(value.value)
-      offset = value.nextOffset
-      continue
-    }
-
-    if (header.fieldNo === 5 && header.wireType === 0) {
-      const value = decodeVarint(body, offset)
-      if (!value) break
-      result.create_time = clampToSafeNumber(value.value)
-      offset = value.nextOffset
-      continue
-    }
-
-    offset = skipUnknownWire(body, offset, header.wireType)
-  }
-
-  if (!result.id) {
-    return null
-  }
-  return result
 }
 
 // 从 WS 原始包解析 UserMttChangeNotify(151)。
 export function decodeUserMttChangeNotifyFromRawPacket(
   rawPacket: ArrayBufferLike,
 ): WsUserMttChangeNotifyPayload | null {
+  if (!mttPbClasses) return null
+
   const packet = decodeHoldemPacket(rawPacket)
   if (!packet || packet.code !== MTT_NOTIFY_CODE.USER_MTT_CHANGE_NOTIFY) {
     return null
   }
-  return parseUserMttChangeNotifyBody(packet.body)
+
+  try {
+    const notify = mttPbClasses.userMttChangeNotify.deserializeBinary(packet.body)
+    const changeType = toSafeInt(notify.getChangeType())
+    if (!changeType) return null
+
+    const payload: WsUserMttChangeNotifyPayload = {
+      changeType,
+      sendTimestamp: toSafeInt(notify.getSendTimestamp()),
+    }
+
+    const mtt = notify.getMtt()
+    if (mtt) payload.mtt = mapUserMttRecord(mtt)
+
+    const mttChange = notify.getMttChange()
+    if (mttChange) payload.mttChange = mapUserMttRecordChange(mttChange)
+
+    return payload
+  } catch {
+    return null
+  }
 }
 
 // 从 WS 原始包解析 UserSngChangeNotify(152)。
 export function decodeUserSngChangeNotifyFromRawPacket(
   rawPacket: ArrayBufferLike,
 ): WsUserSngChangeNotifyPayload | null {
+  if (!mttPbClasses) return null
+
   const packet = decodeHoldemPacket(rawPacket)
   if (!packet || packet.code !== MTT_NOTIFY_CODE.USER_SNG_CHANGE_NOTIFY) {
     return null
   }
-  return parseUserSngChangeNotifyBody(packet.body)
+
+  try {
+    const notify = mttPbClasses.userSngChangeNotify.deserializeBinary(packet.body)
+    const changeType = toSafeInt(notify.getChangeType())
+    if (!changeType) return null
+
+    const payload: WsUserSngChangeNotifyPayload = {
+      changeType,
+      sendTimestamp: toSafeInt(notify.getSendTimestamp()),
+    }
+
+    const sng = notify.getSng()
+    if (sng) payload.sng = mapUserSngRecord(sng)
+
+    const sngChange = notify.getSngChange()
+    if (sngChange) payload.sngChange = mapUserSngRecordChange(sngChange)
+
+    return payload
+  } catch {
+    return null
+  }
 }
 
 // 从 WS 原始包解析 MttSeriesNotify(153)。
 export function decodeMttSeriesNotifyFromRawPacket(
   rawPacket: ArrayBufferLike,
 ): WsMttSeriesNotifyPayload | null {
+  if (!mttPbClasses) return null
+
   const packet = decodeHoldemPacket(rawPacket)
   if (!packet || packet.code !== MTT_NOTIFY_CODE.MTT_SERIES_NOTIFY) {
     return null
   }
-  return parseMttSeriesNotifyBody(packet.body)
-}
 
+  try {
+    const notify = mttPbClasses.mttSeriesNotify.deserializeBinary(packet.body)
+    const id = toSafeInt(notify.getId())
+    if (!id) return null
+
+    return {
+      id,
+      name: notify.getName() || '',
+      type: toSafeInt(notify.getType()),
+      tribe_id: toSafeInt(notify.getTribeId()),
+      create_time: toSafeInt(notify.getCreateTime()),
+    }
+  } catch {
+    return null
+  }
+}

@@ -161,5 +161,7 @@ async function loadLocaleDictionary(locale: LocaleCode): Promise<void> {
 function resolveSharedLocaleUrl(fileName: string): string {
   const baseUrl = import.meta.env.BASE_URL || '/'
   const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
-  return `${normalizedBase}${SHARED_I18N_BASE}/${fileName}`
+  const url = `${normalizedBase}${SHARED_I18N_BASE}/${fileName}`
+  const version = (typeof __I18N_VERSIONS__ !== 'undefined' && __I18N_VERSIONS__[fileName]) || ''
+  return version ? `${url}?v=${version}` : url
 }

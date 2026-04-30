@@ -118,8 +118,8 @@ const emit = defineEmits<{
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 0.02rem;
-  line-height: 1.2;
+  gap: 0.09rem;
+  line-height: 0.9;
   white-space: nowrap;
 }
 

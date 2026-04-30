@@ -1,12 +1,23 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import {
+  postOrgClubSearchByIdApi,
+  postOrgchaNgeClubDataApi,
+  postOrgClubAgentInviTationApi,
+} from '@/api/org'
+import type {
+  OrgClubData,
+  OrgClubSearchByIdResponseData
+} from '@/api/models/org'
 import imgClubCover from '@/assets/images/default_avatar.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgPeople from '@/assets/icons/icon_people.png'
 import imgQuickSafety from '@/assets/images/club_quick_activity.png'
 import imgQuickRanking from '@/assets/images/club_quick_room_history.png'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { extractInvitationLink } from '@/utils/clubInvitation'
 import { showFailToast, showSuccessToast } from 'vant'
 
 interface QuickActionItem {
@@ -26,6 +37,7 @@ interface SettingItem {
 }
 
 const router = useRouter()
+const userInfoStore = useUserInfoStore()
 
 const imgQuickFund = 'https://www.figma.com/api/mcp/asset/9a7731a8-09f1-45c7-8292-70162e10dc50'
 const imgInviteCover = 'https://www.figma.com/api/mcp/asset/788e1bce-ddc2-4682-a337-4421aefcbb64'
@@ -33,281 +45,508 @@ const imgInviteQr = 'https://www.figma.com/api/mcp/asset/f01dee7f-e8ef-4fe8-8e82
 const imgInviteHeart = 'https://www.figma.com/api/mcp/asset/65e10a58-a9e9-4b72-9616-e013be298979'
 const imgModalClose = 'https://www.figma.com/api/mcp/asset/48528ead-0f8b-41cd-8ffc-359a64018378'
 
-const quickActions: QuickActionItem[] = [
-	{ id: 1, title: '活动管理', cover: imgQuickSafety },
-	{ id: 2, title: '牌局记录', cover: imgQuickRanking },
-	{ id: 3, title: '基金', cover: imgQuickFund },
-]
+const loading = ref(false)
+const clubDetail = ref<OrgClubSearchByIdResponseData | null>(null)
 
-const settings: SettingItem[] = [
-	{ id: 1, label: '创始人', kind: 'founder', value: 'User Name' },
-	{ id: 2, label: '邀请分享', kind: 'arrow' },
-	{ id: 3, label: '联盟', kind: 'text', value: 'Guildxxxxx' },
-	{ id: 4, label: '当前俱乐部等级', kind: 'level', value: 'LV. 9' },
-	{ id: 5, label: '允许其他人搜索俱乐部', kind: 'switch', switchKey: 'allowSearch' },
-	{ id: 6, label: '入会无需审批', kind: 'switch', switchKey: 'joinWithoutApproval' },
-	{ id: 7, label: '创建时间', kind: 'text', value: '03/01/2024' },
-	{ id: 8, label: '复制俱乐部', kind: 'copy' },
-]
+// 用户等级：0 普通，1 会长，2 副会长，3 管理员，4 代理。
+const userLevel = computed(() => Number(clubDetail.value?.user_level ?? userInfoStore.currentClub?.user_level ?? 0))
+const isFounder = computed(() => userLevel.value === 1)
+const isVicePresident = computed(() => userLevel.value === 2)
+const isAdmin = computed(() => userLevel.value === 3)
+const isAgent = computed(() => userLevel.value === 4)
+const canManageClub = computed(() => isFounder.value || isVicePresident.value || isAdmin.value)
+
+const displayClub = computed(() => clubDetail.value ?? userInfoStore.currentClub)
+
+const quickActions = computed<QuickActionItem[]>(() => {
+  if (canManageClub.value) {
+    return [
+      { id: 1, title: '活动管理', cover: imgQuickSafety },
+      { id: 2, title: '牌局记录', cover: imgQuickRanking },
+      { id: 3, title: '基金', cover: imgQuickFund },
+    ]
+  }
+
+  return []
+})
+
+const settings = computed<SettingItem[]>(() => {
+  const list: SettingItem[] = [
+    {
+      id: 1,
+      label: '创始人',
+      kind: 'founder',
+      value: displayClub.value?.club_creator_nickname || '--'
+    },
+    { id: 2, label: '邀请分享', kind: 'arrow' },
+    { id: 3, label: '联盟', kind: 'text', value: displayClub.value?.tribe_name || '--' },
+  ]
+
+  if (isFounder.value) {
+    list.push(
+      { id: 4, label: '当前俱乐部等级', kind: 'level', value: `LV. ${displayClub.value?.level || 0}` },
+      { id: 5, label: '允许其他人搜索俱乐部', kind: 'switch', switchKey: 'allowSearch' },
+      { id: 6, label: '入会无需审批', kind: 'switch', switchKey: 'joinWithoutApproval' },
+    )
+  }
+
+  list.push({ id: 7, label: '创建时间', kind: 'text', value: formatDate(displayClub.value?.create_time) })
+
+  if (canManageClub.value) {
+    list.push({ id: 8, label: '复制俱乐部', kind: 'copy' })
+  }
+
+  if (isAgent.value) {
+    list.push({ id: 9, label: '下线成员', kind: 'arrow' })
+  }
+
+  return list
+})
 
 const allowSearch = ref(true)
 const joinWithoutApproval = ref(false)
 const showInvitePopup = ref(false)
 const showCopyPopup = ref(false)
 
-const clubName = '俱乐部名称'
-const clubAlias = 'XXXX'
-const clubId = '867765056'
+const clubName = computed(() => displayClub.value?.club_name || '俱乐部名称')
+const clubAlias = computed(() => displayClub.value?.tribe_name || 'XXXX')
+const clubId = computed(() => String(displayClub.value?.random_id || '--'))
 
-function formatCount(value: number): string {
-	return value.toLocaleString('en-US')
+function formatCount(value?: number): string {
+  return Number(value || 0).toLocaleString('en-US')
 }
 
-function goBack(): void {
-	void router.push('/club/index')
+function formatDate(value?: string): string {
+  if (!value) {
+    return '--'
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
+}
+
+function updateSwitchesByClubData(data: OrgClubData | null): void {
+  allowSearch.value = Number(data?.search_switch ?? 0) === 1
+  joinWithoutApproval.value = Number(data?.auto_audit_switch ?? 0) === 1
+}
+
+async function refreshClubDetail(): Promise<void> {
+  const currentClub = userInfoStore.currentClub
+  if (!currentClub?.random_id) {
+    showFailToast('未找到俱乐部信息')
+    void router.replace('/club/list')
+    return
+  }
+
+  loading.value = true
+  try {
+    const response = await postOrgClubSearchByIdApi({
+      club_random_id: currentClub.random_id,
+    })
+
+    if (response.code !== 0 || !response.data) {
+      showFailToast(response.msg || '获取俱乐部详情失败')
+      clubDetail.value = currentClub
+      updateSwitchesByClubData(currentClub)
+      return
+    }
+
+    clubDetail.value = response.data
+    userInfoStore.setCurrentClub(response.data)
+    updateSwitchesByClubData(response.data)
+  } catch (error) {
+    console.error('refreshClubDetail error', error)
+    showFailToast('获取俱乐部详情失败')
+    clubDetail.value = currentClub
+    updateSwitchesByClubData(currentClub)
+  } finally {
+    loading.value = false
+  }
 }
 
 function goEditDescription(): void {
-	void router.push('/club/edit-description')
+  if (!isFounder.value) {
+    showFailToast('仅创始人可修改')
+    return
+  }
+
+  void router.push('/club/edit-description')
 }
 
 function goEditName(): void {
-	void router.push('/club/edit-name')
+  if (!isFounder.value) {
+    showFailToast('仅创始人可修改')
+    return
+  }
+
+  void router.push('/club/edit-name')
 }
 
 function onQuickAction(actionId: number): void {
-	if (actionId === 2) {
-		void router.push('/club/room/history')
-		return
-	}
+  if (actionId === 1) {
+    void router.push('/club/activity/list')
+    return
+  }
 
-	if (actionId === 1) {
-  		showFailToast('创建牌桌功能开发中')
-		return
-	}
+  if (actionId === 2) {
+    void router.push('/club/room/history')
+    return
+  }
 
-	void router.push('/club/members')
+  if (actionId === 3) {
+    void router.push('/club/fund')
+    return
+  }
+
+  if (actionId === 4) {
+    void router.push('/club/downline-members')
+  }
 }
 
 function onSettingClick(item: SettingItem): void {
-	if (item.kind === 'switch' || item.kind === 'text' || item.kind === 'founder') {
-		return
-	}
+  if (item.kind === 'switch' || item.kind === 'text' || item.kind === 'founder') {
+    return
+  }
 
-	if (item.label === '邀请分享') {
-		showInvitePopup.value = true
-		return
-	}
+  if (item.label === '邀请分享') {
+    showInvitePopup.value = true
+    return
+  }
 
-	if (item.label === '复制俱乐部') {
-		showCopyPopup.value = true
-		return
-	}
+  if (item.label === '复制俱乐部') {
+    if (!canManageClub.value) {
+      showFailToast('暂无权限')
+      return
+    }
 
-	if (item.kind === 'level') {
-		void router.push('/club/level')
-		return
-	}
+    showCopyPopup.value = true
+    return
+  }
+
+  if (item.label === '下线成员') {
+    void router.push('/club/downline-members')
+    return
+  }
+
+  if (item.kind === 'level') {
+    void router.push('/club/level')
+    return
+  }
 }
 
 function toggleSwitch(key: 'allowSearch' | 'joinWithoutApproval'): void {
-	if (key === 'allowSearch') {
-		allowSearch.value = !allowSearch.value
-		return
-	}
+  void updateClubSwitch(key)
+}
 
-	joinWithoutApproval.value = !joinWithoutApproval.value
+async function updateClubSwitch(key: 'allowSearch' | 'joinWithoutApproval'): Promise<void> {
+  if (!isFounder.value) {
+    showFailToast('仅创始人可修改')
+    return
+  }
+
+  const clubId = Number(displayClub.value?.club_id)
+  if (!clubId) {
+    showFailToast('俱乐部信息异常')
+    return
+  }
+
+  const nextAllowSearch = key === 'allowSearch' ? !allowSearch.value : allowSearch.value
+  const nextAutoAudit = key === 'joinWithoutApproval' ? !joinWithoutApproval.value : joinWithoutApproval.value
+
+  if (key === 'allowSearch') {
+    allowSearch.value = nextAllowSearch
+  } else {
+    joinWithoutApproval.value = nextAutoAudit
+  }
+
+  try {
+    const response = await postOrgchaNgeClubDataApi({
+      club_id: clubId,
+      search_switch: nextAllowSearch ? 1 : 2,
+      auto_audit_switch: nextAutoAudit ? 1 : 2,
+    })
+
+    if (response.code !== 0) {
+      const fallback = (response.msg ?? response.message) as unknown
+      throw new Error(typeof fallback === 'string' ? fallback : '更新失败')
+    }
+
+    if (displayClub.value) {
+      const merged = {
+        ...displayClub.value,
+        search_switch: nextAllowSearch ? 1 : 2,
+        auto_audit_switch: nextAutoAudit ? 1 : 2,
+      }
+      clubDetail.value = merged
+      userInfoStore.setCurrentClub(merged)
+    }
+  } catch (error) {
+    if (key === 'allowSearch') {
+      allowSearch.value = !nextAllowSearch
+    } else {
+      joinWithoutApproval.value = !nextAutoAudit
+    }
+    const message = error instanceof Error ? error.message : '更新失败'
+    showFailToast(message)
+  }
 }
 
 function closeInvitePopup(): void {
-	showInvitePopup.value = false
+  showInvitePopup.value = false
 }
 
 function closeCopyPopup(): void {
-	showCopyPopup.value = false
+  showCopyPopup.value = false
 }
 
 function saveInviteShare(): void {
-	showSuccessToast('已保存分享图')
-	closeInvitePopup()
+  showSuccessToast('已保存分享图')
+  closeInvitePopup()
 }
 
 function submitCopyRequest(): void {
-	showSuccessToast('已提交复制申请')
-	closeCopyPopup()
+  showSuccessToast('已提交复制申请')
+  closeCopyPopup()
 }
+
+function onDeleteClub(): void {
+  if (!isFounder.value) {
+    showFailToast('仅创始人可操作')
+    return
+  }
+
+  showFailToast('删除俱乐部接口待接入')
+}
+
+async function prefetchAgentInvitationLink(): Promise<void> {
+  if (!isAgent.value) {
+    return
+  }
+
+  const currentClub = displayClub.value
+  if (!currentClub?.random_id) {
+    return
+  }
+
+  const cached = userInfoStore.getClubAgentInvitation(currentClub.random_id)
+  if (cached) {
+    return
+  }
+
+  try {
+    const rawUserId = currentClub.user_id ?? userInfoStore.userInfo?.user?.id
+    const userId = Number(rawUserId)
+
+    const response = await postOrgClubAgentInviTationApi({
+      club_id: currentClub.club_id,
+      user_id: Number.isFinite(userId) ? userId : undefined,
+    })
+
+    if (response.code !== 0) {
+      return
+    }
+
+    const invitationLink = extractInvitationLink(response.data)
+    if (!invitationLink) {
+      return
+    }
+
+    userInfoStore.setClubAgentInvitation(currentClub.random_id, invitationLink)
+  } catch (error) {
+    console.error('prefetchAgentInvitationLink error', error)
+  }
+}
+
+onMounted(async () => {
+  await refreshClubDetail()
+  await prefetchAgentInvitationLink()
+})
 </script>
 
 <template>
-	<div class="club-detail-bg">
-		<div class="bg-blur bg-blur--pink" aria-hidden="true" />
-		<div class="bg-blur bg-blur--cyan" aria-hidden="true" />
+  <div class="club-detail-bg ">
+    <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
+    <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
+    <HeaderBack :title="'俱乐部信息'" />
 
-		<div class="page-shell club-detail">
-			<header class="top-bar">
-				<button type="button" class="back-btn" @click="goBack">
-					<span class="back-icon" aria-hidden="true" />
-					<span class="back-title">俱乐部管理</span>
-				</button>
-			</header>
+    <div v-loading="loading" class="page-shell club-detail app-scroll-standalone">
+      <section class="club-header-card">
+        <div class="club-header-main">
+          <img class="club-avatar" :src="displayClub?.logo || imgClubCover" alt="俱乐部头像" />
 
-			<section class="club-header-card">
-				<div class="club-header-main">
-					<img class="club-avatar" :src="imgClubCover" alt="俱乐部头像" />
+          <div class="club-summary">
+            <button type="button" class="club-name-edit">
+              <h1 class="club-name">{{ displayClub?.club_name || '俱乐部名称' }}</h1>
+              <span
+                v-if="isFounder"
+                class="name-edit-icon"
+                aria-hidden="true"
+                @click="goEditName"
+              ></span>
+            </button>
+            <p class="club-id-row">
+              <span class="id-tag">ID</span>
+              <span class="id-text">{{ displayClub?.random_id || '--' }}</span>
+            </p>
 
-					<div class="club-summary">
-						<button type="button" class="club-name-edit" @click="goEditName">
-							<h1 class="club-name">俱乐部名称</h1>
-							<span class="name-edit-icon" aria-hidden="true" />
-						</button>
-						<p class="club-id-row">
-							<span class="id-tag">ID</span>
-							<span class="id-text">8677650585</span>
-						</p>
+            <p class="metric-line">
+              <img :src="imgBalance" alt="" aria-hidden="true" />
+              <span>{{ formatCount(displayClub?.user_gold) }}</span>
+            </p>
+            <p class="metric-line">
+              <img :src="imgChips" alt="" aria-hidden="true" />
+              <span>{{ formatCount(displayClub?.user_credit) }}</span>
+            </p>
+          </div>
+        </div>
 
-						<p class="metric-line">
-							<img :src="imgBalance" alt="" aria-hidden="true" />
-							<span>{{ formatCount(1923) }}</span>
-						</p>
-						<p class="metric-line">
-							<img :src="imgChips" alt="" aria-hidden="true" />
-							<span>{{ formatCount(19231) }}</span>
-						</p>
-					</div>
-				</div>
+        <div class="club-size-pill" aria-label="俱乐部人数">
+          <span class="size-text">{{ displayClub?.club_members || 0 }}/{{ displayClub?.upper_limit || 0 }}</span>
+          <img :src="imgPeople" alt="" aria-hidden="true" />
+        </div>
+      </section>
 
-				<div class="club-size-pill" aria-label="俱乐部人数">
-					<span class="size-text">500/1000</span>
-					<img :src="imgPeople" alt="" aria-hidden="true" />
-				</div>
-			</section>
+      <section v-if="quickActions.length > 0" class="quick-actions">
+        <button
+          v-for="item in quickActions"
+          :key="item.id"
+          type="button"
+          class="quick-card"
+          @click="onQuickAction(item.id)"
+        >
+          <span class="quick-image-wrap">
+            <img :src="item.cover" :alt="item.title" />
+          </span>
+          <span class="quick-title">{{ item.title }}</span>
+        </button>
+      </section>
 
-			<section class="quick-actions">
-				<button
-					v-for="item in quickActions"
-					:key="item.id"
-					type="button"
-					class="quick-card"
-					@click="onQuickAction(item.id)"
-				>
-					<span class="quick-image-wrap">
-						<img :src="item.cover" :alt="item.title" />
-					</span>
-					<span class="quick-title">{{ item.title }}</span>
-				</button>
-			</section>
+      <section class="intro-card">
+        <span>俱乐部简介</span>
+        <button
+          v-if="isFounder"
+          type="button"
+          class="intro-edit"
+          aria-label="编辑俱乐部简介"
+          @click="goEditDescription"
+        >
+          <span class="edit-pen"></span>
+        </button>
+      </section>
 
-			<section class="intro-card">
-				<span>俱乐部简介</span>
-				<button type="button" class="intro-edit" aria-label="编辑俱乐部简介" @click="goEditDescription">
-					<span class="edit-pen" />
-				</button>
-			</section>
+      <section class="settings-card">
+        <button
+          v-for="item in settings"
+          :key="item.id"
+          type="button"
+          class="settings-row"
+          :class="[
+            `settings-row--${item.kind}`,
+            {
+              'settings-row--clickable': item.kind === 'arrow' || item.kind === 'level' || item.kind === 'copy',
+            },
+          ]"
+          @click="onSettingClick(item)"
+        >
+          <div class="label-wrap">
+            <span>{{ item.label }}</span>
+            <span v-if="item.kind === 'copy'" class="info-dot">i</span>
+          </div>
 
-			<section class="settings-card">
-				<button
-					v-for="item in settings"
-					:key="item.id"
-					type="button"
-					class="settings-row"
-					:class="[
-						`settings-row--${item.kind}`,
-						{
-							'settings-row--clickable': item.kind === 'arrow' || item.kind === 'level' || item.kind === 'copy',
-						},
-					]"
-					@click="onSettingClick(item)"
-				>
-					<div class="label-wrap">
-						<span>{{ item.label }}</span>
-						<span v-if="item.kind === 'copy'" class="info-dot">i</span>
-					</div>
+          <div class="right-wrap">
+            <template v-if="item.kind === 'founder'">
+              <span class="muted-text">{{ item.value }}</span>
+              <img class="mini-avatar" :src="displayClub?.club_creator_avatar || imgClubCover" alt="创始人头像" />
+            </template>
 
-					<div class="right-wrap">
-						<template v-if="item.kind === 'founder'">
-							<span class="muted-text">{{ item.value }}</span>
-							<img class="mini-avatar" :src="imgClubCover" alt="创始人头像" />
-						</template>
+            <template v-else-if="item.kind === 'text'">
+              <span class="muted-text">{{ item.value }}</span>
+            </template>
 
-						<template v-else-if="item.kind === 'text'">
-							<span class="muted-text">{{ item.value }}</span>
-						</template>
+            <template v-else-if="item.kind === 'level'">
+              <span class="level-pill">{{ item.value }}</span>
+              <span class="chevron" aria-hidden="true"></span>
+            </template>
 
-						<template v-else-if="item.kind === 'level'">
-							<span class="level-pill">{{ item.value }}</span>
-							<span class="chevron" aria-hidden="true" />
-						</template>
+            <template v-else-if="item.kind === 'switch' && item.switchKey">
+              <button
+                type="button"
+                class="switch"
+                :class="{
+                  'switch--on': item.switchKey === 'allowSearch' ? allowSearch : joinWithoutApproval,
+                }"
+                :aria-label="item.label"
+                @click.stop="toggleSwitch(item.switchKey)"
+              >
+                <span class="switch-knob"></span>
+              </button>
+            </template>
 
-						<template v-else-if="item.kind === 'switch' && item.switchKey">
-							<button
-								type="button"
-								class="switch"
-								:class="{
-									'switch--on': item.switchKey === 'allowSearch' ? allowSearch : joinWithoutApproval,
-								}"
-								:aria-label="item.label"
-								@click.stop="toggleSwitch(item.switchKey)"
-							>
-								<span class="switch-knob" />
-							</button>
-						</template>
+            <template v-else>
+              <span class="chevron" aria-hidden="true"></span>
+            </template>
+          </div>
+        </button>
+      </section>
 
-						<template v-else>
-							<span class="chevron" aria-hidden="true" />
-						</template>
-					</div>
-				</button>
-			</section>
+      <section v-if="isFounder" class="danger-zone">
+        <button type="button" class="danger-btn" @click="onDeleteClub">删除俱乐部</button>
+      </section>
+    </div>
 
-			<section class="danger-zone">
-				<button type="button" class="danger-btn">删除俱乐部</button>
-			</section>
-		</div>
+    <div v-if="showInvitePopup" class="club-modal-mask" @click="closeInvitePopup">
+      <section class="invite-modal" @click.stop>
+        <header class="invite-modal__head">
+          <h3>邀请链接</h3>
+          <button
+            type="button"
+            class="invite-modal__close"
+            aria-label="关闭"
+            @click="closeInvitePopup"
+          >
+            <img :src="imgModalClose" alt="" aria-hidden="true" />
+          </button>
+        </header>
 
-		<div v-if="showInvitePopup" class="club-modal-mask" @click="closeInvitePopup">
-			<section class="invite-modal" @click.stop>
-				<header class="invite-modal__head">
-					<h3>邀请链接</h3>
-					<button type="button" class="invite-modal__close" aria-label="关闭" @click="closeInvitePopup">
-						<img :src="imgModalClose" alt="" aria-hidden="true" />
-					</button>
-				</header>
+        <div class="invite-modal__body">
+          <p class="invite-modal__subtitle">开启你的竞技之旅</p>
+          <div class="invite-modal__cover-wrap">
+            <img class="invite-modal__cover" :src="imgInviteCover" alt="邀请海报" />
+          </div>
+          <p class="invite-modal__club-name">{{ clubName }}</p>
+          <p class="invite-modal__club-alias">{{ clubAlias }}</p>
+          <p class="invite-modal__id-row">
+            <span class="invite-modal__id-tag">ID</span>
+            <span>{{ clubId }}</span>
+          </p>
+        </div>
 
-				<div class="invite-modal__body">
-					<p class="invite-modal__subtitle">开启你的竞技之旅</p>
-					<div class="invite-modal__cover-wrap">
-						<img class="invite-modal__cover" :src="imgInviteCover" alt="邀请海报" />
-					</div>
-					<p class="invite-modal__club-name">{{ clubName }}</p>
-					<p class="invite-modal__club-alias">{{ clubAlias }}</p>
-					<p class="invite-modal__id-row">
-						<span class="invite-modal__id-tag">ID</span>
-						<span>{{ clubId }}</span>
-					</p>
-				</div>
+        <div class="invite-modal__qr-wrap">
+          <img class="invite-modal__qr" :src="imgInviteQr" alt="扫码加入俱乐部" />
+          <span class="invite-modal__qr-heart">
+            <img :src="imgInviteHeart" alt="" aria-hidden="true" />
+          </span>
+        </div>
+        <p class="invite-modal__qr-tip">扫码加入，一键开启</p>
 
-				<div class="invite-modal__qr-wrap">
-					<img class="invite-modal__qr" :src="imgInviteQr" alt="扫码加入俱乐部" />
-					<span class="invite-modal__qr-heart">
-						<img :src="imgInviteHeart" alt="" aria-hidden="true" />
-					</span>
-				</div>
-				<p class="invite-modal__qr-tip">扫码加入，一键开启</p>
+        <button type="button" class="modal-primary-btn" @click="saveInviteShare">保存分享</button>
+      </section>
+    </div>
 
-				<button type="button" class="modal-primary-btn" @click="saveInviteShare">保存分享</button>
-			</section>
-		</div>
-
-		<div v-if="showCopyPopup" class="club-modal-mask" @click="closeCopyPopup">
-			<section class="copy-modal" @click.stop>
-				<p>暂无，申请复制俱乐部需要等待审核，是否现在提交申请</p>
-				<div class="copy-modal__actions">
-					<button type="button" class="modal-secondary-btn" @click="closeCopyPopup">取消</button>
-					<button type="button" class="modal-primary-btn" @click="submitCopyRequest">确定</button>
-				</div>
-			</section>
-		</div>
-	</div>
+    <div v-if="showCopyPopup" class="club-modal-mask" @click="closeCopyPopup">
+      <section class="copy-modal" @click.stop>
+        <p>暂无，申请复制俱乐部需要等待审核，是否现在提交申请</p>
+        <div class="copy-modal__actions">
+          <button type="button" class="modal-secondary-btn" @click="closeCopyPopup">取消</button>
+          <button type="button" class="modal-primary-btn" @click="submitCopyRequest">确定</button>
+        </div>
+      </section>
+    </div>
+  </div>
 </template>
 
 <style scoped lang="scss">

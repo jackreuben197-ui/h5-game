@@ -20,6 +20,8 @@ export default class StorageKey {
   static HOME_ROOM_STATS_CACHE = 'HOME_ROOM_STATS_CACHE'
   // MTT 列表缓存（首页与 MTT 列表页共享）。
   static MTT_LIST_CACHE = 'MTT_LIST_CACHE'
+  // 全局配置缓存（global/config，登录后静默拉取）。
+  static APP_CONFIG_CACHE = 'APP_CONFIG_CACHE'
   // 通用多语言模板缓存（名称/道具/简介等模板文本都可复用）。
   static MULTI_LANGUAGE_TEMPLATE_CACHE = 'MULTI_LANGUAGE_TEMPLATE_CACHE'
   // token 有效期。

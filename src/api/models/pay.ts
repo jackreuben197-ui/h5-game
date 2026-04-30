@@ -4,35 +4,32 @@
 // /api/pay/apple/order/recharge (PayAppleOrderRecharge)
 export interface PayAppleOrderRechargeRequest {
 
-    product_id?: string;
-    amount?: number;
-    gold_num?: number;
+    product_id?: string; // 订单id
+    amount?: number; // 支付金额
+    gold_num?: number; // 金额数量
 
   [key: string]: unknown
 }
 
-export interface PayAppleOrderRechargeResponseData {
-
-    data?: PayAppleOrderRechargeData;
-
+export interface PayAppleOrderRechargeResponseData extends PayAppleOrderRechargeData {
   [key: string]: unknown
 }
 
 export interface PayAppleOrderRechargeData {
 
-    recharge_data?: PayAppleOrderRechargeRechargeData;
+    recharge_data?: PayAppleOrderRechargeRechargeData; // 充值数据
 
   [key: string]: unknown
 }
 
 export interface PayAppleOrderRechargeRechargeData {
 
-    product_id?: string;
-    order_no?: string;
-    gold_num?: number;
-    pay_amount?: number;
-    receipt_md5?: string;
-    transaction_no?: string;
+    product_id?: string; // 订单id
+    order_no?: string; // 订单号
+    gold_num?: number; // 充豆金额
+    pay_amount?: number; // 支付金额
+    receipt_md5?: string; // MD5
+    transaction_no?: string; // 交易订单
 
   [key: string]: unknown
 }

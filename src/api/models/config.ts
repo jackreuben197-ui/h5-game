@@ -43,7 +43,28 @@ export interface GlobalConfigData {
   scoreboard_club_price?: string
   scoreboard_friend_price?: string
   user_modify_name_price?: string
+  // MTT 记录费配置（JSON 字符串，需解析为 MttRecordFeeConfig）
+  record_fee_mtt_uc?: string
+  record_fee_mtt_gc?: string
+  record_fee_mtt_diamond?: string
+  record_fee_mtt_scoreboard?: string
   [key: string]: unknown
+}
+
+// MTT 记录费配置（对齐 Unity UIMttBuyInComponent.RecordFeeData）。
+export interface MttRecordFeeConfig {
+  // 1 开启，2 关闭
+  status: number
+  // 保底收取钻石数
+  floor_price: number
+  // 收取比例（记录费 = 带入积分 * ratio）
+  ratio: number
+  // 小数取整类型：1 floor，2 ceil，3 round
+  decimal_type: number
+  // 折扣（< 1 表示有折扣，>= 1 表示无折扣）
+  discount: number
+  start_time: number
+  end_time: number
 }
 
 // /config/base/config/combine 请求参数。

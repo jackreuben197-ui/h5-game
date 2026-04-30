@@ -17,7 +17,7 @@ const form = reactive({
   nickname: gameStore.loginNickname || DEFAULT_DEBUG_ACCOUNT.nickname,
 })
 
-const quickAccounts = computed(() => DEBUG_ACCOUNTS.slice(0, 8))
+const quickAccounts = computed(() => DEBUG_ACCOUNTS.slice(0, 14))
 const pickerVisible = ref(false)
 const pickerColumns = DEBUG_ACCOUNTS.map((item) => ({
   text: `${item.account} - ${item.nickname}`,
@@ -110,7 +110,11 @@ async function handleLogin(): Promise<void> {
             label="账号"
             placeholder="点击选择测试账号"
             @click="openAccountPicker"
-          />
+          >
+            <template #label>
+              <span class="area-label">+{{ form.area }}</span>
+            </template>
+          </VanField>
           <VanField
             v-model="form.nickname"
             label="昵称"
@@ -121,11 +125,6 @@ async function handleLogin(): Promise<void> {
             type="password"
             label="密码"
             placeholder="请输入登录密码"
-          />
-          <VanField
-            v-model="form.area"
-            label="区号"
-            placeholder="默认 55"
           />
         </VanCellGroup>
 
@@ -154,7 +153,7 @@ async function handleLogin(): Promise<void> {
           type="primary"
           @click="applyAccount(item)"
         >
-          {{ item.account }}
+          {{ item.nickname.slice(0, 13) }}
         </VanButton>
       </div>
       <p class="info-line">
@@ -176,3 +175,12 @@ async function handleLogin(): Promise<void> {
     </VanPopup>
   </div>
 </template>
+
+<style scoped>
+.area-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-right: 4px;
+}
+</style>

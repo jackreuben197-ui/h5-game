@@ -225,15 +225,17 @@ function onContinue(): void {
 }
 
 .btn {
-   display: flex;
-  flex: 1 0 0;
+  display: flex;
   height: 53.843px;
   padding: 4.751px 0;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  color: #fff;
-  font-family: "HONOR Sans CN";
-  font-size: 14px;
+  flex: 1 0 0;
+  border-radius: 39.59px;
+  border: none;
+  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s;
@@ -244,6 +246,8 @@ function onContinue(): void {
 }
 
 .btn--cancel {
+   justify-content: center;
+  border-radius: 39.59px;
   background: rgba(0, 0, 0, 0.30);
   backdrop-filter: blur(0.0527px);
   color: #fff;

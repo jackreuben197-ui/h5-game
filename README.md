@@ -990,6 +990,7 @@ __log.setLevel('[wsSend]', null)
 
 ### 15.5 在组件生命周期中临时调试
 
+
 需要调试某个页面时，在生命周期内临时提升特定 logger 的 level，离开时恢复：
 
 ```ts
@@ -1005,3 +1006,26 @@ onUnmounted(() => {
   setLoggerLevel('[wsSend]', null)
 })
 ```
+
+## 16. 协议文件同步（Protobuf）
+
+pb 生成文件（`.js` + `.d.ts`）**已提交到 git**，通常不需要每次开发都重新执行。
+
+```bash
+pnpm sync:protocol
+```
+
+**何时需要执行**：上游 `agreement-web` 仓库新增或变更了 H5 订阅的协议时。
+
+**执行后**：把更新的 pb 文件提交到 git，与代码一起走 CR 流程。
+
+**与 `sync:i18n` 的区别**：
+
+| 命令 | 触发方式 | 来源 | 产物是否提交 git |
+|------|---------|------|----------------|
+| `sync:i18n` | `predev` / `prebuild` 自动 | `pokerqueen/` 语言文件 | 否（仅运行时需要） |
+| `sync:protocol` | 手动按需 | `agreement-web` 仓库 | 是（pb 文件已纳入版控） |
+
+**白名单维护**：`scripts/update_protocol.sh` 中的 `H5_RECV_FILES` 数组。H5 只同步大厅 / 全局通知（code < 1000），游戏内协议由 Cocos 自行管理，双方都从同一个 `agreement-web` 仓库拉取。
+
+新增协议的完整步骤见 `src/bridge/README.md` 6.4 节。

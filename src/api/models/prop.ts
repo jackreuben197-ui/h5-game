@@ -144,6 +144,7 @@ export interface PropGoldPriceListPayType {
     user_recharge_max?: number; // 玩家最大充值额度
     increase_interval?: number; // 唯一识别金额，大于0表示开启
     price_list?: PropGoldPriceListGoldInfo[]; // 金币信息列表
+    price_ids?: number[];
     wallet_addresses?: unknown[]; // 钱包地址列表； 这里有用信息的是qr_code, 为的是提前预缓存二维码图片
 
   [key: string]: unknown

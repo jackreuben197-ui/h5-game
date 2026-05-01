@@ -51,6 +51,9 @@ export interface EnterMttPayload {
   from: string
   matchId: number
   matchName?: string
+  // 观战指定牌桌时传入，对应 Unity ShowGameplayUI(isLookOn:true, roomid)。
+  roomId?: number
+  isLookOn?: boolean
   // MTT 详情原始数据，供 Cocos 读取 type/gold_type 等字段。
   matchInfo: unknown
 }

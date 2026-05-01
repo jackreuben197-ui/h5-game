@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import icRoundedArrowRight from '@/assets/icons/wallet/ic_rounded_arrow_right.svg'
+import icDropdown from '@/assets/icons/wallet/ic_dropdown.svg'
+import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import { t } from '@/i18n'
 
@@ -15,13 +17,28 @@ withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  'open-recipient': []
   submit: [payload: { recipient: string; remark: string; amount: string }]
 }>()
 
 const recipient = ref('USDT')
 const remark = ref('')
 const amount = ref('')
+
+const editPopupOpen = ref(false)
+const editRecipient = ref('')
+const editRemark = ref('')
+
+function openEditPopup(): void {
+  editRecipient.value = recipient.value
+  editRemark.value = remark.value
+  editPopupOpen.value = true
+}
+
+function confirmEdit(): void {
+  recipient.value = editRecipient.value
+  remark.value = editRemark.value
+  editPopupOpen.value = false
+}
 </script>
 
 <template>
@@ -35,9 +52,9 @@ const amount = ref('')
           </div>
           <button
             class="wf__pill"
-            @click="emit('open-recipient')"
+            @click="openEditPopup"
           >
-            <span>{{ $txt('Wallet_Records') }}</span>
+            <span>{{ $txt('Wallet_GoEdit') }}</span>
             <img
               :src="icRoundedArrowRight"
               alt=""
@@ -81,6 +98,51 @@ const amount = ref('')
       @click="emit('submit', { recipient, remark, amount })"
     />
   </div>
+
+  <Teleport to="body">
+    <Transition name="wf-sheet">
+      <div
+        v-if="editPopupOpen"
+        class="wf__overlay"
+        :style="{ backgroundImage: `url(${sharpBgUrl})` }"
+        @click.self="editPopupOpen = false"
+      >
+        <div
+          class="wf__sheet"
+          :style="{ backgroundImage: `url(${sharpBgUrl})` }"
+        >
+          <div class="wf__sheet-title">{{ $txt('Wallet_OrdersTitle') }}</div>
+
+          <div class="wf__sheet-field">
+            <div class="wf__sheet-label">{{ $txt('Wallet_RecipientLabel') }}:</div>
+            <div class="wf__sheet-input">
+              <span class="wf__sheet-input-text">{{ editRecipient || 'USDT' }}</span>
+              <button class="wf__sheet-dropdown">
+                <img :src="icDropdown" alt="" class="wf__sheet-dropdown-icon" />
+              </button>
+            </div>
+          </div>
+
+          <div class="wf__sheet-field">
+            <div class="wf__sheet-label">{{ $txt('Wallet_RemarkLabel') }}:</div>
+            <div class="wf__sheet-input">
+              <input
+                v-model="editRemark"
+                type="text"
+                class="wf__sheet-input-native"
+                :placeholder="$txt('Wallet_RemarkPlaceholder')"
+              />
+            </div>
+          </div>
+
+          <PrimaryButton
+            :text="$txt('Save')"
+            @click="confirmEdit"
+          />
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped lang="scss">
@@ -248,5 +310,173 @@ const amount = ref('')
   font-size: 0.29rem;
   color: #fff;
   line-height: 1.2;
+}
+
+.wf__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    backdrop-filter: blur(34px);
+    -webkit-backdrop-filter: blur(34px);
+    background: rgba(12, 12, 12, 0.60);
+  }
+}
+
+.wf__sheet {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 0.32rem 0.455rem calc(env(safe-area-inset-bottom) + 0.64rem);
+  border-radius: 0.96rem 0.96rem 0 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: rgba(0, 0, 0, 0.70);
+    backdrop-filter: blur(7.6px);
+    -webkit-backdrop-filter: blur(7.6px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 0.027rem 0 0;
+    background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 40%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  & > * {
+    position: relative;
+    z-index: 3;
+  }
+}
+
+.wf__sheet-title {
+  font-family: var(--wallet-font-cn);
+  font-weight: 500;
+  font-size: 0.453rem;
+  color: #fff;
+  text-align: center;
+  line-height: 1.4;
+  margin-bottom: 0.08rem;
+}
+
+.wf__sheet-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.16rem;
+}
+
+.wf__sheet-label {
+  font-family: var(--wallet-font-cn);
+  font-weight: 400;
+  font-size: 0.285rem;
+  color: #f9f9f9;
+  padding-left: 0.1rem;
+}
+
+.wf__sheet-row {
+  display: flex;
+  align-items: center;
+  gap: 0.21rem;
+}
+
+.wf__sheet-input {
+  flex: 1;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.20);
+  border-radius: 0.6rem;
+  padding: 0.36rem 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 1.2rem;
+}
+
+.wf__sheet-input-text {
+  font-family: var(--wallet-font-cn);
+  font-weight: 500;
+  font-size: 0.4rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.wf__sheet-input-native {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--wallet-font-cn);
+  font-weight: 500;
+  font-size: 0.4rem;
+  color: #fff;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.45);
+  }
+}
+
+.wf__sheet-dropdown {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .wf__sheet-dropdown-icon {
+    width: 0.427rem;
+    height: 0.427rem;
+  }
+}
+
+.wf-sheet-enter-active,
+.wf-sheet-leave-active {
+  transition: opacity 0.25s ease;
+
+  .wf__sheet {
+    transition: transform 0.25s ease;
+  }
+}
+
+.wf-sheet-enter-from,
+.wf-sheet-leave-to {
+  opacity: 0;
+
+  .wf__sheet {
+    transform: translateY(100%);
+  }
 }
 </style>

@@ -1,7 +1,6 @@
 // 参考 Cocos PacketHead/ProtocolAgency 的最小实现：
 // 1) 写入/解析 WS 二进制固定包头
 // 2) 提供通用 WS 包头编解码能力（供 H5 自己发查询类包）
-// 3) 提供 protobuf 字段调试摘要（仅用于日志观察）
 
 export const HOLDEM_CODE = {
   REGISTER: 1,
@@ -17,7 +16,6 @@ const FIX_HEAD_LENGTH = 53 // 不含 dataLength 的固定头长度
 const HEAD_LENGTH = 57 // 含 dataLength 的固定头长度
 
 const textEncoder = new TextEncoder()
-const textDecoder = new TextDecoder()
 
 export interface HoldemPacketEncodeInput {
   code: number
@@ -34,21 +32,6 @@ export interface HoldemPacketDecodeResult {
   matchId: number
   protoVersion: number
   body: Uint8Array
-}
-
-interface ProtoField {
-  fieldNo: number
-  wireType: number
-  value?: bigint
-  bytes?: Uint8Array
-}
-
-export interface ProtoDebugField {
-  fieldNo: number
-  wireType: number
-  value?: number
-  len?: number
-  preview?: string
 }
 
 // 把 token 压到固定 32 字节，超长截断，不足补 0。
@@ -164,110 +147,4 @@ export function decodeHoldemPacket(raw: ArrayBufferLike): HoldemPacketDecodeResu
     protoVersion,
     body,
   }
-}
-
-function decodeVarint(bytes: Uint8Array, offset: number): { value: bigint; offset: number } | null {
-  let result = 0n
-  let shift = 0n
-  let idx = offset
-  while (idx < bytes.length) {
-    const byte = BigInt(bytes[idx])
-    result |= (byte & 0x7fn) << shift
-    idx += 1
-    if ((byte & 0x80n) === 0n) {
-      return { value: result, offset: idx }
-    }
-    shift += 7n
-    if (shift > 70n) {
-      return null
-    }
-  }
-  return null
-}
-
-function parseProtoFields(bytes: Uint8Array): ProtoField[] {
-  const fields: ProtoField[] = []
-  let offset = 0
-
-  while (offset < bytes.length) {
-    const key = decodeVarint(bytes, offset)
-    if (!key) {
-      break
-    }
-    offset = key.offset
-    const fieldNo = Number(key.value >> 3n)
-    const wireType = Number(key.value & 0x07n)
-
-    if (wireType === 0) {
-      const data = decodeVarint(bytes, offset)
-      if (!data) break
-      fields.push({ fieldNo, wireType, value: data.value })
-      offset = data.offset
-      continue
-    }
-
-    if (wireType === 2) {
-      const lenData = decodeVarint(bytes, offset)
-      if (!lenData) break
-      const length = Number(lenData.value)
-      offset = lenData.offset
-      const end = offset + length
-      if (end > bytes.length) break
-      fields.push({ fieldNo, wireType, bytes: bytes.slice(offset, end) })
-      offset = end
-      continue
-    }
-
-    if (wireType === 1) {
-      offset += 8
-      continue
-    }
-    if (wireType === 5) {
-      offset += 4
-      continue
-    }
-
-    break
-  }
-
-  return fields
-}
-
-function utf8Preview(bytes: Uint8Array, max = 24): string {
-  if (!bytes.length) {
-    return ''
-  }
-  const text = textDecoder.decode(bytes)
-  const cleaned = text.replace(/[^\u0020-\u007e\u4e00-\u9fa5]/g, '')
-  return cleaned.slice(0, max)
-}
-
-// 通用 protobuf 调试摘要：用于开发日志，不参与业务逻辑。
-export function decodeProtoDebugFields(body: Uint8Array, maxFields = 10): ProtoDebugField[] {
-  const fields = parseProtoFields(body).slice(0, maxFields)
-  return fields.map((field) => {
-    if (field.wireType === 0) {
-      const raw = field.value ?? 0n
-      return {
-        fieldNo: field.fieldNo,
-        wireType: field.wireType,
-        value: raw <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(raw) : Number.MAX_SAFE_INTEGER,
-      }
-    }
-
-    if (field.wireType === 2) {
-      const bytes = field.bytes || new Uint8Array(0)
-      return {
-        fieldNo: field.fieldNo,
-        wireType: field.wireType,
-        len: bytes.length,
-        preview: utf8Preview(bytes),
-      }
-    }
-
-    return {
-      fieldNo: field.fieldNo,
-      wireType: field.wireType,
-    }
-  })
 }

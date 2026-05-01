@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getMemberRouteContext } from './clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar.png'
@@ -8,26 +8,18 @@ const route = useRoute()
 const router = useRouter()
 
 const context = computed(() => getMemberRouteContext(route))
-const rows = ref([
-  { id: '12345678', name: 'Player Name', checked: true },
-  { id: '12345679', name: 'Player Name', checked: false },
-  { id: '12345680', name: 'Player Name', checked: false },
-  { id: '12345681', name: 'Player Name', checked: false },
-  { id: '12345682', name: 'Player Name', checked: false },
-])
 
 function goBack(): void {
   void router.back()
 }
 
 function onConfirm(): void {
-  const selected = rows.value.find((row) => row.checked)
   void router.push({
     path: `/club/member/${context.value.memberId}`,
     query: {
       identity: 'player',
-      bound: '1',
-      name: selected?.name || context.value.name,
+      bound: '0',
+      name: context.value.name,
       uid: context.value.uid,
     },
   })
@@ -39,26 +31,33 @@ function onConfirm(): void {
     <div class="page-shell sub-page">
       <header class="header">
         <button type="button" class="back" @click="goBack">返回</button>
-        <h1>Bind Agents</h1>
+        <h1>Unbind Agents</h1>
       </header>
 
       <section class="cards">
-        <article
-          v-for="row in rows"
-          :key="row.id"
-          class="glass card"
-          @click="rows.forEach((x) => (x.checked = x.id === row.id))"
-        >
-          <img :src="imgAvatar" :alt="row.name" />
-          <div class="meta">
-            <p>{{ row.name }}</p>
-            <small>ID {{ row.id }}</small>
+        <article class="glass card">
+          <img :src="imgAvatar" alt="player" />
+          <div>
+            <p>Player Name</p>
+            <span>ID 12345678</span>
           </div>
-          <button class="dot" :class="{ on: row.checked }"></button>
+          <i class="badge"></i>
+        </article>
+
+        <div class="link">🔗</div>
+
+        <article class="glass card">
+          <img :src="imgAvatar" alt="agent" />
+          <div>
+            <p>Player Name</p>
+            <span>12345678</span>
+          </div>
+          <i class="badge"></i>
         </article>
       </section>
 
-      <button type="button" class="confirm" @click="onConfirm">Bind Agents</button>
+      <p class="hint">Do you want to unlink this agent?</p>
+      <button type="button" class="confirm" @click="onConfirm">unbind Agents</button>
     </div>
   </div>
 </template>
@@ -96,7 +95,6 @@ function onConfirm(): void {
   display: flex;
   align-items: center;
   gap: figma-rem(9.602);
-
 }
 
 .header h1 {
@@ -107,18 +105,19 @@ function onConfirm(): void {
 
 .back {
   border: 0;
-  background: transparent;
   color: #fff;
+  background: transparent;
 }
 
 .cards {
+  margin-top: figma-rem(2);
   display: flex;
   flex-direction: column;
-  gap: figma-rem(7.282);
+  gap: figma-rem(3);
 }
 
 .glass {
-  border-radius: figma-rem(170.596);
+  border-radius: figma-rem(30);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(figma-rem(6));
 }
@@ -129,7 +128,6 @@ function onConfirm(): void {
   display: flex;
   align-items: center;
   gap: figma-rem(8.64);
-
 }
 
 .card img {
@@ -138,36 +136,39 @@ function onConfirm(): void {
   border-radius: 50%;
 }
 
-.meta {
-  flex: 1;
-}
-
-.meta p {
+.card p {
   margin: 0;
-  color: #f3f3f3;
-  font-size: figma-rem(17.742);
+  color: #fff;
+  font-size: figma-rem(14.415);
   font-weight: 600;
 }
 
-.meta small {
+.card span {
   color: rgba(255, 255, 255, 0.75);
   font-size: figma-rem(9.623);
 }
 
-.dot {
-  width: figma-rem(17);
-  height: figma-rem(17);
+.badge {
+  margin-left: auto;
+  width: figma-rem(30);
+  height: figma-rem(30);
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.66);
-  background: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(168deg, #ffd77a 8%, #e8a22f 72%);
 }
 
-.dot.on {
-  background: #2ce3d3;
+.link {
+  align-self: center;
+  color: #fff;
+  font-size: figma-rem(32.51);
+}
+
+.hint {
+  margin: auto auto 0;
+  color: rgba(249, 249, 249, 0.86);
+  font-size: figma-rem(11.534);
 }
 
 .confirm {
-  margin-top: auto;
   border: 1px solid rgba(242, 242, 242, 0.8);
   border-radius: figma-rem(40.576);
   min-height: figma-rem(55.184);

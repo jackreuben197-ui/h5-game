@@ -198,7 +198,7 @@ function onQuickAction(actionId: number): void {
   }
 
   if (actionId === 3) {
-    void router.push('/club/fund')
+    void router.push('/club/members')
     return
   }
 

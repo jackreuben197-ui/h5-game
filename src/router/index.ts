@@ -186,6 +186,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/club/member/:memberId/unbind-agent',
+      name: 'club-member-unbind-agent',
+      component: () => import('@/views/club/ClubMemberUnbindAgentView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/club/wallet/logs',
       name: 'club-wallet-logs',
       component: () => import('@/views/club/ClubWalletLogsView.vue'),

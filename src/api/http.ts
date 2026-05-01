@@ -21,7 +21,7 @@ interface HttpRequestConfigExt extends InternalAxiosRequestConfig {
 let authRedirecting = false
 
 function shouldAttachXClub(url: string): boolean {
-  return /^\/?(?:org|cmsext)\/club\//.test(url)
+  return /^\/?(?:(?:org|cmsext)\/club|order\/club)\//.test(url)
 }
 
 function readClubIdFromPayload(payload: unknown): string {

@@ -1,43 +1,76 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { showToast } from 'vant'
 import icRoundedArrowRight from '@/assets/icons/wallet/ic_rounded_arrow_right.svg'
 import icDropdown from '@/assets/icons/wallet/ic_dropdown.svg'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import { t } from '@/i18n'
+import { postOnlineWithdrawTypeListApi } from '@/api/config'
+import { postTiquGoldApi } from '@/api/order'
+import type { OnlineWithdrawTypeItem } from '@/api/models/config'
+import { useUserInfoStore } from '@/stores/userInfo'
 
-interface Props {
-  availableUc?: string | number
-  rate?: string
-}
+const userInfoStore = useUserInfoStore()
+const availableUc = computed(() => userInfoStore.userInfo?.user?.gold ?? 0)
 
-withDefaults(defineProps<Props>(), {
-  availableUc: '12345678',
-  rate: '',
-})
+const withdrawTypes = ref<OnlineWithdrawTypeItem[]>([])
+const selectedTypeIndex = ref(0)
+const selectedType = computed(() => withdrawTypes.value[selectedTypeIndex.value] ?? null)
 
-const emit = defineEmits<{
-  submit: [payload: { recipient: string; remark: string; amount: string }]
-}>()
-
-const recipient = ref('USDT')
+const recipient = ref('')
 const remark = ref('')
 const amount = ref('')
+const submitting = ref(false)
 
 const editPopupOpen = ref(false)
 const editRecipient = ref('')
 const editRemark = ref('')
+const editTypeIndex = ref(0)
+
+onMounted(async () => {
+  const res = await postOnlineWithdrawTypeListApi()
+  withdrawTypes.value = res.data?.list ?? []
+  if (withdrawTypes.value.length > 0) {
+    recipient.value = withdrawTypes.value[0].name ?? ''
+  }
+})
 
 function openEditPopup(): void {
   editRecipient.value = recipient.value
   editRemark.value = remark.value
+  editTypeIndex.value = selectedTypeIndex.value
   editPopupOpen.value = true
 }
 
+function cycleType(): void {
+  if (withdrawTypes.value.length === 0) return
+  editTypeIndex.value = (editTypeIndex.value + 1) % withdrawTypes.value.length
+  editRecipient.value = withdrawTypes.value[editTypeIndex.value].name ?? ''
+}
+
 function confirmEdit(): void {
+  selectedTypeIndex.value = editTypeIndex.value
   recipient.value = editRecipient.value
   remark.value = editRemark.value
   editPopupOpen.value = false
+}
+
+async function handleSubmit(): Promise<void> {
+  if (submitting.value) return
+  submitting.value = true
+  try {
+    await postTiquGoldApi({
+      amount: Number(amount.value),
+      gold_type: 1,
+      pay_id: selectedType.value?.id,
+      description: remark.value,
+    })
+    showToast(t('Wallet_SubmitWithdraw'))
+    amount.value = ''
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 
@@ -81,6 +114,7 @@ function confirmEdit(): void {
       <div class="wf__balance">
         <span class="wf__balance-label">{{ t('Wallet_AvailableUc', String(availableUc)) }}</span>
       </div>
+
       <div class="wf__input">
         <input
           v-model="amount"
@@ -90,12 +124,13 @@ function confirmEdit(): void {
           :placeholder="$txt('Wallet_InputPlaceholder')"
         />
       </div>
-      <div class="wf__rate">{{ rate || t('Wallet_Rate') }}</div>
+      <div class="wf__rate">{{ selectedType ? `1USDT=${selectedType.rate ?? 1}UC` : t('Wallet_Rate') }}</div>
     </div>
 
     <PrimaryButton
       :text="$txt('Wallet_SubmitWithdraw')"
-      @click="emit('submit', { recipient, remark, amount })"
+      :disabled="submitting"
+      @click="handleSubmit"
     />
   </div>
 
@@ -117,7 +152,7 @@ function confirmEdit(): void {
             <div class="wf__sheet-label">{{ $txt('Wallet_RecipientLabel') }}:</div>
             <div class="wf__sheet-input">
               <span class="wf__sheet-input-text">{{ editRecipient || 'USDT' }}</span>
-              <button class="wf__sheet-dropdown">
+              <button class="wf__sheet-dropdown" @click="cycleType">
                 <img :src="icDropdown" alt="" class="wf__sheet-dropdown-icon" />
               </button>
             </div>

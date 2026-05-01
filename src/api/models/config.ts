@@ -201,3 +201,22 @@ export interface UserWhitelistInfoData {
   [key: string]: unknown
 }
 
+// /config/online_withdraw_type_list 单项。
+export interface OnlineWithdrawTypeItem {
+  id?: number
+  name?: string
+  image?: string
+  type?: number // 1-数字钱包 2-API 3-手动
+  rate?: number
+  fee_rate?: number
+  fee_type?: number // 0-无 1-俱乐部出 2-玩家出
+  description?: string
+  [key: string]: unknown
+}
+
+// /config/online_withdraw_type_list 响应 data。
+export interface OnlineWithdrawTypeListData {
+  list?: OnlineWithdrawTypeItem[]
+  [key: string]: unknown
+}
+

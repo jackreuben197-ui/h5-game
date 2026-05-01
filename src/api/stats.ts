@@ -144,7 +144,11 @@ export async function postClubDataStatsDataDetailApi(
   payload: ClubDataStatsDataDetailRequest = {} as ClubDataStatsDataDetailRequest
 ): Promise<ApiResponse<ClubDataStatsDataDetailResponseData>> {
   const endpoint = '/stats/club_data_stats/data_detail'
-  const response = await http.post<ApiResponse<ClubDataStatsDataDetailResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<ClubDataStatsDataDetailResponseData>>(endpoint, payload, {
+    headers: {
+      'X-Club': userInfoStore.currentClub?.club_id,
+    }
+  })
   return response.data
 }
 
@@ -153,7 +157,11 @@ export async function postClubDataStatsDataDetailInfoApi(
   payload: ClubDataStatsDataDetailInfoRequest = {} as ClubDataStatsDataDetailInfoRequest
 ): Promise<ApiResponse<ClubDataStatsDataDetailInfoResponseData>> {
   const endpoint = '/stats/club_data_stats/data_detail_info'
-  const response = await http.post<ApiResponse<ClubDataStatsDataDetailInfoResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<ClubDataStatsDataDetailInfoResponseData>>(endpoint, payload, {
+    headers: {
+      'X-Club': userInfoStore.currentClub?.club_id,
+    }
+  })
   return response.data
 }
 

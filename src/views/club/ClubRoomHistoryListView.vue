@@ -8,7 +8,6 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import DateRangePicker from '@/components/DateRangePicker/DateRangePicker.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
 import imgClock from '@/assets/icons/icon_time.png'
-import imgSquidLogo from '@/assets/icons/table_icon_squid.png'
 
 interface IncomeItem {
   label: string
@@ -143,9 +142,10 @@ function resolveModeLabel(record: ClubDataStatsDataRecord): string {
   }
 
   const gameType = toSafeNumber(record.game_type)
-  if (gameType === 1) return 'NLH'
-  if (gameType === 2) return 'PLO'
-  if (gameType === 3) return '6+'
+  if (gameType === 0) return 'NLH'
+  if (gameType === 1 || gameType === 2 || gameType === 3) return 'PLO'
+  if (gameType === 0 && record.poker_types == 2) return '6+'
+  if (gameType === 5) return 'Mahjong'
 
   return '牌局'
 }
@@ -448,15 +448,7 @@ onMounted(() => {
 
           <div class="record-card">
             <div class="record-main">
-              <div class="title-with-logo">
-                <p class="record-title">{{ item.title }}</p>
-                <img
-                  v-if="item.hasSquidLogo"
-                  class="squid-logo"
-                  :src="imgSquidLogo"
-                  alt=""
-                />
-              </div>
+              <p class="record-title">{{ item.title }}</p>
 
               <div class="record-meta">
                 <div class="meta-top">
@@ -515,6 +507,7 @@ onMounted(() => {
     radial-gradient(120% 70% at 50% -10%, rgba(91, 18, 115, 0.72), rgba(18, 11, 47, 0.86) 45%, #0a0f2f 85%),
     linear-gradient(180deg, #120a33, #090d2a);
   overflow: hidden;
+  color: #f9f9f9;
 }
 
 .bg-image {
@@ -738,10 +731,9 @@ onMounted(() => {
 }
 
 .record-list {
-  margin-top: 0.08rem;
+  margin-top: 0.26667rem;
   display: grid;
   gap: 0.26667rem;
-  padding-bottom: calc(0.3rem + env(safe-area-inset-bottom));
 }
 
 .record-row {
@@ -791,23 +783,11 @@ onMounted(() => {
   gap: 0.18667rem;
 }
 
-.title-with-logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.12rem;
-}
-
 .record-title {
   margin: 0;
   font-size: 0.33816rem;
   line-height: 0.83;
   font-weight: 700;
-}
-
-.squid-logo {
-  width: 0.32rem;
-  height: 0.4rem;
-  object-fit: contain;
 }
 
 .record-meta {
@@ -819,7 +799,7 @@ onMounted(() => {
 .meta-top {
   display: flex;
   align-items: center;
-  gap: 0.26667rem;
+  gap: 0.66667rem;
   font-size: 0.21928rem;
   line-height: 1;
 

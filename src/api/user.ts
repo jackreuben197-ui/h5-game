@@ -16,6 +16,8 @@ import type {
   UserCheckNicknameRequest,
   UserCheckPhoneData,
   UserCheckPhoneRequest,
+  UserGoldChangeLogData,
+  UserGoldChangeLogRequest,
   UserModifyInfoRequest,
   UserModifyInfoData,
   UserModifyPasswordData,
@@ -306,5 +308,13 @@ export async function postUserMyWalletsApi(
   payload: Record<string, unknown> = {},
 ): Promise<ApiResponse<UserMyWalletsData>> {
   const response = await http.post<ApiResponse<UserMyWalletsData>>('/user/my_wallets', payload)
+  return response.data
+}
+
+// /api/user/gold_change/log —玩家资金变动明细。
+export async function postUserGoldChangeLogApi(
+  payload: UserGoldChangeLogRequest = {},
+): Promise<ApiResponse<UserGoldChangeLogData>> {
+  const response = await http.post<ApiResponse<UserGoldChangeLogData>>('/user/gold_change/log', payload)
   return response.data
 }

@@ -2,8 +2,9 @@
 import { computed } from 'vue'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import { t } from '@/i18n'
+import type { ClubPlayerOrderRecordOrderInfo } from '@/api/models/order'
 
-const props = defineProps<{ orderId: string }>()
+const props = defineProps<{ order: ClubPlayerOrderRecordOrderInfo }>()
 const emit = defineEmits<{ close: [] }>()
 
 interface Row {
@@ -11,16 +12,27 @@ interface Row {
   value: string
 }
 
+function statusLabel(status?: number): string {
+  const map: Record<number, string> = {
+    1: t('Wallet_StatusPending'),
+    2: t('Wallet_StatusApproved'),
+    3: t('Wallet_StatusRejected'),
+    4: t('Wallet_StatusCancelled'),
+  }
+  return map[status ?? 0] ?? '-'
+}
+
+function formatTime(raw?: string): string {
+  if (!raw) return '-'
+  return raw.replace('T', ' ').slice(0, 19)
+}
+
 const rows = computed<Row[]>(() => [
-  { label: t('Wallet_OrderId'), value: props.orderId || '87sdf55dfsd' },
-  { label: t('Wallet_OrderAmount'), value: '100.01' },
-  { label: t('Wallet_OrderFee'), value: '0' },
-  { label: t('Wallet_OrderPayAmount'), value: '13.8014' },
-  { label: t('Wallet_OrderPayAddr'), value: '56677' },
-  { label: t('Wallet_OrderRecvName'), value: '唯一金额' },
-  { label: t('Wallet_OrderRecvAddr'), value: '5sd6654ddfdf' },
-  { label: t('Wallet_OrderTime'), value: '2025-11-12 15:14:09' },
-  { label: t('Wallet_OrderStatus'), value: t('Wallet_StatusPending') },
+  { label: t('Wallet_OrderId'),     value: props.order.order_no ?? '-' },
+  { label: t('Wallet_OrderAmount'), value: String(props.order.gold_num ?? '-') },
+  { label: t('Wallet_OrderPayAmount'), value: String(props.order.amount ?? '-') },
+  { label: t('Wallet_OrderTime'),   value: formatTime(props.order.create_time) },
+  { label: t('Wallet_OrderStatus'), value: statusLabel(props.order.status) },
 ])
 
 function close(): void {

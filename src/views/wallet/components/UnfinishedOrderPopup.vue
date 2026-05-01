@@ -246,7 +246,7 @@ function onContinue(): void {
 }
 
 .btn--cancel {
-   justify-content: center;
+  justify-content: center;
   border-radius: 39.59px;
   background: rgba(0, 0, 0, 0.30);
   backdrop-filter: blur(0.0527px);

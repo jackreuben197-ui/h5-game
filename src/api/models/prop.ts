@@ -94,6 +94,8 @@ export interface PropGoldPriceListData {
     total?: number; // 总条目数
     list?: PropGoldPriceListGoldInfo[]; // 金币信息列表
     pay_types?: PropGoldPriceListPayType[]; // 支付方式列表
+    /** 联盟直充：为 true 时订单列表走 /order/club/order_list?my_order */
+    from_tribe?: boolean
 
   [key: string]: unknown
 }

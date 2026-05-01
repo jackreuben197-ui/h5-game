@@ -5,7 +5,7 @@ import imgAvatar from '@/assets/images/default_avatar.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
-import { getMemberRouteContext } from './memberRoute'
+import { getMemberRouteContext } from '../clubMemberRoute'
 
 const router = useRouter()
 const route = useRoute()

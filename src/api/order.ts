@@ -102,10 +102,12 @@ export async function postGuildGiveRecyCleApi(
 
 // 对齐 cocos WebClubFundOrderList.API
 export async function postClubFundOrderListApi(
-  payload: ClubFundOrderListRequest = {} as ClubFundOrderListRequest
+  payload: ClubFundOrderListRequest = {} as ClubFundOrderListRequest,
+  clubId?: number
 ): Promise<ApiResponse<ClubFundOrderListResponseData>> {
   const endpoint = '/order/club/order_list'
-  const response = await http.post<ApiResponse<ClubFundOrderListResponseData>>(endpoint, payload)
+  const headers = clubId != null ? { 'X-Club': String(clubId) } : undefined
+  const response = await http.post<ApiResponse<ClubFundOrderListResponseData>>(endpoint, payload, { headers })
   return response.data
 }
 
@@ -219,19 +221,23 @@ export async function postClubPlayerOrderRecordApi(
 
 // 对齐 cocos WebRechargeGold.API
 export async function postRechargeGoldApi(
-  payload: RechargeGoldRequest = {} as RechargeGoldRequest
+  payload: RechargeGoldRequest = {} as RechargeGoldRequest,
+  clubId?: number
 ): Promise<ApiResponse<RechargeGoldResponseData>> {
   const endpoint = '/order/user/recharge'
-  const response = await http.post<ApiResponse<RechargeGoldResponseData>>(endpoint, payload)
+  const headers = clubId != null ? { 'X-Club': String(clubId) } : undefined
+  const response = await http.post<ApiResponse<RechargeGoldResponseData>>(endpoint, payload, { headers })
   return response.data
 }
 
 // 对齐 cocos WebOrderUserRechargeNo.API
 export async function postOrderUserRechargeNoApi(
-  payload: OrderUserRechargeNoRequest = {} as OrderUserRechargeNoRequest
+  payload: OrderUserRechargeNoRequest = {} as OrderUserRechargeNoRequest,
+  clubId?: number
 ): Promise<ApiResponse<OrderUserRechargeNoResponseData>> {
   const endpoint = '/order/user/recharge_no'
-  const response = await http.post<ApiResponse<OrderUserRechargeNoResponseData>>(endpoint, payload)
+  const headers = clubId != null ? { 'X-Club': String(clubId) } : undefined
+  const response = await http.post<ApiResponse<OrderUserRechargeNoResponseData>>(endpoint, payload, { headers })
   return response.data
 }
 

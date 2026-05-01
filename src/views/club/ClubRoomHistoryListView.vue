@@ -4,7 +4,11 @@ import { useRouter } from 'vue-router'
 import { showFailToast } from 'vant'
 import { postClubDataStatsDataApi, postClubDataStatsDataInfoApi } from '@/api/stats'
 import type { ClubDataStatsDataRecord } from '@/api/models/stats'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import DateRangePicker from '@/components/DateRangePicker/DateRangePicker.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
+import imgClock from '@/assets/icons/icon_time.png'
+import imgSquidLogo from '@/assets/icons/table_icon_squid.png'
 
 interface IncomeItem {
   label: string
@@ -24,8 +28,14 @@ interface RoomHistoryItem {
   hasSquidLogo?: boolean
   incomes: IncomeItem[]
 }
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 
 type CurrencyTab = 1 | 3
+
+type PickTarget = 'start' | 'end'
 
 interface StatsSummary {
   totalProfit: number
@@ -40,15 +50,7 @@ interface StatsSummary {
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 
-const imgImage12 = 'https://www.figma.com/api/mcp/asset/3647e32e-8c05-4ee3-8184-1e9d5a4eb5e7'
-const imgImage13 = 'https://www.figma.com/api/mcp/asset/21757333-7a5e-423d-b7f7-df8009bef12e'
-const imgSquidLogo = 'https://www.figma.com/api/mcp/asset/c042856c-0a68-438e-9b1b-8ec2a651fe7f'
-const imgCalendar = 'https://www.figma.com/api/mcp/asset/f6d38ab4-2f1f-4bf9-8a7b-ca6f25663280'
-const imgArrow = 'https://www.figma.com/api/mcp/asset/b09b6244-bba5-44ae-a2eb-30c056715078'
-const imgClock = 'https://www.figma.com/api/mcp/asset/bce8d82d-1869-4899-9bf5-da22da334f54'
-
 const activeCurrency = ref<CurrencyTab>(1)
-const pageRef = ref<HTMLElement | null>(null)
 
 const loading = ref(false)
 const loadingMore = ref(false)
@@ -67,8 +69,15 @@ const summary = ref<StatsSummary>({
 })
 
 const PAGE_SIZE = 20
-const endDate = ref(new Date())
-const startDate = ref(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000))
+const now = new Date()
+const maxSelectableDate = endOfDay(now)
+const minSelectableDate = startOfDay(addMonths(now, -3))
+
+const startDate = ref(startOfDay(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000)))
+const endDate = ref(startOfDay(now))
+
+const isDatePickerVisible = ref(false)
+const datePickerTarget = ref<PickTarget>('start')
 
 const timezoneText = computed(() => {
   const tz = Number(userInfoStore.currentClub?.time_zone ?? 0)
@@ -79,10 +88,10 @@ const startDateText = computed(() => formatDate(startDate.value))
 const endDateText = computed(() => formatDate(endDate.value))
 
 function formatDate(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const year = date.getFullYear()
-  return `${month}/${day}/${year}`
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}/${m}/${d}`
 }
 
 function toSafeNumber(value: unknown): number {
@@ -104,14 +113,28 @@ function formatSigned(value: unknown): string {
   return amount > 0 ? `+${abs}` : `-${abs}`
 }
 
-function parseTimestampSeconds(date: Date, endOfDay: boolean): number {
+function startOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+function endOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)
+}
+
+function addMonths(date: Date, months: number): Date {
+  const value = new Date(date)
+  value.setMonth(value.getMonth() + months)
+  return value
+}
+
+function parseTimestampMillSeconds(date: Date, end: boolean): number {
   const normalized = new Date(date)
-  if (endOfDay) {
+  if (end) {
     normalized.setHours(23, 59, 59, 999)
   } else {
     normalized.setHours(0, 0, 0, 0)
   }
-  return Math.floor(normalized.getTime() / 1000)
+  return normalized.getTime()
 }
 
 function resolveModeLabel(record: ClubDataStatsDataRecord): string {
@@ -192,8 +215,8 @@ function mapHistoryItem(record: ClubDataStatsDataRecord, index: number): RoomHis
 
 async function fetchSummary(): Promise<void> {
   const clubId = toSafeNumber(userInfoStore.currentClub?.club_id)
-  const startTime = parseTimestampSeconds(startDate.value, false)
-  const endTime = parseTimestampSeconds(endDate.value, true)
+  const startTime = parseTimestampMillSeconds(startDate.value, false)
+  const endTime = parseTimestampMillSeconds(endDate.value, true)
 
   try {
     const response = await postClubDataStatsDataInfoApi({
@@ -249,8 +272,8 @@ async function fetchHistory(reset = false): Promise<void> {
     loadingMore.value = true
   }
 
-  const startTime = parseTimestampSeconds(startDate.value, false)
-  const endTime = parseTimestampSeconds(endDate.value, true)
+  const startTime = parseTimestampMillSeconds(startDate.value, false)
+  const endTime = parseTimestampMillSeconds(endDate.value, true)
 
   try {
     const currentOffset = reset ? 0 : listOffset.value
@@ -260,10 +283,6 @@ async function fetchHistory(reset = false): Promise<void> {
       offset: currentOffset,
       start_time: startTime,
       end_time: endTime,
-      current_time_str: String(endTime),
-      user_id: toSafeNumber(userInfoStore.currentClub?.club_id),
-      time_zone: toSafeNumber(userInfoStore.currentClub?.time_zone),
-      game_types: [],
     })
 
     if (response.code !== 0) {
@@ -276,11 +295,6 @@ async function fetchHistory(reset = false): Promise<void> {
     historyList.value = reset ? mapped : [...historyList.value, ...mapped]
     listOffset.value = currentOffset + rows.length
     hasMore.value = rows.length >= PAGE_SIZE
-
-    // 时间范围变化时再请求摘要，避免重复请求。
-    if (reset) {
-      await fetchSummary()
-    }
   } catch (error) {
     if (reset) {
       historyList.value = []
@@ -295,6 +309,10 @@ async function fetchHistory(reset = false): Promise<void> {
       loadingMore.value = false
     }
   }
+}
+
+async function refreshData(): Promise<void> {
+  await Promise.all([fetchSummary(), fetchHistory(true)])
 }
 
 function onPageScroll(event: Event): void {
@@ -319,11 +337,20 @@ function selectCurrency(tab: CurrencyTab): void {
   }
 
   activeCurrency.value = tab
-  void fetchSummary()
+  void refreshData()
 }
 
-function backToClub(): void {
-  void router.push('/club/detail')
+function openDatePicker(target: PickTarget): void {
+  datePickerTarget.value = target
+  isDatePickerVisible.value = true
+}
+
+function closeDatePicker(): void {
+  isDatePickerVisible.value = false
+}
+
+function onDateConfirm(): void {
+  void refreshData()
 }
 
 function toDetail(item: RoomHistoryItem): void {
@@ -337,20 +364,14 @@ function toDetail(item: RoomHistoryItem): void {
 }
 
 onMounted(() => {
-  void fetchHistory(true)
+  void refreshData()
 })
 </script>
 
 <template>
-  <div class="club-room-history-bg">
-    <img class="bg-image bg-image--large" :src="imgImage12" alt="" />
-    <img class="bg-image bg-image--overlay" :src="imgImage13" alt="" />
-    <div class="glow glow--pink"></div>
-    <div class="glow glow--blue"></div>
-
-    <div ref="pageRef" class="page-shell club-room-history app-scroll-standalone" @scroll="onPageScroll">
-      <VanNavBar title="牌局记录" left-arrow @click-left="backToClub" />
-
+  <div class="club-room-history-bg" :style="backgroundStyle">
+    <HeaderBack :title="'牌局记录'" />
+    <div class="page-shell club-room-history app-scroll-standalone" @scroll="onPageScroll">
       <div class="coin-tabs">
         <button
           type="button"
@@ -372,13 +393,13 @@ onMounted(() => {
 
       <section class="summary-card">
         <div class="date-range">
-          <button type="button" class="date-btn">
-            <img class="icon-xs" :src="imgCalendar" alt="" />
+          <button type="button" class="date-btn" @click="openDatePicker('start')">
+            <span class="calendar-icon-inline" aria-hidden="true"></span>
             <span>{{ startDateText }}</span>
           </button>
           <span class="date-sep"></span>
-          <button type="button" class="date-btn">
-            <img class="icon-xs" :src="imgCalendar" alt="" />
+          <button type="button" class="date-btn" @click="openDatePicker('end')">
+            <span class="calendar-icon-inline" aria-hidden="true"></span>
             <span>{{ endDateText }}</span>
           </button>
         </div>
@@ -416,58 +437,53 @@ onMounted(() => {
 
       <p class="timezone">时区: {{ timezoneText }}</p>
 
-      <section class="history-list">
-        <article v-for="item in historyList" :key="item.id" class="history-card">
-          <div class="mode-oval">
-            <div class="mode-badge">{{ item.mode }}</div>
-          </div>
-          <div class="base-blur-20"></div>
+      <section class="record-list">
+        <article
+          v-for="item in historyList"
+          :key="item.id"
+          class="record-row"
+          @click="toDetail(item)"
+        >
+          <div class="game-badge">{{ item.mode }}</div>
 
-          <div class="history-main">
-            <div class="history-left">
-              <div class="title-line">
-                <div class="title-with-logo">
-                  <h3 class="history-title">{{ item.title }}</h3>
-                  <img
-                    v-if="item.hasSquidLogo"
-                    class="squid-logo"
-                    :src="imgSquidLogo"
-                    alt=""
-                  />
+          <div class="record-card">
+            <div class="record-main">
+              <div class="title-with-logo">
+                <p class="record-title">{{ item.title }}</p>
+                <img
+                  v-if="item.hasSquidLogo"
+                  class="squid-logo"
+                  :src="imgSquidLogo"
+                  alt=""
+                />
+              </div>
+
+              <div class="record-meta">
+                <div class="meta-top">
+                  <span>{{ item.detailA }}</span>
+                  <span v-if="item.detailB" class="extra">{{ item.detailB }}</span>
+                </div>
+                <div class="meta-time">
+                  <img :src="imgClock" alt="时间" />
+                  <span>{{ item.startedAt }}</span>
                 </div>
               </div>
-
-              <div class="meta-line">
-                <span>{{ item.detailA }}</span>
-                <span v-if="item.detailB">{{ item.detailB }}</span>
-              </div>
-
-              <p class="time-line">
-                <img class="icon-xs" :src="imgClock" alt="" />
-                <span>{{ item.startedAt }}</span>
-              </p>
             </div>
 
-            <div class="income-list">
-              <div
-                v-for="income in item.incomes"
-                :key="`${item.id}-${income.label}`"
-                class="income-row"
-              >
-                <span class="income-label">{{ income.label }}</span>
-                <span class="income-value" :class="income.positive ? 'is-positive' : 'is-negative'">
-                  {{ income.value }}
-                </span>
+            <div class="record-right">
+              <div class="fee-chip">
+                <div
+                  v-for="income in item.incomes"
+                  :key="`${item.id}-${income.label}`"
+                  class="fee-line"
+                >
+                  <span>{{ income.label }}</span>
+                  <span :class="income.positive ? 'value-up' : 'value-down'">{{ income.value }}</span>
+                </div>
               </div>
+              <span class="chevron">›</span>
             </div>
           </div>
-
-          <img
-            class="card-arrow"
-            :src="imgArrow"
-            alt=""
-            @click="toDetail(item)"
-          />
         </article>
 
         <p v-if="!historyList.length && !loading" class="list-status">暂无牌局记录</p>
@@ -476,6 +492,18 @@ onMounted(() => {
         <p v-else-if="historyList.length && !hasMore" class="list-status">没有更多了</p>
       </section>
     </div>
+
+    <DateRangePicker
+      v-model:visible="isDatePickerVisible"
+      v-model:start-date="startDate"
+      v-model:end-date="endDate"
+      :min-date="minSelectableDate"
+      :max-date="maxSelectableDate"
+      :initial-target="datePickerTarget"
+      tip-text="只支持查询最近三个月数据"
+      @close="closeDatePicker"
+      @confirm="onDateConfirm"
+    />
   </div>
 </template>
 
@@ -615,10 +643,31 @@ onMounted(() => {
   gap: 0.2rem;
 }
 
-.icon-xs {
-  width: 0.4rem;
-  height: 0.4rem;
-  object-fit: contain;
+.calendar-icon-inline {
+  width: 0.34rem;
+  height: 0.34rem;
+  border: 0.03rem solid rgba(243, 243, 243, 0.85);
+  border-radius: 0.08rem;
+  position: relative;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: -0.06rem;
+    width: 0.05rem;
+    height: 0.1rem;
+    border-radius: 0.03rem;
+    background: rgba(243, 243, 243, 0.85);
+  }
+
+  &::before {
+    left: 0.07rem;
+  }
+
+  &::after {
+    right: 0.07rem;
+  }
 }
 
 .date-sep {
@@ -688,84 +737,58 @@ onMounted(() => {
   font-size: 0.26rem;
 }
 
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
+.record-list {
+  margin-top: 0.08rem;
+  display: grid;
+  gap: 0.26667rem;
   padding-bottom: calc(0.3rem + env(safe-area-inset-bottom));
 }
 
-.history-card {
+.record-row {
   position: relative;
-  border-radius: 0.46rem;
-  overflow: visible;
-  border: 0.02rem solid rgba(255, 255, 255, 0.24);
-  background:
-    radial-gradient(95% 120% at -5% -10%, rgba(250, 255, 255, 0.28), rgba(255, 255, 255, 0.04) 52%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.08));
-  box-shadow: 0 0.2rem 0.6rem rgba(6, 10, 28, 0.32);
-  min-height: 1.752rem;
-  backdrop-filter: blur(51.23px);
-  border-radius: 158.36px;
+  min-height: 2.27648rem;
+  padding-left: 0.25333rem;
 }
 
-.mode-oval {
+.game-badge {
   position: absolute;
-  left: -0.24rem;
-  top: 50%;
-  width: 1.64rem;
-  height: 1.64rem;
-  transform: translateY(-50%);
-  border-radius: 50%;
-  border: 0.02rem solid rgba(255, 255, 255, 0.55);
-  background: linear-gradient(130deg, rgba(28, 11, 69, 0.82), rgba(61, 35, 113, 0.56));
-  box-shadow: inset 0 0.06rem 0.18rem rgba(255, 255, 255, 0.1);
-}
-
-.mode-badge {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 1.6rem;
-  height: 1.6rem;
-  transform: translateY(-50%);
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  border: 0.02rem solid rgba(255, 255, 255, 0.62);
-  background: linear-gradient(145deg, rgba(253, 246, 255, 0.3), rgba(255, 255, 255, 0.08));
-  font-size: 0.3rem;
-  line-height: 1.05;
+  left: -0.028rem;
+  top: 0.40533rem;
+  width: 1.4888rem;
+  height: 1.4888rem;
+  border: 0.02533rem solid rgba(242, 242, 242, 0.4);
+  border-radius: 1.7372rem;
+  background: rgba(20, 5, 47, 0.33);
+  backdrop-filter: blur(0.28112rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 0 0.06rem;
-  color: #fff;
+  white-space: pre-line;
+  font-size: 0.36235rem;
+  line-height: 1.1;
+  font-weight: 700;
   z-index: 2;
 }
 
-.base-blur-20 {
-  position: absolute;
-  inset: 0;
-  backdrop-filter: blur(51.23px);
-  border-radius: 158.36px;
-  background-color: rgba(157, 18, 124, 0.59);
-  z-index: -1;
-}
-
-.history-main {
-  margin-left: 1.9rem;
-  padding: 0.32rem 0.38rem 0.3rem 0.16rem;
-  position: relative;
-}
-
-.history-left {
-  width: 70%;
-}
-
-.title-line {
+.record-card {
+  margin-left: 0.25333rem;
+  min-height: 2.25507rem;
+  border-radius: 2.0848rem;
+  border: 0.02667rem solid rgba(255, 255, 255, 0.56);
+  background: linear-gradient(95deg, rgba(159, 22, 128, 0.64) 0%, rgba(130, 26, 142, 0.56) 63%, rgba(72, 82, 175, 0.56) 100%);
+  backdrop-filter: blur(0.67653rem);
+  padding: 0.37333rem 0.53333rem 0.37333rem 1.2rem;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 0.24rem;
+  cursor: pointer;
+}
+
+.record-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18667rem;
 }
 
 .title-with-logo {
@@ -774,87 +797,92 @@ onMounted(() => {
   gap: 0.12rem;
 }
 
+.record-title {
+  margin: 0;
+  font-size: 0.33816rem;
+  line-height: 0.83;
+  font-weight: 700;
+}
+
 .squid-logo {
   width: 0.32rem;
   height: 0.4rem;
   object-fit: contain;
 }
 
-.history-title {
-  margin: 0;
-  color: #fff;
-  font-size: 0.34rem;
-  line-height: 1.2;
+.record-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.13333rem;
 }
 
-.income-list {
-  position: absolute;
-  right: -3%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 25%;
-  border-radius: 0.16rem;
-  background: rgba(9, 11, 22, 0.28);
-  padding: 0.12rem 0.16rem;
+.meta-top {
+  display: flex;
+  align-items: center;
+  gap: 0.26667rem;
+  font-size: 0.21928rem;
+  line-height: 1;
+
+  .extra {
+    font-weight: 700;
+  }
 }
 
-.income-row {
-  min-width: 1.9rem;
+.meta-time {
+  display: flex;
+  align-items: center;
+  gap: 0.08rem;
+  font-size: 0.28152rem;
+  line-height: 1;
+  letter-spacing: 0.01126rem;
+  font-weight: 590;
+
+  img {
+    width: 0.35829rem;
+    height: 0.35829rem;
+    object-fit: contain;
+  }
+}
+
+.record-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18667rem;
+}
+
+.fee-chip {
+  min-width: 1.776rem;
+  border-radius: 0.20376rem;
+  background: rgba(0, 0, 0, 0.27);
+  padding: 0.13947rem 0.20853rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.07053rem;
+}
+
+.fee-line {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.12rem;
+  gap: 0.13333rem;
+  font-size: 0.2116rem;
+  line-height: 1;
+  letter-spacing: 0.00846rem;
+  font-weight: 590;
 }
 
-.income-row + .income-row {
-  margin-top: 0.06rem;
+.value-up {
+  color: #ff5364;
 }
 
-.income-label {
-  font-size: 0.26rem;
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.income-value {
-  font-size: 0.27rem;
-  font-weight: 600;
-}
-
-.is-positive {
-  color: #ff5b73;
-}
-
-.is-negative {
+.value-down {
   color: #05e7ae;
 }
 
-.meta-line {
-  margin-top: 0.16rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.16rem;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.25rem;
-}
-
-.time-line {
-  margin: 0.12rem 0 0;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 0.24rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.08rem;
-}
-
-.card-arrow {
-  position: absolute;
-  right: 0.36rem;
-  top: 50%;
-  width: 0.34rem;
-  height: 0.34rem;
-  transform: translateY(-50%) scaleX(-1);
-  object-fit: contain;
-  opacity: 0.95;
+.chevron {
+  font-size: 0.648rem;
+  line-height: 1;
+  color: #f9f9f9;
 }
 
 .list-status {
@@ -870,8 +898,8 @@ onMounted(() => {
     min-width: 2.86rem;
   }
 
-  .income-row {
-    min-width: 1.7rem;
+  .fee-chip {
+    min-width: 1.58rem;
   }
 }
 </style>

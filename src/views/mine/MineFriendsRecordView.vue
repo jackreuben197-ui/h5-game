@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
@@ -24,8 +23,6 @@ interface RecordItem {
   insuranceValue?: string
   feePositive?: boolean
 }
-
-const router = useRouter()
 
 const title = computed(() => '数捕管理')
 
@@ -187,10 +184,6 @@ const calendarCells = computed<DayCell[]>(() => {
 
   return cells.slice(0, 35)
 })
-
-function goBack(): void {
-  void router.push('/mine/friends-career')
-}
 
 function onFilterClick(tab: string): void {
   if (tab === 'Customize') {

@@ -2,6 +2,10 @@
 import { computed, onMounted, ref } from 'vue'
 import { showFailToast, showSuccessToast, showToast } from 'vant'
 import { useRoute, useRouter } from 'vue-router'
+import type {
+  OrgClubJackpotTemplateCreateBlindsSetting,
+  OrgClubJackpotTemplateCreateJackpotSetting,
+} from '@/api/models/org'
 import {
   postOrgClubJackpotTemplateCreateApi,
   postOrgClubJackpotTemplateUpdateApi,
@@ -12,14 +16,42 @@ interface OptionItem {
   id: string
   label: string
   selected?: boolean
+  sb: number
 }
 
-interface ConfigRow {
+interface PoolSettingItem {
   id: string
-  label: string
-  value: string
-  suffix?: string
-  checked?: boolean
+  title: string
+  checked: boolean
+  ratio: string
+}
+
+interface BlindConfigForm {
+  sb: number
+  prizeRatio: string
+  contributePotChecked: boolean
+  contributePotLimit: string
+  awardBetChecked: boolean
+  awardBetLimit: string
+  awardOtherChecked: boolean
+  awardOtherRatio: string
+  profitTriggerChecked: boolean
+  profitTriggerLimit: string
+  jackpotContribChecked: boolean
+  jackpotContribValue: string
+  profitPercentChecked: boolean
+  profitPercentValue: string
+}
+
+interface StakeConfigForm {
+  selectedSbs: number[]
+  blindConfigs: Record<number, BlindConfigForm>
+}
+
+interface ModeConfigForm {
+  gamePlayRatio: string
+  stakes: Record<StakeLevel, StakeConfigForm>
+  poolSettings: PoolSettingItem[]
 }
 
 const route = useRoute()
@@ -30,44 +62,332 @@ const editJackpotId = computed(() => Number(route.query.id) || 0)
 
 const loading = ref(false)
 const jackpotName = ref('Jackpot')
+const jackpotGoldYuan = ref('0')
 
 const gameModes = ['NLH', 'PLO', '6+', 'Bombpot', 'AOF'] as const
 type GameMode = (typeof gameModes)[number]
-const stakeLevels = ['Micro', 'Small', 'Medium', 'Large'] as const
+type StakeLevel = 'Micro' | 'Small' | 'Medium' | 'Large'
+
+const JACKPOT_BLIND_CLASSIFY_RULES = [
+  { level: 'Micro', blindType: 1, sbValues: [10, 20, 30, 40, 50] },
+  { level: 'Small', blindType: 2, sbValues: [100, 200, 300, 400, 500] },
+  { level: 'Medium', blindType: 3, sbValues: [1000, 1500, 2000, 2500, 3000, 5000] },
+  { level: 'Large', blindType: 4, sbValues: [10000, 20000, 30000, 50000, 100000] },
+] as const
+
+function getJackpotBlindTypeBySb(sb: number): number {
+  const matched = JACKPOT_BLIND_CLASSIFY_RULES.find((rule) =>
+    (rule.sbValues as readonly number[]).includes(sb),
+  )
+  return matched?.blindType ?? 1
+}
+
+const stakeLevels = JACKPOT_BLIND_CLASSIFY_RULES.map((item) => item.level) as StakeLevel[]
+const stakeRuleByLevel = Object.fromEntries(
+  JACKPOT_BLIND_CLASSIFY_RULES.map((item) => [item.level, item]),
+) as Record<StakeLevel, (typeof JACKPOT_BLIND_CLASSIFY_RULES)[number]>
+const stakeLevelByBlindType = Object.fromEntries(
+  JACKPOT_BLIND_CLASSIFY_RULES.map((item) => [item.blindType, item.level]),
+) as Record<number, StakeLevel>
+
+const modeKeyMap: Record<GameMode, { switchKey: string; settingKey: string }> = {
+  NLH: { switchKey: 'nlh_switch', settingKey: 'nlh_setting' },
+  PLO: { switchKey: 'plo_switch', settingKey: 'plo_setting' },
+  '6+': { switchKey: 'six_plus_switch', settingKey: 'six_plus_setting' },
+  Bombpot: { switchKey: 'bombpot_switch', settingKey: 'bombpot_setting' },
+  AOF: { switchKey: 'aof_switch', settingKey: 'aof_setting' },
+}
+
+const modeEnabled = ref<Record<GameMode, boolean>>({
+  NLH: true,
+  PLO: false,
+  '6+': false,
+  Bombpot: false,
+  AOF: false,
+})
 
 const activeGameMode = ref<GameMode>('NLH')
-const activeStakeLevel = ref('Micro')
+const activeStakeLevel = ref<StakeLevel>('Micro')
 
-const jackpotRows = ref<ConfigRow[]>([
-  { id: 'jackpot-rake', label: '德州扑克', value: 'Enter here', suffix: '%', checked: true },
-])
+function toSafeNumber(value: unknown): number {
+  const num = Number(value)
+  return Number.isFinite(num) ? num : 0
+}
 
-const contributionRows = ref<ConfigRow[]>([
-  { id: 'blind', label: '0.1/0.2', value: 'Enter here', suffix: '%', checked: true },
-  { id: 'pot-trigger', label: '底池触发jackpot贡献', value: 'BB amount', checked: false },
-  { id: 'put-in', label: '投入底池触发jackpot奖励', value: 'BB amount', checked: false },
-  { id: 'all-table', label: '奖励全桌', value: 'BB amount', checked: false },
-])
+function toSwitch(value: boolean): number {
+  return value ? 1 : 2
+}
 
-const profitRows = ref<ConfigRow[]>([
-  { id: 'profit-trigger', label: '盈利触发', value: 'BB amount', checked: true },
-  { id: 'jackpot-contrib', label: 'Jackpot 贡献', value: 'BB amount', checked: false },
-  { id: 'profit-percent', label: '触发盈利 (%)', value: '', suffix: '%', checked: true },
-])
+function formatCentToYuanText(value: unknown): string {
+  const cent = toSafeNumber(value)
+  if (cent <= 0) {
+    return '0'
+  }
+  return (cent / 100).toString()
+}
 
-const blindOptions = ref<OptionItem[]>([
-  { id: 'b1', label: '0.2/0.4', selected: true },
-  { id: 'b2', label: '0.2/0.4', selected: false },
-  { id: 'b3', label: '0.2/0.4', selected: false },
-  { id: 'b4', label: '0.3/0.6', selected: false },
-  { id: 'b5', label: '0.3/0.6', selected: false },
-])
+function formatSbLabelFromCent(sbCent: number): string {
+  const sb = sbCent / 100
+  const bb = (sbCent * 2) / 100
+  return `${sb}/${bb}`
+}
 
-const poolSettings = ref([
-  { id: 'royal', title: 'Royal Flush', checked: false, ratio: '' },
-  { id: 'straight', title: 'Straight flush', checked: false, ratio: '' },
-  { id: 'four', title: 'Four of a kind', checked: false, ratio: '' },
-])
+function createDefaultBlindConfig(sb: number): BlindConfigForm {
+  return {
+    sb,
+    prizeRatio: '',
+    contributePotChecked: false,
+    contributePotLimit: '',
+    awardBetChecked: false,
+    awardBetLimit: '',
+    awardOtherChecked: false,
+    awardOtherRatio: '',
+    profitTriggerChecked: true,
+    profitTriggerLimit: '',
+    jackpotContribChecked: false,
+    jackpotContribValue: '',
+    profitPercentChecked: true,
+    profitPercentValue: '',
+  }
+}
+
+function createDefaultPoolSettings(): PoolSettingItem[] {
+  return [
+    { id: 'royal', title: 'Royal Flush', checked: false, ratio: '' },
+    { id: 'straight', title: 'Straight flush', checked: false, ratio: '' },
+    { id: 'four', title: 'Four of a kind', checked: false, ratio: '' },
+  ]
+}
+
+function createDefaultStakeConfig(level: StakeLevel): StakeConfigForm {
+  const rule = stakeRuleByLevel[level]
+  const blindConfigs: Record<number, BlindConfigForm> = {}
+  rule.sbValues.forEach((sb) => {
+    blindConfigs[sb] = createDefaultBlindConfig(sb)
+  })
+
+  return {
+    selectedSbs: level === 'Micro' ? [rule.sbValues[0]] : [],
+    blindConfigs,
+  }
+}
+
+function createDefaultModeConfig(): ModeConfigForm {
+  const stakes = {} as Record<StakeLevel, StakeConfigForm>
+  stakeLevels.forEach((level) => {
+    stakes[level] = createDefaultStakeConfig(level)
+  })
+
+  return {
+    gamePlayRatio: '',
+    stakes,
+    poolSettings: createDefaultPoolSettings(),
+  }
+}
+
+function createDefaultModeConfigs(): Record<GameMode, ModeConfigForm> {
+  return {
+    NLH: createDefaultModeConfig(),
+    PLO: createDefaultModeConfig(),
+    '6+': createDefaultModeConfig(),
+    Bombpot: createDefaultModeConfig(),
+    AOF: createDefaultModeConfig(),
+  }
+}
+
+const modeConfigs = ref<Record<GameMode, ModeConfigForm>>(createDefaultModeConfigs())
+const currentModeConfig = computed(() => modeConfigs.value[activeGameMode.value])
+const currentStakeConfig = computed(() => currentModeConfig.value.stakes[activeStakeLevel.value])
+
+const blindOptions = computed<OptionItem[]>(() => {
+  const rule = stakeRuleByLevel[activeStakeLevel.value]
+  return rule.sbValues.map((sb, index) => ({
+    id: `${activeStakeLevel.value}-${index}`,
+    label: formatSbLabelFromCent(sb),
+    sb,
+    selected: currentStakeConfig.value.selectedSbs.includes(sb),
+  }))
+})
+
+const selectedBlindOptions = computed<OptionItem[]>(() =>
+  blindOptions.value.filter((item) => item.selected),
+)
+
+function getBlindConfigBySb(sb: number): BlindConfigForm {
+  const existing = currentStakeConfig.value.blindConfigs[sb]
+  if (existing) {
+    return existing
+  }
+
+  const created = createDefaultBlindConfig(sb)
+  currentStakeConfig.value.blindConfigs[sb] = created
+  return created
+}
+
+function onBlindOptionClick(option: OptionItem): void {
+  const selectedSbs = currentStakeConfig.value.selectedSbs
+  if (selectedSbs.includes(option.sb)) {
+    currentStakeConfig.value.selectedSbs = selectedSbs.filter((sb) => sb !== option.sb)
+    return
+  }
+  currentStakeConfig.value.selectedSbs = [...selectedSbs, option.sb]
+}
+
+function toggleModeEnabled(mode: GameMode): void {
+  modeEnabled.value[mode] = !modeEnabled.value[mode]
+}
+
+function buildModeSetting(modeConfig: ModeConfigForm): OrgClubJackpotTemplateCreateJackpotSetting {
+  const blindSetting: OrgClubJackpotTemplateCreateBlindsSetting[] = []
+
+  JACKPOT_BLIND_CLASSIFY_RULES.forEach((rule) => {
+    const levelConfig = modeConfig.stakes[rule.level]
+
+    rule.sbValues.forEach((sb) => {
+      const blindConfig = levelConfig.blindConfigs[sb] ?? createDefaultBlindConfig(sb)
+      blindSetting.push({
+        sb,
+        status: levelConfig.selectedSbs.includes(sb) ? 1 : 0,
+        blind_type: rule.blindType,
+        prize_ratio: toSafeNumber(blindConfig.prizeRatio),
+        contribute_pot_switch: toSwitch(blindConfig.contributePotChecked),
+        contribute_pot_limit: toSafeNumber(blindConfig.contributePotLimit),
+        award_bet_switch: toSwitch(blindConfig.awardBetChecked),
+        award_bet_limit: toSafeNumber(blindConfig.awardBetLimit),
+        award_other_switch: toSwitch(blindConfig.awardOtherChecked),
+        award_other_ratio: toSafeNumber(blindConfig.awardOtherRatio),
+        contribute_fixed_limit: toSafeNumber(blindConfig.profitTriggerLimit),
+        contribute_ratio: toSafeNumber(blindConfig.jackpotContribValue),
+        contribute_fixed_rate: toSafeNumber(blindConfig.profitPercentValue),
+      })
+    })
+  })
+
+  const royal = modeConfig.poolSettings.find((item) => item.id === 'royal')
+  const straight = modeConfig.poolSettings.find((item) => item.id === 'straight')
+  const four = modeConfig.poolSettings.find((item) => item.id === 'four')
+
+  return {
+    game_play_ratio: toSafeNumber(modeConfig.gamePlayRatio),
+    blind_setting: blindSetting,
+    royal_flush_switch: royal?.checked ? 1 : 0,
+    royal_flush_ratio: toSafeNumber(royal?.ratio),
+    straight_flush_switch: straight?.checked ? 1 : 0,
+    straight_flush_ratio: toSafeNumber(straight?.ratio),
+    four_ofa_kind_switch: four?.checked ? 1 : 0,
+    four_ofa_kind_ratio: toSafeNumber(four?.ratio),
+  }
+}
+
+function normalizeSelectedSb(stakeConfig: StakeConfigForm, level: StakeLevel): void {
+  const rule = stakeRuleByLevel[level]
+  const validSbs = rule.sbValues as readonly number[]
+  const uniqueSbs = Array.from(new Set(stakeConfig.selectedSbs))
+  stakeConfig.selectedSbs = uniqueSbs.filter((sb) => validSbs.includes(sb))
+}
+
+function getLevelByBlindData(sbValue: unknown, blindTypeValue: unknown, multiplier: number): StakeLevel {
+  const sbCent = Math.round(toSafeNumber(sbValue) * multiplier)
+  const fromBlindType = stakeLevelByBlindType[toSafeNumber(blindTypeValue)]
+  const fromSb = stakeLevelByBlindType[getJackpotBlindTypeBySb(sbCent)]
+  return fromBlindType ?? fromSb ?? 'Micro'
+}
+
+function detectSbMultiplier(blindSetting: Record<string, unknown>[]): number {
+  const scoreMultiplier = (multiplier: number): number => {
+    let score = 0
+    for (let i = 0; i < blindSetting.length; i += 1) {
+      const item = blindSetting[i]
+      const level = getLevelByBlindData(item.sb, item.blind_type, multiplier)
+      const rule = stakeRuleByLevel[level]
+      const sbCent = Math.round(toSafeNumber(item.sb) * multiplier)
+      if ((rule.sbValues as readonly number[]).includes(sbCent)) {
+        score += 1
+      }
+    }
+    return score
+  }
+
+  const directScore = scoreMultiplier(1)
+  const x100Score = scoreMultiplier(100)
+  return x100Score > directScore ? 100 : 1
+}
+
+function applyModeSetting(modeConfig: ModeConfigForm, setting: Record<string, unknown> | undefined): void {
+  if (!setting) {
+    return
+  }
+
+  stakeLevels.forEach((level) => {
+    modeConfig.stakes[level] = createDefaultStakeConfig(level)
+  })
+
+  modeConfig.gamePlayRatio = String(setting.game_play_ratio ?? '')
+
+  const royal = modeConfig.poolSettings.find((item) => item.id === 'royal')
+  if (royal) {
+    royal.checked = toSafeNumber(setting.royal_flush_switch) === 1
+    royal.ratio = String(setting.royal_flush_ratio ?? '')
+  }
+
+  const straight = modeConfig.poolSettings.find((item) => item.id === 'straight')
+  if (straight) {
+    straight.checked = toSafeNumber(setting.straight_flush_switch) === 1
+    straight.ratio = String(setting.straight_flush_ratio ?? '')
+  }
+
+  const four = modeConfig.poolSettings.find((item) => item.id === 'four')
+  if (four) {
+    four.checked = toSafeNumber(setting.four_ofa_kind_switch) === 1
+    four.ratio = String(setting.four_ofa_kind_ratio ?? '')
+  }
+
+  const blindSetting = Array.isArray(setting.blind_setting)
+    ? (setting.blind_setting as Record<string, unknown>[])
+    : []
+
+  const sbMultiplier = detectSbMultiplier(blindSetting)
+
+  blindSetting.forEach((item) => {
+    const sbCent = Math.round(toSafeNumber(item.sb) * sbMultiplier)
+    const level = getLevelByBlindData(item.sb, item.blind_type, sbMultiplier)
+    const levelConfig = modeConfig.stakes[level]
+    if (!levelConfig) {
+      return
+    }
+
+    const target = levelConfig.blindConfigs[sbCent]
+    if (!target) {
+      return
+    }
+
+    if (toSafeNumber(item.status) === 1) {
+      levelConfig.selectedSbs = [...levelConfig.selectedSbs, sbCent]
+    }
+
+    target.prizeRatio = String(item.prize_ratio ?? target.prizeRatio ?? '')
+    target.contributePotChecked = toSafeNumber(item.contribute_pot_switch) === 1
+    target.contributePotLimit = String(item.contribute_pot_limit ?? target.contributePotLimit ?? '')
+    target.awardBetChecked = toSafeNumber(item.award_bet_switch) === 1
+    target.awardBetLimit = String(item.award_bet_limit ?? target.awardBetLimit ?? '')
+    target.awardOtherChecked = toSafeNumber(item.award_other_switch) === 1
+    target.awardOtherRatio = String(item.award_other_ratio ?? target.awardOtherRatio ?? '')
+
+    const profitLimit = String(item.contribute_fixed_limit ?? '')
+    const jackpotContrib = String(item.contribute_ratio ?? '')
+    const profitPercent = String(item.contribute_fixed_rate ?? '')
+    target.profitTriggerLimit = profitLimit
+    target.jackpotContribValue = jackpotContrib
+    target.profitPercentValue = profitPercent
+    target.profitTriggerChecked = profitLimit !== '' && toSafeNumber(item.contribute_fixed_limit) > 0
+    target.jackpotContribChecked = jackpotContrib !== '' && toSafeNumber(item.contribute_ratio) > 0
+    target.profitPercentChecked = profitPercent !== '' && toSafeNumber(item.contribute_fixed_rate) > 0
+  })
+
+  stakeLevels.forEach((level) => {
+    normalizeSelectedSb(modeConfig.stakes[level], level)
+  })
+}
 
 function onCancel(): void {
   router.back()
@@ -79,58 +399,52 @@ async function onConfirm(): Promise<void> {
     return
   }
 
+  const goldYuan = toSafeNumber(jackpotGoldYuan.value)
+  if (goldYuan < 0) {
+    showToast('奖池金额不能小于0')
+    return
+  }
+
+  const enabledModes = gameModes.filter((mode) => modeEnabled.value[mode])
+  if (!enabledModes.length) {
+    showToast('请至少启用一个玩法')
+    return
+  }
+
   loading.value = true
   try {
     const modeSwitches: Record<GameMode, number> = {
-      NLH: 1,
-      PLO: 1,
-      '6+': 1,
-      Bombpot: 1,
-      AOF: 1,
-    }
-    void modeSwitches // 预留切换逻辑
-
-    // 构建当前模式的 setting
-    const setting = {
-      game_play_ratio: Number(jackpotRows.value[0]?.value) || 0,
-      blind_setting: blindOptions.value.map((b) => {
-        const [sb] = b.label.split('/').map(Number)
-        return {
-          sb: sb || 0,
-          status: b.selected ? 1 : 0,
-          blind_type: blindOptions.value.indexOf(b) + 1,
-          prize_ratio: 0,
-          contribute_pot_switch: contributionRows.value.find((r) => r.id === 'pot-trigger')?.checked ? 1 : 2,
-          contribute_pot_limit: 0,
-          award_bet_switch: contributionRows.value.find((r) => r.id === 'put-in')?.checked ? 1 : 2,
-          award_bet_limit: 0,
-          award_other_switch: contributionRows.value.find((r) => r.id === 'all-table')?.checked ? 1 : 2,
-          award_other_ratio: 0,
-        }
-      }),
-      royal_flush_switch: poolSettings.value.find((p) => p.id === 'royal')?.checked ? 1 : 0,
-      royal_flush_ratio: Number(poolSettings.value.find((p) => p.id === 'royal')?.ratio) || 0,
-      straight_flush_switch: poolSettings.value.find((p) => p.id === 'straight')?.checked ? 1 : 0,
-      straight_flush_ratio: Number(poolSettings.value.find((p) => p.id === 'straight')?.ratio) || 0,
-      four_ofa_kind_switch: poolSettings.value.find((p) => p.id === 'four')?.checked ? 1 : 0,
-      four_ofa_kind_ratio: Number(poolSettings.value.find((p) => p.id === 'four')?.ratio) || 0,
+      NLH: modeEnabled.value.NLH ? 1 : 2,
+      PLO: modeEnabled.value.PLO ? 1 : 2,
+      '6+': modeEnabled.value['6+'] ? 1 : 2,
+      Bombpot: modeEnabled.value.Bombpot ? 1 : 2,
+      AOF: modeEnabled.value.AOF ? 1 : 2,
     }
 
-    const basePayload = {
+    const payload = {
       name: jackpotName.value.trim(),
-      [`${activeGameMode.value.toLowerCase()}_switch` as string]: 1,
-      [`${activeGameMode.value.toLowerCase()}_setting` as string]: setting,
+      gold: Math.round(goldYuan * 100),
+      nlh_switch: modeSwitches.NLH,
+      nlh_setting: buildModeSetting(modeConfigs.value.NLH),
+      plo_switch: modeSwitches.PLO,
+      plo_setting: buildModeSetting(modeConfigs.value.PLO),
+      six_plus_switch: modeSwitches['6+'],
+      six_plus_setting: buildModeSetting(modeConfigs.value['6+']),
+      bombpot_switch: modeSwitches.Bombpot,
+      bombpot_setting: buildModeSetting(modeConfigs.value.Bombpot),
+      aof_switch: modeSwitches.AOF,
+      aof_setting: buildModeSetting(modeConfigs.value.AOF),
     }
 
     let response
     if (isEditMode.value) {
       response = await postOrgClubJackpotTemplateUpdateApi({
         jackpot_id: editJackpotId.value,
-        ...basePayload,
+        ...payload,
       } as Parameters<typeof postOrgClubJackpotTemplateUpdateApi>[0])
     } else {
       response = await postOrgClubJackpotTemplateCreateApi(
-        basePayload as Parameters<typeof postOrgClubJackpotTemplateCreateApi>[0],
+        payload as Parameters<typeof postOrgClubJackpotTemplateCreateApi>[0],
       )
     }
 
@@ -165,61 +479,26 @@ async function fetchTemplateInfo(): Promise<void> {
     const data = response.data?.item as Record<string, unknown> | undefined
     if (!data) return
 
-    // 填充名称
     if (typeof data.name === 'string') {
       jackpotName.value = data.name
     }
 
-    // 填充游戏模式开关
-    if (data.nlh_switch === 1) activeGameMode.value = 'NLH'
-    else if (data.plo_switch === 1) activeGameMode.value = 'PLO'
-    else if (data.six_plus_switch === 1) activeGameMode.value = '6+'
-    else if (data.bombpot_switch === 1) activeGameMode.value = 'Bombpot'
-    else if (data.aof_switch === 1) activeGameMode.value = 'AOF'
+    jackpotGoldYuan.value = formatCentToYuanText(data.gold)
+    modeConfigs.value = createDefaultModeConfigs()
 
-    // 获取当前模式的 setting
-    const modeKey = activeGameMode.value.toLowerCase()
-    const modeSetting = data[`${modeKey}_setting`] as Record<string, unknown> | undefined
+    gameModes.forEach((mode) => {
+      const modeMeta = modeKeyMap[mode]
+      const setting = data[modeMeta.settingKey] as Record<string, unknown> | undefined
+      applyModeSetting(modeConfigs.value[mode], setting)
+      modeEnabled.value[mode] = toSafeNumber(data[modeMeta.switchKey]) === 1
+      if (modeEnabled.value[mode]) {
+        activeGameMode.value = mode
+      }
+    })
 
-    if (modeSetting) {
-      if (typeof modeSetting.game_play_ratio === 'number') {
-        jackpotRows.value[0].value = String(modeSetting.game_play_ratio)
-      }
-
-      // 盲注设置
-      const blindSettings = modeSetting.blind_setting as
-        | Record<string, unknown>[]
-        | undefined
-      if (Array.isArray(blindSettings) && blindSettings.length > 0) {
-        blindOptions.value = blindSettings.map((bs, i) => ({
-          id: `b${i + 1}`,
-          label: `${bs.sb ?? 0}/${(Number(bs.sb) || 0) * 2}`,
-          selected: bs.status === 1,
-        }))
-      }
-
-      // Pool settings
-      if (typeof modeSetting.royal_flush_switch === 'number') {
-        const royal = poolSettings.value.find((p) => p.id === 'royal')
-        if (royal) {
-          royal.checked = modeSetting.royal_flush_switch === 1
-          royal.ratio = String(modeSetting.royal_flush_ratio ?? '')
-        }
-      }
-      if (typeof modeSetting.straight_flush_switch === 'number') {
-        const straight = poolSettings.value.find((p) => p.id === 'straight')
-        if (straight) {
-          straight.checked = modeSetting.straight_flush_switch === 1
-          straight.ratio = String(modeSetting.straight_flush_ratio ?? '')
-        }
-      }
-      if (typeof modeSetting.four_ofa_kind_switch === 'number') {
-        const four = poolSettings.value.find((p) => p.id === 'four')
-        if (four) {
-          four.checked = modeSetting.four_ofa_kind_switch === 1
-          four.ratio = String(modeSetting.four_ofa_kind_ratio ?? '')
-        }
-      }
+    if (!gameModes.some((mode) => modeEnabled.value[mode])) {
+      modeEnabled.value.NLH = true
+      activeGameMode.value = 'NLH'
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : '获取模板信息失败'
@@ -258,7 +537,15 @@ onMounted(() => {
             <span>Jackpot 奖池</span>
             <i class="icon-info" aria-hidden="true">i</i>
           </div>
-          <p class="summary-amount">0.2/0.4</p>
+          <div class="summary-amount-input">
+            <span>¥</span>
+            <input
+              v-model="jackpotGoldYuan"
+              class="inline-input"
+              inputmode="decimal"
+              placeholder="0"
+            />
+          </div>
         </div>
       </div>
 
@@ -276,19 +563,36 @@ onMounted(() => {
           </button>
         </div>
 
+        <div class="mode-switch-wrap">
+          <label class="mode-switch-item">
+            <input
+              class="mode-switch-checkbox"
+              type="checkbox"
+              :checked="modeEnabled[activeGameMode]"
+              @change="toggleModeEnabled(activeGameMode)"
+            />
+            <span>{{ activeGameMode }} 开关</span>
+          </label>
+        </div>
+
         <div class="divider"></div>
 
         <div class="rows-wrap">
-          <div v-for="row in jackpotRows" :key="row.id" class="config-row config-row--stack">
+          <div class="config-row config-row--stack">
             <div class="row-label">
-              <i class="dot" :class="{ 'dot--active': row.checked }"></i>
-              <span>{{ row.label }}</span>
+              <i class="dot dot--active"></i>
+              <span>玩法奖池比例</span>
               <i class="icon-info" aria-hidden="true">i</i>
             </div>
 
             <div class="value-input">
-              <span>{{ row.value }}</span>
-              <span v-if="row.suffix">{{ row.suffix }}</span>
+              <input
+                v-model="currentModeConfig.gamePlayRatio"
+                class="inline-input"
+                inputmode="decimal"
+                placeholder="Enter here"
+              />
+              <span>%</span>
             </div>
           </div>
         </div>
@@ -310,70 +614,178 @@ onMounted(() => {
 
         <div class="divider"></div>
 
-        <div class="rows-wrap rows-wrap--gap-sm">
-          <div class="config-row config-row--stack">
-            <div class="row-label">
-              <i class="dot dot--active"></i>
-              <span>0.1/0.2</span>
-              <i class="icon-info" aria-hidden="true">i</i>
-            </div>
-            <div class="value-input">
-              <span>Enter here</span>
-              <span>%</span>
-            </div>
-          </div>
-
-          <div v-for="row in contributionRows.slice(1)" :key="row.id" class="config-row">
-            <div class="row-label row-label--small">
-              <i class="dot" :class="{ 'dot--active': row.checked }"></i>
-              <span>{{ row.label }}</span>
-            </div>
-            <div class="value-input value-input--narrow">
-              <span>{{ row.value }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="title-line">
-          <span>jackpot 贡献</span>
-          <i class="icon-info" aria-hidden="true">i</i>
-        </div>
-
-        <div class="rows-wrap rows-wrap--gap-sm">
-          <div v-for="row in profitRows" :key="row.id" class="config-row">
-            <div class="row-label">
-              <i class="dot" :class="{ 'dot--active': row.checked }"></i>
-              <span>{{ row.label }}</span>
-            </div>
-            <div class="value-input value-input--narrow">
-              <span>{{ row.value }}</span>
-              <span v-if="row.suffix">{{ row.suffix }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="blind-list">
-          <button
+        <div class="blind-list blind-list--inline">
+          <label
             v-for="option in blindOptions"
             :key="option.id"
-            type="button"
-            class="blind-item"
-            @click="blindOptions = blindOptions.map((item) => ({ ...item, selected: item.id === option.id }))"
+            class="blind-item blind-item--checkbox"
           >
-            <i class="dot" :class="{ 'dot--active': option.selected }"></i>
+            <input
+              class="blind-checkbox"
+              type="checkbox"
+              :checked="option.selected"
+              @change="onBlindOptionClick(option)"
+            />
             <span>{{ option.label }}</span>
-          </button>
+          </label>
+        </div>
+
+        <div
+          v-for="option in selectedBlindOptions"
+          :key="`config-${activeStakeLevel}-${option.sb}`"
+          class="blind-config-panel"
+        >
+          <div class="divider"></div>
+
+          <div class="rows-wrap rows-wrap--gap-sm">
+            <div class="config-row config-row--stack">
+              <div class="row-label">
+                <i class="dot dot--active"></i>
+                <span>{{ option.label }}</span>
+                <i class="icon-info" aria-hidden="true">i</i>
+              </div>
+              <div class="value-input">
+                <input
+                  v-model="getBlindConfigBySb(option.sb).prizeRatio"
+                  class="inline-input"
+                  inputmode="decimal"
+                  placeholder="Enter here"
+                />
+                <span>%</span>
+              </div>
+            </div>
+
+            <div class="config-row">
+              <div class="row-label row-label--small">
+                <i
+                  class="dot"
+                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).contributePotChecked }"
+                  @click="getBlindConfigBySb(option.sb).contributePotChecked = !getBlindConfigBySb(option.sb).contributePotChecked"
+                ></i>
+                <span>底池触发jackpot贡献</span>
+              </div>
+              <div class="value-input value-input--narrow">
+                <input
+                  v-model="getBlindConfigBySb(option.sb).contributePotLimit"
+                  class="inline-input"
+                  inputmode="decimal"
+                  placeholder="BB amount"
+                />
+              </div>
+            </div>
+
+            <div class="config-row">
+              <div class="row-label row-label--small">
+                <i
+                  class="dot"
+                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).awardBetChecked }"
+                  @click="getBlindConfigBySb(option.sb).awardBetChecked = !getBlindConfigBySb(option.sb).awardBetChecked"
+                ></i>
+                <span>投入底池触发jackpot奖励</span>
+              </div>
+              <div class="value-input value-input--narrow">
+                <input
+                  v-model="getBlindConfigBySb(option.sb).awardBetLimit"
+                  class="inline-input"
+                  inputmode="decimal"
+                  placeholder="BB amount"
+                />
+              </div>
+            </div>
+
+            <div class="config-row">
+              <div class="row-label row-label--small">
+                <i
+                  class="dot"
+                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).awardOtherChecked }"
+                  @click="getBlindConfigBySb(option.sb).awardOtherChecked = !getBlindConfigBySb(option.sb).awardOtherChecked"
+                ></i>
+                <span>奖励全桌</span>
+              </div>
+              <div class="value-input value-input--narrow">
+                <input
+                  v-model="getBlindConfigBySb(option.sb).awardOtherRatio"
+                  class="inline-input"
+                  inputmode="decimal"
+                  placeholder="BB amount"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="title-line">
+            <span>jackpot 贡献</span>
+            <i class="icon-info" aria-hidden="true">i</i>
+          </div>
+
+          <div class="rows-wrap rows-wrap--gap-sm">
+            <div class="config-row">
+              <div class="row-label">
+                <i
+                  class="dot"
+                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).profitTriggerChecked }"
+                  @click="getBlindConfigBySb(option.sb).profitTriggerChecked = !getBlindConfigBySb(option.sb).profitTriggerChecked"
+                ></i>
+                <span>盈利触发</span>
+              </div>
+              <div class="value-input value-input--narrow">
+                <input
+                  v-model="getBlindConfigBySb(option.sb).profitTriggerLimit"
+                  class="inline-input"
+                  inputmode="decimal"
+                  placeholder="BB amount"
+                />
+              </div>
+            </div>
+
+            <div class="config-row">
+              <div class="row-label">
+                <i
+                  class="dot"
+                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).jackpotContribChecked }"
+                  @click="getBlindConfigBySb(option.sb).jackpotContribChecked = !getBlindConfigBySb(option.sb).jackpotContribChecked"
+                ></i>
+                <span>Jackpot 贡献</span>
+              </div>
+              <div class="value-input value-input--narrow">
+                <input
+                  v-model="getBlindConfigBySb(option.sb).jackpotContribValue"
+                  class="inline-input"
+                  inputmode="decimal"
+                  placeholder="BB amount"
+                />
+              </div>
+            </div>
+
+            <div class="config-row">
+              <div class="row-label">
+                <i
+                  class="dot"
+                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).profitPercentChecked }"
+                  @click="getBlindConfigBySb(option.sb).profitPercentChecked = !getBlindConfigBySb(option.sb).profitPercentChecked"
+                ></i>
+                <span>触发盈利 (%)</span>
+              </div>
+              <div class="value-input value-input--narrow">
+                <input
+                  v-model="getBlindConfigBySb(option.sb).profitPercentValue"
+                  class="inline-input"
+                  inputmode="decimal"
+                  placeholder="0"
+                />
+                <span>%</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="glass-card pool-card">
         <h3>Pool Settings</h3>
 
-        <div v-for="item in poolSettings" :key="item.id" class="pool-row">
+        <div v-for="item in currentModeConfig.poolSettings" :key="item.id" class="pool-row">
           <div class="pool-left">
             <div class="row-label">
               <i
@@ -535,12 +947,22 @@ onMounted(() => {
   font-style: normal;
 }
 
-.summary-amount {
+.summary-amount-input {
   margin: 0.0667rem 0 0;
   color: #fff;
   font-size: 0.5333rem;
   line-height: 1.4;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1067rem;
+  min-width: 3.2rem;
+}
+
+.summary-amount-input .inline-input {
+  text-align: left;
+  font-size: inherit;
+  font-weight: inherit;
 }
 
 .section-card {
@@ -585,6 +1007,25 @@ onMounted(() => {
   border: 0.0133rem solid #fff;
   background: rgba(255, 255, 255, 0.17);
   backdrop-filter: blur(0.4533rem);
+}
+
+.mode-switch-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.16rem 0.28rem;
+}
+
+.mode-switch-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1067rem;
+  color: #fff;
+  font-size: 0.32rem;
+}
+
+.mode-switch-checkbox {
+  width: 0.4rem;
+  height: 0.4rem;
 }
 
 .divider {
@@ -678,6 +1119,12 @@ onMounted(() => {
   gap: 0.1351rem;
 }
 
+.blind-list--inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.16rem 0.24rem;
+}
+
 .blind-item {
   border: 0;
   padding: 0;
@@ -688,6 +1135,21 @@ onMounted(() => {
   align-items: center;
   gap: 0.0792rem;
   width: fit-content;
+}
+
+.blind-item--checkbox {
+  align-items: center;
+}
+
+.blind-checkbox {
+  width: 0.4rem;
+  height: 0.4rem;
+}
+
+.blind-config-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.24rem;
 }
 
 .pool-card {

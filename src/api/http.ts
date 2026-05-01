@@ -9,7 +9,7 @@ import { t } from '@/i18n'
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
-  timeout: 15000,
+  timeout: 60000,
 })
 
 interface HttpRequestConfigExt extends InternalAxiosRequestConfig {
@@ -21,7 +21,7 @@ interface HttpRequestConfigExt extends InternalAxiosRequestConfig {
 let authRedirecting = false
 
 function shouldAttachXClub(url: string): boolean {
-  return /^\/?(?:org|cmsext)\/club\//.test(url)
+  return /^\/?(?:org|cmsext|order)\/club\//.test(url)
 }
 
 function readClubIdFromPayload(payload: unknown): string {

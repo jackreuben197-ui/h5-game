@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { showFailToast } from 'vant'
+import { showFailToast, showSuccessToast } from 'vant'
+import { formatUC } from '@/utils/roomVisibility'
+import { postClubFundChangeLogApi, postOrgClubGoldApi, postOrgMemberListApi } from '@/api/org'
+import { postGuildGiveRecyCleApi } from '@/api/order'
+import type { ClubFundChangeLogRecord, OrgClubGoldData, OrgMemberListRecord } from '@/api/models/org'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
+import { useUserInfoStore } from '@/stores/userInfo'
 
 type TabKey = 'account' | 'record'
 type MemberRole = '管理员' | '代理人' | '成员'
@@ -61,11 +66,14 @@ interface FundRecordItem {
 }
 
 const router = useRouter()
+const userInfoStore = useUserInfoStore()
 const activeTab = ref<TabKey>('account')
 const searchKeyword = ref('')
 const activeRange = ref<RecordRangeKey>('today')
 const selectedRecordType = ref('所有')
 const showTypeMenu = ref(true)
+const pageRef = ref<HTMLElement | null>(null)
+const recordListRef = ref<HTMLElement | null>(null)
 const showFundSheet = ref(false)
 const activeMember = ref<MemberItem | null>(null)
 const fundAssetTab = ref<FundAssetTab>('coin')
@@ -76,6 +84,26 @@ const quotaAdjustMode = ref<QuotaAdjustMode>('increase')
 const quotaInput = ref('')
 const disposableQuota = ref(0)
 const reviewQuota = ref(0)
+const loadingMembers = ref(false)
+const loadingMoreMembers = ref(false)
+const hasMoreMembers = ref(true)
+const membersOffset = ref(0)
+const membersTotal = ref(0)
+const memberListTotalGold = ref(0)
+const clubGoldSummary = ref<OrgClubGoldData | null>(null)
+const loadingClubGold = ref(false)
+const recordOffset = ref(0)
+const hasMoreRecords = ref(true)
+const loadingRecords = ref(false)
+const loadingMoreRecords = ref(false)
+const recordsTotal = ref(0)
+const grantAmountTotal = ref(0)
+const recoverAmountTotal = ref(0)
+const profitAmountTotal = ref(0)
+const changeAmountTotal = ref(0)
+const submittingFund = ref(false)
+
+const PAGE_SIZE = 20
 
 const keypadRows = [
   ['1', '2', '3'],
@@ -93,7 +121,7 @@ const currentFundBalanceText = computed(() => {
     return formatCount(activeMember.value.diamond)
   }
 
-  return formatCount(activeMember.value.uc)
+  return formatUC(activeMember.value.uc)
 })
 
 const currentInputText = computed(() => {
@@ -105,24 +133,54 @@ const currentInputText = computed(() => {
 })
 
 const fundSubmitLabel = computed(() => (fundActionTab.value === 'grant' ? '发放' : '回收'))
+const members = ref<MemberItem[]>([])
 
-const summaryTop: SummaryItem[] = [
-  { label: '俱乐部总余额', value: 20000, icon: 'chips' },
-  { label: '成员在桌余额', value: 20000, icon: 'chips' },
-  { label: '成员总余额', value: 20000, icon: 'chips' },
-]
+const memberTotalText = computed(() => {
+  const total = membersTotal.value || toSafeNumber(userInfoStore.currentClub?.club_members) || members.value.length
+  const upperLimit = toSafeNumber(userInfoStore.currentClub?.upper_limit)
 
-const summaryBottom: SummaryItem[] = [
-  { label: '成员总免审额', value: 20000, icon: 'balance' },
-  { label: '俱乐部钻石', value: 20000, icon: 'diamond' },
-]
+  if (upperLimit > 0) {
+    return `${total}/${upperLimit}`
+  }
 
-const members = ref<MemberItem[]>([
-  { id: 1, name: '创始人A', uid: '8677650585', role: '管理员', identityType: 'founder', isBoundAgent: false, diamond: 500, uc: 500, freeLimit: '1000/1000', agentName: 'Gregory' },
-  { id: 2, name: '管理员B', uid: '8677650586', role: '管理员', identityType: 'admin', isBoundAgent: false, diamond: 320, uc: 720, freeLimit: '800/1000', agentName: 'Gregory' },
-  { id: 3, name: '代理人C', uid: '8677650587', role: '代理人', identityType: 'agent', isBoundAgent: false, diamond: 260, uc: 1600, freeLimit: '1200/1200', agentName: 'Self' },
-  { id: 4, name: '普通玩家D', uid: '8677650588', role: '成员', identityType: 'player', isBoundAgent: false, diamond: 140, uc: 280, freeLimit: '100/300', agentName: '-' },
-  { id: 5, name: '普通玩家E', uid: '8677650589', role: '成员', identityType: 'player', isBoundAgent: true, diamond: 620, uc: 2400, freeLimit: '900/1000', agentName: 'Gregory' },
+  return String(total)
+})
+
+const clubFundSummary = computed(() => {
+  const club = userInfoStore.currentClub as Record<string, unknown> | null
+  const clubFund = clubGoldSummary.value as Record<string, unknown> | null
+  const membersUcTotal = members.value.reduce((sum, item) => sum + item.uc, 0)
+  const membersCreditLimitTotal = members.value.reduce((sum, item) => {
+    const parts = item.freeLimit.split('/')
+    return sum + toSafeNumber(parts[1])
+  }, 0)
+
+  return {
+    clubBalance: pickNumber(clubFund, ['gold', 'club_gold'], pickNumber(club, ['club_gold', 'gold', 'user_gold', 'total_gold'], memberListTotalGold.value)),
+    membersTableBalance: pickNumber(clubFund, ['members_table_gold'], pickNumber(club, ['members_table_gold'], 0)),
+    membersTotalBalance: pickNumber(clubFund, ['members_gold'], pickNumber(club, ['members_gold'], membersUcTotal)),
+    membersCreditLimit: pickNumber(
+      clubFund,
+      ['club_credit_limit_total', 'club_gold_credit_limit_total'],
+      pickNumber(
+        club,
+        ['club_credit_limit_total', 'club_gold_credit_limit_total', 'members_credit_limit_total'],
+        membersCreditLimitTotal,
+      ),
+    ),
+    clubDiamond: pickNumber(clubFund, ['diamond', 'diamonds'], pickNumber(club, ['diamond', 'diamonds'], 0)),
+  }
+})
+
+const summaryTop = computed<SummaryItem[]>(() => [
+  { label: '俱乐部总余额', value: clubFundSummary.value.clubBalance, icon: 'chips' },
+  { label: '成员在桌余额', value: clubFundSummary.value.membersTableBalance, icon: 'chips' },
+  { label: '成员总余额', value: clubFundSummary.value.membersTotalBalance, icon: 'chips' },
+])
+
+const summaryBottom = computed<SummaryItem[]>(() => [
+  { label: '成员总免审额', value: clubFundSummary.value.membersCreditLimit, icon: 'balance' },
+  { label: '俱乐部钻石', value: clubFundSummary.value.clubDiamond, icon: 'diamond' },
 ])
 
 const recordRanges: RecordRangeItem[] = [
@@ -132,12 +190,12 @@ const recordRanges: RecordRangeItem[] = [
   { key: 'custom', label: '自定义' },
 ]
 
-const recordStats: RecordStatItem[] = [
-  { id: 1, label: 'Deposits', value: '20/20' },
-  { id: 2, label: 'withdrawal', value: '1000' },
-  { id: 3, label: 'Income', value: '200' },
-  { id: 4, label: 'Percentage', value: '50' },
-]
+const recordStats = computed<RecordStatItem[]>(() => [
+  { id: 1, label: '发放', value: formatCount(grantAmountTotal.value) },
+  { id: 2, label: '回收', value: formatCount(recoverAmountTotal.value) },
+  { id: 3, label: '分润', value: formatCount(profitAmountTotal.value) },
+  { id: 4, label: '变动', value: formatCount(changeAmountTotal.value) },
+])
 
 const recordTypeOptions = [
   '所有',
@@ -155,14 +213,7 @@ const recordTypeOptions = [
   '牛仔赔付',
 ]
 
-const recordRows = ref<FundRecordItem[]>([
-  { id: 1, time: '15:00:50', date: '11/03/2024', type: '服务费', quantity: '+3,000,000', balance: '3500', remark: '备注', remarkId: '11440454', fromName: 'Charlie', fromId: '12345678' },
-  { id: 2, time: '15:00:50', date: '11/03/2024', type: '服务费', quantity: '+3,000,000', balance: '3500', remark: '备注', remarkId: '11440454', fromName: 'Charlie', fromId: '12345678' },
-  { id: 3, time: '15:00:50', date: '11/03/2024', type: '服务费', quantity: '+3,000,000', balance: '3500', remark: '备注', remarkId: '11440454', fromName: 'Charlie', fromId: '12345678' },
-  { id: 4, time: '15:00:50', date: '11/03/2024', type: '服务费', quantity: '+3,000,000', balance: '3500', remark: '备注', remarkId: '11440454' },
-  { id: 5, time: '15:00:50', date: '11/03/2024', type: '服务费', quantity: '+3,000,000', balance: '3500', remark: '备注', remarkId: '11440454' },
-  { id: 6, time: '15:00:50', date: '11/03/2024', type: '服务费', quantity: '+3,000,000', balance: '3500', remark: '备注', remarkId: '11440454' },
-])
+const recordRows = ref<FundRecordItem[]>([])
 
 const filteredRecordRows = computed(() => {
   if (selectedRecordType.value === '所有') {
@@ -174,6 +225,384 @@ const filteredRecordRows = computed(() => {
 
 function formatCount(value: number): string {
   return value.toLocaleString('en-US')
+}
+
+function toSafeNumber(value: unknown): number {
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? numberValue : 0
+}
+
+function pickNumber(source: Record<string, unknown> | null, keys: string[], fallback = 0): number {
+  if (!source) {
+    return fallback
+  }
+
+  for (const key of keys) {
+    const raw = source[key]
+    if (raw === undefined || raw === null || raw === '') {
+      continue
+    }
+
+    const parsed = Number(raw)
+    if (Number.isFinite(parsed)) {
+      return parsed
+    }
+  }
+
+  return fallback
+}
+
+function formatSignedCount(value: number): string {
+  if (!Number.isFinite(value) || value === 0) {
+    return '0'
+  }
+
+  const absText = Math.abs(value).toLocaleString('en-US')
+  return value > 0 ? `+${absText}` : `-${absText}`
+}
+
+function resolveRecordRange(): { start_time?: number; end_time?: number } {
+  const now = new Date()
+  const endTime = Math.floor(now.getTime() / 1000)
+
+  if (activeRange.value === 'today') {
+    const start = new Date(now)
+    start.setHours(0, 0, 0, 0)
+    return { start_time: Math.floor(start.getTime() / 1000), end_time: endTime }
+  }
+
+  if (activeRange.value === 'seven') {
+    const start = endTime - 7 * 24 * 60 * 60
+    return { start_time: start, end_time: endTime }
+  }
+
+  if (activeRange.value === 'thirty') {
+    const start = endTime - 30 * 24 * 60 * 60
+    return { start_time: start, end_time: endTime }
+  }
+
+  return {}
+}
+
+function normalizeRecordType(opCode?: string): string {
+  const code = String(opCode || '').trim().toUpperCase()
+
+  if (!code) {
+    return '未知'
+  }
+
+  if (code.includes('GRANT')) {
+    return '联盟发放'
+  }
+
+  if (code.includes('RECOVER') || code.includes('RECYCLE')) {
+    return '回收'
+  }
+
+  if (code.includes('SERVICE') || code.includes('FEE')) {
+    return '房间服务费'
+  }
+
+  return code
+}
+
+function splitDateTime(value?: string): { time: string; date: string } {
+  const raw = String(value || '').trim()
+  if (!raw) {
+    return { time: '--', date: '--' }
+  }
+
+  const normalized = raw.replace('T', ' ')
+  const [datePart = '--', timePart = '--'] = normalized.split(' ')
+  const simpleTime = timePart.split('.')[0] || '--'
+  return { time: simpleTime, date: datePart }
+}
+
+function mapFundRecord(record: ClubFundChangeLogRecord, index: number): FundRecordItem {
+  const dateTime = splitDateTime(record.create_time)
+  const remarkName = String(record.op_nick_name || record.src_nick_name || record.name || '备注')
+  const remarkId = String(record.op_random_id || record.src_random_id || record.user_random_num || '--')
+  const balance = toSafeNumber(record.gold_after)
+  const quantity = toSafeNumber(record.gold_change)
+
+  return {
+    id: index,
+    time: dateTime.time,
+    date: dateTime.date,
+    type: normalizeRecordType(record.op_code),
+    quantity: formatSignedCount(quantity),
+    balance: formatUC(balance),
+    remark: remarkName,
+    remarkId,
+    fromName: record.src_nick_name ? String(record.src_nick_name) : undefined,
+    fromId: record.src_random_id ? String(record.src_random_id) : undefined,
+  }
+}
+
+async function fetchClubGoldSummary(): Promise<void> {
+  if (loadingClubGold.value) {
+    return
+  }
+
+  const currentClub = userInfoStore.currentClub
+  if (!currentClub?.random_id) {
+    clubGoldSummary.value = null
+    return
+  }
+
+  loadingClubGold.value = true
+  try {
+    const response = await postOrgClubGoldApi({
+      club_random_id: currentClub.random_id,
+    })
+
+    if (response.code !== 0 || !response.data) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '获取俱乐部基金失败')
+    }
+
+    clubGoldSummary.value = response.data
+  } catch (error) {
+    clubGoldSummary.value = null
+    const message = error instanceof Error ? error.message : '获取俱乐部基金失败'
+    showFailToast(message)
+  } finally {
+    loadingClubGold.value = false
+  }
+}
+
+async function fetchRecordRows(reset = false): Promise<void> {
+  if (loadingRecords.value || loadingMoreRecords.value) {
+    return
+  }
+
+  if (!reset && !hasMoreRecords.value) {
+    return
+  }
+
+  const currentClub = userInfoStore.currentClub
+  if (!currentClub?.random_id) {
+    if (reset) {
+      recordRows.value = []
+      hasMoreRecords.value = false
+      recordsTotal.value = 0
+    }
+    return
+  }
+
+  if (reset) {
+    loadingRecords.value = true
+    recordOffset.value = 0
+    hasMoreRecords.value = true
+  } else {
+    loadingMoreRecords.value = true
+  }
+
+  try {
+    const currentOffset = reset ? 0 : recordOffset.value
+    const rangePayload = resolveRecordRange()
+    const response = await postClubFundChangeLogApi({
+      club_random_id: currentClub.random_id,
+      limit: PAGE_SIZE,
+      offset: currentOffset,
+      gold_type: 1,
+      sort_type: 1,
+      order_type: 2,
+      ...rangePayload,
+    })
+
+    if (response.code !== 0 || !response.data) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '获取基金记录失败')
+    }
+
+    const rawRows = Array.isArray(response.data.list) ? response.data.list : []
+    const nextRows = rawRows.map((item, index) => mapFundRecord(item, currentOffset + index + 1))
+
+    recordRows.value = reset ? nextRows : [...recordRows.value, ...nextRows]
+    recordOffset.value = currentOffset + rawRows.length
+
+    const total = toSafeNumber(response.data.total)
+    recordsTotal.value = total
+    grantAmountTotal.value = toSafeNumber(response.data.total_info?.grant_amount)
+    recoverAmountTotal.value = toSafeNumber(response.data.total_info?.recover_amount)
+    profitAmountTotal.value = toSafeNumber(response.data.total_info?.profit_amount)
+    changeAmountTotal.value = toSafeNumber(response.data.total_info?.change_amount)
+
+    if (total > 0) {
+      hasMoreRecords.value = recordOffset.value < total
+    } else {
+      hasMoreRecords.value = rawRows.length >= PAGE_SIZE
+    }
+  } catch (error) {
+    if (reset) {
+      recordRows.value = []
+      hasMoreRecords.value = false
+      recordsTotal.value = 0
+    }
+    const message = error instanceof Error ? error.message : '获取基金记录失败'
+    showFailToast(message)
+  } finally {
+    if (reset) {
+      loadingRecords.value = false
+    } else {
+      loadingMoreRecords.value = false
+    }
+  }
+}
+
+function onRecordScroll(event: Event): void {
+  if (activeTab.value !== 'record' || loadingRecords.value || loadingMoreRecords.value || !hasMoreRecords.value) {
+    return
+  }
+
+  const target = event.target as HTMLElement | null
+  if (!target) {
+    return
+  }
+
+  const remain = target.scrollHeight - (target.scrollTop + target.clientHeight)
+  if (remain <= 80) {
+    void fetchRecordRows(false)
+  }
+}
+
+function resolveRole(record: OrgMemberListRecord): { role: MemberRole; identityType: MemberIdentity } {
+  const userLevel = toSafeNumber(record.user_level)
+  const memberType = toSafeNumber(record.club_member_type)
+  const isBoss = toSafeNumber(record.is_boss) === 1
+
+  if (isBoss || userLevel === 1) {
+    return { role: '管理员', identityType: 'founder' }
+  }
+
+  if (userLevel === 2 || userLevel === 3) {
+    return { role: '管理员', identityType: 'admin' }
+  }
+
+  if (userLevel === 4 || memberType === 2) {
+    return { role: '代理人', identityType: 'agent' }
+  }
+
+  return { role: '成员', identityType: 'player' }
+}
+
+function mapMember(record: OrgMemberListRecord): MemberItem {
+  const id = toSafeNumber(record.user_id)
+  const roleInfo = resolveRole(record)
+  const clubGoldCredit = toSafeNumber(record.club_gold_credit)
+  const clubGoldCreditLimit = toSafeNumber(record.club_gold_credit_limit)
+
+  return {
+    id,
+    name: String(record.remark_name || record.nick_name || `成员${id || '--'}`),
+    uid: String(record.random_num || '--'),
+    role: roleInfo.role,
+    identityType: roleInfo.identityType,
+    isBoundAgent: toSafeNumber(record.agent_random_id) > 0,
+    diamond: toSafeNumber(record.diamonds),
+    uc: toSafeNumber(record.gold),
+    freeLimit: `${formatUC(clubGoldCredit)}/${formatUC(clubGoldCreditLimit)}`,
+    agentName: String(record.agent_nick_name || '-'),
+  }
+}
+
+async function fetchMembers(reset = false): Promise<void> {
+  if (loadingMembers.value || loadingMoreMembers.value) {
+    return
+  }
+
+  if (!reset && !hasMoreMembers.value) {
+    return
+  }
+
+  const currentClub = userInfoStore.currentClub
+  if (!currentClub?.random_id && !currentClub?.club_id) {
+    if (reset) {
+      members.value = []
+      membersTotal.value = 0
+      hasMoreMembers.value = false
+    }
+    showFailToast('未找到俱乐部信息')
+    return
+  }
+
+  if (reset) {
+    loadingMembers.value = true
+    membersOffset.value = 0
+    hasMoreMembers.value = true
+  } else {
+    loadingMoreMembers.value = true
+  }
+
+  try {
+    const currentOffset = reset ? 0 : membersOffset.value
+    const response = await postOrgMemberListApi({
+      club_id: currentClub?.club_id,
+      club_random_id: currentClub?.random_id,
+      search: searchKeyword.value.trim(),
+      sort_type: 4,
+      order_type: 2,
+      gold_type: 1,
+      limit: PAGE_SIZE,
+      offset: currentOffset,
+    })
+
+    if (response.code !== 0 || !response.data) {
+      const message = typeof response.msg === 'string' ? response.msg : '获取成员列表失败'
+      throw new Error(message)
+    }
+
+    const rawMembers = Array.isArray(response.data.data) ? response.data.data : []
+    const nextMembers = rawMembers.map(mapMember)
+
+    members.value = reset ? nextMembers : [...members.value, ...nextMembers]
+    membersOffset.value = currentOffset + rawMembers.length
+
+    const total = toSafeNumber(response.data.total)
+    membersTotal.value = total > 0 ? total : members.value.length
+    memberListTotalGold.value = toSafeNumber(response.data.total_info?.total_gold)
+
+    if (total > 0) {
+      hasMoreMembers.value = membersOffset.value < total
+    } else {
+      hasMoreMembers.value = rawMembers.length >= PAGE_SIZE
+    }
+  } catch (error) {
+    if (reset) {
+      members.value = []
+      membersTotal.value = 0
+      hasMoreMembers.value = false
+    }
+    const message = error instanceof Error ? error.message : '获取成员列表失败'
+    showFailToast(message)
+  } finally {
+    if (reset) {
+      loadingMembers.value = false
+    } else {
+      loadingMoreMembers.value = false
+    }
+  }
+}
+
+function loadNextPage(): void {
+  if (!loadingMembers.value && !loadingMoreMembers.value && hasMoreMembers.value) {
+    void fetchMembers(false)
+  }
+}
+
+function onPageScroll(event: Event): void {
+  if (activeTab.value !== 'account') {
+    return
+  }
+
+  const target = event.target as HTMLElement | null
+  if (!target) {
+    return
+  }
+
+  const remain = target.scrollHeight - (target.scrollTop + target.clientHeight)
+  if (remain <= 80) {
+    loadNextPage()
+  }
 }
 
 function iconByType(type: SummaryItem['icon']): string {
@@ -197,6 +626,11 @@ function switchTab(tab: TabKey): void {
 
   if (tab === 'account') {
     showTypeMenu.value = false
+    return
+  }
+
+  if (!recordRows.value.length) {
+    void fetchRecordRows(true)
   }
 }
 
@@ -288,40 +722,72 @@ function onKeypadPress(key: string): void {
   target.value += key
 }
 
-function onFundConfirm(): void {
-  if (fundAssetTab.value !== 'quota' || !quotaEditField.value || !quotaInput.value) {
+async function onFundConfirm(): Promise<void> {
+  if (fundAssetTab.value === 'quota') {
+    if (!quotaEditField.value || !quotaInput.value) {
+      closeFundSheet()
+      return
+    }
+
+    const amount = Number.parseInt(quotaInput.value, 10)
+    if (Number.isNaN(amount)) {
+      return
+    }
+
+    const factor = quotaAdjustMode.value === 'increase' ? 1 : -1
+    if (quotaEditField.value === 'disposable') {
+      disposableQuota.value = Math.max(0, disposableQuota.value + amount * factor)
+    } else {
+      reviewQuota.value = Math.max(0, reviewQuota.value + amount * factor)
+    }
+
+    quotaInput.value = ''
+    quotaEditField.value = null
+    return
+  }
+
+  if (submittingFund.value) {
+    return
+  }
+
+  const member = activeMember.value
+  const amount = Number.parseInt(fundAmountInput.value, 10)
+  if (!member?.id || Number.isNaN(amount) || amount <= 0) {
+    showFailToast('请输入正确的发放数量')
+    return
+  }
+
+  submittingFund.value = true
+  try {
+    const response = await postGuildGiveRecyCleApi({
+      user_ids: [member.id],
+      gold_num: amount * 100,
+      gold_type: fundAssetTab.value === 'coin' ? 1 : 2,
+      op_type: fundActionTab.value === 'grant' ? 1 : 2,
+    })
+
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '操作失败')
+    }
+
+    showSuccessToast(fundActionTab.value === 'grant' ? '发放成功' : '回收成功')
     closeFundSheet()
-    return
+    await Promise.all([fetchMembers(true), fetchClubGoldSummary(), fetchRecordRows(true)])
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '操作失败'
+    showFailToast(message)
+  } finally {
+    submittingFund.value = false
   }
-
-  const amount = Number.parseInt(quotaInput.value, 10)
-
-  if (Number.isNaN(amount)) {
-    return
-  }
-
-  const factor = quotaAdjustMode.value === 'increase' ? 1 : -1
-
-  if (quotaEditField.value === 'disposable') {
-    disposableQuota.value = Math.max(0, disposableQuota.value + amount * factor)
-  } else {
-    reviewQuota.value = Math.max(0, reviewQuota.value + amount * factor)
-  }
-
-  quotaInput.value = ''
-  quotaEditField.value = null
 }
 
 function onSearchSubmit(): void {
-  if (!searchKeyword.value.trim()) {
-    return
-  }
-
-  showFailToast('玩家查询功能开发中')
+  void fetchMembers(true)
 }
 
 function switchRange(range: RecordRangeKey): void {
   activeRange.value = range
+  void fetchRecordRows(true)
 }
 
 function toggleTypeMenu(): void {
@@ -344,10 +810,14 @@ function roleClass(role: MemberRole): string {
 
   return 'role-badge--admin'
 }
+
+onMounted(() => {
+  void Promise.all([fetchMembers(true), fetchClubGoldSummary(), fetchRecordRows(true)])
+})
 </script>
 
 <template>
-  <div class="club-members-bg">
+  <div ref="pageRef" class="club-members-bg" @scroll="onPageScroll">
     <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
     <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
 
@@ -358,7 +828,7 @@ function roleClass(role: MemberRole): string {
           <span class="back-title">基金管理</span>
         </button>
 
-        <p class="member-total">会员总数 <span>40/200</span></p>
+        <p class="member-total">会员总数 <span>{{ memberTotalText }}</span></p>
       </header>
 
       <nav class="member-tabs" aria-label="基金页签">
@@ -387,7 +857,7 @@ function roleClass(role: MemberRole): string {
               <p class="summary-label">{{ item.label }}</p>
               <p class="summary-value">
                 <img :src="iconByType(item.icon)" alt="" aria-hidden="true" />
-                <span>{{ formatCount(item.value) }}</span>
+                <span>{{ formatUC(item.value) }}</span>
               </p>
             </div>
           </div>
@@ -397,7 +867,7 @@ function roleClass(role: MemberRole): string {
               <p class="summary-label">{{ item.label }}</p>
               <p class="summary-value">
                 <img :src="iconByType(item.icon)" alt="" aria-hidden="true" />
-                <span>{{ formatCount(item.value) }}</span>
+                <span>{{ formatUC(item.value) }}</span>
               </p>
             </div>
 
@@ -446,7 +916,7 @@ function roleClass(role: MemberRole): string {
                   <img :src="imgChips" alt="" aria-hidden="true" />
                   <span>UC</span>
                 </p>
-                <p class="data-value">{{ member.uc }}</p>
+                <p class="data-value">{{ formatUC(member.uc) }}</p>
               </div>
 
               <div class="data-item">
@@ -465,6 +935,11 @@ function roleClass(role: MemberRole): string {
               </div>
             </div>
           </article>
+
+          <p v-if="!members.length && !loadingMembers" class="member-list-status">暂无成员数据</p>
+          <p v-if="loadingMembers" class="member-list-status">加载中...</p>
+          <p v-else-if="members.length && loadingMoreMembers" class="member-list-status">加载更多...</p>
+          <p v-else-if="members.length && !hasMoreMembers" class="member-list-status">没有更多了</p>
         </section>
       </template>
 
@@ -523,7 +998,7 @@ function roleClass(role: MemberRole): string {
               </button>
             </div>
 
-            <section class="record-list">
+            <section ref="recordListRef" class="record-list" @scroll="onRecordScroll">
               <article v-for="row in filteredRecordRows" :key="row.id" class="record-row">
                 <div v-if="row.fromName && row.fromId" class="from-chip">
                   <span class="from-label">From</span>
@@ -546,6 +1021,11 @@ function roleClass(role: MemberRole): string {
                   </p>
                 </div>
               </article>
+
+              <p v-if="!filteredRecordRows.length && !loadingRecords" class="record-list-status">暂无记录</p>
+              <p v-if="loadingRecords" class="record-list-status">加载中...</p>
+              <p v-else-if="recordRows.length && loadingMoreRecords" class="record-list-status">加载更多...</p>
+              <p v-else-if="recordRows.length && !hasMoreRecords" class="record-list-status">没有更多了</p>
             </section>
           </div>
         </section>
@@ -999,6 +1479,14 @@ function roleClass(role: MemberRole): string {
   padding-bottom: 0.21rem;
 }
 
+.member-list-status {
+  margin: 0;
+  text-align: center;
+  font-size: 0.292rem;
+  color: rgba(249, 249, 249, 0.75);
+  padding: 0.12rem 0;
+}
+
 .record-panel {
   position: relative;
   border-radius: 0.76013rem;
@@ -1155,6 +1643,14 @@ function roleClass(role: MemberRole): string {
   max-height: 12.45384rem;
   overflow: auto;
   padding-right: 0;
+}
+
+.record-list-status {
+  margin: 0;
+  text-align: center;
+  font-size: 0.292rem;
+  color: rgba(249, 249, 249, 0.75);
+  padding: 0.12rem 0;
 }
 
 .record-row {

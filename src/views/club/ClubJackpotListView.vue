@@ -17,7 +17,12 @@ interface JackpotTemplateItem {
 
 const router = useRouter()
 const loading = ref(false)
+const loadingMore = ref(false)
 const templates = ref<JackpotTemplateItem[]>([])
+const listOffset = ref(0)
+const hasMore = ref(true)
+const pageRef = ref<HTMLElement | null>(null)
+const PAGE_SIZE = 10
 
 // ---- delete dialog state ----
 const showDeleteDialog = ref(false)
@@ -27,15 +32,31 @@ const deleting = ref(false)
 const hasItems = computed(() => templates.value.length > 0)
 
 onMounted(() => {
-  void fetchJackpotTemplates()
+  void fetchJackpotTemplates(true)
 })
 
-async function fetchJackpotTemplates(): Promise<void> {
-  loading.value = true
+async function fetchJackpotTemplates(reset = false): Promise<void> {
+  if (loading.value || loadingMore.value) {
+    return
+  }
+
+  if (!reset && !hasMore.value) {
+    return
+  }
+
+  if (reset) {
+    loading.value = true
+    listOffset.value = 0
+    hasMore.value = true
+  } else {
+    loadingMore.value = true
+  }
+
   try {
+    const currentOffset = reset ? 0 : listOffset.value
     const response = await postOrgClubJackpotTemplateListApi({
-      limit: 10,
-      offset: 0,
+      limit: PAGE_SIZE,
+      offset: currentOffset,
     })
 
     if (Number(response.code) !== 0) {
@@ -44,13 +65,47 @@ async function fetchJackpotTemplates(): Promise<void> {
     }
 
     const rawItems = Array.isArray(response.data?.items) ? response.data.items : []
-    templates.value = rawItems.map((raw, index) => toJackpotItem(raw, index))
+    const mappedItems = rawItems.map((raw, index) => toJackpotItem(raw, currentOffset + index))
+
+    if (reset) {
+      templates.value = mappedItems
+    } else {
+      templates.value = [...templates.value, ...mappedItems]
+    }
+
+    listOffset.value = currentOffset + rawItems.length
+    hasMore.value = rawItems.length >= PAGE_SIZE
   } catch (error) {
-    templates.value = []
+    if (reset) {
+      templates.value = []
+      hasMore.value = false
+    }
     const message = error instanceof Error ? error.message : '加载 Jackpot 列表失败'
     showFailToast(message)
   } finally {
-    loading.value = false
+    if (reset) {
+      loading.value = false
+    } else {
+      loadingMore.value = false
+    }
+  }
+}
+
+function loadNextPage(): void {
+  if (!loading.value && !loadingMore.value && hasMore.value) {
+    void fetchJackpotTemplates(false)
+  }
+}
+
+function onPageScroll(event: Event): void {
+  const target = event.target as HTMLElement | null
+  if (!target) {
+    return
+  }
+
+  const remain = target.scrollHeight - (target.scrollTop + target.clientHeight)
+  if (remain <= 80) {
+    loadNextPage()
   }
 }
 
@@ -96,7 +151,8 @@ function toSafeNumber(value: unknown): number {
 
 function formatAmount(value: unknown): string {
   const amount = toSafeNumber(value)
-  return amount > 0 ? amount.toLocaleString('en-US') : '0'
+  const amountYuan = amount / 100
+  return amountYuan > 0 ? amountYuan.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0'
 }
 
 function onEdit(item: JackpotTemplateItem): void {
@@ -127,7 +183,7 @@ async function confirmDelete(): Promise<void> {
     deletingItem.value = null
 
     // 重新拉取列表
-    void fetchJackpotTemplates()
+    void fetchJackpotTemplates(true)
   } catch (error) {
     const message = error instanceof Error ? error.message : '删除失败'
     showFailToast(message)
@@ -151,7 +207,7 @@ function goPoolReward(): void {
 </script>
 
 <template>
-  <div class="club-jackpot-page">
+  <div ref="pageRef" class="club-jackpot-page" @scroll="onPageScroll">
     <div class="page-overlay" aria-hidden="true"></div>
 
     <HeaderBack :title="'Jackpot'">
@@ -220,6 +276,9 @@ function goPoolReward(): void {
         <img class="empty-icon" :src="emptyStateIcon" alt="" />
         <p>{{ loading ? '加载中...' : '暂无数据' }}</p>
       </div>
+
+      <p v-if="hasItems && loadingMore" class="list-loading-more">加载更多...</p>
+      <p v-else-if="hasItems && !hasMore" class="list-loading-more">没有更多了</p>
     </section>
 
     <div class="footer-action">
@@ -535,6 +594,13 @@ function goPoolReward(): void {
   font-size: 0.3734rem;
   color: rgba(225, 234, 248, 0.88);
   text-align: center;
+}
+
+.list-loading-more {
+  margin: 0.42rem 0 0;
+  text-align: center;
+  color: rgba(225, 234, 248, 0.88);
+  font-size: 0.32rem;
 }
 
 /* Fixed footer */

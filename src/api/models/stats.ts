@@ -36,6 +36,7 @@ export interface ClubDataStatsDataRequest {
     user_id?: number; // 传0 个人数据。传值 俱乐部数据
     game_types?: number[]; // 游戏类型
     time_zone?: number; // 时区
+    filter_type?: number; // 筛选类型 1 UC币（UC） 2 USDT（GC） 3 记分牌（chip）
 
   [key: string]: unknown
 }

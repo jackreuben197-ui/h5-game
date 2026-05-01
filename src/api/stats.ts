@@ -108,7 +108,9 @@ import type {
   StatsUserStatsRivalRoomStatsRequest,
   StatsUserStatsRivalRoomStatsResponseData,
 } from '@/api/models/stats'
+import { useUserInfoStore } from '@/stores/userInfo'
 
+const userInfoStore = useUserInfoStore()
 const formatPath = (
   template: string,
   pathParams: Record<string, string | number>,
@@ -129,7 +131,11 @@ export async function postClubDataStatsDataApi(
   payload: ClubDataStatsDataRequest = {} as ClubDataStatsDataRequest
 ): Promise<ApiResponse<ClubDataStatsDataResponseData>> {
   const endpoint = '/stats/club_data_stats/data'
-  const response = await http.post<ApiResponse<ClubDataStatsDataResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<ClubDataStatsDataResponseData>>(endpoint, payload, {
+    headers: {
+      'X-Club': userInfoStore.currentClub?.club_id,
+    }
+  })
   return response.data
 }
 
@@ -165,7 +171,11 @@ export async function postClubDataStatsDataInfoApi(
   payload: ClubDataStatsDataInfoRequest = {} as ClubDataStatsDataInfoRequest
 ): Promise<ApiResponse<ClubDataStatsDataInfoResponseData>> {
   const endpoint = '/stats/club_data_stats/data_info'
-  const response = await http.post<ApiResponse<ClubDataStatsDataInfoResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<ClubDataStatsDataInfoResponseData>>(endpoint, payload, {
+    headers: {
+      'X-Club': userInfoStore.currentClub?.club_id,
+    }
+  })
   return response.data
 }
 

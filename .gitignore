@@ -29,3 +29,6 @@ components.d.ts
 *.sw?
 .codebuddy
 assets/CodeBuddyAssets
+
+# local protocol repo
+agreement-web/

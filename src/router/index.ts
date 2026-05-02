@@ -7,14 +7,9 @@ const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     {
-      path: '/login1',
-      name: 'login1',
-      component: () => import('@/views/login/LoginViewNew.vue'),
-    },
-    {
       path: '/login',
       name: 'login',
-      component: () => import('@/views/login/LoginView.vue'),
+      component: () => import('@/views/login/LoginViewNew.vue'),
     },
     {
       path: '/protocol',

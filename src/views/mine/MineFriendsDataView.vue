@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
+import { postStatsFriendStatsDataApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 
 import iconTime from '@/assets/icons/icon_time.png'
@@ -31,6 +33,7 @@ const backgroundStyle = computed(() => ({
 
 const gameTabs = ['德州', '麻将', '其他']
 const activeGameTab = ref(gameTabs[0])
+const loading = ref(false)
 
 const now = new Date()
 const maxSelectableDate = endOfDay(now)
@@ -125,6 +128,77 @@ function goBack(): void {
   void router.push('/mine/friends-career')
 }
 
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function formatProfit(value: number): string {
+  const abs = Math.abs(value).toLocaleString('en-US')
+  if (value === 0) {
+    return '0'
+  }
+  return value > 0 ? `+${abs}` : `-${abs}`
+}
+
+function resolveGameType(): number {
+  if (activeGameTab.value === '麻将') {
+    return 6
+  }
+  if (activeGameTab.value === '其他') {
+    return 7
+  }
+  return 0
+}
+
+function toUnixSeconds(date: Date): number {
+  return Math.floor(date.getTime() / 1000)
+}
+
+async function fetchFriendsData(): Promise<void> {
+  loading.value = true
+  try {
+    const response = await postStatsFriendStatsDataApi({
+      start_time: toUnixSeconds(startDateModel.value),
+      end_time: toUnixSeconds(endDateModel.value),
+      game_types: [resolveGameType()],
+      limit: 50,
+      offset: 0,
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载朋友数据失败')
+    }
+
+    const info = response.data?.info
+    summary[0].value = toSafeNumber(info?.user_num).toLocaleString('en-US')
+    summary[1].value = toSafeNumber(info?.table_num).toLocaleString('en-US')
+    summary[2].value = formatProfit(toSafeNumber(info?.profit))
+
+    const list = response.data?.list ?? []
+    players.value = list.map((item, index) => {
+      const profit = toSafeNumber(item.final_result)
+      return {
+        id: String(item.user_random_id ?? index + 1),
+        name: String(item.user_name ?? 'Player'),
+        userId: String(item.user_random_id ?? '--'),
+        profit: formatProfit(profit),
+        profitType: profit >= 0 ? 'red' : 'green',
+        avatar: typeof item.user_avatar === 'string' && item.user_avatar ? item.user_avatar : defaultAvatar,
+      }
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '加载朋友数据失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
+
+function setGameTab(tab: string): void {
+  activeGameTab.value = tab
+  void fetchFriendsData()
+}
+
 function openDatePicker(target: 'start' | 'end'): void {
   pickingTarget.value = target
   isDatePickerVisible.value = true
@@ -141,6 +215,7 @@ function confirmDatePicker(): void {
     startDateModel.value = endDateModel.value
     endDateModel.value = temp
   }
+  void fetchFriendsData()
   closeDatePicker()
 }
 
@@ -229,6 +304,10 @@ function startOfDay(date: Date): Date {
 function endOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)
 }
+
+onMounted(() => {
+  void fetchFriendsData()
+})
 </script>
 
 <template>
@@ -243,7 +322,7 @@ function endOfDay(date: Date): Date {
           type="button"
           class="game-tab"
           :class="{ active: activeGameTab === tab }"
-          @click="activeGameTab = tab"
+          @click="setGameTab(tab)"
         >
           {{ tab }}
         </button>
@@ -285,6 +364,8 @@ function endOfDay(date: Date): Date {
       </section>
 
       <section class="player-list">
+        <p v-if="loading" class="list-status">加载中...</p>
+        <p v-else-if="!players.length" class="list-status">暂无朋友数据</p>
         <article v-for="item in players" :key="item.id" class="player-card">
           <div class="player-left">
             <img class="avatar" :src="item.avatar" :alt="item.name" />

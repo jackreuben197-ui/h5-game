@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { showSuccessToast } from 'vant'
+import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
+import { postUserModifyInfoApi } from '@/api/user'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { useGameStore } from '@/stores/game'
@@ -24,11 +25,47 @@ const selectedGender = ref<'male' | 'female'>('male')
 const showAvatarPopup = ref(false)
 const showGenderPopup = ref(false)
 const popupGender = ref<'male' | 'female'>('male')
+const savingGender = ref(false)
+
+function readDisplayNickname(): string {
+  const user = userInfoStore.userInfo?.user
+  if (user && typeof user === 'object') {
+    const record = user as Record<string, unknown>
+    const nickname = record.nick_name ?? record.nickname
+    if (typeof nickname === 'string' && nickname.trim()) {
+      return nickname.trim()
+    }
+  }
+  return gameStore.loginNickname || 'Carter Torff'
+}
+
+function readDisplayUserId(): string {
+  const user = userInfoStore.userInfo?.user
+  if (user && typeof user === 'object') {
+    const record = user as Record<string, unknown>
+    const id = record.un_id ?? record.user_id
+    if (id !== undefined && id !== null) {
+      return String(id)
+    }
+  }
+  return gameStore.loginUserId || '8677650585'
+}
+
+function readDisplayAvatar(): string {
+  const user = userInfoStore.userInfo?.user
+  if (user && typeof user === 'object') {
+    const record = user as Record<string, unknown>
+    if (typeof record.avatar === 'string' && record.avatar) {
+      return record.avatar
+    }
+  }
+  return defaultAvatar
+}
 
 const displayUser = computed(() => ({
-  nickname: userInfoStore.userInfo?.user.nickname || gameStore.loginNickname || 'Carter Torff',
-  userId: userInfoStore.userInfo?.user.un_id || gameStore.loginUserId || '8677650585',
-  avatar: userInfoStore.userInfo?.user.avatar || defaultAvatar,
+  nickname: readDisplayNickname(),
+  userId: readDisplayUserId(),
+  avatar: readDisplayAvatar(),
 }))
 
 nickname.value = String(displayUser.value.nickname || '')
@@ -55,9 +92,37 @@ function onAvatarAction(action: 'album' | 'camera'): void {
   showSuccessToast(action === 'album' ? '已选择相册' : '已选择相机')
 }
 
-function onConfirmGender(): void {
-  selectedGender.value = popupGender.value
-  showGenderPopup.value = false
+async function onConfirmGender(): Promise<void> {
+  const nextGender = popupGender.value
+  const sex = nextGender === 'male' ? 1 : 2
+
+  savingGender.value = true
+  try {
+    const response = await postUserModifyInfoApi({ sex })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '性别更新失败')
+    }
+
+    selectedGender.value = nextGender
+    const userInfo = userInfoStore.userInfo
+    if (userInfo && typeof userInfo === 'object' && userInfo.user && typeof userInfo.user === 'object') {
+      userInfoStore.setUserInfo({
+        ...userInfo,
+        user: {
+          ...(userInfo.user as Record<string, unknown>),
+          sex,
+        },
+      })
+    }
+
+    showGenderPopup.value = false
+    showSuccessToast('性别已更新')
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '性别更新失败'
+    showFailToast(message)
+  } finally {
+    savingGender.value = false
+  }
 }
 </script>
 
@@ -122,7 +187,9 @@ function onConfirmGender(): void {
           <span class="radio" :class="{ active: popupGender === 'female' }" />
           <span>女</span>
         </button>
-        <button class="sheet-confirm" type="button" @click="onConfirmGender">赠送</button>
+        <button class="sheet-confirm" type="button" :disabled="savingGender" @click="onConfirmGender">
+          {{ savingGender ? '提交中...' : '确认' }}
+        </button>
       </div>
     </VanPopup>
     </div>
@@ -356,5 +423,9 @@ function onConfirmGender(): void {
   font-size: 0.5493rem;
   line-height: 1.2;
   background: linear-gradient(168.09deg, #05e7ae 7.55%, #027a5c 71.92%);
+
+  &:disabled {
+    opacity: 0.72;
+  }
 }
 </style>

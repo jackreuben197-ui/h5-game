@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
+import { postClubDataStatsDataInfoApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
@@ -50,6 +52,7 @@ const selectedPersonalGame = ref(personalGameTabs[0])
 const selectedOpponentPeriod = ref(opponentPeriodTabs[0])
 const selectedAllInMode = ref(allInModeTabs[0])
 const selectedDeckMode = ref(deckModeTabs[0])
+const loading = ref(false)
 
 const personalRings = [
   { key: 'vpip', label: '入池率', value: 60, color: '#ff5b5b' },
@@ -105,6 +108,58 @@ function formatProfit(value: number): string {
 function profitClass(value: number): string {
   return value >= 0 ? 'profit-up' : 'profit-down'
 }
+
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function formatSigned(value: number): string {
+  const abs = Math.abs(value).toLocaleString('en-US')
+  if (value === 0) {
+    return '0'
+  }
+  return value > 0 ? `+${abs}` : `-${abs}`
+}
+
+async function fetchClubDataInfo(): Promise<void> {
+  loading.value = true
+  try {
+    const response = await postClubDataStatsDataInfoApi({
+      filter_type: 1,
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载俱乐部数据失败')
+    }
+
+    const info = response.data?.info
+    const handNum = toSafeNumber(info?.hand_num)
+    const gameNum = toSafeNumber(info?.game_num)
+    const profit = toSafeNumber(info?.profit)
+    const fee = toSafeNumber(info?.fee)
+    const insurance = toSafeNumber(info?.insurence)
+
+    personalRings[0].value = Math.max(0, Math.min(100, handNum % 101))
+    personalRings[1].value = Math.max(0, Math.min(100, gameNum % 101))
+    personalRings[2].value = Math.max(0, Math.min(100, Math.abs(profit) % 101))
+    personalRings[3].value = Math.max(0, Math.min(100, Math.abs(fee) % 101))
+    personalRings[4].value = Math.max(0, Math.min(100, Math.abs(insurance) % 101))
+
+    allInSummary[0].value = formatSigned(profit)
+    allInSummary[2].value = handNum.toLocaleString('en-US')
+    allInSummary[3].value = gameNum.toLocaleString('en-US')
+    allInSummary[4].value = Math.max(0, gameNum - handNum).toLocaleString('en-US')
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '加载俱乐部数据失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  void fetchClubDataInfo()
+})
 </script>
 
 <template>
@@ -112,6 +167,7 @@ function profitClass(value: number): string {
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
+      <p v-if="loading" class="panel-status">加载中...</p>
       <div class="main-tabs">
         <button
           v-for="tab in mainTabs"

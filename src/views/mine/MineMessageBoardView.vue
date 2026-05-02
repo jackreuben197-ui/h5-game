@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { showSuccessToast } from 'vant'
+import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
+import { postMiscReportFeedbackQuestIonApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
@@ -14,14 +15,36 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 const content = ref('')
+const submitting = ref(false)
 
 function goBack(): void {
   void router.push('/mine')
 }
 
-function submitMessage(): void {
-  showSuccessToast('提交成功')
-  content.value = ''
+async function submitMessage(): Promise<void> {
+  const description = content.value.trim()
+  if (!description) {
+    showFailToast('请先填写反馈内容')
+    return
+  }
+
+  submitting.value = true
+  try {
+    const response = await postMiscReportFeedbackQuestIonApi({
+      title: 'Mine Message Board',
+      description,
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '提交失败')
+    }
+    showSuccessToast('提交成功')
+    content.value = ''
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '提交失败'
+    showFailToast(message)
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 
@@ -39,7 +62,9 @@ function submitMessage(): void {
         placeholder="Type here"
       ></textarea>
 
-      <button class="submit-btn" type="button" @click="submitMessage">Submit Report</button>
+      <button class="submit-btn" type="button" :disabled="submitting" @click="submitMessage">
+        {{ submitting ? 'Submitting...' : 'Submit Report' }}
+      </button>
     </div>
   </div>
 </template>

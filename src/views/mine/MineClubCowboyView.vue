@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { showFailToast } from 'vant'
+import { postRoomCenterHistoryListApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
@@ -13,8 +15,20 @@ interface CowboyPlayerResult {
   id: string
   name: string
   uid: string
+  roomId: string
+  matchId: string
+  time: string
   amount: string
   up: boolean
+}
+
+interface CowboySummary {
+  roomName: string
+  roomIdText: string
+  dateText: string
+  gameTypeText: string
+  durationText: string
+  totalLotText: string
 }
 
 const router = useRouter()
@@ -24,18 +38,173 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const playerResults: CowboyPlayerResult[] = [
-  { id: '1', name: 'Player Name', uid: '11440454', amount: '-1,000', up: false },
-  { id: '2', name: 'Player Name', uid: '11440454', amount: '+20,000', up: true },
-]
+const loading = ref(false)
+const playerResults = ref<CowboyPlayerResult[]>([])
+
+const summary = ref<CowboySummary>({
+  roomName: 'Hand Game Name',
+  roomIdText: 'ID: --',
+  dateText: '--',
+  gameTypeText: 'Texas Cowboy',
+  durationText: '--',
+  totalLotText: '0',
+})
+
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function formatAmount(value: unknown): string {
+  const amount = toSafeNumber(value)
+  const abs = Math.abs(amount).toLocaleString('en-US')
+  if (amount === 0) {
+    return '0'
+  }
+  return amount > 0 ? `+${abs}` : `-${abs}`
+}
+
+function formatDuration(seconds: unknown): string {
+  const totalSeconds = toSafeNumber(seconds)
+  if (totalSeconds <= 0) {
+    return '--'
+  }
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  if (hours <= 0) {
+    return `${minutes} Min`
+  }
+  return `${hours} Hour${hours > 1 ? 's' : ''}${minutes > 0 ? ` ${minutes} Min` : ''}`
+}
+
+function formatDate(raw: unknown): string {
+  if (typeof raw === 'string' && raw.trim()) {
+    return raw
+  }
+  const timestamp = toSafeNumber(raw)
+  if (timestamp <= 0) {
+    return '--'
+  }
+  const date = new Date(timestamp > 1_000_000_000_000 ? timestamp : timestamp * 1000)
+  if (Number.isNaN(date.getTime())) {
+    return '--'
+  }
+  return date.toLocaleString('zh-CN', { hour12: false })
+}
+
+function extractList(value: unknown, depth = 0): Record<string, unknown>[] {
+  if (depth > 4 || value === null || value === undefined) {
+    return []
+  }
+
+  if (Array.isArray(value)) {
+    return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+  }
+
+  if (typeof value !== 'object') {
+    return []
+  }
+
+  const obj = value as Record<string, unknown>
+  for (const key of ['records', 'list', 'items', 'data']) {
+    const nested = extractList(obj[key], depth + 1)
+    if (nested.length) {
+      return nested
+    }
+  }
+
+  for (const nestedValue of Object.values(obj)) {
+    const nested = extractList(nestedValue, depth + 1)
+    if (nested.length) {
+      return nested
+    }
+  }
+
+  return []
+}
+
+function mapResultItem(row: Record<string, unknown>, index: number): CowboyPlayerResult {
+  const roomId = String(row.room_id ?? row.id ?? '')
+  const matchId = String(row.match_id ?? row.id ?? '')
+  const amountValue = toSafeNumber(row.change ?? row.win_gold ?? row.profit ?? row.amount)
+  return {
+    id: roomId || matchId || String(index + 1),
+    name: String(row.name ?? row.game_room_name ?? row.room_name ?? 'Cowboy'),
+    uid: String(row.user_id ?? row.room_id ?? row.match_id ?? '--'),
+    roomId,
+    matchId,
+    time: formatDate(row.end_time ?? row.start_time ?? row.time),
+    amount: formatAmount(amountValue),
+    up: amountValue >= 0,
+  }
+}
+
+function mapSummary(row: Record<string, unknown>): CowboySummary {
+  const roomId = String(row.room_id ?? row.match_id ?? '--')
+  const totalLot = toSafeNumber(row.all_bring_in ?? row.all_bet_pot ?? row.max_bet_pot)
+  return {
+    roomName: String(row.game_room_name ?? row.room_name ?? 'Cowboy Room'),
+    roomIdText: `ID: ${roomId}`,
+    dateText: formatDate(row.end_time ?? row.start_time ?? row.time),
+    gameTypeText: 'Texas Cowboy',
+    durationText: formatDuration(row.player_duration),
+    totalLotText: Math.abs(totalLot).toLocaleString('en-US'),
+  }
+}
+
+async function fetchCowboyHistory(): Promise<void> {
+  loading.value = true
+  try {
+    const response = await postRoomCenterHistoryListApi({
+      limit: 20,
+      offset: 0,
+      game_types: [5],
+    })
+
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载牛仔战绩失败')
+    }
+
+    const rows = extractList(response.data?.records)
+    playerResults.value = rows.map((row, index) => mapResultItem(row, index))
+    if (rows.length) {
+      summary.value = mapSummary(rows[0])
+    }
+  } catch (error) {
+    playerResults.value = []
+    summary.value = {
+      roomName: 'Hand Game Name',
+      roomIdText: 'ID: --',
+      dateText: '--',
+      gameTypeText: 'Texas Cowboy',
+      durationText: '--',
+      totalLotText: '0',
+    }
+    const message = error instanceof Error ? error.message : '加载牛仔战绩失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
 
 function goBack(): void {
   void router.push('/mine/club-career')
 }
 
-function openDetail(): void {
-  void router.push('/mine/club-cowboy/detail')
+function openDetail(item: CowboyPlayerResult): void {
+  void router.push({
+    path: '/mine/club-cowboy/detail',
+    query: {
+      room_id: item.roomId,
+      match_id: item.matchId,
+      time: item.time,
+    },
+  })
 }
+
+onMounted(() => {
+  void fetchCowboyHistory()
+})
 </script>
 
 <template>
@@ -46,34 +215,36 @@ function openDetail(): void {
       <section class="glass-card summary-card">
         <div class="summary-top">
           <div class="summary-col">
-            <div class="main">Hand Game Name</div>
-            <div class="sub">ID: 11440454</div>
+            <div class="main">{{ summary.roomName }}</div>
+            <div class="sub">{{ summary.roomIdText }}</div>
           </div>
           <div class="summary-col summary-col-right">
-            <div class="main">29/12 14:00</div>
-            <div class="sub">Texas Cowboy</div>
+            <div class="main">{{ summary.dateText }}</div>
+            <div class="sub">{{ summary.gameTypeText }}</div>
           </div>
         </div>
 
         <div class="summary-stats">
           <div class="stat-item">
             <div class="label">hand duration</div>
-            <div class="value">1 Hour</div>
+            <div class="value">{{ summary.durationText }}</div>
           </div>
           <div class="divider"></div>
           <div class="stat-item">
             <div class="label">total lot size</div>
-            <div class="value">200</div>
+            <div class="value">{{ summary.totalLotText }}</div>
           </div>
         </div>
       </section>
 
       <section class="result-list">
+        <p v-if="loading" class="list-status">加载中...</p>
+        <p v-else-if="!playerResults.length" class="list-status">暂无牛仔战绩</p>
         <article
           v-for="item in playerResults"
           :key="item.id"
           class="glass-card result-card"
-          @click="openDetail"
+          @click="openDetail(item)"
         >
           <div class="left">
             <img :src="iconMttAvatar" alt="avatar" class="avatar" />
@@ -190,6 +361,13 @@ function openDetail(): void {
   display: flex;
   flex-direction: column;
   gap: 0.22rem;
+}
+
+.list-status {
+  text-align: center;
+  font-size: 0.3rem;
+  opacity: 0.76;
+  padding: 0.2rem 0;
 }
 
 .result-card {

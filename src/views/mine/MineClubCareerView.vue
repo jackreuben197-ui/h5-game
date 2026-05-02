@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
+import { postClubDataStatsDataInfoApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import iconBoxClubT from '@/assets/icons/icon_box_club_t.png'
 import iconBoxFriendT from '@/assets/icons/icon_box_friend_t.png'
@@ -24,6 +26,7 @@ const selectedGameTab = ref(gameTabs[0])
 const selectedDateTab = ref(dateTabs[0])
 const showClubDropdown = ref(false)
 const showCurrencyDropdown = ref(false)
+const loading = ref(false)
 
 const clubs = ['All', 'Club XVXVCq', 'Club XVXVCq', 'Club XVXVCq']
 const selectedClub = ref('UC')
@@ -40,12 +43,12 @@ interface CareerMenuItem {
   route?: string
 }
 
-const metrics: CareerMetric[] = [
+const metrics = ref<CareerMetric[]>([
   { label: '局数', value: '20/20' },
   { label: '手数', value: '1000' },
   { label: '入池率', value: '200' },
   { label: '盈亏', value: '50' },
-]
+])
 
 const menuList: CareerMenuItem[] = [
   { key: 'record', label: '战绩', icon: iconBoxClubT, route: '/mine/club-record' },
@@ -64,10 +67,12 @@ function goBack(): void {
 
 function selectGameTab(tab: string): void {
   selectedGameTab.value = tab
+  void fetchClubCareerSummary()
 }
 
 function selectDateTab(tab: string): void {
   selectedDateTab.value = tab
+  void fetchClubCareerSummary()
 }
 
 function toggleClubDropdown(): void {
@@ -96,6 +101,55 @@ function handleMenuClick(item: CareerMenuItem): void {
   }
   void router.push(item.route)
 }
+
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function resolveGameTypes(): number[] {
+  if (selectedGameTab.value === '奥马哈') {
+    return [1, 2, 3]
+  }
+  if (selectedGameTab.value === '短牌') {
+    return [0]
+  }
+  return [0]
+}
+
+async function fetchClubCareerSummary(): Promise<void> {
+  loading.value = true
+  try {
+    const response = await postClubDataStatsDataInfoApi({
+      filter_type: 1,
+      game_types: resolveGameTypes(),
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载俱乐部生涯数据失败')
+    }
+
+    const info = response.data?.info
+    const gameNum = toSafeNumber(info?.game_num)
+    const handNum = toSafeNumber(info?.hand_num)
+    const profit = toSafeNumber(info?.profit)
+
+    metrics.value = [
+      { label: '局数', value: `${gameNum}/${gameNum}` },
+      { label: '手数', value: handNum.toLocaleString('en-US') },
+      { label: '入池率', value: gameNum > 0 ? `${Math.min(100, Math.round((handNum / gameNum) * 10))}%` : '0%' },
+      { label: '盈亏', value: `${profit > 0 ? '+' : ''}${profit.toLocaleString('en-US')}` },
+    ]
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '加载俱乐部生涯数据失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  void fetchClubCareerSummary()
+})
 </script>
 
 <template>
@@ -173,6 +227,7 @@ function handleMenuClick(item: CareerMenuItem): void {
         </div>
 
         <div class="metric-row">
+          <p v-if="loading" class="metric-status">加载中...</p>
           <div v-for="item in metrics" :key="item.label" class="metric-item">
             <div class="value">{{ item.value }}</div>
             <div class="label">{{ item.label }}</div>
@@ -407,6 +462,14 @@ function handleMenuClick(item: CareerMenuItem): void {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.1rem;
+}
+
+.metric-status {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 0.3rem;
+  opacity: 0.78;
+  margin: 0;
 }
 
 .metric-item {

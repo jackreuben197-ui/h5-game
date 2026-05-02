@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { showFailToast } from 'vant'
+import { postMiscArtiCleInfoApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
@@ -26,31 +28,62 @@ const title = computed(() => {
   return '关于我们'
 })
 
-const content = computed(() => {
+const loading = ref(false)
+const content = ref<string[]>([])
+
+function resolveArticleType(): number {
   if (docType.value === 'agreement') {
-    return [
-      '欢迎使用本游戏服务。使用本服务即表示您同意遵守本协议全部条款。',
-      '您需对账号与密码安全负责，不得以任何形式转借、出租或出让账号。',
-      '请勿利用本服务从事违法违规活动，平台有权根据规则采取限制措施。',
-      '平台会持续优化产品功能，必要时可对服务条款进行更新并公示。',
-    ]
+    return 2
   }
-
   if (docType.value === 'privacy') {
-    return [
-      '我们重视您的个人信息与隐私安全，并采取合理措施进行保护。',
-      '为实现登录、账号安全与服务运营，可能会收集必要的设备及账号信息。',
-      '未经您授权，我们不会将您的个人信息用于与本服务无关的用途。',
-      '如需查询、更正或删除个人信息，可通过客服渠道发起申请。',
-    ]
+    return 3
   }
+  return 1
+}
 
-  return [
-    '本平台致力于为用户提供稳定、公平、安全的线上游戏体验。',
-    '我们持续投入于产品性能优化、反作弊能力建设与客服服务体系。',
-    '如您在使用过程中遇到问题或建议，欢迎通过官方渠道与我们联系。',
-    '感谢您的支持与信任，祝您游戏愉快。',
-  ]
+function extractContentLines(raw: unknown): string[] {
+  if (typeof raw !== 'string' || !raw.trim()) {
+    return []
+  }
+  const lines = raw
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .split(/\n+/)
+    .map(line => line.trim())
+    .filter(Boolean)
+  return lines
+}
+
+async function fetchDocContent(): Promise<void> {
+  loading.value = true
+  try {
+    const response = await postMiscArtiCleInfoApi({
+      type: resolveArticleType(),
+      lang: 'zh_CN',
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载文档失败')
+    }
+
+    const article = response.data?.article
+    const raw = article?.content_ex?.[0]?.value ?? article?.content ?? ''
+    const lines = extractContentLines(raw)
+    content.value = lines.length ? lines : ['暂无内容']
+  } catch (error) {
+    content.value = ['暂无内容']
+    const message = error instanceof Error ? error.message : '加载文档失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
+
+watch(docType, () => {
+  void fetchDocContent()
+})
+
+onMounted(() => {
+  void fetchDocContent()
 })
 
 function goBack(): void {
@@ -65,6 +98,7 @@ function goBack(): void {
     <div class="content-wrap">
       <section class="doc-card">
         <h2>{{ title }}</h2>
+        <p v-if="loading">加载中...</p>
         <p v-for="(item, index) in content" :key="index">{{ item }}</p>
       </section>
     </div>

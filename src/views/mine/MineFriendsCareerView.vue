@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
+import { postStatsFriendStatsDataApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 
 const router = useRouter()
@@ -22,12 +24,14 @@ interface MenuItem {
   route?: string
 }
 
-const rows: DataRow[] = [
+const rows = ref<DataRow[]>([
   { game: 'NLH', playedGames: 123, hands: 4567 },
   { game: 'PLO', playedGames: 22, hands: 4567 },
   { game: '6+', playedGames: 22, hands: 4567 },
   { game: 'Mahjong', playedGames: 22, hands: 4567 },
-]
+])
+
+const loading = ref(false)
 
 const menuList: MenuItem[] = [
   { key: 'data', text: '数据', route: '/mine/friends-data' },
@@ -49,6 +53,52 @@ function handleMenuClick(item: MenuItem): void {
   }
   void router.push(item.route)
 }
+
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+async function fetchGameSummary(): Promise<void> {
+  loading.value = true
+  try {
+    const gameConfig: Array<{ name: string; game_types: number[] }> = [
+      { name: 'NLH', game_types: [0] },
+      { name: 'PLO', game_types: [1, 2, 3] },
+      { name: '6+', game_types: [0] },
+      { name: 'Mahjong', game_types: [6] },
+    ]
+
+    const responses = await Promise.all(
+      gameConfig.map(config => postStatsFriendStatsDataApi({
+        game_types: config.game_types,
+        limit: 1,
+        offset: 0,
+      })),
+    )
+
+    rows.value = responses.map((response, index) => {
+      if (response.code !== 0) {
+        return { game: gameConfig[index].name, playedGames: 0, hands: 0 }
+      }
+      const info = response.data?.info
+      return {
+        game: gameConfig[index].name,
+        playedGames: toSafeNumber(info?.table_num),
+        hands: toSafeNumber(info?.user_num),
+      }
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '加载朋友生涯数据失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  void fetchGameSummary()
+})
 </script>
 
 <template>
@@ -71,6 +121,7 @@ function handleMenuClick(item: MenuItem): void {
           <span>Played Games</span>
           <span>Hands</span>
         </div>
+        <div v-if="loading" class="table-status">加载中...</div>
         <div v-for="item in rows" :key="item.game" class="table-row">
           <span>{{ item.game }}</span>
           <span>{{ item.playedGames }}</span>
@@ -157,6 +208,13 @@ function handleMenuClick(item: MenuItem): void {
 .table-row {
   font-size: 0.42rem;
   padding: 0.3rem 0;
+}
+
+.table-status {
+  text-align: center;
+  font-size: 0.3rem;
+  padding: 0.24rem 0;
+  opacity: 0.78;
 }
 
 .list-card {

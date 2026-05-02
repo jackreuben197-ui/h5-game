@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { showFailToast } from 'vant'
+import { postStatsCowboyHistoryRoomDetailApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import iconTime from '@/assets/icons/icon_time.png'
@@ -17,26 +19,80 @@ interface CowboyRecordItem {
 }
 
 const router = useRouter()
+const route = useRoute()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const records: CowboyRecordItem[] = [
-  { id: '1', name: 'Player Name', uid: '11440454', time: '19/03 12:00', amount: '+123,456', positive: true },
-  { id: '2', name: 'Player Name', uid: '11440454', time: '19/03 12:00', amount: '-123,456', positive: false },
-  { id: '3', name: 'Player Name', uid: '11440454', time: '19/03 12:00', amount: '+123,456', positive: true },
-  { id: '4', name: 'Player Name', uid: '11440454', time: '19/03 12:00', amount: '-123,456', positive: false },
-  { id: '5', name: 'Player Name', uid: '11440454', time: '19/03 12:00', amount: '-123,456', positive: false },
-  { id: '6', name: 'Player Name', uid: '11440454', time: '19/03 12:00', amount: '+123,456', positive: true },
-  { id: '7', name: 'Player Name', uid: '11440454', time: '19/03 12:00', amount: '-123,456', positive: false },
-  { id: '8', name: 'Player Name', uid: '11440454', time: '19/03 12:00', amount: '+123,456', positive: true },
-]
+const loading = ref(false)
+const records = ref<CowboyRecordItem[]>([])
+
+const roomId = computed(() => Number(route.query.room_id ?? 0))
+const fallbackTime = computed(() => String(route.query.time ?? '--'))
+
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function formatAmount(value: unknown): string {
+  const amount = toSafeNumber(value)
+  const abs = Math.abs(amount).toLocaleString('en-US')
+  if (amount === 0) {
+    return '0'
+  }
+  return amount > 0 ? `+${abs}` : `-${abs}`
+}
+
+function mapRecord(row: Record<string, unknown>, index: number): CowboyRecordItem {
+  const win = toSafeNumber(row.user_win)
+  return {
+    id: String(row.user_random_id ?? row.user_id ?? index + 1),
+    name: String(row.user_nick_name ?? 'Player'),
+    uid: String(row.user_random_id ?? row.user_id ?? '--'),
+    time: fallbackTime.value,
+    amount: formatAmount(win),
+    positive: win >= 0,
+  }
+}
+
+async function fetchDetail(): Promise<void> {
+  if (roomId.value <= 0) {
+    records.value = []
+    return
+  }
+
+  loading.value = true
+  try {
+    const response = await postStatsCowboyHistoryRoomDetailApi({
+      room_id: roomId.value,
+      limit: 50,
+      offset: 0,
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载详情失败')
+    }
+
+    const rows = response.data?.records ?? []
+    records.value = rows.map((row, index) => mapRecord(row as Record<string, unknown>, index))
+  } catch (error) {
+    records.value = []
+    const message = error instanceof Error ? error.message : '加载详情失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
 
 function goBack(): void {
   void router.push('/mine/club-career')
 }
+
+onMounted(() => {
+  void fetchDetail()
+})
 </script>
 
 <template>
@@ -45,6 +101,8 @@ function goBack(): void {
 
     <div class="content-wrap">
       <section class="list-wrap">
+        <p v-if="loading" class="list-status">加载中...</p>
+        <p v-else-if="!records.length" class="list-status">暂无战绩明细</p>
         <button
           v-for="item in records"
           :key="item.id"
@@ -95,6 +153,13 @@ function goBack(): void {
   display: flex;
   flex-direction: column;
   gap: 0.22rem;
+}
+
+.list-status {
+  margin: 0.3rem 0;
+  text-align: center;
+  font-size: 0.34rem;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .record-card {

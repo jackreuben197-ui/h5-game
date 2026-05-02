@@ -327,3 +327,166 @@ export interface UserWsData {
   port?: number
   [key: string]: unknown
 }
+
+// /api/user/send_verify_code (UserDeleteCode)
+
+export interface UserDeleteCodeRequest {
+    area?: string; // 区号
+    phone?: string; // 手机号码
+    email?: string; // 邮箱地址
+    lang?: number; // 语言
+
+  [key: string]: unknown
+}
+
+export interface UserDeleteCodeResponseData extends UserDeleteCodeData {
+  [key: string]: unknown
+}
+
+export interface UserDeleteCodeData {
+  [key: string]: unknown
+}
+
+// /api/user/delete (UserDelete)
+
+export interface UserDeleteRequest {
+    area?: string; // 区号
+    phone?: string; // 手机号码
+    email?: string; // 邮箱地址
+    code?: string; // 验证码
+
+  [key: string]: unknown
+}
+
+export interface UserDeleteResponseData extends UserDeleteData {
+  [key: string]: unknown
+}
+
+export interface UserDeleteData {
+  [key: string]: unknown
+}
+
+// /api/user/quick_password/verify (UserVerifyPassword)
+
+export interface UserVerifyPasswordRequest {
+    user_pwd_type?: number; // 用户密码类型： 1 - 普通密码 2 - 数字密码 3 - 手势密码 4 - 生物密码（面容或指纹）
+    password?: string; // 密码的MD5哈希值
+
+  [key: string]: unknown
+}
+
+export interface UserVerifyPasswordResponseData extends UserVerifyPasswordData {
+  [key: string]: unknown
+}
+
+export interface UserVerifyPasswordData {
+    verify?: boolean; // 校验是否通过
+    failed_count?: number; // 失败次数
+
+  [key: string]: unknown
+}
+
+// /api/user/quick_password/modify (UserModifyQuickInfo)
+
+export interface UserModifyQuickInfoRequest {
+    user_pwd_type?: number; // 密码类型：1 普通密码；2 数字密码；3 手势密码；4 生物密码（面容或指纹）
+    switch_status?: number; // 开关状态：1 开；2 关
+    password?: string; // 用户密码的MD5哈希值
+
+  [key: string]: unknown
+}
+
+export interface UserModifyQuickInfoResponseData extends UserModifyQuickInfoData {
+  [key: string]: unknown
+}
+
+export interface UserModifyQuickInfoData {
+  [key: string]: unknown
+}
+
+// /api/user/modify/quick/login/switch (UserModifyQuickSwitch)
+
+export interface UserModifyQuickSwitchRequest {
+    quick_login_switch?: number; // 快捷登录开关状态：1 开启；2 关闭
+    quick_login_type?: string; // 快捷登录类型组合，格式为"1_2_3"： 1 代表手势密码 2 代表数字密码 3 代表生物识别（面容/指纹） 示例："1_3"表示启用手势和生物识别
+
+  [key: string]: unknown
+}
+
+export interface UserModifyQuickSwitchResponseData extends UserModifyQuickSwitchData {
+  [key: string]: unknown
+}
+
+export interface UserModifyQuickSwitchData {
+  [key: string]: unknown
+}
+
+// /api/user/modify/bringin/password/switch (UserModifyBringInSwitch)
+
+export interface UserModifyBringInSwitchRequest {
+    bringin_pwd_switch?: number; // 带入二级密码开关：1=开，2=关
+    bringin_pwd_type?: number; // 带入二级密码类型：1=手势，2=数字密码，3=生物识别
+    bringin_pwd_verify_type?: number; // 带入二级密码验证频率类型： 1=每次带入，2=每桌一次
+
+  [key: string]: unknown
+}
+
+export interface UserModifyBringInSwitchResponseData extends UserModifyBringInSwitchData {
+  [key: string]: unknown
+}
+
+export interface UserModifyBringInSwitchData {
+  [key: string]: unknown
+}
+
+// /api/user/wallets_log (UserBill)
+
+export interface UserBillRequest {
+    gold_type?: number; // 钱包类型 1=UC 2=GC 3=记分牌 4=钻石
+    origin_type?: number; // 记分牌来源 当 gold_type=3 时生效： 3=俱乐部桌 4=朋友桌
+    limit?: number; // 每页条数
+    offset?: number; // 开始下标
+    user_id?: number; // 用户ID
+    op_codes?: unknown; // 操作类型编码数组
+    sort_type?: number; // 排序类型：1-创建时间；2-成员数；3-等级
+    order_type?: number; // 排序方式 1=升序 2=降序
+    start_time?: number; // 开始时间戳
+    end_time?: number; // 结束时间戳
+    club_id?: number; // 俱乐部ID
+
+  [key: string]: unknown
+}
+
+export interface UserBillResponseData extends UserBillData {
+  [key: string]: unknown
+}
+
+export interface UserBillData {
+    limit?: number; // 数据数量
+    offset?: number; // 当前偏移值
+    total?: number; // 总条数
+    list?: unknown[]; // 钱包列表
+    total_info?: unknown; // 统计信息列表
+
+  [key: string]: unknown
+}
+
+// /api/user/my_wallets (UserWallet)
+
+export interface UserWalletRequest {
+    gold_type?: number; // 货币类型： 1 = UC， 2 = GC， 3 = 记分牌， 4 = 钻石
+    origin_type?: number; // 记分牌来源（仅在 gold_type=3 时使用）： 3 = 俱乐部桌， 4 = 朋友桌
+
+  [key: string]: unknown
+}
+
+export interface UserWalletResponseData extends UserWalletData {
+  [key: string]: unknown
+}
+
+export interface UserWalletData {
+    amount?: number; // 金额
+    wallet?: unknown[]; // 钱包列表
+
+  [key: string]: unknown
+}

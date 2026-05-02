@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast } from 'vant'
+import { useRoute, useRouter } from 'vue-router'
+import { postStatsRoomDetailApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
@@ -26,26 +28,34 @@ interface PlayerResult {
 }
 
 const router = useRouter()
+const route = useRoute()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const seatPlayers: SeatPlayer[] = [
+const loading = ref(false)
+const currentRoomId = ref(0)
+const detailTitle = ref('Hand Name')
+const detailSub = ref('ID: --')
+const detailTime = ref('--')
+const totalAmount = ref('+0')
+
+const seatPlayers = ref<SeatPlayer[]>([
   { name: 'Hanna', chips: '120', tag: '土豪' },
   { name: 'Paityn', chips: '3340', tag: 'MVP', highlight: true },
   { name: 'Giana', chips: '120', tag: '土豪' },
-]
+])
 
-const summaryItems = [
+const summaryItems = ref([
   { label: '带入', value: '1200' },
   { label: '底池', value: '3580' },
   { label: '手数', value: '20' },
   { label: '时长', value: '2.3h' },
-]
+])
 
-const playerResults: PlayerResult[] = [
+const playerResults = ref<PlayerResult[]>([
   {
     id: 'p1',
     name: 'Player Name',
@@ -68,15 +78,108 @@ const playerResults: PlayerResult[] = [
     concealedKong: '6',
     exposedKong: '4',
   },
-]
+])
+
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function formatSigned(value: number): string {
+  const abs = Math.abs(value).toLocaleString('en-US')
+  if (value === 0) {
+    return '0'
+  }
+  return value > 0 ? `+${abs}` : `-${abs}`
+}
+
+function extractRoomId(): number {
+  const raw = route.query.room_id ?? route.query.id
+  const value = Number(raw)
+  return Number.isFinite(value) ? value : 0
+}
+
+async function fetchDetail(): Promise<void> {
+  const roomId = extractRoomId()
+  if (roomId <= 0) {
+    return
+  }
+
+  loading.value = true
+  try {
+    const response = await postStatsRoomDetailApi(
+      {
+        limit: 50,
+        offset: 0,
+      },
+      { id: roomId },
+    )
+
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载麻将战绩详情失败')
+    }
+
+    const roomData = response.data?.room_data
+    const usersRaw = roomData?.user_list
+    const users = Array.isArray(usersRaw) ? usersRaw : []
+
+    currentRoomId.value = toSafeNumber(roomData?.room_id)
+    detailTitle.value = String(roomData?.game_room_name ?? 'Hand Name')
+    detailSub.value = `ID: ${String(roomData?.room_id ?? '--')}`
+    detailTime.value = `${String(roomData?.start_time ?? '--')} - ${String(roomData?.end_time ?? '--')}`
+
+    summaryItems.value = [
+      { label: '带入', value: toSafeNumber(roomData?.all_bring_in).toLocaleString('en-US') },
+      { label: '底池', value: toSafeNumber(roomData?.all_bet_pot ?? roomData?.max_bet_pot).toLocaleString('en-US') },
+      { label: '手数', value: toSafeNumber(roomData?.room_total_hand_num).toLocaleString('en-US') },
+      { label: '时长', value: `${Math.max(0, Math.round(toSafeNumber(roomData?.player_duration) / 3600))}h` },
+    ]
+
+    seatPlayers.value = users.slice(0, 3).map((user, index) => ({
+      name: String(user.nick_name ?? `Player ${index + 1}`),
+      chips: toSafeNumber(user.finally_game_results ?? user.original_results).toLocaleString('en-US'),
+      tag: index === 1 ? 'MVP' : undefined,
+      highlight: index === 1,
+    }))
+
+    playerResults.value = users.map((user, index) => ({
+      id: String(user.user_random_id ?? index + 1),
+      name: String(user.nick_name ?? 'Player Name'),
+      uid: String(user.user_random_id ?? '--'),
+      amount: formatSigned(toSafeNumber(user.finally_game_results ?? user.original_results)),
+      selfDraw: String(toSafeNumber(user.mj_win_self_draw_count)),
+      catchWin: String(toSafeNumber(user.mj_win_discard_count)),
+      discardLose: String(toSafeNumber(user.mj_lose_discard_count)),
+      concealedKong: String(toSafeNumber(user.mj_concealed_kong_count)),
+      exposedKong: String(toSafeNumber(user.mj_exposed_kong_count)),
+    }))
+
+    const total = playerResults.value.reduce((sum, item) => sum + toSafeNumber(item.amount.replace(/,/g, '')), 0)
+    totalAmount.value = formatSigned(total)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '加载麻将战绩详情失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
 
 function goBack(): void {
   void router.push('/mine/club-mahjong')
 }
 
 function goToHands(): void {
-  void router.push('/mine/club-mahjong/hand')
+  void router.push({
+    path: '/mine/club-mahjong/hand',
+    query: {
+      room_id: currentRoomId.value > 0 ? String(currentRoomId.value) : undefined,
+    },
+  })
 }
+
+onMounted(() => {
+  void fetchDetail()
+})
 </script>
 
 <template>
@@ -107,10 +210,10 @@ function goToHands(): void {
         <div class="hand-summary">
           <div class="name-line">
             <div>
-              <div class="title">Hand Name</div>
-              <div class="sub">ID: 11440454</div>
+              <div class="title">{{ detailTitle }}</div>
+              <div class="sub">{{ detailSub }}</div>
             </div>
-            <div class="time">29/12 14:00 - 3/1 15:00</div>
+            <div class="time">{{ detailTime }}</div>
           </div>
           <div class="summary-grid">
             <div v-for="item in summaryItems" :key="item.label" class="summary-item">
@@ -124,8 +227,11 @@ function goToHands(): void {
       <section class="glass-card result-section">
         <div class="section-head">
           <div>牌局结算</div>
-          <div class="total">+1200</div>
+          <div class="total">{{ totalAmount }}</div>
         </div>
+
+        <p v-if="loading" class="list-status">加载中...</p>
+        <p v-else-if="!playerResults.length" class="list-status">暂无结算数据</p>
 
         <article
           v-for="item in playerResults"
@@ -319,6 +425,13 @@ function goToHands(): void {
   margin-top: 0.16rem;
   padding: 0.22rem 0.35rem;
   border-top: 0.02rem solid rgba(255, 255, 255, 0.15);
+}
+
+.list-status {
+  margin: 0.2rem 0;
+  text-align: center;
+  font-size: 0.3rem;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .top {

@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
+import { postRoomCenterHistoryListApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
@@ -32,32 +34,35 @@ const gameTabs = ['德州', '奥马哈', '短牌']
 const timeTabs = ['今天', '7天', '30天']
 const selectedGame = ref(gameTabs[0])
 const selectedTime = ref(timeTabs[0])
+const loading = ref(false)
 
-const leftMetrics: SummaryMetric[] = [
+const leftMetrics = ref<SummaryMetric[]>([
   { label: '总带入', value: '25,600' },
   { label: '手数', value: '1,200' },
-]
+])
 
-const rightMetrics: SummaryMetric[] = [
+const rightMetrics = ref<SummaryMetric[]>([
   { label: '入池率', value: '26%' },
   { label: '胜率', value: '54%' },
-]
+])
 
-const detailRowsOne: SummaryMetric[] = [
+const detailRowsOne = ref<SummaryMetric[]>([
   { label: '局数', value: '20' },
   { label: '总盈亏', value: '+5000' },
   { label: '大底池', value: '1024' },
   { label: 'MVP', value: '3' },
-]
+])
 
-const detailRowsTwo: SummaryMetric[] = [
+const detailRowsTwo = ref<SummaryMetric[]>([
   { label: '摊牌', value: '8' },
   { label: '加注', value: '32' },
   { label: '诈唬', value: '5' },
   { label: '弃牌', value: '20' },
-]
+])
 
-const records: RecordCard[] = [
+const todayProfit = ref('+0')
+
+const records = ref<RecordCard[]>([
   {
     id: 'r1',
     playerName: 'Player Name',
@@ -78,15 +83,156 @@ const records: RecordCard[] = [
     endAt: '06/03 21:40',
     profit: '-380',
   },
-]
+])
+
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function formatSigned(value: number): string {
+  const abs = Math.abs(value).toLocaleString('en-US')
+  if (value === 0) return '0'
+  return value > 0 ? `+${abs}` : `-${abs}`
+}
+
+function resolveGameTypes(): number[] {
+  if (selectedGame.value === '奥马哈') {
+    return [1, 2, 3]
+  }
+  if (selectedGame.value === '短牌') {
+    return [0]
+  }
+  return [0]
+}
+
+function formatDateText(raw: unknown): string {
+  if (typeof raw === 'string' && raw.trim()) {
+    return raw
+  }
+  const timestamp = toSafeNumber(raw)
+  if (timestamp <= 0) return '--'
+  const date = new Date(timestamp > 1_000_000_000_000 ? timestamp : timestamp * 1000)
+  if (Number.isNaN(date.getTime())) return '--'
+  return date.toLocaleString('zh-CN', { hour12: false })
+}
+
+function extractRecords(value: unknown, depth = 0): Record<string, unknown>[] {
+  if (depth > 4 || value === null || value === undefined) return []
+  if (Array.isArray(value)) {
+    return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+  }
+  if (typeof value !== 'object') return []
+  const obj = value as Record<string, unknown>
+  for (const key of ['records', 'list', 'items', 'data']) {
+    const nested = extractRecords(obj[key], depth + 1)
+    if (nested.length) return nested
+  }
+  for (const nestedValue of Object.values(obj)) {
+    const nested = extractRecords(nestedValue, depth + 1)
+    if (nested.length) return nested
+  }
+  return []
+}
+
+function mapRecord(row: Record<string, unknown>, index: number): RecordCard {
+  const change = toSafeNumber(row.change ?? row.profit)
+  const count = toSafeNumber(row.count ?? row.hand_num)
+  const durationMinutes = Math.max(0, Math.round(toSafeNumber(row.player_duration) / 60))
+  return {
+    id: String(row.room_id ?? row.match_id ?? index + 1),
+    playerName: String(row.name ?? row.game_room_name ?? 'Player Name'),
+    playerId: String(row.room_id ?? row.match_id ?? '--'),
+    blinds: `${toSafeNumber(row.sb ?? row.small_blind)}/${toSafeNumber(row.ante ?? 0)}`,
+    hands: count > 0 ? String(count) : '--',
+    duration: durationMinutes > 0 ? `${durationMinutes}m` : '--',
+    endAt: formatDateText(row.time ?? row.end_time ?? row.start_time_str),
+    profit: formatSigned(change),
+  }
+}
+
+function refreshSummary(list: RecordCard[]): void {
+  const gameCount = list.length
+  const hands = list.reduce((sum, item) => sum + toSafeNumber(item.hands), 0)
+  const profit = list.reduce((sum, item) => sum + toSafeNumber(item.profit.replace(/,/g, '')), 0)
+  const maxBlind = list.reduce((max, item) => Math.max(max, toSafeNumber(item.blinds.split('/')[0])), 0)
+  const winners = list.filter(item => item.profit.startsWith('+')).length
+
+  leftMetrics.value = [
+    { label: '总带入', value: hands.toLocaleString('en-US') },
+    { label: '手数', value: hands.toLocaleString('en-US') },
+  ]
+  rightMetrics.value = [
+    { label: '入池率', value: gameCount > 0 ? `${Math.min(100, Math.round((hands / Math.max(gameCount, 1)) * 10))}%` : '0%' },
+    { label: '胜率', value: gameCount > 0 ? `${Math.round((winners / gameCount) * 100)}%` : '0%' },
+  ]
+  detailRowsOne.value = [
+    { label: '局数', value: String(gameCount) },
+    { label: '总盈亏', value: formatSigned(profit) },
+    { label: '大底池', value: maxBlind.toLocaleString('en-US') },
+    { label: 'MVP', value: String(winners) },
+  ]
+  detailRowsTwo.value = [
+    { label: '摊牌', value: String(Math.max(0, gameCount - winners)) },
+    { label: '加注', value: String(Math.max(0, hands - gameCount)) },
+    { label: '诈唬', value: String(Math.max(0, Math.round(gameCount * 0.2))) },
+    { label: '弃牌', value: String(Math.max(0, gameCount * 2)) },
+  ]
+  todayProfit.value = formatSigned(profit)
+}
+
+async function fetchClubRecords(): Promise<void> {
+  loading.value = true
+  try {
+    const response = await postRoomCenterHistoryListApi({
+      limit: 20,
+      offset: 0,
+      game_types: resolveGameTypes(),
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载战绩失败')
+    }
+
+    const rows = extractRecords(response.data?.records)
+    records.value = rows.map((row, index) => mapRecord(row, index))
+    refreshSummary(records.value)
+  } catch (error) {
+    records.value = []
+    const message = error instanceof Error ? error.message : '加载战绩失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
 
 function goBack(): void {
   void router.push('/mine/club-career')
 }
 
-function goToDetail(): void {
-  void router.push('/mine/club-record/detail')
+function goToDetail(item: RecordCard): void {
+  const roomId = Number(item.id.replace(/\D/g, '')) || 0
+  void router.push({
+    path: '/mine/club-record/detail',
+    query: {
+      room_id: roomId > 0 ? String(roomId) : undefined,
+      id: item.id,
+    },
+  })
 }
+
+function selectGame(tab: string): void {
+  selectedGame.value = tab
+  void fetchClubRecords()
+}
+
+function selectTime(tab: string): void {
+  selectedTime.value = tab
+  void fetchClubRecords()
+}
+
+onMounted(() => {
+  void fetchClubRecords()
+})
 </script>
 
 <template>
@@ -101,7 +247,7 @@ function goToDetail(): void {
           type="button"
           class="plain-tab"
           :class="{ active: selectedGame === item }"
-          @click="selectedGame = item"
+          @click="selectGame(item)"
         >
           {{ item }}
         </button>
@@ -115,7 +261,7 @@ function goToDetail(): void {
             type="button"
             class="time-tab"
             :class="{ active: selectedTime === item }"
-            @click="selectedTime = item"
+            @click="selectTime(item)"
           >
             {{ item }}
           </button>
@@ -131,7 +277,7 @@ function goToDetail(): void {
 
           <div class="profit-box">
             <div class="profit-title">今日收益</div>
-            <div class="profit-value">+5000</div>
+            <div class="profit-value">{{ todayProfit }}</div>
           </div>
 
           <div class="metric-col right">
@@ -160,11 +306,13 @@ function goToDetail(): void {
       </section>
 
       <section class="content-list">
+        <p v-if="loading" class="list-status">加载中...</p>
+        <p v-else-if="!records.length" class="list-status">暂无战绩记录</p>
         <article
           v-for="item in records"
           :key="item.id"
           class="glass-card record-card"
-          @click="goToDetail"
+          @click="goToDetail(item)"
         >
           <div class="timeline">6月</div>
           <div class="card-content">
@@ -358,6 +506,13 @@ function goToDetail(): void {
   display: flex;
   flex-direction: column;
   gap: 0.22rem;
+}
+
+.list-status {
+  text-align: center;
+  font-size: 0.3rem;
+  opacity: 0.78;
+  margin: 0.2rem 0;
 }
 
 .record-card {

@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast } from 'vant'
+import { useRoute, useRouter } from 'vue-router'
+import { postStatsUserGameRecordListApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import gameZoneMahjongMini from '@/assets/icons/game_zone_mahjong_mini.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
@@ -17,17 +19,82 @@ interface HandRow {
 }
 
 const router = useRouter()
+const route = useRoute()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const handRows: HandRow[] = [
-  { id: 'h1', roundType: '推倒胡', handId: '11440454', result: 'Draw', score: '+88', fanText: '红中 x20' },
-  { id: 'h2', roundType: '推倒胡', handId: '11440454', result: 'Draw', score: '-32', fanText: '明杠 x8' },
-  { id: 'h3', roundType: '推倒胡', handId: '11440454', result: 'Draw', score: '+56', fanText: '清一色 x16' },
-]
+const loading = ref(false)
+const handRows = ref<HandRow[]>([])
+const overviewTitle = ref('牌局名称')
+const overviewId = ref('ID: --')
+const overviewHands = ref('Hands 0')
+
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function formatSigned(value: unknown): string {
+  const amount = toSafeNumber(value)
+  if (amount === 0) return '0'
+  const abs = Math.abs(amount).toLocaleString('en-US')
+  return amount > 0 ? `+${abs}` : `-${abs}`
+}
+
+function resolveRoomId(): number {
+  const raw = route.query.room_id
+  const value = Number(raw)
+  return Number.isFinite(value) ? value : 0
+}
+
+async function fetchMahjongHands(): Promise<void> {
+  const roomId = resolveRoomId()
+  if (roomId <= 0) {
+    handRows.value = []
+    return
+  }
+
+  loading.value = true
+  try {
+    const response = await postStatsUserGameRecordListApi({
+      room_type: 2,
+      room_id: roomId,
+      game_types: [6],
+      limit: 50,
+      offset: 0,
+    } as unknown as Record<string, unknown>)
+
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载麻将手牌失败')
+    }
+
+    const records = Array.isArray(response.data?.records) ? response.data.records : []
+    const room = (records[0]?.room_record as Record<string, unknown>) ?? {}
+    const userRowsRaw = Array.isArray(records[0]?.user_game_records) ? records[0]?.user_game_records : []
+    const userRows = userRowsRaw.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+
+    overviewTitle.value = String(room.name ?? '牌局名称')
+    overviewId.value = `ID: ${String(room.room_id ?? roomId)}`
+    overviewHands.value = `Hands ${userRows.length}`
+    handRows.value = userRows.map((item, index) => ({
+      id: String(item.id ?? item.room_unique_id ?? index + 1),
+      roundType: '推倒胡',
+      handId: String(item.room_unique_id ?? item.id ?? '--'),
+      result: toSafeNumber(item.change) >= 0 ? 'Win' : 'Lose',
+      score: formatSigned(item.change),
+      fanText: `底池 x${toSafeNumber(item.bet_pot)}`,
+    }))
+  } catch (error) {
+    handRows.value = []
+    const message = error instanceof Error ? error.message : '加载麻将手牌失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
 
 function goBack(): void {
   void router.push('/mine/club-mahjong/detail')
@@ -36,6 +103,10 @@ function goBack(): void {
 function goReport(): void {
   void router.push('/mine/club-record/report')
 }
+
+onMounted(() => {
+  void fetchMahjongHands()
+})
 </script>
 
 <template>
@@ -48,16 +119,18 @@ function goReport(): void {
           <div class="avatar"></div>
           <div>
             <div class="name">Player Name</div>
-            <div class="hands">Hands 123</div>
+            <div class="hands">{{ overviewHands }}</div>
           </div>
         </div>
         <div class="right-info">
-          <div class="title">牌局名称</div>
-          <div class="sub">ID: 11440454</div>
+          <div class="title">{{ overviewTitle }}</div>
+          <div class="sub">{{ overviewId }}</div>
         </div>
       </section>
 
       <section class="list-wrap">
+        <p v-if="loading" class="list-status">加载中...</p>
+        <p v-else-if="!handRows.length" class="list-status">暂无麻将手牌</p>
         <article
           v-for="item in handRows"
           :key="item.id"
@@ -159,6 +232,13 @@ function goReport(): void {
   display: flex;
   flex-direction: column;
   gap: 0.22rem;
+}
+
+.list-status {
+  text-align: center;
+  font-size: 0.3rem;
+  opacity: 0.78;
+  margin: 0.2rem 0;
 }
 
 .hand-card {

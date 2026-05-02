@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast } from 'vant'
+import { postFriendRoomStatsDataApi, postFriendRoomStatsDataInfoApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
@@ -33,6 +35,7 @@ const backgroundStyle = computed(() => ({
 
 const filterTabs = ['今天', '14天', '7天', 'Customize']
 const activeFilter = ref(filterTabs[0])
+const loading = ref(false)
 
 const now = new Date()
 const maxSelectableDate = endOfDay(now)
@@ -46,11 +49,11 @@ const pickingTarget = ref<'start' | 'end'>('start')
 const currentMonth = ref(new Date(endDateModel.value.getFullYear(), endDateModel.value.getMonth(), 1))
 const weekLabels = ['m', 't', 'w', 't', 'f', 's', 's']
 
-const metrics: SummaryMetric[] = [
-  { label: '手数/局数', value: '20/50' },
-  { label: '盈利', value: '50' },
-  { label: '服務費', value: '200' },
-]
+const metrics = ref<SummaryMetric[]>([
+  { label: '手数/局数', value: '0/0' },
+  { label: '盈利', value: '0' },
+  { label: '服務費', value: '0' },
+])
 
 const records = ref<RecordItem[]>([
   {
@@ -139,6 +142,102 @@ const records = ref<RecordItem[]>([
   },
 ])
 
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function formatSigned(value: unknown): string {
+  const amount = toSafeNumber(value)
+  if (amount === 0) {
+    return '0'
+  }
+  const abs = Math.abs(amount).toLocaleString('en-US')
+  return amount > 0 ? `+${abs}` : `-${abs}`
+}
+
+function toUnixSeconds(date: Date): number {
+  return Math.floor(startOfDay(date).getTime() / 1000)
+}
+
+function mapGameBadge(gameType: unknown): string {
+  const type = toSafeNumber(gameType)
+  if (type === 1 || type === 2 || type === 3) return 'PLO'
+  if (type === 5) return 'Cowboy'
+  if (type === 6) return '血战\n到底'
+  if (type === 7) return '掼蛋'
+  return 'NLH'
+}
+
+function mapRecordItem(row: Record<string, unknown>, index: number): RecordItem {
+  const feeValue = formatSigned(row.fee)
+  const insuranceValue = formatSigned(row.insurance)
+  const startTime = String(row.start_time_str ?? row.game_start_time ?? '--')
+  const matchPlayers = toSafeNumber(row.match_player_num)
+  const buyIn = toSafeNumber(row.buy_in)
+  const sb = toSafeNumber(row.sb)
+
+  return {
+    id: String(row.room_id ?? row.match_id ?? index + 1),
+    game: mapGameBadge(row.game_type),
+    title: String(row.name ?? row.room_name ?? row.game_room_name ?? '局抽数据'),
+    subtitle: matchPlayers > 0 ? `参赛人数: ${matchPlayers}` : `盲注 : ${sb}`,
+    extra: buyIn > 0 ? `买入 : ${buyIn}` : undefined,
+    time: startTime,
+    feeText: '服务费',
+    feeValue,
+    insuranceLabel: '保险',
+    insuranceValue,
+    feePositive: feeValue.startsWith('+'),
+  }
+}
+
+async function fetchFriendsRecord(): Promise<void> {
+  loading.value = true
+  try {
+    const requestPayload = {
+      start_time: toUnixSeconds(startDateModel.value),
+      end_time: toUnixSeconds(endDateModel.value),
+      limit: 20,
+      offset: 0,
+    }
+
+    const [listRes, infoRes] = await Promise.all([
+      postFriendRoomStatsDataApi(requestPayload),
+      postFriendRoomStatsDataInfoApi({
+        start_time: requestPayload.start_time,
+        end_time: requestPayload.end_time,
+      }),
+    ])
+
+    if (listRes.code !== 0) {
+      throw new Error(typeof listRes.msg === 'string' ? listRes.msg : '加载朋友战绩失败')
+    }
+
+    if (infoRes.code !== 0) {
+      throw new Error(typeof infoRes.msg === 'string' ? infoRes.msg : '加载统计信息失败')
+    }
+
+    const list = Array.isArray(listRes.data?.list) ? listRes.data.list : []
+    records.value = list.map((item, index) => mapRecordItem((item as Record<string, unknown>) ?? {}, index))
+
+    const info = (infoRes.data?.info as Record<string, unknown> | undefined) ?? {}
+    const handNum = toSafeNumber(info.hand_num)
+    const gameNum = toSafeNumber(info.game_num)
+    metrics.value = [
+      { label: '手数/局数', value: `${handNum}/${gameNum}` },
+      { label: '盈利', value: formatSigned(info.profit) },
+      { label: '服務費', value: Math.abs(toSafeNumber(info.fee)).toLocaleString('en-US') },
+    ]
+  } catch (error) {
+    records.value = []
+    const message = error instanceof Error ? error.message : '加载朋友战绩失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
+
 const startDateText = computed(() => formatDateSlash(startDateModel.value))
 const endDateText = computed(() => formatDateSlash(endDateModel.value))
 const monthTitle = computed(() => `${currentMonth.value.getFullYear()}年${currentMonth.value.getMonth() + 1}月`)
@@ -196,18 +295,21 @@ function onFilterClick(tab: string): void {
   if (tab === '今天') {
     startDateModel.value = startOfDay(now)
     endDateModel.value = startOfDay(now)
+    void fetchFriendsRecord()
     return
   }
 
   if (tab === '7天') {
     startDateModel.value = startOfDay(addDays(now, -6))
     endDateModel.value = startOfDay(now)
+    void fetchFriendsRecord()
     return
   }
 
   if (tab === '14天') {
     startDateModel.value = startOfDay(addDays(now, -13))
     endDateModel.value = startOfDay(now)
+    void fetchFriendsRecord()
   }
 }
 
@@ -228,6 +330,7 @@ function confirmDatePicker(): void {
     endDateModel.value = temp
   }
   activeFilter.value = 'Customize'
+  void fetchFriendsRecord()
   closeDatePicker()
 }
 
@@ -326,6 +429,10 @@ function endOfDay(date: Date): Date {
 function openRecordDetail(_item: RecordItem): void {
   // 待后续接入战绩详情页。
 }
+
+onMounted(() => {
+  void fetchFriendsRecord()
+})
 </script>
 
 <template>
@@ -359,6 +466,8 @@ function openRecordDetail(_item: RecordItem): void {
       <p class="timezone-text">时区：UTC+0</p>
 
       <section class="record-list">
+        <p v-if="loading" class="list-status">加载中...</p>
+        <p v-else-if="!records.length" class="list-status">暂无朋友战绩</p>
         <article
           v-for="item in records"
           :key="item.id"
@@ -620,6 +729,13 @@ function openRecordDetail(_item: RecordItem): void {
   margin-top: 0.26667rem;
   display: grid;
   gap: 0.26667rem;
+}
+
+.list-status {
+  text-align: center;
+  font-size: 0.32rem;
+  opacity: 0.78;
+  margin: 0.24rem 0;
 }
 
 .record-row {

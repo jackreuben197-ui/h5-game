@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast } from 'vant'
 import { useRoute, useRouter } from 'vue-router'
+import { postStatsMttRoomDetailApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import iconTicket from '@/assets/icons/icon_ticket.png'
@@ -33,49 +35,153 @@ interface RankPlayerV2 {
 
 type VariantType = 'v1' | 'v2'
 
-const headMetrics = [
+const loading = ref(false)
+const detailTitle = ref('Hand Name')
+const detailSub = ref('ID: --')
+const detailTime = ref('--')
+
+const headMetrics = ref([
   { label: '总参赛', value: '1200' },
   { label: '奖励池', value: '5000' },
   { label: '名次', value: '1' },
   { label: '奖励', value: '1200' },
-]
+])
 
-const rankPlayers: RankPlayerV1[] = [
+const rankPlayers = ref<RankPlayerV1[]>([
   { id: '1', name: 'Player Name', uid: '11440454', tickets: '12', reward: '200' },
   { id: '2', name: 'Player Name', uid: '11440454', tickets: '8', reward: '120' },
   { id: '3', name: 'Player Name', uid: '11440454', tickets: '4', reward: '80' },
   { id: '4', name: 'Player Name', uid: '11440454', tickets: '2', reward: '40' },
   { id: '5', name: 'Player Name', uid: '11440454', tickets: '1', reward: '20' },
   { id: '6', name: 'Player Name', uid: '11440454', tickets: '1', reward: '20' },
-]
+])
 
-const topMetricsV2 = [
+const topMetricsV2 = ref([
   { label: '总参赛人数', value: '1200' },
   { label: '总奖池', value: '5000' },
   { label: '排名', value: '1' },
-]
+])
 
-const sideMetricsV2 = [
+const sideMetricsV2 = ref([
   { label: '奖励', value: '1200' },
   { label: '票数', value: '60' },
-]
+])
 
-const rankPlayersV2: RankPlayerV2[] = [
+const rankPlayersV2 = ref<RankPlayerV2[]>([
   { id: '1', name: 'Player Name', uid: '11440454', reward: '800' },
   { id: '2', name: 'Player Name', uid: '11440454', reward: '300' },
   { id: '3', name: 'Player Name', uid: '11440454', reward: '200' },
   { id: '4', name: 'Player Name', uid: '11440454', reward: '150' },
   { id: '5', name: 'Player Name', uid: '11440454', reward: '120' },
   { id: '6', name: 'Player Name', uid: '11440454', reward: '90' },
-]
+])
 
 const variant = computed<VariantType>(() => {
   return route.query.variant === 'v2' ? 'v2' : 'v1'
 })
 
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function resolveRoomId(): number {
+  const raw = route.query.room_id ?? route.query.id
+  const value = Number(raw)
+  return Number.isFinite(value) ? value : 0
+}
+
+function formatDateText(raw: unknown): string {
+  const timestamp = toSafeNumber(raw)
+  if (timestamp <= 0) {
+    return '--'
+  }
+  const date = new Date(timestamp > 1_000_000_000_000 ? timestamp : timestamp * 1000)
+  if (Number.isNaN(date.getTime())) {
+    return '--'
+  }
+  return date.toLocaleString('zh-CN', { hour12: false })
+}
+
+async function fetchMttDetail(): Promise<void> {
+  const roomId = resolveRoomId()
+  if (roomId <= 0) {
+    return
+  }
+
+  loading.value = true
+  try {
+    const response = await postStatsMttRoomDetailApi(
+      {
+        limit: 50,
+        offset: 0,
+      },
+      { id: roomId },
+    )
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载 MTT 详情失败')
+    }
+
+    const roomData = response.data?.room_data ?? response.data?.mtt_room_data
+    const usersRaw = roomData?.user_list
+    const users = Array.isArray(usersRaw) ? usersRaw : []
+
+    detailTitle.value = String(roomData?.game_room_name ?? 'MTT')
+    detailSub.value = `ID: ${String(roomData?.room_id ?? '--')}`
+    detailTime.value = `${formatDateText(roomData?.start_time)} - ${formatDateText(roomData?.end_time)}`
+
+    const totalPlayers = toSafeNumber(roomData?.player_count)
+    const awards = users.filter(item => toSafeNumber(item.award ?? item.hunter_award) > 0)
+    const currentUser = users.find(item => Boolean(item.is_current_user)) ?? users[0]
+    const rank = toSafeNumber(currentUser?.rank)
+    const reward = toSafeNumber(currentUser?.award ?? currentUser?.hunter_award)
+
+    headMetrics.value = [
+      { label: '总参赛', value: totalPlayers.toLocaleString('en-US') },
+      { label: '奖励池', value: awards.reduce((sum, item) => sum + toSafeNumber(item.award), 0).toLocaleString('en-US') },
+      { label: '名次', value: rank > 0 ? String(rank) : '--' },
+      { label: '奖励', value: reward.toLocaleString('en-US') },
+    ]
+
+    topMetricsV2.value = [
+      { label: '总参赛人数', value: totalPlayers.toLocaleString('en-US') },
+      { label: '总奖池', value: awards.reduce((sum, item) => sum + toSafeNumber(item.award), 0).toLocaleString('en-US') },
+      { label: '排名', value: rank > 0 ? String(rank) : '--' },
+    ]
+    sideMetricsV2.value = [
+      { label: '奖励', value: reward.toLocaleString('en-US') },
+      { label: '票数', value: toSafeNumber(currentUser?.buy_in_times).toLocaleString('en-US') },
+    ]
+
+    rankPlayers.value = users.map((item, index) => ({
+      id: String(item.user_random_id ?? index + 1),
+      name: String(item.nick_name ?? 'Player Name'),
+      uid: String(item.user_random_id ?? '--'),
+      tickets: toSafeNumber(item.buy_in_times).toLocaleString('en-US'),
+      reward: toSafeNumber(item.award).toLocaleString('en-US'),
+    }))
+
+    rankPlayersV2.value = users.map((item, index) => ({
+      id: String(item.user_random_id ?? index + 1),
+      name: String(item.nick_name ?? 'Player Name'),
+      uid: String(item.user_random_id ?? '--'),
+      reward: toSafeNumber(item.award ?? item.hunter_award).toLocaleString('en-US'),
+    }))
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '加载 MTT 详情失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
+
 function goBack(): void {
   void router.push('/mine/club-mtt')
 }
+
+onMounted(() => {
+  void fetchMttDetail()
+})
 </script>
 
 <template>
@@ -87,10 +193,10 @@ function goBack(): void {
         <section class="glass-card top-card">
           <div class="title-row">
             <div>
-              <div class="title">Hand Name</div>
-              <div class="sub">ID: 11440454</div>
+              <div class="title">{{ detailTitle }}</div>
+              <div class="sub">{{ detailSub }}</div>
             </div>
-            <div class="time">29/12 14:00</div>
+            <div class="time">{{ detailTime }}</div>
           </div>
           <div class="metrics-row">
             <div
@@ -137,10 +243,10 @@ function goBack(): void {
         <section class="glass-card top-card top-card--v2">
           <div class="title-row title-row--v2">
             <div>
-              <div class="title">Hand Name</div>
-              <div class="sub">ID: 11440454</div>
+              <div class="title">{{ detailTitle }}</div>
+              <div class="sub">{{ detailSub }}</div>
             </div>
-            <div class="time">29/12 14:00-29/12 15:00</div>
+            <div class="time">{{ detailTime }}</div>
           </div>
 
           <div class="metrics-wrap-v2">

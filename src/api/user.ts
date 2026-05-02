@@ -31,8 +31,24 @@ import type {
   UserRoomSettleDetailData,
   UserRoomSettleDetailRequest,
   UserSendCodeRequest,
+  UserDeleteCodeRequest,
+  UserDeleteCodeResponseData,
   UserWsData,
   UserWsResponse,
+  UserDeleteRequest,
+  UserDeleteResponseData,
+  UserVerifyPasswordRequest,
+  UserVerifyPasswordResponseData,
+  UserModifyQuickInfoRequest,
+  UserModifyQuickInfoResponseData,
+  UserModifyQuickSwitchRequest,
+  UserModifyQuickSwitchResponseData,
+  UserModifyBringInSwitchRequest,
+  UserModifyBringInSwitchResponseData,
+  UserBillRequest,
+  UserBillResponseData,
+  UserWalletRequest,
+  UserWalletResponseData,
 } from '@/api/models/user'
 import { forwardUserClubToCocos, forwardUserInfoToCocos } from '@/bridge/sync'
 import { pinia } from '@/stores/pinia'
@@ -306,5 +322,69 @@ export async function postUserMyWalletsApi(
   payload: Record<string, unknown> = {},
 ): Promise<ApiResponse<UserMyWalletsData>> {
   const response = await http.post<ApiResponse<UserMyWalletsData>>('/user/my_wallets', payload)
+  return response.data
+}
+
+// 对齐 cocos WebUserDeleteCode.API
+export async function postUserDeleteCodeApi(
+  payload: UserDeleteCodeRequest = {} as UserDeleteCodeRequest
+): Promise<ApiResponse<UserDeleteCodeResponseData>> {
+  const response = await http.post<ApiResponse<UserDeleteCodeResponseData>>('/user/send_verify_code', payload)
+  return response.data
+}
+
+// 对齐 cocos WebUserDelete.API
+export async function postUserDeleteApi(
+  payload: UserDeleteRequest = {} as UserDeleteRequest
+): Promise<ApiResponse<UserDeleteResponseData>> {
+  const response = await http.post<ApiResponse<UserDeleteResponseData>>('/user/delete', payload)
+  return response.data
+}
+
+// 对齐 cocos WebUserVerifyPassword.API
+export async function postUserVerifyPasswordApi(
+  payload: UserVerifyPasswordRequest = {} as UserVerifyPasswordRequest
+): Promise<ApiResponse<UserVerifyPasswordResponseData>> {
+  const response = await http.post<ApiResponse<UserVerifyPasswordResponseData>>('/user/quick_password/verify', payload)
+  return response.data
+}
+
+// 对齐 cocos WebUserModifyQuickInfo.API
+export async function postUserModifyQuickInfoApi(
+  payload: UserModifyQuickInfoRequest = {} as UserModifyQuickInfoRequest
+): Promise<ApiResponse<UserModifyQuickInfoResponseData>> {
+  const response = await http.post<ApiResponse<UserModifyQuickInfoResponseData>>('/user/quick_password/modify', payload)
+  return response.data
+}
+
+// 对齐 cocos WebUserModifyQuickSwitch.API
+export async function postUserModifyQuickSwitchApi(
+  payload: UserModifyQuickSwitchRequest = {} as UserModifyQuickSwitchRequest
+): Promise<ApiResponse<UserModifyQuickSwitchResponseData>> {
+  const response = await http.post<ApiResponse<UserModifyQuickSwitchResponseData>>('/user/modify/quick/login/switch', payload)
+  return response.data
+}
+
+// 对齐 cocos WebUserModifyBringInSwitch.API
+export async function postUserModifyBringInSwitchApi(
+  payload: UserModifyBringInSwitchRequest = {} as UserModifyBringInSwitchRequest
+): Promise<ApiResponse<UserModifyBringInSwitchResponseData>> {
+  const response = await http.post<ApiResponse<UserModifyBringInSwitchResponseData>>('/user/modify/bringin/password/switch', payload)
+  return response.data
+}
+
+// 对齐 cocos WebUserBill.API
+export async function postUserBillApi(
+  payload: UserBillRequest = {} as UserBillRequest
+): Promise<ApiResponse<UserBillResponseData>> {
+  const response = await http.post<ApiResponse<UserBillResponseData>>('/user/wallets_log', payload)
+  return response.data
+}
+
+// 对齐 cocos WebUserWallet.API
+export async function postUserWalletApi(
+  payload: UserWalletRequest = {} as UserWalletRequest
+): Promise<ApiResponse<UserWalletResponseData>> {
+  const response = await http.post<ApiResponse<UserWalletResponseData>>('/user/my_wallets', payload)
   return response.data
 }

@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { postUserBillApi, postUserWalletApi } from '@/api/user'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
-
-const router = useRouter()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -14,56 +13,206 @@ const backgroundStyle = computed(() => ({
 
 const title = computed(() => '我的账单')
 
-const tabs = ['UC', 'Club记分牌', '朋友桌记分牌', '钻石']
-const activeTab = ref(tabs[0])
+const tabs = ['UC', 'Club记分牌', '朋友桌记分牌', '钻石'] as const
+type BillTab = (typeof tabs)[number]
 
-interface DayItem {
-  day: string
-  month: string
+const activeTab = ref<BillTab>('UC')
+const loading = ref(false)
+const totalAmount = ref(0)
+
+interface BillRecordItem {
+  name: string
+  time: string
+  amount: string
+  positive?: boolean
 }
 
-interface FlowItem {
+interface BillCardItem {
   id: string
+  day: string
+  month: string
   title: string
   club: string
   inAmount: string
   outAmount: string
-  records: Array<{ name: string; time: string; amount: string; positive?: boolean }>
+  records: BillRecordItem[]
 }
 
-const dayList: DayItem[] = [
-  { day: '04', month: 'April' },
-  { day: '03', month: 'April' },
-  { day: '02', month: 'April' },
-]
+const flowCards = ref<BillCardItem[]>([])
 
-const flowCards: FlowItem[] = [
-  {
-    id: '1',
-    title: 'XXXX牌局名称',
-    club: 'XXX俱乐部',
-    inAmount: '400,000',
-    outAmount: '300,000',
-    records: [
-      { name: 'Tour Nickname', time: '20/04/2026 22:56', amount: '+123,456', positive: true },
-      { name: 'Tour Nickname', time: '20/04/2026 22:56', amount: '-123,456' },
-      { name: 'Tour Nickname', time: '20/04/2026 22:56', amount: '+123,456', positive: true },
-      { name: 'Tour Nickname', time: '20/04/2026 22:56', amount: '-123,456' },
-    ],
-  },
-  {
-    id: '2',
-    title: 'XXXX牌局名称',
-    club: 'XXX俱乐部',
-    inAmount: '400,000',
-    outAmount: '300,000',
-    records: [],
-  },
-]
-
-function goBack(): void {
-  void router.push('/mine')
+const billRequestByTab: Record<BillTab, { gold_type: number; origin_type?: number }> = {
+  UC: { gold_type: 1 },
+  Club记分牌: { gold_type: 3, origin_type: 3 },
+  朋友桌记分牌: { gold_type: 3, origin_type: 4 },
+  钻石: { gold_type: 4 },
 }
+
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function formatAmount(value: unknown): string {
+  return toSafeNumber(value).toLocaleString('en-US')
+}
+
+function formatSigned(value: unknown): string {
+  const amount = toSafeNumber(value)
+  if (amount === 0) {
+    return '0'
+  }
+  const abs = Math.abs(amount).toLocaleString('en-US')
+  return amount > 0 ? `+${abs}` : `-${abs}`
+}
+
+function pickRecordValue(source: Record<string, unknown>, keys: string[]): unknown {
+  for (const key of keys) {
+    const value = source[key]
+    if (value !== undefined && value !== null && value !== '') {
+      return value
+    }
+  }
+  return undefined
+}
+
+function extractList(value: unknown, depth = 0): Record<string, unknown>[] {
+  if (depth > 4 || value === null || value === undefined) {
+    return []
+  }
+
+  if (Array.isArray(value)) {
+    return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+  }
+
+  if (typeof value !== 'object') {
+    return []
+  }
+
+  const obj = value as Record<string, unknown>
+  const priorityKeys = ['list', 'records', 'items', 'data']
+  for (const key of priorityKeys) {
+    const nested = extractList(obj[key], depth + 1)
+    if (nested.length) {
+      return nested
+    }
+  }
+
+  for (const nestedValue of Object.values(obj)) {
+    const nested = extractList(nestedValue, depth + 1)
+    if (nested.length) {
+      return nested
+    }
+  }
+
+  return []
+}
+
+function resolveDateParts(raw: unknown): { day: string; month: string; text: string } {
+  if (typeof raw === 'string' && raw.trim()) {
+    const asNumber = Number(raw)
+    const candidate = Number.isFinite(asNumber) && asNumber > 0 ? new Date(asNumber * 1000) : new Date(raw)
+    if (!Number.isNaN(candidate.getTime())) {
+      return {
+        day: String(candidate.getDate()).padStart(2, '0'),
+        month: candidate.toLocaleString('en-US', { month: 'short' }),
+        text: raw,
+      }
+    }
+    return { day: '--', month: '--', text: raw }
+  }
+
+  const timestamp = toSafeNumber(raw)
+  if (timestamp > 0) {
+    const value = new Date(timestamp > 1_000_000_000_000 ? timestamp : timestamp * 1000)
+    return {
+      day: String(value.getDate()).padStart(2, '0'),
+      month: value.toLocaleString('en-US', { month: 'short' }),
+      text: value.toLocaleString('zh-CN', { hour12: false }),
+    }
+  }
+
+  return { day: '--', month: '--', text: '--' }
+}
+
+function mapBillCard(row: Record<string, unknown>, index: number): BillCardItem {
+  const title = String(
+    pickRecordValue(row, ['title', 'room_name', 'game_room_name', 'op_name', 'op_desc']) ?? '账单记录',
+  )
+  const club = String(pickRecordValue(row, ['club_name', 'group_name', 'source_name']) ?? '--')
+
+  const inAmount = pickRecordValue(row, ['all_bring_in', 'bring_in', 'in_amount'])
+  const outAmount = pickRecordValue(row, ['bring_out', 'out_amount', 'all_bring_out'])
+  const changeAmount = pickRecordValue(row, ['change_amount', 'gold_change', 'amount', 'change'])
+  const timeRaw = pickRecordValue(row, ['create_time_str', 'create_time', 'time', 'created_at'])
+  const timeInfo = resolveDateParts(timeRaw)
+
+  const changeNumber = toSafeNumber(changeAmount)
+  const record: BillRecordItem = {
+    name: String(pickRecordValue(row, ['nick_name', 'name', 'op_name']) ?? '账单变动'),
+    time: timeInfo.text,
+    amount: formatSigned(changeAmount),
+    positive: changeNumber > 0,
+  }
+
+  return {
+    id: String(pickRecordValue(row, ['id', 'log_id', 'order_id']) ?? `${index + 1}`),
+    day: timeInfo.day,
+    month: timeInfo.month,
+    title,
+    club,
+    inAmount: formatAmount(inAmount),
+    outAmount: formatAmount(outAmount),
+    records: [record],
+  }
+}
+
+async function fetchBillData(): Promise<void> {
+  loading.value = true
+  const payload = {
+    ...billRequestByTab[activeTab.value],
+    limit: 20,
+    offset: 0,
+    order_type: 2,
+  }
+
+  try {
+    const [billRes, walletRes] = await Promise.all([
+      postUserBillApi(payload),
+      postUserWalletApi(billRequestByTab[activeTab.value]),
+    ])
+
+    if (billRes.code !== 0) {
+      throw new Error(typeof billRes.msg === 'string' ? billRes.msg : '加载账单失败')
+    }
+
+    if (walletRes.code !== 0) {
+      throw new Error(typeof walletRes.msg === 'string' ? walletRes.msg : '加载钱包余额失败')
+    }
+
+    const rows = extractList(billRes.data?.list)
+    flowCards.value = rows.map((row, index) => mapBillCard(row, index))
+    totalAmount.value = toSafeNumber(walletRes.data?.amount)
+  } catch (error) {
+    flowCards.value = []
+    totalAmount.value = 0
+    const message = error instanceof Error ? error.message : '加载账单失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
+
+function selectTab(tab: BillTab): void {
+  if (activeTab.value === tab) {
+    return
+  }
+  activeTab.value = tab
+  void fetchBillData()
+}
+
+onMounted(() => {
+  void fetchBillData()
+})
 </script>
 
 <template>
@@ -79,7 +228,7 @@ function goBack(): void {
           :key="item"
           type="button"
           :class="['tab', { active: activeTab === item }]"
-          @click="activeTab = item"
+          @click="selectTab(item)"
         >
           {{ item }}
         </button>
@@ -89,16 +238,18 @@ function goBack(): void {
         <div class="label">UC总余额</div>
         <div class="amount-row">
           <img :src="iconDiamond" alt="chip" />
-          <strong>123,456,789</strong>
+          <strong>{{ formatAmount(totalAmount) }}</strong>
         </div>
         <button class="detail-btn" type="button">查看明细</button>
       </section>
 
       <section class="timeline">
-        <article v-for="(card, index) in flowCards" :key="card.id" class="timeline-item">
+        <p v-if="loading" class="list-status">加载中...</p>
+        <p v-else-if="!flowCards.length" class="list-status">暂无账单记录</p>
+        <article v-for="card in flowCards" :key="card.id" class="timeline-item">
           <div class="date-col">
-            <div class="date">{{ dayList[index]?.day }}</div>
-            <div class="month">{{ dayList[index]?.month }}</div>
+            <div class="date">{{ card.day }}</div>
+            <div class="month">{{ card.month }}</div>
             <span class="dot"></span>
           </div>
 
@@ -222,6 +373,13 @@ function goBack(): void {
   display: flex;
   flex-direction: column;
   gap: 0.26rem;
+}
+
+.list-status {
+  text-align: center;
+  font-size: 0.26rem;
+  opacity: 0.76;
+  padding: 0.24rem 0;
 }
 
 .timeline-item {

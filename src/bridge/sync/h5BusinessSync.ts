@@ -6,6 +6,7 @@ import {
 import {
   BRIDGE_ACTION,
   BRIDGE_MSG_TYPE,
+  type SyncLanguagePayload,
   type SyncRoomsListPayload,
   type SyncUserClubPayload,
   type SyncUserPayload,
@@ -94,4 +95,14 @@ export function forwardRoomsListToCocos(
   }
   // 对齐 syncUser/syncUserClub：握手未完成时先缓存，完成后补发最新快照。
   queueSyncUntilHandshake(BRIDGE_ACTION.SYNC_ROOMS_LIST, payload)
+}
+
+export function forwardLanguageChangedToCocos(locale: string): void {
+  const payload: SyncLanguagePayload = {
+    locale: String(locale || '').trim(),
+  }
+  if (!payload.locale) {
+    return
+  }
+  queueSyncUntilHandshake(BRIDGE_ACTION.SYNC_LANGUAGE, payload)
 }

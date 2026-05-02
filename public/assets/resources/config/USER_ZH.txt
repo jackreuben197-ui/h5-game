@@ -7255,3 +7255,5 @@ UIMatchPerTableCount=单桌人数
 UIMatchTotalTables=牌桌总数
 UIMatchGuaranteedTag=保底赛
 UIMatchSelectClubBuyin=选择买入的俱乐部
+UILoginConfirmTitle=您尚未同意协议
+UILoginConfirmContent=请阅读

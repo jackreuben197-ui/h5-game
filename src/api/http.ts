@@ -19,6 +19,16 @@ interface HttpRequestConfigExt extends InternalAxiosRequestConfig {
 }
 
 let authRedirecting = false
+const PRE_LOGIN_PATHS = [
+  '/user/login',
+  '/user/login2',
+  '/user/register',
+  '/user/sendcode',
+  '/user/send_email_code',
+  '/user/check_phone',
+  '/user/check_email',
+  '/user/modify/password',
+]
 
 function shouldAttachXClub(url: string): boolean {
   return /^\/?(?:org|cmsext)\/club\//.test(url)
@@ -75,9 +85,9 @@ async function forceToLogin(): Promise<void> {
   gameStore.clearLogin()
 
   const currentRoute = router.currentRoute.value
-  if (currentRoute.name !== 'login') {
+  if (currentRoute.name !== 'login' && currentRoute.name !== 'login1') {
     // 登录失效后统一回登录页，不携带 redirect 参数。
-    await router.replace({ name: 'login' })
+    await router.replace({ name: 'login1' })
   }
 
   authRedirecting = false
@@ -88,12 +98,13 @@ http.interceptors.request.use((config) => {
   const gameStore = useGameStore(pinia)
   const token = gameStore.sessionToken
   const requestUrl = config.url || ''
-  // 登录接口本身不要求 token。
-  const isLoginRequest = requestUrl.includes('/user/login')
+  const normalizedUrl = requestUrl.startsWith('/') ? requestUrl : `/${requestUrl}`
+  // 登录前接口不要求 token。
+  const isPreLoginRequest = PRE_LOGIN_PATHS.some((path) => normalizedUrl.includes(path))
   config.headers['Content-Type'] = 'application/json'
 
   // 没有 token 且不是登录接口时，直接判定未登录并跳转。
-  if (!token && !isLoginRequest) {
+  if (!token && !isPreLoginRequest) {
     void forceToLogin()
     return Promise.reject(new Error('未登录或登录已过期'))
   }
@@ -104,8 +115,8 @@ http.interceptors.request.use((config) => {
   }
 
   // 对齐 Unity：俱乐部相关接口需要携带 X-Club。
-  const normalizedUrl = requestUrl.startsWith('/') ? requestUrl.slice(1) : requestUrl
-  if (shouldAttachXClub(normalizedUrl)) {
+  const clubRouteUrl = normalizedUrl.startsWith('/') ? normalizedUrl.slice(1) : normalizedUrl
+  if (shouldAttachXClub(clubRouteUrl)) {
     const xClub = resolveXClub(extConfig)
     if (xClub) {
       config.headers['X-Club'] = xClub

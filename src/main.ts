@@ -11,6 +11,7 @@ import LoginSession from './session/loginSession'
 import './styles/main.scss'
 import { setupRem } from './utils/rem'
 import { createLogger } from './utils/logger'
+import { useGameStore } from './stores/game'
 
 const log = createLogger('[h5]')
 import { pinia } from './stores/pinia'
@@ -44,10 +45,13 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
   app.use(pinia)
   app.use(textI18nPlugin)
   app.use(router)
+  const gameStore = useGameStore(pinia)
   // 启动时优先根据本地缓存补齐 WS/Register，保证刷新后也能尽快恢复桥接通道。
-  void LoginSession.EnsureWS().catch(() => {
-    // 无 token 或端口未就绪时忽略；登录成功后会再次走 SyncWS/EnsureWS。
-  })
+  if (gameStore.sessionToken.trim()) {
+    void LoginSession.EnsureWS().catch(() => {
+      // 无 token 或端口未就绪时忽略；登录成功后会再次走 SyncWS/EnsureWS。
+    })
+  }
   // 启动 WS 代理通道：Cocos 发指令给 H5，由 H5 执行 websocket 收发并回传结果。
   stopWsProxyBridgeChannel = setupWsProxyBridgeChannel()
   // 启动全局桥接 toast：接收 Cocos 消息后统一弹窗。

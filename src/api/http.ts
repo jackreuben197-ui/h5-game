@@ -28,6 +28,8 @@ const PRE_LOGIN_PATHS = [
   '/user/check_phone',
   '/user/check_email',
   '/user/modify/password',
+  '/misc/article/info',
+  '/config/register/area',
 ]
 
 function shouldAttachXClub(url: string): boolean {

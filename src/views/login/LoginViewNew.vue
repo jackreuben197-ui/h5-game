@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { md5 } from 'js-md5'
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, onUnmounted, reactive, ref } from 'vue'
 import { onBeforeRouteLeave, useRouter } from 'vue-router'
 import {
   getUserClubApi,
@@ -39,6 +39,7 @@ const LOGIN_EMAIL_PASSWORD_KEY = 'USER_USEREMAILPASSWORD'
 const LOGIN_TYPE_PHONE = 1
 const LOGIN_TYPE_EMAIL = 2
 const LOGIN_PAGE_STATE_CACHE_KEY = 'LOGIN_VIEW_NEW_STATE_V1'
+const LOGIN_PHONE_AREA_SELECTION_KEY = 'LOGIN_PHONE_AREA_SELECTED_V1'
 
 const router = useRouter()
 const gameStore = useGameStore()
@@ -79,16 +80,16 @@ onUnmounted(() => {
   if (otpTimer) clearInterval(otpTimer)
 })
 
-onMounted(() => {
-  hydrateFormFromLocal()
-  restorePageState()
-})
-
 onBeforeRouteLeave((to) => {
-  if (to.path === '/protocol') {
+  if (to.path === '/protocol' || to.path === '/login/phone-area') {
     savePageState()
   }
 })
+
+// 在首帧渲染前同步恢复输入态，避免从空值到有值造成背景闪动。
+hydrateFormFromLocal()
+restorePageState()
+consumePhoneAreaSelection()
 
 // ---------- Computed ----------
 const contactValue = computed(() =>
@@ -279,6 +280,19 @@ function goProtocolPage(): void {
   void router.push('/protocol')
 }
 
+function goPhoneAreaPage(): void {
+  if (contactType.value !== 'phone') {
+    return
+  }
+  savePageState()
+  void router.push({
+    name: 'login-phone-area',
+    query: {
+      current: normalizeArea(),
+    },
+  })
+}
+
 function onAgreementIndicatorClick(): void {
   agreed.value = !agreed.value
 }
@@ -305,9 +319,12 @@ function openDebugAccountDialog(): void {
 }
 
 function applyDebugAccount(account: DebugAccount): void {
+  pageMode.value = 'login'
   contactType.value = 'phone'
   form.phone = account.account
   form.password = account.password
+  form.area = '55'
+  agreed.value = true
   showDebugAccountDialog.value = false
 }
 
@@ -355,8 +372,6 @@ async function handleLogin(target: string) {
     gameStore.clearLogin()
     throw error
   }
-
-  showGameToast(t('UILogin_BtnLogin'))
   await router.replace({ name: 'lobby' })
 }
 
@@ -553,6 +568,17 @@ function restorePageState(): void {
     // ignore parse errors
   }
 }
+
+function consumePhoneAreaSelection(): void {
+  if (typeof window === 'undefined') return
+  const selected = window.sessionStorage.getItem(LOGIN_PHONE_AREA_SELECTION_KEY)
+  if (!selected) return
+  window.sessionStorage.removeItem(LOGIN_PHONE_AREA_SELECTION_KEY)
+  const normalized = String(selected).trim().replace('+', '')
+  if (!normalized) return
+  form.area = normalized
+  localStore.setItem(StorageKey.KEY_PHONE_FIRST, normalized)
+}
 </script>
 
 <template>
@@ -598,7 +624,12 @@ function restorePageState(): void {
             </div>
             <div class="input-inner">
               <!-- Area code selector (phone mode only) -->
-              <button v-if="isPhone" class="area-code-btn" @click.prevent>
+              <button
+                v-if="isPhone"
+                type="button"
+                class="area-code-btn"
+                @click.prevent="goPhoneAreaPage"
+              >
                 <span>+{{ form.area }}</span>
                 <img class="area-code-icon" :src="icArrowDrop" alt="" />
               </button>

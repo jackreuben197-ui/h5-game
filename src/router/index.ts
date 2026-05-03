@@ -17,6 +17,11 @@ const router = createRouter({
       component: () => import('@/views/login/components/ProtocolView.vue')
     },
     {
+      path: '/login/phone-area',
+      name: 'login-phone-area',
+      component: () => import('@/views/login/components/LoginPhoneAreaView.vue'),
+    },
+    {
       path: '/',
 
       component: () => import('@/views/main/MainLayoutView.vue'),

@@ -113,12 +113,6 @@ function toSafeNumber(value: unknown): number {
   return Number.isFinite(numeric) ? numeric : 0
 }
 
-function formatSigned(value: number): string {
-  const abs = Math.abs(value).toLocaleString('en-US')
-  if (value === 0) return '0'
-  return value > 0 ? `+${abs}` : `-${abs}`
-}
-
 function resolveGameTypes(): number[] {
   if (selectedGame.value === '奥马哈') {
     return [1, 2, 3]
@@ -219,13 +213,14 @@ function extractStatsFromResponse(data: unknown): void {
     { label: '激进程度', value: af.toLocaleString('en-US') },
   ]
 
-  todayProfit.value = formatSigned(totalEarn)
+  todayProfit.value = formatUC(totalEarn)
 }
 
 async function fetchStatsSummary(): Promise<void> {
   try {
     const response = await postStatsUserStatsApi({
-      game_type: resolveGameTypes()[0],
+      game_types: resolveGameTypes(),
+      poker_types: selectedGame.value === '短牌' ? [2] : [0],
       time_type: resolveTimeType(),
       filter_type: 1, // 默认联盟币
       room_type: 0, // 生涯
@@ -248,6 +243,7 @@ async function fetchClubRecords(): Promise<void> {
       limit: 20,
       offset: 0,
       game_types: resolveGameTypes(),
+      poker_types: selectedGame.value === '短牌' ? [2] : [0],
       time_type: resolveTimeType(),
       club_id: userInfoStore.currentClub?.club_id,
     })
@@ -338,7 +334,7 @@ onMounted(() => {
 
           <div class="profit-box">
             <div class="profit-title">{{ profitTitleText }}</div>
-            <div class="profit-value">{{ todayProfit }}</div>
+            <div :class="['profit-value', { pos: todayProfit.startsWith('-') }]">{{ todayProfit }}</div>
           </div>
 
           <div class="metric-col right">
@@ -373,10 +369,13 @@ onMounted(() => {
           v-for="(item, index) in records"
           :key="item.id"
           class="glass-card record-card"
+          :class="{ 'is-first-of-date': isFirstOfDate(index) }"
           @click="goToDetail(item)"
         >
-          <div v-if="isFirstOfDate(index)" class="timeline">{{ item.endDay }}<br />{{ item.endMonth }}</div>
-          <div v-else class="timeline"></div>
+          <div class="timeline">
+            <span v-if="isFirstOfDate(index)" class="date-label">{{ item.endMonth }}<br />{{ item.endDay }}</span>
+            <span v-else class="date-label"></span>
+          </div>
           <div class="card-content">
             <div class="card-head">
               <div>{{ item.roomName }}</div>
@@ -526,7 +525,10 @@ onMounted(() => {
     margin-top: 0.12rem;
     font-size: 0.56rem;
     font-weight: 700;
-    color: #6be89d;
+    color: #ff7a8f;
+    &.pos {
+      color: #4ee58f;
+    }
   }
 }
 
@@ -568,6 +570,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.22rem;
+  position: relative;
 }
 
 .list-status {
@@ -582,20 +585,53 @@ onMounted(() => {
   display: grid;
   grid-template-columns: 0.8rem 1fr;
   gap: 0.2rem;
+  position: relative;
 }
 
 .timeline {
-  font-size: 0.32rem;
-  color: rgba(255, 255, 255, 0.9);
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 0.1rem;
+
+  .date-label {
+    font-size: 0.32rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
 
   &::after {
     content: '';
     position: absolute;
-    top: 0.42rem;
-    left: 0.45rem;
+    top: 0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
     width: 0.02rem;
-    height: 2.2rem;
+    height: calc(100% - 0.3rem);
+    background: rgba(255, 255, 255, 0.35);
+  }
+}
+
+// 同一天的非第一条记录：只显示虚线
+.record-card:not(.is-first-of-date) .timeline {
+  &::after {
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.35) 0,
+      rgba(255, 255, 255, 0.35) 4px,
+      transparent 4px,
+      transparent 8px
+    );
+  }
+}
+
+// 第一条记录：显示实线
+.record-card.is-first-of-date .timeline {
+  &::after {
     background: rgba(255, 255, 255, 0.35);
   }
 }

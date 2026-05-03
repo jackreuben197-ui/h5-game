@@ -12,6 +12,7 @@ import iconBoxSetting from '@/assets/icons/icon_box_setting.png'
 import iconFilter from '@/assets/icons/icon_filters.png'
 import iconDropdown from '@/assets/icons/icon_dropdown.png'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { formatUC } from '@/utils/roomVisibility'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -66,7 +67,7 @@ interface CareerMenuItem {
 }
 
 const metrics = ref<CareerMetric[]>([
-  { label: '局数', value: '0/0' },
+  { label: '局数', value: '0' },
   { label: '手数', value: '0' },
   { label: '入池率', value: '0%' },
   { label: '盈亏', value: '0' },
@@ -86,9 +87,10 @@ function selectGameTab(tab: string): void {
   void fetchClubCareerSummary()
 }
 
-// 切换日期 tab 只更新选中状态，不重新请求接口
+// 切换日期 tab 更新选中状态并刷新指标显示
 function selectDateTab(tab: string): void {
   selectedDateTab.value = tab
+  metrics.value = extractMetricsFromCache()
 }
 
 function toggleClubDropdown(): void {
@@ -146,6 +148,7 @@ function resolveRequestParams() {
   return {
     filter_type: currencyTypes[selectedCurrencyIndex.value].value,
     game_types: gameTypes,
+    poker_types: selectedGameTab.value === '短牌' ? [2] : [0],
     ...(selectedClubIndex.value !== 0 ? { club_id: userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id } : {}),
   }
 }
@@ -157,7 +160,7 @@ function extractMetricsFromCache(): CareerMetric[] {
   const data = responseCache.value
   if (!data) {
     return [
-      { label: '局数', value: '0/0' },
+      { label: '局数', value: '0' },
       { label: '手数', value: '0' },
       { label: '入池率', value: '0%' },
       { label: '盈亏', value: '0' },
@@ -186,13 +189,13 @@ function extractMetricsFromCache(): CareerMetric[] {
   const totalEarn = toSafeNumber(dayData?.total_earn)
 
   return [
-    { label: '局数', value: `${totalGameCnt}/${totalGameCnt}` },
+    { label: '局数', value: `${totalGameCnt}` },
     { label: '手数', value: totalHand.toLocaleString('en-US') },
     {
       label: '入池率',
-      value: totalGameCnt > 0 ? `${Math.min(100, Math.round((inPoolCnt / totalGameCnt) * 100))}%` : '0%',
+      value: totalHand > 0 ? `${Math.min(100, Math.round((inPoolCnt / totalHand) * 100))}%` : '0%',
     },
-    { label: '盈亏', value: `${totalEarn > 0 ? '+' : ''}${totalEarn.toLocaleString('en-US')}` },
+    { label: '盈亏', value: `${formatUC(totalEarn)}` },
   ]
 }
 
@@ -297,7 +300,7 @@ onMounted(() => {
         </div>
 
         <div class="metric-row">
-          <p v-if="loading" class="metric-status">加载中...</p>
+          <!-- <p v-if="loading" class="metric-status">加载中...</p> -->
           <div v-for="item in metrics" :key="item.label" class="metric-item">
             <div class="value">{{ item.value }}</div>
             <div class="label">{{ item.label }}</div>

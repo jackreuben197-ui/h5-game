@@ -2,11 +2,16 @@
 import { computed, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
-import { postRoomCenterHistoryListApi } from '@/api/stats'
+import { postRoomCenterHistoryListApi, postStatsUserStatsApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { formatUC } from '@/utils/roomVisibility'
+import { formatDateTime, toTimestampMs } from '@/utils/time'
+import dayjs from 'dayjs'
 
 const router = useRouter()
+const userInfoStore = useUserInfoStore()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -14,6 +19,7 @@ const backgroundStyle = computed(() => ({
 }))
 
 const title = computed(() => '战绩')
+
 interface SummaryMetric {
   label: string
   value: string
@@ -21,12 +27,14 @@ interface SummaryMetric {
 
 interface RecordCard {
   id: string
-  playerName: string
-  playerId: string
+  roomName: string
+  roomId: string
   blinds: string
   hands: string
   duration: string
   endAt: string
+  endDay: string
+  endMonth: string
   profit: string
 }
 
@@ -36,54 +44,69 @@ const selectedGame = ref(gameTabs[0])
 const selectedTime = ref(timeTabs[0])
 const loading = ref(false)
 
+// 统计数据（从 postStatsUserStatsApi 获取，默认值 0）
 const leftMetrics = ref<SummaryMetric[]>([
-  { label: '总带入', value: '25,600' },
-  { label: '手数', value: '1,200' },
+  { label: '总局数', value: '0' },
+  { label: '手数', value: '0' },
 ])
 
 const rightMetrics = ref<SummaryMetric[]>([
-  { label: '入池率', value: '26%' },
-  { label: '胜率', value: '54%' },
+  { label: '入池率', value: '0%' },
+  { label: '胜率', value: '0%' },
 ])
 
 const detailRowsOne = ref<SummaryMetric[]>([
-  { label: '局数', value: '20' },
-  { label: '总盈亏', value: '+5000' },
-  { label: '大底池', value: '1024' },
-  { label: 'MVP', value: '3' },
+  { label: '局数', value: '0' },
+  { label: '总盈亏', value: '0' },
+  { label: '场均战绩', value: '0' },
+  { label: '摊牌胜率', value: '0%' },
 ])
 
 const detailRowsTwo = ref<SummaryMetric[]>([
-  { label: '摊牌', value: '8' },
-  { label: '加注', value: '32' },
-  { label: '诈唬', value: '5' },
-  { label: '弃牌', value: '20' },
+  { label: '翻牌前加注率', value: '0%' },
+  { label: '持续下注率', value: '0%' },
+  { label: '全下胜率', value: '0%' },
+  { label: '激进程度', value: '0' },
 ])
 
-const todayProfit = ref('+0')
+const todayProfit = ref('0')
 
-const records = ref<RecordCard[]>([
-  {
-    id: 'r1',
-    playerName: 'Player Name',
-    playerId: '11440454',
-    blinds: '5/10',
-    hands: '20',
-    duration: '2.5h',
-    endAt: '06/04 22:56',
-    profit: '+1024',
-  },
-  {
-    id: 'r2',
-    playerName: 'Player Name',
-    playerId: '11440454',
-    blinds: '5/10',
-    hands: '18',
-    duration: '1.8h',
-    endAt: '06/03 21:40',
-    profit: '-380',
-  },
-])
+const records = ref<RecordCard[]>([])
+
+// 根据当前选中的时间 tab 返回收益标题
+function profitTitle(): string {
+  switch (selectedTime.value) {
+    case '今天': return '今天收益'
+    case '7天': return '7天收益'
+    case '30天': return '30天收益'
+    default: return '今天收益'
+  }
+}
+
+const profitTitleText = computed(() => profitTitle())
+
+/**
+ * 格式化时长：>=1小时显示 "XhXm"，<1小时显示 "Xm"
+ */
+function formatDuration(minutes: number): string {
+  if (minutes <= 0) return '--'
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  if (hours > 0) {
+    return mins > 0 ? `${hours}h${mins}m` : `${hours}h`
+  }
+  return `${mins}m`
+}
+
+/**
+ * 判断是否为某日期的第一条记录（用于 timeline 显示）
+ */
+function isFirstOfDate(index: number): boolean {
+  if (index === 0) return true
+  const current = dayjs(toTimestampMs(records.value[index].endAt))
+  const prev = dayjs(toTimestampMs(records.value[index - 1].endAt))
+  return current.format('YYYY-MM-DD') !== prev.format('YYYY-MM-DD')
+}
 
 function toSafeNumber(value: unknown): number {
   const numeric = Number(value)
@@ -106,15 +129,13 @@ function resolveGameTypes(): number[] {
   return [0]
 }
 
-function formatDateText(raw: unknown): string {
-  if (typeof raw === 'string' && raw.trim()) {
-    return raw
+function resolveTimeType(): number {
+  switch (selectedTime.value) {
+    case '今天': return 1
+    case '7天': return 2
+    case '30天': return 3
+    default: return 1
   }
-  const timestamp = toSafeNumber(raw)
-  if (timestamp <= 0) return '--'
-  const date = new Date(timestamp > 1_000_000_000_000 ? timestamp : timestamp * 1000)
-  if (Number.isNaN(date.getTime())) return '--'
-  return date.toLocaleString('zh-CN', { hour12: false })
 }
 
 function extractRecords(value: unknown, depth = 0): Record<string, unknown>[] {
@@ -136,49 +157,88 @@ function extractRecords(value: unknown, depth = 0): Record<string, unknown>[] {
 }
 
 function mapRecord(row: Record<string, unknown>, index: number): RecordCard {
-  const change = toSafeNumber(row.change ?? row.profit)
-  const count = toSafeNumber(row.count ?? row.hand_num)
-  const durationMinutes = Math.max(0, Math.round(toSafeNumber(row.player_duration) / 60))
+  const change = toSafeNumber(row.Change ?? row.profit)
+  const durationMinutes = Math.max(0, Math.round(toSafeNumber(row.play_duration) / 60))
+  const endTs = toTimestampMs(row.end_time)
+  const endDay = endTs > 0 ? dayjs(endTs).format('DD') : ''
+  const endMonth = endTs > 0 ? dayjs(endTs).format('MMM') : ''
   return {
-    id: String(row.room_id ?? row.match_id ?? index + 1),
-    playerName: String(row.name ?? row.game_room_name ?? 'Player Name'),
-    playerId: String(row.room_id ?? row.match_id ?? '--'),
-    blinds: `${toSafeNumber(row.sb ?? row.small_blind)}/${toSafeNumber(row.ante ?? 0)}`,
-    hands: count > 0 ? String(count) : '--',
-    duration: durationMinutes > 0 ? `${durationMinutes}m` : '--',
-    endAt: formatDateText(row.time ?? row.end_time ?? row.start_time_str),
-    profit: formatSigned(change),
+    id: String(row.RoomID ?? row.MatchID ?? index + 1),
+    roomName: String(row.Name ?? '--'),
+    roomId: String(row.RoomID ?? row.MatchID ?? '--'),
+    blinds: `${toSafeNumber(row.small_blind)}/${toSafeNumber(row.ante ?? 0)}`,
+    hands: String(row.hand_num),
+    duration: formatDuration(durationMinutes),
+    endAt: endTs > 0 ? formatDateTime(row.end_time) : '--',
+    endDay,
+    endMonth,
+    profit: formatUC(change),
   }
 }
 
-function refreshSummary(list: RecordCard[]): void {
-  const gameCount = list.length
-  const hands = list.reduce((sum, item) => sum + toSafeNumber(item.hands), 0)
-  const profit = list.reduce((sum, item) => sum + toSafeNumber(item.profit.replace(/,/g, '')), 0)
-  const maxBlind = list.reduce((max, item) => Math.max(max, toSafeNumber(item.blinds.split('/')[0])), 0)
-  const winners = list.filter(item => item.profit.startsWith('+')).length
+/**
+ * 从 postStatsUserStatsApi 响应中提取统计数据
+ */
+function extractStatsFromResponse(data: unknown): void {
+  const roomData = (data as Record<string, unknown>)?.room_data as Record<string, unknown> | undefined
+  if (!roomData) return
+
+  const totalGameCnt = toSafeNumber(roomData.total_game_cnt)
+  const totalHand = toSafeNumber(roomData.total_hand)
+  const totalEarn = toSafeNumber(roomData.total_earn)
+  const vpip = toSafeNumber(roomData.vpip)
+  const wins = toSafeNumber(roomData.wins)
+  const avgEarn = formatUC(toSafeNumber(roomData.aveage_earn))
+  const wtsd = toSafeNumber(roomData.wtsd)
+  const prf = toSafeNumber(roomData.prf)
+  const cbet = toSafeNumber(roomData.cbet)
+  const allinWins = toSafeNumber(roomData.allinWins)
+  const af = toSafeNumber(roomData.af)
 
   leftMetrics.value = [
-    { label: '总带入', value: hands.toLocaleString('en-US') },
-    { label: '手数', value: hands.toLocaleString('en-US') },
+    { label: '总局数', value: totalGameCnt.toLocaleString('en-US') },
+    { label: '手数', value: totalHand.toLocaleString('en-US') },
   ]
+
   rightMetrics.value = [
-    { label: '入池率', value: gameCount > 0 ? `${Math.min(100, Math.round((hands / Math.max(gameCount, 1)) * 10))}%` : '0%' },
-    { label: '胜率', value: gameCount > 0 ? `${Math.round((winners / gameCount) * 100)}%` : '0%' },
+    { label: '入池率', value: `${vpip}%` },
+    { label: '胜率', value: `${wins}%` },
   ]
+
   detailRowsOne.value = [
-    { label: '局数', value: String(gameCount) },
-    { label: '总盈亏', value: formatSigned(profit) },
-    { label: '大底池', value: maxBlind.toLocaleString('en-US') },
-    { label: 'MVP', value: String(winners) },
+    { label: '局数', value: totalGameCnt.toLocaleString('en-US') },
+    { label: '总盈亏', value: formatUC(totalEarn) },
+    { label: '场均战绩', value: avgEarn },
+    { label: '摊牌胜率', value: `${wtsd}%` },
   ]
+
   detailRowsTwo.value = [
-    { label: '摊牌', value: String(Math.max(0, gameCount - winners)) },
-    { label: '加注', value: String(Math.max(0, hands - gameCount)) },
-    { label: '诈唬', value: String(Math.max(0, Math.round(gameCount * 0.2))) },
-    { label: '弃牌', value: String(Math.max(0, gameCount * 2)) },
+    { label: '翻牌前加注率', value: `${prf}%` },
+    { label: '持续下注率', value: `${cbet}%` },
+    { label: '全下胜率', value: `${allinWins}%` },
+    { label: '激进程度', value: af.toLocaleString('en-US') },
   ]
-  todayProfit.value = formatSigned(profit)
+
+  todayProfit.value = formatSigned(totalEarn)
+}
+
+async function fetchStatsSummary(): Promise<void> {
+  try {
+    const response = await postStatsUserStatsApi({
+      game_type: resolveGameTypes()[0],
+      time_type: resolveTimeType(),
+      filter_type: 1, // 默认联盟币
+      room_type: 0, // 生涯
+      ...(userInfoStore.currentClub?.club_id ? { club_id: userInfoStore.currentClub.club_id } : {}),
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载统计数据失败')
+    }
+    extractStatsFromResponse(response.data)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '加载统计数据失败'
+    showFailToast(message)
+  }
 }
 
 async function fetchClubRecords(): Promise<void> {
@@ -188,6 +248,8 @@ async function fetchClubRecords(): Promise<void> {
       limit: 20,
       offset: 0,
       game_types: resolveGameTypes(),
+      time_type: resolveTimeType(),
+      club_id: userInfoStore.currentClub?.club_id,
     })
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : '加载战绩失败')
@@ -195,7 +257,6 @@ async function fetchClubRecords(): Promise<void> {
 
     const rows = extractRecords(response.data?.records)
     records.value = rows.map((row, index) => mapRecord(row, index))
-    refreshSummary(records.value)
   } catch (error) {
     records.value = []
     const message = error instanceof Error ? error.message : '加载战绩失败'
@@ -205,33 +266,33 @@ async function fetchClubRecords(): Promise<void> {
   }
 }
 
-function goBack(): void {
-  void router.push('/mine/club-career')
+async function refreshAll(): Promise<void> {
+  await Promise.all([fetchStatsSummary(), fetchClubRecords()])
 }
 
 function goToDetail(item: RecordCard): void {
-  const roomId = Number(item.id.replace(/\D/g, '')) || 0
+  const roomId = Number(item.roomId.replace(/\D/g, '')) || 0
   void router.push({
     path: '/mine/club-record/detail',
     query: {
       room_id: roomId > 0 ? String(roomId) : undefined,
-      id: item.id,
+      id: item.roomId,
     },
   })
 }
 
 function selectGame(tab: string): void {
   selectedGame.value = tab
-  void fetchClubRecords()
+  void refreshAll()
 }
 
 function selectTime(tab: string): void {
   selectedTime.value = tab
-  void fetchClubRecords()
+  void refreshAll()
 }
 
 onMounted(() => {
-  void fetchClubRecords()
+  void refreshAll()
 })
 </script>
 
@@ -276,7 +337,7 @@ onMounted(() => {
           </div>
 
           <div class="profit-box">
-            <div class="profit-title">今日收益</div>
+            <div class="profit-title">{{ profitTitleText }}</div>
             <div class="profit-value">{{ todayProfit }}</div>
           </div>
 
@@ -309,16 +370,17 @@ onMounted(() => {
         <p v-if="loading" class="list-status">加载中...</p>
         <p v-else-if="!records.length" class="list-status">暂无战绩记录</p>
         <article
-          v-for="item in records"
+          v-for="(item, index) in records"
           :key="item.id"
           class="glass-card record-card"
           @click="goToDetail(item)"
         >
-          <div class="timeline">6月</div>
+          <div v-if="isFirstOfDate(index)" class="timeline">{{ item.endDay }}<br />{{ item.endMonth }}</div>
+          <div v-else class="timeline"></div>
           <div class="card-content">
             <div class="card-head">
-              <div>{{ item.playerName }}</div>
-              <div class="id">ID: {{ item.playerId }}</div>
+              <div>{{ item.roomName }}</div>
+              <div class="id">ID: {{ item.roomId }}</div>
             </div>
             <div class="line"></div>
             <div class="card-body">
@@ -340,7 +402,7 @@ onMounted(() => {
                   <span>{{ item.endAt }}</span>
                 </div>
               </div>
-              <div class="profit" :class="{ pos: item.profit.startsWith('+') }">{{ item.profit }}</div>
+              <div class="profit" :class="{ pos: item.profit.startsWith('-') }">{{ item.profit }}</div>
             </div>
           </div>
         </article>
@@ -352,7 +414,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .record-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;

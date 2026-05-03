@@ -310,6 +310,7 @@ export interface UserInfoUser {
   id?: number
   wUid?: number
   pUid?: number
+  w_u_id?: number
   [key: string]: unknown
 }
 

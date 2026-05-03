@@ -1010,36 +1010,97 @@ export interface StatsRoomDetailResponseData extends StatsRoomDetailData {
 
 // /api/stats/room/history/list (RoomCenterHistoryList)
 export interface RoomCenterHistoryListRequest {
-
-    //     group_by?: number,      //1 room 2 mtt 3 mttroom
-    //     limit?: number,         //条目
-    //     offset?: number,        //开始下标。例子（offset=0，limit=10，0-9。）
-    //     game_type?: number,     //游戏类型，对应客户端 枚举 GameType
-    //
-  [key: string]: unknown
-}
-
-export interface RoomCenterHistoryListRecords {
-
-    //     Name: string,//房间名称
-    //     Type: number,//房间类型
-    //     MatchID: number,//比赛id
-    //     RoomID: number,//房间id
-    //     Time: string,//开始时间
-    //     Change: number,//筹码变动
-    //     Count: number,//总手数
-    //
+  /**
+   * 俱乐部id
+   */
+  club_id?: number;
+  /**
+   * 本地时间格式化，2006-01-02 15:04:05
+   */
+  current_time_str?: string;
+  /**
+   * 1 联盟币 2 USDT 3 记分牌 4 钻石
+   */
+  filter_type?: number;
+  /**
+   * 游戏类型 0-德州 1-OMAHA4 2-OMAHA5 3-OMAHA6 4-fantasy 5-牛仔 6-麻将 7-掼蛋
+   */
+  game_types?: number[];
+  /**
+   * 分组类型，1 room 2 mtt 3 mttroom
+   */
+  group_by?: number;
+  limit?: number;
+  offset?: number;
+  /**
+   * 牌类型 0-长牌 2-短牌
+   */
+  poker_types?: number[];
+  /**
+   * 0 普通桌/mtt 1 朋友桌 2 公会
+   */
+  room_type?: number;
+  /**
+   * 游戏类型1-今日, 2-7天, 3-30天, 4-生涯
+   */
+  time_type: number;
   [key: string]: unknown
 }
 
 export interface RoomCenterHistoryListData {
-
-    //     limit: number,
-    //     offset: number,
-    //     total: number,// //总条数
-    //     records: RoomCenterHistoryListRecords,
-    //
+    limit: number;
+    offset: number;
+    records: RoomCenterHistoryListRecords[];
+    total: number;
   [key: string]: unknown
+}
+
+export interface RoomCenterHistoryListRecords {
+    blinds: string;
+    bombpot: number;
+    Change: number;
+    Count: number;
+    end_time: string;
+    game_type: number;
+    game_type_name: string;
+    gk_rank1: number;
+    gk_rank2: number;
+    gk_rank3: number;
+    gk_rank4: number;
+    gold_type: number;
+    hand_num: number;
+    insurance_on: number;
+    MatchID: number;
+    multi_lang_names_obj: MultiLangNamesObj;
+    mushroom_base: number;
+    mushroom_mode: number;
+    Name: string;
+    origin_type: number;
+    play_duration: number;
+    poker_type: number;
+    RoomID: number;
+    small_blind: number;
+    Time: string;
+    Type: number;
+  [key: string]: unknown
+}
+
+export interface MultiLangNamesObj {
+    de_DE: string;
+    en_US: string;
+    es_ES: string;
+    fr_FR: string;
+    hi_IN: string;
+    it_IT: string;
+    ja_JP: string;
+    ko_KR: string;
+    pt_BR: string;
+    ru_RU: string;
+    th_TH: string;
+    tr_TR: string;
+    vi_VN: string;
+    zh_TW: string;
+    [key: string]: unknown;
 }
 
 // /api/stats/room/insurance_data (StatsRoomInsuranceData)
@@ -1293,7 +1354,7 @@ export interface StatsTribeStatsDownLoadResponseData extends StatsTribeStatsDown
 
 export interface StatsTribeStatsDownLoadData {
 
-        url?: string;
+  url?: string;
 
   [key: string]: unknown
 }
@@ -1301,10 +1362,10 @@ export interface StatsTribeStatsDownLoadData {
 // /api/stats/user_stats (StatsUserStats)
 export interface StatsUserStatsRequest {
 
-        game_type?: number; //游戏类型0-all,1-常规桌，2-OMAHA4，3-OMAHA5，4-OMAHA6,5-mtt
-        time_type?: number; //游戏类型1-今日, 2-7天, 3-30天, 4-生涯
-        time_long?: number; //客户端时间戳
-        room_Type?: number;
+    game_type?: number; //游戏类型0-all,1-常规桌，2-OMAHA4，3-OMAHA5，4-OMAHA6,5-mtt
+    time_type?: number; //游戏类型1-今日, 2-7天, 3-30天, 4-生涯
+    time_long?: number; //客户端时间戳
+    room_Type?: number;
     filter_type?: number; // 1-联盟币 2-USDT 3-记分牌 4-钻石
     room_type?: number; // 0-生涯，1-朋友桌，2-俱乐部
     club_id?: number; // 俱乐部ID
@@ -1318,59 +1379,59 @@ export interface StatsUserStatsRequest {
 
 export interface StatsUserStatsMTTRoomData {
 
-        user_id: string;
-        play_times: number; //参赛次数
-        win_times: number; //获奖次数
-        frist_times: number; //第一名次数
-        second_times: string; //第二名次数
-        third_times: number; //第三名次数
+  user_id: string;
+  play_times: number; //参赛次数
+  win_times: number; //获奖次数
+  frist_times: number; //第一名次数
+  second_times: string; //第二名次数
+  third_times: number; //第三名次数
 
   [key: string]: unknown
 }
 
 export interface StatsUserStatsRoomData {
 
-        id: string;
-        user_id: number;
-        game_type: number; //游戏类型： 0-常规桌，1-OMAHA4，2-OMAHA5，3-OMAHA6
-        data_type: number; //数据类型 1--今日；2--7天；3--30天；4--生涯
-        total_game_cnt: string; //总局数
-        total_hand: number; //总手数
-        total_earn: number; //总盈亏
-        aveage_earn: number; //场均战绩
-        aveage_earn_hundred: number; //战绩/百手
-        vpip: number; //入池率
-        wins: number; //入池胜率
-        prf: number; //翻牌前加注率
-        bet3: number; //翻牌前再加注率
-        af: number; //激进程度
-        cbet: number; //4Flop持续下注率
-        wtsd: number; //摊牌胜率
-        allinWins: number; //全下胜率
-    fantasy_count?: number; // 进范数
-    nuts?: number; // 特种牌型率
-    full_win?: number; // 全胜次数
-    max_card_data?: string;
-    mj_win_self_draw_count?: number; // 麻将自摸次数
-    mj_win_discard_count?: number; // 麻将接炮次数
-    mj_lose_discard_count?: number; // 麻将点炮次数
-    mj_concealed_kong_count?: number; // 麻将暗杠次数
-    mj_exposed_kong_count?: number; // 麻将明杠次数
-    cb_wins?: number; // 牛仔：押中率
-    cb_bet?: number; // 牛仔：总押注
-    gd_rank1?: number; // 掼蛋头游次数
-    gd_rank2?: number; // 掼蛋二游次数
-    gd_rank3?: number; // 掼蛋三游次数
-    gd_rank4?: number; // 掼蛋末游次数
-    gd_rank1_rate?: number; // 掼蛋头游率
+  id: string;
+  user_id: number;
+  game_type: number; //游戏类型： 0-常规桌，1-OMAHA4，2-OMAHA5，3-OMAHA6
+  data_type: number; //数据类型 1--今日；2--7天；3--30天；4--生涯
+  total_game_cnt: string; //总局数
+  total_hand: number; //总手数
+  total_earn: number; //总盈亏
+  aveage_earn: number; //场均战绩
+  aveage_earn_hundred: number; //战绩/百手
+  vpip: number; //入池率
+  wins: number; //入池胜率
+  prf: number; //翻牌前加注率
+  bet3: number; //翻牌前再加注率
+  af: number; //激进程度
+  cbet: number; //4Flop持续下注率
+  wtsd: number; //摊牌胜率
+  allinWins: number; //全下胜率
+  fantasy_count?: number; // 进范数
+  nuts?: number; // 特种牌型率
+  full_win?: number; // 全胜次数
+  max_card_data?: string;
+  mj_win_self_draw_count?: number; // 麻将自摸次数
+  mj_win_discard_count?: number; // 麻将接炮次数
+  mj_lose_discard_count?: number; // 麻将点炮次数
+  mj_concealed_kong_count?: number; // 麻将暗杠次数
+  mj_exposed_kong_count?: number; // 麻将明杠次数
+  cb_wins?: number; // 牛仔：押中率
+  cb_bet?: number; // 牛仔：总押注
+  gd_rank1?: number; // 掼蛋头游次数
+  gd_rank2?: number; // 掼蛋二游次数
+  gd_rank3?: number; // 掼蛋三游次数
+  gd_rank4?: number; // 掼蛋末游次数
+  gd_rank1_rate?: number; // 掼蛋头游率
 
   [key: string]: unknown
 }
 
 export interface StatsUserStatsData {
 
-        mtt_room_data: StatsUserStatsMTTRoomData;
-        room_data: StatsUserStatsRoomData; // 普通牌局数据
+  mtt_room_data: StatsUserStatsMTTRoomData;
+  room_data: StatsUserStatsRoomData; // 普通牌局数据
 
   [key: string]: unknown
 }
@@ -1381,11 +1442,113 @@ export interface StatsUserStatsResponseData extends StatsUserStatsData {
 
 // /api/stats/user_stats/all (StatsUserStatsAll)
 export interface StatsUserStatsAllRequest {
-  [key: string]: unknown
+  /**
+   * 俱乐部ID
+   */
+  club_id?: number;
+  /**
+   * 1-联盟币 2-USDT 3-记分牌 4-钻石
+   */
+  filter_type: number;
+  /**
+   * 游戏类型 0-德州 1-OMAHA4 2-OMAHA5 3-OMAHA6 4-fantasy 5-牛仔 6-麻将 7-其他
+   */
+  game_types?: number[];
+  /**
+   * 牌类型 0-长牌 2-短牌（）
+   */
+  poker_types?: number[];
+  time_long?: number;
+  time_type?: number;
+  [key: string]: unknown;
+}
+export interface StatsUserStatsAllResponseData {
+    mtt_room_data: MttRoomData;
+    room_data_total: RoomDataTotal;
+    sng_room_data: SngRoomData;
+    [key: string]: unknown;
 }
 
-export interface StatsUserStatsAllResponseData {
-  [key: string]: unknown
+export interface MttRoomData {
+    frist_times: number;
+    play_times: number;
+    second_times: number;
+    third_times: number;
+    user_id: number;
+    win_times: number;
+    [key: string]: unknown;
+}
+
+export interface RoomDataTotal {
+    all_day: DayTotal;
+    mon_day: DayTotal;
+    one_day: DayTotal;
+    week_day: DayTotal;
+    [key: string]: unknown;
+}
+
+export interface DayTotal {
+    af: number;
+    af_bet_cnt: number;
+    af_call_cnt: number;
+    af_raise_cnt: number;
+    all_in_win_cnt: number;
+    allinWins: number;
+    aveage_earn: number;
+    aveage_earn_hundred: number;
+    bet3: number;
+    bet3_cnt: number;
+    cb_bet: number;
+    cb_wins: number;
+    cbet: number;
+    cbet_cnt: number;
+    data_type: number;
+    fantasy_count: number;
+    full_win: number;
+    game_type: number;
+    gd_rank1: number;
+    gd_rank1_rate: number;
+    gd_rank2: number;
+    gd_rank3: number;
+    gd_rank4: number;
+    id: number;
+    in_pool_cnt: number;
+    in_pool_win_cnt: number;
+    max_card_data: string;
+    max_card_type: number;
+    mj_concealed_kong_count: number;
+    mj_exposed_kong_count: number;
+    mj_lose_discard_count: number;
+    mj_lose_kong_count: number;
+    mj_win_discard_count: number;
+    mj_win_self_draw_count: number;
+    nuts: number;
+    prf: number;
+    prf_cnt: number;
+    prop_profit: number;
+    service_profit: number;
+    total_earn: number;
+    total_game_cnt: number;
+    total_hand: number;
+    user_id: number;
+    user_name: number;
+    user_play_days: number;
+    user_play_duration_total: number;
+    vpip: number;
+    wins: number;
+    wtsd: number;
+    wtsd_cnt: number;
+    [key: string]: unknown;
+}
+
+export interface SngRoomData {
+    frist_times: number;
+    play_times: number;
+    second_times: number;
+    third_times: number;
+    user_id: number;
+    win_times: number;
+    [key: string]: unknown;
 }
 
 // /api/stats/user_stats/allin (StatsUserStatsAllin)

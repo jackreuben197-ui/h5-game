@@ -5,6 +5,7 @@ export interface Preset {
   amount: string | number
   chip: string | number
   id?: number
+  payPrice?: number
 }
 
 interface Props {

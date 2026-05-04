@@ -30,7 +30,7 @@ export const useWalletStore = defineStore('wallet', () => {
     // totalUiPrice includes fee if player pays (feeType 2)
     let total = priceAfterDiscount
     if (feeType === 2 && feeRate > 0) {
-      // Note: In this project's server logic, the 'pay_price' field often expects the 
+      // Note: In this project's server logic, the 'pay_price' field often expects the
       // discounted base price WITHOUT the fee, while 'legal_tender' includes the fee.
       const fee = base * feeRate
       total = priceAfterDiscount + fee
@@ -38,7 +38,7 @@ export const useWalletStore = defineStore('wallet', () => {
     }
 
     const totalUiPrice = Number(total.toFixed(6))
-    
+
     // apiPayPrice should be the final total price (including fee) as expected by the server
     // For many club-managed and identifier-based channels, this must match the total sent by the user.
     const apiPayPrice = totalUiPrice
@@ -46,9 +46,18 @@ export const useWalletStore = defineStore('wallet', () => {
     return { apiPayPrice, totalUiPrice }
   }
 
-  function calculateCustomerServicePrice(goldCount: number, rate: number, feeRate: number) {
+  function calculateCustomerServicePrice(goldCount: number, rate: number, feeRate: number, discount = 0) {
     const base = (goldCount / 100) * rate
-    const final = feeRate > 0 ? base * (1 + feeRate) : base
+    // When discount > 0 it takes priority and fee is not added to pay_price.
+    // When no discount and fee_type = 2, caller passes the actual feeRate; fee is added.
+    let final: number
+    if (discount > 0) {
+      final = base * (1 - discount)
+    } else if (feeRate > 0) {
+      final = base * (1 + feeRate)
+    } else {
+      final = base
+    }
     return Number((Math.round(final * 100) / 100).toFixed(2))
   }
 

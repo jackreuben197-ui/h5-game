@@ -19,14 +19,17 @@ const emit = defineEmits<{
 const walletStore = useWalletStore()
 
 const displayAmount = computed(() => (props.goldCount / 100).toLocaleString())
-const feeDisplay = computed(() =>
-  props.feeRate > 0
+const feeDisplay = computed(() => {
+  if ((props.discount ?? 0) > 0) {
+    return '-' + ((props.discount ?? 0) * 100).toFixed(2).replace(/\.00$/, '') + '%'
+  }
+  return props.feeRate > 0
     ? (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%'
     : '0'
-)
+})
 
-const payPrice = computed(() => 
-  walletStore.calculateCustomerServicePrice(props.goldCount, props.rate || 1, props.feeRate || 0)
+const payPrice = computed(() =>
+  walletStore.calculateCustomerServicePrice(props.goldCount, props.rate || 1, props.feeRate || 0, props.discount || 0)
 )
 </script>
 

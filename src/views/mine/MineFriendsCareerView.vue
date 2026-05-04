@@ -2,7 +2,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
-import { postStatsFriendStatsDataApi } from '@/api/stats'
+import { postFriendRoomStatsApi } from '@/api/stats'
+import type { FriendRoomStatsRecord } from '@/api/models/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 
 const router = useRouter()
@@ -25,10 +26,10 @@ interface MenuItem {
 }
 
 const rows = ref<DataRow[]>([
-  { game: 'NLH', playedGames: 123, hands: 4567 },
-  { game: 'PLO', playedGames: 22, hands: 4567 },
-  { game: '6+', playedGames: 22, hands: 4567 },
-  { game: 'Mahjong', playedGames: 22, hands: 4567 },
+  { game: 'NLH', playedGames: 0, hands: 0 },
+  { game: 'PLO', playedGames: 0, hands: 0 },
+  { game: '6+', playedGames: 0, hands: 0 },
+  { game: 'Mahjong', playedGames: 0, hands: 0 },
 ])
 
 const loading = ref(false)
@@ -42,10 +43,6 @@ const menuList: MenuItem[] = [
 ]
 
 const title = ref('数据')
-
-function goBack(): void {
-  void router.push('/mine')
-}
 
 function handleMenuClick(item: MenuItem): void {
   if (!item.route) {
@@ -62,32 +59,23 @@ function toSafeNumber(value: unknown): number {
 async function fetchGameSummary(): Promise<void> {
   loading.value = true
   try {
-    const gameConfig: Array<{ name: string; game_types: number[] }> = [
-      { name: 'NLH', game_types: [0] },
-      { name: 'PLO', game_types: [1, 2, 3] },
-      { name: '6+', game_types: [0] },
-      { name: 'Mahjong', game_types: [6] },
+    const response = await postFriendRoomStatsApi({})
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载朋友生涯数据失败')
+    }
+
+    const data = response.data as Record<string, unknown> | undefined
+    const nlh = data?.friend_room_stats_nlh as FriendRoomStatsRecord | undefined
+    const plo = data?.friend_room_stats_plo as FriendRoomStatsRecord | undefined
+    const sixPlus = data?.friend_room_stats_6 as FriendRoomStatsRecord | undefined
+    const mahjong = data?.friend_room_stats_mj as FriendRoomStatsRecord | undefined
+
+    rows.value = [
+      { game: 'NLH', playedGames: toSafeNumber(nlh?.game_num), hands: toSafeNumber(nlh?.hand_num) },
+      { game: 'PLO', playedGames: toSafeNumber(plo?.game_num), hands: toSafeNumber(plo?.hand_num) },
+      { game: '6+', playedGames: toSafeNumber(sixPlus?.game_num), hands: toSafeNumber(sixPlus?.hand_num) },
+      { game: 'Mahjong', playedGames: toSafeNumber(mahjong?.game_num), hands: toSafeNumber(mahjong?.hand_num) },
     ]
-
-    const responses = await Promise.all(
-      gameConfig.map(config => postStatsFriendStatsDataApi({
-        game_types: config.game_types,
-        limit: 1,
-        offset: 0,
-      })),
-    )
-
-    rows.value = responses.map((response, index) => {
-      if (response.code !== 0) {
-        return { game: gameConfig[index].name, playedGames: 0, hands: 0 }
-      }
-      const info = response.data?.info
-      return {
-        game: gameConfig[index].name,
-        playedGames: toSafeNumber(info?.table_num),
-        hands: toSafeNumber(info?.user_num),
-      }
-    })
   } catch (error) {
     const message = error instanceof Error ? error.message : '加载朋友生涯数据失败'
     showFailToast(message)

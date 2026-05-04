@@ -867,7 +867,8 @@ onMounted(() => {
               <p class="summary-label">{{ item.label }}</p>
               <p class="summary-value">
                 <img :src="iconByType(item.icon)" alt="" aria-hidden="true" />
-                <span>{{ formatUC(item.value) }}</span>
+                <span v-if="item.icon !== 'diamond'">{{ formatUC(item.value) }}</span>
+                <span v-else>{{ item.value }}</span>
               </p>
             </div>
 

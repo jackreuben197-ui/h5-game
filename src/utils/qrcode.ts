@@ -23,3 +23,16 @@ export async function saveQrCodeImage(text: string, options: SaveQrCodeOptions =
   link.download = options.fileName || `qrcode-${Date.now()}.png`
   link.click()
 }
+
+export async function generateQrCodeUrl(text: string, options: SaveQrCodeOptions = {}): Promise<string> {
+  const content = text.trim()
+  if (!content) {
+    throw new Error('二维码内容不能为空')
+  }
+
+  return QRCode.toDataURL(content, {
+    width: options.size ?? 720,
+    margin: options.margin ?? 2,
+    errorCorrectionLevel: 'M',
+  })
+}

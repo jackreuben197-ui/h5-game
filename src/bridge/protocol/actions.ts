@@ -23,6 +23,7 @@ export const BRIDGE_ACTION = {
   SYNC_USER: 'syncUser',
   SYNC_USER_CLUB: 'syncUserClub',
   SYNC_ROOMS_LIST: 'syncRoomsList',
+  SYNC_LANGUAGE: 'syncLanguage',
   ENTER_TABLE: 'enterTable',
   ENTER_MTT: 'enterMtt',
 } as const

@@ -4,11 +4,13 @@ interface Props {
   disabled?: boolean
   /** 是否显示内嵌高光边框阴影，默认 true */
   shadow?: boolean
+  loading?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   shadow: true,
+  loading: false,
 })
 
 const emit = defineEmits<{
@@ -28,6 +30,7 @@ function handleClick(event: MouseEvent): void {
     :disabled="props.disabled"
     @click="handleClick"
   >
+    <span v-if="props.loading" class="primary-btn__spinner"></span>
     <span class="primary-btn__text">{{ props.text }}</span>
   </button>
 </template>
@@ -92,5 +95,23 @@ function handleClick(event: MouseEvent): void {
 .primary-btn__text {
   position: relative;
   z-index: 1;
+}
+
+.primary-btn__spinner {
+  position: relative;
+  z-index: 1;
+  width: 0.48rem;
+  height: 0.48rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  margin-right: 0.24rem;
+  animation: btn-spin 0.6s linear infinite;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

@@ -9,7 +9,17 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('@/views/LoginView.vue'),
+      component: () => import('@/views/login/LoginViewNew.vue'),
+    },
+    {
+      path: '/protocol',
+      name: 'protocol',
+      component: () => import('@/views/login/components/ProtocolView.vue')
+    },
+    {
+      path: '/login/phone-area',
+      name: 'login-phone-area',
+      component: () => import('@/views/login/components/LoginPhoneAreaView.vue'),
     },
     {
       path: '/',

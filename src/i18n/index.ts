@@ -10,7 +10,7 @@ const log = createLogger('[i18n]')
 // 与 Cocos 保持一致：cn(简中) / zh(繁中) / en / pt。
 export type LocaleCode = 'cn' | 'zh' | 'en' | 'pt'
 
-const DEFAULT_LOCALE: LocaleCode = 'cn'
+const DEFAULT_LOCALE: LocaleCode = 'zh'
 const SHARED_I18N_BASE = 'assets/resources/config'
 
 export const SUPPORTED_LOCALES: LocaleCode[] = ['en', 'pt', 'zh', 'cn']
@@ -32,11 +32,15 @@ export function getLocale(): LocaleCode {
 }
 
 export function setLocale(locale: string): void {
+  const previousLocale = currentLocale.value
   const resolvedLocale = normalizeLocale(locale) ?? DEFAULT_LOCALE
   currentLocale.value = resolvedLocale
   void ensureLocaleLoaded(resolvedLocale)
   // 语言持久化键与 Cocos 对齐：dzpk_Language。
   localStore.setItem(StorageKey.Language, resolvedLocale)
+  if (previousLocale !== resolvedLocale) {
+    notifyLocaleChangedToCocos(resolvedLocale)
+  }
 }
 
 export function t(key: string, ...args: Array<string | number>): string {
@@ -56,6 +60,13 @@ export function t(key: string, ...args: Array<string | number>): string {
   const message = currentDict?.[key] ?? fallbackDict?.[key] ?? key
   return formatTxtMessage(message, args)
 }
+
+export const SUPPORTED_LOCALES_OPTIONS = [
+  { label: '简体中文', value: 'cn' },
+  { label: '繁體中文', value: 'zh' },
+  { label: 'English', value: 'en' },
+  { label: 'Português', value: 'pt' },
+]
 
 export const textI18n = {
   locale: currentLocale,
@@ -164,4 +175,15 @@ function resolveSharedLocaleUrl(fileName: string): string {
   const url = `${normalizedBase}${SHARED_I18N_BASE}/${fileName}`
   const version = (typeof __I18N_VERSIONS__ !== 'undefined' && __I18N_VERSIONS__[fileName]) || ''
   return version ? `${url}?v=${version}` : url
+}
+
+function notifyLocaleChangedToCocos(locale: LocaleCode): void {
+  // 避免 i18n 与 bridge 在模块初始化阶段产生强耦合循环引用。
+  void import('@/bridge/sync')
+    .then(({ forwardLanguageChangedToCocos }) => {
+      forwardLanguageChangedToCocos(locale)
+    })
+    .catch((error) => {
+      log.warn('notify locale to cocos failed:', error)
+    })
 }

@@ -1,10 +1,14 @@
 import http from '@/api/http'
+import type { AxiosRequestConfig } from 'axios'
 import type { ApiResponse } from '@/api/models/common'
 import type {
   LoginRequest,
   LoginResponse,
+  LoginV2Request,
   OtherUserInfoData,
   OtherUserInfoRequest,
+  UserCheckEmailData,
+  UserCheckEmailRequest,
   UserInfoData,
   UserInfoResponse,
   UserAvatarsData,
@@ -33,12 +37,19 @@ import type {
   UserRoomSettleDetailData,
   UserRoomSettleDetailRequest,
   UserSendCodeRequest,
+  UserSendEmailCodeData,
+  UserSendEmailCodeRequest,
   UserWsData,
   UserWsResponse,
 } from '@/api/models/user'
 import { forwardUserClubToCocos, forwardUserInfoToCocos } from '@/bridge/sync'
 import { pinia } from '@/stores/pinia'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
+
+interface ApiRequestExtOptions extends AxiosRequestConfig {
+  suppressBusinessToast?: boolean
+  suppressBusinessCodes?: number[]
+}
 
 function isClubInfo(raw: unknown): raw is ClubInfo {
   if (!raw || typeof raw !== 'object') {
@@ -110,6 +121,29 @@ export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
   return { ...res.data?.data, ...res.data, token }
 }
 
+// 对齐 Cocos Login2：支持手机号/邮箱登录。
+export async function loginV2Api(payload: LoginV2Request): Promise<LoginResponse> {
+  try {
+    const res = await http.post<{ data?: LoginResponse; token?: string }>('/user/login2', payload)
+    const token = res.data?.data?.token ?? res.data?.token
+    if (!token) {
+      throw new Error('登录接口返回缺少 token')
+    }
+    return { ...res.data?.data, ...res.data, token }
+  } catch (error) {
+    // 兼容旧环境：若后端未部署 login2，则手机号登录回退到 /user/login。
+    const status = (error as { response?: { status?: number } })?.response?.status
+    if (status === 404 && payload.phone && !payload.email) {
+      return loginApi({
+        phone: payload.phone,
+        password: payload.password,
+        area: payload.area || '55',
+      })
+    }
+    throw error
+  }
+}
+
 // 用户信息：用于大厅初始化与用户态同步。
 export async function getUserInfoApi(): Promise<UserInfoData> {
   const res = await http.post<UserInfoResponse>('/user/info')
@@ -168,8 +202,9 @@ export async function postUserRefreshApi(
 // 对齐 cocos WebUserCheckPhone.API。
 export async function postUserCheckPhoneApi(
   payload: UserCheckPhoneRequest,
+  options: ApiRequestExtOptions = {},
 ): Promise<ApiResponse<UserCheckPhoneData>> {
-  const response = await http.post<ApiResponse<UserCheckPhoneData>>('/user/check_phone', payload)
+  const response = await http.post<ApiResponse<UserCheckPhoneData>>('/user/check_phone', payload, options)
   return response.data
 }
 
@@ -178,6 +213,22 @@ export async function postUserSendCodeApi(
   payload: UserSendCodeRequest,
 ): Promise<ApiResponse<Record<string, unknown>>> {
   const response = await http.post<ApiResponse<Record<string, unknown>>>('/user/sendcode', payload)
+  return response.data
+}
+
+// 对齐 cocos WebUserCheckEmail.API。
+export async function postUserCheckEmailApi(
+  payload: UserCheckEmailRequest,
+): Promise<ApiResponse<UserCheckEmailData>> {
+  const response = await http.post<ApiResponse<UserCheckEmailData>>('/user/check_email', payload)
+  return response.data
+}
+
+// 对齐 cocos WebUserSendEmailCode.API。
+export async function postUserSendEmailCodeApi(
+  payload: UserSendEmailCodeRequest,
+): Promise<ApiResponse<UserSendEmailCodeData>> {
+  const response = await http.post<ApiResponse<UserSendEmailCodeData>>('/user/send_email_code', payload)
   return response.data
 }
 

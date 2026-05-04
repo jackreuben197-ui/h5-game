@@ -28,12 +28,35 @@ export interface UserCheckPhoneData {
   [key: string]: unknown
 }
 
+// /user/check_email 请求参数。
+export interface UserCheckEmailRequest {
+  email?: string
+  [key: string]: unknown
+}
+
+// /user/check_email 响应 data。
+export interface UserCheckEmailData {
+  [key: string]: unknown
+}
+
 // /user/sendcode 请求参数。
 export interface UserSendCodeRequest {
   // 手机号码。
   phone?: string
   // 国家区号。
   area?: string
+  [key: string]: unknown
+}
+
+// /user/send_email_code 请求参数。
+export interface UserSendEmailCodeRequest {
+  lang?: number
+  email?: string
+  [key: string]: unknown
+}
+
+// /user/send_email_code 响应 data。
+export interface UserSendEmailCodeData {
   [key: string]: unknown
 }
 
@@ -277,6 +300,15 @@ export interface LoginRequest {
   phone: string
   password: string
   area: string
+}
+
+// /user/login2 请求参数（对齐 Cocos 客户端）。
+export interface LoginV2Request {
+  area?: string
+  phone?: string
+  email?: string
+  password: string
+  [key: string]: unknown
 }
 
 // 登录接口返回结构（重点字段 token）。

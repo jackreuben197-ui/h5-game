@@ -10,6 +10,8 @@ import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
 import { useGameStore } from '@/stores/game'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { useTextI18n } from '@/i18n/useTextI18n'
+import StorageKey from '@/constants/storageKey'
+import { localStore } from '@/utils/localStore'
 
 const route = useRoute()
 const gameStore = useGameStore()
@@ -44,9 +46,12 @@ async function fetchUserInfoOnEnter(): Promise<void> {
           userId,
         })
 
-        // 读取后端语言字段；如果没有定义，则按英文兜底。
+        // 读取后端语言字段；本地已有用户明确选择的语言时不覆盖，避免登录后重置为服务端值。
         const languageCode = resolveLanguageCode(user)
-        setLocale(languageCode || 'en')
+        const localSavedLanguage = localStore.getItem<string>(StorageKey.Language, '')
+        if (!localSavedLanguage) {
+          setLocale(languageCode || 'en')
+        }
       })
       .catch((error) => {
         console.warn('[main-layout] sync user info failed:', error)

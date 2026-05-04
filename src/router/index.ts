@@ -422,6 +422,12 @@ const router = createRouter({
       component: () => import('@/views/mtt/MttDetailView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/createTable',
+      name: 'createTable',
+      component: () => import('@/views/table/createPokerTable.vue'),
+      meta: { requiresAuth: true },
+    }
   ],
 })
 

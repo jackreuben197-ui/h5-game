@@ -10,30 +10,32 @@ import iconSquid from '@/assets/icons/table_icon_squid.png'
 import iconCritical from '@/assets/icons/table_icon_critical.png'
 import iconMahjong from '@/assets/icons/game_zone_mahjong_mini.png'
 import iconCustom from '@/assets/icons/icon_table.png'
+import { useRouter } from 'vue-router'
 
 interface GameTypeItem {
   key: string
   title: string
   icon: string
 }
-
+const router = useRouter()
 const selectedKey = ref('')
 
 const gameTypes: GameTypeItem[] = [
   { key: 'nlh', title: '德州', icon: iconNlh },
   { key: 'plo', title: '奥马哈', icon: iconPlo },
   { key: 'six_plus', title: '6+', icon: iconSixPlus },
-  { key: 'aof', title: 'AOF', icon: iconAof },
-  { key: 'mushroom', title: '蘑菇桌', icon: iconMushroom },
-  { key: 'squid', title: '深海桌', icon: iconSquid },
-  { key: 'critical', title: '竞技桌', icon: iconCritical },
-  { key: 'mahjong', title: '麻将', icon: iconMahjong },
-  { key: 'custom', title: '自定义', icon: iconCustom },
+  // { key: 'aof', title: 'AOF', icon: iconAof },
+  // { key: 'mushroom', title: '蘑菇桌', icon: iconMushroom },
+  // { key: 'squid', title: '深海桌', icon: iconSquid },
+  // { key: 'critical', title: '竞技桌', icon: iconCritical },
+  // { key: 'mahjong', title: '麻将', icon: iconMahjong },
+  // { key: 'custom', title: '自定义', icon: iconCustom },
 ]
 
 function onSelect(item: GameTypeItem): void {
   selectedKey.value = item.key
-  showFailToast(`${item.title} 创建流程开发中`)
+  // showFailToast(`${item.title} 创建流程开发中`)
+  void router.push({ path: '/createTable', query: { type: item.key } })
 }
 </script>
 
@@ -83,16 +85,12 @@ function onSelect(item: GameTypeItem): void {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    radial-gradient(circle at 16% 86%, rgba(255, 168, 202, 0.3), transparent 35%),
-    radial-gradient(circle at 86% 79%, rgba(86, 224, 247, 0.3), transparent 34%),
-    rgba(9, 14, 29, 0.35);
 }
 
 :deep(.page-back-header) {
   padding-left: 0;
   padding-right: 0;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
+padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
   padding-bottom: 0;
 }
 
@@ -147,43 +145,44 @@ function onSelect(item: GameTypeItem): void {
 }
 
 .type-card {
+  position: relative;
   min-height: 2.953rem;
   border: 0.01rem solid rgba(255, 255, 255, 0.32);
   border-radius: 0.186rem;
-  background: linear-gradient(145deg, rgba(28, 45, 70, 0.68), rgba(13, 24, 42, 0.82));
-  backdrop-filter: blur(0.06rem);
-  box-shadow:
-    inset 0 0 0.12rem rgba(255, 255, 255, 0.1),
-    0 0.09rem 0.18rem rgba(0, 0, 0, 0.3);
+  border-radius: 0.79rem;
+  background: rgba(255, 255, 255, 0.15);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.18rem;
   color: #fff;
-  padding: 0.14rem 0.08rem;
-}
-
-.type-card--active {
-  border-color: rgba(5, 231, 174, 0.9);
-  background: linear-gradient(160deg, rgba(20, 72, 85, 0.82), rgba(12, 39, 52, 0.9));
-  box-shadow:
-    inset 0 0 0.14rem rgba(255, 255, 255, 0.16),
-    0 0.1rem 0.22rem rgba(0, 0, 0, 0.32),
-    0 0 0.14rem rgba(5, 231, 174, 0.45);
+  padding: 0rem 0rem;
 }
 
 .type-card-icon {
-  width: 1.54rem;
-  height: 1.54rem;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .type-card-title {
-  font-size: 0.32rem;
-  line-height: 1.2;
-  font-weight: 500;
-  text-shadow: 0 0.03rem 0.12rem rgba(0, 0, 0, 0.35);
+  position: absolute;
+  left: 50%;
+  bottom: 0.15rem;
+  width: 2.13rem;
+  height: 0.78rem;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  text-align: center;
+  font-size: 0.375rem;
+  line-height: 0.78rem;
+  font-weight: 400;
+  text-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+  background: rgba(10, 10, 10, 0.29);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  border: 0.0133rem solid rgba(255, 255, 255, 0.34);
 }
 
 @media (max-width: 360px) {

@@ -167,6 +167,7 @@ export default [
       'space-in-parens': ['error', 'never'],
       'no-multi-spaces': 'error',
       'no-trailing-spaces': 'error',
+      'no-multiple-empty-lines': ['error', { max: 1, maxBOF: 0, maxEOF: 0 }],
       // 允许 <span>文字</span> 单行写法，与 Prettier 风格一致。
       'vue/singleline-html-element-content-newline': 'off',
       'vue/multiline-html-element-content-newline': [

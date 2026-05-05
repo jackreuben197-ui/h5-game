@@ -1,73 +1,311 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { showToast } from 'vant'
 import icRoundedArrowRight from '@/assets/icons/wallet/ic_rounded_arrow_right.svg'
 import icDropdown from '@/assets/icons/wallet/ic_dropdown.svg'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import { t } from '@/i18n'
-import { postOnlineWithdrawTypeListApi } from '@/api/config'
+import { postOnlineWithdrawTypeListApi, postOnlineWithdrawDescriptionApi } from '@/api/config'
 import { postTiquGoldApi } from '@/api/order'
-import type { OnlineWithdrawTypeItem } from '@/api/models/config'
+import type { OnlineWithdrawTypeItem, OnlineWithdrawTypeListData } from '@/api/models/config'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useWalletStore } from '@/stores/wallet'
+
+const emit = defineEmits<{
+  'open-cs-chat': [orderData: Record<string, unknown>]
+}>()
 
 const userInfoStore = useUserInfoStore()
+const walletStore = useWalletStore()
 const availableUc = computed(() => userInfoStore.userInfo?.user?.gold ?? 0)
 
-const withdrawTypes = ref<OnlineWithdrawTypeItem[]>([])
-const selectedTypeIndex = ref(0)
-const selectedType = computed(() => withdrawTypes.value[selectedTypeIndex.value] ?? null)
-
-const recipient = ref('')
-const remark = ref('')
+const savedAddresses = ref<OnlineWithdrawTypeItem[]>([])
+const selectedAddress = ref<OnlineWithdrawTypeItem | null>(null)
+/** Канал вывода (withdraw type id); не сбрасываем при правке текста адреса */
+const activeChannelId = ref<number | null>(null)
+const addressInput = ref('')
 const amount = ref('')
 const submitting = ref(false)
 
-const editPopupOpen = ref(false)
-const editRecipient = ref('')
-const editRemark = ref('')
-const editTypeIndex = ref(0)
+/** Карточка «备注»: только user_description выбранной строки из списка (без черновика шита). */
+const mainWithdrawAccountShown = computed(() =>
+  withdrawUserDescription(selectedAddress.value),
+)
 
-onMounted(async () => {
-  const res = await postOnlineWithdrawTypeListApi()
-  withdrawTypes.value = res.data?.list ?? []
-  if (withdrawTypes.value.length > 0) {
-    recipient.value = withdrawTypes.value[0].name ?? ''
+const sheetOpen = ref(false)
+const walletListExpanded = ref(false)
+
+const canSubmit = computed(() => addressInput.value.trim().length > 0 && !submitting.value)
+
+/** Сохранённый адрес игрока: user_description / user_decription (см. API). */
+function withdrawUserDescription(item: OnlineWithdrawTypeItem | null | undefined): string {
+  if (!item) return ''
+  const ex = item as Record<string, unknown>
+  for (const key of ['user_description', 'user_decription'] as const) {
+    const v = ex[key]
+    if (typeof v === 'string' && v.trim() !== '') return v.trim()
+  }
+  return ''
+}
+
+/** После online_withdraw_description список иногда без user_description — подставляем только что сохранённый текст. */
+function applyLocalUserDescription(item: OnlineWithdrawTypeItem, text: string): void {
+  ;(item as Record<string, unknown>).user_description = text.trim()
+}
+
+/** В dropdown показываем только каналы, где уже есть user_description. */
+const withdrawPickerList = computed(() =>
+  savedAddresses.value.filter((a) => withdrawUserDescription(a).length > 0),
+)
+
+function addrLineLabel(addr: OnlineWithdrawTypeItem): string {
+  const saved = withdrawUserDescription(addr)
+  if (saved) return saved
+  const name = (addr.name ?? '').trim()
+  if (name) return name
+  const desc = (addr.description ?? '').trim()
+  if (desc) return desc
+  return 'USDT'
+}
+
+/** Строка списка / триггер: при непустом user_description из API — показываем только его. */
+function withdrawPickerRowLabel(addr: OnlineWithdrawTypeItem): string {
+  const saved = withdrawUserDescription(addr)
+  if (saved) return saved
+  return addrLineLabel(addr)
+}
+
+/** Без выбора — USDT; с выбором и сохранённым адресом — только user_description из API. */
+const sheetPaymentLabel = computed(() => {
+  if (!selectedAddress.value) return 'USDT'
+  const saved = withdrawUserDescription(selectedAddress.value)
+  if (saved) return saved
+  return addrLineLabel(selectedAddress.value)
+})
+
+function withdrawClubPayload(): Record<string, number> {
+  const club = userInfoStore.currentClub ?? userInfoStore.clubList[0]
+  const clubId = club?.club_id !== undefined ? Number(club.club_id) : NaN
+  return Number.isFinite(clubId) && clubId > 0 ? { club_id: clubId } : {}
+}
+
+function assertClubPayload(): { club_id: number } | null {
+  const p = withdrawClubPayload()
+  if (!('club_id' in p) || !(Number(p.club_id) > 0)) {
+    showToast(t('error2005'))
+    return null
+  }
+  return { club_id: Number(p.club_id) }
+}
+
+/** Выбранный канал или первый из type_list как дефолт при «только ввод счёта без выбора строки». */
+function resolveWithdrawTypeId(): number {
+  const pick =
+    activeChannelId.value ??
+    selectedAddress.value?.id ??
+    savedAddresses.value[0]?.id
+  return pick !== undefined && pick >= 1 ? pick : 1
+}
+
+function parseWithdrawGoldCents(raw: string): number | null {
+  const s = raw.replace(/\s/g, '').replace(',', '.').trim()
+  if (s === '') return null
+  const uc = Number(s)
+  if (!Number.isFinite(uc) || uc <= 0) return null
+  const cents = Math.round(uc * 100)
+  return cents >= 1 ? cents : null
+}
+
+onMounted(() => {
+  // club_id может ещё не загрузиться — грузим когда он появится
+  if (userInfoStore.clubList.length > 0 || userInfoStore.currentClub) {
+    loadSavedAddresses()
+  } else {
+    const stop = watch(
+      () => userInfoStore.clubList.length,
+      (len) => { if (len > 0) { stop(); loadSavedAddresses() } },
+      { immediate: false },
+    )
   }
 })
 
-function openEditPopup(): void {
-  editRecipient.value = recipient.value
-  editRemark.value = remark.value
-  editTypeIndex.value = selectedTypeIndex.value
-  editPopupOpen.value = true
+async function loadSavedAddresses(): Promise<void> {
+  const base = withdrawClubPayload()
+  if (!('club_id' in base)) {
+    savedAddresses.value = []
+    return
+  }
+  const res = await postOnlineWithdrawTypeListApi(base)
+  if (res.code !== 0) return
+  const raw = res.data as OnlineWithdrawTypeListData | null | undefined
+  const list = raw?.list ?? []
+  savedAddresses.value = list
+  if (list.length === 0) {
+    selectedAddress.value = null
+    activeChannelId.value = null
+    return
+  }
+
+  const keepId = activeChannelId.value ?? selectedAddress.value?.id ?? null
+  if (keepId != null) {
+    const match = list.find((a) => a.id === keepId)
+    if (match) {
+      selectedAddress.value = match
+      activeChannelId.value = match.id ?? null
+      const saved = withdrawUserDescription(match)
+      const cur = addressInput.value.trim()
+      if (cur === '' || cur === saved) {
+        addressInput.value = saved
+      }
+      return
+    }
+  }
+
+  selectedAddress.value = null
+  activeChannelId.value = null
 }
 
-function cycleType(): void {
-  if (withdrawTypes.value.length === 0) return
-  editTypeIndex.value = (editTypeIndex.value + 1) % withdrawTypes.value.length
-  editRecipient.value = withdrawTypes.value[editTypeIndex.value].name ?? ''
+async function openSheet(): Promise<void> {
+  walletListExpanded.value = false
+  sheetOpen.value = true
+  await loadSavedAddresses()
 }
 
-function confirmEdit(): void {
-  selectedTypeIndex.value = editTypeIndex.value
-  recipient.value = editRecipient.value
-  remark.value = editRemark.value
-  editPopupOpen.value = false
+function selectAddress(addr: OnlineWithdrawTypeItem): void {
+  selectedAddress.value = addr
+  activeChannelId.value = addr.id ?? null
+  addressInput.value = withdrawUserDescription(addr)
+  walletListExpanded.value = false
+}
+
+async function onSheetSave(): Promise<void> {
+  const club = assertClubPayload()
+  if (!club) return
+  const addrTrim = addressInput.value.trim()
+  if (!addrTrim) {
+    showToast(t('Wallet_AddressPlaceholder'))
+    return
+  }
+  const typeId = resolveWithdrawTypeId()
+  activeChannelId.value = typeId
+  const saveRes = await postOnlineWithdrawDescriptionApi({
+    ...club,
+    withdraw_type_id: typeId,
+    description: addrTrim,
+  })
+  if (saveRes.code !== 0) return
+  await loadSavedAddresses()
+  const row = savedAddresses.value.find((a) => a.id === typeId)
+  if (!row) {
+    showToast(t('Wallet_AddressVerifyFail'))
+    return
+  }
+  if (withdrawUserDescription(row) !== addrTrim) {
+    applyLocalUserDescription(row, addrTrim)
+  }
+  selectedAddress.value = row
+  showToast(t('Wallet_AddressSaved'))
+  walletListExpanded.value = false
+  sheetOpen.value = false
 }
 
 async function handleSubmit(): Promise<void> {
-  if (submitting.value) return
+  if (!canSubmit.value) return
+  const club = assertClubPayload()
+  if (!club) return
+  const goldCents = parseWithdrawGoldCents(amount.value)
+  if (goldCents === null) {
+    showToast(t('Wallet_AddItem4'))
+    return
+  }
   submitting.value = true
   try {
-    await postTiquGoldApi({
-      amount: Number(amount.value),
+    const typeId = resolveWithdrawTypeId()
+    activeChannelId.value = typeId
+    const addrTrim = addressInput.value.trim()
+    if (!addrTrim) {
+      showToast(t('Wallet_AddressPlaceholder'))
+      return
+    }
+
+    let channel =
+      savedAddresses.value.find((a) => a.id === typeId) ?? selectedAddress.value ?? null
+    if (!channel && savedAddresses.value.length > 0) {
+      channel = savedAddresses.value[0]
+      activeChannelId.value = channel.id ?? null
+    }
+    if (!channel?.id) {
+      showToast(t('Wallet_AddressPlaceholder'))
+      return
+    }
+
+    const savedTxt = withdrawUserDescription(channel)
+    if (addrTrim !== savedTxt) {
+      const saveRes = await postOnlineWithdrawDescriptionApi({
+        ...club,
+        withdraw_type_id: typeId,
+        description: addrTrim,
+      })
+      if (saveRes.code !== 0) return
+      await loadSavedAddresses()
+      channel = savedAddresses.value.find((a) => a.id === typeId) ?? null
+      if (!channel) {
+        showToast(t('Wallet_AddressVerifyFail'))
+        return
+      }
+      if (withdrawUserDescription(channel) !== addrTrim) {
+        applyLocalUserDescription(channel, addrTrim)
+      }
+    }
+
+    const payId = channel.id
+
+    const rate = Number(channel.rate)
+    const feeRate = channel.fee_rate ?? 0
+    const feeType = channel.fee_type ?? 0
+    const chExtra = channel as Record<string, unknown>
+    const discount = typeof chExtra.discount === 'number' ? chExtra.discount : 0
+
+    if (!Number.isFinite(rate) || rate <= 0) {
+      showToast(t('Wallet_Rate'))
+      return
+    }
+
+    const priceData = walletStore.calculateUsdtPrice(goldCents, rate, feeRate, feeType, discount)
+
+    const withdrawRes = await postTiquGoldApi({
+      ...withdrawClubPayload(),
+      amount: goldCents,
       gold_type: 1,
-      pay_id: selectedType.value?.id,
-      description: remark.value,
+      pay_id: payId,
+      pay_price: priceData.apiPayPrice,
+      description: addrTrim,
     })
+
+    if (withdrawRes.code !== 0) {
+      showToast(withdrawRes.message ?? t('Wallet_SubmitWithdraw'))
+      return
+    }
+
     showToast(t('Wallet_SubmitWithdraw'))
     amount.value = ''
+
+    // type 3 = 手动/撮合 — открываем чат с поддержкой
+    // api_type из ответа не надёжен (может быть 0), поэтому смотрим на тип канала
+    const needsChat = channel.type === 3 || withdrawRes.data?.api_type === 3
+    if (needsChat) {
+      const orderData: Record<string, unknown> = {
+        pay_type_name: channel.name ?? 'USDT',
+        pay_price: priceData.apiPayPrice,
+        order: {
+          gold_num: goldCents,
+          pay_price: priceData.apiPayPrice,
+          order_no: (withdrawRes.data as Record<string, unknown>).order_no ?? '',
+        },
+      }
+      emit('open-cs-chat', orderData)
+    }
   } finally {
     submitting.value = false
   }
@@ -76,45 +314,47 @@ async function handleSubmit(): Promise<void> {
 
 <template>
   <div class="wf">
+    <!-- Address card -->
     <div class="wf__card">
       <div class="wf__field">
         <div class="wf__label">{{ $txt('Wallet_RecipientLabel') }}</div>
         <div class="wf__row">
-          <div class="wf__input wf__input--select">
-            <span class="wf__input-text">{{ recipient || 'USDT' }}</span>
+          <div class="wf__input">
+            <span class="wf__input-native wf__input-native--static">USDT</span>
           </div>
-          <button
-            class="wf__pill"
-            @click="openEditPopup"
-          >
+          <button type="button" class="wf__pill" @click="openSheet">
             <span>{{ $txt('Wallet_GoEdit') }}</span>
-            <img
-              :src="icRoundedArrowRight"
-              alt=""
-              class="wf__pill-icon"
-            />
+            <img :src="icRoundedArrowRight" alt="" class="wf__pill-icon" />
           </button>
         </div>
       </div>
 
       <div class="wf__field">
         <div class="wf__label">{{ $txt('Wallet_RemarkLabel') }}</div>
-        <div class="wf__input">
+        <div
+          class="wf__input wf__remark-opener"
+          role="button"
+          tabindex="0"
+          @click="openSheet"
+          @keydown.enter.prevent="openSheet"
+        >
           <input
-            v-model="remark"
+            readonly
+            tabindex="-1"
             type="text"
             class="wf__input-native"
-            placeholder="**************"
+            :value="mainWithdrawAccountShown"
+            :placeholder="$txt('Wallet_RemarkPlaceholder')"
           />
         </div>
       </div>
     </div>
 
+    <!-- Amount card -->
     <div class="wf__card">
       <div class="wf__balance">
         <span class="wf__balance-label">{{ t('Wallet_AvailableUc', String(availableUc)) }}</span>
       </div>
-
       <div class="wf__input">
         <input
           v-model="amount"
@@ -124,56 +364,106 @@ async function handleSubmit(): Promise<void> {
           :placeholder="$txt('Wallet_InputPlaceholder')"
         />
       </div>
-      <div class="wf__rate">{{ selectedType ? `1USDT=${selectedType.rate ?? 1}UC` : t('Wallet_Rate') }}</div>
+      <div class="wf__rate">
+        <template v-if="selectedAddress?.rate">
+          {{ $txt('Wallet_RateWithValue', selectedAddress.rate) }}
+        </template>
+        <template v-else>
+          {{ $txt('Wallet_Rate') }}
+        </template>
+      </div>
     </div>
 
     <PrimaryButton
       :text="$txt('Wallet_SubmitWithdraw')"
-      :disabled="submitting"
+      :disabled="!canSubmit"
       @click="handleSubmit"
     />
   </div>
 
+  <!-- Saved addresses sheet -->
   <Teleport to="body">
     <Transition name="wf-sheet">
       <div
-        v-if="editPopupOpen"
+        v-if="sheetOpen"
         class="wf__overlay"
         :style="{ backgroundImage: `url(${sharpBgUrl})` }"
-        @click.self="editPopupOpen = false"
+        @click.self="sheetOpen = false"
       >
         <div
-          class="wf__sheet"
+          class="wf__sheet wf__sheet--fig"
           :style="{ backgroundImage: `url(${sharpBgUrl})` }"
         >
-          <div class="wf__sheet-title">{{ $txt('Wallet_OrdersTitle') }}</div>
+          <div class="wf__sheet-fig-title">{{ $txt('Wallet_Records') }}</div>
 
-          <div class="wf__sheet-field">
-            <div class="wf__sheet-label">{{ $txt('Wallet_RecipientLabel') }}:</div>
-            <div class="wf__sheet-input">
-              <span class="wf__sheet-input-text">{{ editRecipient || 'USDT' }}</span>
-              <button class="wf__sheet-dropdown" @click="cycleType">
-                <img :src="icDropdown" alt="" class="wf__sheet-dropdown-icon" />
+          <!-- 收款名称 + dropdown -->
+          <div class="wf__fig-stack">
+            <p class="wf__fig-field-label">{{ $txt('Wallet_OrderRecvName') }}</p>
+            <div
+              class="wf__fig-picker-shell"
+              :class="{ 'wf__fig-picker-shell--open': walletListExpanded }"
+            >
+              <button
+                type="button"
+                class="wf__fig-dropdown wf__fig-dropdown--in-shell"
+                :class="{ 'wf__fig-dropdown--open': walletListExpanded }"
+                @click="walletListExpanded = !walletListExpanded"
+              >
+                <span class="wf__fig-dropdown-value">{{ sheetPaymentLabel }}</span>
+                <span class="wf__fig-dropdown-chevron" aria-hidden="true">
+                  <img :src="icDropdown" alt="" class="wf__fig-chevron-svg" />
+                </span>
               </button>
+
+              <Transition name="wf-expand">
+                <div v-show="walletListExpanded" class="wf__fig-picker-body">
+                  <div class="wf__addr-panel">
+                    <template v-if="withdrawPickerList.length > 0">
+                      <button
+                        v-for="addr in withdrawPickerList"
+                        :key="addr.id"
+                        type="button"
+                        class="wf__addr-row"
+                        :class="{ 'wf__addr-row--active': selectedAddress?.id === addr.id }"
+                        @click="selectAddress(addr)"
+                      >
+                        <span class="wf__addr-row-text">{{ withdrawPickerRowLabel(addr) }}</span>
+                        <span
+                          v-if="selectedAddress?.id === addr.id"
+                          class="wf__addr-row-check"
+                          aria-hidden="true"
+                        />
+                      </button>
+                    </template>
+                    <div v-else class="wf__addr-panel-empty t-caption">
+                      {{ $txt('Wallet_OrdersEmpty') }}
+                    </div>
+                  </div>
+                </div>
+              </Transition>
             </div>
           </div>
 
-          <div class="wf__sheet-field">
-            <div class="wf__sheet-label">{{ $txt('Wallet_RemarkLabel') }}:</div>
-            <div class="wf__sheet-input">
+          <!-- 备注信息 -->
+          <div class="wf__fig-stack">
+            <p class="wf__fig-field-label">{{ $txt('Wallet_RemarkLabel') }}</p>
+            <div class="wf__fig-remark">
               <input
-                v-model="editRemark"
+                v-model="addressInput"
                 type="text"
-                class="wf__sheet-input-native"
-                :placeholder="$txt('Wallet_RemarkPlaceholder')"
+                class="wf__fig-remark-input"
+                :placeholder="$txt('Wallet_WithdrawAccountHint')"
               />
             </div>
           </div>
 
-          <PrimaryButton
-            :text="$txt('Save')"
-            @click="confirmEdit"
-          />
+          <button
+            type="button"
+            class="wf__fig-save"
+            @click="onSheetSave"
+          >
+            {{ $txt('Save') }}
+          </button>
         </div>
       </div>
     </Transition>
@@ -263,18 +553,6 @@ async function handleSubmit(): Promise<void> {
   min-height: 1.2rem;
 }
 
-.wf__input--select {
-  cursor: pointer;
-}
-
-.wf__input-text {
-  font-family: var(--wallet-font-cn);
-  font-weight: 500;
-  font-size: 0.4rem;
-  color: rgba(255, 255, 255, 0.65);
-  line-height: 1.4;
-}
-
 .wf__input-native {
   width: 100%;
   background: transparent;
@@ -289,6 +567,26 @@ async function handleSubmit(): Promise<void> {
 
 .wf__input-native::placeholder {
   color: rgba(255, 255, 255, 0.65);
+}
+
+.wf__input-native--static {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wf__remark-opener {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  &:active {
+    opacity: 0.92;
+  }
+}
+
+.wf__remark-opener .wf__input-native[readonly] {
+  pointer-events: none;
+  cursor: inherit;
 }
 
 .wf__pill {
@@ -341,12 +639,13 @@ async function handleSubmit(): Promise<void> {
 .wf__rate {
   text-align: center;
   font-family: var(--wallet-font-cn);
-  font-weight: 400;
+  font-weight: 300;
   font-size: 0.29rem;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.92);
   line-height: 1.2;
 }
 
+/* Sheet overlay */
 .wf__overlay {
   position: fixed;
   inset: 0;
@@ -417,86 +716,227 @@ async function handleSubmit(): Promise<void> {
   }
 }
 
-.wf__sheet-title {
+.wf__sheet--fig {
+  padding: 0.413rem 0.532rem calc(env(safe-area-inset-bottom) + 0.92rem);
+  gap: 0.499rem;
+  border-radius: 0.844rem 0.844rem 0 0;
+  border: 0.024rem solid rgba(242, 242, 242, 0.4);
+  border-bottom: none;
+  box-shadow:
+    inset 0.030rem 0.030rem 0.06rem rgba(242, 242, 242, 0.2),
+    0.086rem 0.107rem 0.172rem rgba(0, 0, 0, 0.25);
+}
+
+.wf__sheet-fig-title {
   font-family: var(--wallet-font-cn);
   font-weight: 500;
-  font-size: 0.453rem;
+  font-size: 0.515rem;
   color: #fff;
   text-align: center;
   line-height: 1.4;
-  margin-bottom: 0.08rem;
 }
 
-.wf__sheet-field {
+.wf__fig-stack {
   display: flex;
   flex-direction: column;
-  gap: 0.16rem;
+  align-items: stretch;
+  gap: 0.121rem;
+  width: 100%;
 }
 
-.wf__sheet-label {
+.wf__fig-field-label {
+  margin: 0;
+  padding: 0 0.02rem;
   font-family: var(--wallet-font-cn);
   font-weight: 400;
-  font-size: 0.285rem;
+  font-size: 0.274rem;
+  line-height: 1.2;
   color: #f9f9f9;
-  padding-left: 0.1rem;
+  width: 100%;
 }
 
-.wf__sheet-row {
-  display: flex;
-  align-items: center;
-  gap: 0.21rem;
+.wf__fig-picker-shell {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  border: 0.026rem solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.589rem;
+  overflow: hidden;
 }
 
-.wf__sheet-input {
-  flex: 1;
-  min-width: 0;
-  background: rgba(255, 255, 255, 0.20);
-  border-radius: 0.6rem;
-  padding: 0.36rem 0.4rem;
+.wf__fig-dropdown {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 1.2rem;
+  gap: 0.2rem;
+  width: 100%;
+  padding: 0.34rem 0.257rem;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.wf__sheet-input-text {
+.wf__fig-dropdown--in-shell.wf__fig-dropdown--open {
+  border-bottom: 0.026rem solid rgba(255, 255, 255, 0.14);
+}
+
+.wf__fig-picker-body {
+  width: 100%;
+}
+
+.wf__fig-dropdown-value {
+  flex: 1;
+  min-width: 0;
   font-family: var(--wallet-font-cn);
   font-weight: 500;
-  font-size: 0.4rem;
-  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.401rem;
+  color: #fff;
+  line-height: 1.4;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.wf__sheet-input-native {
+.wf__fig-dropdown-chevron {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.50rem;
+  height: 0.50rem;
+}
+
+.wf__fig-chevron-svg {
+  display: block;
+  width: 0.50rem;
+  height: 0.50rem;
+  transition: transform 0.2s ease;
+}
+
+.wf__fig-dropdown--open .wf__fig-chevron-svg {
+  transform: rotate(180deg);
+}
+
+.wf__addr-panel {
+  width: 100%;
+  max-height: 3.2rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.wf__addr-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.2rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.2rem 0.28rem;
+  background: transparent;
+  border: none;
+  border-bottom: 0.026rem solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+
+  &:active {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  &--active {
+    background: rgba(5, 231, 174, 0.1);
+  }
+}
+
+.wf__addr-row-text {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--wallet-font-cn);
+  font-weight: 500;
+  font-size: 0.32rem;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wf__addr-row-check {
+  flex-shrink: 0;
+  width: 0.28rem;
+  height: 0.28rem;
+  border-radius: 50%;
+  background: #05e7ae;
+}
+
+.wf__addr-panel-empty {
+  padding: 0.42rem 0.28rem;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.wf__fig-remark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.34rem 0.257rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 0.589rem;
+}
+
+.wf__fig-remark-input {
   width: 100%;
   background: transparent;
   border: none;
   outline: none;
   font-family: var(--wallet-font-cn);
   font-weight: 500;
-  font-size: 0.4rem;
+  font-size: 0.401rem;
   color: #fff;
-
-  &::placeholder {
-    color: rgba(255, 255, 255, 0.45);
-  }
+  line-height: 1.4;
+  text-align: center;
 }
 
-.wf__sheet-dropdown {
-  flex-shrink: 0;
-  background: none;
-  border: none;
-  padding: 0;
+.wf__fig-remark-input::placeholder {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.wf__fig-save {
+  width: 100%;
+  margin-top: 0.053rem;
+  min-height: 1.436rem;
+  padding: 0.127rem 0.32rem;
+  border: 0.013rem solid rgba(242, 242, 242, 0.8);
+  border-radius: 1.056rem;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-family: var(--wallet-font-num);
+  font-weight: 500;
+  font-size: 0.4rem;
+  line-height: 1.2;
+  color: #fff;
+  text-align: center;
+  background-image: linear-gradient(168.37deg, #05e7ae 7.55%, #02795c 71.92%);
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 
-  .wf__sheet-dropdown-icon {
-    width: 0.427rem;
-    height: 0.427rem;
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
   }
 }
 
+/* Transitions */
 .wf-sheet-enter-active,
 .wf-sheet-leave-active {
   transition: opacity 0.25s ease;
@@ -513,5 +953,18 @@ async function handleSubmit(): Promise<void> {
   .wf__sheet {
     transform: translateY(100%);
   }
+}
+
+.wf-expand-enter-active,
+.wf-expand-leave-active {
+  transition: opacity 0.2s ease, max-height 0.25s ease;
+  overflow: hidden;
+  max-height: 10rem;
+}
+
+.wf-expand-enter-from,
+.wf-expand-leave-to {
+  opacity: 0;
+  max-height: 0;
 }
 </style>

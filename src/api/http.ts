@@ -33,7 +33,13 @@ const PRE_LOGIN_PATHS = [
 ]
 
 function shouldAttachXClub(url: string): boolean {
-  return /^\/?(?:(?:org|cmsext)\/club|order\/club)\//.test(url)
+  if (/^\/?(?:(?:org|cmsext)\/club|order\/club)\//.test(url)) {
+    return true
+  }
+  if (/^\/?config\/online_withdraw/.test(url)) {
+    return true
+  }
+  return /^\/?order\/user\/(?:withdraw|recharge_no|recharge|club_order\/cancel)\b/.test(url)
 }
 
 function readClubIdFromPayload(payload: unknown): string {

@@ -229,7 +229,8 @@ const presets = computed<Preset[]>(() => {
       if (isUsdt) {
         chipStr = walletStore.formatUsdtPrice(walletStore.calculateUsdtPrice(goldCount, rate, feeRate, feeType, discount).totalUiPrice);
       } else if (selected?.type === 3) {
-        chipStr = walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount).toFixed(2);
+        // Customer Service: hide decimals
+        chipStr = Math.round(walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)).toString();
       }
 
       return {
@@ -277,7 +278,8 @@ const displayPayAmount = computed(() => {
     const rate = selected.rate ?? 1
     const feeRate = selected.fee_rate ?? 0
     const discount = selected.discount ?? 0
-    return walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount).toFixed(2)
+    // Customer Service: hide decimals
+    return Math.round(walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)).toString()
   }
 
   return selectedAmount.value

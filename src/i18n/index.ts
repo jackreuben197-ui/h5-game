@@ -83,6 +83,8 @@ export const textI18nPlugin = {
     if (currentLocale.value !== DEFAULT_LOCALE) {
       void ensureLocaleLoaded(DEFAULT_LOCALE)
     }
+    // 启动时将初始 locale 同步给 Cocos；forwardLanguageChangedToCocos 内部会等 Bridge 握手完成后再发送。
+    notifyLocaleChangedToCocos(currentLocale.value)
   },
 }
 

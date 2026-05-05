@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/wangjie/web/cocos/unityAssets/Hotfix/UI/UIRoom/**)",
+      "Bash(pnpm exec *)"
+    ]
+  }
+}

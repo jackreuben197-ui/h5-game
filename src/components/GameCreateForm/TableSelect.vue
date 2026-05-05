@@ -153,6 +153,8 @@ function onPopoverVisibilityChange(next: boolean): void {
 .table-select__dropdown {
   min-width: 2.27rem;
   max-width: 4.4rem;
+  max-height: 3.5rem;
+  overflow-y: auto;
   padding: 0.14rem;
   border-radius: 0.18rem;
   background: rgba(20, 24, 28, 0.96);

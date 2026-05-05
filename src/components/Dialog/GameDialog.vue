@@ -24,6 +24,7 @@ withDefaults(
     message?: string
     /** 是否显示取消按钮 */
     showCancelButton?: boolean
+    showConfirmButton?: boolean
     cancelButtonText?: string
     confirmButtonText?: string
     confirmButtonDisabled?: boolean
@@ -32,6 +33,7 @@ withDefaults(
   }>(),
   {
     showCancelButton: false,
+    showConfirmButton: true,
     cancelButtonText: t('adaptation10013'),
     confirmButtonText: t('adaptation10012'),
     confirmButtonDisabled: false,
@@ -98,6 +100,7 @@ function onCancel() {
           </button>
 
           <PrimaryButton
+            v-if="showConfirmButton"
             class="game-dialog__confirm-btn"
             style="height: 1.43rem; font-size: 0.42rem"
             :shadow="false"

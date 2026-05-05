@@ -78,6 +78,11 @@ export interface SyncRoomsListPayload {
   response: unknown
 }
 
+// H5 当前语言变化同步。
+export interface SyncLanguagePayload {
+  locale: string
+}
+
 // Cocos 回执通用负载。
 export interface CocosAckPayload {
   ok: boolean

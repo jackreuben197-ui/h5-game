@@ -6,6 +6,7 @@ import TogglePillGroup from '@/components/wallet/TogglePillGroup.vue'
 import RecordItem from '@/components/wallet/RecordItem.vue'
 import OrderDetailsView from './OrderDetailsView.vue'
 import { t } from '@/i18n'
+import icNoData from '@/assets/icons/ic_no_data.svg'
 import { postClubFundOrderListApi, postClubPlayerOrderRecordApi } from '@/api/order'
 import type { ClubFundOrderListOrderInfo, ClubPlayerOrderRecordOrderInfo } from '@/api/models/order'
 import { useWalletStore } from '@/stores/wallet'
@@ -110,6 +111,7 @@ onMounted(loadOrders)
       v-if="!loading && orders.length === 0"
       class="wallet-orders-empty t-body"
     >
+      <img :src="icNoData" alt="" class="wallet-orders-empty__icon" />
       {{ $txt('Wallet_OrdersEmpty') }}
     </div>
     <div
@@ -141,6 +143,8 @@ onMounted(loadOrders)
   position: relative;
   height: 100vh;
   height: 100dvh;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
@@ -175,9 +179,20 @@ onMounted(loadOrders)
 }
 
 .wallet-orders-empty {
-  padding: 1.6rem 0.5067rem calc(env(safe-area-inset-bottom) + 0.7467rem);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0 0.5067rem;
   text-align: center;
   color: rgba(255, 255, 255, 0.65);
+
+  &__icon {
+    width: 1.2533rem;
+    height: 1.5733rem;
+  }
 }
 
 </style>

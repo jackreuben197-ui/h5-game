@@ -454,7 +454,7 @@ onMounted(() => {
 
 .stats-card {
   margin-top: 0.3rem;
-  padding: 0.24rem 0.3rem;
+  padding: 0.3632rem 0.67864rem 0.36739rem 0.67864rem;
 }
 
 .time-tabs {
@@ -471,7 +471,7 @@ onMounted(() => {
   border-radius: 0.42rem;
   background: transparent;
   color: rgba(255, 255, 255, 0.9);
-  font-size: 0.35rem;
+  font-size: 0.40541rem;
   padding: 0.18rem 0;
 
   &.active {
@@ -492,6 +492,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  text-align: center;
 }
 
 .metric-item {
@@ -500,30 +501,30 @@ onMounted(() => {
   gap: 0.08rem;
 
   .metric-label {
-    font-size: 0.25rem;
+    font-size: 0.27027rem;
     color: rgba(255, 255, 255, 0.74);
   }
 
   .metric-value {
-    font-size: 0.33rem;
+    font-size: 0.35472rem;
     font-weight: 600;
   }
 }
 
 .metric-col.right {
-  text-align: right;
+  text-align: center;
 }
 
 .profit-box {
   text-align: center;
 
   .profit-title {
-    font-size: 0.32rem;
+    font-size: 0.33821rem;
   }
 
   .profit-value {
     margin-top: 0.12rem;
-    font-size: 0.56rem;
+    font-size: 0.71789rem;
     font-weight: 700;
     color: #ff7a8f;
     &.pos {
@@ -554,7 +555,7 @@ onMounted(() => {
   flex-direction: column;
 
   .label {
-    font-size: 0.24rem;
+    font-size: 0.27027rem;
     color: rgba(255, 255, 255, 0.7);
   }
 

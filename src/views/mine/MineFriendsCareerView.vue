@@ -97,6 +97,7 @@ onMounted(() => {
           <TopActionButton
             name="数据统计"
             icon-alt="wallet"
+            @click="handleMenuClick({ key: 'data', text: '数据', route: '/mine/friends-my-data' })"
           />
         </div>
       </template>

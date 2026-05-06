@@ -131,18 +131,18 @@ async function submitReport(): Promise<void> {
   font-size: 0.39rem;
   border-bottom: 0.02rem solid rgba(255, 255, 255, 0.16);
 
-  &:last-child {
+   &:last-child {
     border-bottom: 0;
-  }
+   }
 }
 
 .check {
   opacity: 0.3;
 
-  &.active {
+   &.active {
     opacity: 1;
     color: #6be89d;
-  }
+   }
 }
 
 .input-card {

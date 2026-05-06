@@ -4,19 +4,9 @@ import { showFailToast } from 'vant'
 import { useRoute, useRouter } from 'vue-router'
 import { postStatsUserGameRecordListApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import gameZoneMahjongMini from '@/assets/icons/game_zone_mahjong_mini.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
 const title = computed(() => 'Result')
-
-interface HandRow {
-  id: string
-  roundType: string
-  handId: string
-  result: string
-  score: string
-  fanText: string
-}
 
 const router = useRouter()
 const route = useRoute()
@@ -25,6 +15,15 @@ const route = useRoute()
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
+
+interface HandRow {
+  id: string
+  title: string
+  handId: string
+  pot: string
+  profit: string
+  hands: string
+}
 
 const loading = ref(false)
 const handRows = ref<HandRow[]>([])
@@ -39,7 +38,9 @@ function toSafeNumber(value: unknown): number {
 
 function formatSigned(value: unknown): string {
   const amount = toSafeNumber(value)
-  if (amount === 0) return '0'
+  if (amount === 0) {
+    return '0'
+  }
   const abs = Math.abs(amount).toLocaleString('en-US')
   return amount > 0 ? `+${abs}` : `-${abs}`
 }
@@ -50,7 +51,18 @@ function resolveRoomId(): number {
   return Number.isFinite(value) ? value : 0
 }
 
-async function fetchMahjongHands(): Promise<void> {
+function mapHandRows(rows: Record<string, unknown>[]): HandRow[] {
+  return rows.map((row, index) => ({
+    id: String(row.id ?? row.room_unique_id ?? index + 1),
+    title: String(row.name ?? 'Hand Record'),
+    handId: String(row.room_unique_id ?? row.id ?? '--'),
+    pot: toSafeNumber(row.bet_pot).toLocaleString('en-US'),
+    profit: formatSigned(row.change),
+    hands: toSafeNumber(row.hand_num).toLocaleString('en-US'),
+  }))
+}
+
+async function fetchHandRows(): Promise<void> {
   const roomId = resolveRoomId()
   if (roomId <= 0) {
     handRows.value = []
@@ -60,15 +72,14 @@ async function fetchMahjongHands(): Promise<void> {
   loading.value = true
   try {
     const response = await postStatsUserGameRecordListApi({
-      room_type: 2,
+      room_type: 1,
       room_id: roomId,
-      game_types: [6],
       limit: 50,
       offset: 0,
     } as unknown as Record<string, unknown>)
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载麻将手牌失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载手牌详情失败')
     }
 
     const records = Array.isArray(response.data?.records) ? response.data.records : []
@@ -79,17 +90,10 @@ async function fetchMahjongHands(): Promise<void> {
     overviewTitle.value = String(room.name ?? '牌局名称')
     overviewId.value = `ID: ${String(room.room_id ?? roomId)}`
     overviewHands.value = `Hands ${userRows.length}`
-    handRows.value = userRows.map((item, index) => ({
-      id: String(item.id ?? item.room_unique_id ?? index + 1),
-      roundType: '推倒胡',
-      handId: String(item.room_unique_id ?? item.id ?? '--'),
-      result: toSafeNumber(item.change) >= 0 ? 'Win' : 'Lose',
-      score: formatSigned(item.change),
-      fanText: `底池 x${toSafeNumber(item.bet_pot)}`,
-    }))
+    handRows.value = mapHandRows(userRows)
   } catch (error) {
     handRows.value = []
-    const message = error instanceof Error ? error.message : '加载麻将手牌失败'
+    const message = error instanceof Error ? error.message : '加载手牌详情失败'
     showFailToast(message)
   } finally {
     loading.value = false
@@ -97,11 +101,11 @@ async function fetchMahjongHands(): Promise<void> {
 }
 
 function goReport(): void {
-  void router.push('/mine/club-record/report')
+  void router.push('/mine/friends-record/report')
 }
 
 onMounted(() => {
-  void fetchMahjongHands()
+  void fetchHandRows()
 })
 </script>
 
@@ -126,27 +130,29 @@ onMounted(() => {
 
       <section class="list-wrap">
         <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!handRows.length" class="list-status">暂无麻将手牌</p>
+        <p v-else-if="!handRows.length" class="list-status">暂无手牌记录</p>
         <article
           v-for="item in handRows"
           :key="item.id"
           class="glass-card hand-card"
           @click="goReport"
         >
-          <div class="left-meta">
-            <div class="round-chip">
-              <img :src="gameZoneMahjongMini" alt="mahjong" />
-              <span>{{ item.roundType }}</span>
+          <div class="top-row">
+            <div class="poker-pair">
+              <div class="poker">10</div>
+              <div class="poker red">J</div>
             </div>
-            <div class="sub-line">ID: {{ item.handId }}</div>
-            <div class="sub-line">{{ item.result }}</div>
+            <div class="title">{{ item.title }}</div>
           </div>
-
-          <div class="right-meta" :class="{ minus: item.score.startsWith('-') }">
-            <div class="score">{{ item.score }}</div>
-            <div class="fan-row">
-              <span class="tile">中</span>
-              <span>{{ item.fanText }}</span>
+          <div class="line"></div>
+          <div class="bottom-row">
+            <div class="meta">
+              <div>Hand ID: {{ item.handId }}</div>
+              <div>Pot: {{ item.pot }}</div>
+            </div>
+            <div class="profit" :class="{ positive: item.profit.startsWith('+') }">
+              <div class="money">{{ item.profit }}</div>
+              <div class="hands-count">Hands: {{ item.hands }}</div>
             </div>
           </div>
         </article>
@@ -191,36 +197,36 @@ onMounted(() => {
   align-items: center;
   gap: 0.16rem;
 
-  .avatar {
+   .avatar {
     width: 0.84rem;
     height: 0.84rem;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.48);
-  }
+   }
 
-  .name {
+   .name {
     font-size: 0.35rem;
-  }
+   }
 
-  .hands {
+   .hands {
     margin-top: 0.05rem;
     font-size: 0.27rem;
     color: rgba(255, 255, 255, 0.74);
-  }
+   }
 }
 
 .right-info {
   text-align: right;
 
-  .title {
+   .title {
     font-size: 0.42rem;
-  }
+   }
 
-  .sub {
+   .sub {
     margin-top: 0.08rem;
     font-size: 0.28rem;
     color: rgba(255, 255, 255, 0.78);
-  }
+   }
 }
 
 .list-wrap {
@@ -238,68 +244,73 @@ onMounted(() => {
 }
 
 .hand-card {
-  padding: 0.24rem 0.3rem;
+  padding: 0.28rem 0.3rem;
+}
+
+.top-row,
+.bottom-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.2rem;
 }
 
-.round-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.1rem;
-
-  img {
-    width: 0.48rem;
-    height: 0.48rem;
-    border-radius: 0.1rem;
-    object-fit: cover;
-  }
-
-  span {
-    font-size: 0.34rem;
-  }
-}
-
-.sub-line {
-  margin-top: 0.08rem;
-  font-size: 0.28rem;
-  color: rgba(255, 255, 255, 0.78);
-}
-
-.right-meta {
-  text-align: right;
-  color: #65e89f;
-
-  &.minus {
-    color: #ff8ea2;
-  }
-}
-
-.score {
-  font-size: 0.52rem;
-  font-weight: 700;
-}
-
-.fan-row {
-  margin-top: 0.06rem;
-  display: inline-flex;
-  align-items: center;
+.poker-pair {
+  display: flex;
   gap: 0.08rem;
-  font-size: 0.29rem;
 }
 
-.tile {
-  width: 0.34rem;
-  height: 0.44rem;
-  border-radius: 0.06rem;
-  background: #ffffff;
-  color: #d6425e;
-  display: inline-flex;
+.poker {
+  width: 0.52rem;
+  height: 0.8rem;
+  border-radius: 0.1rem;
+  background: #fff;
+  color: #111;
+  font-size: 0.28rem;
+  font-weight: 700;
+  display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.26rem;
-  font-weight: 700;
+
+   &.red {
+    color: #df495f;
+   }
+}
+
+.title {
+  flex: 1;
+  text-align: right;
+  font-size: 0.34rem;
+}
+
+.line {
+  height: 0.02rem;
+  margin: 0.16rem 0;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.meta {
+  font-size: 0.3rem;
+  line-height: 1.5;
+}
+
+.profit {
+  text-align: right;
+
+   .money {
+    font-size: 0.52rem;
+    color: #ff8498;
+    font-weight: 700;
+   }
+
+   .hands-count {
+    margin-top: 0.04rem;
+    font-size: 0.29rem;
+   }
+
+   &.positive {
+     .money {
+      color: #65e89f;
+     }
+   }
 }
 </style>

@@ -348,15 +348,27 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/mine/friends-data',
-      name: 'mine-friends-data',
-      component: () => import('@/views/mine/MineFriendsDataView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
       path: '/mine/friends-record',
       name: 'mine-friends-record',
       component: () => import('@/views/mine/MineFriendsRecordView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/mine/friends-record/hand',
+      name: 'mine-friends-record-hand',
+      component: () => import('@/views/mine/MineFriendsRecordHandView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/mine/friends-record/detail',
+      name: 'mine-friends-record-detail',
+      component: () => import('@/views/mine/MineFriendsRecordDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/mine/friends-record/report',
+      name: 'mine-friends-record-report',
+      component: () => import('@/views/mine/MineFriendsRecordReportView.vue'),
       meta: { requiresAuth: true },
     },
     {

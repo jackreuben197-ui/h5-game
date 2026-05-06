@@ -2,9 +2,13 @@
 import { computed, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
-import { postRoomCenterHistoryListApi } from '@/api/stats'
+import { postRoomCenterHistoryListApi, postStatsUserStatsApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { formatUC } from '@/utils/roomVisibility'
+import { formatDateTime, toTimestampMs } from '@/utils/time'
+import dayjs from 'dayjs'
 
 interface SummaryMetric {
   label: string
@@ -13,11 +17,12 @@ interface SummaryMetric {
 
 interface RecordCard {
   id: string
+  roomName: string
   roomId: string
   matchId: string
-  month: string
-  playerName: string
-  playerId: string
+  endDay: string
+  endMonth: string
+  endTimeRaw: string
   blind: string
   hands: string
   duration: string
@@ -26,6 +31,7 @@ interface RecordCard {
 }
 
 const router = useRouter()
+const userInfoStore = useUserInfoStore()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -39,64 +45,43 @@ const selectedTime = ref(timeTabs[0])
 const loading = ref(false)
 
 const leftMetrics = ref<SummaryMetric[]>([
-  { label: '总带入', value: '25,600' },
-  { label: '手数', value: '1,200' },
+  { label: '总场次', value: '0' },
+  { label: '明杠', value: '0' },
 ])
 
 const rightMetrics = ref<SummaryMetric[]>([
-  { label: '入池率', value: '26%' },
-  { label: '胜率', value: '54%' },
+  { label: '全胜次数', value: '0' },
+  { label: '暗杠', value: '0' },
 ])
 
 const bottomMetrics = ref<SummaryMetric[]>([
-  { label: '局数', value: '20' },
-  { label: '大底池', value: '1024' },
-  { label: 'MVP', value: '3' },
+  { label: '自摸', value: '0' },
+  { label: '点炮', value: '0' },
+  { label: '接炮', value: '0' },
 ])
 
-const todayProfit = ref('+0')
+const todayProfit = ref('0')
 
-const records = ref<RecordCard[]>([
-  {
-    id: 'r1',
-    roomId: '1',
-    matchId: '',
-    month: '6月',
-    playerName: 'Player Name',
-    playerId: '11440454',
-    blind: '5/10',
-    hands: '20',
-    duration: '2.5h',
-    endAt: '06/04 22:56',
-    profit: '+1024',
-  },
-  {
-    id: 'r2',
-    roomId: '2',
-    matchId: '',
-    month: '6月',
-    playerName: 'Player Name',
-    playerId: '11440454',
-    blind: '5/10',
-    hands: '18',
-    duration: '1.8h',
-    endAt: '06/03 21:40',
-    profit: '-380',
-  },
-  {
-    id: 'r3',
-    roomId: '3',
-    matchId: '',
-    month: '5月',
-    playerName: 'Player Name',
-    playerId: '11440454',
-    blind: '10/20',
-    hands: '12',
-    duration: '1.2h',
-    endAt: '05/28 18:40',
-    profit: '+560',
-  },
-])
+const records = ref<RecordCard[]>([])
+
+function profitTitle(): string {
+  switch (selectedTime.value) {
+    case '今天': return '今日收益'
+    case '7天': return '7天收益'
+    case '30天': return '30天收益'
+    case '生涯': return '生涯收益'
+    default: return '今日收益'
+  }
+}
+
+const profitTitleText = computed(() => profitTitle())
+
+function isFirstOfDate(index: number): boolean {
+  if (index === 0) return true
+  const current = dayjs(toTimestampMs(records.value[index].endTimeRaw))
+  const prev = dayjs(toTimestampMs(records.value[index - 1].endTimeRaw))
+  return current.format('YYYY-MM-DD') !== prev.format('YYYY-MM-DD')
+}
 
 function toSafeNumber(value: unknown): number {
   const numeric = Number(value)
@@ -109,21 +94,6 @@ function formatSigned(value: number): string {
     return '0'
   }
   return value > 0 ? `+${abs}` : `-${abs}`
-}
-
-function formatDateText(raw: unknown): string {
-  if (typeof raw === 'string' && raw.trim()) {
-    return raw
-  }
-  const timestamp = toSafeNumber(raw)
-  if (timestamp <= 0) {
-    return '--'
-  }
-  const date = new Date(timestamp > 1_000_000_000_000 ? timestamp : timestamp * 1000)
-  if (Number.isNaN(date.getTime())) {
-    return '--'
-  }
-  return date.toLocaleString('zh-CN', { hour12: false })
 }
 
 function formatDuration(seconds: unknown): string {
@@ -164,48 +134,78 @@ function extractRecords(value: unknown, depth = 0): Record<string, unknown>[] {
 }
 
 function mapRecord(row: Record<string, unknown>, index: number): RecordCard {
-  const roomId = String(row.room_id ?? row.id ?? '')
-  const matchId = String(row.match_id ?? '')
-  const change = toSafeNumber(row.change ?? row.profit)
-  const timeText = formatDateText(row.time ?? row.start_time_str ?? row.end_time)
-  const monthText = timeText.includes('/') ? `${timeText.split('/')[0]}月` : '本月'
-  const count = toSafeNumber(row.count ?? row.hand_num)
+  const roomId = String(row.RoomID ?? row.room_id ?? row.id ?? '')
+  const matchId = String(row.MatchID ?? row.match_id ?? '')
+  const endTimeRaw = String(row.end_time ?? row.Time ?? '')
+  const endTs = toTimestampMs(endTimeRaw)
+  const change = toSafeNumber(row.Change ?? row.change ?? row.profit)
 
   return {
     id: roomId || matchId || String(index + 1),
+    roomName: String(row.Name ?? row.name ?? row.game_room_name ?? '麻将牌局'),
     roomId,
     matchId,
-    month: monthText,
-    playerName: String(row.name ?? row.game_room_name ?? 'Mahjong Room'),
-    playerId: String(row.room_id ?? row.match_id ?? '--'),
-    blind: String(row.sb ?? row.blind ?? '--'),
-    hands: count > 0 ? String(count) : '--',
+    endDay: endTs > 0 ? dayjs(endTs).format('DD') : '',
+    endMonth: endTs > 0 ? dayjs(endTs).format('MMM') : '',
+    endTimeRaw,
+    blind: String(row.blinds ?? row.blind ?? row.small_blind ?? '--'),
+    hands: String(toSafeNumber(row.Count ?? row.count ?? row.hand_num)),
     duration: formatDuration(row.player_duration),
-    endAt: timeText,
+    endAt: endTs > 0 ? formatDateTime(endTimeRaw) : '--',
     profit: formatSigned(change),
   }
 }
 
-function refreshSummary(list: RecordCard[]): void {
-  const games = list.length
-  const handCount = list.reduce((sum, item) => sum + toSafeNumber(item.hands), 0)
-  const profit = list.reduce((sum, item) => sum + toSafeNumber(item.profit.replace(/,/g, '')), 0)
-  const maxPot = list.reduce((max, item) => Math.max(max, toSafeNumber(item.blind)), 0)
+function resolveTimeType(): number {
+  switch (selectedTime.value) {
+    case '今天': return 1
+    case '7天': return 2
+    case '30天': return 3
+    case '生涯': return 4
+    default: return 1
+  }
+}
+
+function extractStatsFromResponse(data: unknown): void {
+  const roomData = (data as Record<string, unknown>)?.room_data as Record<string, unknown> | undefined
+  if (!roomData) return
 
   leftMetrics.value = [
-    { label: '总带入', value: handCount.toLocaleString('en-US') },
-    { label: '手数', value: handCount.toLocaleString('en-US') },
+    { label: '总场次', value: toSafeNumber(roomData.total_game_cnt).toLocaleString('en-US') },
+    { label: '明杠', value: toSafeNumber(roomData.mj_exposed_kong_count).toLocaleString('en-US') },
   ]
+
   rightMetrics.value = [
-    { label: '入池率', value: games > 0 ? `${Math.min(100, Math.round((handCount / Math.max(games, 1)) * 10))}%` : '0%' },
-    { label: '胜率', value: games > 0 ? `${Math.min(100, Math.round((list.filter(item => item.profit.startsWith('+')).length / games) * 100))}%` : '0%' },
+    { label: '全胜次数', value: toSafeNumber(roomData.full_win).toLocaleString('en-US') },
+    { label: '暗杠', value: toSafeNumber(roomData.mj_concealed_kong_count).toLocaleString('en-US') },
   ]
+
   bottomMetrics.value = [
-    { label: '局数', value: String(games) },
-    { label: '大底池', value: maxPot.toLocaleString('en-US') },
-    { label: 'MVP', value: String(list.filter(item => item.profit.startsWith('+')).length) },
+    { label: '自摸', value: toSafeNumber(roomData.mj_win_self_draw_count).toLocaleString('en-US') },
+    { label: '点炮', value: toSafeNumber(roomData.mj_lose_discard_count).toLocaleString('en-US') },
+    { label: '接炮', value: toSafeNumber(roomData.mj_win_discard_count).toLocaleString('en-US') },
   ]
-  todayProfit.value = formatSigned(profit)
+
+  todayProfit.value = formatUC(toSafeNumber(roomData.total_earn))
+}
+
+async function fetchStatsSummary(): Promise<void> {
+  try {
+    const response = await postStatsUserStatsApi({
+      game_types: [6],
+      time_type: resolveTimeType(),
+      filter_type: 1,
+      room_type: 0,
+      ...(userInfoStore.currentClub?.club_id ? { club_id: userInfoStore.currentClub.club_id } : {}),
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载麻将汇总失败')
+    }
+    extractStatsFromResponse(response.data)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '加载麻将汇总失败'
+    showFailToast(message)
+  }
 }
 
 async function fetchMahjongHistory(): Promise<void> {
@@ -215,6 +215,8 @@ async function fetchMahjongHistory(): Promise<void> {
       limit: 30,
       offset: 0,
       game_types: [6],
+      time_type: resolveTimeType(),
+      ...(userInfoStore.currentClub?.club_id ? { club_id: userInfoStore.currentClub.club_id } : {}),
     })
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : '加载麻将战绩失败')
@@ -222,7 +224,6 @@ async function fetchMahjongHistory(): Promise<void> {
 
     const rawList = extractRecords(response.data?.records)
     records.value = rawList.map((row, index) => mapRecord(row, index))
-    refreshSummary(records.value)
   } catch (error) {
     records.value = []
     const message = error instanceof Error ? error.message : '加载麻将战绩失败'
@@ -232,8 +233,8 @@ async function fetchMahjongHistory(): Promise<void> {
   }
 }
 
-function goBack(): void {
-  void router.push('/mine/club-career')
+async function refreshAll(): Promise<void> {
+  await Promise.all([fetchStatsSummary(), fetchMahjongHistory()])
 }
 
 function goDetail(item: RecordCard): void {
@@ -248,11 +249,11 @@ function goDetail(item: RecordCard): void {
 
 function selectTimeTab(tab: string): void {
   selectedTime.value = tab
-  void fetchMahjongHistory()
+  void refreshAll()
 }
 
 onMounted(() => {
-  void fetchMahjongHistory()
+  void refreshAll()
 })
 </script>
 
@@ -284,7 +285,7 @@ onMounted(() => {
           </div>
 
           <div class="profit-box">
-            <div class="profit-title">今日收益 <span class="info-dot">i</span></div>
+            <div class="profit-title">{{ profitTitleText }} <span class="info-dot">i</span></div>
             <div class="profit-value">{{ todayProfit }}</div>
           </div>
 
@@ -308,16 +309,20 @@ onMounted(() => {
         <p v-if="loading" class="list-status">加载中...</p>
         <p v-else-if="!records.length" class="list-status">暂无麻将战绩</p>
         <article
-          v-for="item in records"
+          v-for="(item, index) in records"
           :key="item.id"
           class="glass-card record-card"
+          :class="{ 'is-first-of-date': isFirstOfDate(index) }"
           @click="goDetail(item)"
         >
-          <div class="timeline">{{ item.month }}</div>
+          <div class="timeline">
+            <span v-if="isFirstOfDate(index)" class="date-label">{{ item.endMonth }}<br />{{ item.endDay }}</span>
+            <span v-else class="date-label"></span>
+          </div>
           <div class="card-content">
             <div class="card-head">
-              <div>{{ item.playerName }}</div>
-              <div class="id">ID: {{ item.playerId }}</div>
+              <div>{{ item.roomName }}</div>
+              <div class="id">ID: {{ item.roomId }}</div>
             </div>
             <div class="line"></div>
             <div class="card-body">
@@ -373,7 +378,7 @@ onMounted(() => {
 
 .stats-card {
   margin-top: 0.3rem;
-  padding: 0.24rem 0.3rem;
+  padding: 0.3632rem 0.67864rem 0.36739rem 0.67864rem;
 }
 
 .time-tabs {
@@ -390,7 +395,7 @@ onMounted(() => {
   border-radius: 0.42rem;
   background: transparent;
   color: rgba(255, 255, 255, 0.9);
-  font-size: 0.32rem;
+  font-size: 0.40541rem;
   padding: 0.18rem 0;
 
   &.active {
@@ -411,10 +416,11 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  text-align: center;
 }
 
 .metric-col.right {
-  text-align: right;
+  text-align: center;
 }
 
 .metric-item {
@@ -424,12 +430,12 @@ onMounted(() => {
 }
 
 .metric-label {
-  font-size: 0.25rem;
+  font-size: 0.27027rem;
   color: rgba(255, 255, 255, 0.74);
 }
 
 .metric-value {
-  font-size: 0.33rem;
+  font-size: 0.35472rem;
   font-weight: 600;
 }
 
@@ -437,7 +443,7 @@ onMounted(() => {
   text-align: center;
 
   .profit-title {
-    font-size: 0.32rem;
+    font-size: 0.33821rem;
     display: inline-flex;
     align-items: center;
     gap: 0.08rem;
@@ -445,9 +451,9 @@ onMounted(() => {
 
   .profit-value {
     margin-top: 0.12rem;
-    font-size: 0.56rem;
+    font-size: 0.71789rem;
     font-weight: 700;
-    color: #6be89d;
+    color: #ff132b;
   }
 }
 
@@ -501,17 +507,47 @@ onMounted(() => {
 }
 
 .timeline {
-  font-size: 0.32rem;
-  color: rgba(255, 255, 255, 0.9);
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 0.1rem;
+
+  .date-label {
+    font-size: 0.32rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
 
   &::after {
     content: '';
     position: absolute;
-    top: 0.42rem;
-    left: 0.45rem;
+    top: 0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
     width: 0.02rem;
-    height: 2.2rem;
+    height: calc(100% - 0.3rem);
+    background: rgba(255, 255, 255, 0.35);
+  }
+}
+
+.record-card:not(.is-first-of-date) .timeline {
+  &::after {
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.35) 0,
+      rgba(255, 255, 255, 0.35) 4px,
+      transparent 4px,
+      transparent 8px
+    );
+  }
+}
+
+.record-card.is-first-of-date .timeline {
+  &::after {
     background: rgba(255, 255, 255, 0.35);
   }
 }

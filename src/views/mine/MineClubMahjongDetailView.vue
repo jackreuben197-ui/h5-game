@@ -164,10 +164,6 @@ async function fetchDetail(): Promise<void> {
   }
 }
 
-function goBack(): void {
-  void router.push('/mine/club-mahjong')
-}
-
 function goToHands(): void {
   void router.push({
     path: '/mine/club-mahjong/hand',

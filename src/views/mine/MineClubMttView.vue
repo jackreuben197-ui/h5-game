@@ -7,7 +7,7 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 
 const router = useRouter()
 
-const title = computed(() => 'SNG')
+const title = computed(() => 'MTT')
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -220,10 +220,6 @@ async function fetchMttHistory(): Promise<void> {
   } finally {
     loading.value = false
   }
-}
-
-function goBack(): void {
-  void router.push('/mine/club-career')
 }
 
 function goDetail(item: MttRecord): void {

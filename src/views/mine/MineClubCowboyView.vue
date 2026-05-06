@@ -1,185 +1,198 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { showFailToast } from 'vant'
-import { postRoomCenterHistoryListApi } from '@/api/stats'
+import { useRouter } from 'vue-router'
+import { postRoomCenterHistoryListApi, postStatsUserStatsApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { formatUC } from '@/utils/roomVisibility'
+import { formatDateTime, toTimestampMs } from '@/utils/time'
+import dayjs from 'dayjs'
 
-const title = computed(() => '战绩')
-
-import iconChips from '@/assets/icons/icon_chips.png'
-import iconMttAvatar from '@/assets/icons/icon_mtt_avatar.png'
-
-interface CowboyPlayerResult {
-  id: string
-  name: string
-  uid: string
-  roomId: string
-  matchId: string
-  time: string
-  amount: string
-  up: boolean
+interface SummaryMetric {
+  label: string
+  value: string
 }
 
-interface CowboySummary {
+interface RecordCard {
+  id: string
   roomName: string
-  roomIdText: string
-  dateText: string
-  gameTypeText: string
-  durationText: string
-  totalLotText: string
+  roomId: string
+  hands: string
+  duration: string
+  endAt: string
+  endDay: string
+  endMonth: string
+  profit: string
+  isProfitPositive: boolean
 }
 
 const router = useRouter()
+const userInfoStore = useUserInfoStore()
 
-// 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const loading = ref(false)
-const playerResults = ref<CowboyPlayerResult[]>([])
+const title = computed(() => '牛仔战绩')
 
-const summary = ref<CowboySummary>({
-  roomName: 'Hand Game Name',
-  roomIdText: 'ID: --',
-  dateText: '--',
-  gameTypeText: 'Texas Cowboy',
-  durationText: '--',
-  totalLotText: '0',
-})
+const timeTabs = ['今天', '7天', '30天']
+const selectedTime = ref(timeTabs[0])
+const loading = ref(false)
+
+const summaryRows = ref<SummaryMetric[]>([
+  { label: '总手数', value: '0' },
+  { label: '押中率', value: '0%' },
+  { label: '总押注', value: '0' },
+  { label: '总盈利', value: '0' },
+])
+
+const periodProfit = ref('0')
+
+const records = ref<RecordCard[]>([])
+
+function profitTitle(): string {
+  switch (selectedTime.value) {
+    case '今天': return '今日收益'
+    case '7天': return '7天收益'
+    case '30天': return '30天收益'
+    default: return '今日收益'
+  }
+}
+
+const profitTitleText = computed(() => profitTitle())
 
 function toSafeNumber(value: unknown): number {
   const numeric = Number(value)
   return Number.isFinite(numeric) ? numeric : 0
 }
 
-function formatAmount(value: unknown): string {
-  const amount = toSafeNumber(value)
-  const abs = Math.abs(amount).toLocaleString('en-US')
-  if (amount === 0) {
-    return '0'
+function resolveTimeType(): number {
+  switch (selectedTime.value) {
+    case '今天': return 1
+    case '7天': return 2
+    case '30天': return 3
+    default: return 1
   }
-  return amount > 0 ? `+${abs}` : `-${abs}`
 }
 
-function formatDuration(seconds: unknown): string {
-  const totalSeconds = toSafeNumber(seconds)
-  if (totalSeconds <= 0) {
-    return '--'
+function formatDuration(minutes: number): string {
+  if (minutes <= 0) return '--'
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  if (hours > 0) {
+    return mins > 0 ? `${hours}h${mins}m` : `${hours}h`
   }
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  if (hours <= 0) {
-    return `${minutes} Min`
-  }
-  return `${hours} Hour${hours > 1 ? 's' : ''}${minutes > 0 ? ` ${minutes} Min` : ''}`
+  return `${mins}m`
 }
 
-function formatDate(raw: unknown): string {
-  if (typeof raw === 'string' && raw.trim()) {
-    return raw
-  }
-  const timestamp = toSafeNumber(raw)
-  if (timestamp <= 0) {
-    return '--'
-  }
-  const date = new Date(timestamp > 1_000_000_000_000 ? timestamp : timestamp * 1000)
-  if (Number.isNaN(date.getTime())) {
-    return '--'
-  }
-  return date.toLocaleString('zh-CN', { hour12: false })
+function isFirstOfDate(index: number): boolean {
+  if (index === 0) return true
+  const current = dayjs(toTimestampMs(records.value[index].endAt))
+  const prev = dayjs(toTimestampMs(records.value[index - 1].endAt))
+  return current.format('YYYY-MM-DD') !== prev.format('YYYY-MM-DD')
 }
 
-function extractList(value: unknown, depth = 0): Record<string, unknown>[] {
-  if (depth > 4 || value === null || value === undefined) {
-    return []
-  }
+function extractRecords(value: unknown, depth = 0): Record<string, unknown>[] {
+  if (depth > 4 || value === null || value === undefined) return []
 
   if (Array.isArray(value)) {
     return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
   }
 
-  if (typeof value !== 'object') {
-    return []
-  }
+  if (typeof value !== 'object') return []
 
   const obj = value as Record<string, unknown>
   for (const key of ['records', 'list', 'items', 'data']) {
-    const nested = extractList(obj[key], depth + 1)
-    if (nested.length) {
-      return nested
-    }
+    const nested = extractRecords(obj[key], depth + 1)
+    if (nested.length) return nested
   }
 
   for (const nestedValue of Object.values(obj)) {
-    const nested = extractList(nestedValue, depth + 1)
-    if (nested.length) {
-      return nested
-    }
+    const nested = extractRecords(nestedValue, depth + 1)
+    if (nested.length) return nested
   }
 
   return []
 }
 
-function mapResultItem(row: Record<string, unknown>, index: number): CowboyPlayerResult {
-  const roomId = String(row.room_id ?? row.id ?? '')
-  const matchId = String(row.match_id ?? row.id ?? '')
-  const amountValue = toSafeNumber(row.change ?? row.win_gold ?? row.profit ?? row.amount)
+function mapRecord(row: Record<string, unknown>, index: number): RecordCard {
+  const change = toSafeNumber(row.Change ?? row.change ?? row.profit)
+  const durationMinutes = Math.max(0, Math.round(toSafeNumber(row.play_duration) / 60))
+  const endTimeRaw = row.end_time ?? row.Time
+  const endTs = toTimestampMs(endTimeRaw)
+
   return {
-    id: roomId || matchId || String(index + 1),
-    name: String(row.name ?? row.game_room_name ?? row.room_name ?? 'Cowboy'),
-    uid: String(row.user_id ?? row.room_id ?? row.match_id ?? '--'),
-    roomId,
-    matchId,
-    time: formatDate(row.end_time ?? row.start_time ?? row.time),
-    amount: formatAmount(amountValue),
-    up: amountValue >= 0,
+    id: String(row.RoomID ?? row.room_id ?? row.MatchID ?? row.match_id ?? index + 1),
+    roomName: String(row.Name ?? row.name ?? row.game_room_name ?? '--'),
+    roomId: String(row.RoomID ?? row.room_id ?? row.MatchID ?? row.match_id ?? '--'),
+    hands: toSafeNumber(row.hand_num ?? row.Count ?? row.count).toLocaleString('en-US'),
+    duration: formatDuration(durationMinutes),
+    endAt: endTs > 0 ? formatDateTime(endTimeRaw) : '--',
+    endDay: endTs > 0 ? dayjs(endTs).format('DD') : '',
+    endMonth: endTs > 0 ? dayjs(endTs).format('MMM') : '',
+    profit: formatUC(change),
+    isProfitPositive: change >= 0,
   }
 }
 
-function mapSummary(row: Record<string, unknown>): CowboySummary {
-  const roomId = String(row.room_id ?? row.match_id ?? '--')
-  const totalLot = toSafeNumber(row.all_bring_in ?? row.all_bet_pot ?? row.max_bet_pot)
-  return {
-    roomName: String(row.game_room_name ?? row.room_name ?? 'Cowboy Room'),
-    roomIdText: `ID: ${roomId}`,
-    dateText: formatDate(row.end_time ?? row.start_time ?? row.time),
-    gameTypeText: 'Texas Cowboy',
-    durationText: formatDuration(row.player_duration),
-    totalLotText: Math.abs(totalLot).toLocaleString('en-US'),
+function extractStatsFromResponse(data: unknown): void {
+  const roomData = (data as Record<string, unknown>)?.room_data as Record<string, unknown> | undefined
+  if (!roomData) return
+
+  const totalHand = toSafeNumber(roomData.total_hand)
+  const cbWins = toSafeNumber(roomData.cb_wins)
+  const cbBet = toSafeNumber(roomData.cb_bet)
+  const totalEarn = toSafeNumber(roomData.total_earn)
+
+  summaryRows.value = [
+    { label: '总手数', value: totalHand.toLocaleString('en-US') },
+    { label: '押中率', value: `${cbWins}%` },
+    { label: '总押注', value: formatUC(cbBet) },
+    { label: '总盈利', value: formatUC(totalEarn) },
+  ]
+
+  periodProfit.value = formatUC(totalEarn)
+}
+
+async function fetchStatsSummary(): Promise<void> {
+  try {
+    const response = await postStatsUserStatsApi({
+      game_types: [5],
+      time_type: resolveTimeType(),
+      filter_type: 1,
+      room_type: 0,
+      ...(userInfoStore.currentClub?.club_id ? { club_id: userInfoStore.currentClub.club_id } : {}),
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载牛仔统计失败')
+    }
+    extractStatsFromResponse(response.data)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '加载牛仔统计失败'
+    showFailToast(message)
   }
 }
 
-async function fetchCowboyHistory(): Promise<void> {
+async function fetchCowboyRecords(): Promise<void> {
   loading.value = true
   try {
     const response = await postRoomCenterHistoryListApi({
       limit: 20,
       offset: 0,
       game_types: [5],
+      time_type: resolveTimeType(),
+      ...(userInfoStore.currentClub?.club_id ? { club_id: userInfoStore.currentClub.club_id } : {}),
     })
-
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : '加载牛仔战绩失败')
     }
 
-    const rows = extractList(response.data?.records)
-    playerResults.value = rows.map((row, index) => mapResultItem(row, index))
-    if (rows.length) {
-      summary.value = mapSummary(rows[0])
-    }
+    const rows = extractRecords(response.data?.records)
+    records.value = rows.map((row, index) => mapRecord(row, index))
   } catch (error) {
-    playerResults.value = []
-    summary.value = {
-      roomName: 'Hand Game Name',
-      roomIdText: 'ID: --',
-      dateText: '--',
-      gameTypeText: 'Texas Cowboy',
-      durationText: '--',
-      totalLotText: '0',
-    }
+    records.value = []
     const message = error instanceof Error ? error.message : '加载牛仔战绩失败'
     showFailToast(message)
   } finally {
@@ -187,76 +200,100 @@ async function fetchCowboyHistory(): Promise<void> {
   }
 }
 
-function goBack(): void {
-  void router.push('/mine/club-career')
+async function refreshAll(): Promise<void> {
+  await Promise.all([fetchStatsSummary(), fetchCowboyRecords()])
 }
 
-function openDetail(item: CowboyPlayerResult): void {
+function goToDetail(item: RecordCard): void {
+  const roomId = Number(item.roomId.replace(/\D/g, '')) || 0
   void router.push({
     path: '/mine/club-cowboy/detail',
     query: {
-      room_id: item.roomId,
-      match_id: item.matchId,
-      time: item.time,
+      room_id: roomId > 0 ? String(roomId) : undefined,
+      time: item.endAt,
     },
   })
 }
 
+function selectTime(tab: string): void {
+  selectedTime.value = tab
+  void refreshAll()
+}
+
 onMounted(() => {
-  void fetchCowboyHistory()
+  void refreshAll()
 })
 </script>
 
 <template>
-  <div class="cowboy-detail-page" :style="backgroundStyle">
+  <div class="cowboy-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
-      <section class="glass-card summary-card">
-        <div class="summary-top">
-          <div class="summary-col">
-            <div class="main">{{ summary.roomName }}</div>
-            <div class="sub">{{ summary.roomIdText }}</div>
-          </div>
-          <div class="summary-col summary-col-right">
-            <div class="main">{{ summary.dateText }}</div>
-            <div class="sub">{{ summary.gameTypeText }}</div>
-          </div>
+      <section class="glass-card stats-card">
+        <div class="time-tabs">
+          <button
+            v-for="item in timeTabs"
+            :key="item"
+            type="button"
+            class="time-tab"
+            :class="{ active: selectedTime === item }"
+            @click="selectTime(item)"
+          >
+            {{ item }}
+          </button>
         </div>
 
-        <div class="summary-stats">
-          <div class="stat-item">
-            <div class="label">hand duration</div>
-            <div class="value">{{ summary.durationText }}</div>
-          </div>
-          <div class="divider"></div>
-          <div class="stat-item">
-            <div class="label">total lot size</div>
-            <div class="value">{{ summary.totalLotText }}</div>
+        <div class="period-profit-box">
+          <div class="profit-title">{{ profitTitleText }}</div>
+          <div class="profit-value">{{ periodProfit }}</div>
+        </div>
+
+        <div class="summary-grid">
+          <div v-for="item in summaryRows" :key="item.label" class="summary-item">
+            <span class="summary-label">{{ item.label }}</span>
+            <span class="summary-value">{{ item.value }}</span>
           </div>
         </div>
       </section>
 
-      <section class="result-list">
+      <section class="content-list">
         <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!playerResults.length" class="list-status">暂无牛仔战绩</p>
+        <p v-else-if="!records.length" class="list-status">暂无牛仔战绩记录</p>
         <article
-          v-for="item in playerResults"
+          v-for="(item, index) in records"
           :key="item.id"
-          class="glass-card result-card"
-          @click="openDetail(item)"
+          class="glass-card record-card"
+          :class="{ 'is-first-of-date': isFirstOfDate(index) }"
+          @click="goToDetail(item)"
         >
-          <div class="left">
-            <img :src="iconMttAvatar" alt="avatar" class="avatar" />
-            <div class="info">
-              <div class="name">{{ item.name }}</div>
-              <div class="uid">ID: {{ item.uid }}</div>
-            </div>
+          <div class="timeline">
+            <span v-if="isFirstOfDate(index)" class="date-label">{{ item.endMonth }}<br />{{ item.endDay }}</span>
+            <span v-else class="date-label"></span>
           </div>
-
-          <div class="right">
-            <div class="amount" :class="item.up ? 'up' : 'down'">{{ item.amount }}</div>
-            <img :src="iconChips" alt="chips" class="chips" />
+          <div class="card-content">
+            <div class="card-head">
+              <div>{{ item.roomName }}</div>
+              <div class="id">ID: {{ item.roomId }}</div>
+            </div>
+            <div class="line"></div>
+            <div class="card-body">
+              <div class="meta">
+                <div>
+                  <span>手数:</span>
+                  <span>{{ item.hands }}</span>
+                </div>
+                <div>
+                  <span>时长:</span>
+                  <span>{{ item.duration }}</span>
+                </div>
+                <div>
+                  <span>结束时间:</span>
+                  <span>{{ item.endAt }}</span>
+                </div>
+              </div>
+              <div class="profit" :class="{ positive: item.isProfitPositive }">{{ item.profit }}</div>
+            </div>
           </div>
         </article>
       </section>
@@ -265,10 +302,12 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-.cowboy-detail-page {
+.cowboy-page {
   position: relative;
-  min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.74rem;
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;
@@ -281,83 +320,94 @@ onMounted(() => {
 }
 
 .glass-card {
-  border-radius: 0.66rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  border-radius: 0.42rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.2);
   background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.05rem);
+  backdrop-filter: blur(0.04rem);
 }
 
-.summary-card {
-  margin-top: 0.56rem;
-  padding: 0.28rem 0.22rem 0.24rem;
+.stats-card {
+  margin-top: 0.3rem;
+  padding: 0.36rem 0.5rem;
 }
 
-.summary-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.18rem;
-  padding: 0 0.16rem;
-}
-
-.summary-col {
-  .main {
-    font-size: 0.42rem;
-    line-height: 1.2;
-    color: #fff;
-    font-weight: 500;
-  }
-
-  .sub {
-    margin-top: 0.05rem;
-    font-size: 0.33rem;
-    line-height: 1.2;
-    color: rgba(255, 255, 255, 0.7);
-  }
-}
-
-.summary-col-right {
-  text-align: right;
-}
-
-.summary-stats {
-  margin-top: 0.24rem;
+.time-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.08rem;
   border-radius: 0.5rem;
+  padding: 0.08rem;
   background: rgba(255, 255, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.14rem 0.2rem;
 }
 
-.stat-item {
-  width: 45%;
-  text-align: center;
+.time-tab {
+  border: 0;
+  border-radius: 0.42rem;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.40541rem;
+  padding: 0.18rem 0;
 
-  .label {
-    font-size: 0.34rem;
-    line-height: 1.2;
-    color: #fff;
-    opacity: 0.95;
-  }
-
-  .value {
-    margin-top: 0.03rem;
-    font-size: 0.56rem;
-    line-height: 1.1;
-    color: #fff;
-    font-weight: 500;
+  &.active {
+    background: rgba(255, 255, 255, 0.18);
+    font-weight: 700;
   }
 }
 
-.divider {
-  width: 0.02rem;
-  height: 0.7rem;
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.result-list {
+.summary-grid {
   margin-top: 0.24rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.2rem 0.12rem;
+}
+
+.period-profit-box {
+  margin-top: 0.2rem;
+  border-radius: 0.24rem;
+  border: 0.02rem solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  text-align: center;
+  padding: 0.18rem 0.2rem 0.2rem;
+
+  .profit-title {
+    font-size: 0.31rem;
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .profit-value {
+    margin-top: 0.08rem;
+    font-size: 0.62rem;
+    line-height: 1;
+    font-weight: 700;
+    color: #4ee58f;
+  }
+}
+
+.summary-item {
+  min-height: 1.2rem;
+  border-radius: 0.24rem;
+  border: 0.02rem solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  .summary-label {
+    font-size: 0.29rem;
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .summary-value {
+    margin-top: 0.08rem;
+    font-size: 0.4rem;
+    font-weight: 700;
+    color: #fff;
+  }
+}
+
+.content-list {
+  margin-top: 0.28rem;
   display: flex;
   flex-direction: column;
   gap: 0.22rem;
@@ -366,88 +416,109 @@ onMounted(() => {
 .list-status {
   text-align: center;
   font-size: 0.3rem;
-  opacity: 0.76;
-  padding: 0.2rem 0;
+  opacity: 0.78;
+  margin: 0.2rem 0;
 }
 
-.result-card {
-  border-radius: 0.84rem;
-  padding: 0.34rem 0.42rem;
+.record-card {
+  padding: 0.28rem;
+  display: grid;
+  grid-template-columns: 0.8rem 1fr;
+  gap: 0.2rem;
+  position: relative;
+}
+
+.timeline {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-}
+  justify-content: flex-start;
+  padding-top: 0.1rem;
 
-.left {
-  display: flex;
-  align-items: center;
-  gap: 0.22rem;
-}
-
-.avatar {
-  width: 1.36rem;
-  height: 1.36rem;
-  border-radius: 50%;
-  border: 0.02rem solid rgba(255, 255, 255, 0.28);
-  object-fit: cover;
-}
-
-.info {
-  .name {
-    font-size: 0.5rem;
-    line-height: 1.2;
-    font-weight: 600;
-    color: #f3f3f3;
-  }
-
-  .uid {
-    margin-top: 0.03rem;
+  .date-label {
     font-size: 0.32rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
     line-height: 1.2;
-    color: #aaa69e;
+    white-space: nowrap;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0.02rem;
+    height: calc(100% - 0.3rem);
+    background: rgba(255, 255, 255, 0.35);
   }
 }
 
-.right {
+.record-card:not(.is-first-of-date) .timeline {
+  &::after {
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.35) 0,
+      rgba(255, 255, 255, 0.35) 4px,
+      transparent 4px,
+      transparent 8px
+    );
+  }
+}
+
+.record-card.is-first-of-date .timeline {
+  &::after {
+    background: rgba(255, 255, 255, 0.35);
+  }
+}
+
+.card-content {
+  .line {
+    height: 0.02rem;
+    background: rgba(255, 255, 255, 0.15);
+    margin: 0.18rem 0;
+  }
+}
+
+.card-head {
   display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.43rem;
+
+  .id {
+    font-size: 0.29rem;
+    color: rgba(255, 255, 255, 0.78);
+  }
+}
+
+.card-body {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 0.1rem;
 }
 
-.amount {
-  font-size: 0.52rem;
-  line-height: 1.2;
-  font-weight: 600;
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.07rem;
+  font-size: 0.3rem;
 
-  &.up {
-    color: #ff132b;
-  }
-
-  &.down {
-    color: #05e7ae;
+  div {
+    display: flex;
+    gap: 0.16rem;
   }
 }
 
-.chips {
-  width: 0.52rem;
-  height: 0.52rem;
-}
+.profit {
+  font-size: 0.54rem;
+  font-weight: 700;
+  color: #ff7a8f;
 
-@media (max-width: 360px) {
-  .cowboy-detail-page {
-    padding-left: 0.46rem;
-    padding-right: 0.46rem;
-  }
-
-  .result-card {
-    padding-left: 0.34rem;
-    padding-right: 0.34rem;
-  }
-
-  .summary-col .main,
-  .info .name,
-  .amount {
-    font-size: 0.44rem;
+  &.positive {
+    color: #4ee58f;
   }
 }
 </style>

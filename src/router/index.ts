@@ -318,6 +318,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/mine/club-cowboy/hand',
+      name: 'mine-club-cowboy-hand',
+      component: () => import('@/views/mine/MineClubCowboyHandView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/mine/club-cowboy/detail',
       name: 'mine-club-cowboy-detail',
       component: () => import('@/views/mine/MineClubCowboyDetailView.vue'),
@@ -345,6 +351,18 @@ const router = createRouter({
       path: '/mine/friends-career',
       name: 'mine-friends-career',
       component: () => import('@/views/mine/MineFriendsCareerView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/mine/friends-my-data',
+      name: 'mine-friends-my-data',
+      component: () => import('@/views/mine/MineFriendsMyDataView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/mine/friends-data',
+      name: 'mine-friends-data',
+      component: () => import('@/views/mine/MineFriendsDataView.vue'),
       meta: { requiresAuth: true },
     },
     {

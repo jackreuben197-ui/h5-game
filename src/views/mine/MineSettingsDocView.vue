@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { showFailToast } from 'vant'
 import { postMiscArtiCleInfoApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-
-const router = useRouter()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -33,12 +31,12 @@ const content = ref<string[]>([])
 
 function resolveArticleType(): number {
   if (docType.value === 'agreement') {
-    return 2
-  }
-  if (docType.value === 'privacy') {
     return 3
   }
-  return 1
+  if (docType.value === 'privacy') {
+    return 4
+  }
+  return 5
 }
 
 function extractContentLines(raw: unknown): string[] {
@@ -85,10 +83,6 @@ watch(docType, () => {
 onMounted(() => {
   void fetchDocContent()
 })
-
-function goBack(): void {
-  router.back()
-}
 </script>
 
 <template>

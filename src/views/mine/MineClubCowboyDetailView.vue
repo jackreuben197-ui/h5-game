@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { showFailToast } from 'vant'
 import { postStatsCowboyHistoryRoomDetailApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
@@ -18,7 +18,6 @@ interface CowboyRecordItem {
   positive: boolean
 }
 
-const router = useRouter()
 const route = useRoute()
 
 // 主容器背景图：全页面共用一张底图。
@@ -84,10 +83,6 @@ async function fetchDetail(): Promise<void> {
   } finally {
     loading.value = false
   }
-}
-
-function goBack(): void {
-  void router.push('/mine/club-career')
 }
 
 onMounted(() => {

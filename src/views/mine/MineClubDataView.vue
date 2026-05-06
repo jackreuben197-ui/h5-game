@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { showFailToast } from 'vant'
-import { useRouter } from 'vue-router'
-import { postClubDataStatsDataInfoApi } from '@/api/stats'
+import { postMiscCombineApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { useUserInfoStore } from '@/stores/userInfo'
 
 const title = computed(() => 'Data')
 
@@ -13,6 +13,7 @@ type MainTabKey = 'personal' | 'opponent' | 'allin' | 'deck'
 type ProfitRow = {
   id: string
   name: string
+  avatar?: string
   hands: number
   lose: number
   win: number
@@ -27,8 +28,6 @@ type DeckRow = {
   winRate: number
   profit: number
 }
-
-const router = useRouter()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -45,7 +44,7 @@ const mainTabs: Array<{ key: MainTabKey; label: string }> = [
 const personalGameTabs = ['德州', '奥马哈', '短牌']
 const opponentPeriodTabs = ['本周', '本月', '历史']
 const allInModeTabs = ['Texas', 'Omaha', '6+', 'AOF 6+', 'AOF Texas', 'AOF Omaha']
-const deckModeTabs = ['Texas', 'Omaha', 'AOF', 'AOF']
+const deckModeTabs = ['Texas', 'Omaha', 'AOF Texas', 'AOF Omaha']
 
 const selectedMainTab = ref<MainTabKey>('personal')
 const selectedPersonalGame = ref(personalGameTabs[0])
@@ -53,48 +52,68 @@ const selectedOpponentPeriod = ref(opponentPeriodTabs[0])
 const selectedAllInMode = ref(allInModeTabs[0])
 const selectedDeckMode = ref(deckModeTabs[0])
 const loading = ref(false)
+const userInfoStore = useUserInfoStore()
 
-const personalRings = [
-  { key: 'vpip', label: '入池率', value: 60, color: '#ff5b5b' },
-  { key: 'win-rate', label: '胜率', value: 60, color: '#3c6dff' },
-  { key: 'flop-raise', label: '翻牌加注率', value: 60, color: '#f7bb46' },
-  { key: 'showdown', label: '摊牌率', value: 60, color: '#ff2626' },
-  { key: 'wt-sd', label: '摊牌率', value: 60, color: '#66b7ff' },
-  { key: 'rerise', label: '再加注率', value: 60, color: '#20f2c2' },
-]
+const personalRingMeta = [
+  { key: 'vpip', label: '入池率', color: '#ff5b5b' },
+  { key: 'wins', label: '胜率', color: '#3c6dff' },
+  { key: 'prf', label: '翻牌加注率', color: '#f7bb46' },
+  { key: 'wtsd', label: '摊牌胜率', color: '#ff2626' },
+  { key: 'bet3', label: '再加注率', color: '#66b7ff' },
+  { key: 'allinWins', label: '全下胜率', color: '#20f2c2' },
+] as const
 
-const opponentRows: ProfitRow[] = [
-  { id: '1', name: 'name', hands: 20, lose: 25, win: 10, profit: 10000 },
-  { id: '2', name: 'name', hands: 20, lose: 25, win: 10, profit: -10000 },
-  { id: '3', name: 'name', hands: 20, lose: 25, win: 10, profit: -10000 },
-  { id: '4', name: 'name', hands: 20, lose: 25, win: 10, profit: 10000 },
-  { id: '5', name: 'name', hands: 20, lose: 25, win: 10, profit: -10000 },
-]
-
-const deckRows: DeckRow[] = [
-  { id: '1', cards: ['10♣', 'J♦'], winCount: 20, totalHands: 25, winRate: 10, profit: -10000 },
-  { id: '2', cards: ['10♣', 'J♦'], winCount: 20, totalHands: 25, winRate: 10, profit: 10000 },
-  { id: '3', cards: ['10♣', 'J♦'], winCount: 20, totalHands: 25, winRate: 10, profit: 10000 },
-  { id: '4', cards: ['10♣', 'J♦'], winCount: 20, totalHands: 25, winRate: 10, profit: 10000 },
-  { id: '5', cards: ['10♣', 'J♦'], winCount: 20, totalHands: 25, winRate: 10, profit: 10000 },
-  { id: '6', cards: ['10♣', 'J♦'], winCount: 20, totalHands: 25, winRate: 10, profit: 10000 },
-  { id: '7', cards: ['10♣', 'J♦'], winCount: 20, totalHands: 25, winRate: 10, profit: 10000 },
-  { id: '8', cards: ['10♣', 'J♦'], winCount: 20, totalHands: 25, winRate: 10, profit: -10000 },
-]
-
-const allInSummary = [
-  { label: '累计盈利', value: '+98741', highlight: 'up' as const },
+const personalRings = ref(personalRingMeta.map((item) => ({ ...item, value: 0 })))
+const opponentRows = ref<ProfitRow[]>([])
+const deckRows = ref<DeckRow[]>([])
+const allInSummary = ref([
+  { label: '累计盈利', value: '0', highlight: 'up' as const },
   { label: 'All in', value: '0' },
   { label: '手数', value: '0' },
   { label: '获胜', value: '0' },
   { label: '失利', value: '0' },
-]
+])
+const allInRateRows = ref([
+  { key: 'active', label: '主动', rate: 0, color: '#50a7ec' },
+  { key: 'passive', label: '被动', rate: 0, color: '#fa2b4b' },
+  { key: 'ahead', label: '领先', rate: 0, color: '#109657' },
+  { key: 'behind', label: '落后', rate: 0, color: '#b519d8' },
+])
 
-const personalHasData = computed(() => selectedPersonalGame.value !== '短牌')
+const allInOverallRate = computed(() => {
+  const winCount = toSafeNumber(allInSummary.value[3]?.value)
+  const totalHands = toSafeNumber(allInSummary.value[2]?.value)
+  if (totalHands <= 0) {
+    return 0
+  }
+  return clampRate((winCount / totalHands) * 100)
+})
 
-function goBack(): void {
-  void router.push('/mine/club-career')
+const radarCanvasRef = ref<HTMLCanvasElement | null>(null)
+const radarWrapRef = ref<HTMLDivElement | null>(null)
+let radarRafId = 0
+const onWindowResize = () => {
+  if (selectedMainTab.value === 'allin') {
+    scheduleRadarDraw()
+  }
 }
+
+const passiveRate = computed(() => allInRateRows.value.find((item) => item.key === 'passive')?.rate ?? 0)
+const backwardRate = computed(() => allInRateRows.value.find((item) => item.key === 'behind')?.rate ?? 0)
+const leadingRate = computed(() => allInRateRows.value.find((item) => item.key === 'ahead')?.rate ?? 0)
+
+const personalCache = new Map<string, typeof personalRings.value>()
+const opponentCache = new Map<string, ProfitRow[]>()
+const allInCache = new Map<string, { summary: typeof allInSummary.value; rates: typeof allInRateRows.value }>()
+const deckCache = new Map<string, DeckRow[]>()
+
+const personalHasData = computed(() => {
+  if (loading.value) {
+    return true
+  }
+  const cacheValue = personalCache.get(selectedPersonalGame.value)
+  return !!cacheValue
+})
 
 function setMainTab(tab: MainTabKey): void {
   selectedMainTab.value = tab
@@ -110,8 +129,131 @@ function profitClass(value: number): string {
 }
 
 function toSafeNumber(value: unknown): number {
+  if (typeof value === 'string') {
+    const numericText = value.replace(/,/g, '').trim()
+    const numeric = Number(numericText)
+    return Number.isFinite(numeric) ? numeric : 0
+  }
   const numeric = Number(value)
   return Number.isFinite(numeric) ? numeric : 0
+}
+
+function clampRate(value: number): number {
+  return Math.max(0, Math.min(100, Math.round(value * 10) / 10))
+}
+
+function clearRadarRaf(): void {
+  if (radarRafId) {
+    cancelAnimationFrame(radarRafId)
+    radarRafId = 0
+  }
+}
+
+function scheduleRadarDraw(): void {
+  clearRadarRaf()
+  radarRafId = requestAnimationFrame(() => {
+    drawAllInRadar()
+  })
+}
+
+function drawAllInRadar(): void {
+  const canvas = radarCanvasRef.value
+  const wrap = radarWrapRef.value
+  if (!canvas || !wrap) {
+    return
+  }
+
+  const width = wrap.clientWidth
+  const height = wrap.clientHeight
+  if (!width || !height) {
+    return
+  }
+
+  const dpr = window.devicePixelRatio || 1
+  canvas.width = Math.round(width * dpr)
+  canvas.height = Math.round(height * dpr)
+  canvas.style.width = `${width}px`
+  canvas.style.height = `${height}px`
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) {
+    return
+  }
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  ctx.clearRect(0, 0, width, height)
+
+  const centerX = width / 2
+  const centerY = height / 2 + 6
+  const radius = Math.min(width, height) * 0.26
+  const levels = 5
+
+  const pointAt = (axis: 'top' | 'right' | 'bottom' | 'left', value: number): [number, number] => {
+    const scale = clampRate(value) / 100
+    const length = radius * scale
+    if (axis === 'top') return [centerX, centerY - length]
+    if (axis === 'right') return [centerX + length, centerY]
+    if (axis === 'bottom') return [centerX, centerY + length]
+    return [centerX - length, centerY]
+  }
+
+  ctx.lineCap = 'round'
+  for (let level = levels; level >= 1; level -= 1) {
+    const ratio = level / levels
+    const ring = [
+      [centerX, centerY - radius * ratio],
+      [centerX + radius * ratio, centerY],
+      [centerX, centerY + radius * ratio],
+      [centerX - radius * ratio, centerY],
+    ]
+    ctx.beginPath()
+    ctx.moveTo(ring[0][0], ring[0][1])
+    for (let i = 1; i < ring.length; i += 1) {
+      ctx.lineTo(ring[i][0], ring[i][1])
+    }
+    ctx.closePath()
+    ctx.strokeStyle = level === levels ? 'rgba(249, 249, 249, 0.92)' : 'rgba(249, 249, 249, 0.16)'
+    ctx.lineWidth = level === levels ? 1.7 : 1
+    ctx.stroke()
+  }
+
+  ctx.beginPath()
+  ctx.moveTo(centerX, centerY - radius)
+  ctx.lineTo(centerX, centerY + radius)
+  ctx.moveTo(centerX - radius, centerY)
+  ctx.lineTo(centerX + radius, centerY)
+  ctx.strokeStyle = 'rgba(249, 249, 249, 0.24)'
+  ctx.lineWidth = 1
+  ctx.stroke()
+
+  const radarPoints: Array<[number, number]> = [
+    pointAt('top', allInOverallRate.value),
+    pointAt('right', backwardRate.value),
+    pointAt('bottom', leadingRate.value),
+    pointAt('left', passiveRate.value),
+  ]
+
+  const fill = ctx.createLinearGradient(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
+  fill.addColorStop(0, 'rgba(249, 249, 249, 0.34)')
+  fill.addColorStop(1, 'rgba(249, 249, 249, 0.14)')
+  ctx.beginPath()
+  ctx.moveTo(radarPoints[0][0], radarPoints[0][1])
+  for (let i = 1; i < radarPoints.length; i += 1) {
+    ctx.lineTo(radarPoints[i][0], radarPoints[i][1])
+  }
+  ctx.closePath()
+  ctx.fillStyle = fill
+  ctx.strokeStyle = 'rgba(249, 249, 249, 0.78)'
+  ctx.lineWidth = 1.3
+  ctx.fill()
+  ctx.stroke()
+
+  ctx.fillStyle = 'rgba(249, 249, 249, 0.84)'
+  for (const [x, y] of radarPoints) {
+    ctx.beginPath()
+    ctx.arc(x, y, 2, 0, Math.PI * 2)
+    ctx.fill()
+  }
 }
 
 function formatSigned(value: number): string {
@@ -122,43 +264,522 @@ function formatSigned(value: number): string {
   return value > 0 ? `+${abs}` : `-${abs}`
 }
 
-async function fetchClubDataInfo(): Promise<void> {
-  loading.value = true
+function nowSeconds(): number {
+  return Math.floor(Date.now() / 1000)
+}
+
+function withClubId<T extends Record<string, unknown>>(request: T): T {
+  if (userInfoStore.currentClub?.club_id) {
+    return {
+      ...request,
+      club_id: userInfoStore.currentClub.club_id,
+    }
+  }
+  return request
+}
+
+function resolvePeriodRange(period: string): { start_time: number; end_time: number } {
+  const endTime = nowSeconds()
+  const daySeconds = 24 * 3600
+  switch (period) {
+    case '本周':
+      return { start_time: endTime - 7 * daySeconds, end_time: endTime }
+    case '本月':
+      return { start_time: endTime - 30 * daySeconds, end_time: endTime }
+    default:
+      return { start_time: endTime - 90 * daySeconds, end_time: endTime }
+  }
+}
+
+function resolvePersonalMode(mode: string): { game_types: number[]; poker_types: number[] } {
+  if (mode === '奥马哈') {
+    return { game_types: [1, 2, 3], poker_types: [0] }
+  }
+  if (mode === '短牌') {
+    return { game_types: [0], poker_types: [2] }
+  }
+  return { game_types: [0], poker_types: [0] }
+}
+
+function resolveAllInMode(mode: string): { game_types: number[]; poker_types: number[]; aof_type: number } {
+  if (mode === 'Omaha') {
+    return { game_types: [1, 2, 3], poker_types: [0], aof_type: 2 }
+  }
+  if (mode === '6+') {
+    return { game_types: [0], poker_types: [2], aof_type: 2 }
+  }
+  if (mode === 'AOF 6+') {
+    return { game_types: [0], poker_types: [2], aof_type: 1 }
+  }
+  if (mode === 'AOF Texas') {
+    return { game_types: [0], poker_types: [0], aof_type: 1 }
+  }
+  if (mode === 'AOF Omaha') {
+    return { game_types: [1, 2, 3], poker_types: [0], aof_type: 1 }
+  }
+  return { game_types: [0], poker_types: [0], aof_type: 2 }
+}
+
+function resolveDeckMode(mode: string): { game_types: number[]; poker_types: number[]; aof_type: number } {
+  if (mode === 'Omaha') {
+    return { game_types: [1, 2, 3], poker_types: [0], aof_type: 2 }
+  }
+  if (mode === 'AOF Texas') {
+    return { game_types: [0], poker_types: [0], aof_type: 1 }
+  }
+  if (mode === 'AOF Omaha') {
+    return { game_types: [1, 2, 3], poker_types: [0], aof_type: 1 }
+  }
+  return { game_types: [0], poker_types: [0], aof_type: 2 }
+}
+
+function parseDeckCards(value: unknown): [string, string] {
+  if (typeof value !== 'string') {
+    return ['--', '--']
+  }
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return ['--', '--']
+  }
+  const splitByDelimiter = trimmed.split(/[\s,|/]+/).filter(Boolean)
+  if (splitByDelimiter.length >= 2) {
+    return [splitByDelimiter[0], splitByDelimiter[1]]
+  }
+  if (trimmed.length >= 4) {
+    return [trimmed.slice(0, 2), trimmed.slice(2, 4)]
+  }
+  return [trimmed, '--']
+}
+
+function setPersonalCache(mode: string, roomData: Record<string, unknown>): void {
+  const metricMap: Record<string, number> = {
+    vpip: clampRate(toSafeNumber(roomData.vpip)),
+    wins: clampRate(toSafeNumber(roomData.wins)),
+    prf: clampRate(toSafeNumber(roomData.prf)),
+    wtsd: clampRate(toSafeNumber(roomData.wtsd)),
+    bet3: clampRate(toSafeNumber(roomData.bet3)),
+    allinWins: clampRate(toSafeNumber(roomData.allinWins)),
+  }
+
+  personalCache.set(
+    mode,
+    personalRingMeta.map((item) => ({
+      ...item,
+      value: metricMap[item.key] ?? 0,
+    }))
+  )
+}
+
+function setOpponentCache(period: string, records: unknown): void {
+  const list = Array.isArray(records) ? records : []
+  const rows = list.map((item, index) => {
+    const row = typeof item === 'object' && item ? (item as Record<string, unknown>) : {}
+    return {
+      id: String(row.user_id ?? index),
+      name: String(row.nickname ?? '--'),
+      avatar: typeof row.avatar === 'string' ? row.avatar : undefined,
+      hands: toSafeNumber(row.hand_count),
+      lose: toSafeNumber(row.loss_count),
+      win: toSafeNumber(row.profit_count),
+      profit: toSafeNumber(row.profit_total),
+    }
+  })
+  opponentCache.set(period, rows)
+}
+
+function setAllInCache(mode: string, stats: Record<string, unknown>): void {
+  const handCount = toSafeNumber(stats.hand_count)
+  const winCount = toSafeNumber(stats.profit_count)
+  const loseCount = toSafeNumber(stats.loss_count)
+  const profit = toSafeNumber(stats.profit_total)
+
+  const summary = [
+    { label: '累计盈利', value: formatSigned(profit), highlight: 'up' as const },
+    { label: 'All in', value: winCount.toLocaleString('en-US') },
+    { label: '手数', value: handCount.toLocaleString('en-US') },
+    { label: '获胜', value: winCount.toLocaleString('en-US') },
+    { label: '失利', value: loseCount.toLocaleString('en-US') },
+  ]
+
+  const activeCount = toSafeNumber(stats.active_count)
+  const passiveCount = toSafeNumber(stats.passive_count)
+  const aheadCount = toSafeNumber(stats.ahead_count)
+  const behindCount = toSafeNumber(stats.behind_count)
+  const activeProfitCount = toSafeNumber(stats.active_profit_count)
+  const passiveProfitCount = toSafeNumber(stats.passive_profit_count)
+  const aheadProfitCount = toSafeNumber(stats.ahead_profit_count)
+  const behindProfitCount = toSafeNumber(stats.behind_profit_count)
+
+  const rates = [
+    {
+      key: 'active',
+      label: '主动',
+      rate: activeCount > 0 ? clampRate((activeProfitCount / activeCount) * 100) : 0,
+      color: '#50a7ec',
+    },
+    {
+      key: 'passive',
+      label: '被动',
+      rate: passiveCount > 0 ? clampRate((passiveProfitCount / passiveCount) * 100) : 0,
+      color: '#fa2b4b',
+    },
+    {
+      key: 'ahead',
+      label: '领先',
+      rate: aheadCount > 0 ? clampRate((aheadProfitCount / aheadCount) * 100) : 0,
+      color: '#109657',
+    },
+    {
+      key: 'behind',
+      label: '落后',
+      rate: behindCount > 0 ? clampRate((behindProfitCount / behindCount) * 100) : 0,
+      color: '#b519d8',
+    },
+  ]
+
+  allInCache.set(mode, { summary, rates })
+}
+
+function setDeckCache(mode: string, records: unknown): void {
+  const list = Array.isArray(records) ? records : []
+  const rows = list.map((item, index) => {
+    const row = typeof item === 'object' && item ? (item as Record<string, unknown>) : {}
+    const cards = parseDeckCards(row.hand_card_type)
+    return {
+      id: `${mode}-${index}`,
+      cards,
+      winCount: toSafeNumber(row.profit_count),
+      totalHands: toSafeNumber(row.hand_count),
+      winRate: clampRate(toSafeNumber(row.profit_ratio)),
+      profit: toSafeNumber(row.profit_total),
+    }
+  })
+  deckCache.set(mode, rows)
+}
+
+function applyCurrentPersonal(): void {
+  personalRings.value = personalCache.get(selectedPersonalGame.value) ?? personalRingMeta.map((item) => ({ ...item, value: 0 }))
+}
+
+function applyCurrentOpponent(): void {
+  opponentRows.value = opponentCache.get(selectedOpponentPeriod.value) ?? []
+}
+
+function applyCurrentAllIn(): void {
+  const value = allInCache.get(selectedAllInMode.value)
+  allInSummary.value = value?.summary ?? [
+    { label: '累计盈利', value: '0', highlight: 'up' as const },
+    { label: 'All in', value: '0' },
+    { label: '手数', value: '0' },
+    { label: '获胜', value: '0' },
+    { label: '失利', value: '0' },
+  ]
+  allInRateRows.value = value?.rates ?? [
+    { key: 'active', label: '主动', rate: 0, color: '#50a7ec' },
+    { key: 'passive', label: '被动', rate: 0, color: '#fa2b4b' },
+    { key: 'ahead', label: '领先', rate: 0, color: '#109657' },
+    { key: 'behind', label: '落后', rate: 0, color: '#b519d8' },
+  ]
+}
+
+function applyCurrentDeck(): void {
+  deckRows.value = deckCache.get(selectedDeckMode.value) ?? []
+}
+
+async function requestCombine(payload: Record<string, unknown>, silent = false): Promise<Record<string, unknown> | null> {
   try {
-    const response = await postClubDataStatsDataInfoApi({
-      filter_type: 1,
-    })
+    const response = await postMiscCombineApi(payload)
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : '加载俱乐部数据失败')
     }
-
-    const info = response.data?.info
-    const handNum = toSafeNumber(info?.hand_num)
-    const gameNum = toSafeNumber(info?.game_num)
-    const profit = toSafeNumber(info?.profit)
-    const fee = toSafeNumber(info?.fee)
-    const insurance = toSafeNumber(info?.insurence)
-
-    personalRings[0].value = Math.max(0, Math.min(100, handNum % 101))
-    personalRings[1].value = Math.max(0, Math.min(100, gameNum % 101))
-    personalRings[2].value = Math.max(0, Math.min(100, Math.abs(profit) % 101))
-    personalRings[3].value = Math.max(0, Math.min(100, Math.abs(fee) % 101))
-    personalRings[4].value = Math.max(0, Math.min(100, Math.abs(insurance) % 101))
-
-    allInSummary[0].value = formatSigned(profit)
-    allInSummary[2].value = handNum.toLocaleString('en-US')
-    allInSummary[3].value = gameNum.toLocaleString('en-US')
-    allInSummary[4].value = Math.max(0, gameNum - handNum).toLocaleString('en-US')
+    return (response.data as Record<string, unknown>) || {}
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加载俱乐部数据失败'
-    showFailToast(message)
+    if (!silent) {
+      const message = error instanceof Error ? error.message : '加载俱乐部数据失败'
+      showFailToast(message)
+    }
+    return null
+  }
+}
+
+async function loadPersonal(mode: string, silent = false): Promise<void> {
+  if (personalCache.has(mode)) {
+    return
+  }
+  const gameConfig = resolvePersonalMode(mode)
+  const payload = {
+    api_list: [28],
+    stats_user_stats_req: withClubId({
+      filter_type: 1,
+      room_type: 0,
+      time_type: 4,
+      time_long: nowSeconds(),
+      ...gameConfig,
+    }),
+  }
+  const data = await requestCombine(payload, silent)
+  if (!data) {
+    return
+  }
+  const statsResp = (data.stats_user_stats_resp ?? {}) as Record<string, unknown>
+  const roomData = ((statsResp.room_data as Record<string, unknown>) ?? {})
+  setPersonalCache(mode, roomData)
+}
+
+async function loadOpponent(period: string, silent = false): Promise<void> {
+  if (opponentCache.has(period)) {
+    return
+  }
+  const range = resolvePeriodRange(period)
+  const payload = {
+    api_list: [31],
+    user_rival_room_stats_req: withClubId({
+      gold_type: 1,
+      order_type: 2,
+      limit: 50,
+      offset: 0,
+      ...range,
+    }),
+  }
+  const data = await requestCombine(payload, silent)
+  if (!data) {
+    return
+  }
+  const rivalResp = (data.user_rival_room_stats_resp ?? {}) as Record<string, unknown>
+  setOpponentCache(period, rivalResp.records)
+}
+
+async function loadAllIn(mode: string, silent = false): Promise<void> {
+  if (allInCache.has(mode)) {
+    return
+  }
+  const range = resolvePeriodRange('历史')
+  const modeConfig = resolveAllInMode(mode)
+  const payload = {
+    api_list: [32],
+    user_allin_room_stats_req: withClubId({
+      gold_type: 1,
+      ...range,
+      ...modeConfig,
+    }),
+  }
+  const data = await requestCombine(payload, silent)
+  if (!data) {
+    return
+  }
+  const allInResp = (data.user_allin_room_stats_resp ?? {}) as Record<string, unknown>
+  const stats = (allInResp.stats as Record<string, unknown>) ?? {}
+  setAllInCache(mode, stats)
+}
+
+async function loadDeck(mode: string, silent = false): Promise<void> {
+  if (deckCache.has(mode)) {
+    return
+  }
+  const range = resolvePeriodRange('历史')
+  const modeConfig = resolveDeckMode(mode)
+  const payload = {
+    api_list: [33],
+    user_card_type_room_stats_req: withClubId({
+      gold_type: 1,
+      order_type: 6,
+      limit: 50,
+      offset: 0,
+      ...range,
+      ...modeConfig,
+    }),
+  }
+  const data = await requestCombine(payload, silent)
+  if (!data) {
+    return
+  }
+  const cardTypeResp = (data.user_card_type_room_stats_resp ?? {}) as Record<string, unknown>
+  setDeckCache(mode, cardTypeResp.records)
+}
+
+async function loadInitial(): Promise<void> {
+  loading.value = true
+  try {
+    const personalMode = selectedPersonalGame.value
+    const opponentPeriod = selectedOpponentPeriod.value
+    const allInMode = selectedAllInMode.value
+    const deckMode = selectedDeckMode.value
+
+    const payload = {
+      api_list: [28, 31, 32, 33],
+      stats_user_stats_req: withClubId({
+        filter_type: 1,
+        room_type: 0,
+        time_type: 4,
+        time_long: nowSeconds(),
+        ...resolvePersonalMode(personalMode),
+      }),
+      user_rival_room_stats_req: withClubId({
+        gold_type: 1,
+        order_type: 2,
+        limit: 50,
+        offset: 0,
+        ...resolvePeriodRange(opponentPeriod),
+      }),
+      user_allin_room_stats_req: withClubId({
+        gold_type: 1,
+        ...resolvePeriodRange('历史'),
+        ...resolveAllInMode(allInMode),
+      }),
+      user_card_type_room_stats_req: withClubId({
+        gold_type: 1,
+        order_type: 6,
+        limit: 50,
+        offset: 0,
+        ...resolvePeriodRange('历史'),
+        ...resolveDeckMode(deckMode),
+      }),
+    }
+
+    const data = await requestCombine(payload)
+    if (!data) {
+      return
+    }
+
+    const statsResp = (data.stats_user_stats_resp ?? {}) as Record<string, unknown>
+    const roomData = ((statsResp.room_data as Record<string, unknown>) ?? {})
+    setPersonalCache(personalMode, roomData)
+
+    const rivalResp = (data.user_rival_room_stats_resp ?? {}) as Record<string, unknown>
+    setOpponentCache(opponentPeriod, rivalResp.records)
+
+    const allInResp = (data.user_allin_room_stats_resp ?? {}) as Record<string, unknown>
+    setAllInCache(allInMode, (allInResp.stats as Record<string, unknown>) ?? {})
+
+    const cardTypeResp = (data.user_card_type_room_stats_resp ?? {}) as Record<string, unknown>
+    setDeckCache(deckMode, cardTypeResp.records)
+
+    applyCurrentPersonal()
+    applyCurrentOpponent()
+    applyCurrentAllIn()
+    applyCurrentDeck()
   } finally {
     loading.value = false
   }
 }
 
+async function preloadAllTabs(): Promise<void> {
+  const preloadTasks: Array<Promise<void>> = []
+
+  for (const mode of personalGameTabs) {
+    if (mode !== selectedPersonalGame.value) {
+      preloadTasks.push(loadPersonal(mode, true))
+    }
+  }
+
+  for (const period of opponentPeriodTabs) {
+    if (period !== selectedOpponentPeriod.value) {
+      preloadTasks.push(loadOpponent(period, true))
+    }
+  }
+
+  for (const mode of allInModeTabs) {
+    if (mode !== selectedAllInMode.value) {
+      preloadTasks.push(loadAllIn(mode, true))
+    }
+  }
+
+  for (const mode of deckModeTabs) {
+    if (mode !== selectedDeckMode.value) {
+      preloadTasks.push(loadDeck(mode, true))
+    }
+  }
+
+  await Promise.all(preloadTasks)
+}
+
+async function ensureCurrentTabData(): Promise<void> {
+  if (selectedMainTab.value === 'personal') {
+    if (!personalCache.has(selectedPersonalGame.value)) {
+      loading.value = true
+      await loadPersonal(selectedPersonalGame.value)
+      loading.value = false
+    }
+    applyCurrentPersonal()
+    return
+  }
+
+  if (selectedMainTab.value === 'opponent') {
+    if (!opponentCache.has(selectedOpponentPeriod.value)) {
+      loading.value = true
+      await loadOpponent(selectedOpponentPeriod.value)
+      loading.value = false
+    }
+    applyCurrentOpponent()
+    return
+  }
+
+  if (selectedMainTab.value === 'allin') {
+    if (!allInCache.has(selectedAllInMode.value)) {
+      loading.value = true
+      await loadAllIn(selectedAllInMode.value)
+      loading.value = false
+    }
+    applyCurrentAllIn()
+    return
+  }
+
+  if (!deckCache.has(selectedDeckMode.value)) {
+    loading.value = true
+    await loadDeck(selectedDeckMode.value)
+    loading.value = false
+  }
+  applyCurrentDeck()
+}
+
+watch(selectedMainTab, () => {
+  void ensureCurrentTabData()
+  if (selectedMainTab.value === 'allin') {
+    void nextTick(() => {
+      scheduleRadarDraw()
+    })
+  }
+})
+
+watch(selectedPersonalGame, () => {
+  void ensureCurrentTabData()
+})
+
+watch(selectedOpponentPeriod, () => {
+  void ensureCurrentTabData()
+})
+
+watch(selectedAllInMode, () => {
+  void ensureCurrentTabData()
+})
+
+watch([allInRateRows, allInOverallRate], () => {
+  if (selectedMainTab.value !== 'allin') {
+    return
+  }
+  void nextTick(() => {
+    scheduleRadarDraw()
+  })
+}, { deep: true })
+
+watch(selectedDeckMode, () => {
+  void ensureCurrentTabData()
+})
+
 onMounted(() => {
-  void fetchClubDataInfo()
+  window.addEventListener('resize', onWindowResize)
+
+  void (async () => {
+    await loadInitial()
+    await nextTick()
+    scheduleRadarDraw()
+    void preloadAllTabs()
+  })()
+})
+
+onBeforeUnmount(() => {
+  clearRadarRaf()
+  window.removeEventListener('resize', onWindowResize)
 })
 </script>
 
@@ -201,14 +822,21 @@ onMounted(() => {
               v-for="ring in personalRings"
               :key="ring.key"
               class="ring-card"
-              :style="{ '--ring-color': ring.color, '--ring-progress': ring.value + '%' }"
             >
-              <div class="ring-donut">
+              <van-circle
+                class="ring-donut"
+                :size="'1.92rem'"
+                :rate="ring.value"
+                :speed="100"
+                :stroke-width="60"
+                :color="ring.color"
+                layer-color="rgba(255, 255, 255, 0.16)"
+              >
                 <div class="ring-inner">
                   <div class="ring-value">{{ ring.value }}%</div>
                   <div class="ring-label">{{ ring.label }}</div>
                 </div>
-              </div>
+              </van-circle>
             </article>
           </section>
 
@@ -278,7 +906,7 @@ onMounted(() => {
 
           <article v-for="row in opponentRows" :key="row.id" class="table-row">
             <div class="player-cell">
-              <span class="avatar" aria-hidden="true"></span>
+              <span class="avatar" :style="row.avatar ? { backgroundImage: `url(${row.avatar})` } : undefined" aria-hidden="true"></span>
               <span class="name">{{ row.name }}</span>
             </div>
             <span>{{ row.hands }}</span>
@@ -323,17 +951,24 @@ onMounted(() => {
             <span class="pie-icon" aria-hidden="true"></span>
           </div>
 
-          <div class="radar-wrap">
-            <div class="tag tag-top">rate<br />80%</div>
-            <div class="tag tag-left">Passive<br />80%</div>
-            <div class="tag tag-right">Backward<br />80%</div>
-            <div class="tag tag-bottom">Leading<br />80%</div>
-            <div class="radar-core">
-              <div class="diamond d1"></div>
-              <div class="diamond d2"></div>
-              <div class="diamond d3"></div>
-              <div class="diamond d4"></div>
-              <div class="diamond fill"></div>
+          <div ref="radarWrapRef" class="allin-radar-wrap">
+            <canvas ref="radarCanvasRef" class="allin-radar-canvas"></canvas>
+
+            <div class="radar-badge radar-badge-top">
+              <span class="badge-label">rate</span>
+              <span class="badge-rate">{{ allInOverallRate }}%</span>
+            </div>
+            <div class="radar-badge radar-badge-left">
+              <span class="badge-label">Passive</span>
+              <span class="badge-rate">{{ passiveRate }}%</span>
+            </div>
+            <div class="radar-badge radar-badge-right">
+              <span class="badge-label">Backward</span>
+              <span class="badge-rate">{{ backwardRate }}%</span>
+            </div>
+            <div class="radar-badge radar-badge-bottom">
+              <span class="badge-label">Leading</span>
+              <span class="badge-rate">{{ leadingRate }}%</span>
             </div>
           </div>
         </section>
@@ -501,21 +1136,16 @@ onMounted(() => {
 }
 
 .ring-donut {
-  width: 1.92rem;
-  height: 1.92rem;
   border-radius: 50%;
-  padding: 0.12rem;
-  background:
-    conic-gradient(var(--ring-color) var(--ring-progress), rgba(255, 255, 255, 0.15) var(--ring-progress)),
-    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 60%, rgba(0, 0, 0, 0.28) 100%);
+  overflow: hidden;
   box-shadow: 0 0.06rem 0.18rem rgba(0, 0, 0, 0.2);
 }
 
 .ring-inner {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: rgba(116, 90, 116, 0.56);
+  width: 1.34rem;
+  height: 1.34rem;
+  border-radius: 9999px;
+  background: rgba(116, 90, 116, 0.52);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -728,22 +1358,26 @@ onMounted(() => {
 
 .allin-summary-card {
   margin-top: 0.34rem;
-  padding: 0.28rem 0.28rem 0.24rem;
+  border-radius: 0.67rem;
+  padding: 0.48rem 0.58rem 0.34rem;
 }
 
 .allin-mode-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.12rem;
+  gap: 0.24rem;
 }
 
 .mode-chip {
   border: 0;
-  border-radius: 0.38rem;
+  border-radius: 1.16rem;
   background: rgba(0, 0, 0, 0.2);
   color: #fff;
   font-size: 0.34rem;
   min-height: 0.78rem;
+  padding: 0;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
 
   &.active {
     background: rgba(5, 231, 174, 0.6);
@@ -761,109 +1395,110 @@ onMounted(() => {
 }
 
 .summary-list {
-  margin-top: 0.2rem;
+  margin-top: 0.26rem;
 }
 
 .summary-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 0.7rem;
-  font-size: 0.42rem;
+  min-height: 0.6rem;
+  font-size: 0.34rem;
+  line-height: 1.4;
 }
 
 .radar-card {
   margin-top: 0.28rem;
-  padding: 0.28rem;
+  border-radius: 0.67rem;
+  padding: 0.48rem 0.58rem 0.4rem;
 }
 
-.radar-wrap {
-  margin-top: 0.14rem;
-  height: 4.7rem;
+.allin-summary-card .section-title,
+.radar-card .section-title {
+  margin-top: 0.34rem;
+  font-size: 0.338rem;
+  font-weight: 500;
+}
+
+.allin-summary-card .pie-icon,
+.radar-card .pie-icon {
+  width: 0.613rem;
+  height: 0.613rem;
+  border-width: 0.035rem;
+
+  &::after {
+    width: 0.27rem;
+    height: 0.03rem;
+    top: 0.24rem;
+  }
+}
+
+.allin-radar-wrap {
   position: relative;
+  margin-top: 0.26rem;
+  height: 6.75rem;
 }
 
-.tag {
+.allin-radar-canvas {
   position: absolute;
-  min-width: 1.28rem;
-  padding: 0.08rem 0.18rem;
-  border-radius: 0.24rem;
-  border: 0.03rem solid rgba(249, 249, 249, 0.95);
-  text-align: center;
-  font-size: 0.34rem;
-  font-weight: 700;
-  line-height: 1.14;
-  color: #fff;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.tag-top {
+.radar-badge {
+  position: absolute;
+  border: 0.038rem solid #f9f9f9;
+  border-radius: 0.38rem;
+  color: #f9f9f9;
+  min-height: 1.31rem;
+  padding: 0.19rem 0.32rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  line-height: 1;
+}
+
+.badge-label {
+  font-size: 0.3rem;
+  font-weight: 400;
+}
+
+.badge-rate {
+  margin-top: 0.1rem;
+  font-size: 0.4rem;
+  font-weight: 700;
+}
+
+.radar-badge-top {
   left: 50%;
-  top: 0.15rem;
+  top: 0.18rem;
   transform: translateX(-50%);
   background: #50a7ec;
+  min-width: 1.54rem;
 }
 
-.tag-left {
-  left: 0.1rem;
-  top: 1.45rem;
+.radar-badge-left {
+  left: 0;
+  top: 2.08rem;
   background: #fa2b4b;
+  min-width: 1.78rem;
 }
 
-.tag-right {
-  right: 0.1rem;
-  top: 1.45rem;
+.radar-badge-right {
+  right: 0;
+  top: 2.08rem;
   background: #b519d8;
+  min-width: 2.22rem;
 }
 
-.tag-bottom {
+.radar-badge-bottom {
   left: 50%;
-  bottom: 0.16rem;
+  bottom: 0.24rem;
   transform: translateX(-50%);
   background: #109657;
-}
-
-.radar-core {
-  position: absolute;
-  left: 50%;
-  top: 2.42rem;
-  width: 2.8rem;
-  height: 2.8rem;
-  transform: translate(-50%, -50%);
-}
-
-.diamond {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  border: 0.02rem solid rgba(249, 249, 249, 0.34);
-  transform: translate(-50%, -50%) rotate(45deg);
-}
-
-.d1 {
-  width: 2.6rem;
-  height: 2.6rem;
-}
-
-.d2 {
-  width: 2rem;
-  height: 2rem;
-}
-
-.d3 {
-  width: 1.46rem;
-  height: 1.46rem;
-}
-
-.d4 {
-  width: 0.9rem;
-  height: 0.9rem;
-}
-
-.fill {
-  width: 1.55rem;
-  height: 1.2rem;
-  border: 0;
-  background: rgba(249, 249, 249, 0.18);
+  min-width: 1.94rem;
 }
 
 .deck-tabs-card {
@@ -956,6 +1591,8 @@ onMounted(() => {
   border-radius: 0.1rem;
   border: 0.01rem solid rgba(20, 44, 69, 0.28);
   box-shadow: inset 0 0 0 0.01rem rgba(255, 255, 255, 0.35);
+  background-size: cover;
+  background-position: center;
   background: linear-gradient(170deg, #ffffff 0%, #f1f6ff 100%);
   color: #111;
   display: flex;
@@ -988,9 +1625,9 @@ onMounted(() => {
     padding-right: 0.34rem;
   }
 
-  .ring-donut {
-    width: 1.78rem;
-    height: 1.78rem;
+  .ring-inner {
+    width: 1.24rem;
+    height: 1.24rem;
   }
 
   .ring-label {

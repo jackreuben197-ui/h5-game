@@ -31,10 +31,5 @@ export interface TableFormFieldConfig {
   range?: boolean
   markMode?: SliderMarkMode
   placeholder?: string
-}
-
-export interface FormSection {
-  key: string
-  label: string
-  fields: TableFormFieldConfig[]
+  needDouble?: boolean
 }

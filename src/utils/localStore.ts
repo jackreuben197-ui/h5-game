@@ -36,24 +36,25 @@ export const localStore = {
 }
 
 // 提供给 pinia-plugin-persistedstate 的 Storage 适配器。
+// pinia-plugin-persistedstate 传入/期望的 value 已经是 JSON 字符串，
+// 直接存取 localStorage，不再经过 localStore 的二次 JSON.stringify/parse。
 export const dzpkPersistStorage: Storage = {
   get length() {
     return window.localStorage.length
   },
   clear(): void {
-    localStore.clear()
+    window.localStorage.clear()
   },
   getItem(key: string): string | null {
-    const value = localStore.getItem<string | null>(key, null)
-    return typeof value === 'string' ? value : null
+    return window.localStorage.getItem(KEY_PREFIX + key)
   },
   key(index: number): string | null {
     return window.localStorage.key(index)
   },
   removeItem(key: string): void {
-    localStore.removeItem(key)
+    window.localStorage.removeItem(KEY_PREFIX + key)
   },
   setItem(key: string, value: string): void {
-    localStore.setItem(key, value)
+    window.localStorage.setItem(KEY_PREFIX + key, value)
   },
 }

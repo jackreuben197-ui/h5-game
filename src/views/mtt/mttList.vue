@@ -14,11 +14,13 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { getLocale, t } from '@/i18n'
 import { checkIsShowForClubAndTribe, ROOM_ORIGIN_TYPE } from '@/utils/roomVisibility'
 import {
-  ensureMultiLanguageTemplateLoaded,
   multiLanguageTemplateVersion,
   resolveTemplateTextByKey,
 } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, formatTodayAwareTimeLabel, toTimestampMs } from '@/utils/time'
+
+// 赛事级别状态（对应服务端 status 字段，与 Unity MttMatchStatus 枚举一致）
+const MttMatchStatus = { CREATED: 0, RUNNING: 1, CLOSED: 2, CANCEL: 3 } as const
 
 type MttTabName = 'all' | 'poker' | 'mahjong'
 type MttCategory = 'poker' | 'mahjong' | 'unknown'
@@ -55,19 +57,6 @@ interface MttRenderGroup extends MttGroup {
   displayItems: MttViewItem[]
 }
 
-// MTT 玩家状态（与服务端 state_code 语义对齐）。
-// status 游戏状态 0 = 可报名 1 = 等待开赛 2 = 延迟报名 3 = 进行中 4 = 立即进入 5 = 报名截止 6 = 等待审批 7 = 重购条件不足
-
-const MTT_PLAYER_STATUS = {
-  CAN_APPLY: 0,
-  WAITING_START: 1,
-  DELAY_APPLY: 2,
-  RUNNING: 3,
-  CAN_ENTER: 4,
-  APPLY_DEADLINE: 5,
-  WAITING_APPROVAL: 6,
-  REBUY_NOT_ENOUGH: 7,
-} as const
 
 const activeTab = ref<MttTabName>('all')
 const mttListStore = useMttListStore()
@@ -94,8 +83,6 @@ const mttTabs = computed<TabOption[]>(() => [
 onMounted(() => {
   // 与首页共用同一个 MTT 数据源：先读缓存秒开，再静默刷新。
   mttListStore.bootstrapMttList()
-  // 对齐 Unity：进入列表时确保模板多语言映射已就绪。
-  void ensureMultiLanguageTemplateLoaded()
   ticker = window.setInterval(() => {
     nowMs.value = Date.now()
   }, 1000)
@@ -155,7 +142,7 @@ const renderGroups = computed<MttRenderGroup[]>(() =>
 )
 
 function handleCardAction(item: MttItem): void {
-  console.log('[MTT] action:', item)
+  router.push({ name: 'mtt-detail', query: { id: String(item.id) } })
 }
 
 const router = useRouter()
@@ -299,9 +286,8 @@ function normalizeRecordToViewItem(
   const applyStartAtMs = toTimestampMs(record.apply_start_time)
   const lateEndAtMs = calcLateEndMs(record, startAtMs)
 
-  const action = resolveAction(record, stage)
+  const action = resolveAction(stage)
   const statusView = resolveStatusView(
-    record,
     stage,
     startAtMs,
     applyStartAtMs,
@@ -425,96 +411,63 @@ function resolveNameByUnityRule(rawName: string): string {
   return rawName
 }
 
-// 阶段判定：用于卡片右上角状态文案，不影响分组。
+// 对齐 Unity GameMatchItemView：list 的 status 是赛事级别（CREATED/RUNNING/CLOSED），
+// CREATED 内再比较 applyStartTimestamp 决定"等待开赛"还是"报名"。
 function resolveStage(record: RawMttRecord, nowTimestamp: number): MttStage {
-  const status = getMttPlayerStatus(record)
-  if (status === MTT_PLAYER_STATUS.WAITING_START) return 'upcoming'
-  if (status === MTT_PLAYER_STATUS.CAN_APPLY) return 'registering'
-  if (status === MTT_PLAYER_STATUS.DELAY_APPLY) return 'late'
-  if (status === MTT_PLAYER_STATUS.RUNNING || status === MTT_PLAYER_STATUS.CAN_ENTER) {
-    return 'running'
+  const status = toSafeInt(record.status)
+  if (status === MttMatchStatus.CREATED) {
+    const applyStart = toTimestampMs(record.apply_start_time)
+    return applyStart > 0 && nowTimestamp < applyStart ? 'upcoming' : 'registering'
   }
-  // 5=报名截止 6=等待审批 7=重购条件不足 及其他未知状态统一归为 finished。
-  void nowTimestamp
+  if (status === MttMatchStatus.RUNNING) {
+    const enTime = calcLateEndMs(record, toTimestampMs(record.start_time))
+    return enTime > 0 && nowTimestamp < enTime ? 'late' : 'running'
+  }
   return 'finished'
 }
 
-function resolveAction(record: RawMttRecord, stage: MttStage): { type: MttActionType; label: string } {
-  void stage
-  const status = getMttPlayerStatus(record)
-  switch (status) {
-    case MTT_PLAYER_STATUS.CAN_APPLY:
-      return { type: 'register', label: t('UIMTT_Listitembm') }
-    case MTT_PLAYER_STATUS.WAITING_START:
-      return { type: 'full', label: t('mtt_btn_waiting_start') }
-    case MTT_PLAYER_STATUS.DELAY_APPLY:
+function resolveAction(stage: MttStage): { type: MttActionType; label: string } {
+  switch (stage) {
+    case 'upcoming':
+      return { type: 'inProgress', label: t('mtt_btn_waiting_start') }
+    case 'registering':
+      return { type: 'register', label: t('MTT-Apply') }
+    case 'late':
       return { type: 'late', label: t('mtt_btn_delay') }
-    case MTT_PLAYER_STATUS.RUNNING:
-      return { type: 'join', label: t('mtt_btn_ongoing') }
-    case MTT_PLAYER_STATUS.CAN_ENTER:
+    case 'running':
       return { type: 'join', label: t('mtt_btn_enter') }
-    case MTT_PLAYER_STATUS.APPLY_DEADLINE:
-      return { type: 'full', label: t('mtt_btn_sign_up_deadline') }
-    case MTT_PLAYER_STATUS.WAITING_APPROVAL:
-      return { type: 'full', label: t('mtt_btn_waiting_approval') }
-    case MTT_PLAYER_STATUS.REBUY_NOT_ENOUGH:
-      return { type: 'full', label: t('mtt_btn_Stopbuying') }
     default:
       return { type: 'full', label: t('mtt_btn_sign_up_deadline') }
   }
 }
 
 function resolveStatusView(
-  record: RawMttRecord,
   stage: MttStage,
   startAtMs: number,
   applyStartAtMs: number,
   lateEndAtMs: number,
   nowTimestamp: number,
 ): { label: string; theme: 'warning' | 'success' | 'danger' | 'default' } {
-  void stage
-  const status = getMttPlayerStatus(record)
   const applyTarget = applyStartAtMs > 0 ? applyStartAtMs : startAtMs
   const lateTarget = lateEndAtMs > 0 ? lateEndAtMs : startAtMs
-  if (status === MTT_PLAYER_STATUS.CAN_APPLY) {
-    return { label: t('MTT-Applying'), theme: 'success' }
+  switch (stage) {
+    case 'upcoming':
+      return { label: formatTodayAwareTimeLabel(applyTarget, nowTimestamp), theme: 'default' }
+    case 'registering':
+      return { label: t('MTT-Applying'), theme: 'success' }
+    case 'late':
+      return {
+        label: `${t('UIMTTLatestRegister')} ${formatTodayAwareTimeLabel(lateTarget, nowTimestamp)}`,
+        theme: 'warning',
+      }
+    case 'running':
+      return {
+        label: `${t('UIMTTLatestRegister')} ${formatTodayAwareTimeLabel(lateTarget, nowTimestamp)}`,
+        theme: 'danger',
+      }
+    default:
+      return { label: t('mtt_btn_sign_up_deadline'), theme: 'default' }
   }
-  if (status === MTT_PLAYER_STATUS.WAITING_START) {
-    return { label: formatTodayAwareTimeLabel(applyTarget, nowTimestamp), theme: 'default' }
-  }
-  if (status === MTT_PLAYER_STATUS.DELAY_APPLY) {
-    return {
-      label: `${t('UIMTTLatestRegister')} ${formatTodayAwareTimeLabel(lateTarget, nowTimestamp)}`,
-      theme: 'warning',
-    }
-  }
-  if (status === MTT_PLAYER_STATUS.RUNNING) {
-    return {
-      label: `${t('UIMTTLatestRegister')} ${formatTodayAwareTimeLabel(lateTarget, nowTimestamp)}`,
-      theme: 'danger',
-    }
-  }
-  if (status === MTT_PLAYER_STATUS.CAN_ENTER) {
-    return {
-      label: `${t('UIMTTLatestRegister')} ${formatTodayAwareTimeLabel(lateTarget, nowTimestamp)}`,
-      theme: 'danger',
-    }
-  }
-  if (status === MTT_PLAYER_STATUS.APPLY_DEADLINE) {
-    return { label: t('mtt_btn_sign_up_deadline'), theme: 'default' }
-  }
-  if (status === MTT_PLAYER_STATUS.WAITING_APPROVAL) {
-    return { label: t('mtt_btn_waiting_approval'), theme: 'default' }
-  }
-  if (status === MTT_PLAYER_STATUS.REBUY_NOT_ENOUGH) {
-    return { label: t('mtt_btn_Stopbuying'), theme: 'default' }
-  }
-  return { label: t('mtt_btn_sign_up_deadline'), theme: 'default' }
-}
-
-function getMttPlayerStatus(record: RawMttRecord): number {
-  // 仅使用新协议字段 status，不再兼容旧字段。
-  return toSafeInt(record.status)
 }
 
 function resolveMaxCount(record: RawMttRecord, participants: number): number {
@@ -536,14 +489,14 @@ function getDefaultGameIcon(category: MttCategory): string {
 </script>
 
 <template>
-  <div class="mtt-list-page themeType2">
+  <div class="mtt-list-page themeType2 ">
     <div class="bg-overlay"></div>
 
     <HeaderBack :title="t('UIHomeMttArea')">
       <template #right>
         <div class="action-wrap">
-          <TopActionButton name="充值" :icon="walletIcon" icon-alt="wallet" />
-          <TopActionButton name="客服" :icon="serviceIcon" icon-alt="service" />
+          <TopActionButton :name="t('Wallet_Deposit')" :icon="walletIcon" icon-alt="wallet" />
+          <TopActionButton :name="t('Wallet_AppBarSupport')" :icon="serviceIcon" icon-alt="service" />
         </div>
       </template>
     </HeaderBack>
@@ -551,7 +504,7 @@ function getDefaultGameIcon(category: MttCategory): string {
       v-model="activeTab"
       :tabs="mttTabs"
     />
-    <section class="mtt-content">
+    <section class="mtt-content ">
       <template v-if="renderGroups.length">
         <div v-for="group in renderGroups" :key="group.groupId" class="mtt-group">
           <!-- 分组标题 -->
@@ -563,7 +516,7 @@ function getDefaultGameIcon(category: MttCategory): string {
               class="mtt-group__toggle"
               @click="handleViewAll(group)"
             >
-              {{ group.expanded ? '收起' : '查看全部' }}
+              {{ group.expanded ? t('UIMinePutAway') : t('UIHappyShop_ShowAll') }}
             </span>
           </div>
 
@@ -607,7 +560,7 @@ function getDefaultGameIcon(category: MttCategory): string {
 
       <div v-else class="empty-wrap">
         <VanIcon name="search" />
-        <span>暂无赛事</span>
+        <span>{{ t('UIMatchNoTournaments') }}</span>
       </div>
     </section>
   </div>
@@ -642,7 +595,7 @@ function getDefaultGameIcon(category: MttCategory): string {
   z-index: 1;
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
-  padding: 0.4rem 0.38rem 0.5333rem;
+  padding: 0.4rem 0.38rem 2.5333rem;
   // background: rgba(255, 255, 255, 0.24);
   backdrop-filter: blur(0.3533rem) saturate(1.04);
 }

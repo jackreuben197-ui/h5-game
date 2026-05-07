@@ -21,6 +21,9 @@ import type {
 import StorageKey from '@/constants/storageKey'
 import { useGameStore } from '@/stores/game'
 import { localStore } from '@/utils/localStore'
+import { createLogger } from '@/utils/logger'
+
+const log = createLogger('[mttList]')
 
 interface MttListCachePayload {
   version: number
@@ -299,7 +302,7 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
       } catch (error) {
         // 静默刷新失败时保留旧缓存，避免页面闪空。
         if (!options.silent) {
-          console.warn('[mttList] fetch list failed:', error)
+          log.warn('fetch list failed:', error)
         }
       }
     },
@@ -317,7 +320,7 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
       } catch (error) {
         // 静默刷新失败时保留旧缓存，避免页面闪空。
         if (!options.silent) {
-          console.warn('[mttList] fetch all mtt/sng ids failed:', error)
+          log.warn('fetch all mtt/sng ids failed:', error)
         }
       }
     },

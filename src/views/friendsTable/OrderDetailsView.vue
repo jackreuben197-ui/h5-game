@@ -2,8 +2,9 @@
 import { computed } from 'vue'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import { t } from '@/i18n'
+import type { ClubPlayerOrderRecordOrderInfo } from '@/api/models/order'
 
-const props = defineProps<{ orderId: string }>()
+const props = defineProps<{ order: ClubPlayerOrderRecordOrderInfo }>()
 const emit = defineEmits<{ close: [] }>()
 
 interface Row {
@@ -11,16 +12,27 @@ interface Row {
   value: string
 }
 
+function statusLabel(status?: number): string {
+  const map: Record<number, string> = {
+    1: t('Wallet_StatusPending'),
+    2: t('Wallet_StatusApproved'),
+    3: t('Wallet_StatusRejected'),
+    4: t('Wallet_StatusCancelled'),
+  }
+  return map[status ?? 0] ?? '-'
+}
+
+function formatTime(raw?: string): string {
+  if (!raw) return '-'
+  return raw.replace('T', ' ').slice(0, 19)
+}
+
 const rows = computed<Row[]>(() => [
-  { label: t('Wallet_OrderId'), value: props.orderId || '87sdf55dfsd' },
-  { label: t('Wallet_OrderAmount'), value: '100.01' },
-  { label: t('Wallet_OrderFee'), value: '0' },
-  { label: t('Wallet_OrderPayAmount'), value: '13.8014' },
-  { label: t('Wallet_OrderPayAddr'), value: '56677' },
-  { label: t('Wallet_OrderRecvName'), value: '唯一金额' },
-  { label: t('Wallet_OrderRecvAddr'), value: '5sd6654ddfdf' },
-  { label: t('Wallet_OrderTime'), value: '2025-11-12 15:14:09' },
-  { label: t('Wallet_OrderStatus'), value: t('Wallet_StatusPending') },
+  { label: t('Wallet_OrderId'),     value: props.order.order_no ?? '-' },
+  { label: t('Wallet_OrderAmount'), value: String(props.order.gold_num ?? '-') },
+  { label: t('Wallet_OrderPayAmount'), value: String(props.order.amount ?? '-') },
+  { label: t('Wallet_OrderTime'),   value: formatTime(props.order.create_time) },
+  { label: t('Wallet_OrderStatus'), value: statusLabel(props.order.status) },
 ])
 
 function close(): void {
@@ -30,26 +42,26 @@ function close(): void {
 
 <template>
   <Teleport to="body">
-  <div
-    class="overlay"
-    :style="{ backgroundImage: `url(${sharpBgUrl})` }"
-    @click.self="close"
-  >
-    <div class="card">
-      <div class="card__bg" :style="{ backgroundImage: `url(${sharpBgUrl})` }"></div>
-      <h2 class="card__title">{{ t('Wallet_OrderTitle') }}</h2>
-      <div class="card__rows">
-        <div
-          v-for="r in rows"
-          :key="r.label"
-          class="card__row"
-        >
-          <span class="card__key">{{ r.label }}</span>
-          <span class="card__val">{{ r.value }}</span>
+    <div
+      class="overlay"
+      :style="{ backgroundImage: `url(${sharpBgUrl})` }"
+      @click.self="close"
+    >
+      <div class="card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
+        <!-- <div class="card__bg" ></div> -->
+        <h2 class="card__title">{{ t('Wallet_OrderTitle') }}</h2>
+        <div class="card__rows">
+          <div
+            v-for="r in rows"
+            :key="r.label"
+            class="card__row"
+          >
+            <span class="card__key">{{ r.label }}</span>
+            <span class="card__val">{{ r.value }}</span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
   </Teleport>
 </template>
 
@@ -75,7 +87,8 @@ function close(): void {
   pointer-events: none;
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
-  background: rgba(0, 0, 0, 0.15);
+  // background: rgba(0, 0, 0, 0.15);
+  background: rgba(12, 12, 12, 0.60);
 }
 
 .card {
@@ -96,16 +109,16 @@ function close(): void {
   overflow: hidden;
 }
 
-.card__bg {
-  position: absolute;
-  inset: -12px;
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  filter: blur(10px);
-  pointer-events: none;
-  z-index: 0;
-}
+// .card__bg {
+//   position: absolute;
+//   inset: -12px;
+//   background-size: cover;
+//   background-position: center;
+//   background-attachment: fixed;
+//   filter: blur(10px);
+//   pointer-events: none;
+//   z-index: 0;
+// }
 
 .card::after {
   content: '';
@@ -113,10 +126,31 @@ function close(): void {
   inset: 0;
   border-radius: inherit;
   background: rgba(0, 0, 0, 0.28);
+  background: rgba(0, 0, 0, 0.70);
+   box-shadow:
+    0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
+    0 0 0.2298rem 0 #000 inset,
+    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.90) inset;
+  backdrop-filter: blur(7.580729961395264px);
+  -webkit-backdrop-filter: blur(7.580729961395264px);
   pointer-events: none;
   z-index: 1;
 }
 
+.card::before {
+  content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 0.0255rem;
+    background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+
+}
 .card__title,
 .card__rows {
   position: relative;

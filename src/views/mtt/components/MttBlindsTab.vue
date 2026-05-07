@@ -114,7 +114,7 @@ const blindLevels = computed(() => blindList.value.length)
     <!-- 顶部统计 -->
     <div class="blinds-stats-card">
       <div class="blinds-stat-row">
-        <div class="blinds-stat-label">盲注级别数</div>
+        <div class="blinds-stat-label">{{ t('UIMatchBlindLevelCount') }}</div>
         <div class="blinds-stat-value">{{ blindLevels }}</div>
       </div>
     </div>
@@ -123,25 +123,25 @@ const blindLevels = computed(() => blindList.value.length)
     <GameTable :data="blindList" height="12rem">
       <GameTableColumn
         prop="level"
-        label="级别"
+        :label="t('UITexasReport_Text_BlindLevelTip')"
         :flex="1"
         align="center"
       />
       <GameTableColumn
         prop="blinds"
-        label="盲注"
+        :label="t('UITexasReport_Label_AllBarMZ')"
         :flex="2"
         align="center"
       />
       <GameTableColumn
         prop="ante"
-        label="前注"
+        :label="t('UITexasReport_Text_BlindAnteTip')"
         :flex="1"
         align="center"
       />
       <GameTableColumn
         prop="duration"
-        label="盲注时间"
+        :label="t('UITexasReport_Text_BlindBlindTimeTip')"
         :flex="2"
         align="center"
       />
@@ -175,7 +175,7 @@ const blindLevels = computed(() => blindList.value.length)
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0.4rem;
+  padding: 0 1.8rem;
   height: 1.2rem;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 3.9rem;
@@ -183,6 +183,7 @@ const blindLevels = computed(() => blindList.value.length)
 }
 
 .blinds-stat-label {
+  text-align: center;
   font-size: 0.36rem;
   font-family: 'SF Pro', 'HONOR Sans CN', sans-serif;
   font-weight: 700;

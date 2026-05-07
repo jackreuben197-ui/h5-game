@@ -81,13 +81,13 @@ function onWallet(): void {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: clamp(6px, 2.13vw, 10px) clamp(10px, 3.47vw, 16px) clamp(6px, 2.13vw, 10px) clamp(24px, 8vw, 30px);
+  padding: 0.213rem 0.347rem 0.213rem 0.8rem;
 }
 
 .appbar__title {
   display: flex;
   align-items: center;
-  gap: clamp(12px, 4.27vw, 16px);
+  gap: 0.427rem;
   white-space: nowrap;
   background: none;
   border: none;
@@ -97,14 +97,14 @@ function onWallet(): void {
 }
 
 .appbar__back {
-  width: clamp(10px, 3.2vw, 14px);
-  height: clamp(10px, 3.2vw, 14px);
+  width: 0.32rem;
+  height: 0.32rem;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .appbar__actions {
   display: flex;
   align-items: center;
-  gap: clamp(4px, 1.6vw, 8px);
+  gap: 0.16rem;
 }
 </style>

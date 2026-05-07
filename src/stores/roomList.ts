@@ -10,6 +10,9 @@ import {
 import StorageKey from '@/constants/storageKey'
 import { useGameStore } from '@/stores/game'
 import { localStore } from '@/utils/localStore'
+import { createLogger } from '@/utils/logger'
+
+const log = createLogger('[roomList]')
 
 interface RoomListCachePayload {
   version: number
@@ -126,7 +129,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
       } catch (error) {
         // 静默刷新失败时保留旧缓存，避免页面闪空。
         if (!options.silent) {
-          console.warn('[roomList] fetch rooms failed:', error)
+          log.warn('fetch rooms failed:', error)
         }
       }
     },
@@ -148,7 +151,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
         return
       }
 
-      console.info('[roomList] ignore unknown room change type', payload.changeType)
+      log.debug('ignore unknown room change type', payload.changeType)
     },
 
     // 新增房间：已存在则覆盖合并，不存在则追加。
@@ -215,7 +218,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
 
       if (index < 0) {
         // 更新包找不到房间时，不回源 HTTP，等待后续 ADD 或下一次全量同步。
-        console.warn('[roomList] room update ignored: room not found', roomChange.rid)
+        log.warn('room update ignored: room not found', roomChange.rid)
         return
       }
 

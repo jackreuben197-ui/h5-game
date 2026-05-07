@@ -6,7 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
+270_1991744289129892150.md
 node_modules
 dist
 dist-ssr
@@ -28,3 +28,6 @@ components.d.ts
 *.sw?
 .codebuddy
 assets/CodeBuddyAssets
+
+# local protocol repo
+agreement-web/

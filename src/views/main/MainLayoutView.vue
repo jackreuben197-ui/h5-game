@@ -3,14 +3,21 @@ import { computed, onMounted, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { getUserClubApi, getUserInfoApi } from '@/api/user'
+import { postGlobalConfigApi } from '@/api/config'
+import { forwardGlobalConfigToCocos } from '@/bridge/sync/h5BusinessSync'
+import { ensureMultiLanguageTemplateLoaded } from '@/utils/multiLanguageTemplate'
 import LoginSession from '@/session/loginSession'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
 import { useGameStore } from '@/stores/game'
+import { useAppConfigStore } from '@/stores/appConfig'
 import { useTextI18n } from '@/i18n/useTextI18n'
+import StorageKey from '@/constants/storageKey'
+import { localStore } from '@/utils/localStore'
 
 const route = useRoute()
 const gameStore = useGameStore()
 const tabsStore = useMainTabsStore()
+const appConfigStore = useAppConfigStore()
 const { setLocale } = useTextI18n()
 
 // 主容器背景图：全页面共用一张底图。
@@ -40,9 +47,12 @@ async function fetchUserInfoOnEnter(): Promise<void> {
           userId,
         })
 
-        // 读取后端语言字段；如果没有定义，则按英文兜底。
+        // 读取后端语言字段；本地已有用户明确选择的语言时不覆盖，避免登录后重置为服务端值。
         const languageCode = resolveLanguageCode(user)
-        setLocale(languageCode || 'en')
+        const localSavedLanguage = localStore.getItem<string>(StorageKey.Language, '')
+        if (!localSavedLanguage) {
+          setLocale(languageCode || 'en')
+        }
       })
       .catch((error) => {
         console.warn('[main-layout] sync user info failed:', error)
@@ -51,6 +61,23 @@ async function fetchUserInfoOnEnter(): Promise<void> {
     // 俱乐部信息静默同步，失败仅记日志。
     void getUserClubApi().catch((error) => {
       console.warn('[main-layout] sync user club failed:', error)
+    })
+
+    // 全局配置静默拉取并缓存到 Pinia + localStorage（对齐 Unity GameCache）。
+    void postGlobalConfigApi({})
+      .then((res) => {
+        if (res.code === 0 && res.data) {
+          appConfigStore.setGlobalConfig(res.data)
+          forwardGlobalConfigToCocos(res.data)
+        }
+      })
+      .catch((error) => {
+        console.warn('[main-layout] sync global config failed:', error)
+      })
+
+    // 多语言模板静默拉取并缓存到 localStorage（模块初始化时已从缓存恢复，此处更新）。
+    void ensureMultiLanguageTemplateLoaded().catch((error) => {
+      console.warn('[main-layout] sync multi-language template failed:', error)
     })
   }
 

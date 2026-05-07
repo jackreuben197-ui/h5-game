@@ -83,6 +83,11 @@ export interface SyncLanguagePayload {
   locale: string
 }
 
+// globalConfig 同步。
+export interface SyncGlobalConfigPayload {
+  raw: unknown
+}
+
 // Cocos 回执通用负载。
 export interface CocosAckPayload {
   ok: boolean

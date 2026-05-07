@@ -75,11 +75,14 @@ export interface PropChatPropUsedProp {
 
 // /api/prop/gold/price/list (PropGoldPriceList)
 export interface PropGoldPriceListRequest {
-
-    source_type?: number; // 来源类型：1-联盟，2-玩家
-    club_id?: number; // 俱乐部ID
-    gold_types?: number[]; // 币种列表
-
+  club_id?: number
+  ids?: number[]
+  gold_types?: number[]
+  pay_gold_types?: number[]
+  source_type?: number // 1-联盟；2-玩家
+  trader_type?: number // 见接口约定；常与示例中的 0 对齐
+  limit?: number
+  offset?: number
   [key: string]: unknown
 }
 

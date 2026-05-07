@@ -312,6 +312,27 @@ function onPayClick() {
   }
 }
 
+async function onWithdrawCsChat(orderData: Record<string, unknown>) {
+  try {
+    const channelRes = await postChatSupportChannelListApi({
+      im_service_types: [4],
+      limit: 1,
+      offset: 0,
+    })
+    if (channelRes.code === 0 && channelRes.data?.list?.length) {
+      const channel = channelRes.data.list[0]
+      csChatProps.value = {
+        tribeId: channel.tribe_id || 0,
+        supportUserId: channel.support_user_id || 0,
+        orderData,
+      }
+      csChatPopupOpen.value = true
+    }
+  } catch (e) {
+    console.error('Failed to fetch chat channel for withdraw', e)
+  }
+}
+
 async function onCsSubmit(displayPayPrice?: number) {
   csPopupOpen.value = false
 
@@ -579,7 +600,7 @@ async function onUsdtSubmit(type: number) {
       </template>
 
         <template v-else>
-          <WithdrawForm />
+          <WithdrawForm @open-cs-chat="onWithdrawCsChat" />
         </template>
       </div>
     </div>

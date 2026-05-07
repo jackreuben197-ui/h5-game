@@ -121,6 +121,7 @@ export default [
         2,
         {
           SwitchCase: 1,
+          offsetTernaryExpressions: true,
         },
       ],
       'key-spacing': [
@@ -179,7 +180,17 @@ export default [
       ],
       'vue/html-indent': ['error', 2],
       // 与 Prettier singleAttributePerLine:false 保持一致，不强制每个属性独占一行。
-      'vue/max-attributes-per-line': ['error', { singleline: { max: 3 }, multiline: { max: 1 } }],
+      'vue/max-attributes-per-line': [
+        'error',
+        {
+          singleline: {
+            max: 999,
+          },
+          multiline: {
+            max: 1,
+          },
+        },
+      ],
       'vue/html-closing-bracket-newline': [
         'error',
         {

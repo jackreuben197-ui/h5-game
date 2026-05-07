@@ -4,12 +4,59 @@ import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import TableSwitch from '@/components/GameCreateForm/TableSwitch.vue'
 import TableSelect from '@/components/GameCreateForm/TableSelect.vue'
 import TableSlider from '@/components/GameCreateForm/TableSlider.vue'
+import TableInput from '@/components/GameCreateForm/TableInput.vue'
 import QuickCreateView from './QuickCreateView.vue'
 import { nlhSections } from './sections/index'
 import { defaultNlhFormState, type NlhFormState } from './sections/formState'
 import type { FieldValue, TableFormFieldConfig } from './template'
+import { useAppConfigStore } from '@/stores/appConfig'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { buildBuyinOptions, resolveBringinBbRange } from './sections/topSlides'
+import { getAnteOptions } from './sections/constants'
+import { t } from '@/i18n'
+import icDiamondBalance from '@/assets/icons/ic_diamond_balance.svg'
+import icTip from '@/assets/icons/ic_tip.svg'
 
 const formState = reactive<NlhFormState>({ ...defaultNlhFormState })
+const appConfigStore = useAppConfigStore()
+const userInfoStore = useUserInfoStore()
+
+// 俱乐部钻石余额
+const clubDiamondBalance = computed(() => {
+  const club = userInfoStore.currentClub
+  return club?.diamonds ?? 0
+})
+
+// 创建费用计算（根据当前配置动态计算）
+interface CreateFeeConfig {
+  originalPrice: number
+  currentPrice: number
+  isDiscount: boolean
+  discountExpired: boolean
+}
+
+const createFee = computed<CreateFeeConfig>(() => {
+  // 从全局配置读取创建房间费用配置（如果有）
+  // 默认原价 100 钻石，假设有折扣配置
+  const originalPrice = 100
+  let currentPrice = originalPrice
+  let isDiscount = false
+  let discountExpired = true
+
+  // 如果有折扣配置，解析判断是否在有效期内
+  // 这里用示例逻辑：实际应从 globalConfig 或接口获取
+  const now = Date.now() / 1000
+  // 假设折扣配置在 globalConfig 中（后续对接真实配置）
+  const discountStart = 0
+  const discountEnd = 0
+  if (discountStart && discountEnd && now >= discountStart && now <= discountEnd) {
+    currentPrice = Math.floor(originalPrice * 0.8)
+    isDiscount = true
+    discountExpired = false
+  }
+
+  return { originalPrice, currentPrice, isDiscount, discountExpired }
+})
 
 // section 渲染时动态访问 formState，用此别名绕过 TS 索引限制
 const formStateMap = formState as Record<string, FieldValue>
@@ -20,7 +67,16 @@ const componentMap: Record<string, unknown> = {
   switch: TableSwitch,
   select: TableSelect,
   slider: TableSlider,
+  input: TableInput,
 }
+//全局配置中获取俱乐部带入区间范围
+const buyinBbRange = (() => {
+  const raw = appConfigStore.globalConfig?.friend_club_bringin_min_max_bb_range
+  return resolveBringinBbRange(raw)
+})()
+
+const buyinOptions = computed(() => buildBuyinOptions(buyinBbRange, formState.sb))
+const anteOptions = computed(() => getAnteOptions(formState.sb))
 
 function hitCondition(conditionValue: FieldValue | FieldValue[], formValue: FieldValue): boolean {
   if (Array.isArray(conditionValue)) {
@@ -39,11 +95,17 @@ function isSameFieldValue(left: FieldValue, right: FieldValue): boolean {
   }
   return left === right
 }
-
+//处理解析该配置是否隐藏禁用
 function checkConditions(
   conditions: TableFormFieldConfig['visibleWhen'] | TableFormFieldConfig['disabledWhen'],
 ): boolean {
-  return conditions!.every((cond) => hitCondition(cond.equals, formStateMap[cond.field]))
+  return conditions!.every((cond) => {
+    const value = formStateMap[cond.field]
+    const matchEquals = cond.equals === undefined ? true : hitCondition(cond.equals, value)
+    const matchNotEquals =
+      cond.notEquals === undefined ? true : !hitCondition(cond.notEquals, value)
+    return matchEquals && matchNotEquals
+  })
 }
 
 function isVisible(field: TableFormFieldConfig): boolean {
@@ -56,29 +118,95 @@ function isDisabled(field: TableFormFieldConfig): boolean {
   return checkConditions(field.disabledWhen)
 }
 
+// 处理动态选项
+function resolveFieldOptions(field: TableFormFieldConfig) {
+  if (field.modelValue === 'buyin_range') {
+    return buyinOptions.value
+  }
+  if (field.modelValue === 'ante') {
+    return anteOptions.value
+  }
+  return field.options
+}
+
 const renderedSections = computed(() =>
   nlhSections.map((section) => ({
-    fields: section.filter((f) => isVisible(f)).map((f) => ({ ...f, disabled: isDisabled(f) })),
+    fields: section
+      .filter((f) => isVisible(f))
+      .map((f) => ({
+        ...f,
+        options: resolveFieldOptions(f),
+        disabled: isDisabled(f),
+      })),
   })),
 )
 
-
 function onFieldChange(field: TableFormFieldConfig, value: FieldValue): void {
-  if (field.modelValue !== 'buyin_range' || !Array.isArray(value)) {
-    return
+  const curField = field.modelValue
+  if (curField === 'buyin_range' && Array.isArray(value)) {
+    //处理带入区间
+    const start = Number(value[0])
+    const end = Number(value[1])
+    if (!Number.isFinite(start) || !Number.isFinite(end)) {
+      return
+    }
+    const minRate = Math.min(start, end)
+    const maxRate = Math.max(start, end)
+    formState.min_rate = minRate
+    formState.max_rate = maxRate
+    formState.buyin_range = [minRate, maxRate]
+  } else if (curField === 'autostart_min_players' || curField === 'seat_count') {
+    // 人满开局不能超过最大座位数
+    if (formState.autostart_min_players > formState.seat_count) {
+      formState.autostart_min_players = formState.seat_count
+    }
+  } else if (curField === 'sb' || curField == 'random_ante') {
+    // SB 变化时重置前注（新 SB 的选项列表不同）
+    formState.ante = 0
+  } else if (curField === 'min_ante' || curField === 'max_ante') {
+    // 保证最大前注 >= 最小前注
+    formState.max_ante = String(Math.max(+formState.max_ante, +formState.min_ante))
+  } else if (curField === 'retain_min_rate' || curField === 'retain_max_rate') {
+    // 保证最大保留 >= 最小保留
+    formState.retain_max_rate = Math.min(
+      99999,
+      Math.max(+formState.retain_max_rate, +formState.retain_min_rate),
+    )
+  } else if (curField === 'mushroom') {
+    formState.mushroom_mode = 2
+    formState.critical_hit = 0
+    formState.squid = 0
+  } else if (curField == 'squid') {
+    formState.mushroom = 0
+    formState.critical_hit = 0
+  } else if (curField == 'critical_hit') {
+    formState.squid = 0
+    formState.mushroom = 0
   }
+}
 
-  const start = Number(value[0])
-  const end = Number(value[1])
-  if (!Number.isFinite(start) || !Number.isFinite(end)) {
-    return
-  }
-
-  const minRate = Math.min(start, end)
-  const maxRate = Math.max(start, end)
+const clampBuyinRangeOnce = (): void => {
+  const clamp = (value: number) =>
+    Math.min(buyinBbRange.maxBb, Math.max(buyinBbRange.minBb, Math.floor(value)))
+  const nextMin = clamp(formState.buyin_range[0])
+  const nextMax = clamp(formState.buyin_range[1])
+  const minRate = Math.min(nextMin, nextMax)
+  const maxRate = Math.max(nextMin, nextMax)
+  formState.buyin_range = [minRate, maxRate]
   formState.min_rate = minRate
   formState.max_rate = maxRate
-  formState.buyin_range = [minRate, maxRate]
+}
+
+clampBuyinRangeOnce()
+
+function onSaveTemplate() {
+  // TODO: 保存模板逻辑
+  console.log('保存模板', formState)
+}
+
+function onCreateTable() {
+  // TODO: 创建牌桌逻辑
+  console.log('创建牌桌', formState)
 }
 </script>
 
@@ -143,9 +271,51 @@ function onFieldChange(field: TableFormFieldConfig, value: FieldValue): void {
             :range="field.range"
             :mark-mode="field.markMode"
             :disabled="field.disabled"
+            :number-only="field.numberOnly"
+            :decimal-digits="field.decimalDigits"
             :need-double="field.needDouble"
+            :icon="field.icon"
+            :tip2="
+              field.modelValue == 'squid' && formState.squid
+                ? formState.squid_mode == 1
+                  ? t('UICreateTableSquidClassicTips')
+                  : t('UICreateTableSquidBattleTips')
+                : ''
+            "
             @change="onFieldChange(field, $event)"
           />
+        </div>
+      </div>
+
+      <!-- Bottom action bar -->
+      <div class="bottom-action-bar">
+        <div class="fee-info">
+          <div class="fee-row">
+            <span class="fee-label">消耗:</span>
+            <div class="fee-value-wrap">
+              <img :src="icDiamondBalance" class="fee-diamond-icon" alt="" />
+              <span class="fee-original">{{ createFee.originalPrice.toLocaleString() }}</span>
+            </div>
+          </div>
+          <div class="fee-row fee-row--current">
+            <img :src="icDiamondBalance" class="fee-diamond-icon" alt="" />
+            <span class="fee-current">{{ createFee.currentPrice.toLocaleString() }}</span>
+            <img
+              v-if="createFee.isDiscount && !createFee.discountExpired"
+              :src="icTip"
+              class="fee-strike"
+              alt=""
+            />
+          </div>
+          <div class="fee-row">
+            <span class="fee-label">余额:</span>
+            <img :src="icDiamondBalance" class="fee-diamond-icon" alt="" />
+            <span class="fee-balance">{{ clubDiamondBalance.toLocaleString() }}</span>
+          </div>
+        </div>
+        <div class="action-buttons">
+          <button class="action-btn action-btn--save" @click="onSaveTemplate">保存模板</button>
+          <button class="action-btn action-btn--create" @click="onCreateTable">立即创建</button>
         </div>
       </div>
     </template>
@@ -263,6 +433,110 @@ function onFieldChange(field: TableFormFieldConfig, value: FieldValue): void {
 
   &:last-of-type {
     border-bottom: none;
+  }
+}
+
+/* Bottom action bar */
+.bottom-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.27rem 0.35rem 0;
+  padding-bottom: calc(0.4rem + env(safe-area-inset-bottom));
+}
+
+.fee-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.fee-row {
+  display: flex;
+  align-items: center;
+  gap: 0.08rem;
+
+  &--current {
+    margin-left: 0.15rem;
+  }
+}
+
+.fee-label {
+  font-size: 0.31rem;
+  font-family: 'HONOR Sans CN', sans-serif;
+  font-weight: 400;
+  color: #fff;
+}
+
+.fee-value-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.06rem;
+  position: relative;
+}
+
+.fee-diamond-icon {
+  width: 0.32rem;
+  height: 0.32rem;
+}
+
+.fee-original {
+  font-size: 0.34rem;
+  font-family: 'HONOR Sans CN', sans-serif;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  text-decoration: line-through;
+}
+
+.fee-current {
+  font-size: 0.34rem;
+  font-family: 'HONOR Sans CN', sans-serif;
+  font-weight: 700;
+  color: #fff;
+}
+
+.fee-strike {
+  width: 0.28rem;
+  height: 0.28rem;
+}
+
+.fee-balance {
+  font-size: 0.34rem;
+  font-family: 'HONOR Sans CN', sans-serif;
+  font-weight: 700;
+  color: #fff;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.21rem;
+}
+
+.action-btn {
+  width: 2.4rem;
+  height: 1.04rem;
+  border: none;
+  border-radius: 1.11rem;
+  font-size: 0.37rem;
+  font-family: 'HONOR Sans CN', sans-serif;
+  font-weight: 400;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &--save {
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    backdrop-filter: blur(0.17px);
+  }
+
+  &--create {
+    background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+    color: #fff;
+    box-shadow: inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
+      inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
   }
 }
 </style>

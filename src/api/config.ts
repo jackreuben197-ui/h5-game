@@ -5,6 +5,8 @@ import type {
   BaseConfigCombineRequest,
   BeforeLoginConfigData,
   BeforeLoginConfigRequest,
+  DiamondConfigData,
+  DiamondConfigRequest,
   GlobalConfigData,
   GlobalConfigRequest,
   MaintenanceData,
@@ -34,6 +36,14 @@ export async function postGlobalConfigApi(
   payload: GlobalConfigRequest = {},
 ): Promise<ApiResponse<GlobalConfigData>> {
   const response = await http.post<ApiResponse<GlobalConfigData>>('/config/global/config', payload)
+  return response.data
+}
+
+// 对齐 cocos /api/config/diamond/config。
+export async function postDiamondConfigApi(
+  payload: DiamondConfigRequest = {},
+): Promise<ApiResponse<DiamondConfigData>> {
+  const response = await http.post<ApiResponse<DiamondConfigData>>('/config/diamond/config', payload)
   return response.data
 }
 
@@ -115,4 +125,3 @@ export async function postOnlineWithdrawDescriptionApi(
   )
   return response.data
 }
-

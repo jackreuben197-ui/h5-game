@@ -88,6 +88,11 @@ export interface SyncGlobalConfigPayload {
   raw: unknown
 }
 
+// diamondConfig 同步。
+export interface SyncDiamondConfigPayload {
+  raw: unknown
+}
+
 // Cocos 回执通用负载。
 export interface CocosAckPayload {
   ok: boolean

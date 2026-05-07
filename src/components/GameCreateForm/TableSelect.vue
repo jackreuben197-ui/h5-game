@@ -29,7 +29,7 @@ const emit = defineEmits<{
 const expanded = ref(false)
 
 const displayText = computed(() => {
-  const opt = props.options.find(o => o.value === props.modelValue)
+  const opt = props.options.find((o) => o.value === props.modelValue)
   return opt ? opt.text : ''
 })
 
@@ -155,6 +155,8 @@ function onPopoverVisibilityChange(next: boolean): void {
   max-width: 4.4rem;
   max-height: 3.5rem;
   overflow-y: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
   padding: 0.14rem;
   border-radius: 0.18rem;
   background: rgba(20, 24, 28, 0.96);
@@ -164,6 +166,12 @@ function onPopoverVisibilityChange(next: boolean): void {
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
+}
+
+.table-select__dropdown::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 .table-select__popover {

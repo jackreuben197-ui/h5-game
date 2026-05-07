@@ -10,7 +10,8 @@ export interface FieldOption {
 
 export interface FieldCondition {
   field: string
-  equals: FieldValue | FieldValue[]
+  equals?: FieldValue | FieldValue[]
+  notEquals?: FieldValue | FieldValue[]
 }
 
 export interface TableFormFieldConfig {
@@ -31,5 +32,9 @@ export interface TableFormFieldConfig {
   range?: boolean
   markMode?: SliderMarkMode
   placeholder?: string
+  numberOnly?: boolean
+  decimalDigits?: number
   needDouble?: boolean
+  icon?: string
+  tip2?: string
 }

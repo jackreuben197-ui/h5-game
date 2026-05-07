@@ -13,6 +13,11 @@ export interface GlobalConfigRequest {
   [key: string]: unknown
 }
 
+// /config/diamond/config 请求参数。
+export interface DiamondConfigRequest {
+  [key: string]: unknown
+}
+
 // /config/global/config 响应 data。
 export interface GlobalConfigData {
   // 运营模式 1 直营模式 2 公会联盟模式。
@@ -48,6 +53,11 @@ export interface GlobalConfigData {
   record_fee_mtt_gc?: string
   record_fee_mtt_diamond?: string
   record_fee_mtt_scoreboard?: string
+  [key: string]: unknown
+}
+
+// /config/diamond/config 响应 data。
+export interface DiamondConfigData {
   [key: string]: unknown
 }
 
@@ -237,4 +247,3 @@ export interface OnlineWithdrawDescriptionData {
   name?: string
   [key: string]: unknown
 }
-

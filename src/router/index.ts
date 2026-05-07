@@ -397,6 +397,10 @@ const router = createRouter({
       name: 'wallet-orders',
       component: () => import('@/views/friendsTable/RechargeOrdersView.vue'),
       meta: { requiresAuth: true },
+      beforeEnter: async () => {
+        const walletStore = useWalletStore(pinia)
+        await walletStore.loadPriceList()
+      },
     },
     {
       path: '/wallet/details',

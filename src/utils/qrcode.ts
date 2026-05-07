@@ -6,6 +6,13 @@ export interface SaveQrCodeOptions {
   margin?: number
 }
 
+export async function generateQrCodeDataUrl(text: string, options: { width?: number, margin?: number } = {}): Promise<string> {
+  return await QRCode.toDataURL(text, {
+    width: options.width ?? 200,
+    margin: options.margin ?? 1,
+  })
+}
+
 export async function saveQrCodeImage(text: string, options: SaveQrCodeOptions = {}): Promise<void> {
   const content = text.trim()
   if (!content) {

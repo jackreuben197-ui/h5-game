@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useWalletStore } from '@/stores/wallet'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
@@ -8,6 +9,8 @@ const props = defineProps<{
   goldCount: number;
   rate: number;
   feeRate: number;
+  feeType?: number;
+  discount?: number;
 }>();
 
 const emit = defineEmits<{
@@ -15,46 +18,58 @@ const emit = defineEmits<{
   submit: [type: number]
 }>()
 
+const walletStore = useWalletStore()
+
 // 0: exact amount, 1: rounded amount
 const selectedOption = ref(0)
-
-function calculateUsdtPrice(goldCount: number, rate: number, feeRate: number) {
-  let base = goldCount / 100;
-  let price = base * rate;
-  price = Math.round(price * 10000) / 10000;
-  if (feeRate > 0) {
-    price = price * (1 + feeRate);
-    price = Math.round(price * 10000) / 10000;
-  }
-  return Number(price.toFixed(6));
-}
-
-const formatUsdtPrice = (price: number): string => {
-  if (price === 0) return "0";
-  const rounded = Math.round(price * 100) / 100;
-  const nearestInteger = Math.round(rounded);
-  if (Math.abs(rounded - nearestInteger) < 0.01) {
-    return nearestInteger.toString();
-  }
-  if (Number.isInteger(rounded)) {
-    return rounded.toString();
-  }
-  return rounded.toString().replace(/\.?0+$/, "");
-};
+const isTimedOut = ref(false)
+let timer: number | null = null
 
 const exactGoldCount = computed(() => props.goldCount || 0);
 const roundedGoldCount = computed(() => Math.floor((props.goldCount || 0) / 100) * 100);
 
-const exactPrice = computed(() => calculateUsdtPrice(exactGoldCount.value, props.rate || 0, props.feeRate || 0));
-const roundedPrice = computed(() => calculateUsdtPrice(roundedGoldCount.value, props.rate || 0, props.feeRate || 0));
+const exactPriceData = computed(() => walletStore.calculateUsdtPrice(
+  exactGoldCount.value,
+  props.rate || 0,
+  props.feeRate || 0,
+  props.feeType || 0,
+  props.discount || 0
+));
+
+const roundedPriceData = computed(() => walletStore.calculateUsdtPrice(
+  roundedGoldCount.value,
+  props.rate || 0,
+  props.feeRate || 0,
+  props.feeType || 0,
+  props.discount || 0
+));
+
+const exactPrice = computed(() => exactPriceData.value.totalUiPrice);
+const roundedPrice = computed(() => roundedPriceData.value.totalUiPrice);
 
 function close(): void {
   emit('close')
 }
 
 function submit(): void {
+  if (isTimedOut.value) return
   emit('submit', selectedOption.value)
 }
+
+function onRefresh() {
+  window.location.reload()
+}
+
+onMounted(() => {
+  // 15 minutes timeout
+  timer = window.setTimeout(() => {
+    isTimedOut.value = true
+  }, 15 * 60 * 1000)
+})
+
+onUnmounted(() => {
+  if (timer) clearTimeout(timer)
+})
 </script>
 
 <template>
@@ -92,10 +107,10 @@ function submit(): void {
               @click="selectedOption = 0"
             >
               <div class="option-card__amount-row">
-                <span class="option-card__amount">{{ formatUsdtPrice(exactPrice) }}</span>
+                <span class="option-card__amount">{{ walletStore.formatUsdtPrice(exactPrice) }}</span>
                 <img :src="icCoins" alt="" class="option-card__coin" />
               </div>
-              <div class="option-card__desc">需支付 {{ formatUsdtPrice(exactPrice) }}</div>
+              <div class="option-card__desc">需支付 {{ walletStore.formatUsdtPrice(exactPrice) }}</div>
               <div class="option-card__badge" :class="{ 'option-card__badge--active': selectedOption === 0 }">
                 <span class="badge-icon">
                   <svg class="badge-icon__bg" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" style="width: 15px; height: 15px; aspect-ratio: 1/1;">
@@ -119,7 +134,7 @@ function submit(): void {
                 <span class="option-card__amount">{{ Math.floor(roundedPrice) }}</span>
                 <img :src="icCoins" alt="" class="option-card__coin" />
               </div>
-              <div class="option-card__desc">需支付 {{ formatUsdtPrice(roundedPrice) }}</div>
+              <div class="option-card__desc">需支付 {{ walletStore.formatUsdtPrice(roundedPrice) }}</div>
               <div class="option-card__badge" :class="{ 'option-card__badge--active': selectedOption === 1 }">
                 <span class="badge-icon">
                   <svg class="badge-icon__bg" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" style="width: 15px; height: 15px; aspect-ratio: 1/1;">
@@ -137,6 +152,21 @@ function submit(): void {
           <!-- Submit Button -->
           <div class="card__action">
             <PrimaryButton text="报名" @click="submit" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeout Reminder Modal -->
+    <div v-if="isTimedOut" class="timeout-overlay" :style="{ backgroundImage: `url(${sharpBgUrl})` }" @click.self="isTimedOut = false">
+      <div class="timeout-card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
+        <div class="timeout-card__inner">
+          <div class="timeout-header">
+            <h2 class="timeout-title">提醒通知</h2>
+          </div>
+          <div class="timeout-body">
+            <p class="timeout-text">页面停留时间过长，</p>
+            <p class="timeout-text">请重新刷新页面后再充值</p>
           </div>
         </div>
       </div>
@@ -425,5 +455,130 @@ function submit(): void {
 
 .card__action {
   margin-top: 0.1rem;
+}
+
+.timeout-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.timeout-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  backdrop-filter: blur(34px);
+  -webkit-backdrop-filter: blur(34px);
+  background: rgba(12, 12, 12, 0.60);
+}
+
+.timeout-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 317.029px;
+  padding: 15.7px 15.399px 15.399px 15.399px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 18.116px;
+  border: 0.96px solid rgba(242, 242, 242, 0.4);
+  border-radius: clamp(28px, 10vw, 36.4px);
+  box-shadow:
+    3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25),
+    0 0 8.6px #000 inset,
+    2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
+  overflow: hidden;
+  animation: modal-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.timeout-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(0, 0, 0, 0.70);
+  box-shadow:
+    0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
+    0 0 0.2298rem 0 #000 inset,
+    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.90) inset;
+  backdrop-filter: blur(7.580729961395264px);
+  -webkit-backdrop-filter: blur(7.580729961395264px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.timeout-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 0.0255rem;
+  background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.timeout-card__inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+}
+
+.timeout-header {
+  display: flex;
+  align-self: stretch;
+  height: 45.58px;
+  padding: 17px 5.804px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 45.58px;
+  margin: 0 -15.399px 0;
+  background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
+}
+
+.timeout-title {
+  background: linear-gradient(180deg, #fff 0%, #e6e6e6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: 0.32px;
+}
+
+.timeout-body {
+  text-align: center;
+  margin-top: 18.12px;
+}
+
+.timeout-text {
+  color: #fff;
+  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0;
+  letter-spacing: 0.32px;
+}
+
+@keyframes modal-pop {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
 }
 </style>

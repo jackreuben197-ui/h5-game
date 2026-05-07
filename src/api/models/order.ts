@@ -68,12 +68,11 @@ export interface GuildGiveRecyCleResponseData {
 // /api/order/club/order_list (ClubFundOrderList)
 export interface ClubFundOrderListRequest {
 
-  //     order_type: number,
-  //     limit?: number,
-  //     offset?: number
-  //
     my_order?: boolean; // 是否是联盟直冲
     order_no?: string; // 订单号
+    order_type?: number; // 0-全部；1-充豆；2-提豆；3-发豆；4-转换
+    limit?: number;
+    offset?: number;
 
   [key: string]: unknown
 }
@@ -409,6 +408,7 @@ export interface TiquGoldRequest {
     pay_id?: number; // 支付渠道ID
     pay_price?: number; // 支付金额
     description?: string; // 备注
+    club_id?: number;
 
   [key: string]: unknown
 }

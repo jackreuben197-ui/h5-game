@@ -359,3 +359,36 @@ export interface UserWsData {
   port?: number
   [key: string]: unknown
 }
+
+// /user/gold_change/log 请求参数。
+export interface UserGoldChangeLogRequest {
+  limit?: number
+  offset?: number
+  gold_type?: number // 1-联盟币 2-USDT
+  op_codes?: string[]
+  start_time?: number
+  end_time?: number
+  [key: string]: unknown
+}
+
+// /user/gold_change/log 单条记录。
+export interface UserGoldChangeLogRecord {
+  gold_change?: number  // 资金变动量（正=收入 负=支出）
+  gold_after?: number   // 变动后余额
+  create_time?: string
+  op_code?: string      // 操作类型标识
+  name?: string         // 牌局/来源名称
+  gold_type?: number    // 1-联盟币 2-USDT
+  src_nick_name?: string
+  src_random_id?: number
+  [key: string]: unknown
+}
+
+// /user/gold_change/log 响应 data。
+export interface UserGoldChangeLogData {
+  limit?: number
+  offset?: number
+  total?: number
+  list?: UserGoldChangeLogRecord[]
+  [key: string]: unknown
+}

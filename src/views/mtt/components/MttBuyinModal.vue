@@ -9,6 +9,7 @@ import iconAdd from '@/assets/icons/icon_add.png'
 import type { RoomcenterMttDetails, MttWallet, MttWalletFreeLimit } from '@/api/models/roomcenter'
 import { getMttUserWalletApi } from '@/api/roomcenter'
 import { postGlobalConfigApi } from '@/api/config'
+import { forwardGlobalConfigToCocos } from '@/bridge/sync/h5BusinessSync'
 import { postPropUserPropInfoApi } from '@/api/prop'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import { useAppConfigStore } from '@/stores/appConfig'
@@ -73,7 +74,10 @@ async function fetchWalletAndConfig() {
     const extra = appConfigStore.globalConfig
       ? Promise.resolve()
       : postGlobalConfigApi({}).then((res) => {
-        if (res.code === 0 && res.data) appConfigStore.setGlobalConfig(res.data)
+        if (res.code === 0 && res.data) {
+          appConfigStore.setGlobalConfig(res.data)
+          forwardGlobalConfigToCocos(res.data)
+        }
       })
 
     const [walletRes] = await Promise.all([getMttUserWalletApi(props.mttId), extra])

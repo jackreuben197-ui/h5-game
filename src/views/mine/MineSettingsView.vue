@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { showConfirmDialog, showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { getLocale } from '@/i18n'
+import LoginSession from '@/session/loginSession'
+import { useGameStore } from '@/stores/game'
 
 const title = computed(() => '设置')
 
 const router = useRouter()
+const gameStore = useGameStore()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -19,17 +24,18 @@ interface SettingItem {
   label: string
   rightText?: string
   toggle?: boolean
+  clickable?: boolean
 }
 
 const sectionTop: SettingItem[] = [
   { key: 'logout', label: '退出登录' },
-  { key: 'language', label: '切换语言', rightText: '切换语言' },
+  { key: 'language', label: '切换语言', rightText: languageLabel() },
   { key: 'account', label: '账号管理' },
 ]
 
 const sectionMiddle: SettingItem[] = [
   { key: 'sound', label: '游戏声音', toggle: true },
-  { key: 'line', label: '当前线路', rightText: '切换语言' },
+  { key: 'line', label: '当前线路', rightText: '默认线路' },
   { key: 'cancel', label: '注销账号' },
   { key: 'about', label: '关于我们' },
   { key: 'agreement', label: '用户协议' },
@@ -37,14 +43,50 @@ const sectionMiddle: SettingItem[] = [
 
 const sectionBottom: SettingItem[] = [
   { key: 'privacy', label: '用户隐私协议' },
-  { key: 'version', label: '版本号' },
+  { key: 'version', label: '版本号', rightText: 'v1.0.0', clickable: false },
 ]
+
+function languageLabel(): string {
+  const locale = getLocale()
+  if (locale === 'cn') {
+    return '简体中文'
+  }
+  if (locale === 'zh') {
+    return '繁體中文'
+  }
+  if (locale === 'pt') {
+    return 'Português'
+  }
+  return 'English'
+}
 
 function goBack(): void {
   void router.push('/mine')
 }
 
-function onRowClick(item: SettingItem): void {
+async function onRowClick(item: SettingItem): Promise<void> {
+  if (item.clickable === false) {
+    return
+  }
+
+  if (item.key === 'logout') {
+    try {
+      await showConfirmDialog({
+        title: '退出登录',
+        message: '确认退出当前账号吗？',
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+      })
+      gameStore.clearLogin()
+      LoginSession.ClearWS()
+      showSuccessToast('已退出登录')
+      void router.replace('/login')
+    } catch {
+      // 用户取消不提示
+    }
+    return
+  }
+
   if (item.key === 'language') {
     void router.push('/mine/settings/language')
     return
@@ -72,6 +114,11 @@ function onRowClick(item: SettingItem): void {
 
   if (item.key === 'privacy') {
     void router.push('/mine/settings/doc/privacy')
+    return
+  }
+
+  if (item.key === 'line') {
+    showFailToast('线路切换功能开发中')
   }
 }
 </script>
@@ -134,7 +181,10 @@ function onRowClick(item: SettingItem): void {
           @click="onRowClick(item)"
         >
           <span>{{ item.label }}</span>
-          <span class="arrow">›</span>
+          <div class="right">
+            <span v-if="item.rightText" class="light">{{ item.rightText }}</span>
+            <span v-if="item.clickable !== false" class="arrow">›</span>
+          </div>
         </button>
       </section>
     </div>

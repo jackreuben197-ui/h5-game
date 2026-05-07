@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
+import { postUserVerifyPasswordApi } from '@/api/user'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 
 type OverlayType = 'none' | 'loading' | 'error-soft' | 'error-hard'
@@ -11,9 +13,10 @@ const router = useRouter()
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
-const digits = ref('666666')
+const digits = ref('')
 const overlayType = ref<OverlayType>('none')
 const failedAttempts = ref(0)
+const submitting = ref(false)
 
 const canSubmit = computed(() => digits.value.length === 6)
 
@@ -57,16 +60,40 @@ function handleKey(key: string): void {
   digits.value += key
 }
 
-function submitReset(): void {
+async function submitReset(): Promise<void> {
   if (!canSubmit.value) {
     return
   }
 
   overlayType.value = 'loading'
-  window.setTimeout(() => {
-    failedAttempts.value += 1
-    overlayType.value = failedAttempts.value >= 5 ? 'error-hard' : 'error-soft'
-  }, 700)
+  submitting.value = true
+  try {
+    const response = await postUserVerifyPasswordApi({
+      user_pwd_type: 2,
+      password: digits.value,
+    })
+
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '密码校验失败')
+    }
+
+    const verify = Boolean(response.data?.verify)
+    if (!verify) {
+      failedAttempts.value = Number(response.data?.failed_count ?? failedAttempts.value + 1)
+      overlayType.value = failedAttempts.value >= 5 ? 'error-hard' : 'error-soft'
+      return
+    }
+
+    showSuccessToast('身份验证成功，请设置新安全密码')
+    overlayType.value = 'none'
+    void router.replace('/mine/settings/account/security-password/setup?reset=1')
+  } catch (error) {
+    overlayType.value = 'none'
+    const message = error instanceof Error ? error.message : '密码校验失败'
+    showFailToast(message)
+  } finally {
+    submitting.value = false
+  }
 }
 
 function closeOverlay(): void {
@@ -90,6 +117,7 @@ function closeOverlay(): void {
         class="submit-btn"
         :class="{ active: canSubmit }"
         type="button"
+        :disabled="submitting"
         @click="submitReset"
       >
         完成

@@ -415,6 +415,8 @@ onUnmounted(() => {
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s;
+  border: none;
+  outline: none;
 }
 
 .btn:active {

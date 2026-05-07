@@ -114,12 +114,11 @@ async function handleCancelOrder(orderNo: string) {
 async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
   showUnfinishedPopup.value = false
 
-  // Map ClubFundOrderListOrderInfo to RechargeGoldData-like structure
-  // The user specified 'qrcode' param data is coming from API
   const qrCode = (order as any).qrcode || (order as any).qr_code || (order as any).pay_type_qr_code || ''
-
-  rechargeResult.value = {
+  const result = {
     order_no: order.order_no,
+    gold_num: order.gold_num,
+    pay_price: order.pay_price,
     order: {
       order_no: order.order_no,
       amount: order.pay_price,
@@ -128,13 +127,45 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
     usdt_address: {
       address: order.pay_type_address || '',
       qr_code: qrCode,
+      name: (order as any).pay_type_name || '客服撮合'
     }
   }
 
-  // Set the correct rate for the popup
-  usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
+  rechargeResult.value = result
 
-  usdtDetailsPopupOpen.value = true
+  // If it's a Customer Service order (Type 3 or api_type 3), open Chat Popup
+  const orderType = (order as any).pay_type || (order as any).api_type || (order as any).type
+  if (orderType === 3 || (order as any).pay_type_name?.includes('撮合')) {
+    try {
+      const channelRes = await postChatSupportChannelListApi({
+        im_service_types: [4],
+        limit: 1,
+        offset: 0
+      })
+
+      if (channelRes.code === 0 && channelRes.data?.list?.length) {
+        const channel = channelRes.data.list[0]
+        csChatProps.value = {
+          tribeId: channel.tribe_id || 0,
+          supportUserId: channel.support_user_id || 0,
+          orderData: result
+        }
+        csChatPopupOpen.value = true
+      } else {
+        // Fallback to USDT details if no chat channel found
+        usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
+        usdtDetailsPopupOpen.value = true
+      }
+    } catch (e) {
+      console.error('Failed to fetch chat channel for unfinished order', e)
+      usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
+      usdtDetailsPopupOpen.value = true
+    }
+  } else {
+    // Standard USDT flow
+    usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
+    usdtDetailsPopupOpen.value = true
+  }
 }
 
 onMounted(() => {
@@ -198,13 +229,15 @@ const presets = computed<Preset[]>(() => {
       if (isUsdt) {
         chipStr = walletStore.formatUsdtPrice(walletStore.calculateUsdtPrice(goldCount, rate, feeRate, feeType, discount).totalUiPrice);
       } else if (selected?.type === 3) {
-        chipStr = walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate).toFixed(2);
+        // Customer Service: hide decimals
+        chipStr = Math.round(walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)).toString();
       }
 
       return {
         amount: amountStr,
         chip: chipStr,
         id: item.id,
+        payPrice: item.pay_price as number | undefined,
       }
     })
 })
@@ -244,7 +277,9 @@ const displayPayAmount = computed(() => {
     const goldCount = amount * 100
     const rate = selected.rate ?? 1
     const feeRate = selected.fee_rate ?? 0
-    return walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate).toFixed(2)
+    const discount = selected.discount ?? 0
+    // Customer Service: hide decimals
+    return Math.round(walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)).toString()
   }
 
   return selectedAmount.value
@@ -298,7 +333,7 @@ async function onWithdrawCsChat(orderData: Record<string, unknown>) {
   }
 }
 
-async function onCsSubmit(payPrice?: number) {
+async function onCsSubmit(displayPayPrice?: number) {
   csPopupOpen.value = false
 
   const payTypes = filteredPayTypes.value
@@ -308,34 +343,64 @@ async function onCsSubmit(payPrice?: number) {
   const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
   const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
 
-  const goldCount = csPopupProps.value.goldCount
-  const priceId = activePreset.value === -1 ? 0 : (presets.value[activePreset.value]?.id ?? 0)
+  let goldCount = csPopupProps.value.goldCount
+  const rate = selectedPayType.rate ?? 1
+  const feeRate = selectedPayType.fee_rate ?? 0
+  const feeType = selectedPayType.fee_type ?? 0
+  const discount = selectedPayType.discount ?? 0
+  let priceId = activePreset.value === -1 ? 0 : (presets.value[activePreset.value]?.id ?? 0)
 
-  // Use the price from the popup if provided, otherwise calculate it
-  const finalPrice = payPrice ?? walletStore.calculateCustomerServicePrice(
-    goldCount,
-    selectedPayType.rate ?? 1,
-    selectedPayType.fee_rate ?? 0
-  )
+  // 1. Unique-amount channel: server adjusts amount with a tail for payment matching
+  let isUniqueAmount = false
+  if ((selectedPayType.increase_interval ?? 0) > 0) {
+    try {
+      const res = await postOrderUserRechargeNoApi({
+        amount: goldCount,
+        pay_id: selectedPayType.id
+      }, clubId)
+      if (res.code === 0 && res.data) {
+        goldCount = res.data.amount ?? goldCount
+        priceId = res.data.price_id ?? 0
+        isUniqueAmount = true
+      }
+    } catch (e) {
+      console.error('Failed to get unique recharge amount', e)
+    }
+  }
+
+  // pay_price rule: discount > 0 takes priority (discount removes fee from pay_price);
+  // only when discount = 0 and fee_type = 2 is the fee added to pay_price.
+  const basePrice = (goldCount / 100) * rate
+  const apiPayPrice = discount > 0
+    ? Number((basePrice * (1 - discount)).toFixed(4))
+    : feeType === 2 && feeRate > 0
+      ? Number((basePrice * (1 + feeRate)).toFixed(4))
+      : Number(basePrice.toFixed(4))
+
+  // legal_tender = what the player actually pays, in cents (same logic as pay_price)
+  const playerPrice = isUniqueAmount
+    ? walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)
+    : (displayPayPrice ?? walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount))
+  const legalTender = Math.round(playerPrice * 100)
 
   try {
     const res = await postRechargeGoldApi({
       amount: goldCount,
       legal_tender: 0,
+      // legalTender
+      // name:"",
       gold_type: 1,
       pay_id: selectedPayType.id,
       price_id: priceId,
-      pay_price: Math.round(finalPrice),
+      pay_price: apiPayPrice,
       pay_address: "",
       pay_address_save: false,
-      order_no: "",
-      name: "CS User"
+      // order_no: "",
     }, clubId)
 
     if (res.code === 0 && res.data) {
       rechargeResult.value = res.data
 
-      // Step 3: Finding the Chat Channel
       try {
         const channelRes = await postChatSupportChannelListApi({
           im_service_types: [4],
@@ -348,11 +413,14 @@ async function onCsSubmit(payPrice?: number) {
           csChatProps.value = {
             tribeId: channel.tribe_id || 0,
             supportUserId: channel.support_user_id || 0,
-            orderData: res.data
+            orderData: {
+              ...res.data,
+              gold_num: goldCount,
+              pay_price: apiPayPrice
+            }
           }
           csChatPopupOpen.value = true
         } else {
-          // If no channel found, maybe show the result in USDT popup as fallback or alert
           rechargeResult.value = res.data
           usdtDetailsPopupOpen.value = true
         }
@@ -364,7 +432,7 @@ async function onCsSubmit(payPrice?: number) {
 
       activePreset.value = 0
       customAmount.value = ''
-    } else if (res.code === 20066) {
+    } else if (res.code === 20066 || res.code === 90016) {
       void checkUnfinishedOrders()
     } else {
       alert(`Recharge failed: ${res.message}`)

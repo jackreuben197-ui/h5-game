@@ -10,6 +10,22 @@ export const useWalletStore = defineStore('wallet', () => {
   async function loadPriceList(): Promise<void> {
     const userInfoStore = useUserInfoStore()
     const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
+<<<<<<< feature/wallet-page
+    const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
+    const res = await postPropGoldPriceListApi({
+      club_id: clubId,
+      source_type: 0,
+      gold_types: [],
+    }, clubId)
+
+    if (res.data?.pay_types) {
+      res.data.pay_types = res.data.pay_types.filter(
+        (p) => p.type === 1 || p.type === 3
+      )
+    }
+
+    goldPriceData.value = res.data ?? null
+=======
     const clubIdRaw = currentClub?.club_id
     const clubId = clubIdRaw != null ? Number(clubIdRaw) : NaN
     if (!Number.isFinite(clubId) || clubId <= 0) {
@@ -30,10 +46,11 @@ export const useWalletStore = defineStore('wallet', () => {
       clubId
     )
     goldPriceData.value = res.code === 0 ? (res.data ?? null) : null
+>>>>>>> master
   }
 
   function calculateUsdtPrice(goldCount: number, rate: number, feeRate: number, feeType = 0, discount = 0) {
-    // Base price in USDT (goldCount is in cents, e.g. 10000 for 100 gold)
+    // Base price in USDT
     const base = (goldCount / 100) * rate
 
     // Apply discount
@@ -43,25 +60,33 @@ export const useWalletStore = defineStore('wallet', () => {
     // totalUiPrice includes fee if player pays (feeType 2)
     let total = priceAfterDiscount
     if (feeType === 2 && feeRate > 0) {
-      // Note: In this project's server logic, the 'pay_price' field often expects the 
-      // discounted base price WITHOUT the fee, while 'legal_tender' includes the fee.
+
       const fee = base * feeRate
       total = priceAfterDiscount + fee
       total = Math.round(total * 10000) / 10000
     }
 
     const totalUiPrice = Number(total.toFixed(6))
-    
-    // apiPayPrice should be the final total price (including fee) as expected by the server
+
+    // apiPayPrice should be the final total price including fee as expected by the server
     // For many club-managed and identifier-based channels, this must match the total sent by the user.
     const apiPayPrice = totalUiPrice
 
     return { apiPayPrice, totalUiPrice }
   }
 
-  function calculateCustomerServicePrice(goldCount: number, rate: number, feeRate: number) {
+  function calculateCustomerServicePrice(goldCount: number, rate: number, feeRate: number, discount = 0) {
     const base = (goldCount / 100) * rate
-    const final = feeRate > 0 ? base * (1 + feeRate) : base
+    // When discount > 0 it takes priority and fee is not added to pay_price.
+    // When no discount and fee_type = 2, call passes the actual feeRate, fee is added.
+    let final: number
+    if (discount > 0) {
+      final = base * (1 - discount)
+    } else if (feeRate > 0) {
+      final = base * (1 + feeRate)
+    } else {
+      final = base
+    }
     return Number((Math.round(final * 100) / 100).toFixed(2))
   }
 

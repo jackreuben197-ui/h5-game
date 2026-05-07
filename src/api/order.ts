@@ -225,7 +225,7 @@ export async function postRechargeGoldApi(
   clubId?: number
 ): Promise<ApiResponse<RechargeGoldResponseData>> {
   const endpoint = '/order/user/recharge'
-  const headers = clubId != null ? { 'X-Club': String(clubId) } : undefined
+  const headers = clubId != null ? { 'X-club': String(clubId) } : undefined
   const response = await http.post<ApiResponse<RechargeGoldResponseData>>(endpoint, payload, { headers })
   return response.data
 }

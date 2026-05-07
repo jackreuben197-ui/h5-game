@@ -719,8 +719,8 @@ export async function postOrgClubModifyClubDescApi(
   return response.data
 }
 
-// 对齐 cocos WebOrgchaNgeClubData.API
-export async function postOrgchaNgeClubDataApi(
+// 对齐 cocos WebOrgChangeClubData.API
+export async function postOrgChangeClubDataApi(
   payload: OrgChangeClubDataRequest = {} as OrgChangeClubDataRequest
 ): Promise<ApiResponse<OrgChangeClubDataResponseData>> {
   const endpoint = '/org/club/modify/club_info'

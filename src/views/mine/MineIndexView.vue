@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
-import mainBgUrl from '@/assets/images/main_bg.webp'
+// import mainBgUrl from '@/assets/images/main_bg.webp'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import LoginSession from '@/session/loginSession'
@@ -23,9 +23,9 @@ import defaultAvatar from '@/assets/images/default_avatar.png'
 const router = useRouter()
 
 // 主容器背景图：全页面共用一张底图。
-const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
-}))
+// const backgroundStyle = computed(() => ({
+//   backgroundImage: `url(${mainBgUrl})`,
+// }))
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
 

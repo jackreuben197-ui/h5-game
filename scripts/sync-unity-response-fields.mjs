@@ -2,6 +2,32 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
+function normalizeApiPath(input) {
+	if (!input) return ''
+	const trimmed = String(input).trim()
+	if (!trimmed) return ''
+	if (trimmed.startsWith('/api/')) return trimmed
+	if (trimmed === '/api') return '/api'
+	if (trimmed.startsWith('/')) return `/api${trimmed}`
+	return `/api/${trimmed}`
+}
+
+function toH5Endpoint(apiPath) {
+	const normalized = normalizeApiPath(apiPath)
+	if (!normalized.startsWith('/api/')) return normalized
+	return normalized.slice('/api'.length)
+}
+
+function getApiGroup(apiPath) {
+	const endpoint = toH5Endpoint(apiPath).replace(/^\//, '')
+	return endpoint.split('/')[0] || ''
+}
+
+function protocolNameToSymbol(protocolName) {
+	if (!protocolName) return ''
+	return protocolName.replace(/^Http/, '').replace(/Protocol$/, '')
+}
+
 function parseArgs(argv) {
 	const args = {
 		api: '',
@@ -54,7 +80,8 @@ function parseUnityFile(filePath) {
 
 	return {
 		filePath,
-		api: apiMatch[1],
+		api: normalizeApiPath(apiMatch[1]),
+		protocolName: path.basename(filePath, '.cs'),
 		classes,
 	}
 }
@@ -78,8 +105,8 @@ function sanitizeTsComment(comment) {
 }
 
 function parseModelMeta(text) {
-	return [...text.matchAll(/\/\/\s*(\/api\/[^\s(]+)\s*\(([^)]+)\)/g)].map((m) => ({
-		api: m[1].trim(),
+	return [...text.matchAll(/\/\/\s*((?:\/api)?\/[^\s(]+)\s*\(([^)]+)\)/g)].map((m) => ({
+		api: normalizeApiPath(m[1].trim()),
 		symbol: m[2].trim(),
 	}))
 }
@@ -243,9 +270,183 @@ function patchInterface(text, iface, missingProps, commentCandidates) {
 	return text.slice(0, iface.index) + newFull + text.slice(iface.end)
 }
 
+function ensureDir(filePath) {
+	const dir = path.dirname(filePath)
+	if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+}
+
+function ensureFile(filePath, content = '') {
+	if (fs.existsSync(filePath)) return
+	ensureDir(filePath)
+	fs.writeFileSync(filePath, content)
+}
+
+function buildInterfaceBlock(name, props) {
+	const lines = []
+	lines.push(`export interface ${name} {`)
+	for (const p of props) {
+		const comment = sanitizeTsComment(p.comment || '')
+		const propLine = `    ${p.name}?: ${p.tsType};`
+		lines.push(comment ? `${propLine} // ${comment}` : propLine)
+	}
+	if (props.length) lines.push('')
+	lines.push('  [key: string]: unknown')
+	lines.push('}')
+	return lines.join('\n')
+}
+
+function hasInterface(text, name) {
+	return new RegExp(`export\\s+interface\\s+${name}(?:\\s+extends\\s+[^\\{]+)?\\s*\\{`).test(text)
+}
+
+function ensureModelEndpoint(modelText, apiPath, symbol, unity) {
+	let text = modelText
+	let ifaceMap = parseInterfaces(text)
+	const apiLine = `// ${normalizeApiPath(apiPath)} (${symbol})`
+
+	const requestName = `${symbol}Request`
+	const responseName = `${symbol}ResponseData`
+	const dataName = `${symbol}Data`
+
+	const requestProps = (unity.classes.RequestData || unity.classes.Request || []).map((p) => ({
+		name: p.name,
+		tsType: mapCsTypeToTs(p.type, symbol, ifaceMap),
+		comment: p.comment || '',
+	}))
+
+	const dataProps = (unity.classes.Data || []).map((p) => ({
+		name: p.name,
+		tsType: mapCsTypeToTs(p.type, symbol, ifaceMap),
+		comment: p.comment || '',
+	}))
+
+	const chunks = []
+	if (!hasInterface(text, requestName)) {
+		chunks.push(apiLine)
+		chunks.push(buildInterfaceBlock(requestName, requestProps))
+	}
+
+	if (!hasInterface(text, responseName)) {
+		if (!chunks.length) chunks.push(apiLine)
+		chunks.push(`export interface ${responseName} extends ${dataName} {\n  [key: string]: unknown\n}`)
+	}
+
+	if (!hasInterface(text, dataName)) {
+		if (!chunks.length) chunks.push(apiLine)
+		chunks.push(buildInterfaceBlock(dataName, dataProps))
+	}
+
+	if (!chunks.length) return text
+	const appendix = `\n\n${chunks.join('\n\n')}\n`
+	text = text.trimEnd() + appendix
+	return text
+}
+
+function ensureNamedTypeImport(apiText, group, names) {
+	let text = apiText
+	const importRegex = new RegExp(`import type \\{([\\s\\S]*?)\\} from '@/api/models/${group}'`)
+	const match = text.match(importRegex)
+	if (match) {
+		const block = match[1]
+		const existing = new Set(
+			block
+				.split('\n')
+				.map((line) => line.trim().replace(/,$/, ''))
+				.filter(Boolean),
+		)
+		const toAdd = names.filter((n) => !existing.has(n))
+		if (!toAdd.length) return text
+		const insert = toAdd.map((n) => `  ${n},`).join('\n')
+		const replaced = match[0].replace(/\n\}\s*from/, `\n${insert}\n} from`)
+		return text.replace(match[0], replaced)
+	}
+
+	const commonImportRegex = /import\s+type\s+\{\s*ApiResponse\s*\}\s+from\s+'@\/api\/models\/common'\s*/
+	const commonMatch = text.match(commonImportRegex)
+	if (commonMatch) {
+		const importBlock = `import type {\n${names.map((n) => `  ${n},`).join('\n')}\n} from '@/api/models/${group}'\n`
+		return text.replace(commonImportRegex, `${commonMatch[0]}\n${importBlock}`)
+	}
+
+	return `import type {\n${names.map((n) => `  ${n},`).join('\n')}\n} from '@/api/models/${group}'\n${text}`
+}
+
+function ensureFormatPathHelper(apiText) {
+	if (apiText.includes('const formatPath = (')) return apiText
+	const helper = "const formatPath = (\n  template: string,\n  pathParams: Record<string, string | number>,\n): string => template.replace(/\\{([^}]+)\\}/g, (_, key) => encodeURIComponent(String(pathParams[key] ?? '')))\nvoid formatPath\n\n"
+	const marker = "import type { ApiResponse } from '@/api/models/common'"
+	const idx = apiText.indexOf(marker)
+	if (idx >= 0) {
+		const tailIdx = apiText.indexOf('\n', idx)
+		return apiText.slice(0, tailIdx + 1) + '\n' + helper + apiText.slice(tailIdx + 1)
+	}
+	return `${helper}${apiText}`
+}
+
+function ensureApiFunction(apiText, symbol, apiPath) {
+	let text = apiText
+	const fnName = `post${symbol}Api`
+	if (new RegExp(`export\\s+async\\s+function\\s+${fnName}\\s*\\(`).test(text)) return text
+
+	const endpoint = toH5Endpoint(apiPath)
+	const requestName = `${symbol}Request`
+	const responseName = `${symbol}ResponseData`
+	const hasPathParam = /\{[^}]+\}/.test(endpoint)
+
+	if (hasPathParam) {
+		text = ensureFormatPathHelper(text)
+	}
+
+	const fn = hasPathParam
+		? `\n// 对齐 cocos Web${symbol}.API\nexport async function ${fnName}(\n  payload: ${requestName} = {} as ${requestName},\n  pathParams: Record<string, string | number> = {},\n): Promise<ApiResponse<${responseName}>> {\n  const endpoint = formatPath('${endpoint}', pathParams)\n  const response = await http.post<ApiResponse<${responseName}>>(endpoint, payload)\n  return response.data\n}\n`
+		: `\n// 对齐 cocos Web${symbol}.API\nexport async function ${fnName}(\n  payload: ${requestName} = {} as ${requestName}\n): Promise<ApiResponse<${responseName}>> {\n  const response = await http.post<ApiResponse<${responseName}>>('${endpoint}', payload)\n  return response.data\n}\n`
+
+	return text.trimEnd() + '\n' + fn
+}
+
+function ensureEndpointWhenMissing(args, unityByApi, requestedApi) {
+	const normalizedApi = normalizeApiPath(requestedApi)
+	if (!normalizedApi) return { created: false, touched: [] }
+	const unityVariants = unityByApi.get(normalizedApi)
+	if (!unityVariants?.length) return { created: false, touched: [] }
+
+	const group = getApiGroup(normalizedApi)
+	if (!group) return { created: false, touched: [] }
+
+	const modelFile = path.join(args.modelsRoot, `${group}.ts`)
+	const apiFile = path.resolve(process.cwd(), 'src/api', `${group}.ts`)
+	const unity = unityVariants.find((u) => u.classes.ResponseData || u.classes.Data || u.classes.RequestData) || unityVariants[0]
+	const symbol = protocolNameToSymbol(unity.protocolName)
+	if (!symbol) return { created: false, touched: [] }
+
+	ensureFile(modelFile, '')
+	ensureFile(apiFile, "import http from '@/api/http'\nimport type { ApiResponse } from '@/api/models/common'\n")
+
+	let modelText = fs.readFileSync(modelFile, 'utf8')
+	const beforeModel = modelText
+	modelText = ensureModelEndpoint(modelText, normalizedApi, symbol, unity)
+
+	let apiText = fs.readFileSync(apiFile, 'utf8')
+	const beforeApi = apiText
+	apiText = ensureNamedTypeImport(apiText, group, [`${symbol}Request`, `${symbol}ResponseData`])
+	apiText = ensureApiFunction(apiText, symbol, normalizedApi)
+
+	const touched = []
+	if (modelText !== beforeModel) {
+		touched.push(modelFile)
+		if (!args.dryRun) fs.writeFileSync(modelFile, modelText)
+	}
+	if (apiText !== beforeApi) {
+		touched.push(apiFile)
+		if (!args.dryRun) fs.writeFileSync(apiFile, apiText)
+	}
+
+	return { created: touched.length > 0, touched }
+}
+
 function main() {
 	const args = parseArgs(process.argv.slice(2))
-	const apiFilter = args.api.trim()
+	const apiFilter = normalizeApiPath(args.api.trim())
 
 	if (!fs.existsSync(args.unityRoot)) {
 		throw new Error(`Unity path not found: ${args.unityRoot}`)
@@ -263,12 +464,17 @@ function main() {
 		unityByApi.get(parsed.api).push(parsed)
 	}
 
+	const bootstrap = apiFilter ? ensureEndpointWhenMissing(args, unityByApi, apiFilter) : { created: false, touched: [] }
+	for (const touchedFile of bootstrap.touched) {
+		console.log(`patched ${path.relative(process.cwd(), touchedFile)}`)
+	}
+
 	const modelFiles = fs
 		.readdirSync(args.modelsRoot)
 		.filter((f) => f.endsWith('.ts'))
 		.map((f) => path.join(args.modelsRoot, f))
 
-	let touched = 0
+	let touched = bootstrap.touched.filter((p) => p.endsWith('.ts')).length
 	let totalPatchedProps = 0
 
 	for (const modelFile of modelFiles) {
@@ -279,7 +485,7 @@ function main() {
 		let fileChanged = false
 
 		for (const meta of metas) {
-			if (apiFilter && meta.api !== apiFilter) continue
+			if (apiFilter && normalizeApiPath(meta.api) !== apiFilter) continue
 			const unityVariants = unityByApi.get(meta.api)
 			if (!unityVariants?.length) continue
 

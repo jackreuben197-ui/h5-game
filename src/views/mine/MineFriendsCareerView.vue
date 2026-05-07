@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
+import { postFriendRoomStatsApi } from '@/api/stats'
+import type { FriendRoomStatsRecord } from '@/api/models/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 
 const router = useRouter()
@@ -22,12 +25,14 @@ interface MenuItem {
   route?: string
 }
 
-const rows: DataRow[] = [
-  { game: 'NLH', playedGames: 123, hands: 4567 },
-  { game: 'PLO', playedGames: 22, hands: 4567 },
-  { game: '6+', playedGames: 22, hands: 4567 },
-  { game: 'Mahjong', playedGames: 22, hands: 4567 },
-]
+const rows = ref<DataRow[]>([
+  { game: 'NLH', playedGames: 0, hands: 0 },
+  { game: 'PLO', playedGames: 0, hands: 0 },
+  { game: '6+', playedGames: 0, hands: 0 },
+  { game: 'Mahjong', playedGames: 0, hands: 0 },
+])
+
+const loading = ref(false)
 
 const menuList: MenuItem[] = [
   { key: 'data', text: '数据', route: '/mine/friends-data' },
@@ -39,16 +44,49 @@ const menuList: MenuItem[] = [
 
 const title = ref('数据')
 
-function goBack(): void {
-  void router.push('/mine')
-}
-
 function handleMenuClick(item: MenuItem): void {
   if (!item.route) {
     return
   }
   void router.push(item.route)
 }
+
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+async function fetchGameSummary(): Promise<void> {
+  loading.value = true
+  try {
+    const response = await postFriendRoomStatsApi({})
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载朋友生涯数据失败')
+    }
+
+    const data = response.data as Record<string, unknown> | undefined
+    const nlh = data?.friend_room_stats_nlh as FriendRoomStatsRecord | undefined
+    const plo = data?.friend_room_stats_plo as FriendRoomStatsRecord | undefined
+    const sixPlus = data?.friend_room_stats_6 as FriendRoomStatsRecord | undefined
+    const mahjong = data?.friend_room_stats_mj as FriendRoomStatsRecord | undefined
+
+    rows.value = [
+      { game: 'NLH', playedGames: toSafeNumber(nlh?.game_num), hands: toSafeNumber(nlh?.hand_num) },
+      { game: 'PLO', playedGames: toSafeNumber(plo?.game_num), hands: toSafeNumber(plo?.hand_num) },
+      { game: '6+', playedGames: toSafeNumber(sixPlus?.game_num), hands: toSafeNumber(sixPlus?.hand_num) },
+      { game: 'Mahjong', playedGames: toSafeNumber(mahjong?.game_num), hands: toSafeNumber(mahjong?.hand_num) },
+    ]
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '加载朋友生涯数据失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  void fetchGameSummary()
+})
 </script>
 
 <template>
@@ -59,6 +97,7 @@ function handleMenuClick(item: MenuItem): void {
           <TopActionButton
             name="数据统计"
             icon-alt="wallet"
+            @click="handleMenuClick({ key: 'data', text: '数据', route: '/mine/friends-my-data' })"
           />
         </div>
       </template>
@@ -71,6 +110,7 @@ function handleMenuClick(item: MenuItem): void {
           <span>Played Games</span>
           <span>Hands</span>
         </div>
+        <div v-if="loading" class="table-status">加载中...</div>
         <div v-for="item in rows" :key="item.game" class="table-row">
           <span>{{ item.game }}</span>
           <span>{{ item.playedGames }}</span>
@@ -157,6 +197,13 @@ function handleMenuClick(item: MenuItem): void {
 .table-row {
   font-size: 0.42rem;
   padding: 0.3rem 0;
+}
+
+.table-status {
+  text-align: center;
+  font-size: 0.3rem;
+  padding: 0.24rem 0;
+  opacity: 0.78;
 }
 
 .list-card {

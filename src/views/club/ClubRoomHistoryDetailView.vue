@@ -1,6 +1,16 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { showFailToast } from 'vant'
+import { postClubDataStatsDataDetailApi, postClubDataStatsDataDetailInfoApi } from '@/api/stats'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { formatUC } from '@/utils/roomVisibility'
 
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 interface SummaryMetric {
   label: string
   value: string
@@ -16,153 +26,222 @@ interface PlayerRecord {
   buyIn: string
   hands: string
   jp: string
+  avatar: string
 }
 
+interface DetailInfo {
+  roomName: string
+  creator: string
+  creatorId: string
+  roomIdText: string
+  jackpot: string
+  topMetrics: SummaryMetric[]
+  middleMetrics: SummaryMetric[]
+}
+
+const route = useRoute()
 const router = useRouter()
+const userInfoStore = useUserInfoStore()
 
-const imgImage11 = 'https://www.figma.com/api/mcp/asset/1e8698a9-6c7e-4bdd-8b98-dc5f472aca35'
-const imgImage12 = 'https://www.figma.com/api/mcp/asset/3834c952-ecb2-459c-974a-fc9d81434b1f'
-const imgAvatar = 'https://www.figma.com/api/mcp/asset/c1d3a438-ee2a-41b1-8720-7f1e986a055b'
-
-const topMetrics: SummaryMetric[] = [
-  { label: '买入', value: '123~456' },
-  { label: '底分', value: '1/2' },
-  { label: '服务费', value: '12%' },
-]
-
-const middleMetrics: SummaryMetric[] = [
-  { label: '总人数', value: '123' },
-  { label: '保险', value: '12345' },
-  { label: '总服务费', value: '123' },
-]
+const loading = ref(false)
+const detailInfo = ref<DetailInfo>({
+  roomName: '--',
+  creator: '--',
+  creatorId: '--',
+  roomIdText: '--',
+  jackpot: '0',
+  topMetrics: [
+    { label: '买入', value: '--' },
+    { label: '底分', value: '--' },
+    { label: '服务费', value: '--' },
+  ],
+  middleMetrics: [
+    { label: '总人数', value: '--' },
+    { label: '保险', value: '0' },
+    { label: '总服务费', value: '0' },
+  ],
+})
 
 const tableHeaders = ['User', '赢', '服务费', '保险', '买入', '手数', 'JP']
 
-const records: PlayerRecord[] = [
-  {
-    id: 1,
-    name: '备注',
-    userId: '11440454',
-    win: '+123',
-    fee: '+1234',
-    insurance: '+99999',
-    buyIn: '999999',
-    hands: '12345',
-    jp: '+123',
-  },
-  {
-    id: 2,
-    name: '备注',
-    userId: '11440454',
-    win: '+123',
-    fee: '+1234',
-    insurance: '+99999',
-    buyIn: '999999',
-    hands: '12345',
-    jp: '+123',
-  },
-  {
-    id: 3,
-    name: '备注',
-    userId: '11440454',
-    win: '+123',
-    fee: '+1234',
-    insurance: '+99999',
-    buyIn: '999999',
-    hands: '12345',
-    jp: '+123',
-  },
-  {
-    id: 4,
-    name: '备注',
-    userId: '11440454',
-    win: '+123',
-    fee: '+1234',
-    insurance: '+99999',
-    buyIn: '999999',
-    hands: '12345',
-    jp: '+123',
-  },
-  {
-    id: 5,
-    name: '备注',
-    userId: '11440454',
-    win: '+123',
-    fee: '+1234',
-    insurance: '+99999',
-    buyIn: '999999',
-    hands: '12345',
-    jp: '+123',
-  },
-  {
-    id: 6,
-    name: '备注',
-    userId: '11440454',
-    win: '+123',
-    fee: '+1234',
-    insurance: '+99999',
-    buyIn: '999999',
-    hands: '12345',
-    jp: '+123',
-  },
-  {
-    id: 7,
-    name: '备注',
-    userId: '11440454',
-    win: '+123',
-    fee: '+1234',
-    insurance: '+99999',
-    buyIn: '999999',
-    hands: '12345',
-    jp: '+123',
-  },
-  {
-    id: 8,
-    name: '备注',
-    userId: '11440454',
-    win: '+99999',
-    fee: '+99999',
-    insurance: '+99999',
-    buyIn: '999999',
-    hands: '999999',
-    jp: '+99999',
-  },
-]
+const records = ref<PlayerRecord[]>([])
 
-function backToHistory(): void {
-  void router.push('/club/room/history')
+const roomId = computed(() => toSafeNumber(route.query.roomId))
+const matchId = computed(() => toSafeNumber(route.query.matchId))
+
+function toSafeNumber(value: unknown): number {
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? numberValue : 0
 }
+
+function pickNumber(source: Record<string, unknown>, keys: string[], fallback = 0): number {
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(source, key)) {
+      const value = Number(source[key])
+      if (Number.isFinite(value)) {
+        return value
+      }
+    }
+  }
+  return fallback
+}
+
+function pickString(source: Record<string, unknown>, keys: string[], fallback = '--'): string {
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(source, key)) {
+      const value = String(source[key] ?? '').trim()
+      if (value) {
+        return value
+      }
+    }
+  }
+  return fallback
+}
+
+function formatNumber(value: unknown): string {
+  return toSafeNumber(value).toLocaleString('en-US')
+}
+
+function mapDetailInfo(payload: unknown): DetailInfo {
+  const info = (payload ?? {}) as Record<string, unknown>
+  const buyInMin = pickNumber(info, ['buy_in_min', 'min_buy_in'])
+  const buyInMax = pickNumber(info, ['buy_in_max', 'max_buy_in'])
+  const sb = pickNumber(info, ['sb', 'small_blind'])
+  const bb = pickNumber(info, ['bb', 'big_blind'], sb > 0 ? sb * 2 : 0)
+  const feeRate = pickNumber(info, ['fee_ratio'])
+  const totalPlayer = pickNumber(info, ['total_player_num', 'player_num', 'total_user_num'])
+  const insurance = pickNumber(info, ['insurance', 'insurence'])
+  const totalFee = pickNumber(info, ['total_fee', 'fee'])
+  const jackpot = pickNumber(info, ['jackpot'], pickNumber(info, ['jackpot']))
+
+  const buyInValue = buyInMin > 0 || buyInMax > 0
+    ? `${formatUC(buyInMin)}~${formatUC(buyInMax || buyInMin)}`
+    : '--'
+
+  return {
+    roomName: pickString(info, ['name']),
+    creator: pickString(info, ['creator_name', 'create_user_name', 'host_name']),
+    creatorId: pickString(info, ['creator_id', 'create_user_id', 'host_user_id']),
+    roomIdText: String(roomId.value || '--'),
+    jackpot: formatNumber(jackpot),
+    topMetrics: [
+      { label: '买入', value: buyInValue },
+      { label: '底分', value: `${formatUC(sb)}/${formatUC(bb)}` },
+      { label: '服务费', value: feeRate > 0 ? `${feeRate / 10}%` : '--' },
+    ],
+    middleMetrics: [
+      { label: '总人数', value: String(totalPlayer || '--') },
+      { label: '保险', value: formatUC(insurance) },
+      { label: '总服务费', value: formatUC(totalFee) },
+    ],
+  }
+}
+
+function mapPlayerRecord(item: unknown, index: number): PlayerRecord {
+  const row = (item ?? {}) as Record<string, unknown>
+  return {
+    id: index + 1,
+    name: pickString(row, ['nick_name']),
+    userId: pickString(row, ['random_id'], '--'),
+    win: formatUC(pickNumber(row, ['profit', 'win_gold', 'win'])),
+    fee: formatUC(pickNumber(row, ['fee'])),
+    insurance: formatUC(pickNumber(row, ['insurance', 'insurence'])),
+    buyIn: formatUC(pickNumber(row, ['buy_in', 'buy_in_gold'])),
+    hands: formatNumber(pickNumber(row, ['hand_num', 'hands'])),
+    jp: formatUC(pickNumber(row, ['jackpot', 'jp'])),
+    avatar: pickString(row, ['avatar']),
+  }
+}
+
+async function fetchDetailInfo(): Promise<void> {
+  const response = await postClubDataStatsDataDetailInfoApi({
+    room_id: roomId.value || undefined,
+    match_id: matchId.value || undefined,
+    only_master: false,
+    slave_club_id: toSafeNumber(userInfoStore.currentClub?.club_id) || undefined,
+  })
+
+  if (response.code !== 0) {
+    throw new Error(typeof response.msg === 'string' ? response.msg : '加载详情统计失败')
+  }
+
+  detailInfo.value = mapDetailInfo(response.data?.info)
+}
+
+async function fetchDetailRows(): Promise<void> {
+  const response = await postClubDataStatsDataDetailApi({
+    room_id: roomId.value || undefined,
+    match_id: matchId.value || undefined,
+    offset: 0,
+    limit: 200,
+    only_master: false,
+    slave_club_id: toSafeNumber(userInfoStore.currentClub?.club_id) || undefined,
+  })
+
+  if (response.code !== 0) {
+    throw new Error(typeof response.msg === 'string' ? response.msg : '加载详情列表失败')
+  }
+
+  const list = Array.isArray(response.data?.list) ? response.data.list : []
+  records.value = list.map((item, idx) => mapPlayerRecord(item, idx))
+
+  const roomInfo = (response.data?.room_info ?? {}) as Record<string, unknown>
+  const jackpot = toSafeNumber(roomInfo.jackpot)
+  if (jackpot > 0) {
+    detailInfo.value = {
+      ...detailInfo.value,
+      jackpot: formatNumber(jackpot),
+    }
+  }
+}
+
+async function initPage(): Promise<void> {
+  if (!roomId.value && !matchId.value) {
+    showFailToast('缺少 roomId/matchId 参数')
+    void router.back()
+    return
+  }
+
+  loading.value = true
+  try {
+    await Promise.all([fetchDetailInfo(), fetchDetailRows()])
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '加载数据详情失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  void initPage()
+})
+
 </script>
 
 <template>
-  <div class="club-room-history-detail-bg">
-    <img class="bg-image bg-image--base" :src="imgImage11" alt="" />
-    <img class="bg-image bg-image--overlay" :src="imgImage12" alt="" />
-    <div class="fx-glow fx-glow--pink"></div>
-    <div class="fx-glow fx-glow--cyan"></div>
-
+  <div class="club-room-history-detail-bg" :style="backgroundStyle">
+    <HeaderBack :title="'数据详情'" />
     <div class="page-shell club-room-history-detail">
-      <VanNavBar title="数据详情" left-arrow @click-left="backToHistory" />
-
       <section class="meta-panel">
         <div class="meta-title-row">
           <span class="meta-title">完成的</span>
-          <strong class="meta-main-value">12345</strong>
+          <strong class="meta-main-value">{{ detailInfo.roomName }}</strong>
         </div>
 
         <div class="meta-sub-row">
           <div class="creator-wrap">
             <span class="meta-sub-label">创作者</span>
-            <span class="meta-sub-value">Charlie</span>
+            <span class="meta-sub-value">{{ detailInfo.creator }}</span>
             <div class="id-pill-wrap">
               <span class="id-pill">ID</span>
-              <span class="id-number">12345678</span>
+              <span class="id-number">{{ detailInfo.creatorId }}</span>
             </div>
           </div>
 
           <div class="id-pill-wrap">
             <span class="id-pill">ID</span>
-            <span class="id-number">12345678</span>
+            <span class="id-number">{{ detailInfo.roomIdText }}</span>
           </div>
         </div>
       </section>
@@ -170,7 +249,7 @@ function backToHistory(): void {
       <section class="summary-card">
         <div class="summary-row summary-row--three">
           <div
-            v-for="metric in topMetrics"
+            v-for="metric in detailInfo.topMetrics"
             :key="metric.label"
             class="metric-item metric-item--with-divider"
           >
@@ -183,7 +262,7 @@ function backToHistory(): void {
 
         <div class="summary-row summary-row--three">
           <div
-            v-for="metric in middleMetrics"
+            v-for="metric in detailInfo.middleMetrics"
             :key="metric.label"
             class="metric-item metric-item--with-divider"
           >
@@ -197,7 +276,7 @@ function backToHistory(): void {
         <div class="summary-row summary-row--single">
           <div class="metric-item">
             <span class="metric-label">Jackpot</span>
-            <span class="metric-value">123456</span>
+            <span class="metric-value">{{ detailInfo.jackpot }}</span>
           </div>
         </div>
       </section>
@@ -220,7 +299,7 @@ function backToHistory(): void {
         <div class="record-list">
           <article v-for="row in records" :key="row.id" class="record-row board-grid">
             <div class="user-cell">
-              <img class="user-avatar" :src="imgAvatar" alt="" />
+              <img class="user-avatar" :src="row.avatar" alt="" />
               <div class="user-meta">
                 <span class="user-name">{{ row.name }}</span>
                 <span class="user-id">ID: {{ row.userId }}</span>
@@ -233,6 +312,8 @@ function backToHistory(): void {
             <span class="value-cell">{{ row.hands }}</span>
             <span class="value-cell">{{ row.jp }}</span>
           </article>
+          <p v-if="!records.length && !loading" class="list-status">暂无玩家记录</p>
+          <p v-if="loading" class="list-status">加载中...</p>
         </div>
       </section>
     </div>
@@ -242,15 +323,10 @@ function backToHistory(): void {
 <style scoped lang="scss">
 .club-room-history-detail-bg {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   background:
-    radial-gradient(
-      120% 82% at 50% -8%,
-      rgba(201, 77, 114, 0.5),
-      rgba(38, 45, 99, 0.64) 55%,
-      #12284e 88%
-    ),
-    linear-gradient(180deg, #af6680 0%, #34779f 86%);
+    radial-gradient(120% 70% at 50% -10%, rgba(91, 18, 115, 0.72), rgba(18, 11, 47, 0.86) 45%, #0a0f2f 85%),
+    linear-gradient(180deg, #120a33, #090d2a);
   overflow: hidden;
 }
 
@@ -530,6 +606,14 @@ function backToHistory(): void {
   font-size: 0.22rem;
   color: rgba(249, 249, 249, 0.94);
   white-space: nowrap;
+}
+
+.list-status {
+  margin: 0;
+  text-align: center;
+  font-size: 0.24rem;
+  color: rgba(255, 255, 255, 0.72);
+  padding: 0.2rem 0;
 }
 
 @media (max-width: 340px) {

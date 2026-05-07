@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { showFailToast } from 'vant'
+import { postMallShopListApi } from '@/api/prop'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { useUserInfoStore } from '@/stores/userInfo'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
@@ -22,6 +24,7 @@ const imgCoin = 'https://www.figma.com/api/mcp/asset/f2c2c3d0-4480-477f-bf5e-9ee
 
 interface ShopItem {
   id: number
+  productId: string
   title: string
   diamondsText: string
   diamondsValue: number
@@ -31,22 +34,59 @@ interface ShopItem {
   auditing?: boolean
 }
 
-const items: ShopItem[] = [
-  { id: 1, title: '123', diamondsText: '增50钻石', diamondsValue: 50, price: 12.34, image: imgChestA },
-  { id: 2, title: '1234', diamondsText: '增180钻石', diamondsValue: 180, price: 12.34, image: imgChestB },
-  { id: 3, title: '12345', diamondsText: '增5000钻石', diamondsValue: 5000, price: 12.34, image: imgChestB },
-  { id: 4, title: '1234567', diamondsText: '增5000钻石', diamondsValue: 5000, price: 12.34, image: imgChestC, wholesaleOnly: true },
-  { id: 5, title: '12345678', diamondsText: '增180钻石', diamondsValue: 180, price: 12.34, image: imgChestB },
-  { id: 6, title: '12345678', diamondsText: '增5000钻石', diamondsValue: 5000, price: 12.34, image: imgChestC, wholesaleOnly: true, auditing: true },
-  { id: 7, title: '1234567', diamondsText: '增5000钻石', diamondsValue: 5000, price: 12.34, image: imgChestC },
-  { id: 8, title: '12345678', diamondsText: '增180钻石', diamondsValue: 180, price: 12.34, image: imgChestB },
-  { id: 9, title: '12345678', diamondsText: '增5000钻石', diamondsValue: 5000, price: 12.34, image: imgChestC },
-]
+const loading = ref(false)
+const items = ref<ShopItem[]>([])
 
 const userDiamond = computed(() => Number(userInfoStore.userInfo?.user.diamonds ?? 0))
 
 function goBack(): void {
   router.back()
+}
+
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function pickImage(index: number): string {
+  const presets = [imgChestA, imgChestB, imgChestC]
+  return presets[index % presets.length]
+}
+
+async function fetchShopList(): Promise<void> {
+  loading.value = true
+  try {
+    const response = await postMallShopListApi({
+      limit: 50,
+      offset: 0,
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载商品失败')
+    }
+
+    const list = response.data?.list ?? []
+    items.value = list.map((row, index) => {
+      const num = toSafeNumber(row.num)
+      const price = toSafeNumber(row.price)
+      const discount = toSafeNumber(row.discount)
+      return {
+        id: toSafeNumber(row.id),
+        productId: String(row.product_id ?? ''),
+        title: `商品${index + 1}`,
+        diamondsText: `增${num}钻石`,
+        diamondsValue: num,
+        price,
+        image: typeof row.picture === 'string' && row.picture ? row.picture : pickImage(index),
+        wholesaleOnly: discount > 0,
+      }
+    })
+  } catch (error) {
+    items.value = []
+    const message = error instanceof Error ? error.message : '加载商品失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
 }
 
 function goPay(item: ShopItem): void {
@@ -58,6 +98,7 @@ function goPay(item: ShopItem): void {
     path: '/mine/shop/payment',
     query: {
       id: String(item.id),
+      product_id: item.productId,
       title: item.title,
       diamonds: String(item.diamondsValue),
       price: String(item.price),
@@ -65,6 +106,10 @@ function goPay(item: ShopItem): void {
     },
   })
 }
+
+onMounted(() => {
+  void fetchShopList()
+})
 </script>
 
 <template>
@@ -73,6 +118,8 @@ function goPay(item: ShopItem): void {
 
     <div class="content-wrap">
       <section class="shop-grid">
+        <p v-if="loading" class="grid-status">加载中...</p>
+        <p v-else-if="!items.length" class="grid-status">暂无商品</p>
         <button
           v-for="item in items"
           :key="item.id"
@@ -148,6 +195,14 @@ function goPay(item: ShopItem): void {
   grid-template-columns: repeat(3, 2.7607rem);
   gap: 0.3278rem;
   justify-content: space-between;
+}
+
+.grid-status {
+  grid-column: 1 / -1;
+  margin: 0.4rem 0;
+  text-align: center;
+  font-size: 0.34rem;
+  color: rgba(255, 255, 255, 0.86);
 }
 
 .shop-card {

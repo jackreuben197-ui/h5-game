@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { showFailToast, showSuccessToast } from 'vant'
+import { postOrderUserUsdtOrderListApi } from '@/api/order'
+import { postMallBuyApi } from '@/api/prop'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
@@ -15,18 +18,95 @@ const backgroundStyle = computed(() => ({
 const route = useRoute()
 
 const imgQr = 'https://www.figma.com/api/mcp/asset/1aabef25-95a5-4300-9235-709ff3c1d16a'
+const fallbackAddress = 'TKUksSTiyT80KSGdrTrf7ywTe'
 
 const price = computed(() => Number(route.query.price ?? 123.45))
 const diamonds = computed(() => Number(route.query.diamonds ?? 5000))
 const balance = computed(() => Number(route.query.balance ?? 0))
+const goodsId = computed(() => Number(route.query.id ?? 0))
+
+const creatingOrder = ref(false)
+const checkingStatus = ref(false)
+const orderNo = ref('')
+const statusText = ref('待支付')
+const payAddress = ref(fallbackAddress)
+const payQrCode = ref(imgQr)
+
+function getStatusLabel(status: number): string {
+  if (status === 2) return '支付成功'
+  if (status === 3) return '支付失败'
+  if (status === 4) return '订单取消'
+  if (status === 5) return '订单超时'
+  return '待支付'
+}
+
+async function createOrder(): Promise<void> {
+  if (goodsId.value <= 0) {
+    showFailToast('商品参数无效')
+    return
+  }
+
+  creatingOrder.value = true
+  try {
+    const response = await postMallBuyApi({
+      goods_id: goodsId.value,
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '创建订单失败')
+    }
+
+    orderNo.value = String(response.data?.order_id ?? '')
+    if (!orderNo.value) {
+      throw new Error('订单号缺失')
+    }
+    statusText.value = '待支付'
+    await queryOrderStatus(false)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '创建订单失败'
+    showFailToast(message)
+  } finally {
+    creatingOrder.value = false
+  }
+}
+
+async function queryOrderStatus(showSuccessHint = true): Promise<void> {
+  if (!orderNo.value) {
+    return
+  }
+
+  checkingStatus.value = true
+  try {
+    const response = await postOrderUserUsdtOrderListApi({ order_no: orderNo.value })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '查询订单失败')
+    }
+
+    const order = response.data?.list?.[0]?.order
+    const status = Number(order?.status ?? 1)
+    statusText.value = getStatusLabel(status)
+    if (status === 2 && showSuccessHint) {
+      showSuccessToast('支付成功')
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '查询订单失败'
+    showFailToast(message)
+  } finally {
+    checkingStatus.value = false
+  }
+}
 
 function closePage(): void {
   router.back()
 }
 
 function onCopyAddress(): void {
-  void navigator.clipboard?.writeText('TKUksSTiyT80KSGdrTrf7ywTe')
+  void navigator.clipboard?.writeText(payAddress.value)
+  showSuccessToast('钱包地址已复制')
 }
+
+onMounted(() => {
+  void createOrder()
+})
 </script>
 
 <template>
@@ -50,7 +130,7 @@ function onCopyAddress(): void {
         <div class="method usdt-method">
           <p class="t1">复制钱包地址转账</p>
           <p class="t2">复制钱包地址转币</p>
-          <p class="t3">TKUksSTiyT80KSGdrTrf7ywTe</p>
+          <p class="t3">{{ payAddress }}</p>
           <button type="button" class="copy-btn" @click="onCopyAddress">复制</button>
         </div>
       </div>
@@ -58,9 +138,9 @@ function onCopyAddress(): void {
       <p class="tips">提示：复制上方钱包地址转币完，或使用钱包扫描二维码完成付款</p>
       <p class="sub-tips">购买钻石：{{ diamonds }}，账户钻石：{{ balance }}</p>
 
-      <button type="button" class="paying-btn">
-        <span>支付中</span>
-        <small>12:34</small>
+      <button type="button" class="paying-btn" :disabled="creatingOrder || checkingStatus" @click="queryOrderStatus()">
+        <span>{{ creatingOrder ? '创建订单中...' : checkingStatus ? '查询中...' : statusText }}</span>
+        <small>{{ orderNo ? `订单号：${orderNo}` : '等待订单创建' }}</small>
       </button>
     </section>
   </div>
@@ -269,6 +349,10 @@ function onCopyAddress(): void {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
+  &:disabled {
+    opacity: 0.74;
+  }
 
   span {
     font-family: 'HONOR Sans CN', 'PingFang SC', var(--font-family-sans);

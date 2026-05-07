@@ -15,9 +15,17 @@ import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import NumericKeypad from '@/views/wallet/components/NumericKeypad.vue'
 import WithdrawForm from '@/views/wallet/components/WithdrawForm.vue'
 import UsdtPaymentPopup from '@/views/wallet/components/UsdtPaymentPopup.vue'
+import UnfinishedOrderPopup from '@/views/wallet/components/UnfinishedOrderPopup.vue'
+import UsdtPaymentDetailsPopup from '@/views/wallet/components/UsdtPaymentDetailsPopup.vue'
+import CustomerServicePaymentPopup from '@/views/wallet/components/CustomerServicePaymentPopup.vue'
+import CustomerServiceChatPopup from '@/views/wallet/components/CustomerServiceChatPopup.vue'
 import { t } from '@/i18n'
 import { useWalletStore } from '@/stores/wallet'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { postOrderUserRechargeNoApi, postRechargeGoldApi, postClubFundOrderListApi, postOrderUserClubOrderCancelApi } from '@/api/order'
+import { postChatSupportChannelListApi } from '@/api/chat'
+import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
+import { onMounted, watch } from 'vue'
 
 const router = useRouter()
 const walletStore = useWalletStore()
@@ -33,46 +41,172 @@ const usdtPopupProps = ref({
   goldCount: 0,
   rate: 0,
   feeRate: 0,
+  feeType: 0,
+  discount: 0,
+})
+
+const unfinishedOrder = ref<ClubFundOrderListOrderInfo | null>(null)
+const showUnfinishedPopup = ref(false)
+
+const usdtDetailsPopupOpen = ref(false)
+const rechargeResult = ref<any>(null)
+
+const csPopupOpen = ref(false)
+const csPopupProps = ref({
+  goldCount: 0,
+  rate: 0,
+  feeRate: 0,
+  feeType: 0,
+  discount: 0,
+})
+
+const csChatPopupOpen = ref(false)
+const csChatProps = ref({
+  tribeId: 0,
+  supportUserId: 0,
+  orderData: null as any,
+})
+
+async function checkUnfinishedOrders(showPopup = true) {
+  const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
+  const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
+
+  try {
+    const res = await postClubFundOrderListApi({
+      order_type: 1, // Recharge
+      my_order: true,
+      limit: 1,
+      offset: 0,
+      status: 1, // Pending
+    }, clubId)
+
+    if (res.code === 0 && res.data?.list?.length) {
+      unfinishedOrder.value = res.data.list[0]
+      if (showPopup) {
+        showUnfinishedPopup.value = true
+      }
+    } else {
+      unfinishedOrder.value = null
+    }
+  } catch (e) {
+    console.error('Failed to fetch unfinished orders', e)
+  }
+}
+
+async function handleCancelOrder(orderNo: string) {
+  try {
+    const res = await postOrderUserClubOrderCancelApi({ order_no: orderNo })
+    if (res.code === 0) {
+      showUnfinishedPopup.value = false
+      usdtDetailsPopupOpen.value = false
+      unfinishedOrder.value = null
+      // Refresh the list but don't show popup
+      await checkUnfinishedOrders(false)
+    } else {
+      alert(`Cancel failed: ${res.message}`)
+    }
+  } catch (e) {
+    console.error('Failed to cancel order', e)
+    alert('Failed to cancel order')
+  }
+}
+
+async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
+  showUnfinishedPopup.value = false
+
+  const qrCode = (order as any).qrcode || (order as any).qr_code || (order as any).pay_type_qr_code || ''
+  const result = {
+    order_no: order.order_no,
+    gold_num: order.gold_num,
+    pay_price: order.pay_price,
+    order: {
+      order_no: order.order_no,
+      amount: order.pay_price,
+      gold_num: order.gold_num,
+    },
+    usdt_address: {
+      address: order.pay_type_address || '',
+      qr_code: qrCode,
+      name: (order as any).pay_type_name || '客服撮合'
+    }
+  }
+
+  rechargeResult.value = result
+
+  // If it's a Customer Service order (Type 3 or api_type 3), open Chat Popup
+  const orderType = (order as any).pay_type || (order as any).api_type || (order as any).type
+  if (orderType === 3 || (order as any).pay_type_name?.includes('撮合')) {
+    try {
+      const channelRes = await postChatSupportChannelListApi({
+        im_service_types: [4],
+        limit: 1,
+        offset: 0
+      })
+
+      if (channelRes.code === 0 && channelRes.data?.list?.length) {
+        const channel = channelRes.data.list[0]
+        csChatProps.value = {
+          tribeId: channel.tribe_id || 0,
+          supportUserId: channel.support_user_id || 0,
+          orderData: result
+        }
+        csChatPopupOpen.value = true
+      } else {
+        // Fallback to USDT details if no chat channel found
+        usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
+        usdtDetailsPopupOpen.value = true
+      }
+    } catch (e) {
+      console.error('Failed to fetch chat channel for unfinished order', e)
+      usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
+      usdtDetailsPopupOpen.value = true
+    }
+  } else {
+    // Standard USDT flow
+    usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
+    usdtDetailsPopupOpen.value = true
+  }
+}
+
+onMounted(() => {
+  // We no longer check for unfinished orders on mount.
+  // It will be checked only when a recharge attempt fails with code 20066.
 })
 
 
+const filteredPayTypes = computed(() =>
+  (walletStore.goldPriceData?.pay_types ?? []).filter(pt => pt.type === 1 || pt.type === 3)
+)
+
 const methods = computed<PaymentMethod[]>(() =>
-  (walletStore.goldPriceData?.pay_types ?? []).map(pt => ({
+  filteredPayTypes.value.map(pt => ({
     icon: pt.image ?? '',
     primary: pt.name ?? '',
     secondary: '',
   }))
 )
 
+// Watch for method changes to handle methods without price lists
+watch(activeMethod, (newIdx) => {
+  const selected = filteredPayTypes.value[newIdx] as any
+  const hasPriceIds = (selected?.price_ids?.length ?? 0) > 0
+  const hasPriceList = (selected?.price_list?.length ?? 0) > 0
+
+  if (selected && !hasPriceIds && !hasPriceList) {
+    activePreset.value = -1 // Default to custom amount
+  } else {
+    activePreset.value = 0 // Default to first preset
+  }
+}, { immediate: true })
+
 // if pay_type have no price_ids or price_list then empty tile will show and default is custom amount tile will show.
 
-function calculateUsdtPrice(goldCount: number, rate: number, feeRate: number) {
-  let base = goldCount / 100;
-  let price = base * rate;
-  price = Math.round(price * 10000) / 10000;
-  if (feeRate > 0) {
-    price = price * (1 + feeRate);
-    price = Math.round(price * 10000) / 10000;
-  }
-  return Number(price.toFixed(6));
-}
-
-const formatUsdtPrice = (price: number): string => {
-  if (price === 0) return "0";
-  const rounded = Math.round(price * 100) / 100;
-  const nearestInteger = Math.round(rounded);
-  if (Math.abs(rounded - nearestInteger) < 0.01) {
-    return nearestInteger.toString();
-  }
-  if (Number.isInteger(rounded)) {
-    return rounded.toString();
-  }
-  return rounded.toString().replace(/\.?0+$/, "");
-};
+// feeType: 0=none, 1=club pays, 2=player pays — only apply surcharge when player pays
+// Removed local calculation and formatting functions, using walletStore instead.
 
 const presets = computed<Preset[]>(() => {
-  const payTypes = walletStore.goldPriceData?.pay_types ?? []
-  const selected = payTypes[activeMethod.value]
+  const payTypes = filteredPayTypes.value
+  const selected = payTypes[activeMethod.value] as any
   const hasPriceIds = (selected?.price_ids?.length ?? 0) > 0
   const hasPriceList = (selected?.price_list?.length ?? 0) > 0
   if (selected && !hasPriceIds && !hasPriceList) {
@@ -81,23 +215,31 @@ const presets = computed<Preset[]>(() => {
   const list = hasPriceList
     ? selected!.price_list!
     : (walletStore.goldPriceData?.list ?? [])
-    
-  const isUsdt = selected?.type === 1;
-  const rate = selected?.rate ?? 1;
-  const feeRate = selected?.fee_rate ?? 0;
 
-  return list.map(item => {
-    const goldCount = item.gold_count ?? 0;
-    const amountStr = String(goldCount / 100);
-    const chipStr = isUsdt 
-      ? formatUsdtPrice(calculateUsdtPrice(goldCount, rate, feeRate))
-      : (goldCount / 100).toLocaleString();
+    const isUsdt = selected?.type === 1;
+    const rate = selected?.rate ?? 1;
+    const feeRate = selected?.fee_rate ?? 0;
+    const feeType = selected?.fee_type ?? 0;
+    const discount = selected?.discount ?? 0;
 
-    return {
-      amount: amountStr,
-      chip: chipStr,
-    }
-  })
+    return list.map((item: any) => {
+      const goldCount = item.gold_count ?? 0;
+      const amountStr = String(goldCount / 100);
+      let chipStr = (goldCount / 100).toLocaleString();
+      if (isUsdt) {
+        chipStr = walletStore.formatUsdtPrice(walletStore.calculateUsdtPrice(goldCount, rate, feeRate, feeType, discount).totalUiPrice);
+      } else if (selected?.type === 3) {
+        // Customer Service: hide decimals
+        chipStr = Math.round(walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)).toString();
+      }
+
+      return {
+        amount: amountStr,
+        chip: chipStr,
+        id: item.id,
+        payPrice: item.pay_price as number | undefined,
+      }
+    })
 })
 
 function onCustom(): void {
@@ -118,24 +260,35 @@ const selectedAmount = computed(() => {
 })
 
 const displayPayAmount = computed(() => {
-  const payTypes = walletStore.goldPriceData?.pay_types ?? []
+  const payTypes = filteredPayTypes.value
   const selected = payTypes[activeMethod.value]
   const amount = Number(selectedAmount.value)
-  
+
   if (selected?.type === 1) { // USDT
     const goldCount = amount * 100
     const rate = selected.rate ?? 1
     const feeRate = selected.fee_rate ?? 0
-    return formatUsdtPrice(calculateUsdtPrice(goldCount, rate, feeRate))
+    const feeType = selected.fee_type ?? 0
+    const discount = selected.discount ?? 0
+    return walletStore.formatUsdtPrice(walletStore.calculateUsdtPrice(goldCount, rate, feeRate, feeType, discount).totalUiPrice)
   }
-  
+
+  if (selected?.type === 3) { // Customer Service
+    const goldCount = amount * 100
+    const rate = selected.rate ?? 1
+    const feeRate = selected.fee_rate ?? 0
+    const discount = selected.discount ?? 0
+    // Customer Service: hide decimals
+    return Math.round(walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)).toString()
+  }
+
   return selectedAmount.value
 })
 
 const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
 
 function onPayClick() {
-  const payTypes = walletStore.goldPriceData?.pay_types ?? []
+  const payTypes = filteredPayTypes.value
   const selectedPayType = payTypes[activeMethod.value]
 
   if (selectedPayType?.type === 1) {
@@ -143,16 +296,228 @@ function onPayClick() {
       goldCount: Number(selectedAmount.value) * 100,
       rate: selectedPayType.rate ?? 1,
       feeRate: selectedPayType.fee_rate ?? 0,
+      feeType: selectedPayType.fee_type ?? 0,
+      discount: selectedPayType.discount ?? 0,
     }
     usdtPopupOpen.value = true
-  } else {
-    // Normal pay
+  } else if (selectedPayType?.type === 3) {
+    csPopupProps.value = {
+      goldCount: Number(selectedAmount.value) * 100,
+      rate: selectedPayType.rate ?? 1,
+      feeRate: selectedPayType.fee_rate ?? 0,
+      feeType: selectedPayType.fee_type ?? 0,
+      discount: selectedPayType.discount ?? 0,
+    }
+    csPopupOpen.value = true
   }
 }
 
-function onUsdtSubmit(type: number) {
+async function onWithdrawCsChat(orderData: Record<string, unknown>) {
+  try {
+    const channelRes = await postChatSupportChannelListApi({
+      im_service_types: [4],
+      limit: 1,
+      offset: 0,
+    })
+    if (channelRes.code === 0 && channelRes.data?.list?.length) {
+      const channel = channelRes.data.list[0]
+      csChatProps.value = {
+        tribeId: channel.tribe_id || 0,
+        supportUserId: channel.support_user_id || 0,
+        orderData,
+      }
+      csChatPopupOpen.value = true
+    }
+  } catch (e) {
+    console.error('Failed to fetch chat channel for withdraw', e)
+  }
+}
+
+async function onCsSubmit(displayPayPrice?: number) {
+  csPopupOpen.value = false
+
+  const payTypes = filteredPayTypes.value
+  const selectedPayType = payTypes[activeMethod.value]
+  if (!selectedPayType) return
+
+  const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
+  const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
+
+  let goldCount = csPopupProps.value.goldCount
+  const rate = selectedPayType.rate ?? 1
+  const feeRate = selectedPayType.fee_rate ?? 0
+  const feeType = selectedPayType.fee_type ?? 0
+  const discount = selectedPayType.discount ?? 0
+  let priceId = activePreset.value === -1 ? 0 : (presets.value[activePreset.value]?.id ?? 0)
+
+  // 1. Unique-amount channel: server adjusts amount with a tail for payment matching
+  let isUniqueAmount = false
+  if ((selectedPayType.increase_interval ?? 0) > 0) {
+    try {
+      const res = await postOrderUserRechargeNoApi({
+        amount: goldCount,
+        pay_id: selectedPayType.id
+      }, clubId)
+      if (res.code === 0 && res.data) {
+        goldCount = res.data.amount ?? goldCount
+        priceId = res.data.price_id ?? 0
+        isUniqueAmount = true
+      }
+    } catch (e) {
+      console.error('Failed to get unique recharge amount', e)
+    }
+  }
+
+  // pay_price rule: discount > 0 takes priority (discount removes fee from pay_price);
+  // only when discount = 0 and fee_type = 2 is the fee added to pay_price.
+  const basePrice = (goldCount / 100) * rate
+  const apiPayPrice = discount > 0
+    ? Number((basePrice * (1 - discount)).toFixed(4))
+    : feeType === 2 && feeRate > 0
+      ? Number((basePrice * (1 + feeRate)).toFixed(4))
+      : Number(basePrice.toFixed(4))
+
+  // legal_tender = what the player actually pays, in cents (same logic as pay_price)
+  const playerPrice = isUniqueAmount
+    ? walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)
+    : (displayPayPrice ?? walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount))
+  const legalTender = Math.round(playerPrice * 100)
+
+  try {
+    const res = await postRechargeGoldApi({
+      amount: goldCount,
+      legal_tender: 0,
+      // legalTender
+      // name:"",
+      gold_type: 1,
+      pay_id: selectedPayType.id,
+      price_id: priceId,
+      pay_price: apiPayPrice,
+      pay_address: "",
+      pay_address_save: false,
+      // order_no: "",
+    }, clubId)
+
+    if (res.code === 0 && res.data) {
+      rechargeResult.value = res.data
+
+      try {
+        const channelRes = await postChatSupportChannelListApi({
+          im_service_types: [4],
+          limit: 1,
+          offset: 0
+        })
+
+        if (channelRes.code === 0 && channelRes.data?.list?.length) {
+          const channel = channelRes.data.list[0]
+          csChatProps.value = {
+            tribeId: channel.tribe_id || 0,
+            supportUserId: channel.support_user_id || 0,
+            orderData: {
+              ...res.data,
+              gold_num: goldCount,
+              pay_price: apiPayPrice
+            }
+          }
+          csChatPopupOpen.value = true
+        } else {
+          rechargeResult.value = res.data
+          usdtDetailsPopupOpen.value = true
+        }
+      } catch (chatError) {
+        console.error('Failed to fetch chat channel', chatError)
+        rechargeResult.value = res.data
+        usdtDetailsPopupOpen.value = true
+      }
+
+      activePreset.value = 0
+      customAmount.value = ''
+    } else if (res.code === 20066 || res.code === 90016) {
+      void checkUnfinishedOrders()
+    } else {
+      alert(`Recharge failed: ${res.message}`)
+    }
+  } catch (e) {
+    console.error('Failed to submit CS recharge', e)
+    alert('Failed to submit recharge')
+  }
+}
+
+async function onUsdtSubmit(type: number) {
   usdtPopupOpen.value = false
-  // TODO: submit transaction
+
+  const payTypes = filteredPayTypes.value
+  const selectedPayType = payTypes[activeMethod.value]
+  if (!selectedPayType) return
+
+  const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
+  const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
+
+  // type 0: exact, 1: rounded
+  let goldCount = type === 0
+    ? usdtPopupProps.value.goldCount
+    : Math.floor(usdtPopupProps.value.goldCount / 100) * 100
+
+  let priceId = activePreset.value === -1 ? 0 : (presets.value[activePreset.value]?.id ?? 0)
+
+  // 1. Unique-amount channel: server adjusts amount with a tail for payment matching
+  if ((selectedPayType.increase_interval ?? 0) > 0) {
+    try {
+      const res = await postOrderUserRechargeNoApi({
+        amount: goldCount,
+        pay_id: selectedPayType.id
+      }, clubId)
+      if (res.code === 0 && res.data) {
+        goldCount = res.data.amount ?? goldCount
+        priceId = res.data.price_id ?? 0
+      }
+    } catch (e) {
+      console.error('Failed to get unique recharge amount', e)
+    }
+  }
+
+  // 2. Calculate pay_price — fee only applied when fee_type === 2 (player pays)
+  const priceData = walletStore.calculateUsdtPrice(
+    goldCount,
+    selectedPayType.rate ?? 1,
+    selectedPayType.fee_rate ?? 0,
+    usdtPopupProps.value.feeType,
+    selectedPayType.discount ?? 0
+  )
+
+  // 3. Submit recharge
+  try {
+    const res = await postRechargeGoldApi({
+      amount: goldCount,
+      legal_tender: Math.round(priceData.totalUiPrice * 100),
+      gold_type: 1,
+      pay_id: selectedPayType.id,
+      price_id: priceId,
+      pay_price: priceData.apiPayPrice,
+      pay_address: "",
+      pay_address_save: false,
+      order_no: "",
+      name: "USDT User"
+    }, clubId)
+
+    if (res.code === 0 && res.data) {
+      console.log('Recharge successful:', res.data)
+      rechargeResult.value = res.data
+      usdtDetailsPopupOpen.value = true
+
+      // Reset selection state after success
+      activePreset.value = 0
+      customAmount.value = ''
+    } else if (res.code === 20066) {
+      // User has unfinished orders
+      void checkUnfinishedOrders()
+    } else {
+      alert(`Recharge failed: ${res.message}`)
+    }
+  } catch (e) {
+    console.error('Failed to submit recharge', e)
+    alert('Failed to submit recharge')
+  }
 }
 </script>
 
@@ -235,7 +600,7 @@ function onUsdtSubmit(type: number) {
       </template>
 
         <template v-else>
-          <WithdrawForm />
+          <WithdrawForm @open-cs-chat="onWithdrawCsChat" />
         </template>
       </div>
     </div>
@@ -246,13 +611,56 @@ function onUsdtSubmit(type: number) {
       @submit="onKeypadSubmit"
     />
 
+    <CustomerServicePaymentPopup
+      v-if="csPopupOpen"
+      :gold-count="csPopupProps.goldCount"
+      :rate="csPopupProps.rate"
+      :fee-rate="csPopupProps.feeRate"
+      :fee-type="csPopupProps.feeType"
+      :discount="csPopupProps.discount"
+      @close="csPopupOpen = false"
+      @submit="onCsSubmit"
+    />
+
+    <CustomerServiceChatPopup
+      v-if="csChatPopupOpen"
+      :tribe-id="csChatProps.tribeId"
+      :support-user-id="csChatProps.supportUserId"
+      :order-data="csChatProps.orderData"
+      @close="csChatPopupOpen = false"
+    />
+
     <UsdtPaymentPopup
       v-if="usdtPopupOpen"
       :gold-count="usdtPopupProps.goldCount"
       :rate="usdtPopupProps.rate"
       :fee-rate="usdtPopupProps.feeRate"
+      :fee-type="usdtPopupProps.feeType"
+      :discount="usdtPopupProps.discount"
       @close="usdtPopupOpen = false"
       @submit="onUsdtSubmit"
+    />
+
+    <UnfinishedOrderPopup
+      v-if="showUnfinishedPopup && unfinishedOrder"
+      :order="unfinishedOrder"
+      @close="showUnfinishedPopup = false"
+      @cancel="handleCancelOrder(unfinishedOrder.order_no!)"
+      @continue="handleUnfinishedContinue"
+    />
+
+    <UsdtPaymentDetailsPopup
+      v-if="usdtDetailsPopupOpen && rechargeResult"
+      :order-data="rechargeResult"
+      :rate="usdtPopupProps.rate"
+      :price="walletStore.formatUsdtPrice(
+        Number(rechargeResult.order?.amount) ||
+        Number(rechargeResult.pay_price) ||
+        Number(rechargeResult.amount) ||
+        walletStore.calculateUsdtPrice(usdtPopupProps.goldCount, usdtPopupProps.rate, usdtPopupProps.feeRate, usdtPopupProps.feeType, usdtPopupProps.discount).totalUiPrice
+      )"
+      @close="usdtDetailsPopupOpen = false"
+      @cancel="handleCancelOrder"
     />
   </div>
 </template>

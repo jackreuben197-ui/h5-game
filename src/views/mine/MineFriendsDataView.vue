@@ -1,79 +1,167 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast } from 'vant'
+import { postFriendRoomStatsDataApi, postFriendRoomStatsDataInfoApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
 import iconTime from '@/assets/icons/icon_time.png'
-import iconChips from '@/assets/icons/icon_chips.png'
-import defaultAvatar from '@/assets/images/default_avatar.png'
-import mttAvatar from '@/assets/icons/icon_mtt_avatar.png'
 
-interface SummaryItem {
+interface SummaryMetric {
   label: string
   value: string
 }
 
-interface PlayerItem {
+interface RecordItem {
   id: string
-  name: string
-  userId: string
-  profit: string
-  profitType: 'green' | 'red'
-  avatar: string
+  game: string
+  title: string
+  subtitle: string
+  extra?: string
+  time: string
+  feeText: string
+  feeValue: string
+  insuranceLabel?: string
+  insuranceValue?: string
+  feePositive?: boolean
 }
 
-const router = useRouter()
+const title = computed(() => '数捕管理')
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const gameTabs = ['德州', '麻将', '其他']
-const activeGameTab = ref(gameTabs[0])
+const filterTabs = ['今天', '14天', '7天', 'Customize']
+const activeFilter = ref(filterTabs[0])
+const loading = ref(false)
 
 const now = new Date()
 const maxSelectableDate = endOfDay(now)
 const minSelectableDate = startOfDay(addMonths(now, -3))
 
-const startDateModel = ref(new Date(2026, 2, 17))
-const endDateModel = ref(new Date(2026, 2, 27))
-
-const startTime = ref('12:00')
-const endTime = ref('12:00')
+const startDateModel = ref(startOfDay(addDays(now, -6)))
+const endDateModel = ref(startOfDay(now))
 
 const isDatePickerVisible = ref(false)
 const pickingTarget = ref<'start' | 'end'>('start')
 const currentMonth = ref(new Date(endDateModel.value.getFullYear(), endDateModel.value.getMonth(), 1))
-
 const weekLabels = ['m', 't', 'w', 't', 'f', 's', 's']
 
-const summary: SummaryItem[] = [
-  { label: '参与人数', value: '200' },
-  { label: '总桌数', value: '50' },
-  { label: '我的收益', value: '200' },
-]
-
-const players = ref<PlayerItem[]>([
-  {
-    id: '11440454-1',
-    name: 'Player Name',
-    userId: '11440454',
-    profit: '-1,000',
-    profitType: 'green',
-    avatar: defaultAvatar,
-  },
-  {
-    id: '11440454-2',
-    name: 'Player Name',
-    userId: '11440454',
-    profit: '+20,000',
-    profitType: 'red',
-    avatar: mttAvatar,
-  },
+const metrics = ref<SummaryMetric[]>([
+  { label: '手数/局数', value: '0/0' },
+  { label: '盈利', value: '0' },
+  { label: '服務費', value: '0' },
 ])
 
-const title = computed(() => '数据')
+const records = ref<RecordItem[]>([])
+
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function formatSigned(value: unknown): string {
+  const amount = toSafeNumber(value)
+  if (amount === 0) {
+    return '0'
+  }
+  const abs = Math.abs(amount).toLocaleString('en-US')
+  return amount > 0 ? `+${abs}` : `-${abs}`
+}
+
+function toUnixSeconds(date: Date): number {
+  return Math.floor(startOfDay(date).getTime() / 1000)
+}
+
+function mapGameBadge(gameType: unknown, pokerType: unknown): string {
+  const type = toSafeNumber(gameType)
+  const poker = toSafeNumber(pokerType)
+  if (type === 1 || type === 2 || type === 3) return 'PLO'
+  if (type === 5) return 'Cowboy'
+  if (type === 6) {
+    if (poker === 1) {
+      return '血战\n到底'
+    } else if (poker === 2) {
+      return '血流\n成河'
+    } else if (poker === 3) {
+      return '推倒胡'
+    }
+    return '麻将'
+  }
+  if (type === 7) return '掼蛋'
+  return 'NLH'
+}
+
+function mapRecordItem(row: Record<string, unknown>, index: number): RecordItem {
+  const feeValue = formatSigned(row.fee)
+  const insuranceValue = formatSigned(row.insurance)
+  const startTime = String(row.start_time_str ?? row.game_start_time ?? '--')
+  const matchPlayers = toSafeNumber(row.match_player_num)
+  const buyIn = toSafeNumber(row.buy_in)
+  const sb = toSafeNumber(row.sb)
+
+  return {
+    id: String(row.room_id ?? row.match_id ?? index + 1),
+    game: mapGameBadge(row.game_type, row.poker_type),
+    title: String(row.name ?? row.room_name ?? row.game_room_name ?? '局抽数据'),
+    subtitle: matchPlayers > 0 ? `参赛人数: ${matchPlayers}` : `盲注 : ${sb}`,
+    extra: buyIn > 0 ? `买入 : ${buyIn}` : undefined,
+    time: startTime,
+    feeText: '服务费',
+    feeValue,
+    insuranceLabel: '保险',
+    insuranceValue,
+    feePositive: feeValue.startsWith('+'),
+  }
+}
+
+async function fetchFriendsRecord(): Promise<void> {
+  loading.value = true
+  try {
+    const requestPayload = {
+      start_time: toUnixSeconds(startDateModel.value),
+      end_time: toUnixSeconds(endDateModel.value),
+      limit: 20,
+      offset: 0,
+    }
+
+    const [listRes, infoRes] = await Promise.all([
+      postFriendRoomStatsDataApi(requestPayload),
+      postFriendRoomStatsDataInfoApi({
+        start_time: requestPayload.start_time,
+        end_time: requestPayload.end_time,
+      }),
+    ])
+
+    if (listRes.code !== 0) {
+      throw new Error(typeof listRes.msg === 'string' ? listRes.msg : '加载朋友战绩失败')
+    }
+
+    if (infoRes.code !== 0) {
+      throw new Error(typeof infoRes.msg === 'string' ? infoRes.msg : '加载统计信息失败')
+    }
+
+    const list = Array.isArray(listRes.data?.list) ? listRes.data.list : []
+    records.value = list.map((item, index) => mapRecordItem((item as Record<string, unknown>) ?? {}, index))
+
+    const info = (infoRes.data?.info as Record<string, unknown> | undefined) ?? {}
+    const handNum = toSafeNumber(info.hand_num)
+    const gameNum = toSafeNumber(info.game_num)
+    metrics.value = [
+      { label: '手数/局数', value: `${handNum}/${gameNum}` },
+      { label: '盈利', value: formatSigned(info.profit) },
+      { label: '服務費', value: Math.abs(toSafeNumber(info.fee)).toLocaleString('en-US') },
+    ]
+  } catch (error) {
+    records.value = []
+    const message = error instanceof Error ? error.message : '加载朋友战绩失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
 
 const startDateText = computed(() => formatDateSlash(startDateModel.value))
 const endDateText = computed(() => formatDateSlash(endDateModel.value))
@@ -121,8 +209,33 @@ const calendarCells = computed<DayCell[]>(() => {
   return cells.slice(0, 35)
 })
 
-function goBack(): void {
-  void router.push('/mine/friends-career')
+function onFilterClick(tab: string): void {
+  if (tab === 'Customize') {
+    activeFilter.value = tab
+    openDatePicker('start')
+    return
+  }
+
+  activeFilter.value = tab
+  if (tab === '今天') {
+    startDateModel.value = startOfDay(now)
+    endDateModel.value = startOfDay(now)
+    void fetchFriendsRecord()
+    return
+  }
+
+  if (tab === '7天') {
+    startDateModel.value = startOfDay(addDays(now, -6))
+    endDateModel.value = startOfDay(now)
+    void fetchFriendsRecord()
+    return
+  }
+
+  if (tab === '14天') {
+    startDateModel.value = startOfDay(addDays(now, -13))
+    endDateModel.value = startOfDay(now)
+    void fetchFriendsRecord()
+  }
 }
 
 function openDatePicker(target: 'start' | 'end'): void {
@@ -141,6 +254,8 @@ function confirmDatePicker(): void {
     startDateModel.value = endDateModel.value
     endDateModel.value = temp
   }
+  activeFilter.value = 'Customize'
+  void fetchFriendsRecord()
   closeDatePicker()
 }
 
@@ -216,6 +331,12 @@ function formatDateSlash(date: Date): string {
   return `${y}/${m}/${d}`
 }
 
+function addDays(date: Date, days: number): Date {
+  const d = new Date(date)
+  d.setDate(d.getDate() + days)
+  return d
+}
+
 function addMonths(date: Date, months: number): Date {
   const d = new Date(date)
   d.setMonth(d.getMonth() + months)
@@ -229,76 +350,86 @@ function startOfDay(date: Date): Date {
 function endOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)
 }
+
+function openRecordDetail(_item: RecordItem): void {
+  // 待后续接入战绩详情页。
+}
+
+onMounted(() => {
+  void fetchFriendsRecord()
+})
 </script>
 
 <template>
-  <div class="friends-data-page" :style="backgroundStyle">
+  <div class="friends-record-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
-      <nav class="game-tabs" aria-label="玩法切换">
-        <button
-          v-for="tab in gameTabs"
-          :key="tab"
-          type="button"
-          class="game-tab"
-          :class="{ active: activeGameTab === tab }"
-          @click="activeGameTab = tab"
-        >
-          {{ tab }}
-        </button>
-      </nav>
-
-      <section class="glass-card summary-card">
-        <div class="date-range">
-          <button type="button" class="date-pill" @click="openDatePicker('start')">
-            <span class="date">{{ startDateText }}</span>
-            <span class="time-line">
-              <img :src="iconTime" alt="时间" />
-              <span>{{ startTime }}</span>
-            </span>
-          </button>
-
-          <span class="dash" aria-hidden="true">—</span>
-
-          <button type="button" class="date-pill" @click="openDatePicker('end')">
-            <span class="date">{{ endDateText }}</span>
-            <span class="time-line">
-              <img :src="iconTime" alt="时间" />
-              <span>{{ endTime }}</span>
-            </span>
+      <section class="summary-card">
+        <div class="filter-tabs">
+          <button
+            v-for="tab in filterTabs"
+            :key="tab"
+            type="button"
+            class="filter-tab"
+            :class="{ active: activeFilter === tab, 'is-customize': tab === 'Customize' }"
+            @click="onFilterClick(tab)"
+          >
+            {{ tab }}
           </button>
         </div>
 
-        <div class="metrics">
-          <div v-for="(item, index) in summary" :key="item.label" class="metric">
+        <div class="metrics-row">
+          <div v-for="(item, idx) in metrics" :key="item.label" class="metric-item">
             <p class="metric-label">{{ item.label }}</p>
             <p class="metric-value">{{ item.value }}</p>
-            <span v-if="index < summary.length - 1" class="metric-divider" aria-hidden="true"></span>
+            <span v-if="idx < metrics.length - 1" class="metric-divider" aria-hidden="true"></span>
           </div>
         </div>
       </section>
 
-      <section class="list-head">
-        <span>用户</span>
-        <span>盈亏</span>
-      </section>
+      <p class="timezone-text">时区：UTC+0</p>
 
-      <section class="player-list">
-        <article v-for="item in players" :key="item.id" class="player-card">
-          <div class="player-left">
-            <img class="avatar" :src="item.avatar" :alt="item.name" />
-            <div class="player-meta">
-              <p class="name">{{ item.name }}</p>
-              <p class="id">ID: {{ item.userId }}</p>
+      <section class="record-list">
+        <p v-if="loading" class="list-status">加载中...</p>
+        <p v-else-if="!records.length" class="list-status">暂无朋友战绩</p>
+        <article
+          v-for="item in records"
+          :key="item.id"
+          class="record-row"
+          @click="openRecordDetail(item)"
+        >
+          <div class="game-badge">{{ item.game }}</div>
+
+          <div class="record-card">
+            <div class="record-main">
+              <p class="record-title">{{ item.title }}</p>
+
+              <div class="record-meta">
+                <div class="meta-top">
+                  <span>{{ item.subtitle }}</span>
+                  <span v-if="item.extra" class="extra">{{ item.extra }}</span>
+                </div>
+                <div class="meta-time">
+                  <img :src="iconTime" alt="时间" />
+                  <span>{{ item.time }}</span>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div class="player-right">
-            <span class="profit" :class="item.profitType === 'green' ? 'profit-green' : 'profit-red'">
-              {{ item.profit }}
-            </span>
-            <img class="chip" :src="iconChips" alt="筹码" />
+            <div class="record-right">
+              <div class="fee-chip">
+                <div class="fee-line">
+                  <span>{{ item.feeText }}</span>
+                  <span :class="item.feePositive ? 'value-up' : 'value-down'">{{ item.feeValue }}</span>
+                </div>
+                <div v-if="item.insuranceLabel && item.insuranceValue" class="fee-line">
+                  <span>{{ item.insuranceLabel }}</span>
+                  <span class="value-down">{{ item.insuranceValue }}</span>
+                </div>
+              </div>
+              <span class="chevron">›</span>
+            </div>
           </div>
         </article>
       </section>
@@ -404,10 +535,10 @@ function endOfDay(date: Date): Date {
 </template>
 
 <style scoped lang="scss">
-.friends-data-page {
-  position: relative;
+.friends-record-page {
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
+  padding-top: calc(env(safe-area-inset-top) + 0.459rem);
+  padding-bottom: 0.8rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;
@@ -415,102 +546,76 @@ function endOfDay(date: Date): Date {
 }
 
 .content-wrap {
-  position: relative;
-  padding: 0 0.49rem;
+  padding: 0 0.4392rem;
+}
+
+.back-btn {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 0.76845rem;
+  line-height: 1;
+  padding: 0;
 }
 
 .head-space {
-  width: 0.758rem;
-  height: 0.758rem;
-}
-
-.game-tabs {
-  margin-top: 0.40541rem;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: center;
-  padding: 0 0.77704rem;
-}
-
-.game-tab {
-  border: 0;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.37029rem;
-  font-weight: 500;
-  padding: 0.06rem 0;
-  line-height: 0.95;
-
-  &.active {
-    color: #fff;
-    border-bottom: 0.03365rem solid rgba(255, 255, 255, 0.95);
-  }
-}
-
-.glass-card {
-  border-radius: 0.76013rem;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.00421rem);
+  width: 0.76845rem;
+  height: 0.76845rem;
 }
 
 .summary-card {
-  margin-top: 0.40541rem;
+  margin-top: 0.38941rem;
+  border-radius: 0.76013rem;
+  background: rgba(0, 0, 0, 0.2);
   padding: 0.36317rem 0.4392rem;
 }
 
-.date-range {
+.filter-tabs {
+  width: 7.55067rem;
+  max-width: 100%;
+  height: 1.35979rem;
+  border-radius: 0.76013rem;
+  background: rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.21341rem;
+  gap: 0.05912rem;
+  padding: 0.05912rem;
+  overflow: hidden;
+  margin: 0 auto;
 }
 
-.date-pill {
+.filter-tab {
+  flex: 1 1 0;
+  min-width: 0;
   border: 0;
-  border-radius: 1.05573rem;
-  background: rgba(0, 0, 0, 0.24);
-  width: 3.2204rem;
-  height: 1.50483rem;
-  color: #fff;
-  display: grid;
-  justify-items: center;
-  align-content: center;
-  gap: 0.2196rem;
+  border-radius: 1.3844rem;
+  background: transparent;
+  color: #f9f9f9;
+  font-size: 0.40541rem;
+  line-height: 0.44299rem;
+  padding: 0.11075rem 0.24rem;
 
-  .date {
-    font-size: 0.32013rem;
-    line-height: 0.42685rem;
+  &.is-customize {
+    flex: 1.34 1 0;
+    font-size: 0.36235rem;
+    padding-left: 0.22rem;
+    padding-right: 0.22rem;
   }
 
-  .time-line {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.21341rem;
-    font-size: 0.42685rem;
-    line-height: 0.53355rem;
-
-    img {
-      width: 0.33147rem;
-      height: 0.31867rem;
-      object-fit: contain;
-      opacity: 0.95;
-    }
+  &.active {
+    background: rgba(255, 255, 255, 0.17);
+    font-weight: 500;
+    line-height: 0.83;
   }
 }
 
-.dash {
-  font-size: 0.42685rem;
-  line-height: 1;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.metrics {
-  margin-top: 0.276rem;
+.metrics-row {
+  margin-top: 0.24296rem;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.metric {
+.metric-item {
   text-align: center;
   position: relative;
 
@@ -531,98 +636,166 @@ function endOfDay(date: Date): Date {
 .metric-divider {
   position: absolute;
   right: 0;
-  top: 0.05rem;
+  top: 0.12rem;
   width: 0.0192rem;
   height: 0.718rem;
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.2);
 }
 
-.list-head {
-  margin: 0.338rem auto 0;
-  width: 7.2044rem;
+.timezone-text {
+  margin: 0.072rem 0.11rem 0;
+  text-align: right;
+  font-size: 0.25861rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.record-list {
+  margin-top: 0.26667rem;
+  display: grid;
+  gap: 0.26667rem;
+}
+
+.list-status {
+  text-align: center;
+  font-size: 0.32rem;
+  opacity: 0.78;
+  margin: 0.24rem 0;
+}
+
+.record-row {
+  position: relative;
+  min-height: 2.27648rem;
+  padding-left: 0.25333rem;
+}
+
+.game-badge {
+  position: absolute;
+  left: -0.028rem;
+  top: 0.40533rem;
+  width: 1.4888rem;
+  height: 1.4888rem;
+  border: 0.02533rem solid rgba(242, 242, 242, 0.4);
+  border-radius: 1.7372rem;
+  background: rgba(20, 5, 47, 0.33);
+  backdrop-filter: blur(0.28112rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: pre-line;
+  font-size: 0.36235rem;
+  line-height: 1.1;
+  font-weight: 700;
+  z-index: 2;
+}
+
+.record-card {
+  margin-left: 0.25333rem;
+  min-height: 2.25507rem;
+  border-radius: 2.0848rem;
+  border: 0.02667rem solid rgba(255, 255, 255, 0.56);
+  background: linear-gradient(95deg, rgba(159, 22, 128, 0.64) 0%, rgba(130, 26, 142, 0.56) 63%, rgba(72, 82, 175, 0.56) 100%);
+  backdrop-filter: blur(0.67653rem);
+  padding: 0.37333rem 0.53333rem 0.37333rem 1.2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.33784rem;
+  cursor: pointer;
+}
+
+.record-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18667rem;
+}
+
+.record-title {
+  margin: 0;
+  font-size: 0.33816rem;
+  line-height: 0.83;
+  font-weight: 700;
+}
+
+.record-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.13333rem;
+}
+
+.meta-top {
+  display: flex;
+  align-items: center;
+  gap: 0.66667rem;
+  font-size: 0.21928rem;
+  line-height: 1;
+
+  .extra {
+    font-weight: 700;
+  }
+}
+
+.meta-time {
+  display: flex;
+  align-items: center;
+  gap: 0.08rem;
+  font-size: 0.28152rem;
+  line-height: 1;
+  letter-spacing: 0.01126rem;
+  font-weight: 590;
+
+  img {
+    width: 0.35829rem;
+    height: 0.35829rem;
+    object-fit: contain;
+  }
+}
+
+.record-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18667rem;
+}
+
+.fee-chip {
+  min-width: 1.776rem;
+  border-radius: 0.20376rem;
+  background: rgba(0, 0, 0, 0.27);
+  padding: 0.13947rem 0.20853rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.07053rem;
+}
+
+.fee-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.13333rem;
+  font-size: 0.2116rem;
+  line-height: 1;
+  letter-spacing: 0.00846rem;
   font-weight: 590;
 }
 
-.player-list {
-  margin-top: 0.3208rem;
-  display: grid;
-  gap: 0.3208rem;
+.value-up {
+  color: #ff5364;
 }
 
-.player-card {
-  border-radius: 4.223rem;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.00421rem);
-  padding: 0.36317rem 0.4392rem;
-  min-height: 1.93072rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.player-left {
-  display: flex;
-  align-items: center;
-  gap: 0.21387rem;
-}
-
-.avatar {
-  width: 1.3693rem;
-  height: 1.3775rem;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.player-meta {
-  .name {
-    margin: 0;
-    font-size: 0.4392rem;
-    line-height: 0.4812rem;
-    font-weight: 500;
-  }
-
-  .id {
-    margin: 0.06rem 0 0;
-    font-size: 0.30405rem;
-    line-height: 0.42776rem;
-    opacity: 0.55;
-  }
-}
-
-.player-right {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.1352rem;
-}
-
-.profit {
-  font-size: 0.42267rem;
-  line-height: 1.4;
-  font-weight: 600;
-}
-
-.profit-green {
+.value-down {
   color: #05e7ae;
 }
 
-.profit-red {
-  color: #ff132b;
-}
-
-.chip {
-  width: 0.53333rem;
-  height: 0.53333rem;
-  object-fit: contain;
+.chevron {
+  font-size: 0.648rem;
+  line-height: 1;
+  color: #f9f9f9;
 }
 
 .date-picker-mask {
   position: fixed;
   inset: 0;
-  z-index: 20;
+  z-index: 24;
   background: rgba(12, 12, 12, 0.6);
   display: flex;
   align-items: flex-end;
@@ -785,10 +958,7 @@ function endOfDay(date: Date): Date {
     z-index: 2;
   }
 
-  &.disabled {
-    opacity: 0.3;
-  }
-
+  &.disabled,
   &.muted {
     opacity: 0.3;
   }

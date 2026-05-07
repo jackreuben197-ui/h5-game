@@ -10,15 +10,15 @@ const log = createLogger('[i18n]')
 // 与 Cocos 保持一致：cn(简中) / zh(繁中) / en / pt。
 export type LocaleCode = 'cn' | 'zh' | 'en' | 'pt'
 
-const DEFAULT_LOCALE: LocaleCode = 'zh'
+const DEFAULT_LOCALE: LocaleCode = 'cn'
 const SHARED_I18N_BASE = 'assets/resources/config'
 
 export const SUPPORTED_LOCALES: LocaleCode[] = ['en', 'pt', 'zh', 'cn']
 
 const localeAssetUrls: Record<LocaleCode, string> = {
-  en: resolveSharedLocaleUrl('USER_EN.txt'),
-  pt: resolveSharedLocaleUrl('USER_PT.txt'),
-  zh: resolveSharedLocaleUrl('USER_TW.txt'),
+  en: resolveSharedLocaleUrl('USER_ZH.txt'),
+  pt: resolveSharedLocaleUrl('USER_ZH.txt'),
+  zh: resolveSharedLocaleUrl('USER_ZH.txt'),
   cn: resolveSharedLocaleUrl('USER_ZH.txt'),
 }
 const dictionaries: Partial<Record<LocaleCode, TxtLanguageMap>> = {}
@@ -83,6 +83,8 @@ export const textI18nPlugin = {
     if (currentLocale.value !== DEFAULT_LOCALE) {
       void ensureLocaleLoaded(DEFAULT_LOCALE)
     }
+    // 启动时将初始 locale 同步给 Cocos；forwardLanguageChangedToCocos 内部会等 Bridge 握手完成后再发送。
+    notifyLocaleChangedToCocos(currentLocale.value)
   },
 }
 

@@ -1,65 +1,40 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import bannerBgUrl from '@/assets/images/wallet/banner_bg.png'
 import AppBar from '@/components/wallet/AppBar.vue'
-import ava1 from '@/assets/images/wallet/avatars/ava1.png'
+import TagPill from '@/components/wallet/TagPill.vue'
 import iconChips from '@/assets/icons/wallet/ic_coins.png'
+import { postUserGoldChangeLogApi } from '@/api/user'
 
-interface Transaction {
-  id: number
-  type: 'in' | 'out'
-  category: string
-  title: string
-  userId: string
-  amount: string
-  time: string
-  balance: string
+import type { UserGoldChangeLogRecord } from '@/api/models/user'
+import { useUserInfoStore } from '@/stores/userInfo'
+
+const userInfoStore = useUserInfoStore()
+const userInfo = computed(() => userInfoStore.userInfo?.user)
+
+const logs = ref<UserGoldChangeLogRecord[]>([])
+
+function formatAmount(record: UserGoldChangeLogRecord): string {
+  const val = record.gold_change ?? 0
+  const abs = Math.abs(val / 100).toLocaleString()
+  return val >= 0 ? `+${abs}` : `-${abs}`
 }
 
-const transactions = ref<Transaction[]>([
-  {
-    id: 1,
-    type: 'in',
-    category: '小游戏带入',
-    title: '游戏名称',
-    userId: '8677650585',
-    amount: '+1,000',
-    time: '22:56',
-    balance: '55,555,555',
-  },
-  {
-    id: 2,
-    type: 'out',
-    category: '回收',
-    title: '游戏名称',
-    userId: '8677650585',
-    amount: '-1,000',
-    time: '22:56',
-    balance: '55,555,555',
-  },
-  {
-    id: 3,
-    type: 'in',
-    category: '充值',
-    title: '游戏名称',
-    userId: '8677650585',
-    amount: '+1,000',
-    time: '22:56',
-    balance: '55,555,555',
-  },
-  {
-    id: 4,
-    type: 'out',
-    category: '回收',
-    title: '游戏名称',
-    userId: '8677650585',
-    amount: '-1,000',
-    time: '22:56',
-    balance: '55,555,555',
-  },
-])
+function formatBalance(val?: number): string {
+  if (val === undefined) return '-'
+  return (val / 100).toLocaleString()
+}
 
+function formatTime(raw?: string): string {
+  if (!raw) return '-'
+  return raw.replace('T', ' ').slice(11, 16)
+}
+
+onMounted(async () => {
+  const res = await postUserGoldChangeLogApi({ limit: 20, offset: 0 })
+  logs.value = res.data?.list ?? []
+})
 </script>
 
 <template>
@@ -79,20 +54,20 @@ const transactions = ref<Transaction[]>([
           <div class="user-card-inner">
             <div class="user-info-section">
               <div class="avatar-box">
-                <img :src="ava1" alt="avatar" />
+                <img :src="(userInfo?.avatar as string) || ''" alt="avatar" />
               </div>
               <div class="user-text">
-                <span class="user-name">Carter Torff</span>
+                <span class="user-name">{{ userInfo?.nickname ?? '-' }}</span>
                 <div class="user-id-badge">
-                  <span class="id-label">ID</span>
-                  <span class="id-value">8677650585</span>
+                  <TagPill label="ID" variant="id" />
+                  <span class="id-value">{{ userInfo?.un_id ?? userInfo?.unid ?? '-' }}</span>
                 </div>
               </div>
             </div>
 
             <div class="balance-section">
               <span class="balance-label">Balance:</span>
-              <span class="balance-value">123,456,78</span>
+              <span class="balance-value">{{ (userInfo?.gold as number ?? 0).toLocaleString() }}</span>
               <img :src="iconChips" alt="chips" class="chip-icon" />
             </div>
           </div>
@@ -100,13 +75,13 @@ const transactions = ref<Transaction[]>([
       </div>
 
       <div class="transactions-list">
-        <div v-for="item in transactions" :key="item.id" class="transaction-card">
+        <div v-for="(item, idx) in logs" :key="idx" class="transaction-card">
           <div class="card__bg-blur" :style="{ backgroundImage: `url(${sharpBgUrl})` }"></div>
           <div class="transaction-card__top">
             <div class="transaction-card__left">
-              <div :class="['icon-circle', item.type]">
+              <div :class="['icon-circle', (item.gold_change ?? 0) >= 0 ? 'in' : 'out']">
                 <svg
-                  v-if="item.type === 'in'"
+                  v-if="(item.gold_change ?? 0) >= 0"
                   width="26"
                   height="26"
                   viewBox="0 0 26 26"
@@ -140,18 +115,18 @@ const transactions = ref<Transaction[]>([
                 </svg>
               </div>
               <div class="info">
-                <div class="category-badge">{{ item.category }}</div>
+                <div class="category-badge">{{ item.op_code ?? '-' }}</div>
                 <div class="title-row">
-                  <span class="title">{{ item.title }}</span>
-                  <div class="id-row">
+                  <span class="title">{{ item.name ?? '-' }}</span>
+                  <div v-if="item.src_random_id" class="id-row">
                     <span class="id-badge">ID</span>
-                    <span class="id-number">{{ item.userId }}</span>
+                    <span class="id-number">{{ item.src_random_id }}</span>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="amount" :class="item.type">
-              {{ item.amount }}
+            <div class="amount" :class="(item.gold_change ?? 0) >= 0 ? 'in' : 'out'">
+              {{ formatAmount(item) }}
             </div>
           </div>
 
@@ -168,10 +143,10 @@ const transactions = ref<Transaction[]>([
               >
                 <path d="M10 0C15.523 0 20 4.477 20 10C20 15.523 15.523 20 10 20C4.477 20 0 15.523 0 10C0 4.477 4.477 0 10 0ZM10 2C7.87827 2 5.84344 2.84285 4.34315 4.34315C2.84285 5.84344 2 7.87827 2 10C2 12.1217 2.84285 14.1566 4.34315 15.6569C5.84344 17.1571 7.87827 18 10 18C12.1217 18 14.1566 17.1571 15.6569 15.6569C17.1571 14.1566 18 12.1217 18 10C18 7.87827 17.1571 5.84344 15.6569 4.34315C14.1566 2.84285 12.1217 2 10 2ZM10 4C10.2449 4.00003 10.4813 4.08996 10.6644 4.25272C10.8474 4.41547 10.9643 4.63975 10.993 4.883L11 5V9.586L13.707 12.293C13.8863 12.473 13.9905 12.7144 13.9982 12.9684C14.006 13.2223 13.9168 13.4697 13.7488 13.6603C13.5807 13.8508 13.3464 13.9703 13.0935 13.9944C12.8406 14.0185 12.588 13.9454 12.387 13.79L12.293 13.707L9.293 10.707C9.13758 10.5514 9.03776 10.349 9.009 10.131L9 10V5C9 4.73478 9.10536 4.48043 9.29289 4.29289C9.48043 4.10536 9.73478 4 10 4Z" fill="white" />
               </svg>
-              <span class="time-text">{{ item.time }}</span>
+              <span class="time-text">{{ formatTime(item.create_time) }}</span>
             </div>
             <div class="balance">
-              <span class="balance-text">{{ item.balance }}</span>
+              <span class="balance-text">{{ formatBalance(item.gold_after) }}</span>
               <img :src="iconChips" alt="chips" class="icon-chip" />
             </div>
           </div>
@@ -339,27 +314,14 @@ const transactions = ref<Transaction[]>([
 .user-id-badge {
   display: flex;
   align-items: center;
-  gap: 0.1rem;
-  width: fit-content;
-  overflow: hidden;
-}
-
-.id-label {
-  background: rgba(255, 255, 255, 0.40);
-  padding: 2.802px 4.903px;
-  border-radius: 4.202px;
-  color: #fff;
-  font-family: 'SF Pro', sans-serif;
-  font-size: 9.601px;
-  font-weight: 590;
+  gap: 0.06rem;
 }
 
 .id-value {
+  font-family: var(--wallet-font-num);
+  font-weight: 400;
+  font-size: 0.23rem;
   color: #fff;
-  font-family: 'SF Pro', sans-serif;
-  font-size: 9.601px;
-  font-weight: 590;
-  padding-right: 0.16rem;
 }
 
 .balance-section {

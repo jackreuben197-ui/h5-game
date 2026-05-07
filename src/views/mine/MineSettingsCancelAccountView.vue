@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { showFailToast, showSuccessToast } from 'vant'
+import { postUserDeleteApi, postUserDeleteCodeApi } from '@/api/user'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import mainBgUrl from '@/assets/images/main_bg.webp'
@@ -97,6 +99,8 @@ const otp = ref('')
 const emailDraft = ref('')
 const otpCountdown = ref(0)
 const showConfirm = ref(false)
+const requestingOtp = ref(false)
+const deleting = ref(false)
 
 const emailFieldValue = computed({
   get: () => email.value || emailDraft.value,
@@ -111,8 +115,36 @@ function goBack(): void {
   router.back()
 }
 
-function requestOtp(): void {
-  if (otpCountdown.value > 0) {
+function getSceneByType(): 1 | 2 {
+  return isPhone.value ? 1 : 2
+}
+
+async function requestOtp(): Promise<void> {
+  if (otpCountdown.value > 0 || requestingOtp.value) {
+    return
+  }
+
+  const account = isPhone.value ? firstContactValue.value : emailFieldValue.value.trim()
+  if (!account) {
+    showFailToast('账号信息缺失，请重新登录后重试')
+    return
+  }
+
+  requestingOtp.value = true
+  try {
+    const response = await postUserDeleteCodeApi({
+      scene: getSceneByType(),
+      account,
+      lang: 1,
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '验证码发送失败')
+    }
+    showSuccessToast('验证码已发送')
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '验证码发送失败'
+    showFailToast(message)
+    requestingOtp.value = false
     return
   }
 
@@ -132,6 +164,7 @@ function requestOtp(): void {
     }
     otpCountdown.value -= 1
   }, 1000)
+  requestingOtp.value = false
 }
 
 function onSubmit(): void {
@@ -142,9 +175,38 @@ function cancelDialog(): void {
   showConfirm.value = false
 }
 
-function confirmDialog(): void {
+async function confirmDialog(): Promise<void> {
   showConfirm.value = false
-  void router.replace('/mine/settings')
+  const code = otp.value.trim()
+  const account = isPhone.value ? firstContactValue.value : emailFieldValue.value.trim()
+  if (!account) {
+    showFailToast('账号信息缺失，请重新登录后重试')
+    return
+  }
+  if (!code) {
+    showFailToast('请输入验证码')
+    return
+  }
+
+  deleting.value = true
+  try {
+    const response = await postUserDeleteApi({
+      scene: getSceneByType(),
+      account,
+      code,
+      lang: 1,
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '注销申请提交失败')
+    }
+    showSuccessToast('已提交注销申请')
+    void router.replace('/mine/settings')
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '注销申请提交失败'
+    showFailToast(message)
+  } finally {
+    deleting.value = false
+  }
 }
 
 onBeforeUnmount(() => {
@@ -189,6 +251,7 @@ onBeforeUnmount(() => {
               class="otp-btn"
               :class="{ countdown: otpCountdown > 0 }"
               type="button"
+              :disabled="requestingOtp || deleting"
               @click="requestOtp"
             >
               {{ otpButtonText }}
@@ -211,7 +274,7 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <button class="submit-btn" type="button" @click="onSubmit">注销账号</button>
+      <button class="submit-btn" type="button" :disabled="deleting" @click="onSubmit">注销账号</button>
 
       <div v-if="showConfirm" class="dialog-mask">
         <section class="dialog-card">
@@ -219,7 +282,7 @@ onBeforeUnmount(() => {
           <p class="dialog-desc">注销后账号信息将无法恢复，请谨慎操作。</p>
           <div class="dialog-actions">
             <button class="dialog-btn ghost" type="button" @click="cancelDialog">取消</button>
-            <button class="dialog-btn primary" type="button" @click="confirmDialog">确认注销</button>
+            <button class="dialog-btn primary" type="button" :disabled="deleting" @click="confirmDialog">确认注销</button>
           </div>
         </section>
       </div>
@@ -393,6 +456,10 @@ onBeforeUnmount(() => {
   color: #ff132b;
 }
 
+.otp-btn:disabled {
+  opacity: 0.72;
+}
+
 .submit-btn {
   margin-top: auto;
   min-height: 1.4376rem;
@@ -405,6 +472,10 @@ onBeforeUnmount(() => {
   font-size: 0.48rem;
   font-family: var(--font-family-sans);
   font-weight: 600;
+}
+
+.submit-btn:disabled {
+  opacity: 0.72;
 }
 
 .dialog-mask {

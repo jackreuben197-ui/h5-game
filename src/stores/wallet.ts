@@ -10,22 +10,6 @@ export const useWalletStore = defineStore('wallet', () => {
   async function loadPriceList(): Promise<void> {
     const userInfoStore = useUserInfoStore()
     const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
-<<<<<<< feature/wallet-page
-    const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
-    const res = await postPropGoldPriceListApi({
-      club_id: clubId,
-      source_type: 0,
-      gold_types: [],
-    }, clubId)
-
-    if (res.data?.pay_types) {
-      res.data.pay_types = res.data.pay_types.filter(
-        (p) => p.type === 1 || p.type === 3
-      )
-    }
-
-    goldPriceData.value = res.data ?? null
-=======
     const clubIdRaw = currentClub?.club_id
     const clubId = clubIdRaw != null ? Number(clubIdRaw) : NaN
     if (!Number.isFinite(clubId) || clubId <= 0) {
@@ -46,7 +30,6 @@ export const useWalletStore = defineStore('wallet', () => {
       clubId
     )
     goldPriceData.value = res.code === 0 ? (res.data ?? null) : null
->>>>>>> master
   }
 
   function calculateUsdtPrice(goldCount: number, rate: number, feeRate: number, feeType = 0, discount = 0) {

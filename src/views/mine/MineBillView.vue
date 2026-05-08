@@ -24,7 +24,12 @@ type BillTab = (typeof tabs)[number]
 
 const activeTab = ref<BillTab>('UC')
 const loading = ref(false)
+const loadingMore = ref(false)
+const hasMore = ref(true)
+const pageOffset = ref(0)
+const pageContainerRef = ref<HTMLElement | null>(null)
 const totalAmount = ref(0)
+const PAGE_LIMIT = 20
 
 interface BillRecordItem {
   name: string
@@ -352,53 +357,97 @@ function toggleWalletDetails(): void {
   walletDetailExpanded.value = !walletDetailExpanded.value
 }
 
-async function fetchBillData(): Promise<void> {
-  loading.value = true
-  walletDetailExpanded.value = false
-  expandedCardIds.value = []
+function applyDateVisibility(cards: BillCardItem[]): BillCardItem[] {
+  let previousDateKey = ''
+  return cards.map((card) => {
+    const showDate = card.dateKey !== previousDateKey
+    previousDateKey = card.dateKey
+    return {
+      ...card,
+      showDate,
+    }
+  })
+}
+
+function isNearBottom(container: HTMLElement): boolean {
+  const threshold = 80
+  return container.scrollTop + container.clientHeight >= container.scrollHeight - threshold
+}
+
+function handlePageScroll(): void {
+  const container = pageContainerRef.value
+  if (!container || !isNearBottom(container)) {
+    return
+  }
+  void loadMoreBillData()
+}
+
+async function fetchBillData(reset = true): Promise<void> {
+  if (reset) {
+    loading.value = true
+    walletDetailExpanded.value = false
+    expandedCardIds.value = []
+    hasMore.value = true
+    pageOffset.value = 0
+  } else {
+    loadingMore.value = true
+  }
+
   const payload = {
     ...billRequestByTab[activeTab.value],
-    limit: 20,
-    offset: 0,
+    limit: PAGE_LIMIT,
+    offset: reset ? 0 : pageOffset.value,
     order_type: 2,
   }
 
   try {
-    const [billRes, walletRes] = await Promise.all([
-      postUserBillApi(payload),
-      postUserWalletApi(billRequestByTab[activeTab.value]),
-    ])
+    const billRes = await postUserBillApi(payload)
 
     if (billRes.code !== 0) {
       throw new Error(typeof billRes.msg === 'string' ? billRes.msg : '加载账单失败')
     }
 
-    if (walletRes.code !== 0) {
-      throw new Error(typeof walletRes.msg === 'string' ? walletRes.msg : '加载钱包余额失败')
-    }
-
     const rows = extractList(billRes.data?.list) as UserBillWallet[]
     const mapped = rows.map((row, index) => mapBillCard(row, index))
-    let previousDateKey = ''
-    flowCards.value = mapped.map((card) => {
-      const showDate = card.dateKey !== previousDateKey
-      previousDateKey = card.dateKey
-      return {
-        ...card,
-        showDate,
+
+    if (reset) {
+      flowCards.value = applyDateVisibility(mapped)
+      const walletRes = await postUserWalletApi(billRequestByTab[activeTab.value])
+      if (walletRes.code !== 0) {
+        throw new Error(typeof walletRes.msg === 'string' ? walletRes.msg : '加载钱包余额失败')
       }
-    })
-    totalAmount.value = toSafeNumber(walletRes.data?.amount)
-    walletDetails.value = mapWalletDetails(walletRes.data?.wallet)
+      totalAmount.value = toSafeNumber(walletRes.data?.amount)
+      walletDetails.value = mapWalletDetails(walletRes.data?.wallet)
+    } else {
+      flowCards.value = applyDateVisibility([...flowCards.value, ...mapped])
+    }
+
+    pageOffset.value += rows.length
+    hasMore.value = rows.length >= PAGE_LIMIT
   } catch (error) {
-    flowCards.value = []
-    walletDetails.value = []
-    totalAmount.value = 0
+    if (reset) {
+      flowCards.value = []
+      walletDetails.value = []
+      totalAmount.value = 0
+      pageOffset.value = 0
+      hasMore.value = false
+    }
     const message = error instanceof Error ? error.message : '加载账单失败'
     showFailToast(message)
   } finally {
-    loading.value = false
+    if (reset) {
+      loading.value = false
+    } else {
+      loadingMore.value = false
+    }
   }
+}
+
+async function loadMoreBillData(): Promise<void> {
+  if (loading.value || loadingMore.value || !hasMore.value) {
+    return
+  }
+  await fetchBillData(false)
 }
 
 function selectTab(tab: BillTab): void {
@@ -406,16 +455,21 @@ function selectTab(tab: BillTab): void {
     return
   }
   activeTab.value = tab
-  void fetchBillData()
+  void fetchBillData(true)
 }
 
 onMounted(() => {
-  void fetchBillData()
+  void fetchBillData(true)
 })
 </script>
 
 <template>
-  <div class="mine-glass-page bill-page" :style="backgroundStyle">
+  <div
+    ref="pageContainerRef"
+    class="mine-glass-page bill-page"
+    :style="backgroundStyle"
+    @scroll.passive="handlePageScroll"
+  >
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -502,6 +556,8 @@ onMounted(() => {
             </div>
           </div>
         </article>
+        <p v-if="!loading && loadingMore" class="list-status">加载更多中...</p>
+        <p v-else-if="!loading && flowCards.length && !hasMore" class="list-status">没有更多记录了</p>
       </section>
     </div>
   </div>
@@ -510,7 +566,9 @@ onMounted(() => {
 <style scoped lang="scss">
 .mine-glass-page {
   position: relative;
-  height: 100dvh;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
   color: #f3f3f3;
   background-size: cover;

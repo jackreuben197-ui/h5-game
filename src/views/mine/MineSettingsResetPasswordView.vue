@@ -118,7 +118,7 @@ async function submitReset(): Promise<void> {
   const phone = phoneNumber.value.trim()
   const mail = email.value.trim()
   const code = otp.value.trim()
-  const nextPassword = password.trim()
+  const nextPassword = password.value.trim()
 
   if (isPhone.value && !phone) {
     showFailToast('请输入手机号')
@@ -266,7 +266,14 @@ onBeforeUnmount(() => {
         </span>
       </label>
 
-      <button class="submit-btn" type="button" :disabled="submitting" @click="submitReset">{{ submitting ? '提交中...' : submitText }}</button>
+      <button
+        class="submit-btn"
+        type="button"
+        :disabled="submitting"
+        @click="submitReset"
+      >
+        {{ submitting ? '提交中...' : submitText }}
+      </button>
     </div>
   </div>
 </template>

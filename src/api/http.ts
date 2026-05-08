@@ -9,7 +9,7 @@ import { t } from '@/i18n'
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
-  timeout: 10000,
+  timeout: 60000,
 })
 
 interface HttpRequestConfigExt extends InternalAxiosRequestConfig {
@@ -33,7 +33,13 @@ const PRE_LOGIN_PATHS = [
 ]
 
 function shouldAttachXClub(url: string): boolean {
-  return /^\/?(?:(?:org|cmsext)\/club|order\/club|order\/user\/recharge(?:_no)?)\//.test(url)
+  if (/^\/?(?:(?:org|cmsext)\/club|order\/club)\//.test(url)) {
+    return true
+  }
+  if (/^\/?config\/online_withdraw/.test(url)) {
+    return true
+  }
+  return /^\/?order\/user\/(?:withdraw|recharge_no|recharge|club_order\/cancel)\b/.test(url)
 }
 
 function readClubIdFromPayload(payload: unknown): string {

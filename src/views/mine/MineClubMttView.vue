@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
+import { postStatsMttHistoryListApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 
 const router = useRouter()
 
-const title = computed(() => 'SNG')
+const title = computed(() => 'MTT')
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -14,6 +16,8 @@ const backgroundStyle = computed(() => ({
 
 interface MttRecord {
   id: string
+  roomId: string
+  matchId: string
   month: string
   nickname: string
   playerId: string
@@ -29,18 +33,21 @@ const gameTabs = ['NLH', 'PLO', '6+']
 const timeTabs = ['今天', '7天', '30天']
 const selectedGame = ref(gameTabs[0])
 const selectedTime = ref(timeTabs[0])
+const loading = ref(false)
 
-const summary = [
+const summary = ref([
   { label: 'total games', value: '20' },
   { label: 'awards', value: '15' },
   { label: 'first', value: '1' },
   { label: 'second', value: '6' },
   { label: 'third', value: '6' },
-]
+])
 
-const mttRecords: MttRecord[] = [
+const mttRecords = ref<MttRecord[]>([
   {
     id: 'm1',
+    roomId: '1',
+    matchId: '',
     month: '6月',
     nickname: 'Tour Nickname',
     playerId: '11440454',
@@ -53,6 +60,8 @@ const mttRecords: MttRecord[] = [
   },
   {
     id: 'm2',
+    roomId: '2',
+    matchId: '',
     month: '6月',
     nickname: 'Tour Nickname',
     playerId: '11440454',
@@ -65,6 +74,8 @@ const mttRecords: MttRecord[] = [
   },
   {
     id: 'm3',
+    roomId: '3',
+    matchId: '',
     month: '5月',
     nickname: 'Tour Nickname',
     playerId: '11440454',
@@ -77,6 +88,8 @@ const mttRecords: MttRecord[] = [
   },
   {
     id: 'm4',
+    roomId: '4',
+    matchId: '',
     month: '5月',
     nickname: 'Tour Nickname',
     playerId: '11440454',
@@ -87,10 +100,126 @@ const mttRecords: MttRecord[] = [
     finishTime: '05/20 21:10',
     blind: '1/2 (1)',
   },
-]
+])
 
-function goBack(): void {
-  void router.push('/mine/club-career')
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function formatDateText(raw: unknown): string {
+  if (typeof raw === 'string' && raw.trim()) {
+    return raw
+  }
+  const timestamp = toSafeNumber(raw)
+  if (timestamp <= 0) {
+    return '--'
+  }
+  const date = new Date(timestamp > 1_000_000_000_000 ? timestamp : timestamp * 1000)
+  if (Number.isNaN(date.getTime())) {
+    return '--'
+  }
+  return date.toLocaleString('zh-CN', { hour12: false })
+}
+
+function formatMonthLabel(timeText: string): string {
+  const match = timeText.match(/(\d{1,2})\//)
+  if (match) {
+    return `${match[1]}月`
+  }
+  return '本月'
+}
+
+function resolveTimeType(): number {
+  if (selectedTime.value === '7天') return 2
+  if (selectedTime.value === '30天') return 3
+  return 1
+}
+
+function extractMttRows(value: unknown, depth = 0): Record<string, unknown>[] {
+  if (depth > 4 || value === null || value === undefined) {
+    return []
+  }
+  if (Array.isArray(value)) {
+    return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+  }
+  if (typeof value !== 'object') {
+    return []
+  }
+
+  const obj = value as Record<string, unknown>
+  for (const key of ['records', 'list', 'items', 'data']) {
+    const nested = extractMttRows(obj[key], depth + 1)
+    if (nested.length) {
+      return nested
+    }
+  }
+  for (const nestedValue of Object.values(obj)) {
+    const nested = extractMttRows(nestedValue, depth + 1)
+    if (nested.length) {
+      return nested
+    }
+  }
+  return []
+}
+
+function mapMttRecord(row: Record<string, unknown>, index: number): MttRecord {
+  const timeText = formatDateText(row.end_time_str ?? row.end_time ?? row.time)
+  const rank = toSafeNumber(row.rank)
+  return {
+    id: String(row.room_id ?? row.match_id ?? index + 1),
+    roomId: String(row.room_id ?? ''),
+    matchId: String(row.match_id ?? ''),
+    month: formatMonthLabel(timeText),
+    nickname: String(row.nick_name ?? row.user_name ?? 'Tour Nickname'),
+    playerId: String(row.user_random_id ?? '--'),
+    detailVariant: rank > 0 && rank <= 3 ? 'v1' : 'v2',
+    rank: rank > 0 ? `#${rank}` : '--',
+    reward: String(toSafeNumber(row.award ?? row.hunter_award).toLocaleString('en-US')),
+    rewardType: '积分',
+    finishTime: timeText,
+    blind: `${toSafeNumber(row.sb ?? row.small_blind)}/${toSafeNumber(row.ante ?? 0)} (${toSafeNumber(row.buy_in_times ?? 1)})`,
+  }
+}
+
+function refreshSummary(list: MttRecord[]): void {
+  const totalGames = list.length
+  const top1 = list.filter(item => item.rank === '#1').length
+  const top2 = list.filter(item => item.rank === '#2').length
+  const top3 = list.filter(item => item.rank === '#3').length
+  const awards = list.filter(item => item.reward !== '0').length
+  summary.value = [
+    { label: 'total games', value: String(totalGames) },
+    { label: 'awards', value: String(awards) },
+    { label: 'first', value: String(top1) },
+    { label: 'second', value: String(top2) },
+    { label: 'third', value: String(top3) },
+  ]
+}
+
+async function fetchMttHistory(): Promise<void> {
+  loading.value = true
+  try {
+    const response = await postStatsMttHistoryListApi({
+      time_type: resolveTimeType(),
+      filter_type: 3,
+      limit: 20,
+      offset: 0,
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载 MTT 战绩失败')
+    }
+
+    const rows = extractMttRows(response.data)
+    mttRecords.value = rows.map((row, index) => mapMttRecord(row, index))
+    refreshSummary(mttRecords.value)
+  } catch (error) {
+    mttRecords.value = []
+    const message = error instanceof Error ? error.message : '加载 MTT 战绩失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
 }
 
 function goDetail(item: MttRecord): void {
@@ -99,9 +228,25 @@ function goDetail(item: MttRecord): void {
     query: {
       variant: item.detailVariant,
       id: item.id,
+      room_id: item.roomId || undefined,
+      match_id: item.matchId || undefined,
     },
   })
 }
+
+function selectGame(tab: string): void {
+  selectedGame.value = tab
+  void fetchMttHistory()
+}
+
+function selectTime(tab: string): void {
+  selectedTime.value = tab
+  void fetchMttHistory()
+}
+
+onMounted(() => {
+  void fetchMttHistory()
+})
 </script>
 
 <template>
@@ -116,7 +261,7 @@ function goDetail(item: MttRecord): void {
           type="button"
           class="plain-tab"
           :class="{ active: selectedGame === item }"
-          @click="selectedGame = item"
+          @click="selectGame(item)"
         >
           {{ item }}
         </button>
@@ -130,7 +275,7 @@ function goDetail(item: MttRecord): void {
             type="button"
             class="time-tab"
             :class="{ active: selectedTime === item }"
-            @click="selectedTime = item"
+            @click="selectTime(item)"
           >
             {{ item }}
           </button>
@@ -144,6 +289,8 @@ function goDetail(item: MttRecord): void {
       </section>
 
       <section class="list-wrap">
+        <p v-if="loading" class="list-status">加载中...</p>
+        <p v-else-if="!mttRecords.length" class="list-status">暂无 MTT 战绩</p>
         <article
           v-for="item in mttRecords"
           :key="item.id"
@@ -273,6 +420,13 @@ function goDetail(item: MttRecord): void {
   display: flex;
   flex-direction: column;
   gap: 0.22rem;
+}
+
+.list-status {
+  text-align: center;
+  font-size: 0.3rem;
+  opacity: 0.78;
+  padding: 0.2rem 0;
 }
 
 .mtt-card {

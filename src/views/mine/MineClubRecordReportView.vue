@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { showSuccessToast } from 'vant'
+import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
+import { postMiscReportFeedbackQuestIonApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
@@ -16,18 +17,36 @@ const title = computed(() => 'Result')
 
 const reason = ref('')
 const selectedPreset = ref('异常操作')
+const submitting = ref(false)
 
 const presetList = ['异常操作', '安全保护触发']
 
 const reasonCount = computed(() => reason.value.length)
 
-function goBack(): void {
-  void router.push('/mine/club-record/hand')
-}
+async function submitReport(): Promise<void> {
+  const detail = reason.value.trim()
+  if (!detail) {
+    showFailToast('请输入举报原因')
+    return
+  }
 
-function submitReport(): void {
-  showSuccessToast('举报提交成功')
-  void router.back()
+  submitting.value = true
+  try {
+    const response = await postMiscReportFeedbackQuestIonApi({
+      title: selectedPreset.value,
+      description: detail,
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '举报提交失败')
+    }
+    showSuccessToast('举报提交成功')
+    void router.back()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '举报提交失败'
+    showFailToast(message)
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 
@@ -63,6 +82,7 @@ function submitReport(): void {
         round
         type="primary"
         class="submit-btn"
+        :loading="submitting"
         @click="submitReport"
       >
         提交

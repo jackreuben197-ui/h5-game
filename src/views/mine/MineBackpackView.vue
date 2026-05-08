@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast } from 'vant'
+import { postPropUserPropListApi } from '@/api/prop'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import iconTicket from '@/assets/icons/icon_ticket.png'
-
-const router = useRouter()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -14,15 +13,108 @@ const backgroundStyle = computed(() => ({
 
 const title = computed(() => 'My Items')
 
-const list = Array.from({ length: 6 }).map((_, idx) => ({
-  id: `${idx + 1}`,
-  name: 'Tickets 2*1',
-  expire: '19/03/2026 12:00',
-}))
-
-function goBack(): void {
-  void router.push('/mine')
+interface BackpackItem {
+  id: string
+  name: string
+  expire: string
 }
+
+const loading = ref(false)
+const list = ref<BackpackItem[]>([])
+
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function toSafeString(value: unknown): string {
+  return typeof value === 'string' ? value : ''
+}
+
+function resolveTimeLabel(raw: unknown): string {
+  if (typeof raw === 'string' && raw.trim()) {
+    return raw
+  }
+
+  const timestamp = toSafeNumber(raw)
+  if (timestamp <= 0) {
+    return '--'
+  }
+
+  const date = new Date(timestamp > 1_000_000_000_000 ? timestamp : timestamp * 1000)
+  if (Number.isNaN(date.getTime())) {
+    return '--'
+  }
+
+  return date.toLocaleString('zh-CN', { hour12: false })
+}
+
+function extractList(value: unknown, depth = 0): Record<string, unknown>[] {
+  if (depth > 4 || value === null || value === undefined) {
+    return []
+  }
+
+  if (Array.isArray(value)) {
+    return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+  }
+
+  if (typeof value !== 'object') {
+    return []
+  }
+
+  const obj = value as Record<string, unknown>
+  for (const key of ['list', 'records', 'items', 'data']) {
+    const nested = extractList(obj[key], depth + 1)
+    if (nested.length) {
+      return nested
+    }
+  }
+
+  for (const nestedValue of Object.values(obj)) {
+    const nested = extractList(nestedValue, depth + 1)
+    if (nested.length) {
+      return nested
+    }
+  }
+
+  return []
+}
+
+function mapBackpackItem(row: Record<string, unknown>, index: number): BackpackItem {
+  const name = toSafeString(row.prop_name ?? row.name ?? row.subscription_name).trim() || '道具'
+  const count = toSafeNumber(row.prop_amount ?? row.num ?? row.count)
+  const displayName = count > 0 ? `${name} x${count}` : name
+  const expire = resolveTimeLabel(row.end_time_str ?? row.expired_time_str ?? row.end_time ?? row.expired_time)
+
+  return {
+    id: String(row.id ?? row.prop_id ?? index + 1),
+    name: displayName,
+    expire,
+  }
+}
+
+async function fetchBackpackData(): Promise<void> {
+  loading.value = true
+  try {
+    const response = await postPropUserPropListApi({})
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载背包失败')
+    }
+
+    const rows = extractList(response.data?.list)
+    list.value = rows.map((item, index) => mapBackpackItem(item, index))
+  } catch (error) {
+    list.value = []
+    const message = error instanceof Error ? error.message : '加载背包失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  void fetchBackpackData()
+})
 </script>
 
 <template>
@@ -31,6 +123,8 @@ function goBack(): void {
 
     <div class="content-wrap">
       <section class="item-list">
+        <p v-if="loading" class="list-status">加载中...</p>
+        <p v-else-if="!list.length" class="list-status">暂无道具</p>
         <article v-for="item in list" :key="item.id" class="glass-card item-card">
           <div class="icon-wrap">
             <img :src="iconTicket" :alt="item.name" />
@@ -66,6 +160,13 @@ function goBack(): void {
   display: flex;
   flex-direction: column;
   gap: 0.22rem;
+}
+
+.list-status {
+  text-align: center;
+  font-size: 0.3rem;
+  opacity: 0.76;
+  padding: 0.24rem 0;
 }
 
 .glass-card {

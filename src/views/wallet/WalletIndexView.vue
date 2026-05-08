@@ -66,26 +66,40 @@ const csChatProps = ref({
   orderData: null as any,
 })
 
-const pendingCsOrder = computed(() => walletStore.pendingCsOrder)
-const pendingCsCount = computed(() => walletStore.pendingCsOrderCount)
-const hasSeenNotification = ref(false)
+const activeCsOrder = computed(() => {
+  return activeTab.value === 0
+    ? walletStore.pendingCsRechargeOrder
+    : walletStore.pendingCsWithdrawOrder
+})
+
+const activeCsCount = computed(() => {
+  return activeTab.value === 0
+    ? walletStore.pendingCsRechargeCount
+    : walletStore.pendingCsWithdrawCount
+})
+
+const hasSeenRechargeNotification = ref(false)
+const hasSeenWithdrawNotification = ref(false)
+
+const currentHasSeen = computed(() => {
+  return activeTab.value === 0 ? hasSeenRechargeNotification.value : hasSeenWithdrawNotification.value
+})
 
 let refreshInterval: any = null
 
 async function refreshPendingCsOrder() {
-  const prevCount = walletStore.pendingCsOrderCount
+  // We keep this method for manual refreshes within this view (e.g. after cancel/submit)
+  // but we will no longer run it on a 10s interval here as requested.
   await walletStore.refreshPendingCsOrder()
-  // If count increased, reset seen state
-  if (walletStore.pendingCsOrderCount > prevCount) {
-    hasSeenNotification.value = false
-  }
 }
 
 async function openCsChat() {
-  hasSeenNotification.value = true
-  if (!walletStore.pendingCsOrder) return
+  if (activeTab.value === 0) hasSeenRechargeNotification.value = true
+  else hasSeenWithdrawNotification.value = true
 
-  const order = walletStore.pendingCsOrder
+  if (!activeCsOrder.value) return
+
+  const order = activeCsOrder.value
   const qrCode = (order as any).qrcode || (order as any).qr_code || (order as any).pay_type_qr_code || ''
   const result = {
     order_no: order.order_no,
@@ -112,6 +126,10 @@ async function openCsChat() {
 
     if (channelRes.code === 0 && channelRes.data?.list?.length) {
       const channel = channelRes.data.list[0]
+      const orders = activeTab.value === 0
+        ? walletStore.pendingCsRechargeOrders
+        : walletStore.pendingCsWithdrawOrders
+
       csChatProps.value = {
         tribeId: channel.tribe_id || 0,
         supportUserId: channel.support_user_id || 0,
@@ -230,7 +248,7 @@ onMounted(() => {
   // We no longer check for unfinished orders on mount.
   // It will be checked only when a recharge attempt fails with code 20066.
   refreshPendingCsOrder()
-  refreshInterval = setInterval(refreshPendingCsOrder, 10000)
+  // 10s Interval removed as requested. Visibility will be handled by external calls.
 })
 
 onUnmounted(() => {
@@ -373,6 +391,27 @@ function onPayClick() {
       discount: selectedPayType.discount ?? 0,
     }
     csPopupOpen.value = true
+  }
+}
+
+async function onWithdrawCsChat(orderData: Record<string, unknown>) {
+  try {
+    const channelRes = await postChatSupportChannelListApi({
+      im_service_types: [4],
+      limit: 1,
+      offset: 0,
+    })
+    if (channelRes.code === 0 && channelRes.data?.list?.length) {
+      const channel = channelRes.data.list[0]
+      csChatProps.value = {
+        tribeId: channel.tribe_id || 0,
+        supportUserId: channel.support_user_id || 0,
+        orderData,
+      }
+      csChatPopupOpen.value = true
+    }
+  } catch (e) {
+    console.error('Failed to fetch chat channel for withdraw', e)
   }
 }
 
@@ -582,9 +621,9 @@ async function onUsdtSubmit(type: number) {
           :tabs="tabLabels"
         />
         <BellButton
-          v-if="walletStore.pendingCsOrder"
-          :count="pendingCsCount"
-          :show-badge="!hasSeenNotification"
+          v-if="activeCsOrder"
+          :count="1"
+          :show-badge="!currentHasSeen"
           class="floating-bell"
           @click="openCsChat"
         />
@@ -650,7 +689,7 @@ async function onUsdtSubmit(type: number) {
       </template>
 
         <template v-else>
-          <WithdrawForm />
+          <WithdrawForm @open-cs-chat="onWithdrawCsChat" />
         </template>
       </div>
     </div>
@@ -758,8 +797,8 @@ async function onUsdtSubmit(type: number) {
 
 .floating-bell {
   position: fixed;
-  right: 0.45rem;
-  top: 4.2rem;
+  right: 0.03rem;
+  top: 2.4rem;
   z-index: 1000;
 }
 

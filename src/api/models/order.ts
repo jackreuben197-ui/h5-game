@@ -408,6 +408,7 @@ export interface TiquGoldRequest {
     pay_id?: number; // 支付渠道ID
     pay_price?: number; // 支付金额
     description?: string; // 备注
+    club_id?: number;
 
   [key: string]: unknown
 }

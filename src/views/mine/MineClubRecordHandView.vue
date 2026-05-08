@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast } from 'vant'
+import { useRoute, useRouter } from 'vue-router'
+import { postStatsUserGameRecordListApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
 const title = computed(() => 'Result')
 
 const router = useRouter()
+const route = useRoute()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -22,18 +25,88 @@ interface HandRow {
   hands: string
 }
 
-const handRows: HandRow[] = [
-  { id: 'h1', title: 'john wins with Royal Flush', handId: '11440454', pot: '80', profit: '-5000', hands: '10' },
-  { id: 'h2', title: 'john wins with Royal Flush', handId: '11440454', pot: '120', profit: '+1400', hands: '14' },
-]
+const loading = ref(false)
+const handRows = ref<HandRow[]>([])
+const overviewTitle = ref('牌局名称')
+const overviewId = ref('ID: --')
+const overviewHands = ref('Hands 0')
 
-function goBack(): void {
-  void router.push('/mine/club-record/detail')
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function formatSigned(value: unknown): string {
+  const amount = toSafeNumber(value)
+  if (amount === 0) {
+    return '0'
+  }
+  const abs = Math.abs(amount).toLocaleString('en-US')
+  return amount > 0 ? `+${abs}` : `-${abs}`
+}
+
+function resolveRoomId(): number {
+  const raw = route.query.room_id
+  const value = Number(raw)
+  return Number.isFinite(value) ? value : 0
+}
+
+function mapHandRows(rows: Record<string, unknown>[]): HandRow[] {
+  return rows.map((row, index) => ({
+    id: String(row.id ?? row.room_unique_id ?? index + 1),
+    title: String(row.name ?? 'Hand Record'),
+    handId: String(row.room_unique_id ?? row.id ?? '--'),
+    pot: toSafeNumber(row.bet_pot).toLocaleString('en-US'),
+    profit: formatSigned(row.change),
+    hands: toSafeNumber(row.hand_num).toLocaleString('en-US'),
+  }))
+}
+
+async function fetchHandRows(): Promise<void> {
+  const roomId = resolveRoomId()
+  if (roomId <= 0) {
+    handRows.value = []
+    return
+  }
+
+  loading.value = true
+  try {
+    const response = await postStatsUserGameRecordListApi({
+      room_type: 2,
+      room_id: roomId,
+      limit: 50,
+      offset: 0,
+    } as unknown as Record<string, unknown>)
+
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载手牌详情失败')
+    }
+
+    const records = Array.isArray(response.data?.records) ? response.data.records : []
+    const room = (records[0]?.room_record as Record<string, unknown>) ?? {}
+    const userRowsRaw = Array.isArray(records[0]?.user_game_records) ? records[0]?.user_game_records : []
+    const userRows = userRowsRaw.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+
+    overviewTitle.value = String(room.name ?? '牌局名称')
+    overviewId.value = `ID: ${String(room.room_id ?? roomId)}`
+    overviewHands.value = `Hands ${userRows.length}`
+    handRows.value = mapHandRows(userRows)
+  } catch (error) {
+    handRows.value = []
+    const message = error instanceof Error ? error.message : '加载手牌详情失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
 }
 
 function goReport(): void {
   void router.push('/mine/club-record/report')
 }
+
+onMounted(() => {
+  void fetchHandRows()
+})
 </script>
 
 <template>
@@ -46,16 +119,18 @@ function goReport(): void {
           <div class="avatar"></div>
           <div>
             <div class="name">Player Name</div>
-            <div class="hands">Hands 123</div>
+            <div class="hands">{{ overviewHands }}</div>
           </div>
         </div>
         <div class="right-info">
-          <div class="title">牌局名称</div>
-          <div class="sub">ID: 11440454</div>
+          <div class="title">{{ overviewTitle }}</div>
+          <div class="sub">{{ overviewId }}</div>
         </div>
       </section>
 
       <section class="list-wrap">
+        <p v-if="loading" class="list-status">加载中...</p>
+        <p v-else-if="!handRows.length" class="list-status">暂无手牌记录</p>
         <article
           v-for="item in handRows"
           :key="item.id"
@@ -159,6 +234,13 @@ function goReport(): void {
   display: flex;
   flex-direction: column;
   gap: 0.22rem;
+}
+
+.list-status {
+  text-align: center;
+  font-size: 0.3rem;
+  opacity: 0.78;
+  margin: 0.2rem 0;
 }
 
 .hand-card {

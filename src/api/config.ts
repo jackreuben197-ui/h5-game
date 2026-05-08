@@ -10,6 +10,8 @@ import type {
   MaintenanceData,
   MaintenanceTfData,
   MultiLanguageTemplateRecord,
+  OnlineWithdrawDescriptionData,
+  OnlineWithdrawDescriptionRequest,
   OnlineWithdrawTypeListData,
   RegisterAreaData,
   UserWhitelistInfoData,
@@ -93,10 +95,23 @@ export async function postUserWhitelistInfoApi(
 }
 
 // /api/config/online_withdraw_type_list
-export async function postOnlineWithdrawTypeListApi(): Promise<ApiResponse<OnlineWithdrawTypeListData>> {
+export async function postOnlineWithdrawTypeListApi(
+  payload: Record<string, unknown> = {},
+): Promise<ApiResponse<OnlineWithdrawTypeListData>> {
   const response = await http.post<ApiResponse<OnlineWithdrawTypeListData>>(
     '/config/online_withdraw_type_list',
-    {},
+    payload,
+  )
+  return response.data
+}
+
+// /api/config/online_withdraw_description
+export async function postOnlineWithdrawDescriptionApi(
+  payload: OnlineWithdrawDescriptionRequest,
+): Promise<ApiResponse<OnlineWithdrawDescriptionData>> {
+  const response = await http.post<ApiResponse<OnlineWithdrawDescriptionData>>(
+    '/config/online_withdraw_description',
+    payload,
   )
   return response.data
 }

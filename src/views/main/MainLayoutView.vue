@@ -4,6 +4,7 @@ import { RouterView, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { getUserClubApi, getUserInfoApi } from '@/api/user'
 import { postGlobalConfigApi } from '@/api/config'
+import { forwardGlobalConfigToCocos } from '@/bridge/sync/h5BusinessSync'
 import { ensureMultiLanguageTemplateLoaded } from '@/utils/multiLanguageTemplate'
 import LoginSession from '@/session/loginSession'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
@@ -67,6 +68,7 @@ async function fetchUserInfoOnEnter(): Promise<void> {
       .then((res) => {
         if (res.code === 0 && res.data) {
           appConfigStore.setGlobalConfig(res.data)
+          forwardGlobalConfigToCocos(res.data)
         }
       })
       .catch((error) => {

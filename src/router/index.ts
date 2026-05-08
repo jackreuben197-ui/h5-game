@@ -101,6 +101,36 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/club/jackpot/create',
+      name: 'club-jackpot-create',
+      component: () => import('@/views/club/ClubJackpotCreateView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/jackpot',
+      name: 'club-jackpot',
+      component: () => import('@/views/club/ClubJackpotListView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/jackpot/pool-reward',
+      name: 'club-jackpot-pool-reward',
+      component: () => import('@/views/club/ClubPoolRewardView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/jackpot/pool-reward/reward-records',
+      name: 'club-jackpot-pool-reward-reward-records',
+      component: () => import('@/views/club/ClubPoolRewardWinRecordsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/jackpot/pool-reward/contribution-records',
+      name: 'club-jackpot-pool-reward-contribution-records',
+      component: () => import('@/views/club/ClubPoolRewardContributionRecordsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/club/detail',
       name: 'club-detail',
       component: () => import('@/views/club/ClubDetailView.vue'),
@@ -164,6 +194,12 @@ const router = createRouter({
       path: '/club/member/:memberId/bind-agent',
       name: 'club-member-bind-agent',
       component: () => import('@/views/club/ClubMemberBindAgentView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/club/member/:memberId/unbind-agent',
+      name: 'club-member-unbind-agent',
+      component: () => import('@/views/club/ClubMemberUnbindAgentView.vue'),
       meta: { requiresAuth: true },
     },
     {
@@ -293,6 +329,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/mine/club-cowboy/hand',
+      name: 'mine-club-cowboy-hand',
+      component: () => import('@/views/mine/MineClubCowboyHandView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/mine/club-cowboy/detail',
       name: 'mine-club-cowboy-detail',
       component: () => import('@/views/mine/MineClubCowboyDetailView.vue'),
@@ -323,6 +365,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/mine/friends-my-data',
+      name: 'mine-friends-my-data',
+      component: () => import('@/views/mine/MineFriendsMyDataView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/mine/friends-data',
       name: 'mine-friends-data',
       component: () => import('@/views/mine/MineFriendsDataView.vue'),
@@ -332,6 +380,24 @@ const router = createRouter({
       path: '/mine/friends-record',
       name: 'mine-friends-record',
       component: () => import('@/views/mine/MineFriendsRecordView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/mine/friends-record/hand',
+      name: 'mine-friends-record-hand',
+      component: () => import('@/views/mine/MineFriendsRecordHandView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/mine/friends-record/detail',
+      name: 'mine-friends-record-detail',
+      component: () => import('@/views/mine/MineFriendsRecordDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/mine/friends-record/report',
+      name: 'mine-friends-record-report',
+      component: () => import('@/views/mine/MineFriendsRecordReportView.vue'),
       meta: { requiresAuth: true },
     },
     {

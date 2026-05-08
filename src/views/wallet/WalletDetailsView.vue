@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import bannerBgUrl from '@/assets/images/wallet/banner_bg.png'
 import AppBar from '@/components/wallet/AppBar.vue'
+import TagPill from '@/components/wallet/TagPill.vue'
 import iconChips from '@/assets/icons/wallet/ic_coins.png'
 import { postUserGoldChangeLogApi } from '@/api/user'
 
@@ -58,8 +59,8 @@ onMounted(async () => {
               <div class="user-text">
                 <span class="user-name">{{ userInfo?.nickname ?? '-' }}</span>
                 <div class="user-id-badge">
-                  <span class="id-label">ID</span>
-                  <span class="id-value">{{ userInfo?.unid ?? '-' }}</span>
+                  <TagPill label="ID" variant="id" />
+                  <span class="id-value">{{ userInfo?.un_id ?? userInfo?.unid ?? '-' }}</span>
                 </div>
               </div>
             </div>
@@ -313,27 +314,14 @@ onMounted(async () => {
 .user-id-badge {
   display: flex;
   align-items: center;
-  gap: 0.1rem;
-  width: fit-content;
-  overflow: hidden;
-}
-
-.id-label {
-  background: rgba(255, 255, 255, 0.40);
-  padding: 2.802px 4.903px;
-  border-radius: 4.202px;
-  color: #fff;
-  font-family: 'SF Pro', sans-serif;
-  font-size: 9.601px;
-  font-weight: 590;
+  gap: 0.06rem;
 }
 
 .id-value {
+  font-family: var(--wallet-font-num);
+  font-weight: 400;
+  font-size: 0.23rem;
   color: #fff;
-  font-family: 'SF Pro', sans-serif;
-  font-size: 9.601px;
-  font-weight: 590;
-  padding-right: 0.16rem;
 }
 
 .balance-section {

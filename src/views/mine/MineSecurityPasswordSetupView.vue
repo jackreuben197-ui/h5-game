@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
+import { postUserModifyQuickInfoApi } from '@/api/user'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 
 type SetupPhase = 'first' | 'confirm'
@@ -16,6 +18,7 @@ const phase = ref<SetupPhase>('first')
 const digits = ref('')
 const firstInput = ref('')
 const overlayType = ref<OverlayType>('none')
+const submitting = ref(false)
 
 const titleText = computed(() => (phase.value === 'first' ? '设置6位数字密码' : '设置密码'))
 const subtitleText = computed(() => (phase.value === 'first' ? '第一次输入' : '再次输入以键认'))
@@ -61,15 +64,39 @@ function handleKey(key: string): void {
   }
 }
 
-function handleSubmit(): void {
+async function handleSubmit(): Promise<void> {
   if (!canSubmit.value) {
     return
   }
 
+  if (digits.value !== firstInput.value) {
+    showFailToast('两次输入不一致，请重新设置')
+    phase.value = 'first'
+    digits.value = ''
+    firstInput.value = ''
+    return
+  }
+
   overlayType.value = 'loading'
-  window.setTimeout(() => {
+  submitting.value = true
+  try {
+    const response = await postUserModifyQuickInfoApi({
+      user_pwd_type: 2,
+      switch_status: 1,
+      password: digits.value,
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '设置安全密码失败')
+    }
     overlayType.value = 'success'
-  }, 700)
+    showSuccessToast('安全密码设置成功')
+  } catch (error) {
+    overlayType.value = 'none'
+    const message = error instanceof Error ? error.message : '设置安全密码失败'
+    showFailToast(message)
+  } finally {
+    submitting.value = false
+  }
 }
 
 function closeOverlay(): void {
@@ -98,6 +125,7 @@ function closeOverlay(): void {
         class="submit-btn"
         :class="{ active: canSubmit }"
         type="button"
+        :disabled="submitting"
         @click="handleSubmit"
       >
         完成

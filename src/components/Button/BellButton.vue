@@ -66,16 +66,16 @@ function onTouchEnd() {
     @touchend="onTouchEnd"
   >
     <button class="bell">
-      <div class="bell__icon">
-        <!-- New clean Bell SVG -->
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22ZM18 16V11C18 7.93 16.37 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.64 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16Z" fill="white"/>
+      <div class="bell__content">
+        <!-- Bell Icon SVG matching the reference image shape -->
+        <svg class="bell__svg" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22ZM18 16V11C18 7.93 16.37 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.64 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16Z" />
         </svg>
-      </div>
-      
-      <!-- Custom Badge UI -->
-      <div v-if="showBadge && count && count > 0" class="bell__badge">
-        {{ count }}
+        
+        <!-- Badge positioned on the "shoulder" of the bell as in the picture -->
+        <div v-if="showBadge && count && count > 0" class="bell__badge">
+          {{ count }}
+        </div>
       </div>
     </button>
   </div>
@@ -90,45 +90,52 @@ function onTouchEnd() {
 
 .bell {
   position: relative;
-  width: 1.4rem;
-  height: 1.4rem;
-  border-radius: 50%;
-  background: linear-gradient(128deg, rgba(5, 231, 174, 0.4) 7%, rgba(2, 122, 92, 0.4) 72%);
-  display: inline-flex;
-  align-items: center;
+  display: flex;
+  width: 52.554px;
+  height: 52.554px;
+  padding: 0;
   justify-content: center;
-  cursor: pointer;
-  padding: 0.11rem;
+  align-items: center;
+  border-radius: 50%;
+  background: linear-gradient(128deg, rgba(5, 231, 174, 0.40) 7.55%, rgba(2, 122, 92, 0.40) 71.92%);
   border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-.bell__icon {
-  width: 0.85rem;
-  height: 0.85rem;
+.bell__content {
+  position: relative;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.bell__icon svg {
+.bell__svg {
   width: 100%;
   height: 100%;
+  filter: drop-shadow(0px 2px 2px rgba(0, 0, 0, 0.1));
 }
 
 .bell__badge {
   position: absolute;
-  top: 0;
-  right: 0;
-  background: #ff4d4f;
+  top: -4px;
+  right: -4px;
+  background: #FF2D46; /* Bright red matching the picture */
   color: white;
   border-radius: 50%;
-  min-width: 0.4rem;
-  height: 0.4rem;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.24rem;
-  font-weight: bold;
-  border: 1px solid white;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1.5px solid transparent; /* No thick white border in the pic, just a clean circle */
+  line-height: 1;
+  font-family: Arial, sans-serif;
+  z-index: 1;
 }
 </style>

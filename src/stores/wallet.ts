@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { postPropGoldPriceListApi } from '@/api/prop'
 import type { PropGoldPriceListData } from '@/api/models/prop'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -29,26 +29,18 @@ export const useWalletStore = defineStore('wallet', () => {
   }
 
   function calculateUsdtPrice(goldCount: number, rate: number, feeRate: number, feeType = 0, discount = 0) {
-    // Base price in USDT
     const base = (goldCount / 100) * rate
-
-    // Apply discount
     let priceAfterDiscount = base * (1 - discount)
     priceAfterDiscount = Math.round(priceAfterDiscount * 10000) / 10000
 
-    // totalUiPrice includes fee if player pays (feeType 2)
     let total = priceAfterDiscount
     if (feeType === 2 && feeRate > 0) {
-
       const fee = base * feeRate
       total = priceAfterDiscount + fee
       total = Math.round(total * 10000) / 10000
     }
 
     const totalUiPrice = Number(total.toFixed(6))
-
-    // apiPayPrice should be the final total price including fee as expected by the server
-    // For many club-managed and identifier-based channels, this must match the total sent by the user.
     const apiPayPrice = totalUiPrice
 
     return { apiPayPrice, totalUiPrice }
@@ -56,8 +48,6 @@ export const useWalletStore = defineStore('wallet', () => {
 
   function calculateCustomerServicePrice(goldCount: number, rate: number, feeRate: number, discount = 0) {
     const base = (goldCount / 100) * rate
-    // When discount > 0 it takes priority and fee is not added to pay_price.
-    // When no discount and fee_type = 2, call passes the actual feeRate, fee is added.
     let final: number
     if (discount > 0) {
       final = base * (1 - discount)
@@ -69,8 +59,14 @@ export const useWalletStore = defineStore('wallet', () => {
     return Number((Math.round(final * 100) / 100).toFixed(2))
   }
 
-  const pendingCsOrder = ref<ClubFundOrderListOrderInfo | null>(null)
-  const pendingCsOrderCount = ref(0)
+  const pendingCsRechargeOrders = ref<ClubFundOrderListOrderInfo[]>([])
+  const pendingCsWithdrawOrders = ref<ClubFundOrderListOrderInfo[]>([])
+
+  const pendingCsRechargeOrder = computed(() => pendingCsRechargeOrders.value[0] || null)
+  const pendingCsRechargeCount = computed(() => pendingCsRechargeOrders.value.length)
+  
+  const pendingCsWithdrawOrder = computed(() => pendingCsWithdrawOrders.value[0] || null)
+  const pendingCsWithdrawCount = computed(() => pendingCsWithdrawOrders.value.length)
 
   async function refreshPendingCsOrder() {
     const userInfoStore = useUserInfoStore()
@@ -82,35 +78,64 @@ export const useWalletStore = defineStore('wallet', () => {
       const rechargeRes = await postClubFundOrderListApi({
         order_type: 1, // Recharge
         my_order: true,
-        limit: 10, // Increased limit to count more
+        limit: 10,
         offset: 0,
         status: 1, // Pending
       }, clubId)
 
       if (rechargeRes.code === 0 && rechargeRes.data?.list) {
-        const csOrders = rechargeRes.data.list.filter(o => {
+        pendingCsRechargeOrders.value = rechargeRes.data.list.filter(o => {
           const ot = (o as any).pay_type || (o as any).api_type || (o as any).type
           return ot === 3 || o.pay_type_name?.includes('撮合')
         })
-        
-        pendingCsOrderCount.value = csOrders.length
-        
-        if (csOrders.length > 0) {
-          pendingCsOrder.value = csOrders[0]
-          return
-        }
+      } else {
+        pendingCsRechargeOrders.value = []
       }
 
-      pendingCsOrder.value = null
-      pendingCsOrderCount.value = 0
+      // Check Withdraw orders
+      const withdrawRes = await postClubFundOrderListApi({
+        order_type: 2, // Withdraw
+        my_order: true,
+        limit: 10,
+        offset: 0,
+        status: 1, // Pending
+      }, clubId)
+
+      if (withdrawRes.code === 0 && withdrawRes.data?.list) {
+        pendingCsWithdrawOrders.value = withdrawRes.data.list.filter(o => {
+          const ot = (o as any).pay_type || (o as any).api_type || (o as any).type
+          return ot === 3 || o.pay_type_name?.includes('撮合')
+        })
+      } else {
+        pendingCsWithdrawOrders.value = []
+      }
+
     } catch (e) {
       console.error('Failed to fetch pending CS orders', e)
-      pendingCsOrder.value = null
-      pendingCsOrderCount.value = 0
+      pendingCsRechargeOrders.value = []
+      pendingCsWithdrawOrders.value = []
     }
   }
+
   function formatUsdtPrice(price: number): string {
     return price.toFixed(4).replace(/\.?0+$/, '')
+  }
+
+  /**
+   * External hook to manually update the pending CS orders.
+   * Use this after login or reconnect to sync the bell state.
+   */
+  function updateCsOrders(recharge: any[] = [], withdraw: any[] = []) {
+    pendingCsRechargeOrders.value = recharge
+    pendingCsWithdrawOrders.value = withdraw
+  }
+
+  /**
+   * External hook to hide the bell.
+   */
+  function clearCsOrders() {
+    pendingCsRechargeOrders.value = []
+    pendingCsWithdrawOrders.value = []
   }
 
   return {
@@ -119,8 +144,14 @@ export const useWalletStore = defineStore('wallet', () => {
     calculateUsdtPrice,
     formatUsdtPrice,
     calculateCustomerServicePrice,
-    pendingCsOrder,
-    pendingCsOrderCount,
-    refreshPendingCsOrder
+    pendingCsRechargeOrders,
+    pendingCsWithdrawOrders,
+    pendingCsRechargeOrder,
+    pendingCsRechargeCount,
+    pendingCsWithdrawOrder,
+    pendingCsWithdrawCount,
+    refreshPendingCsOrder,
+    updateCsOrders,
+    clearCsOrders
   }
 })

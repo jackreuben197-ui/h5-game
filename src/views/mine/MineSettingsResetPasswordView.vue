@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
+import { showFailToast, showSuccessToast } from 'vant'
 import { useRoute, useRouter } from 'vue-router'
+import { postUserModifyPasswordApi, postUserSendCodeApi } from '@/api/user'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
@@ -20,6 +22,8 @@ const isPhone = computed(() => tab.value === 'phone')
 const otpCountdown = ref(0)
 const acceptedPolicy = ref(false)
 const showPassword = ref(false)
+const requestingOtp = ref(false)
+const submitting = ref(false)
 
 const phoneNumber = ref('')
 const email = ref('')
@@ -57,26 +61,108 @@ function switchTab(nextTab: 'phone' | 'email'): void {
 }
 
 function requestOtp(): void {
-  if (otpCountdown.value > 0) {
+  if (otpCountdown.value > 0 || requestingOtp.value) {
     return
   }
 
-  otpCountdown.value = 50
-  if (otpTimer !== null) {
-    window.clearInterval(otpTimer)
+  const phone = phoneNumber.value.trim()
+  const mail = email.value.trim()
+  if (isPhone.value && !phone) {
+    showFailToast('请输入手机号')
+    return
+  }
+  if (!isPhone.value && !mail) {
+    showFailToast('请输入邮箱')
+    return
   }
 
-  otpTimer = window.setInterval(() => {
-    if (otpCountdown.value <= 1) {
-      otpCountdown.value = 0
+  requestingOtp.value = true
+  const payload = isPhone.value
+    ? { phone, area: '11' }
+    : ({ email: mail } as unknown as { phone: string; area: string })
+
+  void postUserSendCodeApi(payload)
+    .then((response) => {
+      if (response.code !== 0) {
+        throw new Error(typeof response.msg === 'string' ? response.msg : '验证码发送失败')
+      }
+
+      showSuccessToast('验证码已发送')
+      otpCountdown.value = 50
       if (otpTimer !== null) {
         window.clearInterval(otpTimer)
-        otpTimer = null
       }
-      return
+
+      otpTimer = window.setInterval(() => {
+        if (otpCountdown.value <= 1) {
+          otpCountdown.value = 0
+          if (otpTimer !== null) {
+            window.clearInterval(otpTimer)
+            otpTimer = null
+          }
+          return
+        }
+        otpCountdown.value -= 1
+      }, 1000)
+    })
+    .catch((error) => {
+      const message = error instanceof Error ? error.message : '验证码发送失败'
+      showFailToast(message)
+    })
+    .finally(() => {
+      requestingOtp.value = false
+    })
+}
+
+async function submitReset(): Promise<void> {
+  const phone = phoneNumber.value.trim()
+  const mail = email.value.trim()
+  const code = otp.value.trim()
+  const nextPassword = password.value.trim()
+
+  if (isPhone.value && !phone) {
+    showFailToast('请输入手机号')
+    return
+  }
+  if (!isPhone.value && !mail) {
+    showFailToast('请输入邮箱')
+    return
+  }
+  if (!code) {
+    showFailToast('请输入验证码')
+    return
+  }
+  if (!nextPassword) {
+    showFailToast('请输入新密码')
+    return
+  }
+  if (!acceptedPolicy.value) {
+    showFailToast('请先勾选协议')
+    return
+  }
+
+  submitting.value = true
+  try {
+    const response = await postUserModifyPasswordApi({
+      phone: isPhone.value ? phone : undefined,
+      email: isPhone.value ? undefined : mail,
+      area: isPhone.value ? '11' : undefined,
+      code,
+      password: nextPassword,
+    })
+
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '重置密码失败')
     }
-    otpCountdown.value -= 1
-  }, 1000)
+
+    showSuccessToast('密码重置成功')
+    void router.replace('/mine/settings/account')
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '重置密码失败'
+    showFailToast(message)
+  } finally {
+    submitting.value = false
+  }
 }
 
 onBeforeUnmount(() => {
@@ -137,6 +223,7 @@ onBeforeUnmount(() => {
               class="otp-btn"
               :class="{ countdown: isFilledPreview }"
               type="button"
+              :disabled="requestingOtp || submitting"
               @click="requestOtp"
             >
               {{ isFilledPreview ? `${otpCountdown}s` : 'GET OTP' }}
@@ -179,7 +266,14 @@ onBeforeUnmount(() => {
         </span>
       </label>
 
-      <button class="submit-btn" type="button">{{ submitText }}</button>
+      <button
+        class="submit-btn"
+        type="button"
+        :disabled="submitting"
+        @click="submitReset"
+      >
+        {{ submitting ? '提交中...' : submitText }}
+      </button>
     </div>
   </div>
 </template>
@@ -407,6 +501,10 @@ onBeforeUnmount(() => {
   color: #ff132b;
 }
 
+.otp-btn:disabled {
+  opacity: 0.72;
+}
+
 .eye {
   width: 0.5669rem;
   height: 0.5443rem;
@@ -465,5 +563,9 @@ onBeforeUnmount(() => {
   font-size: 0.6754rem;
   font-family: var(--font-family-sans);
   font-weight: 500;
+}
+
+.submit-btn:disabled {
+  opacity: 0.72;
 }
 </style>

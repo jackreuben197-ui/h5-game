@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { getLocale, setLocale, type LocaleCode } from '@/i18n'
 
 const title = computed(() => 'Language')
 
 interface LanguageOption {
-  key: string
+  key: LocaleCode
   label: string
 }
 
@@ -19,29 +21,26 @@ const backgroundStyle = computed(() => ({
 }))
 
 const options: LanguageOption[] = [
-  { key: 'en', label: '英语' },
-  { key: 'zh-CN', label: '简体中文' },
-  { key: 'pt', label: '葡萄牙语' },
-  { key: 'es', label: '西班牙语' },
-  { key: 'ru', label: '俄语' },
-  { key: 'de', label: '德语' },
-  { key: 'hi', label: '印度语' },
-  { key: 'vi', label: '越南语' },
-  { key: 'ja', label: '日本' },
-  { key: 'it', label: '意大利' },
-  { key: 'fr', label: '法国' },
-  { key: 'th', label: '泰国' },
-  { key: 'ko', label: '韩国' },
+  { key: 'cn', label: '简体中文' },
+  { key: 'zh', label: '繁體中文' },
+  { key: 'en', label: 'English' },
+  { key: 'pt', label: 'Português' },
 ]
 
-const activeLanguage = ref('en')
+const activeLanguage = ref<LocaleCode>(getLocale())
 
 function goBack(): void {
   router.back()
 }
 
-function selectLanguage(key: string): void {
+function selectLanguage(key: LocaleCode): void {
+  if (activeLanguage.value === key) {
+    return
+  }
+
   activeLanguage.value = key
+  setLocale(key)
+  showSuccessToast('语言切换成功')
 }
 </script>
 

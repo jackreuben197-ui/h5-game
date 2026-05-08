@@ -333,9 +333,63 @@ export interface MiscBannerListBannerInfo {
 
 // /api/misc/combine (MiscCombine)
 export interface MiscCombineRequest {
+    //  1."/api/misc/popup/newer" // 获取弹窗数据
+    //  2."/api/misc/banner_lobby" // 大厅视频banner
+    //  3."/api/misc/article/list" // 文章列表
+    //  4."/api/org/user/self_profit/bill_unnotify" // 未通知到玩家返水
+    //  5."/api/msg/message/unread" // 未读消息（只有五条）
+    //  6."/api/user/wallet_total" // 玩家总钱包
+    //  7."/api/msg/message/system/broadcast/num" // 获得平台消息未读消息数量
+    //  8."api/msg/message/todo" // 得到消息的数量
+    //  9."api/org/user/self_profit/unpay_records" // 用户返水
+    //  10."api/msg/message/red_num" // 消息红点
+    //  11."api/cmsext/im/service/list" // 俱乐部IM客服列表
+    //  12."api/misc/banner/list" // banner列表
+    //  13."api/cmsext/club/notice" // 俱乐部弹窗消息
+    //  14."api/org/club/club_user/wallet" // 钱包
+    //  15."api/org/club/user/info" // 俱乐部成员详细信息
+    //  16."api/org/club/info" // 单个俱乐部信息
+    //  17."api/org/club/fund/detail" // 基金详情
+    //  18."api/org/club/jackpot/template/list" // 获取Jackpot模版列表
+    //  19."api/stats/user_stats/all" // 生涯首页数据
+    //  20."api/stats/user_stats/game_total" // 生涯首页消息数据
+    //  21."api/prop/mall/goods/list" // 商品列表
+    //  22."api/prop/sign_in/activity/detail" // 签到活动详情
+    //  23.新接口 // mtt首页汇总
+    //  24.“/api/user/:id/info” // 查询用户公共个人信息
+    //  25.“/api/stats/other_user_stats/:id” // 查看其他人的个人统计
+    //  26."/api/stats/friend_room_stats/data" // 朋友桌数据列表
+    //  27."/api/stats/friend_room_stats/data_info" // 朋友桌数据统计信息
+    //  28."api/stats/user_stats" // 战绩,个人统计详情 生涯数据-个人
+    //  29."/api/stats/room/history/list" // 普通牌局的战绩列表
+    //  30."/api/stats/mtt/history/list/data_by_date" // mtt的战绩列表(按日期汇总)
+    //  31."api/stats/user_stats/rival_room_stats"// 生涯数据-对手
+    //  32."api/stats/user_stats/allin"// 生涯数据-对手
+    //  33."api/stats/user_stats/card_type"// 生涯数据-牌组
+    //  34."api/misc/currency_description/info" // 货币描述
+    //  35."api/misc/game/round/list/data_by_room" // 查询收藏牌普列表(根据房间分组)
+    //  36."api/org/club/master/slave_club/list" // 获取从俱乐部列表
+    //  38."api/org/club/admin/has" // 玩家是否可以管理公会，返回用户信息
+    //  39."api/org/club/fund/gold_change/log" // 公会金豆变动明细列表
+    //  40."api/stats/club_data_stats/data_info" // 公会数据管理统计信息
+    //  42"api/stats/user/game/record/list" // 用户近期牌谱
+    //  43."api/stats/club_data_stats/data" // 公会数据管理统计列表
+    //  44."api/org/club/user/wallet/relation/list" // 玩家钱包互通成员列表
+    //  45."api/user/gold_change/log" // 玩家资金变动
+    //  46."api/prop/gold/price/list" // USDT价格列表
+    //  47."api/config/online_withdraw_type_list" //联盟提现类型列表
+    //  48."api/config/get_online_pay_type_user_address" //查询玩家钱包地址列表
+    //  49."api/config/user/whitelist/info" // 获取玩家白名单配置信息
+    //  50."api/user/info" // 获取玩家信息
+    //  51."api/user/channel" // 获取通道信息
+    //  52."api/user/send_info" // 上报用户设备
+    //  53."api/user/action/remaind" // 用户剩余免费次数
+    //  54."api/roomcenter/history/view_public_cards/free_count" // 玩家付费看公共牌剩余免费次数
+    //  55."api/roomcenter/game/watch/unread/list" // 获取付费未读通知列表
+    //  56."api/chat/support/channel/list" // 频道列表与未读数量
+    //  57."api/org/club/user_club" // 查询玩家所属公会
 
-    api_list?: number[]; // 选择接口枚举，不传返回全部 1."/api/misc/popup/newer" // 获取弹窗数据 2."/api/misc/banner_lobby" // 大厅视频banner 3."/api/misc/article/list" // 文章列表 4."/api/org/user/self_profit/bill_unnotify" // 未通知到玩家返水 5."/api/msg/message/unread" // 未读消息（只有五条） 6."/api/user/wallet_total" // 玩家总钱包 7."/api/msg/message/system/broadcast/num" // 获得平台消息未读消息数量 8."api/msg/message/todo" // 得到消息的数量 9."api/org/user/self_profit/unpay_records" // 用户返水 10."api/msg/message/red_num" // 消息红点 11."api/cmsext/im/service/list" // 俱乐部IM客服列表 12."api/misc/banner/list" // banner列表 13."api/cmsext/club/notice" // 俱乐部弹窗消息 14."api/org/club/club_user/wallet" // 钱包 15."api/org/club/user/info" // 俱乐部成员详细信息 16."api/org/club/info" // 单个俱乐部信息 17."api/org/club/fund/detail" // 基金详情 18."api/org/club/jackpot/template/list" // 获取Jackpot模版列表 19."api/stats/user_stats/all" // 生涯首页数据 20."api/stats/user_stats/game_total" // 生涯首页消息数据 21."api/prop/mall/goods/list" // 商品列表 22."api/prop/sign_in/activity/detail" // 签到活动详情 23.新接口 // mtt首页汇总 24.“/api/user/:id/info” // 查询用户公共个人信息 25.“/api/stats/other_user_stats/:id” // 查看其他人的个人统计 26."/api/stats/friend_room_stats/data" // 朋友桌数据列表 27."/api/stats/friend_room_stats/data_info" // 朋友桌数据统计信息 28."api/stats/user_stats" // 战绩,个人统计详情 生涯数据-个人 29."/api/stats/room/history/list" // 普通牌局的战绩列表 30."/api/stats/mtt/history/list/data_by_date" // mtt的战绩列表(按日期汇总) 31."api/stats/user_stats/rival_room_stats"// 生涯数据-对手 32."api/stats/user_stats/allin"// 生涯数据-对手 33."api/stats/user_stats/card_type"// 生涯数据-牌组 34."api/misc/currency_description/info" // 货币描述 35."api/misc/game/round/list/data_by_room" // 查询收藏牌普列表(根据房间分组) 36."api/org/club/master/slave_club/list" // 获取从俱乐部列表 38."api/org/club/admin/has" // 玩家是否可以管理公会，返回用户信息 39."api/org/club/fund/gold_change/log" // 公会金豆变动明细列表 40."api/stats/club_data_stats/data_info" // 公会数据管理统计信息 42"api/stats/user/game/record/list" // 用户近期牌谱 43."api/stats/club_data_stats/data" // 公会数据管理统计列表 44."api/org/club/user/wallet/relation/list" // 玩家钱包互通成员列表 45."api/user/gold_change/log" // 玩家资金变动 46."api/prop/gold/price/list" // USDT价格列表 47."api/config/online_withdraw_type_list" //联盟提现类型列表 48."api/config/get_online_pay_type_user_address" //查询玩家钱包地址列表 49."api/config/user/whitelist/info" // 获取玩家白名单配置信息 50."api/user/info" // 获取玩家信息 51."api/user/channel" // 获取通道信息 52."api/user/send_info" // 上报用户设备 53."api/user/action/remaind" // 用户剩余免费次数 54."api/roomcenter/history/view_public_cards/free_count" // 玩家付费看公共牌剩余免费次数 55."api/roomcenter/game/watch/unread/list" // 获取付费未读通知列表 56."api/chat/support/channel/list" // 频道列表与未读数量 57."api/org/club/user_club" // 查询玩家所属公会
-    popup_newer_req?: MiscPopupNewerRequest; // 获取弹窗请求参数
+    api_list?: number[]; // 选择接口枚举，不传返回全部 popup_newer_req?: MiscPopupNewerRequest; // 获取弹窗请求参数
     banner_lobby_req?: MiscBannerLobbyRequest; // 大厅视频banner请求参数
     article_list_req?: MiscArtiCleListRequest; // 文章列表请求参数
     msg_unread_req?: MsgMessageUnreadRequest; // 未读消息请求参数 5 /api/msg/message/unread

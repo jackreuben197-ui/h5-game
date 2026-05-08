@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { showFailToast } from 'vant'
-import iconNlh from '@/assets/icons/game_type_nlh.png'
-import iconPlo from '@/assets/icons/game_type_plo.png'
-import iconSixPlus from '@/assets/icons/game_type_6+.png'
-import iconAof from '@/assets/icons/table_icon_Aof.png'
-import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
-import iconSquid from '@/assets/icons/table_icon_squid.png'
-import iconCritical from '@/assets/icons/table_icon_critical.png'
-import iconMahjong from '@/assets/icons/game_zone_mahjong_mini.png'
-import iconCustom from '@/assets/icons/icon_table.png'
+import { useRouter } from 'vue-router'
+import iconNlh from '@/assets/icons/create_icon_nlh.png'
+import iconPlo from '@/assets/icons/create_icon_plo.png'
+import iconSixPlus from '@/assets/icons/create_icon_shortdeck.png'
+import iconMahjongXueZhan from '@/assets/icons/create_icon_mahjong_xuezhan.png'
+import iconMahjongXueLiu from '@/assets/icons/create_icon_mahjong_xueliu.png'
+import iconMahjongTuiDaoHu from '@/assets/icons/create_icon_mahjong_tuidaohu.png'
+import iconSng from '@/assets/icons/create_icon_sng.png'
+import iconMtt from '@/assets/icons/create_icon_mtt.png'
+import iconMttMj from '@/assets/icons/create_icon_mtt_mj.png'
+import { t } from '@/i18n'
 
 interface GameTypeItem {
   key: string
@@ -20,36 +22,45 @@ interface GameTypeItem {
 const selectedKey = ref('')
 
 const gameTypes: GameTypeItem[] = [
-  { key: 'nlh', title: '德州', icon: iconNlh },
-  { key: 'plo', title: '奥马哈', icon: iconPlo },
-  { key: 'six_plus', title: '6+', icon: iconSixPlus },
-  { key: 'aof', title: 'AOF', icon: iconAof },
-  { key: 'mushroom', title: '蘑菇桌', icon: iconMushroom },
-  { key: 'squid', title: '深海桌', icon: iconSquid },
-  { key: 'critical', title: '竞技桌', icon: iconCritical },
-  { key: 'mahjong', title: '麻将', icon: iconMahjong },
-  { key: 'custom', title: '自定义', icon: iconCustom },
+  { key: 'nlh', title: '', icon: iconNlh },
+  { key: 'plo', title: '', icon: iconPlo },
+  { key: 'six_plus', title: '', icon: iconSixPlus },
+  { key: 'xuezhan', title: '', icon: iconMahjongXueZhan },
+  { key: 'xueliu', title: '', icon: iconMahjongXueLiu },
+  { key: 'tuidaohu', title: '', icon: iconMahjongTuiDaoHu },
+  { key: 'sng', title: '', icon: iconSng },
+  { key: 'mtt', title: '', icon: iconMtt },
+  { key: 'mtt_mj', title: '', icon: iconMttMj },
 ]
 
 function onSelect(item: GameTypeItem): void {
   selectedKey.value = item.key
-  showFailToast(`${item.title} 创建流程开发中`)
+  showFailToast(`${t(item.title)} 创建流程开发中`)
 }
+const router = useRouter()
 </script>
 
 <template>
   <div class="club-table-create-page">
-    <HeaderBack :title="'创建牌桌'" />
+    <HeaderBack :title="t('创建牌桌')">
+      <template #right>
+        <TopActionButton
+          :name="t('jackpot')"
+          icon-alt="wallet"
+          @click="router.push('/club/jackpot')"
+        />
+      </template>
+    </HeaderBack>
     <div class="club-table-create-overlay"></div>
 
     <section class="club-table-create-body">
       <div class="title-wrap">
-        <h1>选择游戏类型</h1>
+        <h1>{{ t('选择游戏类型') }}</h1>
         <div class="title-divider" aria-hidden="true">
           <span></span>
           <span></span>
         </div>
-        <p>开始创建</p>
+        <p>{{ t('开始创建') }}</p>
       </div>
 
       <div class="type-grid">
@@ -61,7 +72,9 @@ function onSelect(item: GameTypeItem): void {
           :class="{ 'type-card--active': selectedKey === item.key }"
           @click="onSelect(item)"
         >
-          <img class="type-card-icon" :src="item.icon" :alt="item.title" />
+          <div class="type-card-icon-wrap">
+            <img class="type-card-icon" :src="item.icon" :alt="item.title" />
+          </div>
           <span class="type-card-title">{{ item.title }}</span>
         </button>
       </div>
@@ -73,7 +86,7 @@ function onSelect(item: GameTypeItem): void {
 .club-table-create-page {
   position: relative;
   min-height: 100dvh;
-  padding: 0 0.32rem calc(0.44rem + env(safe-area-inset-bottom));
+  padding: 0 0 calc(0.44rem + env(safe-area-inset-bottom));
   background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
   overflow-x: hidden;
   overflow-y: auto;
@@ -83,123 +96,163 @@ function onSelect(item: GameTypeItem): void {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    radial-gradient(circle at 16% 86%, rgba(255, 168, 202, 0.3), transparent 35%),
-    radial-gradient(circle at 86% 79%, rgba(86, 224, 247, 0.3), transparent 34%),
-    rgba(9, 14, 29, 0.35);
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(0.24rem);
+  -webkit-backdrop-filter: blur(0.24rem);
 }
 
 :deep(.page-back-header) {
-  padding-left: 0;
-  padding-right: 0;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
+  padding-left: 0.36rem;
+  padding-right: 0.36rem;
+  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.18rem);
   padding-bottom: 0;
 }
 
 .club-table-create-body {
   position: relative;
   z-index: 2;
-  margin-top: 0.86rem;
+  margin-top: 1.39rem;
 }
 
 .title-wrap {
+  width: 7.2449rem;
+  max-width: calc(100vw - 2.16rem);
+  margin: 0 auto;
   text-align: center;
-  color: #fff;
+  color: #f9f9f9;
 }
 
 .title-wrap h1 {
   margin: 0;
-  font-size: 0.508rem;
+  font-size: 0.5077rem;
   font-weight: 500;
-  line-height: 1.2;
+  line-height: 1;
 }
 
 .title-divider {
-  margin: 0.2rem auto 0;
-  width: 7.245rem;
-  max-width: 100%;
+  margin: 0.1369rem auto 0;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .title-divider span {
-  width: 1.455rem;
-  height: 0.013rem;
-  background: rgba(255, 255, 255, 0.42);
+  width: 1.4555rem;
+  height: 0.0085rem;
+  background: rgba(249, 249, 249, 0.5);
 }
 
 .title-wrap p {
-  margin: 0.14rem 0 0;
-  font-size: 0.508rem;
+  margin: 0.1369rem 0 0;
+  font-size: 0.5077rem;
   font-weight: 500;
-  line-height: 1.2;
-  opacity: 0.92;
+  line-height: 1;
 }
 
 .type-grid {
-  margin-top: 0.93rem;
+  width: 9.0258rem;
+  max-width: calc(100vw - 0.96rem);
+  margin: 0.933rem auto 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  column-gap: 0.37rem;
-  row-gap: 0.32rem;
-  padding: 0 0.16rem;
+  column-gap: 0.3693rem;
+  row-gap: 0.33rem;
 }
 
 .type-card {
-  min-height: 2.953rem;
-  border: 0.01rem solid rgba(255, 255, 255, 0.32);
-  border-radius: 0.186rem;
-  background: linear-gradient(145deg, rgba(28, 45, 70, 0.68), rgba(13, 24, 42, 0.82));
-  backdrop-filter: blur(0.06rem);
-  box-shadow:
-    inset 0 0 0.12rem rgba(255, 255, 255, 0.1),
-    0 0.09rem 0.18rem rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.18rem;
+  position: relative;
+  height: 2.98rem;
+  border-radius: 0.7883rem;
+  border: 0.0238rem solid transparent;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)) padding-box,
+    linear-gradient(155deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.08)) border-box;
+  box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.22);
+  overflow: visible;
   color: #fff;
-  padding: 0.14rem 0.08rem;
 }
 
 .type-card--active {
-  border-color: rgba(5, 231, 174, 0.9);
-  background: linear-gradient(160deg, rgba(20, 72, 85, 0.82), rgba(12, 39, 52, 0.9));
+  background:
+    linear-gradient(rgba(9, 24, 45, 0.72), rgba(9, 24, 45, 0.72)) padding-box,
+    linear-gradient(155deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.22)) border-box;
   box-shadow:
-    inset 0 0 0.14rem rgba(255, 255, 255, 0.16),
-    0 0.1rem 0.22rem rgba(0, 0, 0, 0.32),
-    0 0 0.14rem rgba(5, 231, 174, 0.45);
+    0 0.1rem 0.24rem rgba(0, 0, 0, 0.28),
+    0 0 0.14rem rgba(255, 255, 255, 0.22);
+}
+
+.type-card-icon-wrap {
+  position: absolute;
+  left: 50%;
+  top: -0.045rem;
+  width: 2.897rem;
+  height: 3.05rem;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
 }
 
 .type-card-icon {
-  width: 1.54rem;
-  height: 1.54rem;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
 .type-card-title {
-  font-size: 0.32rem;
-  line-height: 1.2;
-  font-weight: 500;
-  text-shadow: 0 0.03rem 0.12rem rgba(0, 0, 0, 0.35);
+  position: absolute;
+  left: 50%;
+  bottom: 0.14rem;
+  transform: translateX(-50%);
+  width: 2.1392rem;
+  height: 0.7841rem;
+  border-radius: 5.2926rem;
+  background: rgba(10, 10, 10, 0.19);
+  color: #fff;
+  font-size: 0.3751rem;
+  line-height: 0.7841rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-align: center;
+  text-shadow: 0 0.04rem 0.16rem rgba(0, 0, 0, 0.3);
+  padding: 0 0.12rem;
+  box-sizing: border-box;
 }
 
 @media (max-width: 360px) {
+  .club-table-create-body {
+    margin-top: 1.18rem;
+  }
+
+  .title-wrap {
+    max-width: calc(100vw - 1.2rem);
+  }
+
   .type-grid {
-    padding: 0;
+    max-width: calc(100vw - 0.56rem);
     column-gap: 0.24rem;
-    row-gap: 0.24rem;
+    row-gap: 0.26rem;
   }
 
   .type-card {
-    min-height: 2.68rem;
+    height: 2.72rem;
+    border-radius: 0.56rem;
   }
 
-  .type-card-icon {
-    width: 1.34rem;
-    height: 1.34rem;
+  .type-card-icon-wrap {
+    width: 2.5rem;
+    height: 2.62rem;
+    top: -0.04rem;
+  }
+
+  .type-card-title {
+    width: 2.02rem;
+    height: 0.72rem;
+    line-height: 0.72rem;
+    font-size: 0.33rem;
+    bottom: 0.12rem;
   }
 }
 </style>

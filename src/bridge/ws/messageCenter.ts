@@ -2,7 +2,9 @@ import { decodeHoldemCode } from './holdemPacket'
 import { subscribeH5WsMessages, type H5WsIncomingEvent } from './wsProxy'
 
 export const WS_NOTIFY_CODE = {
+  USER_DIAMOND_CHANGE: 138,
   ROOM_CHANGE_NOTIFY: 140,
+  USER_GOLD_CHANGE: 141,
   USER_MTT_CHANGE_NOTIFY: 151,
   USER_SNG_CHANGE_NOTIFY: 152,
   MTT_SERIES_NOTIFY: 153,

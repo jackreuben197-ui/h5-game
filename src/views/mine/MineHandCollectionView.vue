@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { showFailToast } from 'vant'
+import { postStatsUserGameRecordListApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-
-const router = useRouter()
 
 const title = computed(() => 'Result')
 
@@ -29,16 +28,101 @@ interface HandCard {
   negative?: boolean
 }
 
-const handCards: HandCard[] = [
-  { id: '1', title: 'john wins with Royal Flush', handId: '11440454', table: '2/4(10)', pot: '1234', hands: '10', profit: '-5000' },
-  { id: '2', title: 'john wins with Royal Flush', handId: '11440454', table: '2/4(10)', pot: '1234', hands: '10', profit: '-5000' },
-  { id: '3', title: 'john wins with Royal Flush', handId: '11440454', table: '2/4(10)', pot: '1234', hands: '10', profit: '-5000' },
-  { id: '4', title: 'john wins with Royal Flush', handId: '11440454', table: '2/4(10)', pot: '1234', hands: '10', profit: '-5000' },
-]
+const loading = ref(false)
+const handCards = ref<HandCard[]>([])
 
-function goBack(): void {
-  void router.push('/mine')
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
 }
+
+function formatSigned(value: unknown): string {
+  const amount = toSafeNumber(value)
+  if (amount === 0) {
+    return '0'
+  }
+  const abs = Math.abs(amount).toLocaleString('en-US')
+  return amount > 0 ? `+${abs}` : `-${abs}`
+}
+
+function resolveGameFilter(): { game_types: number[]; poker_types?: number[] } {
+  if (selectedGame.value === '奥马哈') {
+    return { game_types: [1, 2, 3] }
+  }
+  if (selectedGame.value === '短牌') {
+    return { game_types: [0], poker_types: [2] }
+  }
+  return { game_types: [0] }
+}
+
+function mapRowToCards(row: Record<string, unknown>, index: number): HandCard[] {
+  const roomRecord = (row.room_record as Record<string, unknown>) ?? {}
+  const gameRecords = Array.isArray(row.user_game_records) ? row.user_game_records : []
+  const roomName = String(roomRecord.name ?? 'Hand Record')
+  const handTable = `${toSafeNumber(roomRecord.small_blind)}/${toSafeNumber(roomRecord.random_ante ?? 0)}(${toSafeNumber(roomRecord.poker_type)})`
+
+  return gameRecords.map((item, itemIndex) => {
+    const record = (item as Record<string, unknown>) ?? {}
+    const handId = String(record.room_unique_id ?? record.id ?? '--')
+    const pot = toSafeNumber(record.bet_pot).toLocaleString('en-US')
+    const hands = toSafeNumber(record.hand_num).toLocaleString('en-US')
+    const profit = formatSigned(record.change)
+    return {
+      id: `${index + 1}-${itemIndex + 1}-${handId}`,
+      title: String(record.name ?? roomName),
+      handId,
+      table: handTable,
+      pot,
+      hands,
+      profit,
+      negative: !profit.startsWith('+'),
+    }
+  })
+}
+
+async function fetchHandCollection(): Promise<void> {
+  loading.value = true
+  try {
+    const filter = resolveGameFilter()
+    const response = await postStatsUserGameRecordListApi({
+      ...filter,
+      room_type: 0,
+      limit: 20,
+      offset: 0,
+    })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '加载手牌记录失败')
+    }
+
+    const records = Array.isArray(response.data?.records) ? response.data.records : []
+    const flat = records.flatMap((row, index) => mapRowToCards((row as Record<string, unknown>) ?? {}, index))
+    handCards.value = selectedMode.value === '收藏'
+      ? flat.filter(card => card.handId && card.handId !== '--').slice(0, 20)
+      : flat
+  } catch (error) {
+    handCards.value = []
+    const message = error instanceof Error ? error.message : '加载手牌记录失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
+
+function selectGame(tab: string): void {
+  if (selectedGame.value === tab) return
+  selectedGame.value = tab
+  void fetchHandCollection()
+}
+
+function selectMode(tab: string): void {
+  if (selectedMode.value === tab) return
+  selectedMode.value = tab
+  void fetchHandCollection()
+}
+
+onMounted(() => {
+  void fetchHandCollection()
+})
 </script>
 
 <template>
@@ -52,7 +136,7 @@ function goBack(): void {
           :key="item"
           type="button"
           :class="['plain-tab', { active: selectedGame === item }]"
-          @click="selectedGame = item"
+          @click="selectGame(item)"
         >
           {{ item }}
         </button>
@@ -64,13 +148,15 @@ function goBack(): void {
           :key="item"
           type="button"
           :class="['capsule-tab', { active: selectedMode === item }]"
-          @click="selectedMode = item"
+          @click="selectMode(item)"
         >
           {{ item }}
         </button>
       </div>
 
       <section class="list-wrap">
+        <p v-if="loading" class="list-status">加载中...</p>
+        <p v-else-if="!handCards.length" class="list-status">暂无手牌记录</p>
         <article v-for="card in handCards" :key="card.id" class="glass-card hand-card">
           <div class="top-row">
             <div class="poker-pair">
@@ -160,6 +246,13 @@ function goBack(): void {
   display: flex;
   flex-direction: column;
   gap: 0.24rem;
+}
+
+.list-status {
+  text-align: center;
+  font-size: 0.3rem;
+  opacity: 0.78;
+  padding: 0.24rem 0;
 }
 
 .glass-card {

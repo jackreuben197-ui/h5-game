@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { showSuccessToast } from 'vant'
+import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
+import { postUserCheckNicknameApi, postUserModifyInfoApi } from '@/api/user'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { useGameStore } from '@/stores/game'
@@ -20,10 +21,40 @@ const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
 
 const inputName = ref('')
+const submitting = ref(false)
+
+function readNickname(): string {
+  const user = userInfoStore.userInfo?.user
+  if (!user || typeof user !== 'object') {
+    return gameStore.loginNickname || ''
+  }
+
+  const record = user as Record<string, unknown>
+  const candidates = [record.nick_name, record.nickname]
+  for (const item of candidates) {
+    if (typeof item === 'string' && item.trim()) {
+      return item.trim()
+    }
+  }
+
+  return gameStore.loginNickname || ''
+}
+
+function readDiamond(): number {
+  const user = userInfoStore.userInfo?.user
+  if (user && typeof user === 'object') {
+    const record = user as Record<string, unknown>
+    const value = Number(record.diamonds ?? record.diamond ?? 0)
+    if (Number.isFinite(value) && value >= 0) {
+      return value
+    }
+  }
+  return 500
+}
 
 const displayUser = computed(() => ({
-  nickname: userInfoStore.userInfo?.user.nickname || gameStore.loginNickname || '',
-  diamond: userInfoStore.userInfo?.user.diamonds ?? 500,
+  nickname: readNickname(),
+  diamond: readDiamond(),
 }))
 
 inputName.value = String(displayUser.value.nickname || '')
@@ -32,9 +63,67 @@ function goBack(): void {
   router.back()
 }
 
-function onSave(): void {
-  showSuccessToast('昵称已保存')
-  router.back()
+function validateNickname(value: string): string | null {
+  if (!value) {
+    return '请输入昵称'
+  }
+  if (value.length < 2) {
+    return '昵称至少2个字符'
+  }
+  if (value.length > 20) {
+    return '昵称最多20个字符'
+  }
+  return null
+}
+
+async function onSave(): Promise<void> {
+  const nextNickname = inputName.value.trim()
+  const error = validateNickname(nextNickname)
+  if (error) {
+    showFailToast(error)
+    return
+  }
+
+  if (nextNickname === displayUser.value.nickname) {
+    showSuccessToast('昵称未发生变化')
+    router.back()
+    return
+  }
+
+  submitting.value = true
+  try {
+    const checkRes = await postUserCheckNicknameApi({ nickname: nextNickname })
+    if (checkRes.code !== 0) {
+      throw new Error(typeof checkRes.msg === 'string' ? checkRes.msg : '昵称不可用')
+    }
+
+    const modifyRes = await postUserModifyInfoApi({ nick_name: nextNickname })
+    if (modifyRes.code !== 0) {
+      throw new Error(typeof modifyRes.msg === 'string' ? modifyRes.msg : '昵称保存失败')
+    }
+
+    const userInfo = userInfoStore.userInfo
+    if (userInfo && typeof userInfo === 'object' && userInfo.user && typeof userInfo.user === 'object') {
+      const nextUserInfo = {
+        ...userInfo,
+        user: {
+          ...(userInfo.user as Record<string, unknown>),
+          nick_name: nextNickname,
+          nickname: nextNickname,
+        },
+      }
+      userInfoStore.setUserInfo(nextUserInfo)
+    }
+    gameStore.loginNickname = nextNickname
+
+    showSuccessToast('昵称已保存')
+    router.back()
+  } catch (requestError) {
+    const message = requestError instanceof Error ? requestError.message : '昵称保存失败'
+    showFailToast(message)
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 
@@ -69,7 +158,9 @@ function onSave(): void {
       </section>
 
       <div class="save-wrap">
-        <button class="save-btn" type="button" @click="onSave">Save</button>
+        <button class="save-btn" type="button" :disabled="submitting" @click="onSave">
+          {{ submitting ? 'Saving...' : 'Save' }}
+        </button>
       </div>
     </div>
   </div>
@@ -185,5 +276,9 @@ function onSave(): void {
   font-weight: 500;
   line-height: 1.2;
   background: linear-gradient(168.34deg, #05e7ae 7.55%, #027a5c 71.92%);
+
+  &:disabled {
+    opacity: 0.72;
+  }
 }
 </style>

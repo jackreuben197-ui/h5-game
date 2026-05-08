@@ -1,5 +1,6 @@
 import { getUserWsApi } from '@/api/user'
 import { closeWsProxy, ensureWsProxyConnected } from '@/bridge/ws'
+import { initUserBalanceSync } from '@/bridge/sync/h5BusinessSync'
 import StorageKey from '@/constants/storageKey'
 import { useGameStore } from '@/stores/game'
 import { pinia } from '@/stores/pinia'
@@ -8,6 +9,7 @@ import { localStore } from '@/utils/localStore'
 // 与 Cocos LoginSession 保持同名职责：管理登录会话相关的 websocket 端口同步。
 export default class LoginSession {
   private static _wsPort = 0
+  private static _stopBalanceSync: (() => void) | null = null
 
   // 当前缓存的 websocket 端口（优先内存，其次本地存储）。
   static get WSPort(): number {
@@ -47,6 +49,8 @@ export default class LoginSession {
     this.WSPort = port
     // 对齐最新流程：登录阶段拿到端口后，H5 直接主动建连，不再等待 Cocos 下发 wsConnect。
     ensureWsProxyConnected({ port: this.WSPort })
+    this._stopBalanceSync?.()
+    this._stopBalanceSync = initUserBalanceSync()
     return this.WSPort
   }
 
@@ -56,6 +60,9 @@ export default class LoginSession {
     if (cached > 0) {
       // 命中缓存时也主动建连，避免刷新后 Cocos/H5 侧连接状态不一致。
       ensureWsProxyConnected({ port: cached })
+      if (!this._stopBalanceSync) {
+        this._stopBalanceSync = initUserBalanceSync()
+      }
       return cached
     }
     return this.SyncWS()
@@ -63,6 +70,8 @@ export default class LoginSession {
 
   // 退出登录时清空 websocket 端口缓存。
   static ClearWS(): void {
+    this._stopBalanceSync?.()
+    this._stopBalanceSync = null
     // 清空登录态时主动关闭 WS，避免旧会话残留。
     closeWsProxy({ code: 1000, reason: 'login session cleared' })
     this.WSPort = 0

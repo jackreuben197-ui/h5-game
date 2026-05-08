@@ -3,8 +3,9 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   postOrgClubSearchByIdApi,
-  postOrgchaNgeClubDataApi,
+  postOrgChangeClubDataApi,
   postOrgClubAgentInviTationApi,
+  postOrgClubInviTationApi,
 } from '@/api/org'
 import type {
   OrgClubData,
@@ -16,8 +17,13 @@ import imgChips from '@/assets/icons/icon_chips.png'
 import imgPeople from '@/assets/icons/icon_people.png'
 import imgQuickSafety from '@/assets/images/club_quick_activity.png'
 import imgQuickRanking from '@/assets/images/club_quick_room_history.png'
+import imgQuickFund from '@/assets/images/club_quick_fund.png'
+import imgInviteCover from '@/assets/images/club_invite_cover.png'
+import imgInviteHeart from '@/assets/icons/club_invite_heart.png'
+import imgModalClose from '@/assets/icons/modal_close.svg'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { extractInvitationLink } from '@/utils/clubInvitation'
+import { generateQrCodeUrl } from '@/utils/qrcode'
 import { showFailToast, showSuccessToast } from 'vant'
 
 interface QuickActionItem {
@@ -39,11 +45,7 @@ interface SettingItem {
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 
-const imgQuickFund = 'https://www.figma.com/api/mcp/asset/9a7731a8-09f1-45c7-8292-70162e10dc50'
-const imgInviteCover = 'https://www.figma.com/api/mcp/asset/788e1bce-ddc2-4682-a337-4421aefcbb64'
-const imgInviteQr = 'https://www.figma.com/api/mcp/asset/f01dee7f-e8ef-4fe8-8e82-da2412a0040b'
-const imgInviteHeart = 'https://www.figma.com/api/mcp/asset/65e10a58-a9e9-4b72-9616-e013be298979'
-const imgModalClose = 'https://www.figma.com/api/mcp/asset/48528ead-0f8b-41cd-8ffc-359a64018378'
+const imgInviteQr = ref('')
 
 const loading = ref(false)
 const clubDetail = ref<OrgClubSearchByIdResponseData | null>(null)
@@ -198,7 +200,7 @@ function onQuickAction(actionId: number): void {
   }
 
   if (actionId === 3) {
-    void router.push('/club/fund')
+    void router.push('/club/members')
     return
   }
 
@@ -264,7 +266,7 @@ async function updateClubSwitch(key: 'allowSearch' | 'joinWithoutApproval'): Pro
   }
 
   try {
-    const response = await postOrgchaNgeClubDataApi({
+    const response = await postOrgChangeClubDataApi({
       club_id: clubId,
       search_switch: nextAllowSearch ? 1 : 2,
       auto_audit_switch: nextAutoAudit ? 1 : 2,
@@ -361,9 +363,37 @@ async function prefetchAgentInvitationLink(): Promise<void> {
   }
 }
 
+async function generateInviteQrCode(): Promise<void> {
+  const currentClub = displayClub.value
+  if (!currentClub?.club_id) {
+    return
+  }
+
+  try {
+    const response = await postOrgClubInviTationApi({
+      club_id: currentClub.club_id,
+    })
+
+    if (response.code !== 0) {
+      console.error('generateInviteQrCode API error', response.msg)
+      return
+    }
+
+    const invitationLink = extractInvitationLink(response.data)
+    if (!invitationLink) {
+      return
+    }
+
+    imgInviteQr.value = await generateQrCodeUrl(invitationLink, { size: 720, margin: 2 })
+  } catch (error) {
+    console.error('generateInviteQrCode error', error)
+  }
+}
+
 onMounted(async () => {
   await refreshClubDetail()
   await prefetchAgentInvitationLink()
+  await generateInviteQrCode()
 })
 </script>
 
@@ -539,7 +569,7 @@ onMounted(async () => {
 
     <div v-if="showCopyPopup" class="club-modal-mask" @click="closeCopyPopup">
       <section class="copy-modal" @click.stop>
-        <p>暂无，申请复制俱乐部需要等待审核，是否现在提交申请</p>
+        <p>申请复制俱乐部需要等待审核，是否现在提交申请</p>
         <div class="copy-modal__actions">
           <button type="button" class="modal-secondary-btn" @click="closeCopyPopup">取消</button>
           <button type="button" class="modal-primary-btn" @click="submitCopyRequest">确定</button>

@@ -144,3 +144,13 @@ export function checkIsShowForClubAndTribe(
 
   return false
 }
+
+export function formatUC(rawValue: number): string {
+  const displayValue = rawValue / 100
+  if (!Number.isFinite(displayValue)) {
+    return '0'
+  }
+
+  // 对齐 C# 的 "0.##"：最多保留 2 位小数并去掉尾随 0。
+  return displayValue.toFixed(2).replace(/\.?0+$/, '')
+}

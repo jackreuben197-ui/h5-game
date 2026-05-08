@@ -134,3 +134,67 @@ src/bridge
 - 子目录内通过 `index.ts` 聚合导出。
 - 上层模块优先从 `@/bridge/<layer>` 引用，而不是跨层深路径引用。
 - `src/bridge/index.ts` 仅做总聚合导出，不放业务逻辑。
+
+## 6. WebSocket 协议解析（H5 侧）
+
+### 6.1 分层原则
+
+- `wsProxy.ts` 负责连接、收发、重连、心跳、原始消息透传给 Cocos。
+- `holdemPacket.ts` 只负责包头解析（取 code、token、body 等基础字段）。
+- `messageCenter.ts` 负责“按 code 分发订阅”。
+- `roomChangeNotify.ts` 与 `mttNotify.ts` 负责“业务 protobuf 解析 + 结构映射”。
+
+### 6.2 现状：使用生成 protobuf 代码解析
+
+当前 H5 对以下 code 使用生成的 protobuf 代码（与 Cocos/Unity 思路一致）：
+
+- `140` `ROOM_CHANGE_NOTIFY`
+- `151` `USER_MTT_CHANGE_NOTIFY`
+- `152` `USER_SNG_CHANGE_NOTIFY`
+- `153` `MTT_SERIES_NOTIFY`
+
+对应实现：
+
+- `src/bridge/ws/roomChangeNotify.ts`
+- `src/bridge/ws/mttNotify.ts`
+
+生成文件位置：
+
+- `src/bridge/ws/pb/protobuf/holdem/*.js`
+- `src/bridge/ws/pb/protobuf/holdem/*.d.ts`
+
+**懒加载策略**：pb 类在 decoder 模块初始化时通过 fire-and-forget `void import(...)` 后台预取，不阻塞主包加载。`define_pb.js`（约 975 KB，gzip ~92 KB）与所有 recv pb 文件被单独打入 `pb-holdem` chunk，不进入主 bundle，首屏不加载。
+
+**类型安全**：使用 `import type` + `typeof ClassName` 获取 pb 构造函数类型（仅类型位置，零运行时开销），通过 `null` 守卫保证 pb 尚未加载完成时 decode 函数安全返回 `null`。
+
+### 6.3 为什么不再手写 wire 解析
+
+- 与 Cocos/Unity 的字段定义保持一致，减少协议偏差。
+- 新增/变更字段时只需更新生成文件与映射层，维护成本更低。
+- 避免手写 varint / fieldNo / wireType 时遗漏字段或类型不一致。
+
+### 6.4 后续新增 WS 业务消息的建议流程
+
+1. 在 `scripts/update_protocol.sh` 的 `H5_RECV_FILES` 数组中追加新协议的 pb 文件名（不含扩展名，如 `recv_g_xxx_notify_pb`）。
+2. 执行 `pnpm sync:protocol`，将 pb 生成文件（`.js` + `.d.ts`）同步到 `src/bridge/ws/pb/protobuf/holdem/`，并把更新的文件提交到 git。
+3. 在 `messageCenter.ts` 新增对应 code 常量（如需要）。
+4. 新增 `xxxNotify.ts` decoder 文件：
+   - 用 `import type` 引入 pb 类型（零运行时）。
+   - 用 `void import(...).then(mod => { pbClass = mod.XxxClass })` 懒加载 pb 类（fire-and-forget）。
+   - 提供 `decodeXxxFromRawPacket(rawPacket)` 方法，在 pb 类未就绪时安全返回 `null`。
+5. 在 store 或业务层通过 `subscribeH5WsCode/subscribeH5WsCodes` 订阅并消费。
+6. 仅在映射层输出 H5 业务需要的数据结构，不在 `wsProxy.ts` 混入业务逻辑。
+7. 更新本 README 6.2 节的协议列表。
+
+### 6.5 Vite CJS→ESM 插件与分包策略
+
+**问题背景**：`protoc-gen-js` 生成的 pb 文件是 CommonJS 格式（`require()`），而 Vite 工程启用了 `"type": "module"`，直接 `import` 会触发 `ReferenceError: require is not defined`。
+
+**解决方案**：`vite.config.ts` 中的 `pbCjsToEsmPlugin` 在 Rollup `transform` 钩子内联完成 CJS→ESM 转换，无需修改生成文件：
+
+- 注入 `import jspb from 'google-protobuf'` 替代 `require('google-protobuf')`。
+- 注入 `import * as protobuf_holdem_define_pb from './define_pb.js'` 替代 `require('./define_pb.js')`。
+- 从 `goog.exportSymbol(...)` 调用中提取符号名，生成具名 ESM `export { ... }` 语句。
+- 同时作用于 `vite dev`（transform 阶段）和 `vite build`（Rollup transform 钩子），无需额外配置。
+
+**分包**：`manualChunks` 将所有 `/bridge/ws/pb/` 路径文件归入独立的 `pb-holdem` chunk，不进入主 bundle，按需动态加载。

@@ -43,7 +43,28 @@ export interface GlobalConfigData {
   scoreboard_club_price?: string
   scoreboard_friend_price?: string
   user_modify_name_price?: string
+  // MTT 记录费配置（JSON 字符串，需解析为 MttRecordFeeConfig）
+  record_fee_mtt_uc?: string
+  record_fee_mtt_gc?: string
+  record_fee_mtt_diamond?: string
+  record_fee_mtt_scoreboard?: string
   [key: string]: unknown
+}
+
+// MTT 记录费配置（对齐 Unity UIMttBuyInComponent.RecordFeeData）。
+export interface MttRecordFeeConfig {
+  // 1 开启，2 关闭
+  status: number
+  // 保底收取钻石数
+  floor_price: number
+  // 收取比例（记录费 = 带入积分 * ratio）
+  ratio: number
+  // 小数取整类型：1 floor，2 ceil，3 round
+  decimal_type: number
+  // 折扣（< 1 表示有折扣，>= 1 表示无折扣）
+  discount: number
+  start_time: number
+  end_time: number
 }
 
 // /config/base/config/combine 请求参数。
@@ -177,6 +198,43 @@ export interface UserWhitelistInfoInnerData {
 // /config/user/whitelist/info 响应 data。
 export interface UserWhitelistInfoData {
   data?: UserWhitelistInfoInnerData
+  [key: string]: unknown
+}
+
+// /config/online_withdraw_type_list 单项。
+export interface OnlineWithdrawTypeItem {
+  id?: number
+  name?: string
+  image?: string
+  type?: number // 1-数字钱包 2-API 3-手动
+  rate?: number
+  fee_rate?: number
+  fee_type?: number // 0-无 1-俱乐部出 2-玩家出
+  /** 通道说明（模板）；玩家保存的地址见 user_description */
+  description?: string
+  /** 玩家已保存的提现地址（服务端返回） */
+  user_description?: string
+  /** 个别环境字段名拼写 */
+  user_decription?: string
+  [key: string]: unknown
+}
+
+// /config/online_withdraw_type_list 响应 data。
+export interface OnlineWithdrawTypeListData {
+  list?: OnlineWithdrawTypeItem[]
+  [key: string]: unknown
+}
+
+export interface OnlineWithdrawDescriptionRequest {
+  withdraw_type_id?: number
+  description?: string
+  club_id?: number
+  [key: string]: unknown
+}
+
+export interface OnlineWithdrawDescriptionData {
+  id?: number
+  name?: string
   [key: string]: unknown
 }
 

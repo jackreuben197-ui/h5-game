@@ -196,14 +196,7 @@ async function onConfirmGender(): Promise<void> {
             <span class="radio" :class="{ active: popupGender === 'female' }"></span>
             <span>女</span>
           </button>
-          <button
-            class="sheet-confirm"
-            type="button"
-            :disabled="savingGender"
-            @click="onConfirmGender"
-          >
-            {{ savingGender ? '提交中...' : '确认' }}
-          </button>
+          <button class="sheet-confirm" type="button" @click="onConfirmGender">赠送</button>
         </div>
       </VanPopup>
     </div>

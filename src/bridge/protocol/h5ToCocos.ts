@@ -35,11 +35,27 @@ export interface EnterTablePayload {
   token: string
   // websocket 端口（来自 /api/user/ws 的 data.port）。
   websocketPort: number
-  from: 'h5-lobby'
+  from: string
   // 点击的目标房间 ID，方便 Cocos 精确切桌；Cocos 不需要时可忽略。
   roomId?: string
   roomName?: string
   roomInfo: any
+}
+
+// 请求进入 MTT 牌桌时发送给 Cocos 的负载。
+export interface EnterMttPayload {
+  userName?: string
+  userId: string
+  token?: string
+  websocketPort: number
+  from: string
+  matchId: number
+  matchName?: string
+  // 观战指定牌桌时传入，对应 Unity ShowGameplayUI(isLookOn:true, roomid)。
+  roomId?: number
+  isLookOn?: boolean
+  // MTT 详情原始数据，供 Cocos 读取 type/gold_type 等字段。
+  matchInfo: unknown
 }
 
 // 用户信息变化后的同步负载。
@@ -60,6 +76,16 @@ export interface SyncUserClubPayload {
 export interface SyncRoomsListPayload {
   request: unknown
   response: unknown
+}
+
+// H5 当前语言变化同步。
+export interface SyncLanguagePayload {
+  locale: string
+}
+
+// globalConfig 同步。
+export interface SyncGlobalConfigPayload {
+  raw: unknown
 }
 
 // Cocos 回执通用负载。

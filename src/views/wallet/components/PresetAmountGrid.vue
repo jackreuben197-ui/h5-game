@@ -4,6 +4,8 @@ import AmountTile from './AmountTile.vue'
 export interface Preset {
   amount: string | number
   chip: string | number
+  id?: number
+  payPrice?: number
 }
 
 interface Props {
@@ -43,7 +45,7 @@ const emit = defineEmits<{
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: clamp(8px, 2.9vw, 11px);
+  gap: 0.29rem;
   width: 100%;
 }
 </style>

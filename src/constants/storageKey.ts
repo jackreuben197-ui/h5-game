@@ -20,8 +20,14 @@ export default class StorageKey {
   static HOME_ROOM_STATS_CACHE = 'HOME_ROOM_STATS_CACHE'
   // MTT 列表缓存（首页与 MTT 列表页共享）。
   static MTT_LIST_CACHE = 'MTT_LIST_CACHE'
+  // 全局配置缓存（global/config，登录后静默拉取）。
+  static APP_CONFIG_CACHE = 'APP_CONFIG_CACHE'
   // 通用多语言模板缓存（名称/道具/简介等模板文本都可复用）。
   static MULTI_LANGUAGE_TEMPLATE_CACHE = 'MULTI_LANGUAGE_TEMPLATE_CACHE'
+  // 用户协议/隐私协议缓存（按 type + language 维度存储）。
+  static PROTOCOL_ARTICLE_CACHE = 'PROTOCOL_ARTICLE_CACHE'
+  // 登录区号列表缓存（/config/register/area）。
+  static LOGIN_AREA_LIST_CACHE = 'LOGIN_AREA_LIST_CACHE'
   // token 有效期。
   static TOKEN_EXPIREAT = 'TOKEN_EXPIREAT'
   // 电话区号（保持原拼写 AERA，与 Cocos 对齐）。

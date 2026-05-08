@@ -24,7 +24,7 @@ const emit = defineEmits<{ back: [] }>()
       <h1 class="recharge-header__title">{{ title }}</h1>
     </button>
     <div class="recharge-header__right">
-      <slot name="right" />
+      <slot name="right"></slot>
     </div>
   </header>
 </template>

@@ -20,7 +20,7 @@ import type {
   PropChatPropUsedRequest,
   PropChatPropUsedResponseData,
   PropGoldPriceListRequest,
-  PropGoldPriceListResponseData,
+  PropGoldPriceListData,
   PropListRequest,
   PropListResponseData,
   PropMallGoodsBuyRequest,
@@ -68,7 +68,7 @@ import type {
   PropUserPropGroupListRequest,
   PropUserPropGroupListResponseData,
   PropUserPropInfoRequest,
-  PropUserPropInfoResponseData,
+  PropUserPropInfoData,
   PropUserPropListRequest,
   PropUserPropListResponseData,
   PropUserPropUsedRequest,
@@ -120,10 +120,12 @@ export async function postPropChatPropUsedApi(
 
 // 对齐 cocos WebPropGoldPriceList.API
 export async function postPropGoldPriceListApi(
-  payload: PropGoldPriceListRequest = {} as PropGoldPriceListRequest
-): Promise<ApiResponse<PropGoldPriceListResponseData>> {
+  payload: PropGoldPriceListRequest = {} as PropGoldPriceListRequest,
+  clubId?: number
+): Promise<ApiResponse<PropGoldPriceListData>> {
   const endpoint = '/prop/gold/price/list'
-  const response = await http.post<ApiResponse<PropGoldPriceListResponseData>>(endpoint, payload)
+  const headers = clubId != null ? { 'X-Club': String(clubId) } : undefined
+  const response = await http.post<ApiResponse<PropGoldPriceListData>>(endpoint, payload, { headers })
   return response.data
 }
 
@@ -427,9 +429,9 @@ export async function postPropUserOfflInetIcketsTransFerApi(
 // 对齐 cocos WebPropUserPropInfo.API
 export async function postPropUserPropInfoApi(
   payload: PropUserPropInfoRequest = {} as PropUserPropInfoRequest
-): Promise<ApiResponse<PropUserPropInfoResponseData>> {
+): Promise<ApiResponse<PropUserPropInfoData>> {
   const endpoint = '/prop/user/prop_info'
-  const response = await http.post<ApiResponse<PropUserPropInfoResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<PropUserPropInfoData>>(endpoint, payload)
   return response.data
 }
 

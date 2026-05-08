@@ -2,6 +2,9 @@ import { subscribeCocosMessages } from '../core/cocosBridgeChannel'
 import { BRIDGE_ACTION, BRIDGE_MSG_TYPE, type BridgeMessage, type H5NavigatePayload } from '../protocol'
 import router from '@/router'
 import type { RouteLocationRaw } from 'vue-router'
+import { createLogger } from '@/utils/logger'
+
+const log = createLogger('[bridge]')
 
 let stopH5VisibilityListener: (() => void) | null = null
 
@@ -24,10 +27,7 @@ export function setH5Visible(visible: boolean): void {
     window.__H5_VISIBLE__ = visible
   }
 
-  console.info('[bridge][h5-visibility]', {
-    visible,
-    action: visible ? BRIDGE_ACTION.H5_SHOW : BRIDGE_ACTION.H5_HIDE,
-  })
+  log.debug('[h5-visibility]', { visible, action: visible ? BRIDGE_ACTION.H5_SHOW : BRIDGE_ACTION.H5_HIDE })
 }
 
 function isRecord(raw: unknown): raw is Record<string, unknown> {
@@ -84,7 +84,7 @@ function normalizeNavigateTarget(payload: unknown): {
 async function navigateH5(payload: unknown): Promise<void> {
   const normalized = normalizeNavigateTarget(payload)
   if (!normalized) {
-    console.warn('[bridge][h5-navigate] invalid payload:', payload)
+    log.warn('[h5-navigate] invalid payload:', payload)
     return
   }
 
@@ -98,16 +98,13 @@ async function navigateH5(payload: unknown): Promise<void> {
       ? await router.replace(normalized.route)
       : await router.push(normalized.route)
     if (failure) {
-      console.warn('[bridge][h5-navigate] navigation failed:', failure)
+      log.warn('[h5-navigate] navigation failed:', failure)
       return
     }
 
-    console.info('[bridge][h5-navigate] done', {
-      mode: normalized.replace ? 'replace' : 'push',
-      target: normalized.route,
-    })
+    log.debug('[h5-navigate] done', { mode: normalized.replace ? 'replace' : 'push', target: normalized.route })
   } catch (error) {
-    console.warn('[bridge][h5-navigate] navigation error:', error)
+    log.warn('[h5-navigate] navigation error:', error)
   }
 }
 

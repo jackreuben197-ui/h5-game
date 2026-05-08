@@ -10,21 +10,58 @@ import MttPlayersTab from './components/MttPlayersTab.vue'
 import MttRewardsTab from './components/MttRewardsTab.vue'
 import MttTablesTab from './components/MttTablesTab.vue'
 import MttBlindsTab from './components/MttBlindsTab.vue'
+import MttBuyinModal from './components/MttBuyinModal.vue'
 import type { FilterTabOption } from '@/components/Tabbar/FilterTabbar.vue'
-import { MttPlayerStatus, type RoomcenterMttDetailData } from '@/api/models/roomcenter'
-import { getRoomcenterMttDetailApi, mttBuyInApi, mttQuitApi, mttRebuyApi } from '@/api/roomcenter'
+import {
+  MttPlayerStatus,
+  type RoomcenterMttDetailData,
+  type RoomcenterMttHunterRanksData,
+  type RoomcenterMttRanksData,
+  type RoomcenterMttRealPrize,
+  type RoomcenterMttRoomRecord,
+} from '@/api/models/roomcenter'
+import {
+  getRoomcenterMttDetailApi,
+  mttBuyInApi,
+  mttQuitApi,
+  mttRebuyApi,
+  postRoomcenterMttHunterRanksApi,
+  postRoomcenterMttRanksApi,
+  postRoomcenterMttRealPrizeApi,
+  postRoomcenterMttRoomsApi,
+} from '@/api/roomcenter'
 import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import { toUnixSeconds } from '@/utils/time'
+import { enterMtt } from '@/bridge/core'
+import type { EnterMttPayload } from '@/bridge/protocol'
+import { useGameStore } from '@/stores/game'
+import LoginSession from '@/session/loginSession'
 
 type DetailTabName = 'status' | 'players' | 'rewards' | 'tables' | 'blinds'
 
 const route = useRoute()
+const gameStore = useGameStore()
 const activeTab = ref<DetailTabName>('status')
 const detailData = ref<RoomcenterMttDetailData | null>(null)
 const btnLoading = ref(false)
+const showBuyinModal = ref(false)
+const buyinModalTitle = ref<string | undefined>(undefined)
+const buyinJoinMode = ref<'apply' | 'rebuy' | 'addon'>('apply')
 const tick = ref(0)
 let tickTimer: ReturnType<typeof setInterval> | null = null
+
+/* ===== 各 tab 子数据（提升到父级管理，跨 tab 切换时数据保留） ===== */
+const playersLoading = ref(false)
+const rankData = ref<RoomcenterMttRanksData | null>(null)
+const hunterData = ref<RoomcenterMttHunterRanksData | null>(null)
+const playerRequestCode = ref<number | null>(null)
+
+const tablesLoading = ref(false)
+const roomList = ref<RoomcenterMttRoomRecord[]>([])
+
+const rewardsLoading = ref(false)
+const rewardData = ref<RoomcenterMttRealPrize | null>(null)
 
 const matchId = computed(() => {
   const id = route.query.id
@@ -33,16 +70,16 @@ const matchId = computed(() => {
 
 const pageTitle = computed(() => {
   const rawName = detailData.value?.mtt?.name
-  if (!rawName) return 'MTT 详情'
+  if (!rawName) return ''
   return resolveTemplateTextByKey(rawName, getLocale()) || t(rawName) || rawName
 })
 
 const tabs = ref<FilterTabOption[]>([
-  { name: 'status', title: '赛况' },
-  { name: 'players', title: '玩家' },
-  { name: 'rewards', title: '奖励' },
-  { name: 'tables', title: '牌桌' },
-  { name: 'blinds', title: '盲注' },
+  { name: 'status', title: t('UITexasReport_Label_AllBarSK') },
+  { name: 'players', title: t('UITexasReport_player') },
+  { name: 'rewards', title: t('MTT_State_Reward') },
+  { name: 'tables', title: t('UITexasReport_Label_AllBarPZ') },
+  { name: 'blinds', title: t('UITexasReport_Label_AllBarMZ') },
 ])
 
 const stateCode = computed(() => detailData.value?.state_code ?? -1)
@@ -80,6 +117,8 @@ const btnConfig = computed<{ text: string; active: boolean }>(() => {
   }
 })
 
+/* ===== 数据加载 ===== */
+
 async function loadDetail(): Promise<void> {
   if (!matchId.value) return
   try {
@@ -87,6 +126,150 @@ async function loadDetail(): Promise<void> {
     if (res.code === 0 && res.data) detailData.value = res.data
   } catch {
     // silently ignore
+  }
+}
+
+function emptyRankData(): RoomcenterMttRanksData {
+  return { alive: 0, total: 0, sb: 0, limit: 0, offset: 0, records: [] }
+}
+
+function emptyHunterData(): RoomcenterMttHunterRanksData {
+  return { total: 0, sb: 0, limit: 0, offset: 0, records: [] }
+}
+
+async function loadRankList(): Promise<void> {
+  if (!matchId.value) {
+    rankData.value = emptyRankData()
+    playerRequestCode.value = null
+    return
+  }
+  try {
+    const response = await postRoomcenterMttRanksApi(
+      matchId.value,
+      { limit: 200, offset: 0 },
+      { suppressBusinessCodes: [10001] },
+    )
+    const code = Number(response.code ?? -1)
+    if (Number(response.code) === 0 && response.data) {
+      rankData.value = response.data
+      // 同步 alive / total 到 detailData，供其他 tab 共享
+      syncRankDataToDetail(response.data)
+      playerRequestCode.value = null
+      return
+    }
+    rankData.value = emptyRankData()
+    playerRequestCode.value = Number.isFinite(code) ? code : -1
+  } catch {
+    rankData.value = emptyRankData()
+    playerRequestCode.value = null
+  }
+}
+
+async function loadHunterList(): Promise<void> {
+  const hunterOn = (detailData.value?.mtt?.hunter_on ?? 0) === 1
+  if (!matchId.value || !hunterOn) {
+    hunterData.value = emptyHunterData()
+    playerRequestCode.value = null
+    return
+  }
+  try {
+    const response = await postRoomcenterMttHunterRanksApi(
+      matchId.value,
+      { limit: 200, offset: 0 },
+      { suppressBusinessCodes: [10001] },
+    )
+    const code = Number(response.code ?? -1)
+    if (Number(response.code) === 0 && response.data) {
+      hunterData.value = response.data
+      playerRequestCode.value = null
+      return
+    }
+    hunterData.value = emptyHunterData()
+    playerRequestCode.value = Number.isFinite(code) ? code : -1
+  } catch {
+    hunterData.value = emptyHunterData()
+    playerRequestCode.value = null
+  }
+}
+
+async function loadPlayersData(mode: 'rank' | 'hunter' = 'rank'): Promise<void> {
+  playersLoading.value = true
+  const hunterOn = (detailData.value?.mtt?.hunter_on ?? 0) === 1
+  try {
+    // 始终加载排名数据；hunter 模式下同时加载猎人榜
+    const tasks: Promise<void>[] = [loadRankList()]
+    if (mode === 'hunter' || hunterOn) {
+      tasks.push(loadHunterList())
+    }
+    await Promise.all(tasks)
+  } finally {
+    playersLoading.value = false
+  }
+}
+
+async function loadRoomsData(): Promise<void> {
+  if (!matchId.value) {
+    roomList.value = []
+    return
+  }
+  tablesLoading.value = true
+  try {
+    const response = await postRoomcenterMttRoomsApi(
+      matchId.value,
+      { limit: 200, offset: 0 },
+      { suppressBusinessToast: true },
+    )
+    if (Number(response.code) === 0 && response.data) {
+      roomList.value = Array.isArray(response.data.records) ? response.data.records : []
+      return
+    }
+    roomList.value = []
+  } catch {
+    roomList.value = []
+  } finally {
+    tablesLoading.value = false
+  }
+}
+
+async function loadRewardsData(): Promise<void> {
+  if (!matchId.value) {
+    rewardData.value = null
+    return
+  }
+  rewardsLoading.value = true
+  try {
+    const response = await postRoomcenterMttRealPrizeApi(matchId.value)
+    if (Number(response.code) === 0 && response.data) {
+      rewardData.value = response.data
+      return
+    }
+    rewardData.value = null
+  } catch {
+    rewardData.value = null
+  } finally {
+    rewardsLoading.value = false
+  }
+}
+
+/** 将 rankData 中的 alive / total 同步回 detailData，实现跨 tab 数据共享 */
+function syncRankDataToDetail(ranks: RoomcenterMttRanksData): void {
+  if (!detailData.value) return
+  if (ranks.alive !== undefined && ranks.alive !== null) {
+    detailData.value = { ...detailData.value, alive: ranks.alive }
+  }
+  if (ranks.total !== undefined && ranks.total !== null) {
+    detailData.value = { ...detailData.value, enter_total: ranks.total }
+  }
+}
+
+/** tab 切换时静默刷新对应子数据（已有数据则后台刷新，不展示 loading 占位） */
+function loadActiveTabData(): void {
+  if (activeTab.value === 'players') {
+    void loadPlayersData()
+  } else if (activeTab.value === 'tables') {
+    void loadRoomsData()
+  } else if (activeTab.value === 'rewards') {
+    void loadRewardsData()
   }
 }
 
@@ -101,6 +284,11 @@ watch(tick, () => {
   }
 })
 
+// tab 切换时静默刷新
+watch(activeTab, () => {
+  loadActiveTabData()
+})
+
 onMounted(() => {
   void loadDetail()
   tickTimer = setInterval(() => { tick.value++ }, 1000)
@@ -112,29 +300,107 @@ onUnmounted(() => {
 
 async function handleBtnClick(): Promise<void> {
   if (!btnConfig.value.active || btnLoading.value) return
+  const s = stateCode.value
+
+  // 报名：弹买入弹窗
+  if (s === MttPlayerStatus.CAN_APPLY_NOT_START || s === MttPlayerStatus.CAN_APPLY_DELAY) {
+    buyinJoinMode.value = 'apply'
+    buyinModalTitle.value = undefined // 使用默认 UIMTTSignDialogBuyTitle
+    showBuyinModal.value = true
+    return
+  }
+
+  // 重购：先校验次数，弹买入弹窗（对齐 Unity MttRebuyAsync availableTimes < 1 检查）
+  if (s === MttPlayerStatus.LOSE_CAN_REBUY) {
+    const leftTimes = detailData.value?.state?.left_rebuy_times ?? 0
+    if (leftTimes < 1) {
+      // 按钮不可点时不应到达此处，防御性兜底
+      return
+    }
+    buyinJoinMode.value = 'rebuy'
+    buyinModalTitle.value = t('MTT_Rebuy')
+    showBuyinModal.value = true
+    return
+  }
+
+  // 进入牌桌：通知 Cocos 进入 MTT 房间（对齐 Unity ShowGameplayUI + EnterForegroundAsync）
+  if (s === MttPlayerStatus.CAN_JOIN) {
+    btnLoading.value = true
+    try {
+      const wsPort = await LoginSession.EnsureWS().catch(() => 0)
+      const mttData = detailData.value?.mtt
+      const payload: EnterMttPayload = {
+        userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',
+        userId: gameStore.loginUserId || gameStore.loginAccount || '',
+        websocketPort: typeof wsPort === 'number' ? wsPort : 0,
+        from: 'h5-lobby',
+        matchId: matchId.value,
+        matchInfo: mttData ?? {},
+      }
+      enterMtt(payload)
+    } finally {
+      btnLoading.value = false
+    }
+    return
+  }
+
+  // 取消报名
+  if (s === MttPlayerStatus.APPLIED_NOT_START) {
+    btnLoading.value = true
+    try {
+      const res = await mttQuitApi(matchId.value)
+      if (res && res.code === 0) await loadDetail()
+    } finally {
+      btnLoading.value = false
+    }
+  }
+}
+
+async function handleBuyinConfirm(payload: { ticket: boolean; ratio: number; useFree: boolean; clubId?: number }): Promise<void> {
+  showBuyinModal.value = false
   const id = matchId.value
-  const clubId = detailData.value?.mtt?.club_id ?? 0
   btnLoading.value = true
   try {
-    let res: { code?: number } | null = null
-    switch (stateCode.value) {
-      case MttPlayerStatus.CAN_APPLY_NOT_START:
-      case MttPlayerStatus.CAN_APPLY_DELAY:
-        res = await mttBuyInApi(id, { ticket: false, ratio: 0, use_free: false, club_id: clubId })
-        break
-      case MttPlayerStatus.APPLIED_NOT_START:
-        res = await mttQuitApi(id)
-        break
-      case MttPlayerStatus.LOSE_CAN_REBUY:
-        res = await mttRebuyApi(id, { ticket: false, ratio: 0, use_free: false, club_id: clubId })
-        break
-      case MttPlayerStatus.CAN_JOIN:
-        showToast(t('mtt_btn_enter'))
-        return
+    const isRebuy = buyinJoinMode.value === 'rebuy'
+    const apiPayload = {
+      ticket: payload.ticket,
+      ratio: payload.ratio,
+      use_free: payload.useFree,
+      club_id: payload.clubId ?? detailData.value?.mtt?.club_id ?? 0,
     }
+    const res = isRebuy
+      ? await mttRebuyApi(id, apiPayload)
+      : await mttBuyInApi(id, apiPayload)
     if (res && res.code === 0) {
       await loadDetail()
     }
+  } finally {
+    btnLoading.value = false
+  }
+}
+
+/* ===== 子组件事件处理 ===== */
+function handlePlayersRefresh(mode: 'rank' | 'hunter'): void {
+  void loadPlayersData(mode)
+}
+
+async function handleEnterTable(rid: number): Promise<void> {
+  if (btnLoading.value) return
+  btnLoading.value = true
+  try {
+    const wsPort = await LoginSession.EnsureWS().catch(() => 0)
+    const mttData = detailData.value?.mtt
+    const payload: EnterMttPayload = {
+      userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',
+      userId: gameStore.loginUserId || gameStore.loginAccount || '',
+      websocketPort: typeof wsPort === 'number' ? wsPort : 0,
+      from: 'h5-lobby',
+      matchId: matchId.value,
+      matchInfo: mttData ?? {},
+      roomId: rid,
+      isLookOn: true,
+    }
+    enterMtt(payload)
   } finally {
     btnLoading.value = false
   }
@@ -149,14 +415,43 @@ async function handleBtnClick(): Promise<void> {
     <HeaderBack :title="pageTitle" />
 
     <!-- Tab 筛选 -->
-    <FilterTabbar v-model="activeTab" :tabs="tabs" active-bg="pill" />
+    <FilterTabbar
+      v-model="activeTab"
+      :tabs="tabs"
+      active-bg="pill"
+      class="filter-bar"
+    />
 
     <!-- 内容区 -->
     <div class="mtt-detail-content">
       <MttStatusTab v-if="activeTab === 'status'" :data="detailData" />
-      <MttPlayersTab v-else-if="activeTab === 'players'" :data="detailData" :match-id="matchId" />
-      <MttRewardsTab v-else-if="activeTab === 'rewards'" :data="detailData" :match-id="matchId" />
-      <MttTablesTab v-else-if="activeTab === 'tables'" :data="detailData" :match-id="matchId" />
+      <MttPlayersTab
+        v-else-if="activeTab === 'players'"
+        :data="detailData"
+        :match-id="matchId"
+        :rank-data="rankData"
+        :hunter-data="hunterData"
+        :loading="playersLoading"
+        :player-request-code="playerRequestCode"
+        @refresh="handlePlayersRefresh"
+      />
+      <MttRewardsTab
+        v-else-if="activeTab === 'rewards'"
+        :data="detailData"
+        :match-id="matchId"
+        :reward-data="rewardData"
+        :loading="rewardsLoading"
+        @refresh="loadRewardsData"
+      />
+      <MttTablesTab
+        v-else-if="activeTab === 'tables'"
+        :data="detailData"
+        :match-id="matchId"
+        :room-list="roomList"
+        :loading="tablesLoading"
+        @refresh="loadRoomsData"
+        @enter-table="handleEnterTable"
+      />
       <MttBlindsTab v-else-if="activeTab === 'blinds'" :data="detailData" :match-id="matchId" />
     </div>
 
@@ -168,10 +463,23 @@ async function handleBtnClick(): Promise<void> {
         @click="handleBtnClick"
       />
     </div>
+
+    <!-- 买入弹窗（报名/重购复用，join-mode 控制费用计算，title 控制标题） -->
+    <MttBuyinModal
+      v-model:show="showBuyinModal"
+      :mtt="detailData?.mtt"
+      :mtt-id="matchId"
+      :join-mode="buyinJoinMode"
+      :title="buyinModalTitle"
+      @confirm="handleBuyinConfirm"
+    />
   </div>
 </template>
 
 <style scoped lang="scss">
+.filter-bar{
+  margin: 0.3rem;
+}
 .mtt-detail-page {
   position: relative;
   height: 100dvh;
@@ -196,7 +504,7 @@ async function handleBtnClick(): Promise<void> {
   position: relative;
   z-index: 1;
   flex: 1;
-  padding: 0 0.38rem 0.4rem;
+  padding: 0 0.30rem 0.4rem;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;

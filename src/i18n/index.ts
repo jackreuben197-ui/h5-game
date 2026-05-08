@@ -3,6 +3,9 @@ import { ref } from 'vue'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 import { formatTxtMessage, parseTxtLanguage, type TxtLanguageMap } from './parser'
+import { createLogger } from '@/utils/logger'
+
+const log = createLogger('[i18n]')
 
 // 与 Cocos 保持一致：cn(简中) / zh(繁中) / en / pt。
 export type LocaleCode = 'cn' | 'zh' | 'en' | 'pt'
@@ -13,9 +16,9 @@ const SHARED_I18N_BASE = 'assets/resources/config'
 export const SUPPORTED_LOCALES: LocaleCode[] = ['en', 'pt', 'zh', 'cn']
 
 const localeAssetUrls: Record<LocaleCode, string> = {
-  en: resolveSharedLocaleUrl('USER_EN.txt'),
-  pt: resolveSharedLocaleUrl('USER_PT.txt'),
-  zh: resolveSharedLocaleUrl('USER_TW.txt'),
+  en: resolveSharedLocaleUrl('USER_ZH.txt'),
+  pt: resolveSharedLocaleUrl('USER_ZH.txt'),
+  zh: resolveSharedLocaleUrl('USER_ZH.txt'),
   cn: resolveSharedLocaleUrl('USER_ZH.txt'),
 }
 const dictionaries: Partial<Record<LocaleCode, TxtLanguageMap>> = {}
@@ -29,11 +32,15 @@ export function getLocale(): LocaleCode {
 }
 
 export function setLocale(locale: string): void {
+  const previousLocale = currentLocale.value
   const resolvedLocale = normalizeLocale(locale) ?? DEFAULT_LOCALE
   currentLocale.value = resolvedLocale
   void ensureLocaleLoaded(resolvedLocale)
   // 语言持久化键与 Cocos 对齐：dzpk_Language。
   localStore.setItem(StorageKey.Language, resolvedLocale)
+  if (previousLocale !== resolvedLocale) {
+    notifyLocaleChangedToCocos(resolvedLocale)
+  }
 }
 
 export function t(key: string, ...args: Array<string | number>): string {
@@ -54,6 +61,13 @@ export function t(key: string, ...args: Array<string | number>): string {
   return formatTxtMessage(message, args)
 }
 
+export const SUPPORTED_LOCALES_OPTIONS = [
+  { label: '简体中文', value: 'cn' },
+  { label: '繁體中文', value: 'zh' },
+  { label: 'English', value: 'en' },
+  { label: 'Português', value: 'pt' },
+]
+
 export const textI18n = {
   locale: currentLocale,
   supportedLocales: SUPPORTED_LOCALES,
@@ -69,6 +83,8 @@ export const textI18nPlugin = {
     if (currentLocale.value !== DEFAULT_LOCALE) {
       void ensureLocaleLoaded(DEFAULT_LOCALE)
     }
+    // 启动时将初始 locale 同步给 Cocos；forwardLanguageChangedToCocos 内部会等 Bridge 握手完成后再发送。
+    notifyLocaleChangedToCocos(currentLocale.value)
   },
 }
 
@@ -147,7 +163,7 @@ async function loadLocaleDictionary(locale: LocaleCode): Promise<void> {
   const cacheMode = import.meta.env.DEV ? 'no-cache' : 'force-cache'
   const response = await fetch(url, { cache: cacheMode })
   if (!response.ok) {
-    console.warn('[i18n] locale file load failed:', locale, response.status)
+    log.warn('locale file load failed:', locale, response.status)
     return
   }
   const raw = await response.text()
@@ -158,5 +174,18 @@ async function loadLocaleDictionary(locale: LocaleCode): Promise<void> {
 function resolveSharedLocaleUrl(fileName: string): string {
   const baseUrl = import.meta.env.BASE_URL || '/'
   const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
-  return `${normalizedBase}${SHARED_I18N_BASE}/${fileName}`
+  const url = `${normalizedBase}${SHARED_I18N_BASE}/${fileName}`
+  const version = (typeof __I18N_VERSIONS__ !== 'undefined' && __I18N_VERSIONS__[fileName]) || ''
+  return version ? `${url}?v=${version}` : url
+}
+
+function notifyLocaleChangedToCocos(locale: LocaleCode): void {
+  // 避免 i18n 与 bridge 在模块初始化阶段产生强耦合循环引用。
+  void import('@/bridge/sync')
+    .then(({ forwardLanguageChangedToCocos }) => {
+      forwardLanguageChangedToCocos(locale)
+    })
+    .catch((error) => {
+      log.warn('notify locale to cocos failed:', error)
+    })
 }

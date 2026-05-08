@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useGameStore } from '@/stores/game'
+import { useWalletStore } from '@/stores/wallet'
 import { pinia } from '@/stores/pinia'
 
 const router = createRouter({
@@ -8,7 +9,17 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('@/views/LoginView.vue'),
+      component: () => import('@/views/login/LoginViewNew.vue'),
+    },
+    {
+      path: '/protocol',
+      name: 'protocol',
+      component: () => import('@/views/login/components/ProtocolView.vue')
+    },
+    {
+      path: '/login/phone-area',
+      name: 'login-phone-area',
+      component: () => import('@/views/login/components/LoginPhoneAreaView.vue'),
     },
     {
       path: '/',
@@ -448,12 +459,20 @@ const router = createRouter({
       name: 'wallet',
       component: () => import('@/views/wallet/WalletIndexView.vue'),
       meta: { requiresAuth: true },
+      beforeEnter: async () => {
+        const walletStore = useWalletStore(pinia)
+        await walletStore.loadPriceList()
+      },
     },
     {
       path: '/wallet/orders',
       name: 'wallet-orders',
       component: () => import('@/views/friendsTable/RechargeOrdersView.vue'),
       meta: { requiresAuth: true },
+      beforeEnter: async () => {
+        const walletStore = useWalletStore(pinia)
+        await walletStore.loadPriceList()
+      },
     },
     {
       path: '/wallet/details',

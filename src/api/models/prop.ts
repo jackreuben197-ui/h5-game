@@ -75,11 +75,14 @@ export interface PropChatPropUsedProp {
 
 // /api/prop/gold/price/list (PropGoldPriceList)
 export interface PropGoldPriceListRequest {
-
-    source_type?: number; // 来源类型：1-联盟，2-玩家
-    club_id?: number; // 俱乐部ID
-    gold_types?: number[]; // 币种列表
-
+  club_id?: number
+  ids?: number[]
+  gold_types?: number[]
+  pay_gold_types?: number[]
+  source_type?: number // 1-联盟；2-玩家
+  trader_type?: number // 见接口约定；常与示例中的 0 对齐
+  limit?: number
+  offset?: number
   [key: string]: unknown
 }
 
@@ -94,12 +97,35 @@ export interface PropGoldPriceListData {
     total?: number; // 总条目数
     list?: PropGoldPriceListGoldInfo[]; // 金币信息列表
     pay_types?: PropGoldPriceListPayType[]; // 支付方式列表
+    /** 联盟直充：为 true 时订单列表走 /order/club/order_list?my_order */
+    from_tribe?: boolean
 
   [key: string]: unknown
 }
 
 export interface PropGoldPriceListGoldInfo {
+  id?: number;
+  gold_count?: number;
+  raw_price?: number;
+  pay_price?: number;
+  op_id?: number;
+  gold_type?: number;
+  pay_gold_type?: number;
+  status?: number;
+  sort?: number;
+  source_type?: number;
+  trader_type?: number;
+  give_gold_count?: number;
+  club_id?: number;
+  tribe_id?: number;
+  create_time?: string;
+  update_time?: string;
+  [key: string]: unknown
+}
 
+export interface PropGoldPriceListWalletAddress {
+  address?: string;
+  qr_code?: string;
     gold_count?: number; // 金币数量
     pay_price?: number; // 支付价格
     id?: number; // 唯一ID
@@ -123,6 +149,7 @@ export interface PropGoldPriceListPayType {
     user_recharge_max?: number; // 玩家最大充值额度
     increase_interval?: number; // 唯一识别金额，大于0表示开启
     price_list?: PropGoldPriceListGoldInfo[]; // 金币信息列表
+    price_ids?: number[];
     wallet_addresses?: unknown[]; // 钱包地址列表； 这里有用信息的是qr_code, 为的是提前预缓存二维码图片
 
   [key: string]: unknown

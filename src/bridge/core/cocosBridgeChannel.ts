@@ -10,7 +10,13 @@ import {
   type BridgeMsgType,
   type BridgeMessage,
   type EnterTablePayload,
+  type EnterMttPayload,
 } from '../protocol'
+import { createLogger } from '@/utils/logger'
+
+const log = createLogger('[bridge]')
+const logH5ToCC = createLogger('[bridge][h5->cc]')
+const logCCToH5 = createLogger('[bridge][cc->h5]')
 
 type MessageHandler = (message: BridgeMessage) => void
 type MessageRoute = 'all' | 'forward' | 'h5'
@@ -109,7 +115,7 @@ function logH5OutgoingNonForwardAction(message: BridgeMessage): void {
     return
   }
 
-  console.info('[bridge][h5->cc][non-forward]', {
+  logH5ToCC.debug({
     action: message.action,
     msgtype: message.msgtype,
     requestId: message.requestId,
@@ -247,7 +253,7 @@ function postToCocos(message: BridgeMessage): void {
     return
   }
 
-  console.warn('[bridge] no cocos channel found, message dropped:', briefBridgeObject(message))
+  log.warn('no cocos channel found, message dropped:', briefBridgeObject(message))
 }
 
 function briefBridgeObject(message: BridgeMessage): string {
@@ -325,9 +331,16 @@ export function sendBridgeMessage<TPayload>(
   return message
 }
 
-// 业务快捷方法：请求 Cocos 进入牌桌。
+// 业务快捷方法：请求 Cocos 进入普通牌桌。
 export function enterTable(payload: EnterTablePayload): BridgeMessage<EnterTablePayload> {
   return sendBridgeMessage(BRIDGE_ACTION.ENTER_TABLE, payload, {
+    msgtype: BRIDGE_MSG_TYPE.H5,
+  })
+}
+
+// 业务快捷方法：请求 Cocos 进入 MTT 赛事牌桌。
+export function enterMtt(payload: EnterMttPayload): BridgeMessage<EnterMttPayload> {
+  return sendBridgeMessage(BRIDGE_ACTION.ENTER_MTT, payload, {
     msgtype: BRIDGE_MSG_TYPE.H5,
   })
 }
@@ -427,7 +440,7 @@ function logCcIncomingAction(message: BridgeMessage, messageSource?: string): vo
     return
   }
 
-  console.info('[bridge][cc->h5][non-forward]', {
+  logCCToH5.debug({
     action: message.action,
     msgtype: message.msgtype,
     requestId: message.requestId,

@@ -182,6 +182,11 @@ function mapCsTypeToTs(typeName, symbol, existingInterfaces) {
 		t = t.slice(0, -1).trim()
 	}
 
+	const arrayMatch = t.match(/^(.+)\[\]$/)
+	if (arrayMatch) {
+		return `${mapCsTypeToTs(arrayMatch[1], symbol, existingInterfaces)}[]`
+	}
+
 	const listMatch = t.match(/^(?:List|IList|IEnumerable|RepeatedField)<(.+)>$/)
 	if (listMatch) {
 		return `${mapCsTypeToTs(listMatch[1], symbol, existingInterfaces)}[]`
@@ -219,12 +224,52 @@ function mapCsTypeToTs(typeName, symbol, existingInterfaces) {
 	return 'unknown'
 }
 
+function targetInterfaceName(symbol, className) {
+	if (/^RequestData$/i.test(className) || /^Request$/i.test(className)) return `${symbol}Request`
+	if (className === 'ResponseData') return `${symbol}ResponseData`
+	if (className === 'Data') return `${symbol}Data`
+	return `${symbol}${className}`
+}
+
 function collectDefinedProps(interfaceBody) {
 	const out = new Set()
 	const re = /\b([A-Za-z_]\w*)\??\s*:/g
 	let m
 	while ((m = re.exec(interfaceBody))) out.add(m[1])
 	return out
+}
+
+function collectPropTypeMap(interfaceBody) {
+	const out = new Map()
+	const re = /^\s*([A-Za-z_]\w*)\??\s*:\s*([^;]+);/gm
+	let m
+	while ((m = re.exec(interfaceBody))) {
+		out.set(m[1], m[2].trim())
+	}
+	return out
+}
+
+function isUnknownLikeType(tsType) {
+	const t = (tsType || '').replace(/\s+/g, ' ').trim()
+	return (
+		t === 'unknown' ||
+		t === 'unknown[]' ||
+		t === 'Record<string, unknown>' ||
+		t === 'any' ||
+		t === 'any[]' ||
+		t === 'object'
+	)
+}
+
+function upgradePropType(body, propName, nextType) {
+	const escaped = propName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+	const re = new RegExp(`^(\\s*${escaped}\\??\\s*:\\s*)([^;]+)(;.*)$`, 'm')
+	const match = body.match(re)
+	if (!match) return body
+	const currentType = (match[2] || '').trim()
+	if (!isUnknownLikeType(currentType)) return body
+	if (!nextType || nextType === 'unknown') return body
+	return body.replace(re, `$1${nextType}$3`)
 }
 
 function addInlinePropComment(body, propName, comment) {
@@ -242,10 +287,13 @@ function addInlinePropComment(body, propName, comment) {
 	return body.replace(propPattern, `$1 // ${safeComment}$2`)
 }
 
-function patchInterface(text, iface, missingProps, commentCandidates) {
-	if (!missingProps.length && !commentCandidates.length) return text
+function patchInterface(text, iface, missingProps, commentCandidates, typeUpgrades) {
+	if (!missingProps.length && !commentCandidates.length && !typeUpgrades.length) return text
 
 	let newBody = iface.body
+	for (const t of typeUpgrades) {
+		newBody = upgradePropType(newBody, t.name, t.tsType)
+	}
 	for (const c of commentCandidates) {
 		newBody = addInlinePropComment(newBody, c.name, c.comment)
 	}
@@ -304,19 +352,24 @@ function ensureModelEndpoint(modelText, apiPath, symbol, unity) {
 	let ifaceMap = parseInterfaces(text)
 	const apiLine = `// ${normalizeApiPath(apiPath)} (${symbol})`
 
-	const requestName = `${symbol}Request`
-	const responseName = `${symbol}ResponseData`
-	const dataName = `${symbol}Data`
+	const plannedNames = new Set(ifaceMap.keys())
+	for (const className of Object.keys(unity.classes)) {
+		plannedNames.add(targetInterfaceName(symbol, className))
+	}
+
+	const requestName = targetInterfaceName(symbol, 'RequestData')
+	const responseName = targetInterfaceName(symbol, 'ResponseData')
+	const dataName = targetInterfaceName(symbol, 'Data')
 
 	const requestProps = (unity.classes.RequestData || unity.classes.Request || []).map((p) => ({
 		name: p.name,
-		tsType: mapCsTypeToTs(p.type, symbol, ifaceMap),
+		tsType: mapCsTypeToTs(p.type, symbol, plannedNames),
 		comment: p.comment || '',
 	}))
 
 	const dataProps = (unity.classes.Data || []).map((p) => ({
 		name: p.name,
-		tsType: mapCsTypeToTs(p.type, symbol, ifaceMap),
+		tsType: mapCsTypeToTs(p.type, symbol, plannedNames),
 		comment: p.comment || '',
 	}))
 
@@ -334,6 +387,21 @@ function ensureModelEndpoint(modelText, apiPath, symbol, unity) {
 	if (!hasInterface(text, dataName)) {
 		if (!chunks.length) chunks.push(apiLine)
 		chunks.push(buildInterfaceBlock(dataName, dataProps))
+	}
+
+	for (const [className, props] of Object.entries(unity.classes)) {
+		if (/^RequestData$/i.test(className) || /^Request$/i.test(className) || className === 'ResponseData' || className === 'Data') {
+			continue
+		}
+		const name = targetInterfaceName(symbol, className)
+		if (hasInterface(text, name)) continue
+		if (!chunks.length) chunks.push(apiLine)
+		const typedProps = props.map((p) => ({
+			name: p.name,
+			tsType: mapCsTypeToTs(p.type, symbol, plannedNames),
+			comment: p.comment || '',
+		}))
+		chunks.push(buildInterfaceBlock(name, typedProps))
 	}
 
 	if (!chunks.length) return text
@@ -423,6 +491,10 @@ function ensureEndpointWhenMissing(args, unityByApi, requestedApi) {
 	ensureFile(apiFile, "import http from '@/api/http'\nimport type { ApiResponse } from '@/api/models/common'\n")
 
 	let modelText = fs.readFileSync(modelFile, 'utf8')
+	const existedMeta = parseModelMeta(modelText).some((m) => m.api === normalizedApi)
+	if (existedMeta) {
+		return { created: false, touched: [] }
+	}
 	const beforeModel = modelText
 	modelText = ensureModelEndpoint(modelText, normalizedApi, symbol, unity)
 
@@ -490,39 +562,47 @@ function main() {
 			if (!unityVariants?.length) continue
 
 			const unity = unityVariants.find((u) => u.classes.ResponseData || u.classes.Data) || unityVariants[0]
+			const ensuredText = ensureModelEndpoint(text, meta.api, meta.symbol, unity)
+			if (ensuredText !== text) {
+				text = ensuredText
+				fileChanged = true
+			}
 			let ifaceMap = parseInterfaces(text)
+			const knownNames = new Set(ifaceMap.keys())
+			for (const className of Object.keys(unity.classes)) {
+				knownNames.add(targetInterfaceName(meta.symbol, className))
+			}
 
 			for (const [className, props] of Object.entries(unity.classes)) {
 				if (!props.length) continue
 
-				let targetName = ''
-				if (/^RequestData$/i.test(className) || /^Request$/i.test(className)) {
-					targetName = `${meta.symbol}Request`
-				} else if (className === 'ResponseData') {
-					targetName = `${meta.symbol}ResponseData`
-				} else {
-					targetName = `${meta.symbol}${className}`
-				}
+				const targetName = targetInterfaceName(meta.symbol, className)
 				const iface = ifaceMap.get(targetName)
 				if (!iface) continue // Only process interfaces already present in h5 models
 
 				const defined = collectDefinedProps(iface.body)
+				const propTypeMap = collectPropTypeMap(iface.body)
 				const missing = []
 				const commentCandidates = []
+				const typeUpgrades = []
 				for (const p of props) {
 					if (className === 'ResponseData' && p.name === 'data') continue
+					const tsType = mapCsTypeToTs(p.type, meta.symbol, knownNames)
 					if (defined.has(p.name)) {
+						const currentType = propTypeMap.get(p.name)
+						if (currentType && isUnknownLikeType(currentType) && tsType !== 'unknown') {
+							typeUpgrades.push({ name: p.name, tsType })
+						}
 						if (p.comment) {
 							commentCandidates.push({ name: p.name, comment: p.comment })
 						}
 						continue
 					}
-					const tsType = mapCsTypeToTs(p.type, meta.symbol, ifaceMap)
 					missing.push({ name: p.name, tsType, comment: p.comment || '' })
 				}
 
-				if (!missing.length && !commentCandidates.length) continue
-				const patchedText = patchInterface(text, iface, missing, commentCandidates)
+				if (!missing.length && !commentCandidates.length && !typeUpgrades.length) continue
+				const patchedText = patchInterface(text, iface, missing, commentCandidates, typeUpgrades)
 				if (patchedText === text) continue
 				text = patchedText
 				ifaceMap = parseInterfaces(text)

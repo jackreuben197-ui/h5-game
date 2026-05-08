@@ -3,11 +3,14 @@ import { computed, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { postUserBillApi, postUserWalletApi } from '@/api/user'
+import type { UserBillRecord, UserBillRoom_info, UserBillWallet, UserMyWalletItem } from '@/api/models/user'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import iconUc from '@/assets/icons/icon_chips.png'
 import iconCredit from '@/assets/icons/credit_chip.png'
 import { formatUC } from '@/utils/roomVisibility'
+import { getLocale, t } from '@/i18n'
+import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -34,14 +37,26 @@ interface BillCardItem {
   id: string
   day: string
   month: string
-  title: string
+  dateKey: string
+  showDate: boolean
+  name: string
   club: string
   inAmount: string
   outAmount: string
+  canExpand: boolean
   records: BillRecordItem[]
 }
 
+interface WalletDetailItem {
+  key: string
+  clubName: string
+  amount: string
+}
+
 const flowCards = ref<BillCardItem[]>([])
+const walletDetails = ref<WalletDetailItem[]>([])
+const walletDetailExpanded = ref(false)
+const expandedCardIds = ref<string[]>([])
 
 const billRequestByTab: Record<BillTab, { gold_type: number; origin_type?: number }> = {
   UC: { gold_type: 1 },
@@ -60,6 +75,13 @@ function formatAmount(value: unknown): string {
     return toSafeNumber(value).toLocaleString('en-US')
   }
   return formatUC(toSafeNumber(value))
+}
+
+function formatFlowAmount(value: unknown): string {
+  if (activeTab.value === '钻石') {
+    return toSafeNumber(value).toLocaleString('en-US')
+  }
+  return Math.abs(toSafeNumber(value)).toLocaleString('en-US')
 }
 
 function formatSigned(value: unknown): string {
@@ -113,67 +135,227 @@ function extractList(value: unknown, depth = 0): Record<string, unknown>[] {
   return []
 }
 
-function resolveDateParts(raw: unknown): { day: string; month: string; text: string } {
+function resolveDateParts(raw: unknown): { day: string; month: string; text: string; dateKey: string } {
   if (typeof raw === 'string' && raw.trim()) {
     const asNumber = Number(raw)
     const candidate = Number.isFinite(asNumber) && asNumber > 0 ? new Date(asNumber * 1000) : new Date(raw)
     if (!Number.isNaN(candidate.getTime())) {
+      const year = candidate.getFullYear()
+      const month = String(candidate.getMonth() + 1).padStart(2, '0')
+      const day = String(candidate.getDate()).padStart(2, '0')
       return {
-        day: String(candidate.getDate()).padStart(2, '0'),
+        day,
         month: candidate.toLocaleString('en-US', { month: 'short' }),
         text: raw,
+        dateKey: `${year}-${month}-${day}`,
       }
     }
-    return { day: '--', month: '--', text: raw }
+    return { day: '--', month: '--', text: raw, dateKey: raw.trim() }
   }
 
   const timestamp = toSafeNumber(raw)
   if (timestamp > 0) {
     const value = new Date(timestamp > 1_000_000_000_000 ? timestamp : timestamp * 1000)
+    const year = value.getFullYear()
+    const month = String(value.getMonth() + 1).padStart(2, '0')
+    const day = String(value.getDate()).padStart(2, '0')
     return {
-      day: String(value.getDate()).padStart(2, '0'),
+      day,
       month: value.toLocaleString('en-US', { month: 'short' }),
       text: value.toLocaleString('zh-CN', { hour12: false }),
+      dateKey: `${year}-${month}-${day}`,
     }
   }
 
-  return { day: '--', month: '--', text: '--' }
+  return { day: '--', month: '--', text: '--', dateKey: '--' }
 }
 
-function mapBillCard(row: Record<string, unknown>, index: number): BillCardItem {
-  const title = String(
-    pickRecordValue(row, ['title', 'room_name', 'game_room_name', 'op_name', 'op_desc']) ?? '账单记录',
-  )
-  const club = String(pickRecordValue(row, ['club_name', 'group_name', 'source_name']) ?? '--')
-
-  const inAmount = pickRecordValue(row, ['all_bring_in', 'bring_in', 'in_amount'])
-  const outAmount = pickRecordValue(row, ['bring_out', 'out_amount', 'all_bring_out'])
-  const changeAmount = pickRecordValue(row, ['change_amount', 'gold_change', 'amount', 'change'])
-  const timeRaw = pickRecordValue(row, ['create_time_str', 'create_time', 'time', 'created_at'])
-  const timeInfo = resolveDateParts(timeRaw)
-
-  const changeNumber = toSafeNumber(changeAmount)
-  const record: BillRecordItem = {
-    name: String(pickRecordValue(row, ['nick_name', 'name', 'op_name']) ?? '账单变动'),
-    time: timeInfo.text,
-    amount: formatSigned(changeAmount),
-    positive: changeNumber > 0,
+function resolveOpCodeText(opCodeRaw: unknown): string {
+  const opCode = String(opCodeRaw ?? '').trim()
+  if (!opCode) {
+    return ''
   }
+
+  const key = `OpCodeString_${opCode}`
+  return resolveTemplateTextByKey(key, getLocale()) || t(key) || key
+}
+
+function normalizeTimeText(raw: unknown): string {
+  if (typeof raw === 'string' && raw.trim()) {
+    return raw
+  }
+  return resolveDateParts(raw).text
+}
+
+function resolveNameByLocale(raw: unknown): string {
+  const safeName = typeof raw === 'string' ? raw.trim() : ''
+  if (!safeName) {
+    return ''
+  }
+  return resolveTemplateTextByKey(safeName, getLocale()) || t(safeName) || safeName
+}
+
+function resolveNameFromMultiLangObj(raw: unknown): string {
+  if (!raw || typeof raw !== 'object') {
+    return ''
+  }
+
+  const source = raw as Record<string, unknown>
+  const locale = getLocale()
+  const localeKeys: Record<string, string[]> = {
+    zh: ['zh', 'cn', 'zh_name', 'cn_name'],
+    cn: ['zh', 'cn', 'zh_name', 'cn_name'],
+    en: ['en', 'us', 'en_name', 'us_name'],
+    pt: ['pt', 'br', 'pt_name', 'br_name'],
+  }
+
+  const keys = localeKeys[locale] ?? localeKeys.en
+  for (const key of keys) {
+    const value = source[key]
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim()
+    }
+  }
+
+  for (const key of ['name', 'title', 'default']) {
+    const value = source[key]
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim()
+    }
+  }
+
+  return ''
+}
+
+function isMttCard(row: UserBillWallet, nameCandidates: string[]): boolean {
+  if (toSafeNumber(row.src_match_id) > 0) {
+    return true
+  }
+  if (typeof row.match_tribe_name === 'string' && row.match_tribe_name.trim()) {
+    return true
+  }
+
+  const texts = [row.op_code, ...nameCandidates]
+    .map((item) => String(item ?? '').trim().toLowerCase())
+    .filter(Boolean)
+  return texts.some((text) => text.includes('mtt') || text.includes('match'))
+}
+
+function mapBillRecord(row: UserBillRecord): BillRecordItem {
+  const changeValue = toSafeNumber(row.gold_change)
+  const opCodeName = resolveOpCodeText(row.op_code)
 
   return {
-    id: String(pickRecordValue(row, ['id', 'log_id', 'order_id']) ?? `${index + 1}`),
+    name: opCodeName || '账单变动',
+    time: normalizeTimeText(row.create_time),
+    amount: formatSigned(changeValue),
+    positive: changeValue > 0,
+  }
+}
+
+function mapBillCard(row: UserBillWallet, index: number): BillCardItem {
+  const roomInfo = (row.room_info as UserBillRoom_info | undefined) || undefined
+  const records = Array.isArray(roomInfo?.records) ? roomInfo.records.map((item) => mapBillRecord(item)) : []
+
+  const rawName = String(pickRecordValue(row as Record<string, unknown>, ['name', 'title', 'room_name', 'game_room_name']) ?? '')
+  const localizedNameByKey = resolveNameByLocale(rawName)
+  const localizedNameByMultiObj = resolveNameFromMultiLangObj(row.multi_lang_names_obj)
+  const fallbackName =
+    resolveOpCodeText(row.op_code) || localizedNameByMultiObj || localizedNameByKey || rawName || '账单记录'
+  const roomName = localizedNameByMultiObj || localizedNameByKey || rawName
+  const cardName = roomName || fallbackName
+  const club = String(
+    roomInfo?.club_name ?? pickRecordValue(row as Record<string, unknown>, ['club_name', 'group_name', 'source_name']) ?? '--',
+  )
+
+  const inAmount = roomInfo?.bring_in_amount
+  const outAmount = roomInfo?.bring_out_amount
+  const changeAmount = pickRecordValue(row as Record<string, unknown>, ['change_amount', 'gold_change', 'amount', 'change'])
+  const timeRaw = pickRecordValue(row as Record<string, unknown>, ['create_time_str', 'create_time', 'time', 'created_at'])
+  const timeInfo = resolveDateParts(timeRaw)
+
+  const fallbackRecord: BillRecordItem = {
+    name: fallbackName,
+    time: timeInfo.text,
+    amount: formatSigned(changeAmount),
+    positive: toSafeNumber(changeAmount) > 0,
+  }
+
+  const finalRecords = records.length ? records : [fallbackRecord]
+  const bringInAmount = toSafeNumber(inAmount)
+  const bringOutAmount = toSafeNumber(outAmount)
+  const hasBringInAndOut = bringInAmount > 0 && bringOutAmount > 0
+  const isDiamondTab = activeTab.value === '钻石'
+  const isMtt = isMttCard(row, [cardName, fallbackName])
+  const canExpand = !isDiamondTab && !isMtt && hasBringInAndOut && finalRecords.length > 0
+
+  return {
+    id: String(pickRecordValue(row as Record<string, unknown>, ['id', 'log_id', 'order_id']) ?? `${index + 1}`),
     day: timeInfo.day,
     month: timeInfo.month,
-    title,
+    dateKey: timeInfo.dateKey,
+    showDate: true,
+    name: cardName,
     club,
-    inAmount: formatAmount(inAmount),
-    outAmount: formatAmount(outAmount),
-    records: [record],
+    inAmount: formatFlowAmount(inAmount),
+    outAmount: formatFlowAmount(outAmount),
+    canExpand,
+    records: finalRecords,
   }
+}
+
+function mapWalletDetails(walletRaw: unknown): WalletDetailItem[] {
+  if (!Array.isArray(walletRaw)) {
+    return []
+  }
+
+  return walletRaw
+    .filter((item): item is UserMyWalletItem => !!item && typeof item === 'object')
+    .map((item, index) => {
+      const clubName = String(item.club_name ?? '').trim() || `俱乐部${index + 1}`
+      return {
+        key: `${clubName}-${index}`,
+        clubName,
+        amount: formatAmount(item.gold),
+      }
+    })
+}
+
+const showWalletDetailButton = computed(() => {
+  if (activeTab.value === 'UC' || activeTab.value === 'Club记分牌') {
+    return walletDetails.value.length > 0
+  }
+  return false
+})
+
+function isCardExpanded(cardId: string): boolean {
+  return expandedCardIds.value.includes(cardId)
+}
+
+function toggleCardExpanded(cardId: string): void {
+  const targetCard = flowCards.value.find((card) => card.id === cardId)
+  if (!targetCard?.canExpand) {
+    return
+  }
+
+  if (isCardExpanded(cardId)) {
+    expandedCardIds.value = expandedCardIds.value.filter((id) => id !== cardId)
+    return
+  }
+  expandedCardIds.value = [...expandedCardIds.value, cardId]
+}
+
+function toggleWalletDetails(): void {
+  if (!showWalletDetailButton.value) {
+    return
+  }
+  walletDetailExpanded.value = !walletDetailExpanded.value
 }
 
 async function fetchBillData(): Promise<void> {
   loading.value = true
+  walletDetailExpanded.value = false
+  expandedCardIds.value = []
   const payload = {
     ...billRequestByTab[activeTab.value],
     limit: 20,
@@ -195,11 +377,22 @@ async function fetchBillData(): Promise<void> {
       throw new Error(typeof walletRes.msg === 'string' ? walletRes.msg : '加载钱包余额失败')
     }
 
-    const rows = extractList(billRes.data?.list)
-    flowCards.value = rows.map((row, index) => mapBillCard(row, index))
+    const rows = extractList(billRes.data?.list) as UserBillWallet[]
+    const mapped = rows.map((row, index) => mapBillCard(row, index))
+    let previousDateKey = ''
+    flowCards.value = mapped.map((card) => {
+      const showDate = card.dateKey !== previousDateKey
+      previousDateKey = card.dateKey
+      return {
+        ...card,
+        showDate,
+      }
+    })
     totalAmount.value = toSafeNumber(walletRes.data?.amount)
+    walletDetails.value = mapWalletDetails(walletRes.data?.wallet)
   } catch (error) {
     flowCards.value = []
+    walletDetails.value = []
     totalAmount.value = 0
     const message = error instanceof Error ? error.message : '加载账单失败'
     showFailToast(message)
@@ -248,30 +441,59 @@ onMounted(() => {
           <img v-else :src="iconDiamond" alt="diamond" />
           <strong>{{ formatAmount(totalAmount) }}</strong>
         </div>
-        <button class="detail-btn" type="button">查看明细</button>
+        <button
+          v-if="showWalletDetailButton"
+          class="detail-btn"
+          type="button"
+          @click="toggleWalletDetails"
+        >
+          查看明细
+          <span :class="['arrow', { expanded: walletDetailExpanded }]"></span>
+        </button>
+        <div v-if="walletDetailExpanded" class="wallet-detail-list">
+          <div v-for="item in walletDetails" :key="item.key" class="wallet-detail-row">
+            <span class="club">{{ item.clubName }}</span>
+            <span class="value">{{ item.amount }}</span>
+          </div>
+        </div>
       </section>
 
       <section class="timeline">
         <p v-if="loading" class="list-status">加载中...</p>
         <p v-else-if="!flowCards.length" class="list-status">暂无账单记录</p>
         <article v-for="card in flowCards" :key="card.id" class="timeline-item">
-          <div class="date-col">
-            <div class="date">{{ card.day }}</div>
-            <div class="month">{{ card.month }}</div>
+          <div :class="['date-col', { 'date-col--continued': !card.showDate }]">
+            <div v-if="card.showDate" class="date">{{ card.day }}</div>
+            <div v-if="card.showDate" class="month">{{ card.month }}</div>
             <span class="dot"></span>
           </div>
 
           <div class="glass-card flow-card">
             <div class="flow-head">
               <div>
-                <div class="title">{{ card.title }} <small>(ID: 11440454)</small></div>
+                <div class="title">{{ card.name }}</div>
                 <div class="sub">{{ card.club }}</div>
                 <div class="sub">总带入:{{ card.inAmount }}</div>
               </div>
-              <div class="sub right">总带出: {{ card.outAmount }}</div>
+              <div class="right-box">
+                <div class="sub right">总带出: {{ card.outAmount }}</div>
+                <button
+                  v-if="card.canExpand"
+                  class="record-toggle"
+                  type="button"
+                  @click="toggleCardExpanded(card.id)"
+                >
+                  {{ isCardExpanded(card.id) ? '收起' : '展开' }}
+                  <span :class="['arrow', { expanded: isCardExpanded(card.id) }]"></span>
+                </button>
+              </div>
             </div>
 
-            <div v-for="row in card.records" :key="`${card.id}-${row.time}-${row.amount}`" class="flow-row">
+            <div
+              v-for="row in card.canExpand && isCardExpanded(card.id) ? card.records : []"
+              :key="`${card.id}-${row.time}-${row.amount}`"
+              class="flow-row"
+            >
               <div>
                 <div class="name">{{ row.name }}</div>
                 <div class="time">{{ row.time }}</div>
@@ -288,7 +510,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .mine-glass-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
   color: #f3f3f3;
   background-size: cover;
@@ -368,12 +590,51 @@ onMounted(() => {
 .detail-btn {
   margin-top: 0.2rem;
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.12rem;
   border: 0;
   background: transparent;
   color: #f3f3f3;
   font-size: 0.28rem;
   padding-top: 0.16rem;
   border-top: 0.02rem solid rgba(249, 249, 249, 0.2);
+}
+
+.wallet-detail-list {
+  margin-top: 0.16rem;
+  border-top: 0.02rem solid rgba(249, 249, 249, 0.2);
+  padding-top: 0.14rem;
+}
+
+.wallet-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.08rem 0;
+  font-size: 0.26rem;
+
+  .club {
+    opacity: 0.82;
+  }
+
+  .value {
+    font-weight: 600;
+  }
+}
+
+.arrow {
+  width: 0.14rem;
+  height: 0.14rem;
+  border-right: 0.03rem solid rgba(255, 255, 255, 0.82);
+  border-bottom: 0.03rem solid rgba(255, 255, 255, 0.82);
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+
+  &.expanded {
+    transform: rotate(-135deg);
+  }
 }
 
 .timeline {
@@ -400,6 +661,27 @@ onMounted(() => {
   position: relative;
   text-align: right;
   font-size: 0.24rem;
+  min-height: 1rem;
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: -0.06rem;
+    top: 0.3rem;
+    width: 0.02rem;
+    bottom: -0.3rem;
+    background: rgba(255, 255, 255, 0.42);
+  }
+
+  &.date-col--continued {
+    .dot {
+      top: 0.05rem;
+    }
+
+    &::after {
+      top: 0.16rem;
+    }
+  }
 
   .dot {
     position: absolute;
@@ -441,8 +723,26 @@ onMounted(() => {
 
   .right {
     white-space: nowrap;
-    margin-top: 0.52rem;
+    margin-top: 0.26rem;
+    text-align: right;
   }
+}
+
+.right-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.14rem;
+}
+
+.record-toggle {
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
+  display: flex;
+  align-items: center;
+  gap: 0.08rem;
+  font-size: 0.24rem;
 }
 
 .flow-row {
@@ -468,11 +768,11 @@ onMounted(() => {
 
 .money {
   font-size: 0.38rem;
-  color: #05e7ae;
+  color: #ff132b;
   font-weight: 700;
 
   &.positive {
-    color: #ff132b;
+    color: #05e7ae;
   }
 }
 </style>

@@ -248,19 +248,19 @@ function matchTabRoom(room: RoomRecord, tabName: GameTypeTabName): boolean {
   if (tabName === 'all') return true
   if (tabName === 'texas') return gameType === 0 && pokerType === 0
   if (tabName === 'omaha') return [1, 2, 3].includes(gameType) && pokerType === 0
-  if (tabName === 'sixPlus') return gameType === 6 || pokerType === 1
+  if (tabName === 'sixPlus') return pokerType === 2
   return true
 }
 
 function getGameName(gameType: number, pokerType: number): string {
-  if (gameType === 6 || pokerType === 1) return t('6+')
+  if (pokerType === 2) return t('6+')
   if ([1, 2, 3].includes(gameType)) return t('UITexasInfo_Omaha')
   if (gameType === 0) return t('UITexasInfo_Texas')
   return '--'
 }
 
 function getGameIconImage(gameType: number, pokerType: number): string {
-  if (gameType === 6 || pokerType === 1) return gameType6Plus
+  if (pokerType === 2) return gameType6Plus
   if ([1, 2, 3].includes(gameType)) return gameTypePlo
   return gameTypeNlh
 }

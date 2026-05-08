@@ -3,8 +3,11 @@ import { computed, onMounted, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { getUserClubApi, getUserInfoApi } from '@/api/user'
-import { postGlobalConfigApi } from '@/api/config'
-import { forwardGlobalConfigToCocos } from '@/bridge/sync/h5BusinessSync'
+import { postDiamondConfigApi, postGlobalConfigApi } from '@/api/config'
+import {
+  forwardDiamondConfigToCocos,
+  forwardGlobalConfigToCocos,
+} from '@/bridge/sync/h5BusinessSync'
 import { ensureMultiLanguageTemplateLoaded } from '@/utils/multiLanguageTemplate'
 import LoginSession from '@/session/loginSession'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
@@ -73,6 +76,18 @@ async function fetchUserInfoOnEnter(): Promise<void> {
       })
       .catch((error) => {
         console.warn('[main-layout] sync global config failed:', error)
+      })
+
+    // 全局收费配置静默拉取并缓存，随后同步给 Cocos。
+    void postDiamondConfigApi({})
+      .then((res) => {
+        if (res.code === 0 && res.data) {
+          appConfigStore.setDiamondConfig(res.data)
+          forwardDiamondConfigToCocos(res.data)
+        }
+      })
+      .catch((error) => {
+        console.warn('[main-layout] sync diamond config failed:', error)
       })
 
     // 多语言模板静默拉取并缓存到 localStorage（模块初始化时已从缓存恢复，此处更新）。

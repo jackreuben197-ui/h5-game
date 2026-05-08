@@ -121,6 +121,7 @@ export default [
         2,
         {
           SwitchCase: 1,
+          offsetTernaryExpressions: true,
         },
       ],
       'key-spacing': [
@@ -167,6 +168,7 @@ export default [
       'space-in-parens': ['error', 'never'],
       'no-multi-spaces': 'error',
       'no-trailing-spaces': 'error',
+      'no-multiple-empty-lines': ['error', { max: 1, maxBOF: 0, maxEOF: 0 }],
       // 允许 <span>文字</span> 单行写法，与 Prettier 风格一致。
       'vue/singleline-html-element-content-newline': 'off',
       'vue/multiline-html-element-content-newline': [
@@ -178,7 +180,17 @@ export default [
       ],
       'vue/html-indent': ['error', 2],
       // 与 Prettier singleAttributePerLine:false 保持一致，不强制每个属性独占一行。
-      'vue/max-attributes-per-line': ['error', { singleline: { max: 3 }, multiline: { max: 1 } }],
+      'vue/max-attributes-per-line': [
+        'error',
+        {
+          singleline: {
+            max: 999,
+          },
+          multiline: {
+            max: 1,
+          },
+        },
+      ],
       'vue/html-closing-bracket-newline': [
         'error',
         {

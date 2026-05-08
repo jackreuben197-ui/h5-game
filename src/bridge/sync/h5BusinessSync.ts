@@ -6,6 +6,7 @@ import {
 import {
   BRIDGE_ACTION,
   BRIDGE_MSG_TYPE,
+  type SyncDiamondConfigPayload,
   type SyncGlobalConfigPayload,
   type SyncLanguagePayload,
   type SyncRoomsListPayload,
@@ -19,7 +20,7 @@ import {
   decodeUserGoldChange,
 } from '../ws/userBalanceNotify'
 import type { UserInfoData } from '@/api/models/user'
-import type { GlobalConfigData } from '@/api/models/config'
+import type { DiamondConfigData, GlobalConfigData } from '@/api/models/config'
 import type { ApiResponse } from '@/api/models/common'
 import type { RoomDetailData, RoomDetailRequest } from '@/api/models/roomcenter'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -127,6 +128,12 @@ export function forwardLanguageChangedToCocos(locale: string): void {
 export function forwardGlobalConfigToCocos(config: GlobalConfigData): void {
   const payload: SyncGlobalConfigPayload = { raw: config }
   queueSyncUntilHandshake(BRIDGE_ACTION.SYNC_GLOBAL_CONFIG, payload)
+}
+
+// 握手完成后将 diamondConfig 同步给 Cocos。
+export function forwardDiamondConfigToCocos(config: DiamondConfigData): void {
+  const payload: SyncDiamondConfigPayload = { raw: config }
+  queueSyncUntilHandshake(BRIDGE_ACTION.SYNC_DIAMOND_CONFIG, payload)
 }
 
 // 订阅 proto 138（钻石变动）和 141（UC/金豆变动），更新本地 userInfo 并重新同步给 Cocos。

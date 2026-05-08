@@ -16,14 +16,15 @@ interface GameTypeItem {
   key: string
   title: string
   icon: string
+  game_play_type: number
 }
 const router = useRouter()
 const selectedKey = ref('')
 
 const gameTypes: GameTypeItem[] = [
-  { key: 'nlh', title: '德州', icon: iconNlh },
-  { key: 'plo', title: '奥马哈', icon: iconPlo },
-  { key: 'six_plus', title: '6+', icon: iconSixPlus },
+  { key: 'nlh', game_play_type: 1, title: '德州', icon: iconNlh },
+  { key: 'plo', game_play_type: 2, title: '奥马哈', icon: iconPlo },
+  { key: 'six_plus', game_play_type: 3, title: '6+', icon: iconSixPlus },
   // { key: 'aof', title: 'AOF', icon: iconAof },
   // { key: 'mushroom', title: '蘑菇桌', icon: iconMushroom },
   // { key: 'squid', title: '深海桌', icon: iconSquid },
@@ -35,7 +36,7 @@ const gameTypes: GameTypeItem[] = [
 function onSelect(item: GameTypeItem): void {
   selectedKey.value = item.key
   // showFailToast(`${item.title} 创建流程开发中`)
-  void router.push({ path: '/createTable', query: { type: item.key } })
+  void router.push({ path: '/createTable', query: { game_play_type: item.game_play_type } })
 }
 </script>
 
@@ -90,7 +91,7 @@ function onSelect(item: GameTypeItem): void {
 :deep(.page-back-header) {
   padding-left: 0;
   padding-right: 0;
-padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
+  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
   padding-bottom: 0;
 }
 

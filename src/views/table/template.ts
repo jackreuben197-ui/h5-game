@@ -1,10 +1,12 @@
-export type FormFieldType = 'switch' | 'select' | 'slider' | 'input'
+export type FormFieldType = 'switch' | 'select' | 'slider' | 'input' | 'tab'
 export type SliderRangeValue = [number, number]
 export type FieldValue = string | number | boolean | SliderRangeValue
 export type SliderMarkMode = 'all' | 'edge' | 'none'
 
 export interface FieldOption {
   text: string
+  icon?: string
+  button?: string
   value: string | number
 }
 

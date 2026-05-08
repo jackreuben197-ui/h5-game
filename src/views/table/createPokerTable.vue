@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import TableSwitch from '@/components/GameCreateForm/TableSwitch.vue'
 import TableSelect from '@/components/GameCreateForm/TableSelect.vue'
 import TableSlider from '@/components/GameCreateForm/TableSlider.vue'
 import TableInput from '@/components/GameCreateForm/TableInput.vue'
+import TableTab from '@/components/GameCreateForm/TableTab.vue'
 import QuickCreateView from './QuickCreateView.vue'
 import { nlhSections } from './sections/index'
 import { defaultNlhFormState, type NlhFormState } from './sections/formState'
@@ -16,8 +18,14 @@ import { getAnteOptions } from './sections/constants'
 import { t } from '@/i18n'
 import icDiamondBalance from '@/assets/icons/ic_diamond_balance.svg'
 import icTip from '@/assets/icons/ic_tip.svg'
+import { showFailToast } from 'vant'
+import { showGameToast } from '@/components/Toast'
+import { buildRoomConfigPayload, parseRoomConfigToFormState } from './sections/payload'
+import { postOrgRoomClubCreateApi, postOrgCreateTemplateApi } from '@/api/cmsext'
 
 const formState = reactive<NlhFormState>({ ...defaultNlhFormState })
+const route = useRoute()
+const router = useRouter()
 const appConfigStore = useAppConfigStore()
 const userInfoStore = useUserInfoStore()
 
@@ -68,6 +76,7 @@ const componentMap: Record<string, unknown> = {
   select: TableSelect,
   slider: TableSlider,
   input: TableInput,
+  tab: TableTab,
 }
 //全局配置中获取俱乐部带入区间范围
 const buyinBbRange = (() => {
@@ -77,6 +86,11 @@ const buyinBbRange = (() => {
 
 const buyinOptions = computed(() => buildBuyinOptions(buyinBbRange, formState.sb))
 const anteOptions = computed(() => getAnteOptions(formState.sb))
+
+function syncRouteParamsToFormState(): void {
+  formState.game_play_type = Number(route.query.game_play_type)
+  formState.bombpot = route.query.bombpot ? Number(route.query.bombpot) : 0
+}
 
 function hitCondition(conditionValue: FieldValue | FieldValue[], formValue: FieldValue): boolean {
   if (Array.isArray(conditionValue)) {
@@ -130,15 +144,15 @@ function resolveFieldOptions(field: TableFormFieldConfig) {
 }
 
 const renderedSections = computed(() =>
-  nlhSections.map((section) => ({
-    fields: section
+  nlhSections.map((section) =>
+    section
       .filter((f) => isVisible(f))
       .map((f) => ({
         ...f,
         options: resolveFieldOptions(f),
         disabled: isDisabled(f),
       })),
-  })),
+  ),
 )
 
 function onFieldChange(field: TableFormFieldConfig, value: FieldValue): void {
@@ -199,19 +213,72 @@ const clampBuyinRangeOnce = (): void => {
 
 clampBuyinRangeOnce()
 
-function onSaveTemplate() {
-  // TODO: 保存模板逻辑
-  console.log('保存模板', formState)
+watch(
+  () => route.query,
+  () => {
+    syncRouteParamsToFormState()
+  },
+  { immediate: true },
+)
+
+// 从模板编辑跳转时，通过 history.state.room_config 携带服务端数据
+onMounted(() => {
+  const roomConfig = (window.history.state as Record<string, unknown> | null)?.room_config
+  if (roomConfig && typeof roomConfig === 'object') {
+    const parsed = parseRoomConfigToFormState(roomConfig as Record<string, unknown>)
+    Object.assign(formState, parsed)
+    // 路由 query 的 game_play_type / bombpot 优先级更高，重新同步一次
+    syncRouteParamsToFormState()
+    clampBuyinRangeOnce()
+  }
+})
+
+const isSubmitting = ref(false)
+
+async function onSaveTemplate() {
+  if (isSubmitting.value) return
+  isSubmitting.value = true
+  try {
+    const res = await postOrgCreateTemplateApi({
+      name: formState.name || '自定义模板',
+      room_config: buildRoomConfigPayload(formState),
+    })
+    if (res.code === 0) {
+      showGameToast('保存成功')
+    } else {
+      showFailToast(res.message || '保存失败')
+    }
+  } catch {
+    showFailToast('保存失败')
+  } finally {
+    isSubmitting.value = false
+  }
 }
 
-function onCreateTable() {
-  // TODO: 创建牌桌逻辑
-  console.log('创建牌桌', formState)
+async function onCreateTable() {
+  if (isSubmitting.value) return
+  isSubmitting.value = true
+  try {
+    const res = await postOrgRoomClubCreateApi({
+      name: formState.name || '自定义牌桌',
+      room_config: buildRoomConfigPayload(formState),
+    })
+    if (res.code === 0) {
+      showGameToast('创建成功')
+      await router.replace({ name: 'club-index' })
+    } else {
+      showFailToast(res.message || '创建失败')
+    }
+  } catch {
+    showFailToast('创建失败')
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
 <template>
-  <div class="create-table-page app-scroll-standalone">
+  <div class="create-table-page">
     <!-- Header with tabs -->
     <HeaderBack>
       <div class="header-tabs">
@@ -236,7 +303,7 @@ function onCreateTable() {
     </template>
 
     <!-- Pro params tab -->
-    <template v-if="activeTab === 'pro'">
+    <div v-if="activeTab === 'pro'" class="create-table-form">
       <!-- Table name row -->
       <div class="table-name-row">
         <span class="table-name__label">牌局名称</span>
@@ -252,39 +319,41 @@ function onCreateTable() {
 
       <!-- Form sections -->
       <div class="detail-form">
-        <div v-for="(section, index) in renderedSections" :key="index" class="detail-form__section">
-          <component
-            :is="componentMap[field.type]"
-            v-for="field in section.fields"
-            :key="field.modelValue"
-            v-model:model-value="formStateMap[field.modelValue]"
-            class="detail-form__item"
-            :label="field.label"
-            :tip="field.tip"
-            :options="field.options"
-            :active-value="field.activeValue"
-            :inactive-value="field.inactiveValue"
-            :min="field.min"
-            :max="field.max"
-            :step="field.step"
-            :unit="field.unit"
-            :range="field.range"
-            :mark-mode="field.markMode"
-            :disabled="field.disabled"
-            :number-only="field.numberOnly"
-            :decimal-digits="field.decimalDigits"
-            :need-double="field.needDouble"
-            :icon="field.icon"
-            :tip2="
-              field.modelValue == 'squid' && formState.squid
-                ? formState.squid_mode == 1
-                  ? t('UICreateTableSquidClassicTips')
-                  : t('UICreateTableSquidBattleTips')
-                : ''
-            "
-            @change="onFieldChange(field, $event)"
-          />
-        </div>
+        <template v-for="(section, index) in renderedSections" :key="index">
+          <div v-if="section.length" class="detail-form__section">
+            <component
+              :is="componentMap[field.type]"
+              v-for="field in section"
+              :key="field.modelValue"
+              v-model:model-value="formStateMap[field.modelValue]"
+              class="detail-form__item"
+              :label="field.label"
+              :tip="field.tip"
+              :options="field.options"
+              :active-value="field.activeValue"
+              :inactive-value="field.inactiveValue"
+              :min="field.min"
+              :max="field.max"
+              :step="field.step"
+              :unit="field.unit"
+              :range="field.range"
+              :mark-mode="field.markMode"
+              :disabled="field.disabled"
+              :number-only="field.numberOnly"
+              :decimal-digits="field.decimalDigits"
+              :need-double="field.needDouble"
+              :icon="field.icon"
+              :tip2="
+                field.modelValue == 'squid' && formState.squid
+                  ? formState.squid_mode == 1
+                    ? t('UICreateTableSquidClassicTips')
+                    : t('UICreateTableSquidBattleTips')
+                  : ''
+              "
+              @change="onFieldChange(field, $event)"
+            />
+          </div>
+        </template>
       </div>
 
       <!-- Bottom action bar -->
@@ -299,13 +368,8 @@ function onCreateTable() {
           </div>
           <div class="fee-row fee-row--current">
             <img :src="icDiamondBalance" class="fee-diamond-icon" alt="" />
-            <span class="fee-current">{{ createFee.currentPrice.toLocaleString() }}</span>
-            <img
-              v-if="createFee.isDiscount && !createFee.discountExpired"
-              :src="icTip"
-              class="fee-strike"
-              alt=""
-            />
+            <span class="fee-current mr-4">{{ createFee.currentPrice.toLocaleString() }}</span>
+            <FieldTip :tip="`123\n456\n789`" />
           </div>
           <div class="fee-row">
             <span class="fee-label">余额:</span>
@@ -314,11 +378,23 @@ function onCreateTable() {
           </div>
         </div>
         <div class="action-buttons">
-          <button class="action-btn action-btn--save" @click="onSaveTemplate">保存模板</button>
-          <button class="action-btn action-btn--create" @click="onCreateTable">立即创建</button>
+          <button
+            class="action-btn action-btn--save"
+            :disabled="isSubmitting"
+            @click="onSaveTemplate"
+          >
+            保存模板
+          </button>
+          <button
+            class="action-btn action-btn--create"
+            :disabled="isSubmitting"
+            @click="onCreateTable"
+          >
+            立即创建
+          </button>
         </div>
       </div>
-    </template>
+    </div>
   </div>
 </template>
 
@@ -367,6 +443,11 @@ function onCreateTable() {
       border-radius: 1px;
     }
   }
+}
+.create-table-form {
+  overflow-y: auto;
+  padding-bottom: 0.5rem;
+  height: calc(100dvh - 1.4rem - env(safe-area-inset-bottom));
 }
 
 /* Table name row */
@@ -473,6 +554,7 @@ function onCreateTable() {
   align-items: center;
   gap: 0.06rem;
   position: relative;
+  opacity: 0.4;
 }
 
 .fee-diamond-icon {
@@ -484,7 +566,7 @@ function onCreateTable() {
   font-size: 0.34rem;
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 1);
   text-decoration: line-through;
 }
 

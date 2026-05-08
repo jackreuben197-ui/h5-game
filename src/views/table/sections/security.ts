@@ -3,10 +3,10 @@ import type { TableFormFieldConfig } from '../template'
 
 // anti_cheat_type: 1=关(NONE) 2=语音(AUDIO) 3=视频(VIDEO) 4=人脸识别(FACE_VERIFY)
 const ANTI_CHEAT_OPTIONS = [
-  { text: '关', value: 1 },
-  { text: '语音', value: 2 },
-  { text: '视频', value: 3 },
-  { text: '人脸识别', value: 4 },
+  { text: '常规桌', value: 1, icon: 'icon_table' },
+  { text: '语音桌', value: 2, icon: 'icon_audio' },
+  { text: '视频桌', value: 3, icon: 'icon_video' },
+  // { text: '人脸识别', value: 4 },
 ]
 
 // anti_cheat_video_type: 1=全时长(FULL_TIME) 2=随机(RANDOM) 3=麦序(SEQUENCE)
@@ -31,9 +31,8 @@ const MIC_CLOSE_OPTIONS = [
 export const securitySection: TableFormFieldConfig[] = [
   {
     // anti_cheat_type: 防作弊类型
-    type: 'select',
+    type: 'tab',
     label: '防作弊',
-    tip: t('UICreateTable_Cheat_Tips'),
     modelValue: 'anti_cheat_type',
     defaultValue: 1,
     options: ANTI_CHEAT_OPTIONS,

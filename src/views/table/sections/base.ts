@@ -14,7 +14,7 @@ export const baseSection: TableFormFieldConfig[] = [
     modelValue: 'plo_game_type',
     defaultValue: 4,
     options: PLO_CARD_OPTIONS,
-    visibleWhen: [{ field: 'game_type', equals: [1, 2, 3] }],
+    visibleWhen: [{ field: 'game_play_type', equals: 2 }],
   },
   {
     type: 'select',
@@ -64,7 +64,10 @@ export const baseSection: TableFormFieldConfig[] = [
     defaultValue: 0,
     activeValue: 1,
     inactiveValue: 0,
-    visibleWhen: [{ field: 'bombpot', notEquals: 1 }],
+    visibleWhen: [
+      { field: 'bombpot', notEquals: 1 },
+      { field: 'game_play_type', equals: [1, 2] },
+    ],
   },
   {
     type: 'input',
@@ -74,7 +77,10 @@ export const baseSection: TableFormFieldConfig[] = [
     placeholder: '请输入',
     numberOnly: true,
     decimalDigits: 1,
-    visibleWhen: [{ field: 'random_ante', equals: 1 }],
+    visibleWhen: [
+      { field: 'random_ante', equals: 1 },
+      { field: 'game_play_type', notEquals: 3 },
+    ],
   },
   {
     type: 'input',
@@ -84,7 +90,10 @@ export const baseSection: TableFormFieldConfig[] = [
     placeholder: '请输入',
     numberOnly: true,
     decimalDigits: 1,
-    visibleWhen: [{ field: 'random_ante', equals: 1 }],
+    visibleWhen: [
+      { field: 'random_ante', equals: 1 },
+      { field: 'game_play_type', notEquals: 3 },
+    ],
   },
   {
     type: 'input',
@@ -94,7 +103,10 @@ export const baseSection: TableFormFieldConfig[] = [
     placeholder: '请输入',
     numberOnly: true,
     decimalDigits: 1,
-    visibleWhen: [{ field: 'random_ante', equals: 1 }],
+    visibleWhen: [
+      { field: 'random_ante', equals: 1 },
+      { field: 'game_play_type', notEquals: 3 },
+    ],
   },
   {
     type: 'select',
@@ -105,6 +117,7 @@ export const baseSection: TableFormFieldConfig[] = [
     visibleWhen: [
       { field: 'bombpot', notEquals: 1 },
       { field: 'random_ante', notEquals: 1 },
+      { field: 'game_play_type', equals: [1, 2] },
     ],
   },
 ]

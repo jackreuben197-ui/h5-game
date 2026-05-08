@@ -3,6 +3,10 @@ export interface NlhFormState {
 
   /** 模板名称 → name */
   name: string
+  /** 页面玩法参数（来自路由 query.type）：nlh | plo | six_plus */
+  type: 'nlh' | 'plo' | 'six_plus'
+  /** BombPot 标识（用于字段可见性判断） */
+  bombpot: number
 
   // ── 基础设置 ──────────────────────────────────────────────────
 
@@ -429,7 +433,7 @@ export interface NlhFormState {
 
   /**
    * 安全屋公共牌可见性 → safe_view_public_cards（提交时 +1）
-   * 0=可看公共牌  1=不可看公共牌；0/1 对应服务端 1/2
+   * 1=可看公共牌  2=不可看公共牌
    */
   safe_view_public_cards: number
 
@@ -492,6 +496,8 @@ export interface NlhFormState {
 
 export const defaultNlhFormState: NlhFormState = {
   name: '',
+  type: 'nlh',
+  bombpot: 0,
 
   game_play_type: 0,
   plo_game_type: 4,
@@ -578,7 +584,7 @@ export const defaultNlhFormState: NlhFormState = {
   only_ios: 0,
   delay_view_card: false,
   all_in_mute: 2,
-  safe_view_public_cards: 0,
+  safe_view_public_cards: 2,
 
   anti_cheat_type: 1,
   anti_cheat_video_type: 1,

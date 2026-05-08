@@ -33,7 +33,7 @@ const PRE_LOGIN_PATHS = [
 ]
 
 function shouldAttachXClub(url: string): boolean {
-  if (/^\/?(?:(?:org|cmsext)\/club|order\/club)\//.test(url)) {
+  if (/^\/?(?:(?:org|cmsext)\/club|cmsext\/room|order\/club)\//.test(url)) {
     return true
   }
   if (/^\/?config\/online_withdraw/.test(url)) {

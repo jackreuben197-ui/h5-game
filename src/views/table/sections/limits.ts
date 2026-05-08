@@ -103,8 +103,8 @@ export const limitsSection: TableFormFieldConfig[] = [
   {
     // only_ios: 私人房（仅iOS设备），1=开启 0=关闭
     type: 'switch',
-    label: t('UIPersonal_Title'),
-    tip: t('UIPersonal_TitleTips'),
+    label: t('UICreateTable_iosTitle'),
+    tip: t('UICreateTable_iosTitleTips'),
     modelValue: 'only_ios',
     defaultValue: 0,
     activeValue: 1,

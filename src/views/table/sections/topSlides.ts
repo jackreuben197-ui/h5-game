@@ -2,12 +2,17 @@ import type { FieldOption, TableFormFieldConfig } from '../template'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 import { TABLE_TIME_OPTIONS } from './constants'
-// 盲注
-const SB_OPTIONS = [
+const BASE_SB_LIST = [
   10, 20, 30, 40, 50, 100, 200, 300, 400, 500, 1000, 1500, 2000, 2500, 3000, 5000, 10000, 20000,
   30000, 50000, 100000,
-].map((v) => ({
+]
+// 盲注
+const SB_OPTIONS = BASE_SB_LIST.map((v) => ({
   text: `${v / 100}/${v / 50}`,
+  value: v,
+}))
+const ANTE_OPTIONS = BASE_SB_LIST.map((v) => ({
+  text: `${v / 100}`,
   value: v,
 }))
 
@@ -16,8 +21,19 @@ export const blindsSection: TableFormFieldConfig[] = [
     type: 'slider',
     label: '小盲/大盲',
     modelValue: 'sb',
-    defaultValue: 10,
+    defaultValue: 1000,
     options: SB_OPTIONS,
+    visibleWhen: [{ field: 'game_play_type', equals: [1, 2] }],
+  },
+]
+export const anteSection: TableFormFieldConfig[] = [
+  {
+    type: 'slider',
+    label: 'Ante',
+    modelValue: 'sb',
+    defaultValue: 1000,
+    options: ANTE_OPTIONS,
+    visibleWhen: [{ field: 'game_play_type', equals: [3] }],
   },
 ]
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { postOrgClubModifyClubDescApi } from '@/api/org'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { showFailToast, showSuccessToast } from 'vant'
@@ -14,10 +15,6 @@ const isSubmitting = ref(false)
 const canConfirm = computed(() => {
   return intro.value.trim().length > 0 && !isSubmitting.value
 })
-
-function goBack(): void {
-  void router.push('/club/detail')
-}
 
 async function onConfirm(): Promise<void> {
   if (!canConfirm.value) {
@@ -67,12 +64,7 @@ async function onConfirm(): Promise<void> {
     <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
 
     <div class="page-shell club-edit-des">
-      <header class="top-bar">
-        <button type="button" class="back-btn" @click="goBack">
-          <span class="back-icon" aria-hidden="true"></span>
-          <span class="back-title">编辑简介</span>
-        </button>
-      </header>
+      <HeaderBack :title="'编辑简介'" />
 
       <section class="editor-block">
         <label class="field-label" for="club-intro-edit-input">俱乐部简介</label>

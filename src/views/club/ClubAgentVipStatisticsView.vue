@@ -1,34 +1,25 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { getMemberRouteContext } from './clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgCard from '@/assets/icons/icon_table.png'
 
-const route = useRoute()
-const router = useRouter()
-
-const context = computed(() => getMemberRouteContext(route))
+const context = computed(() => getMemberRouteContext(useRoute()))
 const gameType = ref<'all' | 'texas' | 'aohaha' | 'short' | 'record'>('all')
 const rows = [
   { label: '手数', total: '5000', today: '60,000', week: '400' },
   { label: '服务费', total: '5000', today: '60,000', week: '400' },
   { label: '奖金', total: '5000', today: '60,000', week: '400' },
 ]
-
-function goBack(): void {
-  void router.back()
-}
 </script>
 
 <template>
   <div class="sub-bg">
     <div class="page-shell sub-page">
-      <header class="header">
-        <button type="button" class="back" @click="goBack">返回</button>
-        <h1>Club Description</h1>
-      </header>
+      <HeaderBack title="Club Description" />
 
       <section class="glass profile-card">
         <img :src="imgAvatar" :alt="context.name" />
@@ -102,22 +93,10 @@ function goBack(): void {
 	gap: figma-rem(7.282);
 }
 
-.header {
-	display: flex;
-	align-items: center;
-	gap: figma-rem(9.602);
-}
-
 .header h1 {
 	margin: 0;
 	color: #fff;
 	font-size: figma-rem(24.378);
-}
-
-.back {
-	border: 0;
-	color: #fff;
-	background: transparent;
 }
 
 .glass {

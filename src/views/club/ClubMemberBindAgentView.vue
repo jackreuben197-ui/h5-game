@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { getMemberRouteContext } from './clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar.png'
 
+const _router = useRouter()
 const route = useRoute()
-const router = useRouter()
 
 const context = computed(() => getMemberRouteContext(route))
 const rows = ref([
@@ -16,18 +17,14 @@ const rows = ref([
   { id: '12345682', name: 'Player Name', checked: false },
 ])
 
-function goBack(): void {
-  void router.back()
-}
-
 function onConfirm(): void {
-  const selected = rows.value.find((row) => row.checked)
-  void router.push({
+  const _selected = rows.value.find((row) => row.checked)
+  _router.push({
     path: `/club/member/${context.value.memberId}`,
     query: {
       identity: 'player',
       bound: '1',
-      name: selected?.name || context.value.name,
+      name: _selected?.name || context.value.name,
       uid: context.value.uid,
     },
   })
@@ -37,10 +34,7 @@ function onConfirm(): void {
 <template>
   <div class="sub-bg">
     <div class="page-shell sub-page">
-      <header class="header">
-        <button type="button" class="back" @click="goBack">返回</button>
-        <h1>Bind Agents</h1>
-      </header>
+      <HeaderBack title="Bind Agents" />
 
       <section class="cards">
         <article
@@ -81,34 +75,15 @@ function onConfirm(): void {
     radial-gradient(78% 62% at 38% 92%, rgba(202, 86, 145, 0.6), rgba(202, 86, 145, 0) 70%),
     radial-gradient(85% 70% at 100% 85%, rgba(30, 174, 210, 0.82), rgba(30, 174, 210, 0) 70%),
     linear-gradient(180deg, #bc8b87 0%, #7e5f8f 42%, #187ca3 100%);
+  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + #{figma-rem(17.244)});
 }
 
 .sub-page {
   min-height: 100%;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + #{figma-rem(17.244)});
   padding-bottom: calc(#{figma-rem(13.412)} + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: figma-rem(7.282);
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  gap: figma-rem(9.602);
-
-}
-
-.header h1 {
-  margin: 0;
-  color: #fff;
-  font-size: figma-rem(24.378);
-}
-
-.back {
-  border: 0;
-  background: transparent;
-  color: #fff;
 }
 
 .cards {

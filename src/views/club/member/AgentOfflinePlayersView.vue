@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
 
-const router = useRouter()
 const listMode = ref<'members' | 'edit'>('edit')
 const hideCurrentPlayers = ref(false)
 const rows = ref([
@@ -16,22 +15,15 @@ const rows = ref([
   { id: '8677650588', name: '成员名字', checked: false },
 ])
 
-function goBack(): void {
-  void router.back()
-}
-
 function onSave(): void {
-  void router.back()
+  window.history.back()
 }
 </script>
 
 <template>
   <div class="sub-bg">
     <div class="page-shell sub-page">
-      <header class="header">
-        <button type="button" class="back" @click="goBack">返回</button>
-        <h1>下线成员</h1>
-      </header>
+      <HeaderBack title="下线成员" />
 
       <section class="top-row">
         <div class="invite">邀请链接</div>
@@ -88,11 +80,11 @@ function onSave(): void {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   background: linear-gradient(180deg, #38414b 0%, #111827 100%);
+  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + #{figma-rem(17.244)});
 }
 
 .sub-page {
   min-height: 100%;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + #{figma-rem(17.244)});
   padding-bottom: calc(#{figma-rem(13.412)} + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;

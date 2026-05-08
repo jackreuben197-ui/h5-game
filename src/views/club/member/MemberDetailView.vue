@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
@@ -63,10 +64,6 @@ const showBindRow = computed(() => context.value.identity === 'player' && !conte
 const showUnbindRow = computed(() => context.value.identity === 'player' && context.value.isBoundAgent)
 const showBottomAction = computed(() => context.value.identity !== 'founder')
 
-function goBack(): void {
-  void router.push('/club/members')
-}
-
 function pushWithContext(path: string): void {
   void router.push({
     path,
@@ -120,12 +117,7 @@ function togglePermission(index: number): void {
 <template>
   <div class="member-detail-bg">
     <div class="page-shell member-detail-page">
-      <header class="detail-header">
-        <button type="button" class="header-back" @click="goBack">
-          <span class="back-icon" aria-hidden="true"></span>
-          <span>{{ detailTitle }}</span>
-        </button>
-      </header>
+      <HeaderBack :title="detailTitle" />
 
       <section class="glass-card profile-card">
         <div class="profile-left">
@@ -237,49 +229,22 @@ function togglePermission(index: number): void {
 }
 
 .member-detail-bg {
-  height: 100dvh;
+  position: relative;
   min-height: 100dvh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
+  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
+  overflow: hidden;
   background:
-    radial-gradient(88% 55% at -10% 66%, rgba(245, 222, 165, 0.45), rgba(245, 222, 165, 0) 70%),
-    radial-gradient(78% 62% at 38% 92%, rgba(202, 86, 145, 0.6), rgba(202, 86, 145, 0) 70%),
-    radial-gradient(85% 70% at 100% 85%, rgba(30, 174, 210, 0.82), rgba(30, 174, 210, 0) 70%),
-    linear-gradient(180deg, #bc8b87 0%, #7e5f8f 42%, #187ca3 100%);
+    radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.68), rgba(154, 97, 145, 0.66) 45%, rgba(33, 136, 168, 0.86) 100%),
+    linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
 }
 
 .member-detail-page {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: figma-rem(7.282);
-  min-height: 100%;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + #{figma-rem(17.244)});
-  padding-bottom: calc(#{figma-rem(13.412)} + env(safe-area-inset-bottom));
-}
-
-.detail-header {
-  min-height: figma-rem(19.629);
-}
-
-.header-back {
-  display: inline-flex;
-  align-items: center;
-  gap: figma-rem(9.606);
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: #f9f9f9;
-  font-size: figma-rem(24.388);
-  line-height: 1;
-}
-
-.back-icon {
-  width: figma-rem(6);
-  height: figma-rem(6);
-  border-left: figma-rem(2) solid rgba(249, 249, 249, 0.95);
-  border-bottom: figma-rem(2) solid rgba(249, 249, 249, 0.95);
-  transform: rotate(45deg);
+  min-height: 100dvh;
+  padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
 }
 
 .glass-card {

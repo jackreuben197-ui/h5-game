@@ -103,7 +103,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="shop-pay-page">
+  <div class="shop-pay-page" :style="backgroundStyle">
     <div class="mask"></div>
 
     <section class="pay-card">
@@ -152,11 +152,6 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 0 0.48rem;
-  background:
-    radial-gradient(60% 44% at 20% 14%, rgba(231, 175, 141, 0.66) 0%, rgba(231, 175, 141, 0) 100%),
-    radial-gradient(54% 46% at 36% 86%, rgba(207, 111, 160, 0.7) 0%, rgba(207, 111, 160, 0) 100%),
-    radial-gradient(44% 38% at 92% 84%, rgba(0, 182, 212, 0.62) 0%, rgba(0, 182, 212, 0) 100%),
-    linear-gradient(158deg, #b68d9f 0%, #92698f 54%, #6a5d87 100%);
 }
 
 .mask {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { getMemberRouteContext } from './clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar.png'
 
@@ -8,10 +9,6 @@ const route = useRoute()
 const router = useRouter()
 
 const context = computed(() => getMemberRouteContext(route))
-
-function goBack(): void {
-  void router.back()
-}
 
 function onConfirm(): void {
   void router.push({
@@ -29,10 +26,7 @@ function onConfirm(): void {
 <template>
   <div class="sub-bg">
     <div class="page-shell sub-page">
-      <header class="header">
-        <button type="button" class="back" @click="goBack">返回</button>
-        <h1>Unbind Agents</h1>
-      </header>
+      <HeaderBack title="Unbind Agents" />
 
       <section class="cards">
         <article class="glass card">
@@ -84,7 +78,6 @@ function onConfirm(): void {
 
 .sub-page {
   min-height: 100%;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + #{figma-rem(17.244)});
   padding-bottom: calc(#{figma-rem(13.412)} + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
@@ -101,12 +94,6 @@ function onConfirm(): void {
   margin: 0;
   color: #fff;
   font-size: figma-rem(24.378);
-}
-
-.back {
-  border: 0;
-  color: #fff;
-  background: transparent;
 }
 
 .cards {

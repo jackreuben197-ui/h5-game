@@ -421,7 +421,13 @@ function onShare(): void {
   }
 }
 
-.name-part,
+.name-part {
+  display: flex;
+  align-items: center;
+  gap: 0.12rem;
+  min-width: 3.45rem;
+}
+
 .move-part {
   display: flex;
   align-items: center;

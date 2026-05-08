@@ -190,7 +190,7 @@ function goEditName(): void {
 
 function onQuickAction(actionId: number): void {
   if (actionId === 1) {
-    void router.push('/club/activity/list')
+  	showFailToast('功能开发中')
     return
   }
 

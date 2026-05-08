@@ -1,29 +1,19 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { getMemberRouteContext } from './clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar.png'
 
-const route = useRoute()
-const router = useRouter()
-
-const context = computed(() => getMemberRouteContext(route))
+const context = computed(() => getMemberRouteContext(useRoute()))
 const focusedKey = ref('service')
-const showPad = computed(() => route.query.pad === '1')
+const showPad = computed(() => useRoute().query.pad === '1')
 const form = ref([
   { key: 'service', label: '服务费分成比例', value: '0' },
   { key: 'insurance', label: '保险分成比例', value: '0' },
   { key: 'mtt', label: 'MTT分成比例', value: '0' },
   { key: 'cowboy', label: '牛仔分成比例', value: '0' },
 ])
-
-function goBack(): void {
-  void router.back()
-}
-
-function onSave(): void {
-  void router.back()
-}
 
 function appendDigit(value: string): void {
   const target = form.value.find((item) => item.key === focusedKey.value)
@@ -45,10 +35,7 @@ function appendDigit(value: string): void {
 <template>
   <div class="profit-bg">
     <div class="page-shell profit-page">
-      <header class="header">
-        <button type="button" class="back" @click="goBack">返回</button>
-        <h1>代理收益设置</h1>
-      </header>
+      <HeaderBack title="代理收益设置" />
 
       <section class="glass profile-card">
         <img :src="imgAvatar" :alt="context.name" />
@@ -73,8 +60,6 @@ function appendDigit(value: string): void {
           {{ key === 'DEL' ? '⌫' : key }}
         </button>
       </section>
-
-      <button type="button" class="confirm" @click="onSave">确定</button>
     </div>
   </div>
 </template>
@@ -101,7 +86,6 @@ function appendDigit(value: string): void {
 
 .profit-page {
 	min-height: 100%;
-	padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + #{figma-rem(17.244)});
 	padding-bottom: calc(#{figma-rem(13.412)} + env(safe-area-inset-bottom));
 	display: flex;
 	flex-direction: column;
@@ -117,12 +101,6 @@ function appendDigit(value: string): void {
 .header h1 {
 	margin: 0;
 	font-size: figma-rem(24.388);
-	color: #fff;
-}
-
-.back {
-	border: 0;
-	background: transparent;
 	color: #fff;
 }
 

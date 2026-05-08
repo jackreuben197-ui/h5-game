@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import {
   postClubAgentUserListApi,
   postOrgClubAgentInviTationApi,
@@ -12,15 +11,13 @@ import imgAvatar from '@/assets/images/default_avatar.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
+import imgSearch from '@/assets/icons/club_search.svg'
+import imgInfo from '@/assets/icons/tips.svg'
 import { extractInvitationLink } from '@/utils/clubInvitation'
 import { saveQrCodeImage } from '@/utils/qrcode'
 import { showFailToast, showSuccessToast } from 'vant'
 
-const router = useRouter()
 const userInfoStore = useUserInfoStore()
-const imgPageBackdrop = 'https://www.figma.com/api/mcp/asset/535f502a-596c-4f1b-89b4-1ac83b52c3a9'
-const imgSearch = 'https://www.figma.com/api/mcp/asset/25fa53bb-0050-49f8-9260-817c218e4b6e'
-const imgInfo = 'https://www.figma.com/api/mcp/asset/4a1b71c7-7708-42f9-b9aa-e6fe3e7189f8'
 
 const loading = ref(false)
 const keyword = ref('')
@@ -35,10 +32,6 @@ const totalText = computed(() => {
 })
 
 const invitationPreview = computed(() => invitationLink.value || '未获取到邀请链接')
-
-function goBack() {
-  router.back()
-}
 
 async function loadMembers() {
   loading.value = true
@@ -139,15 +132,9 @@ onMounted(async () => {
 
 <template>
   <div class="downline-page">
-    <img
-      class="page-backdrop"
-      :src="imgPageBackdrop"
-      alt=""
-      aria-hidden="true"
-    />
     <div class="page-overlay" aria-hidden="true"></div>
 
-    <HeaderBack title="下线成员" @back="goBack" />
+    <HeaderBack title="下线成员" />
 
     <div v-loading="loading" class="content">
       <div class="invite-row">

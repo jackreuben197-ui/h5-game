@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
 const dateStart = '11/03/2024'
 const dateEnd = '11/03/2024'
@@ -19,10 +17,6 @@ const summaryCards = [
     { label: 'MTT收益', value: '-999999', trend: 'down' },
   ],
 ] as const
-
-function goBack(): void {
-  void router.push('/club/members')
-}
 
 function valueClass(trend: 'up' | 'down' | 'neutral'): string {
   if (trend === 'down') {
@@ -43,12 +37,7 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
     <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
 
     <div class="page-shell club-wallet-logs">
-      <header class="top-bar">
-        <button type="button" class="back-btn" @click="goBack">
-          <span class="back-icon" aria-hidden="true"></span>
-          <span class="back-title">收益管理</span>
-        </button>
-      </header>
+      <HeaderBack :title="'收益管理'" />
 
       <section class="range-card">
         <div class="date-row">
@@ -99,6 +88,7 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
 .club-wallet-logs-bg {
   position: relative;
   min-height: 100dvh;
+  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
   background:
     radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.66), rgba(154, 97, 145, 0.64) 45%, rgba(33, 136, 168, 0.84) 100%),
     linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
@@ -135,7 +125,6 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
   padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
   gap: 0.08rem;
 }

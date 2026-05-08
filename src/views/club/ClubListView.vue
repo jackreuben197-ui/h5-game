@@ -141,13 +141,9 @@ function goToClubDetail(club?: ClubInfo): void {
   void router.push('/club/index')
 }
 
-function goToRoomHistory(): void {
-  void router.push('/club/room/history')
-}
-
 function onQuickAction(itemId: number): void {
   if (itemId === 2) {
-    goToRoomHistory()
+    showFailToast('功能开发中')
     return
   }
 

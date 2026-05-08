@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import { postPropGoldPriceListApi } from '@/api/prop'
 import type { PropGoldPriceListData } from '@/api/models/prop'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { postClubFundOrderListApi } from '@/api/order'
+import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 
 export const useWalletStore = defineStore('wallet', () => {
   const goldPriceData = ref<PropGoldPriceListData | null>(null)
@@ -67,9 +69,58 @@ export const useWalletStore = defineStore('wallet', () => {
     return Number((Math.round(final * 100) / 100).toFixed(2))
   }
 
+  const pendingCsOrder = ref<ClubFundOrderListOrderInfo | null>(null)
+  const pendingCsOrderCount = ref(0)
+
+  async function refreshPendingCsOrder() {
+    const userInfoStore = useUserInfoStore()
+    const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
+    const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
+
+    try {
+      // Check Recharge orders
+      const rechargeRes = await postClubFundOrderListApi({
+        order_type: 1, // Recharge
+        my_order: true,
+        limit: 10, // Increased limit to count more
+        offset: 0,
+        status: 1, // Pending
+      }, clubId)
+
+      if (rechargeRes.code === 0 && rechargeRes.data?.list) {
+        const csOrders = rechargeRes.data.list.filter(o => {
+          const ot = (o as any).pay_type || (o as any).api_type || (o as any).type
+          return ot === 3 || o.pay_type_name?.includes('撮合')
+        })
+        
+        pendingCsOrderCount.value = csOrders.length
+        
+        if (csOrders.length > 0) {
+          pendingCsOrder.value = csOrders[0]
+          return
+        }
+      }
+
+      pendingCsOrder.value = null
+      pendingCsOrderCount.value = 0
+    } catch (e) {
+      console.error('Failed to fetch pending CS orders', e)
+      pendingCsOrder.value = null
+      pendingCsOrderCount.value = 0
+    }
+  }
   function formatUsdtPrice(price: number): string {
     return price.toFixed(4).replace(/\.?0+$/, '')
   }
 
-  return { goldPriceData, loadPriceList, calculateUsdtPrice, formatUsdtPrice, calculateCustomerServicePrice }
+  return {
+    goldPriceData,
+    loadPriceList,
+    calculateUsdtPrice,
+    formatUsdtPrice,
+    calculateCustomerServicePrice,
+    pendingCsOrder,
+    pendingCsOrderCount,
+    refreshPendingCsOrder
+  }
 })

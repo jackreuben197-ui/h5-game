@@ -73,6 +73,7 @@ import type {
 } from '@/api/models/cmsext'
 import type { UserMuteListData } from '@/api/models/user'
 import type { UserWhitelistInfoInnerData } from '@/api/models/config'
+import type { StatsReplayData, StatsReplayFantasyData, StatsReplayMahjongData } from '@/api/models/replayDisplay'
 
 // /api/misc/agora/token (MiscAgoraToken)
 export interface MiscAgoraTokenRequest {
@@ -937,8 +938,10 @@ export interface MiscGameRoundListDataByRoomUserGameRecord {
     create_time?: string;
     room_unique_id?: string;
     data?: string;
-    replay?: unknown;
-    replay_ft?: unknown;
+    replay?: StatsReplayData | string;
+    replay_ft?: StatsReplayFantasyData | string;
+    replay_mj?: StatsReplayMahjongData | string;
+    replay_gd?: unknown;
     bet_pot?: number;
     encrypt_cards?: unknown;
     gold_type?: number;

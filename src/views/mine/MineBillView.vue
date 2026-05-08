@@ -5,6 +5,9 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import { postUserBillApi, postUserWalletApi } from '@/api/user'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
+import iconUc from '@/assets/icons/icon_chips.png'
+import iconCredit from '@/assets/icons/credit_chip.png'
+import { formatUC } from '@/utils/roomVisibility'
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -53,7 +56,10 @@ function toSafeNumber(value: unknown): number {
 }
 
 function formatAmount(value: unknown): string {
-  return toSafeNumber(value).toLocaleString('en-US')
+  if (activeTab.value === '钻石') {
+    return toSafeNumber(value).toLocaleString('en-US')
+  }
+  return formatUC(toSafeNumber(value))
 }
 
 function formatSigned(value: unknown): string {
@@ -237,7 +243,9 @@ onMounted(() => {
       <section class="glass-card total-card">
         <div class="label">UC总余额</div>
         <div class="amount-row">
-          <img :src="iconDiamond" alt="chip" />
+          <img v-if="activeTab === 'UC'" :src="iconUc" alt="chip" />
+          <img v-else-if="activeTab === 'Club记分牌' || activeTab === '朋友桌记分牌'" :src="iconCredit" alt="chip" />
+          <img v-else :src="iconDiamond" alt="diamond" />
           <strong>{{ formatAmount(totalAmount) }}</strong>
         </div>
         <button class="detail-btn" type="button">查看明细</button>

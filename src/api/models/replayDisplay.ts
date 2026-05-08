@@ -42,7 +42,7 @@ function formatNumber(value: unknown): string {
   return numeric.toLocaleString('en-US')
 }
 
-function decodeCard(card: number): string {
+export function decodeCard(card: number): string {
   if (!Number.isFinite(card)) return '--'
   const rankMap = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
   const suitMap = ['♠', '♥', '♣', '♦']
@@ -50,6 +50,210 @@ function decodeCard(card: number): string {
   const rank = rankMap[normalized % 13] ?? 'A'
   const suit = suitMap[Math.floor(normalized / 13)] ?? '♠'
   return `${rank}${suit}`
+}
+
+export function parseReplayLike<T>(value: unknown): T | null {
+  if (!value) return null
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value) as T
+    } catch {
+      return null
+    }
+  }
+  if (typeof value === 'object') return value as T
+  return null
+}
+
+export function parseHandRecordCards(value: unknown): number[] {
+  if (Array.isArray(value)) {
+    return value.map(item => toSafeNumber(item)).filter(item => Number.isFinite(item))
+  }
+
+  if (typeof value !== 'string') return []
+
+  return value
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+    .map(item => toSafeNumber(item))
+    .filter(item => Number.isFinite(item))
+}
+
+function formatWinAmount(value: unknown): string {
+  return toSafeNumber(value).toLocaleString('en-US')
+}
+
+function cardTypeName(cardTypeRaw: unknown): string {
+  const cardType = toSafeNumber(cardTypeRaw)
+  const map: Record<number, string> = {
+    1: '高牌',
+    2: '一对',
+    3: '两对',
+    4: '三条',
+    5: '顺子',
+    6: '同花',
+    7: '葫芦',
+    8: '四条',
+    9: '同花顺',
+    10: '皇家同花顺',
+  }
+  return '<font size="4">' + map[cardType] + '</font>'
+}
+
+function getTexasWinDesc(replay: StatsReplayData, currentUserId?: number): string {
+  const players = replay.table?.pl ?? []
+  const results = [...(replay.result ?? [])]
+  if (!players.length || !results.length) return ''
+
+  const playerBySeat = players.reduce<Record<number, StatsReplayTablePlayer>>((acc, player) => {
+    const seat = toSafeNumber(player.sn)
+    if (seat > 0) acc[seat] = player
+    return acc
+  }, {})
+
+  const winners = results.filter(item => toSafeNumber(item.win) > 0)
+  if (!winners.length) return ''
+
+  let selectedWinner = winners[0]
+  if (currentUserId) {
+    const self = winners.find(item => {
+      const seat = toSafeNumber(item.sn)
+      return toSafeNumber(playerBySeat[seat]?.uid) === currentUserId
+    })
+    if (self) {
+      selectedWinner = self
+    } else {
+      selectedWinner = winners.reduce((max, cur) => (toSafeNumber(cur.win) > toSafeNumber(max.win) ? cur : max), winners[0])
+    }
+  } else {
+    selectedWinner = winners.reduce((max, cur) => (toSafeNumber(cur.win) > toSafeNumber(max.win) ? cur : max), winners[0])
+  }
+
+  const winnerSeat = toSafeNumber(selectedWinner.sn)
+  const winnerName = String(playerBySeat[winnerSeat]?.name ?? `玩家${winnerSeat || ''}`)
+  const suffix = winners.length > 1 ? '...' : ''
+
+  const allActions = [
+    ...(replay.procedure?.ante?.pl ?? []),
+    ...(replay.procedure?.preflop?.pl ?? []),
+    ...(replay.procedure?.flop?.pl ?? []),
+    ...(replay.procedure?.turn?.pl ?? []),
+    ...(replay.procedure?.river?.pl ?? []),
+  ]
+  const foldCount = allActions.filter(item => String(item.act ?? '').toLowerCase() === 'fold').length
+
+  if (foldCount >= (results.length - winners.length)) {
+    return `对手弃牌，${winnerName}获得胜利`
+  }
+
+  const typeName = cardTypeName(selectedWinner.card_type)
+  if (typeName) {
+    return `${winnerName}${suffix}以${typeName}牌型获得胜利`
+  }
+
+  return `${winnerName}${suffix}赢得最终胜利`
+}
+
+function getFantasyHighCardType(result: StatsReplayFantasyResult): number {
+  const groups = result.grp ?? []
+  return groups.reduce((max, group) => {
+    const type = toSafeNumber(group.card_type)
+    return type > max ? type : max
+  }, 0)
+}
+
+function getFantasyWinDesc(replay: StatsReplayFantasyData, currentUserId?: number): string {
+  const players = replay.table?.pl ?? []
+  const results = [...(replay.result ?? [])]
+  if (!players.length || !results.length) return ''
+
+  const playerBySeat = players.reduce<Record<number, StatsReplayFantasyTablePlayer>>((acc, player) => {
+    const seat = toSafeNumber(player.sn)
+    if (seat > 0) acc[seat] = player
+    return acc
+  }, {})
+
+  const winners = results.filter(item => toSafeNumber(item.win) > 0)
+  if (!winners.length) return ''
+
+  let selectedWinner = winners[0]
+  if (currentUserId) {
+    const self = winners.find(item => {
+      const seat = toSafeNumber(item.sn)
+      return toSafeNumber(playerBySeat[seat]?.uid) === currentUserId
+    })
+    if (self) {
+      selectedWinner = self
+    } else {
+      selectedWinner = winners.reduce((max, cur) => (toSafeNumber(cur.win) > toSafeNumber(max.win) ? cur : max), winners[0])
+    }
+  } else {
+    selectedWinner = winners.reduce((max, cur) => (toSafeNumber(cur.win) > toSafeNumber(max.win) ? cur : max), winners[0])
+  }
+
+  const winnerSeat = toSafeNumber(selectedWinner.sn)
+  const winnerName = String(playerBySeat[winnerSeat]?.name ?? `玩家${winnerSeat || ''}`)
+  const suffix = winners.length > 1 ? '...' : ''
+
+  if (selectedWinner.nft) {
+    return `${winnerName}${suffix}赢得最终胜利，并拿到进范资格`
+  }
+
+  const typeName = cardTypeName(getFantasyHighCardType(selectedWinner))
+  if (typeName) {
+    return `${winnerName}${suffix}赢得最终胜利，并拿到${typeName}牌型`
+  }
+
+  return `${winnerName}${suffix}赢得最终胜利`
+}
+
+export function GetWinDescRich(
+  replay: StatsReplayData | null,
+  replayFantasy: StatsReplayFantasyData | null,
+  currentUserId?: number,
+): string {
+  if (replay) {
+    return getTexasWinDesc(replay, currentUserId)
+  }
+  if (replayFantasy) {
+    return getFantasyWinDesc(replayFantasy, currentUserId)
+  }
+  return ''
+}
+
+export function GetWinDesc(
+  replay: StatsReplayData | null,
+  replayFantasy: StatsReplayFantasyData | null,
+  anonymous = false,
+  currentUserId?: number,
+): string {
+  let desc = GetWinDescRich(replay, replayFantasy, currentUserId)
+  desc = desc.replace(/<\/color>/g, '').replace(/<color=#F8C255FF>/g, '').replace(/\n/g, '')
+
+  if (currentUserId && replay?.table?.pl && replay?.result) {
+    const self = replay.table.pl.find(player => toSafeNumber(player.uid) === currentUserId)
+    if (self) {
+      const result = replay.result.find(item => toSafeNumber(item.sn) === toSafeNumber(self.sn))
+      if (result) {
+        desc = `赢取${formatWinAmount(result.win)} ${desc}`.trim()
+      }
+    }
+  } else if (currentUserId && replayFantasy?.table?.pl && replayFantasy?.result) {
+    const self = replayFantasy.table.pl.find(player => toSafeNumber(player.uid) === currentUserId)
+    if (self) {
+      const result = replayFantasy.result.find(item => toSafeNumber(item.sn) === toSafeNumber(self.sn))
+      if (result) {
+        desc = `赢取${formatWinAmount(result.win)} ${desc}`.trim()
+      }
+    }
+  }
+
+  if (anonymous) {
+    return desc
+  }
+
+  return desc
 }
 
 function cardListFromUnknown(value: unknown): string[] {

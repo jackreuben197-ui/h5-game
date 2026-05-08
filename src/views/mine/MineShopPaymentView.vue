@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
 import { postOrderUserUsdtOrderListApi } from '@/api/order'
 import { postMallBuyApi } from '@/api/prop'
@@ -8,8 +8,6 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
 const title = computed(() => '确认付款')
-
-const router = useRouter()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -30,7 +28,6 @@ const checkingStatus = ref(false)
 const orderNo = ref('')
 const statusText = ref('待支付')
 const payAddress = ref(fallbackAddress)
-const payQrCode = ref(imgQr)
 
 function getStatusLabel(status: number): string {
   if (status === 2) return '支付成功'
@@ -95,10 +92,6 @@ async function queryOrderStatus(showSuccessHint = true): Promise<void> {
   }
 }
 
-function closePage(): void {
-  router.back()
-}
-
 function onCopyAddress(): void {
   void navigator.clipboard?.writeText(payAddress.value)
   showSuccessToast('钱包地址已复制')
@@ -138,7 +131,12 @@ onMounted(() => {
       <p class="tips">提示：复制上方钱包地址转币完，或使用钱包扫描二维码完成付款</p>
       <p class="sub-tips">购买钻石：{{ diamonds }}，账户钻石：{{ balance }}</p>
 
-      <button type="button" class="paying-btn" :disabled="creatingOrder || checkingStatus" @click="queryOrderStatus()">
+      <button
+        type="button"
+        class="paying-btn"
+        :disabled="creatingOrder || checkingStatus"
+        @click="queryOrderStatus()"
+      >
         <span>{{ creatingOrder ? '创建订单中...' : checkingStatus ? '查询中...' : statusText }}</span>
         <small>{{ orderNo ? `订单号：${orderNo}` : '等待订单创建' }}</small>
       </button>

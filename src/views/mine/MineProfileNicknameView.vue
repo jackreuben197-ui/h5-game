@@ -59,10 +59,6 @@ const displayUser = computed(() => ({
 
 inputName.value = String(displayUser.value.nickname || '')
 
-function goBack(): void {
-  router.back()
-}
-
 function validateNickname(value: string): string | null {
   if (!value) {
     return '请输入昵称'
@@ -158,7 +154,12 @@ async function onSave(): Promise<void> {
       </section>
 
       <div class="save-wrap">
-        <button class="save-btn" type="button" :disabled="submitting" @click="onSave">
+        <button
+          class="save-btn"
+          type="button"
+          :disabled="submitting"
+          @click="onSave"
+        >
           {{ submitting ? 'Saving...' : 'Save' }}
         </button>
       </div>

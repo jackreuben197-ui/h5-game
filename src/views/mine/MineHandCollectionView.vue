@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
+import { useRouter } from 'vue-router'
+import type { StatsUserGameRecordListRecord, StatsUserGameRecordListRoom_record } from '@/api/models/stats'
 import { postStatsUserGameRecordListApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { setHandReplaySession } from '@/session/handReplaySession'
 
 const title = computed(() => 'Result')
+const router = useRouter()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -26,6 +30,8 @@ interface HandCard {
   hands: string
   profit: string
   negative?: boolean
+  roomRecord?: StatsUserGameRecordListRoom_record
+  handRecord?: StatsUserGameRecordListRecord
 }
 
 const loading = ref(false)
@@ -56,13 +62,13 @@ function resolveGameFilter(): { game_types: number[]; poker_types?: number[] } {
 }
 
 function mapRowToCards(row: Record<string, unknown>, index: number): HandCard[] {
-  const roomRecord = (row.room_record as Record<string, unknown>) ?? {}
+  const roomRecord = ((row.room_record as StatsUserGameRecordListRoom_record) ?? {})
   const gameRecords = Array.isArray(row.user_game_records) ? row.user_game_records : []
   const roomName = String(roomRecord.name ?? 'Hand Record')
   const handTable = `${toSafeNumber(roomRecord.small_blind)}/${toSafeNumber(roomRecord.random_ante ?? 0)}(${toSafeNumber(roomRecord.poker_type)})`
 
   return gameRecords.map((item, itemIndex) => {
-    const record = (item as Record<string, unknown>) ?? {}
+    const record = ((item as StatsUserGameRecordListRecord) ?? {})
     const handId = String(record.room_unique_id ?? record.id ?? '--')
     const pot = toSafeNumber(record.bet_pot).toLocaleString('en-US')
     const hands = toSafeNumber(record.hand_num).toLocaleString('en-US')
@@ -76,6 +82,8 @@ function mapRowToCards(row: Record<string, unknown>, index: number): HandCard[] 
       hands,
       profit,
       negative: !profit.startsWith('+'),
+      roomRecord,
+      handRecord: record,
     }
   })
 }
@@ -120,6 +128,26 @@ function selectMode(tab: string): void {
   void fetchHandCollection()
 }
 
+function goHandDetail(card: HandCard): void {
+  if (!card.handRecord) {
+    showFailToast('牌谱数据异常')
+    return
+  }
+
+  setHandReplaySession({
+    handId: card.handId,
+    roomRecord: card.roomRecord,
+    handRecord: card.handRecord,
+  })
+
+  void router.push({
+    path: '/mine/hand-collection/detail',
+    query: {
+      hand_id: card.handId,
+    },
+  })
+}
+
 onMounted(() => {
   void fetchHandCollection()
 })
@@ -157,7 +185,12 @@ onMounted(() => {
       <section class="list-wrap">
         <p v-if="loading" class="list-status">加载中...</p>
         <p v-else-if="!handCards.length" class="list-status">暂无手牌记录</p>
-        <article v-for="card in handCards" :key="card.id" class="glass-card hand-card">
+        <article
+          v-for="card in handCards"
+          :key="card.id"
+          class="glass-card hand-card"
+          @click="goHandDetail(card)"
+        >
           <div class="top-row">
             <div class="poker-pair">
               <div class="poker">10♣</div>
@@ -184,7 +217,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .mine-glass-page {
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;

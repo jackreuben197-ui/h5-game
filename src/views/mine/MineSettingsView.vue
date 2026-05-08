@@ -60,10 +60,6 @@ function languageLabel(): string {
   return 'English'
 }
 
-function goBack(): void {
-  void router.push('/mine')
-}
-
 async function onRowClick(item: SettingItem): Promise<void> {
   if (item.clickable === false) {
     return

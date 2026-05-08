@@ -39,10 +39,6 @@ const items = ref<ShopItem[]>([])
 
 const userDiamond = computed(() => Number(userInfoStore.userInfo?.user.diamonds ?? 0))
 
-function goBack(): void {
-  router.back()
-}
-
 function toSafeNumber(value: unknown): number {
   const numeric = Number(value)
   return Number.isFinite(numeric) ? numeric : 0

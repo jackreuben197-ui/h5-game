@@ -1,6 +1,8 @@
 // 该文件由迁移脚本从 cocos Request 自动生成并做结构化转换。
 // 前缀: /api/stats
 
+import type { StatsReplayData, StatsReplayFantasyData, StatsReplayMahjongData } from './replayDisplay'
+
 // /api/stats/client/click/log (StatsClientClickLog)
 export interface StatsClientClickLogRequest {
 
@@ -1745,8 +1747,10 @@ export interface StatsUserGameRecordListRecord {
         change?: number;
         room_unique_id?: string;
         data?: string;
-        replay?: unknown;
-        replay_ft?: unknown;
+        replay?: StatsReplayData | string;
+        replay_ft?: StatsReplayFantasyData | string;
+        replay_mj?: StatsReplayMahjongData | string;
+        replay_gd?: unknown;
         bet_pot?: number;
         encrypt_cards?: unknown;
         gold_type?: number;

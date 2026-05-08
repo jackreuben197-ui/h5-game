@@ -396,6 +396,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/mine/hand-collection/detail',
+      name: 'mine-hand-collection-detail',
+      component: () => import('@/views/mine/MineHandCollectionDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/mine/bill',
       name: 'mine-bill',
       component: () => import('@/views/mine/MineBillView.vue'),

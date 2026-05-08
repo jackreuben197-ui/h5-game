@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { showFailToast, showSuccessToast } from 'vant'
-import { useRouter } from 'vue-router'
 import { postMiscReportFeedbackQuestIonApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-
-const router = useRouter()
 
 const title = computed(() => '留言板')
 
@@ -16,10 +13,6 @@ const backgroundStyle = computed(() => ({
 }))
 const content = ref('')
 const submitting = ref(false)
-
-function goBack(): void {
-  void router.push('/mine')
-}
 
 async function submitMessage(): Promise<void> {
   const description = content.value.trim()
@@ -62,7 +55,12 @@ async function submitMessage(): Promise<void> {
         placeholder="Type here"
       ></textarea>
 
-      <button class="submit-btn" type="button" :disabled="submitting" @click="submitMessage">
+      <button
+        class="submit-btn"
+        type="button"
+        :disabled="submitting"
+        @click="submitMessage"
+      >
         {{ submitting ? 'Submitting...' : 'Submit Report' }}
       </button>
     </div>

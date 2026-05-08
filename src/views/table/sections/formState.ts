@@ -571,7 +571,7 @@ export const defaultNlhFormState: NlhFormState = {
 
   limit_hc_pool_rate: 0,
   limit_hc_total_hands: 0,
-  chat_type: 0,
+  chat_type: 1,
   limit_watch_hand: 0,
   limit_hand_num: 0,
   limit_bring_in: 0,

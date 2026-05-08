@@ -1,16 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { showFailToast } from 'vant'
+import { onMounted, ref } from 'vue'
 import iconNlh from '@/assets/icons/game_type_nlh.png'
 import iconPlo from '@/assets/icons/game_type_plo.png'
 import iconSixPlus from '@/assets/icons/game_type_6+.png'
-import iconAof from '@/assets/icons/table_icon_Aof.png'
-import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
-import iconSquid from '@/assets/icons/table_icon_squid.png'
-import iconCritical from '@/assets/icons/table_icon_critical.png'
-import iconMahjong from '@/assets/icons/game_zone_mahjong_mini.png'
-import iconCustom from '@/assets/icons/icon_table.png'
 import { useRouter } from 'vue-router'
+import { postOrgClubGoldApi } from '@/api/org'
+import { useUserInfoStore } from '@/stores/userInfo'
 
 interface GameTypeItem {
   key: string
@@ -19,6 +14,7 @@ interface GameTypeItem {
   game_play_type: number
 }
 const router = useRouter()
+const userInfoStore = useUserInfoStore()
 const selectedKey = ref('')
 
 const gameTypes: GameTypeItem[] = [
@@ -38,6 +34,28 @@ function onSelect(item: GameTypeItem): void {
   // showFailToast(`${item.title} 创建流程开发中`)
   void router.push({ path: '/createTable', query: { game_play_type: item.game_play_type } })
 }
+
+async function prefetchClubDiamondBalance(): Promise<void> {
+  const clubRandomId = userInfoStore.currentClub?.random_id
+  if (!clubRandomId) {
+    return
+  }
+
+  try {
+    const response = await postOrgClubGoldApi({
+      club_random_id: clubRandomId,
+    })
+    if (response.code === 0 && response.data) {
+      userInfoStore.syncCurrentClubDiamond(Number(response.data.diamond ?? 0))
+    }
+  } catch {
+    // 预拉余额失败不阻塞后续流程，保持静默。
+  }
+}
+
+onMounted(() => {
+  void prefetchClubDiamondBalance()
+})
 </script>
 
 <template>

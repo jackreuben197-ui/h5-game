@@ -17,7 +17,6 @@ import { buildBuyinOptions, resolveBringinBbRange } from './sections/topSlides'
 import { getAnteOptions } from './sections/constants'
 import { t } from '@/i18n'
 import icDiamondBalance from '@/assets/icons/ic_diamond_balance.svg'
-import icTip from '@/assets/icons/ic_tip.svg'
 import { showFailToast } from 'vant'
 import { showGameToast } from '@/components/Toast'
 import { buildRoomConfigPayload, parseRoomConfigToFormState } from './sections/payload'
@@ -31,8 +30,7 @@ const userInfoStore = useUserInfoStore()
 
 // 俱乐部钻石余额
 const clubDiamondBalance = computed(() => {
-  const club = userInfoStore.currentClub
-  return club?.diamonds ?? 0
+  return Math.max(0, toNumber(userInfoStore.currentClub?.diamonds))
 })
 
 // 创建费用计算（根据当前配置动态计算）
@@ -43,27 +41,291 @@ interface CreateFeeConfig {
   discountExpired: boolean
 }
 
-const createFee = computed<CreateFeeConfig>(() => {
-  // 从全局配置读取创建房间费用配置（如果有）
-  // 默认原价 100 钻石，假设有折扣配置
-  const originalPrice = 100
-  let currentPrice = originalPrice
-  let isDiscount = false
-  let discountExpired = true
+interface FeeDetailItem {
+  label: string
+  unitOrigin: number
+  unitCurrent: number
+  multiple: number
+  totalOrigin: number
+  totalCurrent: number
+  isDiscount: boolean
+}
 
-  // 如果有折扣配置，解析判断是否在有效期内
-  // 这里用示例逻辑：实际应从 globalConfig 或接口获取
-  const now = Date.now() / 1000
-  // 假设折扣配置在 globalConfig 中（后续对接真实配置）
-  const discountStart = 0
-  const discountEnd = 0
-  if (discountStart && discountEnd && now >= discountStart && now <= discountEnd) {
-    currentPrice = Math.floor(originalPrice * 0.8)
-    isDiscount = true
-    discountExpired = false
+interface DiamondSetting {
+  sb: number
+  price: number
+  discount_price: number
+}
+
+interface DiamondConfigItem {
+  config_type: number
+  status: number
+  type_ext: number
+  start_time: number
+  end_time: number
+  setting: DiamondSetting[]
+}
+
+interface FeePrice {
+  originPrice: number
+  discountPrice: number
+  isDiscount: boolean
+}
+
+const DIAMOND_CONFIG_TYPE = {
+  CREATE_TABLE: 1,
+  AUDIO_TABLE: 3,
+  FACE_VERIFICATION: 4,
+  VIDEO_FULL_TIME: 5,
+  VIDEO_RANDOM: 6,
+  VIDEO_SEQUENCE: 7,
+  CHAT: 10,
+} as const
+
+const CLUB_INTERNAL_TABLE_TYPE_EXT = 310
+
+function toNumber(value: unknown, fallback = 0): number {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : fallback
+}
+
+function getSeatCount(): number {
+  const seat = Math.floor(toNumber(formState.seat_count, 2))
+  return seat > 0 ? seat : 2
+}
+
+function getHalfHourMultiple(): number {
+  const duration = toNumber(formState.play_duration, 3600)
+  if (duration <= 0) return 1
+  return Math.max(1, Math.round(duration / 1800))
+}
+
+function getTableTypeExt(): number {
+  // 当前 H5 创建页默认是俱乐部内桌；后续如果支持外桌，可从 query 透传 table_type_ext 覆盖。
+  const fromQuery = toNumber(route.query.table_type_ext, 0)
+  return fromQuery > 0 ? fromQuery : CLUB_INTERNAL_TABLE_TYPE_EXT
+}
+
+function getBanConfigType(antiCheatType: number, antiCheatVideoType: number): number | null {
+  if (antiCheatType === 2) return DIAMOND_CONFIG_TYPE.AUDIO_TABLE
+  if (antiCheatType === 4) return DIAMOND_CONFIG_TYPE.FACE_VERIFICATION
+  if (antiCheatType !== 3) return null
+  if (antiCheatVideoType === 2) return DIAMOND_CONFIG_TYPE.VIDEO_RANDOM
+  if (antiCheatVideoType === 3) return DIAMOND_CONFIG_TYPE.VIDEO_SEQUENCE
+  return DIAMOND_CONFIG_TYPE.VIDEO_FULL_TIME
+}
+
+function getBanMultiple(antiCheatType: number): number {
+  const commonMultiple = getHalfHourMultiple()
+  if (antiCheatType === 2 || antiCheatType === 3) {
+    return commonMultiple
+  }
+  return 1
+}
+
+function normalizeDiamondSettings(raw: unknown): DiamondSetting[] {
+  if (!Array.isArray(raw)) return []
+  return raw.map((item) => {
+    const row = item as Record<string, unknown>
+    return {
+      sb: Math.floor(toNumber(row.sb)),
+      price: toNumber(row.price),
+      discount_price: toNumber(row.discount_price),
+    }
+  })
+}
+
+function normalizeDiamondConfigItems(raw: unknown): DiamondConfigItem[] {
+  if (!Array.isArray(raw)) return []
+  return raw.map((item) => {
+    const row = item as Record<string, unknown>
+    return {
+      config_type: Math.floor(toNumber(row.config_type)),
+      status: Math.floor(toNumber(row.status)),
+      type_ext: Math.floor(toNumber(row.type_ext)),
+      start_time: Math.floor(toNumber(row.start_time)),
+      end_time: Math.floor(toNumber(row.end_time)),
+      setting: normalizeDiamondSettings(row.setting),
+    }
+  })
+}
+
+function extractDiamondConfigItems(raw: unknown): DiamondConfigItem[] {
+  if (!raw || typeof raw !== 'object') return []
+  const root = raw as Record<string, unknown>
+  const candidates: unknown[] = [
+    root,
+    root.data,
+    (root.data as Record<string, unknown> | undefined)?.data,
+    root.list,
+    (root.data as Record<string, unknown> | undefined)?.list,
+  ]
+  for (const candidate of candidates) {
+    const list = normalizeDiamondConfigItems(candidate)
+    if (list.length) {
+      return list
+    }
+  }
+  return []
+}
+
+function isInDiscountWindow(config: DiamondConfigItem, nowSec: number): boolean {
+  if (!config.start_time || !config.end_time) return false
+  return nowSec >= config.start_time && nowSec <= config.end_time
+}
+
+function resolveDiamondSettingBySb(config: DiamondConfigItem, sb: number): DiamondSetting | null {
+  if (!config.setting.length) return null
+  const exact = config.setting.find((item) => item.sb === sb)
+  return exact || config.setting[0] || null
+}
+
+function getConfigPrice(config: DiamondConfigItem | null, sb: number): FeePrice {
+  if (!config) {
+    return { originPrice: 0, discountPrice: 0, isDiscount: false }
+  }
+  const setting = resolveDiamondSettingBySb(config, sb)
+  if (!setting) {
+    return { originPrice: 0, discountPrice: 0, isDiscount: false }
+  }
+  // status=2：配置关闭，按客户端逻辑视作“折扣到 0”（免费）。
+  if (config.status === 2) {
+    return { originPrice: setting.price, discountPrice: 0, isDiscount: true }
   }
 
-  return { originalPrice, currentPrice, isDiscount, discountExpired }
+  const nowSec = Math.floor(Date.now() / 1000)
+  if (!isInDiscountWindow(config, nowSec)) {
+    return {
+      originPrice: setting.price,
+      discountPrice: setting.price,
+      isDiscount: false,
+    }
+  }
+
+  if (setting.discount_price === 0) {
+    return { originPrice: setting.price, discountPrice: 0, isDiscount: true }
+  }
+  if (setting.discount_price < setting.price) {
+    return {
+      originPrice: setting.price,
+      discountPrice: setting.discount_price,
+      isDiscount: true,
+    }
+  }
+  return {
+    originPrice: setting.price,
+    discountPrice: setting.price,
+    isDiscount: false,
+  }
+}
+
+function findDiamondConfig(
+  configItems: DiamondConfigItem[],
+  configType: number,
+  typeExt: number,
+): DiamondConfigItem | null {
+  return (
+    configItems.find((item) => item.config_type === configType && item.type_ext === typeExt) || null
+  )
+}
+
+function formatFeeCount(value: number): string {
+  return Math.max(0, Math.round(value)).toLocaleString()
+}
+
+const feeDetails = computed<FeeDetailItem[]>(() => {
+  const configItems = extractDiamondConfigItems(appConfigStore.diamondConfig)
+  const tableTypeExt = getTableTypeExt()
+  const seatCount = getSeatCount()
+  const sb = Math.floor(toNumber(formState.sb))
+  const details: FeeDetailItem[] = []
+
+  // 1) 开桌收费（config_type=1，按 tableTypeExt + sb）
+  const createConfig = findDiamondConfig(
+    configItems,
+    DIAMOND_CONFIG_TYPE.CREATE_TABLE,
+    tableTypeExt,
+  )
+  const durationMultiple = getHalfHourMultiple()
+  const createPrice = getConfigPrice(createConfig, sb)
+  details.push({
+    label: '创建牌桌',
+    unitOrigin: createPrice.originPrice,
+    unitCurrent: createPrice.discountPrice,
+    multiple: durationMultiple,
+    totalOrigin: createPrice.originPrice * durationMultiple,
+    totalCurrent: createPrice.discountPrice * durationMultiple,
+    isDiscount: createPrice.isDiscount,
+  })
+
+  // 2) 防作弊收费（语音/视频/人脸）
+  const antiCheatType = Math.floor(toNumber(formState.anti_cheat_type))
+  const antiCheatVideoType = Math.floor(toNumber(formState.anti_cheat_video_type, 1))
+  const banConfigType = getBanConfigType(antiCheatType, antiCheatVideoType)
+  if (banConfigType) {
+    const banConfig = findDiamondConfig(configItems, banConfigType, seatCount)
+    const banPrice = getConfigPrice(banConfig, sb)
+    const banMultiple = getBanMultiple(antiCheatType)
+    details.push({
+      label: '防作弊',
+      unitOrigin: banPrice.originPrice,
+      unitCurrent: banPrice.discountPrice,
+      multiple: banMultiple,
+      totalOrigin: banPrice.originPrice * banMultiple,
+      totalCurrent: banPrice.discountPrice * banMultiple,
+      isDiscount: banPrice.isDiscount,
+    })
+  }
+
+  // 3) 聊天收费（config_type=10，type_ext=seat*1000 + tableTypeExt）
+  const isChatOn = Math.floor(toNumber(formState.chat_type)) !== 0
+  if (isChatOn) {
+    const chatTypeExt = seatCount * 1000 + tableTypeExt
+    const chatConfig = findDiamondConfig(configItems, DIAMOND_CONFIG_TYPE.CHAT, chatTypeExt)
+    const chatPrice = getConfigPrice(chatConfig, sb)
+    details.push({
+      label: '聊天消耗',
+      unitOrigin: chatPrice.originPrice,
+      unitCurrent: chatPrice.discountPrice,
+      multiple: 1,
+      totalOrigin: chatPrice.originPrice,
+      totalCurrent: chatPrice.discountPrice,
+      isDiscount: chatPrice.isDiscount,
+    })
+  }
+
+  return details
+})
+
+const createFee = computed<CreateFeeConfig>(() => {
+  const totalOrigin = feeDetails.value.reduce((sum, item) => sum + item.totalOrigin, 0)
+  const totalDiscount = feeDetails.value.reduce((sum, item) => sum + item.totalCurrent, 0)
+  const hasDiscount = feeDetails.value.some((item) => item.isDiscount)
+
+  const originalPrice = Math.max(0, Math.round(totalOrigin))
+  const currentPrice = Math.max(0, Math.round(totalDiscount))
+  return {
+    originalPrice,
+    currentPrice,
+    isDiscount: hasDiscount,
+    discountExpired: !hasDiscount,
+  }
+})
+
+const createFeeTip = computed<string>(() => {
+  const lines = feeDetails.value.map((item) => {
+    const unitPart = `${formatFeeCount(item.unitCurrent)} x ${item.multiple}`
+    if (item.totalCurrent <= 0) {
+      return `${item.label}: 免费`
+    }
+    if (item.isDiscount && item.totalOrigin > item.totalCurrent) {
+      return `${item.label}: ${unitPart} = ${formatFeeCount(
+        item.totalCurrent,
+      )} (原价${formatFeeCount(item.totalOrigin)})`
+    }
+    return `${item.label}: ${unitPart} = ${formatFeeCount(item.totalCurrent)}`
+  })
+  return lines.join('\n')
 })
 
 // section 渲染时动态访问 formState，用此别名绕过 TS 索引限制
@@ -361,7 +623,7 @@ async function onCreateTable() {
         <div class="fee-info">
           <div class="fee-row">
             <span class="fee-label">消耗:</span>
-            <div class="fee-value-wrap">
+            <div v-if="createFee.isDiscount" class="fee-value-wrap">
               <img :src="icDiamondBalance" class="fee-diamond-icon" alt="" />
               <span class="fee-original">{{ createFee.originalPrice.toLocaleString() }}</span>
             </div>
@@ -369,7 +631,7 @@ async function onCreateTable() {
           <div class="fee-row fee-row--current">
             <img :src="icDiamondBalance" class="fee-diamond-icon" alt="" />
             <span class="fee-current mr-4">{{ createFee.currentPrice.toLocaleString() }}</span>
-            <FieldTip :tip="`123\n456\n789`" />
+            <FieldTip :tip="createFeeTip" />
           </div>
           <div class="fee-row">
             <span class="fee-label">余额:</span>
@@ -446,7 +708,7 @@ async function onCreateTable() {
 }
 .create-table-form {
   overflow-y: auto;
-  padding-bottom: 0.5rem;
+  padding-bottom: calc(3.4rem + env(safe-area-inset-bottom));
   height: calc(100dvh - 1.4rem - env(safe-area-inset-bottom));
 }
 
@@ -519,11 +781,20 @@ async function onCreateTable() {
 
 /* Bottom action bar */
 .bottom-action-bar {
+  position: fixed;
+  left: 0.35rem;
+  right: 0.35rem;
+  bottom: calc(0.24rem + env(safe-area-inset-bottom));
+  z-index: 40;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 0.27rem 0.35rem 0;
-  padding-bottom: calc(0.4rem + env(safe-area-inset-bottom));
+  margin: 0;
+  padding: 0.16rem 0.24rem;
+  border-radius: 0.32rem;
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(0.18rem);
+  -webkit-backdrop-filter: blur(0.18rem);
 }
 
 .fee-info {

@@ -154,7 +154,7 @@ export const durationSection: TableFormFieldConfig[] = [
   {
     type: 'slider',
     label: '时长 (h)',
-    modelValue: 'game_duration',
+    modelValue: 'play_duration',
     defaultValue: 1800,
     options: TABLE_TIME_OPTIONS,
     markMode: 'all',

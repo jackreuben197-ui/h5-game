@@ -784,7 +784,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="club-data-page" :style="backgroundStyle">
+  <div class="page-shell club-data-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -1032,7 +1032,7 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .club-data-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.72rem;
   color: #f9f9f9;
   background-size: cover;

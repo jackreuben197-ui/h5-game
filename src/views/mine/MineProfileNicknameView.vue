@@ -59,10 +59,6 @@ const displayUser = computed(() => ({
 
 inputName.value = String(displayUser.value.nickname || '')
 
-function goBack(): void {
-  router.back()
-}
-
 function validateNickname(value: string): string | null {
   if (!value) {
     return '请输入昵称'
@@ -128,7 +124,7 @@ async function onSave(): Promise<void> {
 </script>
 
 <template>
-  <div class="nickname-page" :style="backgroundStyle">
+  <div class="page-shell nickname-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -158,7 +154,12 @@ async function onSave(): Promise<void> {
       </section>
 
       <div class="save-wrap">
-        <button class="save-btn" type="button" :disabled="submitting" @click="onSave">
+        <button
+          class="save-btn"
+          type="button"
+          :disabled="submitting"
+          @click="onSave"
+        >
           {{ submitting ? 'Saving...' : 'Save' }}
         </button>
       </div>
@@ -168,7 +169,7 @@ async function onSave(): Promise<void> {
 
 <style scoped lang="scss">
 .nickname-page {
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.4598rem);
   padding-bottom: 1.04rem;
   color: #f9f9f9;

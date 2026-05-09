@@ -369,9 +369,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="club-room-history-bg" :style="backgroundStyle">
+  <div class="page-shell club-room-history-bg" :style="backgroundStyle">
     <HeaderBack :title="'牌局记录'" />
-    <div class="page-shell club-room-history app-scroll-standalone" @scroll="onPageScroll">
+    <div class="club-room-history app-scroll-standalone" @scroll="onPageScroll">
       <div class="coin-tabs">
         <button
           type="button"

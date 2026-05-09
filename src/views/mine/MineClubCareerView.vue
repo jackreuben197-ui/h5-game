@@ -48,7 +48,7 @@ const selectedClubIndex = ref(0)
 // 货币类型定义：1-联盟币 2-USDT 3-记分牌 4-钻石
 const currencyTypes = [
   { label: 'UC', value: 1 },
-  { label: 'USDT', value: 2 },
+  // { label: 'USDT', value: 2 },
   { label: '记分牌', value: 3 },
   { label: '钻石', value: 4 },
 ] as const
@@ -226,7 +226,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="career-page" :style="backgroundStyle" @click="closePopup">
+  <div class="page-shell career-page" :style="backgroundStyle" @click="closePopup">
     <div class="page-top"></div>
     <HeaderBack title="生涯">
       <template #right>
@@ -332,7 +332,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .career-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;

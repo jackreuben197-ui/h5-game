@@ -1,14 +1,21 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
 import { getMemberRouteContext } from './clubMemberRoute'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 
-const router = useRouter()
+
 const route = useRoute()
+const router = useRouter()
 
 const context = computed(() => getMemberRouteContext(route))
 
@@ -63,10 +70,6 @@ const showBindRow = computed(() => context.value.identity === 'player' && !conte
 const showUnbindRow = computed(() => context.value.identity === 'player' && context.value.isBoundAgent)
 const showBottomAction = computed(() => context.value.identity !== 'founder')
 
-function goBack(): void {
-  void router.push('/club/members')
-}
-
 function pushWithContext(path: string): void {
   void router.push({
     path,
@@ -118,14 +121,9 @@ function togglePermission(index: number): void {
 </script>
 
 <template>
-  <div class="member-detail-bg">
-    <div class="page-shell member-detail-page">
-      <header class="detail-header">
-        <button type="button" class="header-back" @click="goBack">
-          <span class="back-icon" aria-hidden="true"></span>
-          <span>{{ detailTitle }}</span>
-        </button>
-      </header>
+  <div class="page-shell member-detail-bg" :style="backgroundStyle">
+    <div class="member-detail-page">
+      <HeaderBack :title="detailTitle" />
 
       <section class="glass-card profile-card">
         <div class="profile-left">
@@ -238,7 +236,6 @@ function togglePermission(index: number): void {
 
 .member-detail-bg {
   height: 100dvh;
-  min-height: 100dvh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;

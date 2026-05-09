@@ -46,8 +46,8 @@ interface OtherMessageItem {
 
 const route = useRoute()
 
-const otherBannerBgFirst = 'https://www.figma.com/api/mcp/asset/694b9873-5869-4789-991f-f75c25a01cad'
-const otherBannerBgDefault = 'https://www.figma.com/api/mcp/asset/45489388-e515-41a2-8eff-d3e4af9dfc89'
+const otherBannerBgFirst = mainBgUrl
+const otherBannerBgDefault = mainBgUrl
 const otherSenderBtnBg = 'https://www.figma.com/api/mcp/asset/e9e9ef1e-fa31-4411-b2e1-7a28ec807433'
 
 const pageType = computed<MessagePageType>(() => {
@@ -193,7 +193,7 @@ const otherMessages: OtherMessageItem[] = [
 </script>
 
 <template>
-  <div class="message-detail-page" :style="backgroundStyle">
+  <div class="page-shell message-detail-page" :style="backgroundStyle">
     <HeaderBack :title="pageTitle" />
 
     <div class="content-wrap">
@@ -318,7 +318,7 @@ const otherMessages: OtherMessageItem[] = [
 
 <style scoped lang="scss">
 .message-detail-page {
-  min-height: 100dvh;
+  height: 100dvh;
   color: #f3f3f3;
   padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: calc(env(safe-area-inset-bottom) + 0.7rem);

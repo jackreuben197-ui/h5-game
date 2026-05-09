@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import iconNlh from '@/assets/icons/game_type_nlh.png'
 import iconPlo from '@/assets/icons/game_type_plo.png'
 import iconSixPlus from '@/assets/icons/game_type_6+.png'
 import { useRouter } from 'vue-router'
 import { postOrgClubGoldApi } from '@/api/org'
 import { useUserInfoStore } from '@/stores/userInfo'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import { t } from '@/i18n'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
 
 interface GameTypeItem {
   key: string
@@ -59,8 +65,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="club-table-create-page">
-    <HeaderBack :title="'创建牌桌'" />
+  <div class="page-shell club-table-create-page" :style="backgroundStyle">
+    <HeaderBack :title="t('创建牌桌')">
+      <template #right>
+        <TopActionButton
+          :name="t('jackpot')"
+          icon-alt="wallet"
+          @click="router.push('/club/jackpot')"
+        />
+      </template>
+    </HeaderBack>
     <div class="club-table-create-overlay"></div>
 
     <section class="club-table-create-body">
@@ -93,9 +107,8 @@ onMounted(() => {
 <style scoped lang="scss">
 .club-table-create-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding: 0 0.32rem calc(0.44rem + env(safe-area-inset-bottom));
-  background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
   overflow-x: hidden;
   overflow-y: auto;
 }

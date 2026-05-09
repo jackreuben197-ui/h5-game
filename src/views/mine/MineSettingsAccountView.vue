@@ -58,7 +58,7 @@ function openSecurityPasswordFlow(): void {
 </script>
 
 <template>
-  <div class="settings-page settings-page--account" :style="backgroundStyle">
+  <div class="page-shell settings-page settings-page--account" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -96,7 +96,7 @@ function openSecurityPasswordFlow(): void {
 
 <style scoped lang="scss">
 .settings-page {
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.48rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;

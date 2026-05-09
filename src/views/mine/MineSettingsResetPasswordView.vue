@@ -46,10 +46,6 @@ const formRowClass = computed(() => ({
   filled: isFilledPreview.value,
 }))
 
-function goBack(): void {
-  router.back()
-}
-
 function switchTab(nextTab: 'phone' | 'email'): void {
   if (nextTab === tab.value) {
     return
@@ -173,7 +169,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="reset-password-page" :style="backgroundStyle">
+  <div class="page-shell reset-password-page" :style="backgroundStyle">
     <HeaderBack :title="headerTitle" />
 
     <div class="content-wrap">
@@ -280,7 +276,7 @@ onBeforeUnmount(() => {
 
 <style scoped lang="scss">
 .reset-password-page {
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.48rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;

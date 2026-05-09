@@ -111,10 +111,6 @@ const emailFieldValue = computed({
 
 let otpTimer: number | null = null
 
-function goBack(): void {
-  router.back()
-}
-
 function getSceneByType(): 1 | 2 {
   return isPhone.value ? 1 : 2
 }
@@ -217,7 +213,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="cancel-account-page" :style="backgroundStyle">
+  <div class="page-shell cancel-account-page" :style="backgroundStyle">
     <HeaderBack :title="pageTitle" />
 
     <div class="content-wrap">
@@ -274,7 +270,14 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <button class="submit-btn" type="button" :disabled="deleting" @click="onSubmit">注销账号</button>
+      <button
+        class="submit-btn"
+        type="button"
+        :disabled="deleting"
+        @click="onSubmit"
+      >
+        注销账号
+      </button>
 
       <div v-if="showConfirm" class="dialog-mask">
         <section class="dialog-card">
@@ -282,7 +285,14 @@ onBeforeUnmount(() => {
           <p class="dialog-desc">注销后账号信息将无法恢复，请谨慎操作。</p>
           <div class="dialog-actions">
             <button class="dialog-btn ghost" type="button" @click="cancelDialog">取消</button>
-            <button class="dialog-btn primary" type="button" :disabled="deleting" @click="confirmDialog">确认注销</button>
+            <button
+              class="dialog-btn primary"
+              type="button"
+              :disabled="deleting"
+              @click="confirmDialog"
+            >
+              确认注销
+            </button>
           </div>
         </section>
       </div>
@@ -292,7 +302,7 @@ onBeforeUnmount(() => {
 
 <style scoped lang="scss">
 .cancel-account-page {
-  min-height: 100dvh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   padding-top: calc(env(safe-area-inset-top) + 0.48rem);

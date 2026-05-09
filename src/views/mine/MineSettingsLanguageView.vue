@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { showSuccessToast } from 'vant'
-import { useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { getLocale, setLocale, type LocaleCode } from '@/i18n'
@@ -12,8 +11,6 @@ interface LanguageOption {
   key: LocaleCode
   label: string
 }
-
-const router = useRouter()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -29,10 +26,6 @@ const options: LanguageOption[] = [
 
 const activeLanguage = ref<LocaleCode>(getLocale())
 
-function goBack(): void {
-  router.back()
-}
-
 function selectLanguage(key: LocaleCode): void {
   if (activeLanguage.value === key) {
     return
@@ -45,7 +38,7 @@ function selectLanguage(key: LocaleCode): void {
 </script>
 
 <template>
-  <div class="settings-page settings-page--language" :style="backgroundStyle">
+  <div class="page-shell settings-page settings-page--language" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -69,7 +62,7 @@ function selectLanguage(key: LocaleCode): void {
 
 <style scoped lang="scss">
 .settings-page {
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.48rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;

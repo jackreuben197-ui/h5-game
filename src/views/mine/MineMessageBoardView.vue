@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { showFailToast, showSuccessToast } from 'vant'
-import { useRouter } from 'vue-router'
 import { postMiscReportFeedbackQuestIonApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-
-const router = useRouter()
 
 const title = computed(() => '留言板')
 
@@ -16,10 +13,6 @@ const backgroundStyle = computed(() => ({
 }))
 const content = ref('')
 const submitting = ref(false)
-
-function goBack(): void {
-  void router.push('/mine')
-}
 
 async function submitMessage(): Promise<void> {
   const description = content.value.trim()
@@ -31,7 +24,7 @@ async function submitMessage(): Promise<void> {
   submitting.value = true
   try {
     const response = await postMiscReportFeedbackQuestIonApi({
-      title: 'Mine Message Board',
+      title: 'H5游戏反馈',
       description,
     })
     if (response.code !== 0) {
@@ -49,21 +42,26 @@ async function submitMessage(): Promise<void> {
 </script>
 
 <template>
-  <div class="mine-glass-page board-page" :style="backgroundStyle">
+  <div class="page-shell mine-glass-page board-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
-      <p class="tip">请此处留言您的反馈</p>
+      <p class="tip">请在此处留言您的反馈</p>
 
       <textarea
         v-model="content"
         class="board-input"
-        maxlength="250"
-        placeholder="Type here"
+        maxlength="1000"
+        placeholder="在此输入您的反馈"
       ></textarea>
 
-      <button class="submit-btn" type="button" :disabled="submitting" @click="submitMessage">
-        {{ submitting ? 'Submitting...' : 'Submit Report' }}
+      <button
+        class="submit-btn"
+        type="button"
+        :disabled="submitting"
+        @click="submitMessage"
+      >
+        {{ submitting ? '提交中...' : '提交' }}
       </button>
     </div>
   </div>
@@ -71,7 +69,7 @@ async function submitMessage(): Promise<void> {
 
 <style scoped lang="scss">
 .mine-glass-page {
-  min-height: 100dvh;
+  height: 100dvh;
   color: #f3f3f3;
   background-size: cover;
   background-position: center;
@@ -109,12 +107,13 @@ async function submitMessage(): Promise<void> {
 }
 
 .submit-btn {
-  margin-top: auto;
+  margin-top: 1rem;
   border: 0;
   border-radius: 0.56rem;
   height: 1.12rem;
   color: #fbfbfb;
   font-size: 0.5rem;
   background: linear-gradient(165deg, #05e7ae 8%, #027a5c 72%);
+  width: 100%;
 }
 </style>

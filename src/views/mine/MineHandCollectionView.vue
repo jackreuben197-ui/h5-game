@@ -1,11 +1,30 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
+import { useRouter } from 'vue-router'
+import type {
+  MiscGameRoundListDataByRoomRecord,
+  MiscGameRoundListDataByRoomRoomRecord,
+  MiscGameRoundListDataByRoomUserGameRecord,
+} from '@/api/models/misc'
+import type { StatsUserGameRecordListRecord, StatsUserGameRecordListRoom_record } from '@/api/models/stats'
+import {
+  decodeCard,
+  GetWinDesc,
+  parseHandRecordCards,
+  parseReplayLike,
+  type StatsReplayData,
+  type StatsReplayFantasyData,
+} from '@/api/models/replayDisplay'
+import { postMiscGameRoundListDataByRoomApi } from '@/api/misc'
 import { postStatsUserGameRecordListApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { setHandReplaySession } from '@/session/handReplaySession'
+import { formatUC } from '@/utils/roomVisibility'
 
 const title = computed(() => 'Result')
+const router = useRouter()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -20,12 +39,15 @@ const selectedMode = ref(modeTabs[0])
 interface HandCard {
   id: string
   title: string
+  handCards: string[]
   handId: string
   table: string
   pot: string
   hands: string
   profit: string
   negative?: boolean
+  roomRecord?: StatsUserGameRecordListRoom_record
+  handRecord?: StatsUserGameRecordListRecord
 }
 
 const loading = ref(false)
@@ -55,27 +77,54 @@ function resolveGameFilter(): { game_types: number[]; poker_types?: number[] } {
   return { game_types: [0] }
 }
 
-function mapRowToCards(row: Record<string, unknown>, index: number): HandCard[] {
-  const roomRecord = (row.room_record as Record<string, unknown>) ?? {}
+function isRedSuit(card: string): boolean {
+  return card.includes('♥') || card.includes('♦')
+}
+
+function buildDisplayCards(record: { data?: unknown }): string[] {
+  const parsed = parseHandRecordCards(record.data)
+  const cards = parsed.slice(0, 2).map(item => decodeCard(item))
+  if (!cards.length) return ['--', '--']
+  if (cards.length === 1) return [cards[0], '--']
+  return cards
+}
+
+function buildCardTitle(record: StatsUserGameRecordListRecord): string {
+  const replay = parseReplayLike<StatsReplayData>(record.replay)
+  const replayFantasy = parseReplayLike<StatsReplayFantasyData>(record.replay_ft)
+  return GetWinDesc(replay, replayFantasy)
+}
+
+type HandCollectionRow = {
+  room_record?: StatsUserGameRecordListRoom_record | MiscGameRoundListDataByRoomRoomRecord
+  user_game_records?: Array<StatsUserGameRecordListRecord | MiscGameRoundListDataByRoomUserGameRecord>
+}
+
+function mapRowToCards(row: HandCollectionRow, index: number): HandCard[] {
+  const roomRecord = (row.room_record ?? {})
   const gameRecords = Array.isArray(row.user_game_records) ? row.user_game_records : []
-  const roomName = String(roomRecord.name ?? 'Hand Record')
-  const handTable = `${toSafeNumber(roomRecord.small_blind)}/${toSafeNumber(roomRecord.random_ante ?? 0)}(${toSafeNumber(roomRecord.poker_type)})`
+  let sb = toSafeNumber(roomRecord.small_blind)
+  const handTable = `${formatUC(sb)}/${formatUC(sb * 2)}`
 
   return gameRecords.map((item, itemIndex) => {
-    const record = (item as Record<string, unknown>) ?? {}
-    const handId = String(record.room_unique_id ?? record.id ?? '--')
-    const pot = toSafeNumber(record.bet_pot).toLocaleString('en-US')
+    const record = ({ ...(item ?? {}) } as StatsUserGameRecordListRecord)
+    const normalizedRoomRecord = ({ ...roomRecord } as StatsUserGameRecordListRoom_record)
+    const handId = String(record.id ?? '--')
+    const pot = formatUC(record.bet_pot ?? 0)
     const hands = toSafeNumber(record.hand_num).toLocaleString('en-US')
-    const profit = formatSigned(record.change)
+    const profit = formatSigned(formatUC(record.change ?? 0))
     return {
       id: `${index + 1}-${itemIndex + 1}-${handId}`,
-      title: String(record.name ?? roomName),
+      title: buildCardTitle(record),
+      handCards: buildDisplayCards(record),
       handId,
       table: handTable,
       pot,
       hands,
       profit,
-      negative: !profit.startsWith('+'),
+      negative: toSafeNumber(record.change) < 0,
+      roomRecord: normalizedRoomRecord,
+      handRecord: record,
     }
   })
 }
@@ -84,21 +133,35 @@ async function fetchHandCollection(): Promise<void> {
   loading.value = true
   try {
     const filter = resolveGameFilter()
-    const response = await postStatsUserGameRecordListApi({
-      ...filter,
-      room_type: 0,
-      limit: 20,
-      offset: 0,
-    })
-    if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载手牌记录失败')
-    }
+    if (selectedMode.value === '收藏') {
+      const response = await postMiscGameRoundListDataByRoomApi({
+        ...filter,
+        limit: 20,
+        offset: 0,
+      })
 
-    const records = Array.isArray(response.data?.records) ? response.data.records : []
-    const flat = records.flatMap((row, index) => mapRowToCards((row as Record<string, unknown>) ?? {}, index))
-    handCards.value = selectedMode.value === '收藏'
-      ? flat.filter(card => card.handId && card.handId !== '--').slice(0, 20)
-      : flat
+      if (response.code !== 0) {
+        throw new Error(typeof response.msg === 'string' ? response.msg : '加载收藏手牌失败')
+      }
+
+      const rows = Array.isArray(response.data?.list)
+        ? response.data.list
+        : []
+      handCards.value = rows.flatMap((row, index) => mapRowToCards((row as MiscGameRoundListDataByRoomRecord) ?? {}, index))
+    } else {
+      const response = await postStatsUserGameRecordListApi({
+        ...filter,
+        room_type: 0,
+        limit: 20,
+        offset: 0,
+      })
+      if (response.code !== 0) {
+        throw new Error(typeof response.msg === 'string' ? response.msg : '加载手牌记录失败')
+      }
+
+      const records = Array.isArray(response.data?.records) ? response.data.records : []
+      handCards.value = records.flatMap((row, index) => mapRowToCards((row as HandCollectionRow) ?? {}, index))
+    }
   } catch (error) {
     handCards.value = []
     const message = error instanceof Error ? error.message : '加载手牌记录失败'
@@ -120,13 +183,33 @@ function selectMode(tab: string): void {
   void fetchHandCollection()
 }
 
+function goHandDetail(card: HandCard): void {
+  if (!card.handRecord) {
+    showFailToast('牌谱数据异常')
+    return
+  }
+
+  setHandReplaySession({
+    handId: card.handId,
+    roomRecord: card.roomRecord,
+    handRecord: card.handRecord,
+  })
+
+  void router.push({
+    path: '/mine/hand-collection/detail',
+    query: {
+      hand_id: card.handId,
+    },
+  })
+}
+
 onMounted(() => {
   void fetchHandCollection()
 })
 </script>
 
 <template>
-  <div class="mine-glass-page" :style="backgroundStyle">
+  <div class="page-shell mine-glass-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -157,13 +240,23 @@ onMounted(() => {
       <section class="list-wrap">
         <p v-if="loading" class="list-status">加载中...</p>
         <p v-else-if="!handCards.length" class="list-status">暂无手牌记录</p>
-        <article v-for="card in handCards" :key="card.id" class="glass-card hand-card">
+        <article
+          v-for="card in handCards"
+          :key="card.id"
+          class="glass-card hand-card"
+          @click="goHandDetail(card)"
+        >
           <div class="top-row">
             <div class="poker-pair">
-              <div class="poker">10♣</div>
-              <div class="poker red">J♦</div>
+              <div
+                v-for="(value, idx) in card.handCards"
+                :key="`${card.id}-card-${idx}`"
+                :class="['poker', { red: isRedSuit(value) }]"
+              >
+                {{ value }}
+              </div>
             </div>
-            <div class="title">{{ card.title }}</div>
+            <div class="title" v-html="card.title"></div>
           </div>
           <div class="line"></div>
           <div class="bottom-row">
@@ -184,7 +277,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .mine-glass-page {
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;
@@ -319,7 +412,7 @@ onMounted(() => {
 }
 
 .money {
-  color: #05e7ae;
+  color: #fa2b4b;
   font-size: 0.52rem;
   font-weight: 700;
 

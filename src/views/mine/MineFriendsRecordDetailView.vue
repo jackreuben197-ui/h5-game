@@ -159,7 +159,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="record-detail-page" :style="backgroundStyle">
+  <div class="page-shell record-detail-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -239,7 +239,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .record-detail-page {
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;

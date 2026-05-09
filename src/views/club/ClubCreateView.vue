@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import imgClubCover from '@/assets/images/club_cover_avatar.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 const router = useRouter()
 
@@ -23,10 +30,6 @@ const canCreate = computed(() => {
 })
 
 const avatarImage = computed(() => avatarPreviewUrl.value || imgClubCover)
-
-function goBack(): void {
-  void router.push('/club')
-}
 
 function chooseAvatar(): void {
   avatarSheetVisible.value = true
@@ -87,7 +90,7 @@ async function onCreateClub(): Promise<void> {
 </script>
 
 <template>
-  <div class="club-create-bg">
+  <div class="page-shell club-create-bg" :style="backgroundStyle">
     <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
     <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
     <input
@@ -107,12 +110,7 @@ async function onCreateClub(): Promise<void> {
     />
 
     <div class="club-create">
-      <header class="top-bar">
-        <button type="button" class="back-btn" @click="goBack">
-          <span class="back-icon" aria-hidden="true"></span>
-          <span class="back-title">创建俱乐部</span>
-        </button>
-      </header>
+      <HeaderBack :title="'创建俱乐部'" />
 
       <section class="avatar-card">
         <button
@@ -207,10 +205,10 @@ async function onCreateClub(): Promise<void> {
 <style scoped lang="scss">
 .club-create-bg {
 	position: relative;
-	min-height: 100dvh;
-	color: #fbfbfb;
+	height: 100dvh;
+	padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
 	background:
-		radial-gradient(140% 84% at 50% -6%, rgba(216, 146, 131, 0.66), rgba(142, 82, 128, 0.62) 42%, rgba(29, 124, 153, 0.84) 100%),
+		radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.68), rgba(154, 97, 145, 0.66) 45%, rgba(33, 136, 168, 0.86) 100%),
 		linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
 	overflow: hidden;
 }
@@ -219,24 +217,24 @@ async function onCreateClub(): Promise<void> {
 	position: absolute;
 	border-radius: 999px;
 	filter: blur(0.9rem);
-	opacity: 0.48;
+	opacity: 0.5;
 	pointer-events: none;
 }
 
 .bg-blur--pink {
-	width: 2.9067rem;
-	height: 2.9067rem;
+	width: 2.6rem;
+	height: 2.6rem;
 	top: 3.8rem;
-	left: -0.96rem;
+	left: -0.8rem;
 	background: rgba(217, 32, 116, 0.56);
 }
 
 .bg-blur--cyan {
-	width: 3.04rem;
-	height: 3.04rem;
-	right: -1.12rem;
-	bottom: 1.5rem;
-	background: rgba(36, 212, 255, 0.55);
+	width: 2.3rem;
+	height: 2.3rem;
+	right: -0.7rem;
+	bottom: 2.6rem;
+	background: rgba(36, 212, 255, 0.52);
 }
 
 .avatar-file-input {
@@ -252,43 +250,38 @@ async function onCreateClub(): Promise<void> {
 	z-index: 1;
 	display: flex;
 	flex-direction: column;
-	width: min(100%, var(--app-max-width));
-	margin: 0 auto;
-	min-height: 100dvh;
-	padding-bottom: calc(0.3577rem + env(safe-area-inset-bottom));
+	height: 100dvh;
+	gap: 0.40524rem;
+	padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
 }
 
 .top-bar {
-	min-height: 1.4459rem;
-	display: flex;
-	align-items: center;
-	padding: calc(0.4598rem + env(safe-area-inset-top)) 0.7733rem 0;
+	min-height: 0.72215rem;
+	padding-left: 0.32rem;
 }
 
 .back-btn {
 	border: 0;
 	background: transparent;
-	color: #fbfbfb;
+	color: #f9f9f9;
 	display: inline-flex;
 	align-items: center;
-	gap: 0.2rem;
+	gap: 0.16rem;
 	padding: 0;
 }
 
 .back-icon {
-	width: 0.2133rem;
-	height: 0.2133rem;
-	border-left: 0.0533rem solid rgba(251, 251, 251, 0.96);
-	border-bottom: 0.0533rem solid rgba(251, 251, 251, 0.96);
+	width: 0.18rem;
+	height: 0.18rem;
+	border-left: 0.03rem solid rgba(249, 249, 249, 0.95);
+	border-bottom: 0.03rem solid rgba(249, 249, 249, 0.95);
 	transform: rotate(45deg);
-	margin-left: 0.08rem;
 }
 
 .back-title {
-	font-size: 0.6503rem;
-	line-height: 1.2;
+	font-size: 0.49799rem;
+	line-height: 1;
 	font-weight: 500;
-	letter-spacing: 0.002rem;
 }
 
 .avatar-card {

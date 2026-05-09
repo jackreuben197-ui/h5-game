@@ -29,6 +29,7 @@ import imgBannerBgC from '@/assets/images/game_list_card_table_bg.png'
 import type { ClubInfo } from '@/stores/userInfo'
 import { useUserInfoStore } from '@/stores/userInfo'
 
+
 type QuickActionKind = 'create-club' | 'club-panel' | 'create-union'
 
 interface QuickActionItem {
@@ -141,13 +142,9 @@ function goToClubDetail(club?: ClubInfo): void {
   void router.push('/club/index')
 }
 
-function goToRoomHistory(): void {
-  void router.push('/club/room/history')
-}
-
 function onQuickAction(itemId: number): void {
   if (itemId === 2) {
-    goToRoomHistory()
+    showFailToast('功能开发中')
     return
   }
 
@@ -474,7 +471,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .club-index-bg {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   background-color: #0f122f;
 }
 

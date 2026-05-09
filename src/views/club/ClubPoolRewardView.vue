@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 interface PoolRewardItem {
   id: string
@@ -48,7 +54,7 @@ function onOpenRecord(item: PoolRewardItem): void {
 </script>
 
 <template>
-  <div class="pool-reward-page">
+  <div class="page-shell pool-reward-page" :style="backgroundStyle">
     <div class="page-overlay"></div>
 
     <HeaderBack :title="'奖池记录'" />
@@ -116,7 +122,6 @@ function onOpenRecord(item: PoolRewardItem): void {
   position: relative;
   height: 100dvh;
   padding: 0 0.4267rem calc(2.88rem + env(safe-area-inset-bottom));
-  background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
   overflow-x: hidden;
   overflow-y: auto;
 }

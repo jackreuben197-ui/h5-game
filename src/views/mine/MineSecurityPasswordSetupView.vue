@@ -109,7 +109,7 @@ function closeOverlay(): void {
 </script>
 
 <template>
-  <div class="security-password-page">
+  <div class="page-shell security-password-page" :style="backgroundStyle">
     <button class="close-btn" type="button" @click="closePage">×</button>
 
     <section class="password-panel">
@@ -168,7 +168,7 @@ function closeOverlay(): void {
 
 <style scoped lang="scss">
 .security-password-page {
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.42rem);
   position: relative;
   background:

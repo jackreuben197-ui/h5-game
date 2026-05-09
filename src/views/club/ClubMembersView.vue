@@ -6,11 +6,18 @@ import { formatUC } from '@/utils/roomVisibility'
 import { postClubFundChangeLogApi, postOrgClubGoldApi, postOrgMemberListApi } from '@/api/org'
 import { postGuildGiveRecyCleApi } from '@/api/order'
 import type { ClubFundChangeLogRecord, OrgClubGoldData, OrgMemberListRecord } from '@/api/models/org'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
 import { useUserInfoStore } from '@/stores/userInfo'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 type TabKey = 'account' | 'record'
 type MemberRole = '管理员' | '代理人' | '成员'
@@ -617,10 +624,6 @@ function iconByType(type: SummaryItem['icon']): string {
   return imgChips
 }
 
-function goBack(): void {
-  void router.push('/club/detail')
-}
-
 function switchTab(tab: TabKey): void {
   activeTab.value = tab
 
@@ -817,19 +820,21 @@ onMounted(() => {
 </script>
 
 <template>
-  <div ref="pageRef" class="club-members-bg" @scroll="onPageScroll">
+  <div
+    ref="pageRef"
+    class="page-shell club-members-bg"
+    :style="backgroundStyle"
+    @scroll="onPageScroll"
+  >
     <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
     <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
 
-    <div class="page-shell club-members">
-      <header class="top-bar">
-        <button type="button" class="back-btn" @click="goBack">
-          <span class="back-icon" aria-hidden="true"></span>
-          <span class="back-title">基金管理</span>
-        </button>
-
-        <p class="member-total">会员总数 <span>{{ memberTotalText }}</span></p>
-      </header>
+    <div class="club-members">
+      <HeaderBack :title="'基金管理'">
+        <template #right>
+          <p class="member-total">会员总数 <span>{{ memberTotalText }}</span></p>
+        </template>
+      </HeaderBack>
 
       <nav class="member-tabs" aria-label="基金页签">
         <button
@@ -1217,37 +1222,36 @@ onMounted(() => {
 .club-members-bg {
   position: relative;
   height: 100dvh;
-  min-height: 100dvh;
-  background:
-    radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.66), rgba(154, 97, 145, 0.64) 45%, rgba(33, 136, 168, 0.84) 100%),
-    linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
+  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
   overflow-x: hidden;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
+  background:
+    radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.68), rgba(154, 97, 145, 0.66) 45%, rgba(33, 136, 168, 0.86) 100%),
+    linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
 }
 
 .bg-blur {
   position: absolute;
   border-radius: 999px;
-  filter: blur(1.5rem);
+  filter: blur(1rem);
   opacity: 0.5;
   pointer-events: none;
 }
 
 .bg-blur--pink {
-  width: 4.2rem;
-  height: 4.2rem;
-  top: 5.1rem;
-  left: -1.35rem;
-  background: rgba(221, 50, 131, 0.5);
+  width: 3rem;
+  height: 3rem;
+  top: 4.1rem;
+  left: -1rem;
+  background: rgba(221, 50, 131, 0.48);
 }
 
 .bg-blur--cyan {
-  width: 4.5rem;
-  height: 4.5rem;
-  right: -1.65rem;
-  bottom: 3.3rem;
+  width: 3.2rem;
+  height: 3.2rem;
+  right: -1.2rem;
+  bottom: 1.1rem;
   background: rgba(45, 214, 255, 0.55);
 }
 
@@ -1256,54 +1260,17 @@ onMounted(() => {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100%;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.3rem);
-  padding-bottom: calc(0.3rem + env(safe-area-inset-bottom));
-  gap: 0.34538rem;
-}
-
-.top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 1.05rem;
-	padding-left: 0.32rem;
-}
-
-.back-btn {
-  border: 0;
-  background: transparent;
-  color: #f9f9f9;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.24rem;
-  padding: 0;
-}
-
-.back-icon {
-  width: 0.27rem;
-  height: 0.27rem;
-  border-left: 0.045rem solid rgba(249, 249, 249, 0.95);
-  border-bottom: 0.045rem solid rgba(249, 249, 249, 0.95);
-  transform: rotate(45deg);
-}
-
-.back-title {
-  font-size: 0.50933rem;
-  line-height: 1;
-  font-weight: 500;
+  height: 100dvh;
+  padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
+  gap: 0.08rem;
 }
 
 .member-total {
   margin: 0;
-  font-size: 0.34503rem;
+  font-size: 0.32rem;
   line-height: 1;
-  color: rgba(243, 243, 243, 0.9);
-}
-
-.member-total span {
-  color: #f9f9f9;
-  font-weight: 700;
+  color: rgba(249, 249, 249, 0.9);
+  padding-left: 0.32rem;
 }
 
 .member-tabs {
@@ -2191,10 +2158,6 @@ onMounted(() => {
 }
 
 @media (max-width: 340px) {
-  .back-title {
-    font-size: 0.51rem;
-  }
-
   .member-total {
     font-size: 0.32013rem;
   }

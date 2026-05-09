@@ -25,6 +25,12 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { extractInvitationLink } from '@/utils/clubInvitation'
 import { generateQrCodeUrl } from '@/utils/qrcode'
 import { showFailToast, showSuccessToast } from 'vant'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 interface QuickActionItem {
 	id: number
@@ -190,7 +196,7 @@ function goEditName(): void {
 
 function onQuickAction(actionId: number): void {
   if (actionId === 1) {
-    void router.push('/club/activity/list')
+  	showFailToast('功能开发中')
     return
   }
 
@@ -398,12 +404,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="club-detail-bg ">
+  <div class="page-shell club-detail-bg" :style="backgroundStyle">
     <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
     <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
     <HeaderBack :title="'俱乐部信息'" />
 
-    <div v-loading="loading" class="page-shell club-detail app-scroll-standalone">
+    <div v-loading="loading" class="club-detail app-scroll-standalone">
       <section class="club-header-card">
         <div class="club-header-main">
           <img class="club-avatar" :src="displayClub?.logo || imgClubCover" alt="俱乐部头像" />
@@ -582,7 +588,7 @@ onMounted(async () => {
 <style scoped lang="scss">
 .club-detail-bg {
 	position: relative;
-	min-height: 100dvh;
+	height: 100dvh;
 	background:
 		radial-gradient(140% 84% at 50% -6%, rgba(216, 146, 131, 0.64), rgba(142, 82, 128, 0.6) 42%, rgba(29, 124, 153, 0.82) 100%),
 		linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);

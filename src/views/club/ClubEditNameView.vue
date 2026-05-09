@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import { postOrgChangeClubDataApi } from '@/api/org'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { showFailToast, showSuccessToast } from 'vant'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -23,10 +30,6 @@ const nameLength = computed(() => {
 const canConfirm = computed(() => {
   return nameLength.value > 0 && !isSubmitting.value
 })
-
-function goBack(): void {
-  void router.push('/club/detail')
-}
 
 function goRecharge(): void {
   void router.push('/recharge')
@@ -75,17 +78,12 @@ async function onConfirm(): Promise<void> {
 </script>
 
 <template>
-  <div class="club-edit-name-bg">
+  <div class="page-shell club-edit-name-bg" :style="backgroundStyle">
     <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
     <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
 
-    <div class="page-shell club-edit-name">
-      <header class="top-bar">
-        <button type="button" class="back-btn" @click="goBack">
-          <span class="back-icon" aria-hidden="true"></span>
-          <span class="back-title">修改名称</span>
-        </button>
-      </header>
+    <div class="club-edit-name">
+      <HeaderBack :title="'修改名称'" />
 
       <section class="editor-block">
         <div class="hint-row">
@@ -137,7 +135,7 @@ async function onConfirm(): Promise<void> {
 <style scoped lang="scss">
 .club-edit-name-bg {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   background:
     radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.68), rgba(154, 97, 145, 0.66) 45%, rgba(33, 136, 168, 0.86) 100%),
     linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
@@ -173,41 +171,10 @@ async function onConfirm(): Promise<void> {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
   gap: 0.18rem;
   padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
   padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
-}
-
-.top-bar {
-  min-height: 0.7rem;
-  display: flex;
-  align-items: center;
-  padding-left: 0.32rem;
-}
-
-.back-btn {
-  border: 0;
-  background: transparent;
-  color: #f9f9f9;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.16rem;
-  padding: 0;
-}
-
-.back-icon {
-  width: 0.18rem;
-  height: 0.18rem;
-  border-left: 0.03rem solid rgba(249, 249, 249, 0.95);
-  border-bottom: 0.03rem solid rgba(249, 249, 249, 0.95);
-  transform: rotate(45deg);
-}
-
-.back-title {
-  font-size: 0.65rem;
-  line-height: 1.2;
-  font-weight: 500;
 }
 
 .editor-block {
@@ -363,10 +330,6 @@ input::placeholder {
 }
 
 @media (max-width: 340px) {
-  .back-title {
-    font-size: 0.54rem;
-  }
-
   .hint-text,
   .count-text {
     font-size: 0.28rem;

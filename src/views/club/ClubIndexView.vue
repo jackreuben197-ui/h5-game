@@ -26,6 +26,12 @@ import gameTypeNlh from '@/assets/icons/game_type_nlh.png'
 import gameTypePlo from '@/assets/icons/game_type_plo.png'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
 
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
 type ClubHeaderTabName = 'poker' | 'mahjong' | 'event'
 const POKER_TYPE_LONG = 0
@@ -481,7 +487,7 @@ function formatChipBase(rawValue: number): string {
 </script>
 
 <template>
-  <div class="room-list-page themeType2" :style="pageStyle">
+  <div class="page-shell room-list-page themeType2" :style="[backgroundStyle, pageStyle]">
     <div class="bg-overlay"></div>
     <HeaderBack>
       <div class="club-identity">
@@ -513,7 +519,12 @@ function formatChipBase(rawValue: number): string {
           icon-alt="wallet"
           @click="router.push('/wallet')"
         />
-        <TopActionButton :name="t('UIMineMain01')" :icon="serviceIcon" icon-alt="service" />
+        <TopActionButton
+          :name="t('UIMineMain01')"
+          :icon="serviceIcon"
+          icon-alt="service"
+          @click="showFailToast('客服功能开发中')"
+        />
       </div>
     </HeaderBack>
     <header class="club-header">
@@ -655,17 +666,17 @@ function formatChipBase(rawValue: number): string {
 <style scoped lang="scss">
 .room-list-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   color: #fff;
   overflow: hidden;
-  background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
 }
 
 .bg-overlay {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
+  background:
+    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
     radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
     radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
 }
@@ -944,8 +955,10 @@ function formatChipBase(rawValue: number): string {
   inset: -0.0107rem;
   border-radius: inherit;
   border: 0.0107rem solid rgba(255, 255, 255, 0.58);
-  box-shadow: inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
-    inset 0 0 0.2rem rgba(255, 255, 255, 0.14), 0 0 0.08rem rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
+    inset 0 0 0.2rem rgba(255, 255, 255, 0.14),
+    0 0 0.08rem rgba(255, 255, 255, 0.18);
   filter: blur(0.002rem);
   pointer-events: none;
   z-index: 4;

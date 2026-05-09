@@ -480,7 +480,7 @@ export interface UserBillRequest {
     limit?: number; // 每页条数
     offset?: number; // 开始下标
     user_id?: number; // 用户ID
-    op_codes?: unknown; // 操作类型编码数组
+    op_codes?: string[]; // 操作类型编码数组
     sort_type?: number; // 排序类型：1-创建时间；2-成员数；3-等级
     order_type?: number; // 排序方式 1=升序 2=降序
     start_time?: number; // 开始时间戳
@@ -498,8 +498,8 @@ export interface UserBillData {
     limit?: number; // 数据数量
     offset?: number; // 当前偏移值
     total?: number; // 总条数
-    list?: unknown[]; // 钱包列表
-    total_info?: unknown; // 统计信息列表
+    list?: UserBillWallet[]; // 钱包列表
+    total_info?: UserBillTotalInfo; // 统计信息列表
 
   [key: string]: unknown
 }
@@ -554,5 +554,77 @@ export interface UserGoldChangeLogData {
   offset?: number
   total?: number
   list?: UserGoldChangeLogRecord[]
+  [key: string]: unknown
+}
+
+// /api/user/wallets_log (UserBill)
+
+export interface UserBillTotalInfo {
+    grant_amount?: number; // 发放总额
+    recover_amount?: number; // 回收总额
+    bring_amount?: number; // 赢取金额
+    self_profit_amount?: number; // 返水（RB）总额
+    change_amount?: number; // 变动总额
+
+  [key: string]: unknown
+}
+
+export interface UserBillWallet {
+    gold_change?: number; // 余额变动
+    gold_after?: number; // 变动后余额
+    create_time?: string; // 创建时间
+    op_code?: string; // 操作类型
+    gold_type?: number; // 金币类型
+    club_name?: string; // 俱乐部名称
+    src_type?: number;
+    src_room_id?: number; // 来源房间ID
+    name?: string; // 牌局名称
+    room_info?: UserBillRoom_info; // 房间信息 没有则为null
+    date?: string; // 显示的日期 为空则不显示
+    memeber_array?: UserBillMember[]; // 批量赠送钻石
+    memeber_count?: number; // 批量赠送钻石的成员数量
+    tribe_name?: string; // 联盟名称
+    nick_name?: string; // 用户名称
+    user_random_id?: number; // 用户随机id
+    op_nick_name?: string; // 发送目的用户名称
+    op_random_id?: number; // 发送目的用户id
+    multi_lang_names_obj?: unknown; // 多语言名称
+    src_match_id?: number;
+    match_tribe_name?: string;
+    src_nick_name?: string; // 来源用户昵称
+    src_random_id?: number; // 来源用户ID
+
+  [key: string]: unknown
+}
+
+export interface UserBillRoom_info {
+    club_name?: string; // 创建房间的俱乐部名称
+    creator_name?: string; // 创建房间的用户名
+    bring_in_amount?: number; // 总带入
+    bring_out_amount?: number; // 总带出
+    origin_type?: number; // 创建来源 1=平台 2=联盟 3=俱乐部 4=个人（朋友桌）
+    share_table?: number; // 是否共享牌桌 1=不共享 2=共享
+    records?: UserBillRecord[]; // 变动金额列表
+    self_profit_amount?: number; // 自身返水金额
+    game_type?: number; // 游戏类型
+    ante?: number; // 前注
+    poker_type?: number; // 牌型
+
+  [key: string]: unknown
+}
+
+export interface UserBillRecord {
+    gold_change?: number; // 变动金额
+    op_code?: string; // 操作类型
+    create_time?: string; // 创建时间
+
+  [key: string]: unknown
+}
+
+export interface UserBillMember {
+    nick_name?: string; // 名称
+    gold_change?: number; // 变动金额
+    create_time?: string; // 创建时间
+
   [key: string]: unknown
 }

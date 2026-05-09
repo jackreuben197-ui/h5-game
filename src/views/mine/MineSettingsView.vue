@@ -60,10 +60,6 @@ function languageLabel(): string {
   return 'English'
 }
 
-function goBack(): void {
-  void router.push('/mine')
-}
-
 async function onRowClick(item: SettingItem): Promise<void> {
   if (item.clickable === false) {
     return
@@ -124,7 +120,7 @@ async function onRowClick(item: SettingItem): Promise<void> {
 </script>
 
 <template>
-  <div class="mine-glass-page" :style="backgroundStyle">
+  <div class="page-shell mine-glass-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -194,7 +190,7 @@ async function onRowClick(item: SettingItem): Promise<void> {
 
 <style scoped lang="scss">
 .mine-glass-page {
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;

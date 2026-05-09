@@ -26,14 +26,14 @@ interface RecordItem {
   feePositive?: boolean
 }
 
-const title = computed(() => '数捕管理')
+const title = computed(() => '数据管理')
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const filterTabs = ['今天', '14天', '7天', 'Customize']
+const filterTabs = ['今天', '14天', '7天', '自定义']
 const activeFilter = ref(filterTabs[0])
 const loading = ref(false)
 
@@ -52,7 +52,7 @@ const weekLabels = ['m', 't', 'w', 't', 'f', 's', 's']
 const metrics = ref<SummaryMetric[]>([
   { label: '手数/局数', value: '0/0' },
   { label: '盈利', value: '0' },
-  { label: '服務費', value: '0' },
+  { label: '服务费', value: '0' },
 ])
 
 const records = ref<RecordItem[]>([])
@@ -361,7 +361,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="friends-record-page" :style="backgroundStyle">
+  <div class="page-shell friends-record-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -536,7 +536,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .friends-record-page {
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.459rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;

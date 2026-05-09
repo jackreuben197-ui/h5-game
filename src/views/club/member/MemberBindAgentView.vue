@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { getMemberRouteContext } from '../clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar.png'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 const route = useRoute()
 const router = useRouter()
@@ -16,18 +23,14 @@ const rows = ref([
   { id: '12345682', name: 'Player Name', checked: false },
 ])
 
-function goBack(): void {
-  void router.back()
-}
-
 function onConfirm(): void {
-  const selected = rows.value.find((row) => row.checked)
+  const _selected = rows.value.find((row) => row.checked)
   void router.push({
     path: `/club/member/${context.value.memberId}`,
     query: {
       identity: 'player',
       bound: '1',
-      name: selected?.name || context.value.name,
+      name: _selected?.name || context.value.name,
       uid: context.value.uid,
     },
   })
@@ -35,12 +38,9 @@ function onConfirm(): void {
 </script>
 
 <template>
-  <div class="sub-bg">
-    <div class="page-shell sub-page">
-      <header class="header">
-        <button type="button" class="back" @click="goBack">返回</button>
-        <h1>Bind Agents</h1>
-      </header>
+  <div class="page-shell sub-bg" :style="backgroundStyle">
+    <div class="sub-page">
+      <HeaderBack title="Bind Agents" />
 
       <section class="cards">
         <article
@@ -72,7 +72,6 @@ function onConfirm(): void {
 
 .sub-bg {
   height: 100dvh;
-  min-height: 100dvh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
@@ -85,7 +84,6 @@ function onConfirm(): void {
 
 .sub-page {
   min-height: 100%;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + #{figma-rem(17.244)});
   padding-bottom: calc(#{figma-rem(13.412)} + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
@@ -96,7 +94,6 @@ function onConfirm(): void {
   display: flex;
   align-items: center;
   gap: figma-rem(9.602);
-
 }
 
 .header h1 {
@@ -107,8 +104,8 @@ function onConfirm(): void {
 
 .back {
   border: 0;
-  background: transparent;
   color: #fff;
+  background: transparent;
 }
 
 .cards {

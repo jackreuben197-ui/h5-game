@@ -2,21 +2,24 @@
 import { computed, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
 import { postPropUserPropListApi } from '@/api/prop'
+import type { PropUserPropListRecord } from '@/api/models/prop'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-import iconTicket from '@/assets/icons/icon_ticket.png'
+import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
+import { getLocale, t } from '@/i18n'
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const title = computed(() => 'My Items')
+const title = computed(() => '我的背包')
 
 interface BackpackItem {
   id: string
   name: string
   expire: string
+  icon: string
 }
 
 const loading = ref(false)
@@ -49,47 +52,18 @@ function resolveTimeLabel(raw: unknown): string {
   return date.toLocaleString('zh-CN', { hour12: false })
 }
 
-function extractList(value: unknown, depth = 0): Record<string, unknown>[] {
-  if (depth > 4 || value === null || value === undefined) {
-    return []
-  }
-
-  if (Array.isArray(value)) {
-    return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
-  }
-
-  if (typeof value !== 'object') {
-    return []
-  }
-
-  const obj = value as Record<string, unknown>
-  for (const key of ['list', 'records', 'items', 'data']) {
-    const nested = extractList(obj[key], depth + 1)
-    if (nested.length) {
-      return nested
-    }
-  }
-
-  for (const nestedValue of Object.values(obj)) {
-    const nested = extractList(nestedValue, depth + 1)
-    if (nested.length) {
-      return nested
-    }
-  }
-
-  return []
-}
-
-function mapBackpackItem(row: Record<string, unknown>, index: number): BackpackItem {
-  const name = toSafeString(row.prop_name ?? row.name ?? row.subscription_name).trim() || '道具'
-  const count = toSafeNumber(row.prop_amount ?? row.num ?? row.count)
-  const displayName = count > 0 ? `${name} x${count}` : name
+function mapBackpackItem(row: PropUserPropListRecord, index: number): BackpackItem {
+  let name = toSafeString(row.game_prop?.prop_name)
+  name = resolveTemplateTextByKey(name, getLocale()) || t(name) || name
+  const count = toSafeNumber(row.prop_amount)
+  const displayName = count > 0 ? `${name} *${count}` : name
   const expire = resolveTimeLabel(row.end_time_str ?? row.expired_time_str ?? row.end_time ?? row.expired_time)
 
   return {
     id: String(row.id ?? row.prop_id ?? index + 1),
     name: displayName,
     expire,
+    icon: row.game_prop?.prop_icon ?? '',
   }
 }
 
@@ -100,9 +74,10 @@ async function fetchBackpackData(): Promise<void> {
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : '加载背包失败')
     }
-
-    const rows = extractList(response.data?.list)
-    list.value = rows.map((item, index) => mapBackpackItem(item, index))
+    if (response.data?.total ?? 0 > 0) {
+      const rows = response.data.list ?? []
+      list.value = rows.map((item, index) => mapBackpackItem(item, index))
+    }
   } catch (error) {
     list.value = []
     const message = error instanceof Error ? error.message : '加载背包失败'
@@ -118,7 +93,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mine-glass-page" :style="backgroundStyle">
+  <div class="page-shell mine-glass-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -127,7 +102,7 @@ onMounted(() => {
         <p v-else-if="!list.length" class="list-status">暂无道具</p>
         <article v-for="item in list" :key="item.id" class="glass-card item-card">
           <div class="icon-wrap">
-            <img :src="iconTicket" :alt="item.name" />
+            <img :src="item.icon" :alt="item.name" />
           </div>
           <div>
             <div class="name">{{ item.name }}</div>
@@ -142,7 +117,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .mine-glass-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
   color: #f3f3f3;
   background-size: cover;
@@ -170,7 +145,7 @@ onMounted(() => {
 }
 
 .glass-card {
-  border-radius: 0.82rem;
+  border-radius: 4.22296rem;
   border: 0.02rem solid rgba(249, 249, 249, 0.2);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.04rem);
@@ -180,12 +155,12 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.22rem;
-  padding: 0.22rem;
+  padding: 0.36317rem 0.4392rem;
 }
 
 .icon-wrap {
-  width: 1.06rem;
-  height: 1.06rem;
+  width: 1.66rem;
+  height: 1.66rem;
   border-radius: 0.28rem;
   background: rgba(255, 255, 255, 0.15);
   display: flex;
@@ -193,8 +168,8 @@ onMounted(() => {
   align-items: center;
 
   img {
-    width: 0.76rem;
-    height: 0.76rem;
+    width: 1.36rem;
+    height: 1.36rem;
   }
 }
 

@@ -39,10 +39,6 @@ const items = ref<ShopItem[]>([])
 
 const userDiamond = computed(() => Number(userInfoStore.userInfo?.user.diamonds ?? 0))
 
-function goBack(): void {
-  router.back()
-}
-
 function toSafeNumber(value: unknown): number {
   const numeric = Number(value)
   return Number.isFinite(numeric) ? numeric : 0
@@ -113,7 +109,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mine-shop-page" :style="backgroundStyle">
+  <div class="page-shell mine-shop-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -146,7 +142,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .mine-shop-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;

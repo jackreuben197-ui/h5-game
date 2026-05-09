@@ -147,7 +147,7 @@ export function buildRoomConfigPayload(formState: NlhFormState): Record<string, 
 
     // ── 收费 ──────────────────────────────────────────────────────
     settlement_type: formState.settlement_type,
-    fee_permillage: formState.fee_on ? formState.fee_permillage : 0,
+    fee_permillage: formState.fee_on ? Math.round(formState.fee_permillage * 10) : 0,
     settle_profit_type: formState.settle_profit_type,
     preflop_free: formState.preflop_free,
     few_player_half_off: formState.few_player_half_off,
@@ -293,7 +293,7 @@ export function parseRoomConfigToFormState(c: Record<string, unknown>): NlhFormS
 
   // ── 收费 ────────────────────────────────────────────────────────
   base.settlement_type = num(c.settlement_type)
-  base.fee_permillage = num(c.fee_permillage)
+  base.fee_permillage = num(c.fee_permillage) / 10
   base.fee_on = base.fee_permillage > 0
   base.settle_profit_type = num(c.settle_profit_type)
   base.preflop_free = num(c.preflop_free, 2)

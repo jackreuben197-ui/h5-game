@@ -46,7 +46,7 @@ export default { name: 'GameTypeTabbar' }
 
 <template>
   <VanTabs
-    :model-value="props.modelValue"
+    :active="props.modelValue"
     :border="false"
     line-width="0"
     line-height="0"
@@ -57,7 +57,7 @@ export default { name: 'GameTypeTabbar' }
     title-inactive-color="rgba(255, 255, 255, 0.65)"
     :class="['room-tabs', props.size === 'lg' ? 'room-tabs--lg' : '']"
     :style="tabbarStyle"
-    @update:model-value="handleUpdate"
+    @update:active="handleUpdate"
   >
     <VanTab
       v-for="tab in tabOptions"

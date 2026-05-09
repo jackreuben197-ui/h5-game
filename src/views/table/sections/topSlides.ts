@@ -7,11 +7,11 @@ const BASE_SB_LIST = [
   30000, 50000, 100000,
 ]
 // 盲注
-const SB_OPTIONS = BASE_SB_LIST.map((v) => ({
+export const SB_OPTIONS = BASE_SB_LIST.map((v) => ({
   text: `${v / 100}/${v / 50}`,
   value: v,
 }))
-const ANTE_OPTIONS = BASE_SB_LIST.map((v) => ({
+export const ANTE_OPTIONS = BASE_SB_LIST.map((v) => ({
   text: `${v / 100}`,
   value: v,
 }))

@@ -655,7 +655,6 @@ function formatChip(value: number): string {
   height: 100dvh;
   color: #fff;
   overflow: hidden;
-  background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
 }
 
 .bg-overlay {

@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue'
 import { showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
-// import mainBgUrl from '@/assets/images/main_bg.webp'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import LoginSession from '@/session/loginSession'
@@ -20,18 +19,7 @@ import iconBoxSetting from '@/assets/icons/icon_box_setting.png'
 import iconShop from '@/assets/icons/icon_shop.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 
-import mainBgUrl from '@/assets/images/main_bg.webp'
-// 主容器背景图：全页面共用一张底图。
-const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
-}))
-
 const router = useRouter()
-
-// 主容器背景图：全页面共用一张底图。
-// const backgroundStyle = computed(() => ({
-//   backgroundImage: `url(${mainBgUrl})`,
-// }))
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
 
@@ -85,7 +73,7 @@ async function onLogout(): Promise<void> {
 </script>
 
 <template>
-  <div class="page-shell mine-page" :style="backgroundStyle">
+  <div class="page-shell mine-page">
     <div class="title-bar">
       <div class="title">{{ t('UIMine_title') }}</div>
       <div class="currency-info">

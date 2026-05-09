@@ -93,7 +93,6 @@ const router = useRouter()
   position: relative;
   height: 100dvh;
   padding: 0 0 calc(0.44rem + env(safe-area-inset-bottom));
-  background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
   overflow-x: hidden;
   overflow-y: auto;
 }

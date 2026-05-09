@@ -213,7 +213,12 @@ function goPoolReward(): void {
 </script>
 
 <template>
-  <div ref="pageRef" class="page-shell club-jackpot-page" @scroll="onPageScroll" :style="backgroundStyle">
+  <div
+    ref="pageRef"
+    class="page-shell club-jackpot-page"
+    :style="backgroundStyle"
+    @scroll="onPageScroll"
+  >
     <div class="page-overlay" aria-hidden="true"></div>
 
     <HeaderBack :title="'Jackpot'">
@@ -334,7 +339,6 @@ function goPoolReward(): void {
   position: relative;
   height: 100dvh;
   padding-bottom: calc(2.2rem + env(safe-area-inset-bottom));
-  background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
   overflow-x: hidden;
   overflow-y: auto;
 }

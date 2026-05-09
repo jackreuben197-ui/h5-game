@@ -202,7 +202,7 @@ export const gamePlayCriticalHitSection: TableFormFieldConfig[] = [
   {
     type: 'select',
     label: '游戏轮次',
-    modelValue: 'critical_hit_rounds',
+    modelValue: 'rounds',
     defaultValue: 1,
     options: CRIT_ROUNDS_OPTIONS,
     visibleWhen: [{ field: 'critical_hit', equals: 1 }],

@@ -28,6 +28,8 @@ import tabBg from '@/assets/icons/game_type_tab_bg.png'
 
 type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
 type ClubHeaderTabName = 'poker' | 'mahjong' | 'event'
+const POKER_TYPE_LONG = 0
+const POKER_TYPE_SHORT = 2
 
 interface RoomGroupViewModel {
   groupKey: string
@@ -438,21 +440,21 @@ function matchTabRoom(room: RoomRecord, tabName: GameTypeTabName): boolean {
   const pokerType = Number(room.poker_type) || 0
 
   if (tabName === 'all') return true
-  if (tabName === 'texas') return gameType === 0 && pokerType === 0
-  if (tabName === 'omaha') return [1, 2, 3].includes(gameType) && pokerType === 0
-  if (tabName === 'sixPlus') return pokerType === 2
+  if (tabName === 'texas') return gameType === 0 && pokerType === POKER_TYPE_LONG
+  if (tabName === 'omaha') return [1, 2, 3].includes(gameType) && pokerType === POKER_TYPE_LONG
+  if (tabName === 'sixPlus') return pokerType === POKER_TYPE_SHORT
   return true
 }
 
 function getGameName(gameType: number, pokerType: number): string {
-  if (pokerType === 2) return '6+'
+  if (gameType === 0 && pokerType === POKER_TYPE_SHORT) return '6+'
   if ([1, 2, 3].includes(gameType)) return '奥马哈'
   if (gameType === 0) return '德州扑克'
   return '扑克'
 }
 
 function getGameIconImage(gameType: number, pokerType: number): string {
-  if (pokerType === 2) return gameType6Plus
+  if (gameType === 0 && pokerType === POKER_TYPE_SHORT) return gameType6Plus
   if ([1, 2, 3].includes(gameType)) return gameTypePlo
   return gameTypeNlh
 }

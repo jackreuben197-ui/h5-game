@@ -331,7 +331,7 @@ const createFeeTip = computed<string>(() => {
 // section 渲染时动态访问 formState，用此别名绕过 TS 索引限制
 const formStateMap = formState as Record<string, FieldValue>
 
-const activeTab = ref<'quick' | 'pro'>('pro')
+const activeTab = ref<'quick' | 'pro'>('quick')
 
 const componentMap: Record<string, unknown> = {
   switch: TableSwitch,
@@ -483,6 +483,14 @@ watch(
   { immediate: true },
 )
 
+function onQuickEditTemplate(roomConfig: Record<string, unknown>): void {
+  const parsed = parseRoomConfigToFormState(roomConfig)
+  Object.assign(formState, parsed)
+  syncRouteParamsToFormState()
+  clampBuyinRangeOnce()
+  activeTab.value = 'pro'
+}
+
 // 从模板编辑跳转时，通过 history.state.room_config 携带服务端数据
 onMounted(() => {
   const roomConfig = (window.history.state as Record<string, unknown> | null)?.room_config
@@ -560,9 +568,9 @@ async function onCreateTable() {
     </HeaderBack>
 
     <!-- Quick create tab -->
-    <template v-if="activeTab === 'quick'">
-      <QuickCreateView />
-    </template>
+    <div v-show="activeTab === 'quick'" class="quick-create-wrapper">
+      <QuickCreateView @edit-template="onQuickEditTemplate" />
+    </div>
 
     <!-- Pro params tab -->
     <div v-if="activeTab === 'pro'" class="create-table-form">
@@ -710,6 +718,19 @@ async function onCreateTable() {
   overflow-y: auto;
   padding-bottom: calc(3.4rem + env(safe-area-inset-bottom));
   height: calc(100dvh - 1.4rem - env(safe-area-inset-bottom));
+}
+
+.quick-create-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 1.4rem - env(safe-area-inset-bottom));
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.quick-create-wrapper::-webkit-scrollbar {
+  display: none;
 }
 
 /* Table name row */

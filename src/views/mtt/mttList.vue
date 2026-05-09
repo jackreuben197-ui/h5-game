@@ -57,7 +57,6 @@ interface MttRenderGroup extends MttGroup {
   displayItems: MttViewItem[]
 }
 
-
 const activeTab = ref<MttTabName>('all')
 const mttListStore = useMttListStore()
 const userInfoStore = useUserInfoStore()
@@ -219,8 +218,7 @@ function buildGroup(
   items: MttViewItem[],
   layoutOverride?: MttLayout,
 ): MttGroup {
-  const layout =
-    layoutOverride || (items.length <= 1 ? 'lg' : items.length <= 4 ? 'md' : 'sm')
+  const layout = layoutOverride || (items.length <= 1 ? 'lg' : items.length <= 4 ? 'md' : 'sm')
   return {
     groupId,
     title,
@@ -287,13 +285,7 @@ function normalizeRecordToViewItem(
   const lateEndAtMs = calcLateEndMs(record, startAtMs)
 
   const action = resolveAction(stage)
-  const statusView = resolveStatusView(
-    stage,
-    startAtMs,
-    applyStartAtMs,
-    lateEndAtMs,
-    nowTimestamp,
-  )
+  const statusView = resolveStatusView(stage, startAtMs, applyStartAtMs, lateEndAtMs, nowTimestamp)
   const rawName = toSafeString(record.name)
   const title = resolveNameByUnityRule(rawName) || `MTT #${record.match_id ?? '-'}`.trim()
   const participants = Number(record.participants ?? 0)
@@ -489,33 +481,30 @@ function getDefaultGameIcon(category: MttCategory): string {
 </script>
 
 <template>
-  <div class="mtt-list-page themeType2 ">
+  <div class="mtt-list-page themeType2">
     <div class="bg-overlay"></div>
 
     <HeaderBack :title="t('UIHomeMttArea')">
       <template #right>
         <div class="action-wrap">
           <TopActionButton :name="t('Wallet_Deposit')" :icon="walletIcon" icon-alt="wallet" />
-          <TopActionButton :name="t('Wallet_AppBarSupport')" :icon="serviceIcon" icon-alt="service" />
+          <TopActionButton
+            :name="t('Wallet_AppBarSupport')"
+            :icon="serviceIcon"
+            icon-alt="service"
+          />
         </div>
       </template>
     </HeaderBack>
-    <FilterTabbar
-      v-model="activeTab"
-      :tabs="mttTabs"
-    />
-    <section class="mtt-content ">
+    <FilterTabbar v-model="activeTab" :tabs="mttTabs" />
+    <section class="mtt-content">
       <template v-if="renderGroups.length">
         <div v-for="group in renderGroups" :key="group.groupId" class="mtt-group">
           <!-- 分组标题 -->
           <div v-if="group.title || group.showViewAll" class="mtt-group__header">
             <span v-if="group.title" class="mtt-group__title">{{ group.title }}</span>
             <span v-else class="mtt-group__title mtt-group__title--empty"></span>
-            <span
-              v-if="group.showViewAll"
-              class="mtt-group__toggle"
-              @click="handleViewAll(group)"
-            >
+            <span v-if="group.showViewAll" class="mtt-group__toggle" @click="handleViewAll(group)">
               {{ group.expanded ? t('UIMinePutAway') : t('UIHappyShop_ShowAll') }}
             </span>
           </div>

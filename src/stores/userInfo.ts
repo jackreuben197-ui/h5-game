@@ -87,6 +87,29 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       }
       return this.setCurrentClubById(club.club_id)
     },
+    syncCurrentClubDiamond(diamond: number): boolean {
+      if (!this.currentClubId || !Number.isFinite(diamond)) {
+        return false
+      }
+
+      const index = this.clubList.findIndex(
+        (club) => normalizeClubId(club.club_id) === this.currentClubId,
+      )
+      if (index < 0) {
+        return false
+      }
+
+      const normalized = Math.max(0, Number(diamond))
+      const nextClub: ClubInfo = {
+        ...this.clubList[index],
+        user_gold: normalized,
+        diamonds: normalized,
+      }
+      const nextList = [...this.clubList]
+      nextList[index] = nextClub
+      this.clubList = nextList
+      return true
+    },
     clearInfo(): void {
       this.userInfo = null
       this.clubList = []

@@ -1,15 +1,17 @@
 import { defineStore } from 'pinia'
-import type { GlobalConfigData, MttRecordFeeConfig } from '@/api/models/config'
+import type { DiamondConfigData, GlobalConfigData, MttRecordFeeConfig } from '@/api/models/config'
 import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
 
 interface AppConfigState {
   globalConfig: GlobalConfigData | null
+  diamondConfig: DiamondConfigData | null
 }
 
 export const useAppConfigStore = defineStore('h5-appConfig-store', {
   state: (): AppConfigState => ({
     globalConfig: null,
+    diamondConfig: null,
   }),
   getters: {
     getMttRecordFeeConfig(state): (goldType: number) => MttRecordFeeConfig | null {
@@ -30,10 +32,13 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
     setGlobalConfig(config: GlobalConfigData): void {
       this.globalConfig = config
     },
+    setDiamondConfig(config: DiamondConfigData): void {
+      this.diamondConfig = config
+    },
   },
   persist: {
     key: StorageKey.APP_CONFIG_CACHE,
     storage: dzpkPersistStorage,
-    pick: ['globalConfig'],
+    pick: ['globalConfig', 'diamondConfig'],
   },
 })

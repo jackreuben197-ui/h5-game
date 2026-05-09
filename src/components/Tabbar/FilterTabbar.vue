@@ -4,6 +4,7 @@ import { computed } from 'vue'
 export interface FilterTabOption {
   name: string
   title: string
+  [key: string]: unknown
 }
 
 /**
@@ -47,14 +48,21 @@ export default { name: 'FilterTabbar' }
 <template>
   <div :class="wrapperClass">
     <button
-      v-for="tab in props.tabs"
+      v-for="(tab, index) in props.tabs"
       :key="tab.name"
       :class="['filter-tab__item', { 'filter-tab__item--active': tab.name === props.modelValue }]"
       type="button"
       @click="handleClick(tab.name)"
     >
       <div class="inner-content">
-        <span class="filter-tab__text">{{ tab.title }}</span>
+        <slot
+          name="tab"
+          :tab="tab"
+          :active="tab.name === props.modelValue"
+          :index="index"
+        >
+          <span class="filter-tab__text">{{ tab.title }}</span>
+        </slot>
       </div>
     </button>
   </div>
@@ -108,8 +116,6 @@ export default { name: 'FilterTabbar' }
     font-weight: 700;
   }
 }
-
-
 /* ========================================
    风格一：pill（默认）—— Figma 绿色圆角胶囊
    ======================================== */
@@ -134,16 +140,10 @@ export default { name: 'FilterTabbar' }
     background-color: rgba(5,231,174, .9);
     box-shadow: 0 0 0.1rem 0.05rem rgba(5,231,174, .9);
 }
-
-
-
   .filter-tab__text {
     color: #fff;
     font-weight: 700;
     z-index: 3;
   }
 }
-
-
-
 </style>

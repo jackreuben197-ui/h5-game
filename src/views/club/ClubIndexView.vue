@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, type CSSProperties } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, type CSSProperties } from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
 import { getRoomIdsApi, getRoomsDetailApi } from '@/api/roomcenter'
 import { enterTable } from '@/bridge/core'
+import { subscribeH5WsMessages } from '@/bridge/ws/wsProxy'
 import type { EnterTablePayload } from '@/bridge/protocol'
 import StorageKey from '@/constants/storageKey'
 import LoginSession from '@/session/loginSession'
@@ -33,6 +34,8 @@ const backgroundStyle = computed(() => ({
 
 type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
 type ClubHeaderTabName = 'poker' | 'mahjong' | 'event'
+const POKER_TYPE_LONG = 0
+const POKER_TYPE_SHORT = 2
 
 interface RoomGroupViewModel {
   groupKey: string
@@ -192,6 +195,8 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
     })
 })
 
+let unsubscribeWs: (() => void) | null = null
+
 onMounted(() => {
   if (!userInfoStore.currentClub && userInfoStore.clubList.length) {
     userInfoStore.setCurrentClub(userInfoStore.clubList[0] || null)
@@ -203,6 +208,17 @@ onMounted(() => {
   }
 
   bootstrapRoomList()
+
+  unsubscribeWs = subscribeH5WsMessages((event) => {
+    if (event.packet?.code === 140) {
+      void fetchRooms({ silent: true })
+    }
+  })
+})
+
+onUnmounted(() => {
+  unsubscribeWs?.()
+  unsubscribeWs = null
 })
 
 // 进入页面先用缓存秒开，再静默刷新最新数据。
@@ -430,21 +446,21 @@ function matchTabRoom(room: RoomRecord, tabName: GameTypeTabName): boolean {
   const pokerType = Number(room.poker_type) || 0
 
   if (tabName === 'all') return true
-  if (tabName === 'texas') return gameType === 0 && pokerType === 0
-  if (tabName === 'omaha') return [1, 2, 3].includes(gameType) && pokerType === 0
-  if (tabName === 'sixPlus') return gameType === 6 || pokerType === 1
+  if (tabName === 'texas') return gameType === 0 && pokerType === POKER_TYPE_LONG
+  if (tabName === 'omaha') return [1, 2, 3].includes(gameType) && pokerType === POKER_TYPE_LONG
+  if (tabName === 'sixPlus') return pokerType === POKER_TYPE_SHORT
   return true
 }
 
 function getGameName(gameType: number, pokerType: number): string {
-  if (gameType === 6 || pokerType === 1) return '6+'
+  if (gameType === 0 && pokerType === POKER_TYPE_SHORT) return '6+'
   if ([1, 2, 3].includes(gameType)) return '奥马哈'
   if (gameType === 0) return '德州扑克'
   return '扑克'
 }
 
 function getGameIconImage(gameType: number, pokerType: number): string {
-  if (gameType === 6 || pokerType === 1) return gameType6Plus
+  if (gameType === 0 && pokerType === POKER_TYPE_SHORT) return gameType6Plus
   if ([1, 2, 3].includes(gameType)) return gameTypePlo
   return gameTypeNlh
 }
@@ -455,29 +471,28 @@ function formatBlind(sb: number): string {
   return `${formatChip(smallBlind)} / ${formatChip(bigBlind)}`
 }
 
-function formatChip(value: number): string {
-  const num = Number(value) || 0
-  if (num >= 1000) {
-    const text = (num / 1000).toFixed(num % 1000 === 0 ? 0 : 1)
-    return `${text}k`
+function formatChip(rawValue: number): string {
+  const safeRaw = Number(rawValue) || 0
+  if (safeRaw >= 100000) {
+    return `${formatChipBase(safeRaw / 1000)}k`
   }
-  return `${num}`
+  return formatChipBase(safeRaw)
+}
+
+function formatChipBase(rawValue: number): string {
+  const display = rawValue / 100
+  if (!Number.isFinite(display)) return '0'
+  return display.toFixed(2).replace(/\.?0+$/, '')
 }
 </script>
 
 <template>
-  <div
-    class="page-shell room-list-page themeType2"
-    :style="[backgroundStyle, pageStyle]"
-  >
+  <div class="page-shell room-list-page themeType2" :style="[backgroundStyle, pageStyle]">
     <div class="bg-overlay"></div>
     <HeaderBack>
       <div class="club-identity">
         <div class="club-avatar">
-          <img
-            :src="clubCoverUrl"
-            alt="club avatar"
-          />
+          <img :src="clubCoverUrl" alt="club avatar" />
         </div>
 
         <div class="club-meta">
@@ -520,7 +535,9 @@ function formatChip(value: number): string {
         @click="toggleAnnounceExpanded"
       >
         <span class="announce-text">{{ clubNoticeText }}</span>
-        <span class="announce-arrow" :class="{ 'announce-arrow--expanded': announceExpanded }">›</span>
+        <span class="announce-arrow" :class="{ 'announce-arrow--expanded': announceExpanded }">
+          ›
+        </span>
       </button>
 
       <div class="club-header-tabs">
@@ -614,10 +631,7 @@ function formatChip(value: number): string {
         @table-click="handleTableClick"
       />
 
-      <div
-        v-if="!groupedRecords.length"
-        class="empty-wrap"
-      >
+      <div v-if="!groupedRecords.length" class="empty-wrap">
         <VanIcon name="search" />
         <span>
           {{ t('UINoGameTip') }}
@@ -777,8 +791,6 @@ function formatChip(value: number): string {
   border-radius: 0.053rem;
   background: linear-gradient(180deg, #ffd771 0%, #f59f37 100%);
 }
-
-
 
 .action-wrap {
   display: flex;
@@ -1016,7 +1028,6 @@ function formatChip(value: number): string {
   text-shadow: 0 0.03rem 0.16rem rgba(0, 0, 0, 0.54);
 }
 
-
 @media (max-width: 360px) {
   .club-name {
     max-width: min(2.2rem, 36vw);
@@ -1103,5 +1114,4 @@ function formatChip(value: number): string {
   font-size: 0.3467rem;
   color: rgba(255, 255, 255, 0.82);
 }
-
 </style>

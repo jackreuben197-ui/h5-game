@@ -25,6 +25,7 @@ export const BRIDGE_ACTION = {
   SYNC_ROOMS_LIST: 'syncRoomsList',
   SYNC_LANGUAGE: 'syncLanguage',
   SYNC_GLOBAL_CONFIG: 'syncGlobalConfig',
+  SYNC_DIAMOND_CONFIG: 'syncDiamondConfig',
   ENTER_TABLE: 'enterTable',
   ENTER_MTT: 'enterMtt',
 } as const

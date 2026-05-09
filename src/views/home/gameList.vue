@@ -21,6 +21,8 @@ import tabBg from '@/assets/icons/game_type_tab_bg.png'
 import { t } from '@/i18n'
 
 type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
+const POKER_TYPE_LONG = 0
+const POKER_TYPE_SHORT = 2
 
 interface RoomGroupViewModel {
   groupKey: string
@@ -246,21 +248,21 @@ function matchTabRoom(room: RoomRecord, tabName: GameTypeTabName): boolean {
   const pokerType = Number(room.poker_type) || 0
 
   if (tabName === 'all') return true
-  if (tabName === 'texas') return gameType === 0 && pokerType === 0
-  if (tabName === 'omaha') return [1, 2, 3].includes(gameType) && pokerType === 0
-  if (tabName === 'sixPlus') return gameType === 6 || pokerType === 1
+  if (tabName === 'texas') return gameType === 0 && pokerType === POKER_TYPE_LONG
+  if (tabName === 'omaha') return [1, 2, 3].includes(gameType) && pokerType === POKER_TYPE_LONG
+  if (tabName === 'sixPlus') return pokerType === POKER_TYPE_SHORT
   return true
 }
 
 function getGameName(gameType: number, pokerType: number): string {
-  if (gameType === 6 || pokerType === 1) return t('6+')
+  if (gameType === 0 && pokerType === POKER_TYPE_SHORT) return t('6+')
   if ([1, 2, 3].includes(gameType)) return t('UITexasInfo_Omaha')
   if (gameType === 0) return t('UITexasInfo_Texas')
   return '--'
 }
 
 function getGameIconImage(gameType: number, pokerType: number): string {
-  if (gameType === 6 || pokerType === 1) return gameType6Plus
+  if (gameType === 0 && pokerType === POKER_TYPE_SHORT) return gameType6Plus
   if ([1, 2, 3].includes(gameType)) return gameTypePlo
   return gameTypeNlh
 }
@@ -302,10 +304,7 @@ function toSafeInt(value: unknown): number {
 </script>
 
 <template>
-  <div
-    class="room-list-page themeType2"
-    :style="pageStyle"
-  >
+  <div class="room-list-page themeType2" :style="pageStyle">
     <div class="bg-overlay"></div>
     <HeaderBack :title="t('UIHomePokerArea')">
       <template #right>
@@ -316,11 +315,7 @@ function toSafeInt(value: unknown): number {
             icon-alt="wallet"
             @click="router.push('/wallet')"
           />
-          <TopActionButton
-            :name="t('UIMineMain01')"
-            :icon="serviceIcon"
-            icon-alt="service"
-          />
+          <TopActionButton :name="t('UIMineMain01')" :icon="serviceIcon" icon-alt="service" />
         </div>
       </template>
     </HeaderBack>
@@ -344,10 +339,7 @@ function toSafeInt(value: unknown): number {
         @table-click="handleTableClick"
       />
 
-      <div
-        v-if="!groupedRecords.length"
-        class="empty-wrap"
-      >
+      <div v-if="!groupedRecords.length" class="empty-wrap">
         <VanIcon name="search" />
         <span>
           {{ t('UINoGameTip') }}
@@ -370,13 +362,10 @@ function toSafeInt(value: unknown): number {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
+  background: radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
     radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
     radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
 }
-
-
 
 .action-wrap {
   display: flex;
@@ -407,5 +396,4 @@ function toSafeInt(value: unknown): number {
   font-size: 0.3467rem;
   color: rgba(255, 255, 255, 0.82);
 }
-
 </style>

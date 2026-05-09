@@ -105,7 +105,7 @@ async function onConfirmGender(): Promise<void> {
       userInfoStore.setUserInfo({
         ...userInfo,
         user: {
-          ...(userInfo.user as Record<string, unknown>),
+          ...(userInfo.user),
           sex,
           nickname: displayUser.value.nickname,
         },

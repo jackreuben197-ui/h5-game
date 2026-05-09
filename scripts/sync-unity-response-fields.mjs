@@ -64,7 +64,7 @@ function parseUnityFile(filePath) {
 	if (!apiMatch) return null
 
 	const classes = {}
-	const classRegex = /public\s+sealed\s+class\s+(\w+)(?:\s*:\s*[^{\n]+)?\s*\{([\s\S]*?)\n\s*\}/g
+	const classRegex = /public\s+(?:sealed\s+)?class\s+(\w+)(?:\s*:\s*[^{\n]+)?\s*\{([\s\S]*?)\n\s*\}/g
 	let cm
 	while ((cm = classRegex.exec(text))) {
 		const className = cm[1]
@@ -173,7 +173,72 @@ function isPrimitive(typeName) {
 	]).has(typeName)
 }
 
-function mapCsTypeToTs(typeName, symbol, existingInterfaces) {
+function unwrapType(typeName) {
+	let t = normalizeType(typeName)
+	if (t.endsWith('?')) t = t.slice(0, -1).trim()
+
+	const arrayMatch = t.match(/^(.+)\[\]$/)
+	if (arrayMatch) return unwrapType(arrayMatch[1])
+
+	const listMatch = t.match(/^(?:List|IList|IEnumerable|RepeatedField)<(.+)>$/)
+	if (listMatch) return unwrapType(listMatch[1])
+
+	const dictMatch = t.match(/^Dictionary<(.+)>$/)
+	if (dictMatch) {
+		const parts = splitGenericArgs(dictMatch[1])
+		const valueType = parts[1] || 'object'
+		return unwrapType(valueType)
+	}
+
+	return t
+}
+
+function extractProtocolClassRef(typeName) {
+	const base = unwrapType(typeName)
+	const match = base.match(/(?:^|\.)([A-Za-z_]\w*Protocol)\.(\w+)$/)
+	if (!match) return null
+	return { protocolName: match[1], className: match[2] }
+}
+
+function resolveReferencedClass(typeName, currentSymbol, currentUnity, unityByProtocol, unityClassIndex) {
+	const protoRef = extractProtocolClassRef(typeName)
+	if (protoRef) {
+		const refUnity = unityByProtocol.get(protoRef.protocolName)
+		if (refUnity && refUnity.classes?.[protoRef.className]) {
+			return {
+				symbol: protocolNameToSymbol(protoRef.protocolName),
+				className: protoRef.className,
+				props: refUnity.classes[protoRef.className],
+			}
+		}
+		return null
+	}
+
+	const base = unwrapType(typeName)
+	if (!base || isPrimitive(base) || base === 'object') return null
+
+	if (currentUnity?.classes?.[base]) {
+		return {
+			symbol: currentSymbol,
+			className: base,
+			props: currentUnity.classes[base],
+		}
+	}
+
+	const hits = unityClassIndex.get(base) || []
+	if (hits.length === 1) {
+		const hit = hits[0]
+		return {
+			symbol: protocolNameToSymbol(hit.protocolName),
+			className: base,
+			props: hit.props,
+		}
+	}
+
+	return null
+}
+
+function mapCsTypeToTs(typeName, symbol, existingInterfaces, unityByProtocol, unityClassIndex, currentUnity) {
 	let t = normalizeType(typeName)
 	let nullable = false
 
@@ -184,19 +249,19 @@ function mapCsTypeToTs(typeName, symbol, existingInterfaces) {
 
 	const arrayMatch = t.match(/^(.+)\[\]$/)
 	if (arrayMatch) {
-		return `${mapCsTypeToTs(arrayMatch[1], symbol, existingInterfaces)}[]`
+		return `${mapCsTypeToTs(arrayMatch[1], symbol, existingInterfaces, unityByProtocol, unityClassIndex, currentUnity)}[]`
 	}
 
 	const listMatch = t.match(/^(?:List|IList|IEnumerable|RepeatedField)<(.+)>$/)
 	if (listMatch) {
-		return `${mapCsTypeToTs(listMatch[1], symbol, existingInterfaces)}[]`
+		return `${mapCsTypeToTs(listMatch[1], symbol, existingInterfaces, unityByProtocol, unityClassIndex, currentUnity)}[]`
 	}
 
 	const dictMatch = t.match(/^Dictionary<(.+)>$/)
 	if (dictMatch) {
 		const [k, v] = splitGenericArgs(dictMatch[1])
 		const keyType = /string/i.test(k) ? 'string' : 'string'
-		return `Record<${keyType}, ${mapCsTypeToTs(v, symbol, existingInterfaces)}>`
+		return `Record<${keyType}, ${mapCsTypeToTs(v, symbol, existingInterfaces, unityByProtocol, unityClassIndex, currentUnity)}>`
 	}
 
 	if (t === 'string') return nullable ? 'string | null' : 'string'
@@ -211,12 +276,23 @@ function mapCsTypeToTs(typeName, symbol, existingInterfaces) {
 	if (t === 'DateTime') return nullable ? 'string | null' : 'string'
 	if (t === 'object') return 'unknown'
 
+	const directResolved = resolveReferencedClass(t, symbol, currentUnity, unityByProtocol, unityClassIndex)
+	if (directResolved) {
+		return targetInterfaceName(directResolved.symbol, directResolved.className)
+	}
+
 	// Handle namespaced class refs like SomeProtocol.Data / Namespace.Type
 	const base = t.split('.').at(-1) || t
-	if (isPrimitive(base)) return mapCsTypeToTs(base, symbol, existingInterfaces)
+	if (isPrimitive(base)) return mapCsTypeToTs(base, symbol, existingInterfaces, unityByProtocol, unityClassIndex, currentUnity)
 
 	const candidate = base === 'ResponseData' ? `${symbol}ResponseData` : `${symbol}${base}`
 	if (existingInterfaces.has(candidate)) return candidate
+
+	const resolved = resolveReferencedClass(base, symbol, currentUnity, unityByProtocol, unityClassIndex)
+	if (resolved) {
+		const resolvedName = targetInterfaceName(resolved.symbol, resolved.className)
+		return resolvedName
+	}
 
 	// Fallback to base type if it's already a known interface
 	if (existingInterfaces.has(base)) return base
@@ -347,14 +423,42 @@ function hasInterface(text, name) {
 	return new RegExp(`export\\s+interface\\s+${name}(?:\\s+extends\\s+[^\\{]+)?\\s*\\{`).test(text)
 }
 
-function ensureModelEndpoint(modelText, apiPath, symbol, unity) {
+function ensureModelEndpoint(modelText, apiPath, symbol, unity, unityByProtocol, unityClassIndex) {
 	let text = modelText
 	let ifaceMap = parseInterfaces(text)
 	const apiLine = `// ${normalizeApiPath(apiPath)} (${symbol})`
 
+	const localClassDefs = new Map()
+	for (const [className, props] of Object.entries(unity.classes)) {
+		if (/Protocol$/i.test(className)) continue
+		localClassDefs.set(targetInterfaceName(symbol, className), {
+			symbol,
+			className,
+			props,
+		})
+	}
+
+	const queue = [...localClassDefs.values()]
+	while (queue.length) {
+		const current = queue.shift()
+		if (!current?.props?.length) continue
+		for (const p of current.props) {
+			const ref = resolveReferencedClass(p.type, symbol, unity, unityByProtocol, unityClassIndex)
+			if (!ref) continue
+			const refName = targetInterfaceName(ref.symbol, ref.className)
+			if (localClassDefs.has(refName)) continue
+			localClassDefs.set(refName, {
+				symbol: ref.symbol,
+				className: ref.className,
+				props: ref.props,
+			})
+			queue.push(localClassDefs.get(refName))
+		}
+	}
+
 	const plannedNames = new Set(ifaceMap.keys())
-	for (const className of Object.keys(unity.classes)) {
-		plannedNames.add(targetInterfaceName(symbol, className))
+	for (const name of localClassDefs.keys()) {
+		plannedNames.add(name)
 	}
 
 	const requestName = targetInterfaceName(symbol, 'RequestData')
@@ -363,13 +467,13 @@ function ensureModelEndpoint(modelText, apiPath, symbol, unity) {
 
 	const requestProps = (unity.classes.RequestData || unity.classes.Request || []).map((p) => ({
 		name: p.name,
-		tsType: mapCsTypeToTs(p.type, symbol, plannedNames),
+		tsType: mapCsTypeToTs(p.type, symbol, plannedNames, unityByProtocol, unityClassIndex, unity),
 		comment: p.comment || '',
 	}))
 
 	const dataProps = (unity.classes.Data || []).map((p) => ({
 		name: p.name,
-		tsType: mapCsTypeToTs(p.type, symbol, plannedNames),
+		tsType: mapCsTypeToTs(p.type, symbol, plannedNames, unityByProtocol, unityClassIndex, unity),
 		comment: p.comment || '',
 	}))
 
@@ -389,16 +493,18 @@ function ensureModelEndpoint(modelText, apiPath, symbol, unity) {
 		chunks.push(buildInterfaceBlock(dataName, dataProps))
 	}
 
-	for (const [className, props] of Object.entries(unity.classes)) {
-		if (/^RequestData$/i.test(className) || /^Request$/i.test(className) || className === 'ResponseData' || className === 'Data') {
+	for (const def of localClassDefs.values()) {
+		const className = def.className
+		const classSymbol = def.symbol
+		if (classSymbol === symbol && (/^RequestData$/i.test(className) || /^Request$/i.test(className) || className === 'ResponseData' || className === 'Data')) {
 			continue
 		}
-		const name = targetInterfaceName(symbol, className)
+		const name = targetInterfaceName(classSymbol, className)
 		if (hasInterface(text, name)) continue
 		if (!chunks.length) chunks.push(apiLine)
-		const typedProps = props.map((p) => ({
+		const typedProps = def.props.map((p) => ({
 			name: p.name,
-			tsType: mapCsTypeToTs(p.type, symbol, plannedNames),
+			tsType: mapCsTypeToTs(p.type, classSymbol, plannedNames, unityByProtocol, unityClassIndex, unity),
 			comment: p.comment || '',
 		}))
 		chunks.push(buildInterfaceBlock(name, typedProps))
@@ -472,7 +578,7 @@ function ensureApiFunction(apiText, symbol, apiPath) {
 	return text.trimEnd() + '\n' + fn
 }
 
-function ensureEndpointWhenMissing(args, unityByApi, requestedApi) {
+function ensureEndpointWhenMissing(args, unityByApi, requestedApi, unityByProtocol, unityClassIndex) {
 	const normalizedApi = normalizeApiPath(requestedApi)
 	if (!normalizedApi) return { created: false, touched: [] }
 	const unityVariants = unityByApi.get(normalizedApi)
@@ -496,7 +602,7 @@ function ensureEndpointWhenMissing(args, unityByApi, requestedApi) {
 		return { created: false, touched: [] }
 	}
 	const beforeModel = modelText
-	modelText = ensureModelEndpoint(modelText, normalizedApi, symbol, unity)
+	modelText = ensureModelEndpoint(modelText, normalizedApi, symbol, unity, unityByProtocol, unityClassIndex)
 
 	let apiText = fs.readFileSync(apiFile, 'utf8')
 	const beforeApi = apiText
@@ -529,14 +635,21 @@ function main() {
 
 	const unityFiles = walk(args.unityRoot, '.cs')
 	const unityByApi = new Map()
+	const unityByProtocol = new Map()
+	const unityClassIndex = new Map()
 	for (const file of unityFiles) {
 		const parsed = parseUnityFile(file)
 		if (!parsed) continue
 		if (!unityByApi.has(parsed.api)) unityByApi.set(parsed.api, [])
 		unityByApi.get(parsed.api).push(parsed)
+		unityByProtocol.set(parsed.protocolName, parsed)
+		for (const [className, props] of Object.entries(parsed.classes)) {
+			if (!unityClassIndex.has(className)) unityClassIndex.set(className, [])
+			unityClassIndex.get(className).push({ protocolName: parsed.protocolName, props })
+		}
 	}
 
-	const bootstrap = apiFilter ? ensureEndpointWhenMissing(args, unityByApi, apiFilter) : { created: false, touched: [] }
+	const bootstrap = apiFilter ? ensureEndpointWhenMissing(args, unityByApi, apiFilter, unityByProtocol, unityClassIndex) : { created: false, touched: [] }
 	for (const touchedFile of bootstrap.touched) {
 		console.log(`patched ${path.relative(process.cwd(), touchedFile)}`)
 	}
@@ -562,7 +675,7 @@ function main() {
 			if (!unityVariants?.length) continue
 
 			const unity = unityVariants.find((u) => u.classes.ResponseData || u.classes.Data) || unityVariants[0]
-			const ensuredText = ensureModelEndpoint(text, meta.api, meta.symbol, unity)
+			const ensuredText = ensureModelEndpoint(text, meta.api, meta.symbol, unity, unityByProtocol, unityClassIndex)
 			if (ensuredText !== text) {
 				text = ensuredText
 				fileChanged = true
@@ -575,6 +688,7 @@ function main() {
 
 			for (const [className, props] of Object.entries(unity.classes)) {
 				if (!props.length) continue
+				if (/Protocol$/i.test(className)) continue
 
 				const targetName = targetInterfaceName(meta.symbol, className)
 				const iface = ifaceMap.get(targetName)
@@ -587,7 +701,14 @@ function main() {
 				const typeUpgrades = []
 				for (const p of props) {
 					if (className === 'ResponseData' && p.name === 'data') continue
-					const tsType = mapCsTypeToTs(p.type, meta.symbol, knownNames)
+					let tsType = mapCsTypeToTs(p.type, meta.symbol, knownNames, unityByProtocol, unityClassIndex, unity)
+					if (isUnknownLikeType(tsType)) {
+						const ref = extractProtocolClassRef(p.type)
+						if (ref) {
+							const refType = targetInterfaceName(protocolNameToSymbol(ref.protocolName), ref.className)
+							tsType = /\[\]$/.test(tsType) ? `${refType}[]` : refType
+						}
+					}
 					if (defined.has(p.name)) {
 						const currentType = propTypeMap.get(p.name)
 						if (currentType && isUnknownLikeType(currentType) && tsType !== 'unknown') {

@@ -290,6 +290,9 @@ async function handleSubmit(): Promise<void> {
 
     showToast(t('Wallet_SubmitWithdraw'))
     amount.value = ''
+    
+    // Refresh pending orders to show/update the bell icon for withdrawal
+    await walletStore.refreshPendingCsOrder()
 
     // type 3 = 手动/撮合 — открываем чат с поддержкой
     // api_type из ответа не надёжен (может быть 0), поэтому смотрим на тип канала

@@ -5,6 +5,12 @@ import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { postOrgClubModifyClubDescApi } from '@/api/org'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { showFailToast, showSuccessToast } from 'vant'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -59,11 +65,11 @@ async function onConfirm(): Promise<void> {
 </script>
 
 <template>
-  <div class="club-edit-des-bg">
+  <div class="page-shell club-edit-des-bg" :style="backgroundStyle">
     <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
     <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
 
-    <div class="page-shell club-edit-des">
+    <div class="club-edit-des">
       <HeaderBack :title="'编辑简介'" />
 
       <section class="editor-block">
@@ -96,7 +102,7 @@ async function onConfirm(): Promise<void> {
 <style scoped lang="scss">
 .club-edit-des-bg {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   background:
     radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.68), rgba(154, 97, 145, 0.66) 45%, rgba(33, 136, 168, 0.86) 100%),
     linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
@@ -132,7 +138,7 @@ async function onConfirm(): Promise<void> {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
   gap: 0.22rem;
   padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
   padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));

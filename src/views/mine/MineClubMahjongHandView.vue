@@ -106,7 +106,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="record-hand-page" :style="backgroundStyle">
+  <div class="page-shell record-hand-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -157,7 +157,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .record-hand-page {
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;

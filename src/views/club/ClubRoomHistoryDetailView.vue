@@ -220,9 +220,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="club-room-history-detail-bg" :style="backgroundStyle">
+  <div class="page-shell club-room-history-detail-bg" :style="backgroundStyle">
     <HeaderBack :title="'数据详情'" />
-    <div class="page-shell club-room-history-detail">
+    <div class="club-room-history-detail">
       <section class="meta-panel">
         <div class="meta-title-row">
           <span class="meta-title">完成的</span>

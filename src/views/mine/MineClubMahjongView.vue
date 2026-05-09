@@ -258,7 +258,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mahjong-page" :style="backgroundStyle">
+  <div class="page-shell mahjong-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -356,7 +356,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .mahjong-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;

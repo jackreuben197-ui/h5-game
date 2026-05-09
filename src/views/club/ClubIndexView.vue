@@ -25,6 +25,12 @@ import gameTypeNlh from '@/assets/icons/game_type_nlh.png'
 import gameTypePlo from '@/assets/icons/game_type_plo.png'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
 
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
 type ClubHeaderTabName = 'poker' | 'mahjong' | 'event'
 
@@ -461,8 +467,8 @@ function formatChip(value: number): string {
 
 <template>
   <div
-    class="room-list-page themeType2"
-    :style="pageStyle"
+    class="page-shell room-list-page themeType2"
+    :style="[backgroundStyle, pageStyle]"
   >
     <div class="bg-overlay"></div>
     <HeaderBack>
@@ -646,7 +652,7 @@ function formatChip(value: number): string {
 <style scoped lang="scss">
 .room-list-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   color: #fff;
   overflow: hidden;
   background: url('@/assets/images/main_bg.webp') center / cover no-repeat;

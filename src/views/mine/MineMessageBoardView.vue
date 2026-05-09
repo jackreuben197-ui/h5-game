@@ -42,7 +42,7 @@ async function submitMessage(): Promise<void> {
 </script>
 
 <template>
-  <div class="mine-glass-page board-page" :style="backgroundStyle">
+  <div class="page-shell mine-glass-page board-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -69,7 +69,7 @@ async function submitMessage(): Promise<void> {
 
 <style scoped lang="scss">
 .mine-glass-page {
-  min-height: 100dvh;
+  height: 100dvh;
   color: #f3f3f3;
   background-size: cover;
   background-position: center;

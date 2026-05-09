@@ -4,6 +4,12 @@ import { useRouter } from 'vue-router'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import imgClubCover from '@/assets/images/club_cover_avatar.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 const router = useRouter()
 
@@ -84,7 +90,7 @@ async function onCreateClub(): Promise<void> {
 </script>
 
 <template>
-  <div class="club-create-bg">
+  <div class="page-shell club-create-bg" :style="backgroundStyle">
     <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
     <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
     <input
@@ -199,7 +205,7 @@ async function onCreateClub(): Promise<void> {
 <style scoped lang="scss">
 .club-create-bg {
 	position: relative;
-	min-height: 100dvh;
+	height: 100dvh;
 	padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
 	background:
 		radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.68), rgba(154, 97, 145, 0.66) 45%, rgba(33, 136, 168, 0.86) 100%),
@@ -244,7 +250,7 @@ async function onCreateClub(): Promise<void> {
 	z-index: 1;
 	display: flex;
 	flex-direction: column;
-	min-height: 100dvh;
+	height: 100dvh;
 	gap: 0.40524rem;
 	padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
 }

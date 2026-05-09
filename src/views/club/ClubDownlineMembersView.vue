@@ -16,6 +16,12 @@ import imgInfo from '@/assets/icons/tips.svg'
 import { extractInvitationLink } from '@/utils/clubInvitation'
 import { saveQrCodeImage } from '@/utils/qrcode'
 import { showFailToast, showSuccessToast } from 'vant'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 const userInfoStore = useUserInfoStore()
 
@@ -131,7 +137,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="downline-page">
+  <div class="page-shell downline-page" :style="backgroundStyle">
     <div class="page-overlay" aria-hidden="true"></div>
 
     <HeaderBack title="下线成员" />
@@ -215,7 +221,7 @@ onMounted(async () => {
 <style scoped lang="scss">
 .downline-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   overflow: hidden;
   color: #fff;
 }

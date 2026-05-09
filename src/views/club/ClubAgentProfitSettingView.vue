@@ -4,6 +4,12 @@ import { useRoute } from 'vue-router'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { getMemberRouteContext } from './clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar.png'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 const context = computed(() => getMemberRouteContext(useRoute()))
 const focusedKey = ref('service')
@@ -33,8 +39,8 @@ function appendDigit(value: string): void {
 </script>
 
 <template>
-  <div class="profit-bg">
-    <div class="page-shell profit-page">
+  <div class="page-shell profit-bg" :style="backgroundStyle">
+    <div class="profit-page">
       <HeaderBack title="代理收益设置" />
 
       <section class="glass profile-card">
@@ -73,7 +79,6 @@ function appendDigit(value: string): void {
 
 .profit-bg {
 	height: 100dvh;
-	min-height: 100dvh;
 	overflow-y: auto;
 	-webkit-overflow-scrolling: touch;
 	overscroll-behavior-y: contain;

@@ -124,7 +124,7 @@ async function onConfirmGender(): Promise<void> {
 </script>
 
 <template>
-  <div class="profile-edit-page" :style="backgroundStyle">
+  <div class="page-shell profile-edit-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -205,7 +205,7 @@ async function onConfirmGender(): Promise<void> {
 
 <style scoped lang="scss">
 .profile-edit-page {
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.4598rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;

@@ -103,7 +103,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="shop-pay-page" :style="backgroundStyle">
+  <div class="page-shell shop-pay-page" :style="backgroundStyle">
     <div class="mask"></div>
 
     <section class="pay-card">
@@ -146,7 +146,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .shop-pay-page {
-  min-height: 100dvh;
+  height: 100dvh;
   position: relative;
   display: flex;
   align-items: center;

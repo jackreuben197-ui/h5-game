@@ -209,7 +209,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mine-glass-page" :style="backgroundStyle">
+  <div class="page-shell mine-glass-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">

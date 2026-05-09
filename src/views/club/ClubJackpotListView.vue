@@ -7,6 +7,12 @@ import {
   postOrgClubJackpotTemplateListApi,
 } from '@/api/org'
 import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 interface JackpotTemplateItem {
   id: string
@@ -207,7 +213,7 @@ function goPoolReward(): void {
 </script>
 
 <template>
-  <div ref="pageRef" class="club-jackpot-page" @scroll="onPageScroll">
+  <div ref="pageRef" class="page-shell club-jackpot-page" @scroll="onPageScroll" :style="backgroundStyle">
     <div class="page-overlay" aria-hidden="true"></div>
 
     <HeaderBack :title="'Jackpot'">

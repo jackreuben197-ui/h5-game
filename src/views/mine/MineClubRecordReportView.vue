@@ -51,7 +51,7 @@ async function submitReport(): Promise<void> {
 </script>
 
 <template>
-  <div class="record-report-page" :style="backgroundStyle">
+  <div class="page-shell record-report-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -94,7 +94,7 @@ async function submitReport(): Promise<void> {
 <style scoped lang="scss">
 .record-report-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding: calc(env(safe-area-inset-top) + 0.52rem) 0 2.2rem;
   color: #f9f9f9;
   background-size: cover;

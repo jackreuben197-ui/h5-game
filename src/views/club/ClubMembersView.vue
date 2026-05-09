@@ -12,6 +12,12 @@ import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
 import { useUserInfoStore } from '@/stores/userInfo'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 type TabKey = 'account' | 'record'
 type MemberRole = '管理员' | '代理人' | '成员'
@@ -814,11 +820,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <div ref="pageRef" class="club-members-bg" @scroll="onPageScroll">
+  <div
+    ref="pageRef"
+    class="page-shell club-members-bg"
+    :style="backgroundStyle"
+    @scroll="onPageScroll"
+  >
     <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
     <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
 
-    <div class="page-shell club-members">
+    <div class="club-members">
       <HeaderBack :title="'基金管理'">
         <template #right>
           <p class="member-total">会员总数 <span>{{ memberTotalText }}</span></p>
@@ -1210,7 +1221,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .club-members-bg {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
   overflow-x: hidden;
   overflow-y: auto;
@@ -1249,7 +1260,7 @@ onMounted(() => {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
   padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
   gap: 0.08rem;
 }

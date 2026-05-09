@@ -213,7 +213,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="cancel-account-page" :style="backgroundStyle">
+  <div class="page-shell cancel-account-page" :style="backgroundStyle">
     <HeaderBack :title="pageTitle" />
 
     <div class="content-wrap">
@@ -302,7 +302,7 @@ onBeforeUnmount(() => {
 
 <style scoped lang="scss">
 .cancel-account-page {
-  min-height: 100dvh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   padding-top: calc(env(safe-area-inset-top) + 0.48rem);

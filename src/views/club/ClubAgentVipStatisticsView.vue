@@ -6,6 +6,12 @@ import { getMemberRouteContext } from './clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgCard from '@/assets/icons/icon_table.png'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 const context = computed(() => getMemberRouteContext(useRoute()))
 const gameType = ref<'all' | 'texas' | 'aohaha' | 'short' | 'record'>('all')
@@ -17,8 +23,8 @@ const rows = [
 </script>
 
 <template>
-  <div class="sub-bg">
-    <div class="page-shell sub-page">
+  <div class="page-shell sub-bg" :style="backgroundStyle">
+    <div class="sub-page">
       <HeaderBack title="Club Description" />
 
       <section class="glass profile-card">
@@ -77,7 +83,6 @@ const rows = [
 
 .sub-bg {
 	height: 100dvh;
-	min-height: 100dvh;
 	overflow-y: auto;
 	-webkit-overflow-scrolling: touch;
 	overscroll-behavior-y: contain;

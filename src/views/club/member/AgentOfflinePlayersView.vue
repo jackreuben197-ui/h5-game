@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 const listMode = ref<'members' | 'edit'>('edit')
 const hideCurrentPlayers = ref(false)
@@ -21,8 +27,8 @@ function onSave(): void {
 </script>
 
 <template>
-  <div class="sub-bg">
-    <div class="page-shell sub-page">
+  <div class="page-shell sub-bg" :style="backgroundStyle">
+    <div class="sub-page">
       <HeaderBack title="下线成员" />
 
       <section class="top-row">
@@ -75,7 +81,6 @@ function onSave(): void {
 
 .sub-bg {
   height: 100dvh;
-  min-height: 100dvh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;

@@ -91,7 +91,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="cowboy-page" :style="backgroundStyle">
+  <div class="page-shell cowboy-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -130,7 +130,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .cowboy-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.74rem;
   color: #f9f9f9;
   background-size: cover;

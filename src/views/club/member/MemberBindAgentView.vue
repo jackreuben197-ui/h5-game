@@ -4,6 +4,12 @@ import { useRoute, useRouter } from 'vue-router'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { getMemberRouteContext } from '../clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar.png'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 const route = useRoute()
 const router = useRouter()
@@ -32,8 +38,8 @@ function onConfirm(): void {
 </script>
 
 <template>
-  <div class="sub-bg">
-    <div class="page-shell sub-page">
+  <div class="page-shell sub-bg" :style="backgroundStyle">
+    <div class="sub-page">
       <HeaderBack title="Bind Agents" />
 
       <section class="cards">
@@ -66,7 +72,6 @@ function onConfirm(): void {
 
 .sub-bg {
   height: 100dvh;
-  min-height: 100dvh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;

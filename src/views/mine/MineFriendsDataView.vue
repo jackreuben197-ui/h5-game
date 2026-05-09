@@ -361,7 +361,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="friends-record-page" :style="backgroundStyle">
+  <div class="page-shell friends-record-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -536,7 +536,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .friends-record-page {
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.459rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;

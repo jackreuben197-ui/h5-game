@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
 import iconNlh from '@/assets/icons/create_icon_nlh.png'
@@ -12,6 +12,12 @@ import iconSng from '@/assets/icons/create_icon_sng.png'
 import iconMtt from '@/assets/icons/create_icon_mtt.png'
 import iconMttMj from '@/assets/icons/create_icon_mtt_mj.png'
 import { t } from '@/i18n'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 interface GameTypeItem {
   key: string
@@ -41,7 +47,7 @@ const router = useRouter()
 </script>
 
 <template>
-  <div class="club-table-create-page">
+  <div class="page-shell club-table-create-page" :style="backgroundStyle">
     <HeaderBack :title="t('创建牌桌')">
       <template #right>
         <TopActionButton
@@ -85,7 +91,7 @@ const router = useRouter()
 <style scoped lang="scss">
 .club-table-create-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding: 0 0 calc(0.44rem + env(safe-area-inset-bottom));
   background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
   overflow-x: hidden;

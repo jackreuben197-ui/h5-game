@@ -7,6 +7,12 @@ import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
 import { getMemberRouteContext } from '../clubMemberRoute'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 const router = useRouter()
 const route = useRoute()
@@ -115,8 +121,8 @@ function togglePermission(index: number): void {
 </script>
 
 <template>
-  <div class="member-detail-bg">
-    <div class="page-shell member-detail-page">
+  <div class="page-shell member-detail-bg" :style="backgroundStyle">
+    <div class="member-detail-page">
       <HeaderBack :title="detailTitle" />
 
       <section class="glass-card profile-card">
@@ -230,7 +236,7 @@ function togglePermission(index: number): void {
 
 .member-detail-bg {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
   overflow: hidden;
   background:
@@ -243,7 +249,7 @@ function togglePermission(index: number): void {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
   padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
 }
 

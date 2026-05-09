@@ -28,6 +28,12 @@ import imgBannerBgB from '@/assets/images/game_type_card_bg.png'
 import imgBannerBgC from '@/assets/images/game_list_card_table_bg.png'
 import type { ClubInfo } from '@/stores/userInfo'
 import { useUserInfoStore } from '@/stores/userInfo'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 
 type QuickActionKind = 'create-club' | 'club-panel' | 'create-union'
 
@@ -279,7 +285,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell club-index">
+  <div class="page-shell club-index" :style="backgroundStyle">
     <section class="search-row">
       <div class="search-shell" aria-label="俱乐部搜索">
         <label class="search-trigger" for="club-search-input">
@@ -470,7 +476,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .club-index-bg {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   background-color: #0f122f;
 }
 

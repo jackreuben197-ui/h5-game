@@ -1,4 +1,11 @@
-<script setup lang="ts">
+<script setup lang="ts">import { computed } from 'vue'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
+
 interface CardItem {
   rank: string
   suit: 'c' | 'h' | 'd' | 's'
@@ -31,7 +38,7 @@ const records: RewardRecord[] = [
 </script>
 
 <template>
-  <div class="record-page">
+  <div class="page-shell record-page" :style="backgroundStyle">
     <HeaderBack :title="'获奖记录'" />
 
     <div class="record-overlay"></div>

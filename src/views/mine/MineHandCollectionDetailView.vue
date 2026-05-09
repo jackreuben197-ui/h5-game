@@ -148,7 +148,7 @@ function onShare(): void {
 </script>
 
 <template>
-  <div class="hand-detail-page" :style="backgroundStyle">
+  <div class="page-shell hand-detail-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <main class="page-content">
@@ -267,7 +267,7 @@ function onShare(): void {
 
 <style scoped lang="scss">
 .hand-detail-page {
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: calc(env(safe-area-inset-bottom) + 2.2rem);
   color: #f9f9f9;

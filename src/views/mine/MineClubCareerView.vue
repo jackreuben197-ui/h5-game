@@ -226,7 +226,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="career-page" :style="backgroundStyle" @click="closePopup">
+  <div class="page-shell career-page" :style="backgroundStyle" @click="closePopup">
     <div class="page-top"></div>
     <HeaderBack title="生涯">
       <template #right>
@@ -332,7 +332,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .career-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;

@@ -124,7 +124,7 @@ async function onSave(): Promise<void> {
 </script>
 
 <template>
-  <div class="nickname-page" :style="backgroundStyle">
+  <div class="page-shell nickname-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -169,7 +169,7 @@ async function onSave(): Promise<void> {
 
 <style scoped lang="scss">
 .nickname-page {
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.4598rem);
   padding-bottom: 1.04rem;
   color: #f9f9f9;

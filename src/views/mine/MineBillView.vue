@@ -466,7 +466,7 @@ onMounted(() => {
 <template>
   <div
     ref="pageContainerRef"
-    class="mine-glass-page bill-page"
+    class="page-shell mine-glass-page bill-page"
     :style="backgroundStyle"
     @scroll.passive="handlePageScroll"
   >

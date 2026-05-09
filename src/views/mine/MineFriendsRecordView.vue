@@ -290,7 +290,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="record-page" :style="backgroundStyle">
+  <div class="page-shell record-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">

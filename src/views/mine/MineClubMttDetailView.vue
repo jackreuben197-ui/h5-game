@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { postStatsMttRoomDetailApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
@@ -9,7 +9,6 @@ import iconTicket from '@/assets/icons/icon_ticket.png'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 
 const route = useRoute()
-const router = useRouter()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -175,17 +174,13 @@ async function fetchMttDetail(): Promise<void> {
   }
 }
 
-function goBack(): void {
-  void router.push('/mine/club-mtt')
-}
-
 onMounted(() => {
   void fetchMttDetail()
 })
 </script>
 
 <template>
-  <div class="club-mtt-detail-page" :style="backgroundStyle">
+  <div class="page-shell club-mtt-detail-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -300,7 +295,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .club-mtt-detail-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;

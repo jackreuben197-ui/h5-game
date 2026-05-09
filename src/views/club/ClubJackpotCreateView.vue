@@ -12,6 +12,12 @@ import {
   postOrgJackpotTemplateInfoApi,
 } from '@/api/org'
 
+import mainBgUrl from '@/assets/images/main_bg.webp'
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 interface OptionItem {
   id: string
   label: string
@@ -514,7 +520,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="jackpot-create-page">
+  <div class="page-shell jackpot-create-page" :style="backgroundStyle">
     <div class="page-overlay" aria-hidden="true"></div>
 
     <HeaderBack :title="isEditMode ? 'Edit Jackpot' : 'Jackpot'" />
@@ -844,7 +850,6 @@ onMounted(() => {
   position: relative;
   height: 100dvh;
   padding: 0 0.3733rem calc(2.0267rem + env(safe-area-inset-bottom));
-  background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
   overflow-x: hidden;
   overflow-y: auto;
 }

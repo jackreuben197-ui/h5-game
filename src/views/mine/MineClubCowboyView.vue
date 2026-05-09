@@ -226,7 +226,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="cowboy-page" :style="backgroundStyle">
+  <div class="page-shell cowboy-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">

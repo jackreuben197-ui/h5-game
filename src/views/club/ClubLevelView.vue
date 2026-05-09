@@ -132,9 +132,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="club-level-page" :style="backgroundStyle">
+  <div class="page-shell club-level-page" :style="backgroundStyle">
     <div class="club-level-bg" aria-hidden="true"></div>
-    <div class="page-shell club-members">
+    <div class="club-members">
       <HeaderBack :title="'俱乐部等级'">
         <template #right>
           <div class="club-level-diamond">
@@ -202,7 +202,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .club-level-page {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
   overflow: hidden;
   color: #f9f9f9;

@@ -1,12 +1,13 @@
 // Design tokens (375 draft, 1rem = 37.5px at draft width).
 // Keep shared values here to avoid hard-coded sizes in page styles.
-$font-family-sans: 'HONOR Sans CN', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB',
-  'Helvetica Neue', Arial, sans-serif;
+$font-family-sans:
+  'HONOR Sans CN', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', 'Helvetica Neue', Arial,
+  sans-serif;
 
 $font-family-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
 
-$font-family-SF: 'SF Pro', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', 'Helvetica Neue',
-  Arial, sans-serif;
+$font-family-SF:
+  'SF Pro', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', 'Helvetica Neue', Arial, sans-serif;
 
 $color-primary: #05e7ae;
 $color-primary-press: #0a4e92;
@@ -46,7 +47,7 @@ $color-bg-shadow: rgba(0, 0, 0, 0.2);
   --app-max-width: 10rem;
   --app-side-padding: 0.32rem;
   --app-top-padding: 0.32rem;
-  --app-bottom-padding: 0.54rem;
+  --app-bottom-padding: 2.04rem;
   --section-gap: 0.2667rem;
   --space-card-padding: 0.32rem;
   --space-button-min-height: 1.12rem;

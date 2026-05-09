@@ -216,30 +216,30 @@ const presets = computed<Preset[]>(() => {
     ? selected!.price_list!
     : (walletStore.goldPriceData?.list ?? [])
 
-    const isUsdt = selected?.type === 1;
-    const rate = selected?.rate ?? 1;
-    const feeRate = selected?.fee_rate ?? 0;
-    const feeType = selected?.fee_type ?? 0;
-    const discount = selected?.discount ?? 0;
+  const isUsdt = selected?.type === 1
+  const rate = selected?.rate ?? 1
+  const feeRate = selected?.fee_rate ?? 0
+  const feeType = selected?.fee_type ?? 0
+  const discount = selected?.discount ?? 0
 
-    return list.map((item: any) => {
-      const goldCount = item.gold_count ?? 0;
-      const amountStr = String(goldCount / 100);
-      let chipStr = (goldCount / 100).toLocaleString();
-      if (isUsdt) {
-        chipStr = walletStore.formatUsdtPrice(walletStore.calculateUsdtPrice(goldCount, rate, feeRate, feeType, discount).totalUiPrice);
-      } else if (selected?.type === 3) {
-        // Customer Service: hide decimals
-        chipStr = Math.round(walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)).toString();
-      }
+  return list.map((item: any) => {
+    const goldCount = item.gold_count ?? 0
+    const amountStr = String(goldCount / 100)
+    let chipStr = (goldCount / 100).toLocaleString()
+    if (isUsdt) {
+      chipStr = walletStore.formatUsdtPrice(walletStore.calculateUsdtPrice(goldCount, rate, feeRate, feeType, discount).totalUiPrice)
+    } else if (selected?.type === 3) {
+      // Customer Service: hide decimals
+      chipStr = Math.round(walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)).toString()
+    }
 
-      return {
-        amount: amountStr,
-        chip: chipStr,
-        id: item.id,
-        payPrice: item.pay_price as number | undefined,
-      }
-    })
+    return {
+      amount: amountStr,
+      chip: chipStr,
+      id: item.id,
+      payPrice: item.pay_price as number | undefined,
+    }
+  })
 })
 
 function onCustom(): void {
@@ -393,7 +393,7 @@ async function onCsSubmit(displayPayPrice?: number) {
       pay_id: selectedPayType.id,
       price_id: priceId,
       pay_price: apiPayPrice,
-      pay_address: "",
+      pay_address: '',
       pay_address_save: false,
       // order_no: "",
     }, clubId)
@@ -494,10 +494,10 @@ async function onUsdtSubmit(type: number) {
       pay_id: selectedPayType.id,
       price_id: priceId,
       pay_price: priceData.apiPayPrice,
-      pay_address: "",
+      pay_address: '',
       pay_address_save: false,
-      order_no: "",
-      name: "USDT User"
+      order_no: '',
+      name: 'USDT User'
     }, clubId)
 
     if (res.code === 0 && res.data) {
@@ -544,60 +544,60 @@ async function onUsdtSubmit(type: number) {
     <div class="wallet-scrollable">
       <div class="wallet-screen__content">
         <UserCard
-        class="wallet-banner"
-        :avatar="ava1"
-        name="Cooper&#10;Korsgaard"
-        user-id="8677650585"
-      >
-        <template #actions>
-          <GlassButton
-            :label="$txt('Wallet_Records')"
-            @click="router.push('/wallet/orders')"
-          />
-          <GlassButton
-            :label="$txt('Wallet_Details')"
-            @click="router.push('/wallet/details')"
-          />
-        </template>
-        <template #extra>
-          <div class="balance-row">
-            <div class="balance-chip">
-              <span class="balance-chip__value">{{ (userInfoStore.userInfo?.user?.gold ?? 0).toLocaleString() }}</span>
-              <img
-                :src="icCoins"
-                alt=""
-                class="balance-chip__icon"
+          class="wallet-banner"
+          :avatar="ava1"
+          name="Cooper&#10;Korsgaard"
+          user-id="8677650585"
+        >
+          <template #actions>
+            <GlassButton
+              :label="$txt('Wallet_Records')"
+              @click="router.push('/wallet/orders')"
+            />
+            <GlassButton
+              :label="$txt('Wallet_Details')"
+              @click="router.push('/wallet/details')"
+            />
+          </template>
+          <template #extra>
+            <div class="balance-row">
+              <div class="balance-chip">
+                <span class="balance-chip__value">{{ (userInfoStore.userInfo?.user?.gold ?? 0).toLocaleString() }}</span>
+                <img
+                  :src="icCoins"
+                  alt=""
+                  class="balance-chip__icon"
+                />
+              </div>
+              <span class="balance-label">{{ $txt('Wallet_Balance') }}</span>
+            </div>
+          </template>
+        </UserCard>
+
+        <template v-if="activeTab === 0">
+          <div class="recharge-content">
+            <div class="presets-card">
+              <PresetAmountGrid
+                :presets="presets"
+                :active-index="activePreset"
+                @select="activePreset = $event"
+                @custom="onCustom"
               />
             </div>
-            <span class="balance-label">{{ $txt('Wallet_Balance') }}</span>
-          </div>
-        </template>
-      </UserCard>
 
-      <template v-if="activeTab === 0">
-        <div class="recharge-content">
-          <div class="presets-card">
-            <PresetAmountGrid
-              :presets="presets"
-              :active-index="activePreset"
-              @select="activePreset = $event"
-              @custom="onCustom"
+            <PaymentMethodStrip
+              :methods="methods"
+              :active-index="activeMethod"
+              @select="activeMethod = $event"
             />
           </div>
 
-          <PaymentMethodStrip
-            :methods="methods"
-            :active-index="activeMethod"
-            @select="activeMethod = $event"
+          <PrimaryButton
+            :text="`立即支付 ${displayPayAmount}`"
+            class="pay-cta"
+            @click="onPayClick"
           />
-        </div>
-
-        <PrimaryButton
-          :text="`立即支付 ${displayPayAmount}`"
-          class="pay-cta"
-          @click="onPayClick"
-        />
-      </template>
+        </template>
 
         <template v-else>
           <WithdrawForm @open-cs-chat="onWithdrawCsChat" />
@@ -655,9 +655,9 @@ async function onUsdtSubmit(type: number) {
       :rate="usdtPopupProps.rate"
       :price="walletStore.formatUsdtPrice(
         Number(rechargeResult.order?.amount) ||
-        Number(rechargeResult.pay_price) ||
-        Number(rechargeResult.amount) ||
-        walletStore.calculateUsdtPrice(usdtPopupProps.goldCount, usdtPopupProps.rate, usdtPopupProps.feeRate, usdtPopupProps.feeType, usdtPopupProps.discount).totalUiPrice
+          Number(rechargeResult.pay_price) ||
+          Number(rechargeResult.amount) ||
+          walletStore.calculateUsdtPrice(usdtPopupProps.goldCount, usdtPopupProps.rate, usdtPopupProps.feeRate, usdtPopupProps.feeType, usdtPopupProps.discount).totalUiPrice
       )"
       @close="usdtDetailsPopupOpen = false"
       @cancel="handleCancelOrder"

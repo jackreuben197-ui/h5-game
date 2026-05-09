@@ -502,6 +502,7 @@ function formatChip(value: number): string {
           :name="t('UIMineMain01')"
           :icon="serviceIcon"
           icon-alt="service"
+          @click="showFailToast('客服功能开发中')"
         />
       </div>
     </HeaderBack>

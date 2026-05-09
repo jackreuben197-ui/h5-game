@@ -86,7 +86,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="settings-doc-page" :style="backgroundStyle">
+  <div class="page-shell settings-doc-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -101,7 +101,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .settings-doc-page {
-  min-height: 100dvh;
+  height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.48rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;

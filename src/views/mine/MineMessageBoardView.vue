@@ -24,7 +24,7 @@ async function submitMessage(): Promise<void> {
   submitting.value = true
   try {
     const response = await postMiscReportFeedbackQuestIonApi({
-      title: 'Mine Message Board',
+      title: 'H5游戏反馈',
       description,
     })
     if (response.code !== 0) {
@@ -46,13 +46,13 @@ async function submitMessage(): Promise<void> {
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
-      <p class="tip">请此处留言您的反馈</p>
+      <p class="tip">请在此处留言您的反馈</p>
 
       <textarea
         v-model="content"
         class="board-input"
-        maxlength="250"
-        placeholder="Type here"
+        maxlength="1000"
+        placeholder="在此输入您的反馈"
       ></textarea>
 
       <button
@@ -61,7 +61,7 @@ async function submitMessage(): Promise<void> {
         :disabled="submitting"
         @click="submitMessage"
       >
-        {{ submitting ? 'Submitting...' : 'Submit Report' }}
+        {{ submitting ? '提交中...' : '提交' }}
       </button>
     </div>
   </div>
@@ -107,12 +107,13 @@ async function submitMessage(): Promise<void> {
 }
 
 .submit-btn {
-  margin-top: auto;
+  margin-top: 1rem;
   border: 0;
   border-radius: 0.56rem;
   height: 1.12rem;
   color: #fbfbfb;
   font-size: 0.5rem;
   background: linear-gradient(165deg, #05e7ae 8%, #027a5c 72%);
+  width: 100%;
 }
 </style>

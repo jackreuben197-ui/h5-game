@@ -17,18 +17,9 @@ import imgQuickActionCreateBg from '@/assets/images/club_qa_create_club_bg_shape
 import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shield.svg'
 import imgQuickActionBoardBg from '@/assets/images/club_qa_data_board_bg_shape.svg'
 import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.svg'
-import imgQuickActionUnionSwash from '@/assets/images/club_qa_union_swash.svg'
-import imgQuickActionUnionClubSmall from '@/assets/images/club_qa_union_club_small.svg'
-import imgQuickActionUnionClubLarge from '@/assets/images/club_qa_union_club_large.svg'
 import imgClubBannerFigma from '@/assets/images/club_banner_bg.png'
-import imgClubCoverFigma from '@/assets/images/club_cover_avatar.png'
-import imgClubCoverB from '@/assets/images/home_comming_soon_1.png'
-import imgClubCoverC from '@/assets/images/home_comming_soon_2.png'
-import imgBannerBgB from '@/assets/images/game_type_card_bg.png'
-import imgBannerBgC from '@/assets/images/game_list_card_table_bg.png'
 import type { ClubInfo } from '@/stores/userInfo'
 import { useUserInfoStore } from '@/stores/userInfo'
-
 
 type QuickActionKind = 'create-club' | 'club-panel' | 'create-union'
 
@@ -63,18 +54,15 @@ const showJoinModal = ref(false)
 const joinLoading = ref(false)
 const searchedClub = ref<ClubInfo | null>(null)
 
-const fallbackCovers = [imgClubCoverFigma, imgClubCoverB, imgClubCoverC]
-const fallbackBanners = [imgClubBannerFigma, imgBannerBgB, imgBannerBgC]
+const fallbackBanners = [imgClubBannerFigma]
 
 const quickActions: QuickActionItem[] = [
   { id: 1, title: '创建俱乐部', kind: 'create-club' },
   { id: 2, title: '创建俱乐部', kind: 'club-panel' },
-  { id: 3, title: '创建联盟', kind: 'create-union', hidden: true },
 ]
 
 const clubList = computed<ClubCardItem[]>(() => {
   return userInfoStore.clubList.map((club, index) => {
-    const fallbackCover = fallbackCovers[index % fallbackCovers.length]
     const fallbackBanner = fallbackBanners[index % fallbackBanners.length]
     const displayId = normalizeClubId(club.random_id ?? club.club_id)
     const clubId = normalizeClubId(club.club_id)
@@ -90,14 +78,14 @@ const clubList = computed<ClubCardItem[]>(() => {
       chipsCount: toSafeNumber(club.user_credit),
       tableCount: toSafeNumber(club.tables),
       memberCount: toSafeNumber(club.club_members),
-      cover: toSafeString(club.logo) || fallbackCover,
+      cover: toSafeString(club.logo),
       bannerBg: toSafeString(club.banner) || fallbackBanner,
     }
   })
 })
 
-const searchedClubDisplayId = computed(() =>
-  normalizeClubId(searchedClub.value?.random_id ?? searchedClub.value?.club_id) || '--',
+const searchedClubDisplayId = computed(
+  () => normalizeClubId(searchedClub.value?.random_id ?? searchedClub.value?.club_id) || '--',
 )
 
 const searchedClubName = computed(() => toSafeString(searchedClub.value?.club_name) || '俱乐部名称')
@@ -106,7 +94,7 @@ const searchedClubMembers = computed(() => toSafeNumber(searchedClub.value?.club
 
 const searchedClubLogo = computed(() => {
   const logo = toSafeString(searchedClub.value?.logo)
-  return logo || imgClubCoverFigma
+  return logo
 })
 
 function formatCount(value: number): string {
@@ -298,12 +286,7 @@ onMounted(() => {
             @keyup.enter="onSearchClub"
           />
         </label>
-        <button
-          type="button"
-          class="search-btn"
-          :disabled="searchLoading"
-          @click="onSearchClub"
-        >
+        <button type="button" class="search-btn" :disabled="searchLoading" @click="onSearchClub">
           <span class="search-btn-label">{{ searchLoading ? '搜索中' : '搜索' }}</span>
         </button>
       </div>
@@ -320,37 +303,12 @@ onMounted(() => {
       >
         <span class="action-icon">
           <template v-if="item.kind === 'create-club'">
-            <img
-              class="icon-create-bg"
-              :src="imgQuickActionCreateBg"
-              alt=""
-              aria-hidden="true"
-            />
+            <img class="icon-create-bg" :src="imgQuickActionCreateBg" alt="" aria-hidden="true" />
             <img class="icon-create-shield" :src="imgQuickActionCreateShield" alt="" />
           </template>
           <template v-else-if="item.kind === 'club-panel'">
-            <img
-              class="icon-board-bg"
-              :src="imgQuickActionBoardBg"
-              alt=""
-              aria-hidden="true"
-            />
+            <img class="icon-board-bg" :src="imgQuickActionBoardBg" alt="" aria-hidden="true" />
             <img class="icon-board-chart" :src="imgQuickActionBoardChart" alt="" />
-          </template>
-          <template v-else>
-            <img
-              class="icon-union-swash"
-              :src="imgQuickActionUnionSwash"
-              alt=""
-              aria-hidden="true"
-            />
-            <img
-              class="icon-union-club-small"
-              :src="imgQuickActionUnionClubSmall"
-              alt=""
-              aria-hidden="true"
-            />
-            <img class="icon-union-club-large" :src="imgQuickActionUnionClubLarge" alt="" />
           </template>
         </span>
         <span class="action-text">{{ item.title }}</span>
@@ -377,12 +335,7 @@ onMounted(() => {
         class="club-banner"
         @click="goToClubDetail(club.source)"
       >
-        <img
-          class="club-banner-bg"
-          :src="club.bannerBg"
-          alt=""
-          aria-hidden="true"
-        />
+        <img class="club-banner-bg" :src="club.bannerBg" alt="" aria-hidden="true" />
         <!-- <div class="club-banner-overlay" aria-hidden="true" /> -->
 
         <div class="club-main">
@@ -746,7 +699,11 @@ onMounted(() => {
   height: 1.269rem;
   border: 0.006rem solid rgba(255, 255, 255, 0.44);
   border-radius: 0.331rem;
-  background: linear-gradient(160.93deg, rgba(0, 255, 246, 0.71) 10.97%, rgba(0, 189, 214, 0.71) 87.16%);
+  background: linear-gradient(
+    160.93deg,
+    rgba(0, 255, 246, 0.71) 10.97%,
+    rgba(0, 189, 214, 0.71) 87.16%
+  );
 }
 
 .icon-union-swash {
@@ -1078,7 +1035,11 @@ onMounted(() => {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(120% 130% at 50% -22%, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0));
+  background: radial-gradient(
+    120% 130% at 50% -22%,
+    rgba(255, 255, 255, 0.22),
+    rgba(255, 255, 255, 0)
+  );
   pointer-events: none;
 }
 

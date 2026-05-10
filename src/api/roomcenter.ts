@@ -44,6 +44,16 @@ import type {
   RoomcenterRoomsRequest,
   RoomcenterUserAllRoomsData,
   RoomcenterUserAllRoomsRequest,
+  ClubRoomSitApplyRecordsRequest,
+  ClubRoomSitApplyRecordsResponseData,
+  ClubDelayAuditRequest,
+  ClubDelayAuditResponseData,
+  ClubDelayListRequest,
+  ClubDelayListResponseData,
+  UserRoomSitApplyRecordsRequest,
+  UserRoomSitApplyRecordsResponseData,
+  RoomClubApplyAuditRequest,
+  RoomClubApplyAuditResponseData,
 } from '@/api/models/roomcenter'
 import { forwardRoomsListToCocos } from '@/bridge/sync'
 
@@ -278,5 +288,45 @@ export async function mttRebuyApi(
   payload: MttRebuyRequest = {},
 ): Promise<ApiResponse<unknown>> {
   const response = await http.post<ApiResponse<unknown>>(`/roomcenter/mtt/${mttId}/rebuy`, payload)
+  return response.data
+}
+
+// 对齐 cocos WebClubRoomSitApplyRecords.API
+export async function postClubRoomSitApplyRecordsApi(
+  payload: ClubRoomSitApplyRecordsRequest = {} as ClubRoomSitApplyRecordsRequest
+): Promise<ApiResponse<ClubRoomSitApplyRecordsResponseData>> {
+  const response = await http.post<ApiResponse<ClubRoomSitApplyRecordsResponseData>>('/roomcenter/club/room/apply/list', payload)
+  return response.data
+}
+
+// 对齐 cocos WebClubDelayAudit.API
+export async function postClubDelayAuditApi(
+  payload: ClubDelayAuditRequest = {} as ClubDelayAuditRequest
+): Promise<ApiResponse<ClubDelayAuditResponseData>> {
+  const response = await http.post<ApiResponse<ClubDelayAuditResponseData>>('/roomcenter/club/room/apply/delay/audit', payload)
+  return response.data
+}
+
+// 对齐 cocos WebClubDelayList.API
+export async function postClubDelayListApi(
+  payload: ClubDelayListRequest = {} as ClubDelayListRequest
+): Promise<ApiResponse<ClubDelayListResponseData>> {
+  const response = await http.post<ApiResponse<ClubDelayListResponseData>>('/roomcenter/club/room/apply/delay/all/list', payload)
+  return response.data
+}
+
+// 对齐 cocos WebUserRoomSitApplyRecords.API
+export async function postUserRoomSitApplyRecordsApi(
+  payload: UserRoomSitApplyRecordsRequest = {} as UserRoomSitApplyRecordsRequest
+): Promise<ApiResponse<UserRoomSitApplyRecordsResponseData>> {
+  const response = await http.post<ApiResponse<UserRoomSitApplyRecordsResponseData>>('/roomcenter/user/apply/list', payload)
+  return response.data
+}
+
+// 对齐 cocos WebRoomClubApplyAudit.API
+export async function postRoomClubApplyAuditApi(
+  payload: RoomClubApplyAuditRequest = {} as RoomClubApplyAuditRequest
+): Promise<ApiResponse<RoomClubApplyAuditResponseData>> {
+  const response = await http.post<ApiResponse<RoomClubApplyAuditResponseData>>('/roomcenter/club/room/apply/audit', payload)
   return response.data
 }

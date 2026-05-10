@@ -1,6 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { postClubFundApplyListApi, postClubFundAuditApi } from '@/api/order'
+import { postMsgMessageListApi, postMsgMessageUnreadClearApi } from '@/api/msg'
+import {
+  postRoomClubApplyAuditApi,
+  postClubRoomSitApplyRecordsApi,
+  postRoomcenterFriendRoomApplyAuditApi,
+} from '@/api/roomcenter'
+import { t } from '@/i18n'
+import { formatDateTime } from '@/utils/time'
 import avatarDefault from '@/assets/images/default_avatar.png'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconBalance from '@/assets/icons/icon_balance.png'
@@ -10,12 +19,20 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 type MessagePageType = 'system' | 'credit' | 'uc' | 'other'
 type CreditStatus = 'pending' | 'rejected' | 'approved-by-user' | 'approved'
 
+interface MessageTextSegment {
+  text: string
+  green?: boolean
+}
+
 interface SystemMessageItem {
-  content: string
+  segments: MessageTextSegment[]
   time: string
 }
 
 interface CreditMessageItem {
+  id?: number
+  roomId?: number
+  applyType?: number
   texasId?: string
   clubName: string
   time: string
@@ -28,18 +45,21 @@ interface CreditMessageItem {
 }
 
 interface UcMessageItem {
+  orderNo?: string
+  status: CreditStatus
   clubName: string
   time: string
   playerName: string
   playerId: string
   amount: string
+  approverName?: string
+  approverId?: string
 }
 
 interface OtherMessageItem {
-  text: string
-  highlight?: string
-  highlightTone?: 'red' | 'green'
+  segments: MessageTextSegment[]
   clubName: string
+  senderIcon?: string
   time: string
   wrap?: boolean
 }
@@ -48,7 +68,6 @@ const route = useRoute()
 
 const otherBannerBgFirst = mainBgUrl
 const otherBannerBgDefault = mainBgUrl
-const otherSenderBtnBg = 'https://www.figma.com/api/mcp/asset/e9e9ef1e-fa31-4411-b2e1-7a28ec807433'
 
 const pageType = computed<MessagePageType>(() => {
   const type = route.query.type
@@ -72,124 +91,256 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const systemMessages: SystemMessageItem[] = [
-  {
-    content:
-      '这是平台广播系统消息内容 这是平台广播系统消息内容 这是平台广播系统消息内容 这是平台广播系统消息内容 这是平台广播系统消息内容 这是平台广播系统消息内容',
-    time: '3/1/2024 15:00',
-  },
-  {
-    content: '这是平台广播系统消息内容',
-    time: '3/1/2024 15:00',
-  },
-]
+const systemMessages = ref<SystemMessageItem[]>([])
+const creditMessages = ref<CreditMessageItem[]>([])
+const ucMessages = ref<UcMessageItem[]>([])
+const otherMessages = ref<OtherMessageItem[]>([])
 
-const creditMessages: CreditMessageItem[] = [
-  {
-    texasId: '德州 ID: 554dd4f5',
-    clubName: '俱乐部名称',
-    time: '2026/4/12 15:35:00',
-    playerName: 'Player Name',
-    playerId: '12345678',
-    amount: '+2,000',
-    status: 'pending',
-  },
-  {
-    texasId: '德州 ID: 554dd4f5',
-    clubName: '俱乐部名称',
-    time: '2026/4/12 15:35:00',
-    playerName: 'Player Name',
-    playerId: '12345678',
-    amount: '+2,000',
-    status: 'rejected',
-  },
-  {
-    texasId: '德州 ID: 554dd4f5',
-    clubName: '俱乐部名称',
-    time: '2026/4/12 15:35:00',
-    playerName: 'Player Name',
-    playerId: '12345678',
-    amount: '+2,000',
-    status: 'approved-by-user',
-    approverName: 'User12',
-    approverId: '1245454',
-  },
-  {
-    texasId: '德州 ID: 554dd4f5',
-    clubName: '俱乐部名称',
-    time: '2026/4/12 15:35:00',
-    playerName: 'Player Name',
-    playerId: '12345678',
-    amount: '+2,000',
-    status: 'approved',
-  },
-]
+const messageType = computed<number>(() => {
+  const raw = Number(route.query.msgType)
+  if (Number.isFinite(raw) && raw > 0) {
+    return raw
+  }
+  return pageType.value === 'system' ? 4 : 1
+})
 
-const ucMessages: UcMessageItem[] = [
-  {
-    clubName: 'xx俱乐部',
-    time: '2026/4/12 15:35:00',
-    playerName: 'Player Name',
-    playerId: '12345678',
-    amount: '+2000',
-  },
-  {
-    clubName: 'xx俱乐部',
-    time: '2026/4/12 15:35:00',
-    playerName: 'Player Name',
-    playerId: '12345678',
-    amount: '+2000',
-  },
-  {
-    clubName: 'xx俱乐部',
-    time: '2026/4/12 15:35:00',
-    playerName: 'Player Name',
-    playerId: '12345678',
-    amount: '+2000',
-  },
-]
+function formatTime(value: unknown): string {
+  return formatDateTime(value, 'YYYY-MM-DD HH:mm')
+}
 
-const otherMessages: OtherMessageItem[] = [
-  {
-    text: '恭喜成功充值',
-    highlight: '2000 UC！',
-    highlightTone: 'red',
-    clubName: '俱乐部名称',
-    time: '3/1/2024 15:00',
-  },
-  {
-    text: '恭喜获得',
-    highlight: '1000信用值！',
-    highlightTone: 'green',
-    clubName: '俱乐部名称',
-    time: '3/1/2024 15:00',
-  },
-  {
-    text: '恭喜获得俱乐部赛事奖励',
-    highlight: '3000钻石',
-    highlightTone: 'green',
-    clubName: '俱乐部名称',
-    time: '3/1/2024 15:00',
-  },
-  {
-    text: '恭喜加入俱乐部名称',
-    clubName: '俱乐部名称',
-    time: '3/1/2024 15:00',
-  },
-  {
-    text: '恭喜您在赏金猎人赛排名第2，获得决赛门票x4。',
-    clubName: '俱乐部名称',
-    time: '3/1/2024 15:00',
-    wrap: true,
-  },
-  {
-    text: '欢迎加入xx联盟',
-    clubName: '联盟名称',
-    time: '3/1/2024 15:00',
-    wrap: true,
-  },
-]
+function formatAmount(value: unknown): string {
+  const amount = Number(value)
+  if (!Number.isFinite(amount)) {
+    return '0'
+  }
+  return amount.toLocaleString('en-US')
+}
 
+function mapStatus(value: unknown): CreditStatus {
+  const status = Number(value)
+  if (status === 1) return 'pending'
+  if (status === 2) return 'approved'
+  if (status === 3 || status === 4 || status === 5 || status === 6) return 'rejected'
+  return 'pending'
+}
+
+function buildMessageSegments(item: Record<string, unknown>): MessageTextSegment[] {
+  const content = String(item.content ?? '')
+  const remark = String(item.remark ?? '')
+  const title = String(item.title ?? '')
+  const msgType = Number(item.msg_type ?? 0)
+  const templateKey = `MsgInfo_${msgType}`
+  const translatedTemplate = t(templateKey)
+  const template =
+    translatedTemplate && translatedTemplate !== templateKey
+      ? translatedTemplate
+      : content || title || '--'
+
+  const map: Record<string, string> = {
+    '0': content,
+    '1': remark,
+    '2': title,
+  }
+
+  const segments: MessageTextSegment[] = []
+  let cursor = 0
+  const matcher = /\{(\d+)\}/g
+  let match: RegExpExecArray | null = matcher.exec(template)
+
+  while (match) {
+    const [token, tokenKey] = match
+    const tokenStart = match.index
+    if (tokenStart > cursor) {
+      const plain = template.slice(cursor, tokenStart)
+      if (plain) {
+        segments.push({ text: plain })
+      }
+    }
+
+    if (tokenKey in map) {
+      const value = map[tokenKey]
+      if (value) {
+        segments.push({ text: value, green: true })
+      }
+    }
+
+    cursor = tokenStart + token.length
+    match = matcher.exec(template)
+  }
+
+  if (cursor < template.length) {
+    const tail = template.slice(cursor)
+    if (tail) {
+      segments.push({ text: tail })
+    }
+  }
+
+  if (segments.length === 0) {
+    return [{ text: template || '--' }]
+  }
+  return segments
+}
+
+function computeWrap(segments: MessageTextSegment[]): boolean {
+  const text = segments.map((segment) => segment.text).join('')
+  return text.length > 18
+}
+
+async function fetchMsgList(target: 'system' | 'other'): Promise<void> {
+  const response = await postMsgMessageListApi({
+    msg_type: messageType.value,
+    limit: 10,
+    offset: 0,
+  })
+  if (response.code !== 0) {
+    if (target === 'system') {
+      systemMessages.value = []
+    } else {
+      otherMessages.value = []
+    }
+    return
+  }
+
+  const firstLayer = response.data?.data as Record<string, unknown> | undefined
+  const nestedLayer = firstLayer?.data as Record<string, unknown> | undefined
+  // 兼容两种返回：data.list 或 data.data.list
+  const maybeList = firstLayer?.list ?? nestedLayer?.list
+  const records = Array.isArray(maybeList)
+    ? (maybeList as Array<Record<string, unknown>>)
+    : maybeList && typeof maybeList === 'object'
+      ? [maybeList as Record<string, unknown>]
+      : []
+
+  if (target === 'system') {
+    systemMessages.value = records.map((item) => ({
+      segments: buildMessageSegments(item),
+      time: formatTime(item.create_time),
+    }))
+  } else {
+    otherMessages.value = records.map((item) => {
+      const segments = buildMessageSegments(item)
+      return {
+        clubName: String(item.sender_name ?? '系统消息'),
+        senderIcon: item.sender_icon ? String(item.sender_icon) : '',
+        time: formatTime(item.create_time),
+        wrap: computeWrap(segments),
+        segments,
+      }
+    })
+  }
+
+  await postMsgMessageUnreadClearApi({ msg_type: messageType.value })
+}
+
+async function fetchCreditList(): Promise<void> {
+  const response = await postClubRoomSitApplyRecordsApi({
+    apply_type: 0,
+    limit: 50,
+    offset: 0,
+  })
+  if (response.code !== 0) {
+    creditMessages.value = []
+    return
+  }
+
+  const records = Array.isArray(response.data?.data) ? response.data.data : []
+  creditMessages.value = records.map((item) => {
+    const entry = item as Record<string, unknown>
+    return {
+      id: item.id,
+      roomId: item.room_id,
+      applyType: Number(entry.apply_type ?? 2),
+      texasId: `房间ID: ${String(item.room_id ?? '--')}`,
+      clubName: String(item.sender_name ?? item.room_name ?? '--'),
+      time: formatTime(item.create_time),
+      playerName: String(item.user_name ?? '--'),
+      playerId: String(item.user_random_id ?? '--'),
+      amount: `${formatAmount(item.hands)}手`,
+      status: mapStatus(item.status),
+      approverName: item.op_user_name ? String(item.op_user_name) : undefined,
+      approverId: item.op_user_random_id ? String(item.op_user_random_id) : undefined,
+    }
+  })
+}
+
+async function fetchUcList(): Promise<void> {
+  const response = await postClubFundApplyListApi({ limit: 50, offset: 0 })
+  if (response.code !== 0) {
+    ucMessages.value = []
+    return
+  }
+
+  const records = Array.isArray(response.data?.list) ? response.data.list : []
+  ucMessages.value = records.map((item) => {
+    const unknownItem = item as Record<string, unknown>
+    const rawStatus = unknownItem.order_status ?? unknownItem.status
+    return {
+      orderNo: item.order_no,
+      clubName: String(item.club_name ?? '--'),
+      time: formatTime(unknownItem.create_time),
+      playerName: String(item.nickname ?? '--'),
+      playerId: String(item.user_random_id ?? '--'),
+      amount: `+${formatAmount(item.gold_num ?? item.amount)}`,
+      status: mapStatus(rawStatus),
+      approverName: unknownItem.audit_name ? String(unknownItem.audit_name) : undefined,
+      approverId: unknownItem.audit_user_id ? String(unknownItem.audit_user_id) : undefined,
+    }
+  })
+}
+
+async function auditCredit(item: CreditMessageItem, pass: boolean): Promise<void> {
+  if (!item.id) return
+  const isFriendApply = Number(item.applyType ?? 2) === 1
+  if (isFriendApply) {
+    const response = await postRoomcenterFriendRoomApplyAuditApi({
+      room_id: item.roomId,
+      apply_id: item.id,
+      action: pass ? 2 : 3,
+    })
+    if (response.code === 0) {
+      await fetchCreditList()
+    }
+  } else {
+    const response = await postRoomClubApplyAuditApi({
+      apply_id: item.id,
+      audit_op: pass ? 2 : 3,
+    })
+    if (response.code === 0) {
+      await fetchCreditList()
+    }
+  }
+}
+
+async function auditUc(item: UcMessageItem, pass: boolean): Promise<void> {
+  if (!item.orderNo) return
+  const response = await postClubFundAuditApi({
+    order_no: item.orderNo,
+    audit_type: pass ? 1 : 2,
+  })
+  if (response.code === 0) {
+    await fetchUcList()
+  }
+}
+
+watch(
+  () => [pageType.value, messageType.value],
+  async ([type]) => {
+    if (type === 'credit') {
+      await fetchCreditList()
+      return
+    }
+    if (type === 'uc') {
+      await fetchUcList()
+      return
+    }
+    if (type === 'system') {
+      await fetchMsgList('system')
+      return
+    }
+    await fetchMsgList('other')
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -198,14 +349,30 @@ const otherMessages: OtherMessageItem[] = [
 
     <div class="content-wrap">
       <section v-if="pageType === 'system'" class="system-list">
-        <article v-for="item in systemMessages" :key="`${item.content}-${item.time}`" class="system-card">
-          <p class="system-content">{{ item.content }}</p>
+        <article
+          v-for="(item, index) in systemMessages"
+          :key="`system-${index}-${item.time}`"
+          class="system-card"
+        >
+          <p class="system-content">
+            <span
+              v-for="(segment, segmentIndex) in item.segments"
+              :key="`system-segment-${index}-${segmentIndex}`"
+              :class="{ green: segment.green }"
+            >
+              {{ segment.text }}
+            </span>
+          </p>
           <p class="system-time">{{ item.time }}</p>
         </article>
       </section>
 
       <section v-else-if="pageType === 'credit'" class="request-list">
-        <article v-for="(item, index) in creditMessages" :key="`credit-${index}`" class="request-card">
+        <article
+          v-for="(item, index) in creditMessages"
+          :key="`credit-${index}`"
+          class="request-card"
+        >
           <div class="request-top request-top--credit">
             <p class="meta-left">{{ item.texasId }}</p>
             <p class="meta-time">{{ item.time }}</p>
@@ -225,8 +392,20 @@ const otherMessages: OtherMessageItem[] = [
             </div>
 
             <div v-if="item.status === 'pending'" class="pending-actions">
-              <button class="action-btn action-btn--ok" type="button">✓</button>
-              <button class="action-btn action-btn--deny" type="button">✕</button>
+              <button
+                class="action-btn action-btn--ok"
+                type="button"
+                @click="auditCredit(item, true)"
+              >
+                ✓
+              </button>
+              <button
+                class="action-btn action-btn--deny"
+                type="button"
+                @click="auditCredit(item, false)"
+              >
+                ✕
+              </button>
             </div>
 
             <p v-else-if="item.status === 'rejected'" class="state-text">已拒绝</p>
@@ -257,7 +436,7 @@ const otherMessages: OtherMessageItem[] = [
             <p class="meta-time">{{ item.time }}</p>
           </div>
 
-          <div class="request-body status-pending">
+          <div class="request-body" :class="[`status-${item.status}`]">
             <div class="player-block">
               <img class="player-avatar" :src="avatarDefault" alt="avatar" />
               <div class="player-text">
@@ -266,10 +445,28 @@ const otherMessages: OtherMessageItem[] = [
               </div>
             </div>
 
-            <div class="pending-actions">
-              <button class="action-btn action-btn--ok" type="button">✓</button>
-              <button class="action-btn action-btn--deny" type="button">✕</button>
+            <div v-if="item.status === 'pending'" class="pending-actions">
+              <button class="action-btn action-btn--ok" type="button" @click="auditUc(item, true)">
+                ✓
+              </button>
+              <button
+                class="action-btn action-btn--deny"
+                type="button"
+                @click="auditUc(item, false)"
+              >
+                ✕
+              </button>
             </div>
+
+            <p v-else-if="item.status === 'rejected'" class="state-text">已拒绝</p>
+
+            <div v-else-if="item.status === 'approved-by-user'" class="approver-block">
+              <p class="approver-line">{{ item.approverName }}</p>
+              <p class="approver-line">ID: {{ item.approverId }}</p>
+              <p class="state-text">已通过</p>
+            </div>
+
+            <p v-else class="state-text">已通过</p>
           </div>
 
           <div class="request-footer request-footer--uc">
@@ -294,12 +491,17 @@ const otherMessages: OtherMessageItem[] = [
               aria-hidden="true"
             />
             <p class="other-title" :class="{ 'other-title--wrap': item.wrap }">
-              {{ item.text }}
-              <span v-if="item.highlight" class="highlight" :class="`highlight--${item.highlightTone ?? 'green'}`">{{ item.highlight }}</span>
+              <span
+                v-for="(segment, segmentIndex) in item.segments"
+                :key="`other-segment-${index}-${segmentIndex}`"
+                :class="{ green: segment.green }"
+              >
+                {{ segment.text }}
+              </span>
             </p>
 
             <button class="sender-btn" type="button" aria-label="sender">
-              <img :src="otherSenderBtnBg" alt="sender" />
+              <img :src="item.senderIcon || avatarDefault" alt="sender" />
             </button>
           </div>
 
@@ -609,6 +811,10 @@ const otherMessages: OtherMessageItem[] = [
 }
 
 .highlight--green {
+  color: #05e7ae;
+}
+
+.green {
   color: #05e7ae;
 }
 

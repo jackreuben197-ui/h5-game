@@ -996,3 +996,178 @@ export interface MttUserWalletData {
   free?: MttWalletFreeLimit
   [key: string]: unknown
 }
+
+// /api/roomcenter/club/room/apply/list (ClubRoomSitApplyRecords)
+
+export interface ClubRoomSitApplyRecordsRequest {
+  apply_type: number // 申请类型 0-所有；1=朋友桌；2=俱乐部桌
+  limit?: number // 数据数量
+  offset?: number // 当前偏移值
+  [key: string]: unknown
+}
+
+export interface ClubRoomSitApplyRecordsResponseData extends ClubRoomSitApplyRecordsData {
+  [key: string]: unknown
+}
+
+export interface ClubRoomSitApplyRecordsData {
+  limit?: number // 最大条数
+  offset?: number // 开始下标
+  total?: number // 总条数
+  data?: ClubRoomSitApplyRecordsRecord[]
+
+  [key: string]: unknown
+}
+
+export interface ClubRoomSitApplyRecordsRecord {
+  id?: number // 记录id
+  room_id?: number // 房间id
+  club_id?: number // 俱乐部id
+  room_name?: string // 房间名称
+  game_type?: number // 游戏类型
+  poker_type?: number // 牌类型(poker_type)
+  user_random_id?: number // 用户随机id
+  user_name?: string // 用户名
+  avatar?: string // 玩家头像
+  bring_in?: number // 带入冻结，1 开启，2 关闭
+  status?: number // 状态 1 待审批，2通过，3拒绝，4取消 5自动拒绝 6带入失败回退
+  create_time?: string // 创建时间
+  sender_name?: string // 发送者名称
+  sender_icon?: string // 发送者图标
+  op_user_random_id?: number // 审核用户随机ID
+  op_user_name?: string // 审核用户名称
+  op_user_avatar?: string // 审核用户头像
+  squid_base?: number // 鱿鱼基数，大于0，显示，等于0关闭
+  mushroom_base?: number // 蘑菇基数 大于0 显示 等于0 关闭
+  sng_id?: number // sng_id>0 就是一个sng申请
+
+  [key: string]: unknown
+}
+
+// /api/roomcenter/club/room/apply/delay/audit (ClubDelayAudit)
+
+export interface ClubDelayAuditRequest {
+  [key: string]: unknown
+}
+
+export interface ClubDelayAuditResponseData extends ClubDelayAuditData {
+  [key: string]: unknown
+}
+
+export interface ClubDelayAuditData {
+  [key: string]: unknown
+}
+
+// /api/roomcenter/club/room/apply/delay/all/list (ClubDelayList)
+
+export interface ClubDelayListRequest {
+  [key: string]: unknown
+}
+
+export interface ClubDelayListResponseData extends ClubDelayListData {
+  [key: string]: unknown
+}
+
+export interface ClubDelayListData {
+  limit?: number // 最大条数
+  offset?: number // 开始下标
+  total?: number // 总条数
+  unaudited?: number
+  data?: CommonSendDelayApplyDelayApplyData[]
+  delay_room_audit_switch?: number // 延长房间无需审批开关： 1 开 2 关
+
+  [key: string]: unknown
+}
+
+export interface CommonSendDelayApplyDelayApplyData {
+  id?: number // 记录id
+  room_id?: number // 房间id
+  club_id?: number // 俱乐部id
+  room_name?: string // 房间名称
+  game_type?: number // 房间类型
+  poker_type?: number // 牌类型(poker_type)
+  hands?: number // 游戏手数
+  user_random_id?: number // 用户随机id
+  user_name?: string // 用户名
+  avatar?: string // 玩家头像
+  status?: number // 0-all，1-待审批，2-通过，3-拒绝，4-取消
+  create_time?: string // 创建时间
+  sender_name?: string // 发送者名称
+  sender_icon?: string // 发送者图标
+  op_user_random_id?: number // 审核用户随机ID
+  op_user_name?: string // 审核用户名称
+  op_user_avatar?: string // 审核人头像
+  users?: CommonSendDelayApplyDelayInfo[]
+  squid_base?: number // 鱿鱼基数，大于0，显示，等于0关闭
+  mushroom_base?: number // 蘑菇基数 大于0 显示 等于0 关闭
+
+  [key: string]: unknown
+}
+
+export interface CommonSendDelayApplyDelayInfo {
+  user_name?: string // 用户名称
+
+  [key: string]: unknown
+}
+
+// /api/roomcenter/user/apply/list (UserRoomSitApplyRecords)
+
+export interface UserRoomSitApplyRecordsRequest {
+  [key: string]: unknown
+}
+
+export interface UserRoomSitApplyRecordsResponseData extends UserRoomSitApplyRecordsData {
+  [key: string]: unknown
+}
+
+export interface UserRoomSitApplyRecordsData {
+  limit?: number // 数据数量
+  offset?: number // 当前偏移值
+  total?: number // 总条数
+  unaudited?: number // 未审核的申请数量
+  data?: UserRoomSitApplyRecordsRecord[] // 申请列表
+
+  [key: string]: unknown
+}
+
+export interface UserRoomSitApplyRecordsRecord {
+  id?: number // 记录id
+  room_id?: number // 房间id
+  room_name?: string // 房间名称
+  poker_type?: number // 0-德州 1-OMAHA4 2-OMAHA5 3-OMAHA6 4.fantasy 5.牛仔 6-麻將
+  user_random_id?: number // 用户随机id
+  user_name?: string // 用户名
+  avatar?: string // 玩家头像
+  bring_in?: number // 带入冻结，1 开启，2 关闭
+  status?: number // 0-all，1-待审批，2-通过，3-拒绝，4-取消
+  create_time?: string // 创建时间
+  sender_name?: string // 发送者名称
+  sender_icon?: string // 发送者图标
+  op_user_random_id?: number // 审核用户随机ID
+  op_user_name?: string // 审核用户名称
+  op_user_avatar?: string // 审核用户头像
+  club_id?: number // 俱乐部id
+  game_type?: number // 游戏类型
+  squid_base?: number // 鱿鱼基数，大于0，显示，等于0关闭
+  mushroom_base?: number // 蘑菇基数 大于0 显示 等于0 关闭
+  sng_id?: number // sng_id>0 就是一个sng申请
+
+  [key: string]: unknown
+}
+
+// /api/roomcenter/club/room/apply/audit (RoomClubApplyAudit)
+
+export interface RoomClubApplyAuditRequest {
+    apply_id?: number; // 申请 ID
+    audit_op?: number; // 审批状态：2 通过，3 拒绝
+
+  [key: string]: unknown
+}
+
+export interface RoomClubApplyAuditResponseData extends RoomClubApplyAuditData {
+  [key: string]: unknown
+}
+
+export interface RoomClubApplyAuditData {
+  [key: string]: unknown
+}

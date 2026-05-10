@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { postClubFundApplyListApi, postClubFundAuditApi } from '@/api/order'
 import { postMsgMessageListApi, postMsgMessageUnreadClearApi } from '@/api/msg'
@@ -8,6 +8,11 @@ import {
   postClubRoomSitApplyRecordsApi,
   postRoomcenterFriendRoomApplyAuditApi,
 } from '@/api/roomcenter'
+import type {
+  MsgMessageListData,
+  MsgMessageListMsgInfo,
+  MsgMessageListResponseData,
+} from '@/api/models/msg'
 import { t } from '@/i18n'
 import { formatDateTime } from '@/utils/time'
 import avatarDefault from '@/assets/images/default_avatar.png'
@@ -19,14 +24,14 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 type MessagePageType = 'system' | 'credit' | 'uc' | 'other'
 type CreditStatus = 'pending' | 'rejected' | 'approved-by-user' | 'approved'
 
-interface MessageTextSegment {
-  text: string
-  green?: boolean
-}
-
 interface SystemMessageItem {
   segments: MessageTextSegment[]
   time: string
+}
+
+interface MessageTextSegment {
+  text: string
+  green?: boolean
 }
 
 interface CreditMessageItem {
@@ -58,6 +63,7 @@ interface UcMessageItem {
 
 interface OtherMessageItem {
   segments: MessageTextSegment[]
+  plainText: string
   clubName: string
   senderIcon?: string
   time: string
@@ -95,6 +101,11 @@ const systemMessages = ref<SystemMessageItem[]>([])
 const creditMessages = ref<CreditMessageItem[]>([])
 const ucMessages = ref<UcMessageItem[]>([])
 const otherMessages = ref<OtherMessageItem[]>([])
+const pageShellRef = ref<HTMLElement | null>(null)
+const msgLimit = 10
+const msgOffset = ref(0)
+const msgTotal = ref(0)
+const msgListLoading = ref(false)
 
 const messageType = computed<number>(() => {
   const raw = Number(route.query.msgType)
@@ -124,12 +135,19 @@ function mapStatus(value: unknown): CreditStatus {
   return 'pending'
 }
 
-function buildMessageSegments(item: Record<string, unknown>): MessageTextSegment[] {
+function buildMessageContent(item: MsgMessageListMsgInfo): {
+  segments: MessageTextSegment[]
+  text: string
+} {
   const content = String(item.content ?? '')
   const remark = String(item.remark ?? '')
   const title = String(item.title ?? '')
   const msgType = Number(item.msg_type ?? 0)
-  const templateKey = `MsgInfo_${msgType}`
+  const templateTypeAlias: Partial<Record<number, number>> = {
+    2025: 2005,
+  }
+  const mappedMsgType = templateTypeAlias[msgType] ?? msgType
+  const templateKey = `MsgInfo_${mappedMsgType}`
   const translatedTemplate = t(templateKey)
   const template =
     translatedTemplate && translatedTemplate !== templateKey
@@ -142,94 +160,188 @@ function buildMessageSegments(item: Record<string, unknown>): MessageTextSegment
     '2': title,
   }
 
+  const safeTemplate = template || '--'
   const segments: MessageTextSegment[] = []
   let cursor = 0
   const matcher = /\{(\d+)\}/g
-  let match: RegExpExecArray | null = matcher.exec(template)
+  let match = matcher.exec(safeTemplate)
 
   while (match) {
     const [token, tokenKey] = match
     const tokenStart = match.index
+
     if (tokenStart > cursor) {
-      const plain = template.slice(cursor, tokenStart)
+      const plain = safeTemplate.slice(cursor, tokenStart)
       if (plain) {
         segments.push({ text: plain })
       }
     }
 
-    if (tokenKey in map) {
-      const value = map[tokenKey]
-      if (value) {
-        segments.push({ text: value, green: true })
-      }
+    const value = map[tokenKey] ?? ''
+    if (value) {
+      segments.push({ text: value, green: true })
     }
 
     cursor = tokenStart + token.length
-    match = matcher.exec(template)
+    match = matcher.exec(safeTemplate)
   }
 
-  if (cursor < template.length) {
-    const tail = template.slice(cursor)
+  if (cursor < safeTemplate.length) {
+    const tail = safeTemplate.slice(cursor)
     if (tail) {
       segments.push({ text: tail })
     }
   }
 
   if (segments.length === 0) {
-    return [{ text: template || '--' }]
+    segments.push({ text: safeTemplate })
   }
-  return segments
+
+  const text = segments.map((segment) => segment.text).join('')
+
+  return {
+    segments,
+    text: text || '--',
+  }
 }
 
-function computeWrap(segments: MessageTextSegment[]): boolean {
-  const text = segments.map((segment) => segment.text).join('')
+function computeWrap(text: string): boolean {
   return text.length > 18
 }
 
-async function fetchMsgList(target: 'system' | 'other'): Promise<void> {
+function getMsgListData(
+  payload: MsgMessageListResponseData | MsgMessageListData,
+): MsgMessageListData {
+  const directData = payload as MsgMessageListData
+  if (Array.isArray(directData.list)) {
+    return {
+      offset: Number(directData.offset ?? 0),
+      total: Number(directData.total ?? 0),
+      list: directData.list,
+      limit: Number(directData.limit ?? 0),
+    }
+  }
+
+  const nestedData = (payload as MsgMessageListResponseData).data
+  if (nestedData && Array.isArray(nestedData.list)) {
+    return {
+      offset: Number(nestedData.offset ?? 0),
+      total: Number(nestedData.total ?? 0),
+      list: nestedData.list,
+      limit: Number(nestedData.limit ?? 0),
+    }
+  }
+
+  return {
+    offset: 0,
+    total: 0,
+    list: [],
+    limit: 0,
+  }
+}
+
+function resetMsgPagination(): void {
+  msgOffset.value = 0
+  msgTotal.value = 0
+}
+
+const hasMoreMsgList = computed(() => {
+  if (msgTotal.value === 0) return false
+  return msgOffset.value < msgTotal.value
+})
+
+async function fetchMsgList(target: 'system' | 'other', append = false): Promise<void> {
+  if (msgListLoading.value) return
+  if (append && !hasMoreMsgList.value) return
+
+  msgListLoading.value = true
+  const requestOffset = append ? msgOffset.value : 0
   const response = await postMsgMessageListApi({
     msg_type: messageType.value,
-    limit: 10,
-    offset: 0,
+    limit: msgLimit,
+    offset: requestOffset,
   })
+  msgListLoading.value = false
+
   if (response.code !== 0) {
-    if (target === 'system') {
+    if (!append && target === 'system') {
       systemMessages.value = []
-    } else {
+    } else if (!append) {
       otherMessages.value = []
     }
     return
   }
 
-  const firstLayer = response.data?.data as Record<string, unknown> | undefined
-  const nestedLayer = firstLayer?.data as Record<string, unknown> | undefined
-  // 兼容两种返回：data.list 或 data.data.list
-  const maybeList = firstLayer?.list ?? nestedLayer?.list
-  const records = Array.isArray(maybeList)
-    ? (maybeList as Array<Record<string, unknown>>)
-    : maybeList && typeof maybeList === 'object'
-      ? [maybeList as Record<string, unknown>]
-      : []
+  const rawData = response.data as MsgMessageListResponseData | MsgMessageListData
+  const data = getMsgListData(rawData)
+  const records: MsgMessageListMsgInfo[] = data.list
+  msgTotal.value = Number(data.total ?? 0)
+  const loadedCount = records.length
+  msgOffset.value = requestOffset + loadedCount
+  if (append && loadedCount === 0) {
+    msgTotal.value = msgOffset.value
+  }
 
   if (target === 'system') {
-    systemMessages.value = records.map((item) => ({
-      segments: buildMessageSegments(item),
+    const mapped = records.map((item) => ({
+      segments: buildMessageContent(item).segments,
       time: formatTime(item.create_time),
     }))
+    systemMessages.value = append ? [...systemMessages.value, ...mapped] : mapped
   } else {
-    otherMessages.value = records.map((item) => {
-      const segments = buildMessageSegments(item)
+    const mapped = records.map((item) => {
+      const messageContent = buildMessageContent(item)
       return {
         clubName: String(item.sender_name ?? '系统消息'),
         senderIcon: item.sender_icon ? String(item.sender_icon) : '',
         time: formatTime(item.create_time),
-        wrap: computeWrap(segments),
-        segments,
+        wrap: computeWrap(messageContent.text),
+        plainText: messageContent.text,
+        segments: messageContent.segments,
       }
     })
+    otherMessages.value = append ? [...otherMessages.value, ...mapped] : mapped
   }
 
-  await postMsgMessageUnreadClearApi({ msg_type: messageType.value })
+  if (!append) {
+    await postMsgMessageUnreadClearApi({ msg_type: messageType.value })
+  }
+}
+
+async function fillViewportMessages(target: 'system' | 'other'): Promise<void> {
+  await nextTick()
+  const container = pageShellRef.value
+  if (!container) return
+
+  while (
+    hasMoreMsgList.value &&
+    !msgListLoading.value &&
+    container.scrollHeight <= container.clientHeight + 12
+  ) {
+    await fetchMsgList(target, true)
+    await nextTick()
+  }
+}
+
+async function loadMoreMessagesIfNeeded(): Promise<void> {
+  if (pageType.value !== 'system' && pageType.value !== 'other') return
+  if (!hasMoreMsgList.value || msgListLoading.value) return
+
+  const container = pageShellRef.value
+  if (!container) return
+
+  const scrollTop = container.scrollTop
+  const viewportHeight = container.clientHeight
+  const pageHeight = container.scrollHeight
+  const threshold = 120
+
+  if (scrollTop + viewportHeight >= pageHeight - threshold) {
+    await fetchMsgList(pageType.value, true)
+  }
+}
+
+function onPageScroll(): void {
+  void loadMoreMessagesIfNeeded()
 }
 
 async function fetchCreditList(): Promise<void> {
@@ -325,6 +437,7 @@ async function auditUc(item: UcMessageItem, pass: boolean): Promise<void> {
 watch(
   () => [pageType.value, messageType.value],
   async ([type]) => {
+    resetMsgPagination()
     if (type === 'credit') {
       await fetchCreditList()
       return
@@ -335,16 +448,26 @@ watch(
     }
     if (type === 'system') {
       await fetchMsgList('system')
+      await fillViewportMessages('system')
       return
     }
     await fetchMsgList('other')
+    await fillViewportMessages('other')
   },
   { immediate: true },
 )
+
+onMounted(() => {
+  pageShellRef.value?.addEventListener('scroll', onPageScroll, { passive: true })
+})
+
+onBeforeUnmount(() => {
+  pageShellRef.value?.removeEventListener('scroll', onPageScroll)
+})
 </script>
 
 <template>
-  <div class="page-shell message-detail-page" :style="backgroundStyle">
+  <div ref="pageShellRef" class="page-shell message-detail-page" :style="backgroundStyle">
     <HeaderBack :title="pageTitle" />
 
     <div class="content-wrap">
@@ -484,12 +607,11 @@ watch(
           :class="{ 'other-item--first': index === 0 }"
         >
           <div class="other-banner" :class="{ 'other-banner--wrap': item.wrap }">
-            <img
+            <div
               class="other-banner-bg"
-              :src="index === 0 ? otherBannerBgFirst : otherBannerBgDefault"
-              alt=""
+              :style="{ backgroundImage: `url(${index === 0 ? otherBannerBgFirst : otherBannerBgDefault})` }"
               aria-hidden="true"
-            />
+            ></div>
             <p class="other-title" :class="{ 'other-title--wrap': item.wrap }">
               <span
                 v-for="(segment, segmentIndex) in item.segments"
@@ -500,8 +622,8 @@ watch(
               </span>
             </p>
 
-            <button class="sender-btn" type="button" aria-label="sender">
-              <img :src="item.senderIcon || avatarDefault" alt="sender" />
+            <button v-if="item.senderIcon" class="sender-btn" type="button" aria-label="sender">
+              <img :src="item.senderIcon" alt="sender" />
             </button>
           </div>
 
@@ -761,45 +883,53 @@ watch(
 .other-item {
   position: relative;
   width: 100%;
-  height: 2.272rem;
+  min-height: 2.272rem;
 }
 
 .other-banner {
-  position: absolute;
+  position: relative;
   left: 1.301rem;
   top: 0;
   width: 7.458rem;
-  height: 1.385rem;
+  min-height: 1.385rem;
+  border-radius: 0.24rem;
   overflow: hidden;
+  padding: 0.2rem 1.36rem 0.2rem 0.467rem;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
 }
 
 .other-banner--wrap {
-  height: 1.439rem;
+  min-height: 1.439rem;
 }
 
 .other-banner-bg {
   position: absolute;
-  inset: 0;
+  inset: -0.1rem;
   width: 100%;
   height: 100%;
-  object-fit: fill;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  filter: blur(0.1rem);
+  transform: scale(1.05);
 }
 
 .other-title {
   margin: 0;
-  position: absolute;
-  left: 0.467rem;
-  top: 0.448rem;
+  position: relative;
+  z-index: 1;
   font-size: 0.355rem;
   line-height: 1.4;
   color: #fbfbfb;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .other-title--wrap {
-  top: 0.211rem;
-  width: 4.907rem;
-  white-space: normal;
+  width: 100%;
 }
 
 .highlight {
@@ -821,7 +951,8 @@ watch(
 .sender-btn {
   position: absolute;
   right: 0.264rem;
-  top: 0.24rem;
+  top: 50%;
+  transform: translateY(-50%);
   width: 0.88rem;
   height: 0.88rem;
   border: 0;
@@ -834,15 +965,14 @@ watch(
   img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    border-radius: 50%;
+    object-fit: cover;
   }
 }
 
 .other-meta-row {
-  position: absolute;
-  left: 0;
-  top: 1.224rem;
-  width: 8.657rem;
+  margin-top: 0.12rem;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;

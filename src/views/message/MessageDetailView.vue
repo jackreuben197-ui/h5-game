@@ -15,6 +15,7 @@ import type {
 } from '@/api/models/msg'
 import { t } from '@/i18n'
 import { formatDateTime } from '@/utils/time'
+import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import avatarDefault from '@/assets/images/default_avatar.png'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconBalance from '@/assets/icons/icon_balance.png'
@@ -23,6 +24,40 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 
 type MessagePageType = 'system' | 'credit' | 'uc' | 'other'
 type CreditStatus = 'pending' | 'rejected' | 'approved-by-user' | 'approved'
+
+const MSG_SUB_TYPE = {
+  MsgBagTypeGetTickets: 1000,
+  MsgBagTypeUserTransferTicketsToSelf: 1001,
+  MsgBagTypeUserTransferTicketsToOther: 1002,
+  MsgBagTypeSignUpMatch: 1007,
+  MsgBagTypeAwardPropsByEveryDayTask: 1008,
+  MsgBagTypeAwardPropsByAchievementsTask: 1009,
+  MsgBagTypeAwardPropsByVipInvitationReward: 1010,
+  MsgBagTypeClubGrantGold: 1011,
+  MsgBagTypeTribeGivePropToClub: 1012,
+  MsgClubTypeRechargeRequest: 2003,
+  MsgClubTypeWithdrawRequest: 2004,
+  MsgClubTypeRechargeRefuse: 2005,
+  MsgClubTypeRecselfpft: 2022,
+  MsgClubTypeCloseClub: 2024,
+  MsgClubTypeUserGradeQuickly: 2025,
+  MsgClubTypeUserGradeDrain: 2026,
+  MsgClubTypeAutoCloseSevenDays: 2027,
+  MsgClubTypeAutoCloseOneDay: 2028,
+  MsgClubTypeAutoCloseNow: 2029,
+  MsgMoneyTypeReleaseClubFunds: 3000,
+  MsgMoneyTypeMatchWin: 3002,
+  MsgMoneyTypeMatchSignUp: 3003,
+  MsgSuper1AwardDiscount: 3013,
+  MsgCLUBTOUSER: 3023,
+  MsgCLUBRECOVEUSER: 3024,
+  MsgMoneyTypeTribeToClub: 3025,
+  MsgMoneyTypeTribeRecoveClub: 3026,
+  MsgMoneyTypeDiamondTribeToUser: 3029,
+  MSG_CLUB_TYPE_JACKPOT_AWD: 2023,
+  MSG_MONEY_TYPE_JACKPOT_AWD: 3032,
+  MsgTribeTypeKickOutUser: 5014,
+} as const
 
 interface SystemMessageItem {
   segments: MessageTextSegment[]
@@ -135,16 +170,222 @@ function mapStatus(value: unknown): CreditStatus {
   return 'pending'
 }
 
+function formatNumericText(value: unknown, divideBy = 1): string {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) {
+    return String(value ?? '')
+  }
+  return (numeric / divideBy).toLocaleString('en-US')
+}
+
+function formatTimestampTitle(rawTitle: string): string {
+  const timestamp = Number(rawTitle)
+  if (!Number.isFinite(timestamp) || timestamp <= 0) {
+    return rawTitle
+  }
+  return formatDateTime(timestamp * 1000, 'YYYY-MM-DD HH:mm')
+}
+
+function truncateText(value: string, maxLength: number): string {
+  if (value.length <= maxLength) return value
+  return `${value.slice(0, maxLength)}...`
+}
+
+function getCoinTypeName(coinType: number): string {
+  if (coinType === 1) {
+    const i18nText = t('UIGuild_VipCountGoldType1')
+    return i18nText && i18nText !== 'UIGuild_VipCountGoldType1' ? i18nText : '联盟币'
+  }
+  if (coinType === 2) {
+    const i18nText = t('UIGuild_VipCountGoldType2')
+    return i18nText && i18nText !== 'UIGuild_VipCountGoldType2' ? i18nText : 'USDT'
+  }
+  return ''
+}
+
+function resolveRoomTypeName(item: MsgMessageListMsgInfo): string {
+  const key = String(item.multi_language_id ?? '')
+  if (!key) return ''
+
+  if (key.includes(',')) {
+    const [first] = key.split(',')
+    return resolveTemplateTextByKey(first) || t(first) || first
+  }
+
+  return resolveTemplateTextByKey(key) || t(key) || key
+}
+
+function resolveLocalizedName(rawKey: string): string {
+  const key = String(rawKey ?? '').trim()
+  if (!key) return ''
+  return resolveTemplateTextByKey(key) || t(key) || key
+}
+
+function normalizeBagTitleByType(msgType: number, rawTitle: string): string {
+  const needsTitleSplit =
+    msgType === MSG_SUB_TYPE.MsgBagTypeGetTickets ||
+    msgType === MSG_SUB_TYPE.MsgBagTypeUserTransferTicketsToSelf ||
+    msgType === MSG_SUB_TYPE.MsgBagTypeUserTransferTicketsToOther ||
+    msgType === MSG_SUB_TYPE.MsgBagTypeAwardPropsByEveryDayTask ||
+    msgType === MSG_SUB_TYPE.MsgBagTypeAwardPropsByAchievementsTask ||
+    msgType === MSG_SUB_TYPE.MsgBagTypeAwardPropsByVipInvitationReward
+
+  if (!needsTitleSplit || !rawTitle.includes('X')) {
+    return rawTitle
+  }
+
+  const splitIndex = rawTitle.lastIndexOf('X')
+  if (splitIndex <= 0 || splitIndex >= rawTitle.length - 1) {
+    return rawTitle
+  }
+
+  const propKey = rawTitle.slice(0, splitIndex).trim()
+  const count = rawTitle.slice(splitIndex + 1).trim()
+  const propName = resolveLocalizedName(propKey)
+  if (!propName || !count) {
+    return rawTitle
+  }
+
+  return `${truncateText(propName, 17)} x${count}`
+}
+
+function parseRemarkCoin(remark: string): { amount: string; coinType: number; coinName: string } {
+  const [amount = '', coinTypeRaw = ''] = remark.split('_')
+  const coinType = Number(coinTypeRaw)
+  return {
+    amount,
+    coinType,
+    coinName: getCoinTypeName(coinType),
+  }
+}
+
+function buildArgsByMsgType(item: MsgMessageListMsgInfo, title: string): string[] {
+  const content = String(item.content ?? '')
+  const remark = String(item.remark ?? '')
+  const msgType = Number(item.msg_type ?? 0)
+  const senderName = String(item.sender_name ?? '')
+
+  if (msgType === MSG_SUB_TYPE.MsgBagTypeUserTransferTicketsToSelf) {
+    return [title, content]
+  }
+
+  if (msgType === MSG_SUB_TYPE.MsgBagTypeUserTransferTicketsToOther) {
+    return [content, title]
+  }
+
+  if (
+    msgType === MSG_SUB_TYPE.MsgBagTypeAwardPropsByEveryDayTask ||
+    msgType === MSG_SUB_TYPE.MsgBagTypeAwardPropsByAchievementsTask ||
+    msgType === MSG_SUB_TYPE.MsgBagTypeAwardPropsByVipInvitationReward
+  ) {
+    return [remark, title]
+  }
+
+  if (msgType === MSG_SUB_TYPE.MsgClubTypeUserGradeDrain) {
+    return [content, remark]
+  }
+
+  if (
+    msgType === MSG_SUB_TYPE.MsgClubTypeRechargeRequest ||
+    msgType === MSG_SUB_TYPE.MsgClubTypeWithdrawRequest ||
+    msgType === MSG_SUB_TYPE.MsgBagTypeSignUpMatch ||
+    msgType === MSG_SUB_TYPE.MsgMoneyTypeMatchSignUp
+  ) {
+    return [content, remark, title]
+  }
+
+  if (msgType === MSG_SUB_TYPE.MsgSuper1AwardDiscount) {
+    return [resolveTemplateTextByKey(content) || content, remark]
+  }
+
+  if (msgType === MSG_SUB_TYPE.MsgBagTypeClubGrantGold) {
+    return [title, formatNumericText(content)]
+  }
+
+  if (msgType === MSG_SUB_TYPE.MsgBagTypeTribeGivePropToClub) {
+    const propName = resolveTemplateTextByKey(title) || title
+    return [senderName, `${propName}*${content}`]
+  }
+
+  if (msgType === MSG_SUB_TYPE.MsgMoneyTypeReleaseClubFunds) {
+    const { amount, coinName } = parseRemarkCoin(remark)
+    return [amount, coinName]
+  }
+
+  if (msgType === MSG_SUB_TYPE.MsgCLUBTOUSER || msgType === MSG_SUB_TYPE.MsgCLUBRECOVEUSER) {
+    const { amount, coinName } = parseRemarkCoin(remark)
+    return [content, amount, coinName]
+  }
+
+  if (msgType === MSG_SUB_TYPE.MsgMoneyTypeDiamondTribeToUser) {
+    const { amount } = parseRemarkCoin(remark)
+    return [senderName, amount]
+  }
+
+  if (msgType === MSG_SUB_TYPE.MsgMoneyTypeMatchWin) {
+    const roomType = resolveRoomTypeName(item)
+    return [`${roomType}${content}`, formatNumericText(remark), title]
+  }
+
+  if (msgType === MSG_SUB_TYPE.MsgTribeTypeKickOutUser) {
+    return [content, remark]
+  }
+
+  if (msgType === MSG_SUB_TYPE.MsgClubTypeRecselfpft) {
+    return [content, formatNumericText(remark)]
+  }
+
+  if (
+    msgType === MSG_SUB_TYPE.MsgClubTypeAutoCloseSevenDays ||
+    msgType === MSG_SUB_TYPE.MsgClubTypeAutoCloseOneDay
+  ) {
+    return [content]
+  }
+
+  if (msgType === MSG_SUB_TYPE.MsgClubTypeAutoCloseNow) {
+    return [content, remark]
+  }
+
+  if (
+    msgType === MSG_SUB_TYPE.MSG_CLUB_TYPE_JACKPOT_AWD ||
+    msgType === MSG_SUB_TYPE.MSG_MONEY_TYPE_JACKPOT_AWD
+  ) {
+    return [title, formatNumericText(remark, 100)]
+  }
+
+  if (msgType === MSG_SUB_TYPE.MsgMoneyTypeTribeToClub) {
+    return [senderName, content, formatNumericText(remark), title]
+  }
+
+  if (msgType === MSG_SUB_TYPE.MsgMoneyTypeTribeRecoveClub) {
+    return [senderName, content, formatNumericText(remark, 100), title]
+  }
+
+  const defaultRoomType = resolveRoomTypeName(item)
+  return [`${defaultRoomType}${content}`, formatNumericText(remark), title]
+}
+
 function buildMessageContent(item: MsgMessageListMsgInfo): {
   segments: MessageTextSegment[]
   text: string
 } {
   const content = String(item.content ?? '')
-  const remark = String(item.remark ?? '')
-  const title = String(item.title ?? '')
   const msgType = Number(item.msg_type ?? 0)
+
+  let title = String(item.title ?? '')
+  if (title && /^\d+(\.\d+)?$/.test(title)) {
+    title = formatNumericText(title)
+  }
+  if (
+    msgType === MSG_SUB_TYPE.MsgBagTypeSignUpMatch ||
+    msgType === MSG_SUB_TYPE.MsgMoneyTypeMatchSignUp
+  ) {
+    title = formatTimestampTitle(title)
+  }
+  title = normalizeBagTitleByType(msgType, title)
+
   const templateTypeAlias: Partial<Record<number, number>> = {
-    2025: 2005,
+    [MSG_SUB_TYPE.MsgClubTypeUserGradeQuickly]: MSG_SUB_TYPE.MsgClubTypeRechargeRefuse,
   }
   const mappedMsgType = templateTypeAlias[msgType] ?? msgType
   const templateKey = `MsgInfo_${mappedMsgType}`
@@ -154,11 +395,19 @@ function buildMessageContent(item: MsgMessageListMsgInfo): {
       ? translatedTemplate
       : content || title || '--'
 
-  const map: Record<string, string> = {
-    '0': content,
-    '1': remark,
-    '2': title,
+  if (msgType === MSG_SUB_TYPE.MsgClubTypeCloseClub) {
+    const segments: MessageTextSegment[] = []
+    if (content) {
+      segments.push({ text: content, green: true })
+    }
+    segments.push({ text: '已解散' })
+    return {
+      segments,
+      text: `${content}已解散`,
+    }
   }
+
+  const args = buildArgsByMsgType(item, title)
 
   const safeTemplate = template || '--'
   const segments: MessageTextSegment[] = []
@@ -177,7 +426,7 @@ function buildMessageContent(item: MsgMessageListMsgInfo): {
       }
     }
 
-    const value = map[tokenKey] ?? ''
+    const value = args[Number(tokenKey)] ?? ''
     if (value) {
       segments.push({ text: value, green: true })
     }
@@ -609,7 +858,9 @@ onBeforeUnmount(() => {
           <div class="other-banner" :class="{ 'other-banner--wrap': item.wrap }">
             <div
               class="other-banner-bg"
-              :style="{ backgroundImage: `url(${index === 0 ? otherBannerBgFirst : otherBannerBgDefault})` }"
+              :style="{
+                backgroundImage: `url(${index === 0 ? otherBannerBgFirst : otherBannerBgDefault})`,
+              }"
               aria-hidden="true"
             ></div>
             <p class="other-title" :class="{ 'other-title--wrap': item.wrap }">

@@ -187,7 +187,6 @@ async function onRowClick(item: SettingItem): Promise<void> {
   </div>
 </template>
 
-
 <style scoped lang="scss">
 .mine-glass-page {
   height: 100dvh;

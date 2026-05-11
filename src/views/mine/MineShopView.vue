@@ -2,8 +2,11 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast } from 'vant'
-import { postMallShopListApi } from '@/api/prop'
+import { postPropGoldPriceListApi } from '@/api/prop'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import imgCoin from '@/assets/icons/shop_usdt.png'
+import imgDiamonds from '@/assets/images/shop_diamonds.png'
+
 import { useUserInfoStore } from '@/stores/userInfo'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
@@ -16,11 +19,6 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 const userInfoStore = useUserInfoStore()
-
-const imgChestA = 'https://www.figma.com/api/mcp/asset/0d034649-1d4c-4fdc-86c8-27dc3f19c760'
-const imgChestB = 'https://www.figma.com/api/mcp/asset/2da57908-1ad2-45d5-bf15-873e3ff66617'
-const imgChestC = 'https://www.figma.com/api/mcp/asset/571f18d9-22fc-4bff-a810-046d4e2aa541'
-const imgCoin = 'https://www.figma.com/api/mcp/asset/f2c2c3d0-4480-477f-bf5e-9ee46cb1e70f'
 
 interface ShopItem {
   id: number
@@ -44,36 +42,37 @@ function toSafeNumber(value: unknown): number {
   return Number.isFinite(numeric) ? numeric : 0
 }
 
-function pickImage(index: number): string {
-  const presets = [imgChestA, imgChestB, imgChestC]
-  return presets[index % presets.length]
-}
-
 async function fetchShopList(): Promise<void> {
   loading.value = true
   try {
-    const response = await postMallShopListApi({
-      limit: 50,
-      offset: 0,
-    })
+    const response = await postPropGoldPriceListApi(
+      {
+        gold_types: [4],
+        pay_gold_types: [],
+        source_type: 2,
+        trader_type: 0,
+        limit: 100,
+        offset: 0,
+      },
+      0,
+    )
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : '加载商品失败')
     }
 
     const list = response.data?.list ?? []
-    items.value = list.map((row, index) => {
-      const num = toSafeNumber(row.num)
-      const price = toSafeNumber(row.price)
-      const discount = toSafeNumber(row.discount)
+    items.value = list.map((row, _) => {
+      const num = toSafeNumber(row.give_gold_count)
+      const price = toSafeNumber(row.pay_price)
       return {
         id: toSafeNumber(row.id),
         productId: String(row.product_id ?? ''),
-        title: `商品${index + 1}`,
+        title: `${row.gold_count}`,
         diamondsText: `增${num}钻石`,
         diamondsValue: num,
         price,
-        image: typeof row.picture === 'string' && row.picture ? row.picture : pickImage(index),
-        wholesaleOnly: discount > 0,
+        image: typeof row.picture === 'string' && row.picture ? row.picture : imgDiamonds,
+        wholesaleOnly: row.trader_type == 2,
       }
     })
   } catch (error) {
@@ -127,7 +126,7 @@ onMounted(() => {
           <span v-if="item.wholesaleOnly" class="wholesale-tag">批发商专属</span>
           <img class="chest" :src="item.image" :alt="item.title" />
           <p class="title">{{ item.title }}</p>
-          <p class="desc">{{ item.diamondsText }}</p>
+          <p v-if="item.diamondsValue > 0" class="desc">{{ item.diamondsText }}</p>
 
           <div class="price-pill">
             <span>{{ item.auditing ? '审核中' : item.price.toFixed(2) }}</span>

@@ -84,7 +84,7 @@ function requestOtp(): void {
       }
 
       showSuccessToast('验证码已发送')
-      otpCountdown.value = 50
+      otpCountdown.value = 60
       if (otpTimer !== null) {
         window.clearInterval(otpTimer)
       }
@@ -222,7 +222,7 @@ onBeforeUnmount(() => {
               :disabled="requestingOtp || submitting"
               @click="requestOtp"
             >
-              {{ isFilledPreview ? `${otpCountdown}s` : 'GET OTP' }}
+              {{ isFilledPreview ? `${otpCountdown}s` : '获取验证码' }}
             </button>
           </div>
         </div>
@@ -255,19 +255,18 @@ onBeforeUnmount(() => {
       </section>
 
       <label class="policy-row">
-        <span class="policy-check" :class="{ checked: acceptedPolicy }" @click="acceptedPolicy = !acceptedPolicy"></span>
+        <span
+          class="policy-check"
+          :class="{ checked: acceptedPolicy }"
+          @click="acceptedPolicy = !acceptedPolicy"
+        ></span>
         <span class="policy-text">
           By Signing up, you agree to our
           <span class="policy-link">《Terms & Privacy Policy》.</span>
         </span>
       </label>
 
-      <button
-        class="submit-btn"
-        type="button"
-        :disabled="submitting"
-        @click="submitReset"
-      >
+      <button class="submit-btn" type="button" :disabled="submitting" @click="submitReset">
         {{ submitting ? '提交中...' : submitText }}
       </button>
     </div>
@@ -437,7 +436,7 @@ onBeforeUnmount(() => {
 .prefix {
   background: rgba(0, 0, 0, 0.12);
   border-radius: 1.2684rem;
-  min-width: 1.4667rem;
+  // min-width: 1.4667rem;
   height: 0.8889rem;
   display: inline-flex;
   align-items: center;
@@ -484,7 +483,7 @@ onBeforeUnmount(() => {
   border: 0;
   border-radius: 1.2684rem;
   padding: 0 0.3067rem;
-  min-width: 1.9467rem;
+  // min-width: 1.9467rem;
   background: linear-gradient(152deg, #05e7ae 7.55%, #027a5c 71.92%);
   color: #fff;
   font-family: var(--font-family-sans);

@@ -34,19 +34,12 @@ const rootRecord = computed<Record<string, unknown>>(() => {
 })
 
 const phone = computed(() => {
-  const fromUser = readFirstString(userRecord.value, [
-    'phone',
-    'mobile',
-    'mobile_phone',
-    'phone_number',
-    'bind_phone',
-    'tel',
-  ])
+  const fromUser = readFirstString(userRecord.value, ['phone'])
   if (fromUser) {
     return fromUser
   }
 
-  const fromRoot = readFirstString(rootRecord.value, ['phone', 'mobile', 'bind_phone'])
+  const fromRoot = readFirstString(rootRecord.value, ['phone'])
   if (fromRoot) {
     return fromRoot
   }
@@ -60,12 +53,12 @@ const phone = computed(() => {
 })
 
 const email = computed(() => {
-  const fromUser = readFirstString(userRecord.value, ['email', 'mail', 'bind_email', 'email_address'])
+  const fromUser = readFirstString(userRecord.value, ['email'])
   if (fromUser) {
     return fromUser
   }
 
-  const fromRoot = readFirstString(rootRecord.value, ['email', 'mail', 'bind_email'])
+  const fromRoot = readFirstString(rootRecord.value, ['email'])
   if (fromRoot) {
     return fromRoot
   }
@@ -80,12 +73,16 @@ const email = computed(() => {
 
 const isPhone = computed(() => Boolean(phone.value))
 const isEmail = computed(() => !phone.value && Boolean(email.value))
-const firstContactPlaceholder = computed(() => (isPhone.value ? '0000000000' : 'Enter your Mail Id'))
+const firstContactPlaceholder = computed(() =>
+  isPhone.value ? '0000000000' : 'Enter your Mail Id',
+)
 const firstContactValue = computed(() => phone.value)
-const pageTitle = computed(() => (isPhone.value ? 'Security code verification' : '注销账户'))
-const otpButtonText = computed(() => (otpCountdown.value > 0 ? `${otpCountdown.value}s` : 'GET OTP'))
+const pageTitle = computed(() => (isPhone.value ? '6位数密码' : '注销账户'))
+const otpButtonText = computed(() =>
+  otpCountdown.value > 0 ? `${otpCountdown.value}s` : '获取验证码',
+)
 const zoneCode = computed(() => {
-  const fromUser = readFirstString(userRecord.value, ['area', 'area_code', 'country_code'])
+  const fromUser = readFirstString(userRecord.value, ['area'])
   const pure = fromUser.replace(/[^\d]/g, '')
   return pure || '11'
 })
@@ -111,10 +108,6 @@ const emailFieldValue = computed({
 
 let otpTimer: number | null = null
 
-function getSceneByType(): 1 | 2 {
-  return isPhone.value ? 1 : 2
-}
-
 async function requestOtp(): Promise<void> {
   if (otpCountdown.value > 0 || requestingOtp.value) {
     return
@@ -129,9 +122,10 @@ async function requestOtp(): Promise<void> {
   requestingOtp.value = true
   try {
     const response = await postUserDeleteCodeApi({
-      scene: getSceneByType(),
-      account,
-      lang: 1,
+      area: zoneCode.value,
+      phone: phone.value,
+      email: email.value,
+      lang: 0,
     })
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : '验证码发送失败')
@@ -144,7 +138,7 @@ async function requestOtp(): Promise<void> {
     return
   }
 
-  otpCountdown.value = 50
+  otpCountdown.value = 60
   if (otpTimer !== null) {
     window.clearInterval(otpTimer)
   }
@@ -187,10 +181,10 @@ async function confirmDialog(): Promise<void> {
   deleting.value = true
   try {
     const response = await postUserDeleteApi({
-      scene: getSceneByType(),
-      account,
+      area: zoneCode.value,
+      phone: phone.value,
+      email: email.value,
       code,
-      lang: 1,
     })
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : '注销申请提交失败')
@@ -270,12 +264,7 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <button
-        class="submit-btn"
-        type="button"
-        :disabled="deleting"
-        @click="onSubmit"
-      >
+      <button class="submit-btn" type="button" :disabled="deleting" @click="onSubmit">
         注销账号
       </button>
 
@@ -419,7 +408,7 @@ onBeforeUnmount(() => {
 .prefix {
   background: rgba(0, 0, 0, 0.12);
   border-radius: 1.2684rem;
-  min-width: 1.4667rem;
+  // min-width: 0.5667rem;
   height: 0.8889rem;
   display: inline-flex;
   align-items: center;
@@ -454,7 +443,7 @@ onBeforeUnmount(() => {
   border: 0;
   border-radius: 1.2684rem;
   padding: 0 0.3067rem;
-  min-width: 1.9467rem;
+  // min-width: 1.9467rem;
   background: linear-gradient(152deg, #05e7ae 7.55%, #027a5c 71.92%);
   color: #fff;
   font-family: var(--font-family-sans);
@@ -471,7 +460,7 @@ onBeforeUnmount(() => {
 }
 
 .submit-btn {
-  margin-top: auto;
+  margin-top: 0.254rem;
   min-height: 1.4376rem;
   width: 100%;
   height: 1.4376rem;
@@ -502,7 +491,12 @@ onBeforeUnmount(() => {
   width: 8.2rem;
   border-radius: 0.48rem;
   border: 0.0133rem solid rgba(255, 255, 255, 0.34);
-  background: linear-gradient(121deg, rgba(142, 142, 142, 0.3) 2.9%, rgba(103, 103, 103, 0.4) 43.6%, rgba(73, 73, 73, 0.5) 89.8%);
+  background: linear-gradient(
+    121deg,
+    rgba(142, 142, 142, 0.3) 2.9%,
+    rgba(103, 103, 103, 0.4) 43.6%,
+    rgba(73, 73, 73, 0.5) 89.8%
+  );
   backdrop-filter: blur(0.2rem);
   box-shadow: inset 0 0 0.2rem rgba(0, 0, 0, 0.5);
   padding: 0.56rem;

@@ -364,10 +364,10 @@ export interface UserWsData {
 // /api/user/send_verify_code (UserDeleteCode)
 
 export interface UserDeleteCodeRequest {
-    area?: string; // 区号
-    phone?: string; // 手机号码
-    email?: string; // 邮箱地址
-    lang?: number; // 语言
+  area?: string // 区号
+  phone?: string // 手机号码
+  email?: string // 邮箱地址
+  lang?: number // 语言
 
   [key: string]: unknown
 }
@@ -383,10 +383,10 @@ export interface UserDeleteCodeData {
 // /api/user/delete (UserDelete)
 
 export interface UserDeleteRequest {
-    area?: string; // 区号
-    phone?: string; // 手机号码
-    email?: string; // 邮箱地址
-    code?: string; // 验证码
+  area?: string // 区号
+  phone?: string // 手机号码
+  email?: string // 邮箱地址
+  code?: string // 验证码
 
   [key: string]: unknown
 }
@@ -402,8 +402,8 @@ export interface UserDeleteData {
 // /api/user/quick_password/verify (UserVerifyPassword)
 
 export interface UserVerifyPasswordRequest {
-    user_pwd_type?: number; // 用户密码类型： 1 - 普通密码 2 - 数字密码 3 - 手势密码 4 - 生物密码（面容或指纹）
-    password?: string; // 密码的MD5哈希值
+  user_pwd_type?: number // 用户密码类型： 1 - 普通密码 2 - 数字密码 3 - 手势密码 4 - 生物密码（面容或指纹）
+  password?: string // 密码的MD5哈希值
 
   [key: string]: unknown
 }
@@ -413,8 +413,8 @@ export interface UserVerifyPasswordResponseData extends UserVerifyPasswordData {
 }
 
 export interface UserVerifyPasswordData {
-    verify?: boolean; // 校验是否通过
-    failed_count?: number; // 失败次数
+  verify?: boolean // 校验是否通过
+  failed_count?: number // 失败次数
 
   [key: string]: unknown
 }
@@ -422,9 +422,9 @@ export interface UserVerifyPasswordData {
 // /api/user/quick_password/modify (UserModifyQuickInfo)
 
 export interface UserModifyQuickInfoRequest {
-    user_pwd_type?: number; // 密码类型：1 普通密码；2 数字密码；3 手势密码；4 生物密码（面容或指纹）
-    switch_status?: number; // 开关状态：1 开；2 关
-    password?: string; // 用户密码的MD5哈希值
+  user_pwd_type?: number // 密码类型：1 普通密码；2 数字密码；3 手势密码；4 生物密码（面容或指纹）
+  switch_status?: number // 开关状态：1 开；2 关
+  password?: string // 用户密码的MD5哈希值
 
   [key: string]: unknown
 }
@@ -440,8 +440,8 @@ export interface UserModifyQuickInfoData {
 // /api/user/modify/quick/login/switch (UserModifyQuickSwitch)
 
 export interface UserModifyQuickSwitchRequest {
-    quick_login_switch?: number; // 快捷登录开关状态：1 开启；2 关闭
-    quick_login_type?: string; // 快捷登录类型组合，格式为"1_2_3"： 1 代表手势密码 2 代表数字密码 3 代表生物识别（面容/指纹） 示例："1_3"表示启用手势和生物识别
+  quick_login_switch?: number // 快捷登录开关状态：1 开启；2 关闭
+  quick_login_type?: string // 快捷登录类型组合，格式为"1_2_3"： 1 代表手势密码 2 代表数字密码 3 代表生物识别（面容/指纹） 示例："1_3"表示启用手势和生物识别
 
   [key: string]: unknown
 }
@@ -457,9 +457,9 @@ export interface UserModifyQuickSwitchData {
 // /api/user/modify/bringin/password/switch (UserModifyBringInSwitch)
 
 export interface UserModifyBringInSwitchRequest {
-    bringin_pwd_switch?: number; // 带入二级密码开关：1=开，2=关
-    bringin_pwd_type?: number; // 带入二级密码类型：1=手势，2=数字密码，3=生物识别
-    bringin_pwd_verify_type?: number; // 带入二级密码验证频率类型： 1=每次带入，2=每桌一次
+  bringin_pwd_switch?: number // 带入二级密码开关：1=开，2=关
+  bringin_pwd_type?: number // 带入二级密码类型：1=手势，2=数字密码，3=生物识别
+  bringin_pwd_verify_type?: number // 带入二级密码验证频率类型： 1=每次带入，2=每桌一次
 
   [key: string]: unknown
 }
@@ -475,17 +475,17 @@ export interface UserModifyBringInSwitchData {
 // /api/user/wallets_log (UserBill)
 
 export interface UserBillRequest {
-    gold_type?: number; // 钱包类型 1=UC 2=GC 3=记分牌 4=钻石
-    origin_type?: number; // 记分牌来源 当 gold_type=3 时生效： 3=俱乐部桌 4=朋友桌
-    limit?: number; // 每页条数
-    offset?: number; // 开始下标
-    user_id?: number; // 用户ID
-    op_codes?: string[]; // 操作类型编码数组
-    sort_type?: number; // 排序类型：1-创建时间；2-成员数；3-等级
-    order_type?: number; // 排序方式 1=升序 2=降序
-    start_time?: number; // 开始时间戳
-    end_time?: number; // 结束时间戳
-    club_id?: number; // 俱乐部ID
+  gold_type?: number // 钱包类型 1=UC 2=GC 3=记分牌 4=钻石
+  origin_type?: number // 记分牌来源 当 gold_type=3 时生效： 3=俱乐部桌 4=朋友桌
+  limit?: number // 每页条数
+  offset?: number // 开始下标
+  user_id?: number // 用户ID
+  op_codes?: string[] // 操作类型编码数组
+  sort_type?: number // 排序类型：1-创建时间；2-成员数；3-等级
+  order_type?: number // 排序方式 1=升序 2=降序
+  start_time?: number // 开始时间戳
+  end_time?: number // 结束时间戳
+  club_id?: number // 俱乐部ID
 
   [key: string]: unknown
 }
@@ -495,11 +495,11 @@ export interface UserBillResponseData extends UserBillData {
 }
 
 export interface UserBillData {
-    limit?: number; // 数据数量
-    offset?: number; // 当前偏移值
-    total?: number; // 总条数
-    list?: UserBillWallet[]; // 钱包列表
-    total_info?: UserBillTotalInfo; // 统计信息列表
+  limit?: number // 数据数量
+  offset?: number // 当前偏移值
+  total?: number // 总条数
+  list?: UserBillWallet[] // 钱包列表
+  total_info?: UserBillTotalInfo // 统计信息列表
 
   [key: string]: unknown
 }
@@ -507,8 +507,8 @@ export interface UserBillData {
 // /api/user/my_wallets (UserWallet)
 
 export interface UserWalletRequest {
-    gold_type?: number; // 货币类型： 1 = UC， 2 = GC， 3 = 记分牌， 4 = 钻石
-    origin_type?: number; // 记分牌来源（仅在 gold_type=3 时使用）： 3 = 俱乐部桌， 4 = 朋友桌
+  gold_type?: number // 货币类型： 1 = UC， 2 = GC， 3 = 记分牌， 4 = 钻石
+  origin_type?: number // 记分牌来源（仅在 gold_type=3 时使用）： 3 = 俱乐部桌， 4 = 朋友桌
 
   [key: string]: unknown
 }
@@ -518,11 +518,10 @@ export interface UserWalletResponseData extends UserWalletData {
 }
 
 export interface UserWalletData {
-    amount?: number; // 金额
-    wallet?: unknown[]; // 钱包列表
-    [key: string]: unknown
+  amount?: number // 金额
+  wallet?: UserWalletWallet[] // 钱包列表
+  [key: string]: unknown
 }
-
 
 // /user/gold_change/log 请求参数。
 export interface UserGoldChangeLogRequest {
@@ -560,71 +559,80 @@ export interface UserGoldChangeLogData {
 // /api/user/wallets_log (UserBill)
 
 export interface UserBillTotalInfo {
-    grant_amount?: number; // 发放总额
-    recover_amount?: number; // 回收总额
-    bring_amount?: number; // 赢取金额
-    self_profit_amount?: number; // 返水（RB）总额
-    change_amount?: number; // 变动总额
+  grant_amount?: number // 发放总额
+  recover_amount?: number // 回收总额
+  bring_amount?: number // 赢取金额
+  self_profit_amount?: number // 返水（RB）总额
+  change_amount?: number // 变动总额
 
   [key: string]: unknown
 }
 
 export interface UserBillWallet {
-    gold_change?: number; // 余额变动
-    gold_after?: number; // 变动后余额
-    create_time?: string; // 创建时间
-    op_code?: string; // 操作类型
-    gold_type?: number; // 金币类型
-    club_name?: string; // 俱乐部名称
-    src_type?: number;
-    src_room_id?: number; // 来源房间ID
-    name?: string; // 牌局名称
-    room_info?: UserBillRoom_info; // 房间信息 没有则为null
-    date?: string; // 显示的日期 为空则不显示
-    memeber_array?: UserBillMember[]; // 批量赠送钻石
-    memeber_count?: number; // 批量赠送钻石的成员数量
-    tribe_name?: string; // 联盟名称
-    nick_name?: string; // 用户名称
-    user_random_id?: number; // 用户随机id
-    op_nick_name?: string; // 发送目的用户名称
-    op_random_id?: number; // 发送目的用户id
-    multi_lang_names_obj?: unknown; // 多语言名称
-    src_match_id?: number;
-    match_tribe_name?: string;
-    src_nick_name?: string; // 来源用户昵称
-    src_random_id?: number; // 来源用户ID
+  gold_change?: number // 余额变动
+  gold_after?: number // 变动后余额
+  create_time?: string // 创建时间
+  op_code?: string // 操作类型
+  gold_type?: number // 金币类型
+  club_name?: string // 俱乐部名称
+  src_type?: number
+  src_room_id?: number // 来源房间ID
+  name?: string // 牌局名称
+  room_info?: UserBillRoom_info // 房间信息 没有则为null
+  date?: string // 显示的日期 为空则不显示
+  memeber_array?: UserBillMember[] // 批量赠送钻石
+  memeber_count?: number // 批量赠送钻石的成员数量
+  tribe_name?: string // 联盟名称
+  nick_name?: string // 用户名称
+  user_random_id?: number // 用户随机id
+  op_nick_name?: string // 发送目的用户名称
+  op_random_id?: number // 发送目的用户id
+  multi_lang_names_obj?: unknown // 多语言名称
+  src_match_id?: number
+  match_tribe_name?: string
+  src_nick_name?: string // 来源用户昵称
+  src_random_id?: number // 来源用户ID
 
   [key: string]: unknown
 }
 
 export interface UserBillRoom_info {
-    club_name?: string; // 创建房间的俱乐部名称
-    creator_name?: string; // 创建房间的用户名
-    bring_in_amount?: number; // 总带入
-    bring_out_amount?: number; // 总带出
-    origin_type?: number; // 创建来源 1=平台 2=联盟 3=俱乐部 4=个人（朋友桌）
-    share_table?: number; // 是否共享牌桌 1=不共享 2=共享
-    records?: UserBillRecord[]; // 变动金额列表
-    self_profit_amount?: number; // 自身返水金额
-    game_type?: number; // 游戏类型
-    ante?: number; // 前注
-    poker_type?: number; // 牌型
+  club_name?: string // 创建房间的俱乐部名称
+  creator_name?: string // 创建房间的用户名
+  bring_in_amount?: number // 总带入
+  bring_out_amount?: number // 总带出
+  origin_type?: number // 创建来源 1=平台 2=联盟 3=俱乐部 4=个人（朋友桌）
+  share_table?: number // 是否共享牌桌 1=不共享 2=共享
+  records?: UserBillRecord[] // 变动金额列表
+  self_profit_amount?: number // 自身返水金额
+  game_type?: number // 游戏类型
+  ante?: number // 前注
+  poker_type?: number // 牌型
 
   [key: string]: unknown
 }
 
 export interface UserBillRecord {
-    gold_change?: number; // 变动金额
-    op_code?: string; // 操作类型
-    create_time?: string; // 创建时间
+  gold_change?: number // 变动金额
+  op_code?: string // 操作类型
+  create_time?: string // 创建时间
 
   [key: string]: unknown
 }
 
 export interface UserBillMember {
-    nick_name?: string; // 名称
-    gold_change?: number; // 变动金额
-    create_time?: string; // 创建时间
+  nick_name?: string // 名称
+  gold_change?: number // 变动金额
+  create_time?: string // 创建时间
+
+  [key: string]: unknown
+}
+
+// /api/user/my_wallets (UserWallet)
+
+export interface UserWalletWallet {
+  gold?: number // 金额
+  club_name?: string // 俱乐部名称
 
   [key: string]: unknown
 }

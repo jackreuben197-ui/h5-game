@@ -12,7 +12,7 @@ const http = axios.create({
   timeout: 60000,
 })
 
-interface HttpRequestConfigExt extends InternalAxiosRequestConfig {
+export interface HttpRequestConfigExt extends InternalAxiosRequestConfig {
   suppressBusinessToast?: boolean
   suppressBusinessCodes?: number[]
   xClub?: string | number | false

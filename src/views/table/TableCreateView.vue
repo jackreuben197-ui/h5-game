@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import iconNlh from '@/assets/icons/game_type_nlh.png'
 import iconPlo from '@/assets/icons/game_type_plo.png'
 import iconSixPlus from '@/assets/icons/game_type_6+.png'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { postOrgClubGoldApi } from '@/api/org'
 import { useUserInfoStore } from '@/stores/userInfo'
 import mainBgUrl from '@/assets/images/main_bg.webp'
@@ -20,8 +20,13 @@ interface GameTypeItem {
   game_play_type: number
 }
 const router = useRouter()
+const route = useRoute()
 const userInfoStore = useUserInfoStore()
 const selectedKey = ref('')
+const originType = computed(() => {
+  const v = Number(route.query.origin_type)
+  return Number.isFinite(v) && v > 0 ? v : undefined
+})
 
 const gameTypes: GameTypeItem[] = [
   { key: 'nlh', game_play_type: 1, title: '德州', icon: iconNlh },
@@ -37,8 +42,11 @@ const gameTypes: GameTypeItem[] = [
 
 function onSelect(item: GameTypeItem): void {
   selectedKey.value = item.key
-  // showFailToast(`${item.title} 创建流程开发中`)
-  void router.push({ path: '/createTable', query: { game_play_type: item.game_play_type } })
+  const query: Record<string, string | number> = { game_play_type: item.game_play_type }
+  if (originType.value !== undefined) {
+    query.origin_type = originType.value
+  }
+  void router.push({ path: '/createTable', query })
 }
 
 async function prefetchClubDiamondBalance(): Promise<void> {

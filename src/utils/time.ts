@@ -51,6 +51,36 @@ export function formatDurationBySeconds(totalSeconds: number): string {
   return `${pad2(minutes)}:${pad2(seconds)}`
 }
 
+// 对齐 Unity 房间时长显示规则：>=3600 显示 h/m，>=60 显示 m，其余显示 s。
+export function formatDurationByUnity(totalSeconds: number): string {
+  const safeSeconds = Number.isFinite(totalSeconds) ? Math.trunc(totalSeconds) : 0
+  if (safeSeconds >= 3600) {
+    const hour = Math.trunc(safeSeconds / 3600)
+    const minute = Math.trunc((safeSeconds % 3600) / 60)
+    if (minute > 0) {
+      return `${hour}h${minute}m`
+    }
+    return `${hour}h`
+  }
+  if (safeSeconds >= 60) {
+    return `${Math.trunc(safeSeconds / 60)}m`
+  }
+  return `${safeSeconds}s`
+}
+
+// 统一输出“剩余时长/总时长”。
+export function formatRoomLeftAndTotalByUnity(startTime: unknown, totalSeconds: number): string {
+  const safeTotal = Number.isFinite(totalSeconds) ? Math.max(0, Math.trunc(totalSeconds)) : 0
+  const startSeconds = toUnixSeconds(startTime)
+  let leftSeconds = safeTotal
+
+  if (startSeconds > 0) {
+    leftSeconds = startSeconds + safeTotal - Math.floor(Date.now() / 1000)
+  }
+
+  return `${formatDurationByUnity(leftSeconds)}/${formatDurationByUnity(safeTotal)}`
+}
+
 // 补齐两位数字。
 export function pad2(num: number): string {
   return String(Math.max(0, Math.floor(num))).padStart(2, '0')

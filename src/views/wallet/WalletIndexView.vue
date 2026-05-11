@@ -10,9 +10,11 @@ import UserCard from '@/views/wallet/components/UserCard.vue'
 import GlassButton from '@/components/Button/GlassButton.vue'
 import BellButton from '@/components/Button/BellButton.vue'
 import PresetAmountGrid, { type Preset } from '@/views/wallet/components/PresetAmountGrid.vue'
-import PaymentMethodStrip, { type PaymentMethod } from '@/views/wallet/components/PaymentMethodStrip.vue'
+import PaymentMethodStrip, {
+  type PaymentMethod,
+} from '@/views/wallet/components/PaymentMethodStrip.vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
-import NumericKeypad from '@/views/wallet/components/NumericKeypad.vue'
+import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import WithdrawForm from '@/views/wallet/components/WithdrawForm.vue'
 import UsdtPaymentPopup from '@/views/wallet/components/UsdtPaymentPopup.vue'
 import UnfinishedOrderPopup from '@/views/wallet/components/UnfinishedOrderPopup.vue'
@@ -22,7 +24,12 @@ import CustomerServiceChatPopup from '@/views/wallet/components/CustomerServiceC
 import { t } from '@/i18n'
 import { useWalletStore } from '@/stores/wallet'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { postOrderUserRechargeNoApi, postRechargeGoldApi, postClubFundOrderListApi, postOrderUserClubOrderCancelApi } from '@/api/order'
+import {
+  postOrderUserRechargeNoApi,
+  postRechargeGoldApi,
+  postClubFundOrderListApi,
+  postOrderUserClubOrderCancelApi,
+} from '@/api/order'
 import { postChatSupportChannelListApi } from '@/api/chat'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 
@@ -82,7 +89,9 @@ const hasSeenRechargeNotification = ref(false)
 const hasSeenWithdrawNotification = ref(false)
 
 const currentHasSeen = computed(() => {
-  return activeTab.value === 0 ? hasSeenRechargeNotification.value : hasSeenWithdrawNotification.value
+  return activeTab.value === 0
+    ? hasSeenRechargeNotification.value
+    : hasSeenWithdrawNotification.value
 })
 
 let refreshInterval: any = null
@@ -100,7 +109,8 @@ async function openCsChat() {
   if (!activeCsOrder.value) return
 
   const order = activeCsOrder.value
-  const qrCode = (order as any).qrcode || (order as any).qr_code || (order as any).pay_type_qr_code || ''
+  const qrCode =
+    (order as any).qrcode || (order as any).qr_code || (order as any).pay_type_qr_code || ''
   const result = {
     order_no: order.order_no,
     gold_num: order.gold_num,
@@ -113,27 +123,28 @@ async function openCsChat() {
     usdt_address: {
       address: order.pay_type_address || '',
       qr_code: qrCode,
-      name: (order as any).pay_type_name || '客服撮合'
-    }
+      name: (order as any).pay_type_name || '客服撮合',
+    },
   }
 
   try {
     const channelRes = await postChatSupportChannelListApi({
       im_service_types: [4],
       limit: 1,
-      offset: 0
+      offset: 0,
     })
 
     if (channelRes.code === 0 && channelRes.data?.list?.length) {
       const channel = channelRes.data.list[0]
-      const orders = activeTab.value === 0
-        ? walletStore.pendingCsRechargeOrders
-        : walletStore.pendingCsWithdrawOrders
+      const orders =
+        activeTab.value === 0
+          ? walletStore.pendingCsRechargeOrders
+          : walletStore.pendingCsWithdrawOrders
 
       csChatProps.value = {
         tribeId: channel.tribe_id || 0,
         supportUserId: channel.support_user_id || 0,
-        orderData: result
+        orderData: result,
       }
       csChatPopupOpen.value = true
     }
@@ -147,13 +158,16 @@ async function checkUnfinishedOrders(showPopup = true) {
   const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
 
   try {
-    const res = await postClubFundOrderListApi({
-      order_type: 1, // Recharge
-      my_order: true,
-      limit: 1,
-      offset: 0,
-      status: 1, // Pending
-    }, clubId)
+    const res = await postClubFundOrderListApi(
+      {
+        order_type: 1, // Recharge
+        my_order: true,
+        limit: 1,
+        offset: 0,
+        status: 1, // Pending
+      },
+      clubId,
+    )
 
     if (res.code === 0 && res.data?.list?.length) {
       unfinishedOrder.value = res.data.list[0]
@@ -190,7 +204,8 @@ async function handleCancelOrder(orderNo: string) {
 async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
   showUnfinishedPopup.value = false
 
-  const qrCode = (order as any).qrcode || (order as any).qr_code || (order as any).pay_type_qr_code || ''
+  const qrCode =
+    (order as any).qrcode || (order as any).qr_code || (order as any).pay_type_qr_code || ''
   const result = {
     order_no: order.order_no,
     gold_num: order.gold_num,
@@ -203,8 +218,8 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
     usdt_address: {
       address: order.pay_type_address || '',
       qr_code: qrCode,
-      name: (order as any).pay_type_name || '客服撮合'
-    }
+      name: (order as any).pay_type_name || '客服撮合',
+    },
   }
 
   rechargeResult.value = result
@@ -216,7 +231,7 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
       const channelRes = await postChatSupportChannelListApi({
         im_service_types: [4],
         limit: 1,
-        offset: 0
+        offset: 0,
       })
 
       if (channelRes.code === 0 && channelRes.data?.list?.length) {
@@ -224,7 +239,7 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
         csChatProps.value = {
           tribeId: channel.tribe_id || 0,
           supportUserId: channel.support_user_id || 0,
-          orderData: result
+          orderData: result,
         }
         csChatPopupOpen.value = true
       } else {
@@ -255,31 +270,34 @@ onUnmounted(() => {
   if (refreshInterval) clearInterval(refreshInterval)
 })
 
-
 const filteredPayTypes = computed(() =>
-  (walletStore.goldPriceData?.pay_types ?? []).filter(pt => pt.type === 1 || pt.type === 3)
+  (walletStore.goldPriceData?.pay_types ?? []).filter((pt) => pt.type === 1 || pt.type === 3),
 )
 
 const methods = computed<PaymentMethod[]>(() =>
-  filteredPayTypes.value.map(pt => ({
+  filteredPayTypes.value.map((pt) => ({
     icon: pt.image ?? '',
     primary: pt.name ?? '',
     secondary: '',
-  }))
+  })),
 )
 
 // Watch for method changes to handle methods without price lists
-watch(activeMethod, (newIdx) => {
-  const selected = filteredPayTypes.value[newIdx] as any
-  const hasPriceIds = (selected?.price_ids?.length ?? 0) > 0
-  const hasPriceList = (selected?.price_list?.length ?? 0) > 0
+watch(
+  activeMethod,
+  (newIdx) => {
+    const selected = filteredPayTypes.value[newIdx] as any
+    const hasPriceIds = (selected?.price_ids?.length ?? 0) > 0
+    const hasPriceList = (selected?.price_list?.length ?? 0) > 0
 
-  if (selected && !hasPriceIds && !hasPriceList) {
-    activePreset.value = -1 // Default to custom amount
-  } else {
-    activePreset.value = 0 // Default to first preset
-  }
-}, { immediate: true })
+    if (selected && !hasPriceIds && !hasPriceList) {
+      activePreset.value = -1 // Default to custom amount
+    } else {
+      activePreset.value = 0 // Default to first preset
+    }
+  },
+  { immediate: true },
+)
 
 // if pay_type have no price_ids or price_list then empty tile will show and default is custom amount tile will show.
 
@@ -294,9 +312,7 @@ const presets = computed<Preset[]>(() => {
   if (selected && !hasPriceIds && !hasPriceList) {
     return []
   }
-  const list = hasPriceList
-    ? selected!.price_list!
-    : (walletStore.goldPriceData?.list ?? [])
+  const list = hasPriceList ? selected!.price_list! : walletStore.goldPriceData?.list ?? []
 
   const isUsdt = selected?.type === 1
   const rate = selected?.rate ?? 1
@@ -309,10 +325,14 @@ const presets = computed<Preset[]>(() => {
     const amountStr = String(goldCount / 100)
     let chipStr = (goldCount / 100).toLocaleString()
     if (isUsdt) {
-      chipStr = walletStore.formatUsdtPrice(walletStore.calculateUsdtPrice(goldCount, rate, feeRate, feeType, discount).totalUiPrice)
+      chipStr = walletStore.formatUsdtPrice(
+        walletStore.calculateUsdtPrice(goldCount, rate, feeRate, feeType, discount).totalUiPrice,
+      )
     } else if (selected?.type === 3) {
       // Customer Service: hide decimals
-      chipStr = Math.round(walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)).toString()
+      chipStr = Math.round(
+        walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount),
+      ).toString()
     }
 
     return {
@@ -346,22 +366,28 @@ const displayPayAmount = computed(() => {
   const selected = payTypes[activeMethod.value]
   const amount = Number(selectedAmount.value)
 
-  if (selected?.type === 1) { // USDT
+  if (selected?.type === 1) {
+    // USDT
     const goldCount = amount * 100
     const rate = selected.rate ?? 1
     const feeRate = selected.fee_rate ?? 0
     const feeType = selected.fee_type ?? 0
     const discount = selected.discount ?? 0
-    return walletStore.formatUsdtPrice(walletStore.calculateUsdtPrice(goldCount, rate, feeRate, feeType, discount).totalUiPrice)
+    return walletStore.formatUsdtPrice(
+      walletStore.calculateUsdtPrice(goldCount, rate, feeRate, feeType, discount).totalUiPrice,
+    )
   }
 
-  if (selected?.type === 3) { // Customer Service
+  if (selected?.type === 3) {
+    // Customer Service
     const goldCount = amount * 100
     const rate = selected.rate ?? 1
     const feeRate = selected.fee_rate ?? 0
     const discount = selected.discount ?? 0
     // Customer Service: hide decimals
-    return Math.round(walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)).toString()
+    return Math.round(
+      walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount),
+    ).toString()
   }
 
   return selectedAmount.value
@@ -430,16 +456,19 @@ async function onCsSubmit(displayPayPrice?: number) {
   const feeRate = selectedPayType.fee_rate ?? 0
   const feeType = selectedPayType.fee_type ?? 0
   const discount = selectedPayType.discount ?? 0
-  let priceId = activePreset.value === -1 ? 0 : (presets.value[activePreset.value]?.id ?? 0)
+  let priceId = activePreset.value === -1 ? 0 : presets.value[activePreset.value]?.id ?? 0
 
   // 1. Unique-amount channel: server adjusts amount with a tail for payment matching
   let isUniqueAmount = false
   if ((selectedPayType.increase_interval ?? 0) > 0) {
     try {
-      const res = await postOrderUserRechargeNoApi({
-        amount: goldCount,
-        pay_id: selectedPayType.id
-      }, clubId)
+      const res = await postOrderUserRechargeNoApi(
+        {
+          amount: goldCount,
+          pay_id: selectedPayType.id,
+        },
+        clubId,
+      )
       if (res.code === 0 && res.data) {
         goldCount = res.data.amount ?? goldCount
         priceId = res.data.price_id ?? 0
@@ -453,32 +482,37 @@ async function onCsSubmit(displayPayPrice?: number) {
   // pay_price rule: discount > 0 takes priority (discount removes fee from pay_price);
   // only when discount = 0 and fee_type = 2 is the fee added to pay_price.
   const basePrice = (goldCount / 100) * rate
-  const apiPayPrice = discount > 0
-    ? Number((basePrice * (1 - discount)).toFixed(4))
-    : feeType === 2 && feeRate > 0
+  const apiPayPrice =
+    discount > 0
+      ? Number((basePrice * (1 - discount)).toFixed(4))
+      : feeType === 2 && feeRate > 0
       ? Number((basePrice * (1 + feeRate)).toFixed(4))
       : Number(basePrice.toFixed(4))
 
   // legal_tender = what the player actually pays, in cents (same logic as pay_price)
   const playerPrice = isUniqueAmount
     ? walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)
-    : (displayPayPrice ?? walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount))
+    : displayPayPrice ??
+      walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)
   const legalTender = Math.round(playerPrice * 100)
 
   try {
-    const res = await postRechargeGoldApi({
-      amount: goldCount,
-      legal_tender: 0,
-      // legalTender
-      // name:"",
-      gold_type: 1,
-      pay_id: selectedPayType.id,
-      price_id: priceId,
-      pay_price: apiPayPrice,
-      pay_address: '',
-      pay_address_save: false,
-      // order_no: "",
-    }, clubId)
+    const res = await postRechargeGoldApi(
+      {
+        amount: goldCount,
+        legal_tender: 0,
+        // legalTender
+        // name:"",
+        gold_type: 1,
+        pay_id: selectedPayType.id,
+        price_id: priceId,
+        pay_price: apiPayPrice,
+        pay_address: '',
+        pay_address_save: false,
+        // order_no: "",
+      },
+      clubId,
+    )
 
     if (res.code === 0 && res.data) {
       rechargeResult.value = res.data
@@ -487,7 +521,7 @@ async function onCsSubmit(displayPayPrice?: number) {
         const channelRes = await postChatSupportChannelListApi({
           im_service_types: [4],
           limit: 1,
-          offset: 0
+          offset: 0,
         })
 
         if (channelRes.code === 0 && channelRes.data?.list?.length) {
@@ -498,8 +532,8 @@ async function onCsSubmit(displayPayPrice?: number) {
             orderData: {
               ...res.data,
               gold_num: goldCount,
-              pay_price: apiPayPrice
-            }
+              pay_price: apiPayPrice,
+            },
           }
           csChatPopupOpen.value = true
           await refreshPendingCsOrder()
@@ -537,19 +571,23 @@ async function onUsdtSubmit(type: number) {
   const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
 
   // type 0: exact, 1: rounded
-  let goldCount = type === 0
-    ? usdtPopupProps.value.goldCount
-    : Math.floor(usdtPopupProps.value.goldCount / 100) * 100
+  let goldCount =
+    type === 0
+      ? usdtPopupProps.value.goldCount
+      : Math.floor(usdtPopupProps.value.goldCount / 100) * 100
 
-  let priceId = activePreset.value === -1 ? 0 : (presets.value[activePreset.value]?.id ?? 0)
+  let priceId = activePreset.value === -1 ? 0 : presets.value[activePreset.value]?.id ?? 0
 
   // 1. Unique-amount channel: server adjusts amount with a tail for payment matching
   if ((selectedPayType.increase_interval ?? 0) > 0) {
     try {
-      const res = await postOrderUserRechargeNoApi({
-        amount: goldCount,
-        pay_id: selectedPayType.id
-      }, clubId)
+      const res = await postOrderUserRechargeNoApi(
+        {
+          amount: goldCount,
+          pay_id: selectedPayType.id,
+        },
+        clubId,
+      )
       if (res.code === 0 && res.data) {
         goldCount = res.data.amount ?? goldCount
         priceId = res.data.price_id ?? 0
@@ -565,23 +603,26 @@ async function onUsdtSubmit(type: number) {
     selectedPayType.rate ?? 1,
     selectedPayType.fee_rate ?? 0,
     usdtPopupProps.value.feeType,
-    selectedPayType.discount ?? 0
+    selectedPayType.discount ?? 0,
   )
 
   // 3. Submit recharge
   try {
-    const res = await postRechargeGoldApi({
-      amount: goldCount,
-      legal_tender: Math.round(priceData.totalUiPrice * 100),
-      gold_type: 1,
-      pay_id: selectedPayType.id,
-      price_id: priceId,
-      pay_price: priceData.apiPayPrice,
-      pay_address: '',
-      pay_address_save: false,
-      order_no: '',
-      name: 'USDT User'
-    }, clubId)
+    const res = await postRechargeGoldApi(
+      {
+        amount: goldCount,
+        legal_tender: Math.round(priceData.totalUiPrice * 100),
+        gold_type: 1,
+        pay_id: selectedPayType.id,
+        price_id: priceId,
+        pay_price: priceData.apiPayPrice,
+        pay_address: '',
+        pay_address_save: false,
+        order_no: '',
+        name: 'USDT User',
+      },
+      clubId,
+    )
 
     if (res.code === 0 && res.data) {
       console.log('Recharge successful:', res.data)
@@ -605,21 +646,12 @@ async function onUsdtSubmit(type: number) {
 </script>
 
 <template>
-  <div
-    class="wallet-screen"
-    :style="{ backgroundImage: `url(${mainBgUrl})` }"
-  >
-    <AppBar
-      :title="t('Wallet_Title')"
-      :show-actions="false"
-    />
+  <div class="wallet-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
+    <AppBar :title="t('Wallet_Title')" :show-actions="false" />
 
     <div class="wallet-screen__content-top">
       <div class="tabs-row">
-        <SegmentedToggle
-          v-model="activeTab"
-          :tabs="tabLabels"
-        />
+        <SegmentedToggle v-model="activeTab" :tabs="tabLabels" />
         <BellButton
           v-if="activeCsOrder"
           :count="1"
@@ -639,24 +671,16 @@ async function onUsdtSubmit(type: number) {
           user-id="8677650585"
         >
           <template #actions>
-            <GlassButton
-              :label="$txt('Wallet_Records')"
-              @click="router.push('/wallet/orders')"
-            />
-            <GlassButton
-              :label="$txt('Wallet_Details')"
-              @click="router.push('/wallet/details')"
-            />
+            <GlassButton :label="$txt('Wallet_Records')" @click="router.push('/wallet/orders')" />
+            <GlassButton :label="$txt('Wallet_Details')" @click="router.push('/wallet/details')" />
           </template>
           <template #extra>
             <div class="balance-row">
               <div class="balance-chip">
-                <span class="balance-chip__value">{{ (userInfoStore.userInfo?.user?.gold ?? 0).toLocaleString() }}</span>
-                <img
-                  :src="icCoins"
-                  alt=""
-                  class="balance-chip__icon"
-                />
+                <span class="balance-chip__value">
+                  {{ (userInfoStore.userInfo?.user?.gold ?? 0).toLocaleString() }}
+                </span>
+                <img :src="icCoins" alt="" class="balance-chip__icon" />
               </div>
               <span class="balance-label">{{ $txt('Wallet_Balance') }}</span>
             </div>
@@ -696,6 +720,7 @@ async function onUsdtSubmit(type: number) {
 
     <NumericKeypad
       :open="keypadOpen"
+      :show-input-area="true"
       @close="keypadOpen = false"
       @submit="onKeypadSubmit"
     />
@@ -742,12 +767,20 @@ async function onUsdtSubmit(type: number) {
       v-if="usdtDetailsPopupOpen && rechargeResult"
       :order-data="rechargeResult"
       :rate="usdtPopupProps.rate"
-      :price="walletStore.formatUsdtPrice(
-        Number(rechargeResult.order?.amount) ||
-          Number(rechargeResult.pay_price) ||
-          Number(rechargeResult.amount) ||
-          walletStore.calculateUsdtPrice(usdtPopupProps.goldCount, usdtPopupProps.rate, usdtPopupProps.feeRate, usdtPopupProps.feeType, usdtPopupProps.discount).totalUiPrice
-      )"
+      :price="
+        walletStore.formatUsdtPrice(
+          Number(rechargeResult.order?.amount) ||
+            Number(rechargeResult.pay_price) ||
+            Number(rechargeResult.amount) ||
+            walletStore.calculateUsdtPrice(
+              usdtPopupProps.goldCount,
+              usdtPopupProps.rate,
+              usdtPopupProps.feeRate,
+              usdtPopupProps.feeType,
+              usdtPopupProps.discount,
+            ).totalUiPrice,
+        )
+      "
       @close="usdtDetailsPopupOpen = false"
       @cancel="handleCancelOrder"
     />

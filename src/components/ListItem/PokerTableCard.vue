@@ -8,6 +8,7 @@ import iconCritical from '@/assets/icons/table_icon_critical.png'
 import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
 import iconSquid from '@/assets/icons/table_icon_squid.png'
 import type { RoomRecord, RoomUser } from '@/api/models/roomcenter'
+import { formatRoomLeftAndTotalByUnity } from '@/utils/time'
 
 interface Props {
   room: RoomRecord
@@ -96,14 +97,7 @@ const seatUsers = computed(() => {
 // 对齐客户端：显示“剩余时长/总时长”。
 const timeText = computed(() => {
   const totalSeconds = Number(props.room.play_duration) || 0
-  const startTimestamp = parseStartTimestampSeconds(props.room.start_time)
-  let leftSeconds = totalSeconds
-
-  if (startTimestamp > 0) {
-    leftSeconds = startTimestamp + totalSeconds - getCurrentUtcSeconds()
-  }
-
-  return `${formatRoomTime(leftSeconds)}/${formatRoomTime(totalSeconds)}`
+  return formatRoomLeftAndTotalByUnity(props.room.start_time, totalSeconds)
 })
 
 // 买入文案：根据最小倍率和小盲计算。
@@ -219,46 +213,6 @@ function shortName(name?: string): string {
   return `${name}`.slice(0, 1)
 }
 
-// 解析 start_time 到秒级 UTC 时间戳（兼容 RFC3339 字符串与数字）。
-function parseStartTimestampSeconds(value: unknown): number {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    if (value > 1e12) {
-      return Math.floor(value / 1000)
-    }
-    return Math.floor(value)
-  }
-
-  if (typeof value !== 'string' || !value.trim()) {
-    return 0
-  }
-
-  const timeMs = new Date(value).getTime()
-  if (!Number.isFinite(timeMs) || timeMs <= 0) {
-    return 0
-  }
-  return Math.floor(timeMs / 1000)
-}
-
-function getCurrentUtcSeconds(): number {
-  return Math.floor(Date.now() / 1000)
-}
-
-// 对齐 C# GameRoomComponent.GetTime 规则：>=3600 显示 h/m，>=60 显示 m，其余显示 s。
-function formatRoomTime(seconds: number): string {
-  const safeSeconds = Number.isFinite(seconds) ? Math.trunc(seconds) : 0
-  if (safeSeconds >= 3600) {
-    const hour = Math.trunc(safeSeconds / 3600)
-    const minute = Math.trunc((safeSeconds % 3600) / 60)
-    if (minute > 0) {
-      return `${hour}h${minute}m`
-    }
-    return `${hour}h`
-  }
-  if (safeSeconds >= 60) {
-    return `${Math.trunc(safeSeconds / 60)}m`
-  }
-  return `${safeSeconds}s`
-}
 </script>
 
 <template>

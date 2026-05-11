@@ -291,7 +291,9 @@ watch(activeTab, () => {
 
 onMounted(() => {
   void loadDetail()
-  tickTimer = setInterval(() => { tick.value++ }, 1000)
+  tickTimer = setInterval(() => {
+    tick.value++
+  }, 1000)
 })
 
 onUnmounted(() => {
@@ -333,7 +335,7 @@ async function handleBtnClick(): Promise<void> {
         userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',
         userId: gameStore.loginUserId || gameStore.loginAccount || '',
         websocketPort: typeof wsPort === 'number' ? wsPort : 0,
-        from: 'h5-lobby',
+        from: 'h5-mtt',
         matchId: matchId.value,
         matchInfo: mttData ?? {},
       }
@@ -356,7 +358,12 @@ async function handleBtnClick(): Promise<void> {
   }
 }
 
-async function handleBuyinConfirm(payload: { ticket: boolean; ratio: number; useFree: boolean; clubId?: number }): Promise<void> {
+async function handleBuyinConfirm(payload: {
+  ticket: boolean
+  ratio: number
+  useFree: boolean
+  clubId?: number
+}): Promise<void> {
   showBuyinModal.value = false
   const id = matchId.value
   btnLoading.value = true
@@ -368,9 +375,7 @@ async function handleBuyinConfirm(payload: { ticket: boolean; ratio: number; use
       use_free: payload.useFree,
       club_id: payload.clubId ?? detailData.value?.mtt?.club_id ?? 0,
     }
-    const res = isRebuy
-      ? await mttRebuyApi(id, apiPayload)
-      : await mttBuyInApi(id, apiPayload)
+    const res = isRebuy ? await mttRebuyApi(id, apiPayload) : await mttBuyInApi(id, apiPayload)
     if (res && res.code === 0) {
       await loadDetail()
     }
@@ -394,7 +399,7 @@ async function handleEnterTable(rid: number): Promise<void> {
       userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',
       userId: gameStore.loginUserId || gameStore.loginAccount || '',
       websocketPort: typeof wsPort === 'number' ? wsPort : 0,
-      from: 'h5-lobby',
+      from: 'h5-mtt',
       matchId: matchId.value,
       matchInfo: mttData ?? {},
       roomId: rid,
@@ -415,12 +420,7 @@ async function handleEnterTable(rid: number): Promise<void> {
     <HeaderBack :title="pageTitle" />
 
     <!-- Tab 筛选 -->
-    <FilterTabbar
-      v-model="activeTab"
-      :tabs="tabs"
-      active-bg="pill"
-      class="filter-bar"
-    />
+    <FilterTabbar v-model="activeTab" :tabs="tabs" active-bg="pill" class="filter-bar" />
 
     <!-- 内容区 -->
     <div class="mtt-detail-content">
@@ -477,7 +477,7 @@ async function handleEnterTable(rid: number): Promise<void> {
 </template>
 
 <style scoped lang="scss">
-.filter-bar{
+.filter-bar {
   margin: 0.3rem;
 }
 .mtt-detail-page {
@@ -504,7 +504,7 @@ async function handleEnterTable(rid: number): Promise<void> {
   position: relative;
   z-index: 1;
   flex: 1;
-  padding: 0 0.30rem 0.4rem;
+  padding: 0 0.3rem 0.4rem;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;

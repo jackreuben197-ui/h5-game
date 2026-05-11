@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
-import { showFailToast, } from 'vant'
+import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { getUserClubApi } from '@/api/user'
 import { getCowboyRoomListApi } from '@/api/gc'
@@ -193,7 +193,7 @@ async function refreshBalance(): Promise<void> {
 }
 
 function goToRecharge(): void {
-  void router.push('/recharge')
+  void router.push('/wallet')
 }
 
 function getRoomPlayers(room: RoomRecord): number {

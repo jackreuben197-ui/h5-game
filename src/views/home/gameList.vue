@@ -226,7 +226,7 @@ async function handleTableClick(room: RoomRecord): Promise<void> {
     userId: gameStore.loginUserId || gameStore.loginAccount || '',
     token: gameStore.sessionToken,
     websocketPort: wsPort,
-    from: 'h5-lobby',
+    from: 'h5-club-table',
     roomId: String(room.rid ?? ''),
     roomName: String(room.name ?? ''),
     roomInfo: room,

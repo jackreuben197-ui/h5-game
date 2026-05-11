@@ -82,7 +82,7 @@ export function buildRoomConfigPayload(formState: NlhFormState): Record<string, 
   return {
     // ── 必填固定值 ────────────────────────────────────────────────
     tribe_id: 1,
-    origin_type: 5, // 俱乐部（内）
+    origin_type: formState.origin_type ?? 5,
     mode: 1,
     simple: 2,
     private_room: 0,

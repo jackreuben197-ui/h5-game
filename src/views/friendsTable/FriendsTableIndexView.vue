@@ -666,7 +666,7 @@ watch(
                 <span class="room-name ml-2">{{ room.name }}</span>
               </div>
               <div class="info-row">
-                <span class="tag">{{ getRoomStateLabel(room) }}</span>
+                <!-- <span class="tag">{{ getRoomStateLabel(room) }}</span> -->
               </div>
               <div class="info-row info-row-last">
                 <div class="duration">

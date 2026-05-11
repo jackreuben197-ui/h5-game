@@ -18,6 +18,8 @@ import {
   postOrgRoomCreateApi,
   postOrgRoomBatchCreateApi,
   postOrgTemplateDeleteApi,
+  postCmsExtRoomUserTemplateListApi,
+  postCmsExtRoomUserBatchCreateApi,
 } from '@/api/cmsext'
 import { GameDialog } from '@/components/Dialog'
 import { showGameToast } from '@/components/Toast'
@@ -110,6 +112,7 @@ const DIAMOND_CONFIG_TYPE = {
 } as const
 
 const CLUB_INTERNAL_TABLE_TYPE_EXT = 310
+const FRIENDS_TABLE_TYPE_EXT = 410
 const DEFAULT_QUICK_PLAY_DURATION_SECONDS = 7200
 
 function toNumber(value: unknown, fallback = 0): number {
@@ -211,9 +214,15 @@ function findDiamondConfig(
   )
 }
 
+const currentOriginType = computed(() => {
+  const v = Math.floor(toNumber(route.query.origin_type, 5))
+  return v > 0 ? v : 5
+})
+
 function getTableTypeExt(): number {
   const fromQuery = toNumber(route.query.table_type_ext, 0)
-  return fromQuery > 0 ? fromQuery : CLUB_INTERNAL_TABLE_TYPE_EXT
+  if (fromQuery > 0) return fromQuery
+  return currentOriginType.value === 4 ? FRIENDS_TABLE_TYPE_EXT : CLUB_INTERNAL_TABLE_TYPE_EXT
 }
 
 function normalizePlayDurationSeconds(raw: unknown): number {
@@ -392,7 +401,7 @@ async function fetchQuickPresetConfig(): Promise<void> {
       standard: true,
       standard_ext: true,
       mode: 1,
-      origin_type: 5,
+      origin_type: currentOriginType.value,
       ...buildGameTypeParams(gpt),
     })
     if (res.code === 0) {
@@ -441,14 +450,26 @@ function onSelectTemplate(template: TemplateItem): void {
 async function fetchTemplates() {
   loadingTemplates.value = true
   try {
-    const res = await postOrggetTemplateApi({
-      standard_ext: true,
-      limit: 20,
-      offset: 0,
-      mode: 1,
-      origin_type: 5,
-      ...buildGameTypeParams(currentGamePlayType.value),
-    })
+    const isFriendsTable = currentOriginType.value === 4
+    const gameTypeParams = buildGameTypeParams(currentGamePlayType.value)
+    let res
+    if (isFriendsTable) {
+      res = await postCmsExtRoomUserTemplateListApi({
+        mode: 1,
+        limit: 20,
+        offset: 0,
+        ...gameTypeParams,
+      })
+    } else {
+      res = await postOrggetTemplateApi({
+        // standard_ext: true,
+        limit: 20,
+        offset: 0,
+        mode: 1,
+        // origin_type: currentOriginType.value,
+        ...gameTypeParams,
+      })
+    }
     if (res.code === 0) {
       const listCandidate = extractTemplateList(res.data)
       const list = listCandidate
@@ -693,11 +714,12 @@ async function onQuickCreate() {
   }
   if (isSubmitting.value) return
   isSubmitting.value = true
+  const isFriendsTable = currentOriginType.value === 4
   try {
     const res = await postOrgRoomCreateApi(buildTopPanelCreateRequest())
     if (res.code === 0) {
       showGameToast('创建成功')
-      await router.replace({ name: 'club-index' })
+      await router.replace({ name: isFriendsTable ? 'friendsTable' : 'club-index' })
     } else {
       showGameToast((res as unknown as { message?: string }).message || '创建失败')
     }
@@ -803,20 +825,28 @@ async function onCreateFromTemplate(tpl: TemplateItem) {
   onSelectTemplate(tpl)
   if (isSubmitting.value) return
   isSubmitting.value = true
+  const isFriendsTable = currentOriginType.value === 4
   try {
-    const res = await postOrgRoomBatchCreateApi({
-      data: [
-        {
-          template_id: tpl.id,
-          count: 1,
-          sb: tpl.sb ?? 0,
-          ante: Number(tpl.room_config?.ante ?? 0),
-        },
-      ],
-    })
+    let res
+    if (isFriendsTable) {
+      res = await postCmsExtRoomUserBatchCreateApi({
+        data: [{ template_id: tpl.id, count: 1 }],
+      })
+    } else {
+      res = await postOrgRoomBatchCreateApi({
+        data: [
+          {
+            template_id: tpl.id,
+            count: 1,
+            sb: tpl.sb ?? 0,
+            ante: Number(tpl.room_config?.ante ?? 0),
+          },
+        ],
+      })
+    }
     if (res.code === 0) {
       showGameToast('创建成功')
-      await router.replace({ name: 'club-index' })
+      await router.replace({ name: isFriendsTable ? 'friendsTable' : 'club-index' })
     } else {
       showGameToast((res as unknown as { message?: string }).message || '创建失败')
     }

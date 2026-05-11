@@ -492,6 +492,12 @@ export interface NlhFormState {
    * 0=关闭  1=开启（坐下后方可查看牌局信息）
    */
   seated_messaging: number
+
+  /**
+   * 创建来源 → origin_type
+   * 3=俱乐部(外)  4=个人/朋友桌  5=俱乐部(内，默认)
+   */
+  origin_type: number
 }
 
 export const defaultNlhFormState: NlhFormState = {
@@ -595,4 +601,5 @@ export const defaultNlhFormState: NlhFormState = {
   power_saving: 2,
   encrypt_cards: 0,
   seated_messaging: 0,
+  origin_type: 5,
 }

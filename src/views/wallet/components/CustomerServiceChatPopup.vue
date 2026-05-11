@@ -8,7 +8,6 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import customerServiceIcon from '@/assets/icons/customerserviceicon.png'
-import icCoins from '@/assets/icons/wallet/ic_coins.png'
 
 const props = defineProps<{
   tribeId: number
@@ -148,6 +147,7 @@ function formatTime(timestamp?: number) {
 onMounted(() => {
   loadMessages()
   checkOrderStatus()
+  pollTimer = window.setInterval(loadMessages, 5000)
 })
 
 onUnmounted(() => {
@@ -171,19 +171,9 @@ onUnmounted(() => {
                 <!-- Figma SVG Ring -->
                 <svg class="avatar-ring" width="61" height="61" viewBox="0 0 57 57" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <foreignObject x="-4.4941" y="-4.4941" width="65.381" height="65.3813">
-                    <div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(2.25px); clip-path:url(#bgblur_0_500_2086_clip_path); height:100%; width:100%"></div>
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(2.25px); height:100%; width:100%"></div>
                   </foreignObject>
-                  <path d="M28.196 0.150391C43.6857 0.150391 56.2427 12.7067 56.2429 28.1963C56.2429 43.686 43.6858 56.2432 28.196 56.2432C12.7065 56.243 0.150146 43.6859 0.150146 28.1963C0.150328 12.7068 12.7066 0.150572 28.196 0.150391ZM28.196 3.3291C14.4625 3.32928 3.32904 14.4627 3.32886 28.1963C3.32886 41.93 14.4623 53.0643 28.196 53.0645C41.9299 53.0645 53.0642 41.9301 53.0642 28.1963C53.064 14.4626 41.9298 3.3291 28.196 3.3291Z" fill="white" fill-opacity="0.83" stroke="url(#paint0_linear_500_2086)" stroke-width="0.299607"/>
-                  <defs>
-                    <clipPath id="bgblur_0_500_2086_clip_path">
-                      <path d="M28.196 0.150391C43.6857 0.150391 56.2427 12.7067 56.2429 28.1963C56.2429 43.686 43.6858 56.2432 28.196 56.2432C12.7065 56.243 0.150146 43.6859 0.150146 28.1963C0.150328 12.7068 12.7066 0.150572 28.196 0.150391ZM28.196 3.3291C14.4625 3.32928 3.32904 14.4627 3.32886 28.1963C3.32886 41.93 14.4623 53.0643 28.196 53.0645C41.9299 53.0645 53.0642 41.9301 53.0642 28.1963C53.064 14.4626 41.9298 3.3291 28.196 3.3291Z"/>
-                    </clipPath>
-                    <linearGradient id="paint0_linear_500_2086" x1="10.5274" y1="3.34995" x2="40.6706" y2="54.2351" gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#F2F2F2" stop-opacity="0.8"/>
-                      <stop offset="0.445242" stop-color="white" stop-opacity="0"/>
-                      <stop offset="1" stop-color="white" stop-opacity="0.5"/>
-                    </linearGradient>
-                  </defs>
+                  <path d="M28.196 0.150391C43.6857 0.150391 56.2427 12.7067 56.2429 28.1963C56.2429 43.686 43.6858 56.2432 28.196 56.2432C12.7065 56.243 0.150146 43.6859 0.150146 28.1963C0.150328 12.7068 12.7066 0.150572 28.196 0.150391ZM28.196 3.3291C14.4625 3.32928 3.32904 14.4627 3.32886 28.1963C3.32886 41.93 14.4623 53.0643 28.196 53.0645C41.9299 53.0645 53.0642 41.9301 53.0642 28.1963C53.064 14.4626 41.9298 3.3291 28.196 3.3291Z" fill="white" fill-opacity="0.83" />
                 </svg>
                 <img :src="customerServiceIcon" alt="agent" class="agent-avatar" />
               </div>
@@ -212,7 +202,6 @@ onUnmounted(() => {
                     <svg width="7.226" height="7.226" viewBox="0 0 8 8" fill="none">
                       <ellipse cx="2.93052" cy="2.91963" rx="2.38865" ry="2.42647" stroke="#05E7AE" stroke-width="0.955458"/>
                       <path d="M4.63672 4.65283L6.68413 6.73266" stroke="#05E7AE" stroke-width="0.955458" stroke-linecap="round"/>
-                      <path d="M6.68408 4.99951L4.97791 6.7327" stroke="#05E7AE" stroke-width="0.955458" stroke-linecap="round"/>
                     </svg>
                     <span class="sender-name">{{ userInfoStore.userInfo?.user.nickname }}</span>
                   </div>
@@ -234,7 +223,6 @@ onUnmounted(() => {
                       <svg width="7.226" height="7.226" viewBox="0 0 8 8" fill="none">
                         <ellipse cx="2.93052" cy="2.91963" rx="2.38865" ry="2.42647" stroke="#05E7AE" stroke-width="0.955458"/>
                         <path d="M4.63672 4.65283L6.68413 6.73266" stroke="#05E7AE" stroke-width="0.955458" stroke-linecap="round"/>
-                        <path d="M6.68408 4.99951L4.97791 6.7327" stroke="#05E7AE" stroke-width="0.955458" stroke-linecap="round"/>
                       </svg>
                       <span class="sender-name">{{ userInfoStore.userInfo?.user.nickname }}</span>
                     </template>
@@ -267,21 +255,7 @@ onUnmounted(() => {
 
             <button class="send-action-btn" @click="sendMessage">
               <svg width="22" height="21" viewBox="0 0 24 23" fill="none">
-                <g filter="url(#filter0_d_500_2071)">
-                  <path d="M4.31042 5.23619C3.89719 5.10688 3.89323 4.89806 4.31833 4.76503L19.4289 0.0378811C19.8476 -0.0929126 20.0875 0.127059 19.9703 0.512008L15.6528 14.6957C15.5341 15.0888 15.2926 15.1022 15.1153 14.7291L12.2694 8.71783L17.0191 2.77266L10.6862 7.23153L4.31042 5.23619Z" fill="white"/>
-                </g>
-                <defs>
-                  <filter id="filter0_d_500_2071" x="0" y="0" width="24" height="23" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-                    <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-                    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-                    <feOffset dy="4"/>
-                    <feGaussianBlur stdDeviation="2"/>
-                    <feComposite in2="hardAlpha" operator="out"/>
-                    <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
-                    <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_500_2071"/>
-                    <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_500_2071" result="shape"/>
-                  </filter>
-                </defs>
+                <path d="M4.31042 5.23619C3.89719 5.10688 3.89323 4.89806 4.31833 4.76503L19.4289 0.0378811C19.8476 -0.0929126 20.0875 0.127059 19.9703 0.512008L15.6528 14.6957C15.5341 15.0888 15.2926 15.1022 15.1153 14.7291L12.2694 8.71783L17.0191 2.77266L10.6862 7.23153L4.31042 5.23619Z" fill="white"/>
               </svg>
             </button>
 
@@ -561,7 +535,6 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  // border: 1px solid rgba(5, 231, 174, 1);
 }
 
 .input-bar-wrap {
@@ -605,10 +578,6 @@ onUnmounted(() => {
   cursor: pointer;
   flex-shrink: 0;
 
-  svg {
-    margin-top: 5px;
-  }
-
   &:active {
     opacity: 0.8;
   }
@@ -616,7 +585,7 @@ onUnmounted(() => {
 
 .plus-btn {
   background: #0F0F0F;
- border: none;
+  border: none;
   width: 37.331px;
   height: 37.331px;
   padding: 3.342px;
@@ -649,4 +618,3 @@ onUnmounted(() => {
   }
 }
 </style>
-

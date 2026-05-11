@@ -11,6 +11,8 @@ import type {
   MttListRequest,
   RoomDetailData,
   RoomDetailRequest,
+  RoomcenterInvitationRoomData,
+  RoomcenterInvitationRoomRequest,
   RoomIdsData,
   RoomcenterFriendRoomApplyAuditData,
   RoomcenterFriendRoomApplyAuditRequest,
@@ -95,6 +97,17 @@ export async function postRoomcenterFriendRoomsApi(
 ): Promise<ApiResponse<RoomcenterFriendRoomsData>> {
   const response = await http.post<ApiResponse<RoomcenterFriendRoomsData>>(
     '/roomcenter/friend/rooms',
+    payload,
+  )
+  return response.data
+}
+
+// 对齐 cocos /api/roomcenter/invitation/room（根据邀请码获取房间详情）。
+export async function postRoomcenterInvitationRoomApi(
+  payload: RoomcenterInvitationRoomRequest,
+): Promise<ApiResponse<RoomcenterInvitationRoomData>> {
+  const response = await http.post<ApiResponse<RoomcenterInvitationRoomData>>(
+    '/roomcenter/invitation/room',
     payload,
   )
   return response.data

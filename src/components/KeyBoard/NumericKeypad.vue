@@ -10,6 +10,12 @@ interface Props {
   open?: boolean
   min?: number
   max?: number
+  maxLength?: number
+  initialValue?: string
+  allowLeadingZero?: boolean
+  showMask?: boolean
+  showInputArea?: boolean
+  confirmText?: string
   title?: string
 }
 
@@ -17,12 +23,26 @@ const props = withDefaults(defineProps<Props>(), {
   open: false,
   min: 1,
   max: 1000000,
+  maxLength: undefined,
+  initialValue: '',
+  allowLeadingZero: false,
   title: '',
+  showMask: true,
+  showInputArea: false,
+  confirmText: t('Wallet_Confirm'),
 })
 
 const emit = defineEmits<{
   close: []
   submit: [value: number]
+  keyPress: [
+    payload: {
+      key: string
+      action: 'digit' | 'clear' | 'backspace'
+      value: string
+      accepted: boolean
+    },
+  ]
 }>()
 
 const value = ref('')
@@ -33,26 +53,53 @@ const keyBgStyle = {
   backgroundSize: '100% 100%',
 }
 const digits: readonly string[] = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+const getMaxLength = (): number => props.maxLength ?? String(props.max).length
+
+function emitKeyPress(
+  key: string,
+  action: 'digit' | 'clear' | 'backspace',
+  accepted: boolean,
+): void {
+  emit('keyPress', {
+    key,
+    action,
+    value: value.value,
+    accepted,
+  })
+}
 
 watch(
   () => props.open,
   (v) => {
-    if (v) value.value = ''
+    if (v) {
+      value.value = String(props.initialValue || '').replace(/\D/g, '').slice(0, getMaxLength())
+    }
   },
 )
 
 function press(k: string): void {
-  if (value.value.length >= String(props.max).length) return
-  if (value.value === '' && k === '0') return
+  if (value.value.length >= getMaxLength()) {
+    emitKeyPress(k, 'digit', false)
+    return
+  }
+  if (!props.allowLeadingZero && value.value === '' && k === '0') {
+    emitKeyPress(k, 'digit', false)
+    return
+  }
   value.value += k
+  emitKeyPress(k, 'digit', true)
 }
 
 function clearAll(): void {
+  const changed = value.value.length > 0
   value.value = ''
+  emitKeyPress('C', 'clear', changed)
 }
 
 function backspace(): void {
+  const changed = value.value.length > 0
   value.value = value.value.slice(0, -1)
+  emitKeyPress('Backspace', 'backspace', changed)
 }
 
 function cancel(): void {
@@ -67,86 +114,55 @@ function confirm(): void {
 </script>
 
 <template>
-  <Transition name="keypad">
-    <div
-      v-if="open"
-      class="kp"
-      :style="{ backgroundImage: `url(${mainBgUrl})` }"
-      @click.self="cancel"
-    >
+  <Teleport to="body">
+    <Transition name="keypad">
       <div
-        class="kp__dim"
-        @click="cancel"
-      ></div>
-      <div class="kp__sheet">
-        <div class="kp__header">
-          <span class="kp__title">{{ title || t('Wallet_CustomAmount') }}</span>
-          <div class="kp__input">
-            <span
-              v-if="!value"
-              class="kp__placeholder"
+        v-if="open"
+        :class="['kp', { 'kp--plain': !showMask }]"
+        :style="showMask ? { backgroundImage: `url(${mainBgUrl})` } : undefined"
+        @click.self="cancel"
+      >
+        <div v-if="showMask" class="kp__dim" @click="cancel"></div>
+        <div :class="['kp__sheet', { 'kp__sheet--plain': !showMask }]">
+          <div v-if="showInputArea" class="kp__header">
+            <span class="kp__title">{{ title || t('Wallet_CustomAmount') }}</span>
+            <div class="kp__input">
+              <span v-if="!value" class="kp__placeholder">
+                {{ t('Wallet_KeypadPlaceholder', min, max) }}
+              </span>
+              <span v-else class="kp__value">
+                {{ value }}
+              </span>
+            </div>
+          </div>
+
+          <div class="kp__grid">
+            <button
+              v-for="n in digits"
+              :key="n"
+              class="kp__key"
+              :style="keyBgStyle"
+              @click="press(n)"
             >
-              {{ t('Wallet_KeypadPlaceholder', min, max) }}
-            </span>
-            <span
-              v-else
-              class="kp__value"
-            >
-              {{ value }}
-            </span>
+              {{ n }}
+            </button>
+            <button class="kp__key kp__key--accent" @click="clearAll">C</button>
+            <button class="kp__key" :style="keyBgStyle" @click="press('0')">0</button>
+            <button class="kp__key kp__key--accent" @click="backspace">
+              <Icon icon="solar:backspace-bold" class="kp__icon" />
+            </button>
+          </div>
+
+          <div class="kp__actions">
+            <button class="kp__cancel" @click="cancel">
+              {{ t('Wallet_Cancel') }}
+            </button>
+            <PrimaryButton :text="confirmText" class="kp__confirm" @click="confirm" />
           </div>
         </div>
-
-        <div class="kp__grid">
-          <button
-            v-for="n in digits"
-            :key="n"
-            class="kp__key"
-            :style="keyBgStyle"
-            @click="press(n)"
-          >
-            {{ n }}
-          </button>
-          <button
-            class="kp__key kp__key--accent"
-            @click="clearAll"
-          >
-            C
-          </button>
-          <button
-            class="kp__key"
-            :style="keyBgStyle"
-            @click="press('0')"
-          >
-            0
-          </button>
-          <button
-            class="kp__key kp__key--accent"
-            @click="backspace"
-          >
-            <Icon
-              icon="solar:backspace-bold"
-              class="kp__icon"
-            />
-          </button>
-        </div>
-
-        <div class="kp__actions">
-          <button
-            class="kp__cancel"
-            @click="cancel"
-          >
-            {{ t('Wallet_Cancel') }}
-          </button>
-          <PrimaryButton
-            :text="t('Wallet_Confirm')"
-            class="kp__confirm"
-            @click="confirm"
-          />
-        </div>
       </div>
-    </div>
-  </Transition>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped lang="scss">
@@ -160,6 +176,11 @@ function confirm(): void {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+.kp--plain {
+  background-image: none !important;
+  background-color: transparent;
 }
 
 .kp__dim {
@@ -183,11 +204,15 @@ function confirm(): void {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
-  box-shadow:
-    3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25),
-    0 0 8.6px #000 inset,
+  box-shadow: 3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25), 0 0 8.6px #000 inset,
     2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
   overflow: hidden;
+}
+
+.kp__sheet--plain {
+  background-color: #15171d;
+  border-color: #15171d;
+  box-shadow: none;
 }
 
 .kp__sheet::before {
@@ -206,6 +231,10 @@ function confirm(): void {
   );
   mix-blend-mode: hard-light;
   z-index: 0;
+}
+
+.kp__sheet--plain::before {
+  display: none;
 }
 
 .kp__sheet > * {

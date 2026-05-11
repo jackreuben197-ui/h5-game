@@ -14,7 +14,7 @@ const router = createRouter({
     {
       path: '/protocol',
       name: 'protocol',
-      component: () => import('@/views/login/components/ProtocolView.vue')
+      component: () => import('@/views/login/components/ProtocolView.vue'),
     },
     {
       path: '/login/phone-area',
@@ -97,7 +97,7 @@ const router = createRouter({
     {
       path: '/club/table/create',
       name: 'club-table-create',
-      component: () => import('@/views/club/ClubTableCreateView.vue'),
+      component: () => import('@/views/table/TableCreateView.vue'),
       meta: { requiresAuth: true },
     },
     {
@@ -501,9 +501,9 @@ const router = createRouter({
     {
       path: '/createTable',
       name: 'createTable',
-      component: () => import('@/views/table/createPokerTable.vue'),
+      component: () => import('@/views/table/CreatePokerTable.vue'),
       meta: { requiresAuth: true },
-    }
+    },
   ],
 })
 

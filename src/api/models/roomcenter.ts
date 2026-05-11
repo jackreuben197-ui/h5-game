@@ -269,12 +269,80 @@ export interface RoomcenterFriendRoomsRequest {
 
 // /roomcenter/friend/rooms 单项（cocos 未声明完整字段）。
 export interface RoomcenterFriendRoomRecord {
+  rid?: number
+  name?: string
+  room_type?: number
+  game_type?: number
+  poker_type?: number
+  limit_bet_type?: number
+  status?: number
+  ante?: number
+  sb?: number
+  bb?: number
+  seat_count?: number
+  empty_seat?: number
+  roomers?: number
+  play_duration?: number
+  play_hands_limit?: number
+  hand_num?: number
+  invitation_code?: string
+  private_room?: number
+  room_password?: string
+  anti_cheat_type?: number
+  anti_cheat_video_type?: number
+  bombpot?: number
+  personal_type?: number
+  seated_messaging?: number
+  mushroom_mode?: number
+  squid_on?: number
+  random_ante?: string
+  call_time?: number
+  critical_hit?: number
+  blind_name?: string
+  blind_level_name?: string
+  blind_level?: string | number
+  blindtable_type_name?: string
+  users?: Array<Record<string, unknown>>
   [key: string]: unknown
 }
 
 // /roomcenter/friend/rooms 响应 data（cocos 未声明完整字段）。
 export interface RoomcenterFriendRoomsData {
   records?: RoomcenterFriendRoomRecord[]
+  [key: string]: unknown
+}
+
+// /roomcenter/invitation/room 请求参数。
+export interface RoomcenterInvitationRoomRequest {
+  // 7 位邀请码。
+  code: string
+  [key: string]: unknown
+}
+
+// /roomcenter/invitation/room 普通房间数据（对应 Unity HttpRoomInvitationProtocol.Data）。
+export interface RoomcenterInvitationRoomRecord {
+  rid?: number
+  room_type?: number
+  play_duration?: number
+  start_time?: string
+  invitation_code?: string
+  private_room?: number
+  room_password?: string
+  anti_cheat_type?: number
+  anti_cheat_video_type?: number
+  bombpot?: number
+  name?: string
+  [key: string]: unknown
+}
+
+// /roomcenter/invitation/room 响应 data。
+export interface RoomcenterInvitationRoomData {
+  // 普通房间。
+  data?: RoomcenterInvitationRoomRecord | null
+  // SNG 邀请数据（结构暂未在 H5 使用）。
+  sng_data?: Record<string, unknown> | null
+  // MTT 邀请数据（结构暂未在 H5 使用）。
+  mtt_data?: Record<string, unknown> | null
   [key: string]: unknown
 }
 

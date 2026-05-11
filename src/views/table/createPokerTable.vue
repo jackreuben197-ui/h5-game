@@ -20,7 +20,7 @@ import icDiamondBalance from '@/assets/icons/ic_diamond_balance.svg'
 import { showFailToast } from 'vant'
 import { showGameToast } from '@/components/Toast'
 import { buildRoomConfigPayload, parseRoomConfigToFormState } from './sections/payload'
-import { postOrgRoomClubCreateApi, postOrgCreateTemplateApi } from '@/api/cmsext'
+import { postOrgRoomClubCreateApi, postOrgCreateTemplateApi, postOrgRoomConfigCreateApi } from '@/api/cmsext'
 
 const formState = reactive<NlhFormState>({ ...defaultNlhFormState })
 const route = useRoute()
@@ -100,10 +100,17 @@ function getHalfHourMultiple(): number {
   return Math.max(1, Math.round(duration / 1800))
 }
 
+const FRIENDS_TABLE_TYPE_EXT = 410
+
+const currentOriginType = computed(() => {
+  const v = Math.floor(toNumber(route.query.origin_type, 5))
+  return v > 0 ? v : 5
+})
+
 function getTableTypeExt(): number {
-  // 当前 H5 创建页默认是俱乐部内桌；后续如果支持外桌，可从 query 透传 table_type_ext 覆盖。
   const fromQuery = toNumber(route.query.table_type_ext, 0)
-  return fromQuery > 0 ? fromQuery : CLUB_INTERNAL_TABLE_TYPE_EXT
+  if (fromQuery > 0) return fromQuery
+  return currentOriginType.value === 4 ? FRIENDS_TABLE_TYPE_EXT : CLUB_INTERNAL_TABLE_TYPE_EXT
 }
 
 function getBanConfigType(antiCheatType: number, antiCheatVideoType: number): number | null {
@@ -352,6 +359,7 @@ const anteOptions = computed(() => getAnteOptions(formState.sb))
 function syncRouteParamsToFormState(): void {
   formState.game_play_type = Number(route.query.game_play_type)
   formState.bombpot = route.query.bombpot ? Number(route.query.bombpot) : 0
+  formState.origin_type = currentOriginType.value
 }
 
 function hitCondition(conditionValue: FieldValue | FieldValue[], formValue: FieldValue): boolean {
@@ -528,14 +536,18 @@ async function onSaveTemplate() {
 async function onCreateTable() {
   if (isSubmitting.value) return
   isSubmitting.value = true
+  const isFriendsTable = currentOriginType.value === 4
   try {
-    const res = await postOrgRoomClubCreateApi({
+    const payload = {
       name: formState.name || '自定义牌桌',
       room_config: buildRoomConfigPayload(formState),
-    })
+    }
+    const res = isFriendsTable
+      ? await postOrgRoomConfigCreateApi({ ...payload, standard: false })
+      : await postOrgRoomClubCreateApi(payload)
     if (res.code === 0) {
       showGameToast('创建成功')
-      await router.replace({ name: 'club-index' })
+      await router.replace({ name: isFriendsTable ? 'friendsTable' : 'club-index' })
     } else {
       showFailToast(res.message || '创建失败')
     }

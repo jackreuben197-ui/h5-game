@@ -5,6 +5,7 @@ import tabActiveLgBg from '@/assets/images/game_type_tab_active_lg_bg.svg?url'
 export interface TabOption {
   name: string
   title: string
+  [key: string]: unknown
 }
 
 export type GameTypeTabbarSize = 'md' | 'lg'
@@ -59,12 +60,7 @@ export default { name: 'GameTypeTabbar' }
     :style="tabbarStyle"
     @update:active="handleUpdate"
   >
-    <VanTab
-      v-for="tab in tabOptions"
-      :key="tab.name"
-      :name="tab.name"
-      :title="tab.title"
-    />
+    <VanTab v-for="tab in tabOptions" :key="tab.name" :name="tab.name" :title="tab.title" />
   </VanTabs>
 </template>
 
@@ -126,9 +122,8 @@ export default { name: 'GameTypeTabbar' }
 
 /* 新版激活态背景（SVG 形状背景，不遮挡文字） */
 .themeType2 .room-tabs .van-tab--active .van-tab__text {
-  background:
-    center calc(100% + var(--tab-active-offset-y)) /
-    100% var(--tab-active-height) no-repeat;
+  background: center calc(100% + var(--tab-active-offset-y)) / 100% var(--tab-active-height)
+    no-repeat;
   background-image: var(--tab-active-bg);
 }
 </style>

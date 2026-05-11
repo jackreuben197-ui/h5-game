@@ -96,6 +96,10 @@ function goToMessagePage(
   })
 }
 
+function goToMineShop(): void {
+  void router.push('/mine/shop')
+}
+
 onMounted(() => {
   void fetchUnreadCounts()
   void fetchBellStatus()
@@ -112,7 +116,7 @@ onMounted(() => {
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" alt="充值" />
+          <img :src="iconAdd" alt="充值" @click="goToMineShop" />
         </div>
       </div>
     </div>

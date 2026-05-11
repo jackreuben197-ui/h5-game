@@ -37,10 +37,10 @@ export interface ExchangeRateResponseData {
 
 // /api/order/club/member_order/list (ClubFundApplyList)
 export interface ClubFundApplyListRequest {
-  order_type?: number // 请求全部，订单类型（1 申请充豆；2申请提豆；3发豆；4钱包转换） 订单状态（1-申请中,2-同意,3-拒绝,4-取消申请）
+  order_type?: number // 请求全部，订单类型（1 申请充豆；2申请提豆；3发豆；4钱包转换）
   limit?: number // 数据数量
   offset?: number // 当前偏移值
-  order_status?: number // 已审核 1
+  order_status?: number // 订单状态（1-申请中,2-同意,3-拒绝,4-取消申请）
 
   [key: string]: unknown
 }

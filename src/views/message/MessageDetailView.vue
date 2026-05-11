@@ -5,7 +5,7 @@ import { postClubFundApplyListApi, postClubFundAuditApi } from '@/api/order'
 import { postMsgMessageListApi, postMsgMessageUnreadClearApi } from '@/api/msg'
 import {
   postRoomClubApplyAuditApi,
-  postClubRoomSitApplyRecordsApi,
+  postUserRoomSitApplyRecordsApi,
   postRoomcenterFriendRoomApplyAuditApi,
 } from '@/api/roomcenter'
 import type {
@@ -21,9 +21,10 @@ import iconPeople from '@/assets/icons/icon_people.png'
 import iconBalance from '@/assets/icons/icon_balance.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { formatUC } from '@/utils/roomVisibility'
 
 type MessagePageType = 'system' | 'credit' | 'uc' | 'other'
-type CreditStatus = 'pending' | 'rejected' | 'approved-by-user' | 'approved'
+type CreditStatus = 'pending' | 'rejected' | 'approved'
 
 const MSG_SUB_TYPE = {
   MsgBagTypeGetTickets: 1000,
@@ -82,6 +83,8 @@ interface CreditMessageItem {
   status: CreditStatus
   approverName?: string
   approverId?: string
+  avatar: string
+  senderIcon?: string
 }
 
 interface UcMessageItem {
@@ -94,6 +97,8 @@ interface UcMessageItem {
   amount: string
   approverName?: string
   approverId?: string
+  avatar: string
+  clubLogo?: string
 }
 
 interface OtherMessageItem {
@@ -123,7 +128,7 @@ const pageTitle = computed(() => {
   if (typeof titleFromQuery === 'string' && titleFromQuery.trim()) return titleFromQuery
 
   if (pageType.value === 'system') return '系统消息'
-  if (pageType.value === 'credit') return '买入申请'
+  if (pageType.value === 'credit') return '带入申请'
   if (pageType.value === 'uc') return 'UC申请'
   return '消息'
 })
@@ -141,6 +146,17 @@ const msgLimit = 10
 const msgOffset = ref(0)
 const msgTotal = ref(0)
 const msgListLoading = ref(false)
+const msgHasMore = ref(true)
+
+const creditOffset = ref(0)
+const creditTotal = ref(0)
+const creditLoading = ref(false)
+const creditHasMore = ref(true)
+
+const ucOffset = ref(0)
+const ucTotal = ref(0)
+const ucLoading = ref(false)
+const ucHasMore = ref(true)
 
 const messageType = computed<number>(() => {
   const raw = Number(route.query.msgType)
@@ -152,14 +168,6 @@ const messageType = computed<number>(() => {
 
 function formatTime(value: unknown): string {
   return formatDateTime(value, 'YYYY-MM-DD HH:mm')
-}
-
-function formatAmount(value: unknown): string {
-  const amount = Number(value)
-  if (!Number.isFinite(amount)) {
-    return '0'
-  }
-  return amount.toLocaleString('en-US')
 }
 
 function mapStatus(value: unknown): CreditStatus {
@@ -492,11 +500,23 @@ function getMsgListData(
 function resetMsgPagination(): void {
   msgOffset.value = 0
   msgTotal.value = 0
+  msgHasMore.value = true
+}
+
+function resetCreditPagination(): void {
+  creditOffset.value = 0
+  creditTotal.value = 0
+  creditHasMore.value = true
+}
+
+function resetUcPagination(): void {
+  ucOffset.value = 0
+  ucTotal.value = 0
+  ucHasMore.value = true
 }
 
 const hasMoreMsgList = computed(() => {
-  if (msgTotal.value === 0) return false
-  return msgOffset.value < msgTotal.value
+  return msgHasMore.value
 })
 
 async function fetchMsgList(target: 'system' | 'other', append = false): Promise<void> {
@@ -527,9 +547,7 @@ async function fetchMsgList(target: 'system' | 'other', append = false): Promise
   msgTotal.value = Number(data.total ?? 0)
   const loadedCount = records.length
   msgOffset.value = requestOffset + loadedCount
-  if (append && loadedCount === 0) {
-    msgTotal.value = msgOffset.value
-  }
+  msgHasMore.value = msgTotal.value > 0 ? msgOffset.value < msgTotal.value : loadedCount >= msgLimit
 
   if (target === 'system') {
     const mapped = records.map((item) => ({
@@ -572,10 +590,37 @@ async function fillViewportMessages(target: 'system' | 'other'): Promise<void> {
   }
 }
 
-async function loadMoreMessagesIfNeeded(): Promise<void> {
-  if (pageType.value !== 'system' && pageType.value !== 'other') return
-  if (!hasMoreMsgList.value || msgListLoading.value) return
+async function fillViewportCreditList(): Promise<void> {
+  await nextTick()
+  const container = pageShellRef.value
+  if (!container) return
 
+  while (
+    creditHasMore.value &&
+    !creditLoading.value &&
+    container.scrollHeight <= container.clientHeight + 12
+  ) {
+    await fetchCreditList(true)
+    await nextTick()
+  }
+}
+
+async function fillViewportUcList(): Promise<void> {
+  await nextTick()
+  const container = pageShellRef.value
+  if (!container) return
+
+  while (
+    ucHasMore.value &&
+    !ucLoading.value &&
+    container.scrollHeight <= container.clientHeight + 12
+  ) {
+    await fetchUcList(true)
+    await nextTick()
+  }
+}
+
+async function loadMoreMessagesIfNeeded(): Promise<void> {
   const container = pageShellRef.value
   if (!container) return
 
@@ -584,7 +629,24 @@ async function loadMoreMessagesIfNeeded(): Promise<void> {
   const pageHeight = container.scrollHeight
   const threshold = 120
 
-  if (scrollTop + viewportHeight >= pageHeight - threshold) {
+  if (scrollTop + viewportHeight < pageHeight - threshold) {
+    return
+  }
+
+  if (pageType.value === 'credit') {
+    if (!creditHasMore.value || creditLoading.value) return
+    await fetchCreditList(true)
+    return
+  }
+
+  if (pageType.value === 'uc') {
+    if (!ucHasMore.value || ucLoading.value) return
+    await fetchUcList(true)
+    return
+  }
+
+  if (pageType.value === 'system' || pageType.value === 'other') {
+    if (!hasMoreMsgList.value || msgListLoading.value) return
     await fetchMsgList(pageType.value, true)
   }
 }
@@ -593,19 +655,34 @@ function onPageScroll(): void {
   void loadMoreMessagesIfNeeded()
 }
 
-async function fetchCreditList(): Promise<void> {
-  const response = await postClubRoomSitApplyRecordsApi({
+async function fetchCreditList(append = false): Promise<void> {
+  if (creditLoading.value) return
+  if (append && !creditHasMore.value) return
+
+  creditLoading.value = true
+  const requestOffset = append ? creditOffset.value : 0
+  const response = await postUserRoomSitApplyRecordsApi({
     apply_type: 0,
-    limit: 50,
-    offset: 0,
+    limit: msgLimit,
+    offset: requestOffset,
   })
+  creditLoading.value = false
+
   if (response.code !== 0) {
-    creditMessages.value = []
+    if (!append) {
+      creditMessages.value = []
+    }
     return
   }
 
-  const records = Array.isArray(response.data?.data) ? response.data.data : []
-  creditMessages.value = records.map((item) => {
+  const payload = response.data
+  const records = Array.isArray(payload?.data) ? payload.data : []
+  creditTotal.value = Number(payload?.total ?? 0)
+  creditOffset.value = requestOffset + records.length
+  creditHasMore.value =
+    creditTotal.value > 0 ? creditOffset.value < creditTotal.value : records.length >= msgLimit
+
+  const mapped = records.map((item) => {
     const entry = item as Record<string, unknown>
     return {
       id: item.id,
@@ -616,37 +693,63 @@ async function fetchCreditList(): Promise<void> {
       time: formatTime(item.create_time),
       playerName: String(item.user_name ?? '--'),
       playerId: String(item.user_random_id ?? '--'),
-      amount: `${formatAmount(item.hands)}手`,
+      amount: `${formatUC(item.bring_in ?? 0)}`,
       status: mapStatus(item.status),
       approverName: item.op_user_name ? String(item.op_user_name) : undefined,
       approverId: item.op_user_random_id ? String(item.op_user_random_id) : undefined,
+      avatar: item.avatar ? String(item.avatar) : avatarDefault,
+      senderIcon: item.sender_icon ? String(item.sender_icon) : '',
     }
   })
+
+  creditMessages.value = append ? [...creditMessages.value, ...mapped] : mapped
 }
 
-async function fetchUcList(): Promise<void> {
-  const response = await postClubFundApplyListApi({ limit: 50, offset: 0 })
+async function fetchUcList(append = false): Promise<void> {
+  if (ucLoading.value) return
+  if (append && !ucHasMore.value) return
+
+  ucLoading.value = true
+  const requestOffset = append ? ucOffset.value : 0
+  const response = await postClubFundApplyListApi({
+    limit: msgLimit,
+    offset: requestOffset,
+    order_status: 1,
+  })
+  ucLoading.value = false
+
   if (response.code !== 0) {
-    ucMessages.value = []
+    if (!append) {
+      ucMessages.value = []
+    }
     return
   }
 
-  const records = Array.isArray(response.data?.list) ? response.data.list : []
-  ucMessages.value = records.map((item) => {
+  const payload = response.data
+  const records = Array.isArray(payload?.list) ? payload.list : []
+  ucTotal.value = Number(payload?.total ?? 0)
+  ucOffset.value = requestOffset + records.length
+  ucHasMore.value = ucTotal.value > 0 ? ucOffset.value < ucTotal.value : records.length >= msgLimit
+
+  const mapped = records.map((item) => {
     const unknownItem = item as Record<string, unknown>
     const rawStatus = unknownItem.order_status ?? unknownItem.status
     return {
       orderNo: item.order_no,
       clubName: String(item.club_name ?? '--'),
-      time: formatTime(unknownItem.create_time),
+      time: formatTime(item.create_time),
       playerName: String(item.nickname ?? '--'),
       playerId: String(item.user_random_id ?? '--'),
-      amount: `+${formatAmount(item.gold_num ?? item.amount)}`,
+      amount: `+${formatUC(item.amount ?? 0)}`,
       status: mapStatus(rawStatus),
-      approverName: unknownItem.audit_name ? String(unknownItem.audit_name) : undefined,
-      approverId: unknownItem.audit_user_id ? String(unknownItem.audit_user_id) : undefined,
+      approverName: item.audit_name ? String(item.audit_name) : undefined,
+      approverId: item.audit_user_id ? String(item.audit_user_id) : undefined,
+      avatar: item.avatar ? String(item.avatar) : avatarDefault,
+      clubLogo: item.club_logo ? String(item.club_logo) : '',
     }
   })
+
+  ucMessages.value = append ? [...ucMessages.value, ...mapped] : mapped
 }
 
 async function auditCredit(item: CreditMessageItem, pass: boolean): Promise<void> {
@@ -687,12 +790,16 @@ watch(
   () => [pageType.value, messageType.value],
   async ([type]) => {
     resetMsgPagination()
+    resetCreditPagination()
+    resetUcPagination()
     if (type === 'credit') {
       await fetchCreditList()
+      await fillViewportCreditList()
       return
     }
     if (type === 'uc') {
       await fetchUcList()
+      await fillViewportUcList()
       return
     }
     if (type === 'system') {
@@ -749,14 +856,14 @@ onBeforeUnmount(() => {
             <p class="meta-left">{{ item.texasId }}</p>
             <p class="meta-time">{{ item.time }}</p>
             <div class="meta-club">
-              <img :src="avatarDefault" alt="club" />
+              <img :src="item.senderIcon" alt="club" />
               <span>{{ item.clubName }}</span>
             </div>
           </div>
 
           <div class="request-body" :class="[`status-${item.status}`]">
             <div class="player-block">
-              <img class="player-avatar" :src="avatarDefault" alt="avatar" />
+              <img class="player-avatar" :src="item.avatar" alt="avatar" />
               <div class="player-text">
                 <p class="player-name">{{ item.playerName }}</p>
                 <p class="player-id">ID: {{ item.playerId }}</p>
@@ -782,7 +889,7 @@ onBeforeUnmount(() => {
 
             <p v-else-if="item.status === 'rejected'" class="state-text">已拒绝</p>
 
-            <div v-else-if="item.status === 'approved-by-user'" class="approver-block">
+            <div v-else-if="item.status === 'approved' && item.approverId" class="approver-block">
               <p class="approver-line">{{ item.approverName }}</p>
               <p class="approver-line">ID: {{ item.approverId }}</p>
               <p class="state-text">已通过</p>
@@ -793,7 +900,7 @@ onBeforeUnmount(() => {
 
           <div class="request-footer">
             <img :src="iconBalance" alt="balance" />
-            <p>买入申请：{{ item.amount }}</p>
+            <p>带入申请：{{ item.amount }}</p>
           </div>
         </article>
       </section>
@@ -802,7 +909,7 @@ onBeforeUnmount(() => {
         <article v-for="(item, index) in ucMessages" :key="`uc-${index}`" class="request-card">
           <div class="request-top">
             <div class="meta-club meta-club--lead">
-              <img :src="avatarDefault" alt="club" />
+              <img :src="item.clubLogo" alt="club" />
               <span>{{ item.clubName }}</span>
             </div>
             <p class="meta-time">{{ item.time }}</p>
@@ -810,7 +917,7 @@ onBeforeUnmount(() => {
 
           <div class="request-body" :class="[`status-${item.status}`]">
             <div class="player-block">
-              <img class="player-avatar" :src="avatarDefault" alt="avatar" />
+              <img class="player-avatar" :src="item.avatar" alt="avatar" />
               <div class="player-text">
                 <p class="player-name">{{ item.playerName }}</p>
                 <p class="player-id">ID: {{ item.playerId }}</p>
@@ -832,7 +939,7 @@ onBeforeUnmount(() => {
 
             <p v-else-if="item.status === 'rejected'" class="state-text">已拒绝</p>
 
-            <div v-else-if="item.status === 'approved-by-user'" class="approver-block">
+            <div v-else-if="item.status === 'approved' && item.approverId" class="approver-block">
               <p class="approver-line">{{ item.approverName }}</p>
               <p class="approver-line">ID: {{ item.approverId }}</p>
               <p class="state-text">已通过</p>

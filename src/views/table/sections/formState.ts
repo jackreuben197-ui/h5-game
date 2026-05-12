@@ -344,6 +344,26 @@ export interface NlhFormState {
   mushroom_base: number
 
   /**
+   * CallTime 开关 → call_time
+   * 1=开启  2=关闭
+   */
+  call_time: number
+
+  /**
+   * CallTime 盈利线（BB）→ call_time_winline
+   * 玩家盈利达到此值时进入 CallTime 限制；有效范围 1–99
+   * call_time=1 时有效
+   */
+  call_time_winline: string
+
+  /**
+   * CallTime 限制手数 → call_time_count
+   * 进入 CallTime 后需完成的手数；有效范围 1–999，0=不限
+   * call_time=1 时有效
+   */
+  call_time_count: string
+
+  /**
    * Jackpot 开关 → jackpot
    * 1=开启  2=关闭
    */
@@ -571,6 +591,10 @@ export const defaultNlhFormState: NlhFormState = {
   mushroom: 0,
   mushroom_mode: 1,
   mushroom_base: 1000,
+
+  call_time: 2,
+  call_time_winline: '1',
+  call_time_count: '0',
 
   jackpot: 2,
   jackpot_id: 0,

@@ -188,6 +188,36 @@ export const gamePlaySquidGameSection: TableFormFieldConfig[] = [
   },
 ]
 
+export const gamePlayCallTimeSection: TableFormFieldConfig[] = [
+  {
+    type: 'switch',
+    label: 'CallTime',
+    tip: t('UICreateRoomCallTimeTip'),
+    modelValue: 'call_time',
+    activeValue: 1,
+    inactiveValue: 2,
+    defaultValue: 2,
+  },
+  {
+    type: 'input',
+    label: t('UICreateRoomCallTimeLabel1') + '(BB)',
+    modelValue: 'call_time_winline',
+    defaultValue: '1',
+    placeholder: t('UICallTimeInputTips1'),
+    numberOnly: true,
+    visibleWhen: [{ field: 'call_time', equals: 1 }],
+  },
+  {
+    type: 'input',
+    label: t('UICreateRoomCallTimeLabel2'),
+    modelValue: 'call_time_count',
+    defaultValue: '0',
+    placeholder: t('UICallTimeInputTips2'),
+    numberOnly: true,
+    visibleWhen: [{ field: 'call_time', equals: 1 }],
+  },
+]
+
 export const gamePlayCriticalHitSection: TableFormFieldConfig[] = [
   {
     type: 'switch',

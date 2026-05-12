@@ -81,6 +81,16 @@ export const limitsSection: TableFormFieldConfig[] = [
     defaultValue: false,
   },
   {
+    type: 'switch',
+    label: t('UIPersonal_Title'),
+    tip: t('UIPersonal_TitleTips'),
+    modelValue: 'personal_type',
+    activeValue: 1,
+    inactiveValue: 2,
+    defaultValue: 2,
+    visibleWhen: [{ field: 'origin_type', equals: 4 }],
+  },
+  {
     // force_show_card: 每手结束时所有手牌自动亮出，1=开启 0=关闭
     type: 'switch',
     label: t('UICreateTable_FouceShowCard'),
@@ -109,6 +119,7 @@ export const limitsSection: TableFormFieldConfig[] = [
     defaultValue: 0,
     activeValue: 1,
     inactiveValue: 0,
+    visibleWhen: [{ field: 'origin_type', notEquals: 4 }],
   },
   {
     // delay_view_card: 发牌后未轮到操作时手牌不可见

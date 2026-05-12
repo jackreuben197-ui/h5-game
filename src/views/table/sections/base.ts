@@ -67,6 +67,7 @@ export const baseSection: TableFormFieldConfig[] = [
     visibleWhen: [
       { field: 'bombpot', notEquals: 1 },
       { field: 'game_play_type', equals: [1, 2] },
+      { field: 'origin_type', notEquals: 4 },
     ],
   },
   {

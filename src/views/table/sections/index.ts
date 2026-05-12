@@ -7,6 +7,7 @@ import {
   gamePlaySquidGameSection,
   gamePlayCriticalHitSection,
   gamePlayMushroomModeSection,
+  gamePlayCallTimeSection,
 } from './gameplay'
 import { bringinSection } from './bringin'
 import { limitsSection } from './limits'
@@ -20,6 +21,7 @@ export const nlhSections: TableFormFieldConfig[][] = [
   [...baseSection], //客户端基础+盲注部分
   [...bringinSection], //带入设置
   [...activitySection],
+  [...gamePlayCallTimeSection],
   [...gamePlayMushroomModeSection],
   [...gamePlaySquidGameSection],
   [...gamePlayCriticalHitSection],

@@ -13,6 +13,7 @@ import { defaultNlhFormState, type NlhFormState } from './sections/formState'
 import type { FieldValue, TableFormFieldConfig } from './template'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useGameStore } from '@/stores/game'
 import { buildBuyinOptions, resolveBringinBbRange } from './sections/topSlides'
 import { getAnteOptions } from './sections/constants'
 import { t } from '@/i18n'
@@ -27,6 +28,7 @@ const route = useRoute()
 const router = useRouter()
 const appConfigStore = useAppConfigStore()
 const userInfoStore = useUserInfoStore()
+const gameStore = useGameStore()
 
 // 俱乐部钻石余额
 const clubDiamondBalance = computed(() => {
@@ -360,6 +362,12 @@ function syncRouteParamsToFormState(): void {
   formState.game_play_type = Number(route.query.game_play_type)
   formState.bombpot = route.query.bombpot ? Number(route.query.bombpot) : 0
   formState.origin_type = currentOriginType.value
+  if (!formState.name) {
+    const nickname = gameStore.loginNickname || gameStore.loginAccount || ''
+    if (nickname) {
+      formState.name = `${nickname}的牌桌`
+    }
+  }
 }
 
 function hitCondition(conditionValue: FieldValue | FieldValue[], formValue: FieldValue): boolean {

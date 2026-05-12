@@ -27,7 +27,7 @@
 }
 
 // 程序化 GameToast 样式（通过 showGameToast 触发）
-.game-toast-msg.van-toast {
+.van-toast {
   background-image: url('@/assets/images/component_dialog_bg.png');
   background-size: 100% auto;
   background-position: top center;
@@ -50,4 +50,17 @@
     font-family: 'HONOR Sans CN', sans-serif;
     word-break: break-word;
   }
+}
+
+.van-toast--fail.van-toast,
+.van-toast--success.van-toast {
+  flex-direction: row;
+  min-height: 0;
+  align-items: center;
+}
+
+.van-toast--fail.van-toast .van-toast__text,
+.van-toast--success.van-toast .van-toast__text {
+  margin-top: 0;
+  margin-left: 0.2rem;
 }

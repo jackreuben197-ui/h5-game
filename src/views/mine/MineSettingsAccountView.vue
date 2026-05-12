@@ -27,14 +27,15 @@ if (route.query.security === 'on') {
 }
 
 const rows: AccountActionItem[] = [
-  { key: 'reset-password', label: 'Reset password', iconClass: 'icon-reset', arrow: true },
-  { key: 'security-password', label: 'Security password protection', iconClass: 'icon-sound' },
-  { key: 'reset-security-password', label: 'Reset security password', iconClass: 'icon-reset', arrow: true },
+  { key: 'reset-password', label: '重置密码', iconClass: 'icon-reset', arrow: true },
+  { key: 'security-password', label: '6位数密码', iconClass: 'icon-sound' },
+  {
+    key: 'reset-security-password',
+    label: '修改6位数密码',
+    iconClass: 'icon-reset',
+    arrow: true,
+  },
 ]
-
-function goBack(): void {
-  router.back()
-}
 
 function onRowClick(item: AccountActionItem): void {
   if (item.key === 'reset-password') {

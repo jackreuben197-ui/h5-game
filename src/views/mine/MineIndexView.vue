@@ -31,15 +31,34 @@ interface BoxItem {
 }
 
 const boxList = ref<BoxItem[]>([
-  { key: 'club-career', icon: iconBoxClubT, text: t('PageMineClubCareer'), route: '/mine/club-career' },
-  { key: 'friends-career', icon: iconBoxFriendT, text: t('PageMineFriendTableCareer'), route: '/mine/friends-career' },
+  {
+    key: 'club-career',
+    icon: iconBoxClubT,
+    text: t('PageMineClubCareer'),
+    route: '/mine/club-career',
+  },
+  {
+    key: 'friends-career',
+    icon: iconBoxFriendT,
+    text: t('PageMineFriendTableCareer'),
+    route: '/mine/friends-career',
+  },
   { key: 'my-bill', icon: iconBoxDiamond, text: t('UIMine_Bill'), route: '/mine/bill' },
-  { key: 'hand-history', icon: iconBoxSave, text: t('UIMine_btn_paipu'), route: '/mine/hand-collection' },
+  {
+    key: 'hand-history',
+    icon: iconBoxSave,
+    text: t('UIMine_btn_paipu'),
+    route: '/mine/hand-collection',
+  },
   { key: 'bag', icon: iconBoxBag, text: t('UIMine_btn_backpack'), route: '/mine/backpack' },
-  { key: 'message-board', icon: iconBoxComment, text: t('PageMineMessageBoard'), route: '/mine/message-board' },
+  {
+    key: 'message-board',
+    icon: iconBoxComment,
+    text: t('PageMineMessageBoard'),
+    route: '/mine/message-board',
+  },
   { key: 'settings', icon: iconBoxSetting, text: t('UIMine_btn_setting'), route: '/mine/settings' },
 ])
-
 
 function goToNextPage(path: string): void {
   void router.push(path)
@@ -80,9 +99,9 @@ async function onLogout(): Promise<void> {
         <div class="icon-diamond">
           <img :src="iconDiamond" alt="钻石" />
         </div>
-        <div class="num"> {{ displayUser.diamond }}</div>
+        <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" alt="充值" />
+          <img :src="iconAdd" alt="充值" @click="goToMineShop" />
         </div>
       </div>
     </div>
@@ -94,7 +113,9 @@ async function onLogout(): Promise<void> {
               <img :src="String(displayUser.avatar)" alt="头像" />
             </button>
             <div class="right-box">
-              <button class="name" type="button" @click="goToProfileEdit">{{ displayUser.nickname }}</button>
+              <button class="name" type="button" @click="goToProfileEdit">
+                {{ displayUser.nickname }}
+              </button>
               <div class="idbox">
                 <div class="id-label">ID</div>
                 <div class="id-value">{{ displayUser.userID }}</div>
@@ -123,27 +144,14 @@ async function onLogout(): Promise<void> {
       </div>
     </div>
     <div class="box-gallery">
-      <div
-        v-for="box in boxList"
-        :key="box.key"
-        class="box-item"
-        @click="goToNextPage(box.route)"
-      >
+      <div v-for="box in boxList" :key="box.key" class="box-item" @click="goToNextPage(box.route)">
         <div class="img">
           <img :src="box.icon" alt="消息" />
         </div>
         <div class="text">{{ box.text }}</div>
       </div>
     </div>
-    <VanButton
-      plain
-      round
-      size="small"
-      class="logout-btn"
-      @click="onLogout"
-    >
-      退出登录
-    </VanButton>
+    <VanButton plain round size="small" class="logout-btn" @click="onLogout"> 退出登录 </VanButton>
   </div>
 </template>
 
@@ -151,7 +159,7 @@ async function onLogout(): Promise<void> {
 @use '@/styles/messages_mine.scss' as *;
 
 .mine-page {
-  .card-bg-highlight{
+  .card-bg-highlight {
     .card-bg-outter {
       .card-bg-innner {
         .card-line1 {
@@ -183,7 +191,7 @@ async function onLogout(): Promise<void> {
               padding: 0;
               text-align: left;
               color: #fff;
-              margin-top:0.2rem;
+              margin-top: 0.2rem;
               font-size: 0.6rem;
               line-height: 100%;
               font-weight: bold;
@@ -196,7 +204,7 @@ async function onLogout(): Promise<void> {
               .id-label {
                 font-size: 0.28rem;
                 line-height: 150%;
-                background-color: rgba(255,255,255,0.4);
+                background-color: rgba(255, 255, 255, 0.4);
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -206,7 +214,7 @@ async function onLogout(): Promise<void> {
               .id-value {
                 font-size: 0.3rem;
                 line-height: 120%;
-                font-weight: 500  ;
+                font-weight: 500;
                 font-family: var(--font-family-SF);
               }
             }

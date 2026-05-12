@@ -2,8 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
-import { postOrderUserUsdtOrderListApi } from '@/api/order'
-import { postMallBuyApi } from '@/api/prop'
+import { postOrderUserUsdtOrderListApi, postOrderUserUsdtRechargeApi } from '@/api/order'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
@@ -15,19 +14,31 @@ const backgroundStyle = computed(() => ({
 }))
 const route = useRoute()
 
-const imgQr = 'https://www.figma.com/api/mcp/asset/1aabef25-95a5-4300-9235-709ff3c1d16a'
+const fallbackQr = 'https://www.figma.com/api/mcp/asset/1aabef25-95a5-4300-9235-709ff3c1d16a'
 const fallbackAddress = 'TKUksSTiyT80KSGdrTrf7ywTe'
 
 const price = computed(() => Number(route.query.price ?? 123.45))
-const diamonds = computed(() => Number(route.query.diamonds ?? 5000))
 const balance = computed(() => Number(route.query.balance ?? 0))
-const goodsId = computed(() => Number(route.query.id ?? 0))
+const priceId = computed(() => Number(route.query.price_id ?? route.query.id ?? 0))
+const payPrice = computed(() => Number(route.query.pay_price ?? route.query.price ?? 0))
+const payId = computed(() => Number(route.query.pay_id ?? route.query.pay_type_id ?? 0))
+const goldCount = computed(() => Number(route.query.gold_count ?? route.query.title ?? 0))
 
 const creatingOrder = ref(false)
 const checkingStatus = ref(false)
 const orderNo = ref('')
 const statusText = ref('待支付')
 const payAddress = ref(fallbackAddress)
+const imgQr = ref(fallbackQr)
+
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function toPayPrice(value: number): number {
+  return Math.round(toSafeNumber(value) * 10000) / 10000
+}
 
 function getStatusLabel(status: number): string {
   if (status === 2) return '支付成功'
@@ -38,24 +49,33 @@ function getStatusLabel(status: number): string {
 }
 
 async function createOrder(): Promise<void> {
-  if (goodsId.value <= 0) {
+  if (priceId.value <= 0 || payId.value <= 0 || goldCount.value <= 0 || payPrice.value <= 0) {
     showFailToast('商品参数无效')
     return
   }
 
   creatingOrder.value = true
   try {
-    const response = await postMallBuyApi({
-      goods_id: goodsId.value,
+    const response = await postOrderUserUsdtRechargeApi({
+      price_id: priceId.value,
+      pay_price: toPayPrice(payPrice.value),
+      pay_id: payId.value,
+      gold_count: goldCount.value,
     })
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : '创建订单失败')
     }
 
-    orderNo.value = String(response.data?.order_id ?? '')
+    orderNo.value = String(response.data?.order?.order_no ?? '')
     if (!orderNo.value) {
       throw new Error('订单号缺失')
     }
+
+    const address = response.data?.usdt_address?.address
+    const qrCode = response.data?.usdt_address?.qr_code
+    payAddress.value = typeof address === 'string' && address ? address : fallbackAddress
+    imgQr.value = typeof qrCode === 'string' && qrCode ? qrCode : fallbackQr
+
     statusText.value = '待支付'
     await queryOrderStatus(false)
   } catch (error) {
@@ -93,8 +113,19 @@ async function queryOrderStatus(showSuccessHint = true): Promise<void> {
 }
 
 function onCopyAddress(): void {
-  void navigator.clipboard?.writeText(payAddress.value)
-  showSuccessToast('钱包地址已复制')
+  if (!payAddress.value) {
+    showFailToast('钱包地址为空')
+    return
+  }
+
+  void navigator.clipboard
+    ?.writeText(payAddress.value)
+    .then(() => {
+      showSuccessToast('钱包地址已复制')
+    })
+    .catch(() => {
+      showFailToast('复制失败，请手动复制')
+    })
 }
 
 onMounted(() => {
@@ -109,7 +140,7 @@ onMounted(() => {
     <section class="pay-card">
       <HeaderBack :title="title" />
 
-      <div class="amount-box">{{ price.toFixed(2) }}</div>
+      <div class="amount-box">{{ toPayPrice(price).toFixed(4) }}</div>
       <p class="amount-label">付款金额</p>
 
       <div class="pay-methods">
@@ -129,7 +160,7 @@ onMounted(() => {
       </div>
 
       <p class="tips">提示：复制上方钱包地址转币完，或使用钱包扫描二维码完成付款</p>
-      <p class="sub-tips">购买钻石：{{ diamonds }}，账户钻石：{{ balance }}</p>
+      <p class="sub-tips">购买钻石：{{ goldCount }}，账户钻石：{{ balance }}</p>
 
       <button
         type="button"
@@ -137,7 +168,9 @@ onMounted(() => {
         :disabled="creatingOrder || checkingStatus"
         @click="queryOrderStatus()"
       >
-        <span>{{ creatingOrder ? '创建订单中...' : checkingStatus ? '查询中...' : statusText }}</span>
+        <span>
+          {{ creatingOrder ? '创建订单中...' : checkingStatus ? '查询中...' : statusText }}
+        </span>
         <small>{{ orderNo ? `订单号：${orderNo}` : '等待订单创建' }}</small>
       </button>
     </section>
@@ -169,7 +202,12 @@ onMounted(() => {
   color: #f9f9f9;
   backdrop-filter: blur(0.2022rem);
   background:
-    linear-gradient(103deg, rgba(142, 142, 142, 0.3) 2.93%, rgba(103, 103, 103, 0.4) 43.62%, rgba(73, 73, 73, 0.5) 89.79%),
+    linear-gradient(
+      103deg,
+      rgba(142, 142, 142, 0.3) 2.93%,
+      rgba(103, 103, 103, 0.4) 43.62%,
+      rgba(73, 73, 73, 0.5) 89.79%
+    ),
     rgba(0, 0, 0, 0.25);
   box-shadow:
     inset 0 0 0.2298rem #000,
@@ -220,7 +258,11 @@ onMounted(() => {
   font-size: 0.7829rem;
   color: #fff;
   text-shadow: 0 0.1066rem 0.1066rem rgba(0, 0, 0, 0.25);
-  background: linear-gradient(130deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.43%);
+  background: linear-gradient(
+    130deg,
+    rgba(255, 255, 255, 0.1) 21.1%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  );
 }
 
 .amount-label {

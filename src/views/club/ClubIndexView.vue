@@ -418,7 +418,7 @@ function handleCreateTableClick(): void {
     return
   }
 
-  void router.push({ path: '/club/table/create', query: { origin_type: 3 } })
+  void router.push({ path: '/club/table/create', query: { origin_type: 5 } })
 }
 
 function handleFloatingMenuClick(): void {

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import { getRoomIdsApi, getRoomsDetailApi } from '@/api/roomcenter'
-import { WS_NOTIFY_CODE, subscribeH5WsCode } from '@/bridge/ws'
+import { Code, subscribeH5WsCode } from '@/bridge/ws'
 import {
   decodeRoomChangeNotifyFromRawPacket,
   ROOM_CHANGE_TYPE,
@@ -296,7 +296,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
         return
       }
 
-      stopRoomChangeNotifyListener = subscribeH5WsCode(WS_NOTIFY_CODE.ROOM_CHANGE_NOTIFY, (message) => {
+      stopRoomChangeNotifyListener = subscribeH5WsCode(Code.MSG_S_ROOM_CHANGE_NOTIFY, (message) => {
         this.applyRoomChangeNotifyMessage(message.rawBuffer)
       })
     },

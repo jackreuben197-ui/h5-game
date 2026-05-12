@@ -2,11 +2,6 @@ import type { ServerMessageUserDiamondChange } from './pb/protobuf/holdem/recv_g
 import type { ServerMessageUserGoldChange } from './pb/protobuf/holdem/recv_g_user_gold_change_pb'
 import { decodeHoldemPacket } from './holdemPacket'
 
-export const USER_BALANCE_CODE = {
-  DIAMOND_CHANGE: 138,
-  GOLD_CHANGE: 141,
-} as const
-
 export interface WsUserDiamondChangePayload {
   userId: number
   diamonds: number

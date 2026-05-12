@@ -2,13 +2,6 @@
 // 1) 写入/解析 WS 二进制固定包头
 // 2) 提供通用 WS 包头编解码能力（供 H5 自己发查询类包）
 
-export const HOLDEM_CODE = {
-  REGISTER: 1,
-  HEARTBEAT: 2,
-  ENTER_ROOM: 1002,
-  LEAVE: 1010,
-} as const
-
 const CHARS_FLAG = new Uint8Array([0x59, 0x4d]) // "YM"
 const TOKEN_LENGTH = 32
 const PROTOBUF_VERSION = 2

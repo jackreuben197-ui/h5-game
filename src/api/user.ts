@@ -220,7 +220,11 @@ export async function postUserCheckPhoneApi(
   payload: UserCheckPhoneRequest,
   options: ApiRequestExtOptions = {},
 ): Promise<ApiResponse<UserCheckPhoneData>> {
-  const response = await http.post<ApiResponse<UserCheckPhoneData>>('/user/check_phone', payload, options)
+  const response = await http.post<ApiResponse<UserCheckPhoneData>>(
+    '/user/check_phone',
+    payload,
+    options,
+  )
   return response.data
 }
 
@@ -244,7 +248,10 @@ export async function postUserCheckEmailApi(
 export async function postUserSendEmailCodeApi(
   payload: UserSendEmailCodeRequest,
 ): Promise<ApiResponse<UserSendEmailCodeData>> {
-  const response = await http.post<ApiResponse<UserSendEmailCodeData>>('/user/send_email_code', payload)
+  const response = await http.post<ApiResponse<UserSendEmailCodeData>>(
+    '/user/send_email_code',
+    payload,
+  )
   return response.data
 }
 
@@ -331,7 +338,10 @@ export async function postUserBindStatusApi(
 export async function postUserBindEmailApi(
   payload: UserBindEmailRequest,
 ): Promise<ApiResponse<Record<string, unknown>>> {
-  const response = await http.post<ApiResponse<Record<string, unknown>>>('/user/bind_email', payload)
+  const response = await http.post<ApiResponse<Record<string, unknown>>>(
+    '/user/bind_email',
+    payload,
+  )
   return response.data
 }
 
@@ -339,7 +349,10 @@ export async function postUserBindEmailApi(
 export async function postUserBindPhoneApi(
   payload: UserBindPhoneRequest,
 ): Promise<ApiResponse<Record<string, unknown>>> {
-  const response = await http.post<ApiResponse<Record<string, unknown>>>('/user/bind_phone', payload)
+  const response = await http.post<ApiResponse<Record<string, unknown>>>(
+    '/user/bind_phone',
+    payload,
+  )
   return response.data
 }
 
@@ -380,15 +393,18 @@ export async function postUserMyWalletsApi(
 
 // 对齐 cocos WebUserDeleteCode.API
 export async function postUserDeleteCodeApi(
-  payload: UserDeleteCodeRequest = {} as UserDeleteCodeRequest
+  payload: UserDeleteCodeRequest = {} as UserDeleteCodeRequest,
 ): Promise<ApiResponse<UserDeleteCodeResponseData>> {
-  const response = await http.post<ApiResponse<UserDeleteCodeResponseData>>('/user/send_verify_code', payload)
+  const response = await http.post<ApiResponse<UserDeleteCodeResponseData>>(
+    '/user/send_verify_code',
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebUserDelete.API
 export async function postUserDeleteApi(
-  payload: UserDeleteRequest = {} as UserDeleteRequest
+  payload: UserDeleteRequest = {} as UserDeleteRequest,
 ): Promise<ApiResponse<UserDeleteResponseData>> {
   const response = await http.post<ApiResponse<UserDeleteResponseData>>('/user/delete', payload)
   return response.data
@@ -396,39 +412,51 @@ export async function postUserDeleteApi(
 
 // 对齐 cocos WebUserVerifyPassword.API
 export async function postUserVerifyPasswordApi(
-  payload: UserVerifyPasswordRequest = {} as UserVerifyPasswordRequest
+  payload: UserVerifyPasswordRequest = {} as UserVerifyPasswordRequest,
 ): Promise<ApiResponse<UserVerifyPasswordResponseData>> {
-  const response = await http.post<ApiResponse<UserVerifyPasswordResponseData>>('/user/quick_password/verify', payload)
+  const response = await http.post<ApiResponse<UserVerifyPasswordResponseData>>(
+    '/user/quick_password/verify',
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebUserModifyQuickInfo.API
 export async function postUserModifyQuickInfoApi(
-  payload: UserModifyQuickInfoRequest = {} as UserModifyQuickInfoRequest
+  payload: UserModifyQuickInfoRequest = {} as UserModifyQuickInfoRequest,
 ): Promise<ApiResponse<UserModifyQuickInfoResponseData>> {
-  const response = await http.post<ApiResponse<UserModifyQuickInfoResponseData>>('/user/quick_password/modify', payload)
+  const response = await http.post<ApiResponse<UserModifyQuickInfoResponseData>>(
+    '/user/quick_password/modify',
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebUserModifyQuickSwitch.API
 export async function postUserModifyQuickSwitchApi(
-  payload: UserModifyQuickSwitchRequest = {} as UserModifyQuickSwitchRequest
+  payload: UserModifyQuickSwitchRequest = {} as UserModifyQuickSwitchRequest,
 ): Promise<ApiResponse<UserModifyQuickSwitchResponseData>> {
-  const response = await http.post<ApiResponse<UserModifyQuickSwitchResponseData>>('/user/modify/quick/login/switch', payload)
+  const response = await http.post<ApiResponse<UserModifyQuickSwitchResponseData>>(
+    '/user/modify/quick/login/switch',
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebUserModifyBringInSwitch.API
 export async function postUserModifyBringInSwitchApi(
-  payload: UserModifyBringInSwitchRequest = {} as UserModifyBringInSwitchRequest
+  payload: UserModifyBringInSwitchRequest = {} as UserModifyBringInSwitchRequest,
 ): Promise<ApiResponse<UserModifyBringInSwitchResponseData>> {
-  const response = await http.post<ApiResponse<UserModifyBringInSwitchResponseData>>('/user/modify/bringin/password/switch', payload)
+  const response = await http.post<ApiResponse<UserModifyBringInSwitchResponseData>>(
+    '/user/modify/bringin/password/switch',
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebUserBill.API
 export async function postUserBillApi(
-  payload: UserBillRequest = {} as UserBillRequest
+  payload: UserBillRequest = {} as UserBillRequest,
 ): Promise<ApiResponse<UserBillResponseData>> {
   const response = await http.post<ApiResponse<UserBillResponseData>>('/user/wallets_log', payload)
   return response.data
@@ -436,7 +464,7 @@ export async function postUserBillApi(
 
 // 对齐 cocos WebUserWallet.API
 export async function postUserWalletApi(
-  payload: UserWalletRequest = {} as UserWalletRequest
+  payload: UserWalletRequest = {} as UserWalletRequest,
 ): Promise<ApiResponse<UserWalletResponseData>> {
   const response = await http.post<ApiResponse<UserWalletResponseData>>('/user/my_wallets', payload)
   return response.data
@@ -446,6 +474,9 @@ export async function postUserWalletApi(
 export async function postUserGoldChangeLogApi(
   payload: UserGoldChangeLogRequest = {},
 ): Promise<ApiResponse<UserGoldChangeLogData>> {
-  const response = await http.post<ApiResponse<UserGoldChangeLogData>>('/user/gold_change/log', payload)
+  const response = await http.post<ApiResponse<UserGoldChangeLogData>>(
+    '/user/gold_change/log',
+    payload,
+  )
   return response.data
 }

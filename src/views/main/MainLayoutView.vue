@@ -36,7 +36,6 @@ async function fetchUserInfoOnEnter(): Promise<void> {
 
   // 同一 token 在当前应用会话内只同步一次 userinfo / club。
   if (gameStore.shouldSyncProfile(token)) {
-
     // 后台静默同步：不阻塞首页渲染，不打断用户操作。
     void getUserInfoApi()
       .then((userInfo) => {
@@ -137,6 +136,7 @@ onMounted(() => {
         <RouterView />
       </section>
     </div>
+    <GlobalMessageTodoNotice />
     <!-- 公共底部导航：跨模块复用。 -->
     <MainBottomTab />
   </div>
@@ -165,8 +165,7 @@ onMounted(() => {
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   overscroll-behavior-y: contain;
-  padding: calc(env(safe-area-inset-top) + 0.4rem) 0.0rem
-    calc(env(safe-area-inset-bottom) + 2.72rem);
+  padding: calc(env(safe-area-inset-top) + 0.4rem) 0rem calc(env(safe-area-inset-bottom) + 2.72rem);
 }
 
 .module-slot {

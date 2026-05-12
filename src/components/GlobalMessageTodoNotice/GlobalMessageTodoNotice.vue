@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { postMsgMessageTodoAllInfoApi } from '@/api/msg'
 import { postClubFundAuditApi } from '@/api/order'
 import { postRoomClubApplyAuditApi, postRoomcenterFriendRoomApplyAuditApi } from '@/api/roomcenter'
 import { postOrgClubApproValJoinApi } from '@/api/org'
+import { Code, subscribeH5WsCode } from '@/bridge/ws/messageCenter'
+import { decodeTodoListNotify } from '@/bridge/ws/todoListNotify'
 import type {
   ClubMemberJoinListRecord,
   ClubMemberOrderListOrderInfo,
   MsgMessageTodoAllInfoData,
+  MsgMessageTodoAllInfoDataElement,
   MsgMessageTodoAllInfoResponseData,
   UserRoomSitApplyRecordsRecord,
 } from '@/api/models/msg'
@@ -35,7 +38,12 @@ const sectionDefs: TodoSection[] = [
 const visible = ref(false)
 const loading = ref(false)
 const data = ref<MsgMessageTodoAllInfoData>({})
+const todoCountMap = ref<MsgMessageTodoAllInfoDataElement[]>([])
 const gameStore = useGameStore()
+let stopTodoWsListener: (() => void) | null = null
+
+const watchedTodoTypes = [2, 3, 6] as const
+const watchedTodoTypeSet = new Set<number>(watchedTodoTypes)
 
 function parseAllInfoData(
   responseData: MsgMessageTodoAllInfoResponseData | undefined,
@@ -69,20 +77,55 @@ const displaySections = computed(() => {
   })
 })
 
-const totalCount = computed(() => {
-  const mapped = getList<{ type?: number; num?: number }>(data.value.num_map)
-  const todoTypes = new Set([2, 3, 6])
-  const countFromMap = mapped.reduce((sum, item) => {
-    const type = Number(item.type ?? 0)
-    if (!todoTypes.has(type)) return sum
-    return sum + Number(item.num ?? 0)
-  }, 0)
+function normalizeTodoCountMap(source: unknown): MsgMessageTodoAllInfoDataElement[] {
+  const mapped = getList<MsgMessageTodoAllInfoDataElement>(source)
+  if (!mapped.length) return []
 
-  if (countFromMap > 0) return countFromMap
-  return ucList.value.length + bringInList.value.length + joinClubList.value.length
+  return mapped
+    .map((item) => ({
+      type: Number(item.type ?? 0),
+      num: Math.max(0, Number(item.num ?? 0)),
+    }))
+    .filter((item) => watchedTodoTypeSet.has(Number(item.type ?? 0)))
+}
+
+function buildFallbackTodoCountMap(): MsgMessageTodoAllInfoDataElement[] {
+  return [
+    { type: 2, num: ucList.value.length },
+    { type: 3, num: joinClubList.value.length },
+    { type: 6, num: bringInList.value.length },
+  ]
+}
+
+function setTodoCountMapFromApi(): void {
+  const normalized = normalizeTodoCountMap(data.value.num_map)
+  todoCountMap.value = normalized.length ? normalized : buildFallbackTodoCountMap()
+}
+
+function updateTodoTypeCount(type: number, num: number): void {
+  if (!watchedTodoTypeSet.has(type)) return
+
+  const safeNum = Math.max(0, Number(num || 0))
+  const list = [...todoCountMap.value]
+  const index = list.findIndex((item) => Number(item.type ?? 0) === type)
+  if (index >= 0) {
+    list[index] = {
+      ...list[index],
+      type,
+      num: safeNum,
+    }
+  } else {
+    list.push({ type, num: safeNum })
+  }
+  todoCountMap.value = list
+}
+
+const totalCount = computed(() => {
+  return todoCountMap.value.reduce((sum, item) => sum + Number(item.num ?? 0), 0)
 })
 
 const hasAnyTodo = computed(() => displaySections.value.length > 0)
+const shouldShowFloat = computed(() => totalCount.value > 0)
 
 const pageBackgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -115,7 +158,9 @@ async function fetchTodoAllInfo(): Promise<void> {
   }
 
   data.value = parseAllInfoData(response.data)
-  if (!hasAnyTodo.value) {
+  setTodoCountMapFromApi()
+
+  if (totalCount.value <= 0) {
     visible.value = false
   }
 }
@@ -172,8 +217,11 @@ async function auditJoinClub(item: ClubMemberJoinListRecord, pass: boolean): Pro
 }
 
 function openPanel(): void {
-  if (!hasAnyTodo.value) return
-  visible.value = true
+  if (!shouldShowFloat.value) return
+  void fetchTodoAllInfo().finally(() => {
+    if (!hasAnyTodo.value) return
+    visible.value = true
+  })
 }
 
 function closePanel(): void {
@@ -185,17 +233,42 @@ watch(
   (token) => {
     if (token.trim()) {
       void fetchTodoAllInfo()
+      return
     }
+
+    data.value = {}
+    todoCountMap.value = []
+    visible.value = false
   },
 )
 
+function initTodoWsListener(): void {
+  if (stopTodoWsListener) return
+
+  stopTodoWsListener = subscribeH5WsCode(Code.MSG_S_TODO_LIST, (message) => {
+    const payload = decodeTodoListNotify(message.rawBuffer)
+    if (!payload) return
+    updateTodoTypeCount(Number(payload.type || 0), Number(payload.num || 0))
+
+    if (totalCount.value <= 0) {
+      visible.value = false
+    }
+  })
+}
+
 onMounted(() => {
+  initTodoWsListener()
   void fetchTodoAllInfo()
+})
+
+onBeforeUnmount(() => {
+  stopTodoWsListener?.()
+  stopTodoWsListener = null
 })
 </script>
 
 <template>
-  <div v-if="hasAnyTodo" class="todo-float-wrap">
+  <div v-if="shouldShowFloat" class="todo-float-wrap">
     <button class="todo-float-btn" type="button" @click="openPanel">
       <span class="todo-float-text">消息验证</span>
       <span v-if="totalCount > 0" class="todo-float-count">{{ totalCount }}</span>

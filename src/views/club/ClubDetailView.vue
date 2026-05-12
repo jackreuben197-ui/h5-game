@@ -7,10 +7,7 @@ import {
   postOrgClubAgentInviTationApi,
   postOrgClubInviTationApi,
 } from '@/api/org'
-import type {
-  OrgClubData,
-  OrgClubSearchByIdResponseData
-} from '@/api/models/org'
+import type { OrgClubData, OrgClubSearchByIdResponseData } from '@/api/models/org'
 import imgClubCover from '@/assets/images/default_avatar.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
 import imgChips from '@/assets/icons/icon_chips.png'
@@ -31,21 +28,20 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-
 interface QuickActionItem {
-	id: number
-	title: string
-	cover: string
+  id: number
+  title: string
+  cover: string
 }
 
 type SettingItemKind = 'text' | 'arrow' | 'switch' | 'level' | 'founder' | 'copy'
 
 interface SettingItem {
-	id: number
-	label: string
-	kind: SettingItemKind
-	value?: string
-	switchKey?: 'allowSearch' | 'joinWithoutApproval'
+  id: number
+  label: string
+  kind: SettingItemKind
+  value?: string
+  switchKey?: 'allowSearch' | 'joinWithoutApproval'
 }
 
 const router = useRouter()
@@ -57,7 +53,9 @@ const loading = ref(false)
 const clubDetail = ref<OrgClubSearchByIdResponseData | null>(null)
 
 // 用户等级：0 普通，1 会长，2 副会长，3 管理员，4 代理。
-const userLevel = computed(() => Number(clubDetail.value?.user_level ?? userInfoStore.currentClub?.user_level ?? 0))
+const userLevel = computed(() =>
+  Number(clubDetail.value?.user_level ?? userInfoStore.currentClub?.user_level ?? 0),
+)
 const isFounder = computed(() => userLevel.value === 1)
 const isVicePresident = computed(() => userLevel.value === 2)
 const isAdmin = computed(() => userLevel.value === 3)
@@ -84,7 +82,7 @@ const settings = computed<SettingItem[]>(() => {
       id: 1,
       label: '创始人',
       kind: 'founder',
-      value: displayClub.value?.club_creator_nickname || '--'
+      value: displayClub.value?.club_creator_nickname || '--',
     },
     { id: 2, label: '邀请分享', kind: 'arrow' },
     { id: 3, label: '联盟', kind: 'text', value: displayClub.value?.tribe_name || '--' },
@@ -92,13 +90,23 @@ const settings = computed<SettingItem[]>(() => {
 
   if (isFounder.value) {
     list.push(
-      { id: 4, label: '当前俱乐部等级', kind: 'level', value: `LV. ${displayClub.value?.level || 0}` },
+      {
+        id: 4,
+        label: '当前俱乐部等级',
+        kind: 'level',
+        value: `LV. ${displayClub.value?.level || 0}`,
+      },
       { id: 5, label: '允许其他人搜索俱乐部', kind: 'switch', switchKey: 'allowSearch' },
       { id: 6, label: '入会无需审批', kind: 'switch', switchKey: 'joinWithoutApproval' },
     )
   }
 
-  list.push({ id: 7, label: '创建时间', kind: 'text', value: formatDate(displayClub.value?.create_time) })
+  list.push({
+    id: 7,
+    label: '创建时间',
+    kind: 'text',
+    value: formatDate(displayClub.value?.create_time),
+  })
 
   if (canManageClub.value) {
     list.push({ id: 8, label: '复制俱乐部', kind: 'copy' })
@@ -196,7 +204,7 @@ function goEditName(): void {
 
 function onQuickAction(actionId: number): void {
   if (actionId === 1) {
-  	showFailToast('功能开发中')
+    showFailToast('功能开发中')
     return
   }
 
@@ -263,7 +271,8 @@ async function updateClubSwitch(key: 'allowSearch' | 'joinWithoutApproval'): Pro
   }
 
   const nextAllowSearch = key === 'allowSearch' ? !allowSearch.value : allowSearch.value
-  const nextAutoAudit = key === 'joinWithoutApproval' ? !joinWithoutApproval.value : joinWithoutApproval.value
+  const nextAutoAudit =
+    key === 'joinWithoutApproval' ? !joinWithoutApproval.value : joinWithoutApproval.value
 
   if (key === 'allowSearch') {
     allowSearch.value = nextAllowSearch
@@ -405,11 +414,9 @@ onMounted(async () => {
 
 <template>
   <div class="page-shell club-detail-bg" :style="backgroundStyle">
-    <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
-    <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
     <HeaderBack :title="'俱乐部信息'" />
 
-    <div v-loading="loading" class="club-detail app-scroll-standalone">
+    <div v-loading="loading" class="club-detail">
       <section class="club-header-card">
         <div class="club-header-main">
           <img class="club-avatar" :src="displayClub?.logo || imgClubCover" alt="俱乐部头像" />
@@ -441,7 +448,9 @@ onMounted(async () => {
         </div>
 
         <div class="club-size-pill" aria-label="俱乐部人数">
-          <span class="size-text">{{ displayClub?.club_members || 0 }}/{{ displayClub?.upper_limit || 0 }}</span>
+          <span class="size-text">
+            {{ displayClub?.club_members }}/{{ displayClub?.upper_limit }}
+          </span>
           <img :src="imgPeople" alt="" aria-hidden="true" />
         </div>
       </section>
@@ -483,7 +492,8 @@ onMounted(async () => {
           :class="[
             `settings-row--${item.kind}`,
             {
-              'settings-row--clickable': item.kind === 'arrow' || item.kind === 'level' || item.kind === 'copy',
+              'settings-row--clickable':
+                item.kind === 'arrow' || item.kind === 'level' || item.kind === 'copy',
             },
           ]"
           @click="onSettingClick(item)"
@@ -496,7 +506,11 @@ onMounted(async () => {
           <div class="right-wrap">
             <template v-if="item.kind === 'founder'">
               <span class="muted-text">{{ item.value }}</span>
-              <img class="mini-avatar" :src="displayClub?.club_creator_avatar || imgClubCover" alt="创始人头像" />
+              <img
+                class="mini-avatar"
+                :src="displayClub?.club_creator_avatar || imgClubCover"
+                alt="创始人头像"
+              />
             </template>
 
             <template v-else-if="item.kind === 'text'">
@@ -513,7 +527,8 @@ onMounted(async () => {
                 type="button"
                 class="switch"
                 :class="{
-                  'switch--on': item.switchKey === 'allowSearch' ? allowSearch : joinWithoutApproval,
+                  'switch--on':
+                    item.switchKey === 'allowSearch' ? allowSearch : joinWithoutApproval,
                 }"
                 :aria-label="item.label"
                 @click.stop="toggleSwitch(item.switchKey)"
@@ -587,692 +602,663 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 .club-detail-bg {
-	position: relative;
-	height: 100dvh;
-	background:
-		radial-gradient(140% 84% at 50% -6%, rgba(216, 146, 131, 0.64), rgba(142, 82, 128, 0.6) 42%, rgba(29, 124, 153, 0.82) 100%),
-		linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
-	overflow: hidden;
-}
-
-.bg-blur {
-	position: absolute;
-	border-radius: 999px;
-	filter: blur(0.9rem);
-	opacity: 0.5;
-	pointer-events: none;
-}
-
-.bg-blur--pink {
-	width: 2.6rem;
-	height: 2.6rem;
-	top: 3.8rem;
-	left: -0.8rem;
-	background: rgba(217, 32, 116, 0.56);
-}
-
-.bg-blur--cyan {
-	width: 2.3rem;
-	height: 2.3rem;
-	right: -0.7rem;
-	bottom: 2.6rem;
-	background: rgba(36, 212, 255, 0.52);
+  height: 100dvh;
 }
 
 .club-detail {
-	position: relative;
-	z-index: 1;
-	display: flex;
-	flex-direction: column;
-	gap: 0.40524rem;
-	padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.40524rem;
+  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
 }
 
 .top-bar {
-	min-height: 0.72215rem;
-	padding-left: 0.32rem;
+  min-height: 0.72215rem;
+  padding-left: 0.32rem;
 }
 
 .back-btn {
-	border: 0;
-	background: transparent;
-	color: #f9f9f9;
-	display: inline-flex;
-	align-items: center;
-	gap: 0.16rem;
-	padding: 0;
+  border: 0;
+  background: transparent;
+  color: #f9f9f9;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.16rem;
+  padding: 0;
 }
 
 .back-icon {
-	width: 0.18rem;
-	height: 0.18rem;
-	border-left: 0.03rem solid rgba(249, 249, 249, 0.95);
-	border-bottom: 0.03rem solid rgba(249, 249, 249, 0.95);
-	transform: rotate(45deg);
+  width: 0.18rem;
+  height: 0.18rem;
+  border-left: 0.03rem solid rgba(249, 249, 249, 0.95);
+  border-bottom: 0.03rem solid rgba(249, 249, 249, 0.95);
+  transform: rotate(45deg);
 }
 
 .back-title {
-	font-size: 0.49799rem;
-	line-height: 1;
-	font-weight: 500;
+  font-size: 0.49799rem;
+  line-height: 1;
+  font-weight: 500;
 }
 
 .club-header-card {
-	display: flex;
-	align-items: flex-end;
-	justify-content: space-between;
-	gap: 0;
-	min-height: 3.08434rem;
-	padding: 0.12048rem 0.55422rem;
-	border-radius: 1.00402rem;
-	background: rgba(0, 0, 0, 0.22);
-	backdrop-filter: blur(0.2rem);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0;
+  min-height: 3.08434rem;
+  padding: 0.12048rem 0.55422rem;
+  border-radius: 1.00402rem;
+  background: rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(0.2rem);
 }
 
 .club-header-main {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.28112rem;
-    bottom: 0.5rem;
-    position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28112rem;
+  bottom: 0.5rem;
+  position: relative;
 }
 
 .club-avatar {
-	width: 1.96787rem;
-	height: 1.97968rem;
-	border-radius: 999px;
-	object-fit: cover;
-	border: 0;
+  width: 1.96787rem;
+  height: 1.97968rem;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 0;
 }
 
 .club-summary {
-	display: flex;
-	flex-direction: column;
-	min-height: 1.99325rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 1.99325rem;
 }
 
 .club-name-edit {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.08rem;
-	padding: 0;
-	border: 0;
-	background: transparent;
-	color: inherit;
-	max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.08rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  max-width: 100%;
 }
 
 .club-name {
-	margin: 0;
-	color: #f9f9f9;
-	font-size: 0.5692rem;
-	line-height: 1;
-	font-weight: 700;
+  margin: 0;
+  color: #f9f9f9;
+  font-size: 0.5692rem;
+  line-height: 1;
+  font-weight: 700;
 }
 
 .name-edit-icon {
-	position: relative;
-	width: 0.2rem;
-	height: 0.2rem;
-	flex: 0 0 auto;
+  position: relative;
+  width: 0.2rem;
+  height: 0.2rem;
+  flex: 0 0 auto;
 }
 
 .name-edit-icon::before {
-	content: '';
-	position: absolute;
-	left: 0.03rem;
-	top: 0.06rem;
-	width: 0.14rem;
-	height: 0.06rem;
-	border: 0.02rem solid rgba(249, 249, 249, 0.92);
-	border-radius: 0.03rem;
-	transform: rotate(-38deg);
+  content: '';
+  position: absolute;
+  left: 0.03rem;
+  top: 0.06rem;
+  width: 0.14rem;
+  height: 0.06rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.92);
+  border-radius: 0.03rem;
+  transform: rotate(-38deg);
 }
 
 .club-id-row {
-	margin: 0;
-	display: inline-flex;
-	align-items: center;
-	gap: 0.06231rem;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.06231rem;
 }
 
 .id-tag {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	min-width: 0.48924rem;
-	height: 0.27575rem;
-	border-radius: 0.10682rem;
-	font-size: 0.20537rem;
-	color: #fff;
-	background: rgba(255, 255, 255, 0.28);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0.48924rem;
+  height: 0.27575rem;
+  border-radius: 0.10682rem;
+  font-size: 0.20537rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .id-text {
-	font-size: 0.24404rem;
-	color: rgba(249, 249, 249, 0.95);
+  font-size: 0.24404rem;
+  color: rgba(249, 249, 249, 0.95);
 }
 
 .metric-line {
-	margin: 0;
-	display: inline-flex;
-	align-items: center;
-	gap: 0.11365rem;
-	color: #f9f9f9;
-	font-size: 0.3553rem;
-	line-height: 1.2;
-	font-weight: 600;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.11365rem;
+  color: #f9f9f9;
+  font-size: 0.3553rem;
+  line-height: 1.2;
+  font-weight: 600;
 }
 
 .metric-line img {
-	width: 0.4rem;
-	height: 0.4rem;
-	object-fit: contain;
+  width: 0.4rem;
+  height: 0.4rem;
+  object-fit: contain;
 }
 
 .club-size-pill {
-	flex: 0 0 auto;
-	min-height: 0.82731rem;
-	padding: 0 0.28112rem;
-	border-radius: 0.72289rem;
-	display: inline-flex;
-	align-items: center;
-	gap: 0.05622rem;
-	background: rgba(255, 255, 255, 0.2);
-	right: 0.5rem;
-	bottom: 0.3rem;
-    position: absolute;
+  flex: 0 0 auto;
+  min-height: 0.82731rem;
+  padding: 0 0.28112rem;
+  border-radius: 0.72289rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.05622rem;
+  background: rgba(255, 255, 255, 0.2);
+  right: 0.5rem;
+  bottom: 0.3rem;
+  position: absolute;
 }
 
 .size-text {
-	color: #f9f9f9;
-	font-size: 0.4739rem;
-	line-height: 1;
-	font-weight: 500;
+  color: #f9f9f9;
+  font-size: 0.4739rem;
+  line-height: 1;
+  font-weight: 500;
 }
 
 .club-size-pill img {
-	width: 0.48rem;
-	height: 0.48rem;
-	object-fit: contain;
-	opacity: 0.94;
+  width: 0.48rem;
+  height: 0.48rem;
+  object-fit: contain;
+  opacity: 0.94;
 }
 
 .quick-actions {
-	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 0.29333rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.29333rem;
 }
 
 .quick-card {
-	border: 0;
-	padding: 0;
-	background: transparent;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 0.16027rem;
-	color: #f9f9f9;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.16027rem;
+  color: #f9f9f9;
 }
 
 .quick-image-wrap {
-	width: 100%;
-	aspect-ratio: 1 / 1;
-	border-radius: 0.75252rem;
-	border: 0.02667rem solid rgba(255, 255, 255, 0.6);
-	overflow: hidden;
-	background: rgba(255, 255, 255, 0.26);
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 0.75252rem;
+  border: 0.02667rem solid rgba(255, 255, 255, 0.6);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.26);
 }
 
 .quick-image-wrap img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .quick-title {
-	font-size: 0.304rem;
-	line-height: 1;
-	text-align: center;
+  font-size: 0.304rem;
+  line-height: 1;
+  text-align: center;
 }
 
 .intro-card {
-	min-height: 1.51964rem;
-	padding: 0.34538rem 0.41767rem 0.34538rem 0.55422rem;
-	border-radius: 0.72289rem;
-	background: rgba(0, 0, 0, 0.24);
-	backdrop-filter: blur(0.12rem);
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	color: rgba(249, 249, 249, 0.96);
-	font-size: 0.40524rem;
+  min-height: 1.51964rem;
+  padding: 0.34538rem 0.41767rem 0.34538rem 0.55422rem;
+  border-radius: 0.72289rem;
+  background: rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(0.12rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: rgba(249, 249, 249, 0.96);
+  font-size: 0.40524rem;
 }
 
 .intro-edit {
-	border: 0;
-	width: 0.67539rem;
-	height: 0.67539rem;
-	border-radius: 50%;
-	background: linear-gradient(145deg, #15ddb2, #00ca98);
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	padding: 0;
+  border: 0;
+  width: 0.67539rem;
+  height: 0.67539rem;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #15ddb2, #00ca98);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
 .edit-pen {
-	position: relative;
-	width: 0.21rem;
-	height: 0.21rem;
+  position: relative;
+  width: 0.21rem;
+  height: 0.21rem;
 }
 
 .edit-pen::before {
-	content: '';
-	position: absolute;
-	left: 0.03rem;
-	top: 0.06rem;
-	width: 0.14rem;
-	height: 0.06rem;
-	border: 0.02rem solid #fff;
-	border-radius: 0.03rem;
-	transform: rotate(-38deg);
+  content: '';
+  position: absolute;
+  left: 0.03rem;
+  top: 0.06rem;
+  width: 0.14rem;
+  height: 0.06rem;
+  border: 0.02rem solid #fff;
+  border-radius: 0.03rem;
+  transform: rotate(-38deg);
 }
 
 .settings-card {
-	display: flex;
-	flex-direction: column;
-	gap: 0.28916rem;
-	padding: 0.34538rem 0.41767rem;
-	border-radius: 0.72289rem;
-	background:
-		radial-gradient(80% 100% at 100% 100%, rgba(51, 169, 206, 0.26), rgba(51, 169, 206, 0)),
-		rgba(0, 0, 0, 0.24);
-	backdrop-filter: blur(0.15rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.28916rem;
+  padding: 0.34538rem 0.41767rem;
+  border-radius: 0.72289rem;
+  background:
+    radial-gradient(80% 100% at 100% 100%, rgba(51, 169, 206, 0.26), rgba(51, 169, 206, 0)),
+    rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(0.15rem);
 }
 
 .settings-row {
-	width: 100%;
-	border: 0;
-	background: transparent;
-	padding: 0;
-	min-height: 0.53333rem;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 0;
-	color: #f1f1f1;
-	font-size: 0.40524rem;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  min-height: 0.53333rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
+  color: #f1f1f1;
+  font-size: 0.40524rem;
 }
 
 .label-wrap {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.06rem;
-	min-width: 0;
-	text-align: left;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.06rem;
+  min-width: 0;
+  text-align: left;
 }
 
 .right-wrap {
-	display: inline-flex;
-	align-items: center;
-	justify-content: flex-end;
-	gap: 0.08rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.08rem;
 }
 
 .muted-text {
-	color: rgba(228, 228, 228, 0.7);
-	font-size: 0.40524rem;
+  color: rgba(228, 228, 228, 0.7);
+  font-size: 0.40524rem;
 }
 
 .mini-avatar {
-	width: 0.71rem;
-	height: 0.71rem;
-	border-radius: 999px;
-	object-fit: cover;
+  width: 0.71rem;
+  height: 0.71rem;
+  border-radius: 999px;
+  object-fit: cover;
 }
 
 .chevron {
-	width: 0.26656rem;
-	height: 0.26656rem;
-	border-top: 0.02rem solid rgba(237, 237, 237, 0.85);
-	border-right: 0.02rem solid rgba(237, 237, 237, 0.85);
-	transform: rotate(45deg);
+  width: 0.26656rem;
+  height: 0.26656rem;
+  border-top: 0.02rem solid rgba(237, 237, 237, 0.85);
+  border-right: 0.02rem solid rgba(237, 237, 237, 0.85);
+  transform: rotate(45deg);
 }
 
 .level-pill {
-	display: inline-flex;
-	align-items: center;
-	min-height: 0.48614rem;
-	padding: 0 0.1246rem;
-	border-radius: 999px;
-	font-size: 0.27857rem;
-	font-weight: 700;
-	color: #f9f9f9;
-	background: linear-gradient(152deg, #05e7ae 8%, #027a5c 72%);
+  display: inline-flex;
+  align-items: center;
+  min-height: 0.48614rem;
+  padding: 0 0.1246rem;
+  border-radius: 999px;
+  font-size: 0.27857rem;
+  font-weight: 700;
+  color: #f9f9f9;
+  background: linear-gradient(152deg, #05e7ae 8%, #027a5c 72%);
 }
 
 .switch {
-	width: 1.756rem;
-	height: 0.82747rem;
-	border: 0;
-	padding: 0.04rem;
-	border-radius: 999px;
-	background: rgba(255, 255, 255, 0.22);
-	display: inline-flex;
-	align-items: center;
+  width: 1.756rem;
+  height: 0.82747rem;
+  border: 0;
+  padding: 0.04rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  display: inline-flex;
+  align-items: center;
 }
 
 .switch--on {
-	justify-content: flex-end;
-	background: #05e7ae;
+  justify-content: flex-end;
+  background: #05e7ae;
 }
 
 .switch:not(.switch--on) {
-	justify-content: flex-start;
+  justify-content: flex-start;
 }
 
 .switch-knob {
-	width: 0.667rem;
-	height: 0.667rem;
-	border-radius: 50%;
-	background: #fff;
-	box-shadow: 0 0.02rem 0.04rem rgba(0, 0, 0, 0.22);
+  width: 0.667rem;
+  height: 0.667rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0.02rem 0.04rem rgba(0, 0, 0, 0.22);
 }
 
 .info-dot {
-	width: 0.3592rem;
-	height: 0.3592rem;
-	border-radius: 50%;
-	background: rgba(255, 255, 255, 0.24);
-	color: #fff;
-	font-size: 0.22613rem;
-	line-height: 0.3592rem;
-	text-align: center;
+  width: 0.3592rem;
+  height: 0.3592rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.24);
+  color: #fff;
+  font-size: 0.22613rem;
+  line-height: 0.3592rem;
+  text-align: center;
 }
 
 .danger-zone {
-	margin-top: 0.40524rem;
-	padding: 0 0.64108rem 0.24rem;
+  margin-top: 0.40524rem;
+  padding: 0 0.64108rem 0.24rem;
 }
 
 .danger-btn {
-	width: 100%;
-	min-height: 1.43581rem;
-	border: 0;
-	border-radius: 1.05574rem;
-	color: #f9f9f9;
-	font-size: 0.5066rem;
-	font-weight: 500;
-	background: linear-gradient(90deg, rgba(73, 29, 86, 0.8), rgba(19, 95, 125, 0.84));
+  width: 100%;
+  min-height: 1.43581rem;
+  border: 0;
+  border-radius: 1.05574rem;
+  color: #f9f9f9;
+  font-size: 0.5066rem;
+  font-weight: 500;
+  background: linear-gradient(90deg, rgba(73, 29, 86, 0.8), rgba(19, 95, 125, 0.84));
 }
 
 .club-modal-mask {
-	position: fixed;
-	inset: 0;
-	padding: 0.4rem;
-	background: rgba(12, 12, 12, 0.6);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	z-index: 80;
+  position: fixed;
+  inset: 0;
+  padding: 0.4rem;
+  background: rgba(12, 12, 12, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 80;
 }
 
 .invite-modal,
 .copy-modal {
-	width: min(9.1rem, 100%);
-	border-radius: 0.97035rem;
-	border: 0.0255rem solid rgba(242, 242, 242, 0.4);
-	background: linear-gradient(121deg, rgba(142, 142, 142, 0.2) 3%, rgba(73, 73, 73, 0.38) 89%);
-	backdrop-filter: blur(0.20216rem);
-	box-shadow:
-		0 0 0.22981rem rgba(0, 0, 0, 0.85) inset,
-		0.05672rem 0.11344rem 0.45908rem rgba(242, 242, 242, 0.5) inset,
-		0.09192rem 0.11491rem 0.18384rem rgba(0, 0, 0, 0.28);
-	color: #f9f9f9;
+  width: min(9.1rem, 100%);
+  border-radius: 0.97035rem;
+  border: 0.0255rem solid rgba(242, 242, 242, 0.4);
+  background: linear-gradient(121deg, rgba(142, 142, 142, 0.2) 3%, rgba(73, 73, 73, 0.38) 89%);
+  backdrop-filter: blur(0.20216rem);
+  box-shadow:
+    0 0 0.22981rem rgba(0, 0, 0, 0.85) inset,
+    0.05672rem 0.11344rem 0.45908rem rgba(242, 242, 242, 0.5) inset,
+    0.09192rem 0.11491rem 0.18384rem rgba(0, 0, 0, 0.28);
+  color: #f9f9f9;
 }
 
 .invite-modal {
-	padding: 0.42rem 0.42rem 0.62rem;
-	display: flex;
-	flex-direction: column;
-	gap: 0.22rem;
+  padding: 0.42rem 0.42rem 0.62rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
 }
 
 .invite-modal__head {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .invite-modal__head h3 {
-	margin: 0;
-	flex: 1;
-	text-align: center;
-	font-size: 0.41866rem;
-	font-weight: 500;
-	line-height: 1.4;
-	padding-left: 0.48rem;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+  font-size: 0.41866rem;
+  font-weight: 500;
+  line-height: 1.4;
+  padding-left: 0.48rem;
 }
 
 .invite-modal__close {
-	width: 0.96rem;
-	height: 0.96rem;
-	border: 0;
-	background: transparent;
-	padding: 0;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
+  width: 0.96rem;
+  height: 0.96rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .invite-modal__close img {
-	width: 0.66rem;
-	height: 0.66rem;
-	object-fit: contain;
+  width: 0.66rem;
+  height: 0.66rem;
+  object-fit: contain;
 }
 
 .invite-modal__body {
-	padding: 0.35rem 0.42rem 0.24rem;
-	border-radius: 0.72464rem;
-	background: linear-gradient(100deg, rgba(255, 255, 255, 0.08), rgba(230, 230, 230, 0.12));
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 0.08rem;
+  padding: 0.35rem 0.42rem 0.24rem;
+  border-radius: 0.72464rem;
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0.08), rgba(230, 230, 230, 0.12));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.08rem;
 }
 
 .invite-modal__subtitle {
-	margin: 0;
-	font-size: 0.35565rem;
-	line-height: 1.35;
+  margin: 0;
+  font-size: 0.35565rem;
+  line-height: 1.35;
 }
 
 .invite-modal__cover-wrap {
-	width: 100%;
-	height: 2.3752rem;
-	border-radius: 0.58rem;
-	overflow: hidden;
-	border: 0.01778rem solid rgba(255, 255, 255, 0.14);
-	margin-top: 0.06rem;
+  width: 100%;
+  height: 2.3752rem;
+  border-radius: 0.58rem;
+  overflow: hidden;
+  border: 0.01778rem solid rgba(255, 255, 255, 0.14);
+  margin-top: 0.06rem;
 }
 
 .invite-modal__cover {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .invite-modal__club-name {
-	margin: 0.16rem 0 0;
-	font-size: 0.35565rem;
-	line-height: 1.35;
+  margin: 0.16rem 0 0;
+  font-size: 0.35565rem;
+  line-height: 1.35;
 }
 
 .invite-modal__club-alias {
-	margin: 0;
-	font-size: 0.48309rem;
-	line-height: 1.2;
-	font-weight: 700;
+  margin: 0;
+  font-size: 0.48309rem;
+  line-height: 1.2;
+  font-weight: 700;
 }
 
 .invite-modal__id-row {
-	margin: 0;
-	display: inline-flex;
-	align-items: center;
-	gap: 0.09333rem;
-	font-size: 0.32293rem;
-	line-height: 1;
-	font-weight: 600;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.09333rem;
+  font-size: 0.32293rem;
+  line-height: 1;
+  font-weight: 600;
 }
 
 .invite-modal__id-tag {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	min-width: 0.46rem;
-	height: 0.3rem;
-	padding: 0 0.12rem;
-	border-radius: 0.13rem;
-	background: rgba(255, 255, 255, 0.3);
-	font-size: 0.23111rem;
-	color: #444;
-	font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0.46rem;
+  height: 0.3rem;
+  padding: 0 0.12rem;
+  border-radius: 0.13rem;
+  background: rgba(255, 255, 255, 0.3);
+  font-size: 0.23111rem;
+  color: #444;
+  font-weight: 600;
 }
 
 .invite-modal__qr-wrap {
-	position: relative;
-	width: 3.33333rem;
-	height: 3.33333rem;
-	margin: 0.04rem auto 0;
-	border-radius: 0.30747rem;
-	background: #fff;
-	padding: 0.10667rem;
-	border: 0.10067rem solid #00b184;
-	overflow: hidden;
+  position: relative;
+  width: 3.33333rem;
+  height: 3.33333rem;
+  margin: 0.04rem auto 0;
+  border-radius: 0.30747rem;
+  background: #fff;
+  padding: 0.10667rem;
+  border: 0.10067rem solid #00b184;
+  overflow: hidden;
 }
 
 .invite-modal__qr {
-	width: 100%;
-	height: 100%;
-	object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .invite-modal__qr-heart {
-	position: absolute;
-	left: 50%;
-	top: 50%;
-	transform: translate(-50%, -50%);
-	width: 0.9888rem;
-	height: 0.9888rem;
-	border-radius: 50%;
-	background: #fff;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.9888rem;
+  height: 0.9888rem;
+  border-radius: 50%;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .invite-modal__qr-heart img {
-	width: 0.64rem;
-	height: 0.64rem;
-	object-fit: contain;
+  width: 0.64rem;
+  height: 0.64rem;
+  object-fit: contain;
 }
 
 .invite-modal__qr-tip {
-	margin: 0;
-	text-align: center;
-	font-size: 0.314rem;
-	font-weight: 500;
-	line-height: 1.3;
+  margin: 0;
+  text-align: center;
+  font-size: 0.314rem;
+  font-weight: 500;
+  line-height: 1.3;
 }
 
 .modal-primary-btn,
 .modal-secondary-btn {
-	width: 100%;
-	min-height: 1.43581rem;
-	border: 0;
-	border-radius: 1.05574rem;
-	font-size: 0.4rem;
-	font-weight: 500;
-	color: #fff;
-	line-height: 1.2;
-	padding: 0.2rem 0.4rem;
+  width: 100%;
+  min-height: 1.43581rem;
+  border: 0;
+  border-radius: 1.05574rem;
+  font-size: 0.4rem;
+  font-weight: 500;
+  color: #fff;
+  line-height: 1.2;
+  padding: 0.2rem 0.4rem;
 }
 
 .modal-primary-btn {
-	border: 0.01333rem solid rgba(242, 242, 242, 0.8);
-	background: linear-gradient(153deg, #05e7ae 8%, #027a5c 72%);
-	box-shadow: inset 0 -0.16rem 0.3rem rgba(0, 0, 0, 0.14);
+  border: 0.01333rem solid rgba(242, 242, 242, 0.8);
+  background: linear-gradient(153deg, #05e7ae 8%, #027a5c 72%);
+  box-shadow: inset 0 -0.16rem 0.3rem rgba(0, 0, 0, 0.14);
 }
 
 .copy-modal {
-	width: min(8.25283rem, 100%);
-	padding: 0.82rem 0.42rem 0.55rem;
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
+  width: min(8.25283rem, 100%);
+  padding: 0.82rem 0.42rem 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .copy-modal p {
-	margin: 0;
-	text-align: center;
-	font-size: 0.36232rem;
-	line-height: 1.3;
+  margin: 0;
+  text-align: center;
+  font-size: 0.36232rem;
+  line-height: 1.3;
 }
 
 .copy-modal__actions {
-	display: flex;
-	gap: 0.25339rem;
+  display: flex;
+  gap: 0.25339rem;
 }
 
 .copy-modal__actions > button {
-	flex: 1;
-	min-width: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .modal-secondary-btn {
-	background: rgba(0, 0, 0, 0.34);
-	box-shadow: inset 0 -0.2rem 0.24rem rgba(0, 0, 0, 0.24);
+  background: rgba(0, 0, 0, 0.34);
+  box-shadow: inset 0 -0.2rem 0.24rem rgba(0, 0, 0, 0.24);
 }
 
 @media (max-width: 340px) {
-	.invite-modal,
-	.copy-modal {
-		padding-left: 0.3rem;
-		padding-right: 0.3rem;
-	}
+  .invite-modal,
+  .copy-modal {
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
+  }
 
-	.invite-modal__head h3 {
-		font-size: 0.36rem;
-	}
+  .invite-modal__head h3 {
+    font-size: 0.36rem;
+  }
 
-	.copy-modal p {
-		font-size: 0.32rem;
-	}
+  .copy-modal p {
+    font-size: 0.32rem;
+  }
 
-	.modal-primary-btn,
-	.modal-secondary-btn {
-		font-size: 0.35rem;
-	}
+  .modal-primary-btn,
+  .modal-secondary-btn {
+    font-size: 0.35rem;
+  }
 
-	.club-name {
-		font-size: 0.38rem;
-	}
+  .club-name {
+    font-size: 0.38rem;
+  }
 
-	.size-text {
-		font-size: 0.31rem;
-	}
+  .size-text {
+    font-size: 0.31rem;
+  }
 
-	.settings-row {
-		font-size: 0.3rem;
-	}
+  .settings-row {
+    font-size: 0.3rem;
+  }
 
-	.muted-text {
-		font-size: 0.3rem;
-	}
+  .muted-text {
+    font-size: 0.3rem;
+  }
 
-	.danger-btn {
-		font-size: 0.4rem;
-	}
+  .danger-btn {
+    font-size: 0.4rem;
+  }
 }
 </style>

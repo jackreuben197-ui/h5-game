@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
-import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { getUserClubApi } from '@/api/user'
 import { getCowboyRoomListApi } from '@/api/gc'
@@ -13,6 +12,7 @@ import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
 import { localStore } from '@/utils/localStore'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
+import { showGameToast } from '@/components/Toast'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -188,7 +188,7 @@ async function refreshBalance(): Promise<void> {
     await getUserClubApi()
   } catch (error) {
     const message = error instanceof Error ? error.message : '刷新余额失败'
-    showFailToast(message)
+    showGameToast(message)
   }
 }
 
@@ -459,7 +459,7 @@ onBeforeUnmount(() => {
       <!-- 左侧：麻将 + MTT + 小游戏 -->
       <div class="game-zone-left">
         <!-- 麻将专区 -->
-        <div class="game-card game-card-mahjong" @click="goToGameList">
+        <div class="game-card game-card-mahjong" @click="showGameToast('功能开发中')">
           <img
             class="zone-lg-icon zone-lg-icon-mahjong"
             src="@/assets/icons/game_zone_mahjong_lg.png"
@@ -510,7 +510,7 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- 小游戏专区 -->
-        <div class="game-card game-card-minigame" @click="goToGameList">
+        <div class="game-card game-card-minigame" @click="showGameToast('功能开发中')">
           <img
             class="zone-lg-icon zone-lg-icon-minigame"
             src="@/assets/icons/game_zone_minigame_lg.png"

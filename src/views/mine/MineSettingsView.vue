@@ -190,8 +190,6 @@ async function onRowClick(item: SettingItem): Promise<void> {
 <style scoped lang="scss">
 .mine-glass-page {
   height: 100dvh;
-  padding-top: calc(env(safe-area-inset-top) + 0.46rem);
-  padding-bottom: 0.8rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;

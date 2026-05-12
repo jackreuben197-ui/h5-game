@@ -253,7 +253,9 @@ async function onJoinClub(): Promise<void> {
 
     showSuccessToast(response.message || '加入申请已提交')
     showJoinModal.value = false
-    await loadMyClubList(true)
+    setTimeout(() => {
+      void loadMyClubList(true)
+    }, 3000)
   } catch (error) {
     const message = error instanceof Error ? error.message : '加入俱乐部失败'
     showFailToast(message)

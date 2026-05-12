@@ -11,6 +11,7 @@ import iconUsdt from '@/assets/icons/wallet/ic_usdt.svg'
 import iconBtc from '@/assets/icons/wallet/ic_btc.svg'
 import iconEth from '@/assets/icons/wallet/ic_eth.svg'
 import iconCard from '@/assets/icons/wallet/ic_card.svg'
+import defaultAvatar from '@/assets/images/default_avatar.png'
 
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
@@ -69,6 +70,10 @@ const userName = computed(() => {
 const userIdText = computed(() => {
   const uid = userInfoStore.userInfo?.user.un_id || gameStore.loginUserId || '-'
   return String(uid ?? '--')
+})
+const userAvatar = computed(() => {
+  const avatar = userInfoStore.userInfo?.user.avatar
+  return typeof avatar === 'string' && avatar ? avatar : defaultAvatar
 })
 
 const selectedItem = computed<ShopItem | null>(() => {
@@ -304,10 +309,7 @@ onMounted(() => {
       <section class="profile-card">
         <div class="profile-main">
           <div class="avatar-wrap">
-            <img
-              src="https://www.figma.com/api/mcp/asset/6054340b-1668-41ff-9221-95f3c737ffae"
-              alt="avatar"
-            />
+            <img :src="userAvatar" alt="avatar" />
           </div>
           <div class="profile-meta">
             <p class="name">{{ userName }}</p>

@@ -47,7 +47,7 @@ function extractContentLines(raw: unknown): string[] {
     .replace(/<br\s*\/?\s*>/gi, '\n')
     .replace(/<[^>]+>/g, '')
     .split(/\n+/)
-    .map(line => line.trim())
+    .map((line) => line.trim())
     .filter(Boolean)
   return lines
 }
@@ -57,7 +57,7 @@ async function fetchDocContent(): Promise<void> {
   try {
     const response = await postMiscArtiCleInfoApi({
       type: resolveArticleType(),
-      lang: 'zh_CN',
+      lang: 'zh_TW',
     })
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : '加载文档失败')
@@ -102,8 +102,6 @@ onMounted(() => {
 <style scoped lang="scss">
 .settings-doc-page {
   height: 100dvh;
-  padding-top: calc(env(safe-area-inset-top) + 0.48rem);
-  padding-bottom: 0.8rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;

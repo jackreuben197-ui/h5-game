@@ -2,12 +2,6 @@ import http from '@/api/http'
 import type { HttpRequestConfigExt } from '@/api/http'
 import type { ApiResponse } from '@/api/models/common'
 import type {
-  APIOrgTribeRoomPermissionsRequest,
-  APIOrgTribeRoomPermissionsResponseData,
-  APIOrgUserNewLabelReadNumRequest,
-  APIOrgUserNewLabelReadNumResponseData,
-  APIOrgUserNewLabelReadRequest,
-  APIOrgUserNewLabelReadResponseData,
   ClubAgentAddRequest,
   ClubAgentAddResponseData,
   ClubAgentDelRequest,
@@ -927,7 +921,14 @@ export async function postOrgClubJoinApi(
   payload: OrgClubJoinRequest = {} as OrgClubJoinRequest,
 ): Promise<ApiResponse<OrgClubJoinResponseData>> {
   const endpoint = '/org/club/user/join/apply'
-  const response = await http.post<ApiResponse<OrgClubJoinResponseData>>(endpoint, payload)
+  const requestOptions = {
+    xClub: false,
+  } as HttpRequestConfigExt
+  const response = await http.post<ApiResponse<OrgClubJoinResponseData>>(
+    endpoint,
+    payload,
+    requestOptions,
+  )
   return response.data
 }
 
@@ -1274,18 +1275,6 @@ export async function postOrgTribeListApi(
   return response.data
 }
 
-// 对齐 cocos APIOrgTribeRoomPermissions.API
-export async function postAPIOrgTribeRoomPermissionsApi(
-  payload: APIOrgTribeRoomPermissionsRequest = {} as APIOrgTribeRoomPermissionsRequest,
-): Promise<ApiResponse<APIOrgTribeRoomPermissionsResponseData>> {
-  const endpoint = '/org/tribe/room_permissions'
-  const response = await http.post<ApiResponse<APIOrgTribeRoomPermissionsResponseData>>(
-    endpoint,
-    payload,
-  )
-  return response.data
-}
-
 // 对齐 cocos WebOrgTribeRoomPermissionS.API
 export async function postOrgTribeRoomPermissionSApi(
   payload: OrgTribeRoomPermissionSRequest = {} as OrgTribeRoomPermissionSRequest,
@@ -1355,36 +1344,12 @@ export async function postOrgUserClubAdminListApi(
   return response.data
 }
 
-// 对齐 cocos APIOrgUserNewLabelRead.API
-export async function postAPIOrgUserNewLabelReadApi(
-  payload: APIOrgUserNewLabelReadRequest = {} as APIOrgUserNewLabelReadRequest,
-): Promise<ApiResponse<APIOrgUserNewLabelReadResponseData>> {
-  const endpoint = '/org/user/new_label/read'
-  const response = await http.post<ApiResponse<APIOrgUserNewLabelReadResponseData>>(
-    endpoint,
-    payload,
-  )
-  return response.data
-}
-
 // 对齐 cocos WebOrgUserNewLabelRead.API
 export async function postOrgUserNewLabelReadApi(
   payload: OrgUserNewLabelReadRequest = {} as OrgUserNewLabelReadRequest,
 ): Promise<ApiResponse<OrgUserNewLabelReadResponseData>> {
   const endpoint = '/org/user/new_label/read'
   const response = await http.post<ApiResponse<OrgUserNewLabelReadResponseData>>(endpoint, payload)
-  return response.data
-}
-
-// 对齐 cocos APIOrgUserNewLabelReadNum.API
-export async function postAPIOrgUserNewLabelReadNumApi(
-  payload: APIOrgUserNewLabelReadNumRequest = {} as APIOrgUserNewLabelReadNumRequest,
-): Promise<ApiResponse<APIOrgUserNewLabelReadNumResponseData>> {
-  const endpoint = '/org/user/new_label/read/num'
-  const response = await http.post<ApiResponse<APIOrgUserNewLabelReadNumResponseData>>(
-    endpoint,
-    payload,
-  )
   return response.data
 }
 

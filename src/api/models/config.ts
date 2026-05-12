@@ -53,6 +53,7 @@ export interface GlobalConfigData {
   record_fee_mtt_gc?: string
   record_fee_mtt_diamond?: string
   record_fee_mtt_scoreboard?: string
+  create_club_price?: string
   [key: string]: unknown
 }
 

@@ -21,7 +21,11 @@ H5_PB_DST="src/bridge/ws/pb/protobuf/holdem"
 # H5 目前订阅的协议（全部为大厅 / 全局通知，code < 1000）。
 # 新增协议时在此追加文件名（不含扩展名）；不需要改其他地方。
 H5_RECV_FILES=(
+  "recv_g_todo_list_pb"                # 123  MSG_S_TODO_LIST
+  "recv_g_user_order_audit_pb"         # 133  MSG_S_USER_ORDER_AUDIT
   "recv_g_room_change_notify_pb"       # 140  ROOM_CHANGE_NOTIFY
+  "recv_g_user_trader_order_notify_pb" # 143  MSG_S_USER_TRADER_ORDER_NOTIFY
+  "recv_g_user_usdt_order_notify_pb"   # 145  MSG_S_USER_USDT_ORDER_NOTIFY
   "recv_g_user_mtt_change_notify_pb"   # 151  USER_MTT_CHANGE_NOTIFY
   "recv_g_user_sng_change_notify_pb"   # 152  USER_SNG_CHANGE_NOTIFY
   "recv_g_mtt_series_notify_pb"        # 153  MTT_SERIES_NOTIFY

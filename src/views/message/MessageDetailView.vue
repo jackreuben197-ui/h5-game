@@ -73,7 +73,6 @@ interface MessageTextSegment {
 interface CreditMessageItem {
   id?: number
   roomId?: number
-  applyType?: number
   texasId?: string
   clubName: string
   time: string
@@ -662,7 +661,6 @@ async function fetchCreditList(append = false): Promise<void> {
   creditLoading.value = true
   const requestOffset = append ? creditOffset.value : 0
   const response = await postUserRoomSitApplyRecordsApi({
-    apply_type: 0,
     limit: msgLimit,
     offset: requestOffset,
   })
@@ -683,11 +681,9 @@ async function fetchCreditList(append = false): Promise<void> {
     creditTotal.value > 0 ? creditOffset.value < creditTotal.value : records.length >= msgLimit
 
   const mapped = records.map((item) => {
-    const entry = item as Record<string, unknown>
     return {
       id: item.id,
       roomId: item.room_id,
-      applyType: Number(entry.apply_type ?? 2),
       texasId: `房间ID: ${String(item.room_id ?? '--')}`,
       clubName: String(item.sender_name ?? item.room_name ?? '--'),
       time: formatTime(item.create_time),
@@ -754,7 +750,7 @@ async function fetchUcList(append = false): Promise<void> {
 
 async function auditCredit(item: CreditMessageItem, pass: boolean): Promise<void> {
   if (!item.id) return
-  const isFriendApply = Number(item.applyType ?? 2) === 1
+  const isFriendApply = item.clubName === ''
   if (isFriendApply) {
     const response = await postRoomcenterFriendRoomApplyAuditApi({
       room_id: item.roomId,

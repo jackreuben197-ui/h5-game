@@ -335,16 +335,16 @@ export interface UserInfoData {
 }
 
 // 用户对象（按当前业务使用保留常用字段）。
-export interface UserInfoUser {
-  nickname: string
-  unid?: number
-  userid?: number
-  id?: number
-  wUid?: number
-  pUid?: number
-  w_u_id?: number
-  [key: string]: unknown
-}
+// export interface UserInfoUser {
+//   nickname: string
+//   unid?: number
+//   userid?: number
+//   id?: number
+//   wUid?: number
+//   pUid?: number
+//   w_u_id?: number
+//   [key: string]: unknown
+// }
 
 // /api/user/ws 外层响应。
 export interface UserWsResponse {
@@ -633,6 +633,80 @@ export interface UserBillMember {
 export interface UserWalletWallet {
   gold?: number // 金额
   club_name?: string // 俱乐部名称
+
+  [key: string]: unknown
+}
+
+export interface UserInfoUser {
+  p_u_id?: number // 玩家真实id（客户端不用这个id）
+  area?: string // 手机号地区 例子：+86
+  phone?: string // 手机号
+  gold?: number // UC币
+  un_id?: number // 玩家随机id
+  nickname?: string // 名字
+  avatar?: string // 头像
+  sex?: number // 性别
+  province?: string // 省会
+  mnt?: number // 修改用户[名称]次数
+  mat?: number // 修改用户[头像]次数
+  ut?: number // 1 普通用户; 2 支桌号; 3 牌局机器人; 4 牛仔机器人； 5 游客
+  limit?: number // 用户限制 1 不限制, 2 限制
+  club_id?: number // 俱乐部ID
+  save_face?: number // 是否保存人脸验证，1 是，2否
+  email?: string // 邮箱
+  quick_login_switch?: number // 快捷登录 1开 其他关
+  bringin_pwd_switch?: number // 带入二级密码 1开 其他关
+  quick_login_type?: string // 快捷登录类型
+  bringin_pwd_type?: number // 带入二级密码类型
+  bringin_pwd_verify_type?: number // 带入二级密码证明类型
+  digital_switch?: number // 数字密码 1开 其他关
+  gesture_switch?: number // 手势密码 1开 其他关
+  biometric_switch?: number // 生物识别 1开 其他关
+  user_current_subscription?: UserInfoUserVIPInfo // 用户VIP信息
+  lucky_num?: number // 幸运号
+  extra_status?: UserInfoUserExtraStatus // 用户额外状态
+  trader_expire_time?: number // USDT批发商有效期
+  user_today_diamond_send_time?: number // 今天赠送次数
+  diamond_free_times?: number // 钻石免费次数
+  diamonds?: number // 用户钻石余额
+  forbid?: number // 冻结状态 0 被冻结；1 正常
+  ip_addr?: string // 玩家的IP属地
+
+  [key: string]: unknown
+}
+
+export interface UserInfoUserExtraStatus {
+  share_table_guide?: number // 是否完成分享引导
+  change_desk_guide?: number // 是否完成桌布引导
+  isShowBB?: number // 是不是展示BB 1展示 0不展示
+
+  [key: string]: unknown
+}
+
+export interface UserInfoUserVIPInfo {
+  subscription_id?: number // 会员ID
+  subscription_name?: string // 会员名称
+  subscription_logo?: string // 会员Logo
+  subscription_end_time?: number // 会员到期时间（时间戳）
+  free_add_time_num?: number // 免费加时次数
+  free_view_card_num?: number // 免费查看翻牌次数
+  free_use_chat_prop_num?: number // 免费扔道具次数
+  free_use_chat_emoji_num?: number // 免费使用表情次数
+  free_use_chat_bullet_num?: number // 免费使用弹幕框次数
+  free_use_chat_avatar_num?: number // 免费使用头像聊天框次数
+  free_added_time_num?: number // 已免费加时次数
+  free_viewed_card_num?: number // 已免费查看翻牌次数
+  free_used_chat_prop_num?: number // 已免费扔道具次数
+  free_used_chat_emoji_num?: number // 已免费使用表情次数
+  free_used_chat_bullet_num?: number // 已免费使用弹幕框次数
+  free_used_chat_avatar_num?: number // 已免费使用头像聊天框次数
+  subscription_price_type?: number // 价格类型：0=永久，1=30天（月），2=90天（季），3=180天（半年），4=365天（年）
+  free_collect_card?: number // 免费收藏牌谱次数
+  free_change_user_name?: number // 免费修改玩家昵称次数
+  free_watch_card?: number // 免费看手牌次数
+  free_used_collect_card?: number // 已免费使用收藏牌谱次数
+  free_used_change_user_name?: number // 已免费使用修改玩家昵称次数
+  free_used_watch_card?: number // 已免费使用看手牌次数
 
   [key: string]: unknown
 }

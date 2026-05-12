@@ -13,7 +13,6 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-
 const router = useRouter()
 const route = useRoute()
 
@@ -25,7 +24,11 @@ const aliasInput = ref('')
 const descInput = ref('')
 
 const detailTitle = computed(() => {
-  if (context.value.identity === 'founder' || context.value.identity === 'admin' || context.value.identity === 'agent') {
+  if (
+    context.value.identity === 'founder' ||
+    context.value.identity === 'admin' ||
+    context.value.identity === 'agent'
+  ) {
     return '玩家详情'
   }
 
@@ -66,8 +69,12 @@ const adminPermissions = ref([
 
 const showAgentActions = computed(() => context.value.identity === 'agent')
 const showAdminPermissions = computed(() => context.value.identity === 'admin')
-const showBindRow = computed(() => context.value.identity === 'player' && !context.value.isBoundAgent)
-const showUnbindRow = computed(() => context.value.identity === 'player' && context.value.isBoundAgent)
+const showBindRow = computed(
+  () => context.value.identity === 'player' && !context.value.isBoundAgent,
+)
+const showUnbindRow = computed(
+  () => context.value.identity === 'player' && context.value.isBoundAgent,
+)
 const showBottomAction = computed(() => context.value.identity !== 'founder')
 
 function pushWithContext(path: string): void {
@@ -172,16 +179,26 @@ function togglePermission(index: number): void {
         </div>
         <div class="pill-tabs">
           <button :class="{ active: gameType === 'all' }" @click="gameType = 'all'">全部</button>
-          <button :class="{ active: gameType === 'texas' }" @click="gameType = 'texas'">德州</button>
-          <button :class="{ active: gameType === 'mahjong' }" @click="gameType = 'mahjong'">麻将</button>
-          <button :class="{ active: gameType === 'mini' }" @click="gameType = 'mini'">小游戏</button>
+          <button :class="{ active: gameType === 'texas' }" @click="gameType = 'texas'">
+            德州
+          </button>
+          <button :class="{ active: gameType === 'mahjong' }" @click="gameType = 'mahjong'">
+            麻将
+          </button>
+          <button :class="{ active: gameType === 'mini' }" @click="gameType = 'mini'">
+            小游戏
+          </button>
         </div>
       </section>
 
       <section class="pill-tabs range-tabs">
-        <button :class="{ active: rangeType === 'today' }" @click="rangeType = 'today'">今天</button>
+        <button :class="{ active: rangeType === 'today' }" @click="rangeType = 'today'">
+          今天
+        </button>
         <button :class="{ active: rangeType === 'week' }" @click="rangeType = 'week'">7天</button>
-        <button :class="{ active: rangeType === 'month' }" @click="rangeType = 'month'">30天</button>
+        <button :class="{ active: rangeType === 'month' }" @click="rangeType = 'month'">
+          30天
+        </button>
       </section>
 
       <section class="stat-list">
@@ -192,17 +209,27 @@ function togglePermission(index: number): void {
       </section>
 
       <section v-if="showAgentActions" class="glass-card link-list">
-        <button class="link-item" @click="onActionClick('offline')">Total Offline Players <span>9999</span></button>
-        <button class="link-item" @click="onActionClick('vip')">VIP Statistics <span class="arrow"></span></button>
-        <button class="link-item" @click="onActionClick('profit')">代理收益设置 <span class="arrow"></span></button>
+        <button class="link-item" @click="onActionClick('offline')">
+          Total Offline Players <span>9999</span>
+        </button>
+        <button class="link-item" @click="onActionClick('vip')">
+          VIP Statistics <span class="arrow"></span>
+        </button>
+        <button class="link-item" @click="onActionClick('profit')">
+          代理收益设置 <span class="arrow"></span>
+        </button>
       </section>
 
       <section v-if="showBindRow" class="glass-card link-list">
-        <button class="link-item" @click="onActionClick('bind')">未绑定 <span>绑定代理</span></button>
+        <button class="link-item" @click="onActionClick('bind')">
+          未绑定 <span>绑定代理</span>
+        </button>
       </section>
 
       <section v-if="showUnbindRow" class="glass-card link-list">
-        <button class="link-item" @click="onActionClick('unbind')">Player Name <span>解绑代理</span></button>
+        <button class="link-item" @click="onActionClick('unbind')">
+          Player Name <span>解绑代理</span>
+        </button>
       </section>
 
       <section v-if="showAdminPermissions" class="glass-card switch-list">
@@ -240,7 +267,12 @@ function togglePermission(index: number): void {
   padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
   overflow: hidden;
   background:
-    radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.68), rgba(154, 97, 145, 0.66) 45%, rgba(33, 136, 168, 0.86) 100%),
+    radial-gradient(
+      145% 88% at 46% -8%,
+      rgba(219, 155, 140, 0.68),
+      rgba(154, 97, 145, 0.66) 45%,
+      rgba(33, 136, 168, 0.86) 100%
+    ),
     linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
 }
 

@@ -13,9 +13,8 @@ import {
   type SyncUserClubPayload,
   type SyncUserPayload,
 } from '../protocol'
-import { subscribeH5WsCode } from '../ws/messageCenter'
+import { Code, subscribeH5WsCode } from '../ws/messageCenter'
 import {
-  USER_BALANCE_CODE,
   decodeUserDiamondChange,
   decodeUserGoldChange,
 } from '../ws/userBalanceNotify'
@@ -139,7 +138,7 @@ export function forwardDiamondConfigToCocos(config: DiamondConfigData): void {
 // 订阅 proto 138（钻石变动）和 141（UC/金豆变动），更新本地 userInfo 并重新同步给 Cocos。
 // 返回取消订阅函数，登出时调用。
 export function initUserBalanceSync(): () => void {
-  const unsubDiamond = subscribeH5WsCode(USER_BALANCE_CODE.DIAMOND_CHANGE, (msg) => {
+  const unsubDiamond = subscribeH5WsCode(Code.MSG_S_USER_DIAMOND_CHANGE, (msg) => {
     const payload = decodeUserDiamondChange(msg.rawBuffer)
     if (!payload) return
 
@@ -163,7 +162,7 @@ export function initUserBalanceSync(): () => void {
     forwardUserInfoToCocos(updated)
   })
 
-  const unsubGold = subscribeH5WsCode(USER_BALANCE_CODE.GOLD_CHANGE, (msg) => {
+  const unsubGold = subscribeH5WsCode(Code.MSG_S_USER_GOLD_CHANGE, (msg) => {
     const payload = decodeUserGoldChange(msg.rawBuffer)
     if (!payload) return
 

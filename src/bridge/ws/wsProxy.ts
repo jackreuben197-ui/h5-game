@@ -20,12 +20,12 @@ import { pinia } from '@/stores/pinia'
 import { localStore } from '@/utils/localStore'
 import { createLogger } from '@/utils/logger'
 import {
-  HOLDEM_CODE,
   decodeHoldemCode,
   decodeHoldemPacket,
   encodeHoldemPacket,
   type HoldemPacketDecodeResult,
 } from './holdemPacket'
+import { Code } from './pb/code_pb'
 
 const log = createLogger('[ws]')
 const logSend = createLogger('[wsSend]')
@@ -48,16 +48,16 @@ const WS_RECONNECT_BASE_DELAY_MS = 1000
 const WS_RECONNECT_MAX_DELAY_MS = 10000
 
 const HOLDEN_CODE_NAME: Record<number, string> = {
-  [HOLDEM_CODE.REGISTER]: 'REGISTER',
-  [HOLDEM_CODE.HEARTBEAT]: 'HEARTBEAT',
-  [HOLDEM_CODE.ENTER_ROOM]: 'ENTER_ROOM',
-  [HOLDEM_CODE.LEAVE]: 'LEAVE',
-  135: 'CACHE_DATA_UPDATE',
-  140: 'ROOM_CHANGE_NOTIFY',
-  151: 'USER_MTT_CHANGE_NOTIFY',
-  152: 'USER_SNG_CHANGE_NOTIFY',
-  153: 'MTT_SERIES_NOTIFY',
-  1108: 'ACTION_ALL',
+  [Code.MSG_D_REGISTER]: 'REGISTER',
+  [Code.MSG_D_HEARTBEAT]: 'HEARTBEAT',
+  [Code.MSG_D_ENTER_ROOM]: 'ENTER_ROOM',
+  [Code.MSG_D_LEAVE]: 'LEAVE',
+  [Code.MSG_S_CACHE_DATA_UPDATE]: 'CACHE_DATA_UPDATE',
+  [Code.MSG_S_ROOM_CHANGE_NOTIFY]: 'ROOM_CHANGE_NOTIFY',
+  [Code.MSG_S_USER_MTT_CHANGE_NOTIFY]: 'USER_MTT_CHANGE_NOTIFY',
+  [Code.MSG_S_USER_SNG_CHANGE_NOTIFY]: 'USER_SNG_CHANGE_NOTIFY',
+  [Code.MSG_S_MTT_SERIES_NOTIFY]: 'MTT_SERIES_NOTIFY',
+  [Code.MSG_S_ACTION_ALL]: 'ACTION_ALL',
 }
 
 export interface H5WsIncomingEvent {
@@ -244,7 +244,7 @@ function logWsOutgoing(data: string | ArrayBuffer | ArrayBufferView | Blob, cont
 
   const packet = decodeHoldemPacket(raw)
   if (packet) {
-    const isHeartbeat = packet.code === HOLDEM_CODE.HEARTBEAT
+    const isHeartbeat = packet.code === Code.MSG_D_HEARTBEAT
     if (isHeartbeat) {
       const now = Date.now()
       if (now - lastSendHeartbeatLogAt < HEARTBEAT_LOG_INTERVAL_MS) {
@@ -319,7 +319,7 @@ function sendHeartbeatPacket(): boolean {
   }
 
   const packet = encodeHoldemPacket({
-    code: HOLDEM_CODE.HEARTBEAT,
+    code: Code.MSG_D_HEARTBEAT,
     token,
     roomId: 0,
     matchId: 0,
@@ -368,7 +368,7 @@ export function h5SendRegisterPacket(): boolean {
   }
 
   const packet = encodeHoldemPacket({
-    code: HOLDEM_CODE.REGISTER,
+    code: Code.MSG_D_REGISTER,
     token,
     roomId: 0,
     matchId: 0,
@@ -454,7 +454,7 @@ function logHoldemPacket(buffer: ArrayBufferLike): number | null {
   const code = packet.code
   const body = packet.body
   const codeName = HOLDEN_CODE_NAME[code] || 'UNKNOWN'
-  const isHeartbeat = code === HOLDEM_CODE.HEARTBEAT
+  const isHeartbeat = code === Code.MSG_D_HEARTBEAT
 
   // 心跳包非常高频，限制日志频率，避免刷屏。
   if (isHeartbeat) {
@@ -475,7 +475,7 @@ function handleBinaryIncoming(buffer: ArrayBufferLike): void {
   const passthroughBuffer = new Uint8Array(buffer).slice().buffer
 
   // 心跳包由 H5 自维护，不回传给 Cocos；其余一律透传服务器原始字节。
-  if (code !== HOLDEM_CODE.HEARTBEAT) {
+  if (code !== Code.MSG_D_HEARTBEAT) {
     emitWsMessage({
       dataType: 'binary',
       data: passthroughBuffer,

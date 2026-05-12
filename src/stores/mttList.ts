@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { getAllMttSngIdsApi, getMttListApi } from '@/api/roomcenter'
-import { WS_NOTIFY_CODE, subscribeH5WsCodes } from '@/bridge/ws'
+import { Code, subscribeH5WsCodes } from '@/bridge/ws'
 import {
   decodeMttSeriesNotifyFromRawPacket,
   decodeUserMttChangeNotifyFromRawPacket,
@@ -327,15 +327,15 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
 
     // 统一处理 MTT 相关 WS 增量通知（151/152/153）。
     applyMttNotifyByCode(code: number, rawBuffer: ArrayBufferLike): void {
-      if (code === WS_NOTIFY_CODE.USER_MTT_CHANGE_NOTIFY) {
+      if (code === Code.MSG_S_USER_MTT_CHANGE_NOTIFY) {
         this.applyUserMttChangeNotify(rawBuffer)
         return
       }
-      if (code === WS_NOTIFY_CODE.USER_SNG_CHANGE_NOTIFY) {
+      if (code === Code.MSG_S_USER_SNG_CHANGE_NOTIFY) {
         this.applyUserSngChangeNotify(rawBuffer)
         return
       }
-      if (code === WS_NOTIFY_CODE.MTT_SERIES_NOTIFY) {
+      if (code === Code.MSG_S_MTT_SERIES_NOTIFY) {
         this.applyMttSeriesNotify(rawBuffer)
       }
     },
@@ -608,9 +608,9 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
 
       stopMttNotifyListeners = subscribeH5WsCodes(
         [
-          WS_NOTIFY_CODE.USER_MTT_CHANGE_NOTIFY,
-          WS_NOTIFY_CODE.USER_SNG_CHANGE_NOTIFY,
-          WS_NOTIFY_CODE.MTT_SERIES_NOTIFY,
+          Code.MSG_S_USER_MTT_CHANGE_NOTIFY,
+          Code.MSG_S_USER_SNG_CHANGE_NOTIFY,
+          Code.MSG_S_MTT_SERIES_NOTIFY,
         ],
         (message) => {
           this.applyMttNotifyByCode(message.code, message.rawBuffer)

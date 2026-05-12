@@ -109,7 +109,7 @@ http.interceptors.request.use((config) => {
   const normalizedUrl = requestUrl.startsWith('/') ? requestUrl : `/${requestUrl}`
   // 登录前接口不要求 token。
   const isPreLoginRequest = PRE_LOGIN_PATHS.some((path) => normalizedUrl.includes(path))
-  config.headers['Content-Type'] = 'application/json'
+  resolveContentType(config)
 
   // 没有 token 且不是登录接口时，直接判定未登录并跳转。
   if (!token && !isPreLoginRequest) {
@@ -169,5 +169,12 @@ http.interceptors.response.use(
     return Promise.reject(error)
   },
 )
+
+// Auto-set Content-Type for non-FormData payloads; let browser handle FormData boundary.
+function resolveContentType(config: InternalAxiosRequestConfig): void {
+  if (!(config.data instanceof FormData)) {
+    config.headers['Content-Type'] = 'application/json'
+  }
+}
 
 export default http

@@ -149,7 +149,9 @@ function resolveRequestParams() {
     filter_type: currencyTypes[selectedCurrencyIndex.value].value,
     game_types: gameTypes,
     poker_types: selectedGameTab.value === '短牌' ? [2] : [0],
-    ...(selectedClubIndex.value !== 0 ? { club_id: userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id } : {}),
+    ...(selectedClubIndex.value !== 0
+      ? { club_id: userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id }
+      : {}),
   }
 }
 
@@ -346,7 +348,6 @@ onMounted(() => {
 //   justify-content: space-between;
 //   align-items: center;
 // }
-
 
 .title-wrap {
   display: flex;

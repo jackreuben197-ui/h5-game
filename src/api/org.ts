@@ -927,7 +927,14 @@ export async function postOrgClubJoinApi(
   payload: OrgClubJoinRequest = {} as OrgClubJoinRequest,
 ): Promise<ApiResponse<OrgClubJoinResponseData>> {
   const endpoint = '/org/club/user/join/apply'
-  const response = await http.post<ApiResponse<OrgClubJoinResponseData>>(endpoint, payload)
+  const requestOptions = {
+    xClub: false,
+  } as HttpRequestConfigExt
+  const response = await http.post<ApiResponse<OrgClubJoinResponseData>>(
+    endpoint,
+    payload,
+    requestOptions,
+  )
   return response.data
 }
 

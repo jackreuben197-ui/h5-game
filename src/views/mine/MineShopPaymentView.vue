@@ -14,8 +14,8 @@ const backgroundStyle = computed(() => ({
 }))
 const route = useRoute()
 
-const fallbackQr = 'https://www.figma.com/api/mcp/asset/1aabef25-95a5-4300-9235-709ff3c1d16a'
-const fallbackAddress = 'TKUksSTiyT80KSGdrTrf7ywTe'
+const fallbackQr = ''
+const fallbackAddress = ''
 
 const price = computed(() => Number(route.query.price ?? 123.45))
 const balance = computed(() => Number(route.query.balance ?? 0))

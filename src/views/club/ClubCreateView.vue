@@ -1,17 +1,22 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { showToast } from 'vant'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import imgClubCover from '@/assets/images/club_cover_avatar.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { postOrgClubCreateApi, postOrgClubCreateIsFirstApi } from '@/api/org'
+import type { OrgClubCreateRequest } from '@/api/models/org'
+import { useAppConfigStore } from '@/stores/appConfig'
+import { postOssUploadImageApi } from '@/api/oss'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-
 const router = useRouter()
+const appConfig = useAppConfigStore()
 
 const clubName = ref('')
 const clubIntro = ref('')
@@ -21,9 +26,50 @@ const avatarSource = ref<'camera' | 'gallery'>('gallery')
 const galleryInputRef = ref<HTMLInputElement | null>(null)
 const cameraInputRef = ref<HTMLInputElement | null>(null)
 const avatarPreviewUrl = ref('')
+const isFirstCreate = ref(false)
 
-const createCostOriginal = 500
-const createCostCurrent = 100
+interface ClubCreatePriceConfig {
+  raw_price: number
+  pay_price: number
+  discount: number
+  start_date: string
+  end_date: string
+  start_time: number
+  end_time: number
+  status: number
+}
+
+const clubCreatePriceConfig = computed<ClubCreatePriceConfig | null>(() => {
+  const raw = appConfig.globalConfig?.create_club_price
+  if (!raw || typeof raw !== 'string') return null
+  try {
+    return JSON.parse(raw) as ClubCreatePriceConfig
+  } catch {
+    return null
+  }
+})
+
+const createCostOriginal = computed<number>(() => {
+  if (isFirstCreate.value) return 0
+  const config = clubCreatePriceConfig.value
+  if (!config) return 500
+  const now = Math.floor(Date.now() / 1000)
+  if (now >= config.start_time && now <= config.end_time) {
+    return config.raw_price
+  }
+  return config.raw_price
+})
+
+const createCostCurrent = computed<number>(() => {
+  if (isFirstCreate.value) return 0
+  const config = clubCreatePriceConfig.value
+  if (!config) return 100
+  const now = Math.floor(Date.now() / 1000)
+  if (now >= config.start_time && now <= config.end_time) {
+    return config.pay_price
+  }
+  return config.raw_price
+})
 
 const canCreate = computed(() => {
   return clubName.value.trim().length > 0 && !isSubmitting.value
@@ -41,6 +87,7 @@ function closeAvatarSheet(): void {
 
 function selectAvatarSource(source: 'camera' | 'gallery'): void {
   avatarSource.value = source
+  triggerAvatarPicker()
 }
 
 function triggerAvatarPicker(): void {
@@ -52,7 +99,7 @@ function triggerAvatarPicker(): void {
   targetInput.click()
 }
 
-function updateAvatarFile(event: Event): void {
+async function updateAvatarFile(event: Event): Promise<void> {
   const target = event.target as HTMLInputElement | null
   const file = target?.files?.[0]
   if (!file) {
@@ -62,11 +109,39 @@ function updateAvatarFile(event: Event): void {
   if (avatarPreviewUrl.value) {
     URL.revokeObjectURL(avatarPreviewUrl.value)
   }
-  avatarPreviewUrl.value = URL.createObjectURL(file)
-  if (target) {
-    target.value = ''
+
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const result = await postOssUploadImageApi(
+      formData as unknown as Parameters<typeof postOssUploadImageApi>[0],
+    )
+
+    if (result?.data) {
+      avatarPreviewUrl.value = result.data as unknown as string
+    } else {
+      showToast('头像上传失败')
+    }
+  } catch {
+    showToast('头像上传失败')
+  } finally {
+    if (target) {
+      target.value = ''
+    }
   }
 }
+
+onMounted(async () => {
+  try {
+    const result = await postOrgClubCreateIsFirstApi()
+    if (result?.code === 0) {
+      isFirstCreate.value = result.is_first === 1
+    }
+  } catch {
+    // ignore
+  }
+})
 
 onUnmounted(() => {
   if (avatarPreviewUrl.value) {
@@ -82,7 +157,26 @@ async function onCreateClub(): Promise<void> {
   isSubmitting.value = true
 
   try {
-    await router.push('/club/detail')
+    const payload: OrgClubCreateRequest = {
+      club_name: clubName.value.trim(),
+      desc: clubIntro.value.trim(),
+      more_contact: '',
+      logo: avatarPreviewUrl.value,
+    }
+
+    const result = await postOrgClubCreateApi(payload)
+
+    if (result?.code === 0) {
+      showToast('俱乐部创建成功')
+      setTimeout(() => {
+        router.push('/club')
+      }, 3000)
+    } else {
+      showToast(result?.msg ?? '创建失败，请重试')
+    }
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : '创建失败，请重试'
+    showToast(message)
   } finally {
     isSubmitting.value = false
   }
@@ -91,8 +185,6 @@ async function onCreateClub(): Promise<void> {
 
 <template>
   <div class="page-shell club-create-bg" :style="backgroundStyle">
-    <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
-    <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
     <input
       ref="galleryInputRef"
       class="avatar-file-input"
@@ -173,12 +265,7 @@ async function onCreateClub(): Promise<void> {
     </div>
 
     <div v-if="avatarSheetVisible" class="avatar-sheet-mask" @click="closeAvatarSheet">
-      <div
-        class="avatar-sheet"
-        role="dialog"
-        aria-label="选择头像来源"
-        @click.stop
-      >
+      <div class="avatar-sheet" role="dialog" aria-label="选择头像来源" @click.stop>
         <button
           type="button"
           class="avatar-sheet-option"
@@ -194,9 +281,11 @@ async function onCreateClub(): Promise<void> {
           :class="{ 'avatar-sheet-option--active': avatarSource === 'gallery' }"
           @click="selectAvatarSource('gallery')"
         >
-          画廊
+          相册
         </button>
-        <button type="button" class="avatar-sheet-confirm" @click="triggerAvatarPicker">确认</button>
+        <!-- <button type="button" class="avatar-sheet-confirm" @click="triggerAvatarPicker">
+          确认
+        </button> -->
       </div>
     </div>
   </div>
@@ -204,351 +293,320 @@ async function onCreateClub(): Promise<void> {
 
 <style scoped lang="scss">
 .club-create-bg {
-	position: relative;
-	height: 100dvh;
-	padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
-	background:
-		radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.68), rgba(154, 97, 145, 0.66) 45%, rgba(33, 136, 168, 0.86) 100%),
-		linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
-	overflow: hidden;
-}
-
-.bg-blur {
-	position: absolute;
-	border-radius: 999px;
-	filter: blur(0.9rem);
-	opacity: 0.5;
-	pointer-events: none;
-}
-
-.bg-blur--pink {
-	width: 2.6rem;
-	height: 2.6rem;
-	top: 3.8rem;
-	left: -0.8rem;
-	background: rgba(217, 32, 116, 0.56);
-}
-
-.bg-blur--cyan {
-	width: 2.3rem;
-	height: 2.3rem;
-	right: -0.7rem;
-	bottom: 2.6rem;
-	background: rgba(36, 212, 255, 0.52);
+  height: 100dvh;
 }
 
 .avatar-file-input {
-	position: fixed;
-	width: 0;
-	height: 0;
-	opacity: 0;
-	pointer-events: none;
+  position: fixed;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .club-create {
-	position: relative;
-	z-index: 1;
-	display: flex;
-	flex-direction: column;
-	height: 100dvh;
-	gap: 0.40524rem;
-	padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.40524rem;
+  padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
 }
 
 .top-bar {
-	min-height: 0.72215rem;
-	padding-left: 0.32rem;
+  min-height: 0.72215rem;
+  padding-left: 0.32rem;
 }
 
 .back-btn {
-	border: 0;
-	background: transparent;
-	color: #f9f9f9;
-	display: inline-flex;
-	align-items: center;
-	gap: 0.16rem;
-	padding: 0;
+  border: 0;
+  background: transparent;
+  color: #f9f9f9;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.16rem;
+  padding: 0;
 }
 
 .back-icon {
-	width: 0.18rem;
-	height: 0.18rem;
-	border-left: 0.03rem solid rgba(249, 249, 249, 0.95);
-	border-bottom: 0.03rem solid rgba(249, 249, 249, 0.95);
-	transform: rotate(45deg);
+  width: 0.18rem;
+  height: 0.18rem;
+  border-left: 0.03rem solid rgba(249, 249, 249, 0.95);
+  border-bottom: 0.03rem solid rgba(249, 249, 249, 0.95);
+  transform: rotate(45deg);
 }
 
 .back-title {
-	font-size: 0.49799rem;
-	line-height: 1;
-	font-weight: 500;
+  font-size: 0.49799rem;
+  line-height: 1;
+  font-weight: 500;
 }
 
 .avatar-card {
-	margin: 0.2703rem 0.4561rem 0;
-	padding: 0.1267rem 0.5828rem;
-	min-height: 3.2433rem;
-	border-radius: 1.0557rem;
-	background: rgba(0, 0, 0, 0.2);
-	backdrop-filter: blur(0.158rem);
-	display: flex;
-	align-items: center;
-	flex-shrink: 0;
+  margin: 0.2703rem 0.4561rem 0;
+  padding: 0.1267rem 0.5828rem;
+  min-height: 3.2433rem;
+  border-radius: 1.0557rem;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(0.158rem);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .avatar-trigger {
-	position: relative;
-	border: 0;
-	padding: 0;
-	background: transparent;
-	width: 1.7834rem;
-	height: 1.7941rem;
-	border-radius: 50%;
-	overflow: visible;
+  position: relative;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  width: 1.7834rem;
+  height: 1.7941rem;
+  border-radius: 50%;
+  overflow: visible;
 }
 
 .avatar-image {
-	width: 100%;
-	height: 100%;
-	border-radius: 50%;
-	object-fit: cover;
-	border: 0.0107rem solid rgba(255, 255, 255, 0.38);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 0.0107rem solid rgba(255, 255, 255, 0.38);
 }
 
 .add-badge {
-	position: absolute;
-	right: -0.047rem;
-	bottom: -0.049rem;
-	width: 0.7267rem;
-	height: 0.7267rem;
-	border-radius: 50%;
-	background: linear-gradient(165deg, #05e7ae 10%, #027a5c 75%);
-	color: #fff;
-	font-size: 0.64rem;
-	line-height: 0.7267rem;
-	font-weight: 500;
-	text-align: center;
-	box-shadow: 0 0.0267rem 0.1067rem rgba(0, 0, 0, 0.2);
+  position: absolute;
+  right: -0.047rem;
+  bottom: -0.049rem;
+  width: 0.7267rem;
+  height: 0.7267rem;
+  border-radius: 50%;
+  background: linear-gradient(165deg, #05e7ae 10%, #027a5c 75%);
+  color: #fff;
+  font-size: 0.64rem;
+  line-height: 0.7267rem;
+  font-weight: 500;
+  text-align: center;
+  box-shadow: 0 0.0267rem 0.1067rem rgba(0, 0, 0, 0.2);
 }
 
 .form-card {
-	display: flex;
-	flex-direction: column;
-	gap: 0.4307rem;
-	flex: 1;
-	min-height: 0;
-	padding: 0.4307rem 0.4561rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4307rem;
+  flex: 1;
+  min-height: 0;
+  padding: 0.4307rem 0.4561rem 0;
 }
 
 .field-block {
-	display: flex;
-	flex-direction: column;
-	gap: 0.4307rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4307rem;
 }
 
 .field-label {
-	font-size: 0.48rem;
-	line-height: 1.4;
-	font-weight: 500;
-	color: #fbfbfb;
+  font-size: 0.48rem;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #fbfbfb;
 }
 
 .field-shell {
-	border: 0.0083rem solid rgba(249, 249, 249, 0.6);
-	background: rgba(255, 255, 255, 0.3);
-	backdrop-filter: blur(0.8232rem);
-	overflow: hidden;
+  border: 0.0083rem solid rgba(249, 249, 249, 0.6);
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(0.8232rem);
+  overflow: hidden;
 }
 
 .field-shell--single {
-	height: 1.6638rem;
-	display: flex;
-	align-items: center;
-	padding: 0 0.554rem;
-	border-radius: 1.4759rem;
+  height: 1.6638rem;
+  display: flex;
+  align-items: center;
+  padding: 0 0.554rem;
+  border-radius: 1.4759rem;
 }
 
 .field-shell--multi {
-	min-height: 6.3176rem;
-	border-radius: 0.72rem;
-	padding: 0.5405rem;
-	background:
-		radial-gradient(95% 82% at 15% 30%, rgba(255, 193, 158, 0.42), rgba(255, 193, 158, 0)),
-		radial-gradient(82% 78% at 60% 54%, rgba(185, 70, 151, 0.34), rgba(185, 70, 151, 0)),
-		radial-gradient(66% 66% at 92% 56%, rgba(54, 208, 255, 0.34), rgba(54, 208, 255, 0)),
-		rgba(255, 255, 255, 0.18);
+  min-height: 6.3176rem;
+  border-radius: 0.72rem;
+  padding: 0.5405rem;
+  background:
+    radial-gradient(95% 82% at 15% 30%, rgba(255, 193, 158, 0.42), rgba(255, 193, 158, 0)),
+    radial-gradient(82% 78% at 60% 54%, rgba(185, 70, 151, 0.34), rgba(185, 70, 151, 0)),
+    radial-gradient(66% 66% at 92% 56%, rgba(54, 208, 255, 0.34), rgba(54, 208, 255, 0)),
+    rgba(255, 255, 255, 0.18);
 }
 
 input,
 textarea {
-	width: 100%;
-	border: 0;
-	outline: none;
-	background: transparent;
-	color: #fbfbfb;
-	font-size: 0.3885rem;
-	font-weight: 500;
-	line-height: 1.4;
-	font-family: inherit;
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #fbfbfb;
+  font-size: 0.3885rem;
+  font-weight: 500;
+  line-height: 1.4;
+  font-family: inherit;
 }
 
 textarea {
-	resize: none;
-	min-height: 5.776rem;
+  resize: none;
+  min-height: 5.776rem;
 }
 
 input::placeholder,
 textarea::placeholder {
-	color: rgba(255, 255, 255, 0.71);
+  color: rgba(255, 255, 255, 0.71);
 }
 
 .footer-actions {
-	margin-top: auto;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 0.2872rem;
-	padding: 0.2872rem 0 0;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2872rem;
+  padding: 0.2872rem 0 0;
 }
 
 .create-btn {
-	width: 8.9046rem;
-	min-height: 1.4349rem;
-	border: 0;
-	border-radius: 1.0557rem;
-	color: #fbfbfb;
-	font-size: 0.5063rem;
-	font-weight: 500;
-	line-height: 1.2;
-	background: linear-gradient(168.34deg, #05e7ae 7.55%, #027a5c 71.92%);
-	box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.18);
-	transition: opacity 0.2s ease;
+  width: 8.9046rem;
+  min-height: 1.4349rem;
+  border: 0;
+  border-radius: 1.0557rem;
+  color: #fbfbfb;
+  font-size: 0.5063rem;
+  font-weight: 500;
+  line-height: 1.2;
+  background: linear-gradient(168.34deg, #05e7ae 7.55%, #027a5c 71.92%);
+  box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.18);
+  transition: opacity 0.2s ease;
 }
 
 .create-btn--disabled {
-	opacity: 0.56;
+  opacity: 0.56;
 }
 
 .cost-line {
-	margin: 0;
-	display: inline-flex;
-	align-items: center;
-	gap: 0.1538rem;
-	font-size: 0.359rem;
-	line-height: 1.4;
-	color: #fbfbfb;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1538rem;
+  font-size: 0.359rem;
+  line-height: 1.4;
+  color: #fbfbfb;
 }
 
 .cost-line img {
-	width: 0.4rem;
-	height: 0.3209rem;
-	object-fit: contain;
+  width: 0.4rem;
+  height: 0.3209rem;
+  object-fit: contain;
 }
 
 .cost-original {
-	position: relative;
-	opacity: 0.86;
-	text-decoration: line-through;
-	text-decoration-color: rgba(255, 255, 255, 0.65);
+  position: relative;
+  opacity: 0.86;
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 255, 255, 0.65);
 }
 
 .cost-current {
-	color: #05e7ae;
-	font-weight: 700;
+  color: #05e7ae;
+  font-weight: 700;
 }
 
 .avatar-sheet-mask {
-	position: fixed;
-	inset: 0;
-	z-index: 30;
-	background: rgba(12, 12, 12, 0.6);
-	display: flex;
-	align-items: flex-end;
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(12, 12, 12, 0.6);
+  display: flex;
+  align-items: flex-end;
 }
 
 .avatar-sheet {
-	width: min(100%, var(--app-max-width));
-	margin: 0 auto;
-	padding: 0.6426rem 0.5321rem calc(0.7872rem + env(safe-area-inset-bottom));
-	border-top-left-radius: 0.8446rem;
-	border-top-right-radius: 0.8446rem;
-	background: rgba(0, 0, 0, 0.2);
-	backdrop-filter: blur(0.9733rem);
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 0.34rem;
-	color: #f9f9f9;
+  width: min(100%, var(--app-max-width));
+  margin: 0 auto;
+  padding: 0.6426rem 0.5321rem calc(0.7872rem + env(safe-area-inset-bottom));
+  border-top-left-radius: 0.8446rem;
+  border-top-right-radius: 0.8446rem;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(0.9733rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.34rem;
+  color: #f9f9f9;
 }
 
 .avatar-sheet-option {
-	width: 100%;
-	padding: 0;
-	border: 0;
-	background: transparent;
-	color: inherit;
-	font-size: 0.5493rem;
-	line-height: 0.7324rem;
-	font-weight: 500;
-	text-align: center;
-	opacity: 0.92;
-	transition: opacity 0.18s ease;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 0.5493rem;
+  line-height: 0.7324rem;
+  font-weight: 500;
+  text-align: center;
+  opacity: 0.92;
+  transition: opacity 0.18s ease;
 }
 
 .avatar-sheet-option--active {
-	opacity: 1;
+  opacity: 1;
 }
 
 .avatar-sheet-divider {
-	width: 100%;
-	height: 0.01rem;
-	background: rgba(249, 249, 249, 0.28);
+  width: 100%;
+  height: 0.01rem;
+  background: rgba(249, 249, 249, 0.28);
 }
 
 .avatar-sheet-confirm {
-	margin-top: 0.08rem;
-	width: 8.9358rem;
-	height: 1.4716rem;
-	border: 0.0134rem solid rgba(242, 242, 242, 0.8);
-	border-radius: 1.082rem;
-	background: linear-gradient(168.09deg, #05e7ae 7.55%, #027a5c 71.92%);
-	color: #fff;
-	font-size: 0.5063rem;
-	line-height: 1.2;
-	font-weight: 500;
+  margin-top: 0.08rem;
+  width: 8.9358rem;
+  height: 1.4716rem;
+  border: 0.0134rem solid rgba(242, 242, 242, 0.8);
+  border-radius: 1.082rem;
+  background: linear-gradient(168.09deg, #05e7ae 7.55%, #027a5c 71.92%);
+  color: #fff;
+  font-size: 0.5063rem;
+  line-height: 1.2;
+  font-weight: 500;
 }
 
 @media (max-width: 340px) {
-	.top-bar {
-		padding-left: 0.56rem;
-		padding-right: 0.56rem;
-	}
+  .top-bar {
+    padding-left: 0.56rem;
+    padding-right: 0.56rem;
+  }
 
-	.avatar-card {
-		margin-left: 0.32rem;
-		margin-right: 0.32rem;
-	}
+  .avatar-card {
+    margin-left: 0.32rem;
+    margin-right: 0.32rem;
+  }
 
-	.form-card {
-		padding-left: 0.32rem;
-		padding-right: 0.32rem;
-	}
+  .form-card {
+    padding-left: 0.32rem;
+    padding-right: 0.32rem;
+  }
 
-	.form-card {
-		padding-top: 0.32rem;
-	}
+  .form-card {
+    padding-top: 0.32rem;
+  }
 
-	.back-title {
-		font-size: 0.54rem;
-	}
+  .back-title {
+    font-size: 0.54rem;
+  }
 
-	.field-label {
-		font-size: 0.4rem;
-	}
+  .field-label {
+    font-size: 0.4rem;
+  }
 
-	.create-btn {
-		width: 100%;
-		font-size: 0.44rem;
-	}
+  .create-btn {
+    width: 100%;
+    font-size: 0.44rem;
+  }
 }
 </style>

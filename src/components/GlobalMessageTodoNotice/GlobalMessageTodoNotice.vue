@@ -180,9 +180,7 @@ async function auditUc(item: ClubMemberOrderListOrderInfo, pass: boolean): Promi
 
 async function auditBringIn(item: UserRoomSitApplyRecordsRecord, pass: boolean): Promise<void> {
   if (!item.id) return
-
-  const applyType = Number((item as Record<string, unknown>).apply_type ?? 2)
-  if (applyType === 1) {
+  if (item.club_id === 0) {
     const response = await postRoomcenterFriendRoomApplyAuditApi({
       room_id: item.room_id,
       apply_id: item.id,

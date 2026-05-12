@@ -2,17 +2,13 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
-import {
-  postOrgClubJackpotTemplateDelApi,
-  postOrgClubJackpotTemplateListApi,
-} from '@/api/org'
+import { postOrgClubJackpotTemplateDelApi, postOrgClubJackpotTemplateListApi } from '@/api/org'
 import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
-
 
 interface JackpotTemplateItem {
   id: string
@@ -223,12 +219,7 @@ function goPoolReward(): void {
 
     <HeaderBack :title="'Jackpot'">
       <template #right>
-        <button
-          type="button"
-          class="pool-trigger"
-          aria-label="Pool Reward"
-          @click="goPoolReward"
-        >
+        <button type="button" class="pool-trigger" aria-label="Pool Reward" @click="goPoolReward">
           <span>Pool Reward</span>
           <span class="trigger-caret" aria-hidden="true"></span>
         </button>
@@ -260,12 +251,7 @@ function goPoolReward(): void {
           <div class="jackpot-right">
             <div class="jp-badge">JP {{ item.jpAmount }}</div>
             <div class="action-row">
-              <button
-                type="button"
-                class="action-btn"
-                aria-label="编辑"
-                @click.stop="onEdit(item)"
-              >
+              <button type="button" class="action-btn" aria-label="编辑" @click.stop="onEdit(item)">
                 <i class="action-icon" aria-hidden="true">✎</i>
                 <span class="action-label">编辑</span>
               </button>
@@ -293,21 +279,17 @@ function goPoolReward(): void {
     </section>
 
     <div class="footer-action">
-      <button type="button" class="create-btn" @click="goCreateJackpot">Create Jackpot Table</button>
+      <button type="button" class="create-btn" @click="goCreateJackpot">
+        Create Jackpot Table
+      </button>
     </div>
 
     <!-- 删除确认弹窗 (Figma node-id=1451-5725, 1rem=37.5px) -->
     <teleport to="body">
       <transition name="dialog-fade">
-        <div
-          v-if="showDeleteDialog"
-          class="delete-dialog-overlay"
-          @click.self="cancelDelete"
-        >
+        <div v-if="showDeleteDialog" class="delete-dialog-overlay" @click.self="cancelDelete">
           <div class="delete-dialog-card">
-            <p class="delete-dialog-title">
-              Are you sure you want to delete this game table?
-            </p>
+            <p class="delete-dialog-title">Are you sure you want to delete this game table?</p>
 
             <div class="delete-dialog-actions">
               <button
@@ -665,13 +647,12 @@ function goPoolReward(): void {
   overflow: hidden;
 
   /* 渐变背景: grey 从浅到深, opacity 0.2 */
-  background:
-    linear-gradient(
-      135deg,
-      rgba(142, 142, 142, 0.2) 0%,
-      rgba(103, 103, 103, 0.2) 46.8%,
-      rgba(73, 73, 73, 0.2) 100%
-    );
+  background: linear-gradient(
+    135deg,
+    rgba(142, 142, 142, 0.2) 0%,
+    rgba(103, 103, 103, 0.2) 46.8%,
+    rgba(73, 73, 73, 0.2) 100%
+  );
 
   /* 渐变描边: 白色, 透明度从 0.4→0→0.5 */
   border: 0.0267rem solid transparent;
@@ -685,13 +666,12 @@ function goPoolReward(): void {
     inset: 0;
     border-radius: inherit;
     padding: 0.0267rem;
-    background:
-      linear-gradient(
-        120deg,
-        rgba(242, 242, 242, 0.4) 0%,
-        rgba(255, 255, 255, 0) 44.5%,
-        rgba(255, 255, 255, 0.5) 100%
-      );
+    background: linear-gradient(
+      120deg,
+      rgba(242, 242, 242, 0.4) 0%,
+      rgba(255, 255, 255, 0) 44.5%,
+      rgba(255, 255, 255, 0.5) 100%
+    );
     -webkit-mask:
       linear-gradient(#fff 0 0) content-box,
       linear-gradient(#fff 0 0);
@@ -732,7 +712,7 @@ function goPoolReward(): void {
 
 /* Shared button base: 138.37×53.84px → 3.690×1.436rem, corner 39.59px → 1.056rem */
 .delete-btn {
-  width: 3.690rem; // 138.37px
+  width: 3.69rem; // 138.37px
   height: 1.4358rem; // 53.84px
   border-radius: 1.0557rem; // 39.59px (pill)
   border: 0;

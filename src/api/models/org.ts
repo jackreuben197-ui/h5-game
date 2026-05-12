@@ -2040,16 +2040,6 @@ export interface OrgTribeListCommunityData {
   [key: string]: unknown
 }
 
-// /api/org/tribe/room_permissions (APIOrgTribeRoomPermissions)
-export interface APIOrgTribeRoomPermissionsRequest {
-  club_id?: number // 俱乐部ID
-  tribe_id?: number // 联盟ID
-
-  [key: string]: unknown
-}
-
-export type APIOrgTribeRoomPermissionsResponseData = unknown
-
 // /api/org/tribe/room_permissions (OrgTribeRoomPermissionS)
 export interface OrgTribeRoomPermissionSRequest {
   club_id?: number // 俱乐部ID
@@ -2180,17 +2170,6 @@ export interface OrgUserClubAdminListClubData {
   [key: string]: unknown
 }
 
-// /api/org/user/new_label/read (APIOrgUserNewLabelRead)
-export interface APIOrgUserNewLabelReadRequest {
-  tribe_id?: number // 联盟id
-
-  [key: string]: unknown
-}
-
-export interface APIOrgUserNewLabelReadResponseData {
-  [key: string]: unknown
-}
-
 // /api/org/user/new_label/read (OrgUserNewLabelRead)
 export interface OrgUserNewLabelReadRequest {
   tribe_id?: number // 联盟id
@@ -2199,17 +2178,6 @@ export interface OrgUserNewLabelReadRequest {
 }
 
 export interface OrgUserNewLabelReadResponseData {
-  [key: string]: unknown
-}
-
-// /api/org/user/new_label/read/num (APIOrgUserNewLabelReadNum)
-export interface APIOrgUserNewLabelReadNumRequest {
-  tribe_id?: number // 联盟id
-
-  [key: string]: unknown
-}
-
-export interface APIOrgUserNewLabelReadNumResponseData extends APIOrgUserNewLabelReadNumData {
   [key: string]: unknown
 }
 
@@ -2795,12 +2763,6 @@ export interface OrgTribeSearchByIdData {
   random_id?: number // 联盟随机id
   bring_in_auto_switch?: number // 自动带入开关
   room_permissions?: unknown // 房间权限
-
-  [key: string]: unknown
-}
-
-export interface APIOrgUserNewLabelReadNumData {
-  user_new_label_num?: unknown // 新功能次数
 
   [key: string]: unknown
 }

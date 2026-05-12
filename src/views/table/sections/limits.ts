@@ -128,14 +128,15 @@ export const limitsSection: TableFormFieldConfig[] = [
     activeValue: 1,
     inactiveValue: 0,
   },
-  {
-    // safe_view_public_cards: 安全屋公共牌可见性；提交时 +1 → 服务端 1/2
-    type: 'select',
-    label: 'Safe',
-    modelValue: 'safe_view_public_cards',
-    defaultValue: 0,
-    options: SAFE_ROOM_OPTIONS,
-  },
+  // {
+  // safe_view_public_cards: 安全屋公共牌可见性；提交时 +1 → 服务端 1/2
+  //隐藏该配置
+  //   type: 'select',
+  //   label: 'Safe',
+  //   modelValue: 'safe_view_public_cards',
+  //   defaultValue: 2,
+  //   options: SAFE_ROOM_OPTIONS,
+  // },
   {
     // all_in_mute: allin思考期间屏蔽其他玩家聊天，1=开启 2=关闭
     type: 'switch',

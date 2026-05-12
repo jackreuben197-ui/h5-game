@@ -501,7 +501,7 @@ const router = createRouter({
     {
       path: '/createTable',
       name: 'createTable',
-      component: () => import('@/views/table/CreatePokerTable.vue'),
+      component: () => import('@/views/table/CreateTablePoker.vue'),
       meta: { requiresAuth: true },
     },
   ],

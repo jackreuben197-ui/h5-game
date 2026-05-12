@@ -17,6 +17,7 @@ function pbCjsToEsmPlugin(): Plugin {
       if (!id.includes('/bridge/ws/pb/') || !id.endsWith('.js')) return null
 
       const isDefine = id.endsWith('/define_pb.js')
+      const needsDefinePb = !isDefine && code.includes('define_pb.js')
 
       // 从 goog.exportSymbol 调用中提取顶层导出符号名（Def.Action 这类嵌套只取 Def）
       const symbols = [
@@ -30,7 +31,7 @@ function pbCjsToEsmPlugin(): Plugin {
         `import jspb from 'google-protobuf';`,
         `var goog = jspb;`,
         `var global = Function('return this')();`,
-        ...(isDefine ? [] : [`import * as protobuf_holdem_define_pb from './define_pb.js';`]),
+        ...(needsDefinePb ? [`import * as protobuf_holdem_define_pb from './define_pb.js';`] : []),
         '',
       ].join('\n')
 

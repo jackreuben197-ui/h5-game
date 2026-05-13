@@ -63,6 +63,8 @@ import type {
   USDTApplyResponseData,
   USDTApplyReadRequest,
   USDTApplyReadResponseData,
+  NewSafetyRequest,
+  NewSafetyResponseData,
 } from '@/api/models/user'
 import { forwardUserClubToCocos, forwardUserInfoToCocos } from '@/bridge/sync'
 import { pinia } from '@/stores/pinia'
@@ -508,5 +510,13 @@ export async function postUSDTApplyReadApi(
   payload: USDTApplyReadRequest = {} as USDTApplyReadRequest
 ): Promise<ApiResponse<USDTApplyReadResponseData>> {
   const response = await http.post<ApiResponse<USDTApplyReadResponseData>>('/user/trader/apply/read', payload)
+  return response.data
+}
+
+// 对齐 cocos WebNewSafety.API
+export async function postNewSafetyApi(
+  payload: NewSafetyRequest = {} as NewSafetyRequest
+): Promise<ApiResponse<NewSafetyResponseData>> {
+  const response = await http.post<ApiResponse<NewSafetyResponseData>>('/user/freeze/public/list', payload)
   return response.data
 }

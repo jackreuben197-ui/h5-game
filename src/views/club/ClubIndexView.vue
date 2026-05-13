@@ -25,6 +25,7 @@ import gameType6Plus from '@/assets/icons/game_type_6+.png'
 import gameTypeNlh from '@/assets/icons/game_type_nlh.png'
 import gameTypePlo from '@/assets/icons/game_type_plo.png'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
+import SafetyGuardPopup from '@/components/Dialog/SafetyGuardPopup.vue'
 
 import mainBgUrl from '@/assets/images/main_bg.webp'
 // 主容器背景图：全页面共用一张底图。
@@ -75,6 +76,7 @@ const clubHeaderTab = ref<ClubHeaderTabName>('poker')
 const sourceRecords = ref<RoomRecord[]>([])
 const expandedMap = reactive<Record<string, boolean>>({})
 const announceExpanded = ref(false)
+const showSafetyGuardPopup = ref(false)
 const pageStyle = computed<CSSProperties>(() => ({
   '--tab-bg': `url(${tabBg})`,
 }))
@@ -406,7 +408,12 @@ function handleClubHeaderTabClick(tab: ClubHeaderTabName): void {
 
 function handleQuickActionClick(action: 'safety' | 'ranking'): void {
   if (action === 'safety') {
-    showFailToast('安全卫士功能开发中')
+    if (selectedTribeId.value <= 0) {
+      showFailToast('当前俱乐部的此功能暂未开放')
+      return
+    }
+
+    showSafetyGuardPopup.value = true
     return
   }
   showFailToast('排行榜功能开发中')
@@ -660,6 +667,8 @@ function formatChipBase(rawValue: number): string {
         <span></span>
       </button>
     </div>
+
+    <SafetyGuardPopup v-model:show="showSafetyGuardPopup" :tribe-id="selectedTribeId" />
   </div>
 </template>
 

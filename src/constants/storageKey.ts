@@ -16,6 +16,8 @@ export default class StorageKey {
   static ROOM_LIST_CACHE = 'ROOM_LIST_CACHE'
   // 牌局分组展开状态缓存（key 为 groupKey，value 为是否展开）。
   static ROOM_GROUP_EXPANDED_CACHE = 'ROOM_GROUP_EXPANDED_CACHE'
+  // 联盟封禁名单缓存（按 tribe_id 维度存储）。
+  static TRIBE_BLACK_USER_LIST_CACHE = 'TRIBE_BLACK_USER_LIST_CACHE'
   // 首页玩法统计缓存（扑克/麻将/小游戏/MTT）。
   static HOME_ROOM_STATS_CACHE = 'HOME_ROOM_STATS_CACHE'
   // MTT 列表缓存（首页与 MTT 列表页共享）。

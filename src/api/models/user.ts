@@ -772,3 +772,33 @@ export interface USDTApplyReadResponseData extends USDTApplyReadData {
 export interface USDTApplyReadData {
   [key: string]: unknown
 }
+
+// /api/user/freeze/public/list (NewSafety)
+
+export interface NewSafetyRequest {
+    limit?: number; // 条目数量
+    offset?: number; // 开始下标。例子：offset=0，limit=10，代表0-9条数据
+
+  [key: string]: unknown
+}
+
+export interface NewSafetyResponseData extends NewSafetyData {
+  [key: string]: unknown
+}
+
+export interface NewSafetyData {
+    limit?: number; // 条目数量
+    offset?: number; // 开始下标
+    list?: NewSafetyRecord[]; // 数据记录列表
+
+  [key: string]: unknown
+}
+
+export interface NewSafetyRecord {
+    create_time?: string; // 创建时间
+    user_random_id?: number; // 用户随机ID
+    user_nick_name?: string; // 用户昵称
+    user_avatar?: string; // 用户头像
+
+  [key: string]: unknown
+}

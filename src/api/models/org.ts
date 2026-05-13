@@ -1564,6 +1564,8 @@ export interface OrgTribeAuditApplyData {
 export interface OrgTribeBlackUserListRequest {
   offset?: number // 开始下标
   limit?: number // 条目数
+  tribe_id?: number // 联盟ID
+  club_id?: number // 俱乐部ID
 
   [key: string]: unknown
 }

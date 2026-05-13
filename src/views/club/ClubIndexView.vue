@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref, type CSSProperties } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch, type CSSProperties } from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
+import { postOrgClubNoticeApi, postOrgClubNoticeIgnoreApi } from '@/api/cmsext'
 import { getRoomIdsApi, getRoomsDetailApi } from '@/api/roomcenter'
 import { enterTable } from '@/bridge/core'
 import { subscribeH5WsMessages } from '@/bridge/ws/wsProxy'
@@ -63,6 +64,12 @@ interface RoomGroupExpandedCachePayload {
   expandedMap: Record<string, boolean>
 }
 
+interface ClubNoticeViewModel {
+  title: string
+  content: string
+  dateText: string
+}
+
 const ROOM_LIST_CACHE_VERSION = 1
 const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
 
@@ -77,6 +84,9 @@ const sourceRecords = ref<RoomRecord[]>([])
 const expandedMap = reactive<Record<string, boolean>>({})
 const announceExpanded = ref(false)
 const showSafetyGuardPopup = ref(false)
+const showClubNoticePopup = ref(false)
+const ignoringClubNotice = ref(false)
+const clubNoticeInfo = ref<ClubNoticeViewModel | null>(null)
 const pageStyle = computed<CSSProperties>(() => ({
   '--tab-bg': `url(${tabBg})`,
 }))
@@ -124,12 +134,30 @@ const clubCoverUrl = computed(() => {
   return logo || clubCoverAvatar
 })
 
-const clubNoticeText = computed(() => {
-  const text = String(currentClub.value?.prologue || '').trim()
+const clubNoticeTitle = computed(() => {
+  const text = String(clubNoticeInfo.value?.title || '').trim()
   if (text) {
     return text
   }
+
+  const fallback = String(currentClub.value?.prologue || '').trim()
+  if (fallback) {
+    return fallback
+  }
+
   return '暂未设置俱乐部公告'
+})
+
+const clubNoticeContent = computed(() => {
+  const text = String(clubNoticeInfo.value?.content || '').trim()
+  if (text) {
+    return text
+  }
+  return clubNoticeTitle.value
+})
+
+const clubNoticeText = computed(() => {
+  return announceExpanded.value ? clubNoticeContent.value : clubNoticeTitle.value
 })
 
 const clubMemberCount = computed(() => {
@@ -210,6 +238,7 @@ onMounted(() => {
   }
 
   bootstrapRoomList()
+  void fetchClubNotice({ showPopup: true })
 
   unsubscribeWs = subscribeH5WsMessages((event) => {
     if (event.packet?.code === 140) {
@@ -222,6 +251,17 @@ onUnmounted(() => {
   unsubscribeWs?.()
   unsubscribeWs = null
 })
+
+watch(
+  () => selectedClubId.value,
+  (clubId, prevClubId) => {
+    if (clubId <= 0 || clubId === prevClubId) {
+      return
+    }
+    announceExpanded.value = false
+    void fetchClubNotice({ showPopup: true })
+  },
+)
 
 // 进入页面先用缓存秒开，再静默刷新最新数据。
 function bootstrapRoomList(): void {
@@ -438,6 +478,91 @@ function goToClubDetail(): void {
 
 function toggleAnnounceExpanded(): void {
   announceExpanded.value = !announceExpanded.value
+}
+
+async function fetchClubNotice(options: { showPopup?: boolean } = {}): Promise<void> {
+  const clubId = selectedClubId.value
+  if (clubId <= 0) {
+    clubNoticeInfo.value = null
+    showClubNoticePopup.value = false
+    return
+  }
+
+  try {
+    const response = await postOrgClubNoticeApi({ club_id: clubId })
+    if (Number(response.code) !== 0) {
+      throw new Error(String(response.msg || '俱乐部公告加载失败'))
+    }
+
+    const info = response.data?.info
+    const title = String(info?.title || '').trim()
+    const content = String(info?.content || '').trim()
+    const startTime = String(info?.start_time || '').trim()
+    const endTime = String(info?.end_time || '').trim()
+
+    if (!title && !content) {
+      clubNoticeInfo.value = null
+      showClubNoticePopup.value = false
+      return
+    }
+
+    clubNoticeInfo.value = {
+      title: title || '俱乐部通知',
+      content: content || title,
+      dateText: formatNoticeDate(startTime || endTime),
+    }
+
+    if (options.showPopup) {
+      showClubNoticePopup.value = true
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '俱乐部公告加载失败'
+    showFailToast(message)
+  }
+}
+
+async function handleIgnoreNoticeToday(): Promise<void> {
+  if (ignoringClubNotice.value) {
+    return
+  }
+
+  const clubId = selectedClubId.value
+  if (clubId <= 0) {
+    showClubNoticePopup.value = false
+    return
+  }
+
+  ignoringClubNotice.value = true
+  try {
+    const response = await postOrgClubNoticeIgnoreApi({ club_id: clubId })
+    if (Number(response.code) !== 0) {
+      throw new Error(String(response.msg || '设置失败'))
+    }
+    showClubNoticePopup.value = false
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '设置失败'
+    showFailToast(message)
+  } finally {
+    ignoringClubNotice.value = false
+  }
+}
+
+function formatNoticeDate(rawDate: string): string {
+  if (!rawDate) {
+    return '--/--/----'
+  }
+
+  const plain = rawDate
+    .trim()
+    .replace(/[.]/g, '-')
+    .replace(/[Tt].*$/, '')
+  const match = plain.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/)
+  if (match) {
+    const [, year, month, day] = match
+    return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`
+  }
+
+  return rawDate
 }
 
 function toSafeInt(value: unknown): number {
@@ -668,6 +793,30 @@ function formatChipBase(rawValue: number): string {
       </button>
     </div>
 
+    <van-popup
+      v-model:show="showClubNoticePopup"
+      class="club-notice-popup"
+      round
+      :close-on-click-overlay="true"
+      :lock-scroll="true"
+      :overlay-style="{ background: 'rgba(8, 8, 8, 0.6)' }"
+    >
+      <div class="club-notice-card">
+        <div class="club-notice-club-pill">{{ clubDisplayName }}</div>
+        <p class="club-notice-title">{{ clubNoticeTitle }}</p>
+        <p class="club-notice-date">{{ clubNoticeInfo?.dateText || '--/--/----' }}</p>
+        <p class="club-notice-content">{{ clubNoticeContent }}</p>
+        <button
+          class="club-notice-ignore-btn"
+          type="button"
+          :disabled="ignoringClubNotice"
+          @click="handleIgnoreNoticeToday"
+        >
+          今天不再显示提示
+        </button>
+      </div>
+    </van-popup>
+
     <SafetyGuardPopup v-model:show="showSafetyGuardPopup" :tribe-id="selectedTribeId" />
   </div>
 </template>
@@ -887,6 +1036,85 @@ function formatChipBase(rawValue: number): string {
 
 .announce-arrow--expanded {
   transform: rotate(-90deg);
+}
+
+.club-notice-popup {
+  width: min(6.86rem, calc(100vw - 1.2rem));
+  border-radius: 0.97rem;
+  background: transparent;
+}
+
+.club-notice-card {
+  position: relative;
+  border: 0.026rem solid rgba(242, 242, 242, 0.4);
+  border-radius: 0.97rem;
+  padding: 0.42rem 0.41rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.16rem;
+  background: linear-gradient(
+    102.74deg,
+    rgba(142, 142, 142, 0.3) 2.93%,
+    rgba(103, 103, 103, 0.4) 43.62%,
+    rgba(73, 73, 73, 0.5) 89.79%
+  );
+  backdrop-filter: blur(0.2rem);
+  box-shadow:
+    0.092rem 0.115rem 0.184rem rgba(0, 0, 0, 0.25),
+    inset 0 0 0.23rem rgba(0, 0, 0, 1),
+    inset 0.057rem 0.113rem 0.46rem rgba(242, 242, 242, 0.9);
+}
+
+.club-notice-club-pill {
+  padding: 0.187rem 0.293rem;
+  border-radius: 0.67rem;
+  background: rgba(44, 45, 45, 0.31);
+  color: #f9f9f9;
+  font-size: 0.427rem;
+  line-height: 1.2;
+}
+
+.club-notice-title {
+  margin: 0.1rem 0 0;
+  color: #fff;
+  font-size: 0.427rem;
+  line-height: 1.4;
+  text-align: center;
+  letter-spacing: 0.009rem;
+}
+
+.club-notice-date {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.427rem;
+  line-height: 1.4;
+}
+
+.club-notice-content {
+  margin: 0.06rem 0 0;
+  width: 100%;
+  min-height: 2.1rem;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.4rem;
+  line-height: 1.4;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.club-notice-ignore-btn {
+  margin-top: 0.06rem;
+  border: none;
+  border-radius: 0.67rem;
+  padding: 0.133rem 0.267rem;
+  background: rgba(44, 45, 45, 0.31);
+  color: #f9f9f9;
+  font-size: 0.347rem;
+  line-height: 1.2;
+
+  &:disabled {
+    opacity: 0.5;
+  }
 }
 
 .club-quick-actions {

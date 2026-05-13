@@ -14,15 +14,15 @@ import {
   type SyncUserPayload,
 } from '../protocol'
 import { Code, subscribeH5WsCode } from '../ws/messageCenter'
-import {
-  decodeUserDiamondChange,
-  decodeUserGoldChange,
-} from '../ws/userBalanceNotify'
+import { decodeUserDiamondChange, decodeUserGoldChange } from '../ws/userBalanceNotify'
+import { decodeUserTraderOrderNotify } from '../ws/traderOrderNotify'
 import type { UserInfoData } from '@/api/models/user'
 import type { DiamondConfigData, GlobalConfigData } from '@/api/models/config'
 import type { ApiResponse } from '@/api/models/common'
 import type { RoomDetailData, RoomDetailRequest } from '@/api/models/roomcenter'
 import { useUserInfoStore } from '@/stores/userInfo'
+
+const TRADER_ORDER_STATUS_APPROVED = 2
 
 function emitH5BusinessMessage<TPayload>(action: string, payload: TPayload): void {
   sendBridgeMessage(action, payload, { msgtype: BRIDGE_MSG_TYPE.H5 })
@@ -77,7 +77,8 @@ function resolveUserField(user: Record<string, unknown>, keys: string[]): string
 }
 
 function resolveUserId(user: Record<string, unknown>): number {
-  const raw = user['p_u_id'] ?? user['pUid'] ?? user['userid'] ?? user['id'] ?? user['wUid'] ?? user['unid']
+  const raw =
+    user['p_u_id'] ?? user['pUid'] ?? user['userid'] ?? user['id'] ?? user['wUid'] ?? user['unid']
   const n = Number(raw)
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0
 }
@@ -186,8 +187,20 @@ export function initUserBalanceSync(): () => void {
     forwardUserInfoToCocos(updated)
   })
 
+  // 批发商审核通过后，重新拉取 userInfo，刷新 trader_expire_time。
+  const unsubTraderOrder = subscribeH5WsCode(Code.MSG_S_USER_TRADER_ORDER_NOTIFY, (msg) => {
+    const payload = decodeUserTraderOrderNotify(msg.rawBuffer)
+    if (!payload || payload.status !== TRADER_ORDER_STATUS_APPROVED) {
+      return
+    }
+
+    // 避免 bridge/sync <-> api/user 模块循环依赖，使用动态导入。
+    void import('@/api/user').then(({ getUserInfoApi }) => getUserInfoApi()).catch(() => undefined)
+  })
+
   return () => {
     unsubDiamond()
     unsubGold()
+    unsubTraderOrder()
   }
 }

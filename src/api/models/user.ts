@@ -710,3 +710,65 @@ export interface UserInfoUserVIPInfo {
 
   [key: string]: unknown
 }
+
+// /api/user/trader/apply/list (USDTApplyList)
+
+export interface USDTApplyListRequest {
+    status?: number; // 订单状态 1-申请中 2-成功 3-拒绝 4-取消 5-超时
+
+  [key: string]: unknown
+}
+
+export interface USDTApplyListResponseData extends USDTApplyListData {
+  [key: string]: unknown
+}
+
+export interface USDTApplyListData {
+    list?: USDTApplyListApplyInfo[]; // 申请列表
+
+  [key: string]: unknown
+}
+
+export interface USDTApplyListApplyInfo {
+    order_no?: string; // 订单号
+    status?: number; // 订单状态 1-申请中 2-成功 3-拒绝 4-取消 5-超时
+    reject_reason?: string; // 拒绝理由
+    read_status?: number; // 已读状态
+    audit_time?: string; // 审核时间
+    update_time?: string; // 更新时间
+    create_time?: string; // 创建时间
+
+  [key: string]: unknown
+}
+
+// /api/user/trader/apply (USDTApply)
+
+export interface USDTApplyRequest {
+  [key: string]: unknown
+}
+
+export interface USDTApplyResponseData extends USDTApplyData {
+  [key: string]: unknown
+}
+
+export interface USDTApplyData {
+    data?: USDTApplyListApplyInfo[]; // 申请列表
+
+  [key: string]: unknown
+}
+
+// /api/user/trader/apply/read (USDTApplyRead)
+
+export interface USDTApplyReadRequest {
+    order_nos?: string[];
+
+  [key: string]: unknown
+}
+
+export interface USDTApplyReadResponseData extends USDTApplyReadData {
+  [key: string]: unknown
+}
+
+export interface USDTApplyReadData {
+  [key: string]: unknown
+}

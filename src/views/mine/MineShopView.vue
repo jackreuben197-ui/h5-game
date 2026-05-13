@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { showFailToast } from 'vant'
+import { showFailToast, showSuccessToast } from 'vant'
 import { postPropGoldPriceListApi } from '@/api/prop'
+import { postUSDTApplyApi, postUSDTApplyListApi } from '@/api/user'
+import { Code, subscribeH5WsCode } from '@/bridge/ws/messageCenter'
+import { decodeUserTraderOrderNotify } from '@/bridge/ws/traderOrderNotify'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import imgCoin from '@/assets/icons/shop_usdt.png'
 import diamondCoin from '@/assets/icons/icon_diamond.png'
@@ -15,6 +18,7 @@ import defaultAvatar from '@/assets/images/default_avatar.png'
 
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
+import { useAppConfigStore } from '@/stores/appConfig'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
 const title = computed(() => '我的商城')
@@ -27,6 +31,7 @@ const backgroundStyle = computed(() => ({
 }))
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
+const appConfigStore = useAppConfigStore()
 
 interface ShopItem {
   id: number
@@ -57,10 +62,15 @@ interface PayTypeOption {
 }
 
 const loading = ref(false)
+const applyStatusLoading = ref(false)
+const applySubmitting = ref(false)
+const showApplyPopup = ref(false)
+const hasPendingApply = ref(false)
 const items = ref<ShopItem[]>([])
 const payTypes = ref<PayTypeOption[]>([])
 const selectedItemId = ref<number>(0)
 const selectedPayTypeId = ref<number>(0)
+let stopTraderOrderWsListener: (() => void) | null = null
 
 const userDiamond = computed(() => Number(userInfoStore.userInfo?.user.diamonds ?? 0))
 const userName = computed(() => {
@@ -76,9 +86,77 @@ const userAvatar = computed(() => {
   return typeof avatar === 'string' && avatar ? avatar : defaultAvatar
 })
 
+function toTimestampMs(value: unknown): number {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric) || numeric <= 0) return 0
+  return numeric < 1e12 ? numeric * 1000 : numeric
+}
+
+const isTrader = computed(() => {
+  const expireTime = toTimestampMs(userInfoStore.userInfo?.user.trader_expire_time)
+  return expireTime > Date.now()
+})
+
+interface TraderSwitchConfig {
+  status: number
+  apply_cost: number
+  expire_day: number
+}
+
+function parseTraderSwitchConfig(raw: unknown): TraderSwitchConfig | null {
+  if (!raw) return null
+
+  const source =
+    typeof raw === 'string'
+      ? (() => {
+          try {
+            return JSON.parse(raw) as Record<string, unknown>
+          } catch {
+            return null
+          }
+        })()
+      : typeof raw === 'object'
+        ? (raw as Record<string, unknown>)
+        : null
+
+  if (!source) return null
+
+  return {
+    status: toSafeNumber(source.status),
+    apply_cost: toSafeNumber(source.apply_cost),
+    expire_day: toSafeNumber(source.expire_day),
+  }
+}
+
+const traderSwitchConfig = computed<TraderSwitchConfig>(() => {
+  const raw = appConfigStore.globalConfig?.trader_usdt_diamond_switch
+  const parsed = parseTraderSwitchConfig(raw)
+  return {
+    status: parsed?.status || 1,
+    apply_cost: parsed?.apply_cost || 1000,
+    expire_day: parsed?.expire_day || 60,
+  }
+})
+
+const applyCostText = computed(() => String(Math.max(0, traderSwitchConfig.value.apply_cost)))
+const traderExpireDayText = computed(() => String(Math.max(1, traderSwitchConfig.value.expire_day)))
+
 const selectedItem = computed<ShopItem | null>(() => {
   if (!items.value.length) return null
   return items.value.find((item) => item.id === selectedItemId.value) ?? items.value[0]
+})
+
+const selectedNeedTrader = computed(() => Boolean(selectedItem.value?.wholesaleOnly))
+
+const payNowText = computed(() => {
+  if (!selectedItem.value) return '请选择商品'
+  if (selectedNeedTrader.value && !isTrader.value) {
+    if (hasPendingApply.value) {
+      return '审核中'
+    }
+    return '申请批发商'
+  }
+  return `立即支付${formatMoney(selectedPrice.value)}`
 })
 
 const selectedPayType = computed<PayTypeOption | null>(() => {
@@ -178,7 +256,11 @@ function channelSuffix(name: string): string {
   return ''
 }
 
-async function fetchShopList(): Promise<void> {
+interface RefreshOptions {
+  silent?: boolean
+}
+
+async function fetchShopList(options: RefreshOptions = {}): Promise<void> {
   loading.value = true
   try {
     const response = await postPropGoldPriceListApi(
@@ -229,7 +311,7 @@ async function fetchShopList(): Promise<void> {
         productId: String(row.product_id ?? ''),
         title: `${row.gold_count}`,
         goldCount,
-        diamondsText: `增${num}钻石`,
+        diamondsText: `赠${num}钻石`,
         diamondsValue: num,
         price,
         status,
@@ -245,10 +327,84 @@ async function fetchShopList(): Promise<void> {
     payTypes.value = []
     selectedItemId.value = 0
     selectedPayTypeId.value = 0
-    const message = error instanceof Error ? error.message : '加载商品失败'
-    showFailToast(message)
+    if (!options.silent) {
+      const message = error instanceof Error ? error.message : '加载商品失败'
+      showFailToast(message)
+    }
   } finally {
     loading.value = false
+  }
+}
+
+async function fetchApplyStatus(options: RefreshOptions = {}): Promise<void> {
+  if (isTrader.value) {
+    hasPendingApply.value = false
+    return
+  }
+
+  applyStatusLoading.value = true
+  try {
+    const response = await postUSDTApplyListApi({ status: 1 })
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '查询申请状态失败')
+    }
+    const list = response.data?.list ?? []
+    hasPendingApply.value = Array.isArray(list) && list.length > 0
+  } catch (error) {
+    hasPendingApply.value = false
+    if (!options.silent) {
+      const message = error instanceof Error ? error.message : '查询申请状态失败'
+      showFailToast(message)
+    }
+  } finally {
+    applyStatusLoading.value = false
+  }
+}
+
+async function refreshTraderGoodsStateFromWs(): Promise<void> {
+  await Promise.allSettled([fetchShopList({ silent: true }), fetchApplyStatus({ silent: true })])
+}
+
+function initTraderOrderWsListener(): void {
+  if (stopTraderOrderWsListener) return
+
+  stopTraderOrderWsListener = subscribeH5WsCode(Code.MSG_S_USER_TRADER_ORDER_NOTIFY, (message) => {
+    const payload = decodeUserTraderOrderNotify(message.rawBuffer)
+    if (!payload) {
+      return
+    }
+
+    if (payload.status === 2 || payload.status === 3) {
+      void refreshTraderGoodsStateFromWs()
+    }
+  })
+}
+
+function openApplyPopup(): void {
+  showApplyPopup.value = true
+}
+
+function closeApplyPopup(): void {
+  if (applySubmitting.value) return
+  showApplyPopup.value = false
+}
+
+async function onConfirmApply(): Promise<void> {
+  if (applySubmitting.value) return
+  applySubmitting.value = true
+  try {
+    const response = await postUSDTApplyApi({})
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '申请提交失败')
+    }
+    showApplyPopup.value = false
+    hasPendingApply.value = true
+    showSuccessToast('申请已提交，请等待审核')
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '申请提交失败'
+    showFailToast(message)
+  } finally {
+    applySubmitting.value = false
   }
 }
 
@@ -293,11 +449,32 @@ function onPayNow(): void {
     showFailToast('请选择商品')
     return
   }
+
+  if (item.wholesaleOnly && !isTrader.value) {
+    if (applyStatusLoading.value) {
+      showFailToast('申请状态加载中，请稍后')
+      return
+    }
+    if (hasPendingApply.value) {
+      showFailToast('审核中，请留意系统消息')
+      return
+    }
+    openApplyPopup()
+    return
+  }
+
   goPay(item)
 }
 
 onMounted(() => {
+  initTraderOrderWsListener()
   void fetchShopList()
+  void fetchApplyStatus()
+})
+
+onBeforeUnmount(() => {
+  stopTraderOrderWsListener?.()
+  stopTraderOrderWsListener = null
 })
 </script>
 
@@ -384,10 +561,49 @@ onMounted(() => {
         </button>
       </section>
 
-      <button type="button" class="pay-now" :disabled="!selectedItem" @click="onPayNow">
-        立即支付{{ formatMoney(selectedPrice) }}
+      <button
+        type="button"
+        class="pay-now"
+        :class="{ pending: selectedNeedTrader && !isTrader && hasPendingApply }"
+        :disabled="!selectedItem || applyStatusLoading || applySubmitting"
+        @click="onPayNow"
+      >
+        {{ payNowText }}
       </button>
     </div>
+
+    <van-popup
+      v-model:show="showApplyPopup"
+      class="trader-apply-popup"
+      position="center"
+      :close-on-click-overlay="!applySubmitting"
+      :overlay-style="{ background: 'rgba(12, 12, 12, 0.6)' }"
+      @click-overlay="closeApplyPopup"
+    >
+      <section class="trader-apply-card">
+        <p class="apply-rules">
+          1、钻石批发商申请费为
+          <span style="color: #05e7ae">{{ applyCostText }}</span>
+          钻石，审核被拒后退还；<br />
+          2、申请通过后，需在
+          <span style="color: #05e7ae">{{ traderExpireDayText }}</span>
+          天内购买批发商专属钻石，否则资格将失效；<br />
+          3、批发商资格失效或者审批被拒需重新付费
+          <span style="color: #05e7ae">{{ applyCostText }}</span>
+          钻石申请；<br />
+          4、申请后，我们将通过系统消息联系您，请留意消息
+        </p>
+
+        <button
+          type="button"
+          class="apply-confirm-btn"
+          :disabled="applySubmitting"
+          @click="onConfirmApply"
+        >
+          {{ applySubmitting ? '提交中...' : `支付${applyCostText}钻石` }}
+        </button>
+      </section>
+    </van-popup>
   </div>
 </template>
 
@@ -754,8 +970,82 @@ onMounted(() => {
   font-weight: 500;
 }
 
+.pay-now.pending {
+  background: linear-gradient(169deg, #7f8ca1 7.55%, #4a5568 71.92%);
+}
+
 .pay-now:disabled {
   opacity: 0.65;
+}
+
+:deep(.trader-apply-popup.van-popup) {
+  overflow: visible;
+  background: transparent;
+}
+
+.trader-apply-card {
+  width: 8.7584rem;
+  max-width: calc(100vw - 1.28rem);
+  min-height: 7.3618rem;
+  border-radius: 1.018rem;
+  border: 0.0267rem solid transparent;
+  padding: 0.8925rem 0.4307rem 0.6379rem;
+  box-sizing: border-box;
+  color: #fff;
+  background:
+    linear-gradient(
+      113deg,
+      rgba(142, 142, 142, 0.6) 0%,
+      rgba(103, 103, 103, 0.8) 46.85%,
+      #494949 100%
+    ),
+    rgba(0, 0, 0, 0.35);
+  border-image: linear-gradient(
+      117deg,
+      rgba(242, 242, 242, 0.4) 0%,
+      rgba(255, 255, 255, 0) 44.52%,
+      rgba(255, 255, 255, 0.5) 100%
+    )
+    1;
+  box-shadow:
+    inset 0.0594rem 0.1188rem 0.4821rem rgba(242, 242, 242, 0.9),
+    inset 0 0 0.624rem rgba(203, 110, 125, 0.7),
+    inset 0 0 0.241rem rgba(0, 0, 0, 0.95),
+    0.0964rem 0.1205rem 0.1928rem rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(0.4241rem);
+}
+
+.apply-rules {
+  margin: 0;
+  text-align: center;
+  font-family: 'HONOR Sans CN', 'PingFang SC', var(--font-family-sans);
+  font-size: 0.36rem;
+  line-height: 1.5;
+  white-space: normal;
+}
+
+.apply-confirm-btn {
+  margin-top: 0.3605rem;
+  width: 100%;
+  height: 1.4358rem;
+  border-radius: 1.0557rem;
+  border: 0.0133rem solid transparent;
+  border-image: linear-gradient(
+      117deg,
+      rgba(242, 242, 242, 0.8) 0%,
+      rgba(255, 255, 255, 0) 44.52%,
+      rgba(255, 255, 255, 0.5) 100%
+    )
+    1;
+  background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+  color: #fff;
+  font-family: 'Afacad', var(--font-family-sans);
+  font-size: 0.4rem;
+  font-weight: 500;
+}
+
+.apply-confirm-btn:disabled {
+  opacity: 0.7;
 }
 
 @media (max-width: 360px) {
@@ -771,6 +1061,10 @@ onMounted(() => {
   .shop-card {
     padding-left: 0.12rem;
     padding-right: 0.12rem;
+  }
+
+  .trader-apply-card {
+    max-width: calc(100vw - 0.4rem);
   }
 }
 </style>

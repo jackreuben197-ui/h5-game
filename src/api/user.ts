@@ -57,6 +57,14 @@ import type {
   UserBillResponseData,
   UserWalletRequest,
   UserWalletResponseData,
+  USDTApplyListRequest,
+  USDTApplyListResponseData,
+  USDTApplyRequest,
+  USDTApplyResponseData,
+  USDTApplyReadRequest,
+  USDTApplyReadResponseData,
+  NewSafetyRequest,
+  NewSafetyResponseData,
 } from '@/api/models/user'
 import { forwardUserClubToCocos, forwardUserInfoToCocos } from '@/bridge/sync'
 import { pinia } from '@/stores/pinia'
@@ -478,5 +486,37 @@ export async function postUserGoldChangeLogApi(
     '/user/gold_change/log',
     payload,
   )
+  return response.data
+}
+
+// 对齐 cocos WebUSDTApplyList.API
+export async function postUSDTApplyListApi(
+  payload: USDTApplyListRequest = {} as USDTApplyListRequest
+): Promise<ApiResponse<USDTApplyListResponseData>> {
+  const response = await http.post<ApiResponse<USDTApplyListResponseData>>('/user/trader/apply/list', payload)
+  return response.data
+}
+
+// 对齐 cocos WebUSDTApply.API
+export async function postUSDTApplyApi(
+  payload: USDTApplyRequest = {} as USDTApplyRequest
+): Promise<ApiResponse<USDTApplyResponseData>> {
+  const response = await http.post<ApiResponse<USDTApplyResponseData>>('/user/trader/apply', payload)
+  return response.data
+}
+
+// 对齐 cocos WebUSDTApplyRead.API
+export async function postUSDTApplyReadApi(
+  payload: USDTApplyReadRequest = {} as USDTApplyReadRequest
+): Promise<ApiResponse<USDTApplyReadResponseData>> {
+  const response = await http.post<ApiResponse<USDTApplyReadResponseData>>('/user/trader/apply/read', payload)
+  return response.data
+}
+
+// 对齐 cocos WebNewSafety.API
+export async function postNewSafetyApi(
+  payload: NewSafetyRequest = {} as NewSafetyRequest
+): Promise<ApiResponse<NewSafetyResponseData>> {
+  const response = await http.post<ApiResponse<NewSafetyResponseData>>('/user/freeze/public/list', payload)
   return response.data
 }

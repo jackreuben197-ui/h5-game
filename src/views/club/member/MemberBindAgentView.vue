@@ -10,7 +10,6 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-
 const route = useRoute()
 const router = useRouter()
 
@@ -39,27 +38,25 @@ function onConfirm(): void {
 
 <template>
   <div class="page-shell sub-bg" :style="backgroundStyle">
-    <div class="sub-page">
-      <HeaderBack title="Bind Agents" />
+    <HeaderBack title="Bind Agents" />
 
-      <section class="cards">
-        <article
-          v-for="row in rows"
-          :key="row.id"
-          class="glass card"
-          @click="rows.forEach((x) => (x.checked = x.id === row.id))"
-        >
-          <img :src="imgAvatar" :alt="row.name" />
-          <div class="meta">
-            <p>{{ row.name }}</p>
-            <small>ID {{ row.id }}</small>
-          </div>
-          <button class="dot" :class="{ on: row.checked }"></button>
-        </article>
-      </section>
+    <section class="cards">
+      <article
+        v-for="row in rows"
+        :key="row.id"
+        class="glass card"
+        @click="rows.forEach((x) => (x.checked = x.id === row.id))"
+      >
+        <img :src="imgAvatar" :alt="row.name" />
+        <div class="meta">
+          <p>{{ row.name }}</p>
+          <small>ID {{ row.id }}</small>
+        </div>
+        <button class="dot" :class="{ on: row.checked }"></button>
+      </article>
+    </section>
 
-      <button type="button" class="confirm" @click="onConfirm">Bind Agents</button>
-    </div>
+    <button type="button" class="confirm" @click="onConfirm">Bind Agents</button>
   </div>
 </template>
 
@@ -73,39 +70,7 @@ function onConfirm(): void {
 .sub-bg {
   height: 100dvh;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-  background:
-    radial-gradient(88% 55% at -10% 66%, rgba(245, 222, 165, 0.45), rgba(245, 222, 165, 0) 70%),
-    radial-gradient(78% 62% at 38% 92%, rgba(202, 86, 145, 0.6), rgba(202, 86, 145, 0) 70%),
-    radial-gradient(85% 70% at 100% 85%, rgba(30, 174, 210, 0.82), rgba(30, 174, 210, 0) 70%),
-    linear-gradient(180deg, #bc8b87 0%, #7e5f8f 42%, #187ca3 100%);
-}
-
-.sub-page {
-  min-height: 100%;
-  padding-bottom: calc(#{figma-rem(13.412)} + env(safe-area-inset-bottom));
-  display: flex;
-  flex-direction: column;
-  gap: figma-rem(7.282);
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  gap: figma-rem(9.602);
-}
-
-.header h1 {
-  margin: 0;
-  color: #fff;
-  font-size: figma-rem(24.378);
-}
-
-.back {
-  border: 0;
-  color: #fff;
-  background: transparent;
+  background-size: cover;
 }
 
 .cards {
@@ -126,7 +91,6 @@ function onConfirm(): void {
   display: flex;
   align-items: center;
   gap: figma-rem(8.64);
-
 }
 
 .card img {

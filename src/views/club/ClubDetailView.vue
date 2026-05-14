@@ -603,6 +603,7 @@ onMounted(async () => {
 <style scoped lang="scss">
 .club-detail-bg {
   height: 100dvh;
+  background-size: cover;
 }
 
 .club-detail {

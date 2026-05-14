@@ -27,55 +27,51 @@ function onSave(): void {
 
 <template>
   <div class="page-shell sub-bg" :style="backgroundStyle">
-    <div class="sub-page">
-      <HeaderBack title="下线成员" />
+    <HeaderBack title="下线成员" />
 
-      <section class="top-row">
-        <div class="invite">邀请链接</div>
-        <button class="copy">复制链接</button>
-      </section>
+    <section class="top-row">
+      <div class="invite">邀请链接</div>
+      <button class="copy">复制链接</button>
+    </section>
 
-      <section class="tabs">
-        <button :class="{ active: listMode === 'members' }" @click="listMode = 'members'">
-          成员列表
-        </button>
-        <button :class="{ active: listMode === 'edit' }" @click="listMode = 'edit'">
-          编辑下线
-        </button>
-      </section>
+    <section class="tabs">
+      <button :class="{ active: listMode === 'members' }" @click="listMode = 'members'">
+        成员列表
+      </button>
+      <button :class="{ active: listMode === 'edit' }" @click="listMode = 'edit'">编辑下线</button>
+    </section>
 
-      <section class="search glass">玩家查询</section>
+    <section class="search glass">玩家查询</section>
 
-      <section class="toggle-row">
-        <span>邀请链接</span>
-        <label>
-          隐藏当前下线玩家
-          <input v-model="hideCurrentPlayers" type="checkbox" />
-        </label>
-      </section>
+    <section class="toggle-row">
+      <span>邀请链接</span>
+      <label>
+        隐藏当前下线玩家
+        <input v-model="hideCurrentPlayers" type="checkbox" />
+      </label>
+    </section>
 
-      <section class="cards">
-        <article v-for="row in rows" :key="row.id" class="glass card">
-          <button
-            class="check"
-            :class="{ on: row.checked }"
-            @click="row.checked = !row.checked"
-          ></button>
-          <img :src="imgAvatar" :alt="row.name" />
-          <div class="meta">
-            <p>{{ row.name }}</p>
-            <span>ID {{ row.id }}</span>
-            <div class="assets">
-              <b><img :src="imgChips" alt="" />UC 500</b>
-              <b><img :src="imgBalance" alt="" />免审额 1000/1000</b>
-              <b><img :src="imgDiamond" alt="" />钻石 500</b>
-            </div>
+    <section class="cards">
+      <article v-for="row in rows" :key="row.id" class="glass card">
+        <button
+          class="check"
+          :class="{ on: row.checked }"
+          @click="row.checked = !row.checked"
+        ></button>
+        <img :src="imgAvatar" :alt="row.name" />
+        <div class="meta">
+          <p>{{ row.name }}</p>
+          <span>ID {{ row.id }}</span>
+          <div class="assets">
+            <b><img :src="imgChips" alt="" />UC 500</b>
+            <b><img :src="imgBalance" alt="" />免审额 1000/1000</b>
+            <b><img :src="imgDiamond" alt="" />钻石 500</b>
           </div>
-        </article>
-      </section>
+        </div>
+      </article>
+    </section>
 
-      <button class="save" @click="onSave">保存</button>
-    </div>
+    <button class="save" @click="onSave">保存</button>
   </div>
 </template>
 
@@ -88,19 +84,7 @@ function onSave(): void {
 
 .sub-bg {
   height: 100dvh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-  background: linear-gradient(180deg, #38414b 0%, #111827 100%);
-}
-
-.sub-page {
-  min-height: 100%;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + #{figma-rem(17.244)});
-  padding-bottom: calc(#{figma-rem(13.412)} + env(safe-area-inset-bottom));
-  display: flex;
-  flex-direction: column;
-  gap: figma-rem(7.282);
+  background-size: cover;
 }
 
 .header h1 {

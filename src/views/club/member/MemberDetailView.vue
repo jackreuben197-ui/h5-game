@@ -129,128 +129,116 @@ function togglePermission(index: number): void {
 
 <template>
   <div class="page-shell member-detail-bg" :style="backgroundStyle">
-    <div class="member-detail-page">
-      <HeaderBack :title="detailTitle" />
+    <HeaderBack :title="detailTitle" />
 
-      <section class="glass-card profile-card">
-        <div class="profile-left">
-          <img class="avatar" :src="imgAvatar" :alt="`${context.name}头像`" />
-          <div>
-            <p class="name">{{ context.name || '俱乐部名称' }}</p>
-            <p class="uid-line"><span>ID</span>{{ context.uid }}</p>
-            <p class="badge">{{ badgeLabel }}</p>
-          </div>
+    <section class="glass-card profile-card">
+      <div class="profile-left">
+        <img class="avatar" :src="imgAvatar" :alt="`${context.name}头像`" />
+        <div>
+          <p class="name">{{ context.name || '俱乐部名称' }}</p>
+          <p class="uid-line"><span>ID</span>{{ context.uid }}</p>
+          <p class="badge">{{ badgeLabel }}</p>
         </div>
-        <div class="asset-stack">
-          <p>
-            <span>20,000</span>
-            <img :src="imgChips" alt="" />
-          </p>
-          <p>
-            <span>20,000</span>
-            <img :src="imgBalance" alt="" />
-          </p>
-          <p>
-            <span>20,000</span>
-            <img :src="imgDiamond" alt="" />
-          </p>
-        </div>
-      </section>
+      </div>
+      <div class="asset-stack">
+        <p>
+          <span>20,000</span>
+          <img :src="imgChips" alt="" />
+        </p>
+        <p>
+          <span>20,000</span>
+          <img :src="imgBalance" alt="" />
+        </p>
+        <p>
+          <span>20,000</span>
+          <img :src="imgDiamond" alt="" />
+        </p>
+      </div>
+    </section>
 
-      <section class="glass-card role-card">
-        <span>成员角色</span>
-        <span>{{ roleLabel }}</span>
-      </section>
+    <section class="glass-card role-card">
+      <span>成员角色</span>
+      <span>{{ roleLabel }}</span>
+    </section>
 
-      <section class="glass-card form-card">
-        <label>
-          <span>Alias here</span>
-          <input v-model="aliasInput" type="text" placeholder="此处输入" />
-        </label>
-        <label>
-          <span>Description</span>
-          <input v-model="descInput" type="text" placeholder="此处输入" />
-        </label>
-      </section>
+    <section class="glass-card form-card">
+      <label>
+        <span>Alias here</span>
+        <input v-model="aliasInput" type="text" placeholder="此处输入" />
+      </label>
+      <label>
+        <span>Description</span>
+        <input v-model="descInput" type="text" placeholder="此处输入" />
+      </label>
+    </section>
 
-      <section class="glass-card stat-head-card">
-        <div class="stat-head-top">
-          <strong>数据统计</strong>
-        </div>
-        <div class="pill-tabs">
-          <button :class="{ active: gameType === 'all' }" @click="gameType = 'all'">全部</button>
-          <button :class="{ active: gameType === 'texas' }" @click="gameType = 'texas'">
-            德州
-          </button>
-          <button :class="{ active: gameType === 'mahjong' }" @click="gameType = 'mahjong'">
-            麻将
-          </button>
-          <button :class="{ active: gameType === 'mini' }" @click="gameType = 'mini'">
-            小游戏
-          </button>
-        </div>
-      </section>
-
-      <section class="pill-tabs range-tabs">
-        <button :class="{ active: rangeType === 'today' }" @click="rangeType = 'today'">
-          今天
+    <section class="glass-card stat-head-card">
+      <div class="stat-head-top">
+        <strong>数据统计</strong>
+      </div>
+      <div class="pill-tabs">
+        <button :class="{ active: gameType === 'all' }" @click="gameType = 'all'">全部</button>
+        <button :class="{ active: gameType === 'texas' }" @click="gameType = 'texas'">德州</button>
+        <button :class="{ active: gameType === 'mahjong' }" @click="gameType = 'mahjong'">
+          麻将
         </button>
-        <button :class="{ active: rangeType === 'week' }" @click="rangeType = 'week'">7天</button>
-        <button :class="{ active: rangeType === 'month' }" @click="rangeType = 'month'">
-          30天
-        </button>
-      </section>
+        <button :class="{ active: gameType === 'mini' }" @click="gameType = 'mini'">小游戏</button>
+      </div>
+    </section>
 
-      <section class="stat-list">
-        <article v-for="row in statRows" :key="row.label" class="stat-row glass-card">
-          <span>{{ row.label }}</span>
-          <span>{{ row.value }}</span>
-        </article>
-      </section>
+    <section class="pill-tabs range-tabs">
+      <button :class="{ active: rangeType === 'today' }" @click="rangeType = 'today'">今天</button>
+      <button :class="{ active: rangeType === 'week' }" @click="rangeType = 'week'">7天</button>
+      <button :class="{ active: rangeType === 'month' }" @click="rangeType = 'month'">30天</button>
+    </section>
 
-      <section v-if="showAgentActions" class="glass-card link-list">
-        <button class="link-item" @click="onActionClick('offline')">
-          Total Offline Players <span>9999</span>
-        </button>
-        <button class="link-item" @click="onActionClick('vip')">
-          VIP Statistics <span class="arrow"></span>
-        </button>
-        <button class="link-item" @click="onActionClick('profit')">
-          代理收益设置 <span class="arrow"></span>
-        </button>
-      </section>
+    <section class="stat-list">
+      <article v-for="row in statRows" :key="row.label" class="stat-row glass-card">
+        <span>{{ row.label }}</span>
+        <span>{{ row.value }}</span>
+      </article>
+    </section>
 
-      <section v-if="showBindRow" class="glass-card link-list">
-        <button class="link-item" @click="onActionClick('bind')">
-          未绑定 <span>绑定代理</span>
+    <section v-if="showAgentActions" class="glass-card link-list">
+      <button class="link-item" @click="onActionClick('offline')">
+        Total Offline Players <span>9999</span>
+      </button>
+      <button class="link-item" @click="onActionClick('vip')">
+        VIP Statistics <span class="arrow"></span>
+      </button>
+      <button class="link-item" @click="onActionClick('profit')">
+        代理收益设置 <span class="arrow"></span>
+      </button>
+    </section>
+
+    <section v-if="showBindRow" class="glass-card link-list">
+      <button class="link-item" @click="onActionClick('bind')">未绑定 <span>绑定代理</span></button>
+    </section>
+
+    <section v-if="showUnbindRow" class="glass-card link-list">
+      <button class="link-item" @click="onActionClick('unbind')">
+        Player Name <span>解绑代理</span>
+      </button>
+    </section>
+
+    <section v-if="showAdminPermissions" class="glass-card switch-list">
+      <article v-for="(item, index) in adminPermissions" :key="item.label" class="switch-row">
+        <span>{{ item.label }}</span>
+        <button
+          type="button"
+          class="switch"
+          :class="{ on: item.enabled }"
+          @click="togglePermission(index)"
+        >
+          <i></i>
         </button>
-      </section>
+      </article>
+    </section>
 
-      <section v-if="showUnbindRow" class="glass-card link-list">
-        <button class="link-item" @click="onActionClick('unbind')">
-          Player Name <span>解绑代理</span>
-        </button>
-      </section>
-
-      <section v-if="showAdminPermissions" class="glass-card switch-list">
-        <article v-for="(item, index) in adminPermissions" :key="item.label" class="switch-row">
-          <span>{{ item.label }}</span>
-          <button
-            type="button"
-            class="switch"
-            :class="{ on: item.enabled }"
-            @click="togglePermission(index)"
-          >
-            <i></i>
-          </button>
-        </article>
-      </section>
-
-      <footer v-if="showBottomAction" class="bottom-actions">
-        <button type="button" class="btn secondary">Delete</button>
-        <button type="button" class="btn primary">Freeze</button>
-      </footer>
-    </div>
+    <footer v-if="showBottomAction" class="bottom-actions">
+      <button type="button" class="btn secondary">Delete</button>
+      <button type="button" class="btn primary">Freeze</button>
+    </footer>
   </div>
 </template>
 
@@ -264,25 +252,7 @@ function togglePermission(index: number): void {
 .member-detail-bg {
   position: relative;
   height: 100dvh;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
-  overflow: hidden;
-  background:
-    radial-gradient(
-      145% 88% at 46% -8%,
-      rgba(219, 155, 140, 0.68),
-      rgba(154, 97, 145, 0.66) 45%,
-      rgba(33, 136, 168, 0.86) 100%
-    ),
-    linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
-}
-
-.member-detail-page {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
+  background-size: cover;
 }
 
 .glass-card {

@@ -294,6 +294,7 @@ async function onCreateClub(): Promise<void> {
 <style scoped lang="scss">
 .club-create-bg {
   height: 100dvh;
+  background-size: cover;
 }
 
 .avatar-file-input {

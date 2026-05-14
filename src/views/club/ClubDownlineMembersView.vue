@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import {
-  postClubAgentUserListApi,
-  postOrgClubAgentInviTationApi,
-} from '@/api/org'
+import { postClubAgentUserListApi, postOrgClubAgentInviTationApi } from '@/api/org'
 import type { ClubAgentUserListRecord } from '@/api/models/org'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -21,7 +18,6 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
-
 
 const userInfoStore = useUserInfoStore()
 
@@ -49,7 +45,7 @@ async function loadMembers() {
       order_type: 2,
       keyword: keyword.value.trim(),
       offset: 0,
-      limit: 50
+      limit: 50,
     })
 
     if (response.code !== 0 || !response.data) {
@@ -138,8 +134,6 @@ onMounted(async () => {
 
 <template>
   <div class="page-shell downline-page" :style="backgroundStyle">
-    <div class="page-overlay" aria-hidden="true"></div>
-
     <HeaderBack title="下线成员" />
 
     <div v-loading="loading" class="content">
@@ -154,12 +148,7 @@ onMounted(async () => {
       <p class="invite-link" :title="invitationLink">{{ invitationPreview }}</p>
 
       <div class="search-box">
-        <img
-          class="search-icon"
-          :src="imgSearch"
-          alt=""
-          aria-hidden="true"
-        />
+        <img class="search-icon" :src="imgSearch" alt="" aria-hidden="true" />
         <input
           v-model="keyword"
           type="text"
@@ -175,16 +164,14 @@ onMounted(async () => {
       </div>
 
       <div class="members-wrap">
-        <div
-          v-for="member in members"
-          :key="member.user_id"
-          class="member-card"
-        >
+        <div v-for="member in members" :key="member.user_id" class="member-card">
           <img class="member-avatar" :src="member.avatar || imgAvatar" alt="avatar" />
 
           <div class="member-main">
             <div class="member-top">
-              <p class="member-name">{{ member.nick_name || member.remark_name || '未命名成员' }}</p>
+              <p class="member-name">
+                {{ member.nick_name || member.remark_name || '未命名成员' }}
+              </p>
             </div>
 
             <div class="member-id-row">
@@ -201,7 +188,9 @@ onMounted(async () => {
               <p class="asset-item">
                 <img :src="imgBalance" alt="credit" />
                 <span class="asset-label">免审额</span>
-                <strong class="asset-value">{{ member.club_gold_credit || 0 }}/{{ member.club_gold_credit_limit || 0 }}</strong>
+                <strong class="asset-value">
+                  {{ member.club_gold_credit }}/{{ member.club_gold_credit_limit }}
+                </strong>
               </p>
               <p class="asset-item">
                 <img :src="imgDiamond" alt="diamond" />
@@ -222,7 +211,7 @@ onMounted(async () => {
 .downline-page {
   position: relative;
   height: 100dvh;
-  overflow: hidden;
+  background-size: cover;
   color: #fff;
 }
 
@@ -232,17 +221,6 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  pointer-events: none;
-}
-
-.page-overlay {
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(140% 120% at 15% 0%, rgba(255, 156, 134, 0.46) 0%, rgba(196, 107, 149, 0.5) 45%, rgba(47, 165, 197, 0.54) 100%),
-    linear-gradient(180deg, rgba(186, 141, 130, 0.56), rgba(53, 166, 198, 0.56));
-  mix-blend-mode: luminosity;
-  backdrop-filter: blur(0.16rem);
   pointer-events: none;
 }
 
@@ -420,7 +398,12 @@ onMounted(async () => {
   margin-top: 0.164rem;
   border-radius: 1.44rem;
   background:
-    linear-gradient(112deg, rgba(160, 40, 76, 0.58) 1%, rgba(86, 87, 128, 0.28) 42%, rgba(10, 96, 139, 0.62) 100%),
+    linear-gradient(
+      112deg,
+      rgba(160, 40, 76, 0.58) 1%,
+      rgba(86, 87, 128, 0.28) 42%,
+      rgba(10, 96, 139, 0.62) 100%
+    ),
     rgba(34, 34, 34, 0.66);
   backdrop-filter: blur(0.8rem);
   padding: 0.1182rem 0.5828rem;

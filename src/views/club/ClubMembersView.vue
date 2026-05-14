@@ -5,7 +5,11 @@ import { showFailToast, showSuccessToast } from 'vant'
 import { formatUC } from '@/utils/roomVisibility'
 import { postClubFundChangeLogApi, postOrgClubGoldApi, postOrgMemberListApi } from '@/api/org'
 import { postGuildGiveRecyCleApi } from '@/api/order'
-import type { ClubFundChangeLogRecord, OrgClubGoldData, OrgMemberListRecord } from '@/api/models/org'
+import type {
+  ClubFundChangeLogRecord,
+  OrgClubGoldData,
+  OrgMemberListRecord,
+} from '@/api/models/org'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
@@ -17,7 +21,6 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
-
 
 type TabKey = 'account' | 'record'
 type MemberRole = '管理员' | '代理人' | '成员'
@@ -143,7 +146,10 @@ const fundSubmitLabel = computed(() => (fundActionTab.value === 'grant' ? '发�
 const members = ref<MemberItem[]>([])
 
 const memberTotalText = computed(() => {
-  const total = membersTotal.value || toSafeNumber(userInfoStore.currentClub?.club_members) || members.value.length
+  const total =
+    membersTotal.value ||
+    toSafeNumber(userInfoStore.currentClub?.club_members) ||
+    members.value.length
   const upperLimit = toSafeNumber(userInfoStore.currentClub?.upper_limit)
 
   if (upperLimit > 0) {
@@ -163,9 +169,21 @@ const clubFundSummary = computed(() => {
   }, 0)
 
   return {
-    clubBalance: pickNumber(clubFund, ['gold', 'club_gold'], pickNumber(club, ['club_gold', 'gold', 'user_gold', 'total_gold'], memberListTotalGold.value)),
-    membersTableBalance: pickNumber(clubFund, ['members_table_gold'], pickNumber(club, ['members_table_gold'], 0)),
-    membersTotalBalance: pickNumber(clubFund, ['members_gold'], pickNumber(club, ['members_gold'], membersUcTotal)),
+    clubBalance: pickNumber(
+      clubFund,
+      ['gold', 'club_gold'],
+      pickNumber(club, ['club_gold', 'gold', 'user_gold', 'total_gold'], memberListTotalGold.value),
+    ),
+    membersTableBalance: pickNumber(
+      clubFund,
+      ['members_table_gold'],
+      pickNumber(club, ['members_table_gold'], 0),
+    ),
+    membersTotalBalance: pickNumber(
+      clubFund,
+      ['members_gold'],
+      pickNumber(club, ['members_gold'], membersUcTotal),
+    ),
     membersCreditLimit: pickNumber(
       clubFund,
       ['club_credit_limit_total', 'club_gold_credit_limit_total'],
@@ -175,7 +193,11 @@ const clubFundSummary = computed(() => {
         membersCreditLimitTotal,
       ),
     ),
-    clubDiamond: pickNumber(clubFund, ['diamond', 'diamonds'], pickNumber(club, ['diamond', 'diamonds'], 0)),
+    clubDiamond: pickNumber(
+      clubFund,
+      ['diamond', 'diamonds'],
+      pickNumber(club, ['diamond', 'diamonds'], 0),
+    ),
   }
 })
 
@@ -292,7 +314,9 @@ function resolveRecordRange(): { start_time?: number; end_time?: number } {
 }
 
 function normalizeRecordType(opCode?: string): string {
-  const code = String(opCode || '').trim().toUpperCase()
+  const code = String(opCode || '')
+    .trim()
+    .toUpperCase()
 
   if (!code) {
     return '未知'
@@ -328,7 +352,9 @@ function splitDateTime(value?: string): { time: string; date: string } {
 function mapFundRecord(record: ClubFundChangeLogRecord, index: number): FundRecordItem {
   const dateTime = splitDateTime(record.create_time)
   const remarkName = String(record.op_nick_name || record.src_nick_name || record.name || '备注')
-  const remarkId = String(record.op_random_id || record.src_random_id || record.user_random_num || '--')
+  const remarkId = String(
+    record.op_random_id || record.src_random_id || record.user_random_num || '--',
+  )
   const balance = toSafeNumber(record.gold_after)
   const quantity = toSafeNumber(record.gold_change)
 
@@ -457,7 +483,12 @@ async function fetchRecordRows(reset = false): Promise<void> {
 }
 
 function onRecordScroll(event: Event): void {
-  if (activeTab.value !== 'record' || loadingRecords.value || loadingMoreRecords.value || !hasMoreRecords.value) {
+  if (
+    activeTab.value !== 'record' ||
+    loadingRecords.value ||
+    loadingMoreRecords.value ||
+    !hasMoreRecords.value
+  ) {
     return
   }
 
@@ -472,7 +503,10 @@ function onRecordScroll(event: Event): void {
   }
 }
 
-function resolveRole(record: OrgMemberListRecord): { role: MemberRole; identityType: MemberIdentity } {
+function resolveRole(record: OrgMemberListRecord): {
+  role: MemberRole
+  identityType: MemberIdentity
+} {
   const userLevel = toSafeNumber(record.user_level)
   const memberType = toSafeNumber(record.club_member_type)
   const isBoss = toSafeNumber(record.is_boss) === 1
@@ -832,7 +866,9 @@ onMounted(() => {
     <div class="club-members">
       <HeaderBack :title="'基金管理'">
         <template #right>
-          <p class="member-total">会员总数 <span>{{ memberTotalText }}</span></p>
+          <p class="member-total">
+            会员总数 <span>{{ memberTotalText }}</span>
+          </p>
         </template>
       </HeaderBack>
 
@@ -902,7 +938,9 @@ onMounted(() => {
               <div class="member-left">
                 <img class="member-avatar" :src="imgAvatar" :alt="`${member.name}头像`" />
                 <div class="member-base">
-                  <button type="button" class="member-name" @click="openMemberDetail(member)">{{ member.name }}</button>
+                  <button type="button" class="member-name" @click="openMemberDetail(member)">
+                    {{ member.name }}
+                  </button>
                   <p class="member-id-row">
                     <span class="id-pill">ID</span>
                     <span>{{ member.uid }}</span>
@@ -944,7 +982,9 @@ onMounted(() => {
 
           <p v-if="!members.length && !loadingMembers" class="member-list-status">暂无成员数据</p>
           <p v-if="loadingMembers" class="member-list-status">加载中...</p>
-          <p v-else-if="members.length && loadingMoreMembers" class="member-list-status">加载更多...</p>
+          <p v-else-if="members.length && loadingMoreMembers" class="member-list-status">
+            加载更多...
+          </p>
           <p v-else-if="members.length && !hasMoreMembers" class="member-list-status">没有更多了</p>
         </section>
       </template>
@@ -1028,10 +1068,16 @@ onMounted(() => {
                 </div>
               </article>
 
-              <p v-if="!filteredRecordRows.length && !loadingRecords" class="record-list-status">暂无记录</p>
+              <p v-if="!filteredRecordRows.length && !loadingRecords" class="record-list-status">
+                暂无记录
+              </p>
               <p v-if="loadingRecords" class="record-list-status">加载中...</p>
-              <p v-else-if="recordRows.length && loadingMoreRecords" class="record-list-status">加载更多...</p>
-              <p v-else-if="recordRows.length && !hasMoreRecords" class="record-list-status">没有更多了</p>
+              <p v-else-if="recordRows.length && loadingMoreRecords" class="record-list-status">
+                加载更多...
+              </p>
+              <p v-else-if="recordRows.length && !hasMoreRecords" class="record-list-status">
+                没有更多了
+              </p>
             </section>
           </div>
         </section>
@@ -1102,8 +1148,16 @@ onMounted(() => {
               <p>{{ disposableQuota }}</p>
             </div>
             <div class="quota-actions">
-              <button type="button" class="quota-action quota-action--primary" @click="editQuota('disposable')">修改</button>
-              <button type="button" class="quota-action" @click="resetQuota('disposable')">重置</button>
+              <button
+                type="button"
+                class="quota-action quota-action--primary"
+                @click="editQuota('disposable')"
+              >
+                修改
+              </button>
+              <button type="button" class="quota-action" @click="resetQuota('disposable')">
+                重置
+              </button>
             </div>
           </div>
 
@@ -1135,7 +1189,13 @@ onMounted(() => {
               <p>{{ reviewQuota }}</p>
             </div>
             <div class="quota-actions">
-              <button type="button" class="quota-action quota-action--primary" @click="editQuota('review')">修改</button>
+              <button
+                type="button"
+                class="quota-action quota-action--primary"
+                @click="editQuota('review')"
+              >
+                修改
+              </button>
               <button type="button" class="quota-action" @click="resetQuota('review')">重置</button>
             </div>
           </div>
@@ -1176,7 +1236,11 @@ onMounted(() => {
           <div class="sheet-row">
             <p class="sheet-label">余额</p>
             <p class="sheet-balance">
-              <img :src="fundAssetTab === 'diamond' ? imgDiamond : imgChips" alt="" aria-hidden="true" />
+              <img
+                :src="fundAssetTab === 'diamond' ? imgDiamond : imgChips"
+                alt=""
+                aria-hidden="true"
+              />
               <span>{{ currentFundBalanceText }}</span>
             </p>
           </div>
@@ -1184,7 +1248,11 @@ onMounted(() => {
           <div class="sheet-row">
             <p class="sheet-label">发放数量</p>
             <p class="sheet-balance">
-              <img :src="fundAssetTab === 'diamond' ? imgDiamond : imgChips" alt="" aria-hidden="true" />
+              <img
+                :src="fundAssetTab === 'diamond' ? imgDiamond : imgChips"
+                alt=""
+                aria-hidden="true"
+              />
               <span :class="{ 'sheet-placeholder': !fundAmountInput }">{{ currentInputText }}</span>
             </p>
           </div>
@@ -1211,7 +1279,13 @@ onMounted(() => {
 
         <div class="sheet-footer-actions">
           <button type="button" class="sheet-footer-btn" @click="closeFundSheet">取消</button>
-          <button type="button" class="sheet-footer-btn sheet-footer-btn--confirm" @click="onFundConfirm">{{ fundSubmitLabel }}</button>
+          <button
+            type="button"
+            class="sheet-footer-btn sheet-footer-btn--confirm"
+            @click="onFundConfirm"
+          >
+            {{ fundSubmitLabel }}
+          </button>
         </div>
       </section>
     </div>
@@ -1227,7 +1301,12 @@ onMounted(() => {
   overflow-y: auto;
   overscroll-behavior-y: contain;
   background:
-    radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.68), rgba(154, 97, 145, 0.66) 45%, rgba(33, 136, 168, 0.86) 100%),
+    radial-gradient(
+      145% 88% at 46% -8%,
+      rgba(219, 155, 140, 0.68),
+      rgba(154, 97, 145, 0.66) 45%,
+      rgba(33, 136, 168, 0.86) 100%
+    ),
     linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
 }
 
@@ -1833,7 +1912,12 @@ onMounted(() => {
   width: min(100%, 10rem);
   border-radius: 0.84459rem 0.84459rem 0 0;
   padding: 0.64257rem 0.53209rem calc(0.5472rem + env(safe-area-inset-bottom));
-  background: linear-gradient(90deg, rgba(0, 8, 20, 0.95) 0%, rgba(5, 5, 5, 0.95) 52%, rgba(0, 8, 20, 0.95) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(0, 8, 20, 0.95) 0%,
+    rgba(5, 5, 5, 0.95) 52%,
+    rgba(0, 8, 20, 0.95) 100%
+  );
   box-shadow: 0 -0.16rem 0.53rem rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;

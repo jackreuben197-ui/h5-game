@@ -428,6 +428,7 @@ onMounted(() => {
   position: relative;
   height: 100dvh;
   background-color: #0f122f;
+  background-size: cover;
 }
 
 .bg-image {

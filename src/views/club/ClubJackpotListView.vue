@@ -215,8 +215,6 @@ function goPoolReward(): void {
     :style="backgroundStyle"
     @scroll="onPageScroll"
   >
-    <div class="page-overlay" aria-hidden="true"></div>
-
     <HeaderBack :title="'Jackpot'">
       <template #right>
         <button type="button" class="pool-trigger" aria-label="Pool Reward" @click="goPoolReward">
@@ -320,19 +318,7 @@ function goPoolReward(): void {
 .club-jackpot-page {
   position: relative;
   height: 100dvh;
-  padding-bottom: calc(2.2rem + env(safe-area-inset-bottom));
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
-.page-overlay {
-  position: fixed;
-  inset: 0;
-  backdrop-filter: blur(36.5px);
-  background: rgba(0, 0, 0, 0.2);
-  mix-blend-mode: luminosity;
-  pointer-events: none;
-  z-index: 0;
+  background-size: cover;
 }
 
 :deep(.page-back-header) {

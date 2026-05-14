@@ -116,9 +116,7 @@ onMounted(() => {
 .club-table-create-page {
   position: relative;
   height: 100dvh;
-  padding: 0 0.32rem calc(0.44rem + env(safe-area-inset-bottom));
-  overflow-x: hidden;
-  overflow-y: auto;
+  background-size: cover;
 }
 
 .club-table-create-overlay {

@@ -121,7 +121,7 @@ function readAppPkgInfo(): Required<PackageJsonLike> {
 // https://vite.dev/config/
 export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const proxyTarget = env.VITE_PROXY_TARGET || 'https://test2.awanptest.com'
+  const proxyTarget = env.VITE_PROXY_TARGET || 'https://preview.trackyourchoice.com'
   const enableSourceMap = env.VITE_BUILD_SOURCEMAP === 'true'
   const enableDropConsole = toBoolean(env.VITE_DROP_CONSOLE)
   const isBuild = command === 'build'

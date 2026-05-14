@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref, watch, type CSSProperties } from 'vue'
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  reactive,
+  ref,
+  watch,
+  type CSSProperties,
+} from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
 import { postOrgClubNoticeApi, postOrgClubNoticeIgnoreApi } from '@/api/cmsext'
@@ -65,6 +74,7 @@ interface RoomGroupExpandedCachePayload {
 }
 
 interface ClubNoticeViewModel {
+  source: 'tribe' | 'club'
   title: string
   content: string
   dateText: string
@@ -86,7 +96,8 @@ const announceExpanded = ref(false)
 const showSafetyGuardPopup = ref(false)
 const showClubNoticePopup = ref(false)
 const ignoringClubNotice = ref(false)
-const clubNoticeInfo = ref<ClubNoticeViewModel | null>(null)
+const clubNoticeQueue = ref<ClubNoticeViewModel[]>([])
+const clubNoticeQueueIndex = ref(0)
 const pageStyle = computed<CSSProperties>(() => ({
   '--tab-bg': `url(${tabBg})`,
 }))
@@ -134,30 +145,20 @@ const clubCoverUrl = computed(() => {
   return logo || clubCoverAvatar
 })
 
-const clubNoticeTitle = computed(() => {
-  const text = String(clubNoticeInfo.value?.title || '').trim()
+const clubNoticeIntro = computed(() => {
+  const text = String(currentClub.value?.prologue || '').trim()
   if (text) {
     return text
   }
-
-  const fallback = String(currentClub.value?.prologue || '').trim()
-  if (fallback) {
-    return fallback
-  }
-
   return '暂未设置俱乐部公告'
 })
 
-const clubNoticeContent = computed(() => {
-  const text = String(clubNoticeInfo.value?.content || '').trim()
-  if (text) {
-    return text
-  }
-  return clubNoticeTitle.value
+const clubNoticeText = computed(() => {
+  return clubNoticeIntro.value
 })
 
-const clubNoticeText = computed(() => {
-  return announceExpanded.value ? clubNoticeContent.value : clubNoticeTitle.value
+const activeClubNotice = computed<ClubNoticeViewModel | null>(() => {
+  return clubNoticeQueue.value[clubNoticeQueueIndex.value] || null
 })
 
 const clubMemberCount = computed(() => {
@@ -260,6 +261,29 @@ watch(
     }
     announceExpanded.value = false
     void fetchClubNotice({ showPopup: true })
+  },
+)
+
+watch(
+  () => showClubNoticePopup.value,
+  (visible, prevVisible) => {
+    if (visible || !prevVisible) {
+      return
+    }
+
+    if (clubNoticeQueueIndex.value < clubNoticeQueue.value.length - 1) {
+      const nextNotice = clubNoticeQueue.value[clubNoticeQueueIndex.value + 1]
+      if (!nextNotice) {
+        return
+      }
+
+      // 只保留下一条通知，避免关闭第二条时再次被“队列切换”逻辑误拉起。
+      clubNoticeQueue.value = [nextNotice]
+      clubNoticeQueueIndex.value = 0
+      void nextTick(() => {
+        showClubNoticePopup.value = true
+      })
+    }
   },
 )
 
@@ -483,7 +507,8 @@ function toggleAnnounceExpanded(): void {
 async function fetchClubNotice(options: { showPopup?: boolean } = {}): Promise<void> {
   const clubId = selectedClubId.value
   if (clubId <= 0) {
-    clubNoticeInfo.value = null
+    clubNoticeQueue.value = []
+    clubNoticeQueueIndex.value = 0
     showClubNoticePopup.value = false
     return
   }
@@ -495,27 +520,47 @@ async function fetchClubNotice(options: { showPopup?: boolean } = {}): Promise<v
     }
 
     const info = response.data?.info
-    const title = String(info?.title || '').trim()
-    const content = String(info?.content || '').trim()
+    const tribeTitle = String(info?.tribe_notice_title || '').trim()
+    const tribeContent = String(info?.tribe_notice || '').trim()
+    const clubTitle = String(info?.title || '').trim()
+    const clubContent = String(info?.content || '').trim()
     const startTime = String(info?.start_time || '').trim()
     const endTime = String(info?.end_time || '').trim()
+    const dateText = formatNoticeDate(startTime || endTime)
+    const queue: ClubNoticeViewModel[] = []
 
-    if (!title && !content) {
-      clubNoticeInfo.value = null
-      showClubNoticePopup.value = false
-      return
+    if (tribeTitle || tribeContent) {
+      queue.push({
+        source: 'tribe',
+        title: tribeTitle || '联盟通知',
+        content: (tribeContent || tribeTitle).replace(/\[link\]|\[\/link\]/g, ''),
+        dateText,
+      })
     }
 
-    clubNoticeInfo.value = {
-      title: title || '俱乐部通知',
-      content: content || title,
-      dateText: formatNoticeDate(startTime || endTime),
+    if (clubTitle || clubContent) {
+      queue.push({
+        source: 'club',
+        title: clubTitle || '俱乐部通知',
+        content: (clubContent || clubTitle).replace(/\[link\]|\[\/link\]/g, ''),
+        dateText,
+      })
+    }
+
+    clubNoticeQueue.value = queue
+    clubNoticeQueueIndex.value = 0
+
+    if (!queue.length) {
+      showClubNoticePopup.value = false
+      return
     }
 
     if (options.showPopup) {
       showClubNoticePopup.value = true
     }
   } catch (error) {
+    clubNoticeQueue.value = []
+    clubNoticeQueueIndex.value = 0
     const message = error instanceof Error ? error.message : '俱乐部公告加载失败'
     showFailToast(message)
   }
@@ -549,7 +594,7 @@ async function handleIgnoreNoticeToday(): Promise<void> {
 
 function formatNoticeDate(rawDate: string): string {
   if (!rawDate) {
-    return '--/--/----'
+    return ''
   }
 
   const plain = rawDate
@@ -803,9 +848,9 @@ function formatChipBase(rawValue: number): string {
     >
       <div class="club-notice-card">
         <div class="club-notice-club-pill">{{ clubDisplayName }}</div>
-        <p class="club-notice-title">{{ clubNoticeTitle }}</p>
-        <p class="club-notice-date">{{ clubNoticeInfo?.dateText || '--/--/----' }}</p>
-        <p class="club-notice-content">{{ clubNoticeContent }}</p>
+        <p class="club-notice-title">{{ activeClubNotice?.title }}</p>
+        <p class="club-notice-date">{{ activeClubNotice?.dateText }}</p>
+        <p class="club-notice-content">{{ activeClubNotice?.content }}</p>
         <button
           class="club-notice-ignore-btn"
           type="button"

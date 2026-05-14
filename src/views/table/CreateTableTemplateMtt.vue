@@ -6,24 +6,23 @@ import TableSwitch from '@/components/GameCreateForm/TableSwitch.vue'
 import TableSelect from '@/components/GameCreateForm/TableSelect.vue'
 import TableSlider from '@/components/GameCreateForm/TableSlider.vue'
 import TableInput from '@/components/GameCreateForm/TableInput.vue'
+import TableStepper from '@/components/GameCreateForm/TableStepper.vue'
 import TableTab from '@/components/GameCreateForm/TableTab.vue'
-import QuickCreateView from './QuickCreateView.vue'
-import { nlhSections } from './sections/index'
-import { defaultNlhFormState, type NlhFormState } from './sections/formState'
+import QuickCreateView from './components/CreateTableQuicklyMtt.vue'
+import { mttSections } from './mttSections/index'
+import { defaultMttFormState, type MttFormState } from './mttSections/formState'
 import type { FieldValue, TableFormFieldConfig } from './template'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
-import { buildBuyinOptions, resolveBringinBbRange } from './sections/topSlides'
-import { getAnteOptions } from './sections/constants'
 import { t } from '@/i18n'
 import icDiamondBalance from '@/assets/icons/ic_diamond_balance.svg'
 import { showFailToast } from 'vant'
 import { showGameToast } from '@/components/Toast'
-import { buildRoomConfigPayload, parseRoomConfigToFormState } from './sections/payload'
-import { postOrgRoomClubCreateApi, postOrgCreateTemplateApi, postOrgRoomConfigCreateApi } from '@/api/cmsext'
+import { buildRoomConfigPayload, parseRoomConfigToFormState } from './mttSections/payload'
+import { postOrgRoomClubCreateApi, postOrgCreateTemplateApi } from '@/api/cmsext'
 
-const formState = reactive<NlhFormState>({ ...defaultNlhFormState })
+const formState = reactive<MttFormState>({ ...defaultMttFormState })
 const route = useRoute()
 const router = useRouter()
 const appConfigStore = useAppConfigStore()
@@ -84,8 +83,6 @@ const DIAMOND_CONFIG_TYPE = {
   CHAT: 10,
 } as const
 
-const CLUB_INTERNAL_TABLE_TYPE_EXT = 310
-
 function toNumber(value: unknown, fallback = 0): number {
   const n = Number(value)
   return Number.isFinite(n) ? n : fallback
@@ -102,18 +99,10 @@ function getHalfHourMultiple(): number {
   return Math.max(1, Math.round(duration / 1800))
 }
 
-const FRIENDS_TABLE_TYPE_EXT = 410
-
 const currentOriginType = computed(() => {
   const v = Math.floor(toNumber(route.query.origin_type, 5))
   return v > 0 ? v : 5
 })
-
-function getTableTypeExt(): number {
-  const fromQuery = toNumber(route.query.table_type_ext, 0)
-  if (fromQuery > 0) return fromQuery
-  return currentOriginType.value === 4 ? FRIENDS_TABLE_TYPE_EXT : CLUB_INTERNAL_TABLE_TYPE_EXT
-}
 
 function getBanConfigType(antiCheatType: number, antiCheatVideoType: number): number | null {
   if (antiCheatType === 2) return DIAMOND_CONFIG_TYPE.AUDIO_TABLE
@@ -244,7 +233,7 @@ function formatFeeCount(value: number): string {
 
 const feeDetails = computed<FeeDetailItem[]>(() => {
   const configItems = extractDiamondConfigItems(appConfigStore.diamondConfig)
-  const tableTypeExt = getTableTypeExt()
+  const tableTypeExt = 2
   const seatCount = getSeatCount()
   const sb = Math.floor(toNumber(formState.sb))
   const details: FeeDetailItem[] = []
@@ -347,16 +336,9 @@ const componentMap: Record<string, unknown> = {
   select: TableSelect,
   slider: TableSlider,
   input: TableInput,
+  stepper: TableStepper,
   tab: TableTab,
 }
-//全局配置中获取俱乐部带入区间范围
-const buyinBbRange = (() => {
-  const raw = appConfigStore.globalConfig?.friend_club_bringin_min_max_bb_range
-  return resolveBringinBbRange(raw)
-})()
-
-const buyinOptions = computed(() => buildBuyinOptions(buyinBbRange, formState.sb))
-const anteOptions = computed(() => getAnteOptions(formState.sb))
 
 function syncRouteParamsToFormState(): void {
   formState.game_play_type = Number(route.query.game_play_type)
@@ -412,17 +394,11 @@ function isDisabled(field: TableFormFieldConfig): boolean {
 
 // 处理动态选项
 function resolveFieldOptions(field: TableFormFieldConfig) {
-  if (field.modelValue === 'buyin_range') {
-    return buyinOptions.value
-  }
-  if (field.modelValue === 'ante') {
-    return anteOptions.value
-  }
   return field.options
 }
 
 const renderedSections = computed(() =>
-  nlhSections.map((section) =>
+  mttSections.map((section) =>
     section
       .filter((f) => isVisible(f))
       .map((f) => ({
@@ -477,20 +453,6 @@ function onFieldChange(field: TableFormFieldConfig, value: FieldValue): void {
   }
 }
 
-const clampBuyinRangeOnce = (): void => {
-  const clamp = (value: number) =>
-    Math.min(buyinBbRange.maxBb, Math.max(buyinBbRange.minBb, Math.floor(value)))
-  const nextMin = clamp(formState.buyin_range[0])
-  const nextMax = clamp(formState.buyin_range[1])
-  const minRate = Math.min(nextMin, nextMax)
-  const maxRate = Math.max(nextMin, nextMax)
-  formState.buyin_range = [minRate, maxRate]
-  formState.min_rate = minRate
-  formState.max_rate = maxRate
-}
-
-clampBuyinRangeOnce()
-
 watch(
   () => route.query,
   () => {
@@ -503,7 +465,6 @@ function onQuickEditTemplate(roomConfig: Record<string, unknown>): void {
   const parsed = parseRoomConfigToFormState(roomConfig)
   Object.assign(formState, parsed)
   syncRouteParamsToFormState()
-  clampBuyinRangeOnce()
   activeTab.value = 'pro'
 }
 
@@ -515,7 +476,6 @@ onMounted(() => {
     Object.assign(formState, parsed)
     // 路由 query 的 game_play_type / bombpot 优先级更高，重新同步一次
     syncRouteParamsToFormState()
-    clampBuyinRangeOnce()
   }
 })
 
@@ -544,18 +504,15 @@ async function onSaveTemplate() {
 async function onCreateTable() {
   if (isSubmitting.value) return
   isSubmitting.value = true
-  const isFriendsTable = currentOriginType.value === 4
   try {
     const payload = {
       name: formState.name || '自定义牌桌',
       room_config: buildRoomConfigPayload(formState),
     }
-    const res = isFriendsTable
-      ? await postOrgRoomConfigCreateApi({ ...payload, standard: false })
-      : await postOrgRoomClubCreateApi(payload)
+    const res = await postOrgRoomClubCreateApi(payload)
     if (res.code === 0) {
       showGameToast('创建成功')
-      await router.replace({ name: isFriendsTable ? 'friendsTable' : 'club-index' })
+      await router.replace({ name: 'club-index' })
     } else {
       showFailToast(res.message || '创建失败')
     }
@@ -593,7 +550,7 @@ async function onCreateTable() {
     </div>
 
     <!-- Pro params tab -->
-    <div v-if="activeTab === 'pro'" class="create-table-form">
+    <div v-show="activeTab === 'pro'" class="create-table-form">
       <!-- Table name row -->
       <div class="table-name-row">
         <span class="table-name__label">牌局名称</span>

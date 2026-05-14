@@ -1,4 +1,4 @@
-export type FormFieldType = 'switch' | 'select' | 'slider' | 'input' | 'tab'
+export type FormFieldType = 'switch' | 'select' | 'slider' | 'input' | 'tab' | 'stepper'
 export type SliderRangeValue = [number, number]
 export type FieldValue = string | number | boolean | SliderRangeValue
 export type SliderMarkMode = 'all' | 'edge' | 'none'

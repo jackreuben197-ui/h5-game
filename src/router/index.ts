@@ -97,7 +97,7 @@ const router = createRouter({
     {
       path: '/club/table/create',
       name: 'club-table-create',
-      component: () => import('@/views/table/TableCreateView.vue'),
+      component: () => import('@/views/table/CreateTableSelect.vue'),
       meta: { requiresAuth: true },
     },
     {
@@ -501,7 +501,13 @@ const router = createRouter({
     {
       path: '/createTable',
       name: 'createTable',
-      component: () => import('@/views/table/CreateTablePoker.vue'),
+      component: () => import('@/views/table/CreateTableTemplate.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/createMtt',
+      name: 'createMtt',
+      component: () => import('@/views/table/CreateTableTemplateMtt.vue'),
       meta: { requiresAuth: true },
     },
   ],

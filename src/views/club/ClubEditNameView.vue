@@ -78,9 +78,6 @@ async function onConfirm(): Promise<void> {
 
 <template>
   <div class="page-shell club-edit-name-bg" :style="backgroundStyle">
-    <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
-    <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
-
     <div class="club-edit-name">
       <HeaderBack :title="'修改名称'" />
 
@@ -136,30 +133,6 @@ async function onConfirm(): Promise<void> {
   position: relative;
   height: 100dvh;
   background-size: cover;
-}
-
-.bg-blur {
-  position: absolute;
-  border-radius: 999px;
-  filter: blur(1rem);
-  opacity: 0.54;
-  pointer-events: none;
-}
-
-.bg-blur--pink {
-  width: 2.7rem;
-  height: 2.7rem;
-  left: -0.9rem;
-  top: 4.1rem;
-  background: rgba(224, 52, 127, 0.52);
-}
-
-.bg-blur--cyan {
-  width: 3rem;
-  height: 3rem;
-  right: -1.1rem;
-  bottom: 1.2rem;
-  background: rgba(42, 222, 255, 0.55);
 }
 
 .club-edit-name {

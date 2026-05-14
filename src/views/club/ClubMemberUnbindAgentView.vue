@@ -30,32 +30,34 @@ function onConfirm(): void {
 
 <template>
   <div class="page-shell sub-bg" :style="backgroundStyle">
-    <HeaderBack title="Unbind Agents" />
+    <div class="sub-page">
+      <HeaderBack title="Unbind Agents" />
 
-    <section class="cards">
-      <article class="glass card">
-        <img :src="imgAvatar" alt="player" />
-        <div>
-          <p>Player Name</p>
-          <span>ID 12345678</span>
-        </div>
-        <i class="badge"></i>
-      </article>
+      <section class="cards">
+        <article class="glass card">
+          <img :src="imgAvatar" alt="player" />
+          <div>
+            <p>Player Name</p>
+            <span>ID 12345678</span>
+          </div>
+          <i class="badge"></i>
+        </article>
 
-      <div class="link">🔗</div>
+        <div class="link">🔗</div>
 
-      <article class="glass card">
-        <img :src="imgAvatar" alt="agent" />
-        <div>
-          <p>Player Name</p>
-          <span>12345678</span>
-        </div>
-        <i class="badge"></i>
-      </article>
-    </section>
+        <article class="glass card">
+          <img :src="imgAvatar" alt="agent" />
+          <div>
+            <p>Player Name</p>
+            <span>12345678</span>
+          </div>
+          <i class="badge"></i>
+        </article>
+      </section>
 
-    <p class="hint">Do you want to unlink this agent?</p>
-    <button type="button" class="confirm" @click="onConfirm">unbind Agents</button>
+      <p class="hint">Do you want to unlink this agent?</p>
+      <button type="button" class="confirm" @click="onConfirm">unbind Agents</button>
+    </div>
   </div>
 </template>
 
@@ -69,6 +71,13 @@ function onConfirm(): void {
 .sub-bg {
   height: 100dvh;
   background-size: cover;
+}
+
+.sub-page {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: figma-rem(7.282);
 }
 
 .cards {

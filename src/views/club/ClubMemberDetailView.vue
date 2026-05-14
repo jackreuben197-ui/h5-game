@@ -23,40 +23,28 @@ const rangeType = ref<'today' | 'week' | 'month'>('today')
 const aliasInput = ref('')
 const descInput = ref('')
 
-const detailTitle = computed(() => {
-  if (
-    context.value.identity === 'founder' ||
-    context.value.identity === 'admin' ||
-    context.value.identity === 'agent'
-  ) {
-    return '玩家详情'
-  }
-
-  return 'Club Description'
-})
-
 const roleLabel = computed(() => {
   if (context.value.identity === 'founder') return '创始人'
-  if (context.value.identity === 'admin') return '行政人员'
-  if (context.value.identity === 'agent') return '代理人'
+  if (context.value.identity === 'admin') return '管理员'
+  if (context.value.identity === 'agent') return '代理'
   return '成员'
 })
 
 const badgeLabel = computed(() => {
-  if (context.value.identity === 'founder') return 'Founder'
-  if (context.value.identity === 'admin') return 'Admin'
-  if (context.value.identity === 'agent') return 'Agent'
-  return 'Member'
+  if (context.value.identity === 'founder') return '创始人'
+  if (context.value.identity === 'admin') return '管理员'
+  if (context.value.identity === 'agent') return '代理'
+  return '成员'
 })
 
 const statRows = [
-  { label: 'Number of Games', value: '0' },
-  { label: 'Number of Hands', value: '20' },
-  { label: 'Issue Alliance Coins', value: '0' },
-  { label: 'Recycle Alliance Coins', value: '0' },
-  { label: 'win', value: '0' },
-  { label: 'Insurance Fee', value: '0' },
-  { label: 'Service Fee', value: '0' },
+  { label: '总局数', value: '0' },
+  { label: '总手数', value: '0' },
+  { label: '发放UC', value: '0' },
+  { label: '回收UC', value: '0' },
+  { label: '赢', value: '0' },
+  { label: '保险', value: '0' },
+  { label: '服务费', value: '0' },
 ]
 
 const adminPermissions = ref([
@@ -129,116 +117,127 @@ function togglePermission(index: number): void {
 
 <template>
   <div class="page-shell member-detail-bg" :style="backgroundStyle">
-    <HeaderBack :title="detailTitle" />
-
-    <section class="glass-card profile-card">
-      <div class="profile-left">
-        <img class="avatar" :src="imgAvatar" :alt="`${context.name}头像`" />
-        <div>
-          <p class="name">{{ context.name || '俱乐部名称' }}</p>
-          <p class="uid-line"><span>ID</span>{{ context.uid }}</p>
-          <p class="badge">{{ badgeLabel }}</p>
+    <HeaderBack :title="'成员详情'" />
+    <div class="member-detail-page">
+      <section class="glass-card profile-card">
+        <div class="profile-left">
+          <img class="avatar" :src="imgAvatar" :alt="`${context.name}头像`" />
+          <div>
+            <p class="name">{{ context.name || '俱乐部名称' }}</p>
+            <p class="uid-line"><span>ID</span>{{ context.uid }}</p>
+            <p class="badge">{{ badgeLabel }}</p>
+          </div>
         </div>
-      </div>
-      <div class="asset-stack">
-        <p>
-          <span>20,000</span>
-          <img :src="imgChips" alt="" />
-        </p>
-        <p>
-          <span>20,000</span>
-          <img :src="imgBalance" alt="" />
-        </p>
-        <p>
-          <span>20,000</span>
-          <img :src="imgDiamond" alt="" />
-        </p>
-      </div>
-    </section>
+        <div class="asset-stack">
+          <p>
+            <span>20,000</span>
+            <img :src="imgChips" alt="" />
+          </p>
+          <p>
+            <span>20,000</span>
+            <img :src="imgBalance" alt="" />
+          </p>
+          <p>
+            <span>20,000</span>
+            <img :src="imgDiamond" alt="" />
+          </p>
+        </div>
+      </section>
 
-    <section class="glass-card role-card">
-      <span>成员角色</span>
-      <span>{{ roleLabel }}</span>
-    </section>
+      <section class="glass-card role-card">
+        <span>成员角色</span>
+        <span>{{ roleLabel }}</span>
+      </section>
 
-    <section class="glass-card form-card">
-      <label>
-        <span>Alias here</span>
-        <input v-model="aliasInput" type="text" placeholder="此处输入" />
-      </label>
-      <label>
-        <span>Description</span>
-        <input v-model="descInput" type="text" placeholder="此处输入" />
-      </label>
-    </section>
+      <section class="glass-card form-card">
+        <label>
+          <span>Alias here</span>
+          <input v-model="aliasInput" type="text" placeholder="此处输入" />
+        </label>
+        <label>
+          <span>Description</span>
+          <input v-model="descInput" type="text" placeholder="此处输入" />
+        </label>
+      </section>
 
-    <section class="glass-card stat-head-card">
-      <div class="stat-head-top">
-        <strong>数据统计</strong>
-      </div>
-      <div class="pill-tabs">
-        <button :class="{ active: gameType === 'all' }" @click="gameType = 'all'">全部</button>
-        <button :class="{ active: gameType === 'texas' }" @click="gameType = 'texas'">德州</button>
-        <button :class="{ active: gameType === 'mahjong' }" @click="gameType = 'mahjong'">
-          麻将
+      <section class="glass-card stat-head-card">
+        <div class="stat-head-top">
+          <strong>数据统计</strong>
+        </div>
+        <div class="pill-tabs">
+          <button :class="{ active: gameType === 'all' }" @click="gameType = 'all'">全部</button>
+          <button :class="{ active: gameType === 'texas' }" @click="gameType = 'texas'">
+            德州
+          </button>
+          <button :class="{ active: gameType === 'mahjong' }" @click="gameType = 'mahjong'">
+            麻将
+          </button>
+          <button :class="{ active: gameType === 'mini' }" @click="gameType = 'mini'">
+            小游戏
+          </button>
+        </div>
+      </section>
+
+      <section class="pill-tabs range-tabs">
+        <button :class="{ active: rangeType === 'today' }" @click="rangeType = 'today'">
+          今天
         </button>
-        <button :class="{ active: gameType === 'mini' }" @click="gameType = 'mini'">小游戏</button>
-      </div>
-    </section>
-
-    <section class="pill-tabs range-tabs">
-      <button :class="{ active: rangeType === 'today' }" @click="rangeType = 'today'">今天</button>
-      <button :class="{ active: rangeType === 'week' }" @click="rangeType = 'week'">7天</button>
-      <button :class="{ active: rangeType === 'month' }" @click="rangeType = 'month'">30天</button>
-    </section>
-
-    <section class="stat-list">
-      <article v-for="row in statRows" :key="row.label" class="stat-row glass-card">
-        <span>{{ row.label }}</span>
-        <span>{{ row.value }}</span>
-      </article>
-    </section>
-
-    <section v-if="showAgentActions" class="glass-card link-list">
-      <button class="link-item" @click="onActionClick('offline')">
-        Total Offline Players <span>9999</span>
-      </button>
-      <button class="link-item" @click="onActionClick('vip')">
-        VIP Statistics <span class="arrow"></span>
-      </button>
-      <button class="link-item" @click="onActionClick('profit')">
-        代理收益设置 <span class="arrow"></span>
-      </button>
-    </section>
-
-    <section v-if="showBindRow" class="glass-card link-list">
-      <button class="link-item" @click="onActionClick('bind')">未绑定 <span>绑定代理</span></button>
-    </section>
-
-    <section v-if="showUnbindRow" class="glass-card link-list">
-      <button class="link-item" @click="onActionClick('unbind')">
-        Player Name <span>解绑代理</span>
-      </button>
-    </section>
-
-    <section v-if="showAdminPermissions" class="glass-card switch-list">
-      <article v-for="(item, index) in adminPermissions" :key="item.label" class="switch-row">
-        <span>{{ item.label }}</span>
-        <button
-          type="button"
-          class="switch"
-          :class="{ on: item.enabled }"
-          @click="togglePermission(index)"
-        >
-          <i></i>
+        <button :class="{ active: rangeType === 'week' }" @click="rangeType = 'week'">7天</button>
+        <button :class="{ active: rangeType === 'month' }" @click="rangeType = 'month'">
+          30天
         </button>
-      </article>
-    </section>
+      </section>
 
-    <footer v-if="showBottomAction" class="bottom-actions">
-      <button type="button" class="btn secondary">Delete</button>
-      <button type="button" class="btn primary">Freeze</button>
-    </footer>
+      <section class="stat-list">
+        <article v-for="row in statRows" :key="row.label" class="stat-row glass-card">
+          <span>{{ row.label }}</span>
+          <span>{{ row.value }}</span>
+        </article>
+      </section>
+
+      <section v-if="showAgentActions" class="glass-card link-list">
+        <button class="link-item" @click="onActionClick('offline')">
+          Total Offline Players <span>9999</span>
+        </button>
+        <button class="link-item" @click="onActionClick('vip')">
+          VIP Statistics <span class="arrow"></span>
+        </button>
+        <button class="link-item" @click="onActionClick('profit')">
+          代理收益设置 <span class="arrow"></span>
+        </button>
+      </section>
+
+      <section v-if="showBindRow" class="glass-card link-list">
+        <button class="link-item" @click="onActionClick('bind')">
+          未绑定 <span>绑定代理</span>
+        </button>
+      </section>
+
+      <section v-if="showUnbindRow" class="glass-card link-list">
+        <button class="link-item" @click="onActionClick('unbind')">
+          Player Name <span>解绑代理</span>
+        </button>
+      </section>
+
+      <section v-if="showAdminPermissions" class="glass-card switch-list">
+        <article v-for="(item, index) in adminPermissions" :key="item.label" class="switch-row">
+          <span>{{ item.label }}</span>
+          <button
+            type="button"
+            class="switch"
+            :class="{ on: item.enabled }"
+            @click="togglePermission(index)"
+          >
+            <i></i>
+          </button>
+        </article>
+      </section>
+
+      <footer v-if="showBottomAction" class="bottom-actions">
+        <button type="button" class="btn secondary">Delete</button>
+        <button type="button" class="btn primary">Freeze</button>
+      </footer>
+    </div>
   </div>
 </template>
 
@@ -252,6 +251,14 @@ function togglePermission(index: number): void {
 .member-detail-bg {
   height: 100dvh;
   background-size: cover;
+}
+
+.member-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: figma-rem(7.282);
+  min-height: 100%;
+  padding-top: #{figma-rem(17.244)};
 }
 
 .glass-card {

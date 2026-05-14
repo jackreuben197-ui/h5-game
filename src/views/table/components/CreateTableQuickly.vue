@@ -4,13 +4,13 @@ import { useRoute, useRouter } from 'vue-router'
 import TableTab from '@/components/GameCreateForm/TableTab.vue'
 import TableSlider from '@/components/GameCreateForm/TableSlider.vue'
 import QuickSwitchCard from '@/components/GameCreateForm/QuickSwitchCard.vue'
-import { defaultNlhFormState, type NlhFormState } from './sections/formState'
-import { SB_OPTIONS, ANTE_OPTIONS, resolveBringinBbRange } from './sections/topSlides'
+import { defaultNlhFormState, type NlhFormState } from '../tableSections/formState'
+import { SB_OPTIONS, ANTE_OPTIONS, resolveBringinBbRange } from '../tableSections/topSlides'
 import {
   SEAT_COUNT_NLH_OPTIONS,
   SEAT_COUNT_PLO5_OPTIONS,
   SEAT_COUNT_SIX_PLUS_OPTIONS,
-} from './sections/constants'
+} from '../tableSections/constants'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useAppConfigStore } from '@/stores/appConfig'
 import {

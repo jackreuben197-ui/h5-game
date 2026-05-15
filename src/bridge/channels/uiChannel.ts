@@ -62,8 +62,8 @@ function normalizeNavigateTarget(payload: unknown): {
   const routeObject: Record<string, unknown> = hasPath
     ? { path }
     : {
-      name: (raw.name as string).trim(),
-    }
+        name: (raw.name as string).trim(),
+      }
   if (isRecord(raw.params)) {
     routeObject.params = raw.params
   }

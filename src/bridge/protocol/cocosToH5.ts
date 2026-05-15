@@ -37,6 +37,35 @@ export interface CocosToastPayload {
   duration?: number
 }
 
+// Cocos -> H5：显示通用业务弹窗。
+export interface CocosDialogPayload {
+  title?: string
+  message: string
+  showCancelButton?: boolean
+  showConfirmButton?: boolean
+  cancelButtonText?: string
+  confirmButtonText?: string
+  // 点击遮罩是否允许关闭，默认 false。
+  closeOnClickOverlay?: boolean
+  // 是否在展示前确保 H5 可见，默认 false。
+  ensureVisible?: boolean
+}
+
+export interface CocosPanelPayload {
+  panelType: string
+  title?: string
+  // 自定义面板渲染参数，交由对应 panelType 的组件解释。
+  props?: Record<string, unknown>
+  // 点击遮罩是否允许关闭，默认 true。
+  closeOnClickOverlay?: boolean
+  ensureVisible?: boolean
+}
+
+export interface ClosePanelPayload {
+  requestId?: string
+  panelType?: string
+}
+
 // Cocos -> H5：控制 H5 根节点显隐（显示 Cocos 画布时可下发 h5Hide）。
 export interface H5VisibilityPayload {
   // 可选附加原因，仅用于日志。

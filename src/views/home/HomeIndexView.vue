@@ -198,19 +198,19 @@ function goToRecharge(): void {
 }
 
 function openMiniGamePanel(): void {
-  // showGameToast('功能开发中')
-  openBridgePanel({
-    panelType: 'gameRule',
-    closeOnClickOverlay: true,
-    props: {
-      ruleType: 2,
-      gameInfo: {
-        game_type: 0,
-        poker_type: 2,
-        room_critical_hit: 1,
-      },
-    },
-  })
+  showGameToast('功能开发中')
+  // openBridgePanel({
+  //   panelType: 'gameRule',
+  //   closeOnClickOverlay: true,
+  //   props: {
+  //     ruleType: 1,
+  //     gameInfo: {
+  //       game_type: 0,
+  //       poker_type: 2,
+  //       room_critical_hit: 1,
+  //     },
+  //   },
+  // })
 }
 
 function getRoomPlayers(room: RoomRecord): number {

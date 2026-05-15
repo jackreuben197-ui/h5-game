@@ -39,7 +39,7 @@ const route = useRoute()
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 
-const listMode = ref<ListMode>('edit')
+const listMode = ref<ListMode>('members')
 const hideCurrentPlayers = ref(false)
 const loading = ref(false)
 const searching = ref(false)
@@ -157,6 +157,7 @@ async function searchPlayers(): Promise<void> {
       limit: 50,
       offset: 0,
       gold_type: 0,
+      simple: true,
     })
 
     if (response.code !== 0 || !response.data) {
@@ -267,16 +268,19 @@ onMounted(() => {
         />
       </section>
 
-      <section v-if="listMode === 'edit'" class="toggle-row">
-        <span>隐藏当前下线玩家</span>
-        <button
-          type="button"
-          class="switch"
-          :class="{ on: hideCurrentPlayers }"
-          @click="hideCurrentPlayers = !hideCurrentPlayers"
-        >
-          <i></i>
-        </button>
+      <section class="toggle-row">
+        <span>邀请链接</span>
+        <label v-if="listMode === 'edit'">
+          <span class="hidden-text">隐藏当前下线玩家</span>
+          <button
+            type="button"
+            class="switch"
+            :class="{ on: hideCurrentPlayers }"
+            @click="hideCurrentPlayers = !hideCurrentPlayers"
+          >
+            <i></i>
+          </button>
+        </label>
       </section>
 
       <section class="cards">
@@ -360,7 +364,7 @@ onMounted(() => {
 }
 
 .search {
-  min-height: figma-rem(77.882);
+  min-height: 1.06827rem;
   display: flex;
   align-items: center;
   gap: figma-rem(8.64);
@@ -391,6 +395,12 @@ onMounted(() => {
   align-items: center;
   color: #fff;
   font-size: figma-rem(10.135);
+}
+
+.hidden-text {
+  float: left;
+  padding-right: 0.1rem;
+  line-height: figma-rem(18.5);
 }
 
 .switch {

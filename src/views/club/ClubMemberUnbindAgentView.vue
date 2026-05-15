@@ -109,6 +109,8 @@ async function loadDisplayData(): Promise<void> {
           limit: 200,
           offset: 0,
           gold_type: 0,
+          simple: true,
+          hide_slave: true,
         })
 
         if (

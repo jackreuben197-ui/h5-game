@@ -632,6 +632,8 @@ async function fetchMembers(reset = false): Promise<void> {
       sort_type: 4,
       order_type: 2,
       gold_type: 0,
+      simple: true,
+      hide_slave: true,
       limit: PAGE_SIZE,
       offset: currentOffset,
     })

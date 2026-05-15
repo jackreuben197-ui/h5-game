@@ -957,6 +957,7 @@ export interface OrgMemberListRequest {
   filter_type?: number // 1联盟币 2 usdt 3 记分牌
   agent_id?: number // 代理id
   simple?: boolean // 是否简版
+  hide_slave?: boolean // 是否隐藏从属俱乐部成员
 
   [key: string]: unknown
 }

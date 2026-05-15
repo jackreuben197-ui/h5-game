@@ -444,6 +444,8 @@ async function fetchAgentList(): Promise<void> {
       limit: 200,
       offset: 0,
       gold_type: 0,
+      simple: true,
+      hide_slave: true,
     })
 
     if (response.code !== 0 || !response.data) {

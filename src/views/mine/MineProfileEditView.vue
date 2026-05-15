@@ -101,11 +101,16 @@ async function onConfirmGender(): Promise<void> {
 
     selectedGender.value = nextGender
     const userInfo = userInfoStore.userInfo
-    if (userInfo && typeof userInfo === 'object' && userInfo.user && typeof userInfo.user === 'object') {
+    if (
+      userInfo &&
+      typeof userInfo === 'object' &&
+      userInfo.user &&
+      typeof userInfo.user === 'object'
+    ) {
       userInfoStore.setUserInfo({
         ...userInfo,
         user: {
-          ...(userInfo.user),
+          ...userInfo.user,
           sex,
           nickname: displayUser.value.nickname,
         },
@@ -132,7 +137,7 @@ async function onConfirmGender(): Promise<void> {
         <div class="profile-card__inner">
           <button class="avatar-wrap" type="button" @click="openAvatarPopup">
             <img :src="String(displayUser.avatar)" alt="avatar" />
-            <span class="edit-chip">Edit</span>
+            <span class="edit-chip">编辑</span>
           </button>
 
           <div class="user-box">
@@ -150,17 +155,17 @@ async function onConfirmGender(): Promise<void> {
         <button class="glass-input" type="button" @click="goNicknamePage">
           {{ nickname || 'Name here' }}
         </button>
-        <p class="input-hint">Enter your Account Name</p>
+        <p class="input-hint">输入昵称</p>
       </section>
 
       <section class="gender-select" @click="openGenderPopup">
         <button class="gender-option" type="button">
           <span class="radio" :class="{ active: selectedGender === 'male' }"></span>
-          <span>Male</span>
+          <span>男</span>
         </button>
         <button class="gender-option" type="button">
           <span class="radio" :class="{ active: selectedGender === 'female' }"></span>
-          <span>Female</span>
+          <span>女</span>
         </button>
       </section>
 
@@ -224,7 +229,12 @@ async function onConfirmGender(): Promise<void> {
   min-height: 3.7867rem;
   border-radius: 1.0418rem;
   padding: 0.0267rem;
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.25) 40%, rgba(255, 255, 255, 0.75) 100%);
+  background: linear-gradient(
+    150deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(255, 255, 255, 0.25) 40%,
+    rgba(255, 255, 255, 0.75) 100%
+  );
 }
 
 .profile-card__inner {
@@ -236,8 +246,18 @@ async function onConfirmGender(): Promise<void> {
   gap: 0.5rem;
   backdrop-filter: blur(0.4rem);
   background:
-    radial-gradient(70% 100% at 20% 30%, rgba(159, 62, 26, 0.72) 0%, rgba(159, 62, 26, 0.3) 58%, rgba(159, 62, 26, 0) 100%),
-    radial-gradient(80% 130% at 78% 45%, rgba(125, 2, 57, 0.72) 0%, rgba(125, 2, 57, 0.3) 60%, rgba(125, 2, 57, 0) 100%),
+    radial-gradient(
+      70% 100% at 20% 30%,
+      rgba(159, 62, 26, 0.72) 0%,
+      rgba(159, 62, 26, 0.3) 58%,
+      rgba(159, 62, 26, 0) 100%
+    ),
+    radial-gradient(
+      80% 130% at 78% 45%,
+      rgba(125, 2, 57, 0.72) 0%,
+      rgba(125, 2, 57, 0.3) 60%,
+      rgba(125, 2, 57, 0) 100%
+    ),
     rgba(0, 0, 0, 0.24);
   border: 0.0267rem solid rgba(255, 255, 255, 0.3);
 }

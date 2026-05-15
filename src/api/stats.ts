@@ -111,15 +111,13 @@ import type {
 import { useUserInfoStore } from '@/stores/userInfo'
 
 const userInfoStore = useUserInfoStore()
-const formatPath = (
-  template: string,
-  pathParams: Record<string, string | number>,
-): string => template.replace(/\{([^}]+)\}/g, (_, key) => encodeURIComponent(String(pathParams[key] ?? '')))
+const formatPath = (template: string, pathParams: Record<string, string | number>): string =>
+  template.replace(/\{([^}]+)\}/g, (_, key) => encodeURIComponent(String(pathParams[key] ?? '')))
 void formatPath
 
 // 对齐 cocos WebStatsClientClickLog.API
 export async function postStatsClientClickLogApi(
-  payload: StatsClientClickLogRequest = {} as StatsClientClickLogRequest
+  payload: StatsClientClickLogRequest = {} as StatsClientClickLogRequest,
 ): Promise<ApiResponse<StatsClientClickLogResponseData>> {
   const endpoint = '/stats/client/click/log'
   const response = await http.post<ApiResponse<StatsClientClickLogResponseData>>(endpoint, payload)
@@ -128,77 +126,100 @@ export async function postStatsClientClickLogApi(
 
 // 对齐 cocos WebClubDataStatsData.API
 export async function postClubDataStatsDataApi(
-  payload: ClubDataStatsDataRequest = {} as ClubDataStatsDataRequest
+  payload: ClubDataStatsDataRequest = {} as ClubDataStatsDataRequest,
 ): Promise<ApiResponse<ClubDataStatsDataResponseData>> {
   const endpoint = '/stats/club_data_stats/data'
   const response = await http.post<ApiResponse<ClubDataStatsDataResponseData>>(endpoint, payload, {
     headers: {
       'X-Club': userInfoStore.currentClub?.club_id,
-    }
+    },
   })
   return response.data
 }
 
 // 对齐 cocos WebClubDataStatsDataDetail.API
 export async function postClubDataStatsDataDetailApi(
-  payload: ClubDataStatsDataDetailRequest = {} as ClubDataStatsDataDetailRequest
+  payload: ClubDataStatsDataDetailRequest = {} as ClubDataStatsDataDetailRequest,
 ): Promise<ApiResponse<ClubDataStatsDataDetailResponseData>> {
   const endpoint = '/stats/club_data_stats/data_detail'
-  const response = await http.post<ApiResponse<ClubDataStatsDataDetailResponseData>>(endpoint, payload, {
-    headers: {
-      'X-Club': userInfoStore.currentClub?.club_id,
-    }
-  })
+  const response = await http.post<ApiResponse<ClubDataStatsDataDetailResponseData>>(
+    endpoint,
+    payload,
+    {
+      headers: {
+        'X-Club': userInfoStore.currentClub?.club_id,
+      },
+    },
+  )
   return response.data
 }
 
 // 对齐 cocos WebClubDataStatsDataDetailInfo.API
 export async function postClubDataStatsDataDetailInfoApi(
-  payload: ClubDataStatsDataDetailInfoRequest = {} as ClubDataStatsDataDetailInfoRequest
+  payload: ClubDataStatsDataDetailInfoRequest = {} as ClubDataStatsDataDetailInfoRequest,
 ): Promise<ApiResponse<ClubDataStatsDataDetailInfoResponseData>> {
   const endpoint = '/stats/club_data_stats/data_detail_info'
-  const response = await http.post<ApiResponse<ClubDataStatsDataDetailInfoResponseData>>(endpoint, payload, {
-    headers: {
-      'X-Club': userInfoStore.currentClub?.club_id,
-    }
-  })
+  const response = await http.post<ApiResponse<ClubDataStatsDataDetailInfoResponseData>>(
+    endpoint,
+    payload,
+    {
+      headers: {
+        'X-Club': userInfoStore.currentClub?.club_id,
+      },
+    },
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsClubDataStatsDataDetailDownLoad.API
 export async function postStatsClubDataStatsDataDetailDownLoadApi(
-  payload: StatsClubDataStatsDataDetailDownLoadRequest = {} as StatsClubDataStatsDataDetailDownLoadRequest
+  payload: StatsClubDataStatsDataDetailDownLoadRequest = {} as StatsClubDataStatsDataDetailDownLoadRequest,
 ): Promise<ApiResponse<StatsClubDataStatsDataDetailDownLoadResponseData>> {
   const endpoint = '/stats/club_data_stats/data_detail/download'
-  const response = await http.post<ApiResponse<StatsClubDataStatsDataDetailDownLoadResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsClubDataStatsDataDetailDownLoadResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebClubDataStatsDataInfo.API
 export async function postClubDataStatsDataInfoApi(
-  payload: ClubDataStatsDataInfoRequest = {} as ClubDataStatsDataInfoRequest
+  payload: ClubDataStatsDataInfoRequest = {} as ClubDataStatsDataInfoRequest,
 ): Promise<ApiResponse<ClubDataStatsDataInfoResponseData>> {
   const endpoint = '/stats/club_data_stats/data_info'
-  const response = await http.post<ApiResponse<ClubDataStatsDataInfoResponseData>>(endpoint, payload, {
-    headers: {
-      'X-Club': userInfoStore.currentClub?.club_id,
-    }
-  })
+  const response = await http.post<ApiResponse<ClubDataStatsDataInfoResponseData>>(
+    endpoint,
+    payload,
+    {
+      headers: {
+        'X-Club': userInfoStore.currentClub?.club_id,
+      },
+    },
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsClubDataStatsUserDetail.API
 export async function postStatsClubDataStatsUserDetailApi(
-  payload: StatsClubDataStatsUserDetailRequest = {} as StatsClubDataStatsUserDetailRequest
+  payload: StatsClubDataStatsUserDetailRequest = {} as StatsClubDataStatsUserDetailRequest,
 ): Promise<ApiResponse<StatsClubDataStatsUserDetailResponseData>> {
   const endpoint = '/stats/club_data_stats/user_detail'
-  const response = await http.post<ApiResponse<StatsClubDataStatsUserDetailResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsClubDataStatsUserDetailResponseData>>(
+    endpoint,
+    payload,
+    {
+      headers: {
+        'X-Club': userInfoStore.currentClub?.club_id,
+      },
+    },
+  )
   return response.data
 }
 
 // 对齐 cocos WebGuildDataVipInfo.API
 export async function postGuildDataVipInfoApi(
-  payload: GuildDataVipInfoRequest = {} as GuildDataVipInfoRequest
+  payload: GuildDataVipInfoRequest = {} as GuildDataVipInfoRequest,
 ): Promise<ApiResponse<GuildDataVipInfoResponseData>> {
   const endpoint = '/stats/club_data_stats/vip_game'
   const response = await http.post<ApiResponse<GuildDataVipInfoResponseData>>(endpoint, payload)
@@ -207,25 +228,31 @@ export async function postGuildDataVipInfoApi(
 
 // 对齐 cocos WebStatsClubDataStatsVipUser.API
 export async function postStatsClubDataStatsVipUserApi(
-  payload: StatsClubDataStatsVipUserRequest = {} as StatsClubDataStatsVipUserRequest
+  payload: StatsClubDataStatsVipUserRequest = {} as StatsClubDataStatsVipUserRequest,
 ): Promise<ApiResponse<StatsClubDataStatsVipUserResponseData>> {
   const endpoint = '/stats/club_data_stats/vip_user'
-  const response = await http.post<ApiResponse<StatsClubDataStatsVipUserResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsClubDataStatsVipUserResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsClubDataStatsWeeklyReport.API
 export async function postStatsClubDataStatsWeeklyReportApi(
-  payload: StatsClubDataStatsWeeklyReportRequest = {} as StatsClubDataStatsWeeklyReportRequest
+  payload: StatsClubDataStatsWeeklyReportRequest = {} as StatsClubDataStatsWeeklyReportRequest,
 ): Promise<ApiResponse<StatsClubDataStatsWeeklyReportResponseData>> {
   const endpoint = '/stats/club_data_stats/weekly_report'
-  const response = await http.post<ApiResponse<StatsClubDataStatsWeeklyReportResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsClubDataStatsWeeklyReportResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebClubAgentFriendData.API
 export async function postClubAgentFriendDataApi(
-  payload: ClubAgentFriendDataRequest = {} as ClubAgentFriendDataRequest
+  payload: ClubAgentFriendDataRequest = {} as ClubAgentFriendDataRequest,
 ): Promise<ApiResponse<ClubAgentFriendDataResponseData>> {
   const endpoint = '/stats/club/agent/friend_data'
   const response = await http.post<ApiResponse<ClubAgentFriendDataResponseData>>(endpoint, payload)
@@ -234,7 +261,7 @@ export async function postClubAgentFriendDataApi(
 
 // 对齐 cocos WebClubAgentFriendInfo.API
 export async function postClubAgentFriendInfoApi(
-  payload: ClubAgentFriendInfoRequest = {} as ClubAgentFriendInfoRequest
+  payload: ClubAgentFriendInfoRequest = {} as ClubAgentFriendInfoRequest,
 ): Promise<ApiResponse<ClubAgentFriendInfoResponseData>> {
   const endpoint = '/stats/club/agent/friend_info'
   const response = await http.post<ApiResponse<ClubAgentFriendInfoResponseData>>(endpoint, payload)
@@ -243,7 +270,7 @@ export async function postClubAgentFriendInfoApi(
 
 // 对齐 cocos WebOrgClubEarnIng.API
 export async function postOrgClubEarnIngApi(
-  payload: OrgClubEarnIngRequest = {} as OrgClubEarnIngRequest
+  payload: OrgClubEarnIngRequest = {} as OrgClubEarnIngRequest,
 ): Promise<ApiResponse<OrgClubEarnIngResponseData>> {
   const endpoint = '/stats/club/profit'
   const response = await http.post<ApiResponse<OrgClubEarnIngResponseData>>(endpoint, payload)
@@ -252,7 +279,7 @@ export async function postOrgClubEarnIngApi(
 
 // 对齐 cocos WebOrgClubMemberEarnIng.API
 export async function postOrgClubMemberEarnIngApi(
-  payload: OrgClubMemberEarnIngRequest = {} as OrgClubMemberEarnIngRequest
+  payload: OrgClubMemberEarnIngRequest = {} as OrgClubMemberEarnIngRequest,
 ): Promise<ApiResponse<OrgClubMemberEarnIngResponseData>> {
   const endpoint = '/stats/club/user_profit'
   const response = await http.post<ApiResponse<OrgClubMemberEarnIngResponseData>>(endpoint, payload)
@@ -261,7 +288,7 @@ export async function postOrgClubMemberEarnIngApi(
 
 // 对齐 cocos WebOrgClubUserGameInfo.API
 export async function postOrgClubUserGameInfoApi(
-  payload: OrgClubUserGameInfoRequest = {} as OrgClubUserGameInfoRequest
+  payload: OrgClubUserGameInfoRequest = {} as OrgClubUserGameInfoRequest,
 ): Promise<ApiResponse<OrgClubUserGameInfoResponseData>> {
   const endpoint = '/stats/club/user/info'
   const response = await http.post<ApiResponse<OrgClubUserGameInfoResponseData>>(endpoint, payload)
@@ -270,16 +297,19 @@ export async function postOrgClubUserGameInfoApi(
 
 // 对齐 cocos WebStatsCowboyHistoryRoomDetail.API
 export async function postStatsCowboyHistoryRoomDetailApi(
-  payload: StatsCowboyHistoryRoomDetailRequest = {} as StatsCowboyHistoryRoomDetailRequest
+  payload: StatsCowboyHistoryRoomDetailRequest = {} as StatsCowboyHistoryRoomDetailRequest,
 ): Promise<ApiResponse<StatsCowboyHistoryRoomDetailResponseData>> {
   const endpoint = '/stats/cowboy/history/room/detail'
-  const response = await http.post<ApiResponse<StatsCowboyHistoryRoomDetailResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsCowboyHistoryRoomDetailResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebFriendRoomStats.API
 export async function postFriendRoomStatsApi(
-  payload: FriendRoomStatsRequest = {} as FriendRoomStatsRequest
+  payload: FriendRoomStatsRequest = {} as FriendRoomStatsRequest,
 ): Promise<ApiResponse<FriendRoomStatsResponseData>> {
   const endpoint = '/stats/friend_room_stats'
   const response = await http.post<ApiResponse<FriendRoomStatsResponseData>>(endpoint, payload)
@@ -288,7 +318,7 @@ export async function postFriendRoomStatsApi(
 
 // 对齐 cocos WebFriendRoomStatsData.API
 export async function postFriendRoomStatsDataApi(
-  payload: FriendRoomStatsDataRequest = {} as FriendRoomStatsDataRequest
+  payload: FriendRoomStatsDataRequest = {} as FriendRoomStatsDataRequest,
 ): Promise<ApiResponse<FriendRoomStatsDataResponseData>> {
   const endpoint = '/stats/friend_room_stats/data'
   const response = await http.post<ApiResponse<FriendRoomStatsDataResponseData>>(endpoint, payload)
@@ -297,61 +327,79 @@ export async function postFriendRoomStatsDataApi(
 
 // 对齐 cocos WebFriendRoomStatsDataDetail.API
 export async function postFriendRoomStatsDataDetailApi(
-  payload: FriendRoomStatsDataDetailRequest = {} as FriendRoomStatsDataDetailRequest
+  payload: FriendRoomStatsDataDetailRequest = {} as FriendRoomStatsDataDetailRequest,
 ): Promise<ApiResponse<FriendRoomStatsDataDetailResponseData>> {
   const endpoint = '/stats/friend_room_stats/data_detail'
-  const response = await http.post<ApiResponse<FriendRoomStatsDataDetailResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<FriendRoomStatsDataDetailResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebFriendRoomStatsDataDetailInfo.API
 export async function postFriendRoomStatsDataDetailInfoApi(
-  payload: FriendRoomStatsDataDetailInfoRequest = {} as FriendRoomStatsDataDetailInfoRequest
+  payload: FriendRoomStatsDataDetailInfoRequest = {} as FriendRoomStatsDataDetailInfoRequest,
 ): Promise<ApiResponse<FriendRoomStatsDataDetailInfoResponseData>> {
   const endpoint = '/stats/friend_room_stats/data_detail_info'
-  const response = await http.post<ApiResponse<FriendRoomStatsDataDetailInfoResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<FriendRoomStatsDataDetailInfoResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebFriendRoomStatsDataInfo.API
 export async function postFriendRoomStatsDataInfoApi(
-  payload: FriendRoomStatsDataInfoRequest = {} as FriendRoomStatsDataInfoRequest
+  payload: FriendRoomStatsDataInfoRequest = {} as FriendRoomStatsDataInfoRequest,
 ): Promise<ApiResponse<FriendRoomStatsDataInfoResponseData>> {
   const endpoint = '/stats/friend_room_stats/data_info'
-  const response = await http.post<ApiResponse<FriendRoomStatsDataInfoResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<FriendRoomStatsDataInfoResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsFriendRoomStatsUserRoomDetailList.API
 export async function postStatsFriendRoomStatsUserRoomDetailListApi(
-  payload: StatsFriendRoomStatsUserRoomDetailListRequest = {} as StatsFriendRoomStatsUserRoomDetailListRequest
+  payload: StatsFriendRoomStatsUserRoomDetailListRequest = {} as StatsFriendRoomStatsUserRoomDetailListRequest,
 ): Promise<ApiResponse<StatsFriendRoomStatsUserRoomDetailListResponseData>> {
   const endpoint = '/stats/friend_room_stats/user/room_detail/list'
-  const response = await http.post<ApiResponse<StatsFriendRoomStatsUserRoomDetailListResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsFriendRoomStatsUserRoomDetailListResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsFriendRoomStatsUserRoomIdList.API
 export async function postStatsFriendRoomStatsUserRoomIdListApi(
-  payload: StatsFriendRoomStatsUserRoomIdListRequest = {} as StatsFriendRoomStatsUserRoomIdListRequest
+  payload: StatsFriendRoomStatsUserRoomIdListRequest = {} as StatsFriendRoomStatsUserRoomIdListRequest,
 ): Promise<ApiResponse<StatsFriendRoomStatsUserRoomIdListResponseData>> {
   const endpoint = '/stats/friend_room_stats/user/room_id/list'
-  const response = await http.post<ApiResponse<StatsFriendRoomStatsUserRoomIdListResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsFriendRoomStatsUserRoomIdListResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsFriendRoomStatsUserRoomStatsList.API
 export async function postStatsFriendRoomStatsUserRoomStatsListApi(
-  payload: StatsFriendRoomStatsUserRoomStatsListRequest = {} as StatsFriendRoomStatsUserRoomStatsListRequest
+  payload: StatsFriendRoomStatsUserRoomStatsListRequest = {} as StatsFriendRoomStatsUserRoomStatsListRequest,
 ): Promise<ApiResponse<StatsFriendRoomStatsUserRoomStatsListResponseData>> {
   const endpoint = '/stats/friend_room_stats/user/room_stats/list'
-  const response = await http.post<ApiResponse<StatsFriendRoomStatsUserRoomStatsListResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsFriendRoomStatsUserRoomStatsListResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsFriendStatsData.API
 export async function postStatsFriendStatsDataApi(
-  payload: StatsFriendStatsDataRequest = {} as StatsFriendStatsDataRequest
+  payload: StatsFriendStatsDataRequest = {} as StatsFriendStatsDataRequest,
 ): Promise<ApiResponse<StatsFriendStatsDataResponseData>> {
   const endpoint = '/stats/friend_stats/data'
   const response = await http.post<ApiResponse<StatsFriendStatsDataResponseData>>(endpoint, payload)
@@ -360,19 +408,25 @@ export async function postStatsFriendStatsDataApi(
 
 // 对齐 cocos WebStatsJackpotAwardLogs.API
 export async function postStatsJackpotAwardLogsApi(
-  payload: StatsJackpotAwardLogsRequest = {} as StatsJackpotAwardLogsRequest
+  payload: StatsJackpotAwardLogsRequest = {} as StatsJackpotAwardLogsRequest,
 ): Promise<ApiResponse<StatsJackpotAwardLogsResponseData>> {
   const endpoint = '/stats/jackpot/award_logs'
-  const response = await http.post<ApiResponse<StatsJackpotAwardLogsResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsJackpotAwardLogsResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsJackpotGoldChangeLogs.API
 export async function postStatsJackpotGoldChangeLogsApi(
-  payload: StatsJackpotGoldChangeLogsRequest = {} as StatsJackpotGoldChangeLogsRequest
+  payload: StatsJackpotGoldChangeLogsRequest = {} as StatsJackpotGoldChangeLogsRequest,
 ): Promise<ApiResponse<StatsJackpotGoldChangeLogsResponseData>> {
   const endpoint = '/stats/jackpot/gold_change_logs'
-  const response = await http.post<ApiResponse<StatsJackpotGoldChangeLogsResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsJackpotGoldChangeLogsResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
@@ -392,13 +446,16 @@ export async function postStatsMttRoomDetailApiApi(
   pathParams: Record<string, string | number> = {},
 ): Promise<ApiResponse<StatsMttRoomDetailApiResponseData>> {
   const endpoint = formatPath('/stats/mtt_room_detail/{id}', pathParams)
-  const response = await http.post<ApiResponse<StatsMttRoomDetailApiResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsMttRoomDetailApiResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsMttHistoryList.API
 export async function postStatsMttHistoryListApi(
-  payload: StatsMttHistoryListRequest = {} as StatsMttHistoryListRequest
+  payload: StatsMttHistoryListRequest = {} as StatsMttHistoryListRequest,
 ): Promise<ApiResponse<StatsMttHistoryListResponseData>> {
   const endpoint = '/stats/mtt/history/list'
   const response = await http.post<ApiResponse<StatsMttHistoryListResponseData>>(endpoint, payload)
@@ -417,28 +474,37 @@ export async function postStatsOtherUserStatsApi(
 
 // 对齐 cocos WebStatsProfitDataStatsDataByDate.API
 export async function postStatsProfitDataStatsDataByDateApi(
-  payload: StatsProfitDataStatsDataByDateRequest = {} as StatsProfitDataStatsDataByDateRequest
+  payload: StatsProfitDataStatsDataByDateRequest = {} as StatsProfitDataStatsDataByDateRequest,
 ): Promise<ApiResponse<StatsProfitDataStatsDataByDateResponseData>> {
   const endpoint = '/stats/profit_data_stats/data_by_date'
-  const response = await http.post<ApiResponse<StatsProfitDataStatsDataByDateResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsProfitDataStatsDataByDateResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsProfitDataStatsDataInfo.API
 export async function postStatsProfitDataStatsDataInfoApi(
-  payload: StatsProfitDataStatsDataInfoRequest = {} as StatsProfitDataStatsDataInfoRequest
+  payload: StatsProfitDataStatsDataInfoRequest = {} as StatsProfitDataStatsDataInfoRequest,
 ): Promise<ApiResponse<StatsProfitDataStatsDataInfoResponseData>> {
   const endpoint = '/stats/profit_data_stats/data_info'
-  const response = await http.post<ApiResponse<StatsProfitDataStatsDataInfoResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsProfitDataStatsDataInfoResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsProfitDataStatsUserByDate.API
 export async function postStatsProfitDataStatsUserByDateApi(
-  payload: StatsProfitDataStatsUserByDateRequest = {} as StatsProfitDataStatsUserByDateRequest
+  payload: StatsProfitDataStatsUserByDateRequest = {} as StatsProfitDataStatsUserByDateRequest,
 ): Promise<ApiResponse<StatsProfitDataStatsUserByDateResponseData>> {
   const endpoint = '/stats/profit_data_stats/user_by_date'
-  const response = await http.post<ApiResponse<StatsProfitDataStatsUserByDateResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsProfitDataStatsUserByDateResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
@@ -454,7 +520,7 @@ export async function postStatsRoomDetailApi(
 
 // 对齐 cocos WebRoomCenterHistoryList.API
 export async function postRoomCenterHistoryListApi(
-  payload: RoomCenterHistoryListRequest = {} as RoomCenterHistoryListRequest
+  payload: RoomCenterHistoryListRequest = {} as RoomCenterHistoryListRequest,
 ): Promise<ApiResponse<RoomCenterHistoryListData>> {
   const endpoint = '/stats/room/history/list'
   const response = await http.post<ApiResponse<RoomCenterHistoryListData>>(endpoint, payload)
@@ -463,79 +529,103 @@ export async function postRoomCenterHistoryListApi(
 
 // 对齐 cocos WebStatsRoomInsuranceData.API
 export async function postStatsRoomInsuranceDataApi(
-  payload: StatsRoomInsuranceDataRequest = {} as StatsRoomInsuranceDataRequest
+  payload: StatsRoomInsuranceDataRequest = {} as StatsRoomInsuranceDataRequest,
 ): Promise<ApiResponse<StatsRoomInsuranceDataResponseData>> {
   const endpoint = '/stats/room/insurance_data'
-  const response = await http.post<ApiResponse<StatsRoomInsuranceDataResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsRoomInsuranceDataResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsRoomInsuranceInfo.API
 export async function postStatsRoomInsuranceInfoApi(
-  payload: StatsRoomInsuranceInfoRequest = {} as StatsRoomInsuranceInfoRequest
+  payload: StatsRoomInsuranceInfoRequest = {} as StatsRoomInsuranceInfoRequest,
 ): Promise<ApiResponse<StatsRoomInsuranceInfoResponseData>> {
   const endpoint = '/stats/room/insurance_info'
-  const response = await http.post<ApiResponse<StatsRoomInsuranceInfoResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsRoomInsuranceInfoResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsTribeStatsCurrent.API
 export async function postStatsTribeStatsCurrentApi(
-  payload: StatsTribeStatsCurrentRequest = {} as StatsTribeStatsCurrentRequest
+  payload: StatsTribeStatsCurrentRequest = {} as StatsTribeStatsCurrentRequest,
 ): Promise<ApiResponse<StatsTribeStatsCurrentResponseData>> {
   const endpoint = '/stats/tribe/stats/current'
-  const response = await http.post<ApiResponse<StatsTribeStatsCurrentResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsTribeStatsCurrentResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsTribeStatsDataByDate.API
 export async function postStatsTribeStatsDataByDateApi(
-  payload: StatsTribeStatsDataByDateRequest = {} as StatsTribeStatsDataByDateRequest
+  payload: StatsTribeStatsDataByDateRequest = {} as StatsTribeStatsDataByDateRequest,
 ): Promise<ApiResponse<StatsTribeStatsDataByDateResponseData>> {
   const endpoint = '/stats/tribe/stats/data_by_date'
-  const response = await http.post<ApiResponse<StatsTribeStatsDataByDateResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsTribeStatsDataByDateResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsTribeStatsDataDetail.API
 export async function postStatsTribeStatsDataDetailApi(
-  payload: StatsTribeStatsDataDetailRequest = {} as StatsTribeStatsDataDetailRequest
+  payload: StatsTribeStatsDataDetailRequest = {} as StatsTribeStatsDataDetailRequest,
 ): Promise<ApiResponse<StatsTribeStatsDataDetailResponseData>> {
   const endpoint = '/stats/tribe/stats/data_detail'
-  const response = await http.post<ApiResponse<StatsTribeStatsDataDetailResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsTribeStatsDataDetailResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsTribeStatsDataDetailInfo.API
 export async function postStatsTribeStatsDataDetailInfoApi(
-  payload: StatsTribeStatsDataDetailInfoRequest = {} as StatsTribeStatsDataDetailInfoRequest
+  payload: StatsTribeStatsDataDetailInfoRequest = {} as StatsTribeStatsDataDetailInfoRequest,
 ): Promise<ApiResponse<StatsTribeStatsDataDetailInfoResponseData>> {
   const endpoint = '/stats/tribe/stats/data_detail_info'
-  const response = await http.post<ApiResponse<StatsTribeStatsDataDetailInfoResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsTribeStatsDataDetailInfoResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsTribeStatsDataInfo.API
 export async function postStatsTribeStatsDataInfoApi(
-  payload: StatsTribeStatsDataInfoRequest = {} as StatsTribeStatsDataInfoRequest
+  payload: StatsTribeStatsDataInfoRequest = {} as StatsTribeStatsDataInfoRequest,
 ): Promise<ApiResponse<StatsTribeStatsDataInfoResponseData>> {
   const endpoint = '/stats/tribe/stats/data_info'
-  const response = await http.post<ApiResponse<StatsTribeStatsDataInfoResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsTribeStatsDataInfoResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsTribeStatsDownLoad.API
 export async function postStatsTribeStatsDownLoadApi(
-  payload: StatsTribeStatsDownLoadRequest = {} as StatsTribeStatsDownLoadRequest
+  payload: StatsTribeStatsDownLoadRequest = {} as StatsTribeStatsDownLoadRequest,
 ): Promise<ApiResponse<StatsTribeStatsDownLoadResponseData>> {
   const endpoint = '/stats/tribe/stats/download'
-  const response = await http.post<ApiResponse<StatsTribeStatsDownLoadResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsTribeStatsDownLoadResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsUserStats.API
 export async function postStatsUserStatsApi(
-  payload: StatsUserStatsRequest = {} as StatsUserStatsRequest
+  payload: StatsUserStatsRequest = {} as StatsUserStatsRequest,
 ): Promise<ApiResponse<StatsUserStatsResponseData>> {
   const endpoint = '/stats/user_stats'
   const response = await http.post<ApiResponse<StatsUserStatsResponseData>>(endpoint, payload)
@@ -544,7 +634,7 @@ export async function postStatsUserStatsApi(
 
 // 对齐 cocos WebStatsUserStatsAll.API
 export async function postStatsUserStatsAllApi(
-  payload: StatsUserStatsAllRequest = {} as StatsUserStatsAllRequest
+  payload: StatsUserStatsAllRequest = {} as StatsUserStatsAllRequest,
 ): Promise<ApiResponse<StatsUserStatsAllResponseData>> {
   const endpoint = '/stats/user_stats/all'
   const response = await http.post<ApiResponse<StatsUserStatsAllResponseData>>(endpoint, payload)
@@ -553,7 +643,7 @@ export async function postStatsUserStatsAllApi(
 
 // 对齐 cocos WebStatsUserStatsAllin.API
 export async function postStatsUserStatsAllinApi(
-  payload: StatsUserStatsAllinRequest = {} as StatsUserStatsAllinRequest
+  payload: StatsUserStatsAllinRequest = {} as StatsUserStatsAllinRequest,
 ): Promise<ApiResponse<StatsUserStatsAllinResponseData>> {
   const endpoint = '/stats/user_stats/allin'
   const response = await http.post<ApiResponse<StatsUserStatsAllinResponseData>>(endpoint, payload)
@@ -562,52 +652,67 @@ export async function postStatsUserStatsAllinApi(
 
 // 对齐 cocos WebStatsUserStatsCardType.API
 export async function postStatsUserStatsCardTypeApi(
-  payload: StatsUserStatsCardTypeRequest = {} as StatsUserStatsCardTypeRequest
+  payload: StatsUserStatsCardTypeRequest = {} as StatsUserStatsCardTypeRequest,
 ): Promise<ApiResponse<StatsUserStatsCardTypeResponseData>> {
   const endpoint = '/stats/user_stats/card_type'
-  const response = await http.post<ApiResponse<StatsUserStatsCardTypeResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsUserStatsCardTypeResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsUserStatsRivalRoomStats.API
 export async function postStatsUserStatsRivalRoomStatsApi(
-  payload: StatsUserStatsRivalRoomStatsRequest = {} as StatsUserStatsRivalRoomStatsRequest
+  payload: StatsUserStatsRivalRoomStatsRequest = {} as StatsUserStatsRivalRoomStatsRequest,
 ): Promise<ApiResponse<StatsUserStatsRivalRoomStatsResponseData>> {
   const endpoint = '/stats/user_stats/rival_room_stats'
-  const response = await http.post<ApiResponse<StatsUserStatsRivalRoomStatsResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsUserStatsRivalRoomStatsResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsUserGameRecordList.API
 export async function postStatsUserGameRecordListApi(
-  payload: StatsUserGameRecordListRequest = {} as StatsUserGameRecordListRequest
+  payload: StatsUserGameRecordListRequest = {} as StatsUserGameRecordListRequest,
 ): Promise<ApiResponse<StatsUserGameRecordListResponseData>> {
   const endpoint = '/stats/user/game/record/list'
-  const response = await http.post<ApiResponse<StatsUserGameRecordListResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsUserGameRecordListResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsUserRoomMatchIdList.API
 export async function postStatsUserRoomMatchIdListApi(
-  payload: StatsUserRoomMatchIdListRequest = {} as StatsUserRoomMatchIdListRequest
+  payload: StatsUserRoomMatchIdListRequest = {} as StatsUserRoomMatchIdListRequest,
 ): Promise<ApiResponse<StatsUserRoomMatchIdListResponseData>> {
   const endpoint = '/stats/user/room/match/id/list'
-  const response = await http.post<ApiResponse<StatsUserRoomMatchIdListResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsUserRoomMatchIdListResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebStatsUserRoomMatchList.API
 export async function postStatsUserRoomMatchListApi(
-  payload: StatsUserRoomMatchListRequest = {} as StatsUserRoomMatchListRequest
+  payload: StatsUserRoomMatchListRequest = {} as StatsUserRoomMatchListRequest,
 ): Promise<ApiResponse<StatsUserRoomMatchListResponseData>> {
   const endpoint = '/stats/user/room/match/list'
-  const response = await http.post<ApiResponse<StatsUserRoomMatchListResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<StatsUserRoomMatchListResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebClubStandiNgs.API
 export async function postClubStandiNgsApi(
-  payload: ClubStandiNgsRequest = {} as ClubStandiNgsRequest
+  payload: ClubStandiNgsRequest = {} as ClubStandiNgsRequest,
 ): Promise<ApiResponse<ClubStandiNgsResponseData>> {
   const endpoint = '/stats/user/standings'
   const response = await http.post<ApiResponse<ClubStandiNgsResponseData>>(endpoint, payload)

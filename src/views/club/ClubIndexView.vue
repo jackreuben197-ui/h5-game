@@ -466,7 +466,8 @@ function handleClubHeaderTabClick(tab: ClubHeaderTabName): void {
     return
   }
   if (tab === 'event') {
-    showFailToast('赛事开发中')
+    router.push('/mttList')
+    return
   }
 }
 

@@ -265,7 +265,7 @@ async function onJoinClub(): Promise<void> {
 }
 
 onMounted(() => {
-  void loadMyClubList()
+  void loadMyClubList(true)
 })
 </script>
 

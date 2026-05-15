@@ -31,7 +31,7 @@ const backgroundStyle = computed(() => ({
 }))
 
 type TabKey = 'account' | 'record'
-type MemberRole = '管理员' | '代理人' | '成员'
+type MemberRole = '会长' | '管理员' | '代理人' | '成员'
 type MemberIdentity = 'founder' | 'admin' | 'agent' | 'player'
 type FundAssetTab = 'coin' | 'quota' | 'diamond'
 type FundActionTab = 'grant' | 'recycle'
@@ -535,7 +535,7 @@ function resolveRole(record: OrgMemberListRecord): {
   const isBoss = toSafeNumber(record.is_boss) === 1
 
   if (isBoss || userLevel === 1) {
-    return { role: '管理员', identityType: 'founder' }
+    return { role: '会长', identityType: 'founder' }
   }
 
   if (userLevel === 2 || userLevel === 3) {
@@ -1446,7 +1446,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  gap: 0.08rem;
+  gap: 0.34rem;
   padding-top: 0.2rem;
 }
 

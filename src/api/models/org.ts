@@ -2683,6 +2683,7 @@ export interface OrgClubUserInfoData {
   uc_deposit_advance?: number // UC垫付 1 开启 2 未开启
   club_gold_credit?: number // 俱乐部币信用余额
   club_gold_credit_limit?: number // 俱乐部币信用额度限
+  friend_total?: number // 下线成员总数
 
   [key: string]: unknown
 }

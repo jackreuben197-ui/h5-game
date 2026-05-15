@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import SafetyGuardPanelContent from '@/components/Dialog/SafetyGuardPanelContent.vue'
+import SafetyGuardPanelContent from '@/components/Dialog/panels/SafetyGuardPanelContent.vue'
 
 const props = defineProps<{
   panelProps?: Record<string, unknown>

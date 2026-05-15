@@ -35,7 +35,6 @@ function onCancel(): void {
 
 <template>
   <GameDialog
-    class="game-dialog--table"
     :show="visible"
     :title="title"
     :message="message"

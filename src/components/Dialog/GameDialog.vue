@@ -2,6 +2,7 @@
 import { Comment, Fragment, Text, computed, useAttrs, useSlots, type VNode } from 'vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import dialogBg from '@/assets/images/component_dialog_bg.png'
+import tableBg from '@/assets/images/table_bg.png'
 import { t } from '@/i18n'
 
 /**
@@ -107,7 +108,13 @@ const hasFooterSlotContent = computed(() => hasRenderableContent(slots.footer?.(
   >
     <!-- 完全自定义 dialog 内部内容 -->
     <template #default>
-      <div class="game-dialog__card" :style="{ backgroundImage: `url(${dialogBg})` }">
+      <div
+        class="game-dialog__card"
+        :style="{
+          backgroundImage: `url(${dialogBg})`,
+          '--game-dialog-table-bg': `url(${tableBg})`,
+        }"
+      >
         <!-- Title -->
         <div v-if="title || hasTitleSlotContent" class="game-dialog__title">
           <slot name="title">{{ title }}</slot>
@@ -169,6 +176,7 @@ const hasFooterSlotContent = computed(() => hasRenderableContent(slots.footer?.(
 <style scoped lang="scss">
 .game-dialog__card {
   position: relative;
+  isolation: isolate;
   min-height: 2rem;
   border-radius: 0.97rem;
   overflow: hidden;
@@ -189,11 +197,43 @@ const hasFooterSlotContent = computed(() => hasRenderableContent(slots.footer?.(
   gap: 0.32rem;
 }
 
-.game-dialog--table .game-dialog__card {
-  background-image: none !important;
-  background-color: rgba(12, 12, 12, 0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+.game-dialog__card > * {
+  position: relative;
+  z-index: 2;
+}
+
+.game-panel-dialog .game-dialog__card {
+  background-color: transparent;
+}
+
+.game-panel-dialog .game-dialog__card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: var(--game-dialog-table-bg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(14px) brightness(0.8);
+  transform: scale(1.08);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.game-panel-dialog .game-dialog__card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  background: rgba(8, 8, 8, 0.25);
+  box-shadow: inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
+    inset 0.5px 0.5px 0 0 rgba(255, 255, 255, 0.85),
+    inset 2px 2px 0 -2px rgba(255, 255, 255, 0.3),
+    inset -0.5px -0.5px 0 0 rgba(255, 255, 255, 0.85),
+    inset -2px -2px 0 -2px rgba(255, 255, 255, 0.3);
+  pointer-events: none;
 }
 
 .game-dialog__title {

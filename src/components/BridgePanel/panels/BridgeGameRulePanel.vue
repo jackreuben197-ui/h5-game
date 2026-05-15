@@ -1,13 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-
-interface DemoTab {
-  key: string
-  label: string
-  description?: string
-  imageUrl?: string
-  bullets?: string[]
-}
+import { computed, ref, watchEffect } from 'vue'
+import PokerCard from '@/components/GameCard/PokerCard.vue'
+import { decodeCard } from '@/api/models/replayDisplay'
+import { t } from '@/i18n'
 
 const props = defineProps<{
   panelProps?: Record<string, unknown>
@@ -15,269 +10,464 @@ const props = defineProps<{
   closePanel: (reason?: string, payload?: unknown) => void
 }>()
 
+interface GameRulePanelGameInfo {
+  ruleType?: number
+  game_type?: number
+  poker_type?: number
+  room_critical_hit?: number
+  insurance_mode?: number
+}
+
+interface HandSection {
+  id: string
+  labelKey: string
+  cards: number[]
+}
+
+interface RuleBlock {
+  type: 'title' | 'paragraph'
+  text: string
+}
+
+interface RuleTab {
+  key: 'rules' | 'hands' | 'insurance'
+  label: string
+}
+
+const GAME_TYPE = {
+  HOLDEM: 0,
+  OMAHA4: 1,
+  OMAHA5: 2,
+  OMAHA6: 3,
+} as const
+
+const RULE_TYPE = {
+  BASIC: 1,
+  INSURANCE: 2,
+} as const
+
+const POKER_TYPE = {
+  NORMAL: 0,
+  SIX_PLUS: 2,
+} as const
+
+const INSURANCE_MODE = {
+  NORMAL: 0,
+  WPK: 1,
+  EV: 2,
+  NEW_NORMAL: 3,
+} as const
+
+const RAW_HAND_SECTIONS: HandSection[] = [
+  { id: 'royal-flush', labelKey: 'adaptation10053', cards: [9, 10, 11, 12, 0] },
+  { id: 'straight-flush', labelKey: 'adaptation10054', cards: [19, 20, 21, 22, 23] },
+  { id: 'four-kind', labelKey: 'adaptation10055', cards: [0, 13, 26, 39, 37] },
+  { id: 'full-house', labelKey: 'adaptation10056', cards: [38, 51, 12, 35, 48] },
+  { id: 'flush', labelKey: 'adaptation10057', cards: [17, 18, 20, 21, 23] },
+  { id: 'straight', labelKey: 'adaptation10058', cards: [18, 32, 33, 21, 22] },
+  { id: 'three-kind', labelKey: 'adaptation10059', cards: [24, 37, 11, 35, 0] },
+  { id: 'two-pairs', labelKey: 'adaptation10060', cards: [19, 24, 50, 0, 13] },
+  { id: 'one-pair', labelKey: 'adaptation10061', cards: [6, 19, 33, 44, 48] },
+  { id: 'high-card', labelKey: 'adaptation10062', cards: [7, 24, 0, 48, 29] },
+]
+
+const activeTabKey = ref<RuleTab['key']>('rules')
+
+function toSafeNumber(value: unknown): number {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
 function isRecord(raw: unknown): raw is Record<string, unknown> {
   return Boolean(raw) && typeof raw === 'object' && !Array.isArray(raw)
 }
 
-function normalizeTabs(raw: unknown): DemoTab[] {
-  if (!Array.isArray(raw)) {
+function getI18nText(key: string): string {
+  const translated = t(key)
+  return translated === key ? '' : translated
+}
+
+function getFirstI18nText(keys: string[], fallback = ''): string {
+  for (const key of keys) {
+    const translated = getI18nText(key)
+    if (translated) {
+      return translated
+    }
+  }
+
+  return fallback
+}
+
+function normalizeUnityRichText(raw: string): string {
+  return raw
+    .replace(/\\\s*n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\r\n/g, '\n')
+    .replace(/\u00A0/g, ' ')
+    .trim()
+}
+
+function stripUnityTags(raw: string): string {
+  return raw
+    .replace(/<\/?b>/gi, '')
+    .replace(/<size=\d+>/gi, '')
+    .replace(/<\/size>/gi, '')
+    .trim()
+}
+
+function parseRuleBlocks(raw: string): RuleBlock[] {
+  const normalized = normalizeUnityRichText(raw)
+  if (!normalized) {
     return []
   }
 
-  const mapped: (DemoTab | null)[] = raw.map((item, index) => {
-    if (!isRecord(item)) {
-      return null
+  const blocks: RuleBlock[] = []
+  const titlePattern = /<b>\s*<size=\d+>(.*?)<\/size>\s*<\/b>/gi
+  let cursor = 0
+
+  for (const match of normalized.matchAll(titlePattern)) {
+    const matchText = match[0]
+    const titleText = stripUnityTags(match[1] ?? '')
+    const matchIndex = match.index ?? 0
+    const beforeText = normalized.slice(cursor, matchIndex)
+    pushParagraphBlocks(blocks, beforeText)
+
+    if (titleText) {
+      blocks.push({
+        type: 'title',
+        text: titleText,
+      })
     }
 
-    const key = typeof item.key === 'string' && item.key.trim() ? item.key.trim() : `tab_${index}`
-    const label = typeof item.label === 'string' && item.label.trim() ? item.label.trim() : `Tab ${index + 1}`
-    const bullets = Array.isArray(item.bullets)
-      ? item.bullets.filter((bullet): bullet is string => typeof bullet === 'string' && bullet.trim().length > 0)
-      : []
-
-    return {
-      key,
-      label,
-      description: typeof item.description === 'string' ? item.description : undefined,
-      imageUrl: typeof item.imageUrl === 'string' ? item.imageUrl : undefined,
-      bullets,
-    } satisfies DemoTab
-  })
-
-  return mapped.filter((item): item is DemoTab => Boolean(item))
-}
-
-const heading = computed(() =>
-  typeof props.panelProps?.heading === 'string' ? props.panelProps.heading : '活动说明',
-)
-const summary = computed(() =>
-  typeof props.panelProps?.summary === 'string'
-    ? props.panelProps.summary
-    : '这个示例面板用于承载更复杂的 tab、图片和动态内容。',
-)
-const tabs = computed<DemoTab[]>(() => {
-  const normalized = normalizeTabs(props.panelProps?.tabs)
-  if (normalized.length > 0) {
-    return normalized
+    cursor = matchIndex + matchText.length
   }
 
-  return [
-    {
-      key: 'reward',
-      label: '奖励说明',
-      description: '支持显示一张活动图、说明文字和多条规则。',
-      bullets: ['奖励按 tab 切换', '内容完全由 Cocos 传参驱动', '点击行为会回传给 Cocos'],
-    },
-    {
-      key: 'task',
-      label: '任务列表',
-      description: '后续可以扩展成任务进度、领奖按钮、倒计时等复杂交互。',
-      bullets: ['支持按钮事件上报', '支持图片资源展示', '支持异步组件按需加载'],
-    },
-  ]
-})
+  pushParagraphBlocks(blocks, normalized.slice(cursor))
+  return blocks
+}
 
-const requestedDefaultTab = computed(() =>
-  typeof props.panelProps?.defaultTab === 'string' ? props.panelProps.defaultTab : '',
-)
-const activeTabKey = ref('')
-
-watch(
-  tabs,
-  (nextTabs) => {
-    const candidate = nextTabs.find((tab) => tab.key === requestedDefaultTab.value)?.key ?? nextTabs[0]?.key ?? ''
-    activeTabKey.value = candidate
-  },
-  { immediate: true },
-)
-
-const activeTab = computed(() => tabs.value.find((tab) => tab.key === activeTabKey.value) ?? null)
-
-function selectTab(nextKey: string): void {
-  if (!nextKey || nextKey === activeTabKey.value) {
+function pushParagraphBlocks(blocks: RuleBlock[], raw: string): void {
+  const plainText = stripUnityTags(raw)
+  if (!plainText) {
     return
   }
 
-  activeTabKey.value = nextKey
-  props.emitPanelEvent('tabChange', { tab: nextKey })
+  plainText
+    .split(/\n{2,}/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .forEach((part) => {
+      blocks.push({
+        type: 'paragraph',
+        text: part,
+      })
+    })
 }
 
-function emitPrimaryAction(): void {
-  props.emitPanelEvent('primaryAction', {
-    tab: activeTabKey.value,
-  })
+function getRuleBaseKey(gameType: number): string {
+  if (gameType === GAME_TYPE.OMAHA4) {
+    return 'UIPlO4Rule_Introduce'
+  }
+  if (gameType === GAME_TYPE.OMAHA5) {
+    return 'UIPlO5Rule_Introduce'
+  }
+  if (gameType === GAME_TYPE.OMAHA6) {
+    return 'UIPlO6Rule_Introduce'
+  }
+  return 'UITexasRule_Introduce'
 }
 
-function closeSelf(): void {
-  props.closePanel('close', {
-    from: 'panel-close-button',
-  })
+const gameInfo = computed<GameRulePanelGameInfo>(() => {
+  const raw = props.panelProps?.gameInfo
+  const panelRuleType = toSafeNumber(props.panelProps?.ruleType)
+
+  if (!isRecord(raw)) {
+    return {
+      ruleType: panelRuleType || RULE_TYPE.BASIC,
+    }
+  }
+
+  return {
+    ruleType: panelRuleType || RULE_TYPE.BASIC,
+    game_type: toSafeNumber(raw.game_type),
+    poker_type: toSafeNumber(raw.poker_type),
+    room_critical_hit: toSafeNumber(raw.room_critical_hit),
+    insurance_mode: toSafeNumber(raw.insurance_mode),
+  }
+})
+
+const ruleType = computed(() => toSafeNumber(gameInfo.value.ruleType) || RULE_TYPE.BASIC)
+const isInsuranceRuleType = computed(() => ruleType.value === RULE_TYPE.INSURANCE)
+
+const ruleText = computed(() => {
+  const baseText = getI18nText(getRuleBaseKey(toSafeNumber(gameInfo.value.game_type)))
+  let merged = baseText
+
+  if (toSafeNumber(gameInfo.value.poker_type) === POKER_TYPE.SIX_PLUS) {
+    merged += getI18nText('UI6Plus_Introduce')
+  }
+
+  if (toSafeNumber(gameInfo.value.room_critical_hit) === 1) {
+    merged += getI18nText('UICriticalHit_GameRuleTips')
+  }
+
+  return merged
+})
+
+const ruleBlocks = computed<RuleBlock[]>(() => parseRuleBlocks(ruleText.value))
+
+const insuranceRuleText = computed(() => {
+  const insuranceMode = toSafeNumber(gameInfo.value.insurance_mode)
+
+  if (insuranceMode === INSURANCE_MODE.EV) {
+    return getI18nText('UIEVInsuranceRuler')
+  }
+
+  if (insuranceMode === INSURANCE_MODE.WPK) {
+    return getI18nText('UILowWaterInsuranceRuler')
+  }
+
+  const title = getI18nText('UIInsuranceRuleTitle')
+  const detailKeys = [
+    'UITexasRule_detail4',
+    'UITexasRule_detail5',
+    'UITexasRule_detail6',
+    'UITexasRule_detail7',
+    'UITexasRule_detail8',
+    'UITexasRule_detail31',
+    'UITexasRule_detail11',
+    'UITexasRule_detail12',
+    'UITexasRule_detail13',
+  ]
+
+  const details = detailKeys
+    .map((key) => getI18nText(key))
+    .filter(Boolean)
+
+  const titleLine = title ? `<b><size=46>${title}</size></b>` : ''
+
+  return [titleLine, details.join('\n')]
+    .filter(Boolean)
+    .join('\n\n')
+})
+
+const insuranceRuleBlocks = computed<RuleBlock[]>(() => parseRuleBlocks(insuranceRuleText.value))
+
+const decodedHands = computed(() =>
+  RAW_HAND_SECTIONS.map((section) => ({
+    ...section,
+    label: t(section.labelKey),
+    boardCards: section.cards.map((card) => decodeCard(card)),
+  })),
+)
+
+const tabs = computed<RuleTab[]>(() => {
+  if (isInsuranceRuleType.value) {
+    return [
+      {
+        key: 'insurance',
+        label: getFirstI18nText(['UITexasRule_1QEuiq2M', 'adaptation10021'], 'Insurance'),
+      },
+    ]
+  }
+
+  return [
+    { key: 'rules', label: t('UITexasRule_RlNZ1ysZ') },
+    { key: 'hands', label: t('UITexasRule_Ug7QXzjK') },
+  ]
+})
+
+const activeRuleBlocks = computed<RuleBlock[]>(() => {
+  if (activeTabKey.value === 'insurance') {
+    return insuranceRuleBlocks.value
+  }
+
+  return ruleBlocks.value
+})
+
+watchEffect(() => {
+  const nextTab = tabs.value[0]?.key
+  const hasActiveTab = tabs.value.some((tab) => tab.key === activeTabKey.value)
+
+  if (!hasActiveTab && nextTab) {
+    activeTabKey.value = nextTab
+  }
+})
+
+function selectTab(key: RuleTab['key']): void {
+  if (key === activeTabKey.value) {
+    return
+  }
+
+  activeTabKey.value = key
+  props.emitPanelEvent('tabChange', { tab: key })
 }
 </script>
 
 <template>
-  <section class="bridge-rich-panel">
-    <div class="bridge-rich-panel__header">
-      <div class="bridge-rich-panel__header-main">
-        <h3 class="bridge-rich-panel__heading">{{ heading }}</h3>
-        <p class="bridge-rich-panel__summary">{{ summary }}</p>
-      </div>
-      <button class="bridge-rich-panel__close" type="button" @click="closeSelf">关闭</button>
-    </div>
-
-    <div class="bridge-rich-panel__tabs">
+  <section class="game-rule-panel">
+    <div class="game-rule-panel__tabs">
       <button
         v-for="tab in tabs"
         :key="tab.key"
         type="button"
-        class="bridge-rich-panel__tab"
-        :class="{ 'bridge-rich-panel__tab--active': tab.key === activeTabKey }"
+        class="game-rule-panel__tab"
+        :class="{ 'game-rule-panel__tab--active': tab.key === activeTabKey }"
         @click="selectTab(tab.key)"
       >
         {{ tab.label }}
+        <span v-if="tab.key === activeTabKey" class="game-rule-panel__tab-underline"></span>
       </button>
     </div>
 
-    <div v-if="activeTab" class="bridge-rich-panel__content">
-      <img
-        v-if="activeTab.imageUrl"
-        :src="activeTab.imageUrl"
-        :alt="activeTab.label"
-        class="bridge-rich-panel__image"
-      />
-
-      <p v-if="activeTab.description" class="bridge-rich-panel__description">
-        {{ activeTab.description }}
+    <div v-if="activeTabKey !== 'hands'" class="game-rule-panel__rules">
+      <template v-if="activeRuleBlocks.length">
+        <template v-for="(block, index) in activeRuleBlocks" :key="`${block.type}-${index}-${block.text}`">
+          <h4 v-if="block.type === 'title'" class="game-rule-panel__rich-title">
+            {{ block.text }}
+          </h4>
+          <p v-else class="game-rule-panel__paragraph">
+            {{ block.text }}
+          </p>
+        </template>
+      </template>
+      <p v-else class="game-rule-panel__empty">
+        {{ t('MsgContentUnRead') }}
       </p>
-
-      <ul v-if="activeTab.bullets?.length" class="bridge-rich-panel__bullet-list">
-        <li v-for="bullet in activeTab.bullets" :key="bullet" class="bridge-rich-panel__bullet">
-          {{ bullet }}
-        </li>
-      </ul>
     </div>
 
-    <div class="bridge-rich-panel__actions">
-      <button class="bridge-rich-panel__secondary" type="button" @click="closeSelf">稍后再看</button>
-      <button class="bridge-rich-panel__primary" type="button" @click="emitPrimaryAction">通知 Cocos</button>
+    <div v-if="activeTabKey === 'hands'" class="game-rule-panel__list">
+      <div
+        v-for="hand in decodedHands"
+        :key="hand.id"
+        class="game-rule-panel__row"
+      >
+        <div class="game-rule-panel__cards">
+          <PokerCard
+            v-for="(card, idx) in hand.boardCards"
+            :key="`${hand.id}-${idx}`"
+            :rank="card.rank"
+            :suit="card.suit"
+            size="0.55rem"
+          />
+        </div>
+        <span class="game-rule-panel__label">{{ hand.label }}</span>
+      </div>
     </div>
   </section>
 </template>
 
 <style scoped lang="scss">
-.bridge-rich-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.32rem;
-  text-align: left;
-}
-
-.bridge-rich-panel__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.24rem;
-}
-
-.bridge-rich-panel__header-main {
-  min-width: 0;
-}
-
-.bridge-rich-panel__heading {
-  margin: 0;
-  font-size: 0.52rem;
-  font-weight: 600;
-  color: #fff;
-}
-
-.bridge-rich-panel__summary {
-  margin: 0.12rem 0 0;
-  font-size: 0.34rem;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.78);
-}
-
-.bridge-rich-panel__close {
-  flex-shrink: 0;
-  border: none;
-  border-radius: 999px;
-  padding: 0.18rem 0.32rem;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  font-size: 0.32rem;
-}
-
-.bridge-rich-panel__tabs {
-  display: flex;
-  gap: 0.18rem;
-  overflow-x: auto;
-}
-
-.bridge-rich-panel__tab {
-  flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 999px;
-  padding: 0.18rem 0.4rem;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 0.34rem;
-}
-
-.bridge-rich-panel__tab--active {
-  border-color: rgba(117, 255, 174, 0.65);
-  background: rgba(117, 255, 174, 0.16);
-  color: #fff;
-}
-
-.bridge-rich-panel__content {
+.game-rule-panel {
   display: flex;
   flex-direction: column;
   gap: 0.28rem;
 }
 
-.bridge-rich-panel__image {
-  display: block;
-  width: 100%;
-  max-height: 4rem;
-  object-fit: cover;
-  border-radius: 0.36rem;
-}
-
-.bridge-rich-panel__description {
-  margin: 0;
-  font-size: 0.38rem;
-  line-height: 1.7;
-  color: #fff;
-}
-
-.bridge-rich-panel__bullet-list {
-  margin: 0;
-  padding-left: 0.48rem;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 0.34rem;
-  line-height: 1.7;
-}
-
-.bridge-rich-panel__actions {
+.game-rule-panel__tabs {
   display: flex;
-  gap: 0.2rem;
+  justify-content: center;
+  gap: 1.2rem;
 }
 
-.bridge-rich-panel__secondary,
-.bridge-rich-panel__primary {
-  flex: 1;
-  height: 1.08rem;
+.game-rule-panel__tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   border: none;
-  border-radius: 999px;
-  font-size: 0.36rem;
+  background: transparent;
+  font-size: 0.41rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.4;
+
+  &:hover {
+    color: rgba(255, 255, 255, 0.88);
+  }
+}
+
+.game-rule-panel__tab--active {
   color: #fff;
 }
 
-.bridge-rich-panel__secondary {
-  background: rgba(255, 255, 255, 0.08);
+.game-rule-panel__tab-underline {
+  margin-top: 0.04rem;
+  width: 1.5rem;
+  height: 0.07rem;
+  background: var(--primary, #05e7ae);
+  border-radius: 999px;
 }
 
-.bridge-rich-panel__primary {
-  background: linear-gradient(135deg, rgba(87, 236, 167, 0.92), rgba(38, 177, 118, 0.92));
+.game-rule-panel__rules,
+.game-rule-panel__list {
+  display: flex;
+  flex-direction: column;
+  height: 10.8rem;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.game-rule-panel__rules {
+  gap: 0.24rem;
+  padding-right: 0.08rem;
+}
+
+.game-rule-panel__rich-title {
+  margin: 0.12rem 0 0;
+  font-size: 0.35rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: left;
+  color: var(--color-primary);
+}
+
+.game-rule-panel__paragraph {
+  margin: 0;
+  font-size: 0.34rem;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.84);
+  white-space: pre-wrap;
+  text-align: left;
+}
+
+.game-rule-panel__empty {
+  margin: auto 0;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.34rem;
+}
+
+.game-rule-panel__list {
+  gap: 0.22rem;
+}
+
+.game-rule-panel__row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.12rem 0.36rem;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(0.51px);
+  border-radius: 999px;
+}
+
+.game-rule-panel__cards {
+  display: flex;
+  gap: 0.12rem;
+  flex-shrink: 0;
+}
+
+.game-rule-panel__label {
+  font-size: 0.325rem;
+  font-family: 'HONOR Sans CN', sans-serif;
+  font-weight: 300;
+  color: #fff;
+  white-space: nowrap;
 }
 </style>

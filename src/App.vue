@@ -1,6 +1,6 @@
 <template>
   <RouterView />
-  <!-- <GlobalBridgeDialogHost /> -->
+  <GlobalBridgeDialogHost />
   <GlobalBridgePanelHost />
   <GlobalMessageTodoNotice />
 </template>

@@ -7,7 +7,7 @@ import 'vant/es/toast/style'
 import 'vant/es/icon/style'
 import './bridge/core'
 import {
-  // setupGlobalBridgeDialogChannel,
+  setupGlobalBridgeDialogChannel,
   setupGlobalBridgePanelChannel,
   setupGlobalBridgeToastChannel,
   setupH5VisibilityBridgeChannel,
@@ -24,7 +24,7 @@ import { pinia } from './stores/pinia'
 import { textI18nPlugin } from './i18n'
 
 let app: VueApp<Element> | null = null
-// let stopBridgeDialogChannel: (() => void) | null = null
+let stopBridgeDialogChannel: (() => void) | null = null
 let stopBridgePanelChannel: (() => void) | null = null
 let stopBridgeToastChannel: (() => void) | null = null
 let stopWsProxyBridgeChannel: (() => void) | null = null
@@ -63,7 +63,7 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
   // 启动 WS 代理通道：Cocos 发指令给 H5，由 H5 执行 websocket 收发并回传结果。
   stopWsProxyBridgeChannel = setupWsProxyBridgeChannel()
   // 启动全局桥接 dialog：接收 Cocos 消息后统一弹窗并回传交互结果。
-  // stopBridgeDialogChannel = setupGlobalBridgeDialogChannel()
+  stopBridgeDialogChannel = setupGlobalBridgeDialogChannel()
   // 启动全局桥接 panel：接收 Cocos 消息后展示复杂 H5 交互面板。
   stopBridgePanelChannel = setupGlobalBridgePanelChannel()
   // 启动全局桥接 toast：接收 Cocos 消息后统一弹窗。
@@ -79,8 +79,8 @@ export function unmountH5App(): void {
     return
   }
   // 卸载时释放桥接订阅，避免重复监听。
-  // stopBridgeDialogChannel?.()
-  // stopBridgeDialogChannel = null
+  stopBridgeDialogChannel?.()
+  stopBridgeDialogChannel = null
   stopBridgePanelChannel?.()
   stopBridgePanelChannel = null
   stopBridgeToastChannel?.()

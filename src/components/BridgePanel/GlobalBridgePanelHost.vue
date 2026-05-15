@@ -47,7 +47,7 @@ function onDialogClose(): void {
 
 <template>
   <GameDialog
-    class="game-dialog--table game-panel-dialog"
+    class="game-panel-dialog"
     :show="visible"
     :title="title"
     :show-footer="false"

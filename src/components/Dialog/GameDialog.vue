@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { useAttrs } from 'vue'
+import { Comment, Fragment, Text, computed, useAttrs, useSlots, type StyleValue, type VNode } from 'vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import dialogBg from '@/assets/images/component_dialog_bg.png'
+import tableBg from '@/assets/images/table_bg.png'
 import { t } from '@/i18n'
 
 /**
@@ -15,8 +16,9 @@ import { t } from '@/i18n'
 // 透传所有未声明的 attrs/listeners 给 van-dialog
 defineOptions({ name: 'GameDialog', inheritAttrs: false })
 const attrs = useAttrs()
+const slots = useSlots()
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     /** v-model:show */
     show: boolean
@@ -28,15 +30,30 @@ withDefaults(
     cancelButtonText?: string
     confirmButtonText?: string
     confirmButtonDisabled?: boolean
+    showFooter?: boolean
+    dialogWidth?: string
+    cardMinHeight?: string
+    bodyMaxHeight?: string
+    cardStyle?: StyleValue
+    bodyStyle?: StyleValue
     /** 关闭前回调，return false 阻止关闭 */
     beforeClose?: (action: string) => boolean | Promise<boolean>
   }>(),
   {
+    title: '',
+    message: '',
     showCancelButton: false,
     showConfirmButton: true,
     cancelButtonText: t('adaptation10013'),
     confirmButtonText: t('adaptation10012'),
     confirmButtonDisabled: false,
+    showFooter: true,
+    dialogWidth: '9rem',
+    cardMinHeight: '2rem',
+    bodyMaxHeight: '12rem',
+    cardStyle: undefined,
+    bodyStyle: undefined,
+    beforeClose: undefined,
   },
 )
 
@@ -54,6 +71,52 @@ function onConfirm() {
 function onCancel() {
   emit('cancel')
 }
+
+function hasRenderableContent(nodes: VNode[] | undefined): boolean {
+  if (!nodes || nodes.length === 0) {
+    return false
+  }
+
+  return nodes.some((node) => {
+    if (node.type === Comment) {
+      return false
+    }
+
+    if (node.type === Text) {
+      return String(node.children ?? '').trim().length > 0
+    }
+
+    if (node.type === Fragment) {
+      return Array.isArray(node.children) && hasRenderableContent(node.children as VNode[])
+    }
+
+    return true
+  })
+}
+
+const hasTitleSlotContent = computed(() => hasRenderableContent(slots.title?.()))
+const hasDefaultSlotContent = computed(() => hasRenderableContent(slots.default?.()))
+const hasFooterSlotContent = computed(() => hasRenderableContent(slots.footer?.()))
+
+const dialogStyle = computed<StyleValue>(() => ({
+  '--game-dialog-width': props.dialogWidth,
+}))
+
+const cardStyles = computed<StyleValue>(() => [
+  {
+    backgroundImage: `url(${dialogBg})`,
+    '--game-dialog-table-bg': `url(${tableBg})`,
+    '--game-dialog-card-min-height': props.cardMinHeight,
+  },
+  props.cardStyle,
+])
+
+const bodyStyles = computed<StyleValue>(() => [
+  {
+    '--game-dialog-body-max-height': props.bodyMaxHeight,
+  },
+  props.bodyStyle,
+])
 </script>
 
 <template>
@@ -69,27 +132,36 @@ function onCancel() {
     :before-close="beforeClose"
     :overlay-style="{ backgroundColor: 'rgba(12, 12, 12, 0.6)' }"
     class="game-dialog"
+    :style="dialogStyle"
     v-bind="attrs"
     @update:show="emit('update:show', $event)"
     @close="emit('close')"
   >
     <!-- 完全自定义 dialog 内部内容 -->
     <template #default>
-      <div class="game-dialog__card" :style="{ backgroundImage: `url(${dialogBg})` }">
+      <div
+        class="game-dialog__card"
+        :style="cardStyles"
+      >
         <!-- Title -->
-        <div v-if="title || $slots.title" class="game-dialog__title">
+        <div v-if="title || hasTitleSlotContent" class="game-dialog__title">
           <slot name="title">{{ title }}</slot>
         </div>
 
         <!-- Message / body -->
-        <div v-if="message || $slots.default" class="game-dialog__body">
+        <div v-if="message || hasDefaultSlotContent" class="game-dialog__body" :style="bodyStyles">
           <slot>
             <span class="game-dialog__message">{{ message }}</span>
           </slot>
         </div>
 
         <!-- Footer buttons -->
-        <div class="game-dialog__footer">
+        <div
+          v-if="showFooter && (showCancelButton || showConfirmButton || hasFooterSlotContent)"
+          class="game-dialog__footer"
+        >
+          <slot name="footer"></slot>
+
           <button
             v-if="showCancelButton"
             class="game-dialog__cancel-btn"
@@ -121,7 +193,7 @@ function onCancel() {
   border-radius: 0 !important;
   padding: 0 !important;
   overflow: visible !important;
-  width: 9rem;
+  width: var(--game-dialog-width, 9rem);
 
   .van-dialog__content {
     padding: 0 !important;
@@ -132,7 +204,8 @@ function onCancel() {
 <style scoped lang="scss">
 .game-dialog__card {
   position: relative;
-  min-height: 2rem;
+  isolation: isolate;
+  min-height: var(--game-dialog-card-min-height, 2rem);
   border-radius: 0.97rem;
   overflow: hidden;
   background-size: 100% auto;
@@ -152,6 +225,45 @@ function onCancel() {
   gap: 0.32rem;
 }
 
+.game-dialog__card > * {
+  position: relative;
+  z-index: 2;
+}
+
+.game-panel-dialog .game-dialog__card {
+  background-color: transparent;
+}
+
+.game-panel-dialog .game-dialog__card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: var(--game-dialog-table-bg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(14px) brightness(0.8);
+  transform: scale(1.08);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.game-panel-dialog .game-dialog__card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  background: rgba(8, 8, 8, 0.25);
+  box-shadow: inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
+    inset 0.5px 0.5px 0 0 rgba(255, 255, 255, 0.85),
+    inset 2px 2px 0 -2px rgba(255, 255, 255, 0.3),
+    inset -0.5px -0.5px 0 0 rgba(255, 255, 255, 0.85),
+    inset -2px -2px 0 -2px rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+}
+
 .game-dialog__title {
   font-size: 0.58rem;
   font-weight: 500;
@@ -163,7 +275,7 @@ function onCancel() {
 
 .game-dialog__body {
   flex: 1;
-  max-height: 12rem;
+  max-height: var(--game-dialog-body-max-height, 12rem);
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -176,6 +288,10 @@ function onCancel() {
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+.game-panel-dialog .game-dialog__body {
+  max-height: none;
 }
 
 .game-dialog__message {

@@ -1,0 +1,184 @@
+<script setup lang="ts">
+import FieldTip from './FieldTip.vue'
+
+interface Props {
+  label: string
+  tip?: string
+  modelValue: string | number
+  disabled?: boolean
+  min?: number
+  max?: number
+  step?: number
+  decimalDigits?: number
+  placeholder?: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  tip: '',
+  disabled: false,
+  min: 0,
+  max: Infinity,
+  step: 1,
+  decimalDigits: 0,
+  placeholder: '',
+})
+
+const emit = defineEmits<{
+  'update:modelValue': [value: number]
+  change: [value: number]
+}>()
+
+function normalizeValue(value: string | number): number {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) {
+    return Number(props.min)
+  }
+  return parsed
+}
+
+function onInput(value: string | number): void {
+  const nextValue = normalizeValue(value)
+  emit('update:modelValue', nextValue)
+  emit('change', nextValue)
+}
+</script>
+
+<template>
+  <div class="table-stepper-row">
+    <div class="table-stepper__label">
+      <span class="table-stepper__text">{{ label }}</span>
+      <FieldTip :tip="tip" />
+    </div>
+
+    <div :class="['table-stepper__field-wrap', { 'table-stepper__field-wrap--disabled': disabled }]">
+      <VanStepper
+        :model-value="modelValue"
+        theme="round"
+        :disabled="disabled"
+        :min="min"
+        :max="max"
+        :step="step"
+        :integer="decimalDigits <= 0"
+        :decimal-length="decimalDigits"
+        :placeholder="placeholder"
+        class="table-stepper"
+        @update:model-value="onInput"
+      />
+    </div>
+  </div>
+</template>
+
+<style scoped lang="scss">
+.table-stepper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 1.15rem;
+  position: relative;
+}
+
+.table-stepper__label {
+  display: flex;
+  align-items: center;
+  gap: 0.09rem;
+}
+
+.table-stepper__text {
+  font-size: 0.37rem;
+  font-family: 'HONOR Sans CN', sans-serif;
+  font-weight: 400;
+  color: #fff;
+}
+
+.table-stepper__field-wrap {
+  width: 3.32rem;
+  height: 0.93rem;
+  display: flex;
+  align-items: center;
+  padding: 0 0.09rem;
+  border-radius: 1.55rem;
+  background: rgba(255, 255, 255, 0.18);
+  background-blend-mode: soft-light;
+
+  &--disabled {
+    opacity: 0.5;
+  }
+}
+
+.table-stepper {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  :deep(.van-stepper__input) {
+    flex: 1;
+    min-width: 0;
+    height: 0.76rem;
+    margin: 0 0.12rem;
+    padding: 0;
+    background: transparent;
+    color: #fff;
+    font-size: 0.37rem;
+    font-family: 'HONOR Sans CN', sans-serif;
+    font-weight: 400;
+    line-height: 0.76rem;
+    text-align: center;
+  }
+
+  :deep(.van-stepper__input::placeholder) {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  :deep(.van-stepper__minus),
+  :deep(.van-stepper__plus) {
+    width: 0.76rem;
+    height: 0.76rem;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 0.7348rem;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(171, 171, 171, 0.16) 100%
+    );
+    box-shadow: 2.851px 2.534px 5.733px 0 rgba(255, 255, 255, 0.22) inset;
+    color: #fff;
+  }
+
+  :deep(.van-stepper__minus::before),
+  :deep(.van-stepper__plus::before) {
+    width: 0.24rem;
+    height: 0.04rem;
+    border-radius: 999px;
+    background-color: currentColor;
+  }
+
+  :deep(.van-stepper__plus::after) {
+    width: 0.04rem;
+    height: 0.24rem;
+    border-radius: 999px;
+    background-color: currentColor;
+  }
+
+  :deep(.van-stepper__minus::after) {
+    display: none;
+  }
+
+  :deep(.van-stepper__minus--disabled),
+  :deep(.van-stepper__plus--disabled) {
+    opacity: 0.35;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(171, 171, 171, 0.16) 100%
+    );
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  :deep(.van-stepper--round .van-stepper__input:disabled) {
+    background: transparent;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.7);
+  }
+}
+</style>

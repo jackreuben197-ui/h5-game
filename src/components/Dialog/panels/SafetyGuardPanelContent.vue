@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch, type StyleValue } from 'vue'
 import { showFailToast } from 'vant'
 import { postOrgTribeBlackUserListApi } from '@/api/org'
 import type { OrgTribeBlackUserListInfo } from '@/api/models/org'
@@ -56,21 +56,17 @@ const CORE_SYSTEM_LABELS_RIGHT = [
 
 const props = withDefaults(
   defineProps<{
-    show?: boolean
     tribeId?: number
-    tribeID?: number
-    clubID?: number
+    height?: string
   }>(),
   {
-    show: false,
     tribeId: 0,
-    tribeID: 0,
-    clubID: 0,
+    height: '',
   },
 )
 
 const emit = defineEmits<{
-  'update:show': [value: boolean]
+  tabChange: [payload: { tab: SafetyTabName; tribeId: number }]
 }>()
 
 const activeTab = ref<SafetyTabName>('overview')
@@ -85,12 +81,7 @@ const resolvedTribeId = computed(() => {
   if (preferred > 0) {
     return preferred
   }
-  return toSafeInt(props.tribeID)
-})
-
-const popupShow = computed({
-  get: () => props.show,
-  set: (value: boolean) => emit('update:show', value),
+  return 0
 })
 
 const coreSystemRows = computed(() => {
@@ -101,27 +92,28 @@ const coreSystemRows = computed(() => {
   }))
 })
 
-watch(
-  () => props.show,
-  (visible) => {
-    if (!visible) {
-      return
-    }
-    activeTab.value = 'overview'
-    if (resolvedTribeId.value > 0) {
-      void hydrateSafetyData(false)
-    }
-  },
+const cardStyle = computed<StyleValue>(() =>
+  props.height
+    ? {
+        '--safety-guard-height': props.height,
+      }
+    : undefined,
 )
 
 watch(
   () => resolvedTribeId.value,
-  (tribeId, prevTribeId) => {
-    if (!props.show || tribeId <= 0 || tribeId === prevTribeId) {
+  (tribeId) => {
+    activeTab.value = 'overview'
+    if (tribeId > 0) {
+      void hydrateSafetyData(false)
       return
     }
-    void hydrateSafetyData(false)
+
+    loadedTribeId.value = 0
+    blockedTotal.value = 0
+    blockedUsers.value = []
   },
+  { immediate: true },
 )
 
 onMounted(() => {
@@ -136,8 +128,6 @@ onMounted(() => {
       return
     }
 
-    // 后台收到黑名单变更通知后，按消息里的 tribe_id 刷新对应缓存。
-    // 若当前弹窗正在展示同一 tribe，则会同步刷新界面数据。
     void fetchBlacklistByTribeId(tribeId, { silent: true, force: true, background: true })
   })
 })
@@ -177,7 +167,7 @@ async function fetchBlacklistByTribeId(
 
   const isCurrentTribe = tribeId === resolvedTribeId.value
   const shouldUpdateViewState = isCurrentTribe
-  const shouldShowLoading = shouldUpdateViewState && props.show && !options.background
+  const shouldShowLoading = shouldUpdateViewState && !options.background
 
   if (shouldShowLoading) {
     loading.value = true
@@ -191,8 +181,7 @@ async function fetchBlacklistByTribeId(
     })
 
     if (Number(response.code) !== 0) {
-      const message = String(response.msg || '安全卫士数据加载失败')
-      throw new Error(message)
+      throw new Error(String(response.msg || '安全卫士数据加载失败'))
     }
 
     const records = Array.isArray(response.data?.data) ? response.data?.data : []
@@ -208,8 +197,7 @@ async function fetchBlacklistByTribeId(
     }
   } catch (error) {
     if (!options.silent && shouldUpdateViewState) {
-      const message = error instanceof Error ? error.message : '安全卫士数据加载失败'
-      showFailToast(message)
+      showFailToast(error instanceof Error ? error.message : '安全卫士数据加载失败')
     }
   } finally {
     if (shouldShowLoading) {
@@ -220,22 +208,24 @@ async function fetchBlacklistByTribeId(
 
 function handleTabClick(tabName: SafetyTabName): void {
   activeTab.value = tabName
+  emit('tabChange', { tab: tabName, tribeId: resolvedTribeId.value })
+
   if (tabName === 'blacklist' && resolvedTribeId.value > 0 && !blockedUsers.value.length) {
     void fetchBlacklist({ silent: true })
   }
 }
 
 function persistBlacklistCache(
-  tribeID: number,
+  tribeId: number,
   total: number,
   users: SafetyGuardBlacklistUser[],
 ): void {
-  if (tribeID <= 0) {
+  if (tribeId <= 0) {
     return
   }
 
   const cached = getCachePayload()
-  cached.tribeMap[String(tribeID)] = {
+  cached.tribeMap[String(tribeId)] = {
     updatedAt: Date.now(),
     total,
     users,
@@ -244,20 +234,20 @@ function persistBlacklistCache(
   localStore.setItem(StorageKey.TRIBE_BLACK_USER_LIST_CACHE, cached)
 }
 
-function restoreBlacklistCache(tribeID: number): boolean {
-  if (tribeID <= 0) {
+function restoreBlacklistCache(tribeId: number): boolean {
+  if (tribeId <= 0) {
     return false
   }
 
   const cached = getCachePayload()
-  const entry = cached.tribeMap[String(tribeID)]
+  const entry = cached.tribeMap[String(tribeId)]
   if (!entry) {
     return false
   }
 
   blockedTotal.value = toSafeInt(entry.total)
   blockedUsers.value = Array.isArray(entry.users) ? entry.users : []
-  loadedTribeId.value = tribeID
+  loadedTribeId.value = tribeId
   return true
 }
 
@@ -309,131 +299,104 @@ function toSafeInt(value: unknown): number {
   if (!Number.isFinite(num)) {
     return 0
   }
+
   return Math.floor(num)
 }
 </script>
 
 <template>
-  <van-popup
-    v-model:show="popupShow"
-    class="safety-guard-popup"
-    position="center"
-    :close-on-click-overlay="true"
-    :overlay-style="{ background: 'rgba(12, 12, 12, 0.62)' }"
-  >
-    <section class="safety-guard-card">
-      <div class="safety-guard-tabs">
-        <button
-          class="safety-guard-tab"
-          :class="{ 'safety-guard-tab--active': activeTab === 'overview' }"
-          type="button"
-          @click="handleTabClick('overview')"
-        >
-          安全卫士
-        </button>
-        <button
-          class="safety-guard-tab"
-          :class="{ 'safety-guard-tab--active': activeTab === 'blacklist' }"
-          type="button"
-          @click="handleTabClick('blacklist')"
-        >
-          封禁名单
-        </button>
+  <section class="safety-guard-card" :style="cardStyle">
+    <div class="safety-guard-tabs">
+      <button
+        class="safety-guard-tab"
+        :class="{ 'safety-guard-tab--active': activeTab === 'overview' }"
+        type="button"
+        @click="handleTabClick('overview')"
+      >
+        安全卫士
+      </button>
+      <button
+        class="safety-guard-tab"
+        :class="{ 'safety-guard-tab--active': activeTab === 'blacklist' }"
+        type="button"
+        @click="handleTabClick('blacklist')"
+      >
+        封禁名单
+      </button>
+    </div>
+
+    <div v-if="activeTab === 'overview'" class="safety-overview">
+      <div class="safety-overview__icon-wrap">
+        <div class="safety-overview__lock"></div>
+        <van-icon class="safety-overview__star" name="star-o" />
       </div>
 
-      <div v-if="activeTab === 'overview'" class="safety-overview">
-        <div class="safety-overview__icon-wrap">
-          <div class="safety-overview__lock"></div>
-          <van-icon class="safety-overview__star" name="star-o" />
-        </div>
+      <p class="safety-overview__sub-title">7*24小时智能AI风控巡航已启动</p>
 
-        <p class="safety-overview__sub-title">7*24小时智能AI风控巡航已启动</p>
+      <div class="safety-overview__stat-card">
+        <p class="safety-overview__stat-value">{{ blockedTotal }}</p>
+        <p class="safety-overview__stat-label">累计封禁人数</p>
+      </div>
 
-        <div class="safety-overview__stat-card">
-          <p class="safety-overview__stat-value">{{ blockedTotal }}</p>
-          <p class="safety-overview__stat-label">累计封禁人数</p>
-        </div>
+      <p class="safety-overview__title">9大核心安全系统</p>
 
-        <p class="safety-overview__title">9大核心安全系统</p>
-
-        <div class="safety-overview__system-grid">
-          <div
-            v-for="(row, index) in coreSystemRows"
-            :key="index"
-            class="safety-overview__system-row"
-          >
-            <div class="safety-overview__system-cell">
-              <i v-if="row.left" class="safety-overview__dot"></i>
-              <span>{{ row.left }}</span>
-            </div>
-            <div class="safety-overview__system-cell">
-              <i v-if="row.right" class="safety-overview__dot"></i>
-              <span>{{ row.right }}</span>
-            </div>
+      <div class="safety-overview__system-grid">
+        <div
+          v-for="(row, index) in coreSystemRows"
+          :key="index"
+          class="safety-overview__system-row"
+        >
+          <div class="safety-overview__system-cell">
+            <i v-if="row.left" class="safety-overview__dot"></i>
+            <span>{{ row.left }}</span>
+          </div>
+          <div class="safety-overview__system-cell">
+            <i v-if="row.right" class="safety-overview__dot"></i>
+            <span>{{ row.right }}</span>
           </div>
         </div>
       </div>
+    </div>
 
-      <div v-else class="safety-blacklist">
-        <div v-if="loading" class="safety-blacklist__status-wrap">
-          <van-loading size="0.56rem" color="#55ffe2" />
-          <p>加载中...</p>
-        </div>
-
-        <div v-else-if="!blockedUsers.length" class="safety-blacklist__status-wrap">
-          <van-icon name="shield-o" size="0.62rem" />
-          <p>暂无封禁记录</p>
-        </div>
-
-        <ul v-else class="safety-blacklist__list">
-          <li
-            v-for="user in blockedUsers"
-            :key="`${user.id}_${user.userName}_${user.createTime}`"
-            class="safety-blacklist__item"
-          >
-            <div class="safety-blacklist__avatar-wrap">
-              <img :src="user.avatar" alt="avatar" />
-              <span class="safety-blacklist__badge">已封禁</span>
-            </div>
-            <div class="safety-blacklist__meta">
-              <p class="safety-blacklist__name">{{ user.userName }}</p>
-              <p class="safety-blacklist__date">{{ user.createTime }}</p>
-            </div>
-          </li>
-        </ul>
+    <div v-else class="safety-blacklist">
+      <div v-if="loading" class="safety-blacklist__status-wrap">
+        <van-loading size="0.56rem" color="#55ffe2" />
+        <p>加载中...</p>
       </div>
-    </section>
-  </van-popup>
+
+      <div v-else-if="!blockedUsers.length" class="safety-blacklist__status-wrap">
+        <van-icon name="shield-o" size="0.62rem" />
+        <p>暂无封禁记录</p>
+      </div>
+
+      <ul v-else class="safety-blacklist__list">
+        <li
+          v-for="user in blockedUsers"
+          :key="`${user.id}_${user.userName}_${user.createTime}`"
+          class="safety-blacklist__item"
+        >
+          <div class="safety-blacklist__avatar-wrap">
+            <img :src="user.avatar" alt="avatar" />
+            <span class="safety-blacklist__badge">已封禁</span>
+          </div>
+          <div class="safety-blacklist__meta">
+            <p class="safety-blacklist__name">{{ user.userName }}</p>
+            <p class="safety-blacklist__date">{{ user.createTime }}</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
 </template>
 
 <style scoped lang="scss">
-.safety-guard-popup.van-popup {
-  width: 9.12rem;
-  max-width: calc(100vw - 0.56rem);
-  border-radius: 0.96rem;
-  overflow: hidden;
-  background: transparent;
-}
-
 .safety-guard-card {
   position: relative;
-  height: min(16.2rem, calc(100dvh - 1.6rem));
+  width: 100%;
+  height: var(--safety-guard-height, min(14.4rem, calc(100dvh - 3.2rem)));
+  box-sizing: border-box;
   border-radius: 0.96rem;
   color: #f9f9f9;
-  padding: 0.56rem 0.44rem 0.44rem;
-  background:
-    radial-gradient(circle at 15% 90%, rgba(132, 219, 235, 0.14), transparent 40%),
-    radial-gradient(circle at 85% 12%, rgba(94, 94, 94, 0.25), transparent 40%),
-    linear-gradient(
-      110deg,
-      rgba(142, 142, 142, 0.3) 3%,
-      rgba(103, 103, 103, 0.4) 44%,
-      rgba(73, 73, 73, 0.56) 90%
-    );
-  box-shadow:
-    inset 0 0 0.22rem rgba(0, 0, 0, 0.54),
-    inset 0.08rem 0.12rem 0.42rem rgba(242, 242, 242, 0.35),
-    0 0.12rem 0.36rem rgba(0, 0, 0, 0.45);
 }
 
 .safety-guard-tabs {
@@ -548,6 +511,12 @@ function toSafeInt(value: unknown): number {
   gap: 0.14rem;
   overflow-y: auto;
   padding-bottom: 0.12rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .safety-overview__system-row {
@@ -598,6 +567,12 @@ function toSafeInt(value: unknown): number {
   margin: 0;
   padding: 0;
   list-style: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .safety-blacklist__item {

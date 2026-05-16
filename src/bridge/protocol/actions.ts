@@ -16,10 +16,14 @@ export const BRIDGE_ACTION = {
   WS_CLOSED: 'wsClosed',
   // Cocos -> H5
   SHOW_TOAST: 'showToast',
+  SHOW_DIALOG: 'showDialog',
+  SHOW_PANEL: 'showPanel',
+  CLOSE_PANEL: 'closePanel',
   H5_HIDE: 'h5Hide',
   H5_SHOW: 'h5Show',
   H5_NAVIGATE: 'h5Navigate',
   // H5 -> Cocos
+  PANEL_EVENT: 'panelEvent',
   SYNC_USER: 'syncUser',
   SYNC_USER_CLUB: 'syncUserClub',
   SYNC_ROOMS_LIST: 'syncRoomsList',
@@ -28,6 +32,7 @@ export const BRIDGE_ACTION = {
   SYNC_DIAMOND_CONFIG: 'syncDiamondConfig',
   ENTER_TABLE: 'enterTable',
   ENTER_MTT: 'enterMtt',
+  DIALOG_RESULT: 'dialogResult',
 } as const
 
 export type BridgeAction = (typeof BRIDGE_ACTION)[keyof typeof BRIDGE_ACTION]

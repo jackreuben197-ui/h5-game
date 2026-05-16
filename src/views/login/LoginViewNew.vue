@@ -92,9 +92,7 @@ restorePageState()
 consumePhoneAreaSelection()
 
 // ---------- Computed ----------
-const contactValue = computed(() =>
-  contactType.value === 'phone' ? form.phone : form.email,
-)
+const contactValue = computed(() => (contactType.value === 'phone' ? form.phone : form.email))
 
 const contactPlaceholder = computed(() =>
   contactType.value === 'phone' ? t('UILogin_InputMoblie') : t('UILogin_InputEmail'),
@@ -126,7 +124,7 @@ const otpBtnText = computed(() => {
 const isPhone = computed(() => contactType.value === 'phone')
 
 const contactModel = computed({
-  get: () => contactType.value === 'phone' ? form.phone : form.email,
+  get: () => (contactType.value === 'phone' ? form.phone : form.email),
   set: (val: string) => {
     if (contactType.value === 'phone') {
       form.phone = val
@@ -173,12 +171,13 @@ async function sendOtp() {
   otpSending.value = true
   try {
     if (contactType.value === 'phone') {
-      const check = await postUserCheckPhoneApi({
-        phone: target,
-        area: normalizeArea(),
-      }, pageMode.value === 'forgot'
-        ? { suppressBusinessCodes: [90005] }
-        : {})
+      const check = await postUserCheckPhoneApi(
+        {
+          phone: target,
+          area: normalizeArea(),
+        },
+        pageMode.value === 'forgot' ? { suppressBusinessCodes: [90005] } : {},
+      )
 
       if (pageMode.value === 'forgot' && check.code === 0) {
         showGameToast(t('UILogin_1010'))
@@ -218,7 +217,8 @@ async function sendOtp() {
     showGameToast(t('UILogin_1007'))
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed'
-    showGameToast(message)
+    console.log('sendOtp error', message)
+    message
   } finally {
     otpSending.value = false
   }
@@ -472,7 +472,9 @@ function readLocalString(key: string, fallback = ''): string {
 }
 
 function hydrateFormFromLocal() {
-  const storedType = Number(localStore.getItem<number | string>(LOGIN_ACCOUNT_TYPE_KEY, LOGIN_TYPE_PHONE))
+  const storedType = Number(
+    localStore.getItem<number | string>(LOGIN_ACCOUNT_TYPE_KEY, LOGIN_TYPE_PHONE),
+  )
   contactType.value = storedType === LOGIN_TYPE_EMAIL ? 'email' : 'phone'
   form.area = readLocalString(StorageKey.KEY_PHONE_FIRST, '55') || '55'
   form.phone = readLocalString(StorageKey.KEY_PHONE, gameStore.loginAccount || '')
@@ -482,7 +484,10 @@ function hydrateFormFromLocal() {
 
 function persistLoginDraft() {
   const password = form.password.trim()
-  localStore.setItem(LOGIN_ACCOUNT_TYPE_KEY, contactType.value === 'phone' ? LOGIN_TYPE_PHONE : LOGIN_TYPE_EMAIL)
+  localStore.setItem(
+    LOGIN_ACCOUNT_TYPE_KEY,
+    contactType.value === 'phone' ? LOGIN_TYPE_PHONE : LOGIN_TYPE_EMAIL,
+  )
   if (contactType.value === 'phone') {
     localStore.setItem(StorageKey.KEY_PHONE, form.phone.trim())
     localStore.setItem(StorageKey.KEY_PHONE_FIRST, normalizeArea())
@@ -550,7 +555,8 @@ function restorePageState(): void {
 
   try {
     const parsed = JSON.parse(raw) as Partial<LoginPageStateSnapshot>
-    pageMode.value = parsed.pageMode === 'register' || parsed.pageMode === 'forgot' ? parsed.pageMode : 'login'
+    pageMode.value =
+      parsed.pageMode === 'register' || parsed.pageMode === 'forgot' ? parsed.pageMode : 'login'
     contactType.value = parsed.contactType === 'email' ? 'email' : 'phone'
     form.phone = String(parsed.form?.phone || form.phone)
     form.email = String(parsed.form?.email || form.email)
@@ -654,7 +660,10 @@ function consumePhoneAreaSelection(): void {
           </div>
 
           <!-- OTP code input (register & forgot only) -->
-          <div v-if="pageMode !== 'login'" :class="['input-row', { 'input-row--filled': !!form.code.trim() }]">
+          <div
+            v-if="pageMode !== 'login'"
+            :class="['input-row', { 'input-row--filled': !!form.code.trim() }]"
+          >
             <div class="input-icon-wrap">
               <img class="input-icon" :src="icLock" alt="" />
             </div>
@@ -693,11 +702,7 @@ function consumePhoneAreaSelection(): void {
         <div class="bottom-area">
           <!-- Action links row -->
           <div class="action-links">
-            <button
-              v-if="pageMode === 'login'"
-              class="link-btn"
-              @click="goMode('forgot')"
-            >
+            <button v-if="pageMode === 'login'" class="link-btn" @click="goMode('forgot')">
               {{ t('UILogin_Forget') }}
             </button>
             <span v-else></span>
@@ -711,7 +716,10 @@ function consumePhoneAreaSelection(): void {
 
           <!-- Agreement checkbox (register only) -->
           <div v-if="needAgreement" class="agreement-row">
-            <span :class="['radio-circle', { 'radio-circle--checked': agreed }]" @click="onAgreementIndicatorClick"></span>
+            <span
+              :class="['radio-circle', { 'radio-circle--checked': agreed }]"
+              @click="onAgreementIndicatorClick"
+            ></span>
             <span class="agreement-text agreement-text--link" @click="onAgreementTextClick">
               {{ t('UILogin_ReadOK') }}
             </span>
@@ -728,7 +736,11 @@ function consumePhoneAreaSelection(): void {
       </div>
     </div>
   </div>
-  <GameDialog v-model:show="showLanguageModal" :show-confirm-button="false" :close-on-click-overlay="true">
+  <GameDialog
+    v-model:show="showLanguageModal"
+    :show-confirm-button="false"
+    :close-on-click-overlay="true"
+  >
     <div
       v-for="lang in SUPPORTED_LOCALES_OPTIONS"
       :key="lang.value"
@@ -736,7 +748,9 @@ function consumePhoneAreaSelection(): void {
       @click="handleSelectLang(lang.value)"
     >
       <span>{{ lang.label }}</span>
-      <span :class="['radio-circle', { 'radio-circle--checked': lang.value==currentLang }]"></span>
+      <span
+        :class="['radio-circle', { 'radio-circle--checked': lang.value == currentLang }]"
+      ></span>
     </div>
   </GameDialog>
   <GameDialog
@@ -767,7 +781,9 @@ function consumePhoneAreaSelection(): void {
   >
     <div>
       <span>{{ t('UILoginConfirmContent') }}</span>
-      <span class="text-primary ml-2 protocol-link" @click="goProtocolPage">{{ t('UIMine_Setting_UserSecret') }}</span>
+      <span class="text-primary ml-2 protocol-link" @click="goProtocolPage">
+        {{ t('UIMine_Setting_UserSecret') }}
+      </span>
     </div>
   </GameDialog>
 </template>
@@ -796,7 +812,7 @@ function consumePhoneAreaSelection(): void {
   cursor: pointer;
 }
 
-.language-item{
+.language-item {
   align-items: center;
   justify-content: space-between;
   height: 1.2rem;
@@ -804,25 +820,25 @@ function consumePhoneAreaSelection(): void {
   border-bottom: 0.2px solid rgba(255, 255, 255, 0.2);
   display: flex;
   .radio-circle {
-  width: 0.42rem;
-  height: 0.42rem;
-  &--checked {
-    &::after {
-      width: 0.26rem;
-      height: 0.26rem;
+    width: 0.42rem;
+    height: 0.42rem;
+    &--checked {
+      &::after {
+        width: 0.26rem;
+        height: 0.26rem;
+      }
     }
   }
-}
 
-.debug-account-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 1.1rem;
-  border-bottom: 0.2px solid rgba(255, 255, 255, 0.2);
-  padding: 0 0.08rem;
-  cursor: pointer;
-}
+  .debug-account-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 1.1rem;
+    border-bottom: 0.2px solid rgba(255, 255, 255, 0.2);
+    padding: 0 0.08rem;
+    cursor: pointer;
+  }
 }
 
 .lang-btn {
@@ -943,7 +959,7 @@ function consumePhoneAreaSelection(): void {
   flex: 1;
   height: 100%;
   // Inner pill: white semi-transparent
-  background: rgba(255, 255, 255, 0.80);
+  background: rgba(255, 255, 255, 0.8);
   border-radius: 1.69rem;
   display: flex;
   align-items: center;
@@ -1042,7 +1058,7 @@ function consumePhoneAreaSelection(): void {
 
 /* Bottom area */
 .bottom-area {
-  margin-top: 0.60rem;
+  margin-top: 0.6rem;
   display: flex;
   flex-direction: column;
   gap: 0.27rem;
@@ -1066,9 +1082,9 @@ function consumePhoneAreaSelection(): void {
   cursor: pointer;
   padding: 0.08rem 0.1rem;
 
-    text-align: center;
-    background: rgba(0, 0, 0, 0.15);
-    border-radius: 0.42rem;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 0.42rem;
 }
 
 /* Agreement */
@@ -1103,7 +1119,7 @@ function consumePhoneAreaSelection(): void {
 .protocol-link {
   cursor: pointer;
 }
-.primary-btn{
+.primary-btn {
   height: 1.44rem;
 }
 </style>

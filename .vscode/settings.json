@@ -1,26 +1,26 @@
 {
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.defaultFormatter": "dbaeumer.vscode-eslint",
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "always"
   },
-  "eslint.format.enable": false,
+  "eslint.format.enable": true,
   "eslint.useFlatConfig": true,
   "eslint.validate": ["javascript", "typescript", "vue"],
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
   "[vue]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
       "source.fixAll.eslint": "always"
     }
   },
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
   "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"

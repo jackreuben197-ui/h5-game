@@ -46,7 +46,7 @@ import gameTypeNlh from '@/assets/icons/game_type_nlh.png'
 import gameTypePlo from '@/assets/icons/game_type_plo.png'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
 import peopleBgUrl from '@/assets/icons/icon_people.png'
-import SafetyGuardPopup from '@/components/Dialog/SafetyGuardPopup.vue'
+import SafetyGuardDialog from '@/components/Dialog/SafetyGuardDialog.vue'
 import {
   multiLanguageTemplateVersion,
   resolveTemplateTextByKey,
@@ -1344,7 +1344,7 @@ function formatChipBase(rawValue: number): string {
       </div>
     </van-popup>
 
-    <SafetyGuardPopup v-model:show="showSafetyGuardPopup" :tribe-id="selectedTribeId" />
+    <SafetyGuardDialog v-model:show="showSafetyGuardPopup" :tribe-id="selectedTribeId" />
   </div>
 </template>
 

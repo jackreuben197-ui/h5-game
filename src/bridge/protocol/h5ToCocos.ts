@@ -28,6 +28,17 @@ export interface WsClosedPayload {
   wasClean?: boolean
 }
 
+export interface DialogResultPayload {
+  dialogRequestId: string
+  action: 'confirm' | 'cancel' | 'close'
+}
+
+export interface PanelEventPayload {
+  panelRequestId: string
+  event: string
+  payload?: unknown
+}
+
 // 请求进入牌桌时发送给 Cocos 的负载。
 export interface EnterTablePayload {
   userName: string

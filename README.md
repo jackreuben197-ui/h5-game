@@ -506,11 +506,11 @@ const text = t('Wallet_AddItem7', 100, 12)
 - 登录态 key：`LOGIN_DATA`（最终存储项为 `dzpk_LOGIN_DATA`）
 - token key：`TOKEN`（最终存储项为 `dzpk_TOKEN`）
 
-## 11. 全局业务组件
+## 11. 组件
 
 ### 11.1 TopActionButton
 
-位置：`src/components/TopActionButton.vue`
+位置：`src/components/Button/TopActionButton.vue`
 
 用途：
 
@@ -534,7 +534,7 @@ Events：
 
 ### 11.2 PageBackHeader
 
-位置：`src/components/PageBackHeader.vue`
+位置：`src/components/HeaderBack/HeaderBack.vue`
 
 用途：
 
@@ -572,11 +572,7 @@ Slots：
 <PageBackHeader title="扑克专区" @back="handleBack">
   <template #right>
     <div class="action-wrap">
-      <TopActionButton
-        name="切换"
-        :icon="walletIcon"
-        @click="handleTodoClick"
-      />
+      <TopActionButton name="切换" :icon="walletIcon" @click="handleTodoClick" />
     </div>
   </template>
 </PageBackHeader>
@@ -592,7 +588,9 @@ Slots：
 </PageBackHeader>
 ```
 
-## 12. GameTable 组件
+---
+
+### 11.3 GameTable
 
 位置：`src/components/Table/`
 
@@ -609,7 +607,7 @@ Table/
 └── GameTableCell.vue     # 单元格内容，支持 formatter 和自定义 slot
 ```
 
-### 12.1 GameTable Props
+#### GameTable Props
 
 | Prop | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
@@ -622,7 +620,7 @@ Table/
 | `disabled` | `boolean` | `false` | 禁用滚动加载 |
 | `offset` | `number` | `50` | 距底部多少 px 时触发 load |
 
-### 12.2 GameTable Events
+#### GameTable Events
 
 | Event | 参数 | 说明 |
 |-------|------|------|
@@ -631,7 +629,7 @@ Table/
 | `selectChange` | `(col, option)` | 下拉选择触发 |
 | `rowClick` | `(row)` | 行点击触发 |
 
-### 12.3 GameTableColumn Props
+#### GameTableColumn Props
 
 | Prop | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
@@ -645,7 +643,7 @@ Table/
 | `fixed` | `boolean` | `false` | 固定列（预留，暂不处理横向滚动） |
 | `formatter` | `(value, row) => any` | 原值 | 自定义格式化显示值 |
 
-### 12.4 自定义 slot 渲染
+#### 自定义 slot 渲染
 
 `GameTableColumn` 的默认 slot 接收 `{ row, value }` 作用域，可自定义单元格内容：
 
@@ -658,7 +656,7 @@ Table/
 </GameTableColumn>
 ```
 
-### 12.5 完整示例
+#### 完整示例
 
 ```vue
 <script setup lang="ts">
@@ -670,7 +668,7 @@ const data = [
 ]
 
 function onSortChange(col, order) {
-  console.log('sort', col.prop, order) // 向服务端传参重新拉取数据
+  console.log('sort', col.prop, order)
 }
 
 function onSelectChange(col, option) {
@@ -687,26 +685,14 @@ function onSelectChange(col, option) {
     @select-change="onSelectChange"
     @row-click="(row) => console.log(row)"
   >
-    <!-- 固定宽度列 -->
     <GameTableColumn prop="rank" label="排名" width="1rem" />
-
-    <!-- 自定义 slot 列 -->
     <GameTableColumn prop="name" label="玩家" :flex="2">
       <template #default="{ row, value }">
         <img :src="row.avatar" style="width:0.6rem;height:0.6rem;border-radius:50%" />
         <span style="margin-left:0.12rem">{{ value }}</span>
       </template>
     </GameTableColumn>
-
-    <!-- 排序列 + formatter -->
-    <GameTableColumn
-      prop="score"
-      label="积分"
-      :sortable="true"
-      :formatter="(v) => v.toLocaleString()"
-    />
-
-    <!-- 下拉筛选列 -->
+    <GameTableColumn prop="score" label="积分" :sortable="true" :formatter="(v) => v.toLocaleString()" />
     <GameTableColumn
       prop="type"
       label="类型"
@@ -720,7 +706,7 @@ function onSelectChange(col, option) {
 </template>
 ```
 
-### 12.6 分页滚动加载示例
+#### 分页滚动加载示例
 
 ```vue
 <script setup lang="ts">
@@ -735,19 +721,13 @@ let page = 1
 async function onLoad() {
   const res = await fetchTableData({ page: page++ })
   data.value.push(...res.list)
-  loading.value = false             // 必须置为 false，否则不会触发下一次 load
+  loading.value = false
   if (data.value.length >= res.total) finished.value = true
 }
 </script>
 
 <template>
-  <GameTable
-    :data="data"
-    height="12rem"
-    v-model:loading="loading"
-    :finished="finished"
-    @load="onLoad"
-  >
+  <GameTable :data="data" height="12rem" v-model:loading="loading" :finished="finished" @load="onLoad">
     <GameTableColumn prop="rank" label="排名" width="1rem" />
     <GameTableColumn prop="name" label="玩家" />
     <GameTableColumn prop="score" label="积分" :sortable="true" />
@@ -761,7 +741,7 @@ async function onLoad() {
 - 数据不足一屏时组件会在 `loading` 变 false 后自动再次检查并触发 `load`，直到内容溢出或 `finished` 为 true
 - 自定义底部状态可通过 `#loading` / `#finished` slot 覆盖默认样式
 
-### 12.7 样式说明
+#### 样式说明
 
 - **Header**：整体为一个 pill 胶囊条，样式与 `FilterTabbar--pill` 激活态完全一致（外层白色内阴影环 + 内层绿色填充 + 绿色 glow）
 - **Row**：每行为一个独立圆角卡片（`border-radius: 0.425rem`，`background: rgba(0,0,0,0.2)`），最小高度 `0.85rem`，行间有 `0.12rem` 间距
@@ -769,13 +749,15 @@ async function onLoad() {
 - **排序图标**：上下箭头对（Vant `arrow-up` / `arrow-down`），激活态变白色，后续可替换为自定义 SVG
 - **下拉箭头**：Vant `arrow-down`，展开时旋转 180°
 
-## 13. GameDialog 组件
+---
+
+### 11.4 GameDialog
 
 位置：`src/components/Dialog/`
 
 二次封装 `van-dialog`，保留其 overlay/teleport/lockScroll 等底层能力，完全替换视觉 UI。
 
-### 13.1 Props
+#### Props
 
 | Prop | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
@@ -790,14 +772,14 @@ async function onLoad() {
 
 其余 `van-dialog` 原生属性（`overlay`、`teleport`、`closeOnClickOverlay` 等）均通过 `v-bind="$attrs"` 透传。
 
-### 13.2 Slots
+#### Slots
 
 | Slot | 说明 |
 |------|------|
 | `#title` | 自定义标题内容，覆盖 `title` prop |
 | `#default` | 自定义 body 内容，覆盖 `message` prop |
 
-### 13.3 Events
+#### Events
 
 | Event | 说明 |
 |-------|------|
@@ -805,7 +787,7 @@ async function onLoad() {
 | `cancel` | 点击取消按钮 |
 | `close` | 弹窗关闭 |
 
-### 13.4 示例
+#### 示例
 
 ```vue
 <script setup lang="ts">
@@ -835,7 +817,7 @@ const show = ref(false)
 </template>
 ```
 
-### 13.5 样式说明
+#### 样式说明
 
 - **背景**：`component_dialog_bg.png`，`background-size: 100% auto` 从顶部裁切，内容多高显示多高，不拉伸
 - **内阴影**：`inset 2.12px 4.24px 17.23px rgba(242,242,242,0.9)` + 四角高光
@@ -847,13 +829,13 @@ const show = ref(false)
 
 ---
 
-## 14. GameToast 组件
+### 11.5 GameToast
 
 位置：`src/components/Toast/`
 
 二次封装 `van-toast`，保留其定时关闭/位置/遮罩能力，完全替换视觉 UI。
 
-### 14.1 Props
+#### Props
 
 | Prop | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
@@ -868,19 +850,19 @@ const show = ref(false)
 
 其余 `van-toast` 原生属性通过 `v-bind="$attrs"` 透传。
 
-### 14.2 Slots
+#### Slots
 
 | Slot | 说明 |
 |------|------|
 | `#default` | 自定义内容，覆盖 `message` prop，可放任意节点 |
 
-### 14.3 Events
+#### Events
 
 | Event | 说明 |
 |-------|------|
 | `close` | toast 关闭时触发 |
 
-### 14.4 示例
+#### 示例
 
 ```vue
 <script setup lang="ts">
@@ -888,10 +870,6 @@ import { ref } from 'vue'
 import { GameToast } from '@/components/Toast'
 
 const show = ref(false)
-
-function showTip() {
-  show.value = true
-}
 </script>
 
 <template>
@@ -908,7 +886,7 @@ function showTip() {
 </template>
 ```
 
-### 14.5 样式说明
+#### 样式说明
 
 - **背景**：与 GameDialog 相同，`component_dialog_bg.png` 顶部裁切不拉伸
 - **内阴影**：与 GameDialog 完全一致
@@ -919,13 +897,71 @@ function showTip() {
 
 ---
 
-## 15. 日志系统
+### 11.6 ImageUploadSheet
+
+位置：`src/components/ImageUploadSheet/ImageUploadSheet.vue`
+
+底部弹窗式图片上传组件，支持拍照和相册两种来源，自动上传至 OSS，通过 `v-model` 绑定返回的图片 URL。底部弹窗经 `<teleport to="body">` 挂载，不受父级 `overflow: hidden` 影响。
+
+#### Props
+
+| Prop | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `modelValue` | `string` | `''` | 图片 URL，配合 `v-model` 使用 |
+| `accept` | `string` | `'image/*'` | 透传给 `<input type="file">` 的 accept 属性 |
+
+#### Emits
+
+| 事件 | 载荷 | 说明 |
+|---|---|---|
+| `update:modelValue` | `string` | OSS 上传成功后返回的图片 URL |
+| `upload-start` | — | 开始上传时触发 |
+| `upload-end` | — | 上传结束时触发（成功与失败均会触发） |
+| `error` | `string` | 上传失败时触发，携带错误消息 |
+
+#### 默认插槽（scoped slot）
+
+| Slot Prop | 类型 | 说明 |
+|---|---|---|
+| `open` | `() => void` | 调用后弹出底部来源选择弹窗 |
+| `imageUrl` | `string` | 当前 `modelValue` 的透传，可直接用于渲染预览 |
+| `uploading` | `boolean` | 上传进行中状态，可用于显示 loading |
+
+#### 示例
+
+```vue
+<ImageUploadSheet v-model="avatarUrl">
+  <template #default="{ open, imageUrl, uploading }">
+    <button class="avatar-trigger" @click="open">
+      <img :src="imageUrl || fallbackImg" />
+      <span v-if="uploading">上传中...</span>
+    </button>
+  </template>
+</ImageUploadSheet>
+```
+
+监听上传状态：
+
+```vue
+<ImageUploadSheet
+  v-model="avatarUrl"
+  @upload-start="loading = true"
+  @upload-end="loading = false"
+  @error="onUploadError"
+>
+  ...
+</ImageUploadSheet>
+```
+
+---
+
+## 12. 日志系统
 
 位置：`src/utils/logger.ts`
 
 统一封装 `console.log/info/warn/error`，支持全局 level 控制和单 logger 独立开关。
 
-### 15.1 Level 说明
+### 12.1 Level 说明
 
 | Level | 输出内容 |
 |-------|---------|
@@ -937,7 +973,7 @@ function showTip() {
 
 开发环境默认 `debug`，生产环境默认 `warn`（可被 `VITE_DROP_CONSOLE=true` 在构建时彻底抹除）。
 
-### 15.2 在模块中使用
+### 12.2 在模块中使用
 
 ```ts
 import { createLogger } from '@/utils/logger'
@@ -952,7 +988,7 @@ log.error('致命错误:', error)
 
 同 tag 多次调用 `createLogger` 返回同一实例（注册表单例）。
 
-### 15.3 已注册的 logger 及职责
+### 12.3 已注册的 logger 及职责
 
 | Tag | 文件 | 职责 |
 |-----|------|------|
@@ -967,7 +1003,7 @@ log.error('致命错误:', error)
 | `[i18n]` | `i18n/index.ts` / `utils/multiLanguageTemplate.ts` | 语言包加载 |
 | `[h5]` | `main.ts` | 应用挂载 |
 
-### 15.4 运行时动态控制
+### 12.4 运行时动态控制
 
 项目在 `window.__log` 上暴露了三个方法，可直接在浏览器控制台调用：
 
@@ -988,8 +1024,7 @@ __log.setLevel('[bridge][cc->h5]', 'silent')  // 关掉 Cocos→H5 消息
 __log.setLevel('[wsSend]', null)
 ```
 
-### 15.5 在组件生命周期中临时调试
-
+### 12.5 在组件生命周期中临时调试
 
 需要调试某个页面时，在生命周期内临时提升特定 logger 的 level，离开时恢复：
 
@@ -1007,7 +1042,7 @@ onUnmounted(() => {
 })
 ```
 
-## 16. 协议文件同步（Protobuf）
+## 13. 协议文件同步（Protobuf）
 
 pb 生成文件（`.js` + `.d.ts`）**已提交到 git**，通常不需要每次开发都重新执行。
 

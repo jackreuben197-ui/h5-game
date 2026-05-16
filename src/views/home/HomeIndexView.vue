@@ -13,6 +13,7 @@ import { t } from '@/i18n'
 import { localStore } from '@/utils/localStore'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { showGameToast } from '@/components/Toast'
+import { openBridgePanel } from '@/bridge/channels'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -194,6 +195,22 @@ async function refreshBalance(): Promise<void> {
 
 function goToRecharge(): void {
   void router.push('/wallet')
+}
+
+function openMiniGamePanel(): void {
+  showGameToast('功能开发中')
+  // openBridgePanel({
+  //   panelType: 'gameRule',
+  //   closeOnClickOverlay: true,
+  //   props: {
+  //     ruleType: 1,
+  //     gameInfo: {
+  //       game_type: 0,
+  //       poker_type: 2,
+  //       room_critical_hit: 1,
+  //     },
+  //   },
+  // })
 }
 
 function getRoomPlayers(room: RoomRecord): number {
@@ -510,7 +527,7 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- 小游戏专区 -->
-        <div class="game-card game-card-minigame" @click="showGameToast('功能开发中')">
+        <div class="game-card game-card-minigame" @click="openMiniGamePanel">
           <img
             class="zone-lg-icon zone-lg-icon-minigame"
             src="@/assets/icons/game_zone_minigame_lg.png"

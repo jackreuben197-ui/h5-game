@@ -155,15 +155,6 @@ export async function loginV2Api(payload: LoginV2Request): Promise<LoginResponse
     }
     return { ...res.data?.data, ...res.data, token }
   } catch (error) {
-    // 兼容旧环境：若后端未部署 login2，则手机号登录回退到 /user/login。
-    const status = (error as { response?: { status?: number } })?.response?.status
-    if (status === 404 && payload.phone && !payload.email) {
-      return loginApi({
-        phone: payload.phone,
-        password: payload.password,
-        area: payload.area || '55',
-      })
-    }
     throw error
   }
 }

@@ -2,6 +2,7 @@
 import { computed, onMounted, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBg2Url from '@/assets/images/main_bg2.png'
 import { getUserClubApi, getUserInfoApi } from '@/api/user'
 import { postDiamondConfigApi, postGlobalConfigApi } from '@/api/config'
 import {
@@ -23,9 +24,9 @@ const tabsStore = useMainTabsStore()
 const appConfigStore = useAppConfigStore()
 const { setLocale } = useTextI18n()
 
-// 主容器背景图：全页面共用一张底图。
+// 主容器背景图：全页面共用一张底图，首页使用 main_bg2.png。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  backgroundImage: route.meta.tabKey === 'home' ? `url(${mainBg2Url})` : `url(${mainBgUrl})`,
 }))
 
 async function fetchUserInfoOnEnter(): Promise<void> {

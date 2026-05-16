@@ -470,7 +470,9 @@ onMounted(() => {
                   class="fee-line"
                 >
                   <span>{{ income.label }}</span>
-                  <span :class="income.positive ? 'value-up' : 'value-down'">{{ income.value }}</span>
+                  <span :class="income.positive ? 'value-up' : 'value-down'">
+                    {{ income.value }}
+                  </span>
                 </div>
               </div>
               <span class="chevron">›</span>
@@ -503,59 +505,8 @@ onMounted(() => {
 .club-room-history-bg {
   position: relative;
   height: 100dvh;
-  background:
-    radial-gradient(120% 70% at 50% -10%, rgba(91, 18, 115, 0.72), rgba(18, 11, 47, 0.86) 45%, #0a0f2f 85%),
-    linear-gradient(180deg, #120a33, #090d2a);
-  overflow: hidden;
+  background-size: cover;
   color: #f9f9f9;
-}
-
-.bg-image {
-  position: absolute;
-  pointer-events: none;
-  user-select: none;
-}
-
-.bg-image--large {
-  width: 44.72rem;
-  height: 97.5rem;
-  left: -32.2rem;
-  top: -11rem;
-  opacity: 0.44;
-  object-fit: cover;
-}
-
-.bg-image--overlay {
-  width: 14rem;
-  height: 30.5rem;
-  left: -1.2rem;
-  top: -0.2rem;
-  opacity: 0.62;
-  object-fit: cover;
-}
-
-.glow {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(1.2rem);
-  opacity: 0.65;
-  pointer-events: none;
-}
-
-.glow--pink {
-  width: 6rem;
-  height: 6rem;
-  top: -2rem;
-  right: -1.4rem;
-  background: rgba(210, 45, 168, 0.56);
-}
-
-.glow--blue {
-  width: 5.4rem;
-  height: 5.4rem;
-  left: -1.8rem;
-  top: 9rem;
-  background: rgba(60, 102, 255, 0.52);
 }
 
 .club-room-history {
@@ -567,19 +518,6 @@ onMounted(() => {
   height: 100dvh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-}
-
-:deep(.van-nav-bar) {
-  background: transparent;
-}
-
-:deep(.van-nav-bar__title) {
-  color: #fff;
-  font-size: 0.44rem;
-}
-
-:deep(.van-icon-arrow-left) {
-  color: #fff;
 }
 
 .coin-tabs {
@@ -768,7 +706,12 @@ onMounted(() => {
   min-height: 2.25507rem;
   border-radius: 2.0848rem;
   border: 0.02667rem solid rgba(255, 255, 255, 0.56);
-  background: linear-gradient(95deg, rgba(159, 22, 128, 0.64) 0%, rgba(130, 26, 142, 0.56) 63%, rgba(72, 82, 175, 0.56) 100%);
+  background: linear-gradient(
+    95deg,
+    rgba(159, 22, 128, 0.64) 0%,
+    rgba(130, 26, 142, 0.56) 63%,
+    rgba(72, 82, 175, 0.56) 100%
+  );
   backdrop-filter: blur(0.67653rem);
   padding: 0.37333rem 0.53333rem 0.37333rem 1.2rem;
   display: flex;

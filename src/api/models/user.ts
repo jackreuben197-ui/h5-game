@@ -802,3 +802,20 @@ export interface NewSafetyRecord {
 
   [key: string]: unknown
 }
+
+// /api/user/club/creator/grant (ClubSendDiamonds)
+
+export interface ClubSendDiamondsRequest {
+    amount?: number; // 金额
+    user_ids?: number[]; // 用户IDs
+
+  [key: string]: unknown
+}
+
+export interface ClubSendDiamondsResponseData extends ClubSendDiamondsData {
+  [key: string]: unknown
+}
+
+export interface ClubSendDiamondsData {
+  [key: string]: unknown
+}

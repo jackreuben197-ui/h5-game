@@ -957,6 +957,7 @@ export interface OrgMemberListRequest {
   filter_type?: number // 1联盟币 2 usdt 3 记分牌
   agent_id?: number // 代理id
   simple?: boolean // 是否简版
+  hide_slave?: boolean // 是否隐藏从属俱乐部成员
 
   [key: string]: unknown
 }
@@ -2683,6 +2684,7 @@ export interface OrgClubUserInfoData {
   uc_deposit_advance?: number // UC垫付 1 开启 2 未开启
   club_gold_credit?: number // 俱乐部币信用余额
   club_gold_credit_limit?: number // 俱乐部币信用额度限
+  friend_total?: number // 下线成员总数
 
   [key: string]: unknown
 }

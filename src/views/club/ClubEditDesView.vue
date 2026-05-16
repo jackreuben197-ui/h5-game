@@ -11,7 +11,6 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 
@@ -103,10 +102,7 @@ async function onConfirm(): Promise<void> {
 .club-edit-des-bg {
   position: relative;
   height: 100dvh;
-  background:
-    radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.68), rgba(154, 97, 145, 0.66) 45%, rgba(33, 136, 168, 0.86) 100%),
-    linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
-  overflow: hidden;
+  background-size: cover;
 }
 
 .bg-blur {

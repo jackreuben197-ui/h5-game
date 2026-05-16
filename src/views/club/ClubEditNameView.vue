@@ -12,7 +12,6 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 
@@ -79,9 +78,6 @@ async function onConfirm(): Promise<void> {
 
 <template>
   <div class="page-shell club-edit-name-bg" :style="backgroundStyle">
-    <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
-    <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
-
     <div class="club-edit-name">
       <HeaderBack :title="'修改名称'" />
 
@@ -136,34 +132,7 @@ async function onConfirm(): Promise<void> {
 .club-edit-name-bg {
   position: relative;
   height: 100dvh;
-  background:
-    radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.68), rgba(154, 97, 145, 0.66) 45%, rgba(33, 136, 168, 0.86) 100%),
-    linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
-  overflow: hidden;
-}
-
-.bg-blur {
-  position: absolute;
-  border-radius: 999px;
-  filter: blur(1rem);
-  opacity: 0.54;
-  pointer-events: none;
-}
-
-.bg-blur--pink {
-  width: 2.7rem;
-  height: 2.7rem;
-  left: -0.9rem;
-  top: 4.1rem;
-  background: rgba(224, 52, 127, 0.52);
-}
-
-.bg-blur--cyan {
-  width: 3rem;
-  height: 3rem;
-  right: -1.1rem;
-  bottom: 1.2rem;
-  background: rgba(42, 222, 255, 0.55);
+  background-size: cover;
 }
 
 .club-edit-name {

@@ -393,24 +393,10 @@ function toSafeInt(value: unknown): number {
 .safety-guard-card {
   position: relative;
   width: 100%;
-  height: var(--safety-guard-height, min(13.4rem, calc(100dvh - 3.2rem)));
+  height: var(--safety-guard-height, min(14.4rem, calc(100dvh - 3.2rem)));
   box-sizing: border-box;
   border-radius: 0.96rem;
   color: #f9f9f9;
-  padding: 0.56rem 0.44rem 0.44rem;
-  background:
-    radial-gradient(circle at 15% 90%, rgba(132, 219, 235, 0.14), transparent 40%),
-    radial-gradient(circle at 85% 12%, rgba(94, 94, 94, 0.25), transparent 40%),
-    linear-gradient(
-      110deg,
-      rgba(142, 142, 142, 0.3) 3%,
-      rgba(103, 103, 103, 0.4) 44%,
-      rgba(73, 73, 73, 0.56) 90%
-    );
-  box-shadow:
-    inset 0 0 0.22rem rgba(0, 0, 0, 0.54),
-    inset 0.08rem 0.12rem 0.42rem rgba(242, 242, 242, 0.35),
-    0 0.12rem 0.36rem rgba(0, 0, 0, 0.45);
 }
 
 .safety-guard-tabs {

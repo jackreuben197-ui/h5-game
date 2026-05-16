@@ -21,6 +21,7 @@ import imgModalClose from '@/assets/icons/modal_close.svg'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { extractInvitationLink } from '@/utils/clubInvitation'
 import { generateQrCodeUrl } from '@/utils/qrcode'
+import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 // 主容器背景图：全页面共用一张底图。
@@ -63,6 +64,9 @@ const isAgent = computed(() => userLevel.value === 4)
 const canManageClub = computed(() => isFounder.value || isVicePresident.value || isAdmin.value)
 
 const displayClub = computed(() => clubDetail.value ?? userInfoStore.currentClub)
+const cachedClub = computed(() => userInfoStore.currentClub)
+const currentClubGold = computed(() => Number(cachedClub.value?.user_gold ?? 0))
+const currentClubCredit = computed(() => Number(cachedClub.value?.user_credit ?? 0))
 
 const quickActions = computed<QuickActionItem[]>(() => {
   if (canManageClub.value) {
@@ -127,10 +131,6 @@ const showCopyPopup = ref(false)
 const clubName = computed(() => displayClub.value?.club_name || '俱乐部名称')
 const clubAlias = computed(() => displayClub.value?.tribe_name || 'XXXX')
 const clubId = computed(() => String(displayClub.value?.random_id || '--'))
-
-function formatCount(value?: number): string {
-  return Number(value || 0).toLocaleString('en-US')
-}
 
 function formatDate(value?: string): string {
   if (!value) {
@@ -438,11 +438,11 @@ onMounted(async () => {
 
             <p class="metric-line">
               <img :src="imgBalance" alt="" aria-hidden="true" />
-              <span>{{ formatCount(displayClub?.user_gold) }}</span>
+              <span>{{ formatUC(currentClubGold) }}</span>
             </p>
             <p class="metric-line">
               <img :src="imgChips" alt="" aria-hidden="true" />
-              <span>{{ formatCount(displayClub?.user_credit) }}</span>
+              <span>{{ formatUC(currentClubCredit) }}</span>
             </p>
           </div>
         </div>
@@ -699,20 +699,20 @@ onMounted(async () => {
 
 .name-edit-icon {
   position: relative;
-  width: 0.2rem;
-  height: 0.2rem;
+  width: 0.6rem;
+  height: 0.6rem;
   flex: 0 0 auto;
 }
 
 .name-edit-icon::before {
   content: '';
   position: absolute;
-  left: 0.03rem;
-  top: 0.06rem;
-  width: 0.14rem;
-  height: 0.06rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.92);
-  border-radius: 0.03rem;
+  left: 0.09rem;
+  top: 0.18rem;
+  width: 0.42rem;
+  height: 0.18rem;
+  border: 0.06rem solid rgba(249, 249, 249, 0.92);
+  border-radius: 0.09rem;
   transform: rotate(-38deg);
 }
 

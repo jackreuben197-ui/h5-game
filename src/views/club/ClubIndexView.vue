@@ -10,7 +10,7 @@ import {
   type CSSProperties,
 } from 'vue'
 import { useRouter } from 'vue-router'
-import { showFailToast, showSuccessToast } from 'vant'
+import { showFailToast } from 'vant'
 import { postOrgClubNoticeApi, postOrgClubNoticeIgnoreApi } from '@/api/cmsext'
 import { getRoomIdsApi, getRoomsDetailApi } from '@/api/roomcenter'
 import { enterTable } from '@/bridge/core'
@@ -45,6 +45,7 @@ import gameType6Plus from '@/assets/icons/game_type_6+.png'
 import gameTypeNlh from '@/assets/icons/game_type_nlh.png'
 import gameTypePlo from '@/assets/icons/game_type_plo.png'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
+import peopleBgUrl from '@/assets/icons/icon_people.png'
 import SafetyGuardPopup from '@/components/Dialog/SafetyGuardPopup.vue'
 import {
   multiLanguageTemplateVersion,
@@ -163,6 +164,11 @@ const currentClub = computed(() => {
 
 const selectedClubId = computed(() => toSafeInt(currentClub.value?.club_id))
 const selectedTribeId = computed(() => toSafeInt(currentClub.value?.tribe_id))
+
+const canCreateTable = computed(() => {
+  const userLevel = toSafeInt(currentClub.value?.user_level)
+  return userLevel >= 1 && userLevel <= 3
+})
 
 const filteredRecords = computed(() => {
   const baseList = sourceRecords.value.filter((room) => {
@@ -554,7 +560,7 @@ async function handleTableClick(room: RoomRecord): Promise<void> {
 
   enterTable(payload)
   gameStore.setLastEnterTable(payload)
-  showSuccessToast(`已请求进入牌桌：${room.name || room.rid}`)
+  // showSuccessToast(`已请求进入牌桌：${room.name || room.rid}`)
 }
 
 function handleToggleGroup(groupKey: string): void {
@@ -586,6 +592,15 @@ function handleQuickActionClick(action: 'safety' | 'ranking'): void {
     return
   }
   showFailToast('排行榜功能开发中')
+}
+
+function handleCreateTableClick(): void {
+  if (!canCreateTable.value) {
+    showFailToast('仅管理员或创始人可创建牌桌')
+    return
+  }
+
+  void router.push({ path: '/club/table/create', query: { origin_type: 5 } })
 }
 
 function handleFloatingMenuClick(): void {
@@ -1087,7 +1102,7 @@ function formatChipBase(rawValue: number): string {
               <span class="club-id-text">{{ clubDisplayId }}</span>
             </div>
             <div class="club-member-wrap">
-              <span class="club-member-dot"></span>
+              <img :src="peopleBgUrl" alt="members" class="club-member-icon" />
               <span>{{ clubMemberCount }}</span>
             </div>
           </div>
@@ -1285,6 +1300,15 @@ function formatChipBase(rawValue: number): string {
 
     <div class="floating-action-area">
       <button
+        v-if="clubHeaderTab !== 'event' && canCreateTable"
+        class="create-table-btn"
+        type="button"
+        @click="handleCreateTableClick"
+      >
+        创建牌桌
+      </button>
+      <button
+        :class="{ 'floating-menu-btn--solo': clubHeaderTab === 'event' || !canCreateTable }"
         class="floating-menu-btn"
         type="button"
         aria-label="更多操作"
@@ -1335,7 +1359,7 @@ function formatChipBase(rawValue: number): string {
 .club-header {
   position: relative;
   z-index: 2;
-  padding: calc(env(safe-area-inset-top) + 0.457rem) 0.456rem 0.22rem;
+  // padding: calc(env(safe-area-inset-top) + 0.457rem) 0.456rem 0.22rem;
 }
 
 .club-header-row {
@@ -1436,11 +1460,9 @@ function formatChipBase(rawValue: number): string {
   gap: 0.08rem;
 }
 
-.club-member-dot {
-  width: 0.249rem;
-  height: 0.211rem;
-  border-radius: 0.053rem;
-  background: linear-gradient(180deg, #ffd771 0%, #f59f37 100%);
+.club-member-icon {
+  width: 0.4rem;
+  height: 0.4rem;
 }
 
 .action-wrap {
@@ -1489,7 +1511,7 @@ function formatChipBase(rawValue: number): string {
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.2rem;
-  background: rgba(34, 34, 34, 0.39);
+  background: rgba(34, 34, 34, 0.1);
   box-shadow: inset 0 0 0 0.0133rem rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(0.8133rem);
   transition: min-height 0.2s ease;
@@ -1505,9 +1527,9 @@ function formatChipBase(rawValue: number): string {
   line-height: 1.4;
   text-align: left;
   flex: 1;
-  line-clamp: 2;
+  line-clamp: 1;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
   word-break: break-word;
@@ -1775,12 +1797,14 @@ function formatChipBase(rawValue: number): string {
 .group-list {
   position: relative;
   z-index: 1;
-  margin-top: 0;
+  margin-top: -0.03rem;
   max-height: calc(100dvh - 7.85rem);
   overflow-y: auto;
-  padding: 0.34rem 0.38rem 2.2rem;
+  padding: 0.34rem 0.96rem 2.2rem 0.38rem;
   background: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(0.8032rem) saturate(1.04);
+  width: 10.56rem;
+  margin-left: -0.28rem;
 }
 
 .mtt-content {
@@ -1875,7 +1899,7 @@ function formatChipBase(rawValue: number): string {
 }
 
 .floating-menu-btn {
-  margin-left: auto;
+  margin-left: -0.58rem;
   width: 0.92rem;
   height: 0.92rem;
   border: none;
@@ -1888,6 +1912,10 @@ function formatChipBase(rawValue: number): string {
   gap: 0.08rem;
   box-shadow: 0 0.14rem 0.3rem rgba(0, 0, 0, 0.38);
   z-index: 99;
+}
+
+.floating-menu-btn--solo {
+  margin-left: auto;
 }
 
 .floating-menu-btn span {

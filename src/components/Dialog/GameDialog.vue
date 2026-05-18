@@ -1,8 +1,17 @@
 <script setup lang="ts">
-import { Comment, Fragment, Text, computed, useAttrs, useSlots, type StyleValue, type VNode } from 'vue'
+import {
+  Comment,
+  Fragment,
+  Text,
+  computed,
+  useAttrs,
+  useSlots,
+  type StyleValue,
+  type VNode,
+} from 'vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import dialogBg from '@/assets/images/component_dialog_bg.png'
-import tableBg from '@/assets/images/table_bg.png'
+import tableBg from '@/assets/images/table_bg.webp'
 import { t } from '@/i18n'
 
 /**
@@ -139,10 +148,7 @@ const bodyStyles = computed<StyleValue>(() => [
   >
     <!-- 完全自定义 dialog 内部内容 -->
     <template #default>
-      <div
-        class="game-dialog__card"
-        :style="cardStyles"
-      >
+      <div class="game-dialog__card" :style="cardStyles">
         <!-- Title -->
         <div v-if="title || hasTitleSlotContent" class="game-dialog__title">
           <slot name="title">{{ title }}</slot>
@@ -211,13 +217,12 @@ const bodyStyles = computed<StyleValue>(() => [
   background-size: 100% auto;
   background-position: top center;
   background-repeat: no-repeat;
-  box-shadow: inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
-    /* 左上高光 */
-  inset  0.5px  0.5px 0px  0px rgba(255, 255, 255, 0.85),
-  inset  2px  2px 0px -2px rgba(255, 255, 255, 0.30),
-  /* 右下高光 */
-  inset -0.5px -0.5px 0px  0px rgba(255, 255, 255, 0.85),
-  inset -2px -2px 0px -2px rgba(255, 255, 255, 0.30);
+  box-shadow:
+    inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
+    /* 左上高光 */ inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.85),
+    inset 2px 2px 0px -2px rgba(255, 255, 255, 0.3),
+    /* 右下高光 */ inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.85),
+    inset -2px -2px 0px -2px rgba(255, 255, 255, 0.3);
   display: flex;
   flex-direction: column;
   padding: 0.5rem;
@@ -256,7 +261,8 @@ const bodyStyles = computed<StyleValue>(() => [
   z-index: 1;
   border-radius: inherit;
   background: rgba(8, 8, 8, 0.25);
-  box-shadow: inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
+  box-shadow:
+    inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
     inset 0.5px 0.5px 0 0 rgba(255, 255, 255, 0.85),
     inset 2px 2px 0 -2px rgba(255, 255, 255, 0.3),
     inset -0.5px -0.5px 0 0 rgba(255, 255, 255, 0.85),

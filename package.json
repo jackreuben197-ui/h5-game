@@ -14,6 +14,7 @@
     "build:analyze": "vue-tsc -b && vite build --mode analyze",
     "analyze:report": "pnpm build:analyze && webpack-bundle-analyzer dist/stats.json dist --mode static --report dist/bundle-report.html --no-open",
     "analyze:server": "pnpm build:analyze && webpack-bundle-analyzer dist/stats.json dist",
+    "assets:compress": "node scripts/compress-assets.mjs",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.ts,.tsx,.js,.jsx",
     "lint:fix": "eslint . --ext .vue,.ts,.tsx,.js,.jsx --fix"
@@ -46,6 +47,8 @@
     "eslint": "^9.39.0",
     "eslint-plugin-vue": "^10.7.0",
     "sass": "^1.99.0",
+    "sharp": "^0.34.5",
+    "svgo": "^4.0.1",
     "typescript": "~6.0.2",
     "unplugin-vue-components": "^32.0.0",
     "vite": "^8.0.4",

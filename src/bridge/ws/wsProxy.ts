@@ -529,6 +529,8 @@ function connectWs(payload: WsConnectPayload): void {
     return
   }
 
+  log.info('ws connect start', { url: targetUrl })
+
   // 无 token 时不建立 websocket，避免进入“已连接但无法 REGISTER”的半可用状态。
   if (!hasSessionToken()) {
     log.info('wsConnect skipped: token empty, waiting login')
@@ -565,6 +567,7 @@ function connectWs(payload: WsConnectPayload): void {
   ws.binaryType = 'arraybuffer'
 
   ws.onopen = () => {
+    log.info('ws open', { url: targetUrl })
     clearReconnectTimer()
     reconnectAttempts = 0
     emitWsOpen(targetUrl)
@@ -584,10 +587,17 @@ function connectWs(payload: WsConnectPayload): void {
   }
 
   ws.onerror = () => {
+    log.warn('ws onerror', { url: targetUrl })
     emitWsError('websocket onerror')
   }
 
   ws.onclose = (event: CloseEvent) => {
+    log.warn('ws close', {
+      url: targetUrl,
+      code: event.code,
+      reason: event.reason,
+      wasClean: event.wasClean,
+    })
     stopHeartbeatLoop()
     emitWsClosed({
       code: event.code,
@@ -698,6 +708,10 @@ export function waitH5WsPacket(
 }
 
 function sendWs(payload: WsSendPayload): void {
+  log.debug('bridge wsSend received', {
+    dataType: payload.dataType,
+  })
+
   if (payload.dataType === 'text') {
     sendWsRaw(payload.text || '', 'bridge-wsSend-text')
     return

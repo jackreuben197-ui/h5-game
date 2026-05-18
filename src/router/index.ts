@@ -2,6 +2,9 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { useWalletStore } from '@/stores/wallet'
 import { pinia } from '@/stores/pinia'
+import { createLogger } from '@/utils/logger'
+
+const log = createLogger('[router]')
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -513,20 +516,54 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to) => {
+router.beforeEach((to, from) => {
   const gameStore = useGameStore(pinia)
   const token = gameStore.sessionToken
+  log.info('beforeEach', {
+    from: from.fullPath || '<init>',
+    to: to.fullPath,
+    requiresAuth: Boolean(to.meta.requiresAuth),
+    hasToken: Boolean(token),
+  })
 
   if (to.meta.requiresAuth && !token) {
     // 未登录统一进入登录页；登录成功后固定回首页，不做业务页重定向。
+    log.warn('redirect to login: token missing', {
+      from: from.fullPath || '<init>',
+      to: to.fullPath,
+    })
     return { name: 'login' }
   }
 
   if (to.name === 'login' && token) {
+    log.warn('redirect to lobby: already logged in', {
+      from: from.fullPath || '<init>',
+      to: to.fullPath,
+    })
     return { name: 'lobby' }
   }
 
   return true
+})
+
+router.afterEach((to, from, failure) => {
+  if (failure) {
+    log.warn('afterEach failure', {
+      from: from.fullPath || '<init>',
+      to: to.fullPath,
+      failure,
+    })
+    return
+  }
+
+  log.info('afterEach', {
+    from: from.fullPath || '<init>',
+    to: to.fullPath,
+  })
+})
+
+router.onError((error) => {
+  log.error('router error', error)
 })
 
 export default router

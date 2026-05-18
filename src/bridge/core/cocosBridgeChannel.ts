@@ -55,6 +55,7 @@ const handshakeDoneHandlers = new Set<HandshakeDoneHandler>()
 
 let h5ReadySent = false
 let bridgeHandshakeDone = false
+let lastBridgeChannelName = ''
 
 function isNonForwardMessage(message: BridgeMessage): boolean {
   return normalizeBridgeMsgType(message.msgtype) === BRIDGE_MSG_TYPE.H5
@@ -236,6 +237,12 @@ function shouldUseScheme(): boolean {
 
 // 按优先级依次尝试发送通道，命中一个即返回。
 function postToCocos(message: BridgeMessage): void {
+  const channelName = getBridgeChannelName()
+  if (channelName !== lastBridgeChannelName) {
+    lastBridgeChannelName = channelName
+    log.info('[channel] current channel', { channel: channelName })
+  }
+
   if (postByDirectBridge(message)) {
     return
   }
@@ -375,6 +382,7 @@ function markBridgeHandshakeDone(): void {
     return
   }
   bridgeHandshakeDone = true
+  log.info('[handshake] done')
   handshakeDoneHandlers.forEach((handler) => handler())
 }
 
@@ -405,6 +413,7 @@ function maybeSendH5Ready(): void {
     return
   }
 
+  log.info('[handshake] send h5Ready')
   sendBridgeMessage(BRIDGE_ACTION.H5_READY, {}, { msgtype: BRIDGE_MSG_TYPE.H5 })
   h5ReadySent = true
 }
@@ -418,14 +427,23 @@ function markCcReady(): void {
 
 function handleHandshakeMessage(message: BridgeMessage): void {
   if (message.action === BRIDGE_ACTION.CC_READY) {
+    log.info('[handshake] recv ccReady', {
+      requestId: message.requestId,
+      source: message.source,
+    })
     markCcReady()
     sendBridgeMessage(BRIDGE_ACTION.H5_ACK, {}, { msgtype: BRIDGE_MSG_TYPE.H5 })
+    log.info('[handshake] send h5Ack')
     markBridgeHandshakeDone()
     maybeSendH5Ready()
     return
   }
 
   if (message.action === BRIDGE_ACTION.CC_ACK) {
+    log.info('[handshake] recv ccAck', {
+      requestId: message.requestId,
+      source: message.source,
+    })
     markCcReady()
     markBridgeHandshakeDone()
     return

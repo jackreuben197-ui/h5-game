@@ -1,5 +1,10 @@
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent'
 
+import {
+  pushLoggerDebugEntry,
+  withDebugConsoleCaptureSuppressed,
+} from './debugConsole'
+
 const LEVEL_NUM: Record<LogLevel, number> = { debug: 0, info: 1, warn: 2, error: 3, silent: 4 }
 
 let _globalLevel: LogLevel = import.meta.env.DEV ? 'debug' : 'warn'
@@ -27,10 +32,33 @@ export class Logger {
     return LEVEL_NUM[this._level ?? _globalLevel]
   }
 
-  debug(...args: unknown[]) { if (this._n <= 0) console.log(this.tag, ...args) }
-  info(...args: unknown[]) { if (this._n <= 1) console.info(this.tag, ...args) }
-  warn(...args: unknown[]) { if (this._n <= 2) console.warn(this.tag, ...args) }
-  error(...args: unknown[]) { if (this._n <= 3) console.error(this.tag, ...args) }
+  debug(...args: unknown[]) {
+    pushLoggerDebugEntry('debug', this.tag, args)
+    if (this._n <= 0) {
+      withDebugConsoleCaptureSuppressed(() => console.log(this.tag, ...args))
+    }
+  }
+
+  info(...args: unknown[]) {
+    pushLoggerDebugEntry('info', this.tag, args)
+    if (this._n <= 1) {
+      withDebugConsoleCaptureSuppressed(() => console.info(this.tag, ...args))
+    }
+  }
+
+  warn(...args: unknown[]) {
+    pushLoggerDebugEntry('warn', this.tag, args)
+    if (this._n <= 2) {
+      withDebugConsoleCaptureSuppressed(() => console.warn(this.tag, ...args))
+    }
+  }
+
+  error(...args: unknown[]) {
+    pushLoggerDebugEntry('error', this.tag, args)
+    if (this._n <= 3) {
+      withDebugConsoleCaptureSuppressed(() => console.error(this.tag, ...args))
+    }
+  }
 }
 
 export function createLogger(tag: string): Logger {

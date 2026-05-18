@@ -40,5 +40,11 @@ declare global {
       mount?: (container?: string) => void
       unmount?: () => void
     }
+    __H5_DEBUG_CONSOLE__?: {
+      open?: () => void
+      close?: () => void
+      clear?: () => void
+      copy?: () => string
+    }
   }
 }

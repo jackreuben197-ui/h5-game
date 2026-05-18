@@ -27,7 +27,10 @@ export function setH5Visible(visible: boolean): void {
     window.__H5_VISIBLE__ = visible
   }
 
-  log.debug('[h5-visibility]', { visible, action: visible ? BRIDGE_ACTION.H5_SHOW : BRIDGE_ACTION.H5_HIDE })
+  log.info('[h5-visibility]', {
+    visible,
+    action: visible ? BRIDGE_ACTION.H5_SHOW : BRIDGE_ACTION.H5_HIDE,
+  })
 }
 
 function isRecord(raw: unknown): raw is Record<string, unknown> {
@@ -102,7 +105,10 @@ async function navigateH5(payload: unknown): Promise<void> {
       return
     }
 
-    log.debug('[h5-navigate] done', { mode: normalized.replace ? 'replace' : 'push', target: normalized.route })
+    log.info('[h5-navigate] done', {
+      mode: normalized.replace ? 'replace' : 'push',
+      target: normalized.route,
+    })
   } catch (error) {
     log.warn('[h5-navigate] navigation error:', error)
   }

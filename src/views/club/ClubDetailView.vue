@@ -10,7 +10,11 @@ import {
   postOrgClubDisbandApi,
   postOrgClubCloneApplyApi,
 } from '@/api/org'
-import type { OrgClubData, OrgClubSearchByIdResponseData } from '@/api/models/org'
+import type {
+  OrgChangeClubDataRequest,
+  OrgClubData,
+  OrgClubSearchByIdResponseData,
+} from '@/api/models/org'
 import imgClubCover from '@/assets/images/default_avatar.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
 import imgChips from '@/assets/icons/icon_chips.png'
@@ -21,6 +25,7 @@ import imgQuickFund from '@/assets/images/club_quick_fund.png'
 import imgInviteCover from '@/assets/images/club_invite_cover.png'
 import imgInviteHeart from '@/assets/icons/club_invite_heart.png'
 import imgModalClose from '@/assets/icons/modal_close.svg'
+import ImageUploadSheet from '@/components/ImageUploadSheet/ImageUploadSheet.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { extractInvitationLink } from '@/utils/clubInvitation'
 import { generateQrCodeUrl } from '@/utils/qrcode'
@@ -132,6 +137,8 @@ const joinWithoutApproval = ref(false)
 const showInvitePopup = ref(false)
 const showCopyPopup = ref(false)
 const savingInviteShare = ref(false)
+const savingClubLogo = ref(false)
+const clubAvatarUrl = ref('')
 const inviteModalRef = ref<HTMLElement | null>(null)
 
 const clubName = computed(() => displayClub.value?.club_name || '俱乐部名称')
@@ -156,6 +163,44 @@ function updateSwitchesByClubData(data: OrgClubData | null): void {
   joinWithoutApproval.value = Number(data?.auto_audit_switch ?? 0) === 1
 }
 
+function syncCurrentClubFields(fields: Partial<OrgClubData>): void {
+  if (displayClub.value) {
+    clubDetail.value = {
+      ...displayClub.value,
+      ...fields,
+    }
+  }
+
+  userInfoStore.syncCurrentClubFields(fields)
+
+  if (typeof fields.logo === 'string') {
+    clubAvatarUrl.value = fields.logo
+  }
+}
+
+async function submitClubDataPatch(payload: Partial<OrgChangeClubDataRequest>): Promise<void> {
+  if (!isFounder.value) {
+    throw new Error('仅创始人可修改')
+  }
+
+  const clubId = Number(displayClub.value?.club_id)
+  if (!clubId) {
+    throw new Error('俱乐部信息异常')
+  }
+
+  const response = await postOrgChangeClubDataApi({
+    club_id: clubId,
+    ...payload,
+  })
+
+  if (response.code !== 0) {
+    const fallback = (response.msg ?? response.message) as unknown
+    throw new Error(typeof fallback === 'string' ? fallback : '更新失败')
+  }
+
+  syncCurrentClubFields(payload as Partial<OrgClubData>)
+}
+
 async function refreshClubDetail(): Promise<void> {
   const currentClub = userInfoStore.currentClub
   if (!currentClub?.random_id) {
@@ -163,6 +208,8 @@ async function refreshClubDetail(): Promise<void> {
     void router.replace('/club/list')
     return
   }
+  clubDetail.value = currentClub
+  clubAvatarUrl.value = currentClub.logo || ''
 
   loading.value = true
   try {
@@ -173,18 +220,19 @@ async function refreshClubDetail(): Promise<void> {
     if (response.code !== 0 || !response.data) {
       showFailToast(response.msg || '获取俱乐部详情失败')
       clubDetail.value = currentClub
+      clubAvatarUrl.value = currentClub.logo || ''
       updateSwitchesByClubData(currentClub)
       return
     }
 
     clubDetail.value = response.data
     userInfoStore.setCurrentClub(response.data)
+    // userInfoStore.syncCurrentClubFields(response.data)
+    clubAvatarUrl.value = response.data.logo || ''
     updateSwitchesByClubData(response.data)
   } catch (error) {
     console.error('refreshClubDetail error', error)
     showFailToast('获取俱乐部详情失败')
-    clubDetail.value = currentClub
-    updateSwitchesByClubData(currentClub)
   } finally {
     loading.value = false
   }
@@ -287,26 +335,10 @@ async function updateClubSwitch(key: 'allowSearch' | 'joinWithoutApproval'): Pro
   }
 
   try {
-    const response = await postOrgChangeClubDataApi({
-      club_id: clubId,
+    await submitClubDataPatch({
       search_switch: nextAllowSearch ? 1 : 2,
       auto_audit_switch: nextAutoAudit ? 1 : 2,
     })
-
-    if (response.code !== 0) {
-      const fallback = (response.msg ?? response.message) as unknown
-      throw new Error(typeof fallback === 'string' ? fallback : '更新失败')
-    }
-
-    if (displayClub.value) {
-      const merged = {
-        ...displayClub.value,
-        search_switch: nextAllowSearch ? 1 : 2,
-        auto_audit_switch: nextAutoAudit ? 1 : 2,
-      }
-      clubDetail.value = merged
-      userInfoStore.setCurrentClub(merged)
-    }
   } catch (error) {
     if (key === 'allowSearch') {
       allowSearch.value = !nextAllowSearch
@@ -315,6 +347,38 @@ async function updateClubSwitch(key: 'allowSearch' | 'joinWithoutApproval'): Pro
     }
     const message = error instanceof Error ? error.message : '更新失败'
     showFailToast(message)
+  }
+}
+
+function onClubAvatarUploadError(message: string): void {
+  showFailToast(message || '图片上传失败')
+}
+
+async function onClubAvatarUploaded(url: string): Promise<void> {
+  if (!isFounder.value) {
+    showFailToast('仅创始人可修改')
+    return
+  }
+
+  const nextLogo = (url || '').trim()
+  if (!nextLogo) {
+    showFailToast('图片上传失败')
+    return
+  }
+
+  const previousLogo = displayClub.value?.logo || ''
+  clubAvatarUrl.value = nextLogo
+  savingClubLogo.value = true
+
+  try {
+    await submitClubDataPatch({ logo: nextLogo })
+    showSuccessToast('俱乐部头像已更新')
+  } catch (error) {
+    clubAvatarUrl.value = previousLogo
+    const message = error instanceof Error ? error.message : '更新失败'
+    showFailToast(message)
+  } finally {
+    savingClubLogo.value = false
   }
 }
 
@@ -393,7 +457,7 @@ async function submitCopyRequest(): Promise<void> {
 
   try {
     const response = await postOrgClubCloneApplyApi({
-      club_id: displayClub.value?.club_id
+      club_id: displayClub.value?.club_id,
     })
 
     if (response.code !== 0) {
@@ -511,7 +575,31 @@ onMounted(async () => {
     <div v-loading="loading" class="club-detail">
       <section class="club-header-card">
         <div class="club-header-main">
-          <img class="club-avatar" :src="displayClub?.logo || imgClubCover" alt="俱乐部头像" />
+          <ImageUploadSheet
+            v-if="isFounder"
+            v-model="clubAvatarUrl"
+            @update:model-value="onClubAvatarUploaded"
+            @error="onClubAvatarUploadError"
+          >
+            <template #default="{ open, imageUrl, uploading }">
+              <button
+                type="button"
+                class="club-avatar-trigger"
+                :disabled="savingClubLogo || uploading"
+                aria-label="修改俱乐部头像"
+                @click="open"
+              >
+                <img class="club-avatar" :src="imageUrl || imgClubCover" alt="俱乐部头像" />
+                <span class="club-avatar-edit" aria-hidden="true">+</span>
+              </button>
+            </template>
+          </ImageUploadSheet>
+          <img
+            v-else
+            class="club-avatar"
+            :src="displayClub?.logo || imgClubCover"
+            alt="俱乐部头像"
+          />
 
           <div class="club-summary">
             <button type="button" class="club-name-edit">
@@ -770,6 +858,30 @@ onMounted(async () => {
   border-radius: 999px;
   object-fit: cover;
   border: 0;
+}
+
+.club-avatar-trigger {
+  position: relative;
+  width: 1.96787rem;
+  height: 1.97968rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0;
+  background: transparent;
+}
+
+.club-avatar-edit {
+  position: absolute;
+  right: -0.03rem;
+  bottom: -0.03rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: linear-gradient(165deg, #05e7ae 10%, #027a5c 75%);
+  color: #fff;
+  font-size: 0.45rem;
+  line-height: 0.5rem;
+  text-align: center;
 }
 
 .club-summary {

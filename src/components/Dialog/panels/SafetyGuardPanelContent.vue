@@ -8,6 +8,8 @@ import { decodeTribeBlackUserNotify } from '@/bridge/ws/tribeBlackUserNotify'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 import clubCoverAvatar from '@/assets/images/default_avatar.png'
+import iconSafetyGuard from '@/assets/icons/icon_safety_guard.png'
+import safetyGuardSprite from '@/assets/icons/safety_guard_sprite.png'
 import { formatDateTime } from '@/utils/time'
 
 interface SafetyGuardBlacklistUser {
@@ -35,24 +37,33 @@ const DEFAULT_PAGE_LIMIT = 100
 
 type SafetyTabName = 'overview' | 'blacklist'
 
-const CORE_SYSTEM_LABELS_LEFT = [
+const CORE_SYSTEM_ITEMS = [
   '作弊工具检测',
-  '禁止数据采集',
-  'AI行为建模引擎',
-  '数据特征聚类分析',
-  '实时对局风险预警',
-  '账号关系识别',
-  '对战行为录像与回放分析',
-]
-
-const CORE_SYSTEM_LABELS_RIGHT = [
   '伙牌检测',
+  '禁止数据采集',
   '机器人检测',
+  'AI行为建模引擎',
   '深度神经识别',
+  '数据特征聚类分析',
   '职业牌手双重审核',
+  '实时对局风险预警',
   'AI代打检测',
+  '账号关系识别',
   '行为画像分析',
+  '对战录像与回放分析',
 ]
+const SAFETY_GUARD_SPRITE_WIDTH = 1171
+const SAFETY_GUARD_SPRITE_HEIGHT = 83
+const SAFETY_GUARD_ICON_SOURCE_SIZE = 69.55
+const SAFETY_GUARD_ICON_GAP = 20
+const SAFETY_GUARD_ICON_START_X = 13.4
+const SAFETY_GUARD_ICON_START_Y = 6.7
+const SAFETY_GUARD_ICON_DISPLAY_SIZE = 0.56
+
+interface CoreSystemItem {
+  label: string
+  iconIndex: number
+}
 
 const props = withDefaults(
   defineProps<{
@@ -84,13 +95,12 @@ const resolvedTribeId = computed(() => {
   return 0
 })
 
-const coreSystemRows = computed(() => {
-  const totalRows = Math.max(CORE_SYSTEM_LABELS_LEFT.length, CORE_SYSTEM_LABELS_RIGHT.length)
-  return Array.from({ length: totalRows }, (_, index) => ({
-    left: CORE_SYSTEM_LABELS_LEFT[index] || '',
-    right: CORE_SYSTEM_LABELS_RIGHT[index] || '',
-  }))
-})
+const coreSystemItems = computed<CoreSystemItem[]>(() =>
+  CORE_SYSTEM_ITEMS.map((label, iconIndex) => ({
+    label,
+    iconIndex,
+  })),
+)
 
 const cardStyle = computed<StyleValue>(() =>
   props.height
@@ -294,6 +304,24 @@ function formatBlockedDate(rawTime: unknown): string {
   return formatDateTime(rawTime, 'DD/MM/YYYY')
 }
 
+function getCoreSystemIconStyle(iconIndex: number): StyleValue {
+  const spriteScale = SAFETY_GUARD_ICON_DISPLAY_SIZE / SAFETY_GUARD_ICON_SOURCE_SIZE
+  const backgroundWidth = SAFETY_GUARD_SPRITE_WIDTH * spriteScale
+  const backgroundHeight = SAFETY_GUARD_SPRITE_HEIGHT * spriteScale
+  const offsetX =
+    (SAFETY_GUARD_ICON_START_X +
+      (SAFETY_GUARD_ICON_SOURCE_SIZE + SAFETY_GUARD_ICON_GAP) * iconIndex) *
+    spriteScale
+  const offsetY = SAFETY_GUARD_ICON_START_Y * spriteScale
+
+  return {
+    backgroundImage: `url(${safetyGuardSprite})`,
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: `${backgroundWidth}rem ${backgroundHeight}rem`,
+    backgroundPosition: `-${offsetX}rem -${offsetY}rem`,
+  }
+}
+
 function toSafeInt(value: unknown): number {
   const num = Number(value)
   if (!Number.isFinite(num)) {
@@ -327,8 +355,7 @@ function toSafeInt(value: unknown): number {
 
     <div v-if="activeTab === 'overview'" class="safety-overview">
       <div class="safety-overview__icon-wrap">
-        <div class="safety-overview__lock"></div>
-        <van-icon class="safety-overview__star" name="star-o" />
+        <img :src="iconSafetyGuard" alt="" />
       </div>
 
       <p class="safety-overview__sub-title">7*24小时智能AI风控巡航已启动</p>
@@ -342,18 +369,12 @@ function toSafeInt(value: unknown): number {
 
       <div class="safety-overview__system-grid">
         <div
-          v-for="(row, index) in coreSystemRows"
-          :key="index"
-          class="safety-overview__system-row"
+          v-for="item in coreSystemItems"
+          :key="`${item.iconIndex}-${item.label}`"
+          class="safety-overview__system-cell"
         >
-          <div class="safety-overview__system-cell">
-            <i v-if="row.left" class="safety-overview__dot"></i>
-            <span>{{ row.left }}</span>
-          </div>
-          <div class="safety-overview__system-cell">
-            <i v-if="row.right" class="safety-overview__dot"></i>
-            <span>{{ row.right }}</span>
-          </div>
+          <i class="safety-overview__icon" :style="getCoreSystemIconStyle(item.iconIndex)"></i>
+          <span class="safety-overview__label">{{ item.label }}</span>
         </div>
       </div>
     </div>
@@ -377,7 +398,10 @@ function toSafeInt(value: unknown): number {
         >
           <div class="safety-blacklist__avatar-wrap">
             <img :src="user.avatar" alt="avatar" />
-            <span class="safety-blacklist__badge">已封禁</span>
+            <!-- <img :src="baned" class="icon-baned" alt="avatar" /> -->
+            <span class="safety-blacklist__badge">
+              <span>已封禁</span>
+            </span>
           </div>
           <div class="safety-blacklist__meta">
             <p class="safety-blacklist__name">{{ user.userName }}</p>
@@ -424,6 +448,7 @@ function toSafeInt(value: unknown): number {
 .safety-overview {
   margin-top: 0.26rem;
   height: calc(100% - 0.98rem);
+  padding: 0 0.2rem;
   display: flex;
   flex-direction: column;
 }
@@ -433,37 +458,10 @@ function toSafeInt(value: unknown): number {
   width: 2.1rem;
   height: 2.1rem;
   position: relative;
-}
-
-.safety-overview__lock {
-  position: absolute;
-  left: 0.42rem;
-  top: 0.46rem;
-  width: 1.08rem;
-  height: 0.9rem;
-  border: 0.14rem solid #46e2ce;
-  border-radius: 0.28rem;
-  border-top-width: 0.24rem;
-}
-
-.safety-overview__lock::before {
-  content: '';
-  position: absolute;
-  left: 0.18rem;
-  top: -0.74rem;
-  width: 0.48rem;
-  height: 0.62rem;
-  border: 0.14rem solid #46e2ce;
-  border-bottom: 0;
-  border-radius: 0.4rem 0.4rem 0 0;
-}
-
-.safety-overview__star {
-  position: absolute;
-  right: 0.16rem;
-  bottom: 0.36rem;
-  font-size: 0.82rem;
-  color: #36d8c9;
+  img {
+    width: 2.1rem;
+    height: 2.1rem;
+  }
 }
 
 .safety-overview__sub-title {
@@ -481,7 +479,11 @@ function toSafeInt(value: unknown): number {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(185deg, rgba(104, 254, 221, 0.8) 49%, rgba(6, 126, 132, 0.8) 90%);
+  background: linear-gradient(
+    194deg,
+    rgba(104, 254, 221, 0.8) -48.5%,
+    rgba(6, 126, 132, 0.8) 89.85%
+  );
 }
 
 .safety-overview__stat-value {
@@ -498,17 +500,21 @@ function toSafeInt(value: unknown): number {
 }
 
 .safety-overview__title {
-  margin: 0.54rem 0 0;
-  font-size: 0.5rem;
-  line-height: 1.25;
+  text-align: left;
+  color: #fff;
+  font-family: 'HONOR Sans CN';
+  font-size: 0.34rem;
+  font-style: normal;
   font-weight: 800;
+  line-height: normal;
 }
 
 .safety-overview__system-grid {
   margin-top: 0.24rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.14rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 0.22rem;
+  row-gap: 0.14rem;
   overflow-y: auto;
   padding-bottom: 0.12rem;
   scrollbar-width: none;
@@ -517,12 +523,6 @@ function toSafeInt(value: unknown): number {
   &::-webkit-scrollbar {
     display: none;
   }
-}
-
-.safety-overview__system-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 0.22rem;
 }
 
 .safety-overview__system-cell {
@@ -534,17 +534,24 @@ function toSafeInt(value: unknown): number {
   line-height: 1.28;
 }
 
-.safety-overview__dot {
-  width: 0.34rem;
-  height: 0.34rem;
-  border-radius: 50%;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.75), rgba(181, 181, 181, 0.4));
-  box-shadow: 0 0.03rem 0.08rem rgba(0, 0, 0, 0.3);
+.safety-overview__icon {
+  width: 0.56rem;
+  height: 0.56rem;
+  flex-shrink: 0;
+}
+.safety-overview__label {
+  color: #fff;
+  font-family: 'HONOR Sans CN';
+  font-size: 0.3rem;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
 }
 
 .safety-blacklist {
   margin-top: 0.3rem;
   height: calc(100% - 0.96rem);
+  padding: 0 0.2rem;
 }
 
 .safety-blacklist__status-wrap {
@@ -568,6 +575,7 @@ function toSafeInt(value: unknown): number {
   padding: 0;
   list-style: none;
   scrollbar-width: none;
+  padding: 0 0.2rem;
   -ms-overflow-style: none;
 
   &::-webkit-scrollbar {
@@ -583,14 +591,14 @@ function toSafeInt(value: unknown): number {
   background: rgba(255, 255, 255, 0.09);
   display: grid;
   grid-template-columns: 1.36rem minmax(0, 1fr);
-  align-items: center;
+  // align-items: center;
   column-gap: 0.28rem;
 }
 
 .safety-blacklist__avatar-wrap {
   position: relative;
-  width: 1.28rem;
-  height: 1.28rem;
+  width: 1.38rem;
+  height: 1.38rem;
 }
 
 .safety-blacklist__avatar-wrap img {
@@ -602,27 +610,29 @@ function toSafeInt(value: unknown): number {
 
 .safety-blacklist__badge {
   position: absolute;
-  left: -0.34rem;
-  top: -0.2rem;
-  width: 1rem;
-  height: 1rem;
+  left: -0.5rem;
+  top: -0.4rem;
+  width: 1.2rem;
+  height: 1.2rem;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.62);
-  color: #ff3556;
-  border: 0.04rem solid rgba(175, 0, 0, 0.8);
-  font-size: 0.26rem;
+  // background: rgba(0, 0, 0, 0.62);
+  // border: 0.04rem solid rgba(175, 0, 0, 0.8);
   font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transform: rotate(-28deg);
-  box-shadow: 0 0.08rem 0.16rem rgba(0, 0, 0, 0.28);
+  background: url('@/assets/images/table_baned.png') no-repeat center/cover;
+  // box-shadow: 0 0.08rem 0.16rem rgba(0, 0, 0, 0.28);
+  span {
+    color: #ff3556;
+    font-size: 0.22rem;
+    transform: rotate(-28deg);
+  }
 }
 
 .safety-blacklist__meta {
   min-width: 0;
   display: flex;
-  align-items: center;
   justify-content: space-between;
   gap: 0.2rem;
 }
@@ -630,19 +640,24 @@ function toSafeInt(value: unknown): number {
 .safety-blacklist__name {
   margin: 0;
   min-width: 0;
-  font-size: 0.5rem;
-  font-weight: 600;
-  line-height: 1.2;
+  font-size: 0.42rem;
+  line-height: 2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-family: Afacad;
+  font-style: normal;
+  font-weight: 500;
 }
 
 .safety-blacklist__date {
   margin: 0;
   flex-shrink: 0;
-  font-size: 0.42rem;
-  line-height: 1.2;
-  color: rgba(249, 249, 249, 0.92);
+  font-size: 0.33rem;
+  line-height: 2;
+  color: #fff;
+  font-family: Afacad;
+  font-style: normal;
+  font-weight: 500;
 }
 </style>

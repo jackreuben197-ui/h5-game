@@ -513,6 +513,12 @@ const router = createRouter({
       component: () => import('@/views/table/CreateTableTemplateMtt.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/tableGameEnd',
+      name: 'tableGameEnd',
+      component: () => import('@/views/table/TableGameEnd.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 

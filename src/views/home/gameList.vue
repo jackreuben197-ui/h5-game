@@ -301,6 +301,9 @@ function toSafeInt(value: unknown): number {
   }
   return Math.floor(num)
 }
+function handleService() {
+  router.push({ path: '/tableGameEnd', query: { room_id: 12345 } })
+}
 </script>
 
 <template>
@@ -315,7 +318,12 @@ function toSafeInt(value: unknown): number {
             icon-alt="wallet"
             @click="router.push('/wallet')"
           />
-          <TopActionButton :name="t('UIMineMain01')" :icon="serviceIcon" icon-alt="service" />
+          <TopActionButton
+            :name="t('UIMineMain01')"
+            :icon="serviceIcon"
+            icon-alt="service"
+            @click="handleService"
+          />
         </div>
       </template>
     </HeaderBack>

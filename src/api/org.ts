@@ -70,8 +70,8 @@ import type {
   OrgClubDelAdminResponseData,
   OrgClubDelayRoomAuditSwitchUpdateRequest,
   OrgClubDelayRoomAuditSwitchUpdateResponseData,
-  OrgClubDisbAndRequest,
-  OrgClubDisbAndResponseData,
+  OrgClubDisbandRequest,
+  OrgClubDisbandResponseData,
   OrgClubGetJoinlListRequest,
   OrgClubGetJoinlListResponseData,
   OrgClubGetRequest,
@@ -526,12 +526,12 @@ export async function postOrgClubDelayRoomAuditSwitchUpdateApi(
   return response.data
 }
 
-// 对齐 cocos WebOrgClubDisbAnd.API
-export async function postOrgClubDisbAndApi(
-  payload: OrgClubDisbAndRequest = {} as OrgClubDisbAndRequest,
-): Promise<ApiResponse<OrgClubDisbAndResponseData>> {
+// 对齐 cocos WebOrgClubDisband.API
+export async function postOrgClubDisbandApi(
+  payload: OrgClubDisbandRequest = {} as OrgClubDisbandRequest,
+): Promise<ApiResponse<OrgClubDisbandResponseData>> {
   const endpoint = '/org/club/disband'
-  const response = await http.post<ApiResponse<OrgClubDisbAndResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<OrgClubDisbandResponseData>>(endpoint, payload)
   return response.data
 }
 
@@ -876,7 +876,10 @@ export async function postOrgClubGetApi(
   payload: OrgClubGetRequest = {} as OrgClubGetRequest,
 ): Promise<ApiResponse<OrgClubGetResponseData>> {
   const endpoint = '/org/club/user_club'
-  const response = await http.post<ApiResponse<OrgClubGetResponseData>>(endpoint, payload)
+  const requestOptions = {
+    xClub: false,
+  } as HttpRequestConfigExt
+  const response = await http.post<ApiResponse<OrgClubGetResponseData>>(endpoint, payload, requestOptions)
   return response.data
 }
 

@@ -169,7 +169,7 @@ async function loadMyClubList(force = false): Promise<void> {
     return
   }
 
-  loadingMyClubs.value = true
+  // loadingMyClubs.value = true
   try {
     const response = await postOrgClubGetApi()
     if (Number(response.code) !== 0) {

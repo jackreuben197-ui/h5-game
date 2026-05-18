@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import html2canvas from 'html2canvas'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   postOrgClubSearchByIdApi,
   postOrgChangeClubDataApi,
   postOrgClubAgentInviTationApi,
   postOrgClubInviTationApi,
+  postOrgClubDisbandApi,
+  postOrgClubCloneApplyApi,
 } from '@/api/org'
 import type { OrgClubData, OrgClubSearchByIdResponseData } from '@/api/models/org'
 import imgClubCover from '@/assets/images/default_avatar.png'
@@ -24,6 +27,7 @@ import { generateQrCodeUrl } from '@/utils/qrcode'
 import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { t } from '@/i18n'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -127,6 +131,8 @@ const allowSearch = ref(true)
 const joinWithoutApproval = ref(false)
 const showInvitePopup = ref(false)
 const showCopyPopup = ref(false)
+const savingInviteShare = ref(false)
+const inviteModalRef = ref<HTMLElement | null>(null)
 
 const clubName = computed(() => displayClub.value?.club_name || '俱乐部名称')
 const clubAlias = computed(() => displayClub.value?.tribe_name || 'XXXX')
@@ -320,23 +326,109 @@ function closeCopyPopup(): void {
   showCopyPopup.value = false
 }
 
-function saveInviteShare(): void {
-  showSuccessToast('已保存分享图')
-  closeInvitePopup()
+async function downloadBlob(blob: Blob, fileName: string): Promise<void> {
+  const objectUrl = URL.createObjectURL(blob)
+  try {
+    const link = document.createElement('a')
+    link.href = objectUrl
+    link.download = fileName
+    link.click()
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
 }
 
-function submitCopyRequest(): void {
-  showSuccessToast('已提交复制申请')
-  closeCopyPopup()
+async function saveInviteShare(): Promise<void> {
+  if (savingInviteShare.value) {
+    return
+  }
+
+  if (!inviteModalRef.value) {
+    showFailToast('分享弹窗未准备好')
+    return
+  }
+
+  savingInviteShare.value = true
+  try {
+    await nextTick()
+    const saveButton = document.getElementById('save-invite-share')
+    if (saveButton) {
+      saveButton.style.display = 'none' // 隐藏保存按钮，避免被截图到
+    }
+    const canvas = await html2canvas(inviteModalRef.value, {
+      useCORS: true,
+      backgroundColor: null,
+      logging: false,
+      scale: Math.min(window.devicePixelRatio || 1, 3),
+    })
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob((result) => resolve(result), 'image/jpeg', 1)
+    })
+
+    if (blob) {
+      await downloadBlob(blob, `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`)
+    } else {
+      const link = document.createElement('a')
+      link.href = canvas.toDataURL('image/jpeg')
+      link.download = `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`
+      link.click()
+    }
+
+    showSuccessToast('已保存分享图')
+    closeInvitePopup()
+  } catch (error) {
+    console.error('saveInviteShare error', error)
+    showFailToast('保存分享图失败')
+  } finally {
+    savingInviteShare.value = false
+  }
 }
 
-function onDeleteClub(): void {
+async function submitCopyRequest(): Promise<void> {
   if (!isFounder.value) {
     showFailToast('仅创始人可操作')
     return
   }
 
-  showFailToast('删除俱乐部接口待接入')
+  try {
+    const response = await postOrgClubCloneApplyApi({
+      club_id: displayClub.value?.club_id
+    })
+
+    if (response.code !== 0) {
+      const fallback = t('ClubCopy_' + response.code) ?? response.msg
+      throw new Error(typeof fallback === 'string' ? fallback : '复制失败')
+    }
+    showSuccessToast('已提交复制申请')
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '复制失败'
+    showFailToast(message)
+  }
+  closeCopyPopup()
+}
+
+async function onDeleteClub(): Promise<void> {
+  if (!isFounder.value) {
+    showFailToast('仅创始人可操作')
+    return
+  }
+
+  try {
+    const response = await postOrgClubDisbandApi({})
+
+    if (response.code !== 0) {
+      const fallback = (response.msg ?? response.message) as unknown
+      throw new Error(typeof fallback === 'string' ? fallback : '删除失败')
+    }
+    showSuccessToast('已删除俱乐部')
+    setTimeout(() => {
+      void router.replace('/club')
+    }, 1000)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '删除失败'
+    showFailToast(message)
+  }
 }
 
 async function prefetchAgentInvitationLink(): Promise<void> {
@@ -550,7 +642,7 @@ onMounted(async () => {
     </div>
 
     <div v-if="showInvitePopup" class="club-modal-mask" @click="closeInvitePopup">
-      <section class="invite-modal" @click.stop>
+      <section ref="inviteModalRef" class="invite-modal" @click.stop>
         <header class="invite-modal__head">
           <h3>邀请链接</h3>
           <button
@@ -584,7 +676,15 @@ onMounted(async () => {
         </div>
         <p class="invite-modal__qr-tip">扫码加入，一键开启</p>
 
-        <button type="button" class="modal-primary-btn" @click="saveInviteShare">保存分享</button>
+        <button
+          id="save-invite-share"
+          type="button"
+          class="modal-primary-btn"
+          :disabled="savingInviteShare"
+          @click="saveInviteShare"
+        >
+          {{ savingInviteShare ? '保存中...' : '保存分享' }}
+        </button>
       </section>
     </div>
 
@@ -1010,8 +1110,8 @@ onMounted(async () => {
   width: min(9.1rem, 100%);
   border-radius: 0.97035rem;
   border: 0.0255rem solid rgba(242, 242, 242, 0.4);
-  background: linear-gradient(121deg, rgba(142, 142, 142, 0.2) 3%, rgba(73, 73, 73, 0.38) 89%);
-  backdrop-filter: blur(0.20216rem);
+  background: linear-gradient(121deg, rgba(0, 0, 0, 0.2) 3%, rgba(0, 0, 0, 0.38) 89%);
+  backdrop-filter: blur(1.20216rem);
   box-shadow:
     0 0 0.22981rem rgba(0, 0, 0, 0.85) inset,
     0.05672rem 0.11344rem 0.45908rem rgba(242, 242, 242, 0.5) inset,
@@ -1190,6 +1290,10 @@ onMounted(async () => {
   border: 0.01333rem solid rgba(242, 242, 242, 0.8);
   background: linear-gradient(153deg, #05e7ae 8%, #027a5c 72%);
   box-shadow: inset 0 -0.16rem 0.3rem rgba(0, 0, 0, 0.14);
+}
+
+.modal-primary-btn:disabled {
+  opacity: 0.72;
 }
 
 .copy-modal {

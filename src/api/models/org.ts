@@ -488,16 +488,16 @@ export interface OrgClubDelayRoomAuditSwitchUpdateData {
   [key: string]: unknown
 }
 
-// /api/org/club/disband (OrgClubDisbAnd)
-export interface OrgClubDisbAndRequest {
+// /api/org/club/disband (OrgClubDisband)
+export interface OrgClubDisbandRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubDisbAndResponseData extends OrgClubDisbAndData {
+export interface OrgClubDisbandResponseData extends OrgClubDisbandData {
   [key: string]: unknown
 }
 
-export interface OrgClubDisbAndData {
+export interface OrgClubDisbandData {
   [key: string]: unknown
 }
 

@@ -20,6 +20,7 @@ import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.s
 import imgClubBannerFigma from '@/assets/images/club_banner_bg.png'
 import type { ClubInfo } from '@/stores/userInfo'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { formatUC } from '@/utils/roomVisibility'
 
 type QuickActionKind = 'create-club' | 'club-panel' | 'create-union'
 
@@ -97,10 +98,6 @@ const searchedClubLogo = computed(() => {
   return logo
 })
 
-function formatCount(value: number): string {
-  return value.toLocaleString('en-US')
-}
-
 function normalizeClubId(value: unknown): string {
   return value === undefined || value === null ? '' : String(value).trim()
 }
@@ -172,7 +169,7 @@ async function loadMyClubList(force = false): Promise<void> {
     return
   }
 
-  loadingMyClubs.value = true
+  // loadingMyClubs.value = true
   try {
     const response = await postOrgClubGetApi()
     if (Number(response.code) !== 0) {
@@ -353,11 +350,11 @@ onMounted(() => {
               <div class="club-top-metrics" aria-hidden="true">
                 <span class="top-metric-item">
                   <img :src="imgBalance" alt="" />
-                  <span>{{ formatCount(club.activeCount) }}</span>
+                  <span>{{ formatUC(club.activeCount) }}</span>
                 </span>
                 <span class="top-metric-item">
                   <img :src="imgChips" alt="" />
-                  <span>{{ formatCount(club.chipsCount) }}</span>
+                  <span>{{ formatUC(club.chipsCount) }}</span>
                 </span>
               </div>
             </div>

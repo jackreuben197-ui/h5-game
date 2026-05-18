@@ -1,13 +1,20 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import html2canvas from 'html2canvas'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   postOrgClubSearchByIdApi,
   postOrgChangeClubDataApi,
   postOrgClubAgentInviTationApi,
   postOrgClubInviTationApi,
+  postOrgClubDisbandApi,
+  postOrgClubCloneApplyApi,
 } from '@/api/org'
-import type { OrgClubData, OrgClubSearchByIdResponseData } from '@/api/models/org'
+import type {
+  OrgChangeClubDataRequest,
+  OrgClubData,
+  OrgClubSearchByIdResponseData,
+} from '@/api/models/org'
 import imgClubCover from '@/assets/images/default_avatar.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
 import imgChips from '@/assets/icons/icon_chips.png'
@@ -18,11 +25,14 @@ import imgQuickFund from '@/assets/images/club_quick_fund.png'
 import imgInviteCover from '@/assets/images/club_invite_cover.png'
 import imgInviteHeart from '@/assets/icons/club_invite_heart.png'
 import imgModalClose from '@/assets/icons/modal_close.svg'
+import ImageUploadSheet from '@/components/ImageUploadSheet/ImageUploadSheet.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { extractInvitationLink } from '@/utils/clubInvitation'
 import { generateQrCodeUrl } from '@/utils/qrcode'
+import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { t } from '@/i18n'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -63,6 +73,9 @@ const isAgent = computed(() => userLevel.value === 4)
 const canManageClub = computed(() => isFounder.value || isVicePresident.value || isAdmin.value)
 
 const displayClub = computed(() => clubDetail.value ?? userInfoStore.currentClub)
+const cachedClub = computed(() => userInfoStore.currentClub)
+const currentClubGold = computed(() => Number(cachedClub.value?.user_gold ?? 0))
+const currentClubCredit = computed(() => Number(cachedClub.value?.user_credit ?? 0))
 
 const quickActions = computed<QuickActionItem[]>(() => {
   if (canManageClub.value) {
@@ -123,14 +136,14 @@ const allowSearch = ref(true)
 const joinWithoutApproval = ref(false)
 const showInvitePopup = ref(false)
 const showCopyPopup = ref(false)
+const savingInviteShare = ref(false)
+const savingClubLogo = ref(false)
+const clubAvatarUrl = ref('')
+const inviteModalRef = ref<HTMLElement | null>(null)
 
 const clubName = computed(() => displayClub.value?.club_name || '俱乐部名称')
 const clubAlias = computed(() => displayClub.value?.tribe_name || 'XXXX')
 const clubId = computed(() => String(displayClub.value?.random_id || '--'))
-
-function formatCount(value?: number): string {
-  return Number(value || 0).toLocaleString('en-US')
-}
 
 function formatDate(value?: string): string {
   if (!value) {
@@ -150,6 +163,44 @@ function updateSwitchesByClubData(data: OrgClubData | null): void {
   joinWithoutApproval.value = Number(data?.auto_audit_switch ?? 0) === 1
 }
 
+function syncCurrentClubFields(fields: Partial<OrgClubData>): void {
+  if (displayClub.value) {
+    clubDetail.value = {
+      ...displayClub.value,
+      ...fields,
+    }
+  }
+
+  userInfoStore.syncCurrentClubFields(fields)
+
+  if (typeof fields.logo === 'string') {
+    clubAvatarUrl.value = fields.logo
+  }
+}
+
+async function submitClubDataPatch(payload: Partial<OrgChangeClubDataRequest>): Promise<void> {
+  if (!isFounder.value) {
+    throw new Error('仅创始人可修改')
+  }
+
+  const clubId = Number(displayClub.value?.club_id)
+  if (!clubId) {
+    throw new Error('俱乐部信息异常')
+  }
+
+  const response = await postOrgChangeClubDataApi({
+    club_id: clubId,
+    ...payload,
+  })
+
+  if (response.code !== 0) {
+    const fallback = (response.msg ?? response.message) as unknown
+    throw new Error(typeof fallback === 'string' ? fallback : '更新失败')
+  }
+
+  syncCurrentClubFields(payload as Partial<OrgClubData>)
+}
+
 async function refreshClubDetail(): Promise<void> {
   const currentClub = userInfoStore.currentClub
   if (!currentClub?.random_id) {
@@ -157,6 +208,8 @@ async function refreshClubDetail(): Promise<void> {
     void router.replace('/club/list')
     return
   }
+  clubDetail.value = currentClub
+  clubAvatarUrl.value = currentClub.logo || ''
 
   loading.value = true
   try {
@@ -167,18 +220,19 @@ async function refreshClubDetail(): Promise<void> {
     if (response.code !== 0 || !response.data) {
       showFailToast(response.msg || '获取俱乐部详情失败')
       clubDetail.value = currentClub
+      clubAvatarUrl.value = currentClub.logo || ''
       updateSwitchesByClubData(currentClub)
       return
     }
 
     clubDetail.value = response.data
     userInfoStore.setCurrentClub(response.data)
+    // userInfoStore.syncCurrentClubFields(response.data)
+    clubAvatarUrl.value = response.data.logo || ''
     updateSwitchesByClubData(response.data)
   } catch (error) {
     console.error('refreshClubDetail error', error)
     showFailToast('获取俱乐部详情失败')
-    clubDetail.value = currentClub
-    updateSwitchesByClubData(currentClub)
   } finally {
     loading.value = false
   }
@@ -281,26 +335,10 @@ async function updateClubSwitch(key: 'allowSearch' | 'joinWithoutApproval'): Pro
   }
 
   try {
-    const response = await postOrgChangeClubDataApi({
-      club_id: clubId,
+    await submitClubDataPatch({
       search_switch: nextAllowSearch ? 1 : 2,
       auto_audit_switch: nextAutoAudit ? 1 : 2,
     })
-
-    if (response.code !== 0) {
-      const fallback = (response.msg ?? response.message) as unknown
-      throw new Error(typeof fallback === 'string' ? fallback : '更新失败')
-    }
-
-    if (displayClub.value) {
-      const merged = {
-        ...displayClub.value,
-        search_switch: nextAllowSearch ? 1 : 2,
-        auto_audit_switch: nextAutoAudit ? 1 : 2,
-      }
-      clubDetail.value = merged
-      userInfoStore.setCurrentClub(merged)
-    }
   } catch (error) {
     if (key === 'allowSearch') {
       allowSearch.value = !nextAllowSearch
@@ -312,6 +350,38 @@ async function updateClubSwitch(key: 'allowSearch' | 'joinWithoutApproval'): Pro
   }
 }
 
+function onClubAvatarUploadError(message: string): void {
+  showFailToast(message || '图片上传失败')
+}
+
+async function onClubAvatarUploaded(url: string): Promise<void> {
+  if (!isFounder.value) {
+    showFailToast('仅创始人可修改')
+    return
+  }
+
+  const nextLogo = (url || '').trim()
+  if (!nextLogo) {
+    showFailToast('图片上传失败')
+    return
+  }
+
+  const previousLogo = displayClub.value?.logo || ''
+  clubAvatarUrl.value = nextLogo
+  savingClubLogo.value = true
+
+  try {
+    await submitClubDataPatch({ logo: nextLogo })
+    showSuccessToast('俱乐部头像已更新')
+  } catch (error) {
+    clubAvatarUrl.value = previousLogo
+    const message = error instanceof Error ? error.message : '更新失败'
+    showFailToast(message)
+  } finally {
+    savingClubLogo.value = false
+  }
+}
+
 function closeInvitePopup(): void {
   showInvitePopup.value = false
 }
@@ -320,23 +390,109 @@ function closeCopyPopup(): void {
   showCopyPopup.value = false
 }
 
-function saveInviteShare(): void {
-  showSuccessToast('已保存分享图')
-  closeInvitePopup()
+async function downloadBlob(blob: Blob, fileName: string): Promise<void> {
+  const objectUrl = URL.createObjectURL(blob)
+  try {
+    const link = document.createElement('a')
+    link.href = objectUrl
+    link.download = fileName
+    link.click()
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
 }
 
-function submitCopyRequest(): void {
-  showSuccessToast('已提交复制申请')
-  closeCopyPopup()
+async function saveInviteShare(): Promise<void> {
+  if (savingInviteShare.value) {
+    return
+  }
+
+  if (!inviteModalRef.value) {
+    showFailToast('分享弹窗未准备好')
+    return
+  }
+
+  savingInviteShare.value = true
+  try {
+    await nextTick()
+    const saveButton = document.getElementById('save-invite-share')
+    if (saveButton) {
+      saveButton.style.display = 'none' // 隐藏保存按钮，避免被截图到
+    }
+    const canvas = await html2canvas(inviteModalRef.value, {
+      useCORS: true,
+      backgroundColor: null,
+      logging: false,
+      scale: Math.min(window.devicePixelRatio || 1, 3),
+    })
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob((result) => resolve(result), 'image/jpeg', 1)
+    })
+
+    if (blob) {
+      await downloadBlob(blob, `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`)
+    } else {
+      const link = document.createElement('a')
+      link.href = canvas.toDataURL('image/jpeg')
+      link.download = `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`
+      link.click()
+    }
+
+    showSuccessToast('已保存分享图')
+    closeInvitePopup()
+  } catch (error) {
+    console.error('saveInviteShare error', error)
+    showFailToast('保存分享图失败')
+  } finally {
+    savingInviteShare.value = false
+  }
 }
 
-function onDeleteClub(): void {
+async function submitCopyRequest(): Promise<void> {
   if (!isFounder.value) {
     showFailToast('仅创始人可操作')
     return
   }
 
-  showFailToast('删除俱乐部接口待接入')
+  try {
+    const response = await postOrgClubCloneApplyApi({
+      club_id: displayClub.value?.club_id,
+    })
+
+    if (response.code !== 0) {
+      const fallback = t('ClubCopy_' + response.code) ?? response.msg
+      throw new Error(typeof fallback === 'string' ? fallback : '复制失败')
+    }
+    showSuccessToast('已提交复制申请')
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '复制失败'
+    showFailToast(message)
+  }
+  closeCopyPopup()
+}
+
+async function onDeleteClub(): Promise<void> {
+  if (!isFounder.value) {
+    showFailToast('仅创始人可操作')
+    return
+  }
+
+  try {
+    const response = await postOrgClubDisbandApi({})
+
+    if (response.code !== 0) {
+      const fallback = (response.msg ?? response.message) as unknown
+      throw new Error(typeof fallback === 'string' ? fallback : '删除失败')
+    }
+    showSuccessToast('已删除俱乐部')
+    setTimeout(() => {
+      void router.replace('/club')
+    }, 1000)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '删除失败'
+    showFailToast(message)
+  }
 }
 
 async function prefetchAgentInvitationLink(): Promise<void> {
@@ -419,7 +575,31 @@ onMounted(async () => {
     <div v-loading="loading" class="club-detail">
       <section class="club-header-card">
         <div class="club-header-main">
-          <img class="club-avatar" :src="displayClub?.logo || imgClubCover" alt="俱乐部头像" />
+          <ImageUploadSheet
+            v-if="isFounder"
+            v-model="clubAvatarUrl"
+            @update:model-value="onClubAvatarUploaded"
+            @error="onClubAvatarUploadError"
+          >
+            <template #default="{ open, imageUrl, uploading }">
+              <button
+                type="button"
+                class="club-avatar-trigger"
+                :disabled="savingClubLogo || uploading"
+                aria-label="修改俱乐部头像"
+                @click="open"
+              >
+                <img class="club-avatar" :src="imageUrl || imgClubCover" alt="俱乐部头像" />
+                <span class="club-avatar-edit" aria-hidden="true">+</span>
+              </button>
+            </template>
+          </ImageUploadSheet>
+          <img
+            v-else
+            class="club-avatar"
+            :src="displayClub?.logo || imgClubCover"
+            alt="俱乐部头像"
+          />
 
           <div class="club-summary">
             <button type="button" class="club-name-edit">
@@ -438,11 +618,11 @@ onMounted(async () => {
 
             <p class="metric-line">
               <img :src="imgBalance" alt="" aria-hidden="true" />
-              <span>{{ formatCount(displayClub?.user_gold) }}</span>
+              <span>{{ formatUC(currentClubGold) }}</span>
             </p>
             <p class="metric-line">
               <img :src="imgChips" alt="" aria-hidden="true" />
-              <span>{{ formatCount(displayClub?.user_credit) }}</span>
+              <span>{{ formatUC(currentClubCredit) }}</span>
             </p>
           </div>
         </div>
@@ -550,7 +730,7 @@ onMounted(async () => {
     </div>
 
     <div v-if="showInvitePopup" class="club-modal-mask" @click="closeInvitePopup">
-      <section class="invite-modal" @click.stop>
+      <section ref="inviteModalRef" class="invite-modal" @click.stop>
         <header class="invite-modal__head">
           <h3>邀请链接</h3>
           <button
@@ -584,7 +764,15 @@ onMounted(async () => {
         </div>
         <p class="invite-modal__qr-tip">扫码加入，一键开启</p>
 
-        <button type="button" class="modal-primary-btn" @click="saveInviteShare">保存分享</button>
+        <button
+          id="save-invite-share"
+          type="button"
+          class="modal-primary-btn"
+          :disabled="savingInviteShare"
+          @click="saveInviteShare"
+        >
+          {{ savingInviteShare ? '保存中...' : '保存分享' }}
+        </button>
       </section>
     </div>
 
@@ -672,6 +860,30 @@ onMounted(async () => {
   border: 0;
 }
 
+.club-avatar-trigger {
+  position: relative;
+  width: 1.96787rem;
+  height: 1.97968rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0;
+  background: transparent;
+}
+
+.club-avatar-edit {
+  position: absolute;
+  right: -0.03rem;
+  bottom: -0.03rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: linear-gradient(165deg, #05e7ae 10%, #027a5c 75%);
+  color: #fff;
+  font-size: 0.45rem;
+  line-height: 0.5rem;
+  text-align: center;
+}
+
 .club-summary {
   display: flex;
   flex-direction: column;
@@ -699,20 +911,20 @@ onMounted(async () => {
 
 .name-edit-icon {
   position: relative;
-  width: 0.2rem;
-  height: 0.2rem;
+  width: 0.6rem;
+  height: 0.6rem;
   flex: 0 0 auto;
 }
 
 .name-edit-icon::before {
   content: '';
   position: absolute;
-  left: 0.03rem;
-  top: 0.06rem;
-  width: 0.14rem;
-  height: 0.06rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.92);
-  border-radius: 0.03rem;
+  left: 0.09rem;
+  top: 0.18rem;
+  width: 0.42rem;
+  height: 0.18rem;
+  border: 0.06rem solid rgba(249, 249, 249, 0.92);
+  border-radius: 0.09rem;
   transform: rotate(-38deg);
 }
 
@@ -1010,8 +1222,8 @@ onMounted(async () => {
   width: min(9.1rem, 100%);
   border-radius: 0.97035rem;
   border: 0.0255rem solid rgba(242, 242, 242, 0.4);
-  background: linear-gradient(121deg, rgba(142, 142, 142, 0.2) 3%, rgba(73, 73, 73, 0.38) 89%);
-  backdrop-filter: blur(0.20216rem);
+  background: linear-gradient(121deg, rgba(0, 0, 0, 0.2) 3%, rgba(0, 0, 0, 0.38) 89%);
+  backdrop-filter: blur(1.20216rem);
   box-shadow:
     0 0 0.22981rem rgba(0, 0, 0, 0.85) inset,
     0.05672rem 0.11344rem 0.45908rem rgba(242, 242, 242, 0.5) inset,
@@ -1190,6 +1402,10 @@ onMounted(async () => {
   border: 0.01333rem solid rgba(242, 242, 242, 0.8);
   background: linear-gradient(153deg, #05e7ae 8%, #027a5c 72%);
   box-shadow: inset 0 -0.16rem 0.3rem rgba(0, 0, 0, 0.14);
+}
+
+.modal-primary-btn:disabled {
+  opacity: 0.72;
 }
 
 .copy-modal {

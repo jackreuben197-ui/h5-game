@@ -90,7 +90,7 @@ async function handleFileChange(event: Event): Promise<void> {
     @change="handleFileChange"
   />
 
-  <slot :open="open" :image-url="modelValue" :uploading="uploading" />
+  <slot :open="open" :image-url="modelValue" :uploading="uploading"></slot>
 
   <teleport to="body">
     <div v-if="sheetVisible" class="upload-sheet-mask" @click="close">

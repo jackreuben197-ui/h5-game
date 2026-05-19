@@ -37,8 +37,6 @@ import walletIcon from '@/assets/icons/icon_wallet.png'
 import pokerMiniIcon from '@/assets/icons/game_zone_mtt_mini.png'
 import mahjongMiniIcon from '@/assets/icons/game_zone_mahjong_mini.png'
 import clubCoverAvatar from '@/assets/images/default_avatar.png'
-import imgQuickActionCreateBg from '@/assets/images/club_qa_create_club_bg_shape.svg'
-import imgQuickActionBoardBg from '@/assets/images/club_qa_data_board_bg_shape.svg'
 import quickSafetyBg from '@/assets/images/club_header_quick_safety.jpg'
 import quickRankingBg from '@/assets/images/club_header_quick_ranking.png'
 import gameType6Plus from '@/assets/icons/game_type_6+.png'
@@ -570,15 +568,14 @@ function handleToggleGroup(groupKey: string): void {
 }
 
 function handleClubHeaderTabClick(tab: ClubHeaderTabName): void {
-  clubHeaderTab.value = tab
   if (tab === 'mahjong') {
     showFailToast('麻将专区开发中')
     return
   }
   if (tab === 'event') {
     mttListStore.bootstrapMttList()
-    return
   }
+  clubHeaderTab.value = tab
 }
 
 function handleQuickActionClick(action: 'safety' | 'ranking'): void {
@@ -1176,12 +1173,6 @@ function formatChipBase(rawValue: number): string {
             alt=""
             aria-hidden="true"
           />
-          <img
-            class="quick-card-layer quick-card-layer--safety-bg"
-            :src="imgQuickActionCreateBg"
-            alt=""
-            aria-hidden="true"
-          />
           <span class="quick-card-title">安全卫士</span>
         </button>
 
@@ -1193,12 +1184,6 @@ function formatChipBase(rawValue: number): string {
           <img
             class="quick-card-photo quick-card-photo--ranking"
             :src="quickRankingBg"
-            alt=""
-            aria-hidden="true"
-          />
-          <img
-            class="quick-card-layer quick-card-layer--ranking-bg"
-            :src="imgQuickActionBoardBg"
             alt=""
             aria-hidden="true"
           />

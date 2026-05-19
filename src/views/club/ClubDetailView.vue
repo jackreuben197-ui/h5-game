@@ -617,11 +617,11 @@ onMounted(async () => {
             </p>
 
             <p class="metric-line">
-              <img :src="imgBalance" alt="" aria-hidden="true" />
+              <img :src="imgChips" alt="" aria-hidden="true" />
               <span>{{ formatUC(currentClubGold) }}</span>
             </p>
             <p class="metric-line">
-              <img :src="imgChips" alt="" aria-hidden="true" />
+              <img :src="imgBalance" alt="" aria-hidden="true" />
               <span>{{ formatUC(currentClubCredit) }}</span>
             </p>
           </div>

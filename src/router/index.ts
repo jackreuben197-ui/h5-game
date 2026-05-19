@@ -478,6 +478,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/wallet/gift-uc',
+      name: 'wallet-gift-uc',
+      component: () => import('@/views/wallet/WalletGiftUcView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/gameList',
       name: 'game-list',
       component: () => import('@/views/home/gameList.vue'),

@@ -1469,7 +1469,10 @@ export interface OrgClubUserWalletRelationListData {
 }
 
 export interface OrgClubUserWalletRelationListUserData {
-  [key: string]: unknown
+  nickname: string // 用户昵称
+  user_id: number // 用户ID
+  random_id: number // 用户随机ID
+  avatar: string // 用户头像
 }
 
 // /api/org/jackpot/template/info (OrgJackpotTemplateInfo)

@@ -452,12 +452,6 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/mine/shop/payment',
-      name: 'mine-shop-payment',
-      component: () => import('@/views/mine/MineShopPaymentView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
       path: '/wallet',
       name: 'wallet',
       component: () => import('@/views/wallet/WalletIndexView.vue'),

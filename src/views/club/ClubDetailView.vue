@@ -210,6 +210,7 @@ async function refreshClubDetail(): Promise<void> {
   }
   clubDetail.value = currentClub
   clubAvatarUrl.value = currentClub.logo || ''
+  updateSwitchesByClubData(currentClub)
 
   loading.value = true
   try {
@@ -219,9 +220,6 @@ async function refreshClubDetail(): Promise<void> {
 
     if (response.code !== 0 || !response.data) {
       showFailToast(response.msg || '获取俱乐部详情失败')
-      clubDetail.value = currentClub
-      clubAvatarUrl.value = currentClub.logo || ''
-      updateSwitchesByClubData(currentClub)
       return
     }
 
@@ -1062,19 +1060,19 @@ onMounted(async () => {
 
 .edit-pen {
   position: relative;
-  width: 0.21rem;
-  height: 0.21rem;
+  width: 0.6rem;
+  height: 0.6rem;
 }
 
 .edit-pen::before {
   content: '';
   position: absolute;
-  left: 0.03rem;
-  top: 0.06rem;
-  width: 0.14rem;
-  height: 0.06rem;
-  border: 0.02rem solid #fff;
-  border-radius: 0.03rem;
+  left: 0.1rem;
+  top: 0.2rem;
+  width: 0.42rem;
+  height: 0.18rem;
+  border: 0.06rem solid #fff;
+  border-radius: 0.1rem;
   transform: rotate(-38deg);
 }
 

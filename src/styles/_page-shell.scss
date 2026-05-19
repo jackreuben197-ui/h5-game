@@ -13,5 +13,6 @@
   padding-left: var(--app-side-padding);
   padding-right: var(--app-side-padding);
   overflow-y: auto;
+  overflow-x: hidden;
   @include safe-bottom-padding(var(--app-bottom-padding));
 }

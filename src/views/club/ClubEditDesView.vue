@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { postOrgClubModifyClubDescApi } from '@/api/org'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -11,7 +10,6 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const router = useRouter()
 const userInfoStore = useUserInfoStore()
 
 const intro = ref(String(userInfoStore.currentClub?.desc || '').trim())
@@ -50,7 +48,6 @@ async function onConfirm(): Promise<void> {
     }
 
     showSuccessToast('修改成功')
-    await router.push('/club/detail')
   } catch (error) {
     const message = error instanceof Error ? error.message : '修改简介失败'
     showFailToast(message)

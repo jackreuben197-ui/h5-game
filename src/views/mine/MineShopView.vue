@@ -6,6 +6,7 @@ import { postPropGoldPriceListApi } from '@/api/prop'
 import { postUSDTApplyApi, postUSDTApplyListApi } from '@/api/user'
 import { Code, subscribeH5WsCode } from '@/bridge/ws/messageCenter'
 import { decodeUserTraderOrderNotify } from '@/bridge/ws/traderOrderNotify'
+import { decodeUserUsdtOrderNotify } from '@/bridge/ws/usdtOrderNotify'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import imgCoin from '@/assets/icons/shop_usdt.png'
 import diamondCoin from '@/assets/icons/icon_diamond.png'
@@ -79,6 +80,10 @@ const imgQr = ref('')
 const paymentPrice = ref(0)
 const paymentGoldCount = ref(0)
 let stopTraderOrderWsListener: (() => void) | null = null
+let stopUsdtOrderWsListener: (() => void) | null = null
+let orderCountdownTimer: number | null = null
+const orderExpireAt = ref(0)
+const orderRemainingSeconds = ref(0)
 
 const userDiamond = computed(() => Number(userInfoStore.userInfo?.user.diamonds ?? 0))
 const userName = computed(() => {
@@ -280,6 +285,68 @@ function getStatusLabel(status: number): string {
   return '待支付'
 }
 
+function isOrderFinalStatus(status: number): boolean {
+  return status === 2 || status === 3 || status === 4 || status === 5
+}
+
+function clearOrderCountdown(): void {
+  if (orderCountdownTimer !== null) {
+    window.clearInterval(orderCountdownTimer)
+    orderCountdownTimer = null
+  }
+}
+
+function tickOrderCountdown(): void {
+  if (orderExpireAt.value <= 0) {
+    orderRemainingSeconds.value = 0
+    return
+  }
+
+  const delta = Math.max(0, Math.ceil((orderExpireAt.value - Date.now()) / 1000))
+  orderRemainingSeconds.value = delta
+  if (delta <= 0) {
+    clearOrderCountdown()
+    if (statusText.value === '待支付') {
+      statusText.value = '订单超时'
+    }
+  }
+}
+
+function startOrderCountdown(minutes = 15): void {
+  clearOrderCountdown()
+  const durationMs = Math.max(1, minutes) * 60 * 1000
+  orderExpireAt.value = Date.now() + durationMs
+  tickOrderCountdown()
+  orderCountdownTimer = window.setInterval(() => {
+    tickOrderCountdown()
+  }, 1000)
+}
+
+const orderCountdownText = computed(() => {
+  const seconds = Math.max(0, orderRemainingSeconds.value)
+  const mm = String(Math.floor(seconds / 60)).padStart(2, '0')
+  const ss = String(seconds % 60).padStart(2, '0')
+  return `${mm}:${ss}`
+})
+
+const payingBtnSubText = computed(() => {
+  if (!orderNo.value) {
+    return '等待订单创建'
+  }
+  if (statusText.value === '待支付') {
+    return `剩余支付时间：${orderCountdownText.value}`
+  }
+  return statusText.value
+})
+
+function getUsdtOrderNotifyToast(status: number): string {
+  if (status === 2) return '订单审核通过'
+  if (status === 3) return '订单审核拒绝'
+  if (status === 4) return '订单已取消'
+  if (status === 5) return '订单已超时'
+  return '订单状态已更新'
+}
+
 interface RefreshOptions {
   silent?: boolean
 }
@@ -413,6 +480,40 @@ function initTraderOrderWsListener(): void {
   })
 }
 
+function initUsdtOrderWsListener(): void {
+  if (stopUsdtOrderWsListener) return
+
+  stopUsdtOrderWsListener = subscribeH5WsCode(Code.MSG_S_USER_USDT_ORDER_NOTIFY, (message) => {
+    const payload = decodeUserUsdtOrderNotify(message.rawBuffer)
+    if (!payload) {
+      return
+    }
+
+    const nextStatus = Number(payload.status)
+    const toastText = getUsdtOrderNotifyToast(nextStatus)
+
+    if (showPaymentPopup.value && orderNo.value && payload.orderNo === orderNo.value) {
+      statusText.value = getStatusLabel(nextStatus)
+      clearOrderCountdown()
+      if (nextStatus === 2) {
+        showSuccessToast(toastText)
+      } else {
+        showFailToast(toastText)
+      }
+      showPaymentPopup.value = false
+      return
+    }
+
+    if (!showPaymentPopup.value) {
+      if (nextStatus === 2) {
+        showSuccessToast(toastText)
+      } else {
+        showFailToast(toastText)
+      }
+    }
+  })
+}
+
 function openApplyPopup(): void {
   showApplyPopup.value = true
 }
@@ -484,6 +585,9 @@ async function queryOrderStatus(showSuccessHint = true): Promise<void> {
     const order = response.data?.list?.[0]?.order
     const status = Number(order?.status ?? 1)
     statusText.value = getStatusLabel(status)
+    if (isOrderFinalStatus(status)) {
+      clearOrderCountdown()
+    }
     if (status === 2 && showSuccessHint) {
       showSuccessToast('支付成功')
     }
@@ -552,10 +656,12 @@ async function createOrderAndHandlePayment(item: ShopItem): Promise<void> {
     paymentPrice.value = payPrice
     paymentGoldCount.value = item.goldCount
     statusText.value = '待支付'
+    startOrderCountdown(15)
 
     // API 型通道仅提交订单，无需展示支付二维码弹窗。
     if (payType.type === 2) {
       statusText.value = '订单已提交'
+      clearOrderCountdown()
       showSuccessToast('订单已提交')
       return
     }
@@ -607,6 +713,7 @@ function onPayNow(): void {
 
 onMounted(() => {
   initTraderOrderWsListener()
+  initUsdtOrderWsListener()
   void fetchShopList()
   void fetchApplyStatus()
 })
@@ -614,6 +721,9 @@ onMounted(() => {
 onBeforeUnmount(() => {
   stopTraderOrderWsListener?.()
   stopTraderOrderWsListener = null
+  stopUsdtOrderWsListener?.()
+  stopUsdtOrderWsListener = null
+  clearOrderCountdown()
 })
 </script>
 
@@ -757,7 +867,7 @@ onBeforeUnmount(() => {
           <span>
             {{ creatingOrder ? '创建订单中...' : checkingStatus ? '查询中...' : statusText }}
           </span>
-          <small>{{ orderNo ? `订单号：${orderNo}` : '等待订单创建' }}</small>
+          <small>{{ payingBtnSubText }}</small>
         </button>
       </section>
     </van-popup>

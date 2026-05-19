@@ -178,7 +178,8 @@ export default [
           ignores: ['pre', 'textarea'],
         },
       ],
-      'vue/html-indent': ['error', 2],
+      // .vue 文件交给 Prettier 负责模板缩进，避免与 vue/html-indent 反复冲突。
+      'vue/html-indent': 'off',
       // 与 Prettier singleAttributePerLine:false 保持一致，不强制每个属性独占一行。
       'vue/max-attributes-per-line': [
         'error',

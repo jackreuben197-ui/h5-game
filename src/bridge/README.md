@@ -280,7 +280,6 @@ H5 再根据 `panelType` 动态加载对应组件并渲染。
 - `src/bridge/channels/panelChannel.ts`
 - `src/components/BridgePanel/GlobalBridgePanelHost.vue`
 - `src/components/BridgePanel/panelRegistry.ts`
-- `src/components/BridgePanel/panels/BridgeRichTabsDemoPanel.vue`
 
 ### 7.3 协议约定
 

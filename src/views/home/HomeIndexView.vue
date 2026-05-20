@@ -213,7 +213,7 @@ function openMiniGamePanel(): void {
   //     awardUsersList: [
   //       {
   //         userRid: '1234567',
-  //         nickname: 'Jackpot Player',
+  //         nickname: 'Jackpot PlayerPlayer',
   //         avatar: 'https://static.awanptest.com/pint-intl-test/image-avatar/97189718-cvWtG.png',
   //         award: 888800,
   //         cardsType: 10,

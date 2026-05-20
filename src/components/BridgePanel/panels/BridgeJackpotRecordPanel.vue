@@ -583,12 +583,13 @@ function trimTrailingZero(value: number): string {
               </span>
             </template>
           </GameTableColumn>
-          <GameTableColumn prop="rewardValue" label="金额" :flex="1.45" align="right">
+          <GameTableColumn prop="rewardValue" label="金额" :flex="1.45" align="center">
             <template #default="{ row }">
               <span class="jackpot-panel__amount"> +{{ row.rewardText }} </span>
             </template>
           </GameTableColumn>
-          <GameTableColumn prop="typeText" label="牌型" :flex="3" align="center">
+          <!-- 暂不显示牌型 -->
+          <!-- <GameTableColumn prop="typeText" label="牌型" :flex="3" align="center">
             <template #default="{ row }">
               <div v-if="row.cards.length" class="jackpot-panel__cards">
                 <PokerCard
@@ -600,7 +601,7 @@ function trimTrailingZero(value: number): string {
                 />
               </div>
             </template>
-          </GameTableColumn>
+          </GameTableColumn> -->
           <GameTableColumn prop="createText" label="时间" :flex="1.6" align="right">
             <template #default="{ row }">
               <span class="table-text">

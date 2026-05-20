@@ -216,6 +216,11 @@ export interface UserRoomSettleUserInfo {
   user_hand_num?: number
   bring_in?: number
   bring_out?: number
+  mushroom_count?: number
+  mushroom_amount?: number
+  squid_in?: number
+  squid_out?: number
+  punish_fee?: number
   [key: string]: unknown
 }
 
@@ -223,6 +228,12 @@ export interface UserRoomSettleUserInfo {
 export interface UserRoomSettleDetailData {
   list?: UserRoomSettleUserInfo[]
   self_settle?: UserRoomSettleSelf
+  insurance?: number
+  insurance_on?: number
+  room_name?: string
+  room_id?: number
+  end_time?: string | number
+  game_type?: string | number
   [key: string]: unknown
 }
 

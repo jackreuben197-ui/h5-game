@@ -5,6 +5,7 @@ import type { ColumnConfig } from './types'
 defineProps<{
   row: Record<string, any>
   columns: ColumnConfig[]
+  isSummary?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -17,7 +18,7 @@ export default { name: 'GameTableRow' }
 </script>
 
 <template>
-  <div class="game-table__row" @click="emit('rowClick', row)">
+  <div class="game-table__row" :class="{ 'game-table__row--summary': isSummary }" @click="emit('rowClick', row)">
     <GameTableCell
       v-for="col in columns"
       :key="col.prop"
@@ -35,5 +36,6 @@ export default { name: 'GameTableRow' }
   border-radius: 0.425rem;
   background: rgba(0, 0, 0, 0.2);
   overflow: hidden;
+
 }
 </style>

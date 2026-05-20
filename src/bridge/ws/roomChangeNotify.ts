@@ -1,4 +1,5 @@
 import type { RoomRecord } from '@/api/models/roomcenter'
+import { createLogger } from '@/utils/logger'
 import type {
   CowboyConfig as PbCowboyConfig,
   RoomChange as PbRoomChange,
@@ -8,6 +9,8 @@ import type {
 } from './pb/protobuf/holdem/define_pb'
 import type { ServerMessageRoomChangeNotify as PbServerMessageRoomChangeNotify } from './pb/protobuf/holdem/recv_g_room_change_notify_pb'
 import { decodeHoldemPacket } from './holdemPacket'
+
+const log = createLogger('[roomChangeNotify]')
 
 export const ROOM_CHANGE_NOTIFY_CODE = 140
 
@@ -47,8 +50,7 @@ export interface WsRoomChangeNotifyPayload {
   roomChange?: WsRoomChangePayload
 }
 
-// pb 模块在本模块首次被 import 时立即后台加载（fire-and-forget），
-// 正常情况下 WS 建立连接前 pb 已就绪；极端情况下首条消息会被丢弃并安全降级为 null。
+// 对齐 bridge README 的约定：pb 类 fire-and-forget 懒加载，不阻塞主包。
 let pbClass: typeof PbServerMessageRoomChangeNotify | null = null
 void import('./pb/protobuf/holdem/recv_g_room_change_notify_pb').then((mod) => {
   pbClass = mod.ServerMessageRoomChangeNotify
@@ -171,7 +173,8 @@ export function decodeRoomChangeNotifyFromRawPacket(
     }
 
     return payload
-  } catch {
+  } catch (error) {
+    log.warn('decode failed', error)
     return null
   }
 }

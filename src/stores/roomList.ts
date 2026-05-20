@@ -30,12 +30,15 @@ const ROOM_LIST_CACHE_VERSION = 1
 const ROOM_STATUS = {
   CREATED_NOT_START: 1,
   STARTING: 2,
+  FORCE_CLOSE: 3,
+  ABOUT_TO_CLOSE: 4,
 } as const
 
 // 同一 token 会话内只拉一次全量牌桌，后续依赖 WS 增量更新。
 let roomListLoadedToken = ''
 let roomListLoadingToken = ''
 let roomListLoadingPromise: Promise<void> | null = null
+const roomDetailLoadingRidSet = new Set<string>()
 
 // WS 监听全局只注册一次，避免重复消费同一条 ROOM_CHANGE_NOTIFY。
 let stopRoomChangeNotifyListener: (() => void) | null = null
@@ -160,30 +163,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
       if (!room) {
         return
       }
-
-      const roomRid = String(room.rid ?? '')
-      if (!roomRid) {
-        return
-      }
-
-      const nextRoom = {
-        ...room,
-        __wsUpdateTime: Number(payload.sendTimestamp || 0),
-      }
-
-      const currentList = this.records.slice()
-      const index = currentList.findIndex((item) => String(item.rid) === roomRid)
-      if (index >= 0) {
-        currentList[index] = {
-          ...currentList[index],
-          ...nextRoom,
-        }
-      } else {
-        currentList.push(nextRoom)
-      }
-
-      this.records = currentList
-      this.persistRoomListCache()
+      this.upsertRoomRecord(room, Number(payload.sendTimestamp || 0))
     },
 
     // 更新房间：对齐 Cocos 逻辑，离开可见状态时直接移除。
@@ -200,7 +180,10 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
 
       const status = Number(roomChange.status || 0)
       const isVisibleRoom =
-        status === ROOM_STATUS.CREATED_NOT_START || status === ROOM_STATUS.STARTING
+        status === ROOM_STATUS.CREATED_NOT_START ||
+        status === ROOM_STATUS.STARTING ||
+        status === ROOM_STATUS.FORCE_CLOSE ||
+        status === ROOM_STATUS.ABOUT_TO_CLOSE
       const nextTimestamp = Number(payload.sendTimestamp || 0)
 
       const currentList = this.records.slice()
@@ -217,8 +200,9 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
       }
 
       if (index < 0) {
-        // 更新包找不到房间时，不回源 HTTP，等待后续 ADD 或下一次全量同步。
-        log.warn('room update ignored: room not found', roomChange.rid)
+        // 对齐 Unity：更新包命中不到本地房间时，仅补这一个房间详情，不触发整表刷新。
+        log.warn('room update missing local room, request one detail', roomChange.rid)
+        void this.fetchRoomDetailByRid(Number(roomChange.rid || 0), nextTimestamp)
         return
       }
 
@@ -248,6 +232,74 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
         relate_club_ids: roomChange.relate_club_ids || [],
         relate_tribe_club_list: roomChange.relate_tribe_club_list || [],
         __wsUpdateTime: nextTimestamp,
+      }
+
+      this.records = currentList
+      this.persistRoomListCache()
+    },
+
+    // 对齐 Unity RequestTableOne：仅回源单个 rid 的详情，避免 140 高频时全量刷新。
+    async fetchRoomDetailByRid(rid: number, updateTimestamp = 0): Promise<void> {
+      const roomId = Number(rid)
+      if (!Number.isFinite(roomId) || roomId <= 0) {
+        return
+      }
+
+      const roomRid = String(Math.floor(roomId))
+      if (roomDetailLoadingRidSet.has(roomRid)) {
+        return
+      }
+
+      roomDetailLoadingRidSet.add(roomRid)
+      try {
+        const detailRes = await getRoomsDetailApi({
+          room_ids: [Math.floor(roomId)],
+          room_type: 0,
+        })
+
+        const records =
+          Number(detailRes.code) === 0 && Array.isArray(detailRes.data?.records)
+            ? detailRes.data.records
+            : []
+        const room = records[0]
+        if (!room) {
+          return
+        }
+
+        this.upsertRoomRecord(room, updateTimestamp)
+      } catch (error) {
+        log.warn('fetch one room detail failed', { rid: roomId, error })
+      } finally {
+        roomDetailLoadingRidSet.delete(roomRid)
+      }
+    },
+
+    // 统一房间合并入口：新增房间、补单房间详情都走这里，避免列表更新逻辑分叉。
+    upsertRoomRecord(room: RoomRecord, updateTimestamp = 0): void {
+      const roomRid = String(room.rid ?? '')
+      if (!roomRid) {
+        return
+      }
+
+      const nextRoom: RoomRecord & { __wsUpdateTime?: number } = {
+        ...room,
+        __wsUpdateTime: updateTimestamp > 0 ? updateTimestamp : undefined,
+      }
+
+      const currentList = this.records.slice()
+      const index = currentList.findIndex((item) => String(item.rid) === roomRid)
+      if (index >= 0) {
+        const currentRoom = currentList[index] as RoomRecord & { __wsUpdateTime?: number }
+        currentList[index] = {
+          ...currentRoom,
+          ...nextRoom,
+          __wsUpdateTime: Math.max(
+            Number(currentRoom.__wsUpdateTime || 0),
+            Number(nextRoom.__wsUpdateTime || 0),
+          ) || undefined,
+        }
+      } else {
+        currentList.push(nextRoom)
       }
 
       this.records = currentList

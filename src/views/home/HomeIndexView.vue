@@ -144,9 +144,12 @@ const clubNameText = computed(() => toSafeString(currentClub.value?.club_name) |
 const clubGoldText = computed(() => toSafeNumber(currentClub.value?.user_gold) / 100)
 const pokerTablesText = computed(() => `${homeRoomStats.value.poker.tables}`)
 const pokerPlayersText = computed(() => `${homeRoomStats.value.poker.players}`)
-const miniGamePlayersText = computed(() => `${homeRoomStats.value.miniGame.players}`)
-const mahjongTablesText = computed(() => `${homeRoomStats.value.mahjong.tables}`)
-const mahjongPlayersText = computed(() => `${homeRoomStats.value.mahjong.players}`)
+// const miniGamePlayersText = computed(() => `${homeRoomStats.value.miniGame.players}`)
+const miniGamePlayersText = 0
+// const mahjongTablesText = computed(() => `${homeRoomStats.value.mahjong.tables}`)
+const mahjongTablesText = 0
+// const mahjongPlayersText = computed(() => `${homeRoomStats.value.mahjong.players}`)
+const mahjongPlayersText = 0
 const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
 const mttPlayersText = computed(() => `${homeRoomStats.value.mtt.players}`)
 
@@ -454,7 +457,7 @@ onBeforeUnmount(() => {
           />
         </div>
         <div class="club-balance-row">
-          <img class="icon-sm" src="@/assets/icons/icon_balance.png" alt="余额" />
+          <img class="icon-sm" src="@/assets/icons/icon_chips.png" alt="余额" />
           <span v-if="loading" class="balance-amount">
             <van-loading size="16" />
           </span>

@@ -21,8 +21,8 @@ importers:
         specifier: ^1.11.20
         version: 1.11.20
       google-protobuf:
-        specifier: ^4.0.2
-        version: 4.0.2
+        specifier: ^3.21.4
+        version: 3.21.4
       html2canvas:
         specifier: ^1.4.1
         version: 1.4.1
@@ -1707,8 +1707,8 @@ packages:
     resolution: {integrity: sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ==}
     engines: {node: '>=18'}
 
-  google-protobuf@4.0.2:
-    resolution: {integrity: sha512-yD2fqbNgvJPuQwdKJiPdbUcXveNRxgqy070gzsBsCyFJA8Qdj9oxa9xtkddb/JEhcDk0RD5SfGUWg+nhINfMxA==}
+  google-protobuf@3.21.4:
+    resolution: {integrity: sha512-MnG7N936zcKTco4Jd2PX2U96Kf9PxygAPKBug+74LHzmHXmceN16MmRcdgZv+DGef/S9YvQAfRsNCn4cjf9yyQ==}
 
   gopd@1.2.0:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
@@ -4205,7 +4205,7 @@ snapshots:
 
   globals@14.0.0: {}
 
-  google-protobuf@4.0.2: {}
+  google-protobuf@3.21.4: {}
 
   gopd@1.2.0: {}
 

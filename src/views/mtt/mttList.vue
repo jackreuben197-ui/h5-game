@@ -18,6 +18,7 @@ import {
   resolveTemplateTextByKey,
 } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, formatTodayAwareTimeLabel, toTimestampMs } from '@/utils/time'
+import { showGameToast } from '@/components/Toast'
 
 // 赛事级别状态（对应服务端 status 字段，与 Unity MttMatchStatus 枚举一致）
 const MttMatchStatus = { CREATED: 0, RUNNING: 1, CLOSED: 2, CANCEL: 3 } as const
@@ -478,20 +479,32 @@ function calcLateEndMs(record: RawMttRecord, startAtMs: number): number {
 function getDefaultGameIcon(category: MttCategory): string {
   return category === 'mahjong' ? mahjongMiniIcon : pokerMiniIcon
 }
+function handleBack() {
+  router.push('/home')
+}
+function handleService() {
+  showGameToast('功能开发中')
+}
 </script>
 
 <template>
-  <div class="mtt-list-page themeType2">
+  <div class="mtt-list-page themeType2" @back="handleBack">
     <div class="bg-overlay"></div>
 
     <HeaderBack :title="t('UIHomeMttArea')">
       <template #right>
         <div class="action-wrap">
-          <TopActionButton :name="t('Wallet_Deposit')" :icon="walletIcon" icon-alt="wallet" />
           <TopActionButton
-            :name="t('Wallet_AppBarSupport')"
+            :name="t('UIGuildFund_RechargeText')"
+            :icon="walletIcon"
+            icon-alt="wallet"
+            @click="router.push('/wallet')"
+          />
+          <TopActionButton
+            :name="t('UIMineMain01')"
             :icon="serviceIcon"
             icon-alt="service"
+            @click="handleService"
           />
         </div>
       </template>

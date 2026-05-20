@@ -19,6 +19,7 @@ import gameTypeNlh from '@/assets/icons/game_type_nlh.png'
 import gameTypePlo from '@/assets/icons/game_type_plo.png'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
 import { t } from '@/i18n'
+import { showGameToast } from '@/components/Toast'
 
 type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
 const POKER_TYPE_LONG = 0
@@ -301,15 +302,18 @@ function toSafeInt(value: unknown): number {
   }
   return Math.floor(num)
 }
+function handleBack() {
+  router.push('/home')
+}
 function handleService() {
-  router.push({ path: '/tableGameEnd', query: { room_id: 12345 } })
+  showGameToast('功能开发中')
 }
 </script>
 
 <template>
   <div class="room-list-page themeType2" :style="pageStyle">
     <div class="bg-overlay"></div>
-    <HeaderBack :title="t('UIHomePokerArea')">
+    <HeaderBack :title="t('UIHomePokerArea')" @back="handleBack">
       <template #right>
         <div class="action-wrap">
           <TopActionButton

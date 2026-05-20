@@ -487,6 +487,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/casino',
+      name: 'casino',
+      component: () => import('@/views/home/CasinoView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/mttList',
       name: 'mtt-list',
       component: () => import('@/views/mtt/mttList.vue'),

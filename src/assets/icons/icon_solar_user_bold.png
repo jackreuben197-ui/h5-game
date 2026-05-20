@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 6 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="solar:user-bold" clip-path="url(#clip0_0_4)">
+<path id="Vector" d="M2.98203 2.83127C3.76172 2.83127 4.39379 2.23432 4.39379 1.49794C4.39379 0.761556 3.76172 0.164602 2.98203 0.164602C2.20233 0.164602 1.57026 0.761556 1.57026 1.49794C1.57026 2.23432 2.20233 2.83127 2.98203 2.83127Z" fill="var(--fill-0, white)"/>
+<path id="Vector_2" d="M5.80585 5.33158C5.80585 6.15991 5.80585 6.83158 2.98232 6.83158C0.158786 6.83158 0.158786 6.15991 0.158786 5.33158C0.158786 4.50324 1.42302 3.83158 2.98232 3.83158C4.54161 3.83158 5.80585 4.50324 5.80585 5.33158Z" fill="var(--fill-0, white)"/>
+</g>
+<defs>
+<clipPath id="clip0_0_4">
+<rect width="6" height="7" fill="white"/>
+</clipPath>
+</defs>
+</svg>

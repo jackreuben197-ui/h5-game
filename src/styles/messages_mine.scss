@@ -69,7 +69,7 @@
       height: 5.48rem;
       border-radius: 1.42rem;
       overflow: hidden;
-      background: url('@/assets/images/card_bg.png') center/cover no-repeat;
+      background: url('@/assets/images/card_bg2.png') center/cover no-repeat;
       backdrop-filter: blur(20px);
       /* 针对旧版 Safari 浏览器的兼容性写法 */
       -webkit-backdrop-filter: blur(20px);
@@ -134,7 +134,7 @@
       bottom: 0;
 
       /* 在这里设置你的背景图片 */
-      background-image: url('@/assets/images/card_border.png');
+      background-image: url('@/assets/images/card_border2.png');
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;

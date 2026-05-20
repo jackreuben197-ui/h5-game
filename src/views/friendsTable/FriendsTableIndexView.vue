@@ -607,6 +607,9 @@ watch(
 .main-content {
   position: relative;
   height: 16.8rem;
+  margin-top: 1rem;
+  background: url('@/assets/images/Base-blur-20.png') no-repeat center top;
+  background-size: 100% auto;
 }
 .main-content::before {
   content: '  ';
@@ -615,21 +618,19 @@ watch(
   left: 0;
   width: 100%;
   height: 100%;
-  background: url('@/assets/images/friend_table_bg.svg') no-repeat center top;
+  background: url('@/assets/images/friend_table_bg.png') no-repeat center top;
   background-size: 100% auto;
-  opacity: 0.1;
   pointer-events: none;
 }
 .main-content::after {
   content: '  ';
   position: absolute;
-  top: 1.1rem;
+  top: 0;
   left: 0;
   width: 100%;
-  height: 90%;
-  background: url('@/assets/images/friend_table_bg2.svg') no-repeat center top;
+  height: 100%;
+  background: url('@/assets/images/Baseblur21.png') no-repeat center top;
   background-size: 100% auto;
-  opacity: 0.5;
   pointer-events: none;
 }
 
@@ -981,7 +982,8 @@ watch(
   padding: 0.08rem 0.2rem;
   background: rgba(0, 0, 0, 0.05);
   box-shadow:
-  /* 左上高光 */ inset 0.4px 0.4px 0px 0px rgba(255, 255, 255, 0.5),
+  /* 左上高光 */
+    inset 0.4px 0.4px 0px 0px rgba(255, 255, 255, 0.5),
     /* 右下高光 */ inset -0.4px -0.4px 0px 0px rgba(255, 255, 255, 0.5);
   background-blend-mode: multiply;
   border-radius: 3.2rem;

@@ -297,9 +297,11 @@ export interface UserAvatarsData {
 
 // 登录接口请求参数。
 export interface LoginRequest {
-  phone: string
+  qk_account: string
   password: string
-  area: string
+  device_id: string
+  platform: number
+  system_language: string
 }
 
 // /user/login2 请求参数（对齐 Cocos 客户端）。

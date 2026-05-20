@@ -5,6 +5,7 @@ import { onBeforeRouteLeave, useRouter } from 'vue-router'
 import {
   getUserClubApi,
   getUserInfoApi,
+  loginApi,
   loginV2Api,
   postUserCheckEmailApi,
   postUserCheckPhoneApi,
@@ -30,7 +31,7 @@ import { Loading } from 'vant'
 import { DEBUG_ACCOUNTS, type DebugAccount } from '@/constants/debugAccounts'
 
 type PageMode = 'login' | 'register' | 'forgot'
-type ContactType = 'phone' | 'email'
+type ContactType = 'account' | 'email'
 
 const LOGIN_ACCOUNT_TYPE_KEY = 'LAST_LOGIN_ACCOUNT_TYPE'
 const LOGIN_EMAIL_KEY = 'USER_Email'
@@ -46,9 +47,9 @@ const gameStore = useGameStore()
 
 // ---------- State ----------
 const pageMode = ref<PageMode>('login')
-const contactType = ref<ContactType>('phone')
+const contactType = ref<ContactType>('account')
 const form = reactive({
-  phone: '',
+  account: '',
   email: '',
   area: '55',
   code: '',
@@ -92,10 +93,10 @@ restorePageState()
 consumePhoneAreaSelection()
 
 // ---------- Computed ----------
-const contactValue = computed(() => (contactType.value === 'phone' ? form.phone : form.email))
+const contactValue = computed(() => (contactType.value === 'account' ? form.account : form.email))
 
 const contactPlaceholder = computed(() =>
-  contactType.value === 'phone' ? t('UILogin_InputMoblie') : t('UILogin_InputEmail'),
+  contactType.value === 'account' ? t('UILogin_Account', 'Please enter account ID') : t('UILogin_InputEmail'),
 )
 
 const needAgreement = computed(() => pageMode.value !== 'forgot')
@@ -121,13 +122,13 @@ const otpBtnText = computed(() => {
   return t('UILogin_GetCode')
 })
 
-const isPhone = computed(() => contactType.value === 'phone')
+const isAccount = computed(() => contactType.value === 'account')
 
 const contactModel = computed({
-  get: () => (contactType.value === 'phone' ? form.phone : form.email),
+  get: () => (contactType.value === 'account' ? form.account : form.email),
   set: (val: string) => {
-    if (contactType.value === 'phone') {
-      form.phone = val
+    if (contactType.value === 'account') {
+      form.account = val
     } else {
       form.email = val
     }
@@ -141,7 +142,7 @@ function switchContact(type: ContactType) {
   if (contactType.value === type) return
   resetOtpCountdown()
   form.code = ''
-  localStore.setItem(LOGIN_ACCOUNT_TYPE_KEY, type === 'phone' ? LOGIN_TYPE_PHONE : LOGIN_TYPE_EMAIL)
+  localStore.setItem(LOGIN_ACCOUNT_TYPE_KEY, type === 'account' ? LOGIN_TYPE_PHONE : LOGIN_TYPE_EMAIL)
   if (pageMode.value === 'login') {
     form.password = readSavedPassword(type)
   } else {
@@ -170,31 +171,11 @@ async function sendOtp() {
 
   otpSending.value = true
   try {
-    if (contactType.value === 'phone') {
-      const check = await postUserCheckPhoneApi(
-        {
-          phone: target,
-          area: normalizeArea(),
-        },
-        pageMode.value === 'forgot' ? { suppressBusinessCodes: [90005] } : {},
-      )
-
-      if (pageMode.value === 'forgot' && check.code === 0) {
-        showGameToast(t('UILogin_1010'))
-        return
-      }
-      if (pageMode.value === 'register' && check.code !== 0) {
-        throw new Error(check.message || `error: ${check.code}`)
-      }
-
-      const result = await postUserSendCodeApi({
-        phone: target,
-        area: normalizeArea(),
-      })
-      if (result.code !== 0) {
-        throw new Error(result.message || `error: ${result.code}`)
-      }
+    if (contactType.value === 'account') {
+      showGameToast(t('UILogin_1010', 'Account login does not support OTP verification'))
+      return
     } else {
+
       const check = await postUserCheckEmailApi({ email: target })
 
       if (pageMode.value === 'forgot' && check.code === 0) {
@@ -281,16 +262,8 @@ function goProtocolPage(): void {
 }
 
 function goPhoneAreaPage(): void {
-  if (contactType.value !== 'phone') {
-    return
-  }
-  savePageState()
-  void router.push({
-    name: 'login-phone-area',
-    query: {
-      current: normalizeArea(),
-    },
-  })
+  // Area code removed for account mode
+  return
 }
 
 function onAgreementIndicatorClick(): void {
@@ -320,8 +293,8 @@ function openDebugAccountDialog(): void {
 
 function applyDebugAccount(account: DebugAccount): void {
   pageMode.value = 'login'
-  contactType.value = 'phone'
-  form.phone = account.account
+  contactType.value = 'account'
+  form.account = account.account
   form.password = account.password
   form.area = '55'
   agreed.value = true
@@ -329,12 +302,21 @@ function applyDebugAccount(account: DebugAccount): void {
 }
 
 async function handleLogin(target: string) {
-  const res = await loginV2Api({
-    phone: contactType.value === 'phone' ? target : undefined,
-    email: contactType.value === 'email' ? target : undefined,
-    password: md5(form.password.trim()),
-    area: contactType.value === 'phone' ? normalizeArea() : undefined,
-  })
+  let res
+  if (contactType.value === 'account') {
+    res = await loginApi({
+      qk_account: target,
+      password: md5(form.password.trim()),
+      device_id: 'ios',
+      platform: 5,
+      system_language: 'en-US',
+    })
+  } else {
+    res = await loginV2Api({
+      email: target,
+      password: md5(form.password.trim()),
+    })
+  }
   const token = String(res.token || '').trim()
   if (!token) {
     throw new Error('登录接口返回缺少 token')
@@ -381,9 +363,9 @@ async function handleRegister(target: string) {
     code: form.code.trim(),
     platform: 5, // Web
   }
-  if (contactType.value === 'phone') {
-    payload.phone = target
-    payload.area = form.area.trim() || '55'
+  if (contactType.value === 'account') {
+    showGameToast('Account registration is disabled.')
+    return
   } else {
     payload.email = target
   }
@@ -399,9 +381,9 @@ async function handleForgot(target: string) {
     password: md5(form.password.trim()),
     code: form.code.trim(),
   }
-  if (contactType.value === 'phone') {
-    payload.phone = target
-    payload.area = form.area.trim() || '55'
+  if (contactType.value === 'account') {
+    showGameToast('Account password recovery is disabled.')
+    return
   } else {
     payload.email = target
   }
@@ -416,10 +398,10 @@ async function handleForgot(target: string) {
 
 function validateContactOnly(target: string): boolean {
   if (!target) {
-    showGameToast(contactType.value === 'phone' ? t('UILogin_1001') : t('UILogin_InputEmail'))
+    showGameToast(contactType.value === 'account' ? t('UILogin_1001') : t('UILogin_InputEmail'))
     return false
   }
-  if (contactType.value === 'phone' && target.length <= 6) {
+  if (contactType.value === 'account' && target.length <= 6) {
     showGameToast(t('adaptation10128'))
     return false
   }
@@ -460,7 +442,7 @@ function normalizeArea(): string {
 }
 
 function readSavedPassword(type: ContactType): string {
-  if (type === 'phone') {
+  if (type === 'account') {
     return readLocalString(LOGIN_PHONE_PASSWORD_KEY)
   }
   return readLocalString(LOGIN_EMAIL_PASSWORD_KEY)
@@ -475,9 +457,9 @@ function hydrateFormFromLocal() {
   const storedType = Number(
     localStore.getItem<number | string>(LOGIN_ACCOUNT_TYPE_KEY, LOGIN_TYPE_PHONE),
   )
-  contactType.value = storedType === LOGIN_TYPE_EMAIL ? 'email' : 'phone'
+  contactType.value = storedType === LOGIN_TYPE_EMAIL ? 'email' : 'account'
   form.area = readLocalString(StorageKey.KEY_PHONE_FIRST, '55') || '55'
-  form.phone = readLocalString(StorageKey.KEY_PHONE, gameStore.loginAccount || '')
+  form.account = readLocalString(StorageKey.KEY_PHONE, gameStore.loginAccount || '')
   form.email = readLocalString(LOGIN_EMAIL_KEY)
   form.password = readSavedPassword(contactType.value)
 }
@@ -486,10 +468,10 @@ function persistLoginDraft() {
   const password = form.password.trim()
   localStore.setItem(
     LOGIN_ACCOUNT_TYPE_KEY,
-    contactType.value === 'phone' ? LOGIN_TYPE_PHONE : LOGIN_TYPE_EMAIL,
+    contactType.value === 'account' ? LOGIN_TYPE_PHONE : LOGIN_TYPE_EMAIL,
   )
-  if (contactType.value === 'phone') {
-    localStore.setItem(StorageKey.KEY_PHONE, form.phone.trim())
+  if (contactType.value === 'account') {
+    localStore.setItem(StorageKey.KEY_PHONE, form.account.trim())
     localStore.setItem(StorageKey.KEY_PHONE_FIRST, normalizeArea())
     localStore.setItem(LOGIN_PHONE_PASSWORD_KEY, password)
     return
@@ -509,7 +491,7 @@ interface LoginPageStateSnapshot {
   pageMode: PageMode
   contactType: ContactType
   form: {
-    phone: string
+    account: string
     email: string
     area: string
     code: string
@@ -530,7 +512,7 @@ function savePageState(): void {
     pageMode: pageMode.value,
     contactType: contactType.value,
     form: {
-      phone: form.phone,
+      account: form.account,
       email: form.email,
       area: form.area,
       code: form.code,
@@ -557,8 +539,8 @@ function restorePageState(): void {
     const parsed = JSON.parse(raw) as Partial<LoginPageStateSnapshot>
     pageMode.value =
       parsed.pageMode === 'register' || parsed.pageMode === 'forgot' ? parsed.pageMode : 'login'
-    contactType.value = parsed.contactType === 'email' ? 'email' : 'phone'
-    form.phone = String(parsed.form?.phone || form.phone)
+    contactType.value = parsed.contactType === 'email' ? 'email' : 'account'
+    form.account = String(parsed.form?.account || form.account)
     form.email = String(parsed.form?.email || form.email)
     form.area = String(parsed.form?.area || form.area)
     form.code = String(parsed.form?.code || '')
@@ -608,8 +590,8 @@ function consumePhoneAreaSelection(): void {
         <!-- Contact type tabs: phone / email -->
         <div class="tab-row">
           <button
-            :class="['tab-item', { 'tab-item--active': contactType === 'phone' }]"
-            @click="switchContact('phone')"
+            :class="['tab-item', { 'tab-item--active': contactType === 'account' }]"
+            @click="switchContact('account')"
           >
             {{ t('UIloginPhone_logintext') }}
           </button>
@@ -629,16 +611,7 @@ function consumePhoneAreaSelection(): void {
               <img class="input-icon" :src="icPhone" alt="" />
             </div>
             <div class="input-inner">
-              <!-- Area code selector (phone mode only) -->
-              <button
-                v-if="isPhone"
-                type="button"
-                class="area-code-btn"
-                @click.prevent="goPhoneAreaPage"
-              >
-                <span>+{{ form.area }}</span>
-                <img class="area-code-icon" :src="icArrowDrop" alt="" />
-              </button>
+              <!-- Area code selector (phone mode only) - removed for Account ID login -->
               <input
                 v-model="contactModel"
                 class="input-field"

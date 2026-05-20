@@ -305,11 +305,11 @@ onBeforeUnmount(() => {
 }
 
 .tabbar-fill-stop-start {
-  stop-color: var(--bg-new-nav-start, rgba(7, 17, 95, 0.4));
+  stop-color: rgba(18, 18, 18, 0.4);
 }
 
 .tabbar-fill-stop-end {
-  stop-color: var(--bg-new-nav-end, rgba(18, 18, 18, 0.12));
+  stop-color: transparent;
 }
 
 .tabs-row {

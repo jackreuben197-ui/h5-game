@@ -8,7 +8,7 @@
     "sync:protocol": "bash scripts/update_protocol.sh",
     "predev": "pnpm sync:i18n",
     "prebuild": "pnpm sync:i18n",
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vue-tsc -b && vite build",
     "build:debug": "vue-tsc -b && VITE_BUILD_SOURCEMAP=true vite build",
     "preview": "vite preview",

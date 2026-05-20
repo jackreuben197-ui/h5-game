@@ -1391,7 +1391,7 @@ onBeforeUnmount(() => {
 .en-base-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(40, 40, 40, 0.2);
+  // background: rgba(40, 40, 40, 0.2);
   border-radius: 0.56rem;
   z-index: 1;
 }
@@ -1401,7 +1401,7 @@ onBeforeUnmount(() => {
   // inset: -0.948rem -0.953rem -0.925rem -0.92rem;
   // backdrop-filter: blur(0.925rem);
   // -webkit-backdrop-filter: blur(0.925rem);
-  background: rgba(49, 35, 29, 0.81);
+  // background: rgba(49, 35, 29, 0.81);
   border-radius: 1.057rem;
   pointer-events: none;
   z-index: 1;

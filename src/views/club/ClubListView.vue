@@ -8,16 +8,14 @@ import imgPokerSpade from '@/assets/icons/club_poker_spade.svg'
 import imgPokerHeart from '@/assets/icons/club_poker_heart.svg'
 import imgPokerClub from '@/assets/icons/club_poker_club.svg'
 import imgPokerDiamond from '@/assets/icons/club_poker_diamond.svg'
-import imgTable from '@/assets/icons/icon_table.png'
-import imgPeople from '@/assets/icons/icon_people.png'
-import imgBalance from '@/assets/icons/icon_balance.png'
-import imgChips from '@/assets/icons/icon_chips.png'
-import imgClubRoleIcon from '@/assets/images/club_role_icon.png'
-import imgQuickActionCreateBg from '@/assets/images/club_qa_create_club_bg_shape.svg'
+import imgPeople from '@/assets/icons/icon_people2.png'
+import imgChipRed from '@/assets/icons/icon_chip_red.png'
+import imgChipGreen from '@/assets/icons/icon_chip_green.png'
+import imgTable from '@/assets/icons/icon_table2.png'
+import imgClubRoleIcon from '@/assets/icons/member_icon.png'
 import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shield.svg'
-import imgQuickActionBoardBg from '@/assets/images/club_qa_data_board_bg_shape.svg'
 import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.svg'
-import imgClubBannerFigma from '@/assets/images/club_banner_bg.png'
+import imgQuickActionAlliance from '@/assets/images/club_qa_data_board_alliance.svg'
 import type { ClubInfo } from '@/stores/userInfo'
 import { useUserInfoStore } from '@/stores/userInfo'
 
@@ -41,7 +39,6 @@ interface ClubCardItem {
   tableCount: number
   memberCount: number
   cover: string
-  bannerBg: string
 }
 
 const router = useRouter()
@@ -54,16 +51,14 @@ const showJoinModal = ref(false)
 const joinLoading = ref(false)
 const searchedClub = ref<ClubInfo | null>(null)
 
-const fallbackBanners = [imgClubBannerFigma]
-
 const quickActions: QuickActionItem[] = [
   { id: 1, title: '创建俱乐部', kind: 'create-club' },
-  { id: 2, title: '创建俱乐部', kind: 'club-panel' },
+  { id: 2, title: '俱乐部生涯', kind: 'club-panel' },
+  { id: 3, title: '创建联盟', kind: 'create-union' },
 ]
 
 const clubList = computed<ClubCardItem[]>(() => {
   return userInfoStore.clubList.map((club, index) => {
-    const fallbackBanner = fallbackBanners[index % fallbackBanners.length]
     const displayId = normalizeClubId(club.random_id ?? club.club_id)
     const clubId = normalizeClubId(club.club_id)
     const key = `${clubId || displayId || index}`
@@ -79,7 +74,6 @@ const clubList = computed<ClubCardItem[]>(() => {
       tableCount: toSafeNumber(club.tables),
       memberCount: toSafeNumber(club.club_members),
       cover: toSafeString(club.logo),
-      bannerBg: toSafeString(club.banner) || fallbackBanner,
     }
   })
 })
@@ -131,11 +125,10 @@ function goToClubDetail(club?: ClubInfo): void {
 }
 
 function onQuickAction(itemId: number): void {
-  if (itemId === 2) {
+  if (itemId !== 1) {
     showFailToast('功能开发中')
     return
   }
-
   void router.push('/club/create')
 }
 
@@ -283,13 +276,15 @@ onMounted(() => {
             inputmode="numeric"
             autocomplete="off"
             maxlength="6"
-            placeholder="搜索俱乐部ID"
+            placeholder="搜索俱乐部"
             @input="onSearchInputEvent"
             @keyup.enter="onSearchClub"
           />
         </label>
         <button type="button" class="search-btn" :disabled="searchLoading" @click="onSearchClub">
+          <div class="search-btn-blur" aria-hidden="true" />
           <span class="search-btn-label">{{ searchLoading ? '搜索中' : '搜索' }}</span>
+          <div class="search-btn-inset" aria-hidden="true" />
         </button>
       </div>
     </section>
@@ -303,28 +298,42 @@ onMounted(() => {
         :class="[`quick-item--${item.kind}`, { 'quick-item--hidden': item.hidden }]"
         @click="onQuickAction(item.id)"
       >
-        <span class="action-icon">
+        <div class="qa-icon" :class="`qa-icon--${item.kind}`">
           <template v-if="item.kind === 'create-club'">
-            <img class="icon-create-bg" :src="imgQuickActionCreateBg" alt="" aria-hidden="true" />
-            <img class="icon-create-shield" :src="imgQuickActionCreateShield" alt="" />
+            <img
+              class="qa-img qa-img--cc-small"
+              :src="imgQuickActionCreateShield"
+              alt=""
+              aria-hidden="true"
+            />
           </template>
           <template v-else-if="item.kind === 'club-panel'">
-            <img class="icon-board-bg" :src="imgQuickActionBoardBg" alt="" aria-hidden="true" />
-            <img class="icon-board-chart" :src="imgQuickActionBoardChart" alt="" />
+            <img
+              class="qa-img qa-img--cp-vec"
+              :src="imgQuickActionBoardChart"
+              alt=""
+              aria-hidden="true"
+            />
           </template>
-        </span>
-        <span class="action-text">{{ item.title }}</span>
+          <template v-else-if="item.kind === 'create-union'">
+            <img
+              class="qa-img qa-img--cu-alliance"
+              :src="imgQuickActionAlliance"
+              alt=""
+              aria-hidden="true"
+            />
+          </template>
+        </div>
+        <span class="action-text" :class="`action-text--${item.kind}`">{{ item.title }}</span>
       </button>
     </section>
 
-    <section class="cards-divider">
+    <section class="cards-divider" aria-hidden="true">
       <span class="divider-line"></span>
-      <div class="cards-icons" aria-hidden="true">
-        <img :src="imgPokerSpade" alt="" />
-        <img :src="imgPokerHeart" alt="" />
-        <img :src="imgPokerClub" alt="" />
-        <img :src="imgPokerDiamond" alt="" />
-      </div>
+      <img class="suit-icon" :src="imgPokerSpade" alt="" />
+      <img class="suit-icon" :src="imgPokerHeart" alt="" />
+      <img class="suit-icon" :src="imgPokerClub" alt="" />
+      <img class="suit-icon" :src="imgPokerDiamond" alt="" />
       <span class="divider-line"></span>
     </section>
 
@@ -337,36 +346,40 @@ onMounted(() => {
         class="club-banner"
         @click="goToClubDetail(club.source)"
       >
-        <img class="club-banner-bg" :src="club.bannerBg" alt="" aria-hidden="true" />
-        <!-- <div class="club-banner-overlay" aria-hidden="true" /> -->
+        <div class="club-banner-glass">
+          <div class="club-banner-blur" aria-hidden="true" />
 
-        <div class="club-main">
-          <div class="club-identity">
-            <img class="club-cover" :src="club.cover" alt="" />
+          <div class="club-main">
+            <div class="club-identity">
+              <img class="club-cover" :src="club.cover" alt="" />
 
-            <div class="club-meta">
-              <h2 class="club-name">{{ club.name }}</h2>
-              <p class="club-id">
-                <span class="club-id-tag">ID</span>
-                <span class="club-id-value">{{ club.clubIdText }}</span>
-              </p>
-              <div class="club-top-metrics" aria-hidden="true">
-                <span class="top-metric-item">
-                  <img :src="imgBalance" alt="" />
-                  <span>{{ formatCount(club.activeCount) }}</span>
-                </span>
-                <span class="top-metric-item">
-                  <img :src="imgChips" alt="" />
-                  <span>{{ formatCount(club.chipsCount) }}</span>
-                </span>
+              <div class="club-meta">
+                <h2 class="club-name">{{ club.name }}</h2>
+                <p class="club-id">
+                  <span class="club-id-tag">ID</span>
+                  <span class="club-id-value">{{ club.clubIdText }}</span>
+                </p>
+                <div class="club-top-metrics" aria-hidden="true">
+                  <span class="top-metric-item">
+                    <img :src="imgChipRed" alt="" />
+                    <span>{{ formatCount(club.activeCount) }}</span>
+                  </span>
+                  <span class="top-metric-item">
+                    <img :src="imgChipGreen" alt="" />
+                    <span>{{ formatCount(club.chipsCount) }}</span>
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <button type="button" class="enter-btn" @click.stop="goToClubDetail(club.source)">
-            <span class="enter-btn-label">进入</span>
-          </button>
+            <div class="enter-btn-wrapper">
+              <button type="button" class="enter-btn" @click.stop="goToClubDetail(club.source)">
+                <span class="enter-btn-label">进入</span>
+              </button>
+            </div>
+          </div>
         </div>
+
         <div class="club-stats-shell" aria-hidden="true">
           <div class="club-stats-inline">
             <span class="stat-item stat-item--role">
@@ -510,18 +523,26 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 0.99rem;
-  border-radius: 0.79rem;
-  padding: 0.09rem 0.15rem 0.09rem 0.34rem;
-  background: rgba(14, 14, 14, 0.15);
-  overflow: hidden;
+  border-radius: 1.055rem;
+  padding: 0.127rem 0.203rem 0.127rem 0.447rem;
+  background: transparent;
 
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    backdrop-filter: blur(0.004rem);
+    padding: 0.013rem; // ~1px border width
+    background: linear-gradient(
+      126.09deg,
+      rgba(255, 255, 255, 0.89) 21.1%,
+      rgba(230, 230, 230, 0.89) 71.4%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
     mix-blend-mode: overlay;
     pointer-events: none;
   }
@@ -531,13 +552,11 @@ onMounted(() => {
   position: relative;
   z-index: 1;
   flex: 1;
-  min-height: 0.8rem;
   border: 0;
-  border-radius: 999px;
   padding: 0;
   display: inline-flex;
   align-items: center;
-  gap: 0.16rem;
+  gap: 0.218rem; // 8.19px / 37.5
   justify-content: flex-start;
   background: transparent;
   color: #fff;
@@ -545,16 +564,8 @@ onMounted(() => {
 
 .search-icon {
   flex: 0 0 auto;
-  width: 0.34rem;
-  height: 0.34rem;
-}
-
-.search-placeholder {
-  font-family: 'HONOR Sans CN', 'PingFang SC', sans-serif;
-  font-size: 0.3rem;
-  line-height: 1.4;
-  color: #fff;
-  opacity: 0.96;
+  width: 0.557rem; // 20.885px / 37.5
+  height: 0.546rem; // 20.475px / 37.5
 }
 
 .search-input {
@@ -565,32 +576,33 @@ onMounted(() => {
   background: transparent;
   color: #fff;
   font-family: 'HONOR Sans CN', 'PingFang SC', sans-serif;
-  font-size: 0.3rem;
+  font-size: 0.393rem;
   line-height: 1.4;
+  white-space: nowrap;
 }
 
 .search-input::placeholder {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 1);
 }
 
 .search-btn {
   position: relative;
   z-index: 1;
-  flex: 0 0 auto;
-  width: 1.54rem;
-  min-height: 0.82rem;
-  border-radius: 1.26rem;
-  border: 0.009rem solid rgba(242, 242, 242, 0.4);
-  display: inline-flex;
-  align-items: center;
+  flex-shrink: 0;
+  width: 2.06rem;
+  height: 1.089rem;
+  border-radius: 1.689rem;
+  border: none;
+  padding: 0.209rem 0.648rem;
+  display: flex;
+  flex-direction: column;
   justify-content: center;
+  align-items: flex-start;
+  gap: 0.166rem;
   color: #fff;
-  background: rgba(165, 165, 165, 0.8);
-  box-shadow:
-    0.018rem 0.022rem 0.036rem rgba(0, 0, 0, 0.25),
-    inset 0 0 0.045rem rgba(0, 0, 0, 1),
-    inset 0.006rem 0.006rem 0.045rem rgba(0, 0, 0, 1),
-    inset 0 0 0.09rem rgba(242, 242, 242, 0.9);
+  background: transparent;
+
+  box-shadow: 0.024rem 0.03rem 0.047rem 0 rgba(0, 0, 0, 0.25);
   overflow: hidden;
 
   &::before {
@@ -598,9 +610,20 @@ onMounted(() => {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    backdrop-filter: blur(0.143rem);
-    mix-blend-mode: hard-light;
+    padding: 0.012rem; // 0.445px border width
+    background: linear-gradient(
+      to bottom,
+      rgba(242, 242, 242, 0.4),
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 0.5)
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
     pointer-events: none;
+    z-index: 2;
   }
 }
 
@@ -608,171 +631,176 @@ onMounted(() => {
   opacity: 0.7;
 }
 
+.search-btn-blur {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  backdrop-filter: blur(0.19rem);
+  background: rgba(165, 165, 165, 0.4);
+  mix-blend-mode: hard-light;
+  pointer-events: none;
+  z-index: 0;
+}
+
 .search-btn-label {
   position: relative;
   z-index: 1;
   font-family: 'SF Pro', 'PingFang SC', sans-serif;
-  font-size: 0.28rem;
+  font-size: 0.371rem; // 13.93px / 37.5
   font-weight: 400;
-  line-height: 0.95;
-  letter-spacing: 0;
+  font-variation-settings: 'wdth' 100;
+  line-height: 0.946;
+  white-space: nowrap;
+  color: #fff;
+}
+
+.search-btn-inset {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  box-shadow:
+    inset 0 0 0.059rem 0 #000,
+    inset 0.008rem 0.008rem 0.059rem 0 #000,
+    inset 0 0 0.119rem 0.042rem rgba(242, 242, 242, 0.9); // spread: 1.558px
 }
 
 .quick-actions {
-  margin-top: 0.03rem;
   padding: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 0.475rem;
+  gap: 0.633rem;
 }
 
 .quick-item {
-  flex: 0 0 auto;
-  width: 1.216rem;
+  flex-shrink: 0;
   border: 0;
   background: transparent;
   padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.088rem;
-  color: #fff;
+  gap: 0.118rem;
+  cursor: pointer;
+
+  &--create-club,
+  &--club-panel {
+    width: 1.621rem;
+  }
+
+  &--create-union {
+    width: 1.692rem;
+    gap: 0.124rem;
+  }
+
+  &--hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
-.quick-item--hidden {
-  opacity: 0;
+.qa-icon {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.441rem;
+
+  &--create-club {
+    width: 1.621rem;
+    height: 1.621rem;
+  }
+
+  &--club-panel {
+    width: 1.621rem;
+    height: 1.621rem;
+  }
+
+  &--create-union {
+    width: 1.692rem; // 63.459px / 37.5
+    height: 1.692rem;
+  }
+}
+
+// Shared base for all icon images
+.qa-img {
+  position: absolute;
+  display: block;
+  max-width: none;
   pointer-events: none;
 }
 
-.action-icon {
-  position: relative;
-  width: 1.216rem;
-  height: 1.216rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border: 0.01rem solid rgba(255, 255, 255, 0.78);
-  border-radius: 0.331rem;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.action-icon img {
-  position: absolute;
-  max-width: none;
+// create-club — shield fills entire icon container
+.qa-img--cc-small {
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
   object-fit: contain;
 }
 
-.icon-create-bg {
-  width: 1.9rem;
-  height: 1.46rem;
-  left: -0.7rem;
-  top: 0.03rem;
-}
-
-.icon-create-shield {
-  width: 0.69rem;
-  height: 0.69rem;
-  left: 0.265rem;
-  top: 0.27rem;
-}
-
-.icon-board-bg {
-  width: 1.26rem;
-  height: 1.19rem;
-  left: -0.57rem;
+// club-panel — chart svg fills entire icon container
+.qa-img--cp-vec {
+  width: 100%;
+  height: 100%;
+  left: 0;
   top: 0;
+  object-fit: contain;
 }
 
-.icon-board-chart {
-  width: 0.68rem;
-  height: 0.68rem;
-  left: 0.275rem;
-  top: 0.264rem;
-}
-
-.quick-item--create-union {
-  width: 1.269rem;
-}
-
-.quick-item--create-union .action-icon {
-  width: 1.269rem;
-  height: 1.269rem;
-  border: 0.006rem solid rgba(255, 255, 255, 0.44);
-  border-radius: 0.331rem;
-  background: linear-gradient(
-    160.93deg,
-    rgba(0, 255, 246, 0.71) 10.97%,
-    rgba(0, 189, 214, 0.71) 87.16%
-  );
-}
-
-.icon-union-swash {
-  width: 2.15rem;
-  height: 2.3rem;
-  left: -0.43rem;
-  top: -0.04rem;
-  transform: rotate(15deg);
-}
-
-.icon-union-club-small {
-  width: 0.61rem;
-  height: 0.65rem;
-  left: 0.52rem;
-  top: 0.29rem;
-  transform: rotate(15deg);
-}
-
-.icon-union-club-large {
-  width: 0.82rem;
-  height: 0.88rem;
-  left: 0.03rem;
-  top: 0.31rem;
-  transform: rotate(15deg);
+// create-union — alliance svg fills entire icon container
+.qa-img--cu-alliance {
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  object-fit: contain;
 }
 
 .action-text {
-  width: 100%;
-  font-size: 0.228rem;
-  line-height: 1;
-  font-weight: 500;
-  color: #fff;
+  font-family: 'SF Pro', 'PingFang SC', sans-serif;
+  font-size: 0.304rem;
+  font-weight: 510;
+  font-variation-settings: 'wdth' 100;
+  line-height: normal;
   text-align: center;
-  text-shadow: 0 0.025rem 0.317rem rgba(0, 0, 0, 0.6);
+  color: #fff;
+  text-shadow: 0 0.034rem 0.422rem rgba(0, 0, 0, 0.6);
   white-space: nowrap;
+  min-width: 100%;
+
+  &--create-union {
+    font-size: 0.319rem;
+    text-shadow: 0 0.035rem 0.443rem rgba(0, 0, 0, 0.6);
+  }
 }
 
 .cards-divider {
-  margin-top: 0.02rem;
   display: flex;
   align-items: center;
-  gap: 0.14rem;
+  gap: 0.177rem;
+  mix-blend-mode: plus-lighter;
+  opacity: 0.4;
 }
 
 .divider-line {
   flex: 1;
-  height: 0.02rem;
-  background: rgba(249, 249, 249, 0.42);
+  height: 1px;
+  background: #f9f9f9;
 }
 
-.cards-icons {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.06rem;
-}
-
-.cards-icons img {
-  width: 0.32rem;
-  height: 0.32rem;
+.suit-icon {
+  flex-shrink: 0;
+  width: 0.445rem;
+  height: 0.445rem;
   object-fit: contain;
 }
 
 .club-list {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
-  padding-bottom: 0.44rem;
+  gap: 0.5rem;
+  padding-bottom: 1rem;
+  padding-top: 0.3rem;
 }
 
 .club-empty-text {
@@ -785,225 +813,239 @@ onMounted(() => {
 
 .club-banner {
   position: relative;
-  min-height: 2.78rem;
-  border-radius: 0.46rem;
-  overflow: hidden;
-  isolation: isolate;
-  border: 0;
-  // background: rgba(84, 73, 106, 0.22);
-  // box-shadow:
-  //   0 0.16rem 0.32rem rgba(6, 10, 26, 0.34),
-  //   inset 0 0 0.03rem rgba(255, 255, 255, 0.24);
+  margin-bottom: 0.3rem;
 
   &::before {
     content: '';
     position: absolute;
-    inset: 0.07rem;
-    border-radius: 0.38rem;
-    border: 0.07rem solid rgba(238, 236, 249, 0.3);
-    box-shadow:
-      0 0 0.02rem rgba(255, 255, 255, 0.2),
-      inset 0 0 0.03rem rgba(255, 255, 255, 0.12);
+    inset: -0.213rem;
+    border-radius: 1.015rem; // 0.802 + 0.213
+    border: 0.213rem solid rgba(60, 24, 13, 0.8);
+    background: #241108;
+    backdrop-filter: blur(0.446rem);
     pointer-events: none;
-    z-index: 4;
+    z-index: 0;
+
+    clip-path: polygon(
+      0% 0%,
+      100% 0%,
+      100% 100%,
+      calc(50% + 2.845rem) 100%,
+      calc(50% + 2.845rem) calc(100% - 0.3rem),
+      calc(50% - 2.845rem) calc(100% - 0.3rem),
+      calc(50% - 2.845rem) 100%,
+      0% 100%
+    );
   }
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0.09rem;
-    border-radius: 0.36rem;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
-    pointer-events: none;
-    z-index: 2;
-  }
 }
 
-.club-main {
+.club-banner-glass {
   position: relative;
-  z-index: 3;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.16rem;
-  padding: 0.3rem 0.28rem 0;
-}
-
-.club-banner-bg {
-  position: absolute;
-  inset: 0;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.82;
-}
-
-.club-banner-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background:
-    linear-gradient(180deg, rgba(30, 27, 43, 0.08), rgba(17, 17, 25, 0.5)),
-    radial-gradient(108% 88% at 12% -18%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0)),
-    radial-gradient(86% 62% at 100% 100%, rgba(116, 155, 255, 0.22), rgba(116, 155, 255, 0));
-  backdrop-filter: blur(0.17rem);
-}
-
-.club-identity {
   display: flex;
-  align-items: center;
-  gap: 0.18rem;
-}
-
-.club-cover {
-  width: 1.4rem;
-  height: 1.4rem;
-  border-radius: 0.24rem;
-  object-fit: cover;
-  border: 0.01rem solid rgba(255, 255, 255, 0.28);
-  box-shadow:
-    0 0.08rem 0.22rem rgba(8, 8, 8, 0.3),
-    inset 0 0 0.02rem rgba(255, 255, 255, 0.24);
-}
-
-.club-meta {
-  display: flex;
-  flex-direction: column;
   justify-content: center;
-  min-height: 1.4rem;
-}
-
-.club-name {
-  margin: 0;
-  font-size: 0.36rem;
-  line-height: 1.08;
-  font-weight: 500;
-  color: rgba(249, 249, 249, 0.98);
-}
-
-.club-id {
-  margin: 0.11rem 0 0;
-  display: inline-flex;
   align-items: center;
-  gap: 0.08rem;
-}
-
-.club-id-tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0.36rem;
-  height: 0.28rem;
-  border-radius: 0.1rem;
-  font-size: 0.18rem;
-  font-weight: 600;
-  color: #444;
-  background: rgba(255, 255, 255, 0.56);
-}
-
-.club-id-value {
-  font-size: 0.24rem;
-  font-weight: 300;
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.club-top-metrics {
-  margin-top: 0.1rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.22rem;
-}
-
-.top-metric-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.04rem;
-  color: rgba(255, 255, 255, 0.95);
-  font-size: 0.22rem;
-  font-weight: 300;
-  line-height: 1;
-}
-
-.top-metric-item img {
-  width: 0.28rem;
-  height: 0.28rem;
-  object-fit: contain;
-}
-
-.club-stats-inline {
-  position: relative;
-  z-index: 3;
-  margin: 0;
-  width: 100%;
-  min-height: 0.56rem;
-  padding: 0 0.26rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.28rem;
-}
-
-.stat-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.05rem;
-  font-size: 0.2rem;
-  line-height: 0.95;
-  color: rgba(251, 251, 251, 0.95);
-}
-
-.stat-item img {
-  width: 0.28rem;
-  height: 0.28rem;
-  object-fit: contain;
-}
-
-.stat-item--role {
-  gap: 0.04rem;
-}
-
-.stat-item--role img {
-  width: 0.3rem;
-  height: 0.3rem;
-}
-
-.stat-item span {
-  letter-spacing: 0.006rem;
-  white-space: nowrap;
-}
-
-.stat-item--role span {
-  letter-spacing: 0;
-  line-height: 1;
-}
-
-.enter-btn {
-  position: relative;
+  border-radius: 0.802rem;
   overflow: hidden;
-  flex-shrink: 0;
-  border: 0.01rem solid rgba(242, 242, 242, 0.4);
-  min-width: 1.56rem;
-  min-height: 0.72rem;
-  margin-top: 0.36rem;
-  border-radius: 0.34rem;
-  font-size: 0.3rem;
-  font-weight: 500;
-  color: rgba(249, 249, 249, 0.98);
-  background: transparent;
-  box-shadow:
-    0.02rem 0.025rem 0.04rem rgba(0, 0, 0, 0.25),
-    inset 0 0 0.05rem rgba(0, 0, 0, 1),
-    inset 0.007rem 0.007rem 0.05rem rgba(0, 0, 0, 1),
-    inset 0 0 0.1rem rgba(242, 242, 242, 0.9);
+  padding: 0.357rem 0.385rem 1.125rem 0.339rem;
 
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    backdrop-filter: blur(0.14rem);
-    background: rgba(165, 165, 165, 0.8);
+    padding: 0.5px;
+    background: linear-gradient(
+      68deg,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(255, 255, 255, 0) 30%,
+      rgba(255, 255, 255, 0) 70%,
+      rgba(255, 255, 255, 1) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 5;
+
+    clip-path: polygon(
+      0% 0%,
+      100% 0%,
+      100% 100%,
+      calc(50% + 2.845rem) 100%,
+      calc(50% + 2.845rem) calc(100% - 0.2rem),
+      calc(50% - 2.845rem) calc(100% - 0.2rem),
+      calc(50% - 2.845rem) 100%,
+      0% 100%
+    );
+  }
+}
+
+.club-banner-blur {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  backdrop-filter: blur(0.446rem);
+
+  pointer-events: none;
+}
+
+.club-main {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 0.16rem;
+}
+
+.club-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.269rem;
+}
+
+.club-cover {
+  flex-shrink: 0;
+  width: 1.859rem;
+  height: 1.846rem;
+  border-radius: 0.458rem;
+  object-fit: cover;
+  border: 0.01rem solid rgba(255, 255, 255, 0.28);
+}
+
+.club-meta {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.227rem;
+}
+
+.club-name {
+  margin: 0;
+  font-size: 0.365rem;
+  line-height: 0.83;
+  font-weight: 500;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.club-id {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.067rem;
+}
+
+.club-id-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.077rem 0.135rem;
+  border-radius: 0.116rem;
+  font-size: 0.222rem;
+  font-weight: 600;
+  color: #444;
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.club-id-value {
+  font-size: 0.279rem;
+  font-weight: 300;
+  color: #fff;
+}
+
+.club-top-metrics {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.217rem;
+}
+
+.top-metric-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.044rem;
+  color: #fff;
+  font-size: 0.279rem;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.top-metric-item img {
+  width: 0.36rem;
+  height: 0.4rem;
+  object-fit: contain;
+}
+
+.enter-btn-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.enter-btn {
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0.209rem 0.648rem;
+  gap: 0.166rem;
+
+  height: 0.929rem;
+  border-radius: 0.448rem;
+  box-sizing: border-box;
+
+  font-family: 'HONOR Sans CN', 'PingFang SC', sans-serif;
+  font-size: 0.359rem;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 0.9456;
+  color: #fff;
+
+  background: transparent;
+  border: none;
+  box-shadow: 0.024rem 0.03rem 0.047rem rgba(0, 0, 0, 0.25);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: rgba(165, 165, 165, 0.4);
+    backdrop-filter: blur(0.19rem);
     mix-blend-mode: hard-light;
+    box-shadow:
+      inset 0 0 0.059rem #000,
+      inset 0.008rem 0.008rem 0.059rem #000,
+      inset 0 0 0.119rem 0.042rem rgba(242, 242, 242, 0.9);
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 0.012rem;
+    background: linear-gradient(
+      135deg,
+      rgba(242, 242, 242, 0.4) 0%,
+      rgba(255, 255, 255, 0) 50%,
+      rgba(255, 255, 255, 0.5) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
     pointer-events: none;
   }
 }
@@ -1018,40 +1060,83 @@ onMounted(() => {
   z-index: 4;
   left: 50%;
   transform: translateX(-50%);
-  bottom: -0.06rem;
-  width: 4.36rem;
-  height: 0.72rem;
-  border-radius: 0.29rem 0.29rem 0.04rem 0.04rem;
-  border: 0.01rem solid rgba(236, 236, 247, 0.24);
-  background:
-    linear-gradient(180deg, rgba(123, 118, 139, 0.36), rgba(83, 79, 99, 0.22)),
-    rgba(48, 44, 64, 0.32);
-  backdrop-filter: blur(0.18rem);
-  box-shadow:
-    inset 0 0.02rem 0.06rem rgba(255, 255, 255, 0.12),
-    0 0.06rem 0.12rem rgba(11, 10, 18, 0.22);
+  width: 5.69rem;
+  height: 0.917rem;
+  border-radius: 0.4rem 0.4rem 0 0;
+  background: transparent;
+  backdrop-filter: blur(0.446rem);
+  bottom: -0.213rem;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      201deg,
+      #696969 0%,
+      rgba(255, 255, 255, 0) 38%,
+      rgba(255, 255, 255, 0) 73%,
+      #666666 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
 }
 
-.club-stats-shell::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(
-    120% 130% at 50% -22%,
-    rgba(255, 255, 255, 0.22),
-    rgba(255, 255, 255, 0)
-  );
-  pointer-events: none;
+.club-stats-inline {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  padding: 0 0.26rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.43rem;
 }
 
-.club-stats-shell::after {
-  content: '';
-  position: absolute;
-  inset: 0.01rem;
-  border-radius: inherit;
-  border: 0.01rem solid rgba(255, 255, 255, 0.18);
-  pointer-events: none;
+.stat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.06rem;
+  padding-left: 0.023rem;
+  font-family: 'HONOR Sans CN', 'PingFang SC', sans-serif;
+  font-size: 0.27rem;
+  font-weight: 400;
+  line-height: normal;
+  color: #fbfbfb;
+  letter-spacing: 0.0108rem;
+  white-space: nowrap;
+
+  img {
+    width: 0.367rem;
+    height: 0.367rem;
+    object-fit: contain;
+  }
+}
+
+.stat-item--role {
+  gap: 0.051rem;
+  padding-left: 0;
+  color: white;
+  letter-spacing: 0;
+  line-height: 0.946;
+
+  img {
+    width: 0.394rem;
+    height: 0.394rem;
+    filter: drop-shadow(0.021rem 0.042rem 0.023rem rgba(0, 0, 0, 0.23))
+      drop-shadow(0.047rem 0.093rem 0.031rem rgba(0, 0, 0, 0.13))
+      drop-shadow(0.083rem 0.165rem 0.037rem rgba(0, 0, 0, 0.04))
+      drop-shadow(0.005rem 0.011rem 0.012rem rgba(0, 0, 0, 0.26));
+  }
 }
 
 .join-modal-mask {
@@ -1212,22 +1297,7 @@ onMounted(() => {
     min-width: 1.36rem;
   }
 
-  .club-banner {
-    min-height: 2.7rem;
-    border-radius: 0.4rem;
-
-    &::before {
-      inset: 0.06rem;
-      border-radius: 0.33rem;
-    }
-
-    &::after {
-      inset: 0.08rem;
-      border-radius: 0.31rem;
-    }
-  }
-
-  .club-main {
+  .club-banner-glass {
     padding-left: 0.18rem;
     padding-right: 0.18rem;
   }
@@ -1251,17 +1321,18 @@ onMounted(() => {
   }
 
   .club-stats-shell {
-    width: 4rem;
-    height: 0.68rem;
+    width: 4.8rem;
+    height: 0.8rem;
+    left: 1.649rem;
   }
 
   .club-stats-inline {
+    gap: 0.28rem;
     padding: 0 0.18rem;
-    gap: 0.1rem;
   }
 
   .stat-item {
-    font-size: 0.18rem;
+    font-size: 0.22rem;
   }
 
   .enter-btn {

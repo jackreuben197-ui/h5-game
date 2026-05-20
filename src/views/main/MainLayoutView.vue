@@ -2,7 +2,7 @@
 import { computed, onMounted, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import mainBg2Url from '@/assets/images/main_bg2.png'
+import mainBg2Url from '@/assets/images/main_bg2.jpg'
 import { getUserClubApi, getUserInfoApi } from '@/api/user'
 import { postDiamondConfigApi, postGlobalConfigApi } from '@/api/config'
 import {
@@ -26,8 +26,21 @@ const { setLocale } = useTextI18n()
 
 // 主容器背景图：全页面共用一张底图，首页使用 main_bg2.png。
 const backgroundStyle = computed(() => ({
-  backgroundImage: route.meta.tabKey === 'home' ? `url(${mainBg2Url})` : `url(${mainBgUrl})`,
+  backgroundImage:
+    route.meta.tabKey === 'home' ||
+    route.meta.tabKey === 'club' ||
+    route.meta.tabKey === 'message' ||
+    route.meta.tabKey === 'mine' ||
+    route.meta.tabKey === 'friendsTable'
+      ? `url(${mainBg2Url})`
+      : `url(${mainBgUrl})`,
 }))
+
+const isHome = computed(() => route.meta.tabKey === 'home')
+const isClub = computed(() => route.meta.tabKey === 'club')
+const isMessage = computed(() => route.meta.tabKey === 'message')
+const isMine = computed(() => route.meta.tabKey === 'mine')
+const isFriendsTable = computed(() => route.meta.tabKey === 'friendsTable')
 
 async function fetchUserInfoOnEnter(): Promise<void> {
   const token = gameStore.sessionToken.trim()
@@ -130,7 +143,17 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="main-layout" :style="backgroundStyle">
+  <div
+    class="main-layout"
+    :class="{
+      'is-home': isHome,
+      'is-club': isClub,
+      'is-message': isMessage,
+      'is-mine': isMine,
+      'is-friends-table': isFriendsTable,
+    }"
+    :style="backgroundStyle"
+  >
     <div class="main-layout-content">
       <!-- 子模块页面内容区域：由路由子页面渲染。 -->
       <section class="module-slot">
@@ -149,6 +172,44 @@ onMounted(() => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  &.is-home,
+  &.is-club,
+  &.is-message,
+  &.is-mine,
+  &.is-friends-table {
+    background-size: cover;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.7);
+      mix-blend-mode: luminosity;
+      pointer-events: none;
+      z-index: 1;
+    }
+  }
+
+  &.is-home::before {
+    backdrop-filter: blur(1.5px);
+  }
+
+  &.is-club::before {
+    backdrop-filter: blur(6px);
+  }
+
+  &.is-message::before {
+    backdrop-filter: blur(1.5px);
+  }
+
+  &.is-mine::before {
+    backdrop-filter: blur(1.5px);
+  }
+
+  &.is-friends-table::before {
+    backdrop-filter: blur(6px);
+  }
 }
 
 .main-layout-content {

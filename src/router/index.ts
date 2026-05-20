@@ -452,12 +452,6 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/mine/shop/payment',
-      name: 'mine-shop-payment',
-      component: () => import('@/views/mine/MineShopPaymentView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
       path: '/wallet',
       name: 'wallet',
       component: () => import('@/views/wallet/WalletIndexView.vue'),
@@ -481,6 +475,12 @@ const router = createRouter({
       path: '/wallet/details',
       name: 'wallet-details',
       component: () => import('@/views/wallet/WalletDetailsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/wallet/gift-uc',
+      name: 'wallet-gift-uc',
+      component: () => import('@/views/wallet/WalletGiftUcView.vue'),
       meta: { requiresAuth: true },
     },
     {

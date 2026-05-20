@@ -24,6 +24,7 @@ import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { t } from '@/i18n'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -74,15 +75,24 @@ interface RecordStatItem {
 
 interface FundRecordItem {
   id: number
-  time: string
   date: string
+  time: string
+  opCode: string
   type: string
   quantity: string
   balance: string
   remark: string
   remarkId: string
+  showFromTag: boolean
   fromName?: string
   fromId?: string
+}
+
+interface RecordTypeOption {
+  key: string
+  textKey: string
+  fallbackText: string
+  opCodes?: string[] | null
 }
 
 const router = useRouter()
@@ -90,8 +100,8 @@ const userInfoStore = useUserInfoStore()
 const activeTab = ref<TabKey>('account')
 const searchKeyword = ref('')
 const activeRange = ref<RecordRangeKey>('today')
-const selectedRecordType = ref('所有')
-const showTypeMenu = ref(true)
+const selectedRecordType = ref('all')
+const showTypeMenu = ref(false)
 const pageRef = ref<HTMLElement | null>(null)
 const recordListRef = ref<HTMLElement | null>(null)
 const showFundSheet = ref(false)
@@ -243,37 +253,119 @@ const recordRanges: RecordRangeItem[] = [
 ]
 
 const recordStats = computed<RecordStatItem[]>(() => [
-  { id: 1, label: '发放', value: formatCount(grantAmountTotal.value) },
-  { id: 2, label: '回收', value: formatCount(recoverAmountTotal.value) },
-  { id: 3, label: '分润', value: formatCount(profitAmountTotal.value) },
-  { id: 4, label: '变动', value: formatCount(changeAmountTotal.value) },
+  { id: 1, label: '发放', value: formatUC(grantAmountTotal.value) },
+  { id: 2, label: '回收', value: formatUC(recoverAmountTotal.value) },
+  { id: 3, label: '分润', value: formatUC(profitAmountTotal.value) },
+  { id: 4, label: '变动', value: formatUC(changeAmountTotal.value) },
 ])
 
-const recordTypeOptions = [
-  '所有',
-  '回收',
-  '房间服务费',
-  '存储',
-  '提取',
-  'MTT服务费',
-  '保险收入',
-  '押金明细',
-  '玩家盈利扣除',
-  '俱乐部平账支出',
-  '联盟发放',
-  '牛仔收入',
-  '牛仔赔付',
+const recordTypeOptions: RecordTypeOption[] = [
+  { key: 'all', textKey: 'adaptation10123', fallbackText: '所有', opCodes: null },
+  {
+    key: 'grant',
+    textKey: 'UIClub_FundGive',
+    fallbackText: '发放',
+    opCodes: ['CLUBTOUSER', 'PAYUSER'],
+  },
+  {
+    key: 'recycle',
+    textKey: 'UIClub_FundDetail_recycle',
+    fallbackText: '回收',
+    opCodes: ['CLUBRECOVEUSER', 'TAKEOVER'],
+  },
+  {
+    key: 'room_service_fee',
+    textKey: 'UIGuildClubRoomFee',
+    fallbackText: '房间服务费',
+    opCodes: ['PFTROOM', 'PFTINSUR'],
+  },
+  {
+    key: 'deposit',
+    textKey: 'UIGuildClubManagerDepositsTip',
+    fallbackText: '存款',
+    opCodes: ['TRIBETOCLUB', 'RECHARGE', 'RECHGTRB'],
+  },
+  {
+    key: 'withdraw',
+    textKey: 'UIGuildClubManagerWithdrawTip',
+    fallbackText: '取款',
+    opCodes: ['TRIBERECOVECLUB'],
+  },
+  {
+    key: 'mtt_service_fee',
+    textKey: 'UIGuildClubMTTFee',
+    fallbackText: 'MTT服务费',
+    opCodes: ['PFTMTT'],
+  },
+  {
+    key: 'insurance_income',
+    textKey: 'UIGuildClubInsuranceIncome',
+    fallbackText: '保险收入',
+    opCodes: ['INSURIN', 'INSUROUT'],
+  },
+  {
+    key: 'deposit_detail',
+    textKey: 'UIGuildClubDepositFee',
+    fallbackText: '押金明细',
+    opCodes: ['DEPOSITADV', 'DEPOSITRTN'],
+  },
+  {
+    key: 'player_profit_deduct',
+    textKey: 'UIGuildClubPlayerProfitDeduction',
+    fallbackText: '玩家盈利扣除',
+    opCodes: ['USERDEDUCTROOM'],
+  },
+  {
+    key: 'sng_service_fee',
+    textKey: 'UISNGFee',
+    fallbackText: 'SNG服务费',
+    opCodes: ['PFTSNG'],
+  },
+  {
+    key: 'club_balance_out',
+    textKey: 'UIGuildClubAccountOut',
+    fallbackText: '联盟平账支出',
+    opCodes: ['TRIBEBALCLUB', 'CLUBBALUSER'],
+  },
+  {
+    key: 'tribe_grant',
+    textKey: 'UIAllianceRelease',
+    fallbackText: '联盟发放',
+    opCodes: ['TRIBETOCLUB'],
+  },
+  {
+    key: 'cowboy_income',
+    textKey: 'UIGuildClubDetailsCowboyTip',
+    fallbackText: '牛仔收入',
+    opCodes: ['PFTCBIN'],
+  },
+  {
+    key: 'cowboy_compensation',
+    textKey: 'UINiuZaiPFTCBOUT',
+    fallbackText: '牛仔赔付',
+    opCodes: ['PFTCBOUT'],
+  },
+  {
+    key: 'prop_exchange',
+    textKey: 'UIPropExchangeDes',
+    fallbackText: '道具兑换',
+    opCodes: ['WHEELAWARD'],
+  },
+  {
+    key: 'mahjong_mtt_fee',
+    textKey: 'UIMahjongMTT12',
+    fallbackText: '麻将MTT服务费',
+    opCodes: ['MJPFTMTT'],
+  },
+  {
+    key: 'other',
+    textKey: 'UIChatReport008',
+    fallbackText: '其他',
+    opCodes: ['OTHER'],
+  },
 ]
 
 const recordRows = ref<FundRecordItem[]>([])
-
-const filteredRecordRows = computed(() => {
-  if (selectedRecordType.value === '所有') {
-    return recordRows.value
-  }
-
-  return recordRows.value.filter((row) => row.type === selectedRecordType.value)
-})
 
 function formatCount(value: number): string {
   return value.toLocaleString('en-US')
@@ -304,12 +396,12 @@ function pickNumber(source: Record<string, unknown> | null, keys: string[], fall
   return fallback
 }
 
-function formatSignedCount(value: number): string {
+function formatSignedFenAmount(value: number): string {
   if (!Number.isFinite(value) || value === 0) {
     return '0'
   }
 
-  const absText = Math.abs(value).toLocaleString('en-US')
+  const absText = formatUC(Math.abs(value))
   return value > 0 ? `+${absText}` : `-${absText}`
 }
 
@@ -336,28 +428,20 @@ function resolveRecordRange(): { start_time?: number; end_time?: number } {
   return {}
 }
 
-function normalizeRecordType(opCode?: string): string {
-  const code = String(opCode || '')
-    .trim()
-    .toUpperCase()
-
-  if (!code) {
-    return '未知'
+function getSelectedRecordOpCodes(): string[] | undefined {
+  const selected = recordTypeOptions.find((item) => item.key === selectedRecordType.value)
+  if (!selected?.opCodes?.length) {
+    return undefined
   }
+  return selected.opCodes
+}
 
-  if (code.includes('GRANT')) {
-    return '联盟发放'
+function resolveRecordTypeLabel(option: RecordTypeOption): string {
+  const text = t(option.textKey)
+  if (text && text !== option.textKey) {
+    return text
   }
-
-  if (code.includes('RECOVER') || code.includes('RECYCLE')) {
-    return '回收'
-  }
-
-  if (code.includes('SERVICE') || code.includes('FEE')) {
-    return '房间服务费'
-  }
-
-  return code
+  return option.fallbackText
 }
 
 function splitDateTime(value?: string): { time: string; date: string } {
@@ -366,33 +450,107 @@ function splitDateTime(value?: string): { time: string; date: string } {
     return { time: '--', date: '--' }
   }
 
+  const date = new Date(raw)
+  if (!Number.isNaN(date.getTime())) {
+    return {
+      date: date.toLocaleDateString('zh-CN'),
+      time: date.toLocaleTimeString('zh-CN', { hour12: false }),
+    }
+  }
+
   const normalized = raw.replace('T', ' ')
   const [datePart = '--', timePart = '--'] = normalized.split(' ')
-  const simpleTime = timePart.split('.')[0] || '--'
-  return { time: simpleTime, date: datePart }
+  const simpleTime = timePart.split('.')[0].replace('Z', '') || '--'
+  return { date: datePart, time: simpleTime }
+}
+
+function pickFirstNonEmpty(...values: unknown[]): string {
+  for (const value of values) {
+    const text = String(value ?? '').trim()
+    if (text) {
+      return text
+    }
+  }
+  return ''
 }
 
 function mapFundRecord(record: ClubFundChangeLogRecord, index: number): FundRecordItem {
   const dateTime = splitDateTime(record.create_time)
-  const remarkName = String(record.op_nick_name || record.src_nick_name || record.name || '备注')
-  const remarkId = String(
-    record.op_random_id || record.src_random_id || record.user_random_num || '--',
-  )
+  const opCode = String(record.op_code || '')
+    .trim()
+    .toUpperCase()
+  const opCodeText = resolveFundTypeText(opCode)
+  const remarkName =
+    pickFirstNonEmpty(
+      record.op_nick_name,
+      record.src_nick_name,
+      (record as Record<string, unknown>).nick_name,
+      record.name,
+      record.user_nick_name,
+    ) || '--'
+  const remarkId =
+    pickFirstNonEmpty(
+      record.op_random_id,
+      record.src_random_id,
+      record.user_random_num,
+      (record as Record<string, unknown>).random_num,
+    ) || '--'
   const balance = toSafeNumber(record.gold_after)
   const quantity = toSafeNumber(record.gold_change)
+  const isPftRoom = opCode === 'PFTROOM'
+  const fromName = isPftRoom ? String(record.user_nick_name || '').trim() : ''
+  const fromId = isPftRoom ? String(record.user_random_num || '').trim() : ''
 
   return {
     id: index,
-    time: dateTime.time,
     date: dateTime.date,
-    type: normalizeRecordType(record.op_code),
-    quantity: formatSignedCount(quantity),
+    time: dateTime.time,
+    opCode,
+    type: opCodeText || opCode || '未知',
+    quantity: formatSignedFenAmount(quantity),
     balance: formatUC(balance),
     remark: remarkName,
     remarkId,
-    fromName: record.src_nick_name ? String(record.src_nick_name) : undefined,
-    fromId: record.src_random_id ? String(record.src_random_id) : undefined,
+    showFromTag: Boolean(isPftRoom && fromName && fromId),
+    fromName: fromName || undefined,
+    fromId: fromId || undefined,
   }
+}
+
+function resolveFundTypeText(opCode: string): string {
+  const currentType = recordTypeOptions.find((item) => item.key === selectedRecordType.value)
+  if (currentType && currentType.key !== 'all') {
+    return resolveRecordTypeLabel(currentType)
+  }
+
+  const matched = recordTypeOptions.find(
+    (item) => item.key !== 'all' && item.opCodes?.includes(opCode),
+  )
+  if (matched) {
+    return resolveRecordTypeLabel(matched)
+  }
+
+  const otherType = recordTypeOptions.find((item) => item.key === 'other')
+  return otherType ? resolveRecordTypeLabel(otherType) : opCode || '未知'
+}
+
+function patchActiveMemberOnList(): void {
+  if (!activeMember.value) {
+    return
+  }
+
+  const index = members.value.findIndex((item) => item.id === activeMember.value?.id)
+  if (index < 0) {
+    return
+  }
+
+  const nextMembers = [...members.value]
+  nextMembers[index] = {
+    ...nextMembers[index],
+    ...activeMember.value,
+    freeLimit: `${formatUC(activeMember.value.disposableCredit)}/${formatUC(activeMember.value.reviewCredit)}`,
+  }
+  members.value = nextMembers
 }
 
 async function fetchClubGoldSummary(): Promise<void> {
@@ -461,6 +619,7 @@ async function fetchRecordRows(reset = false): Promise<void> {
       limit: PAGE_SIZE,
       offset: currentOffset,
       gold_type: 1,
+      op_codes: getSelectedRecordOpCodes(),
       sort_type: 1,
       order_type: 2,
       ...rangePayload,
@@ -591,6 +750,7 @@ function syncActiveMemberFromMembers(): void {
 }
 
 async function refreshFundData(): Promise<void> {
+  patchActiveMemberOnList()
   await Promise.all([fetchMembers(true), fetchClubGoldSummary(), fetchRecordRows(true)])
   syncActiveMemberFromMembers()
 }
@@ -831,8 +991,20 @@ async function resetQuota(field: QuotaEditField): Promise<void> {
     showSuccessToast('重置成功')
     if (field === 'disposable') {
       disposableQuota.value = 0
+      if (activeMember.value) {
+        activeMember.value = {
+          ...activeMember.value,
+          disposableCredit: 0,
+        }
+      }
     } else {
       reviewQuota.value = 0
+      if (activeMember.value) {
+        activeMember.value = {
+          ...activeMember.value,
+          reviewCredit: 0,
+        }
+      }
     }
     quotaEditField.value = null
     quotaInput.value = ''
@@ -895,8 +1067,20 @@ async function onFundConfirm(): Promise<void> {
       const factor = quotaAdjustMode.value === 'increase' ? 1 : -1
       if (quotaEditField.value === 'disposable') {
         disposableQuota.value = Math.max(0, disposableQuota.value + amount * factor * 100)
+        if (activeMember.value) {
+          activeMember.value = {
+            ...activeMember.value,
+            disposableCredit: disposableQuota.value,
+          }
+        }
       } else {
         reviewQuota.value = Math.max(0, reviewQuota.value + amount * factor * 100)
+        if (activeMember.value) {
+          activeMember.value = {
+            ...activeMember.value,
+            reviewCredit: reviewQuota.value,
+          }
+        }
       }
 
       quotaInput.value = ''
@@ -952,6 +1136,21 @@ async function onFundConfirm(): Promise<void> {
       throw new Error(typeof response.msg === 'string' ? response.msg : '操作失败')
     }
 
+    if (activeMember.value) {
+      if (fundAssetTab.value === 'diamond') {
+        activeMember.value = {
+          ...activeMember.value,
+          diamond: Math.max(0, activeMember.value.diamond + amount),
+        }
+      } else {
+        const delta = fundActionTab.value === 'grant' ? amount * 100 : -amount * 100
+        activeMember.value = {
+          ...activeMember.value,
+          uc: Math.max(0, activeMember.value.uc + delta),
+        }
+      }
+    }
+
     showSuccessToast(fundActionTab.value === 'grant' ? '发放成功' : '回收成功')
     closeFundSheet()
     await refreshFundData()
@@ -976,9 +1175,10 @@ function toggleTypeMenu(): void {
   showTypeMenu.value = !showTypeMenu.value
 }
 
-function chooseType(type: string): void {
-  selectedRecordType.value = type
+function chooseType(typeKey: string): void {
+  selectedRecordType.value = typeKey
   showTypeMenu.value = false
+  void fetchRecordRows(true)
 }
 
 function roleClass(role: MemberRole): string {
@@ -1156,72 +1356,74 @@ onMounted(() => {
               <p class="record-stat-value">{{ stat.value }}</p>
             </article>
           </div>
-
-          <div class="record-table-wrap">
-            <div class="record-table-head">
-              <button type="button" class="head-cell head-cell--time">
-                <span>time</span>
-                <span class="tiny-arrow" aria-hidden="true"></span>
-              </button>
-              <button type="button" class="head-cell head-cell--type" @click="toggleTypeMenu">
-                <span>type</span>
-                <span class="tiny-arrow" aria-hidden="true"></span>
-              </button>
-              <span class="head-cell">Quantity</span>
-              <span class="head-cell">Balance</span>
-              <span class="head-cell">Remarks</span>
-            </div>
-
-            <div v-if="showTypeMenu" class="type-dropdown">
-              <button
-                v-for="option in recordTypeOptions"
-                :key="option"
-                type="button"
-                class="type-option"
-                :class="{ 'type-option--active': selectedRecordType === option }"
-                @click="chooseType(option)"
-              >
-                {{ option }}
-              </button>
-            </div>
-
-            <section ref="recordListRef" class="record-list" @scroll="onRecordScroll">
-              <article v-for="row in filteredRecordRows" :key="row.id" class="record-row">
-                <div v-if="row.fromName && row.fromId" class="from-chip">
-                  <span class="from-label">From</span>
-                  <span>{{ row.fromName }}</span>
-                  <span class="from-id-pill">ID</span>
-                  <span>{{ row.fromId }}</span>
-                </div>
-
-                <div class="record-main-grid">
-                  <p class="time-cell">
-                    <span>{{ row.time }}</span>
-                    <span class="sub-line">{{ row.date }}</span>
-                  </p>
-                  <p class="type-cell">{{ row.type }}</p>
-                  <p class="quantity-cell">{{ row.quantity }}</p>
-                  <p class="balance-cell">{{ row.balance }}</p>
-                  <p class="remark-cell">
-                    <span>{{ row.remark }}</span>
-                    <span class="sub-line">ID: {{ row.remarkId }}</span>
-                  </p>
-                </div>
-              </article>
-
-              <p v-if="!filteredRecordRows.length && !loadingRecords" class="record-list-status">
-                暂无记录
-              </p>
-              <p v-if="loadingRecords" class="record-list-status">加载中...</p>
-              <p v-else-if="recordRows.length && loadingMoreRecords" class="record-list-status">
-                加载更多...
-              </p>
-              <p v-else-if="recordRows.length && !hasMoreRecords" class="record-list-status">
-                没有更多了
-              </p>
-            </section>
-          </div>
         </section>
+        <div class="record-table-wrap">
+          <div class="record-table-head">
+            <button type="button" class="head-cell head-cell--time">
+              <span>时间</span>
+              <span class="tiny-arrow" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="head-cell head-cell--type" @click="toggleTypeMenu">
+              <span>类型</span>
+              <span class="tiny-arrow" aria-hidden="true"></span>
+            </button>
+            <span class="head-cell">数量</span>
+            <span class="head-cell">余额</span>
+            <span class="head-cell">备注</span>
+          </div>
+
+          <div v-if="showTypeMenu" class="type-dropdown">
+            <button
+              v-for="option in recordTypeOptions"
+              :key="option.key"
+              type="button"
+              class="type-option"
+              :class="{ 'type-option--active': selectedRecordType === option.key }"
+              @click="chooseType(option.key)"
+            >
+              {{ resolveRecordTypeLabel(option) }}
+            </button>
+          </div>
+
+          <section ref="recordListRef" class="record-list" @scroll="onRecordScroll">
+            <article
+              v-for="row in recordRows"
+              :key="row.id"
+              class="record-row"
+              :class="{ 'record-row--pftroom': row.opCode === 'PFTROOM' }"
+            >
+              <div v-if="row.showFromTag && row.fromName && row.fromId" class="from-chip">
+                <span class="from-label">From</span>
+                <span>{{ row.fromName }}</span>
+                <span class="from-id-pill">ID</span>
+                <span>{{ row.fromId }}</span>
+              </div>
+
+              <div class="record-main-grid">
+                <p class="time-cell">
+                  <span>{{ row.date }}</span>
+                  <span class="sub-line">{{ row.time }}</span>
+                </p>
+                <p class="type-cell">{{ row.type }}</p>
+                <p class="quantity-cell">{{ row.quantity }}</p>
+                <p class="balance-cell">{{ row.balance }}</p>
+                <p class="remark-cell">
+                  <span class="remark-main" :title="row.remark">{{ row.remark }}</span>
+                  <span class="sub-line">{{ row.remarkId }}</span>
+                </p>
+              </div>
+            </article>
+
+            <p v-if="!recordRows.length && !loadingRecords" class="record-list-status">暂无记录</p>
+            <p v-if="loadingRecords" class="record-list-status">加载中...</p>
+            <p v-else-if="recordRows.length && loadingMoreRecords" class="record-list-status">
+              加载更多...
+            </p>
+            <p v-else-if="recordRows.length && !hasMoreRecords" class="record-list-status">
+              没有更多了
+            </p>
+          </section>
+        </div>
       </template>
 
       <div v-if="showFundSheet" class="fund-sheet-mask" @click="closeFundSheet"></div>
@@ -1715,11 +1917,15 @@ onMounted(() => {
 }
 
 .record-table-wrap {
+  --record-columns: 1.2fr 1fr 1fr 1fr 1.2fr;
+  --record-col-gap: 0.08rem;
   position: relative;
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 0.15674rem;
   min-height: 0;
+  overflow: hidden;
 }
 
 .record-table-head {
@@ -1727,7 +1933,8 @@ onMounted(() => {
   border-radius: 0.375rem;
   background: linear-gradient(180deg, #23ddad 0%, #02b487 100%);
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr 1fr 1.2fr;
+  grid-template-columns: var(--record-columns);
+  column-gap: var(--record-col-gap);
   align-items: center;
   padding: 0 0.16rem;
   color: #f9f9f9;
@@ -1795,7 +2002,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.07837rem;
-  max-height: 12.45384rem;
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   padding-right: 0;
 }
@@ -1811,21 +2019,27 @@ onMounted(() => {
 .record-row {
   border-radius: 0.37751rem;
   background: rgba(0, 0, 0, 0.22);
-  padding: 0.08rem 0.12rem;
+  padding: 0.08rem 0;
   display: flex;
   flex-direction: column;
   gap: 0.06rem;
 }
 
+.record-row--pftroom {
+  background: rgba(0, 0, 0, 0.26);
+}
+
 .from-chip {
   align-self: flex-start;
-  border-radius: 0.42929rem;
-  background: rgba(5, 231, 174, 0.2);
-  padding: 0.08rem 0.16rem;
+  margin: 0 0.16rem;
+  border-radius: 0.34rem;
+  background: rgba(255, 255, 255, 0.17);
+  border: 0.02rem solid rgba(255, 255, 255, 0.32);
+  padding: 0.06rem 0.14rem;
   display: inline-flex;
   align-items: center;
-  gap: 0.09rem;
-  color: rgba(249, 249, 249, 0.75);
+  gap: 0.08rem;
+  color: rgba(249, 249, 249, 0.86);
   font-size: 0.224rem;
 }
 
@@ -1842,9 +2056,10 @@ onMounted(() => {
 
 .record-main-grid {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr 1fr 1.2fr;
+  grid-template-columns: var(--record-columns);
+  column-gap: var(--record-col-gap);
   align-items: center;
-  gap: 0.08rem;
+  padding: 0 0.16rem;
   color: #fff;
 }
 
@@ -1855,10 +2070,35 @@ onMounted(() => {
 }
 
 .time-cell,
+.type-cell,
+.quantity-cell,
+.balance-cell,
+.remark-cell {
+  min-width: 0;
+}
+
+.time-cell,
 .remark-cell {
   display: flex;
   flex-direction: column;
   gap: 0.03rem;
+}
+
+.time-cell > span,
+.type-cell,
+.balance-cell,
+.sub-line {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remark-main {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sub-line {
@@ -1870,10 +2110,15 @@ onMounted(() => {
   border-radius: 0.37751rem;
   background: rgba(255, 255, 255, 0.15);
   min-height: 0.51rem;
+  width: 100%;
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0 0.16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .member-card {

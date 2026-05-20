@@ -12,12 +12,11 @@ import imgTable from '@/assets/icons/icon_table.png'
 import imgPeople from '@/assets/icons/icon_people.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
 import imgChips from '@/assets/icons/icon_chips.png'
-import imgClubRoleIcon from '@/assets/images/club_role_icon.png'
-import imgQuickActionCreateBg from '@/assets/images/club_qa_create_club_bg_shape.svg'
-import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shield.svg'
-import imgQuickActionBoardBg from '@/assets/images/club_qa_data_board_bg_shape.svg'
-import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.svg'
+import imgClubRoleIcon from '@/assets/icons/club_role_icon.png'
+import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shield.png'
+import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.png'
 import imgClubBannerFigma from '@/assets/images/club_banner_bg.png'
+import imgClubLogo from '@/assets/images/club_default_logo.png'
 import type { ClubInfo } from '@/stores/userInfo'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
@@ -79,8 +78,8 @@ const clubList = computed<ClubCardItem[]>(() => {
       chipsCount: toSafeNumber(club.user_credit),
       tableCount: toSafeNumber(club.tables),
       memberCount: toSafeNumber(club.club_members),
-      cover: toSafeString(club.logo),
-      bannerBg: toSafeString(club.banner) || fallbackBanner,
+      cover: toSafeString(club.logo) || imgClubLogo,
+      bannerBg: fallbackBanner,
     }
   })
 })
@@ -302,11 +301,9 @@ onMounted(() => {
       >
         <span class="action-icon">
           <template v-if="item.kind === 'create-club'">
-            <img class="icon-create-bg" :src="imgQuickActionCreateBg" alt="" aria-hidden="true" />
             <img class="icon-create-shield" :src="imgQuickActionCreateShield" alt="" />
           </template>
           <template v-else-if="item.kind === 'club-panel'">
-            <img class="icon-board-bg" :src="imgQuickActionBoardBg" alt="" aria-hidden="true" />
             <img class="icon-board-chart" :src="imgQuickActionBoardChart" alt="" />
           </template>
         </span>
@@ -349,11 +346,11 @@ onMounted(() => {
               </p>
               <div class="club-top-metrics" aria-hidden="true">
                 <span class="top-metric-item">
-                  <img :src="imgBalance" alt="" />
+                  <img :src="imgChips" alt="" />
                   <span>{{ formatUC(club.activeCount) }}</span>
                 </span>
                 <span class="top-metric-item">
-                  <img :src="imgChips" alt="" />
+                  <img :src="imgBalance" alt="" />
                   <span>{{ formatUC(club.chipsCount) }}</span>
                 </span>
               </div>
@@ -508,10 +505,19 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 0.99rem;
-  border-radius: 0.79rem;
-  padding: 0.09rem 0.15rem 0.09rem 0.34rem;
-  background: rgba(14, 14, 14, 0.15);
+  min-height: 1.34rem;
+  border-radius: 1.055rem;
+  padding: 0.127rem 0.203rem 0.127rem 0.447rem;
+  background: linear-gradient(
+    98deg,
+    rgba(133, 73, 115, 0.96) 0%,
+    rgba(177, 69, 87, 0.96) 44%,
+    rgba(178, 76, 51, 0.96) 72%,
+    rgba(141, 59, 84, 0.96) 100%
+  );
+  box-shadow:
+    inset 0 0.01rem 0.045rem rgba(255, 255, 255, 0.35),
+    inset 0 -0.04rem 0.08rem rgba(70, 13, 34, 0.35);
   overflow: hidden;
 
   &::before {
@@ -519,8 +525,12 @@ onMounted(() => {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    backdrop-filter: blur(0.004rem);
-    mix-blend-mode: overlay;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(255, 255, 255, 0.03) 38%,
+      rgba(0, 0, 0, 0.2) 100%
+    );
     pointer-events: none;
   }
 }
@@ -529,13 +539,13 @@ onMounted(() => {
   position: relative;
   z-index: 1;
   flex: 1;
-  min-height: 0.8rem;
+  min-height: 1.089rem;
   border: 0;
   border-radius: 999px;
   padding: 0;
   display: inline-flex;
   align-items: center;
-  gap: 0.16rem;
+  gap: 0.218rem;
   justify-content: flex-start;
   background: transparent;
   color: #fff;
@@ -543,8 +553,8 @@ onMounted(() => {
 
 .search-icon {
   flex: 0 0 auto;
-  width: 0.34rem;
-  height: 0.34rem;
+  width: 0.557rem;
+  height: 0.546rem;
 }
 
 .search-placeholder {
@@ -563,7 +573,7 @@ onMounted(() => {
   background: transparent;
   color: #fff;
   font-family: 'HONOR Sans CN', 'PingFang SC', sans-serif;
-  font-size: 0.3rem;
+  font-size: 0.393rem;
   line-height: 1.4;
 }
 
@@ -575,15 +585,16 @@ onMounted(() => {
   position: relative;
   z-index: 1;
   flex: 0 0 auto;
-  width: 1.54rem;
-  min-height: 0.82rem;
-  border-radius: 1.26rem;
-  border: 0.009rem solid rgba(242, 242, 242, 0.4);
+  width: 2.12rem;
+  min-height: 1.089rem;
+  border-radius: 0.54rem;
+  border: 0.012rem solid rgba(244, 241, 248, 0.68);
+  padding: 0.209rem 0.58rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  background: rgba(165, 165, 165, 0.8);
+  background: rgba(165, 165, 165, 0.1);
   box-shadow:
     0.018rem 0.022rem 0.036rem rgba(0, 0, 0, 0.25),
     inset 0 0 0.045rem rgba(0, 0, 0, 1),
@@ -610,15 +621,16 @@ onMounted(() => {
   position: relative;
   z-index: 1;
   font-family: 'SF Pro', 'PingFang SC', sans-serif;
-  font-size: 0.28rem;
-  font-weight: 400;
-  line-height: 0.95;
+  font-size: 0.38rem;
+  font-weight: 500;
+  line-height: 0.946;
   letter-spacing: 0;
+  text-shadow: 0 0.01rem 0.02rem rgba(86, 64, 101, 0.35);
 }
 
 .quick-actions {
   margin-top: 0.03rem;
-  padding: 0;
+  padding-left: 0;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -627,7 +639,6 @@ onMounted(() => {
 
 .quick-item {
   flex: 0 0 auto;
-  width: 1.216rem;
   border: 0;
   background: transparent;
   padding: 0;
@@ -645,89 +656,18 @@ onMounted(() => {
 
 .action-icon {
   position: relative;
-  width: 1.216rem;
-  height: 1.216rem;
+  width: 1.62rem;
+  height: 1.62rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 0.01rem solid rgba(255, 255, 255, 0.78);
-  border-radius: 0.331rem;
-  background: rgba(255, 255, 255, 0.2);
 }
 
 .action-icon img {
   position: absolute;
   max-width: none;
   object-fit: contain;
-}
-
-.icon-create-bg {
-  width: 1.9rem;
-  height: 1.46rem;
-  left: -0.7rem;
-  top: 0.03rem;
-}
-
-.icon-create-shield {
-  width: 0.69rem;
-  height: 0.69rem;
-  left: 0.265rem;
-  top: 0.27rem;
-}
-
-.icon-board-bg {
-  width: 1.26rem;
-  height: 1.19rem;
-  left: -0.57rem;
-  top: 0;
-}
-
-.icon-board-chart {
-  width: 0.68rem;
-  height: 0.68rem;
-  left: 0.275rem;
-  top: 0.264rem;
-}
-
-.quick-item--create-union {
-  width: 1.269rem;
-}
-
-.quick-item--create-union .action-icon {
-  width: 1.269rem;
-  height: 1.269rem;
-  border: 0.006rem solid rgba(255, 255, 255, 0.44);
-  border-radius: 0.331rem;
-  background: linear-gradient(
-    160.93deg,
-    rgba(0, 255, 246, 0.71) 10.97%,
-    rgba(0, 189, 214, 0.71) 87.16%
-  );
-}
-
-.icon-union-swash {
-  width: 2.15rem;
-  height: 2.3rem;
-  left: -0.43rem;
-  top: -0.04rem;
-  transform: rotate(15deg);
-}
-
-.icon-union-club-small {
-  width: 0.61rem;
-  height: 0.65rem;
-  left: 0.52rem;
-  top: 0.29rem;
-  transform: rotate(15deg);
-}
-
-.icon-union-club-large {
-  width: 0.82rem;
-  height: 0.88rem;
-  left: 0.03rem;
-  top: 0.31rem;
-  transform: rotate(15deg);
 }
 
 .action-text {
@@ -783,8 +723,8 @@ onMounted(() => {
 
 .club-banner {
   position: relative;
-  min-height: 2.78rem;
-  border-radius: 0.46rem;
+  min-height: 3.6279rem;
+  // border-radius: 0.802rem;
   overflow: hidden;
   isolation: isolate;
   border: 0;
@@ -792,29 +732,6 @@ onMounted(() => {
   // box-shadow:
   //   0 0.16rem 0.32rem rgba(6, 10, 26, 0.34),
   //   inset 0 0 0.03rem rgba(255, 255, 255, 0.24);
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0.07rem;
-    border-radius: 0.38rem;
-    border: 0.07rem solid rgba(238, 236, 249, 0.3);
-    box-shadow:
-      0 0 0.02rem rgba(255, 255, 255, 0.2),
-      inset 0 0 0.03rem rgba(255, 255, 255, 0.12);
-    pointer-events: none;
-    z-index: 4;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0.09rem;
-    border-radius: 0.36rem;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
-    pointer-events: none;
-    z-index: 2;
-  }
 }
 
 .club-main {
@@ -824,7 +741,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   gap: 0.16rem;
-  padding: 0.3rem 0.28rem 0;
+  padding: 0.4rem 0.38rem 0;
 }
 
 .club-banner-bg {
@@ -836,17 +753,6 @@ onMounted(() => {
   opacity: 0.82;
 }
 
-.club-banner-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background:
-    linear-gradient(180deg, rgba(30, 27, 43, 0.08), rgba(17, 17, 25, 0.5)),
-    radial-gradient(108% 88% at 12% -18%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0)),
-    radial-gradient(86% 62% at 100% 100%, rgba(116, 155, 255, 0.22), rgba(116, 155, 255, 0));
-  backdrop-filter: blur(0.17rem);
-}
-
 .club-identity {
   display: flex;
   align-items: center;
@@ -854,9 +760,9 @@ onMounted(() => {
 }
 
 .club-cover {
-  width: 1.4rem;
-  height: 1.4rem;
-  border-radius: 0.24rem;
+  width: 1.859rem;
+  height: 1.846rem;
+  border-radius: 0.458rem;
   object-fit: cover;
   border: 0.01rem solid rgba(255, 255, 255, 0.28);
   box-shadow:
@@ -868,12 +774,12 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 1.4rem;
+  min-height: 1.846rem;
 }
 
 .club-name {
   margin: 0;
-  font-size: 0.36rem;
+  font-size: 0.366rem;
   line-height: 1.08;
   font-weight: 500;
   color: rgba(249, 249, 249, 0.98);
@@ -890,17 +796,17 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 0.36rem;
-  height: 0.28rem;
-  border-radius: 0.1rem;
-  font-size: 0.18rem;
+  min-width: 0.493rem;
+  height: 0.377rem;
+  border-radius: 0.116rem;
+  font-size: 0.223rem;
   font-weight: 600;
   color: #444;
   background: rgba(255, 255, 255, 0.56);
 }
 
 .club-id-value {
-  font-size: 0.24rem;
+  font-size: 0.279rem;
   font-weight: 300;
   color: rgba(255, 255, 255, 0.92);
 }
@@ -917,14 +823,14 @@ onMounted(() => {
   align-items: center;
   gap: 0.04rem;
   color: rgba(255, 255, 255, 0.95);
-  font-size: 0.22rem;
+  font-size: 0.279rem;
   font-weight: 300;
   line-height: 1;
 }
 
 .top-metric-item img {
-  width: 0.28rem;
-  height: 0.28rem;
+  width: 0.427rem;
+  height: 0.427rem;
   object-fit: contain;
 }
 
@@ -933,26 +839,26 @@ onMounted(() => {
   z-index: 3;
   margin: 0;
   width: 100%;
-  min-height: 0.56rem;
+  min-height: 0.837rem;
   padding: 0 0.26rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.28rem;
+  gap: 0.68rem;
 }
 
 .stat-item {
   display: inline-flex;
   align-items: center;
   gap: 0.05rem;
-  font-size: 0.2rem;
+  font-size: 0.27rem;
   line-height: 0.95;
   color: rgba(251, 251, 251, 0.95);
 }
 
 .stat-item img {
-  width: 0.28rem;
-  height: 0.28rem;
+  width: 0.4rem;
+  height: 0.4rem;
   object-fit: contain;
 }
 
@@ -961,8 +867,8 @@ onMounted(() => {
 }
 
 .stat-item--role img {
-  width: 0.3rem;
-  height: 0.3rem;
+  width: 0.437rem;
+  height: 0.437rem;
 }
 
 .stat-item span {
@@ -980,14 +886,20 @@ onMounted(() => {
   overflow: hidden;
   flex-shrink: 0;
   border: 0.01rem solid rgba(242, 242, 242, 0.4);
-  min-width: 1.56rem;
-  min-height: 0.72rem;
+  width: 2.019rem;
+  height: 0.929rem;
   margin-top: 0.36rem;
-  border-radius: 0.34rem;
-  font-size: 0.3rem;
+  border-radius: 0.448rem;
+  font-size: 0.359rem;
   font-weight: 500;
   color: rgba(249, 249, 249, 0.98);
-  background: transparent;
+  background: linear-gradient(
+      122.04deg,
+      rgba(242, 242, 242, 0.4),
+      rgba(255, 255, 255, 0) 44.52%,
+      rgba(255, 255, 255, 0.5)
+    )
+    border-box;
   box-shadow:
     0.02rem 0.025rem 0.04rem rgba(0, 0, 0, 0.25),
     inset 0 0 0.05rem rgba(0, 0, 0, 1),
@@ -1017,8 +929,8 @@ onMounted(() => {
   left: 50%;
   transform: translateX(-50%);
   bottom: -0.06rem;
-  width: 4.36rem;
-  height: 0.72rem;
+  width: 5.661rem;
+  height: 0.913rem;
   border-radius: 0.29rem 0.29rem 0.04rem 0.04rem;
   border: 0.01rem solid rgba(236, 236, 247, 0.24);
   background:

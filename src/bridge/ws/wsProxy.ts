@@ -93,8 +93,8 @@ function resolveWsUrl(payload: WsConnectPayload): string {
     return ''
   }
 
-  // 对齐现网模板：wss://test2.awanptest.com{0}
-  const template = (import.meta.env.VITE_WS_URL_TEMPLATE || 'wss://test2.awanptest.com{0}').trim()
+  // 对齐现网模板：wss://preview.trackyourchoice.com{0}
+  const template = (import.meta.env.VITE_WS_URL_TEMPLATE || 'wss://preview.trackyourchoice.com{0}').trim()
   if (template.includes('{0}')) {
     return template.replace('{0}', `:${Math.floor(port)}`)
   }

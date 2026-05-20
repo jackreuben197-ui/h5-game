@@ -85,7 +85,7 @@ Ignored build scripts: @parcel/watcher, core-js
 项目已内置默认后端（生产）：
 
 ```bash
-VITE_API_BASE_URL=https://test2.awanptest.com/api
+VITE_API_BASE_URL=https://preview.trackyourchoice.com/api
 ```
 
 位置：`/Users/wangjie/web/cocos/h5-game/.env`
@@ -94,7 +94,7 @@ VITE_API_BASE_URL=https://test2.awanptest.com/api
 
 ```bash
 VITE_API_BASE_URL=/api
-VITE_PROXY_TARGET=https://test2.awanptest.com
+VITE_PROXY_TARGET=https://preview.trackyourchoice.com
 ```
 
 位置：`/Users/wangjie/web/cocos/h5-game/.env.development`
@@ -109,7 +109,7 @@ VITE_API_BASE_URL=https://your-api-domain pnpm dev
 
 - 本地 `pnpm dev` 时，前端请求会先打到同源 `/api`
 - Vite 会把 `/api/*` 代理到 `VITE_PROXY_TARGET`
-- 代理不再重写路径，因此最终是 `https://test2.awanptest.com/api/*`
+- 代理不再重写路径，因此最终是 `https://preview.trackyourchoice.com/api/*`
 - 这样浏览器端不再直接跨域到后端，登录接口可正常调用
 - 注意：生产环境若仍是跨域访问，仍需要服务端配置 CORS 或走同域网关
 
@@ -297,7 +297,7 @@ window.H5Bridge.onMessgeRecv(type, payload, msgtype, requestId, timestamp, sourc
 ```ts
 sendMessage('wsConnect', { port: 25201 }, 0)
 // 或
-sendMessage('wsConnect', { url: 'wss://test2.awanptest.com:25201' }, 0)
+sendMessage('wsConnect', { url: 'wss://preview.trackyourchoice.com:25201' }, 0)
 ```
 
 2. `wsSend`：发送 websocket 消息（仅支持 `text`、`binary`）

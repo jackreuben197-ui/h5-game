@@ -178,6 +178,9 @@ function goToGameList(): void {
 function goToMttList(): void {
   void router.push('/mttList')
 }
+function goToCasino(): void {
+  void router.push('/casino')
+}
 
 function toggleBalance(): void {
   balanceVisible.value = !balanceVisible.value
@@ -572,7 +575,7 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- 娱乐场（右侧下方）-->
-        <div class="game-card en-card" @click="showGameToast('功能开发中')">
+        <div class="game-card en-card" @click="goToCasino">
           <div class="en-bg1-wrap">
             <img class="en-bg1-img" src="@/assets/images/game_zone_entertainment_bg1.png" alt="" />
           </div>

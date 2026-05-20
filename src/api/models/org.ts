@@ -519,7 +519,7 @@ export interface ClubFundChangeLogRequest {
   limit?: number // 数据数量
   offset?: number // 当前偏移值
   gold_type?: number // 1-联盟币;2-USDT;
-  op_codes?: unknown // 操作类型;
+  op_codes?: string[] // 操作类型;
   start_time?: number // 开始时间，时间戳;
   end_time?: number // 结束时间，时间戳;
   sort_type?: number // 1-创建时间;2-成员数;3-等级

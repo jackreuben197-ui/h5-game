@@ -25,6 +25,9 @@ import icLock from '@/assets/icons/ic_lock.svg'
 import icKey from '@/assets/icons/ic_key.svg'
 import icEye from '@/assets/icons/ic_eye.svg'
 import icGlobe from '@/assets/icons/ic_globe.svg'
+import icCheckbox from '@/assets/icons/ic_checkbox.png'
+import icUncheckbox from '@/assets/icons/ic_uncheckbox.png'
+import imgTextLogo from '@/assets/images/img_text_logo.png'
 import { showGameToast } from '@/components/Toast'
 import { Loading } from 'vant'
 import { DEBUG_ACCOUNTS, type DebugAccount } from '@/constants/debugAccounts'
@@ -62,6 +65,18 @@ const showProtocolConfifm = ref(false)
 const showDebugAccountDialog = ref(false)
 const pendingAgreementSubmit = ref(false)
 const loading = ref(false)
+const errorText = ref('')
+const errorVisible = ref(false)
+let errorTimer: ReturnType<typeof setTimeout> | null = null
+
+function showError(text: string) {
+  if (errorTimer) clearTimeout(errorTimer)
+  errorText.value = text
+  errorVisible.value = true
+  errorTimer = setTimeout(() => {
+    errorVisible.value = false
+  }, 3000)
+}
 
 const handleSelectLang = (lang: string) => {
   const matched = SUPPORTED_LOCALES_OPTIONS.find((item) => item.value === lang)?.value
@@ -78,6 +93,7 @@ let otpTimer: ReturnType<typeof setInterval> | null = null
 
 onUnmounted(() => {
   if (otpTimer) clearInterval(otpTimer)
+  if (errorTimer) clearTimeout(errorTimer)
 })
 
 onBeforeRouteLeave((to) => {
@@ -92,6 +108,17 @@ restorePageState()
 consumePhoneAreaSelection()
 
 // ---------- Computed ----------
+const agreementPrefix = computed(() => {
+  const full = t('UILogin_ReadOK')
+  const idx = full.indexOf('《')
+  return idx > -1 ? full.slice(0, idx) : full
+})
+const agreementProtocol = computed(() => {
+  const full = t('UILogin_ReadOK')
+  const idx = full.indexOf('《')
+  return idx > -1 ? full.slice(idx) : ''
+})
+
 const contactValue = computed(() => (contactType.value === 'phone' ? form.phone : form.email))
 
 const contactPlaceholder = computed(() =>
@@ -180,7 +207,7 @@ async function sendOtp() {
       )
 
       if (pageMode.value === 'forgot' && check.code === 0) {
-        showGameToast(t('UILogin_1010'))
+        showError(t('UILogin_1010'))
         return
       }
       if (pageMode.value === 'register' && check.code !== 0) {
@@ -198,7 +225,7 @@ async function sendOtp() {
       const check = await postUserCheckEmailApi({ email: target })
 
       if (pageMode.value === 'forgot' && check.code === 0) {
-        showGameToast(t('UILogin_EmaliNoRegister'))
+        showError(t('UILogin_EmaliNoRegister'))
         return
       }
       if (pageMode.value === 'register' && check.code !== 0) {
@@ -269,6 +296,8 @@ async function runSubmitFlow() {
     }
   } catch (error) {
     console.log('[login-new] handleSubmit error:', error)
+    const message = error instanceof Error ? error.message : t('UILogin_LoginFailed')
+    showError(message)
   } finally {
     loading.value = false
     pendingAgreementSubmit.value = false
@@ -329,12 +358,15 @@ function applyDebugAccount(account: DebugAccount): void {
 }
 
 async function handleLogin(target: string) {
-  const res = await loginV2Api({
-    phone: contactType.value === 'phone' ? target : undefined,
-    email: contactType.value === 'email' ? target : undefined,
-    password: md5(form.password.trim()),
-    area: contactType.value === 'phone' ? normalizeArea() : undefined,
-  })
+  const res = await loginV2Api(
+    {
+      phone: contactType.value === 'phone' ? target : undefined,
+      email: contactType.value === 'email' ? target : undefined,
+      password: md5(form.password.trim()),
+      area: contactType.value === 'phone' ? normalizeArea() : undefined,
+    },
+    { suppressBusinessToast: true },
+  )
   const token = String(res.token || '').trim()
   if (!token) {
     throw new Error('登录接口返回缺少 token')
@@ -416,15 +448,15 @@ async function handleForgot(target: string) {
 
 function validateContactOnly(target: string): boolean {
   if (!target) {
-    showGameToast(contactType.value === 'phone' ? t('UILogin_1001') : t('UILogin_InputEmail'))
+    showError(contactType.value === 'phone' ? t('UILogin_1001') : t('UILogin_InputEmail'))
     return false
   }
   if (contactType.value === 'phone' && target.length <= 6) {
-    showGameToast(t('adaptation10128'))
+    showError(t('adaptation10128'))
     return false
   }
   if (contactType.value === 'email' && !isEmail(target)) {
-    showGameToast(t('UILogin_InputEmail'))
+    showError(t('UILogin_InputEmail'))
     return false
   }
   return true
@@ -433,17 +465,17 @@ function validateContactOnly(target: string): boolean {
 function validateBeforeSubmit(target: string): boolean {
   if (!validateContactOnly(target)) return false
   if (form.password.trim().length < 6) {
-    showGameToast(t('UILogin_1002'))
+    showError(t('UILogin_1002'))
     return false
   }
   if (pageMode.value !== 'login') {
     const code = form.code.trim()
     if (!code) {
-      showGameToast(t('UILogin_1008'))
+      showError(t('UILogin_1008'))
       return false
     }
     if (code.length !== 4) {
-      showGameToast(t('error1001'))
+      showError(t('error1001'))
       return false
     }
   }
@@ -698,6 +730,11 @@ function consumePhoneAreaSelection(): void {
           </div>
         </div>
 
+        <!-- Error snackbar -->
+        <Transition name="snackbar">
+          <div v-if="errorVisible" class="error-snackbar">{{ errorText }}</div>
+        </Transition>
+
         <!-- Bottom area -->
         <div class="bottom-area">
           <!-- Action links row -->
@@ -716,13 +753,14 @@ function consumePhoneAreaSelection(): void {
 
           <!-- Agreement checkbox (register only) -->
           <div v-if="needAgreement" class="agreement-row">
-            <span
-              :class="['radio-circle', { 'radio-circle--checked': agreed }]"
+            <img
+              class="agreement-checkbox-icon"
+              :src="agreed ? icCheckbox : icUncheckbox"
+              alt=""
               @click="onAgreementIndicatorClick"
-            ></span>
-            <span class="agreement-text agreement-text--link" @click="onAgreementTextClick">
-              {{ t('UILogin_ReadOK') }}
-            </span>
+            />
+            <span class="agreement-text">{{ agreementPrefix }}</span>
+            <span class="agreement-text agreement-text--protocol" @click="onAgreementTextClick">{{ agreementProtocol }}</span>
           </div>
 
           <!-- Submit button -->
@@ -732,6 +770,7 @@ function consumePhoneAreaSelection(): void {
             :loading="loading"
             @click="handleSubmit"
           />
+          <img :src="imgTextLogo" class="text-logo" alt="" />
         </div>
       </div>
     </div>
@@ -748,9 +787,11 @@ function consumePhoneAreaSelection(): void {
       @click="handleSelectLang(lang.value)"
     >
       <span>{{ lang.label }}</span>
-      <span
-        :class="['radio-circle', { 'radio-circle--checked': lang.value == currentLang }]"
-      ></span>
+      <img
+        class="lang-radio-icon"
+        :src="lang.value === currentLang ? icCheckbox : icUncheckbox"
+        alt=""
+      />
     </div>
   </GameDialog>
   <GameDialog
@@ -873,7 +914,7 @@ function consumePhoneAreaSelection(): void {
 }
 
 .form-panel {
-  background: rgba(0, 0, 0, 0.32);
+  background: transparent;
   padding: 0.4rem 0.46rem 0.53rem;
   height: 72vh;
   display: flex;
@@ -890,29 +931,60 @@ function consumePhoneAreaSelection(): void {
 }
 
 .tab-item {
-  border: 0;
-  background: transparent;
-  font-size: 0.45rem;
-  font-family: 'HONOR Sans CN', sans-serif;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.7);
+  background: linear-gradient(197.83deg, rgba(128, 128, 128, 0.52) 20.7%, rgba(71, 71, 71, 0.52) 73.7%);
+  border: none;
+  border-radius: 0.674rem;
+  backdrop-filter: blur(0.533rem);
+  -webkit-backdrop-filter: blur(0.533rem);
+  box-shadow:
+    inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
+    inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5),
+    0.045rem 0.053rem 0.105rem rgba(0, 0, 0, 0.25);
+  font-size: 0.405rem;
+  font-family: 'PingFang SC', 'HONOR Sans CN', sans-serif;
+  font-weight: 600;
+  color: #fff;
   cursor: pointer;
-  padding: 0.13rem 0 0;
+  padding: 0.25rem 0.72rem;
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.34px;
+    background: linear-gradient(
+      135deg,
+      rgba(242, 242, 242, 0.8) 0%,
+      rgba(255, 255, 255, 0) 44.5%,
+      rgba(255, 255, 255, 0.5) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
 
   &--active {
-    color: #fff;
-    font-weight: 700;
-
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: -0.07rem;
-      left: 0;
-      right: 0;
-      height: 0.033rem;
-      background: #fff;
-    }
+    background: linear-gradient(165.14deg, rgb(255, 81, 108) 7.5%, rgb(223, 35, 64) 71.9%);
+    border-radius: 9rem;
+    backdrop-filter: blur(2.102rem);
+    -webkit-backdrop-filter: blur(2.102rem);
+    box-shadow:
+      inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
+      inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5),
+      0.364rem 0.252rem 0.476rem rgba(110, 2, 2, 0.27);
+    font-weight: 500;
   }
 }
 
@@ -936,7 +1008,7 @@ function consumePhoneAreaSelection(): void {
 
   // When input has content, outer background turns green
   &--filled {
-    background: rgba(5, 231, 174, 0.65);
+    background: rgba(85, 243, 41, 1);
   }
 }
 
@@ -1023,7 +1095,7 @@ function consumePhoneAreaSelection(): void {
   height: 0.91rem;
   padding: 0 0.27rem;
   min-width: 2rem;
-  background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+  background: linear-gradient(157deg, #55F329 0%, #3EAD06 100%);
   border-radius: 1.27rem;
   border: 0;
   cursor: pointer;
@@ -1072,19 +1144,56 @@ function consumePhoneAreaSelection(): void {
 }
 
 .link-btn {
-  border: 0;
-  background: transparent;
-  font-size: 0.41rem;
+  border: none;
+  font-size: 0.405rem;
   font-weight: 500;
-  min-width: 2.5rem;
   font-family: 'PingFang SC', 'HONOR Sans CN', sans-serif;
-  color: #f9f9f9;
+  color: #fff;
   cursor: pointer;
-  padding: 0.08rem 0.1rem;
-
+  padding: 0.22rem 0.48rem;
   text-align: center;
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 0.42rem;
+  border-radius: 1.08rem;
+  white-space: nowrap;
+  background: linear-gradient(157deg, #ff4d6a 0%, #d41e3c 100%);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
+    inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.34px;
+    background: linear-gradient(
+      135deg,
+      rgba(242, 242, 242, 0.8) 0%,
+      rgba(255, 255, 255, 0) 44.5%,
+      rgba(255, 255, 255, 0.5) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  &:active {
+    opacity: 0.92;
+    transform: scale(0.985);
+  }
+}
+
+.link-btn--right {
+  background: linear-gradient(157deg, #7fcfff 0%, #4a8fe0 100%);
 }
 
 /* Agreement */
@@ -1105,6 +1214,12 @@ function consumePhoneAreaSelection(): void {
   }
 }
 
+.lang-radio-icon {
+  width: 0.48rem;
+  height: 0.48rem;
+  flex-shrink: 0;
+}
+
 .agreement-text {
   font-size: 0.27rem;
   font-weight: 500;
@@ -1116,10 +1231,80 @@ function consumePhoneAreaSelection(): void {
   cursor: pointer;
 }
 
+.agreement-checkbox-icon {
+  width: 0.48rem;
+  height: 0.48rem;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.agreement-text--protocol {
+  color: #4A90E2;
+  cursor: pointer;
+}
+
 .protocol-link {
   cursor: pointer;
+  color: #4a90e2;
 }
 .primary-btn {
   height: 1.44rem;
+}
+
+.text-logo {
+  display: block;
+  width: 2.6rem;
+  margin: 0 auto 0;
+}
+
+/* Error snackbar */
+.error-snackbar {
+  background: rgba(250, 43, 75, 0.14);
+  border: none;
+  border-radius: 0.422rem;
+  padding: 0.152rem 0.355rem;
+  font-size: 0.236rem;
+  font-weight: 500;
+  font-family: 'PingFang SC', 'HONOR Sans CN', sans-serif;
+  color: #fff;
+  text-align: center;
+  margin-top: 0.27rem;
+  position: relative;
+  box-shadow:
+    inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
+    inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.34px;
+    background: linear-gradient(
+      135deg,
+      rgba(242, 242, 242, 0.8) 0%,
+      rgba(255, 255, 255, 0) 44.5%,
+      rgba(255, 255, 255, 0.5) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+}
+
+.snackbar-enter-active,
+.snackbar-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.snackbar-enter-from,
+.snackbar-leave-to {
+  opacity: 0;
+  transform: translateY(-0.16rem);
 }
 </style>

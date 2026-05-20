@@ -75,7 +75,8 @@ function onCancel() {
   >
     <!-- 完全自定义 dialog 内部内容 -->
     <template #default>
-      <div class="game-dialog__card" :style="{ backgroundImage: `url(${dialogBg})` }">
+      <div class="game-dialog__card">
+        <div class="game-dialog__card-bg" :style="{ backgroundImage: `url(${dialogBg})` }"></div>
         <!-- Title -->
         <div v-if="title || $slots.title" class="game-dialog__title">
           <slot name="title">{{ title }}</slot>
@@ -133,11 +134,8 @@ function onCancel() {
 .game-dialog__card {
   position: relative;
   min-height: 2rem;
-  border-radius: 0.97rem;
+  border-radius: 0.439rem;
   overflow: hidden;
-  background-size: 100% auto;
-  background-position: top center;
-  background-repeat: no-repeat;
   box-shadow: inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
     /* 左上高光 */
   inset  0.5px  0.5px 0px  0px rgba(255, 255, 255, 0.85),
@@ -152,7 +150,21 @@ function onCancel() {
   gap: 0.32rem;
 }
 
+.game-dialog__card-bg {
+  position: absolute;
+  inset: 0;
+  background-size: 100% auto;
+  background-position: top center;
+  background-repeat: no-repeat;
+  filter: blur(10px) brightness(0.4);
+  transform: scale(1.05);
+  z-index: 0;
+  pointer-events: none;
+}
+
 .game-dialog__title {
+  position: relative;
+  z-index: 1;
   font-size: 0.58rem;
   font-weight: 500;
   color: #f9f9f9;
@@ -162,6 +174,8 @@ function onCancel() {
 }
 
 .game-dialog__body {
+  position: relative;
+  z-index: 1;
   flex: 1;
   max-height: 12rem;
   overflow-y: auto;
@@ -183,25 +197,55 @@ function onCancel() {
 }
 
 .game-dialog__footer {
+  position: relative;
+  z-index: 1;
   display: flex;
   gap: 0.24rem;
-  // 无分割线，独立按钮并排
 }
 
-// 取消按钮：黑色30%透明 + blur
 .game-dialog__cancel-btn {
   flex: 1;
   height: 1.43rem;
   border: none;
-  border-radius: 1.08rem;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(0.05rem);
-  -webkit-backdrop-filter: blur(0.05rem);
-  color: #fff;
-  font-size: 0.42rem;
+  border-radius: 0.825rem;
+  background: rgba(146, 146, 146, 0.4);
+  backdrop-filter: blur(2.667rem);
+  -webkit-backdrop-filter: blur(2.667rem);
+  color: #f9f9f9;
+  font-size: 0.439rem;
   font-weight: 500;
-  font-family: 'HONOR Sans CN', sans-serif;
+  font-family: 'PingFang SC', 'HONOR Sans CN', sans-serif;
   cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
+    inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.34px;
+    background: linear-gradient(
+      135deg,
+      rgba(242, 242, 242, 0.8) 0%,
+      rgba(255, 255, 255, 0) 44.5%,
+      rgba(255, 255, 255, 0.5) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
 
   &:active {
     opacity: 0.8;

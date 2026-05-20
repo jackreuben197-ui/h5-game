@@ -1,5 +1,5 @@
-import http from '@/api/http'
-import type { AxiosRequestConfig } from 'axios'
+import http, { type HttpRequestConfigExt } from '@/api/http'
+import type { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios'
 import type { ApiResponse } from '@/api/models/common'
 import type {
   LoginRequest,
@@ -146,12 +146,19 @@ export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
 }
 
 // 对齐 Cocos Login2：支持手机号/邮箱登录。
-export async function loginV2Api(payload: LoginV2Request): Promise<LoginResponse> {
+export async function loginV2Api(
+  payload: LoginV2Request,
+  config?: Partial<HttpRequestConfigExt>,
+): Promise<LoginResponse> {
   try {
-    const res = await http.post<{ data?: LoginResponse; token?: string }>('/user/login2', payload)
+    const res = await http.post<{ data?: LoginResponse; token?: string; message?: string }>(
+      '/user/login2',
+      payload,
+      config as InternalAxiosRequestConfig,
+    )
     const token = res.data?.data?.token ?? res.data?.token
     if (!token) {
-      throw new Error('登录接口返回缺少 token')
+      throw new Error(res.data?.message || '登录失败')
     }
     return { ...res.data?.data, ...res.data, token }
   } catch (error) {

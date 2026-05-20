@@ -41,7 +41,7 @@ function handleClick(event: MouseEvent): void {
   height: 1.47rem;
   border: none;
   border-radius: 1.08rem;
-  background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+  background: linear-gradient(157deg, #55F329 0%, #3EAD06 100%);
   color: #fff;
   font-size: 0.5rem;
   font-weight: 500;
@@ -74,6 +74,9 @@ function handleClick(event: MouseEvent): void {
       rgba(255, 255, 255, 0.5) 100%
     );
     -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
       linear-gradient(#fff 0 0) content-box,
       linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;

@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import tabActiveBg from '@/assets/images/game_type_tab_active_bg.svg?url'
 import tabActiveLgBg from '@/assets/images/game_type_tab_active_lg_bg.svg?url'
+import { showGameToast } from '@/components/Toast'
 
 export interface TabOption {
   name: string
   title: string
+  disabled?: boolean
+  disabledToast?: string
   [key: string]: unknown
 }
 
@@ -38,10 +42,21 @@ const tabbarStyle = computed<Record<string, string>>(() => {
 function handleUpdate(value: string | number): void {
   emit('update:modelValue', String(value))
 }
+
+function handleBeforeChange(value: string | number): boolean {
+  const targetName = String(value)
+  const targetTab = props.tabs.find((tab) => tab.name === targetName)
+  if (targetTab?.disabled) {
+    if (typeof targetTab.disabledToast === 'string' && targetTab.disabledToast.trim()) {
+      showGameToast(targetTab.disabledToast.trim())
+    }
+    return false
+  }
+  return true
+}
 </script>
 
 <script lang="ts">
-import { computed } from 'vue'
 export default { name: 'GameTypeTabbar' }
 </script>
 
@@ -58,6 +73,7 @@ export default { name: 'GameTypeTabbar' }
     title-inactive-color="rgba(255, 255, 255, 0.65)"
     :class="['room-tabs', props.size === 'lg' ? 'room-tabs--lg' : '']"
     :style="tabbarStyle"
+    :before-change="handleBeforeChange"
     @update:active="handleUpdate"
   >
     <VanTab v-for="tab in tabOptions" :key="tab.name" :name="tab.name" :title="tab.title" />

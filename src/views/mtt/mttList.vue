@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import type { MttItem, MttActionType } from '@/components/ListItem/MttCard.vue'
 import type { MttIdInfoRecord, MttListRecord, MttSeriesInfoRecord } from '@/api/models/roomcenter'
 import type { RoomRecord } from '@/api/models/roomcenter'
-import type { TabOption } from '@/components/Tabbar/GameTypeTabbar.vue'
+import type { FilterTabOption } from '@/components/Tabbar/FilterTabbar.vue'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
 import pokerMiniIcon from '@/assets/icons/game_zone_mtt_mini.png'
@@ -74,10 +74,15 @@ const nowMs = ref(Date.now())
 let ticker: number | null = null
 
 // MTT 页面专用 Tab：保留“全部/扑克/麻将”筛选，支持多语言文案回退。
-const mttTabs = computed<TabOption[]>(() => [
+const mttTabs = computed<FilterTabOption[]>(() => [
   { name: 'all', title: resolveLabel('UIMatch_GtO8YEdb', '全部') },
   { name: 'poker', title: resolveLabel('UIHomePokerArea', '扑克赛事') },
-  { name: 'mahjong', title: resolveLabel('UIHomeMahjongArea', '麻将赛事') },
+  {
+    name: 'mahjong',
+    title: resolveLabel('UIHomeMahjongArea', '麻将赛事'),
+    disabled: true,
+    disabledToast: '功能开发中',
+  },
 ])
 
 onMounted(() => {
@@ -112,6 +117,9 @@ const normalizedItems = computed<MttViewItem[]>(() =>
 // 当前 tab 下的可见赛事：先按玩法筛选，再按 club/tribe 可见性筛选。
 const filteredItems = computed<MttViewItem[]>(() => {
   return normalizedItems.value.filter((item) => {
+    if (item.category === 'mahjong') {
+      return false
+    }
     if (activeTab.value !== 'all' && item.category !== activeTab.value) {
       return false
     }

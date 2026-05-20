@@ -275,7 +275,7 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
 const mttTabs = computed<TabOption[]>(() => [
   { name: 'all', title: '全部' },
   { name: 'poker', title: '扑克' },
-  { name: 'mahjong', title: '麻将' },
+  { name: 'mahjong', title: '麻将', disabled: true, disabledToast: '功能开发中' },
 ])
 
 const mttSourceRecords = computed<RawMttRecord[]>(() => mttListStore.records as RawMttRecord[])
@@ -291,6 +291,9 @@ const normalizedItems = computed<MttViewItem[]>(() =>
 
 const filteredMttItems = computed<MttViewItem[]>(() => {
   return normalizedItems.value.filter((item) => {
+    if (item.category === 'mahjong') {
+      return false
+    }
     if (mttActiveTab.value !== 'all' && item.category !== mttActiveTab.value) {
       return false
     }
@@ -1487,9 +1490,7 @@ function formatChipBase(rawValue: number): string {
     rgba(73, 73, 73, 0.5) 89.79%
   );
   backdrop-filter: blur(0.2rem);
-  box-shadow:
-    0.092rem 0.115rem 0.184rem rgba(0, 0, 0, 0.25),
-    inset 0 0 0.23rem rgba(0, 0, 0, 1),
+  box-shadow: 0.092rem 0.115rem 0.184rem rgba(0, 0, 0, 0.25), inset 0 0 0.23rem rgba(0, 0, 0, 1),
     inset 0.057rem 0.113rem 0.46rem rgba(242, 242, 242, 0.9);
 }
 
@@ -1619,10 +1620,8 @@ function formatChipBase(rawValue: number): string {
   inset: -0.0107rem;
   border-radius: inherit;
   border: 0.0107rem solid rgba(255, 255, 255, 0.58);
-  box-shadow:
-    inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
-    inset 0 0 0.2rem rgba(255, 255, 255, 0.14),
-    0 0 0.08rem rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
+    inset 0 0 0.2rem rgba(255, 255, 255, 0.14), 0 0 0.08rem rgba(255, 255, 255, 0.18);
   filter: blur(0.002rem);
   pointer-events: none;
   z-index: 4;

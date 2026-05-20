@@ -20,6 +20,7 @@ const userInfoStore = useUserInfoStore()
 const roomListStore = useRoomListStore()
 const mttListStore = useMttListStore()
 
+const loading = ref(false)
 const balanceVisible = ref(true)
 const noticeScrollRef = ref<HTMLElement | null>(null)
 const noticeItemRef = ref<HTMLElement | null>(null)
@@ -186,29 +187,47 @@ function toggleBalance(): void {
 
 async function refreshBalance(): Promise<void> {
   try {
+    loading.value = true
     await getUserClubApi()
   } catch (error) {
     const message = error instanceof Error ? error.message : '刷新余额失败'
     showGameToast(message)
+  } finally {
+    loading.value = false
   }
 }
 
 function goToRecharge(): void {
   void router.push('/wallet')
 }
+function handleService(): void {
+  showGameToast('功能开发中')
+}
 
 function openMiniGamePanel(): void {
   showGameToast('功能开发中')
   // openBridgePanel({
-  //   panelType: 'gameRule',
+  //   panelType: 'jackpotAward',
   //   closeOnClickOverlay: true,
   //   props: {
-  //     ruleType: 1,
-  //     gameInfo: {
-  //       game_type: 0,
-  //       poker_type: 2,
-  //       room_critical_hit: 1,
-  //     },
+  //     awardUsersList: [
+  //       {
+  //         userRid: '1234567',
+  //         nickname: 'Jackpot Player',
+  //         avatar: 'https://static.awanptest.com/pint-intl-test/image-avatar/97189718-cvWtG.png',
+  //         award: 888800,
+  //         cardsType: 10,
+  //         handValue: 100000,
+  //       },
+  //       {
+  //         userRid: '7654321',
+  //         nickname: 'Lucky Runner',
+  //         avatar: 'https://static.awanptest.com/pint-intl-test/image-avatar/97189718-cvWtG.png',
+  //         award: 256600,
+  //         cardsType: 9,
+  //         handValue: 90000,
+  //       },
+  //     ],
   //   },
   // })
 }
@@ -436,7 +455,10 @@ onBeforeUnmount(() => {
         </div>
         <div class="club-balance-row">
           <img class="icon-sm" src="@/assets/icons/icon_balance.png" alt="余额" />
-          <span class="balance-amount">
+          <span v-if="loading" class="balance-amount">
+            <van-loading size="16" />
+          </span>
+          <span v-else class="balance-amount">
             {{ balanceVisible ? clubGoldText : '****' }}
           </span>
           <img
@@ -456,15 +478,15 @@ onBeforeUnmount(() => {
 
       <!-- 右侧：联系方式 -->
       <div class="club-right">
-        <div class="contact-item">
+        <div class="contact-item" @click="handleService">
           <img class="contact-icon" src="@/assets/icons/icon_service_1.png" alt="Telegram" />
           <span class="contact-label"> @game </span>
         </div>
-        <div class="contact-item">
+        <div class="contact-item" @click="handleService">
           <img class="contact-icon" src="@/assets/icons/icon_service_2.png" alt="邮箱" />
           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>
-        <div class="contact-item">
+        <div class="contact-item" @click="handleService">
           <img class="contact-icon" src="@/assets/icons/icon_service_3.png" alt="IM客服" />
           <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
         </div>
@@ -766,7 +788,8 @@ onBeforeUnmount(() => {
   font-size: 0.38rem;
   color: #fff;
   font-weight: 500;
-  min-width: 0.9rem;
+  text-align: center;
+  min-width: 1.5rem;
 }
 
 .usdt-amount {

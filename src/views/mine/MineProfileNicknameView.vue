@@ -188,7 +188,7 @@ async function onSave(): Promise<void> {
   height: 1.6638rem;
   border-radius: 1.4759rem;
   border: 0.0082rem solid rgba(249, 249, 249, 0.6);
-  background: rgba(255, 255, 255, 0.3);
+  background: #FFFFFF1A;
   backdrop-filter: blur(0.8232rem);
   color: rgba(255, 255, 255, 0.92);
   font-family: 'PingFang SC', var(--font-family-sans);

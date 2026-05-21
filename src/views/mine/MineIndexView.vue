@@ -18,6 +18,7 @@ import iconBoxComment from '@/assets/icons/icon_box_comment.png'
 import iconBoxSetting from '@/assets/icons/icon_box_setting.png'
 import iconShop from '@/assets/icons/icon_shop.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
+import ProfileCard from '@/components/ProfileCard/ProfileCard.vue'
 
 const router = useRouter()
 const gameStore = useGameStore()
@@ -105,44 +106,31 @@ async function onLogout(): Promise<void> {
         </div>
       </div>
     </div>
-    <div class="card-bg-highlight">
-      <div class="card-bg-outter">
-        <div class="card-bg-innner">
-          <div class="card-line1">
-            <button class="left-avatar" type="button" @click="goToProfileEdit">
-              <img :src="String(displayUser.avatar)" alt="头像" />
-            </button>
-            <div class="right-box">
-              <button class="name" type="button" @click="goToProfileEdit">
-                {{ displayUser.nickname }}
-              </button>
-              <div class="idbox">
-                <div class="id-label">ID</div>
-                <div class="id-value">{{ displayUser.userID }}</div>
-              </div>
-            </div>
+    <ProfileCard
+      :avatar="String(displayUser.avatar)"
+      :nickname="displayUser.nickname"
+      :user-id="displayUser.userID"
+      @avatar-click="goToProfileEdit"
+    >
+      <template #bottom>
+        <div class="left-board">
+          <div class="currency">
+            <img class="icon-currency" :src="iconChip" alt="gold" />
+            <div class="num">{{ displayUser.gold.toLocaleString() }}</div>
           </div>
-          <div class="card-line2">
-            <div class="left-board">
-              <div class="currency">
-                <img class="icon-currency" :src="iconChip" alt="gold" />
-                <div class="num">{{ displayUser.gold.toLocaleString() }}</div>
-              </div>
-              <div class="currency">
-                <img class="icon-currency" :src="iconDiamond" alt="diamond" />
-                <div class="num">{{ displayUser.diamond.toLocaleString() }}</div>
-              </div>
-            </div>
-            <button class="button" type="button" @click="goToMineShop">
-              <div class="text">{{ t('UIHappyShop_ActivityShop') }}</div>
-              <div class="round-icon">
-                <img :src="iconShop" alt="我的商城" />
-              </div>
-            </button>
+          <div class="currency">
+            <img class="icon-currency" :src="iconDiamond" alt="diamond" />
+            <div class="num">{{ displayUser.diamond.toLocaleString() }}</div>
           </div>
         </div>
-      </div>
-    </div>
+        <button class="button" type="button" @click="goToMineShop">
+          <div class="text">{{ t('UIHappyShop_ActivityShop') }}</div>
+          <div class="round-icon">
+            <img :src="iconShop" alt="我的商城" />
+          </div>
+        </button>
+      </template>
+    </ProfileCard>
     <div class="box-gallery">
       <div v-for="box in boxList" :key="box.key" class="box-item" @click="goToNextPage(box.route)">
         <div class="img">
@@ -159,99 +147,75 @@ async function onLogout(): Promise<void> {
 @use '@/styles/messages_mine.scss' as *;
 
 .mine-page {
-  .card-bg-highlight {
-    .card-bg-outter {
-      .card-bg-innner {
-        .card-line1 {
-          justify-content: flex-start;
-          align-items: flex-start;
-          gap: 0.5rem;
-          padding: 0 0.8rem 0.3rem 0.45rem;
-          .left-avatar {
-            width: 2.32rem;
-            height: 2.32rem;
-            border-radius: 50%;
-            overflow: hidden;
-            border: 0;
-            background: transparent;
-            padding: 0;
-            img {
-              width: 100%;
-              height: 100%;
-            }
-          }
-          .right-box {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 0.3rem;
-            .name {
-              border: 0;
-              background: transparent;
-              padding: 0;
-              text-align: left;
-              color: #fff;
-              margin-top: 0.2rem;
-              font-size: 0.6rem;
-              line-height: 100%;
-              font-weight: bold;
-              font-family: var(--font-family-SF);
-            }
-            .idbox {
-              display: flex;
-              align-items: center;
-              gap: 0.15rem;
-              .id-label {
-                font-size: 0.28rem;
-                line-height: 150%;
-                background-color: rgba(255, 255, 255, 0.4);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                padding: 0 0.25rem;
-                border-radius: 0.5rem;
-              }
-              .id-value {
-                font-size: 0.3rem;
-                line-height: 120%;
-                font-weight: 500;
-                font-family: var(--font-family-SF);
-              }
-            }
-          }
-        }
-        .card-line2 {
-          padding: 0 0.25rem 0 0.45rem;
-          .left-board {
-            display: flex;
-            align-items: flex-start;
-            flex-direction: column;
-            gap: 0.1rem;
-            .currency {
-              display: flex;
-              align-items: center;
-              gap: 0.2rem;
-              .icon-currency {
-                width: 0.32rem;
-              }
-              .num {
-                font-size: 0.34rem;
-                line-height: 120%;
-                font-weight: 500;
-                font-family: var(--font-family-SF);
-              }
-            }
-          }
-          .button {
-            border: 0;
-            cursor: pointer;
-            .round-icon {
-              img {
-                width: 0.32rem;
-              }
-            }
-          }
-        }
+  :deep(.card-line2) {
+    padding: 0 0.25rem 0 0.45rem;
+  }
+
+  .left-board {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.1rem;
+
+    .currency {
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+
+      .icon-currency {
+        width: 0.32rem;
+      }
+
+      .num {
+        font-size: 0.34rem;
+        line-height: 120%;
+        font-weight: 500;
+        font-family: var(--font-family-SF);
+      }
+    }
+  }
+
+  .button {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 0.4rem;
+    border: 0.5px solid rgba(255, 255, 255, 0.25);
+    padding: 0.1rem 0.1rem 0.1rem 0.36rem;
+    overflow: hidden;
+    cursor: pointer;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(38, 38, 38, 0.2);
+      mix-blend-mode: hard-light;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    .text {
+      font-size: 0.33rem;
+      line-height: 100%;
+    }
+
+    .round-icon {
+      width: 0.75rem;
+      height: 0.75rem;
+      border-radius: 50%;
+      background-color: rgba(20, 20, 20, 0.48);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-left: 0.2rem;
+
+      img {
+        width: 0.474rem;
       }
     }
   }

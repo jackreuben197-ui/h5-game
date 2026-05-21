@@ -493,6 +493,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/minigame',
+      name: 'minigame',
+      component: () => import('@/views/home/MiniGameView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/mttList',
       name: 'mtt-list',
       component: () => import('@/views/mtt/mttList.vue'),

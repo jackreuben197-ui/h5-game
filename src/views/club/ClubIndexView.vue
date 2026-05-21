@@ -36,6 +36,10 @@ import gameTypeNlh from '@/assets/icons/game_type_nlh.png'
 import gameTypePlo from '@/assets/icons/game_type_plo.png'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
 import SafetyGuardPopup from '@/components/Dialog/SafetyGuardPopup.vue'
+import MiniGameView from '@/views/home/MiniGameView.vue'
+import CasinoView from '@/views/home/CasinoView.vue'
+import { useCasinoStore } from '@/stores/casino'
+import { useMinigameStore } from '@/stores/minigame'
 
 import mainBgUrl from '@/assets/images/main_bg.webp'
 // 主容器背景图：全页面共用一张底图。
@@ -44,7 +48,7 @@ const backgroundStyle = computed(() => ({
 }))
 
 type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
-type ClubHeaderTabName = 'poker' | 'mahjong' | 'event'
+type ClubHeaderTabName = 'poker' | 'mahjong' | 'event' | 'minigame' | 'casino'
 const POKER_TYPE_LONG = 0
 const POKER_TYPE_SHORT = 2
 
@@ -85,6 +89,8 @@ const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
 
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
+const casinoStore = useCasinoStore()
+const minigameStore = useMinigameStore()
 const router = useRouter()
 
 // 顶部右侧切换风格开关：和旧版保持一致。
@@ -229,6 +235,9 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
 let unsubscribeWs: (() => void) | null = null
 
 onMounted(() => {
+  casinoStore.preloadCasinoData(selectedClubId.value, false).catch(console.warn)
+  minigameStore.preloadMinigameData(selectedClubId.value, false).catch(console.warn)
+
   if (!userInfoStore.currentClub && userInfoStore.clubList.length) {
     userInfoStore.setCurrentClub(userInfoStore.clubList[0] || null)
   }
@@ -467,6 +476,7 @@ function handleClubHeaderTabClick(tab: ClubHeaderTabName): void {
   }
   if (tab === 'event') {
     showFailToast('赛事开发中')
+    return
   }
 }
 
@@ -742,6 +752,22 @@ function formatChipBase(rawValue: number): string {
         >
           赛事
         </button>
+        <button
+          class="club-header-tab"
+          :class="{ 'club-header-tab--active': clubHeaderTab === 'minigame' }"
+          type="button"
+          @click="handleClubHeaderTabClick('minigame')"
+        >
+          小游戏专区
+        </button>
+        <button
+          class="club-header-tab"
+          :class="{ 'club-header-tab--active': clubHeaderTab === 'casino' }"
+          type="button"
+          @click="handleClubHeaderTabClick('casino')"
+        >
+          娱乐场
+        </button>
       </div>
 
       <div class="club-quick-actions">
@@ -788,6 +814,7 @@ function formatChipBase(rawValue: number): string {
     </header>
 
     <GameTypeTabbar
+      v-show="clubHeaderTab === 'poker'"
       v-model="activeTab"
       class="club-game-tabs"
       :tabs="[
@@ -798,7 +825,7 @@ function formatChipBase(rawValue: number): string {
       ]"
     />
 
-    <section class="group-list">
+    <section class="group-list" v-show="clubHeaderTab === 'poker'">
       <PokerTableGroupCard
         v-for="group in groupedRecords"
         :key="group.groupKey"
@@ -816,7 +843,15 @@ function formatChipBase(rawValue: number): string {
       </div>
     </section>
 
-    <div class="floating-action-area">
+    <div v-if="clubHeaderTab === 'minigame'" class="club-embedded-container">
+      <MiniGameView :hideHeader="true" :clubId="selectedClubId" />
+    </div>
+
+    <div v-if="clubHeaderTab === 'casino'" class="club-embedded-container">
+      <CasinoView :hideHeader="true" :clubId="selectedClubId" />
+    </div>
+
+    <div class="floating-action-area" v-show="clubHeaderTab === 'poker'">
       <button
         v-if="canCreateTable"
         class="create-table-btn"
@@ -1333,6 +1368,16 @@ function formatChipBase(rawValue: number): string {
   padding: 0.34rem 0.38rem 2.2rem;
   background: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(0.8032rem) saturate(1.04);
+}
+
+.club-embedded-container {
+  position: relative;
+  z-index: 1;
+  max-height: calc(100dvh - 7.85rem);
+  height: calc(100dvh - 7.85rem);
+  width: 100%;
+  overflow-y: auto;
+  padding-bottom: 2.2rem;
 }
 
 .floating-action-area {

@@ -13,11 +13,15 @@ import { t } from '@/i18n'
 import { localStore } from '@/utils/localStore'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { showGameToast } from '@/components/Toast'
+import { useCasinoStore } from '@/stores/casino'
+import { useMinigameStore } from '@/stores/minigame'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const roomListStore = useRoomListStore()
 const mttListStore = useMttListStore()
+const casinoStore = useCasinoStore()
+const minigameStore = useMinigameStore()
 
 const balanceVisible = ref(true)
 const noticeScrollRef = ref<HTMLElement | null>(null)
@@ -180,6 +184,9 @@ function goToMttList(): void {
 }
 function goToCasino(): void {
   void router.push('/casino')
+}
+function goToMinigame(): void {
+  void router.push('/minigame')
 }
 
 function toggleBalance(): void {
@@ -368,6 +375,13 @@ onMounted(() => {
       noticeResizeObserver.observe(noticeScrollRef.value)
     }
   }
+
+  casinoStore.preloadCasinoData(undefined, true).catch((e) => {
+    console.warn('[home] preload casino data failed:', e)
+  })
+  minigameStore.preloadMinigameData(undefined, true).catch((e) => {
+    console.warn('[home] preload minigame data failed:', e)
+  })
 })
 
 onBeforeUnmount(() => {
@@ -504,7 +518,7 @@ onBeforeUnmount(() => {
         <div
           class="game-card game-card-minigame"
           style="min-height: 2.7rem"
-          @click="showGameToast('功能开发中')"
+          @click="goToMinigame"
         >
           <!-- Title: left:38.04px top:41.03px, font 15px ExtraBold -->
           <div class="mg-title-wrap">

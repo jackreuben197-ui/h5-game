@@ -12,9 +12,7 @@ import {
 import { useRouter } from 'vue-router'
 import { showFailToast } from 'vant'
 import { postOrgClubNoticeApi, postOrgClubNoticeIgnoreApi } from '@/api/cmsext'
-import { getRoomIdsApi, getRoomsDetailApi } from '@/api/roomcenter'
 import { enterTable } from '@/bridge/core'
-import { subscribeH5WsMessages } from '@/bridge/ws/wsProxy'
 import type { MttItem, MttActionType } from '@/components/ListItem/MttCard.vue'
 import type { TabOption } from '@/components/Tabbar/GameTypeTabbar.vue'
 import type { EnterTablePayload } from '@/bridge/protocol'
@@ -28,6 +26,7 @@ import type {
 } from '@/api/models/roomcenter'
 import { useGameStore } from '@/stores/game'
 import { useMttListStore } from '@/stores/mttList'
+import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
 import { checkIsShowForClubAndTribe, ROOM_ORIGIN_TYPE } from '@/utils/roomVisibility'
@@ -83,12 +82,6 @@ interface RoomGroupViewModel {
   playerCount: number
 }
 
-interface RoomListCachePayload {
-  version: number
-  updatedAt: number
-  records: RoomRecord[]
-}
-
 interface RoomGroupExpandedCachePayload {
   version: number
   updatedAt: number
@@ -130,11 +123,11 @@ interface MttRenderGroup extends MttGroup {
   displayItems: MttViewItem[]
 }
 
-const ROOM_LIST_CACHE_VERSION = 1
 const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
 
 const gameStore = useGameStore()
 const mttListStore = useMttListStore()
+const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
 const router = useRouter()
 
@@ -142,7 +135,7 @@ const router = useRouter()
 const activeTab = ref<GameTypeTabName>('all')
 const clubHeaderTab = ref<ClubHeaderTabName>('poker')
 const mttActiveTab = ref<MttTabName>('all')
-const sourceRecords = ref<RoomRecord[]>([])
+const sourceRecords = computed<RoomRecord[]>(() => roomListStore.records)
 const expandedMap = reactive<Record<string, boolean>>({})
 const expandedGroupMap = ref<Record<string, boolean>>({})
 const announceExpanded = ref(false)
@@ -283,7 +276,7 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
 const mttTabs = computed<TabOption[]>(() => [
   { name: 'all', title: '全部' },
   { name: 'poker', title: '扑克' },
-  { name: 'mahjong', title: '麻将' },
+  { name: 'mahjong', title: '麻将', disabled: true, disabledToast: '功能开发中' },
 ])
 
 const mttSourceRecords = computed<RawMttRecord[]>(() => mttListStore.records as RawMttRecord[])
@@ -299,6 +292,9 @@ const normalizedItems = computed<MttViewItem[]>(() =>
 
 const filteredMttItems = computed<MttViewItem[]>(() => {
   return normalizedItems.value.filter((item) => {
+    if (item.category === 'mahjong') {
+      return false
+    }
     if (mttActiveTab.value !== 'all' && item.category !== mttActiveTab.value) {
       return false
     }
@@ -325,8 +321,6 @@ const renderGroups = computed<MttRenderGroup[]>(() =>
   }),
 )
 
-let unsubscribeWs: (() => void) | null = null
-
 onMounted(() => {
   if (!userInfoStore.currentClub && userInfoStore.clubList.length) {
     userInfoStore.setCurrentClub(userInfoStore.clubList[0] || null)
@@ -344,18 +338,9 @@ onMounted(() => {
   mttTicker = window.setInterval(() => {
     nowMs.value = Date.now()
   }, 1000)
-
-  unsubscribeWs = subscribeH5WsMessages((event) => {
-    if (event.packet?.code === 140) {
-      void fetchRooms({ silent: true })
-    }
-  })
 })
 
 onUnmounted(() => {
-  unsubscribeWs?.()
-  unsubscribeWs = null
-
   if (mttTicker !== null) {
     window.clearInterval(mttTicker)
     mttTicker = null
@@ -370,6 +355,17 @@ watch(
     }
     announceExpanded.value = false
     void fetchClubNotice({ showPopup: true })
+  },
+)
+
+watch(
+  () => roomListStore.records,
+  (records) => {
+    syncExpandedMapWithRecords(records)
+    persistRoomGroupExpandedCache()
+  },
+  {
+    deep: false,
   },
 )
 
@@ -398,75 +394,9 @@ watch(
 
 // 进入页面先用缓存秒开，再静默刷新最新数据。
 function bootstrapRoomList(): void {
-  restoreRoomListCache()
+  roomListStore.bootstrapRoomList()
   restoreRoomGroupExpandedCache()
-  syncExpandedMapWithRecords(sourceRecords.value)
-  void fetchRooms({ silent: true })
-}
-
-// 拉取牌桌列表：先拿 room id，再批量拿详情。
-async function fetchRooms(options: { silent?: boolean } = {}): Promise<void> {
-  try {
-    const idRes = await getRoomIdsApi({})
-    const idRecords =
-      Number(idRes.code) === 0 && Array.isArray(idRes.data?.records) ? idRes.data.records : []
-
-    const roomIds = idRecords
-      .map((item) => Number(item?.rid))
-      .filter((id) => Number.isFinite(id) && id > 0)
-
-    if (!roomIds.length) {
-      sourceRecords.value = []
-      persistRoomListCache([])
-      syncExpandedMapWithRecords([])
-      persistRoomGroupExpandedCache()
-      return
-    }
-
-    const detailRes = await getRoomsDetailApi({
-      room_ids: roomIds,
-      room_type: 0,
-    })
-
-    const records =
-      Number(detailRes.code) === 0 && Array.isArray(detailRes.data?.records)
-        ? detailRes.data.records
-        : []
-    sourceRecords.value = Array.isArray(records) ? records : []
-    persistRoomListCache(sourceRecords.value)
-    syncExpandedMapWithRecords(sourceRecords.value)
-    persistRoomGroupExpandedCache()
-  } catch (error) {
-    // 静默刷新失败时保留旧列表，避免页面闪空。
-    if (!options.silent) {
-      const message = error instanceof Error ? error.message : '牌局列表刷新失败'
-      showFailToast(message)
-    }
-  }
-}
-
-// 把最新牌局列表写入本地缓存。
-function persistRoomListCache(records: RoomRecord[]): void {
-  const payload: RoomListCachePayload = {
-    version: ROOM_LIST_CACHE_VERSION,
-    updatedAt: Date.now(),
-    records,
-  }
-  localStore.setItem(StorageKey.ROOM_LIST_CACHE, payload)
-}
-
-// 恢复上次牌局列表缓存，保证进入页面可秒开。
-function restoreRoomListCache(): void {
-  const cached = localStore.getItem<RoomListCachePayload | null>(StorageKey.ROOM_LIST_CACHE, null)
-  if (!cached || typeof cached !== 'object') {
-    return
-  }
-
-  if (cached.version !== ROOM_LIST_CACHE_VERSION || !Array.isArray(cached.records)) {
-    return
-  }
-
-  sourceRecords.value = cached.records
+  syncExpandedMapWithRecords(roomListStore.records)
 }
 
 // 缓存分组展开状态，避免静默刷新后折叠状态丢失。
@@ -1575,9 +1505,7 @@ function formatChipBase(rawValue: number): string {
     rgba(73, 73, 73, 0.5) 89.79%
   );
   backdrop-filter: blur(0.2rem);
-  box-shadow:
-    0.092rem 0.115rem 0.184rem rgba(0, 0, 0, 0.25),
-    inset 0 0 0.23rem rgba(0, 0, 0, 1),
+  box-shadow: 0.092rem 0.115rem 0.184rem rgba(0, 0, 0, 0.25), inset 0 0 0.23rem rgba(0, 0, 0, 1),
     inset 0.057rem 0.113rem 0.46rem rgba(242, 242, 242, 0.9);
 }
 
@@ -1707,10 +1635,8 @@ function formatChipBase(rawValue: number): string {
   inset: -0.0107rem;
   border-radius: inherit;
   border: 0.0107rem solid rgba(255, 255, 255, 0.58);
-  box-shadow:
-    inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
-    inset 0 0 0.2rem rgba(255, 255, 255, 0.14),
-    0 0 0.08rem rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
+    inset 0 0 0.2rem rgba(255, 255, 255, 0.14), 0 0 0.08rem rgba(255, 255, 255, 0.18);
   filter: blur(0.002rem);
   pointer-events: none;
   z-index: 4;

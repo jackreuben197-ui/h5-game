@@ -24,7 +24,7 @@
     "@vueuse/core": "^14.2.1",
     "axios": "^1.15.0",
     "dayjs": "^1.11.20",
-    "google-protobuf": "^4.0.2",
+    "google-protobuf": "^3.21.4",
     "html2canvas": "^1.4.1",
     "js-md5": "^0.8.3",
     "pinia": "^3.0.4",

@@ -3,4 +3,5 @@
   <GlobalBridgeDialogHost />
   <GlobalBridgePanelHost />
   <GlobalMessageTodoNotice />
+  <GlobalCustomerServiceChat />
 </template>

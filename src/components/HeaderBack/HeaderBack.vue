@@ -44,17 +44,8 @@ function handleBack(event: MouseEvent): void {
 
 <template>
   <div class="page-back-header">
-    <button
-      class="back-trigger"
-      type="button"
-      @click="handleBack"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="back-icon"
-        viewBox="0 0 7 12"
-        fill="none"
-      >
+    <button class="back-trigger" type="button" @click="handleBack">
+      <svg xmlns="http://www.w3.org/2000/svg" class="back-icon" viewBox="0 0 7 12" fill="none">
         <path
           fill-rule="evenodd"
           clip-rule="evenodd"
@@ -62,25 +53,16 @@ function handleBack(event: MouseEvent): void {
           fill="white"
         />
       </svg>
-      <span
-        v-if="headerMode !== 'full-slot' && props.title"
-        class="title"
-      >
+      <span v-if="headerMode !== 'full-slot' && props.title" class="title">
         {{ props.title }}
       </span>
     </button>
 
-    <div
-      v-if="headerMode === 'full-slot'"
-      class="full-slot-wrap"
-    >
+    <div v-if="headerMode === 'full-slot'" class="full-slot-wrap">
       <slot></slot>
     </div>
 
-    <div
-      v-else-if="headerMode === 'title-right'"
-      class="right-slot-wrap"
-    >
+    <div v-else-if="headerMode === 'title-right'" class="right-slot-wrap">
       <slot name="right"></slot>
     </div>
   </div>
@@ -96,7 +78,7 @@ function handleBack(event: MouseEvent): void {
   position: relative;
   z-index: 1;
   min-height: 1.1733rem;
-  padding: 0.5rem 0.44rem 0.2rem;
+  padding: 0.5rem 0rem 0.2rem;
 }
 
 .back-trigger {
@@ -106,7 +88,7 @@ function handleBack(event: MouseEvent): void {
   background: transparent;
   display: inline-flex;
   align-items: center;
-  padding:0 0.25rem;
+  padding: 0 0.25rem;
   gap: 0.4rem;
 }
 

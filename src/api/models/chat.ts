@@ -149,7 +149,7 @@ export interface ChatSupportChannelListRequest {
     limit?: number; // 条目数
     offset?: number; // 开始下标
     order?: number; // 排序方式；1:最新消息时间;2:创建时间
-    im_service_types?: number[]; // 为空默认只查1、2、3类型 4是撮合客服
+    im_service_types?: number[]; // 为空默认只查1、2、3类型 4撮合订单客服
 
   [key: string]: unknown
 }
@@ -179,7 +179,7 @@ export interface ChatSupportChannelListServiceData {
     club_name?: string; // 俱乐部名称
     club_logo?: string; // 俱乐部Logo
     unread_count?: number; // 未读消息数量
-    im_service_type?: number; // IM客服类型 1.俱乐部客服 2.官方FlowChat大厅首页客服 3.官方FlowChat钻石商城客服 4.客服撮合
+    im_service_type?: number; // IM客服类型 1.俱乐部客服 2.官方FlowChat大厅首页客服 3.官方FlowChat钻石商城客服 4.撮合订单客服
 
   [key: string]: unknown
 }
@@ -195,7 +195,7 @@ export interface ChatSupportMessageListRequest {
     from?: number; // 起始时间戳
     asc?: boolean; // 排序顺序（true-大于from正序; false-小于from倒序）
     set_read?: boolean; // 是否将消息设置为已读
-    im_service_type?: number; // IM客服类型 1.俱乐部客服 2.官方FlowChat大厅首页客服 3.官方FlowChat钻石商城客服
+    im_service_type?: number; // IM客服类型 1.俱乐部客服 2.官方FlowChat大厅首页客服 3.官方FlowChat钻石商城客服 4.撮合订单客服
 
   [key: string]: unknown
 }
@@ -269,7 +269,7 @@ export interface ChatSupportMessageReadRequest {
     club_id?: number; // 俱乐部ID
     to_user_id?: number; // 回复用户ID
     time_token?: number; // Token
-    im_service_type?: number; // 客服类型 1.俱乐部客服 2.官方FlowChat大厅首页客服 3.官方FlowChat钻石商城客服
+    im_service_type?: number; // 客服类型 1.俱乐部客服 2.官方FlowChat大厅首页客服 3.官方FlowChat钻石商城客服 4.撮合订单客服
 
   [key: string]: unknown
 }
@@ -291,7 +291,7 @@ export interface ChatSupportMessageSendRequest {
     file_size?: number; // 文件大小
     thumb_url?: string; // 缩略图URL
     duration?: number; // 时长（秒
-    im_service_type?: number; // IM客服类型 1.俱乐部客服 2.官方FlowChat大厅首页客服 3.官方FlowChat钻石商城客服 4 订单客服
+    im_service_type?: number; // IM客服类型 1.俱乐部客服 2.官方FlowChat大厅首页客服 3.官方FlowChat钻石商城客服 4.撮合订单客服
 
   [key: string]: unknown
 }
@@ -306,4 +306,3 @@ export interface ChatSupportMessageSendData {
 
   [key: string]: unknown
 }
-

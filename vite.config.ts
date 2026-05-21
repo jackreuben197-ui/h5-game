@@ -216,6 +216,7 @@ function readAppPkgInfo(): Required<PackageJsonLike> {
 export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const proxyTarget = env.VITE_PROXY_TARGET || 'https://test2.awanptest.com'
+  const proxyImTarget = env.VITE_PROXY_IM_TARGET || 'https://test-impubnub.awanptest.com'
   const enableSourceMap = env.VITE_BUILD_SOURCEMAP === 'true'
   const enableDropConsole = toBoolean(env.VITE_DROP_CONSOLE)
   const enableBundleAnalyze = toBoolean(env.VITE_BUNDLE_ANALYZE) || mode === 'analyze'
@@ -257,6 +258,11 @@ export default defineConfig(({ mode, command }) => {
     },
     server: {
       proxy: {
+        '/api/imoss': {
+          target: proxyImTarget,
+          changeOrigin: true,
+          secure: false,
+        },
         '/api': {
           target: proxyTarget,
           changeOrigin: true,

@@ -45,6 +45,7 @@ import gameTypePlo from '@/assets/icons/game_type_plo.png'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
 import peopleBgUrl from '@/assets/icons/icon_people.png'
 import SafetyGuardDialog from '@/components/Dialog/SafetyGuardDialog.vue'
+import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import {
   multiLanguageTemplateVersion,
   resolveTemplateTextByKey,
@@ -199,11 +200,11 @@ const clubCoverUrl = computed(() => {
 })
 
 const clubNoticeIntro = computed(() => {
-  const text = String(currentClub.value?.prologue || '').trim()
+  const text = String(currentClub.value?.desc || '').trim()
   if (text) {
     return text
   }
-  return '暂未设置俱乐部公告'
+  return '暂未设置俱乐部简介'
 })
 
 const clubNoticeText = computed(() => {
@@ -589,6 +590,20 @@ function handleQuickActionClick(action: 'safety' | 'ranking'): void {
     return
   }
   showFailToast('排行榜功能开发中')
+}
+
+function handleOpenCustomerService(): void {
+  const clubId = selectedClubId.value
+  if (clubId <= 0) {
+    showFailToast('当前俱乐部信息无效')
+    return
+  }
+
+  openGlobalCustomerServiceChat({
+    imServiceType: 1,
+    clubId,
+    tribeId: selectedTribeId.value,
+  })
 }
 
 function handleCreateTableClick(): void {
@@ -1117,7 +1132,7 @@ function formatChipBase(rawValue: number): string {
           :name="t('UIMineMain01')"
           :icon="serviceIcon"
           icon-alt="service"
-          @click="showFailToast('客服功能开发中')"
+          @click="handleOpenCustomerService"
         />
       </div>
     </HeaderBack>
@@ -1485,9 +1500,9 @@ function formatChipBase(rawValue: number): string {
 }
 
 .announce-bar {
-  margin-top: 0.217rem;
+  // margin-top: 0.217rem;
   width: 100%;
-  min-height: 1.0577rem;
+  // min-height: 1.0577rem;
   border: 0;
   border-radius: 0.4016rem;
   padding: 0.1847rem 0.3936rem;
@@ -1629,7 +1644,7 @@ function formatChipBase(rawValue: number): string {
   display: flex;
   align-items: center;
   gap: 0.6587rem;
-  padding: 0 0.4562rem;
+  padding: 0 0.1562rem;
   height: 0.6483rem;
 }
 

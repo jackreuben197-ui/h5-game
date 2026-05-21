@@ -30,8 +30,37 @@ let stopBridgePanelChannel: (() => void) | null = null
 let stopBridgeToastChannel: (() => void) | null = null
 let stopWsProxyBridgeChannel: (() => void) | null = null
 let stopH5VisibilityBridgeChannel: (() => void) | null = null
+let stopNativeMenuGuard: (() => void) | null = null
 
 initDebugConsole()
+
+function setupNativeMenuGuard(): () => void {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return () => {}
+  }
+
+  const onContextMenu = (event: MouseEvent): void => {
+    const target = event.target
+    if (!(target instanceof HTMLElement)) {
+      event.preventDefault()
+      return
+    }
+
+    // 在可编辑区域保留系统菜单，避免输入能力受影响。
+    const editable = target.closest('input, textarea, [contenteditable="true"], [contenteditable=""]')
+    if (editable) {
+      return
+    }
+
+    event.preventDefault()
+  }
+
+  document.addEventListener('contextmenu', onContextMenu, { capture: true })
+
+  return () => {
+    document.removeEventListener('contextmenu', onContextMenu, { capture: true })
+  }
+}
 
 export function mountH5App(container: string | Element = '#app'): VueApp<Element> | null {
   if (typeof window === 'undefined') {
@@ -60,6 +89,7 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
   }
 
   setupRem()
+  stopNativeMenuGuard = setupNativeMenuGuard()
 
   try {
     app = createApp(App)
@@ -111,6 +141,8 @@ export function unmountH5App(): void {
   stopWsProxyBridgeChannel = null
   stopH5VisibilityBridgeChannel?.()
   stopH5VisibilityBridgeChannel = null
+  stopNativeMenuGuard?.()
+  stopNativeMenuGuard = null
   app.unmount()
   app = null
   recordDebugEvent('[h5]', 'unmount success')

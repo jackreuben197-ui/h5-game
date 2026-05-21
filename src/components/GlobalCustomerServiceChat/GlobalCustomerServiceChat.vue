@@ -50,6 +50,7 @@ const noServiceVisible = ref(false)
 const imagePreviewVisible = ref(false)
 const imagePreviewUrl = ref('')
 const requestedClubMissing = ref(false)
+const messagesReady = ref(false)
 
 const voiceMode = ref(false)
 const voicePressed = ref(false)
@@ -199,11 +200,18 @@ async function fetchChannel(): Promise<void> {
       : null
   requestedClubMissing.value = requestedClubId > 0 && !requestedClubMatched
 
-  const preferred = requestedClubMissing.value ? null : pickChannel(validList)
+  const preferred =
+    requestedClubId <= 0
+      ? validList[0] || null
+      : requestedClubMissing.value
+        ? null
+        : pickChannel(validList)
   const currentSupportId = Number(activeChannel.value?.support_user_id || 0)
   const byCurrent = validList.find((item) => Number(item.support_user_id || 0) === currentSupportId)
   const channel =
-    preferred || byCurrent || (requestedClubMissing.value ? null : validList[0] || null)
+    preferred ||
+    (requestedClubId > 0 ? byCurrent : null) ||
+    (requestedClubMissing.value ? null : validList[0] || null)
   activeChannel.value = channel
   hasUnread.value = validList.some((item) => Number(item.unread_count || 0) > 0)
 }
@@ -302,8 +310,8 @@ async function markAsRead(): Promise<void> {
   })
 }
 
-function scrollToBottom(): void {
-  nextTick(() => {
+function scrollToBottom(): Promise<void> {
+  return nextTick().then(() => {
     if (!messageContainer.value) return
     messageContainer.value.scrollTop = messageContainer.value.scrollHeight
   })
@@ -336,27 +344,39 @@ function formatVoiceDuration(seconds: unknown): string {
 }
 
 function openPanelByFloat(): void {
+  chatContext.value.clubId = 0
+  chatContext.value.tribeId = 0
+  chatContext.value.supportUserId = 0
+  requestedClubMissing.value = false
+  activeChannel.value = null
   void openPanel()
 }
 
 async function openPanel(): Promise<void> {
   noServiceVisible.value = false
+  messagesReady.value = false
 
   if (!activeChannel.value) {
     await fetchChannel()
   }
 
-  if (!activeChannel.value || requestedClubMissing.value) {
+  if (
+    !activeChannel.value ||
+    (requestedClubMissing.value && Number(chatContext.value.clubId || 0) > 0)
+  ) {
     noServiceVisible.value = true
     return
   }
 
   visible.value = true
   await fetchMessages({ setRead: true })
+  await scrollToBottom()
+  messagesReady.value = true
 }
 
 function closePanel(): void {
   visible.value = false
+  messagesReady.value = false
   voiceMode.value = false
   closeImagePreview()
   stopVoicePlayback()
@@ -1077,7 +1097,11 @@ watch(
             </div>
           </div>
 
-          <div ref="messageContainer" class="messages-wrap">
+          <div
+            ref="messageContainer"
+            class="messages-wrap"
+            :class="{ 'messages-wrap--hidden': !messagesReady }"
+          >
             <div class="messages-inner">
               <div
                 v-for="(msg, idx) in messages"
@@ -1285,9 +1309,9 @@ watch(
   <Teleport to="body">
     <div v-if="noServiceVisible" class="no-service-mask" @click="closeNoServicePopup">
       <div class="no-service-card" @click.stop>
-        <p class="no-service-title">暂未开通客服通道</p>
+        <p class="no-service-title">当前俱乐部暂未开通在线客服服务</p>
         <p class="no-service-desc">请联系管理员开通后再试</p>
-        <button class="no-service-btn" type="button" @click="closeNoServicePopup">关闭</button>
+        <button class="no-service-btn" type="button" @click="closeNoServicePopup">好的</button>
       </div>
     </div>
   </Teleport>
@@ -1495,6 +1519,10 @@ watch(
   flex: 1;
   overflow-y: auto;
   padding: 0.28rem 0.36rem 0.2rem;
+}
+
+.messages-wrap--hidden {
+  opacity: 0;
 }
 
 .messages-inner {

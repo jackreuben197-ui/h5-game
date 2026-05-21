@@ -14,6 +14,7 @@ import { localStore } from '@/utils/localStore'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { showGameToast } from '@/components/Toast'
 import { openBridgePanel } from '@/bridge/channels'
+import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -205,6 +206,20 @@ function goToRecharge(): void {
 }
 function handleService(): void {
   showGameToast('功能开发中')
+}
+
+function handleOpenCustomerService(): void {
+  const clubId = selectedClubId.value
+  if (clubId <= 0) {
+    showGameToast('当前俱乐部信息无效')
+    return
+  }
+
+  openGlobalCustomerServiceChat({
+    imServiceType: 1,
+    clubId,
+    tribeId: selectedTribeId.value,
+  })
 }
 
 function openMiniGamePanel(): void {
@@ -489,7 +504,7 @@ onBeforeUnmount(() => {
           <img class="contact-icon" src="@/assets/icons/icon_service_2.png" alt="邮箱" />
           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>
-        <div class="contact-item" @click="handleService">
+        <div class="contact-item" @click="handleOpenCustomerService">
           <img class="contact-icon" src="@/assets/icons/icon_service_3.png" alt="IM客服" />
           <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
         </div>
@@ -738,7 +753,8 @@ onBeforeUnmount(() => {
   min-height: 1.54rem;
   gap: 0;
   box-shadow:
-  /* 左上高光 */ inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
+  /* 左上高光 */
+    inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
     /* 右下高光 */ inset -1px -1px 0px 0px rgba(255, 255, 255, 0.35);
 }
 

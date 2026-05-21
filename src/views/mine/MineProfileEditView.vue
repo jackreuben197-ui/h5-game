@@ -4,7 +4,9 @@ import { showFailToast, showSuccessToast } from 'vant'
 
 import { useRouter } from 'vue-router'
 import { postUserModifyInfoApi } from '@/api/user'
-import mainBgUrl from '@/assets/images/main_bg2.jpg'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import cardBg3 from '@/assets/images/card_bg3.png'
+import bottomSheetBg from '@/assets/images/bottom_sheet_bg.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -117,6 +119,7 @@ function onAvatarAction(action: 'album' | 'camera'): void {
         :nickname="displayUser.nickname"
         :user-id="displayUser.userId"
         :editable="true"
+        :bg-image="cardBg3"
         @avatar-click="openAvatarPopup"
       />
 
@@ -145,7 +148,7 @@ function onAvatarAction(action: 'album' | 'camera'): void {
         class="sheet-popup"
         :overlay-style="{ background: 'rgba(12,12,12,0.6)' }"
       >
-        <div class="sheet-body">
+        <div class="sheet-body" :style="{ backgroundImage: `url(${bottomSheetBg})` }">
           <button class="sheet-row" type="button" @click="onAvatarAction('album')">相册</button>
           <div class="sheet-divider"></div>
           <button class="sheet-row" type="button" @click="onAvatarAction('camera')">相机</button>
@@ -168,17 +171,6 @@ function onAvatarAction(action: 'album' | 'camera'): void {
   background-position: center;
   background-repeat: no-repeat;
 
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.7);
-    mix-blend-mode: luminosity;
-    backdrop-filter: blur(1.5px);
-    -webkit-backdrop-filter: blur(1.5px);
-    pointer-events: none;
-    z-index: 0;
-  }
 }
 
 .content-wrap {
@@ -196,7 +188,7 @@ function onAvatarAction(action: 'album' | 'camera'): void {
   width: 9.0613rem;
   height: 1.6638rem;
   border-radius: 1.4759rem;
-  border: 0.0082rem solid rgba(249, 249, 249, 0.6);
+  border: none;
   background: #FFFFFF1A;
   backdrop-filter: blur(0.8232rem);
   color: rgba(255, 255, 255, 0.71);
@@ -245,12 +237,29 @@ function onAvatarAction(action: 'album' | 'camera'): void {
 }
 
 .sheet-body {
+  position: relative;
+  overflow: hidden;
   width: 10rem;
   border-top-left-radius: 0.8445rem;
   border-top-right-radius: 0.8445rem;
   padding: 0.6426rem 0.5321rem 0.7872rem;
-  background: #0000000D;
-  backdrop-filter: blur(0.9733rem);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 0;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 .sheet-row {
@@ -281,14 +290,16 @@ function onAvatarAction(action: 'album' | 'camera'): void {
 .sheet-confirm {
   margin-top: 0.3467rem;
   width: 100%;
-  border: 0.0358rem solid rgba(242, 242, 242, 0.8);
+  border: none;
   border-radius: 1.082rem;
   height: 1.4716rem;
-  color: #fff;
+  color: #f9f9f9;
   font-family: 'HONOR Sans CN', 'PingFang SC', var(--font-family-sans);
   font-size: 0.5493rem;
   line-height: 1.2;
-  background: linear-gradient(168.09deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background: linear-gradient(124.88deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
+  backdrop-filter: blur(0.02rem);
+  -webkit-backdrop-filter: blur(0.02rem);
 
   &:disabled {
     opacity: 0.72;

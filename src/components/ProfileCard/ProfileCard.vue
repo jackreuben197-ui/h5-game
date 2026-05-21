@@ -1,9 +1,13 @@
 <script setup lang="ts">
-defineProps<{
+import icInfo from '@/assets/icons/ic_info.svg'
+import cardBg2 from '@/assets/images/card_bg2.png'
+
+const props = defineProps<{
   avatar: string
   nickname: string
   userId: string
   editable?: boolean
+  bgImage?: string
 }>()
 
 defineEmits<{
@@ -13,7 +17,7 @@ defineEmits<{
 
 <template>
   <div class="profile-card">
-    <div class="profile-card__outer">
+    <div class="profile-card__outer" :style="{ backgroundImage: `url(${props.bgImage ?? cardBg2})` }">
       <div class="profile-card__inner">
         <div class="card-line1">
           <button class="avatar-wrap" type="button" @click="$emit('avatar-click')">
@@ -25,6 +29,7 @@ defineEmits<{
             <div class="user-id-row">
               <span class="id-tag">ID</span>
               <span class="id-value">{{ userId }}</span>
+              <img class="id-info-icon" :src="icInfo" alt="" />
             </div>
           </div>
         </div>
@@ -56,7 +61,9 @@ defineEmits<{
   width: 100%;
   border-radius: 1.42rem;
   overflow: hidden;
-  background: url('@/assets/images/card_bg2.png') center / cover no-repeat;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   padding: 0.2rem;
@@ -130,7 +137,7 @@ defineEmits<{
   font-size: 0.2664rem;
   line-height: 0.4664rem;
   text-align: center;
-  background: linear-gradient(143deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background: #fa2b4b;
   white-space: nowrap;
 }
 
@@ -171,5 +178,12 @@ defineEmits<{
   line-height: 120%;
   font-weight: 500;
   color: #fff;
+}
+
+.id-info-icon {
+  width: 0.267rem;
+  height: 0.267rem;
+  flex-shrink: 0;
+  opacity: 0.8;
 }
 </style>

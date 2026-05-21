@@ -8,6 +8,7 @@ import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
+import icInfo from '@/assets/icons/ic_info.svg'
 
 const router = useRouter()
 
@@ -143,7 +144,7 @@ async function onSave(): Promise<void> {
           <img class="diamond" :src="iconDiamond" alt="diamond" />
           <span class="origin">500</span>
           <span class="current">100</span>
-          <span class="info">!</span>
+          <img class="info-icon" :src="icInfo" alt="info" />
         </div>
 
         <div class="cost-row balance-row">
@@ -171,25 +172,29 @@ async function onSave(): Promise<void> {
 .nickname-page {
   height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.4598rem);
-  padding-bottom: 1.04rem;
+  padding-bottom: 0;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  display: flex;
+  flex-direction: column;
 }
 
 .content-wrap {
   padding: 0 0.48rem;
   margin-top: 0.6228rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .name-input {
   width: 9.0613rem;
   height: 1.6638rem;
   border-radius: 1.4759rem;
-  border: 0.0082rem solid rgba(249, 249, 249, 0.6);
-  background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(0.8232rem);
+  border: none;
+  background: linear-gradient(123.3deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
   color: rgba(255, 255, 255, 0.92);
   font-family: 'PingFang SC', var(--font-family-sans);
   font-size: 0.3885rem;
@@ -235,10 +240,10 @@ async function onSave(): Promise<void> {
 }
 
 .origin {
-  color: rgba(255, 255, 255, 0.75);
+  color: #c1c1c1;
   text-decoration: line-through;
   text-decoration-thickness: 0.0267rem;
-  text-decoration-color: rgba(255, 255, 255, 0.75);
+  text-decoration-color: #c1c1c1;
 }
 
 .current,
@@ -247,36 +252,32 @@ async function onSave(): Promise<void> {
   font-weight: 600;
 }
 
-.info {
-  width: 0.3467rem;
-  height: 0.3467rem;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.95);
-  color: #9a6075;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.2667rem;
-  font-weight: 600;
-  line-height: 1;
+.info-icon {
+  width: 0.3632rem;
+  height: 0.3632rem;
+  flex-shrink: 0;
 }
 
 .save-wrap {
   margin-top: auto;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 0.08rem);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 1.08rem);
+  display: flex;
+  justify-content: center;
 }
 
 .save-btn {
   width: 8.9046rem;
   height: 1.4349rem;
   border-radius: 1.0557rem;
-  border: 0.0133rem solid rgba(242, 242, 242, 0.8);
+  border: 0.0133rem solid rgba(255, 255, 255, 0.2);
   color: #fbfbfb;
   font-family: 'PingFang SC', var(--font-family-sans);
   font-size: 0.5063rem;
   font-weight: 500;
   line-height: 1.2;
-  background: linear-gradient(168.34deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background: linear-gradient(126.8deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 
   &:disabled {
     opacity: 0.72;

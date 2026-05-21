@@ -27,6 +27,7 @@ import icGlobe from '@/assets/icons/ic_globe.svg'
 import icCheckbox from '@/assets/icons/ic_checkbox.png'
 import icUncheckbox from '@/assets/icons/ic_uncheckbox.png'
 import imgTextLogo from '@/assets/images/img_text_logo.png'
+import imgFishLogo from '@/assets/images/img_fish_logo.png'
 import { showGameToast } from '@/components/Toast'
 import { Loading } from 'vant'
 import { DEBUG_ACCOUNTS, type DebugAccount } from '@/constants/debugAccounts'
@@ -610,6 +611,15 @@ function consumePhoneAreaSelection(): void {
       </button>
     </div>
 
+    <!-- Logo hero -->
+    <div class="logo-hero">
+      <img class="logo-hero__fish" :src="imgFishLogo" alt="" />
+      <div class="logo-hero__text">
+        <p class="logo-hero__title">小鱼视频真人竞技</p>
+        <p class="logo-hero__subtitle">xypk.com</p>
+      </div>
+    </div>
+
     <!-- Content card -->
     <div class="login-card">
       <!-- Form panel with dark background -->
@@ -692,7 +702,7 @@ function consumePhoneAreaSelection(): void {
                 autocomplete="off"
               />
               <button class="eye-btn" @click.prevent="togglePassword">
-                <img :src="icEye" alt="" :style="{ opacity: showPassword ? 1 : 0.4 }" />
+                <img :src="icEye" alt="" />
               </button>
             </div>
           </div>
@@ -815,7 +825,7 @@ function consumePhoneAreaSelection(): void {
 .debug-trigger {
   color: rgba(255, 255, 255, 0.65);
   font-size: 0.34rem;
-  font-family: 'Afacad', sans-serif;
+  font-family: 'PingFang SC', sans-serif;
   line-height: 0.9rem;
   min-width: 1rem;
   cursor: pointer;
@@ -871,6 +881,46 @@ function consumePhoneAreaSelection(): void {
   color: #fff;
 }
 
+/* Logo hero */
+.logo-hero {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 72vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+}
+
+.logo-hero__fish {
+  width: 5.2rem;
+  object-fit: contain;
+}
+
+.logo-hero__text {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.logo-hero__title {
+  font-family: 'PingFang SC', sans-serif;
+  font-weight: 600;
+  font-size: 0.54rem;
+  color: #fff;
+  margin: 0;
+}
+
+.logo-hero__subtitle {
+  font-family: 'PingFang SC', sans-serif;
+  font-weight: 700;
+  font-size: 0.35rem;
+  color: #fff;
+  margin: 0;
+}
+
 /* Card */
 .login-card {
   position: absolute;
@@ -893,12 +943,13 @@ function consumePhoneAreaSelection(): void {
 .tab-row {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 0.53rem;
   margin-bottom: 0.69rem;
 }
 
 .tab-item {
+  flex: 1;
+  height: 0.96rem;
   background: linear-gradient(197.83deg, rgba(128, 128, 128, 0.52) 20.7%, rgba(71, 71, 71, 0.52) 73.7%);
   border: none;
   border-radius: 0.674rem;
@@ -909,11 +960,11 @@ function consumePhoneAreaSelection(): void {
     inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5),
     0.045rem 0.053rem 0.105rem rgba(0, 0, 0, 0.25);
   font-size: 0.405rem;
-  font-family: 'PingFang SC', 'HONOR Sans CN', sans-serif;
+  font-family: 'PingFang SC', sans-serif;
   font-weight: 600;
   color: #fff;
   cursor: pointer;
-  padding: 0.25rem 0.72rem;
+  padding: 0 0.72rem;
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -1029,7 +1080,7 @@ function consumePhoneAreaSelection(): void {
     font-size: 0.33rem;
     margin: 0 0.1rem;
     font-weight: 500;
-    font-family: 'Afacad', sans-serif;
+    font-family: 'PingFang SC', sans-serif;
     color: #000;
   }
 
@@ -1048,7 +1099,7 @@ function consumePhoneAreaSelection(): void {
   outline: none;
   font-size: 0.38rem;
   font-weight: 500;
-  font-family: 'Afacad', sans-serif;
+  font-family: 'PingFang SC', sans-serif;
   color: #000;
   padding-left: 0.5rem;
   min-width: 0;
@@ -1069,7 +1120,7 @@ function consumePhoneAreaSelection(): void {
   cursor: pointer;
   font-size: 0.34rem;
   font-weight: 500;
-  font-family: 'Afacad', sans-serif;
+  font-family: 'PingFang SC', sans-serif;
   color: #fff;
   white-space: nowrap;
 
@@ -1115,10 +1166,11 @@ function consumePhoneAreaSelection(): void {
   border: none;
   font-size: 0.405rem;
   font-weight: 500;
-  font-family: 'PingFang SC', 'HONOR Sans CN', sans-serif;
+  font-family: 'PingFang SC', sans-serif;
   color: #fff;
   cursor: pointer;
-  padding: 0.22rem 0.48rem;
+  height: 0.96rem;
+  padding: 0 0.48rem;
   text-align: center;
   border-radius: 1.08rem;
   white-space: nowrap;
@@ -1191,8 +1243,8 @@ function consumePhoneAreaSelection(): void {
 .agreement-text {
   font-size: 0.27rem;
   font-weight: 500;
-  color: #fff;
-  font-family: 'PingFang SC', 'HONOR Sans CN', sans-serif;
+  color: #E6E6E6;
+  font-family: 'PingFang SC', sans-serif;
 }
 
 .agreement-text--link {
@@ -1233,7 +1285,7 @@ function consumePhoneAreaSelection(): void {
   padding: 0.152rem 0.355rem;
   font-size: 0.236rem;
   font-weight: 500;
-  font-family: 'PingFang SC', 'HONOR Sans CN', sans-serif;
+  font-family: 'PingFang SC', sans-serif;
   color: #fff;
   text-align: center;
   margin-top: 0.27rem;

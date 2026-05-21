@@ -15,6 +15,8 @@ import iconBtc from '@/assets/icons/wallet/ic_btc.svg'
 import iconEth from '@/assets/icons/wallet/ic_eth.svg'
 import iconCard from '@/assets/icons/wallet/ic_card.svg'
 import defaultAvatar from '@/assets/images/default_avatar.png'
+import icCheckbox from '@/assets/icons/ic_checkbox.png'
+import icUncheckbox from '@/assets/icons/ic_uncheckbox.png'
 
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
@@ -557,7 +559,7 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <span class="radio" aria-hidden="true"></span>
+          <img class="radio" :src="selectedPayType?.id === channel.id ? icCheckbox : icUncheckbox" alt="" />
         </button>
       </section>
 
@@ -947,14 +949,7 @@ onBeforeUnmount(() => {
 .radio {
   width: 0.4rem;
   height: 0.4rem;
-  border-radius: 50%;
-  border: 0.0267rem solid rgba(249, 249, 249, 0.45);
-  transition: all 0.16s ease;
-}
-
-.pay-channel.active .radio {
-  border-color: rgba(249, 249, 249, 0.8);
-  background: radial-gradient(circle, rgba(5, 231, 174, 1) 46%, rgba(5, 231, 174, 0) 47%);
+  flex-shrink: 0;
 }
 
 .pay-now {

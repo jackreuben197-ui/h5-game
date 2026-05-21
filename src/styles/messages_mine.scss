@@ -22,7 +22,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background-color: var(--color-bg-shadow);
+      background-color: #FFFFFF1A;
       padding: 0 0.24rem 0.08rem;
       border-radius: 0.6rem;
       overflow: hidden;
@@ -96,9 +96,23 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 1rem;
+            background-color: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 0.4rem;
+            border: 0.5px solid rgba(255, 255, 255, 0.25);
             padding: 0.1rem 0.1rem 0.1rem 0.36rem;
+            overflow: hidden;
+
+            &::before {
+              content: '';
+              position: absolute;
+              inset: 0;
+              background: rgba(38, 38, 38, 0.2);
+              mix-blend-mode: hard-light;
+              border-radius: inherit;
+              pointer-events: none;
+            }
             .text {
               font-size: 0.33rem;
               line-height: 100%;

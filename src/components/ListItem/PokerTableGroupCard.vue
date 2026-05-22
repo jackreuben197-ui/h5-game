@@ -49,9 +49,6 @@ function handleTableClick(room: RoomRecord): void {
       <div class="summary-left">
         <div class="game-icon-wrap">
           <img class="game-icon-img" :src="group.iconImage" alt="game-type" />
-          <span class="icon-tag">
-            {{ group.gameName }}
-          </span>
         </div>
 
         <div class="summary-content">
@@ -121,10 +118,10 @@ function handleTableClick(room: RoomRecord): void {
 
 .game-icon-wrap {
   width: 1.62rem;
-  height: 1.71rem;
+  height: 2rem;
   border-radius: 0.441rem;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(0.24rem);
+  // background: rgba(255, 255, 255, 0.15);
+  // backdrop-filter: blur(0.24rem);
   position: relative;
   overflow: hidden;
 }
@@ -135,24 +132,6 @@ function handleTableClick(room: RoomRecord): void {
   object-fit: cover;
 }
 
-.icon-tag {
-  position: absolute;
-  left: 50%;
-  bottom: 0.15rem;
-  width: 1.2rem;
-  height: 0.43rem;
-  transform: translateX(-50%);
-  border-radius: 999px;
-  text-align: center;
-  font-size: 0.21rem;
-  line-height: 0.38rem;
-  font-weight: 400;
-  text-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
-  background: rgba(10, 10, 10, 0.29);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-  border: 0.0133rem solid rgba(255, 255, 255, 0.34);
-}
 
 .summary-content {
   padding: 0.5rem 0 0;

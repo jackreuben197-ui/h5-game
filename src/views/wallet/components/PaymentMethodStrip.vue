@@ -38,7 +38,7 @@ const emit = defineEmits<{
       <div class="method__label">
         <div class="method__label-row">
           <span class="method__label-primary">{{ m.primary }}</span>
-          <span class="method__label-suffix">{{ $txt('Wallet_PaySuffix') }}</span>
+          <!-- <span class="method__label-suffix">{{ $txt('Wallet_PaySuffix') }}</span> -->
         </div>
         <span
           v-if="m.secondary"
@@ -120,13 +120,21 @@ const emit = defineEmits<{
   justify-content: center;
   gap: 0.09rem;
   line-height: 0.9;
-  white-space: nowrap;
+  white-space: normal;
+  width: 100%;
 }
 
 .method__label-primary {
   font-family: var(--wallet-font-num);
   font-weight: 500;
   font-size: 0.3rem;
+  text-align: center;
+  word-break: break-word;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.1;
 }
 
 .method__label-suffix {

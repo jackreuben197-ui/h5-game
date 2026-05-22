@@ -19,11 +19,7 @@ export const useWalletStore = defineStore('wallet', () => {
       gold_types: [],
     }, clubId)
 
-    if (res.data?.pay_types) {
-      res.data.pay_types = res.data.pay_types.filter(
-        (p) => p.type === 1 || p.type === 3
-      )
-    }
+    // All payment types (types 1 to 9) should be loaded and shown.
 
     goldPriceData.value = res.data ?? null
   }

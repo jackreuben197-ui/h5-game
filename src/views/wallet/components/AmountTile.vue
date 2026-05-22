@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import icCoins from '@/assets/icons/wallet/ic_coins.png'
+import icCoins from '@/assets/icons/icon_chip_red.png'
 import CryptoChip from './CryptoChip.vue'
 
 interface Props {
@@ -58,12 +58,17 @@ withDefaults(defineProps<Props>(), {
 }
 
 .tile--active {
-  background: rgba(178, 0, 0, 0.23);
-  border-top: 0.134px solid rgba(242, 242, 242, 0.3);
-  border-right: 0.134px solid rgba(242, 242, 242, 0.3);
-  border-bottom: 0.134px solid rgba(242, 242, 242, 0.3);
-  border-left: 0.134px solid rgba(242, 242, 242, 0.3);
-  border-radius: 0.78rem;
+  justify-content: flex-end;
+  gap: 0.523rem; /* 19.601px */
+  padding: 0.25rem 0.276rem 0.286rem; /* 9.4px 10.34px 10.716px */
+  border-radius: 0.78rem; /* 29.219px */
+  background: radial-gradient(
+    47.75% 48.13% at 41.94% 52.55%,
+    rgba(37, 49, 107, 0.5) 0%,
+    rgba(16, 16, 16, 0.5) 100%
+  );
+  background-blend-mode: soft-light;
+  border: 0.134px solid rgba(242, 242, 242, 0.3);
   box-shadow: 0.9px 1.1px 1.8px rgba(0, 0, 0, 0.25);
 }
 

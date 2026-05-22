@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import ava1 from '@/assets/images/wallet/avatars/ava1.png'
-import icCoins from '@/assets/icons/wallet/ic_coins.png'
+import icCoins from '@/assets/icons/icon_chip_red.png'
 import AppBar from '@/components/wallet/AppBar.vue'
 import SegmentedToggle from '@/views/wallet/components/SegmentedToggle.vue'
 import UserCard from '@/views/wallet/components/UserCard.vue'
@@ -21,6 +21,7 @@ import UnfinishedOrderPopup from '@/views/wallet/components/UnfinishedOrderPopup
 import UsdtPaymentDetailsPopup from '@/views/wallet/components/UsdtPaymentDetailsPopup.vue'
 import CustomerServicePaymentPopup from '@/views/wallet/components/CustomerServicePaymentPopup.vue'
 import CustomerServiceChatPopup from '@/views/wallet/components/CustomerServiceChatPopup.vue'
+import OnlinePaymentPopup from '@/views/wallet/components/OnlinePaymentPopup.vue'
 import { t } from '@/i18n'
 import { useWalletStore } from '@/stores/wallet'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -72,6 +73,34 @@ const csChatProps = ref({
   supportUserId: 0,
   orderData: null as any,
 })
+
+const onlinePopupOpen = ref(false)
+const onlinePopupProps = ref({
+  goldCount: 0,
+  rate: 0,
+  feeRate: 0,
+  feeType: 0,
+  discount: 0,
+  payId: 0,
+  priceId: 0,
+})
+
+const onlinePopupInitialData = ref({
+  step: 1,
+  orderNo: '',
+  qrCode: '',
+  payAddress: '',
+})
+
+function handleOnlineSuccess() {
+  activePreset.value = 0
+  customAmount.value = ''
+}
+
+function handleOnlineUnfinished() {
+  onlinePopupOpen.value = false
+  void checkUnfinishedOrders()
+}
 
 const activeCsOrder = computed(() => {
   return activeTab.value === 0
@@ -252,10 +281,28 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
       usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
       usdtDetailsPopupOpen.value = true
     }
-  } else {
+  } else if (orderType === 1) {
     // Standard USDT flow
     usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
     usdtDetailsPopupOpen.value = true
+  } else {
+    // WeChat, Alipay, Bank Card top-up type features (Types 2, 4-9)
+    onlinePopupProps.value = {
+      goldCount: Number(order.gold_num) || 0,
+      rate: (order as any).rate || (order as any).exchange_rate || 1,
+      feeRate: (order as any).fee_rate || 0,
+      feeType: (order as any).fee_type || 0,
+      discount: (order as any).discount || 0,
+      payId: (order as any).pay_id || (order as any).pay_type || 0,
+      priceId: (order as any).price_id || 0,
+    }
+    onlinePopupInitialData.value = {
+      step: 2,
+      orderNo: order.order_no || '',
+      qrCode: qrCode,
+      payAddress: order.pay_type_address || '',
+    }
+    onlinePopupOpen.value = true
   }
 }
 
@@ -271,7 +318,7 @@ onUnmounted(() => {
 })
 
 const filteredPayTypes = computed(() =>
-  (walletStore.goldPriceData?.pay_types ?? []).filter((pt) => pt.type === 1 || pt.type === 3),
+  (walletStore.goldPriceData?.pay_types ?? []),
 )
 
 const methods = computed<PaymentMethod[]>(() =>
@@ -314,7 +361,7 @@ const presets = computed<Preset[]>(() => {
   }
   const list = hasPriceList ? selected!.price_list! : walletStore.goldPriceData?.list ?? []
 
-  const isUsdt = selected?.type === 1
+  const isUsdt = selected?.type !== 3
   const rate = selected?.rate ?? 1
   const feeRate = selected?.fee_rate ?? 0
   const feeType = selected?.fee_type ?? 0
@@ -366,8 +413,8 @@ const displayPayAmount = computed(() => {
   const selected = payTypes[activeMethod.value]
   const amount = Number(selectedAmount.value)
 
-  if (selected?.type === 1) {
-    // USDT
+  if (selected?.type !== 3 && selected) {
+    // USDT/API/WeChat/Alipay/Bank Card
     const goldCount = amount * 100
     const rate = selected.rate ?? 1
     const feeRate = selected.fee_rate ?? 0
@@ -417,6 +464,23 @@ function onPayClick() {
       discount: selectedPayType.discount ?? 0,
     }
     csPopupOpen.value = true
+  } else if (selectedPayType) {
+    onlinePopupProps.value = {
+      goldCount: Number(selectedAmount.value) * 100,
+      rate: selectedPayType.rate ?? 1,
+      feeRate: selectedPayType.fee_rate ?? 0,
+      feeType: selectedPayType.fee_type ?? 0,
+      discount: selectedPayType.discount ?? 0,
+      payId: selectedPayType.id,
+      priceId: activePreset.value === -1 ? 0 : presets.value[activePreset.value]?.id ?? 0,
+    }
+    onlinePopupInitialData.value = {
+      step: 1,
+      orderNo: '',
+      qrCode: '',
+      payAddress: '',
+    }
+    onlinePopupOpen.value = true
   }
 }
 
@@ -753,6 +817,24 @@ async function onUsdtSubmit(type: number) {
       :discount="usdtPopupProps.discount"
       @close="usdtPopupOpen = false"
       @submit="onUsdtSubmit"
+    />
+
+    <OnlinePaymentPopup
+      v-if="onlinePopupOpen"
+      :gold-count="onlinePopupProps.goldCount"
+      :rate="onlinePopupProps.rate"
+      :fee-rate="onlinePopupProps.feeRate"
+      :fee-type="onlinePopupProps.feeType"
+      :discount="onlinePopupProps.discount"
+      :pay-id="onlinePopupProps.payId"
+      :price-id="onlinePopupProps.priceId"
+      :initial-step="onlinePopupInitialData.step"
+      :initial-order-no="onlinePopupInitialData.orderNo"
+      :initial-qr-code="onlinePopupInitialData.qrCode"
+      :initial-pay-address="onlinePopupInitialData.payAddress"
+      @close="onlinePopupOpen = false"
+      @success="handleOnlineSuccess"
+      @unfinished-order="handleOnlineUnfinished"
     />
 
     <UnfinishedOrderPopup

@@ -37,10 +37,12 @@ const payPrice = computed(() =>
   <Teleport to="body">
     <div
       class="overlay"
-      :style="{ backgroundImage: `url(${sharpBgUrl})` }"
+
       @click.self="emit('close')"
     >
-      <div class="card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
+      <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
+      <div class="card" >
+        <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
         <div class="card__inner">
           <!-- Header -->
           <div class="card__header">
@@ -85,6 +87,8 @@ const payPrice = computed(() =>
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+   background: rgba(23, 23, 23, 0.70);
+
 }
 
 .overlay::before {
@@ -93,9 +97,9 @@ const payPrice = computed(() =>
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  backdrop-filter: blur(34px);
-  -webkit-backdrop-filter: blur(34px);
-  background: rgba(12, 12, 12, 0.60);
+  // backdrop-filter: blur(34px);
+  // -webkit-backdrop-filter: blur(34px);
+  // background: rgba(12, 12, 12, 0.60);
 }
 
 .card {
@@ -122,7 +126,7 @@ const payPrice = computed(() =>
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: rgba(0, 0, 0, 0.70);
+  // background: rgba(0, 0, 0, 0.70);
   box-shadow:
     0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
     0 0 0.2298rem 0 #000 inset,

@@ -24,7 +24,7 @@ import {
 import { GameDialog } from '@/components/Dialog'
 import { showGameToast } from '@/components/Toast'
 import FieldTip from '@/components/GameCreateForm/FieldTip.vue'
-import icDiamondBalance from '@/assets/icons/ic_diamond_balance.svg'
+import icDiamondBalance from '@/assets/icons/ic_diamond_balance.png'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconAudio from '@/assets/icons/icon_audio.png'
 import iconVideo from '@/assets/icons/icon_video.png'

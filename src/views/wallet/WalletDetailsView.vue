@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
-import bannerBgUrl from '@/assets/images/wallet/banner_bg.png'
+import bannerBgUrl from '@/assets/images/card_bg3.png'
 import AppBar from '@/components/wallet/AppBar.vue'
 import TagPill from '@/components/wallet/TagPill.vue'
-import iconChips from '@/assets/icons/wallet/ic_coins.png'
+import iconChips from '@/assets/icons/icon_chip_red.png'
 import { postUserGoldChangeLogApi } from '@/api/user'
 
 import type { UserGoldChangeLogRecord } from '@/api/models/user'
@@ -221,28 +221,17 @@ onMounted(async () => {
   backdrop-filter: blur(16.5px);
   -webkit-backdrop-filter: blur(16.5px);
   box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: rgba(0, 0, 0, 0.28);
-    pointer-events: none;
-    z-index: 1;
-  }
-
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    padding: 0.055rem;
+    padding: 1.252px;
     background: linear-gradient(
-      180deg,
-      rgba(240, 205, 225, 0.95) 0%,
-      rgba(220, 175, 205, 0.40) 50%,
-      rgba(240, 205, 225, 0.95) 100%
+      135deg,
+      rgba(255, 255, 255, 0.25) 0%,
+      rgba(255, 255, 255, 0.8) 50%,
+      rgba(255, 255, 255, 0.25) 100%
     );
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -250,6 +239,16 @@ onMounted(async () => {
     mask-composite: exclude;
     pointer-events: none;
     z-index: 3;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: rgba(0, 0, 0, 0.13);
+    pointer-events: none;
+    z-index: 1;
   }
 }
 

@@ -169,7 +169,7 @@ export interface ChatSupportChannelListData {
 }
 
 export interface ChatSupportChannelListServiceData {
-
+    channel?: string; // 聊天频道
     club_id?: number; // 俱乐部ID
     tribe_id?: number; // 联盟ID
     user_id?: number; // 用户ID

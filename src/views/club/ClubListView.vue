@@ -17,6 +17,7 @@ import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shie
 import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.png'
 import imgClubBannerFigma from '@/assets/images/club_banner_bg.png'
 import imgClubLogo from '@/assets/images/club_default_logo.png'
+import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import type { ClubInfo } from '@/stores/userInfo'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
@@ -50,6 +51,7 @@ const userInfoStore = useUserInfoStore()
 const searchKeyword = ref('')
 const loadingMyClubs = ref(false)
 const searchLoading = ref(false)
+const searchKeypadOpen = ref(false)
 const showJoinModal = ref(false)
 const joinLoading = ref(false)
 const searchedClub = ref<ClubInfo | null>(null)
@@ -135,13 +137,28 @@ function onQuickAction(itemId: number): void {
   void router.push('/club/create')
 }
 
-function onSearchInput(value: string): void {
-  searchKeyword.value = value.replace(/\D+/g, '')
+function openSearchKeypad(): void {
+  searchKeypadOpen.value = true
 }
 
-function onSearchInputEvent(event: Event): void {
-  const target = event.target as HTMLInputElement | null
-  onSearchInput(target?.value || '')
+function onSearchKeypadClose(): void {
+  searchKeypadOpen.value = false
+}
+
+function onSearchKeypadSubmit(): void {
+  searchKeypadOpen.value = false
+}
+
+function onSearchKeypadKeyPress(payload: {
+  key: string
+  action: 'digit' | 'clear' | 'backspace'
+  value: string
+  accepted: boolean
+}): void {
+  if (!payload.accepted && payload.action === 'digit') {
+    return
+  }
+  searchKeyword.value = payload.value.replace(/\D+/g, '').slice(0, 6)
 }
 
 function findClubInMine(target: ClubInfo): ClubInfo | null {
@@ -200,7 +217,8 @@ async function onSearchClub(): Promise<void> {
   try {
     const response = await postOrgClubSearchByIdApi({ club_random_id: Number(keyword) })
     if (Number(response.code) !== 0) {
-      throw new Error(response.message || '查询俱乐部失败')
+      showFailToast('找不到俱乐部')
+      return
     }
 
     const targetClub = response.data
@@ -218,8 +236,8 @@ async function onSearchClub(): Promise<void> {
     searchedClub.value = targetClub
     showJoinModal.value = true
   } catch (error) {
-    const message = error instanceof Error ? error.message : '查询俱乐部失败'
-    showFailToast(message)
+    const message = error instanceof Error ? error.message : ''
+    showFailToast(message || '找不到俱乐部')
   } finally {
     searchLoading.value = false
   }
@@ -279,9 +297,10 @@ onMounted(() => {
             inputmode="numeric"
             autocomplete="off"
             maxlength="6"
+            readonly
             placeholder="搜索俱乐部ID"
-            @input="onSearchInputEvent"
-            @keyup.enter="onSearchClub"
+            @focus="openSearchKeypad"
+            @click="openSearchKeypad"
           />
         </label>
         <button type="button" class="search-btn" :disabled="searchLoading" @click="onSearchClub">
@@ -414,6 +433,21 @@ onMounted(() => {
         </div>
       </section>
     </div>
+
+    <NumericKeypad
+      :open="searchKeypadOpen"
+      :min="0"
+      :max="999999"
+      :max-length="6"
+      :initial-value="searchKeyword"
+      :show-input-area="true"
+      :allow-leading-zero="true"
+      title="搜索俱乐部ID"
+      confirm-text="确定"
+      @close="onSearchKeypadClose"
+      @submit="onSearchKeypadSubmit"
+      @key-press="onSearchKeypadKeyPress"
+    />
   </div>
 </template>
 

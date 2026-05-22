@@ -29,6 +29,7 @@ import {
 
 interface ImGameConfig {
   oss_key: string
+  url: string
 }
 
 const userInfoStore = useUserInfoStore()
@@ -85,13 +86,16 @@ const panelBackgroundStyle = computed(() => ({
   backgroundImage: `url(${sharpBgUrl})`,
 }))
 
+const existsClubIds = new Set<number>()
 const availableChannels = computed(() =>
   channels.value.filter((item) => {
     if (!item || typeof item !== 'object') return false
     const clubId = Number(item.club_id || 0)
-    const supportUserId = Number(item.support_user_id || 0)
+    if (chatContext.value.clubId > 0 && clubId !== chatContext.value.clubId) return false
+    if (existsClubIds.has(clubId)) return false
+    existsClubIds.add(clubId)
     const clubName = String(item.club_name || '').trim()
-    return clubId > 0 && supportUserId > 0 && !!clubName
+    return clubId > 0 && !!clubName
   }),
 )
 
@@ -117,9 +121,10 @@ const imGameConfig = computed<ImGameConfig | null>(() => {
   if (typeof raw !== 'string' || !raw.trim()) return null
 
   try {
-    const parsed = JSON.parse(raw) as { oss_key?: unknown }
+    const parsed = JSON.parse(raw) as { oss_key?: unknown; url?: unknown }
     const ossKey = typeof parsed.oss_key === 'string' ? parsed.oss_key.trim() : ''
-    return { oss_key: ossKey }
+    const url = typeof parsed.url === 'string' ? parsed.url.trim() : ''
+    return { oss_key: ossKey, url }
   } catch {
     return null
   }
@@ -187,9 +192,11 @@ async function fetchChannel(): Promise<void> {
   const validList = list.filter((item) => {
     if (!item || typeof item !== 'object') return false
     const clubId = Number(item.club_id || 0)
-    const supportUserId = Number(item.support_user_id || 0)
     const clubName = String(item.club_name || '').trim()
-    return clubId > 0 && supportUserId > 0 && !!clubName
+    if (clubId > 0 && !!clubName) {
+      return true
+    }
+    return false
   })
 
   channels.value = validList
@@ -217,29 +224,15 @@ async function fetchChannel(): Promise<void> {
 }
 
 function isActiveChannel(channel: ChatSupportChannelListServiceData): boolean {
-  const activeSupportId = Number(activeChannel.value?.support_user_id || 0)
   const activeClubId = Number(activeChannel.value?.club_id || 0)
-  const nextSupportId = Number(channel.support_user_id || 0)
   const nextClubId = Number(channel.club_id || 0)
-
-  if (activeSupportId > 0 && nextSupportId > 0 && activeClubId > 0 && nextClubId > 0) {
-    return activeSupportId === nextSupportId && activeClubId === nextClubId
-  }
-
-  if (activeSupportId > 0 && nextSupportId > 0) {
-    return activeSupportId === nextSupportId
-  }
-
-  return activeClubId > 0 && nextClubId > 0 && activeClubId === nextClubId
+  return activeClubId === nextClubId
 }
 
 async function switchChannel(channel: ChatSupportChannelListServiceData): Promise<void> {
   if (isActiveChannel(channel)) return
   requestedClubMissing.value = false
   activeChannel.value = channel
-  chatContext.value.clubId = Number(channel.club_id || 0)
-  chatContext.value.tribeId = Number(channel.tribe_id || 0)
-  chatContext.value.supportUserId = Number(channel.support_user_id || 0)
   await fetchMessages({ setRead: true })
 }
 
@@ -264,10 +257,6 @@ function buildMessageQuery(setRead: boolean) {
 
   const clubId = Number(channel.club_id || targetClubId.value || 0)
   const tribeId = Number(channel.tribe_id || chatContext.value.tribeId || 0)
-  const supportUserId = Number(channel.support_user_id || 0)
-
-  if (supportUserId <= 0) return null
-
   return {
     limit: 50,
     tribe_id: tribeId,
@@ -290,7 +279,8 @@ async function fetchMessages(options: { setRead: boolean } = { setRead: false })
 
   const list = Array.isArray(response.data?.list) ? response.data.list : []
   messages.value = [...list].reverse()
-  if (options.setRead) {
+  const channel = activeChannel.value
+  if (options.setRead && list.length > 0 && channel?.channel !== '') {
     markActiveChannelRead()
     await markAsRead()
   }
@@ -438,7 +428,8 @@ function triggerAudioUploadFallback(): void {
 async function resolveUploadRuntime() {
   const config = imGameConfig.value
   return {
-    ossKey: config?.oss_key || '',
+    oss_key: config?.oss_key || '',
+    base_url: config?.url || '',
   }
 }
 
@@ -983,24 +974,18 @@ function initWsListener(): void {
       return
     }
 
-    if (!payload.userSend) {
-      const nextChannels = channels.value.map((item) => {
-        const supportId = Number(item.support_user_id || 0)
-        const clubId = Number(item.club_id || 0)
-        if (supportId > 0 && payload.supportUserId > 0 && supportId !== payload.supportUserId) {
-          return item
-        }
-        if (clubId > 0 && payload.clubId > 0 && clubId !== payload.clubId) {
-          return item
-        }
-        return {
-          ...item,
-          unread_count: Number(item.unread_count || 0) + 1,
-        }
-      })
-      channels.value = nextChannels
-      hasUnread.value = nextChannels.some((item) => Number(item.unread_count || 0) > 0)
-    }
+    const nextChannels = channels.value.map((item) => {
+      const clubId = Number(item.club_id || 0)
+      if (clubId > 0 && payload.clubId > 0 && clubId !== payload.clubId) {
+        return item
+      }
+      return {
+        ...item,
+        unread_count: Number(item.unread_count || 0) + 1,
+      }
+    })
+    channels.value = nextChannels
+    hasUnread.value = nextChannels.some((item) => Number(item.unread_count || 0) > 0)
   })
 }
 

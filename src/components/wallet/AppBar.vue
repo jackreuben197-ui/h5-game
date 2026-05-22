@@ -99,7 +99,7 @@ function onWallet(): void {
 .appbar__back {
   width: 0.32rem;
   height: 0.32rem;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  filter: brightness(0) saturate(100%) invert(22%) sepia(95%) saturate(4000%) hue-rotate(337deg) brightness(105%);
 }
 
 .appbar__actions {

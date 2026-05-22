@@ -37,38 +37,26 @@ function handleClick(event: MouseEvent): void {
 
 <style scoped lang="scss">
 .action-btn {
-  width: 1.5644rem;
-  height: 0.5856rem;
-  padding: 0 0.15rem;
-  border-radius: 0.4267rem;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(0.35rem) saturate(1.02);
-  display: inline-flex;
-  align-items: center;
+  display: flex;
+  width: 58.524px;
+  height: 21.909px;
+  padding: 2.401px 0 2.401px 0.6px;
   justify-content: center;
-  font-size: 0.225rem;
+  align-items: center;
+  gap: 14.106px;
+  border-radius: 15.006px;
+  background: #FFF;
   border: none;
-  line-height: 0.2rem;
-  box-shadow:
-  /* 左上高光 */
-  inset  1px  1px 0px  0px rgba(255, 255, 255, 0.85),
-  inset  3px  3px 0px -2px rgba(255, 255, 255, 0.30),
-  /* 右下高光 */
-  inset -1px -1px 0px  0px rgba(255, 255, 255, 0.85),
-  inset -3px -3px 0px -2px rgba(255, 255, 255, 0.30),
-  /* 左下暗部 */
-  inset  1px -1px 0px  0px rgba(200, 157, 149, 1),
-  inset  3px -3px 0px -2px rgba(200, 157, 149, 1),
-  /* 右上暗部 */
-  inset -1px  1px 0px  0px rgba(200, 157, 149, 1),
-  inset -3px  3px 0px -2px rgba(200, 157, 149, 1),
-  /* 整体内阴影 */
-  inset  0    0   2px      rgba(0, 0, 0, 0.80);
 }
 
-.action-btn--with-icon {
-  justify-content: space-between;
+.action-label {
+  color: rgba(0, 0, 0, 1);
+  font-feature-settings: 'liga' off, 'clig' off;
+  font-family: "HONOR Sans CN";
+  font-size: 8.403px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 120%; /* 10.084px */
 }
 
 .action-icon {

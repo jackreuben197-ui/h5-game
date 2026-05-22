@@ -29,7 +29,7 @@ import walletIcon from '@/assets/icons/icon_wallet.png'
 import clubCoverAvatar from '@/assets/images/default_avatar.png'
 import imgQuickActionCreateBg from '@/assets/images/club_qa_create_club_bg_shape.svg'
 import imgQuickActionBoardBg from '@/assets/images/club_qa_data_board_bg_shape.svg'
-import quickSafetyBg from '@/assets/images/club_header_quick_safety.jpg'
+import quickSafetyBg from '@/assets/images/club_header_quick_safety.png'
 import quickRankingBg from '@/assets/images/club_header_quick_ranking.png'
 import gameType6Plus from '@/assets/icons/game_type_6+.png'
 import gameTypeNlh from '@/assets/icons/game_type_nlh.png'
@@ -674,7 +674,7 @@ function formatChipBase(rawValue: number): string {
 </script>
 
 <template>
-  <div class="page-shell room-list-page themeType2" :style="[backgroundStyle, pageStyle]">
+  <div class="room-list-page themeType2" :style="[backgroundStyle, pageStyle]">
     <div class="bg-overlay"></div>
     <HeaderBack>
       <div class="club-identity">
@@ -782,12 +782,7 @@ function formatChipBase(rawValue: number): string {
             alt=""
             aria-hidden="true"
           />
-          <img
-            class="quick-card-layer quick-card-layer--safety-bg"
-            :src="imgQuickActionCreateBg"
-            alt=""
-            aria-hidden="true"
-          />
+
           <span class="quick-card-title">安全卫士</span>
         </button>
 
@@ -802,12 +797,7 @@ function formatChipBase(rawValue: number): string {
             alt=""
             aria-hidden="true"
           />
-          <img
-            class="quick-card-layer quick-card-layer--ranking-bg"
-            :src="imgQuickActionBoardBg"
-            alt=""
-            aria-hidden="true"
-          />
+
           <span class="quick-card-title">排行榜</span>
         </button>
       </div>
@@ -904,9 +894,13 @@ function formatChipBase(rawValue: number): string {
 <style scoped lang="scss">
 .room-list-page {
   position: relative;
+  width: 100%;
   height: 100dvh;
   color: #fff;
   overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .bg-overlay {
@@ -1069,16 +1063,16 @@ function formatChipBase(rawValue: number): string {
   width: 100%;
   min-height: 1.0577rem;
   border: 0;
-  border-radius: 0.4016rem;
-  padding: 0.1847rem 0.3936rem;
+  border-radius: 0.5279rem;
+  padding: 0.1325rem 0.1446rem;
   color: #fff;
-  display: inline-flex;
-  align-items: flex-start;
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  gap: 0.2rem;
-  background: rgba(34, 34, 34, 0.39);
+  gap: 0.0832rem;
+  background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
   box-shadow: inset 0 0 0 0.0133rem rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(0.8133rem);
+  backdrop-filter: blur(0.0021rem);
   transition: min-height 0.2s ease;
 }
 
@@ -1207,27 +1201,39 @@ function formatChipBase(rawValue: number): string {
 .club-header-tabs {
   margin-top: 0.4177rem;
   display: flex;
-  align-items: center;
-  gap: 0.6587rem;
-  padding: 0 0.4562rem;
   height: 0.6483rem;
+  padding: 0 0.4562rem;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
 }
 
 .club-header-tab {
   position: relative;
   border: 0;
   background: transparent;
-  color: rgba(255, 255, 255, 0.72);
+  color: #FFF;
+  text-align: center;
+  font-feature-settings: 'liga' off, 'clig' off;
+  font-family: "HONOR Sans CN", sans-serif;
   font-size: 0.3521rem;
-  line-height: 0.95;
+  font-style: normal;
   font-weight: 500;
+  line-height: 95%;
+  opacity: 0.7;
   padding: 0 0 0.03rem;
-  opacity: 0.92;
 }
 
 .club-header-tab--active {
-  color: #fff;
+  color: #FFF;
+  text-align: center;
+  font-feature-settings: 'liga' off, 'clig' off;
+  font-family: "HONOR Sans CN", sans-serif;
+  font-size: 0.3521rem;
+  font-style: normal;
   font-weight: 700;
+  line-height: 95%;
+  opacity: 1;
 }
 
 .club-header-tab--active::after {
@@ -1337,12 +1343,15 @@ function formatChipBase(rawValue: number): string {
 .quick-card-title {
   position: relative;
   z-index: 3;
-  margin-left: 0;
+  margin-left: 1.45rem;
+  color: #FFF;
+  font-feature-settings: 'liga' off, 'clig' off;
+  font-family: "HONOR Sans CN", sans-serif;
   font-size: 0.4177rem;
+  font-style: normal;
   font-weight: 700;
-  letter-spacing: 0.002rem;
-  color: #fff;
-  text-shadow: 0 0.03rem 0.16rem rgba(0, 0, 0, 0.54);
+  line-height: 140%;
+  text-shadow: 0 0.0321rem 0.1767rem rgba(0, 0, 0, 0.25);
 }
 
 @media (max-width: 360px) {
@@ -1365,9 +1374,15 @@ function formatChipBase(rawValue: number): string {
   margin-top: 0;
   max-height: calc(100dvh - 7.85rem);
   overflow-y: auto;
-  padding: 0.34rem 0.38rem 2.2rem;
-  background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(0.8032rem) saturate(1.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6105rem;
+  align-self: stretch;
+  border-radius: 0.1687rem;
+  padding: 0.7791rem 0.4559rem 2.2rem 0.4559rem;
+  background: rgba(34, 34, 34, 0.50);
+  backdrop-filter: blur(0.2213rem);
 }
 
 .club-embedded-container {

@@ -5,6 +5,7 @@ import { getUserClubApi } from '@/api/user'
 import { getCowboyRoomListApi } from '@/api/gc'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import StorageKey from '@/constants/storageKey'
+import { joinCasinoGame, getDeviceType } from '@/api/casino'
 import homeHeaderFallback from '@/assets/images/home_header_2.png'
 import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
@@ -15,6 +16,19 @@ import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { showGameToast } from '@/components/Toast'
 import { useCasinoStore } from '@/stores/casino'
 import { useMinigameStore } from '@/stores/minigame'
+import GameClubSelector from '@/components/GameClubSelector.vue'
+
+import imgPa from '@/assets/images/minigame-newui/pa.svg'
+import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
+import imgFb from '@/assets/images/minigame-newui/fb.svg'
+import imgCowboy from '@/assets/images/minigame-newui/sg.svg'
+
+const popularBannerGamesStatic = [
+  { name: 'PA真人', svg: imgPa, gameApiType: 'pa_live' },
+  { name: '麻将胡了', svg: imgMahjong, gameApiType: 'mahjong' },
+  { name: 'FB体育', svg: imgFb, gameApiType: 'fb_sports' },
+  { name: '德州牛仔', svg: imgCowboy, gameApiType: 'cow_boy' },
+]
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -34,6 +48,103 @@ const NOTICE_SPEED_PX_PER_SEC = 40
 const NOTICE_GAP_PX = 48
 
 let noticeResizeObserver: ResizeObserver | null = null
+
+const showGameClubSelector = ref(false)
+const pendingGameInfo = ref<{ apiType: string; gameType: string; roomId: number } | null>(null)
+
+const activeBannerGames = computed(() => {
+  const apiGames = casinoStore.popularBannerGames || []
+  return popularBannerGamesStatic.map(staticGame => {
+    let matched = apiGames.find(g => {
+      if (staticGame.name === 'PA真人') {
+        return g.game_name?.includes('PA') || g.game_api_type === 'pa_live' || g.game_name?.includes('DB视讯') || g.game_name === 'DB真人'
+      }
+      if (staticGame.name === '麻将胡了') {
+        return g.game_name === '麻将胡了' || g.game_api_type === 'slots_gpd'
+      }
+      if (staticGame.name === 'FB体育') {
+        return g.game_api_type === 'fb_sports' || g.game_name === 'FB体育'
+      }
+      if (staticGame.name === '德州牛仔') {
+        return g.game_type === 'cow_boy' || g.game_api_type === 'cow_boy' || g.game_name === '德州牛仔'
+      }
+      return false
+    })
+
+    // If not found in popularBannerGames, try gameRecords as fallback
+    if (!matched) {
+      const allGames = casinoStore.gameRecords || []
+      matched = allGames.find(g => {
+        if (staticGame.name === 'PA真人') return g.game_name?.includes('PA') || g.game_api_type === 'pa_live' || g.game_name?.includes('DB视讯') || g.game_name === 'DB真人'
+        if (staticGame.name === '麻将胡了') return g.game_name === '麻将胡了' || g.game_api_type === 'slots_gpd'
+        if (staticGame.name === 'FB体育') return g.game_api_type === 'fb_sports' || g.game_name === 'FB体育'
+        if (staticGame.name === '德州牛仔') return g.game_type === 'cow_boy' || g.game_api_type === 'cow_boy' || g.game_name === '德州牛仔'
+        return false
+      })
+    }
+
+    return {
+      ...staticGame,
+      gameApiType: matched?.game_api_type || staticGame.gameApiType,
+      roomId: matched?.id || matched?.game_room_id || 0
+    }
+  })
+})
+
+function handleBannerGameClick(game: any) {
+  if (game.gameApiType === 'cow_boy') {
+    showGameToast(t('UIMineClubCowboyDownloadTip') || '下载牛仔游戏')
+    return
+  }
+
+  pendingGameInfo.value = { apiType: game.gameApiType, gameType: '', roomId: game.roomId }
+  showGameClubSelector.value = true
+}
+
+function handleWalletConfirm(clubId?: number) {
+  showGameClubSelector.value = false
+  if (!pendingGameInfo.value) return
+  const { apiType, gameType, roomId } = pendingGameInfo.value
+  joinGame(apiType, gameType, roomId, clubId)
+  pendingGameInfo.value = null
+}
+
+const joinGame = async (apiType: string, gameType: string, roomId = 0, clubId?: number) => {
+  try {
+    const isRealNameGame = apiType === 'real_name' || apiType === 'pa_live'
+    const finalGameType = ""
+    const deviceType = getDeviceType()
+    const finalDeviceType = isRealNameGame ? 2 : deviceType
+
+    const res = await joinCasinoGame({
+      game_api_type: apiType,
+      game_room_id: roomId,
+      game_type: finalGameType,
+      device_type: finalDeviceType,
+      currency_type: 1,
+    }, clubId)
+
+    if (res.code === 0 && res.data) {
+      const gameUrl = res.data.url || res.data.game_url
+      if (gameUrl) {
+        if (isRealNameGame && deviceType === 1) {
+          const width = screen.width;
+          const height = screen.height;
+          const windowFeatures = `width=${width},height=${height},scrollbars=yes,resizable=yes,location=yes`;
+          window.open(gameUrl, '_blank', windowFeatures)
+        } else {
+          window.open(gameUrl, '_blank', 'noopener,noreferrer')
+        }
+      } else {
+        showGameToast(t('UIErrorNetwork') || 'No game URL available')
+      }
+    } else {
+      showGameToast(res.msg || t('UIErrorNetwork'))
+    }
+  } catch (error: any) {
+    showGameToast(error?.response?.data?.msg || t('UIErrorNetwork'))
+  }
+}
 
 interface ZoneStats {
   tables: number
@@ -621,18 +732,18 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <!-- 5. 底部4个即将开放 -->
+    <!-- 5. 底部4个热门游戏 (原即将开放) -->
     <div class="coming-soon-row">
-      <div v-for="i in 4" :key="i" class="coming-soon-small">
-        <img
-          class="coming-soon-small-bg"
-          src="@/assets/images/home_comming_soon_2.png"
-          alt="即将开放"
-        />
-        <div class="coming-soon-small-overlay"></div>
-        <span class="coming-soon-small-text"> {{ t('UIHomeComingSoon') }}</span>
+      <div v-for="(game, index) in activeBannerGames" :key="index" class="coming-soon-small" @click="handleBannerGameClick(game)">
+        <img class="coming-soon-full-svg" :src="game.svg" alt="" />
       </div>
     </div>
+
+    <GameClubSelector
+      v-model:show="showGameClubSelector"
+      @confirm="handleWalletConfirm"
+      @cancel="showGameClubSelector = false"
+    />
   </div>
 </template>
 
@@ -1514,7 +1625,7 @@ onBeforeUnmount(() => {
   object-fit: contain;
 }
 
-/* ===== 5. 底部4个即将开放 ===== */
+/* ===== 5. 底部4个即将开放 (修改为静态游戏入口) ===== */
 .coming-soon-row {
   display: flex;
   gap: 0.12rem;
@@ -1528,30 +1639,14 @@ onBeforeUnmount(() => {
   border-radius: 0.5rem;
   overflow: hidden;
   aspect-ratio: 81 / 86;
+  background: rgba(0,0,0,0.2);
+  cursor: pointer;
 }
 
-.coming-soon-small-bg {
-  position: absolute;
-  inset: 0;
+.coming-soon-full-svg {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.coming-soon-small-overlay {
-  position: absolute;
-  inset: 0;
-}
-
-.coming-soon-small-text {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  font-size: 0.293rem;
-  font-weight: 400;
-  color: #fff;
+  display: block;
 }
 </style>

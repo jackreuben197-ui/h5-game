@@ -9,24 +9,33 @@ import { t } from '@/i18n'
 
 import mainBgUrl from '@/assets/images/main_bg.webp'
 
-// Assets
+
 import walletIcon from '@/assets/icons/icon_wallet.png'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import popularTextIcon from '@/assets/images/minigame-newui/populartext.svg'
 
-// Mahjong Assets
-// @ts-ignore
+
 import legPokerSvg from '@/assets/images/minigame-newui/skinnyman.png'
-// @ts-ignore
+
 import kyPokerSvg from '@/assets/images/minigame-newui/mustacheman.png'
-// @ts-ignore
+
 import cowboyBlueSvg from '@/assets/images/minigame-newui/cowboypng.png'
-// @ts-ignore
+
 import mahjong1Svg from '@/assets/images/minigame-newui/麻将胡了.png'
-// @ts-ignore
+
 import mahjong2Svg from '@/assets/images/minigame-newui/麻将胡了2.png'
 
-import game2 from '@/assets/images/minigame-newui/games2.png' // fallback icon for category header
+import dbLiveSvg from '@/assets/images/minigame-newui/DB真人.png'
+
+import fbSportsSvg from '@/assets/images/minigame-newui/FB体育mini.png'
+
+import legPokerSvgCasino from '@/assets/images/minigame-newui/乐游棋牌.png'
+
+import kyPokerSvgCasino from '@/assets/images/minigame-newui/开元棋牌.png'
+
+import cowboyBlueSvgCasino from '@/assets/images/minigame-newui/德州牛仔.png'
+
+import game2 from '@/assets/images/minigame-newui/games2.png' //
 import GameClubSelector from '@/components/GameClubSelector.vue'
 
 const props = defineProps<{ hideHeader?: boolean; clubId?: number }>()
@@ -103,6 +112,34 @@ onActivated(() => {
   if (mahjongGames.value.length === 0) fetchMahjongData()
 })
 
+const getPopularGameImage = (game: any, preferSvg: boolean = false): string => {
+  const gameType = game.game_type || ''
+  const gameApiType = game.game_api_type || ''
+  const gameName = game.game_name || ''
+
+  let gameImage = game.game_icon || game.game_url_p || ''
+
+  if (gameName === '麻将胡了') {
+    gameImage = mahjong1Svg
+  } else if (gameName === '麻将胡了2') {
+    gameImage = mahjong2Svg
+  } else if (gameName === '德州牛仔' || gameType === 'cow_boy' || gameApiType === 'cow_boy') {
+    gameImage = cowboyBlueSvgCasino
+  } else if (gameName === 'DB真人' || (gameName && gameName.includes('DB视讯'))) {
+    if (preferSvg) {
+      gameImage = dbLiveSvg
+    }
+  } else if (gameName === 'FB体育' || gameApiType === 'fb_sports') {
+     gameImage = fbSportsSvg
+  } else if ((gameName && gameName.includes('乐游')) || gameApiType === 'leg_poker') {
+    gameImage = legPokerSvgCasino
+  } else if ((gameName && gameName.includes('开元')) || gameApiType === 'ky_poker') {
+     gameImage = kyPokerSvgCasino
+  }
+
+  return gameImage
+}
+
 const getMahjongGameImage = (game: any): string => {
   const gameApiType = game.game_api_type || "";
   const gameName = (game.game_name || "").toLowerCase();
@@ -156,7 +193,7 @@ const mahjongBlocks = computed(() => {
       key: `mj-api-${index}`,
       title: game.title || game.originalGame?.game_name || "",
       subtitle: game.desc || game.originalGame?.desc || "",
-      icon: game2, // fallback since mahjongBrick isn't present
+      icon: game2,
       layout: "wide",
       items: [game],
     }));
@@ -171,13 +208,13 @@ const handleImageError = (e: Event) => {
 const handleGameClick = (game: any) => {
   if (!game) return
 
-  // Cowboy specific logic
+
   if (game.gameType === 'cow_boy' || game.gameApiType === 'cow_boy' || game.game_type === 'cow_boy' || game.game_api_type === 'cow_boy') {
     showToast(t('UIMineClubCowboyDownloadTip') || '下载牛仔游戏')
     return
   }
 
-  // Handle nested or flat game object
+
   const apiType = game.gameApiType || game.game_api_type;
   const gameType = game.gameType || game.game_type;
   const roomId = game.id || game.gameId || game.game_room_id || 0;
@@ -261,7 +298,7 @@ const joinGame = async (apiType: string, gameType: string, roomId = 0, clubId?: 
     </HeaderBack>
 
     <main class="page-content" :class="{ 'is-embedded': hideHeader }">
-      <!-- ── Popular Banner (horizontal scroll) ─────────────────────── -->
+
       <section
         class="popular-banner-section"
         v-show="popularBannerGames.length > 0 || loadingPopularBanner"
@@ -279,20 +316,20 @@ const joinGame = async (apiType: string, gameType: string, roomId = 0, clubId?: 
               @click="handleGameClick(game)"
             >
               <img
-                :src="game.game_icon || game.game_url_p"
+                :src="getPopularGameImage(game, true)"
                 class="popular-game-img"
-                @error="handleImageError"
+                @error="(e) => (e.target as HTMLImageElement).style.visibility = 'hidden'"
               />
             </button>
           </template>
-          <!-- Skeleton Loader -->
+
           <template v-else>
             <div v-for="n in 6" :key="n" class="skeleton-item"></div>
           </template>
         </div>
       </section>
 
-      <!-- ── Mahjong Category List UI ───────────────────────────────── -->
+
       <div class="category-list">
         <section
           v-for="block in mahjongBlocks"
@@ -407,9 +444,9 @@ const joinGame = async (apiType: string, gameType: string, roomId = 0, clubId?: 
   overflow: visible;
 }
 
-/* ── Popular Banner Section ──────────────────────────────────────────────── */
+
 .popular-banner-section {
-   display: flex;
+  display: flex;
   flex-direction: row;
   width: 100%;
   justify-content: flex-start;
@@ -431,19 +468,19 @@ const joinGame = async (apiType: string, gameType: string, roomId = 0, clubId?: 
     width: 40px;
     height: 100%;
     flex-shrink: 0;
-    margin-left: -15px;
+    margin-left: -13px;
     gap: 2px;
 }
 
 .popular-text-img {
-   width: 38.323px;
+  width: 38.323px;
   height: 54.793px;
   border-radius: 8.868px;
   object-fit: contain;
 }
 
 .popular-games-scroll {
-   display: flex;
+  display: flex;
   flex-direction: row;
   gap: 3.544px;
   overflow-x: auto;
@@ -461,17 +498,14 @@ const joinGame = async (apiType: string, gameType: string, roomId = 0, clubId?: 
   height: 47.292px;
   flex-shrink: 0;
   border-radius: 10.293px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border: none;
+  background: transparent;
   padding: 0;
+  cursor: pointer;
   overflow: hidden;
-  transition: transform 0.2s ease, background 0.2s ease;
+  transition: transform 0.15s ease;
   &:active {
     transform: scale(0.95);
-    background: rgba(255, 255, 255, 0.2);
   }
 }
 
@@ -497,18 +531,19 @@ const joinGame = async (apiType: string, gameType: string, roomId = 0, clubId?: 
   100% { opacity: 0.6; }
 }
 
-/* ── Category List & Grid Styles (Ported from MiniGames.vue) ───────────────────────── */
+
 .category-list {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  // gap: 0.3rem;
+  margin-top: 13.25px;
   width: 100%;
 }
 
 .category-block {
   background: transparent;
   border-radius: 0.32rem;
-  padding: 0.15rem 0.15rem 0.4rem;
+  // padding: 0.15rem 0.15rem 0.4rem;
   box-shadow: none;
   border: none;
   overflow: visible;

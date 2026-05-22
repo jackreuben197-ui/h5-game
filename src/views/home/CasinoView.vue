@@ -520,21 +520,21 @@ const categoryBlocks = computed(() => {
     {
       key: 'hot-real',
       title: '热门真人',
-      subtitle: 'REAL',
+      subtitle: '性感荷官 倾情演绎',
       icon: img2,
       items: getBlockItems('hot-real', hotRealGames, 3),
     },
     {
       key: 'hot-slot',
       title: '热门电子',
-      subtitle: 'SLOT',
+      subtitle: '火爆游戏 轻松爆奖',
       icon: img3,
       items: getBlockItems('hot-slot', hotSlotGames, 3),
     },
     {
       key: 'hot-fish',
       title: '热门捕鱼',
-      subtitle: 'FISH',
+      subtitle: '经典捕鱼 轻松爆奖',
       icon: img5,
       items: getBlockItems('hot-fish', hotFishGames, 3),
     },
@@ -1340,8 +1340,8 @@ onActivated(async () => {
 }
 
 .category-icon-img {
-  width: 20px;
-  height: 20px;
+  width: 30px;
+  height: 30px;
   border-radius: 0.2rem;
   object-fit: cover;
   box-shadow: none;

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
-import keypadBgUrl from '@/assets/images/wallet/keyboard_numbers_bg.svg'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import { t } from '@/i18n'
@@ -46,12 +45,6 @@ const emit = defineEmits<{
 }>()
 
 const value = ref('')
-const keyBgStyle = {
-  backgroundImage: `url(${keypadBgUrl})`,
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'center',
-  backgroundSize: '100% 100%',
-}
 const digits: readonly string[] = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
 const getMaxLength = (): number => props.maxLength ?? String(props.max).length
 
@@ -141,23 +134,19 @@ function confirm(): void {
               v-for="n in digits"
               :key="n"
               class="kp__key"
-              :style="keyBgStyle"
               @click="press(n)"
             >
               {{ n }}
             </button>
             <button class="kp__key kp__key--accent" @click="clearAll">C</button>
-            <button class="kp__key" :style="keyBgStyle" @click="press('0')">0</button>
+            <button class="kp__key" @click="press('0')">0</button>
             <button class="kp__key kp__key--accent" @click="backspace">
               <Icon icon="solar:backspace-bold" class="kp__icon" />
             </button>
           </div>
 
           <div class="kp__actions">
-            <button class="kp__cancel" @click="cancel">
-              {{ t('Wallet_Cancel') }}
-            </button>
-            <PrimaryButton :text="confirmText" class="kp__confirm" @click="confirm" />
+            <PrimaryButton :text="confirmText" :shadow="false" class="kp__confirm" @click="confirm" />
           </div>
         </div>
       </div>
@@ -190,51 +179,43 @@ function confirm(): void {
   cursor: pointer;
 }
 
-.kp__sheet {
+.kp__sheet,
+.kp__sheet--plain {
   position: relative;
   z-index: 1;
-  width: 100%;
-  max-width: 430px;
-  background-color: rgba(0, 0, 0, 0.34);
-  border: 0.96px solid rgba(242, 242, 242, 0.4);
-  border-bottom: none;
-  border-top-left-radius: 0.85rem;
-  border-top-right-radius: 0.85rem;
-  padding: 0.68rem 0.53rem 0.55rem;
   display: flex;
+  width: 375px;
+  padding: 24.096px 19.954px 15.519px 19.954px;
   flex-direction: column;
-  gap: 0.45rem;
-  box-shadow: 3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25), 0 0 8.6px #000 inset,
-    2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
+  align-items: center;
+  gap: 16.265px;
+  border-radius: 31.672px 31.672px 0 0;
+  border: 0.894px solid rgba(242, 242, 242, 0.40);
+  border-bottom: none;
+  background: url(@/assets/images/wallet/bg_sharp.webp) lightgray 0% 0% / 40.11695086956024px 40.11695086956024px repeat,
+              linear-gradient(107deg, rgba(142, 142, 142, 0.30) 2.93%, rgba(103, 103, 103, 0.40) 43.62%, rgba(73, 73, 73, 0.50) 89.79%);
+  background-blend-mode: overlay, hard-light;
+  box-shadow: 3.222px 4.028px 6.445px 0 rgba(0, 0, 0, 0.25),
+              1.134px 1.134px 2.268px 0 rgba(242, 242, 242, 0.20) inset;
+  backdrop-filter: blur(9.921565055847168px);
+  -webkit-backdrop-filter: blur(9.921565055847168px);
   overflow: hidden;
 }
 
-.kp__sheet--plain {
-  background-color: #15171d;
-  border-color: #15171d;
-  box-shadow: none;
-}
-
-.kp__sheet::before {
+.kp__sheet::before,
+.kp__sheet--plain::before {
   content: '';
   position: absolute;
   inset: 0;
-  pointer-events: none;
   border-radius: inherit;
-  backdrop-filter: blur(7.6px);
-  -webkit-backdrop-filter: blur(7.6px);
-  background-image: linear-gradient(
-    106.9deg,
-    rgba(142, 142, 142, 0.3) 3%,
-    rgba(103, 103, 103, 0.4) 44%,
-    rgba(73, 73, 73, 0.5) 90%
-  );
-  mix-blend-mode: hard-light;
-  z-index: 0;
-}
-
-.kp__sheet--plain::before {
-  display: none;
+  padding: 0.894px;
+  background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
 }
 
 .kp__sheet > * {
@@ -293,25 +274,54 @@ function confirm(): void {
 
 .kp__key {
   position: relative;
-  aspect-ratio: 100 / 51;
-  width: 100%;
+  width: 99.699px;
+  height: 50.904px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(233, 233, 233, 0.2) 0%, rgba(165, 165, 165, 0.4) 100%);
+  mix-blend-mode: plus-lighter;
+  border-radius: 14.157px;
   border: none;
-  border-radius: 0.38rem;
+  backdrop-filter: blur(6.02px);
+  -webkit-backdrop-filter: blur(6.02px);
   font-family: var(--wallet-font-num);
   font-weight: 500;
   font-size: 0.61rem;
   color: #fff;
   cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.kp__key::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 0.71px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 55%, rgba(255, 255, 255, 0) 61%, rgba(255, 255, 255, 0.5) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.kp__key:active {
+  opacity: 0.7;
+  transform: scale(0.96);
 }
 
 .kp__key--accent {
-  background: rgba(4, 209, 157, 0.24);
-  border: none;
-  border-radius: 1.35rem;
+  display: flex;
+  width: 99.699px;
+  height: 50.904px;
+  padding: 7.53px 9.639px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 60.241px;
+  background: rgba(245, 45, 45, 0.20);
+  mix-blend-mode: plus-lighter;
 }
 
 .kp__icon {
@@ -324,23 +334,34 @@ function confirm(): void {
   gap: 0.25rem;
   padding: 0 0.2rem;
   margin-top: 0.13rem;
-}
-
-.kp__cancel {
-  flex: 1;
-  height: 1.44rem;
-  border-radius: 1.05rem;
-  background: rgba(0, 0, 0, 0.55);
-  border: none;
-  color: #fff;
-  font-family: var(--wallet-font-cn);
-  font-weight: 500;
-  font-size: 0.4rem;
-  cursor: pointer;
+  width: 100%;
 }
 
 .kp__confirm {
-  flex: 1;
+  display: flex !important;
+  height: 55.184px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  flex: 1 0 0 !important;
+  border-radius: 40.576px !important;
+  background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%) !important;
+  backdrop-filter: blur(0.16230463981628418px) !important;
+  box-shadow: none !important;
+}
+
+.kp__confirm::before {
+  display: none !important;
+}
+
+.kp__confirm :deep(.primary-btn__text) {
+  color: #78E490 !important;
+  text-align: center !important;
+  font-feature-settings: 'liga' off, 'clig' off !important;
+  font-family: "HONOR Sans CN", sans-serif !important;
+  font-size: 15.658px !important;
+  font-style: normal !important;
+  font-weight: 500 !important;
+  line-height: 120% !important;
 }
 
 .keypad-enter-active .kp__sheet,

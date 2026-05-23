@@ -93,24 +93,45 @@ const emit = defineEmits<{
 .method__label {
   margin-top: -0.45rem;
   padding: 0.55rem 0.15rem 0.1rem;
-  width: 1.75rem;
-  height: 1.24rem;
-  background: rgba(47, 47, 47, 0.24);
-  border: 0.18px solid rgba(153, 153, 153, 0.6);
-  border-radius: 0.25rem;
+  width: 65.367px;
+  height: 46.389px;
+  background: rgba(255, 255, 255, 0.20);
+  border: 0.357px solid transparent;
+  border-radius: 9.287px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
   color: #fff;
   box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+.method__label::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 0.357px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(153, 153, 153, 1) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
 .method--active .method__label {
-  background: rgba(255, 255, 255, 0.79);
+  border-radius: 10.543px;
+  background: radial-gradient(47.75% 48.13% at 41.94% 52.55%, rgba(37, 49, 107, 0.50) 0%, rgba(16, 16, 16, 0.50) 100%);
+  background-blend-mode: soft-light;
   border: none;
-  color: #009d68;
   font-weight: 600;
+}
+
+.method--active .method__label::before {
+  display: none;
 }
 
 .method__label-row {

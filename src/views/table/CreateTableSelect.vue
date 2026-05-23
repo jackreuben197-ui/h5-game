@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import iconNlh from '@/assets/icons/game_type_nlh.png'
-import iconPlo from '@/assets/icons/game_type_plo.png'
-import iconSixPlus from '@/assets/icons/game_type_6+.png'
+import iconNlh from '@/assets/icons/game_type_nlh.svg'
+import iconPlo from '@/assets/icons/game_type_plo.svg'
+import iconSixPlus from '@/assets/icons/game_type_6+.svg'
 import iconMTT from '@/assets/icons/game_type_mtt.png'
 import { useRoute, useRouter } from 'vue-router'
 import { postOrgClubGoldApi } from '@/api/org'

@@ -550,8 +550,8 @@ async function onCsSubmit(displayPayPrice?: number) {
     discount > 0
       ? Number((basePrice * (1 - discount)).toFixed(4))
       : feeType === 2 && feeRate > 0
-      ? Number((basePrice * (1 + feeRate)).toFixed(4))
-      : Number(basePrice.toFixed(4))
+        ? Number((basePrice * (1 + feeRate)).toFixed(4))
+        : Number(basePrice.toFixed(4))
 
   // legal_tender = what the player actually pays, in cents (same logic as pay_price)
   const playerPrice = isUniqueAmount
@@ -769,11 +769,13 @@ async function onUsdtSubmit(type: number) {
             />
           </div>
 
-          <PrimaryButton
-            :text="`立即支付 ${displayPayAmount}`"
-            class="pay-cta"
-            @click="onPayClick"
-          />
+          <div class="pay-cta-wrapper">
+            <PrimaryButton
+              :text="`立即支付 ${displayPayAmount}`"
+              class="pay-cta"
+              @click="onPayClick"
+            />
+          </div>
         </template>
 
         <template v-else>
@@ -1010,11 +1012,23 @@ async function onUsdtSubmit(type: number) {
   color: #f8f8f8;
 }
 
-.pay-cta {
+.pay-cta-wrapper {
   position: fixed;
   bottom: calc(env(safe-area-inset-bottom) + 0.6rem);
   left: 0.455rem;
   width: calc(100% - 0.91rem);
+  height: 1.47rem;
+  border-radius: 1.08rem;
+  background: rgba(18, 20, 24, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   z-index: 10;
+  overflow: hidden;
+}
+
+.pay-cta {
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%) !important;
 }
 </style>

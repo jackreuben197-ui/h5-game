@@ -177,7 +177,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Divider -->
-          <div class="divider"></div>
+          <!-- <div class="divider"></div> -->
 
           <!-- Phase 1 Layout -->
           <template v-if="step === 1">
@@ -510,6 +510,7 @@ onUnmounted(() => {
 
 .submit-action {
   width: 100%;
+
 }
 
 .action-btn {
@@ -526,6 +527,7 @@ onUnmounted(() => {
   transition: all 0.2s ease;
   border: none;
   outline: none;
+
 }
 
 .action-btn:active {

@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-import {
-  postOrgClubLevelCostApi,
-  postOrgClubLevelInfoApi,
-  postOrgClubUpLevelApi
-} from '@/api/org'
+import { postOrgClubLevelCostApi, postOrgClubLevelInfoApi, postOrgClubUpLevelApi } from '@/api/org'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgMedal from '@/assets/images/club_medal.png'
 import imgRankBadge from '@/assets/icons/club_rank_badge.png'
@@ -183,15 +179,21 @@ onMounted(() => {
       </main>
 
       <footer class="club-level-footer">
-        <button type="button" class="club-upgrade-btn" @click="openUpgradeConfirm">Upgrade Level</button>
+        <button type="button" class="club-upgrade-btn" @click="openUpgradeConfirm">
+          Upgrade Level
+        </button>
       </footer>
 
       <div v-if="showUpgradeConfirm" class="club-level-mask" @click="closeUpgradeConfirm">
         <section class="club-level-confirm" @click.stop>
           <p>{{ confirmText }}</p>
           <div class="club-level-confirm__actions">
-            <button type="button" class="club-level-confirm__cancel" @click="closeUpgradeConfirm">取消</button>
-            <button type="button" class="club-level-confirm__ok" @click="confirmUpgrade">确定</button>
+            <button type="button" class="club-level-confirm__cancel" @click="closeUpgradeConfirm">
+              取消
+            </button>
+            <button type="button" class="club-level-confirm__ok" @click="confirmUpgrade">
+              确定
+            </button>
           </div>
         </section>
       </div>
@@ -203,10 +205,7 @@ onMounted(() => {
 .club-level-page {
   position: relative;
   height: 100dvh;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
-  overflow: hidden;
-  color: #f9f9f9;
-  background: #100d18;
+  background-size: cover;
 }
 
 .club-level-bg {

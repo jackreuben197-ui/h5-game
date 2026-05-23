@@ -13,6 +13,7 @@ import {
   GetWinDesc,
   parseHandRecordCards,
   parseReplayLike,
+  type CardItem,
   type StatsReplayData,
   type StatsReplayFantasyData,
 } from '@/api/models/replayDisplay'
@@ -20,6 +21,7 @@ import { postMiscGameRoundListDataByRoomApi } from '@/api/misc'
 import { postStatsUserGameRecordListApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import PokerCard from '@/components/GameCard/PokerCard.vue'
 import { setHandReplaySession } from '@/session/handReplaySession'
 import { formatUC } from '@/utils/roomVisibility'
 
@@ -39,7 +41,7 @@ const selectedMode = ref(modeTabs[0])
 interface HandCard {
   id: string
   title: string
-  handCards: string[]
+  handCards: CardItem[]
   handId: string
   table: string
   pot: string
@@ -77,15 +79,12 @@ function resolveGameFilter(): { game_types: number[]; poker_types?: number[] } {
   return { game_types: [0] }
 }
 
-function isRedSuit(card: string): boolean {
-  return card.includes('♥') || card.includes('♦')
-}
-
-function buildDisplayCards(record: { data?: unknown }): string[] {
+function buildDisplayCards(record: { data?: unknown }): CardItem[] {
   const parsed = parseHandRecordCards(record.data)
   const cards = parsed.slice(0, 2).map(item => decodeCard(item))
-  if (!cards.length) return ['--', '--']
-  if (cards.length === 1) return [cards[0], '--']
+  const placeholder: CardItem = { rank: '--', suit: 's' }
+  if (!cards.length) return [placeholder, placeholder]
+  if (cards.length === 1) return [cards[0], placeholder]
   return cards
 }
 
@@ -248,13 +247,13 @@ onMounted(() => {
         >
           <div class="top-row">
             <div class="poker-pair">
-              <div
+              <PokerCard
                 v-for="(value, idx) in card.handCards"
                 :key="`${card.id}-card-${idx}`"
-                :class="['poker', { red: isRedSuit(value) }]"
-              >
-                {{ value }}
-              </div>
+                :rank="value.rank"
+                :suit="value.suit"
+                size="0.64rem"
+              />
             </div>
             <div class="title" v-html="card.title"></div>
           </div>
@@ -371,22 +370,6 @@ onMounted(() => {
   gap: 0.08rem;
 }
 
-.poker {
-  width: 0.64rem;
-  height: 0.82rem;
-  border-radius: 0.1rem;
-  background: #fff;
-  color: #000;
-  font-size: 0.22rem;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 0.08rem;
-
-  &.red {
-    color: #fa2b4b;
-  }
-}
 
 .title {
   flex: 1;

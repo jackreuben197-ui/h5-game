@@ -1,4 +1,4 @@
-const KEY_PREFIX = 'dzpk_'
+const KEY_PREFIX = 'dzpk_h5_'
 
 export const localStore = {
   // 与 Cocos LocalStoreManager 一致的统一前缀。
@@ -9,7 +9,6 @@ export const localStore = {
     const safeValue = value === undefined ? null : value
     window.localStorage.setItem(this.keyPre + key, JSON.stringify(safeValue))
   },
-
 
   getItem<T = unknown>(key: string, defaultValue: T | null = null): T | null {
     const prefixedKey = this.keyPre + key

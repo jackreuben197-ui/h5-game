@@ -443,16 +443,19 @@ export function h5SendHoldemPacket(payload: H5SendHoldemPacketPayload): boolean 
 }
 
 // 开发日志：仅解析 code 供观测与分流，不参与转发数据构造。
-function logHoldemPacket(buffer: ArrayBufferLike): number | null {
-  const packet = decodeHoldemPacket(buffer)
-  if (!packet) {
+function logHoldemPacket(
+  buffer: ArrayBufferLike,
+  packet: HoldemPacketDecodeResult | null = null,
+): number | null {
+  const decodedPacket = packet || decodeHoldemPacket(buffer)
+  if (!decodedPacket) {
     const bytes = new Uint8Array(buffer)
     logRecv.warn('code decode failed', { byteLength: bytes.length })
     return null
   }
 
-  const code = packet.code
-  const body = packet.body
+  const code = decodedPacket.code
+  const body = decodedPacket.body
   const codeName = HOLDEN_CODE_NAME[code] || 'UNKNOWN'
   const isHeartbeat = code === Code.MSG_D_HEARTBEAT
 
@@ -471,7 +474,8 @@ function logHoldemPacket(buffer: ArrayBufferLike): number | null {
 
 // 二进制入站统一处理：解析日志 + 同步给 Cocos + 分发给 H5 业务层。
 function handleBinaryIncoming(buffer: ArrayBufferLike): void {
-  const code = logHoldemPacket(buffer)
+  const packet = decodeHoldemPacket(buffer)
+  const code = logHoldemPacket(buffer, packet)
   const passthroughBuffer = new Uint8Array(buffer).slice().buffer
 
   // 心跳包由 H5 自维护，不回传给 Cocos；其余一律透传服务器原始字节。
@@ -486,6 +490,7 @@ function handleBinaryIncoming(buffer: ArrayBufferLike): void {
     dataType: 'binary',
     data: passthroughBuffer,
     rawBuffer: passthroughBuffer,
+    packet,
   })
 }
 
@@ -529,6 +534,8 @@ function connectWs(payload: WsConnectPayload): void {
     return
   }
 
+  log.info('ws connect start', { url: targetUrl })
+
   // 无 token 时不建立 websocket，避免进入“已连接但无法 REGISTER”的半可用状态。
   if (!hasSessionToken()) {
     log.info('wsConnect skipped: token empty, waiting login')
@@ -565,6 +572,7 @@ function connectWs(payload: WsConnectPayload): void {
   ws.binaryType = 'arraybuffer'
 
   ws.onopen = () => {
+    log.info('ws open', { url: targetUrl })
     clearReconnectTimer()
     reconnectAttempts = 0
     emitWsOpen(targetUrl)
@@ -584,10 +592,17 @@ function connectWs(payload: WsConnectPayload): void {
   }
 
   ws.onerror = () => {
+    log.warn('ws onerror', { url: targetUrl })
     emitWsError('websocket onerror')
   }
 
   ws.onclose = (event: CloseEvent) => {
+    log.warn('ws close', {
+      url: targetUrl,
+      code: event.code,
+      reason: event.reason,
+      wasClean: event.wasClean,
+    })
     stopHeartbeatLoop()
     emitWsClosed({
       code: event.code,
@@ -698,6 +713,10 @@ export function waitH5WsPacket(
 }
 
 function sendWs(payload: WsSendPayload): void {
+  log.debug('bridge wsSend received', {
+    dataType: payload.dataType,
+  })
+
   if (payload.dataType === 'text') {
     sendWsRaw(payload.text || '', 'bridge-wsSend-text')
     return

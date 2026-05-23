@@ -1,6 +1,7 @@
 import { showFailToast, showSuccessToast } from 'vant'
 import { subscribeCocosMessages } from '../core/cocosBridgeChannel'
 import { BRIDGE_ACTION, BRIDGE_MSG_TYPE, type BridgeMessage, type CocosToastPayload } from '../protocol'
+import { showGameToastOnTable } from '@/components/Toast'
 
 let stopBridgeToastListener: (() => void) | null = null
 
@@ -44,29 +45,8 @@ function onCocosMessage(message: BridgeMessage): void {
       return
     }
 
-    if (toastPayload.type === 'danger') {
-      showFailToast({ message: toastPayload.message, duration: toastPayload.duration ?? 2000 })
-      return
-    }
-
-    showSuccessToast({ message: toastPayload.message, duration: toastPayload.duration ?? 2000 })
+    showGameToastOnTable(toastPayload.type, toastPayload.message, toastPayload.duration ?? 2000)
     return
-  }
-
-  // 兼容协议：直接通过动作名区分成功/失败提示。
-  if (message.action === 'toastSuccess') {
-    const toastPayload = normalizeToastPayload(message.payload)
-    if (toastPayload?.message) {
-      showSuccessToast({ message: toastPayload.message, duration: toastPayload.duration ?? 2000 })
-    }
-    return
-  }
-
-  if (message.action === 'toastDanger') {
-    const toastPayload = normalizeToastPayload(message.payload)
-    if (toastPayload?.message) {
-      showFailToast({ message: toastPayload.message, duration: toastPayload.duration ?? 2000 })
-    }
   }
 }
 

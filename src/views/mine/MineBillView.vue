@@ -3,7 +3,12 @@ import { computed, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { postUserBillApi, postUserWalletApi } from '@/api/user'
-import type { UserBillRecord, UserBillRoom_info, UserBillWallet, UserMyWalletItem } from '@/api/models/user'
+import type {
+  UserBillRecord,
+  UserBillRoom_info,
+  UserBillWallet,
+  UserMyWalletItem,
+} from '@/api/models/user'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import iconUc from '@/assets/icons/icon_chips.png'
@@ -11,6 +16,7 @@ import iconCredit from '@/assets/icons/credit_chip.png'
 import { formatUC } from '@/utils/roomVisibility'
 import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
+import { resolveOpCodeText } from '@/utils/opCodeText'
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -114,7 +120,9 @@ function extractList(value: unknown, depth = 0): Record<string, unknown>[] {
   }
 
   if (Array.isArray(value)) {
-    return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+    return value.filter(
+      (item): item is Record<string, unknown> => !!item && typeof item === 'object',
+    )
   }
 
   if (typeof value !== 'object') {
@@ -140,10 +148,16 @@ function extractList(value: unknown, depth = 0): Record<string, unknown>[] {
   return []
 }
 
-function resolveDateParts(raw: unknown): { day: string; month: string; text: string; dateKey: string } {
+function resolveDateParts(raw: unknown): {
+  day: string
+  month: string
+  text: string
+  dateKey: string
+} {
   if (typeof raw === 'string' && raw.trim()) {
     const asNumber = Number(raw)
-    const candidate = Number.isFinite(asNumber) && asNumber > 0 ? new Date(asNumber * 1000) : new Date(raw)
+    const candidate =
+      Number.isFinite(asNumber) && asNumber > 0 ? new Date(asNumber * 1000) : new Date(raw)
     if (!Number.isNaN(candidate.getTime())) {
       const year = candidate.getFullYear()
       const month = String(candidate.getMonth() + 1).padStart(2, '0')
@@ -173,16 +187,6 @@ function resolveDateParts(raw: unknown): { day: string; month: string; text: str
   }
 
   return { day: '--', month: '--', text: '--', dateKey: '--' }
-}
-
-function resolveOpCodeText(opCodeRaw: unknown): string {
-  const opCode = String(opCodeRaw ?? '').trim()
-  if (!opCode) {
-    return ''
-  }
-
-  const key = `OpCodeString_${opCode}`
-  return resolveTemplateTextByKey(key, getLocale()) || t(key) || key
 }
 
 function normalizeTimeText(raw: unknown): string {
@@ -241,7 +245,11 @@ function isMttCard(row: UserBillWallet, nameCandidates: string[]): boolean {
   }
 
   const texts = [row.op_code, ...nameCandidates]
-    .map((item) => String(item ?? '').trim().toLowerCase())
+    .map((item) =>
+      String(item ?? '')
+        .trim()
+        .toLowerCase(),
+    )
     .filter(Boolean)
   return texts.some((text) => text.includes('mtt') || text.includes('match'))
 }
@@ -260,23 +268,48 @@ function mapBillRecord(row: UserBillRecord): BillRecordItem {
 
 function mapBillCard(row: UserBillWallet, index: number): BillCardItem {
   const roomInfo = (row.room_info as UserBillRoom_info | undefined) || undefined
-  const records = Array.isArray(roomInfo?.records) ? roomInfo.records.map((item) => mapBillRecord(item)) : []
+  const records = Array.isArray(roomInfo?.records)
+    ? roomInfo.records.map((item) => mapBillRecord(item))
+    : []
 
-  const rawName = String(pickRecordValue(row as Record<string, unknown>, ['name', 'title', 'room_name', 'game_room_name']) ?? '')
+  const rawName = String(
+    pickRecordValue(row as Record<string, unknown>, [
+      'name',
+      'title',
+      'room_name',
+      'game_room_name',
+    ]) ?? '',
+  )
   const localizedNameByKey = resolveNameByLocale(rawName)
   const localizedNameByMultiObj = resolveNameFromMultiLangObj(row.multi_lang_names_obj)
   const fallbackName =
-    resolveOpCodeText(row.op_code) || localizedNameByMultiObj || localizedNameByKey || rawName || '账单记录'
+    resolveOpCodeText(row.op_code) ||
+    localizedNameByMultiObj ||
+    localizedNameByKey ||
+    rawName ||
+    '账单记录'
   const roomName = localizedNameByMultiObj || localizedNameByKey || rawName
   const cardName = roomName || fallbackName
   const club = String(
-    roomInfo?.club_name ?? pickRecordValue(row as Record<string, unknown>, ['club_name', 'group_name', 'source_name']) ?? '--',
+    roomInfo?.club_name ??
+      pickRecordValue(row as Record<string, unknown>, ['club_name', 'group_name', 'source_name']) ??
+      '--',
   )
 
   const inAmount = roomInfo?.bring_in_amount
   const outAmount = roomInfo?.bring_out_amount
-  const changeAmount = pickRecordValue(row as Record<string, unknown>, ['change_amount', 'gold_change', 'amount', 'change'])
-  const timeRaw = pickRecordValue(row as Record<string, unknown>, ['create_time_str', 'create_time', 'time', 'created_at'])
+  const changeAmount = pickRecordValue(row as Record<string, unknown>, [
+    'change_amount',
+    'gold_change',
+    'amount',
+    'change',
+  ])
+  const timeRaw = pickRecordValue(row as Record<string, unknown>, [
+    'create_time_str',
+    'create_time',
+    'time',
+    'created_at',
+  ])
   const timeInfo = resolveDateParts(timeRaw)
 
   const fallbackRecord: BillRecordItem = {
@@ -295,7 +328,10 @@ function mapBillCard(row: UserBillWallet, index: number): BillCardItem {
   const canExpand = !isDiamondTab && !isMtt && hasBringInAndOut && finalRecords.length > 0
 
   return {
-    id: String(pickRecordValue(row as Record<string, unknown>, ['id', 'log_id', 'order_id']) ?? `${index + 1}`),
+    id: String(
+      pickRecordValue(row as Record<string, unknown>, ['id', 'log_id', 'order_id']) ??
+        `${index + 1}`,
+    ),
     day: timeInfo.day,
     month: timeInfo.month,
     dateKey: timeInfo.dateKey,
@@ -491,7 +527,11 @@ onMounted(() => {
         <div class="label">UC总余额</div>
         <div class="amount-row">
           <img v-if="activeTab === 'UC'" :src="iconUc" alt="chip" />
-          <img v-else-if="activeTab === 'Club记分牌' || activeTab === '朋友桌记分牌'" :src="iconCredit" alt="chip" />
+          <img
+            v-else-if="activeTab === 'Club记分牌' || activeTab === '朋友桌记分牌'"
+            :src="iconCredit"
+            alt="chip"
+          />
           <img v-else :src="iconDiamond" alt="diamond" />
           <strong>{{ formatAmount(totalAmount) }}</strong>
         </div>
@@ -557,7 +597,9 @@ onMounted(() => {
           </div>
         </article>
         <p v-if="!loading && loadingMore" class="list-status">加载更多中...</p>
-        <p v-else-if="!loading && flowCards.length && !hasMore" class="list-status">没有更多记录了</p>
+        <p v-else-if="!loading && flowCards.length && !hasMore" class="list-status">
+          没有更多记录了
+        </p>
       </section>
     </div>
   </div>

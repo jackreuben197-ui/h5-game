@@ -19,6 +19,7 @@ import gameTypeNlh from '@/assets/icons/game_type_nlh.png'
 import gameTypePlo from '@/assets/icons/game_type_plo.png'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
 import { t } from '@/i18n'
+import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 
 type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
 const POKER_TYPE_LONG = 0
@@ -301,12 +302,28 @@ function toSafeInt(value: unknown): number {
   }
   return Math.floor(num)
 }
+function handleBack() {
+  router.push('/home')
+}
+function handleOpenCustomerService(): void {
+  const clubId = selectedClubId.value
+  if (clubId <= 0) {
+    showFailToast('当前俱乐部信息无效')
+    return
+  }
+
+  openGlobalCustomerServiceChat({
+    imServiceType: 1,
+    clubId,
+    tribeId: selectedTribeId.value,
+  })
+}
 </script>
 
 <template>
   <div class="room-list-page themeType2" :style="pageStyle">
     <div class="bg-overlay"></div>
-    <HeaderBack :title="t('UIHomePokerArea')">
+    <HeaderBack :title="t('UIHomePokerArea')" @back="handleBack">
       <template #right>
         <div class="action-wrap">
           <TopActionButton
@@ -315,7 +332,12 @@ function toSafeInt(value: unknown): number {
             icon-alt="wallet"
             @click="router.push('/wallet')"
           />
-          <TopActionButton :name="t('UIMineMain01')" :icon="serviceIcon" icon-alt="service" />
+          <TopActionButton
+            :name="t('UIMineMain01')"
+            :icon="serviceIcon"
+            icon-alt="service"
+            @click="handleOpenCustomerService"
+          />
         </div>
       </template>
     </HeaderBack>
@@ -362,7 +384,8 @@ function toSafeInt(value: unknown): number {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
+  background:
+    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
     radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
     radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
 }

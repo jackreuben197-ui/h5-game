@@ -3,6 +3,7 @@ interface Props {
   name: string
   icon?: string
   iconAlt?: string
+  large?: boolean
 }
 
 const props = defineProps<Props>()
@@ -19,7 +20,7 @@ function handleClick(event: MouseEvent): void {
 
 <template>
   <button
-    :class="['action-btn', { 'action-btn--with-icon': Boolean(props.icon) }]"
+    :class="['action-btn', { 'action-btn--with-icon': Boolean(props.icon), 'action-btn--large': props.large }]"
     type="button"
     @click="handleClick"
   >
@@ -69,6 +70,19 @@ function handleClick(event: MouseEvent): void {
 
 .action-btn--with-icon {
   justify-content: space-between;
+}
+
+.action-btn--large {
+  width: 2.19rem;
+  height: 0.82rem;
+  border-radius: 0.60rem;
+  font-size: 0.315rem;
+  padding: 0 0.21rem;
+
+  .action-icon {
+    width: 0.559rem;
+    height: 0.512rem;
+  }
 }
 
 .action-icon {

@@ -3,6 +3,8 @@
 
 // /api/imoss/game_client/upload/audio (ImossGameClientUploadAudio)
 export interface ImossGameClientUploadAudioRequest {
+  fileType: number; // 0 头像;  1 图片; 2 语音文件; 3-文件; 4-视频
+  check_code?: string; // 文件校验码，md5值
   [key: string]: unknown
 }
 
@@ -19,6 +21,8 @@ export interface ImossGameClientUploadAudioData {
 
 // /api/imoss/game_client/upload/image (ImossGameClientUploadImage)
 export interface ImossGameClientUploadImageRequest {
+  fileType: number; // 0 头像;  1 图片; 2 语音文件; 3-文件; 4-视频
+  check_code?: string; // 文件校验码，md5值
   [key: string]: unknown
 }
 

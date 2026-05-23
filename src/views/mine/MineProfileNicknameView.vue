@@ -5,13 +5,15 @@ import { useRouter } from 'vue-router'
 import { postUserCheckNicknameApi, postUserModifyInfoApi } from '@/api/user'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { useAppConfigStore } from '@/stores/appConfig'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
+import { resolveDiamondPriceValue } from '@/utils/diamondPriceConfig'
 
 const router = useRouter()
 
-const title = computed(() => 'Nickname')
+const title = computed(() => '修改昵称')
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -19,6 +21,7 @@ const backgroundStyle = computed(() => ({
 }))
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
+const appConfigStore = useAppConfigStore()
 
 const inputName = ref('')
 const submitting = ref(false)
@@ -56,6 +59,13 @@ const displayUser = computed(() => ({
   nickname: readNickname(),
   diamond: readDiamond(),
 }))
+
+const nicknameCost = computed(() => {
+  return resolveDiamondPriceValue(appConfigStore.globalConfig?.user_modify_name_price, {
+    original: 0,
+    current: 0,
+  })
+})
 
 inputName.value = String(displayUser.value.nickname || '')
 
@@ -99,7 +109,12 @@ async function onSave(): Promise<void> {
     }
 
     const userInfo = userInfoStore.userInfo
-    if (userInfo && typeof userInfo === 'object' && userInfo.user && typeof userInfo.user === 'object') {
+    if (
+      userInfo &&
+      typeof userInfo === 'object' &&
+      userInfo.user &&
+      typeof userInfo.user === 'object'
+    ) {
       const nextUserInfo = {
         ...userInfo,
         user: {
@@ -134,33 +149,28 @@ async function onSave(): Promise<void> {
           class="name-input"
           type="text"
           maxlength="20"
-          placeholder="Name here"
+          placeholder="请输入昵称"
         />
-        <p class="input-hint">Enter your Account Name</p>
+        <p class="input-hint">请输入昵称</p>
 
         <div class="cost-row">
-          <span class="label">Cost</span>
+          <span class="label">消耗</span>
           <img class="diamond" :src="iconDiamond" alt="diamond" />
-          <span class="origin">500</span>
-          <span class="current">100</span>
+          <span class="origin">{{ nicknameCost.original }}</span>
+          <span class="current">{{ nicknameCost.current }}</span>
           <span class="info">!</span>
         </div>
 
         <div class="cost-row balance-row">
-          <span class="label">Diamond Balance</span>
+          <span class="label">钻石余额</span>
           <img class="diamond" :src="iconDiamond" alt="diamond" />
           <span class="balance">{{ displayUser.diamond }}</span>
         </div>
       </section>
 
       <div class="save-wrap">
-        <button
-          class="save-btn"
-          type="button"
-          :disabled="submitting"
-          @click="onSave"
-        >
-          {{ submitting ? 'Saving...' : 'Save' }}
+        <button class="save-btn" type="button" :disabled="submitting" @click="onSave">
+          {{ submitting ? '保存中...' : '保存' }}
         </button>
       </div>
     </div>
@@ -170,12 +180,8 @@ async function onSave(): Promise<void> {
 <style scoped lang="scss">
 .nickname-page {
   height: 100dvh;
-  padding-top: calc(env(safe-area-inset-top) + 0.4598rem);
-  padding-bottom: 1.04rem;
   color: #f9f9f9;
   background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
 }
 
 .content-wrap {

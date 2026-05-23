@@ -488,16 +488,16 @@ export interface OrgClubDelayRoomAuditSwitchUpdateData {
   [key: string]: unknown
 }
 
-// /api/org/club/disband (OrgClubDisbAnd)
-export interface OrgClubDisbAndRequest {
+// /api/org/club/disband (OrgClubDisband)
+export interface OrgClubDisbandRequest {
   [key: string]: unknown
 }
 
-export interface OrgClubDisbAndResponseData extends OrgClubDisbAndData {
+export interface OrgClubDisbandResponseData extends OrgClubDisbandData {
   [key: string]: unknown
 }
 
-export interface OrgClubDisbAndData {
+export interface OrgClubDisbandData {
   [key: string]: unknown
 }
 
@@ -519,7 +519,7 @@ export interface ClubFundChangeLogRequest {
   limit?: number // 数据数量
   offset?: number // 当前偏移值
   gold_type?: number // 1-联盟币;2-USDT;
-  op_codes?: unknown // 操作类型;
+  op_codes?: string[] // 操作类型;
   start_time?: number // 开始时间，时间戳;
   end_time?: number // 结束时间，时间戳;
   sort_type?: number // 1-创建时间;2-成员数;3-等级
@@ -957,6 +957,7 @@ export interface OrgMemberListRequest {
   filter_type?: number // 1联盟币 2 usdt 3 记分牌
   agent_id?: number // 代理id
   simple?: boolean // 是否简版
+  hide_slave?: boolean // 是否隐藏从属俱乐部成员
 
   [key: string]: unknown
 }
@@ -1468,7 +1469,10 @@ export interface OrgClubUserWalletRelationListData {
 }
 
 export interface OrgClubUserWalletRelationListUserData {
-  [key: string]: unknown
+  nickname: string // 用户昵称
+  user_id: number // 用户ID
+  random_id: number // 用户随机ID
+  avatar: string // 用户头像
 }
 
 // /api/org/jackpot/template/info (OrgJackpotTemplateInfo)
@@ -2683,6 +2687,7 @@ export interface OrgClubUserInfoData {
   uc_deposit_advance?: number // UC垫付 1 开启 2 未开启
   club_gold_credit?: number // 俱乐部币信用余额
   club_gold_credit_limit?: number // 俱乐部币信用额度限
+  friend_total?: number // 下线成员总数
 
   [key: string]: unknown
 }

@@ -7,7 +7,6 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-
 interface PoolRewardItem {
   id: string
   name: string
@@ -55,8 +54,6 @@ function onOpenRecord(item: PoolRewardItem): void {
 
 <template>
   <div class="page-shell pool-reward-page" :style="backgroundStyle">
-    <div class="page-overlay"></div>
-
     <HeaderBack :title="'奖池记录'" />
 
     <section class="pool-body">
@@ -121,28 +118,7 @@ function onOpenRecord(item: PoolRewardItem): void {
 .pool-reward-page {
   position: relative;
   height: 100dvh;
-  padding: 0 0.4267rem calc(2.88rem + env(safe-area-inset-bottom));
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
-.page-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  backdrop-filter: blur(0.9733rem);
-  background: rgba(0, 0, 0, 0.2);
-  mix-blend-mode: luminosity;
-  z-index: 0;
-}
-
-:deep(.page-back-header) {
-  position: relative;
-  z-index: 2;
-  padding-left: 0;
-  padding-right: 0;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
-  min-height: 1.46rem;
+  background-size: cover;
 }
 
 .pool-body {

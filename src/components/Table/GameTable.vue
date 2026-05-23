@@ -15,6 +15,8 @@ const props = withDefaults(
     data: Record<string, any>[]
     showHeader?: boolean
     defaultSort?: DefaultSort
+    /** 第一行汇总数据，按列对齐渲染，与 summary slot 二选一，slot 优先 */
+    summaryData?: Record<string, any>
     /** 固定 body 高度，超出后滚动，如 '10rem' */
     height?: string
     /** v-model:loading，加载中时不触发新的 load 事件 */
@@ -29,6 +31,7 @@ const props = withDefaults(
   {
     showHeader: true,
     defaultSort: undefined,
+    summaryData: undefined,
     height: undefined,
     loading: false,
     finished: false,
@@ -134,6 +137,19 @@ export default { name: 'GameTable' }
     />
 
     <div ref="bodyRef" class="game-table__body scrollbar-hide" :style="bodyStyle">
+      <!-- 首行：自定义 summary slot 或 summaryData 汇总行 -->
+      <template v-if="$slots.summary">
+        <div class="game-table__summary">
+          <slot name="summary" />
+        </div>
+      </template>
+      <GameTableRow
+        v-else-if="summaryData"
+        :row="summaryData"
+        :columns="columns"
+        :is-summary="true"
+      />
+
       <GameTableRow
         v-for="(row, i) in data"
         :key="i"
@@ -176,6 +192,19 @@ export default { name: 'GameTable' }
 /* 固定高度滚动时，避免 flex 子项被压缩导致行高变小 */
 .game-table__body > * {
   flex-shrink: 0;
+}
+
+.game-table__summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0.85rem;
+  border-radius: 0.425rem;
+  background: rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  font-size: 0.32rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-family: 'HONOR Sans CN', sans-serif;
 }
 
 .game-table__status {

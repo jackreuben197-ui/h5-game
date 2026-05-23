@@ -25,7 +25,8 @@ body {
   font-size: 0.3733rem;
   line-height: 1.5;
   color: var(--color-text-main);
-  background: radial-gradient(circle at 8% 0%, rgba(10, 103, 194, 0.14), transparent 36%),
+  background:
+    radial-gradient(circle at 8% 0%, rgba(10, 103, 194, 0.14), transparent 36%),
     radial-gradient(circle at 95% 12%, rgba(18, 141, 95, 0.11), transparent 30%),
     linear-gradient(180deg, var(--color-bg-top), var(--color-bg-bottom));
 }
@@ -34,4 +35,16 @@ button,
 input,
 textarea {
   font: inherit;
+}
+
+// Disable browser callout menu on long press for non-editable areas.
+* {
+  -webkit-touch-callout: none;
+}
+
+input,
+textarea,
+[contenteditable=''],
+[contenteditable='true'] {
+  -webkit-touch-callout: default;
 }

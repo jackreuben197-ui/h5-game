@@ -7267,3 +7267,4 @@ UIMatchGuaranteedTag=保底賽
 UIMatchSelectClubBuyin=選擇買入的俱樂部
 UILoginConfirmTitle=您尚未同意協議
 UILoginConfirmContent=請閱讀
+UIJackpot_Introduce_TW=<b><size=50>Jackpot介紹</size></b>\nJackpot為牌桌隨機大獎玩法。滿足指定牌型條件並完成攤牌後，即有機會觸發Jackpot大獎。\n\n<b><size=50>觸發條件</size></b>\n1.使用手牌組成指定大牌;\n2.被更大的牌型擊敗;\n3.牌局需正常攤牌結束;\n4.當前牌桌需滿足最低參與人數。\n\n<b><size=50>獎勵規則</size></b>\n1.Jackpot獎池隨牌局持續累積;\n2.觸發後將按規則分配獎勵;\n3.獎勵將發放給觸發玩家、獲勝玩家及同桌其他玩家。\n\n<b><size=50>溫馨提示</size></b>\n不同盲注牌桌擁有不同Jackpot獎池與獎勵金額，盲注越高，獎勵越高。

@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import type { MttItem, MttActionType } from '@/components/ListItem/MttCard.vue'
 import type { MttIdInfoRecord, MttListRecord, MttSeriesInfoRecord } from '@/api/models/roomcenter'
 import type { RoomRecord } from '@/api/models/roomcenter'
-import type { TabOption } from '@/components/Tabbar/GameTypeTabbar.vue'
+import type { FilterTabOption } from '@/components/Tabbar/FilterTabbar.vue'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
 import pokerMiniIcon from '@/assets/icons/game_zone_mtt_mini.png'
@@ -18,6 +18,8 @@ import {
   resolveTemplateTextByKey,
 } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, formatTodayAwareTimeLabel, toTimestampMs } from '@/utils/time'
+import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
+import { showFailToast } from 'vant'
 
 // 赛事级别状态（对应服务端 status 字段，与 Unity MttMatchStatus 枚举一致）
 const MttMatchStatus = { CREATED: 0, RUNNING: 1, CLOSED: 2, CANCEL: 3 } as const
@@ -73,10 +75,15 @@ const nowMs = ref(Date.now())
 let ticker: number | null = null
 
 // MTT 页面专用 Tab：保留“全部/扑克/麻将”筛选，支持多语言文案回退。
-const mttTabs = computed<TabOption[]>(() => [
+const mttTabs = computed<FilterTabOption[]>(() => [
   { name: 'all', title: resolveLabel('UIMatch_GtO8YEdb', '全部') },
   { name: 'poker', title: resolveLabel('UIHomePokerArea', '扑克赛事') },
-  { name: 'mahjong', title: resolveLabel('UIHomeMahjongArea', '麻将赛事') },
+  {
+    name: 'mahjong',
+    title: resolveLabel('UIHomeMahjongArea', '麻将赛事'),
+    disabled: true,
+    disabledToast: '功能开发中',
+  },
 ])
 
 onMounted(() => {
@@ -111,6 +118,9 @@ const normalizedItems = computed<MttViewItem[]>(() =>
 // 当前 tab 下的可见赛事：先按玩法筛选，再按 club/tribe 可见性筛选。
 const filteredItems = computed<MttViewItem[]>(() => {
   return normalizedItems.value.filter((item) => {
+    if (item.category === 'mahjong') {
+      return false
+    }
     if (activeTab.value !== 'all' && item.category !== activeTab.value) {
       return false
     }
@@ -478,20 +488,42 @@ function calcLateEndMs(record: RawMttRecord, startAtMs: number): number {
 function getDefaultGameIcon(category: MttCategory): string {
   return category === 'mahjong' ? mahjongMiniIcon : pokerMiniIcon
 }
+function handleBack() {
+  router.push('/home')
+}
+function handleOpenCustomerService() {
+  const clubId = selectedClubId.value
+  if (clubId <= 0) {
+    showFailToast('当前俱乐部信息无效')
+    return
+  }
+
+  openGlobalCustomerServiceChat({
+    imServiceType: 1,
+    clubId,
+    tribeId: selectedTribeId.value,
+  })
+}
 </script>
 
 <template>
-  <div class="mtt-list-page themeType2">
+  <div class="mtt-list-page themeType2" @back="handleBack">
     <div class="bg-overlay"></div>
 
     <HeaderBack :title="t('UIHomeMttArea')">
       <template #right>
         <div class="action-wrap">
-          <TopActionButton :name="t('Wallet_Deposit')" :icon="walletIcon" icon-alt="wallet" />
           <TopActionButton
-            :name="t('Wallet_AppBarSupport')"
+            :name="t('UIGuildFund_RechargeText')"
+            :icon="walletIcon"
+            icon-alt="wallet"
+            @click="router.push('/wallet')"
+          />
+          <TopActionButton
+            :name="t('UIMineMain01')"
             :icon="serviceIcon"
             icon-alt="service"
+            @click="handleOpenCustomerService"
           />
         </div>
       </template>
@@ -568,7 +600,8 @@ function getDefaultGameIcon(category: MttCategory): string {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
+  background:
+    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
     radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
     radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
 }

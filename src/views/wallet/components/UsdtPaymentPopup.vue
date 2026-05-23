@@ -3,6 +3,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useWalletStore } from '@/stores/wallet'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
+import icCheckbox from '@/assets/icons/ic_checkbox.png'
+import icUncheckbox from '@/assets/icons/ic_uncheckbox.png'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 
 const props = defineProps<{
@@ -11,7 +13,7 @@ const props = defineProps<{
   feeRate: number;
   feeType?: number;
   discount?: number;
-}>();
+}>()
 
 const emit = defineEmits<{
   close: []
@@ -25,8 +27,8 @@ const selectedOption = ref(0)
 const isTimedOut = ref(false)
 let timer: number | null = null
 
-const exactGoldCount = computed(() => props.goldCount || 0);
-const roundedGoldCount = computed(() => Math.floor((props.goldCount || 0) / 100) * 100);
+const exactGoldCount = computed(() => props.goldCount || 0)
+const roundedGoldCount = computed(() => Math.floor((props.goldCount || 0) / 100) * 100)
 
 const exactPriceData = computed(() => walletStore.calculateUsdtPrice(
   exactGoldCount.value,
@@ -34,7 +36,7 @@ const exactPriceData = computed(() => walletStore.calculateUsdtPrice(
   props.feeRate || 0,
   props.feeType || 0,
   props.discount || 0
-));
+))
 
 const roundedPriceData = computed(() => walletStore.calculateUsdtPrice(
   roundedGoldCount.value,
@@ -42,10 +44,10 @@ const roundedPriceData = computed(() => walletStore.calculateUsdtPrice(
   props.feeRate || 0,
   props.feeType || 0,
   props.discount || 0
-));
+))
 
-const exactPrice = computed(() => exactPriceData.value.totalUiPrice);
-const roundedPrice = computed(() => roundedPriceData.value.totalUiPrice);
+const exactPrice = computed(() => exactPriceData.value.totalUiPrice)
+const roundedPrice = computed(() => roundedPriceData.value.totalUiPrice)
 
 function close(): void {
   emit('close')
@@ -80,7 +82,7 @@ onUnmounted(() => {
       @click.self="close"
     >
       <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
-      <div class="card" >
+      <div class="card">
         <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
         <div class="card__inner">
           <!-- Header -->
@@ -114,14 +116,11 @@ onUnmounted(() => {
               </div>
               <div class="option-card__desc">需支付 {{ walletStore.formatUsdtPrice(exactPrice) }}</div>
               <div class="option-card__badge" :class="{ 'option-card__badge--active': selectedOption === 0 }">
-                <span class="badge-icon">
-                  <svg class="badge-icon__bg" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" style="width: 15px; height: 15px; aspect-ratio: 1/1;">
-                    <ellipse cx="7.50662" cy="7.50662" rx="7.50662" ry="7.50662" fill="#F9F9F9" fill-opacity="0.2"/>
-                  </svg>
-                  <svg v-if="selectedOption === 0" class="badge-icon__check" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 11 11" fill="none" style="width: 10.421px; height: 10.421px;">
-                    <path d="M5.20996 0.650391C7.72844 0.650391 9.7703 2.69153 9.77051 5.20996C9.77051 7.72857 7.72857 9.77051 5.20996 9.77051C2.69153 9.7703 0.650391 7.72844 0.650391 5.20996C0.650594 2.69165 2.69165 0.650594 5.20996 0.650391Z" stroke="#55FFE2" stroke-width="1.3"/>
-                  </svg>
-                </span>
+                <img
+                  class="badge-icon__check"
+                  :src="selectedOption === 0 ? icCheckbox : icUncheckbox"
+                  alt=""
+                />
                 秒到账
               </div>
             </div>
@@ -138,14 +137,11 @@ onUnmounted(() => {
               </div>
               <div class="option-card__desc">需支付 {{ walletStore.formatUsdtPrice(roundedPrice) }}</div>
               <div class="option-card__badge" :class="{ 'option-card__badge--active': selectedOption === 1 }">
-                <span class="badge-icon">
-                  <svg class="badge-icon__bg" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" style="width: 15px; height: 15px; aspect-ratio: 1/1;">
-                    <ellipse cx="7.50662" cy="7.50662" rx="7.50662" ry="7.50662" fill="#F9F9F9" fill-opacity="0.2"/>
-                  </svg>
-                  <svg v-if="selectedOption === 1" class="badge-icon__check" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 11 11" fill="none" style="width: 10.421px; height: 10.421px;">
-                    <path d="M5.20996 0.650391C7.72844 0.650391 9.7703 2.69153 9.77051 5.20996C9.77051 7.72857 7.72857 9.77051 5.20996 9.77051C2.69153 9.7703 0.650391 7.72844 0.650391 5.20996C0.650594 2.69165 2.69165 0.650594 5.20996 0.650391Z" stroke="#55FFE2" stroke-width="1.3"/>
-                  </svg>
-                </span>
+                <img
+                  class="badge-icon__check"
+                  :src="selectedOption === 1 ? icCheckbox : icUncheckbox"
+                  alt=""
+                />
                 30分钟到账
               </div>
             </div>
@@ -438,23 +434,10 @@ onUnmounted(() => {
 
 }
 
-.badge-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
+.badge-icon__check {
   width: 15px;
   height: 15px;
-}
-
-.badge-icon__bg {
-  position: absolute;
-  inset: 0;
-}
-
-.badge-icon__check {
-  position: absolute;
-  z-index: 1;
+  flex-shrink: 0;
 }
 
 .card__action {

@@ -26,6 +26,7 @@ import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { t } from '@/i18n'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
+import twoPersonIcon from '@/assets/icons/2person.png'
 import clubCoverAvatar from '@/assets/images/default_avatar.png'
 import imgQuickActionCreateBg from '@/assets/images/club_qa_create_club_bg_shape.svg'
 import imgQuickActionBoardBg from '@/assets/images/club_qa_data_board_bg_shape.svg'
@@ -692,7 +693,7 @@ function formatChipBase(rawValue: number): string {
               <span class="club-id-text">{{ clubDisplayId }}</span>
             </div>
             <div class="club-member-wrap">
-              <span class="club-member-dot"></span>
+              <img :src="twoPersonIcon" class="club-member-dot" alt="" />
               <span>{{ clubMemberCount }}</span>
             </div>
           </div>
@@ -1020,8 +1021,7 @@ function formatChipBase(rawValue: number): string {
 .club-member-dot {
   width: 0.249rem;
   height: 0.211rem;
-  border-radius: 0.053rem;
-  background: linear-gradient(180deg, #ffd771 0%, #f59f37 100%);
+  object-fit: contain;
 }
 
 .action-wrap {

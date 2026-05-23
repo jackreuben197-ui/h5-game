@@ -208,11 +208,12 @@ onUnmounted(() => {
             <div class="submit-action">
               <button
                 class="action-btn action-btn--submit"
-                :disabled="!userName.trim() || loading"
+
                 @click="handleRegister"
               >
                 {{ loading ? '提交中...' : '报名' }}
               </button>
+               <!-- :disabled="!userName.trim() || loading" -->
             </div>
           </template>
 
@@ -537,8 +538,8 @@ onUnmounted(() => {
 
 .action-btn--submit {
   border: 0.648px solid rgba(242, 242, 242, 0.80);
-  background: rgba(255, 255, 255, 0.08);
-  color: #55FFE2;
+  background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%) !important;
+  color: rgba(120, 228, 144, 1);
 }
 
 .action-btn--submit:disabled {
@@ -648,7 +649,7 @@ onUnmounted(() => {
   flex: 1.2;
   border: 0.5px solid rgba(242, 242, 242, 0.80);
   background: rgba(255, 255, 255, 0.08);
-  color: #55FFE2;
+  color: rgba(120, 228, 144, 1);
   display: flex;
   flex-direction: column;
   justify-content: center;

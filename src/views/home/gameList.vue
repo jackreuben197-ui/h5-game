@@ -19,7 +19,7 @@ import gameTypeNlh from '@/assets/icons/game_type_nlh.png'
 import gameTypePlo from '@/assets/icons/game_type_plo.png'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
 import { t } from '@/i18n'
-import { showGameToast } from '@/components/Toast'
+import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 
 type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
 const POKER_TYPE_LONG = 0
@@ -305,8 +305,18 @@ function toSafeInt(value: unknown): number {
 function handleBack() {
   router.push('/home')
 }
-function handleService() {
-  showGameToast('功能开发中')
+function handleOpenCustomerService(): void {
+  const clubId = selectedClubId.value
+  if (clubId <= 0) {
+    showFailToast('当前俱乐部信息无效')
+    return
+  }
+
+  openGlobalCustomerServiceChat({
+    imServiceType: 1,
+    clubId,
+    tribeId: selectedTribeId.value,
+  })
 }
 </script>
 
@@ -326,7 +336,7 @@ function handleService() {
             :name="t('UIMineMain01')"
             :icon="serviceIcon"
             icon-alt="service"
-            @click="handleService"
+            @click="handleOpenCustomerService"
           />
         </div>
       </template>
@@ -374,7 +384,8 @@ function handleService() {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
+  background:
+    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
     radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
     radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
 }

@@ -5,4 +5,9 @@ export const bridgePanelRegistry: Record<string, Component> = {
   safetyGuard: defineAsyncComponent(() => import('./panels/BridgeSafetyGuardPanel.vue')),
   jackpotRecord: defineAsyncComponent(() => import('./panels/BridgeJackpotRecordPanel.vue')),
   jackpotAward: defineAsyncComponent(() => import('./panels/BridgeJackpotAwardPanel.vue')),
+  customerServiceChat: defineAsyncComponent(() => import('./panels/BridgeCustomerServiceChatPanel.vue')),
+  globalCustomerServiceChat: defineAsyncComponent(
+    () => import('./panels/BridgeCustomerServiceChatPanel.vue'),
+  ),
+  supportChat: defineAsyncComponent(() => import('./panels/BridgeCustomerServiceChatPanel.vue')),
 }

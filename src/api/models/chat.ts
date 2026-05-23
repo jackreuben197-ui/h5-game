@@ -169,7 +169,7 @@ export interface ChatSupportChannelListData {
 }
 
 export interface ChatSupportChannelListServiceData {
-
+    channel?: string; // 聊天频道
     club_id?: number; // 俱乐部ID
     tribe_id?: number; // 联盟ID
     user_id?: number; // 用户ID
@@ -180,6 +180,7 @@ export interface ChatSupportChannelListServiceData {
     club_logo?: string; // 俱乐部Logo
     unread_count?: number; // 未读消息数量
     im_service_type?: number; // IM客服类型 1.俱乐部客服 2.官方FlowChat大厅首页客服 3.官方FlowChat钻石商城客服 4.撮合订单客服
+    last_time_token?: number; // 上次消息时间戳
 
   [key: string]: unknown
 }

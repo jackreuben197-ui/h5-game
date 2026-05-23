@@ -563,7 +563,7 @@ function onClickItem(item: ShopItem): void {
     return
   }
 
-  goPay(item)
+  // goPay(item)
 }
 
 function onSelectPayType(payTypeId: number): void {

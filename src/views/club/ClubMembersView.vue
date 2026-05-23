@@ -52,6 +52,7 @@ interface MemberItem {
   role: MemberRole
   identityType: MemberIdentity
   isBoundAgent: boolean
+  avatar: string
   diamond: number
   uc: number
   disposableCredit: number
@@ -727,6 +728,7 @@ function mapMember(record: OrgMemberListRecord): MemberItem {
     reviewCredit: clubGoldCreditLimit,
     freeLimit: `${formatUC(clubGoldCredit)}/${formatUC(clubGoldCreditLimit)}`,
     agentName: String(record.agent_nick_name || '-'),
+    avatar: String(record.avatar || imgAvatar),
   }
 }
 
@@ -894,6 +896,7 @@ function openMemberDetail(member: MemberItem): void {
       bound: member.isBoundAgent ? '1' : '0',
       name: member.name,
       uid: member.uid,
+      diamonds: String(member.diamond),
     },
   })
 }
@@ -1277,7 +1280,7 @@ onMounted(() => {
 
             <div class="member-main">
               <div class="member-left">
-                <img class="member-avatar" :src="imgAvatar" :alt="`${member.name}头像`" />
+                <img class="member-avatar" :src="member.avatar" :alt="`${member.name}头像`" />
                 <div class="member-base">
                   <button type="button" class="member-name" @click="openMemberDetail(member)">
                     {{ member.name }}

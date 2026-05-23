@@ -8,6 +8,7 @@ export interface MemberRouteContext {
 	isBoundAgent: boolean
 	name: string
 	uid: string
+  diamonds: number
 }
 
 function normalizeIdentity(value: unknown): MemberIdentity {
@@ -43,6 +44,7 @@ export function getMemberRouteContext(route: RouteLocationNormalizedLoaded): Mem
     isBoundAgent,
     name,
     uid,
+    diamonds: Number(toQueryValue(route.query.diamonds as string | string[] | undefined) || 0),
   }
 }
 

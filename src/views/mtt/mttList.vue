@@ -18,7 +18,8 @@ import {
   resolveTemplateTextByKey,
 } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, formatTodayAwareTimeLabel, toTimestampMs } from '@/utils/time'
-import { showGameToast } from '@/components/Toast'
+import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
+import { showFailToast } from 'vant'
 
 // 赛事级别状态（对应服务端 status 字段，与 Unity MttMatchStatus 枚举一致）
 const MttMatchStatus = { CREATED: 0, RUNNING: 1, CLOSED: 2, CANCEL: 3 } as const
@@ -490,8 +491,18 @@ function getDefaultGameIcon(category: MttCategory): string {
 function handleBack() {
   router.push('/home')
 }
-function handleService() {
-  showGameToast('功能开发中')
+function handleOpenCustomerService() {
+  const clubId = selectedClubId.value
+  if (clubId <= 0) {
+    showFailToast('当前俱乐部信息无效')
+    return
+  }
+
+  openGlobalCustomerServiceChat({
+    imServiceType: 1,
+    clubId,
+    tribeId: selectedTribeId.value,
+  })
 }
 </script>
 
@@ -512,7 +523,7 @@ function handleService() {
             :name="t('UIMineMain01')"
             :icon="serviceIcon"
             icon-alt="service"
-            @click="handleService"
+            @click="handleOpenCustomerService"
           />
         </div>
       </template>
@@ -589,7 +600,8 @@ function handleService() {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
+  background:
+    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
     radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
     radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
 }

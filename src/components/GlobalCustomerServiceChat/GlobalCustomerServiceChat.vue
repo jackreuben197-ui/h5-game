@@ -29,6 +29,7 @@ import {
 
 interface ImGameConfig {
   oss_key: string
+  url: string
 }
 
 const userInfoStore = useUserInfoStore()
@@ -85,15 +86,18 @@ const panelBackgroundStyle = computed(() => ({
   backgroundImage: `url(${sharpBgUrl})`,
 }))
 
-const availableChannels = computed(() =>
-  channels.value.filter((item) => {
+const availableChannels = computed(() => {
+  const existsClubIds = new Set<number>()
+  return channels.value.filter((item) => {
     if (!item || typeof item !== 'object') return false
     const clubId = Number(item.club_id || 0)
-    const supportUserId = Number(item.support_user_id || 0)
+    if (chatContext.value.clubId > 0 && clubId !== chatContext.value.clubId) return false
+    if (existsClubIds.has(clubId)) return false
+    existsClubIds.add(clubId)
     const clubName = String(item.club_name || '').trim()
-    return clubId > 0 && supportUserId > 0 && !!clubName
-  }),
-)
+    return clubId > 0 && !!clubName
+  })
+})
 
 const targetClubId = computed(() => {
   if (chatContext.value.clubId > 0) return chatContext.value.clubId
@@ -117,9 +121,10 @@ const imGameConfig = computed<ImGameConfig | null>(() => {
   if (typeof raw !== 'string' || !raw.trim()) return null
 
   try {
-    const parsed = JSON.parse(raw) as { oss_key?: unknown }
+    const parsed = JSON.parse(raw) as { oss_key?: unknown; url?: unknown }
     const ossKey = typeof parsed.oss_key === 'string' ? parsed.oss_key.trim() : ''
-    return { oss_key: ossKey }
+    const url = typeof parsed.url === 'string' ? parsed.url.trim() : ''
+    return { oss_key: ossKey, url }
   } catch {
     return null
   }
@@ -160,6 +165,87 @@ function pickChannel(
   return list[0] || null
 }
 
+function toChannelSortTime(value: unknown): number {
+  const raw = String(value ?? '').trim()
+  if (!raw) return 0
+  if (/^\d{11,}$/.test(raw)) {
+    return Number(raw.slice(0, 10)) || 0
+  }
+  const num = Number(raw)
+  if (!Number.isFinite(num) || num <= 0) return 0
+  if (num > 1000000000000) {
+    return Math.floor(num / 1000)
+  }
+  return Math.floor(num)
+}
+
+function resolveChannelLatestTime(channel: ChatSupportChannelListServiceData): number {
+  const item = channel as Record<string, unknown>
+  const candidates = [
+    item.last_time_token,
+    item.last_msg_time,
+    item.last_message_time,
+    item.latest_msg_time,
+    item.latest_message_time,
+    item.last_time,
+    item.update_time,
+    item.updated_at,
+    item.time_token,
+    item.local_time,
+  ]
+  for (const candidate of candidates) {
+    const time = toChannelSortTime(candidate)
+    if (time > 0) return time
+  }
+  return 0
+}
+
+function bumpChannelUnreadByWs(payload: {
+  clubId: number
+  supportUserId: number
+  timeToken: number
+}): boolean {
+  let matched = false
+  const nextChannels = channels.value.map((item) => {
+    const clubId = Number(item.club_id || 0)
+    const supportUserId = Number(item.support_user_id || 0)
+    const bySupport =
+      supportUserId > 0 && payload.supportUserId > 0 && supportUserId === payload.supportUserId
+    const byClub = clubId > 0 && payload.clubId > 0 && clubId === payload.clubId
+    if (!bySupport && !byClub) return item
+
+    matched = true
+    const currentTimeToken = Number((item as Record<string, unknown>).last_time_token || 0)
+    const nextTimeToken = Number(payload.timeToken || 0)
+    return {
+      ...item,
+      unread_count: Number(item.unread_count || 0) + 1,
+      last_time_token: nextTimeToken > currentTimeToken ? nextTimeToken : currentTimeToken,
+    }
+  })
+
+  if (!matched) return false
+
+  const sortedChannels = sortChannels(nextChannels)
+  channels.value = sortedChannels
+  hasUnread.value = sortedChannels.some((item) => Number(item.unread_count || 0) > 0)
+  return true
+}
+
+function sortChannels(
+  list: ChatSupportChannelListServiceData[],
+): ChatSupportChannelListServiceData[] {
+  return [...list].sort((a, b) => {
+    const unreadDiff = Number(b.unread_count || 0) - Number(a.unread_count || 0)
+    if (unreadDiff !== 0) return unreadDiff
+
+    const timeDiff = resolveChannelLatestTime(b) - resolveChannelLatestTime(a)
+    if (timeDiff !== 0) return timeDiff
+
+    return Number(b.club_id || 0) - Number(a.club_id || 0)
+  })
+}
+
 async function fetchChannel(): Promise<void> {
   if (!gameStore.sessionToken.trim()) {
     channels.value = []
@@ -187,75 +273,73 @@ async function fetchChannel(): Promise<void> {
   const validList = list.filter((item) => {
     if (!item || typeof item !== 'object') return false
     const clubId = Number(item.club_id || 0)
-    const supportUserId = Number(item.support_user_id || 0)
     const clubName = String(item.club_name || '').trim()
-    return clubId > 0 && supportUserId > 0 && !!clubName
+    if (clubId > 0 && !!clubName) {
+      return true
+    }
+    return false
   })
 
-  channels.value = validList
+  const sortedList = sortChannels(validList)
+  channels.value = sortedList
   const requestedClubId = Number(chatContext.value.clubId || 0)
   const requestedClubMatched =
     requestedClubId > 0
-      ? validList.find((item) => Number(item.club_id || 0) === requestedClubId) || null
+      ? sortedList.find((item) => Number(item.club_id || 0) === requestedClubId) || null
       : null
   requestedClubMissing.value = requestedClubId > 0 && !requestedClubMatched
 
   const preferred =
     requestedClubId <= 0
-      ? validList[0] || null
+      ? sortedList[0] || null
       : requestedClubMissing.value
         ? null
-        : pickChannel(validList)
+        : pickChannel(sortedList)
   const currentSupportId = Number(activeChannel.value?.support_user_id || 0)
-  const byCurrent = validList.find((item) => Number(item.support_user_id || 0) === currentSupportId)
+  const byCurrent = sortedList.find(
+    (item) => Number(item.support_user_id || 0) === currentSupportId,
+  )
   const channel =
     preferred ||
     (requestedClubId > 0 ? byCurrent : null) ||
-    (requestedClubMissing.value ? null : validList[0] || null)
+    (requestedClubMissing.value ? null : sortedList[0] || null)
   activeChannel.value = channel
-  hasUnread.value = validList.some((item) => Number(item.unread_count || 0) > 0)
+  hasUnread.value = sortedList.some((item) => Number(item.unread_count || 0) > 0)
 }
 
 function isActiveChannel(channel: ChatSupportChannelListServiceData): boolean {
-  const activeSupportId = Number(activeChannel.value?.support_user_id || 0)
   const activeClubId = Number(activeChannel.value?.club_id || 0)
-  const nextSupportId = Number(channel.support_user_id || 0)
   const nextClubId = Number(channel.club_id || 0)
-
-  if (activeSupportId > 0 && nextSupportId > 0 && activeClubId > 0 && nextClubId > 0) {
-    return activeSupportId === nextSupportId && activeClubId === nextClubId
-  }
-
-  if (activeSupportId > 0 && nextSupportId > 0) {
-    return activeSupportId === nextSupportId
-  }
-
-  return activeClubId > 0 && nextClubId > 0 && activeClubId === nextClubId
+  return activeClubId === nextClubId
 }
 
 async function switchChannel(channel: ChatSupportChannelListServiceData): Promise<void> {
   if (isActiveChannel(channel)) return
   requestedClubMissing.value = false
   activeChannel.value = channel
-  chatContext.value.clubId = Number(channel.club_id || 0)
-  chatContext.value.tribeId = Number(channel.tribe_id || 0)
-  chatContext.value.supportUserId = Number(channel.support_user_id || 0)
   await fetchMessages({ setRead: true })
 }
 
 function markActiveChannelRead(): void {
   const supportId = Number(activeChannel.value?.support_user_id || 0)
-  if (supportId <= 0) return
+  const clubId = Number(activeChannel.value?.club_id || 0)
+  if (supportId <= 0 && clubId <= 0) return
 
-  channels.value = channels.value.map((item) => {
-    const currentSupportId = Number(item.support_user_id || 0)
-    if (currentSupportId !== supportId) return item
-    return {
-      ...item,
-      unread_count: 0,
-    }
-  })
-  hasUnread.value = channels.value.some((item) => Number(item.unread_count || 0) > 0)
+  const nextChannels = sortChannels(
+    channels.value.map((item) => {
+      const currentSupportId = Number(item.support_user_id || 0)
+      const currentClubId = Number(item.club_id || 0)
+      const sameSupport = supportId > 0 && currentSupportId === supportId
+      const sameClub = clubId > 0 && currentClubId === clubId
+      if (!sameSupport && !sameClub) return item
+      return {
+        ...item,
+        unread_count: 0,
+      }
+    }),
+  )
+  channels.value = nextChannels
+  hasUnread.value = nextChannels.some((item) => Number(item.unread_count || 0) > 0)
 }
 
 function buildMessageQuery(setRead: boolean) {
@@ -264,10 +348,6 @@ function buildMessageQuery(setRead: boolean) {
 
   const clubId = Number(channel.club_id || targetClubId.value || 0)
   const tribeId = Number(channel.tribe_id || chatContext.value.tribeId || 0)
-  const supportUserId = Number(channel.support_user_id || 0)
-
-  if (supportUserId <= 0) return null
-
   return {
     limit: 50,
     tribe_id: tribeId,
@@ -290,8 +370,11 @@ async function fetchMessages(options: { setRead: boolean } = { setRead: false })
 
   const list = Array.isArray(response.data?.list) ? response.data.list : []
   messages.value = [...list].reverse()
-  if (options.setRead) {
+  const channel = activeChannel.value
+  if (options.setRead && channel) {
     markActiveChannelRead()
+  }
+  if (options.setRead && list.length > 0 && channel?.channel !== '') {
     await markAsRead()
   }
   scrollToBottom()
@@ -438,7 +521,8 @@ function triggerAudioUploadFallback(): void {
 async function resolveUploadRuntime() {
   const config = imGameConfig.value
   return {
-    ossKey: config?.oss_key || '',
+    oss_key: config?.oss_key || '',
+    base_url: config?.url || '',
   }
 }
 
@@ -887,9 +971,15 @@ function shouldHandleWsMessage(payload: {
     return false
   }
 
-  const clubId = targetClubId.value
-  if (clubId > 0 && payload.clubId > 0 && payload.clubId !== clubId) {
-    return false
+  if (!visible.value) {
+    return true
+  }
+
+  if (Number(chatContext.value.clubId || 0) > 0) {
+    const contextClubId = Number(chatContext.value.clubId || 0)
+    if (contextClubId > 0 && payload.clubId > 0 && payload.clubId !== contextClubId) {
+      return false
+    }
   }
 
   const expectedSupportUserId = Number(
@@ -979,27 +1069,26 @@ function initWsListener(): void {
         } else {
           void fetchMessages({ setRead: true })
         }
+      } else {
+        const matched = bumpChannelUnreadByWs(payload)
+        if (!matched) {
+          void fetchChannel()
+        }
       }
       return
     }
 
-    if (!payload.userSend) {
-      const nextChannels = channels.value.map((item) => {
-        const supportId = Number(item.support_user_id || 0)
-        const clubId = Number(item.club_id || 0)
-        if (supportId > 0 && payload.supportUserId > 0 && supportId !== payload.supportUserId) {
-          return item
-        }
-        if (clubId > 0 && payload.clubId > 0 && clubId !== payload.clubId) {
-          return item
-        }
-        return {
-          ...item,
-          unread_count: Number(item.unread_count || 0) + 1,
-        }
-      })
-      channels.value = nextChannels
-      hasUnread.value = nextChannels.some((item) => Number(item.unread_count || 0) > 0)
+    if (!channels.value.length) {
+      void fetchChannel()
+      hasUnread.value = true
+      return
+    }
+
+    const matchedChannel = bumpChannelUnreadByWs(payload)
+    if (!matchedChannel) {
+      void fetchChannel()
+      hasUnread.value = true
+      return
     }
   })
 }
@@ -1438,15 +1527,15 @@ watch(
   width: 1.488rem;
   height: 1.488rem;
   border-radius: 50%;
-  overflow: hidden;
+  overflow: visible;
   flex-shrink: 0;
   position: relative;
 }
 
 .agent-unread-badge {
   position: absolute;
-  top: 0.02rem;
-  right: -0.08rem;
+  top: -0.05rem;
+  right: -0.16rem;
   min-width: 0.45rem;
   height: 0.45rem;
   border-radius: 0.42rem;
@@ -1464,6 +1553,7 @@ watch(
 .agent-avatar {
   width: 100%;
   height: 100%;
+  border-radius: 50%;
   object-fit: cover;
 }
 

@@ -208,15 +208,7 @@ const assetUc = computed(() => {
 const assetCredit = computed(() => toSafeNumber(memberProfile.value?.club_gold_credit))
 
 const assetDiamond = computed(() => {
-  const profile = memberProfile.value as Record<string, unknown> | null
-  const userInfo = profile?.user_info as Record<string, unknown> | undefined
-  return toSafeNumber(
-    profile?.diamonds ??
-      userInfo?.diamonds ??
-      userInfo?.diamond ??
-      userInfo?.diamond_balance ??
-      userInfo?.wallet_diamond,
-  )
+  return toSafeNumber(context.value.diamonds)
 })
 
 function toSafeNumber(value: unknown): number {

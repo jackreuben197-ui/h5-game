@@ -439,8 +439,9 @@ onUnmounted(() => {
   gap: 5px;
   border-radius: 39.59px;
   border: 0.5px solid rgba(242, 242, 242, 0.80);
-  background: linear-gradient(128deg, #05E7AE 7.55%, #027A5C 71.92%);
-  backdrop-filter: blur(0.1583614945411682px);
+  color: rgba(120, 228, 144, 1);
+  background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%) !important;
+  // backdrop-filter: blur(0.1583614945411682px);
 }
 
 .timer {

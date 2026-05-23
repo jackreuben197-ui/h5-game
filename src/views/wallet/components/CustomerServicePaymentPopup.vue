@@ -286,7 +286,8 @@ const payPrice = computed(() =>
 }
 
 .btn-pay {
-  background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+    color: rgba(120, 228, 144, 1);
+  background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%) !important;
   box-shadow:
     inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
     inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);

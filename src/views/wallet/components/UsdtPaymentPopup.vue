@@ -149,7 +149,7 @@ onUnmounted(() => {
 
           <!-- Submit Button -->
           <div class="card__action">
-            <PrimaryButton text="报名" @click="submit" />
+            <PrimaryButton text="报名" @click="submit" class="pay-cta" />
           </div>
         </div>
       </div>
@@ -568,4 +568,26 @@ onUnmounted(() => {
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
 }
+
+// .card__action {
+//   position: fixed;
+//   bottom: calc(env(safe-area-inset-bottom) + 0.6rem);
+//   left: 0.455rem;
+//   width: calc(100% - 0.91rem);
+//   height: 1.47rem;
+//   border-radius: 1.08rem;
+//   background: rgba(18, 20, 24, 0.92);
+//   backdrop-filter: blur(10px);
+//   -webkit-backdrop-filter: blur(10px);
+//   z-index: 10;
+//   overflow: hidden;
+// }
+
+.pay-cta {
+  // width: 100% !important;
+  // height: 100% !important;
+  color: rgba(120, 228, 144, 1);
+  background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%) !important;
+}
+
 </style>

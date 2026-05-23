@@ -9,6 +9,7 @@ import {
   type PanelEventPayload,
 } from '../protocol'
 import { setH5Visible } from './uiChannel'
+import { runBridgeAction } from '@/components/BridgePanel/actionRegistry'
 
 export interface ActiveBridgePanel extends CocosPanelPayload {
   requestId: string
@@ -92,6 +93,16 @@ function onCocosMessage(message: BridgeMessage): void {
   if (message.action === BRIDGE_ACTION.SHOW_PANEL) {
     const panelPayload = normalizePanelPayload(message.payload)
     if (!panelPayload) {
+      return
+    }
+
+    // 先尝试走“bridge action”分流。
+    // 这类类型不需要 GlobalBridgePanelHost + GameDialog 承载，
+    // 更像是“触发一个全局行为”，例如直接打开全局客服单例。
+    if (runBridgeAction(panelPayload)) {
+      if (panelPayload.ensureVisible === true) {
+        setH5Visible(true)
+      }
       return
     }
 

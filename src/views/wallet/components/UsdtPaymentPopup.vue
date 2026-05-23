@@ -107,7 +107,7 @@ onUnmounted(() => {
               @click="selectedOption = 0"
             >
               <div class="option-card__amount-row">
-                <span class="option-card__amount">{{ walletStore.formatUsdtPrice(exactPrice) }}</span>
+                <span class="option-card__amount">{{ Math.floor(exactPrice) }}</span>
                 <img :src="icCoins" alt="" class="option-card__coin" />
               </div>
               <div class="option-card__desc">需支付 {{ walletStore.formatUsdtPrice(exactPrice) }}</div>

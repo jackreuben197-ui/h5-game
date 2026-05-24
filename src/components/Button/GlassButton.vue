@@ -26,8 +26,8 @@ defineProps<Props>()
   gap: 0.1rem;
   padding: 0.12rem 0.16rem 0.12rem 0.21rem;
   width: 100%;
-  border-radius: 0.26rem;
-  border: 0.007rem solid rgba(242, 242, 242, 0.4);
+  border-radius: 0.6rem;
+  border: none;
   background: transparent;
   box-shadow: 0.014rem 0.017rem 0.027rem 0 rgba(0, 0, 0, 0.25);
   cursor: pointer;
@@ -73,9 +73,6 @@ defineProps<Props>()
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  box-shadow:
-    inset 0 0 0.034rem 0 black,
-    inset 0.005rem 0.005rem 0.034rem 0 black,
-    inset 0 0 0.069rem 0 rgba(242, 242, 242, 0.9);
+  box-shadow: inset 0 0 0.069rem 0 rgba(242, 242, 242, 0.9);
 }
 </style>

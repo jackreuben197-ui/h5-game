@@ -990,18 +990,42 @@ async function onUsdtSubmit(type: number) {
 }
 
 .balance-chip {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.14rem;
-  background: rgba(0, 0, 0, 0.22);
-  border: 0.4px solid rgba(242, 242, 242, 0.4);
-  border-radius: 0.4rem;
-  padding: 0.18rem 0.21rem 0.18rem 0.33rem;
-  box-shadow: 0.8px 1px 1.6px rgba(0, 0, 0, 0.25);
-  height: 0.85rem;
+  border-radius: 0.6rem;
+  border: none;
+  background: transparent;
+  padding: 0.12rem 0.21rem 0.12rem 0.33rem;
+  box-shadow: 0.014rem 0.017rem 0.027rem 0 rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    backdrop-filter: blur(3.7px);
+    -webkit-backdrop-filter: blur(3.7px);
+    background: linear-gradient(152.51deg, rgba(248, 253, 255, 0.8) 3.37%, rgba(199, 199, 199, 0.8) 37.46%);
+    mix-blend-mode: hard-light;
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: inset 0 0 0.069rem 0 rgba(242, 242, 242, 0.9);
+  }
 }
 
 .balance-chip__value {
+  position: relative;
+  z-index: 1;
   font-family: var(--wallet-font-num);
   font-weight: 600;
   font-size: 0.43rem;
@@ -1010,6 +1034,8 @@ async function onUsdtSubmit(type: number) {
 }
 
 .balance-chip__icon {
+  position: relative;
+  z-index: 1;
   width: 0.7rem;
   height: 0.7rem;
 }

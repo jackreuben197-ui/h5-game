@@ -171,12 +171,12 @@ export const useCasinoStore = defineStore('casino', {
           {
             id: 'leg',
             check: (g: any) => g.game_api_type === 'leg_poker' || g.game_name?.includes('乐游'),
-            fallback: { id: 'manual_leg', game_name: '乐游棋牌', game_api_type: 'leg_poker' } as ExtendGameRecord
+            fallback: { id: 'manual_leg' as any, game_name: '乐游棋牌', game_api_type: 'leg_poker' } as ExtendGameRecord
           },
           {
             id: 'ky',
             check: (g: any) => g.game_api_type === 'ky_poker' || g.game_name?.includes('开元'),
-            fallback: { id: 'manual_ky', game_name: '开元棋牌', game_api_type: 'ky_poker' } as ExtendGameRecord
+            fallback: { id: 'manual_ky' as any, game_name: '开元棋牌', game_api_type: 'ky_poker' } as ExtendGameRecord
           }
         ]
 

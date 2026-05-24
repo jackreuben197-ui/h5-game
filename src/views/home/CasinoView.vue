@@ -65,6 +65,15 @@ import mahjong1Svg from '@/assets/images/minigame-newui/麻将胡了.png'
 // @ts-ignore
 import mahjong2Svg from '@/assets/images/minigame-newui/麻将胡了2.png'
 
+interface GameBlock {
+  key: string
+  title: string
+  subtitle: string
+  icon: string
+  layout?: string
+  items: any[]
+}
+
 // ─── Router / Route ───────────────────────────────────────────────────────────
 const router = useRouter()
 const route = useRoute()
@@ -501,7 +510,7 @@ const toggleBlockExpand = async (blockKey: string) => {
 }
 
 // ─── Computed: categoryBlocks ────────────────────────────────────────────────
-const categoryBlocks = computed(() => {
+const categoryBlocks = computed<GameBlock[]>(() => {
   const hotRealGames = getPopularGamesForCategory('hot-real')
   const hotSlotGames = getPopularGamesForCategory('hot-slot')
   const hotFishGames = getPopularGamesForCategory('hot-fish')
@@ -564,7 +573,7 @@ const categoryBlocks = computed(() => {
 })
 
 // ─── Derived display blocks ───────────────────────────────────────────────────
-const displayBlocks = computed(() => {
+const displayBlocks = computed<GameBlock[]>(() => {
   if (selectedCategory.value !== 'hot') {
     if (selectedCategory.value === 'tiyu') {
       const hotSportsGames = getPopularGamesForCategory('hot-sports')
@@ -724,7 +733,7 @@ async function doJoinGame(item: GameItem, clubId?: number): Promise<void> {
         showGameToast('游戏跳转失败，请稍后重试')
       }
     } else {
-      showGameToast(res.msg || '游戏跳转失败，请稍后重试')
+      showGameToast((res.msg as string) || '游戏跳转失败，请稍后重试')
     }
   } catch (error: any) {
     showGameToast(error?.response?.data?.msg || '游戏跳转失败，请稍后重试')

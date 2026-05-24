@@ -109,7 +109,7 @@ async function onLogout(): Promise<void> {
     <ProfileCard
       :avatar="String(displayUser.avatar)"
       :nickname="displayUser.nickname"
-      :user-id="displayUser.userID"
+      :user-id="String(displayUser.userID)"
       @avatar-click="goToProfileEdit"
     >
       <template #bottom>

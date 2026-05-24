@@ -109,7 +109,7 @@ onMounted(() => {
 
 onActivated(() => {
   fetchPopularBannerGames()
-  if (mahjongGames.value.length === 0) fetchMahjongData()
+  if (mahjongGames.value.length === 0) minigameStore.fetchMahjongData(routeClubId.value, isGlobalMode.value)
 })
 
 const getPopularGameImage = (game: any, preferSvg: boolean = false): string => {

@@ -472,7 +472,7 @@ function onPayClick() {
       feeRate: selectedPayType.fee_rate ?? 0,
       feeType: selectedPayType.fee_type ?? 0,
       discount: selectedPayType.discount ?? 0,
-      payId: selectedPayType.id,
+      payId: selectedPayType.id ?? 0,
       priceId: activePreset.value === -1 ? 0 : presets.value[activePreset.value]?.id ?? 0,
     }
     onlinePopupInitialData.value = {
@@ -772,7 +772,7 @@ async function onUsdtSubmit(type: number) {
 
           <div class="pay-cta-wrapper">
             <PrimaryButton
-              :text="`立即支付 ${displayPayAmount}`"
+              :text="`立即充值${displayPayAmount}钻`"
               class="pay-cta"
               @click="onPayClick"
             />
@@ -943,40 +943,48 @@ async function onUsdtSubmit(type: number) {
 
 .presets-card {
   position: relative;
-  padding: 0.7rem 0.48rem 0.55rem;
-  background: rgba(0, 0, 0, 0.01);
-  backdrop-filter: blur(16.6px);
-  -webkit-backdrop-filter: blur(16.6px);
-  border: 0.18px solid rgba(255, 255, 255, 0.3);
-  border-radius: 1rem;
+  padding: 0.55rem 0.42rem;
+  border: 0.016rem solid rgba(242, 242, 242, 0.7);
+  border-radius: 0.94rem;
   box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 0.38rem;
   overflow: hidden;
   margin-top: -20px;
   z-index: 1;
   margin-bottom: 10px;
-}
 
-.presets-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  backdrop-filter: blur(16.6px);
-  -webkit-backdrop-filter: blur(16.6px);
-  background-image: linear-gradient(
-    110.6deg,
-    rgba(249, 249, 249, 0.18) 12%,
-    rgba(249, 249, 249, 0.24) 33%,
-    rgba(147, 147, 147, 0.3) 85%
-  );
-  mix-blend-mode: hard-light;
-  pointer-events: none;
-  border-radius: inherit;
-  z-index: 0;
-}
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(16.6px);
+    -webkit-backdrop-filter: blur(16.6px);
+    background: linear-gradient(107.6deg, rgba(249,249,249,0.18) 12.3%, rgba(249,249,249,0.24) 33.3%, rgba(147,147,147,0.3) 85.1%);
+    mix-blend-mode: hard-light;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 0;
+  }
 
-.presets-card > * {
-  position: relative;
-  z-index: 1;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    box-shadow:
+      inset 0 0 8.6px rgba(0,0,0,1),
+      inset 3.4px 2.6px 8.6px rgba(0,0,0,0.1),
+      inset 0 0 36.1px rgba(242,242,242,0.3);
+    z-index: 0;
+  }
+
+  & > * {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 .balance-row {

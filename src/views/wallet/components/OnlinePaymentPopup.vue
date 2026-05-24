@@ -105,7 +105,7 @@ async function handleRegister() {
 
     if (res.code === 0 && res.data) {
       orderNo.value = res.data.order_no || res.data.order?.order_no || ''
-      qrCodeUrl.value = res.data.usdt_address?.qr_code || res.data.qrcode || res.data.qr_code || ''
+      qrCodeUrl.value = (res.data.usdt_address?.qr_code || res.data.qrcode || res.data.qr_code || '') as string
       payAddress.value = res.data.usdt_address?.address || ''
       step.value = 2
       startTimer()

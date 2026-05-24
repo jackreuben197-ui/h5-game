@@ -139,7 +139,7 @@ const joinGame = async (apiType: string, gameType: string, roomId = 0, clubId?: 
         showGameToast(t('UIErrorNetwork') || 'No game URL available')
       }
     } else {
-      showGameToast(res.msg || t('UIErrorNetwork'))
+      showGameToast((res.msg as string) || t('UIErrorNetwork'))
     }
   } catch (error: any) {
     showGameToast(error?.response?.data?.msg || t('UIErrorNetwork'))

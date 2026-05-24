@@ -217,10 +217,16 @@ export interface OnlineWithdrawTypeItem {
   id?: number
   name?: string
   image?: string
-  type?: number // 1-数字钱包 2-API 3-手动
+  type?: number           // 1-数字钱包 2-API 3-手动
   rate?: number
   fee_rate?: number
-  fee_type?: number // 0-无 1-俱乐部出 2-玩家出
+  fee_type?: number       // 0-无 1-俱乐部出 2-玩家出
+  account_type?: number   // 1=银行卡 3=alipay 0=客服
+  action_type?: number    // 1=在线 0=客服
+  status?: number         // 1=激活
+  user_withdraw_min?: number  // 最小提现额，单位分
+  user_withdraw_max?: number  // 最大提现额，单位分
+  weight?: number         // 排序权重，降序
   /** 通道说明（模板）；玩家保存的地址见 user_description */
   description?: string
   /** 玩家已保存的提现地址（服务端返回） */

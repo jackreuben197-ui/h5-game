@@ -16,10 +16,10 @@ const SHARED_I18N_BASE = 'assets/resources/config'
 export const SUPPORTED_LOCALES: LocaleCode[] = ['en', 'pt', 'zh', 'cn']
 
 const localeAssetUrls: Record<LocaleCode, string> = {
-  en: resolveSharedLocaleUrl('USER_ZH.txt'),
-  pt: resolveSharedLocaleUrl('USER_ZH.txt'),
-  zh: resolveSharedLocaleUrl('USER_ZH.txt'),
   cn: resolveSharedLocaleUrl('USER_ZH.txt'),
+  zh: resolveSharedLocaleUrl('USER_TW.txt'),
+  en: resolveSharedLocaleUrl('USER_EN.txt'),
+  pt: resolveSharedLocaleUrl('USER_PT.txt'),
 }
 const dictionaries: Partial<Record<LocaleCode, TxtLanguageMap>> = {}
 const loadingTasks = new Map<LocaleCode, Promise<void>>()

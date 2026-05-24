@@ -481,6 +481,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/wallet/add-bank-card',
+      name: 'wallet-add-bank-card',
+      component: () => import('@/views/wallet/AddBankCardView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/gameList',
       name: 'game-list',
       component: () => import('@/views/home/gameList.vue'),

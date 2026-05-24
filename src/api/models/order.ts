@@ -380,11 +380,13 @@ export interface OrderUserUsdtRechargeOrderInfo {
 
 // /api/order/user/withdraw (TiquGold)
 export interface TiquGoldRequest {
-  amount?: number // 提现金额
-  gold_type?: number // 金币类型:1-联盟币 2-usdt
-  pay_id?: number // 支付渠道ID
-  pay_price?: number // 支付金额
-  description?: string // 备注
+  amount?: number           // 提现金额（单位分）
+  gold_type?: number        // 金币类型:1-联盟币 2-usdt
+  pay_id?: number           // 支付渠道ID (WithdrawType.id)
+  pay_price?: number        // 手续费后实际支付金额
+  legal_tender?: number     // 手续费后金额（单位分）
+  payment_type_id?: number  // 绑定账户ID (PaymentInfo.id); 客服传 0
+  description?: string      // 备注
   club_id?: number
 
   [key: string]: unknown

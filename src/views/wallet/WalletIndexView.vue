@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import ava1 from '@/assets/images/wallet/avatars/ava1.png'
 import icCoins from '@/assets/icons/icon_chip_red.png'
@@ -35,10 +35,11 @@ import { postChatSupportChannelListApi } from '@/api/chat'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 
 const router = useRouter()
+const route = useRoute()
 const walletStore = useWalletStore()
 const userInfoStore = useUserInfoStore()
 
-const activeTab = ref(0)
+const activeTab = ref(Number(route.query.tab ?? 0))
 const activePreset = ref(0)
 const activeMethod = ref(0)
 const keypadOpen = ref(false)
@@ -779,7 +780,9 @@ async function onUsdtSubmit(type: number) {
         </template>
 
         <template v-else>
-          <WithdrawForm @open-cs-chat="onWithdrawCsChat" />
+          <div class="withdraw-content">
+            <WithdrawForm @open-cs-chat="onWithdrawCsChat" />
+          </div>
         </template>
       </div>
     </div>
@@ -927,6 +930,12 @@ async function onUsdtSubmit(type: number) {
 }
 
 .recharge-content {
+  position: relative;
+  z-index: 1;
+  padding-bottom: 2.5rem;
+}
+
+.withdraw-content {
   position: relative;
   z-index: 1;
   padding-bottom: 2.5rem;

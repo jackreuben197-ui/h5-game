@@ -3,6 +3,9 @@ import type { ApiResponse } from '@/api/models/common'
 import type {
   PayAppleOrderRechargeRequest,
   PayAppleOrderRechargeResponseData,
+  PaymentInfoListRequest,
+  PaymentInfoListData,
+  CreatePaymentInfoRequest,
 } from '@/api/models/pay'
 
 const formatPath = (
@@ -17,5 +20,21 @@ export async function postPayAppleOrderRechargeApi(
 ): Promise<ApiResponse<PayAppleOrderRechargeResponseData>> {
   const endpoint = '/pay/apple/order/recharge'
   const response = await http.post<ApiResponse<PayAppleOrderRechargeResponseData>>(endpoint, payload)
+  return response.data
+}
+
+// /pay/cpay/pay/info/list — список привязанных счетов пользователя
+export async function postPaymentInfoListApi(
+  payload: PaymentInfoListRequest = {}
+): Promise<ApiResponse<PaymentInfoListData>> {
+  const response = await http.post<ApiResponse<PaymentInfoListData>>('/pay/cpay/pay/info/list', payload)
+  return response.data
+}
+
+// /pay/cpay/pay/info/create — добавить счёт для вывода
+export async function postPaymentInfoCreateApi(
+  payload: CreatePaymentInfoRequest = {}
+): Promise<ApiResponse<Record<string, unknown>>> {
+  const response = await http.post<ApiResponse<Record<string, unknown>>>('/pay/cpay/pay/info/create', payload)
   return response.data
 }

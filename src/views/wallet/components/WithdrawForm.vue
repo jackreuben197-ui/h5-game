@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
-import icRoundedArrowRight from '@/assets/icons/wallet/ic_rounded_arrow_right.svg'
-import icDropdown from '@/assets/icons/wallet/ic_dropdown.svg'
-import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
+import icSupportService from '@/assets/images/ic_support_service.png'
+import icBankcard from '@/assets/images/ic_bankcard.png'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
+import WithdrawConfirmModal from '@/views/wallet/components/WithdrawConfirmModal.vue'
 import { t } from '@/i18n'
-import { postOnlineWithdrawTypeListApi, postOnlineWithdrawDescriptionApi } from '@/api/config'
+import { postOnlineWithdrawTypeListApi } from '@/api/config'
 import { postTiquGoldApi } from '@/api/order'
-import type { OnlineWithdrawTypeItem, OnlineWithdrawTypeListData } from '@/api/models/config'
+import { postPaymentInfoListApi } from '@/api/pay'
+import type { OnlineWithdrawTypeItem } from '@/api/models/config'
+import type { PaymentInfo } from '@/api/models/pay'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useWalletStore } from '@/stores/wallet'
 
@@ -16,73 +19,100 @@ const emit = defineEmits<{
   'open-cs-chat': [orderData: Record<string, unknown>]
 }>()
 
+const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const walletStore = useWalletStore()
+
+// ─── i18n helper: returns fallback when key not translated ────────────────────
+function tx(key: string, fallback: string): string {
+  const val = t(key)
+  return val !== key ? val : fallback
+}
+
 const availableUc = computed(() => userInfoStore.userInfo?.user?.gold ?? 0)
 
-const savedAddresses = ref<OnlineWithdrawTypeItem[]>([])
-const selectedAddress = ref<OnlineWithdrawTypeItem | null>(null)
-/** Канал вывода (withdraw type id); не сбрасываем при правке текста адреса */
-const activeChannelId = ref<number | null>(null)
-const addressInput = ref('')
-const amount = ref('')
-const submitting = ref(false)
+// ─── Каналы ──────────────────────────────────────────────────────────────────
+type ChannelId = 'bankcard' | 'customercare'
+const activeChannel = ref<ChannelId>('bankcard')
+const isCustomerCare = computed(() => activeChannel.value === 'customercare')
 
-/** Карточка «备注»: только user_description выбранной строки из списка (без черновика шита). */
-const mainWithdrawAccountShown = computed(() =>
-  withdrawUserDescription(selectedAddress.value),
-)
+// ─── Состояние ───────────────────────────────────────────────────────────────
+const withdrawTypes = ref<OnlineWithdrawTypeItem[]>([])
+const selectedWithdrawType = ref<OnlineWithdrawTypeItem | null>(null)
 
-const sheetOpen = ref(false)
-const walletListExpanded = ref(false)
+const withdrawAmount = ref('')
+const withdrawing = ref(false)
 
-const canSubmit = computed(() => addressInput.value.trim().length > 0 && !submitting.value)
+const paymentInfoList = ref<PaymentInfo[]>([])
+const loadingPaymentInfo = ref(false)
+const selectedPaymentAccount = ref<PaymentInfo | null>(null)
 
-/** Сохранённый адрес игрока: user_description / user_decription (см. API). */
-function withdrawUserDescription(item: OnlineWithdrawTypeItem | null | undefined): string {
-  if (!item) return ''
-  const ex = item as Record<string, unknown>
-  for (const key of ['user_description', 'user_decription'] as const) {
-    const v = ex[key]
-    if (typeof v === 'string' && v.trim() !== '') return v.trim()
-  }
-  return ''
-}
+const showWithdrawConfirmModal = ref(false)
+const withdrawConfirmAmount = ref(0)
 
-/** После online_withdraw_description список иногда без user_description — подставляем только что сохранённый текст. */
-function applyLocalUserDescription(item: OnlineWithdrawTypeItem, text: string): void {
-  ;(item as Record<string, unknown>).user_description = text.trim()
-}
-
-/** В dropdown показываем только каналы, где уже есть user_description. */
-const withdrawPickerList = computed(() =>
-  savedAddresses.value.filter((a) => withdrawUserDescription(a).length > 0),
-)
-
-function addrLineLabel(addr: OnlineWithdrawTypeItem): string {
-  const saved = withdrawUserDescription(addr)
-  if (saved) return saved
-  const name = (addr.name ?? '').trim()
-  if (name) return name
-  const desc = (addr.description ?? '').trim()
-  if (desc) return desc
-  return 'USDT'
-}
-
-/** Строка списка / триггер: при непустом user_description из API — показываем только его. */
-function withdrawPickerRowLabel(addr: OnlineWithdrawTypeItem): string {
-  const saved = withdrawUserDescription(addr)
-  if (saved) return saved
-  return addrLineLabel(addr)
-}
-
-/** Без выбора — USDT; с выбором и сохранённым адресом — только user_description из API. */
-const sheetPaymentLabel = computed(() => {
-  if (!selectedAddress.value) return 'USDT'
-  const saved = withdrawUserDescription(selectedAddress.value)
-  if (saved) return saved
-  return addrLineLabel(selectedAddress.value)
+// ─── Computed ────────────────────────────────────────────────────────────────
+const filteredWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() => {
+  const ch = activeChannel.value
+  return withdrawTypes.value.filter((wt) => {
+    if (ch === 'bankcard') {
+      return wt.account_type === 1 && wt.status === 1 && wt.action_type === 1
+    }
+    if (ch === 'customercare') {
+      const nameMatch =
+        wt.name?.toLowerCase().includes('客服') ||
+        wt.name?.toLowerCase().includes('customer') ||
+        wt.name?.toLowerCase().includes('care') ||
+        wt.name?.toLowerCase().includes('service')
+      return nameMatch || wt.account_type === 0
+    }
+    return false
+  })
 })
+
+const handlingFeeRate = 0.05
+const parsedAmount = computed(() => {
+  const v = parseFloat(withdrawAmount.value.replace(',', '.').trim())
+  return Number.isFinite(v) && v > 0 ? v : 0
+})
+
+const calculatedWithdrawAmountAfterFee = computed(() => {
+  if (!parsedAmount.value) return 0
+  return parsedAmount.value * (1 - handlingFeeRate)
+})
+
+const withdrawRange = computed(() => {
+  const wt = selectedWithdrawType.value
+  return {
+    min: wt?.user_withdraw_min ? wt.user_withdraw_min / 100 : 0,
+    max: wt?.user_withdraw_max ? wt.user_withdraw_max / 100 : Infinity,
+  }
+})
+
+const amountPlaceholder = computed(() => {
+  const { min, max } = withdrawRange.value
+  if (min > 0 && Number.isFinite(max)) {
+    return `${tx('Wallet_WithdrawRange', '联盟币回收限')} ${min.toLocaleString()}-${max.toLocaleString()}`
+  }
+  if (min > 0) return `${tx('Wallet_MinWithdraw', '最低')} ${min.toLocaleString()}`
+  return tx('Wallet_InputPlaceholder', '输入需要回收的UC数量')
+})
+
+const canWithdraw = computed(() => {
+  if (!selectedWithdrawType.value) return false
+  const amt = parsedAmount.value
+  if (amt <= 0) return false
+  if (amt > availableUc.value / 100) return false
+  if (withdrawRange.value.min > 0 && amt < withdrawRange.value.min) return false
+  if (Number.isFinite(withdrawRange.value.max) && amt > withdrawRange.value.max) return false
+  if (!isCustomerCare.value && !selectedPaymentAccount.value) return false
+  return true
+})
+
+// ─── Утилиты ─────────────────────────────────────────────────────────────────
+function formatAccountNumber(accountNo: string | undefined): string {
+  if (!accountNo) return '—'
+  return accountNo.length > 4 ? `**** **** **** ${accountNo.slice(-4)}` : accountNo
+}
 
 function withdrawClubPayload(): Record<string, number> {
   const club = userInfoStore.currentClub ?? userInfoStore.clubList[0]
@@ -90,387 +120,278 @@ function withdrawClubPayload(): Record<string, number> {
   return Number.isFinite(clubId) && clubId > 0 ? { club_id: clubId } : {}
 }
 
-function assertClubPayload(): { club_id: number } | null {
+function assertClub(): { club_id: number } | null {
   const p = withdrawClubPayload()
-  if (!('club_id' in p) || !(Number(p.club_id) > 0)) {
+  if (!('club_id' in p)) {
     showToast(t('error2005'))
     return null
   }
   return { club_id: Number(p.club_id) }
 }
 
-/** Выбранный канал или первый из type_list как дефолт при «только ввод счёта без выбора строки». */
-function resolveWithdrawTypeId(): number {
-  const pick =
-    activeChannelId.value ??
-    selectedAddress.value?.id ??
-    savedAddresses.value[0]?.id
-  return pick !== undefined && pick >= 1 ? pick : 1
+// ─── API ─────────────────────────────────────────────────────────────────────
+async function fetchWithdrawTypes(): Promise<void> {
+  const club = assertClub()
+  if (!club) return
+  try {
+    const res = await postOnlineWithdrawTypeListApi({ club_id: club.club_id })
+    if (res.code === 0 && res.data?.list) {
+      withdrawTypes.value = res.data.list
+        .filter((wt) => wt.status === 1)
+        .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
+    }
+  } catch (e) {
+    console.error('fetchWithdrawTypes failed', e)
+  }
+  applyChannel('bankcard')
 }
 
-function parseWithdrawGoldCents(raw: string): number | null {
-  const s = raw.replace(/\s/g, '').replace(',', '.').trim()
-  if (s === '') return null
-  const uc = Number(s)
-  if (!Number.isFinite(uc) || uc <= 0) return null
-  const cents = Math.round(uc * 100)
-  return cents >= 1 ? cents : null
+async function fetchPaymentInfo(): Promise<void> {
+  loadingPaymentInfo.value = true
+  paymentInfoList.value = []
+  selectedPaymentAccount.value = null
+  try {
+    const userId =
+      userInfoStore.userInfo?.user?.p_u_id ??
+      Number(localStorage.getItem('user_p_u_id') ?? '0')
+    const res = await postPaymentInfoListApi({ user_id: userId, account_type: 1, limit: 50, offset: 0 })
+    if (res.code === 0 && res.data?.list) {
+      const seen = new Set<string>()
+      const deduped: PaymentInfo[] = []
+      for (const item of res.data.list) {
+        const key = `${item.pix_name}|${item.account_no}|${item.bank_name}|${item.account_type}`
+        if (!seen.has(key)) { seen.add(key); deduped.push(item) }
+      }
+      paymentInfoList.value = deduped
+      if (deduped.length > 0) selectedPaymentAccount.value = deduped[0]
+    }
+  } catch (e) {
+    console.error('fetchPaymentInfo failed', e)
+  } finally {
+    loadingPaymentInfo.value = false
+  }
 }
 
+function selectWithdrawType(wt: OnlineWithdrawTypeItem): void {
+  if (isCustomerCare.value) {
+    activeChannel.value = 'bankcard'
+    void fetchPaymentInfo()
+  }
+  selectedWithdrawType.value = wt
+}
+
+function applyChannel(ch: ChannelId): void {
+  activeChannel.value = ch
+  selectedWithdrawType.value = filteredWithdrawTypes.value[0] ?? null
+  withdrawAmount.value = ''
+  selectedPaymentAccount.value = null
+  if (ch === 'bankcard') void fetchPaymentInfo()
+}
+
+// ─── Обработчики ─────────────────────────────────────────────────────────────
+function handleWithdraw(): void {
+  if (!canWithdraw.value) return
+  withdrawConfirmAmount.value = parsedAmount.value
+  showWithdrawConfirmModal.value = true
+}
+
+async function confirmWithdraw(): Promise<void> {
+  showWithdrawConfirmModal.value = false
+  const wt = selectedWithdrawType.value
+  if (!wt) return
+  const club = assertClub()
+  if (!club) return
+
+  const amount = parsedAmount.value
+  const amountCents = Math.round(amount * 100)
+  const rate = wt.rate ?? 1
+  const feeRate = wt.fee_rate ?? 0
+  const baseValue = amount * rate
+  const fee = baseValue * feeRate
+  const payPrice = baseValue - fee
+  const legalTender = Math.round(payPrice * 100)
+  const paymentTypeId = isCustomerCare.value ? 0 : (selectedPaymentAccount.value?.id ?? 0)
+
+  withdrawing.value = true
+  try {
+    const res = await postTiquGoldApi({
+      amount: amountCents,
+      gold_type: 1,
+      pay_id: wt.id,
+      pay_price: payPrice,
+      legal_tender: legalTender,
+      payment_type_id: paymentTypeId,
+      ...withdrawClubPayload(),
+    })
+
+    if (res.code === 0) {
+      withdrawAmount.value = ''
+      selectedPaymentAccount.value = paymentInfoList.value[0] ?? null
+      if (isCustomerCare.value || res.data?.api_type === 3) {
+        emit('open-cs-chat', {
+          pay_type_name: wt.name ?? tx('Wallet_CustomerService', '客服'),
+          pay_price: payPrice,
+          order: { gold_num: amountCents, pay_price: payPrice, order_no: '' },
+        })
+      } else {
+        showToast(tx('Wallet_SubmitWithdraw', '提款申请已提交'))
+        await walletStore.refreshPendingCsOrder()
+      }
+    } else {
+      showToast((res.message ?? tx('Wallet_SubmitWithdraw', '提款失败')) || '提款失败')
+    }
+  } catch (e) {
+    console.error('confirmWithdraw failed', e)
+    showToast(tx('Wallet_SubmitWithdraw', '提款失败，请重试'))
+  } finally {
+    withdrawing.value = false
+  }
+}
+
+// ─── Жизненный цикл ──────────────────────────────────────────────────────────
 onMounted(() => {
-  // club_id может ещё не загрузиться — грузим когда он появится
   if (userInfoStore.clubList.length > 0 || userInfoStore.currentClub) {
-    loadSavedAddresses()
+    void fetchWithdrawTypes()
   } else {
     const stop = watch(
       () => userInfoStore.clubList.length,
-      (len) => { if (len > 0) { stop(); loadSavedAddresses() } },
-      { immediate: false },
+      (len) => { if (len > 0) { stop(); void fetchWithdrawTypes() } },
     )
   }
 })
 
-async function loadSavedAddresses(): Promise<void> {
-  const base = withdrawClubPayload()
-  if (!('club_id' in base)) {
-    savedAddresses.value = []
-    return
+watch(filteredWithdrawTypes, (list) => {
+  if (!list.includes(selectedWithdrawType.value!)) {
+    selectedWithdrawType.value = list[0] ?? null
   }
-  const res = await postOnlineWithdrawTypeListApi(base)
-  if (res.code !== 0) return
-  const raw = res.data as OnlineWithdrawTypeListData | null | undefined
-  const list = raw?.list ?? []
-  savedAddresses.value = list
-  if (list.length === 0) {
-    selectedAddress.value = null
-    activeChannelId.value = null
-    return
-  }
-
-  const keepId = activeChannelId.value ?? selectedAddress.value?.id ?? null
-  if (keepId != null) {
-    const match = list.find((a) => a.id === keepId)
-    if (match) {
-      selectedAddress.value = match
-      activeChannelId.value = match.id ?? null
-      const saved = withdrawUserDescription(match)
-      const cur = addressInput.value.trim()
-      if (cur === '' || cur === saved) {
-        addressInput.value = saved
-      }
-      return
-    }
-  }
-
-  selectedAddress.value = null
-  activeChannelId.value = null
-}
-
-async function openSheet(): Promise<void> {
-  walletListExpanded.value = false
-  sheetOpen.value = true
-  await loadSavedAddresses()
-}
-
-function selectAddress(addr: OnlineWithdrawTypeItem): void {
-  selectedAddress.value = addr
-  activeChannelId.value = addr.id ?? null
-  addressInput.value = withdrawUserDescription(addr)
-  walletListExpanded.value = false
-}
-
-async function onSheetSave(): Promise<void> {
-  const club = assertClubPayload()
-  if (!club) return
-  const addrTrim = addressInput.value.trim()
-  if (!addrTrim) {
-    showToast(t('Wallet_AddressPlaceholder'))
-    return
-  }
-  const typeId = resolveWithdrawTypeId()
-  activeChannelId.value = typeId
-  const saveRes = await postOnlineWithdrawDescriptionApi({
-    ...club,
-    withdraw_type_id: typeId,
-    description: addrTrim,
-  })
-  if (saveRes.code !== 0) return
-  await loadSavedAddresses()
-  const row = savedAddresses.value.find((a) => a.id === typeId)
-  if (!row) {
-    showToast(t('Wallet_AddressVerifyFail'))
-    return
-  }
-  if (withdrawUserDescription(row) !== addrTrim) {
-    applyLocalUserDescription(row, addrTrim)
-  }
-  selectedAddress.value = row
-  showToast(t('Wallet_AddressSaved'))
-  walletListExpanded.value = false
-  sheetOpen.value = false
-}
-
-async function handleSubmit(): Promise<void> {
-  if (!canSubmit.value) return
-  const club = assertClubPayload()
-  if (!club) return
-  const goldCents = parseWithdrawGoldCents(amount.value)
-  if (goldCents === null) {
-    showToast(t('Wallet_AddItem4'))
-    return
-  }
-  submitting.value = true
-  try {
-    const typeId = resolveWithdrawTypeId()
-    activeChannelId.value = typeId
-    const addrTrim = addressInput.value.trim()
-    if (!addrTrim) {
-      showToast(t('Wallet_AddressPlaceholder'))
-      return
-    }
-
-    let channel =
-      savedAddresses.value.find((a) => a.id === typeId) ?? selectedAddress.value ?? null
-    if (!channel && savedAddresses.value.length > 0) {
-      channel = savedAddresses.value[0]
-      activeChannelId.value = channel.id ?? null
-    }
-    if (!channel?.id) {
-      showToast(t('Wallet_AddressPlaceholder'))
-      return
-    }
-
-    const savedTxt = withdrawUserDescription(channel)
-    if (addrTrim !== savedTxt) {
-      const saveRes = await postOnlineWithdrawDescriptionApi({
-        ...club,
-        withdraw_type_id: typeId,
-        description: addrTrim,
-      })
-      if (saveRes.code !== 0) return
-      await loadSavedAddresses()
-      channel = savedAddresses.value.find((a) => a.id === typeId) ?? null
-      if (!channel) {
-        showToast(t('Wallet_AddressVerifyFail'))
-        return
-      }
-      if (withdrawUserDescription(channel) !== addrTrim) {
-        applyLocalUserDescription(channel, addrTrim)
-      }
-    }
-
-    const payId = channel.id
-
-    const rate = Number(channel.rate)
-    const feeRate = channel.fee_rate ?? 0
-    const feeType = channel.fee_type ?? 0
-    const chExtra = channel as Record<string, unknown>
-    const discount = typeof chExtra.discount === 'number' ? chExtra.discount : 0
-
-    if (!Number.isFinite(rate) || rate <= 0) {
-      showToast(t('Wallet_Rate'))
-      return
-    }
-
-    const priceData = walletStore.calculateUsdtPrice(goldCents, rate, feeRate, feeType, discount)
-
-    const withdrawRes = await postTiquGoldApi({
-      ...withdrawClubPayload(),
-      amount: goldCents,
-      gold_type: 1,
-      pay_id: payId,
-      pay_price: priceData.apiPayPrice,
-      description: addrTrim,
-    })
-
-    if (withdrawRes.code !== 0) {
-      showToast(withdrawRes.message ?? t('Wallet_SubmitWithdraw'))
-      return
-    }
-
-    showToast(t('Wallet_SubmitWithdraw'))
-    amount.value = ''
-    
-    // Refresh pending orders to show/update the bell icon for withdrawal
-    await walletStore.refreshPendingCsOrder()
-
-    // type 3 = 手动/撮合 — открываем чат с поддержкой
-    // api_type из ответа не надёжен (может быть 0), поэтому смотрим на тип канала
-    const needsChat = channel.type === 3 || withdrawRes.data?.api_type === 3
-    if (needsChat) {
-      const orderData: Record<string, unknown> = {
-        pay_type_name: channel.name ?? 'USDT',
-        pay_price: priceData.apiPayPrice,
-        order: {
-          gold_num: goldCents,
-          pay_price: priceData.apiPayPrice,
-          order_no: (withdrawRes.data as Record<string, unknown>).order_no ?? '',
-        },
-      }
-      emit('open-cs-chat', orderData)
-    }
-  } finally {
-    submitting.value = false
-  }
-}
+})
 </script>
 
 <template>
   <div class="wf">
-    <!-- Address card -->
+
+    <!-- ── КАРТОЧКА ВЫБОРА СЧЁТА / CS ─────────────────────────────────────── -->
     <div class="wf__card">
-      <div class="wf__field">
-        <div class="wf__label">{{ $txt('Wallet_RecipientLabel') }}</div>
-        <div class="wf__row">
-          <div class="wf__input">
-            <span class="wf__input-native wf__input-native--static">USDT</span>
+
+      <!-- Заголовок -->
+      <div class="wf__acct-header">
+        <span class="wf__acct-title">{{ tx('Wallet_SelectAccount', '请选择收款账户') }}</span>
+        <button v-if="!isCustomerCare" class="wf__add-card-btn" type="button" @click="router.push('/wallet/add-bank-card')">
+          {{ tx('Wallet_AddCard', '添加银行卡') }}
+        </button>
+      </div>
+
+      <!-- Горизонтальный скролл типов вывода + CS карточка -->
+      <div class="wf__type-scroll">
+        <div
+          v-for="wt in filteredWithdrawTypes"
+          :key="wt.id"
+          class="wf__type-card"
+          :class="{ 'wf__type-card--active': !isCustomerCare && selectedWithdrawType?.id === wt.id }"
+          @click="selectWithdrawType(wt)"
+        >
+          <img class="wf__type-card-icon" :src="icBankcard" alt="" />
+          <div class="wf__type-card-label">
+            <div class="wf__type-card-text">
+              <span class="wf__type-card-name">{{ wt.name || tx('Wallet_BankCard', '银行卡') }}</span>
+              <span class="wf__type-card-sub">{{ tx('Wallet_Payment', '支付') }}</span>
+            </div>
           </div>
-          <button type="button" class="wf__pill" @click="openSheet">
-            <span>{{ $txt('Wallet_GoEdit') }}</span>
-            <img :src="icRoundedArrowRight" alt="" class="wf__pill-icon" />
-          </button>
+        </div>
+
+        <!-- CS карточка -->
+        <div
+          class="wf__type-card"
+          :class="{ 'wf__type-card--active': isCustomerCare }"
+          @click="applyChannel('customercare')"
+        >
+          <img :src="icSupportService" alt="" class="wf__type-card-icon" />
+          <div class="wf__type-card-label">
+            <div class="wf__type-card-text">
+              <span class="wf__type-card-name">{{ tx('Wallet_CsWithdraw', '联系客服') }}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="wf__field">
-        <div class="wf__label">{{ $txt('Wallet_RemarkLabel') }}</div>
-        <div
-          class="wf__input wf__remark-opener"
-          role="button"
-          tabindex="0"
-          @click="openSheet"
-          @keydown.enter.prevent="openSheet"
-        >
-          <input
-            readonly
-            tabindex="-1"
-            type="text"
-            class="wf__input-native"
-            :value="mainWithdrawAccountShown"
-            :placeholder="$txt('Wallet_RemarkPlaceholder')"
-          />
+      <!-- Список карт — только в режиме bankcard -->
+      <template v-if="!isCustomerCare">
+        <div v-if="loadingPaymentInfo" class="wf__acct-loading">
+          {{ tx('Wallet_Loading', '加载中…') }}
         </div>
-      </div>
+        <template v-else-if="paymentInfoList.length > 0">
+          <div
+            v-for="info in paymentInfoList"
+            :key="info.id"
+            class="wf__acct-row"
+            :class="{ 'wf__acct-row--active': selectedPaymentAccount?.id === info.id }"
+            @click="selectedPaymentAccount = info"
+          >
+            <img :src="icBankcard" alt="" class="wf__acct-icon" />
+            <div class="wf__acct-details">
+              <div class="wf__acct-top">
+                <span class="wf__acct-name">{{ info.pix_name || info.bank_name || '—' }}</span>
+                <span class="wf__acct-last4">{{ info.account_no?.slice(-4) || '—' }}</span>
+              </div>
+              <div class="wf__acct-no-pill">{{ formatAccountNumber(info.account_no) }}</div>
+            </div>
+          </div>
+        </template>
+        <div v-else class="wf__acct-empty">
+          {{ tx('Wallet_NoCardBound', '暂无绑定银行卡') }}
+        </div>
+      </template>
+
     </div>
 
-    <!-- Amount card -->
-    <div class="wf__card">
-      <div class="wf__balance">
-        <span class="wf__balance-label">{{ t('Wallet_AvailableUc', String(availableUc)) }}</span>
-      </div>
-      <div class="wf__input">
+    <!-- ── КАРТОЧКА СУММЫ ──────────────────────────────────────────────────── -->
+    <div class="wf__card wf__amount-card">
+      <!-- Ввод суммы -->
+      <div class="wf__amount-input-wrap">
         <input
-          v-model="amount"
+          v-model="withdrawAmount"
           type="text"
-          inputmode="numeric"
-          class="wf__input-native wf__input-native--center"
-          :placeholder="$txt('Wallet_InputPlaceholder')"
+          inputmode="decimal"
+          class="wf__amount-input"
+          :placeholder="amountPlaceholder"
         />
       </div>
-      <div class="wf__rate">
-        <template v-if="selectedAddress?.rate">
-          {{ $txt('Wallet_RateWithValue', selectedAddress.rate) }}
-        </template>
-        <template v-else>
-          {{ $txt('Wallet_Rate') }}
-        </template>
+
+      <!-- Тёмная область с суммой после комиссии -->
+      <div class="wf__amount-display">
+        <span class="wf__amount-value" :class="{ 'wf__amount-value--active': parsedAmount > 0 }">
+          {{ parsedAmount > 0 ? calculatedWithdrawAmountAfterFee.toFixed(2) : '—' }}
+        </span>
+      </div>
+
+      <!-- Нижняя строка: введённая сумма + комиссия -->
+      <div class="wf__amount-footer" :class="{ 'wf__amount-footer--visible': parsedAmount > 0 }">
+        <span class="wf__amount-entered">{{ parsedAmount > 0 ? parsedAmount.toLocaleString() : '' }}</span>
+        <span class="wf__amount-fee-tag">{{ tx('Wallet_ServiceFee', '手续费') }}：{{ (handlingFeeRate * 100).toFixed(0) }}%</span>
       </div>
     </div>
 
+    <!-- Доступный баланс -->
+    <div class="wf__balance-hint">
+      <span>{{ tx('Wallet_AvailableBalance', '可回收UC') }}：{{ (availableUc / 100).toLocaleString() }}</span>
+    </div>
+
+    <!-- Кнопка вывода -->
     <PrimaryButton
-      :text="$txt('Wallet_SubmitWithdraw')"
-      :disabled="!canSubmit"
-      @click="handleSubmit"
+      :text="isCustomerCare ? tx('Wallet_ContactCs', '联系客服') : tx('Wallet_SubmitWithdraw', '立即提现')"
+      :disabled="!canWithdraw || withdrawing"
+      @click="handleWithdraw"
     />
   </div>
 
-  <!-- Saved addresses sheet -->
-  <Teleport to="body">
-    <Transition name="wf-sheet">
-      <div
-        v-if="sheetOpen"
-        class="wf__overlay"
-        :style="{ backgroundImage: `url(${sharpBgUrl})` }"
-        @click.self="sheetOpen = false"
-      >
-        <div
-          class="wf__sheet wf__sheet--fig"
-          :style="{ backgroundImage: `url(${sharpBgUrl})` }"
-        >
-          <div class="wf__sheet-fig-title">{{ $txt('Wallet_Records') }}</div>
-
-          <!-- 收款名称 + dropdown -->
-          <div class="wf__fig-stack">
-            <p class="wf__fig-field-label">{{ $txt('Wallet_OrderRecvName') }}</p>
-            <div
-              class="wf__fig-picker-shell"
-              :class="{ 'wf__fig-picker-shell--open': walletListExpanded }"
-            >
-              <button
-                type="button"
-                class="wf__fig-dropdown wf__fig-dropdown--in-shell"
-                :class="{ 'wf__fig-dropdown--open': walletListExpanded }"
-                @click="walletListExpanded = !walletListExpanded"
-              >
-                <span class="wf__fig-dropdown-value">{{ sheetPaymentLabel }}</span>
-                <span class="wf__fig-dropdown-chevron" aria-hidden="true">
-                  <img :src="icDropdown" alt="" class="wf__fig-chevron-svg" />
-                </span>
-              </button>
-
-              <Transition name="wf-expand">
-                <div v-show="walletListExpanded" class="wf__fig-picker-body">
-                  <div class="wf__addr-panel">
-                    <template v-if="withdrawPickerList.length > 0">
-                      <button
-                        v-for="addr in withdrawPickerList"
-                        :key="addr.id"
-                        type="button"
-                        class="wf__addr-row"
-                        :class="{ 'wf__addr-row--active': selectedAddress?.id === addr.id }"
-                        @click="selectAddress(addr)"
-                      >
-                        <span class="wf__addr-row-text">{{ withdrawPickerRowLabel(addr) }}</span>
-                        <span
-                          v-if="selectedAddress?.id === addr.id"
-                          class="wf__addr-row-check"
-                          aria-hidden="true"
-                        />
-                      </button>
-                    </template>
-                    <div v-else class="wf__addr-panel-empty t-caption">
-                      {{ $txt('Wallet_OrdersEmpty') }}
-                    </div>
-                  </div>
-                </div>
-              </Transition>
-            </div>
-          </div>
-
-          <!-- 备注信息 -->
-          <div class="wf__fig-stack">
-            <p class="wf__fig-field-label">{{ $txt('Wallet_RemarkLabel') }}</p>
-            <div class="wf__fig-remark">
-              <input
-                v-model="addressInput"
-                type="text"
-                class="wf__fig-remark-input"
-                :placeholder="$txt('Wallet_WithdrawAccountHint')"
-              />
-            </div>
-          </div>
-
-          <button
-            type="button"
-            class="wf__fig-save"
-            @click="onSheetSave"
-          >
-            {{ $txt('Save') }}
-          </button>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
+  <!-- Модалка подтверждения -->
+  <WithdrawConfirmModal
+    :show="showWithdrawConfirmModal"
+    :original-amount="withdrawConfirmAmount"
+    :calculated-amount="withdrawConfirmAmount * (1 - handlingFeeRate)"
+    @close="showWithdrawConfirmModal = false"
+    @confirm="confirmWithdraw"
+  />
 </template>
 
 <style scoped lang="scss">
@@ -481,493 +402,344 @@ async function handleSubmit(): Promise<void> {
   width: 100%;
 }
 
-.wf__card {
-  position: relative;
-  padding: 0.55rem 0.42rem;
-  background: rgba(0, 0, 0, 0.01);
-  backdrop-filter: blur(16.6px);
-  -webkit-backdrop-filter: blur(16.6px);
-  border: 0.18px solid rgba(255, 255, 255, 0.3);
-  border-radius: 1rem;
-  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  overflow: hidden;
-  z-index: 1;
-}
-
-.wf__card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  backdrop-filter: blur(16.6px);
-  -webkit-backdrop-filter: blur(16.6px);
-  background-image: linear-gradient(
-    110.6deg,
-    rgba(249, 249, 249, 0.18) 12%,
-    rgba(249, 249, 249, 0.24) 33%,
-    rgba(147, 147, 147, 0.3) 85%
-  );
-  mix-blend-mode: hard-light;
-  pointer-events: none;
-  border-radius: inherit;
-  z-index: 0;
-}
-
-.wf__card > * {
-  position: relative;
-  z-index: 1;
-}
-
+// ── Glass card ────────────────────────────────────────────────────────────────
 .wf__card:first-child {
   margin-top: -20px;
 }
 
-.wf__field {
+.wf__card {
+  position: relative;
+  padding: 0.55rem 0.42rem;
+  border: 0.016rem solid rgba(242, 242, 242, 0.7);
+  border-radius: 0.94rem;
+  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
-  gap: 0.12rem;
-}
-
-.wf__label {
-  font-family: var(--wallet-font-cn);
-  font-weight: 400;
-  font-size: 0.285rem;
-  color: #f9f9f9;
-  padding-left: 0.1rem;
-}
-
-.wf__row {
-  display: flex;
-  gap: 0.13rem;
-  align-items: center;
-}
-
-.wf__input {
-  flex: 1;
-  min-width: 0;
-  background: rgba(0, 0, 0, 0.26);
-  border-radius: 0.6rem;
-  padding: 0.36rem 0.28rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 1.2rem;
-}
-
-.wf__input-native {
-  width: 100%;
-  background: transparent;
-  border: none;
-  outline: none;
-  font-family: var(--wallet-font-cn);
-  font-weight: 500;
-  font-size: 0.4rem;
-  color: #fff;
-  text-align: center;
-}
-
-.wf__input-native::placeholder {
-  color: rgba(255, 255, 255, 0.65);
-}
-
-.wf__input-native--static {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.wf__remark-opener {
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-
-  &:active {
-    opacity: 0.92;
-  }
-}
-
-.wf__remark-opener .wf__input-native[readonly] {
-  pointer-events: none;
-  cursor: inherit;
-}
-
-.wf__pill {
-  display: flex;
-  align-items: center;
-  gap: 0.15rem;
-  padding: 0.19rem 0.19rem 0.19rem 0.33rem;
-  background: rgba(255, 255, 255, 0.2);
-  border: 0.4px solid rgba(242, 242, 242, 0.4);
-  border-radius: 1.37rem;
-  box-shadow: 0.8px 1px 1.6px rgba(0, 0, 0, 0.25);
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.wf__pill span {
-  font-family: var(--wallet-font-num);
-  font-weight: 510;
-  font-size: 0.32rem;
-  color: #fff;
-  line-height: 1.4;
-}
-
-.wf__pill-icon {
-  width: 0.38rem;
-  height: 0.38rem;
-}
-
-.wf__balance {
-  display: flex;
-  justify-content: center;
-  padding: 0.26rem 0.4rem;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 0.8rem;
-}
-
-.wf__balance-label {
-  font-family: var(--wallet-font-cn);
-  font-weight: 600;
-  font-size: 0.415rem;
-  color: #fff;
-  line-height: 1.4;
-}
-
-.wf__input-native--center {
-  text-align: center;
-}
-
-.wf__rate {
-  text-align: center;
-  font-family: var(--wallet-font-cn);
-  font-weight: 300;
-  font-size: 0.29rem;
-  color: rgba(255, 255, 255, 0.92);
-  line-height: 1.2;
-}
-
-/* Sheet overlay */
-.wf__overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  gap: 0.38rem;
+  overflow: hidden;
+  z-index: 1;
 
   &::before {
     content: '';
     position: absolute;
     inset: 0;
-    z-index: 0;
+    backdrop-filter: blur(16.6px);
+    -webkit-backdrop-filter: blur(16.6px);
+    background: linear-gradient(107.6deg, rgba(249,249,249,0.18) 12.3%, rgba(249,249,249,0.24) 33.3%, rgba(147,147,147,0.3) 85.1%);
+    mix-blend-mode: hard-light;
     pointer-events: none;
-    backdrop-filter: blur(34px);
-    -webkit-backdrop-filter: blur(34px);
-    background: rgba(12, 12, 12, 0.60);
+    border-radius: inherit;
+    z-index: 0;
   }
-}
-
-.wf__sheet {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  padding: 0.32rem 0.455rem calc(env(safe-area-inset-bottom) + 0.64rem);
-  border-radius: 0.96rem 0.96rem 0 0;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  display: flex;
-  flex-direction: column;
-  gap: 0.32rem;
-  overflow: hidden;
 
   &::after {
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: inherit;
-    background: rgba(0, 0, 0, 0.70);
-    backdrop-filter: blur(7.6px);
-    -webkit-backdrop-filter: blur(7.6px);
     pointer-events: none;
+    border-radius: inherit;
+    box-shadow:
+      inset 0 0 8.6px rgba(0,0,0,1),
+      inset 3.4px 2.6px 8.6px rgba(0,0,0,0.1),
+      inset 0 0 36.1px rgba(242,242,242,0.3);
     z-index: 0;
   }
+
+  & > * { position: relative; z-index: 1; }
+}
+
+// ── Account card ──────────────────────────────────────────────────────────────
+.wf__acct-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.2rem;
+}
+
+.wf__acct-title {
+  font-family: var(--wallet-font-cn);
+  font-size: 0.28rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+.wf__add-card-btn {
+  flex-shrink: 0;
+  height: 0.62rem;
+  padding: 0 0.32rem;
+  border: none;
+  border-radius: 0.72rem;
+  background: #fff;
+  color: #262525;
+  font-family: var(--wallet-font-cn);
+  font-size: 0.3rem;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  &:active { opacity: 0.85; }
+}
+
+// Type cards horizontal scroll
+.wf__type-scroll {
+  display: flex;
+  gap: 0.3rem;
+  overflow-x: auto;
+  padding-bottom: 0.04rem;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.wf__type-card {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wf__type-card-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.wf__type-card-label {
+  margin-top: -0.45rem;
+  width: 1.64rem;
+  height: 1.16rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 0.23rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 0.12rem;
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
 
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    padding: 0.027rem 0 0;
-    background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 40%);
+    padding: 0.004rem;
+    background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(153,153,153,1) 100%);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
-    z-index: 2;
   }
 
-  & > * {
-    position: relative;
-    z-index: 3;
+  .wf__type-card--active & {
+    border-radius: 0.26rem;
+    background: #EE3955;
+
+    &::before { display: none; }
   }
 }
 
-.wf__sheet--fig {
-  padding: 0.413rem 0.532rem calc(env(safe-area-inset-bottom) + 0.92rem);
-  gap: 0.499rem;
-  border-radius: 0.844rem 0.844rem 0 0;
-  border: 0.024rem solid rgba(242, 242, 242, 0.4);
-  border-bottom: none;
-  box-shadow:
-    inset 0.030rem 0.030rem 0.06rem rgba(242, 242, 242, 0.2),
-    0.086rem 0.107rem 0.172rem rgba(0, 0, 0, 0.25);
+.wf__type-card-text {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.05rem;
+  width: 100%;
+  padding: 0 0.1rem;
+  overflow: hidden;
 }
 
-.wf__sheet-fig-title {
+.wf__type-card-name {
   font-family: var(--wallet-font-cn);
+  font-size: 0.22rem;
   font-weight: 500;
-  font-size: 0.515rem;
   color: #fff;
-  text-align: center;
-  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
-.wf__fig-stack {
+
+.wf__type-card-sub {
+  font-family: var(--wallet-font-cn);
+  font-size: 0.19rem;
+  color: rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+// Account rows
+.wf__acct-loading {
+  text-align: center;
+  font-family: var(--wallet-font-cn);
+  font-size: 0.3rem;
+  color: rgba(255,255,255,0.5);
+  padding: 0.24rem 0;
+}
+
+.wf__acct-row {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0.12rem 0.08rem;
+  border-radius: 0.4rem;
+  transition: background 0.15s;
+  &--active { background: transparent; }
+}
+
+.wf__acct-icon {
+  flex-shrink: 0;
+  width: 1.12rem;
+  height: 1.12rem;
+  object-fit: contain;
+}
+
+.wf__acct-details {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: 0.121rem;
-  width: 100%;
+  gap: 0.12rem;
 }
 
-.wf__fig-field-label {
-  margin: 0;
-  padding: 0 0.02rem;
+.wf__acct-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wf__acct-name {
   font-family: var(--wallet-font-cn);
+  font-size: 0.3rem;
   font-weight: 400;
-  font-size: 0.274rem;
-  line-height: 1.2;
-  color: #f9f9f9;
-  width: 100%;
-}
-
-.wf__fig-picker-shell {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.2);
-  border: 0.026rem solid rgba(255, 255, 255, 0.14);
-  border-radius: 0.589rem;
-  overflow: hidden;
-}
-
-.wf__fig-dropdown {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.2rem;
-  width: 100%;
-  padding: 0.34rem 0.257rem;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.wf__fig-dropdown--in-shell.wf__fig-dropdown--open {
-  border-bottom: 0.026rem solid rgba(255, 255, 255, 0.14);
-}
-
-.wf__fig-picker-body {
-  width: 100%;
-}
-
-.wf__fig-dropdown-value {
-  flex: 1;
-  min-width: 0;
-  font-family: var(--wallet-font-cn);
-  font-weight: 500;
-  font-size: 0.401rem;
   color: #fff;
-  line-height: 1.4;
-  text-align: left;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.wf__acct-last4 {
+  font-family: var(--wallet-font-num);
+  font-size: 0.3rem;
+  color: rgba(255,255,255,0.8);
   white-space: nowrap;
 }
 
-.wf__fig-dropdown-chevron {
-  flex-shrink: 0;
+.wf__acct-no-pill {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 0.50rem;
-  height: 0.50rem;
-}
-
-.wf__fig-chevron-svg {
-  display: block;
-  width: 0.50rem;
-  height: 0.50rem;
-  transition: transform 0.2s ease;
-}
-
-.wf__fig-dropdown--open .wf__fig-chevron-svg {
-  transform: rotate(180deg);
-}
-
-.wf__addr-panel {
-  width: 100%;
-  max-height: 3.2rem;
-  overflow-y: auto;
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  border: none;
-}
-
-.wf__addr-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.2rem;
-  width: 100%;
-  margin: 0;
-  padding: 0.2rem 0.28rem;
-  background: transparent;
-  border: none;
-  border-bottom: 0.026rem solid rgba(255, 255, 255, 0.1);
-  cursor: pointer;
-  text-align: left;
-  color: inherit;
-  -webkit-tap-highlight-color: transparent;
-
-  &:last-of-type {
-    border-bottom: none;
-  }
-
-  &:active {
-    background: rgba(255, 255, 255, 0.06);
-  }
-
-  &--active {
-    background: rgba(5, 231, 174, 0.1);
-  }
-}
-
-.wf__addr-row-text {
-  flex: 1;
-  min-width: 0;
-  font-family: var(--wallet-font-cn);
-  font-weight: 500;
-  font-size: 0.32rem;
-  color: rgba(255, 255, 255, 0.95);
-  line-height: 1.25;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  height: 0.62rem;
+  padding: 0 0.25rem;
+  background: #2d2b2b;
+  border-radius: 0.72rem;
+  font-family: var(--wallet-font-num);
+  font-size: 0.3rem;
+  color: #fff;
   white-space: nowrap;
 }
 
-.wf__addr-row-check {
-  flex-shrink: 0;
-  width: 0.28rem;
-  height: 0.28rem;
-  border-radius: 50%;
-  background: #05e7ae;
-}
-
-.wf__addr-panel-empty {
-  padding: 0.42rem 0.28rem;
+.wf__acct-empty {
   text-align: center;
-  color: rgba(255, 255, 255, 0.52);
+  font-family: var(--wallet-font-cn);
+  font-size: 0.3rem;
+  color: rgba(255,255,255,0.45);
+  padding: 0.16rem 0;
 }
 
-.wf__fig-remark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 0.34rem 0.257rem;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 0.589rem;
+
+
+// ── Amount card ───────────────────────────────────────────────────────────────
+.wf__amount-card {
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
-.wf__fig-remark-input {
+.wf__amount-input-wrap {
+  padding: 0 0.42rem;
+  margin-top: 0.55rem;
+}
+
+.wf__amount-input {
   width: 100%;
-  background: transparent;
+  height: 1.2rem;
+  padding: 0 0.5rem;
+  background: rgba(232,232,232,0.15);
   border: none;
+  border-radius: 0.75rem;
   outline: none;
   font-family: var(--wallet-font-cn);
-  font-weight: 500;
-  font-size: 0.401rem;
-  color: #fff;
-  line-height: 1.4;
-  text-align: center;
-}
-
-.wf__fig-remark-input::placeholder {
-  color: rgba(255, 255, 255, 0.65);
-}
-
-.wf__fig-save {
-  width: 100%;
-  margin-top: 0.053rem;
-  min-height: 1.436rem;
-  padding: 0.127rem 0.32rem;
-  border: 0.013rem solid rgba(242, 242, 242, 0.8);
-  border-radius: 1.056rem;
-  cursor: pointer;
-  font-family: var(--wallet-font-num);
-  font-weight: 500;
-  font-size: 0.4rem;
-  line-height: 1.2;
+  font-size: 0.38rem;
   color: #fff;
   text-align: center;
-  background-image: linear-gradient(168.37deg, #05e7ae 7.55%, #02795c 71.92%);
   box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: default;
+  &::placeholder {
+    font-size: 0.28rem;
+    color: rgba(249,249,249,0.45);
+    font-weight: 400;
   }
 }
 
-/* Transitions */
-.wf-sheet-enter-active,
-.wf-sheet-leave-active {
-  transition: opacity 0.25s ease;
-
-  .wf__sheet {
-    transition: transform 0.25s ease;
-  }
+.wf__amount-display {
+  margin-top: 0.32rem;
+  width: 100%;
+  min-height: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(170.7deg, rgb(54,54,54) 7.9%, rgb(23,23,23) 80.2%);
 }
 
-.wf-sheet-enter-from,
-.wf-sheet-leave-to {
+.wf__amount-value {
+  font-family: var(--wallet-font-num);
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.2);
+  transition: color 0.2s;
+  &--active { color: #e80000; }
+}
+
+.wf__amount-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 1.2rem;
+  padding: 0 0.5rem;
+  margin: 0.2rem 0.42rem 0.55rem;
+  border-radius: 0.75rem;
+  background: rgba(255,255,255,0.04);
   opacity: 0;
-
-  .wf__sheet {
-    transform: translateY(100%);
-  }
+  transition: opacity 0.2s;
+  &--visible { opacity: 1; background: rgba(255,255,255,0.9); }
 }
 
-.wf-expand-enter-active,
-.wf-expand-leave-active {
-  transition: opacity 0.2s ease, max-height 0.25s ease;
-  overflow: hidden;
-  max-height: 10rem;
+.wf__amount-entered {
+  font-family: var(--wallet-font-num);
+  font-size: 0.36rem;
+  color: #000;
 }
 
-.wf-expand-enter-from,
-.wf-expand-leave-to {
-  opacity: 0;
-  max-height: 0;
+.wf__amount-fee-tag {
+  font-family: var(--wallet-font-cn);
+  font-size: 0.28rem;
+  color: #000;
+}
+
+// Balance hint
+.wf__balance-hint {
+  text-align: center;
+  font-family: var(--wallet-font-cn);
+  font-size: 0.26rem;
+  color: rgba(255,255,255,0.5);
+  span { line-height: 1.4; }
 }
 </style>

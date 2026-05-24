@@ -8,81 +8,74 @@ defineProps<Props>()
 
 <template>
   <button class="gb">
+    <div class="gb__blur" />
     <span class="gb__label">{{ label }}</span>
+    <svg class="gb__arrow" width="5" height="8" viewBox="0 0 5 8" fill="none">
+      <path d="M1 1L4 4L1 7" stroke="#f9f9f9" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    <div class="gb__inner-shadow" />
   </button>
 </template>
 
 <style scoped lang="scss">
 .gb {
-  // display: inline-flex;
-  // align-items: center;
-  // justify-content: center;
-  // padding: 0.18rem 0.41rem;
-  // background: rgba(255, 255, 255, 0.31);
-  // border: 0.445px solid rgba(242, 242, 242, 0.4);
-  // border-radius: 0.45rem;
-  // box-shadow: 0.9px 1.1px 1.8px rgba(0, 0, 0, 0.25);
-  // cursor: pointer;
-  // white-space: nowrap;
-  // min-width: 1.87rem;
- position: relative;
+  position: relative;
   display: inline-flex;
-  padding: 0.1821rem 0.4075rem;
-  flex-direction: column;
-  justify-content: center;
   align-items: center;
-  gap: 0.1658rem;
+  justify-content: space-between;
+  gap: 0.1rem;
+  padding: 0.12rem 0.16rem 0.12rem 0.21rem;
   width: 100%;
-  border-radius: 0.4483rem;
-  border: none;
-  background: rgba(255, 255, 255, 0.31);
-  box-shadow: 0.0237rem 0.0297rem 0.0475rem 0 rgba(0, 0, 0, 0.25);
-  color: #fff;
-  font-family: 'HONOR Sans CN', sans-serif;
-  font-size: 0.3586rem;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 94.56%;
+  border-radius: 0.26rem;
+  border: 0.007rem solid rgba(242, 242, 242, 0.4);
+  background: transparent;
+  box-shadow: 0.014rem 0.017rem 0.027rem 0 rgba(0, 0, 0, 0.25);
   cursor: pointer;
   white-space: nowrap;
-  transition: opacity 0.2s;
+  overflow: hidden;
   -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
 
+  &:active { opacity: 0.8; }
+}
 
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 0.0119rem;
-    background: linear-gradient(
-      to bottom,
-      hsla(0, 0%, 95%, 0.4),
-      hsla(0, 0%, 100%, 0),
-      hsla(0, 0%, 100%, 0.5)
-    );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-  }
-
-  &:active {
-    opacity: 0.8;
-  }
+// Градиентный blur-фон
+.gb__blur {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  backdrop-filter: blur(3.7px);
+  -webkit-backdrop-filter: blur(3.7px);
+  background: linear-gradient(152.51deg, rgba(248, 253, 255, 0.8) 3.37%, rgba(199, 199, 199, 0.8) 37.46%);
+  mix-blend-mode: hard-light;
+  pointer-events: none;
 }
 
 .gb__label {
- color: #FFF;
-font-family: "HONOR Sans CN";
-font-size: 13.448px;
-font-style: normal;
-font-weight: 500;
-line-height: 94.56%;
+  position: relative;
+  z-index: 1;
+  color: #f9f9f9;
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
+  font-size: 0.275rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.gb__arrow {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+// Внутренняя тень поверх всего
+.gb__inner-shadow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0.034rem 0 black,
+    inset 0.005rem 0.005rem 0.034rem 0 black,
+    inset 0 0 0.069rem 0 rgba(242, 242, 242, 0.9);
 }
 </style>

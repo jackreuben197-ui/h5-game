@@ -223,31 +223,20 @@ function handleOpenCustomerService(): void {
 }
 
 function openMiniGamePanel(): void {
-  showGameToast('功能开发中')
-  // openBridgePanel({
-  //   panelType: 'jackpotAward',
-  //   closeOnClickOverlay: true,
-  //   props: {
-  //     awardUsersList: [
-  //       {
-  //         userRid: '1234567',
-  //         nickname: 'Jackpot PlayerPlayer',
-  //         avatar: 'https://static.awanptest.com/pint-intl-test/image-avatar/97189718-cvWtG.png',
-  //         award: 888800,
-  //         cardsType: 10,
-  //         handValue: 100000,
-  //       },
-  //       {
-  //         userRid: '7654321',
-  //         nickname: 'Lucky Runner',
-  //         avatar: 'https://static.awanptest.com/pint-intl-test/image-avatar/97189718-cvWtG.png',
-  //         award: 256600,
-  //         cardsType: 9,
-  //         handValue: 90000,
-  //       },
-  //     ],
-  //   },
-  // })
+  // showGameToast('功能开发中')
+  openBridgePanel({
+    panelType: 'mttSettlement',
+    closeOnClickOverlay: true,
+    showH5Bg: true,
+    props: {
+      matchId: 92280386,
+      matchName: 'MTT202603121773282270383563',
+      isRebuy: false,
+      currentBlindLevel: 500,
+      maxRebuyBlindLevel: 1000,
+      remainRebuyTimes: 1,
+    },
+  })
 }
 
 function getRoomPlayers(room: RoomRecord): number {
@@ -753,8 +742,7 @@ onBeforeUnmount(() => {
   min-height: 1.54rem;
   gap: 0;
   box-shadow:
-  /* 左上高光 */
-    inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
+  /* 左上高光 */ inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
     /* 右下高光 */ inset -1px -1px 0px 0px rgba(255, 255, 255, 0.35);
 }
 

@@ -59,6 +59,7 @@ export interface CocosPanelPayload {
   // 点击遮罩是否允许关闭，默认 true。
   closeOnClickOverlay?: boolean
   ensureVisible?: boolean
+  showH5Bg?: boolean
 }
 
 export interface ClosePanelPayload {

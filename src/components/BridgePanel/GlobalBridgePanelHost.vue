@@ -13,12 +13,15 @@ const renderedPanel = ref<ActiveBridgePanel | null>(null)
 
 const visible = computed(() => Boolean(activePanel.value))
 const title = computed(() => renderedPanel.value?.title ?? '')
+const showH5Bg = computed(() => renderedPanel.value?.showH5Bg === true)
 const closeOnClickOverlay = computed(() => renderedPanel.value?.closeOnClickOverlay === true)
 const currentPanelComponent = computed(() =>
   renderedPanel.value ? bridgePanelRegistry[renderedPanel.value.panelType] ?? null : null,
 )
 const panelProps = computed(() => renderedPanel.value?.props ?? {})
-const shouldShowFallback = computed(() => Boolean(renderedPanel.value && !currentPanelComponent.value))
+const shouldShowFallback = computed(() =>
+  Boolean(renderedPanel.value && !currentPanelComponent.value),
+)
 
 watch(
   activePanel,
@@ -47,7 +50,7 @@ function onDialogClose(): void {
 
 <template>
   <GameDialog
-    class="game-panel-dialog"
+    :class="{ 'game-panel-dialog': !showH5Bg }"
     :show="visible"
     :title="title"
     :show-footer="false"

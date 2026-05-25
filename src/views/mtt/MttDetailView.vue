@@ -334,6 +334,7 @@ async function handleBtnClick(): Promise<void> {
       const payload: EnterMttPayload = {
         userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',
         userId: gameStore.loginUserId || gameStore.loginAccount || '',
+        token: gameStore.sessionToken,
         websocketPort: typeof wsPort === 'number' ? wsPort : 0,
         from: 'h5-mtt',
         matchId: matchId.value,
@@ -398,6 +399,7 @@ async function handleEnterTable(rid: number): Promise<void> {
     const payload: EnterMttPayload = {
       userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',
       userId: gameStore.loginUserId || gameStore.loginAccount || '',
+      token: gameStore.sessionToken,
       websocketPort: typeof wsPort === 'number' ? wsPort : 0,
       from: 'h5-mtt',
       matchId: matchId.value,

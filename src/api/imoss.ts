@@ -26,6 +26,8 @@ export async function postImossGameClientUploadAudioApi(
       'Osskey': runtime.oss_key || '',
     },
   })
+  // 恢复默认 baseURL，避免影响后续其他 API 请求
+  http.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || '/api'
   return response.data
 }
 
@@ -43,5 +45,7 @@ export async function postImossGameClientUploadImageApi(
       'Osskey': runtime.oss_key || '',
     },
   })
+  // 恢复默认 baseURL，避免影响后续其他 API 请求
+  http.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || '/api'
   return response.data
 }

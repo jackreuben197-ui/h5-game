@@ -830,3 +830,39 @@ export interface ClubSendDiamondsResponseData extends ClubSendDiamondsData {
 export interface ClubSendDiamondsData {
   [key: string]: unknown
 }
+
+// /api/user/agent/diamonds/grant (UserAgencySendDiamonds)
+
+export interface UserAgencySendDiamondsRequest {
+    amount?: number; // 金额
+    user_id?: number; // 用户id
+
+  [key: string]: unknown
+}
+
+export interface UserAgencySendDiamondsResponseData extends UserAgencySendDiamondsData {
+  [key: string]: unknown
+}
+
+export interface UserAgencySendDiamondsData {
+  [key: string]: unknown
+}
+
+// /api/user/agent/gold/grant (UserAgencyGoldGrant)
+
+export interface UserAgencyGoldGrantRequest {
+    user_id?: number; // 用户ID
+    amount?: number; // 金额
+    op_type?: number; // 操作类型： 1 - 发放豆 2 - 回收豆
+    legal_tender?: number; // 法币金额（单位：分）
+
+  [key: string]: unknown
+}
+
+export interface UserAgencyGoldGrantResponseData extends UserAgencyGoldGrantData {
+  [key: string]: unknown
+}
+
+export interface UserAgencyGoldGrantData {
+  [key: string]: unknown
+}

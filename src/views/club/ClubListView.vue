@@ -60,7 +60,7 @@ const fallbackBanners = [imgClubBannerFigma]
 
 const quickActions: QuickActionItem[] = [
   { id: 1, title: '创建俱乐部', kind: 'create-club' },
-  { id: 2, title: '创建俱乐部', kind: 'club-panel' },
+  { id: 2, title: '创建俱乐部', kind: 'club-panel', hidden: true },
 ]
 
 const clubList = computed<ClubCardItem[]>(() => {

@@ -279,6 +279,8 @@ export interface ClubAgentUserListRequest {
   order_type?: number // 1-顺序;2-倒叙;
   limit?: number // 最大条数
   offset?: number // 开始下标
+  simple?: boolean // 是否简化返回数据，true-简化，false-完整
+  return_diamonds?: boolean // 是否返回钻石余额
 
   [key: string]: unknown
 }

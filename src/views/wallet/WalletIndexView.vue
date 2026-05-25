@@ -323,16 +323,15 @@ const presets = computed<Preset[]>(() => {
   return list.map((item: any) => {
     const goldCount = item.gold_count ?? 0
     const amountStr = String(goldCount / 100)
-    let chipStr = (goldCount / 100).toLocaleString()
+    let chipStr = (goldCount / 100).toLocaleString(undefined, { useGrouping: false })
     if (isUsdt) {
       chipStr = walletStore.formatUsdtPrice(
         walletStore.calculateUsdtPrice(goldCount, rate, feeRate, feeType, discount).totalUiPrice,
       )
     } else if (selected?.type === 3) {
-      // Customer Service: hide decimals
-      chipStr = Math.round(
-        walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount),
-      ).toString()
+      // Customer Service: show decimals
+      const csPrice = walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)
+      chipStr = csPrice.toLocaleString(undefined, { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 })
     }
 
     return {
@@ -379,15 +378,13 @@ const displayPayAmount = computed(() => {
   }
 
   if (selected?.type === 3) {
-    // Customer Service
+    // Customer Service: show decimals
     const goldCount = amount * 100
     const rate = selected.rate ?? 1
     const feeRate = selected.fee_rate ?? 0
     const discount = selected.discount ?? 0
-    // Customer Service: hide decimals
-    return Math.round(
-      walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount),
-    ).toString()
+    const csPrice = walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)
+    return csPrice.toLocaleString(undefined, { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
 
   return selectedAmount.value

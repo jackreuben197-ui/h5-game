@@ -82,7 +82,7 @@ async function fetchUserInfoOnEnter(): Promise<void> {
       .then((res) => {
         if (res.code === 0 && res.data) {
           appConfigStore.setDiamondConfig(res.data)
-          forwardDiamondConfigToCocos(res.data)
+          forwardDiamondConfigToCocos(appConfigStore.diamondConfig)
         }
       })
       .catch((error) => {

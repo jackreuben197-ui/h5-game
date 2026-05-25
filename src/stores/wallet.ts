@@ -118,7 +118,7 @@ export const useWalletStore = defineStore('wallet', () => {
   }
 
   function formatUsdtPrice(price: number): string {
-    return price.toFixed(4).replace(/\.?0+$/, '')
+    return price.toLocaleString(undefined, { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 4 })
   }
 
   /**

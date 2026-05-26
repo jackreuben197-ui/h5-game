@@ -112,7 +112,7 @@ function createOfficialDisplayChannel(
     club_logo: avatar,
     user_avatar: avatar,
     unread_count: Number(source?.unread_count || 0),
-    club_id: Number(source?.club_id || 0),
+    club_id: 0,
     support_user_id: Number(source?.support_user_id || 0),
     tribe_id: Number(source?.tribe_id || 0),
   }
@@ -481,7 +481,7 @@ function buildMessageQuery(setRead: boolean) {
   return {
     limit: 50,
     tribe_id: tribeId,
-    club_id: clubId > 0 ? clubId : 0,
+    club_id: channel.im_service_type === 1 && clubId > 0 ? clubId : 0,
     // to_user_id: supportUserId,
     im_service_type: resolveEffectiveImServiceType(channel),
     set_read: setRead,
@@ -516,7 +516,7 @@ async function markAsRead(): Promise<void> {
   const last = messages.value[messages.value.length - 1]
 
   await postChatSupportMessageReadApi({
-    club_id: Number(channel.club_id || targetClubId.value || 0) || 0,
+    club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
     // to_user_id: Number(channel.support_user_id || 0) || undefined,
     time_token: Number(last?.time_token || 0) || undefined,
     im_service_type: resolveEffectiveImServiceType(channel),
@@ -608,8 +608,8 @@ async function sendMessage(): Promise<void> {
   inputText.value = ''
 
   const response = await postChatSupportMessageSendApi({
-    tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || undefined,
-    club_id: Number(channel.club_id || targetClubId.value || 0) || undefined,
+    tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
+    club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
     // to_user_id: Number(channel.support_user_id || 0) || undefined,
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 1,
@@ -762,8 +762,8 @@ async function onImageUpload(event: Event): Promise<void> {
   }
 
   const sendResponse = await postChatSupportMessageSendApi({
-    tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || undefined,
-    club_id: Number(channel.club_id || targetClubId.value || 0) || undefined,
+    tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
+    club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
     // to_user_id: Number(channel.support_user_id || 0) || undefined,
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 2,
@@ -921,8 +921,8 @@ async function uploadAndSendVoice(blob: Blob, duration: number): Promise<void> {
   }
 
   const sendResponse = await postChatSupportMessageSendApi({
-    tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || undefined,
-    club_id: Number(channel.club_id || targetClubId.value || 0) || undefined,
+    tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
+    club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
     // to_user_id: Number(channel.support_user_id || 0) || undefined,
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 3,
@@ -1068,8 +1068,8 @@ async function onFallbackAudioUpload(event: Event): Promise<void> {
   }
 
   const sendResponse = await postChatSupportMessageSendApi({
-    tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || undefined,
-    club_id: Number(channel.club_id || targetClubId.value || 0) || undefined,
+    tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
+    club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
     // to_user_id: Number(channel.support_user_id || 0) || undefined,
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 3,

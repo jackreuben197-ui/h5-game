@@ -504,7 +504,11 @@ onBeforeUnmount(() => {
           <img class="contact-icon" src="@/assets/icons/icon_service_2.png" alt="邮箱" />
           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>
-        <div class="contact-item" @click="handleOpenCustomerService">
+        <div
+          v-if="currentClub?.support_im_rid"
+          class="contact-item"
+          @click="handleOpenCustomerService"
+        >
           <img class="contact-icon" src="@/assets/icons/icon_service_3.png" alt="IM客服" />
           <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
         </div>

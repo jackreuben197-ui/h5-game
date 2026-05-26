@@ -120,20 +120,20 @@ function createOfficialDisplayChannel(
 
 function resolveChannelDisplayName(channel: ChatSupportChannelListServiceData): string {
   if (isOfficialChannel(channel)) return '官方客服'
-  return String(channel.club_name || '').trim()
+  return String(channel.user_nickname || channel.club_name || '').trim()
 }
 
 function resolveChannelDisplayAvatar(channel: ChatSupportChannelListServiceData): string {
   if (isOfficialChannel(channel)) {
     return (
       officialServiceAvatar.value ||
-      String(channel.club_logo || channel.user_avatar || '').trim() ||
+      String(channel.user_avatar || channel.club_logo || '').trim() ||
       customerServiceIcon
     )
   }
 
   return (
-    String(channel.club_logo || channel.user_avatar || '').trim() || clubLogo.value || avatarDefault
+    String(channel.user_avatar || channel.club_logo || '').trim() || clubLogo.value || avatarDefault
   )
 }
 
@@ -145,15 +145,16 @@ const availableChannels = computed(() => {
     return [createOfficialDisplayChannel(official || null)]
   }
 
-  const existsClubIds = new Set<number>()
+  const existsClubIds = new Set<string>()
   const list = channels.value.filter((item) => {
     if (!item || typeof item !== 'object') return false
     if (isOfficialChannel(item)) return true
 
     const clubId = Number(item.club_id || 0)
     if (chatContext.value.clubId > 0 && clubId !== chatContext.value.clubId) return false
-    if (existsClubIds.has(clubId)) return false
-    existsClubIds.add(clubId)
+    const userId = Number(item.user_id || 0)
+    if (existsClubIds.has(`${clubId}-${userId}`)) return false
+    existsClubIds.add(`${clubId}-${userId}`)
     const clubName = String(item.club_name || '').trim()
     return clubId > 0 && !!clubName
   })
@@ -224,14 +225,11 @@ function resolveChannelIdentity(
   channel: ChatSupportChannelListServiceData | null | undefined,
 ): string {
   if (!channel) return ''
-  const supportUserId = Number(channel.support_user_id || 0)
-  if (supportUserId > 0) {
-    return `support:${supportUserId}`
-  }
 
   const clubId = Number(channel.club_id || 0)
   const type = Number(channel.im_service_type || 0)
-  return `club:${clubId}:type:${type}`
+  const userId = Number(channel.user_id || 0)
+  return `club:${clubId}:type:${type}:user:${userId}`
 }
 
 async function ensureOfficialServiceProfileLoaded(): Promise<void> {
@@ -306,15 +304,15 @@ function bumpChannelUnreadByWs(payload: {
   clubId: number
   supportUserId: number
   timeToken: number
+  userId: number
 }): boolean {
   let matched = false
   const nextChannels = channels.value.map((item) => {
     const clubId = Number(item.club_id || 0)
-    const supportUserId = Number(item.support_user_id || 0)
-    const bySupport =
-      supportUserId > 0 && payload.supportUserId > 0 && supportUserId === payload.supportUserId
+    const userId = Number(item.user_id || 0)
     const byClub = clubId > 0 && payload.clubId > 0 && clubId === payload.clubId
-    if (!bySupport && !byClub) return item
+    const byUser = userId > 0 && payload.userId > 0 && userId === payload.userId
+    if (!byClub && !byUser) return item
 
     matched = true
     const currentTimeToken = Number((item as Record<string, unknown>).last_time_token || 0)
@@ -482,7 +480,8 @@ function buildMessageQuery(setRead: boolean) {
     limit: 50,
     tribe_id: tribeId,
     club_id: channel.im_service_type === 1 && clubId > 0 ? clubId : 0,
-    // to_user_id: supportUserId,
+    to_user_id:
+      channel.user_id !== userInfoStore.userInfo?.user.p_u_id ? Number(channel.user_id || 0) : 0,
     im_service_type: resolveEffectiveImServiceType(channel),
     set_read: setRead,
   }
@@ -517,7 +516,8 @@ async function markAsRead(): Promise<void> {
 
   await postChatSupportMessageReadApi({
     club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
-    // to_user_id: Number(channel.support_user_id || 0) || undefined,
+    to_user_id:
+      channel.user_id !== userInfoStore.userInfo?.user.p_u_id ? Number(channel.user_id || 0) : 0,
     time_token: Number(last?.time_token || 0) || undefined,
     im_service_type: resolveEffectiveImServiceType(channel),
   })
@@ -610,7 +610,8 @@ async function sendMessage(): Promise<void> {
   const response = await postChatSupportMessageSendApi({
     tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
     club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
-    // to_user_id: Number(channel.support_user_id || 0) || undefined,
+    to_user_id:
+      channel.user_id !== userInfoStore.userInfo?.user.p_u_id ? Number(channel.user_id || 0) : 0,
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 1,
     text,
@@ -764,7 +765,8 @@ async function onImageUpload(event: Event): Promise<void> {
   const sendResponse = await postChatSupportMessageSendApi({
     tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
     club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
-    // to_user_id: Number(channel.support_user_id || 0) || undefined,
+    to_user_id:
+      channel.user_id !== userInfoStore.userInfo?.user.p_u_id ? Number(channel.user_id || 0) : 0,
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 2,
     url,
@@ -923,7 +925,8 @@ async function uploadAndSendVoice(blob: Blob, duration: number): Promise<void> {
   const sendResponse = await postChatSupportMessageSendApi({
     tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
     club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
-    // to_user_id: Number(channel.support_user_id || 0) || undefined,
+    to_user_id:
+      channel.user_id !== userInfoStore.userInfo?.user.p_u_id ? Number(channel.user_id || 0) : 0,
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 3,
     url,
@@ -1283,7 +1286,7 @@ watch(
           <div class="agent-floating-card" role="tablist" aria-label="客服会话列表">
             <button
               v-for="channel in availableChannels"
-              :key="String(channel.support_user_id || channel.club_id || channel.user_id || 0)"
+              :key="`${channel.club_id}-${channel.user_id}`"
               class="agent-strip-item"
               :class="{ 'agent-strip-item--active': isActiveChannel(channel) }"
               type="button"

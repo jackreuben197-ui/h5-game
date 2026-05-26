@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { showToast } from 'vant'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import FilterTabbar from '@/components/Tabbar/FilterTabbar.vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
@@ -37,11 +36,13 @@ import { enterMtt } from '@/bridge/core'
 import type { EnterMttPayload } from '@/bridge/protocol'
 import { useGameStore } from '@/stores/game'
 import LoginSession from '@/session/loginSession'
+import { useBridgePanelState } from '@/bridge/channels/panelChannel'
 
 type DetailTabName = 'status' | 'players' | 'rewards' | 'tables' | 'blinds'
 
 const route = useRoute()
 const gameStore = useGameStore()
+const activeBridgePanel = useBridgePanelState()
 const activeTab = ref<DetailTabName>('status')
 const detailData = ref<RoomcenterMttDetailData | null>(null)
 const btnLoading = ref(false)
@@ -273,6 +274,11 @@ function loadActiveTabData(): void {
   }
 }
 
+async function refreshDetailPageData(): Promise<void> {
+  await loadDetail()
+  loadActiveTabData()
+}
+
 // 对齐 Unity UIMatchMttDetailComponent.Update()：
 // 当 state_code 为 WAITING_APPLY 时，每秒检查 apply_start_time，
 // 到达后重新拉取详情，服务端会返回新的 state_code（CAN_APPLY_NOT_START）。
@@ -288,6 +294,27 @@ watch(tick, () => {
 watch(activeTab, () => {
   loadActiveTabData()
 })
+
+watch(
+  () => activeBridgePanel.value?.requestId,
+  (nextRequestId, prevRequestId) => {
+    if (!nextRequestId || nextRequestId === prevRequestId) {
+      return
+    }
+
+    const panel = activeBridgePanel.value
+    if (!panel || panel.panelType !== 'mttSettlement') {
+      return
+    }
+
+    const panelMatchId = Number(panel.props?.matchId ?? 0)
+    if (panelMatchId > 0 && panelMatchId !== matchId.value) {
+      return
+    }
+
+    void refreshDetailPageData()
+  },
+)
 
 onMounted(() => {
   void loadDetail()

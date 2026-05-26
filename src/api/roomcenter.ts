@@ -219,11 +219,17 @@ export async function postRoomcenterMttRealPrizeApi(
 // 对齐 cocos /api/roomcenter/mtt/{id}/myaward。轮询期间屏蔽业务错误 toast。
 export async function getRoomcenterMttMyawardApi(
   mttId: number | string,
+  requestOptions: RoomcenterRequestOptions = {},
 ): Promise<ApiResponse<RoomcenterMttMyawardData>> {
   const endpoint = `/roomcenter/mtt/${mttId}/myaward`
-  const response = await http.post<ApiResponse<RoomcenterMttMyawardData>>(endpoint, {}, {
-    suppressBusinessToast: true,
-  })
+  const response = await http.post<ApiResponse<RoomcenterMttMyawardData>>(
+    endpoint,
+    {},
+    {
+      suppressBusinessToast: true,
+      ...requestOptions,
+    },
+  )
   return response.data
 }
 

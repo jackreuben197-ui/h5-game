@@ -7,6 +7,7 @@ import iconClock from '@/assets/icons/icon_mtt_clock.svg'
 import iconRanking from '@/assets/icons/icon_mtt_ranking.svg'
 import { getRoomcenterMttDetailApi, getRoomcenterMttMyawardApi } from '@/api/roomcenter'
 import type { RoomcenterMttDetailData, RoomcenterMttMyawardData } from '@/api/models/roomcenter'
+import { postMiscGameDescriptionInfoApi } from '@/api/misc'
 import { t, getLocale } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, toTimestampMs } from '@/utils/time'
@@ -18,20 +19,12 @@ const props = defineProps<{
 }>()
 
 // ── 从 Cocos 传入的上下文参数 ──
-const matchId = computed(() => props.panelProps?.matchId ?? props.panelProps?.match_id)
-const matchName = computed(() =>
-  String(props.panelProps?.matchName ?? props.panelProps?.match_name ?? ''),
-)
-const isRebuy = computed(() => Boolean(props.panelProps?.isRebuy ?? props.panelProps?.is_rebuy))
-const currentBlindLevel = computed(() =>
-  Number(props.panelProps?.currentBlindLevel ?? props.panelProps?.current_blind_level ?? 0),
-)
-const maxRebuyBlindLevel = computed(() =>
-  Number(props.panelProps?.maxRebuyBlindLevel ?? props.panelProps?.max_rebuy_blind_level ?? 0),
-)
-const remainRebuyTimes = computed(() =>
-  Number(props.panelProps?.remainRebuyTimes ?? props.panelProps?.remain_rebuy_times ?? 0),
-)
+const matchId = computed(() => props.panelProps?.matchId)
+const matchName = computed(() => String(props.panelProps?.matchName ?? ''))
+const isRebuy = computed(() => Boolean(props.panelProps?.isRebuy))
+const currentBlindLevel = computed(() => Number(props.panelProps?.currentBlindLevel ?? 0))
+const maxRebuyBlindLevel = computed(() => Number(props.panelProps?.maxRebuyBlindLevel ?? 0))
+const remainRebuyTimes = computed(() => Number(props.panelProps?.remainRebuyTimes ?? 0))
 
 // ── 决定展示哪个 case ──
 // settlement: 展示排名奖励（isRebuy=false，或 isRebuy=true 但盲注已超重购上限）
@@ -46,6 +39,32 @@ const panelCase = computed<'settlement' | 'rebuy' | 'confirm'>(() => {
   }
   return 'settlement'
 })
+
+// ── CMS 文案（desc_type 6=重购 7=无次数确认 8=结算脚注） ──
+const cmsTitle = ref('')
+const cmsContent = ref('')
+const cmsSettlementFootnote = ref('')
+
+async function fetchCmsText(descType: number) {
+  try {
+    const res = await postMiscGameDescriptionInfoApi({ desc_type: descType })
+    if (res.code === 0 && res.data?.list) {
+      const item = res.data.list.find((i) => i.desc_type === descType)
+      if (item) {
+        const resolve = (key?: string) =>
+          key ? resolveTemplateTextByKey(key, getLocale()) || t(key) || key : ''
+        if (descType === 8) {
+          cmsSettlementFootnote.value = resolve(item.content)
+        } else {
+          cmsTitle.value = resolve(item.title)
+          cmsContent.value = resolve(item.content)
+        }
+      }
+    }
+  } catch {
+    // silent
+  }
+}
 
 // ── 动态拉取数据（仅 settlement case 需要） ──
 const loading = ref(false)
@@ -75,6 +94,32 @@ async function fetchAward(): Promise<boolean> {
     if (res.code === 0 && res.data) {
       awardData.value = res.data
       return true
+    } else {
+      const res = {
+        code: 0,
+        data: {
+          uid: 96355770,
+          rank: 1558,
+          award_gold: 6660,
+          award_goods: [],
+          hunter_award: 100,
+          hunter_rank: 100,
+          hunter_kill: 1,
+          is_final: true,
+          awarded: true,
+          award_replace_prop_id: 0,
+          award_replace_remain: 0,
+          award_extra_prop_id: 0,
+          award_extra_gold_value: 0,
+          username: 'kong',
+          avatar:
+            'https://static.awanptest.com/awanptesting-intl-test/image-avatar/96355770-mwOEM.png',
+          final_match_id: 0,
+          final_start_time: '0001-01-01T00:00:00Z',
+        },
+      }
+      console.log(res)
+      //   awardData.value = res.data
     }
   } catch {
     console.log('fetchAward error')
@@ -102,8 +147,13 @@ async function startPolling() {
 }
 
 onMounted(async () => {
-  if (panelCase.value === 'settlement' && matchId.value) {
+  if (panelCase.value !== 'settlement') {
+    fetchCmsText(panelCase.value === 'rebuy' ? 6 : 7)
+    return
+  }
+  if (matchId.value) {
     loading.value = true
+    fetchCmsText(8)
     await fetchMttDetail()
     await startPolling()
   }
@@ -124,22 +174,28 @@ const tournamentName = computed(() => {
   if (rawName) {
     return resolveTemplateTextByKey(rawName, getLocale()) || t(rawName) || rawName
   }
-  return matchName.value
+  return resolveTemplateTextByKey(matchName.value, getLocale())
 })
 
 // 开始时间：格式化为 YYYY/MM/DD HH:mm:ss
 const startTime = computed(() => {
-  const raw =
-    mttDetail.value?.mtt?.start_time ?? props.panelProps?.startTime ?? props.panelProps?.start_time
+  const raw = mttDetail.value?.mtt?.start_time ?? props.panelProps?.startTime
   if (!raw) return ''
   return formatDateTime(toTimestampMs(raw), 'YYYY/MM/DD HH:mm:ss')
 })
 
 const totalParticipants = computed(() => mttDetail.value?.mtt?.participants ?? 0)
 
+// gold_type === 4 为钻石赛，其余为筹码赛
+const goldType = computed(() => Number(mttDetail.value?.mtt?.gold_type ?? 1))
+const isDiamond = computed(() => goldType.value === 4)
+const rewardIcon = computed(() => (isDiamond.value ? iconDiamond : iconChips))
+
 // 奖励
 const poolAmount = computed(() => awardData.value?.award_gold ?? 0)
 const hunterAmount = computed(() => awardData.value?.hunter_award ?? 0)
+const displayPoolAmount = computed(() => formatRewardAmount(poolAmount.value, goldType.value))
+const displayHunterAmount = computed(() => formatRewardAmount(hunterAmount.value, goldType.value))
 const hasHunterReward = computed(() => hunterAmount.value > 0)
 const hasReward = computed(() => poolAmount.value > 0 || hunterAmount.value > 0)
 
@@ -149,7 +205,7 @@ const isFinal = computed(() => awardData.value?.is_final ?? false)
 
 // 加载文案：初始显示等待结算，重试后显示排名计算中
 const loadingText = computed(() =>
-  pollingRetried.value ? t('Ranking_check') : t('UIMTTWaitforend'),
+  pollingRetried.value ? t('Ranking_patient') : t('UIMTTWaitforend'),
 )
 
 function handleDone(): void {
@@ -166,6 +222,15 @@ function handleConfirm(): void {
   props.emitPanelEvent('confirm')
   props.closePanel('confirm')
 }
+
+function formatRewardAmount(value: number, goldTypeValue: number): string {
+  if (!Number.isFinite(value)) {
+    return '0'
+  }
+  const amount = goldTypeValue === 1 ? value / 100 : value
+  const fixed = amount.toFixed(2)
+  return fixed.replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')
+}
 </script>
 
 <template>
@@ -174,11 +239,19 @@ function handleConfirm(): void {
     <div v-if="tournamentName" class="mtt-settlement-panel__title">
       {{ tournamentName }}
     </div>
-
+    <!-- 开始时间 -->
+    <div v-if="startTime" class="mtt-settlement-panel__time-row">
+      <img class="mtt-settlement-panel__time-icon" :src="iconClock" alt="clock" />
+      <span class="mtt-settlement-panel__time-label">{{ t('MTT-Start Time') }}</span>
+      <span class="mtt-settlement-panel__time-value">{{ startTime }}</span>
+    </div>
     <!-- ── Case: rebuy（可重购）── -->
     <template v-if="panelCase === 'rebuy'">
       <div class="mtt-settlement-panel__case-title">
-        {{ t('UIMTTSignDialogReBuyTitle') }}
+        {{ cmsTitle || t('UIMTTWaitforend') }}
+      </div>
+      <div v-if="cmsContent" class="mtt-settlement-panel__case-content">
+        {{ cmsContent }}
       </div>
       <PrimaryButton
         class="mtt-settlement-panel__btn"
@@ -190,9 +263,16 @@ function handleConfirm(): void {
     <!-- ── Case: confirm（无次数，不可重购）── -->
     <template v-else-if="panelCase === 'confirm'">
       <div class="mtt-settlement-panel__case-title">
-        {{ t('UIMTT_Ranking_TiaoZheng') }}
+        {{ cmsTitle || t('UIMTT_Ranking_TiaoZheng') }}
       </div>
-      <PrimaryButton class="mtt-settlement-panel__btn" text="OK" @click="handleConfirm" />
+      <div v-if="cmsContent" class="mtt-settlement-panel__case-content">
+        {{ cmsContent }}
+      </div>
+      <PrimaryButton
+        class="mtt-settlement-panel__btn"
+        :text="t('UI_Recharge_confirm')"
+        @click="handleConfirm"
+      />
     </template>
 
     <!-- ── Case: settlement（结算）── -->
@@ -203,39 +283,36 @@ function handleConfirm(): void {
       </div>
 
       <template v-else>
-        <!-- 开始时间 -->
-        <div v-if="startTime" class="mtt-settlement-panel__time-row">
-          <img class="mtt-settlement-panel__time-icon" :src="iconClock" alt="clock" />
-          <span class="mtt-settlement-panel__time-label">{{ t('MTT-Start Time') }}</span>
-          <span class="mtt-settlement-panel__time-value">{{ startTime }}</span>
-        </div>
-
         <!-- 有奖励 -->
         <template v-if="hasReward">
           <!-- 恭喜文案 -->
-          <div class="mtt-settlement-panel__congrats">
+          <div v-if="false" class="mtt-settlement-panel__congrats">
             {{ t('UIMTT_Ranking_GongXi') }}
           </div>
 
           <!-- 奖池奖励 -->
           <div v-if="poolAmount > 0" class="mtt-settlement-panel__reward-row">
-            <img class="mtt-settlement-panel__reward-icon" :src="iconChips" alt="chips" />
-            <div class="mtt-settlement-panel__reward-content">
-              <span class="mtt-settlement-panel__reward-amount">{{ poolAmount }}</span>
+            <div class="mtt-settlement-panel__reward-left">
+              <img class="mtt-settlement-panel__reward-icon" :src="rewardIcon" alt="reward" />
+              <span class="mtt-settlement-panel__reward-amount">{{ displayPoolAmount }}</span>
             </div>
+            <div class="mtt-settlement-panel__reward-label">{{ t('UIMTT_PoolReward') }}</div>
           </div>
 
           <!-- 猎人奖励 -->
           <div v-if="hasHunterReward" class="mtt-settlement-panel__reward-row">
-            <img class="mtt-settlement-panel__reward-icon" :src="iconDiamond" alt="diamond" />
-            <div class="mtt-settlement-panel__reward-content">
-              <span class="mtt-settlement-panel__reward-amount">{{ hunterAmount }}</span>
+            <div class="mtt-settlement-panel__reward-left">
+              <img class="mtt-settlement-panel__reward-icon" :src="rewardIcon" alt="reward" />
+              <span class="mtt-settlement-panel__reward-amount">{{ displayHunterAmount }}</span>
+            </div>
+            <div class="mtt-settlement-panel__reward-label">
+              {{ t('UITexasReport_Text_HunterTitle') }}
             </div>
           </div>
 
           <!-- 领奖说明 -->
-          <div class="mtt-settlement-panel__reward-tips">
-            {{ t('UIMTT_Ranking_GongXiTips') }}
+          <div v-if="false" class="mtt-settlement-panel__reward-tips">
+            {{ cmsSettlementFootnote || t('UIMTT_Ranking_GongXiTips') }}
           </div>
         </template>
 
@@ -249,7 +326,7 @@ function handleConfirm(): void {
           <div class="mtt-settlement-panel__ranking-left">
             <img class="mtt-settlement-panel__ranking-icon" :src="iconRanking" alt="ranking" />
             <span class="mtt-settlement-panel__ranking-label">
-              {{ t('UIMTT_Ranking_YourRank') }}
+              {{ t('MTT_end_rank').replace('{0}', '') }}
             </span>
           </div>
           <span class="mtt-settlement-panel__ranking-value">
@@ -260,7 +337,11 @@ function handleConfirm(): void {
         </div>
 
         <!-- Done 按钮 -->
-        <PrimaryButton class="mtt-settlement-panel__btn" text="Done" @click="handleDone" />
+        <PrimaryButton
+          class="mtt-settlement-panel__btn"
+          :text="t('UI_Recharge_confirm')"
+          @click="handleDone"
+        />
       </template>
     </template>
   </section>
@@ -271,7 +352,7 @@ function handleConfirm(): void {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0.3rem 0.41rem 0.43rem;
+  padding: 0rem 0rem 0rem;
   gap: 0.21rem;
   width: 100%;
   box-sizing: border-box;
@@ -290,11 +371,22 @@ function handleConfirm(): void {
 /* ── case 标题（rebuy / confirm 的说明文案） ── */
 .mtt-settlement-panel__case-title {
   color: rgba(255, 255, 255, 0.9);
-  font-size: 0.42rem;
+  font-size: 0.4rem;
   font-family: 'HONOR Sans CN', sans-serif;
-  font-weight: 600;
+  font-weight: 500;
   text-align: center;
-  padding: 0.2rem 0;
+  margin-top: 0.3rem;
+}
+
+/* ── case 正文（CMS content 字段） ── */
+.mtt-settlement-panel__case-content {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.3rem;
+  font-family: 'HONOR Sans CN', sans-serif;
+  font-weight: 400;
+  text-align: center;
+  line-height: 1.5;
+  //   padding: 0 0.2rem;
 }
 
 /* ── 加载中 ── */
@@ -374,14 +466,21 @@ function handleConfirm(): void {
   height: 2.24rem;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  justify-content: space-between;
+  padding: 0 0.56rem;
   background: linear-gradient(
     158deg,
     rgba(255, 255, 255, 0.1) 0%,
     rgba(229.6, 229.6, 229.6, 0.1) 100%
   );
   border-radius: 0.77rem;
+  box-sizing: border-box;
+}
+
+.mtt-settlement-panel__reward-left {
+  display: flex;
+  align-items: center;
+  gap: 0.26rem;
 }
 
 .mtt-settlement-panel__reward-icon {
@@ -389,12 +488,6 @@ function handleConfirm(): void {
   height: 0.85rem;
   object-fit: contain;
   flex-shrink: 0;
-}
-
-.mtt-settlement-panel__reward-content {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
 }
 
 .mtt-settlement-panel__reward-amount {
@@ -409,12 +502,13 @@ function handleConfirm(): void {
   text-shadow: 0 0.11rem 0.11rem rgba(0, 0, 0, 0.25);
 }
 
-.mtt-settlement-panel__reward-sub {
+.mtt-settlement-panel__reward-label {
   color: #fff;
   font-size: 0.37rem;
-  font-family: 'Keania One', sans-serif;
-  font-weight: 400;
-  text-shadow: 0 0.11rem 0.11rem rgba(0, 0, 0, 0.25);
+  font-family: 'HONOR Sans CN', sans-serif;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: right;
 }
 
 /* ── 排名行 ── */
@@ -469,6 +563,7 @@ function handleConfirm(): void {
 
 /* ── 按钮 ── */
 .mtt-settlement-panel__btn {
+  height: 1.4rem;
   width: 100%;
 }
 </style>

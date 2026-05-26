@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import iconChips from '@/assets/icons/icon_chips.png'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
-import iconClock from '@/assets/icons/icon_mtt_clock.svg'
+import iconClock from '@/assets/icons/icon_time.png'
 import iconRanking from '@/assets/icons/icon_mtt_ranking.svg'
 import { getRoomcenterMttDetailApi, getRoomcenterMttMyawardApi } from '@/api/roomcenter'
 import type { RoomcenterMttDetailData, RoomcenterMttMyawardData } from '@/api/models/roomcenter'
 import { postMiscGameDescriptionInfoApi } from '@/api/misc'
 import { t, getLocale } from '@/i18n'
+import { useMttListStore } from '@/stores/mttList'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, toTimestampMs } from '@/utils/time'
 
@@ -17,6 +19,9 @@ const props = defineProps<{
   emitPanelEvent: (event: string, payload?: unknown) => void
   closePanel: (reason?: string, payload?: unknown) => void
 }>()
+
+const router = useRouter()
+const mttListStore = useMttListStore()
 
 // ── 从 Cocos 传入的上下文参数 ──
 const matchId = computed(() => props.panelProps?.matchId)
@@ -147,6 +152,15 @@ async function startPolling() {
 }
 
 onMounted(async () => {
+  if (panelCase.value === 'settlement') {
+    await router.replace({ name: 'mtt-list' })
+    mttListStore.bootstrapMttList()
+    await Promise.all([
+      mttListStore.fetchMttList({ silent: true }),
+      mttListStore.fetchAllMttSngIds({ silent: true }),
+    ])
+  }
+
   if (panelCase.value !== 'settlement') {
     fetchCmsText(panelCase.value === 'rebuy' ? 6 : 7)
     return
@@ -182,6 +196,10 @@ const startTime = computed(() => {
   const raw = mttDetail.value?.mtt?.start_time ?? props.panelProps?.startTime
   if (!raw) return ''
   return formatDateTime(toTimestampMs(raw), 'YYYY/MM/DD HH:mm:ss')
+})
+//用户头像
+const avatar = computed(() => {
+  return awardData.value?.avatar ?? props.panelProps?.avatar
 })
 
 const totalParticipants = computed(() => mttDetail.value?.mtt?.participants ?? 0)
@@ -245,6 +263,7 @@ function formatRewardAmount(value: number, goldTypeValue: number): string {
       <span class="mtt-settlement-panel__time-label">{{ t('MTT-Start Time') }}</span>
       <span class="mtt-settlement-panel__time-value">{{ startTime }}</span>
     </div>
+    <img v-if="avatar" class="user-avatar" :src="iconClock" alt="clock" />
     <!-- ── Case: rebuy（可重购）── -->
     <template v-if="panelCase === 'rebuy'">
       <div class="mtt-settlement-panel__case-title">
@@ -396,6 +415,11 @@ function formatRewardAmount(value: number, goldTypeValue: number): string {
   font-family: 'HONOR Sans CN', sans-serif;
   text-align: center;
   padding: 0.5rem 0;
+}
+.user-avatar {
+  border-radius: 50%;
+  width: 1rem;
+  height: 1rem;
 }
 
 /* ── 恭喜文案 ── */

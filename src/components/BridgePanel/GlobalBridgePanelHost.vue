@@ -50,7 +50,10 @@ function onDialogClose(): void {
 
 <template>
   <GameDialog
-    :class="{ 'game-panel-dialog': !showH5Bg }"
+    :class="{
+      'game-panel-dialog': !showH5Bg,
+      'game-panel-dialog--h5-bg': showH5Bg,
+    }"
     :show="visible"
     :title="title"
     :show-footer="false"

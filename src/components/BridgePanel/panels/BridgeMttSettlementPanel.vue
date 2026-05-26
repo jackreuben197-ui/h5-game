@@ -197,10 +197,6 @@ const startTime = computed(() => {
   if (!raw) return ''
   return formatDateTime(toTimestampMs(raw), 'YYYY/MM/DD HH:mm:ss')
 })
-//用户头像
-const avatar = computed(() => {
-  return awardData.value?.avatar ?? props.panelProps?.avatar
-})
 
 const totalParticipants = computed(() => mttDetail.value?.mtt?.participants ?? 0)
 
@@ -263,7 +259,7 @@ function formatRewardAmount(value: number, goldTypeValue: number): string {
       <span class="mtt-settlement-panel__time-label">{{ t('MTT-Start Time') }}</span>
       <span class="mtt-settlement-panel__time-value">{{ startTime }}</span>
     </div>
-    <img v-if="avatar" class="user-avatar" :src="iconClock" alt="clock" />
+    <img v-if="awardData?.avatar" class="user-avatar" :src="awardData?.avatar" alt="clock" />
     <!-- ── Case: rebuy（可重购）── -->
     <template v-if="panelCase === 'rebuy'">
       <div class="mtt-settlement-panel__case-title">
@@ -418,8 +414,8 @@ function formatRewardAmount(value: number, goldTypeValue: number): string {
 }
 .user-avatar {
   border-radius: 50%;
-  width: 1rem;
-  height: 1rem;
+  width: 2rem;
+  height: 2rem;
 }
 
 /* ── 恭喜文案 ── */

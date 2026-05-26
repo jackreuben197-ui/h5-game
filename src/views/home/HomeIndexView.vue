@@ -223,21 +223,22 @@ function handleOpenCustomerService(): void {
 }
 
 function openMiniGamePanel(): void {
-  // showGameToast('功能开发中')
-  openBridgePanel({
-    panelType: 'mttSettlement',
-    closeOnClickOverlay: true,
-    showH5Bg: true,
-    props: {
-      matchId: 92280386,
-      matchName: 'MTT202603121773282270383563',
-      isRebuy: false,
-      currentBlindLevel: 500,
-      maxRebuyBlindLevel: 1000,
-      remainRebuyTimes: 0,
-      startTime: 1234567890,
-    },
-  })
+  showGameToast('功能开发中')
+  // openBridgePanel({
+  //   // panelType: 'mttRecord',
+  //   panelType: 'mttSettlement',
+  //   closeOnClickOverlay: true,
+  //   // showH5Bg: true,
+  //   props: {
+  //     matchId: 92180450,
+  //     matchName: 'MTT202603121773282270383563',
+  //     isRebuy: false,
+  //     startTime: '',
+  //     currentBlindLevel: 0,
+  //     maxRebuyBlindLevel: 10,
+  //     remainRebuyTimes: 2,
+  //   },
+  // })
 }
 
 function getRoomPlayers(room: RoomRecord): number {

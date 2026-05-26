@@ -734,6 +734,15 @@ export interface RoomcenterMttDetailData {
   [key: string]: unknown
 }
 
+// /roomcenter/mtt/{id}/myrank 响应 data。
+export interface RoomcenterMttMyRankData {
+  my_rank?: number
+  max_chip?: number
+  avg_chip?: number
+  min_chip?: number
+  [key: string]: unknown
+}
+
 // /roomcenter/mtt/{id}/ranks 请求参数。
 export interface RoomcenterMttRanksRequest {
   limit?: number

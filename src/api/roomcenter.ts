@@ -31,6 +31,7 @@ import type {
   RoomcenterMttRanksData,
   RoomcenterMttRanksRequest,
   RoomcenterMttMyawardData,
+  RoomcenterMttMyRankData,
   RoomcenterMttRealPrize,
   RoomcenterMttRealPrizeRequest,
   RoomcenterMttRoomsData,
@@ -181,6 +182,15 @@ export async function getRoomcenterMttDetailApi(
 ): Promise<ApiResponse<RoomcenterMttDetailData>> {
   const endpoint = `/roomcenter/mtt/${mttId}/detail`
   const response = await http.post<ApiResponse<RoomcenterMttDetailData>>(endpoint, payload)
+  return response.data
+}
+
+// 对齐 cocos /api/roomcenter/mtt/{id}/myrank。
+export async function getRoomcenterMttMyRankApi(
+  mttId: number | string,
+): Promise<ApiResponse<RoomcenterMttMyRankData>> {
+  const endpoint = `/roomcenter/mtt/${mttId}/myrank`
+  const response = await http.get<ApiResponse<RoomcenterMttMyRankData>>(endpoint)
   return response.data
 }
 

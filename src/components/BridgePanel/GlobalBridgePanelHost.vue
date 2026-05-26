@@ -15,6 +15,7 @@ const visible = computed(() => Boolean(activePanel.value))
 const title = computed(() => renderedPanel.value?.title ?? '')
 const showH5Bg = computed(() => renderedPanel.value?.showH5Bg === true)
 const closeOnClickOverlay = computed(() => renderedPanel.value?.closeOnClickOverlay === true)
+const isMttRecord = computed(() => renderedPanel.value?.panelType === 'mttRecord')
 const currentPanelComponent = computed(() =>
   renderedPanel.value ? bridgePanelRegistry[renderedPanel.value.panelType] ?? null : null,
 )
@@ -49,12 +50,28 @@ function onDialogClose(): void {
 </script>
 
 <template>
+  <van-popup
+    :show="visible && isMttRecord"
+    position="left"
+    teleport="body"
+    :close-on-click-overlay="closeOnClickOverlay"
+    class="bridge-panel-left-popup"
+    :duration="0.2"
+    @update:show="onShowChange"
+    @closed="onDialogClose"
+  >
+    <component
+      :is="currentPanelComponent"
+      v-if="renderedPanel && currentPanelComponent && isMttRecord"
+      :panel-props="panelProps"
+      :emit-panel-event="emitActiveBridgePanelEvent"
+      :close-panel="closeActiveBridgePanel"
+    />
+  </van-popup>
+
   <GameDialog
-    :class="{
-      'game-panel-dialog': !showH5Bg,
-      'game-panel-dialog--h5-bg': showH5Bg,
-    }"
-    :show="visible"
+    :class="{ 'game-panel-dialog': !showH5Bg }"
+    :show="visible && !isMttRecord"
     :title="title"
     :show-footer="false"
     :show-confirm-button="false"
@@ -116,5 +133,17 @@ function onDialogClose(): void {
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
   font-size: 0.36rem;
+}
+</style>
+
+<style lang="scss">
+.bridge-panel-left-popup {
+  width: 90vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
 }
 </style>

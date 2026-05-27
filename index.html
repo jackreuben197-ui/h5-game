@@ -74,46 +74,114 @@
     <!-- H5 挂载节点 -->
     <div id="app"></div>
 
-    <!-- Cocos 引擎加载（与旧模板一致） -->
-    <script src="src/settings.js" charset="utf-8"></script>
-    <script src="vconsole.min.js"></script>
-    <script src="main.js" charset="utf-8"></script>
     <script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
 
-    <!-- Cocos 启动脚本：兼容纯 H5 开发场景（无 Cocos 资源时直接跳过） -->
+    <!-- Cocos 启动脚本：按环境按需加载，避免 Telegram Mini App 场景被 Cocos 加载流程阻塞 -->
     <script type="text/javascript">
       ;(function () {
-        if (!window._CCSettings) {
+        function parseBooleanFlag(value) {
+          if (value === '1' || value === 'true') {
+            return true
+          }
+          if (value === '0' || value === 'false') {
+            return false
+          }
+          return null
+        }
+
+        function isTelegramMiniAppEnv() {
+          if (window.Telegram && window.Telegram.WebApp) {
+            return true
+          }
+
+          // Telegram WebApp 常见注入参数：可能在 search/hash 中出现。
+          var tgPattern = /tgWebApp(Data|Version|Platform|ThemeParams)=/i
+          return tgPattern.test(window.location.search) || tgPattern.test(window.location.hash)
+        }
+
+        function loadScript(moduleName, cb, onError) {
+          function scriptLoaded() {
+            domScript.removeEventListener('load', scriptLoaded, false)
+            domScript.removeEventListener('error', scriptError, false)
+            document.body.removeChild(domScript)
+            cb && cb()
+          }
+
+          function scriptError() {
+            domScript.removeEventListener('load', scriptLoaded, false)
+            domScript.removeEventListener('error', scriptError, false)
+            document.body.removeChild(domScript)
+            onError && onError()
+          }
+
+          var domScript = document.createElement('script')
+          domScript.async = true
+          domScript.src = moduleName
+          domScript.addEventListener('load', scriptLoaded, false)
+          domScript.addEventListener('error', scriptError, false)
+          document.body.appendChild(domScript)
+        }
+
+        var searchParams = new URLSearchParams(window.location.search)
+        var cocosFlag = parseBooleanFlag(searchParams.get('cocos'))
+        var disableCocosByEnv = isTelegramMiniAppEnv()
+        var shouldEnableCocos = cocosFlag !== null ? cocosFlag : !disableCocosByEnv
+        window.__ENABLE_COCOS__ = shouldEnableCocos
+
+        if (!shouldEnableCocos) {
+          var gameCanvas = document.getElementById('GameCanvas')
+          if (gameCanvas) {
+            gameCanvas.style.display = 'none'
+          }
           return
         }
 
-        var debug = window._CCSettings.debug
+        // 可选调试脚本，不存在时不影响后续流程。
+        loadScript('vconsole.min.js')
+
         var splash = document.getElementById('splash')
         if (splash) {
           splash.style.display = 'block'
         }
 
-        function loadScript(moduleName, cb) {
-          function scriptLoaded() {
-            document.body.removeChild(domScript)
-            domScript.removeEventListener('load', scriptLoaded, false)
-            cb && cb()
+        function hideSplash() {
+          if (splash) {
+            splash.style.display = 'none'
           }
-          var domScript = document.createElement('script')
-          domScript.async = true
-          domScript.src = moduleName
-          domScript.addEventListener('load', scriptLoaded, false)
-          document.body.appendChild(domScript)
         }
 
-        loadScript(debug ? 'cocos2d-js.js' : 'cocos2d-js-min.js', function () {
-          var hasPhysics = window.CC_PHYSICS_BUILTIN || window.CC_PHYSICS_CANNON
-          if (hasPhysics) {
-            loadScript(debug ? 'physics.js' : 'physics-min.js', window.boot)
-          } else if (typeof window.boot === 'function') {
-            window.boot()
-          }
-        })
+        loadScript(
+          'src/settings.js',
+          function () {
+            loadScript(
+              'main.js',
+              function () {
+                if (!window._CCSettings) {
+                  hideSplash()
+                  return
+                }
+
+                var debug = window._CCSettings.debug
+                loadScript(
+                  debug ? 'cocos2d-js.js' : 'cocos2d-js-min.js',
+                  function () {
+                    var hasPhysics = window.CC_PHYSICS_BUILTIN || window.CC_PHYSICS_CANNON
+                    if (hasPhysics) {
+                      loadScript(debug ? 'physics.js' : 'physics-min.js', window.boot, hideSplash)
+                    } else if (typeof window.boot === 'function') {
+                      window.boot()
+                    } else {
+                      hideSplash()
+                    }
+                  },
+                  hideSplash,
+                )
+              },
+              hideSplash,
+            )
+          },
+          hideSplash,
+        )
       })()
     </script>
 

@@ -95,13 +95,13 @@ async function onLogout(): Promise<void> {
   <div class="page-shell mine-page">
     <div class="title-bar">
       <div class="title">{{ t('UIMine_title') }}</div>
-      <div class="currency-info">
+      <div class="currency-info" @click="goToMineShop">
         <div class="icon-diamond">
           <img :src="iconDiamond" alt="钻石" />
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" alt="充值" @click="goToMineShop" />
+          <img :src="iconAdd" alt="充值" />
         </div>
       </div>
     </div>

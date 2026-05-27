@@ -300,6 +300,11 @@ const bodyStyles = computed<StyleValue>(() => [
   max-height: none;
 }
 
+.game-panel-dialog .game-dialog__card {
+  background-image: none !important;
+  background-color: transparent;
+}
+
 .game-dialog__message {
   display: block;
 }

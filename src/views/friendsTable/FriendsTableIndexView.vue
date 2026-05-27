@@ -3,7 +3,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { postRoomcenterFriendRoomsApi, postRoomcenterInvitationRoomApi } from '@/api/roomcenter'
-import type { RoomcenterFriendRoomRecord } from '@/api/models/roomcenter'
+import type { RoomRecord, RoomcenterFriendRoomRecord } from '@/api/models/roomcenter'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import iconAdd from '@/assets/icons/icon_add.svg'
 import iconAudio from '@/assets/icons/icon_audio.png'
@@ -19,11 +19,14 @@ import { enterTable } from '@/bridge/core'
 import type { EnterTablePayload } from '@/bridge/protocol'
 import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
+import { useRoomListStore } from '@/stores/roomList'
+import { ROOM_ORIGIN_TYPE } from '@/utils/roomVisibility'
 import { formatRoomLeftAndTotalByUnity } from '@/utils/time'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
+const roomListStore = useRoomListStore()
 
 const INVITE_CODE_LENGTH = 7
 const inviteCode = ref<string[]>(Array(INVITE_CODE_LENGTH).fill(''))
@@ -40,7 +43,47 @@ const filters = [
   // { key: 'mahjong', label: '麻将' },
 ]
 
-const friendRooms = ref<RoomcenterFriendRoomRecord[]>([])
+interface FriendRoomListItem {
+  rid?: number | string
+  name?: string
+  room_type?: number
+  game_type?: number
+  poker_type?: number
+  limit_bet_type?: number
+  status?: number
+  ante?: number
+  sb?: number
+  bb?: number
+  seat_count?: number
+  empty_seat?: number
+  roomers?: number
+  play_duration?: number
+  play_hands_limit?: number
+  hand_num?: number
+  invitation_code?: string
+  private_room?: number
+  room_password?: string
+  anti_cheat_type?: number
+  anti_cheat_video_type?: number
+  bombpot?: number
+  personal_type?: number
+  seated_messaging?: number
+  mushroom_mode?: number
+  squid_on?: number
+  random_ante?: string
+  call_time?: number
+  critical_hit?: number
+  blind_name?: string
+  blind_level_name?: string
+  blind_level?: string | number
+  blindtable_type_name?: string
+  users?: Array<Record<string, unknown>>
+  start_time?: string | number | null
+  origin_type?: number
+  [key: string]: unknown
+}
+
+const apiFriendRooms = ref<FriendRoomListItem[]>([])
 const loading = ref(false)
 const joinLoading = ref(false)
 type RoomStatus = 0 | 1 | 2 | 3 | 4 | 5
@@ -117,6 +160,89 @@ function getFilterKey(gameType: number, pokerType?: number): string {
   if (gameType >= 1 && gameType <= 3) return 'plo'
   return 'nlh'
 }
+
+function getRoomRid(room: Pick<FriendRoomListItem, 'rid'>): string {
+  return String(room.rid ?? '').trim()
+}
+
+function getRoomStartTimestamp(room: Pick<FriendRoomListItem, 'start_time'>): number {
+  const raw = room.start_time
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return raw > 1e12 ? raw : raw * 1000
+  }
+
+  if (typeof raw === 'string') {
+    const ts = Date.parse(raw)
+    if (Number.isFinite(ts)) {
+      return ts
+    }
+  }
+
+  return 0
+}
+
+function normalizeFriendRoomRecord(record: RoomcenterFriendRoomRecord | RoomRecord): FriendRoomListItem {
+  return {
+    ...record,
+    rid: record.rid,
+    name: String(record.name || '').trim(),
+    game_type: toSafeNumber(record.game_type),
+    poker_type: toSafeNumber(record.poker_type),
+    status: toSafeNumber(record.status),
+    sb: toSafeNumber(record.sb),
+    bb: toSafeNumber(record.bb),
+    seat_count: toSafeNumber(record.seat_count),
+    empty_seat: toSafeNumber(record.empty_seat),
+    roomers: toSafeNumber(record.roomers),
+    play_duration: toSafeNumber(record.play_duration),
+    play_hands_limit: toSafeNumber(record.play_hands_limit),
+    hand_num: toSafeNumber(record.hand_num),
+    private_room: toSafeNumber(record.private_room),
+    anti_cheat_type: toSafeNumber(record.anti_cheat_type),
+    start_time:
+      typeof record.start_time === 'string' || typeof record.start_time === 'number'
+        ? record.start_time
+        : null,
+    users: Array.isArray(record.users) ? record.users : [],
+    origin_type: toSafeNumber(record.origin_type),
+  }
+}
+
+function getStoreFriendRooms(records: RoomRecord[]): FriendRoomListItem[] {
+  return records
+    .filter((room) => toSafeNumber(room.origin_type) === ROOM_ORIGIN_TYPE.FRIEND)
+    .map((room) => normalizeFriendRoomRecord(room))
+}
+
+function mergeFriendRooms(
+  apiRooms: FriendRoomListItem[],
+  storeRooms: FriendRoomListItem[],
+): FriendRoomListItem[] {
+  const roomMap = new Map<string, FriendRoomListItem>()
+
+  apiRooms.forEach((room) => {
+    const rid = getRoomRid(room)
+    if (!rid) return
+    roomMap.set(rid, room)
+  })
+
+  storeRooms.forEach((room) => {
+    const rid = getRoomRid(room)
+    if (!rid) return
+    const prev = roomMap.get(rid)
+    roomMap.set(rid, prev ? { ...prev, ...room } : room)
+  })
+
+  return Array.from(roomMap.values()).sort((a, b) => {
+    const timeDiff = getRoomStartTimestamp(b) - getRoomStartTimestamp(a)
+    if (timeDiff !== 0) return timeDiff
+    return toSafeNumber(b.rid) - toSafeNumber(a.rid)
+  })
+}
+
+const friendRooms = computed<FriendRoomListItem[]>(() => {
+  return mergeFriendRooms(apiFriendRooms.value, getStoreFriendRooms(roomListStore.records))
+})
 
 const filteredRooms = computed(() => {
   if (activeFilter.value === 'all') return friendRooms.value
@@ -206,7 +332,7 @@ function onCreateRoom(): void {
   void router.push({ path: '/club/table/create', query: { origin_type: 4 } })
 }
 
-async function onEnterRoom(room: RoomcenterFriendRoomRecord): Promise<void> {
+async function onEnterRoom(room: FriendRoomListItem): Promise<void> {
   if (joinLoading.value) {
     return
   }
@@ -293,7 +419,7 @@ function formatChipBase(raw: number): string {
   return fixed.replace(/\.?0+$/, '')
 }
 
-function getBlindLabel(room: RoomcenterFriendRoomRecord): string {
+function getBlindLabel(room: FriendRoomListItem): string {
   const blindName = String(
     room.blind_name || room.blind_level_name || room.blind_level || room.blindtable_type_name || '',
   ).trim()
@@ -305,7 +431,7 @@ function getBlindLabel(room: RoomcenterFriendRoomRecord): string {
   return formatBlinds(sb, bb)
 }
 
-function getRoomDuration(room: RoomcenterFriendRoomRecord): string {
+function getRoomDuration(room: FriendRoomListItem): string {
   const gameType = toSafeNumber(room.game_type)
   const handNum = toSafeNumber(room.hand_num)
   const handLimit = toSafeNumber(room.play_hands_limit)
@@ -321,25 +447,15 @@ function getRoomDuration(room: RoomcenterFriendRoomRecord): string {
   return ''
 }
 
-function getRoomStateLabel(room: RoomcenterFriendRoomRecord): string {
-  const status = toSafeNumber(room.status) as RoomStatus
-  if (status === 1) return '未开始'
-  if (status === 2) return '进行中'
-  if (status === 3) return '已强制关闭'
-  if (status === 4) return '即将关闭'
-  if (status === 5) return '已关闭'
-  return '未开始'
-}
-
-function isAudioTable(room: RoomcenterFriendRoomRecord): boolean {
+function isAudioTable(room: FriendRoomListItem): boolean {
   return toSafeNumber(room.anti_cheat_type) === 2
 }
 
-function isVideoTable(room: RoomcenterFriendRoomRecord): boolean {
+function isVideoTable(room: FriendRoomListItem): boolean {
   return toSafeNumber(room.anti_cheat_type) === 3
 }
 
-function getRoomSeatRatio(room: RoomcenterFriendRoomRecord): string {
+function getRoomSeatRatio(room: FriendRoomListItem): string {
   const seatCount = toSafeNumber(room.seat_count)
   const emptySeat = toSafeNumber(room.empty_seat, -1)
   const roomers = toSafeNumber(room.roomers)
@@ -359,8 +475,8 @@ async function fetchFriendRooms(): Promise<void> {
       limit: 200,
       offset: 0,
     })
-    if (res.code === 0 && Array.isArray(res.data?.records) && res.data.records.length > 0) {
-      friendRooms.value = res.data.records as RoomcenterFriendRoomRecord[]
+    if (res.code === 0 && Array.isArray(res.data?.records)) {
+      apiFriendRooms.value = res.data.records.map((room) => normalizeFriendRoomRecord(room))
     }
   } catch (error) {
     console.warn('[friendsTable] fetch rooms failed:', error)
@@ -368,8 +484,12 @@ async function fetchFriendRooms(): Promise<void> {
     loading.value = false
   }
 }
+function goToMineShop(): void {
+  void router.push('/mine/shop')
+}
 
 onMounted(() => {
+  roomListStore.bootstrapRoomList()
   void fetchFriendRooms()
 })
 
@@ -391,7 +511,7 @@ watch(
     <!-- 顶部标题栏 -->
     <div class="title-bar">
       <div class="title">朋友桌</div>
-      <div class="currency-info">
+      <div class="currency-info" @click="goToMineShop">
         <div class="icon-diamond">
           <img :src="iconDiamond" alt="钻石" />
         </div>
@@ -543,12 +663,11 @@ watch(
   width: 100%;
   justify-content: space-between;
   align-items: center;
-  min-height: 1rem;
   padding: 0 0.78rem;
   .title {
     font-size: 0.65rem;
     font-weight: 510;
-    line-height: 1;
+    line-height: 120%;
     text-shadow: 0 0.22rem 0.5rem rgba(0, 0, 0, 0.35);
   }
   .currency-info {
@@ -556,7 +675,7 @@ watch(
     justify-content: center;
     align-items: center;
     background-color: var(--color-bg-shadow);
-    height: 0.72rem;
+    // height: 0.8rem;
     padding: 0 0.24rem;
     border-radius: 0.6rem;
     overflow: hidden;
@@ -573,7 +692,7 @@ watch(
       }
     }
     .num {
-      line-height: 1;
+      line-height: 140%;
       font-size: 0.5rem;
       font-weight: 700;
     }

@@ -1036,6 +1036,25 @@ export interface MiscPopupNewerData {
   [key: string]: unknown
 }
 
+// /api/misc/game_description/info (MiscGameDescriptionInfo)
+export interface MiscGameDescriptionInfoRequest {
+  desc_type?: number; // 6-重购 7-无次数确认 8-结算脚注
+  [key: string]: unknown
+}
+
+export interface MiscGameDescriptionInfoItem {
+  status?: number;
+  title?: string; // 多语言模板 ID
+  content?: string; // 多语言模板 ID
+  desc_type?: number;
+  [key: string]: unknown
+}
+
+export interface MiscGameDescriptionInfoData {
+  list?: MiscGameDescriptionInfoItem[];
+  [key: string]: unknown
+}
+
 export interface MiscPopupNewerPopup {
     redirect_url?: string;
     type?: number;

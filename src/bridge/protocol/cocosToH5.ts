@@ -4,6 +4,9 @@ export interface WsConnectPayload {
   url?: string
   // 或者传端口，H5 根据模板拼接（如 wss://host{0}）。
   port?: number
+  // 当前房间/比赛 ID（Cocos 随连接请求一并下发，H5 仅作透传参考）。
+  roomId?: number
+  matchId?: number
 }
 
 // Cocos -> H5：发送 websocket 文本消息。
@@ -86,4 +89,33 @@ export interface H5NavigatePayload {
   replace?: boolean
   // 可选：跳转前先显示 H5 层。
   ensureVisible?: boolean
+}
+
+// ─── CC → H5 Payload 映射表 ────────────────────────────────────────────────
+// 将每一个 Cocos→H5 的 action 字符串映射到它对应的 payload 类型。
+// H5 侧的 subscribeCocosMessages handler 可用此表获得精确类型：
+//   (message.payload as CocosToH5PayloadMap['showPanel'])
+//
+// 注意：wsSend 在 H5 接收时已由 Cocos 的 sendToH5 包装为 WsSendPayload 信封，
+// 不再是原始 Uint8Array。若需要修改 action，两端同步更新：
+//   pokerqueen/assets/script/H5MsgMgr.ts → CocosToH5PayloadMap
+export interface CocosToH5PayloadMap {
+  // 握手
+  ccReady: undefined
+  ccAck: undefined
+  // WebSocket 代理（wsSend 走 msgtype=0；其余走 msgtype=1）
+  wsConnect: WsConnectPayload
+  /** H5 接收到的 wsSend payload 为已包装的 binary 信封（Cocos 内部自动封装）。*/
+  wsSend: WsSendPayload
+  wsClose: WsClosePayload
+  // UI 控制
+  showToast: CocosToastPayload
+  showDialog: CocosDialogPayload
+  showPanel: CocosPanelPayload
+  closePanel: ClosePanelPayload
+  // H5 显隐
+  h5Hide: H5VisibilityPayload | undefined
+  h5Show: H5VisibilityPayload | undefined
+  // 路由跳转
+  h5Navigate: H5NavigatePayload
 }

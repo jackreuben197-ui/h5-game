@@ -94,9 +94,9 @@ export interface SyncLanguagePayload {
   locale: string
 }
 
-// globalConfig 同步。
+// globalConfig 同步（raw 为 key → 值映射；值可以是数字、字符串或嵌套对象）。
 export interface SyncGlobalConfigPayload {
-  raw: unknown
+  raw: Record<string, unknown>
 }
 
 // diamondConfig 同步。

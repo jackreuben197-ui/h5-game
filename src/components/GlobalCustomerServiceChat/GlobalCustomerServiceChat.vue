@@ -847,12 +847,16 @@ async function onImageUpload(event: Event): Promise<void> {
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 2,
     url,
+    file_size: Number(file.size || 0),
+    thumb_url: uploadResponse.data.smfileUrl,
+    file_name: String(file.name || '').trim(),
   })
 
   if (sendResponse.code === 0) {
     messages.value.push({
       msg_type: 2,
       url,
+      thumb_url: uploadResponse.data.smfileUrl,
       user_send: resolveOutgoingMessageUserSend(channel),
       local_time: Math.floor(Date.now() / 1000),
       time_token: Number(sendResponse.data?.time_token || Date.now()),

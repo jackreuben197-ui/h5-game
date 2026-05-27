@@ -19,7 +19,7 @@ export async function postImossGameClientUploadAudioApi(
 ): Promise<ApiResponse<ImossGameClientUploadAudioResponseData>> {
   const endpoint = '/imoss/game_client/upload/audio'
   // 由于上传接口可能在不同的域名下，且不一定与 VITE_API_BASE_URL 相同，因此允许通过 runtime 参数覆盖 baseURL 的默认值
-  const baseURL = import.meta.env.VITE_API_BASE_URL ? (runtime.base_url ? runtime.base_url.replace(/\/$/, '') + '/api' : '/api') : '/api'
+  const baseURL = runtime.base_url ? runtime.base_url.replace(/\/$/, '') + '/api' : '/api'
   http.defaults.baseURL = baseURL
   const response = await http.post<ApiResponse<ImossGameClientUploadAudioResponseData>>(endpoint, payload, {
     headers: {
@@ -38,7 +38,7 @@ export async function postImossGameClientUploadImageApi(
 ): Promise<ApiResponse<ImossGameClientUploadImageResponseData>> {
   const endpoint = '/imoss/game_client/upload/image'
   // 由于上传接口可能在不同的域名下，且不一定与 VITE_API_BASE_URL 相同，因此允许通过 runtime 参数覆盖 baseURL 的默认值
-  const baseURL = import.meta.env.VITE_API_BASE_URL ? (runtime.base_url ? runtime.base_url.replace(/\/$/, '') + '/api' : '/api') : '/api'
+  const baseURL = runtime.base_url ? runtime.base_url.replace(/\/$/, '') + '/api' : '/api'
   http.defaults.baseURL = baseURL
   const response = await http.post<ApiResponse<ImossGameClientUploadImageResponseData>>(endpoint, payload, {
     headers: {

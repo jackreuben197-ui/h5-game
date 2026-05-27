@@ -89,6 +89,48 @@ const panelBackgroundStyle = computed(() => ({
   backgroundImage: `url(${sharpBgUrl})`,
 }))
 
+const currentUserId = computed(() => Number(userInfoStore.userInfo?.user?.p_u_id || 0))
+
+function isCurrentUserSupportInChannel(
+  channel: ChatSupportChannelListServiceData | null | undefined,
+): boolean {
+  if (!channel) return false
+  const loginUserId = currentUserId.value
+  const channelUserId = Number(channel.user_id || 0)
+  if (loginUserId <= 0 || channelUserId <= 0) return false
+  return channelUserId !== loginUserId
+}
+
+function resolveToUserId(channel: ChatSupportChannelListServiceData | null | undefined): number {
+  if (!channel) return 0
+  if (isCurrentUserSupportInChannel(channel)) {
+    return Number(channel.user_id || 0) || 0
+  }
+  return 0
+}
+
+function isSelfMessage(
+  message: ChatSupportMessageListChatData,
+  channel: ChatSupportChannelListServiceData | null | undefined = activeChannel.value,
+): boolean {
+  const userSend = message.user_send === true
+  return isCurrentUserSupportInChannel(channel) ? !userSend : userSend
+}
+
+function resolveSenderName(
+  message: ChatSupportMessageListChatData,
+  channel: ChatSupportChannelListServiceData | null | undefined = activeChannel.value,
+): string {
+  if (isSelfMessage(message, channel)) return '我'
+  return isCurrentUserSupportInChannel(channel) ? '玩家' : '客服'
+}
+
+function resolveOutgoingMessageUserSend(
+  channel: ChatSupportChannelListServiceData | null | undefined,
+): boolean {
+  return !isCurrentUserSupportInChannel(channel)
+}
+
 function isOfficialServiceType(type: unknown): boolean {
   return Number(type || 0) === OFFICIAL_IM_SERVICE_TYPE
 }
@@ -120,20 +162,20 @@ function createOfficialDisplayChannel(
 
 function resolveChannelDisplayName(channel: ChatSupportChannelListServiceData): string {
   if (isOfficialChannel(channel)) return '官方客服'
-  return String(channel.user_nickname || channel.club_name || '').trim()
+  return channel.user_id !== userInfoStore.userInfo?.user?.p_u_id
+    ? channel.user_nickname || '玩家'
+    : channel.club_name || '俱乐部'
 }
 
 function resolveChannelDisplayAvatar(channel: ChatSupportChannelListServiceData): string {
   if (isOfficialChannel(channel)) {
-    return (
-      officialServiceAvatar.value ||
-      String(channel.user_avatar || channel.club_logo || '').trim() ||
-      customerServiceIcon
-    )
+    return officialServiceAvatar.value
   }
 
   return (
-    String(channel.user_avatar || channel.club_logo || '').trim() || clubLogo.value || avatarDefault
+    (channel.user_id !== userInfoStore.userInfo?.user?.p_u_id
+      ? channel.user_avatar
+      : channel.club_logo) || customerServiceIcon
   )
 }
 
@@ -165,16 +207,6 @@ const availableChannels = computed(() => {
 const targetClubId = computed(() => {
   if (chatContext.value.clubId > 0) return chatContext.value.clubId
   return Number(userInfoStore.currentClub?.club_id || 0)
-})
-
-const clubLogo = computed(() => {
-  if (isOfficialChannel(activeChannel.value)) {
-    return officialServiceAvatar.value || customerServiceIcon
-  }
-  const channelLogo = String(activeChannel.value?.club_logo || '').trim()
-  if (channelLogo) return channelLogo
-  const currentLogo = String(userInfoStore.currentClub?.logo || '').trim()
-  return currentLogo || customerServiceIcon
 })
 
 const supportHintText = computed(() => (voiceCancel.value ? '松开取消' : '松开发送'))
@@ -305,14 +337,11 @@ function bumpChannelUnreadByWs(payload: {
   supportUserId: number
   timeToken: number
   userId: number
+  imServiceType: number
 }): boolean {
   let matched = false
   const nextChannels = channels.value.map((item) => {
-    const clubId = Number(item.club_id || 0)
-    const userId = Number(item.user_id || 0)
-    const byClub = clubId > 0 && payload.clubId > 0 && clubId === payload.clubId
-    const byUser = userId > 0 && payload.userId > 0 && userId === payload.userId
-    if (!byClub && !byUser) return item
+    if (!isPayloadForChannelStrict(payload, item)) return item
 
     matched = true
     const currentTimeToken = Number((item as Record<string, unknown>).last_time_token || 0)
@@ -329,6 +358,62 @@ function bumpChannelUnreadByWs(payload: {
   const sortedChannels = sortChannels(nextChannels)
   channels.value = sortedChannels
   hasUnread.value = sortedChannels.some((item) => Number(item.unread_count || 0) > 0)
+  return true
+}
+
+function isPayloadForChannel(
+  payload: {
+    clubId: number
+    supportUserId: number
+    imServiceType: number
+    userId: number
+  },
+  channel: ChatSupportChannelListServiceData,
+): boolean {
+  const channelType = Number(channel.im_service_type || 0)
+  if (payload.imServiceType > 0 && channelType > 0 && payload.imServiceType !== channelType) {
+    return false
+  }
+
+  const channelClubId = Number(channel.club_id || 0)
+  if (payload.clubId > 0 && channelClubId > 0 && payload.clubId !== channelClubId) {
+    return false
+  }
+
+  const channelSupportId = Number(channel.support_user_id || 0)
+  if (
+    payload.supportUserId > 0 &&
+    channelSupportId > 0 &&
+    payload.supportUserId !== channelSupportId
+  ) {
+    return false
+  }
+
+  const channelUserId = Number(channel.user_id || 0)
+  if (payload.userId > 0 && channelUserId > 0 && payload.userId !== channelUserId) {
+    return false
+  }
+
+  return true
+}
+
+function isPayloadForChannelStrict(
+  payload: {
+    clubId: number
+    supportUserId: number
+    imServiceType: number
+    userId: number
+  },
+  channel: ChatSupportChannelListServiceData,
+): boolean {
+  if (!isPayloadForChannel(payload, channel)) return false
+
+  // 同俱乐部下多个玩家会话必须按 user_id 精确命中。
+  const channelUserId = Number(channel.user_id || 0)
+  if (channelUserId > 0) {
+    return payload.userId > 0 && payload.userId === channelUserId
+  }
+
   return true
 }
 
@@ -419,7 +504,9 @@ async function fetchChannel(): Promise<void> {
         : pickChannel(sortedList)
   const currentSupportId = Number(activeChannel.value?.support_user_id || 0)
   const byCurrent = sortedList.find(
-    (item) => Number(item.support_user_id || 0) === currentSupportId,
+    (item) =>
+      Number(item.support_user_id || 0) === currentSupportId &&
+      Number(item.user_id || 0) === Number(activeChannel.value?.user_id || 0),
   )
   const channel =
     preferred ||
@@ -449,17 +536,12 @@ async function switchChannel(channel: ChatSupportChannelListServiceData): Promis
 }
 
 function markActiveChannelRead(): void {
-  const supportId = Number(activeChannel.value?.support_user_id || 0)
-  const clubId = Number(activeChannel.value?.club_id || 0)
-  if (supportId <= 0 && clubId <= 0) return
+  const activeIdentity = resolveChannelIdentity(activeChannel.value)
+  if (!activeIdentity) return
 
   const nextChannels = sortChannels(
     channels.value.map((item) => {
-      const currentSupportId = Number(item.support_user_id || 0)
-      const currentClubId = Number(item.club_id || 0)
-      const sameSupport = supportId > 0 && currentSupportId === supportId
-      const sameClub = clubId > 0 && currentClubId === clubId
-      if (!sameSupport && !sameClub) return item
+      if (resolveChannelIdentity(item) !== activeIdentity) return item
       return {
         ...item,
         unread_count: 0,
@@ -480,8 +562,7 @@ function buildMessageQuery(setRead: boolean) {
     limit: 50,
     tribe_id: tribeId,
     club_id: channel.im_service_type === 1 && clubId > 0 ? clubId : 0,
-    to_user_id:
-      channel.user_id !== userInfoStore.userInfo?.user.p_u_id ? Number(channel.user_id || 0) : 0,
+    to_user_id: resolveToUserId(channel),
     im_service_type: resolveEffectiveImServiceType(channel),
     set_read: setRead,
   }
@@ -503,22 +584,20 @@ async function fetchMessages(options: { setRead: boolean } = { setRead: false })
   if (options.setRead && channel) {
     markActiveChannelRead()
   }
-  if (options.setRead && list.length > 0 && channel?.channel !== '') {
-    await markAsRead()
-  }
   scrollToBottom()
 }
 
-async function markAsRead(): Promise<void> {
+async function markAsRead(timeToken?: number): Promise<void> {
   const channel = activeChannel.value
   if (!channel) return
+
   const last = messages.value[messages.value.length - 1]
+  const resolvedTimeToken = Number(timeToken || last?.time_token || 0) || undefined
 
   await postChatSupportMessageReadApi({
     club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
-    to_user_id:
-      channel.user_id !== userInfoStore.userInfo?.user.p_u_id ? Number(channel.user_id || 0) : 0,
-    time_token: Number(last?.time_token || 0) || undefined,
+    to_user_id: resolveToUserId(channel),
+    time_token: resolvedTimeToken,
     im_service_type: resolveEffectiveImServiceType(channel),
   })
 }
@@ -610,8 +689,7 @@ async function sendMessage(): Promise<void> {
   const response = await postChatSupportMessageSendApi({
     tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
     club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
-    to_user_id:
-      channel.user_id !== userInfoStore.userInfo?.user.p_u_id ? Number(channel.user_id || 0) : 0,
+    to_user_id: resolveToUserId(channel),
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 1,
     text,
@@ -622,12 +700,12 @@ async function sendMessage(): Promise<void> {
     messages.value.push({
       msg_type: 1,
       text,
-      user_send: true,
+      user_send: resolveOutgoingMessageUserSend(channel),
       local_time: Math.floor(Date.now() / 1000),
       time_token: Number(response.data?.time_token || Date.now()),
     })
     scrollToBottom()
-    await fetchMessages({ setRead: true })
+    // await fetchMessages({ setRead: true })
     return
   }
 
@@ -765,8 +843,7 @@ async function onImageUpload(event: Event): Promise<void> {
   const sendResponse = await postChatSupportMessageSendApi({
     tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
     club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
-    to_user_id:
-      channel.user_id !== userInfoStore.userInfo?.user.p_u_id ? Number(channel.user_id || 0) : 0,
+    to_user_id: resolveToUserId(channel),
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 2,
     url,
@@ -776,12 +853,12 @@ async function onImageUpload(event: Event): Promise<void> {
     messages.value.push({
       msg_type: 2,
       url,
-      user_send: true,
+      user_send: resolveOutgoingMessageUserSend(channel),
       local_time: Math.floor(Date.now() / 1000),
       time_token: Number(sendResponse.data?.time_token || Date.now()),
     })
     scrollToBottom()
-    await fetchMessages({ setRead: true })
+    // await fetchMessages({ setRead: true })
   }
 
   input.value = ''
@@ -925,8 +1002,7 @@ async function uploadAndSendVoice(blob: Blob, duration: number): Promise<void> {
   const sendResponse = await postChatSupportMessageSendApi({
     tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
     club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
-    to_user_id:
-      channel.user_id !== userInfoStore.userInfo?.user.p_u_id ? Number(channel.user_id || 0) : 0,
+    to_user_id: resolveToUserId(channel),
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 3,
     url,
@@ -938,12 +1014,12 @@ async function uploadAndSendVoice(blob: Blob, duration: number): Promise<void> {
       msg_type: 3,
       url,
       duration,
-      user_send: true,
+      user_send: resolveOutgoingMessageUserSend(channel),
       local_time: Math.floor(Date.now() / 1000),
       time_token: Number(sendResponse.data?.time_token || Date.now()),
     })
     scrollToBottom()
-    await fetchMessages({ setRead: true })
+    // await fetchMessages({ setRead: true })
     return
   }
 
@@ -1073,7 +1149,7 @@ async function onFallbackAudioUpload(event: Event): Promise<void> {
   const sendResponse = await postChatSupportMessageSendApi({
     tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
     club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
-    // to_user_id: Number(channel.support_user_id || 0) || undefined,
+    to_user_id: resolveToUserId(channel),
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 3,
     url,
@@ -1085,12 +1161,12 @@ async function onFallbackAudioUpload(event: Event): Promise<void> {
       msg_type: 3,
       url,
       duration: 1,
-      user_send: true,
+      user_send: resolveOutgoingMessageUserSend(channel),
       local_time: Math.floor(Date.now() / 1000),
       time_token: Number(sendResponse.data?.time_token || Date.now()),
     })
     scrollToBottom()
-    await fetchMessages({ setRead: true })
+    // await fetchMessages({ setRead: true })
   }
 
   input.value = ''
@@ -1099,6 +1175,7 @@ async function onFallbackAudioUpload(event: Event): Promise<void> {
 function shouldHandleWsMessage(payload: {
   clubId: number
   supportUserId: number
+  userId: number
   imServiceType: number
 }): boolean {
   const contextType = Number(chatContext.value.imServiceType || 0)
@@ -1117,51 +1194,19 @@ function shouldHandleWsMessage(payload: {
     }
   }
 
-  const expectedSupportUserId = Number(
-    activeChannel.value?.support_user_id || chatContext.value.supportUserId || 0,
-  )
-  if (
-    expectedSupportUserId > 0 &&
-    payload.supportUserId > 0 &&
-    payload.supportUserId !== expectedSupportUserId
-  ) {
-    return false
-  }
-
   return true
 }
 
 function isPayloadForActiveChannel(payload: {
   clubId: number
   supportUserId: number
+  userId: number
   imServiceType: number
 }): boolean {
   const channel = activeChannel.value
   if (!channel) return false
 
-  const expectedType = Number(resolveEffectiveImServiceType(channel) || 0)
-  if (
-    expectedType > 0 &&
-    payload.imServiceType > 0 &&
-    Number(payload.imServiceType || 0) !== expectedType
-  ) {
-    return false
-  }
-
-  const channelClubId = Number(channel.club_id || 0)
-  const channelSupportId = Number(channel.support_user_id || 0)
-  if (channelClubId > 0 && payload.clubId > 0 && payload.clubId !== channelClubId) {
-    return false
-  }
-  if (
-    channelSupportId > 0 &&
-    payload.supportUserId > 0 &&
-    payload.supportUserId !== channelSupportId
-  ) {
-    return false
-  }
-
-  return true
+  return isPayloadForChannelStrict(payload, channel)
 }
 
 function canRenderWsMessage(payload: { msgType: number; text: string; url: string }): boolean {
@@ -1202,7 +1247,7 @@ function initWsListener(): void {
         if (canRenderWsMessage(payload)) {
           appendWsMessageToBottom(payload)
           markActiveChannelRead()
-          void markAsRead()
+          void markAsRead(payload.timeToken)
         } else {
           void fetchMessages({ setRead: true })
         }
@@ -1335,13 +1380,13 @@ watch(
                 v-for="(msg, idx) in messages"
                 :key="String(msg.time_token ?? idx)"
                 class="message-row"
-                :class="{ 'message-row--self': msg.user_send }"
+                :class="{ 'message-row--self': isSelfMessage(msg) }"
               >
-                <div class="bubble-wrapper" :class="{ 'bubble-wrapper--self': msg.user_send }">
+                <div class="bubble-wrapper" :class="{ 'bubble-wrapper--self': isSelfMessage(msg) }">
                   <div
                     v-if="msg.msg_type === 1"
                     class="text-bubble"
-                    :class="{ 'text-bubble--self': msg.user_send }"
+                    :class="{ 'text-bubble--self': isSelfMessage(msg) }"
                   >
                     {{ msg.text }}
                   </div>
@@ -1349,7 +1394,7 @@ watch(
                   <button
                     v-else-if="msg.msg_type === 2"
                     class="image-bubble"
-                    :class="{ 'image-bubble--self': msg.user_send }"
+                    :class="{ 'image-bubble--self': isSelfMessage(msg) }"
                     type="button"
                     @click="openImagePreview(msg)"
                   >
@@ -1361,7 +1406,7 @@ watch(
                     type="button"
                     class="voice-message"
                     :class="{
-                      'voice-message--self': msg.user_send,
+                      'voice-message--self': isSelfMessage(msg),
                       'voice-message--playing': playingVoiceToken === resolveVoiceToken(msg),
                     }"
                     @click="handleVoiceMessageClick(msg)"
@@ -1395,13 +1440,17 @@ watch(
                     <span class="voice-message-time">{{ formatVoiceDuration(msg.duration) }}</span>
                   </button>
 
-                  <div v-else class="text-bubble" :class="{ 'text-bubble--self': msg.user_send }">
+                  <div
+                    v-else
+                    class="text-bubble"
+                    :class="{ 'text-bubble--self': isSelfMessage(msg) }"
+                  >
                     暂不支持的消息类型
                   </div>
 
                   <div class="bubble-footer">
                     <span>{{ formatMessageTime(msg) }}</span>
-                    <span class="sender-name">{{ msg.user_send ? '我' : '客服' }}</span>
+                    <span class="sender-name">{{ resolveSenderName(msg) }}</span>
                   </div>
                 </div>
               </div>

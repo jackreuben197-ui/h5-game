@@ -72,6 +72,9 @@ async function prefetchClubDiamondBalance(): Promise<void> {
     // 预拉余额失败不阻塞后续流程，保持静默。
   }
 }
+const handleBack = () => {
+  router.push('/club/index')
+}
 
 onMounted(() => {
   void prefetchClubDiamondBalance()
@@ -80,7 +83,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell club-table-create-page" :style="backgroundStyle">
-    <HeaderBack :title="t('创建牌桌')">
+    <HeaderBack :title="t('创建牌桌')" @back="handleBack">
       <template #right>
         <TopActionButton
           :name="t('jackpot')"

@@ -1024,11 +1024,14 @@ function formatChipBase(rawValue: number): string {
   if (!Number.isFinite(display)) return '0'
   return display.toFixed(2).replace(/\.?0+$/, '')
 }
+const handleBack = () => {
+  router.push('/club')
+}
 </script>
 
 <template>
   <div class="page-shell room-list-page themeType2" :style="[backgroundStyle, pageStyle]">
-    <HeaderBack>
+    <HeaderBack @back="handleBack">
       <div class="club-identity">
         <div class="club-avatar">
           <img :src="clubCoverUrl" alt="club avatar" />

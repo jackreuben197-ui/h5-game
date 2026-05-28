@@ -224,6 +224,7 @@ function handleOpenCustomerService(): void {
 
 function openMiniGamePanel(): void {
   showGameToast('功能开发中')
+  router.push('/home2')
   // openBridgePanel({
   //   // panelType: 'mttRecord',
   //   panelType: 'mttSettlement',

@@ -4,8 +4,8 @@ import { t } from '@/i18n'
 
 const props = defineProps<{
   show: boolean
-  originalAmount: number  // сумма в UC (не центах)
-  calculatedAmount: number  // сумма к получению после комиссии
+  originalAmount: number
+  calculatedAmount: number
 }>()
 
 const emit = defineEmits<{

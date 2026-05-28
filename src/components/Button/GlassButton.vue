@@ -39,7 +39,6 @@ defineProps<Props>()
   &:active { opacity: 0.8; }
 }
 
-// Градиентный blur-фон
 .gb__blur {
   position: absolute;
   inset: 0;
@@ -67,7 +66,6 @@ defineProps<Props>()
   flex-shrink: 0;
 }
 
-// Внутренняя тень поверх всего
 .gb__inner-shadow {
   position: absolute;
   inset: 0;

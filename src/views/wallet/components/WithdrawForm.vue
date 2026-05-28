@@ -31,12 +31,10 @@ function tx(key: string, fallback: string): string {
 
 const availableUc = computed(() => userInfoStore.userInfo?.user?.gold ?? 0)
 
-// ─── Каналы ──────────────────────────────────────────────────────────────────
 type ChannelId = 'bankcard' | 'customercare'
 const activeChannel = ref<ChannelId>('bankcard')
 const isCustomerCare = computed(() => activeChannel.value === 'customercare')
 
-// ─── Состояние ───────────────────────────────────────────────────────────────
 const withdrawTypes = ref<OnlineWithdrawTypeItem[]>([])
 const selectedWithdrawType = ref<OnlineWithdrawTypeItem | null>(null)
 
@@ -108,7 +106,6 @@ const canWithdraw = computed(() => {
   return true
 })
 
-// ─── Утилиты ─────────────────────────────────────────────────────────────────
 function formatAccountNumber(accountNo: string | undefined): string {
   if (!accountNo) return '—'
   return accountNo.length > 4 ? `**** **** **** ${accountNo.slice(-4)}` : accountNo
@@ -188,7 +185,6 @@ function applyChannel(ch: ChannelId): void {
   if (ch === 'bankcard') void fetchPaymentInfo()
 }
 
-// ─── Обработчики ─────────────────────────────────────────────────────────────
 function handleWithdraw(): void {
   if (!canWithdraw.value) return
   withdrawConfirmAmount.value = parsedAmount.value
@@ -248,7 +244,6 @@ async function confirmWithdraw(): Promise<void> {
   }
 }
 
-// ─── Жизненный цикл ──────────────────────────────────────────────────────────
 onMounted(() => {
   if (userInfoStore.clubList.length > 0 || userInfoStore.currentClub) {
     void fetchWithdrawTypes()
@@ -270,10 +265,8 @@ watch(filteredWithdrawTypes, (list) => {
 <template>
   <div class="wf">
 
-    <!-- ── КАРТОЧКА ВЫБОРА СЧЁТА / CS ─────────────────────────────────────── -->
     <div class="wf__card">
 
-      <!-- Заголовок -->
       <div class="wf__acct-header">
         <span class="wf__acct-title">{{ tx('Wallet_SelectAccount', '请选择收款账户') }}</span>
         <button v-if="!isCustomerCare" class="wf__add-card-btn" type="button" @click="router.push('/wallet/add-bank-card')">
@@ -281,7 +274,6 @@ watch(filteredWithdrawTypes, (list) => {
         </button>
       </div>
 
-      <!-- Горизонтальный скролл типов вывода + CS карточка -->
       <div class="wf__type-scroll">
         <div
           v-for="wt in filteredWithdrawTypes"
@@ -299,7 +291,6 @@ watch(filteredWithdrawTypes, (list) => {
           </div>
         </div>
 
-        <!-- CS карточка -->
         <div
           class="wf__type-card"
           :class="{ 'wf__type-card--active': isCustomerCare }"
@@ -314,7 +305,6 @@ watch(filteredWithdrawTypes, (list) => {
         </div>
       </div>
 
-      <!-- Список карт — только в режиме bankcard -->
       <template v-if="!isCustomerCare">
         <div v-if="loadingPaymentInfo" class="wf__acct-loading">
           {{ tx('Wallet_Loading', '加载中…') }}
@@ -344,9 +334,7 @@ watch(filteredWithdrawTypes, (list) => {
 
     </div>
 
-    <!-- ── КАРТОЧКА СУММЫ ──────────────────────────────────────────────────── -->
     <div class="wf__card wf__amount-card">
-      <!-- Ввод суммы -->
       <div class="wf__amount-input-wrap">
         <input
           v-model="withdrawAmount"
@@ -357,26 +345,22 @@ watch(filteredWithdrawTypes, (list) => {
         />
       </div>
 
-      <!-- Тёмная область с суммой после комиссии -->
       <div class="wf__amount-display">
         <span class="wf__amount-value" :class="{ 'wf__amount-value--active': parsedAmount > 0 }">
           {{ parsedAmount > 0 ? calculatedWithdrawAmountAfterFee.toFixed(2) : '—' }}
         </span>
       </div>
 
-      <!-- Нижняя строка: введённая сумма + комиссия -->
       <div class="wf__amount-footer" :class="{ 'wf__amount-footer--visible': parsedAmount > 0 }">
         <span class="wf__amount-entered">{{ parsedAmount > 0 ? parsedAmount.toLocaleString() : '' }}</span>
         <span class="wf__amount-fee-tag">{{ tx('Wallet_ServiceFee', '手续费') }}：{{ (handlingFeeRate * 100).toFixed(0) }}%</span>
       </div>
     </div>
 
-    <!-- Доступный баланс -->
     <div class="wf__balance-hint">
       <span>{{ tx('Wallet_AvailableBalance', '可回收UC') }}：{{ (availableUc / 100).toLocaleString() }}</span>
     </div>
 
-    <!-- Кнопка вывода -->
     <PrimaryButton
       :text="isCustomerCare ? tx('Wallet_ContactCs', '联系客服') : tx('Wallet_SubmitWithdraw', '立即提现')"
       :disabled="!canWithdraw || withdrawing"
@@ -384,7 +368,6 @@ watch(filteredWithdrawTypes, (list) => {
     />
   </div>
 
-  <!-- Модалка подтверждения -->
   <WithdrawConfirmModal
     :show="showWithdrawConfirmModal"
     :original-amount="withdrawConfirmAmount"

@@ -47,6 +47,10 @@ export interface EnterTablePayload {
   // websocket 端口（来自 /api/user/ws 的 data.port）。
   websocketPort: number
   from: string
+  // 当前俱乐部 ID，Cocos 入桌后用于按俱乐部上下文处理。
+  clubId?: number
+  // 当前俱乐部随机 ID，Cocos 入桌后用于展示/业务上下文。
+  clubRandomId?: number
   // 点击的目标房间 ID，方便 Cocos 精确切桌；Cocos 不需要时可忽略。
   roomId?: string
   roomName?: string

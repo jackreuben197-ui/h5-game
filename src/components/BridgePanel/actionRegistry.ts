@@ -17,10 +17,10 @@ function normalizeSupportChatPayload(
 ): OpenGlobalCustomerServiceChatPayload {
   const p = props ?? {}
   return {
-    imServiceType: toSafeInt(p.imServiceType ?? p.im_service_type) || 1,
-    clubId: toSafeInt(p.clubId ?? p.club_id),
-    tribeId: toSafeInt(p.tribeId ?? p.tribe_id ?? p.tribeID),
-    supportUserId: toSafeInt(p.supportUserId ?? p.support_user_id),
+    imServiceType: toSafeInt(p.imServiceType),
+    clubId: toSafeInt(p.clubId),
+    tribeId: toSafeInt(p.tribeId),
+    supportUserId: toSafeInt(p.supportUserId),
   }
 }
 

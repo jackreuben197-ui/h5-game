@@ -312,6 +312,7 @@ export interface CmsExtImServiceListData {
   im_service_no?: string // IM客服号
   service_begin_time?: number // 客服开始时间
   service_end_time?: number // 客服结束时间
+  avatar?: string // 客服头像
 
   [key: string]: unknown
 }

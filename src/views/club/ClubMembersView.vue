@@ -6,12 +6,12 @@ import { showFailToast, showSuccessToast } from 'vant'
 import { formatUC } from '@/utils/roomVisibility'
 import {
   postClubFundChangeLogApi,
-  postOrgClubCreditBalaNceApi,
+  postOrgClubCreditBalanceApi,
   postOrgClubCreditLimitApi,
   postOrgClubGoldApi,
   postOrgMemberListApi,
 } from '@/api/org'
-import { postGuildGiveRecyCleApi } from '@/api/order'
+import { postGuildGiveRecycleApi } from '@/api/order'
 import { postClubSendDiamondsApi } from '@/api/user'
 import type {
   ClubFundChangeLogRecord,
@@ -970,7 +970,7 @@ async function submitQuotaUpdate(options: {
 
   const response =
     options.field === 'disposable'
-      ? await postOrgClubCreditBalaNceApi(payload)
+      ? await postOrgClubCreditBalanceApi(payload)
       : await postOrgClubCreditLimitApi(payload)
 
   if (response.code !== 0) {
@@ -1127,7 +1127,7 @@ async function onFundConfirm(): Promise<void> {
         clubId,
       )
     } else {
-      response = await postGuildGiveRecyCleApi({
+      response = await postGuildGiveRecycleApi({
         user_ids: [member.id],
         gold_num: amount * 100,
         gold_type: 1,

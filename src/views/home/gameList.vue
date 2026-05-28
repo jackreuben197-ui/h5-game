@@ -333,6 +333,7 @@ function handleOpenCustomerService(): void {
             @click="router.push('/wallet')"
           />
           <TopActionButton
+            v-if="userInfoStore.currentClub?.support_im_rid"
             :name="t('UIMineMain01')"
             :icon="serviceIcon"
             icon-alt="service"

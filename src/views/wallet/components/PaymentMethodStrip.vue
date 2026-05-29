@@ -29,21 +29,14 @@ const emit = defineEmits<{
       @click="emit('select', i)"
     >
       <div class="method__coin">
-        <img
-          :src="m.icon"
-          alt=""
-          class="method__coin-img"
-        />
+        <img :src="m.icon" alt="" class="method__coin-img" />
       </div>
       <div class="method__label">
         <div class="method__label-row">
-          <span class="method__label-primary">{{ m.primary }}</span>
-          <span class="method__label-suffix">{{ $txt('Wallet_PaySuffix') }}</span>
+          <div class="method__label-primary">{{ m.primary }}</div>
+          <div class="method__label-suffix">{{ $txt('Wallet_PaySuffix') }}</div>
         </div>
-        <span
-          v-if="m.secondary"
-          class="method__label-secondary"
-        >
+        <span v-if="m.secondary" class="method__label-secondary">
           {{ m.secondary }}
         </span>
       </div>
@@ -114,8 +107,8 @@ const emit = defineEmits<{
 }
 
 .method__label-row {
-  display: flex;
-  flex-wrap: wrap;
+  // display: flex;
+  // flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 0.09rem;
@@ -127,6 +120,7 @@ const emit = defineEmits<{
   font-family: var(--wallet-font-num);
   font-weight: 500;
   font-size: 0.3rem;
+  margin-bottom: 0.1rem;
 }
 
 .method__label-suffix {

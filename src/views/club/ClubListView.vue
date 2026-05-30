@@ -399,40 +399,42 @@ onMounted(() => {
       </article>
     </section>
 
-    <div v-if="showJoinModal" class="join-modal-mask" @click="closeJoinModal">
-      <section class="join-modal" @click.stop>
-        <div class="join-modal-card">
-          <img class="join-modal-logo" :src="searchedClubLogo" alt="俱乐部头像" />
-          <h3 class="join-modal-name">{{ searchedClubName }}</h3>
-          <p class="join-modal-id-row">
-            <span class="join-modal-id-tag">ID</span>
-            <span>{{ searchedClubDisplayId }}</span>
-          </p>
-          <p class="join-modal-member-row">
-            <img :src="imgPeople" alt="" aria-hidden="true" />
-            <span>{{ searchedClubMembers }}人</span>
-          </p>
-        </div>
+    <transition name="dialog-fade">
+      <div v-if="showJoinModal" class="join-modal-mask" @click="closeJoinModal">
+        <section class="join-modal" @click.stop>
+          <div class="join-modal-card">
+            <img class="join-modal-logo" :src="searchedClubLogo" alt="俱乐部头像" />
+            <h3 class="join-modal-name">{{ searchedClubName }}</h3>
+            <p class="join-modal-id-row">
+              <span class="join-modal-id-tag">ID</span>
+              <span>{{ searchedClubDisplayId }}</span>
+            </p>
+            <p class="join-modal-member-row">
+              <img :src="imgPeople" alt="" aria-hidden="true" />
+              <span>{{ searchedClubMembers }}人</span>
+            </p>
+          </div>
 
-        <div class="join-modal-actions">
-          <button
-            type="button"
-            class="join-modal-btn join-modal-btn--cancel"
-            @click="closeJoinModal"
-          >
-            取消
-          </button>
-          <button
-            type="button"
-            class="join-modal-btn join-modal-btn--confirm"
-            :disabled="joinLoading"
-            @click="onJoinClub"
-          >
-            {{ joinLoading ? '提交中' : '加入' }}
-          </button>
-        </div>
-      </section>
-    </div>
+          <div class="join-modal-actions">
+            <button
+              type="button"
+              class="join-modal-btn join-modal-btn--cancel"
+              @click="closeJoinModal"
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              class="join-modal-btn join-modal-btn--confirm"
+              :disabled="joinLoading"
+              @click="onJoinClub"
+            >
+              {{ joinLoading ? '提交中' : '加入' }}
+            </button>
+          </div>
+        </section>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -1147,50 +1149,61 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 0.72rem;
+  padding: 0 0.532rem;
 }
 
 .join-modal {
-  width: 8.454rem;
-  max-width: 100%;
-  padding: 0.42rem;
-  border-radius: 0.97rem;
-  border: 0.025rem solid rgba(255, 255, 255, 0.38);
-  background:
-    linear-gradient(126deg, rgba(142, 142, 142, 0.6) 0%, rgba(72, 72, 72, 0.92) 100%),
-    rgba(30, 30, 30, 0.65);
+  position: relative;
+  width: 9.717rem;
+  max-width: calc(100vw - 1.064rem);
+  padding: 0.33rem 0.32rem 0.32rem 0.32rem;
+  border-radius: 1.209rem;
+  border: 0.024rem solid rgba(242, 242, 242, 0.4);
+  // background-image: linear-gradient(
+  //   110deg,
+  //   rgba(142, 142, 142, 0.3) 2.9%,
+  //   rgba(103, 103, 103, 0.4) 43.6%,
+  //   rgba(73, 73, 73, 0.5) 89.8%
+  // );
+  background-color: rgba(25, 25, 25, 0.55);
   box-shadow:
-    0.09rem 0.11rem 0.18rem rgba(0, 0, 0, 0.25),
-    inset 0.05rem 0.1rem 0.4rem rgba(242, 242, 242, 0.25),
-    inset 0 0 0.23rem rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(0.4rem);
+    0.086rem 0.107rem 0.172rem rgba(0, 0, 0, 0.25),
+    inset 0.03rem 0.03rem 0.06rem rgba(242, 242, 242, 0.2);
+  backdrop-filter: blur(9.917px);
+  -webkit-backdrop-filter: blur(9.917px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.405rem;
 }
 
 .join-modal-card {
-  min-height: 5.02rem;
-  border-radius: 0.834rem;
-  border: 0.026rem solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.1);
+  width: 100%;
+  height: 5.032rem;
+  border-radius: 0.994rem;
+  border: 0.018rem solid rgba(242, 242, 242, 0.8);
+  background-image: linear-gradient(143deg, rgb(255, 81, 108) 7.5%, rgb(223, 35, 64) 71.9%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.3rem;
-  padding: 0.5rem 0.42rem;
+  gap: 0.144rem;
+  padding: 0.3rem 0.4rem;
+  box-sizing: border-box;
 }
 
 .join-modal-logo {
-  width: 1.893rem;
-  height: 1.813rem;
+  width: 2.305rem;
+  height: 2.288rem;
   object-fit: cover;
-  border-radius: 0.26rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .join-modal-name {
   margin: 0;
   font-family: 'SF Pro', 'PingFang SC', sans-serif;
-  font-size: 0.597rem;
-  font-weight: 700;
+  font-size: 0.418rem;
+  font-weight: bold;
   line-height: 1.2;
   color: #fff;
   text-align: center;
@@ -1200,10 +1213,10 @@ onMounted(() => {
   margin: 0;
   display: inline-flex;
   align-items: center;
-  gap: 0.2rem;
+  gap: 0.065rem;
   font-family: 'SF Pro', 'PingFang SC', sans-serif;
-  font-size: 0.256rem;
-  font-weight: 600;
+  font-size: 0.298rem;
+  font-weight: normal;
   color: #fff;
 }
 
@@ -1211,61 +1224,112 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 0.445rem;
-  height: 0.316rem;
-  border-radius: 0.075rem;
-  background: rgba(255, 255, 255, 0.25);
-  font-size: 0.216rem;
+  padding: 0.075rem 0.13rem;
+  border-radius: 0.112rem;
+  background: rgba(255, 255, 255, 0.56);
+  color: #444;
+  font-family: 'SF Pro Display', 'PingFang SC', sans-serif;
+  font-size: 0.215rem;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .join-modal-member-row {
   margin: 0;
-  height: 0.88rem;
-  padding: 0 0.3rem;
-  border-radius: 0.667rem;
-  background: rgba(0, 0, 0, 0.31);
+  height: 0.802rem;
+  padding: 0 0.523rem;
+  border-radius: 4.22rem;
+  border: 0.01rem solid rgba(242, 242, 242, 0.4);
+  background: rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(1.631px);
+  -webkit-backdrop-filter: blur(1.631px);
+  box-shadow:
+    inset 0px 0px 1.799px 0px black,
+    inset 0.249px 0.249px 1.799px 0px black,
+    inset 0px 0px 3.599px 0px rgba(242, 242, 242, 0.9);
   display: inline-flex;
   align-items: center;
-  gap: 0.12rem;
-  font-size: 0.427rem;
-  color: #f9f9f9;
+  gap: 0.06rem;
+  font-size: 0.347rem;
+  font-weight: 600;
+  color: #fbfbfb;
 }
 
 .join-modal-member-row img {
-  width: 0.453rem;
-  height: 0.453rem;
+  width: 0.507rem;
+  height: 0.507rem;
+  object-fit: contain;
 }
 
 .join-modal-actions {
-  margin-top: 0.48rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.25rem;
+  gap: 0.532rem;
+  width: 100%;
 }
 
 .join-modal-btn {
   flex: 1;
-  min-height: 1.436rem;
-  border-radius: 1.055rem;
+  height: 1.285rem;
   border: 0;
-  color: #fff;
-  font-family: 'Afacad', 'PingFang SC', sans-serif;
-  font-size: 0.4rem;
+  color: #f9f9f9;
+  font-family: 'PingFang SC', sans-serif;
+  font-size: 0.405rem;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  cursor: pointer;
+}
+
+.join-modal-btn:active {
+  transform: scale(0.96);
+  opacity: 0.9;
 }
 
 .join-modal-btn--cancel {
+  border-radius: 1.266rem;
+  border: 0.01rem solid #f3f3f3;
   background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(31.659px);
+  -webkit-backdrop-filter: blur(31.659px);
 }
 
 .join-modal-btn--confirm {
-  background: linear-gradient(180deg, #05e7ae 0%, #027a5b 100%);
-  border: 0.013rem solid rgba(255, 255, 255, 0.5);
+  border-radius: 0.825rem;
+  border: 0.018rem solid rgba(242, 242, 242, 0.8);
+  background-image: linear-gradient(156.255deg, rgb(85, 243, 41) 7.5472%, rgb(62, 173, 6) 71.919%);
+  box-shadow:
+    2.795rem 1.899rem 0.949rem 0px rgba(15, 110, 2, 0.01),
+    1.792rem 1.216rem 0.87rem 0px rgba(33, 87, 3, 0.04),
+    1.003rem 0.683rem 0.728rem 0px rgba(17, 91, 2, 0.14),
+    0.444rem 0.302rem 0.541rem 0px rgba(31, 101, 5, 0.24),
+    0.115rem 0.08rem 0.302rem 0px rgba(40, 91, 4, 0.27);
 }
 
 .join-modal-btn:disabled {
-  opacity: 0.72;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Fade transition for dialog */
+.dialog-fade-enter-active,
+.dialog-fade-leave-active {
+  transition: opacity 0.3s ease;
+  .join-modal {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+}
+
+.dialog-fade-enter-from,
+.dialog-fade-leave-to {
+  opacity: 0;
+  .join-modal {
+    transform: scale(0.9);
+  }
 }
 
 @media (max-width: 340px) {

@@ -1,0 +1,28 @@
+<svg width="27" height="27" viewBox="0 0 27.2522 27.2522" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g id="add">
+    <g clip-path="url(#clip0_2422_47257)">
+      <g id="Ellipse 10738">
+        <circle cx="13.5332" cy="13.5522" r="13.5276" fill="url(#paint0_linear_2422_47257)"/>
+        <circle cx="13.5332" cy="13.5522" r="13.2036" stroke="url(#paint1_linear_2422_47257)" stroke-width="0.647992"/>
+      </g>
+      <g id="+">
+        <path id="Line 58" d="M13.536 7.55475L13.536 19.5438" stroke="#F3F3F3" stroke-width="1.69095" stroke-linecap="round"/>
+        <path id="Line 59" d="M19.5274 13.5515L7.53842 13.5515" stroke="#F3F3F3" stroke-width="1.69095" stroke-linecap="round"/>
+      </g>
+    </g>
+  </g>
+  <defs>
+    <linearGradient id="paint0_linear_2422_47257" x1="2.56326" y1="1.40567" x2="21.833" y2="16.4464" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#55F329"/>
+      <stop offset="1" stop-color="#3EAD06"/>
+    </linearGradient>
+    <linearGradient id="paint1_linear_2422_47257" x1="4.96519" y1="1.50367" x2="19.5821" y2="26.1787" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F2F2F2" stop-opacity="0.8"/>
+      <stop offset="0.445242" stop-color="white" stop-opacity="0"/>
+      <stop offset="1" stop-color="white" stop-opacity="0.5"/>
+    </linearGradient>
+    <clipPath id="clip0_2422_47257">
+      <rect width="27.2522" height="27.2522" rx="13.6261" fill="white"/>
+    </clipPath>
+  </defs>
+</svg>

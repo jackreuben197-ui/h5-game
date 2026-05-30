@@ -76,7 +76,11 @@ function onCancel() {
     <!-- 完全自定义 dialog 内部内容 -->
     <template #default>
       <div class="game-dialog__card">
-        <div class="game-dialog__card-bg" :style="{ backgroundImage: `url(${dialogBg})` }"></div>
+        <!-- Background Overlay Layers matching Figma -->
+        <div class="game-dialog__card-bg-gradient"></div>
+        <div class="game-dialog__card-bg-texture" :style="{ backgroundImage: `url(${dialogBg})` }"></div>
+        <div class="game-dialog__card-bg-shadow"></div>
+
         <!-- Title -->
         <div v-if="title || $slots.title" class="game-dialog__title">
           <slot name="title">{{ title }}</slot>
@@ -134,15 +138,10 @@ function onCancel() {
 .game-dialog__card {
   position: relative;
   min-height: 2rem;
-  border-radius: 0.439rem;
+  border-radius: 0.485rem;
+  border: 0.956px solid rgba(242, 242, 242, 0.4);
+  box-shadow: 3.446px 4.308px 6.893px rgba(0, 0, 0, 0.25);
   overflow: hidden;
-  box-shadow: inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
-    /* 左上高光 */
-  inset  0.5px  0.5px 0px  0px rgba(255, 255, 255, 0.85),
-  inset  2px  2px 0px -2px rgba(255, 255, 255, 0.30),
-  /* 右下高光 */
-  inset -0.5px -0.5px 0px  0px rgba(255, 255, 255, 0.85),
-  inset -2px -2px 0px -2px rgba(255, 255, 255, 0.30);
   display: flex;
   flex-direction: column;
   padding: 0.5rem;
@@ -150,14 +149,36 @@ function onCancel() {
   gap: 0.32rem;
 }
 
-.game-dialog__card-bg {
+.game-dialog__card-bg-gradient {
   position: absolute;
   inset: 0;
+  border-radius: inherit;
+  background-image: linear-gradient(102.679deg, rgba(142, 142, 142, 0.3) 2.93%, rgba(103, 103, 103, 0.4) 43.62%, rgba(73, 73, 73, 0.5) 89.79%);
+  mix-blend-mode: hard-light;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.game-dialog__card-bg-texture {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
   background-size: 100% auto;
   background-position: top center;
   background-repeat: no-repeat;
-  filter: blur(10px) brightness(0.4);
-  transform: scale(1.05);
+  backdrop-filter: blur(7.579px);
+  -webkit-backdrop-filter: blur(7.579px);
+  mix-blend-mode: overlay;
+  opacity: 0.8;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.game-dialog__card-bg-shadow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0px 0px 8.616px 0px black, inset 2.122px 4.244px 17.232px 0px rgba(242, 242, 242, 0.9);
   z-index: 0;
   pointer-events: none;
 }

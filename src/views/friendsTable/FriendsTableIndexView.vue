@@ -469,9 +469,6 @@ watch(
                   alt=""
                 />
               </div>
-              <div class="type-card-title">
-                {{ getGameTypeName(Number(room.game_type), Number(room.poker_type)) }}
-              </div>
             </div>
 
             <!-- 中间信息 -->
@@ -860,31 +857,13 @@ watch(
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    backdrop-filter: blur(10px);
-    background: rgba($color: #fff, $alpha: 0.3);
-    border: 0.5px solid rgba(255, 255, 255, 1);
+    background: transparent;
   }
 
   .type-card-icon {
     width: 100%;
     height: 100%;
     object-fit: contain;
-  }
-
-  .type-card-title {
-    position: absolute;
-    bottom: 0.15rem;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 0.05rem 0.15rem;
-    background: rgba(9, 9, 9, 0.19);
-    border-radius: 3rem;
-    font-size: 0.21rem;
-    font-family: 'SF Pro', sans-serif;
-    font-weight: 590;
-    color: #fff;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
-    white-space: nowrap;
   }
 }
 

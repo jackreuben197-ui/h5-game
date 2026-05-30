@@ -114,7 +114,6 @@ onMounted(() => {
           @click="onSelect(item)"
         >
           <img class="type-card-icon" :src="item.icon" :alt="item.title" />
-          <span class="type-card-title">{{ item.title }}</span>
         </button>
       </div>
     </section>
@@ -128,6 +127,10 @@ onMounted(() => {
   padding: 0 0.32rem calc(0.44rem + env(safe-area-inset-bottom));
   overflow-x: hidden;
   overflow-y: auto;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .club-table-create-overlay {
@@ -196,10 +199,11 @@ onMounted(() => {
 .type-card {
   position: relative;
   min-height: 2.953rem;
-  border: 0.01rem solid rgba(255, 255, 255, 0.32);
   border-radius: 0.186rem;
   border-radius: 0.79rem;
-  background: rgba(255, 255, 255, 0.15);
+  background: transparent;
+  border: none;
+  outline: none;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -221,25 +225,6 @@ onMounted(() => {
     height: 2.8rem;
     transform: translate(7%, 12%);
   }
-}
-
-.type-card-title {
-  position: absolute;
-  left: 50%;
-  bottom: 0.15rem;
-  width: 2.13rem;
-  height: 0.78rem;
-  transform: translateX(-50%);
-  border-radius: 999px;
-  text-align: center;
-  font-size: 0.375rem;
-  line-height: 0.78rem;
-  font-weight: 400;
-  text-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
-  background: rgba(10, 10, 10, 0.29);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-  border: 0.0133rem solid rgba(255, 255, 255, 0.34);
 }
 
 @media (max-width: 360px) {

@@ -362,7 +362,8 @@ function toSafeInt(value: unknown): number {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
+  background:
+    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
     radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
     radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
 }
@@ -383,7 +384,7 @@ function toSafeInt(value: unknown): number {
   padding-right: 0.38rem;
   padding-bottom: 0.5333rem;
   padding-left: 0.38rem;
-  background: rgba(255, 255, 255, 0.24);
+  background: rgba(34, 34, 34, 0.5);
   backdrop-filter: blur(0.3533rem) saturate(1.04);
 }
 

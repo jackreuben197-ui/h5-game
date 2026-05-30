@@ -458,6 +458,7 @@ async function handleEnterTable(rid: number): Promise<void> {
     <!-- 底部报名按钮 -->
     <div class="detail-footer">
       <PrimaryButton
+        glass
         :text="btnConfig.text"
         :disabled="!btnConfig.active || btnLoading"
         @click="handleBtnClick"

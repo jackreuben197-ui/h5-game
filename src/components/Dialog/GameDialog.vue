@@ -150,13 +150,14 @@ function onCancel() {
   gap: 0.32rem;
 }
 
+
 .game-dialog__card-bg {
   position: absolute;
   inset: 0;
   background-size: 100% auto;
-  background-position: top center;
+  background-position: center center;
   background-repeat: no-repeat;
-  filter: blur(10px) brightness(0.4);
+  filter: blur(10px) brightness(0.6);
   transform: scale(1.05);
   z-index: 0;
   pointer-events: none;

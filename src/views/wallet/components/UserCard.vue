@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import bannerBgUrl from '@/assets/images/wallet/banner_bg.png'
+import bannerBgUrl from '@/assets/images/img_user_banner_bg.png'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
 import TagPill from '@/components/wallet/TagPill.vue'
 import { computed } from 'vue'

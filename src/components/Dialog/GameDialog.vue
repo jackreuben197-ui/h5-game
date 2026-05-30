@@ -78,7 +78,10 @@ function onCancel() {
       <div class="game-dialog__card">
         <!-- Background Overlay Layers matching Figma -->
         <div class="game-dialog__card-bg-gradient"></div>
-        <div class="game-dialog__card-bg-texture" :style="{ backgroundImage: `url(${dialogBg})` }"></div>
+        <div
+          class="game-dialog__card-bg-texture"
+          :style="{ backgroundImage: `url(${dialogBg})` }"
+        ></div>
         <div class="game-dialog__card-bg-shadow"></div>
 
         <!-- Title -->
@@ -149,11 +152,16 @@ function onCancel() {
   gap: 0.32rem;
 }
 
-.game-dialog__card-bg-gradient {
+.game-dialog__card-bg {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background-image: linear-gradient(102.679deg, rgba(142, 142, 142, 0.3) 2.93%, rgba(103, 103, 103, 0.4) 43.62%, rgba(73, 73, 73, 0.5) 89.79%);
+  background-image: linear-gradient(
+    102.679deg,
+    rgba(142, 142, 142, 0.3) 2.93%,
+    rgba(103, 103, 103, 0.4) 43.62%,
+    rgba(73, 73, 73, 0.5) 89.79%
+  );
   mix-blend-mode: hard-light;
   z-index: 0;
   pointer-events: none;
@@ -164,21 +172,10 @@ function onCancel() {
   inset: 0;
   border-radius: inherit;
   background-size: 100% auto;
-  background-position: top center;
+  background-position: center center;
   background-repeat: no-repeat;
-  backdrop-filter: blur(7.579px);
-  -webkit-backdrop-filter: blur(7.579px);
-  mix-blend-mode: overlay;
-  opacity: 0.8;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.game-dialog__card-bg-shadow {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  box-shadow: inset 0px 0px 8.616px 0px black, inset 2.122px 4.244px 17.232px 0px rgba(242, 242, 242, 0.9);
+  filter: blur(10px) brightness(0.6);
+  transform: scale(1.05);
   z-index: 0;
   pointer-events: none;
 }

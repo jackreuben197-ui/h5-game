@@ -76,8 +76,11 @@ const isActive = computed(() => props.modelValue === props.activeValue)
   position: absolute;
   right: 0rem;
   top: 0rem;
-  width: 0.84rem;
-  height: 0.9rem;
+  width: auto;
+  height: 0.8rem;
+  margin-right: 0.1rem;
+  margin-top: 0.1rem;
+  object-fit: contain;
   pointer-events: none;
 }
 
@@ -116,7 +119,7 @@ const isActive = computed(() => props.modelValue === props.activeValue)
   --van-switch-width: 0.9rem;
   --van-switch-height: 0.44rem;
   --van-switch-node-size: 0.36rem;
-  --van-switch-on-background: #05e7ae;
+  --van-switch-on-background: #78E490;
   --van-switch-off-background: rgba(255, 255, 255, 0.3);
 
   :deep(.van-switch__node) {

@@ -34,13 +34,12 @@ export interface PayAppleOrderRechargeRechargeData {
   [key: string]: unknown
 }
 
-// /api/pay/cpay/pay/info/list — привязанные счета пользователя
 export interface PaymentInfo {
   id?: number
-  account_no?: string      // номер счёта (маскируем, показываем последние 4 цифры)
-  pix_name?: string        // имя владельца
-  bank_name?: string       // название банка
-  account_type?: number    // 1=банковская карта, 3=alipay, 2=wechat
+  account_no?: string
+  pix_name?: string
+  bank_name?: string
+  account_type?: number    // 1=bankcard, 3=alipay, 2=wechat
   [key: string]: unknown
 }
 
@@ -58,12 +57,11 @@ export interface PaymentInfoListData {
   [key: string]: unknown
 }
 
-// /api/pay/cpay/pay/info/create — добавить счёт для вывода
 export interface CreatePaymentInfoRequest {
   account_no?: string
   pix_name?: string
   bank_name?: string
-  account_type?: number    // 1=банковская карта
+  account_type?: number    // 1=bankcard
   [key: string]: unknown
 }
 

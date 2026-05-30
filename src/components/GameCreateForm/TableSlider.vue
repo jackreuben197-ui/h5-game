@@ -343,18 +343,19 @@ function clampOptionIndex(value: number, length: number): number {
   width: calc(100% - 0.4rem);
   margin: 0.56rem 0.2rem 0.3rem;
   height: 0.12rem;
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: #999999;
+}
+
+:deep(.van-slider__bar) {
+  background: #78E490;
 }
 
 :deep(.van-slider__button) {
   width: 0.7rem;
-  height: 0.7rem;
-  border: 0.01rem solid rgba(255, 255, 255, 0.5);
-  background: rgba(198, 176, 186, 0.9);
-  backdrop-filter: blur(100px) saturate(1.5);
-  -webkit-backdrop-filter: blur(100px) saturate(1.5);
+  height: 0.75rem;
+  border: none;
+  background: url('@/assets/icons/ic_tumbler.svg') center / contain no-repeat;
   box-shadow: none;
-  will-change: backdrop-filter;
 }
 
 .table-slider__marks {

@@ -6,7 +6,8 @@ import { postPropGoldPriceListApi } from '@/api/prop'
 import { postUSDTApplyApi, postUSDTApplyListApi } from '@/api/user'
 import { Code, subscribeH5WsCode } from '@/bridge/ws/messageCenter'
 import { decodeUserTraderOrderNotify } from '@/bridge/ws/traderOrderNotify'
-import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgUrl from '@/assets/images/img_shop_bg.png'
+import bannerBgUrl from '@/assets/images/img_user_banner_bg.png'
 import imgCoin from '@/assets/icons/shop_usdt.png'
 import diamondCoin from '@/assets/icons/icon_diamond.png'
 import imgDiamonds from '@/assets/images/shop_diamonds.png'
@@ -30,6 +31,9 @@ const router = useRouter()
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
+}))
+const bannerStyle = computed(() => ({
+  backgroundImage: `url(${bannerBgUrl})`,
 }))
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
@@ -186,7 +190,11 @@ function toSafeNumber(value: unknown): number {
 }
 
 function formatMoney(value: number): string {
-  return toSafeNumber(value).toFixed(4)
+  const n = toSafeNumber(value)
+  if (n >= 1000) {
+    return (n / 1000).toFixed(2).replace(/\.?0+$/, '') + 'K'
+  }
+  return n.toFixed(2)
 }
 
 function formatBalance(value: number): string {
@@ -485,7 +493,7 @@ onBeforeUnmount(() => {
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
-      <section class="profile-card">
+      <section class="profile-card" :style="bannerStyle">
         <div class="profile-main">
           <div class="avatar-wrap">
             <img :src="userAvatar" alt="avatar" />
@@ -549,8 +557,6 @@ onBeforeUnmount(() => {
                 <span v-if="channelSuffix(channel.name)" class="plain">
                   {{ channelSuffix(channel.name) }}
                 </span>
-              </p>
-              <p class="line-2">
                 <span v-if="index === 0" class="tag recommend">推荐</span>
                 <span v-if="discountTag(channel.discount)" class="tag reduce">
                   {{ discountTag(channel.discount) }}
@@ -579,7 +585,7 @@ onBeforeUnmount(() => {
       class="trader-apply-popup"
       position="center"
       :close-on-click-overlay="!applySubmitting"
-      :overlay-style="{ background: 'rgba(12, 12, 12, 0.6)' }"
+      :overlay-style="{ background: 'transparent' }"
       @click-overlay="closeApplyPopup"
     >
       <section class="trader-apply-card">
@@ -648,15 +654,11 @@ onBeforeUnmount(() => {
 
 .profile-card {
   height: 4.1333rem;
-  border-radius: 1.0418rem;
+  border-radius: 1.422rem;
   padding: 0.5rem 0.56rem 0.44rem;
-  background:
-    radial-gradient(
-      94.22% 94.22% at 86.5% 19.3%,
-      rgba(105, 9, 61, 0.73) 0%,
-      rgba(105, 9, 61, 0) 100%
-    ),
-    rgba(0, 0, 0, 0.35);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
   border: 0.027rem solid rgba(242, 242, 242, 0.65);
   box-shadow: 0 0.108rem 0.293rem rgba(0, 0, 0, 0.28);
 }
@@ -713,6 +715,7 @@ onBeforeUnmount(() => {
 }
 
 .balance-row {
+  position: relative;
   margin-top: 0.58rem;
   display: flex;
   align-items: center;
@@ -722,6 +725,7 @@ onBeforeUnmount(() => {
 
   span {
     font-size: 0.302rem;
+    line-height: 1;
     opacity: 0.95;
   }
 
@@ -732,9 +736,10 @@ onBeforeUnmount(() => {
   }
 
   img {
-    width: 0.72rem;
-    height: 0.5867rem;
+    width: 0.60rem;
+    height: 0.60rem;
     object-fit: contain;
+    flex-shrink: 0;
   }
 }
 
@@ -742,7 +747,8 @@ onBeforeUnmount(() => {
   margin-top: 0.3067rem;
   display: grid;
   grid-template-columns: repeat(3, 2.7607rem);
-  gap: 0.3278rem;
+  column-gap: 0.3278rem;
+  row-gap: 0.7rem;
   justify-content: space-between;
 }
 
@@ -756,15 +762,16 @@ onBeforeUnmount(() => {
 
 .shop-card {
   position: relative;
-  height: 3.5768rem;
+  height: 3.05rem;
   border: 0;
   border-radius: 0.5241rem;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
   color: #f9f9f9;
-  padding: 0.1439rem 0.2364rem 0.185rem;
+  padding: 0.1439rem 0.2364rem 0.3rem;
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow: visible;
   transition:
     transform 0.16s ease,
     box-shadow 0.16s ease;
@@ -788,7 +795,9 @@ onBeforeUnmount(() => {
   right: 0.08rem;
   top: -0.09rem;
   border-radius: 1rem;
-  background: #00644b;
+  background: #52c4ea;
+  backdrop-filter: blur(0.78rem);
+  border: 0.021rem solid rgba(242, 242, 242, 0.8);
   font-size: 0.2666rem;
   line-height: 0.4677rem;
   padding: 0 0.24rem;
@@ -817,7 +826,7 @@ onBeforeUnmount(() => {
   font-family: var(--font-family-SF);
   font-size: 0.4241rem;
   line-height: 1;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .desc {
@@ -828,16 +837,21 @@ onBeforeUnmount(() => {
 }
 
 .price-pill {
-  margin-top: auto;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 50%);
   width: 1.9919rem;
   height: 0.5976rem;
   border-radius: 1.0045rem;
-  border: 0.0137rem solid rgba(242, 242, 242, 0.8);
-  background: linear-gradient(159deg, #05e7ae 7.55%, #00644b 71.92%);
+  border: 0.021rem solid rgba(242, 242, 242, 0.4);
+  background: linear-gradient(158.976deg, rgb(255, 81, 108) 7.547%, rgb(223, 35, 64) 71.919%);
+  backdrop-filter: blur(0.78rem);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 0.0866rem 0 0.1912rem;
+  justify-content: end;
+  gap: 0.08rem;
+  padding: 0 0.087rem;
 
   span {
     font-family: 'HONOR Sans CN', 'PingFang SC', var(--font-family-sans);
@@ -855,17 +869,25 @@ onBeforeUnmount(() => {
 }
 
 .rate-bar {
-  margin-top: 0.3133rem;
+  margin-top: 0.6133rem;
+  margin-bottom: 0.3133rem;
   width: 100%;
-  min-height: 0.5867rem;
-  border-radius: 0.5867rem;
+  min-height: 0.88rem;
+  border-radius: 1.0557rem;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0.08rem 0.2rem;
   font-size: 0.3405rem;
   font-family: var(--font-family-SF);
-  background: rgba(0, 0, 0, 0.22);
+  font-weight: 400;
+  color: #f9f9f9;
+  background: linear-gradient(126.814deg, rgba(255, 255, 255, 0.1) 21.106%, rgba(230, 230, 230, 0.1) 71.429%);
+  backdrop-filter: blur(0.014rem);
+  border: 0.021rem solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    inset 0 0.08rem 0.45rem rgba(255, 255, 255, 0.12),
+    0 0.108rem 0.293rem rgba(0, 0, 0, 0.28);
 }
 
 .pay-channel-list {
@@ -909,7 +931,7 @@ onBeforeUnmount(() => {
 .line-1 {
   margin: 0;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.077rem;
 
   .name {
@@ -934,16 +956,16 @@ onBeforeUnmount(() => {
 }
 
 .tag {
-  height: 0.4267rem;
   border-radius: 0.853rem;
-  padding: 0 0.14rem;
+  padding: 0.08rem 0.14rem;
+  margin-left: 0.08rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 0.2536rem;
-  line-height: 1;
+  line-height: 1.1;
   font-family: 'HONOR Sans CN', 'PingFang SC', var(--font-family-sans);
-  background: linear-gradient(157deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background: #fa2b4b;
 }
 
 .radio {
@@ -956,17 +978,21 @@ onBeforeUnmount(() => {
   margin-top: 0.2rem;
   width: 100%;
   height: 1.4358rem;
-  border: 0.0133rem solid rgba(242, 242, 242, 0.8);
   border-radius: 1.0557rem;
-  background: linear-gradient(169deg, #05e7ae 7.55%, #027a5c 71.92%);
-  color: #fff;
-  font-family: 'Afacad', var(--font-family-sans);
-  font-size: 0.4rem;
+  background: linear-gradient(126.814deg, rgba(255, 255, 255, 0.1) 21.106%, rgba(230, 230, 230, 0.1) 71.429%);
+  backdrop-filter: blur(0.014rem);
+  border: 0.021rem solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    inset 0 0.08rem 0.45rem rgba(255, 255, 255, 0.12),
+    0 0.108rem 0.293rem rgba(0, 0, 0, 0.28);
+  color: #78e490;
+  font-family: 'PingFang SC', var(--font-family-sans);
+  font-size: 0.506rem;
   font-weight: 500;
 }
 
 .pay-now.pending {
-  background: linear-gradient(169deg, #7f8ca1 7.55%, #4a5568 71.92%);
+  color: rgba(120, 228, 144, 0.5);
 }
 
 .pay-now:disabled {
@@ -982,32 +1008,22 @@ onBeforeUnmount(() => {
   width: 8.7584rem;
   max-width: calc(100vw - 1.28rem);
   min-height: 7.3618rem;
-  border-radius: 1.018rem;
-  border: 0.0267rem solid transparent;
+  border-radius: 0.97rem;
+  border: 0.0255rem solid rgba(242, 242, 242, 0.4);
   padding: 0.8925rem 0.4307rem 0.6379rem;
   box-sizing: border-box;
   color: #fff;
-  background:
-    linear-gradient(
-      113deg,
-      rgba(142, 142, 142, 0.6) 0%,
-      rgba(103, 103, 103, 0.8) 46.85%,
-      #494949 100%
-    ),
-    rgba(0, 0, 0, 0.35);
-  border-image: linear-gradient(
-      117deg,
-      rgba(242, 242, 242, 0.4) 0%,
-      rgba(255, 255, 255, 0) 44.52%,
-      rgba(255, 255, 255, 0.5) 100%
-    )
-    1;
+  background: linear-gradient(
+    102.737deg,
+    rgba(142, 142, 142, 0.1) 2.93%,
+    rgba(103, 103, 103, 0.1) 33.62%,
+    rgba(73, 73, 73, 0.2) 69.79%
+  );
   box-shadow:
-    inset 0.0594rem 0.1188rem 0.4821rem rgba(242, 242, 242, 0.9),
-    inset 0 0 0.624rem rgba(203, 110, 125, 0.7),
-    inset 0 0 0.241rem rgba(0, 0, 0, 0.95),
-    0.0964rem 0.1205rem 0.1928rem rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(0.4241rem);
+    inset 0 0 0.2298rem black,
+    inset 0.0566rem 0.1132rem 0.4596rem rgba(242, 242, 242, 0.9),
+    0.0919rem 0.1149rem 0.1838rem rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(0.2021rem);
 }
 
 .apply-rules {
@@ -1024,15 +1040,8 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 1.4358rem;
   border-radius: 1.0557rem;
-  border: 0.0133rem solid transparent;
-  border-image: linear-gradient(
-      117deg,
-      rgba(242, 242, 242, 0.8) 0%,
-      rgba(255, 255, 255, 0) 44.52%,
-      rgba(255, 255, 255, 0.5) 100%
-    )
-    1;
-  background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+  border: 0.0133rem solid rgba(242, 242, 242, 0.5);
+  background: linear-gradient(157deg, #55f329 0%, #3ead06 100%);
   color: #fff;
   font-family: 'Afacad', var(--font-family-sans);
   font-size: 0.4rem;

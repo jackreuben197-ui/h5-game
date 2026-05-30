@@ -870,7 +870,7 @@ function formatChipBase(rawValue: number): string {
       round
       :close-on-click-overlay="true"
       :lock-scroll="true"
-      :overlay-style="{ background: 'rgba(8, 8, 8, 0.6)' }"
+      :overlay-style="{ background: 'transparent' }"
     >
       <div class="club-notice-card">
         <div class="club-notice-club-pill">{{ clubDisplayName }}</div>
@@ -1120,7 +1120,7 @@ function formatChipBase(rawValue: number): string {
 
 .club-notice-card {
   position: relative;
-  border: 0.026rem solid rgba(242, 242, 242, 0.4);
+  border: 0.0255rem solid rgba(242, 242, 242, 0.4);
   border-radius: 0.97rem;
   padding: 0.42rem 0.41rem;
   display: flex;
@@ -1128,16 +1128,16 @@ function formatChipBase(rawValue: number): string {
   align-items: center;
   gap: 0.16rem;
   background: linear-gradient(
-    102.74deg,
-    rgba(142, 142, 142, 0.3) 2.93%,
-    rgba(103, 103, 103, 0.4) 43.62%,
-    rgba(73, 73, 73, 0.5) 89.79%
+    102.737deg,
+    rgba(142, 142, 142, 0.04) 2.93%,
+    rgba(103, 103, 103, 0.1) 33.62%,
+    rgba(73, 73, 73, 0.2) 69.79%
   );
-  backdrop-filter: blur(0.2rem);
+  backdrop-filter: blur(0.2021rem);
   box-shadow:
-    0.092rem 0.115rem 0.184rem rgba(0, 0, 0, 0.25),
-    inset 0 0 0.23rem rgba(0, 0, 0, 1),
-    inset 0.057rem 0.113rem 0.46rem rgba(242, 242, 242, 0.9);
+    inset 0 0 0.2298rem black,
+    inset 0.0566rem 0.1132rem 0.4596rem rgba(242, 242, 242, 0.9),
+    0.0919rem 0.1149rem 0.1838rem rgba(0, 0, 0, 0.25);
 }
 
 .club-notice-club-pill {
@@ -1177,13 +1177,15 @@ function formatChipBase(rawValue: number): string {
 }
 
 .club-notice-ignore-btn {
-  margin-top: 0.06rem;
-  border: none;
-  border-radius: 0.67rem;
-  padding: 0.133rem 0.267rem;
+  margin-top: 0.3rem;
+  width: 100%;
+  height: 1.4358rem;
+  border: 0.0133rem solid rgba(242, 242, 242, 0.1);
+  border-radius: 1.0557rem;
   background: rgba(44, 45, 45, 0.31);
   color: #f9f9f9;
-  font-size: 0.347rem;
+  font-size: 0.4rem;
+  font-weight: 500;
   line-height: 1.2;
 
   &:disabled {

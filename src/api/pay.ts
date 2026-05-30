@@ -23,7 +23,6 @@ export async function postPayAppleOrderRechargeApi(
   return response.data
 }
 
-// /pay/cpay/pay/info/list — список привязанных счетов пользователя
 export async function postPaymentInfoListApi(
   payload: PaymentInfoListRequest = {}
 ): Promise<ApiResponse<PaymentInfoListData>> {
@@ -31,7 +30,6 @@ export async function postPaymentInfoListApi(
   return response.data
 }
 
-// /pay/cpay/pay/info/create — добавить счёт для вывода
 export async function postPaymentInfoCreateApi(
   payload: CreatePaymentInfoRequest = {}
 ): Promise<ApiResponse<Record<string, unknown>>> {

@@ -1,18 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
 import { postOrderUserUsdtOrderListApi, postOrderUserUsdtRechargeApi } from '@/api/order'
-import mainBgUrl from '@/assets/images/main_bg.webp'
-import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import paymentBgUrl from '@/assets/images/img_payment_bg1.png'
 
-const title = computed(() => '确认付款')
-
-// 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  backgroundImage: `url(${paymentBgUrl})`,
 }))
 const route = useRoute()
+const router = useRouter()
 
 const fallbackQr = ''
 const fallbackAddress = ''
@@ -128,6 +125,10 @@ function onCopyAddress(): void {
     })
 }
 
+function onClose(): void {
+  void router.back()
+}
+
 onMounted(() => {
   void createOrder()
 })
@@ -135,10 +136,14 @@ onMounted(() => {
 
 <template>
   <div class="page-shell shop-pay-page" :style="backgroundStyle">
-    <div class="mask"></div>
+    <div class="mask" />
 
     <section class="pay-card">
-      <HeaderBack :title="title" />
+      <div class="pay-head">
+        <p class="head-title">确认付款</p>
+        <p class="head-sub">当前参考单价:1钻石=0.025USDT</p>
+        <button type="button" class="close-btn" @click="onClose">×</button>
+      </div>
 
       <div class="amount-box">{{ toPayPrice(price).toFixed(4) }}</div>
       <p class="amount-label">付款金额</p>
@@ -185,6 +190,8 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 0 0.48rem;
+  background-size: cover;
+  background-position: center;
 }
 
 .mask {
@@ -196,88 +203,95 @@ onMounted(() => {
 .pay-card {
   position: relative;
   width: 8.4541rem;
-  border: 0.0255rem solid rgba(242, 242, 242, 0.4);
-  border-radius: 0.9703rem;
-  padding: 0.4187rem 0.4106rem 0.4106rem;
+  border: 0.035rem solid rgba(242, 242, 242, 0.4);
+  border-radius: 0.8533rem;
+  padding: 0.3733rem 0.5867rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.48rem;
   color: #f9f9f9;
   backdrop-filter: blur(0.2022rem);
-  background:
-    linear-gradient(
-      103deg,
-      rgba(142, 142, 142, 0.3) 2.93%,
-      rgba(103, 103, 103, 0.4) 43.62%,
-      rgba(73, 73, 73, 0.5) 89.79%
-    ),
-    rgba(0, 0, 0, 0.25);
+  background: linear-gradient(
+    104.56deg,
+    rgba(142, 142, 142, 0.12) 2.93%,
+    rgba(103, 103, 103, 0.16) 43.62%,
+    rgba(73, 73, 73, 0.2) 89.79%
+  );
   box-shadow:
     inset 0 0 0.2298rem #000,
     inset 0.0566rem 0.1132rem 0.4596rem rgba(242, 242, 242, 0.9),
-    0.0919rem 0.1149rem 0.0919rem rgba(0, 0, 0, 0.25);
+    0.0919rem 0.1149rem 0.1838rem rgba(0, 0, 0, 0.25);
 }
 
 .pay-head {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
   align-items: center;
-  gap: 0.15rem;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.2rem;
 }
 
-.title {
+.head-title {
   margin: 0;
-  font-family: 'HONOR Sans CN', 'PingFang SC', var(--font-family-sans);
+  font-family: 'HONOR Sans CN', var(--font-family-sans);
   font-size: 0.4267rem;
+  font-weight: 400;
   line-height: 1;
-}
-
-.unit {
-  margin: 0;
-  font-family: 'HONOR Sans CN', 'PingFang SC', var(--font-family-sans);
-  font-size: 0.2933rem;
-  line-height: 1;
+  color: #fff;
   white-space: nowrap;
 }
 
-.close {
-  width: 1.024rem;
-  height: 1.024rem;
-  border: 0;
-  border-radius: 50%;
-  color: #fff;
-  font-size: 0.72rem;
+.head-sub {
+  margin: 0;
+  font-family: 'HONOR Sans CN', var(--font-family-sans);
+  font-size: 0.2933rem;
+  font-weight: 400;
   line-height: 1;
-  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  white-space: nowrap;
+}
+
+.close-btn {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  flex-shrink: 0;
+  padding: 0;
+  cursor: pointer;
 }
 
 .amount-box {
-  margin-top: 0.2667rem;
+  width: 100%;
   height: 1.2155rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Keania One', 'Afacad', var(--font-family-sans);
+  font-family:  'HONOR Sans CN', var(--font-family-sans);
   font-size: 0.7829rem;
+  font-weight: 400;
   color: #fff;
   text-shadow: 0 0.1066rem 0.1066rem rgba(0, 0, 0, 0.25);
-  background: linear-gradient(
-    130deg,
-    rgba(255, 255, 255, 0.1) 21.1%,
-    rgba(230, 230, 230, 0.1) 71.43%
-  );
+  background: linear-gradient(170.66deg, rgb(54, 54, 54) 7.9%, rgb(23, 23, 23) 80.24%);
+  border-radius: 0.24rem;
 }
 
 .amount-label {
-  margin: 0.2133rem 0 0;
+  margin: 0;
   text-align: center;
-  font-family: 'HONOR Sans CN', 'PingFang SC', var(--font-family-sans);
+  font-family: 'HONOR Sans CN', var(--font-family-sans);
   font-size: 0.4267rem;
+  font-weight: 400;
   line-height: 1;
 }
 
 .pay-methods {
-  margin-top: 0.4533rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.4533rem;
+  width: 100%;
 }
 
 .method {
@@ -294,6 +308,7 @@ onMounted(() => {
     text-align: center;
     font-family: 'PingFang SC', var(--font-family-sans);
     font-size: 0.2899rem;
+    font-weight: 400;
     line-height: 1.4;
   }
 }
@@ -330,6 +345,7 @@ onMounted(() => {
   width: 100%;
   text-align: left;
   color: #ffeaea;
+  font-weight: 400;
 }
 
 .t1 {
@@ -355,31 +371,31 @@ onMounted(() => {
   border-radius: 0.8035rem;
   color: #fff;
   font-size: 0.2909rem;
+  font-weight: 400;
   background: linear-gradient(161deg, #55f329 7.55%, #3ead06 71.92%);
 }
 
 .tips,
 .sub-tips {
-  margin: 0.24rem 0 0;
+  margin: 0;
   text-align: center;
   font-family: 'HONOR Sans CN', 'PingFang SC', var(--font-family-sans);
   font-size: 0.2667rem;
+  font-weight: 400;
   line-height: 1.2;
 }
 
 .sub-tips {
-  margin-top: 0.12rem;
   opacity: 0.9;
 }
 
 .paying-btn {
-  margin-top: 0.24rem;
   width: 100%;
   height: 1.4358rem;
   border: 0.0133rem solid rgba(242, 242, 242, 0.8);
   border-radius: 1.0557rem;
   color: #f9f9f9;
-  background: linear-gradient(166deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background: linear-gradient(166deg, #55f329 7.55%, #3ead06 71.92%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -392,11 +408,13 @@ onMounted(() => {
   span {
     font-family: 'HONOR Sans CN', 'PingFang SC', var(--font-family-sans);
     font-size: 0.4rem;
+    font-weight: 400;
     line-height: 1.2;
   }
 
   small {
     font-size: 0.2667rem;
+    font-weight: 400;
     line-height: 1.2;
   }
 }

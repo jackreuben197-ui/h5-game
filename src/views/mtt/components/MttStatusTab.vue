@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import hunterIcon from '@/assets/icons/icon_mtt_hunter.png'
-import chipsIcon from '@/assets/icons/icon_chips.png'
+import chipsIcon from '@/assets/icons/icon_chip_red.png'
 import type { RoomcenterMttDetailData } from '@/api/models/roomcenter'
 import { formatDateTime, toUnixSeconds } from '@/utils/time'
 import { getLocale, t } from '@/i18n'
@@ -14,8 +14,14 @@ const props = defineProps<{
 /* ===== 倒计时 tick ===== */
 const timerTick = ref(0)
 let timerInterval: ReturnType<typeof setInterval> | null = null
-onMounted(() => { timerInterval = setInterval(() => { timerTick.value++ }, 1000) })
-onUnmounted(() => { if (timerInterval) clearInterval(timerInterval) })
+onMounted(() => {
+  timerInterval = setInterval(() => {
+    timerTick.value++
+  }, 1000)
+})
+onUnmounted(() => {
+  if (timerInterval) clearInterval(timerInterval)
+})
 
 /* ===== 数据快捷引用 ===== */
 const mtt = computed(() => props.data?.mtt)
@@ -181,9 +187,10 @@ const matchInfo = computed(() => {
   const bl = more.value?.bl ?? 0
   const maxDelayBl = m.max_delay_apply_bl ?? 0
   if (maxDelayBl > bl) {
-    const limitStr = (m.limit_total_buy_times ?? 0) >= 1000
-      ? t('UIMTT_wuxianzhi')
-      : fmtNum(m.limit_total_buy_times)
+    const limitStr =
+      (m.limit_total_buy_times ?? 0) >= 1000
+        ? t('UIMTT_wuxianzhi')
+        : fmtNum(m.limit_total_buy_times)
     buyLimitLabel = t('MTT_State_DelayDetailNoAddOn', limitStr, String(maxDelayBl))
   } else {
     buyLimitLabel = t('MTT_State_CannotDelay')
@@ -195,8 +202,15 @@ const matchInfo = computed(() => {
   return [
     { label: t('UIMatchName'), value: resolveName(m.name) },
     { label: t('MTT_State_gametype'), value: betTypeLabel },
-    { label: t('UI_GameType'), value: gameTypeName.value, icon: (m.hunter_on ?? 0) > 0 ? hunterIcon : undefined },
-    { label: t('UIMTT_ListdistancestartText'), value: formatDateTime(m.start_time, 'DD/MM/YYYY-HH:mm') },
+    {
+      label: t('UI_GameType'),
+      value: gameTypeName.value,
+      icon: (m.hunter_on ?? 0) > 0 ? hunterIcon : undefined,
+    },
+    {
+      label: t('UIMTT_ListdistancestartText'),
+      value: formatDateTime(m.start_time, 'DD/MM/YYYY-HH:mm'),
+    },
     { label: t('MTT_xq_buy'), value: buyInLabel.value },
     { label: t('MTT_State_ShangXian'), value: buyLimitLabel, tip: true },
     { label: t('MTT_Rebuy'), value: fmtNum(m.rebuy_times) },
@@ -204,9 +218,18 @@ const matchInfo = computed(() => {
     { label: t('UIMTT_chouma1'), value: initialBB },
     { label: t('MTT_State_DelayApply'), value: enterTimeLabel },
     { label: t('UIMatchEstimatedDuration'), value: holdTimeLabel },
-    { label: t('UIMatchBlindInterval'), value: interval > 0 ? `${Math.floor(interval / 60)}${t('UIClubData_Text_time')}` : '-' },
-    { label: t('UITexas_TableType'), value: m.seat_count ? t('UIMatch_PersonTable', m.seat_count) : '-' },
-    { label: t('UIMatchMinMaxPlayers'), value: `${m.limit_min ?? '-'}~${realPrize.value?.participants ?? '-'}` },
+    {
+      label: t('UIMatchBlindInterval'),
+      value: interval > 0 ? `${Math.floor(interval / 60)}${t('UIClubData_Text_time')}` : '-',
+    },
+    {
+      label: t('UITexas_TableType'),
+      value: m.seat_count ? t('UIMatch_PersonTable', m.seat_count) : '-',
+    },
+    {
+      label: t('UIMatchMinMaxPlayers'),
+      value: `${m.limit_min ?? '-'}~${realPrize.value?.participants ?? '-'}`,
+    },
     { label: t('UIMatchStartCondition'), value: '-' },
     { label: t('UIMatchBreakTime'), value: '-' },
   ]
@@ -242,7 +265,7 @@ const matchInfo = computed(() => {
     <div class="stats-panel">
       <div class="stats-grid">
         <!-- 左列 -->
-        <div class="stats-col">
+        <div class="stats-col stats-col--left">
           <div class="stat-item">
             <div class="stat-label">{{ t('UIMTT_zongjiangjin') }}</div>
             <div class="stat-value">{{ prizePool }}</div>
@@ -260,6 +283,7 @@ const matchInfo = computed(() => {
             <div class="stat-value">{{ nextPrize }}</div>
           </div>
         </div>
+        <div class="stats-col-divider"></div>
 
         <!-- 中列 -->
         <div class="stats-col--center">
@@ -279,9 +303,10 @@ const matchInfo = computed(() => {
             </div>
           </div>
         </div>
+        <div class="stats-col-divider"></div>
 
         <!-- 右列 -->
-        <div class="stats-col">
+        <div class="stats-col stats-col--right">
           <div class="stat-item">
             <div class="stat-label">{{ t('UIMTT_shengyuwanjia') }}</div>
             <div class="stat-value">{{ remainingPlayers }}</div>
@@ -302,8 +327,7 @@ const matchInfo = computed(() => {
       </div>
 
       <!-- 分隔线 -->
-      <div class="stats-divider">
-      </div>
+      <div class="stats-divider"></div>
 
       <!-- 筹码统计 -->
       <div class="chips-row">
@@ -338,12 +362,7 @@ const matchInfo = computed(() => {
           <VanIcon v-if="item.tip" name="question-o" class="info-tip" />
         </div>
         <div class="info-value">
-          <img
-            v-if="item.icon"
-            :src="item.icon"
-            class="info-icon"
-            alt="icon"
-          />
+          <img v-if="item.icon" :src="item.icon" class="info-icon" alt="icon" />
           <span>{{ item.value }}</span>
         </div>
       </div>
@@ -380,7 +399,7 @@ const matchInfo = computed(() => {
   padding: 0.22rem 0.27rem;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0.66rem;
-  box-shadow: 0 -0.21rem 0.54rem rgba(10, 184, 247, 0.54) inset;
+  box-shadow: 0 -0.21rem 0.54rem rgba(78, 135, 97, 0.54) inset;
   margin-bottom: 0.2rem;
 }
 
@@ -390,7 +409,7 @@ const matchInfo = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0ab8f7;
+  background: rgba(65, 137, 80, 1);
   border-radius: 0.43rem;
   font-size: 0.36rem;
   font-weight: 600;
@@ -438,32 +457,56 @@ const matchInfo = computed(() => {
 
 /* ===== 数据统计面板 ===== */
 .stats-panel {
-  background: rgba(0, 0, 0, 0.2);
+  background: linear-gradient(
+    98.37deg,
+    rgba(255, 255, 255, 0.1) 21.1%,
+    rgba(230, 230, 230, 0.1) 71.4%
+  );
+  backdrop-filter: blur(2px);
   border-radius: 0.77rem;
-  padding: 0.30rem 0rem;
+  padding: 0.37rem 0.45rem;
   margin-bottom: 0.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
 }
 
 .stats-grid {
   display: flex;
-  justify-content: space-between;
-  gap: 0.3rem;
+  align-items: stretch;
+  min-height: 5.22rem;
 }
 
 .stats-col {
   display: flex;
   flex-direction: column;
-  gap: 0.48rem;
-  flex: 1;
+  justify-content: space-between;
+  flex-shrink: 0;
+  width: 1.93rem;
+}
+
+.stats-col--left {
+  text-align: left;
+}
+
+.stats-col--right {
+  text-align: right;
 }
 
 .stats-col--center {
-  flex: 1.4;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  padding: 0 0.24rem;
 }
 
-.stat-item {
-  text-align: center;
+.stats-col-divider {
+  width: 1px;
+  flex-shrink: 0;
+  align-self: stretch;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0 0.08rem;
 }
 
 .stat-label {
@@ -483,12 +526,20 @@ const matchInfo = computed(() => {
 /* 级别卡片 */
 .level-card {
   width: 100%;
-  height: 2.7rem;
-  background: linear-gradient(158deg, rgba(255, 255, 255, 0.1) 0%, rgba(230, 230, 230, 0.1) 100%);
+  height: 2.72rem;
+  background: linear-gradient(
+    99.49deg,
+    rgba(255, 255, 255, 0.1) 21.1%,
+    rgba(230, 230, 230, 0.1) 71.4%
+  );
   border-radius: 0.77rem;
-  padding: 0.1rem 0.15rem 0.15rem;
+  padding: 0.08rem 0.15rem 0.19rem;
   text-align: center;
-  margin-bottom: 0.24rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.19rem;
 }
 
 .level-label {
@@ -503,8 +554,7 @@ const matchInfo = computed(() => {
   color: #fff;
   font-weight: 400;
   font-family: 'Keania One';
-  line-height: 1.2;
-  margin: 0.1rem 0;
+  line-height: 1.1;
 }
 
 .level-break {
@@ -519,7 +569,8 @@ const matchInfo = computed(() => {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.48rem;
+  flex: 1;
+  justify-content: space-between;
 }
 
 .blind-row {
@@ -542,35 +593,15 @@ const matchInfo = computed(() => {
 
 /* 分隔线 */
 .stats-divider {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0rem 0.4rem;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
   opacity: 0.5;
-  position: relative;
-
-  &::before,
-  &::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: rgba(255, 255, 255, 0.2);
-  }
-}
-
-.divider-icon {
-  width: 0.5rem;
-  height: 0.5rem;
-  margin: 0 0.3rem;
-  object-fit: contain;
 }
 
 /* 筹码统计 */
 .chips-row {
-  margin: 0.4rem 0 0;
   display: flex;
   justify-content: space-between;
-  gap: 0.2rem;
 }
 
 .chip-item {
@@ -612,7 +643,7 @@ const matchInfo = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.10rem 0.45rem;
+  padding: 0.1rem 0.45rem;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0.77rem;
   min-height: 0.72rem;

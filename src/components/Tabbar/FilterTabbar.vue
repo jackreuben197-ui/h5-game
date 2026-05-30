@@ -29,10 +29,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-const wrapperClass = computed(() => [
-  'filter-tabbar',
-  `filter-tabbar--${props.activeBg}`,
-])
+const wrapperClass = computed(() => ['filter-tabbar', `filter-tabbar--${props.activeBg}`])
 
 function handleClick(name: string): void {
   if (name !== props.modelValue) {
@@ -55,12 +52,7 @@ export default { name: 'FilterTabbar' }
       @click="handleClick(tab.name)"
     >
       <div class="inner-content">
-        <slot
-          name="tab"
-          :tab="tab"
-          :active="tab.name === props.modelValue"
-          :index="index"
-        >
+        <slot name="tab" :tab="tab" :active="tab.name === props.modelValue" :index="index">
           <span class="filter-tab__text">{{ tab.title }}</span>
         </slot>
       </div>
@@ -78,7 +70,7 @@ export default { name: 'FilterTabbar' }
   background: rgba(27, 27, 30, 0.4);
   border-radius: 0.67rem;
   margin: 0.45rem;
-  font-family:'HONOR Sans CN';
+  font-family: 'HONOR Sans CN';
 }
 
 /* ---- 每个 tab 按钮：flex-1 等宽 ---- */
@@ -94,7 +86,9 @@ export default { name: 'FilterTabbar' }
   cursor: pointer;
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.18s, border-color 0.18s;
+  transition:
+    background 0.18s,
+    border-color 0.18s;
   position: relative;
   overflow: hidden;
 }
@@ -124,22 +118,22 @@ export default { name: 'FilterTabbar' }
   background: transparent;
   border: none;
   overflow: visible;
-//   border: 0.8px solid #fff;
+  //   border: 0.8px solid #fff;
   box-shadow:
-  0 0 0.1rem 0.05rem rgba(5,231,174, .9) inset,
-    inset  1px  1px 0px  0px rgba(255, 255, 255, 0.85),
-  inset  3px  3px 0px -2px rgba(255, 255, 255, 0.30),
-    inset -1px -1px 0px  0px rgba(255, 255, 255, 0.85),
-  inset -3px -3px 0px -2px rgba(255, 255, 255, 0.30);
-.inner-content{
+    0 0 0.1rem 0.05rem rgba(86, 153, 205, 1) inset,
+    inset 1px 1px 0px 0px rgba(255, 255, 255, 0.85),
+    inset 3px 3px 0px -2px rgba(255, 255, 255, 0.3),
+    inset -1px -1px 0px 0px rgba(255, 255, 255, 0.85),
+    inset -3px -3px 0px -2px rgba(255, 255, 255, 0.3);
+  .inner-content {
     width: 100%;
     height: 1rem;
     line-height: 1rem;
     border-radius: 0.65rem;
     // border: 1px solid red;
-    background-color: rgba(5,231,174, .9);
-    box-shadow: 0 0 0.1rem 0.05rem rgba(5,231,174, .9);
-}
+    background-color: rgba(86, 153, 205, 1);
+    box-shadow: 0 0 0.1rem 0.05rem rgba(86, 153, 205, 1);
+  }
   .filter-tab__text {
     color: #fff;
     font-weight: 700;

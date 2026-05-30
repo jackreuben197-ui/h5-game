@@ -5,12 +5,15 @@ interface Props {
   /** 是否显示内嵌高光边框阴影，默认 true */
   shadow?: boolean
   loading?: boolean
+  /** 玻璃拟态风格（用于深色背景，如 MTT 详情页底部） */
+  glass?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   shadow: true,
   loading: false,
+  glass: false,
 })
 
 const emit = defineEmits<{
@@ -25,7 +28,7 @@ function handleClick(event: MouseEvent): void {
 
 <template>
   <button
-    :class="['primary-btn', { 'primary-btn--disabled': props.disabled, 'primary-btn--no-shadow': !props.shadow }]"
+    :class="['primary-btn', { 'primary-btn--disabled': props.disabled, 'primary-btn--no-shadow': !props.shadow, 'primary-btn--glass': props.glass }]"
     type="button"
     :disabled="props.disabled"
     @click="handleClick"
@@ -87,6 +90,29 @@ function handleClick(event: MouseEvent): void {
   &:active:not(:disabled) {
     opacity: 0.92;
     transform: scale(0.985);
+  }
+
+  &.primary-btn--glass {
+    background: linear-gradient(126.81deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
+    backdrop-filter: blur(10px);
+    box-shadow: none;
+    height: auto;
+    padding: 0.4rem 0;
+
+    &::before {
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.35) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(255, 255, 255, 0.2) 100%
+      );
+    }
+
+    .primary-btn__text {
+      font-family: 'PingFang SC', 'HONOR Sans CN', sans-serif;
+      font-size: 0.515rem;
+      color: #fbfbfb;
+    }
   }
 }
 

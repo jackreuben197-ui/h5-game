@@ -132,7 +132,7 @@ onMounted(() => {
 
 <template>
   <div class="gift-page" :style="{ backgroundImage: `url(${mainBgUrl})` }">
-    <AppBar title="礼物" :show-actions="false" />
+    <AppBar title="赠送" :show-actions="false" />
 
     <div class="gift-content">
       <p class="max-amount">最大赠送金额: {{ displayMaxAmount }}</p>

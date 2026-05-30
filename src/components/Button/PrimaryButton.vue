@@ -25,7 +25,10 @@ function handleClick(event: MouseEvent): void {
 
 <template>
   <button
-    :class="['primary-btn', { 'primary-btn--disabled': props.disabled, 'primary-btn--no-shadow': !props.shadow }]"
+    :class="[
+      'primary-btn',
+      { 'primary-btn--disabled': props.disabled, 'primary-btn--no-shadow': !props.shadow },
+    ]"
     type="button"
     :disabled="props.disabled"
     @click="handleClick"
@@ -53,9 +56,8 @@ function handleClick(event: MouseEvent): void {
   justify-content: center;
 
   /* 内嵌高光边框效果 */
-  box-shadow:
-    inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
-    inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0.5px 0.5px 0px 0px rgba(242, 242, 242, 0.8),
+    inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.5);
 
   &.primary-btn--no-shadow {
     box-shadow: none;
@@ -73,9 +75,7 @@ function handleClick(event: MouseEvent): void {
       rgba(255, 255, 255, 0) 44.5%,
       rgba(255, 255, 255, 0.5) 100%
     );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;

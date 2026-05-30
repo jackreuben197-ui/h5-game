@@ -72,7 +72,9 @@ watch(
   () => props.open,
   (v) => {
     if (v) {
-      value.value = String(props.initialValue || '').replace(/\D/g, '').slice(0, getMaxLength())
+      value.value = String(props.initialValue || '')
+        .replace(/\D/g, '')
+        .slice(0, getMaxLength())
     }
   },
 )
@@ -121,9 +123,10 @@ function confirm(): void {
         :class="['kp', { 'kp--plain': !showMask }]"
         :style="showMask ? { backgroundImage: `url(${mainBgUrl})` } : undefined"
         @click.self="cancel"
+        @dblclick.prevent
       >
         <div v-if="showMask" class="kp__dim" @click="cancel"></div>
-        <div :class="['kp__sheet', { 'kp__sheet--plain': !showMask }]">
+        <div :class="['kp__sheet', { 'kp__sheet--plain': !showMask }]" @dblclick.prevent>
           <div v-if="showInputArea" class="kp__header">
             <span class="kp__title">{{ title || t('Wallet_CustomAmount') }}</span>
             <div class="kp__input">
@@ -140,21 +143,43 @@ function confirm(): void {
             <button
               v-for="n in digits"
               :key="n"
+              type="button"
               class="kp__key"
               :style="keyBgStyle"
               @click="press(n)"
+              @dblclick.prevent
             >
               {{ n }}
             </button>
-            <button class="kp__key kp__key--accent" @click="clearAll">C</button>
-            <button class="kp__key" :style="keyBgStyle" @click="press('0')">0</button>
-            <button class="kp__key kp__key--accent" @click="backspace">
+            <button
+              type="button"
+              class="kp__key kp__key--accent"
+              @click="clearAll"
+              @dblclick.prevent
+            >
+              C
+            </button>
+            <button
+              type="button"
+              class="kp__key"
+              :style="keyBgStyle"
+              @click="press('0')"
+              @dblclick.prevent
+            >
+              0
+            </button>
+            <button
+              type="button"
+              class="kp__key kp__key--accent"
+              @click="backspace"
+              @dblclick.prevent
+            >
               <Icon icon="solar:backspace-bold" class="kp__icon" />
             </button>
           </div>
 
           <div class="kp__actions">
-            <button class="kp__cancel" @click="cancel">
+            <button type="button" class="kp__cancel" @click="cancel" @dblclick.prevent>
               {{ t('Wallet_Cancel') }}
             </button>
             <PrimaryButton :text="confirmText" class="kp__confirm" @click="confirm" />
@@ -176,6 +201,10 @@ function confirm(): void {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .kp--plain {
@@ -207,6 +236,7 @@ function confirm(): void {
   box-shadow: 3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25), 0 0 8.6px #000 inset,
     2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
   overflow: hidden;
+  touch-action: manipulation;
 }
 
 .kp__sheet--plain {
@@ -289,6 +319,7 @@ function confirm(): void {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.22rem;
+  touch-action: manipulation;
 }
 
 .kp__key {
@@ -306,6 +337,9 @@ function confirm(): void {
   font-size: 0.61rem;
   color: #fff;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .kp__key--accent {
@@ -324,6 +358,7 @@ function confirm(): void {
   gap: 0.25rem;
   padding: 0 0.2rem;
   margin-top: 0.13rem;
+  touch-action: manipulation;
 }
 
 .kp__cancel {
@@ -337,10 +372,20 @@ function confirm(): void {
   font-weight: 500;
   font-size: 0.4rem;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .kp__confirm {
   flex: 1;
+}
+
+:deep(.kp__confirm),
+:deep(.kp__confirm *) {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .keypad-enter-active .kp__sheet,

@@ -75,7 +75,7 @@ export default { name: 'FilterTabbar' }
   align-items: center;
   box-sizing: border-box;
   height: 1.35rem;
-  background: rgba($color: #FFFFFF, $alpha: 0.2);
+  background: rgba(27, 27, 30, 0.4);
   border-radius: 0.67rem;
   margin: 0.45rem;
   font-family:'HONOR Sans CN';
@@ -109,8 +109,8 @@ export default { name: 'FilterTabbar' }
   z-index: 1;
 }
 .filter-tab__item--active {
-  background: rgba($color: #FFFFFF, $alpha: 0.17);
-  border: 0.8px solid #ffffff;
+  background: rgba(249, 249, 249, 0.4);
+  border: none;
 
   .filter-tab__text {
     font-weight: 700;

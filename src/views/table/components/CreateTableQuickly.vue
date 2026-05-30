@@ -31,7 +31,7 @@ import iconVideo from '@/assets/icons/icon_video.png'
 import iconDelete from '@/assets/icons/icon_delete.svg'
 import iconEdit from '@/assets/icons/icon_edit.svg'
 import iconCards from '@/assets/icons/icon_cards.png'
-import tableIconSquid from '@/assets/icons/table_icon_squid.png'
+import tableIconSquid from '@/assets/images/img_squid_game.png'
 import tableIconMushroom from '@/assets/icons/table_icon_mushroom.png'
 import tableIconCritical from '@/assets/icons/table_icon_critical.png'
 import blueBlur from '@/assets/images/blue_blur.png'
@@ -1182,8 +1182,9 @@ async function onDeleteConfirm() {
   height: 1.07rem;
   border: none;
   border-radius: 1.11rem;
-  background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
-  color: #fff;
+  background: linear-gradient(105.31deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
+  backdrop-filter: blur(0.167px);
+  color: #78e490;
   font-size: 0.32rem;
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 500;
@@ -1191,8 +1192,6 @@ async function onDeleteConfirm() {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
-    inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
 }
 
 /* 模板列表 */

@@ -866,3 +866,21 @@ export interface UserAgencyGoldGrantResponseData extends UserAgencyGoldGrantData
 export interface UserAgencyGoldGrantData {
   [key: string]: unknown
 }
+
+// /api/user/login_third_party (UserLoginThirdParty)
+
+export interface UserLoginThirdPartyRequest {
+    source: string; // 第三方平台标识，支持 facebook,instagram,google,telegram
+    app_source: number; // 应用来源，1-IOS 2-Android 3-Web
+    telegram_init_data: string; // Telegram 登录所需的 init_data 字符串,
+    platform: number; // 平台(platform):1-IOS 2-Android 3-Windows 4-OSX 5-Web 6-MiniWeb 7-Linux
+    device_id?: string;
+    user_device_no?: string;
+    system_version?: string;
+    client_language?: string;
+    system_language?: string;
+    gps_latitude?: string;
+    gps_longitude?: string;
+    is_simulator?: boolean;
+    mac_addr?: string;
+}

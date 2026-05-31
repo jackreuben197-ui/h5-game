@@ -71,6 +71,7 @@ import type {
   UserAgencySendDiamondsResponseData,
   UserAgencyGoldGrantRequest,
   UserAgencyGoldGrantResponseData,
+  UserLoginThirdPartyRequest,
 } from '@/api/models/user'
 import { forwardUserClubToCocos, forwardUserInfoToCocos } from '@/bridge/sync'
 import { pinia } from '@/stores/pinia'
@@ -586,6 +587,19 @@ export async function postUserAgencyGoldGrantApi(
     '/user/agent/gold/grant',
     payload,
     { headers },
+  )
+  return response.data
+}
+
+// 第三方登录，目前支持telegram mini app登录
+export async function postUserThirdPartyApi(
+  payload: UserLoginThirdPartyRequest = {} as UserLoginThirdPartyRequest,
+  options: ApiRequestExtOptions = {},
+): Promise<ApiResponse<LoginResponse>> {
+  const response = await http.post<ApiResponse<LoginResponse>>(
+    '/user/login_third_party',
+    payload,
+    options,
   )
   return response.data
 }

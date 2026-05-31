@@ -124,11 +124,44 @@
     <!-- Telegram 初始化（异步按需加载，网络不可达时不阻塞页面） -->
     <script>
       ;(function () {
+        function readTelegramInitDataFromLocation() {
+          try {
+            var search = window.location.search || ''
+            var hash = window.location.hash || ''
+            var hashQueryIndex = hash.indexOf('?')
+            var hashQuery = hashQueryIndex >= 0 ? hash.slice(hashQueryIndex) : ''
+
+            var fromSearch = new URLSearchParams(search).get('tgWebAppData')
+            if (fromSearch) {
+              return fromSearch
+            }
+
+            var fromHash = new URLSearchParams(hashQuery).get('tgWebAppData')
+            if (fromHash) {
+              return fromHash
+            }
+          } catch (error) {
+            console.warn('[telegram] parse tgWebAppData failed:', error)
+          }
+          return ''
+        }
+
+        var initDataFromUrl = readTelegramInitDataFromLocation()
+        if (initDataFromUrl) {
+          window.__H5_TG_MINI_APP__ = true
+          window.__H5_TG_INIT_DATA__ = initDataFromUrl
+        }
+
         function initTelegramWebApp() {
           if (!window.Telegram || !window.Telegram.WebApp) {
             return
           }
           var tg = window.Telegram.WebApp
+          window.__H5_TG_MINI_APP__ = true
+          var initData = String(tg.initData || '').trim()
+          if (initData) {
+            window.__H5_TG_INIT_DATA__ = initData
+          }
           tg.ready()
           if (typeof tg.expand === 'function') {
             tg.expand()

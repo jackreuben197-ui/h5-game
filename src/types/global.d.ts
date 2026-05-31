@@ -46,5 +46,14 @@ declare global {
       clear?: () => void
       copy?: () => string
     }
+    __H5_TG_MINI_APP__?: boolean
+    __H5_TG_INIT_DATA__?: string
+    Telegram?: {
+      WebApp?: {
+        initData?: string
+        ready?: () => void
+        expand?: () => void
+      }
+    }
   }
 }

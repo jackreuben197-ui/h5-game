@@ -787,17 +787,6 @@ function getGameTypeBg(type: number): string {
   }
 }
 
-function getGameTypeColor(type: number): string {
-  switch (type) {
-    case 2:
-      return '#00B07E'
-    case 3:
-      return '#AB05E7'
-    case 1:
-    default:
-      return '#4081E8'
-  }
-}
 
 function formatBlinds(sb: number, ante?: number): string {
   const sbFace = sb / 100
@@ -985,7 +974,6 @@ async function onDeleteConfirm() {
         <div class="template-card__left">
           <div
             class="template-card__badge"
-            :style="{ backgroundColor: getGameTypeColor(item.game_play_type ?? 1) }"
           >
             <span class="template-card__game-name">
               {{ getGameTypeName(item.game_play_type ?? 1) }}
@@ -1084,12 +1072,52 @@ async function onDeleteConfirm() {
 /* 主配置面板 */
 .quick-panel {
   flex-shrink: 0;
-  background: rgba(0, 0, 0, 0.2);
+  position: relative;
+    background: rgba(0, 0, 0, 0.1);
+  // background: linear-gradient(96.018deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
+  border: 0.016rem solid rgba(242, 242, 242, 0.24);
   border-radius: 0.86rem;
-  backdrop-filter: blur(0.16px);
+  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
   padding: 0.25rem 0.51rem 0.4rem;
-  // margin-bottom: 0.5rem;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(16.6px);
+    -webkit-backdrop-filter: blur(16.6px);
+    background: linear-gradient(
+      107.6deg,
+      rgba(249, 249, 249, 0.08) 12.3%,
+      rgba(249, 249, 249, 0.14) 33.3%,
+      rgba(147, 147, 147, 0.03) 85.1%
+    );
+    mix-blend-mode: hard-light;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 0;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    box-shadow:
+      inset 0 0 8.6px rgba(0, 0, 0, 1),
+      inset 3.4px 2.6px 8.6px rgba(0, 0, 0, 0.1),
+      inset 0 0 36.1px rgba(242, 242, 242, 0.3);
+    z-index: 0;
+  }
+
+  & > * { position: relative; z-index: 1; }
 }
+.quick-panel :deep(.filter-tabbar) {
+  background: rgba(27, 27, 30, 0.4);
+}
+
 .table-slider-row {
   padding: 0.2rem 0;
 }
@@ -1180,10 +1208,15 @@ async function onDeleteConfirm() {
 .quick-create-btn {
   width: 2.42rem;
   height: 1.07rem;
-  border: none;
+  border: 0.016rem solid rgba(242, 242, 242, 0.29);
   border-radius: 1.11rem;
-  background: linear-gradient(105.31deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
-  backdrop-filter: blur(0.167px);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16.6px);
+  -webkit-backdrop-filter: blur(16.6px);
+  box-shadow:
+    inset 0 0 8.6px rgba(0, 0, 0, 0.155),
+    inset 3.4px 2.6px 8.6px rgba(0, 0, 0, 0.1),
+    inset 0 0 59.1px rgba(242, 242, 242, 0.3);
   color: #78e490;
   font-size: 0.32rem;
   font-family: 'HONOR Sans CN', sans-serif;
@@ -1254,11 +1287,14 @@ async function onDeleteConfirm() {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(255, 255, 255, 0.25);
   background-blend-mode: hard-light;
-  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
-  outline: 0.95px solid transparent;
-  outline-offset: -0.95px;
-  backdrop-filter: blur(10.54px);
+  backdrop-filter: blur(1.9px);
+  border: 0.016rem solid rgba(242, 242, 242, 0.2);
+  box-shadow:
+    0 0 0.1rem 0.05rem rgba(255, 255, 255, 0.6) inset,
+    inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.3),
+    inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.3);
 }
 
 .template-card__game-name {

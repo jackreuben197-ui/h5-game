@@ -616,7 +616,7 @@ async function onCreateTable() {
       <!-- Form sections -->
       <div class="detail-form">
         <template v-for="(section, index) in renderedSections" :key="index">
-          <div v-if="section.length" class="detail-form__section">
+          <div v-if="section.length" class="detail-form__section" :class="{ 'detail-form__section--tab': section.some(f => f.type === 'tab') }">
             <component
               :is="componentMap[field.type]"
               v-for="field in section"
@@ -699,7 +699,7 @@ async function onCreateTable() {
   position: relative;
   min-height: 100dvh;
   padding: 0 0 calc(1.6rem + env(safe-area-inset-bottom));
-  background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
+  background: url('@/assets/images/img_table_setting_bg.png') center / cover no-repeat;
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -767,15 +767,26 @@ async function onCreateTable() {
   margin: 0.35rem 0.35rem 0;
   padding: 0 0.51rem;
   background: rgba(0, 0, 0, 0.2);
+  border: 0.016rem solid rgba(242, 242, 242, 0.14);
   border-radius: 0.43rem;
   backdrop-filter: blur(0.16px);
 }
 .detail-form__section {
   margin: 0.38rem 0.35rem 0;
   background: rgba(0, 0, 0, 0.2);
+  border: 0.016rem solid rgba(242, 242, 242, 0.14);
   border-radius: 0.43rem;
   backdrop-filter: blur(0.16px);
   padding: 0.13rem 0.5rem;
+
+}
+
+.detail-form__section--tab {
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .table-name__label {
@@ -818,8 +829,19 @@ async function onCreateTable() {
   padding: 0.08rem 0 0.25rem;
 }
 
+.detail-form__section--tab :deep(.filter-tabbar) {
+  background: rgba(27, 27, 30, 0.4);
+}
+
+:deep(.table-switch-row:not(.table-switch-row-with-icon) .table-switch__switch) {
+  --van-switch-size: 0.42rem;
+  --van-switch-width: 0.88rem;
+  --van-switch-height: 0.43rem;
+  --van-switch-node-size: 0.36rem;
+}
+
 .detail-form__item {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 
   &:last-of-type {
     border-bottom: none;
@@ -840,6 +862,7 @@ async function onCreateTable() {
   padding: 0.16rem 0.24rem;
   border-radius: 0.32rem;
   background: rgba(0, 0, 0, 0.28);
+  border: 0.016rem solid rgba(242, 242, 242, 0.14);
   backdrop-filter: blur(0.18rem);
   -webkit-backdrop-filter: blur(0.18rem);
 }
@@ -933,7 +956,7 @@ async function onCreateTable() {
   }
 
   &--create {
-    background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+    background: linear-gradient(157deg, #55f329 0%, #3ead06 100%);
     color: #fff;
     box-shadow: inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
       inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);

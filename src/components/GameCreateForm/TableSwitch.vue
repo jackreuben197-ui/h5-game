@@ -90,7 +90,7 @@ const getIcon = (name: string) => {
   --van-switch-width: 1.25rem;
   --van-switch-height: 0.62rem;
   --van-switch-node-size: 0.52rem;
-  --van-switch-on-background: #05e7ae;
+  --van-switch-on-background: #78E490;
   --van-switch-off-background: rgba(255, 255, 255, 0.3);
 
   :deep(.van-switch__node) {

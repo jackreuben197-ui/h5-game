@@ -28,9 +28,8 @@ const MIC_CLOSE_OPTIONS = [
   { text: t('UIGuildRoomCreatmode_AudioModeMictipsnoClose'), value: 2 },
 ]
 
-export const securitySection: TableFormFieldConfig[] = [
+export const securityTabSection: TableFormFieldConfig[] = [
   {
-    // anti_cheat_type: 防作弊类型
     type: 'tab',
     label: '防作弊',
     modelValue: 'anti_cheat_type',
@@ -38,8 +37,9 @@ export const securitySection: TableFormFieldConfig[] = [
     options: ANTI_CHEAT_OPTIONS,
   },
 
-  // ── 视频桌专属 ───────────────────────────────────────────────
+]
 
+export const securitySection: TableFormFieldConfig[] = [
   {
     // anti_cheat_video_type: 全时长/随机/麦序
     type: 'select',

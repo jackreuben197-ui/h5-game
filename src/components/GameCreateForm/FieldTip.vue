@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import icTip from '@/assets/icons/ic_tip.svg'
+import icTip from '@/assets/icons/ic_warning.svg'
 
 interface Props {
   tip?: string
@@ -34,6 +34,7 @@ withDefaults(defineProps<Props>(), {
   width: 0.35rem;
   height: 0.35rem;
   margin-top: 0.15rem;
+  margin-left: 4px;
   cursor: pointer;
 }
 

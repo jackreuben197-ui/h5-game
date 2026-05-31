@@ -61,15 +61,48 @@ const isActive = computed(() => props.modelValue === props.activeValue)
   position: relative;
   width: 100%;
   height: 1.82rem;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.1);
+  border: 0.016rem solid rgba(242, 242, 242, 0.2);
   border-radius: 0.45rem;
-  outline: 0.5px solid transparent;
-  backdrop-filter: blur(12.16px);
+  overflow: hidden;
   padding: 0.24rem 0.18rem 0.24rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   box-sizing: border-box;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(16.6px);
+    -webkit-backdrop-filter: blur(16.6px);
+    background: linear-gradient(
+      107.6deg,
+      rgba(249, 249, 249, 0.08) 2.3%,
+      rgba(249, 249, 249, 0.04) 3.3%,
+      rgba(147, 147, 147, 0.03) 5.1%
+    );
+    mix-blend-mode: hard-light;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 0;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    box-shadow:
+      inset 0 0 8.6px rgba(0, 0, 0, 0.155),
+      inset 3.4px 2.6px 8.6px rgba(0, 0, 0, 0.1),
+      inset 0 0 59.1px rgba(242, 242, 242, 0.3);
+    z-index: 0;
+  }
+
+  & > * { position: relative; z-index: 1; }
 }
 
 .quick-switch-card__badge {

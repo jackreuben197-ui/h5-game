@@ -97,8 +97,7 @@ function onInput(value: string | number): void {
   align-items: center;
   padding: 0 0.09rem;
   border-radius: 1.55rem;
-  background: rgba(255, 255, 255, 0.18);
-  background-blend-mode: soft-light;
+  background: rgb(0, 0, 0);
 
   &--disabled {
     opacity: 0.5;

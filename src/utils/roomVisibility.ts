@@ -28,9 +28,7 @@ function toNumberList(list: unknown): number[] {
   if (!Array.isArray(list)) {
     return []
   }
-  return list
-    .map((item) => toSafeInt(item))
-    .filter((item) => Number.isFinite(item))
+  return list.map((item) => toSafeInt(item)).filter((item) => Number.isFinite(item))
 }
 
 function getOriginType(room: RoomRecord): number {
@@ -46,7 +44,9 @@ function getRelateTribeClubList(room: RoomRecord): RoomTribeClubRelateItem[] {
   if (!Array.isArray(raw)) {
     return []
   }
-  return raw.filter((item) => Boolean(item) && typeof item === 'object') as RoomTribeClubRelateItem[]
+  return raw.filter(
+    (item) => Boolean(item) && typeof item === 'object',
+  ) as RoomTribeClubRelateItem[]
 }
 
 function getTribeId(item: RoomTribeClubRelateItem): number {

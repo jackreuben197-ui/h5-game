@@ -60,7 +60,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
 
       // 默认选中第一个俱乐部。
       //测试默认选择竞技场俱乐部
-      const tatget = normalized.find((item) => item.club_id == 49)
+      const tatget = normalized.find((item) => item.club_id == 136)
       if (tatget){
         this.currentClubId = normalizeClubId(tatget.club_id)
         return

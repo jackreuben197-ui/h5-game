@@ -4,8 +4,9 @@ import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import ImageUploadSheet from '@/components/ImageUploadSheet/ImageUploadSheet.vue'
-import imgClubCover from '@/assets/images/club_cover_avatar.png'
+import imgClubCover from '@/assets/images/default_club_avatar.svg'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
+import imgAvatarAdd from '@/assets/icons/avatar_add_badge.svg'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { postOrgClubCreateApi, postOrgClubCreateIsFirstApi } from '@/api/org'
 import type { OrgClubCreateRequest } from '@/api/models/org'
@@ -126,10 +127,22 @@ async function onCreateClub(): Promise<void> {
           <template #default="{ open, imageUrl }">
             <button type="button" class="avatar-trigger" aria-label="选择俱乐部头像" @click="open">
               <img class="avatar-image" :src="imageUrl || imgClubCover" alt="俱乐部头像" />
-              <span class="add-badge" aria-hidden="true">+</span>
+              <img class="add-badge" :src="imgAvatarAdd" alt="添加" aria-hidden="true" />
             </button>
           </template>
         </ImageUploadSheet>
+
+        <div class="card-info">
+          <p class="club-name-preview">
+            {{ clubName || '联盟名称' }}
+          </p>
+          <div class="club-id-badge">
+            <div class="id-label">
+              <span>ID</span>
+            </div>
+            <span class="id-value">8677650585</span>
+          </div>
+        </div>
       </section>
 
       <section class="form-card">
@@ -185,6 +198,9 @@ async function onCreateClub(): Promise<void> {
 <style scoped lang="scss">
 .club-create-bg {
   height: 100dvh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .club-create {
@@ -226,15 +242,31 @@ async function onCreateClub(): Promise<void> {
 }
 
 .avatar-card {
+  position: relative;
   margin: 0.2703rem 0.4561rem 0;
-  padding: 0.1267rem 0.5828rem;
-  min-height: 3.2433rem;
-  border-radius: 1.0557rem;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.158rem);
   display: flex;
+  height: 121.622px;
+  padding: 4.751px 21.854px;
   align-items: center;
+  gap: 23.754px;
   flex-shrink: 0;
+  align-self: stretch;
+  border-radius: 39.59px;
+  background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
+  backdrop-filter: blur(0.15836147964000702px);
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 39.59px;
+    padding: 1px;
+    background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
 }
 
 .avatar-trigger {
@@ -242,34 +274,83 @@ async function onCreateClub(): Promise<void> {
   border: 0;
   padding: 0;
   background: transparent;
-  width: 1.7834rem;
-  height: 1.7941rem;
-  border-radius: 50%;
+  width: 66.878px;
+  height: 67.279px;
+  border-radius: 120px;
   overflow: visible;
+  display: block;
+  flex-shrink: 0;
 }
 
 .avatar-image {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
+  border-radius: 120px;
   object-fit: cover;
   border: 0.0107rem solid rgba(255, 255, 255, 0.38);
 }
 
 .add-badge {
   position: absolute;
-  right: -0.047rem;
-  bottom: -0.049rem;
-  width: 0.7267rem;
-  height: 0.7267rem;
+  left: 43.91px;
+  top: 42.55px;
+  width: 27.252px;
+  height: 27.252px;
   border-radius: 50%;
-  background: linear-gradient(165deg, #05e7ae 10%, #027a5c 75%);
-  color: #fff;
-  font-size: 0.64rem;
-  line-height: 0.7267rem;
-  font-weight: 500;
-  text-align: center;
-  box-shadow: 0 0.0267rem 0.1067rem rgba(0, 0, 0, 0.2);
+  display: block;
+}
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12.669px;
+  align-items: flex-start;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.club-name-preview {
+  margin: 0;
+  word-break: break-word;
+  font-family: 'HONOR Sans CN', 'PingFang SC', sans-serif;
+  font-weight: bold;
+  font-size: 22.445px;
+  line-height: 1.2;
+  color: #ffffff;
+  max-width: 180px;
+}
+
+.club-id-badge {
+  display: flex;
+  gap: 2.457px;
+  align-items: center;
+  height: 11.483px;
+}
+
+.id-label {
+  background: rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.808px 4.914px;
+  border-radius: 4.212px;
+  flex-shrink: 0;
+
+  span {
+    font-family: 'SF Pro', 'PingFang SC', sans-serif;
+    font-weight: 600;
+    font-size: 8.098px;
+    line-height: 1;
+    color: #ffffff;
+  }
+}
+
+.id-value {
+  font-family: 'SF Pro', 'PingFang SC', sans-serif;
+  font-weight: 600;
+  font-size: 9.623px;
+  line-height: 1;
+  color: #ffffff;
 }
 
 .form-card {
@@ -302,21 +383,29 @@ async function onCreateClub(): Promise<void> {
 }
 
 .field-shell--single {
-  height: 1.6638rem;
   display: flex;
-  align-items: center;
-  padding: 0 0.554rem;
-  border-radius: 1.4759rem;
+  height: 62.394px;
+  padding-left: 20.27px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 6.73px;
+  align-self: stretch;
+  border-radius: 54px;
+  border: none;
+  background: rgba(34, 34, 34, 0.30);
+  background-blend-mode: soft-light;
+  backdrop-filter: blur(30.120716094970703px);
 }
 
 .field-shell--multi {
   min-height: 6.3176rem;
   border-radius: 0.72rem;
   padding: 0.5405rem;
-  background: radial-gradient(95% 82% at 15% 30%, rgba(255, 193, 158, 0.42), rgba(255, 193, 158, 0)),
-    radial-gradient(82% 78% at 60% 54%, rgba(185, 70, 151, 0.34), rgba(185, 70, 151, 0)),
-    radial-gradient(66% 66% at 92% 56%, rgba(54, 208, 255, 0.34), rgba(54, 208, 255, 0)),
-    rgba(255, 255, 255, 0.18);
+  border: none;
+  background: rgba(34, 34, 34, 0.30);
+  background-blend-mode: soft-light;
+  backdrop-filter: blur(30.120716094970703px);
 }
 
 input,
@@ -353,20 +442,63 @@ textarea::placeholder {
 
 .create-btn {
   width: 8.9046rem;
-  min-height: 1.4349rem;
-  border: 0;
-  border-radius: 1.0557rem;
-  color: #fbfbfb;
-  font-size: 0.5063rem;
+  height: 53.807px;
+  border: none;
+  border-radius: 1.08rem;
+ background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
+  color: #fff;
+  font-size: 0.5rem;
   font-weight: 500;
-  line-height: 1.2;
-  background: linear-gradient(168.34deg, #05e7ae 7.55%, #027a5c 71.92%);
-  box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.18);
-  transition: opacity 0.2s ease;
+  font-family: 'HONOR Sans CN', sans-serif;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* 内嵌高光边框效果 */
+  box-shadow:
+    inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
+    inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
+
+  &.primary-btn--no-shadow {
+    box-shadow: none;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.34px;
+    background: linear-gradient(
+      135deg,
+      rgba(242, 242, 242, 0.8) 0%,
+      rgba(255, 255, 255, 0) 44.5%,
+      rgba(255, 255, 255, 0.5) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  &:active:not(:disabled) {
+    opacity: 0.92;
+    transform: scale(0.985);
+  }
 }
 
 .create-btn--disabled {
-  opacity: 0.56;
+  background: linear-gradient(126.814deg, rgba(255, 255, 255, 0.1) 21.106%, rgba(230, 230, 230, 0.1) 71.429%) !important;
+  backdrop-filter: blur(0.5px);
+  box-shadow: none;
+  opacity: 1;
 }
 
 .cost-line {
@@ -388,12 +520,26 @@ textarea::placeholder {
 .cost-original {
   position: relative;
   opacity: 0.86;
-  text-decoration: line-through;
-  text-decoration-color: rgba(255, 255, 255, 0.65);
+  text-decoration: none;
+  display: inline-block;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: -10%;
+    right: -10%;
+    top: 50%;
+    height: 3px;
+    background: #a0a0a0;
+    border-radius: 99px;
+    transform: translateY(-50%) rotate(15deg);
+    transform-origin: center;
+    pointer-events: none;
+  }
 }
 
 .cost-current {
-  color: #05e7ae;
+  color: rgba(250, 43, 75, 1);
   font-weight: 700;
 }
 

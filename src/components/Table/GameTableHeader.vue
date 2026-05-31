@@ -59,8 +59,10 @@ export default { name: 'GameTableHeader' }
         class="game-table__header-cell"
         :class="{
           'game-table__header-cell--sortable': col.sortable,
-          'game-table__header-cell--active-asc': col.sortable && sortProp === col.prop && sortOrder === 'asc',
-          'game-table__header-cell--active-desc': col.sortable && sortProp === col.prop && sortOrder === 'desc',
+          'game-table__header-cell--active-asc':
+            col.sortable && sortProp === col.prop && sortOrder === 'asc',
+          'game-table__header-cell--active-desc':
+            col.sortable && sortProp === col.prop && sortOrder === 'desc',
         }"
         :style="colStyle(col)"
         @click="handleCellClick(col, $event)"
@@ -72,12 +74,16 @@ export default { name: 'GameTableHeader' }
           <van-icon
             name="arrow-up"
             class="game-table__sort-icon"
-            :class="{ 'game-table__sort-icon--active': sortProp === col.prop && sortOrder === 'asc' }"
+            :class="{
+              'game-table__sort-icon--active': sortProp === col.prop && sortOrder === 'asc',
+            }"
           />
           <van-icon
             name="arrow-down"
             class="game-table__sort-icon"
-            :class="{ 'game-table__sort-icon--active': sortProp === col.prop && sortOrder === 'desc' }"
+            :class="{
+              'game-table__sort-icon--active': sortProp === col.prop && sortOrder === 'desc',
+            }"
           />
         </span>
 
@@ -114,25 +120,24 @@ export default { name: 'GameTableHeader' }
 <style scoped lang="scss">
 // ---- Outer container: white inner shadow ring (matches FilterTabbar--pill outer button) ----
 .game-table__header {
-  display: flex;       // flex 让内层可垂直居中，形成四边均匀的环形间距
+  display: flex; // flex 让内层可垂直居中，形成四边均匀的环形间距
   align-items: center;
   margin: 0 0.12rem 0.2rem;
   border-radius: 0.65rem;
-  padding: 0.10rem 0.10rem;
+  padding: 0.1rem 0.1rem;
   // border: 0.83px solid white;
-  box-shadow:
-    0 0 0.2rem 0.01rem rgba(0, 175, 131, 0.9) inset,
+  box-shadow: 0 0 0.2rem 0.01rem rgb(86, 153, 205) inset;
 }
 
 // ---- Inner container: green fill (matches FilterTabbar--pill .inner-content) ----
 .game-table__header-inner {
   display: flex;
-  flex: 1;           // 在父级 flex 里横向撑满
-  min-width: 0;      // 防止 flex item 撑破父容器
+  flex: 1; // 在父级 flex 里横向撑满
+  min-width: 0; // 防止 flex item 撑破父容器
   box-sizing: border-box;
   border-radius: 0.55rem;
-  background: rgba(0, 175, 131, 0.9);
-  box-shadow: 0 0 0.1rem 0.05rem rgba(0, 175, 131, 0.9);
+  background: rgb(86, 153, 205);
+  box-shadow: 0 0 0.1rem 0.05rem rgb(86, 153, 205);
   overflow: visible; // allow dropdowns to overflow
   font-family: 'HONOR Sans CN', sans-serif;
 }
@@ -234,7 +239,9 @@ export default { name: 'GameTableHeader' }
 // ---- Dropdown transition ----
 .gt-dropdown-enter-active,
 .gt-dropdown-leave-active {
-  transition: opacity 0.15s, transform 0.15s;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
 }
 .gt-dropdown-enter-from,
 .gt-dropdown-leave-to {

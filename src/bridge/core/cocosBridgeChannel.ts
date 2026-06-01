@@ -11,8 +11,11 @@ import {
   type BridgeMessage,
   type EnterTablePayload,
   type EnterMttPayload,
+  type H5ReadyPayload,
 } from '../protocol'
+import StorageKey from '@/constants/storageKey'
 import { createLogger } from '@/utils/logger'
+import { localStore } from '@/utils/localStore'
 
 const log = createLogger('[bridge]')
 const logH5ToCC = createLogger('[bridge][h5->cc]')
@@ -413,9 +416,15 @@ function maybeSendH5Ready(): void {
     return
   }
 
-  log.info('[handshake] send h5Ready')
-  sendBridgeMessage(BRIDGE_ACTION.H5_READY, {}, { msgtype: BRIDGE_MSG_TYPE.H5 })
+  const payload = createH5ReadyPayload()
+  log.info('[handshake] send h5Ready', payload)
+  sendBridgeMessage(BRIDGE_ACTION.H5_READY, payload, { msgtype: BRIDGE_MSG_TYPE.H5 })
   h5ReadySent = true
+}
+
+function createH5ReadyPayload(): H5ReadyPayload {
+  const token = (localStore.getItem<string>(StorageKey.TOKEN, '') || '').trim()
+  return token ? { token } : {}
 }
 
 function markCcReady(): void {

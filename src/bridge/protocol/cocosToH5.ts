@@ -7,6 +7,8 @@ export interface WsConnectPayload {
   // 当前房间/比赛 ID（Cocos 随连接请求一并下发，H5 仅作透传参考）。
   roomId?: number
   matchId?: number
+  // Cocos 主动要求强制重连：复位 attempt/timer，立即重连一次。
+  force?: boolean
 }
 
 // Cocos -> H5：发送 websocket 文本消息。
@@ -76,6 +78,13 @@ export interface H5VisibilityPayload {
   reason?: string
 }
 
+// Cocos -> H5：通知 H5 切换心跳频率，对齐 Cocos HeartbeatComponent 的 normal/in-gameplay 区分。
+//   normal      —— 牌桌外，5s/次
+//   in-gameplay —— 牌桌内（GameUtil.isInGameplay），1s/次
+export interface SetHeartbeatModePayload {
+  mode: 'normal' | 'in-gameplay'
+}
+
 // Cocos -> H5：路由跳转控制。
 export interface H5NavigatePayload {
   // 二选一：path 或 name 至少传一个。
@@ -118,4 +127,6 @@ export interface CocosToH5PayloadMap {
   h5Show: H5VisibilityPayload | undefined
   // 路由跳转
   h5Navigate: H5NavigatePayload
+  // 心跳频率切换（对齐 Cocos HeartbeatComponent.SendIntervalNormal/InGameplay）
+  setHeartbeatMode: SetHeartbeatModePayload
 }

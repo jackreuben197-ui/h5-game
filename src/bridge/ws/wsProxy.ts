@@ -12,6 +12,7 @@ import {
   type WsReconnectedPayload,
   type WsReconnectingPayload,
   type WsSendPayload,
+  type SetHeartbeatModePayload,
 } from '../protocol'
 import { sendBridgeMessage, subscribeCocosMessages } from '../core/cocosBridgeChannel'
 import StorageKey from '@/constants/storageKey'
@@ -55,7 +56,14 @@ let pageLifecycleBound = false
 // 下一次 wsReconnecting 通知的触发原因。
 let nextReconnectReason: WsReconnectingPayload['reason'] = 'close'
 const h5WsMessageHandlers = new Set<(event: H5WsIncomingEvent) => void>()
-const HEARTBEAT_INTERVAL_MS = 5000
+// 心跳间隔对齐 Cocos HeartbeatComponent：
+//   normal (牌桌外)      = 5000ms
+//   in-gameplay (牌桌内) = 1000ms
+// Cocos 通过 setHeartbeatMode 桥接动作通知 H5 切换。
+const HEARTBEAT_INTERVAL_NORMAL_MS = 5000
+const HEARTBEAT_INTERVAL_IN_GAMEPLAY_MS = 1000
+let heartbeatIntervalMs = HEARTBEAT_INTERVAL_NORMAL_MS
+let heartbeatMode: 'normal' | 'in-gameplay' = 'normal'
 const HEARTBEAT_LOG_INTERVAL_MS = 10000
 const WS_RECONNECT_BASE_DELAY_MS = 1000
 const WS_RECONNECT_MAX_DELAY_MS = 10000
@@ -64,6 +72,10 @@ const WS_RECONNECT_MAX_ATTEMPTS = 10
 const WS_RECONNECT_MAX_DURATION_MS = 60000
 // 心跳无响应触发主动重连的阈值（对齐 Unity 的 5 次）。
 const HEARTBEAT_MAX_PENDING = 5
+// 页面在后台累计超过该时长后，回前台一律强制重连，避免 readyState 假阳性。
+const RECONNECT_AFTER_HIDDEN_MS = 30000
+// 记录最近一次 visibility 变成 hidden 的时间戳；0 表示当前没在后台。
+let hiddenAt = 0
 
 const HOLDEN_CODE_NAME: Record<number, string> = {
   [Code.MSG_D_REGISTER]: 'REGISTER',
@@ -261,6 +273,7 @@ function giveUpReconnect(reason: WsReconnectFailedPayload['reason']): void {
   }
   // 从未真正进入重连流程 → 静默重置，不打扰 Cocos。
   if (firstFailedAt === 0) {
+    log.info('giveUpReconnect: never entered reconnecting, silent reset', { reason })
     reconnectState = 'idle'
     shouldAutoReconnect = false
     clearReconnectTimer()
@@ -392,8 +405,16 @@ function scheduleReconnect(): void {
 // 主动触发一次立即重连（visibility/online/force/heartbeat 超时统一入口）。
 function triggerReconnect(reason: WsReconnectingPayload['reason']): void {
   if (!wsUrl) {
+    log.info('triggerReconnect skipped: no wsUrl', { reason })
     return
   }
+  log.info('triggerReconnect', {
+    reason,
+    state: reconnectState,
+    wsReady: ws?.readyState,
+    pendingHeartbeats: pendingHeartbeatCount,
+    attempts: reconnectAttempts,
+  })
   if (reconnectState === 'failed') {
     // 已放弃；新的触发要求清掉旧的失败状态再重试。
     reconnectState = 'idle'
@@ -406,10 +427,12 @@ function triggerReconnect(reason: WsReconnectingPayload['reason']): void {
   clearReconnectTimer()
   // 已经打开就不重复触发。
   if (isWsOpen()) {
+    log.info('triggerReconnect skipped: ws already open', { reason })
     return
   }
   // 关闭旧连接，让 onclose 走 scheduleReconnect。
   if (ws) {
+    log.info('triggerReconnect: closing stale ws to trigger reconnect path', { reason })
     try {
       ws.close()
     } catch {
@@ -446,6 +469,13 @@ function sendHeartbeatPacket(): boolean {
   const sent = sendWsRaw(packet, 'h5-heartbeat')
   if (sent) {
     pendingHeartbeatCount += 1
+    // 累计未响应 ≥ 2 时即开始预警，方便观察弱网/堵塞渐进式恶化的过程。
+    if (pendingHeartbeatCount >= 2) {
+      log.warn('heartbeat pending accumulating', {
+        pending: pendingHeartbeatCount,
+        threshold: HEARTBEAT_MAX_PENDING,
+      })
+    }
   }
   return sent
 }
@@ -470,7 +500,24 @@ function startHeartbeatLoop(): void {
       return
     }
     sendHeartbeatPacket()
-  }, HEARTBEAT_INTERVAL_MS)
+  }, heartbeatIntervalMs)
+}
+
+// Cocos 通过 setHeartbeatMode 桥接动作通知 H5 切换心跳频率。
+// 仅当模式真正变化时重启 heartbeat 定时器，避免重复打断。
+function applyHeartbeatMode(mode: 'normal' | 'in-gameplay'): void {
+  const targetInterval =
+    mode === 'in-gameplay' ? HEARTBEAT_INTERVAL_IN_GAMEPLAY_MS : HEARTBEAT_INTERVAL_NORMAL_MS
+  if (heartbeatMode === mode && heartbeatIntervalMs === targetInterval) {
+    return
+  }
+  heartbeatMode = mode
+  heartbeatIntervalMs = targetInterval
+  log.info('heartbeat mode changed', { mode, intervalMs: heartbeatIntervalMs })
+  // 仅在 WS 已连接且心跳循环活跃时立即重启；未连接时新间隔会在 startHeartbeatLoop 调用时生效。
+  if (heartbeatTimer !== null) {
+    startHeartbeatLoop()
+  }
 }
 
 // websocket 原始发送入口：统一处理“未连接”报错。
@@ -609,6 +656,9 @@ function handleBinaryIncoming(buffer: ArrayBufferLike): void {
 
   // 收到心跳响应即认为链路活着，复位无响应计数（对齐 Unity 的 _sendCount = 0）。
   if (code === Code.MSG_D_HEARTBEAT) {
+    if (pendingHeartbeatCount >= 2) {
+      log.info('heartbeat recovered', { previousPending: pendingHeartbeatCount })
+    }
     pendingHeartbeatCount = 0
   }
 
@@ -639,6 +689,12 @@ function cleanWsHandlers(): void {
 }
 
 function closeWs(payload?: WsClosePayload): void {
+  log.info('closeWs (active close)', {
+    code: payload?.code,
+    reason: payload?.reason,
+    hadWs: !!ws,
+    wsReady: ws?.readyState,
+  })
   shouldAutoReconnect = false
   clearReconnectTimer()
   stopHeartbeatLoop()
@@ -697,6 +753,7 @@ function connectWs(payload: WsConnectPayload): void {
     (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)
   ) {
     // 已连接则直接复用；REGISTER 会在新连接 open 时自动发送。
+    log.info('wsConnect reuse existing', { url: targetUrl, readyState: ws.readyState })
     return
   }
 
@@ -741,6 +798,7 @@ function connectWs(payload: WsConnectPayload): void {
     sendHeartbeatPacket()
     startHeartbeatLoop()
     if (wasReconnecting) {
+      log.info('ws reconnected', { url: targetUrl, attempt: finishedAttempt, durationMs })
       emitWsReconnected({
         url: targetUrl,
         attempt: finishedAttempt,
@@ -815,18 +873,28 @@ function connectWs(payload: WsConnectPayload): void {
   }
 }
 
-// 切回前台 / 网络恢复时若 WS 不在线，立即触发一次重连（对齐 Unity 的 OnApplicationPause + Internet 检测）。
+// 切回前台 / 网络恢复时按以下规则触发重连（对齐 Unity 的 OnApplicationPause + Internet 检测）：
+//   1. 切到后台：记录时间戳，不做动作
+//   2. 回到前台 + WS 已断开：立即重连
+//   3. 回到前台 + 后台累计 >= 30s：强制重连（readyState 在长时间挂起后不可信）
 function onPageVisible(): void {
   if (typeof document === 'undefined') {
     return
   }
-  if (document.visibilityState !== 'visible') {
+  if (document.visibilityState === 'hidden') {
+    hiddenAt = Date.now()
     return
   }
-  if (!wsUrl || isWsOpen()) {
+  if (document.visibilityState !== 'visible' || !wsUrl) {
     return
   }
-  log.info('page visible, force reconnect')
+  const hiddenDurationMs = hiddenAt ? Date.now() - hiddenAt : 0
+  hiddenAt = 0
+  const wsOpen = isWsOpen()
+  if (wsOpen && hiddenDurationMs < RECONNECT_AFTER_HIDDEN_MS) {
+    return
+  }
+  log.info('page visible, force reconnect', { hiddenDurationMs, wsOpen })
   triggerReconnect('visibility')
 }
 
@@ -960,6 +1028,14 @@ function onCocosBridgeMessage(message: BridgeMessage): void {
   if (message.action === 'exitTable') {
     // 纯透传模式：离桌消息仅做日志，具体离桌协议包由 Cocos 发送 wsSend(binary)。
     log.info('exitTable received (passthrough mode), no websocket packet is sent by H5')
+    return
+  }
+
+  if (message.action === BRIDGE_ACTION.SET_HEARTBEAT_MODE) {
+    const payload = (message.payload || {}) as Partial<SetHeartbeatModePayload>
+    const mode: 'normal' | 'in-gameplay' = payload.mode === 'in-gameplay' ? 'in-gameplay' : 'normal'
+    applyHeartbeatMode(mode)
+    return
   }
 }
 

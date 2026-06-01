@@ -35,6 +35,7 @@ export const BRIDGE_ACTION = {
   SYNC_GLOBAL_CONFIG: 'syncGlobalConfig',
   SYNC_DIAMOND_CONFIG: 'syncDiamondConfig',
   ENTER_TABLE: 'enterTable',
+  SET_HEARTBEAT_MODE: 'setHeartbeatMode',
   ENTER_MTT: 'enterMtt',
   DIALOG_RESULT: 'dialogResult',
 } as const

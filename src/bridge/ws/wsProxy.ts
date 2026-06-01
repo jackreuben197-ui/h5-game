@@ -8,6 +8,9 @@ import {
   type WsErrorPayload,
   type WsMessagePayload,
   type WsOpenPayload,
+  type WsReconnectFailedPayload,
+  type WsReconnectedPayload,
+  type WsReconnectingPayload,
   type WsSendPayload,
 } from '../protocol'
 import { sendBridgeMessage, subscribeCocosMessages } from '../core/cocosBridgeChannel'
@@ -41,11 +44,26 @@ let reconnectTimer: number | null = null
 let reconnectAttempts = 0
 let shouldAutoReconnect = false
 let authRedirecting = false
+// 重连状态机：idle=未启动 / open=已连接 / reconnecting=断开后进入重连流程 / failed=已放弃。
+type ReconnectState = 'idle' | 'open' | 'reconnecting' | 'failed'
+let reconnectState: ReconnectState = 'idle'
+// 第一次失败时刻，用于计算整体超时。
+let firstFailedAt = 0
+// 连续未收到响应的心跳次数（参照 Unity CPGameHeartbeatComponent._sendCount）。
+let pendingHeartbeatCount = 0
+let pageLifecycleBound = false
+// 下一次 wsReconnecting 通知的触发原因。
+let nextReconnectReason: WsReconnectingPayload['reason'] = 'close'
 const h5WsMessageHandlers = new Set<(event: H5WsIncomingEvent) => void>()
 const HEARTBEAT_INTERVAL_MS = 5000
 const HEARTBEAT_LOG_INTERVAL_MS = 10000
 const WS_RECONNECT_BASE_DELAY_MS = 1000
 const WS_RECONNECT_MAX_DELAY_MS = 10000
+// 重连放弃阈值（对齐用户确认：10 次或 60s 整体超时）。
+const WS_RECONNECT_MAX_ATTEMPTS = 10
+const WS_RECONNECT_MAX_DURATION_MS = 60000
+// 心跳无响应触发主动重连的阈值（对齐 Unity 的 5 次）。
+const HEARTBEAT_MAX_PENDING = 5
 
 const HOLDEN_CODE_NAME: Record<number, string> = {
   [Code.MSG_D_REGISTER]: 'REGISTER',
@@ -128,6 +146,24 @@ function emitWsClosed(payload: WsClosedPayload): void {
   })
 }
 
+function emitWsReconnecting(payload: WsReconnectingPayload): void {
+  sendBridgeMessage(BRIDGE_ACTION.WS_RECONNECTING, payload, {
+    msgtype: BRIDGE_MSG_TYPE.H5,
+  })
+}
+
+function emitWsReconnected(payload: WsReconnectedPayload): void {
+  sendBridgeMessage(BRIDGE_ACTION.WS_RECONNECTED, payload, {
+    msgtype: BRIDGE_MSG_TYPE.H5,
+  })
+}
+
+function emitWsReconnectFailed(payload: WsReconnectFailedPayload): void {
+  sendBridgeMessage(BRIDGE_ACTION.WS_RECONNECT_FAILED, payload, {
+    msgtype: BRIDGE_MSG_TYPE.H5,
+  })
+}
+
 // 分发给 H5 业务层订阅者（例如战绩、排行榜等模块自管请求）。
 function emitH5WsIncoming(event: H5WsIncomingEvent): void {
   h5WsMessageHandlers.forEach((handler) => {
@@ -201,6 +237,9 @@ async function forceToLoginFromWs(reason: string): Promise<void> {
   }
   wsUrl = ''
 
+  // 鉴权失败属于不可恢复的重连放弃路径，告知 Cocos 让上层关闭重连遮罩。
+  giveUpReconnect('auth-invalid')
+
   const gameStore = useGameStore(pinia)
   gameStore.clearLogin()
 
@@ -212,6 +251,33 @@ async function forceToLoginFromWs(reason: string): Promise<void> {
   }
 
   authRedirecting = false
+}
+
+// 统一的放弃重连出口：emit wsReconnectFailed + 重置状态。
+function giveUpReconnect(reason: WsReconnectFailedPayload['reason']): void {
+  // 已经放弃过 → 不重复通知。
+  if (reconnectState === 'failed') {
+    return
+  }
+  // 从未真正进入重连流程 → 静默重置，不打扰 Cocos。
+  if (firstFailedAt === 0) {
+    reconnectState = 'idle'
+    shouldAutoReconnect = false
+    clearReconnectTimer()
+    return
+  }
+  const durationMs = Date.now() - firstFailedAt
+  log.warn('reconnect give up', { reason, attempts: reconnectAttempts, durationMs })
+  emitWsReconnectFailed({
+    reason,
+    attempts: reconnectAttempts,
+    durationMs,
+  })
+  reconnectState = 'failed'
+  shouldAutoReconnect = false
+  clearReconnectTimer()
+  firstFailedAt = 0
+  reconnectAttempts = 0
 }
 
 function toBufferLike(data: ArrayBuffer | ArrayBufferView | Blob): ArrayBufferLike | null {
@@ -289,9 +355,30 @@ function scheduleReconnect(): void {
     return
   }
 
+  if (firstFailedAt === 0) {
+    firstFailedAt = Date.now()
+  }
+
+  // 命中整体超时：直接放弃。
+  if (Date.now() - firstFailedAt >= WS_RECONNECT_MAX_DURATION_MS) {
+    giveUpReconnect('overall-timeout')
+    return
+  }
+
+  // 命中次数上限：直接放弃。
+  if (reconnectAttempts >= WS_RECONNECT_MAX_ATTEMPTS) {
+    giveUpReconnect('max-attempts')
+    return
+  }
+
   reconnectAttempts += 1
+  reconnectState = 'reconnecting'
   const delay = getReconnectDelay(reconnectAttempts)
-  log.info('reconnect scheduled', { attempt: reconnectAttempts, delayMs: delay, url: wsUrl })
+  const reason = nextReconnectReason
+  // 下一次默认走 close 分支，由具体触发点（heartbeat/visibility/online/force）覆盖。
+  nextReconnectReason = 'close'
+  log.info('reconnect scheduled', { attempt: reconnectAttempts, delayMs: delay, reason, url: wsUrl })
+  emitWsReconnecting({ attempt: reconnectAttempts, delayMs: delay, reason })
 
   reconnectTimer = window.setTimeout(() => {
     reconnectTimer = null
@@ -300,6 +387,37 @@ function scheduleReconnect(): void {
     }
     connectWs({ url: wsUrl })
   }, delay)
+}
+
+// 主动触发一次立即重连（visibility/online/force/heartbeat 超时统一入口）。
+function triggerReconnect(reason: WsReconnectingPayload['reason']): void {
+  if (!wsUrl) {
+    return
+  }
+  if (reconnectState === 'failed') {
+    // 已放弃；新的触发要求清掉旧的失败状态再重试。
+    reconnectState = 'idle'
+    firstFailedAt = 0
+    reconnectAttempts = 0
+  }
+  shouldAutoReconnect = true
+  nextReconnectReason = reason
+  pendingHeartbeatCount = 0
+  clearReconnectTimer()
+  // 已经打开就不重复触发。
+  if (isWsOpen()) {
+    return
+  }
+  // 关闭旧连接，让 onclose 走 scheduleReconnect。
+  if (ws) {
+    try {
+      ws.close()
+    } catch {
+      // 忽略关闭异常。
+    }
+    return
+  }
+  scheduleReconnect()
 }
 
 function stopHeartbeatLoop(): void {
@@ -325,7 +443,11 @@ function sendHeartbeatPacket(): boolean {
     matchId: 0,
     body: new Uint8Array(0),
   })
-  return sendWsRaw(packet, 'h5-heartbeat')
+  const sent = sendWsRaw(packet, 'h5-heartbeat')
+  if (sent) {
+    pendingHeartbeatCount += 1
+  }
+  return sent
 }
 
 function startHeartbeatLoop(): void {
@@ -333,11 +455,18 @@ function startHeartbeatLoop(): void {
   if (!isWsOpen()) {
     return
   }
+  pendingHeartbeatCount = 0
 
   // 对齐旧 Cocos 逻辑：连接稳定后固定间隔发送心跳保活。
   heartbeatTimer = window.setInterval(() => {
     if (!isWsOpen()) {
       stopHeartbeatLoop()
+      return
+    }
+    // 连续未响应阈值达到 → 主动断开触发重连（对齐 Unity 5 次未响应）。
+    if (pendingHeartbeatCount >= HEARTBEAT_MAX_PENDING) {
+      log.warn('heartbeat no response, trigger reconnect', { pending: pendingHeartbeatCount })
+      triggerReconnect('heartbeat')
       return
     }
     sendHeartbeatPacket()
@@ -478,6 +607,11 @@ function handleBinaryIncoming(buffer: ArrayBufferLike): void {
   const code = logHoldemPacket(buffer, packet)
   const passthroughBuffer = new Uint8Array(buffer).slice().buffer
 
+  // 收到心跳响应即认为链路活着，复位无响应计数（对齐 Unity 的 _sendCount = 0）。
+  if (code === Code.MSG_D_HEARTBEAT) {
+    pendingHeartbeatCount = 0
+  }
+
   // 心跳包由 H5 自维护，不回传给 Cocos；其余一律透传服务器原始字节。
   if (code !== Code.MSG_D_HEARTBEAT) {
     emitWsMessage({
@@ -534,9 +668,9 @@ function connectWs(payload: WsConnectPayload): void {
     return
   }
 
-  log.info('ws connect start', { url: targetUrl })
+  log.info('ws connect start', { url: targetUrl, force: !!payload.force })
 
-  // 无 token 时不建立 websocket，避免进入“已连接但无法 REGISTER”的半可用状态。
+  // 无 token 时不建立 websocket，避免进入"已连接但无法 REGISTER"的半可用状态。
   if (!hasSessionToken()) {
     log.info('wsConnect skipped: token empty, waiting login')
     void forceToLoginFromWs('wsConnect token empty')
@@ -545,9 +679,19 @@ function connectWs(payload: WsConnectPayload): void {
 
   shouldAutoReconnect = true
   clearReconnectTimer()
+  bindPageLifecycleListeners()
+
+  // Cocos 主动 force 重连：复位失败状态，让本次重连重新开始计数与计时。
+  if (payload.force) {
+    reconnectState = 'idle'
+    firstFailedAt = 0
+    reconnectAttempts = 0
+    nextReconnectReason = 'force'
+  }
 
   // URL 相同且已经在连接/已连接时直接复用。
   if (
+    !payload.force &&
     ws &&
     wsUrl === targetUrl &&
     (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)
@@ -574,7 +718,14 @@ function connectWs(payload: WsConnectPayload): void {
   ws.onopen = () => {
     log.info('ws open', { url: targetUrl })
     clearReconnectTimer()
+    // 本次开启之前是否经历过重连（失败 → 成功），用于决定是否广播 wsReconnected。
+    const wasReconnecting = reconnectState === 'reconnecting' || firstFailedAt > 0
+    const finishedAttempt = reconnectAttempts
+    const durationMs = firstFailedAt > 0 ? Date.now() - firstFailedAt : 0
     reconnectAttempts = 0
+    firstFailedAt = 0
+    reconnectState = 'open'
+    pendingHeartbeatCount = 0
     emitWsOpen(targetUrl)
     // 对齐 Cocos：连接建立后先发 REGISTER，再启动心跳。
     const registerSent = h5SendRegisterPacket()
@@ -589,6 +740,13 @@ function connectWs(payload: WsConnectPayload): void {
     }
     sendHeartbeatPacket()
     startHeartbeatLoop()
+    if (wasReconnecting) {
+      emitWsReconnected({
+        url: targetUrl,
+        attempt: finishedAttempt,
+        durationMs,
+      })
+    }
   }
 
   ws.onerror = () => {
@@ -611,6 +769,10 @@ function connectWs(payload: WsConnectPayload): void {
     })
     cleanWsHandlers()
     ws = null
+    // 重连原因尚未被外部覆盖（visibility/online/force）时，默认归为 close。
+    if (nextReconnectReason === 'close' && reconnectState !== 'reconnecting') {
+      reconnectState = 'reconnecting'
+    }
     scheduleReconnect()
   }
 
@@ -651,6 +813,47 @@ function connectWs(payload: WsConnectPayload): void {
         })
     }
   }
+}
+
+// 切回前台 / 网络恢复时若 WS 不在线，立即触发一次重连（对齐 Unity 的 OnApplicationPause + Internet 检测）。
+function onPageVisible(): void {
+  if (typeof document === 'undefined') {
+    return
+  }
+  if (document.visibilityState !== 'visible') {
+    return
+  }
+  if (!wsUrl || isWsOpen()) {
+    return
+  }
+  log.info('page visible, force reconnect')
+  triggerReconnect('visibility')
+}
+
+function onNetworkOnline(): void {
+  if (!wsUrl || isWsOpen()) {
+    return
+  }
+  log.info('network online, force reconnect')
+  triggerReconnect('online')
+}
+
+function bindPageLifecycleListeners(): void {
+  if (pageLifecycleBound || typeof window === 'undefined') {
+    return
+  }
+  pageLifecycleBound = true
+  document.addEventListener('visibilitychange', onPageVisible)
+  window.addEventListener('online', onNetworkOnline)
+}
+
+function unbindPageLifecycleListeners(): void {
+  if (!pageLifecycleBound || typeof window === 'undefined') {
+    return
+  }
+  pageLifecycleBound = false
+  document.removeEventListener('visibilitychange', onPageVisible)
+  window.removeEventListener('online', onNetworkOnline)
 }
 
 // 提供给 H5 业务层主动建连（当前登录流程会调用）。
@@ -781,8 +984,14 @@ export function setupWsProxyBridgeChannel(): () => void {
     closeWs()
     stopHeartbeatLoop()
     cleanWsHandlers()
+    unbindPageLifecycleListeners()
     ws = null
     wsUrl = ''
+    reconnectState = 'idle'
+    firstFailedAt = 0
+    reconnectAttempts = 0
+    pendingHeartbeatCount = 0
+    nextReconnectReason = 'close'
     stopWsBridgeListener = null
   }
 

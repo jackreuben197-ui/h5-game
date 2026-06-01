@@ -16,6 +16,11 @@ export interface WsMessageBinaryPayload {
 
 export type WsMessagePayload = WsMessageTextPayload | WsMessageBinaryPayload
 
+// H5 -> Cocos：H5/CC 握手完成通知；已有登录态时附带 token。
+export interface H5ReadyPayload {
+  token?: string
+}
+
 // H5 -> Cocos：websocket 错误消息。
 export interface WsErrorPayload {
   message: string
@@ -26,6 +31,30 @@ export interface WsClosedPayload {
   code?: number
   reason?: string
   wasClean?: boolean
+}
+
+// H5 -> Cocos：已安排一次重连尝试（attempt 从 1 开始；delayMs 是本次等待时长）。
+export interface WsReconnectingPayload {
+  attempt: number
+  delayMs: number
+  // 触发本次重连的来源：close=连接关闭、heartbeat=心跳超时、visibility=切回前台、online=网络恢复、force=Cocos 主动触发。
+  reason: 'close' | 'heartbeat' | 'visibility' | 'online' | 'force'
+}
+
+// H5 -> Cocos：重连成功（已 onopen 并完成 REGISTER）。
+export interface WsReconnectedPayload {
+  url: string
+  attempt: number
+  // 从首次失败到本次成功的总耗时（毫秒）。
+  durationMs: number
+}
+
+// H5 -> Cocos：放弃重连（命中次数或整体超时）。
+export interface WsReconnectFailedPayload {
+  reason: 'max-attempts' | 'overall-timeout' | 'auth-invalid'
+  attempts: number
+  // 累计耗时（毫秒）。
+  durationMs: number
 }
 
 export interface DialogResultPayload {

@@ -7,6 +7,8 @@ export interface WsConnectPayload {
   // 当前房间/比赛 ID（Cocos 随连接请求一并下发，H5 仅作透传参考）。
   roomId?: number
   matchId?: number
+  // Cocos 主动要求强制重连：复位 attempt/timer，立即重连一次。
+  force?: boolean
 }
 
 // Cocos -> H5：发送 websocket 文本消息。

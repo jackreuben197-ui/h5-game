@@ -14,6 +14,10 @@ export const BRIDGE_ACTION = {
   WS_MESSAGE: 'wsMessage',
   WS_ERROR: 'wsError',
   WS_CLOSED: 'wsClosed',
+  // H5 -> Cocos：重连流程通知（对齐 Unity NetworkDetectionComponent）。
+  WS_RECONNECTING: 'wsReconnecting',
+  WS_RECONNECTED: 'wsReconnected',
+  WS_RECONNECT_FAILED: 'wsReconnectFailed',
   // Cocos -> H5
   SHOW_TOAST: 'showToast',
   SHOW_DIALOG: 'showDialog',

@@ -1,4 +1,6 @@
-const CHANNEL_MAIN_DOMAIN = 'test2-game.awanptest.com'
+const CHANNEL_MAIN_DOMAIN = (
+  import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || ''
+).trim().toLowerCase()
 
 interface ParsedQueryParams {
   inviteCode: string

@@ -292,7 +292,11 @@ function normalizeSelectedSb(stakeConfig: StakeConfigForm, level: StakeLevel): v
   stakeConfig.selectedSbs = uniqueSbs.filter((sb) => validSbs.includes(sb))
 }
 
-function getLevelByBlindData(sbValue: unknown, blindTypeValue: unknown, multiplier: number): StakeLevel {
+function getLevelByBlindData(
+  sbValue: unknown,
+  blindTypeValue: unknown,
+  multiplier: number,
+): StakeLevel {
   const sbCent = Math.round(toSafeNumber(sbValue) * multiplier)
   const fromBlindType = stakeLevelByBlindType[toSafeNumber(blindTypeValue)]
   const fromSb = stakeLevelByBlindType[getJackpotBlindTypeBySb(sbCent)]
@@ -319,7 +323,10 @@ function detectSbMultiplier(blindSetting: Record<string, unknown>[]): number {
   return x100Score > directScore ? 100 : 1
 }
 
-function applyModeSetting(modeConfig: ModeConfigForm, setting: Record<string, unknown> | undefined): void {
+function applyModeSetting(
+  modeConfig: ModeConfigForm,
+  setting: Record<string, unknown> | undefined,
+): void {
   if (!setting) {
     return
   }
@@ -385,9 +392,11 @@ function applyModeSetting(modeConfig: ModeConfigForm, setting: Record<string, un
     target.profitTriggerLimit = profitLimit
     target.jackpotContribValue = jackpotContrib
     target.profitPercentValue = profitPercent
-    target.profitTriggerChecked = profitLimit !== '' && toSafeNumber(item.contribute_fixed_limit) > 0
+    target.profitTriggerChecked =
+      profitLimit !== '' && toSafeNumber(item.contribute_fixed_limit) > 0
     target.jackpotContribChecked = jackpotContrib !== '' && toSafeNumber(item.contribute_ratio) > 0
-    target.profitPercentChecked = profitPercent !== '' && toSafeNumber(item.contribute_fixed_rate) > 0
+    target.profitPercentChecked =
+      profitPercent !== '' && toSafeNumber(item.contribute_fixed_rate) > 0
   })
 
   stakeLevels.forEach((level) => {
@@ -528,12 +537,7 @@ onMounted(() => {
     <section class="create-content">
       <div class="name-input-pill">
         <span class="pill-label">牌局名称</span>
-        <input
-          v-model="jackpotName"
-          class="pill-input"
-          maxlength="20"
-          placeholder="Jackpot"
-        />
+        <input v-model="jackpotName" class="pill-input" maxlength="20" placeholder="Jackpot" />
         <span class="pill-count">{{ jackpotName.length }}/20</span>
       </div>
 
@@ -666,7 +670,11 @@ onMounted(() => {
                 <i
                   class="dot"
                   :class="{ 'dot--active': getBlindConfigBySb(option.sb).contributePotChecked }"
-                  @click="getBlindConfigBySb(option.sb).contributePotChecked = !getBlindConfigBySb(option.sb).contributePotChecked"
+                  @click="
+                    getBlindConfigBySb(option.sb).contributePotChecked = !getBlindConfigBySb(
+                      option.sb,
+                    ).contributePotChecked
+                  "
                 ></i>
                 <span>底池触发jackpot贡献</span>
               </div>
@@ -685,7 +693,10 @@ onMounted(() => {
                 <i
                   class="dot"
                   :class="{ 'dot--active': getBlindConfigBySb(option.sb).awardBetChecked }"
-                  @click="getBlindConfigBySb(option.sb).awardBetChecked = !getBlindConfigBySb(option.sb).awardBetChecked"
+                  @click="
+                    getBlindConfigBySb(option.sb).awardBetChecked = !getBlindConfigBySb(option.sb)
+                      .awardBetChecked
+                  "
                 ></i>
                 <span>投入底池触发jackpot奖励</span>
               </div>
@@ -704,7 +715,10 @@ onMounted(() => {
                 <i
                   class="dot"
                   :class="{ 'dot--active': getBlindConfigBySb(option.sb).awardOtherChecked }"
-                  @click="getBlindConfigBySb(option.sb).awardOtherChecked = !getBlindConfigBySb(option.sb).awardOtherChecked"
+                  @click="
+                    getBlindConfigBySb(option.sb).awardOtherChecked = !getBlindConfigBySb(option.sb)
+                      .awardOtherChecked
+                  "
                 ></i>
                 <span>奖励全桌</span>
               </div>
@@ -732,7 +746,11 @@ onMounted(() => {
                 <i
                   class="dot"
                   :class="{ 'dot--active': getBlindConfigBySb(option.sb).profitTriggerChecked }"
-                  @click="getBlindConfigBySb(option.sb).profitTriggerChecked = !getBlindConfigBySb(option.sb).profitTriggerChecked"
+                  @click="
+                    getBlindConfigBySb(option.sb).profitTriggerChecked = !getBlindConfigBySb(
+                      option.sb,
+                    ).profitTriggerChecked
+                  "
                 ></i>
                 <span>盈利触发</span>
               </div>
@@ -751,7 +769,11 @@ onMounted(() => {
                 <i
                   class="dot"
                   :class="{ 'dot--active': getBlindConfigBySb(option.sb).jackpotContribChecked }"
-                  @click="getBlindConfigBySb(option.sb).jackpotContribChecked = !getBlindConfigBySb(option.sb).jackpotContribChecked"
+                  @click="
+                    getBlindConfigBySb(option.sb).jackpotContribChecked = !getBlindConfigBySb(
+                      option.sb,
+                    ).jackpotContribChecked
+                  "
                 ></i>
                 <span>Jackpot 贡献</span>
               </div>
@@ -770,7 +792,11 @@ onMounted(() => {
                 <i
                   class="dot"
                   :class="{ 'dot--active': getBlindConfigBySb(option.sb).profitPercentChecked }"
-                  @click="getBlindConfigBySb(option.sb).profitPercentChecked = !getBlindConfigBySb(option.sb).profitPercentChecked"
+                  @click="
+                    getBlindConfigBySb(option.sb).profitPercentChecked = !getBlindConfigBySb(
+                      option.sb,
+                    ).profitPercentChecked
+                  "
                 ></i>
                 <span>触发盈利 (%)</span>
               </div>
@@ -814,11 +840,7 @@ onMounted(() => {
           <div class="pool-right">
             <span>Award ratio (%)</span>
             <div class="value-input value-input--narrow">
-              <input
-                v-model="item.ratio"
-                class="inline-input"
-                placeholder="BB amount"
-              />
+              <input v-model="item.ratio" class="inline-input" placeholder="BB amount" />
             </div>
           </div>
         </div>
@@ -826,13 +848,7 @@ onMounted(() => {
     </section>
 
     <div class="bottom-actions">
-      <button
-        type="button"
-        class="action-btn action-btn--cancel"
-        @click="onCancel"
-      >
-        取消
-      </button>
+      <button type="button" class="action-btn action-btn--cancel" @click="onCancel">取消</button>
       <button
         type="button"
         class="action-btn action-btn--confirm"
@@ -852,6 +868,9 @@ onMounted(() => {
   padding: 0 0.3733rem calc(2.0267rem + env(safe-area-inset-bottom));
   overflow-x: hidden;
   overflow-y: auto;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .page-overlay {

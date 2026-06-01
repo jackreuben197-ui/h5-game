@@ -124,6 +124,9 @@ function onOpenRecord(item: PoolRewardItem): void {
   padding: 0 0.4267rem calc(2.88rem + env(safe-area-inset-bottom));
   overflow-x: hidden;
   overflow-y: auto;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .page-overlay {

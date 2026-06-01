@@ -1,10 +1,10 @@
-<script setup lang="ts">import { computed } from 'vue'
+<script setup lang="ts">
+import { computed } from 'vue'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
-
 
 interface CardItem {
   rank: string
@@ -24,16 +24,110 @@ interface RewardRecord {
 
 const SUIT_SYMBOL: Record<string, string> = { c: '♣', h: '♥', d: '♦', s: '♠' }
 
-function suitSymbol(suit: string) { return SUIT_SYMBOL[suit] ?? '' }
-function isRed(suit: string) { return suit === 'h' || suit === 'd' }
+function suitSymbol(suit: string) {
+  return SUIT_SYMBOL[suit] ?? ''
+}
+function isRed(suit: string) {
+  return suit === 'h' || suit === 'd'
+}
 
 const records: RewardRecord[] = [
-  { id: '1', player: 'name', playerId: 'ID:187548724', gameId: 'name', gameIdSub: 'ID:187548724', reward: '+123456', gameType: 'NLH', cards: [{ rank: '2', suit: 'c' }, { rank: '2', suit: 'h' }, { rank: '2', suit: 'd' }, { rank: '2', suit: 's' }, { rank: '2', suit: 'h' }] },
-  { id: '2', player: 'name', playerId: 'ID:187548724', gameId: 'name', gameIdSub: 'ID:187548724', reward: '+123456', gameType: 'PLO', cards: [{ rank: '2', suit: 'c' }, { rank: '2', suit: 'h' }, { rank: '2', suit: 'd' }, { rank: '2', suit: 's' }, { rank: '2', suit: 'h' }] },
-  { id: '3', player: 'name', playerId: 'ID:187548724', gameId: 'name', gameIdSub: 'ID:187548724', reward: '-123456', gameType: 'NLH', cards: [{ rank: '2', suit: 'c' }, { rank: '2', suit: 'h' }, { rank: '2', suit: 'd' }, { rank: '2', suit: 's' }, { rank: '2', suit: 'h' }] },
-  { id: '4', player: 'name', playerId: 'ID:187548724', gameId: 'name', gameIdSub: 'ID:187548724', reward: '-123456', gameType: '6+', cards: [{ rank: '2', suit: 'c' }, { rank: '2', suit: 'h' }, { rank: '2', suit: 'd' }, { rank: '2', suit: 's' }, { rank: '2', suit: 'h' }] },
-  { id: '5', player: 'name', playerId: 'ID:187548724', gameId: 'name', gameIdSub: 'ID:187548724', reward: '+123456', gameType: 'NLH', cards: [{ rank: '2', suit: 'c' }, { rank: '2', suit: 'h' }, { rank: '2', suit: 'd' }, { rank: '2', suit: 's' }, { rank: '2', suit: 'h' }] },
-  { id: '6', player: 'name', playerId: 'ID:187548724', gameId: 'name', gameIdSub: 'ID:187548724', reward: '-123456', gameType: '6+', cards: [{ rank: '2', suit: 'c' }, { rank: '2', suit: 'h' }, { rank: '2', suit: 'd' }, { rank: '2', suit: 's' }, { rank: '2', suit: 'h' }] },
+  {
+    id: '1',
+    player: 'name',
+    playerId: 'ID:187548724',
+    gameId: 'name',
+    gameIdSub: 'ID:187548724',
+    reward: '+123456',
+    gameType: 'NLH',
+    cards: [
+      { rank: '2', suit: 'c' },
+      { rank: '2', suit: 'h' },
+      { rank: '2', suit: 'd' },
+      { rank: '2', suit: 's' },
+      { rank: '2', suit: 'h' },
+    ],
+  },
+  {
+    id: '2',
+    player: 'name',
+    playerId: 'ID:187548724',
+    gameId: 'name',
+    gameIdSub: 'ID:187548724',
+    reward: '+123456',
+    gameType: 'PLO',
+    cards: [
+      { rank: '2', suit: 'c' },
+      { rank: '2', suit: 'h' },
+      { rank: '2', suit: 'd' },
+      { rank: '2', suit: 's' },
+      { rank: '2', suit: 'h' },
+    ],
+  },
+  {
+    id: '3',
+    player: 'name',
+    playerId: 'ID:187548724',
+    gameId: 'name',
+    gameIdSub: 'ID:187548724',
+    reward: '-123456',
+    gameType: 'NLH',
+    cards: [
+      { rank: '2', suit: 'c' },
+      { rank: '2', suit: 'h' },
+      { rank: '2', suit: 'd' },
+      { rank: '2', suit: 's' },
+      { rank: '2', suit: 'h' },
+    ],
+  },
+  {
+    id: '4',
+    player: 'name',
+    playerId: 'ID:187548724',
+    gameId: 'name',
+    gameIdSub: 'ID:187548724',
+    reward: '-123456',
+    gameType: '6+',
+    cards: [
+      { rank: '2', suit: 'c' },
+      { rank: '2', suit: 'h' },
+      { rank: '2', suit: 'd' },
+      { rank: '2', suit: 's' },
+      { rank: '2', suit: 'h' },
+    ],
+  },
+  {
+    id: '5',
+    player: 'name',
+    playerId: 'ID:187548724',
+    gameId: 'name',
+    gameIdSub: 'ID:187548724',
+    reward: '+123456',
+    gameType: 'NLH',
+    cards: [
+      { rank: '2', suit: 'c' },
+      { rank: '2', suit: 'h' },
+      { rank: '2', suit: 'd' },
+      { rank: '2', suit: 's' },
+      { rank: '2', suit: 'h' },
+    ],
+  },
+  {
+    id: '6',
+    player: 'name',
+    playerId: 'ID:187548724',
+    gameId: 'name',
+    gameIdSub: 'ID:187548724',
+    reward: '-123456',
+    gameType: '6+',
+    cards: [
+      { rank: '2', suit: 'c' },
+      { rank: '2', suit: 'h' },
+      { rank: '2', suit: 'd' },
+      { rank: '2', suit: 's' },
+      { rank: '2', suit: 'h' },
+    ],
+  },
 ]
 </script>
 
@@ -103,6 +197,9 @@ const records: RewardRecord[] = [
   padding: 0 0.3467rem 0.64rem;
   overflow-x: hidden;
   overflow-y: auto;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .record-overlay {
@@ -129,7 +226,7 @@ const records: RewardRecord[] = [
   position: relative;
   z-index: 2;
   margin: 0.1293rem auto 0; // 4.837px / 37.5
-  width: 9.2863rem;         // 348.237px / 37.5
+  width: 9.2863rem; // 348.237px / 37.5
   max-width: calc(100vw - 0.6934rem);
   display: flex;
   flex-direction: column;
@@ -146,23 +243,23 @@ const records: RewardRecord[] = [
 .record-header-glow {
   position: absolute;
   left: 1.76%;
-  top: 0.172rem;    // 6.45px / 37.5
+  top: 0.172rem; // 6.45px / 37.5
   width: 96.2%;
   height: 0.5073rem; // 19.024px / 37.5
   border-radius: 0.7136rem; // 26.763px / 37.5
-  background: #00af83;
+  background: rgba(86, 153, 205, 1);
 }
 
 .record-header-pill {
   position: relative;
   display: flex;
   align-items: center;
-  height: 0.8512rem;  // 31.922px / 37.5
+  height: 0.8512rem; // 31.922px / 37.5
   padding: 0 0.4471rem; // 16.767px / 37.5
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4.2992rem; // 161.221px / 37.5
   color: #f9f9f9;
-  font-size: 0.308rem;  // 11.54px / 37.5
+  font-size: 0.308rem; // 11.54px / 37.5
 }
 
 // 数据行
@@ -185,7 +282,7 @@ const records: RewardRecord[] = [
 // 列定义
 .col-player {
   flex-shrink: 0;
-  width: 1.617rem;  // 60.619px / 37.5
+  width: 1.617rem; // 60.619px / 37.5
   display: flex;
   align-items: center;
 }
@@ -273,7 +370,7 @@ const records: RewardRecord[] = [
 
 .mini-card {
   flex-shrink: 0;
-  width: 0.3416rem;  // 12.809px / 37.5
+  width: 0.3416rem; // 12.809px / 37.5
   height: 0.5123rem; // 19.211px / 37.5
   background: #ffffff;
   border-radius: 0.1867rem; // 7px / 37.5

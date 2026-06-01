@@ -323,6 +323,9 @@ function goPoolReward(): void {
   padding-bottom: calc(2.2rem + env(safe-area-inset-bottom));
   overflow-x: hidden;
   overflow-y: auto;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .page-overlay {

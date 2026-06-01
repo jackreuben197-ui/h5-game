@@ -3324,6 +3324,7 @@ MsgInfo_1010=Agent invite player for {0}{1}
 UIMine_FreeAward_ShareText=Share
 UIShowAdv_TodayNot=Don't show me this today again
 UIClub_AgentManager_TitleT=Agent management
+UILogin_Account=Please enter account name
 UILogin_InputEmail=Please enter your e-mail
 UILogin_NewUser=New User？<color=#DCBA82>Register</color>
 UIClub_JoinClub=Join the Club

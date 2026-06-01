@@ -3325,6 +3325,7 @@ MsgInfo_1010=Agente convida jogador para {0}{1}
 UIMine_FreeAward_ShareText=Convidar
 UIShowAdv_TodayNot=Não me mostre isso novamente
 UIClub_AgentManager_TitleT=Gerênciamento de agentes
+UILogin_Account=Por favor, insira o nome da conta
 UILogin_InputEmail=Por favor, insira seu e-mail
 UILogin_NewUser=Novo usuário ？<color=#DCBA82>Registro de conta</color>
 UIClub_JoinClub=Junte-se ao clube

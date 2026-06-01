@@ -3324,6 +3324,7 @@ MsgInfo_1010=代理邀请获得{0}{1}
 UIMine_FreeAward_ShareText=分享
 UIShowAdv_TodayNot=今天不想再提示这个
 UIClub_AgentManager_TitleT=代理管理
+UILogin_Account=请输入账号名
 UILogin_InputEmail=请输入邮箱
 UILogin_NewUser= 新用户？<color=#DCBA82>注册账号</color>
 UIClub_JoinClub=加入俱乐部

@@ -1,21 +1,27 @@
 const INVITATION_KEYS = [
   'invitation_link',
-  'invitationLink',
-  'invitation_url',
-  'invite_link',
-  'inviteLink',
-  'invite_url',
-  'inviteUrl',
-  'invitation',
-  'url',
-  'link',
 ] as const
+
+const INVITATION_CODE_KEYS = ['invitation_code'] as const
+const TRACE_HASH_KEYS = ['trace_hash'] as const
 
 function readString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
 }
 
 export function extractInvitationLink(payload: unknown): string {
+  return extractInvitationValue(payload, INVITATION_KEYS)
+}
+
+export function extractInvitationCode(payload: unknown): string {
+  return extractInvitationValue(payload, INVITATION_CODE_KEYS)
+}
+
+export function extractTraceHash(payload: unknown): string {
+  return extractInvitationValue(payload, TRACE_HASH_KEYS)
+}
+
+function extractInvitationValue(payload: unknown, keys: readonly string[]): string {
   if (!payload || typeof payload !== 'object') {
     return ''
   }
@@ -33,7 +39,7 @@ export function extractInvitationLink(payload: unknown): string {
     }
     visited.add(obj)
 
-    for (const key of INVITATION_KEYS) {
+    for (const key of keys) {
       const value = readString(obj[key])
       if (value) {
         return value

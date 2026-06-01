@@ -53,6 +53,29 @@
         position: fixed;
         inset: 0;
         z-index: 10;
+        box-sizing: border-box;
+        background-image: url('/assets/images/main_bg.webp');
+        background-repeat: no-repeat;
+        background-position: center top; /* 确保背景图从绝对顶部开始对齐 */
+        background-size: cover;          /* 或者设置 100% 100% 铺满 */
+      }
+
+      /* 将 Telegram 安全区留白放到业务根节点，仅在 Telegram Mini App 环境启用 */
+      html[data-tg-mini-app='1'] #app > * {
+        box-sizing: border-box;
+        min-height: 100%;
+        padding-top: max(
+          env(safe-area-inset-top),
+          calc(var(--tg-content-safe-area-inset-top, 0px) - var(--app-top-padding)),
+          calc(var(--tg-safe-area-guard-top, 0px) - var(--app-top-padding))
+        );
+        padding-bottom: max(
+          env(safe-area-inset-bottom),
+          var(--tg-content-safe-area-inset-bottom, 0px),
+          var(--tg-safe-area-guard-bottom, 0px)
+        );
+        padding-left: max(env(safe-area-inset-left), var(--tg-content-safe-area-inset-left, 0px));
+        padding-right: max(env(safe-area-inset-right), var(--tg-content-safe-area-inset-right, 0px));
       }
 
       #drawCanvas {
@@ -121,68 +144,12 @@
       })()
     </script>
 
-    <!-- Telegram 初始化（异步按需加载，网络不可达时不阻塞页面） -->
+    <script src="/telegram-env.js"></script>
     <script>
       ;(function () {
-        function readTelegramInitDataFromLocation() {
-          try {
-            var search = window.location.search || ''
-            var hash = window.location.hash || ''
-            var hashQueryIndex = hash.indexOf('?')
-            var hashQuery = hashQueryIndex >= 0 ? hash.slice(hashQueryIndex) : ''
-
-            var fromSearch = new URLSearchParams(search).get('tgWebAppData')
-            if (fromSearch) {
-              return fromSearch
-            }
-
-            var fromHash = new URLSearchParams(hashQuery).get('tgWebAppData')
-            if (fromHash) {
-              return fromHash
-            }
-          } catch (error) {
-            console.warn('[telegram] parse tgWebAppData failed:', error)
-          }
-          return ''
+        if (typeof window.initH5TelegramEnvironment === 'function') {
+          window.initH5TelegramEnvironment()
         }
-
-        var initDataFromUrl = readTelegramInitDataFromLocation()
-        if (initDataFromUrl) {
-          window.__H5_TG_MINI_APP__ = true
-          window.__H5_TG_INIT_DATA__ = initDataFromUrl
-        }
-
-        function initTelegramWebApp() {
-          if (!window.Telegram || !window.Telegram.WebApp) {
-            return
-          }
-          var tg = window.Telegram.WebApp
-          window.__H5_TG_MINI_APP__ = true
-          var initData = String(tg.initData || '').trim()
-          if (initData) {
-            window.__H5_TG_INIT_DATA__ = initData
-          }
-          tg.ready()
-          if (typeof tg.expand === 'function') {
-            tg.expand()
-          }
-        }
-
-        // 先尝试直接初始化（例如容器已注入 Telegram 对象）。
-        initTelegramWebApp()
-
-        // 再异步加载官方 SDK，避免 head 同步脚本在弱网/不可达场景卡住首屏。
-        var script = document.createElement('script')
-        script.src = 'https://telegram.org/js/telegram-web-app.js'
-        script.async = true
-        script.defer = true
-        script.crossOrigin = 'anonymous'
-        script.referrerPolicy = 'no-referrer'
-        script.onload = initTelegramWebApp
-        script.onerror = function () {
-          console.warn('[telegram] sdk load failed, continue without telegram bridge')
-        }
-        document.head.appendChild(script)
       })()
     </script>
 

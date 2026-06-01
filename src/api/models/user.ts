@@ -122,6 +122,10 @@ export interface UserRegisterRequest {
   email?: string
   // 平台（1-IOS 2-Android 3-Windows 4-OSX 5-Web 6-MiniWeb 7-Linux）。
   platform?: number
+  // 邀请码。
+  invite_code?: string
+  // 绑定邀请码唯一id（代理）
+  trace_hash?: string
   [key: string]: unknown
 }
 
@@ -319,6 +323,8 @@ export interface LoginV2Request {
   phone?: string
   email?: string
   password: string
+  invite_code?: string
+  trace_hash?: string
   [key: string]: unknown
 }
 
@@ -874,6 +880,8 @@ export interface UserLoginThirdPartyRequest {
     app_source: number; // 应用来源，1-IOS 2-Android 3-Web
     telegram_init_data: string; // Telegram 登录所需的 init_data 字符串,
     platform: number; // 平台(platform):1-IOS 2-Android 3-Windows 4-OSX 5-Web 6-MiniWeb 7-Linux
+    invite_code?: string; // 邀请码
+    trace_hash?: string; // 绑定邀请码唯一id（代理）
     device_id?: string;
     user_device_no?: string;
     system_version?: string;

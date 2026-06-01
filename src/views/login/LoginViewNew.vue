@@ -28,6 +28,7 @@ import icGlobe from '@/assets/icons/ic_globe.svg'
 import { showGameToast } from '@/components/Toast'
 import { Loading } from 'vant'
 import { DEBUG_ACCOUNTS, type DebugAccount } from '@/constants/debugAccounts'
+import { resolveInviteCode, resolveTraceHash, shouldOpenRegisterMode } from '@/utils/channelPackage'
 
 type PageMode = 'login' | 'register' | 'forgot'
 type ContactType = 'phone' | 'email'
@@ -62,6 +63,8 @@ const showProtocolConfifm = ref(false)
 const showDebugAccountDialog = ref(false)
 const pendingAgreementSubmit = ref(false)
 const loading = ref(false)
+const inviteCodeFromChannel = ref('')
+const traceHashFromChannel = ref('')
 
 const handleSelectLang = (lang: string) => {
   const matched = SUPPORTED_LOCALES_OPTIONS.find((item) => item.value === lang)?.value
@@ -89,6 +92,7 @@ onBeforeRouteLeave((to) => {
 // 在首帧渲染前同步恢复输入态，避免从空值到有值造成背景闪动。
 hydrateFormFromLocal()
 restorePageState()
+applyChannelInviteContext()
 consumePhoneAreaSelection()
 
 // ---------- Computed ----------
@@ -329,11 +333,15 @@ function applyDebugAccount(account: DebugAccount): void {
 }
 
 async function handleLogin(target: string) {
+  const effectiveInviteCode = traceHashFromChannel.value ? '' : inviteCodeFromChannel.value
+
   const res = await loginV2Api({
     phone: contactType.value === 'phone' ? target : undefined,
     email: contactType.value === 'email' ? target : undefined,
     password: md5(form.password.trim()),
     area: contactType.value === 'phone' ? normalizeArea() : undefined,
+    invite_code: effectiveInviteCode || undefined,
+    trace_hash: traceHashFromChannel.value || undefined,
   })
   const token = String(res.token || '').trim()
   if (!token) {
@@ -376,11 +384,22 @@ async function handleLogin(target: string) {
 }
 
 async function handleRegister(target: string) {
+  const effectiveInviteCode = traceHashFromChannel.value ? '' : inviteCodeFromChannel.value
+
   const payload: Record<string, string | number> = {
     password: md5(form.password.trim()),
     code: form.code.trim(),
     platform: 5, // Web
   }
+
+  if (effectiveInviteCode) {
+    payload.invite_code = effectiveInviteCode
+  }
+
+  if (traceHashFromChannel.value) {
+    payload.trace_hash = traceHashFromChannel.value
+  }
+
   if (contactType.value === 'phone') {
     payload.phone = target
     payload.area = form.area.trim() || '55'
@@ -584,6 +603,15 @@ function consumePhoneAreaSelection(): void {
   if (!normalized) return
   form.area = normalized
   localStore.setItem(StorageKey.KEY_PHONE_FIRST, normalized)
+}
+
+function applyChannelInviteContext(): void {
+  inviteCodeFromChannel.value = resolveInviteCode()
+  traceHashFromChannel.value = resolveTraceHash()
+
+  if (shouldOpenRegisterMode() && pageMode.value === 'login') {
+    pageMode.value = 'register'
+  }
 }
 </script>
 

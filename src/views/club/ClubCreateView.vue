@@ -11,6 +11,8 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import { postOrgClubCreateApi, postOrgClubCreateIsFirstApi } from '@/api/org'
 import type { OrgClubCreateRequest } from '@/api/models/org'
 import { useAppConfigStore } from '@/stores/appConfig'
+import { resolveDiamondPriceValue } from '@/utils/diamondPriceConfig'
+// 主容器背景图：全页面共用一张底图。
 
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -25,48 +27,18 @@ const isSubmitting = ref(false)
 const avatarPreviewUrl = ref('')
 const isFirstCreate = ref(false)
 
-interface ClubCreatePriceConfig {
-  raw_price: number
-  pay_price: number
-  discount: number
-  start_date: string
-  end_date: string
-  start_time: number
-  end_time: number
-  status: number
-}
-
-const clubCreatePriceConfig = computed<ClubCreatePriceConfig | null>(() => {
-  const raw = appConfig.globalConfig?.create_club_price
-  if (!raw || typeof raw !== 'string') return null
-  try {
-    return JSON.parse(raw) as ClubCreatePriceConfig
-  } catch {
-    return null
+const createCost = computed(() => {
+  if (isFirstCreate.value) {
+    return { original: 0, current: 0 }
   }
+  return resolveDiamondPriceValue(appConfig.globalConfig?.create_club_price, {
+    original: 500,
+    current: 100,
+  })
 })
 
-const createCostOriginal = computed<number>(() => {
-  if (isFirstCreate.value) return 0
-  const config = clubCreatePriceConfig.value
-  if (!config) return 500
-  const now = Math.floor(Date.now() / 1000)
-  if (now >= config.start_time && now <= config.end_time) {
-    return config.raw_price
-  }
-  return config.raw_price
-})
-
-const createCostCurrent = computed<number>(() => {
-  if (isFirstCreate.value) return 0
-  const config = clubCreatePriceConfig.value
-  if (!config) return 100
-  const now = Math.floor(Date.now() / 1000)
-  if (now >= config.start_time && now <= config.end_time) {
-    return config.pay_price
-  }
-  return config.raw_price
-})
+const createCostOriginal = computed<number>(() => createCost.value.original)
+const createCostCurrent = computed<number>(() => createCost.value.current)
 
 const canCreate = computed(() => {
   return clubName.value.trim().length > 0 && !isSubmitting.value

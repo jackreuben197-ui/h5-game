@@ -10,20 +10,27 @@ import {
   type CSSProperties,
 } from 'vue'
 import { useRouter } from 'vue-router'
-import { showFailToast, showSuccessToast } from 'vant'
+import { showFailToast } from 'vant'
 import { postOrgClubNoticeApi, postOrgClubNoticeIgnoreApi } from '@/api/cmsext'
-import { getRoomIdsApi, getRoomsDetailApi } from '@/api/roomcenter'
 import { enterTable } from '@/bridge/core'
-import { subscribeH5WsMessages } from '@/bridge/ws/wsProxy'
+import type { MttItem, MttActionType } from '@/components/ListItem/MttCard.vue'
+import type { TabOption } from '@/components/Tabbar/GameTypeTabbar.vue'
 import type { EnterTablePayload } from '@/bridge/protocol'
 import StorageKey from '@/constants/storageKey'
 import LoginSession from '@/session/loginSession'
-import type { RoomRecord } from '@/api/models/roomcenter'
+import type {
+  MttIdInfoRecord,
+  MttListRecord,
+  MttSeriesInfoRecord,
+  RoomRecord,
+} from '@/api/models/roomcenter'
 import { useGameStore } from '@/stores/game'
+import { useMttListStore } from '@/stores/mttList'
+import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
-import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
-import { t } from '@/i18n'
+import { checkIsShowForClubAndTribe, ROOM_ORIGIN_TYPE } from '@/utils/roomVisibility'
+import { getLocale, t } from '@/i18n'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
 import twoPersonIcon from '@/assets/icons/2person.png'
@@ -31,16 +38,26 @@ import clubCoverAvatar from '@/assets/images/default_avatar.png'
 import imgQuickActionCreateBg from '@/assets/images/club_qa_create_club_bg_shape.svg'
 import imgQuickActionBoardBg from '@/assets/images/club_qa_data_board_bg_shape.svg'
 import quickSafetyBg from '@/assets/images/club_header_quick_safety.png'
+import pokerMiniIcon from '@/assets/icons/game_zone_mtt_mini.png'
+import mahjongMiniIcon from '@/assets/icons/game_zone_mahjong_mini.png'
 import quickRankingBg from '@/assets/images/club_header_quick_ranking.png'
 import gameType6Plus from '@/assets/icons/game_type_6+.svg'
 import gameTypeNlh from '@/assets/icons/game_type_nlh.svg'
 import gameTypePlo from '@/assets/icons/game_type_plo.svg'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
+import peopleBgUrl from '@/assets/icons/icon_people.png'
 import SafetyGuardPopup from '@/components/Dialog/SafetyGuardPopup.vue'
+import SafetyGuardDialog from '@/components/Dialog/SafetyGuardDialog.vue'
 import MiniGameView from '@/views/home/MiniGameView.vue'
 import CasinoView from '@/views/home/CasinoView.vue'
 import { useCasinoStore } from '@/stores/casino'
 import { useMinigameStore } from '@/stores/minigame'
+import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
+import {
+  multiLanguageTemplateVersion,
+  resolveTemplateTextByKey,
+} from '@/utils/multiLanguageTemplate'
+import { formatDateTime, formatTodayAwareTimeLabel, toTimestampMs } from '@/utils/time'
 
 import mainBgUrl from '@/assets/images/main_bg.webp'
 // 主容器背景图：全页面共用一张底图。
@@ -50,8 +67,15 @@ const backgroundStyle = computed(() => ({
 
 type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
 type ClubHeaderTabName = 'poker' | 'mahjong' | 'event' | 'minigame' | 'casino'
+type MttTabName = 'all' | 'poker' | 'mahjong'
+type MttCategory = 'poker' | 'mahjong' | 'unknown'
+type MttStage = 'upcoming' | 'registering' | 'late' | 'running' | 'finished'
+type MttLayout = 'sm' | 'md' | 'lg'
+
+type RawMttRecord = MttListRecord
 const POKER_TYPE_LONG = 0
 const POKER_TYPE_SHORT = 2
+const MttMatchStatus = { CREATED: 0, RUNNING: 1, CLOSED: 2, CANCEL: 3 } as const
 
 interface RoomGroupViewModel {
   groupKey: string
@@ -64,12 +88,6 @@ interface RoomGroupViewModel {
   iconImage: string
   tableCount: number
   playerCount: number
-}
-
-interface RoomListCachePayload {
-  version: number
-  updatedAt: number
-  records: RoomRecord[]
 }
 
 interface RoomGroupExpandedCachePayload {
@@ -85,10 +103,39 @@ interface ClubNoticeViewModel {
   dateText: string
 }
 
-const ROOM_LIST_CACHE_VERSION = 1
+interface MttViewItem extends MttItem {
+  category: MttCategory
+  stage: MttStage
+  startAtMs: number
+  applyStartAtMs: number
+  lateEndAtMs: number
+  seriesId: number
+  pinnedTime: number
+  originType: number
+  relateClubIds: Array<number | string>
+  relateTribeClubList: Array<Record<string, unknown>>
+  raw: RawMttRecord
+}
+
+interface MttGroup {
+  groupId: string
+  title: string
+  layout: MttLayout
+  items: MttViewItem[]
+  defaultVisibleCount: number
+}
+
+interface MttRenderGroup extends MttGroup {
+  expanded: boolean
+  showViewAll: boolean
+  displayItems: MttViewItem[]
+}
+
 const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
 
 const gameStore = useGameStore()
+const mttListStore = useMttListStore()
+const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
 const casinoStore = useCasinoStore()
 const minigameStore = useMinigameStore()
@@ -97,17 +144,21 @@ const router = useRouter()
 // 顶部右侧切换风格开关：和旧版保持一致。
 const activeTab = ref<GameTypeTabName>('all')
 const clubHeaderTab = ref<ClubHeaderTabName>('poker')
-const sourceRecords = ref<RoomRecord[]>([])
+const mttActiveTab = ref<MttTabName>('all')
+const sourceRecords = computed<RoomRecord[]>(() => roomListStore.records)
 const expandedMap = reactive<Record<string, boolean>>({})
+const expandedGroupMap = ref<Record<string, boolean>>({})
 const announceExpanded = ref(false)
 const showSafetyGuardPopup = ref(false)
 const showClubNoticePopup = ref(false)
 const ignoringClubNotice = ref(false)
 const clubNoticeQueue = ref<ClubNoticeViewModel[]>([])
 const clubNoticeQueueIndex = ref(0)
+const nowMs = ref(Date.now())
 const pageStyle = computed<CSSProperties>(() => ({
   '--tab-bg': `url(${tabBg})`,
 }))
+let mttTicker: number | null = null
 
 const currentClub = computed(() => {
   return userInfoStore.currentClub || null
@@ -118,7 +169,6 @@ const selectedTribeId = computed(() => toSafeInt(currentClub.value?.tribe_id))
 
 const canCreateTable = computed(() => {
   const userLevel = toSafeInt(currentClub.value?.user_level)
-  // 1=会长，2=副会长，3=管理员 均允许创建牌桌。
   return userLevel >= 1 && userLevel <= 3
 })
 
@@ -153,11 +203,11 @@ const clubCoverUrl = computed(() => {
 })
 
 const clubNoticeIntro = computed(() => {
-  const text = String(currentClub.value?.prologue || '').trim()
+  const text = String(currentClub.value?.desc || '').trim()
   if (text) {
     return text
   }
-  return '暂未设置俱乐部公告'
+  return '暂未设置俱乐部简介'
 })
 
 const clubNoticeText = computed(() => {
@@ -233,7 +283,53 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
     })
 })
 
-let unsubscribeWs: (() => void) | null = null
+const mttTabs = computed<TabOption[]>(() => [
+  { name: 'all', title: '全部' },
+  { name: 'poker', title: '扑克' },
+  { name: 'mahjong', title: '麻将', disabled: true, disabledToast: '功能开发中' },
+])
+
+const mttSourceRecords = computed<RawMttRecord[]>(() => mttListStore.records as RawMttRecord[])
+
+const normalizedItems = computed<MttViewItem[]>(() =>
+  mttSourceRecords.value.map((record) => {
+    void multiLanguageTemplateVersion.value
+    const matchId = toSafeInt(record.match_id)
+    const mttIdMeta = mttListStore.mttIdMetaMap[matchId]
+    return normalizeRecordToViewItem(record, mttIdMeta, nowMs.value)
+  }),
+)
+
+const filteredMttItems = computed<MttViewItem[]>(() => {
+  return normalizedItems.value.filter((item) => {
+    if (item.category === 'mahjong') {
+      return false
+    }
+    if (mttActiveTab.value !== 'all' && item.category !== mttActiveTab.value) {
+      return false
+    }
+    return checkMttVisibility(item, selectedClubId.value, selectedTribeId.value)
+  })
+})
+
+const mttGroups = computed<MttGroup[]>(() =>
+  buildGroupsBySeries(filteredMttItems.value, mttListStore.mttSeriesMap),
+)
+
+const renderGroups = computed<MttRenderGroup[]>(() =>
+  mttGroups.value.map((group) => {
+    const expanded = expandedGroupMap.value[group.groupId] === true
+    const showViewAll =
+      group.groupId !== 'no-series' && group.items.length > group.defaultVisibleCount
+    return {
+      ...group,
+      expanded,
+      showViewAll,
+      displayItems:
+        showViewAll && !expanded ? group.items.slice(0, group.defaultVisibleCount) : group.items,
+    }
+  }),
+)
 
 onMounted(() => {
   casinoStore.preloadCasinoData(selectedClubId.value, false).catch(console.warn)
@@ -249,18 +345,19 @@ onMounted(() => {
   }
 
   bootstrapRoomList()
+  mttListStore.bootstrapMttList()
   void fetchClubNotice({ showPopup: true })
 
-  unsubscribeWs = subscribeH5WsMessages((event) => {
-    if (event.packet?.code === 140) {
-      void fetchRooms({ silent: true })
-    }
-  })
+  mttTicker = window.setInterval(() => {
+    nowMs.value = Date.now()
+  }, 1000)
 })
 
 onUnmounted(() => {
-  unsubscribeWs?.()
-  unsubscribeWs = null
+  if (mttTicker !== null) {
+    window.clearInterval(mttTicker)
+    mttTicker = null
+  }
 })
 
 watch(
@@ -271,6 +368,17 @@ watch(
     }
     announceExpanded.value = false
     void fetchClubNotice({ showPopup: true })
+  },
+)
+
+watch(
+  () => roomListStore.records,
+  (records) => {
+    syncExpandedMapWithRecords(records)
+    persistRoomGroupExpandedCache()
+  },
+  {
+    deep: false,
   },
 )
 
@@ -299,75 +407,9 @@ watch(
 
 // 进入页面先用缓存秒开，再静默刷新最新数据。
 function bootstrapRoomList(): void {
-  restoreRoomListCache()
+  roomListStore.bootstrapRoomList()
   restoreRoomGroupExpandedCache()
-  syncExpandedMapWithRecords(sourceRecords.value)
-  void fetchRooms({ silent: true })
-}
-
-// 拉取牌桌列表：先拿 room id，再批量拿详情。
-async function fetchRooms(options: { silent?: boolean } = {}): Promise<void> {
-  try {
-    const idRes = await getRoomIdsApi({})
-    const idRecords =
-      Number(idRes.code) === 0 && Array.isArray(idRes.data?.records) ? idRes.data.records : []
-
-    const roomIds = idRecords
-      .map((item) => Number(item?.rid))
-      .filter((id) => Number.isFinite(id) && id > 0)
-
-    if (!roomIds.length) {
-      sourceRecords.value = []
-      persistRoomListCache([])
-      syncExpandedMapWithRecords([])
-      persistRoomGroupExpandedCache()
-      return
-    }
-
-    const detailRes = await getRoomsDetailApi({
-      room_ids: roomIds,
-      room_type: 0,
-    })
-
-    const records =
-      Number(detailRes.code) === 0 && Array.isArray(detailRes.data?.records)
-        ? detailRes.data.records
-        : []
-    sourceRecords.value = Array.isArray(records) ? records : []
-    persistRoomListCache(sourceRecords.value)
-    syncExpandedMapWithRecords(sourceRecords.value)
-    persistRoomGroupExpandedCache()
-  } catch (error) {
-    // 静默刷新失败时保留旧列表，避免页面闪空。
-    if (!options.silent) {
-      const message = error instanceof Error ? error.message : '牌局列表刷新失败'
-      showFailToast(message)
-    }
-  }
-}
-
-// 把最新牌局列表写入本地缓存。
-function persistRoomListCache(records: RoomRecord[]): void {
-  const payload: RoomListCachePayload = {
-    version: ROOM_LIST_CACHE_VERSION,
-    updatedAt: Date.now(),
-    records,
-  }
-  localStore.setItem(StorageKey.ROOM_LIST_CACHE, payload)
-}
-
-// 恢复上次牌局列表缓存，保证进入页面可秒开。
-function restoreRoomListCache(): void {
-  const cached = localStore.getItem<RoomListCachePayload | null>(StorageKey.ROOM_LIST_CACHE, null)
-  if (!cached || typeof cached !== 'object') {
-    return
-  }
-
-  if (cached.version !== ROOM_LIST_CACHE_VERSION || !Array.isArray(cached.records)) {
-    return
-  }
-
-  sourceRecords.value = cached.records
+  syncExpandedMapWithRecords(roomListStore.records)
 }
 
 // 缓存分组展开状态，避免静默刷新后折叠状态丢失。
@@ -460,7 +502,7 @@ async function handleTableClick(room: RoomRecord): Promise<void> {
 
   enterTable(payload)
   gameStore.setLastEnterTable(payload)
-  showSuccessToast(`已请求进入牌桌：${room.name || room.rid}`)
+  // showSuccessToast(`已请求进入牌桌：${room.name || room.rid}`)
 }
 
 function handleToggleGroup(groupKey: string): void {
@@ -470,15 +512,14 @@ function handleToggleGroup(groupKey: string): void {
 }
 
 function handleClubHeaderTabClick(tab: ClubHeaderTabName): void {
-  clubHeaderTab.value = tab
   if (tab === 'mahjong') {
     showFailToast('麻将专区开发中')
     return
   }
   if (tab === 'event') {
-    showFailToast('赛事开发中')
-    return
+    mttListStore.bootstrapMttList()
   }
+  clubHeaderTab.value = tab
 }
 
 function handleQuickActionClick(action: 'safety' | 'ranking'): void {
@@ -492,6 +533,20 @@ function handleQuickActionClick(action: 'safety' | 'ranking'): void {
     return
   }
   showFailToast('排行榜功能开发中')
+}
+
+function handleOpenCustomerService(): void {
+  const clubId = selectedClubId.value
+  if (clubId <= 0) {
+    showFailToast('当前俱乐部信息无效')
+    return
+  }
+
+  openGlobalCustomerServiceChat({
+    imServiceType: 1,
+    clubId,
+    tribeId: selectedTribeId.value,
+  })
 }
 
 function handleCreateTableClick(): void {
@@ -629,6 +684,316 @@ function toSafeInt(value: unknown): number {
   return Math.floor(num)
 }
 
+function toSafeString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function resolveLabel(key: string, fallback: string): string {
+  const translated = t(key)
+  if (translated && translated !== key) {
+    return translated
+  }
+  return fallback
+}
+
+function resolveNameByUnityRule(rawName: string): string {
+  if (!rawName) {
+    return ''
+  }
+
+  const mappedName = resolveTemplateTextByKey(rawName, getLocale())
+  if (mappedName) {
+    return mappedName
+  }
+
+  const translated = t(rawName)
+  if (translated && translated !== rawName) {
+    return translated
+  }
+  return rawName
+}
+
+function handleMttCardAction(item: MttItem): void {
+  router.push({ name: 'mtt-detail', query: { id: String(item.id) } })
+}
+
+function handleMttCardClick(item: MttItem): void {
+  router.push({ name: 'mtt-detail', query: { id: String(item.id) } })
+}
+
+function handleViewAll(group: MttRenderGroup): void {
+  expandedGroupMap.value[group.groupId] = !(expandedGroupMap.value[group.groupId] === true)
+}
+
+function buildGroupsBySeries(
+  items: MttViewItem[],
+  seriesMap: Record<number, MttSeriesInfoRecord>,
+): MttGroup[] {
+  const groups: MttGroup[] = []
+  const sortedItems = [...items].sort((a, b) => a.startAtMs - b.startAtMs)
+
+  const clubItems = sortedItems.filter((item) => item.originType === ROOM_ORIGIN_TYPE.CLUB)
+  if (clubItems.length) {
+    groups.push(buildGroup('club', resolveLabel('UIGuildMain_ClubGame', '俱乐部赛事'), clubItems))
+  }
+
+  const noSeriesItems: MttViewItem[] = []
+  const seriesBucketMap: Record<number, MttViewItem[]> = {}
+
+  sortedItems.forEach((item) => {
+    if (item.originType === ROOM_ORIGIN_TYPE.FRIEND || item.originType === ROOM_ORIGIN_TYPE.CLUB) {
+      return
+    }
+
+    if (item.seriesId > 0 && seriesMap[item.seriesId]) {
+      if (!seriesBucketMap[item.seriesId]) {
+        seriesBucketMap[item.seriesId] = []
+      }
+      seriesBucketMap[item.seriesId].push(item)
+      return
+    }
+
+    noSeriesItems.push(item)
+  })
+
+  const seriesIds = Object.keys(seriesBucketMap)
+    .map((value) => Number(value))
+    .filter((value) => value > 0)
+    .sort((a, b) => compareSeriesOrder(a, b, seriesMap))
+
+  seriesIds.forEach((seriesId) => {
+    const seriesInfo = seriesMap[seriesId]
+    const seriesName = resolveNameByUnityRule(toSafeString(seriesInfo?.name)) || `系列 #${seriesId}`
+    const seriesItems = [...seriesBucketMap[seriesId]].sort(compareSeriesRoom)
+    const seriesLayout = resolveSeriesLayoutByType(toSafeInt(seriesInfo?.type), seriesItems.length)
+    groups.push(buildGroup(`series-${seriesId}`, seriesName, seriesItems, seriesLayout))
+  })
+
+  if (noSeriesItems.length) {
+    groups.push(buildGroup('no-series', '', noSeriesItems, 'lg'))
+  }
+
+  return groups
+}
+
+function buildGroup(
+  groupId: string,
+  title: string,
+  items: MttViewItem[],
+  layoutOverride?: MttLayout,
+): MttGroup {
+  const layout = layoutOverride || (items.length <= 1 ? 'lg' : items.length <= 4 ? 'md' : 'sm')
+  return {
+    groupId,
+    title,
+    layout,
+    items,
+    defaultVisibleCount: layout === 'lg' ? 1 : layout === 'md' ? 2 : 3,
+  }
+}
+
+function compareSeriesOrder(
+  seriesAId: number,
+  seriesBId: number,
+  seriesMap: Record<number, MttSeriesInfoRecord>,
+): number {
+  const createA = toSafeInt(seriesMap[seriesAId]?.create_time)
+  const createB = toSafeInt(seriesMap[seriesBId]?.create_time)
+  if (createA !== createB) {
+    return createB - createA
+  }
+  return seriesBId - seriesAId
+}
+
+function compareSeriesRoom(a: MttViewItem, b: MttViewItem): number {
+  if (a.pinnedTime !== b.pinnedTime) {
+    return b.pinnedTime - a.pinnedTime
+  }
+  return a.startAtMs - b.startAtMs
+}
+
+function checkMttVisibility(item: MttViewItem, clubId: number, tribeId: number): boolean {
+  const roomLike = {
+    rid: 0,
+    game_type: 0,
+    poker_type: 0,
+    sb: 0,
+    origin_type: item.originType,
+    relate_club_ids: item.relateClubIds,
+    relate_tribe_club_list: item.relateTribeClubList,
+  } as RoomRecord
+  return checkIsShowForClubAndTribe(roomLike, clubId, tribeId)
+}
+
+function resolveCategory(record: RawMttRecord): MttCategory {
+  const gameType = Number(record.game_type ?? 0)
+  if (gameType === 6) {
+    return 'mahjong'
+  }
+  if (gameType >= 0 && gameType <= 3) {
+    return 'poker'
+  }
+  return 'unknown'
+}
+
+function normalizeRecordToViewItem(
+  record: RawMttRecord,
+  mttIdMeta: MttIdInfoRecord | undefined,
+  nowTimestamp: number,
+): MttViewItem {
+  const category = resolveCategory(record)
+  const stage = resolveStage(record, nowTimestamp)
+  const startAtMs = toTimestampMs(record.start_time)
+  const applyStartAtMs = toTimestampMs(record.apply_start_time)
+  const lateEndAtMs = calcLateEndMs(record, startAtMs)
+
+  const action = resolveAction(stage)
+  const statusView = resolveStatusView(stage, startAtMs, applyStartAtMs, lateEndAtMs, nowTimestamp)
+  const rawName = toSafeString(record.name)
+  const title = resolveNameByUnityRule(rawName) || `MTT #${record.match_id ?? '-'}`.trim()
+  const participants = Number(record.participants ?? 0)
+  const applyFeePool = toSafeInt(record.apply_fee_pool)
+  const prizePool = toSafeInt(record.prize_base_pool ?? record.prize_pool)
+  const prizeType = toSafeInt(record.prize_type)
+  const rebuyTimes = toSafeInt(record.rebuy_times)
+  const addonBeginBl = toSafeInt(record.addon_begin_bl)
+  const addonEndBl = toSafeInt(record.addon_end_bl)
+  const antiCheatType = toSafeInt(record.anti_cheat_type)
+  const startTime = formatDateTime(startAtMs, 'YYYY/MM/DD HH:mm:ss')
+
+  return {
+    id: record.match_id ?? `${title}-${startAtMs}`,
+    title,
+    coverImage: (record.mtt_banner_url || '').trim() || undefined,
+    gameIcon: (record.game_icon || '').trim() || getDefaultGameIcon(category),
+    applyFeePool,
+    prizePool,
+    startTime,
+    registeredCount: Math.max(0, participants),
+    maxCount: resolveMaxCount(record, participants),
+    prizeType,
+    rebuyTimes,
+    addonBeginBl,
+    addonEndBl,
+    antiCheatType,
+    actionType: action.type,
+    actionLabel: action.label,
+    statusLabel: statusView.label,
+    statusTheme: statusView.theme,
+    category,
+    stage,
+    startAtMs,
+    applyStartAtMs,
+    lateEndAtMs,
+    seriesId: toSafeInt(record.series_id),
+    pinnedTime: toSafeInt(record.pinned_time),
+    originType: toSafeInt(mttIdMeta?.origin_type ?? record.origin_type),
+    relateClubIds: normalizeListField(
+      mttIdMeta?.relate_club_ids ?? record.relate_club_ids ?? [],
+    ) as Array<number | string>,
+    relateTribeClubList: normalizeRelateTribeClubList(
+      mttIdMeta?.relate_tribe_club_list ?? record.relate_tribe_club_list,
+    ),
+    raw: record,
+  }
+}
+
+function normalizeListField(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : []
+}
+
+function normalizeRelateTribeClubList(value: unknown): Array<Record<string, unknown>> {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value.filter((item) => Boolean(item) && typeof item === 'object') as Array<
+    Record<string, unknown>
+  >
+}
+
+function resolveSeriesLayoutByType(seriesType: number, total: number): MttLayout {
+  if (total <= 1) return 'lg'
+  if (seriesType === 1) return 'lg'
+  if (seriesType === 2) return 'md'
+  if (seriesType === 3) return total === 2 ? 'md' : 'sm'
+  return total <= 4 ? 'md' : 'sm'
+}
+
+function resolveStage(record: RawMttRecord, nowTimestamp: number): MttStage {
+  const status = toSafeInt(record.status)
+  if (status === MttMatchStatus.CREATED) {
+    const applyStart = toTimestampMs(record.apply_start_time)
+    return applyStart > 0 && nowTimestamp < applyStart ? 'upcoming' : 'registering'
+  }
+  if (status === MttMatchStatus.RUNNING) {
+    const enTime = calcLateEndMs(record, toTimestampMs(record.start_time))
+    return enTime > 0 && nowTimestamp < enTime ? 'late' : 'running'
+  }
+  return 'finished'
+}
+
+function resolveAction(stage: MttStage): { type: MttActionType; label: string } {
+  switch (stage) {
+    case 'upcoming':
+      return { type: 'inProgress', label: t('mtt_btn_waiting_start') }
+    case 'registering':
+      return { type: 'register', label: t('MTT-Apply') }
+    case 'late':
+      return { type: 'late', label: t('mtt_btn_delay') }
+    case 'running':
+      return { type: 'join', label: t('mtt_btn_enter') }
+    default:
+      return { type: 'full', label: t('mtt_btn_sign_up_deadline') }
+  }
+}
+
+function resolveStatusView(
+  stage: MttStage,
+  startAtMs: number,
+  applyStartAtMs: number,
+  lateEndAtMs: number,
+  nowTimestamp: number,
+): { label: string; theme: 'warning' | 'success' | 'danger' | 'default' } {
+  const applyTarget = applyStartAtMs > 0 ? applyStartAtMs : startAtMs
+  const lateTarget = lateEndAtMs > 0 ? lateEndAtMs : startAtMs
+  switch (stage) {
+    case 'upcoming':
+      return { label: formatTodayAwareTimeLabel(applyTarget, nowTimestamp), theme: 'default' }
+    case 'registering':
+      return { label: t('MTT-Applying'), theme: 'success' }
+    case 'late':
+      return {
+        label: `${t('UIMTTLatestRegister')} ${formatTodayAwareTimeLabel(lateTarget, nowTimestamp)}`,
+        theme: 'warning',
+      }
+    case 'running':
+      return {
+        label: `${t('UIMTTLatestRegister')} ${formatTodayAwareTimeLabel(lateTarget, nowTimestamp)}`,
+        theme: 'danger',
+      }
+    default:
+      return { label: t('mtt_btn_sign_up_deadline'), theme: 'default' }
+  }
+}
+
+function resolveMaxCount(record: RawMttRecord, participants: number): number {
+  const seatCount = Number(record.seat_count ?? 0)
+  const upperLimit = Number(record.limit_participants ?? 0)
+  return Math.max(upperLimit, seatCount, participants, 1)
+}
+
+function calcLateEndMs(record: RawMttRecord, startAtMs: number): number {
+  const upblindIntervalSec = Number(record.upblind_interval ?? 0)
+  const maxDelayApplyBl = Number(record.max_delay_apply_bl ?? 0)
+  if (startAtMs <= 0 || upblindIntervalSec <= 0 || maxDelayApplyBl <= 1) return 0
+  return startAtMs + upblindIntervalSec * 1000 * (maxDelayApplyBl - 1)
+}
+
+function getDefaultGameIcon(category: MttCategory): string {
+  return category === 'mahjong' ? mahjongMiniIcon : pokerMiniIcon
+}
+
 function matchTabRoom(room: RoomRecord, tabName: GameTypeTabName): boolean {
   const gameType = Number(room.game_type) || 0
   const pokerType = Number(room.poker_type) || 0
@@ -711,7 +1076,7 @@ function formatChipBase(rawValue: number): string {
           :name="t('UIMineMain01')"
           :icon="serviceIcon"
           icon-alt="service"
-          @click="showFailToast('客服功能开发中')"
+          @click="handleOpenCustomerService"
         />
       </div>
     </HeaderBack>
@@ -783,7 +1148,6 @@ function formatChipBase(rawValue: number): string {
             alt=""
             aria-hidden="true"
           />
-
           <span class="quick-card-title">安全卫士</span>
         </button>
 
@@ -798,41 +1162,101 @@ function formatChipBase(rawValue: number): string {
             alt=""
             aria-hidden="true"
           />
-
           <span class="quick-card-title">排行榜</span>
         </button>
       </div>
     </header>
 
-    <GameTypeTabbar
-      v-show="clubHeaderTab === 'poker'"
-      v-model="activeTab"
-      class="club-game-tabs"
-      :tabs="[
-        { name: 'all', title: t('UIMatch_GtO8YEdb') },
-        { name: 'texas', title: t('UITexasInfo_Texas') },
-        { name: 'omaha', title: t('UITexasInfo_Omaha') },
-        { name: 'sixPlus', title: t('6+') },
-      ]"
-    />
+    <template v-if="clubHeaderTab === 'event'">
+      <GameTypeTabbar v-model="mttActiveTab" class="club-game-tabs" :tabs="mttTabs" />
 
-    <section class="group-list" v-show="clubHeaderTab === 'poker'">
-      <PokerTableGroupCard
-        v-for="group in groupedRecords"
-        :key="group.groupKey"
-        :group="group"
-        :expanded="expandedMap[group.groupKey] === true"
-        @toggle="handleToggleGroup"
-        @table-click="handleTableClick"
+      <section class="group-list">
+        <template v-if="renderGroups.length">
+          <div v-for="group in renderGroups" :key="group.groupId" class="mtt-group">
+            <div v-if="group.title || group.showViewAll" class="mtt-group__header">
+              <span v-if="group.title" class="mtt-group__title">{{ group.title }}</span>
+              <span v-else class="mtt-group__title mtt-group__title--empty"></span>
+              <span
+                v-if="group.showViewAll"
+                class="mtt-group__toggle"
+                @click="handleViewAll(group)"
+              >
+                {{ group.expanded ? t('UIMinePutAway') : t('UIHappyShop_ShowAll') }}
+              </span>
+            </div>
+
+            <div v-if="group.layout === 'sm'" class="mtt-grid mtt-grid--sm">
+              <MttCard
+                v-for="item in group.displayItems"
+                :key="item.id"
+                size="sm"
+                :item="item"
+                @action="handleMttCardAction"
+                @click="handleMttCardClick"
+              />
+            </div>
+
+            <div v-else-if="group.layout === 'md'" class="mtt-grid mtt-grid--md">
+              <MttCard
+                v-for="item in group.displayItems"
+                :key="item.id"
+                size="md"
+                :item="item"
+                @action="handleMttCardAction"
+                @click="handleMttCardClick"
+              />
+            </div>
+
+            <div v-else class="mtt-grid mtt-grid--lg">
+              <MttCard
+                v-for="item in group.displayItems"
+                :key="item.id"
+                size="lg"
+                :item="item"
+                @action="handleMttCardAction"
+                @click="handleMttCardClick"
+              />
+            </div>
+          </div>
+        </template>
+
+        <div v-else class="empty-wrap">
+          <VanIcon name="search" />
+          <span>{{ t('UIMatchNoTournaments') }}</span>
+        </div>
+      </section>
+    </template>
+
+    <template v-else>
+      <GameTypeTabbar
+        v-model="activeTab"
+        class="club-game-tabs"
+        :tabs="[
+          { name: 'all', title: t('UIMatch_GtO8YEdb') },
+          { name: 'texas', title: t('UITexasInfo_Texas') },
+          { name: 'omaha', title: t('UITexasInfo_Omaha') },
+          { name: 'sixPlus', title: t('6+') },
+        ]"
       />
 
-      <div v-if="!groupedRecords.length" class="empty-wrap">
-        <VanIcon name="search" />
-        <span>
-          {{ t('UINoGameTip') }}
-        </span>
-      </div>
-    </section>
+      <section class="group-list">
+        <PokerTableGroupCard
+          v-for="group in groupedRecords"
+          :key="group.groupKey"
+          :group="group"
+          :expanded="expandedMap[group.groupKey] === true"
+          @toggle="handleToggleGroup"
+          @table-click="handleTableClick"
+        />
+
+        <div v-if="!groupedRecords.length" class="empty-wrap">
+          <VanIcon name="search" />
+          <span>
+            {{ t('UINoGameTip') }}
+          </span>
+        </div>
+      </section>
+    </template>
 
     <div v-if="clubHeaderTab === 'minigame'" class="club-embedded-container">
       <MiniGameView :hideHeader="true" :clubId="selectedClubId" />
@@ -844,7 +1268,7 @@ function formatChipBase(rawValue: number): string {
 
     <div class="floating-action-area" v-show="clubHeaderTab === 'poker'">
       <button
-        v-if="canCreateTable"
+        v-if="clubHeaderTab !== 'event' && canCreateTable"
         class="create-table-btn"
         type="button"
         @click="handleCreateTableClick"
@@ -852,7 +1276,7 @@ function formatChipBase(rawValue: number): string {
         创建牌桌
       </button>
       <button
-        :class="{ 'floating-menu-btn--solo': !canCreateTable }"
+        :class="{ 'floating-menu-btn--solo': clubHeaderTab === 'event' || !canCreateTable }"
         class="floating-menu-btn"
         type="button"
         aria-label="更多操作"
@@ -888,7 +1312,7 @@ function formatChipBase(rawValue: number): string {
       </div>
     </van-popup>
 
-    <SafetyGuardPopup v-model:show="showSafetyGuardPopup" :tribe-id="selectedTribeId" />
+    <SafetyGuardDialog v-model:show="showSafetyGuardPopup" :tribe-id="selectedTribeId" />
   </div>
 </template>
 
@@ -917,7 +1341,7 @@ function formatChipBase(rawValue: number): string {
 .club-header {
   position: relative;
   z-index: 2;
-  padding: calc(env(safe-area-inset-top) + 0.457rem) 0.456rem 0.22rem;
+  // padding: calc(env(safe-area-inset-top) + 0.457rem) 0.456rem 0.22rem;
 }
 
 .club-header-row {
@@ -1059,9 +1483,9 @@ function formatChipBase(rawValue: number): string {
 }
 
 .announce-bar {
-  margin-top: 0.217rem;
+  // margin-top: 0.217rem;
   width: 100%;
-  min-height: 1.0577rem;
+  // min-height: 1.0577rem;
   border: 0;
   border-radius: 0.5279rem;
   padding: 0.1325rem 0.1446rem;
@@ -1086,9 +1510,9 @@ function formatChipBase(rawValue: number): string {
   line-height: 1.4;
   text-align: left;
   flex: 1;
-  line-clamp: 2;
+  line-clamp: 1;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
   word-break: break-word;
@@ -1280,10 +1704,8 @@ function formatChipBase(rawValue: number): string {
   inset: -0.0107rem;
   border-radius: inherit;
   border: 0.0107rem solid rgba(255, 255, 255, 0.58);
-  box-shadow:
-    inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
-    inset 0 0 0.2rem rgba(255, 255, 255, 0.14),
-    0 0 0.08rem rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
+    inset 0 0 0.2rem rgba(255, 255, 255, 0.14), 0 0 0.08rem rgba(255, 255, 255, 0.18);
   filter: blur(0.002rem);
   pointer-events: none;
   z-index: 4;
@@ -1373,7 +1795,7 @@ function formatChipBase(rawValue: number): string {
 .group-list {
   position: relative;
   z-index: 1;
-  margin-top: 0;
+  margin-top: -0.03rem;
   max-height: calc(100dvh - 7.85rem);
   overflow-y: auto;
   display: flex;
@@ -1395,6 +1817,72 @@ function formatChipBase(rawValue: number): string {
   width: 100%;
   overflow-y: auto;
   padding-bottom: 2.2rem;
+}
+
+.mtt-content {
+  position: relative;
+  z-index: 1;
+  margin-top: 0;
+  max-height: calc(100dvh - 7.85rem);
+  overflow-y: auto;
+  padding: 0.34rem 0.38rem 2.2rem;
+  backdrop-filter: blur(0.3533rem) saturate(1.04);
+}
+
+.mtt-group {
+  margin-bottom: 0.48rem;
+}
+
+.mtt-group__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0.4rem 0.32rem;
+}
+
+.mtt-group__title {
+  font-size: 0.4893rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.mtt-group__title--empty {
+  min-height: 0.5866rem;
+}
+
+.mtt-group__toggle {
+  display: inline-flex;
+  justify-content: flex-end;
+  width: 4em;
+  font-size: 0.32rem;
+  font-weight: 500;
+  color: #ececec;
+  cursor: pointer;
+  text-align: right;
+  line-height: 0.6rem;
+}
+
+.mtt-grid {
+  width: 100%;
+}
+
+.mtt-grid--sm {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.16rem;
+}
+
+.mtt-grid--md {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.13rem;
+}
+
+.mtt-grid--lg {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
 }
 
 .floating-action-area {

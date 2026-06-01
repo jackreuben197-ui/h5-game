@@ -16,8 +16,14 @@ import imgClubRoleIcon from '@/assets/icons/member_icon.png'
 import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shield.svg'
 import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.svg'
 import imgQuickActionAlliance from '@/assets/images/club_qa_data_board_alliance.svg'
+import imgBalance from '@/assets/icons/icon_balance.png'
+import imgChips from '@/assets/icons/icon_chips.png'
+import imgClubBannerFigma from '@/assets/images/club_banner_bg.png'
+import imgClubLogo from '@/assets/images/club_default_logo.png'
+import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import type { ClubInfo } from '@/stores/userInfo'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { formatUC } from '@/utils/roomVisibility'
 
 type QuickActionKind = 'create-club' | 'club-panel' | 'create-union'
 
@@ -47,6 +53,7 @@ const userInfoStore = useUserInfoStore()
 const searchKeyword = ref('')
 const loadingMyClubs = ref(false)
 const searchLoading = ref(false)
+const searchKeypadOpen = ref(false)
 const showJoinModal = ref(false)
 const joinLoading = ref(false)
 const searchedClub = ref<ClubInfo | null>(null)
@@ -73,7 +80,8 @@ const clubList = computed<ClubCardItem[]>(() => {
       chipsCount: toSafeNumber(club.user_credit),
       tableCount: toSafeNumber(club.tables),
       memberCount: toSafeNumber(club.club_members),
-      cover: toSafeString(club.logo),
+      cover: toSafeString(club.logo) || imgClubLogo,
+      bannerBg: fallbackBanner,
     }
   })
 })
@@ -90,10 +98,6 @@ const searchedClubLogo = computed(() => {
   const logo = toSafeString(searchedClub.value?.logo)
   return logo
 })
-
-function formatCount(value: number): string {
-  return value.toLocaleString('en-US')
-}
 
 function normalizeClubId(value: unknown): string {
   return value === undefined || value === null ? '' : String(value).trim()
@@ -132,13 +136,28 @@ function onQuickAction(itemId: number): void {
   void router.push('/club/create')
 }
 
-function onSearchInput(value: string): void {
-  searchKeyword.value = value.replace(/\D+/g, '')
+function openSearchKeypad(): void {
+  searchKeypadOpen.value = true
 }
 
-function onSearchInputEvent(event: Event): void {
-  const target = event.target as HTMLInputElement | null
-  onSearchInput(target?.value || '')
+function onSearchKeypadClose(): void {
+  searchKeypadOpen.value = false
+}
+
+function onSearchKeypadSubmit(): void {
+  searchKeypadOpen.value = false
+}
+
+function onSearchKeypadKeyPress(payload: {
+  key: string
+  action: 'digit' | 'clear' | 'backspace'
+  value: string
+  accepted: boolean
+}): void {
+  if (!payload.accepted && payload.action === 'digit') {
+    return
+  }
+  searchKeyword.value = payload.value.replace(/\D+/g, '').slice(0, 6)
 }
 
 function findClubInMine(target: ClubInfo): ClubInfo | null {
@@ -165,7 +184,7 @@ async function loadMyClubList(force = false): Promise<void> {
     return
   }
 
-  loadingMyClubs.value = true
+  // loadingMyClubs.value = true
   try {
     const response = await postOrgClubGetApi()
     if (Number(response.code) !== 0) {
@@ -197,7 +216,8 @@ async function onSearchClub(): Promise<void> {
   try {
     const response = await postOrgClubSearchByIdApi({ club_random_id: Number(keyword) })
     if (Number(response.code) !== 0) {
-      throw new Error(response.message || '查询俱乐部失败')
+      showFailToast('找不到俱乐部')
+      return
     }
 
     const targetClub = response.data
@@ -215,8 +235,8 @@ async function onSearchClub(): Promise<void> {
     searchedClub.value = targetClub
     showJoinModal.value = true
   } catch (error) {
-    const message = error instanceof Error ? error.message : '查询俱乐部失败'
-    showFailToast(message)
+    const message = error instanceof Error ? error.message : ''
+    showFailToast(message || '找不到俱乐部')
   } finally {
     searchLoading.value = false
   }
@@ -258,7 +278,7 @@ async function onJoinClub(): Promise<void> {
 }
 
 onMounted(() => {
-  void loadMyClubList()
+  void loadMyClubList(true)
 })
 </script>
 
@@ -276,9 +296,10 @@ onMounted(() => {
             inputmode="numeric"
             autocomplete="off"
             maxlength="6"
-            placeholder="搜索俱乐部"
-            @input="onSearchInputEvent"
-            @keyup.enter="onSearchClub"
+            readonly
+            placeholder="搜索俱乐部ID"
+            @focus="openSearchKeypad"
+            @click="openSearchKeypad"
           />
         </label>
         <button type="button" class="search-btn" :disabled="searchLoading" @click="onSearchClub">
@@ -362,13 +383,13 @@ onMounted(() => {
                 <div class="club-top-metrics" aria-hidden="true">
                   <span class="top-metric-item">
                     <img :src="imgChipRed" alt="" />
-                    <span>{{ formatCount(club.activeCount) }}</span>
+                    <span>{{ formatUC(club.activeCount) }}</span>
                   </span>
                   <span class="top-metric-item">
                     <img :src="imgChipGreen" alt="" />
-                    <span>{{ formatCount(club.chipsCount) }}</span>
+                    <span>{{ formatUC(club.chipsCount) }}</span>
                   </span>
-                </div>
+
               </div>
             </div>
 
@@ -378,6 +399,7 @@ onMounted(() => {
               </button>
             </div>
           </div>
+        </div>
         </div>
 
         <div class="club-stats-shell" aria-hidden="true">
@@ -415,26 +437,40 @@ onMounted(() => {
             </p>
           </div>
 
-          <div class="join-modal-actions">
-            <button
-              type="button"
-              class="join-modal-btn join-modal-btn--cancel"
-              @click="closeJoinModal"
-            >
-              取消
-            </button>
-            <button
-              type="button"
-              class="join-modal-btn join-modal-btn--confirm"
-              :disabled="joinLoading"
-              @click="onJoinClub"
-            >
-              {{ joinLoading ? '提交中' : '加入' }}
-            </button>
-          </div>
-        </section>
-      </div>
-    </transition>
+        <div class="join-modal-actions">
+          <button
+            type="button"
+            class="join-modal-btn join-modal-btn--cancel"
+            @click="closeJoinModal"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            class="join-modal-btn join-modal-btn--confirm"
+            :disabled="joinLoading"
+            @click="onJoinClub"
+          >
+            {{ joinLoading ? '提交中' : '加入' }}
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <NumericKeypad
+      :open="searchKeypadOpen"
+      :min="0"
+      :max="999999"
+      :max-length="6"
+      :initial-value="searchKeyword"
+      :show-input-area="true"
+      :allow-leading-zero="true"
+      title="搜索俱乐部ID"
+      confirm-text="确定"
+      @close="onSearchKeypadClose"
+      @submit="onSearchKeypadSubmit"
+      @key-press="onSearchKeypadKeyPress"
+    />
   </div>
 </template>
 
@@ -443,6 +479,7 @@ onMounted(() => {
   position: relative;
   height: 100dvh;
   background-color: #0f122f;
+  background-size: cover;
 }
 
 .bg-image {
@@ -534,7 +571,7 @@ onMounted(() => {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    padding: 0.013rem; // ~1px border width
+    padding: 0.013rem;
     background: linear-gradient(
       126.09deg,
       rgba(255, 255, 255, 0.89) 21.1%,
@@ -558,7 +595,7 @@ onMounted(() => {
   padding: 0;
   display: inline-flex;
   align-items: center;
-  gap: 0.218rem; // 8.19px / 37.5
+  gap: 0.218rem;
   justify-content: flex-start;
   background: transparent;
   color: #fff;
@@ -566,8 +603,16 @@ onMounted(() => {
 
 .search-icon {
   flex: 0 0 auto;
-  width: 0.557rem; // 20.885px / 37.5
-  height: 0.546rem; // 20.475px / 37.5
+  width: 0.557rem;
+  height: 0.546rem;
+}
+
+.search-placeholder {
+  font-family: 'HONOR Sans CN', 'PingFang SC', sans-serif;
+  font-size: 0.3rem;
+  line-height: 1.4;
+  color: #fff;
+  opacity: 0.96;
 }
 
 .search-input {
@@ -648,7 +693,7 @@ onMounted(() => {
   position: relative;
   z-index: 1;
   font-family: 'SF Pro', 'PingFang SC', sans-serif;
-  font-size: 0.371rem; // 13.93px / 37.5
+  font-size: 0.371rem;
   font-weight: 400;
   font-variation-settings: 'wdth' 100;
   line-height: 0.946;
@@ -665,7 +710,7 @@ onMounted(() => {
   box-shadow:
     inset 0 0 0.059rem 0 #000,
     inset 0.008rem 0.008rem 0.059rem 0 #000,
-    inset 0 0 0.119rem 0.042rem rgba(242, 242, 242, 0.9); // spread: 1.558px
+    inset 0 0 0.119rem 0.042rem rgba(242, 242, 242, 0.9);
 }
 
 .quick-actions {
@@ -718,12 +763,11 @@ onMounted(() => {
   }
 
   &--create-union {
-    width: 1.692rem; // 63.459px / 37.5
+    width: 1.692rem;
     height: 1.692rem;
   }
 }
 
-// Shared base for all icon images
 .qa-img {
   position: absolute;
   display: block;
@@ -731,7 +775,6 @@ onMounted(() => {
   pointer-events: none;
 }
 
-// create-club — shield fills entire icon container
 .qa-img--cc-small {
   width: 100%;
   height: 100%;
@@ -740,7 +783,6 @@ onMounted(() => {
   object-fit: contain;
 }
 
-// club-panel — chart svg fills entire icon container
 .qa-img--cp-vec {
   width: 100%;
   height: 100%;
@@ -749,7 +791,6 @@ onMounted(() => {
   object-fit: contain;
 }
 
-// create-union — alliance svg fills entire icon container
 .qa-img--cu-alliance {
   width: 100%;
   height: 100%;
@@ -757,7 +798,6 @@ onMounted(() => {
   top: 0;
   object-fit: contain;
 }
-
 .action-text {
   font-family: 'SF Pro', 'PingFang SC', sans-serif;
   font-size: 0.304rem;
@@ -821,7 +861,7 @@ onMounted(() => {
     content: '';
     position: absolute;
     inset: -0.213rem;
-    border-radius: 1.015rem; // 0.802 + 0.213
+    border-radius: 1.015rem;
     border: 0.213rem solid rgba(60, 24, 13, 0.8);
     background: #241108;
     backdrop-filter: blur(0.446rem);
@@ -980,6 +1020,40 @@ onMounted(() => {
   width: 0.36rem;
   height: 0.4rem;
   object-fit: contain;
+}
+
+.stat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.05rem;
+  font-size: 0.27rem;
+  line-height: 0.95;
+  color: rgba(251, 251, 251, 0.95);
+}
+
+.stat-item img {
+  width: 0.4rem;
+  height: 0.4rem;
+  object-fit: contain;
+}
+
+.stat-item--role {
+  gap: 0.04rem;
+}
+
+.stat-item--role img {
+  width: 0.437rem;
+  height: 0.437rem;
+}
+
+.stat-item span {
+  letter-spacing: 0.006rem;
+  white-space: nowrap;
+}
+
+.stat-item--role span {
+  letter-spacing: 0;
+  line-height: 1;
 }
 
 .enter-btn-wrapper {

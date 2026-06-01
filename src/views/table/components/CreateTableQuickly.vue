@@ -13,6 +13,7 @@ import {
 } from '../tableSections/constants'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useAppConfigStore } from '@/stores/appConfig'
+import type { DiamondConfigItem, DiamondSetting } from '@/api/models/config'
 import {
   postOrggetTemplateApi,
   postOrgRoomCreateApi,
@@ -67,21 +68,6 @@ const clubDiamondBalance = computed(() => {
   return Number(userInfoStore.currentClub?.diamonds ?? 0)
 })
 
-interface DiamondSetting {
-  sb: number
-  price: number
-  discount_price: number
-}
-
-interface DiamondConfigItem {
-  config_type: number
-  status: number
-  type_ext: number
-  start_time: number
-  end_time: number
-  setting: DiamondSetting[]
-}
-
 interface FeePrice {
   originPrice: number
   discountPrice: number
@@ -124,50 +110,6 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
-function normalizeDiamondSettings(raw: unknown): DiamondSetting[] {
-  if (!Array.isArray(raw)) return []
-  return raw.map((item) => {
-    const row = item as Record<string, unknown>
-    return {
-      sb: Math.floor(toNumber(row.sb)),
-      price: toNumber(row.price),
-      discount_price: toNumber(row.discount_price),
-    }
-  })
-}
-
-function normalizeDiamondConfigItems(raw: unknown): DiamondConfigItem[] {
-  if (!Array.isArray(raw)) return []
-  return raw.map((item) => {
-    const row = item as Record<string, unknown>
-    return {
-      config_type: Math.floor(toNumber(row.config_type)),
-      status: Math.floor(toNumber(row.status)),
-      type_ext: Math.floor(toNumber(row.type_ext)),
-      start_time: Math.floor(toNumber(row.start_time)),
-      end_time: Math.floor(toNumber(row.end_time)),
-      setting: normalizeDiamondSettings(row.setting),
-    }
-  })
-}
-
-function extractDiamondConfigItems(raw: unknown): DiamondConfigItem[] {
-  if (!raw || typeof raw !== 'object') return []
-  const root = raw as Record<string, unknown>
-  const candidates: unknown[] = [
-    root,
-    root.data,
-    (root.data as Record<string, unknown> | undefined)?.data,
-    root.list,
-    (root.data as Record<string, unknown> | undefined)?.list,
-  ]
-  for (const candidate of candidates) {
-    const list = normalizeDiamondConfigItems(candidate)
-    if (list.length) return list
-  }
-  return []
-}
-
 function isInDiscountWindow(config: DiamondConfigItem, nowSec: number): boolean {
   if (!config.start_time || !config.end_time) return false
   return nowSec >= config.start_time && nowSec <= config.end_time
@@ -204,14 +146,8 @@ function getConfigPrice(config: DiamondConfigItem | null, sb: number): FeePrice 
   return { originPrice: setting.price, discountPrice: setting.price, isDiscount: false }
 }
 
-function findDiamondConfig(
-  configItems: DiamondConfigItem[],
-  configType: number,
-  typeExt: number,
-): DiamondConfigItem | null {
-  return (
-    configItems.find((item) => item.config_type === configType && item.type_ext === typeExt) || null
-  )
+function findDiamondConfig(configType: number, typeExt: number): DiamondConfigItem | null {
+  return appConfigStore.diamondConfig?.[configType]?.[typeExt] ?? null
 }
 
 const currentOriginType = computed(() => {
@@ -542,18 +478,13 @@ watch(
 )
 
 const feeDetails = computed<FeeDetailItem[]>(() => {
-  const configItems = extractDiamondConfigItems(appConfigStore.diamondConfig)
   const tableTypeExt = feeContext.tableTypeExt
   const seatCount = Math.max(2, Math.floor(toNumber(formState.seat_count, 2)))
   const sb = Math.floor(toNumber(formState.sb, 10))
   const playDuration = normalizePlayDurationSeconds(formState.play_duration)
   const details: FeeDetailItem[] = []
 
-  const createConfig = findDiamondConfig(
-    configItems,
-    DIAMOND_CONFIG_TYPE.CREATE_TABLE,
-    tableTypeExt,
-  )
+  const createConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.CREATE_TABLE, tableTypeExt)
   const createPrice = getConfigPrice(createConfig, sb)
   const durationMultiple = Math.max(1, Math.floor(playDuration / 1800))
   details.push({
@@ -570,7 +501,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
   const antiCheatVideoType = feeContext.antiCheatVideoType
   const banConfigType = getBanConfigType(antiCheatType, antiCheatVideoType)
   if (banConfigType) {
-    const banConfig = findDiamondConfig(configItems, banConfigType, seatCount)
+    const banConfig = findDiamondConfig(banConfigType, seatCount)
     const banPrice = getConfigPrice(banConfig, sb)
     const banMultiple = getBanMultiple(antiCheatType, playDuration)
     details.push({
@@ -588,7 +519,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
   const isChatOn = feeContext.chatEnabled
   if (isChatOn) {
     const chatTypeExt = seatCount * 1000 + tableTypeExt
-    const chatConfig = findDiamondConfig(configItems, DIAMOND_CONFIG_TYPE.CHAT, chatTypeExt)
+    const chatConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.CHAT, chatTypeExt)
     const chatPrice = getConfigPrice(chatConfig, sb)
     details.push({
       label: '聊天消耗',
@@ -604,11 +535,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
   // 快速开桌客户端口径：洗切牌默认开启（无开关，收费提示固定展示）。
   const isBlockchainOn = feeContext.blockchainEnabled
   if (isBlockchainOn) {
-    const blockchainConfig = findDiamondConfig(
-      configItems,
-      DIAMOND_CONFIG_TYPE.BLOCKCHAIN,
-      tableTypeExt,
-    )
+    const blockchainConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.BLOCKCHAIN, tableTypeExt)
     const blockchainPrice = getConfigPrice(blockchainConfig, sb)
     details.push({
       label: '洗切牌',
@@ -623,11 +550,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
 
   const isInsuranceOn = Number(formState.insurance) > 0
   if (isInsuranceOn) {
-    const insuranceConfig = findDiamondConfig(
-      configItems,
-      DIAMOND_CONFIG_TYPE.INSURANCE,
-      tableTypeExt,
-    )
+    const insuranceConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.INSURANCE, tableTypeExt)
     const insurancePrice = getConfigPrice(insuranceConfig, sb)
     details.push({
       label: '保险',
@@ -642,7 +565,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
 
   const isSquidOn = Number(formState.squid) > 0
   if (isSquidOn) {
-    const squidConfig = findDiamondConfig(configItems, DIAMOND_CONFIG_TYPE.SQUID, tableTypeExt)
+    const squidConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.SQUID, tableTypeExt)
     const squidPrice = getConfigPrice(squidConfig, sb)
     details.push({
       label: '鱿鱼玩法',

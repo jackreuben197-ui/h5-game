@@ -57,10 +57,29 @@ export interface GlobalConfigData {
   [key: string]: unknown
 }
 
-// /config/diamond/config 响应 data。
+// /config/diamond/config 原始响应 data（data 字段为配置项数组）。
 export interface DiamondConfigData {
+  data?: Array<Record<string, unknown>>
   [key: string]: unknown
 }
+
+export interface DiamondSetting {
+  sb: number
+  price: number
+  discount_price: number
+}
+
+export interface DiamondConfigItem {
+  config_type: number
+  status: number
+  type_ext: number
+  start_time: number
+  end_time: number
+  setting: DiamondSetting[]
+}
+
+// 转换后的收费配置结构：{ [config_type]: { [type_ext]: DiamondConfigItem } }
+export type DiamondConfigMap = Record<number, Record<number, DiamondConfigItem>>
 
 // MTT 记录费配置（对齐 Unity UIMttBuyInComponent.RecordFeeData）。
 export interface MttRecordFeeConfig {

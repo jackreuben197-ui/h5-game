@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import bannerBgUrl from '@/assets/images/card_bg3.png'
 import AppBar from '@/components/wallet/AppBar.vue'
@@ -9,8 +10,10 @@ import { postUserGoldChangeLogApi } from '@/api/user'
 
 import type { UserGoldChangeLogRecord } from '@/api/models/user'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { formatUC } from '@/utils/roomVisibility'
 
 const userInfoStore = useUserInfoStore()
+const router = useRouter()
 const userInfo = computed(() => userInfoStore.userInfo?.user)
 
 const logs = ref<UserGoldChangeLogRecord[]>([])
@@ -31,6 +34,10 @@ function formatTime(raw?: string): string {
   return raw.replace('T', ' ').slice(11, 16)
 }
 
+function goGiftUc(): void {
+  void router.push('/wallet/gift-uc')
+}
+
 onMounted(async () => {
   const res = await postUserGoldChangeLogApi({ limit: 20, offset: 0 })
   logs.value = res.data?.list ?? []
@@ -38,24 +45,25 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div
-    class="details-page"
-    :style="{ backgroundImage: `url(${sharpBgUrl})` }"
-  >
-    <AppBar
-      title="明细"
-      :show-actions="false"
-    />
+  <div class="details-page" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
+    <AppBar title="明细" :show-actions="false" />
 
     <div class="details-content">
       <div class="user-card-wrapper">
         <div class="user-card">
-          <div class="user-card__banner-bg" :style="{ backgroundImage: `url(${bannerBgUrl})` }"></div>
+          <div
+            class="user-card__banner-bg"
+            :style="{ backgroundImage: `url(${bannerBgUrl})` }"
+          ></div>
           <div class="user-card-inner">
             <div class="user-info-section">
               <div class="avatar-box">
                 <img :src="(userInfo?.avatar as string) || ''" alt="avatar" />
               </div>
+              <button class="gift-entry" @click="goGiftUc">
+                <span class="gift-entry__label">赠送</span>
+                <img src="@/assets/icons/wallet/ic_gift.png" alt="gift" class="gift-entry__icon" />
+              </button>
               <div class="user-text">
                 <span class="user-name">{{ userInfo?.nickname ?? '-' }}</span>
                 <div class="user-id-badge">
@@ -67,7 +75,7 @@ onMounted(async () => {
 
             <div class="balance-section">
               <span class="balance-label">Balance:</span>
-              <span class="balance-value">{{ (userInfo?.gold as number ?? 0).toLocaleString() }}</span>
+              <span class="balance-value">{{ formatUC(userInfo?.gold as number) ?? 0 }}</span>
               <img :src="iconChips" alt="chips" class="chip-icon" />
             </div>
           </div>
@@ -88,7 +96,10 @@ onMounted(async () => {
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path d="M9.38467 12.699L7.75448 14.328L12.6427 19.2163L17.531 14.328L15.902 12.699L13.7948 14.805L13.7948 6.1218L11.4907 6.1218L11.4907 14.805L9.38467 12.699Z" fill="#05E7AE" />
+                  <path
+                    d="M9.38467 12.699L7.75448 14.328L12.6427 19.2163L17.531 14.328L15.902 12.699L13.7948 14.805L13.7948 6.1218L11.4907 6.1218L11.4907 14.805L9.38467 12.699Z"
+                    fill="#05E7AE"
+                  />
                   <path
                     fill-rule="evenodd"
                     clip-rule="evenodd"
@@ -105,7 +116,10 @@ onMounted(async () => {
                   xmlns="http://www.w3.org/2000/svg"
                   style="transform: rotate(180deg)"
                 >
-                  <path d="M9.38467 12.699L7.75448 14.328L12.6427 19.2163L17.531 14.328L15.902 12.699L13.7948 14.805L13.7948 6.1218L11.4907 6.1218L11.4907 14.805L9.38467 12.699Z" fill="#FF4B4B" />
+                  <path
+                    d="M9.38467 12.699L7.75448 14.328L12.6427 19.2163L17.531 14.328L15.902 12.699L13.7948 14.805L13.7948 6.1218L11.4907 6.1218L11.4907 14.805L9.38467 12.699Z"
+                    fill="#FF4B4B"
+                  />
                   <path
                     fill-rule="evenodd"
                     clip-rule="evenodd"
@@ -141,7 +155,10 @@ onMounted(async () => {
                 viewBox="0 0 20 20"
                 fill="none"
               >
-                <path d="M10 0C15.523 0 20 4.477 20 10C20 15.523 15.523 20 10 20C4.477 20 0 15.523 0 10C0 4.477 4.477 0 10 0ZM10 2C7.87827 2 5.84344 2.84285 4.34315 4.34315C2.84285 5.84344 2 7.87827 2 10C2 12.1217 2.84285 14.1566 4.34315 15.6569C5.84344 17.1571 7.87827 18 10 18C12.1217 18 14.1566 17.1571 15.6569 15.6569C17.1571 14.1566 18 12.1217 18 10C18 7.87827 17.1571 5.84344 15.6569 4.34315C14.1566 2.84285 12.1217 2 10 2ZM10 4C10.2449 4.00003 10.4813 4.08996 10.6644 4.25272C10.8474 4.41547 10.9643 4.63975 10.993 4.883L11 5V9.586L13.707 12.293C13.8863 12.473 13.9905 12.7144 13.9982 12.9684C14.006 13.2223 13.9168 13.4697 13.7488 13.6603C13.5807 13.8508 13.3464 13.9703 13.0935 13.9944C12.8406 14.0185 12.588 13.9454 12.387 13.79L12.293 13.707L9.293 10.707C9.13758 10.5514 9.03776 10.349 9.009 10.131L9 10V5C9 4.73478 9.10536 4.48043 9.29289 4.29289C9.48043 4.10536 9.73478 4 10 4Z" fill="white" />
+                <path
+                  d="M10 0C15.523 0 20 4.477 20 10C20 15.523 15.523 20 10 20C4.477 20 0 15.523 0 10C0 4.477 4.477 0 10 0ZM10 2C7.87827 2 5.84344 2.84285 4.34315 4.34315C2.84285 5.84344 2 7.87827 2 10C2 12.1217 2.84285 14.1566 4.34315 15.6569C5.84344 17.1571 7.87827 18 10 18C12.1217 18 14.1566 17.1571 15.6569 15.6569C17.1571 14.1566 18 12.1217 18 10C18 7.87827 17.1571 5.84344 15.6569 4.34315C14.1566 2.84285 12.1217 2 10 2ZM10 4C10.2449 4.00003 10.4813 4.08996 10.6644 4.25272C10.8474 4.41547 10.9643 4.63975 10.993 4.883L11 5V9.586L13.707 12.293C13.8863 12.473 13.9905 12.7144 13.9982 12.9684C14.006 13.2223 13.9168 13.4697 13.7488 13.6603C13.5807 13.8508 13.3464 13.9703 13.0935 13.9944C12.8406 14.0185 12.588 13.9454 12.387 13.79L12.293 13.707L9.293 10.707C9.13758 10.5514 9.03776 10.349 9.009 10.131L9 10V5C9 4.73478 9.10536 4.48043 9.29289 4.29289C9.48043 4.10536 9.73478 4 10 4Z"
+                  fill="white"
+                />
               </svg>
               <span class="time-text">{{ formatTime(item.create_time) }}</span>
             </div>
@@ -233,8 +250,12 @@ onMounted(async () => {
       rgba(255, 255, 255, 0.8) 50%,
       rgba(255, 255, 255, 0.25) 100%
     );
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
@@ -274,6 +295,52 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+.gift-entry {
+  position: fixed;
+  right: 0.7024rem;
+  top: 2.0594rem;
+  width: 4.0976rem;
+  height: 0.8273rem;
+  z-index: 4;
+  border: none;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 0.7229rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.gift-entry__icon-wrap {
+  position: absolute;
+  right: -0.009rem;
+  top: -0.012rem;
+  width: 0.987rem;
+  height: 0.851rem;
+  border-radius: 50%;
+  background: radial-gradient(110% 110% at 30% 25%, #3cd8ff 0%, #2588ef 64%, #1160d2 100%);
+  box-shadow: 0 0 0.02rem rgba(255, 255, 255, 0.85) inset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  float: left;
+}
+
+.gift-entry__icon {
+  width: 0.48rem;
+  height: 0.48rem;
+  right: 0.1rem;
+  position: absolute;
+}
+
+.gift-entry__label {
+  font-family: 'SF Pro', sans-serif;
+  font-size: 0.3939rem;
+  font-weight: 500;
+  line-height: 1;
 }
 
 .user-info-section {
@@ -406,8 +473,12 @@ onMounted(async () => {
     border-radius: inherit;
     padding: 0.0169rem;
     background: linear-gradient(139deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0) 100%);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
@@ -492,7 +563,7 @@ onMounted(async () => {
   justify-content: center;
   align-items: center;
   border-radius: 0.1121rem;
-  background: rgba(255, 255, 255, 0.40);
+  background: rgba(255, 255, 255, 0.4);
   color: #fff;
   font-family: 'SF Pro', sans-serif;
   font-size: 0.2155rem;
@@ -513,14 +584,18 @@ onMounted(async () => {
   font-weight: 600;
   font-family: 'SF Pro', sans-serif;
 
-  &.in { color: #05E7AE; }
-  &.out { color: #FF4B4B; }
+  &.in {
+    color: #05e7ae;
+  }
+  &.out {
+    color: #ff4b4b;
+  }
 }
 
 .divider {
   width: 7.5906rem;
   height: 0.5px;
-  border-bottom: 0.5px dashed rgba(255, 255, 255, 0.50);
+  border-bottom: 0.5px dashed rgba(255, 255, 255, 0.5);
   align-self: center;
   margin: 0.2rem 0;
 }

@@ -67,3 +67,9 @@
   margin-top: 0;
   margin-left: 0;
 }
+
+.table-toast-msg {
+  background-image: none;
+  backdrop-filter: blur(10px);
+  background-color: rgba(12, 12, 12, 0.2);
+}

@@ -87,8 +87,8 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       }
       return this.setCurrentClubById(club.club_id)
     },
-    syncCurrentClubDiamond(diamond: number): boolean {
-      if (!this.currentClubId || !Number.isFinite(diamond)) {
+    syncCurrentClubFields(fields: Partial<ClubInfo>): boolean {
+      if (!this.currentClubId || !fields || typeof fields !== 'object') {
         return false
       }
 
@@ -99,16 +99,25 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
         return false
       }
 
-      const normalized = Math.max(0, Number(diamond))
       const nextClub: ClubInfo = {
         ...this.clubList[index],
-        user_gold: normalized,
-        diamonds: normalized,
+        ...fields,
       }
       const nextList = [...this.clubList]
       nextList[index] = nextClub
       this.clubList = nextList
       return true
+    },
+    syncCurrentClubDiamond(diamond: number): boolean {
+      if (!this.currentClubId || !Number.isFinite(diamond)) {
+        return false
+      }
+
+      const normalized = Math.max(0, Number(diamond))
+      return this.syncCurrentClubFields({
+        user_gold: normalized,
+        diamonds: normalized,
+      })
     },
     clearInfo(): void {
       this.userInfo = null
@@ -137,6 +146,16 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       }
 
       return this.clubAgentInvitations[cacheKey] || ''
+    },
+    syncCurrentClubDesc(desc: string): boolean {
+      if (!this.currentClubId || typeof desc !== 'string') {
+        return false
+      }
+
+      const normalized = desc.trim()
+      return this.syncCurrentClubFields({
+        desc: normalized,
+      })
     },
   },
   persist: {

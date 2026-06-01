@@ -30,6 +30,8 @@ import type {
   RoomcenterMttListRequest,
   RoomcenterMttRanksData,
   RoomcenterMttRanksRequest,
+  RoomcenterMttMyawardData,
+  RoomcenterMttMyRankData,
   RoomcenterMttRealPrize,
   RoomcenterMttRealPrizeRequest,
   RoomcenterMttRoomsData,
@@ -183,6 +185,15 @@ export async function getRoomcenterMttDetailApi(
   return response.data
 }
 
+// 对齐 cocos /api/roomcenter/mtt/{id}/myrank。
+export async function getRoomcenterMttMyRankApi(
+  mttId: number | string,
+): Promise<ApiResponse<RoomcenterMttMyRankData>> {
+  const endpoint = `/roomcenter/mtt/${mttId}/myrank`
+  const response = await http.get<ApiResponse<RoomcenterMttMyRankData>>(endpoint)
+  return response.data
+}
+
 // 对齐 cocos /api/roomcenter/mtt/{id}/ranks。
 export async function postRoomcenterMttRanksApi(
   mttId: number | string,
@@ -212,6 +223,23 @@ export async function postRoomcenterMttRealPrizeApi(
 ): Promise<ApiResponse<RoomcenterMttRealPrize>> {
   const endpoint = `/roomcenter/mtt/${mttId}/real_prize`
   const response = await http.post<ApiResponse<RoomcenterMttRealPrize>>(endpoint, payload)
+  return response.data
+}
+
+// 对齐 cocos /api/roomcenter/mtt/{id}/myaward。轮询期间屏蔽业务错误 toast。
+export async function getRoomcenterMttMyawardApi(
+  mttId: number | string,
+  requestOptions: RoomcenterRequestOptions = {},
+): Promise<ApiResponse<RoomcenterMttMyawardData>> {
+  const endpoint = `/roomcenter/mtt/${mttId}/myaward`
+  const response = await http.post<ApiResponse<RoomcenterMttMyawardData>>(
+    endpoint,
+    {},
+    {
+      suppressBusinessToast: true,
+      ...requestOptions,
+    },
+  )
   return response.data
 }
 

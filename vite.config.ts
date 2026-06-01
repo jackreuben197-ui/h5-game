@@ -76,6 +76,100 @@ function i18nHotReloadPlugin(): Plugin {
   }
 }
 
+interface WebpackLikeStatsModule {
+  id: string
+  identifier: string
+  name: string
+  size: number
+  chunks: string[]
+  depth: number
+}
+
+interface WebpackLikeStatsChunk {
+  id: string
+  modules: WebpackLikeStatsModule[]
+}
+
+interface WebpackLikeStatsAsset {
+  name: string
+  size: number
+  chunks: string[]
+  type: 'asset'
+  info: {
+    javascriptModule: boolean
+  }
+}
+
+// 为 webpack-bundle-analyzer 生成兼容的 stats.json。
+// 该插件只收集 JS chunk 与其模块大小映射，满足体积可视化所需最小字段。
+function webpackBundleStatsPlugin(): Plugin {
+  return {
+    name: 'webpack-bundle-stats',
+    apply: 'build',
+    generateBundle(_, bundle) {
+      const chunks: WebpackLikeStatsChunk[] = []
+      const assets: WebpackLikeStatsAsset[] = []
+      const entrypointAssets = new Set<string>()
+
+      for (const output of Object.values(bundle)) {
+        if (output.type !== 'chunk') {
+          continue
+        }
+
+        const chunkId = output.fileName
+        const chunkModules: WebpackLikeStatsModule[] = Object.entries(output.modules).map(
+          ([moduleId, renderedModule]) => ({
+            id: moduleId,
+            identifier: moduleId,
+            name: moduleId,
+            size: renderedModule.renderedLength || 0,
+            chunks: [chunkId],
+            depth: 1,
+          }),
+        )
+
+        chunks.push({
+          id: chunkId,
+          modules: chunkModules,
+        })
+
+        assets.push({
+          name: output.fileName,
+          size: Buffer.byteLength(output.code || '', 'utf-8'),
+          chunks: [chunkId],
+          type: 'asset',
+          info: {
+            javascriptModule: true,
+          },
+        })
+
+        if (output.isEntry) {
+          entrypointAssets.add(output.fileName)
+        }
+      }
+
+      const entrypointNames = entrypointAssets.size > 0 ? [...entrypointAssets] : assets.map((a) => a.name)
+
+      const stats = {
+        assets,
+        chunks,
+        entrypoints: {
+          app: {
+            name: 'app',
+            assets: entrypointNames.map((name) => ({ name })),
+          },
+        },
+      }
+
+      this.emitFile({
+        type: 'asset',
+        fileName: 'stats.json',
+        source: JSON.stringify(stats, null, 2),
+      })
+    },
+  }
+}
+
 interface PackageJsonLike {
   name?: string
   version?: string
@@ -121,9 +215,11 @@ function readAppPkgInfo(): Required<PackageJsonLike> {
 // https://vite.dev/config/
 export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const proxyTarget = env.VITE_PROXY_TARGET || 'https://preview.trackyourchoice.com'
+  const proxyTarget = env.VITE_PROXY_TARGET || 'https://test2.awanptest.com'
+  const proxyImTarget = env.VITE_PROXY_IM_TARGET || 'https://test-impubnub.awanptest.com'
   const enableSourceMap = env.VITE_BUILD_SOURCEMAP === 'true'
   const enableDropConsole = toBoolean(env.VITE_DROP_CONSOLE)
+  const enableBundleAnalyze = toBoolean(env.VITE_BUNDLE_ANALYZE) || mode === 'analyze'
   const isBuild = command === 'build'
   const appPkgInfo = readAppPkgInfo()
   const appInfo = {
@@ -153,6 +249,7 @@ export default defineConfig(({ mode, command }) => {
         targets: ['defaults', 'Android >= 7', 'iOS >= 12'],
         modernPolyfills: true,
       }),
+      ...(enableBundleAnalyze ? [webpackBundleStatsPlugin()] : []),
     ],
     resolve: {
       alias: {
@@ -161,6 +258,11 @@ export default defineConfig(({ mode, command }) => {
     },
     server: {
       proxy: {
+        '/api/imoss': {
+          target: proxyImTarget,
+          changeOrigin: true,
+          secure: false,
+        },
         '/api': {
           target: proxyTarget,
           changeOrigin: true,

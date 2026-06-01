@@ -324,7 +324,7 @@ onMounted(() => {
           </button>
         </div>
 
-        <div class="main-metrics">
+        <div class="stats-content">
           <div class="metric-col">
             <div v-for="item in leftMetrics" :key="item.label" class="metric-item">
               <span class="metric-label">{{ item.label }}</span>
@@ -333,8 +333,10 @@ onMounted(() => {
           </div>
 
           <div class="profit-box">
-            <div class="profit-title">{{ profitTitleText }}</div>
-            <div :class="['profit-value', { pos: todayProfit.startsWith('-') }]">{{ todayProfit }}</div>
+            <div class="profit-inner">
+              <div class="profit-title">{{ profitTitleText }}</div>
+              <div :class="['profit-value', { pos: todayProfit.startsWith('-') }]">{{ todayProfit }}</div>
+            </div>
           </div>
 
           <div class="metric-col right">
@@ -343,9 +345,7 @@ onMounted(() => {
               <span class="metric-value">{{ item.value }}</span>
             </div>
           </div>
-        </div>
 
-        <div class="detail-grid">
           <div class="detail-row">
             <div v-for="item in detailRowsOne" :key="item.label" class="detail-cell">
               <span class="label">{{ item.label }}</span>
@@ -446,10 +446,40 @@ onMounted(() => {
 }
 
 .glass-card {
-  border-radius: 0.42rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.2);
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.04rem);
+  border-radius: 30px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(16.5px);
+  -webkit-backdrop-filter: blur(16.5px);
+  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.05);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    background: linear-gradient(139deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 3;
+  }
+}
+
+.glass-card > * {
+  position: relative;
+  z-index: 2;
 }
 
 .stats-card {
@@ -459,40 +489,60 @@ onMounted(() => {
 
 .time-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.08rem;
-  border-radius: 0.5rem;
-  padding: 0.08rem;
-  background: rgba(255, 255, 255, 0.2);
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+  gap: 0.1rem;
+  height: 1.33rem;
+  padding: 0.06rem;
+  border-radius: 0.68rem;
+  background: rgba(0, 0, 0, 0.2);
+  margin: 0;
 }
 
 .time-tab {
   border: 0;
-  border-radius: 0.42rem;
+  border-radius: 0.62rem;
   background: transparent;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.40541rem;
-  padding: 0.18rem 0;
+  color: #f9f9f9;
+  opacity: 0.86;
+  font-size: 0.42rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &.active {
-    background: rgba(255, 255, 255, 0.18);
+    background: rgba(249, 249, 249, 0.5);
     font-weight: 700;
+    opacity: 1;
   }
 }
 
-.main-metrics {
+.stats-content {
   margin-top: 0.28rem;
   display: grid;
-  grid-template-columns: 1fr 1.2fr 1fr;
-  gap: 0.2rem;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 0.2rem 0.08rem;
   align-items: center;
 }
 
 .metric-col {
+  grid-column: 1;
+  grid-row: 1;
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
   text-align: center;
+  align-self: stretch;
+  justify-content: space-around;
+}
+
+.metric-col.right {
+  grid-column: 4;
+  grid-row: 1;
+  text-align: center;
+  align-self: stretch;
+  justify-content: space-around;
 }
 
 .metric-item {
@@ -511,12 +561,51 @@ onMounted(() => {
   }
 }
 
-.metric-col.right {
+.profit-box {
+  grid-column: 2 / 4;
+  grid-row: 1;
   text-align: center;
+  border-left: 0.02rem solid rgba(255, 255, 255, 0.2);
+  border-right: 0.02rem solid rgba(255, 255, 255, 0.2);
+  padding: 0.1rem 0.2rem;
 }
 
-.profit-box {
-  text-align: center;
+.profit-inner {
+  border-radius: 30px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+  box-shadow: 3.4px 4.3px 2.8px rgba(0, 0, 0, 0.05);
+  padding: 0.15rem 0.4rem;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.05);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    background: linear-gradient(139deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  > * {
+    position: relative;
+    z-index: 2;
+  }
 
   .profit-title {
     font-size: 0.33821rem;
@@ -524,29 +613,27 @@ onMounted(() => {
 
   .profit-value {
     margin-top: 0.12rem;
-    font-size: 0.71789rem;
-    font-weight: 700;
-    color: #ff7a8f;
+    font-size: 0.9rem;
+    font-weight: 400;
+    font-family: 'Keania One', sans-serif;
+    color: #fff;
     &.pos {
-      color: #4ee58f;
+      color: #fff;
     }
   }
 }
 
-.detail-grid {
-  margin-top: 0.22rem;
-
-  .line {
-    height: 0.02rem;
-    background: rgba(255, 255, 255, 0.18);
-    margin: 0.14rem 0;
-  }
+.detail-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.08rem;
 }
 
-.detail-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.08rem;
+.line {
+  grid-column: 1 / -1;
+  height: 0.02rem;
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .detail-cell {

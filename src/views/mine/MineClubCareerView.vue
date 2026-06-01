@@ -4,13 +4,15 @@ import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { postStatsUserStatsAllApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import iconBoxClubT from '@/assets/icons/icon_box_club_t.png'
-import iconBoxFriendT from '@/assets/icons/icon_box_friend_t.png'
-import iconBoxDiamond from '@/assets/icons/icon_box_diamond.png'
-import iconBoxBag from '@/assets/icons/icon_box_bag.png'
-import iconBoxSetting from '@/assets/icons/icon_box_setting.png'
-import iconFilter from '@/assets/icons/icon_filters.png'
-import iconDropdown from '@/assets/icons/icon_dropdown.png'
+
+import iconBoxClubT from '@/assets/icons/ic_club_t.svg'
+import iconBoxFriendT from '@/assets/icons/ic_cowboy.svg'
+import iconBoxDiamond from '@/assets/icons/ic_mtt.svg'
+import iconBoxBag from '@/assets/icons/ic_mahjong.svg'
+import iconBoxSetting from '@/assets/icons/ic_settings.svg'
+import iconFilter from '@/assets/icons/ic_filter.svg'
+import iconDropdown from '@/assets/icons/ic_dropdown.svg'
+import iconArrowRight from '@/assets/icons/ic_arrow_right.svg'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 
@@ -319,12 +321,10 @@ onMounted(() => {
           @click="handleMenuClick(item)"
         >
           <div class="menu-left">
-            <div class="icon-box">
-              <img :src="item.icon" :alt="item.label" />
-            </div>
+            <img class="menu-icon" :src="item.icon" :alt="item.label" />
             <span class="menu-label">{{ item.label }}</span>
           </div>
-          <span class="menu-arrow">›</span>
+          <img class="menu-arrow" :src="iconArrowRight" alt="" />
         </button>
       </section>
     </div>
@@ -405,13 +405,14 @@ onMounted(() => {
   position: absolute;
   left: 0;
   top: 0.86rem;
-  width: 2.56rem;
-  border-radius: 0.34rem;
-  background: rgba(46, 35, 51, 0.85);
-  backdrop-filter: blur(0.22rem);
-  border: 0.02rem solid rgba(255, 255, 255, 0.16);
+  min-width: 4rem;
+  border-radius: 16px;
   overflow: hidden;
   z-index: 5;
+  background: rgba(0, 0, 0, 0.07);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0.1rem 0;
 }
 
 .club-option {
@@ -420,17 +421,17 @@ onMounted(() => {
   background: transparent;
   color: #fff;
   text-align: left;
-  padding: 0.2rem 0.26rem;
-  font-size: 0.3rem;
-  border-bottom: 0.02rem solid rgba(255, 255, 255, 0.16);
+  padding: 0.16rem 0.44rem;
+  font-size: 11.364px;
+  font-weight: 400;
+  border-bottom: 0.5px solid #AAA69E0D;
 
   &.active {
-    background: rgba(255, 255, 255, 0.16);
     font-weight: 700;
   }
 
   &:last-child {
-    border-bottom: 0;
+    border-bottom: 0.5px solid #AAA69E0D;
   }
 }
 
@@ -440,17 +441,17 @@ onMounted(() => {
   background: transparent;
   color: #fff;
   text-align: left;
-  padding: 0.2rem 0.26rem;
-  font-size: 0.3rem;
-  border-bottom: 0.02rem solid rgba(255, 255, 255, 0.16);
+  padding: 0.16rem 0.44rem;
+  font-size: 11.364px;
+  font-weight: 400;
+  border-bottom: 0.5px solid #AAA69E0D;
 
   &.active {
-    background: rgba(255, 255, 255, 0.16);
     font-weight: 700;
   }
 
   &:last-child {
-    border-bottom: 0;
+    border-bottom: 0.5px solid #AAA69E0D;
   }
 }
 
@@ -458,13 +459,14 @@ onMounted(() => {
   position: absolute;
   right: 0;
   top: 0.86rem;
-  width: 2.56rem;
-  border-radius: 0.34rem;
-  background: rgba(46, 35, 51, 0.85);
-  backdrop-filter: blur(0.22rem);
-  border: 0.02rem solid rgba(255, 255, 255, 0.16);
+  min-width: 4rem;
+  border-radius: 16px;
   overflow: hidden;
   z-index: 5;
+  background: rgba(0, 0, 0, 0.07);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0.1rem 0;
 }
 
 .content-wrap {
@@ -475,8 +477,7 @@ onMounted(() => {
   margin-top: 0.6rem;
   display: flex;
   align-items: center;
-  gap: 0.72rem;
-  padding: 0 0.16rem;
+  justify-content: space-around;
 }
 
 .game-tab {
@@ -495,19 +496,53 @@ onMounted(() => {
 
 .stats-card {
   margin-top: 0.4rem;
-  border-radius: 0.56rem;
+  border-radius: 30px;
   padding: 0.34rem 0.44rem 0.28rem;
-  background: rgba(42, 26, 43, 0.34);
-  backdrop-filter: blur(0.03rem);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(16.5px);
+  -webkit-backdrop-filter: blur(16.5px);
+  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.05);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    background: linear-gradient(139deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 3;
+  }
+}
+
+.stats-card > *:not(.card__bg-blur) {
+  position: relative;
+  z-index: 2;
 }
 
 .date-tabs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  align-items: center;
   gap: 0.1rem;
+  height: 1.33rem;
   padding: 0.06rem;
   border-radius: 0.68rem;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.2);
+  margin: 0 0.33rem;
 }
 
 .date-tab {
@@ -517,10 +552,13 @@ onMounted(() => {
   color: #f9f9f9;
   opacity: 0.86;
   font-size: 0.42rem;
-  padding: 0.2rem 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &.active {
-    background: rgba(255, 255, 255, 0.16);
+    background: rgba(249, 249, 249, 0.5);
     font-weight: 700;
     opacity: 1;
   }
@@ -559,10 +597,41 @@ onMounted(() => {
 
 .menu-card {
   margin-top: 0.5rem;
-  border-radius: 0.42rem;
-  background: rgba(31, 24, 46, 0.34);
-  backdrop-filter: blur(0.03rem);
-  padding: 0 0.36rem;
+  border-radius: 30px;
+  padding: 0.14rem 0.46rem 0.14rem;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(16.5px);
+  -webkit-backdrop-filter: blur(16.5px);
+  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.15);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.01);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    background: linear-gradient(139deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 3;
+  }
+}
+
+.menu-card > *:not(.card__bg-blur) {
+  position: relative;
+  z-index: 2;
 }
 
 .menu-item {
@@ -570,16 +639,18 @@ onMounted(() => {
   border: 0;
   background: transparent;
   color: #fff;
+  font-weight: 400;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.28rem 0;
-  border-bottom: 0.02rem solid rgba(255, 255, 255, 0.16);
+  border-bottom: 0.02rem solid rgba(255, 255, 255, 0.2);
 
   &:last-child {
-    border-bottom: 0;
+    border-bottom: 0.5px solid #AAA69E0D;
   }
 }
+
 
 .menu-left {
   display: flex;
@@ -587,29 +658,22 @@ onMounted(() => {
   gap: 0.24rem;
 }
 
-.icon-box {
-  width: 0.62rem;
-  height: 0.62rem;
-  border-radius: 0.22rem;
-  background: rgba(255, 255, 255, 0.14);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  img {
-    width: 0.42rem;
-    height: 0.42rem;
-  }
+.menu-icon {
+  width: 0.52rem;
+  height: 0.52rem;
 }
 
 .menu-label {
   font-size: 0.42rem;
   line-height: 1.2;
+  font-weight: 400;
+  font-family: 'HONOR Sans CN', sans-serif;
 }
 
 .menu-arrow {
-  font-size: 0.7rem;
-  line-height: 1;
-  color: rgba(255, 255, 255, 0.88);
+  width: 0.32rem;
+  height: 0.32rem;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 </style>

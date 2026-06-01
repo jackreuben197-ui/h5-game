@@ -38,30 +38,30 @@ function handleClick(event: MouseEvent): void {
 <style scoped lang="scss">
 .action-btn {
   display: flex;
-  width: 58.524px;
   height: 21.909px;
-  padding: 2.401px 0 2.401px 0.6px;
+  padding: 2.401px 8px;
   justify-content: center;
   align-items: center;
-  gap: 14.106px;
+  gap: 6px;
   border-radius: 15.006px;
   background: #FFF;
   border: none;
+  white-space: nowrap;
 }
 
 .action-label {
   color: rgba(0, 0, 0, 1);
   font-feature-settings: 'liga' off, 'clig' off;
   font-family: "HONOR Sans CN";
-  font-size: 8.403px;
+  font-size: 10px;
   font-style: normal;
   font-weight: 500;
   line-height: 120%; /* 10.084px */
 }
 
 .action-icon {
-  width: 0.399rem;
-  height: 0.366rem;
+  width: 0.300rem;
+  height: 0.300rem;
   object-fit: contain;
 }
 </style>

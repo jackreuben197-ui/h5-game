@@ -8,6 +8,8 @@ import imgCardJ from '@/assets/images/img_card_j.png'
 import imgCard8 from '@/assets/images/img_card_8.png'
 import imgCard2 from '@/assets/images/img_card_2.png'
 import imgCardBack from '@/assets/images/img_card_back.png'
+import icSettings from '@/assets/icons/ic_settings.svg'
+import icDropdown from '@/assets/icons/icon_dropdown.svg'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
 
@@ -72,7 +74,7 @@ const personalRings = ref(personalRingMeta.map((item) => ({ ...item, value: 0 })
 const opponentRows = ref<ProfitRow[]>([])
 const deckRows = ref<DeckRow[]>([])
 const allInSummary = ref([
-  { label: '累计盈利', value: '0', highlight: 'up' as const },
+  { label: '累计盈利', value: '0', highlight: 'up' as 'up' | 'positive' },
   { label: 'All in', value: '0' },
   { label: '手数', value: '0' },
   { label: '获胜', value: '0' },
@@ -399,7 +401,7 @@ function setAllInCache(mode: string, stats: Record<string, unknown>): void {
   const profit = toSafeNumber(stats.profit_total)
 
   const summary = [
-    { label: '累计盈利', value: formatSigned(profit), highlight: 'up' as const },
+    { label: '累计盈利', value: formatSigned(profit), highlight: profit > 0 ? 'positive' : 'up' as 'up' | 'positive' },
     { label: 'All in', value: winCount.toLocaleString('en-US') },
     { label: '手数', value: handCount.toLocaleString('en-US') },
     { label: '获胜', value: winCount.toLocaleString('en-US') },
@@ -473,7 +475,7 @@ function applyCurrentOpponent(): void {
 function applyCurrentAllIn(): void {
   const value = allInCache.get(selectedAllInMode.value)
   allInSummary.value = value?.summary ?? [
-    { label: '累计盈利', value: '0', highlight: 'up' as const },
+    { label: '累计盈利', value: '0', highlight: 'up' as 'up' | 'positive' },
     { label: 'All in', value: '0' },
     { label: '手数', value: '0' },
     { label: '获胜', value: '0' },
@@ -830,10 +832,10 @@ onBeforeUnmount(() => {
             >
               <van-circle
                 class="ring-donut"
-                :size="'1.92rem'"
+                :size="'2rem'"
                 :rate="ring.value"
                 :speed="100"
-                :stroke-width="60"
+                :stroke-width="100"
                 :color="ring.color"
                 layer-color="rgba(255, 255, 255, 0.16)"
               />
@@ -846,7 +848,7 @@ onBeforeUnmount(() => {
 
           <section class="glass-pill title-pill">
             <span>近3个月内玩牌数据统计</span>
-            <span class="pie-icon" aria-hidden="true"></span>
+            <img class="pie-icon" :src="icSettings" alt="" aria-hidden="true" />
           </section>
 
           <section class="glass-card biggest-card">
@@ -866,7 +868,7 @@ onBeforeUnmount(() => {
             <div class="title-text">Statistics of the week</div>
             <button class="sort-btn" type="button">
               Descending
-              <span class="arrow">▾</span>
+              <img class="arrow" :src="icDropdown" alt="" aria-hidden="true" />
             </button>
           </section>
 
@@ -894,7 +896,7 @@ onBeforeUnmount(() => {
           <div class="title-text">Statistics of the week</div>
           <button class="sort-btn" type="button">
             Descending
-            <span class="arrow">▾</span>
+            <img class="arrow" :src="icDropdown" alt="" aria-hidden="true" />
           </button>
         </section>
 
@@ -944,13 +946,13 @@ onBeforeUnmount(() => {
 
           <div class="section-title">
             <span>近3个月内玩牌数据统计</span>
-            <span class="pie-icon" aria-hidden="true"></span>
+            <img class="pie-icon" :src="icSettings" alt="" aria-hidden="true" />
           </div>
 
           <div class="summary-list">
             <div v-for="item in allInSummary" :key="item.label" class="summary-row">
               <span>{{ item.label }}</span>
-              <span :class="item.highlight === 'up' ? 'profit-up' : ''">{{ item.value }}</span>
+              <span :class="item.highlight === 'positive' ? 'profit-positive' : item.highlight === 'up' ? 'profit-up' : ''">{{ item.value }}</span>
             </div>
           </div>
         </section>
@@ -958,7 +960,7 @@ onBeforeUnmount(() => {
         <section class="glass-card radar-card">
           <div class="section-title">
             <span>ALL IN 胜率分布图</span>
-            <span class="pie-icon" aria-hidden="true"></span>
+            <img class="pie-icon" :src="icSettings" alt="" aria-hidden="true" />
           </div>
 
           <div ref="radarWrapRef" class="allin-radar-wrap">
@@ -1195,21 +1197,21 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   gap: 0.04rem;
-  padding: 0.05rem 0.14rem 0.09rem;
+  padding: 0.1rem 0.2rem 0.12rem;
   border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.1);
   pointer-events: none;
 }
 
 .ring-value {
-  font-size: 0.36rem;
-  font-weight: 800;
+  font-size: 0.3rem;
+  font-weight: 600;
   font-family: 'HONOR Sans CN', sans-serif;
   line-height: 1.2;
 }
 
 .ring-label {
-  font-size: 0.17rem;
+  font-size: 0.14rem;
   line-height: 0.87;
   color: rgba(249, 249, 249, 0.86);
   font-family: 'HONOR Sans CN', sans-serif;
@@ -1223,28 +1225,13 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   font-size: 0.42rem;
-  font-weight: 600;
+  font-weight: 400;
+  color: #fff;
 }
 
 .pie-icon {
   width: 0.5rem;
   height: 0.5rem;
-  border-radius: 50%;
-  border: 0.04rem solid rgba(249, 249, 249, 0.95);
-  border-right-color: transparent;
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    width: 0.24rem;
-    height: 0.04rem;
-    background: rgba(249, 249, 249, 0.95);
-    top: 0.18rem;
-    right: -0.02rem;
-    transform: rotate(-34deg);
-    border-radius: 0.03rem;
-  }
 }
 
 .biggest-card {
@@ -1289,17 +1276,18 @@ onBeforeUnmount(() => {
 .sort-btn {
   border: 0;
   border-radius: 0.4rem;
-  background: rgba(0, 0, 0, 0.46);
+  background: rgba(249, 249, 249, 0.5);
   color: #fff;
   font-size: 0.33rem;
+  font-weight: 400;
   padding: 0.12rem 0.24rem;
   display: inline-flex;
   align-items: center;
   gap: 0.08rem;
 
   .arrow {
-    font-size: 0.24rem;
-    line-height: 1;
+    width: 0.33rem;
+    height: 0.33rem;
   }
 }
 
@@ -1396,12 +1384,14 @@ onBeforeUnmount(() => {
 
 .profit-up {
   color: #ff2748;
-  font-weight: 600;
+}
+
+.profit-positive {
+  color: #78e490;
 }
 
 .profit-down {
   color: #05e7ae;
-  font-weight: 600;
 }
 
 .allin-summary-card {
@@ -1428,7 +1418,7 @@ onBeforeUnmount(() => {
   transition: background-color 0.2s ease;
 
   &.active {
-    background: rgba(5, 231, 174, 0.6);
+    background: rgba(224, 37, 66, 0.5);
     font-weight: 600;
   }
 }
@@ -1440,6 +1430,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   font-size: 0.4rem;
   font-weight: 600;
+  color: #fff;
 }
 
 .summary-list {
@@ -1452,7 +1443,9 @@ onBeforeUnmount(() => {
   align-items: center;
   min-height: 0.6rem;
   font-size: 0.34rem;
+  font-weight: 400 !important;
   line-height: 1.4;
+  color: #fff !important;
 }
 
 .radar-card {
@@ -1569,7 +1562,7 @@ onBeforeUnmount(() => {
   background: rgba(0, 0, 0, 0.19);
 
   &.active {
-    background: rgba(5, 231, 174, 0.6);
+    background: rgba(224, 37, 66, 0.5);
     color: #fff;
     font-weight: 600;
   }

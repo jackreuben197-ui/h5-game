@@ -409,22 +409,22 @@
               doc.documentElement.setAttribute('data-tg-mini-app', '1')
             }
           }
-
-          initTelegramWebApp()
         }
         initH5TelegramEnvironment()
-        // 再异步加载官方 SDK，避免 head 同步脚本在弱网/不可达场景卡住首屏。
-        var script = document.createElement('script')
-        script.src = 'https://telegram.org/js/telegram-web-app.js'
-        script.async = true
-        script.defer = true
-        script.crossOrigin = 'anonymous'
-        script.referrerPolicy = 'no-referrer'
-        script.onload = initH5TelegramEnvironment
-        script.onerror = function () {
-          console.warn('[telegram] sdk load failed, continue without telegram bridge')
+        if (win.__H5_TG_MINI_APP__) {
+          // 再异步加载官方 SDK，避免 head 同步脚本在弱网/不可达场景卡住首屏。
+          var script = document.createElement('script')
+          script.src = 'https://telegram.org/js/telegram-web-app.js'
+          script.async = true
+          script.defer = true
+          script.crossOrigin = 'anonymous'
+          script.referrerPolicy = 'no-referrer'
+          script.onload = initTelegramWebApp
+          script.onerror = function () {
+            console.warn('[telegram] sdk load failed, continue without telegram bridge')
+          }
+          document.head.appendChild(script)
         }
-        document.head.appendChild(script)
       })()
     </script>
     <script>

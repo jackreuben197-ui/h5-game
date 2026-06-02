@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { postMiscArtiCleInfoApi } from '@/api/misc'
@@ -9,11 +8,24 @@ import { getLocale, t, type LocaleCode } from '@/i18n'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 
-const route = useRoute()
-
 const AGREEMENT_TYPE = 3
 const PRIVACY_TYPE = 4
 const PROTOCOL_CACHE_VERSION = 1
+
+const props = withDefaults(
+  defineProps<{
+    type?: number
+    version?: string
+  }>(),
+  {
+    type: AGREEMENT_TYPE,
+    version: '',
+  },
+)
+
+const emit = defineEmits<{
+  back: [event: MouseEvent]
+}>()
 
 const loading = ref(false)
 const errorMessage = ref('')
@@ -31,18 +43,11 @@ interface ProtocolArticleCachePayload {
   records: Record<string, ProtocolArticleCacheItem>
 }
 
-const articleType = computed<number>(() => {
-  const raw = Number(route.query.type ?? AGREEMENT_TYPE)
-  if (raw === PRIVACY_TYPE) {
-    return PRIVACY_TYPE
-  }
-  return AGREEMENT_TYPE
-})
+const articleType = computed<number>(() =>
+  props.type === PRIVACY_TYPE ? PRIVACY_TYPE : AGREEMENT_TYPE,
+)
 const localeCode = computed(() => getLocale())
-const articleVersionHint = computed(() => {
-  const raw = route.query.version ?? route.query.v ?? ''
-  return String(raw || '').trim()
-})
+const articleVersionHint = computed(() => String(props.version || '').trim())
 const cacheKey = computed(() => `${articleType.value}:${toServerLang(localeCode.value)}`)
 
 const pageTitle = computed(() => {
@@ -119,7 +124,7 @@ function formatArticleContent(contentEx: MiscArtiCleInfoContentData[]): string {
     .replace(/<p[^>]*>/gi, '')
     .replace(/<\/p>/gi, '\n\n')
     .replace(/<br\s*\/?>/gi, '\n\n')
-    .replace(/&nbsp;/gi, '\u00A0')
+    .replace(/&nbsp;/gi, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
 }
@@ -226,7 +231,7 @@ function resolveArticleVersion(article: unknown): string {
 
 <template>
   <div class="protocol-page" :style="backgroundStyle">
-    <HeaderBack :title="pageTitle" />
+    <HeaderBack :title="pageTitle" @back="emit('back', $event)" />
 
     <div class="content-wrap">
       <section class="content-card">
@@ -276,8 +281,6 @@ function resolveArticleVersion(article: unknown): string {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  // border: 0.0133rem solid rgba(255, 255, 255, 0.22);
-  // background: rgba(0, 0, 0, 0.22);
   backdrop-filter: blur(0.08rem);
   -webkit-overflow-scrolling: touch;
 }

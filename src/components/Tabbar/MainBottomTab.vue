@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
+import { useGameStore } from '@/stores/game'
 import iconHome from '@/assets/icons/tabbar_home.png'
 import iconClub from '@/assets/icons/tabbar_club.png'
 import iconFriendsTable from '@/assets/icons/tabbar_friends_table.png'
@@ -12,21 +13,29 @@ import { t } from '@/i18n'
 interface TabItem {
   key: MainTabKey
   label: string
+  // 登录态路径
   path: string
+  // 未登录态路径（指向 guest mock 页）
+  guestPath: string
   icon: string
 }
 
-// 底部 5 个主模块入口与路由路径。
+// 底部 5 个主模块入口与路由路径（登录态走 path，未登录态走 guestPath）。
 const tabs: TabItem[] = [
-  { key: 'home', label: t('UITabbarHome'), path: '/home', icon: iconHome },
-  { key: 'club', label: t('UIClub_Info'), path: '/club', icon: iconClub },
-  { key: 'friendsTable', label: t('UIMessage_Default'), path: '/friendsTable', icon: iconFriendsTable },
-  { key: 'message', label: t('UIMine_MsgSystemContent'), path: '/message', icon: iconMessage },
-  { key: 'mine', label: t('UIMine_title'), path: '/mine', icon: iconMine },
+  { key: 'home', label: t('UITabbarHome'), path: '/home', guestPath: '/guest/home', icon: iconHome },
+  { key: 'club', label: t('UIClub_Info'), path: '/club', guestPath: '/guest/club', icon: iconClub },
+  { key: 'friendsTable', label: t('UIMessage_Default'), path: '/friendsTable', guestPath: '/guest/friendsTable', icon: iconFriendsTable },
+  { key: 'message', label: t('UIMine_MsgSystemContent'), path: '/message', guestPath: '/guest/message', icon: iconMessage },
+  { key: 'mine', label: t('UIMine_title'), path: '/mine', guestPath: '/guest/mine', icon: iconMine },
 ]
 
 const router = useRouter()
 const tabsStore = useMainTabsStore()
+const gameStore = useGameStore()
+
+function resolveTabPath(tab: TabItem): string {
+  return gameStore.sessionToken ? tab.path : tab.guestPath
+}
 
 // 当前激活项索引：用于驱动顶部凸起在 5 个 tab 间平滑移动。
 const activeIndex = computed(() => {
@@ -174,7 +183,7 @@ function refreshPathByCurrentTab(): void {
 
 function onTabClick(tab: TabItem): void {
   tabsStore.setActiveTab(tab.key)
-  void router.push(tab.path)
+  void router.push(resolveTabPath(tab))
 }
 
 function handleWindowResize(): void {

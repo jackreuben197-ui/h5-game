@@ -15,20 +15,9 @@ const router = createRouter({
       component: () => import('@/views/login/LoginViewNew.vue'),
     },
     {
-      path: '/protocol',
-      name: 'protocol',
-      component: () => import('@/views/login/components/ProtocolView.vue'),
-    },
-    {
-      path: '/login/phone-area',
-      name: 'login-phone-area',
-      component: () => import('@/views/login/components/LoginPhoneAreaView.vue'),
-    },
-    {
       path: '/',
 
       component: () => import('@/views/main/MainLayoutView.vue'),
-      meta: { requiresAuth: true },
       redirect: '/home',
       children: [
         {
@@ -91,6 +80,37 @@ const router = createRouter({
             tabKey: 'mine',
             moduleTitle: '我的',
           },
+        },
+        // 访客（未登录）专用页面，与登录版共用 MainLayoutView 与底部 Tab。
+        {
+          path: 'guest/home',
+          name: 'guest-home',
+          component: () => import('@/views/guest/GuestHomeView.vue'),
+          meta: { tabKey: 'home', moduleTitle: '首页' },
+        },
+        {
+          path: 'guest/club',
+          name: 'guest-club',
+          component: () => import('@/views/guest/GuestClubView.vue'),
+          meta: { tabKey: 'club', moduleTitle: '俱乐部' },
+        },
+        {
+          path: 'guest/friendsTable',
+          name: 'guest-friendsTable',
+          component: () => import('@/views/guest/GuestFriendsTableView.vue'),
+          meta: { tabKey: 'friendsTable', moduleTitle: '朋友桌' },
+        },
+        {
+          path: 'guest/message',
+          name: 'guest-message',
+          component: () => import('@/views/guest/GuestMessageView.vue'),
+          meta: { tabKey: 'message', moduleTitle: '消息' },
+        },
+        {
+          path: 'guest/mine',
+          name: 'guest-mine',
+          component: () => import('@/views/guest/GuestMineView.vue'),
+          meta: { tabKey: 'mine', moduleTitle: '我的' },
         },
       ],
     },
@@ -532,6 +552,15 @@ const router = createRouter({
   ],
 })
 
+// 未登录场景下，5 个底部 Tab 的真实页面会被重定向到对应访客页，而不是跳登录。
+const GUEST_FALLBACK_BY_NAME: Record<string, string> = {
+  lobby: 'guest-home',
+  club: 'guest-club',
+  friendsTable: 'guest-friendsTable',
+  message: 'guest-message',
+  mine: 'guest-mine',
+}
+
 router.beforeEach((to, from) => {
   const gameStore = useGameStore(pinia)
   const token = gameStore.sessionToken
@@ -543,20 +572,45 @@ router.beforeEach((to, from) => {
   })
 
   if (to.meta.requiresAuth && !token) {
-    // 未登录统一进入登录页；登录成功后固定回首页，不做业务页重定向。
-    log.warn('redirect to login: token missing', {
-      from: from.fullPath || '<init>',
+    const guestName =
+      typeof to.name === 'string' ? GUEST_FALLBACK_BY_NAME[to.name] : undefined
+    if (guestName) {
+      log.warn('redirect to guest page: token missing', {
+        from: from.fullPath || '<init>',
+        to: to.fullPath,
+        guest: guestName,
+      })
+      return { name: guestName }
+    }
+
+    // 非 5tab 的鉴权页面拦截：仅取消导航/兜底 guest-home，不自动弹窗。
+    // 弹窗只在 (a) 用户主动点登录 / (b) http 401 / (c) ws token 失效 三种情形触发。
+    if (from.name) {
+      log.warn('cancel nav: token missing', {
+        from: from.fullPath || '<init>',
+        to: to.fullPath,
+      })
+      return false
+    }
+    log.warn('initial nav fallback to guest-home: token missing', {
       to: to.fullPath,
     })
-    return { name: 'login' }
+    return { name: 'guest-home' }
   }
 
-  if (to.name === 'login' && token) {
-    log.warn('redirect to lobby: already logged in', {
-      from: from.fullPath || '<init>',
-      to: to.fullPath,
-    })
-    return { name: 'lobby' }
+  if (to.name === 'login') {
+    if (token) {
+      log.warn('redirect to lobby: already logged in', {
+        from: from.fullPath || '<init>',
+      })
+      return { name: 'lobby' }
+    }
+    if (from.name) {
+      log.warn('cancel nav to /login', { from: from.fullPath })
+      return false
+    }
+    log.warn('initial nav to /login fallback to guest-home')
+    return { name: 'guest-home' }
   }
 
   return true

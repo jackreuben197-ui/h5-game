@@ -33,7 +33,16 @@ import imgModalClose from '@/assets/icons/modal_close.svg'
 import ImageUploadSheet from '@/components/ImageUploadSheet/ImageUploadSheet.vue'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { extractInvitationLink } from '@/utils/clubInvitation'
+import {
+  extractInvitationCode,
+  extractInvitationLink,
+  extractTraceHash,
+} from '@/utils/clubInvitation'
+import {
+  buildChannelAgentInviteUrl,
+  buildChannelClubInviteUrl,
+  isChannelPackageHost,
+} from '@/utils/channelPackage'
 import { generateQrCodeUrl } from '@/utils/qrcode'
 import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
@@ -82,6 +91,7 @@ const displayClub = computed(() => clubDetail.value ?? userInfoStore.currentClub
 const cachedClub = computed(() => userInfoStore.currentClub)
 const currentClubGold = computed(() => Number(cachedClub.value?.user_gold ?? 0))
 const currentClubCredit = computed(() => Number(cachedClub.value?.user_credit ?? 0))
+const isChannelPackage = isChannelPackageHost()
 
 const quickActions = computed<QuickActionItem[]>(() => {
   if (canManageClub.value) {
@@ -181,6 +191,20 @@ function formatDate(value?: string): string {
 function toSafeNumber(value: unknown): number {
   const num = Number(value)
   return Number.isFinite(num) ? num : 0
+}
+
+function readQueryParamFromUrl(rawUrl: string, key: string): string {
+  const trimmedUrl = String(rawUrl || '').trim()
+  if (!trimmedUrl) {
+    return ''
+  }
+
+  try {
+    const parsed = new URL(trimmedUrl, window.location.origin)
+    return String(parsed.searchParams.get(key) || '').trim()
+  } catch {
+    return ''
+  }
 }
 
 function getCurrentClubId(): number {
@@ -814,11 +838,24 @@ async function prefetchAgentInvitationLink(): Promise<void> {
     }
 
     const invitationLink = extractInvitationLink(response.data)
-    if (!invitationLink) {
+    if (!invitationLink && !isChannelPackage) {
       return
     }
 
-    userInfoStore.setClubAgentInvitation(currentClub.random_id, invitationLink)
+    const traceHash =
+      extractTraceHash(response.data) ||
+      readQueryParamFromUrl(invitationLink, 'trace_hash') ||
+      readQueryParamFromUrl(invitationLink, 'i')
+
+    const finalLink = isChannelPackage
+      ? buildChannelAgentInviteUrl(traceHash || extractInvitationCode(response.data))
+      : invitationLink
+
+    if (!finalLink) {
+      return
+    }
+
+    userInfoStore.setClubAgentInvitation(currentClub.random_id, finalLink)
   } catch (error) {
     console.error('prefetchAgentInvitationLink error', error)
   }
@@ -841,11 +878,13 @@ async function generateInviteQrCode(): Promise<void> {
     }
 
     const invitationLink = extractInvitationLink(response.data)
-    if (!invitationLink) {
+    const finalLink = isChannelPackage ? buildChannelClubInviteUrl() : invitationLink
+
+    if (!finalLink) {
       return
     }
 
-    imgInviteQr.value = await generateQrCodeUrl(invitationLink, { size: 720, margin: 2 })
+    imgInviteQr.value = await generateQrCodeUrl(finalLink, { size: 720, margin: 2 })
   } catch (error) {
     console.error('generateInviteQrCode error', error)
   }

@@ -1,3 +1,4 @@
+import mainBgUrl from '@/assets/images/main_bg.webp'
 import { mountH5App, unmountH5App } from '../main'
 import { initDebugConsole, recordDebugEvent } from '../utils/debugConsole'
 
@@ -5,6 +6,10 @@ initDebugConsole()
 recordDebugEvent('[boot]', 'cocos h5 entry loaded', {
   href: typeof window !== 'undefined' ? window.location.href : '',
 })
+
+if (typeof document !== 'undefined' && document.documentElement) {
+  document.documentElement.style.setProperty('--h5-main-bg-image', `url(${mainBgUrl})`)
+}
 
 const host = {
   mount(container = '#app'): void {

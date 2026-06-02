@@ -3,6 +3,7 @@ import { useGameStore } from '@/stores/game'
 import { useWalletStore } from '@/stores/wallet'
 import { pinia } from '@/stores/pinia'
 import { createLogger } from '@/utils/logger'
+import { isChannelPackageHost } from '@/utils/channelPackage'
 
 const log = createLogger('[router]')
 
@@ -465,7 +466,7 @@ const router = createRouter({
       path: '/wallet',
       name: 'wallet',
       component: () => import('@/views/wallet/WalletIndexView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, tabKey: 'wallet' },
       beforeEnter: async () => {
         const walletStore = useWalletStore(pinia)
         await walletStore.loadPriceList()
@@ -475,7 +476,7 @@ const router = createRouter({
       path: '/wallet/orders',
       name: 'wallet-orders',
       component: () => import('@/views/friendsTable/RechargeOrdersView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, tabKey: 'wallet' },
       beforeEnter: async () => {
         const walletStore = useWalletStore(pinia)
         await walletStore.loadPriceList()
@@ -535,6 +536,7 @@ const router = createRouter({
 router.beforeEach((to, from) => {
   const gameStore = useGameStore(pinia)
   const token = gameStore.sessionToken
+  const isChannelPackage = isChannelPackageHost()
   log.info('beforeEach', {
     from: from.fullPath || '<init>',
     to: to.fullPath,
@@ -549,6 +551,10 @@ router.beforeEach((to, from) => {
       to: to.fullPath,
     })
     return { name: 'login' }
+  }
+
+  if (isChannelPackage && to.name === 'friendsTable') {
+    return { name: 'wallet' }
   }
 
   if (to.name === 'login' && token) {

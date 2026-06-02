@@ -629,14 +629,14 @@ onUnmounted(() => {
             type="button"
             @click="playerMode = 'rank'"
           >
-            {{ t('UITexasReport_player') }}
+            {{ t('Ranking') }}
           </button>
           <button
             :class="['mrp__mode-btn', { 'mrp__mode-btn--active': playerMode === 'hunter' }]"
             type="button"
             @click="playerMode = 'hunter'"
           >
-            {{ t('UIReward_Bounty') }}
+            {{ t('Hunter_Rank') }}
           </button>
         </div>
 
@@ -982,20 +982,20 @@ onUnmounted(() => {
 }
 
 .mrp__mode-btn {
-  min-width: 1.5rem;
   height: 0.64rem;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 0.4rem;
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(0, 0, 0, 0.18);
-  font-size: 0.26rem;
+  border: none;
+  // border-radius: 0.4rem;
+  color: #fff;
+  padding: 0;
+  margin: 0 0.5rem;
+  background: transparent;
+  font-size: 0.35rem;
   font-family: 'HONOR Sans CN', sans-serif;
 }
 
 .mrp__mode-btn--active {
   color: #fff;
-  border-color: #0ab8f7;
-  background: rgba(10, 184, 247, 0.28);
+  border-bottom: 1px solid #fff;
 }
 
 /* 分页滑块栏（固定底部） */

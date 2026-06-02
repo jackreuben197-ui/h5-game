@@ -149,7 +149,7 @@ const prizePool = computed(() => fmtMoney(more.value?.prize_pool ?? realPrize.va
 const myRank = computed(() => {
   const myUrid = Number(gameStore.loginUserId)
   if (!myUrid) return '-'
-  const record = rankData.value?.records?.find(r => Number(r.urid) === myUrid)
+  const record = rankData.value?.records?.find((r) => Number(r.urid) === myUrid)
   if (!record?.rank) return '-'
   return String(record.rank)
 })
@@ -804,7 +804,10 @@ onUnmounted(() => {
   box-sizing: border-box;
   color: #f9f9f9;
   font-family: 'HONOR Sans CN', sans-serif;
-  background: url('@/assets/images/table_bg.webp') center / cover no-repeat;
+  // background: rgba(6, 7, 10, 0.5);
+  background: none;
+  backdrop-filter: blur(0.18rem);
+  -webkit-backdrop-filter: blur(0.18rem);
   overflow: hidden;
 
   &::before {

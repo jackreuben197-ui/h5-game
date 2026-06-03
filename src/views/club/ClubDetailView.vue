@@ -1473,6 +1473,7 @@ onMounted(async () => {
   mix-blend-mode: soft-light;
   position: relative;
   z-index: 1;
+  margin-top: 1.3rem;
 }
 
 .size-text {

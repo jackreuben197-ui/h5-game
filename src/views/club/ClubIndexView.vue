@@ -1316,7 +1316,8 @@ function formatChipBase(rawValue: number): string {
 <style scoped lang="scss">
 .room-list-page {
   position: relative;
-  width: 100%;
+  width: min(100%, var(--app-max-width));
+  margin: 0 auto;
   height: 100dvh;
   color: #fff;
   overflow: hidden;
@@ -1338,7 +1339,7 @@ function formatChipBase(rawValue: number): string {
 .club-header {
   position: relative;
   z-index: 2;
-  // padding: calc(env(safe-area-inset-top) + 0.457rem) 0.456rem 0.22rem;
+  padding: 0.22rem 0.4562rem 0;
 }
 
 .club-header-row {
@@ -1625,7 +1626,7 @@ function formatChipBase(rawValue: number): string {
   margin-top: 0.4177rem;
   display: flex;
   height: 0.6483rem;
-  padding: 0 0.4562rem;
+  padding: 0;
   justify-content: space-between;
   align-items: center;
   align-self: stretch;

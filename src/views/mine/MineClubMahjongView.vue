@@ -556,8 +556,8 @@ onMounted(() => {
 .record-card {
   padding: 0.28rem;
   display: grid;
-  grid-template-columns: 0.8rem 1fr;
-  gap: 0.2rem;
+  grid-template-columns: 1.2rem 1fr;
+  gap: 0.24rem;
 }
 
 .timeline {
@@ -656,7 +656,7 @@ onMounted(() => {
   color: #ff8ba4;
 
   &.pos {
-    color: #68ea9f;
+    color: #78E490;
   }
 }
 </style>

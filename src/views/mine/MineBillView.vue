@@ -519,7 +519,7 @@ onMounted(() => {
           :class="['tab', { active: activeTab === item }]"
           @click="selectTab(item)"
         >
-          {{ item }}
+          <span class="tab-label">{{ item }}</span>
         </button>
       </div>
 
@@ -635,9 +635,10 @@ onMounted(() => {
 
 .bill-tabs {
   margin-top: 0.24rem;
-  display: flex;
-  gap: 0.26rem;
-  overflow-x: auto;
+  margin-left: -0.49rem;
+  margin-right: -0.49rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
 }
 
 .tab {
@@ -647,11 +648,22 @@ onMounted(() => {
   font-size: 0.32rem;
   padding: 0.1rem 0;
   white-space: nowrap;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
   &.active {
     color: #fff;
-    border-bottom: 0.03rem solid rgba(255, 255, 255, 0.9);
+
+    .tab-label {
+      border-bottom: 0.03rem solid rgba(255, 255, 255, 0.9);
+    }
   }
+}
+
+.tab-label {
+  display: inline-block;
+  padding-bottom: 0.06rem;
 }
 
 .glass-card {

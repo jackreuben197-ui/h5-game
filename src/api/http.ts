@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { closeToast, showFailToast, showLoadingToast } from 'vant'
 import { useGameStore } from '@/stores/game'
+import { useLoginModalStore } from '@/stores/loginModal'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { pinia } from '@/stores/pinia'
 import router from '@/router'
@@ -105,11 +106,8 @@ async function forceToLogin(): Promise<void> {
   gameStore.clearLogin()
   LoginSession.ClearWS()
 
-  const currentRoute = router.currentRoute.value
-  if (currentRoute.name !== 'login' && currentRoute.name !== 'login1') {
-    // 登录失效后统一回登录页，不携带 redirect 参数。
-    await router.replace({ name: 'login' })
-  }
+  // 登录态失效时原地弹出登录弹窗，不强制跳转页面。
+  useLoginModalStore(pinia).open()
 
   authRedirecting = false
 }
@@ -132,9 +130,9 @@ http.interceptors.request.use(async (config) => {
     }
   }
 
-  // 没有 token 且不是登录接口时，直接判定未登录并跳转。
+  // 没有 token 且不是登录接口时，静默拒绝即可：guest 页上的全局组件不应被动唤起登录弹窗。
+  // 真正的服务端 401（带 token 被服务端拒绝）由 response 拦截器在调用 forceToLogin。
   if (!token && !isPreLoginRequest) {
-    void forceToLogin()
     return Promise.reject(new Error('未登录或登录已过期'))
   }
 

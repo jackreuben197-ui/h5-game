@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>初中英语学习海报 - 课内保底 课外拔高</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #e9f0f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Roboto, 'Segoe UI', system-ui, -apple-system, sans-serif;
+            padding: 24px;
+        }
+
+        /* 海报卡片容器 */
+        .poster {
+            max-width: 780px;
+            width: 100%;
+            background: linear-gradient(145deg, #ffffff 0%, #fefefe 100%);
+            border-radius: 56px;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        /* 内部主要内容区 */
+        .poster-content {
+            padding: 36px 32px 44px 32px;
+        }
+
+        /* 主标题区域 */
+        .main-title {
+            text-align: center;
+            margin-bottom: 28px;
+            border-bottom: 3px solid #ffe6b3;
+            padding-bottom: 20px;
+        }
+
+        .main-title h1 {
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #1e3c4c 0%, #2b5e6e 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .subhead {
+            font-size: 20px;
+            font-weight: 600;
+            color: #e67e22;
+            background: #fff3e0;
+            display: inline-block;
+            padding: 6px 20px;
+            border-radius: 60px;
+            margin-top: 8px;
+        }
+
+        /* 双栏对比核心区 */
+        .compare-grid {
+            display: flex;
+            gap: 24px;
+            margin: 32px 0 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            flex: 1;
+            border-radius: 32px;
+            padding: 24px 20px;
+            background: #f9fafc;
+            transition: transform 0.2s ease, box-shadow 0.2s;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.03);
+        }
+
+        .card.left {
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+        }
+
+        .card.right {
+            background: linear-gradient(135deg, #fffaf2 0%, #fff7eb 100%);
+            border: 1px solid #ffe2b5;
+            box-shadow: 0 12px 22px -10px rgba(230, 126, 34, 0.12);
+        }
+
+        .card-header {
+            font-size: 24px;
+            font-weight: 800;
+            text-align: center;
+            padding-bottom: 18px;
+            margin-bottom: 18px;
+            border-bottom: 2px dashed currentColor;
+        }
+
+        .card.left .card-header {
+            color: #7f8c8d;
+            border-bottom-color: #dce5ec;
+        }
+
+        .card.right .card-header {
+            color: #e67e22;
+            border-bottom-color: #ffd9a5;
+        }
+
+        .card-item {
+            font-size: 18px;
+            font-weight: 500;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-item .icon {
+            font-size: 26px;
+            width: 32px;
+            text-align: center;
+        }
+
+        .result-badge {
+            text-align: center;
+            margin-top: 28px;
+            font-weight: 700;
+            font-size: 20px;
+            background: #eff3f6;
+            border-radius: 60px;
+            padding: 12px 10px;
+        }
+
+        .result-badge .left-result {
+            color: #a0aab5;
+        }
+
+        .result-badge .right-result {
+            color: #e67e22;
+            font-weight: 800;
+        }
+
+        /* 拔高优势栏（词汇阅读听力写作语感） */
+        .advantage-strip {
+            background: #1e3c4c;
+            margin: 20px 0 28px 0;
+            border-radius: 80px;
+            padding: 18px 24px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .skill-item {
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.18);
+            padding: 6px 16px;
+            border-radius: 40px;
+            letter-spacing: 1px;
+            backdrop-filter: blur(2px);
+        }
+
+        .skill-item strong {
+            font-weight: 800;
+            margin-right: 4px;
+        }
+
+        /* 金句底部 */
+        .footer-quote {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 2px solid #ffe0b3;
+        }
+
+        .quote-line1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e4e;
+            margin-bottom: 8px;
+        }
+
+        .quote-line2 {
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(120deg, #b45309, #e67e22);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #f1c40f20;
+            border-radius: 40px;
+            font-size: 14px;
+            padding: 4px 12px;
+            margin-top: 12px;
+            color: #b45f1b;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 620px) {
+            .poster-content {
+                padding: 24px 18px 32px 18px;
+            }
+            .main-title h1 {
+                font-size: 28px;
+            }
+            .subhead {
+                font-size: 16px;
+            }
+            .card-header {
+                font-size: 20px;
+            }
+            .card-item {
+                font-size: 15px;
+            }
+            .skill-item {
+                font-size: 13px;
+                padding: 4px 12px;
+            }
+            .advantage-strip {
+                border-radius: 32px;
+                justify-content: center;
+            }
+            .quote-line2 {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="poster">
+    <div class="poster-content">
+        <!-- 主标题：已将“英语别只跟着课内走”改为“初中英语别只跟着课内走” -->
+        <div class="main-title">
+            <h1>初中英语别只跟着课内走</h1>
+            <div class="subhead">课内保底 · 课外拔高</div>
+        </div>
+
+        <!-- 核心对比：“只学课本” vs “课内吃透 + 课外加餐”  -->
+        <div class="compare-grid">
+            <!-- 左侧: 只学课本 -->
+            <div class="card left">
+                <div class="card-header">📘 只学课本</div>
+                <div class="card-item"><span class="icon">📚</span> 局限于教材范围</div>
+                <div class="card-item"><span class="icon">⚠️</span> 词汇量增长慢</div>
+                <div class="card-item"><span class="icon">🎧</span> 听力/阅读输入不足</div>
+                <div class="card-item"><span class="icon">✍️</span> 写作语感提升有限</div>
+                <div class="result-badge left-result">➡️ 勉强及格</div>
+            </div>
+
+            <!-- 右侧: 课内吃透 + 课外加餐 -->
+            <div class="card right">
+                <div class="card-header">✨ 课内吃透<br>+ 课外加餐</div>
+                <div class="card-item"><span class="icon">✅</span> 夯实基础 + 拓展视野</div>
+                <div class="card-item"><span class="icon">🚀</span> 词汇暴涨 / 阅读进阶</div>
+                <div class="card-item"><span class="icon">🎯</span> 原版听力·语感飞跃</div>
+                <div class="card-item"><span class="icon">🏆</span> 写作表达地道高级</div>
+                <div class="result-badge right-result">⭐ 稳拿高分 ⭐</div>
+            </div>
+        </div>
+
+        <!-- 词汇·阅读·听力·写作·语感同步提升 -->
+        <div class="advantage-strip">
+            <div class="skill-item"><strong>📖 词汇</strong> 同步提升</div>
+            <div class="skill-item"><strong>📰 阅读</strong> 同步提升</div>
+            <div class="skill-item"><strong>🎧 听力</strong> 同步提升</div>
+            <div class="skill-item"><strong>✍️ 写作</strong> 同步提升</div>
+            <div class="skill-item"><strong>🧠 语感</strong> 同步提升</div>
+        </div>
+
+        <!-- 底部励志标语 -->
+        <div class="footer-quote">
+            <div class="quote-line1">跳出课本局限，真正学好英语</div>
+            <div class="quote-line2">赢在起点 · 更赢在长远</div>
+            <div class="badge">🏅 初中英语进阶指南</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

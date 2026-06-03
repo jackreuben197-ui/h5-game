@@ -3,6 +3,7 @@ import { computed, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
+import LoginModal from '@/views/login/LoginModal.vue'
 
 const route = useRoute()
 const tabsStore = useMainTabsStore()
@@ -22,7 +23,6 @@ watch(
   },
   { immediate: true },
 )
-
 </script>
 
 <template>
@@ -35,6 +35,7 @@ watch(
     </div>
     <!-- 公共底部导航：跨模块复用。 -->
     <MainBottomTab />
+    <LoginModal />
   </div>
 </template>
 

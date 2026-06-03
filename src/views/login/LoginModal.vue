@@ -534,15 +534,14 @@ function localeToServerLang(locale: string): number {
     body-max-height="14rem"
   >
     <template #title>
-      <div class="login-title-row">
-        <span class="debug-trigger" @click="openDebugAccountDialog">DEV</span>
+      <div v-if="false" class="login-title-row">
         <button class="lang-btn" @click="showLanguageModal = true">
           <img :src="icGlobe" alt="" />
           <span class="lang-text">{{ currentLang.toUpperCase() }}</span>
         </button>
       </div>
     </template>
-
+    <span class="debug-trigger" @click="openDebugAccountDialog">DEV</span>
     <div class="login-form">
       <div class="tab-row">
         <button
@@ -577,6 +576,7 @@ function localeToServerLang(locale: string): number {
             <input
               v-model="contactModel"
               class="input-field"
+              :class="{ 'input-field-phone': isPhone }"
               type="text"
               :placeholder="contactPlaceholder"
               autocomplete="off"
@@ -750,11 +750,14 @@ function localeToServerLang(locale: string): number {
 }
 
 .debug-trigger {
+  position: absolute;
+  left: 0;
+  top: 0.3rem;
   color: rgba(255, 255, 255, 0.65);
   font-size: 0.34rem;
   font-family: 'Afacad', sans-serif;
-  line-height: 0.9rem;
-  min-width: 1rem;
+  // line-height: 0.9rem;
+  // min-width: 1rem;
   cursor: pointer;
 }
 
@@ -819,7 +822,7 @@ function localeToServerLang(locale: string): number {
   align-items: center;
   justify-content: center;
   gap: 0.53rem;
-  margin-bottom: 0.69rem;
+  margin-bottom: 0.5rem;
 }
 
 .tab-item {
@@ -907,8 +910,8 @@ function localeToServerLang(locale: string): number {
   align-items: center;
   gap: 0.11rem;
   height: 0.91rem;
-  padding: 0 0.3rem;
-  margin-left: 0.41rem;
+  padding: 0 0.2rem;
+  margin-left: 0.25rem;
   background: rgba(0, 0, 0, 0.12);
   border-radius: 1.27rem;
   border: 0;
@@ -945,6 +948,9 @@ function localeToServerLang(locale: string): number {
   &::placeholder {
     color: rgba(0, 0, 0, 0.38);
   }
+}
+.input-field-phone {
+  padding-left: 0.1rem;
 }
 
 .otp-btn {

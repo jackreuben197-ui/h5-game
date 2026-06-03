@@ -18,8 +18,8 @@ import { sendBridgeMessage, subscribeCocosMessages } from '../core/cocosBridgeCh
 import StorageKey from '@/constants/storageKey'
 import { t } from '@/i18n'
 import { showFailToast } from 'vant'
-import router from '@/router'
 import { useGameStore } from '@/stores/game'
+import { useLoginModalStore } from '@/stores/loginModal'
 import { pinia } from '@/stores/pinia'
 import { localStore } from '@/utils/localStore'
 import { createLogger } from '@/utils/logger'
@@ -255,12 +255,9 @@ async function forceToLoginFromWs(reason: string): Promise<void> {
   const gameStore = useGameStore(pinia)
   gameStore.clearLogin()
 
-  const currentRoute = router.currentRoute.value
-  if (currentRoute.name !== 'login') {
-    // 登录态失效时给出明确提示，避免用户误以为是页面卡死。
-    showFailToast(t('tokenFail'))
-    await router.replace({ name: 'login' })
-  }
+  // 登录态失效时原地弹出登录弹窗 + 文案提示，不强制跳页。
+  showFailToast(t('tokenFail'))
+  useLoginModalStore(pinia).open()
 
   authRedirecting = false
 }
@@ -726,10 +723,9 @@ function connectWs(payload: WsConnectPayload): void {
 
   log.info('ws connect start', { url: targetUrl, force: !!payload.force })
 
-  // 无 token 时不建立 websocket，避免进入"已连接但无法 REGISTER"的半可用状态。
+  // 无 token 时不建立 websocket，但也不弹登录——未登录是 guest 页正常状态，登录后 Cocos 会再次触发 wsConnect。
   if (!hasSessionToken()) {
     log.info('wsConnect skipped: token empty, waiting login')
-    void forceToLoginFromWs('wsConnect token empty')
     return
   }
 

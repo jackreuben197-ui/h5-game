@@ -30,6 +30,7 @@ function readParam(searchParams: URLSearchParams, hashParams: URLSearchParams, k
 }
 
 export function isChannelPackageHost(hostname: string = window.location.hostname): boolean {
+  return true
   const normalizedHost = readString(hostname).toLowerCase()
   if (!normalizedHost) {
     return false

@@ -803,7 +803,7 @@ onBeforeUnmount(() => {
   color: #fff;
   font-weight: 500;
   text-align: center;
-  min-width: 1.5rem;
+  min-width: 0.5rem;
 }
 
 .usdt-amount {

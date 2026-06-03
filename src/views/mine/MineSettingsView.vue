@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { showConfirmDialog, showFailToast, showSuccessToast } from 'vant'
+import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { GameDialog } from '@/components/Dialog'
 import { getLocale } from '@/i18n'
 import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
@@ -18,6 +19,7 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 const soundEnabled = ref(true)
+const showLogoutDialog = ref(false)
 
 interface SettingItem {
   key: string
@@ -60,26 +62,13 @@ function languageLabel(): string {
   return 'English'
 }
 
-async function onRowClick(item: SettingItem): Promise<void> {
+function onRowClick(item: SettingItem): void {
   if (item.clickable === false) {
     return
   }
 
   if (item.key === 'logout') {
-    try {
-      await showConfirmDialog({
-        title: '退出登录',
-        message: '确认退出当前账号吗？',
-        confirmButtonText: '确认',
-        cancelButtonText: '取消',
-      })
-      gameStore.clearLogin()
-      LoginSession.ClearWS()
-      showSuccessToast('已退出登录')
-      void router.replace('/login')
-    } catch {
-      // 用户取消不提示
-    }
+    showLogoutDialog.value = true
     return
   }
 
@@ -116,6 +105,18 @@ async function onRowClick(item: SettingItem): Promise<void> {
   if (item.key === 'line') {
     showFailToast('线路切换功能开发中')
   }
+}
+
+function onLogoutConfirm(): void {
+  showLogoutDialog.value = false
+  gameStore.clearLogin()
+  LoginSession.ClearWS()
+  showSuccessToast('已退出登录')
+  void router.replace('/guest/home')
+}
+
+function onLogoutCancel(): void {
+  showLogoutDialog.value = false
 }
 </script>
 
@@ -184,6 +185,19 @@ async function onRowClick(item: SettingItem): Promise<void> {
         </button>
       </section>
     </div>
+
+    <GameDialog
+      v-model:show="showLogoutDialog"
+      title="退出登录"
+      :show-cancel-button="true"
+      :close-on-click-overlay="true"
+      confirm-button-text="确认"
+      cancel-button-text="取消"
+      @confirm="onLogoutConfirm"
+      @cancel="onLogoutCancel"
+    >
+      <div class="logout-confirm-text">确认退出当前账号吗？</div>
+    </GameDialog>
   </div>
 </template>
 
@@ -273,5 +287,12 @@ async function onRowClick(item: SettingItem): Promise<void> {
       transform: translateX(0.44rem);
     }
   }
+}
+
+.logout-confirm-text {
+  text-align: center;
+  font-size: 0.38rem;
+  color: #fff;
+  padding: 0.2rem 0;
 }
 </style>

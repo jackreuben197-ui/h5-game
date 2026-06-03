@@ -1,8 +1,4 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useGameStore } from '@/stores/game'
-import { useUserInfoStore } from '@/stores/userInfo'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import iconAdd from '@/assets/icons/icon_add.svg'
 import iconChip from '@/assets/icons/icon_chips.png'
@@ -16,76 +12,48 @@ import iconBoxComment from '@/assets/icons/icon_box_comment.png'
 import iconBoxSetting from '@/assets/icons/icon_box_setting.png'
 import iconShop from '@/assets/icons/icon_shop.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
-
-const router = useRouter()
-const gameStore = useGameStore()
-const userInfoStore = useUserInfoStore()
+import { useLoginModalStore } from '@/stores/loginModal'
 
 interface BoxItem {
   key: string
   icon: string
   text: string
-  route: string
 }
 
-const boxList = ref<BoxItem[]>([
-  {
-    key: 'club-career',
-    icon: iconBoxClubT,
-    text: t('PageMineClubCareer'),
-    route: '/mine/club-career',
-  },
-  {
-    key: 'friends-career',
-    icon: iconBoxFriendT,
-    text: t('PageMineFriendTableCareer'),
-    route: '/mine/friends-career',
-  },
-  { key: 'my-bill', icon: iconBoxDiamond, text: t('UIMine_Bill'), route: '/mine/bill' },
-  {
-    key: 'hand-history',
-    icon: iconBoxSave,
-    text: t('UIMine_btn_paipu'),
-    route: '/mine/hand-collection',
-  },
-  { key: 'bag', icon: iconBoxBag, text: t('UIMine_btn_backpack'), route: '/mine/backpack' },
-  {
-    key: 'message-board',
-    icon: iconBoxComment,
-    text: t('PageMineMessageBoard'),
-    route: '/mine/message-board',
-  },
-  { key: 'settings', icon: iconBoxSetting, text: t('UIMine_btn_setting'), route: '/mine/settings' },
-])
+const loginModalStore = useLoginModalStore()
 
-function goToNextPage(path: string): void {
-  void router.push(path)
+const boxList: BoxItem[] = [
+  { key: 'club-career', icon: iconBoxClubT, text: t('PageMineClubCareer') },
+  { key: 'friends-career', icon: iconBoxFriendT, text: t('PageMineFriendTableCareer') },
+  { key: 'my-bill', icon: iconBoxDiamond, text: t('UIMine_Bill') },
+  { key: 'hand-history', icon: iconBoxSave, text: t('UIMine_btn_paipu') },
+  { key: 'bag', icon: iconBoxBag, text: t('UIMine_btn_backpack') },
+  { key: 'message-board', icon: iconBoxComment, text: t('PageMineMessageBoard') },
+  { key: 'settings', icon: iconBoxSetting, text: t('UIMine_btn_setting') },
+]
+
+const displayUser = {
+  nickname: '游客',
+  userID: '-',
+  avatar: defaultAvatar,
+  diamond: 0,
+  gold: 0,
 }
 
-function goToProfileEdit(): void {
-  void router.push('/mine/profile/edit')
+function notifyNotLogin(): void {
+  loginModalStore.open()
 }
 
-function goToMineShop(): void {
-  void router.push('/mine/shop')
+function goToLogin(): void {
+  loginModalStore.open()
 }
-
-const displayUser = computed(() => {
-  return {
-    nickname: userInfoStore.userInfo?.user.nickname || gameStore.loginNickname || '-',
-    userID: userInfoStore.userInfo?.user.un_id || gameStore.loginUserId || '-',
-    avatar: userInfoStore.userInfo?.user.avatar || defaultAvatar,
-    diamond: userInfoStore.userInfo?.user.diamonds ?? 0,
-    gold: userInfoStore.userInfo?.user.gold ?? 0,
-  }
-})
 </script>
 
 <template>
   <div class="page-shell mine-page">
     <div class="title-bar">
       <div class="title">{{ t('UIMine_title') }}</div>
-      <div class="currency-info" @click="goToMineShop">
+      <div class="currency-info" @click="notifyNotLogin">
         <div class="icon-diamond">
           <img :src="iconDiamond" alt="钻石" />
         </div>
@@ -99,31 +67,23 @@ const displayUser = computed(() => {
       <div class="card-bg-outter">
         <div class="card-bg-innner">
           <div class="card-line1">
-            <button class="left-avatar" type="button" @click="goToProfileEdit">
-              <img :src="String(displayUser.avatar)" alt="头像" />
+            <button class="left-avatar" type="button" @click="notifyNotLogin">
+              <img :src="displayUser.avatar" alt="头像" />
             </button>
-            <div class="right-box">
-              <button class="name" type="button" @click="goToProfileEdit">
-                {{ displayUser.nickname }}
-              </button>
-              <div class="idbox">
-                <div class="id-label">ID</div>
-                <div class="id-value">{{ displayUser.userID }}</div>
-              </div>
-            </div>
+            <div class="right-box" @click="notifyNotLogin">登陆/注册</div>
           </div>
           <div class="card-line2">
             <div class="left-board">
               <div class="currency">
                 <img class="icon-currency" :src="iconChip" alt="gold" />
-                <div class="num">{{ displayUser.gold.toLocaleString() }}</div>
+                <div class="num">-</div>
               </div>
               <div class="currency">
                 <img class="icon-currency" :src="iconDiamond" alt="diamond" />
-                <div class="num">{{ displayUser.diamond.toLocaleString() }}</div>
+                <div class="num">-</div>
               </div>
             </div>
-            <button class="button" type="button" @click="goToMineShop">
+            <button class="button" type="button" @click="notifyNotLogin">
               <div class="text">{{ t('UIHappyShop_ActivityShop') }}</div>
               <div class="round-icon">
                 <img :src="iconShop" alt="我的商城" />
@@ -134,7 +94,7 @@ const displayUser = computed(() => {
       </div>
     </div>
     <div class="box-gallery">
-      <div v-for="box in boxList" :key="box.key" class="box-item" @click="goToNextPage(box.route)">
+      <div v-for="box in boxList" :key="box.key" class="box-item" @click="notifyNotLogin">
         <div class="img">
           <img :src="box.icon" alt="消息" />
         </div>
@@ -170,43 +130,17 @@ const displayUser = computed(() => {
             }
           }
           .right-box {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 0.3rem;
-            .name {
-              border: 0;
-              background: transparent;
-              padding: 0;
-              text-align: left;
-              color: #fff;
-              margin-top: 0.2rem;
-              font-size: 0.6rem;
-              line-height: 100%;
-              font-weight: bold;
-              font-family: var(--font-family-SF);
-            }
-            .idbox {
-              display: flex;
-              align-items: center;
-              gap: 0.15rem;
-              .id-label {
-                font-size: 0.28rem;
-                line-height: 150%;
-                background-color: rgba(255, 255, 255, 0.4);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                padding: 0 0.25rem;
-                border-radius: 0.5rem;
-              }
-              .id-value {
-                font-size: 0.3rem;
-                line-height: 120%;
-                font-weight: 500;
-                font-family: var(--font-family-SF);
-              }
-            }
+            display: inline-block;
+            padding: 0.37rem 0.62rem;
+            margin-top: 0.5rem;
+            font-size: 0.32rem;
+            border-radius: 1.73493rem;
+            background: rgba(255, 255, 255, 0.2);
+            background-blend-mode: hard-light;
+            box-shadow:
+              /* 左上高光 */ inset 0.2px 0.2px 0px 0px
+                rgba(255, 255, 255, 0.85),
+              /* 右下高光 */ inset -0.2px -0.2px 0px 0px rgba(255, 255, 255, 0.85);
           }
         }
         .card-line2 {

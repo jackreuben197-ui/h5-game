@@ -20,6 +20,8 @@ import {
 import { postMiscGameRoundListDataByRoomApi } from '@/api/misc'
 import { postStatsUserGameRecordListApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import icBlinde from '@/assets/icons/ic_blinde.png'
+import icHands from '@/assets/icons/ic_hands.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import PokerCard from '@/components/GameCard/PokerCard.vue'
 import { setHandReplaySession } from '@/session/handReplaySession'
@@ -261,11 +263,17 @@ onMounted(() => {
           <div class="bottom-row">
             <div class="meta">
               <div>Hand ID: {{ card.handId }}</div>
-              <div>{{ card.table }}&nbsp;&nbsp;&nbsp;底池: {{ card.pot }}</div>
+              <div class="meta-blind">
+                <img class="meta-icon" :src="icBlinde" alt="" />
+                {{ card.table }}&nbsp;&nbsp;&nbsp;底池: <strong>{{ card.pot }}</strong>
+              </div>
             </div>
             <div class="profit">
               <div :class="['money', { negative: card.negative !== false }]">{{ card.profit }}</div>
-              <div>Hands:{{ card.hands }}</div>
+              <div class="hands-row">
+                <img class="meta-icon" :src="icHands" alt="" />
+                Hands: <strong>{{ card.hands }}</strong>
+              </div>
             </div>
           </div>
         </article>
@@ -313,23 +321,25 @@ onMounted(() => {
 
 .mode-tabs {
   margin-top: 0.3rem;
-  border-radius: 0.56rem;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.08rem;
+  border-radius: 0.8rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0;
+  overflow: hidden;
 }
 
 .capsule-tab {
   flex: 1;
   border: 0;
-  border-radius: 0.5rem;
+  border-radius: 0.72rem;
   background: transparent;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.6);
   font-size: 0.44rem;
   padding: 0.2rem 0;
 
   &.active {
-    background: rgba(255, 255, 255, 0.2);
-    font-weight: 700;
+    background: rgba(249, 249, 249, 0.5);
+    color: #f9f9f9;
+    font-weight: 600;
   }
 }
 
@@ -356,7 +366,7 @@ onMounted(() => {
 }
 
 .hand-card {
-  padding: 0.28rem 0.3rem 0.24rem;
+  padding: 0.4rem 0.4rem 0.24rem;
 }
 
 .top-row,
@@ -390,9 +400,27 @@ onMounted(() => {
   line-height: 1.4;
 }
 
+.meta-blind,
+.hands-row {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.meta-icon {
+  width: 0.32rem;
+  height: 0.32rem;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .profit {
   text-align: right;
   font-size: 0.31rem;
+}
+
+.hands-row {
+  justify-content: flex-end;
 }
 
 .money {

@@ -4,6 +4,8 @@ import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { postUserVerifyPasswordApi } from '@/api/user'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import icDeleteKeyboard from '@/assets/icons/ic_delete_keyboard.svg'
+import btnClose from '@/assets/icons/btn_close.png'
 
 type OverlayType = 'none' | 'loading' | 'error-soft' | 'error-hard'
 
@@ -103,7 +105,7 @@ function closeOverlay(): void {
 
 <template>
   <div class="page-shell security-password-page" :style="backgroundStyle">
-    <button class="close-btn" type="button" @click="closePage">×</button>
+    <img class="close-btn" :src="btnClose" alt="" aria-hidden="true" @click="closePage" />
 
     <section class="password-panel">
       <h1>修改密码</h1>
@@ -135,7 +137,7 @@ function closeOverlay(): void {
           @click="handleKey(key)"
         >
           <span v-if="key !== '⌫'">{{ key }}</span>
-          <span v-else class="erase-icon">⌫</span>
+          <img v-else class="erase-icon" :src="icDeleteKeyboard" alt="" aria-hidden="true" />
         </button>
       </div>
     </section>
@@ -158,23 +160,17 @@ function closeOverlay(): void {
   height: 100dvh;
   padding-top: calc(env(safe-area-inset-top) + 0.42rem);
   position: relative;
-  background:
-    radial-gradient(60% 42% at 20% 10%, rgba(226, 163, 133, 0.62) 0%, rgba(226, 163, 133, 0) 100%),
-    radial-gradient(55% 45% at 26% 84%, rgba(206, 107, 160, 0.58) 0%, rgba(206, 107, 160, 0) 100%),
-    radial-gradient(45% 38% at 88% 84%, rgba(0, 183, 212, 0.56) 0%, rgba(0, 183, 212, 0) 100%),
-    linear-gradient(160deg, #b58eb1 0%, #8d668d 54%, #6f5988 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .close-btn {
   margin-left: 0.4rem;
-  width: 1.024rem;
-  height: 1.024rem;
-  border: 0.0133rem solid rgba(255, 255, 255, 0.5);
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  font-size: 0.72rem;
-  line-height: 1;
+  width: 1.0748rem;
+  height: 1.0748rem;
+  object-fit: contain;
+  cursor: pointer;
 }
 
 .password-panel {
@@ -208,8 +204,11 @@ function closeOverlay(): void {
   width: 1.0748rem;
   height: 1.0748rem;
   border-radius: 1.0064rem;
-  border: 0.0133rem solid rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.18);
+  border: 0.02rem solid rgba(249, 249, 249, 0.04);
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.12);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -224,15 +223,21 @@ function closeOverlay(): void {
   margin-top: 0.8533rem;
   width: 8.9809rem;
   height: 1.4376rem;
-  border: 0;
+  border: 0.02rem solid rgba(249, 249, 249, 0.02);
   border-radius: 1.2684rem;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(2.5px);
+  -webkit-backdrop-filter: blur(2.5px);
+  box-shadow:
+    inset 1px 1px 0px rgba(255, 255, 255, 0.15),
+    inset -1px -1px 0px rgba(255, 255, 255, 0.05);
   color: #f9f9f9;
-  font-size: 0.674rem;
+  font-size: 0.42rem;
 }
 
 .submit-btn.active {
-  background: linear-gradient(168deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background: rgba(245, 45, 45, 0.2);
+  border-color: rgba(245, 45, 45, 0.3);
 }
 
 .keyboard-wrap {
@@ -241,7 +246,10 @@ function closeOverlay(): void {
   right: 0;
   bottom: 0;
   border-radius: 0.8446rem 0.8446rem 0 0;
-  background: rgba(0, 0, 0, 0.37);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 0.02rem solid rgba(249, 249, 249, 0.14);
   padding: 0.6426rem 0.5321rem 0.5472rem;
   display: flex;
   flex-direction: column;
@@ -256,9 +264,12 @@ function closeOverlay(): void {
 
 .key {
   height: 1.354rem;
-  border: 0.0133rem solid rgba(255, 255, 255, 0.3);
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
   border-radius: 0.3775rem;
-  background: rgba(255, 255, 255, 0.23);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.1);
   color: #fff;
   font-size: 0.6105rem;
   font-weight: 600;
@@ -266,12 +277,15 @@ function closeOverlay(): void {
 
 .key.clear,
 .key.erase {
-  background: rgba(4, 209, 157, 0.24);
+  background: rgba(245, 45, 45, 0.2);
+  border-color: rgba(245, 45, 45, 0.3);
   border-radius: 1.6064rem;
 }
 
 .erase-icon {
-  font-size: 0.56rem;
+  width: 0.56rem;
+  height: 0.56rem;
+  object-fit: contain;
 }
 
 .overlay-mask {
@@ -329,7 +343,8 @@ function closeOverlay(): void {
   height: 1.474rem;
   border: 0;
   border-radius: 1.0846rem;
-  background: linear-gradient(166deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background: rgba(245, 45, 45, 0.2);
+  border: 0.02rem solid rgba(245, 45, 45, 0.3);
   color: #fff;
   font-size: 0.6rem;
 }

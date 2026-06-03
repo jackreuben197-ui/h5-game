@@ -231,6 +231,13 @@ const bodyStyles = computed<StyleValue>(() => [
   gap: 0.32rem;
 }
 
+.game-dialog__card-bg-gradient,
+.game-dialog__card-bg-shadow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
 .game-dialog__card-bg {
   position: absolute;
   inset: 0;

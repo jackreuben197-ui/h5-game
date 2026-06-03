@@ -757,6 +757,8 @@ function consumePhoneAreaSelection(): void {
     v-model:show="showLanguageModal"
     :show-confirm-button="false"
     :close-on-click-overlay="true"
+    :card-style="{ paddingTop: '0.06rem', paddingBottom: '0.04rem' }"
+    :body-style="{ textAlign: 'left' }"
   >
     <div
       v-for="lang in SUPPORTED_LOCALES_OPTIONS"
@@ -832,12 +834,30 @@ function consumePhoneAreaSelection(): void {
 }
 
 .language-item {
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 1.2rem;
-  margin: 0 0.1rem 0;
-  border-bottom: 0.2px solid rgba(255, 255, 255, 0.2);
-  display: flex;
+  width: 100%;
+  height: 1rem;
+  margin: 0;
+  padding: 0.6rem 0.2rem;
+  box-sizing: border-box;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0.2rem;
+    right: 0.2rem;
+    height: 0.2px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  &:last-child::after {
+    display: none;
+  }
+
   .radio-circle {
     width: 0.42rem;
     height: 0.42rem;

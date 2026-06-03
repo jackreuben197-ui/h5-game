@@ -1,9 +1,21 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { showConfirmDialog, showFailToast, showSuccessToast } from 'vant'
+import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import icArrowRight from '@/assets/icons/ic_arrow_right.svg'
+import icLogout from '@/assets/icons/ic_logout.svg'
+import icChangeLanguage from '@/assets/icons/ic_change_language.svg'
+import icAccountCenter from '@/assets/icons/ic_account_center.svg'
+import icGameSound from '@/assets/icons/ic_game_sound.svg'
+import icCurrentLine from '@/assets/icons/ic_current_line.svg'
+import icDeleteAccount from '@/assets/icons/ic_delete_account.svg'
+import icAboutUs from '@/assets/icons/ic_about_us.svg'
+import icPolicePrivacy from '@/assets/icons/ic_police_privacy.svg'
+import icUserAgreement from '@/assets/icons/ic_user_agreement.svg'
+import icAppVersion from '@/assets/icons/ic_app_version.svg'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { getLocale } from '@/i18n'
 import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
@@ -12,6 +24,7 @@ const title = computed(() => '设置')
 
 const router = useRouter()
 const gameStore = useGameStore()
+const showLogoutDialog = ref(false)
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -22,28 +35,29 @@ const soundEnabled = ref(true)
 interface SettingItem {
   key: string
   label: string
+  icon?: string
   rightText?: string
   toggle?: boolean
   clickable?: boolean
 }
 
 const sectionTop: SettingItem[] = [
-  { key: 'logout', label: '退出登录' },
-  { key: 'language', label: '切换语言', rightText: languageLabel() },
-  { key: 'account', label: '账号管理' },
+  { key: 'logout', label: '退出登录', icon: icLogout },
+  { key: 'language', label: '切换语言', icon: icChangeLanguage, rightText: languageLabel() },
+  { key: 'account', label: '账号管理', icon: icAccountCenter },
 ]
 
 const sectionMiddle: SettingItem[] = [
-  { key: 'sound', label: '游戏声音', toggle: true },
-  { key: 'line', label: '当前线路', rightText: '默认线路' },
-  { key: 'cancel', label: '注销账号' },
-  { key: 'about', label: '关于我们' },
-  { key: 'agreement', label: '用户协议' },
+  { key: 'sound', label: '游戏声音', icon: icGameSound, toggle: true },
+  { key: 'line', label: '当前线路', icon: icCurrentLine, rightText: '默认线路' },
+  { key: 'cancel', label: '注销账号', icon: icDeleteAccount },
+  { key: 'about', label: '关于我们', icon: icAboutUs },
+  { key: 'agreement', label: '用户协议', icon: icPolicePrivacy },
 ]
 
 const sectionBottom: SettingItem[] = [
-  { key: 'privacy', label: '用户隐私协议' },
-  { key: 'version', label: '版本号', rightText: 'v1.0.0', clickable: false },
+  { key: 'privacy', label: '用户隐私协议', icon: icUserAgreement },
+  { key: 'version', label: '版本号', icon: icAppVersion, rightText: 'v1.0.0', clickable: false },
 ]
 
 function languageLabel(): string {
@@ -60,26 +74,21 @@ function languageLabel(): string {
   return 'English'
 }
 
+function confirmLogout(): void {
+  showLogoutDialog.value = false
+  gameStore.clearLogin()
+  LoginSession.ClearWS()
+  showSuccessToast('已退出登录')
+  void router.replace('/login')
+}
+
 async function onRowClick(item: SettingItem): Promise<void> {
   if (item.clickable === false) {
     return
   }
 
   if (item.key === 'logout') {
-    try {
-      await showConfirmDialog({
-        title: '退出登录',
-        message: '确认退出当前账号吗？',
-        confirmButtonText: '确认',
-        cancelButtonText: '取消',
-      })
-      gameStore.clearLogin()
-      LoginSession.ClearWS()
-      showSuccessToast('已退出登录')
-      void router.replace('/login')
-    } catch {
-      // 用户取消不提示
-    }
+    showLogoutDialog.value = true
     return
   }
 
@@ -132,10 +141,13 @@ async function onRowClick(item: SettingItem): Promise<void> {
           class="line-item"
           @click="onRowClick(item)"
         >
-          <span>{{ item.label }}</span>
+          <div class="left">
+            <img v-if="item.icon" class="item-icon" :src="item.icon" alt="" aria-hidden="true" />
+            <span>{{ item.label }}</span>
+          </div>
           <div class="right">
             <span v-if="item.rightText" class="light">{{ item.rightText }}</span>
-            <span class="arrow">›</span>
+            <img class="arrow" :src="icArrowRight" alt="" aria-hidden="true" />
           </div>
         </button>
       </section>
@@ -148,7 +160,10 @@ async function onRowClick(item: SettingItem): Promise<void> {
           class="line-item"
           @click="onRowClick(item)"
         >
-          <span>{{ item.label }}</span>
+          <div class="left">
+            <img v-if="item.icon" class="item-icon" :src="item.icon" alt="" aria-hidden="true" />
+            <span>{{ item.label }}</span>
+          </div>
           <div class="right">
             <template v-if="item.toggle">
               <button
@@ -162,7 +177,7 @@ async function onRowClick(item: SettingItem): Promise<void> {
             </template>
             <template v-else>
               <span v-if="item.rightText" class="light">{{ item.rightText }}</span>
-              <span class="arrow">›</span>
+              <img class="arrow" :src="icArrowRight" alt="" aria-hidden="true" />
             </template>
           </div>
         </button>
@@ -176,15 +191,29 @@ async function onRowClick(item: SettingItem): Promise<void> {
           class="line-item"
           @click="onRowClick(item)"
         >
-          <span>{{ item.label }}</span>
+          <div class="left">
+            <img v-if="item.icon" class="item-icon" :src="item.icon" alt="" aria-hidden="true" />
+            <span>{{ item.label }}</span>
+          </div>
           <div class="right">
             <span v-if="item.rightText" class="light">{{ item.rightText }}</span>
-            <span v-if="item.clickable !== false" class="arrow">›</span>
+            <img v-if="item.clickable !== false" class="arrow" :src="icArrowRight" alt="" aria-hidden="true" />
           </div>
         </button>
       </section>
     </div>
   </div>
+
+  <GameDialog
+    v-model:show="showLogoutDialog"
+    title="退出登录"
+    message="确认退出当前账号吗？"
+    :show-cancel-button="true"
+    cancel-button-text="取消"
+    confirm-button-text="确认"
+    @confirm="confirmLogout"
+    @cancel="showLogoutDialog = false"
+  />
 </template>
 
 <style scoped lang="scss">
@@ -225,12 +254,35 @@ async function onRowClick(item: SettingItem): Promise<void> {
   justify-content: space-between;
   align-items: center;
   font-size: 0.42rem;
+  font-weight: 400;
   padding: 0.28rem 0;
-  border-bottom: 0.02rem solid rgba(249, 249, 249, 0.2);
+  position: relative;
 
-  &:last-child {
-    border-bottom: 0;
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0.8rem;
+    right: 0;
+    height: 0.02rem;
+    background: rgba(249, 249, 249, 0.2);
   }
+
+  &:last-child::after {
+    display: none;
+  }
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 0.24rem;
+}
+
+.item-icon {
+  width: 0.56rem;
+  height: 0.56rem;
+  object-fit: contain;
 }
 
 .right {
@@ -245,8 +297,8 @@ async function onRowClick(item: SettingItem): Promise<void> {
 }
 
 .arrow {
-  font-size: 0.66rem;
-  line-height: 1;
+  width: 0.44rem;
+  height: 0.44rem;
 }
 
 .switch {
@@ -268,7 +320,7 @@ async function onRowClick(item: SettingItem): Promise<void> {
   }
 
   &.on {
-    background: #05e7ae;
+    background: #78e490;
 
     .dot {
       transform: translateX(0.44rem);

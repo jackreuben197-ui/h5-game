@@ -307,10 +307,12 @@ function onShare(): void {
 
 .street-card {
   margin-top: 0.34rem;
-  border-radius: 0.42rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.08);
-  background: rgba(0, 0, 0, 0.33);
-  backdrop-filter: blur(0.08rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.08);
   padding: 0.28rem 0.32rem 0.24rem;
 }
 
@@ -423,12 +425,12 @@ function onShare(): void {
 }
 
 .seat-tag {
-  background: linear-gradient(180deg, #00d4a6 0%, #007e63 100%);
+  background: #8053fd;
 }
 
 .tone-blue {
-  background: #4caaf4;
-  color: #222;
+  background: #78e490;
+  color: #111;
 }
 
 .tone-red {
@@ -476,18 +478,23 @@ function onShare(): void {
   right: 0;
   bottom: 0;
   padding: 0.24rem 0.24rem calc(env(safe-area-inset-bottom) + 0.24rem);
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.08rem);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 0.02rem solid rgba(249, 249, 249, 0.14);
   display: flex;
   gap: 0.2rem;
 }
 
 .action-btn {
   flex: 1;
-  border: 0;
   height: 0.86rem;
   border-radius: 0.43rem;
-  background: rgba(0, 0, 0, 0.62);
+  border: 0.02rem solid rgba(249, 249, 249, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.12);
   color: #f9f9f9;
   font-size: 0.32rem;
   font-weight: 600;

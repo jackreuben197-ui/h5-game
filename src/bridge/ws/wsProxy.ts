@@ -227,7 +227,7 @@ function hasSessionToken(): boolean {
   return Boolean(getSessionToken())
 }
 
-// websocket 链路统一鉴权兜底：发现 token 缺失时，清理状态并强制回登录页。
+// websocket 链路统一鉴权兜底：发现 token 缺失时，清理状态并打开登录弹窗。
 async function forceToLoginFromWs(reason: string): Promise<void> {
   if (authRedirecting) {
     return

@@ -40,6 +40,14 @@ const TELEGRAM_LOGIN_LOADING_MESSAGE = '正在通过 Telegram 自动登录...'
 let telegramAutoLoginPromise: Promise<boolean> | null = null
 let telegramLoadingVisible = false
 
+const REAL_ROUTE_BY_GUEST_NAME: Record<string, string> = {
+  'guest-home': 'lobby',
+  'guest-club': 'club',
+  'guest-friendsTable': 'friendsTable',
+  'guest-message': 'message',
+  'guest-mine': 'mine',
+}
+
 function shouldAttachXClub(url: string): boolean {
   if (/^\/?(?:(?:org|cmsext)\/club|cmsext\/room|order\/club)\//.test(url)) {
     return true
@@ -89,7 +97,7 @@ function resolveXClub(config: HttpRequestConfigExt): string {
   return String(userInfoStore.currentClubId || '').trim()
 }
 
-// 统一处理登录失效：清理登录态并强制跳转到登录页。
+// 统一处理登录失效：清理登录态并打开登录弹窗。
 async function forceToLogin(): Promise<void> {
   const autoLoginSucceeded = await ensureTelegramAutoLogin()
   if (autoLoginSucceeded) {
@@ -164,7 +172,7 @@ http.interceptors.response.use(
       requestConfig.suppressBusinessToast === true ||
       (businessCode !== undefined && suppressCodes.includes(Number(businessCode)))
 
-    // 服务端返回 90010：token 失效，强制回登录页。
+    // 服务端返回 90010：token 失效，打开登录弹窗。
     if (businessCode === 90010) {
       void forceToLogin()
       return Promise.reject(new Error('登录已失效，请重新登录'))
@@ -332,8 +340,13 @@ async function doTelegramAutoLogin(): Promise<boolean> {
     }
 
     const currentRoute = router.currentRoute.value
-    if (currentRoute.name === 'login' || currentRoute.name === 'login1') {
+    if (currentRoute.name === 'login') {
       await router.replace({ name: 'lobby' })
+    } else if (typeof currentRoute.name === 'string') {
+      const realRouteName = REAL_ROUTE_BY_GUEST_NAME[currentRoute.name]
+      if (realRouteName) {
+        await router.replace({ name: realRouteName })
+      }
     }
 
     return true

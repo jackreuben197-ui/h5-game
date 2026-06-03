@@ -6,6 +6,7 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 
 import iconTime from '@/assets/icons/icon_time.png'
 import iconChips from '@/assets/icons/icon_chips.png'
+import icCalendar from '@/assets/icons/ic_calendar.svg'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 import { formatUC } from '@/utils/roomVisibility'
 
@@ -292,7 +293,7 @@ onMounted(() => {
           :class="{ active: activeGameTab === tab }"
           @click="setGameTab(tab)"
         >
-          {{ tab }}
+          <span class="tab-label">{{ tab }}</span>
         </button>
       </nav>
 
@@ -366,7 +367,7 @@ onMounted(() => {
               :class="{ active: pickingTarget === 'start' }"
               @click="pickingTarget = 'start'"
             >
-              <span class="calendar-icon" aria-hidden="true"></span>
+              <img class="calendar-icon" :src="icCalendar" alt="" aria-hidden="true" />
               <span>{{ startDateText }}</span>
             </button>
             <button
@@ -375,7 +376,7 @@ onMounted(() => {
               :class="{ active: pickingTarget === 'end' }"
               @click="pickingTarget = 'end'"
             >
-              <span class="calendar-icon" aria-hidden="true"></span>
+              <img class="calendar-icon" :src="icCalendar" alt="" aria-hidden="true" />
               <span>{{ endDateText }}</span>
             </button>
           </div>
@@ -492,8 +493,16 @@ onMounted(() => {
 
   &.active {
     color: #fff;
-    border-bottom: 0.03365rem solid rgba(255, 255, 255, 0.95);
+
+    .tab-label {
+      border-bottom: 0.03365rem solid rgba(255, 255, 255, 0.95);
+    }
   }
+}
+
+.tab-label {
+  display: inline-block;
+  padding-bottom: 0.06rem;
 }
 
 .glass-card {
@@ -517,9 +526,11 @@ onMounted(() => {
 }
 
 .date-pill {
-  border: 0;
-  border-radius: 1.05573rem;
-  background: rgba(0, 0, 0, 0.24);
+  border: 0.02rem solid rgba(249, 249, 249, 0.08);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
   width: 3.2204rem;
   height: 1.50483rem;
   color: #fff;
@@ -585,7 +596,7 @@ onMounted(() => {
   top: 0.05rem;
   width: 0.0192rem;
   height: 0.718rem;
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.10);
 }
 
 .list-head {
@@ -683,8 +694,10 @@ onMounted(() => {
   width: 100%;
   padding: 0.64256rem 0.53211rem 0.5472rem;
   border-radius: 0.84459rem 0.84459rem 0 0;
-  background: rgba(0, 0, 0, 0.86);
-  backdrop-filter: blur(0.16064rem);
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
 }
 
 .picker-tip {
@@ -705,7 +718,7 @@ onMounted(() => {
   height: 1.024rem;
   border: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  background: #E02542;
   color: #fff;
   font-size: 0.8rem;
   line-height: 1;
@@ -719,11 +732,13 @@ onMounted(() => {
 }
 
 .picker-date-btn {
-  border: 0;
+  border: 0.02rem solid rgba(249, 249, 249, 0.04);
   height: 0.85141rem;
-  border-radius: 0.64157rem;
+  border-radius: 0.8rem;
   padding: 0 0.42208rem;
-  background: rgba(6, 6, 6, 0.4);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(3.5px);
+  -webkit-backdrop-filter: blur(3.5px);
   color: #fff;
   display: flex;
   align-items: center;
@@ -733,35 +748,14 @@ onMounted(() => {
   line-height: 1.2;
 
   &.active {
-    box-shadow: 0 0 0 0.02rem rgba(5, 231, 174, 0.45) inset;
+    border-color: rgba(249, 249, 249, 0.8);
   }
 }
 
 .calendar-icon {
   width: 0.48rem;
   height: 0.48rem;
-  border: 0.04rem solid rgba(243, 243, 243, 0.85);
-  border-radius: 0.1rem;
-  position: relative;
-
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -0.06rem;
-    width: 0.06rem;
-    height: 0.12rem;
-    border-radius: 0.03rem;
-    background: rgba(243, 243, 243, 0.85);
-  }
-
-  &::before {
-    left: 0.09rem;
-  }
-
-  &::after {
-    right: 0.09rem;
-  }
+  object-fit: contain;
 }
 
 .picker-month-row {
@@ -853,7 +847,7 @@ onMounted(() => {
     right: 0;
     top: 0.14667rem;
     bottom: 0.14667rem;
-    background: rgba(5, 231, 174, 0.17);
+    background: rgba(224, 37, 66, 0.17);
     z-index: 1;
   }
 
@@ -876,7 +870,7 @@ onMounted(() => {
     width: 0.8rem;
     height: 0.8rem;
     border-radius: 50%;
-    background: #05e7ae;
+    background: #E02542;
     z-index: 1;
   }
 }
@@ -885,10 +879,11 @@ onMounted(() => {
   margin-top: 0.37333rem;
   width: 100%;
   height: 1.43581rem;
-  border: 0.01333rem solid rgba(242, 242, 242, 0.8);
   border-radius: 1.05573rem;
-  background: linear-gradient(168.11deg, #05e7ae 7.55%, #027a5c 71.92%);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  color: #78E490;
   font-size: 0.4rem;
   font-weight: 500;
 }

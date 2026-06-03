@@ -456,6 +456,7 @@ onMounted(() => {
         </div>
       </section>
     </div>
+    </transition>
 
     <NumericKeypad
       :open="searchKeypadOpen"

@@ -368,7 +368,7 @@ onMounted(() => {
 
 .content-wrap {
   position: relative;
-  padding: 0 0.49rem;
+  padding: 0 0.5rem;
 }
 
 .glass-card {
@@ -386,7 +386,7 @@ onMounted(() => {
 
 .stats-card {
   margin-top: 0.3rem;
-  padding: 0.3632rem 0.67864rem 0.36739rem 0.67864rem;
+  padding: 0.3632rem 0.4rem 0.36739rem 0.4rem;
 }
 
 .time-tabs {

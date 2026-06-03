@@ -69,13 +69,6 @@
           calc(var(--tg-content-safe-area-inset-top, 0px) - var(--app-top-padding)),
           calc(var(--tg-safe-area-guard-top, 0px) - var(--app-top-padding))
         );
-        padding-bottom: max(
-          env(safe-area-inset-bottom),
-          var(--tg-content-safe-area-inset-bottom, 0px),
-          var(--tg-safe-area-guard-bottom, 0px)
-        );
-        padding-left: max(env(safe-area-inset-left), var(--tg-content-safe-area-inset-left, 0px));
-        padding-right: max(env(safe-area-inset-right), var(--tg-content-safe-area-inset-right, 0px));
       }
 
       #drawCanvas {

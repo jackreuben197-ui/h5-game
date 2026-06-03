@@ -27,20 +27,15 @@ import imgQuickSafety from '@/assets/images/club_quick_activity.png'
 import imgQuickRanking from '@/assets/images/club_quick_room_history.png'
 import imgQuickFund from '@/assets/images/club_quick_fund.png'
 import imgInviteCover from '@/assets/images/club_invite_cover.png'
-import imgInviteHeart from '@/assets/icons/club_invite_heart.png'
 import imgSearch from '@/assets/icons/club_search.svg'
 import imgModalClose from '@/assets/icons/modal_close.svg'
 import ImageUploadSheet from '@/components/ImageUploadSheet/ImageUploadSheet.vue'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { extractInvitationCode, extractInvitationLink } from '@/utils/clubInvitation'
 import {
-  extractInvitationCode,
-  extractInvitationLink,
-  extractTraceHash,
-} from '@/utils/clubInvitation'
-import {
-  buildChannelAgentInviteUrl,
   buildChannelClubInviteUrl,
+  buildChannelRegisterUrl,
   isChannelPackageHost,
 } from '@/utils/channelPackage'
 import { generateQrCodeUrl } from '@/utils/qrcode'
@@ -191,20 +186,6 @@ function formatDate(value?: string): string {
 function toSafeNumber(value: unknown): number {
   const num = Number(value)
   return Number.isFinite(num) ? num : 0
-}
-
-function readQueryParamFromUrl(rawUrl: string, key: string): string {
-  const trimmedUrl = String(rawUrl || '').trim()
-  if (!trimmedUrl) {
-    return ''
-  }
-
-  try {
-    const parsed = new URL(trimmedUrl, window.location.origin)
-    return String(parsed.searchParams.get(key) || '').trim()
-  } catch {
-    return ''
-  }
 }
 
 function getCurrentClubId(): number {
@@ -842,14 +823,7 @@ async function prefetchAgentInvitationLink(): Promise<void> {
       return
     }
 
-    const traceHash =
-      extractTraceHash(response.data) ||
-      readQueryParamFromUrl(invitationLink, 'trace_hash') ||
-      readQueryParamFromUrl(invitationLink, 'i')
-
-    const finalLink = isChannelPackage
-      ? buildChannelAgentInviteUrl(traceHash || extractInvitationCode(response.data))
-      : invitationLink
+    const finalLink = invitationLink
 
     if (!finalLink) {
       return
@@ -877,8 +851,10 @@ async function generateInviteQrCode(): Promise<void> {
       return
     }
 
-    const invitationLink = extractInvitationLink(response.data)
-    const finalLink = isChannelPackage ? buildChannelClubInviteUrl() : invitationLink
+    // const invitationLink = extractInvitationLink(response.data)
+    const finalLink = isChannelPackage
+      ? buildChannelClubInviteUrl()
+      : buildChannelRegisterUrl({ inviteCode: extractInvitationCode(response.data) })
 
     if (!finalLink) {
       return
@@ -1109,9 +1085,6 @@ onMounted(async () => {
 
         <div class="invite-modal__qr-wrap">
           <img class="invite-modal__qr" :src="imgInviteQr" alt="扫码加入俱乐部" />
-          <span class="invite-modal__qr-heart">
-            <img :src="imgInviteHeart" alt="" aria-hidden="true" />
-          </span>
         </div>
         <p class="invite-modal__qr-tip">扫码加入，一键开启</p>
 

@@ -1,3 +1,4 @@
+import { buildChannelAgentInviteUrl } from '@/utils/channelPackage'
 const INVITATION_KEYS = [
   'invitation_link',
 ] as const
@@ -10,6 +11,10 @@ function readString(value: unknown): string {
 }
 
 export function extractInvitationLink(payload: unknown): string {
+  const inviteCode = extractTraceHash(payload) || extractInvitationCode(payload)
+  if (inviteCode) {
+    return buildChannelAgentInviteUrl(inviteCode)
+  }
   return extractInvitationValue(payload, INVITATION_KEYS)
 }
 
@@ -17,6 +22,7 @@ export function extractInvitationCode(payload: unknown): string {
   return extractInvitationValue(payload, INVITATION_CODE_KEYS)
 }
 
+// @TODO 这个有啥用？暂时没用上，先保留
 export function extractTraceHash(payload: unknown): string {
   return extractInvitationValue(payload, TRACE_HASH_KEYS)
 }

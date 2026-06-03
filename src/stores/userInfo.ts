@@ -3,6 +3,7 @@ import type { UserInfoData } from '@/api/models/user'
 import type { OrgClubData } from '@/api/models/org'
 import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
+import { resolveInviteCode } from '@/utils/channelPackage'
 
 export type ClubInfo = OrgClubData
 
@@ -58,9 +59,11 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
         return
       }
 
+      // 获取子域邀请码，优先匹配对应邀请码的俱乐部，其次默认选中第一个俱乐部。
+      const subDomainInviteCode = resolveInviteCode()
       // 默认选中第一个俱乐部。
       //测试默认选择竞技场俱乐部
-      const tatget = normalized.find((item) => item.club_id == 49)
+      const tatget = normalized.find((item) => item.invitation_code?.toLowerCase() === subDomainInviteCode)
       if (tatget){
         this.currentClubId = normalizeClubId(tatget.club_id)
         return

@@ -2515,6 +2515,7 @@ export interface OrgClubData {
   deposit_switch?: number
   security_deposit?: number
   freeze_status?: number
+  invitation_code?: string
 
   [key: string]: unknown
 }

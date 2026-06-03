@@ -17,12 +17,7 @@ import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
 import imgSearch from '@/assets/icons/club_search.svg'
 import imgInfo from '@/assets/icons/tips.svg'
-import {
-  extractInvitationCode,
-  extractInvitationLink,
-  extractTraceHash,
-} from '@/utils/clubInvitation'
-import { buildChannelAgentInviteUrl, isChannelPackageHost } from '@/utils/channelPackage'
+import { extractInvitationLink } from '@/utils/clubInvitation'
 import { saveQrCodeImage } from '@/utils/qrcode'
 import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
@@ -52,7 +47,6 @@ const userInfoStore = useUserInfoStore()
 const loading = ref(false)
 const keyword = ref('')
 const members = ref<DownlineMemberItem[]>([])
-const isChannelPackage = isChannelPackageHost()
 const total = ref(0)
 const invitationLink = ref('')
 const showFundSheet = ref(false)
@@ -123,20 +117,6 @@ const currentInputText = computed(() => {
 function toSafeNumber(value: unknown): number {
   const numberValue = Number(value)
   return Number.isFinite(numberValue) ? numberValue : 0
-}
-
-function readQueryParamFromUrl(rawUrl: string, key: string): string {
-  const trimmedUrl = String(rawUrl || '').trim()
-  if (!trimmedUrl) {
-    return ''
-  }
-
-  try {
-    const parsed = new URL(trimmedUrl)
-    return String(parsed.searchParams.get(key) || '').trim()
-  } catch {
-    return ''
-  }
 }
 
 function mapMember(record: ClubAgentUserListRecord): DownlineMemberItem {
@@ -212,15 +192,7 @@ async function loadInvitationLink() {
 
   const cached = userInfoStore.getClubAgentInvitation(currentClub.random_id)
   if (cached) {
-    if (isChannelPackage) {
-      const normalized = buildChannelAgentInviteUrl(
-        readQueryParamFromUrl(cached, 'i') || readQueryParamFromUrl(cached, 'trace_hash'),
-      )
-      invitationLink.value = normalized
-      userInfoStore.setClubAgentInvitation(currentClub.random_id, normalized)
-    } else {
-      invitationLink.value = cached
-    }
+    invitationLink.value = cached
     return
   }
 
@@ -239,17 +211,7 @@ async function loadInvitationLink() {
     }
 
     const link = extractInvitationLink(response.data)
-    const responseInviteCode = extractInvitationCode(response.data)
-    const responseTraceHash = extractTraceHash(response.data)
-
     let finalLink = link
-    if (isChannelPackage) {
-      const traceHash =
-        responseTraceHash ||
-        readQueryParamFromUrl(link, 'trace_hash') ||
-        readQueryParamFromUrl(link, 'i')
-      finalLink = buildChannelAgentInviteUrl(traceHash || responseInviteCode)
-    }
 
     invitationLink.value = finalLink
     if (finalLink) {

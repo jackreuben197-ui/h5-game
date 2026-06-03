@@ -28,6 +28,7 @@ import icCheckbox from '@/assets/icons/ic_checkbox.png'
 import icUncheckbox from '@/assets/icons/ic_uncheckbox.png'
 import imgTextLogo from '@/assets/images/img_text_logo.png'
 import imgFishLogo from '@/assets/images/img_fish_logo.png'
+import logoPdf from '@/assets/doc/logopdf.pdf'
 import { showGameToast } from '@/components/Toast'
 import { Loading } from 'vant'
 import { DEBUG_ACCOUNTS, type DebugAccount } from '@/constants/debugAccounts'
@@ -595,6 +596,10 @@ function consumePhoneAreaSelection(): void {
   form.area = normalized
   localStore.setItem(StorageKey.KEY_PHONE_FIRST, normalized)
 }
+
+function showLogoPdf(): void {
+  window.open(logoPdf, '_blank')
+}
 </script>
 
 <template>
@@ -748,7 +753,7 @@ function consumePhoneAreaSelection(): void {
             :loading="loading"
             @click="handleSubmit"
           />
-          <img :src="imgTextLogo" class="text-logo" alt="" />
+          <img :src="imgTextLogo" class="text-logo" alt="" @click="showLogoPdf" />
         </div>
       </div>
     </div>
@@ -1275,6 +1280,7 @@ function consumePhoneAreaSelection(): void {
   display: block;
   width: 2.6rem;
   margin: 0 auto 0;
+  cursor: pointer;
 }
 
 /* Error snackbar */

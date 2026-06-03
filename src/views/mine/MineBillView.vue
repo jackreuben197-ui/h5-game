@@ -191,6 +191,15 @@ function resolveDateParts(raw: unknown): {
 
 function normalizeTimeText(raw: unknown): string {
   if (typeof raw === 'string' && raw.trim()) {
+    const candidate = new Date(raw)
+    if (!Number.isNaN(candidate.getTime())) {
+      const y = candidate.getFullYear()
+      const m = String(candidate.getMonth() + 1).padStart(2, '0')
+      const d = String(candidate.getDate()).padStart(2, '0')
+      const hh = String(candidate.getHours()).padStart(2, '0')
+      const mm = String(candidate.getMinutes()).padStart(2, '0')
+      return `${y}/${m}/${d} ${hh}:${mm}`
+    }
     return raw
   }
   return resolveDateParts(raw).text
@@ -535,27 +544,29 @@ onMounted(() => {
           <img v-else :src="iconDiamond" alt="diamond" />
           <strong>{{ formatAmount(totalAmount) }}</strong>
         </div>
+        <div v-if="walletDetailExpanded" class="wallet-detail-wrap">
+          <div class="wallet-detail-list">
+            <div v-for="item in walletDetails" :key="item.key" class="wallet-detail-row">
+              <span class="club">{{ item.clubName }}</span>
+              <span class="value">{{ item.amount }}</span>
+            </div>
+          </div>
+        </div>
         <button
           v-if="showWalletDetailButton"
-          class="detail-btn"
+          :class="['detail-btn', { 'detail-btn--no-border': walletDetailExpanded }]"
           type="button"
           @click="toggleWalletDetails"
         >
           查看明细
           <span :class="['arrow', { expanded: walletDetailExpanded }]"></span>
         </button>
-        <div v-if="walletDetailExpanded" class="wallet-detail-list">
-          <div v-for="item in walletDetails" :key="item.key" class="wallet-detail-row">
-            <span class="club">{{ item.clubName }}</span>
-            <span class="value">{{ item.amount }}</span>
-          </div>
-        </div>
       </section>
 
       <section class="timeline">
         <p v-if="loading" class="list-status">加载中...</p>
         <p v-else-if="!flowCards.length" class="list-status">暂无账单记录</p>
-        <article v-for="card in flowCards" :key="card.id" class="timeline-item">
+        <article v-for="card in flowCards" :key="card.id" :class="['timeline-item', { 'timeline-item--new-date': card.showDate }]">
           <div :class="['date-col', { 'date-col--continued': !card.showDate }]">
             <div v-if="card.showDate" class="date">{{ card.day }}</div>
             <div v-if="card.showDate" class="month">{{ card.month }}</div>
@@ -563,23 +574,22 @@ onMounted(() => {
           </div>
 
           <div class="glass-card flow-card">
-            <div class="flow-head">
+            <div :class="['flow-head', { 'flow-head--no-divider': !card.canExpand }]">
               <div>
                 <div class="title">{{ card.name }}</div>
                 <div class="sub">{{ card.club }}</div>
                 <div class="sub">总带入:{{ card.inAmount }}</div>
               </div>
               <div class="right-box">
-                <div class="sub right">总带出: {{ card.outAmount }}</div>
                 <button
                   v-if="card.canExpand"
                   class="record-toggle"
                   type="button"
                   @click="toggleCardExpanded(card.id)"
                 >
-                  {{ isCardExpanded(card.id) ? '收起' : '展开' }}
                   <span :class="['arrow', { expanded: isCardExpanded(card.id) }]"></span>
                 </button>
+                <div class="sub right">总带出: {{ card.outAmount }}</div>
               </div>
             </div>
 
@@ -708,17 +718,27 @@ onMounted(() => {
   justify-content: center;
   gap: 0.12rem;
   border: 0;
+  border-top: 0.02rem solid rgba(249, 249, 249, 0.2);
   background: transparent;
   color: #f3f3f3;
   font-size: 0.28rem;
   padding-top: 0.16rem;
-  border-top: 0.02rem solid rgba(249, 249, 249, 0.2);
+
+  &.detail-btn--no-border {
+    border-top: 0;
+    padding-top: 0.08rem;
+  }
+}
+
+.wallet-detail-wrap {
+  margin-top: 0.16rem;
+  border-radius: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 14px;
 }
 
 .wallet-detail-list {
-  margin-top: 0.16rem;
-  border-top: 0.02rem solid rgba(249, 249, 249, 0.2);
-  padding-top: 0.14rem;
+  padding: 0.04rem 0;
 }
 
 .wallet-detail-row {
@@ -738,8 +758,8 @@ onMounted(() => {
 }
 
 .arrow {
-  width: 0.14rem;
-  height: 0.14rem;
+  width: 0.154rem;
+  height: 0.154rem;
   border-right: 0.03rem solid rgba(255, 255, 255, 0.82);
   border-bottom: 0.03rem solid rgba(255, 255, 255, 0.82);
   transform: rotate(45deg);
@@ -770,11 +790,20 @@ onMounted(() => {
   gap: 0.18rem;
 }
 
+.timeline-item--new-date {
+  margin-top: 0.4rem;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
 .date-col {
   position: relative;
   text-align: right;
   font-size: 0.24rem;
   min-height: 1rem;
+  padding-right: 0.1rem;
 
   &::after {
     content: '';
@@ -818,6 +847,11 @@ onMounted(() => {
   gap: 0.16rem;
   padding-bottom: 0.16rem;
   border-bottom: 0.02rem solid rgba(249, 249, 249, 0.2);
+
+  &.flow-head--no-divider {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
 
   .title {
     font-size: 0.34rem;
@@ -885,7 +919,7 @@ onMounted(() => {
   font-weight: 700;
 
   &.positive {
-    color: #05e7ae;
+    color: #78e490;
   }
 }
 </style>

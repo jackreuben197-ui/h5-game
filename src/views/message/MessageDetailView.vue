@@ -17,8 +17,9 @@ import { t } from '@/i18n'
 import { formatDateTime } from '@/utils/time'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import avatarDefault from '@/assets/images/default_avatar.png'
+import imgDefaultAva from '@/assets/images/img_default_ava.png'
 import iconPeople from '@/assets/icons/icon_people.png'
-import iconBalance from '@/assets/icons/icon_balance.png'
+import iconDollars from '@/assets/icons/ic_dollars.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { formatUC } from '@/utils/roomVisibility'
@@ -111,9 +112,6 @@ interface OtherMessageItem {
 
 const route = useRoute()
 
-const otherBannerBgFirst = mainBgUrl
-const otherBannerBgDefault = mainBgUrl
-
 const pageType = computed<MessagePageType>(() => {
   const type = route.query.type
   if (type === 'system' || type === 'credit' || type === 'uc' || type === 'other') {
@@ -166,7 +164,7 @@ const messageType = computed<number>(() => {
 })
 
 function formatTime(value: unknown): string {
-  return formatDateTime(value, 'YYYY-MM-DD HH:mm')
+  return formatDateTime(value, 'YYYY/MM/DD HH:mm')
 }
 
 function mapStatus(value: unknown): CreditStatus {
@@ -867,20 +865,24 @@ onBeforeUnmount(() => {
             </div>
 
             <div v-if="item.status === 'pending'" class="pending-actions">
-              <button
-                class="action-btn action-btn--ok"
-                type="button"
-                @click="auditCredit(item, true)"
-              >
-                ✓
-              </button>
-              <button
-                class="action-btn action-btn--deny"
-                type="button"
-                @click="auditCredit(item, false)"
-              >
-                ✕
-              </button>
+              <div class="action-wrap">
+                <button
+                  class="action-btn action-btn--ok"
+                  type="button"
+                  @click="auditCredit(item, true)"
+                >
+                  ✓
+                </button>
+              </div>
+              <div class="action-wrap">
+                <button
+                  class="action-btn action-btn--deny"
+                  type="button"
+                  @click="auditCredit(item, false)"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             <p v-else-if="item.status === 'rejected'" class="state-text">已拒绝</p>
@@ -895,7 +897,7 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="request-footer">
-            <img :src="iconBalance" alt="balance" />
+            <img :src="iconDollars" alt="balance" />
             <p>带入申请：{{ item.amount }}</p>
           </div>
         </article>
@@ -959,13 +961,6 @@ onBeforeUnmount(() => {
           :class="{ 'other-item--first': index === 0 }"
         >
           <div class="other-banner" :class="{ 'other-banner--wrap': item.wrap }">
-            <div
-              class="other-banner-bg"
-              :style="{
-                backgroundImage: `url(${index === 0 ? otherBannerBgFirst : otherBannerBgDefault})`,
-              }"
-              aria-hidden="true"
-            ></div>
             <p class="other-title" :class="{ 'other-title--wrap': item.wrap }">
               <span
                 v-for="(segment, segmentIndex) in item.segments"
@@ -983,7 +978,7 @@ onBeforeUnmount(() => {
 
           <div class="other-meta-row">
             <div class="other-meta-club">
-              <img :src="avatarDefault" alt="club" />
+              <img :src="imgDefaultAva" alt="club" />
               <span>{{ item.clubName }}</span>
             </div>
             <p class="other-time">{{ item.time }}</p>
@@ -1053,9 +1048,12 @@ onBeforeUnmount(() => {
 }
 
 .request-card {
-  border-radius: 0.738rem;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.16rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.08);
   padding: 0.32rem 0.304rem 0.304rem;
 }
 
@@ -1117,13 +1115,17 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.14);
 }
 
+.status-pending {
+  background: rgba(199, 199, 199, 0.14);
+}
+
 .status-rejected {
-  background: rgba(255, 19, 43, 0.4);
+  background: rgba(250, 43, 75, 0.4);
 }
 
 .status-approved-by-user,
 .status-approved {
-  background: rgba(5, 231, 174, 0.3);
+  background: rgba(37, 221, 0, 0.3);
 }
 
 .player-block {
@@ -1164,13 +1166,23 @@ onBeforeUnmount(() => {
   gap: 0.35rem;
 }
 
-.action-btn {
+.action-wrap {
   width: 0.97rem;
   height: 0.97rem;
   border-radius: 50%;
-  border: 0.013rem solid #fff;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+  border: 0.02rem solid rgba(249, 249, 249, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.12);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn {
+  border: 0;
+  background: transparent;
   font-size: 0.52rem;
   line-height: 1;
   padding: 0;
@@ -1243,11 +1255,14 @@ onBeforeUnmount(() => {
 .other-banner {
   position: relative;
   left: 1.301rem;
-  top: 0;
   width: 7.458rem;
   min-height: 1.385rem;
-  border-radius: 0.24rem;
-  overflow: hidden;
+  border-radius: 0.8rem 0.8rem 0.8rem 0;
+  border: 0.02rem solid rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.08);
   padding: 0.2rem 1.36rem 0.2rem 0.467rem;
   box-sizing: border-box;
   display: flex;
@@ -1256,19 +1271,6 @@ onBeforeUnmount(() => {
 
 .other-banner--wrap {
   min-height: 1.439rem;
-}
-
-.other-banner-bg {
-  position: absolute;
-  inset: -0.1rem;
-  width: 100%;
-  height: 100%;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  filter: blur(0.1rem);
-  transform: scale(1.05);
 }
 
 .other-title {

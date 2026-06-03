@@ -11,7 +11,8 @@ import type { OrgClubData, OrgClubSearchByIdResponseData } from '@/api/models/or
 import imgClubCover from '@/assets/images/default_avatar.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
 import imgChips from '@/assets/icons/icon_chips.png'
-import imgPeople from '@/assets/icons/icon_people.png'
+import imgDiamond from '@/assets/icons/icon_diamond.png'
+import imgPeople from '@/assets/icons/member_icon_redesigned.svg'
 import imgQuickSafety from '@/assets/images/club_quick_activity.png'
 import imgQuickRanking from '@/assets/images/club_quick_room_history.png'
 import imgQuickFund from '@/assets/images/club_quick_fund.png'
@@ -19,6 +20,8 @@ import imgInviteCover from '@/assets/images/club_invite_cover.png'
 import imgInviteHeart from '@/assets/icons/club_invite_heart.png'
 import imgModalClose from '@/assets/icons/modal_close.svg'
 import { useUserInfoStore } from '@/stores/userInfo'
+import ImageUploadSheet from '@/components/ImageUploadSheet/ImageUploadSheet.vue'
+import imgAvatarAdd from '@/assets/icons/avatar_add_badge.svg'
 import { extractInvitationLink } from '@/utils/clubInvitation'
 import { generateQrCodeUrl } from '@/utils/qrcode'
 import { showFailToast, showSuccessToast } from 'vant'
@@ -68,8 +71,8 @@ const quickActions = computed<QuickActionItem[]>(() => {
   if (canManageClub.value) {
     return [
       { id: 1, title: '活动管理', cover: imgQuickSafety },
-      { id: 2, title: '牌局记录', cover: imgQuickRanking },
-      { id: 3, title: '基金', cover: imgQuickFund },
+      { id: 2, title: 'MTT管理', cover: imgQuickRanking },
+      { id: 3, title: '团队管理', cover: imgQuickFund },
     ]
   }
 
@@ -312,6 +315,43 @@ async function updateClubSwitch(key: 'allowSearch' | 'joinWithoutApproval'): Pro
   }
 }
 
+async function updateClubLogo(newLogoUrl: string): Promise<void> {
+  if (!isFounder.value) {
+    showFailToast('仅创始人可修改')
+    return
+  }
+  const clubId = Number(displayClub.value?.club_id)
+  if (!clubId) {
+    showFailToast('俱乐部信息异常')
+    return
+  }
+  loading.value = true
+  try {
+    const response = await postOrgChangeClubDataApi({
+      club_id: clubId,
+      logo: newLogoUrl,
+    })
+    if (response.code !== 0) {
+      const fallback = (response.msg ?? response.message) as unknown
+      throw new Error(typeof fallback === 'string' ? fallback : '更新失败')
+    }
+    if (displayClub.value) {
+      const merged = {
+        ...displayClub.value,
+        logo: newLogoUrl,
+      }
+      clubDetail.value = merged
+      userInfoStore.setCurrentClub(merged)
+    }
+    showSuccessToast('修改头像成功')
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '更新失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+  }
+}
+
 function closeInvitePopup(): void {
   showInvitePopup.value = false
 }
@@ -419,29 +459,41 @@ onMounted(async () => {
     <div v-loading="loading" class="club-detail">
       <section class="club-header-card">
         <div class="club-header-main">
-          <img class="club-avatar" :src="displayClub?.logo || imgClubCover" alt="俱乐部头像" />
+          <div class="club-avatar-wrap">
+            <img class="club-avatar" :src="displayClub?.logo || imgClubCover" alt="俱乐部头像" />
+            <ImageUploadSheet
+              v-if="isFounder"
+              :model-value="displayClub?.logo"
+              @update:model-value="updateClubLogo"
+            >
+              <template #default="{ open }">
+                <button
+                  type="button"
+                  class="avatar-edit-btn"
+                  aria-label="修改俱乐部头像"
+                  @click="open"
+                >
+                  <img class="add-badge" :src="imgAvatarAdd" alt="添加" aria-hidden="true" />
+                </button>
+              </template>
+            </ImageUploadSheet>
+          </div>
 
           <div class="club-summary">
-            <button type="button" class="club-name-edit">
+            <button type="button" class="club-name-edit" @click="goEditName">
               <h1 class="club-name">{{ displayClub?.club_name || '俱乐部名称' }}</h1>
-              <span
-                v-if="isFounder"
-                class="name-edit-icon"
-                aria-hidden="true"
-                @click="goEditName"
-              ></span>
             </button>
-            <p class="club-id-row">
+            <div class="club-id-row">
               <span class="id-tag">ID</span>
               <span class="id-text">{{ displayClub?.random_id || '--' }}</span>
-            </p>
+            </div>
 
             <p class="metric-line">
-              <img :src="imgBalance" alt="" aria-hidden="true" />
+              <img :src="imgChips" alt="" aria-hidden="true" />
               <span>{{ formatCount(displayClub?.user_gold) }}</span>
             </p>
             <p class="metric-line">
-              <img :src="imgChips" alt="" aria-hidden="true" />
+              <img :src="imgDiamond" alt="" aria-hidden="true" />
               <span>{{ formatCount(displayClub?.user_credit) }}</span>
             </p>
           </div>
@@ -449,9 +501,11 @@ onMounted(async () => {
 
         <div class="club-size-pill" aria-label="俱乐部人数">
           <span class="size-text">
-            {{ displayClub?.club_members }}/{{ displayClub?.upper_limit }}
+            {{ displayClub?.club_members || 0 }}
           </span>
-          <img :src="imgPeople" alt="" aria-hidden="true" />
+          <div class="size-icon-wrap">
+            <img :src="imgPeople" alt="" aria-hidden="true" />
+          </div>
         </div>
       </section>
 
@@ -463,7 +517,7 @@ onMounted(async () => {
           class="quick-card"
           @click="onQuickAction(item.id)"
         >
-          <span class="quick-image-wrap">
+          <span class="quick-image-wrap" :class="['quick-image-wrap--' + item.id]">
             <img :src="item.cover" :alt="item.title" />
           </span>
           <span class="quick-title">{{ item.title }}</span>
@@ -479,7 +533,11 @@ onMounted(async () => {
           aria-label="编辑俱乐部简介"
           @click="goEditDescription"
         >
-          <span class="edit-pen"></span>
+          <span class="edit-pen">
+            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 11 11" fill="none">
+              <path d="M7.1838 0.371378L6.22515 1.33003L8.80004 3.90492L9.75869 2.94627C10.2539 2.4511 10.2539 1.64892 9.75869 1.15375L8.9783 0.371378C8.48313 -0.123793 7.68095 -0.123793 7.18578 0.371378H7.1838ZM5.77751 1.77766L1.16054 6.39662C0.954552 6.60261 0.80402 6.85811 0.720831 7.13739L0.0196696 9.52015C-0.0298475 9.68851 0.0157082 9.86875 0.138511 9.99156C0.261313 10.1144 0.441555 10.1599 0.607932 10.1124L2.99069 9.41121C3.26997 9.32803 3.52548 9.17749 3.73147 8.9715L8.3524 4.35255L5.77751 1.77766Z" fill="white"/>
+            </svg>
+          </span>
         </button>
       </section>
 
@@ -545,7 +603,7 @@ onMounted(async () => {
       </section>
 
       <section v-if="isFounder" class="danger-zone">
-        <button type="button" class="danger-btn" @click="onDeleteClub">删除俱乐部</button>
+        <PrimaryButton glass text="删除俱乐部" @click="onDeleteClub" />
       </section>
     </div>
 
@@ -603,6 +661,9 @@ onMounted(async () => {
 <style scoped lang="scss">
 .club-detail-bg {
   height: 100dvh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .club-detail {
@@ -644,75 +705,106 @@ onMounted(async () => {
 }
 
 .club-header-card {
+  position: relative;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: 0;
   min-height: 3.08434rem;
-  padding: 0.12048rem 0.55422rem;
-  border-radius: 1.00402rem;
-  background: rgba(0, 0, 0, 0.22);
+  padding: 0 0.55422rem;
+  border-radius: 1.004rem;
+  background: linear-gradient(
+    109.623deg,
+    rgba(255, 255, 255, 0.1) 21.106%,
+    rgba(230, 230, 230, 0.1) 71.429%
+  );
   backdrop-filter: blur(0.2rem);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 1.004rem;
+    padding: 1px;
+    background: linear-gradient(
+      109.623deg,
+      rgba(255, 255, 255, 0.15) 21.106%,
+      rgba(230, 230, 230, 0.05) 71.429%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
 }
 
 .club-header-main {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.28112rem;
-  bottom: 0.5rem;
   position: relative;
+  z-index: 1;
+}
+
+.club-avatar-wrap {
+  position: relative;
+  width: 1.96787rem;
+  height: 1.97968rem;
+  flex-shrink: 0;
 }
 
 .club-avatar {
-  width: 1.96787rem;
-  height: 1.97968rem;
+  width: 100%;
+  height: 100%;
   border-radius: 999px;
   object-fit: cover;
+}
+
+.avatar-edit-btn {
+  position: absolute;
+  left: 1.28rem;
+  top: 1.29rem;
+  width: 0.69rem;
+  height: 0.69rem;
   border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.add-badge {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: block;
 }
 
 .club-summary {
   display: flex;
   flex-direction: column;
-  min-height: 1.99325rem;
+  justify-content: center;
+  gap: 0.08rem;
 }
 
 .club-name-edit {
   display: inline-flex;
   align-items: center;
-  gap: 0.08rem;
   padding: 0;
   border: 0;
   background: transparent;
   color: inherit;
   max-width: 100%;
+  text-align: left;
 }
 
 .club-name {
   margin: 0;
   color: #f9f9f9;
   font-size: 0.5692rem;
-  line-height: 1;
+  line-height: 1.2;
   font-weight: 700;
-}
-
-.name-edit-icon {
-  position: relative;
-  width: 0.2rem;
-  height: 0.2rem;
-  flex: 0 0 auto;
-}
-
-.name-edit-icon::before {
-  content: '';
-  position: absolute;
-  left: 0.03rem;
-  top: 0.06rem;
-  width: 0.14rem;
-  height: 0.06rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.92);
-  border-radius: 0.03rem;
-  transform: rotate(-38deg);
 }
 
 .club-id-row {
@@ -731,12 +823,13 @@ onMounted(async () => {
   border-radius: 0.10682rem;
   font-size: 0.20537rem;
   color: #fff;
-  background: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .id-text {
   font-size: 0.24404rem;
-  color: rgba(249, 249, 249, 0.95);
+  color: #fff;
+  font-weight: 600;
 }
 
 .metric-line {
@@ -757,17 +850,18 @@ onMounted(async () => {
 }
 
 .club-size-pill {
-  flex: 0 0 auto;
-  min-height: 0.82731rem;
-  padding: 0 0.28112rem;
+  flex-shrink: 0;
+  height: 0.82731rem;
+  padding-left: 0.28112rem;
+  padding-right: 0rem;
   border-radius: 0.72289rem;
   display: inline-flex;
   align-items: center;
   gap: 0.05622rem;
-  background: rgba(255, 255, 255, 0.2);
-  right: 0.5rem;
-  bottom: 0.3rem;
-  position: absolute;
+  background: rgba(0, 0, 0, 0.2);
+  mix-blend-mode: soft-light;
+  position: relative;
+  z-index: 1;
 }
 
 .size-text {
@@ -777,9 +871,18 @@ onMounted(async () => {
   font-weight: 500;
 }
 
+.size-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+  transform: scaleY(-1) rotate(180deg);
+}
+
 .club-size-pill img {
-  width: 0.48rem;
-  height: 0.48rem;
+  width: 0.987rem;
+  height: 0.851rem;
   object-fit: contain;
   opacity: 0.94;
 }
@@ -797,17 +900,31 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.16027rem;
+  gap: 0.186rem;
   color: #f9f9f9;
 }
 
 .quick-image-wrap {
   width: 100%;
   aspect-ratio: 1 / 1;
-  border-radius: 0.75252rem;
-  border: 0.02667rem solid rgba(255, 255, 255, 0.6);
+  border-radius: 0.679rem;
+  border: 0.0128rem solid rgba(255, 255, 255, 0.4);
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.26);
+  box-shadow:
+    inset 0 0.06rem 0.12rem rgba(255, 255, 255, 0.5),
+    inset 0 -0.06rem 0.12rem rgba(0, 0, 0, 0.4);
+}
+
+.quick-image-wrap--1 {
+  background: linear-gradient(180deg, #51b7ff 0%, #1257a6 100%);
+}
+
+.quick-image-wrap--2 {
+  background: linear-gradient(180deg, #fa4356 0%, #a60d1e 100%);
+}
+
+.quick-image-wrap--3 {
+  background: linear-gradient(180deg, #e78c24 0%, #943f07 100%);
 }
 
 .quick-image-wrap img {
@@ -817,64 +934,99 @@ onMounted(async () => {
 }
 
 .quick-title {
-  font-size: 0.304rem;
-  line-height: 1;
+  font-size: 0.295rem;
+  line-height: 1.2;
+  font-weight: 510;
+  text-shadow: 0px 0.0338rem 0.253rem rgba(0, 0, 0, 0.4);
   text-align: center;
 }
 
 .intro-card {
+  position: relative;
   min-height: 1.51964rem;
   padding: 0.34538rem 0.41767rem 0.34538rem 0.55422rem;
   border-radius: 0.72289rem;
-  background: rgba(0, 0, 0, 0.24);
+  background: linear-gradient(
+    125.866deg,
+    rgba(255, 255, 255, 0.1) 21.106%,
+    rgba(230, 230, 230, 0.1) 71.429%
+  );
   backdrop-filter: blur(0.12rem);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: rgba(249, 249, 249, 0.96);
+  color: #f1f1f1;
   font-size: 0.40524rem;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 0.72289rem;
+    padding: 1px;
+    background: linear-gradient(
+      125.866deg,
+      rgba(255, 255, 255, 0.15) 21.106%,
+      rgba(230, 230, 230, 0.05) 71.429%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
 }
 
 .intro-edit {
   border: 0;
   width: 0.67539rem;
   height: 0.67539rem;
-  border-radius: 50%;
-  background: linear-gradient(145deg, #15ddb2, #00ca98);
+  border-radius: 0.435rem;
+  background: #fa2b4b;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
+  cursor: pointer;
 }
 
 .edit-pen {
-  position: relative;
-  width: 0.21rem;
-  height: 0.21rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.28141rem; /* 10.553px */
+  height: 0.28141rem; /* 10.553px */
 }
 
-.edit-pen::before {
-  content: '';
-  position: absolute;
-  left: 0.03rem;
-  top: 0.06rem;
-  width: 0.14rem;
-  height: 0.06rem;
-  border: 0.02rem solid #fff;
-  border-radius: 0.03rem;
-  transform: rotate(-38deg);
+.edit-pen svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .settings-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.28916rem;
   padding: 0.34538rem 0.41767rem;
   border-radius: 0.72289rem;
-  background:
-    radial-gradient(80% 100% at 100% 100%, rgba(51, 169, 206, 0.26), rgba(51, 169, 206, 0)),
-    rgba(0, 0, 0, 0.24);
+  background: linear-gradient(99.0166deg, rgba(255, 255, 255, 0.1) 21.106%, rgba(230, 230, 230, 0.1) 71.429%);
   backdrop-filter: blur(0.15rem);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 0.72289rem;
+    padding: 1px;
+    background: linear-gradient(99.0166deg, rgba(255, 255, 255, 0.15) 21.106%, rgba(230, 230, 230, 0.05) 71.429%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
 }
 
 .settings-row {
@@ -907,7 +1059,7 @@ onMounted(async () => {
 }
 
 .muted-text {
-  color: rgba(228, 228, 228, 0.7);
+  color: rgba(228, 228, 228, 0.5);
   font-size: 0.40524rem;
 }
 
@@ -929,13 +1081,12 @@ onMounted(async () => {
 .level-pill {
   display: inline-flex;
   align-items: center;
-  min-height: 0.48614rem;
-  padding: 0 0.1246rem;
+  padding: 0.083rem 0.2492rem;
   border-radius: 999px;
   font-size: 0.27857rem;
   font-weight: 700;
   color: #f9f9f9;
-  background: linear-gradient(152deg, #05e7ae 8%, #027a5c 72%);
+  background: #fa2b4b;
 }
 
 .switch {
@@ -944,18 +1095,19 @@ onMounted(async () => {
   border: 0;
   padding: 0.04rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.22);
+  background: #c1c1c1;
   display: inline-flex;
   align-items: center;
 }
 
 .switch--on {
   justify-content: flex-end;
-  background: #05e7ae;
+  background: #fa2b4b;
 }
 
 .switch:not(.switch--on) {
   justify-content: flex-start;
+  background: #c1c1c1;
 }
 
 .switch-knob {
@@ -982,16 +1134,7 @@ onMounted(async () => {
   padding: 0 0.64108rem 0.24rem;
 }
 
-.danger-btn {
-  width: 100%;
-  min-height: 1.43581rem;
-  border: 0;
-  border-radius: 1.05574rem;
-  color: #f9f9f9;
-  font-size: 0.5066rem;
-  font-weight: 500;
-  background: linear-gradient(90deg, rgba(73, 29, 86, 0.8), rgba(19, 95, 125, 0.84));
-}
+
 
 .club-modal-mask {
   position: fixed;

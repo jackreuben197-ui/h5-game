@@ -65,7 +65,9 @@ watch(
   () => props.open,
   (v) => {
     if (v) {
-      value.value = String(props.initialValue || '').replace(/\D/g, '').slice(0, getMaxLength())
+      value.value = String(props.initialValue || '')
+        .replace(/\D/g, '')
+        .slice(0, getMaxLength())
     }
   },
 )
@@ -130,12 +132,7 @@ function confirm(): void {
           </div>
 
           <div class="kp__grid">
-            <button
-              v-for="n in digits"
-              :key="n"
-              class="kp__key"
-              @click="press(n)"
-            >
+            <button v-for="n in digits" :key="n" class="kp__key" @click="press(n)">
               {{ n }}
             </button>
             <button class="kp__key kp__key--accent" @click="clearAll">C</button>
@@ -146,7 +143,12 @@ function confirm(): void {
           </div>
 
           <div class="kp__actions">
-            <PrimaryButton :text="confirmText" :shadow="false" class="kp__confirm" @click="confirm" />
+            <PrimaryButton
+              :text="confirmText"
+              :shadow="false"
+              class="kp__confirm"
+              @click="confirm"
+            />
           </div>
         </div>
       </div>
@@ -190,13 +192,14 @@ function confirm(): void {
   align-items: center;
   gap: 16.265px;
   border-radius: 31.672px 31.672px 0 0;
-  border: 0.894px solid rgba(242, 242, 242, 0.40);
+  border: 0.894px solid rgba(242, 242, 242, 0.4);
   border-bottom: none;
-  background: url(@/assets/images/wallet/bg_sharp.webp) lightgray 0% 0% / 40.11695086956024px 40.11695086956024px repeat,
-              linear-gradient(107deg, rgba(142, 142, 142, 0.30) 2.93%, rgba(103, 103, 103, 0.40) 43.62%, rgba(73, 73, 73, 0.50) 89.79%);
+  // background: url(@/assets/images/wallet/bg_sharp.webp) lightgray 0% 0% / 40.11695086956024px 40.11695086956024px repeat,
+  // linear-gradient(107deg, rgba(142, 142, 142, 0.30) 2.93%, rgba(103, 103, 103, 0.40) 43.62%, rgba(73, 73, 73, 0.50) 89.79%);
   background-blend-mode: overlay, hard-light;
-  box-shadow: 3.222px 4.028px 6.445px 0 rgba(0, 0, 0, 0.25),
-              1.134px 1.134px 2.268px 0 rgba(242, 242, 242, 0.20) inset;
+  box-shadow:
+    3.222px 4.028px 6.445px 0 rgba(0, 0, 0, 0.25),
+    1.134px 1.134px 2.268px 0 rgba(242, 242, 242, 0.2) inset;
   backdrop-filter: blur(9.921565055847168px);
   -webkit-backdrop-filter: blur(9.921565055847168px);
   overflow: hidden;
@@ -209,9 +212,18 @@ function confirm(): void {
   inset: 0;
   border-radius: inherit;
   padding: 0.894px;
-  background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  background: linear-gradient(
+    180deg,
+    rgba(242, 242, 242, 0.4) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -299,9 +311,19 @@ function confirm(): void {
   inset: 0;
   border-radius: inherit;
   padding: 0.71px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 55%, rgba(255, 255, 255, 0) 61%, rgba(255, 255, 255, 0.5) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0) 55%,
+    rgba(255, 255, 255, 0) 61%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -320,7 +342,7 @@ function confirm(): void {
   justify-content: center;
   align-items: center;
   border-radius: 60.241px;
-  background: rgba(245, 45, 45, 0.20);
+  background: rgba(245, 45, 45, 0.2);
   mix-blend-mode: plus-lighter;
 }
 
@@ -344,7 +366,11 @@ function confirm(): void {
   align-items: center !important;
   flex: 1 0 0 !important;
   border-radius: 40.576px !important;
-  background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%) !important;
+  background: linear-gradient(
+    97deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  ) !important;
   backdrop-filter: blur(0.16230463981628418px) !important;
   box-shadow: none !important;
 }
@@ -354,10 +380,12 @@ function confirm(): void {
 }
 
 .kp__confirm :deep(.primary-btn__text) {
-  color: #78E490 !important;
+  color: #78e490 !important;
   text-align: center !important;
-  font-feature-settings: 'liga' off, 'clig' off !important;
-  font-family: "HONOR Sans CN", sans-serif !important;
+  font-feature-settings:
+    'liga' off,
+    'clig' off !important;
+  font-family: 'HONOR Sans CN', sans-serif !important;
   font-size: 15.658px !important;
   font-style: normal !important;
   font-weight: 500 !important;

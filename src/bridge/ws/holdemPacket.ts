@@ -2,11 +2,15 @@
 // 1) 写入/解析 WS 二进制固定包头
 // 2) 提供通用 WS 包头编解码能力（供 H5 自己发查询类包）
 
-const CHARS_FLAG = new Uint8Array([0x59, 0x4d]) // "YM"
+// const CHARS_FLAG = new Uint8Array([0x59, 0x4d]) // old: "YM"
+const CHARS_FLAG = new Uint8Array([0x42, 0x51, 0x4d, 0x4e]) // "BQMN" - client → server
+// const CHARS_FLAG_RECV = new Uint8Array([0x59, 0x4d]) // old: "YM" - server → client
 const TOKEN_LENGTH = 32
 const PROTOBUF_VERSION = 2
-const FIX_HEAD_LENGTH = 53 // 不含 dataLength 的固定头长度
-const HEAD_LENGTH = 57 // 含 dataLength 的固定头长度
+// const FIX_HEAD_LENGTH = 53 // old: 不含 dataLength 的固定头长度
+const FIX_HEAD_LENGTH = 55 // 不含 dataLength 的固定头长度
+// const HEAD_LENGTH = 57 // old: 含 dataLength 的固定头长度
+const HEAD_LENGTH = 59 // 含 dataLength 的固定头长度
 
 const textEncoder = new TextEncoder()
 
@@ -71,7 +75,7 @@ function decodeTokenDisplay(tokenBytes: Uint8Array): string {
   return `0x${hex}`
 }
 
-// 生成客户端发送包：含 dataLength + YM + code + token + room/match + protoVersion + body。
+// 生成客户端发送包：含 dataLength + code + BQMN + token + room/match + protoVersion + body。
 export function encodeHoldemPacket(input: HoldemPacketEncodeInput): ArrayBuffer {
   const body = input.body || new Uint8Array(0)
   const dataLength = FIX_HEAD_LENGTH + body.length
@@ -81,26 +85,29 @@ export function encodeHoldemPacket(input: HoldemPacketEncodeInput): ArrayBuffer 
   const bytes = new Uint8Array(buffer)
 
   view.setUint32(0, dataLength, false)
-  bytes.set(CHARS_FLAG, 4)
-  view.setUint16(6, input.code, false)
-  bytes.set(encodeToken(input.token), 8)
-  writeUint64BE(view, 40, input.roomId || 0)
-  writeUint64BE(view, 48, input.matchId || 0)
-  view.setUint8(56, PROTOBUF_VERSION)
-  bytes.set(body, 57)
+  view.setUint16(4, input.code, false)       // old: view.setUint16(6, input.code, false)
+  bytes.set(CHARS_FLAG, 6)                   // old: bytes.set(CHARS_FLAG, 4)
+  bytes.set(encodeToken(input.token), 10)    // old: bytes.set(encodeToken(input.token), 8)
+  writeUint64BE(view, 42, input.roomId || 0) // old: writeUint64BE(view, 40, input.roomId || 0)
+  writeUint64BE(view, 50, input.matchId || 0) // old: writeUint64BE(view, 48, input.matchId || 0)
+  view.setUint8(58, PROTOBUF_VERSION)        // old: view.setUint8(56, PROTOBUF_VERSION)
+  bytes.set(body, 59)                        // old: bytes.set(body, 57)
   return buffer
 }
 
 // 只解析协议号：用于高频路径快速分流（例如心跳过滤）。
 export function decodeHoldemCode(raw: ArrayBufferLike): number | null {
   const bytes = new Uint8Array(raw)
-  if (bytes.length < 4) {
+  // old: if (bytes.length < 4)
+  if (bytes.length < 6) {
     return null
   }
-  if (bytes[0] !== CHARS_FLAG[0] || bytes[1] !== CHARS_FLAG[1]) {
+  // old: if (bytes[0] !== CHARS_FLAG_RECV[0] || bytes[1] !== CHARS_FLAG_RECV[1])
+  if (bytes[2] !== CHARS_FLAG[0] || bytes[3] !== CHARS_FLAG[1] || bytes[4] !== CHARS_FLAG[2] || bytes[5] !== CHARS_FLAG[3]) {
     return null
   }
-  return new DataView(raw).getUint16(2, false)
+  // old: return new DataView(raw).getUint16(2, false)
+  return new DataView(raw).getUint16(0, false)
 }
 
 // 解析服务端回包：对齐 Cocos ProtocolAgency.Receive 的头格式。
@@ -113,24 +120,32 @@ export function decodeHoldemPacket(raw: ArrayBufferLike): HoldemPacketDecodeResu
   const view = new DataView(raw)
 
   // Cocos 入站格式（ProtocolAgency.Receive）：
-  // [0:2] YM
-  // [2:4] code(uint16)
-  // [4:36] token(32)
-  // [36:44] roomId(uint64)
-  // [44:52] matchId(uint64)
-  // [52] protoVersion
-  // [53:] pb body
-  if (bytes.length < FIX_HEAD_LENGTH || bytes[0] !== CHARS_FLAG[0] || bytes[1] !== CHARS_FLAG[1]) {
+  // old: [0:2] YM / [2:4] code / [4:36] token / [36:44] roomId / [44:52] matchId / [52] proto / [53:] body
+  // [0:2]   code(uint16)
+  // [2:6]   BQMN
+  // [6:38]  token(32)
+  // [38:46] roomId(uint64)
+  // [46:54] matchId(uint64)
+  // [54]    protoVersion
+  // [55:]   pb body
+  // old: if (bytes.length < FIX_HEAD_LENGTH || bytes[0] !== CHARS_FLAG_RECV[0] || bytes[1] !== CHARS_FLAG_RECV[1])
+  if (bytes.length < FIX_HEAD_LENGTH || bytes[2] !== CHARS_FLAG[0] || bytes[3] !== CHARS_FLAG[1] || bytes[4] !== CHARS_FLAG[2] || bytes[5] !== CHARS_FLAG[3]) {
     return null
   }
 
-  const code = view.getUint16(2, false)
-  const tokenBytes = bytes.slice(4, 4 + TOKEN_LENGTH)
+  // old: const code = view.getUint16(2, false)
+  const code = view.getUint16(0, false)
+  // old: const tokenBytes = bytes.slice(4, 4 + TOKEN_LENGTH)
+  const tokenBytes = bytes.slice(6, 6 + TOKEN_LENGTH)
   const token = decodeTokenDisplay(tokenBytes)
-  const roomId = readUint64BE(view, 36)
-  const matchId = readUint64BE(view, 44)
-  const protoVersion = bytes[52] || 0
-  const body = bytes.slice(53)
+  // old: const roomId = readUint64BE(view, 36)
+  const roomId = readUint64BE(view, 38)
+  // old: const matchId = readUint64BE(view, 44)
+  const matchId = readUint64BE(view, 46)
+  // old: const protoVersion = bytes[52] || 0
+  const protoVersion = bytes[54] || 0
+  // old: const body = bytes.slice(53)
+  const body = bytes.slice(55)
 
   return {
     code,

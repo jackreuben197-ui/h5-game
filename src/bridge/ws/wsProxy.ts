@@ -93,7 +93,6 @@ function resolveWsUrl(payload: WsConnectPayload): string {
     return ''
   }
 
-  // 对齐现网模板：wss://preview.trackyourchoice.com{0}
   const template = (import.meta.env.VITE_WS_URL_TEMPLATE || 'wss://preview.trackyourchoice.com{0}').trim()
   if (template.includes('{0}')) {
     return template.replace('{0}', `:${Math.floor(port)}`)
@@ -465,7 +464,12 @@ function logHoldemPacket(buffer: ArrayBufferLike): number | null {
     lastHeartbeatLogAt = now
   }
 
-  logRecv.debug({ code, codeName, bodyLen: body.length, bodyBase64Preview: uint8ArrayToBase64Preview(body) })
+  logRecv.debug({
+    code,
+    codeName,
+    bodyLen: body.length,
+    bodyBase64Preview: uint8ArrayToBase64Preview(body),
+  })
   return code
 }
 

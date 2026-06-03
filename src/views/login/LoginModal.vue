@@ -27,6 +27,7 @@ import icGlobe from '@/assets/icons/ic_globe.svg'
 import { showGameToast } from '@/components/Toast'
 import { Loading } from 'vant'
 import { DEBUG_ACCOUNTS, type DebugAccount } from '@/constants/debugAccounts'
+import { resolveInviteCode, resolveTraceHash, shouldOpenRegisterMode } from '@/utils/channelPackage'
 import ProtocolView from './components/ProtocolView.vue'
 import LoginPhoneAreaView from './components/LoginPhoneAreaView.vue'
 
@@ -74,6 +75,8 @@ const showProtocolPanel = ref(false)
 const showPhoneAreaPanel = ref(false)
 const pendingAgreementSubmit = ref(false)
 const loading = ref(false)
+const inviteCodeFromChannel = ref('')
+const traceHashFromChannel = ref('')
 
 const handleSelectLang = (lang: string) => {
   const matched = SUPPORTED_LOCALES_OPTIONS.find((item) => item.value === lang)?.value
@@ -92,6 +95,7 @@ onUnmounted(() => {
 })
 
 hydrateFormFromLocal()
+applyChannelInviteContext()
 
 watch(
   () => loginModalStore.visible,
@@ -103,6 +107,8 @@ watch(
       showProtocolConfifm.value = false
       showDebugAccountDialog.value = false
       pendingAgreementSubmit.value = false
+      // 关闭未登录态弹窗（含点击遮罩关闭）时清空残留的跳转目标，避免下次登录被错误带跳。
+      loginModalStore.pendingRedirect = ''
       return
     }
     // 每次打开同步一次最新缓存（避免外部修改导致状态过期）。
@@ -357,11 +363,15 @@ function applyDebugAccount(account: DebugAccount): void {
 }
 
 async function handleLogin(target: string) {
+  const effectiveInviteCode = traceHashFromChannel.value ? '' : inviteCodeFromChannel.value
+
   const res = await loginV2Api({
     phone: contactType.value === 'phone' ? target : undefined,
     email: contactType.value === 'email' ? target : undefined,
     password: md5(form.password.trim()),
     area: contactType.value === 'phone' ? normalizeArea() : undefined,
+    invite_code: effectiveInviteCode || undefined,
+    trace_hash: traceHashFromChannel.value || undefined,
   })
   const token = String(res.token || '').trim()
   if (!token) {
@@ -383,22 +393,39 @@ async function handleLogin(target: string) {
   // 把首页无关的拉取（userInfo/club/全局配置/收费配置/多语言模板/WS）统一收口到登录后处理。
   syncPostAuthData()
 
-  // 假页 → 真页切换；非 guest 路由（如 /wallet）保持原页。
-  const currentName = router.currentRoute.value.name
-  const realRouteName =
-    typeof currentName === 'string' ? GUEST_TO_REAL_ROUTE[currentName] : undefined
-  if (realRouteName) {
-    await router.replace({ name: realRouteName })
+  // 优先跳转到登录前记录的目标路径（如点击钱包 tab 触发登录的场景）。
+  const pendingRedirect = loginModalStore.consumePendingRedirect()
+  if (pendingRedirect) {
+    await router.replace(pendingRedirect)
+  } else {
+    // 假页 → 真页切换；非 guest 路由（如 /wallet）保持原页。
+    const currentName = router.currentRoute.value.name
+    const realRouteName =
+      typeof currentName === 'string' ? GUEST_TO_REAL_ROUTE[currentName] : undefined
+    if (realRouteName) {
+      await router.replace({ name: realRouteName })
+    }
   }
   loginModalStore.close()
 }
 
 async function handleRegister(target: string) {
+  const effectiveInviteCode = traceHashFromChannel.value ? '' : inviteCodeFromChannel.value
+
   const payload: Record<string, string | number> = {
     password: md5(form.password.trim()),
     code: form.code.trim(),
     platform: 5,
   }
+
+  if (effectiveInviteCode) {
+    payload.invite_code = effectiveInviteCode
+  }
+
+  if (traceHashFromChannel.value) {
+    payload.trace_hash = traceHashFromChannel.value
+  }
+
   if (contactType.value === 'phone') {
     payload.phone = target
     payload.area = form.area.trim() || '55'
@@ -521,6 +548,15 @@ function localeToServerLang(locale: string): number {
   if (locale === 'zh') return 2
   if (locale === 'pt') return 3
   return 0
+}
+
+function applyChannelInviteContext(): void {
+  inviteCodeFromChannel.value = resolveInviteCode()
+  traceHashFromChannel.value = resolveTraceHash()
+
+  if (shouldOpenRegisterMode() && pageMode.value === 'login') {
+    pageMode.value = 'register'
+  }
 }
 </script>
 

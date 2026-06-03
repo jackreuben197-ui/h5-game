@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
 import { useGameStore } from '@/stores/game'
+import { useLoginModalStore } from '@/stores/loginModal'
 import iconHome from '@/assets/icons/tabbar_home.png'
 import iconClub from '@/assets/icons/tabbar_club.png'
 import iconFriendsTable from '@/assets/icons/tabbar_friends_table.png'
@@ -78,6 +79,7 @@ const tabs = computed<TabItem[]>(() => {
 const router = useRouter()
 const tabsStore = useMainTabsStore()
 const gameStore = useGameStore()
+const loginModalStore = useLoginModalStore()
 
 function resolveTabPath(tab: TabItem): string {
   return gameStore.sessionToken ? tab.path : tab.guestPath
@@ -232,6 +234,11 @@ function refreshPathByCurrentTab(): void {
 }
 
 function onTabClick(tab: TabItem): void {
+  // 渠道包未登录态点击钱包：原地弹出登录框，登录成功后再跳转到钱包
+  if (tab.key === 'wallet' && !gameStore.sessionToken) {
+    loginModalStore.open(tab.path)
+    return
+  }
   tabsStore.setActiveTab(tab.key)
   void router.push(resolveTabPath(tab))
 }

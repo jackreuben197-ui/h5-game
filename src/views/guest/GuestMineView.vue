@@ -70,25 +70,17 @@ function goToLogin(): void {
             <button class="left-avatar" type="button" @click="notifyNotLogin">
               <img :src="displayUser.avatar" alt="头像" />
             </button>
-            <div class="right-box">
-              <button class="name" type="button" @click="notifyNotLogin">
-                {{ displayUser.nickname }}
-              </button>
-              <div class="idbox">
-                <div class="id-label">ID</div>
-                <div class="id-value">{{ displayUser.userID }}</div>
-              </div>
-            </div>
+            <div class="right-box" @click="notifyNotLogin">登陆/注册</div>
           </div>
           <div class="card-line2">
             <div class="left-board">
               <div class="currency">
                 <img class="icon-currency" :src="iconChip" alt="gold" />
-                <div class="num">{{ displayUser.gold.toLocaleString() }}</div>
+                <div class="num">-</div>
               </div>
               <div class="currency">
                 <img class="icon-currency" :src="iconDiamond" alt="diamond" />
-                <div class="num">{{ displayUser.diamond.toLocaleString() }}</div>
+                <div class="num">-</div>
               </div>
             </div>
             <button class="button" type="button" @click="notifyNotLogin">
@@ -109,9 +101,6 @@ function goToLogin(): void {
         <div class="text">{{ box.text }}</div>
       </div>
     </div>
-    <VanButton plain round size="small" class="logout-btn" @click="goToLogin">
-      立即登录
-    </VanButton>
   </div>
 </template>
 
@@ -141,43 +130,17 @@ function goToLogin(): void {
             }
           }
           .right-box {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 0.3rem;
-            .name {
-              border: 0;
-              background: transparent;
-              padding: 0;
-              text-align: left;
-              color: #fff;
-              margin-top: 0.2rem;
-              font-size: 0.6rem;
-              line-height: 100%;
-              font-weight: bold;
-              font-family: var(--font-family-SF);
-            }
-            .idbox {
-              display: flex;
-              align-items: center;
-              gap: 0.15rem;
-              .id-label {
-                font-size: 0.28rem;
-                line-height: 150%;
-                background-color: rgba(255, 255, 255, 0.4);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                padding: 0 0.25rem;
-                border-radius: 0.5rem;
-              }
-              .id-value {
-                font-size: 0.3rem;
-                line-height: 120%;
-                font-weight: 500;
-                font-family: var(--font-family-SF);
-              }
-            }
+            display: inline-block;
+            padding: 0.37rem 0.62rem;
+            margin-top: 0.5rem;
+            font-size: 0.32rem;
+            border-radius: 1.73493rem;
+            background: rgba(255, 255, 255, 0.2);
+            background-blend-mode: hard-light;
+            box-shadow:
+              /* 左上高光 */ inset 0.2px 0.2px 0px 0px
+                rgba(255, 255, 255, 0.85),
+              /* 右下高光 */ inset -0.2px -0.2px 0px 0px rgba(255, 255, 255, 0.85);
           }
         }
         .card-line2 {

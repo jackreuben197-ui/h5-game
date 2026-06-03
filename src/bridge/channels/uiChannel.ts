@@ -2,6 +2,8 @@ import { subscribeCocosMessages } from '../core/cocosBridgeChannel'
 import { BRIDGE_ACTION, BRIDGE_MSG_TYPE, type BridgeMessage, type H5NavigatePayload } from '../protocol'
 import router from '@/router'
 import type { RouteLocationRaw } from 'vue-router'
+import { useLoginModalStore } from '@/stores/loginModal'
+import { pinia } from '@/stores/pinia'
 import { createLogger } from '@/utils/logger'
 
 const log = createLogger('[bridge]')
@@ -41,12 +43,14 @@ function normalizeNavigateTarget(payload: unknown): {
   route: RouteLocationRaw
   replace: boolean
   ensureVisible: boolean
+  openLoginModal: boolean
 } | null {
   if (typeof payload === 'string' && payload.trim()) {
     return {
       route: { path: payload.trim() },
       replace: false,
       ensureVisible: false,
+      openLoginModal: false,
     }
   }
 
@@ -57,15 +61,17 @@ function normalizeNavigateTarget(payload: unknown): {
   const raw = payload as H5NavigatePayload
   const path = typeof raw.path === 'string' ? raw.path.trim() : ''
   const hasPath = Boolean(path)
-  const hasName = typeof raw.name === 'string' && raw.name.trim().length > 0
+  const name = typeof raw.name === 'string' ? raw.name.trim() : ''
+  const hasName = name.length > 0
   if (!hasPath && !hasName) {
     return null
   }
 
+  const shouldOpenLoginModal = raw.openLoginModal === true || name === 'login' || name === 'login1'
   const routeObject: Record<string, unknown> = hasPath
     ? { path }
     : {
-        name: (raw.name as string).trim(),
+        name: shouldOpenLoginModal ? 'guest-home' : name,
       }
   if (isRecord(raw.params)) {
     routeObject.params = raw.params
@@ -81,6 +87,7 @@ function normalizeNavigateTarget(payload: unknown): {
     route: routeObject as RouteLocationRaw,
     replace: raw.replace === true,
     ensureVisible: raw.ensureVisible === true,
+    openLoginModal: shouldOpenLoginModal,
   }
 }
 
@@ -104,10 +111,14 @@ async function navigateH5(payload: unknown): Promise<void> {
       log.warn('[h5-navigate] navigation failed:', failure)
       return
     }
+    if (normalized.openLoginModal) {
+      useLoginModalStore(pinia).open()
+    }
 
     log.info('[h5-navigate] done', {
       mode: normalized.replace ? 'replace' : 'push',
       target: normalized.route,
+      openLoginModal: normalized.openLoginModal,
     })
   } catch (error) {
     log.warn('[h5-navigate] navigation error:', error)

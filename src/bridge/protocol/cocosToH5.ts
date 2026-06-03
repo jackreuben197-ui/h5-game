@@ -98,6 +98,8 @@ export interface H5NavigatePayload {
   replace?: boolean
   // 可选：跳转前先显示 H5 层。
   ensureVisible?: boolean
+  // 可选：跳转完成后打开登录弹窗；用于替代旧登录页。
+  openLoginModal?: boolean
 }
 
 // ─── CC → H5 Payload 映射表 ────────────────────────────────────────────────

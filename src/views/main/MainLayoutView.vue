@@ -1,105 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import { getUserClubApi, getUserInfoApi } from '@/api/user'
-import { postDiamondConfigApi, postGlobalConfigApi } from '@/api/config'
-import {
-  forwardDiamondConfigToCocos,
-  forwardGlobalConfigToCocos,
-} from '@/bridge/sync/h5BusinessSync'
-import { ensureMultiLanguageTemplateLoaded } from '@/utils/multiLanguageTemplate'
-import LoginSession from '@/session/loginSession'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
-import { useGameStore } from '@/stores/game'
-import { useAppConfigStore } from '@/stores/appConfig'
-import { useTextI18n } from '@/i18n/useTextI18n'
-import StorageKey from '@/constants/storageKey'
-import { localStore } from '@/utils/localStore'
 
 const route = useRoute()
-const gameStore = useGameStore()
 const tabsStore = useMainTabsStore()
-const appConfigStore = useAppConfigStore()
-const { setLocale } = useTextI18n()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
-
-async function fetchUserInfoOnEnter(): Promise<void> {
-  const token = gameStore.sessionToken.trim()
-  if (!token) {
-    return
-  }
-
-  // 同一 token 在当前应用会话内只同步一次 userinfo / club。
-  if (gameStore.shouldSyncProfile(token)) {
-    // 后台静默同步：不阻塞首页渲染，不打断用户操作。
-    void getUserInfoApi()
-      .then((userInfo) => {
-        const user = userInfo.user as Record<string, unknown>
-        const userId = String(user.p_u_id ?? user.pUid ?? user.userid ?? '')
-        const userName = String(user.nickname ?? gameStore.loginAccount ?? '')
-
-        gameStore.setLoginUser({
-          account: gameStore.loginAccount || userName,
-          nickname: userName,
-          userId,
-        })
-
-        // 读取后端语言字段；本地已有用户明确选择的语言时不覆盖，避免登录后重置为服务端值。
-        const languageCode = resolveLanguageCode(user)
-        const localSavedLanguage = localStore.getItem<string>(StorageKey.Language, '')
-        if (!localSavedLanguage) {
-          setLocale(languageCode || 'en')
-        }
-      })
-      .catch((error) => {
-        console.warn('[main-layout] sync user info failed:', error)
-      })
-
-    // 俱乐部信息静默同步，失败仅记日志。
-    void getUserClubApi().catch((error) => {
-      console.warn('[main-layout] sync user club failed:', error)
-    })
-
-    // 全局配置静默拉取并缓存到 Pinia + localStorage（对齐 Unity GameCache）。
-    void postGlobalConfigApi({})
-      .then((res) => {
-        if (res.code === 0 && res.data) {
-          appConfigStore.setGlobalConfig(res.data)
-          forwardGlobalConfigToCocos(res.data)
-        }
-      })
-      .catch((error) => {
-        console.warn('[main-layout] sync global config failed:', error)
-      })
-
-    // 全局收费配置静默拉取并缓存，随后同步给 Cocos。
-    void postDiamondConfigApi({})
-      .then((res) => {
-        if (res.code === 0 && res.data) {
-          appConfigStore.setDiamondConfig(res.data)
-          forwardDiamondConfigToCocos(appConfigStore.diamondConfig)
-        }
-      })
-      .catch((error) => {
-        console.warn('[main-layout] sync diamond config failed:', error)
-      })
-
-    // 多语言模板静默拉取并缓存到 localStorage（模块初始化时已从缓存恢复，此处更新）。
-    void ensureMultiLanguageTemplateLoaded().catch((error) => {
-      console.warn('[main-layout] sync multi-language template failed:', error)
-    })
-  }
-
-  // websocket 就绪逻辑同样走后台，不阻塞首页进入。
-  void LoginSession.EnsureWS().catch((error) => {
-    console.warn('[main-layout] ensure ws failed:', error)
-  })
-}
 
 // 路由变化时同步底部 Tab 共享状态，确保子页面也能维持正确高亮。
 watch(
@@ -112,20 +23,6 @@ watch(
   { immediate: true },
 )
 
-function resolveLanguageCode(user: Record<string, unknown>): string {
-  const languageKeys = ['language', 'client_language', 'system_language', 'lt']
-  for (const key of languageKeys) {
-    const value = user[key]
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim()
-    }
-  }
-  return ''
-}
-
-onMounted(() => {
-  void fetchUserInfoOnEnter()
-})
 </script>
 
 <template>

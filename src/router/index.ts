@@ -4,6 +4,7 @@ import { useWalletStore } from '@/stores/wallet'
 import { pinia } from '@/stores/pinia'
 import { createLogger } from '@/utils/logger'
 import { isChannelPackageHost } from '@/utils/channelPackage'
+import { syncPostAuthData } from '@/session/postAuthSync'
 
 const log = createLogger('[router]')
 
@@ -582,6 +583,13 @@ router.afterEach((to, from, failure) => {
     from: from.fullPath || '<init>',
     to: to.fullPath,
   })
+
+  if (to.meta.requiresAuth) {
+    const gameStore = useGameStore(pinia)
+    if (gameStore.sessionToken.trim()) {
+      syncPostAuthData()
+    }
+  }
 })
 
 router.onError((error) => {

@@ -13,7 +13,7 @@ import {
   setupH5VisibilityBridgeChannel,
 } from './bridge/channels'
 import { setupWsProxyBridgeChannel } from './bridge/ws'
-import LoginSession from './session/loginSession'
+import { syncPostAuthData } from './session/postAuthSync'
 import './styles/main.scss'
 import { setupRem } from './utils/rem'
 import { initDebugConsole, recordDebugEvent } from './utils/debugConsole'
@@ -97,11 +97,9 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
     app.use(textI18nPlugin)
     app.use(router)
     const gameStore = useGameStore(pinia)
-    // 启动时优先根据本地缓存补齐 WS/Register，保证刷新后也能尽快恢复桥接通道。
+    // 启动时若已有 token，则同步用户资料/配置/WS；任意路由刷新都不依赖首页布局。
     if (gameStore.sessionToken.trim()) {
-      void LoginSession.EnsureWS().catch(() => {
-        // 无 token 或端口未就绪时忽略；登录成功后会再次走 SyncWS/EnsureWS。
-      })
+      syncPostAuthData()
     }
     // 启动 WS 代理通道：Cocos 发指令给 H5，由 H5 执行 websocket 收发并回传结果。
     stopWsProxyBridgeChannel = setupWsProxyBridgeChannel()

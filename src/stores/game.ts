@@ -63,11 +63,13 @@ export const useGameStore = defineStore(
         if (!safeToken) {
           return false
         }
-        if (this.syncedProfileToken === safeToken) {
-          return false
+        return this.syncedProfileToken !== safeToken
+      },
+      markProfileSynced(token: string): void {
+        const safeToken = token.trim()
+        if (safeToken) {
+          this.syncedProfileToken = safeToken
         }
-        this.syncedProfileToken = safeToken
-        return true
       },
       clearLogin(): void {
         this.sessionToken = ''

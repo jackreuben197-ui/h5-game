@@ -326,6 +326,7 @@ async function doTelegramAutoLogin(): Promise<boolean> {
         nickname,
         userId,
       })
+      gameStore.markProfileSynced(token)
     } catch (error) {
       LoginSession.ClearWS()
       gameStore.clearLogin()

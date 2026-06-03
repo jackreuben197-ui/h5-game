@@ -375,6 +375,7 @@ async function handleLogin(target: string) {
       nickname,
       userId,
     })
+    gameStore.markProfileSynced(token)
   } catch (error) {
     LoginSession.ClearWS()
     gameStore.clearLogin()

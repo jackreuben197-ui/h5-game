@@ -565,8 +565,11 @@ onMounted(() => {
 
 .summary-card {
   margin-top: 0.38941rem;
-  border-radius: 0.76013rem;
-  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
   padding: 0.36317rem 0.4392rem;
 }
 
@@ -574,12 +577,12 @@ onMounted(() => {
   width: 7.55067rem;
   max-width: 100%;
   height: 1.35979rem;
-  border-radius: 0.76013rem;
-  background: rgba(255, 255, 255, 0.2);
+  border-radius: 0.68rem;
+  background: rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
-  gap: 0.05912rem;
-  padding: 0.05912rem;
+  gap: 0.1rem;
+  padding: 0.06rem;
   overflow: hidden;
   margin: 0 auto;
 }
@@ -588,24 +591,25 @@ onMounted(() => {
   flex: 1 1 0;
   min-width: 0;
   border: 0;
-  border-radius: 1.3844rem;
+  border-radius: 0.62rem;
   background: transparent;
   color: #f9f9f9;
   font-size: 0.40541rem;
-  line-height: 0.44299rem;
-  padding: 0.11075rem 0.24rem;
+  opacity: 0.86;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &.is-customize {
     flex: 1.34 1 0;
     font-size: 0.36235rem;
-    padding-left: 0.22rem;
-    padding-right: 0.22rem;
   }
 
   &.active {
-    background: rgba(255, 255, 255, 0.17);
-    font-weight: 500;
-    line-height: 0.83;
+    background: rgba(249, 249, 249, 0.5);
+    font-weight: 700;
+    opacity: 1;
   }
 }
 
@@ -643,7 +647,7 @@ onMounted(() => {
 }
 
 .timezone-text {
-  margin: 0.072rem 0.11rem 0;
+  margin: 0.2rem 0.4rem 0;
   text-align: right;
   font-size: 0.25861rem;
   line-height: 1.4;

@@ -530,8 +530,6 @@ onMounted(() => {
 
 <template>
   <div class="page-shell jackpot-create-page" :style="backgroundStyle">
-    <div class="page-overlay" aria-hidden="true"></div>
-
     <HeaderBack :title="isEditMode ? 'Edit Jackpot' : 'Jackpot'" />
 
     <section class="create-content">

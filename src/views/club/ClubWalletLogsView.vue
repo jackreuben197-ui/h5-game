@@ -1,4 +1,5 @@
-<script setup lang="ts">import { computed } from 'vue'
+<script setup lang="ts">
+import { computed } from 'vue'
 
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import mainBgUrl from '@/assets/images/main_bg.webp'
@@ -6,7 +7,6 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
-
 
 const dateStart = '11/03/2024'
 const dateEnd = '11/03/2024'
@@ -40,54 +40,49 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
 
 <template>
   <div class="page-shell club-wallet-logs-bg" :style="backgroundStyle">
-    <div class="bg-blur bg-blur--pink" aria-hidden="true"></div>
-    <div class="bg-blur bg-blur--cyan" aria-hidden="true"></div>
+    <HeaderBack :title="'收益管理'" />
 
-    <div class="club-wallet-logs">
-      <HeaderBack :title="'收益管理'" />
+    <section class="range-card">
+      <div class="date-row">
+        <button type="button" class="date-pill">
+          <span class="calendar-icon" aria-hidden="true"></span>
+          <span>{{ dateStart }}</span>
+        </button>
+        <span class="range-divider" aria-hidden="true"></span>
+        <button type="button" class="date-pill">
+          <span class="calendar-icon" aria-hidden="true"></span>
+          <span>{{ dateEnd }}</span>
+        </button>
+      </div>
 
-      <section class="range-card">
-        <div class="date-row">
-          <button type="button" class="date-pill">
-            <span class="calendar-icon" aria-hidden="true"></span>
-            <span>{{ dateStart }}</span>
-          </button>
-          <span class="range-divider" aria-hidden="true"></span>
-          <button type="button" class="date-pill">
-            <span class="calendar-icon" aria-hidden="true"></span>
-            <span>{{ dateEnd }}</span>
-          </button>
+      <div class="balance-row">
+        <div class="balance-col">
+          <p class="balance-label">初始基金余额</p>
+          <p class="balance-value">123456</p>
         </div>
-
-        <div class="balance-row">
-          <div class="balance-col">
-            <p class="balance-label">初始基金余额</p>
-            <p class="balance-value">123456</p>
-          </div>
-          <span class="balance-split" aria-hidden="true"></span>
-          <div class="balance-col">
-            <p class="balance-label">实时基金余额</p>
-            <p class="balance-value">123456</p>
-          </div>
+        <span class="balance-split" aria-hidden="true"></span>
+        <div class="balance-col">
+          <p class="balance-label">实时基金余额</p>
+          <p class="balance-value">123456</p>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <p class="timezone">时区：UTC+0</p>
+    <p class="timezone">时区：UTC+0</p>
 
-      <section class="metrics-wrap">
-        <article v-for="(group, groupIndex) in summaryCards" :key="groupIndex" class="metrics-card">
-          <div
-            v-for="(item, itemIndex) in group"
-            :key="item.label"
-            class="metric-item"
-            :class="{ 'metric-item--with-divider': itemIndex < group.length - 1 }"
-          >
-            <p class="metric-label">{{ item.label }}</p>
-            <p class="metric-value" :class="valueClass(item.trend)">{{ item.value }}</p>
-          </div>
-        </article>
-      </section>
-    </div>
+    <section class="metrics-wrap">
+      <article v-for="(group, groupIndex) in summaryCards" :key="groupIndex" class="metrics-card">
+        <div
+          v-for="(item, itemIndex) in group"
+          :key="item.label"
+          class="metric-item"
+          :class="{ 'metric-item--with-divider': itemIndex < group.length - 1 }"
+        >
+          <p class="metric-label">{{ item.label }}</p>
+          <p class="metric-value" :class="valueClass(item.trend)">{{ item.value }}</p>
+        </div>
+      </article>
+    </section>
   </div>
 </template>
 
@@ -95,52 +90,14 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
 .club-wallet-logs-bg {
   position: relative;
   height: 100dvh;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
-  background:
-    radial-gradient(145% 88% at 46% -8%, rgba(219, 155, 140, 0.66), rgba(154, 97, 145, 0.64) 45%, rgba(33, 136, 168, 0.84) 100%),
-    linear-gradient(180deg, #ba8d82 0%, #35a6c6 100%);
-  overflow: hidden;
-}
-
-.bg-blur {
-  position: absolute;
-  border-radius: 999px;
-  filter: blur(1rem);
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.bg-blur--pink {
-  width: 3rem;
-  height: 3rem;
-  top: 4.1rem;
-  left: -1rem;
-  background: rgba(221, 50, 131, 0.48);
-}
-
-.bg-blur--cyan {
-  width: 3.2rem;
-  height: 3.2rem;
-  right: -1.2rem;
-  bottom: 1.1rem;
-  background: rgba(45, 214, 255, 0.55);
-}
-
-.club-wallet-logs {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
-  gap: 0.08rem;
+  background-size: cover;
 }
 
 .top-bar {
   min-height: 0.7rem;
   display: flex;
   align-items: center;
-	padding-left: 0.32rem;
+  padding-left: 0.32rem;
 }
 
 .back-btn {

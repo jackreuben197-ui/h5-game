@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import FieldTip from './FieldTip.vue'
+import tumblerActive from '@/assets/icons/ic_tumbler_active.png'
+import tumblerEnd from '@/assets/icons/ic_tumbler.svg'
 
 type SliderValue = number | [number, number]
 type SliderMarkMode = 'all' | 'edge' | 'none'
@@ -255,6 +257,11 @@ function onChange(raw: SliderValue) {
   emit('change', raw)
 }
 
+function thumbSrc(_currentValue: number | undefined): string {
+  if (props.range) return tumblerEnd
+  return (sliderValue.value as number) === sliderMax.value ? tumblerEnd : tumblerActive
+}
+
 function clampOptionIndex(value: number, length: number): number {
   const int = Math.round(Number(value))
   if (!Number.isFinite(int)) return 0
@@ -282,7 +289,11 @@ function clampOptionIndex(value: number, length: number): number {
       :range="range"
       :disabled="disabled"
       @update:model-value="onChange"
-    />
+    >
+      <template #button="{ currentValue }">
+        <img class="slider-thumb" :src="thumbSrc(currentValue)" alt="" />
+      </template>
+    </VanSlider>
 
     <div v-if="markItems.length" class="table-slider__marks">
       <div
@@ -354,8 +365,15 @@ function clampOptionIndex(value: number, length: number): number {
   width: 0.7rem;
   height: 0.75rem;
   border: none;
-  background: url('@/assets/icons/ic_tumbler.svg') center / contain no-repeat;
+  background: none;
   box-shadow: none;
+}
+
+.slider-thumb {
+  width: 0.7rem;
+  height: 0.75rem;
+  object-fit: contain;
+  display: block;
 }
 
 .table-slider__marks {

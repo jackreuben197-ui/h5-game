@@ -3324,6 +3324,7 @@ MsgInfo_1010=Agent invite player for {0}{1}
 UIMine_FreeAward_ShareText=Share
 UIShowAdv_TodayNot=Don't show me this today again
 UIClub_AgentManager_TitleT=Agent management
+UILogin_Account=Please enter account name
 UILogin_InputEmail=Please enter your e-mail
 UILogin_NewUser=New User？<color=#DCBA82>Register</color>
 UIClub_JoinClub=Join the Club
@@ -7267,3 +7268,4 @@ UIMatchGuaranteedTag=Guaranteed
 UIMatchSelectClubBuyin=Select the Club for Buy-in request
 UILoginConfirmTitle=You have not yet agreed to the agreement
 UILoginConfirmContent=Please read on
+UIJackpot_Introduce_EN=<b><size=50>Jackpot Introduction</size></b>\nJackpot is a random big prize feature at the table. After meeting the specified hand conditions and completing a showdown, you have a chance to trigger the Jackpot prize.\n\n<b><size=50>Trigger Conditions</size></b>\n1.Form the specified big hand using your hole cards;\n2.Be defeated by a stronger hand;\n3.The round must end with a normal showdown;\n4.The table must meet the minimum number of participants.\n\n<b><size=50>Reward Rules</size></b>\n1.The Jackpot pool accumulates continuously with each round;\n2.Upon triggering, rewards will be distributed according to the rules;\n3.Rewards will be given to the triggering player, the winning player, and other players at the table.\n\n<b><size=50>Reminder</size></b>\nDifferent blind tables have different Jackpot pools and reward amounts. The higher the blind, the higher the reward.

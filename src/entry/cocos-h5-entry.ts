@@ -1,10 +1,18 @@
 import { mountH5App, unmountH5App } from '../main'
+import { initDebugConsole, recordDebugEvent } from '../utils/debugConsole'
+
+initDebugConsole()
+recordDebugEvent('[boot]', 'cocos h5 entry loaded', {
+  href: typeof window !== 'undefined' ? window.location.href : '',
+})
 
 const host = {
   mount(container = '#app'): void {
+    recordDebugEvent('[boot]', 'mount requested', { container })
     mountH5App(container)
   },
   unmount(): void {
+    recordDebugEvent('[boot]', 'unmount requested')
     unmountH5App()
   },
 }

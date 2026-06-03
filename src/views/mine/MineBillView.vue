@@ -3,7 +3,12 @@ import { computed, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { postUserBillApi, postUserWalletApi } from '@/api/user'
-import type { UserBillRecord, UserBillRoom_info, UserBillWallet, UserMyWalletItem } from '@/api/models/user'
+import type {
+  UserBillRecord,
+  UserBillRoom_info,
+  UserBillWallet,
+  UserMyWalletItem,
+} from '@/api/models/user'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import iconUc from '@/assets/icons/icon_chips.png'
@@ -11,6 +16,7 @@ import iconCredit from '@/assets/icons/credit_chip.png'
 import { formatUC } from '@/utils/roomVisibility'
 import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
+import { resolveOpCodeText } from '@/utils/opCodeText'
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -114,7 +120,9 @@ function extractList(value: unknown, depth = 0): Record<string, unknown>[] {
   }
 
   if (Array.isArray(value)) {
-    return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+    return value.filter(
+      (item): item is Record<string, unknown> => !!item && typeof item === 'object',
+    )
   }
 
   if (typeof value !== 'object') {
@@ -140,10 +148,16 @@ function extractList(value: unknown, depth = 0): Record<string, unknown>[] {
   return []
 }
 
-function resolveDateParts(raw: unknown): { day: string; month: string; text: string; dateKey: string } {
+function resolveDateParts(raw: unknown): {
+  day: string
+  month: string
+  text: string
+  dateKey: string
+} {
   if (typeof raw === 'string' && raw.trim()) {
     const asNumber = Number(raw)
-    const candidate = Number.isFinite(asNumber) && asNumber > 0 ? new Date(asNumber * 1000) : new Date(raw)
+    const candidate =
+      Number.isFinite(asNumber) && asNumber > 0 ? new Date(asNumber * 1000) : new Date(raw)
     if (!Number.isNaN(candidate.getTime())) {
       const year = candidate.getFullYear()
       const month = String(candidate.getMonth() + 1).padStart(2, '0')
@@ -175,18 +189,17 @@ function resolveDateParts(raw: unknown): { day: string; month: string; text: str
   return { day: '--', month: '--', text: '--', dateKey: '--' }
 }
 
-function resolveOpCodeText(opCodeRaw: unknown): string {
-  const opCode = String(opCodeRaw ?? '').trim()
-  if (!opCode) {
-    return ''
-  }
-
-  const key = `OpCodeString_${opCode}`
-  return resolveTemplateTextByKey(key, getLocale()) || t(key) || key
-}
-
 function normalizeTimeText(raw: unknown): string {
   if (typeof raw === 'string' && raw.trim()) {
+    const candidate = new Date(raw)
+    if (!Number.isNaN(candidate.getTime())) {
+      const y = candidate.getFullYear()
+      const m = String(candidate.getMonth() + 1).padStart(2, '0')
+      const d = String(candidate.getDate()).padStart(2, '0')
+      const hh = String(candidate.getHours()).padStart(2, '0')
+      const mm = String(candidate.getMinutes()).padStart(2, '0')
+      return `${y}/${m}/${d} ${hh}:${mm}`
+    }
     return raw
   }
   return resolveDateParts(raw).text
@@ -241,7 +254,11 @@ function isMttCard(row: UserBillWallet, nameCandidates: string[]): boolean {
   }
 
   const texts = [row.op_code, ...nameCandidates]
-    .map((item) => String(item ?? '').trim().toLowerCase())
+    .map((item) =>
+      String(item ?? '')
+        .trim()
+        .toLowerCase(),
+    )
     .filter(Boolean)
   return texts.some((text) => text.includes('mtt') || text.includes('match'))
 }
@@ -260,23 +277,48 @@ function mapBillRecord(row: UserBillRecord): BillRecordItem {
 
 function mapBillCard(row: UserBillWallet, index: number): BillCardItem {
   const roomInfo = (row.room_info as UserBillRoom_info | undefined) || undefined
-  const records = Array.isArray(roomInfo?.records) ? roomInfo.records.map((item) => mapBillRecord(item)) : []
+  const records = Array.isArray(roomInfo?.records)
+    ? roomInfo.records.map((item) => mapBillRecord(item))
+    : []
 
-  const rawName = String(pickRecordValue(row as Record<string, unknown>, ['name', 'title', 'room_name', 'game_room_name']) ?? '')
+  const rawName = String(
+    pickRecordValue(row as Record<string, unknown>, [
+      'name',
+      'title',
+      'room_name',
+      'game_room_name',
+    ]) ?? '',
+  )
   const localizedNameByKey = resolveNameByLocale(rawName)
   const localizedNameByMultiObj = resolveNameFromMultiLangObj(row.multi_lang_names_obj)
   const fallbackName =
-    resolveOpCodeText(row.op_code) || localizedNameByMultiObj || localizedNameByKey || rawName || '账单记录'
+    resolveOpCodeText(row.op_code) ||
+    localizedNameByMultiObj ||
+    localizedNameByKey ||
+    rawName ||
+    '账单记录'
   const roomName = localizedNameByMultiObj || localizedNameByKey || rawName
   const cardName = roomName || fallbackName
   const club = String(
-    roomInfo?.club_name ?? pickRecordValue(row as Record<string, unknown>, ['club_name', 'group_name', 'source_name']) ?? '--',
+    roomInfo?.club_name ??
+      pickRecordValue(row as Record<string, unknown>, ['club_name', 'group_name', 'source_name']) ??
+      '--',
   )
 
   const inAmount = roomInfo?.bring_in_amount
   const outAmount = roomInfo?.bring_out_amount
-  const changeAmount = pickRecordValue(row as Record<string, unknown>, ['change_amount', 'gold_change', 'amount', 'change'])
-  const timeRaw = pickRecordValue(row as Record<string, unknown>, ['create_time_str', 'create_time', 'time', 'created_at'])
+  const changeAmount = pickRecordValue(row as Record<string, unknown>, [
+    'change_amount',
+    'gold_change',
+    'amount',
+    'change',
+  ])
+  const timeRaw = pickRecordValue(row as Record<string, unknown>, [
+    'create_time_str',
+    'create_time',
+    'time',
+    'created_at',
+  ])
   const timeInfo = resolveDateParts(timeRaw)
 
   const fallbackRecord: BillRecordItem = {
@@ -295,7 +337,10 @@ function mapBillCard(row: UserBillWallet, index: number): BillCardItem {
   const canExpand = !isDiamondTab && !isMtt && hasBringInAndOut && finalRecords.length > 0
 
   return {
-    id: String(pickRecordValue(row as Record<string, unknown>, ['id', 'log_id', 'order_id']) ?? `${index + 1}`),
+    id: String(
+      pickRecordValue(row as Record<string, unknown>, ['id', 'log_id', 'order_id']) ??
+        `${index + 1}`,
+    ),
     day: timeInfo.day,
     month: timeInfo.month,
     dateKey: timeInfo.dateKey,
@@ -483,7 +528,7 @@ onMounted(() => {
           :class="['tab', { active: activeTab === item }]"
           @click="selectTab(item)"
         >
-          {{ item }}
+          <span class="tab-label">{{ item }}</span>
         </button>
       </div>
 
@@ -491,31 +536,37 @@ onMounted(() => {
         <div class="label">UC总余额</div>
         <div class="amount-row">
           <img v-if="activeTab === 'UC'" :src="iconUc" alt="chip" />
-          <img v-else-if="activeTab === 'Club记分牌' || activeTab === '朋友桌记分牌'" :src="iconCredit" alt="chip" />
+          <img
+            v-else-if="activeTab === 'Club记分牌' || activeTab === '朋友桌记分牌'"
+            :src="iconCredit"
+            alt="chip"
+          />
           <img v-else :src="iconDiamond" alt="diamond" />
           <strong>{{ formatAmount(totalAmount) }}</strong>
         </div>
+        <div v-if="walletDetailExpanded" class="wallet-detail-wrap">
+          <div class="wallet-detail-list">
+            <div v-for="item in walletDetails" :key="item.key" class="wallet-detail-row">
+              <span class="club">{{ item.clubName }}</span>
+              <span class="value">{{ item.amount }}</span>
+            </div>
+          </div>
+        </div>
         <button
           v-if="showWalletDetailButton"
-          class="detail-btn"
+          :class="['detail-btn', { 'detail-btn--no-border': walletDetailExpanded }]"
           type="button"
           @click="toggleWalletDetails"
         >
           查看明细
           <span :class="['arrow', { expanded: walletDetailExpanded }]"></span>
         </button>
-        <div v-if="walletDetailExpanded" class="wallet-detail-list">
-          <div v-for="item in walletDetails" :key="item.key" class="wallet-detail-row">
-            <span class="club">{{ item.clubName }}</span>
-            <span class="value">{{ item.amount }}</span>
-          </div>
-        </div>
       </section>
 
       <section class="timeline">
         <p v-if="loading" class="list-status">加载中...</p>
         <p v-else-if="!flowCards.length" class="list-status">暂无账单记录</p>
-        <article v-for="card in flowCards" :key="card.id" class="timeline-item">
+        <article v-for="card in flowCards" :key="card.id" :class="['timeline-item', { 'timeline-item--new-date': card.showDate }]">
           <div :class="['date-col', { 'date-col--continued': !card.showDate }]">
             <div v-if="card.showDate" class="date">{{ card.day }}</div>
             <div v-if="card.showDate" class="month">{{ card.month }}</div>
@@ -523,23 +574,22 @@ onMounted(() => {
           </div>
 
           <div class="glass-card flow-card">
-            <div class="flow-head">
+            <div :class="['flow-head', { 'flow-head--no-divider': !card.canExpand }]">
               <div>
                 <div class="title">{{ card.name }}</div>
                 <div class="sub">{{ card.club }}</div>
                 <div class="sub">总带入:{{ card.inAmount }}</div>
               </div>
               <div class="right-box">
-                <div class="sub right">总带出: {{ card.outAmount }}</div>
                 <button
                   v-if="card.canExpand"
                   class="record-toggle"
                   type="button"
                   @click="toggleCardExpanded(card.id)"
                 >
-                  {{ isCardExpanded(card.id) ? '收起' : '展开' }}
                   <span :class="['arrow', { expanded: isCardExpanded(card.id) }]"></span>
                 </button>
+                <div class="sub right">总带出: {{ card.outAmount }}</div>
               </div>
             </div>
 
@@ -557,7 +607,9 @@ onMounted(() => {
           </div>
         </article>
         <p v-if="!loading && loadingMore" class="list-status">加载更多中...</p>
-        <p v-else-if="!loading && flowCards.length && !hasMore" class="list-status">没有更多记录了</p>
+        <p v-else-if="!loading && flowCards.length && !hasMore" class="list-status">
+          没有更多记录了
+        </p>
       </section>
     </div>
   </div>
@@ -593,9 +645,10 @@ onMounted(() => {
 
 .bill-tabs {
   margin-top: 0.24rem;
-  display: flex;
-  gap: 0.26rem;
-  overflow-x: auto;
+  margin-left: -0.49rem;
+  margin-right: -0.49rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
 }
 
 .tab {
@@ -605,18 +658,30 @@ onMounted(() => {
   font-size: 0.32rem;
   padding: 0.1rem 0;
   white-space: nowrap;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
   &.active {
     color: #fff;
-    border-bottom: 0.03rem solid rgba(255, 255, 255, 0.9);
+
+    .tab-label {
+      border-bottom: 0.03rem solid rgba(255, 255, 255, 0.9);
+    }
   }
 }
 
+.tab-label {
+  display: inline-block;
+  padding-bottom: 0.06rem;
+}
+
 .glass-card {
-  border-radius: 0.44rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.2);
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.04rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
 }
 
 .total-card {
@@ -653,17 +718,27 @@ onMounted(() => {
   justify-content: center;
   gap: 0.12rem;
   border: 0;
+  border-top: 0.02rem solid rgba(249, 249, 249, 0.2);
   background: transparent;
   color: #f3f3f3;
   font-size: 0.28rem;
   padding-top: 0.16rem;
-  border-top: 0.02rem solid rgba(249, 249, 249, 0.2);
+
+  &.detail-btn--no-border {
+    border-top: 0;
+    padding-top: 0.08rem;
+  }
+}
+
+.wallet-detail-wrap {
+  margin-top: 0.16rem;
+  border-radius: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 14px;
 }
 
 .wallet-detail-list {
-  margin-top: 0.16rem;
-  border-top: 0.02rem solid rgba(249, 249, 249, 0.2);
-  padding-top: 0.14rem;
+  padding: 0.04rem 0;
 }
 
 .wallet-detail-row {
@@ -683,8 +758,8 @@ onMounted(() => {
 }
 
 .arrow {
-  width: 0.14rem;
-  height: 0.14rem;
+  width: 0.154rem;
+  height: 0.154rem;
   border-right: 0.03rem solid rgba(255, 255, 255, 0.82);
   border-bottom: 0.03rem solid rgba(255, 255, 255, 0.82);
   transform: rotate(45deg);
@@ -715,11 +790,20 @@ onMounted(() => {
   gap: 0.18rem;
 }
 
+.timeline-item--new-date {
+  margin-top: 0.4rem;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
 .date-col {
   position: relative;
   text-align: right;
   font-size: 0.24rem;
   min-height: 1rem;
+  padding-right: 0.1rem;
 
   &::after {
     content: '';
@@ -763,6 +847,11 @@ onMounted(() => {
   gap: 0.16rem;
   padding-bottom: 0.16rem;
   border-bottom: 0.02rem solid rgba(249, 249, 249, 0.2);
+
+  &.flow-head--no-divider {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
 
   .title {
     font-size: 0.34rem;
@@ -830,7 +919,7 @@ onMounted(() => {
   font-weight: 700;
 
   &.positive {
-    color: #05e7ae;
+    color: #78e490;
   }
 }
 </style>

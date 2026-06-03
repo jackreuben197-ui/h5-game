@@ -17,6 +17,8 @@ import { showGameToast } from '@/components/Toast'
 import { useCasinoStore } from '@/stores/casino'
 import { useMinigameStore } from '@/stores/minigame'
 import GameClubSelector from '@/components/GameClubSelector.vue'
+import { openBridgePanel } from '@/bridge/channels'
+import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 
 import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
@@ -37,6 +39,7 @@ const mttListStore = useMttListStore()
 const casinoStore = useCasinoStore()
 const minigameStore = useMinigameStore()
 
+const loading = ref(false)
 const balanceVisible = ref(true)
 const noticeScrollRef = ref<HTMLElement | null>(null)
 const noticeItemRef = ref<HTMLElement | null>(null)
@@ -257,9 +260,12 @@ const clubNameText = computed(() => toSafeString(currentClub.value?.club_name) |
 const clubGoldText = computed(() => toSafeNumber(currentClub.value?.user_gold) / 100)
 const pokerTablesText = computed(() => `${homeRoomStats.value.poker.tables}`)
 const pokerPlayersText = computed(() => `${homeRoomStats.value.poker.players}`)
-const miniGamePlayersText = computed(() => `${homeRoomStats.value.miniGame.players}`)
-const mahjongTablesText = computed(() => `${homeRoomStats.value.mahjong.tables}`)
-const mahjongPlayersText = computed(() => `${homeRoomStats.value.mahjong.players}`)
+// const miniGamePlayersText = computed(() => `${homeRoomStats.value.miniGame.players}`)
+const miniGamePlayersText = 0
+// const mahjongTablesText = computed(() => `${homeRoomStats.value.mahjong.tables}`)
+const mahjongTablesText = 0
+// const mahjongPlayersText = computed(() => `${homeRoomStats.value.mahjong.players}`)
+const mahjongPlayersText = 0
 const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
 const mttPlayersText = computed(() => `${homeRoomStats.value.mtt.players}`)
 
@@ -306,15 +312,54 @@ function toggleBalance(): void {
 
 async function refreshBalance(): Promise<void> {
   try {
+    loading.value = true
     await getUserClubApi()
   } catch (error) {
     const message = error instanceof Error ? error.message : '刷新余额失败'
     showGameToast(message)
+  } finally {
+    loading.value = false
   }
 }
 
 function goToRecharge(): void {
   void router.push('/wallet')
+}
+function handleService(): void {
+  showGameToast('功能开发中')
+}
+
+function handleOpenCustomerService(): void {
+  const clubId = selectedClubId.value
+  if (clubId <= 0) {
+    showGameToast('当前俱乐部信息无效')
+    return
+  }
+
+  openGlobalCustomerServiceChat({
+    imServiceType: 1,
+    clubId,
+    tribeId: selectedTribeId.value,
+  })
+}
+
+function openMiniGamePanel(): void {
+  showGameToast('功能开发中')
+  // openBridgePanel({
+  //   // panelType: 'mttRecord',
+  //   panelType: 'mttSettlement',
+  //   closeOnClickOverlay: true,
+  //   // showH5Bg: true,
+  //   props: {
+  //     matchId: 92180450,
+  //     matchName: 'MTT202603121773282270383563',
+  //     isRebuy: false,
+  //     startTime: '',
+  //     currentBlindLevel: 0,
+  //     maxRebuyBlindLevel: 10,
+  //     remainRebuyTimes: 2,
+  //   },
+  // })
 }
 
 function getRoomPlayers(room: RoomRecord): number {
@@ -547,7 +592,10 @@ onBeforeUnmount(() => {
         </div>
         <div class="club-balance-row">
           <img class="icon-sm" src="@/assets/icons/diamondicon.svg" alt="余额" />
-          <span class="balance-amount">
+          <span v-if="loading" class="balance-amount">
+            <van-loading size="16" />
+          </span>
+          <span v-else class="balance-amount">
             {{ balanceVisible ? clubGoldText : '****' }}
           </span>
           <img
@@ -567,15 +615,15 @@ onBeforeUnmount(() => {
 
       <!-- 右侧：联系方式 -->
       <div class="club-right">
-        <div class="contact-item">
+        <div class="contact-item" @click="handleService">
           <img class="contact-icon" src="@/assets/icons/icon_service_1.png" alt="Telegram" />
           <span class="contact-label"> @game </span>
         </div>
-        <div class="contact-item">
+        <div class="contact-item" @click="handleService">
           <img class="contact-icon" src="@/assets/icons/icon_service_2.png" alt="邮箱" />
           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>
-        <div class="contact-item">
+        <div class="contact-item" @click="handleOpenCustomerService">
           <img class="contact-icon" src="@/assets/icons/icon_service_3.png" alt="IM客服" />
           <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
         </div>
@@ -916,7 +964,8 @@ onBeforeUnmount(() => {
   font-size: 0.38rem;
   color: #fff;
   font-weight: 500;
-  min-width: 0.9rem;
+  text-align: center;
+  min-width: 1.5rem;
 }
 
 .usdt-amount {

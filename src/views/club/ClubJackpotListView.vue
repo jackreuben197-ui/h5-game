@@ -215,8 +215,6 @@ function goPoolReward(): void {
     :style="backgroundStyle"
     @scroll="onPageScroll"
   >
-    <div class="page-overlay" aria-hidden="true"></div>
-
     <HeaderBack :title="'Jackpot'">
       <template #right>
         <button type="button" class="pool-trigger" aria-label="Pool Reward" @click="goPoolReward">

@@ -15,6 +15,8 @@ const props = withDefaults(
     data: Record<string, any>[]
     showHeader?: boolean
     defaultSort?: DefaultSort
+    /** 第一行汇总数据，按列对齐渲染，与 summary slot 二选一，slot 优先 */
+    summaryData?: Record<string, any>
     /** 固定 body 高度，超出后滚动，如 '10rem' */
     height?: string
     /** v-model:loading，加载中时不触发新的 load 事件 */
@@ -29,6 +31,7 @@ const props = withDefaults(
   {
     showHeader: true,
     defaultSort: undefined,
+    summaryData: undefined,
     height: undefined,
     loading: false,
     finished: false,
@@ -86,16 +89,28 @@ function handleSelect(col: ColumnConfig, option: SelectOption) {
 // ---- Scroll / infinite load ----
 const bodyRef = ref<HTMLElement | null>(null)
 
+// height 未传 → flex-fill 模式（body 撑满父容器剩余高度，自身滚动）
+// height='auto' → 自然高度，不滚动
+// height='7rem' 等 → 固定高度，自身滚动（旧行为）
+const isFillMode = computed(() => !props.height)
+const isScrollable = computed(() => props.height !== 'auto')
+
 const bodyStyle = computed(() => {
-  if (!props.height) return {}
+  if (isFillMode.value) {
+    return {
+      flex: '1',
+      minHeight: '0',
+      overflowY: 'auto' as const,
+      WebkitOverflowScrolling: 'touch' as const,
+    }
+  }
+  if (props.height === 'auto') return {}
   return {
     height: props.height,
     overflowY: 'auto' as const,
     WebkitOverflowScrolling: 'touch' as const,
   }
 })
-
-const isScrollable = computed(() => !!props.height)
 
 function tryLoad() {
   if (!isScrollable.value) return
@@ -123,7 +138,7 @@ export default { name: 'GameTable' }
 </script>
 
 <template>
-  <div class="game-table">
+  <div class="game-table" :class="{ 'game-table--fill': isFillMode }">
     <GameTableHeader
       v-if="showHeader && columns.length"
       :columns="columns"
@@ -133,7 +148,20 @@ export default { name: 'GameTable' }
       @select="handleSelect"
     />
 
-    <div ref="bodyRef" class="game-table__body scrollbar-hide" :style="bodyStyle">
+    <div ref="bodyRef" class="game-table__body scrollbar-hide" :style="bodyStyle" :class="{ 'game-table__body--scroll': isScrollable }">
+      <!-- 首行：自定义 summary slot 或 summaryData 汇总行 -->
+      <template v-if="$slots.summary">
+        <div class="game-table__summary">
+          <slot name="summary" />
+        </div>
+      </template>
+      <GameTableRow
+        v-else-if="summaryData"
+        :row="summaryData"
+        :columns="columns"
+        :is-summary="true"
+      />
+
       <GameTableRow
         v-for="(row, i) in data"
         :key="i"
@@ -164,6 +192,13 @@ export default { name: 'GameTable' }
 .game-table {
   width: 100%;
   font-family: 'HONOR Sans CN', sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.game-table--fill {
+  flex: 1;
 }
 
 .game-table__body {
@@ -171,11 +206,24 @@ export default { name: 'GameTable' }
   flex-direction: column;
   gap: 0.12rem;
   padding: 0 0.12rem;
+  // 滚动时子项不能被压缩
+  &--scroll > * {
+    flex-shrink: 0;
+  }
+  overscroll-behavior-y: contain;
 }
 
-/* 固定高度滚动时，避免 flex 子项被压缩导致行高变小 */
-.game-table__body > * {
-  flex-shrink: 0;
+.game-table__summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0.85rem;
+  border-radius: 0.425rem;
+  background: rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  font-size: 0.32rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-family: 'HONOR Sans CN', sans-serif;
 }
 
 .game-table__status {

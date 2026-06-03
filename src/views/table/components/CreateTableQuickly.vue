@@ -13,6 +13,7 @@ import {
 } from '../tableSections/constants'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useAppConfigStore } from '@/stores/appConfig'
+import type { DiamondConfigItem, DiamondSetting } from '@/api/models/config'
 import {
   postOrggetTemplateApi,
   postOrgRoomCreateApi,
@@ -67,21 +68,6 @@ const clubDiamondBalance = computed(() => {
   return Number(userInfoStore.currentClub?.diamonds ?? 0)
 })
 
-interface DiamondSetting {
-  sb: number
-  price: number
-  discount_price: number
-}
-
-interface DiamondConfigItem {
-  config_type: number
-  status: number
-  type_ext: number
-  start_time: number
-  end_time: number
-  setting: DiamondSetting[]
-}
-
 interface FeePrice {
   originPrice: number
   discountPrice: number
@@ -124,50 +110,6 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
-function normalizeDiamondSettings(raw: unknown): DiamondSetting[] {
-  if (!Array.isArray(raw)) return []
-  return raw.map((item) => {
-    const row = item as Record<string, unknown>
-    return {
-      sb: Math.floor(toNumber(row.sb)),
-      price: toNumber(row.price),
-      discount_price: toNumber(row.discount_price),
-    }
-  })
-}
-
-function normalizeDiamondConfigItems(raw: unknown): DiamondConfigItem[] {
-  if (!Array.isArray(raw)) return []
-  return raw.map((item) => {
-    const row = item as Record<string, unknown>
-    return {
-      config_type: Math.floor(toNumber(row.config_type)),
-      status: Math.floor(toNumber(row.status)),
-      type_ext: Math.floor(toNumber(row.type_ext)),
-      start_time: Math.floor(toNumber(row.start_time)),
-      end_time: Math.floor(toNumber(row.end_time)),
-      setting: normalizeDiamondSettings(row.setting),
-    }
-  })
-}
-
-function extractDiamondConfigItems(raw: unknown): DiamondConfigItem[] {
-  if (!raw || typeof raw !== 'object') return []
-  const root = raw as Record<string, unknown>
-  const candidates: unknown[] = [
-    root,
-    root.data,
-    (root.data as Record<string, unknown> | undefined)?.data,
-    root.list,
-    (root.data as Record<string, unknown> | undefined)?.list,
-  ]
-  for (const candidate of candidates) {
-    const list = normalizeDiamondConfigItems(candidate)
-    if (list.length) return list
-  }
-  return []
-}
-
 function isInDiscountWindow(config: DiamondConfigItem, nowSec: number): boolean {
   if (!config.start_time || !config.end_time) return false
   return nowSec >= config.start_time && nowSec <= config.end_time
@@ -204,14 +146,8 @@ function getConfigPrice(config: DiamondConfigItem | null, sb: number): FeePrice 
   return { originPrice: setting.price, discountPrice: setting.price, isDiscount: false }
 }
 
-function findDiamondConfig(
-  configItems: DiamondConfigItem[],
-  configType: number,
-  typeExt: number,
-): DiamondConfigItem | null {
-  return (
-    configItems.find((item) => item.config_type === configType && item.type_ext === typeExt) || null
-  )
+function findDiamondConfig(configType: number, typeExt: number): DiamondConfigItem | null {
+  return appConfigStore.diamondConfig?.[configType]?.[typeExt] ?? null
 }
 
 const currentOriginType = computed(() => {
@@ -542,18 +478,13 @@ watch(
 )
 
 const feeDetails = computed<FeeDetailItem[]>(() => {
-  const configItems = extractDiamondConfigItems(appConfigStore.diamondConfig)
   const tableTypeExt = feeContext.tableTypeExt
   const seatCount = Math.max(2, Math.floor(toNumber(formState.seat_count, 2)))
   const sb = Math.floor(toNumber(formState.sb, 10))
   const playDuration = normalizePlayDurationSeconds(formState.play_duration)
   const details: FeeDetailItem[] = []
 
-  const createConfig = findDiamondConfig(
-    configItems,
-    DIAMOND_CONFIG_TYPE.CREATE_TABLE,
-    tableTypeExt,
-  )
+  const createConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.CREATE_TABLE, tableTypeExt)
   const createPrice = getConfigPrice(createConfig, sb)
   const durationMultiple = Math.max(1, Math.floor(playDuration / 1800))
   details.push({
@@ -570,7 +501,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
   const antiCheatVideoType = feeContext.antiCheatVideoType
   const banConfigType = getBanConfigType(antiCheatType, antiCheatVideoType)
   if (banConfigType) {
-    const banConfig = findDiamondConfig(configItems, banConfigType, seatCount)
+    const banConfig = findDiamondConfig(banConfigType, seatCount)
     const banPrice = getConfigPrice(banConfig, sb)
     const banMultiple = getBanMultiple(antiCheatType, playDuration)
     details.push({
@@ -588,7 +519,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
   const isChatOn = feeContext.chatEnabled
   if (isChatOn) {
     const chatTypeExt = seatCount * 1000 + tableTypeExt
-    const chatConfig = findDiamondConfig(configItems, DIAMOND_CONFIG_TYPE.CHAT, chatTypeExt)
+    const chatConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.CHAT, chatTypeExt)
     const chatPrice = getConfigPrice(chatConfig, sb)
     details.push({
       label: '聊天消耗',
@@ -604,11 +535,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
   // 快速开桌客户端口径：洗切牌默认开启（无开关，收费提示固定展示）。
   const isBlockchainOn = feeContext.blockchainEnabled
   if (isBlockchainOn) {
-    const blockchainConfig = findDiamondConfig(
-      configItems,
-      DIAMOND_CONFIG_TYPE.BLOCKCHAIN,
-      tableTypeExt,
-    )
+    const blockchainConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.BLOCKCHAIN, tableTypeExt)
     const blockchainPrice = getConfigPrice(blockchainConfig, sb)
     details.push({
       label: '洗切牌',
@@ -623,11 +550,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
 
   const isInsuranceOn = Number(formState.insurance) > 0
   if (isInsuranceOn) {
-    const insuranceConfig = findDiamondConfig(
-      configItems,
-      DIAMOND_CONFIG_TYPE.INSURANCE,
-      tableTypeExt,
-    )
+    const insuranceConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.INSURANCE, tableTypeExt)
     const insurancePrice = getConfigPrice(insuranceConfig, sb)
     details.push({
       label: '保险',
@@ -642,7 +565,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
 
   const isSquidOn = Number(formState.squid) > 0
   if (isSquidOn) {
-    const squidConfig = findDiamondConfig(configItems, DIAMOND_CONFIG_TYPE.SQUID, tableTypeExt)
+    const squidConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.SQUID, tableTypeExt)
     const squidPrice = getConfigPrice(squidConfig, sb)
     details.push({
       label: '鱿鱼玩法',
@@ -787,17 +710,6 @@ function getGameTypeBg(type: number): string {
   }
 }
 
-function getGameTypeColor(type: number): string {
-  switch (type) {
-    case 2:
-      return '#00B07E'
-    case 3:
-      return '#AB05E7'
-    case 1:
-    default:
-      return '#4081E8'
-  }
-}
 
 function formatBlinds(sb: number, ante?: number): string {
   const sbFace = sb / 100
@@ -985,7 +897,6 @@ async function onDeleteConfirm() {
         <div class="template-card__left">
           <div
             class="template-card__badge"
-            :style="{ backgroundColor: getGameTypeColor(item.game_play_type ?? 1) }"
           >
             <span class="template-card__game-name">
               {{ getGameTypeName(item.game_play_type ?? 1) }}
@@ -1084,12 +995,52 @@ async function onDeleteConfirm() {
 /* 主配置面板 */
 .quick-panel {
   flex-shrink: 0;
-  background: rgba(0, 0, 0, 0.2);
+  position: relative;
+    background: rgba(0, 0, 0, 0.1);
+  // background: linear-gradient(96.018deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
+  border: 0.016rem solid rgba(242, 242, 242, 0.24);
   border-radius: 0.86rem;
-  backdrop-filter: blur(0.16px);
+  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
   padding: 0.25rem 0.51rem 0.4rem;
-  // margin-bottom: 0.5rem;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(16.6px);
+    -webkit-backdrop-filter: blur(16.6px);
+    background: linear-gradient(
+      107.6deg,
+      rgba(249, 249, 249, 0.08) 12.3%,
+      rgba(249, 249, 249, 0.14) 33.3%,
+      rgba(147, 147, 147, 0.03) 85.1%
+    );
+    mix-blend-mode: hard-light;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 0;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    box-shadow:
+      inset 0 0 8.6px rgba(0, 0, 0, 1),
+      inset 3.4px 2.6px 8.6px rgba(0, 0, 0, 0.1),
+      inset 0 0 36.1px rgba(242, 242, 242, 0.3);
+    z-index: 0;
+  }
+
+  & > * { position: relative; z-index: 1; }
 }
+.quick-panel :deep(.filter-tabbar) {
+  background: rgba(27, 27, 30, 0.4);
+}
+
 .table-slider-row {
   padding: 0.2rem 0;
 }
@@ -1180,10 +1131,15 @@ async function onDeleteConfirm() {
 .quick-create-btn {
   width: 2.42rem;
   height: 1.07rem;
-  border: none;
+  border: 0.016rem solid rgba(242, 242, 242, 0.29);
   border-radius: 1.11rem;
-  background: linear-gradient(105.31deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
-  backdrop-filter: blur(0.167px);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16.6px);
+  -webkit-backdrop-filter: blur(16.6px);
+  box-shadow:
+    inset 0 0 8.6px rgba(0, 0, 0, 0.155),
+    inset 3.4px 2.6px 8.6px rgba(0, 0, 0, 0.1),
+    inset 0 0 59.1px rgba(242, 242, 242, 0.3);
   color: #78e490;
   font-size: 0.32rem;
   font-family: 'HONOR Sans CN', sans-serif;
@@ -1254,11 +1210,14 @@ async function onDeleteConfirm() {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(255, 255, 255, 0.25);
   background-blend-mode: hard-light;
-  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
-  outline: 0.95px solid transparent;
-  outline-offset: -0.95px;
-  backdrop-filter: blur(10.54px);
+  backdrop-filter: blur(1.9px);
+  border: 0.016rem solid rgba(242, 242, 242, 0.2);
+  box-shadow:
+    0 0 0.1rem 0.05rem rgba(255, 255, 255, 0.6) inset,
+    inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.3),
+    inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.3);
 }
 
 .template-card__game-name {

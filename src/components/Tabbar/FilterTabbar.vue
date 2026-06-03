@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { showGameToast } from '@/components/Toast'
 
 export interface FilterTabOption {
   name: string
   title: string
+  disabled?: boolean
+  disabledToast?: string
   [key: string]: unknown
 }
 
@@ -32,6 +35,14 @@ const emit = defineEmits<{
 const wrapperClass = computed(() => ['filter-tabbar', `filter-tabbar--${props.activeBg}`])
 
 function handleClick(name: string): void {
+  const targetTab = props.tabs.find((tab) => tab.name === name)
+  if (targetTab?.disabled) {
+    if (typeof targetTab.disabledToast === 'string' && targetTab.disabledToast.trim()) {
+      showGameToast(targetTab.disabledToast.trim())
+    }
+    return
+  }
+
   if (name !== props.modelValue) {
     emit('update:modelValue', name)
   }
@@ -47,8 +58,15 @@ export default { name: 'FilterTabbar' }
     <button
       v-for="(tab, index) in props.tabs"
       :key="tab.name"
-      :class="['filter-tab__item', { 'filter-tab__item--active': tab.name === props.modelValue }]"
+      :class="[
+        'filter-tab__item',
+        {
+          'filter-tab__item--active': tab.name === props.modelValue,
+          'filter-tab__item--disabled': tab.disabled === true,
+        },
+      ]"
       type="button"
+      :aria-disabled="tab.disabled === true"
       @click="handleClick(tab.name)"
     >
       <div class="inner-content">
@@ -91,6 +109,10 @@ export default { name: 'FilterTabbar' }
     border-color 0.18s;
   position: relative;
   overflow: hidden;
+}
+
+.filter-tab__item--disabled {
+  opacity: 0.56;
 }
 
 .filter-tab__text {

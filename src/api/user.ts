@@ -65,6 +65,8 @@ import type {
   USDTApplyReadResponseData,
   NewSafetyRequest,
   NewSafetyResponseData,
+  ClubSendDiamondsRequest,
+  ClubSendDiamondsResponseData,
 } from '@/api/models/user'
 import { forwardUserClubToCocos, forwardUserInfoToCocos } from '@/bridge/sync'
 import { pinia } from '@/stores/pinia'
@@ -489,32 +491,61 @@ export async function postUserGoldChangeLogApi(
 
 // 对齐 cocos WebUSDTApplyList.API
 export async function postUSDTApplyListApi(
-  payload: USDTApplyListRequest = {} as USDTApplyListRequest
+  payload: USDTApplyListRequest = {} as USDTApplyListRequest,
 ): Promise<ApiResponse<USDTApplyListResponseData>> {
-  const response = await http.post<ApiResponse<USDTApplyListResponseData>>('/user/trader/apply/list', payload)
+  const response = await http.post<ApiResponse<USDTApplyListResponseData>>(
+    '/user/trader/apply/list',
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebUSDTApply.API
 export async function postUSDTApplyApi(
-  payload: USDTApplyRequest = {} as USDTApplyRequest
+  payload: USDTApplyRequest = {} as USDTApplyRequest,
 ): Promise<ApiResponse<USDTApplyResponseData>> {
-  const response = await http.post<ApiResponse<USDTApplyResponseData>>('/user/trader/apply', payload)
+  const response = await http.post<ApiResponse<USDTApplyResponseData>>(
+    '/user/trader/apply',
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebUSDTApplyRead.API
 export async function postUSDTApplyReadApi(
-  payload: USDTApplyReadRequest = {} as USDTApplyReadRequest
+  payload: USDTApplyReadRequest = {} as USDTApplyReadRequest,
 ): Promise<ApiResponse<USDTApplyReadResponseData>> {
-  const response = await http.post<ApiResponse<USDTApplyReadResponseData>>('/user/trader/apply/read', payload)
+  const response = await http.post<ApiResponse<USDTApplyReadResponseData>>(
+    '/user/trader/apply/read',
+    payload,
+  )
   return response.data
 }
 
 // 对齐 cocos WebNewSafety.API
 export async function postNewSafetyApi(
-  payload: NewSafetyRequest = {} as NewSafetyRequest
+  payload: NewSafetyRequest = {} as NewSafetyRequest,
 ): Promise<ApiResponse<NewSafetyResponseData>> {
-  const response = await http.post<ApiResponse<NewSafetyResponseData>>('/user/freeze/public/list', payload)
+  const response = await http.post<ApiResponse<NewSafetyResponseData>>(
+    '/user/freeze/public/list',
+    payload,
+  )
+  return response.data
+}
+
+// 对齐 cocos WebClubSendDiamonds.API
+export async function postClubSendDiamondsApi(
+  payload: ClubSendDiamondsRequest = {} as ClubSendDiamondsRequest,
+  clubId?: number | string,
+): Promise<ApiResponse<ClubSendDiamondsResponseData>> {
+  const headers =
+    clubId === undefined || clubId === null || String(clubId).trim() === ''
+      ? undefined
+      : { 'X-Club': String(clubId) }
+  const response = await http.post<ApiResponse<ClubSendDiamondsResponseData>>(
+    '/user/club/creator/grant',
+    payload,
+    { headers },
+  )
   return response.data
 }

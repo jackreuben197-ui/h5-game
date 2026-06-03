@@ -3,6 +3,13 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { showFailToast } from 'vant'
 import { postMiscCombineApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import imgEmptyDataState from '@/assets/images/img_empty_data_state.png'
+import imgCardJ from '@/assets/images/img_card_j.png'
+import imgCard8 from '@/assets/images/img_card_8.png'
+import imgCard2 from '@/assets/images/img_card_2.png'
+import imgCardBack from '@/assets/images/img_card_back.png'
+import icSettings from '@/assets/icons/ic_settings.svg'
+import icDropdown from '@/assets/icons/icon_dropdown.svg'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
 
@@ -55,19 +62,19 @@ const loading = ref(false)
 const userInfoStore = useUserInfoStore()
 
 const personalRingMeta = [
-  { key: 'vpip', label: '入池率', color: '#ff5b5b' },
-  { key: 'wins', label: '胜率', color: '#3c6dff' },
-  { key: 'prf', label: '翻牌加注率', color: '#f7bb46' },
-  { key: 'wtsd', label: '摊牌胜率', color: '#ff2626' },
-  { key: 'bet3', label: '再加注率', color: '#66b7ff' },
-  { key: 'allinWins', label: '全下胜率', color: '#20f2c2' },
+  { key: 'vpip', label: '入池率', color: '#CB777A' },
+  { key: 'wins', label: '胜率', color: '#6F50BC' },
+  { key: 'prf', label: '翻牌加注率', color: '#AB784F' },
+  { key: 'wtsd', label: '摊牌胜率', color: '#B13A5B' },
+  { key: 'bet3', label: '再加注率', color: '#5699CD' },
+  { key: 'allinWins', label: '全下胜率', color: '#418950' },
 ] as const
 
 const personalRings = ref(personalRingMeta.map((item) => ({ ...item, value: 0 })))
 const opponentRows = ref<ProfitRow[]>([])
 const deckRows = ref<DeckRow[]>([])
 const allInSummary = ref([
-  { label: '累计盈利', value: '0', highlight: 'up' as const },
+  { label: '累计盈利', value: '0', highlight: 'up' as 'up' | 'positive' },
   { label: 'All in', value: '0' },
   { label: '手数', value: '0' },
   { label: '获胜', value: '0' },
@@ -394,7 +401,7 @@ function setAllInCache(mode: string, stats: Record<string, unknown>): void {
   const profit = toSafeNumber(stats.profit_total)
 
   const summary = [
-    { label: '累计盈利', value: formatSigned(profit), highlight: 'up' as const },
+    { label: '累计盈利', value: formatSigned(profit), highlight: profit > 0 ? 'positive' : 'up' as 'up' | 'positive' },
     { label: 'All in', value: winCount.toLocaleString('en-US') },
     { label: '手数', value: handCount.toLocaleString('en-US') },
     { label: '获胜', value: winCount.toLocaleString('en-US') },
@@ -468,7 +475,7 @@ function applyCurrentOpponent(): void {
 function applyCurrentAllIn(): void {
   const value = allInCache.get(selectedAllInMode.value)
   allInSummary.value = value?.summary ?? [
-    { label: '累计盈利', value: '0', highlight: 'up' as const },
+    { label: '累计盈利', value: '0', highlight: 'up' as 'up' | 'positive' },
     { label: 'All in', value: '0' },
     { label: '手数', value: '0' },
     { label: '获胜', value: '0' },
@@ -825,34 +832,33 @@ onBeforeUnmount(() => {
             >
               <van-circle
                 class="ring-donut"
-                :size="'1.92rem'"
+                :size="'2rem'"
                 :rate="ring.value"
                 :speed="100"
-                :stroke-width="60"
+                :stroke-width="100"
                 :color="ring.color"
                 layer-color="rgba(255, 255, 255, 0.16)"
-              >
-                <div class="ring-inner">
-                  <div class="ring-value">{{ ring.value }}%</div>
-                  <div class="ring-label">{{ ring.label }}</div>
-                </div>
-              </van-circle>
+              />
+              <div class="ring-pill">
+                <div class="ring-value">{{ ring.value }}%</div>
+                <div class="ring-label">{{ ring.label }}</div>
+              </div>
             </article>
           </section>
 
           <section class="glass-pill title-pill">
             <span>近3个月内玩牌数据统计</span>
-            <span class="pie-icon" aria-hidden="true"></span>
+            <img class="pie-icon" :src="icSettings" alt="" aria-hidden="true" />
           </section>
 
           <section class="glass-card biggest-card">
             <div class="biggest-title">Possible Biggest Hand</div>
             <div class="card-row">
-              <div class="poker-card">A ♣</div>
-              <div class="poker-card red">J ♥</div>
-              <div class="poker-card">10 ◆</div>
-              <div class="poker-card back"></div>
-              <div class="poker-card back"></div>
+              <img class="poker-card" :src="imgCardJ" alt="J" />
+              <img class="poker-card" :src="imgCard8" alt="8" />
+              <img class="poker-card" :src="imgCard2" alt="2" />
+              <img class="poker-card" :src="imgCardBack" alt="" />
+              <img class="poker-card" :src="imgCardBack" alt="" />
             </div>
           </section>
         </template>
@@ -862,14 +868,13 @@ onBeforeUnmount(() => {
             <div class="title-text">Statistics of the week</div>
             <button class="sort-btn" type="button">
               Descending
-              <span class="arrow">▾</span>
+              <img class="arrow" :src="icDropdown" alt="" aria-hidden="true" />
             </button>
           </section>
 
-          <section class="empty-wrap">
-            <div class="empty-icon" aria-hidden="true">✕</div>
-            <div class="empty-text">暂无数据</div>
-          </section>
+          <div class="empty-state">
+            <img :src="imgEmptyDataState" alt="" class="empty-state-img" />
+          </div>
         </template>
       </template>
 
@@ -891,30 +896,37 @@ onBeforeUnmount(() => {
           <div class="title-text">Statistics of the week</div>
           <button class="sort-btn" type="button">
             Descending
-            <span class="arrow">▾</span>
+            <img class="arrow" :src="icDropdown" alt="" aria-hidden="true" />
           </button>
         </section>
 
-        <section class="glass-card table-card">
-          <header class="table-head">
-            <span>玩家</span>
-            <span>手数</span>
-            <span>负</span>
-            <span>胜</span>
-            <span>盈利</span>
-          </header>
+        <template v-if="opponentRows.length">
+          <section class="glass-card table-card">
+            <header class="table-head">
+              <span>玩家</span>
+              <span>手数</span>
+              <span>负</span>
+              <span>胜</span>
+              <span>盈利</span>
+            </header>
 
-          <article v-for="row in opponentRows" :key="row.id" class="table-row">
-            <div class="player-cell">
-              <span class="avatar" :style="row.avatar ? { backgroundImage: `url(${row.avatar})` } : undefined" aria-hidden="true"></span>
-              <span class="name">{{ row.name }}</span>
-            </div>
-            <span>{{ row.hands }}</span>
-            <span>{{ row.lose }}</span>
-            <span>{{ row.win }}</span>
-            <span :class="profitClass(row.profit)">{{ formatProfit(row.profit) }}</span>
-          </article>
-        </section>
+            <article v-for="row in opponentRows" :key="row.id" class="table-row">
+              <div class="player-cell">
+                <span class="avatar" :style="row.avatar ? { backgroundImage: `url(${row.avatar})` } : undefined" aria-hidden="true"></span>
+                <span class="name">{{ row.name }}</span>
+              </div>
+              <span>{{ row.hands }}</span>
+              <span>{{ row.lose }}</span>
+              <span>{{ row.win }}</span>
+              <span :class="profitClass(row.profit)">{{ formatProfit(row.profit) }}</span>
+            </article>
+          </section>
+        </template>
+        <template v-else-if="!loading">
+          <div class="empty-state">
+            <img :src="imgEmptyDataState" alt="" class="empty-state-img" />
+          </div>
+        </template>
       </template>
 
       <template v-else-if="selectedMainTab === 'allin'">
@@ -934,13 +946,13 @@ onBeforeUnmount(() => {
 
           <div class="section-title">
             <span>近3个月内玩牌数据统计</span>
-            <span class="pie-icon" aria-hidden="true"></span>
+            <img class="pie-icon" :src="icSettings" alt="" aria-hidden="true" />
           </div>
 
           <div class="summary-list">
             <div v-for="item in allInSummary" :key="item.label" class="summary-row">
               <span>{{ item.label }}</span>
-              <span :class="item.highlight === 'up' ? 'profit-up' : ''">{{ item.value }}</span>
+              <span :class="item.highlight === 'positive' ? 'profit-positive' : item.highlight === 'up' ? 'profit-up' : ''">{{ item.value }}</span>
             </div>
           </div>
         </section>
@@ -948,7 +960,7 @@ onBeforeUnmount(() => {
         <section class="glass-card radar-card">
           <div class="section-title">
             <span>ALL IN 胜率分布图</span>
-            <span class="pie-icon" aria-hidden="true"></span>
+            <img class="pie-icon" :src="icSettings" alt="" aria-hidden="true" />
           </div>
 
           <div ref="radarWrapRef" class="allin-radar-wrap">
@@ -1082,45 +1094,78 @@ onBeforeUnmount(() => {
 
 .segmented {
   margin-top: 0.34rem;
-  border-radius: 0.56rem;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.06rem;
   display: grid;
-  gap: 0.06rem;
+  align-items: center;
+  gap: 0.1rem;
+  height: 1.33rem;
+  padding: 0.06rem;
+  border-radius: 0.68rem;
+  background: rgba(0, 0, 0, 0.2);
+  margin-left: 0.53rem;
+  margin-right: 0.53rem;
 }
 
 .game-segmented,
 .period-segmented {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .segment {
   border: 0;
-  border-radius: 0.52rem;
+  border-radius: 0.62rem;
   background: transparent;
   color: #f9f9f9;
+  opacity: 0.86;
   font-size: 0.42rem;
-  padding: 0.2rem 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &.active {
-    background: rgba(255, 255, 255, 0.16);
-    border: 0.02rem solid rgba(249, 249, 249, 0.9);
+    background: rgba(249, 249, 249, 0.5);
     font-weight: 700;
+    opacity: 1;
   }
 }
 
-.glass-card {
-  border-radius: 0.42rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.15);
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.06rem);
+.glass-card,
+.glass-pill {
+  border-radius: 30px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(16.5px);
+  -webkit-backdrop-filter: blur(16.5px);
+  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.05);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    background: linear-gradient(139deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 3;
+  }
 }
 
-.glass-pill {
-  border-radius: 0.4rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.12);
-  background: rgba(0, 0, 0, 0.24);
-  backdrop-filter: blur(0.06rem);
+.glass-card > *,
+.glass-pill > * {
+  position: relative;
+  z-index: 2;
 }
 
 .ring-grid {
@@ -1131,6 +1176,7 @@ onBeforeUnmount(() => {
 }
 
 .ring-card {
+  position: relative;
   display: flex;
   justify-content: center;
 }
@@ -1141,28 +1187,35 @@ onBeforeUnmount(() => {
   box-shadow: 0 0.06rem 0.18rem rgba(0, 0, 0, 0.2);
 }
 
-.ring-inner {
-  width: 1.34rem;
-  height: 1.34rem;
-  border-radius: 9999px;
-  background: rgba(116, 90, 116, 0.52);
+.ring-pill {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 0.04rem;
+  padding: 0.1rem 0.2rem 0.12rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  pointer-events: none;
 }
 
 .ring-value {
-  font-size: 0.36rem;
-  font-weight: 700;
-  line-height: 1.1;
+  font-size: 0.3rem;
+  font-weight: 600;
+  font-family: 'HONOR Sans CN', sans-serif;
+  line-height: 1.2;
 }
 
 .ring-label {
-  margin-top: 0.05rem;
-  font-size: 0.18rem;
-  line-height: 1.1;
+  font-size: 0.14rem;
+  line-height: 0.87;
   color: rgba(249, 249, 249, 0.86);
+  font-family: 'HONOR Sans CN', sans-serif;
+  font-weight: 400;
 }
 
 .title-pill {
@@ -1172,28 +1225,13 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   font-size: 0.42rem;
-  font-weight: 600;
+  font-weight: 400;
+  color: #fff;
 }
 
 .pie-icon {
   width: 0.5rem;
   height: 0.5rem;
-  border-radius: 50%;
-  border: 0.04rem solid rgba(249, 249, 249, 0.95);
-  border-right-color: transparent;
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    width: 0.24rem;
-    height: 0.04rem;
-    background: rgba(249, 249, 249, 0.95);
-    top: 0.18rem;
-    right: -0.02rem;
-    transform: rotate(-34deg);
-    border-radius: 0.03rem;
-  }
 }
 
 .biggest-card {
@@ -1219,24 +1257,8 @@ onBeforeUnmount(() => {
   width: 0.76rem;
   height: 1.1rem;
   border-radius: 0.12rem;
-  background: #fff;
-  color: #1a1a1a;
-  font-size: 0.28rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &.red {
-    color: #fa2b4b;
-  }
-
-  &.back {
-    background:
-      repeating-linear-gradient(45deg, #30b6ff 0, #30b6ff 0.08rem, #2f86e7 0.08rem, #2f86e7 0.16rem);
-    border: 0.02rem solid rgba(249, 249, 249, 0.28);
-    box-shadow: inset 0 0 0 0.02rem rgba(255, 255, 255, 0.24);
-  }
+  object-fit: cover;
+  display: block;
 }
 
 .title-row {
@@ -1254,17 +1276,18 @@ onBeforeUnmount(() => {
 .sort-btn {
   border: 0;
   border-radius: 0.4rem;
-  background: rgba(0, 0, 0, 0.46);
+  background: rgba(249, 249, 249, 0.5);
   color: #fff;
   font-size: 0.33rem;
+  font-weight: 400;
   padding: 0.12rem 0.24rem;
   display: inline-flex;
   align-items: center;
   gap: 0.08rem;
 
   .arrow {
-    font-size: 0.24rem;
-    line-height: 1;
+    width: 0.33rem;
+    height: 0.33rem;
   }
 }
 
@@ -1293,6 +1316,19 @@ onBeforeUnmount(() => {
   margin-top: 0.18rem;
   font-size: 0.42rem;
   color: rgba(249, 249, 249, 0.9);
+}
+
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 8rem;
+}
+
+.empty-state-img {
+  width: 1.8rem;
+  height: 1.8rem;
+  object-fit: contain;
 }
 
 .table-card {
@@ -1348,12 +1384,14 @@ onBeforeUnmount(() => {
 
 .profit-up {
   color: #ff2748;
-  font-weight: 600;
+}
+
+.profit-positive {
+  color: #78e490;
 }
 
 .profit-down {
   color: #05e7ae;
-  font-weight: 600;
 }
 
 .allin-summary-card {
@@ -1380,7 +1418,7 @@ onBeforeUnmount(() => {
   transition: background-color 0.2s ease;
 
   &.active {
-    background: rgba(5, 231, 174, 0.6);
+    background: rgba(224, 37, 66, 0.5);
     font-weight: 600;
   }
 }
@@ -1392,6 +1430,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   font-size: 0.4rem;
   font-weight: 600;
+  color: #fff;
 }
 
 .summary-list {
@@ -1404,7 +1443,9 @@ onBeforeUnmount(() => {
   align-items: center;
   min-height: 0.6rem;
   font-size: 0.34rem;
+  font-weight: 400 !important;
   line-height: 1.4;
+  color: #fff !important;
 }
 
 .radar-card {
@@ -1521,7 +1562,7 @@ onBeforeUnmount(() => {
   background: rgba(0, 0, 0, 0.19);
 
   &.active {
-    background: rgba(5, 231, 174, 0.6);
+    background: rgba(224, 37, 66, 0.5);
     color: #fff;
     font-weight: 600;
   }

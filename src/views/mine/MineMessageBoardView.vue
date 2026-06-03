@@ -96,24 +96,34 @@ async function submitMessage(): Promise<void> {
   margin-top: 0.18rem;
   width: 100%;
   height: 6.3rem;
-  border-radius: 0.54rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.35);
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(0.3rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
   color: #fff;
   font-size: 0.42rem;
   padding: 0.34rem;
   resize: none;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
 }
 
 .submit-btn {
-  margin-top: 1rem;
-  border: 0;
-  border-radius: 0.56rem;
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom) + 1rem);
+  left: 0.45rem;
+  right: 0.45rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.1);
+  border-radius: 0.8rem;
   height: 1.12rem;
-  color: #fbfbfb;
+  color: #fff;
   font-size: 0.5rem;
-  background: linear-gradient(165deg, #05e7ae 8%, #027a5c 72%);
-  width: 100%;
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  width: auto;
 }
 </style>

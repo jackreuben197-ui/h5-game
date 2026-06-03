@@ -13,6 +13,7 @@ import { mttSections } from './mttSections/index'
 import { defaultMttFormState, type MttFormState } from './mttSections/formState'
 import type { FieldValue, TableFormFieldConfig } from './template'
 import { useAppConfigStore } from '@/stores/appConfig'
+import type { DiamondConfigItem, DiamondSetting } from '@/api/models/config'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
 import { t } from '@/i18n'
@@ -50,21 +51,6 @@ interface FeeDetailItem {
   totalOrigin: number
   totalCurrent: number
   isDiscount: boolean
-}
-
-interface DiamondSetting {
-  sb: number
-  price: number
-  discount_price: number
-}
-
-interface DiamondConfigItem {
-  config_type: number
-  status: number
-  type_ext: number
-  start_time: number
-  end_time: number
-  setting: DiamondSetting[]
 }
 
 interface FeePrice {
@@ -121,52 +107,6 @@ function getBanMultiple(antiCheatType: number): number {
   return 1
 }
 
-function normalizeDiamondSettings(raw: unknown): DiamondSetting[] {
-  if (!Array.isArray(raw)) return []
-  return raw.map((item) => {
-    const row = item as Record<string, unknown>
-    return {
-      sb: Math.floor(toNumber(row.sb)),
-      price: toNumber(row.price),
-      discount_price: toNumber(row.discount_price),
-    }
-  })
-}
-
-function normalizeDiamondConfigItems(raw: unknown): DiamondConfigItem[] {
-  if (!Array.isArray(raw)) return []
-  return raw.map((item) => {
-    const row = item as Record<string, unknown>
-    return {
-      config_type: Math.floor(toNumber(row.config_type)),
-      status: Math.floor(toNumber(row.status)),
-      type_ext: Math.floor(toNumber(row.type_ext)),
-      start_time: Math.floor(toNumber(row.start_time)),
-      end_time: Math.floor(toNumber(row.end_time)),
-      setting: normalizeDiamondSettings(row.setting),
-    }
-  })
-}
-
-function extractDiamondConfigItems(raw: unknown): DiamondConfigItem[] {
-  if (!raw || typeof raw !== 'object') return []
-  const root = raw as Record<string, unknown>
-  const candidates: unknown[] = [
-    root,
-    root.data,
-    (root.data as Record<string, unknown> | undefined)?.data,
-    root.list,
-    (root.data as Record<string, unknown> | undefined)?.list,
-  ]
-  for (const candidate of candidates) {
-    const list = normalizeDiamondConfigItems(candidate)
-    if (list.length) {
-      return list
-    }
-  }
-  return []
-}
-
 function isInDiscountWindow(config: DiamondConfigItem, nowSec: number): boolean {
   if (!config.start_time || !config.end_time) return false
   return nowSec >= config.start_time && nowSec <= config.end_time
@@ -217,14 +157,8 @@ function getConfigPrice(config: DiamondConfigItem | null, sb: number): FeePrice 
   }
 }
 
-function findDiamondConfig(
-  configItems: DiamondConfigItem[],
-  configType: number,
-  typeExt: number,
-): DiamondConfigItem | null {
-  return (
-    configItems.find((item) => item.config_type === configType && item.type_ext === typeExt) || null
-  )
+function findDiamondConfig(configType: number, typeExt: number): DiamondConfigItem | null {
+  return appConfigStore.diamondConfig?.[configType]?.[typeExt] ?? null
 }
 
 function formatFeeCount(value: number): string {
@@ -232,18 +166,13 @@ function formatFeeCount(value: number): string {
 }
 
 const feeDetails = computed<FeeDetailItem[]>(() => {
-  const configItems = extractDiamondConfigItems(appConfigStore.diamondConfig)
   const tableTypeExt = 2
   const seatCount = getSeatCount()
   const sb = Math.floor(toNumber(formState.sb))
   const details: FeeDetailItem[] = []
 
   // 1) 开桌收费（config_type=1，按 tableTypeExt + sb）
-  const createConfig = findDiamondConfig(
-    configItems,
-    DIAMOND_CONFIG_TYPE.CREATE_TABLE,
-    tableTypeExt,
-  )
+  const createConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.CREATE_TABLE, tableTypeExt)
   const durationMultiple = getHalfHourMultiple()
   const createPrice = getConfigPrice(createConfig, sb)
   details.push({
@@ -261,7 +190,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
   const antiCheatVideoType = Math.floor(toNumber(formState.anti_cheat_video_type, 1))
   const banConfigType = getBanConfigType(antiCheatType, antiCheatVideoType)
   if (banConfigType) {
-    const banConfig = findDiamondConfig(configItems, banConfigType, seatCount)
+    const banConfig = findDiamondConfig(banConfigType, seatCount)
     const banPrice = getConfigPrice(banConfig, sb)
     const banMultiple = getBanMultiple(antiCheatType)
     details.push({
@@ -279,7 +208,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
   const isChatOn = Math.floor(toNumber(formState.chat_type)) !== 0
   if (isChatOn) {
     const chatTypeExt = seatCount * 1000 + tableTypeExt
-    const chatConfig = findDiamondConfig(configItems, DIAMOND_CONFIG_TYPE.CHAT, chatTypeExt)
+    const chatConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.CHAT, chatTypeExt)
     const chatPrice = getConfigPrice(chatConfig, sb)
     details.push({
       label: '聊天消耗',

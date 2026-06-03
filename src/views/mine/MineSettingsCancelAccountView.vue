@@ -6,6 +6,8 @@ import { postUserDeleteApi, postUserDeleteCodeApi } from '@/api/user'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import icMail from '@/assets/icons/ic_mail.svg'
+import icLock from '@/assets/icons/ic_lock_new.svg'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
 const router = useRouter()
@@ -71,7 +73,7 @@ const email = computed(() => {
   return ''
 })
 
-const isPhone = computed(() => Boolean(phone.value))
+const isPhone = computed(() => Boolean(phone.value) && /^\d+$/.test(phone.value))
 const isEmail = computed(() => !phone.value && Boolean(email.value))
 const firstContactPlaceholder = computed(() =>
   isPhone.value ? '0000000000' : 'Enter your Mail Id',
@@ -212,9 +214,8 @@ onBeforeUnmount(() => {
 
     <div class="content-wrap">
       <section class="form-stack">
-        <div class="form-label">Passcode</div>
         <div class="form-row">
-          <span class="row-icon" :class="isPhone ? 'icon-phone' : 'icon-mail'"></span>
+          <img class="row-icon" :src="icMail" alt="" aria-hidden="true" />
           <div class="row-main">
             <template v-if="isPhone">
               <span class="prefix">+{{ zoneCode }}</span>
@@ -249,9 +250,8 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div class="form-label">Passcode</div>
         <div class="form-row">
-          <span class="row-icon icon-lock"></span>
+          <img class="row-icon" :src="icLock" alt="" aria-hidden="true" />
           <div class="row-main single">
             <input
               v-model.trim="otp"
@@ -263,12 +263,15 @@ onBeforeUnmount(() => {
           </div>
         </div>
       </section>
+    </div>
 
+    <div class="bottom-bar">
       <button class="submit-btn" type="button" :disabled="deleting" @click="onSubmit">
         注销账号
       </button>
+    </div>
 
-      <div v-if="showConfirm" class="dialog-mask">
+    <div v-if="showConfirm" class="dialog-mask">
         <section class="dialog-card">
           <p class="dialog-title">确认要注销当前账号吗？</p>
           <p class="dialog-desc">注销后账号信息将无法恢复，请谨慎操作。</p>
@@ -285,7 +288,6 @@ onBeforeUnmount(() => {
           </div>
         </section>
       </div>
-    </div>
   </div>
 </template>
 
@@ -313,19 +315,10 @@ onBeforeUnmount(() => {
   gap: 0.2133rem;
 }
 
-.form-label {
-  font-family: var(--font-family-sans);
-  font-size: 0.36rem;
-  line-height: 0.48rem;
-  color: rgba(255, 255, 255, 0.92);
-  margin-top: 0.1333rem;
-}
-
 .form-row {
   height: 1.4376rem;
   border-radius: 1.6913rem;
-  background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(0.5566rem);
+  background: rgba(0, 0, 0, 0.22);
   display: flex;
   align-items: center;
   padding-left: 0.4144rem;
@@ -334,59 +327,9 @@ onBeforeUnmount(() => {
 .row-icon {
   width: 0.5333rem;
   height: 0.5333rem;
-  border-radius: 0.08rem;
-  position: relative;
+  object-fit: contain;
   margin-right: 0.4133rem;
-}
-
-.icon-phone::before {
-  content: '';
-  position: absolute;
-  inset: 0.04rem 0.1rem;
-  border: 0.04rem solid rgba(255, 255, 255, 0.95);
-  border-radius: 0.1rem;
-}
-
-.icon-mail::before {
-  content: '';
-  position: absolute;
-  inset: 0.08rem;
-  border: 0.04rem solid rgba(255, 255, 255, 0.95);
-  border-radius: 0.06rem;
-}
-
-.icon-mail::after {
-  content: '';
-  position: absolute;
-  left: 0.13rem;
-  right: 0.13rem;
-  top: 0.16rem;
-  height: 0.04rem;
-  background: rgba(255, 255, 255, 0.95);
-  transform: rotate(32deg);
-}
-
-.icon-lock::before {
-  content: '';
-  position: absolute;
-  left: 0.1rem;
-  right: 0.1rem;
-  bottom: 0.06rem;
-  height: 0.24rem;
-  border: 0.04rem solid rgba(255, 255, 255, 0.95);
-  border-radius: 0.06rem;
-}
-
-.icon-lock::after {
-  content: '';
-  position: absolute;
-  left: 0.16rem;
-  right: 0.16rem;
-  top: 0.04rem;
-  height: 0.24rem;
-  border: 0.04rem solid rgba(255, 255, 255, 0.95);
-  border-bottom: 0;
-  border-radius: 0.2rem 0.2rem 0 0;
+  flex-shrink: 0;
 }
 
 .row-main {
@@ -444,7 +387,7 @@ onBeforeUnmount(() => {
   border-radius: 1.2684rem;
   padding: 0 0.3067rem;
   // min-width: 1.9467rem;
-  background: linear-gradient(152deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background: #55606c;
   color: #fff;
   font-family: var(--font-family-sans);
   font-size: 0.3383rem;
@@ -459,18 +402,29 @@ onBeforeUnmount(() => {
   opacity: 0.72;
 }
 
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.4rem 0.4533rem calc(env(safe-area-inset-bottom) + 1rem);
+}
+
 .submit-btn {
-  margin-top: 0.254rem;
-  min-height: 1.4376rem;
   width: 100%;
   height: 1.4376rem;
-  border: 0;
+  border: 0.02rem solid rgba(249, 249, 249, 0.02);
   border-radius: 1.2684rem;
-  background: linear-gradient(167deg, rgba(220, 72, 93, 0.88) 0%, rgba(153, 40, 58, 0.88) 100%);
-  color: #fff;
-  font-size: 0.48rem;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(2.5px);
+  -webkit-backdrop-filter: blur(2.5px);
+  box-shadow:
+    inset 1px 1px 0px rgba(255, 255, 255, 0.15),
+    inset -1px -1px 0px rgba(255, 255, 255, 0.05);
+  color: #f9f9f9;
+  font-size: 0.42rem;
   font-family: var(--font-family-sans);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .submit-btn:disabled {
@@ -489,16 +443,14 @@ onBeforeUnmount(() => {
 
 .dialog-card {
   width: 8.2rem;
-  border-radius: 0.48rem;
-  border: 0.0133rem solid rgba(255, 255, 255, 0.34);
-  background: linear-gradient(
-    121deg,
-    rgba(142, 142, 142, 0.3) 2.9%,
-    rgba(103, 103, 103, 0.4) 43.6%,
-    rgba(73, 73, 73, 0.5) 89.8%
-  );
-  backdrop-filter: blur(0.2rem);
-  box-shadow: inset 0 0 0.2rem rgba(0, 0, 0, 0.5);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.04);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow:
+    inset 1px 1px 0px rgba(255, 255, 255, 0.12),
+    inset -1px -1px 0px rgba(255, 255, 255, 0.04);
   padding: 0.56rem;
   color: #fff;
 }
@@ -533,12 +485,20 @@ onBeforeUnmount(() => {
 }
 
 .dialog-btn.ghost {
-  background: rgba(255, 255, 255, 0.2);
+  border: 0.02rem solid rgba(249, 249, 249, 0.02);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.12);
   color: #fff;
 }
 
 .dialog-btn.primary {
-  background: linear-gradient(166deg, #05e7ae 7.55%, #027a5c 71.92%);
-  color: #fff;
+  border: 0.02rem solid rgba(249, 249, 249, 0.02);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.12);
+  color: #78E490;
 }
 </style>

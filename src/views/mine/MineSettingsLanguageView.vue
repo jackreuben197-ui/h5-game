@@ -3,12 +3,14 @@ import { computed, ref } from 'vue'
 import { showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import icCheckbox from '@/assets/icons/ic_checkbox.png'
+import icUncheckbox from '@/assets/icons/ic_uncheckbox.png'
 import { getLocale, setLocale, type LocaleCode } from '@/i18n'
 
 const title = computed(() => 'Language')
 
 interface LanguageOption {
-  key: LocaleCode
+  key: string
   label: string
 }
 
@@ -24,15 +26,18 @@ const options: LanguageOption[] = [
   { key: 'pt', label: 'Português' },
 ]
 
-const activeLanguage = ref<LocaleCode>(getLocale())
+const SUPPORTED: string[] = ['cn', 'zh', 'en', 'pt']
+const activeLanguage = ref<string>(getLocale())
 
-function selectLanguage(key: LocaleCode): void {
+function selectLanguage(key: string): void {
   if (activeLanguage.value === key) {
     return
   }
 
   activeLanguage.value = key
-  setLocale(key)
+  if (SUPPORTED.includes(key)) {
+    setLocale(key as LocaleCode)
+  }
   showSuccessToast('语言切换成功')
 }
 </script>
@@ -51,9 +56,12 @@ function selectLanguage(key: LocaleCode): void {
           @click="selectLanguage(item.key)"
         >
           <span class="label">{{ item.label }}</span>
-          <span class="radio" :class="{ selected: activeLanguage === item.key }">
-            <span v-if="activeLanguage === item.key" class="inner"></span>
-          </span>
+          <img
+            class="checkbox-icon"
+            :src="activeLanguage === item.key ? icCheckbox : icUncheckbox"
+            alt=""
+            aria-hidden="true"
+          />
         </button>
       </section>
     </div>
@@ -81,25 +89,37 @@ function selectLanguage(key: LocaleCode): void {
 
 .language-card {
   margin-top: 0.62rem;
-  border-radius: 0.4209rem;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.08rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
   overflow: hidden;
 }
 
 .language-row {
   width: 100%;
   border: 0;
-  border-bottom: 0.0133rem solid rgba(255, 255, 255, 0.2);
   background: transparent;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.224rem 0.4rem;
+  position: relative;
 
-  &:last-child {
-    border-bottom: 0;
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0.4rem;
+    right: 0.4rem;
+    height: 0.0133rem;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  &:last-child::after {
+    display: none;
   }
 }
 
@@ -111,26 +131,9 @@ function selectLanguage(key: LocaleCode): void {
   color: rgba(255, 255, 255, 0.94);
 }
 
-.radio {
-  width: 0.48rem;
-  height: 0.48rem;
-  border-radius: 50%;
-  border: 0.0133rem solid rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.15);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.radio.selected {
-  border-color: #78ece6;
-}
-
-.inner {
-  width: 0.2667rem;
-  height: 0.2667rem;
-  border-radius: 50%;
-  background: #4ce2df;
-  box-shadow: 0 0 0.08rem rgba(82, 243, 231, 0.6);
+.checkbox-icon {
+  width: 0.4rem;
+  height: 0.4rem;
+  object-fit: contain;
 }
 </style>

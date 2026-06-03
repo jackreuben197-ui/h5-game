@@ -359,10 +359,16 @@ onMounted(() => {
 }
 
 .glass-card {
-  border-radius: 0.42rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.2);
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.04rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+}
+
+.glass-card > * {
+  position: relative;
+  z-index: 2;
 }
 
 .summary-card {
@@ -372,24 +378,32 @@ onMounted(() => {
 
 .time-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.08rem;
-  padding: 0.08rem;
-  border-radius: 0.52rem;
-  background: rgba(255, 255, 255, 0.2);
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+  gap: 0.1rem;
+  height: 1.33rem;
+  padding: 0.06rem;
+  border-radius: 0.68rem;
+  background: rgba(0, 0, 0, 0.2);
+  margin: 0 0.53rem;
 }
 
 .time-tab {
   border: 0;
-  border-radius: 0.44rem;
+  border-radius: 0.62rem;
   background: transparent;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.35rem;
-  padding: 0.18rem 0;
+  color: #f9f9f9;
+  opacity: 0.86;
+  font-size: 0.42rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &.active {
-    background: rgba(255, 255, 255, 0.16);
+    background: rgba(249, 249, 249, 0.5);
     font-weight: 700;
+    opacity: 1;
   }
 }
 

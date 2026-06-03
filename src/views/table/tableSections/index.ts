@@ -11,7 +11,7 @@ import {
 } from './gameplay'
 import { bringinSection } from './bringin'
 import { limitsSection } from './limits'
-import { securitySection } from './security'
+import { securitySection, securityTabSection } from './security'
 
 export const nlhSections: TableFormFieldConfig[][] = [
   [...blindsSection], //大小盲拉杆
@@ -26,6 +26,7 @@ export const nlhSections: TableFormFieldConfig[][] = [
   [...gamePlaySquidGameSection],
   [...gamePlayCriticalHitSection],
   [...gamePlayInsuranceSection],
+  [...securityTabSection],
   [...securitySection],
   [...limitsSection],
 ]

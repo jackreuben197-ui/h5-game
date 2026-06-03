@@ -3324,6 +3324,7 @@ MsgInfo_1010=代理邀请获得{0}{1}
 UIMine_FreeAward_ShareText=分享
 UIShowAdv_TodayNot=今天不想再提示这个
 UIClub_AgentManager_TitleT=代理管理
+UILogin_Account=请输入账号名
 UILogin_InputEmail=请输入邮箱
 UILogin_NewUser= 新用户？<color=#DCBA82>注册账号</color>
 UIClub_JoinClub=加入俱乐部
@@ -7267,3 +7268,4 @@ UIMatchGuaranteedTag=保底赛
 UIMatchSelectClubBuyin=选择买入的俱乐部
 UILoginConfirmTitle=您尚未同意协议
 UILoginConfirmContent=请阅读
+UIJackpot_Introduce=<b><size=50>Jackpot介绍</size></b>\nJackpot为牌桌随机大奖玩法。满足指定牌型条件并完成摊牌后，即有机会触发Jackpot大奖。\n\n<b><size=50>触发条件</size></b>\n1.使用手牌组成指定大牌;\n2.被更大的牌型击败;\n3.牌局需正常摊牌结束;\n4.当前牌桌需满足最低参与人数。\n\n<b><size=50>奖励规则</size></b>\n1.Jackpot奖池随牌局持续累积;\n2.触发后将按规则分配奖励;\n3.奖励将发放给触发玩家、获胜玩家及同桌其他玩家。\n\n<b><size=50>温馨提示</size></b>\n不同盲注牌桌拥有不同Jackpot奖池与奖励金额，盲注越高，奖励越高。

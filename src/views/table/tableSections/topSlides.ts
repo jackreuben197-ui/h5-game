@@ -81,12 +81,7 @@ function readBringinRangeFromCache(): unknown {
   if (!cache || typeof cache !== 'object') {
     return null
   }
-  const globalConfig = (cache as { globalConfig?: Record<string, unknown> }).globalConfig
-  if (globalConfig && typeof globalConfig === 'object') {
-    return globalConfig.friend_club_bringin_min_max_bb_range
-  }
-  // 兼容可能的平铺结构
-  return (cache as Record<string, unknown>).friend_club_bringin_min_max_bb_range
+  return cache.friend_club_bringin_min_max_bb_range
 }
 
 export function resolveBringinBbRange(rawFromStore: unknown): BringinBbRange {

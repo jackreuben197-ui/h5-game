@@ -5,6 +5,8 @@ import { useRouter } from 'vue-router'
 import { postFriendRoomStatsApi } from '@/api/stats'
 import type { FriendRoomStatsRecord } from '@/api/models/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import imgTabFrame from '@/assets/images/img_tab_frame.png'
+import icArrowRight from '@/assets/icons/ic_arrow_right.svg'
 
 const router = useRouter()
 
@@ -105,10 +107,13 @@ onMounted(() => {
 
     <div class="content-wrap">
       <section class="glass-card table-card">
-        <div class="table-head">
-          <span>玩法</span>
-          <span>Played Games</span>
-          <span>Hands</span>
+        <div class="table-head-wrap">
+          <img class="table-head-accent" :src="imgTabFrame" alt="" aria-hidden="true" />
+          <div class="table-head">
+            <span>玩法</span>
+            <span>Played Games</span>
+            <span>Hands</span>
+          </div>
         </div>
         <div v-if="loading" class="table-status">加载中...</div>
         <div v-for="item in rows" :key="item.game" class="table-row">
@@ -127,7 +132,7 @@ onMounted(() => {
           @click="handleMenuClick(item)"
         >
           <span>{{ item.text }}</span>
-          <span class="arrow">›</span>
+          <img class="arrow" :src="icArrowRight" alt="" aria-hidden="true" />
         </button>
       </section>
     </div>
@@ -168,15 +173,40 @@ onMounted(() => {
 }
 
 .glass-card {
-  border-radius: 0.44rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.25);
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.04rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
 }
+
+// old
+// .glass-card {
+//   border-radius: 0.8rem;
+//   border: 0.02rem solid rgba(249, 249, 249, 0.14);
+//   background: rgba(255, 255, 255, 0.03);
+//   backdrop-filter: blur(8.5px);
+//   -webkit-backdrop-filter: blur(8.5px);
+// }
 
 .table-card {
   margin-top: 0.5rem;
   padding: 0.3rem 0.3rem 0.22rem;
+}
+
+.table-head-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.table-head-accent {
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
 }
 
 .table-head,
@@ -188,10 +218,13 @@ onMounted(() => {
 }
 
 .table-head {
-  border-radius: 0.4rem;
-  background: #00af83;
+  position: relative;
+  width: 100%;
+  border-radius: 2rem;
+  background: rgba(255, 255, 255, 0.1);
   font-size: 0.33rem;
   padding: 0.18rem 0;
+  color: #f9f9f9;
 }
 
 .table-row {
@@ -208,7 +241,7 @@ onMounted(() => {
 
 .list-card {
   margin-top: 0.24rem;
-  padding: 0 0.36rem;
+  padding: 0 0.46rem;
 }
 
 .line-item {
@@ -221,7 +254,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.3rem 0;
+  padding: 0.18rem 0;
 
   &:last-child {
     border-bottom: 0;
@@ -229,6 +262,7 @@ onMounted(() => {
 }
 
 .arrow {
-  font-size: 0.66rem;
+  width: 0.44rem;
+  height: 0.44rem;
 }
 </style>

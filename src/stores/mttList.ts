@@ -49,6 +49,9 @@ let mttListLoadedToken = ''
 let mttListLoadingToken = ''
 let mttListLoadingPromise: Promise<void> | null = null
 let stopMttNotifyListeners: (() => void) | null = null
+let mttRepairSyncPromise: Promise<void> | null = null
+let pendingRepairNeedList = false
+let pendingRepairNeedIds = false
 
 function toSafeInt(value: unknown): number {
   const num = Number(value)
@@ -325,6 +328,48 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
       }
     },
 
+    // 增量通知命中不到本地缓存时，合并为一次静默补同步，避免消息风暴下重复全量请求。
+    scheduleRepairSync(options: { needList?: boolean; needIds?: boolean } = {}): void {
+      pendingRepairNeedList = pendingRepairNeedList || options.needList === true
+      pendingRepairNeedIds = pendingRepairNeedIds || options.needIds === true
+
+      if (mttRepairSyncPromise) {
+        return
+      }
+
+      const runRepair = async (): Promise<void> => {
+        const needList = pendingRepairNeedList
+        const needIds = pendingRepairNeedIds
+        pendingRepairNeedList = false
+        pendingRepairNeedIds = false
+
+        try {
+          if (needList && needIds) {
+            await Promise.all([
+              this.fetchMttList({ silent: true }),
+              this.fetchAllMttSngIds({ silent: true }),
+            ])
+            return
+          }
+
+          if (needList) {
+            await this.fetchMttList({ silent: true })
+          }
+
+          if (needIds) {
+            await this.fetchAllMttSngIds({ silent: true })
+          }
+        } finally {
+          mttRepairSyncPromise = null
+          if (pendingRepairNeedList || pendingRepairNeedIds) {
+            this.scheduleRepairSync()
+          }
+        }
+      }
+
+      mttRepairSyncPromise = runRepair()
+    },
+
     // 统一处理 MTT 相关 WS 增量通知（151/152/153）。
     applyMttNotifyByCode(code: number, rawBuffer: ArrayBufferLike): void {
       if (code === Code.MSG_S_USER_MTT_CHANGE_NOTIFY) {
@@ -411,9 +456,8 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
       }
 
       if (index < 0) {
-        // 对齐 Unity：更新包缺失详情时回源拉取（H5 无单条接口，走静默全量）。
-        void this.fetchMttList({ silent: true })
-        void this.fetchAllMttSngIds({ silent: true })
+        // H5 暂无与 Unity RequestMttOne 完全对等的轻量接口，先合并为一次补同步，避免重复全量请求。
+        this.scheduleRepairSync({ needList: true, needIds: true })
         return
       }
 
@@ -490,8 +534,8 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
       }
 
       if (index < 0) {
-        // SNG 元信息缺失时回源一次，避免长期错过可见性数据。
-        void this.fetchAllMttSngIds({ silent: true })
+        // SNG 元信息缺失时仅补一次 ids 索引，同一波通知共用一次请求。
+        this.scheduleRepairSync({ needIds: true })
         return
       }
 

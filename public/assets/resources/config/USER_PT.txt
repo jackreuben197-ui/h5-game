@@ -3325,6 +3325,7 @@ MsgInfo_1010=Agente convida jogador para {0}{1}
 UIMine_FreeAward_ShareText=Convidar
 UIShowAdv_TodayNot=Não me mostre isso novamente
 UIClub_AgentManager_TitleT=Gerênciamento de agentes
+UILogin_Account=Por favor, insira o nome da conta
 UILogin_InputEmail=Por favor, insira seu e-mail
 UILogin_NewUser=Novo usuário ？<color=#DCBA82>Registro de conta</color>
 UIClub_JoinClub=Junte-se ao clube
@@ -7267,3 +7268,4 @@ UIMatchGuaranteedTag=Garantido
 UIMatchSelectClubBuyin=Selecione o Clube para o Buy-in
 UILoginConfirmTitle=Você ainda não concordou com o acordo
 UILoginConfirmContent=Por favor, continue lendo
+UIJackpot_Introduce_PT=<b><size=50>Introdução ao Jackpot</size></b>\nO Jackpot é uma funcionalidade de grande prémio aleatório na mesa. Após cumprir as condições de combinação de cartas especificadas e completar o showdown, terá a oportunidade de acionar o prémio Jackpot.\n\n<b><size=50>Condições de Ativação</size></b>\n1.Forme a combinação de cartas especificada usando suas cartas na mão;\n2.Seja derrotado por uma combinação mais forte;\n3.A rodada deve terminar com um showdown normal;\n4.A mesa deve ter o número mínimo de participantes.\n\n<b><size=50>Regras de Recompensa</size></b>\n1.O poço do Jackpot acumula-se continuamente a cada rodada;\n2.Após a ativação, as recompensas serão distribuídas de acordo com as regras;\n3.As recompensas serão entregues ao jogador que acionou, ao jogador vencedor e aos outros jogadores na mesa.\n\n<b><size=50>Lembrete</size></b>\nDiferentes mesas de blinds possuem diferentes poços de Jackpot e valores de recompensa. Quanto maior o blind, maior a recompensa.

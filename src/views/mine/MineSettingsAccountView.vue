@@ -2,12 +2,15 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import icArrowRight from '@/assets/icons/ic_arrow_right.svg'
+import icReset from '@/assets/icons/ic_reset.svg'
+import icSecurity from '@/assets/icons/ic_security.svg'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
 interface AccountActionItem {
   key: string
   label: string
-  iconClass: string
+  icon: string
   arrow?: boolean
 }
 
@@ -27,14 +30,9 @@ if (route.query.security === 'on') {
 }
 
 const rows: AccountActionItem[] = [
-  { key: 'reset-password', label: '重置密码', iconClass: 'icon-reset', arrow: true },
-  { key: 'security-password', label: '6位数密码', iconClass: 'icon-sound' },
-  {
-    key: 'reset-security-password',
-    label: '修改6位数密码',
-    iconClass: 'icon-reset',
-    arrow: true,
-  },
+  { key: 'reset-password', label: '重置密码', icon: icReset, arrow: true },
+  { key: 'security-password', label: '6位数密码', icon: icSecurity },
+  { key: 'reset-security-password', label: '修改6位数密码', icon: icReset, arrow: true },
 ]
 
 function onRowClick(item: AccountActionItem): void {
@@ -72,22 +70,21 @@ function openSecurityPasswordFlow(): void {
           @click="onRowClick(item)"
         >
           <div class="left-wrap">
-            <span class="row-icon" :class="item.iconClass"></span>
+            <img class="row-icon" :src="item.icon" alt="" aria-hidden="true" />
             <span class="label">{{ item.label }}</span>
           </div>
 
           <div class="right-wrap">
-            <span
+            <button
               v-if="item.key === 'security-password'"
+              type="button"
               class="switch"
               :class="{ on: securityPasswordEnabled }"
-              role="switch"
-              :aria-checked="securityPasswordEnabled"
               @click.stop="openSecurityPasswordFlow"
             >
               <span class="dot"></span>
-            </span>
-            <span v-else-if="item.arrow" class="arrow">›</span>
+            </button>
+            <img v-else-if="item.arrow" class="arrow-icon" :src="icArrowRight" alt="" aria-hidden="true" />
           </div>
         </button>
       </section>
@@ -112,98 +109,58 @@ function openSecurityPasswordFlow(): void {
 
 .account-card {
   margin-top: 0.62rem;
-  border-radius: 0.4209rem;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.08rem);
-  padding: 0.362rem 0.362rem 0.268rem;
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  overflow: hidden;
+  padding: 0 0.36rem;
 }
 
 .account-row {
   width: 100%;
   border: 0;
-  border-bottom: 0.0133rem solid rgba(255, 255, 255, 0.2);
   background: transparent;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 1.06rem;
+  padding: 0.28rem 0;
+  position: relative;
 
-  &:last-child {
-    border-bottom: 0;
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0.8rem;
+    right: 0;
+    height: 0.02rem;
+    background: rgba(249, 249, 249, 0.2);
+  }
+
+  &:last-child::after {
+    display: none;
   }
 }
 
 .left-wrap {
   display: flex;
   align-items: center;
-  gap: 0.2525rem;
+  gap: 0.24rem;
 }
 
 .label {
-  font-family: var(--font-family-SF);
-  font-size: 0.404rem;
+  font-size: 0.42rem;
   font-weight: 400;
   line-height: 1.2;
   color: rgba(255, 255, 255, 0.94);
 }
 
 .row-icon {
-  width: 0.533rem;
-  height: 0.533rem;
-  border-radius: 0.133rem;
-  position: relative;
-}
-
-.icon-reset::before,
-.icon-reset::after {
-  content: '';
-  position: absolute;
-}
-
-.icon-reset::before {
-  inset: 0.066rem;
-  border: 0.053rem solid rgba(255, 255, 255, 0.95);
-  border-right-color: transparent;
-  border-top-color: transparent;
-  border-radius: 0.106rem;
-}
-
-.icon-reset::after {
-  right: 0.02rem;
-  top: 0.02rem;
-  width: 0.186rem;
-  height: 0.186rem;
-  border-top: 0.053rem solid rgba(255, 255, 255, 0.95);
-  border-right: 0.053rem solid rgba(255, 255, 255, 0.95);
-}
-
-.icon-sound::before,
-.icon-sound::after {
-  content: '';
-  position: absolute;
-}
-
-.icon-sound::before {
-  left: 0.026rem;
-  top: 0.133rem;
-  width: 0.16rem;
-  height: 0.266rem;
-  border-radius: 0.053rem;
-  background: rgba(255, 255, 255, 0.95);
-  clip-path: polygon(0 30%, 60% 30%, 100% 0, 100% 100%, 60% 70%, 0 70%);
-}
-
-.icon-sound::after {
-  right: 0.08rem;
-  top: 0.106rem;
-  width: 0.213rem;
-  height: 0.32rem;
-  border-right: 0.053rem solid rgba(255, 255, 255, 0.95);
-  border-top: 0.053rem solid rgba(255, 255, 255, 0.95);
-  border-bottom: 0.053rem solid rgba(255, 255, 255, 0.95);
-  border-left: 0;
-  border-radius: 0 0.266rem 0.266rem 0;
+  width: 0.56rem;
+  height: 0.56rem;
+  object-fit: contain;
 }
 
 .right-wrap {
@@ -211,32 +168,35 @@ function openSecurityPasswordFlow(): void {
   align-items: center;
 }
 
-.arrow {
-  font-size: 0.72rem;
-  line-height: 1;
-  color: rgba(255, 255, 255, 0.95);
+.arrow-icon {
+  width: 0.44rem;
+  height: 0.44rem;
 }
 
 .switch {
-  width: 1.1986rem;
-  height: 0.5648rem;
+  width: 0.9rem;
+  height: 0.46rem;
   border: 0;
-  border-radius: 0.8775rem;
-  background: rgba(255, 255, 255, 0.17);
-  padding: 0.053rem;
-  display: inline-flex;
+  border-radius: 0.24rem;
+  background: rgba(255, 255, 255, 0.3);
+  padding: 0.04rem;
+  display: flex;
   align-items: center;
-}
 
-.dot {
-  width: 0.454rem;
-  height: 0.454rem;
-  border-radius: 50%;
-  background: #f4f8f8;
-  transition: transform 0.2s ease;
-}
+  .dot {
+    width: 0.38rem;
+    height: 0.38rem;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.2s ease;
+  }
 
-.switch.on .dot {
-  transform: translateX(0.6rem);
+  &.on {
+    background: #78e490;
+
+    .dot {
+      transform: translateX(0.44rem);
+    }
+  }
 }
 </style>

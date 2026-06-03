@@ -13,6 +13,7 @@ import { nlhSections } from './tableSections/index'
 import { defaultNlhFormState, type NlhFormState } from './tableSections/formState'
 import type { FieldValue, TableFormFieldConfig } from './template'
 import { useAppConfigStore } from '@/stores/appConfig'
+import type { DiamondConfigItem, DiamondSetting } from '@/api/models/config'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
 import { buildBuyinOptions, resolveBringinBbRange } from './tableSections/topSlides'
@@ -56,21 +57,6 @@ interface FeeDetailItem {
   totalOrigin: number
   totalCurrent: number
   isDiscount: boolean
-}
-
-interface DiamondSetting {
-  sb: number
-  price: number
-  discount_price: number
-}
-
-interface DiamondConfigItem {
-  config_type: number
-  status: number
-  type_ext: number
-  start_time: number
-  end_time: number
-  setting: DiamondSetting[]
 }
 
 interface FeePrice {
@@ -137,52 +123,6 @@ function getBanMultiple(antiCheatType: number): number {
   return 1
 }
 
-function normalizeDiamondSettings(raw: unknown): DiamondSetting[] {
-  if (!Array.isArray(raw)) return []
-  return raw.map((item) => {
-    const row = item as Record<string, unknown>
-    return {
-      sb: Math.floor(toNumber(row.sb)),
-      price: toNumber(row.price),
-      discount_price: toNumber(row.discount_price),
-    }
-  })
-}
-
-function normalizeDiamondConfigItems(raw: unknown): DiamondConfigItem[] {
-  if (!Array.isArray(raw)) return []
-  return raw.map((item) => {
-    const row = item as Record<string, unknown>
-    return {
-      config_type: Math.floor(toNumber(row.config_type)),
-      status: Math.floor(toNumber(row.status)),
-      type_ext: Math.floor(toNumber(row.type_ext)),
-      start_time: Math.floor(toNumber(row.start_time)),
-      end_time: Math.floor(toNumber(row.end_time)),
-      setting: normalizeDiamondSettings(row.setting),
-    }
-  })
-}
-
-function extractDiamondConfigItems(raw: unknown): DiamondConfigItem[] {
-  if (!raw || typeof raw !== 'object') return []
-  const root = raw as Record<string, unknown>
-  const candidates: unknown[] = [
-    root,
-    root.data,
-    (root.data as Record<string, unknown> | undefined)?.data,
-    root.list,
-    (root.data as Record<string, unknown> | undefined)?.list,
-  ]
-  for (const candidate of candidates) {
-    const list = normalizeDiamondConfigItems(candidate)
-    if (list.length) {
-      return list
-    }
-  }
-  return []
-}
-
 function isInDiscountWindow(config: DiamondConfigItem, nowSec: number): boolean {
   if (!config.start_time || !config.end_time) return false
   return nowSec >= config.start_time && nowSec <= config.end_time
@@ -233,14 +173,8 @@ function getConfigPrice(config: DiamondConfigItem | null, sb: number): FeePrice 
   }
 }
 
-function findDiamondConfig(
-  configItems: DiamondConfigItem[],
-  configType: number,
-  typeExt: number,
-): DiamondConfigItem | null {
-  return (
-    configItems.find((item) => item.config_type === configType && item.type_ext === typeExt) || null
-  )
+function findDiamondConfig(configType: number, typeExt: number): DiamondConfigItem | null {
+  return appConfigStore.diamondConfig?.[configType]?.[typeExt] ?? null
 }
 
 function formatFeeCount(value: number): string {
@@ -248,18 +182,13 @@ function formatFeeCount(value: number): string {
 }
 
 const feeDetails = computed<FeeDetailItem[]>(() => {
-  const configItems = extractDiamondConfigItems(appConfigStore.diamondConfig)
   const tableTypeExt = getTableTypeExt()
   const seatCount = getSeatCount()
   const sb = Math.floor(toNumber(formState.sb))
   const details: FeeDetailItem[] = []
 
   // 1) 开桌收费（config_type=1，按 tableTypeExt + sb）
-  const createConfig = findDiamondConfig(
-    configItems,
-    DIAMOND_CONFIG_TYPE.CREATE_TABLE,
-    tableTypeExt,
-  )
+  const createConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.CREATE_TABLE, tableTypeExt)
   const durationMultiple = getHalfHourMultiple()
   const createPrice = getConfigPrice(createConfig, sb)
   details.push({
@@ -277,7 +206,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
   const antiCheatVideoType = Math.floor(toNumber(formState.anti_cheat_video_type, 1))
   const banConfigType = getBanConfigType(antiCheatType, antiCheatVideoType)
   if (banConfigType) {
-    const banConfig = findDiamondConfig(configItems, banConfigType, seatCount)
+    const banConfig = findDiamondConfig(banConfigType, seatCount)
     const banPrice = getConfigPrice(banConfig, sb)
     const banMultiple = getBanMultiple(antiCheatType)
     details.push({
@@ -295,7 +224,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
   const isChatOn = Math.floor(toNumber(formState.chat_type)) !== 0
   if (isChatOn) {
     const chatTypeExt = seatCount * 1000 + tableTypeExt
-    const chatConfig = findDiamondConfig(configItems, DIAMOND_CONFIG_TYPE.CHAT, chatTypeExt)
+    const chatConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.CHAT, chatTypeExt)
     const chatPrice = getConfigPrice(chatConfig, sb)
     details.push({
       label: '聊天消耗',
@@ -616,7 +545,7 @@ async function onCreateTable() {
       <!-- Form sections -->
       <div class="detail-form">
         <template v-for="(section, index) in renderedSections" :key="index">
-          <div v-if="section.length" class="detail-form__section">
+          <div v-if="section.length" class="detail-form__section" :class="{ 'detail-form__section--tab': section.some(f => f.type === 'tab') }">
             <component
               :is="componentMap[field.type]"
               v-for="field in section"
@@ -699,7 +628,7 @@ async function onCreateTable() {
   position: relative;
   min-height: 100dvh;
   padding: 0 0 calc(1.6rem + env(safe-area-inset-bottom));
-  background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
+  background: url('@/assets/images/img_table_setting_bg.png') center / cover no-repeat;
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -767,15 +696,26 @@ async function onCreateTable() {
   margin: 0.35rem 0.35rem 0;
   padding: 0 0.51rem;
   background: rgba(0, 0, 0, 0.2);
+  border: 0.016rem solid rgba(242, 242, 242, 0.14);
   border-radius: 0.43rem;
   backdrop-filter: blur(0.16px);
 }
 .detail-form__section {
   margin: 0.38rem 0.35rem 0;
   background: rgba(0, 0, 0, 0.2);
+  border: 0.016rem solid rgba(242, 242, 242, 0.14);
   border-radius: 0.43rem;
   backdrop-filter: blur(0.16px);
   padding: 0.13rem 0.5rem;
+
+}
+
+.detail-form__section--tab {
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .table-name__label {
@@ -818,8 +758,19 @@ async function onCreateTable() {
   padding: 0.08rem 0 0.25rem;
 }
 
+.detail-form__section--tab :deep(.filter-tabbar) {
+  background: rgba(27, 27, 30, 0.4);
+}
+
+:deep(.table-switch-row:not(.table-switch-row-with-icon) .table-switch__switch) {
+  --van-switch-size: 0.42rem;
+  --van-switch-width: 0.88rem;
+  --van-switch-height: 0.43rem;
+  --van-switch-node-size: 0.36rem;
+}
+
 .detail-form__item {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 
   &:last-of-type {
     border-bottom: none;
@@ -840,6 +791,7 @@ async function onCreateTable() {
   padding: 0.16rem 0.24rem;
   border-radius: 0.32rem;
   background: rgba(0, 0, 0, 0.28);
+  border: 0.016rem solid rgba(242, 242, 242, 0.14);
   backdrop-filter: blur(0.18rem);
   -webkit-backdrop-filter: blur(0.18rem);
 }
@@ -933,7 +885,7 @@ async function onCreateTable() {
   }
 
   &--create {
-    background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+    background: linear-gradient(157deg, #55f329 0%, #3ead06 100%);
     color: #fff;
     box-shadow: inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
       inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);

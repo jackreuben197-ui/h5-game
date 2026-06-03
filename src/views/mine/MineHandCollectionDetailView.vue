@@ -9,6 +9,8 @@ import type {
 import type { StatsUserGameRecordListRecord, StatsUserGameRecordListRoom_record } from '@/api/models/stats'
 import {
   buildReplayDisplaySections,
+  decodeCard,
+  type CardItem,
   type ReplayDisplayMetric,
   type ReplayDisplayStreetSection,
 } from '@/api/models/replayDisplay'
@@ -16,6 +18,7 @@ import iconChips from '@/assets/icons/icon_chips.png'
 import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import PokerCard from '@/components/GameCard/PokerCard.vue'
 import { getHandReplaySession } from '@/session/handReplaySession'
 
 const title = computed(() => 'Result')
@@ -53,19 +56,9 @@ function formatDateTime(unixSeconds?: number): string {
   return `${month}/${day} ${hour}:${minute}`
 }
 
-function decodeCard(card: number): string {
-  if (!Number.isFinite(card)) return '--'
-  const rankMap = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
-  const suitMap = ['♠', '♥', '♣', '♦']
-  const normalized = ((Math.floor(card) % 52) + 52) % 52
-  const rank = rankMap[normalized % 13] ?? 'A'
-  const suit = suitMap[Math.floor(normalized / 13)] ?? '♠'
-  return `${rank}${suit}`
-}
-
-function cardListFromUnknown(value: unknown): string[] {
+function cardListFromUnknown(value: unknown): CardItem[] {
   if (!Array.isArray(value)) return []
-  return value.map(item => decodeCard(toSafeNumber(item))).filter(Boolean)
+  return (value as number[]).map(item => decodeCard(toSafeNumber(item))).filter(c => c.rank !== '--')
 }
 
 const handId = computed(() => {
@@ -145,6 +138,7 @@ function onFavorite(): void {
 function onShare(): void {
   showSuccessToast('分享功能开发中')
 }
+
 </script>
 
 <template>
@@ -176,14 +170,13 @@ function onShare(): void {
           <div class="head-left">
             <h3 class="street-title">{{ section.title }}</h3>
             <div v-if="section.boardCards?.length" class="board-cards">
-              <span
+              <PokerCard
                 v-for="(card, idx) in section.boardCards"
                 :key="`${section.id}-${idx}`"
-                class="mini-card"
-                :class="{ red: card.includes('♦') || card.includes('♥') }"
-              >
-                {{ card }}
-              </span>
+                :rank="card.rank"
+                :suit="card.suit"
+                size="0.6rem"
+              />
             </div>
             <p v-else class="street-sub">详细过程</p>
           </div>
@@ -238,14 +231,13 @@ function onShare(): void {
         <div class="showdown-row">
           <div class="showdown-main">
             <div class="showdown-cards">
-              <span
+              <PokerCard
                 v-for="(card, idx) in showdownCards"
                 :key="`show-${idx}`"
-                class="mini-card"
-                :class="{ red: card.includes('♦') || card.includes('♥') }"
-              >
-                {{ card }}
-              </span>
+                :rank="card.rank"
+                :suit="card.suit"
+                size="0.6rem"
+              />
             </div>
           </div>
         </div>
@@ -315,10 +307,12 @@ function onShare(): void {
 
 .street-card {
   margin-top: 0.34rem;
-  border-radius: 0.42rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.08);
-  background: rgba(0, 0, 0, 0.33);
-  backdrop-filter: blur(0.08rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.08);
   padding: 0.28rem 0.32rem 0.24rem;
 }
 
@@ -349,23 +343,6 @@ function onShare(): void {
 .board-cards {
   display: flex;
   gap: 0.06rem;
-}
-
-.mini-card {
-  width: 0.6rem;
-  height: 0.8rem;
-  border-radius: 0.1rem;
-  background: #fff;
-  color: #1a1a1a;
-  font-size: 0.27rem;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  &.red {
-    color: #fa2b4b;
-  }
 }
 
 .head-right {
@@ -448,12 +425,12 @@ function onShare(): void {
 }
 
 .seat-tag {
-  background: linear-gradient(180deg, #00d4a6 0%, #007e63 100%);
+  background: #8053fd;
 }
 
 .tone-blue {
-  background: #4caaf4;
-  color: #222;
+  background: #78e490;
+  color: #111;
 }
 
 .tone-red {
@@ -501,18 +478,23 @@ function onShare(): void {
   right: 0;
   bottom: 0;
   padding: 0.24rem 0.24rem calc(env(safe-area-inset-bottom) + 0.24rem);
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.08rem);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 0.02rem solid rgba(249, 249, 249, 0.14);
   display: flex;
   gap: 0.2rem;
 }
 
 .action-btn {
   flex: 1;
-  border: 0;
   height: 0.86rem;
   border-radius: 0.43rem;
-  background: rgba(0, 0, 0, 0.62);
+  border: 0.02rem solid rgba(249, 249, 249, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.12);
   color: #f9f9f9;
   font-size: 0.32rem;
   font-weight: 600;

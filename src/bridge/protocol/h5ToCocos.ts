@@ -28,6 +28,17 @@ export interface WsClosedPayload {
   wasClean?: boolean
 }
 
+export interface DialogResultPayload {
+  dialogRequestId: string
+  action: 'confirm' | 'cancel' | 'close'
+}
+
+export interface PanelEventPayload {
+  panelRequestId: string
+  event: string
+  payload?: unknown
+}
+
 // 请求进入牌桌时发送给 Cocos 的负载。
 export interface EnterTablePayload {
   userName: string
@@ -83,9 +94,9 @@ export interface SyncLanguagePayload {
   locale: string
 }
 
-// globalConfig 同步。
+// globalConfig 同步（raw 为 key → 值映射；值可以是数字、字符串或嵌套对象）。
 export interface SyncGlobalConfigPayload {
-  raw: unknown
+  raw: Record<string, unknown>
 }
 
 // diamondConfig 同步。

@@ -23,6 +23,7 @@ H5_PB_DST="src/bridge/ws/pb/protobuf/holdem"
 H5_RECV_FILES=(
   "recv_g_todo_list_pb"                # 123  MSG_S_TODO_LIST
   "recv_g_user_order_audit_pb"         # 133  MSG_S_USER_ORDER_AUDIT
+  "recv_g_support_message_pb"          # 136  MSG_S_SUPPORT_MESSAGE
   "recv_g_room_change_notify_pb"       # 140  ROOM_CHANGE_NOTIFY
   "recv_g_tribe_black_user_pb"         # 142  MSG_S_TRIBE_BLACK_USER
   "recv_g_user_trader_order_notify_pb" # 143  MSG_S_USER_TRADER_ORDER_NOTIFY

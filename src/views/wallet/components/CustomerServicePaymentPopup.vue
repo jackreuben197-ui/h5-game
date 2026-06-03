@@ -58,7 +58,7 @@ const payPrice = computed(() =>
 
           <!-- Amount -->
           <div class="amount-row">
-            <span class="amount-value">{{ payPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+            <span class="amount-value">{{ payPrice.toLocaleString(undefined, { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
           </div>
 
           <!-- Label -->

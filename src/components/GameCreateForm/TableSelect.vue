@@ -115,8 +115,7 @@ function onPopoverVisibilityChange(next: boolean): void {
 .table-select__field {
   min-width: 2.27rem;
   height: 0.93rem;
-  background: rgba(255, 255, 255, 0.18);
-  background-blend-mode: soft-light;
+  background: rgba(34, 34, 34, 0.6);
   border-radius: 1.55rem;
   padding: 0 0.28rem;
   display: flex;
@@ -201,7 +200,7 @@ function onPopoverVisibilityChange(next: boolean): void {
 }
 
 .table-select__option--active {
-  background: rgba(5, 231, 174, 0.9);
+  background: #78E490;
   color: #08392d;
 }
 </style>

@@ -13,13 +13,17 @@ import {
   GetWinDesc,
   parseHandRecordCards,
   parseReplayLike,
+  type CardItem,
   type StatsReplayData,
   type StatsReplayFantasyData,
 } from '@/api/models/replayDisplay'
 import { postMiscGameRoundListDataByRoomApi } from '@/api/misc'
 import { postStatsUserGameRecordListApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import icBlinde from '@/assets/icons/ic_blinde.png'
+import icHands from '@/assets/icons/ic_hands.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import PokerCard from '@/components/GameCard/PokerCard.vue'
 import { setHandReplaySession } from '@/session/handReplaySession'
 import { formatUC } from '@/utils/roomVisibility'
 
@@ -39,7 +43,7 @@ const selectedMode = ref(modeTabs[0])
 interface HandCard {
   id: string
   title: string
-  handCards: string[]
+  handCards: CardItem[]
   handId: string
   table: string
   pot: string
@@ -77,15 +81,12 @@ function resolveGameFilter(): { game_types: number[]; poker_types?: number[] } {
   return { game_types: [0] }
 }
 
-function isRedSuit(card: string): boolean {
-  return card.includes('♥') || card.includes('♦')
-}
-
-function buildDisplayCards(record: { data?: unknown }): string[] {
+function buildDisplayCards(record: { data?: unknown }): CardItem[] {
   const parsed = parseHandRecordCards(record.data)
   const cards = parsed.slice(0, 2).map(item => decodeCard(item))
-  if (!cards.length) return ['--', '--']
-  if (cards.length === 1) return [cards[0], '--']
+  const placeholder: CardItem = { rank: '--', suit: 's' }
+  if (!cards.length) return [placeholder, placeholder]
+  if (cards.length === 1) return [cards[0], placeholder]
   return cards
 }
 
@@ -248,13 +249,13 @@ onMounted(() => {
         >
           <div class="top-row">
             <div class="poker-pair">
-              <div
+              <PokerCard
                 v-for="(value, idx) in card.handCards"
                 :key="`${card.id}-card-${idx}`"
-                :class="['poker', { red: isRedSuit(value) }]"
-              >
-                {{ value }}
-              </div>
+                :rank="value.rank"
+                :suit="value.suit"
+                size="0.64rem"
+              />
             </div>
             <div class="title" v-html="card.title"></div>
           </div>
@@ -262,11 +263,17 @@ onMounted(() => {
           <div class="bottom-row">
             <div class="meta">
               <div>Hand ID: {{ card.handId }}</div>
-              <div>{{ card.table }}&nbsp;&nbsp;&nbsp;底池: {{ card.pot }}</div>
+              <div class="meta-blind">
+                <img class="meta-icon" :src="icBlinde" alt="" />
+                {{ card.table }}&nbsp;&nbsp;&nbsp;底池: <strong>{{ card.pot }}</strong>
+              </div>
             </div>
             <div class="profit">
               <div :class="['money', { negative: card.negative !== false }]">{{ card.profit }}</div>
-              <div>Hands:{{ card.hands }}</div>
+              <div class="hands-row">
+                <img class="meta-icon" :src="icHands" alt="" />
+                Hands: <strong>{{ card.hands }}</strong>
+              </div>
             </div>
           </div>
         </article>
@@ -314,23 +321,25 @@ onMounted(() => {
 
 .mode-tabs {
   margin-top: 0.3rem;
-  border-radius: 0.56rem;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.08rem;
+  border-radius: 0.8rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0;
+  overflow: hidden;
 }
 
 .capsule-tab {
   flex: 1;
   border: 0;
-  border-radius: 0.5rem;
+  border-radius: 0.72rem;
   background: transparent;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.6);
   font-size: 0.44rem;
   padding: 0.2rem 0;
 
   &.active {
-    background: rgba(255, 255, 255, 0.2);
-    font-weight: 700;
+    background: rgba(249, 249, 249, 0.5);
+    color: #f9f9f9;
+    font-weight: 600;
   }
 }
 
@@ -349,14 +358,15 @@ onMounted(() => {
 }
 
 .glass-card {
-  border-radius: 0.44rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.2);
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.04rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
 }
 
 .hand-card {
-  padding: 0.28rem 0.3rem 0.24rem;
+  padding: 0.4rem 0.4rem 0.24rem;
 }
 
 .top-row,
@@ -371,22 +381,6 @@ onMounted(() => {
   gap: 0.08rem;
 }
 
-.poker {
-  width: 0.64rem;
-  height: 0.82rem;
-  border-radius: 0.1rem;
-  background: #fff;
-  color: #000;
-  font-size: 0.22rem;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 0.08rem;
-
-  &.red {
-    color: #fa2b4b;
-  }
-}
 
 .title {
   flex: 1;
@@ -406,9 +400,27 @@ onMounted(() => {
   line-height: 1.4;
 }
 
+.meta-blind,
+.hands-row {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.meta-icon {
+  width: 0.32rem;
+  height: 0.32rem;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .profit {
   text-align: right;
   font-size: 0.31rem;
+}
+
+.hands-row {
+  justify-content: flex-end;
 }
 
 .money {

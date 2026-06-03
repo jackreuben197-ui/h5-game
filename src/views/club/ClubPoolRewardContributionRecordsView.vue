@@ -135,8 +135,6 @@ const records: ContributionRecord[] = [
   <div class="page-shell record-page" :style="backgroundStyle">
     <HeaderBack :title="'贡献记录'" />
 
-    <div class="record-overlay"></div>
-
     <section class="record-table-wrap">
       <!-- 表头：底层绿色光晕 + 半透明 pill -->
       <div class="record-header-wrap">

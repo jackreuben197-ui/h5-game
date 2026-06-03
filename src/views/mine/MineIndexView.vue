@@ -183,7 +183,7 @@ async function onLogout(): Promise<void> {
     background-color: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-radius: 0.4rem;
+    border-radius: 0.6rem;
     border: 0.5px solid rgba(255, 255, 255, 0.25);
     padding: 0.1rem 0.1rem 0.1rem 0.36rem;
     overflow: hidden;

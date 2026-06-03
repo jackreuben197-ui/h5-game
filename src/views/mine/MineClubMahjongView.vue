@@ -285,8 +285,10 @@ onMounted(() => {
           </div>
 
           <div class="profit-box">
-            <div class="profit-title">{{ profitTitleText }} <span class="info-dot">i</span></div>
-            <div class="profit-value">{{ todayProfit }}</div>
+            <div class="profit-inner">
+              <div class="profit-title">{{ profitTitleText }} <span class="info-dot">i</span></div>
+              <div class="profit-value">{{ todayProfit }}</div>
+            </div>
           </div>
 
           <div class="metric-col right">
@@ -366,41 +368,55 @@ onMounted(() => {
 
 .content-wrap {
   position: relative;
-  padding: 0 0.49rem;
+  padding: 0 0.5rem;
 }
 
 .glass-card {
-  border-radius: 0.42rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.2);
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.04rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+}
+
+.glass-card > * {
+  position: relative;
+  z-index: 2;
 }
 
 .stats-card {
   margin-top: 0.3rem;
-  padding: 0.3632rem 0.67864rem 0.36739rem 0.67864rem;
+  padding: 0.3632rem 0.4rem 0.36739rem 0.4rem;
 }
 
 .time-tabs {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.08rem;
-  border-radius: 0.5rem;
-  padding: 0.08rem;
-  background: rgba(255, 255, 255, 0.2);
+  grid-template-columns: repeat(4, 1fr);
+  align-items: center;
+  gap: 0.1rem;
+  height: 1.33rem;
+  padding: 0.06rem;
+  border-radius: 0.68rem;
+  background: rgba(0, 0, 0, 0.2);
+  margin: 0 0.53rem;
 }
 
 .time-tab {
   border: 0;
-  border-radius: 0.42rem;
+  border-radius: 0.62rem;
   background: transparent;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.40541rem;
-  padding: 0.18rem 0;
+  color: #f9f9f9;
+  opacity: 0.86;
+  font-size: 0.42rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &.active {
-    background: rgba(255, 255, 255, 0.18);
+    background: rgba(249, 249, 249, 0.5);
     font-weight: 700;
+    opacity: 1;
   }
 }
 
@@ -441,6 +457,44 @@ onMounted(() => {
 
 .profit-box {
   text-align: center;
+}
+
+.profit-inner {
+  border-radius: 30px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+  box-shadow: 3.4px 4.3px 2.8px rgba(0, 0, 0, 0.05);
+  padding: 0.15rem 0.4rem;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.05);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    background: linear-gradient(139deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  > * {
+    position: relative;
+    z-index: 2;
+  }
 
   .profit-title {
     font-size: 0.33821rem;
@@ -451,8 +505,9 @@ onMounted(() => {
 
   .profit-value {
     margin-top: 0.12rem;
-    font-size: 0.71789rem;
-    font-weight: 700;
+    font-size: 0.9rem;
+    font-weight: 400;
+    font-family: 'Keania One', sans-serif;
     color: #ff132b;
   }
 }
@@ -472,7 +527,6 @@ onMounted(() => {
 .bottom-metrics {
   margin-top: 0.22rem;
   padding-top: 0.18rem;
-  border-top: 0.02rem solid rgba(255, 255, 255, 0.16);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.1rem;
@@ -502,8 +556,8 @@ onMounted(() => {
 .record-card {
   padding: 0.28rem;
   display: grid;
-  grid-template-columns: 0.8rem 1fr;
-  gap: 0.2rem;
+  grid-template-columns: 1.2rem 1fr;
+  gap: 0.24rem;
 }
 
 .timeline {
@@ -602,7 +656,7 @@ onMounted(() => {
   color: #ff8ba4;
 
   &.pos {
-    color: #68ea9f;
+    color: #78E490;
   }
 }
 </style>

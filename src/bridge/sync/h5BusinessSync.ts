@@ -17,7 +17,7 @@ import { Code, subscribeH5WsCode } from '../ws/messageCenter'
 import { decodeUserDiamondChange, decodeUserGoldChange } from '../ws/userBalanceNotify'
 import { decodeUserTraderOrderNotify } from '../ws/traderOrderNotify'
 import type { UserInfoData } from '@/api/models/user'
-import type { DiamondConfigData, GlobalConfigData } from '@/api/models/config'
+import type { DiamondConfigMap, GlobalConfigData } from '@/api/models/config'
 import type { ApiResponse } from '@/api/models/common'
 import type { RoomDetailData, RoomDetailRequest } from '@/api/models/roomcenter'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -130,8 +130,9 @@ export function forwardGlobalConfigToCocos(config: GlobalConfigData): void {
   queueSyncUntilHandshake(BRIDGE_ACTION.SYNC_GLOBAL_CONFIG, payload)
 }
 
-// 握手完成后将 diamondConfig 同步给 Cocos。
-export function forwardDiamondConfigToCocos(config: DiamondConfigData): void {
+// 握手完成后将已转换的 diamondConfig map 同步给 Cocos。
+export function forwardDiamondConfigToCocos(config: DiamondConfigMap | null): void {
+  if (!config) return
   const payload: SyncDiamondConfigPayload = { raw: config }
   queueSyncUntilHandshake(BRIDGE_ACTION.SYNC_DIAMOND_CONFIG, payload)
 }

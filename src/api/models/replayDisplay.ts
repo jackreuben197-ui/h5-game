@@ -2,6 +2,8 @@
 
 export type ReplayActionTone = 'blue' | 'red' | 'black'
 export type ReplayMetricIcon = 'mushroom' | 'chips'
+export type CardSuit = 'c' | 'h' | 'd' | 's'
+export interface CardItem { rank: string; suit: CardSuit }
 
 export interface ReplayDisplayMetric {
   icon: ReplayMetricIcon
@@ -21,7 +23,7 @@ export interface ReplayDisplayRow {
 export interface ReplayDisplayStreetSection {
   id: string
   title: string
-  boardCards: string[]
+  boardCards: CardItem[]
   metrics: ReplayDisplayMetric[]
   rows: ReplayDisplayRow[]
 }
@@ -42,14 +44,13 @@ function formatNumber(value: unknown): string {
   return numeric.toLocaleString('en-US')
 }
 
-export function decodeCard(card: number): string {
-  if (!Number.isFinite(card)) return '--'
+export function decodeCard(card: number): CardItem {
   const rankMap = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
-  const suitMap = ['♠', '♥', '♣', '♦']
+  const suitMap: CardSuit[] = ['s', 'h', 'c', 'd']
   const normalized = ((Math.floor(card) % 52) + 52) % 52
-  const rank = rankMap[normalized % 13] ?? 'A'
-  const suit = suitMap[Math.floor(normalized / 13)] ?? '♠'
-  return `${rank}${suit}`
+  const rank = Number.isFinite(card) ? (rankMap[normalized % 13] ?? 'A') : '--'
+  const suit = suitMap[Math.floor(normalized / 13)] ?? 's'
+  return { rank, suit }
 }
 
 export function parseReplayLike<T>(value: unknown): T | null {
@@ -256,9 +257,9 @@ export function GetWinDesc(
   return desc
 }
 
-function cardListFromUnknown(value: unknown): string[] {
+function cardListFromUnknown(value: unknown): CardItem[] {
   if (!Array.isArray(value)) return []
-  return value.map(item => decodeCard(toSafeNumber(item))).filter(Boolean)
+  return value.map(item => decodeCard(toSafeNumber(item))).filter(c => c.rank !== '--')
 }
 
 function normalizeAction(actionRaw: unknown, raiseTimes: number): string {

@@ -114,9 +114,8 @@ function mapDetailInfo(payload: unknown): DetailInfo {
   const totalFee = pickNumber(info, ['total_fee', 'fee'])
   const jackpot = pickNumber(info, ['jackpot'], pickNumber(info, ['jackpot']))
 
-  const buyInValue = buyInMin > 0 || buyInMax > 0
-    ? `${formatUC(buyInMin)}~${formatUC(buyInMax || buyInMin)}`
-    : '--'
+  const buyInValue =
+    buyInMin > 0 || buyInMax > 0 ? `${formatUC(buyInMin)}~${formatUC(buyInMax || buyInMin)}` : '--'
 
   return {
     roomName: pickString(info, ['name']),
@@ -216,7 +215,6 @@ async function initPage(): Promise<void> {
 onMounted(() => {
   void initPage()
 })
-
 </script>
 
 <template>
@@ -324,56 +322,7 @@ onMounted(() => {
 .club-room-history-detail-bg {
   position: relative;
   height: 100dvh;
-  background:
-    radial-gradient(120% 70% at 50% -10%, rgba(91, 18, 115, 0.72), rgba(18, 11, 47, 0.86) 45%, #0a0f2f 85%),
-    linear-gradient(180deg, #120a33, #090d2a);
-  overflow: hidden;
-}
-
-.bg-image {
-  position: absolute;
-  pointer-events: none;
-  user-select: none;
-}
-
-.bg-image--base {
-  width: 100%;
-  height: 100%;
-  inset: 0;
-  object-fit: cover;
-  opacity: 0.46;
-}
-
-.bg-image--overlay {
-  width: 5.4rem;
-  height: 11.8rem;
-  top: -0.28rem;
-  left: -1.1rem;
-  object-fit: cover;
-  opacity: 0.55;
-}
-
-.fx-glow {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(0.8rem);
-  pointer-events: none;
-}
-
-.fx-glow--pink {
-  width: 2.4rem;
-  height: 2.4rem;
-  top: 5.2rem;
-  left: -0.9rem;
-  background: rgba(228, 109, 165, 0.42);
-}
-
-.fx-glow--cyan {
-  width: 2.7rem;
-  height: 2.7rem;
-  right: -0.9rem;
-  bottom: 2rem;
-  background: rgba(55, 190, 255, 0.4);
+  background-size: cover;
 }
 
 .club-room-history-detail {
@@ -382,20 +331,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.24rem;
-}
-
-:deep(.van-nav-bar) {
-  background: transparent;
-}
-
-:deep(.van-nav-bar__title) {
-  color: #fff;
-  font-size: 0.48rem;
-  font-weight: 500;
-}
-
-:deep(.van-icon-arrow-left) {
-  color: #fff;
 }
 
 .meta-panel {

@@ -81,7 +81,6 @@ const clubList = computed<ClubCardItem[]>(() => {
       tableCount: toSafeNumber(club.tables),
       memberCount: toSafeNumber(club.club_members),
       cover: toSafeString(club.logo) || imgClubLogo,
-      bannerBg: fallbackBanner,
     }
   })
 })

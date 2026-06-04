@@ -12,6 +12,7 @@ import {
   type EnterTablePayload,
   type EnterMttPayload,
   type H5ReadyPayload,
+  type SafeArea,
 } from '../protocol'
 import StorageKey from '@/constants/storageKey'
 import { createLogger } from '@/utils/logger'
@@ -424,7 +425,20 @@ function maybeSendH5Ready(): void {
 
 function createH5ReadyPayload(): H5ReadyPayload {
   const token = (localStore.getItem<string>(StorageKey.TOKEN, '') || '').trim()
-  return token ? { token } : {}
+  const payload: H5ReadyPayload = {}
+  if (token) {
+    payload.token = token
+  }
+  const safeArea: SafeArea = { top: 0, left: 0, right: 0, bottom: 0, source: '' }
+  if (window.__H5_TG_MINI_APP__) {
+    safeArea.source = 'telegram'
+    safeArea.top = window.__H5_SAFE_AREA_TOP__ || 0
+    safeArea.left = window.__H5_SAFE_AREA_LEFT__ || 0
+    safeArea.right = window.__H5_SAFE_AREA_RIGHT__ || 0
+    safeArea.bottom = window.__H5_SAFE_AREA_BOTTOM__ || 0
+  }
+  payload.safeArea = safeArea
+  return payload
 }
 
 function markCcReady(): void {

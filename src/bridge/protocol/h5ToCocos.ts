@@ -19,6 +19,15 @@ export type WsMessagePayload = WsMessageTextPayload | WsMessageBinaryPayload
 // H5 -> Cocos：H5/CC 握手完成通知；已有登录态时附带 token。
 export interface H5ReadyPayload {
   token?: string
+  safeArea?: SafeArea
+}
+
+export interface SafeArea {
+  top: number
+  left: number
+  right: number
+  bottom: number
+  source?: string
 }
 
 // H5 -> Cocos：websocket 错误消息。

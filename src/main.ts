@@ -21,6 +21,7 @@ import { createLogger } from './utils/logger'
 import { useGameStore } from './stores/game'
 import {
   cacheAgentInviteCodeIfPresent,
+  restoreStorageFromUrl,
 } from '@/utils/channelPackage'
 
 const log = createLogger('[h5]')
@@ -37,6 +38,8 @@ let stopNativeMenuGuard: (() => void) | null = null
 
 // 启动时缓存 URL 中的代理邀请码，防止跨页面丢失
 cacheAgentInviteCodeIfPresent()
+// 启动时从 URL 恢复可能的存储数据，子域名跳转主域名时使用。
+restoreStorageFromUrl()
 
 initDebugConsole()
 

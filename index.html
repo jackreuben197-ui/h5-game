@@ -368,8 +368,15 @@
           tg.ready()
           var isFullscreenRequested = false
           if (typeof tg.requestFullscreen === 'function') {
-            tg.requestFullscreen()
-            isFullscreenRequested = true
+            try {
+              tg.requestFullscreen()
+              isFullscreenRequested = true
+            } catch (error) {
+              console.warn('[telegram] requestFullscreen failed, falling back to expand:', error)
+              if (typeof tg.expand === 'function') {
+                tg.expand()
+              }
+            }
           } else if (typeof tg.expand === 'function') {
             tg.expand()
           }

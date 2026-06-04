@@ -69,13 +69,6 @@
           calc(var(--tg-content-safe-area-inset-top, 0px) - var(--app-top-padding)),
           calc(var(--tg-safe-area-guard-top, 0px) - var(--app-top-padding))
         );
-        padding-bottom: max(
-          env(safe-area-inset-bottom),
-          var(--tg-content-safe-area-inset-bottom, 0px),
-          var(--tg-safe-area-guard-bottom, 0px)
-        );
-        padding-left: max(env(safe-area-inset-left), var(--tg-content-safe-area-inset-left, 0px));
-        padding-right: max(env(safe-area-inset-right), var(--tg-content-safe-area-inset-right, 0px));
       }
 
       #drawCanvas {
@@ -176,9 +169,6 @@
     <!-- Telegram 初始化：内联脚本避免外部路径在 Cocos 预览中失效 -->
     <script>
       ;(function () {
-        var win = typeof globalThis !== 'undefined' ? globalThis : {}
-        var doc = win.document
-
         function toInsetNumber(value) {
           var next = Number(value)
           if (!Number.isFinite(next) || next < 0) {
@@ -189,12 +179,12 @@
 
         function readTelegramInitDataFromLocation() {
           try {
-            if (!win.location || typeof URLSearchParams !== 'function') {
+            if (!window.location || typeof URLSearchParams !== 'function') {
               return ''
             }
 
-            var search = win.location.search || ''
-            var hash = win.location.hash || ''
+            var search = window.location.search || ''
+            var hash = window.location.hash || ''
             var hashQueryIndex = hash.indexOf('?')
             var hashQuery = hashQueryIndex >= 0 ? hash.slice(hashQueryIndex) : ''
 
@@ -216,12 +206,12 @@
         }
 
         function getSafeFillColor(tg) {
-          if (!doc || !doc.documentElement || typeof win.getComputedStyle !== 'function') {
+          if (!document || !document.documentElement || typeof window.getComputedStyle !== 'function') {
             var fallbackThemeParams = (tg && tg.themeParams) || {}
             return fallbackThemeParams.bg_color || fallbackThemeParams.secondary_bg_color || '#c6a2b8'
           }
 
-          var rootStyles = win.getComputedStyle(doc.documentElement)
+          var rootStyles = window.getComputedStyle(document.documentElement)
           var cssFallback = String(rootStyles.getPropertyValue('--tg-safe-fill-bg') || '').trim()
 
           if (cssFallback) {
@@ -235,7 +225,7 @@
         function getViewportChromeHeight(tg) {
           var viewportHeight = Number(tg && tg.viewportHeight)
           var stableViewportHeight = Number(tg && tg.viewportStableHeight)
-          var winHeight = Number(win.innerHeight)
+          var winHeight = Number(window.innerHeight)
 
           var chromeFromViewport = Number.isFinite(viewportHeight) && viewportHeight > 0
             ? Math.max(0, Math.floor(winHeight - viewportHeight))
@@ -267,6 +257,7 @@
         }
 
         function applySafeAreaToCss(tg) {
+          console.log('[telegram] applying safe area to css with tg:', tg)
           var safe = tg.safeAreaInset || {}
           var contentSafe = tg.contentSafeAreaInset || {}
 
@@ -283,8 +274,8 @@
           var guardTop = getTopControlsCompensation(tg, safeTop, contentTop)
           var guardBottom = Math.max(safeBottom, contentBottom)
 
-          if (doc && doc.documentElement) {
-            var rootStyle = doc.documentElement.style
+          if (document && document.documentElement) {
+            var rootStyle = document.documentElement.style
             rootStyle.setProperty('--tg-safe-area-inset-top', safeTop + 'px')
             rootStyle.setProperty('--tg-safe-area-inset-bottom', safeBottom + 'px')
             rootStyle.setProperty('--tg-safe-area-inset-left', safeLeft + 'px')
@@ -298,6 +289,10 @@
             rootStyle.setProperty('--tg-safe-area-guard-top', guardTop + 'px')
             rootStyle.setProperty('--tg-safe-area-guard-bottom', guardBottom + 'px')
             rootStyle.setProperty('--tg-header-guard-top', Math.max(0, guardTop - safeTop) + 'px')
+            window.__H5_SAFE_AREA_TOP__ = Math.max(guardTop, contentTop)
+            window.__H5_SAFE_AREA_BOTTOM__ = Math.max(guardBottom, contentBottom)
+            window.__H5_SAFE_AREA_LEFT__ = Math.max(safeLeft, contentLeft)
+            window.__H5_SAFE_AREA_RIGHT__ = Math.max(safeRight, contentRight)
           }
         }
 
@@ -317,11 +312,11 @@
         }
 
         function bindSafeAreaEvents(tg) {
-          if (win.__H5_TG_SAFE_AREA_BOUND__) {
+          if (window.__H5_TG_SAFE_AREA_BOUND__) {
             return
           }
 
-          win.__H5_TG_SAFE_AREA_BOUND__ = true
+          window.__H5_TG_SAFE_AREA_BOUND__ = true
           if (typeof tg.onEvent !== 'function') {
             return
           }
@@ -338,8 +333,8 @@
 
         function syncTelegramHeaderAndBackground(tg) {
           var fill = getSafeFillColor(tg)
-          if (doc && doc.documentElement) {
-            doc.documentElement.style.setProperty('--tg-safe-fill-bg', fill)
+          if (document && document.documentElement) {
+            document.documentElement.style.setProperty('--tg-safe-fill-bg', fill)
           }
 
           if (typeof tg.setBackgroundColor === 'function') {
@@ -351,40 +346,33 @@
         }
 
         function initTelegramWebApp() {
-          if (!win.Telegram || !win.Telegram.WebApp) {
+          if (!window.Telegram || !window.Telegram.WebApp) {
+            console.warn('[telegram] sdk loaded but Telegram.WebApp is not available, continue without telegram bridge')
             return
+          }else{
+            console.log('[telegram] sdk loaded and Telegram.WebApp is available, initializing telegram bridge')
           }
 
-          var tg = win.Telegram.WebApp
-          win.__H5_TG_MINI_APP__ = true
-          if (doc && doc.documentElement) {
-            doc.documentElement.setAttribute('data-tg-mini-app', '1')
+          var tg = window.Telegram.WebApp
+          window.__H5_TG_MINI_APP__ = true
+          if (document && document.documentElement) {
+            document.documentElement.setAttribute('data-tg-mini-app', '1')
           }
 
           var initData = String(tg.initData || '').trim()
           if (initData) {
-            win.__H5_TG_INIT_DATA__ = initData
+            window.__H5_TG_INIT_DATA__ = initData
           }
 
           hideTelegramChromeButtons(tg)
           tg.ready()
-
-          applySafeAreaToCss(tg)
-          bindSafeAreaEvents(tg)
-          syncTelegramHeaderAndBackground(tg)
-
+          var isFullscreenRequested = false
           if (typeof tg.requestFullscreen === 'function') {
             tg.requestFullscreen()
+            isFullscreenRequested = true
           } else if (typeof tg.expand === 'function') {
             tg.expand()
           }
-
-          win.setTimeout(function () {
-            applySafeAreaToCss(tg)
-          }, 80)
-          win.setTimeout(function () {
-            applySafeAreaToCss(tg)
-          }, 260)
 
           if (typeof tg.disableVerticalSwipes === 'function') {
             tg.disableVerticalSwipes()
@@ -395,37 +383,51 @@
           if (typeof tg.lockOrientation === 'function') {
             tg.lockOrientation()
           }
+          // 不是全屏不需要适配安全区。
+          if (!isFullscreenRequested){
+            console.log('[telegram] not fullscreen, skip applying safe area')
+            return
+          }
+
+          applySafeAreaToCss(tg)
+          bindSafeAreaEvents(tg)
+          syncTelegramHeaderAndBackground(tg)
+
+          window.setTimeout(function () {
+            applySafeAreaToCss(tg)
+          }, 200)
+          window.setTimeout(function () {
+            applySafeAreaToCss(tg)
+          }, 1000)
         }
 
         function initH5TelegramEnvironment() {
           var initDataFromUrl = readTelegramInitDataFromLocation()
           if (initDataFromUrl) {
-            win.__H5_TG_MINI_APP__ = true
-            win.__H5_TG_INIT_DATA__ = initDataFromUrl
+            window.__H5_TG_MINI_APP__ = true
+            window.__H5_TG_INIT_DATA__ = initDataFromUrl
           }
 
-          if (win.Telegram && win.Telegram.WebApp) {
-            win.__H5_TG_MINI_APP__ = true
-            if (doc && doc.documentElement) {
-              doc.documentElement.setAttribute('data-tg-mini-app', '1')
+          if (window.Telegram && window.Telegram.WebApp) {
+            window.__H5_TG_MINI_APP__ = true
+            if (document && document.documentElement) {
+              document.documentElement.setAttribute('data-tg-mini-app', '1')
             }
           }
         }
         initH5TelegramEnvironment()
-        if (win.__H5_TG_MINI_APP__) {
-          // 再异步加载官方 SDK，避免 head 同步脚本在弱网/不可达场景卡住首屏。
-          var script = document.createElement('script')
-          script.src = 'https://telegram.org/js/telegram-web-app.js'
-          script.async = true
-          script.defer = true
-          script.crossOrigin = 'anonymous'
-          script.referrerPolicy = 'no-referrer'
-          script.onload = initTelegramWebApp
-          script.onerror = function () {
-            console.warn('[telegram] sdk load failed, continue without telegram bridge')
-          }
-          document.head.appendChild(script)
+        // 再异步加载官方 SDK，避免 head 同步脚本在弱网/不可达场景卡住首屏。
+        var script = document.createElement('script')
+        script.src = 'https://telegram.org/js/telegram-web-app.js'
+        script.async = true
+        script.defer = true
+        script.crossOrigin = 'anonymous'
+        script.referrerPolicy = 'no-referrer'
+        script.onload = initTelegramWebApp
+        script.onerror = function () {
+          console.warn('[telegram] sdk load failed, continue without telegram bridge')
         }
+        document.head.appendChild(script)
       })()
     </script>
     <script>

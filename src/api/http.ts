@@ -8,7 +8,7 @@ import router from '@/router'
 import { showGameToast } from '@/components/Toast'
 import { t } from '@/i18n'
 import LoginSession from '@/session/loginSession'
-import { resolveInviteCode, resolveTraceHash } from '@/utils/channelPackage'
+import { resolveInviteCode, resolveTraceHash, resolveAgentInviteCode } from '@/utils/channelPackage'
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
@@ -278,9 +278,8 @@ async function doTelegramAutoLogin(): Promise<boolean> {
     return false
   }
 
-  const inviteCode = resolveInviteCode()
+  const inviteCode = resolveAgentInviteCode() || resolveInviteCode()
   const traceHash = resolveTraceHash()
-  const effectiveInviteCode = traceHash ? '' : inviteCode
 
   showTelegramLoginLoading()
 
@@ -292,7 +291,7 @@ async function doTelegramAutoLogin(): Promise<boolean> {
         app_source: 3,
         platform: 5,
         telegram_init_data: initData,
-        invite_code: effectiveInviteCode || undefined,
+        invite_code: inviteCode || undefined,
         trace_hash: traceHash || undefined,
       },
       {

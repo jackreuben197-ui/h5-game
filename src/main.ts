@@ -19,6 +19,9 @@ import { setupRem } from './utils/rem'
 import { initDebugConsole, recordDebugEvent } from './utils/debugConsole'
 import { createLogger } from './utils/logger'
 import { useGameStore } from './stores/game'
+import {
+  cacheAgentInviteCodeIfPresent,
+} from '@/utils/channelPackage'
 
 const log = createLogger('[h5]')
 import { pinia } from './stores/pinia'
@@ -32,9 +35,15 @@ let stopWsProxyBridgeChannel: (() => void) | null = null
 let stopH5VisibilityBridgeChannel: (() => void) | null = null
 let stopNativeMenuGuard: (() => void) | null = null
 
+// 启动时缓存 URL 中的代理邀请码，防止跨页面丢失
+cacheAgentInviteCodeIfPresent()
+
 initDebugConsole()
 
 function setupNativeMenuGuard(): () => void {
+  if (import.meta.env.VITE_NATIVE_MENU_GUARD === 'open') {
+    return () => {}
+  }
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return () => {}
   }

@@ -27,7 +27,13 @@ import icGlobe from '@/assets/icons/ic_globe.svg'
 import { showGameToast } from '@/components/Toast'
 import { Loading } from 'vant'
 import { DEBUG_ACCOUNTS, type DebugAccount } from '@/constants/debugAccounts'
-import { resolveInviteCode, resolveTraceHash, shouldOpenRegisterMode } from '@/utils/channelPackage'
+import {
+  resolveInviteCode,
+  resolveTraceHash,
+  shouldOpenRegisterMode,
+  resolveAgentInviteCode,
+  clearAgentInviteCodeCache,
+} from '@/utils/channelPackage'
 import ProtocolView from './components/ProtocolView.vue'
 import LoginPhoneAreaView from './components/LoginPhoneAreaView.vue'
 
@@ -363,7 +369,7 @@ function applyDebugAccount(account: DebugAccount): void {
 }
 
 async function handleLogin(target: string) {
-  const effectiveInviteCode = traceHashFromChannel.value ? '' : inviteCodeFromChannel.value
+  const effectiveInviteCode = resolveAgentInviteCode() || inviteCodeFromChannel.value
 
   const res = await loginV2Api({
     phone: contactType.value === 'phone' ? target : undefined,
@@ -407,10 +413,12 @@ async function handleLogin(target: string) {
     }
   }
   loginModalStore.close()
+  // 登录成功后清除本地缓存的代理邀请码
+  clearAgentInviteCodeCache()
 }
 
 async function handleRegister(target: string) {
-  const effectiveInviteCode = traceHashFromChannel.value ? '' : inviteCodeFromChannel.value
+  const effectiveInviteCode = resolveAgentInviteCode() || inviteCodeFromChannel.value
 
   const payload: Record<string, string | number> = {
     password: md5(form.password.trim()),

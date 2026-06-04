@@ -48,6 +48,10 @@ declare global {
     }
     __H5_TG_MINI_APP__?: boolean
     __H5_TG_INIT_DATA__?: string
+    __H5_SAFE_AREA_TOP__?: number
+    __H5_SAFE_AREA_LEFT__?: number
+    __H5_SAFE_AREA_RIGHT__?: number
+    __H5_SAFE_AREA_BOTTOM__?: number
     Telegram?: {
       WebApp?: {
         initData?: string

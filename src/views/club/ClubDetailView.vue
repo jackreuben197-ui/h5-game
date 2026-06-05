@@ -28,6 +28,7 @@ import imgQuickSafety from '@/assets/images/club_quick_activity.png'
 import imgQuickRanking from '@/assets/images/club_quick_room_history.png'
 import imgQuickFund from '@/assets/images/club_quick_fund.png'
 import imgInviteCover from '@/assets/images/club_invite_cover.png'
+import imgInviteSubtract from '@/assets/images/club_invite_subtract.svg'
 import imgInviteHeart from '@/assets/icons/club_invite_heart.png'
 import imgSearch from '@/assets/icons/club_search.svg'
 import imgModalClose from '@/assets/icons/modal_close.svg'
@@ -149,6 +150,7 @@ const showTribeSearchPopup = ref(false)
 const showTribeApplyPopup = ref(false)
 const showCancelTribeApplyPopup = ref(false)
 const savingInviteShare = ref(false)
+const savingInviteQr = ref(false)
 const savingClubLogo = ref(false)
 const tribeApplySubmitting = ref(false)
 const tribeApplyStatusLoading = ref(false)
@@ -722,9 +724,9 @@ async function saveInviteShare(): Promise<void> {
   savingInviteShare.value = true
   try {
     await nextTick()
-    const saveButton = document.getElementById('save-invite-share')
-    if (saveButton) {
-      saveButton.style.display = 'none' // 隐藏保存按钮，避免被截图到
+    const actionsEl = document.getElementById('invite-modal-actions')
+    if (actionsEl) {
+      actionsEl.style.display = 'none'
     }
     const canvas = await html2canvas(inviteModalRef.value, {
       useCORS: true,
@@ -746,13 +748,34 @@ async function saveInviteShare(): Promise<void> {
       link.click()
     }
 
-    showSuccessToast('已保存分享图')
+    showSuccessToast('已保存图片')
     closeInvitePopup()
   } catch (error) {
     console.error('saveInviteShare error', error)
-    showFailToast('保存分享图失败')
+    showFailToast('保存图片失败')
   } finally {
     savingInviteShare.value = false
+  }
+}
+
+async function saveInviteQr(): Promise<void> {
+  if (savingInviteQr.value) return
+  const qrUrl = imgInviteQr.value
+  if (!qrUrl) {
+    showFailToast('二维码未生成')
+    return
+  }
+  savingInviteQr.value = true
+  try {
+    const response = await fetch(qrUrl)
+    const blob = await response.blob()
+    await downloadBlob(blob, `club-qr-${displayClub.value?.random_id || Date.now()}.png`)
+    showSuccessToast('已保存二维码')
+  } catch (error) {
+    console.error('saveInviteQr error', error)
+    showFailToast('保存二维码失败')
+  } finally {
+    savingInviteQr.value = false
   }
 }
 
@@ -1057,7 +1080,7 @@ onMounted(async () => {
       </section>
 
       <section v-if="isFounder" class="danger-zone">
-        <PrimaryButton glass text="删除俱乐部" @click="onDeleteClub" />
+        <PrimaryButton text="删除俱乐部" class="danger-btn" @click="onDeleteClub" />
       </section>
     </div>
 
@@ -1076,35 +1099,44 @@ onMounted(async () => {
         </header>
 
         <div class="invite-modal__body">
-          <p class="invite-modal__subtitle">开启你的竞技之旅</p>
+          <p class="invite-modal__subtitle">加入小鱼扑克，开启你的竞技之旅</p>
           <div class="invite-modal__cover-wrap">
             <img class="invite-modal__cover" :src="imgInviteCover" alt="邀请海报" />
+            <!-- <img class="invite-modal__cover-subtract" :src="imgInviteSubtract" alt="" aria-hidden="true" /> -->
           </div>
-          <p class="invite-modal__club-name">{{ clubName }}</p>
-          <p class="invite-modal__club-alias">{{ clubAlias }}</p>
-          <p class="invite-modal__id-row">
-            <span class="invite-modal__id-tag">ID</span>
-            <span>{{ clubId }}</span>
-          </p>
+          <div class="invite-modal__club-info">
+            <p class="invite-modal__club-name">{{ clubName }}</p>
+            <p class="invite-modal__club-alias">{{ clubAlias }}</p>
+            <p class="invite-modal__id-row">
+              <span class="invite-modal__id-tag">ID</span>
+              <span>{{ clubId }}</span>
+            </p>
+          </div>
         </div>
 
         <div class="invite-modal__qr-wrap">
           <img class="invite-modal__qr" :src="imgInviteQr" alt="扫码加入俱乐部" />
-          <span class="invite-modal__qr-heart">
-            <img :src="imgInviteHeart" alt="" aria-hidden="true" />
-          </span>
         </div>
-        <p class="invite-modal__qr-tip">扫码加入，一键开启</p>
+        <p class="invite-modal__qr-tip">扫描二维码，一键开启</p>
 
-        <button
-          id="save-invite-share"
-          type="button"
-          class="modal-primary-btn"
-          :disabled="savingInviteShare"
-          @click="saveInviteShare"
-        >
-          {{ savingInviteShare ? '保存中...' : '保存分享' }}
-        </button>
+        <div id="invite-modal-actions" class="invite-modal__actions">
+          <button
+            type="button"
+            class="invite-modal__btn invite-modal__btn--secondary"
+            :disabled="savingInviteQr"
+            @click="saveInviteQr"
+          >
+            {{ savingInviteQr ? '保存中...' : '保存二维码' }}
+          </button>
+          <button
+            type="button"
+            class="invite-modal__btn invite-modal__btn--primary"
+            :disabled="savingInviteShare"
+            @click="saveInviteShare"
+          >
+            {{ savingInviteShare ? '保存中...' : '保存图片' }}
+          </button>
+        </div>
       </section>
     </div>
 
@@ -1673,7 +1705,7 @@ onMounted(async () => {
   color: #fff;
   font-size: 0.28rem;
   font-weight: 500;
-  background: linear-gradient(153deg, #05e7ae 8%, #027a5c 72%);
+  background: #fa2b4b;
 }
 
 .tribe-apply-btn--pending {
@@ -1772,7 +1804,21 @@ onMounted(async () => {
 
 .danger-zone {
   margin-top: 0.40524rem;
-  padding: 0 0.64108rem 0.24rem;
+  // padding: 0 0.55422rem 0.6rem;
+}
+
+.danger-btn {
+  background: linear-gradient(
+    97deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  ) !important;
+  // color: #fa2b4b !important;
+  transition: opacity 0.2s ease;
+
+  &:active {
+    opacity: 0.8;
+  }
 }
 
 .club-modal-mask {
@@ -1792,7 +1838,7 @@ onMounted(async () => {
   border-radius: 0.97035rem;
   border: 0.0255rem solid rgba(242, 242, 242, 0.4);
   background: linear-gradient(121deg, rgba(0, 0, 0, 0.2) 3%, rgba(0, 0, 0, 0.38) 89%);
-  backdrop-filter: blur(1.20216rem);
+  backdrop-filter: blur(0.20216rem);
   box-shadow:
     0 0 0.22981rem rgba(0, 0, 0, 0.85) inset,
     0.05672rem 0.11344rem 0.45908rem rgba(242, 242, 242, 0.5) inset,
@@ -2043,13 +2089,18 @@ onMounted(async () => {
 }
 
 .invite-modal__body {
-  padding: 0.35rem 0.42rem 0.24rem;
+  padding: 0.347rem 0.42rem 0.178rem;
   border-radius: 0.72464rem;
-  background: linear-gradient(100deg, rgba(255, 255, 255, 0.08), rgba(230, 230, 230, 0.12));
+  background: linear-gradient(
+    100.095deg,
+    rgba(255, 255, 255, 0.1) 21.1%,
+    rgba(230, 230, 230, 0.1) 71.4%
+  );
+  backdrop-filter: blur(0.151px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.08rem;
+  gap: 0.3394rem;
 }
 
 .invite-modal__subtitle {
@@ -2060,11 +2111,11 @@ onMounted(async () => {
 
 .invite-modal__cover-wrap {
   width: 100%;
-  height: 2.3752rem;
-  border-radius: 0.58rem;
+  height: 2.383rem;
+  border-radius: 0.726rem;
   overflow: hidden;
-  border: 0.01778rem solid rgba(255, 255, 255, 0.14);
-  margin-top: 0.06rem;
+  position: relative;
+  flex-shrink: 0;
 }
 
 .invite-modal__cover {
@@ -2073,8 +2124,23 @@ onMounted(async () => {
   object-fit: cover;
 }
 
+.invite-modal__cover-subtract {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.invite-modal__club-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
 .invite-modal__club-name {
-  margin: 0.16rem 0 0;
+  margin: 0;
   font-size: 0.35565rem;
   line-height: 1.35;
 }
@@ -2128,32 +2194,48 @@ onMounted(async () => {
   object-fit: contain;
 }
 
-.invite-modal__qr-heart {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 0.9888rem;
-  height: 0.9888rem;
-  border-radius: 50%;
-  background: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.invite-modal__qr-heart img {
-  width: 0.64rem;
-  height: 0.64rem;
-  object-fit: contain;
-}
-
 .invite-modal__qr-tip {
   margin: 0;
   text-align: center;
   font-size: 0.314rem;
   font-weight: 500;
   line-height: 1.3;
+}
+
+.invite-modal__actions {
+  display: flex;
+  gap: 0.22rem;
+  width: 100%;
+}
+
+.invite-modal__btn {
+  flex: 1;
+  border-radius: 3.345rem;
+  font-size: 0.42rem;
+  font-weight: 500;
+  color: #fff;
+  line-height: 1.2;
+  padding: 0.4014rem 0.3rem;
+}
+
+.invite-modal__btn--secondary {
+  background: transparent;
+  border: 0.01333rem solid rgba(242, 242, 242, 0.6);
+}
+
+.invite-modal__btn--primary {
+  background: linear-gradient(
+    108.128deg,
+    rgba(255, 255, 255, 0.1) 21.1%,
+    rgba(230, 230, 230, 0.1) 71.4%
+  );
+  backdrop-filter: blur(0.5px);
+  border: 0.01333rem solid rgba(242, 242, 242, 0.3);
+  color: #78e490;
+}
+
+.invite-modal__btn:disabled {
+  opacity: 0.72;
 }
 
 .modal-primary-btn,
@@ -2171,7 +2253,12 @@ onMounted(async () => {
 
 .modal-primary-btn {
   border: 0.01333rem solid rgba(242, 242, 242, 0.8);
-  background: linear-gradient(153deg, #05e7ae 8%, #027a5c 72%);
+  background: linear-gradient(
+    97deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  );
+  backdrop-filter: blur(0.16230463981628418px);
   box-shadow: inset 0 -0.16rem 0.3rem rgba(0, 0, 0, 0.14);
 }
 

@@ -1364,14 +1364,18 @@ onMounted(() => {
           <div class="record-table-head">
             <button type="button" class="head-cell head-cell--time">
               <span>时间</span>
-              <span class="tiny-arrow" aria-hidden="true"></span>
+              <svg class="tiny-arrow" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M3.5 4.5L6 7L8.5 4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
             </button>
             <button type="button" class="head-cell head-cell--type" @click="toggleTypeMenu">
               <span>类型</span>
-              <span class="tiny-arrow" aria-hidden="true"></span>
+              <svg class="tiny-arrow" :class="{ 'tiny-arrow--open': showTypeMenu }" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M3.5 4.5L6 7L8.5 4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
             </button>
-            <span class="head-cell">数量</span>
-            <span class="head-cell">余额</span>
+            <span class="head-cell head-cell--quantity">数量</span>
+            <span class="head-cell head-cell--balance">余额</span>
             <span class="head-cell">备注</span>
           </div>
 
@@ -1932,21 +1936,51 @@ onMounted(() => {
 }
 
 .record-table-head {
+  position: relative;
   min-height: 0.77586rem;
-  border-radius: 0.375rem;
-  background: linear-gradient(180deg, #23ddad 0%, #02b487 100%);
+  border-radius: 9999px;
   display: grid;
   grid-template-columns: var(--record-columns);
   column-gap: var(--record-col-gap);
   align-items: center;
-  padding: 0 0.16rem;
+  padding: 0 0.2rem;
   color: #f9f9f9;
   font-size: 0.27429rem;
-  line-height: 1;
+  line-height: 1.4;
   font-weight: 500;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0.16rem;
+    left: 1.74%;
+    right: 2.06%;
+    height: 0.462rem;
+    border-radius: 9999px;
+    background: #5699cd;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: inherit;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(0.24rem);
+    z-index: 1;
+    pointer-events: none;
+  }
 }
 
 .head-cell {
+  position: relative;
+  z-index: 2;
   border: 0;
   background: transparent;
   padding: 0;
@@ -1956,14 +1990,22 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.06757rem;
+
+  &--quantity,
+  &--balance {
+    justify-content: center;
+  }
 }
 
 .tiny-arrow {
-  width: 0.135rem;
-  height: 0.135rem;
-  border-left: 0.03rem solid rgba(249, 249, 249, 0.85);
-  border-bottom: 0.03rem solid rgba(249, 249, 249, 0.85);
-  transform: rotate(-45deg);
+  width: 0.28rem;
+  height: 0.28rem;
+  transition: transform 0.2s ease;
+  display: inline-block;
+
+  &--open {
+    transform: rotate(180deg);
+  }
 }
 
 .type-dropdown {

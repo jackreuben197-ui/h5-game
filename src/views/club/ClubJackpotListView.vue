@@ -610,16 +610,20 @@ function goPoolReward(): void {
 .create-btn {
   width: 100%;
   height: 1.4716rem;
-  border: 0.0358rem solid rgba(242, 242, 242, 0.8);
+  border: 0.0267rem solid rgba(255, 255, 255, 0.15);
   border-radius: 1.082rem;
-  font-size: 0.48rem;
-  font-weight: 600;
-  color: #fff;
-  background: linear-gradient(168.09deg, #05e7ae 7.55%, #027a5c 71.92%);
-  box-shadow:
-    inset 0 0.04rem 0.2rem rgba(255, 255, 255, 0.25),
-    0 0.16rem 0.36rem rgba(0, 120, 100, 0.45);
+  font-size: 0.4175rem;
+  font-family: 'HONOR Sans CN', sans-serif;
+  font-weight: 500;
+  color: #78e490;
+  background: linear-gradient(125.587deg, rgba(255, 255, 255, 0.1) 21.106%, rgba(230, 230, 230, 0.1) 71.429%);
+  backdrop-filter: blur(0.5px);
   cursor: pointer;
+
+  &:active {
+    opacity: 0.92;
+    transform: scale(0.985);
+  }
 }
 
 /* ===== 删除确认弹窗 (Figma node-id=1451-5725, 1rem=37.5px) ===== */

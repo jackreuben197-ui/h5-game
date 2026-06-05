@@ -1224,7 +1224,7 @@ function formatChipBase(rawValue: number): string {
       </section>
     </template>
 
-    <template v-else>
+    <template v-else-if="clubHeaderTab === 'poker'">
       <GameTypeTabbar
         v-model="activeTab"
         class="club-game-tabs"

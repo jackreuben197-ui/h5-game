@@ -94,23 +94,19 @@ function handleClick(event: MouseEvent): void {
 
   &.primary-btn--glass {
     background: linear-gradient(126.81deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(0.0133rem);
     box-shadow: none;
+    border-radius: 1.004rem;
     height: auto;
-    padding: 0.4rem 0;
+    padding: 0.4003rem 0;
 
     &::before {
-      background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.35) 0%,
-        rgba(255, 255, 255, 0.05) 50%,
-        rgba(255, 255, 255, 0.2) 100%
-      );
+      content: none;
     }
 
     .primary-btn__text {
-      font-family: 'PingFang SC', 'HONOR Sans CN', sans-serif;
-      font-size: 0.515rem;
+      font-size: 0.4815rem;
+      line-height: 1.2;
       color: #fbfbfb;
     }
   }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import { postOrgClubModifyClubDescApi } from '@/api/org'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { showFailToast, showSuccessToast } from 'vant'
@@ -75,15 +76,12 @@ async function onConfirm(): Promise<void> {
       </section>
 
       <section class="footer-actions">
-        <button
-          type="button"
-          class="confirm-btn"
-          :class="{ 'confirm-btn--disabled': !canConfirm }"
+        <PrimaryButton
+          text="确定"
+          :loading="isSubmitting"
           :disabled="!canConfirm"
           @click="onConfirm"
-        >
-          {{ isSubmitting ? '提交中...' : '确定' }}
-        </button>
+        />
       </section>
     </div>
   </div>
@@ -160,17 +158,23 @@ async function onConfirm(): Promise<void> {
 }
 
 .field-shell {
-  min-height: 6.32rem;
-  border: 0.01rem solid rgba(249, 249, 249, 0.58);
-  border-radius: 0.72rem;
-  padding: 0.54rem 0.54rem;
-  background:
-    radial-gradient(90% 70% at 14% 20%, rgba(255, 199, 160, 0.46), rgba(255, 199, 160, 0)),
-    radial-gradient(82% 74% at 64% 49%, rgba(185, 76, 157, 0.4), rgba(185, 76, 157, 0)),
-    radial-gradient(82% 78% at 86% 75%, rgba(121, 146, 206, 0.38), rgba(121, 146, 206, 0)),
-    rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(0.3rem);
-  overflow: hidden;
+  // min-height: 6.32rem;
+  // border-radius: 0.72rem;
+  // padding: 0.5405rem;
+  // background: linear-gradient(99.84deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
+  // backdrop-filter: blur(0.004rem);
+  margin-top: 0.18rem;
+  width: 100%;
+  height: 6.3rem;
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  color: #fff;
+  font-size: 0.42rem;
+  padding: 0.34rem;
+  resize: none;
 }
 
 textarea {
@@ -197,21 +201,12 @@ textarea::placeholder {
   padding-bottom: 0.1rem;
 }
 
-.confirm-btn {
-  width: 100%;
-  min-height: 1.44rem;
-  border: 0;
-  border-radius: 1.06rem;
-  background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
-  color: #f9f9f9;
-  font-size: 0.51rem;
-  font-weight: 500;
-  box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.2);
-  transition: opacity 0.2s ease;
-}
-
-.confirm-btn--disabled {
-  opacity: 0.56;
+.footer-actions :deep(.primary-btn) {
+  background: linear-gradient(
+    97deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  ) !important;
 }
 
 @media (max-width: 340px) {
@@ -221,10 +216,6 @@ textarea::placeholder {
 
   .field-label {
     font-size: 0.4rem;
-  }
-
-  .confirm-btn {
-    font-size: 0.44rem;
   }
 }
 </style>

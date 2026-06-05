@@ -97,7 +97,7 @@ function onOpenRecord(item: PoolRewardItem): void {
             <p class="game-name">{{ item.name }}</p>
             <div class="pool-tags">
               <span v-for="tag in item.tags" :key="`${item.id}-${tag}`" class="tag-item">
-                <i class="tag-icon"></i>
+                <span class="suit-icon">♠</span>
                 {{ tag }}
               </span>
             </div>
@@ -204,10 +204,8 @@ function onOpenRecord(item: PoolRewardItem): void {
   width: 8.7753rem;
   height: 2.2551rem;
   border-radius: 2.0848rem;
-  border: 0.0267rem solid rgba(255, 255, 255, 0.96);
-  background:
-    radial-gradient(74% 96% at 42% 42%, rgba(104, 75, 255, 0.3) 0%, rgba(104, 75, 255, 0) 62%),
-    rgba(5, 13, 231, 0.6);
+  border: 0.0267rem solid #fff;
+  background: rgba(58, 149, 220, 0.6);
   backdrop-filter: blur(0.1098rem);
   overflow: hidden;
 }
@@ -230,7 +228,7 @@ function onOpenRecord(item: PoolRewardItem): void {
   border: 0.0253rem solid rgba(242, 242, 242, 0.4);
   box-shadow: 0.0913rem 0.1141rem 0.0913rem rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(0.2811rem);
-  background: #7a45d6;
+  background: #3a95dc;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -246,11 +244,15 @@ function onOpenRecord(item: PoolRewardItem): void {
 
 .pool-info {
   position: absolute;
-  left: 1.4533rem;
+  left: 1.7533rem;
   top: 50%;
   transform: translateY(-50%);
   width: 4.1rem;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1496rem;
 }
 
 .game-name {
@@ -259,10 +261,10 @@ function onOpenRecord(item: PoolRewardItem): void {
   line-height: 0.83;
   color: #f9f9f9;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .pool-tags {
-  margin-top: 0.1493rem;
   display: flex;
   align-items: center;
   gap: 0.3467rem;
@@ -271,20 +273,25 @@ function onOpenRecord(item: PoolRewardItem): void {
 .tag-item {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.1333rem;
   font-size: 0.2933rem;
   line-height: normal;
   color: #ffffff;
   font-weight: 700;
   letter-spacing: 0.0117rem;
+  white-space: nowrap;
 }
 
-.tag-icon {
+.suit-icon {
+  display: inline-block;
   width: 0.24rem;
   height: 0.2667rem;
-  display: inline-block;
-  background: linear-gradient(180deg, rgba(190, 232, 255, 0.95), rgba(136, 188, 255, 0.85));
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  font-size: 0.24rem;
+  line-height: 0.2667rem;
+  text-align: center;
+  color: #fff;
+  flex-shrink: 0;
 }
 
 .jp-badge {
@@ -297,7 +304,7 @@ function onOpenRecord(item: PoolRewardItem): void {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, #69ffe6, #079a8b);
+  background: linear-gradient(180deg, #69beff 0%, #3a95dc 100%);
   font-size: 0.2951rem;
   font-weight: 700;
   line-height: 1;
@@ -322,15 +329,17 @@ function onOpenRecord(item: PoolRewardItem): void {
 .create-btn {
   width: 100%;
   height: 1.4716rem;
-  border: 0.0358rem solid rgba(242, 242, 242, 0.8);
-  border-radius: 1.082rem;
-  font-size: 0.48rem;
-  font-weight: 600;
-  color: #ffffff;
-  background: linear-gradient(168.09deg, #05e7ae 7.55%, #027a5c 71.92%);
-  box-shadow:
-    inset 0 0.04rem 0.2rem rgba(255, 255, 255, 0.25),
-    0 0.16rem 0.36rem rgba(0, 120, 100, 0.45);
+  border: 0;
+  border-radius: 3.3333rem;
+  font-size: 0.4175rem;
+  font-weight: 500;
+  color: #78e490;
+  background: linear-gradient(
+    125.59deg,
+    rgba(255, 255, 255, 0.1) 21.1%,
+    rgba(230, 230, 230, 0.1) 71.4%
+  );
+  backdrop-filter: blur(0.0133rem);
 }
 
 @media (max-width: 360px) {

@@ -4,6 +4,8 @@ import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { postOrgClubLevelCostApi, postOrgClubLevelInfoApi, postOrgClubUpLevelApi } from '@/api/org'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgMedal from '@/assets/images/club_medal.png'
+import imgLevelThumb from '@/assets/images/club_level_thumb.svg'
+import imgLevelBadge from '@/assets/images/club_level_badge.svg'
 import imgRankBadge from '@/assets/icons/club_rank_badge.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -72,6 +74,10 @@ const progressActiveDots = computed(() => {
     return 1
   }
   return Math.max(1, Math.min(9, lv + 1))
+})
+
+const progressPercent = computed(() => {
+  return (progressActiveDots.value - 1) * 12.5
 })
 
 const levelLabel = computed(() => `LEVEL ${currentLevel.value || 1}`)
@@ -143,38 +149,58 @@ onMounted(() => {
       <main v-loading="loading" class="club-level-main">
         <section class="club-medal">
           <div><img class="club-medal__coin-bg" :src="imgMedal" alt="勋章" /></div>
-          <div class="club-medal__level-pill">{{ levelLabel }}</div>
+          <!-- <div class="club-medal__level-pill">{{ levelLabel }}</div> -->
         </section>
 
         <section class="club-upgrade-card">
-          <p class="club-upgrade-card__date">有效日期至：{{ levelExpireTime }}</p>
+          <p class="club-upgrade-card__date">
+            <span>有效日期至：</span
+            ><span class="club-upgrade-card__date--value">{{ levelExpireTime }}</span>
+          </p>
 
           <div class="club-upgrade-progress" aria-label="升级进度">
-            <div class="club-upgrade-progress__line"></div>
-            <div class="club-upgrade-progress__line club-upgrade-progress__line--rest"></div>
+            <div
+              class="club-upgrade-progress__line"
+              :style="{ right: `${100 - progressPercent}%` }"
+            ></div>
+            <div
+              class="club-upgrade-progress__line club-upgrade-progress__line--rest"
+              :style="{ left: `${progressPercent}%` }"
+            ></div>
             <span
               v-for="idx in 9"
               :key="idx"
               class="club-upgrade-progress__dot"
               :class="{ 'club-upgrade-progress__dot--active': idx <= progressActiveDots }"
             ></span>
-            <span class="club-upgrade-progress__thumb"></span>
+            <img
+              class="club-upgrade-progress__thumb"
+              :src="imgLevelThumb"
+              alt=""
+              aria-hidden="true"
+              :style="{ left: `${progressPercent}%` }"
+            />
           </div>
 
           <div class="club-upgrade-cost">
             <p>升级至{{ targetLevel }}级俱乐部需消耗钻石</p>
             <div class="club-upgrade-cost__value">
               <span class="club-upgrade-cost__badge">
-                <img :src="imgRankBadge" alt="" aria-hidden="true" />
+                <img :src="imgLevelBadge" alt="" aria-hidden="true" />
                 <i>{{ targetLevel }}</i>
               </span>
-              <span>{{ upgradeCost }}</span>
+              <span class="club-upgrade-cost__amount">{{ upgradeCost }}</span>
               <img :src="imgDiamond" alt="钻石" />
             </div>
           </div>
 
-          <p class="club-upgrade-card__desc">{{ levelDesc }}</p>
-          <p class="club-upgrade-card__desc">有效期：{{ levelDuration }}天</p>
+          <div class="club-upgrade-card__desc">
+            <p>{{ levelDesc }}</p>
+            <p>
+              <span>有效期：</span
+              ><span class="club-upgrade-card__desc--value">{{ levelDuration }}天</span>
+            </p>
+          </div>
         </section>
       </main>
 
@@ -367,10 +393,17 @@ onMounted(() => {
   margin-top: 0.56rem;
   width: 100%;
   max-width: 8.94056rem;
-  border-radius: 1.10968rem;
-  padding: 0.46163rem;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.16667rem);
+  border-radius: 1.11rem;
+  padding: 0.463rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.419rem;
+  background: linear-gradient(
+    101.276deg,
+    rgba(255, 255, 255, 0.1) 21.1%,
+    rgba(230, 230, 230, 0.1) 71.4%
+  );
+  backdrop-filter: blur(0.166px);
 }
 
 .club-upgrade-card__date {
@@ -378,12 +411,16 @@ onMounted(() => {
   text-align: center;
   font-size: 0.37317rem;
   line-height: 1.35;
-  color: rgba(249, 249, 249, 0.9);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.club-upgrade-card__date--value {
+  font-weight: 500;
+  color: #fff;
 }
 
 .club-upgrade-progress {
   position: relative;
-  margin-top: 0.4rem;
   height: 0.74rem;
 }
 
@@ -394,14 +431,14 @@ onMounted(() => {
   top: 50%;
   height: 0.12403rem;
   border-radius: 0.61851rem;
-  background: #05e7ae;
+  background: #78e490;
   transform: translateY(-50%);
 }
 
 .club-upgrade-progress__line--rest {
   left: 50%;
   right: 0;
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .club-upgrade-progress__dot {
@@ -415,7 +452,7 @@ onMounted(() => {
 }
 
 .club-upgrade-progress__dot--active {
-  background: #05e7ae;
+  background: #78e490;
 }
 
 .club-upgrade-progress__dot:nth-of-type(3) {
@@ -460,14 +497,11 @@ onMounted(() => {
   left: 50%;
   width: 0.72635rem;
   height: 0.72635rem;
-  border-radius: 50%;
-  background: radial-gradient(circle at 32% 28%, #dae0e2, #8d97a5 74%);
-  box-shadow: 0 0.05333rem 0.10667rem rgba(0, 0, 0, 0.22);
+  object-fit: contain;
   transform: translate(-50%, -50%);
 }
 
 .club-upgrade-cost {
-  margin-top: 0.22rem;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -488,6 +522,10 @@ onMounted(() => {
   font-size: 0.54344rem;
   line-height: 1;
   font-weight: 600;
+}
+
+.club-upgrade-cost__amount {
+  color: #78e490;
 }
 
 .club-upgrade-cost__value > img {
@@ -520,10 +558,19 @@ onMounted(() => {
 }
 
 .club-upgrade-card__desc {
-  margin: 0;
+  padding: 0 0.288rem;
   font-size: 0.32083rem;
   line-height: 1.35;
-  color: rgba(249, 249, 249, 0.74);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.club-upgrade-card__desc p {
+  margin: 0;
+}
+
+.club-upgrade-card__desc--value {
+  font-weight: 500;
+  color: #fff;
 }
 
 .club-level-footer {
@@ -538,13 +585,23 @@ onMounted(() => {
 .club-upgrade-btn {
   width: 100%;
   height: 1.47157rem;
-  border: 0.03584rem solid rgba(242, 242, 242, 0.8);
+  border: 0.03584rem solid rgba(242, 242, 242, 0.4);
   border-radius: 1.08203rem;
-  background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
+  background: linear-gradient(
+    124.811deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  );
+  backdrop-filter: blur(0.526px);
   color: #fff;
   font-size: 0.73822rem;
   font-weight: 500;
   line-height: 1.2;
+  transition: opacity 0.2s ease;
+}
+
+.club-upgrade-btn:active {
+  opacity: 0.8;
 }
 
 .club-level-mask {
@@ -599,9 +656,21 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.34);
 }
 
-.club-level-confirm__ok {
-  border: 0.01333rem solid rgba(242, 242, 242, 0.8);
-  background: linear-gradient(153deg, #05e7ae 8%, #027a5c 72%);
+.club-level-confirm__actions .club-level-confirm__ok {
+  border: 0.01333rem solid rgba(242, 242, 242, 0.4);
+  background: linear-gradient(
+    106.392deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  );
+  backdrop-filter: blur(0.16230463981628418px);
+  color: #78e490;
+  transition: opacity 0.2s ease;
+}
+
+.club-level-confirm__actions .club-level-confirm__ok:active {
+  opacity: 0.8;
+  color: #78e490;
 }
 
 @media (max-width: 340px) {

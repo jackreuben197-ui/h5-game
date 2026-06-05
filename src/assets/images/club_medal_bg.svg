@@ -1,0 +1,28 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 178.581 208.387" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Bg">
+<mask id="mask0_0_9" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="3" width="179" height="203">
+<path id="Mask" d="M0.15376 63.3678C-0.0859842 56.7898 -0.205856 53.5008 1.05181 49.9977C2.13051 46.9932 4.1145 44.0854 6.51881 41.9854C9.32205 39.5369 13.3928 38.1114 21.5344 35.2603C38.8577 29.194 55.5702 21.0583 71.3274 11.6053C78.4894 7.30863 82.0704 5.1603 85.1526 4.48354C88.2127 3.81163 90.3687 3.81163 93.4288 4.48354C96.511 5.1603 100.092 7.30863 107.254 11.6053C123.011 21.0583 139.724 29.194 157.047 35.2603C165.189 38.1114 169.259 39.5369 172.063 41.9854C174.467 44.0854 176.451 46.9932 177.53 49.9977C178.787 53.5008 178.667 56.7898 178.428 63.3678C177.745 82.0876 174.367 109.908 162.017 135.019C145.732 168.133 118.532 189.854 102.414 200.553C98.8757 202.902 97.1065 204.077 93.7725 204.873C91.4612 205.425 87.1203 205.425 84.8089 204.873C81.475 204.077 79.7057 202.902 76.1673 200.553C60.0494 189.854 32.8499 168.133 16.5644 135.019C4.21493 109.908 0.836031 82.0876 0.15376 63.3678Z" fill="var(--fill-0, black)"/>
+</mask>
+<g mask="url(#mask0_0_9)">
+<rect id="Color" x="-45.8901" y="-31.5183" width="270.132" height="270.132" fill="var(--fill-0, #0C52C3)"/>
+<g id="Lighten">
+<rect x="-45.8901" y="-31.5183" width="270.132" height="270.132" fill="url(#paint0_linear_0_9)" fill-opacity="0.6" style="mix-blend-mode:overlay"/>
+<rect x="-45.8901" y="-31.5183" width="270.132" height="270.132" fill="url(#paint1_radial_0_9)" fill-opacity="0.6" style="mix-blend-mode:overlay"/>
+</g>
+<g id="Darker">
+<rect x="-45.8901" y="-31.5183" width="270.132" height="270.132" fill="var(--fill-0, black)" fill-opacity="0.16" style="mix-blend-mode:overlay"/>
+<rect x="-45.8901" y="-31.5183" width="270.132" height="270.132" fill="var(--fill-1, black)" fill-opacity="0.12" style="mix-blend-mode:darken"/>
+</g>
+</g>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_9" x1="89.1757" y1="-0.908081" x2="89.1757" y2="206.603" gradientUnits="userSpaceOnUse">
+<stop stop-color="white"/>
+<stop offset="1" stop-color="white" stop-opacity="0"/>
+</linearGradient>
+<radialGradient id="paint1_radial_0_9" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(89.1757 58.6961) rotate(90) scale(136.869 103.845)">
+<stop stop-color="white"/>
+<stop offset="1" stop-color="white" stop-opacity="0"/>
+</radialGradient>
+</defs>
+</svg>

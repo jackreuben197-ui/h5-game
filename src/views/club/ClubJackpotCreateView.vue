@@ -25,11 +25,18 @@ interface OptionItem {
   sb: number
 }
 
+interface CardItem {
+  rank: string
+  suit: string
+  red: boolean
+}
+
 interface PoolSettingItem {
   id: string
   title: string
   checked: boolean
   ratio: string
+  cards: CardItem[]
 }
 
 interface BlindConfigForm {
@@ -157,11 +164,19 @@ function createDefaultBlindConfig(sb: number): BlindConfigForm {
   }
 }
 
+const POOL_CARDS: CardItem[] = [
+  { rank: '7', suit: '♣', red: false },
+  { rank: '3', suit: '♦', red: true },
+  { rank: '6', suit: '♣', red: false },
+  { rank: '3', suit: '♦', red: true },
+  { rank: '6', suit: '♣', red: false },
+]
+
 function createDefaultPoolSettings(): PoolSettingItem[] {
   return [
-    { id: 'royal', title: 'Royal Flush', checked: false, ratio: '' },
-    { id: 'straight', title: 'Straight flush', checked: false, ratio: '' },
-    { id: 'four', title: 'Four of a kind', checked: false, ratio: '' },
+    { id: 'royal', title: 'Royal Flush', checked: false, ratio: '', cards: POOL_CARDS },
+    { id: 'straight', title: 'Straight flush', checked: false, ratio: '', cards: POOL_CARDS },
+    { id: 'four', title: 'Four of a kind', checked: false, ratio: '', cards: POOL_CARDS },
   ]
 }
 
@@ -622,22 +637,6 @@ onMounted(() => {
 
         <div class="divider"></div>
 
-        <div class="blind-list blind-list--inline">
-          <label
-            v-for="option in blindOptions"
-            :key="option.id"
-            class="blind-item blind-item--checkbox"
-          >
-            <input
-              class="blind-checkbox"
-              type="checkbox"
-              :checked="option.selected"
-              @change="onBlindOptionClick(option)"
-            />
-            <span>{{ option.label }}</span>
-          </label>
-        </div>
-
         <div
           v-for="option in selectedBlindOptions"
           :key="`config-${activeStakeLevel}-${option.sb}`"
@@ -810,38 +809,61 @@ onMounted(() => {
             </div>
           </div>
         </div>
+
+        <div class="blind-list">
+          <label
+            v-for="option in blindOptions"
+            :key="option.id"
+            class="blind-item blind-item--checkbox"
+          >
+            <input
+              class="blind-checkbox"
+              type="checkbox"
+              :checked="option.selected"
+              @change="onBlindOptionClick(option)"
+            />
+            <span>{{ option.label }}</span>
+          </label>
+        </div>
       </div>
 
       <div class="glass-card pool-card">
-        <h3>Pool Settings</h3>
+        <p class="pool-settings-title">Pool Settings</p>
 
-        <div v-for="item in currentModeConfig.poolSettings" :key="item.id" class="pool-row">
-          <div class="pool-left">
-            <div class="row-label">
-              <i
-                class="dot"
-                :class="{ 'dot--active': item.checked }"
-                @click="item.checked = !item.checked"
-              ></i>
-              <span>{{ item.title }}</span>
+        <template v-for="(item, index) in currentModeConfig.poolSettings" :key="item.id">
+          <div v-if="index > 0" class="divider"></div>
+          <div class="pool-row">
+            <div class="pool-left">
+              <div class="row-label">
+                <i
+                  class="dot"
+                  :class="{ 'dot--active': item.checked }"
+                  @click="item.checked = !item.checked"
+                ></i>
+                <span>{{ item.title }}</span>
+              </div>
+
+              <div class="hand-cards">
+                <div
+                  v-for="(card, ci) in item.cards"
+                  :key="ci"
+                  class="play-card"
+                  :class="card.red ? 'play-card--red' : 'play-card--black'"
+                >
+                  <span class="play-card__rank">{{ card.rank }}</span>
+                  <span class="play-card__suit">{{ card.suit }}</span>
+                </div>
+              </div>
             </div>
 
-            <div class="hand-cards">
-              <span class="card black">2♣</span>
-              <span class="card red">2♥</span>
-              <span class="card black">2♠</span>
-              <span class="card red">2♦</span>
-              <span class="card red">2♥</span>
+            <div class="pool-right">
+              <span>Award ratio (%)</span>
+              <div class="value-input value-input--narrow">
+                <input v-model="item.ratio" class="inline-input" placeholder="BB amount" />
+              </div>
             </div>
           </div>
-
-          <div class="pool-right">
-            <span>Award ratio (%)</span>
-            <div class="value-input value-input--narrow">
-              <input v-model="item.ratio" class="inline-input" placeholder="BB amount" />
-            </div>
-          </div>
-        </div>
+        </template>
       </div>
     </section>
 
@@ -937,8 +959,8 @@ onMounted(() => {
 
 .glass-card {
   border-radius: 0.4328rem;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.0043rem);
+  background: linear-gradient(103.95deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
+  backdrop-filter: blur(0.004rem);
 }
 
 .summary-card {
@@ -996,13 +1018,13 @@ onMounted(() => {
 }
 
 .section-card--dense {
-  gap: 0.32rem;
+  gap: 0.3733rem;
 }
 
 .segment-row {
   height: 1.04rem;
   border-radius: 0.8rem;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(27, 27, 30, 0.4);
   display: grid;
   align-items: center;
   padding: 0.0267rem;
@@ -1026,9 +1048,8 @@ onMounted(() => {
 }
 
 .segment-btn--active {
-  border: 0.0133rem solid #fff;
-  background: rgba(255, 255, 255, 0.17);
-  backdrop-filter: blur(0.4533rem);
+  border: 0;
+  background: rgba(249, 249, 249, 0.5);
 }
 
 .mode-switch-wrap {
@@ -1062,7 +1083,7 @@ onMounted(() => {
 }
 
 .rows-wrap--gap-sm {
-  gap: 0.16rem;
+  gap: 0.24rem;
 }
 
 .config-row {
@@ -1110,8 +1131,7 @@ onMounted(() => {
 .value-input {
   height: 0.9291rem;
   border-radius: 1.5519rem;
-  background: rgba(255, 255, 255, 0.38);
-  mix-blend-mode: soft-light;
+  background: rgba(27, 27, 30, 0.6);
   padding: 0 0.304rem;
   color: #fff;
   font-size: 0.3716rem;
@@ -1119,7 +1139,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.1333rem;
+  gap: 0.1943rem;
 }
 
 .value-input--narrow {
@@ -1181,12 +1201,13 @@ onMounted(() => {
   gap: 0.2134rem;
 }
 
-.pool-card h3 {
+.pool-settings-title {
   margin: 0;
   font-size: 0.4392rem;
-  line-height: 1;
+  line-height: normal;
   color: #fff;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .pool-row {
@@ -1209,23 +1230,40 @@ onMounted(() => {
   gap: 0.0865rem;
 }
 
-.card {
+.play-card {
   width: 0.5549rem;
-  height: 0.8323rem;
-  border-radius: 0.1867rem;
-  background: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.208rem;
+  height: 0.8324rem;
+  border-radius: 0.876rem;
+  border: 0.0068rem solid rgba(255, 255, 255, 0.8);
+  background: linear-gradient(165.16deg, rgb(251, 251, 251) 2.45%, rgb(230, 227, 227) 92.49%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0.04rem;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.play-card__rank {
+  font-size: 0.2933rem;
   font-weight: 700;
+  line-height: 1;
 }
 
-.card.black {
-  color: #111;
+.play-card__suit {
+  font-size: 0.2667rem;
+  line-height: 1;
+  align-self: flex-end;
 }
 
-.card.red {
+.play-card--black .play-card__rank,
+.play-card--black .play-card__suit {
+  color: #171717;
+}
+
+.play-card--red .play-card__rank,
+.play-card--red .play-card__suit {
   color: #fa2b4b;
 }
 
@@ -1270,8 +1308,12 @@ onMounted(() => {
 }
 
 .action-btn--confirm {
-  border: 0.0133rem solid rgba(242, 242, 242, 0.8);
-  background: linear-gradient(157.77deg, #05e7ae 7.55%, #027a5c 71.92%);
+  border: 0;
+  border-radius: 3.3333rem;
+  background: linear-gradient(109.57deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
+  backdrop-filter: blur(0.0133rem);
+  color: #78e490;
+  font-size: 0.4175rem;
 
   &:disabled {
     opacity: 0.5;

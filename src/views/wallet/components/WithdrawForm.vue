@@ -49,23 +49,22 @@ const showWithdrawConfirmModal = ref(false)
 const withdrawConfirmAmount = ref(0)
 
 // ─── Computed ────────────────────────────────────────────────────────────────
-const filteredWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() => {
-  const ch = activeChannel.value
-  return withdrawTypes.value.filter((wt) => {
-    if (ch === 'bankcard') {
-      return wt.account_type === 1 && wt.status === 1 && wt.action_type === 1
-    }
-    if (ch === 'customercare') {
-      const nameMatch =
-        wt.name?.toLowerCase().includes('客服') ||
-        wt.name?.toLowerCase().includes('customer') ||
-        wt.name?.toLowerCase().includes('care') ||
-        wt.name?.toLowerCase().includes('service')
-      return nameMatch || wt.account_type === 0
-    }
-    return false
-  })
-})
+// 银行卡渠道：account_type === 1 且在线提现 (action_type === 1)；其余 (usdt、撮合提现等) 归为客服渠道
+function isBankcardWithdrawType(wt: OnlineWithdrawTypeItem): boolean {
+  return wt.account_type === 1 && wt.action_type === 1
+}
+
+const bankWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
+  withdrawTypes.value.filter((wt) => wt.status === 1 && isBankcardWithdrawType(wt)),
+)
+
+const csWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
+  withdrawTypes.value.filter((wt) => wt.status === 1 && !isBankcardWithdrawType(wt)),
+)
+
+const filteredWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
+  activeChannel.value === 'bankcard' ? bankWithdrawTypes.value : csWithdrawTypes.value,
+)
 
 const handlingFeeRate = 0.05
 const parsedAmount = computed(() => {
@@ -177,6 +176,11 @@ function selectWithdrawType(wt: OnlineWithdrawTypeItem): void {
   selectedWithdrawType.value = wt
 }
 
+// 客服渠道下选择提现方式（usdt、撮合提现等），不切换渠道
+function selectCsWithdrawType(wt: OnlineWithdrawTypeItem): void {
+  selectedWithdrawType.value = wt
+}
+
 function applyChannel(ch: ChannelId): void {
   activeChannel.value = ch
   selectedWithdrawType.value = filteredWithdrawTypes.value[0] ?? null
@@ -268,7 +272,7 @@ watch(filteredWithdrawTypes, (list) => {
     <div class="wf__card">
 
       <div class="wf__acct-header">
-        <span class="wf__acct-title">{{ tx('Wallet_SelectAccount', '请选择收款账户') }}</span>
+        <span class="wf__acct-title">{{ isCustomerCare ? tx('Wallet_SelectMethod', '请选择提现方式') : tx('Wallet_SelectAccount', '请选择收款账户') }}</span>
         <button v-if="!isCustomerCare" class="wf__add-card-btn" type="button" @click="router.push('/wallet/add-bank-card')">
           {{ tx('Wallet_AddCard', '添加银行卡') }}
         </button>
@@ -276,7 +280,7 @@ watch(filteredWithdrawTypes, (list) => {
 
       <div class="wf__type-scroll">
         <div
-          v-for="wt in filteredWithdrawTypes"
+          v-for="wt in bankWithdrawTypes"
           :key="wt.id"
           class="wf__type-card"
           :class="{ 'wf__type-card--active': !isCustomerCare && selectedWithdrawType?.id === wt.id }"
@@ -299,12 +303,13 @@ watch(filteredWithdrawTypes, (list) => {
           <img :src="icSupportService" alt="" class="wf__type-card-icon" />
           <div class="wf__type-card-label">
             <div class="wf__type-card-text">
-              <span class="wf__type-card-name">{{ tx('Wallet_CsWithdraw', '联系客服') }}</span>
+              <span class="wf__type-card-name">{{ tx('Wallet_CsWithdraw', '客服') }}</span>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- 银行卡渠道：已绑定的收款账户 -->
       <template v-if="!isCustomerCare">
         <div v-if="loadingPaymentInfo" class="wf__acct-loading">
           {{ tx('Wallet_Loading', '加载中…') }}
@@ -329,6 +334,30 @@ watch(filteredWithdrawTypes, (list) => {
         </template>
         <div v-else class="wf__acct-empty">
           {{ tx('Wallet_NoCardBound', '暂无绑定银行卡') }}
+        </div>
+      </template>
+
+      <!-- 客服渠道：可选择的提现方式 (usdt提现、撮合提现 等) -->
+      <template v-else>
+        <div v-if="csWithdrawTypes.length > 0" class="wf__type-scroll">
+          <div
+            v-for="wt in csWithdrawTypes"
+            :key="wt.id"
+            class="wf__type-card"
+            :class="{ 'wf__type-card--active': selectedWithdrawType?.id === wt.id }"
+            @click="selectCsWithdrawType(wt)"
+          >
+            <img :src="icSupportService" alt="" class="wf__type-card-icon" />
+            <div class="wf__type-card-label">
+              <div class="wf__type-card-text">
+                <span class="wf__type-card-name">{{ wt.name || tx('Wallet_CsWithdraw', '客服') }}</span>
+                <span class="wf__type-card-sub">{{ tx('Wallet_Payment', '支付') }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="wf__acct-empty">
+          {{ tx('Wallet_NoWithdrawMethod', '暂无可用提现方式') }}
         </div>
       </template>
 
@@ -574,8 +603,12 @@ watch(filteredWithdrawTypes, (list) => {
   -webkit-tap-highlight-color: transparent;
   padding: 0.12rem 0.08rem;
   border-radius: 0.4rem;
-  transition: background 0.15s;
-  &--active { background: transparent; }
+  border: 0.016rem solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+  &--active {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.7);
+  }
 }
 
 .wf__acct-icon {

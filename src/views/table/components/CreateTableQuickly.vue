@@ -1297,8 +1297,8 @@ async function onDeleteConfirm() {
 }
 
 .template-card__badge-icon {
-  width: 1.5rem;
-  height: 1.2rem;
+  width: 1rem;
+  height: 1rem;
   object-fit: contain;
 }
 
@@ -1370,7 +1370,7 @@ async function onDeleteConfirm() {
     /* 左上高光 */ inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.3),
     /* 右下高光 */ inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.3);
   color: #fff;
-  font-size: 0.28rem;
+  font-size: 0.22rem;
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 800;
   cursor: pointer;

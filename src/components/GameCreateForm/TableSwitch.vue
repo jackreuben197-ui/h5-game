@@ -98,8 +98,8 @@ const getIcon = (name: string) => {
   }
 }
 .table-switch__icon {
-  width: 1.25rem;
-  height: 1.6rem;
+  width: 0.7rem;
+  margin-right: 0.2rem;
 }
 .table-switch__tip2 {
   color: #fff;

@@ -317,8 +317,7 @@ function shortName(name?: string): string {
 }
 
 .feature-icon {
-  width: 1.3rem;
-  height: 1.3rem;
+  width: 0.7rem;
   object-fit: contain;
 }
 

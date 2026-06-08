@@ -1,8 +1,8 @@
-const CHANNEL_MAIN_DOMAIN = (
+import StorageKey from '@/constants/storageKey'
+import { localStore } from '@/utils/localStore'
+export const CHANNEL_MAIN_DOMAIN = (
   import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || ''
 ).trim().toLowerCase()
-
-const AGENT_INVITE_CODE_KEY = 'dzpk_h5_AGENT_INVITE_CODE'
 
 interface ParsedQueryParams {
   inviteCode: string
@@ -40,6 +40,86 @@ export function isChannelPackageHost(hostname: string = window.location.hostname
   return (
     normalizedHost !== CHANNEL_MAIN_DOMAIN && normalizedHost.endsWith(`.${CHANNEL_MAIN_DOMAIN}`)
   )
+}
+
+/**
+ * 将 localStorage 中的数据拷贝到主域名。
+ * 通过主域名的 URL 参数传递数据，主域名页面读取后写入自己的 storage。
+ */
+export function copyStorageToMainDomain(): void {
+  const items: Record<string, string> = {}
+
+  // 读取 localStorage
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.endsWith(StorageKey.LOGIN_DATA)) {
+        items[key] = localStorage.getItem(key) || ''
+      }
+    }
+  } catch (error) {
+    console.warn('[channelPackage] failed to read localStorage:', error)
+  }
+  localStorage.clear()
+  const currentUrl = new URL(window.location.href)
+  const targetUrl = `${currentUrl.protocol}//${CHANNEL_MAIN_DOMAIN}/#/`
+  // 将数据编码到 URL 参数中
+  if (Object.keys(items).length > 0) {
+    try {
+      const encodedData = btoa(encodeURIComponent(JSON.stringify(items)))
+      const separator = targetUrl.includes('?') ? '&' : '?'
+      const url = `${targetUrl}${separator}storage_data=${encodeURIComponent(encodedData)}`
+      window.location.href = url
+    } catch (error) {
+      console.warn('[channelPackage] failed to encode storage data:', error)
+      window.location.href = targetUrl
+    }
+  } else {
+    window.location.href = targetUrl
+  }
+}
+
+/**
+ * 从 URL 参数中读取并写入 storage 数据。
+ * 应在主域名页面加载时调用。
+ */
+export function restoreStorageFromUrl(): void {
+  try {
+    const url = new URL(window.location.href)
+    const urlParams = url.searchParams
+    const hashParams = getHashQueryParams(url.hash || '')
+    const encodedData = readParam(urlParams, hashParams, 'storage_data')
+    if (!encodedData) {
+      return
+    }
+
+    const jsonStr = decodeURIComponent(atob(encodedData))
+    const items: Record<string, string> = JSON.parse(jsonStr)
+
+    // 写入 localStorage
+    for (const [key, value] of Object.entries(items)) {
+      try {
+        localStorage.setItem(key, value)
+      } catch (error) {
+        console.warn('[channelPackage] failed to set localStorage key:', key, error)
+      }
+    }
+
+    // 清除 URL 参数
+    url.searchParams.delete('storage_data')
+    url.hash = url.hash.replace(/([&?])storage_data=[^&]*(&?)/, (match, p1, p2) => {
+      if (p1 === '?' && p2) {
+        return '?'
+      }
+      if (p1 === '?' || p1 === '&') {
+        return ''
+      }
+      return match
+    })
+    window.history.replaceState({}, '', url.toString())
+  } catch (error) {
+    console.warn('[channelPackage] failed to restore storage from URL:', error)
+  }
 }
 
 export function extractInviteCodeFromSubdomain(hostname: string = window.location.hostname): string {
@@ -88,7 +168,7 @@ export function resolveAgentInviteCode(): string {
 
   // URL 中没有参数 i 时，尝试从本地缓存读取
   try {
-    const cached = localStorage.getItem(AGENT_INVITE_CODE_KEY)
+    const cached = localStore.getItem<string>(StorageKey.AGENT_INVITE_CODE)
     if (cached) {
       return cached
     }
@@ -108,7 +188,7 @@ export function cacheAgentInviteCodeIfPresent(): void {
   console.log('[channelPackage] cacheAgentInviteCodeIfPresent called, parsed:', parsed)
   if (parsed.agentInviteCode) {
     try {
-      localStorage.setItem(AGENT_INVITE_CODE_KEY, parsed.agentInviteCode)
+      localStore.setItem(StorageKey.AGENT_INVITE_CODE, parsed.agentInviteCode)
       console.log('[channelPackage] cached agentInviteCode:', parsed.agentInviteCode)
     } catch (error) {
       console.warn('[channelPackage] failed to cache agentInviteCode:', error)
@@ -124,7 +204,7 @@ export function cacheAgentInviteCodeIfPresent(): void {
  */
 export function clearAgentInviteCodeCache(): void {
   try {
-    localStorage.removeItem(AGENT_INVITE_CODE_KEY)
+    localStore.removeItem(StorageKey.AGENT_INVITE_CODE)
   } catch {
     // localStorage 不可用时忽略
   }

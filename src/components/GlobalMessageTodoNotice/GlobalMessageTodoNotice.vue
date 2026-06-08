@@ -125,7 +125,7 @@ const totalCount = computed(() => {
 })
 
 const hasAnyTodo = computed(() => displaySections.value.length > 0)
-const shouldShowFloat = computed(() => totalCount.value > 0)
+const shouldShowFloat = computed(() => !!gameStore.sessionToken && totalCount.value > 0)
 
 const pageBackgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,

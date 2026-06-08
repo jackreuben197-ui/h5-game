@@ -74,8 +74,10 @@ import type {
   UserLoginThirdPartyRequest,
 } from '@/api/models/user'
 import { forwardUserClubToCocos, forwardUserInfoToCocos } from '@/bridge/sync'
+import { useGameStore } from '@/stores/game'
 import { pinia } from '@/stores/pinia'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
+import { writeClubListCache } from '@/utils/userClubListCache'
 
 interface ApiRequestExtOptions extends AxiosRequestConfig {
   suppressBusinessToast?: boolean
@@ -206,7 +208,13 @@ export async function getUserClubApi(): Promise<ApiResponse<unknown>> {
 
   // 每次请求都更新 clubList 全局缓存；currentClub 默认取第一条，可手动切换。
   const userInfoStore = useUserInfoStore(pinia)
-  userInfoStore.setClubList(extractClubList(body.data))
+  const clubList = extractClubList(body.data)
+  userInfoStore.setClubList(clubList)
+  // 落地到当前用户级 IndexedDB（h5_cache_user_${userId}），供下次启动秒开。
+  const gameStore = useGameStore(pinia)
+  if (gameStore.loginUserId) {
+    void writeClubListCache(gameStore.loginUserId, clubList)
+  }
   // 把 club 接口响应转发到 Cocos（msgtype=1）。
   forwardUserClubToCocos(body)
   return body

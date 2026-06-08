@@ -18,10 +18,12 @@ import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.p
 import imgClubBannerFigma from '@/assets/images/club_banner_bg.png'
 import imgClubLogo from '@/assets/images/club_default_logo.png'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
+import { useGameStore } from '@/stores/game'
 import type { ClubInfo } from '@/stores/userInfo'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { isChannelPackageHost } from '@/utils/channelPackage'
+import { readClubListCache, writeClubListCache } from '@/utils/userClubListCache'
 
 type QuickActionKind = 'create-club' | 'club-panel' | 'create-union'
 
@@ -48,6 +50,7 @@ interface ClubCardItem {
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
+const gameStore = useGameStore()
 
 const searchKeyword = ref('')
 const loadingMyClubs = ref(false)
@@ -209,7 +212,20 @@ async function loadMyClubList(force = false): Promise<void> {
     return
   }
 
-  // loadingMyClubs.value = true
+  const userId = gameStore.loginUserId
+  // 没有内存数据时优先用用户级 IndexedDB 缓存填充，避免空白等待。
+  if (!userInfoStore.clubList.length && userId) {
+    const cached = await readClubListCache(userId)
+    if (cached.length && !userInfoStore.clubList.length) {
+      userInfoStore.setClubList(cached)
+    }
+  }
+
+  const hasInitialData = userInfoStore.clubList.length > 0
+  if (!hasInitialData) {
+    loadingMyClubs.value = true
+  }
+
   try {
     const response = await postOrgClubGetApi()
     if (Number(response.code) !== 0) {
@@ -218,9 +234,17 @@ async function loadMyClubList(force = false): Promise<void> {
 
     const list = Array.isArray(response.data) ? response.data : []
     userInfoStore.setClubList(list)
+    if (userId) {
+      void writeClubListCache(userId, list)
+    }
   } catch (error) {
-    const message = error instanceof Error ? error.message : '获取俱乐部失败'
-    showFailToast(message)
+    // 有缓存兜底时静默失败，避免在已有展示之上弹错。
+    if (!hasInitialData) {
+      const message = error instanceof Error ? error.message : '获取俱乐部失败'
+      showFailToast(message)
+    } else {
+      console.warn('[club-list] 静默刷新失败:', error)
+    }
   } finally {
     loadingMyClubs.value = false
   }

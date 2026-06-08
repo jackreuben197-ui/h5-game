@@ -1034,12 +1034,14 @@ function formatChipBase(rawValue: number): string {
   if (!Number.isFinite(display)) return '0'
   return display.toFixed(2).replace(/\.?0+$/, '')
 }
+const handleBack = () => {
+  router.push('/club')
+}
 </script>
 
 <template>
-  <div class="room-list-page themeType2" :style="[backgroundStyle, pageStyle]">
-    <div class="bg-overlay"></div>
-    <HeaderBack>
+  <div class="page-shell room-list-page themeType2" :style="[backgroundStyle, pageStyle]">
+    <HeaderBack @back="handleBack">
       <div class="club-identity">
         <div class="club-avatar">
           <img :src="clubCoverUrl" alt="club avatar" />
@@ -1070,6 +1072,7 @@ function formatChipBase(rawValue: number): string {
           @click="router.push('/wallet')"
         />
         <TopActionButton
+          v-if="currentClub?.support_im_rid"
           :name="t('UIMineMain01')"
           :icon="serviceIcon"
           icon-alt="service"
@@ -1396,7 +1399,6 @@ function formatChipBase(rawValue: number): string {
   max-width: min(2.9rem, 42vw);
   font-size: 0.345rem;
   font-weight: 700;
-  line-height: 0.83;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1492,7 +1494,11 @@ function formatChipBase(rawValue: number): string {
   align-items: center;
   justify-content: space-between;
   gap: 0.0832rem;
-  background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
+  background: linear-gradient(
+    97deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  );
   box-shadow: inset 0 0 0 0.0133rem rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(0.0021rem);
   transition: min-height 0.2s ease;
@@ -1555,11 +1561,11 @@ function formatChipBase(rawValue: number): string {
     rgba(103, 103, 103, 0.1) 33.62%,
     rgba(73, 73, 73, 0.2) 69.79%
   );
-  backdrop-filter: blur(0.2021rem);
+  backdrop-filter: blur(0.2rem);
   box-shadow:
-    inset 0 0 0.2298rem black,
-    inset 0.0566rem 0.1132rem 0.4596rem rgba(242, 242, 242, 0.9),
-    0.0919rem 0.1149rem 0.1838rem rgba(0, 0, 0, 0.25);
+    0.092rem 0.115rem 0.184rem rgba(0, 0, 0, 0.25),
+    inset 0 0 0.23rem rgba(0, 0, 0, 1),
+    inset 0.057rem 0.113rem 0.46rem rgba(242, 242, 242, 0.9);
 }
 
 .club-notice-club-pill {
@@ -1636,10 +1642,12 @@ function formatChipBase(rawValue: number): string {
   position: relative;
   border: 0;
   background: transparent;
-  color: #FFF;
+  color: #fff;
   text-align: center;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: "HONOR Sans CN", sans-serif;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
+  font-family: 'HONOR Sans CN', sans-serif;
   font-size: 0.3521rem;
   font-style: normal;
   font-weight: 500;
@@ -1649,10 +1657,12 @@ function formatChipBase(rawValue: number): string {
 }
 
 .club-header-tab--active {
-  color: #FFF;
+  color: #fff;
   text-align: center;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: "HONOR Sans CN", sans-serif;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
+  font-family: 'HONOR Sans CN', sans-serif;
   font-size: 0.3521rem;
   font-style: normal;
   font-weight: 700;
@@ -1702,8 +1712,10 @@ function formatChipBase(rawValue: number): string {
   inset: -0.0107rem;
   border-radius: inherit;
   border: 0.0107rem solid rgba(255, 255, 255, 0.58);
-  box-shadow: inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
-    inset 0 0 0.2rem rgba(255, 255, 255, 0.14), 0 0 0.08rem rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
+    inset 0 0 0.2rem rgba(255, 255, 255, 0.14),
+    0 0 0.08rem rgba(255, 255, 255, 0.18);
   filter: blur(0.002rem);
   pointer-events: none;
   z-index: 4;
@@ -1766,9 +1778,11 @@ function formatChipBase(rawValue: number): string {
   position: relative;
   z-index: 3;
   margin-left: 1.45rem;
-  color: #FFF;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: "HONOR Sans CN", sans-serif;
+  color: #fff;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
+  font-family: 'HONOR Sans CN', sans-serif;
   font-size: 0.4177rem;
   font-style: normal;
   font-weight: 700;
@@ -1803,7 +1817,7 @@ function formatChipBase(rawValue: number): string {
   align-self: stretch;
   border-radius: 0.1687rem;
   padding: 0.7791rem 0.4559rem 2.2rem 0.4559rem;
-  background: rgba(34, 34, 34, 0.50);
+  background: rgba(34, 34, 34, 0.5);
   backdrop-filter: blur(0.2213rem);
 }
 
@@ -1815,6 +1829,12 @@ function formatChipBase(rawValue: number): string {
   width: 100%;
   overflow-y: auto;
   padding-bottom: 2.2rem;
+  padding: 0.34rem 0.96rem 2.2rem 0.38rem;
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(0.8032rem) saturate(1.04);
+  width: 10.56rem;
+  margin-left: -0.28rem;
+  margin-bottom: -2rem;
 }
 
 .mtt-content {

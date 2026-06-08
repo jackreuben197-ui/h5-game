@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { postClubAgentUserListApi, postOrgClubAgentInviTationApi } from '@/api/org'
+import { Icon } from '@iconify/vue'
+import {
+  postClubAgentUserListApi,
+  postOrgClubAgentCreditBalanceApi,
+  postOrgClubAgentCreditLimitApi,
+  postOrgClubAgentInviTationApi,
+} from '@/api/org'
+import { postUserAgencyGoldGrantApi, postUserAgencySendDiamondsApi } from '@/api/user'
 import type { ClubAgentUserListRecord } from '@/api/models/org'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -12,6 +19,7 @@ import imgSearch from '@/assets/icons/club_search.svg'
 import imgInfo from '@/assets/icons/tips.svg'
 import { extractInvitationLink } from '@/utils/clubInvitation'
 import { saveQrCodeImage } from '@/utils/qrcode'
+import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 // 主容器背景图：全页面共用一张底图。
@@ -19,13 +27,45 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
+type FundAssetTab = 'coin' | 'quota' | 'diamond'
+type QuotaEditField = 'disposable' | 'review'
+type QuotaAdjustMode = 'increase' | 'decrease'
+
+interface DownlineMemberItem {
+  id: number
+  name: string
+  uid: string
+  avatar: string
+  uc: number
+  disposableCredit: number
+  reviewCredit: number
+  diamond: number
+}
+
 const userInfoStore = useUserInfoStore()
 
 const loading = ref(false)
 const keyword = ref('')
-const members = ref<ClubAgentUserListRecord[]>([])
+const members = ref<DownlineMemberItem[]>([])
 const total = ref(0)
 const invitationLink = ref('')
+const showFundSheet = ref(false)
+const activeMember = ref<DownlineMemberItem | null>(null)
+const fundAssetTab = ref<FundAssetTab>('coin')
+const fundAmountInput = ref('')
+const quotaEditField = ref<QuotaEditField | null>(null)
+const quotaAdjustMode = ref<QuotaAdjustMode>('increase')
+const quotaInput = ref('')
+const disposableQuota = ref(0)
+const reviewQuota = ref(0)
+const submittingFund = ref(false)
+
+const keypadRows = [
+  ['1', '2', '3'],
+  ['4', '5', '6'],
+  ['7', '8', '9'],
+  ['C', '0', 'DEL'],
+] as const
 
 const totalText = computed(() => {
   const current = members.value.length
@@ -34,6 +74,79 @@ const totalText = computed(() => {
 })
 
 const invitationPreview = computed(() => invitationLink.value || '未获取到邀请链接')
+const shouldShowCoinFundTab = computed(
+  () =>
+    toSafeNumber(userInfoStore.currentClub?.tribe_id) > 0 &&
+    toSafeNumber(userInfoStore.currentClub?.agent_uc_switch) === 1,
+)
+const availableFundAssetTabs = computed<FundAssetTab[]>(() => {
+  const tabs: FundAssetTab[] = []
+  if (shouldShowCoinFundTab.value) {
+    tabs.push('coin')
+  }
+  tabs.push('quota')
+  tabs.push('diamond')
+  return tabs
+})
+const agentCoinBalance = computed(() => toSafeNumber(userInfoStore.currentClub?.user_gold))
+const agentDiamondBalance = computed(() => toSafeNumber(userInfoStore.userInfo?.user?.diamonds))
+const agentDisposableQuotaBalance = computed(() =>
+  toSafeNumber(userInfoStore.currentClub?.user_credit),
+)
+
+const currentFundBalanceText = computed(() => {
+  if (!activeMember.value) {
+    return '--'
+  }
+
+  if (fundAssetTab.value === 'diamond') {
+    return String(activeMember.value.diamond)
+  }
+
+  return formatUC(activeMember.value.uc)
+})
+
+const currentInputText = computed(() => {
+  if (fundAssetTab.value === 'quota' && quotaEditField.value) {
+    return quotaInput.value || '请输入调整额度'
+  }
+
+  return fundAmountInput.value || '请输入发放数量'
+})
+
+function toSafeNumber(value: unknown): number {
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? numberValue : 0
+}
+
+function mapMember(record: ClubAgentUserListRecord): DownlineMemberItem {
+  const id = toSafeNumber(record.user_id)
+  return {
+    id,
+    name: String(record.remark_name || record.nick_name || `成员${id || '--'}`),
+    uid: String(record.random_num || '--'),
+    avatar: String(record.avatar || imgAvatar),
+    uc: toSafeNumber(record.gold),
+    disposableCredit: toSafeNumber(record.club_gold_credit),
+    reviewCredit: toSafeNumber(record.club_gold_credit_limit),
+    diamond: toSafeNumber(record.diamonds),
+  }
+}
+
+function patchMemberOnList(member: DownlineMemberItem): void {
+  const index = members.value.findIndex((item) => item.id === member.id)
+  if (index < 0) {
+    return
+  }
+
+  const next = [...members.value]
+  next[index] = member
+  members.value = next
+}
+
+function pickDefaultFundAssetTab(): FundAssetTab {
+  return availableFundAssetTabs.value[0] || 'quota'
+}
 
 async function loadMembers() {
   loading.value = true
@@ -43,9 +156,11 @@ async function loadMembers() {
       club_id: userInfoStore.currentClub?.club_id,
       sort_type: 4,
       order_type: 2,
-      keyword: keyword.value.trim(),
+      search: keyword.value.trim(),
       offset: 0,
-      limit: 50,
+      limit: 20,
+      simple: true,
+      return_diamonds: true,
     })
 
     if (response.code !== 0 || !response.data) {
@@ -56,7 +171,7 @@ async function loadMembers() {
     }
 
     const records = Array.isArray(response.data.data) ? response.data.data : []
-    members.value = records
+    members.value = records.map(mapMember)
     total.value = Number(response.data.total ?? records.length)
   } catch (error) {
     console.error('loadMembers error', error)
@@ -96,9 +211,11 @@ async function loadInvitationLink() {
     }
 
     const link = extractInvitationLink(response.data)
-    invitationLink.value = link
-    if (link) {
-      userInfoStore.setClubAgentInvitation(currentClub.random_id, link)
+    let finalLink = link
+
+    invitationLink.value = finalLink
+    if (finalLink) {
+      userInfoStore.setClubAgentInvitation(currentClub.random_id, finalLink)
     }
   } catch (error) {
     console.error('loadInvitationLink error', error)
@@ -108,6 +225,225 @@ async function loadInvitationLink() {
 
 function onSearch() {
   void loadMembers()
+}
+
+function openFundSheet(member: DownlineMemberItem): void {
+  activeMember.value = member
+  showFundSheet.value = true
+  fundAssetTab.value = pickDefaultFundAssetTab()
+  fundAmountInput.value = ''
+  quotaInput.value = ''
+  quotaEditField.value = null
+  quotaAdjustMode.value = 'increase'
+  disposableQuota.value = member.disposableCredit
+  reviewQuota.value = member.reviewCredit
+}
+
+function closeFundSheet(): void {
+  showFundSheet.value = false
+  quotaEditField.value = null
+}
+
+function switchFundAsset(tab: FundAssetTab): void {
+  if (!availableFundAssetTabs.value.includes(tab)) {
+    return
+  }
+
+  fundAssetTab.value = tab
+
+  if (tab !== 'quota') {
+    quotaEditField.value = null
+    quotaInput.value = ''
+    quotaAdjustMode.value = 'increase'
+  }
+}
+
+function editQuota(field: QuotaEditField): void {
+  quotaEditField.value = field
+  quotaInput.value = ''
+  quotaAdjustMode.value = 'increase'
+}
+
+function onKeypadPress(key: string): void {
+  const isQuotaEditing = fundAssetTab.value === 'quota' && quotaEditField.value
+  const target = isQuotaEditing ? quotaInput : fundAmountInput
+
+  if (key === 'C') {
+    target.value = ''
+    return
+  }
+
+  if (key === 'DEL') {
+    target.value = target.value.slice(0, -1)
+    return
+  }
+
+  if (target.value.length >= 9) {
+    return
+  }
+
+  target.value += key
+}
+
+async function submitQuotaUpdate(options: {
+  field: QuotaEditField
+  amount: number
+  adjustMode: QuotaAdjustMode
+}): Promise<void> {
+  const member = activeMember.value
+  if (!member?.id) {
+    showFailToast('未找到成员信息')
+    return
+  }
+
+  const signedAmount =
+    options.adjustMode === 'decrease' ? -Math.abs(options.amount) : Math.abs(options.amount)
+  const payload = {
+    user_id: member.id,
+    gold_type: 3,
+    amount: signedAmount * 100,
+    is_reset: false,
+  }
+
+  const response =
+    options.field === 'disposable'
+      ? await postOrgClubAgentCreditBalanceApi(payload)
+      : await postOrgClubAgentCreditLimitApi(payload)
+
+  if (response.code !== 0) {
+    throw new Error(typeof response.msg === 'string' ? response.msg : '额度发放失败')
+  }
+}
+
+async function onFundConfirm(): Promise<void> {
+  if (submittingFund.value) {
+    return
+  }
+
+  const member = activeMember.value
+  if (!member?.id) {
+    showFailToast('未找到成员信息')
+    return
+  }
+
+  if (fundAssetTab.value === 'quota') {
+    if (!quotaEditField.value || !quotaInput.value) {
+      showFailToast('请输入正确的额度')
+      return
+    }
+
+    const amount = Number.parseInt(quotaInput.value, 10)
+    if (Number.isNaN(amount) || amount <= 0) {
+      showFailToast('请输入正确的额度')
+      return
+    }
+
+    if (quotaAdjustMode.value === 'increase') {
+      const required = amount * 100
+      const available = agentDisposableQuotaBalance.value
+      if (required > available) {
+        showFailToast('额度余额不足')
+        return
+      }
+    }
+
+    submittingFund.value = true
+    try {
+      await submitQuotaUpdate({
+        field: quotaEditField.value,
+        amount,
+        adjustMode: quotaAdjustMode.value,
+      })
+
+      const delta = quotaAdjustMode.value === 'increase' ? amount * 100 : -amount * 100
+      if (quotaEditField.value === 'disposable') {
+        disposableQuota.value = Math.max(0, disposableQuota.value + delta)
+        member.disposableCredit = disposableQuota.value
+        const nextAgentCredit = Math.max(0, agentDisposableQuotaBalance.value - delta)
+        userInfoStore.syncCurrentClubFields({ user_credit: nextAgentCredit })
+      } else {
+        reviewQuota.value = reviewQuota.value + delta
+        member.reviewCredit = reviewQuota.value
+        member.disposableCredit += delta
+        const nextAgentCredit = Math.max(0, agentDisposableQuotaBalance.value - delta)
+        userInfoStore.syncCurrentClubFields({ user_credit: nextAgentCredit })
+      }
+
+      patchMemberOnList({ ...member })
+      quotaInput.value = ''
+      quotaEditField.value = null
+      showSuccessToast('额度发放成功')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '额度发放失败'
+      showFailToast(message)
+    } finally {
+      submittingFund.value = false
+    }
+    return
+  }
+
+  const amount = Number.parseInt(fundAmountInput.value, 10)
+  if (Number.isNaN(amount) || amount <= 0) {
+    showFailToast('请输入正确的发放数量')
+    return
+  }
+
+  if (fundAssetTab.value === 'coin' && amount * 100 > agentCoinBalance.value) {
+    showFailToast('联盟币余额不足')
+    return
+  }
+
+  if (fundAssetTab.value === 'diamond' && amount > agentDiamondBalance.value) {
+    showFailToast('钻石余额不足')
+    return
+  }
+
+  submittingFund.value = true
+  try {
+    let response: { code?: number; msg?: string } = {}
+
+    if (fundAssetTab.value === 'diamond') {
+      response = await postUserAgencySendDiamondsApi(
+        {
+          user_id: member.id,
+          amount,
+        },
+        userInfoStore.currentClub?.club_id,
+      )
+    } else {
+      response = await postUserAgencyGoldGrantApi(
+        {
+          user_id: member.id,
+          amount: amount * 100,
+          op_type: 1,
+        },
+        userInfoStore.currentClub?.club_id,
+      )
+    }
+
+    if (response.code !== 0) {
+      throw new Error(typeof response.msg === 'string' ? response.msg : '发放失败')
+    }
+
+    if (fundAssetTab.value === 'diamond') {
+      member.diamond += amount
+      const nextDiamond = Math.max(0, agentDiamondBalance.value - amount)
+      userInfoStore.syncCurrentClubFields({ diamonds: nextDiamond })
+    } else {
+      member.uc += amount * 100
+      const nextCoin = Math.max(0, agentCoinBalance.value - amount * 100)
+      userInfoStore.syncCurrentClubFields({ user_gold: nextCoin })
+    }
+
+    patchMemberOnList({ ...member })
+    showSuccessToast('发放成功')
+    closeFundSheet()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '发放失败'
+    showFailToast(message)
+  } finally {
+    submittingFund.value = false
+  }
 }
 
 async function onSaveQrCode() {
@@ -159,50 +495,230 @@ onMounted(async () => {
       </div>
 
       <div class="total-row">
-        <span class="total-title">Total Members</span>
+        <span class="total-title">成员总数</span>
         <span class="total-value">{{ totalText }}</span>
       </div>
 
       <div class="members-wrap">
-        <div v-for="member in members" :key="member.user_id" class="member-card">
-          <img class="member-avatar" :src="member.avatar || imgAvatar" alt="avatar" />
-
-          <div class="member-main">
-            <div class="member-top">
-              <p class="member-name">
-                {{ member.nick_name || member.remark_name || '未命名成员' }}
-              </p>
+        <div v-for="member in members" :key="member.id" class="member-card">
+          <div class="member-head">
+            <img class="member-avatar" :src="member.avatar" :alt="`${member.name}头像`" />
+            <div class="member-head-main">
+              <p class="member-name">{{ member.name }}</p>
+              <div class="member-id-row">
+                <span class="member-id-tag">ID</span>
+                <span class="member-id">{{ member.uid }}</span>
+              </div>
             </div>
+          </div>
 
-            <div class="member-id-row">
-              <span class="member-id-tag">ID</span>
-              <span class="member-id">{{ member.random_num || '--' }}</span>
-            </div>
-
-            <div class="member-assets">
-              <p class="asset-item">
-                <img :src="imgChips" alt="uc" />
-                <span class="asset-label">UC</span>
-                <strong class="asset-value">{{ member.gold || 0 }}</strong>
-              </p>
-              <p class="asset-item">
-                <img :src="imgBalance" alt="credit" />
-                <span class="asset-label">免审额</span>
-                <strong class="asset-value">
-                  {{ member.club_gold_credit }}/{{ member.club_gold_credit_limit }}
-                </strong>
-              </p>
-              <p class="asset-item">
-                <img :src="imgDiamond" alt="diamond" />
-                <span class="asset-label">钻石</span>
-                <strong class="asset-value">{{ member.diamonds || 0 }}</strong>
-              </p>
-            </div>
+          <div class="member-assets" @click="openFundSheet(member)">
+            <p class="asset-item">
+              <img :src="imgChips" alt="uc" />
+              <span class="asset-label">UC</span>
+              <strong class="asset-value">{{ formatUC(member.uc) }}</strong>
+            </p>
+            <p class="asset-item">
+              <img :src="imgBalance" alt="credit" />
+              <span class="asset-label">额度</span>
+              <strong class="asset-value">
+                {{ formatUC(member.disposableCredit) }}/{{ formatUC(member.reviewCredit) }}
+              </strong>
+            </p>
+            <p class="asset-item">
+              <img :src="imgDiamond" alt="diamond" />
+              <span class="asset-label">钻石</span>
+              <strong class="asset-value">{{ member.diamond }}</strong>
+            </p>
           </div>
         </div>
 
         <div v-if="!members.length && !loading" class="empty-box">暂无下线成员</div>
       </div>
+
+      <div v-if="showFundSheet" class="fund-sheet-mask" @click="closeFundSheet"></div>
+
+      <section v-if="showFundSheet && activeMember" class="fund-sheet" @click.stop>
+        <div class="fund-tabs" role="tablist" aria-label="基金资产类型">
+          <button
+            v-if="shouldShowCoinFundTab"
+            type="button"
+            class="fund-tab"
+            :class="{ 'fund-tab--active': fundAssetTab === 'coin' }"
+            @click="switchFundAsset('coin')"
+          >
+            联盟币
+          </button>
+          <button
+            type="button"
+            class="fund-tab"
+            :class="{ 'fund-tab--active': fundAssetTab === 'quota' }"
+            @click="switchFundAsset('quota')"
+          >
+            额度
+          </button>
+          <button
+            type="button"
+            class="fund-tab"
+            :class="{ 'fund-tab--active': fundAssetTab === 'diamond' }"
+            @click="switchFundAsset('diamond')"
+          >
+            钻石
+          </button>
+        </div>
+
+        <div v-if="fundAssetTab === 'quota'" class="quota-body">
+          <div class="sheet-row sheet-row--top">
+            <p class="sheet-label">用户名</p>
+            <p class="sheet-username">
+              <span>{{ activeMember.name }}</span>
+              <span class="sheet-id-tag">ID</span>
+              <span>{{ activeMember.uid }}</span>
+            </p>
+          </div>
+
+          <div class="sheet-row">
+            <div class="quota-group-label">
+              <p>可支配额度</p>
+              <p>{{ formatUC(disposableQuota) }}</p>
+            </div>
+            <div class="quota-actions">
+              <button
+                type="button"
+                class="quota-action quota-action--primary"
+                @click="editQuota('disposable')"
+              >
+                发放
+              </button>
+            </div>
+          </div>
+
+          <section v-if="quotaEditField === 'disposable'" class="quota-editor">
+            <div class="quota-mode-row">
+              <button
+                type="button"
+                class="quota-mode"
+                :class="{ 'quota-mode--active': quotaAdjustMode === 'increase' }"
+                @click="quotaAdjustMode = 'increase'"
+              >
+                增加额度
+              </button>
+              <button
+                type="button"
+                class="quota-mode"
+                :class="{ 'quota-mode--active': quotaAdjustMode === 'decrease' }"
+                @click="quotaAdjustMode = 'decrease'"
+              >
+                减少额度
+              </button>
+            </div>
+            <div class="quota-input-pill">{{ currentInputText }}</div>
+          </section>
+
+          <div class="sheet-row">
+            <div class="quota-group-label">
+              <p>免审核额度</p>
+              <p>{{ formatUC(reviewQuota) }}</p>
+            </div>
+            <div class="quota-actions">
+              <button
+                type="button"
+                class="quota-action quota-action--primary"
+                @click="editQuota('review')"
+              >
+                发放
+              </button>
+            </div>
+          </div>
+
+          <section v-if="quotaEditField === 'review'" class="quota-editor">
+            <div class="quota-mode-row">
+              <button
+                type="button"
+                class="quota-mode"
+                :class="{ 'quota-mode--active': quotaAdjustMode === 'increase' }"
+                @click="quotaAdjustMode = 'increase'"
+              >
+                增加额度
+              </button>
+              <button
+                type="button"
+                class="quota-mode"
+                :class="{ 'quota-mode--active': quotaAdjustMode === 'decrease' }"
+                @click="quotaAdjustMode = 'decrease'"
+              >
+                减少额度
+              </button>
+            </div>
+            <div class="quota-input-pill">{{ currentInputText }}</div>
+          </section>
+        </div>
+
+        <div v-else class="sheet-meta">
+          <div class="sheet-row sheet-row--top">
+            <p class="sheet-label">用户名</p>
+            <p class="sheet-username">
+              <span>{{ activeMember.name }}</span>
+              <span class="sheet-id-tag">ID</span>
+              <span>{{ activeMember.uid }}</span>
+            </p>
+          </div>
+
+          <div class="sheet-row">
+            <p class="sheet-label">余额</p>
+            <p class="sheet-balance">
+              <img
+                :src="fundAssetTab === 'diamond' ? imgDiamond : imgChips"
+                alt=""
+                aria-hidden="true"
+              />
+              <span>{{ currentFundBalanceText }}</span>
+            </p>
+          </div>
+
+          <div class="sheet-row">
+            <p class="sheet-label">发放数量</p>
+            <p class="sheet-balance">
+              <img
+                :src="fundAssetTab === 'diamond' ? imgDiamond : imgChips"
+                alt=""
+                aria-hidden="true"
+              />
+              <span :class="{ 'sheet-placeholder': !fundAmountInput }">{{ currentInputText }}</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="fund-keypad">
+          <div v-for="(row, rowIndex) in keypadRows" :key="rowIndex" class="fund-keypad-row">
+            <button
+              v-for="key in row"
+              :key="key"
+              type="button"
+              class="keypad-btn"
+              :class="{
+                'keypad-btn--accent': key === 'C' || key === 'DEL',
+                'keypad-btn--del': key === 'DEL',
+              }"
+              @click="onKeypadPress(key)"
+            >
+              <span v-if="key !== 'DEL'">{{ key }}</span>
+              <Icon v-else icon="solar:backspace-bold" />
+            </button>
+          </div>
+        </div>
+
+        <div class="sheet-footer-actions">
+          <button type="button" class="sheet-footer-btn" @click="closeFundSheet">取消</button>
+          <button
+            type="button"
+            class="sheet-footer-btn sheet-footer-btn--confirm"
+            @click="onFundConfirm"
+          >
+            发放
+          </button>
+        </div>
+      </section>
     </div>
   </div>
 </template>
@@ -332,15 +848,23 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 0.2667rem;
+  padding-bottom: calc(0.42rem + env(safe-area-inset-bottom));
 }
 
 .member-card {
   border-radius: 1.0557rem;
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.16rem);
-  padding: 0.1606rem 0.4392rem 0.2811rem 0.4459rem;
+  padding: 0.24rem 0.36rem;
   display: flex;
-  gap: 0.3209rem;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.member-head {
+  display: flex;
+  align-items: center;
+  gap: 0.24rem;
 }
 
 .member-avatar {
@@ -351,27 +875,32 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 
-.member-main {
+.member-head-main {
   flex: 1;
   min-width: 0;
-}
-
-.member-top {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.18rem;
 }
 
 .member-name {
   margin: 0;
   font-size: 0.3052rem;
   line-height: 1;
-  font-weight: 600;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .member-id-row {
-  margin-top: 0.205rem;
   display: inline-flex;
   align-items: center;
   gap: 0.0655rem;
+  margin: 0;
 }
 
 .member-id-tag {
@@ -395,7 +924,6 @@ onMounted(async () => {
 }
 
 .member-assets {
-  margin-top: 0.164rem;
   border-radius: 1.44rem;
   background:
     linear-gradient(
@@ -406,27 +934,28 @@ onMounted(async () => {
     ),
     rgba(34, 34, 34, 0.66);
   backdrop-filter: blur(0.8rem);
-  padding: 0.1182rem 0.5828rem;
+  padding: 0.16rem 0.32rem;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.1333rem;
-  min-height: 0.8353rem;
+  gap: 0.18rem;
+  min-height: 0.9rem;
+  cursor: pointer;
 }
 
 .asset-item {
   margin: 0;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.08rem;
+  align-items: center;
+  gap: 0.0533rem;
+  justify-content: center;
   min-width: 0;
   color: #f3f6ff;
-  font-size: 0.2566rem;
+  font-size: 0.24rem;
 }
 
 .asset-item img {
-  width: 0.2933rem;
-  height: 0.2933rem;
+  width: 0.32rem;
+  height: 0.32rem;
   object-fit: contain;
   flex-shrink: 0;
 }
@@ -434,10 +963,10 @@ onMounted(async () => {
 .asset-label {
   display: inline-flex;
   align-items: center;
-  gap: 0.0533rem;
   opacity: 0.72;
-  font-size: 0.2566rem;
+  font-size: 0.235rem;
   line-height: 1;
+  flex: 0 0 auto;
 }
 
 .asset-value {
@@ -445,9 +974,9 @@ onMounted(async () => {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: #fff;
-  font-size: 0.2566rem;
+  font-size: 0.248rem;
   line-height: 1;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .empty-box {
@@ -459,15 +988,259 @@ onMounted(async () => {
   color: rgba(255, 255, 255, 0.72);
 }
 
+.fund-sheet-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 12, 12, 0.6);
+  z-index: 40;
+}
+
+.fund-sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(100%, 10rem);
+  border-radius: 0.84459rem 0.84459rem 0 0;
+  padding: 0.64257rem 0.53209rem calc(0.5472rem + env(safe-area-inset-bottom));
+  background: linear-gradient(
+    90deg,
+    rgba(0, 8, 20, 0.95) 0%,
+    rgba(5, 5, 5, 0.95) 52%,
+    rgba(0, 8, 20, 0.95) 100%
+  );
+  box-shadow: 0 -0.16rem 0.53rem rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 0.43373rem;
+  z-index: 41;
+}
+
+.fund-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 1.28514rem;
+}
+
+.fund-tab {
+  border: 0;
+  background: transparent;
+  color: rgba(249, 249, 249, 0.7);
+  font-size: 0.37951rem;
+  padding: 0;
+  line-height: 0.95;
+}
+
+.fund-tab--active {
+  color: #f9f9f9;
+  border-bottom: 0.034rem solid #f9f9f9;
+}
+
+.sheet-meta,
+.quota-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.337rem;
+}
+
+.sheet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.24rem;
+}
+
+.sheet-row--top {
+  margin-top: 0.05rem;
+}
+
+.sheet-label {
+  margin: 0;
+  color: rgba(249, 249, 249, 0.7);
+  font-size: 0.432rem;
+}
+
+.sheet-username,
+.sheet-balance {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.12rem;
+  color: #f9f9f9;
+  font-size: 0.434rem;
+  font-weight: 500;
+}
+
+.sheet-id-tag {
+  min-width: 0.72rem;
+  height: 0.56rem;
+  border-radius: 0.204rem;
+  padding: 0 0.238rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.4);
+  font-size: 0.393rem;
+}
+
+.sheet-balance img {
+  width: 0.533rem;
+  height: 0.533rem;
+  object-fit: contain;
+}
+
+.sheet-placeholder {
+  color: rgba(249, 249, 249, 0.85);
+}
+
+.quota-group-label {
+  margin: 0;
+  color: rgba(249, 249, 249, 0.7);
+  font-size: 0.432rem;
+  line-height: 1.35;
+}
+
+.quota-group-label p {
+  margin: 0;
+}
+
+.quota-actions {
+  display: inline-flex;
+  gap: 0.225rem;
+}
+
+.quota-action {
+  min-width: 1.895rem;
+  height: 0.851rem;
+  border: 0;
+  border-radius: 4.016rem;
+  padding: 0 0.422rem;
+  background: rgba(6, 6, 6, 0.45);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.322rem;
+}
+
+.quota-action--primary {
+  background: rgba(5, 231, 174, 0.4);
+  color: #fff;
+}
+
+.quota-editor {
+  border-radius: 0.44053rem;
+  padding: 0.56rem;
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.33467rem;
+}
+
+.quota-mode-row {
+  display: flex;
+  align-items: center;
+  gap: 0.26667rem;
+}
+
+.quota-mode {
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.317rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.079rem;
+}
+
+.quota-mode::before {
+  content: '';
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  border: 0.03rem solid rgba(255, 255, 255, 0.5);
+  box-sizing: border-box;
+}
+
+.quota-mode--active {
+  color: #fff;
+}
+
+.quota-mode--active::before {
+  border-color: rgba(95, 247, 209, 0.92);
+  box-shadow: inset 0 0 0 0.1rem rgba(95, 247, 209, 0.85);
+}
+
+.quota-input-pill {
+  min-height: 0.88rem;
+  border-radius: 0.68472rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.24rem 0.34667rem;
+  display: flex;
+  align-items: center;
+  color: rgba(249, 249, 249, 0.95);
+  font-size: 0.325rem;
+}
+
+.fund-keypad {
+  display: flex;
+  flex-direction: column;
+  gap: 0.20587rem;
+}
+
+.fund-keypad-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.15261rem;
+}
+
+.keypad-btn {
+  min-height: 1.35393rem;
+  border: 0.01907rem solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.37751rem;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 0.61044rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.keypad-btn--accent {
+  background: rgba(4, 209, 157, 0.26);
+  border-color: transparent;
+}
+
+.keypad-btn--del {
+  font-size: 0.61044rem;
+}
+
+.sheet-footer-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25291rem;
+}
+
+.sheet-footer-btn {
+  min-height: 1.4372rem;
+  border: 0;
+  border-radius: 1.05761rem;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 0.4rem;
+}
+
+.sheet-footer-btn--confirm {
+  border: 0.013rem solid rgba(242, 242, 242, 0.8);
+  background: linear-gradient(156deg, #05e7ae 8%, #027a5c 72%);
+}
+
 @media (max-width: 360px) {
   .content {
     padding-left: 0.32rem;
     padding-right: 0.32rem;
   }
 
-  .member-assets {
-    grid-template-columns: 1fr;
-    border-radius: 0.4267rem;
+  .asset-item {
+    font-size: 0.22rem;
   }
 }
 </style>

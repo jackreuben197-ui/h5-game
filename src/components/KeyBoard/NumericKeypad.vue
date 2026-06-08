@@ -116,9 +116,10 @@ function confirm(): void {
         :class="['kp', { 'kp--plain': !showMask }]"
         :style="showMask ? { backgroundImage: `url(${mainBgUrl})` } : undefined"
         @click.self="cancel"
+        @dblclick.prevent
       >
         <div v-if="showMask" class="kp__dim" @click="cancel"></div>
-        <div :class="['kp__sheet', { 'kp__sheet--plain': !showMask }]">
+        <div :class="['kp__sheet', { 'kp__sheet--plain': !showMask }]" @dblclick.prevent>
           <div v-if="showInputArea" class="kp__header">
             <span class="kp__title">{{ title || t('Wallet_CustomAmount') }}</span>
             <div class="kp__input">
@@ -167,6 +168,10 @@ function confirm(): void {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .kp--plain {
@@ -203,6 +208,7 @@ function confirm(): void {
   backdrop-filter: blur(9.921565055847168px);
   -webkit-backdrop-filter: blur(9.921565055847168px);
   overflow: hidden;
+  touch-action: manipulation;
 }
 
 .kp__sheet::before,
@@ -282,6 +288,7 @@ function confirm(): void {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.22rem;
+  touch-action: manipulation;
 }
 
 .kp__key {
@@ -332,6 +339,9 @@ function confirm(): void {
 .kp__key:active {
   opacity: 0.7;
   transform: scale(0.96);
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .kp__key--accent {
@@ -357,6 +367,23 @@ function confirm(): void {
   padding: 0 0.2rem;
   margin-top: 0.13rem;
   width: 100%;
+  touch-action: manipulation;
+}
+
+.kp__cancel {
+  flex: 1;
+  height: 1.44rem;
+  border-radius: 1.05rem;
+  background: rgba(0, 0, 0, 0.55);
+  border: none;
+  color: #fff;
+  font-family: var(--wallet-font-cn);
+  font-weight: 500;
+  font-size: 0.4rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .kp__confirm {
@@ -390,6 +417,13 @@ function confirm(): void {
   font-style: normal !important;
   font-weight: 500 !important;
   line-height: 120% !important;
+}
+
+:deep(.kp__confirm),
+:deep(.kp__confirm *) {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .keypad-enter-active .kp__sheet,

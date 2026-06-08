@@ -17,6 +17,7 @@ import { useAppConfigStore } from '@/stores/appConfig'
 import { useTextI18n } from '@/i18n/useTextI18n'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
+import LoginModal from '@/views/login/LoginModal.vue'
 
 const route = useRoute()
 const gameStore = useGameStore()
@@ -115,17 +116,6 @@ async function fetchUserInfoOnEnter(): Promise<void> {
   })
 }
 
-// 路由变化时同步底部 Tab 共享状态，确保子页面也能维持正确高亮。
-watch(
-  () => route.meta.tabKey,
-  (tabKey) => {
-    if (typeof tabKey === 'string') {
-      tabsStore.setActiveTab(tabKey as MainTabKey)
-    }
-  },
-  { immediate: true },
-)
-
 function resolveLanguageCode(user: Record<string, unknown>): string {
   const languageKeys = ['language', 'client_language', 'system_language', 'lt']
   for (const key of languageKeys) {
@@ -140,6 +130,17 @@ function resolveLanguageCode(user: Record<string, unknown>): string {
 onMounted(() => {
   void fetchUserInfoOnEnter()
 })
+
+// 路由变化时同步底部 Tab 共享状态，确保子页面也能维持正确高亮。
+watch(
+  () => route.meta.tabKey,
+  (tabKey) => {
+    if (typeof tabKey === 'string') {
+      tabsStore.setActiveTab(tabKey as MainTabKey)
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -162,6 +163,7 @@ onMounted(() => {
     </div>
     <!-- 公共底部导航：跨模块复用。 -->
     <MainBottomTab />
+    <LoginModal />
   </div>
 </template>
 

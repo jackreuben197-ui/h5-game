@@ -74,14 +74,6 @@ function languageLabel(): string {
   return 'English'
 }
 
-function confirmLogout(): void {
-  showLogoutDialog.value = false
-  gameStore.clearLogin()
-  LoginSession.ClearWS()
-  showSuccessToast('已退出登录')
-  void router.replace('/login')
-}
-
 async function onRowClick(item: SettingItem): Promise<void> {
   if (item.clickable === false) {
     return
@@ -125,6 +117,18 @@ async function onRowClick(item: SettingItem): Promise<void> {
   if (item.key === 'line') {
     showFailToast('线路切换功能开发中')
   }
+}
+
+function onLogoutConfirm(): void {
+  showLogoutDialog.value = false
+  gameStore.clearLogin()
+  LoginSession.ClearWS()
+  showSuccessToast('已退出登录')
+  void router.replace('/guest/home')
+}
+
+function onLogoutCancel(): void {
+  showLogoutDialog.value = false
 }
 </script>
 
@@ -197,23 +201,31 @@ async function onRowClick(item: SettingItem): Promise<void> {
           </div>
           <div class="right">
             <span v-if="item.rightText" class="light">{{ item.rightText }}</span>
-            <img v-if="item.clickable !== false" class="arrow" :src="icArrowRight" alt="" aria-hidden="true" />
+            <img
+              v-if="item.clickable !== false"
+              class="arrow"
+              :src="icArrowRight"
+              alt=""
+              aria-hidden="true"
+            />
           </div>
         </button>
       </section>
     </div>
-  </div>
 
-  <GameDialog
-    v-model:show="showLogoutDialog"
-    title="退出登录"
-    message="确认退出当前账号吗？"
-    :show-cancel-button="true"
-    cancel-button-text="取消"
-    confirm-button-text="确认"
-    @confirm="confirmLogout"
-    @cancel="showLogoutDialog = false"
-  />
+    <GameDialog
+      v-model:show="showLogoutDialog"
+      title="退出登录"
+      :show-cancel-button="true"
+      :close-on-click-overlay="true"
+      confirm-button-text="确认"
+      cancel-button-text="取消"
+      @confirm="onLogoutConfirm"
+      @cancel="onLogoutCancel"
+    >
+      <div class="logout-confirm-text">确认退出当前账号吗？</div>
+    </GameDialog>
+  </div>
 </template>
 
 <style scoped lang="scss">
@@ -326,5 +338,12 @@ async function onRowClick(item: SettingItem): Promise<void> {
       transform: translateX(0.44rem);
     }
   }
+}
+
+.logout-confirm-text {
+  text-align: center;
+  font-size: 0.38rem;
+  color: #fff;
+  padding: 0.2rem 0;
 }
 </style>

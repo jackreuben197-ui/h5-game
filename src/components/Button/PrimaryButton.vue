@@ -28,7 +28,14 @@ function handleClick(event: MouseEvent): void {
 
 <template>
   <button
-    :class="['primary-btn', { 'primary-btn--disabled': props.disabled, 'primary-btn--no-shadow': !props.shadow, 'primary-btn--glass': props.glass }]"
+    :class="[
+      'primary-btn',
+      {
+        'primary-btn--disabled': props.disabled,
+        'primary-btn--no-shadow': !props.shadow,
+        'primary-btn--glass': props.glass,
+      },
+    ]"
     type="button"
     :disabled="props.disabled"
     @click="handleClick"
@@ -44,7 +51,7 @@ function handleClick(event: MouseEvent): void {
   height: 1.47rem;
   border: none;
   border-radius: 1.08rem;
-  background: linear-gradient(157deg, #55F329 0%, #3EAD06 100%);
+  background: linear-gradient(157deg, #55f329 0%, #3ead06 100%);
   color: #fff;
   font-size: 0.5rem;
   font-weight: 500;
@@ -57,8 +64,8 @@ function handleClick(event: MouseEvent): void {
 
   /* 内嵌高光边框效果 */
   box-shadow:
-    inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
-    inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
+    inset 0.5px 0.5px 0px 0px rgba(242, 242, 242, 0.8),
+    inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.5);
 
   &.primary-btn--no-shadow {
     box-shadow: none;
@@ -93,7 +100,11 @@ function handleClick(event: MouseEvent): void {
   }
 
   &.primary-btn--glass {
-    background: linear-gradient(126.81deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
+    background: linear-gradient(
+      126.81deg,
+      rgba(255, 255, 255, 0.1) 21.1%,
+      rgba(230, 230, 230, 0.1) 71.4%
+    );
     backdrop-filter: blur(0.0133rem);
     box-shadow: none;
     border-radius: 1.004rem;

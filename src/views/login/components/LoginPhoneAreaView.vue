@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { postRegisterAreaApi } from '@/api/config'
 import type { RegisterAreaRecord } from '@/api/models/config'
@@ -13,7 +12,6 @@ interface AreaOption {
   countryCode: string
 }
 
-const LOGIN_PHONE_AREA_SELECTION_KEY = 'LOGIN_PHONE_AREA_SELECTED_V1'
 const LOGIN_AREA_LIST_CACHE_VERSION = 1
 
 interface LoginAreaListCachePayload {
@@ -22,8 +20,19 @@ interface LoginAreaListCachePayload {
   records: RegisterAreaRecord[]
 }
 
-const route = useRoute()
-const router = useRouter()
+withDefaults(
+  defineProps<{
+    currentCode?: string
+  }>(),
+  {
+    currentCode: '',
+  },
+)
+
+const emit = defineEmits<{
+  back: [event: MouseEvent]
+  select: [code: string]
+}>()
 
 const loading = ref(false)
 const keyword = ref('')
@@ -89,8 +98,7 @@ async function loadAreaList(): Promise<void> {
 
 function onSelectArea(item: AreaOption): void {
   localStore.setItem(StorageKey.KEY_PHONE_FIRST, item.code)
-  window.sessionStorage.setItem(LOGIN_PHONE_AREA_SELECTION_KEY, item.code)
-  void router.back()
+  emit('select', item.code)
 }
 
 function normalizeAreaOption(row: RegisterAreaRecord): AreaOption | null {
@@ -145,7 +153,7 @@ function persistAreaRows(rows: RegisterAreaRecord[]): void {
 
 <template>
   <div class="phone-area-page">
-    <HeaderBack :title="resolveI18nText('UILogin_AreaCode', '选择区号')" />
+    <HeaderBack :title="resolveI18nText('UILogin_AreaCode', '选择区号')" @back="emit('back', $event)" />
 
     <div class="search-wrap">
       <input

@@ -11,7 +11,6 @@ import {
 } from 'vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import dialogBg from '@/assets/images/component_dialog_bg.png'
-import tableBg from '@/assets/images/table_bg.webp'
 import { t } from '@/i18n'
 
 /**
@@ -114,7 +113,6 @@ const dialogStyle = computed<StyleValue>(() => ({
 const cardStyles = computed<StyleValue>(() => [
   {
     backgroundImage: `url(${dialogBg})`,
-    '--game-dialog-table-bg': `url(${tableBg})`,
     '--game-dialog-card-min-height': props.cardMinHeight,
   },
   props.cardStyle,
@@ -156,7 +154,6 @@ const bodyStyles = computed<StyleValue>(() => [
           :style="{ backgroundImage: `url(${dialogBg})` }"
         ></div>
         <div class="game-dialog__card-bg-shadow"></div>
-
 
         <!-- Title -->
         <div v-if="title || hasTitleSlotContent" class="game-dialog__title">
@@ -224,6 +221,15 @@ const bodyStyles = computed<StyleValue>(() => [
   border: 0.956px solid rgba(242, 242, 242, 0.4);
   box-shadow: 3.446px 4.308px 6.893px rgba(0, 0, 0, 0.25);
   overflow: hidden;
+  background-size: 100% auto;
+  background-position: top center;
+  background-repeat: no-repeat;
+  box-shadow:
+    inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
+    /* 左上高光 */ inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.85),
+    inset 2px 2px 0px -2px rgba(255, 255, 255, 0.3),
+    /* 右下高光 */ inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.85),
+    inset -2px -2px 0px -2px rgba(255, 255, 255, 0.3);
   display: flex;
   flex-direction: column;
   padding: 0.5rem;
@@ -235,6 +241,11 @@ const bodyStyles = computed<StyleValue>(() => [
 .game-dialog__card-bg-shadow {
   position: absolute;
   inset: 0;
+  z-index: 0;
+  background-image: none !important;
+  // background: rgba(6, 7, 10, 0.5);
+  backdrop-filter: blur(0.18rem);
+  -webkit-backdrop-filter: blur(0.18rem);
   pointer-events: none;
 }
 
@@ -263,6 +274,13 @@ const bodyStyles = computed<StyleValue>(() => [
   filter: blur(10px) brightness(0.6);
   transform: scale(1.05);
   z-index: 0;
+  background: rgba(8, 8, 8, 0.25);
+  box-shadow:
+    inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
+    inset 0.5px 0.5px 0 0 rgba(255, 255, 255, 0.85),
+    inset 2px 2px 0 -2px rgba(255, 255, 255, 0.3),
+    inset -0.5px -0.5px 0 0 rgba(255, 255, 255, 0.85),
+    inset -2px -2px 0 -2px rgba(255, 255, 255, 0.3);
   pointer-events: none;
 }
 

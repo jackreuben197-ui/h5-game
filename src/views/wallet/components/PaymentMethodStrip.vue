@@ -29,21 +29,14 @@ const emit = defineEmits<{
       @click="emit('select', i)"
     >
       <div class="method__coin">
-        <img
-          :src="m.icon"
-          alt=""
-          class="method__coin-img"
-        />
+        <img :src="m.icon" alt="" class="method__coin-img" />
       </div>
       <div class="method__label">
         <div class="method__label-row">
           <span class="method__label-primary">{{ m.primary }}</span>
           <!-- <span class="method__label-suffix">{{ $txt('Wallet_PaySuffix') }}</span> -->
         </div>
-        <span
-          v-if="m.secondary"
-          class="method__label-secondary"
-        >
+        <span v-if="m.secondary" class="method__label-secondary">
           {{ m.secondary }}
         </span>
       </div>
@@ -95,7 +88,7 @@ const emit = defineEmits<{
   padding: 0.55rem 0.15rem 0.1rem;
   width: 65.367px;
   height: 46.389px;
-  background: rgba(255, 255, 255, 0.20);
+  background: rgba(255, 255, 255, 0.2);
   border: 0.357px solid transparent;
   border-radius: 9.287px;
   display: flex;
@@ -115,8 +108,12 @@ const emit = defineEmits<{
   border-radius: inherit;
   padding: 0.357px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(153, 153, 153, 1) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -124,7 +121,11 @@ const emit = defineEmits<{
 
 .method--active .method__label {
   border-radius: 10.543px;
-  background: radial-gradient(47.75% 48.13% at 41.94% 52.55%, rgba(37, 49, 107, 0.50) 0%, rgba(16, 16, 16, 0.50) 100%);
+  background: radial-gradient(
+    47.75% 48.13% at 41.94% 52.55%,
+    rgba(37, 49, 107, 0.5) 0%,
+    rgba(16, 16, 16, 0.5) 100%
+  );
   background-blend-mode: soft-light;
   border: none;
   font-weight: 600;
@@ -135,8 +136,8 @@ const emit = defineEmits<{
 }
 
 .method__label-row {
-  display: flex;
-  flex-wrap: wrap;
+  // display: flex;
+  // flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 0.09rem;
@@ -156,6 +157,7 @@ const emit = defineEmits<{
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   line-height: 1.1;
+  margin-bottom: 0.1rem;
 }
 
 .method__label-suffix {

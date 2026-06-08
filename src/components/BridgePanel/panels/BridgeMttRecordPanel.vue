@@ -149,7 +149,7 @@ const prizePool = computed(() => fmtMoney(more.value?.prize_pool ?? realPrize.va
 const myRank = computed(() => {
   const myUrid = Number(gameStore.loginUserId)
   if (!myUrid) return '-'
-  const record = rankData.value?.records?.find(r => Number(r.urid) === myUrid)
+  const record = rankData.value?.records?.find((r) => Number(r.urid) === myUrid)
   if (!record?.rank) return '-'
   return String(record.rank)
 })
@@ -629,14 +629,14 @@ onUnmounted(() => {
             type="button"
             @click="playerMode = 'rank'"
           >
-            {{ t('UITexasReport_player') }}
+            {{ t('Ranking') }}
           </button>
           <button
             :class="['mrp__mode-btn', { 'mrp__mode-btn--active': playerMode === 'hunter' }]"
             type="button"
             @click="playerMode = 'hunter'"
           >
-            {{ t('UIReward_Bounty') }}
+            {{ t('Hunter_Rank') }}
           </button>
         </div>
 
@@ -804,7 +804,10 @@ onUnmounted(() => {
   box-sizing: border-box;
   color: #f9f9f9;
   font-family: 'HONOR Sans CN', sans-serif;
-  background: url('@/assets/images/table_bg.webp') center / cover no-repeat;
+  // background: rgba(6, 7, 10, 0.5);
+  background: none;
+  backdrop-filter: blur(0.18rem);
+  -webkit-backdrop-filter: blur(0.18rem);
   overflow: hidden;
 
   &::before {
@@ -979,20 +982,20 @@ onUnmounted(() => {
 }
 
 .mrp__mode-btn {
-  min-width: 1.5rem;
   height: 0.64rem;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 0.4rem;
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(0, 0, 0, 0.18);
-  font-size: 0.26rem;
+  border: none;
+  // border-radius: 0.4rem;
+  color: #fff;
+  padding: 0;
+  margin: 0 0.5rem;
+  background: transparent;
+  font-size: 0.35rem;
   font-family: 'HONOR Sans CN', sans-serif;
 }
 
 .mrp__mode-btn--active {
   color: #fff;
-  border-color: #0ab8f7;
-  background: rgba(10, 184, 247, 0.28);
+  border-bottom: 1px solid #fff;
 }
 
 /* 分页滑块栏（固定底部） */

@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
-import LoginSession from '@/session/loginSession'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import iconAdd from '@/assets/icons/icon_add.svg'
 import iconChip from '@/assets/icons/icon_chips.png'
@@ -82,27 +80,19 @@ const displayUser = computed(() => {
     gold: userInfoStore.userInfo?.user.gold ?? 0,
   }
 })
-
-async function onLogout(): Promise<void> {
-  // 退出登录时同步清理 WS 连接与端口缓存，避免脏会话残留。
-  LoginSession.ClearWS()
-  gameStore.clearLogin()
-  showSuccessToast('已退出登录')
-  await router.replace('/login')
-}
 </script>
 
 <template>
   <div class="page-shell mine-page">
     <div class="title-bar">
       <div class="title">{{ t('UIMine_title') }}</div>
-      <div class="currency-info">
+      <div class="currency-info" @click="goToMineShop">
         <div class="icon-diamond">
           <img :src="iconDiamond" alt="钻石" />
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" alt="充值" @click="goToMineShop" />
+          <img :src="iconAdd" alt="充值" />
         </div>
       </div>
     </div>
@@ -139,7 +129,6 @@ async function onLogout(): Promise<void> {
         <div class="text">{{ box.text }}</div>
       </div>
     </div>
-    <VanButton plain round size="small" class="logout-btn" @click="onLogout"> 退出登录 </VanButton>
   </div>
 </template>
 

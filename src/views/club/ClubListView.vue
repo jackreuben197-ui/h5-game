@@ -24,6 +24,7 @@ import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import type { ClubInfo } from '@/stores/userInfo'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
+import { isChannelPackageHost } from '@/utils/channelPackage'
 
 type QuickActionKind = 'create-club' | 'club-panel' | 'create-union'
 
@@ -58,10 +59,12 @@ const showJoinModal = ref(false)
 const joinLoading = ref(false)
 const searchedClub = ref<ClubInfo | null>(null)
 
+const fallbackBanners = [imgClubBannerFigma]
+const isChannelPackage = isChannelPackageHost()
+
 const quickActions: QuickActionItem[] = [
   { id: 1, title: '创建俱乐部', kind: 'create-club' },
-  { id: 2, title: '俱乐部生涯', kind: 'club-panel' },
-  { id: 3, title: '创建联盟', kind: 'create-union' },
+  { id: 2, title: '创建俱乐部', kind: 'club-panel', hidden: true },
 ]
 
 const clubList = computed<ClubCardItem[]>(() => {
@@ -83,6 +86,24 @@ const clubList = computed<ClubCardItem[]>(() => {
       cover: toSafeString(club.logo) || imgClubLogo,
     }
   })
+})
+
+const displayClubList = computed<ClubCardItem[]>(() => {
+  if (!isChannelPackage) {
+    return clubList.value
+  }
+
+  if (userInfoStore.currentClub) {
+    const currentClubId = normalizeClubId(userInfoStore.currentClub.club_id)
+    const hit = clubList.value.find(
+      (item) => normalizeClubId(item.source.club_id) === currentClubId,
+    )
+    if (hit) {
+      return [hit]
+    }
+  }
+
+  return clubList.value.slice(0, 1)
 })
 
 const searchedClubDisplayId = computed(
@@ -128,7 +149,11 @@ function goToClubDetail(club?: ClubInfo): void {
 }
 
 function onQuickAction(itemId: number): void {
-  if (itemId !== 1) {
+  if (isChannelPackage) {
+    return
+  }
+
+  if (itemId === 2) {
     showFailToast('功能开发中')
     return
   }
@@ -283,7 +308,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell club-index">
-    <section class="search-row">
+    <section v-if="!isChannelPackage" class="search-row">
       <div class="search-shell" aria-label="俱乐部搜索">
         <label class="search-trigger" for="club-search-input">
           <img class="search-icon" :src="imgSearch" alt="" />
@@ -309,7 +334,7 @@ onMounted(() => {
       </div>
     </section>
 
-    <section class="quick-actions">
+    <section v-if="!isChannelPackage" class="quick-actions">
       <button
         v-for="item in quickActions"
         :key="item.id"
@@ -359,9 +384,9 @@ onMounted(() => {
 
     <section class="club-list">
       <p v-if="loadingMyClubs" class="club-empty-text">正在加载俱乐部...</p>
-      <p v-else-if="!clubList.length" class="club-empty-text">暂无俱乐部，先去创建一个吧</p>
+      <p v-else-if="!displayClubList.length" class="club-empty-text">暂无俱乐部，先去创建一个吧</p>
       <article
-        v-for="club in clubList"
+        v-for="club in displayClubList"
         :key="club.key"
         class="club-banner"
         @click="goToClubDetail(club.source)"

@@ -462,3 +462,115 @@ H5MsgMgr.Instance.on('panelEvent', (payload) => {
 - 同时作用于 `vite dev`（transform 阶段）和 `vite build`（Rollup transform 钩子），无需额外配置。
 
 **分包**：`manualChunks` 将所有 `/bridge/ws/pb/` 路径文件归入独立的 `pb-holdem` chunk，不进入主 bundle，按需动态加载。
+
+## 9. WebSocket 重连机制
+
+### 9.1 设计目标
+
+对齐 Unity `NetworkDetectionComponent` 的行为：H5 全权负责 WebSocket 连接的存活检测、断线重连和恢复，Cocos 通过桥接事件感知状态变化并决定上层 UI（重连遮罩）与玩法恢复（`ReEnterRoom`）。
+
+### 9.2 触发来源
+
+`wsProxy.ts` 在以下五种情况下进入重连流程，并通过 `wsReconnecting` 的 `reason` 字段告知 Cocos：
+
+| reason       | 触发点                                                                 |
+|--------------|------------------------------------------------------------------------|
+| `close`      | `ws.onclose` 被动断开（默认归类）                                       |
+| `heartbeat`  | 连续 5 次心跳无响应（对齐 Unity `_sendCount >= 5`）                     |
+| `visibility` | `document.visibilitychange` → `visible`，且满足 WS 已断开 或 后台累计 ≥ 30s |
+| `online`     | `window.online` 网络恢复且 WS 未连接                                    |
+| `force`      | Cocos 通过 `wsConnect` 携带 `force: true` 主动要求重连                  |
+
+### 9.3 状态机与超时
+
+```
+idle ─connect─▶ open ─close─▶ reconnecting ─open─▶ open
+                                      │
+                                      └─cap─▶ failed
+```
+
+- 单次重连退避：指数 `1s → 2s → 4s → 8s → 10s`（封顶 `WS_RECONNECT_MAX_DELAY_MS`）
+- 整体放弃阈值：**10 次尝试**（`WS_RECONNECT_MAX_ATTEMPTS`）或 **60s 累计**（`WS_RECONNECT_MAX_DURATION_MS`）
+- 鉴权失败（`forceToLoginFromWs`）直接走 `auth-invalid` 失败路径，不再重试
+
+### 9.4 心跳与活性检测
+
+- 心跳间隔默认 `HEARTBEAT_INTERVAL_NORMAL_MS = 5000`（牌桌外），由 Cocos 通过 `setHeartbeatMode` 切到 `HEARTBEAT_INTERVAL_IN_GAMEPLAY_MS = 1000`（牌桌内）
+- 对齐 Cocos `HeartbeatComponent.SendIntervalNormal/InGameplay`：`ProcedureTexas.lateEnter` 切 `in-gameplay`，`Leave` 切回 `normal`
+- 每发送一次 `MSG_D_HEARTBEAT`，`pendingHeartbeatCount += 1`；累计 ≥ 2 时立即 warn 日志，方便观察弱网渐进恶化
+- 收到任意心跳响应即重置为 0；若复位前累计 ≥ 2 则打 `heartbeat recovered` info
+- 累积 `>= HEARTBEAT_MAX_PENDING (5)` 时主动 `triggerReconnect('heartbeat')` 关闭旧连接
+
+### 9.5 协议约定
+
+#### H5 → Cocos：`wsReconnecting`
+
+```ts
+interface WsReconnectingPayload {
+  attempt: number        // 从 1 开始
+  delayMs: number        // 本次等待时长
+  reason: 'close' | 'heartbeat' | 'visibility' | 'online' | 'force'
+}
+```
+
+#### H5 → Cocos：`wsReconnected`
+
+```ts
+interface WsReconnectedPayload {
+  url: string
+  attempt: number        // 成功时是第几次（0 表示无重连过程）
+  durationMs: number     // 从首次失败到成功的总耗时
+}
+```
+
+emit 时机：WS `onopen` 成功且发送 REGISTER 之后，仅当本次 open 之前曾经历过断开。
+
+#### H5 → Cocos：`wsReconnectFailed`
+
+```ts
+interface WsReconnectFailedPayload {
+  reason: 'max-attempts' | 'overall-timeout' | 'auth-invalid'
+  attempts: number
+  durationMs: number
+}
+```
+
+#### Cocos → H5：`wsConnect`（已扩展）
+
+```ts
+interface WsConnectPayload {
+  url?: string
+  port?: number
+  roomId?: number
+  matchId?: number
+  force?: boolean        // true 时复位 attempt/计时，立即重连一次
+}
+```
+
+#### Cocos → H5：`setHeartbeatMode`
+
+```ts
+interface SetHeartbeatModePayload {
+  mode: 'normal' | 'in-gameplay'   // 5s / 1s
+}
+```
+
+由 `ProcedureTexas.lateEnter / Leave` 触发，对齐 Cocos `HeartbeatComponent` 的 `SendIntervalNormal / SendIntervalInGameplay`。仅当模式真正变化时 H5 端会重启心跳定时器。
+
+### 9.6 Cocos 侧契约
+
+- `BridgeReconnectComponent`（`assets/script/funcomponent/BridgeReconnectComponent.ts`）订阅三类事件：
+  - `wsReconnecting` → 显示重连遮罩 `Main.Reconnect`，并标记 `_inReconnectFlow = true`
+  - `wsReconnected` → 等服务端 `Protocol_Holdem_Register` 回包；带 8s 兜底定时器
+  - `wsReconnectFailed` → 隐藏遮罩 + Toast + 通过 `h5Navigate` 回登录页
+- 服务端 Register 回包到达时清掉遮罩；若 `GameCache.Instance.CurGame` 存在则调用 `ReEnterRoom()` 恢复牌桌
+- Cocos 主动重连：`BridgeReconnectComponent.Instance.StartReconnect()` 内部下发 `wsConnect` + `force: true`
+- 牌桌业务清场入口：`BridgeReconnectComponent.Instance.ConsumeReconnectFlag()` 在 `Protocol_Holdem_EnterRoom_Handler` 内调用，返回 `true` 表示本次进房是由重连触发，调用方据此触发 `ReEnterClear()` 清掉公牌/弹窗/座位等脏 UI（对齐 Unity `OnMsgEnterRoom` 内对 `_gameStatusRestoreHandler` 的处理）
+
+### 9.7 注意事项
+
+- H5 在桥接模式下独占心跳，Cocos 端 `LobbySession.heartbeatComponent` 不在桥接路径中激活，避免双倍心跳
+- `wsClosed` 仅作日志记录，不再用于触发重连（`wsProxy` 已自动处理）
+- 鉴权失败（token 缺失）会同时触发 `forceToLoginFromWs` 与 `wsReconnectFailed(auth-invalid)`，Cocos 端在该 reason 下不再二次发送 `h5Navigate`
+- 切到后台再回来：浏览器 `ws.readyState` 不能信（长时间挂起后底层 TCP 已断但 readyState 仍是 `OPEN`），因此采用「后台累计 ≥ 30s 一律强制重连」策略（`RECONNECT_AFTER_HIDDEN_MS`），对齐 Unity 在 `OnApplicationPause(false)` + `internetReachability` 轮询下的等价行为
+

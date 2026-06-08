@@ -257,6 +257,11 @@ export default defineConfig(({ mode, command }) => {
       },
     },
     server: {
+      allowedHosts: [
+        'h5.com',
+        '.h5.com',
+      ],
+      port: 80,
       proxy: {
         '/api/imoss': {
           target: proxyImTarget,

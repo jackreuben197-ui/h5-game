@@ -8,11 +8,11 @@ import icUncheckbox from '@/assets/icons/ic_uncheckbox.png'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 
 const props = defineProps<{
-  goldCount: number;
-  rate: number;
-  feeRate: number;
-  feeType?: number;
-  discount?: number;
+  goldCount: number
+  rate: number
+  feeRate: number
+  feeType?: number
+  discount?: number
 }>()
 
 const emit = defineEmits<{
@@ -30,21 +30,25 @@ let timer: number | null = null
 const exactGoldCount = computed(() => props.goldCount || 0)
 const roundedGoldCount = computed(() => Math.floor((props.goldCount || 0) / 100) * 100)
 
-const exactPriceData = computed(() => walletStore.calculateUsdtPrice(
-  exactGoldCount.value,
-  props.rate || 0,
-  props.feeRate || 0,
-  props.feeType || 0,
-  props.discount || 0
-))
+const exactPriceData = computed(() =>
+  walletStore.calculateUsdtPrice(
+    exactGoldCount.value,
+    props.rate || 0,
+    props.feeRate || 0,
+    props.feeType || 0,
+    props.discount || 0,
+  ),
+)
 
-const roundedPriceData = computed(() => walletStore.calculateUsdtPrice(
-  roundedGoldCount.value,
-  props.rate || 0,
-  props.feeRate || 0,
-  props.feeType || 0,
-  props.discount || 0
-))
+const roundedPriceData = computed(() =>
+  walletStore.calculateUsdtPrice(
+    roundedGoldCount.value,
+    props.rate || 0,
+    props.feeRate || 0,
+    props.feeType || 0,
+    props.discount || 0,
+  ),
+)
 
 const exactPrice = computed(() => exactPriceData.value.totalUiPrice)
 const roundedPrice = computed(() => roundedPriceData.value.totalUiPrice)
@@ -64,9 +68,12 @@ function onRefresh() {
 
 onMounted(() => {
   // 15 minutes timeout
-  timer = window.setTimeout(() => {
-    isTimedOut.value = true
-  }, 15 * 60 * 1000)
+  timer = window.setTimeout(
+    () => {
+      isTimedOut.value = true
+    },
+    15 * 60 * 1000,
+  )
 })
 
 onUnmounted(() => {
@@ -76,11 +83,7 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <div
-      class="overlay"
-
-      @click.self="close"
-    >
+    <div class="overlay" @click.self="close">
       <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
       <div class="card">
         <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
@@ -89,7 +92,13 @@ onUnmounted(() => {
           <div class="card__header">
             <h2 class="card__title">确认付款</h2>
             <div class="card__header-info">
-              <span>手续费：{{ props.feeRate > 0 ? (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%' : '0' }}</span>
+              <span>
+                手续费：{{
+                  props.feeRate > 0
+                    ? (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%'
+                    : '0'
+                }}
+              </span>
               <span>当前参考单价：1UC={{ props.rate || 1 }}USDT</span>
             </div>
           </div>
@@ -114,8 +123,13 @@ onUnmounted(() => {
                 <span class="option-card__amount">{{ Math.floor(exactPrice) }}</span>
                 <img :src="icCoins" alt="" class="option-card__coin" />
               </div>
-              <div class="option-card__desc">需支付 {{ walletStore.formatUsdtPrice(exactPrice) }}</div>
-              <div class="option-card__badge" :class="{ 'option-card__badge--active': selectedOption === 0 }">
+              <div class="option-card__desc">
+                需支付 {{ walletStore.formatUsdtPrice(exactPrice) }}
+              </div>
+              <div
+                class="option-card__badge"
+                :class="{ 'option-card__badge--active': selectedOption === 0 }"
+              >
                 <img
                   class="badge-icon__check"
                   :src="selectedOption === 0 ? icCheckbox : icUncheckbox"
@@ -135,8 +149,13 @@ onUnmounted(() => {
                 <span class="option-card__amount">{{ Math.floor(roundedPrice) }}</span>
                 <img :src="icCoins" alt="" class="option-card__coin" />
               </div>
-              <div class="option-card__desc">需支付 {{ walletStore.formatUsdtPrice(roundedPrice) }}</div>
-              <div class="option-card__badge" :class="{ 'option-card__badge--active': selectedOption === 1 }">
+              <div class="option-card__desc">
+                需支付 {{ walletStore.formatUsdtPrice(roundedPrice) }}
+              </div>
+              <div
+                class="option-card__badge"
+                :class="{ 'option-card__badge--active': selectedOption === 1 }"
+              >
                 <img
                   class="badge-icon__check"
                   :src="selectedOption === 1 ? icCheckbox : icUncheckbox"
@@ -156,7 +175,12 @@ onUnmounted(() => {
     </div>
 
     <!-- Timeout Reminder Modal -->
-    <div v-if="isTimedOut" class="timeout-overlay" :style="{ backgroundImage: `url(${sharpBgUrl})` }" @click.self="isTimedOut = false">
+    <div
+      v-if="isTimedOut"
+      class="timeout-overlay"
+      :style="{ backgroundImage: `url(${sharpBgUrl})` }"
+      @click.self="isTimedOut = false"
+    >
       <div class="timeout-card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
         <div class="timeout-card__inner">
           <div class="timeout-header">
@@ -184,8 +208,7 @@ onUnmounted(() => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-   background: rgba(23, 23, 23, 0.70);
-
+  background: rgba(23, 23, 23, 0.7);
 }
 
 .overlay::before {
@@ -227,7 +250,7 @@ onUnmounted(() => {
   box-shadow:
     0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
     0 0 0.2298rem 0 #000 inset,
-    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.90) inset;
+    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.9) inset;
   backdrop-filter: blur(7.580729961395264px);
   -webkit-backdrop-filter: blur(7.580729961395264px);
   pointer-events: none;
@@ -240,9 +263,18 @@ onUnmounted(() => {
   inset: 0;
   border-radius: inherit;
   padding: 0.0255rem;
-  background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  background: linear-gradient(
+    180deg,
+    rgba(242, 242, 242, 0.4) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -267,8 +299,10 @@ onUnmounted(() => {
   text-align: center;
   leading-trim: both;
   text-edge: cap;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
@@ -289,8 +323,10 @@ onUnmounted(() => {
   text-align: center;
   leading-trim: both;
   text-edge: cap;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 11px;
   font-style: normal;
   font-weight: 400;
@@ -311,8 +347,10 @@ onUnmounted(() => {
   text-align: center;
   leading-trim: both;
   text-edge: cap;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 15px;
   font-style: normal;
   font-weight: 400;
@@ -337,7 +375,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
   border-radius: 27.928px;
-  background: rgba(245, 245, 245, 0.10);
+  background: rgba(245, 245, 245, 0.1);
   background-blend-mode: plus-lighter;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -375,9 +413,11 @@ onUnmounted(() => {
 }
 
 .option-card__amount {
-  color: var(--White, #F9F9F9);
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: var(--wallet-font-num, "SF Pro");
+  color: var(--White, #f9f9f9);
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
+  font-family: var(--wallet-font-num, 'SF Pro');
   font-size: 17.317px;
   font-style: normal;
   font-weight: 700;
@@ -393,8 +433,10 @@ onUnmounted(() => {
 .option-card__desc {
   color: rgba(255, 234, 234, 1);
   text-align: right;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: "SF Pro";
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
+  font-family: 'SF Pro';
   font-size: 10.908px;
   font-style: normal;
   font-weight: 590;
@@ -416,8 +458,10 @@ onUnmounted(() => {
   margin-bottom: 0;
   color: #fff;
   text-align: right;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: "SF Pro";
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
+  font-family: 'SF Pro';
   font-size: 10.908px;
   font-style: normal;
   font-weight: 590;
@@ -431,7 +475,6 @@ onUnmounted(() => {
 .option-card__badge--active {
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
-
 }
 
 .badge-icon__check {
@@ -464,7 +507,7 @@ onUnmounted(() => {
   pointer-events: none;
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
-  background: rgba(12, 12, 12, 0.60);
+  background: rgba(12, 12, 12, 0.6);
 }
 
 .timeout-card {
@@ -492,11 +535,11 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: rgba(0, 0, 0, 0.70);
+  background: rgba(0, 0, 0, 0.7);
   box-shadow:
     0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
     0 0 0.2298rem 0 #000 inset,
-    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.90) inset;
+    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.9) inset;
   backdrop-filter: blur(7.580729961395264px);
   -webkit-backdrop-filter: blur(7.580729961395264px);
   pointer-events: none;
@@ -509,9 +552,18 @@ onUnmounted(() => {
   inset: 0;
   border-radius: inherit;
   padding: 0.0255rem;
-  background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  background: linear-gradient(
+    180deg,
+    rgba(242, 242, 242, 0.4) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -535,7 +587,11 @@ onUnmounted(() => {
   align-items: center;
   gap: 45.58px;
   margin: 0 -15.399px 0;
-  background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
+  background: linear-gradient(
+    97deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  );
 }
 
 .timeout-title {
@@ -543,7 +599,7 @@ onUnmounted(() => {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 16px;
   font-weight: 600;
   margin: 0;
@@ -557,7 +613,7 @@ onUnmounted(() => {
 
 .timeout-text {
   color: #fff;
-  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 15px;
   line-height: 1.5;
   margin: 0;
@@ -565,8 +621,14 @@ onUnmounted(() => {
 }
 
 @keyframes modal-pop {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 // .card__action {
@@ -587,7 +649,10 @@ onUnmounted(() => {
   // width: 100% !important;
   // height: 100% !important;
   color: rgba(120, 228, 144, 1);
-  background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%) !important;
+  background: linear-gradient(
+    97deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  ) !important;
 }
-
 </style>

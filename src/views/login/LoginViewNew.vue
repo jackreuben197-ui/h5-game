@@ -122,7 +122,9 @@ const agreementProtocol = computed(() => {
 })
 
 const contactPlaceholder = computed(() =>
-  contactType.value === 'account' ? t('UILogin_Account', 'Please enter account ID') : t('UILogin_InputEmail'),
+  contactType.value === 'account'
+    ? t('UILogin_Account', 'Please enter account ID')
+    : t('UILogin_InputEmail'),
 )
 
 const needAgreement = computed(() => pageMode.value !== 'forgot')
@@ -168,7 +170,10 @@ function switchContact(type: ContactType) {
   if (contactType.value === type) return
   resetOtpCountdown()
   form.code = ''
-  localStore.setItem(LOGIN_ACCOUNT_TYPE_KEY, type === 'account' ? LOGIN_TYPE_PHONE : LOGIN_TYPE_EMAIL)
+  localStore.setItem(
+    LOGIN_ACCOUNT_TYPE_KEY,
+    type === 'account' ? LOGIN_TYPE_PHONE : LOGIN_TYPE_EMAIL,
+  )
   if (pageMode.value === 'login') {
     form.password = readSavedPassword(type)
   } else {
@@ -201,7 +206,6 @@ async function sendOtp() {
       showGameToast(t('UILogin_1010', 'Account login does not support OTP verification'))
       return
     } else {
-
       const check = await postUserCheckEmailApi({ email: target })
 
       if (pageMode.value === 'forgot' && check.code === 0) {
@@ -738,7 +742,9 @@ function consumePhoneAreaSelection(): void {
               @click="onAgreementIndicatorClick"
             />
             <span class="agreement-text">{{ agreementPrefix }}</span>
-            <span class="agreement-text agreement-text--protocol" @click="onAgreementTextClick">{{ agreementProtocol }}</span>
+            <span class="agreement-text agreement-text--protocol" @click="onAgreementTextClick">{{
+              agreementProtocol
+            }}</span>
           </div>
 
           <!-- Submit button -->
@@ -970,7 +976,11 @@ function consumePhoneAreaSelection(): void {
 .tab-item {
   flex: 1;
   height: 0.96rem;
-  background: linear-gradient(197.83deg, rgba(128, 128, 128, 0.52) 20.7%, rgba(71, 71, 71, 0.52) 73.7%);
+  background: linear-gradient(
+    197.83deg,
+    rgba(128, 128, 128, 0.52) 20.7%,
+    rgba(71, 71, 71, 0.52) 73.7%
+  );
   border: none;
   border-radius: 0.674rem;
   backdrop-filter: blur(0.533rem);
@@ -1134,7 +1144,7 @@ function consumePhoneAreaSelection(): void {
   height: 0.91rem;
   padding: 0 0.27rem;
   min-width: 2rem;
-  background: linear-gradient(157deg, #55F329 0%, #3EAD06 100%);
+  background: linear-gradient(157deg, #55f329 0%, #3ead06 100%);
   border-radius: 1.27rem;
   border: 0;
   cursor: pointer;
@@ -1263,7 +1273,7 @@ function consumePhoneAreaSelection(): void {
 .agreement-text {
   font-size: 0.27rem;
   font-weight: 500;
-  color: #E6E6E6;
+  color: #e6e6e6;
   font-family: 'PingFang SC', sans-serif;
 }
 
@@ -1279,7 +1289,7 @@ function consumePhoneAreaSelection(): void {
 }
 
 .agreement-text--protocol {
-  color: #4A90E2;
+  color: #4a90e2;
   cursor: pointer;
 }
 
@@ -1340,7 +1350,9 @@ function consumePhoneAreaSelection(): void {
 
 .snackbar-enter-active,
 .snackbar-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
 }
 .snackbar-enter-from,
 .snackbar-leave-to {

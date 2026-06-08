@@ -258,11 +258,6 @@ async function ensureTelegramAutoLogin(): Promise<boolean> {
     return false
   }
 
-  const gameStore = useGameStore(pinia)
-  if (String(gameStore.sessionToken || '').trim()) {
-    return true
-  }
-
   if (!telegramAutoLoginPromise) {
     telegramAutoLoginPromise = doTelegramAutoLogin().finally(() => {
       telegramAutoLoginPromise = null

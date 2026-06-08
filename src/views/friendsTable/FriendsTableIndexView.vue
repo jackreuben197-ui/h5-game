@@ -117,7 +117,7 @@ function scrollForKeypad(): void {
 
 function onKeypadKeyPress(payload: {
   key: string
-  action: 'digit' | 'clear' | 'backspace'
+  action: 'digit' | 'clear' | 'backspace' | 'decimal'
   value: string
   accepted: boolean
 }): void {
@@ -181,7 +181,9 @@ function getRoomStartTimestamp(room: Pick<FriendRoomListItem, 'start_time'>): nu
   return 0
 }
 
-function normalizeFriendRoomRecord(record: RoomcenterFriendRoomRecord | RoomRecord): FriendRoomListItem {
+function normalizeFriendRoomRecord(
+  record: RoomcenterFriendRoomRecord | RoomRecord,
+): FriendRoomListItem {
   return {
     ...record,
     rid: record.rid,
@@ -1100,7 +1102,8 @@ watch(
   padding: 0.08rem 0.2rem;
   background: rgba(0, 0, 0, 0.05);
   box-shadow:
-  /* 左上高光 */ inset 0.4px 0.4px 0px 0px rgba(255, 255, 255, 0.5),
+  /* 左上高光 */
+    inset 0.4px 0.4px 0px 0px rgba(255, 255, 255, 0.5),
     /* 右下高光 */ inset -0.4px -0.4px 0px 0px rgba(255, 255, 255, 0.5);
   background-blend-mode: multiply;
   border-radius: 3.2rem;

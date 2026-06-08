@@ -83,7 +83,9 @@ let recordStartMs = 0
 let playingAudio: HTMLAudioElement | null = null
 let startingRecord = false
 
-const shouldShowFloat = computed(() => !visible.value && hasUnread.value)
+const shouldShowFloat = computed(
+  () => !!gameStore.sessionToken && !visible.value && hasUnread.value,
+)
 
 const panelBackgroundStyle = computed(() => ({
   backgroundImage: `url(${sharpBgUrl})`,

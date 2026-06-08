@@ -254,11 +254,11 @@ function resetOtpCountdown() {
 async function handleSubmit() {
   if (loading.value) return
   if (!canSubmit.value) return
-  if (needAgreement.value && !agreed.value) {
-    pendingAgreementSubmit.value = true
-    showProtocolConfifm.value = true
-    return
-  }
+  // if (needAgreement.value && !agreed.value) {
+  //   pendingAgreementSubmit.value = true
+  //   showProtocolConfifm.value = true
+  //   return
+  // }
   await runSubmitFlow()
 }
 
@@ -730,7 +730,7 @@ function consumePhoneAreaSelection(): void {
           </div>
 
           <!-- Agreement checkbox (register only) -->
-          <div v-if="needAgreement" class="agreement-row">
+          <!-- <div v-if="needAgreement" class="agreement-row">
             <img
               class="agreement-checkbox-icon"
               :src="agreed ? icCheckbox : icUncheckbox"
@@ -739,7 +739,7 @@ function consumePhoneAreaSelection(): void {
             />
             <span class="agreement-text">{{ agreementPrefix }}</span>
             <span class="agreement-text agreement-text--protocol" @click="onAgreementTextClick">{{ agreementProtocol }}</span>
-          </div>
+          </div> -->
 
           <!-- Submit button -->
           <PrimaryButton
@@ -790,7 +790,7 @@ function consumePhoneAreaSelection(): void {
       <span class="ml-5">{{ item.nickname }}</span>
     </div>
   </GameDialog>
-  <GameDialog
+  <!-- <GameDialog
     v-model:show="showProtocolConfifm"
     :title="t('UILoginConfirmTitle')"
     :close-on-click-overlay="true"
@@ -806,7 +806,7 @@ function consumePhoneAreaSelection(): void {
         {{ t('UIMine_Setting_UserSecret') }}
       </span>
     </div>
-  </GameDialog>
+  </GameDialog> -->
 </template>
 
 <style scoped lang="scss">

@@ -8,11 +8,11 @@ import icUncheckbox from '@/assets/icons/ic_uncheckbox.png'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 
 const props = defineProps<{
-  goldCount: number;
-  rate: number;
-  feeRate: number;
-  feeType?: number;
-  discount?: number;
+  goldCount: number
+  rate: number
+  feeRate: number
+  feeType?: number
+  discount?: number
 }>()
 
 const emit = defineEmits<{
@@ -30,21 +30,25 @@ let timer: number | null = null
 const exactGoldCount = computed(() => props.goldCount || 0)
 const roundedGoldCount = computed(() => Math.floor((props.goldCount || 0) / 100) * 100)
 
-const exactPriceData = computed(() => walletStore.calculateUsdtPrice(
-  exactGoldCount.value,
-  props.rate || 0,
-  props.feeRate || 0,
-  props.feeType || 0,
-  props.discount || 0
-))
+const exactPriceData = computed(() =>
+  walletStore.calculateUsdtPrice(
+    exactGoldCount.value,
+    props.rate || 0,
+    props.feeRate || 0,
+    props.feeType || 0,
+    props.discount || 0,
+  ),
+)
 
-const roundedPriceData = computed(() => walletStore.calculateUsdtPrice(
-  roundedGoldCount.value,
-  props.rate || 0,
-  props.feeRate || 0,
-  props.feeType || 0,
-  props.discount || 0
-))
+const roundedPriceData = computed(() =>
+  walletStore.calculateUsdtPrice(
+    roundedGoldCount.value,
+    props.rate || 0,
+    props.feeRate || 0,
+    props.feeType || 0,
+    props.discount || 0,
+  ),
+)
 
 const exactPrice = computed(() => exactPriceData.value.totalUiPrice)
 const roundedPrice = computed(() => roundedPriceData.value.totalUiPrice)
@@ -89,7 +93,13 @@ onUnmounted(() => {
           <div class="card__header">
             <h2 class="card__title">确认付款</h2>
             <div class="card__header-info">
-              <span>手续费：{{ props.feeRate > 0 ? (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%' : '0' }}</span>
+              <span>
+                手续费：{{
+                  props.feeRate > 0
+                    ? (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%'
+                    : '0'
+                }}
+              </span>
               <span>当前参考单价：1UC={{ props.rate || 1 }}USDT</span>
             </div>
           </div>
@@ -156,7 +166,12 @@ onUnmounted(() => {
     </div>
 
     <!-- Timeout Reminder Modal -->
-    <div v-if="isTimedOut" class="timeout-overlay" :style="{ backgroundImage: `url(${sharpBgUrl})` }" @click.self="isTimedOut = false">
+    <div
+      v-if="isTimedOut"
+      class="timeout-overlay"
+      :style="{ backgroundImage: `url(${sharpBgUrl})` }"
+      @click.self="isTimedOut = false"
+    >
       <div class="timeout-card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
         <div class="timeout-card__inner">
           <div class="timeout-header">
@@ -211,9 +226,7 @@ onUnmounted(() => {
   gap: 18.116px;
   border: 0.96px solid rgba(242, 242, 242, 0.4);
   border-radius: clamp(28px, 10vw, 36.4px);
-  box-shadow:
-    3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25),
-    0 0 8.6px #000 inset,
+  box-shadow: 3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25), 0 0 8.6px #000 inset,
     2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
   overflow: hidden;
 }
@@ -240,7 +253,12 @@ onUnmounted(() => {
   inset: 0;
   border-radius: inherit;
   padding: 0.0255rem;
-  background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(242, 242, 242, 0.4) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
@@ -268,7 +286,7 @@ onUnmounted(() => {
   leading-trim: both;
   text-edge: cap;
   font-feature-settings: 'liga' off, 'clig' off;
-  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
@@ -290,7 +308,7 @@ onUnmounted(() => {
   leading-trim: both;
   text-edge: cap;
   font-feature-settings: 'liga' off, 'clig' off;
-  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 11px;
   font-style: normal;
   font-weight: 400;
@@ -312,7 +330,7 @@ onUnmounted(() => {
   leading-trim: both;
   text-edge: cap;
   font-feature-settings: 'liga' off, 'clig' off;
-  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 15px;
   font-style: normal;
   font-weight: 400;
@@ -337,7 +355,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
   border-radius: 27.928px;
-  background: rgba(245, 245, 245, 0.10);
+  background: rgba(245, 245, 245, 0.1);
   background-blend-mode: plus-lighter;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -375,9 +393,9 @@ onUnmounted(() => {
 }
 
 .option-card__amount {
-  color: var(--White, #F9F9F9);
+  color: var(--White, #f9f9f9);
   font-feature-settings: 'liga' off, 'clig' off;
-  font-family: var(--wallet-font-num, "SF Pro");
+  font-family: var(--wallet-font-num, 'SF Pro');
   font-size: 17.317px;
   font-style: normal;
   font-weight: 700;
@@ -394,7 +412,7 @@ onUnmounted(() => {
   color: rgba(255, 234, 234, 1);
   text-align: right;
   font-feature-settings: 'liga' off, 'clig' off;
-  font-family: "SF Pro";
+  font-family: 'SF Pro';
   font-size: 10.908px;
   font-style: normal;
   font-weight: 590;
@@ -417,7 +435,7 @@ onUnmounted(() => {
   color: #fff;
   text-align: right;
   font-feature-settings: 'liga' off, 'clig' off;
-  font-family: "SF Pro";
+  font-family: 'SF Pro';
   font-size: 10.908px;
   font-style: normal;
   font-weight: 590;
@@ -431,7 +449,6 @@ onUnmounted(() => {
 .option-card__badge--active {
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
-
 }
 
 .badge-icon__check {
@@ -464,7 +481,7 @@ onUnmounted(() => {
   pointer-events: none;
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
-  background: rgba(12, 12, 12, 0.60);
+  background: rgba(12, 12, 12, 0.6);
 }
 
 .timeout-card {
@@ -479,9 +496,7 @@ onUnmounted(() => {
   gap: 18.116px;
   border: 0.96px solid rgba(242, 242, 242, 0.4);
   border-radius: clamp(28px, 10vw, 36.4px);
-  box-shadow:
-    3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25),
-    0 0 8.6px #000 inset,
+  box-shadow: 3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25), 0 0 8.6px #000 inset,
     2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
   overflow: hidden;
   animation: modal-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -492,11 +507,9 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: rgba(0, 0, 0, 0.70);
-  box-shadow:
-    0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
-    0 0 0.2298rem 0 #000 inset,
-    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.90) inset;
+  background: rgba(0, 0, 0, 0.7);
+  box-shadow: 0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25), 0 0 0.2298rem 0 #000 inset,
+    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.9) inset;
   backdrop-filter: blur(7.580729961395264px);
   -webkit-backdrop-filter: blur(7.580729961395264px);
   pointer-events: none;
@@ -509,7 +522,12 @@ onUnmounted(() => {
   inset: 0;
   border-radius: inherit;
   padding: 0.0255rem;
-  background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(242, 242, 242, 0.4) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
@@ -535,7 +553,11 @@ onUnmounted(() => {
   align-items: center;
   gap: 45.58px;
   margin: 0 -15.399px 0;
-  background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
+  background: linear-gradient(
+    97deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  );
 }
 
 .timeout-title {
@@ -543,7 +565,7 @@ onUnmounted(() => {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 16px;
   font-weight: 600;
   margin: 0;
@@ -557,7 +579,7 @@ onUnmounted(() => {
 
 .timeout-text {
   color: #fff;
-  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 15px;
   line-height: 1.5;
   margin: 0;
@@ -565,8 +587,14 @@ onUnmounted(() => {
 }
 
 @keyframes modal-pop {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 // .card__action {

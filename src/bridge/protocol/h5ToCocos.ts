@@ -16,6 +16,20 @@ export interface WsMessageBinaryPayload {
 
 export type WsMessagePayload = WsMessageTextPayload | WsMessageBinaryPayload
 
+// H5 -> Cocos：H5/CC 握手完成通知；已有登录态时附带 token。
+export interface H5ReadyPayload {
+  token?: string
+  safeArea?: SafeArea
+}
+
+export interface SafeArea {
+  top: number
+  left: number
+  right: number
+  bottom: number
+  source?: string
+}
+
 // H5 -> Cocos：websocket 错误消息。
 export interface WsErrorPayload {
   message: string
@@ -26,6 +40,30 @@ export interface WsClosedPayload {
   code?: number
   reason?: string
   wasClean?: boolean
+}
+
+// H5 -> Cocos：已安排一次重连尝试（attempt 从 1 开始；delayMs 是本次等待时长）。
+export interface WsReconnectingPayload {
+  attempt: number
+  delayMs: number
+  // 触发本次重连的来源：close=连接关闭、heartbeat=心跳超时、visibility=切回前台、online=网络恢复、force=Cocos 主动触发。
+  reason: 'close' | 'heartbeat' | 'visibility' | 'online' | 'force'
+}
+
+// H5 -> Cocos：重连成功（已 onopen 并完成 REGISTER）。
+export interface WsReconnectedPayload {
+  url: string
+  attempt: number
+  // 从首次失败到本次成功的总耗时（毫秒）。
+  durationMs: number
+}
+
+// H5 -> Cocos：放弃重连（命中次数或整体超时）。
+export interface WsReconnectFailedPayload {
+  reason: 'max-attempts' | 'overall-timeout' | 'auth-invalid'
+  attempts: number
+  // 累计耗时（毫秒）。
+  durationMs: number
 }
 
 export interface DialogResultPayload {
@@ -47,6 +85,10 @@ export interface EnterTablePayload {
   // websocket 端口（来自 /api/user/ws 的 data.port）。
   websocketPort: number
   from: string
+  // 当前俱乐部 ID，Cocos 入桌后用于按俱乐部上下文处理。
+  clubId?: number
+  // 当前俱乐部随机 ID，Cocos 入桌后用于展示/业务上下文。
+  clubRandomId?: number
   // 点击的目标房间 ID，方便 Cocos 精确切桌；Cocos 不需要时可忽略。
   roomId?: string
   roomName?: string

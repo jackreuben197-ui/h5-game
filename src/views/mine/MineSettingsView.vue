@@ -15,7 +15,7 @@ import icPolicePrivacy from '@/assets/icons/ic_police_privacy.svg'
 import icUserAgreement from '@/assets/icons/ic_user_agreement.svg'
 import icAppVersion from '@/assets/icons/ic_app_version.svg'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-import GameDialog from '@/components/Dialog/GameDialog.vue'
+import { GameDialog } from '@/components/Dialog'
 import { getLocale } from '@/i18n'
 import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
@@ -31,6 +31,7 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 const soundEnabled = ref(true)
+const showLogoutDialog = ref(false)
 
 interface SettingItem {
   key: string
@@ -126,6 +127,18 @@ async function onRowClick(item: SettingItem): Promise<void> {
     showFailToast('线路切换功能开发中')
   }
 }
+
+function onLogoutConfirm(): void {
+  showLogoutDialog.value = false
+  gameStore.clearLogin()
+  LoginSession.ClearWS()
+  showSuccessToast('已退出登录')
+  void router.replace('/guest/home')
+}
+
+function onLogoutCancel(): void {
+  showLogoutDialog.value = false
+}
 </script>
 
 <template>
@@ -202,6 +215,19 @@ async function onRowClick(item: SettingItem): Promise<void> {
         </button>
       </section>
     </div>
+
+    <GameDialog
+      v-model:show="showLogoutDialog"
+      title="退出登录"
+      :show-cancel-button="true"
+      :close-on-click-overlay="true"
+      confirm-button-text="确认"
+      cancel-button-text="取消"
+      @confirm="onLogoutConfirm"
+      @cancel="onLogoutCancel"
+    >
+      <div class="logout-confirm-text">确认退出当前账号吗？</div>
+    </GameDialog>
   </div>
 
   <GameDialog
@@ -326,5 +352,12 @@ async function onRowClick(item: SettingItem): Promise<void> {
       transform: translateX(0.44rem);
     }
   }
+}
+
+.logout-confirm-text {
+  text-align: center;
+  font-size: 0.38rem;
+  color: #fff;
+  padding: 0.2rem 0;
 }
 </style>

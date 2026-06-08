@@ -379,7 +379,11 @@ const presets = computed<Preset[]>(() => {
     } else if (selected?.type === 3) {
       // Customer Service: show decimals
       const csPrice = walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)
-      chipStr = csPrice.toLocaleString(undefined, { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      chipStr = csPrice.toLocaleString(undefined, {
+        useGrouping: false,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
     }
 
     return {
@@ -432,7 +436,11 @@ const displayPayAmount = computed(() => {
     const feeRate = selected.fee_rate ?? 0
     const discount = selected.discount ?? 0
     const csPrice = walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)
-    return csPrice.toLocaleString(undefined, { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    return csPrice.toLocaleString(undefined, {
+      useGrouping: false,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
   }
 
   return selectedAmount.value

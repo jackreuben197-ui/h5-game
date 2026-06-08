@@ -214,6 +214,8 @@ export interface OrgClubAgentInviTationResponseData extends OrgClubAgentInviTati
 }
 
 export interface OrgClubAgentInviTationData {
+  invitation_link?: string // 代理邀请链接
+  invitation_code?: string // 代理邀请码
   [key: string]: unknown
 }
 
@@ -279,6 +281,8 @@ export interface ClubAgentUserListRequest {
   order_type?: number // 1-顺序;2-倒叙;
   limit?: number // 最大条数
   offset?: number // 开始下标
+  simple?: boolean // 是否简化返回数据，true-简化，false-完整
+  return_diamonds?: boolean // 是否返回钻石余额
 
   [key: string]: unknown
 }
@@ -618,6 +622,8 @@ export interface OrgClubInviTationResponseData extends OrgClubInviTationData {
 }
 
 export interface OrgClubInviTationData {
+  invitation_link?: string // 邀请链接
+  invitation_code?: string // 邀请码
   [key: string]: unknown
 }
 
@@ -2509,6 +2515,7 @@ export interface OrgClubData {
   deposit_switch?: number
   security_deposit?: number
   freeze_status?: number
+  invitation_code?: string
 
   [key: string]: unknown
 }

@@ -67,6 +67,11 @@ import type {
   NewSafetyResponseData,
   ClubSendDiamondsRequest,
   ClubSendDiamondsResponseData,
+  UserAgencySendDiamondsRequest,
+  UserAgencySendDiamondsResponseData,
+  UserAgencyGoldGrantRequest,
+  UserAgencyGoldGrantResponseData,
+  UserLoginThirdPartyRequest,
 } from '@/api/models/user'
 import { forwardUserClubToCocos, forwardUserInfoToCocos } from '@/bridge/sync'
 import { pinia } from '@/stores/pinia'
@@ -546,6 +551,53 @@ export async function postClubSendDiamondsApi(
     '/user/club/creator/grant',
     payload,
     { headers },
+  )
+  return response.data
+}
+
+// 对齐 cocos WebUserAgencySendDiamonds.API
+export async function postUserAgencySendDiamondsApi(
+  payload: UserAgencySendDiamondsRequest = {} as UserAgencySendDiamondsRequest,
+  clubId?: number | string,
+): Promise<ApiResponse<UserAgencySendDiamondsResponseData>> {
+  const headers =
+    clubId === undefined || clubId === null || String(clubId).trim() === ''
+      ? undefined
+      : { 'X-Club': String(clubId) }
+  const response = await http.post<ApiResponse<UserAgencySendDiamondsResponseData>>(
+    '/user/agent/diamonds/grant',
+    payload,
+    { headers },
+  )
+  return response.data
+}
+
+// 对齐 cocos WebUserAgencyGoldGrant.API
+export async function postUserAgencyGoldGrantApi(
+  payload: UserAgencyGoldGrantRequest = {} as UserAgencyGoldGrantRequest,
+  clubId?: number | string,
+): Promise<ApiResponse<UserAgencyGoldGrantResponseData>> {
+  const headers =
+    clubId === undefined || clubId === null || String(clubId).trim() === ''
+      ? undefined
+      : { 'X-Club': String(clubId) }
+  const response = await http.post<ApiResponse<UserAgencyGoldGrantResponseData>>(
+    '/user/agent/gold/grant',
+    payload,
+    { headers },
+  )
+  return response.data
+}
+
+// 第三方登录，目前支持telegram mini app登录
+export async function postUserThirdPartyApi(
+  payload: UserLoginThirdPartyRequest = {} as UserLoginThirdPartyRequest,
+  options: ApiRequestExtOptions = {},
+): Promise<ApiResponse<LoginResponse>> {
+  const response = await http.post<ApiResponse<LoginResponse>>(
+    '/user/login_third_party',
+    payload,
+    options,
   )
   return response.data
 }

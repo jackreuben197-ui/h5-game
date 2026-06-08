@@ -74,8 +74,8 @@ async function fetchBellStatus(): Promise<void> {
   const records = Array.isArray(payload)
     ? (payload as Array<Record<string, unknown>>)
     : payload && typeof payload === 'object'
-      ? [payload as Record<string, unknown>]
-      : []
+    ? [payload as Record<string, unknown>]
+    : []
 
   showBell.value = records.some((item) => Number(item.num ?? 0) > 0)
 }
@@ -109,13 +109,13 @@ onMounted(() => {
   <div class="message-page">
     <div class="title-bar">
       <div class="title">{{ t('UIMine_MsgSystemContent') }}</div>
-      <div class="currency-info">
+      <div class="currency-info" @click="goToMineShop">
         <div class="icon-diamond">
           <img :src="iconDiamond" alt="钻石" />
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" alt="充值" @click="goToMineShop" />
+          <img :src="iconAdd" alt="充值" />
         </div>
       </div>
     </div>

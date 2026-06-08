@@ -92,7 +92,7 @@ export async function postClubFundApplyListApi(
 }
 
 // 对齐 cocos WebGuildGiveRecyCle.API
-export async function postGuildGiveRecyCleApi(
+export async function postGuildGiveRecycleApi(
   payload: GuildGiveRecyCleRequest = {} as GuildGiveRecyCleRequest
 ): Promise<ApiResponse<GuildGiveRecyCleResponseData>> {
   const endpoint = '/order/club/member/grant'

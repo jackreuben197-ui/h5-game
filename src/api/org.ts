@@ -350,7 +350,7 @@ export async function postUnlockUserApi(
 }
 
 // 对齐 cocos WebOrgClubAgentCreditBalaNce.API
-export async function postOrgClubAgentCreditBalaNceApi(
+export async function postOrgClubAgentCreditBalanceApi(
   payload: OrgClubAgentCreditBalaNceRequest = {} as OrgClubAgentCreditBalaNceRequest,
 ): Promise<ApiResponse<OrgClubAgentCreditBalaNceResponseData>> {
   const endpoint = '/org/club/agent/credit/balance'
@@ -488,7 +488,7 @@ export async function postOrgClubCreateIsFirstApi(
 }
 
 // 对齐 cocos WebOrgClubCreditBalaNce.API
-export async function postOrgClubCreditBalaNceApi(
+export async function postOrgClubCreditBalanceApi(
   payload: OrgClubCreditBalaNceRequest = {} as OrgClubCreditBalaNceRequest,
 ): Promise<ApiResponse<OrgClubCreditBalaNceResponseData>> {
   const endpoint = '/org/club/credit/balance'

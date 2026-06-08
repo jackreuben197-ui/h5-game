@@ -13,12 +13,16 @@ import {
   setupH5VisibilityBridgeChannel,
 } from './bridge/channels'
 import { setupWsProxyBridgeChannel } from './bridge/ws'
-import LoginSession from './session/loginSession'
+import { syncPostAuthData } from './session/postAuthSync'
 import './styles/main.scss'
 import { setupRem } from './utils/rem'
 import { initDebugConsole, recordDebugEvent } from './utils/debugConsole'
 import { createLogger } from './utils/logger'
 import { useGameStore } from './stores/game'
+import {
+  cacheAgentInviteCodeIfPresent,
+  restoreStorageFromUrl,
+} from '@/utils/channelPackage'
 
 const log = createLogger('[h5]')
 import { pinia } from './stores/pinia'
@@ -32,9 +36,17 @@ let stopWsProxyBridgeChannel: (() => void) | null = null
 let stopH5VisibilityBridgeChannel: (() => void) | null = null
 let stopNativeMenuGuard: (() => void) | null = null
 
+// 启动时缓存 URL 中的代理邀请码，防止跨页面丢失
+cacheAgentInviteCodeIfPresent()
+// 启动时从 URL 恢复可能的存储数据，子域名跳转主域名时使用。
+restoreStorageFromUrl()
+
 initDebugConsole()
 
 function setupNativeMenuGuard(): () => void {
+  if (import.meta.env.VITE_NATIVE_MENU_GUARD === 'open') {
+    return () => {}
+  }
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return () => {}
   }
@@ -97,11 +109,9 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
     app.use(textI18nPlugin)
     app.use(router)
     const gameStore = useGameStore(pinia)
-    // 启动时优先根据本地缓存补齐 WS/Register，保证刷新后也能尽快恢复桥接通道。
+    // 启动时若已有 token，则同步用户资料/配置/WS；任意路由刷新都不依赖首页布局。
     if (gameStore.sessionToken.trim()) {
-      void LoginSession.EnsureWS().catch(() => {
-        // 无 token 或端口未就绪时忽略；登录成功后会再次走 SyncWS/EnsureWS。
-      })
+      syncPostAuthData()
     }
     // 启动 WS 代理通道：Cocos 发指令给 H5，由 H5 执行 websocket 收发并回传结果。
     stopWsProxyBridgeChannel = setupWsProxyBridgeChannel()

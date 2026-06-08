@@ -108,12 +108,18 @@ export async function replacePublicCacheEntries<T>(
   })
 }
 
+// === 用户级缓存 ==============================================================
+// 每个用户独立一个 db：h5_cache_user_${userId}。
+// 新增 store：① 加常量 ② 加进 UserCacheStoreName union 与 USER_CACHE_STORES
+// ③ 把 USER_CACHE_DB_VERSION + 1（旧用户下次 open 会触发 onupgradeneeded 补建 store）。
 const USER_CACHE_DB_PREFIX = 'h5_cache_user_'
 const USER_CACHE_DB_VERSION = 1
 
 export const USER_STORE_CLUB_LIST = 'club_list'
 
-const USER_CACHE_STORES = [USER_STORE_CLUB_LIST] as const
+export type UserCacheStoreName = typeof USER_STORE_CLUB_LIST
+
+const USER_CACHE_STORES: UserCacheStoreName[] = [USER_STORE_CLUB_LIST]
 
 export function openUserIndexedDB(userId: string | number): Promise<IDBDatabase> {
   const id = userId === undefined || userId === null ? '' : String(userId).trim()

@@ -1,5 +1,6 @@
 import { mountH5App, unmountH5App } from '../main'
 import { initDebugConsole, recordDebugEvent } from '../utils/debugConsole'
+import { configReady } from '../utils/appConfig'
 
 initDebugConsole()
 recordDebugEvent('[boot]', 'cocos h5 entry loaded', {
@@ -9,7 +10,8 @@ recordDebugEvent('[boot]', 'cocos h5 entry loaded', {
 const host = {
   mount(container = '#app'): void {
     recordDebugEvent('[boot]', 'mount requested', { container })
-    mountH5App(container)
+    // 等待运行时配置（config.json）加载完成后再挂载，确保 API 基础地址已就绪。
+    void configReady.finally(() => mountH5App(container))
   },
   unmount(): void {
     recordDebugEvent('[boot]', 'unmount requested')

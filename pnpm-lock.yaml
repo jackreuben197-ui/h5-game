@@ -12,8 +12,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(vue@3.5.32(typescript@6.0.2))
       '@silenthill/agreement-web':
-        specifier: git+https://github.com/kingofake/agreement-web.git#main
-        version: git+https://github.com/kingofake/agreement-web.git#c6928aa36f403715bd7b26566dcb1fbce232455f
+        specifier: git+ssh://git@github.com/kingofake/agreement-web.git#main
+        version: git+https://github.com/kingofake/agreement-web.git#63294744971c6ab4508d8a7ff5f0dbcaa7533b7b
       '@vueuse/core':
         specifier: ^14.2.1
         version: 14.2.1(vue@3.5.32(typescript@6.0.2))
@@ -27,8 +27,8 @@ importers:
         specifier: ^3.21.4
         version: 3.21.4
       h5-cc-bridge:
-        specifier: git+https://github.com/soolary/h5-cc-bridge.git#main
-        version: https://codeload.github.com/soolary/h5-cc-bridge/tar.gz/00a8fc2bee7a8db810ef2ae9d7708c910c59d50d
+        specifier: git+ssh://git@github.com/soolary/h5-cc-bridge.git#main
+        version: git+https://github.com/soolary/h5-cc-bridge.git#00a8fc2bee7a8db810ef2ae9d7708c910c59d50d
       html2canvas:
         specifier: ^1.4.1
         version: 1.4.1
@@ -1056,8 +1056,8 @@ packages:
   '@rolldown/pluginutils@1.0.0-rc.2':
     resolution: {integrity: sha512-izyXV/v+cHiRfozX62W9htOAvwMo4/bXKDrQ+vom1L1qRuexPock/7VZDAhnpHCLNejd3NJ6hiab+tO0D44Rgw==}
 
-  '@silenthill/agreement-web@git+https://github.com/kingofake/agreement-web.git#c6928aa36f403715bd7b26566dcb1fbce232455f':
-    resolution: {commit: c6928aa36f403715bd7b26566dcb1fbce232455f, repo: https://github.com/kingofake/agreement-web.git, type: git}
+  '@silenthill/agreement-web@git+https://github.com/kingofake/agreement-web.git#63294744971c6ab4508d8a7ff5f0dbcaa7533b7b':
+    resolution: {commit: 63294744971c6ab4508d8a7ff5f0dbcaa7533b7b, repo: https://github.com/kingofake/agreement-web.git, type: git}
     version: 1.0.0
 
   '@tybys/wasm-util@0.10.1':
@@ -1724,8 +1724,8 @@ packages:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
     engines: {node: '>= 0.4'}
 
-  h5-cc-bridge@https://codeload.github.com/soolary/h5-cc-bridge/tar.gz/00a8fc2bee7a8db810ef2ae9d7708c910c59d50d:
-    resolution: {tarball: https://codeload.github.com/soolary/h5-cc-bridge/tar.gz/00a8fc2bee7a8db810ef2ae9d7708c910c59d50d}
+  h5-cc-bridge@git+https://github.com/soolary/h5-cc-bridge.git#00a8fc2bee7a8db810ef2ae9d7708c910c59d50d:
+    resolution: {commit: 00a8fc2bee7a8db810ef2ae9d7708c910c59d50d, repo: https://github.com/soolary/h5-cc-bridge.git, type: git}
     version: 0.1.0
 
   has-flag@4.0.0:
@@ -3485,7 +3485,7 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.0-rc.2': {}
 
-  '@silenthill/agreement-web@git+https://github.com/kingofake/agreement-web.git#c6928aa36f403715bd7b26566dcb1fbce232455f':
+  '@silenthill/agreement-web@git+https://github.com/kingofake/agreement-web.git#63294744971c6ab4508d8a7ff5f0dbcaa7533b7b':
     dependencies:
       google-protobuf: 3.21.4
 
@@ -4227,7 +4227,7 @@ snapshots:
 
   gopd@1.2.0: {}
 
-  h5-cc-bridge@https://codeload.github.com/soolary/h5-cc-bridge/tar.gz/00a8fc2bee7a8db810ef2ae9d7708c910c59d50d: {}
+  h5-cc-bridge@git+https://github.com/soolary/h5-cc-bridge.git#00a8fc2bee7a8db810ef2ae9d7708c910c59d50d: {}
 
   has-flag@4.0.0: {}
 

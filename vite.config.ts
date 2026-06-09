@@ -213,8 +213,17 @@ function readAppPkgInfo(): Required<PackageJsonLike> {
 }
 
 // https://vite.dev/config/
+// bridge 协议来源开关：决定 `@bridge-protocol` 解析到哪份代码。
+//   pokerqueen（默认）：本地 src/bridge/protocol/，兼容旧 cocos 项目
+//   h5-cc-game        ：h5-cc-bridge npm 包，与 h5-cc-game 共用同一份协议
+type BridgeTarget = 'pokerqueen' | 'h5-cc-game'
+function resolveBridgeTarget(raw: string | undefined): BridgeTarget {
+  return raw === 'h5-cc-game' ? 'h5-cc-game' : 'pokerqueen'
+}
+
 export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), '')
+  const bridgeTarget = resolveBridgeTarget(env.VITE_BRIDGE_TARGET)
   const proxyTarget = env.VITE_PROXY_TARGET || 'https://test2.awanptest.com'
   const proxyImTarget = env.VITE_PROXY_IM_TARGET || 'https://test-impubnub.awanptest.com'
   const enableSourceMap = env.VITE_BUILD_SOURCEMAP === 'true'
@@ -254,6 +263,13 @@ export default defineConfig(({ mode, command }) => {
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
+        // bridge 协议来源（受 VITE_BRIDGE_TARGET 控制）：
+        //   pokerqueen  → 项目内 src/bridge/protocol，旧 cocos 项目用
+        //   h5-cc-game  → npm 包 h5-cc-bridge，新 cocos 项目共用同一份类型
+        '@bridge-protocol':
+          bridgeTarget === 'h5-cc-game'
+            ? 'h5-cc-bridge'
+            : fileURLToPath(new URL('./src/bridge/protocol', import.meta.url)),
       },
     },
     server: {

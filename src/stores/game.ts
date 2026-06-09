@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { defineStore } from 'pinia'
-import type { EnterTablePayload } from '@/bridge/protocol'
+import type { EnterTablePayload } from '@bridge-protocol'
 import StorageKey from '@/constants/storageKey'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { dzpkPersistStorage, localStore } from '@/utils/localStore'

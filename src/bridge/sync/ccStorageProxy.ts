@@ -25,7 +25,7 @@ import {
   type CcStorageOpPayload,
   type CcStorageResultPayload,
   type CcStorageSnapshotPayload,
-} from '../protocol'
+} from '@bridge-protocol'
 import { useUserInfoStore } from '@/stores/userInfo'
 import {
   CC_CACHE_STORES,

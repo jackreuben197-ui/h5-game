@@ -1,5 +1,5 @@
 import { subscribeCocosMessages } from '../core/cocosBridgeChannel'
-import { BRIDGE_ACTION, BRIDGE_MSG_TYPE, type BridgeMessage, type H5NavigatePayload } from '../protocol'
+import { BRIDGE_ACTION, BRIDGE_MSG_TYPE, type BridgeMessage, type H5NavigatePayload } from '@bridge-protocol'
 import router from '@/router'
 import type { RouteLocationRaw } from 'vue-router'
 import { useLoginModalStore } from '@/stores/loginModal'

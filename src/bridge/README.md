@@ -1,18 +1,47 @@
 # Bridge 目录说明
 
-本文档说明 `src/bridge` 各子目录职责边界，目标是让后续改动能快速判断“代码该放哪里”。
+本文档说明 `src/bridge` 各子目录职责边界，目标是让后续改动能快速判断”代码该放哪里”。
+
+## 0. 协议来源：本地 vs 共享包
+
+协议层（action 常量 / payload 类型 / 消息信封）现在通过 `@bridge-protocol` 这个别名引入，由 `vite.config.ts` 根据 `VITE_BRIDGE_TARGET` 切实际路径：
+
+| `VITE_BRIDGE_TARGET` | `@bridge-protocol` 解析到 | 适用场景 |
+|---|---|---|
+| `pokerqueen`（默认）| 本地 `src/bridge/protocol/` | 对接旧 cocos 项目，保留与 pokerqueen `H5MsgMgr.ts` 对齐的冻结副本 |
+| `h5-cc-game` | npm 包 `h5-cc-bridge`（[github](https://github.com/soolary/h5-cc-bridge)）| 对接新 cocos 项目 h5-cc-game，两端共用同一份类型 |
+
+业务代码统一从 `@bridge-protocol` 引入，不要写 `'./protocol'` 或 `'@/bridge/protocol'`：
+
+```ts
+import { BRIDGE_ACTION, type BridgeMessage } from '@bridge-protocol'
+```
+
+切换目标后协议层会自动换源，传输/业务层（core/channels/sync/ws）**不动**，因为它们本来就只依赖 `@bridge-protocol` 暴露的接口。
+
+切换方法：改 `.env`（或 `.env.development`）里的 `VITE_BRIDGE_TARGET`，重启 dev server / 重新 build。
 
 ## 1. 目录分层
 
 ```text
 src/bridge
 ├── core/       # H5 <-> Cocos 通道与握手（底层传输）
-├── protocol/   # 动作常量、消息信封、双向 payload 类型
+├── protocol/   # 【冻结副本】对接 pokerqueen 时使用的协议；
+│               # h5-cc-game 模式下不再被引用（alias 改指 npm 包）
 ├── ws/         # H5 代理服务器 WebSocket（连接、收发、重连、解析）
 ├── channels/   # Cocos -> H5 的业务通道（UI/Toast/路由等）
-├── sync/       # H5 HTTP 结果同步到 Cocos
+├── sync/       # H5 HTTP 结果同步到 Cocos + Cocos 持久化代理回写
 └── index.ts    # 顶层聚合导出
 ```
+
+**为什么保留本地 protocol/？** 因为 pokerqueen（旧 cocos 项目）不接入 h5-cc-bridge 仓库，本目录就是它的兼容协议快照。如果哪天 pokerqueen 也接入了共享协议，可以直接删掉这个文件夹（连带 vite alias 的分支）。
+
+**注意：`h5-cc-bridge` 这个 npm 包不管哪个模式都得装**。原因：
+
+- 运行时（Vite bundle）：是否用 npm 包看 `VITE_BRIDGE_TARGET`。pokerqueen 模式下 alias 切到本地，npm 包代码不会进 bundle。
+- 类型检查（vue-tsc）：`tsconfig.app.json` 里 `@bridge-protocol` 是静态映射到 `node_modules/h5-cc-bridge/dist/index.d.ts` 的，tsc 不读环境变量，所以无论哪个模式都需要包存在才能类型检查通过。
+
+结果：`pnpm install` 永远必须；但是 `pnpm build` 出来的产物在 pokerqueen 模式下不含 h5-cc-bridge 任何代码。
 
 ## 2. 各文件夹功能说明
 
@@ -37,11 +66,10 @@ src/bridge
 
 ### `protocol/`
 
-职责：
+**这是 pokerqueen 兼容模式下的协议副本，结构与 h5-cc-bridge 仓库的 `src/` 一一对应。**
 
-- 定义跨端约定的动作名（`BRIDGE_ACTION`）。
-- 定义消息信封结构（`BridgeMessage`、`msgtype`、`requestId` 等）。
-- 定义 Cocos -> H5 与 H5 -> Cocos 的 payload 类型。
+- `VITE_BRIDGE_TARGET=pokerqueen` 时，`@bridge-protocol` 解析到本目录。
+- `VITE_BRIDGE_TARGET=h5-cc-game` 时，`@bridge-protocol` 解析到 npm 包 `h5-cc-bridge`，本目录闲置但保留。
 
 典型文件：
 
@@ -52,8 +80,8 @@ src/bridge
 
 维护约定：
 
-- 新增 action 必须先加到 `actions.ts`。
-- 新增 payload 类型必须归类到 `cocosToH5.ts` 或 `h5ToCocos.ts`。
+- 新协议优先去 [h5-cc-bridge 仓库](https://github.com/soolary/h5-cc-bridge) 改，再回到本副本同步。
+- 如果只在 pokerqueen 用、暂时不上 h5-cc-game，可直接改本目录；记得同步到 pokerqueen 的 `H5MsgMgr.ts`。
 
 ---
 

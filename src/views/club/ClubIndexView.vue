@@ -15,7 +15,7 @@ import { postOrgClubNoticeApi, postOrgClubNoticeIgnoreApi } from '@/api/cmsext'
 import { enterTable } from '@/bridge/core'
 import type { MttItem, MttActionType } from '@/components/ListItem/MttCard.vue'
 import type { TabOption } from '@/components/Tabbar/GameTypeTabbar.vue'
-import type { EnterTablePayload } from '@/bridge/protocol'
+import type { EnterTablePayload } from '@bridge-protocol'
 import StorageKey from '@/constants/storageKey'
 import LoginSession from '@/session/loginSession'
 import type {

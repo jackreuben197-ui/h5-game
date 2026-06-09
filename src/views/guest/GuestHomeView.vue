@@ -167,7 +167,7 @@ function notifyNotLogin(): void {
       <div class="game-zone-right">
         <!-- 扑克专区 -->
         <div class="game-card poker-card" @click="notifyNotLogin">
-          <img class="poker-bg" src="@/assets/images/home_game_zone_poker.png" alt="扑克背景" />
+          <img class="poker-bg" src="@/assets/images/game_zone_poker_ip2.png" alt="扑克背景" />
           <div class="poker-overlay"></div>
           <img
             class="zone-mini-icon poker-mini"

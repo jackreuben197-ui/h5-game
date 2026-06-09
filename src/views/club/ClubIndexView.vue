@@ -1037,9 +1037,8 @@ function formatChipBase(rawValue: number): string {
 </script>
 
 <template>
-  <div class="room-list-page themeType2" :style="[backgroundStyle, pageStyle]">
-    <div class="bg-overlay"></div>
-    <HeaderBack>
+  <div class="page-shell room-list-page themeType2" :style="[backgroundStyle, pageStyle]">
+    <HeaderBack @back="handleBack">
       <div class="club-identity">
         <div class="club-avatar">
           <img :src="clubCoverUrl" alt="club avatar" />
@@ -1492,7 +1491,11 @@ function formatChipBase(rawValue: number): string {
   align-items: center;
   justify-content: space-between;
   gap: 0.0832rem;
-  background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
+  background: linear-gradient(
+    97deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  );
   box-shadow: inset 0 0 0 0.0133rem rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(0.0021rem);
   transition: min-height 0.2s ease;
@@ -1636,10 +1639,12 @@ function formatChipBase(rawValue: number): string {
   position: relative;
   border: 0;
   background: transparent;
-  color: #FFF;
+  color: #fff;
   text-align: center;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: "HONOR Sans CN", sans-serif;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
+  font-family: 'HONOR Sans CN', sans-serif;
   font-size: 0.3521rem;
   font-style: normal;
   font-weight: 500;
@@ -1649,10 +1654,12 @@ function formatChipBase(rawValue: number): string {
 }
 
 .club-header-tab--active {
-  color: #FFF;
+  color: #fff;
   text-align: center;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: "HONOR Sans CN", sans-serif;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
+  font-family: 'HONOR Sans CN', sans-serif;
   font-size: 0.3521rem;
   font-style: normal;
   font-weight: 700;
@@ -1766,9 +1773,11 @@ function formatChipBase(rawValue: number): string {
   position: relative;
   z-index: 3;
   margin-left: 1.45rem;
-  color: #FFF;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: "HONOR Sans CN", sans-serif;
+  color: #fff;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
+  font-family: 'HONOR Sans CN', sans-serif;
   font-size: 0.4177rem;
   font-style: normal;
   font-weight: 700;
@@ -1803,7 +1812,7 @@ function formatChipBase(rawValue: number): string {
   align-self: stretch;
   border-radius: 0.1687rem;
   padding: 0.7791rem 0.4559rem 2.2rem 0.4559rem;
-  background: rgba(34, 34, 34, 0.50);
+  background: rgba(34, 34, 34, 0.5);
   backdrop-filter: blur(0.2213rem);
 }
 

@@ -15,7 +15,7 @@ import icPolicePrivacy from '@/assets/icons/ic_police_privacy.svg'
 import icUserAgreement from '@/assets/icons/ic_user_agreement.svg'
 import icAppVersion from '@/assets/icons/ic_app_version.svg'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-import { GameDialog } from '@/components/Dialog'
+import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { getLocale } from '@/i18n'
 import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
@@ -31,7 +31,6 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 const soundEnabled = ref(true)
-const showLogoutDialog = ref(false)
 
 interface SettingItem {
   key: string
@@ -73,14 +72,6 @@ function languageLabel(): string {
     return 'Português'
   }
   return 'English'
-}
-
-function confirmLogout(): void {
-  showLogoutDialog.value = false
-  gameStore.clearLogin()
-  LoginSession.ClearWS()
-  showSuccessToast('已退出登录')
-  void router.replace('/login')
 }
 
 async function onRowClick(item: SettingItem): Promise<void> {
@@ -210,7 +201,13 @@ function onLogoutCancel(): void {
           </div>
           <div class="right">
             <span v-if="item.rightText" class="light">{{ item.rightText }}</span>
-            <img v-if="item.clickable !== false" class="arrow" :src="icArrowRight" alt="" aria-hidden="true" />
+            <img
+              v-if="item.clickable !== false"
+              class="arrow"
+              :src="icArrowRight"
+              alt=""
+              aria-hidden="true"
+            />
           </div>
         </button>
       </section>
@@ -229,17 +226,6 @@ function onLogoutCancel(): void {
       <div class="logout-confirm-text">确认退出当前账号吗？</div>
     </GameDialog>
   </div>
-
-  <GameDialog
-    v-model:show="showLogoutDialog"
-    title="退出登录"
-    message="确认退出当前账号吗？"
-    :show-cancel-button="true"
-    cancel-button-text="取消"
-    confirm-button-text="确认"
-    @confirm="confirmLogout"
-    @cancel="showLogoutDialog = false"
-  />
 </template>
 
 <style scoped lang="scss">

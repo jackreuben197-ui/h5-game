@@ -1,7 +1,12 @@
 <script setup lang="ts">
-import homeHeaderFallback from '@/assets/images/home_header_1.png'
+import homeHeaderFallback from '@/assets/images/home_header_2.png'
 import { t } from '@/i18n'
 import { useLoginModalStore } from '@/stores/loginModal'
+
+import imgPa from '@/assets/images/minigame-newui/pa.svg'
+import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
+import imgFb from '@/assets/images/minigame-newui/fb.svg'
+import imgCowboy from '@/assets/images/minigame-newui/sg.svg'
 
 const loginModalStore = useLoginModalStore()
 
@@ -9,14 +14,19 @@ const clubBannerUrl = homeHeaderFallback
 const noticeText = '欢迎来到德州扑克，登录后体验更多精彩内容'
 const clubNameText = '俱乐部'
 const clubGoldText = '0'
+const balanceVisible = true
 const pokerTablesText = '0'
 const pokerPlayersText = '0'
-const miniGamePlayersText = '0'
-const mahjongTablesText = '0'
-const mahjongPlayersText = '0'
+const miniGamePlayersText = 0
 const mttTablesText = '0'
 const mttPlayersText = '0'
-const balanceVisible = true
+
+const activeBannerGames = [
+  { name: 'PA真人', svg: imgPa },
+  { name: '麻将胡了', svg: imgMahjong },
+  { name: 'FB体育', svg: imgFb },
+  { name: '德州牛仔', svg: imgCowboy },
+]
 
 function notifyNotLogin(): void {
   loginModalStore.open()
@@ -56,7 +66,7 @@ function notifyNotLogin(): void {
           />
         </div>
         <div class="club-balance-row">
-          <img class="icon-sm" src="@/assets/icons/icon_chips.png" alt="余额" />
+          <img class="icon-sm" src="@/assets/icons/diamondicon.svg" alt="余额" />
           <span class="balance-amount">
             {{ balanceVisible ? clubGoldText : '****' }}
           </span>
@@ -92,129 +102,147 @@ function notifyNotLogin(): void {
 
     <!-- 4. 游戏模块 -->
     <div class="game-zones">
+      <!-- 左侧：MTT赛事 + 小游戏 -->
       <div class="game-zone-left">
-        <!-- 麻将专区 -->
-        <div class="game-card game-card-mahjong" @click="notifyNotLogin">
-          <img
-            class="zone-lg-icon zone-lg-icon-mahjong"
-            src="@/assets/icons/game_zone_mahjong_lg.png"
-            alt="麻将"
-          />
-          <img class="zone-mini-icon" src="@/assets/icons/game_zone_mahjong_mini.png" alt="" />
-          <div class="zone-info">
-            <span class="zone-title"> {{ t('UIHomeMahjongArea') }} </span>
-            <p class="zone-desc">
-              <span class="mr-4"> {{ t('Mahjong_BloodFight') }}</span>
-              <span class="mr-4"> {{ t('Mahjong_BloodRiver') }}</span>
-              <span class="mr-4"> {{ t('Mahjong_Standard') }}</span>
-            </p>
-            <p class="zone-sub-desc">{{ t('UIHomeMahjongAreaTip') }}</p>
+        <!-- MTT赛事专区 / 扑克比赛 -->
+        <div
+          class="game-card game-card-mtt"
+          style="flex: 1; min-height: 5.54rem"
+          @click="notifyNotLogin"
+        >
+          <div class="mtt-bg-wrap">
+            <img class="mtt-bg-main" src="@/assets/images/game_zone_mtt_bg.png" alt="" />
+            <div class="mtt-bg-inner">
+              <img class="mtt-bg-tex" src="@/assets/images/game_zone_mtt_bg2.png" alt="" />
+            </div>
           </div>
-          <div class="zone-online-bar">
-            <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
-            <span class="online-num"> {{ mahjongTablesText }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> {{ mahjongPlayersText }} </span>
+          <div class="mtt-layer-base"></div>
+          <div class="mtt-layer-blur1"></div>
+          <div class="mtt-layer-blur2"></div>
+          <div class="mtt-title-wrap">
+            <span class="mtt-title">{{ t('UIHomeMttArea') }}</span>
           </div>
-        </div>
-
-        <!-- MTT赛事专区 -->
-        <div class="game-card game-card-mtt" @click="notifyNotLogin">
-          <img
-            class="zone-lg-icon zone-lg-icon-mtt"
-            src="@/assets/icons/game_zone_mtt_lg.png"
-            alt="MTT"
-          />
-          <img class="zone-mini-icon" src="@/assets/icons/game_zone_mtt_mini.png" alt="" />
-          <div class="zone-info">
-            <span class="zone-title"> {{ t('UIHomeMttArea') }} </span>
-            <p class="zone-desc">
-              <span>{{ t('UIHomeMttPokerTip') }}</span>
-              <span>{{ t('UIHomeMttMahjongTip') }}</span>
-            </p>
-            <p class="zone-sub-desc">{{ t('UIHomeMttAreaTip') }}</p>
-          </div>
-          <div class="zone-online-bar">
-            <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
-            <span class="online-num"> {{ mttTablesText }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> {{ mttPlayersText }} </span>
+          <img class="mtt-vector-icon" src="@/assets/icons/game_zone_mtt_vector.png" alt="" />
+          <div class="mtt-online-bar">
+            <span class="mtt-bar-label">{{ t('UIClub_Mlist_zaixian') }}</span>
+            <div class="mtt-bar-group">
+              <span class="mtt-table-rect"></span>
+              <span class="mtt-bar-label">{{ mttTablesText }}桌</span>
+            </div>
+            <div class="mtt-bar-group">
+              <img class="mtt-user-icon" src="@/assets/icons/icon_solar_user_bold.png" alt="" />
+              <span class="mtt-bar-label">{{ mttPlayersText }}人</span>
+            </div>
           </div>
         </div>
 
         <!-- 小游戏专区 -->
-        <div class="game-card game-card-minigame" @click="notifyNotLogin">
-          <img
-            class="zone-lg-icon zone-lg-icon-minigame"
-            src="@/assets/icons/game_zone_minigame_lg.png"
-            alt="小游戏"
-          />
-          <img class="zone-mini-icon" src="@/assets/icons/game_zone_minigame_mini.png" alt="" />
-          <div class="zone-info">
-            <span class="zone-title"> {{ t('UIHomeMinigameArea') }} </span>
-            <p class="zone-desc">{{ t('UIData_YGvXd5iXr_011') }}</p>
+        <div
+          class="game-card game-card-minigame"
+          style="min-height: 2.7rem"
+          @click="notifyNotLogin"
+        >
+          <div class="mg-title-wrap">
+            <span class="mg-title">{{ t('UIHomeMinigameArea') }}</span>
           </div>
-          <div class="zone-online-bar">
-            <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> {{ miniGamePlayersText }} </span>
+          <div class="mg-mask-group">
+            <div class="mg-mask-inner">
+              <img class="mg-mask-img" src="@/assets/images/game_zone_minigame_mask.png" alt="" />
+            </div>
+          </div>
+          <div class="mg-online-bar">
+            <div class="mg-online-bg" aria-hidden="true"></div>
+            <div class="mg-online-content">
+              <span class="mg-bar-label">{{ t('UIClub_Mlist_zaixian') }}</span>
+              <div class="mg-bar-group">
+                <img class="mg-user-icon" src="@/assets/icons/icon_solar_user_bold.png" alt="" />
+                <span class="mg-bar-label">{{ miniGamePlayersText }}人</span>
+              </div>
+            </div>
+          </div>
+          <div class="mg-character-wrap">
+            <div class="mg-character-inner">
+              <img
+                class="mg-character-img"
+                src="@/assets/images/game_zone_minigame_object.png"
+                alt=""
+              />
+            </div>
           </div>
         </div>
       </div>
 
+      <!-- 右侧：德州扑克 + 娱乐场 -->
       <div class="game-zone-right">
-        <!-- 扑克专区 -->
+        <!-- 德州扑克 -->
         <div class="game-card poker-card" @click="notifyNotLogin">
-          <img class="poker-bg" src="@/assets/images/home_game_zone_poker.png" alt="扑克背景" />
-          <div class="poker-overlay"></div>
-          <img
-            class="zone-mini-icon poker-mini"
-            src="@/assets/icons/game_zone_poker_mini.png"
-            alt=""
-          />
-          <div class="zone-info poker-info">
-            <span class="zone-title"> {{ t('UIHomePokerArea') }} </span>
-            <div class="poker-desc-area">
-              <p class="zone-sub-desc text-left">{{ t('UITexasRule_texas') }}</p>
-              <p class="zone-sub-desc text-right">{{ t('UITexasRule_omaha') }}</p>
-              <p class="zone-sub-desc text-left">{{ t('PokerType_2') }}</p>
-              <p class="zone-sub-desc">{{ t('UIHomeMahjongAreaTip') }}</p>
-            </div>
+          <div class="pk-ip2-wrap">
+            <img class="pk-ip2-img" src="@/assets/images/game_zone_poker_ip2.png" alt="" />
           </div>
-          <div class="zone-online-bar">
-            <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
-            <span class="online-num"> {{ pokerTablesText }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> {{ pokerPlayersText }} </span>
+          <div class="pk-ip1-wrap">
+            <img class="pk-ip1-img" src="@/assets/images/game_zone_poker_ip.png" alt="" />
+          </div>
+          <div class="pk-title-wrap">
+            <span class="pk-title">{{ t('UIHomePokerArea') }}</span>
+          </div>
+          <img class="pk-vector-icon" src="@/assets/icons/game_zone_poker_vector.png" alt="" />
+          <div class="pk-online-bar">
+            <span class="pk-bar-label">{{ t('UIClub_Mlist_zaixian') }}</span>
+            <div class="pk-bar-stats">
+              <div class="pk-bar-group pk-bar-group--table">
+                <span class="pk-table-rect"></span>
+                <span class="pk-bar-label">{{ pokerTablesText }}桌</span>
+              </div>
+              <div class="pk-bar-group pk-bar-group--people">
+                <img class="pk-user-icon" src="@/assets/icons/icon_solar_user_bold.png" alt="" />
+                <span class="pk-bar-label">{{ pokerPlayersText }}人</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- 即将开放 -->
-        <div class="game-card coming-soon-card coming-soon-right" @click="notifyNotLogin">
+        <!-- 娱乐场 -->
+        <div class="game-card en-card" @click="notifyNotLogin">
+          <div class="en-bg1-wrap">
+            <img class="en-bg1-img" src="@/assets/images/game_zone_entertainment_bg1.png" alt="" />
+          </div>
+          <div class="en-bg2-wrap">
+            <img class="en-bg2-img" src="@/assets/images/game_zone_entertainment_bg2.png" alt="" />
+          </div>
+          <div class="en-base-overlay"></div>
+          <div class="en-blur1"></div>
+          <div class="en-blur2"></div>
+          <div class="en-title-wrap">
+            <span class="en-title">娱乐场</span>
+          </div>
           <img
-            class="coming-soon-bg"
-            src="@/assets/images/home_comming_soon_1.png"
-            alt="即将开放"
+            class="en-vector-icon"
+            src="@/assets/icons/game_zone_entertainment_vector.png"
+            alt=""
           />
-          <div class="coming-soon-overlay"></div>
-          <span class="coming-soon-text"> {{ t('UIHomeComingSoon') }}</span>
+          <div class="en-online-bar">
+            <div class="en-online-bg" aria-hidden="true"></div>
+            <div class="en-online-content">
+              <span class="en-bar-label">{{ t('UIClub_Mlist_zaixian') }}</span>
+              <div class="en-bar-group">
+                <img class="en-user-icon" src="@/assets/icons/icon_solar_user_bold.png" alt="" />
+                <span class="en-bar-label">{{ miniGamePlayersText }}人</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- 5. 底部4个即将开放 -->
+    <!-- 5. 底部4个热门游戏 -->
     <div class="coming-soon-row">
-      <div v-for="i in 4" :key="i" class="coming-soon-small" @click="notifyNotLogin">
-        <img
-          class="coming-soon-small-bg"
-          src="@/assets/images/home_comming_soon_2.png"
-          alt="即将开放"
-        />
-        <div class="coming-soon-small-overlay"></div>
-        <span class="coming-soon-small-text"> {{ t('UIHomeComingSoon') }}</span>
+      <div
+        v-for="(game, index) in activeBannerGames"
+        :key="index"
+        class="coming-soon-small"
+        @click="notifyNotLogin"
+      >
+        <img class="coming-soon-full-svg" :src="game.svg" alt="" />
       </div>
     </div>
   </div>
@@ -235,6 +263,7 @@ function notifyNotLogin(): void {
   }
 }
 
+/* ===== 1. 顶部 Header ===== */
 .home-header {
   width: 100%;
   border-radius: 0.42rem;
@@ -249,15 +278,20 @@ function notifyNotLogin(): void {
   display: block;
 }
 
+/* ===== 2. 公告栏 ===== */
 .notice-bar {
   display: flex;
   align-items: center;
   gap: 0.06rem;
   padding: 0rem 0.18rem;
-  background: rgba(0, 0, 0, 0.22);
-  border-radius: 1rem;
+  border-radius: 505.114px;
   height: 0.5rem;
   min-height: 0.5rem;
+  background: rgba(76, 76, 76, 0.3);
+  position: relative;
+  box-shadow:
+    inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
+    inset -1px -1px 0px 0px rgba(255, 255, 255, 0.35);
 }
 
 .notice-icon {
@@ -301,6 +335,7 @@ function notifyNotLogin(): void {
   white-space: nowrap;
 }
 
+/* ===== 3. 俱乐部控件 ===== */
 .club-panel {
   display: flex;
   align-items: center;
@@ -309,7 +344,8 @@ function notifyNotLogin(): void {
   padding: 0.1rem 0.6rem;
   min-height: 1.54rem;
   gap: 0;
-  box-shadow: inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
+  box-shadow:
+    inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
     inset -1px -1px 0px 0px rgba(255, 255, 255, 0.35);
 }
 
@@ -364,7 +400,7 @@ function notifyNotLogin(): void {
 .recharge-btn {
   width: 1.3rem;
   padding: 0.06rem 0rem;
-  background: rgba(93, 4, 40, 0.25);
+  background: rgba(37, 37, 37, 0.49);
   border: none;
   border-radius: 1rem;
   color: #fff;
@@ -410,6 +446,7 @@ function notifyNotLogin(): void {
   white-space: nowrap;
 }
 
+/* ===== 4. 游戏模块 ===== */
 .game-zones {
   display: flex;
   gap: 0.3rem;
@@ -447,183 +484,584 @@ function notifyNotLogin(): void {
   }
 }
 
-.zone-lg-icon {
-  position: absolute;
-  object-fit: contain;
-  pointer-events: none;
-  z-index: 3;
-}
-.game-card-mahjong {
-  background: url('@/assets/images/home_left_card_bg_1.png') center/cover no-repeat;
-}
+/* ===== MTT Card ===== */
 .game-card-mtt {
-  background: url('@/assets/images/home_left_card_bg_2.png') center/cover no-repeat;
-}
-.game-card-minigame {
   overflow: hidden;
-  background: url('@/assets/images/home_left_card_bg_3.png') center/cover no-repeat;
-}
-.zone-lg-icon-mahjong {
-  width: 1.8rem;
-  height: 1.7rem;
-  left: -0.45rem;
-  top: -0.55rem;
-}
-.zone-lg-icon-mtt {
-  width: 0.96rem;
-  height: 0.96rem;
-  left: -0.05rem;
-  top: -0.2rem;
-  bottom: 0.26rem;
-}
-.zone-lg-icon-minigame {
-  width: 1.4rem;
-  height: 1.6rem;
-  left: -0.05rem;
-  bottom: -0.1rem;
+  background: none;
 }
 
-.zone-mini-icon {
+.mtt-bg-wrap {
   position: absolute;
-  top: 0.26rem;
-  right: 0.24rem;
-  width: 0.35rem;
-  height: 0.27rem;
-  object-fit: contain;
+  left: -3.808rem;
+  top: -0.234rem;
+  width: 9.847rem;
+  height: 5.781rem;
+  pointer-events: none;
 }
 
-.zone-info {
-  text-align: center;
-}
-
-.zone-title {
-  font-size: 0.4rem;
-  font-weight: 800;
-  color: #fff;
+.mtt-bg-main {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  max-width: none;
   display: block;
-  margin-bottom: 0.4rem;
-}
-.poker-desc-area {
-  height: 3rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
 }
 
-.zone-desc {
-  font-size: 0.22rem;
-  font-weight: 400;
-  color: #fff;
-  margin: 0;
-  line-height: 1.5;
+.mtt-bg-inner {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
 }
 
-.zone-sub-desc {
-  font-size: 0.22rem;
-  font-weight: 400;
-  color: #fff;
-  margin: 0.06rem 0 0;
+.mtt-bg-tex {
+  position: absolute;
+  left: 0;
+  top: -8.19%;
+  width: 116.04%;
+  height: 116.38%;
+  object-fit: cover;
+  max-width: none;
+  display: block;
 }
 
-.zone-online-bar {
+.mtt-layer-base {
+  position: absolute;
+  inset: 0;
+  background: rgba(71, 35, 25, 0.3);
+  border-radius: 0.56rem;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mtt-layer-blur1 {
+  position: absolute;
+  backdrop-filter: blur(0.925rem);
+  background: rgba(49, 35, 29, 0.81);
+  border-radius: 1.057rem;
+  pointer-events: none;
+  z-index: 1;
+  mask-image: radial-gradient(ellipse 35% 37% at 50% 50%, transparent 0%, black 100%);
+  -webkit-mask-image: radial-gradient(ellipse 35% 37% at 50% 50%, transparent 0%, black 100%);
+}
+
+.mtt-layer-blur2 {
+  position: absolute;
+  inset: -0.894rem -0.723rem -0.687rem -0.818rem;
+  backdrop-filter: blur(1.057rem);
+  background: rgba(37, 25, 21, 0.93);
+  border-radius: 1.057rem;
+  border: 0.027rem solid #000;
+  pointer-events: none;
+  z-index: 1;
+  mask-image: radial-gradient(ellipse 38% 40% at 50% 50%, transparent 0%, black 100%);
+  -webkit-mask-image: radial-gradient(ellipse 38% 40% at 50% 50%, transparent 0%, black 100%);
+}
+
+.mtt-title-wrap {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 1.313rem;
+  padding: 0.16rem 0.197rem;
+  border-radius: 1.333rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.1rem;
-  background: rgba(200, 200, 200, 0.25);
-  border-radius: 1rem;
-  padding: 0.06rem 0.2rem;
-  margin-top: 0.18rem;
-  height: 0.4rem;
-  width: 100%;
+  white-space: nowrap;
   z-index: 2;
 }
 
-.online-text {
-  font-size: 0.22rem;
+.mtt-title {
+  font-size: 0.4rem;
+  font-weight: 800;
   color: #fff;
+  white-space: nowrap;
+  line-height: 1;
 }
 
-.online-icon {
-  width: 0.22rem;
-  height: 0.22rem;
-  margin-left: 0.1rem;
+.mtt-vector-icon {
+  position: absolute;
+  left: 4.028rem;
+  top: 0.267rem;
+  width: 0.24rem;
+  height: 0.24rem;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.mtt-online-bar {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 4.854rem;
+  backdrop-filter: blur(0.037rem);
+  background: rgba(56, 55, 55, 0.61);
+  padding: 0.08rem 0.133rem;
+  border-radius: 0.133rem;
+  display: flex;
+  gap: 0.133rem;
+  align-items: center;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.mtt-bar-label {
+  font-size: 0.213rem;
+  color: #fff;
+  line-height: 0.24rem;
+  font-weight: 500;
+}
+
+.mtt-bar-group {
+  display: flex;
+  gap: 0.053rem;
+  align-items: center;
+  width: 0.853rem;
+}
+
+.mtt-table-rect {
+  display: inline-block;
+  width: 0.187rem;
+  height: 0.107rem;
+  background: #fff;
+  border-radius: 50px;
+  flex-shrink: 0;
+}
+
+.mtt-user-icon {
+  width: 0.16rem;
+  height: 0.187rem;
+  flex-shrink: 0;
+  object-fit: contain;
+  display: block;
+}
+
+/* ===== Mini Game Card ===== */
+.game-card-minigame {
+  overflow: visible;
+  background: rgba(148, 148, 148, 0.1);
+}
+
+.mg-title-wrap {
+  position: absolute;
+  left: 1.014rem;
+  top: 1.094rem;
+  padding: 0.16rem 0.197rem;
+  border-radius: 1.333rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.mg-title {
+  font-size: 0.4rem;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.mg-mask-group {
+  position: absolute;
+  top: 8.94%;
+  right: 6.7%;
+  bottom: 81.16%;
+  left: 86.25%;
+  z-index: 2;
+}
+
+.mg-mask-inner {
+  position: absolute;
+  top: -7.14%;
+  right: -6.07%;
+  bottom: -7.14%;
+  left: -6.07%;
+}
+
+.mg-mask-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
   object-fit: contain;
 }
 
-.online-num {
-  font-size: 0.22rem;
-  color: #fff;
+.mg-online-bar {
+  position: absolute;
+  left: 1.414rem;
+  top: 2.134rem;
+  padding: 0.08rem 0.133rem;
+  border-radius: 0.133rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  z-index: 2;
 }
 
+.mg-online-bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(199, 199, 199, 0.15);
+  mix-blend-mode: plus-lighter;
+  border-radius: 0.133rem;
+  pointer-events: none;
+}
+
+.mg-online-content {
+  position: relative;
+  display: flex;
+  gap: 0.133rem;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.mg-bar-label {
+  font-size: 0.213rem;
+  color: #fff;
+  line-height: 0.24rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.mg-bar-group {
+  display: flex;
+  gap: 0.08rem;
+  align-items: center;
+  width: 0.853rem;
+}
+
+.mg-user-icon {
+  width: 0.16rem;
+  height: 0.187rem;
+  flex-shrink: 0;
+  object-fit: contain;
+  display: block;
+}
+
+.mg-character-wrap {
+  position: absolute;
+  top: -12.06%;
+  right: 76.76%;
+  bottom: 45.39%;
+  left: -3.52%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mg-character-inner {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.mg-character-img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+}
+
+/* ===== Poker Card ===== */
 .poker-card {
   flex: 1;
   min-height: 5.54rem;
   overflow: hidden;
+  background: rgba(148, 148, 148, 0.1);
 }
 
-.poker-bg {
+.pk-ip1-wrap {
+  position: absolute;
+  left: 0;
+  top: 0.095rem;
+  width: 4.479rem;
+  height: 5.974rem;
+  pointer-events: none;
+}
+
+.pk-ip1-img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  max-width: none;
+  pointer-events: none;
 }
 
-.poker-overlay {
+.pk-ip2-wrap {
   position: absolute;
-  inset: 0;
-  z-index: 1;
+  left: 0.008rem;
+  top: 0.095rem;
+  width: 4.479rem;
+  height: 5.974rem;
+  pointer-events: none;
+  mask-image: url('@/assets/images/game_zone_poker_mask.png');
+  -webkit-mask-image: url('@/assets/images/game_zone_poker_mask.png');
+  mask-position: -0.225rem 4.572rem;
+  -webkit-mask-position: -0.225rem 4.572rem;
+  mask-size: 4.991rem 1.661rem;
+  -webkit-mask-size: 4.991rem 1.661rem;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-mode: alpha;
 }
 
-.poker-mini {
-  z-index: 1;
-}
-
-.poker-info {
-  position: relative;
-  z-index: 1;
-  padding-left: 0;
-  flex: 1;
-}
-
-.coming-soon-card {
-  min-height: 2.7rem;
-  padding: 0;
-}
-
-.coming-soon-right {
-  position: relative;
-  border-radius: 0.56rem;
-  overflow: hidden;
-}
-
-.coming-soon-bg {
+.pk-ip2-img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  max-width: none;
+  pointer-events: none;
 }
 
-.coming-soon-overlay {
+.pk-title-wrap {
   position: absolute;
-  inset: 0;
+  left: 1.201rem;
+  top: 0.241rem;
+  padding: 0.16rem 0.197rem;
+  border-radius: 1.333rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  z-index: 2;
 }
 
-.coming-soon-text {
-  position: relative;
-  z-index: 1;
-  display: block;
-  text-align: center;
-  font-size: 0.36rem;
-  font-weight: 700;
+.pk-title {
+  font-size: 0.4rem;
+  font-weight: 800;
   color: #fff;
-  margin: auto;
-  padding: 1rem 0;
-  width: 100%;
+  white-space: nowrap;
+  line-height: 1;
 }
 
+.pk-vector-icon {
+  position: absolute;
+  left: 3.841rem;
+  top: 0.241rem;
+  width: 0.32rem;
+  height: 0.267rem;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.pk-online-bar {
+  position: absolute;
+  left: 0.854rem;
+  top: 5.014rem;
+  backdrop-filter: blur(0.037rem);
+  background: rgba(56, 55, 55, 0.61);
+  padding: 0.08rem 0.133rem;
+  border-radius: 0.133rem;
+  display: flex;
+  gap: 0.133rem;
+  align-items: center;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.pk-bar-label {
+  font-size: 0.213rem;
+  color: #fff;
+  line-height: 0.24rem;
+  font-weight: 500;
+}
+
+.pk-bar-stats {
+  display: flex;
+  gap: 0.133rem;
+  align-items: center;
+}
+
+.pk-bar-group {
+  display: flex;
+  align-items: center;
+  width: 0.853rem;
+}
+
+.pk-bar-group--table {
+  gap: 0.053rem;
+}
+.pk-bar-group--people {
+  gap: 0.08rem;
+}
+
+.pk-table-rect {
+  display: inline-block;
+  width: 0.187rem;
+  height: 0.107rem;
+  background: #fff;
+  border-radius: 50px;
+  flex-shrink: 0;
+}
+
+.pk-user-icon {
+  width: 0.16rem;
+  height: 0.187rem;
+  flex-shrink: 0;
+  object-fit: contain;
+  display: block;
+}
+
+/* ===== Entertainment Card ===== */
+.en-card {
+  min-height: 2.7rem;
+  overflow: hidden;
+  background: none;
+}
+
+.en-bg1-wrap {
+  position: absolute;
+  left: -1.36rem;
+  top: -2.08rem;
+  width: 12.762rem;
+  height: 7.493rem;
+  pointer-events: none;
+}
+
+.en-bg1-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  max-width: none;
+}
+
+.en-bg2-wrap {
+  position: absolute;
+  left: 0;
+  top: -2.826rem;
+  width: 4.453rem;
+  height: 6.667rem;
+  pointer-events: none;
+}
+
+.en-bg2-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  max-width: none;
+}
+
+.en-base-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 0.56rem;
+  z-index: 1;
+}
+
+.en-blur1 {
+  position: absolute;
+  border-radius: 1.057rem;
+  pointer-events: none;
+  z-index: 1;
+  mask-image: radial-gradient(ellipse 35% 37% at 50% 50%, transparent 0%, black 100%);
+  -webkit-mask-image: radial-gradient(ellipse 35% 37% at 50% 50%, transparent 0%, black 100%);
+}
+
+.en-blur2 {
+  position: absolute;
+  inset: -0.75rem -0.607rem -0.555rem -0.698rem;
+  backdrop-filter: blur(1.057rem);
+  -webkit-backdrop-filter: blur(1.057rem);
+  background: rgba(37, 25, 21, 0.93);
+  border-radius: 1.057rem;
+  border: 0.027rem solid #000;
+  pointer-events: none;
+  z-index: 1;
+  mask-image: radial-gradient(ellipse 38% 40% at 50% 50%, transparent 0%, black 100%);
+  -webkit-mask-image: radial-gradient(ellipse 38% 40% at 50% 50%, transparent 0%, black 100%);
+}
+
+.en-title-wrap {
+  position: absolute;
+  left: 1.521rem;
+  top: 1.094rem;
+  padding: 0.16rem 0.197rem;
+  border-radius: 1.333rem;
+  z-index: 2;
+  white-space: nowrap;
+}
+
+.en-title {
+  font-size: 0.4rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.en-vector-icon {
+  position: absolute;
+  left: 4.028rem;
+  top: 0.267rem;
+  width: 0.24rem;
+  height: 0.24rem;
+  z-index: 2;
+}
+
+.en-online-bar {
+  position: absolute;
+  left: 1.361rem;
+  top: 2.107rem;
+  padding: 0.08rem 0.133rem;
+  border-radius: 0.133rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  z-index: 2;
+}
+
+.en-online-bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(199, 199, 199, 0.15);
+  mix-blend-mode: plus-lighter;
+  border-radius: 0.133rem;
+  pointer-events: none;
+}
+
+.en-online-content {
+  position: relative;
+  display: flex;
+  gap: 0.133rem;
+  align-items: flex-start;
+}
+
+.en-bar-label {
+  font-size: 0.213rem;
+  color: #fff;
+  line-height: 0.24rem;
+  font-weight: 500;
+}
+
+.en-bar-group {
+  display: flex;
+  gap: 0.08rem;
+  align-items: center;
+  width: 0.853rem;
+}
+
+.en-user-icon {
+  width: 0.16rem;
+  height: 0.187rem;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+/* ===== 5. 底部4个热门游戏 ===== */
 .coming-soon-row {
   display: flex;
   gap: 0.12rem;
@@ -637,30 +1075,14 @@ function notifyNotLogin(): void {
   border-radius: 0.5rem;
   overflow: hidden;
   aspect-ratio: 81 / 86;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
 }
 
-.coming-soon-small-bg {
-  position: absolute;
-  inset: 0;
+.coming-soon-full-svg {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.coming-soon-small-overlay {
-  position: absolute;
-  inset: 0;
-}
-
-.coming-soon-small-text {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  font-size: 0.293rem;
-  font-weight: 400;
-  color: #fff;
+  display: block;
 }
 </style>

@@ -78,6 +78,39 @@ export interface H5VisibilityPayload {
   reason?: string
 }
 
+// Cocos -> H5：indexedDB 持久化操作。
+//   - storage 区分载体（'indexeddb' / 'localstorage'），两类 payload 字段集不同。
+//   - requestId 必填：H5 处理完后通过 ccStorageResult 按 requestId 回包；写操作也回 ok。
+//   - 读未命中返回 { ok:true, value:null }；store 不在白名单时返回 { ok:false, error:'store_not_allowed' }。
+export interface CcIndexedDBOpPayload {
+  requestId: string
+  storage: 'indexeddb'
+  // 表名；当前白名单：'table_user_base_info' / 'table_user_data_info' / 'game_replays'。
+  store: string
+  op: 'get' | 'getAll' | 'put' | 'delete' | 'clear'
+  // get / put / delete 需要 key；getAll / clear 可省略。
+  key?: IDBValidKey
+  // put 时携带；其余 op 忽略。
+  value?: unknown
+}
+
+// Cocos -> H5：localStorage 持久化操作。
+//   - H5 实际写入时统一加 'dzpk_cc_' 前缀，避免和 H5 自己的 'dzpk_h5_' 冲突。
+//   - requestId 选填：握手完成后 H5 会主动推 ccStorageSnapshot 把全部 cc 命名空间下的
+//     键值回灌给 Cocos 用作内存镜像，因此 Cocos 的 get 通常走内存，不必每次请求 H5。
+//     若 Cocos 显式发起 get，仍可通过 requestId 拿到 ccStorageResult 回包。
+export interface CcLocalStorageOpPayload {
+  requestId?: string
+  storage: 'localstorage'
+  op: 'get' | 'set' | 'remove' | 'clear'
+  // get / set / remove 必填；clear 省略，清空整个 cc 命名空间。
+  key?: string
+  // set 时携带，字符串形态由 Cocos 自行决定（JSON / 明文等）。
+  value?: string
+}
+
+export type CcStorageOpPayload = CcIndexedDBOpPayload | CcLocalStorageOpPayload
+
 // Cocos -> H5：通知 H5 切换心跳频率，对齐 Cocos HeartbeatComponent 的 normal/in-gameplay 区分。
 //   normal      —— 牌桌外，5s/次
 //   in-gameplay —— 牌桌内（GameUtil.isInGameplay），1s/次
@@ -131,4 +164,6 @@ export interface CocosToH5PayloadMap {
   h5Navigate: H5NavigatePayload
   // 心跳频率切换（对齐 Cocos HeartbeatComponent.SendIntervalNormal/InGameplay）
   setHeartbeatMode: SetHeartbeatModePayload
+  // 持久化代理（indexedDB / localStorage 同走一个 action，靠 payload.storage 区分）
+  ccStorageOp: CcStorageOpPayload
 }

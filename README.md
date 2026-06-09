@@ -1072,6 +1072,7 @@ pnpm sync:protocol
 - **切换用户天然隔离**：A 账号登出后 B 账号登录，互相看不到对方的缓存。
 - **不卡加载**：首屏先用本地缓存渲染，后台静默 fetch 覆盖更新。
 - **按"用户 → 俱乐部"分层扩展**：后续要缓存某 club 的成员列表、房间列表等不需要重新设计存储结构。
+- **H5 与 Cocos 共用一份库**：cocos 不再开自己的 `cc_cache_user_*`，所有持久化经 bridge 委托给 H5（详见 `src/bridge/README.md §10`）。
 
 ### 14.2 整体布局
 
@@ -1082,19 +1083,21 @@ pnpm sync:protocol
 │   ├── app_config
 │   └── diamond_config
 │
-├── h5_cache_user_1001            ← 用户 1001 的私有 db
-│   └── club_list                 ← 用户 1001 的俱乐部列表
-│       ├── (key: clubId)         ← record = ClubInfo
-│       └── ...
+├── user_cache_1001               ← 用户 1001 的私有 db（H5 + Cocos 共用）
+│   ├── club_list                 ← h5 自己的：用户 1001 的俱乐部列表
+│   │   ├── (key: clubId)
+│   │   └── ...
+│   ├── table_user_base_info      ← cocos 通过 bridge 写：牌桌内玩家公共信息
+│   ├── table_user_data_info      ← cocos 通过 bridge 写：牌桌内玩家战绩
+│   └── game_replays              ← cocos 通过 bridge 写：局内牌谱
 │
-├── h5_cache_user_1002            ← 用户 1002 的私有 db
-│   └── club_list
-│       └── ...
+├── user_cache_1002
+│   └── ...
 │
 └── ...
 ```
 
-**db 命名**：`h5_cache_user_${userId}`。和 cocos 端 `cc_cache_user_${userId}` 同构。
+**db 命名**：`user_cache_${userId}`，H5 与 Cocos 共用同一份；cocos 端通过 `ccStorageOp` 把读写转发到 H5 进程。
 
 **为什么 per-user 一个 db**：
 
@@ -1282,45 +1285,52 @@ try {
 
 ### 14.7 与 `public_cache` 的关系
 
-| 维度              | `public_cache`                | `h5_cache_user_${uid}`                  |
+| 维度              | `public_cache`                | `user_cache_${uid}`                     |
 | ----------------- | ----------------------------- | --------------------------------------- |
-| 作用域            | 全用户共享                    | 单用户私有                              |
-| 典型数据          | 多语言模板、全局配置、钻石档位 | 俱乐部列表、（未来）成员、房间…         |
+| 作用域            | 全用户共享                    | 单用户私有（H5 + Cocos 共用）           |
+| 典型数据          | 多语言模板、全局配置、钻石档位 | 俱乐部列表、牌桌玩家信息、牌谱…         |
 | 隔离              | 否                            | 切换用户天然隔离                        |
 | 清理              | 升级版本时由 `onupgradeneeded` 处理 | 退出账号无需清理，下次同账号秒开 |
-| API               | `readPublicCache` / `writePublicCache` | `userCache(uid).get/put/...`           |
+| API               | `readPublicCache` / `writePublicCache` | `userCache(uid).get/put/...`（H5）/ `cocosCache().get/put/...`（CC，bridge 转发） |
 
 ### 14.8 与 cocos 端的对应
 
-cocos 端有同构的 `cocosCache()`（`pokerqueen/assets/script/tools/CocosIndexedDB.ts`）：
+H5 与 Cocos 共用同一个 `user_cache_${uid}`，cocos 通过 bridge 把读写委托给 H5（协议见 `src/bridge/README.md §10`）：
 
-| 维度       | h5                                       | cocos                                       |
-| ---------- | ---------------------------------------- | ------------------------------------------- |
-| db 命名    | `h5_cache_user_${uid}`                   | `cc_cache_user_${uid}`                      |
-| 用户切换   | Map 缓存多个 db 连接                     | 单 db，切用户时 close + 重开                |
-| API 形态   | `userCache(uid).get/put/...`             | `cocosCache().get/put/...`（uid 隐式）      |
-| 已有 store | `club_list`                              | `public_info` / `stats` / `replays`        |
+| 维度       | h5                                       | cocos                                                |
+| ---------- | ---------------------------------------- | ---------------------------------------------------- |
+| db 命名    | `user_cache_${uid}`                      | `user_cache_${uid}`（与 H5 同一份，bridge 转发）      |
+| 用户切换   | Map 缓存多个 db 连接                     | 由 H5 端按当前登录态决定 uid                          |
+| API 形态   | `userCache(uid).get/put/...`             | `cocosCache().get/put/...`（uid 隐式，内部走 bridge） |
+| 已有 store | `club_list`                              | `table_user_base_info` / `table_user_data_info` / `game_replays` |
 | TTL        | 不内置；wrapper 自行决定                 | wrapper 用 `CacheRecord<T> = {data, updatedAt}` 包一层 |
 
-两端管各自的 db，互不读写。新增/调整 store 名时，命名上保持 h5 / cocos 各自独立即可（数据无重叠），但 wrapper 模块结构建议对齐。
+两端共用 db 但 store 名严格区分：H5 自有 store（如 `club_list`）只在 H5 进程内访问；cocos 写入的 store 必须在 `CC_CACHE_STORES` 白名单中，否则 `ccStorageProxy` 会拒绝。
 
 ### 14.9 已落地的缓存清单
 
-| Store         | 维度       | Key            | 数据                | 调用方                                            |
-| ------------- | ---------- | -------------- | ------------------- | ------------------------------------------------- |
-| `club_list`   | 用户级     | `clubId`       | `ClubInfo`          | `src/utils/userClubListCache.ts`                  |
+| Store                     | 写入方  | Key                | 数据                  | 调用方                                                       |
+| ------------------------- | ------- | ------------------ | --------------------- | ------------------------------------------------------------ |
+| `club_list`               | H5      | `clubId`           | `ClubInfo`            | `src/utils/userClubListCache.ts`                             |
+| `table_user_base_info`    | Cocos   | `userRandomId`     | `CacheRecord<info>`   | `pokerqueen/assets/script/tools/PlayerInfoCacheDB.ts`        |
+| `table_user_data_info`    | Cocos   | 复合（含 game/poker/origin/gold type） | `CacheRecord<stats>` | 同上                                                         |
+| `game_replays`            | Cocos   | `userId_roomId_handNum` 或 `userId_m{matchId}_handNum` | 牌谱 | `pokerqueen/assets/script/tools/ReplayCacheDB.ts`            |
 
-更新此表请同步本节。
+更新此表请同步本节。新增 cocos 写入的 store 时同时更新 `src/utils/indexedDB.ts` 的 `CC_CACHE_STORES`（白名单）与 `USER_CACHE_DB_VERSION`。
 
 ### 14.10 FAQ
 
 **Q：为什么不放一个 db、用 key 前缀区分用户？**
 
-A：清理某个用户的数据要游标遍历前缀匹配，没有 `deleteDatabase` 干净；schema 升级要全员一起；和 cocos 端 `cc_cache_user_XXX` 命名不一致。per-user db 是最低心智负担的选择。
+A：清理某个用户的数据要游标遍历前缀匹配，没有 `deleteDatabase` 干净；schema 升级要全员一起。per-user db 是最低心智负担的选择。
 
 **Q：为什么不在每个用户 db 内部再按 club 拆 store（`user_xx_club_yy_data`）？**
 
 A：IndexedDB 创建 object store 必须在 `onupgradeneeded` 里、要 bump version。每加入一个新 club 就升级 schema 不现实。复合键 `[clubId, subId]` 才是 IndexedDB 的官方姿势。
+
+**Q：为什么 H5 与 Cocos 共用一个 db？**
+
+A：早期 H5 / Cocos 各自开 `h5_cache_user_*` 和 `cc_cache_user_*`，配额、清理、调试都要看两份。改成共用 `user_cache_${uid}` 后：清账号一次 `deleteDatabase` 就干净；DevTools 看一张表；Cocos 不再有本地落盘，所有数据出口都汇聚到 H5（详见 `src/bridge/README.md §10`）。
 
 **Q：缓存陈旧怎么办？**
 

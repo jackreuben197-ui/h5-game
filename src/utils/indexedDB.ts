@@ -109,17 +109,35 @@ export async function replacePublicCacheEntries<T>(
 }
 
 // === 用户级缓存 ==============================================================
-// 每个用户独立一个 db：h5_cache_user_${userId}。
+// 每个用户独立一个 db：user_cache_${userId}（h5 与 cocos 共用同一个库，
+// 由 bridge 把 cocos 的 put/get 转交给本进程，避免双端各开一份 db）。
 // 新增 store：① 加常量 ② 加进 UserCacheStoreName union 与 USER_CACHE_STORES
 // ③ 把 USER_CACHE_DB_VERSION + 1（旧用户下次 open 会触发 onupgradeneeded 补建 store）。
-const USER_CACHE_DB_PREFIX = 'h5_cache_user_'
-const USER_CACHE_DB_VERSION = 1
+const USER_CACHE_DB_PREFIX = 'user_cache_'
+const USER_CACHE_DB_VERSION = 2
 
 export const USER_STORE_CLUB_LIST = 'club_list'
 
-export type UserCacheStoreName = typeof USER_STORE_CLUB_LIST
+// cocos 通过 bridge 写入的 store；与 h5 自己的 store 同库不同名，
+// h5 对 bridge 收到的 store 必须做白名单校验，未列入这里的请求一律忽略。
+export const CC_STORE_TABLE_USER_BASE_INFO = 'table_user_base_info'
+export const CC_STORE_TABLE_USER_DATA_INFO = 'table_user_data_info'
+export const CC_STORE_GAME_REPLAYS = 'game_replays'
 
-const USER_CACHE_STORES: UserCacheStoreName[] = [USER_STORE_CLUB_LIST]
+export type CcCacheStoreName =
+  | typeof CC_STORE_TABLE_USER_BASE_INFO
+  | typeof CC_STORE_TABLE_USER_DATA_INFO
+  | typeof CC_STORE_GAME_REPLAYS
+
+export const CC_CACHE_STORES: CcCacheStoreName[] = [
+  CC_STORE_TABLE_USER_BASE_INFO,
+  CC_STORE_TABLE_USER_DATA_INFO,
+  CC_STORE_GAME_REPLAYS,
+]
+
+export type UserCacheStoreName = typeof USER_STORE_CLUB_LIST | CcCacheStoreName
+
+const USER_CACHE_STORES: UserCacheStoreName[] = [USER_STORE_CLUB_LIST, ...CC_CACHE_STORES]
 
 export function openUserIndexedDB(userId: string | number): Promise<IDBDatabase> {
   const id = userId === undefined || userId === null ? '' : String(userId).trim()

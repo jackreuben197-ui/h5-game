@@ -13,6 +13,7 @@ import {
   setupH5VisibilityBridgeChannel,
 } from './bridge/channels'
 import { setupWsProxyBridgeChannel } from './bridge/ws'
+import { installCcStorageProxy } from './bridge/sync/ccStorageProxy'
 import { syncPostAuthData } from './session/postAuthSync'
 import './styles/main.scss'
 import { setupRem } from './utils/rem'
@@ -34,6 +35,7 @@ let stopBridgePanelChannel: (() => void) | null = null
 let stopBridgeToastChannel: (() => void) | null = null
 let stopWsProxyBridgeChannel: (() => void) | null = null
 let stopH5VisibilityBridgeChannel: (() => void) | null = null
+let stopCcStorageProxy: (() => void) | null = null
 let stopNativeMenuGuard: (() => void) | null = null
 
 // 启动时缓存 URL 中的代理邀请码，防止跨页面丢失
@@ -123,6 +125,9 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
     stopBridgeToastChannel = setupGlobalBridgeToastChannel()
     // 启动 H5 UI 桥接：接收 Cocos 下发的 h5Hide/h5Show/h5Navigate。
     stopH5VisibilityBridgeChannel = setupH5VisibilityBridgeChannel()
+    // 启动持久化代理：Cocos 把 indexedDB/localStorage 操作经 bridge 委托给 H5，
+    // h5 与 cocos 共用 user_cache_${userId} 一个 IndexedDB；localStorage 用 dzpk_cc_ 前缀隔离。
+    stopCcStorageProxy = installCcStorageProxy()
     app.mount(mountTarget)
     recordDebugEvent('[h5]', 'mount success', {
       route: window.location.hash || window.location.pathname,
@@ -151,6 +156,8 @@ export function unmountH5App(): void {
   stopWsProxyBridgeChannel = null
   stopH5VisibilityBridgeChannel?.()
   stopH5VisibilityBridgeChannel = null
+  stopCcStorageProxy?.()
+  stopCcStorageProxy = null
   stopNativeMenuGuard?.()
   stopNativeMenuGuard = null
   app.unmount()

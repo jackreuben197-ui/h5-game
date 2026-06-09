@@ -787,7 +787,7 @@ onMounted(() => {
 }
 
 .value-down {
-  color: #05e7ae;
+  color: rgba(85, 243, 41, 1);
 }
 
 .chevron {
@@ -999,7 +999,7 @@ onMounted(() => {
     width: 0.8rem;
     height: 0.8rem;
     border-radius: 50%;
-    background: #05e7ae;
+    background: rgba(85, 243, 41, 1);
     z-index: 1;
   }
 }
@@ -1010,7 +1010,7 @@ onMounted(() => {
   height: 1.43581rem;
   border: 0.01333rem solid rgba(242, 242, 242, 0.8);
   border-radius: 1.05573rem;
-  background: linear-gradient(168.11deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background: linear-gradient(168.11deg, rgba(85, 243, 41, 1) 7.55%, rgba(62, 173, 6, 1) 71.92%);
   color: #fff;
   font-size: 0.4rem;
   font-weight: 500;

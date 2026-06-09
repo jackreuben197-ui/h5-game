@@ -393,14 +393,20 @@ onMounted(() => {
 
       <section class="summary-card">
         <div class="date-range">
-          <button type="button" class="date-btn" @click="openDatePicker('start')">
-            <span class="calendar-icon-inline" aria-hidden="true"></span>
-            <span>{{ startDateText }}</span>
+          <button type="button" class="date-pill" @click="openDatePicker('start')">
+            <span class="date">{{ startDateText }}</span>
+            <span class="time-line">
+              <img :src="imgClock" alt="时间" />
+              <span>00:00</span>
+            </span>
           </button>
-          <span class="date-sep"></span>
-          <button type="button" class="date-btn" @click="openDatePicker('end')">
-            <span class="calendar-icon-inline" aria-hidden="true"></span>
-            <span>{{ endDateText }}</span>
+          <span class="dash" aria-hidden="true">—</span>
+          <button type="button" class="date-pill" @click="openDatePicker('end')">
+            <span class="date">{{ endDateText }}</span>
+            <span class="time-line">
+              <img :src="imgClock" alt="时间" />
+              <span>23:59</span>
+            </span>
           </button>
         </div>
 
@@ -559,53 +565,45 @@ onMounted(() => {
   gap: 0.16rem;
 }
 
-.date-btn {
-  min-width: 3.22rem;
-  min-height: 1.36rem;
-  border-radius: 1.06rem;
-  border: 0;
-  background: rgba(255, 255, 255, 0.15);
-  color: rgba(243, 243, 243, 0.96);
-  font-size: 0.32rem;
-  line-height: 0.42rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.2rem;
-}
+.date-pill {
+  border: 0.02rem solid rgba(249, 249, 249, 0.08);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  width: 3.2204rem;
+  height: 1.50483rem;
+  color: #fff;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0.2196rem;
 
-.calendar-icon-inline {
-  width: 0.34rem;
-  height: 0.34rem;
-  border: 0.03rem solid rgba(243, 243, 243, 0.85);
-  border-radius: 0.08rem;
-  position: relative;
-
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -0.06rem;
-    width: 0.05rem;
-    height: 0.1rem;
-    border-radius: 0.03rem;
-    background: rgba(243, 243, 243, 0.85);
+  .date {
+    font-size: 0.32013rem;
+    line-height: 0.42685rem;
   }
 
-  &::before {
-    left: 0.07rem;
-  }
+  .time-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.21341rem;
+    font-size: 0.42685rem;
+    line-height: 0.53355rem;
 
-  &::after {
-    right: 0.07rem;
+    img {
+      width: 0.33147rem;
+      height: 0.31867rem;
+      object-fit: contain;
+      opacity: 0.95;
+    }
   }
 }
 
-.date-sep {
-  width: 0.32rem;
-  height: 0.02rem;
-  border-radius: 999px;
-  background: rgba(243, 243, 243, 0.55);
+.dash {
+  font-size: 0.42685rem;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .stats-row,
@@ -799,7 +797,7 @@ onMounted(() => {
 }
 
 .value-down {
-  color: #05e7ae;
+  color: rgba(85, 243, 41, 1);
 }
 
 .chevron {

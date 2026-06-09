@@ -887,13 +887,13 @@ onBeforeUnmount(() => {
       <section class="trader-apply-card">
         <p class="apply-rules">
           1、钻石批发商申请费为
-          <span style="color: #05e7ae">{{ applyCostText }}</span>
+          <span style="color: rgba(85, 243, 41, 1)">{{ applyCostText }}</span>
           钻石，审核被拒后退还；<br />
           2、申请通过后，需在
-          <span style="color: #05e7ae">{{ traderExpireDayText }}</span>
+          <span style="color: rgba(85, 243, 41, 1)">{{ traderExpireDayText }}</span>
           天内购买批发商专属钻石，否则资格将失效；<br />
           3、批发商资格失效或者审批被拒需重新付费
-          <span style="color: #05e7ae">{{ applyCostText }}</span>
+          <span style="color: rgba(85, 243, 41, 1)">{{ applyCostText }}</span>
           钻石申请；<br />
           4、申请后，我们将通过系统消息联系您，请留意消息
         </p>
@@ -1403,7 +1403,7 @@ onBeforeUnmount(() => {
   width: 2.2672rem;
   height: 2.2672rem;
   border-radius: 0.3869rem;
-  border: 0.019rem solid #05e7ae;
+  border: 0.019rem solid rgba(85, 243, 41, 1);
   background: #fff;
   display: flex;
   align-items: center;
@@ -1479,7 +1479,7 @@ onBeforeUnmount(() => {
   border: 0.0133rem solid rgba(242, 242, 242, 0.8);
   border-radius: 1.0557rem;
   color: #f9f9f9;
-  background: linear-gradient(166deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background: linear-gradient(166deg, rgba(85, 243, 41, 1) 7.55%, rgba(62, 173, 6, 1) 71.92%);
   display: flex;
   flex-direction: column;
   align-items: center;

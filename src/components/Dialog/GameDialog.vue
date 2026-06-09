@@ -44,6 +44,7 @@ const props = withDefaults(
     bodyMaxHeight?: string
     cardStyle?: StyleValue
     bodyStyle?: StyleValue
+    bgImage?: string
     /** 关闭前回调，return false 阻止关闭 */
     beforeClose?: (action: string) => boolean | Promise<boolean>
   }>(),
@@ -61,6 +62,7 @@ const props = withDefaults(
     bodyMaxHeight: '12rem',
     cardStyle: undefined,
     bodyStyle: undefined,
+    bgImage: undefined,
     beforeClose: undefined,
   },
 )
@@ -112,7 +114,7 @@ const dialogStyle = computed<StyleValue>(() => ({
 
 const cardStyles = computed<StyleValue>(() => [
   {
-    backgroundImage: `url(${dialogBg})`,
+    backgroundImage: `url(${props.bgImage ?? dialogBg})`,
     '--game-dialog-card-min-height': props.cardMinHeight,
   },
   props.cardStyle,
@@ -151,7 +153,7 @@ const bodyStyles = computed<StyleValue>(() => [
         <div class="game-dialog__card-bg-gradient"></div>
         <div
           class="game-dialog__card-bg-texture"
-          :style="{ backgroundImage: `url(${dialogBg})` }"
+          :style="{ backgroundImage: `url(${props.bgImage ?? dialogBg})` }"
         ></div>
         <div class="game-dialog__card-bg-shadow"></div>
 
@@ -218,17 +220,17 @@ const bodyStyles = computed<StyleValue>(() => [
   position: relative;
   min-height: 2rem;
   border-radius: 0.485rem;
-  border: 0.956px solid rgba(242, 242, 242, 0.4);
-  box-shadow: 3.446px 4.308px 6.893px rgba(0, 0, 0, 0.25);
+  border: 0.956px solid rgba(242, 242, 242, 0.04);
+  box-shadow: 3.446px 4.308px 6.893px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   background-size: 100% auto;
   background-position: top center;
   background-repeat: no-repeat;
   box-shadow:
-    inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
-    /* 左上高光 */ inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.85),
+    inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.1),
+    /* 左上高光 */ inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.45),
     inset 2px 2px 0px -2px rgba(255, 255, 255, 0.3),
-    /* 右下高光 */ inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.85),
+    /* 右下高光 */ inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.45),
     inset -2px -2px 0px -2px rgba(255, 255, 255, 0.3);
   display: flex;
   flex-direction: column;
@@ -255,7 +257,7 @@ const bodyStyles = computed<StyleValue>(() => [
   border-radius: inherit;
   background-image: linear-gradient(
     102.679deg,
-    rgba(142, 142, 142, 0.3) 2.93%,
+    rgba(142, 142, 142, 0.1) 2.93%,
     rgba(103, 103, 103, 0.4) 43.62%,
     rgba(73, 73, 73, 0.5) 89.79%
   );

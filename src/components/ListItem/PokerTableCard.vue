@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, type CSSProperties } from 'vue'
 import iconPeople from '@/assets/icons/icon_people.png'
-import iconTime from '@/assets/icons/icon_time.png'
+import iconTime from '@/assets/icons/wallet/ic_time.svg'
 import iconChips from '@/assets/icons/icon_chips.png'
 import iconAof from '@/assets/icons/table_icon_Aof.png'
 import iconCritical from '@/assets/icons/table_icon_critical.png'
@@ -295,11 +295,10 @@ function shortName(name?: string): string {
 .table-main {
   border-radius: 0.48rem;
   padding: 0.56rem 0.24rem 0.26rem;
-  width: 4.378rem;
-  height: 4.378rem;
+  width: 4rem;
+  height: 4.4rem;
   background: url('@/assets/images/game_list_card_bg.png') no-repeat center / 100% 100%;
   position: relative;
-  // overflow: hidden;
 }
 
 /* 右上角玩法标识：仅显示 AOF / Mushroom / Squid / Critical。 */
@@ -347,8 +346,8 @@ function shortName(name?: string): string {
 }
 
 .table-bg {
-  width: 4rem;
-  height: 2.7rem;
+  width: 3.8rem;
+  height: 2.57rem;
   margin: 0.3rem auto 0;
   background: url('@/assets/images/game_list_card_table_bg.png') center / 100% 100% no-repeat;
   position: relative;
@@ -389,7 +388,7 @@ function shortName(name?: string): string {
 }
 
 .seat-avatar.empty {
-  background: rgba(86, 76, 94, 0.7);
+  background: rgba(0, 0, 0, 0.342);
 }
 
 .seat-avatar img {
@@ -399,6 +398,7 @@ function shortName(name?: string): string {
 }
 .seat-name {
   font-size: 0.3rem;
+  color: #e5e4e427;
 }
 
 .table-footer {

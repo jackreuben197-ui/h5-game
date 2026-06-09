@@ -444,7 +444,7 @@ onMounted(() => {
 }
 
 .score--neg {
-  color: var(--primary, #05e7ae);
+  color: var(--primary, rgba(85, 243, 41, 1));
 }
 
 .score--zero {

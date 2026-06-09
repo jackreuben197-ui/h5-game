@@ -1069,7 +1069,7 @@ onMounted(() => {
   min-height: figma-rem(42.124);
   color: #fff;
   font-size: figma-rem(14);
-  background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
+  background: linear-gradient(168deg, rgba(85, 243, 41, 1) 8%, rgba(62, 173, 6, 1) 72%);
 }
 
 .remark-save-btn:disabled {
@@ -1341,7 +1341,7 @@ onMounted(() => {
 }
 
 .btn.primary {
-  background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
+  background: linear-gradient(168deg, rgba(85, 243, 41, 1) 8%, rgba(62, 173, 6, 1) 72%);
 }
 
 .btn:disabled {
@@ -1406,6 +1406,6 @@ onMounted(() => {
   font-family: 'HONOR Sans CN', 'PingFang SC', var(--font-family-sans);
   font-size: 0.5493rem;
   line-height: 1.2;
-  background: linear-gradient(168.09deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background: linear-gradient(168.09deg, rgba(85, 243, 41, 1) 7.55%, rgba(62, 173, 6, 1) 71.92%);
 }
 </style>

@@ -330,8 +330,8 @@ onMounted(() => {
 }
 
 .player-item__check--on {
-  border-color: #05e7ae;
-  background: #05e7ae;
+  border-color: rgba(85, 243, 41, 1);
+  background: rgba(85, 243, 41, 1);
   color: #052319;
 }
 
@@ -345,7 +345,7 @@ onMounted(() => {
   font-size: 0.5rem;
   font-weight: 500;
   color: #fff;
-  background: linear-gradient(120deg, #05e7ae 0%, #029d75 100%);
+  background: linear-gradient(120deg, rgba(85, 243, 41, 1) 0%, #029d75 100%);
 }
 
 .submit-btn:disabled {

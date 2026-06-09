@@ -13,6 +13,8 @@ import {
 } from '@/api/org'
 
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import iconChecked from '@/assets/icons/ic_jackpot_checked.svg'
+import iconUnchecked from '@/assets/icons/ic_jackbot_unchecked.svg'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -594,6 +596,7 @@ onMounted(() => {
               :checked="modeEnabled[activeGameMode]"
               @change="toggleModeEnabled(activeGameMode)"
             />
+            <img class="check-icon" :src="modeEnabled[activeGameMode] ? iconChecked : iconUnchecked" aria-hidden="true" />
             <span>{{ activeGameMode }} 开关</span>
           </label>
         </div>
@@ -603,7 +606,7 @@ onMounted(() => {
         <div class="rows-wrap">
           <div class="config-row config-row--stack">
             <div class="row-label">
-              <i class="dot dot--active"></i>
+              <img class="check-icon" :src="iconChecked" aria-hidden="true" />
               <span>玩法奖池比例</span>
               <i class="icon-info" aria-hidden="true">i</i>
             </div>
@@ -647,7 +650,7 @@ onMounted(() => {
           <div class="rows-wrap rows-wrap--gap-sm">
             <div class="config-row config-row--stack">
               <div class="row-label">
-                <i class="dot dot--active"></i>
+                <img class="check-icon" :src="iconChecked" aria-hidden="true" />
                 <span>{{ option.label }}</span>
                 <i class="icon-info" aria-hidden="true">i</i>
               </div>
@@ -664,15 +667,11 @@ onMounted(() => {
 
             <div class="config-row">
               <div class="row-label row-label--small">
-                <i
-                  class="dot"
-                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).contributePotChecked }"
-                  @click="
-                    getBlindConfigBySb(option.sb).contributePotChecked = !getBlindConfigBySb(
-                      option.sb,
-                    ).contributePotChecked
-                  "
-                ></i>
+                <img
+                  class="check-icon"
+                  :src="getBlindConfigBySb(option.sb).contributePotChecked ? iconChecked : iconUnchecked"
+                  @click="getBlindConfigBySb(option.sb).contributePotChecked = !getBlindConfigBySb(option.sb).contributePotChecked"
+                />
                 <span>底池触发jackpot贡献</span>
               </div>
               <div class="value-input value-input--narrow">
@@ -687,14 +686,11 @@ onMounted(() => {
 
             <div class="config-row">
               <div class="row-label row-label--small">
-                <i
-                  class="dot"
-                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).awardBetChecked }"
-                  @click="
-                    getBlindConfigBySb(option.sb).awardBetChecked = !getBlindConfigBySb(option.sb)
-                      .awardBetChecked
-                  "
-                ></i>
+                <img
+                  class="check-icon"
+                  :src="getBlindConfigBySb(option.sb).awardBetChecked ? iconChecked : iconUnchecked"
+                  @click="getBlindConfigBySb(option.sb).awardBetChecked = !getBlindConfigBySb(option.sb).awardBetChecked"
+                />
                 <span>投入底池触发jackpot奖励</span>
               </div>
               <div class="value-input value-input--narrow">
@@ -709,14 +705,11 @@ onMounted(() => {
 
             <div class="config-row">
               <div class="row-label row-label--small">
-                <i
-                  class="dot"
-                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).awardOtherChecked }"
-                  @click="
-                    getBlindConfigBySb(option.sb).awardOtherChecked = !getBlindConfigBySb(option.sb)
-                      .awardOtherChecked
-                  "
-                ></i>
+                <img
+                  class="check-icon"
+                  :src="getBlindConfigBySb(option.sb).awardOtherChecked ? iconChecked : iconUnchecked"
+                  @click="getBlindConfigBySb(option.sb).awardOtherChecked = !getBlindConfigBySb(option.sb).awardOtherChecked"
+                />
                 <span>奖励全桌</span>
               </div>
               <div class="value-input value-input--narrow">
@@ -740,15 +733,11 @@ onMounted(() => {
           <div class="rows-wrap rows-wrap--gap-sm">
             <div class="config-row">
               <div class="row-label">
-                <i
-                  class="dot"
-                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).profitTriggerChecked }"
-                  @click="
-                    getBlindConfigBySb(option.sb).profitTriggerChecked = !getBlindConfigBySb(
-                      option.sb,
-                    ).profitTriggerChecked
-                  "
-                ></i>
+                <img
+                  class="check-icon"
+                  :src="getBlindConfigBySb(option.sb).profitTriggerChecked ? iconChecked : iconUnchecked"
+                  @click="getBlindConfigBySb(option.sb).profitTriggerChecked = !getBlindConfigBySb(option.sb).profitTriggerChecked"
+                />
                 <span>盈利触发</span>
               </div>
               <div class="value-input value-input--narrow">
@@ -763,15 +752,11 @@ onMounted(() => {
 
             <div class="config-row">
               <div class="row-label">
-                <i
-                  class="dot"
-                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).jackpotContribChecked }"
-                  @click="
-                    getBlindConfigBySb(option.sb).jackpotContribChecked = !getBlindConfigBySb(
-                      option.sb,
-                    ).jackpotContribChecked
-                  "
-                ></i>
+                <img
+                  class="check-icon"
+                  :src="getBlindConfigBySb(option.sb).jackpotContribChecked ? iconChecked : iconUnchecked"
+                  @click="getBlindConfigBySb(option.sb).jackpotContribChecked = !getBlindConfigBySb(option.sb).jackpotContribChecked"
+                />
                 <span>Jackpot 贡献</span>
               </div>
               <div class="value-input value-input--narrow">
@@ -786,15 +771,11 @@ onMounted(() => {
 
             <div class="config-row">
               <div class="row-label">
-                <i
-                  class="dot"
-                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).profitPercentChecked }"
-                  @click="
-                    getBlindConfigBySb(option.sb).profitPercentChecked = !getBlindConfigBySb(
-                      option.sb,
-                    ).profitPercentChecked
-                  "
-                ></i>
+                <img
+                  class="check-icon"
+                  :src="getBlindConfigBySb(option.sb).profitPercentChecked ? iconChecked : iconUnchecked"
+                  @click="getBlindConfigBySb(option.sb).profitPercentChecked = !getBlindConfigBySb(option.sb).profitPercentChecked"
+                />
                 <span>触发盈利 (%)</span>
               </div>
               <div class="value-input value-input--narrow">
@@ -822,6 +803,7 @@ onMounted(() => {
               :checked="option.selected"
               @change="onBlindOptionClick(option)"
             />
+            <img class="check-icon" :src="option.selected ? iconChecked : iconUnchecked" aria-hidden="true" />
             <span>{{ option.label }}</span>
           </label>
         </div>
@@ -835,11 +817,11 @@ onMounted(() => {
           <div class="pool-row">
             <div class="pool-left">
               <div class="row-label">
-                <i
-                  class="dot"
-                  :class="{ 'dot--active': item.checked }"
+                <img
+                  class="check-icon"
+                  :src="item.checked ? iconChecked : iconUnchecked"
                   @click="item.checked = !item.checked"
-                ></i>
+                />
                 <span>{{ item.title }}</span>
               </div>
 
@@ -1067,8 +1049,18 @@ onMounted(() => {
 }
 
 .mode-switch-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.check-icon {
   width: 0.4rem;
   height: 0.4rem;
+  object-fit: contain;
+  flex-shrink: 0;
+  cursor: pointer;
 }
 
 .divider {
@@ -1184,8 +1176,10 @@ onMounted(() => {
 }
 
 .blind-checkbox {
-  width: 0.4rem;
-  height: 0.4rem;
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
 }
 
 .blind-config-panel {

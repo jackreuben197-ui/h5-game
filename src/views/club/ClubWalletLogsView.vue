@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import iconTime from '@/assets/icons/icon_time.png'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -10,6 +11,8 @@ const backgroundStyle = computed(() => ({
 
 const dateStart = '11/03/2024'
 const dateEnd = '11/03/2024'
+const timeStart = '00:00'
+const timeEnd = '23:59'
 
 const summaryCards = [
   [
@@ -43,15 +46,21 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
     <HeaderBack :title="'收益管理'" />
 
     <section class="range-card">
-      <div class="date-row">
+      <div class="date-range">
         <button type="button" class="date-pill">
-          <span class="calendar-icon" aria-hidden="true"></span>
-          <span>{{ dateStart }}</span>
+          <span class="date">{{ dateStart }}</span>
+          <span class="time-line">
+            <img :src="iconTime" alt="时间" />
+            <span>{{ timeStart }}</span>
+          </span>
         </button>
-        <span class="range-divider" aria-hidden="true"></span>
+        <span class="dash" aria-hidden="true">—</span>
         <button type="button" class="date-pill">
-          <span class="calendar-icon" aria-hidden="true"></span>
-          <span>{{ dateEnd }}</span>
+          <span class="date">{{ dateEnd }}</span>
+          <span class="time-line">
+            <img :src="iconTime" alt="时间" />
+            <span>{{ timeEnd }}</span>
+          </span>
         </button>
       </div>
 
@@ -125,69 +134,64 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
 }
 
 .range-card {
-  border-radius: 0.44rem;
-  padding: 0.18rem 0.2rem;
-  background: rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(0.16rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  padding: 0.48rem 0.1rem;
   display: flex;
   flex-direction: column;
   gap: 0.12rem;
 }
 
-.date-row {
+.date-range {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.14rem;
+  gap: 0.41341rem;
+  margin-bottom: 0.22rem;
 }
 
 .date-pill {
-  min-width: 2.26rem;
-  min-height: 0.82rem;
-  border: 0.01rem solid rgba(255, 255, 255, 0.26);
-  border-radius: 0.42rem;
-  background: rgba(255, 255, 255, 0.14);
-  color: #f3f3f3;
-  font-size: 0.31rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.08);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  width: 3.2204rem;
+  height: 1.50483rem;
+  color: #fff;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0.2196rem;
+
+  .date {
+    font-size: 0.32013rem;
+    line-height: 0.42685rem;
+  }
+
+  .time-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.21341rem;
+    font-size: 0.42685rem;
+    line-height: 0.53355rem;
+
+    img {
+      width: 0.33147rem;
+      height: 0.31867rem;
+      object-fit: contain;
+      opacity: 0.95;
+    }
+  }
+}
+
+.dash {
+  font-size: 0.52685rem;
   line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.1rem;
-}
-
-.range-divider {
-  width: 0.25rem;
-  height: 0.03rem;
-  border-radius: 999px;
-  background: rgba(249, 249, 249, 0.72);
-}
-
-.calendar-icon {
-  width: 0.2rem;
-  height: 0.2rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.9);
-  border-radius: 0.05rem;
-  position: relative;
-}
-
-.calendar-icon::before,
-.calendar-icon::after {
-  content: '';
-  position: absolute;
-  top: -0.05rem;
-  width: 0.03rem;
-  height: 0.05rem;
-  border-radius: 999px;
-  background: rgba(249, 249, 249, 0.9);
-}
-
-.calendar-icon::before {
-  left: 0.03rem;
-}
-
-.calendar-icon::after {
-  right: 0.03rem;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .balance-row {
@@ -226,8 +230,8 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
 }
 
 .timezone {
-  margin: 0;
-  align-self: flex-end;
+  text-align: right;
+  margin: 0.2rem 0.4rem .82rem;
   color: rgba(249, 249, 249, 0.52);
   font-size: 0.22rem;
   line-height: 1;
@@ -241,10 +245,13 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
 }
 
 .metrics-card {
-  border-radius: 0.42rem;
-  padding: 0.16rem 0.12rem;
-  background: rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(0.16rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  padding: 0.36rem 0.12rem;
+  margin-bottom: 0.22rem;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
 }
@@ -281,7 +288,7 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
 }
 
 .metric-value--down {
-  color: #05e7ae;
+  color: rgba(85, 243, 41, 1);
 }
 
 .metric-value--neutral {

@@ -511,7 +511,7 @@ function formatRewardAmount(value: number, goldTypeValue: number): string {
 }
 
 .mtt-settlement-panel__reward-amount {
-  background: var(--primary, #05e7ae);
+  background: var(--primary, rgba(85, 243, 41, 1));
   color: transparent;
   background-clip: text;
   -webkit-background-clip: text;
@@ -567,7 +567,7 @@ function formatRewardAmount(value: number, goldTypeValue: number): string {
 }
 
 .mtt-settlement-panel__ranking-current {
-  background: var(--primary, #05e7ae);
+  background: var(--primary, rgba(85, 243, 41, 1));
   color: transparent;
   background-clip: text;
   -webkit-background-clip: text;

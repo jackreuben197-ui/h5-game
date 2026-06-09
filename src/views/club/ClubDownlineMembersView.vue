@@ -775,7 +775,7 @@ onMounted(async () => {
   border: 0.0133rem solid rgba(242, 242, 242, 0.8);
   color: #fff;
   font-size: 0.32rem;
-  background: linear-gradient(159deg, #05e7ae 8%, #027a5c 72%);
+  background: linear-gradient(159deg, rgba(85, 243, 41, 1) 8%, rgba(62, 173, 6, 1) 72%);
 }
 
 .invite-link {
@@ -1230,7 +1230,7 @@ onMounted(async () => {
 
 .sheet-footer-btn--confirm {
   border: 0.013rem solid rgba(242, 242, 242, 0.8);
-  background: linear-gradient(156deg, #05e7ae 8%, #027a5c 72%);
+  background: linear-gradient(156deg, rgba(85, 243, 41, 1) 8%, rgba(62, 173, 6, 1) 72%);
 }
 
 @media (max-width: 360px) {

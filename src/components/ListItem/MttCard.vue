@@ -425,7 +425,7 @@ function formatCentAmount(value: number): string {
 
   &--success {
     background: rgba(255, 255, 255, 0.12);
-    color: #05e7ae;
+    color: rgba(85, 243, 41, 1);
   }
 
   &--danger {

@@ -167,6 +167,7 @@ function closeOverlay(): void {
 
 .close-btn {
   margin-left: 0.4rem;
+  margin-top: 0.5rem;
   width: 1.0748rem;
   height: 1.0748rem;
   object-fit: contain;

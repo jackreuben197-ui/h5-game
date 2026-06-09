@@ -518,7 +518,7 @@ onMounted(() => {
   min-height: figma-rem(55.184);
   border-radius: figma-rem(40.576);
   color: #fff;
-  background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
+  background: linear-gradient(168deg, rgba(85, 243, 41, 1) 8%, rgba(62, 173, 6, 1) 72%);
   font-size: figma-rem(18.985);
 }
 

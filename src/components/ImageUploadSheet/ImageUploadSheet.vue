@@ -93,17 +93,22 @@ async function handleFileChange(event: Event): Promise<void> {
   <slot :open="open" :image-url="modelValue" :uploading="uploading"></slot>
 
   <teleport to="body">
-    <div v-if="sheetVisible" class="upload-sheet-mask" @click="close">
-      <div class="upload-sheet" role="dialog" aria-label="选择图片来源" @click.stop>
-        <button type="button" class="upload-sheet-option" @click="selectSource('camera')">
-          拍照
-        </button>
-        <div class="upload-sheet-divider" aria-hidden="true"></div>
-        <button type="button" class="upload-sheet-option" @click="selectSource('gallery')">
-          相册
-        </button>
+    <transition name="sheet">
+      <div v-if="sheetVisible" class="upload-sheet-mask" @click="close">
+        <div class="upload-sheet" role="dialog" aria-label="选择图片来源" @click.stop>
+          <button type="button" class="upload-sheet-option" @click="selectSource('camera')">
+            拍照
+          </button>
+          <div class="upload-sheet-divider" aria-hidden="true"></div>
+          <button type="button" class="upload-sheet-option" @click="selectSource('gallery')">
+            相册
+          </button>
+          <button type="button" class="upload-sheet-confirm" @click="close">
+            确认
+          </button>
+        </div>
       </div>
-    </div>
+    </transition>
   </teleport>
 </template>
 
@@ -120,7 +125,7 @@ async function handleFileChange(event: Event): Promise<void> {
   position: fixed;
   inset: 0;
   z-index: 30;
-  background: rgba(12, 12, 12, 0.6);
+  background: rgba(12, 12, 12, 0.55);
   display: flex;
   align-items: flex-end;
 }
@@ -129,10 +134,11 @@ async function handleFileChange(event: Event): Promise<void> {
   width: min(100%, var(--app-max-width));
   margin: 0 auto;
   padding: 0.6426rem 0.5321rem calc(0.7872rem + env(safe-area-inset-bottom));
-  border-top-left-radius: 0.8446rem;
-  border-top-right-radius: 0.8446rem;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.9733rem);
+  border-top-left-radius: 0.953rem;
+  border-top-right-radius: 0.953rem;
+  background: linear-gradient(164deg, rgba(62, 62, 62, 0.92) 5.88%, rgba(23, 23, 23, 0.95) 94.12%);
+  backdrop-filter: blur(1.9rem);
+  -webkit-backdrop-filter: blur(1.9rem);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -145,22 +151,58 @@ async function handleFileChange(event: Event): Promise<void> {
   padding: 0;
   border: 0;
   background: transparent;
-  color: inherit;
+  color: #f9f9f9;
   font-size: 0.5493rem;
   line-height: 0.7324rem;
   font-weight: 500;
   text-align: center;
-  opacity: 0.92;
-  transition: opacity 0.18s ease;
+  transition: opacity 0.15s ease;
+
+  &:active {
+    opacity: 0.55;
+  }
+}
+
+.upload-sheet-divider {
+  width: 100%;
+  height: 0.013rem;
+  background: rgba(249, 249, 249, 0.22);
+}
+
+.upload-sheet-confirm {
+  width: 100%;
+  height: 1.545rem;
+  margin-top: 0.06rem;
+  border: 0;
+  border-radius: 1.11rem;
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
+  backdrop-filter: blur(0.5px);
+  color: #f9f9f9;
+  font-size: 0.507rem;
+  font-weight: 500;
+  text-align: center;
+  transition: opacity 0.15s ease;
 
   &:active {
     opacity: 0.6;
   }
 }
 
-.upload-sheet-divider {
-  width: 100%;
-  height: 0.01rem;
-  background: rgba(249, 249, 249, 0.28);
+.sheet-enter-active,
+.sheet-leave-active {
+  transition: opacity 0.22s ease;
+
+  .upload-sheet {
+    transition: transform 0.22s ease;
+  }
+}
+
+.sheet-enter-from,
+.sheet-leave-to {
+  opacity: 0;
+
+  .upload-sheet {
+    transform: translateY(100%);
+  }
 }
 </style>

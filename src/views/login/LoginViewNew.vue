@@ -59,11 +59,11 @@ const form = reactive({
 })
 const currentLang = ref<LocaleCode>(getLocale())
 const showPassword = ref(false)
-const agreed = ref(false)
+// const agreed = ref(false)
 const showLanguageModal = ref(false)
-const showProtocolConfifm = ref(false)
+// const showProtocolConfifm = ref(false)
 const showDebugAccountDialog = ref(false)
-const pendingAgreementSubmit = ref(false)
+// const pendingAgreementSubmit = ref(false)
 const loading = ref(false)
 const errorText = ref('')
 const errorVisible = ref(false)
@@ -110,16 +110,16 @@ consumePhoneAreaSelection()
 // ---------- Computed ----------
 const contactValue = computed(() => (contactType.value === 'account' ? form.account : form.email))
 
-const agreementPrefix = computed(() => {
-  const full = t('UILogin_ReadOK')
-  const idx = full.indexOf('《')
-  return idx > -1 ? full.slice(0, idx) : full
-})
-const agreementProtocol = computed(() => {
-  const full = t('UILogin_ReadOK')
-  const idx = full.indexOf('《')
-  return idx > -1 ? full.slice(idx) : ''
-})
+// const agreementPrefix = computed(() => {
+//   const full = t('UILogin_ReadOK')
+//   const idx = full.indexOf('《')
+//   return idx > -1 ? full.slice(0, idx) : full
+// })
+// const agreementProtocol = computed(() => {
+//   const full = t('UILogin_ReadOK')
+//   const idx = full.indexOf('《')
+//   return idx > -1 ? full.slice(idx) : ''
+// })
 
 const contactPlaceholder = computed(() =>
   contactType.value === 'account'
@@ -127,7 +127,7 @@ const contactPlaceholder = computed(() =>
     : t('UILogin_InputEmail'),
 )
 
-const needAgreement = computed(() => pageMode.value !== 'forgot')
+// const needAgreement = computed(() => pageMode.value !== 'forgot')
 
 const canSubmit = computed(() => {
   if (!contactValue.value.trim()) return false
@@ -258,11 +258,11 @@ function resetOtpCountdown() {
 async function handleSubmit() {
   if (loading.value) return
   if (!canSubmit.value) return
-  if (needAgreement.value && !agreed.value) {
-    pendingAgreementSubmit.value = true
-    showProtocolConfifm.value = true
-    return
-  }
+  // if (needAgreement.value && !agreed.value) {
+  //   pendingAgreementSubmit.value = true
+  //   showProtocolConfifm.value = true
+  //   return
+  // }
   await runSubmitFlow()
 }
 
@@ -284,40 +284,40 @@ async function runSubmitFlow() {
     showError(message)
   } finally {
     loading.value = false
-    pendingAgreementSubmit.value = false
+    // pendingAgreementSubmit.value = false
   }
 }
 
-function goProtocolPage(): void {
-  savePageState()
-  void router.push('/protocol')
-}
+// function goProtocolPage(): void {
+//   savePageState()
+//   void router.push('/protocol')
+// }
 
 function goPhoneAreaPage(): void {
   // Area code removed for account mode
   return
 }
 
-function onAgreementIndicatorClick(): void {
-  agreed.value = !agreed.value
-}
+// function onAgreementIndicatorClick(): void {
+//   agreed.value = !agreed.value
+// }
 
-function onAgreementTextClick(): void {
-  goProtocolPage()
-}
+// function onAgreementTextClick(): void {
+//   goProtocolPage()
+// }
 
-function onProtocolConfirm(): void {
-  agreed.value = true
-  showProtocolConfifm.value = false
-  if (pendingAgreementSubmit.value) {
-    void runSubmitFlow()
-  }
-}
+// function onProtocolConfirm(): void {
+//   agreed.value = true
+//   showProtocolConfifm.value = false
+//   if (pendingAgreementSubmit.value) {
+//     void runSubmitFlow()
+//   }
+// }
 
-function onProtocolCancel(): void {
-  pendingAgreementSubmit.value = false
-  showProtocolConfifm.value = false
-}
+// function onProtocolCancel(): void {
+//   pendingAgreementSubmit.value = false
+//   showProtocolConfifm.value = false
+// }
 
 function openDebugAccountDialog(): void {
   showDebugAccountDialog.value = true
@@ -329,7 +329,7 @@ function applyDebugAccount(account: DebugAccount): void {
   form.account = account.account
   form.password = account.password
   form.area = '55'
-  agreed.value = true
+  // agreed.value = true
   showDebugAccountDialog.value = false
 }
 
@@ -531,11 +531,11 @@ interface LoginPageStateSnapshot {
   }
   currentLang: LocaleCode
   showPassword: boolean
-  agreed: boolean
+  // agreed: boolean
   showLanguageModal: boolean
-  showProtocolConfifm: boolean
+  // showProtocolConfifm: boolean
   showDebugAccountDialog: boolean
-  pendingAgreementSubmit: boolean
+  // pendingAgreementSubmit: boolean
 }
 
 function savePageState(): void {
@@ -552,11 +552,11 @@ function savePageState(): void {
     },
     currentLang: currentLang.value,
     showPassword: showPassword.value,
-    agreed: agreed.value,
+    // agreed: agreed.value,
     showLanguageModal: showLanguageModal.value,
-    showProtocolConfifm: showProtocolConfifm.value,
+    // showProtocolConfifm: showProtocolConfifm.value,
     showDebugAccountDialog: showDebugAccountDialog.value,
-    pendingAgreementSubmit: pendingAgreementSubmit.value,
+    // pendingAgreementSubmit: pendingAgreementSubmit.value,
   }
   window.sessionStorage.setItem(LOGIN_PAGE_STATE_CACHE_KEY, JSON.stringify(snapshot))
 }
@@ -579,11 +579,11 @@ function restorePageState(): void {
     form.password = String(parsed.form?.password || form.password)
     currentLang.value = parsed.currentLang || currentLang.value
     showPassword.value = Boolean(parsed.showPassword)
-    agreed.value = Boolean(parsed.agreed)
+    // agreed.value = Boolean(parsed.agreed)
     showLanguageModal.value = Boolean(parsed.showLanguageModal)
-    showProtocolConfifm.value = Boolean(parsed.showProtocolConfifm)
+    // showProtocolConfifm.value = Boolean(parsed.showProtocolConfifm)
     showDebugAccountDialog.value = Boolean(parsed.showDebugAccountDialog)
-    pendingAgreementSubmit.value = Boolean(parsed.pendingAgreementSubmit)
+    // pendingAgreementSubmit.value = Boolean(parsed.pendingAgreementSubmit)
   } catch {
     // ignore parse errors
   }
@@ -608,7 +608,7 @@ function consumePhoneAreaSelection(): void {
 
     <!-- Status bar area -->
     <div class="status-bar">
-      <span class="debug-trigger" @click="openDebugAccountDialog">DEV</span>
+      <!-- <span class="debug-trigger" @click="openDebugAccountDialog">DEV</span> -->
       <button class="lang-btn" @click="showLanguageModal = true">
         <img :src="icGlobe" alt="" />
         <span class="lang-text">{{ currentLang.toUpperCase() }}</span>
@@ -721,10 +721,10 @@ function consumePhoneAreaSelection(): void {
         <div class="bottom-area">
           <!-- Action links row -->
           <div class="action-links">
-            <button v-if="pageMode === 'login'" class="link-btn" @click="goMode('forgot')">
+            <!-- <button v-if="pageMode === 'login'" class="link-btn" @click="goMode('forgot')">
               {{ t('UILogin_Forget') }}
-            </button>
-            <span v-else></span>
+            </button> -->
+            <span></span>
             <button
               class="link-btn link-btn--right"
               @click="goMode(pageMode === 'login' ? 'register' : 'login')"
@@ -734,7 +734,7 @@ function consumePhoneAreaSelection(): void {
           </div>
 
           <!-- Agreement checkbox (register only) -->
-          <div v-if="needAgreement" class="agreement-row">
+          <!-- <div v-if="needAgreement" class="agreement-row">
             <img
               class="agreement-checkbox-icon"
               :src="agreed ? icCheckbox : icUncheckbox"
@@ -745,7 +745,7 @@ function consumePhoneAreaSelection(): void {
             <span class="agreement-text agreement-text--protocol" @click="onAgreementTextClick">{{
               agreementProtocol
             }}</span>
-          </div>
+          </div> -->
 
           <!-- Submit button -->
           <PrimaryButton
@@ -796,7 +796,7 @@ function consumePhoneAreaSelection(): void {
       <span class="ml-5">{{ item.nickname }}</span>
     </div>
   </GameDialog>
-  <GameDialog
+  <!-- <GameDialog
     v-model:show="showProtocolConfifm"
     :title="t('UILoginConfirmTitle')"
     :close-on-click-overlay="true"
@@ -812,7 +812,7 @@ function consumePhoneAreaSelection(): void {
         {{ t('UIMine_Setting_UserSecret') }}
       </span>
     </div>
-  </GameDialog>
+  </GameDialog> -->
 </template>
 
 <style scoped lang="scss">

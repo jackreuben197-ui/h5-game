@@ -1808,15 +1808,17 @@ const handleBack = () => {
   position: relative;
   z-index: 1;
   margin-top: -0.03rem;
+  margin-left: calc(-1 * var(--app-side-padding));
+  margin-right: calc(-1 * var(--app-side-padding));
   max-height: calc(100dvh - 7.85rem);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.6105rem;
+  align-items: stretch;
+  gap: 0;
   align-self: stretch;
-  border-radius: 0.1687rem;
-  padding: 0.7791rem 0.4559rem 2.2rem 0.4559rem;
+  border-radius: 0.533rem 0.533rem 0 0;
+  padding: 0.2rem 0 0.8rem;
   background: rgba(34, 34, 34, 0.5);
   backdrop-filter: blur(0.2213rem);
 }
@@ -1918,7 +1920,7 @@ const handleBack = () => {
   height: 1.25rem;
   border: 0.0133rem solid rgba(242, 242, 242, 0.8);
   border-radius: 0.958rem;
-  background-image: linear-gradient(168deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background-image: linear-gradient(168deg, rgba(85, 243, 41, 1) 7.55%, rgba(62, 173, 6, 1) 71.92%);
   color: #fbfbfb;
   font-size: 0.46rem;
   font-weight: 500;
@@ -1926,12 +1928,14 @@ const handleBack = () => {
   text-align: center;
   backdrop-filter: blur(0.08rem);
   box-shadow: 0 0.16rem 0.32rem rgba(0, 0, 0, 0.22);
+  margin-bottom: 0.8rem;
 }
 
 .floating-menu-btn {
   margin-left: -0.58rem;
-  width: 0.92rem;
-  height: 0.92rem;
+  margin-bottom: 0.8rem;
+  width: 1.104rem;
+  height: 1.104rem;
   border: none;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 25%, #056a57 0%, #01382f 75%);

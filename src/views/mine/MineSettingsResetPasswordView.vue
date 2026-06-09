@@ -26,7 +26,7 @@ const backgroundStyle = computed(() => ({
 // const phoneNumber = ref('')
 
 const otpCountdown = ref(0)
-const acceptedPolicy = ref(false)
+// const acceptedPolicy = ref(false)
 const showPassword = ref(false)
 const requestingOtp = ref(false)
 const submitting = ref(false)
@@ -109,10 +109,10 @@ async function submitReset(): Promise<void> {
     showFailToast('请输入新密码')
     return
   }
-  if (!acceptedPolicy.value) {
-    showFailToast('请先勾选协议')
-    return
-  }
+  // if (!acceptedPolicy.value) {
+  //   showFailToast('请先勾选协议')
+  //   return
+  // }
 
   submitting.value = true
   try {
@@ -207,7 +207,7 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <label class="policy-row">
+      <!-- <label class="policy-row">
         <img
           class="policy-check"
           :src="acceptedPolicy ? icCheckbox : icUncheckbox"
@@ -219,7 +219,7 @@ onBeforeUnmount(() => {
           By Signing up, you agree to our
           <span class="policy-link">《Terms & Privacy Policy》.</span>
         </span>
-      </label>
+      </label> -->
 
       <button class="submit-btn" type="button" :disabled="submitting" @click="submitReset">
         {{ submitting ? '提交中...' : submitText }}
@@ -267,7 +267,7 @@ onBeforeUnmount(() => {
   font-weight: 600;
   border: 0.0133rem solid rgba(255, 255, 255, 0.7);
   border-radius: 1.3844rem;
-  background: linear-gradient(158deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background: linear-gradient(158deg, rgba(85, 243, 41, 1) 7.55%, rgba(62, 173, 6, 1) 71.92%);
 }
 
 .form-stack {
@@ -426,7 +426,7 @@ onBeforeUnmount(() => {
 }
 
 .submit-btn {
-  margin-top: 0.254rem;
+  margin-top: 0.8rem;
   width: 100%;
   height: 1.4376rem;
   border: 0.02rem solid rgba(249, 249, 249, 0.2);

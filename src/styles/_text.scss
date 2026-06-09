@@ -11,10 +11,10 @@
   --text-shadow-soft: 0 1px 4px rgba(0, 0, 0, 0.32);
   --text-shadow-tiny: 0 1px 2px rgba(0, 0, 0, 0.3);
 
-  --color-primary: #05e7ae;
-  --color-primary-dark: #027a5c;
+  --color-primary: rgba(85, 243, 41, 1);
+  --color-primary-dark: rgba(62, 173, 6, 1);
   --color-danger: #ff132b;
-  --grad-primary: linear-gradient(168deg, #05e7ae 7%, #027a5c 72%);
+  --grad-primary: linear-gradient(168deg, rgba(85, 243, 41, 1) 7%, rgba(62, 173, 6, 1) 72%);
   --glass-bg: rgba(0, 0, 0, 0.2);
   --glass-border: rgba(255, 255, 255, 0.31);
   --glass-border-soft: rgba(242, 242, 242, 0.4);

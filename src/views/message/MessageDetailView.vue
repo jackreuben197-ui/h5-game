@@ -1297,11 +1297,11 @@ onBeforeUnmount(() => {
 }
 
 .highlight--green {
-  color: #05e7ae;
+  color: rgba(85, 243, 41, 1);
 }
 
 .green {
-  color: #05e7ae;
+  color: rgba(85, 243, 41, 1);
 }
 
 .sender-btn {

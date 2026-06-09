@@ -1432,7 +1432,7 @@ onMounted(async () => {
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  background: linear-gradient(165deg, #05e7ae 10%, #027a5c 75%);
+  background: linear-gradient(165deg, rgba(85, 243, 41, 1) 10%, rgba(62, 173, 6, 1) 75%);
   color: #fff;
   font-size: 0.45rem;
   line-height: 0.5rem;
@@ -1967,7 +1967,7 @@ onMounted(async () => {
 }
 
 .join-modal-btn--confirm {
-  background: linear-gradient(180deg, #05e7ae 0%, #027a5b 100%);
+  background: linear-gradient(180deg, rgba(85, 243, 41, 1) 0%, rgba(62, 173, 6, 1) 100%);
   border: 0.013rem solid rgba(255, 255, 255, 0.5);
 }
 

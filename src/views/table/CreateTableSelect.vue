@@ -31,8 +31,8 @@ const originType = computed(() => {
 // 1.NLH 2.PLO 3.6+ 4.fantasy 5.牛仔 6.麻将 7.mtt 8.SNG 9.惯蛋
 const gameTypes: GameTypeItem[] = [
   { key: 'nlh', game_play_type: 1, title: '德州', icon: iconNlh },
-  { key: 'plo', game_play_type: 2, title: '奥马哈', icon: iconPlo },
   { key: 'six_plus', game_play_type: 3, title: '6+', icon: iconSixPlus },
+  { key: 'plo', game_play_type: 2, title: '奥马哈', icon: iconPlo },
   // { key: 'mtt', game_play_type: 7, title: 'MTT', icon: iconMTT },
   // { key: 'aof', title: 'AOF', icon: iconAof },
   // { key: 'mushroom', title: '蘑菇桌', icon: iconMushroom },

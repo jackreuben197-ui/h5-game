@@ -2210,7 +2210,7 @@ watch(
   height: 1.4716rem;
   border: none;
   border-radius: 1.082rem;
-  background: linear-gradient(180deg, #05e7ae 0%, #027a5c 100%);
+  background: linear-gradient(180deg, rgba(85, 243, 41, 1) 0%, rgba(62, 173, 6, 1) 100%);
   color: #fff;
   font-size: 0.5rem;
 }

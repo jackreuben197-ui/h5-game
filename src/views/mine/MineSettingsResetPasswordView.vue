@@ -267,7 +267,7 @@ onBeforeUnmount(() => {
   font-weight: 600;
   border: 0.0133rem solid rgba(255, 255, 255, 0.7);
   border-radius: 1.3844rem;
-  background: linear-gradient(158deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background: linear-gradient(158deg, rgba(85, 243, 41, 1) 7.55%, rgba(62, 173, 6, 1) 71.92%);
 }
 
 .form-stack {

@@ -2183,11 +2183,11 @@ onMounted(() => {
 }
 
 .role-badge--admin {
-  background: linear-gradient(152deg, #05e7ae 8%, #027a5c 72%);
+  background: linear-gradient(152deg, rgba(85, 243, 41, 1) 8%, rgba(62, 173, 6, 1) 72%);
 }
 
 .role-badge--agent {
-  background: linear-gradient(152deg, #05e7ae 8%, #027a5c 72%);
+  background: linear-gradient(152deg, rgba(85, 243, 41, 1) 8%, rgba(62, 173, 6, 1) 72%);
 }
 
 .role-badge--member {
@@ -2584,7 +2584,7 @@ onMounted(() => {
 
 .sheet-footer-btn--confirm {
   border: 0.013rem solid rgba(242, 242, 242, 0.8);
-  background: linear-gradient(156deg, #05e7ae 8%, #027a5c 72%);
+  background: linear-gradient(156deg, rgba(85, 243, 41, 1) 8%, rgba(62, 173, 6, 1) 72%);
 }
 
 .data-item {

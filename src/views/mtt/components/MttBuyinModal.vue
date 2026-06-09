@@ -417,7 +417,7 @@ function handleConfirm() {
         </div>
       </div>
       <div v-if="loading" class="buyin-loading">
-        <van-loading color="#05e7ae" size="0.6rem" />
+        <van-loading color="rgba(85, 243, 41, 1)" size="0.6rem" />
       </div>
       <!-- 钱包选择（默认展开，超出 5rem 滚动） -->
       <div v-else-if="wallets.length > 0" class="wallet-section">
@@ -536,7 +536,7 @@ function handleConfirm() {
 }
 
 .free-badge {
-  background: linear-gradient(135deg, #05e7ae, #027a5c);
+  background: linear-gradient(135deg, rgba(85, 243, 41, 1), rgba(62, 173, 6, 1));
   color: #fff;
   font-size: 0.22rem;
   font-weight: 700;
@@ -592,7 +592,7 @@ function handleConfirm() {
   }
 
   &--active {
-    background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+    background: linear-gradient(157deg, rgba(85, 243, 41, 1) 0%, rgba(62, 173, 6, 1) 100%);
   }
 }
 
@@ -657,7 +657,7 @@ function handleConfirm() {
 
 .wallet-item-check {
   font-size: 0.3rem;
-  color: #05e7ae;
+  color: rgba(85, 243, 41, 1);
   margin-left: 0.08rem;
 }
 
@@ -729,7 +729,7 @@ function handleConfirm() {
 .cost-item-free {
   font-size: 0.33rem;
   font-weight: 800;
-  color: #05e7ae;
+  color: rgba(85, 243, 41, 1);
 }
 
 /* ===== 记录费 ===== */

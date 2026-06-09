@@ -342,7 +342,7 @@ input::placeholder {
   font-size: 0.36rem;
   line-height: 1;
   font-weight: 700;
-  color: #05e7ae;
+  color: rgba(85, 243, 41, 1);
 }
 
 .recharge-btn {
@@ -384,7 +384,7 @@ input::placeholder {
 }
 
 .cost-value {
-  color: #05e7ae;
+  color: rgba(85, 243, 41, 1);
   font-weight: 700;
 }
 
@@ -400,7 +400,7 @@ input::placeholder {
   min-height: 1.44rem;
   border: 0;
   border-radius: 1.06rem;
-  background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
+  background: linear-gradient(168deg, rgba(85, 243, 41, 1) 8%, rgba(62, 173, 6, 1) 72%);
   color: #f9f9f9;
   font-size: 0.51rem;
   font-weight: 500;

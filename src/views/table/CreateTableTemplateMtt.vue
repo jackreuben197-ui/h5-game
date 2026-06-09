@@ -813,7 +813,7 @@ async function onCreateTable() {
   }
 
   &--create {
-    background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+    background: linear-gradient(157deg, rgba(85, 243, 41, 1) 0%, rgba(62, 173, 6, 1) 100%);
     color: #fff;
     box-shadow: inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
       inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);

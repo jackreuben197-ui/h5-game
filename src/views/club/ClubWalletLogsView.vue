@@ -288,7 +288,7 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
 }
 
 .metric-value--down {
-  color: #05e7ae;
+  color: rgba(85, 243, 41, 1);
 }
 
 .metric-value--neutral {

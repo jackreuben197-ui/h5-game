@@ -11,6 +11,9 @@ importers:
       '@iconify/vue':
         specifier: ^5.0.0
         version: 5.0.0(vue@3.5.32(typescript@6.0.2))
+      '@silenthill/agreement-web':
+        specifier: git+https://github.com/kingofake/agreement-web.git#main
+        version: git+https://github.com/kingofake/agreement-web.git#c6928aa36f403715bd7b26566dcb1fbce232455f
       '@vueuse/core':
         specifier: ^14.2.1
         version: 14.2.1(vue@3.5.32(typescript@6.0.2))
@@ -1052,6 +1055,10 @@ packages:
 
   '@rolldown/pluginutils@1.0.0-rc.2':
     resolution: {integrity: sha512-izyXV/v+cHiRfozX62W9htOAvwMo4/bXKDrQ+vom1L1qRuexPock/7VZDAhnpHCLNejd3NJ6hiab+tO0D44Rgw==}
+
+  '@silenthill/agreement-web@git+https://github.com/kingofake/agreement-web.git#c6928aa36f403715bd7b26566dcb1fbce232455f':
+    resolution: {commit: c6928aa36f403715bd7b26566dcb1fbce232455f, repo: https://github.com/kingofake/agreement-web.git, type: git}
+    version: 1.0.0
 
   '@tybys/wasm-util@0.10.1':
     resolution: {integrity: sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg==}
@@ -3477,6 +3484,10 @@ snapshots:
   '@rolldown/pluginutils@1.0.0-rc.15': {}
 
   '@rolldown/pluginutils@1.0.0-rc.2': {}
+
+  '@silenthill/agreement-web@git+https://github.com/kingofake/agreement-web.git#c6928aa36f403715bd7b26566dcb1fbce232455f':
+    dependencies:
+      google-protobuf: 3.21.4
 
   '@tybys/wasm-util@0.10.1':
     dependencies:

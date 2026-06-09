@@ -29,7 +29,7 @@ import {
   encodeHoldemPacket,
   type HoldemPacketDecodeResult,
 } from './holdemPacket'
-import { Code } from './pb/code_pb'
+import { Code } from '@holdem-pb'
 
 const log = createLogger('[ws]')
 const logSend = createLogger('[wsSend]')

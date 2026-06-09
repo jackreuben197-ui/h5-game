@@ -1,4 +1,4 @@
-import type { ServerMessageSupportMessage } from './pb/protobuf/holdem/recv_g_support_message_pb'
+import { ServerMessageSupportMessage } from '@holdem-pb'
 import { decodeHoldemPacket } from './holdemPacket'
 
 export interface WsSupportMessagePayload {
@@ -15,19 +15,13 @@ export interface WsSupportMessagePayload {
   url: string
 }
 
-let pbSupportMessageClass: typeof ServerMessageSupportMessage | null = null
-
-void import('./pb/protobuf/holdem/recv_g_support_message_pb').then((mod) => {
-  pbSupportMessageClass = mod.ServerMessageSupportMessage
-})
-
 export function decodeSupportMessageNotify(rawPacket: ArrayBufferLike): WsSupportMessagePayload | null {
-  if (!pbSupportMessageClass) return null
+  if (!ServerMessageSupportMessage) return null
   const packet = decodeHoldemPacket(rawPacket)
   if (!packet) return null
 
   try {
-    const msg = pbSupportMessageClass.deserializeBinary(packet.body)
+    const msg = ServerMessageSupportMessage.deserializeBinary(packet.body)
     return {
       clubId: Number(msg.getClubId() || 0),
       tribeId: Number(msg.getTribeId() || 0),

@@ -1,13 +1,13 @@
-import type {
-  RoomTribeClubRelate as PbRoomTribeClubRelate,
-  UserMttRecord as PbUserMttRecord,
-  UserMttRecordChange as PbUserMttRecordChange,
-  UserSNGRecord as PbUserSNGRecord,
-  UserSNGRecordChange as PbUserSNGRecordChange,
-} from './pb/protobuf/holdem/define_pb'
-import type { ServerMessageMttSeriesNotify as PbServerMessageMttSeriesNotify } from './pb/protobuf/holdem/recv_g_mtt_series_notify_pb'
-import type { ServerMessageUserMttChangeNotify as PbServerMessageUserMttChangeNotify } from './pb/protobuf/holdem/recv_g_user_mtt_change_notify_pb'
-import type { ServerMessageUserSngChangeNotify as PbServerMessageUserSngChangeNotify } from './pb/protobuf/holdem/recv_g_user_sng_change_notify_pb'
+import {
+  ServerMessageMttSeriesNotify,
+  ServerMessageUserMttChangeNotify,
+  ServerMessageUserSngChangeNotify,
+  type RoomTribeClubRelate as PbRoomTribeClubRelate,
+  type UserMttRecord as PbUserMttRecord,
+  type UserMttRecordChange as PbUserMttRecordChange,
+  type UserSNGRecord as PbUserSNGRecord,
+  type UserSNGRecordChange as PbUserSNGRecordChange,
+} from '@holdem-pb'
 import { decodeHoldemPacket } from './holdemPacket'
 
 // 对齐 Unity GameMatchMttMessageController.RegisterMsgHandler 的 3 个通知协议号。
@@ -112,25 +112,8 @@ export interface WsMttSeriesNotifyPayload {
   create_time: number
 }
 
-// pb 模块三个文件共享 define_pb（~1 MB），合并为一次并行加载。
-// 在本模块首次 import 时立即后台加载，WS 建立前 pb 通常已就绪。
-type MttPbClasses = {
-  userMttChangeNotify: typeof PbServerMessageUserMttChangeNotify
-  userSngChangeNotify: typeof PbServerMessageUserSngChangeNotify
-  mttSeriesNotify: typeof PbServerMessageMttSeriesNotify
-}
-let mttPbClasses: MttPbClasses | null = null
-void Promise.all([
-  import('./pb/protobuf/holdem/recv_g_user_mtt_change_notify_pb'),
-  import('./pb/protobuf/holdem/recv_g_user_sng_change_notify_pb'),
-  import('./pb/protobuf/holdem/recv_g_mtt_series_notify_pb'),
-]).then(([mttMod, sngMod, seriesMod]) => {
-  mttPbClasses = {
-    userMttChangeNotify: mttMod.ServerMessageUserMttChangeNotify,
-    userSngChangeNotify: sngMod.ServerMessageUserSngChangeNotify,
-    mttSeriesNotify: seriesMod.ServerMessageMttSeriesNotify,
-  }
-})
+// pb 类已由 @silenthill/agreement-web 的 proxy 处理：import 拿到的是 window.HoldemPB
+// 的惰性 getter，UMD bundle 由 holdemPbInjectPlugin 提前注入 <script> 加载。
 
 function toSafeInt(value: unknown): number {
   const num = Number(value)
@@ -216,7 +199,7 @@ function mapUserSngRecordChange(record: PbUserSNGRecordChange): WsUserSngRecordC
 export function decodeUserMttChangeNotifyFromRawPacket(
   rawPacket: ArrayBufferLike,
 ): WsUserMttChangeNotifyPayload | null {
-  if (!mttPbClasses) return null
+  if (!ServerMessageUserMttChangeNotify) return null
 
   const packet = decodeHoldemPacket(rawPacket)
   if (!packet || packet.code !== MTT_NOTIFY_CODE.USER_MTT_CHANGE_NOTIFY) {
@@ -224,7 +207,7 @@ export function decodeUserMttChangeNotifyFromRawPacket(
   }
 
   try {
-    const notify = mttPbClasses.userMttChangeNotify.deserializeBinary(packet.body)
+    const notify = ServerMessageUserMttChangeNotify.deserializeBinary(packet.body)
     const changeType = toSafeInt(notify.getChangeType())
     if (!changeType) return null
 
@@ -249,7 +232,7 @@ export function decodeUserMttChangeNotifyFromRawPacket(
 export function decodeUserSngChangeNotifyFromRawPacket(
   rawPacket: ArrayBufferLike,
 ): WsUserSngChangeNotifyPayload | null {
-  if (!mttPbClasses) return null
+  if (!ServerMessageUserSngChangeNotify) return null
 
   const packet = decodeHoldemPacket(rawPacket)
   if (!packet || packet.code !== MTT_NOTIFY_CODE.USER_SNG_CHANGE_NOTIFY) {
@@ -257,7 +240,7 @@ export function decodeUserSngChangeNotifyFromRawPacket(
   }
 
   try {
-    const notify = mttPbClasses.userSngChangeNotify.deserializeBinary(packet.body)
+    const notify = ServerMessageUserSngChangeNotify.deserializeBinary(packet.body)
     const changeType = toSafeInt(notify.getChangeType())
     if (!changeType) return null
 
@@ -282,7 +265,7 @@ export function decodeUserSngChangeNotifyFromRawPacket(
 export function decodeMttSeriesNotifyFromRawPacket(
   rawPacket: ArrayBufferLike,
 ): WsMttSeriesNotifyPayload | null {
-  if (!mttPbClasses) return null
+  if (!ServerMessageMttSeriesNotify) return null
 
   const packet = decodeHoldemPacket(rawPacket)
   if (!packet || packet.code !== MTT_NOTIFY_CODE.MTT_SERIES_NOTIFY) {
@@ -290,7 +273,7 @@ export function decodeMttSeriesNotifyFromRawPacket(
   }
 
   try {
-    const notify = mttPbClasses.mttSeriesNotify.deserializeBinary(packet.body)
+    const notify = ServerMessageMttSeriesNotify.deserializeBinary(packet.body)
     const id = toSafeInt(notify.getId())
     if (!id) return null
 

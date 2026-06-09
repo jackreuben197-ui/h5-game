@@ -12,7 +12,7 @@ import {
   type SyncRoomsListPayload,
   type SyncUserClubPayload,
   type SyncUserPayload,
-} from '../protocol'
+} from '@bridge-protocol'
 import { Code, subscribeH5WsCode } from '../ws/messageCenter'
 import { decodeUserDiamondChange, decodeUserGoldChange } from '../ws/userBalanceNotify'
 import { decodeUserTraderOrderNotify } from '../ws/traderOrderNotify'

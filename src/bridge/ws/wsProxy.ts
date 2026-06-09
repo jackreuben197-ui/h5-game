@@ -13,7 +13,7 @@ import {
   type WsReconnectingPayload,
   type WsSendPayload,
   type SetHeartbeatModePayload,
-} from '../protocol'
+} from '@bridge-protocol'
 import { sendBridgeMessage, subscribeCocosMessages } from '../core/cocosBridgeChannel'
 import StorageKey from '@/constants/storageKey'
 import { t } from '@/i18n'

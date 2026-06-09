@@ -1,4 +1,4 @@
-import type { CocosPanelPayload } from '@/bridge/protocol'
+import type { CocosPanelPayload } from '@bridge-protocol'
 import {
   openGlobalCustomerServiceChat,
   type OpenGlobalCustomerServiceChatPayload,

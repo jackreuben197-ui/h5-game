@@ -36,6 +36,13 @@ src/bridge
 
 **为什么保留本地 protocol/？** 因为 pokerqueen（旧 cocos 项目）不接入 h5-cc-bridge 仓库，本目录就是它的兼容协议快照。如果哪天 pokerqueen 也接入了共享协议，可以直接删掉这个文件夹（连带 vite alias 的分支）。
 
+**注意：`h5-cc-bridge` 这个 npm 包不管哪个模式都得装**。原因：
+
+- 运行时（Vite bundle）：是否用 npm 包看 `VITE_BRIDGE_TARGET`。pokerqueen 模式下 alias 切到本地，npm 包代码不会进 bundle。
+- 类型检查（vue-tsc）：`tsconfig.app.json` 里 `@bridge-protocol` 是静态映射到 `node_modules/h5-cc-bridge/dist/index.d.ts` 的，tsc 不读环境变量，所以无论哪个模式都需要包存在才能类型检查通过。
+
+结果：`pnpm install` 永远必须；但是 `pnpm build` 出来的产物在 pokerqueen 模式下不含 h5-cc-bridge 任何代码。
+
 ## 2. 各文件夹功能说明
 
 ### `core/`

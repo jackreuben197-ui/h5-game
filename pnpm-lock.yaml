@@ -24,8 +24,8 @@ importers:
         specifier: ^3.21.4
         version: 3.21.4
       h5-cc-bridge:
-        specifier: file:../h5-cc-bridge
-        version: file:../h5-cc-bridge
+        specifier: git+https://github.com/soolary/h5-cc-bridge.git#main
+        version: https://codeload.github.com/soolary/h5-cc-bridge/tar.gz/00a8fc2bee7a8db810ef2ae9d7708c910c59d50d
       html2canvas:
         specifier: ^1.4.1
         version: 1.4.1
@@ -1717,8 +1717,9 @@ packages:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
     engines: {node: '>= 0.4'}
 
-  h5-cc-bridge@file:../h5-cc-bridge:
-    resolution: {directory: ../h5-cc-bridge, type: directory}
+  h5-cc-bridge@https://codeload.github.com/soolary/h5-cc-bridge/tar.gz/00a8fc2bee7a8db810ef2ae9d7708c910c59d50d:
+    resolution: {tarball: https://codeload.github.com/soolary/h5-cc-bridge/tar.gz/00a8fc2bee7a8db810ef2ae9d7708c910c59d50d}
+    version: 0.1.0
 
   has-flag@4.0.0:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
@@ -4215,7 +4216,7 @@ snapshots:
 
   gopd@1.2.0: {}
 
-  h5-cc-bridge@file:../h5-cc-bridge: {}
+  h5-cc-bridge@https://codeload.github.com/soolary/h5-cc-bridge/tar.gz/00a8fc2bee7a8db810ef2ae9d7708c910c59d50d: {}
 
   has-flag@4.0.0: {}
 

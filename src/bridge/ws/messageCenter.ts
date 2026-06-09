@@ -1,7 +1,7 @@
 import { decodeHoldemCode } from './holdemPacket'
 import { subscribeH5WsMessages, type H5WsIncomingEvent } from './wsProxy'
 
-export { Code } from './pb/code_pb'
+export { Code } from '@holdem-pb'
 
 export interface H5WsDecodedMessage {
   code: number

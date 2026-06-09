@@ -8,55 +8,57 @@ import legacy from '@vitejs/plugin-legacy'
 import Components from 'unplugin-vue-components/vite'
 import { VantResolver } from '@vant/auto-import-resolver'
 
-// 将 pb 目录下 protoc-gen-js 生成的 CommonJS 文件在 Vite ESM 环境中正确运行。
-// 策略：保留原始 .js 不修改（与 Cocos/Unity 同源），在 transform 阶段注入 ESM 兼容头。
-function pbCjsToEsmPlugin(): Plugin {
+// 注入 @silenthill/agreement-web 的 UMD bundle (holdem-pb.js) 到 index.html，
+// 并在 dev / build 两种模式下从 node_modules 解析文件。
+//
+// 协议层 import { Code, ServerMessageXxx } from '@silenthill/agreement-web' 走的是
+// dist/proxy.js（28 KB，惰性 getter 转去读 window.HoldemPB）；实际 pb 类实现在
+// holdem-pb.js（~3.7 MB raw）里，由本插件以独立 <script> 形式加载到 window.HoldemPB。
+//
+// 设计参考：服务端 README 的「UMD bundle + proxy layer」模式。
+function holdemPbInjectPlugin(): Plugin {
+  const PKG_FILE = '@silenthill/agreement-web/dist/holdem-pb.js'
+  const VIRTUAL_PATH = '/libs/holdem-pb.js'
+  let resolvedFile = ''
+
   return {
-    name: 'pb-cjs-to-esm',
-    transform(code: string, id: string) {
-      if (!id.includes('/bridge/ws/pb/') || !id.endsWith('.js')) return null
-
-      const isDefine = id.endsWith('/define_pb.js')
-      const needsDefinePb = !isDefine && code.includes('define_pb.js')
-
-      // 从 goog.exportSymbol 调用中提取顶层导出符号名（Def.Action 这类嵌套只取 Def）
-      const symbols = [
-        ...new Set(
-          [...code.matchAll(/goog\.exportSymbol\('proto\.holdem\.pb\.(\w+)'/g)].map((m) => m[1]),
-        ),
-      ]
-
-      // ESM 前置：用 import 替代 require，保留 goog/global 变量名不变
-      const preamble = [
-        `import jspb from 'google-protobuf';`,
-        `var goog = jspb;`,
-        `var global = Function('return this')();`,
-        ...(needsDefinePb ? [`import * as protobuf_holdem_define_pb from './define_pb.js';`] : []),
-        '',
-      ].join('\n')
-
-      // 剥离 CJS 头部（require 语句已被 preamble 中的 import 取代）
-      let body = code
-        .replace(/^var jspb = require\('google-protobuf'\);\r?\n/m, '')
-        .replace(/^var goog = jspb;\r?\n/m, '')
-        .replace(/^var global = Function\('return this'\)\(\);\r?\n/m, '')
-        .replace(/^goog\.object\.extend\(exports, proto\.holdem\.pb\);\r?\n?/m, '')
-
-      if (!isDefine) {
-        body = body.replace(
-          /^var protobuf_holdem_define_pb = require\('\.\.\/\.\.\/protobuf\/holdem\/define_pb\.js'\);\r?\n/m,
-          '',
-        )
-      }
-
-      // 模块代码执行完毕后，从 global.proto.holdem.pb 上捕获类并导出为具名 ESM export
-      const footer = [
-        '',
-        ...symbols.map((sym) => `var _e_${sym} = proto.holdem.pb.${sym};`),
-        `export { ${symbols.map((sym) => `_e_${sym} as ${sym}`).join(', ')} };`,
-      ].join('\n')
-
-      return { code: preamble + body + footer, map: null }
+    name: 'holdem-pb-inject',
+    configResolved() {
+      // 用 import.meta.resolve 这种新 API 不通用；直接拼 node_modules 路径稳。
+      resolvedFile = fileURLToPath(new URL(`./node_modules/${PKG_FILE}`, import.meta.url))
+    },
+    // dev：拦截 /libs/holdem-pb.js，直接从 node_modules 流回
+    configureServer(server) {
+      server.middlewares.use(VIRTUAL_PATH, (_req, res) => {
+        try {
+          const buf = readFileSync(resolvedFile)
+          res.setHeader('Content-Type', 'application/javascript')
+          res.setHeader('Cache-Control', 'public, max-age=3600')
+          res.end(buf)
+        } catch (e) {
+          res.statusCode = 500
+          res.end(`/* holdem-pb-inject: cannot read ${resolvedFile}: ${String(e)} */`)
+        }
+      })
+    },
+    // build：把 holdem-pb.js 当 asset 发出去
+    generateBundle() {
+      const source = readFileSync(resolvedFile)
+      this.emitFile({
+        type: 'asset',
+        fileName: 'libs/holdem-pb.js',
+        source,
+      })
+    },
+    // dev + build：把 <script> 插到 index.html 的 <head> 末尾，保证早于 type=module 主入口
+    transformIndexHtml: {
+      order: 'pre',
+      handler(html) {
+        const tag = `<script src="${VIRTUAL_PATH}" charset="utf-8"></script>`
+        // 已经手动插过就不重复加
+        if (html.includes(VIRTUAL_PATH)) return html
+        return html.replace('</head>', `    ${tag}\n  </head>`)
+      },
     },
   }
 }
@@ -246,7 +248,7 @@ export default defineConfig(({ mode, command }) => {
       __I18N_VERSIONS__: JSON.stringify(i18nVersions),
     },
     plugins: [
-      pbCjsToEsmPlugin(),
+      holdemPbInjectPlugin(),
       vue(),
       i18nHotReloadPlugin(),
       Components({
@@ -270,6 +272,10 @@ export default defineConfig(({ mode, command }) => {
           bridgeTarget === 'h5-cc-game'
             ? 'h5-cc-bridge'
             : fileURLToPath(new URL('./src/bridge/protocol', import.meta.url)),
+        // 短别名：业务代码 import { Code, ServerMessageXxx } from '@holdem-pb'
+        // 实际指向 @silenthill/agreement-web 的 proxy 层（运行时从 window.HoldemPB 取）。
+        // 真正的 UMD bundle 由 holdemPbInjectPlugin 注入 <script>。
+        '@holdem-pb': '@silenthill/agreement-web',
       },
     },
     server: {
@@ -311,10 +317,11 @@ export default defineConfig(({ mode, command }) => {
           manualChunks: (id) => {
             const normalizedId = id.replace(/\\/g, '/')
 
-            // pb 生成文件单独成 chunk：体积大（define_pb ~1MB），且通过动态 import
-            // 懒加载，不应进入主 bundle。
-            if (normalizedId.includes('/bridge/ws/pb/')) {
-              return 'pb-holdem'
+            // @silenthill/agreement-web 的 proxy.js（~28 KB）单独 chunk；
+            // 真正的 pb runtime (holdem-pb.js, ~3.7 MB) 由 holdemPbInjectPlugin
+            // 以独立 <script> 加载到 window.HoldemPB，不进 Vite bundle。
+            if (normalizedId.includes('/@silenthill/agreement-web/')) {
+              return 'pb-holdem-proxy'
             }
 
             if (!normalizedId.includes('/node_modules/')) {

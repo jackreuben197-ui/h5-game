@@ -21,6 +21,7 @@ import UnfinishedOrderPopup from '@/views/wallet/components/UnfinishedOrderPopup
 import UsdtPaymentDetailsPopup from '@/views/wallet/components/UsdtPaymentDetailsPopup.vue'
 import CustomerServicePaymentPopup from '@/views/wallet/components/CustomerServicePaymentPopup.vue'
 import CustomerServiceChatPopup from '@/views/wallet/components/CustomerServiceChatPopup.vue'
+import FixedDepositPanel from '@/views/wallet/components/FixedDepositPanel.vue'
 import { t } from '@/i18n'
 import { useWalletStore } from '@/stores/wallet'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -36,6 +37,11 @@ import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 const router = useRouter()
 const walletStore = useWalletStore()
 const userInfoStore = useUserInfoStore()
+
+// deposit_switch: 1 = deposit-free (normal wallet UI); 2 = fixed-deposit (simplified apply-recharge UI)
+const isFixedDeposit = computed(
+  () => (userInfoStore.currentClub ?? userInfoStore.clubList[0])?.deposit_switch === 2,
+)
 
 const activeTab = ref(0)
 const activePreset = ref(0)
@@ -643,7 +649,9 @@ async function onUsdtSubmit(type: number) {
 </script>
 
 <template>
-  <div class="wallet-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
+  <FixedDepositPanel v-if="isFixedDeposit" />
+
+  <div v-else class="wallet-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
     <AppBar :title="t('Wallet_Title')" :show-actions="false" />
 
     <div class="wallet-screen__content-top">

@@ -22,7 +22,9 @@ import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgChips from '@/assets/icons/icon_chips.png'
-import imgBalance from '@/assets/icons/icon_balance.png'
+import imgBalance from '@/assets/icons/icon_chip_green.png'
+import icTimeRefresh from '@/assets/icons/ic_time_refresh.svg'
+import icSearch from '@/assets/icons/ic_search.svg'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
 import mainBgUrl from '@/assets/images/main_bg.webp'
@@ -1259,13 +1261,13 @@ onMounted(() => {
 
             <button type="button" class="income-btn" @click="onIncomeQuery">
               <span>收益查询</span>
-              <span class="income-icon" aria-hidden="true"></span>
+              <img :src="icTimeRefresh" alt="" class="income-icon" aria-hidden="true" />
             </button>
           </div>
         </section>
 
         <section class="search-card">
-          <span class="search-icon" aria-hidden="true"></span>
+          <img :src="icSearch" alt="" class="search-icon" aria-hidden="true" />
           <input
             v-model.trim="searchKeyword"
             type="text"
@@ -1705,9 +1707,11 @@ onMounted(() => {
 
 .summary-card {
   padding: 0.43919rem;
-  border-radius: 1.05574rem;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.24rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
   display: flex;
   flex-direction: column;
   gap: 0.39696rem;
@@ -1769,55 +1773,30 @@ onMounted(() => {
 }
 
 .income-icon {
-  position: relative;
-  width: 0.24rem;
-  height: 0.24rem;
-  border: 0.03rem solid rgba(243, 243, 243, 0.9);
-  border-radius: 0.045rem;
-}
-
-.income-icon::after {
-  content: '';
-  position: absolute;
-  left: 0.03rem;
-  top: -0.105rem;
-  width: 0.105rem;
-  height: 0.105rem;
-  border: 0.03rem solid rgba(243, 243, 243, 0.9);
-  border-bottom: 0;
-  border-radius: 0.045rem 0.045rem 0 0;
+  width: 0.4rem;
+  height: 0.4rem;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .search-card {
   min-height: 1.06827rem;
   padding: 0.12669rem 0.2027rem 0.12669rem 0.44763rem;
-  border-radius: 1.05574rem;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.225rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
   display: flex;
   align-items: center;
   gap: 0.16649rem;
 }
 
 .search-icon {
-  width: 0.36rem;
-  height: 0.36rem;
-  border: 0.045rem solid rgba(248, 248, 248, 0.94);
-  border-radius: 50%;
-  position: relative;
+  width: 0.4rem;
+  height: 0.4rem;
+  object-fit: contain;
   flex: 0 0 auto;
-}
-
-.search-icon::after {
-  content: '';
-  position: absolute;
-  width: 0.18rem;
-  height: 0.045rem;
-  background: rgba(248, 248, 248, 0.94);
-  transform: rotate(45deg);
-  transform-origin: left center;
-  right: -0.15rem;
-  bottom: -0.03rem;
 }
 
 .search-card input {
@@ -1853,9 +1832,11 @@ onMounted(() => {
 
 .record-panel {
   position: relative;
-  border-radius: 0.76013rem;
-  background: rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(0.225rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
   padding: 0.36318rem 0.43919rem;
   display: flex;
   flex-direction: column;
@@ -1874,27 +1855,34 @@ onMounted(() => {
 }
 
 .range-tabs {
-  min-height: 1.44426rem;
-  border-radius: 0.8rem;
-  padding: 0;
-  background: rgba(164, 143, 161, 0.3);
+  height: 1.44426rem;
+  border-radius: 0.68rem;
+  background: rgba(0, 0, 0, 0.2);
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.26667rem;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.06rem;
 }
 
 .range-tab {
   border: 0;
-  border-radius: 1.38441rem;
+  border-radius: 0.62rem;
   background: transparent;
   color: #f9f9f9;
+  opacity: 0.86;
   font-size: 0.36197rem;
   line-height: 1;
-  padding: 0.11075rem 0.12rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .range-tab--active {
-  background: rgba(255, 255, 255, 0.24);
+  background: rgba(249, 249, 249, 0.5);
+  font-weight: 700;
+  opacity: 1;
 }
 
 .record-stats {
@@ -1907,7 +1895,9 @@ onMounted(() => {
 .record-stat-item {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.07356rem;
+  text-align: center;
 }
 
 .record-stat-label {

@@ -52,11 +52,11 @@ const sectionMiddle: SettingItem[] = [
   { key: 'line', label: '当前线路', icon: icCurrentLine, rightText: '默认线路' },
   { key: 'cancel', label: '注销账号', icon: icDeleteAccount },
   { key: 'about', label: '关于我们', icon: icAboutUs },
-  { key: 'agreement', label: '用户协议', icon: icPolicePrivacy },
+  // { key: 'agreement', label: '用户协议', icon: icPolicePrivacy },
 ]
 
 const sectionBottom: SettingItem[] = [
-  { key: 'privacy', label: '用户隐私协议', icon: icUserAgreement },
+  // { key: 'privacy', label: '用户隐私协议', icon: icUserAgreement },
   { key: 'version', label: '版本号', icon: icAppVersion, rightText: 'v1.0.0', clickable: false },
 ]
 

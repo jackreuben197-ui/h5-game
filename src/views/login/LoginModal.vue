@@ -17,6 +17,7 @@ import { useLoginModalStore } from '@/stores/loginModal'
 import { syncPostAuthData } from '@/session/postAuthSync'
 import { SUPPORTED_LOCALES_OPTIONS, getLocale, setLocale, t, type LocaleCode } from '@/i18n'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
+import loginModalBg from '@/assets/images/main_bg2.png'
 import icPhone from '@/assets/icons/ic_phone.svg'
 import icLock from '@/assets/icons/ic_lock.svg'
 import icKey from '@/assets/icons/ic_key.svg'
@@ -69,12 +70,12 @@ const form = reactive({
 })
 const currentLang = ref<LocaleCode>(getLocale())
 const showPassword = ref(false)
-const agreed = ref(false)
+// const agreed = ref(false)
 const showLanguageModal = ref(false)
-const showProtocolConfifm = ref(false)
+// const showProtocolConfifm = ref(false)
 const showDebugAccountDialog = ref(false)
-const showProtocolPanel = ref(false)
-const pendingAgreementSubmit = ref(false)
+// const showProtocolPanel = ref(false)
+// const pendingAgreementSubmit = ref(false)
 const loading = ref(false)
 const inviteCodeFromChannel = ref('')
 const traceHashFromChannel = ref('')
@@ -102,11 +103,11 @@ watch(
   () => loginModalStore.visible,
   (visible) => {
     if (!visible) {
-      showProtocolPanel.value = false
+      // showProtocolPanel.value = false
       showLanguageModal.value = false
-      showProtocolConfifm.value = false
+      // showProtocolConfifm.value = false
       showDebugAccountDialog.value = false
-      pendingAgreementSubmit.value = false
+      // pendingAgreementSubmit.value = false
       // 关闭未登录态弹窗（含点击遮罩关闭）时清空残留的跳转目标，避免下次登录被错误带跳。
       loginModalStore.pendingRedirect = ''
       return
@@ -123,7 +124,7 @@ const contactPlaceholder = computed(() =>
   contactType.value === 'account' ? t('UILogin_Account', 'Please enter account ID') : t('UILogin_InputEmail'),
 )
 
-const needAgreement = computed(() => pageMode.value !== 'forgot')
+// const needAgreement = computed(() => pageMode.value !== 'forgot')
 
 const canSubmit = computed(() => {
   if (!contactValue.value.trim()) return false
@@ -248,11 +249,11 @@ function resetOtpCountdown() {
 async function handleSubmit() {
   if (loading.value) return
   if (!canSubmit.value) return
-  if (needAgreement.value && !agreed.value) {
-    pendingAgreementSubmit.value = true
-    showProtocolConfifm.value = true
-    return
-  }
+  // if (needAgreement.value && !agreed.value) {
+  //   pendingAgreementSubmit.value = true
+  //   showProtocolConfifm.value = true
+  //   return
+  // }
   await runSubmitFlow()
 }
 
@@ -272,38 +273,38 @@ async function runSubmitFlow() {
     console.log('[login-modal] handleSubmit error:', error)
   } finally {
     loading.value = false
-    pendingAgreementSubmit.value = false
+    // pendingAgreementSubmit.value = false
   }
 }
 
-function openProtocolPanel(): void {
-  showProtocolPanel.value = true
-}
+// function openProtocolPanel(): void {
+//   showProtocolPanel.value = true
+// }
 
-function onProtocolPanelBack(): void {
-  showProtocolPanel.value = false
-}
+// function onProtocolPanelBack(): void {
+//   showProtocolPanel.value = false
+// }
 
-function onAgreementIndicatorClick(): void {
-  agreed.value = !agreed.value
-}
+// function onAgreementIndicatorClick(): void {
+//   agreed.value = !agreed.value
+// }
 
-function onAgreementTextClick(): void {
-  openProtocolPanel()
-}
+// function onAgreementTextClick(): void {
+//   openProtocolPanel()
+// }
 
-function onProtocolConfirm(): void {
-  agreed.value = true
-  showProtocolConfifm.value = false
-  if (pendingAgreementSubmit.value) {
-    void runSubmitFlow()
-  }
-}
+// function onProtocolConfirm(): void {
+//   agreed.value = true
+//   showProtocolConfifm.value = false
+//   if (pendingAgreementSubmit.value) {
+//     void runSubmitFlow()
+//   }
+// }
 
-function onProtocolCancel(): void {
-  pendingAgreementSubmit.value = false
-  showProtocolConfifm.value = false
-}
+// function onProtocolCancel(): void {
+//   pendingAgreementSubmit.value = false
+//   showProtocolConfifm.value = false
+// }
 
 function openDebugAccountDialog(): void {
   showDebugAccountDialog.value = true
@@ -314,7 +315,7 @@ function applyDebugAccount(account: DebugAccount): void {
   contactType.value = 'account'
   form.account = account.account
   form.password = account.password
-  agreed.value = true
+  // agreed.value = true
   showDebugAccountDialog.value = false
 }
 
@@ -529,6 +530,7 @@ function applyChannelInviteContext(): void {
     :close-on-click-overlay="true"
     dialog-width="9rem"
     body-max-height="14rem"
+    :bg-image="loginModalBg"
   >
     <template #title>
       <div v-if="false" class="login-title-row">
@@ -538,7 +540,7 @@ function applyChannelInviteContext(): void {
         </button>
       </div>
     </template>
-    <span class="debug-trigger" @click="openDebugAccountDialog">DEV</span>
+    <!-- <span class="debug-trigger" @click="openDebugAccountDialog">DEV</span> -->
     <div class="login-form">
       <div class="tab-row">
         <button
@@ -619,10 +621,10 @@ function applyChannelInviteContext(): void {
 
       <div class="bottom-area">
         <div class="action-links">
-          <button v-if="pageMode === 'login'" class="link-btn" @click="goMode('forgot')">
+          <!-- <button v-if="pageMode === 'login'" class="link-btn" @click="goMode('forgot')">
             {{ t('UILogin_Forget') }}
-          </button>
-          <span v-else></span>
+          </button> -->
+          <span></span>
           <button
             class="link-btn link-btn--right"
             @click="goMode(pageMode === 'login' ? 'register' : 'login')"
@@ -631,7 +633,7 @@ function applyChannelInviteContext(): void {
           </button>
         </div>
 
-        <div v-if="needAgreement" class="agreement-row">
+        <!-- <div v-if="needAgreement" class="agreement-row">
           <span
             :class="['radio-circle', { 'radio-circle--checked': agreed }]"
             @click="onAgreementIndicatorClick"
@@ -639,7 +641,7 @@ function applyChannelInviteContext(): void {
           <span class="agreement-text agreement-text--link" @click="onAgreementTextClick">
             {{ t('UILogin_ReadOK') }}
           </span>
-        </div>
+        </div> -->
 
         <PrimaryButton
           :text="submitText"
@@ -653,11 +655,11 @@ function applyChannelInviteContext(): void {
 
 
 
-  <Teleport to="body">
+  <!-- <Teleport to="body">
     <div v-if="showProtocolPanel" class="login-fullscreen-panel">
       <ProtocolView :type="PROTOCOL_TYPE_AGREEMENT" @back="onProtocolPanelBack" />
     </div>
-  </Teleport>
+  </Teleport> -->
 
   <GameDialog
     v-model:show="showLanguageModal"
@@ -694,7 +696,7 @@ function applyChannelInviteContext(): void {
     </div>
   </GameDialog>
 
-  <GameDialog
+  <!-- <GameDialog
     v-model:show="showProtocolConfifm"
     :title="t('UILoginConfirmTitle')"
     :close-on-click-overlay="true"
@@ -710,7 +712,7 @@ function applyChannelInviteContext(): void {
         {{ t('UIMine_Setting_UserSecret') }}
       </span>
     </div>
-  </GameDialog>
+  </GameDialog> -->
 </template>
 
 <style scoped lang="scss">
@@ -848,7 +850,7 @@ function applyChannelInviteContext(): void {
   transition: background 0.2s;
 
   &--filled {
-    background: rgba(5, 231, 174, 0.65);
+    background: rgba(62, 173, 6, 0.65);
   }
 }
 
@@ -937,7 +939,7 @@ function applyChannelInviteContext(): void {
   height: 0.91rem;
   padding: 0 0.27rem;
   min-width: 2rem;
-  background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+  background: linear-gradient(157deg, #55f329 0%, #3ead06 100%);
   border-radius: 1.27rem;
   border: 0;
   cursor: pointer;

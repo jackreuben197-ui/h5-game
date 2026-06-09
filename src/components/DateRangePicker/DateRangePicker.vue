@@ -330,8 +330,10 @@ function startOfDay(date: Date): Date {
   width: 100%;
   padding: 0.64256rem 0.53211rem 0.5472rem;
   border-radius: 0.84459rem 0.84459rem 0 0;
-  background: rgba(0, 0, 0, 0.86);
-  backdrop-filter: blur(0.16064rem);
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
 }
 
 .picker-tip {
@@ -352,7 +354,7 @@ function startOfDay(date: Date): Date {
   height: 1.024rem;
   border: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  background: #e02542;
   color: #fff;
   font-size: 0.8rem;
   line-height: 1;
@@ -366,11 +368,13 @@ function startOfDay(date: Date): Date {
 }
 
 .picker-date-btn {
-  border: 0;
+  border: 0.02rem solid rgba(249, 249, 249, 0.04);
   height: 0.85141rem;
-  border-radius: 0.64157rem;
+  border-radius: 0.8rem;
   padding: 0 0.42208rem;
-  background: rgba(6, 6, 6, 0.4);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(3.5px);
+  -webkit-backdrop-filter: blur(3.5px);
   color: #fff;
   display: flex;
   align-items: center;
@@ -380,7 +384,7 @@ function startOfDay(date: Date): Date {
   line-height: 1.2;
 
   &.active {
-    box-shadow: 0 0 0 0.02rem rgba(5, 231, 174, 0.45) inset;
+    border-color: rgba(249, 249, 249, 0.8);
   }
 }
 
@@ -497,7 +501,7 @@ function startOfDay(date: Date): Date {
     right: 0;
     top: 0.14667rem;
     bottom: 0.14667rem;
-    background: rgba(5, 231, 174, 0.17);
+    background: rgba(224, 37, 66, 0.17);
     z-index: 1;
   }
 
@@ -520,7 +524,7 @@ function startOfDay(date: Date): Date {
     width: 0.8rem;
     height: 0.8rem;
     border-radius: 50%;
-    background: #05e7ae;
+    background: #e02542;
     z-index: 1;
   }
 }
@@ -529,10 +533,12 @@ function startOfDay(date: Date): Date {
   margin-top: 0.37333rem;
   width: 100%;
   height: 1.43581rem;
-  border: 0.01333rem solid rgba(242, 242, 242, 0.8);
+  border: 0;
   border-radius: 1.05573rem;
-  background: linear-gradient(168.11deg, #05e7ae 7.55%, #027a5c 71.92%);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  color: #78e490;
   font-size: 0.4rem;
   font-weight: 500;
 }

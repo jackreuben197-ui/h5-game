@@ -96,8 +96,8 @@ const quickActions = computed<QuickActionItem[]>(() => {
   if (canManageClub.value) {
     return [
       { id: 1, title: '活动管理', cover: imgQuickSafety },
-      { id: 2, title: 'MTT管理', cover: imgQuickRanking },
-      { id: 3, title: '团队管理', cover: imgQuickFund },
+      { id: 2, title: '牌局管理', cover: imgQuickRanking },
+      { id: 3, title: '基金管理', cover: imgQuickFund },
     ]
   }
 

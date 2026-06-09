@@ -22,6 +22,7 @@ import { useGameStore } from '@/stores/game'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { pinia } from '@/stores/pinia'
 import { localStore } from '@/utils/localStore'
+import { appConfig } from '@/utils/appConfig'
 import { createLogger } from '@/utils/logger'
 import {
   decodeHoldemCode,
@@ -112,6 +113,33 @@ export interface H5WaitWsPacketOptions {
   timeoutMs?: number
 }
 
+// 默认 websocket 域名模板：与 API 走同一来源（运行时 config.json 的 baseApi），
+// 这样测试/正式环境只需各自部署对应的 config.json，websocket 就会跟随后端域名，
+// 不会再回落到写死的测试域名（如正式环境 https://ccsgame.recognitionway.com）。
+// 优先级：config.json baseApi（绝对地址）→ 兜底测试域名。
+// 注意：刻意不回落到页面来源（window.location）。本项目页面常与后端不同域
+//   （如 Cocos 本地预览 localhost:7456、测试 test2-game.awanptest.com），
+//   用页面来源既会连错地址，页面端口也会与后端端口拼成非法 URL（ws://localhost:7456:15003）。
+function getDefaultWsTemplate(): string {
+  // 仅接受绝对地址（http(s)://域名），避免相对路径 /api 误解析到页面来源。
+  const baseApi = (appConfig.baseApi || appConfig.apiDomains[0] || '').trim()
+  if (/^https?:\/\//i.test(baseApi)) {
+    try {
+      const apiUrl = new URL(baseApi)
+      if (apiUrl.hostname) {
+        // 用 hostname（不含端口），websocket 端口由后端 /user/ws 下发后再追加。
+        const wsProtocol = apiUrl.protocol === 'https:' ? 'wss' : 'ws'
+        return `${wsProtocol}://${apiUrl.hostname}{0}`
+      }
+    } catch {
+      // baseApi 解析失败时回落到兜底域名。
+    }
+  }
+
+  // 兜底测试域名（本地 Cocos 预览 / 未配置 config.json 等场景）。
+  return 'wss://preview.trackyourchoice.com{0}'
+}
+
 // 从 payload 推导 websocket URL：优先全量 URL，其次端口模板。
 function resolveWsUrl(payload: WsConnectPayload): string {
   if (typeof payload.url === 'string' && payload.url.trim()) {
@@ -123,7 +151,7 @@ function resolveWsUrl(payload: WsConnectPayload): string {
     return ''
   }
 
-  const template = (import.meta.env.VITE_WS_URL_TEMPLATE || 'wss://preview.trackyourchoice.com{0}').trim()
+  const template = (import.meta.env.VITE_WS_URL_TEMPLATE || getDefaultWsTemplate()).trim()
   if (template.includes('{0}')) {
     return template.replace('{0}', `:${Math.floor(port)}`)
   }

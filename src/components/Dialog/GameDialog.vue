@@ -186,7 +186,7 @@ const bodyStyles = computed<StyleValue>(() => [
           <PrimaryButton
             v-if="showConfirmButton"
             class="game-dialog__confirm-btn"
-            style="height: 1.43rem; font-size: 0.42rem"
+            glass
             :shadow="false"
             :text="confirmButtonText"
             :disabled="confirmButtonDisabled"
@@ -383,8 +383,19 @@ const bodyStyles = computed<StyleValue>(() => [
   }
 }
 
-// 确认按钮：占满剩余空间
+// 确认按钮：玻璃拟态风格，占满剩余空间
+// height 55.18px / radius 30.131px / 97deg 玻璃渐变 / 微量背景模糊
 .game-dialog__confirm-btn {
-  flex: 1;
+  flex: 1 0 0;
+  height: 1.47rem !important;
+  border-radius: 0.8rem !important;
+  padding: 0 !important;
+  background: linear-gradient(
+    97deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  ) !important;
+  backdrop-filter: blur(0.0043rem) !important;
+  -webkit-backdrop-filter: blur(0.0043rem) !important;
 }
 </style>

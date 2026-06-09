@@ -1328,7 +1328,8 @@ watch(
   <Teleport to="body">
     <div v-if="visible" class="chat-overlay" @click="closePanel">
       <div class="chat-mask"></div>
-      <div class="chat-sheet" :style="panelBackgroundStyle" @click.stop>
+      :style="panelBackgroundStyle"
+      <div class="chat-sheet" @click.stop>
         <div class="chat-sheet-frost"></div>
 
         <div class="chat-sheet-inner">
@@ -1646,7 +1647,14 @@ watch(
 .chat-mask {
   position: absolute;
   inset: 0;
-  background: rgba(12, 12, 12, 0.62);
+  /* Figma 背景：财神等装饰图经亮度混合 + 大模糊后呈现为翡翠绿渐变 */
+  background: radial-gradient(
+    125% 90% at 50% 60%,
+    #229a7c 0%,
+    #198063 42%,
+    #126149 74%,
+    #0d4338 100%
+  );
 }
 
 .chat-sheet {
@@ -1682,7 +1690,7 @@ watch(
   margin: 0.373rem;
   min-height: 2.4986rem;
   border-radius: 0.8533rem;
-  background: rgba(0, 0, 0, 0.27);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(51, 51, 51, 0.09) 100%);
   padding: 0.373rem 0.5867rem 0.373rem 0.5867rem;
   display: flex;
   align-items: center;
@@ -1724,8 +1732,34 @@ watch(
   position: relative;
 }
 
+/* 头像外圈：白→透明→灰的玻璃质感描边，所有头像通用 */
+.agent-avatar-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  padding: 0.08rem;
+  background: linear-gradient(
+    150deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(199, 196, 196, 0) 52%,
+    rgba(232, 230, 230, 0.55) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 0;
+}
+
 .agent-unread-badge {
   position: absolute;
+  z-index: 2;
   top: -0.05rem;
   right: -0.16rem;
   min-width: 0.45rem;
@@ -1751,6 +1785,7 @@ watch(
 
 .agent-avatar-ring {
   position: absolute;
+  z-index: 1;
   inset: 0;
   border-radius: 50%;
   border: 0.048rem solid rgba(255, 255, 255, 0.83);
@@ -1758,15 +1793,23 @@ watch(
 }
 
 .agent-name-tag {
+  position: relative;
+  z-index: 1;
+  margin-top: -0.237rem;
   width: 1.454rem;
   height: 0.4476rem;
   border-radius: 0.1958rem;
   padding: 0 0.112rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 0.01rem solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(
+    131deg,
+    rgba(142, 142, 142, 0.3) 3%,
+    rgba(103, 103, 103, 0.4) 44%,
+    rgba(73, 73, 73, 0.5) 90%
+  );
+  border: 0.01rem solid rgba(242, 242, 242, 0.4);
   color: rgba(255, 255, 255, 0.96);
   font-family: 'SF Pro';
-  font-size: 0.234rem;
+  font-size: 0.2876rem;
   letter-spacing: 0.02em;
   line-height: 0.35rem;
   text-align: center;
@@ -1834,17 +1877,17 @@ watch(
 }
 
 .text-bubble {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 0.24rem 0.24rem 0.24rem 0.06rem;
-  padding: 0.18rem 0.24rem;
-  color: #fff;
-  font-size: 0.28rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0.6255rem;
+  padding: 0.2275rem 0.39rem;
+  color: #f9f9f9;
+  font-size: 0.3087rem;
   line-height: 1.4;
 }
 
 .text-bubble--self {
-  background: rgba(5, 231, 174, 0.5);
-  border-radius: 0.24rem 0.24rem 0.06rem 0.24rem;
+  background: #1f9816;
+  border-radius: 0.6255rem;
 }
 
 .image-bubble {
@@ -1879,7 +1922,7 @@ watch(
 }
 
 .voice-message--self {
-  background: rgba(5, 231, 174, 0.5);
+  background: #1f9816;
 }
 
 .voice-message--playing .voice-message-bar {
@@ -1947,8 +1990,8 @@ watch(
   display: flex;
   align-items: center;
   gap: 0.08rem;
-  color: rgba(255, 255, 255, 0.74);
-  font-size: 0.2rem;
+  color: rgba(249, 249, 249, 0.86);
+  font-size: 0.26rem;
 }
 
 .sender-name {
@@ -2089,7 +2132,7 @@ watch(
 }
 
 .send-action-btn {
-  background: #01ceab;
+  background: #0f0f0f;
   width: 0.9955rem;
   min-width: 0.9955rem;
   padding-top: 0.2rem;
@@ -2124,8 +2167,8 @@ watch(
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  border: 0.01rem solid rgba(255, 255, 255, 0.35);
+  background: #d40000;
+  border: none;
 }
 
 .image-preview-mask {

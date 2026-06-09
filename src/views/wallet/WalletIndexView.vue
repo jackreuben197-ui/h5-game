@@ -22,7 +22,14 @@ import UsdtPaymentDetailsPopup from '@/views/wallet/components/UsdtPaymentDetail
 import CustomerServicePaymentPopup from '@/views/wallet/components/CustomerServicePaymentPopup.vue'
 import CustomerServiceChatPopup from '@/views/wallet/components/CustomerServiceChatPopup.vue'
 import OnlinePaymentPopup from '@/views/wallet/components/OnlinePaymentPopup.vue'
+import ClubDepositPanel from '@/views/wallet/components/ClubDepositPanel.vue'
 import { t } from '@/i18n'
+
+// i18n helper: returns fallback when key not translated.
+function tx(key: string, fallback: string): string {
+  const val = t(key)
+  return val !== key ? val : fallback
+}
 import { useWalletStore } from '@/stores/wallet'
 import { useUserInfoStore } from '@/stores/userInfo'
 import {
@@ -38,6 +45,11 @@ const router = useRouter()
 const route = useRoute()
 const walletStore = useWalletStore()
 const userInfoStore = useUserInfoStore()
+
+// deposit_switch === 2 → fixed-deposit (simplified "apply to recharge") flow.
+const isFixedDeposit = computed(
+  () => Number(userInfoStore.currentClub?.deposit_switch) === 2,
+)
 
 const activeTab = ref(Number(route.query.tab ?? 0))
 const activePreset = ref(0)
@@ -717,9 +729,18 @@ async function onUsdtSubmit(type: number) {
 
 <template>
   <div class="wallet-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
-    <AppBar :title="t('Wallet_Title')" :show-actions="false" />
+    <AppBar
+      :title="isFixedDeposit ? tx('Wallet_RechargeTitle', '充值') : t('Wallet_Title')"
+      :show-actions="false"
+    >
+      <template v-if="isFixedDeposit" #actions>
+        <button class="details-pill" @click="router.push('/wallet/details')">
+          <span class="wallet-t-button details-pill__label">{{ tx('Wallet_Details', '明细') }}</span>
+        </button>
+      </template>
+    </AppBar>
 
-    <div class="wallet-screen__content-top">
+    <div v-if="!isFixedDeposit" class="wallet-screen__content-top">
       <div class="tabs-row">
         <SegmentedToggle v-model="activeTab" :tabs="tabLabels" />
         <BellButton
@@ -735,6 +756,17 @@ async function onUsdtSubmit(type: number) {
     <div class="wallet-scrollable">
       <div class="wallet-screen__content">
         <UserCard
+          v-if="isFixedDeposit"
+          class="wallet-banner wallet-banner--deposit"
+          variant="glass"
+          :avatar="ava1"
+          name="Cooper&#10;Korsgaard"
+          user-id="8677650585"
+          :balance="(userInfoStore.userInfo?.user?.gold ?? 0).toLocaleString()"
+        />
+
+        <UserCard
+          v-else
           class="wallet-banner"
           :avatar="ava1"
           name="Cooper&#10;Korsgaard"
@@ -757,7 +789,9 @@ async function onUsdtSubmit(type: number) {
           </template>
         </UserCard>
 
-        <template v-if="activeTab === 0">
+        <ClubDepositPanel v-if="isFixedDeposit" />
+
+        <template v-else-if="activeTab === 0">
           <div class="recharge-content">
             <div class="presets-card">
               <PresetAmountGrid
@@ -934,6 +968,11 @@ async function onUsdtSubmit(type: number) {
   z-index: 0;
 }
 
+// Glass deposit banner spans the full content width (matches the 340px Figma frame).
+.wallet-banner--deposit {
+  margin: 0;
+}
+
 .recharge-content {
   position: relative;
   z-index: 1;
@@ -1078,5 +1117,28 @@ async function onUsdtSubmit(type: number) {
   width: 100% !important;
   height: 100% !important;
   background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%) !important;
+}
+
+// Fixed-deposit appbar action: dark-gradient "明细" pill (Figma node 53:63392).
+.details-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 0.747rem;
+  padding: 0 0.48rem;
+  border-radius: 0.74rem;
+  border: 0.016rem solid rgba(242, 242, 242, 0.8);
+  background: linear-gradient(145.4deg, rgb(67, 65, 66) 7.55%, rgb(34, 34, 34) 71.92%);
+  backdrop-filter: blur(0.597rem);
+  -webkit-backdrop-filter: blur(0.597rem);
+  box-shadow:
+    0.103rem 0.072rem 0.271rem rgba(51, 51, 51, 0.27),
+    0.398rem 0.271rem 0.486rem rgba(48, 48, 48, 0.24),
+    0.9rem 0.613rem 0.653rem rgba(50, 50, 50, 0.14);
+  cursor: pointer;
+}
+
+.details-pill__label {
+  white-space: nowrap;
 }
 </style>

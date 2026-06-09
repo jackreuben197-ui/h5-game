@@ -1,27 +1,27 @@
 {
-    "baseApi": "https://go.srqplk888.com/api",
-    "apiDomains": [
-        "https://abctest01.com",
-        "https://abctest02.com",
-        "https://preview.trackyourchoice.com"
-    ],
-    "baseApiNew": "/api",
-    "imageApi": "http://152.70.234.14:5039/",
-    "isTest": false,
-    "oldBaseApi": "http://152.70.234.14:5050/api",
-    "uploadApi": "http://152.70.234.14:4038/api",
-    "webHost": "http://152.70.234.14:4038/#/",
-    "ipaUrl": "itms-services:///?action=download-manifest&url=https://test.kefu.mayipoker.com/download/ios/download.plist",
-    "downloadInfo": {
-        "endpoint": "/api/misc/web/download/info/detail",
-        "testEndpoint": "/api/stats/test/audit_logs",
-        "traceHashendpoint": "/api/user/bind/invite_code",
-        "defaultParams": {
-            "lang": "zh_CN",
-            "linkType": -120,
-            "linkTypeMahjong": -121,
-            "linkTypeMtt": -122,
-            "env": 1
-        }
+  "baseApi": "https://ccsgame.recognitionway.com/api",
+  "apiDomains": [
+    "https://abctest01.com",
+    "https://abctest02.com",
+    "https://preview.trackyourchoice.com"
+  ],
+  "baseApiNew": "/api",
+  "imageApi": "http://152.70.234.14:5039/",
+  "isTest": false,
+  "oldBaseApi": "http://152.70.234.14:5050/api",
+  "uploadApi": "http://152.70.234.14:4038/api",
+  "webHost": "http://152.70.234.14:4038/#/",
+  "ipaUrl": "itms-services:///?action=download-manifest&url=https://test.kefu.mayipoker.com/download/ios/download.plist",
+  "downloadInfo": {
+    "endpoint": "/api/misc/web/download/info/detail",
+    "testEndpoint": "/api/stats/test/audit_logs",
+    "traceHashendpoint": "/api/user/bind/invite_code",
+    "defaultParams": {
+      "lang": "zh_CN",
+      "linkType": -120,
+      "linkTypeMahjong": -121,
+      "linkTypeMtt": -122,
+      "env": 1
     }
+  }
 }

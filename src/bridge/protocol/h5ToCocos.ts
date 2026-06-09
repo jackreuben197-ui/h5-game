@@ -151,3 +151,18 @@ export interface CocosAckPayload {
   ok: boolean
   message: string
 }
+
+// H5 -> Cocos：ccStorageOp 的回包。读操作的命中值放在 value 里；
+// 写操作只看 ok（成功为 true，失败时 error 给原因，如 'store_not_allowed'）。
+export interface CcStorageResultPayload {
+  requestId: string
+  ok: boolean
+  value?: unknown
+  error?: string
+}
+
+// H5 -> Cocos：握手完成后把 cocos 命名空间下的 localStorage 一次性回灌。
+// entries 已经把 'dzpk_cc_' 前缀去掉，Cocos 内存镜像直接以原始 key 索引。
+export interface CcStorageSnapshotPayload {
+  entries: Record<string, string>
+}

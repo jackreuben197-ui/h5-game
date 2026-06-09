@@ -2844,3 +2844,24 @@ export interface OrgJoinTripData {
 export interface OrgClubCancleJoinTribeData {
   [key: string]: unknown
 }
+
+export interface OrgClubDefaultRequest {
+  [key: string]: unknown
+}
+export interface OrgClubDefaultResponseData extends OrgClubDefaultData{
+  [key: string]: unknown
+}
+
+export interface OrgClubDefaultData {
+  club: DefaultClub;
+  [key: string]: unknown
+}
+export interface DefaultClub {
+  banner: string;
+  club_name: string;
+  id: number;
+  logo: string;
+  random_id: number;
+  support_im_rid: string;
+  [key: string]: unknown
+}

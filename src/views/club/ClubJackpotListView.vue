@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
 import { postOrgClubJackpotTemplateDelApi, postOrgClubJackpotTemplateListApi } from '@/api/org'
 import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
+import iconArrowRight from '@/assets/icons/ic_arrow_rightt.svg'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -219,7 +220,7 @@ function goPoolReward(): void {
       <template #right>
         <button type="button" class="pool-trigger" aria-label="Pool Reward" @click="goPoolReward">
           <span>Pool Reward</span>
-          <span class="trigger-caret" aria-hidden="true"></span>
+          <img class="trigger-arrow" :src="iconArrowRight" alt="" aria-hidden="true" />
         </button>
       </template>
     </HeaderBack>
@@ -340,31 +341,34 @@ function goPoolReward(): void {
   position: relative;
   z-index: 2;
   padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
-  min-height: 1.46rem;
+  min-height: 1.9rem;
 }
 
 .pool-trigger {
   border: 0;
-  min-height: 0.9733rem;
-  border-radius: 0.5261rem;
-  padding: 0.1739rem 0.24rem 0.1739rem 0.4267rem;
-  font-size: 0.4483rem;
+  min-height: 1.139rem;
+  border-radius: 0.684rem;
+  padding: 0.226rem 0.312rem 0.226rem 0.555rem;
+  font-size: 0.583rem;
+  font-weight: 500;
   color: #fff;
   background: rgba(255, 255, 255, 0.21);
   display: inline-flex;
   align-items: center;
-  gap: 0.0475rem;
+  justify-content: center;
+  gap: 0.062rem;
   cursor: pointer;
   line-height: 1.2;
 }
 
-.trigger-caret {
-  width: 0.1867rem;
-  height: 0.1867rem;
-  border-right: 0.04rem solid rgba(255, 255, 255, 0.96);
-  border-bottom: 0.04rem solid rgba(255, 255, 255, 0.96);
-  transform: rotate(-45deg);
+.trigger-arrow {
+  width: 0.39rem;
+  height: 0.39rem;
+  object-fit: contain;
+  flex-shrink: 0;
   margin-right: 0.0267rem;
+  margin-left: 0.1rem;
+  margin-top: 0.05rem;
 }
 
 .jackpot-body {

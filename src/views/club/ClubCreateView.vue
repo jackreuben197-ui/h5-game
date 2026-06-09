@@ -11,6 +11,7 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import { postOrgClubCreateApi, postOrgClubCreateIsFirstApi } from '@/api/org'
 import type { OrgClubCreateRequest } from '@/api/models/org'
 import { useAppConfigStore } from '@/stores/appConfig'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { resolveDiamondPriceValue } from '@/utils/diamondPriceConfig'
 // 主容器背景图：全页面共用一张底图。
 
@@ -20,6 +21,9 @@ const backgroundStyle = computed(() => ({
 
 const router = useRouter()
 const appConfig = useAppConfigStore()
+const userInfoStore = useUserInfoStore()
+
+const userDisplayId = computed(() => userInfoStore.userInfo?.random_num ?? '--')
 
 const clubName = ref('')
 const clubIntro = ref('')
@@ -106,14 +110,14 @@ async function onCreateClub(): Promise<void> {
 
         <div class="card-info">
           <p class="club-name-preview">
-            {{ clubName || '联盟名称' }}
+            {{ clubName }}
           </p>
-          <div class="club-id-badge">
+          <!-- <div class="club-id-badge">
             <div class="id-label">
               <span>ID</span>
             </div>
-            <span class="id-value">8677650585</span>
-          </div>
+            <span class="id-value">{{ userDisplayId }}</span>
+          </div> -->
         </div>
       </section>
 
@@ -371,7 +375,7 @@ async function onCreateClub(): Promise<void> {
 }
 
 .field-shell--multi {
-  min-height: 6.3176rem;
+  min-height: 5rem;
   border-radius: 0.72rem;
   padding: 0.5405rem;
   border: none;
@@ -395,7 +399,7 @@ textarea {
 
 textarea {
   resize: none;
-  min-height: 5.776rem;
+  min-height: 5rem;
 }
 
 input::placeholder,

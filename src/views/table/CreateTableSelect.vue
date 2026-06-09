@@ -88,6 +88,7 @@ onMounted(() => {
         <TopActionButton
           :name="t('jackpot')"
           icon-alt="wallet"
+          large
           @click="router.push('/club/jackpot')"
         />
       </template>

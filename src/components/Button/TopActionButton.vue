@@ -61,15 +61,18 @@ function handleClick(event: MouseEvent): void {
 }
 
 .action-btn--large {
-  width: 2.19rem;
-  height: 0.82rem;
-  border-radius: 0.60rem;
-  font-size: 0.315rem;
-  padding: 0 0.21rem;
+  height: 0.76rem;
+  padding: 0.08rem 0.277rem;
+  border-radius: 0.52rem;
+  gap: 0.208rem;
+
+  .action-label {
+    font-size: 0.347rem;
+  }
 
   .action-icon {
-    width: 0.559rem;
-    height: 0.512rem;
+    width: 0.39rem;
+    height: 0.39rem;
   }
 }
 

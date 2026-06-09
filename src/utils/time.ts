@@ -75,7 +75,7 @@ export function formatRoomLeftAndTotalByUnity(startTime: unknown, totalSeconds: 
   let leftSeconds = safeTotal
 
   if (startSeconds > 0) {
-    leftSeconds = startSeconds + safeTotal - Math.floor(Date.now() / 1000)
+    leftSeconds = Math.max(0, startSeconds + safeTotal - Math.floor(Date.now() / 1000))
   }
 
   return `${formatDurationByUnity(leftSeconds)}/${formatDurationByUnity(safeTotal)}`

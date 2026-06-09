@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import iconTable from '@/assets/icons/icon_table.png'
 import iconPeople from '@/assets/icons/icon_people.png'
-import iconDropDown from '@/assets/icons/icon_drop_down.png'
+import iconDropDown from '@/assets/icons/ic_arrow_drop.svg'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import { t } from '@/i18n'
 
@@ -70,7 +70,7 @@ function handleTableClick(room: RoomRecord): void {
           </p>
         </div>
       </div>
-      <div @click.stop="toggleGroup">
+      <div class="toggle-btn" @click.stop="toggleGroup">
         <img
           class="toggle-icon"
           :class="{ 'is-expanded': expanded }"
@@ -97,8 +97,18 @@ function handleTableClick(room: RoomRecord): void {
 
 <style scoped lang="scss">
 .group-item {
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.5);
-  padding: 0.2667rem 0 0.45rem;
+  position: relative;
+  padding: 0.4rem 0.4559rem 0.12rem;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0.427rem;
+    right: 0.427rem;
+    height: 0.5px;
+    background: #e5e4e427;
+  }
 }
 
 .group-summary {
@@ -134,7 +144,7 @@ function handleTableClick(room: RoomRecord): void {
 
 
 .summary-content {
-  padding: 0.5rem 0 0;
+  padding: 0.1rem 0 0;
 }
 
 .blind-text {
@@ -169,10 +179,20 @@ function handleTableClick(room: RoomRecord): void {
   object-fit: contain;
 }
 
+.toggle-btn {
+  width: 0.96rem;
+  height: 0.96rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .toggle-icon {
-  width: 0.956rem;
-  height: 0.956rem;
-  margin-top: 0.4rem;
+  width: 0.5rem;
+  height: 0.5rem;
   object-fit: contain;
   transition: transform 0.2s ease;
 }
@@ -202,8 +222,10 @@ function handleTableClick(room: RoomRecord): void {
 
 .table-grid {
   margin-top: 0.32rem;
+  margin-bottom: 0.32rem;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.55rem;
+  grid-template-columns: repeat(2, max-content);
+  justify-content: space-around;
+  gap: 0.6rem;
 }
 </style>

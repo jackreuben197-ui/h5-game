@@ -12,8 +12,11 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(vue@3.5.32(typescript@6.0.2))
       '@silenthill/agreement-web':
-        specifier: git+ssh://git@github.com/kingofake/agreement-web.git#main
-        version: git+https://github.com/kingofake/agreement-web.git#63294744971c6ab4508d8a7ff5f0dbcaa7533b7b
+        specifier: git+ssh://git@github.com/kingofake/agreement-web.git#master
+        version: git+https://github.com/kingofake/agreement-web.git#cf5374e648b7d6be75fc37db1a20c7c426a976db
+      '@silenthill/h5-cc-i18n':
+        specifier: github:guysoup027/h5-cc-i18n
+        version: git+https://github.com/guysoup027/h5-cc-i18n.git#bc317f3b3c0664b9efbcd6584a77abc2f2825c2f
       '@vueuse/core':
         specifier: ^14.2.1
         version: 14.2.1(vue@3.5.32(typescript@6.0.2))
@@ -1056,8 +1059,12 @@ packages:
   '@rolldown/pluginutils@1.0.0-rc.2':
     resolution: {integrity: sha512-izyXV/v+cHiRfozX62W9htOAvwMo4/bXKDrQ+vom1L1qRuexPock/7VZDAhnpHCLNejd3NJ6hiab+tO0D44Rgw==}
 
-  '@silenthill/agreement-web@git+https://github.com/kingofake/agreement-web.git#63294744971c6ab4508d8a7ff5f0dbcaa7533b7b':
-    resolution: {commit: 63294744971c6ab4508d8a7ff5f0dbcaa7533b7b, repo: https://github.com/kingofake/agreement-web.git, type: git}
+  '@silenthill/agreement-web@git+https://github.com/kingofake/agreement-web.git#cf5374e648b7d6be75fc37db1a20c7c426a976db':
+    resolution: {commit: cf5374e648b7d6be75fc37db1a20c7c426a976db, repo: https://github.com/kingofake/agreement-web.git, type: git}
+    version: 1.0.0
+
+  '@silenthill/h5-cc-i18n@git+https://github.com/guysoup027/h5-cc-i18n.git#bc317f3b3c0664b9efbcd6584a77abc2f2825c2f':
+    resolution: {commit: bc317f3b3c0664b9efbcd6584a77abc2f2825c2f, repo: https://github.com/guysoup027/h5-cc-i18n.git, type: git}
     version: 1.0.0
 
   '@tybys/wasm-util@0.10.1':
@@ -3485,9 +3492,11 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.0-rc.2': {}
 
-  '@silenthill/agreement-web@git+https://github.com/kingofake/agreement-web.git#63294744971c6ab4508d8a7ff5f0dbcaa7533b7b':
+  '@silenthill/agreement-web@git+https://github.com/kingofake/agreement-web.git#cf5374e648b7d6be75fc37db1a20c7c426a976db':
     dependencies:
       google-protobuf: 3.21.4
+
+  '@silenthill/h5-cc-i18n@git+https://github.com/guysoup027/h5-cc-i18n.git#bc317f3b3c0664b9efbcd6584a77abc2f2825c2f': {}
 
   '@tybys/wasm-util@0.10.1':
     dependencies:

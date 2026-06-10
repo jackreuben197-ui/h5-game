@@ -2,7 +2,6 @@ export {}
 
 declare global {
   const __APP_INFO__: { pkg: { name: string; version: string }; lastBuildTime: string }
-  const __I18N_VERSIONS__: Record<string, string>
   type BridgeReceiveFn = (
     type: string,
     payload?: unknown,

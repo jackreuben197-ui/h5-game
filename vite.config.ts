@@ -1,8 +1,7 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import { fileURLToPath, URL } from 'node:url'
-import { extname, join } from 'node:path'
+import { extname } from 'node:path'
 import { readFileSync } from 'node:fs'
-import { createHash } from 'node:crypto'
 import vue from '@vitejs/plugin-vue'
 import legacy from '@vitejs/plugin-legacy'
 import Components from 'unplugin-vue-components/vite'
@@ -59,21 +58,6 @@ function holdemPbInjectPlugin(): Plugin {
         if (html.includes(VIRTUAL_PATH)) return html
         return html.replace('</head>', `    ${tag}\n  </head>`)
       },
-    },
-  }
-}
-
-// 监听 public/assets/resources/config 下的 txt 文件变化，触发整页刷新。
-function i18nHotReloadPlugin(): Plugin {
-  return {
-    name: 'i18n-hot-reload',
-    configureServer(server) {
-      server.watcher.add('public/assets/resources/config/*.txt')
-      server.watcher.on('change', (file) => {
-        if (file.includes('resources/config') && file.endsWith('.txt')) {
-          server.ws.send({ type: 'full-reload' })
-        }
-      })
     },
   }
 }
@@ -184,22 +168,6 @@ function toBoolean(value: string | undefined): boolean {
   return ['true', '1', 'yes', 'on'].includes((value || '').toLowerCase())
 }
 
-// 计算 i18n txt 文件的内容 hash（8 位），供运行时拼接 ?v= 做缓存破除。
-function computeI18nVersions(): Record<string, string> {
-  const files = ['USER_ZH.txt', 'USER_TW.txt', 'USER_EN.txt', 'USER_PT.txt']
-  const dir = fileURLToPath(new URL('./public/assets/resources/config', import.meta.url))
-  const versions: Record<string, string> = {}
-  for (const file of files) {
-    try {
-      const content = readFileSync(join(dir, file))
-      versions[file] = createHash('md5').update(content).digest('hex').slice(0, 8)
-    } catch {
-      versions[file] = '0'
-    }
-  }
-  return versions
-}
-
 // 读取 package.json 的关键信息，注入给运行时代码做版本/构建信息展示。
 function readAppPkgInfo(): Required<PackageJsonLike> {
   const packageJsonPath = fileURLToPath(new URL('./package.json', import.meta.url))
@@ -237,20 +205,16 @@ export default defineConfig(({ mode, command }) => {
     pkg: appPkgInfo,
     lastBuildTime: new Date().toISOString(),
   }
-  const i18nVersions = computeI18nVersions()
 
   return {
     base: './',
     define: {
       // 运行时可读取构建元信息（版本号、依赖、构建时间）。
       __APP_INFO__: JSON.stringify(appInfo),
-      // i18n txt 文件的内容 hash，运行时拼接 ?v= 做缓存破除。
-      __I18N_VERSIONS__: JSON.stringify(i18nVersions),
     },
     plugins: [
       holdemPbInjectPlugin(),
       vue(),
-      i18nHotReloadPlugin(),
       Components({
         dts: true,
         resolvers: [VantResolver()],

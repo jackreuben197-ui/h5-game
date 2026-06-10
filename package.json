@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "sync:i18n": "node scripts/sync-i18n-txt.mjs",
+    "sync:i18n": "node scripts/sync-i18n.mjs",
     "sync:protocol": "bash scripts/update_protocol.sh",
     "predev": "pnpm sync:i18n",
     "prebuild": "pnpm sync:i18n",
@@ -25,6 +25,7 @@
     "axios": "^1.15.0",
     "dayjs": "^1.11.20",
     "@silenthill/agreement-web": "git+ssh://git@github.com/kingofake/agreement-web.git#master",
+    "@silenthill/h5-cc-i18n": "github:guysoup027/h5-cc-i18n",
     "google-protobuf": "^3.21.4",
     "h5-cc-bridge": "git+ssh://git@github.com/soolary/h5-cc-bridge.git#main",
     "html2canvas": "^1.4.1",

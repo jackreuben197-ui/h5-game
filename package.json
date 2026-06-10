@@ -24,7 +24,7 @@
     "@vueuse/core": "^14.2.1",
     "axios": "^1.15.0",
     "dayjs": "^1.11.20",
-    "@silenthill/agreement-web": "git+ssh://git@github.com/kingofake/agreement-web.git#main",
+    "@silenthill/agreement-web": "git+ssh://git@github.com/kingofake/agreement-web.git#master",
     "google-protobuf": "^3.21.4",
     "h5-cc-bridge": "git+ssh://git@github.com/soolary/h5-cc-bridge.git#main",
     "html2canvas": "^1.4.1",

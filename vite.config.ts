@@ -185,7 +185,7 @@ function readAppPkgInfo(): Required<PackageJsonLike> {
 // https://vite.dev/config/
 // bridge 协议来源开关：决定 `@bridge-protocol` 解析到哪份代码。
 //   pokerqueen（默认）：本地 src/bridge/protocol/，兼容旧 cocos 项目
-//   h5-cc-game        ：h5-cc-bridge npm 包，与 h5-cc-game 共用同一份协议
+//   h5-cc-game        ：@silenthill/h5-cc-bridge npm 包，与 h5-cc-game 共用同一份协议
 type BridgeTarget = 'pokerqueen' | 'h5-cc-game'
 function resolveBridgeTarget(raw: string | undefined): BridgeTarget {
   return raw === 'h5-cc-game' ? 'h5-cc-game' : 'pokerqueen'
@@ -231,10 +231,10 @@ export default defineConfig(({ mode, command }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
         // bridge 协议来源（受 VITE_BRIDGE_TARGET 控制）：
         //   pokerqueen  → 项目内 src/bridge/protocol，旧 cocos 项目用
-        //   h5-cc-game  → npm 包 h5-cc-bridge 的 h5-side 入口（含 envelope 运行时）
+        //   h5-cc-game  → npm 包 @silenthill/h5-cc-bridge 的 h5-side 入口（含 envelope 运行时）
         '@bridge-protocol':
           bridgeTarget === 'h5-cc-game'
-            ? 'h5-cc-bridge/h5-side'
+            ? '@silenthill/h5-cc-bridge/h5-side'
             : fileURLToPath(new URL('./src/bridge/protocol', import.meta.url)),
         // 短别名：业务代码 import { Code, ServerMessageXxx } from '@holdem-pb'
         // 实际指向 @silenthill/agreement-web 的 proxy 层（运行时从 window.HoldemPB 取）。

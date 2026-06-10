@@ -112,9 +112,9 @@ VITE_API_BASE_URL=https://your-api-domain pnpm dev
 | 值 | `@bridge-protocol` 解析到 | 使用场景 |
 |---|---|---|
 | `pokerqueen`（默认）| 本地 `src/bridge/protocol/`（冻结副本）| 对接旧 cocos 项目 pokerqueen |
-| `h5-cc-game` | npm 包 `h5-cc-bridge` | 对接新 cocos 项目 h5-cc-game，两端共用同一份类型 |
+| `h5-cc-game` | npm 包 `@silenthill/h5-cc-bridge`（h5-side 入口）| 对接新 cocos 项目 h5-cc-game，两端共用同一份类型 |
 
-`h5-cc-bridge` 由 [独立仓库](https://github.com/soolary/h5-cc-bridge) 管理，本仓库通过 `package.json` 里的 git URL 依赖拉取。详细机制见 `src/bridge/README.md §0`。
+`@silenthill/h5-cc-bridge` 由 [独立仓库](https://github.com/soolary/h5-cc-bridge) 管理，本仓库通过 `package.json` 里的 git URL 依赖拉取。详细机制见 `src/bridge/README.md §0`。
 
 切换后需重启 dev / 重新 build。两种模式下 h5-game 的传输层和业务层（`core/` `channels/` `sync/` `ws/`）都不变。
 

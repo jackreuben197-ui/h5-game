@@ -23,24 +23,24 @@ const rows = [
 
 <template>
   <div class="page-shell sub-bg" :style="backgroundStyle">
-    <HeaderBack title="Club Description" />
+    <HeaderBack title="代理数据" />
 
     <section class="glass profile-card">
       <img :src="imgAvatar" :alt="context.name" />
       <div class="name-wrap">
         <p>俱乐部名称</p>
         <span>ID {{ context.uid }}</span>
-        <small>Agent</small>
+        <small>代理</small>
       </div>
       <div class="coin">15,000 <img :src="imgChips" alt="" /></div>
     </section>
 
     <section class="offline-head">
       <div>
-        <p>Offline Players</p>
+        <p>下线成员数</p>
         <strong>1234</strong>
       </div>
-      <p>offline UC 15,000 <img :src="imgChips" alt="" /></p>
+      <p>下线UC 15,000 <img :src="imgChips" alt="" /></p>
     </section>
 
     <section class="tabs glass">
@@ -60,15 +60,15 @@ const rows = [
         <div class="left"><img :src="imgCard" alt="" /> {{ row.label }}</div>
         <div class="metric">
           <b>{{ row.total }}</b>
-          <span>Total</span>
+          <span>全部</span>
         </div>
         <div class="metric">
           <b>{{ row.today }}</b>
-          <span>Today</span>
+          <span>今天</span>
         </div>
         <div class="metric">
           <b>{{ row.week }}</b>
-          <span>Past 7 days</span>
+          <span>7天</span>
         </div>
       </article>
     </section>

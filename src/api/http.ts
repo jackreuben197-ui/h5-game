@@ -34,6 +34,7 @@ const PRE_LOGIN_PATHS = [
   '/user/modify/password',
   '/misc/article/info',
   '/config/register/area',
+  '/org/club/default',
 ]
 
 const TELEGRAM_LOGIN_LOADING_MESSAGE = '正在通过 Telegram 自动登录...'
@@ -256,11 +257,6 @@ function hideTelegramLoginLoading(): void {
 async function ensureTelegramAutoLogin(): Promise<boolean> {
   if (!isTelegramMiniAppEnv()) {
     return false
-  }
-
-  const gameStore = useGameStore(pinia)
-  if (String(gameStore.sessionToken || '').trim()) {
-    return true
   }
 
   if (!telegramAutoLoginPromise) {

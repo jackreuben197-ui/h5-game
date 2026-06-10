@@ -17,6 +17,7 @@ interface Props {
   showInputArea?: boolean
   confirmText?: string
   title?: string
+  allowDecimal?: boolean // When true, replace 'C' with '.' and allow decimal input
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -30,6 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
   showMask: true,
   showInputArea: false,
   confirmText: t('Wallet_Confirm'),
+  allowDecimal: false,
 })
 
 const emit = defineEmits<{
@@ -38,7 +40,7 @@ const emit = defineEmits<{
   keyPress: [
     payload: {
       key: string
-      action: 'digit' | 'clear' | 'backspace'
+      action: 'digit' | 'clear' | 'backspace' | 'decimal'
       value: string
       accepted: boolean
     },
@@ -53,11 +55,19 @@ const keyBgStyle = {
   backgroundSize: '100% 100%',
 }
 const digits: readonly string[] = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
-const getMaxLength = (): number => props.maxLength ?? String(props.max).length
+const getMaxLength = (): number => {
+  if (props.maxLength) return props.maxLength
+  if (props.allowDecimal) return 4 // e.g. "100.0" max 4 digits
+  return String(props.max).length
+}
+
+function hasDecimal(): boolean {
+  return value.value.includes('.')
+}
 
 function emitKeyPress(
   key: string,
-  action: 'digit' | 'clear' | 'backspace',
+  action: 'digit' | 'clear' | 'backspace' | 'decimal',
   accepted: boolean,
 ): void {
   emit('keyPress', {
@@ -72,14 +82,55 @@ watch(
   () => props.open,
   (v) => {
     if (v) {
-      value.value = String(props.initialValue || '')
-        .replace(/\D/g, '')
-        .slice(0, getMaxLength())
+      if (props.allowDecimal) {
+        // For decimal mode, allow digits and one decimal point
+        value.value = String(props.initialValue || '')
+          .replace(/[^0-9.]/g, '')
+          .split('.')
+          .slice(0, 2)
+          .join('.')
+          .slice(0, getMaxLength())
+      } else {
+        value.value = String(props.initialValue || '')
+          .replace(/\D/g, '')
+          .slice(0, getMaxLength())
+      }
     }
   },
 )
 
 function press(k: string): void {
+  if (props.allowDecimal) {
+    // Decimal mode
+    if (k === '.') {
+      if (hasDecimal()) {
+        emitKeyPress('.', 'decimal', false)
+        return
+      }
+      if (value.value === '') {
+        value.value = '0.'
+        emitKeyPress('.', 'decimal', true)
+        return
+      }
+      value.value += '.'
+      emitKeyPress('.', 'decimal', true)
+      return
+    }
+    if (value.value.length >= getMaxLength()) {
+      emitKeyPress(k, 'digit', false)
+      return
+    }
+    // Limit to 1 decimal place
+    if (hasDecimal() && value.value.split('.')[1]?.length >= 1) {
+      emitKeyPress(k, 'digit', false)
+      return
+    }
+    value.value += k
+    emitKeyPress(k, 'digit', true)
+    return
+  }
+
+  // Original integer mode
   if (value.value.length >= getMaxLength()) {
     emitKeyPress(k, 'digit', false)
     return
@@ -110,8 +161,10 @@ function cancel(): void {
 
 function confirm(): void {
   const n = Number(value.value)
-  if (!value.value || n < props.min || n > props.max) return
-  emit('submit', n)
+  if (!value.value || n < props.min) return
+  // Cap at max for decimal mode (percentage)
+  const cappedValue = n > props.max ? props.max : n
+  emit('submit', cappedValue)
 }
 </script>
 
@@ -154,10 +207,10 @@ function confirm(): void {
             <button
               type="button"
               class="kp__key kp__key--accent"
-              @click="clearAll"
+              @click="props.allowDecimal ? press('.') : clearAll()"
               @dblclick.prevent
             >
-              C
+              {{ props.allowDecimal ? '.' : 'C' }}
             </button>
             <button
               type="button"
@@ -225,7 +278,7 @@ function confirm(): void {
   width: 100%;
   max-width: 430px;
   background-color: rgba(0, 0, 0, 0.34);
-  border: 0.96px solid rgba(242, 242, 242, 0.4);
+  border: 0.96px solid rgba(242, 244, 244, 0.4);
   border-bottom: none;
   border-top-left-radius: 0.85rem;
   border-top-right-radius: 0.85rem;
@@ -233,7 +286,9 @@ function confirm(): void {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
-  box-shadow: 3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25), 0 0 8.6px #000 inset,
+  box-shadow:
+    3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25),
+    0 0 8.6px #000 inset,
     2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
   overflow: hidden;
   touch-action: manipulation;

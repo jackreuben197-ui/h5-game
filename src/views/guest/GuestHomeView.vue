@@ -2,12 +2,15 @@
 import homeHeaderFallback from '@/assets/images/home_header_1.png'
 import { t } from '@/i18n'
 import { useLoginModalStore } from '@/stores/loginModal'
+import { postOrgClubDefaultApi } from '@/api/org'
+import type { DefaultClub } from '@/api/models/org'
+import { ref, onMounted } from 'vue'
 
 const loginModalStore = useLoginModalStore()
 
-const clubBannerUrl = homeHeaderFallback
+const clubBannerUrl = ref<string>(homeHeaderFallback)
 const noticeText = '欢迎来到德州扑克，登录后体验更多精彩内容'
-const clubNameText = '俱乐部'
+const clubNameText = ref<string>('俱乐部')
 const clubGoldText = '0'
 const pokerTablesText = '0'
 const pokerPlayersText = '0'
@@ -18,9 +21,31 @@ const mttTablesText = '0'
 const mttPlayersText = '0'
 const balanceVisible = true
 
+async function fetchDefaultClub(): Promise<void> {
+  try {
+    const result = await postOrgClubDefaultApi({})
+    const club = result?.data?.club as DefaultClub | undefined
+    if (club) {
+      if (club.banner) {
+        clubBannerUrl.value = club.banner
+      }
+      if (club.club_name) {
+        clubNameText.value = club.club_name
+      }
+    }
+  } catch {
+    console.error('Failed to fetch default club info')
+    // 请求失败，保持默认值
+  }
+}
+
 function notifyNotLogin(): void {
   loginModalStore.open()
 }
+
+onMounted(() => {
+  void fetchDefaultClub()
+})
 </script>
 
 <template>
@@ -309,7 +334,8 @@ function notifyNotLogin(): void {
   padding: 0.1rem 0.6rem;
   min-height: 1.54rem;
   gap: 0;
-  box-shadow: inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
+  box-shadow:
+    inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
     inset -1px -1px 0px 0px rgba(255, 255, 255, 0.35);
 }
 

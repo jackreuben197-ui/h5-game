@@ -20,11 +20,13 @@ import type {
 } from '@/api/models/org'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import imgAvatar from '@/assets/images/default_avatar.png'
-import imgDiamond from '@/assets/icons/icon_diamond.png'
+import imgDiamond from '@/assets/icons/ic_diamond_shadow.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgBalance from '@/assets/icons/icon_chip_green.png'
-import icTimeRefresh from '@/assets/icons/ic_time_refresh.svg'
+import icTimeRefresh from '@/assets/icons/ic_time_refresh.png'
 import icSearch from '@/assets/icons/ic_search.svg'
+import icUserShadow from '@/assets/icons/ic_user_shadow.png'
+import icJackpotChecked from '@/assets/icons/ic_jackpot_checked.svg'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
 import mainBgUrl from '@/assets/images/main_bg.webp'
@@ -138,12 +140,6 @@ const submittingFund = ref(false)
 
 const PAGE_SIZE = 20
 
-const keypadRows = [
-  ['1', '2', '3'],
-  ['4', '5', '6'],
-  ['7', '8', '9'],
-  ['C', '0', 'DEL'],
-] as const
 
 const currentFundBalanceText = computed(() => {
   if (!activeMember.value) {
@@ -1319,6 +1315,7 @@ onMounted(() => {
 
               <div class="data-item">
                 <p class="data-label data-label--agent">
+                  <img :src="icUserShadow" alt="" aria-hidden="true" />
                   <span>所属代理</span>
                 </p>
                 <p class="data-value">{{ member.agentName }}</p>
@@ -1523,6 +1520,7 @@ onMounted(() => {
                 :class="{ 'quota-mode--active': quotaAdjustMode === 'increase' }"
                 @click="quotaAdjustMode = 'increase'"
               >
+                <img v-if="quotaAdjustMode === 'increase'" :src="icJackpotChecked" class="quota-mode-icon" aria-hidden="true" />
                 增加额度
               </button>
               <button
@@ -1531,6 +1529,7 @@ onMounted(() => {
                 :class="{ 'quota-mode--active': quotaAdjustMode === 'decrease' }"
                 @click="quotaAdjustMode = 'decrease'"
               >
+                <img v-if="quotaAdjustMode === 'decrease'" :src="icJackpotChecked" class="quota-mode-icon" aria-hidden="true" />
                 减少额度
               </button>
             </div>
@@ -1562,6 +1561,7 @@ onMounted(() => {
                 :class="{ 'quota-mode--active': quotaAdjustMode === 'increase' }"
                 @click="quotaAdjustMode = 'increase'"
               >
+                <img v-if="quotaAdjustMode === 'increase'" :src="icJackpotChecked" class="quota-mode-icon" aria-hidden="true" />
                 增加额度
               </button>
               <button
@@ -1570,6 +1570,7 @@ onMounted(() => {
                 :class="{ 'quota-mode--active': quotaAdjustMode === 'decrease' }"
                 @click="quotaAdjustMode = 'decrease'"
               >
+                <img v-if="quotaAdjustMode === 'decrease'" :src="icJackpotChecked" class="quota-mode-icon" aria-hidden="true" />
                 减少额度
               </button>
             </div>
@@ -1613,22 +1614,12 @@ onMounted(() => {
         </div>
 
         <div class="fund-keypad">
-          <div v-for="(row, rowIndex) in keypadRows" :key="rowIndex" class="fund-keypad-row">
-            <button
-              v-for="key in row"
-              :key="key"
-              type="button"
-              class="keypad-btn"
-              :class="{
-                'keypad-btn--accent': key === 'C' || key === 'DEL',
-                'keypad-btn--del': key === 'DEL',
-              }"
-              @click="onKeypadPress(key)"
-            >
-              <span v-if="key !== 'DEL'">{{ key }}</span>
-              <Icon v-else icon="solar:backspace-bold" />
-            </button>
-          </div>
+          <button v-for="n in ['1','2','3','4','5','6','7','8','9']" :key="n" class="keypad-btn" @click="onKeypadPress(n)">{{ n }}</button>
+          <button class="keypad-btn keypad-btn--accent" @click="onKeypadPress('C')">C</button>
+          <button class="keypad-btn" @click="onKeypadPress('0')">0</button>
+          <button class="keypad-btn keypad-btn--accent" @click="onKeypadPress('DEL')">
+            <Icon icon="solar:backspace-bold" class="keypad-del-icon" />
+          </button>
         </div>
 
         <div class="sheet-footer-actions">
@@ -1707,11 +1698,11 @@ onMounted(() => {
 
 .summary-card {
   padding: 0.43919rem;
-  border-radius: 0.8rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.14);
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(8.5px);
-  -webkit-backdrop-filter: blur(8.5px);
+  border-radius: 1rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.1);
+  background: rgba(170, 170, 170, 0.1);
+  backdrop-filter: blur(18.5px);
+  -webkit-backdrop-filter: blur(18.5px);
   display: flex;
   flex-direction: column;
   gap: 0.39696rem;
@@ -1759,17 +1750,19 @@ onMounted(() => {
 
 .income-btn {
   min-height: 0.96rem;
-  border: 0;
-  border-radius: 0.51rem;
-  background: rgba(180, 178, 178, 0.18);
+  border: 0.02rem solid rgba(249, 249, 249, 0.04);
+  border-radius: 1rem;
+  background: rgba(170, 170, 170, 0.04);
+  backdrop-filter: blur(18.5px);
+  -webkit-backdrop-filter: blur(18.5px);
   color: #f3f3f3;
-  font-size: 0.32013rem;
+  font-size: 0.26rem;
   line-height: 1;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.06rem;
+  gap: 0.16rem;
 }
 
 .income-icon {
@@ -2159,12 +2152,11 @@ onMounted(() => {
 .member-card {
   position: relative;
   padding: 0.16064rem 0.43919rem 0.28112rem;
-  border-radius: 1.05574rem;
-  background:
-    radial-gradient(78% 88% at 12% 34%, rgba(188, 117, 151, 0.5), rgba(188, 117, 151, 0)),
-    radial-gradient(94% 88% at 92% 74%, rgba(47, 161, 212, 0.46), rgba(47, 161, 212, 0)),
-    rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(0.21rem);
+  border-radius: 1rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.1);
+  background: rgba(170, 170, 170, 0.1);
+  backdrop-filter: blur(18.5px);
+  -webkit-backdrop-filter: blur(18.5px);
 }
 
 .role-badge {
@@ -2173,26 +2165,16 @@ onMounted(() => {
   left: 0.03rem;
   padding: 0 0.15rem;
   min-height: 0.45rem;
-  border-radius: 0.225rem;
+  border-radius: 0.225rem 0.225rem 0 0.225rem;
   display: inline-flex;
   align-items: center;
   font-size: 0.24738rem;
   font-weight: 600;
   color: #fff;
+  background: rgba(181, 115, 255, 1);
   box-shadow: 0 0.03rem 0.09rem rgba(0, 0, 0, 0.25);
 }
 
-.role-badge--admin {
-  background: linear-gradient(152deg, rgba(85, 243, 41, 1) 8%, rgba(62, 173, 6, 1) 72%);
-}
-
-.role-badge--agent {
-  background: linear-gradient(152deg, rgba(85, 243, 41, 1) 8%, rgba(62, 173, 6, 1) 72%);
-}
-
-.role-badge--member {
-  background: linear-gradient(152deg, #15d39f 8%, #017157 72%);
-}
 
 .member-main {
   display: flex;
@@ -2299,13 +2281,12 @@ onMounted(() => {
   transform: translateX(-50%);
   width: min(100%, 10rem);
   border-radius: 0.84459rem 0.84459rem 0 0;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  border-bottom: none;
   padding: 0.64257rem 0.53209rem calc(0.5472rem + env(safe-area-inset-bottom));
-  background: linear-gradient(
-    90deg,
-    rgba(0, 8, 20, 0.95) 0%,
-    rgba(5, 5, 5, 0.95) 52%,
-    rgba(0, 8, 20, 0.95) 100%
-  );
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
   box-shadow: 0 -0.16rem 0.53rem rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
@@ -2331,30 +2312,45 @@ onMounted(() => {
 .fund-tab--active {
   color: #f9f9f9;
   border-bottom: 0.034rem solid #f9f9f9;
+  padding-bottom: 4px;
 }
 
 .fund-action-switch {
   align-self: center;
   width: 8.08835rem;
   min-height: 1.35743rem;
-  border-radius: 4.223rem;
-  background: rgba(255, 255, 255, 0.2);
+  border-radius: 158.361px;
+  background: linear-gradient(125.7deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
+  backdrop-filter: blur(0.162px);
+  -webkit-backdrop-filter: blur(0.162px);
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  padding: 0.09521rem;
+  padding: 3.57px;
+  gap: 0;
 }
 
 .action-tab {
+  position: relative;
   border: 0;
-  border-radius: 4.223rem;
+  border-radius: 158.361px;
   background: transparent;
-  color: #f9f9f9;
+  color: rgba(249, 249, 249, 0.7);
   font-size: 0.40541rem;
+  overflow: hidden;
 }
 
 .action-tab--active {
-  border: 0.005rem solid rgba(249, 249, 249, 0.85);
-  background: rgba(255, 255, 255, 0.2);
+  color: #f9f9f9;
+}
+
+.action-tab--active::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(249, 249, 249, 0.5);
+  mix-blend-mode: hard-light;
+  pointer-events: none;
 }
 
 .sheet-meta,
@@ -2442,8 +2438,8 @@ onMounted(() => {
 }
 
 .quota-action--primary {
-  background: rgba(5, 231, 174, 0.4);
-  color: #fff;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(153, 153, 153, 0.22) 100%);
+  color: #78e490;
 }
 
 .quota-editor {
@@ -2485,8 +2481,14 @@ onMounted(() => {
 }
 
 .quota-mode--active::before {
-  border-color: rgba(95, 247, 209, 0.92);
-  box-shadow: inset 0 0 0 0.1rem rgba(95, 247, 209, 0.85);
+  display: none;
+}
+
+.quota-mode-icon {
+  width: 0.4rem;
+  height: 0.4rem;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .quota-input-pill {
@@ -2501,37 +2503,70 @@ onMounted(() => {
 }
 
 .fund-keypad {
-  display: flex;
-  flex-direction: column;
-  gap: 0.20587rem;
-}
-
-.fund-keypad-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.15261rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.22rem;
+  touch-action: manipulation;
 }
 
 .keypad-btn {
-  min-height: 1.35393rem;
-  border: 0.01907rem solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.37751rem;
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
-  font-size: 0.61044rem;
-  font-weight: 600;
-  display: inline-flex;
+  position: relative;
+  height: 50.904px;
+  display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(180deg, rgba(233, 233, 233, 0.2) 0%, rgba(165, 165, 165, 0.4) 100%);
+  mix-blend-mode: plus-lighter;
+  border-radius: 14.157px;
+  border: none;
+  backdrop-filter: blur(6.02px);
+  -webkit-backdrop-filter: blur(6.02px);
+  font-weight: 500;
+  font-size: 0.61rem;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+}
+
+.keypad-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 0.71px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0) 55%,
+    rgba(255, 255, 255, 0) 61%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.keypad-btn:active {
+  opacity: 0.7;
+  transform: scale(0.96);
 }
 
 .keypad-btn--accent {
-  background: rgba(4, 209, 157, 0.26);
-  border-color: transparent;
+  border-radius: 60.241px;
+  background: rgba(245, 45, 45, 0.2);
+  mix-blend-mode: plus-lighter;
 }
 
-.keypad-btn--del {
-  font-size: 0.61044rem;
+.keypad-del-icon {
+  width: 50px;
+  height: 32px;
 }
 
 .del-icon {
@@ -2570,21 +2605,22 @@ onMounted(() => {
 .sheet-footer-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.25291rem;
+  gap: 9.738px;
 }
 
 .sheet-footer-btn {
-  min-height: 1.4372rem;
-  border: 0;
-  border-radius: 1.05761rem;
-  background: rgba(0, 0, 0, 0.35);
+  height: 55.184px;
+  border: 0.02rem solid rgba(249, 249, 249, 0.1);
+  border-radius: 1rem;
+  background: rgba(170, 170, 170, 0.1);
+  backdrop-filter: blur(18.5px);
+  -webkit-backdrop-filter: blur(18.5px);
   color: #fff;
   font-size: 0.4rem;
 }
 
 .sheet-footer-btn--confirm {
-  border: 0.013rem solid rgba(242, 242, 242, 0.8);
-  background: linear-gradient(156deg, rgba(85, 243, 41, 1) 8%, rgba(62, 173, 6, 1) 72%);
+  color: #78e490;
 }
 
 .data-item {
@@ -2620,14 +2656,6 @@ onMounted(() => {
   white-space: nowrap;
 }
 
-.data-label--agent::before {
-  content: '';
-  width: 0.195rem;
-  height: 0.195rem;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.85);
-  flex: 0 0 auto;
-}
 
 @media (max-width: 340px) {
   .member-total {

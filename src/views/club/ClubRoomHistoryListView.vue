@@ -529,7 +529,7 @@ onMounted(() => {
 .coin-tabs {
   display: flex;
   justify-content: center;
-  gap: 0.38rem;
+  gap: 1.2rem;
 }
 
 .coin-tab {

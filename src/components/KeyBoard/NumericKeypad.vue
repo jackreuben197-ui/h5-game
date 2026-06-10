@@ -191,7 +191,7 @@ function confirm(): void {
   position: relative;
   z-index: 1;
   display: flex;
-  width: 375px;
+  width: 100%;
   padding: 24.096px 19.954px 15.519px 19.954px;
   flex-direction: column;
   align-items: center;
@@ -288,12 +288,13 @@ function confirm(): void {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.22rem;
+  width: 100%;
   touch-action: manipulation;
 }
 
 .kp__key {
   position: relative;
-  width: 99.699px;
+  width: 100%;
   height: 50.904px;
   display: flex;
   align-items: center;
@@ -346,7 +347,7 @@ function confirm(): void {
 
 .kp__key--accent {
   display: flex;
-  width: 99.699px;
+  width: 100%;
   height: 50.904px;
   padding: 7.53px 9.639px;
   justify-content: center;

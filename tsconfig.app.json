@@ -4,7 +4,14 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "types": ["vite/client"],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      // bridge 协议来源（运行时 alias 在 vite.config.ts，由 VITE_BRIDGE_TARGET 控制）。
+      // 类型检查统一指向 h5-cc-bridge 包的 h5-side 入口（含 envelope 运行时函数）；
+      // 本地 src/bridge/protocol/ 是兼容 pokerqueen 的冻结副本，与包内容结构一致。
+      "@bridge-protocol": ["./node_modules/h5-cc-bridge/dist/h5-side"],
+      // 短别名：业务代码统一用 '@holdem-pb' import pb 类与 Code，
+      // 实际指向 @silenthill/agreement-web 的 proxy（运行时从 window.HoldemPB 惰性取）。
+      "@holdem-pb": ["./node_modules/@silenthill/agreement-web/dist/index"]
     },
 
     /* Linting */

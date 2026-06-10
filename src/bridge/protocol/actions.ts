@@ -14,6 +14,12 @@ export const BRIDGE_ACTION = {
   WS_MESSAGE: 'wsMessage',
   WS_ERROR: 'wsError',
   WS_CLOSED: 'wsClosed',
+  // H5 -> Cocos：重连流程通知（对齐 Unity NetworkDetectionComponent）。
+  WS_RECONNECTING: 'wsReconnecting',
+  WS_RECONNECTED: 'wsReconnected',
+  WS_RECONNECT_FAILED: 'wsReconnectFailed',
+  // Cocos -> H5：发起一次 indexedDB 或 localStorage 读/写。
+  CC_STORAGE_OP: 'ccStorageOp',
   // Cocos -> H5
   SHOW_TOAST: 'showToast',
   SHOW_DIALOG: 'showDialog',
@@ -31,8 +37,13 @@ export const BRIDGE_ACTION = {
   SYNC_GLOBAL_CONFIG: 'syncGlobalConfig',
   SYNC_DIAMOND_CONFIG: 'syncDiamondConfig',
   ENTER_TABLE: 'enterTable',
+  SET_HEARTBEAT_MODE: 'setHeartbeatMode',
   ENTER_MTT: 'enterMtt',
   DIALOG_RESULT: 'dialogResult',
+  // H5 -> Cocos：ccStorageOp 的回包（按 requestId 配对）。
+  CC_STORAGE_RESULT: 'ccStorageResult',
+  // H5 -> Cocos：握手完成后把 cocos 命名空间下的 localStorage 全量回灌。
+  CC_STORAGE_SNAPSHOT: 'ccStorageSnapshot',
 } as const
 
 export type BridgeAction = (typeof BRIDGE_ACTION)[keyof typeof BRIDGE_ACTION]

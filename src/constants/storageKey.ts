@@ -77,4 +77,6 @@ export default class StorageKey {
   static togglesCardType = 'togglesCardType'
   // 声音开关。
   static soundIsOpen = 'soundIsOpen'
+  // 渠道代理邀请码缓存（首次打开分享链接时缓存参数 i）。
+  static AGENT_INVITE_CODE = 'AGENT_INVITE_CODE'
 }

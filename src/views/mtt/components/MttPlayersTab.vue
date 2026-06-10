@@ -113,7 +113,9 @@ const participants = computed(() => {
 
 const registered = computed(() => formatNum(props.data?.mtt?.participants))
 
-const rankRecords = computed(() => (Array.isArray(props.rankData?.records) ? props.rankData?.records : []))
+const rankRecords = computed(() =>
+  Array.isArray(props.rankData?.records) ? props.rankData?.records : [],
+)
 
 const rebuyCount = computed(() => {
   const count = rankRecords.value.reduce((sum, item) => {
@@ -167,10 +169,13 @@ watch(showHunterMode, (enabled) => {
     <!-- 排名 / 猎人榜切换 -->
     <div v-if="showHunterMode" class="mode-switch">
       <button :class="['mode-btn', { 'mode-btn--active': mode === 'rank' }]" @click="mode = 'rank'">
-        排名榜
+        排名
       </button>
-      <button :class="['mode-btn', { 'mode-btn--active': mode === 'hunter' }]" @click="mode = 'hunter'">
-        猎人榜
+      <button
+        :class="['mode-btn', { 'mode-btn--active': mode === 'hunter' }]"
+        @click="mode = 'hunter'"
+      >
+        猎人排名
       </button>
     </div>
 
@@ -203,24 +208,9 @@ watch(showHunterMode, (enabled) => {
     </div>
 
     <!-- 玩家表格 -->
-    <GameTable
-      :data="playerList"
-      :loading="loading"
-      height="7.2rem"
-      @row-click="handleRowClick"
-    >
-      <GameTableColumn
-        prop="rank"
-        :label="t('UI_Rank')"
-        :flex="1"
-        align="center"
-      />
-      <GameTableColumn
-        prop="name"
-        :label="t('UITexasReport_player')"
-        :flex="2"
-        align="center"
-      >
+    <GameTable :data="playerList" :loading="loading" height="7.2rem" @row-click="handleRowClick">
+      <GameTableColumn prop="rank" :label="t('UI_Rank')" :flex="1" align="center" />
+      <GameTableColumn prop="name" :label="t('UITexasReport_player')" :flex="2" align="center">
         <template #default="{ row }">
           <div class="player-cell">
             <img :src="row.avatar" class="player-avatar" alt="avatar" />
@@ -258,8 +248,6 @@ watch(showHunterMode, (enabled) => {
 </template>
 
 <style scoped lang="scss">
-
-
 .mode-switch {
   display: flex;
   justify-content: center;
@@ -268,20 +256,21 @@ watch(showHunterMode, (enabled) => {
 }
 
 .mode-btn {
-  min-width: 1.5rem;
+  // min-width: 1.5rem;
   height: 0.7rem;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 0.4rem;
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(0, 0, 0, 0.18);
-  font-size: 0.28rem;
+  border: none;
+  padding: 0;
+  margin: 0 0.5rem;
+  // border-radius: 0.4rem;
+  color: rgba(255, 255, 255, 1);
+  background: transparent;
+  font-size: 0.38rem;
   font-family: 'HONOR Sans CN', sans-serif;
 }
 
 .mode-btn--active {
   color: #fff;
-  border-color: #0ab8f7;
-  background: rgba(10, 184, 247, 0.28);
+  border-bottom: 1px solid #fff;
 }
 
 /* ===== 顶部统计卡片 ===== */

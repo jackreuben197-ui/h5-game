@@ -27,13 +27,17 @@ import imgQuickSafety from '@/assets/images/club_quick_activity.png'
 import imgQuickRanking from '@/assets/images/club_quick_room_history.png'
 import imgQuickFund from '@/assets/images/club_quick_fund.png'
 import imgInviteCover from '@/assets/images/club_invite_cover.png'
-import imgInviteHeart from '@/assets/icons/club_invite_heart.png'
 import imgSearch from '@/assets/icons/club_search.svg'
 import imgModalClose from '@/assets/icons/modal_close.svg'
 import ImageUploadSheet from '@/components/ImageUploadSheet/ImageUploadSheet.vue'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { extractInvitationLink } from '@/utils/clubInvitation'
+import { extractInvitationCode, extractInvitationLink } from '@/utils/clubInvitation'
+import {
+  buildChannelClubInviteUrl,
+  buildChannelRegisterUrl,
+  isChannelPackageHost,
+} from '@/utils/channelPackage'
 import { generateQrCodeUrl } from '@/utils/qrcode'
 import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
@@ -82,6 +86,7 @@ const displayClub = computed(() => clubDetail.value ?? userInfoStore.currentClub
 const cachedClub = computed(() => userInfoStore.currentClub)
 const currentClubGold = computed(() => Number(cachedClub.value?.user_gold ?? 0))
 const currentClubCredit = computed(() => Number(cachedClub.value?.user_credit ?? 0))
+const isChannelPackage = isChannelPackageHost()
 
 const quickActions = computed<QuickActionItem[]>(() => {
   if (canManageClub.value) {
@@ -221,7 +226,7 @@ function onTribeIdKeypadSubmit(): void {
 
 function onTribeIdKeypadKeyPress(payload: {
   key: string
-  action: 'digit' | 'clear' | 'backspace'
+  action: 'digit' | 'clear' | 'backspace' | 'decimal'
   value: string
   accepted: boolean
 }): void {
@@ -814,11 +819,17 @@ async function prefetchAgentInvitationLink(): Promise<void> {
     }
 
     const invitationLink = extractInvitationLink(response.data)
-    if (!invitationLink) {
+    if (!invitationLink && !isChannelPackage) {
       return
     }
 
-    userInfoStore.setClubAgentInvitation(currentClub.random_id, invitationLink)
+    const finalLink = invitationLink
+
+    if (!finalLink) {
+      return
+    }
+
+    userInfoStore.setClubAgentInvitation(currentClub.random_id, finalLink)
   } catch (error) {
     console.error('prefetchAgentInvitationLink error', error)
   }
@@ -840,12 +851,16 @@ async function generateInviteQrCode(): Promise<void> {
       return
     }
 
-    const invitationLink = extractInvitationLink(response.data)
-    if (!invitationLink) {
+    // const invitationLink = extractInvitationLink(response.data)
+    const finalLink = isChannelPackage
+      ? buildChannelClubInviteUrl()
+      : buildChannelRegisterUrl({ inviteCode: extractInvitationCode(response.data) })
+
+    if (!finalLink) {
       return
     }
 
-    imgInviteQr.value = await generateQrCodeUrl(invitationLink, { size: 720, margin: 2 })
+    imgInviteQr.value = await generateQrCodeUrl(finalLink, { size: 720, margin: 2 })
   } catch (error) {
     console.error('generateInviteQrCode error', error)
   }
@@ -1070,9 +1085,6 @@ onMounted(async () => {
 
         <div class="invite-modal__qr-wrap">
           <img class="invite-modal__qr" :src="imgInviteQr" alt="扫码加入俱乐部" />
-          <span class="invite-modal__qr-heart">
-            <img :src="imgInviteHeart" alt="" aria-hidden="true" />
-          </span>
         </div>
         <p class="invite-modal__qr-tip">扫码加入，一键开启</p>
 

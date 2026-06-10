@@ -11,7 +11,6 @@ import {
 } from 'vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import dialogBg from '@/assets/images/component_dialog_bg.png'
-import tableBg from '@/assets/images/table_bg.webp'
 import { t } from '@/i18n'
 
 /**
@@ -114,7 +113,6 @@ const dialogStyle = computed<StyleValue>(() => ({
 const cardStyles = computed<StyleValue>(() => [
   {
     backgroundImage: `url(${dialogBg})`,
-    '--game-dialog-table-bg': `url(${tableBg})`,
     '--game-dialog-card-min-height': props.cardMinHeight,
   },
   props.cardStyle,
@@ -217,8 +215,7 @@ const bodyStyles = computed<StyleValue>(() => [
   background-size: 100% auto;
   background-position: top center;
   background-repeat: no-repeat;
-  box-shadow:
-    inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
+  box-shadow: inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
     /* 左上高光 */ inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.85),
     inset 2px 2px 0px -2px rgba(255, 255, 255, 0.3),
     /* 右下高光 */ inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.85),
@@ -244,13 +241,10 @@ const bodyStyles = computed<StyleValue>(() => [
   position: absolute;
   inset: 0;
   z-index: 0;
-  background-image: var(--game-dialog-table-bg);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  filter: blur(14px) brightness(0.8);
-  transform: scale(1.08);
-  opacity: 0.85;
+  background-image: none !important;
+  // background: rgba(6, 7, 10, 0.5);
+  backdrop-filter: blur(0.18rem);
+  -webkit-backdrop-filter: blur(0.18rem);
   pointer-events: none;
 }
 
@@ -261,10 +255,8 @@ const bodyStyles = computed<StyleValue>(() => [
   z-index: 1;
   border-radius: inherit;
   background: rgba(8, 8, 8, 0.25);
-  box-shadow:
-    inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
-    inset 0.5px 0.5px 0 0 rgba(255, 255, 255, 0.85),
-    inset 2px 2px 0 -2px rgba(255, 255, 255, 0.3),
+  box-shadow: inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
+    inset 0.5px 0.5px 0 0 rgba(255, 255, 255, 0.85), inset 2px 2px 0 -2px rgba(255, 255, 255, 0.3),
     inset -0.5px -0.5px 0 0 rgba(255, 255, 255, 0.85),
     inset -2px -2px 0 -2px rgba(255, 255, 255, 0.3);
   pointer-events: none;
@@ -298,6 +290,11 @@ const bodyStyles = computed<StyleValue>(() => [
 
 .game-panel-dialog .game-dialog__body {
   max-height: none;
+}
+
+.game-panel-dialog .game-dialog__card {
+  background-image: none !important;
+  background-color: transparent;
 }
 
 .game-dialog__message {

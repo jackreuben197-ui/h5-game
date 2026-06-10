@@ -1,4 +1,4 @@
-import type { ServerMessageTribeBlackUser } from './pb/protobuf/holdem/recv_g_tribe_black_user_pb'
+import { ServerMessageTribeBlackUser } from '@holdem-pb'
 import { decodeHoldemPacket } from './holdemPacket'
 
 export interface WsTribeBlackUserNotifyPayload {
@@ -14,22 +14,16 @@ export interface WsTribeBlackUserNotifyPayload {
   joinStatus: number
 }
 
-let pbTribeBlackUserClass: typeof ServerMessageTribeBlackUser | null = null
-
-void import('./pb/protobuf/holdem/recv_g_tribe_black_user_pb').then((mod) => {
-  pbTribeBlackUserClass = mod.ServerMessageTribeBlackUser
-})
-
 export function decodeTribeBlackUserNotify(
   rawPacket: ArrayBufferLike,
 ): WsTribeBlackUserNotifyPayload | null {
-  if (!pbTribeBlackUserClass) return null
+  if (!ServerMessageTribeBlackUser) return null
 
   const packet = decodeHoldemPacket(rawPacket)
   if (!packet) return null
 
   try {
-    const msg = pbTribeBlackUserClass.deserializeBinary(packet.body)
+    const msg = ServerMessageTribeBlackUser.deserializeBinary(packet.body)
     return {
       id: msg.getId(),
       userId: msg.getUserId(),

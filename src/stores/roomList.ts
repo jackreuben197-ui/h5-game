@@ -25,7 +25,7 @@ interface RoomListState {
   records: RoomRecord[]
 }
 
-const ROOM_LIST_CACHE_VERSION = 1
+const ROOM_LIST_CACHE_VERSION = 2
 
 const ROOM_STATUS = {
   CREATED_NOT_START: 1,

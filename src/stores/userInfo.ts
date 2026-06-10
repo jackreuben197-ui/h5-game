@@ -3,6 +3,10 @@ import type { UserInfoData } from '@/api/models/user'
 import type { OrgClubData } from '@/api/models/org'
 import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
+import {
+  copyStorageToMainDomain,
+  resolveInviteCode,
+} from '@/utils/channelPackage'
 
 export type ClubInfo = OrgClubData
 
@@ -58,13 +62,26 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
         return
       }
 
-      // 默认选中第一个俱乐部。
-      //测试默认选择竞技场俱乐部
-      const tatget = normalized.find((item) => item.club_id == 49)
-      if (tatget){
-        this.currentClubId = normalizeClubId(tatget.club_id)
-        return
+      // 获取子域邀请码，优先匹配对应邀请码的俱乐部，其次默认选中第一个俱乐部。
+      const subDomainInviteCode = resolveInviteCode()
+
+      // 检查是否是子域名且玩家未加入对应俱乐部
+      if (subDomainInviteCode) {
+        const targetClub = normalized.find(
+          (item) => item.invitation_code?.toLowerCase() === subDomainInviteCode.toLowerCase(),
+        )
+
+        // 如果玩家没有加入该俱乐部，则跳转到主域名
+        if (!targetClub) {
+          console.log('[userInfo] subdomain invite code not found in club list, redirecting to main domain')
+          copyStorageToMainDomain()
+          return
+        } else {
+          this.currentClubId = normalizeClubId(targetClub.club_id)
+          return
+        }
       }
+      // 默认选中第一个俱乐部。
       this.currentClubId = normalizeClubId(normalized[0].club_id)
     },
     setCurrentClubById(clubId: number | string): boolean {

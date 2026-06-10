@@ -224,28 +224,20 @@ function handleOpenCustomerService(): void {
 
 function openMiniGamePanel(): void {
   showGameToast('功能开发中')
+  router.push('/home2')
   // openBridgePanel({
-  //   panelType: 'jackpotAward',
+  //   // panelType: 'mttRecord',
+  //   panelType: 'mttSettlement',
   //   closeOnClickOverlay: true,
+  //   // showH5Bg: true,
   //   props: {
-  //     awardUsersList: [
-  //       {
-  //         userRid: '1234567',
-  //         nickname: 'Jackpot PlayerPlayer',
-  //         avatar: 'https://static.awanptest.com/pint-intl-test/image-avatar/97189718-cvWtG.png',
-  //         award: 888800,
-  //         cardsType: 10,
-  //         handValue: 100000,
-  //       },
-  //       {
-  //         userRid: '7654321',
-  //         nickname: 'Lucky Runner',
-  //         avatar: 'https://static.awanptest.com/pint-intl-test/image-avatar/97189718-cvWtG.png',
-  //         award: 256600,
-  //         cardsType: 9,
-  //         handValue: 90000,
-  //       },
-  //     ],
+  //     matchId: 92180450,
+  //     matchName: 'MTT202603121773282270383563',
+  //     isRebuy: false,
+  //     startTime: '',
+  //     currentBlindLevel: 0,
+  //     maxRebuyBlindLevel: 10,
+  //     remainRebuyTimes: 2,
   //   },
   // })
 }
@@ -504,7 +496,11 @@ onBeforeUnmount(() => {
           <img class="contact-icon" src="@/assets/icons/icon_service_2.png" alt="邮箱" />
           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>
-        <div class="contact-item" @click="handleOpenCustomerService">
+        <div
+          v-if="currentClub?.support_im_rid"
+          class="contact-item"
+          @click="handleOpenCustomerService"
+        >
           <img class="contact-icon" src="@/assets/icons/icon_service_3.png" alt="IM客服" />
           <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
         </div>
@@ -753,8 +749,7 @@ onBeforeUnmount(() => {
   min-height: 1.54rem;
   gap: 0;
   box-shadow:
-  /* 左上高光 */
-    inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
+  /* 左上高光 */ inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
     /* 右下高光 */ inset -1px -1px 0px 0px rgba(255, 255, 255, 0.35);
 }
 
@@ -808,7 +803,7 @@ onBeforeUnmount(() => {
   color: #fff;
   font-weight: 500;
   text-align: center;
-  min-width: 1.5rem;
+  min-width: 0.5rem;
 }
 
 .usdt-amount {

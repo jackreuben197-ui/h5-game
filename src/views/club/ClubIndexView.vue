@@ -15,7 +15,7 @@ import { postOrgClubNoticeApi, postOrgClubNoticeIgnoreApi } from '@/api/cmsext'
 import { enterTable } from '@/bridge/core'
 import type { MttItem, MttActionType } from '@/components/ListItem/MttCard.vue'
 import type { TabOption } from '@/components/Tabbar/GameTypeTabbar.vue'
-import type { EnterTablePayload } from '@/bridge/protocol'
+import type { EnterTablePayload } from '@bridge-protocol'
 import StorageKey from '@/constants/storageKey'
 import LoginSession from '@/session/loginSession'
 import type {
@@ -1024,11 +1024,14 @@ function formatChipBase(rawValue: number): string {
   if (!Number.isFinite(display)) return '0'
   return display.toFixed(2).replace(/\.?0+$/, '')
 }
+const handleBack = () => {
+  router.push('/club')
+}
 </script>
 
 <template>
   <div class="page-shell room-list-page themeType2" :style="[backgroundStyle, pageStyle]">
-    <HeaderBack>
+    <HeaderBack @back="handleBack">
       <div class="club-identity">
         <div class="club-avatar">
           <img :src="clubCoverUrl" alt="club avatar" />
@@ -1059,6 +1062,7 @@ function formatChipBase(rawValue: number): string {
           @click="router.push('/wallet')"
         />
         <TopActionButton
+          v-if="currentClub?.support_im_rid"
           :name="t('UIMineMain01')"
           :icon="serviceIcon"
           icon-alt="service"
@@ -1346,7 +1350,6 @@ function formatChipBase(rawValue: number): string {
   max-width: min(2.9rem, 42vw);
   font-size: 0.345rem;
   font-weight: 700;
-  line-height: 0.83;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1505,7 +1508,9 @@ function formatChipBase(rawValue: number): string {
     rgba(73, 73, 73, 0.5) 89.79%
   );
   backdrop-filter: blur(0.2rem);
-  box-shadow: 0.092rem 0.115rem 0.184rem rgba(0, 0, 0, 0.25), inset 0 0 0.23rem rgba(0, 0, 0, 1),
+  box-shadow:
+    0.092rem 0.115rem 0.184rem rgba(0, 0, 0, 0.25),
+    inset 0 0 0.23rem rgba(0, 0, 0, 1),
     inset 0.057rem 0.113rem 0.46rem rgba(242, 242, 242, 0.9);
 }
 
@@ -1635,8 +1640,10 @@ function formatChipBase(rawValue: number): string {
   inset: -0.0107rem;
   border-radius: inherit;
   border: 0.0107rem solid rgba(255, 255, 255, 0.58);
-  box-shadow: inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
-    inset 0 0 0.2rem rgba(255, 255, 255, 0.14), 0 0 0.08rem rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
+    inset 0 0 0.2rem rgba(255, 255, 255, 0.14),
+    0 0 0.08rem rgba(255, 255, 255, 0.18);
   filter: blur(0.002rem);
   pointer-events: none;
   z-index: 4;
@@ -1731,6 +1738,7 @@ function formatChipBase(rawValue: number): string {
   backdrop-filter: blur(0.8032rem) saturate(1.04);
   width: 10.56rem;
   margin-left: -0.28rem;
+  margin-bottom: -2rem;
 }
 
 .mtt-content {

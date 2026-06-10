@@ -11,8 +11,12 @@ import {
   type BridgeMessage,
   type EnterTablePayload,
   type EnterMttPayload,
-} from '../protocol'
+  type H5ReadyPayload,
+  type SafeArea,
+} from '@bridge-protocol'
+import StorageKey from '@/constants/storageKey'
 import { createLogger } from '@/utils/logger'
+import { localStore } from '@/utils/localStore'
 
 const log = createLogger('[bridge]')
 const logH5ToCC = createLogger('[bridge][h5->cc]')
@@ -413,9 +417,28 @@ function maybeSendH5Ready(): void {
     return
   }
 
-  log.info('[handshake] send h5Ready')
-  sendBridgeMessage(BRIDGE_ACTION.H5_READY, {}, { msgtype: BRIDGE_MSG_TYPE.H5 })
+  const payload = createH5ReadyPayload()
+  log.info('[handshake] send h5Ready', payload)
+  sendBridgeMessage(BRIDGE_ACTION.H5_READY, payload, { msgtype: BRIDGE_MSG_TYPE.H5 })
   h5ReadySent = true
+}
+
+function createH5ReadyPayload(): H5ReadyPayload {
+  const token = (localStore.getItem<string>(StorageKey.TOKEN, '') || '').trim()
+  const payload: H5ReadyPayload = {}
+  if (token) {
+    payload.token = token
+  }
+  const safeArea: SafeArea = { top: 0, left: 0, right: 0, bottom: 0, source: '' }
+  if (window.__H5_TG_MINI_APP__) {
+    safeArea.source = 'telegram'
+    safeArea.top = window.__H5_SAFE_AREA_TOP__ || 0
+    safeArea.left = window.__H5_SAFE_AREA_LEFT__ || 0
+    safeArea.right = window.__H5_SAFE_AREA_RIGHT__ || 0
+    safeArea.bottom = window.__H5_SAFE_AREA_BOTTOM__ || 0
+  }
+  payload.safeArea = safeArea
+  return payload
 }
 
 function markCcReady(): void {

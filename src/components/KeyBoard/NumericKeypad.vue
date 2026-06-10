@@ -17,6 +17,7 @@ interface Props {
   showInputArea?: boolean
   confirmText?: string
   title?: string
+  allowDecimal?: boolean // When true, replace 'C' with '.' and allow decimal input
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -30,6 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
   showMask: true,
   showInputArea: false,
   confirmText: t('Wallet_Confirm'),
+  allowDecimal: false,
 })
 
 const emit = defineEmits<{
@@ -38,7 +40,7 @@ const emit = defineEmits<{
   keyPress: [
     payload: {
       key: string
-      action: 'digit' | 'clear' | 'backspace'
+      action: 'digit' | 'clear' | 'backspace' | 'decimal'
       value: string
       accepted: boolean
     },
@@ -53,11 +55,19 @@ const keyBgStyle = {
   backgroundSize: '100% 100%',
 }
 const digits: readonly string[] = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
-const getMaxLength = (): number => props.maxLength ?? String(props.max).length
+const getMaxLength = (): number => {
+  if (props.maxLength) return props.maxLength
+  if (props.allowDecimal) return 4 // e.g. "100.0" max 4 digits
+  return String(props.max).length
+}
+
+function hasDecimal(): boolean {
+  return value.value.includes('.')
+}
 
 function emitKeyPress(
   key: string,
-  action: 'digit' | 'clear' | 'backspace',
+  action: 'digit' | 'clear' | 'backspace' | 'decimal',
   accepted: boolean,
 ): void {
   emit('keyPress', {
@@ -72,12 +82,55 @@ watch(
   () => props.open,
   (v) => {
     if (v) {
-      value.value = String(props.initialValue || '').replace(/\D/g, '').slice(0, getMaxLength())
+      if (props.allowDecimal) {
+        // For decimal mode, allow digits and one decimal point
+        value.value = String(props.initialValue || '')
+          .replace(/[^0-9.]/g, '')
+          .split('.')
+          .slice(0, 2)
+          .join('.')
+          .slice(0, getMaxLength())
+      } else {
+        value.value = String(props.initialValue || '')
+          .replace(/\D/g, '')
+          .slice(0, getMaxLength())
+      }
     }
   },
 )
 
 function press(k: string): void {
+  if (props.allowDecimal) {
+    // Decimal mode
+    if (k === '.') {
+      if (hasDecimal()) {
+        emitKeyPress('.', 'decimal', false)
+        return
+      }
+      if (value.value === '') {
+        value.value = '0.'
+        emitKeyPress('.', 'decimal', true)
+        return
+      }
+      value.value += '.'
+      emitKeyPress('.', 'decimal', true)
+      return
+    }
+    if (value.value.length >= getMaxLength()) {
+      emitKeyPress(k, 'digit', false)
+      return
+    }
+    // Limit to 1 decimal place
+    if (hasDecimal() && value.value.split('.')[1]?.length >= 1) {
+      emitKeyPress(k, 'digit', false)
+      return
+    }
+    value.value += k
+    emitKeyPress(k, 'digit', true)
+    return
+  }
+
+  // Original integer mode
   if (value.value.length >= getMaxLength()) {
     emitKeyPress(k, 'digit', false)
     return
@@ -108,8 +161,10 @@ function cancel(): void {
 
 function confirm(): void {
   const n = Number(value.value)
-  if (!value.value || n < props.min || n > props.max) return
-  emit('submit', n)
+  if (!value.value || n < props.min) return
+  // Cap at max for decimal mode (percentage)
+  const cappedValue = n > props.max ? props.max : n
+  emit('submit', cappedValue)
 }
 </script>
 
@@ -121,9 +176,10 @@ function confirm(): void {
         :class="['kp', { 'kp--plain': !showMask }]"
         :style="showMask ? { backgroundImage: `url(${mainBgUrl})` } : undefined"
         @click.self="cancel"
+        @dblclick.prevent
       >
         <div v-if="showMask" class="kp__dim" @click="cancel"></div>
-        <div :class="['kp__sheet', { 'kp__sheet--plain': !showMask }]">
+        <div :class="['kp__sheet', { 'kp__sheet--plain': !showMask }]" @dblclick.prevent>
           <div v-if="showInputArea" class="kp__header">
             <span class="kp__title">{{ title || t('Wallet_CustomAmount') }}</span>
             <div class="kp__input">
@@ -140,21 +196,43 @@ function confirm(): void {
             <button
               v-for="n in digits"
               :key="n"
+              type="button"
               class="kp__key"
               :style="keyBgStyle"
               @click="press(n)"
+              @dblclick.prevent
             >
               {{ n }}
             </button>
-            <button class="kp__key kp__key--accent" @click="clearAll">C</button>
-            <button class="kp__key" :style="keyBgStyle" @click="press('0')">0</button>
-            <button class="kp__key kp__key--accent" @click="backspace">
+            <button
+              type="button"
+              class="kp__key kp__key--accent"
+              @click="props.allowDecimal ? press('.') : clearAll()"
+              @dblclick.prevent
+            >
+              {{ props.allowDecimal ? '.' : 'C' }}
+            </button>
+            <button
+              type="button"
+              class="kp__key"
+              :style="keyBgStyle"
+              @click="press('0')"
+              @dblclick.prevent
+            >
+              0
+            </button>
+            <button
+              type="button"
+              class="kp__key kp__key--accent"
+              @click="backspace"
+              @dblclick.prevent
+            >
               <Icon icon="solar:backspace-bold" class="kp__icon" />
             </button>
           </div>
 
           <div class="kp__actions">
-            <button class="kp__cancel" @click="cancel">
+            <button type="button" class="kp__cancel" @click="cancel" @dblclick.prevent>
               {{ t('Wallet_Cancel') }}
             </button>
             <PrimaryButton :text="confirmText" class="kp__confirm" @click="confirm" />
@@ -176,6 +254,10 @@ function confirm(): void {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .kp--plain {
@@ -196,7 +278,7 @@ function confirm(): void {
   width: 100%;
   max-width: 430px;
   background-color: rgba(0, 0, 0, 0.34);
-  border: 0.96px solid rgba(242, 242, 242, 0.4);
+  border: 0.96px solid rgba(242, 244, 244, 0.4);
   border-bottom: none;
   border-top-left-radius: 0.85rem;
   border-top-right-radius: 0.85rem;
@@ -204,9 +286,12 @@ function confirm(): void {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
-  box-shadow: 3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25), 0 0 8.6px #000 inset,
+  box-shadow:
+    3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25),
+    0 0 8.6px #000 inset,
     2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
   overflow: hidden;
+  touch-action: manipulation;
 }
 
 .kp__sheet--plain {
@@ -289,6 +374,7 @@ function confirm(): void {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.22rem;
+  touch-action: manipulation;
 }
 
 .kp__key {
@@ -306,6 +392,9 @@ function confirm(): void {
   font-size: 0.61rem;
   color: #fff;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .kp__key--accent {
@@ -324,6 +413,7 @@ function confirm(): void {
   gap: 0.25rem;
   padding: 0 0.2rem;
   margin-top: 0.13rem;
+  touch-action: manipulation;
 }
 
 .kp__cancel {
@@ -337,10 +427,20 @@ function confirm(): void {
   font-weight: 500;
   font-size: 0.4rem;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .kp__confirm {
   flex: 1;
+}
+
+:deep(.kp__confirm),
+:deep(.kp__confirm *) {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .keypad-enter-active .kp__sheet,

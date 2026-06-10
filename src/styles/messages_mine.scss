@@ -23,7 +23,7 @@
       justify-content: center;
       align-items: center;
       background-color: var(--color-bg-shadow);
-      padding: 0 0.24rem 0.08rem;
+      padding: 0 0.24rem 0rem;
       border-radius: 0.6rem;
       overflow: hidden;
       gap: 0.2rem;
@@ -43,7 +43,9 @@
         font-weight: 700;
       }
       .icon-recharge {
-        margin-top: 0.18rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         width: 0.47rem;
         img {
           width: 100%;

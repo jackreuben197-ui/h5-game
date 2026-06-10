@@ -8,7 +8,14 @@ import type {
   MttRecordFeeConfig,
 } from '@/api/models/config'
 import StorageKey from '@/constants/storageKey'
-import { dzpkPersistStorage } from '@/utils/localStore'
+import {
+  PUBLIC_STORE_APP_CONFIG,
+  PUBLIC_STORE_DIAMOND_CONFIG,
+  readPublicCache,
+  readPublicCacheEntries,
+  replacePublicCacheEntries,
+} from '@/utils/indexedDB'
+import { localStore } from '@/utils/localStore'
 
 interface AppConfigState {
   globalConfig: GlobalConfigData | null
@@ -75,31 +82,118 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
   actions: {
     setGlobalConfig(config: GlobalConfigData): void {
       this.globalConfig = config
+      void persistGlobalConfig(config, StorageKey.APP_CONFIG_CACHE)
+        .catch((error) => {
+          console.warn('[appConfig] persist app_config cache failed:', error)
+        })
     },
     setDiamondConfig(raw: DiamondConfigData): void {
-      this.diamondConfig = buildDiamondConfigMap(raw)
+      const map = buildDiamondConfigMap(raw)
+      this.diamondConfig = map
+      void persistDiamondConfig(map, StorageKey.DIAMOND_CONFIG_CACHE)
+        .catch((error) => {
+          console.warn('[appConfig] persist diamond_config cache failed:', error)
+        })
+    },
+    async restorePublicConfigCache(): Promise<void> {
+      const [globalConfig, diamondConfig] = await Promise.all([
+        restoreGlobalConfig(StorageKey.APP_CONFIG_CACHE),
+        restoreDiamondConfig(StorageKey.DIAMOND_CONFIG_CACHE),
+      ])
+
+      if (globalConfig) {
+        this.globalConfig = globalConfig
+      }
+      if (diamondConfig) {
+        this.diamondConfig = diamondConfig
+      }
     },
   },
-  persist: [
-    {
-      key: StorageKey.APP_CONFIG_CACHE,
-      storage: dzpkPersistStorage,
-      pick: ['globalConfig'],
-      serializer: {
-        serialize: (state) =>
-          JSON.stringify((state as Partial<AppConfigState>).globalConfig ?? null),
-        deserialize: (str) => ({ globalConfig: JSON.parse(str) as GlobalConfigData | null }),
-      },
-    },
-    {
-      key: StorageKey.DIAMOND_CONFIG_CACHE,
-      storage: dzpkPersistStorage,
-      pick: ['diamondConfig'],
-      serializer: {
-        serialize: (state) =>
-          JSON.stringify((state as Partial<AppConfigState>).diamondConfig ?? null),
-        deserialize: (str) => ({ diamondConfig: JSON.parse(str) as DiamondConfigMap | null }),
-      },
-    },
-  ],
 })
+
+async function persistGlobalConfig(
+  value: GlobalConfigData,
+  legacyKey: string,
+): Promise<void> {
+  const entries = Object.entries(value as Record<string, unknown>)
+    .filter(([key, itemValue]) => key && itemValue !== undefined)
+    .map(([key, itemValue]) => ({
+      key,
+      value: itemValue,
+    }))
+  await replacePublicCacheEntries(PUBLIC_STORE_APP_CONFIG, entries)
+  localStore.removeItem(legacyKey)
+}
+
+async function persistDiamondConfig(
+  value: DiamondConfigMap,
+  legacyKey: string,
+): Promise<void> {
+  const entries = Object.entries(value)
+    .map(([configType, configValue]) => ({
+      key: Number(configType),
+      value: configValue,
+    }))
+    .filter((entry) => Number.isFinite(entry.key) && entry.key > 0)
+  await replacePublicCacheEntries(PUBLIC_STORE_DIAMOND_CONFIG, entries)
+  localStore.removeItem(legacyKey)
+}
+
+async function restoreGlobalConfig(
+  legacyKey: string,
+): Promise<GlobalConfigData | null> {
+  const entries = await readPublicCacheEntries<unknown>(PUBLIC_STORE_APP_CONFIG)
+  const keyedEntries = entries.filter((entry) => entry.key !== 'cache')
+  if (keyedEntries.length > 0) {
+    return keyedEntries.reduce<GlobalConfigData>((config, entry) => {
+      config[String(entry.key)] = entry.value
+      return config
+    }, {})
+  }
+
+  const legacyIndexedDBCache = await readPublicCache<GlobalConfigData>(PUBLIC_STORE_APP_CONFIG)
+  if (legacyIndexedDBCache) {
+    await persistGlobalConfig(legacyIndexedDBCache, legacyKey)
+    return legacyIndexedDBCache
+  }
+
+  const legacyCache = localStore.getItem<GlobalConfigData | null>(legacyKey, null)
+  if (legacyCache) {
+    await persistGlobalConfig(legacyCache, legacyKey)
+    return legacyCache
+  }
+
+  return null
+}
+
+async function restoreDiamondConfig(
+  legacyKey: string,
+): Promise<DiamondConfigMap | null> {
+  const entries = await readPublicCacheEntries<Record<number, DiamondConfigItem>>(
+    PUBLIC_STORE_DIAMOND_CONFIG,
+  )
+  const keyedEntries = entries.filter((entry) => entry.key !== 'cache')
+  if (keyedEntries.length > 0) {
+    return keyedEntries.reduce<DiamondConfigMap>((config, entry) => {
+      const configType = Number(entry.key)
+      if (Number.isFinite(configType) && configType > 0) {
+        config[configType] = entry.value
+      }
+      return config
+    }, {})
+  }
+
+  const legacyIndexedDBCache = await readPublicCache<DiamondConfigMap>(PUBLIC_STORE_DIAMOND_CONFIG)
+  if (legacyIndexedDBCache) {
+    await persistDiamondConfig(legacyIndexedDBCache, legacyKey)
+    return legacyIndexedDBCache
+  }
+
+  const legacyCache = localStore.getItem<DiamondConfigMap | null>(legacyKey, null)
+  if (legacyCache) {
+    await persistDiamondConfig(legacyCache, legacyKey)
+    return legacyCache
+  }
+
+  return null
+}

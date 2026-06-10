@@ -2,35 +2,92 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
+import { useGameStore } from '@/stores/game'
+import { useLoginModalStore } from '@/stores/loginModal'
 import iconHome from '@/assets/icons/tabbar_home.png'
 import iconClub from '@/assets/icons/tabbar_club.png'
 import iconFriendsTable from '@/assets/icons/tabbar_friends_table.png'
 import iconMessage from '@/assets/icons/tabbar_message.png'
 import iconMine from '@/assets/icons/tabbar_mine.png'
 import { t } from '@/i18n'
+import { isChannelPackageHost } from '@/utils/channelPackage'
 
 interface TabItem {
   key: MainTabKey
   label: string
+  // 登录态路径
   path: string
+  // 未登录态路径（指向 guest mock 页）
+  guestPath: string
   icon: string
 }
 
+const isChannelPackage = isChannelPackageHost()
+
 // 底部 5 个主模块入口与路由路径。
-const tabs: TabItem[] = [
-  { key: 'home', label: t('UITabbarHome'), path: '/home', icon: iconHome },
-  { key: 'club', label: t('UIClub_Info'), path: '/club', icon: iconClub },
-  { key: 'friendsTable', label: t('UIMessage_Default'), path: '/friendsTable', icon: iconFriendsTable },
-  { key: 'message', label: t('UIMine_MsgSystemContent'), path: '/message', icon: iconMessage },
-  { key: 'mine', label: t('UIMine_title'), path: '/mine', icon: iconMine },
-]
+// 底部 5 个主模块入口与路由路径（登录态走 path，未登录态走 guestPath）。
+const tabs = computed<TabItem[]>(() => {
+  const middleTab: TabItem = isChannelPackage
+    ? {
+        key: 'wallet',
+        label: t('UIGuildFund_RechargeText'),
+        path: '/wallet',
+        guestPath: '/guest/friendsTable',
+        icon: iconFriendsTable,
+      }
+    : {
+        key: 'friendsTable',
+        label: t('UIMessage_Default'),
+        path: '/friendsTable',
+        guestPath: '/guest/friendsTable',
+        icon: iconFriendsTable,
+      }
+
+  return [
+    {
+      key: 'home',
+      label: t('UITabbarHome'),
+      path: '/home',
+      guestPath: '/guest/home',
+      icon: iconHome,
+    },
+    {
+      key: 'club',
+      label: t('UIClub_Info'),
+      path: '/club',
+      guestPath: '/guest/club',
+      icon: iconClub,
+    },
+    middleTab,
+    {
+      key: 'message',
+      label: t('UIMine_MsgSystemContent'),
+      path: '/message',
+      guestPath: '/guest/message',
+      icon: iconMessage,
+    },
+    {
+      key: 'mine',
+      label: t('UIMine_title'),
+      path: '/mine',
+      guestPath: '/guest/mine',
+      icon: iconMine,
+    },
+  ]
+})
 
 const router = useRouter()
 const tabsStore = useMainTabsStore()
+const gameStore = useGameStore()
+const loginModalStore = useLoginModalStore()
+
+function resolveTabPath(tab: TabItem): string {
+  return gameStore.sessionToken ? tab.path : tab.guestPath
+}
 
 // 当前激活项索引：用于驱动顶部凸起在 5 个 tab 间平滑移动。
 const activeIndex = computed(() => {
-  const index = tabs.findIndex((item) => item.key === tabsStore.activeTab)
+  const index = tabs.value.findIndex((item) => item.key === tabsStore.activeTab)
   return index >= 0 ? index : 0
 })
 
@@ -43,7 +100,7 @@ const BUMP_HEIGHT_REM = 0.25
 const TOTAL_HEIGHT_REM = BASE_HEIGHT_REM + BUMP_HEIGHT_REM
 const TABBAR_WIDTH_REM = 9
 const TABBAR_SIDE_PADDING_REM = 0.72
-const TAB_COUNT = tabs.length
+const TAB_COUNT = 5
 const BUMP_WIDTH_IN_TAB = 0.9
 const TABBAR_Y_OFFSET_REM = 0.08
 const BUMP_SIDE_CTRL_RATIO = 0.24
@@ -105,8 +162,12 @@ function buildTabbarPath(bumpCenterX: number): string {
 
   let d = `M ${cornerRadius} ${topY}`
   d += ` L ${safeLeft} ${topY}`
-  d += ` C ${bumpLeft + sideControlOffset} ${topY}, ${clampedCenter - apexControlOffsetX} ${apexY}, ${clampedCenter} ${apexY}`
-  d += ` C ${clampedCenter + apexControlOffsetX} ${apexY}, ${bumpRight - sideControlOffset} ${topY}, ${safeRight} ${topY}`
+  d += ` C ${bumpLeft + sideControlOffset} ${topY}, ${
+    clampedCenter - apexControlOffsetX
+  } ${apexY}, ${clampedCenter} ${apexY}`
+  d += ` C ${clampedCenter + apexControlOffsetX} ${apexY}, ${
+    bumpRight - sideControlOffset
+  } ${topY}, ${safeRight} ${topY}`
   d += ` L ${width - cornerRadius} ${topY}`
   d += ` A ${cornerRadius} ${cornerRadius} 0 0 1 ${width} ${topY + cornerRadius}`
   d += ` L ${width} ${height - cornerRadius}`
@@ -173,8 +234,13 @@ function refreshPathByCurrentTab(): void {
 }
 
 function onTabClick(tab: TabItem): void {
+  // 渠道包未登录态点击钱包：原地弹出登录框，登录成功后再跳转到钱包
+  if (tab.key === 'wallet' && !gameStore.sessionToken) {
+    loginModalStore.open(tab.path)
+    return
+  }
   tabsStore.setActiveTab(tab.key)
-  void router.push(tab.path)
+  void router.push(resolveTabPath(tab))
 }
 
 function handleWindowResize(): void {
@@ -200,10 +266,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <nav
-    class="bottom-tab"
-    aria-label="底部切换栏"
-  >
+  <nav class="bottom-tab" aria-label="底部切换栏">
     <svg
       ref="svgRef"
       class="tabbar-svg"
@@ -212,35 +275,14 @@ onBeforeUnmount(() => {
       aria-hidden="true"
     >
       <defs>
-        <linearGradient
-          id="tabbar-fill-gradient"
-          x1="0%"
-          y1="0%"
-          x2="100%"
-          y2="100%"
-        >
-          <stop
-            offset="0%"
-            class="tabbar-fill-stop-start"
-          />
-          <stop
-            offset="74.34%"
-            class="tabbar-fill-stop-end"
-          />
-          <stop
-            offset="100%"
-            class="tabbar-fill-stop-end"
-          />
+        <linearGradient id="tabbar-fill-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" class="tabbar-fill-stop-start" />
+          <stop offset="74.34%" class="tabbar-fill-stop-end" />
+          <stop offset="100%" class="tabbar-fill-stop-end" />
         </linearGradient>
       </defs>
-      <path
-        :d="fillPath"
-        class="tabbar-fill"
-      />
-      <path
-        :d="strokePath"
-        class="tabbar-stroke"
-      />
+      <path :d="fillPath" class="tabbar-fill" />
+      <path :d="strokePath" class="tabbar-stroke" />
     </svg>
 
     <div class="tabs-row">
@@ -252,15 +294,8 @@ onBeforeUnmount(() => {
         :class="{ 'is-active': tabsStore.activeTab === tab.key }"
         @click="onTabClick(tab)"
       >
-        <span
-          class="tab-icon"
-          aria-hidden="true"
-        >
-          <img
-            class="tab-icon-image"
-            :src="tab.icon"
-            :alt="tab.label"
-          />
+        <span class="tab-icon" aria-hidden="true">
+          <img class="tab-icon-image" :src="tab.icon" :alt="tab.label" />
         </span>
         <span class="tab-label">
           {{ tab.label }}
@@ -338,7 +373,7 @@ onBeforeUnmount(() => {
   justify-content: flex-start;
   gap: 0;
   color: rgba(250, 252, 255, 0.84);
-  padding: 0.0rem 0.06rem 0.08rem;
+  padding: 0rem 0.06rem 0.08rem;
   border-radius: 0.44rem;
   -webkit-tap-highlight-color: transparent;
 }

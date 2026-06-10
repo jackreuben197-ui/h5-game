@@ -122,6 +122,10 @@ export interface UserRegisterRequest {
   email?: string
   // 平台（1-IOS 2-Android 3-Windows 4-OSX 5-Web 6-MiniWeb 7-Linux）。
   platform?: number
+  // 邀请码。
+  invite_code?: string
+  // 绑定邀请码唯一id（代理）
+  trace_hash?: string
   [key: string]: unknown
 }
 
@@ -319,6 +323,8 @@ export interface LoginV2Request {
   phone?: string
   email?: string
   password: string
+  invite_code?: string
+  trace_hash?: string
   [key: string]: unknown
 }
 
@@ -829,4 +835,60 @@ export interface ClubSendDiamondsResponseData extends ClubSendDiamondsData {
 
 export interface ClubSendDiamondsData {
   [key: string]: unknown
+}
+
+// /api/user/agent/diamonds/grant (UserAgencySendDiamonds)
+
+export interface UserAgencySendDiamondsRequest {
+    amount?: number; // 金额
+    user_id?: number; // 用户id
+
+  [key: string]: unknown
+}
+
+export interface UserAgencySendDiamondsResponseData extends UserAgencySendDiamondsData {
+  [key: string]: unknown
+}
+
+export interface UserAgencySendDiamondsData {
+  [key: string]: unknown
+}
+
+// /api/user/agent/gold/grant (UserAgencyGoldGrant)
+
+export interface UserAgencyGoldGrantRequest {
+    user_id?: number; // 用户ID
+    amount?: number; // 金额
+    op_type?: number; // 操作类型： 1 - 发放豆 2 - 回收豆
+    legal_tender?: number; // 法币金额（单位：分）
+
+  [key: string]: unknown
+}
+
+export interface UserAgencyGoldGrantResponseData extends UserAgencyGoldGrantData {
+  [key: string]: unknown
+}
+
+export interface UserAgencyGoldGrantData {
+  [key: string]: unknown
+}
+
+// /api/user/login_third_party (UserLoginThirdParty)
+
+export interface UserLoginThirdPartyRequest {
+    source: string; // 第三方平台标识，支持 facebook,instagram,google,telegram
+    app_source: number; // 应用来源，1-IOS 2-Android 3-Web
+    telegram_init_data: string; // Telegram 登录所需的 init_data 字符串,
+    platform: number; // 平台(platform):1-IOS 2-Android 3-Windows 4-OSX 5-Web 6-MiniWeb 7-Linux
+    invite_code?: string; // 邀请码
+    trace_hash?: string; // 绑定邀请码唯一id（代理）
+    device_id?: string;
+    user_device_no?: string;
+    system_version?: string;
+    client_language?: string;
+    system_language?: string;
+    gps_latitude?: string;
+    gps_longitude?: string;
+    is_simulator?: boolean;
+    mac_addr?: string;
 }

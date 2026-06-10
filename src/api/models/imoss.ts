@@ -27,7 +27,19 @@ export interface ImossGameClientUploadImageRequest {
 }
 
 export interface ImossGameClientUploadImageResponseData {
+  fileSize?: number; // 文件大小，单位字节
+  fileUrl?: string; // 图片地址
+  fileUrlSize?: ImossGameClientUploadImageSizeData; // 图片尺寸，单位像素
+  smallBigUrl?: string; // 小图地址，fileType为1时返回
+  smallBigUrlSize?: ImossGameClientUploadImageSizeData; // 小图尺寸，单位像素，fileType为1时返回
+  smfileUrl?: string; // 缩略图地址，fileType为1时返回
+  smfileUrlSize?: ImossGameClientUploadImageSizeData; // 缩略图尺寸，单位像素，fileType为1时返回
   [key: string]: unknown
+}
+
+interface ImossGameClientUploadImageSizeData {
+  width?: number; // 图片宽度，单位像素
+  height?: number; // 图片高度，单位像素
 }
 
 export interface ImossGameClientUploadImageData {

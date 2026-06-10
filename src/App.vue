@@ -2,6 +2,10 @@
   <RouterView />
   <GlobalBridgeDialogHost />
   <GlobalBridgePanelHost />
-  <GlobalMessageTodoNotice />
-  <GlobalCustomerServiceChat />
+  <Teleport to="body">
+    <GlobalMessageTodoNotice />
+  </Teleport>
+  <Teleport to="body">
+    <GlobalCustomerServiceChat />
+  </Teleport>
 </template>

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { showToast } from 'vant'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import FilterTabbar from '@/components/Tabbar/FilterTabbar.vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
@@ -34,7 +33,7 @@ import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import { toUnixSeconds } from '@/utils/time'
 import { enterMtt } from '@/bridge/core'
-import type { EnterMttPayload } from '@/bridge/protocol'
+import type { EnterMttPayload } from '@bridge-protocol'
 import { useGameStore } from '@/stores/game'
 import LoginSession from '@/session/loginSession'
 
@@ -334,6 +333,7 @@ async function handleBtnClick(): Promise<void> {
       const payload: EnterMttPayload = {
         userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',
         userId: gameStore.loginUserId || gameStore.loginAccount || '',
+        token: gameStore.sessionToken,
         websocketPort: typeof wsPort === 'number' ? wsPort : 0,
         from: 'h5-mtt',
         matchId: matchId.value,
@@ -398,6 +398,7 @@ async function handleEnterTable(rid: number): Promise<void> {
     const payload: EnterMttPayload = {
       userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',
       userId: gameStore.loginUserId || gameStore.loginAccount || '',
+      token: gameStore.sessionToken,
       websocketPort: typeof wsPort === 'number' ? wsPort : 0,
       from: 'h5-mtt',
       matchId: matchId.value,

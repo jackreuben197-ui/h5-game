@@ -228,6 +228,8 @@ import type {
   OrgChangeClubDataResponseData,
   UnlockUserRequest,
   UnlockUserResponseData,
+  OrgClubDefaultRequest,
+  OrgClubDefaultResponseData,
 } from '@/api/models/org'
 
 const formatPath = (template: string, pathParams: Record<string, string | number>): string =>
@@ -350,7 +352,7 @@ export async function postUnlockUserApi(
 }
 
 // 对齐 cocos WebOrgClubAgentCreditBalaNce.API
-export async function postOrgClubAgentCreditBalaNceApi(
+export async function postOrgClubAgentCreditBalanceApi(
   payload: OrgClubAgentCreditBalaNceRequest = {} as OrgClubAgentCreditBalaNceRequest,
 ): Promise<ApiResponse<OrgClubAgentCreditBalaNceResponseData>> {
   const endpoint = '/org/club/agent/credit/balance'
@@ -488,7 +490,7 @@ export async function postOrgClubCreateIsFirstApi(
 }
 
 // 对齐 cocos WebOrgClubCreditBalaNce.API
-export async function postOrgClubCreditBalaNceApi(
+export async function postOrgClubCreditBalanceApi(
   payload: OrgClubCreditBalaNceRequest = {} as OrgClubCreditBalaNceRequest,
 ): Promise<ApiResponse<OrgClubCreditBalaNceResponseData>> {
   const endpoint = '/org/club/credit/balance'
@@ -1410,6 +1412,17 @@ export async function postOrgUserTribeAdminListApi(
 ): Promise<ApiResponse<OrgUserTribeAdminListResponseData>> {
   const endpoint = '/org/user/tribe/admin/list'
   const response = await http.post<ApiResponse<OrgUserTribeAdminListResponseData>>(
+    endpoint,
+    payload,
+  )
+  return response.data
+}
+
+export async function postOrgClubDefaultApi(
+  payload: OrgClubDefaultRequest = {} as OrgClubDefaultRequest,
+): Promise<ApiResponse<OrgClubDefaultResponseData>> {
+  const endpoint = '/org/club/default'
+  const response = await http.post<ApiResponse<OrgClubDefaultResponseData>>(
     endpoint,
     payload,
   )

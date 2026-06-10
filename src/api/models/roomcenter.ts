@@ -734,6 +734,15 @@ export interface RoomcenterMttDetailData {
   [key: string]: unknown
 }
 
+// /roomcenter/mtt/{id}/myrank 响应 data。
+export interface RoomcenterMttMyRankData {
+  my_rank?: number
+  max_chip?: number
+  avg_chip?: number
+  min_chip?: number
+  [key: string]: unknown
+}
+
 // /roomcenter/mtt/{id}/ranks 请求参数。
 export interface RoomcenterMttRanksRequest {
   limit?: number
@@ -796,6 +805,21 @@ export interface RoomcenterMttHunterRanksData {
 
 // /roomcenter/mtt/{id}/real_prize 请求参数。
 export interface RoomcenterMttRealPrizeRequest {
+  [key: string]: unknown
+}
+
+// /roomcenter/mtt/{id}/myaward 响应 data。
+export interface RoomcenterMttMyawardData {
+  uid?: number
+  rank?: number
+  award_gold?: number
+  hunter_award?: number
+  hunter_rank?: number
+  hunter_kill?: number
+  is_final?: boolean
+  awarded?: boolean
+  username?: string
+  avatar?: string
   [key: string]: unknown
 }
 

@@ -205,7 +205,7 @@ function attachDebugConsoleDom(): void {
   style.textContent = `
     .h5-debug-console__toggle {
       position: fixed;
-      top: 1.2rem;
+      top: 2.4rem;
       right: 0.24rem;
       z-index: 99999;
       min-width: 0.8rem;
@@ -233,6 +233,7 @@ function attachDebugConsoleDom(): void {
       backdrop-filter: blur(0.16rem);
       -webkit-backdrop-filter: blur(0.16rem);
       box-shadow: 0 0.24rem 0.56rem rgba(0, 0, 0, 0.32);
+      margin-top: 2.2rem; /* 避开 Telegram 顶部安全区留白 */
     }
 
     .h5-debug-console__header,

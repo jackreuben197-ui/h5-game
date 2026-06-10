@@ -7,7 +7,7 @@ import {
   type ClosePanelPayload,
   type CocosPanelPayload,
   type PanelEventPayload,
-} from '../protocol'
+} from '@bridge-protocol'
 import { setH5Visible } from './uiChannel'
 import { runBridgeAction } from '@/components/BridgePanel/actionRegistry'
 
@@ -38,6 +38,7 @@ function normalizePanelPayload(payload: unknown): CocosPanelPayload | null {
     props: isRecord(payload.props) ? payload.props : undefined,
     closeOnClickOverlay: payload.closeOnClickOverlay !== false,
     ensureVisible: payload.ensureVisible === true,
+    showH5Bg: payload.showH5Bg === true,
   }
 }
 
@@ -91,6 +92,7 @@ export function openBridgePanel(payload: CocosPanelPayload, requestId?: string):
 
 function onCocosMessage(message: BridgeMessage): void {
   if (message.action === BRIDGE_ACTION.SHOW_PANEL) {
+    console.log('SHOW_PANEL', message.payload)
     const panelPayload = normalizePanelPayload(message.payload)
     if (!panelPayload) {
       return

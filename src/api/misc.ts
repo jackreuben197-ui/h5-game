@@ -1,6 +1,8 @@
 import http from '@/api/http'
 import type { ApiResponse } from '@/api/models/common'
 import type {
+  MiscGameDescriptionInfoRequest,
+  MiscGameDescriptionInfoData,
   MiscAgoraTokenRequest,
   MiscAgoraTokenResponseData,
   MiscArtiCleIdRequest,
@@ -350,6 +352,17 @@ export async function postMiscReportFeedbackQuestIonApi(
 ): Promise<ApiResponse<MiscReportFeedbackQuestIonResponseData>> {
   const endpoint = '/misc/report/feedback_question'
   const response = await http.post<ApiResponse<MiscReportFeedbackQuestIonResponseData>>(endpoint, payload)
+  return response.data
+}
+
+// 对齐 Unity HttpMTTInstructionsProtocol.API
+export async function postMiscGameDescriptionInfoApi(
+  payload: MiscGameDescriptionInfoRequest,
+): Promise<ApiResponse<MiscGameDescriptionInfoData>> {
+  const response = await http.post<ApiResponse<MiscGameDescriptionInfoData>>(
+    '/misc/game_description/info',
+    payload,
+  )
   return response.data
 }
 

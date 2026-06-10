@@ -67,10 +67,17 @@ import type {
   NewSafetyResponseData,
   ClubSendDiamondsRequest,
   ClubSendDiamondsResponseData,
+  UserAgencySendDiamondsRequest,
+  UserAgencySendDiamondsResponseData,
+  UserAgencyGoldGrantRequest,
+  UserAgencyGoldGrantResponseData,
+  UserLoginThirdPartyRequest,
 } from '@/api/models/user'
 import { forwardUserClubToCocos, forwardUserInfoToCocos } from '@/bridge/sync'
+import { useGameStore } from '@/stores/game'
 import { pinia } from '@/stores/pinia'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
+import { writeClubListCache } from '@/utils/userClubListCache'
 
 interface ApiRequestExtOptions extends AxiosRequestConfig {
   suppressBusinessToast?: boolean
@@ -201,7 +208,13 @@ export async function getUserClubApi(): Promise<ApiResponse<unknown>> {
 
   // 每次请求都更新 clubList 全局缓存；currentClub 默认取第一条，可手动切换。
   const userInfoStore = useUserInfoStore(pinia)
-  userInfoStore.setClubList(extractClubList(body.data))
+  const clubList = extractClubList(body.data)
+  userInfoStore.setClubList(clubList)
+  // 落地到当前用户级 IndexedDB（user_cache_${userId}，H5/Cocos 共用），供下次启动秒开。
+  const gameStore = useGameStore(pinia)
+  if (gameStore.loginUserId) {
+    void writeClubListCache(gameStore.loginUserId, clubList)
+  }
   // 把 club 接口响应转发到 Cocos（msgtype=1）。
   forwardUserClubToCocos(body)
   return body
@@ -548,6 +561,53 @@ export async function postClubSendDiamondsApi(
     '/user/club/creator/grant',
     payload,
     { headers },
+  )
+  return response.data
+}
+
+// 对齐 cocos WebUserAgencySendDiamonds.API
+export async function postUserAgencySendDiamondsApi(
+  payload: UserAgencySendDiamondsRequest = {} as UserAgencySendDiamondsRequest,
+  clubId?: number | string,
+): Promise<ApiResponse<UserAgencySendDiamondsResponseData>> {
+  const headers =
+    clubId === undefined || clubId === null || String(clubId).trim() === ''
+      ? undefined
+      : { 'X-Club': String(clubId) }
+  const response = await http.post<ApiResponse<UserAgencySendDiamondsResponseData>>(
+    '/user/agent/diamonds/grant',
+    payload,
+    { headers },
+  )
+  return response.data
+}
+
+// 对齐 cocos WebUserAgencyGoldGrant.API
+export async function postUserAgencyGoldGrantApi(
+  payload: UserAgencyGoldGrantRequest = {} as UserAgencyGoldGrantRequest,
+  clubId?: number | string,
+): Promise<ApiResponse<UserAgencyGoldGrantResponseData>> {
+  const headers =
+    clubId === undefined || clubId === null || String(clubId).trim() === ''
+      ? undefined
+      : { 'X-Club': String(clubId) }
+  const response = await http.post<ApiResponse<UserAgencyGoldGrantResponseData>>(
+    '/user/agent/gold/grant',
+    payload,
+    { headers },
+  )
+  return response.data
+}
+
+// 第三方登录，目前支持telegram mini app登录
+export async function postUserThirdPartyApi(
+  payload: UserLoginThirdPartyRequest = {} as UserLoginThirdPartyRequest,
+  options: ApiRequestExtOptions = {},
+): Promise<ApiResponse<LoginResponse>> {
+  const response = await http.post<ApiResponse<LoginResponse>>(
+    '/user/login_third_party',
+    payload,
+    options,
   )
   return response.data
 }

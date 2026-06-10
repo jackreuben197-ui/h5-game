@@ -1,5 +1,5 @@
 {
-  "baseApi": "https://ccsgame.recognitionway.com/api",
+  "baseApi": "https://api.recognitionway.com/api",
   "apiDomains": [
     "https://abctest01.com",
     "https://abctest02.com",

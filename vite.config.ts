@@ -231,10 +231,10 @@ export default defineConfig(({ mode, command }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
         // bridge 协议来源（受 VITE_BRIDGE_TARGET 控制）：
         //   pokerqueen  → 项目内 src/bridge/protocol，旧 cocos 项目用
-        //   h5-cc-game  → npm 包 h5-cc-bridge，新 cocos 项目共用同一份类型
+        //   h5-cc-game  → npm 包 h5-cc-bridge 的 h5-side 入口（含 envelope 运行时）
         '@bridge-protocol':
           bridgeTarget === 'h5-cc-game'
-            ? 'h5-cc-bridge'
+            ? 'h5-cc-bridge/h5-side'
             : fileURLToPath(new URL('./src/bridge/protocol', import.meta.url)),
         // 短别名：业务代码 import { Code, ServerMessageXxx } from '@holdem-pb'
         // 实际指向 @silenthill/agreement-web 的 proxy 层（运行时从 window.HoldemPB 取）。

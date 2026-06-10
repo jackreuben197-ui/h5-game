@@ -16,6 +16,7 @@ import iconBoxComment from '@/assets/icons/icon_box_comment.png'
 import iconBoxSetting from '@/assets/icons/icon_box_setting.png'
 import iconShop from '@/assets/icons/icon_shop.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
+import { formatUC } from '@/utils/roomVisibility'
 
 const router = useRouter()
 const gameStore = useGameStore()
@@ -76,7 +77,7 @@ const displayUser = computed(() => {
     userID: userInfoStore.userInfo?.user.un_id || gameStore.loginUserId || '-',
     avatar: userInfoStore.userInfo?.user.avatar || defaultAvatar,
     diamond: userInfoStore.userInfo?.user.diamonds ?? 0,
-    gold: userInfoStore.userInfo?.user.gold ?? 0,
+    gold: userInfoStore.currentClub?.user_gold ?? 0,
   }
 })
 </script>
@@ -116,7 +117,7 @@ const displayUser = computed(() => {
             <div class="left-board">
               <div class="currency">
                 <img class="icon-currency" :src="iconChip" alt="gold" />
-                <div class="num">{{ displayUser.gold.toLocaleString() }}</div>
+                <div class="num">{{ formatUC(displayUser.gold) }}</div>
               </div>
               <div class="currency">
                 <img class="icon-currency" :src="iconDiamond" alt="diamond" />

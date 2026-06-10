@@ -226,7 +226,7 @@ function onTribeIdKeypadSubmit(): void {
 
 function onTribeIdKeypadKeyPress(payload: {
   key: string
-  action: 'digit' | 'clear' | 'backspace'
+  action: 'digit' | 'clear' | 'backspace' | 'decimal'
   value: string
   accepted: boolean
 }): void {

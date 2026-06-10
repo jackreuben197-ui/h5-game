@@ -17,7 +17,7 @@ export const useWalletStore = defineStore('wallet', () => {
       club_id: clubId,
       source_type: 0,
       gold_types: [],
-    }, clubId)
+    }/*, clubId */)
 
     // All payment types (types 1 to 9) should be loaded and shown.
 

@@ -369,7 +369,7 @@ async function fetchShopList(options: RefreshOptions = {}): Promise<void> {
         limit: 100,
         offset: 0,
       },
-      0,
+      // 0,
     )
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : '加载商品失败')

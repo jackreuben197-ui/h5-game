@@ -1,4 +1,5 @@
 import http from '@/api/http'
+import type { HttpRequestConfigExt } from '@/api/http'
 import type { ApiResponse } from '@/api/models/common'
 import type {
   BaseConfigCombineData,
@@ -108,9 +109,12 @@ export async function postUserWhitelistInfoApi(
 export async function postOnlineWithdrawTypeListApi(
   payload: Record<string, unknown> = {},
 ): Promise<ApiResponse<OnlineWithdrawTypeListData>> {
+  // 该提现类型列表接口不需要携带 X-Club。
+  const requestOptions = { xClub: false } as HttpRequestConfigExt
   const response = await http.post<ApiResponse<OnlineWithdrawTypeListData>>(
     '/config/online_withdraw_type_list',
     payload,
+    requestOptions,
   )
   return response.data
 }

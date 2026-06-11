@@ -924,6 +924,35 @@ export interface RoomDetailRequest {
   room_type: number
 }
 
+// /roomcenter/user/contrast/rooms 请求参数（对齐 Unity HttpRoomCenterContrastRoomsProtocol）。
+// room_ids 命中的房间只返回变化字段；其余可见房间作为「新房间」完整返回。
+export interface RoomcenterUserContrastRoomsRequest {
+  room_ids?: number[]
+  last_time?: number
+  [key: string]: unknown
+}
+
+// /roomcenter/user/contrast/rooms 单条变化字段（精简结构）。
+export interface RoomcenterUserContrastRoomInfo {
+  rid: number | string
+  status?: number
+  hand_num?: number
+  empty_seat?: number
+  users?: RoomUser[]
+  relate_club_ids?: Array<number | string>
+  relate_tribe_club_list?: Array<Record<string, unknown>>
+  [key: string]: unknown
+}
+
+// /roomcenter/user/contrast/rooms 响应 data。
+export interface RoomcenterUserContrastRoomsData {
+  // 不在 room_ids 里且当前可见的新房间：返回完整 RoomRecord。
+  records?: RoomRecord[]
+  // 在 room_ids 里、自 last_time 后有变化的房间：只返回变化字段。
+  contrast_rooms?: RoomcenterUserContrastRoomInfo[]
+  [key: string]: unknown
+}
+
 // ===== 由 models/mtt.ts 合并而来 =====
 
 // MTT 列表请求参数。

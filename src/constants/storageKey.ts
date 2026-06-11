@@ -12,8 +12,6 @@ export default class StorageKey {
   static WS_PORT = 'WS_PORT'
   // websocket 端口更新时间（毫秒时间戳）。
   static WS_PORT_UPDATED_AT = 'WS_PORT_UPDATED_AT'
-  // 牌局列表缓存（用于页面秒开 + 静默刷新）。
-  static ROOM_LIST_CACHE = 'ROOM_LIST_CACHE'
   // 牌局分组展开状态缓存（key 为 groupKey，value 为是否展开）。
   static ROOM_GROUP_EXPANDED_CACHE = 'ROOM_GROUP_EXPANDED_CACHE'
   // 联盟封禁名单缓存（按 tribe_id 维度存储）。

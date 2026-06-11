@@ -48,6 +48,8 @@ import type {
   RoomcenterRoomsRequest,
   RoomcenterUserAllRoomsData,
   RoomcenterUserAllRoomsRequest,
+  RoomcenterUserContrastRoomsData,
+  RoomcenterUserContrastRoomsRequest,
   ClubRoomSitApplyRecordsRequest,
   ClubRoomSitApplyRecordsResponseData,
   ClubDelayAuditRequest,
@@ -268,6 +270,18 @@ export async function postRoomcenterUserAllRoomsApi(
 // 请求所有可见牌桌 ID。
 export async function getRoomIdsApi(payload: Record<string, unknown>): Promise<ApiResponse<RoomIdsData>> {
   const response = await http.post<ApiResponse<RoomIdsData>>('/roomcenter/user/all/room/ids', payload)
+  return response.data
+}
+
+// 对齐 Unity HttpRoomCenterContrastRoomsProtocol.API（/api/roomcenter/user/contrast/rooms）。
+// 传 { room_ids: 本地已知 rid 列表, last_time: 上次 WS 同步时间戳 } 拿增量数据。
+export async function postRoomcenterUserContrastRoomsApi(
+  payload: RoomcenterUserContrastRoomsRequest,
+): Promise<ApiResponse<RoomcenterUserContrastRoomsData>> {
+  const response = await http.post<ApiResponse<RoomcenterUserContrastRoomsData>>(
+    '/roomcenter/user/contrast/rooms',
+    payload,
+  )
   return response.data
 }
 

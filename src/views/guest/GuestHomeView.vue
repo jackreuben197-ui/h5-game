@@ -247,6 +247,7 @@ onMounted(() => {
   background: transparent;
   min-height: max-content;
   box-sizing: border-box;
+  overscroll-behavior-y: none;
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;

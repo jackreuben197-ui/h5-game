@@ -1361,6 +1361,7 @@ const handleBack = () => {
   height: 100dvh;
   color: #fff;
   background-size: cover;
+  padding-top: calc(env(safe-area-inset-top) + 0.4rem);
 }
 
 .club-header {

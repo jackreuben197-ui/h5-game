@@ -13,6 +13,8 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
+const isHomeRoute = computed(() => route.name === 'lobby' || route.name === 'guest-home')
+
 // 路由变化时同步底部 Tab 共享状态，确保子页面也能维持正确高亮。
 watch(
   () => route.meta.tabKey,
@@ -26,7 +28,7 @@ watch(
 </script>
 
 <template>
-  <div class="main-layout" :style="backgroundStyle">
+  <div class="main-layout" :class="{ 'main-layout--home': isHomeRoute }" :style="backgroundStyle">
     <div class="main-layout-content">
       <!-- 子模块页面内容区域：由路由子页面渲染。 -->
       <section class="module-slot">
@@ -48,12 +50,18 @@ watch(
   background-repeat: no-repeat;
 }
 
+.main-layout--home {
+  background-color: #f7f8fa;
+  background-image: none !important;
+}
+
 .main-layout-content {
   position: relative;
   z-index: 2;
   // 统一作为“页面滚动容器”：在 html/body fixed 的场景下也可稳定滚动。
   height: 100dvh;
   min-height: 100dvh;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -61,8 +69,12 @@ watch(
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
-  overscroll-behavior-y: contain;
+  overscroll-behavior-y: none;
   padding: calc(env(safe-area-inset-top) + 0.4rem) 0rem calc(env(safe-area-inset-bottom) + 2.72rem);
+}
+
+.main-layout--home .main-layout-content {
+  background: #f7f8fa;
 }
 
 .module-slot {

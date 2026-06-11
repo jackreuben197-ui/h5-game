@@ -643,10 +643,11 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 0.24rem;
-  padding: 0 0.4rem 4rem;
+  padding: 0 0.4rem 3rem;
   background: transparent;
   min-height: max-content;
   box-sizing: border-box;
+  overscroll-behavior-y: none;
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
@@ -761,6 +762,7 @@ onBeforeUnmount(() => {
   padding: 0.1rem 0.6rem;
   min-height: 1.54rem;
   gap: 0;
+  border: 0.302px solid rgba(0, 0, 0, 0.16);
   box-shadow: inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
     inset -1px -1px 0px 0px rgba(255, 255, 255, 0.35);
 }

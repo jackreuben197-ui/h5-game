@@ -34,16 +34,6 @@ const router = createRouter({
           },
         },
         {
-          path: 'home2',
-          name: 'home2',
-          component: () => import('@/views/home/home2.vue'),
-          meta: {
-            requiresAuth: true,
-            tabKey: 'home',
-            moduleTitle: '首页2',
-          },
-        },
-        {
           path: 'club',
           name: 'club',
           component: () => import('@/views/club/ClubListView.vue'),

@@ -73,7 +73,9 @@ const WS_RECONNECT_MAX_DURATION_MS = 60000
 // 心跳无响应触发主动重连的阈值（对齐 Unity 的 5 次）。
 const HEARTBEAT_MAX_PENDING = 5
 // 页面在后台累计超过该时长后，回前台一律强制重连，避免 readyState 假阳性。
-const RECONNECT_AFTER_HIDDEN_MS = 30000
+// 原值 30s 实际复现过"锁屏 20s 后 readyState 仍报 OPEN 但 TCP 已死"的死区，
+// 收紧到 10s 抢在 cocos 心跳超时（最长 25s）和用户触屏（点击进牌桌）之前。
+const RECONNECT_AFTER_HIDDEN_MS = 10000
 // 记录最近一次 visibility 变成 hidden 的时间戳；0 表示当前没在后台。
 let hiddenAt = 0
 

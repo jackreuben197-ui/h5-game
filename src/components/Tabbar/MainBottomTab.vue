@@ -54,8 +54,8 @@ const tabs = computed<TabItem[]>(() => {
     {
       key: 'club',
       label: t('UIClub_Info'),
-      path: '/club',
-      guestPath: '/guest/club',
+      path: isChannelPackage ? '/club/index' : '/club',
+      guestPath: isChannelPackage ? '/club/index' : '/guest/club',
       icon: iconClub,
     },
     middleTab,
@@ -82,6 +82,9 @@ const gameStore = useGameStore()
 const loginModalStore = useLoginModalStore()
 
 function resolveTabPath(tab: TabItem): string {
+  if (isChannelPackage && tab.key === 'club') {
+    return tab.path
+  }
   return gameStore.sessionToken ? tab.path : tab.guestPath
 }
 

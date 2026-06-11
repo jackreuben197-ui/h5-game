@@ -574,10 +574,20 @@ router.beforeEach((to, from) => {
     hasToken: Boolean(token),
   })
 
+  if (isChannelPackage && (to.name === 'club' || to.name === 'guest-club')) {
+    return { name: 'club-index' }
+  }
+
   if (to.meta.requiresAuth && !token) {
+    if (isChannelPackage && to.name === 'club-index') {
+      return true
+    }
     const guestName =
       typeof to.name === 'string' ? GUEST_FALLBACK_BY_NAME[to.name] : undefined
     if (guestName) {
+      if (isChannelPackage && guestName === 'guest-club') {
+        return { name: 'club-index' }
+      }
       log.warn('redirect to guest page: token missing', {
         from: from.fullPath || '<init>',
         to: to.fullPath,

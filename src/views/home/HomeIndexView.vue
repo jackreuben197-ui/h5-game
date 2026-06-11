@@ -11,6 +11,7 @@ import { useRoomListStore } from '@/stores/roomList'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
 import { localStore } from '@/utils/localStore'
+import { useCachedImage } from '@/utils/imageCache'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { showGameToast } from '@/components/Toast'
 import { openBridgePanel } from '@/bridge/channels'
@@ -131,7 +132,9 @@ const currentClub = computed<ClubInfo | null>(() => {
   return userInfoStore.clubList[0] || null
 })
 
-const clubBannerUrl = computed(() => toSafeString(currentClub.value?.banner) || homeHeaderFallback)
+const clubBannerUrl = useCachedImage(
+  () => toSafeString(currentClub.value?.banner) || homeHeaderFallback,
+)
 const noticeText = computed(() => {
   return toSafeString(currentClub.value?.prologue)
 })

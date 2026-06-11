@@ -22,6 +22,7 @@ import { createLogger } from './utils/logger'
 import { useGameStore } from './stores/game'
 import {
   cacheAgentInviteCodeIfPresent,
+  isChannelPackageHost,
   restoreStorageFromUrl,
 } from '@/utils/channelPackage'
 
@@ -42,6 +43,10 @@ let stopNativeMenuGuard: (() => void) | null = null
 cacheAgentInviteCodeIfPresent()
 // 启动时从 URL 恢复可能的存储数据，子域名跳转主域名时使用。
 restoreStorageFromUrl()
+
+if (typeof document !== 'undefined' && isChannelPackageHost()) {
+  document.documentElement.setAttribute('data-channel-package', '1')
+}
 
 initDebugConsole()
 

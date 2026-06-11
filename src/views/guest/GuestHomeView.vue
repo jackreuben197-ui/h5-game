@@ -2,15 +2,20 @@
 import homeHeaderFallback from '@/assets/images/home_header_1.png'
 import { t } from '@/i18n'
 import { useLoginModalStore } from '@/stores/loginModal'
-import { postOrgClubDefaultApi } from '@/api/org'
-import type { DefaultClub } from '@/api/models/org'
-import { ref, onMounted } from 'vue'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { useCachedImage } from '@/utils/imageCache'
+import { computed, onMounted } from 'vue'
 
 const loginModalStore = useLoginModalStore()
+const userInfoStore = useUserInfoStore()
 
-const clubBannerUrl = ref<string>(homeHeaderFallback)
+const clubBannerUrl = useCachedImage(
+  () => userInfoStore.channelDefaultClub?.banner || homeHeaderFallback,
+)
+const clubNameText = computed<string>(
+  () => userInfoStore.channelDefaultClub?.club_name || '俱乐部',
+)
 const noticeText = '欢迎来到德州扑克，登录后体验更多精彩内容'
-const clubNameText = ref<string>('俱乐部')
 const clubGoldText = '0'
 const pokerTablesText = '0'
 const pokerPlayersText = '0'
@@ -21,30 +26,12 @@ const mttTablesText = '0'
 const mttPlayersText = '0'
 const balanceVisible = true
 
-async function fetchDefaultClub(): Promise<void> {
-  try {
-    const result = await postOrgClubDefaultApi({})
-    const club = result?.data?.club as DefaultClub | undefined
-    if (club) {
-      if (club.banner) {
-        clubBannerUrl.value = club.banner
-      }
-      if (club.club_name) {
-        clubNameText.value = club.club_name
-      }
-    }
-  } catch {
-    console.error('Failed to fetch default club info')
-    // 请求失败，保持默认值
-  }
-}
-
 function notifyNotLogin(): void {
   loginModalStore.open()
 }
 
 onMounted(() => {
-  void fetchDefaultClub()
+  void userInfoStore.ensureChannelDefaultClub()
 })
 </script>
 

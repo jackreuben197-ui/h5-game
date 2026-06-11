@@ -13,6 +13,8 @@ import { useRouter } from 'vue-router'
 import { showFailToast } from 'vant'
 import { postOrgClubNoticeApi, postOrgClubNoticeIgnoreApi } from '@/api/cmsext'
 import { enterTable } from '@/bridge/core'
+import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
+import LoginModal from '@/views/login/LoginModal.vue'
 import type { MttItem, MttActionType } from '@/components/ListItem/MttCard.vue'
 import type { TabOption } from '@/components/Tabbar/GameTypeTabbar.vue'
 import type { EnterTablePayload } from '@bridge-protocol'
@@ -26,8 +28,12 @@ import type {
 } from '@/api/models/roomcenter'
 import { useGameStore } from '@/stores/game'
 import { useMttListStore } from '@/stores/mttList'
+import { useMainTabsStore } from '@/stores/mainTabs'
 import { useRoomListStore } from '@/stores/roomList'
-import { useUserInfoStore } from '@/stores/userInfo'
+import { useUserInfoStore, type ClubInfo } from '@/stores/userInfo'
+import { useLoginModalStore } from '@/stores/loginModal'
+import { isChannelPackageHost } from '@/utils/channelPackage'
+import { useCachedImage } from '@/utils/imageCache'
 import { localStore } from '@/utils/localStore'
 import { checkIsShowForClubAndTribe, ROOM_ORIGIN_TYPE } from '@/utils/roomVisibility'
 import { getLocale, t } from '@/i18n'
@@ -129,7 +135,10 @@ const gameStore = useGameStore()
 const mttListStore = useMttListStore()
 const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
+const tabsStore = useMainTabsStore()
+const loginModalStore = useLoginModalStore()
 const router = useRouter()
+const isChannelPackage = isChannelPackageHost()
 
 // 顶部右侧切换风格开关：和旧版保持一致。
 const activeTab = ref<GameTypeTabName>('all')
@@ -150,16 +159,33 @@ const pageStyle = computed<CSSProperties>(() => ({
 }))
 let mttTicker: number | null = null
 
-const currentClub = computed(() => {
-  return userInfoStore.currentClub || null
+const currentJoinedClub = computed(() => {
+  return userInfoStore.currentJoinedClub || null
 })
+
+const currentClub = computed(() => {
+  return currentJoinedClub.value || (isChannelPackage ? userInfoStore.channelDefaultClub : null)
+})
+
+const showChannelTabbar = computed(() => isChannelPackage)
 
 const selectedClubId = computed(() => toSafeInt(currentClub.value?.club_id))
 const selectedTribeId = computed(() => toSafeInt(currentClub.value?.tribe_id))
 
 const canCreateTable = computed(() => {
-  const userLevel = toSafeInt(currentClub.value?.user_level)
+  if (!gameStore.sessionToken) {
+    return false
+  }
+  const userLevel = toSafeInt(currentJoinedClub.value?.user_level)
   return userLevel >= 1 && userLevel <= 3
+})
+
+const canManageClub = computed(() => {
+  return Boolean(gameStore.sessionToken && currentJoinedClub.value)
+})
+
+const showFloatingActionArea = computed(() => {
+  return canCreateTable.value || canManageClub.value
 })
 
 const filteredRecords = computed(() => {
@@ -187,7 +213,7 @@ const clubDisplayId = computed(() => {
   return '--'
 })
 
-const clubCoverUrl = computed(() => {
+const clubCoverUrl = useCachedImage(() => {
   const logo = String(currentClub.value?.logo || '').trim()
   return logo || clubCoverAvatar
 })
@@ -322,23 +348,42 @@ const renderGroups = computed<MttRenderGroup[]>(() =>
 )
 
 onMounted(() => {
-  if (!userInfoStore.currentClub && userInfoStore.clubList.length) {
+  if (isChannelPackage) {
+    tabsStore.setActiveTab('club')
+  }
+
+  if (!isChannelPackage && !userInfoStore.currentClub && userInfoStore.clubList.length) {
     userInfoStore.setCurrentClub(userInfoStore.clubList[0] || null)
   }
 
-  if (!userInfoStore.currentClub || !String(userInfoStore.currentClub.club_id || '').trim()) {
+  void initializeClubIndex()
+})
+
+async function initializeClubIndex(): Promise<void> {
+  if (isChannelPackage && !currentJoinedClub.value) {
+    await userInfoStore.ensureChannelDefaultClub()
+  }
+
+  if (!currentClub.value || !String(currentClub.value.club_id || '').trim()) {
+    if (isChannelPackage) {
+      return
+    }
     void router.replace('/club')
     return
   }
 
-  bootstrapRoomList()
-  mttListStore.bootstrapMttList()
-  void fetchClubNotice({ showPopup: true })
+  if (currentJoinedClub.value) {
+    bootstrapRoomList()
+  }
+  if (gameStore.sessionToken && currentJoinedClub.value) {
+    mttListStore.bootstrapMttList()
+    void fetchClubNotice({ showPopup: true })
+  }
 
   mttTicker = window.setInterval(() => {
     nowMs.value = Date.now()
   }, 1000)
-})
+}
 
 onUnmounted(() => {
   if (mttTicker !== null) {
@@ -350,7 +395,7 @@ onUnmounted(() => {
 watch(
   () => selectedClubId.value,
   (clubId, prevClubId) => {
-    if (clubId <= 0 || clubId === prevClubId) {
+    if (clubId <= 0 || clubId === prevClubId || !currentJoinedClub.value) {
       return
     }
     announceExpanded.value = false
@@ -397,6 +442,21 @@ function bootstrapRoomList(): void {
   roomListStore.bootstrapRoomList()
   restoreRoomGroupExpandedCache()
   syncExpandedMapWithRecords(roomListStore.records)
+}
+
+function notifyNotLogin(): void {
+  loginModalStore.open()
+}
+
+function handleGuestPageClick(event: MouseEvent): void {
+  if (gameStore.sessionToken) {
+    return
+  }
+
+  event.preventDefault()
+  event.stopPropagation()
+  event.stopImmediatePropagation()
+  notifyNotLogin()
 }
 
 // 缓存分组展开状态，避免静默刷新后折叠状态丢失。
@@ -503,7 +563,7 @@ function handleClubHeaderTabClick(tab: ClubHeaderTabName): void {
     showFailToast('麻将专区开发中')
     return
   }
-  if (tab === 'event') {
+  if (tab === 'event' && gameStore.sessionToken && currentJoinedClub.value) {
     mttListStore.bootstrapMttList()
   }
   clubHeaderTab.value = tab
@@ -558,6 +618,10 @@ function toggleAnnounceExpanded(): void {
 }
 
 async function fetchClubNotice(options: { showPopup?: boolean } = {}): Promise<void> {
+  if (!currentJoinedClub.value) {
+    return
+  }
+
   const clubId = selectedClubId.value
   if (clubId <= 0) {
     clubNoticeQueue.value = []
@@ -1030,255 +1094,264 @@ const handleBack = () => {
 </script>
 
 <template>
-  <div class="page-shell room-list-page themeType2" :style="[backgroundStyle, pageStyle]">
-    <HeaderBack @back="handleBack">
-      <div class="club-identity">
-        <div class="club-avatar">
-          <img :src="clubCoverUrl" alt="club avatar" />
-        </div>
+  <div
+    class="page-shell room-list-page themeType2"
+    :class="{ 'room-list-page--channel': showChannelTabbar }"
+    :style="[backgroundStyle, pageStyle]"
+  >
+    <div class="club-auth-interaction-layer" @click.capture="handleGuestPageClick">
+      <HeaderBack :show-back="!isChannelPackage" @back="handleBack">
+        <div class="club-identity">
+          <div class="club-avatar">
+            <img :src="clubCoverUrl" alt="club avatar" />
+          </div>
 
-        <div class="club-meta">
-          <p class="club-name">
-            {{ clubDisplayName }}
-          </p>
-          <div class="club-sub-meta">
-            <div class="club-id-wrap">
-              <span class="club-id-tag">ID</span>
-              <span class="club-id-text">{{ clubDisplayId }}</span>
-            </div>
-            <div class="club-member-wrap">
-              <img :src="peopleBgUrl" alt="members" class="club-member-icon" />
-              <span>{{ clubMemberCount }}</span>
+          <div class="club-meta">
+            <p class="club-name">
+              {{ clubDisplayName }}
+            </p>
+            <div class="club-sub-meta">
+              <div class="club-id-wrap">
+                <span class="club-id-tag">ID</span>
+                <span class="club-id-text">{{ clubDisplayId }}</span>
+              </div>
+              <div class="club-member-wrap">
+                <img :src="peopleBgUrl" alt="members" class="club-member-icon" />
+                <span>{{ clubMemberCount }}</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="action-wrap">
-        <TopActionButton
-          :name="t('UIGuildFund_RechargeText')"
-          :icon="walletIcon"
-          icon-alt="wallet"
-          @click="router.push('/wallet')"
-        />
-        <TopActionButton
-          v-if="currentClub?.support_im_rid"
-          :name="t('UIMineMain01')"
-          :icon="serviceIcon"
-          icon-alt="service"
-          @click="handleOpenCustomerService"
-        />
-      </div>
-    </HeaderBack>
-    <header class="club-header">
-      <button
-        class="announce-bar"
-        :class="{ 'announce-bar--expanded': announceExpanded }"
-        type="button"
-        @click="toggleAnnounceExpanded"
-      >
-        <span class="announce-text">{{ clubNoticeText }}</span>
-        <span class="announce-arrow" :class="{ 'announce-arrow--expanded': announceExpanded }">
-          ›
-        </span>
-      </button>
-
-      <div class="club-header-tabs">
-        <button
-          class="club-header-tab"
-          :class="{ 'club-header-tab--active': clubHeaderTab === 'poker' }"
-          type="button"
-          @click="handleClubHeaderTabClick('poker')"
-        >
-          扑克专区
-        </button>
-        <button
-          class="club-header-tab"
-          :class="{ 'club-header-tab--active': clubHeaderTab === 'mahjong' }"
-          type="button"
-          @click="handleClubHeaderTabClick('mahjong')"
-        >
-          麻将专区
-        </button>
-        <button
-          class="club-header-tab"
-          :class="{ 'club-header-tab--active': clubHeaderTab === 'event' }"
-          type="button"
-          @click="handleClubHeaderTabClick('event')"
-        >
-          赛事
-        </button>
-      </div>
-
-      <div class="club-quick-actions">
-        <button
-          class="club-quick-card club-quick-card--safety"
-          type="button"
-          @click="handleQuickActionClick('safety')"
-        >
-          <img
-            class="quick-card-photo quick-card-photo--safety"
-            :src="quickSafetyBg"
-            alt=""
-            aria-hidden="true"
+        <div class="action-wrap">
+          <TopActionButton
+            :name="t('UIGuildFund_RechargeText')"
+            :icon="walletIcon"
+            icon-alt="wallet"
+            @click="router.push('/wallet')"
           />
-          <span class="quick-card-title">安全卫士</span>
-        </button>
-
-        <button
-          class="club-quick-card club-quick-card--ranking"
-          type="button"
-          @click="handleQuickActionClick('ranking')"
-        >
-          <img
-            class="quick-card-photo quick-card-photo--ranking"
-            :src="quickRankingBg"
-            alt=""
-            aria-hidden="true"
+          <TopActionButton
+            v-if="currentClub?.support_im_rid"
+            :name="t('UIMineMain01')"
+            :icon="serviceIcon"
+            icon-alt="service"
+            @click="handleOpenCustomerService"
           />
-          <span class="quick-card-title">排行榜</span>
-        </button>
-      </div>
-    </header>
-
-    <template v-if="clubHeaderTab === 'event'">
-      <GameTypeTabbar v-model="mttActiveTab" class="club-game-tabs" :tabs="mttTabs" />
-
-      <section class="group-list">
-        <template v-if="renderGroups.length">
-          <div v-for="group in renderGroups" :key="group.groupId" class="mtt-group">
-            <div v-if="group.title || group.showViewAll" class="mtt-group__header">
-              <span v-if="group.title" class="mtt-group__title">{{ group.title }}</span>
-              <span v-else class="mtt-group__title mtt-group__title--empty"></span>
-              <span
-                v-if="group.showViewAll"
-                class="mtt-group__toggle"
-                @click="handleViewAll(group)"
-              >
-                {{ group.expanded ? t('UIMinePutAway') : t('UIHappyShop_ShowAll') }}
-              </span>
-            </div>
-
-            <div v-if="group.layout === 'sm'" class="mtt-grid mtt-grid--sm">
-              <MttCard
-                v-for="item in group.displayItems"
-                :key="item.id"
-                size="sm"
-                :item="item"
-                @action="handleMttCardAction"
-                @click="handleMttCardClick"
-              />
-            </div>
-
-            <div v-else-if="group.layout === 'md'" class="mtt-grid mtt-grid--md">
-              <MttCard
-                v-for="item in group.displayItems"
-                :key="item.id"
-                size="md"
-                :item="item"
-                @action="handleMttCardAction"
-                @click="handleMttCardClick"
-              />
-            </div>
-
-            <div v-else class="mtt-grid mtt-grid--lg">
-              <MttCard
-                v-for="item in group.displayItems"
-                :key="item.id"
-                size="lg"
-                :item="item"
-                @action="handleMttCardAction"
-                @click="handleMttCardClick"
-              />
-            </div>
-          </div>
-        </template>
-
-        <div v-else class="empty-wrap">
-          <VanIcon name="search" />
-          <span>{{ t('UIMatchNoTournaments') }}</span>
         </div>
-      </section>
-    </template>
-
-    <template v-else>
-      <GameTypeTabbar
-        v-model="activeTab"
-        class="club-game-tabs"
-        :tabs="[
-          { name: 'all', title: t('UIMatch_GtO8YEdb') },
-          { name: 'texas', title: t('UITexasInfo_Texas') },
-          { name: 'omaha', title: t('UITexasInfo_Omaha') },
-          { name: 'sixPlus', title: t('6+') },
-        ]"
-      />
-
-      <section class="group-list">
-        <PokerTableGroupCard
-          v-for="group in groupedRecords"
-          :key="group.groupKey"
-          :group="group"
-          :expanded="expandedMap[group.groupKey] === true"
-          @toggle="handleToggleGroup"
-          @table-click="handleTableClick"
-        />
-
-        <div v-if="!groupedRecords.length" class="empty-wrap">
-          <VanIcon name="search" />
-          <span>
-            {{ t('UINoGameTip') }}
+      </HeaderBack>
+      <header class="club-header">
+        <button
+          class="announce-bar"
+          :class="{ 'announce-bar--expanded': announceExpanded }"
+          type="button"
+          @click="toggleAnnounceExpanded"
+        >
+          <span class="announce-text">{{ clubNoticeText }}</span>
+          <span class="announce-arrow" :class="{ 'announce-arrow--expanded': announceExpanded }">
+            ›
           </span>
+        </button>
+
+        <div class="club-header-tabs">
+          <button
+            class="club-header-tab"
+            :class="{ 'club-header-tab--active': clubHeaderTab === 'poker' }"
+            type="button"
+            @click="handleClubHeaderTabClick('poker')"
+          >
+            扑克专区
+          </button>
+          <button
+            class="club-header-tab"
+            :class="{ 'club-header-tab--active': clubHeaderTab === 'mahjong' }"
+            type="button"
+            @click="handleClubHeaderTabClick('mahjong')"
+          >
+            麻将专区
+          </button>
+          <button
+            class="club-header-tab"
+            :class="{ 'club-header-tab--active': clubHeaderTab === 'event' }"
+            type="button"
+            @click="handleClubHeaderTabClick('event')"
+          >
+            赛事
+          </button>
         </div>
-      </section>
-    </template>
 
-    <div class="floating-action-area">
-      <button
-        v-if="clubHeaderTab !== 'event' && canCreateTable"
-        class="create-table-btn"
-        type="button"
-        @click="handleCreateTableClick"
-      >
-        创建牌桌
-      </button>
-      <button
-        :class="{ 'floating-menu-btn--solo': clubHeaderTab === 'event' || !canCreateTable }"
-        class="floating-menu-btn"
-        type="button"
-        aria-label="更多操作"
-        @click="handleFloatingMenuClick"
-      >
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-    </div>
+        <div class="club-quick-actions">
+          <button
+            class="club-quick-card club-quick-card--safety"
+            type="button"
+            @click="handleQuickActionClick('safety')"
+          >
+            <img
+              class="quick-card-photo quick-card-photo--safety"
+              :src="quickSafetyBg"
+              alt=""
+              aria-hidden="true"
+            />
+            <span class="quick-card-title">安全卫士</span>
+          </button>
 
-    <van-popup
-      v-model:show="showClubNoticePopup"
-      class="club-notice-popup"
-      round
-      :close-on-click-overlay="true"
-      :lock-scroll="true"
-      :overlay-style="{ background: 'rgba(8, 8, 8, 0.6)' }"
-    >
-      <div class="club-notice-card">
-        <div class="club-notice-club-pill">{{ clubDisplayName }}</div>
-        <p class="club-notice-title">{{ activeClubNotice?.title }}</p>
-        <p class="club-notice-date">{{ activeClubNotice?.dateText }}</p>
-        <p class="club-notice-content">{{ activeClubNotice?.content }}</p>
+          <button
+            class="club-quick-card club-quick-card--ranking"
+            type="button"
+            @click="handleQuickActionClick('ranking')"
+          >
+            <img
+              class="quick-card-photo quick-card-photo--ranking"
+              :src="quickRankingBg"
+              alt=""
+              aria-hidden="true"
+            />
+            <span class="quick-card-title">排行榜</span>
+          </button>
+        </div>
+      </header>
+
+      <template v-if="clubHeaderTab === 'event'">
+        <GameTypeTabbar v-model="mttActiveTab" class="club-game-tabs" :tabs="mttTabs" />
+
+        <section class="group-list">
+          <template v-if="renderGroups.length">
+            <div v-for="group in renderGroups" :key="group.groupId" class="mtt-group">
+              <div v-if="group.title || group.showViewAll" class="mtt-group__header">
+                <span v-if="group.title" class="mtt-group__title">{{ group.title }}</span>
+                <span v-else class="mtt-group__title mtt-group__title--empty"></span>
+                <span
+                  v-if="group.showViewAll"
+                  class="mtt-group__toggle"
+                  @click="handleViewAll(group)"
+                >
+                  {{ group.expanded ? t('UIMinePutAway') : t('UIHappyShop_ShowAll') }}
+                </span>
+              </div>
+
+              <div v-if="group.layout === 'sm'" class="mtt-grid mtt-grid--sm">
+                <MttCard
+                  v-for="item in group.displayItems"
+                  :key="item.id"
+                  size="sm"
+                  :item="item"
+                  @action="handleMttCardAction"
+                  @click="handleMttCardClick"
+                />
+              </div>
+
+              <div v-else-if="group.layout === 'md'" class="mtt-grid mtt-grid--md">
+                <MttCard
+                  v-for="item in group.displayItems"
+                  :key="item.id"
+                  size="md"
+                  :item="item"
+                  @action="handleMttCardAction"
+                  @click="handleMttCardClick"
+                />
+              </div>
+
+              <div v-else class="mtt-grid mtt-grid--lg">
+                <MttCard
+                  v-for="item in group.displayItems"
+                  :key="item.id"
+                  size="lg"
+                  :item="item"
+                  @action="handleMttCardAction"
+                  @click="handleMttCardClick"
+                />
+              </div>
+            </div>
+          </template>
+
+          <div v-else class="empty-wrap">
+            <VanIcon name="search" />
+            <span>{{ t('UIMatchNoTournaments') }}</span>
+          </div>
+        </section>
+      </template>
+
+      <template v-else>
+        <GameTypeTabbar
+          v-model="activeTab"
+          class="club-game-tabs"
+          :tabs="[
+            { name: 'all', title: t('UIMatch_GtO8YEdb') },
+            { name: 'texas', title: t('UITexasInfo_Texas') },
+            { name: 'omaha', title: t('UITexasInfo_Omaha') },
+            { name: 'sixPlus', title: t('6+') },
+          ]"
+        />
+
+        <section class="group-list">
+          <PokerTableGroupCard
+            v-for="group in groupedRecords"
+            :key="group.groupKey"
+            :group="group"
+            :expanded="expandedMap[group.groupKey] === true"
+            @toggle="handleToggleGroup"
+            @table-click="handleTableClick"
+          />
+
+          <div v-if="!groupedRecords.length" class="empty-wrap">
+            <VanIcon name="search" />
+            <span>
+              {{ t('UINoGameTip') }}
+            </span>
+          </div>
+        </section>
+      </template>
+
+      <div v-if="showFloatingActionArea" class="floating-action-area">
         <button
-          class="club-notice-ignore-btn"
+          v-if="clubHeaderTab !== 'event' && canCreateTable"
+          class="create-table-btn"
           type="button"
-          :disabled="ignoringClubNotice"
-          @click="handleIgnoreNoticeToday"
+          @click="handleCreateTableClick"
         >
-          今天不再显示提示
+          创建牌桌
+        </button>
+        <button
+          v-if="canManageClub"
+          :class="{ 'floating-menu-btn--solo': clubHeaderTab === 'event' || !canCreateTable }"
+          class="floating-menu-btn"
+          type="button"
+          aria-label="更多操作"
+          @click="handleFloatingMenuClick"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
         </button>
       </div>
-    </van-popup>
 
-    <SafetyGuardDialog v-model:show="showSafetyGuardPopup" :tribe-id="selectedTribeId" />
+      <van-popup
+        v-model:show="showClubNoticePopup"
+        class="club-notice-popup"
+        round
+        :close-on-click-overlay="true"
+        :lock-scroll="true"
+        :overlay-style="{ background: 'rgba(8, 8, 8, 0.6)' }"
+      >
+        <div class="club-notice-card">
+          <div class="club-notice-club-pill">{{ clubDisplayName }}</div>
+          <p class="club-notice-title">{{ activeClubNotice?.title }}</p>
+          <p class="club-notice-date">{{ activeClubNotice?.dateText }}</p>
+          <p class="club-notice-content">{{ activeClubNotice?.content }}</p>
+          <button
+            class="club-notice-ignore-btn"
+            type="button"
+            :disabled="ignoringClubNotice"
+            @click="handleIgnoreNoticeToday"
+          >
+            今天不再显示提示
+          </button>
+        </div>
+      </van-popup>
+
+      <SafetyGuardDialog v-model:show="showSafetyGuardPopup" :tribe-id="selectedTribeId" />
+    </div>
+    <MainBottomTab v-if="showChannelTabbar" />
+    <LoginModal />
   </div>
 </template>
 
@@ -1508,9 +1581,7 @@ const handleBack = () => {
     rgba(73, 73, 73, 0.5) 89.79%
   );
   backdrop-filter: blur(0.2rem);
-  box-shadow:
-    0.092rem 0.115rem 0.184rem rgba(0, 0, 0, 0.25),
-    inset 0 0 0.23rem rgba(0, 0, 0, 1),
+  box-shadow: 0.092rem 0.115rem 0.184rem rgba(0, 0, 0, 0.25), inset 0 0 0.23rem rgba(0, 0, 0, 1),
     inset 0.057rem 0.113rem 0.46rem rgba(242, 242, 242, 0.9);
 }
 
@@ -1640,10 +1711,8 @@ const handleBack = () => {
   inset: -0.0107rem;
   border-radius: inherit;
   border: 0.0107rem solid rgba(255, 255, 255, 0.58);
-  box-shadow:
-    inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
-    inset 0 0 0.2rem rgba(255, 255, 255, 0.14),
-    0 0 0.08rem rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
+    inset 0 0 0.2rem rgba(255, 255, 255, 0.14), 0 0 0.08rem rgba(255, 255, 255, 0.18);
   filter: blur(0.002rem);
   pointer-events: none;
   z-index: 4;
@@ -1731,7 +1800,7 @@ const handleBack = () => {
   position: relative;
   z-index: 1;
   margin-top: -0.03rem;
-  max-height: calc(100dvh - 7.85rem);
+  max-height: calc(100dvh - 6.9rem);
   overflow-y: auto;
   padding: 0.34rem 0.96rem 2.2rem 0.38rem;
   background: rgba(255, 255, 255, 0.22);
@@ -1745,10 +1814,21 @@ const handleBack = () => {
   position: relative;
   z-index: 1;
   margin-top: 0;
-  max-height: calc(100dvh - 7.85rem);
+  max-height: calc(100dvh - 6.9rem);
   overflow-y: auto;
   padding: 0.34rem 0.38rem 2.2rem;
   backdrop-filter: blur(0.3533rem) saturate(1.04);
+}
+
+.room-list-page--channel {
+  .group-list,
+  .mtt-content {
+    padding-bottom: 3.55rem;
+  }
+
+  .floating-action-area {
+    bottom: calc(2.64rem + env(safe-area-inset-bottom));
+  }
 }
 
 .mtt-group {

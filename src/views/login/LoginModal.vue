@@ -549,7 +549,7 @@ function applyChannelInviteContext(): void {
           :class="['tab-item', { 'tab-item--active': contactType === 'account' }]"
           @click="switchContact('account')"
         >
-          {{ t('UIloginPhone_logintext') }}
+          {{ pageMode === 'register' ? t('UIloginPhone_Registertext') : t('UIloginPhone_logintext') }}
         </button>
         <button
           :class="['tab-item', { 'tab-item--active': contactType === 'email' }]"

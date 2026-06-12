@@ -23,6 +23,7 @@ import {
   cacheAgentInviteCodeIfPresent,
   restoreStorageFromUrl,
 } from '@/utils/channelPackage'
+import { ensureTelegramAutoLogin } from '@/api/http'
 
 const log = createLogger('[h5]')
 import { pinia } from './stores/pinia'
@@ -112,6 +113,9 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
     // 启动时若已有 token，则同步用户资料/配置/WS；任意路由刷新都不依赖首页布局。
     if (gameStore.sessionToken.trim()) {
       syncPostAuthData()
+    } else {
+      // Telegram Mini App: trigger auto-login at startup before the user sees any guest page.
+      void ensureTelegramAutoLogin()
     }
     // 启动 WS 代理通道：Cocos 发指令给 H5，由 H5 执行 websocket 收发并回传结果。
     stopWsProxyBridgeChannel = setupWsProxyBridgeChannel()

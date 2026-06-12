@@ -441,8 +441,8 @@ function toSafeInt(value: unknown): number {
 }
 
 .safety-guard-tab--active {
-  color: #55ffe2;
-  border-bottom: 0.08rem solid #55ffe2;
+  color: #4099E0;
+  border-bottom: 0.08rem solid #4099E0;
 }
 
 .safety-overview {

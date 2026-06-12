@@ -254,7 +254,7 @@ function hideTelegramLoginLoading(): void {
   closeToast()
 }
 
-async function ensureTelegramAutoLogin(): Promise<boolean> {
+export async function ensureTelegramAutoLogin(): Promise<boolean> {
   if (!isTelegramMiniAppEnv()) {
     return false
   }

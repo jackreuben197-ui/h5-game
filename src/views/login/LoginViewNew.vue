@@ -396,12 +396,12 @@ async function handleRegister(target: string) {
     platform: 5,
   }
   if (contactType.value === 'account') {
-    payload.phone = target
+    payload.qk_account = target
   } else {
     payload.code = form.code.trim()
     payload.email = target
   }
-  const res = await postUserRegisterApi(payload)
+  const res = await postUserRegisterApi(payload, { suppressBusinessToast: true })
   if (res.code !== 0) {
     throw new Error(res.message || `error: ${res.code}`)
   }
@@ -430,11 +430,11 @@ async function handleForgot(target: string) {
 
 function validateContactOnly(target: string): boolean {
   if (!target) {
-    showGameToast(contactType.value === 'account' ? t('UILogin_1001') : t('UILogin_InputEmail'))
+    showGameToast(contactType.value === 'account' ? t('UILogin_Account', 'Please enter account name') : t('UILogin_InputEmail'))
     return false
   }
-  if (contactType.value === 'account' && target.length <= 6) {
-    showGameToast(t('adaptation10128'))
+  if (contactType.value === 'account' && target.length <= 3) {
+    showGameToast(t('UILogin_Account', 'Please enter account name'))
     return false
   }
   if (contactType.value === 'email' && !isEmail(target)) {

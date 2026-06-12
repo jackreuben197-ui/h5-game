@@ -142,11 +142,18 @@ function extractClubList(raw: unknown, depth = 0): ClubInfo[] {
 
 // 登录：返回 token 等登录态信息。
 export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
-  const res = await http.post<{ data?: LoginResponse; token?: string }>('/user/login', payload)
+  const res = await http.post<{ code?: number; message?: string; data?: LoginResponse; token?: string }>(
+    '/user/login',
+    payload,
+    { suppressBusinessToast: true } as InternalAxiosRequestConfig,
+  )
+  const businessCode = res.data?.code
+  if (businessCode !== undefined && businessCode !== 0) {
+    throw new Error(res.data?.message || `error: ${businessCode}`)
+  }
   const token = res.data?.data?.token ?? res.data?.token
-
   if (!token) {
-    throw new Error('登录接口返回缺少 token')
+    throw new Error(res.data?.message || 'login failed')
   }
 
   return { ...res.data?.data, ...res.data, token }
@@ -304,8 +311,9 @@ export async function postUserCheckNicknameApi(
 // 对齐 cocos WebUserRegister.API。
 export async function postUserRegisterApi(
   payload: UserRegisterRequest,
+  config?: Partial<HttpRequestConfigExt>,
 ): Promise<ApiResponse<UserRegisterData>> {
-  const response = await http.post<ApiResponse<UserRegisterData>>('/user/register', payload)
+  const response = await http.post<ApiResponse<UserRegisterData>>('/user/register', payload, config)
   return response.data
 }
 

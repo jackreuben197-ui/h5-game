@@ -27,6 +27,7 @@ const PRE_LOGIN_PATHS = [
   '/user/login2',
   '/user/login_third_party',
   '/user/register',
+  '/user/quick/register',
   '/user/sendcode',
   '/user/send_email_code',
   '/user/check_phone',

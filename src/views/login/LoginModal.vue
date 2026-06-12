@@ -130,8 +130,10 @@ const canSubmit = computed(() => {
   if (!contactValue.value.trim()) return false
   if (form.password.trim().length < 6) return false
   if (pageMode.value === 'login') return true
-  if (!form.code.trim()) return false
-  if (form.code.trim().length !== 4) return false
+  if (contactType.value === 'email') {
+    if (!form.code.trim()) return false
+    if (form.code.trim().length !== 4) return false
+  }
   return true
 })
 
@@ -378,18 +380,18 @@ async function handleLogin(target: string) {
 }
 
 async function handleRegister(target: string) {
-  if (contactType.value === 'account') {
-    showGameToast('Account registration is disabled.')
-    return
-  }
-
   const effectiveInviteCode = resolveAgentInviteCode() || inviteCodeFromChannel.value
 
   const payload: Record<string, string | number> = {
     password: md5(form.password.trim()),
-    code: form.code.trim(),
     platform: 5,
-    email: target,
+  }
+
+  if (contactType.value === 'account') {
+    payload.phone = target
+  } else {
+    payload.code = form.code.trim()
+    payload.email = target
   }
 
   if (effectiveInviteCode) {
@@ -449,7 +451,7 @@ function validateBeforeSubmit(target: string): boolean {
     showGameToast(t('UILogin_1002'))
     return false
   }
-  if (pageMode.value !== 'login') {
+  if (pageMode.value !== 'login' && contactType.value === 'email') {
     const code = form.code.trim()
     if (!code) {
       showGameToast(t('UILogin_1008'))
@@ -571,7 +573,7 @@ function applyChannelInviteContext(): void {
               autocomplete="off"
             />
             <button
-              v-if="pageMode !== 'login'"
+              v-if="pageMode !== 'login' && contactType === 'email'"
               :class="['otp-btn', { 'otp-btn--disabled': otpCountdown > 0 || otpSending }]"
               :disabled="otpCountdown > 0 || otpSending"
               @click.prevent="sendOtp"
@@ -583,7 +585,7 @@ function applyChannelInviteContext(): void {
         </div>
 
         <div
-          v-if="pageMode !== 'login'"
+          v-if="pageMode !== 'login' && contactType === 'email'"
           :class="['input-row', { 'input-row--filled': !!form.code.trim() }]"
         >
           <div class="input-icon-wrap">

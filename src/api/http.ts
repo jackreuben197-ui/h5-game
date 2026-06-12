@@ -99,25 +99,26 @@ function resolveXClub(config: HttpRequestConfigExt): string {
 
 // 统一处理登录失效：清理登录态并打开登录弹窗。
 async function forceToLogin(): Promise<void> {
-  const autoLoginSucceeded = await ensureTelegramAutoLogin()
-  if (autoLoginSucceeded) {
-    return
-  }
-
   if (authRedirecting) {
     return
   }
-
   authRedirecting = true
 
   const gameStore = useGameStore(pinia)
   gameStore.clearLogin()
   LoginSession.ClearWS()
 
+  // 先清空 token，再尝试 Telegram 自动重登（clearLogin 之后 token 为空，
+  // ensureTelegramAutoLogin 才会真正发起新的登录请求而不是复用过期 token）。
+  const autoLoginSucceeded = await ensureTelegramAutoLogin()
+  authRedirecting = false
+
+  if (autoLoginSucceeded) {
+    return
+  }
+
   // 登录态失效时原地弹出登录弹窗，不强制跳转页面。
   useLoginModalStore(pinia).open()
-
-  authRedirecting = false
 }
 
 http.interceptors.request.use(async (config) => {

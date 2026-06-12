@@ -25,6 +25,7 @@ import type {
   RoomRecord,
 } from '@/api/models/roomcenter'
 import { useGameStore } from '@/stores/game'
+import { useLoginModalStore } from '@/stores/loginModal'
 import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -131,6 +132,7 @@ interface MttRenderGroup extends MttGroup {
 const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
 
 const gameStore = useGameStore()
+const loginModalStore = useLoginModalStore()
 const mttListStore = useMttListStore()
 const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
@@ -469,7 +471,7 @@ function buildGroupKey(room: RoomRecord): string {
 
 async function handleTableClick(room: RoomRecord): Promise<void> {
   if (!gameStore.sessionToken) {
-    showFailToast('登录状态已失效，请重新登录')
+    loginModalStore.open()
     return
   }
 

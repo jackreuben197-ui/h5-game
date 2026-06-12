@@ -8,6 +8,7 @@ import StorageKey from '@/constants/storageKey'
 import LoginSession from '@/session/loginSession'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import { useGameStore } from '@/stores/game'
+import { useLoginModalStore } from '@/stores/loginModal'
 import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
@@ -48,6 +49,7 @@ const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
 
 const router = useRouter()
 const gameStore = useGameStore()
+const loginModalStore = useLoginModalStore()
 const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
 
@@ -206,7 +208,7 @@ function buildGroupKey(room: RoomRecord): string {
 
 async function handleTableClick(room: RoomRecord): Promise<void> {
   if (!gameStore.sessionToken) {
-    showFailToast(t('tokenFail'))
+    loginModalStore.open()
     return
   }
 

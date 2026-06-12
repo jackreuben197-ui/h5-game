@@ -19,6 +19,7 @@ import { enterTable } from '@/bridge/core'
 import type { EnterTablePayload } from '@/bridge/protocol'
 import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
+import { useLoginModalStore } from '@/stores/loginModal'
 import { useRoomListStore } from '@/stores/roomList'
 import { ROOM_ORIGIN_TYPE } from '@/utils/roomVisibility'
 import { formatRoomLeftAndTotalByUnity } from '@/utils/time'
@@ -26,6 +27,7 @@ import { formatRoomLeftAndTotalByUnity } from '@/utils/time'
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
+const loginModalStore = useLoginModalStore()
 const roomListStore = useRoomListStore()
 
 const INVITE_CODE_LENGTH = 7
@@ -272,7 +274,7 @@ async function joinByInvitationCode(code: string): Promise<void> {
   }
 
   if (!gameStore.sessionToken) {
-    showGameToast(t('tokenFail'))
+    loginModalStore.open()
     return
   }
 
@@ -373,7 +375,7 @@ async function onEnterRoom(room: FriendRoomListItem): Promise<void> {
 
 async function enterFriendRoom(roomInfo: unknown, roomId: number): Promise<void> {
   if (!gameStore.sessionToken) {
-    showGameToast(t('tokenFail'))
+    loginModalStore.open()
     return
   }
 

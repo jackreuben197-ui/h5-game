@@ -31,6 +31,7 @@ const popupShow = computed({
     :show-confirm-button="false"
     :show-cancel-button="false"
     :close-on-click-overlay="true"
+    bg-image=""
     body-max-height="none"
     teleport="body"
     @update:show="popupShow = $event"

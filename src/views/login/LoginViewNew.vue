@@ -9,6 +9,7 @@ import {
   loginV2Api,
   postUserCheckEmailApi,
   postUserModifyPasswordApi,
+  postUserQuickRegisterApi,
   postUserRegisterApi,
   postUserSendEmailCodeApi,
 } from '@/api/user'
@@ -391,17 +392,19 @@ async function handleLogin(target: string) {
 }
 
 async function handleRegister(target: string) {
-  const payload: Record<string, string | number> = {
-    password: md5(form.password.trim()),
-    platform: 5,
-  }
+  const password = md5(form.password.trim())
+  let res
   if (contactType.value === 'account') {
-    payload.qk_account = target
+    res = await postUserQuickRegisterApi(
+      { qk_account: target, password, code: '1111', system_language: 'en-US', device_id: 'ios', platform: 5 },
+      { suppressBusinessToast: true },
+    )
   } else {
-    payload.code = form.code.trim()
-    payload.email = target
+    res = await postUserRegisterApi(
+      { email: target, password, code: form.code.trim(), platform: 5 },
+      { suppressBusinessToast: true },
+    )
   }
-  const res = await postUserRegisterApi(payload, { suppressBusinessToast: true })
   if (res.code !== 0) {
     throw new Error(res.message || `error: ${res.code}`)
   }
@@ -634,7 +637,7 @@ function consumePhoneAreaSelection(): void {
             :class="['tab-item', { 'tab-item--active': contactType === 'account' }]"
             @click="switchContact('account')"
           >
-            {{ t('UIloginPhone_logintext') }}
+            {{ pageMode === 'register' ? t('UIloginPhone_Registertext') : t('UIloginPhone_logintext') }}
           </button>
           <button
             :class="['tab-item', { 'tab-item--active': contactType === 'email' }]"

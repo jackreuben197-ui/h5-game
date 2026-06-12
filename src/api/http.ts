@@ -27,6 +27,7 @@ const PRE_LOGIN_PATHS = [
   '/user/login2',
   '/user/login_third_party',
   '/user/register',
+  '/user/quick/register',
   '/user/sendcode',
   '/user/send_email_code',
   '/user/check_phone',
@@ -254,7 +255,7 @@ function hideTelegramLoginLoading(): void {
   closeToast()
 }
 
-async function ensureTelegramAutoLogin(): Promise<boolean> {
+export async function ensureTelegramAutoLogin(): Promise<boolean> {
   if (!isTelegramMiniAppEnv()) {
     return false
   }

@@ -317,6 +317,14 @@ export async function postUserRegisterApi(
   return response.data
 }
 
+export async function postUserQuickRegisterApi(
+  payload: UserRegisterRequest,
+  config?: Partial<HttpRequestConfigExt>,
+): Promise<ApiResponse<UserRegisterData>> {
+  const response = await http.post<ApiResponse<UserRegisterData>>('/user/quick/register', payload, config)
+  return response.data
+}
+
 // 对齐 cocos WebOtherUserInfo.API。
 export async function getOtherUserInfoApi(
   userId: number | string,

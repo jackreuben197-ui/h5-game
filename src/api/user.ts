@@ -145,7 +145,7 @@ export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
   const res = await http.post<{ code?: number; message?: string; data?: LoginResponse; token?: string }>(
     '/user/login',
     payload,
-    { suppressBusinessToast: true } as InternalAxiosRequestConfig,
+    { suppressBusinessToast: true } as Partial<HttpRequestConfigExt>,
   )
   const businessCode = res.data?.code
   if (businessCode !== undefined && businessCode !== 0) {

@@ -854,6 +854,12 @@ export interface RoomcenterUserAllRoomsRequest {
   [key: string]: unknown
 }
 
+// /roomcenter/guest/all/rooms 请求参数。
+export interface RoomcenterGuestAllRoomsRequest {
+  club_rid?: number
+  [key: string]: unknown
+}
+
 // /roomcenter/user/all/rooms 响应 data。
 export interface RoomcenterUserAllRoomsData {
   // cocos 当前未给出详细结构定义。
@@ -862,6 +868,12 @@ export interface RoomcenterUserAllRoomsData {
 }
 
 // ===== 由 models/room.ts 合并而来 =====
+
+// /roomcenter/guest/all/rooms 请求参数。
+export interface RoomcenterGuestRoomIdsRequest {
+  club_rid?: number
+  [key: string]: unknown
+}
 
 // 牌桌 ID 列表项。
 export interface RoomIdRecord {
@@ -918,10 +930,17 @@ export interface RoomDetailData {
   records: RoomRecord[]
 }
 
-// 批量查询牌桌详情请求体。
+// /roomcenter/user/rooms/list 批量查询牌桌详情请求体。
 export interface RoomDetailRequest {
   room_ids: number[]
   room_type: number
+}
+
+// /roomcenter/guest/rooms/list 批量查询牌桌详情请求体。
+export interface GuestRoomDetailRequest {
+  room_ids: number[]
+  room_type: number
+  club_rid?: number
 }
 
 // /roomcenter/user/contrast/rooms 请求参数（对齐 Unity HttpRoomCenterContrastRoomsProtocol）。
@@ -929,6 +948,14 @@ export interface RoomDetailRequest {
 export interface RoomcenterUserContrastRoomsRequest {
   room_ids?: number[]
   last_time?: number
+  [key: string]: unknown
+}
+
+// /roomcenter/guest/contrast/rooms 请求参数（返回同 RoomcenterUserContrastRoomsRequest）。
+export interface RoomcenterGuestContrastRoomsRequest {
+  room_ids?: number[]
+  last_time?: number
+  club_rid?: number
   [key: string]: unknown
 }
 
@@ -1046,6 +1073,12 @@ export interface MttSeriesInfoRecord {
 // /roomcenter/user/all/mtt/sng/ids 请求体。
 export interface AllMttSngIdsRequest {
   room_ids?: number[]
+  [key: string]: unknown
+}
+// /roomcenter/guest/all/mtt/sng/ids 请求体。
+export interface GuestAllMttSngIdsRequest {
+  room_ids?: number[]
+  club_rid?: number // 俱乐部随机ID
   [key: string]: unknown
 }
 

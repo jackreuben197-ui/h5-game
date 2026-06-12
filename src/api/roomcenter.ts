@@ -4,6 +4,7 @@ import type { ApiResponse } from '@/api/models/common'
 import type {
   AllMttSngIdsData,
   AllMttSngIdsRequest,
+  GuestAllMttSngIdsRequest,
   MttBuyInRequest,
   MttRebuyRequest,
   MttUserWalletData,
@@ -11,9 +12,11 @@ import type {
   MttListRequest,
   RoomDetailData,
   RoomDetailRequest,
+  GuestRoomDetailRequest,
   RoomcenterInvitationRoomData,
   RoomcenterInvitationRoomRequest,
   RoomIdsData,
+  RoomcenterGuestRoomIdsRequest,
   RoomcenterFriendRoomApplyAuditData,
   RoomcenterFriendRoomApplyAuditRequest,
   RoomcenterFriendRoomApplyListData,
@@ -48,8 +51,10 @@ import type {
   RoomcenterRoomsRequest,
   RoomcenterUserAllRoomsData,
   RoomcenterUserAllRoomsRequest,
+  RoomcenterGuestAllRoomsRequest,
   RoomcenterUserContrastRoomsData,
   RoomcenterUserContrastRoomsRequest,
+  RoomcenterGuestContrastRoomsRequest,
   ClubRoomSitApplyRecordsRequest,
   ClubRoomSitApplyRecordsResponseData,
   ClubDelayAuditRequest,
@@ -266,10 +271,23 @@ export async function postRoomcenterUserAllRoomsApi(
   )
   return response.data
 }
+export async function postRoomcenterGuestAllRoomsApi(
+  payload: RoomcenterGuestAllRoomsRequest = {},
+): Promise<ApiResponse<RoomcenterUserAllRoomsData>> {
+  const response = await http.post<ApiResponse<RoomcenterUserAllRoomsData>>(
+    '/roomcenter/guest/all/rooms',
+    payload,
+  )
+  return response.data
+}
 
 // 请求所有可见牌桌 ID。
 export async function getRoomIdsApi(payload: Record<string, unknown>): Promise<ApiResponse<RoomIdsData>> {
   const response = await http.post<ApiResponse<RoomIdsData>>('/roomcenter/user/all/room/ids', payload)
+  return response.data
+}
+export async function getGuestRoomIdsApi(payload: RoomcenterGuestRoomIdsRequest = {}): Promise<ApiResponse<RoomIdsData>> {
+  const response = await http.post<ApiResponse<RoomIdsData>>('/roomcenter/guest/all/room/ids', payload)
   return response.data
 }
 
@@ -284,6 +302,15 @@ export async function postRoomcenterUserContrastRoomsApi(
   )
   return response.data
 }
+export async function postRoomcenterGuestContrastRoomsApi(
+  payload: RoomcenterGuestContrastRoomsRequest,
+): Promise<ApiResponse<RoomcenterUserContrastRoomsData>> {
+  const response = await http.post<ApiResponse<RoomcenterUserContrastRoomsData>>(
+    '/roomcenter/guest/contrast/rooms',
+    payload,
+  )
+  return response.data
+}
 
 // 根据房间 ID 批量请求牌桌详情。
 export async function getRoomsDetailApi(payload: RoomDetailRequest): Promise<ApiResponse<RoomDetailData>> {
@@ -291,6 +318,11 @@ export async function getRoomsDetailApi(payload: RoomDetailRequest): Promise<Api
   const body = response.data
   // 把 rooms/list 请求结果转发给 Cocos（msgtype=1）。
   forwardRoomsListToCocos(payload, body)
+  return body
+}
+export async function getGuestRoomsDetailApi(payload: GuestRoomDetailRequest): Promise<ApiResponse<RoomDetailData>> {
+  const response = await http.post<ApiResponse<RoomDetailData>>('/roomcenter/guest/rooms/list', payload)
+  const body = response.data
   return body
 }
 
@@ -306,6 +338,15 @@ export async function getAllMttSngIdsApi(
 ): Promise<ApiResponse<AllMttSngIdsData>> {
   const response = await http.post<ApiResponse<AllMttSngIdsData>>(
     '/roomcenter/user/all/mtt/sng/ids',
+    payload,
+  )
+  return response.data
+}
+export async function getGuestAllMttSngIdsApi(
+  payload: GuestAllMttSngIdsRequest = {},
+): Promise<ApiResponse<AllMttSngIdsData>> {
+  const response = await http.post<ApiResponse<AllMttSngIdsData>>(
+    '/roomcenter/guest/all/mtt/sng/ids',
     payload,
   )
   return response.data

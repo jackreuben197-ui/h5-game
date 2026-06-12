@@ -2845,7 +2845,10 @@ export interface OrgClubCancleJoinTribeData {
   [key: string]: unknown
 }
 
+// /api/org/club/default (OrgClubDefault) 渠道包指定俱乐部，官方包不用传参取默认俱乐部
 export interface OrgClubDefaultRequest {
+  invite_code?: string // 俱乐部邀请码（优先级高于 random_id）
+  random_id?: number // 俱乐部随机id
   [key: string]: unknown
 }
 export interface OrgClubDefaultResponseData extends OrgClubDefaultData{
@@ -2853,15 +2856,6 @@ export interface OrgClubDefaultResponseData extends OrgClubDefaultData{
 }
 
 export interface OrgClubDefaultData {
-  club: DefaultClub;
-  [key: string]: unknown
-}
-export interface DefaultClub {
-  banner: string;
-  club_name: string;
-  id: number;
-  logo: string;
-  random_id: number;
-  support_im_rid: string;
+  club: OrgClubSearchInfoData;
   [key: string]: unknown
 }

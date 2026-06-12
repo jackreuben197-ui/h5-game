@@ -455,12 +455,12 @@ function toSafeInt(value: unknown): number {
 
 .safety-overview__icon-wrap {
   margin: 0.34rem auto 0;
-  width: 2.1rem;
-  height: 2.1rem;
+  width: 2.4rem;
+  height: 2.6rem;
   position: relative;
   img {
-    width: 2.1rem;
-    height: 2.1rem;
+    width: 2.4rem;
+    height: 2.6rem;
   }
 }
 
@@ -473,29 +473,30 @@ function toSafeInt(value: unknown): number {
 
 .safety-overview__stat-card {
   margin-top: 0.34rem;
-  border-radius: 0.78rem;
-  min-height: 2.71rem;
+  border-radius: 9.99rem;
+  min-height: 1.4rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    194deg,
-    rgba(104, 254, 221, 0.8) -48.5%,
-    rgba(6, 126, 132, 0.8) 89.85%
-  );
+  background: linear-gradient(165deg, rgb(104, 189, 254) 7.5%, rgb(63, 153, 224) 71.9%);
+  backdrop-filter: blur(24px);
+  border: 0.01rem solid rgba(242, 242, 242, 0.3);
+  box-shadow:
+    0.64rem 0.43rem 0.16rem rgba(110, 2, 2, 0.04),
+    0.16rem 0.11rem 0.1rem rgba(110, 2, 2, 0.24);
 }
 
 .safety-overview__stat-value {
   margin: 0;
   font-size: 0.72rem;
   line-height: 1.1;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .safety-overview__stat-label {
   margin: 0.08rem 0 0;
-  font-size: 0.38rem;
+  font-size: 0.28rem;
   line-height: 1.2;
 }
 
@@ -505,7 +506,7 @@ function toSafeInt(value: unknown): number {
   font-family: 'HONOR Sans CN';
   font-size: 0.34rem;
   font-style: normal;
-  font-weight: 800;
+  font-weight: 600;
   line-height: normal;
 }
 
@@ -549,7 +550,7 @@ function toSafeInt(value: unknown): number {
 }
 
 .safety-blacklist {
-  margin-top: 0.3rem;
+  margin-top: 0.2rem;
   height: calc(100% - 0.96rem);
   padding: 0 0.2rem;
 }
@@ -570,12 +571,11 @@ function toSafeInt(value: unknown): number {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 0.22rem;
+  gap: 0.32rem;
   margin: 0;
-  padding: 0;
   list-style: none;
   scrollbar-width: none;
-  padding: 0 0.2rem;
+  padding: 0.4rem 0.2rem 0;
   -ms-overflow-style: none;
 
   &::-webkit-scrollbar {

@@ -263,9 +263,9 @@ onMounted(async () => {
 }
 
 .gift-entry {
-  position: fixed;
-  right: 0.7024rem;
-  top: 2.0594rem;
+  position: absolute;
+  right: 0;
+  top: 0;
   width: 3rem;
   height: 0.8273rem;
   z-index: 4;

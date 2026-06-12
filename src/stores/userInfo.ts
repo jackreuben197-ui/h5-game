@@ -1,18 +1,17 @@
 import { defineStore } from 'pinia'
 import type { UserInfoData } from '@/api/models/user'
-import type { OrgClubData } from '@/api/models/org'
+import type { DefaultClub, OrgClubData } from '@/api/models/org'
+import { postOrgClubDefaultApi } from '@/api/org'
 import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
-import {
-  copyStorageToMainDomain,
-  resolveInviteCode,
-} from '@/utils/channelPackage'
+import { resolveInviteCode } from '@/utils/channelPackage'
 
 export type ClubInfo = OrgClubData
 
 interface UserInfoState {
   userInfo: UserInfoData | null
   clubList: ClubInfo[]
+  channelDefaultClub: ClubInfo | null
   currentClubId: string
   clubAgentInvitations: Record<string, string>
 }
@@ -21,14 +20,57 @@ function normalizeClubId(value: unknown): string {
   return value === undefined || value === null ? '' : String(value).trim()
 }
 
+function toSafeInt(value: unknown): number {
+  const num = Number(value)
+  if (!Number.isFinite(num)) {
+    return 0
+  }
+  return Math.floor(num)
+}
+
+function normalizeDefaultClub(club: DefaultClub | undefined): ClubInfo | null {
+  if (!club) {
+    return null
+  }
+  const clubId = toSafeInt(club.id)
+  if (clubId <= 0) {
+    return null
+  }
+  return {
+    ...club,
+    club_id: clubId,
+    club_name: String(club.club_name || ''),
+    logo: String(club.logo || ''),
+    banner: String(club.banner || ''),
+    random_id: toSafeInt(club.random_id),
+    support_im_rid: String(club.support_im_rid || ''),
+    club_members: toSafeInt((club as Record<string, unknown>).club_members),
+  }
+}
+
+// 当前 SPA 会话内的去重缓存，刷新页面后重置；与持久化的 channelDefaultClub 配合：
+// - 已 loaded 直接返回 store 中的值
+// - 有 in-flight 请求时并发调用共享同一个 promise
+let channelDefaultClubLoaded = false
+let channelDefaultClubInFlight: Promise<ClubInfo | null> | null = null
+
 export const useUserInfoStore = defineStore('h5-userInfo-store', {
   state: (): UserInfoState => ({
     userInfo: null,
     clubList: [],
+    channelDefaultClub: null,
     currentClubId: '',
     clubAgentInvitations: {},
   }),
   getters: {
+    currentJoinedClub(state): ClubInfo | null {
+      if (!state.currentClubId) {
+        return null
+      }
+      return (
+        state.clubList.find((club) => normalizeClubId(club.club_id) === state.currentClubId) || null
+      )
+    },
     currentClub(state): ClubInfo | null {
       if (!state.currentClubId) {
         return null
@@ -50,6 +92,21 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
 
       this.clubList = normalized
 
+      const subDomainInviteCode = resolveInviteCode()
+      if (subDomainInviteCode) {
+        const targetClub = normalized.find(
+          (item) => item.invitation_code?.toLowerCase() === subDomainInviteCode.toLowerCase(),
+        )
+        if (targetClub) {
+          this.channelDefaultClub = null
+          this.currentClubId = normalizeClubId(targetClub.club_id)
+          return
+        }
+
+        this.currentClubId = ''
+        return
+      }
+
       if (!normalized.length) {
         this.currentClubId = ''
         return
@@ -62,27 +119,45 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
         return
       }
 
-      // 获取子域邀请码，优先匹配对应邀请码的俱乐部，其次默认选中第一个俱乐部。
-      const subDomainInviteCode = resolveInviteCode()
-
-      // 检查是否是子域名且玩家未加入对应俱乐部
-      if (subDomainInviteCode) {
-        const targetClub = normalized.find(
-          (item) => item.invitation_code?.toLowerCase() === subDomainInviteCode.toLowerCase(),
-        )
-
-        // 如果玩家没有加入该俱乐部，则跳转到主域名
-        if (!targetClub) {
-          console.log('[userInfo] subdomain invite code not found in club list, redirecting to main domain')
-          copyStorageToMainDomain()
-          return
-        } else {
-          this.currentClubId = normalizeClubId(targetClub.club_id)
-          return
-        }
-      }
       // 默认选中第一个俱乐部。
       this.currentClubId = normalizeClubId(normalized[0].club_id)
+    },
+    setChannelDefaultClub(club: ClubInfo | null): void {
+      this.channelDefaultClub = club
+    },
+    async ensureChannelDefaultClub(): Promise<ClubInfo | null> {
+      if (channelDefaultClubLoaded) {
+        return this.channelDefaultClub
+      }
+      if (channelDefaultClubInFlight) {
+        return channelDefaultClubInFlight
+      }
+
+      const inviteCode = resolveInviteCode()
+      const payload = inviteCode
+        ? { invite_code: inviteCode, invitation_code: inviteCode }
+        : {}
+
+      channelDefaultClubInFlight = (async () => {
+        try {
+          const response = await postOrgClubDefaultApi(payload)
+          if (Number(response.code) !== 0) {
+            throw new Error(String(response.msg || '渠道俱乐部加载失败'))
+          }
+          const club = normalizeDefaultClub(response.data?.club)
+          this.channelDefaultClub = club
+          channelDefaultClubLoaded = true
+          return club
+        } catch (error) {
+          console.warn('[userInfo] ensureChannelDefaultClub failed:', error)
+          this.channelDefaultClub = null
+          return null
+        } finally {
+          channelDefaultClubInFlight = null
+        }
+      })()
+
+      return channelDefaultClubInFlight
     },
     setCurrentClubById(clubId: number | string): boolean {
       const targetId = normalizeClubId(clubId)
@@ -139,8 +214,11 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
     clearInfo(): void {
       this.userInfo = null
       this.clubList = []
+      this.channelDefaultClub = null
       this.currentClubId = ''
       this.clubAgentInvitations = {}
+      channelDefaultClubLoaded = false
+      channelDefaultClubInFlight = null
     },
     setClubAgentInvitation(clubRandomId: number | string | null | undefined, link: string): void {
       const cacheKey = normalizeClubId(clubRandomId)
@@ -178,6 +256,6 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
   persist: {
     key: StorageKey.USER_DATA,
     storage: dzpkPersistStorage,
-    pick: ['userInfo', 'clubList', 'currentClubId', 'clubAgentInvitations'],
+    pick: ['userInfo', 'clubList', 'channelDefaultClub', 'currentClubId', 'clubAgentInvitations'],
   },
 })

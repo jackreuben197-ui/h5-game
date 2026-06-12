@@ -34,14 +34,14 @@ src/bridge
 └── index.ts    # 顶层聚合导出
 ```
 
-**为什么保留本地 protocol/？** 因为 pokerqueen（旧 cocos 项目）不接入 h5-cc-bridge 仓库，本目录就是它的兼容协议快照。如果哪天 pokerqueen 也接入了共享协议，可以直接删掉这个文件夹（连带 vite alias 的分支）。
+**为什么保留本地 protocol/？** 因为 pokerqueen（旧 cocos 项目）不接入 `@silenthill/h5-cc-bridge` 仓库，本目录就是它的兼容协议快照。如果哪天 pokerqueen 也接入了共享协议，可以直接删掉这个文件夹（连带 vite alias 的分支）。
 
-**注意：`h5-cc-bridge` 这个 npm 包不管哪个模式都得装**。原因：
+**注意：`@silenthill/h5-cc-bridge` 这个 npm 包不管哪个模式都得装**。原因：
 
 - 运行时（Vite bundle）：是否用 npm 包看 `VITE_BRIDGE_TARGET`。pokerqueen 模式下 alias 切到本地，npm 包代码不会进 bundle。
-- 类型检查（vue-tsc）：`tsconfig.app.json` 里 `@bridge-protocol` 是静态映射到 `node_modules/h5-cc-bridge/dist/index.d.ts` 的，tsc 不读环境变量，所以无论哪个模式都需要包存在才能类型检查通过。
+- 类型检查（vue-tsc）：`tsconfig.app.json` 里 `@bridge-protocol` 是静态映射到 `node_modules/@silenthill/h5-cc-bridge/dist/h5-side.d.ts` 的，tsc 不读环境变量，所以无论哪个模式都需要包存在才能类型检查通过。
 
-结果：`pnpm install` 永远必须；但是 `pnpm build` 出来的产物在 pokerqueen 模式下不含 h5-cc-bridge 任何代码。
+结果：`pnpm install` 永远必须；但是 `pnpm build` 出来的产物在 pokerqueen 模式下不含 `@silenthill/h5-cc-bridge` 任何代码。
 
 ## 2. 各文件夹功能说明
 
@@ -66,10 +66,10 @@ src/bridge
 
 ### `protocol/`
 
-**这是 pokerqueen 兼容模式下的协议副本，结构与 h5-cc-bridge 仓库的 `src/` 一一对应。**
+**这是 pokerqueen 兼容模式下的协议副本，结构与 `@silenthill/h5-cc-bridge` 仓库的 `src/` 一一对应。**
 
 - `VITE_BRIDGE_TARGET=pokerqueen` 时，`@bridge-protocol` 解析到本目录。
-- `VITE_BRIDGE_TARGET=h5-cc-game` 时，`@bridge-protocol` 解析到 npm 包 `h5-cc-bridge`，本目录闲置但保留。
+- `VITE_BRIDGE_TARGET=h5-cc-game` 时，`@bridge-protocol` 解析到 npm 包 `@silenthill/h5-cc-bridge` 的 h5-side 入口，本目录闲置但保留。
 
 典型文件：
 

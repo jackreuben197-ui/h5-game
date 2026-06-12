@@ -2,6 +2,7 @@ import dayjs from 'dayjs'
 import { defineStore } from 'pinia'
 import type { EnterTablePayload } from '@bridge-protocol'
 import StorageKey from '@/constants/storageKey'
+import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { dzpkPersistStorage, localStore } from '@/utils/localStore'
 
@@ -53,9 +54,15 @@ export const useGameStore = defineStore(
         localStore.removeItem(StorageKey.WS_PORT_UPDATED_AT)
       },
       setLoginUser(payload: { account: string; nickname: string; userId: string }): void {
+        const previousUserId = this.loginUserId
         this.loginAccount = payload.account
         this.loginNickname = payload.nickname
         this.loginUserId = payload.userId
+        // userId 真正就绪（从空 → 有值，或换号）时主动触发房间列表 bootstrap，
+        // 否则登录瞬间 setLoginUser({ userId: '' }) 会让 scope 卡在 guest。
+        if (payload.userId && payload.userId !== previousUserId) {
+          useRoomListStore().bootstrapRoomList()
+        }
       },
       // 同一 token 在当前应用会话内只允许同步一次用户/俱乐部资料。
       shouldSyncProfile(token: string): boolean {
@@ -72,6 +79,8 @@ export const useGameStore = defineStore(
         }
       },
       clearLogin(): void {
+        // 仅清内存与同步状态；scope.meta 和 rooms 表保留，下次同账号登录走 hotSync 增量。
+        useRoomListStore().clearRoomList()
         this.sessionToken = ''
         this.websocketPort = 0
         this.loginAccount = ''
@@ -85,8 +94,7 @@ export const useGameStore = defineStore(
         localStore.removeItem(StorageKey.TOKEN)
         localStore.removeItem(StorageKey.WS_PORT)
         localStore.removeItem(StorageKey.WS_PORT_UPDATED_AT)
-        // 登录态清空时同步清理房间相关缓存，避免下个账号看到旧牌桌。
-        localStore.removeItem(StorageKey.ROOM_LIST_CACHE)
+        // 登录态清空时同步清理 MTT / 首页统计缓存。
         localStore.removeItem(StorageKey.MTT_LIST_CACHE)
         localStore.removeItem(StorageKey.HOME_ROOM_STATS_CACHE)
       },

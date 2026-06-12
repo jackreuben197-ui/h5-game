@@ -114,12 +114,18 @@ watch(
       showDebugAccountDialog.value = false
       pendingAgreementSubmit.value = false
       // 关闭未登录态弹窗（含点击遮罩关闭）时清空残留的跳转目标，避免下次登录被错误带跳。
+      loginModalStore.mode = ''
       loginModalStore.pendingRedirect = ''
       return
     }
     // 每次打开同步一次最新缓存（避免外部修改导致状态过期）。
     currentLang.value = getLocale()
     hydrateFormFromLocal()
+    if (loginModalStore.mode) {
+      goMode(loginModalStore.mode)
+    } else if (shouldOpenRegisterMode() && pageMode.value === 'login') {
+      goMode('register')
+    }
   },
 )
 

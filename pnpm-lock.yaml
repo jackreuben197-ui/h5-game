@@ -12,8 +12,14 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(vue@3.5.32(typescript@6.0.2))
       '@silenthill/agreement-web':
-        specifier: git+ssh://git@github.com/kingofake/agreement-web.git#main
-        version: git+https://github.com/kingofake/agreement-web.git#63294744971c6ab4508d8a7ff5f0dbcaa7533b7b
+        specifier: git+ssh://git@github.com/kingofake/agreement-web.git#master
+        version: git+https://github.com/kingofake/agreement-web.git#cf5374e648b7d6be75fc37db1a20c7c426a976db
+      '@silenthill/h5-cc-bridge':
+        specifier: git+ssh://git@github.com/soolary/h5-cc-bridge.git#main
+        version: git+https://git@github.com:soolary/h5-cc-bridge.git#6938cfebf6a3c29f45e86eb4f312cf3e78806ebd
+      '@silenthill/h5-cc-i18n':
+        specifier: github:guysoup027/h5-cc-i18n
+        version: git+https://github.com/guysoup027/h5-cc-i18n.git#bc317f3b3c0664b9efbcd6584a77abc2f2825c2f
       '@vueuse/core':
         specifier: ^14.2.1
         version: 14.2.1(vue@3.5.32(typescript@6.0.2))
@@ -26,9 +32,6 @@ importers:
       google-protobuf:
         specifier: ^3.21.4
         version: 3.21.4
-      h5-cc-bridge:
-        specifier: git+ssh://git@github.com/soolary/h5-cc-bridge.git#main
-        version: git+https://github.com/soolary/h5-cc-bridge.git#00a8fc2bee7a8db810ef2ae9d7708c910c59d50d
       html2canvas:
         specifier: ^1.4.1
         version: 1.4.1
@@ -1056,8 +1059,16 @@ packages:
   '@rolldown/pluginutils@1.0.0-rc.2':
     resolution: {integrity: sha512-izyXV/v+cHiRfozX62W9htOAvwMo4/bXKDrQ+vom1L1qRuexPock/7VZDAhnpHCLNejd3NJ6hiab+tO0D44Rgw==}
 
-  '@silenthill/agreement-web@git+https://github.com/kingofake/agreement-web.git#63294744971c6ab4508d8a7ff5f0dbcaa7533b7b':
-    resolution: {commit: 63294744971c6ab4508d8a7ff5f0dbcaa7533b7b, repo: https://github.com/kingofake/agreement-web.git, type: git}
+  '@silenthill/agreement-web@git+https://github.com/kingofake/agreement-web.git#cf5374e648b7d6be75fc37db1a20c7c426a976db':
+    resolution: {commit: cf5374e648b7d6be75fc37db1a20c7c426a976db, repo: https://github.com/kingofake/agreement-web.git, type: git}
+    version: 1.0.0
+
+  '@silenthill/h5-cc-bridge@git+https://git@github.com:soolary/h5-cc-bridge.git#6938cfebf6a3c29f45e86eb4f312cf3e78806ebd':
+    resolution: {commit: 6938cfebf6a3c29f45e86eb4f312cf3e78806ebd, repo: git@github.com:soolary/h5-cc-bridge.git, type: git}
+    version: 0.1.0
+
+  '@silenthill/h5-cc-i18n@git+https://github.com/guysoup027/h5-cc-i18n.git#bc317f3b3c0664b9efbcd6584a77abc2f2825c2f':
+    resolution: {commit: bc317f3b3c0664b9efbcd6584a77abc2f2825c2f, repo: https://github.com/guysoup027/h5-cc-i18n.git, type: git}
     version: 1.0.0
 
   '@tybys/wasm-util@0.10.1':
@@ -1723,10 +1734,6 @@ packages:
   gopd@1.2.0:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
     engines: {node: '>= 0.4'}
-
-  h5-cc-bridge@git+https://github.com/soolary/h5-cc-bridge.git#00a8fc2bee7a8db810ef2ae9d7708c910c59d50d:
-    resolution: {commit: 00a8fc2bee7a8db810ef2ae9d7708c910c59d50d, repo: https://github.com/soolary/h5-cc-bridge.git, type: git}
-    version: 0.1.0
 
   has-flag@4.0.0:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
@@ -3485,9 +3492,13 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.0-rc.2': {}
 
-  '@silenthill/agreement-web@git+https://github.com/kingofake/agreement-web.git#63294744971c6ab4508d8a7ff5f0dbcaa7533b7b':
+  '@silenthill/agreement-web@git+https://github.com/kingofake/agreement-web.git#cf5374e648b7d6be75fc37db1a20c7c426a976db':
     dependencies:
       google-protobuf: 3.21.4
+
+  '@silenthill/h5-cc-bridge@git+https://git@github.com:soolary/h5-cc-bridge.git#6938cfebf6a3c29f45e86eb4f312cf3e78806ebd': {}
+
+  '@silenthill/h5-cc-i18n@git+https://github.com/guysoup027/h5-cc-i18n.git#bc317f3b3c0664b9efbcd6584a77abc2f2825c2f': {}
 
   '@tybys/wasm-util@0.10.1':
     dependencies:
@@ -4226,8 +4237,6 @@ snapshots:
   google-protobuf@3.21.4: {}
 
   gopd@1.2.0: {}
-
-  h5-cc-bridge@git+https://github.com/soolary/h5-cc-bridge.git#00a8fc2bee7a8db810ef2ae9d7708c910c59d50d: {}
 
   has-flag@4.0.0: {}
 

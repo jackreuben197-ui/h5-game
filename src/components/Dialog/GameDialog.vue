@@ -325,6 +325,10 @@ const bodyStyles = computed<StyleValue>(() => [
   background-color: transparent;
 }
 
+.game-panel-dialog .game-dialog__card-bg-texture {
+  background-image: none !important;
+}
+
 .game-dialog__message {
   display: block;
 }

@@ -352,7 +352,8 @@ async function doTelegramAutoLogin(): Promise<boolean> {
 
     return true
   } catch (error) {
-    console.warn('[telegram-auto-login] failed:', error)
+    const msg = error instanceof Error ? error.message : String(error)
+    console.warn('[telegram-auto-login] failed:', msg, error)
     return false
   } finally {
     hideTelegramLoginLoading()

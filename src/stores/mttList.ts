@@ -314,9 +314,9 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
 
       mttListLoadingToken = sessionKey
       // 对齐 Unity：列表详情和可见性/系列索引都在启动阶段一次拉齐。
+      await this.fetchAllMttSngIds(options)
       mttListLoadingPromise = Promise.all([
         this.fetchMttList(options),
-        this.fetchAllMttSngIds(options),
       ])
         .then(() => {
           mttListLoadedToken = sessionKey
@@ -453,20 +453,12 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
         pendingRepairNeedIds = false
 
         try {
-          if (needList && needIds) {
-            await Promise.all([
-              this.fetchMttList({ silent: true }),
-              this.fetchAllMttSngIds({ silent: true }),
-            ])
-            return
+          if (needIds) {
+            await this.fetchAllMttSngIds({ silent: true })
           }
 
           if (needList) {
             await this.fetchMttList({ silent: true })
-          }
-
-          if (needIds) {
-            await this.fetchAllMttSngIds({ silent: true })
           }
         } finally {
           mttRepairSyncPromise = null

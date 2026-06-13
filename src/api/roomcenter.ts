@@ -65,6 +65,9 @@ import type {
   UserRoomSitApplyRecordsResponseData,
   RoomClubApplyAuditRequest,
   RoomClubApplyAuditResponseData,
+  RoomCenterUserMatchListRequest,
+  RoomCenterUserMatchListResponseData,
+  RoomCenterGuestMatchListRequest,
 } from '@/api/models/roomcenter'
 import { forwardRoomsListToCocos } from '@/bridge/sync'
 
@@ -424,5 +427,20 @@ export async function postRoomClubApplyAuditApi(
   payload: RoomClubApplyAuditRequest = {} as RoomClubApplyAuditRequest
 ): Promise<ApiResponse<RoomClubApplyAuditResponseData>> {
   const response = await http.post<ApiResponse<RoomClubApplyAuditResponseData>>('/roomcenter/club/room/apply/audit', payload)
+  return response.data
+}
+
+// 对齐 cocos WebRoomCenterUserMatchList.API
+export async function postRoomCenterUserMatchListApi(
+  payload: RoomCenterUserMatchListRequest = {} as RoomCenterUserMatchListRequest
+): Promise<ApiResponse<RoomCenterUserMatchListResponseData>> {
+  const response = await http.post<ApiResponse<RoomCenterUserMatchListResponseData>>('/roomcenter/user/mtt/sng/rooms/list', payload)
+  return response.data
+}
+
+export async function postRoomCenterGuestMatchListApi(
+  payload: RoomCenterGuestMatchListRequest = {} as RoomCenterGuestMatchListRequest
+): Promise<ApiResponse<RoomCenterUserMatchListResponseData>> {
+  const response = await http.post<ApiResponse<RoomCenterUserMatchListResponseData>>('/roomcenter/guest/mtt/sng/rooms/list', payload)
   return response.data
 }

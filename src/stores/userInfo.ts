@@ -33,7 +33,7 @@ function normalizeDefaultClub(club: OrgClubSearchInfoData | undefined): ClubInfo
   if (!club) {
     return null
   }
-  const clubId = toSafeInt(club.id)
+  const clubId = toSafeInt(club.club_id)
   if (clubId <= 0) {
     return null
   }
@@ -137,7 +137,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
 
       const inviteCode = resolveInviteCode()
       const payload = inviteCode
-        ? { invite_code: inviteCode, invitation_code: inviteCode }
+        ? { invite_code: inviteCode }
         : {}
 
       channelDefaultClubInFlight = (async () => {

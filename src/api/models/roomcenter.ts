@@ -1325,3 +1325,168 @@ export interface RoomClubApplyAuditResponseData extends RoomClubApplyAuditData {
 export interface RoomClubApplyAuditData {
   [key: string]: unknown
 }
+
+// /api/roomcenter/user/mtt/sng/rooms/list (RoomCenterUserMatchList)
+export interface RoomCenterUserMatchListRequest {
+  mtt_ids?: number[]; // mtt ID 列表
+  sng_ids?: number[]; // sng ID 列表
+  room_type?: number; // 0.所有信息 1.变化信息
+  [key: string]: unknown
+}
+// /api/roomcenter/guest/mtt/sng/rooms/list (RoomCenterGuestMatchList)
+export interface RoomCenterGuestMatchListRequest {
+  mtt_ids?: number[]; // mtt ID 列表
+  sng_ids?: number[]; // sng ID 列表
+  room_type?: number; // 0.所有信息 1.变化信息
+  club_rid?: number // 俱乐部随机ID
+  [key: string]: unknown
+}
+
+export interface RoomCenterUserMatchListResponseData extends RoomCenterUserMatchListData {
+  [key: string]: unknown
+}
+
+export interface RoomCenterUserMatchListData {
+    mtt_change_list?: RoomCenterUserMatchListContrastMttInfo[]; // mtt 变化数据
+    sng_change_list?: RoomCenterUserMatchListContrastSngInfo[]; // sng 变化数据
+    mtt_list?: RoomCenterUserMatchListMttInfo[]; // mtt 详情数据
+    sng_list?: RoomCenterUserMatchListSngInfo[]; // sng 详情数据
+
+  [key: string]: unknown
+}
+
+export interface RoomCenterUserMatchListSngInfo {
+    anti_cheat_type?: number; // 防作弊类型
+    anti_cheat_video_type?: number; // 视频模式
+    apply_fee_pool?: number; // 报名费 进池
+    apply_fee_service?: number; // 报名费 服务费
+    bombpot?: number; // 1:开启bombpot 0: 未开启
+    buy_status?: number; // 用户参与状态：0-不可参加；1-可以报名参加；2-已报名可退赛；3-比赛中；4-申请中
+    game_type?: number; // 游戏类型
+    limit_bet_type?: number; // 下注类型
+    limit_participants?: number; // 限制多少人开始
+    name?: string; // 比赛名称
+    origin_type?: number; // 创建来源
+    poker_type?: number; // 牌类型
+    sng_id?: number; // 显示ID
+    currency?: string; // 货币代码
+    blindtable_type?: number; // 盲注表类型
+    club_id?: number; // 俱乐部ID
+    game_icon?: string; // 游戏图标URL
+    gold_type?: number; // 币种类型（0-未知 1-联盟币 2-USDT 3-记分牌 4-钻石）
+    initial_score?: number; // 初始分数
+    invitation_code?: string; // 邀请码
+    is_admin?: boolean; // 是否为管理员
+    prize_type?: number; // 奖励类型
+    prizes?: MTTRealPrizePrize[]; // 奖励列表
+    relate_club_ids?: number[]; // 关联俱乐部ID列表
+    relate_tribe_club_list?: RoomClubListTribeClubInfo[]; // 关联联盟-俱乐部列表
+    status?: number; // 当前状态 (0 创建，1 运行，2 结束，3 取消)
+    tribe_id?: number; // 联盟ID
+    type?: number; // 赛事类型
+    upblind_interval?: number; // 升盲间隔（秒/分钟，按业务定义）
+
+  [key: string]: unknown
+}
+
+export interface RoomCenterUserMatchListMttInfo {
+    origin_type?: number; // 房间来源类型 1 平台 2 联盟 3 俱乐部 4 个人
+    relate_club_ids?: number[]; // 俱乐部桌关联列表
+    relate_tribe_club_list?: RoomClubListTribeClubInfo[]; // 联盟桌关联map
+    match_id?: number; // 比赛id
+    start_time?: string; // 开始时间
+    status?: number; // 游戏状态
+    name?: string; // 比赛名称
+    game_type?: number; // 游戏类型
+    poker_type?: number; // 牌类型
+    hunter_on?: number; // 是否猎人赛
+    participants?: number; // 参赛人次
+    alive?: number; // 存活人数 优化
+    upblind_interval?: number; // 升盲时间 优化
+    apply_start_time?: string; // 报名时间
+    max_delay_apply_bl?: number; // 关闭延迟报名，升盲等级
+    rebuy_times?: number; // 重构次数
+    total_rebuy_times?: number; // 总重购次数
+    addon_begin_bl?: number; // 增购开始盲注等级
+    addon_end_bl?: number; // 增购结束盲注等级
+    apply_fee_pool?: number; // 报名费
+    apply_fee_service?: number; // 服务费
+    apply_fee_hunter?: number; // 猎人赛人头费
+    prize_type?: number; // 奖励类型
+    prize_base_pool?: number; // 奖励数量
+    prop_buy_type?: number;
+    buyin_free_times?: number; // 报名限免次数
+    rebuy_free_times?: number; // 重购限免次数
+    multi_ratio_free_times?: number; // 多倍率买入限免次数
+    addon_free_times?: number; // 增购限免次数（包含addon addonp1 addonp2）
+    buyin_free_incl_svr?: number; // 报名限免是否包含服务费，0不包含，1包含
+    rebuy_free_incl_svr?: number; // 重购限免是否包含服务费，0不包含，1包含
+    multi_ratio_free_incl_svr?: number; // 多倍率买入限免是否包含服务费，0不包含，1包含
+    addon_free_incl_svr?: number; // 增购限免是否包含服务费，0不包含，1包含
+    gold_type?: number; // 币种类型 0 未知 1 联盟币 2 USDT 3记分牌 4钻石
+    anti_cheat_type?: number; // 防作弊类型 0 未知 1 无 2 实时语音 3 实时视频 4 人脸验证
+    anti_cheat_timelimit?: number; // 强制开启语音/视频 秒数
+    anti_cheat_video_type?: number; // 实时视频模式 0 未知 1 全时长 2 随机验证 3 麦序
+    video_verify_type?: number; // 视频验证方式
+    anti_cheat_order_type?: number; // 麦序模式验证方式：1麦序音频，2全程音频
+    anti_cheat_order_mic_type?: number; // 麦序模式-麦克风验证方式： 1可关闭麦克，2不可关闭麦克
+    bought?: number; // 0: 无法报名 , 1: 报名中 , 2: 参与中
+    mtt_buy?: number; // 是否已报名
+    mtt_banner_url?: string; // MTT比赛banner
+    force_close_time?: number; // 限时赛时间
+    game_icon?: string; // 游戏图标
+    initial_score?: number; // 初始分数
+    is_admin?: boolean; // 是否为管理员
+    is_top?: number; // 是否置顶
+    joker?: number; // 百搭牌（joker）配置
+    joker_count?: number; // 百搭牌数量
+    limit_min?: number; // 最低限制值
+    mj_blind_up_hands?: number; // 麻将盲注升级手数
+    mj_total_hands?: number; // 麻将总手数
+    prizes?: MTTRealPrizePrize[]; // 奖励列表
+    state_code?: number; // 状态码
+    total_buyin_times?: number; // 总买入次数
+    type?: number; // 赛事类型
+    stage_name?: string; // 阶段赛名称
+    stage_father_id?: number; // 阶段赛终赛 ID
+    stage_blind_level?: number; // 阶段赛结束盲注级别
+    stage_remain_rate?: number; // 阶段赛结束剩余比例 (5 表示 5%)
+    stage_final_score_type?: number; // 阶段赛晋级筹码类型 (1 表示最高筹码；2 表示累加筹码)
+
+  [key: string]: unknown
+}
+
+export interface RoomCenterUserMatchListContrastMttInfo {
+    match_id?: number; // 比赛id
+    bought?: number; // 0: 无法报名 , 1: 报名中 , 2: 参与中
+    mtt_buy?: number; // 是否已报名
+    status?: number; // 游戏状态
+    participants?: number; // 参赛人次
+    state_code?: number; // 当前玩家的状态，参考 MTTPlayerStatus 定义
+
+  [key: string]: unknown
+}
+
+export interface RoomCenterUserMatchListContrastSngInfo {
+    sng_id?: number; // 比赛id
+    buy_status?: number; // 用户参与状态：0-不可参加；1-可以报名参加；2-已报名可退赛；3-比赛中；4-申请中
+    status?: number; // 游戏状态
+
+  [key: string]: unknown
+}
+
+export interface MTTRealPrizePrize {
+    min?: number; // 最小名次
+    max?: number; // 最大名次
+    award?: number; // 奖励
+    goods?: unknown[]; // 奖励物品
+
+  [key: string]: unknown
+}
+
+export interface RoomClubListTribeClubInfo {
+    tribe_id?: number; // 联盟Id
+    club_ids?: number[]; // 俱乐部
+
+  [key: string]: unknown
+}

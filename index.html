@@ -197,6 +197,12 @@
             if (fromHash) {
               return fromHash
             }
+
+            var hashRaw = hash.replace(/^#\/?/, '')
+            var fromHashDirect = new URLSearchParams(hashRaw).get('tgWebAppData')
+            if (fromHashDirect) {
+              return fromHashDirect
+            }
           } catch (error) {
             if (typeof console !== 'undefined' && typeof console.warn === 'function') {
               console.warn('[telegram] parse tgWebAppData failed:', error)

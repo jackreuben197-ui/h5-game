@@ -132,9 +132,9 @@ onMounted(() => {
             <button
               class="button btn-credit"
               type="button"
-              @click="goToMessagePage('credit', '买入要求')"
+              @click="goToMessagePage('credit', '授信额度申请')"
             >
-              <div class="text">买入要求</div>
+              <div class="text">授信额度申请</div>
               <div class="round-icon">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -186,9 +186,9 @@ onMounted(() => {
             <button
               class="button btn-credit"
               type="button"
-              @click="goToMessagePage('uc', '需要审核')"
+              @click="goToMessagePage('uc', '联盟币申请')"
             >
-              <div class="text">需要审核</div>
+              <div class="text">联盟币申请</div>
               <div class="round-icon">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -322,13 +322,18 @@ onMounted(() => {
           .btn-credit {
             display: inline-flex;
             height: 31.909px;
-            padding: 9.933px 1.505px 10.234px 15.351px;
+            padding: 9.933px 1.505px 10.234px 12px;
             align-items: center;
             gap: 5.566px;
             border-radius: 15.05px;
             background: rgba(38, 38, 38, 0.2);
             background-blend-mode: hard-light;
             position: relative;
+            /* 标签变长（授信额度申请 / 联盟币申请）后禁止压缩，避免 nowrap 文案被 overflow:hidden 裁掉。 */
+            flex-shrink: 0;
+            .text {
+              white-space: nowrap;
+            }
             &::before {
               content: '';
               position: absolute;

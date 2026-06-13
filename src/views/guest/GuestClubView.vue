@@ -4,8 +4,8 @@ import imgPokerSpade from '@/assets/icons/club_poker_spade.svg'
 import imgPokerHeart from '@/assets/icons/club_poker_heart.svg'
 import imgPokerClub from '@/assets/icons/club_poker_club.svg'
 import imgPokerDiamond from '@/assets/icons/club_poker_diamond.svg'
-import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shield.png'
-import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.png'
+import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shield.svg'
+import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.svg'
 import { useLoginModalStore } from '@/stores/loginModal'
 
 const loginModalStore = useLoginModalStore()
@@ -47,7 +47,9 @@ function notifyNotLogin(): void {
           />
         </label>
         <button type="button" class="search-btn" @click="notifyNotLogin">
+          <div class="search-btn-blur" aria-hidden="true" />
           <span class="search-btn-label">搜索</span>
+          <div class="search-btn-inset" aria-hidden="true" />
         </button>
       </div>
     </section>
@@ -61,15 +63,25 @@ function notifyNotLogin(): void {
         :class="[`quick-item--${item.kind}`, { 'quick-item--hidden': item.hidden }]"
         @click="notifyNotLogin"
       >
-        <span class="action-icon">
+        <div class="qa-icon" :class="`qa-icon--${item.kind}`">
           <template v-if="item.kind === 'create-club'">
-            <img class="icon-create-shield" :src="imgQuickActionCreateShield" alt="" />
+            <img
+              class="qa-img qa-img--cc-small"
+              :src="imgQuickActionCreateShield"
+              alt=""
+              aria-hidden="true"
+            />
           </template>
           <template v-else-if="item.kind === 'club-panel'">
-            <img class="icon-board-chart" :src="imgQuickActionBoardChart" alt="" />
+            <img
+              class="qa-img qa-img--cp-vec"
+              :src="imgQuickActionBoardChart"
+              alt=""
+              aria-hidden="true"
+            />
           </template>
-        </span>
-        <span class="action-text">{{ item.title }}</span>
+        </div>
+        <span class="action-text" :class="`action-text--${item.kind}`">{{ item.title }}</span>
       </button>
     </section>
 
@@ -109,32 +121,27 @@ function notifyNotLogin(): void {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 1.34rem;
   border-radius: 1.055rem;
   padding: 0.127rem 0.203rem 0.127rem 0.447rem;
-  background: linear-gradient(
-    98deg,
-    rgba(133, 73, 115, 0.96) 0%,
-    rgba(177, 69, 87, 0.96) 44%,
-    rgba(178, 76, 51, 0.96) 72%,
-    rgba(141, 59, 84, 0.96) 100%
-  );
-  box-shadow:
-    inset 0 0.01rem 0.045rem rgba(255, 255, 255, 0.35),
-    inset 0 -0.04rem 0.08rem rgba(70, 13, 34, 0.35);
-  overflow: hidden;
+  background: transparent;
 
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: inherit;
+    padding: 0.013rem;
     background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.18) 0%,
-      rgba(255, 255, 255, 0.03) 38%,
-      rgba(0, 0, 0, 0.2) 100%
+      126.09deg,
+      rgba(255, 255, 255, 0.89) 21.1%,
+      rgba(230, 230, 230, 0.89) 71.4%
     );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    mix-blend-mode: overlay;
     pointer-events: none;
   }
 }
@@ -143,9 +150,7 @@ function notifyNotLogin(): void {
   position: relative;
   z-index: 1;
   flex: 1;
-  min-height: 1.089rem;
   border: 0;
-  border-radius: 999px;
   padding: 0;
   display: inline-flex;
   align-items: center;
@@ -174,58 +179,109 @@ function notifyNotLogin(): void {
 }
 
 .search-input::placeholder {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 1);
 }
 
 .search-btn {
   position: relative;
   z-index: 1;
-  flex: 0 0 auto;
-  width: 2.12rem;
-  min-height: 1.089rem;
-  border-radius: 0.54rem;
-  border: 0.012rem solid rgba(244, 241, 248, 0.68);
-  padding: 0.209rem 0.58rem;
-  display: inline-flex;
-  align-items: center;
+  flex-shrink: 0;
+  width: 2.06rem;
+  height: 1.089rem;
+  border-radius: 1.689rem;
+  border: none;
+  padding: 0.209rem 0.648rem;
+  display: flex;
+  flex-direction: column;
   justify-content: center;
+  align-items: flex-start;
+  gap: 0.166rem;
   color: #fff;
-  background: rgba(165, 165, 165, 0.1);
-  box-shadow:
-    0.018rem 0.022rem 0.036rem rgba(0, 0, 0, 0.25),
-    inset 0 0 0.045rem rgba(0, 0, 0, 1),
-    inset 0.006rem 0.006rem 0.045rem rgba(0, 0, 0, 1),
-    inset 0 0 0.09rem rgba(242, 242, 242, 0.9);
+  background: transparent;
+  box-shadow: 0.024rem 0.03rem 0.047rem 0 rgba(0, 0, 0, 0.25);
   overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 0.012rem;
+    background: linear-gradient(
+      to bottom,
+      rgba(242, 242, 242, 0.4),
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 0.5)
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 2;
+  }
+}
+
+.search-btn-blur {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  backdrop-filter: blur(0.19rem);
+  background: rgba(165, 165, 165, 0.4);
+  mix-blend-mode: hard-light;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .search-btn-label {
   position: relative;
   z-index: 1;
   font-family: 'SF Pro', 'PingFang SC', sans-serif;
-  font-size: 0.38rem;
-  font-weight: 500;
+  font-size: 0.371rem;
+  font-weight: 400;
+  font-variation-settings: 'wdth' 100;
+  line-height: 0.946;
+  white-space: nowrap;
+  color: #fff;
+}
+
+.search-btn-inset {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  box-shadow:
+    inset 0 0 0.059rem 0 #000,
+    inset 0.008rem 0.008rem 0.059rem 0 #000,
+    inset 0 0 0.119rem 0.042rem rgba(242, 242, 242, 0.9);
 }
 
 .quick-actions {
   margin-top: 0.03rem;
-  padding-left: 0;
+  padding: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 0.475rem;
+  gap: 0.633rem;
 }
 
 .quick-item {
-  flex: 0 0 auto;
+  flex-shrink: 0;
   border: 0;
   background: transparent;
   padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.088rem;
+  gap: 0.118rem;
   color: #fff;
+  cursor: pointer;
+
+  &--create-club,
+  &--club-panel {
+    width: 1.621rem;
+  }
 }
 
 .quick-item--hidden {
@@ -233,31 +289,45 @@ function notifyNotLogin(): void {
   pointer-events: none;
 }
 
-.action-icon {
+.qa-icon {
   position: relative;
-  width: 1.62rem;
-  height: 1.62rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   overflow: hidden;
+  border-radius: 0.441rem;
+
+  &--create-club,
+  &--club-panel {
+    width: 1.621rem;
+    height: 1.621rem;
+  }
 }
 
-.action-icon img {
+.qa-img {
   position: absolute;
+  display: block;
   max-width: none;
+  pointer-events: none;
+}
+
+.qa-img--cc-small,
+.qa-img--cp-vec {
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
   object-fit: contain;
 }
 
 .action-text {
-  width: 100%;
-  font-size: 0.228rem;
-  line-height: 1;
-  font-weight: 500;
-  color: #fff;
+  font-family: 'SF Pro', 'PingFang SC', sans-serif;
+  font-size: 0.304rem;
+  font-weight: 510;
+  font-variation-settings: 'wdth' 100;
+  line-height: normal;
   text-align: center;
-  text-shadow: 0 0.025rem 0.317rem rgba(0, 0, 0, 0.6);
+  color: #fff;
+  text-shadow: 0 0.034rem 0.422rem rgba(0, 0, 0, 0.6);
   white-space: nowrap;
+  min-width: 100%;
 }
 
 .cards-divider {

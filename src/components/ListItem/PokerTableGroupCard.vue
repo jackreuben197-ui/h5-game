@@ -220,6 +220,12 @@ function handleTableClick(room: RoomRecord): void {
   overflow: hidden;
 }
 
+/* 展开后放开裁剪，避免卡片右上角溢出的玩法标识（如鱿鱼角色）被切掉。
+   收起/动画过程中仍保持 hidden，以保证折叠动画干净。 */
+.table-grid-wrap.is-expanded .table-grid-inner {
+  overflow: visible;
+}
+
 .table-grid {
   margin-top: 0.32rem;
   margin-bottom: 0.32rem;

@@ -245,5 +245,8 @@ export function buildChannelRegisterUrl(options?: {
     nextParams.set('trace_hash', traceHash)
   }
 
-  return `${currentUrl.protocol}//${inviteCode}.${currentUrl.hostname}/#/?${nextParams.toString()}`
+  // 邀请码只放在 ?i= 参数里，不能再拼到域名前缀（否则会生成不存在的子域名导致无法访问）。
+  // 旧逻辑（保留备查）：把邀请码拼成子域名，会生成不存在的域名导致无法访问。
+  // return `${currentUrl.protocol}//${inviteCode}.${currentUrl.hostname}/#/?${nextParams.toString()}`
+  return `${currentUrl.origin}/#/?${nextParams.toString()}`
 }

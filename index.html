@@ -201,6 +201,7 @@
             var hashRaw = hash.replace(/^#\/?/, '')
             var fromHashDirect = new URLSearchParams(hashRaw).get('tgWebAppData')
             if (fromHashDirect) {
+              try { fromHashDirect = decodeURIComponent(fromHashDirect) } catch (e) {}
               return fromHashDirect
             }
           } catch (error) {

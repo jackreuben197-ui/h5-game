@@ -3678,6 +3678,7 @@ UIloginEmail_logintext=郵箱登錄
 UIloginphonecode_logintext=手機驗證碼登錄
 UIloginPhone_Registertext=賬號註冊
 UIloginEmail_Registertext=郵箱註冊
+UILogin_AccountRegisterTip=請您妥善保管好帳號和密碼，一旦遺失將無法找回
 UIGuild_MemberBindVipDone=綁定成功
 UIGuild_MemberUnBindVipDone=解綁成功
 UIClub_IntroGuildDatail=介紹一下俱樂部吧

@@ -622,10 +622,10 @@ function applyChannelInviteContext(): void {
           {{ t('UILogin_AccountRegisterTip') }}
         </div>
         <div class="action-links">
-          <!-- <button v-if="pageMode === 'login'" class="link-btn" @click="goMode('forgot')">
+          <button v-if="pageMode === 'login' && contactType === 'email'" class="link-btn" @click="goMode('forgot')">
             {{ t('UILogin_Forget') }}
-          </button> -->
-          <span></span>
+          </button>
+          <span v-else></span>
           <button
             class="link-btn link-btn--right"
             @click="goMode(pageMode === 'login' ? 'register' : 'login')"

@@ -1829,16 +1829,12 @@ const handleBack = () => {
   position: relative;
   z-index: 1;
   max-height: calc(100dvh - 7.85rem);
-  height: calc(100dvh - 7.85rem);
   width: 100%;
   overflow-y: auto;
-  padding-bottom: 2.2rem;
-  padding: 0.34rem 0.96rem 2.2rem 0.38rem;
-  background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(0.8032rem) saturate(1.04);
+  padding: 0.34rem 0.96rem 0.5rem 0.38rem;
+  background: transparent;
   width: 10.56rem;
   margin-left: -0.28rem;
-  margin-bottom: -2rem;
 }
 
 .mtt-content {

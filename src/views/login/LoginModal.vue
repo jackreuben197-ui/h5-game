@@ -168,6 +168,9 @@ function switchContact(type: ContactType) {
   if (contactType.value === type) return
   resetOtpCountdown()
   form.code = ''
+  if (type === 'account' && pageMode.value === 'forgot') {
+    pageMode.value = 'login'
+  }
   localStore.setItem(LOGIN_ACCOUNT_TYPE_KEY, type === 'account' ? LOGIN_TYPE_PHONE : LOGIN_TYPE_EMAIL)
   if (pageMode.value === 'login') {
     form.password = readSavedPassword(type)

@@ -592,6 +592,11 @@ router.beforeEach((to, from) => {
     hasToken: Boolean(token),
   })
 
+  // Telegram appends tgWebAppData to the hash path — redirect to lobby/guest while auto-login runs.
+  if (to.path.startsWith('/tgWebAppData=')) {
+    return token ? { name: 'lobby' } : { name: 'guest-home' }
+  }
+
   if (to.meta.requiresAuth && !token) {
     const guestName =
       typeof to.name === 'string' ? GUEST_FALLBACK_BY_NAME[to.name] : undefined

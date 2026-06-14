@@ -551,7 +551,7 @@ function applyChannelInviteContext(): void {
           :class="['tab-item', { 'tab-item--active': contactType === 'email' }]"
           @click="switchContact('email')"
         >
-          {{ t('UIloginEmail_logintext') }}
+          {{ pageMode === 'register' ? t('UIloginEmail_Registertext') : t('UIloginEmail_logintext') }}
         </button>
       </div>
 
@@ -618,6 +618,9 @@ function applyChannelInviteContext(): void {
       </div>
 
       <div class="bottom-area">
+        <div v-if="pageMode === 'register' && contactType === 'account'" class="register-tip">
+          {{ t('UILogin_AccountRegisterTip') }}
+        </div>
         <div class="action-links">
           <!-- <button v-if="pageMode === 'login'" class="link-btn" @click="goMode('forgot')">
             {{ t('UILogin_Forget') }}
@@ -1035,5 +1038,20 @@ function applyChannelInviteContext(): void {
 
 .primary-btn {
   height: 1.44rem;
+}
+
+.register-tip {
+  background: rgba(220, 38, 38, 0.08);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  border: 0.5px solid rgba(249, 249, 249, 0.08);
+  border-radius: 0.8rem;
+  padding: 0.12rem 0.26rem;
+  font-size: 0.3rem;
+  font-weight: 400;
+  font-family: 'PingFang SC', 'HONOR Sans CN', sans-serif;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.5;
+  text-align: center;
 }
 </style>

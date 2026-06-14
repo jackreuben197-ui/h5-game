@@ -643,7 +643,7 @@ function consumePhoneAreaSelection(): void {
             :class="['tab-item', { 'tab-item--active': contactType === 'email' }]"
             @click="switchContact('email')"
           >
-            {{ t('UIloginEmail_logintext') }}
+            {{ pageMode === 'register' ? t('UIloginEmail_Registertext') : t('UIloginEmail_logintext') }}
           </button>
         </div>
 

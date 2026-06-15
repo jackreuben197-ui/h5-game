@@ -84,8 +84,12 @@ async function fetchHandRows(): Promise<void> {
 
     const records = Array.isArray(response.data?.records) ? response.data.records : []
     const room = (records[0]?.room_record as Record<string, unknown>) ?? {}
-    const userRowsRaw = Array.isArray(records[0]?.user_game_records) ? records[0]?.user_game_records : []
-    const userRows = userRowsRaw.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+    const userRowsRaw = Array.isArray(records[0]?.user_game_records)
+      ? records[0]?.user_game_records
+      : []
+    const userRows = userRowsRaw.filter(
+      (item): item is Record<string, unknown> => !!item && typeof item === 'object',
+    )
 
     overviewTitle.value = String(room.name ?? '牌局名称')
     overviewId.value = `ID: ${String(room.room_id ?? roomId)}`
@@ -164,7 +168,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .record-hand-page {
   height: 100dvh;
-  padding-top: calc(env(safe-area-inset-top) + 0.46rem);
+  // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;
   background-size: cover;

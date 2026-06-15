@@ -2,11 +2,11 @@
 import { computed, onMounted } from 'vue'
 import { showFailToast, showSuccessToast } from 'vant'
 import { useRoute } from 'vue-router'
+import type { StatsReplayData, StatsReplayFantasyData } from '@/api/models/replayDisplay'
 import type {
-  StatsReplayData,
-  StatsReplayFantasyData,
-} from '@/api/models/replayDisplay'
-import type { StatsUserGameRecordListRecord, StatsUserGameRecordListRoom_record } from '@/api/models/stats'
+  StatsUserGameRecordListRecord,
+  StatsUserGameRecordListRoom_record,
+} from '@/api/models/stats'
 import {
   buildReplayDisplaySections,
   decodeCard,
@@ -58,7 +58,9 @@ function formatDateTime(unixSeconds?: number): string {
 
 function cardListFromUnknown(value: unknown): CardItem[] {
   if (!Array.isArray(value)) return []
-  return (value as number[]).map(item => decodeCard(toSafeNumber(item))).filter(c => c.rank !== '--')
+  return (value as number[])
+    .map((item) => decodeCard(toSafeNumber(item)))
+    .filter((c) => c.rank !== '--')
 }
 
 const handId = computed(() => {
@@ -67,11 +69,17 @@ const handId = computed(() => {
 })
 
 const payload = computed(() => getHandReplaySession(handId.value || undefined))
-const roomRecord = computed<StatsUserGameRecordListRoom_record>(() => payload.value?.roomRecord ?? {})
-const handRecord = computed<StatsUserGameRecordListRecord | null>(() => payload.value?.handRecord ?? null)
+const roomRecord = computed<StatsUserGameRecordListRoom_record>(
+  () => payload.value?.roomRecord ?? {},
+)
+const handRecord = computed<StatsUserGameRecordListRecord | null>(
+  () => payload.value?.handRecord ?? null,
+)
 
 const replay = computed(() => parseReplayLike<StatsReplayData>(handRecord.value?.replay))
-const replayFantasy = computed(() => parseReplayLike<StatsReplayFantasyData>(handRecord.value?.replay_ft))
+const replayFantasy = computed(() =>
+  parseReplayLike<StatsReplayFantasyData>(handRecord.value?.replay_ft),
+)
 
 const summaryTitle = computed(() => {
   if (replay.value?.name) return String(replay.value.name)
@@ -110,7 +118,9 @@ const showdownCards = computed(() => {
   if (replay.value?.result?.[0]?.card?.length) {
     return cardListFromUnknown(replay.value.result[0].card)
   }
-  const fallbackCards = cardListFromUnknown((replay.value?.procedure?.river?.card ?? replay.value?.procedure?.turn?.card ?? []))
+  const fallbackCards = cardListFromUnknown(
+    replay.value?.procedure?.river?.card ?? replay.value?.procedure?.turn?.card ?? [],
+  )
   return fallbackCards.length ? fallbackCards : []
 })
 
@@ -138,7 +148,6 @@ function onFavorite(): void {
 function onShare(): void {
   showSuccessToast('分享功能开发中')
 }
-
 </script>
 
 <template>
@@ -161,11 +170,7 @@ function onShare(): void {
         </div>
       </section>
 
-      <section
-        v-for="section in streetSections"
-        :key="section.id"
-        class="street-card"
-      >
+      <section v-for="section in streetSections" :key="section.id" class="street-card">
         <header class="street-head">
           <div class="head-left">
             <h3 class="street-title">{{ section.title }}</h3>
@@ -260,7 +265,7 @@ function onShare(): void {
 <style scoped lang="scss">
 .hand-detail-page {
   height: 100dvh;
-  padding-top: calc(env(safe-area-inset-top) + 0.46rem);
+  // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: calc(env(safe-area-inset-bottom) + 2.2rem);
   color: #f9f9f9;
   background-size: cover;

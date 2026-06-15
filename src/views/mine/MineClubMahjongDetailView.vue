@@ -126,18 +126,28 @@ async function fetchDetail(): Promise<void> {
     currentRoomId.value = toSafeNumber(roomData?.room_id)
     detailTitle.value = String(roomData?.game_room_name ?? 'Hand Name')
     detailSub.value = `ID: ${String(roomData?.room_id ?? '--')}`
-    detailTime.value = `${String(roomData?.start_time ?? '--')} - ${String(roomData?.end_time ?? '--')}`
+    detailTime.value = `${String(roomData?.start_time ?? '--')} - ${String(
+      roomData?.end_time ?? '--',
+    )}`
 
     summaryItems.value = [
       { label: '带入', value: toSafeNumber(roomData?.all_bring_in).toLocaleString('en-US') },
-      { label: '底池', value: toSafeNumber(roomData?.all_bet_pot ?? roomData?.max_bet_pot).toLocaleString('en-US') },
+      {
+        label: '底池',
+        value: toSafeNumber(roomData?.all_bet_pot ?? roomData?.max_bet_pot).toLocaleString('en-US'),
+      },
       { label: '手数', value: toSafeNumber(roomData?.room_total_hand_num).toLocaleString('en-US') },
-      { label: '时长', value: `${Math.max(0, Math.round(toSafeNumber(roomData?.player_duration) / 3600))}h` },
+      {
+        label: '时长',
+        value: `${Math.max(0, Math.round(toSafeNumber(roomData?.player_duration) / 3600))}h`,
+      },
     ]
 
     seatPlayers.value = users.slice(0, 3).map((user, index) => ({
       name: String(user.nick_name ?? `Player ${index + 1}`),
-      chips: toSafeNumber(user.finally_game_results ?? user.original_results).toLocaleString('en-US'),
+      chips: toSafeNumber(user.finally_game_results ?? user.original_results).toLocaleString(
+        'en-US',
+      ),
       tag: index === 1 ? 'MVP' : undefined,
       highlight: index === 1,
     }))
@@ -154,7 +164,10 @@ async function fetchDetail(): Promise<void> {
       exposedKong: String(toSafeNumber(user.mj_exposed_kong_count)),
     }))
 
-    const total = playerResults.value.reduce((sum, item) => sum + toSafeNumber(item.amount.replace(/,/g, '')), 0)
+    const total = playerResults.value.reduce(
+      (sum, item) => sum + toSafeNumber(item.amount.replace(/,/g, '')),
+      0,
+    )
     totalAmount.value = formatSigned(total)
   } catch (error) {
     const message = error instanceof Error ? error.message : '加载麻将战绩详情失败'
@@ -229,12 +242,7 @@ onMounted(() => {
         <p v-if="loading" class="list-status">加载中...</p>
         <p v-else-if="!playerResults.length" class="list-status">暂无结算数据</p>
 
-        <article
-          v-for="item in playerResults"
-          :key="item.id"
-          class="result-row"
-          @click="goToHands"
-        >
+        <article v-for="item in playerResults" :key="item.id" class="result-row" @click="goToHands">
           <div class="top">
             <div class="left">
               <div class="avatar small"></div>
@@ -243,7 +251,9 @@ onMounted(() => {
                 <div class="sub">ID: {{ item.uid }}</div>
               </div>
             </div>
-            <div class="amount" :class="{ minus: item.amount.startsWith('-') }">{{ item.amount }}</div>
+            <div class="amount" :class="{ minus: item.amount.startsWith('-') }">
+              {{ item.amount }}
+            </div>
           </div>
           <div class="stats-row">
             <span>自摸:{{ item.selfDraw }}</span>
@@ -261,7 +271,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .record-detail-page {
   height: 100dvh;
-  padding-top: calc(env(safe-area-inset-top) + 0.46rem);
+  // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;
   background-size: cover;

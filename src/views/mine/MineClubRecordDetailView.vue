@@ -49,8 +49,24 @@ const summaryItems = ref([
 ])
 
 const playerResults = ref<PlayerResult[]>([
-  { id: 'p1', name: 'Player Name', uid: '11440454', buyIn: '200', hands: '123', vpip: '7%', profit: '+800' },
-  { id: 'p2', name: 'Player Name', uid: '11440454', buyIn: '200', hands: '123', vpip: '7%', profit: '+400' },
+  {
+    id: 'p1',
+    name: 'Player Name',
+    uid: '11440454',
+    buyIn: '200',
+    hands: '123',
+    vpip: '7%',
+    profit: '+800',
+  },
+  {
+    id: 'p2',
+    name: 'Player Name',
+    uid: '11440454',
+    buyIn: '200',
+    hands: '123',
+    vpip: '7%',
+    profit: '+400',
+  },
 ])
 
 const detailTitle = ref('Hand Name')
@@ -105,13 +121,21 @@ async function fetchRecordDetail(): Promise<void> {
     detailTitle.value = String(roomData?.game_room_name ?? 'Hand Name')
     currentRoomId.value = toSafeNumber(roomData?.room_id)
     detailSub.value = `ID: ${String(roomData?.room_id ?? '--')}`
-    detailTime.value = `${String(roomData?.start_time ?? '--')} - ${String(roomData?.end_time ?? '--')}`
+    detailTime.value = `${String(roomData?.start_time ?? '--')} - ${String(
+      roomData?.end_time ?? '--',
+    )}`
 
     summaryItems.value = [
       { label: '带入', value: toSafeNumber(roomData?.all_bring_in).toLocaleString('en-US') },
-      { label: '底池', value: toSafeNumber(roomData?.all_bet_pot ?? roomData?.max_bet_pot).toLocaleString('en-US') },
+      {
+        label: '底池',
+        value: toSafeNumber(roomData?.all_bet_pot ?? roomData?.max_bet_pot).toLocaleString('en-US'),
+      },
       { label: '手数', value: toSafeNumber(roomData?.room_total_hand_num).toLocaleString('en-US') },
-      { label: '时长', value: `${Math.max(0, Math.round(toSafeNumber(roomData?.player_duration) / 3600))}h` },
+      {
+        label: '时长',
+        value: `${Math.max(0, Math.round(toSafeNumber(roomData?.player_duration) / 3600))}h`,
+      },
     ]
 
     seatPlayers.value = userList.slice(0, 3).map((user, index) => ({
@@ -134,7 +158,10 @@ async function fetchRecordDetail(): Promise<void> {
       }
     })
 
-    const total = playerResults.value.reduce((sum, item) => sum + toSafeNumber(item.profit.replace(/,/g, '')), 0)
+    const total = playerResults.value.reduce(
+      (sum, item) => sum + toSafeNumber(item.profit.replace(/,/g, '')),
+      0,
+    )
     totalProfit.value = formatSigned(total)
   } catch (error) {
     const message = error instanceof Error ? error.message : '加载战绩详情失败'
@@ -210,12 +237,7 @@ onMounted(() => {
         <p v-if="loading" class="list-status">加载中...</p>
         <p v-else-if="!playerResults.length" class="list-status">暂无结算数据</p>
 
-        <article
-          v-for="item in playerResults"
-          :key="item.id"
-          class="result-row"
-          @click="goToHands"
-        >
+        <article v-for="item in playerResults" :key="item.id" class="result-row" @click="goToHands">
           <div class="left">
             <div class="avatar small"></div>
             <div>
@@ -240,7 +262,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .record-detail-page {
   height: 100dvh;
-  padding-top: calc(env(safe-area-inset-top) + 0.46rem);
+  // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;
   background-size: cover;

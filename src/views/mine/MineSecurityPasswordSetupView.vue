@@ -169,10 +169,13 @@ function closeOverlay(): void {
 <style scoped lang="scss">
 .security-password-page {
   height: 100dvh;
-  padding-top: calc(env(safe-area-inset-top) + 0.42rem);
+  // padding-top: calc(env(safe-area-inset-top) + 0.42rem);
   position: relative;
-  background:
-    radial-gradient(60% 42% at 20% 10%, rgba(226, 163, 133, 0.62) 0%, rgba(226, 163, 133, 0) 100%),
+  background: radial-gradient(
+      60% 42% at 20% 10%,
+      rgba(226, 163, 133, 0.62) 0%,
+      rgba(226, 163, 133, 0) 100%
+    ),
     radial-gradient(55% 45% at 26% 84%, rgba(206, 107, 160, 0.58) 0%, rgba(206, 107, 160, 0) 100%),
     radial-gradient(45% 38% at 88% 84%, rgba(0, 183, 212, 0.56) 0%, rgba(0, 183, 212, 0) 100%),
     linear-gradient(160deg, #b58eb1 0%, #8d668d 54%, #6f5988 100%);
@@ -301,8 +304,14 @@ function closeOverlay(): void {
   min-height: 3.1rem;
   border: 0.0133rem solid rgba(242, 242, 242, 0.4);
   border-radius: 0.9703rem;
-  background: linear-gradient(121deg, rgba(142, 142, 142, 0.3) 2.9%, rgba(103, 103, 103, 0.4) 43.6%, rgba(73, 73, 73, 0.5) 89.8%);
-  box-shadow: inset 0 0 0.2298rem rgba(0, 0, 0, 1), inset 0.0566rem 0.1132rem 0.4596rem rgba(242, 242, 242, 0.9);
+  background: linear-gradient(
+    121deg,
+    rgba(142, 142, 142, 0.3) 2.9%,
+    rgba(103, 103, 103, 0.4) 43.6%,
+    rgba(73, 73, 73, 0.5) 89.8%
+  );
+  box-shadow: inset 0 0 0.2298rem rgba(0, 0, 0, 1),
+    inset 0.0566rem 0.1132rem 0.4596rem rgba(242, 242, 242, 0.9);
   backdrop-filter: blur(0.2rem);
   color: #fff;
   display: flex;

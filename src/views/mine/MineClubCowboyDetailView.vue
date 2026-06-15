@@ -92,18 +92,13 @@ onMounted(() => {
 
 <template>
   <div class="page-shell cowboy-page" :style="backgroundStyle">
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
       <section class="list-wrap">
         <p v-if="loading" class="list-status">加载中...</p>
         <p v-else-if="!records.length" class="list-status">暂无战绩明细</p>
-        <button
-          v-for="item in records"
-          :key="item.id"
-          type="button"
-          class="record-card"
-        >
+        <button v-for="item in records" :key="item.id" type="button" class="record-card">
           <div class="left">
             <div class="avatar-wrap">
               <span class="cowboy-hat" aria-hidden="true">⌒</span>
@@ -131,7 +126,7 @@ onMounted(() => {
 .cowboy-page {
   position: relative;
   height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.74rem;
+  padding: 0 0 0.74rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;

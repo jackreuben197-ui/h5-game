@@ -49,8 +49,24 @@ const summaryItems = ref([
 ])
 
 const playerResults = ref<PlayerResult[]>([
-  { id: 'p1', name: 'Player Name', uid: '11440454', buyIn: '200', hands: '123', vpip: '7%', profit: '+800' },
-  { id: 'p2', name: 'Player Name', uid: '11440454', buyIn: '200', hands: '123', vpip: '7%', profit: '+400' },
+  {
+    id: 'p1',
+    name: 'Player Name',
+    uid: '11440454',
+    buyIn: '200',
+    hands: '123',
+    vpip: '7%',
+    profit: '+800',
+  },
+  {
+    id: 'p2',
+    name: 'Player Name',
+    uid: '11440454',
+    buyIn: '200',
+    hands: '123',
+    vpip: '7%',
+    profit: '+400',
+  },
 ])
 
 const detailTitle = ref('Hand Name')
@@ -105,13 +121,21 @@ async function fetchRecordDetail(): Promise<void> {
     detailTitle.value = String(roomData?.game_room_name ?? 'Hand Name')
     currentRoomId.value = toSafeNumber(roomData?.room_id)
     detailSub.value = `ID: ${String(roomData?.room_id ?? '--')}`
-    detailTime.value = `${String(roomData?.start_time ?? '--')} - ${String(roomData?.end_time ?? '--')}`
+    detailTime.value = `${String(roomData?.start_time ?? '--')} - ${String(
+      roomData?.end_time ?? '--',
+    )}`
 
     summaryItems.value = [
       { label: '带入', value: toSafeNumber(roomData?.all_bring_in).toLocaleString('en-US') },
-      { label: '底池', value: toSafeNumber(roomData?.all_bet_pot ?? roomData?.max_bet_pot).toLocaleString('en-US') },
+      {
+        label: '底池',
+        value: toSafeNumber(roomData?.all_bet_pot ?? roomData?.max_bet_pot).toLocaleString('en-US'),
+      },
       { label: '手数', value: toSafeNumber(roomData?.room_total_hand_num).toLocaleString('en-US') },
-      { label: '时长', value: `${Math.max(0, Math.round(toSafeNumber(roomData?.player_duration) / 3600))}h` },
+      {
+        label: '时长',
+        value: `${Math.max(0, Math.round(toSafeNumber(roomData?.player_duration) / 3600))}h`,
+      },
     ]
 
     seatPlayers.value = userList.slice(0, 3).map((user, index) => ({
@@ -134,7 +158,10 @@ async function fetchRecordDetail(): Promise<void> {
       }
     })
 
-    const total = playerResults.value.reduce((sum, item) => sum + toSafeNumber(item.profit.replace(/,/g, '')), 0)
+    const total = playerResults.value.reduce(
+      (sum, item) => sum + toSafeNumber(item.profit.replace(/,/g, '')),
+      0,
+    )
     totalProfit.value = formatSigned(total)
   } catch (error) {
     const message = error instanceof Error ? error.message : '加载战绩详情失败'
@@ -210,12 +237,7 @@ onMounted(() => {
         <p v-if="loading" class="list-status">加载中...</p>
         <p v-else-if="!playerResults.length" class="list-status">暂无结算数据</p>
 
-        <article
-          v-for="item in playerResults"
-          :key="item.id"
-          class="result-row"
-          @click="goToHands"
-        >
+        <article v-for="item in playerResults" :key="item.id" class="result-row" @click="goToHands">
           <div class="left">
             <div class="avatar small"></div>
             <div>
@@ -240,7 +262,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .record-detail-page {
   height: 100dvh;
-  padding-top: calc(env(safe-area-inset-top) + 0.46rem);
+  // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;
   background-size: cover;
@@ -267,10 +289,10 @@ onMounted(() => {
   justify-content: space-between;
   font-size: 0.34rem;
 
-   .arrow {
+  .arrow {
     font-size: 0.26rem;
     opacity: 0.82;
-   }
+  }
 }
 
 .table-section {
@@ -287,15 +309,15 @@ onMounted(() => {
 .seat {
   text-align: center;
 
-   .avatar {
+  .avatar {
     width: 1rem;
     height: 1rem;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.45);
     margin: 0 auto;
-   }
+  }
 
-   .tag {
+  .tag {
     margin-top: 0.08rem;
     display: inline-flex;
     align-items: center;
@@ -306,24 +328,24 @@ onMounted(() => {
     font-size: 0.2rem;
     color: #fff;
     background: rgba(255, 255, 255, 0.24);
-   }
+  }
 
-   .name {
+  .name {
     margin-top: 0.1rem;
     font-size: 0.32rem;
-   }
+  }
 
-   .chips {
+  .chips {
     margin-top: 0.06rem;
     font-size: 0.34rem;
     font-weight: 600;
-   }
+  }
 
-   &.highlight {
-     .avatar {
+  &.highlight {
+    .avatar {
       background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
-     }
-   }
+    }
+  }
 }
 
 .hand-summary {
@@ -366,15 +388,15 @@ onMounted(() => {
   flex-direction: column;
   gap: 0.06rem;
 
-   .label {
+  .label {
     font-size: 0.24rem;
     color: rgba(255, 255, 255, 0.7);
-   }
+  }
 
-   .value {
+  .value {
     font-size: 0.34rem;
     font-weight: 600;
-   }
+  }
 }
 
 .result-section {
@@ -389,11 +411,11 @@ onMounted(() => {
   font-size: 0.36rem;
   font-weight: 600;
 
-   .total {
+  .total {
     font-size: 0.48rem;
     font-weight: 700;
     color: #ff8498;
-   }
+  }
 }
 
 .list-status {
@@ -418,39 +440,39 @@ onMounted(() => {
   align-items: center;
   gap: 0.14rem;
 
-   .avatar {
+  .avatar {
     width: 0.72rem;
     height: 0.72rem;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.4);
 
-     &.small {
+    &.small {
       width: 0.6rem;
       height: 0.6rem;
-     }
-   }
+    }
+  }
 
-   .name {
+  .name {
     font-size: 0.34rem;
-   }
+  }
 
-   .sub {
+  .sub {
     margin-top: 0.04rem;
     font-size: 0.26rem;
     color: rgba(255, 255, 255, 0.7);
-   }
+  }
 }
 
 .right {
   text-align: right;
 
-   .profit {
+  .profit {
     font-size: 0.48rem;
     font-weight: 700;
     color: #ff8498;
-   }
+  }
 
-   .sub-row {
+  .sub-row {
     margin-top: 0.04rem;
     font-size: 0.26rem;
     color: rgba(255, 255, 255, 0.7);
@@ -458,6 +480,6 @@ onMounted(() => {
     flex-direction: column;
     gap: 0.02rem;
     align-items: flex-end;
-   }
+  }
 }
 </style>

@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { postFriendRoomStatsApi } from '@/api/stats'
 import type { FriendRoomStatsRecord } from '@/api/models/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { showGameToast } from '@/components/Toast'
 
 const router = useRouter()
 
@@ -46,6 +47,7 @@ const title = ref('数据')
 
 function handleMenuClick(item: MenuItem): void {
   if (!item.route) {
+    showGameToast('功能开发中')
     return
   }
   void router.push(item.route)

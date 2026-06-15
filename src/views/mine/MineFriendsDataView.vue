@@ -46,7 +46,9 @@ const endDateModel = ref(startOfDay(now))
 
 const isDatePickerVisible = ref(false)
 const pickingTarget = ref<'start' | 'end'>('start')
-const currentMonth = ref(new Date(endDateModel.value.getFullYear(), endDateModel.value.getMonth(), 1))
+const currentMonth = ref(
+  new Date(endDateModel.value.getFullYear(), endDateModel.value.getMonth(), 1),
+)
 const weekLabels = ['m', 't', 'w', 't', 'f', 's', 's']
 
 const metrics = ref<SummaryMetric[]>([
@@ -144,7 +146,9 @@ async function fetchFriendsRecord(): Promise<void> {
     }
 
     const list = Array.isArray(listRes.data?.list) ? listRes.data.list : []
-    records.value = list.map((item, index) => mapRecordItem((item as Record<string, unknown>) ?? {}, index))
+    records.value = list.map((item, index) =>
+      mapRecordItem((item as Record<string, unknown>) ?? {}, index),
+    )
 
     const info = (infoRes.data?.info as Record<string, unknown> | undefined) ?? {}
     const handNum = toSafeNumber(info.hand_num)
@@ -165,7 +169,9 @@ async function fetchFriendsRecord(): Promise<void> {
 
 const startDateText = computed(() => formatDateSlash(startDateModel.value))
 const endDateText = computed(() => formatDateSlash(endDateModel.value))
-const monthTitle = computed(() => `${currentMonth.value.getFullYear()}年${currentMonth.value.getMonth() + 1}月`)
+const monthTitle = computed(
+  () => `${currentMonth.value.getFullYear()}年${currentMonth.value.getMonth() + 1}月`,
+)
 
 type DayCell = {
   date: Date
@@ -260,19 +266,35 @@ function confirmDatePicker(): void {
 }
 
 function goPrevYear(): void {
-  currentMonth.value = new Date(currentMonth.value.getFullYear() - 1, currentMonth.value.getMonth(), 1)
+  currentMonth.value = new Date(
+    currentMonth.value.getFullYear() - 1,
+    currentMonth.value.getMonth(),
+    1,
+  )
 }
 
 function goPrevMonth(): void {
-  currentMonth.value = new Date(currentMonth.value.getFullYear(), currentMonth.value.getMonth() - 1, 1)
+  currentMonth.value = new Date(
+    currentMonth.value.getFullYear(),
+    currentMonth.value.getMonth() - 1,
+    1,
+  )
 }
 
 function goNextMonth(): void {
-  currentMonth.value = new Date(currentMonth.value.getFullYear(), currentMonth.value.getMonth() + 1, 1)
+  currentMonth.value = new Date(
+    currentMonth.value.getFullYear(),
+    currentMonth.value.getMonth() + 1,
+    1,
+  )
 }
 
 function goNextYear(): void {
-  currentMonth.value = new Date(currentMonth.value.getFullYear() + 1, currentMonth.value.getMonth(), 1)
+  currentMonth.value = new Date(
+    currentMonth.value.getFullYear() + 1,
+    currentMonth.value.getMonth(),
+    1,
+  )
 }
 
 function selectDay(date: Date): void {
@@ -295,13 +317,20 @@ function selectDay(date: Date): void {
     pickingTarget.value = 'start'
   }
 
-  if (selectedDate.getMonth() !== currentMonth.value.getMonth() || selectedDate.getFullYear() !== currentMonth.value.getFullYear()) {
+  if (
+    selectedDate.getMonth() !== currentMonth.value.getMonth() ||
+    selectedDate.getFullYear() !== currentMonth.value.getFullYear()
+  ) {
     currentMonth.value = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
   }
 }
 
 function isSameDay(a: Date, b: Date): boolean {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  )
 }
 
 function isRangeStart(date: Date): boolean {
@@ -421,7 +450,9 @@ onMounted(() => {
               <div class="fee-chip">
                 <div class="fee-line">
                   <span>{{ item.feeText }}</span>
-                  <span :class="item.feePositive ? 'value-up' : 'value-down'">{{ item.feeValue }}</span>
+                  <span :class="item.feePositive ? 'value-up' : 'value-down'">{{
+                    item.feeValue
+                  }}</span>
                 </div>
                 <div v-if="item.insuranceLabel && item.insuranceValue" class="fee-line">
                   <span>{{ item.insuranceLabel }}</span>
@@ -464,39 +495,19 @@ onMounted(() => {
 
           <div class="picker-month-row">
             <div class="month-arrows">
-              <button
-                type="button"
-                class="arrow-btn"
-                aria-label="上一年"
-                @click="goPrevYear"
-              >
+              <button type="button" class="arrow-btn" aria-label="上一年" @click="goPrevYear">
                 «
               </button>
-              <button
-                type="button"
-                class="arrow-btn"
-                aria-label="上一月"
-                @click="goPrevMonth"
-              >
+              <button type="button" class="arrow-btn" aria-label="上一月" @click="goPrevMonth">
                 ‹
               </button>
             </div>
             <p class="month-title">{{ monthTitle }}</p>
             <div class="month-arrows">
-              <button
-                type="button"
-                class="arrow-btn"
-                aria-label="下一月"
-                @click="goNextMonth"
-              >
+              <button type="button" class="arrow-btn" aria-label="下一月" @click="goNextMonth">
                 ›
               </button>
-              <button
-                type="button"
-                class="arrow-btn"
-                aria-label="下一年"
-                @click="goNextYear"
-              >
+              <button type="button" class="arrow-btn" aria-label="下一年" @click="goNextYear">
                 »
               </button>
             </div>
@@ -537,7 +548,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .friends-record-page {
   height: 100dvh;
-  padding-top: calc(env(safe-area-inset-top) + 0.459rem);
+  // padding-top: calc(env(safe-area-inset-top) + 0.459rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;
   background-size: cover;
@@ -695,7 +706,12 @@ onMounted(() => {
   min-height: 2.25507rem;
   border-radius: 2.0848rem;
   border: 0.02667rem solid rgba(255, 255, 255, 0.56);
-  background: linear-gradient(95deg, rgba(159, 22, 128, 0.64) 0%, rgba(130, 26, 142, 0.56) 63%, rgba(72, 82, 175, 0.56) 100%);
+  background: linear-gradient(
+    95deg,
+    rgba(159, 22, 128, 0.64) 0%,
+    rgba(130, 26, 142, 0.56) 63%,
+    rgba(72, 82, 175, 0.56) 100%
+  );
   backdrop-filter: blur(0.67653rem);
   padding: 0.37333rem 0.53333rem 0.37333rem 1.2rem;
   display: flex;

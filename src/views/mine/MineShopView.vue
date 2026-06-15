@@ -129,8 +129,8 @@ function parseTraderSwitchConfig(raw: unknown): TraderSwitchConfig | null {
           }
         })()
       : typeof raw === 'object'
-        ? (raw as Record<string, unknown>)
-        : null
+      ? (raw as Record<string, unknown>)
+      : null
 
   if (!source) return null
 
@@ -729,7 +729,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="page-shell mine-shop-page" :style="backgroundStyle">
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
       <section class="profile-card">
@@ -911,7 +911,7 @@ onBeforeUnmount(() => {
 .mine-shop-page {
   position: relative;
   height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 calc(env(safe-area-inset-bottom) + 0.55rem);
+  padding: 0 0 calc(env(safe-area-inset-bottom) + 0.55rem);
   color: #f9f9f9;
   background-size: cover;
   background-position: center;
@@ -922,8 +922,7 @@ onBeforeUnmount(() => {
 .bg-mask {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(
+  background: radial-gradient(
       92.73% 55.38% at 22.4% 25.21%,
       rgba(177, 0, 0, 0.38) 0%,
       rgba(177, 0, 0, 0) 100%
@@ -949,8 +948,7 @@ onBeforeUnmount(() => {
   height: 4.1333rem;
   border-radius: 1.0418rem;
   padding: 0.5rem 0.56rem 0.44rem;
-  background:
-    radial-gradient(
+  background: radial-gradient(
       94.22% 94.22% at 86.5% 19.3%,
       rgba(105, 9, 61, 0.73) 0%,
       rgba(105, 9, 61, 0) 100%
@@ -1064,9 +1062,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition:
-    transform 0.16s ease,
-    box-shadow 0.16s ease;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
 }
 
 .shop-card.active {
@@ -1303,17 +1299,14 @@ onBeforeUnmount(() => {
   padding: 0.4187rem 0.4106rem 0.4106rem;
   color: #f9f9f9;
   backdrop-filter: blur(0.2022rem);
-  background:
-    linear-gradient(
+  background: linear-gradient(
       103deg,
       rgba(142, 142, 142, 0.3) 2.93%,
       rgba(103, 103, 103, 0.4) 43.62%,
       rgba(73, 73, 73, 0.5) 89.79%
     ),
     rgba(0, 0, 0, 0.25);
-  box-shadow:
-    inset 0 0 0.2298rem #000,
-    inset 0.0566rem 0.1132rem 0.4596rem rgba(242, 242, 242, 0.9),
+  box-shadow: inset 0 0 0.2298rem #000, inset 0.0566rem 0.1132rem 0.4596rem rgba(242, 242, 242, 0.9),
     0.0919rem 0.1149rem 0.0919rem rgba(0, 0, 0, 0.25);
 }
 
@@ -1493,8 +1486,7 @@ onBeforeUnmount(() => {
   padding: 0.8925rem 0.4307rem 0.6379rem;
   box-sizing: border-box;
   color: #fff;
-  background:
-    linear-gradient(
+  background: linear-gradient(
       113deg,
       rgba(142, 142, 142, 0.6) 0%,
       rgba(103, 103, 103, 0.8) 46.85%,
@@ -1508,10 +1500,8 @@ onBeforeUnmount(() => {
       rgba(255, 255, 255, 0.5) 100%
     )
     1;
-  box-shadow:
-    inset 0.0594rem 0.1188rem 0.4821rem rgba(242, 242, 242, 0.9),
-    inset 0 0 0.624rem rgba(203, 110, 125, 0.7),
-    inset 0 0 0.241rem rgba(0, 0, 0, 0.95),
+  box-shadow: inset 0.0594rem 0.1188rem 0.4821rem rgba(242, 242, 242, 0.9),
+    inset 0 0 0.624rem rgba(203, 110, 125, 0.7), inset 0 0 0.241rem rgba(0, 0, 0, 0.95),
     0.0964rem 0.1205rem 0.1928rem rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(0.4241rem);
 }

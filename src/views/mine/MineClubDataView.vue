@@ -98,13 +98,22 @@ const onWindowResize = () => {
   }
 }
 
-const passiveRate = computed(() => allInRateRows.value.find((item) => item.key === 'passive')?.rate ?? 0)
-const backwardRate = computed(() => allInRateRows.value.find((item) => item.key === 'behind')?.rate ?? 0)
-const leadingRate = computed(() => allInRateRows.value.find((item) => item.key === 'ahead')?.rate ?? 0)
+const passiveRate = computed(
+  () => allInRateRows.value.find((item) => item.key === 'passive')?.rate ?? 0,
+)
+const backwardRate = computed(
+  () => allInRateRows.value.find((item) => item.key === 'behind')?.rate ?? 0,
+)
+const leadingRate = computed(
+  () => allInRateRows.value.find((item) => item.key === 'ahead')?.rate ?? 0,
+)
 
 const personalCache = new Map<string, typeof personalRings.value>()
 const opponentCache = new Map<string, ProfitRow[]>()
-const allInCache = new Map<string, { summary: typeof allInSummary.value; rates: typeof allInRateRows.value }>()
+const allInCache = new Map<
+  string,
+  { summary: typeof allInSummary.value; rates: typeof allInRateRows.value }
+>()
 const deckCache = new Map<string, DeckRow[]>()
 
 const personalHasData = computed(() => {
@@ -233,7 +242,12 @@ function drawAllInRadar(): void {
     pointAt('left', passiveRate.value),
   ]
 
-  const fill = ctx.createLinearGradient(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
+  const fill = ctx.createLinearGradient(
+    centerX - radius,
+    centerY - radius,
+    centerX + radius,
+    centerY + radius,
+  )
   fill.addColorStop(0, 'rgba(249, 249, 249, 0.34)')
   fill.addColorStop(1, 'rgba(249, 249, 249, 0.14)')
   ctx.beginPath()
@@ -301,7 +315,11 @@ function resolvePersonalMode(mode: string): { game_types: number[]; poker_types:
   return { game_types: [0], poker_types: [0] }
 }
 
-function resolveAllInMode(mode: string): { game_types: number[]; poker_types: number[]; aof_type: number } {
+function resolveAllInMode(mode: string): {
+  game_types: number[]
+  poker_types: number[]
+  aof_type: number
+} {
   if (mode === 'Omaha') {
     return { game_types: [1, 2, 3], poker_types: [0], aof_type: 2 }
   }
@@ -320,7 +338,11 @@ function resolveAllInMode(mode: string): { game_types: number[]; poker_types: nu
   return { game_types: [0], poker_types: [0], aof_type: 2 }
 }
 
-function resolveDeckMode(mode: string): { game_types: number[]; poker_types: number[]; aof_type: number } {
+function resolveDeckMode(mode: string): {
+  game_types: number[]
+  poker_types: number[]
+  aof_type: number
+} {
   if (mode === 'Omaha') {
     return { game_types: [1, 2, 3], poker_types: [0], aof_type: 2 }
   }
@@ -366,7 +388,7 @@ function setPersonalCache(mode: string, roomData: Record<string, unknown>): void
     personalRingMeta.map((item) => ({
       ...item,
       value: metricMap[item.key] ?? 0,
-    }))
+    })),
   )
 }
 
@@ -458,7 +480,9 @@ function setDeckCache(mode: string, records: unknown): void {
 }
 
 function applyCurrentPersonal(): void {
-  personalRings.value = personalCache.get(selectedPersonalGame.value) ?? personalRingMeta.map((item) => ({ ...item, value: 0 }))
+  personalRings.value =
+    personalCache.get(selectedPersonalGame.value) ??
+    personalRingMeta.map((item) => ({ ...item, value: 0 }))
 }
 
 function applyCurrentOpponent(): void {
@@ -486,7 +510,10 @@ function applyCurrentDeck(): void {
   deckRows.value = deckCache.get(selectedDeckMode.value) ?? []
 }
 
-async function requestCombine(payload: Record<string, unknown>, silent = false): Promise<Record<string, unknown> | null> {
+async function requestCombine(
+  payload: Record<string, unknown>,
+  silent = false,
+): Promise<Record<string, unknown> | null> {
   try {
     const response = await postMiscCombineApi(payload)
     if (response.code !== 0) {
@@ -522,7 +549,7 @@ async function loadPersonal(mode: string, silent = false): Promise<void> {
     return
   }
   const statsResp = (data.stats_user_stats_resp ?? {}) as Record<string, unknown>
-  const roomData = ((statsResp.room_data as Record<string, unknown>) ?? {})
+  const roomData = (statsResp.room_data as Record<string, unknown>) ?? {}
   setPersonalCache(mode, roomData)
 }
 
@@ -642,7 +669,7 @@ async function loadInitial(): Promise<void> {
     }
 
     const statsResp = (data.stats_user_stats_resp ?? {}) as Record<string, unknown>
-    const roomData = ((statsResp.room_data as Record<string, unknown>) ?? {})
+    const roomData = (statsResp.room_data as Record<string, unknown>) ?? {}
     setPersonalCache(personalMode, roomData)
 
     const rivalResp = (data.user_rival_room_stats_resp ?? {}) as Record<string, unknown>
@@ -753,14 +780,18 @@ watch(selectedAllInMode, () => {
   void ensureCurrentTabData()
 })
 
-watch([allInRateRows, allInOverallRate], () => {
-  if (selectedMainTab.value !== 'allin') {
-    return
-  }
-  void nextTick(() => {
-    scheduleRadarDraw()
-  })
-}, { deep: true })
+watch(
+  [allInRateRows, allInOverallRate],
+  () => {
+    if (selectedMainTab.value !== 'allin') {
+      return
+    }
+    void nextTick(() => {
+      scheduleRadarDraw()
+    })
+  },
+  { deep: true },
+)
 
 watch(selectedDeckMode, () => {
   void ensureCurrentTabData()
@@ -785,7 +816,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="page-shell club-data-page" :style="backgroundStyle">
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
       <p v-if="loading" class="panel-status">加载中...</p>
@@ -818,11 +849,7 @@ onBeforeUnmount(() => {
 
         <template v-if="personalHasData">
           <section class="ring-grid">
-            <article
-              v-for="ring in personalRings"
-              :key="ring.key"
-              class="ring-card"
-            >
+            <article v-for="ring in personalRings" :key="ring.key" class="ring-card">
               <van-circle
                 class="ring-donut"
                 :size="'1.92rem'"
@@ -906,7 +933,11 @@ onBeforeUnmount(() => {
 
           <article v-for="row in opponentRows" :key="row.id" class="table-row">
             <div class="player-cell">
-              <span class="avatar" :style="row.avatar ? { backgroundImage: `url(${row.avatar})` } : undefined" aria-hidden="true"></span>
+              <span
+                class="avatar"
+                :style="row.avatar ? { backgroundImage: `url(${row.avatar})` } : undefined"
+                aria-hidden="true"
+              ></span>
               <span class="name">{{ row.name }}</span>
             </div>
             <span>{{ row.hands }}</span>
@@ -1033,7 +1064,7 @@ onBeforeUnmount(() => {
 .club-data-page {
   position: relative;
   height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.72rem;
+  padding: 0 0 0.72rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;
@@ -1232,8 +1263,13 @@ onBeforeUnmount(() => {
   }
 
   &.back {
-    background:
-      repeating-linear-gradient(45deg, #30b6ff 0, #30b6ff 0.08rem, #2f86e7 0.08rem, #2f86e7 0.16rem);
+    background: repeating-linear-gradient(
+      45deg,
+      #30b6ff 0,
+      #30b6ff 0.08rem,
+      #2f86e7 0.08rem,
+      #2f86e7 0.16rem
+    );
     border: 0.02rem solid rgba(249, 249, 249, 0.28);
     box-shadow: inset 0 0 0 0.02rem rgba(255, 255, 255, 0.24);
   }
@@ -1337,8 +1373,7 @@ onBeforeUnmount(() => {
   width: 0.48rem;
   height: 0.48rem;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 30% 28%, #ffd8b6 0%, #c88145 42%, #5e3a26 100%);
+  background: radial-gradient(circle at 30% 28%, #ffd8b6 0%, #c88145 42%, #5e3a26 100%);
   border: 0.02rem solid rgba(249, 249, 249, 0.34);
 }
 

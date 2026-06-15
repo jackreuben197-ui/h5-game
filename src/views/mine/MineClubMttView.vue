@@ -141,7 +141,9 @@ function extractMttRows(value: unknown, depth = 0): Record<string, unknown>[] {
     return []
   }
   if (Array.isArray(value)) {
-    return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+    return value.filter(
+      (item): item is Record<string, unknown> => !!item && typeof item === 'object',
+    )
   }
   if (typeof value !== 'object') {
     return []
@@ -178,16 +180,18 @@ function mapMttRecord(row: Record<string, unknown>, index: number): MttRecord {
     reward: String(toSafeNumber(row.award ?? row.hunter_award).toLocaleString('en-US')),
     rewardType: '积分',
     finishTime: timeText,
-    blind: `${toSafeNumber(row.sb ?? row.small_blind)}/${toSafeNumber(row.ante ?? 0)} (${toSafeNumber(row.buy_in_times ?? 1)})`,
+    blind: `${toSafeNumber(row.sb ?? row.small_blind)}/${toSafeNumber(
+      row.ante ?? 0,
+    )} (${toSafeNumber(row.buy_in_times ?? 1)})`,
   }
 }
 
 function refreshSummary(list: MttRecord[]): void {
   const totalGames = list.length
-  const top1 = list.filter(item => item.rank === '#1').length
-  const top2 = list.filter(item => item.rank === '#2').length
-  const top3 = list.filter(item => item.rank === '#3').length
-  const awards = list.filter(item => item.reward !== '0').length
+  const top1 = list.filter((item) => item.rank === '#1').length
+  const top2 = list.filter((item) => item.rank === '#2').length
+  const top3 = list.filter((item) => item.rank === '#3').length
+  const awards = list.filter((item) => item.reward !== '0').length
   summary.value = [
     { label: 'total games', value: String(totalGames) },
     { label: 'awards', value: String(awards) },
@@ -251,7 +255,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell club-mtt-page" :style="backgroundStyle">
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
       <nav class="game-tabs" aria-label="玩法切换">
@@ -325,7 +329,7 @@ onMounted(() => {
 .club-mtt-page {
   position: relative;
   height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
+  padding: 0 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;
@@ -336,8 +340,6 @@ onMounted(() => {
   position: relative;
   padding: 0 0.49rem;
 }
-
-
 
 .game-tabs {
   margin-top: 0.34rem;

@@ -502,8 +502,8 @@ async function fetchChannel(): Promise<void> {
     requestedClubId <= 0
       ? sortedList[0] || null
       : requestedClubMissing.value
-        ? null
-        : pickChannel(sortedList)
+      ? null
+      : pickChannel(sortedList)
   const currentSupportId = Number(activeChannel.value?.support_user_id || 0)
   const byCurrent = sortedList.find(
     (item) =>
@@ -1648,7 +1648,7 @@ watch(
 .chat-mask {
   position: absolute;
   inset: 0;
-  background: rgba(12, 12, 12, 0.62);
+  background: rgba(12, 12, 12, 0.3);
 }
 
 .chat-sheet {
@@ -1663,6 +1663,7 @@ watch(
   background-position: center;
   background-repeat: no-repeat;
   overflow: hidden;
+  opacity: 0.8;
 }
 
 .chat-sheet-frost {
@@ -1775,8 +1776,7 @@ watch(
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  box-shadow:
-    inset 0.017rem 0.017rem 0 rgba(242, 242, 242, 0.2),
+  box-shadow: inset 0.017rem 0.017rem 0 rgba(242, 242, 242, 0.2),
     0.05rem 0.06rem 0.1rem rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(0.245rem);
 }
@@ -2178,8 +2178,7 @@ watch(
   min-height: 4.06rem;
   border-radius: 0.97rem;
   padding: 0.7rem 0.52rem;
-  background:
-    linear-gradient(
+  background: linear-gradient(
       124deg,
       rgba(142, 142, 142, 0.6) 0%,
       rgba(103, 103, 103, 0.8) 46.8%,

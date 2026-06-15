@@ -574,7 +574,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.24rem;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top));
+  // padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top));
 }
 
 .search-row {

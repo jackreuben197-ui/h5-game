@@ -139,7 +139,7 @@ const bodyStyles = computed<StyleValue>(() => [
     :show-confirm-button="false"
     :show-cancel-button="false"
     :before-close="beforeClose"
-    :overlay-style="{ backgroundColor: 'rgba(12, 12, 12, 0.6)' }"
+    :overlay-style="{ backgroundColor: 'rgba(12, 12, 12, 0.6)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }"
     class="game-dialog"
     :style="dialogStyle"
     v-bind="attrs"

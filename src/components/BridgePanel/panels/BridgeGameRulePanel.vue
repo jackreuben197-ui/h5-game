@@ -112,6 +112,8 @@ function stripUnityTags(raw: string): string {
     .replace(/<\/?b>/gi, '')
     .replace(/<size=\d+>/gi, '')
     .replace(/<\/size>/gi, '')
+    .replace(/<color=[^>]+>/gi, '')
+    .replace(/<\/color>/gi, '')
     .trim()
 }
 
@@ -388,14 +390,14 @@ function selectTab(key: RuleTab['key']): void {
 }
 
 .game-rule-panel__tab--active {
-  color: #fff;
+  color: #dc3232;
 }
 
 .game-rule-panel__tab-underline {
   margin-top: 0.04rem;
   width: 1.5rem;
   height: 0.07rem;
-  background: var(--primary, rgba(85, 243, 41, 1));
+  background: #dc3232;
   border-radius: 999px;
 }
 
@@ -424,7 +426,7 @@ function selectTab(key: RuleTab['key']): void {
   font-weight: 700;
   line-height: 1.35;
   text-align: left;
-  color: var(--color-primary);
+  color: #dc3232;
 }
 
 .game-rule-panel__paragraph {

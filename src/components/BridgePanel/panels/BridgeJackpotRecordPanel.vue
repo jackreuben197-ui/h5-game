@@ -144,6 +144,8 @@ function stripUnityTags(raw: string): string {
     .replace(/<\/?b>/gi, '')
     .replace(/<size=\d+>/gi, '')
     .replace(/<\/size>/gi, '')
+    .replace(/<color=[^>]+>/gi, '')
+    .replace(/<\/color>/gi, '')
     .trim()
 }
 
@@ -692,8 +694,8 @@ function trimTrailingZero(value: number): string {
 }
 
 .jackpot-tab--active {
-  color: #55ffe2;
-  border-bottom: 0.08rem solid #55ffe2;
+  color: #dc3232;
+  border-bottom: 0.08rem solid #dc3232;
 }
 
 .jackpot-panel__content {
@@ -769,7 +771,7 @@ function trimTrailingZero(value: number): string {
   font-weight: 700;
   line-height: 1.35;
   text-align: left;
-  // color: #55ffe2;
+  color: #dc3232;
 }
 
 .jackpot-panel__paragraph {

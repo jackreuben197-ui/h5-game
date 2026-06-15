@@ -363,10 +363,10 @@ function mapWalletDetails(): WalletDetailItem[] {
       const clubName = String(item.club_name ?? '').trim() || `俱乐部${index + 1}`
       const amount =
         activeTab.value === 'UC'
-          ? (item.user_gold ?? 0)
+          ? item.user_gold ?? 0
           : activeTab.value === 'Club记分牌'
-            ? (item.user_credit ?? 0)
-            : 0
+          ? item.user_credit ?? 0
+          : 0
       totalAmount.value += amount
       return {
         key: `${clubName}-${index}`,
@@ -516,7 +516,7 @@ onMounted(() => {
     :style="backgroundStyle"
     @scroll.passive="handlePageScroll"
   >
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
       <p class="hint">只支持查询最近三个月数据</p>
@@ -619,7 +619,7 @@ onMounted(() => {
   height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
+  padding: 0 0 0.8rem;
   color: #f3f3f3;
   background-size: cover;
   background-position: center;

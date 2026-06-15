@@ -998,7 +998,7 @@ onBeforeUnmount(() => {
 .message-detail-page {
   height: 100dvh;
   color: #f3f3f3;
-  padding-top: calc(env(safe-area-inset-top) + 0.46rem);
+  // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: calc(env(safe-area-inset-bottom) + 0.7rem);
   background-size: cover;
   background-position: center;

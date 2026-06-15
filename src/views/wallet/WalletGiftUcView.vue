@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import iconChips from '@/assets/icons/wallet/ic_coins.png'
-import AppBar from '@/components/wallet/AppBar.vue'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import {
   postOrgClubUserWalletRelationGrantApi,
@@ -132,7 +132,7 @@ onMounted(() => {
 
 <template>
   <div class="gift-page" :style="{ backgroundImage: `url(${mainBgUrl})` }">
-    <AppBar title="赠送" :show-actions="false" />
+    <HeaderBack title="赠送" extra-padding />
 
     <div class="gift-content">
       <p class="max-amount">最大赠送金额: {{ displayMaxAmount }}</p>

@@ -73,8 +73,16 @@ async function fetchGameSummary(): Promise<void> {
     rows.value = [
       { game: 'NLH', playedGames: toSafeNumber(nlh?.game_num), hands: toSafeNumber(nlh?.hand_num) },
       { game: 'PLO', playedGames: toSafeNumber(plo?.game_num), hands: toSafeNumber(plo?.hand_num) },
-      { game: '6+', playedGames: toSafeNumber(sixPlus?.game_num), hands: toSafeNumber(sixPlus?.hand_num) },
-      { game: 'Mahjong', playedGames: toSafeNumber(mahjong?.game_num), hands: toSafeNumber(mahjong?.hand_num) },
+      {
+        game: '6+',
+        playedGames: toSafeNumber(sixPlus?.game_num),
+        hands: toSafeNumber(sixPlus?.hand_num),
+      },
+      {
+        game: 'Mahjong',
+        playedGames: toSafeNumber(mahjong?.game_num),
+        hands: toSafeNumber(mahjong?.hand_num),
+      },
     ]
   } catch (error) {
     const message = error instanceof Error ? error.message : '加载朋友生涯数据失败'
@@ -91,7 +99,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell mine-glass-page" :style="backgroundStyle">
-    <HeaderBack :title="title">
+    <HeaderBack :title="title" extra-padding>
       <template #right>
         <div class="action-wrap">
           <TopActionButton
@@ -138,7 +146,7 @@ onMounted(() => {
 .mine-glass-page {
   position: relative;
   height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
+  padding: 0 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;

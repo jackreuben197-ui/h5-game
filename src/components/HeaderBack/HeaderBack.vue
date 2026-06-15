@@ -5,11 +5,13 @@ import { useRouter } from 'vue-router'
 interface Props {
   title?: string
   showBack?: boolean
+  extraPadding?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   title: '',
   showBack: true,
+  extraPadding: false,
 })
 
 const emit = defineEmits<{
@@ -45,7 +47,7 @@ function handleBack(event: MouseEvent): void {
 </script>
 
 <template>
-  <div class="page-back-header">
+  <div class="page-back-header" :class="{ 'extra-padding': props.extraPadding }">
     <button v-if="props.showBack" class="back-trigger" type="button" @click="handleBack">
       <svg xmlns="http://www.w3.org/2000/svg" class="back-icon" viewBox="0 0 7 12" fill="none">
         <path
@@ -80,7 +82,7 @@ function handleBack(event: MouseEvent): void {
   position: relative;
   z-index: 1;
   min-height: 1.1733rem;
-  padding: 0.5rem 0rem 0.2rem;
+  padding: calc(env(safe-area-inset-top) + 0.4rem) 0rem 0.2rem;
 }
 
 .back-trigger {
@@ -118,5 +120,9 @@ function handleBack(event: MouseEvent): void {
   min-width: 0;
   display: flex;
   align-items: center;
+}
+.extra-padding {
+  padding-left: var(--app-side-padding);
+  padding-right: var(--app-side-padding);
 }
 </style>

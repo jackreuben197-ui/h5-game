@@ -9,7 +9,7 @@
 .page-shell {
   width: min(100%, var(--app-max-width));
   margin: 0 auto;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top));
+  // padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top));
   padding-left: var(--app-side-padding);
   padding-right: var(--app-side-padding);
   overflow-y: auto;

@@ -63,9 +63,13 @@ const backgroundStyle = computed(() => ({
 
 const hasArticle = computed(() => Boolean(articleContent.value.trim()))
 
-watch([cacheKey, articleVersionHint], () => {
-  void loadArticle()
-}, { immediate: true })
+watch(
+  [cacheKey, articleVersionHint],
+  () => {
+    void loadArticle()
+  },
+  { immediate: true },
+)
 
 async function loadArticle(): Promise<void> {
   const cached = readProtocolCache(cacheKey.value, articleVersionHint.value)
@@ -262,7 +266,7 @@ function resolveArticleVersion(article: unknown): string {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding-top: calc(env(safe-area-inset-top) + 0.48rem);
+  // padding-top: calc(env(safe-area-inset-top) + 0.48rem);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

@@ -30,7 +30,7 @@ import { useGameStore } from '@/stores/game'
 import { useMttListStore } from '@/stores/mttList'
 import { useMainTabsStore } from '@/stores/mainTabs'
 import { useRoomListStore } from '@/stores/roomList'
-import { useUserInfoStore, type ClubInfo } from '@/stores/userInfo'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import { useCachedImage } from '@/utils/imageCache'
@@ -372,9 +372,9 @@ async function initializeClubIndex(): Promise<void> {
     return
   }
 
-  if (currentJoinedClub.value) {
-    bootstrapRoomList()
-  }
+  // if (currentJoinedClub.value) {
+  bootstrapRoomList()
+  // }
   if (gameStore.sessionToken && currentJoinedClub.value) {
     mttListStore.bootstrapMttList()
     void fetchClubNotice({ showPopup: true })
@@ -518,6 +518,10 @@ function buildGroupKey(room: RoomRecord): string {
 }
 
 async function handleTableClick(room: RoomRecord): Promise<void> {
+  if (isChannelPackage && !gameStore.sessionToken) {
+    notifyNotLogin()
+    return
+  }
   if (!gameStore.sessionToken) {
     showFailToast('登录状态已失效，请重新登录')
     return
@@ -563,7 +567,10 @@ function handleClubHeaderTabClick(tab: ClubHeaderTabName): void {
     showFailToast('麻将专区开发中')
     return
   }
-  if (tab === 'event' && gameStore.sessionToken && currentJoinedClub.value) {
+  if (
+    (tab === 'event' && gameStore.sessionToken && currentJoinedClub.value && !isChannelPackage) ||
+    isChannelPackage
+  ) {
     mttListStore.bootstrapMttList()
   }
   clubHeaderTab.value = tab
@@ -765,10 +772,18 @@ function resolveNameByUnityRule(rawName: string): string {
 }
 
 function handleMttCardAction(item: MttItem): void {
+  if (isChannelPackage && !gameStore.sessionToken) {
+    notifyNotLogin()
+    return
+  }
   router.push({ name: 'mtt-detail', query: { id: String(item.id) } })
 }
 
 function handleMttCardClick(item: MttItem): void {
+  if (isChannelPackage && !gameStore.sessionToken) {
+    notifyNotLogin()
+    return
+  }
   router.push({ name: 'mtt-detail', query: { id: String(item.id) } })
 }
 
@@ -1099,8 +1114,12 @@ const handleBack = () => {
     :class="{ 'room-list-page--channel': showChannelTabbar }"
     :style="[backgroundStyle, pageStyle]"
   >
-    <div class="club-auth-interaction-layer" @click.capture="handleGuestPageClick">
-      <HeaderBack :show-back="!isChannelPackage" @back="handleBack">
+    <div class="club-auth-interaction-layer">
+      <HeaderBack
+        :show-back="!isChannelPackage"
+        @back="handleBack"
+        @click.capture="handleGuestPageClick"
+      >
         <div class="club-identity">
           <div class="club-avatar">
             <img :src="clubCoverUrl" alt="club avatar" />
@@ -1179,7 +1198,7 @@ const handleBack = () => {
           </button>
         </div>
 
-        <div class="club-quick-actions">
+        <div class="club-quick-actions" @click.capture="handleGuestPageClick">
           <button
             class="club-quick-card club-quick-card--safety"
             type="button"
@@ -1582,7 +1601,9 @@ const handleBack = () => {
     rgba(73, 73, 73, 0.5) 89.79%
   );
   backdrop-filter: blur(0.2rem);
-  box-shadow: 0.092rem 0.115rem 0.184rem rgba(0, 0, 0, 0.25), inset 0 0 0.23rem rgba(0, 0, 0, 1),
+  box-shadow:
+    0.092rem 0.115rem 0.184rem rgba(0, 0, 0, 0.25),
+    inset 0 0 0.23rem rgba(0, 0, 0, 1),
     inset 0.057rem 0.113rem 0.46rem rgba(242, 242, 242, 0.9);
 }
 
@@ -1712,8 +1733,10 @@ const handleBack = () => {
   inset: -0.0107rem;
   border-radius: inherit;
   border: 0.0107rem solid rgba(255, 255, 255, 0.58);
-  box-shadow: inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
-    inset 0 0 0.2rem rgba(255, 255, 255, 0.14), 0 0 0.08rem rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
+    inset 0 0 0.2rem rgba(255, 255, 255, 0.14),
+    0 0 0.08rem rgba(255, 255, 255, 0.18);
   filter: blur(0.002rem);
   pointer-events: none;
   z-index: 4;

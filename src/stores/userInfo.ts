@@ -1,10 +1,11 @@
 import { defineStore } from 'pinia'
 import type { UserInfoData } from '@/api/models/user'
-import type { DefaultClub, OrgClubData } from '@/api/models/org'
+import type { OrgClubSearchInfoData, OrgClubData } from '@/api/models/org'
 import { postOrgClubDefaultApi } from '@/api/org'
 import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
 import { resolveInviteCode } from '@/utils/channelPackage'
+import { copyStorageToMainDomain } from '@/utils/channelPackage'
 
 export type ClubInfo = OrgClubData
 
@@ -28,11 +29,11 @@ function toSafeInt(value: unknown): number {
   return Math.floor(num)
 }
 
-function normalizeDefaultClub(club: DefaultClub | undefined): ClubInfo | null {
+function normalizeDefaultClub(club: OrgClubSearchInfoData | undefined): ClubInfo | null {
   if (!club) {
     return null
   }
-  const clubId = toSafeInt(club.id)
+  const clubId = toSafeInt(club.club_id)
   if (clubId <= 0) {
     return null
   }
@@ -101,10 +102,11 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
           this.channelDefaultClub = null
           this.currentClubId = normalizeClubId(targetClub.club_id)
           return
+        } else {
+          this.currentClubId = ''
+          copyStorageToMainDomain()
+          return
         }
-
-        this.currentClubId = ''
-        return
       }
 
       if (!normalized.length) {
@@ -135,7 +137,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
 
       const inviteCode = resolveInviteCode()
       const payload = inviteCode
-        ? { invite_code: inviteCode, invitation_code: inviteCode }
+        ? { invite_code: inviteCode }
         : {}
 
       channelDefaultClubInFlight = (async () => {

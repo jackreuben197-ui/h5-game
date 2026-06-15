@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { getAllMttSngIdsApi, getMttListApi } from '@/api/roomcenter'
+import { getAllMttSngIdsApi, getGuestAllMttSngIdsApi, postRoomCenterUserMatchListApi, postRoomCenterGuestMatchListApi } from '@/api/roomcenter'
 import { Code, subscribeH5WsCodes } from '@/bridge/ws'
 import {
   decodeMttSeriesNotifyFromRawPacket,
@@ -20,6 +20,8 @@ import type {
 } from '@/api/models/roomcenter'
 import StorageKey from '@/constants/storageKey'
 import { useGameStore } from '@/stores/game'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { isChannelPackageHost } from '@/utils/channelPackage'
 import { localStore } from '@/utils/localStore'
 import { createLogger } from '@/utils/logger'
 
@@ -43,6 +45,8 @@ interface MttListState {
 }
 
 const MTT_LIST_CACHE_VERSION = 2
+const CHANNEL_GUEST_UID = '0'
+const CHANNEL_GUEST_SESSION_KEY = `user_${CHANNEL_GUEST_UID}`
 
 // 同一 token 会话内只拉一次：mtt/list + all/mtt/sng/ids。
 let mttListLoadedToken = ''
@@ -53,12 +57,70 @@ let mttRepairSyncPromise: Promise<void> | null = null
 let pendingRepairNeedList = false
 let pendingRepairNeedIds = false
 
+function resolveMttSessionKey(): string {
+  const gameStore = useGameStore()
+  const uid = String(gameStore.loginUserId || '').trim()
+  if (uid) {
+    return `user_${uid}`
+  }
+
+  const sessionToken = gameStore.sessionToken.trim()
+  if (sessionToken) {
+    return `token_${sessionToken}`
+  }
+
+  if (isChannelPackageHost()) {
+    return CHANNEL_GUEST_SESSION_KEY
+  }
+
+  return ''
+}
+
+function isOfficialGuestMode(): boolean {
+  const gameStore = useGameStore()
+  return !gameStore.sessionToken.trim() && !isChannelPackageHost()
+}
+
+function isChannelGuestSession(sessionKey: string): boolean {
+  return sessionKey === CHANNEL_GUEST_SESSION_KEY
+}
+
+async function resolveGuestClubRid(): Promise<number> {
+  if (!isChannelPackageHost()) {
+    return 0
+  }
+
+  const userInfoStore = useUserInfoStore()
+  const cachedRid = toSafeInt(userInfoStore.channelDefaultClub?.random_id)
+  if (cachedRid > 0) {
+    return cachedRid
+  }
+
+  const club = await userInfoStore.ensureChannelDefaultClub()
+  return toSafeInt(club?.random_id)
+}
+
 function toSafeInt(value: unknown): number {
   const num = Number(value)
   if (!Number.isFinite(num)) {
     return 0
   }
   return Math.floor(num)
+}
+
+function chunkIds(ids: number[], size: number): number[][] {
+  if (size <= 0) {
+    return [ids]
+  }
+  if (!ids.length) {
+    return []
+  }
+
+  const chunks: number[][] = []
+  for (let i = 0; i < ids.length; i += size) {
+    chunks.push(ids.slice(i, i + size))
+  }
+  return chunks
 }
 
 // 仅 CREATED / RUNNING 视为可见赛事；其他状态按 Unity 逻辑移除。
@@ -206,9 +268,13 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
   actions: {
     // 对外统一入口：恢复缓存 + 会话内静默拉取一次。
     bootstrapMttList(): void {
-      const gameStore = useGameStore()
-      const sessionToken = gameStore.sessionToken.trim()
-      if (!sessionToken) {
+      if (isOfficialGuestMode()) {
+        this.clearMttList()
+        return
+      }
+
+      const sessionKey = resolveMttSessionKey()
+      if (!sessionKey) {
         this.clearMttList()
         return
       }
@@ -232,29 +298,28 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
 
     // 仅在当前 token 会话内请求一次全量列表。
     async fetchMttListOncePerSession(options: { silent?: boolean } = {}): Promise<void> {
-      const gameStore = useGameStore()
-      const sessionToken = gameStore.sessionToken.trim()
-      if (!sessionToken) {
+      const sessionKey = resolveMttSessionKey()
+      if (!sessionKey) {
         return
       }
 
-      if (mttListLoadedToken === sessionToken) {
+      if (mttListLoadedToken === sessionKey) {
         return
       }
 
-      if (mttListLoadingToken === sessionToken && mttListLoadingPromise) {
+      if (mttListLoadingToken === sessionKey && mttListLoadingPromise) {
         await mttListLoadingPromise
         return
       }
 
-      mttListLoadingToken = sessionToken
+      mttListLoadingToken = sessionKey
       // 对齐 Unity：列表详情和可见性/系列索引都在启动阶段一次拉齐。
+      await this.fetchAllMttSngIds(options)
       mttListLoadingPromise = Promise.all([
         this.fetchMttList(options),
-        this.fetchAllMttSngIds(options),
       ])
         .then(() => {
-          mttListLoadedToken = sessionToken
+          mttListLoadedToken = sessionKey
         })
         .finally(() => {
           mttListLoadingPromise = null
@@ -266,38 +331,65 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
 
     // 全量拉取：按分页聚合 records，默认状态只取 CREATED/RUNNING（0/1）。
     async fetchMttList(options: { silent?: boolean } = {}): Promise<void> {
-      const limit = 100
-      let offset = 0
-      let page = 0
-      const maxPages = 10
+      const sessionKey = resolveMttSessionKey()
+      if (!sessionKey) {
+        return
+      }
+
+      const channelGuest = isChannelGuestSession(sessionKey)
+      const guestClubRid = channelGuest ? await resolveGuestClubRid() : 0
+      if (channelGuest && guestClubRid <= 0) {
+        this.records = []
+        this.persistMttListCache()
+        return
+      }
+
+      const mttIds = this.mttIdList
+        .map((item) => toSafeInt(item.match_id))
+        .filter((id) => id > 0)
+      const sngIds = this.sngIdList
+        .map((item) => toSafeInt(item.sng_id))
+        .filter((id) => id > 0)
+
+      const mttChunks = chunkIds(mttIds, 100)
+      const sngChunks = chunkIds(sngIds, 100)
+      const requestCount = Math.max(mttChunks.length, sngChunks.length)
       const nextRecords: MttListRecord[] = []
 
+      if (!requestCount) {
+        this.records = []
+        this.persistMttListCache()
+        return
+      }
+
       try {
-        while (page < maxPages) {
-          const response = await getMttListApi({
-            limit,
-            offset,
-            status: [0, 1],
-            order: ['start_asc'],
-          })
+        for (let i = 0; i < requestCount; i += 1) {
+          const requestMttIds = mttChunks[i] || []
+          const requestSngIds = sngChunks[i] || []
+          if (!requestMttIds.length && !requestSngIds.length) {
+            continue
+          }
+
+          const response = channelGuest
+            ? await postRoomCenterGuestMatchListApi({
+              mtt_ids: requestMttIds,
+              sng_ids: requestSngIds,
+              room_type: 0,
+              club_rid: guestClubRid,
+            })
+            : await postRoomCenterUserMatchListApi({
+              mtt_ids: requestMttIds,
+              sng_ids: requestSngIds,
+              room_type: 0,
+            })
 
           const records =
-            Number(response.code) === 0 && Array.isArray(response.data?.records)
-              ? response.data.records
+            Number(response.code) === 0 && Array.isArray(response.data?.mtt_list)
+              ? response.data.mtt_list
               : []
-
           if (records.length) {
             nextRecords.push(...records)
           }
-
-          const total = Number(response.data?.total || 0)
-          const loadedCount = offset + records.length
-          if (!records.length || loadedCount >= total || records.length < limit) {
-            break
-          }
-
-          offset += limit
-          page += 1
         }
 
         this.records = nextRecords
@@ -313,7 +405,24 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
     // 可见赛事 ID + 系列信息：用于列表按“赛事系列”分组，并按 club/tribe 做可见性过滤。
     async fetchAllMttSngIds(options: { silent?: boolean } = {}): Promise<void> {
       try {
-        const response = await getAllMttSngIdsApi()
+        const sessionKey = resolveMttSessionKey()
+        if (!sessionKey) {
+          return
+        }
+
+        const channelGuest = isChannelGuestSession(sessionKey)
+        const guestClubRid = channelGuest ? await resolveGuestClubRid() : 0
+        if (channelGuest && guestClubRid <= 0) {
+          this.mttIdList = []
+          this.sngIdList = []
+          this.seriesList = []
+          this.persistMttListCache()
+          return
+        }
+
+        const response = channelGuest
+          ? await getGuestAllMttSngIdsApi({ club_rid: guestClubRid })
+          : await getAllMttSngIdsApi()
         const data = Number(response.code) === 0 ? response.data : null
 
         this.mttIdList = Array.isArray(data?.mtt_id_list) ? data.mtt_id_list : []
@@ -344,20 +453,12 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
         pendingRepairNeedIds = false
 
         try {
-          if (needList && needIds) {
-            await Promise.all([
-              this.fetchMttList({ silent: true }),
-              this.fetchAllMttSngIds({ silent: true }),
-            ])
-            return
+          if (needIds) {
+            await this.fetchAllMttSngIds({ silent: true })
           }
 
           if (needList) {
             await this.fetchMttList({ silent: true })
-          }
-
-          if (needIds) {
-            await this.fetchAllMttSngIds({ silent: true })
           }
         } finally {
           mttRepairSyncPromise = null
@@ -595,12 +696,15 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
 
     // 本地缓存写入：供首页与 MTT 列表页秒开共享。
     persistMttListCache(): void {
-      const gameStore = useGameStore()
-      const sessionToken = gameStore.sessionToken.trim()
+      const sessionKey = resolveMttSessionKey()
+      if (!sessionKey) {
+        return
+      }
+
       const payload: MttListCachePayload = {
         version: MTT_LIST_CACHE_VERSION,
         updatedAt: Date.now(),
-        token: sessionToken,
+        token: sessionKey,
         records: this.records,
         mttIdList: this.mttIdList,
         sngIdList: this.sngIdList,
@@ -612,9 +716,12 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
     // 当前 token 对应缓存恢复；token 不同则忽略，避免串号。
     restoreMttListCacheForCurrentToken(): void {
       const gameStore = useGameStore()
-      const sessionToken = gameStore.sessionToken.trim()
-      if (!sessionToken) {
+      const sessionKey = resolveMttSessionKey()
+      if (!sessionKey) {
         this.records = []
+        this.mttIdList = []
+        this.sngIdList = []
+        this.seriesList = []
         return
       }
 
@@ -622,7 +729,14 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
       if (!cached || typeof cached !== 'object') {
         return
       }
-      if (!Array.isArray(cached.records) || (cached.token && cached.token !== sessionToken)) {
+
+      const legacyToken = gameStore.sessionToken.trim()
+      const tokenMatched =
+        !cached.token ||
+        cached.token === sessionKey ||
+        (sessionKey.startsWith('token_') && cached.token === legacyToken)
+
+      if (!Array.isArray(cached.records) || !tokenMatched) {
         return
       }
 

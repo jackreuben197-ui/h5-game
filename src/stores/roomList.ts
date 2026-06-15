@@ -3,7 +3,10 @@ import { toRaw } from 'vue'
 import type { RoomRecord, RoomcenterUserContrastRoomInfo } from '@/api/models/roomcenter'
 import {
   getRoomIdsApi,
+  getGuestRoomIdsApi,
   getRoomsDetailApi,
+  getGuestRoomsDetailApi,
+  postRoomcenterGuestContrastRoomsApi,
   postRoomcenterUserContrastRoomsApi,
 } from '@/api/roomcenter'
 import { Code, subscribeH5WsCode } from '@/bridge/ws'
@@ -13,6 +16,8 @@ import {
   type WsRoomChangeNotifyPayload,
 } from '@/bridge/ws/roomChangeNotify'
 import { useGameStore } from '@/stores/game'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { isChannelPackageHost } from '@/utils/channelPackage'
 import {
   bulkUpsertRooms,
   loadRoomsByRids,
@@ -42,12 +47,16 @@ interface RoomListState {
   records: RoomRecord[]
 }
 
+const CHANNEL_GUEST_UID = '0'
+const CHANNEL_GUEST_SCOPE = scopeForUser(CHANNEL_GUEST_UID)
+
 // 当前已激活的 scope（'guest' / 'user_${uid}'）。scope 切换时重置内存与同步状态。
 let activeScope: RoomListScope = ''
 let bootstrappedScope: RoomListScope = ''
 let bootstrappingPromise: Promise<void> | null = null
 // 当前 scope 的 ws 最后时间戳，热启动 contrast/rooms 的 last_time 参数。
 let lastNotifyTs = 0
+let bootstrapRoomListTryTimes = 0
 
 const roomDetailLoadingRidSet = new Set<string>()
 
@@ -75,12 +84,47 @@ function cleanupLegacyLocalStorageOnce(): void {
   }
 }
 
+function toSafeInt(value: unknown): number {
+  const num = Number(value)
+  if (!Number.isFinite(num)) {
+    return 0
+  }
+  return Math.floor(num)
+}
+
+function isOfficialGuestMode(): boolean {
+  const gameStore = useGameStore()
+  return !gameStore.sessionToken.trim() && !isChannelPackageHost()
+}
+
+async function resolveGuestClubRid(): Promise<number> {
+  if (!isChannelPackageHost()) {
+    return 0
+  }
+
+  const userInfoStore = useUserInfoStore()
+  const cachedRid = toSafeInt(userInfoStore.channelDefaultClub?.random_id)
+  if (cachedRid > 0) {
+    return cachedRid
+  }
+
+  const club = await userInfoStore.ensureChannelDefaultClub()
+  return toSafeInt(club?.random_id)
+}
+
+function isChannelGuestScope(scope: RoomListScope): boolean {
+  return scope === CHANNEL_GUEST_SCOPE
+}
+
 // uid 已就绪 → user scope；否则 guest scope（含「已登录但 userId 还没回来」的过渡态）。
 // userId 就绪后 game.ts 的 setLoginUser 会主动再触发一次 bootstrap，自然切换到 user scope。
 function resolveScope(): RoomListScope {
   const gameStore = useGameStore()
   const uid = String(gameStore.loginUserId || '').trim()
   if (uid) return scopeForUser(uid)
+  if (!gameStore.sessionToken.trim() && isChannelPackageHost()) {
+    return CHANNEL_GUEST_SCOPE
+  }
   return SCOPE_GUEST
 }
 
@@ -153,6 +197,15 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
   actions: {
     bootstrapRoomList(): void {
       cleanupLegacyLocalStorageOnce()
+      if (isOfficialGuestMode()) {
+        this.records = []
+        activeScope = ''
+        bootstrappedScope = ''
+        bootstrappingPromise = null
+        lastNotifyTs = 0
+        return
+      }
+
       const scope = resolveScope()
       this.ensureRoomChangeNotifyListener()
       log.debug('bootstrap scope:', scope, 'active:', activeScope, 'bootstrapped:', bootstrappedScope)
@@ -182,8 +235,14 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
           // 兜底：如果 sync 期间 setLoginUser 又切了 scope（guest → user），
           // 本次 sync 已经按旧 scope 做完早退、不会再写入；这里主动重启一次同步。
           if (activeScope && activeScope !== bootstrappedScope) {
+            bootstrapRoomListTryTimes++
+            // 最多重试 1 次
+            if (bootstrapRoomListTryTimes > 1){
+              return
+            }
             this.bootstrapRoomList()
           }
+          bootstrapRoomListTryTimes = 0
         })
     },
 
@@ -210,7 +269,23 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
 
     // 冷启动：getRoomIdsApi → 分批 80 拉详情 → rooms 共享表 + scope.rids 整表替换。
     async coldSync(scope: RoomListScope): Promise<void> {
-      const idRes = await getRoomIdsApi({})
+      const channelGuest = isChannelGuestScope(scope)
+      const guestClubRid = channelGuest ? await resolveGuestClubRid() : 0
+
+      if (channelGuest && guestClubRid <= 0) {
+        this.records = []
+        await writeScopeMeta(scope, {
+          version: ROOM_LIST_DATA_VERSION,
+          rids: [],
+          lastNotifyTs,
+          lastFullFetchAt: Date.now(),
+        })
+        return
+      }
+
+      const idRes = channelGuest
+        ? await getGuestRoomIdsApi({ club_rid: guestClubRid })
+        : await getRoomIdsApi({})
       if (scope !== activeScope) return
 
       const idRecords =
@@ -235,7 +310,13 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
       for (const batch of batches) {
         if (scope !== activeScope) return
         try {
-          const detailRes = await getRoomsDetailApi({ room_ids: batch, room_type: 0 })
+          const detailRes = channelGuest
+            ? await getGuestRoomsDetailApi({
+              room_ids: batch,
+              room_type: 0,
+              club_rid: guestClubRid,
+            })
+            : await getRoomsDetailApi({ room_ids: batch, room_type: 0 })
           const records =
             Number(detailRes.code) === 0 && Array.isArray(detailRes.data?.records)
               ? detailRes.data.records
@@ -253,6 +334,14 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
 
     // 热启动：并行拉「当前可见 rid 集合」+「本地已知房间的变化」。
     async hotSync(scope: RoomListScope, localRids: string[]): Promise<void> {
+      const channelGuest = isChannelGuestScope(scope)
+      const guestClubRid = channelGuest ? await resolveGuestClubRid() : 0
+
+      if (channelGuest && guestClubRid <= 0) {
+        log.warn('hot sync skipped: channel guest club rid not ready')
+        return
+      }
+
       const numericLocalRids = localRids
         .map((rid) => Number(rid))
         .filter((id) => Number.isFinite(id) && id > 0)
@@ -260,13 +349,24 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
       let idRes: Awaited<ReturnType<typeof getRoomIdsApi>> | null = null
       let contrastRes: Awaited<ReturnType<typeof postRoomcenterUserContrastRoomsApi>> | null = null
       try {
-        const result = await Promise.all([
-          getRoomIdsApi({}),
-          postRoomcenterUserContrastRoomsApi({
-            room_ids: numericLocalRids,
-            last_time: lastNotifyTs,
-          }),
-        ])
+        const result = await Promise.all(
+          channelGuest
+            ? [
+                getGuestRoomIdsApi({ club_rid: guestClubRid }),
+                postRoomcenterGuestContrastRoomsApi({
+                  room_ids: numericLocalRids,
+                  last_time: lastNotifyTs,
+                  club_rid: guestClubRid,
+                }),
+              ]
+            : [
+                getRoomIdsApi({}),
+                postRoomcenterUserContrastRoomsApi({
+                  room_ids: numericLocalRids,
+                  last_time: lastNotifyTs,
+                }),
+              ],
+        )
         idRes = result[0]
         contrastRes = result[1]
       } catch (error) {
@@ -331,7 +431,13 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
         for (const batch of batches) {
           if (scope !== activeScope) return
           try {
-            const res = await getRoomsDetailApi({ room_ids: batch, room_type: 0 })
+            const res = channelGuest
+              ? await getGuestRoomsDetailApi({
+                room_ids: batch,
+                room_type: 0,
+                club_rid: guestClubRid,
+              })
+              : await getRoomsDetailApi({ room_ids: batch, room_type: 0 })
             const list =
               Number(res.code) === 0 && Array.isArray(res.data?.records) ? res.data.records : []
             list.forEach((r) => this.upsertRoomRecordInternal(r, 0))
@@ -500,10 +606,23 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
 
       roomDetailLoadingRidSet.add(roomRid)
       try {
-        const detailRes = await getRoomsDetailApi({
-          room_ids: [Math.floor(roomId)],
-          room_type: 0,
-        })
+        const scope = resolveScope()
+        const channelGuest = isChannelGuestScope(scope)
+        const guestClubRid = channelGuest ? await resolveGuestClubRid() : 0
+        if (channelGuest && guestClubRid <= 0) {
+          return
+        }
+
+        const detailRes = channelGuest
+          ? await getGuestRoomsDetailApi({
+            room_ids: [Math.floor(roomId)],
+            room_type: 0,
+            club_rid: guestClubRid,
+          })
+          : await getRoomsDetailApi({
+            room_ids: [Math.floor(roomId)],
+            room_type: 0,
+          })
         const records =
           Number(detailRes.code) === 0 && Array.isArray(detailRes.data?.records)
             ? detailRes.data.records

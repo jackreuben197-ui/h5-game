@@ -116,5 +116,9 @@ watch(isLoggedIn, (val) => {
   right: 0.3rem;
   top: 52%;
   z-index: 9999;
+
+  :deep(.bell-wrapper) {
+    position: relative;
+  }
 }
 </style>

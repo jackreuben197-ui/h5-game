@@ -243,7 +243,7 @@ onUnmounted(() => {
               </div>
 
               <!-- QR Code & Scanner Row -->
-              <div class="info-row info-row--qr" @click="copyText(payAddress.value)">
+              <div class="info-row info-row--qr" @click="copyText(payAddress)">
                 <div class="info-row__left">
                   <span class="info-row__label">收款账户（点击此处获取收款账号）</span>
                 </div>

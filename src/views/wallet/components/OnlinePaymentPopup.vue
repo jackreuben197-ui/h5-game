@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { showToast } from 'vant'
+import { t } from '@/i18n'
 import { useWalletStore } from '@/stores/wallet'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { postRechargeGoldApi, postOrderUserClubOrderCancelApi } from '@/api/order'
@@ -77,6 +79,7 @@ function startTimer() {
 function copyText(text: string) {
   if (!text) return
   navigator.clipboard.writeText(text)
+  showToast({ message: t('adaptation10106') || '已复制', duration: 800, position: 'bottom' })
 }
 
 async function handleRegister() {
@@ -240,7 +243,7 @@ onUnmounted(() => {
               </div>
 
               <!-- QR Code & Scanner Row -->
-              <div class="info-row info-row--qr" @click="copyText(payAddress)">
+              <div class="info-row info-row--qr" @click="copyText(payAddress.value)">
                 <div class="info-row__left">
                   <span class="info-row__label">收款账户（点击此处获取收款账号）</span>
                 </div>

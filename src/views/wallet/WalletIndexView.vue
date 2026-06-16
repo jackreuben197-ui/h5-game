@@ -811,7 +811,7 @@ async function onUsdtSubmit(type: number) {
 
           <div class="pay-cta-wrapper">
             <PrimaryButton
-              :text="`立即充值${displayPayAmount}钻`"
+              :text="`立即充值${displayPayAmount}`"
               class="pay-cta"
               @click="onPayClick"
             />

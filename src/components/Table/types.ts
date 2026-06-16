@@ -23,6 +23,7 @@ export interface ColumnConfig {
 export interface TableContext {
   registerColumn: (col: ColumnConfig) => void
   unregisterColumn: (prop: string) => void
+  flat?: boolean
 }
 
 export const TABLE_INJECT_KEY: InjectionKey<TableContext> = Symbol('GameTable')

@@ -27,6 +27,10 @@ const props = withDefaults(
     disabled?: boolean
     /** 距底部多少 px 时触发 load，默认 50 */
     offset?: number
+    /** flat 模式：行无背景无圆角，用 border-bottom 分隔，配合外层 glass-card 使用 */
+    flat?: boolean
+    /** 表头风格：primary（绿色，默认）| ghost（半透明白色） */
+    headerVariant?: 'primary' | 'ghost'
   }>(),
   {
     showHeader: true,
@@ -37,6 +41,8 @@ const props = withDefaults(
     finished: false,
     disabled: false,
     offset: 50,
+    flat: false,
+    headerVariant: 'primary',
   },
 )
 
@@ -64,6 +70,7 @@ provide(TABLE_INJECT_KEY, {
     const idx = columns.value.findIndex(c => c.prop === prop)
     if (idx >= 0) columns.value.splice(idx, 1)
   },
+  flat: props.flat,
 })
 
 // ---- Sort ----
@@ -144,11 +151,12 @@ export default { name: 'GameTable' }
       :columns="columns"
       :sort-prop="sortProp"
       :sort-order="sortOrder"
+      :header-variant="headerVariant"
       @sort-click="handleSortClick"
       @select="handleSelect"
     />
 
-    <div ref="bodyRef" class="game-table__body scrollbar-hide" :style="bodyStyle" :class="{ 'game-table__body--scroll': isScrollable }">
+    <div ref="bodyRef" class="game-table__body scrollbar-hide" :style="bodyStyle" :class="{ 'game-table__body--scroll': isScrollable, 'game-table__body--flat': flat }">
       <!-- 首行：自定义 summary slot 或 summaryData 汇总行 -->
       <template v-if="$slots.summary">
         <div class="game-table__summary">
@@ -211,6 +219,11 @@ export default { name: 'GameTable' }
     flex-shrink: 0;
   }
   overscroll-behavior-y: contain;
+
+  &--flat {
+    gap: 0;
+    padding: 0;
+  }
 }
 
 .game-table__summary {

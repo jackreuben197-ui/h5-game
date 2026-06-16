@@ -33,7 +33,7 @@ const amountNumber = computed(() => Number(amount.value))
 const canSubmit = computed(() => Number.isFinite(amountNumber.value) && amountNumber.value > 0)
 
 const confirmMessage = computed(() =>
-  `${tx('Wallet_DepositApplyTo', '确定向')} ${clubName.value} ${tx('Wallet_Club', '俱乐部')} ${tx('Wallet_DepositApplyAmount', '申请充值')}${amount.value}${tx('Wallet_DepositCoinUnit', 'V欧蒙币')}？`,
+  `${tx('Wallet_DepositApplyTo', '确定向')} ${clubName.value} ${tx('Wallet_Club', '俱乐部')} ${tx('Wallet_DepositApplyAmount', '申请充值')}${amount.value}${tx('Wallet_DepositCoinUnit', '联盟币')}？`,
 )
 
 function onAmountInput(e: Event): void {

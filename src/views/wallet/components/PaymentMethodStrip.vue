@@ -121,12 +121,7 @@ const emit = defineEmits<{
 
 .method--active .method__label {
   border-radius: 10.543px;
-  background: radial-gradient(
-    47.75% 48.13% at 41.94% 52.55%,
-    rgba(37, 49, 107, 0.5) 0%,
-    rgba(16, 16, 16, 0.5) 100%
-  );
-  background-blend-mode: soft-light;
+  background: #EE3955;
   border: none;
   font-weight: 600;
 }

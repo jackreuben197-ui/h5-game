@@ -8,7 +8,6 @@ import AppBar from '@/components/wallet/AppBar.vue'
 import SegmentedToggle from '@/views/wallet/components/SegmentedToggle.vue'
 import UserCard from '@/views/wallet/components/UserCard.vue'
 import GlassButton from '@/components/Button/GlassButton.vue'
-import BellButton from '@/components/Button/BellButton.vue'
 import PresetAmountGrid, { type Preset } from '@/views/wallet/components/PresetAmountGrid.vue'
 import PaymentMethodStrip, {
   type PaymentMethod,
@@ -115,85 +114,6 @@ function handleOnlineUnfinished() {
   void checkUnfinishedOrders()
 }
 
-const activeCsOrder = computed(() => {
-  return activeTab.value === 0
-    ? walletStore.pendingCsRechargeOrder
-    : walletStore.pendingCsWithdrawOrder
-})
-
-const activeCsCount = computed(() => {
-  return activeTab.value === 0
-    ? walletStore.pendingCsRechargeCount
-    : walletStore.pendingCsWithdrawCount
-})
-
-const hasSeenRechargeNotification = ref(false)
-const hasSeenWithdrawNotification = ref(false)
-
-const currentHasSeen = computed(() => {
-  return activeTab.value === 0
-    ? hasSeenRechargeNotification.value
-    : hasSeenWithdrawNotification.value
-})
-
-let refreshInterval: any = null
-
-async function refreshPendingCsOrder() {
-  // We keep this method for manual refreshes within this view (e.g. after cancel/submit)
-  // but we will no longer run it on a 10s interval here as requested.
-  await walletStore.refreshPendingCsOrder()
-}
-
-async function openCsChat() {
-  if (activeTab.value === 0) hasSeenRechargeNotification.value = true
-  else hasSeenWithdrawNotification.value = true
-
-  if (!activeCsOrder.value) return
-
-  const order = activeCsOrder.value
-  const qrCode =
-    (order as any).qrcode || (order as any).qr_code || (order as any).pay_type_qr_code || ''
-  const result = {
-    order_no: order.order_no,
-    gold_num: order.gold_num,
-    pay_price: order.pay_price,
-    order: {
-      order_no: order.order_no,
-      amount: order.pay_price,
-      gold_num: order.gold_num,
-    },
-    usdt_address: {
-      address: order.pay_type_address || '',
-      qr_code: qrCode,
-      name: (order as any).pay_type_name || '客服撮合',
-    },
-  }
-
-  try {
-    const channelRes = await postChatSupportChannelListApi({
-      im_service_types: [4],
-      limit: 1,
-      offset: 0,
-    })
-
-    if (channelRes.code === 0 && channelRes.data?.list?.length) {
-      const channel = channelRes.data.list[0]
-      const orders =
-        activeTab.value === 0
-          ? walletStore.pendingCsRechargeOrders
-          : walletStore.pendingCsWithdrawOrders
-
-      csChatProps.value = {
-        tribeId: channel.tribe_id || 0,
-        supportUserId: channel.support_user_id || 0,
-        orderData: result,
-      }
-      csChatPopupOpen.value = true
-    }
-  } catch (e) {
-    console.error('Failed to open CS chat from bell', e)
-  }
-}
 
 async function checkUnfinishedOrders(showPopup = true) {
   const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
@@ -233,7 +153,7 @@ async function handleCancelOrder(orderNo: string) {
       unfinishedOrder.value = null
       // Refresh the list but don't show popup
       await checkUnfinishedOrders(false)
-      await refreshPendingCsOrder()
+      await walletStore.refreshPendingCsOrder()
     } else {
       alert(`Cancel failed: ${res.message}`)
     }
@@ -322,7 +242,7 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
 onMounted(() => {
   // We no longer check for unfinished orders on mount.
   // It will be checked only when a recharge attempt fails with code 20066.
-  refreshPendingCsOrder()
+  void walletStore.refreshPendingCsOrder()
   // 10s Interval removed as requested. Visibility will be handled by external calls.
 })
 
@@ -618,7 +538,7 @@ async function onCsSubmit(displayPayPrice?: number) {
             },
           }
           csChatPopupOpen.value = true
-          await refreshPendingCsOrder()
+          await walletStore.refreshPendingCsOrder()
         } else {
           rechargeResult.value = res.data
           usdtDetailsPopupOpen.value = true
@@ -743,13 +663,6 @@ async function onUsdtSubmit(type: number) {
     <div v-if="!isFixedDeposit" class="wallet-screen__content-top">
       <div class="tabs-row">
         <SegmentedToggle v-model="activeTab" :tabs="tabLabels" />
-        <BellButton
-          v-if="activeCsOrder"
-          :count="1"
-          :show-badge="!currentHasSeen"
-          class="floating-bell"
-          @click="openCsChat"
-        />
       </div>
     </div>
 
@@ -762,7 +675,7 @@ async function onUsdtSubmit(type: number) {
           :avatar="ava1"
           name="Cooper&#10;Korsgaard"
           user-id="8677650585"
-          :balance="(userInfoStore.userInfo?.user?.gold ?? 0).toLocaleString()"
+          :balance="(userInfoStore.userInfo?.user?.gold ?? 0).toLocaleString('en-US', { useGrouping: false })"
         />
 
         <UserCard
@@ -780,7 +693,7 @@ async function onUsdtSubmit(type: number) {
             <div class="balance-row">
               <div class="balance-chip">
                 <span class="balance-chip__value">
-                  {{ (userInfoStore.userInfo?.user?.gold ?? 0).toLocaleString() }}
+                  {{ (userInfoStore.userInfo?.user?.gold ?? 0).toLocaleString('en-US', { useGrouping: false }) }}
                 </span>
                 <img :src="icCoins" alt="" class="balance-chip__icon" />
               </div>
@@ -952,13 +865,6 @@ async function onUsdtSubmit(type: number) {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.floating-bell {
-  position: fixed;
-  right: 0.03rem;
-  top: 2.4rem;
-  z-index: 1000;
 }
 
 .wallet-banner {

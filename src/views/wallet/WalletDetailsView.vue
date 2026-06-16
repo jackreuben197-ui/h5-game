@@ -14,6 +14,7 @@ import { postUserGoldChangeLogApi } from '@/api/user'
 import type { UserGoldChangeLogRecord } from '@/api/models/user'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
+import { t } from '@/i18n'
 
 const userInfoStore = useUserInfoStore()
 const router = useRouter()
@@ -35,6 +36,13 @@ function formatBalance(val?: number): string {
 function formatTime(raw?: string): string {
   if (!raw) return '-'
   return raw.replace('T', ' ').slice(11, 16)
+}
+
+function getOpLabel(code?: string): string {
+  if (!code) return '-'
+  const key = `Wallet_OpCode_${code}`
+  const label = t(key)
+  return label !== key ? label : code
 }
 
 function goGiftUc(): void {
@@ -63,10 +71,6 @@ onMounted(async () => {
               <div class="avatar-box">
                 <img :src="(userInfo?.avatar as string) || ''" alt="avatar" />
               </div>
-              <button class="gift-entry" @click="goGiftUc">
-                <span class="gift-entry__label">赠送</span>
-                <img src="@/assets/icons/img_gift_btn.svg" alt="gift" class="gift-entry__icon" />
-              </button>
               <div class="user-text">
                 <span class="user-name">{{ userInfo?.nickname ?? '-' }}</span>
                 <div class="user-id-badge">
@@ -74,6 +78,13 @@ onMounted(async () => {
                   <span class="id-value">{{ userInfo?.un_id ?? userInfo?.unid ?? '-' }}</span>
                 </div>
               </div>
+            </div>
+
+            <div class="gift-row">
+              <button class="gift-entry" @click="goGiftUc">
+                <span class="gift-entry__label">赠送</span>
+                <img src="@/assets/icons/img_gift_btn.svg" alt="gift" class="gift-entry__icon" />
+              </button>
             </div>
 
             <div class="balance-section">
@@ -105,7 +116,7 @@ onMounted(async () => {
                 />
               </div>
               <div class="info">
-                <div :class="['category-badge', (item.gold_change ?? 0) >= 0 ? 'category-badge--in' : 'category-badge--out']">{{ item.op_code ?? '-' }}</div>
+                <div :class="['category-badge', (item.gold_change ?? 0) >= 0 ? 'category-badge--in' : 'category-badge--out']">{{ getOpLabel(item.op_code) }}</div>
                 <div class="title-row">
                   <span class="title">{{ item.name ?? '-' }}</span>
                   <div v-if="item.src_random_id" class="id-row">
@@ -263,22 +274,18 @@ onMounted(async () => {
 }
 
 .gift-entry {
-  position: absolute;
-  right: 0;
-  top: 0;
   width: 3rem;
   height: 0.8273rem;
-  z-index: 4;
   border: none;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 0.7229rem;
   padding: 0 0.05rem 0 0.6rem;
   display: inline-flex;
   align-items: center;
-
   justify-content: space-between;
   color: #ffffffc6;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .gift-entry__icon {
@@ -342,12 +349,18 @@ onMounted(async () => {
   color: #fff;
 }
 
+.gift-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0;
+}
+
 .balance-section {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.16rem;
-  margin-top: 0.4rem;
+  gap: 0.12rem;
+  margin-top: 0.1rem;
 }
 
 .balance-label {
@@ -367,8 +380,8 @@ onMounted(async () => {
 }
 
 .chip-icon {
-  width: 29px;
-  height: 29px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
 }
 

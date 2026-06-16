@@ -444,7 +444,7 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(148deg, rgba(5, 231, 174, 0.59) 7.5%, rgba(2, 122, 92, 0.59) 71.9%);
+  background: #55F329;
   color: #fff;
   position: relative;
   box-shadow: 0 0.08rem 0.24rem rgba(0, 0, 0, 0.28);

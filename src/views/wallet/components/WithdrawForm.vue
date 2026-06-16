@@ -386,9 +386,6 @@ watch(filteredWithdrawTypes, (list) => {
       </div>
     </div>
 
-    <div class="wf__balance-hint">
-      <span>{{ tx('Wallet_AvailableBalance', '可回收UC') }}：{{ (availableUc / 100).toLocaleString() }}</span>
-    </div>
 
     <PrimaryButton
       :text="isCustomerCare ? tx('Wallet_ContactCs', '联系客服') : tx('Wallet_SubmitWithdraw', '立即提现')"

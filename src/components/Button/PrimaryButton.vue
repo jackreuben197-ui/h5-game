@@ -62,37 +62,6 @@ function handleClick(event: MouseEvent): void {
   align-items: center;
   justify-content: center;
 
-  /* 内嵌高光边框效果 */
-  box-shadow:
-    inset 0.5px 0.5px 0px 0px rgba(242, 242, 242, 0.8),
-    inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.5);
-
-  &.primary-btn--no-shadow {
-    box-shadow: none;
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1.34px;
-    background: linear-gradient(
-      135deg,
-      rgba(242, 242, 242, 0.8) 0%,
-      rgba(255, 255, 255, 0) 44.5%,
-      rgba(255, 255, 255, 0.5) 100%
-    );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-  }
 
   &:active:not(:disabled) {
     opacity: 0.92;

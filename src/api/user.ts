@@ -57,6 +57,8 @@ import type {
   UserBillResponseData,
   UserWalletRequest,
   UserWalletResponseData,
+  UserDiamondsWalletRequest,
+  UserDiamondsWalletResponseData,
   USDTApplyListRequest,
   USDTApplyListResponseData,
   USDTApplyRequest,
@@ -490,6 +492,17 @@ export async function postUserWalletApi(
   payload: UserWalletRequest = {} as UserWalletRequest,
 ): Promise<ApiResponse<UserWalletResponseData>> {
   const response = await http.post<ApiResponse<UserWalletResponseData>>('/user/my_wallets', payload)
+  return response.data
+}
+
+// 对齐 cocos HttpUserDiamondsProtocol.API
+export async function postUserDiamondsWalletApi(
+  payload: UserDiamondsWalletRequest = {} as UserDiamondsWalletRequest,
+): Promise<ApiResponse<UserDiamondsWalletResponseData>> {
+  const response = await http.post<ApiResponse<UserDiamondsWalletResponseData>>(
+    '/user/user_diamonds_wallet',
+    payload,
+  )
   return response.data
 }
 

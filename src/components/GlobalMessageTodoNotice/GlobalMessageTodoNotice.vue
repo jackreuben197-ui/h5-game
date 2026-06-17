@@ -18,7 +18,7 @@ import { formatDateTime } from '@/utils/time'
 import { formatUC } from '@/utils/roomVisibility'
 import avatarDefault from '@/assets/images/default_avatar.png'
 import iconPeople from '@/assets/icons/icon_people.png'
-import iconBalance from '@/assets/icons/icon_balance.png'
+import iconBalance from '@/assets/icons/icon_credit_chip.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { useGameStore } from '@/stores/game'
 

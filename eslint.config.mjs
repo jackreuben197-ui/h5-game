@@ -98,77 +98,29 @@ export default [
       local: localPlugin,
     },
     rules: {
-      // JS/TS 代码风格：统一单引号、禁用分号、清理多余空格。
-      quotes: [
-        'error',
-        'single',
-        {
-          avoidEscape: true,
-          allowTemplateLiterals: true,
-        },
-      ],
-      semi: ['error', 'never'],
-      'no-extra-semi': 'error',
-      'semi-spacing': [
-        'error',
-        {
-          before: false,
-          after: true,
-        },
-      ],
-      indent: [
-        'error',
-        2,
-        {
-          SwitchCase: 1,
-          offsetTernaryExpressions: true,
-        },
-      ],
-      'key-spacing': [
-        'error',
-        {
-          beforeColon: false,
-          afterColon: true,
-          mode: 'strict',
-        },
-      ],
-      'space-infix-ops': 'error',
-      'comma-spacing': [
-        'error',
-        {
-          before: false,
-          after: true,
-        },
-      ],
-      'object-curly-spacing': ['error', 'always'],
-      'array-bracket-spacing': ['error', 'never'],
-      'arrow-spacing': [
-        'error',
-        {
-          before: true,
-          after: true,
-        },
-      ],
-      'keyword-spacing': [
-        'error',
-        {
-          before: true,
-          after: true,
-        },
-      ],
-      // 与 Prettier 对齐：匿名 function 保留空格，命名 function 不加空格。
-      'space-before-function-paren': [
-        'error',
-        {
-          anonymous: 'always',
-          named: 'never',
-          asyncArrow: 'always',
-        },
-      ],
-      'space-in-parens': ['error', 'never'],
-      'no-multi-spaces': 'error',
-      'no-trailing-spaces': 'error',
-      'no-multiple-empty-lines': ['error', { max: 1, maxBOF: 0, maxEOF: 0 }],
+      // ── 排版交给 Prettier ──────────────────────────────────────────────────
+      // 下面这些规则要么和 Prettier 100% 重叠（quotes/semi/space-* 等），
+      // 要么对嵌套三元这类边界 case 的缩进认知和 Prettier 不一致
+      // （indent + offsetTernaryExpressions），保存时会出现
+      // "Prettier 排成 A → ESLint --fix 改成 B → 下一次保存又被 Prettier 拉回 A"
+      // 的拉锯。统一关掉，Prettier 一家说了算。
+      quotes: 'off',
+      semi: 'off',
+      'no-extra-semi': 'off',
+      'semi-spacing': 'off',
+      indent: 'off',
+      'key-spacing': 'off',
+      'space-infix-ops': 'off',
+      'comma-spacing': 'off',
+      'object-curly-spacing': 'off',
+      'array-bracket-spacing': 'off',
+      'arrow-spacing': 'off',
+      'keyword-spacing': 'off',
+      'space-before-function-paren': 'off',
+      'space-in-parens': 'off',
+      'no-multi-spaces': 'off',
+      'no-trailing-spaces': 'off',
+      'no-multiple-empty-lines': 'off',
       // 允许 <span>文字</span> 单行写法，与 Prettier 风格一致。
       'vue/singleline-html-element-content-newline': 'off',
       'vue/multiline-html-element-content-newline': [

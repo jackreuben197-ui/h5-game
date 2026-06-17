@@ -10,8 +10,10 @@ import LoginSession from '@/session/loginSession'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { useGameStore } from '@/stores/game'
 import { pinia } from '@/stores/pinia'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
 import { ensureMultiLanguageTemplateLoaded } from '@/utils/multiLanguageTemplate'
+import { readClubListCache } from '@/utils/userClubListCache'
 
 let inFlightToken = ''
 let inFlightPromise: Promise<void> | null = null
@@ -49,6 +51,32 @@ export function syncPostAuthData(): void {
 async function runPostAuthSync(token: string): Promise<void> {
   const gameStore = useGameStore(pinia)
   const appConfigStore = useAppConfigStore(pinia)
+  const userInfoStore = useUserInfoStore(pinia)
+
+  await appConfigStore.restorePublicConfigCache()
+    .then(() => {
+      if (appConfigStore.globalConfig) {
+        forwardGlobalConfigToCocos(appConfigStore.globalConfig)
+      }
+      if (appConfigStore.diamondConfig) {
+        forwardDiamondConfigToCocos(appConfigStore.diamondConfig)
+      }
+    })
+    .catch((error) => {
+      console.warn('[post-auth-sync] restore public config cache failed:', error)
+    })
+
+  // 上一次登录已知 userId 时，先用用户级 IndexedDB 缓存填充 clubList，再发请求静默刷新。
+  if (gameStore.loginUserId && !userInfoStore.clubList.length) {
+    try {
+      const cached = await readClubListCache(gameStore.loginUserId)
+      if (cached.length && !userInfoStore.clubList.length) {
+        userInfoStore.setClubList(cached)
+      }
+    } catch (error) {
+      console.warn('[post-auth-sync] hydrate club list cache failed:', error)
+    }
+  }
 
   await Promise.allSettled([
     getUserInfoApi()

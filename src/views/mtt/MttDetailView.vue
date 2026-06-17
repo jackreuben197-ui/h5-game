@@ -33,7 +33,7 @@ import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import { toUnixSeconds } from '@/utils/time'
 import { enterMtt } from '@/bridge/core'
-import type { EnterMttPayload } from '@/bridge/protocol'
+import type { EnterMttPayload } from '@bridge-protocol'
 import { useGameStore } from '@/stores/game'
 import LoginSession from '@/session/loginSession'
 

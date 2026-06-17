@@ -2,13 +2,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import { postUserBillApi, postUserWalletApi } from '@/api/user'
-import type {
-  UserBillRecord,
-  UserBillRoom_info,
-  UserBillWallet,
-  UserMyWalletItem,
-} from '@/api/models/user'
+import { postUserBillApi } from '@/api/user'
+import type { UserBillRecord, UserBillRoom_info, UserBillWallet } from '@/api/models/user'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import iconUc from '@/assets/icons/icon_chips.png'
@@ -17,6 +12,9 @@ import { formatUC } from '@/utils/roomVisibility'
 import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import { resolveOpCodeText } from '@/utils/opCodeText'
+import { useUserInfoStore, type ClubInfo } from '@/stores/userInfo'
+
+const userInfoStore = useUserInfoStore()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -354,19 +352,35 @@ function mapBillCard(row: UserBillWallet, index: number): BillCardItem {
   }
 }
 
-function mapWalletDetails(walletRaw: unknown): WalletDetailItem[] {
-  if (!Array.isArray(walletRaw)) {
+function mapWalletDetails(): WalletDetailItem[] {
+  if (!Array.isArray(userInfoStore.clubList) || userInfoStore.clubList.length === 0) {
     return []
   }
-
-  return walletRaw
-    .filter((item): item is UserMyWalletItem => !!item && typeof item === 'object')
+  if (activeTab.value === '钻石') {
+    totalAmount.value = userInfoStore.userInfo?.user.diamonds ?? 0
+  }
+  if (activeTab.value === '钻石' || activeTab.value === '朋友桌记分牌') {
+    return []
+  }
+  totalAmount.value = 0
+  return userInfoStore.clubList
+    .filter(
+      (item): item is ClubInfo =>
+        !!item && typeof item === 'object' && !(activeTab.value === 'UC' && item.tribe_id === 0),
+    )
     .map((item, index) => {
       const clubName = String(item.club_name ?? '').trim() || `俱乐部${index + 1}`
+      const amount =
+        activeTab.value === 'UC'
+          ? (item.user_gold ?? 0)
+          : activeTab.value === 'Club记分牌'
+            ? (item.user_credit ?? 0)
+            : 0
+      totalAmount.value += amount
       return {
         key: `${clubName}-${index}`,
         clubName,
-        amount: formatAmount(item.gold),
+        amount: formatAmount(amount),
       }
     })
 }
@@ -434,6 +448,8 @@ async function fetchBillData(reset = true): Promise<void> {
     expandedCardIds.value = []
     hasMore.value = true
     pageOffset.value = 0
+    walletDetails.value = mapWalletDetails()
+    flowCards.value = []
   } else {
     loadingMore.value = true
   }
@@ -457,12 +473,6 @@ async function fetchBillData(reset = true): Promise<void> {
 
     if (reset) {
       flowCards.value = applyDateVisibility(mapped)
-      const walletRes = await postUserWalletApi(billRequestByTab[activeTab.value])
-      if (walletRes.code !== 0) {
-        throw new Error(typeof walletRes.msg === 'string' ? walletRes.msg : '加载钱包余额失败')
-      }
-      totalAmount.value = toSafeNumber(walletRes.data?.amount)
-      walletDetails.value = mapWalletDetails(walletRes.data?.wallet)
     } else {
       flowCards.value = applyDateVisibility([...flowCards.value, ...mapped])
     }
@@ -532,15 +542,13 @@ onMounted(() => {
         </button>
       </div>
 
-      <section class="glass-card total-card">
-        <div class="label">UC总余额</div>
+      <section v-if="activeTab !== '朋友桌记分牌'" class="glass-card total-card">
+        <div v-if="activeTab === 'UC'" class="label">UC总金额</div>
+        <div v-else-if="activeTab === 'Club记分牌'" class="label">俱乐部记分牌总额度</div>
+        <div v-else-if="activeTab === '钻石'" class="label">钻石余额</div>
         <div class="amount-row">
           <img v-if="activeTab === 'UC'" :src="iconUc" alt="chip" />
-          <img
-            v-else-if="activeTab === 'Club记分牌' || activeTab === '朋友桌记分牌'"
-            :src="iconCredit"
-            alt="chip"
-          />
+          <img v-else-if="activeTab === 'Club记分牌'" :src="iconCredit" alt="chip" />
           <img v-else :src="iconDiamond" alt="diamond" />
           <strong>{{ formatAmount(totalAmount) }}</strong>
         </div>

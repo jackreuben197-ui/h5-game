@@ -2,6 +2,9 @@
 import homeHeaderFallback from '@/assets/images/home_header_2.png'
 import { t } from '@/i18n'
 import { useLoginModalStore } from '@/stores/loginModal'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { useCachedImage } from '@/utils/imageCache'
+import { computed, onMounted } from 'vue'
 
 import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
@@ -9,11 +12,14 @@ import imgFb from '@/assets/images/minigame-newui/fb.svg'
 import imgCowboy from '@/assets/images/minigame-newui/sg.svg'
 
 const loginModalStore = useLoginModalStore()
+const userInfoStore = useUserInfoStore()
 
-const clubBannerUrl = homeHeaderFallback
+const clubBannerUrl = useCachedImage(
+  () => userInfoStore.channelDefaultClub?.banner || homeHeaderFallback,
+)
+const clubNameText = computed<string>(() => userInfoStore.channelDefaultClub?.club_name || '俱乐部')
 const noticeText = '欢迎来到德州扑克，登录后体验更多精彩内容'
-const clubNameText = '俱乐部'
-const clubGoldText = '0'
+const clubGoldText = '0.00'
 const balanceVisible = true
 const pokerTablesText = '0'
 const pokerPlayersText = '0'
@@ -29,12 +35,29 @@ const activeBannerGames = [
 ]
 
 function notifyNotLogin(): void {
-  loginModalStore.open()
+  loginModalStore.open({ mode: 'login' })
 }
+function notifyNotLoginRegister(): void {
+  loginModalStore.open({ mode: 'register' })
+}
+
+onMounted(() => {
+  void userInfoStore.ensureChannelDefaultClub()
+})
 </script>
 
 <template>
   <div class="home-page">
+    <!-- 0. 顶部栏：POKER + 注册/登录 -->
+    <div class="top-bar">
+      <span class="top-bar__logo">POKER</span>
+      <div class="top-bar__actions">
+        <button class="top-bar__btn top-bar__btn--register" @click="notifyNotLoginRegister">
+          注册
+        </button>
+        <button class="top-bar__btn top-bar__btn--login" @click="notifyNotLogin">登陆</button>
+      </div>
+    </div>
     <!-- 1. 顶部俱乐部介绍图 -->
     <div class="home-header">
       <img class="home-header-img" :src="clubBannerUrl" alt="俱乐部介绍" />
@@ -42,7 +65,7 @@ function notifyNotLogin(): void {
 
     <!-- 2. 公告栏 -->
     <div class="notice-bar">
-      <img class="notice-icon" src="@/assets/icons/icon_notice.png" alt="公告" />
+      <img class="notice-icon" src="@/assets/icons/icon_notice.svg" alt="公告" />
       <div class="notice-marquee">
         <span class="notice-label mr-4"> {{ $txt('Serverbulletin') }}: </span>
         <div class="notice-scroll">
@@ -60,7 +83,7 @@ function notifyNotLogin(): void {
           <span class="service-label"> {{ clubNameText }} </span>
           <img
             class="icon-sm icon-eye"
-            src="@/assets/icons/icon_eye_open.png"
+            src="@/assets/icons/icon_eye_open.svg"
             alt="显示/隐藏"
             @click="notifyNotLogin"
           />
@@ -70,31 +93,37 @@ function notifyNotLogin(): void {
           <span class="balance-amount">
             {{ balanceVisible ? clubGoldText : '****' }}
           </span>
-          <img
+          <svg
             class="icon-sm icon-refresh"
-            src="@/assets/icons/icon_refresh.png"
-            alt="刷新"
+            xmlns="http://www.w3.org/2000/svg"
+            width="19"
+            height="19"
+            viewBox="0 0 19 19"
+            fill="none"
             @click="notifyNotLogin"
-          />
+          >
+            <path
+              d="M9.22333 18.4467C4.12929 18.4467 0 14.3174 0 9.22333C0 4.12929 4.12929 0 9.22333 0C14.3174 0 18.4467 4.12929 18.4467 9.22333C18.4467 14.3174 14.3174 18.4467 9.22333 18.4467ZM13.669 13.9051C14.7823 12.8498 15.4836 11.4326 15.6471 9.90734C15.8106 8.38207 15.4257 6.84842 14.5613 5.58114C13.6969 4.31385 12.4095 3.39575 10.9298 2.9913C9.45006 2.58685 7.87467 2.72248 6.48585 3.37389L7.38512 4.99259C8.08695 4.68756 8.85365 4.56198 9.61612 4.62715C10.3786 4.69233 11.1128 4.94622 11.7527 5.36594C12.3926 5.78566 12.918 6.35802 13.2815 7.03142C13.645 7.70481 13.8352 8.45808 13.835 9.22333H11.068L13.669 13.9051ZM11.9608 15.0728L11.0615 13.4541C10.3597 13.7591 9.59301 13.8847 8.83055 13.8195C8.06808 13.7543 7.33382 13.5004 6.69394 13.0807C6.05407 12.661 5.5287 12.0886 5.16519 11.4152C4.80168 10.7418 4.61145 9.98858 4.61167 9.22333H7.37866L4.77769 4.54157C3.66433 5.59684 2.96308 7.01406 2.79958 8.53933C2.63608 10.0646 3.021 11.5982 3.88539 12.8655C4.74978 14.1328 6.03715 15.0509 7.51688 15.4554C8.9966 15.8598 10.572 15.7242 11.9608 15.0728Z"
+              fill="#ABABAB"
+            />
+          </svg>
           <button class="recharge-btn" @click="notifyNotLogin">
             {{ t('OpCodeString_RECHARGE') }}
           </button>
         </div>
       </div>
 
-      <div class="club-divider"></div>
-
       <div class="club-right">
         <div class="contact-item" @click="notifyNotLogin">
-          <img class="contact-icon" src="@/assets/icons/icon_service_1.png" alt="Telegram" />
+          <img class="contact-icon" src="@/assets/icons/icon_service_1.svg" alt="Telegram" />
           <span class="contact-label"> @game </span>
         </div>
         <div class="contact-item" @click="notifyNotLogin">
-          <img class="contact-icon" src="@/assets/icons/icon_service_2.png" alt="邮箱" />
+          <img class="contact-icon" src="@/assets/icons/icon_service_2.svg" alt="邮箱" />
           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>
         <div class="contact-item" @click="notifyNotLogin">
-          <img class="contact-icon" src="@/assets/icons/icon_service_3.png" alt="IM客服" />
+          <img class="contact-icon" src="@/assets/icons/icon_service_3.svg" alt="IM客服" />
           <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
         </div>
       </div>
@@ -257,23 +286,82 @@ function notifyNotLogin(): void {
   background: transparent;
   min-height: max-content;
   box-sizing: border-box;
+  overscroll-behavior-y: none;
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
   }
 }
+/* ========== 0. 顶部栏 ========== */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.2rem 0 0;
+  flex-shrink: 0;
+}
+
+.top-bar__logo {
+  font-size: 0.54rem;
+  font-weight: 900;
+  color: #000;
+  text-shadow: 0.5px 0 0 currentColor, -0.5px 0 0 currentColor, 0 0.5px 0 currentColor,
+    0 -0.5px 0 currentColor;
+  letter-spacing: 0.05rem;
+  font-family: 'HONOR Sans CN', sans-serif;
+}
+
+.top-bar__actions {
+  display: flex;
+  gap: 0.1rem;
+}
+
+.top-bar__btn {
+  border: none;
+  border-radius: 0.56rem;
+  font-size: 0.34rem;
+  font-weight: 500;
+  font-family: 'PingFang SC', sans-serif;
+  cursor: pointer;
+  padding: 0.18rem 0.75rem;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
+.top-bar__btn--register {
+  background: rgba(174, 174, 174, 0.52);
+  color: rgba(0, 0, 0, 0.82);
+  box-shadow: 0.01rem 0.01rem 0.03rem rgba(0, 0, 0, 0.25);
+  // outline: 0.01rem solid rgba(255, 255, 255, 0.5);
+  outline-offset: -0.01rem;
+  backdrop-filter: blur(0.14rem);
+}
+
+.top-bar__btn--login {
+  background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+  color: #fff;
+  // outline: 0.01rem solid rgba(255, 255, 255, 0.5);
+  outline-offset: -0.01rem;
+  backdrop-filter: blur(0.55rem);
+}
 
 /* ===== 1. 顶部 Header ===== */
 .home-header {
   width: 100%;
-  border-radius: 0.42rem;
+  border-radius: 0.8rem;
   overflow: hidden;
   flex-shrink: 0;
 }
 
 .home-header-img {
   width: 100%;
-  height: 3.7rem;
+  height: 3.68rem;
   object-fit: cover;
   display: block;
 }
@@ -284,7 +372,7 @@ function notifyNotLogin(): void {
   align-items: center;
   gap: 0.06rem;
   padding: 0rem 0.18rem;
-  border-radius: 505.114px;
+  border-radius: 1rem;
   height: 0.5rem;
   min-height: 0.5rem;
   background: rgba(76, 76, 76, 0.3);
@@ -309,7 +397,7 @@ function notifyNotLogin(): void {
 
 .notice-label {
   font-size: 0.28rem;
-  color: #fff;
+  color: #000;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -322,7 +410,6 @@ function notifyNotLogin(): void {
 }
 
 .notice-track {
-  display: inline-flex;
   align-items: center;
   min-width: max-content;
   white-space: nowrap;
@@ -330,7 +417,8 @@ function notifyNotLogin(): void {
 
 .notice-item {
   font-size: 0.28rem;
-  color: rgba(255, 255, 255, 1);
+  line-height: 0.6rem;
+  color: #000;
   font-weight: 400;
   white-space: nowrap;
 }
@@ -339,7 +427,7 @@ function notifyNotLogin(): void {
 .club-panel {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.17);
+  background: #fff;
   border-radius: 1rem;
   padding: 0.1rem 0.6rem;
   min-height: 1.54rem;
@@ -364,7 +452,7 @@ function notifyNotLogin(): void {
 
 .service-label {
   font-size: 0.3rem;
-  color: #fff;
+  color: #000;
 }
 
 .club-balance-row {
@@ -391,7 +479,7 @@ function notifyNotLogin(): void {
 
 .balance-amount {
   font-size: 0.38rem;
-  color: #fff;
+  color: #000;
   font-weight: 500;
   text-align: center;
   min-width: 0.5rem;
@@ -400,10 +488,10 @@ function notifyNotLogin(): void {
 .recharge-btn {
   width: 1.3rem;
   padding: 0.06rem 0rem;
-  background: rgba(37, 37, 37, 0.49);
+  background: #e7e7e7;
   border: none;
   border-radius: 1rem;
-  color: #fff;
+  color: #000;
   font-size: 0.28rem;
   cursor: pointer;
   white-space: nowrap;
@@ -438,7 +526,7 @@ function notifyNotLogin(): void {
 
 .contact-label {
   font-size: 0.2rem;
-  color: #fff;
+  color: #000;
   text-align: center;
   max-width: 1rem;
   overflow: hidden;
@@ -451,19 +539,41 @@ function notifyNotLogin(): void {
   display: flex;
   gap: 0.3rem;
 }
+.game-center-scroll {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 
-.game-zone-left {
-  display: flex;
-  flex-direction: column;
-  gap: 0.16rem;
-  flex: 1;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
-
-.game-zone-right {
+.game-center-track {
+  display: flex;
+  gap: 0.15rem;
+  // padding-bottom: 0.1rem;
+  width: max-content;
+}
+.game-scroll-card {
+  flex-shrink: 0;
+  width: 2.95rem;
+  height: 3.91rem;
+  border-radius: 0.37rem;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  background: #54b78d;
+  // backdrop-filter: blur(0.11rem);
   display: flex;
   flex-direction: column;
-  gap: 0.16rem;
-  flex: 1;
+  justify-content: space-between;
+  padding: 0.26rem 0.2rem 0.2rem;
+  box-sizing: border-box;
+
+  &:active {
+    opacity: 0.85;
+  }
 }
 
 .game-card {
@@ -1064,15 +1174,16 @@ function notifyNotLogin(): void {
 /* ===== 5. 底部4个热门游戏 ===== */
 .coming-soon-row {
   display: flex;
-  gap: 0.12rem;
+  gap: 0.15rem;
+  padding-bottom: 0.1rem;
+  width: max-content;
 }
 
-.coming-soon-small {
-  position: relative;
-  flex: 1;
-  width: 2.165rem;
-  height: 2.293rem;
-  border-radius: 0.5rem;
+.coming-soon-scroll-card {
+  flex-shrink: 0;
+  width: 2.95rem;
+  height: 3.91rem;
+  border-radius: 0.51rem;
   overflow: hidden;
   aspect-ratio: 81 / 86;
   background: rgba(0, 0, 0, 0.2);

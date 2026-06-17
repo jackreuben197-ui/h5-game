@@ -1,13 +1,13 @@
 import type { RoomRecord } from '@/api/models/roomcenter'
 import { createLogger } from '@/utils/logger'
-import type {
-  CowboyConfig as PbCowboyConfig,
-  RoomChange as PbRoomChange,
-  RoomRecord as PbRoomRecord,
-  RoomTribeClubRelate as PbRoomTribeClubRelate,
-  RoomUserInfo as PbRoomUserInfo,
-} from './pb/protobuf/holdem/define_pb'
-import type { ServerMessageRoomChangeNotify as PbServerMessageRoomChangeNotify } from './pb/protobuf/holdem/recv_g_room_change_notify_pb'
+import {
+  ServerMessageRoomChangeNotify,
+  type CowboyConfig as PbCowboyConfig,
+  type RoomChange as PbRoomChange,
+  type RoomRecord as PbRoomRecord,
+  type RoomTribeClubRelate as PbRoomTribeClubRelate,
+  type RoomUserInfo as PbRoomUserInfo,
+} from '@holdem-pb'
 import { decodeHoldemPacket } from './holdemPacket'
 
 const log = createLogger('[roomChangeNotify]')
@@ -50,11 +50,8 @@ export interface WsRoomChangeNotifyPayload {
   roomChange?: WsRoomChangePayload
 }
 
-// 对齐 bridge README 的约定：pb 类 fire-and-forget 懒加载，不阻塞主包。
-let pbClass: typeof PbServerMessageRoomChangeNotify | null = null
-void import('./pb/protobuf/holdem/recv_g_room_change_notify_pb').then((mod) => {
-  pbClass = mod.ServerMessageRoomChangeNotify
-})
+// agreement-web 的 proxy 让 ServerMessageRoomChangeNotify 在首次访问时从
+// window.HoldemPB 取真实类；UMD bundle 由 holdemPbInjectPlugin 提前注入 <script> 加载。
 
 function toSafeInt(value: unknown): number {
   const num = Number(value)
@@ -156,7 +153,7 @@ function mapRoomChange(change: PbRoomChange): WsRoomChangePayload {
 export function decodeRoomChangeNotifyFromRawPacket(
   rawPacket: ArrayBufferLike,
 ): WsRoomChangeNotifyPayload | null {
-  if (!pbClass) return null
+  if (!ServerMessageRoomChangeNotify) return null
 
   const packet = decodeHoldemPacket(rawPacket)
   if (!packet || packet.code !== ROOM_CHANGE_NOTIFY_CODE) {
@@ -164,7 +161,7 @@ export function decodeRoomChangeNotifyFromRawPacket(
   }
 
   try {
-    const notify = pbClass.deserializeBinary(packet.body)
+    const notify = ServerMessageRoomChangeNotify.deserializeBinary(packet.body)
     const changeType = toSafeInt(notify.getChangeType())
     if (!changeType) {
       return null

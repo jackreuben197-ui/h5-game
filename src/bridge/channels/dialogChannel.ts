@@ -6,7 +6,7 @@ import {
   type BridgeMessage,
   type CocosDialogPayload,
   type DialogResultPayload,
-} from '../protocol'
+} from '@bridge-protocol'
 import { setH5Visible } from './uiChannel'
 
 interface ActiveBridgeDialog extends CocosDialogPayload {

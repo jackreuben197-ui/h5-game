@@ -3,6 +3,7 @@ import { localStore } from '@/utils/localStore'
 export const CHANNEL_MAIN_DOMAIN = (
   import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || ''
 ).trim().toLowerCase()
+// const TEST_CHANNEL_INVITE_CODE = 'DYyhWokm'
 
 interface ParsedQueryParams {
   inviteCode: string
@@ -32,6 +33,8 @@ function readParam(searchParams: URLSearchParams, hashParams: URLSearchParams, k
 }
 
 export function isChannelPackageHost(hostname: string = window.location.hostname): boolean {
+  // void hostname
+  // return true
   const normalizedHost = readString(hostname).toLowerCase()
   if (!normalizedHost) {
     return false
@@ -123,6 +126,8 @@ export function restoreStorageFromUrl(): void {
 }
 
 export function extractInviteCodeFromSubdomain(hostname: string = window.location.hostname): string {
+  // void hostname
+  // return TEST_CHANNEL_INVITE_CODE
   const normalizedHost = readString(hostname).toLowerCase()
   if (!isChannelPackageHost(normalizedHost)) {
     return ''
@@ -148,6 +153,8 @@ export function parseInviteParamsFromLocation(url: URL = new URL(window.location
 }
 
 export function resolveInviteCode(hostname: string = window.location.hostname): string {
+  // void hostname
+  // return TEST_CHANNEL_INVITE_CODE
   const parsed = parseInviteParamsFromLocation()
   if (parsed.inviteCode) {
     return parsed.inviteCode

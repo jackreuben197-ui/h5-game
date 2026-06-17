@@ -16,7 +16,7 @@ import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import { showGameToast } from '@/components/Toast'
 import { t } from '@/i18n'
 import { enterTable } from '@/bridge/core'
-import type { EnterTablePayload } from '@/bridge/protocol'
+import type { EnterTablePayload } from '@bridge-protocol'
 import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
 import { useLoginModalStore } from '@/stores/loginModal'
@@ -119,7 +119,7 @@ function scrollForKeypad(): void {
 
 function onKeypadKeyPress(payload: {
   key: string
-  action: 'digit' | 'clear' | 'backspace'
+  action: 'digit' | 'clear' | 'backspace' | 'decimal'
   value: string
   accepted: boolean
 }): void {
@@ -183,7 +183,9 @@ function getRoomStartTimestamp(room: Pick<FriendRoomListItem, 'start_time'>): nu
   return 0
 }
 
-function normalizeFriendRoomRecord(record: RoomcenterFriendRoomRecord | RoomRecord): FriendRoomListItem {
+function normalizeFriendRoomRecord(
+  record: RoomcenterFriendRoomRecord | RoomRecord,
+): FriendRoomListItem {
   return {
     ...record,
     rid: record.rid,

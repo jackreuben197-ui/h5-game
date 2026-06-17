@@ -12,6 +12,7 @@ import { useRoomListStore } from '@/stores/roomList'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
 import { localStore } from '@/utils/localStore'
+import { useCachedImage } from '@/utils/imageCache'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { showGameToast } from '@/components/Toast'
 import { useCasinoStore } from '@/stores/casino'
@@ -246,7 +247,9 @@ const currentClub = computed<ClubInfo | null>(() => {
   return userInfoStore.clubList[0] || null
 })
 
-const clubBannerUrl = computed(() => toSafeString(currentClub.value?.banner) || homeHeaderFallback)
+const clubBannerUrl = useCachedImage(
+  () => toSafeString(currentClub.value?.banner) || homeHeaderFallback,
+)
 const noticeText = computed(() => {
   return toSafeString(currentClub.value?.prologue)
 })
@@ -345,7 +348,6 @@ function handleOpenCustomerService(): void {
 
 function openMiniGamePanel(): void {
   showGameToast('功能开发中')
-  router.push('/home2')
   // openBridgePanel({
   //   // panelType: 'mttRecord',
   //   panelType: 'mttSettlement',
@@ -551,6 +553,11 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="home-page">
+    <!-- 0. 顶部栏：登录态仅保留 POKER 品牌 -->
+    <div class="top-bar">
+      <span class="top-bar__logo">POKER</span>
+    </div>
+
     <!-- 1. 顶部俱乐部介绍图 -->
     <div class="home-header">
       <img class="home-header-img" :src="clubBannerUrl" alt="俱乐部介绍" />
@@ -558,7 +565,7 @@ onBeforeUnmount(() => {
 
     <!-- 2. 公告栏 -->
     <div class="notice-bar">
-      <img class="notice-icon" src="@/assets/icons/icon_notice.png" alt="公告" />
+      <img class="notice-icon" src="@/assets/icons/icon_notice.svg" alt="公告" />
       <div class="notice-marquee">
         <span class="notice-label mr-4"> {{ $txt('Serverbulletin') }}: </span>
         <div ref="noticeScrollRef" class="notice-scroll">
@@ -586,7 +593,7 @@ onBeforeUnmount(() => {
           <span class="service-label"> {{ clubNameText }} </span>
           <img
             class="icon-sm icon-eye"
-            src="@/assets/icons/icon_eye_open.png"
+            src="@/assets/icons/icon_eye_open.svg"
             alt="显示/隐藏"
             @click="toggleBalance"
           />
@@ -599,29 +606,34 @@ onBeforeUnmount(() => {
           <span v-else class="balance-amount">
             {{ balanceVisible ? clubGoldText : '****' }}
           </span>
-          <img
+          <svg
             class="icon-sm icon-refresh"
-            src="@/assets/icons/icon_refresh.png"
-            alt="刷新"
+            xmlns="http://www.w3.org/2000/svg"
+            width="19"
+            height="19"
+            viewBox="0 0 19 19"
+            fill="none"
             @click="refreshBalance"
-          />
+          >
+            <path
+              d="M9.22333 18.4467C4.12929 18.4467 0 14.3174 0 9.22333C0 4.12929 4.12929 0 9.22333 0C14.3174 0 18.4467 4.12929 18.4467 9.22333C18.4467 14.3174 14.3174 18.4467 9.22333 18.4467ZM13.669 13.9051C14.7823 12.8498 15.4836 11.4326 15.6471 9.90734C15.8106 8.38207 15.4257 6.84842 14.5613 5.58114C13.6969 4.31385 12.4095 3.39575 10.9298 2.9913C9.45006 2.58685 7.87467 2.72248 6.48585 3.37389L7.38512 4.99259C8.08695 4.68756 8.85365 4.56198 9.61612 4.62715C10.3786 4.69233 11.1128 4.94622 11.7527 5.36594C12.3926 5.78566 12.918 6.35802 13.2815 7.03142C13.645 7.70481 13.8352 8.45808 13.835 9.22333H11.068L13.669 13.9051ZM11.9608 15.0728L11.0615 13.4541C10.3597 13.7591 9.59301 13.8847 8.83055 13.8195C8.06808 13.7543 7.33382 13.5004 6.69394 13.0807C6.05407 12.661 5.5287 12.0886 5.16519 11.4152C4.80168 10.7418 4.61145 9.98858 4.61167 9.22333H7.37866L4.77769 4.54157C3.66433 5.59684 2.96308 7.01406 2.79958 8.53933C2.63608 10.0646 3.021 11.5982 3.88539 12.8655C4.74978 14.1328 6.03715 15.0509 7.51688 15.4554C8.9966 15.8598 10.572 15.7242 11.9608 15.0728Z"
+              fill="#ABABAB"
+            />
+          </svg>
           <button class="recharge-btn" @click="goToRecharge">
             {{ t('OpCodeString_RECHARGE') }}
           </button>
         </div>
       </div>
 
-      <!-- 分割线 -->
-      <div class="club-divider"></div>
-
       <!-- 右侧：联系方式 -->
       <div class="club-right">
         <div class="contact-item" @click="handleService">
-          <img class="contact-icon" src="@/assets/icons/icon_service_1.png" alt="Telegram" />
+          <img class="contact-icon" src="@/assets/icons/icon_service_1.svg" alt="Telegram" />
           <span class="contact-label"> @game </span>
         </div>
         <div class="contact-item" @click="handleService">
-          <img class="contact-icon" src="@/assets/icons/icon_service_2.png" alt="邮箱" />
+          <img class="contact-icon" src="@/assets/icons/icon_service_2.svg" alt="邮箱" />
           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>
         <div
@@ -629,7 +641,7 @@ onBeforeUnmount(() => {
           class="contact-item"
           @click="handleOpenCustomerService"
         >
-          <img class="contact-icon" src="@/assets/icons/icon_service_3.png" alt="IM客服" />
+          <img class="contact-icon" src="@/assets/icons/icon_service_3.svg" alt="IM客服" />
           <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
         </div>
       </div>
@@ -716,7 +728,6 @@ onBeforeUnmount(() => {
             </div>
           </div>
         </div>
-      </div>
 
       <!-- 右侧：德州扑克 + 娱乐场 -->
       <div class="game-zone-right">
@@ -805,34 +816,49 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 0.24rem;
-  padding: 0 0.4rem 4rem; // 底部留出 tabbar 高度
+  padding: 0 0.4rem 3rem;
   background: transparent;
-  // 由 MainLayoutView 统一滚动，这里不再单独设滚动容器。
   min-height: max-content;
   box-sizing: border-box;
-  // 隐藏滚动条但保留滚动功能
+  overscroll-behavior-y: none;
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
   }
 }
 
-/* ===== 1. 顶部 Header ===== */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.2rem 0 0;
+  flex-shrink: 0;
+}
+
+.top-bar__logo {
+  font-size: 0.54rem;
+  font-weight: 900;
+  color: #000;
+  text-shadow: 0.5px 0 0 currentColor, -0.5px 0 0 currentColor, 0 0.5px 0 currentColor,
+    0 -0.5px 0 currentColor;
+  letter-spacing: 0.05rem;
+  font-family: 'HONOR Sans CN', sans-serif;
+}
+
 .home-header {
   width: 100%;
-  border-radius: 0.42rem;
+  border-radius: 0.8rem;
   overflow: hidden;
   flex-shrink: 0;
 }
 
 .home-header-img {
   width: 100%;
-  height: 3.7rem;
+  height: 3.68rem;
   object-fit: cover;
   display: block;
 }
 
-/* ===== 2. 公告栏 ===== */
 .notice-bar {
   display: flex;
   align-items: center;
@@ -864,7 +890,7 @@ onBeforeUnmount(() => {
 
 .notice-label {
   font-size: 0.28rem;
-  color: #fff;
+  color: #000;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -891,7 +917,8 @@ onBeforeUnmount(() => {
 
 .notice-item {
   font-size: 0.28rem;
-  color: rgba(255, 255, 255, 1);
+  line-height: 0.6rem;
+  color: #000;
   font-weight: 400;
   white-space: nowrap;
 }
@@ -905,11 +932,10 @@ onBeforeUnmount(() => {
   }
 }
 
-/* ===== 3. 俱乐部控件 ===== */
 .club-panel {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.17);
+  background: #fff;
   border-radius: 1rem;
   padding: 0.1rem 0.6rem;
   min-height: 1.54rem;
@@ -933,14 +959,9 @@ onBeforeUnmount(() => {
   gap: 0.12rem;
 }
 
-.icon-service {
-  width: 0.36rem;
-  height: 0.36rem;
-}
-
 .service-label {
   font-size: 0.3rem;
-  color: #fff;
+  color: #000;
 }
 
 .club-balance-row {
@@ -967,15 +988,10 @@ onBeforeUnmount(() => {
 
 .balance-amount {
   font-size: 0.38rem;
-  color: #fff;
+  color: #000;
   font-weight: 500;
   text-align: center;
   min-width: 0.5rem;
-}
-
-.usdt-amount {
-  font-size: 0.24rem;
-  opacity: 0.9;
 }
 
 .recharge-btn {
@@ -984,18 +1000,10 @@ onBeforeUnmount(() => {
   background: rgba(37, 37, 37, 0.49);
   border: none;
   border-radius: 1rem;
-  color: #fff;
+  color: #000;
   font-size: 0.28rem;
   cursor: pointer;
   white-space: nowrap;
-}
-
-.club-divider {
-  width: 0.02rem;
-  height: 1.2rem;
-  background: rgba(255, 255, 255, 0.2);
-  margin: 0 0.28rem;
-  flex-shrink: 0;
 }
 
 .club-right {
@@ -1019,7 +1027,7 @@ onBeforeUnmount(() => {
 
 .contact-label {
   font-size: 0.2rem;
-  color: #fff;
+  color: #000;
   text-align: center;
   max-width: 1rem;
   overflow: hidden;
@@ -1027,41 +1035,48 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
-/* ===== 4. 游戏模块 ===== */
-.game-zones {
-  display: flex;
-  gap: 0.3rem;
+.section-header {
+  padding: 0.12rem 0 0;
+  .section-title {
+    font-size: 0.38rem;
+    font-weight: 700;
+    margin-bottom: 0rem;
+    color: #000;
+    font-family: 'HONOR Sans CN', sans-serif;
+  }
 }
 
-.game-zone-left {
-  display: flex;
-  flex-direction: column;
-  gap: 0.16rem;
-  flex: 1;
+.game-center-scroll {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-.game-zone-right {
+.game-center-track {
   display: flex;
-  flex-direction: column;
-  gap: 0.16rem;
-  flex: 1;
+  gap: 0.15rem;
+  width: max-content;
 }
 
-/* 游戏卡片通用 */
-.game-card {
+.game-scroll-card {
+  flex-shrink: 0;
+  width: 2.95rem;
+  height: 3.91rem;
+  border-radius: 0.37rem;
+  overflow: hidden;
   position: relative;
-  // background: rgba(0, 0, 0, 0.22);
-  border-radius: 0.56rem;
-  border: 0.02rem solid rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(6px);
-  // overflow: hidden;
-  padding: 0.14rem 0.24rem 0.14rem;
+  cursor: pointer;
+  background: #54b78d;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  cursor: pointer;
-  min-height: 2.69rem;
-  max-width: 4.45rem;
+  padding: 0.26rem 0.2rem 0.2rem;
+  box-sizing: border-box;
 
   &:active {
     opacity: 0.85;
@@ -1682,15 +1697,16 @@ onBeforeUnmount(() => {
 /* ===== 5. 底部4个即将开放 (修改为静态游戏入口) ===== */
 .coming-soon-row {
   display: flex;
-  gap: 0.12rem;
+  gap: 0.15rem;
+  padding-bottom: 0.1rem;
+  width: max-content;
 }
 
 .coming-soon-small {
-  position: relative;
-  flex: 1;
-  width: 2.165rem;
-  height: 2.293rem;
-  border-radius: 0.5rem;
+  flex-shrink: 0;
+  width: 2.95rem;
+  height: 3.91rem;
+  border-radius: 0.51rem;
   overflow: hidden;
   aspect-ratio: 81 / 86;
   background: rgba(0,0,0,0.2);

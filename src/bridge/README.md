@@ -1,18 +1,47 @@
 # Bridge 目录说明
 
-本文档说明 `src/bridge` 各子目录职责边界，目标是让后续改动能快速判断“代码该放哪里”。
+本文档说明 `src/bridge` 各子目录职责边界，目标是让后续改动能快速判断”代码该放哪里”。
+
+## 0. 协议来源：本地 vs 共享包
+
+协议层（action 常量 / payload 类型 / 消息信封）现在通过 `@bridge-protocol` 这个别名引入，由 `vite.config.ts` 根据 `VITE_BRIDGE_TARGET` 切实际路径：
+
+| `VITE_BRIDGE_TARGET` | `@bridge-protocol` 解析到 | 适用场景 |
+|---|---|---|
+| `pokerqueen`（默认）| 本地 `src/bridge/protocol/` | 对接旧 cocos 项目，保留与 pokerqueen `H5MsgMgr.ts` 对齐的冻结副本 |
+| `h5-cc-game` | npm 包 `h5-cc-bridge`（[github](https://github.com/soolary/h5-cc-bridge)）| 对接新 cocos 项目 h5-cc-game，两端共用同一份类型 |
+
+业务代码统一从 `@bridge-protocol` 引入，不要写 `'./protocol'` 或 `'@/bridge/protocol'`：
+
+```ts
+import { BRIDGE_ACTION, type BridgeMessage } from '@bridge-protocol'
+```
+
+切换目标后协议层会自动换源，传输/业务层（core/channels/sync/ws）**不动**，因为它们本来就只依赖 `@bridge-protocol` 暴露的接口。
+
+切换方法：改 `.env`（或 `.env.development`）里的 `VITE_BRIDGE_TARGET`，重启 dev server / 重新 build。
 
 ## 1. 目录分层
 
 ```text
 src/bridge
 ├── core/       # H5 <-> Cocos 通道与握手（底层传输）
-├── protocol/   # 动作常量、消息信封、双向 payload 类型
+├── protocol/   # 【冻结副本】对接 pokerqueen 时使用的协议；
+│               # h5-cc-game 模式下不再被引用（alias 改指 npm 包）
 ├── ws/         # H5 代理服务器 WebSocket（连接、收发、重连、解析）
 ├── channels/   # Cocos -> H5 的业务通道（UI/Toast/路由等）
-├── sync/       # H5 HTTP 结果同步到 Cocos
+├── sync/       # H5 HTTP 结果同步到 Cocos + Cocos 持久化代理回写
 └── index.ts    # 顶层聚合导出
 ```
+
+**为什么保留本地 protocol/？** 因为 pokerqueen（旧 cocos 项目）不接入 `@silenthill/h5-cc-bridge` 仓库，本目录就是它的兼容协议快照。如果哪天 pokerqueen 也接入了共享协议，可以直接删掉这个文件夹（连带 vite alias 的分支）。
+
+**注意：`@silenthill/h5-cc-bridge` 这个 npm 包不管哪个模式都得装**。原因：
+
+- 运行时（Vite bundle）：是否用 npm 包看 `VITE_BRIDGE_TARGET`。pokerqueen 模式下 alias 切到本地，npm 包代码不会进 bundle。
+- 类型检查（vue-tsc）：`tsconfig.app.json` 里 `@bridge-protocol` 是静态映射到 `node_modules/@silenthill/h5-cc-bridge/dist/h5-side.d.ts` 的，tsc 不读环境变量，所以无论哪个模式都需要包存在才能类型检查通过。
+
+结果：`pnpm install` 永远必须；但是 `pnpm build` 出来的产物在 pokerqueen 模式下不含 `@silenthill/h5-cc-bridge` 任何代码。
 
 ## 2. 各文件夹功能说明
 
@@ -37,11 +66,10 @@ src/bridge
 
 ### `protocol/`
 
-职责：
+**这是 pokerqueen 兼容模式下的协议副本，结构与 `@silenthill/h5-cc-bridge` 仓库的 `src/` 一一对应。**
 
-- 定义跨端约定的动作名（`BRIDGE_ACTION`）。
-- 定义消息信封结构（`BridgeMessage`、`msgtype`、`requestId` 等）。
-- 定义 Cocos -> H5 与 H5 -> Cocos 的 payload 类型。
+- `VITE_BRIDGE_TARGET=pokerqueen` 时，`@bridge-protocol` 解析到本目录。
+- `VITE_BRIDGE_TARGET=h5-cc-game` 时，`@bridge-protocol` 解析到 npm 包 `@silenthill/h5-cc-bridge` 的 h5-side 入口，本目录闲置但保留。
 
 典型文件：
 
@@ -52,8 +80,8 @@ src/bridge
 
 维护约定：
 
-- 新增 action 必须先加到 `actions.ts`。
-- 新增 payload 类型必须归类到 `cocosToH5.ts` 或 `h5ToCocos.ts`。
+- 新协议优先去 [h5-cc-bridge 仓库](https://github.com/soolary/h5-cc-bridge) 改，再回到本副本同步。
+- 如果只在 pokerqueen 用、暂时不上 h5-cc-game，可直接改本目录；记得同步到 pokerqueen 的 `H5MsgMgr.ts`。
 
 ---
 
@@ -573,4 +601,119 @@ interface SetHeartbeatModePayload {
 - `wsClosed` 仅作日志记录，不再用于触发重连（`wsProxy` 已自动处理）
 - 鉴权失败（token 缺失）会同时触发 `forceToLoginFromWs` 与 `wsReconnectFailed(auth-invalid)`，Cocos 端在该 reason 下不再二次发送 `h5Navigate`
 - 切到后台再回来：浏览器 `ws.readyState` 不能信（长时间挂起后底层 TCP 已断但 readyState 仍是 `OPEN`），因此采用「后台累计 ≥ 30s 一律强制重连」策略（`RECONNECT_AFTER_HIDDEN_MS`），对齐 Unity 在 `OnApplicationPause(false)` + `internetReachability` 轮询下的等价行为
+
+## 10. 持久化代理（Storage Bridge）
+
+### 10.1 设计目标
+
+Cocos 端不再自己开 `cc_cache_user_*` 这个独立 IndexedDB，也不再直接调 `cc.sys.localStorage`：所有持久化操作经 bridge 委托给 H5，由 H5 落到统一的 IndexedDB（`user_cache_${userId}`，与 h5 自己的 `club_list` 同库不同名）和 `dzpk_cc_*` 命名空间下的 localStorage。
+
+收益：
+
+- IndexedDB 单一库、单一 schema：迁移/清理/调试只看一份。
+- localStorage 命名空间隔离：cocos 的 `dzpk_cc_*` 与 h5 的 `dzpk_h5_*` 互不污染。
+- store 白名单：h5 强制校验 cocos 写入的 store 名，拦截误写到 h5 自己 store（如 `club_list`）的请求。
+
+### 10.2 相关文件
+
+- `src/bridge/protocol/actions.ts` — `CC_STORAGE_OP / CC_STORAGE_RESULT / CC_STORAGE_SNAPSHOT`
+- `src/bridge/protocol/cocosToH5.ts` — `CcIndexedDBOpPayload`、`CcLocalStorageOpPayload`
+- `src/bridge/protocol/h5ToCocos.ts` — `CcStorageResultPayload`、`CcStorageSnapshotPayload`
+- `src/bridge/sync/ccStorageProxy.ts` — H5 侧分发 + 白名单 + snapshot 回灌
+- `src/utils/indexedDB.ts` — `user_cache_${uid}` schema，`CC_CACHE_STORES` 白名单
+- Cocos 侧：`pokerqueen/assets/script/frame/BridgeStorage.ts`（统一出口），`tools/CocosIndexedDB.ts` / `frame/manager/LocalStoreManager.ts`（thin wrapper）
+
+### 10.3 协议约定
+
+#### Cocos → H5：`ccStorageOp`
+
+两类 payload 通过 `storage` 字段区分。
+
+```ts
+// IndexedDB
+interface CcIndexedDBOpPayload {
+  requestId: string                                  // 必填，H5 按 requestId 回包
+  storage: 'indexeddb'
+  store: string                                      // 必须命中白名单（见 10.4）
+  op: 'get' | 'getAll' | 'put' | 'delete' | 'clear'
+  key?: IDBValidKey                                  // get/put/delete 需要；getAll/clear 可省略
+  value?: unknown                                    // 仅 put
+}
+
+// localStorage
+interface CcLocalStorageOpPayload {
+  requestId?: string                                 // 写操作通常 fire-and-forget，可不带
+  storage: 'localstorage'
+  op: 'get' | 'set' | 'remove' | 'clear'
+  key?: string                                       // get/set/remove 需要
+  value?: string                                     // 仅 set；字符串形态由 Cocos 自决（JSON / 明文）
+}
+```
+
+#### H5 → Cocos：`ccStorageResult`
+
+```ts
+interface CcStorageResultPayload {
+  requestId: string
+  ok: boolean
+  value?: unknown                                    // 读 op 命中时为存储值，未命中为 null
+  error?: string                                     // 失败原因：'store_not_allowed' / 'no_user' / 'missing_key' / ...
+}
+```
+
+#### H5 → Cocos：`ccStorageSnapshot`
+
+握手完成后由 H5 主动推送，把 `dzpk_cc_*` 命名空间下的全部 key/value 一次性回灌给 Cocos 用作内存镜像，让 `LocalStoreManager.getItem` 保持同步 API。
+
+```ts
+interface CcStorageSnapshotPayload {
+  entries: Record<string, string>                    // 已去掉 'dzpk_cc_' 前缀
+}
+```
+
+### 10.4 IndexedDB 白名单
+
+H5 侧只接受以下 store；其它 store 直接 `ok=false, error='store_not_allowed'`，不会落盘也不会覆盖 h5 自己的表。
+
+| Store 常量                          | 实际表名                  | Cocos 业务                          |
+|------------------------------------|--------------------------|------------------------------------|
+| `CC_STORE_TABLE_USER_BASE_INFO`    | `table_user_base_info`   | 牌桌内玩家公共信息（24h TTL）        |
+| `CC_STORE_TABLE_USER_DATA_INFO`    | `table_user_data_info`   | 牌桌内玩家战绩（30 分钟 TTL）        |
+| `CC_STORE_GAME_REPLAYS`            | `game_replays`           | 局内牌谱缓存                          |
+
+新增白名单步骤：
+
+1. `src/utils/indexedDB.ts` 加常量到 `CC_STORE_*` 并放进 `CC_CACHE_STORES`。
+2. 把 `USER_CACHE_DB_VERSION` 加一，老用户下次 open 会自动补建。
+3. Cocos 侧 `frame/BridgeStorage.ts` 同步加 `STORE_*` 常量与 union 成员。
+4. 业务 wrapper（如 `PlayerInfoCacheDB.ts`）按现有模式接入，无需感知 bridge。
+
+### 10.5 localStorage 命名空间
+
+- Cocos 写 key `foo` → H5 实际落地 `dzpk_cc_foo`。
+- H5 自己的 store（pinia-persist 等）使用 `dzpk_h5_` 前缀，与 cocos 完全隔离。
+- 握手完成后 H5 扫描所有 `dzpk_cc_*` key，去掉前缀打包成 `ccStorageSnapshot` 发回 Cocos。
+- Cocos 在握手前调用 `localStorageGet` 只能返回 `null`（镜像尚未回灌），目前所有调用点都在登录后或 UI 触发，影响面可接受。
+
+### 10.6 Cocos 侧入口
+
+业务层不直接 import bridge 协议；统一走 `BridgeStorage`：
+
+```ts
+// IndexedDB
+import { BridgeStorage, STORE_TABLE_USER_BASE_INFO } from '../frame/BridgeStorage';
+await BridgeStorage.indexedDBPut(STORE_TABLE_USER_BASE_INFO, key, data);
+const v = await BridgeStorage.indexedDBGet<MyType>(STORE_TABLE_USER_BASE_INFO, key);
+
+// localStorage（同步 API）
+BridgeStorage.localStorageSet('SomeKey', 'value');
+const s = BridgeStorage.localStorageGet('SomeKey');
+```
+
+`cocosCache()`（`tools/CocosIndexedDB.ts`）和 `LocalStoreManager`（`frame/manager/LocalStoreManager.ts`）是 thin wrapper，保留旧的业务接口（含加密/JSON 序列化语义），内部全部转发到 `BridgeStorage`。
+
+### 10.7 启动顺序
+
+- Cocos：`Main.onLoad` 在 `H5MsgMgr.Instance.init()` 之后调用 `BridgeStorage.install()`，注册 `ccStorageResult` / `ccStorageSnapshot` 监听。
+- H5：`main.ts` 在 mount 前调用 `installCcStorageProxy()`，订阅 `ccStorageOp` 并在 `onBridgeHandshakeDone` 时推一次 snapshot。
 

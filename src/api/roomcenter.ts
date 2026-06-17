@@ -4,6 +4,7 @@ import type { ApiResponse } from '@/api/models/common'
 import type {
   AllMttSngIdsData,
   AllMttSngIdsRequest,
+  GuestAllMttSngIdsRequest,
   MttBuyInRequest,
   MttRebuyRequest,
   MttUserWalletData,
@@ -11,9 +12,11 @@ import type {
   MttListRequest,
   RoomDetailData,
   RoomDetailRequest,
+  GuestRoomDetailRequest,
   RoomcenterInvitationRoomData,
   RoomcenterInvitationRoomRequest,
   RoomIdsData,
+  RoomcenterGuestRoomIdsRequest,
   RoomcenterFriendRoomApplyAuditData,
   RoomcenterFriendRoomApplyAuditRequest,
   RoomcenterFriendRoomApplyListData,
@@ -48,6 +51,10 @@ import type {
   RoomcenterRoomsRequest,
   RoomcenterUserAllRoomsData,
   RoomcenterUserAllRoomsRequest,
+  RoomcenterGuestAllRoomsRequest,
+  RoomcenterUserContrastRoomsData,
+  RoomcenterUserContrastRoomsRequest,
+  RoomcenterGuestContrastRoomsRequest,
   ClubRoomSitApplyRecordsRequest,
   ClubRoomSitApplyRecordsResponseData,
   ClubDelayAuditRequest,
@@ -58,6 +65,9 @@ import type {
   UserRoomSitApplyRecordsResponseData,
   RoomClubApplyAuditRequest,
   RoomClubApplyAuditResponseData,
+  RoomCenterUserMatchListRequest,
+  RoomCenterUserMatchListResponseData,
+  RoomCenterGuestMatchListRequest,
 } from '@/api/models/roomcenter'
 import { forwardRoomsListToCocos } from '@/bridge/sync'
 
@@ -264,10 +274,44 @@ export async function postRoomcenterUserAllRoomsApi(
   )
   return response.data
 }
+export async function postRoomcenterGuestAllRoomsApi(
+  payload: RoomcenterGuestAllRoomsRequest = {},
+): Promise<ApiResponse<RoomcenterUserAllRoomsData>> {
+  const response = await http.post<ApiResponse<RoomcenterUserAllRoomsData>>(
+    '/roomcenter/guest/all/rooms',
+    payload,
+  )
+  return response.data
+}
 
 // 请求所有可见牌桌 ID。
 export async function getRoomIdsApi(payload: Record<string, unknown>): Promise<ApiResponse<RoomIdsData>> {
   const response = await http.post<ApiResponse<RoomIdsData>>('/roomcenter/user/all/room/ids', payload)
+  return response.data
+}
+export async function getGuestRoomIdsApi(payload: RoomcenterGuestRoomIdsRequest = {}): Promise<ApiResponse<RoomIdsData>> {
+  const response = await http.post<ApiResponse<RoomIdsData>>('/roomcenter/guest/all/room/ids', payload)
+  return response.data
+}
+
+// 对齐 Unity HttpRoomCenterContrastRoomsProtocol.API（/api/roomcenter/user/contrast/rooms）。
+// 传 { room_ids: 本地已知 rid 列表, last_time: 上次 WS 同步时间戳 } 拿增量数据。
+export async function postRoomcenterUserContrastRoomsApi(
+  payload: RoomcenterUserContrastRoomsRequest,
+): Promise<ApiResponse<RoomcenterUserContrastRoomsData>> {
+  const response = await http.post<ApiResponse<RoomcenterUserContrastRoomsData>>(
+    '/roomcenter/user/contrast/rooms',
+    payload,
+  )
+  return response.data
+}
+export async function postRoomcenterGuestContrastRoomsApi(
+  payload: RoomcenterGuestContrastRoomsRequest,
+): Promise<ApiResponse<RoomcenterUserContrastRoomsData>> {
+  const response = await http.post<ApiResponse<RoomcenterUserContrastRoomsData>>(
+    '/roomcenter/guest/contrast/rooms',
+    payload,
+  )
   return response.data
 }
 
@@ -277,6 +321,11 @@ export async function getRoomsDetailApi(payload: RoomDetailRequest): Promise<Api
   const body = response.data
   // 把 rooms/list 请求结果转发给 Cocos（msgtype=1）。
   forwardRoomsListToCocos(payload, body)
+  return body
+}
+export async function getGuestRoomsDetailApi(payload: GuestRoomDetailRequest): Promise<ApiResponse<RoomDetailData>> {
+  const response = await http.post<ApiResponse<RoomDetailData>>('/roomcenter/guest/rooms/list', payload)
+  const body = response.data
   return body
 }
 
@@ -292,6 +341,15 @@ export async function getAllMttSngIdsApi(
 ): Promise<ApiResponse<AllMttSngIdsData>> {
   const response = await http.post<ApiResponse<AllMttSngIdsData>>(
     '/roomcenter/user/all/mtt/sng/ids',
+    payload,
+  )
+  return response.data
+}
+export async function getGuestAllMttSngIdsApi(
+  payload: GuestAllMttSngIdsRequest = {},
+): Promise<ApiResponse<AllMttSngIdsData>> {
+  const response = await http.post<ApiResponse<AllMttSngIdsData>>(
+    '/roomcenter/guest/all/mtt/sng/ids',
     payload,
   )
   return response.data
@@ -369,5 +427,20 @@ export async function postRoomClubApplyAuditApi(
   payload: RoomClubApplyAuditRequest = {} as RoomClubApplyAuditRequest
 ): Promise<ApiResponse<RoomClubApplyAuditResponseData>> {
   const response = await http.post<ApiResponse<RoomClubApplyAuditResponseData>>('/roomcenter/club/room/apply/audit', payload)
+  return response.data
+}
+
+// 对齐 cocos WebRoomCenterUserMatchList.API
+export async function postRoomCenterUserMatchListApi(
+  payload: RoomCenterUserMatchListRequest = {} as RoomCenterUserMatchListRequest
+): Promise<ApiResponse<RoomCenterUserMatchListResponseData>> {
+  const response = await http.post<ApiResponse<RoomCenterUserMatchListResponseData>>('/roomcenter/user/mtt/sng/rooms/list', payload)
+  return response.data
+}
+
+export async function postRoomCenterGuestMatchListApi(
+  payload: RoomCenterGuestMatchListRequest = {} as RoomCenterGuestMatchListRequest
+): Promise<ApiResponse<RoomCenterUserMatchListResponseData>> {
+  const response = await http.post<ApiResponse<RoomCenterUserMatchListResponseData>>('/roomcenter/guest/mtt/sng/rooms/list', payload)
   return response.data
 }

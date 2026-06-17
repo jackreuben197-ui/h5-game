@@ -16,6 +16,7 @@ interface Props {
   showInputArea?: boolean
   confirmText?: string
   title?: string
+  allowDecimal?: boolean // When true, replace 'C' with '.' and allow decimal input
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -29,6 +30,7 @@ const props = withDefaults(defineProps<Props>(), {
   showMask: true,
   showInputArea: false,
   confirmText: t('Wallet_Confirm'),
+  allowDecimal: false,
 })
 
 const emit = defineEmits<{
@@ -37,7 +39,7 @@ const emit = defineEmits<{
   keyPress: [
     payload: {
       key: string
-      action: 'digit' | 'clear' | 'backspace'
+      action: 'digit' | 'clear' | 'backspace' | 'decimal'
       value: string
       accepted: boolean
     },
@@ -46,11 +48,19 @@ const emit = defineEmits<{
 
 const value = ref('')
 const digits: readonly string[] = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
-const getMaxLength = (): number => props.maxLength ?? String(props.max).length
+const getMaxLength = (): number => {
+  if (props.maxLength) return props.maxLength
+  if (props.allowDecimal) return 4 // e.g. "100.0" max 4 digits
+  return String(props.max).length
+}
+
+function hasDecimal(): boolean {
+  return value.value.includes('.')
+}
 
 function emitKeyPress(
   key: string,
-  action: 'digit' | 'clear' | 'backspace',
+  action: 'digit' | 'clear' | 'backspace' | 'decimal',
   accepted: boolean,
 ): void {
   emit('keyPress', {
@@ -65,14 +75,55 @@ watch(
   () => props.open,
   (v) => {
     if (v) {
-      value.value = String(props.initialValue || '')
-        .replace(/\D/g, '')
-        .slice(0, getMaxLength())
+      if (props.allowDecimal) {
+        // For decimal mode, allow digits and one decimal point
+        value.value = String(props.initialValue || '')
+          .replace(/[^0-9.]/g, '')
+          .split('.')
+          .slice(0, 2)
+          .join('.')
+          .slice(0, getMaxLength())
+      } else {
+        value.value = String(props.initialValue || '')
+          .replace(/\D/g, '')
+          .slice(0, getMaxLength())
+      }
     }
   },
 )
 
 function press(k: string): void {
+  if (props.allowDecimal) {
+    // Decimal mode
+    if (k === '.') {
+      if (hasDecimal()) {
+        emitKeyPress('.', 'decimal', false)
+        return
+      }
+      if (value.value === '') {
+        value.value = '0.'
+        emitKeyPress('.', 'decimal', true)
+        return
+      }
+      value.value += '.'
+      emitKeyPress('.', 'decimal', true)
+      return
+    }
+    if (value.value.length >= getMaxLength()) {
+      emitKeyPress(k, 'digit', false)
+      return
+    }
+    // Limit to 1 decimal place
+    if (hasDecimal() && value.value.split('.')[1]?.length >= 1) {
+      emitKeyPress(k, 'digit', false)
+      return
+    }
+    value.value += k
+    emitKeyPress(k, 'digit', true)
+    return
+  }
+
+  // Original integer mode
   if (value.value.length >= getMaxLength()) {
     emitKeyPress(k, 'digit', false)
     return
@@ -103,8 +154,10 @@ function cancel(): void {
 
 function confirm(): void {
   const n = Number(value.value)
-  if (!value.value || n < props.min || n > props.max) return
-  emit('submit', n)
+  if (!value.value || n < props.min) return
+  // Cap at max for decimal mode (percentage)
+  const cappedValue = n > props.max ? props.max : n
+  emit('submit', cappedValue)
 }
 </script>
 
@@ -136,9 +189,28 @@ function confirm(): void {
             <button v-for="n in digits" :key="n" class="kp__key" @click="press(n)">
               {{ n }}
             </button>
-            <button class="kp__key kp__key--accent" @click="clearAll">C</button>
-            <button class="kp__key" @click="press('0')">0</button>
-            <button class="kp__key kp__key--accent" @click="backspace">
+            <button
+              type="button"
+              class="kp__key kp__key--accent"
+              @click="props.allowDecimal ? press('.') : clearAll()"
+              @dblclick.prevent
+            >
+              {{ props.allowDecimal ? '.' : 'C' }}
+            </button>
+            <button
+              type="button"
+              class="kp__key"
+              @click="press('0')"
+              @dblclick.prevent
+            >
+              0
+            </button>
+            <button
+              type="button"
+              class="kp__key kp__key--accent"
+              @click="backspace"
+              @dblclick.prevent
+            >
               <Icon icon="solar:backspace-bold" class="kp__icon" />
             </button>
           </div>
@@ -190,23 +262,21 @@ function confirm(): void {
 .kp__sheet--plain {
   position: relative;
   z-index: 1;
-  display: flex;
   width: 100%;
-  padding: 24.096px 19.954px 15.519px 19.954px;
-  flex-direction: column;
-  align-items: center;
-  gap: 16.265px;
-  border-radius: 31.672px 31.672px 0 0;
-  border: 0.894px solid rgba(242, 242, 242, 0.4);
+  max-width: 430px;
+  background-color: rgba(0, 0, 0, 0.34);
+  border: 0.96px solid rgba(242, 244, 244, 0.4);
   border-bottom: none;
-  // background: url(@/assets/images/wallet/bg_sharp.webp) lightgray 0% 0% / 40.11695086956024px 40.11695086956024px repeat,
-  // linear-gradient(107deg, rgba(142, 142, 142, 0.30) 2.93%, rgba(103, 103, 103, 0.40) 43.62%, rgba(73, 73, 73, 0.50) 89.79%);
-  background-blend-mode: overlay, hard-light;
+  border-top-left-radius: 0.85rem;
+  border-top-right-radius: 0.85rem;
+  padding: 0.68rem 0.53rem 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
   box-shadow:
-    3.222px 4.028px 6.445px 0 rgba(0, 0, 0, 0.25),
-    1.134px 1.134px 2.268px 0 rgba(242, 242, 242, 0.2) inset;
-  backdrop-filter: blur(9.921565055847168px);
-  -webkit-backdrop-filter: blur(9.921565055847168px);
+    3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25),
+    0 0 8.6px #000 inset,
+    2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
   overflow: hidden;
   touch-action: manipulation;
 }

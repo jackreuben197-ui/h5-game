@@ -21,7 +21,7 @@ import UsdtPaymentDetailsPopup from '@/views/wallet/components/UsdtPaymentDetail
 import CustomerServicePaymentPopup from '@/views/wallet/components/CustomerServicePaymentPopup.vue'
 import CustomerServiceChatPopup from '@/views/wallet/components/CustomerServiceChatPopup.vue'
 import OnlinePaymentPopup from '@/views/wallet/components/OnlinePaymentPopup.vue'
-import ClubDepositPanel from '@/views/wallet/components/ClubDepositPanel.vue'
+import FixedDepositPanel from '@/views/wallet/components/FixedDepositPanel.vue'
 import { t } from '@/i18n'
 
 // i18n helper: returns fallback when key not translated.
@@ -246,9 +246,7 @@ onMounted(() => {
   // 10s Interval removed as requested. Visibility will be handled by external calls.
 })
 
-onUnmounted(() => {
-  if (refreshInterval) clearInterval(refreshInterval)
-})
+onUnmounted(() => {})
 
 const filteredPayTypes = computed(() =>
   (walletStore.goldPriceData?.pay_types ?? []),
@@ -648,19 +646,12 @@ async function onUsdtSubmit(type: number) {
 </script>
 
 <template>
-  <div class="wallet-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
-    <AppBar
-      :title="isFixedDeposit ? tx('Wallet_RechargeTitle', '充值') : t('Wallet_Title')"
-      :show-actions="false"
-    >
-      <template v-if="isFixedDeposit" #actions>
-        <button class="details-pill" @click="router.push('/wallet/details')">
-          <span class="wallet-t-button details-pill__label">{{ tx('Wallet_Details', '明细') }}</span>
-        </button>
-      </template>
-    </AppBar>
+  <FixedDepositPanel v-if="isFixedDeposit" />
 
-    <div v-if="!isFixedDeposit" class="wallet-screen__content-top">
+  <div v-else class="wallet-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
+    <AppBar :title="t('Wallet_Title')" :show-actions="false" />
+
+    <div class="wallet-screen__content-top">
       <div class="tabs-row">
         <SegmentedToggle v-model="activeTab" :tabs="tabLabels" />
       </div>
@@ -669,17 +660,6 @@ async function onUsdtSubmit(type: number) {
     <div class="wallet-scrollable">
       <div class="wallet-screen__content">
         <UserCard
-          v-if="isFixedDeposit"
-          class="wallet-banner wallet-banner--deposit"
-          variant="glass"
-          :avatar="ava1"
-          name="Cooper&#10;Korsgaard"
-          user-id="8677650585"
-          :balance="(userInfoStore.userInfo?.user?.gold ?? 0).toLocaleString('en-US', { useGrouping: false })"
-        />
-
-        <UserCard
-          v-else
           class="wallet-banner"
           :avatar="ava1"
           name="Cooper&#10;Korsgaard"
@@ -702,9 +682,7 @@ async function onUsdtSubmit(type: number) {
           </template>
         </UserCard>
 
-        <ClubDepositPanel v-if="isFixedDeposit" />
-
-        <template v-else-if="activeTab === 0">
+        <template v-if="activeTab === 0">
           <div class="recharge-content">
             <div class="presets-card">
               <PresetAmountGrid

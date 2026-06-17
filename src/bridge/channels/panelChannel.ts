@@ -7,7 +7,7 @@ import {
   type ClosePanelPayload,
   type CocosPanelPayload,
   type PanelEventPayload,
-} from '../protocol'
+} from '@bridge-protocol'
 import { setH5Visible } from './uiChannel'
 import { runBridgeAction } from '@/components/BridgePanel/actionRegistry'
 

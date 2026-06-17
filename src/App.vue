@@ -6,7 +6,11 @@ import GlobalCsOrderFloat from '@/components/GlobalCsOrderFloat/GlobalCsOrderFlo
   <RouterView />
   <GlobalBridgeDialogHost />
   <GlobalBridgePanelHost />
-  <GlobalMessageTodoNotice />
-  <GlobalCustomerServiceChat />
+  <Teleport to="body">
+    <GlobalMessageTodoNotice />
+  </Teleport>
+  <Teleport to="body">
+    <GlobalCustomerServiceChat />
+  </Teleport>
   <GlobalCsOrderFloat />
 </template>

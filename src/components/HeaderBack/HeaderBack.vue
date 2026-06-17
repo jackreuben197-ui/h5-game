@@ -4,10 +4,12 @@ import { useRouter } from 'vue-router'
 
 interface Props {
   title?: string
+  showBack?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   title: '',
+  showBack: true,
 })
 
 const emit = defineEmits<{
@@ -44,7 +46,7 @@ function handleBack(event: MouseEvent): void {
 
 <template>
   <div class="page-back-header">
-    <button class="back-trigger" type="button" @click="handleBack">
+    <button v-if="props.showBack" class="back-trigger" type="button" @click="handleBack">
       <svg xmlns="http://www.w3.org/2000/svg" class="back-icon" viewBox="0 0 7 12" fill="none">
         <path
           fill-rule="evenodd"

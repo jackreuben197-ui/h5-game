@@ -3,7 +3,7 @@ import { computed, onMounted, reactive, ref, watch, type CSSProperties } from 'v
 import { useRouter } from 'vue-router'
 import { showFailToast } from 'vant'
 import { enterTable } from '@/bridge/core'
-import type { EnterTablePayload } from '@/bridge/protocol'
+import type { EnterTablePayload } from '@bridge-protocol'
 import StorageKey from '@/constants/storageKey'
 import LoginSession from '@/session/loginSession'
 import type { RoomRecord } from '@/api/models/roomcenter'

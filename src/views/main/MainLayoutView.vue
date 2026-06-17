@@ -42,6 +42,7 @@ const isClub = computed(() => route.meta.tabKey === 'club')
 const isMessage = computed(() => route.meta.tabKey === 'message')
 const isMine = computed(() => route.meta.tabKey === 'mine')
 const isFriendsTable = computed(() => route.meta.tabKey === 'friendsTable')
+const isHomeRoute = computed(() => route.name === 'lobby' || route.name === 'guest-home')
 
 async function fetchUserInfoOnEnter(): Promise<void> {
   const token = gameStore.sessionToken.trim()
@@ -110,7 +111,7 @@ async function fetchUserInfoOnEnter(): Promise<void> {
     })
   }
 
-  // websocket 就绪逻辑同样走后台，不阻塞首页进入。
+  // websocket 就绪逻辑同样走后台，не阻塞首页进入。
   void LoginSession.EnsureWS().catch((error) => {
     console.warn('[main-layout] ensure ws failed:', error)
   })
@@ -152,6 +153,7 @@ watch(
       'is-message': isMessage,
       'is-mine': isMine,
       'is-friends-table': isFriendsTable,
+      'main-layout--home': isHomeRoute,
     }"
     :style="backgroundStyle"
   >
@@ -214,12 +216,18 @@ watch(
   }
 }
 
+.main-layout--home {
+  background-color: #f7f8fa;
+  background-image: none !important;
+}
+
 .main-layout-content {
   position: relative;
   z-index: 2;
   // 统一作为“页面滚动容器”：在 html/body fixed 的场景下也可稳定滚动。
   height: 100dvh;
   min-height: 100dvh;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -227,8 +235,12 @@ watch(
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
-  overscroll-behavior-y: contain;
+  overscroll-behavior-y: none;
   padding: calc(env(safe-area-inset-top) + 0.4rem) 0rem calc(env(safe-area-inset-bottom) + 2.72rem);
+}
+
+.main-layout--home .main-layout-content {
+  background: #f7f8fa;
 }
 
 .module-slot {

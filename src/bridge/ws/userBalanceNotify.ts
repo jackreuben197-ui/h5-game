@@ -1,5 +1,7 @@
-import type { ServerMessageUserDiamondChange } from './pb/protobuf/holdem/recv_g_user_diamond_change_pb'
-import type { ServerMessageUserGoldChange } from './pb/protobuf/holdem/recv_g_user_gold_change_pb'
+import {
+  ServerMessageUserDiamondChange,
+  ServerMessageUserGoldChange,
+} from '@holdem-pb'
 import { decodeHoldemPacket } from './holdemPacket'
 
 export interface WsUserDiamondChangePayload {
@@ -15,24 +17,15 @@ export interface WsUserGoldChangePayload {
   clubId: number
 }
 
-let pbDiamondClass: typeof ServerMessageUserDiamondChange | null = null
-let pbGoldClass: typeof ServerMessageUserGoldChange | null = null
-
-void import('./pb/protobuf/holdem/recv_g_user_diamond_change_pb').then((mod) => {
-  pbDiamondClass = mod.ServerMessageUserDiamondChange
-})
-void import('./pb/protobuf/holdem/recv_g_user_gold_change_pb').then((mod) => {
-  pbGoldClass = mod.ServerMessageUserGoldChange
-})
-
 export function decodeUserDiamondChange(
   rawPacket: ArrayBufferLike,
 ): WsUserDiamondChangePayload | null {
-  if (!pbDiamondClass) return null
+  // agreement-web 的 proxy 通过 window.HoldemPB 惰性取类；UMD <script> 没加载完时为 undefined
+  if (!ServerMessageUserDiamondChange) return null
   const packet = decodeHoldemPacket(rawPacket)
   if (!packet) return null
   try {
-    const msg = pbDiamondClass.deserializeBinary(packet.body)
+    const msg = ServerMessageUserDiamondChange.deserializeBinary(packet.body)
     return {
       userId: msg.getUserId(),
       diamonds: msg.getDiamonds(),
@@ -44,11 +37,11 @@ export function decodeUserDiamondChange(
 }
 
 export function decodeUserGoldChange(rawPacket: ArrayBufferLike): WsUserGoldChangePayload | null {
-  if (!pbGoldClass) return null
+  if (!ServerMessageUserGoldChange) return null
   const packet = decodeHoldemPacket(rawPacket)
   if (!packet) return null
   try {
-    const msg = pbGoldClass.deserializeBinary(packet.body)
+    const msg = ServerMessageUserGoldChange.deserializeBinary(packet.body)
     return {
       userId: msg.getUserId(),
       gold: msg.getGold(),

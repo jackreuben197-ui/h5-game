@@ -13,7 +13,7 @@ import {
   type EnterMttPayload,
   type H5ReadyPayload,
   type SafeArea,
-} from '../protocol'
+} from '@bridge-protocol'
 import StorageKey from '@/constants/storageKey'
 import { createLogger } from '@/utils/logger'
 import { localStore } from '@/utils/localStore'

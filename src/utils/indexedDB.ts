@@ -1,0 +1,160 @@
+const PUBLIC_CACHE_DB_NAME = 'public_cache'
+const PUBLIC_CACHE_DB_VERSION = 2
+const PUBLIC_CACHE_RECORD_KEY = 'cache'
+
+export const PUBLIC_STORE_MULTI_LANGUAGE_TEMPLATE = 'multi_language_template'
+export const PUBLIC_STORE_APP_CONFIG = 'app_config'
+export const PUBLIC_STORE_DIAMOND_CONFIG = 'diamond_config'
+
+export type PublicCacheStoreName =
+  | typeof PUBLIC_STORE_MULTI_LANGUAGE_TEMPLATE
+  | typeof PUBLIC_STORE_APP_CONFIG
+  | typeof PUBLIC_STORE_DIAMOND_CONFIG
+
+const PUBLIC_CACHE_STORES: PublicCacheStoreName[] = [
+  PUBLIC_STORE_MULTI_LANGUAGE_TEMPLATE,
+  PUBLIC_STORE_APP_CONFIG,
+  PUBLIC_STORE_DIAMOND_CONFIG,
+]
+
+export function openPublicIndexedDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(PUBLIC_CACHE_DB_NAME, PUBLIC_CACHE_DB_VERSION)
+    req.onupgradeneeded = () => {
+      PUBLIC_CACHE_STORES.forEach((storeName) => {
+        if (!req.result.objectStoreNames.contains(storeName)) {
+          req.result.createObjectStore(storeName)
+        }
+      })
+    }
+    req.onsuccess = () => resolve(req.result)
+    req.onerror = () => reject(req.error)
+  })
+}
+
+export async function readPublicCache<T>(
+  storeName: PublicCacheStoreName,
+  key = PUBLIC_CACHE_RECORD_KEY,
+): Promise<T | null> {
+  const db = await openPublicIndexedDB()
+  return new Promise((resolve, reject) => {
+    const req = db
+      .transaction(storeName, 'readonly')
+      .objectStore(storeName)
+      .get(key)
+    req.onsuccess = () => resolve((req.result as T | undefined) ?? null)
+    req.onerror = () => reject(req.error)
+  })
+}
+
+export async function writePublicCache<T>(
+  storeName: PublicCacheStoreName,
+  value: T,
+  key = PUBLIC_CACHE_RECORD_KEY,
+): Promise<void> {
+  const db = await openPublicIndexedDB()
+  await new Promise<void>((resolve, reject) => {
+    const req = db
+      .transaction(storeName, 'readwrite')
+      .objectStore(storeName)
+      .put(value, key)
+    req.onsuccess = () => resolve()
+    req.onerror = () => reject(req.error)
+  })
+}
+
+export async function readPublicCacheEntries<T>(
+  storeName: PublicCacheStoreName,
+): Promise<Array<{ key: IDBValidKey; value: T }>> {
+  const db = await openPublicIndexedDB()
+  return new Promise((resolve, reject) => {
+    const entries: Array<{ key: IDBValidKey; value: T }> = []
+    const req = db
+      .transaction(storeName, 'readonly')
+      .objectStore(storeName)
+      .openCursor()
+
+    req.onsuccess = () => {
+      const cursor = req.result
+      if (!cursor) {
+        resolve(entries)
+        return
+      }
+      entries.push({
+        key: cursor.key,
+        value: cursor.value as T,
+      })
+      cursor.continue()
+    }
+    req.onerror = () => reject(req.error)
+  })
+}
+
+export async function replacePublicCacheEntries<T>(
+  storeName: PublicCacheStoreName,
+  entries: Array<{ key: IDBValidKey; value: T }>,
+): Promise<void> {
+  const db = await openPublicIndexedDB()
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readwrite')
+    const store = tx.objectStore(storeName)
+    store.clear()
+    entries.forEach((entry) => {
+      store.put(entry.value, entry.key)
+    })
+    tx.oncomplete = () => resolve()
+    tx.onerror = () => reject(tx.error)
+    tx.onabort = () => reject(tx.error)
+  })
+}
+
+// === 用户级缓存 ==============================================================
+// 每个用户独立一个 db：user_cache_${userId}（h5 与 cocos 共用同一个库，
+// 由 bridge 把 cocos 的 put/get 转交给本进程，避免双端各开一份 db）。
+// 新增 store：① 加常量 ② 加进 UserCacheStoreName union 与 USER_CACHE_STORES
+// ③ 把 USER_CACHE_DB_VERSION + 1（旧用户下次 open 会触发 onupgradeneeded 补建 store）。
+const USER_CACHE_DB_PREFIX = 'user_cache_'
+const USER_CACHE_DB_VERSION = 2
+
+export const USER_STORE_CLUB_LIST = 'club_list'
+
+// cocos 通过 bridge 写入的 store；与 h5 自己的 store 同库不同名，
+// h5 对 bridge 收到的 store 必须做白名单校验，未列入这里的请求一律忽略。
+export const CC_STORE_TABLE_USER_BASE_INFO = 'table_user_base_info'
+export const CC_STORE_TABLE_USER_DATA_INFO = 'table_user_data_info'
+export const CC_STORE_GAME_REPLAYS = 'game_replays'
+
+export type CcCacheStoreName =
+  | typeof CC_STORE_TABLE_USER_BASE_INFO
+  | typeof CC_STORE_TABLE_USER_DATA_INFO
+  | typeof CC_STORE_GAME_REPLAYS
+
+export const CC_CACHE_STORES: CcCacheStoreName[] = [
+  CC_STORE_TABLE_USER_BASE_INFO,
+  CC_STORE_TABLE_USER_DATA_INFO,
+  CC_STORE_GAME_REPLAYS,
+]
+
+export type UserCacheStoreName = typeof USER_STORE_CLUB_LIST | CcCacheStoreName
+
+const USER_CACHE_STORES: UserCacheStoreName[] = [USER_STORE_CLUB_LIST, ...CC_CACHE_STORES]
+
+export function openUserIndexedDB(userId: string | number): Promise<IDBDatabase> {
+  const id = userId === undefined || userId === null ? '' : String(userId).trim()
+  if (!id) {
+    return Promise.reject(new Error('openUserIndexedDB: empty userId'))
+  }
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(`${USER_CACHE_DB_PREFIX}${id}`, USER_CACHE_DB_VERSION)
+    req.onupgradeneeded = () => {
+      const db = req.result
+      USER_CACHE_STORES.forEach((store) => {
+        if (!db.objectStoreNames.contains(store)) {
+          db.createObjectStore(store)
+        }
+      })
+    }
+    req.onsuccess = () => resolve(req.result)
+    req.onerror = () => reject(req.error)
+  })
+}

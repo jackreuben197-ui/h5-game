@@ -72,12 +72,16 @@ function goToMineShop(): void {
 }
 
 const displayUser = computed(() => {
+  let totalGold = 0
+  for (const club of userInfoStore.clubList || []) {
+    totalGold += club.user_gold ?? 0
+  }
   return {
     nickname: userInfoStore.userInfo?.user.nickname || gameStore.loginNickname || '-',
     userID: userInfoStore.userInfo?.user.un_id || gameStore.loginUserId || '-',
     avatar: userInfoStore.userInfo?.user.avatar || defaultAvatar,
     diamond: userInfoStore.userInfo?.user.diamonds ?? 0,
-    gold: userInfoStore.userInfo?.user.gold ?? 0,
+    gold: totalGold,
   }
 })
 </script>

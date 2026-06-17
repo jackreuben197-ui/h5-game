@@ -240,6 +240,7 @@ export default defineConfig(({ mode, command }) => {
         // 实际指向 @silenthill/agreement-web 的 proxy 层（运行时从 window.HoldemPB 取）。
         // 真正的 UMD bundle 由 holdemPbInjectPlugin 注入 <script>。
         '@holdem-pb': '@silenthill/agreement-web',
+        '@silenthill/h5-cc-i18n': fileURLToPath(new URL('./src/shims/h5-cc-i18n.ts', import.meta.url)),
       },
     },
     server: {

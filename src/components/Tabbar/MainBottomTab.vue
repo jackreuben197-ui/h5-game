@@ -420,21 +420,21 @@ onBeforeUnmount(() => {
 }
 
 .tabbar-fill {
-  fill: rgba(253, 253, 253, 0.9);
+  fill: rgba(51, 55, 56, 0.77);
 }
 
 .tabbar-stroke {
   fill: none;
-  stroke: rgba(0, 0, 0, 0.3);
+  stroke: rgba(249, 249, 249, 0.4);
   stroke-width: 0.451px;
 }
 
 .tabbar-fill-stop-start {
-  stop-color: rgba(18, 18, 18, 0.4);
+  stop-color: rgba(51, 55, 56, 0.77);
 }
 
 .tabbar-fill-stop-end {
-  stop-color: transparent;
+  stop-color: rgba(51, 55, 56, 0.77);
 }
 
 .tabs-row {
@@ -462,14 +462,14 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: flex-start;
   gap: 0;
-  color: #7b7b7b;
+  color: #f9f9f9;
   padding: 0rem 0.06rem 0.08rem;
   border-radius: 0.44rem;
   -webkit-tap-highlight-color: transparent;
 }
 
 .tab-button.is-active {
-  color: #000;
+  color: #F9F9F9;
 }
 
 .tab-icon {

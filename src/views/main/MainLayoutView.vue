@@ -217,7 +217,7 @@ watch(
 }
 
 .main-layout--home {
-  background-color: #f7f8fa;
+  background-color: #222627;
   background-image: none !important;
 }
 
@@ -240,7 +240,8 @@ watch(
 }
 
 .main-layout--home .main-layout-content {
-  background: #f7f8fa;
+  background: #222627;
+  padding-top: env(safe-area-inset-top);
 }
 
 .module-slot {

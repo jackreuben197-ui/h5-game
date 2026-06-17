@@ -12,14 +12,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(vue@3.5.32(typescript@6.0.2))
       '@silenthill/agreement-web':
-        specifier: git+ssh://git@github.com/kingofake/agreement-web.git#master
-        version: git+https://github.com/kingofake/agreement-web.git#cf5374e648b7d6be75fc37db1a20c7c426a976db
-      '@silenthill/h5-cc-bridge':
-        specifier: git+ssh://git@github.com/soolary/h5-cc-bridge.git#main
-        version: git+https://git@github.com:soolary/h5-cc-bridge.git#6938cfebf6a3c29f45e86eb4f312cf3e78806ebd
-      '@silenthill/h5-cc-i18n':
-        specifier: github:guysoup027/h5-cc-i18n
-        version: git+https://github.com/guysoup027/h5-cc-i18n.git#bc317f3b3c0664b9efbcd6584a77abc2f2825c2f
+        specifier: git+ssh://git@github.com/jackreuben197-ui/agreement-web.git#dev_merge_0616
+        version: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/78d9db052cdc74a643298130847a86185b5718fd
       '@vueuse/core':
         specifier: ^14.2.1
         version: 14.2.1(vue@3.5.32(typescript@6.0.2))
@@ -68,28 +62,28 @@ importers:
         version: 1.5.6
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.46.1
-        version: 8.58.2(@typescript-eslint/parser@8.58.2(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2))(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)
+        version: 8.58.2(@typescript-eslint/parser@8.58.2(eslint@9.39.4)(typescript@6.0.2))(eslint@9.39.4)(typescript@6.0.2)
       '@typescript-eslint/parser':
         specifier: ^8.46.1
-        version: 8.58.2(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)
+        version: 8.58.2(eslint@9.39.4)(typescript@6.0.2)
       '@vant/auto-import-resolver':
         specifier: ^1.3.0
         version: 1.3.0
       '@vitejs/plugin-legacy':
         specifier: ^8.0.1
-        version: 8.0.1(terser@5.46.1)(vite@8.0.8(@types/node@24.12.2)(jiti@2.6.1)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3))
+        version: 8.0.1(terser@5.46.1)(vite@8.0.8(@types/node@24.12.2)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3))
       '@vitejs/plugin-vue':
         specifier: ^6.0.5
-        version: 6.0.5(vite@8.0.8(@types/node@24.12.2)(jiti@2.6.1)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3))(vue@3.5.32(typescript@6.0.2))
+        version: 6.0.5(vite@8.0.8(@types/node@24.12.2)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3))(vue@3.5.32(typescript@6.0.2))
       '@vue/tsconfig':
         specifier: ^0.9.1
         version: 0.9.1(typescript@6.0.2)(vue@3.5.32(typescript@6.0.2))
       eslint:
         specifier: ^9.39.0
-        version: 9.39.4(jiti@2.6.1)
+        version: 9.39.4
       eslint-plugin-vue:
         specifier: ^10.7.0
-        version: 10.8.0(@typescript-eslint/parser@8.58.2(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2))(eslint@9.39.4(jiti@2.6.1))(vue-eslint-parser@10.4.0(eslint@9.39.4(jiti@2.6.1)))
+        version: 10.8.0(@typescript-eslint/parser@8.58.2(eslint@9.39.4)(typescript@6.0.2))(eslint@9.39.4)(vue-eslint-parser@10.4.0(eslint@9.39.4))
       sass:
         specifier: ^1.99.0
         version: 1.99.0
@@ -107,10 +101,10 @@ importers:
         version: 32.0.0(vue@3.5.32(typescript@6.0.2))
       vite:
         specifier: ^8.0.4
-        version: 8.0.8(@types/node@24.12.2)(jiti@2.6.1)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3)
+        version: 8.0.8(@types/node@24.12.2)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3)
       vue-eslint-parser:
         specifier: ^10.2.0
-        version: 10.4.0(eslint@9.39.4(jiti@2.6.1))
+        version: 10.4.0(eslint@9.39.4)
       vue-tsc:
         specifier: ^3.2.6
         version: 3.2.6(typescript@6.0.2)
@@ -1059,16 +1053,8 @@ packages:
   '@rolldown/pluginutils@1.0.0-rc.2':
     resolution: {integrity: sha512-izyXV/v+cHiRfozX62W9htOAvwMo4/bXKDrQ+vom1L1qRuexPock/7VZDAhnpHCLNejd3NJ6hiab+tO0D44Rgw==}
 
-  '@silenthill/agreement-web@git+https://github.com/kingofake/agreement-web.git#cf5374e648b7d6be75fc37db1a20c7c426a976db':
-    resolution: {commit: cf5374e648b7d6be75fc37db1a20c7c426a976db, repo: https://github.com/kingofake/agreement-web.git, type: git}
-    version: 1.0.0
-
-  '@silenthill/h5-cc-bridge@git+https://git@github.com:soolary/h5-cc-bridge.git#6938cfebf6a3c29f45e86eb4f312cf3e78806ebd':
-    resolution: {commit: 6938cfebf6a3c29f45e86eb4f312cf3e78806ebd, repo: git@github.com:soolary/h5-cc-bridge.git, type: git}
-    version: 0.1.0
-
-  '@silenthill/h5-cc-i18n@git+https://github.com/guysoup027/h5-cc-i18n.git#bc317f3b3c0664b9efbcd6584a77abc2f2825c2f':
-    resolution: {commit: bc317f3b3c0664b9efbcd6584a77abc2f2825c2f, repo: https://github.com/guysoup027/h5-cc-i18n.git, type: git}
+  '@silenthill/agreement-web@https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/78d9db052cdc74a643298130847a86185b5718fd':
+    resolution: {gitHosted: true, integrity: sha512-3h3dMJ32NY4BI7QJ9NnU2jKo7u/T7O3EV8nM2SXlekFdkewHRZUVlltGB45wKo2/F7ZuWIrEQZXijZAWnDzt9A==, tarball: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/78d9db052cdc74a643298130847a86185b5718fd}
     version: 1.0.0
 
   '@tybys/wasm-util@0.10.1':
@@ -1802,10 +1788,6 @@ packages:
 
   isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
-
-  jiti@2.6.1:
-    resolution: {integrity: sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ==}
-    hasBin: true
 
   js-md5@0.8.3:
     resolution: {integrity: sha512-qR0HB5uP6wCuRMrWPTrkMaev7MJZwJuuw4fnwAzRgP4J4/F8RwtodOKpGp4XpqsLBFzzgqIO42efFAyz2Et6KQ==}
@@ -3183,9 +3165,9 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
-  '@eslint-community/eslint-utils@4.9.1(eslint@9.39.4(jiti@2.6.1))':
+  '@eslint-community/eslint-utils@4.9.1(eslint@9.39.4)':
     dependencies:
-      eslint: 9.39.4(jiti@2.6.1)
+      eslint: 9.39.4
       eslint-visitor-keys: 3.4.3
 
   '@eslint-community/regexpp@4.12.2': {}
@@ -3492,13 +3474,9 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.0-rc.2': {}
 
-  '@silenthill/agreement-web@git+https://github.com/kingofake/agreement-web.git#cf5374e648b7d6be75fc37db1a20c7c426a976db':
+  '@silenthill/agreement-web@https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/78d9db052cdc74a643298130847a86185b5718fd':
     dependencies:
       google-protobuf: 3.21.4
-
-  '@silenthill/h5-cc-bridge@git+https://git@github.com:soolary/h5-cc-bridge.git#6938cfebf6a3c29f45e86eb4f312cf3e78806ebd': {}
-
-  '@silenthill/h5-cc-i18n@git+https://github.com/guysoup027/h5-cc-i18n.git#bc317f3b3c0664b9efbcd6584a77abc2f2825c2f': {}
 
   '@tybys/wasm-util@0.10.1':
     dependencies:
@@ -3521,15 +3499,15 @@ snapshots:
 
   '@types/web-bluetooth@0.0.21': {}
 
-  '@typescript-eslint/eslint-plugin@8.58.2(@typescript-eslint/parser@8.58.2(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2))(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)':
+  '@typescript-eslint/eslint-plugin@8.58.2(@typescript-eslint/parser@8.58.2(eslint@9.39.4)(typescript@6.0.2))(eslint@9.39.4)(typescript@6.0.2)':
     dependencies:
       '@eslint-community/regexpp': 4.12.2
-      '@typescript-eslint/parser': 8.58.2(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)
+      '@typescript-eslint/parser': 8.58.2(eslint@9.39.4)(typescript@6.0.2)
       '@typescript-eslint/scope-manager': 8.58.2
-      '@typescript-eslint/type-utils': 8.58.2(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)
-      '@typescript-eslint/utils': 8.58.2(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)
+      '@typescript-eslint/type-utils': 8.58.2(eslint@9.39.4)(typescript@6.0.2)
+      '@typescript-eslint/utils': 8.58.2(eslint@9.39.4)(typescript@6.0.2)
       '@typescript-eslint/visitor-keys': 8.58.2
-      eslint: 9.39.4(jiti@2.6.1)
+      eslint: 9.39.4
       ignore: 7.0.5
       natural-compare: 1.4.0
       ts-api-utils: 2.5.0(typescript@6.0.2)
@@ -3537,14 +3515,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/parser@8.58.2(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)':
+  '@typescript-eslint/parser@8.58.2(eslint@9.39.4)(typescript@6.0.2)':
     dependencies:
       '@typescript-eslint/scope-manager': 8.58.2
       '@typescript-eslint/types': 8.58.2
       '@typescript-eslint/typescript-estree': 8.58.2(typescript@6.0.2)
       '@typescript-eslint/visitor-keys': 8.58.2
       debug: 4.4.3
-      eslint: 9.39.4(jiti@2.6.1)
+      eslint: 9.39.4
       typescript: 6.0.2
     transitivePeerDependencies:
       - supports-color
@@ -3567,13 +3545,13 @@ snapshots:
     dependencies:
       typescript: 6.0.2
 
-  '@typescript-eslint/type-utils@8.58.2(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)':
+  '@typescript-eslint/type-utils@8.58.2(eslint@9.39.4)(typescript@6.0.2)':
     dependencies:
       '@typescript-eslint/types': 8.58.2
       '@typescript-eslint/typescript-estree': 8.58.2(typescript@6.0.2)
-      '@typescript-eslint/utils': 8.58.2(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)
+      '@typescript-eslint/utils': 8.58.2(eslint@9.39.4)(typescript@6.0.2)
       debug: 4.4.3
-      eslint: 9.39.4(jiti@2.6.1)
+      eslint: 9.39.4
       ts-api-utils: 2.5.0(typescript@6.0.2)
       typescript: 6.0.2
     transitivePeerDependencies:
@@ -3596,13 +3574,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/utils@8.58.2(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)':
+  '@typescript-eslint/utils@8.58.2(eslint@9.39.4)(typescript@6.0.2)':
     dependencies:
-      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.4(jiti@2.6.1))
+      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.4)
       '@typescript-eslint/scope-manager': 8.58.2
       '@typescript-eslint/types': 8.58.2
       '@typescript-eslint/typescript-estree': 8.58.2(typescript@6.0.2)
-      eslint: 9.39.4(jiti@2.6.1)
+      eslint: 9.39.4
       typescript: 6.0.2
     transitivePeerDependencies:
       - supports-color
@@ -3620,7 +3598,7 @@ snapshots:
     dependencies:
       vue: 3.5.32(typescript@6.0.2)
 
-  '@vitejs/plugin-legacy@8.0.1(terser@5.46.1)(vite@8.0.8(@types/node@24.12.2)(jiti@2.6.1)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3))':
+  '@vitejs/plugin-legacy@8.0.1(terser@5.46.1)(vite@8.0.8(@types/node@24.12.2)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3))':
     dependencies:
       '@babel/core': 7.29.0
       '@babel/plugin-transform-dynamic-import': 7.27.1(@babel/core@7.29.0)
@@ -3635,14 +3613,14 @@ snapshots:
       regenerator-runtime: 0.14.1
       systemjs: 6.15.1
       terser: 5.46.1
-      vite: 8.0.8(@types/node@24.12.2)(jiti@2.6.1)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3)
+      vite: 8.0.8(@types/node@24.12.2)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3)
     transitivePeerDependencies:
       - supports-color
 
-  '@vitejs/plugin-vue@6.0.5(vite@8.0.8(@types/node@24.12.2)(jiti@2.6.1)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3))(vue@3.5.32(typescript@6.0.2))':
+  '@vitejs/plugin-vue@6.0.5(vite@8.0.8(@types/node@24.12.2)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3))(vue@3.5.32(typescript@6.0.2))':
     dependencies:
       '@rolldown/pluginutils': 1.0.0-rc.2
-      vite: 8.0.8(@types/node@24.12.2)(jiti@2.6.1)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3)
+      vite: 8.0.8(@types/node@24.12.2)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3)
       vue: 3.5.32(typescript@6.0.2)
 
   '@volar/language-core@2.4.28':
@@ -4060,18 +4038,18 @@ snapshots:
 
   escape-string-regexp@5.0.0: {}
 
-  eslint-plugin-vue@10.8.0(@typescript-eslint/parser@8.58.2(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2))(eslint@9.39.4(jiti@2.6.1))(vue-eslint-parser@10.4.0(eslint@9.39.4(jiti@2.6.1))):
+  eslint-plugin-vue@10.8.0(@typescript-eslint/parser@8.58.2(eslint@9.39.4)(typescript@6.0.2))(eslint@9.39.4)(vue-eslint-parser@10.4.0(eslint@9.39.4)):
     dependencies:
-      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.4(jiti@2.6.1))
-      eslint: 9.39.4(jiti@2.6.1)
+      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.4)
+      eslint: 9.39.4
       natural-compare: 1.4.0
       nth-check: 2.1.1
       postcss-selector-parser: 7.1.1
       semver: 7.7.4
-      vue-eslint-parser: 10.4.0(eslint@9.39.4(jiti@2.6.1))
+      vue-eslint-parser: 10.4.0(eslint@9.39.4)
       xml-name-validator: 4.0.0
     optionalDependencies:
-      '@typescript-eslint/parser': 8.58.2(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.2)
+      '@typescript-eslint/parser': 8.58.2(eslint@9.39.4)(typescript@6.0.2)
 
   eslint-scope@8.4.0:
     dependencies:
@@ -4091,9 +4069,9 @@ snapshots:
 
   eslint-visitor-keys@5.0.1: {}
 
-  eslint@9.39.4(jiti@2.6.1):
+  eslint@9.39.4:
     dependencies:
-      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.4(jiti@2.6.1))
+      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.4)
       '@eslint-community/regexpp': 4.12.2
       '@eslint/config-array': 0.21.2
       '@eslint/config-helpers': 0.4.2
@@ -4127,8 +4105,6 @@ snapshots:
       minimatch: 3.1.5
       natural-compare: 1.4.0
       optionator: 0.9.4
-    optionalDependencies:
-      jiti: 2.6.1
     transitivePeerDependencies:
       - supports-color
 
@@ -4287,9 +4263,6 @@ snapshots:
   is-what@5.5.0: {}
 
   isexe@2.0.0: {}
-
-  jiti@2.6.1:
-    optional: true
 
   js-md5@0.8.3: {}
 
@@ -4814,7 +4787,7 @@ snapshots:
       '@vue/shared': 3.5.32
       vue: 3.5.32(typescript@6.0.2)
 
-  vite@8.0.8(@types/node@24.12.2)(jiti@2.6.1)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3):
+  vite@8.0.8(@types/node@24.12.2)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3):
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
@@ -4824,17 +4797,16 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.12.2
       fsevents: 2.3.3
-      jiti: 2.6.1
       sass: 1.99.0
       terser: 5.46.1
       yaml: 2.8.3
 
   vscode-uri@3.1.0: {}
 
-  vue-eslint-parser@10.4.0(eslint@9.39.4(jiti@2.6.1)):
+  vue-eslint-parser@10.4.0(eslint@9.39.4):
     dependencies:
       debug: 4.4.3
-      eslint: 9.39.4(jiti@2.6.1)
+      eslint: 9.39.4
       eslint-scope: 9.1.2
       eslint-visitor-keys: 5.0.1
       espree: 11.2.0

@@ -3,6 +3,7 @@ import { computed, type CSSProperties } from 'vue'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconTime from '@/assets/icons/icon_time.png'
 import iconChips from '@/assets/icons/icon_chips.png'
+import iconBalance from '@/assets/icons/icon_balance.png'
 import iconAof from '@/assets/icons/table_icon_Aof.png'
 import iconCritical from '@/assets/icons/table_icon_critical.png'
 import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
@@ -62,13 +63,13 @@ const featureIcons = computed<FeatureIconItem[]>(() => {
       alt: 'critical',
     })
   }
-  return result
+  return result.length > 1 ? [result[0]] : result
 })
 
 // 当前牌桌人数。
 const roomers = computed(() => {
   const fromCount = Number(props.room.roomers)
-  const valid = (Number.isFinite(fromCount) && fromCount > 0)
+  const valid = Number.isFinite(fromCount) && fromCount > 0
   return Array.isArray(props.room.users) ? props.room.users.length : valid ? fromCount : 0
 })
 
@@ -99,6 +100,10 @@ const timeText = computed(() => {
   const totalSeconds = Number(props.room.play_duration) || 0
   return formatRoomLeftAndTotalByUnity(props.room.start_time, totalSeconds)
 })
+
+const chipsIcon = computed(() => (Number(props.room.gold_type) === 1 ? iconChips : iconBalance))
+
+const showParticipation = computed(() => Number(props.room.participation_status) === 1)
 
 // 买入文案：根据最小倍率和小盲计算。
 const bringInText = computed(() => {
@@ -212,25 +217,21 @@ function shortName(name?: string): string {
   }
   return `${name}`.slice(0, 1)
 }
-
 </script>
 
 <template>
   <article class="table-card" @click="handleClick">
     <div class="table-name">
-      {{ room.name || 'Poker Game Name' }}
+      {{ room.name || 'Poker Game Name' }}{{ showParticipation ? '（参与中）' : '' }}
     </div>
 
     <div class="table-main">
-      <div
-        v-if="featureIcons.length"
-        class="feature-icons"
-      >
+      <div v-if="featureIcons.length" class="feature-icons">
         <img
           v-for="item in featureIcons"
           :key="item.key"
           class="feature-icon"
-          :class="'icon-'+item.alt"
+          :class="'icon-' + item.alt"
           :src="item.src"
           :alt="item.alt"
         />
@@ -266,17 +267,13 @@ function shortName(name?: string): string {
 
       <div class="table-footer">
         <p>
-          <img
-            class="meta-icon"
-            :src="iconTime"
-            alt="time"
-          />
+          <img class="meta-icon" :src="iconTime" alt="time" />
           <span>
             {{ timeText }}
           </span>
         </p>
         <p>
-          <img class="meta-icon" :src="iconChips" alt="chips" />
+          <img class="meta-icon" :src="chipsIcon" alt="chips" />
           <span>
             {{ bringInText }}
           </span>
@@ -312,7 +309,7 @@ function shortName(name?: string): string {
   align-items: center;
   gap: 0.08rem;
 }
-.icon-aof{
+.icon-aof {
   margin-right: 0.15rem;
 }
 

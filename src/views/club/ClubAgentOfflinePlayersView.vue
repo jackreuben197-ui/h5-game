@@ -300,7 +300,7 @@ onMounted(() => {
             <p>{{ row.name }}</p>
             <span>ID {{ row.uid }}</span>
             <div class="assets">
-              <b><img :src="imgChips" alt="" />UC {{ row.uc }}</b>
+              <b><img :src="imgChips" alt="" />联盟币 {{ row.uc }}</b>
               <b><img :src="imgBalance" alt="" />免审额 {{ row.credit }}/{{ row.creditLimit }}</b>
               <b><img :src="imgDiamond" alt="" />钻石 {{ row.diamonds }}</b>
             </div>

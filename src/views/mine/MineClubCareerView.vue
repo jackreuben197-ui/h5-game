@@ -49,7 +49,7 @@ const selectedClubIndex = ref(0)
 
 // 货币类型定义：1-联盟币 2-USDT 3-记分牌 4-钻石
 const currencyTypes = [
-  { label: 'UC', value: 1 },
+  { label: '联盟币', value: 1 },
   // { label: 'USDT', value: 2 },
   { label: '记分牌', value: 3 },
   { label: '钻石', value: 4 },

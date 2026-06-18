@@ -126,7 +126,7 @@ const pageTitle = computed(() => {
 
   if (pageType.value === 'system') return '系统消息'
   if (pageType.value === 'credit') return '带入申请'
-  if (pageType.value === 'uc') return 'UC申请'
+  if (pageType.value === 'uc') return '联盟币申请'
   return '消息'
 })
 

@@ -49,7 +49,7 @@ const payPrice = computed(() =>
             <h2 class="card__title">确认付款</h2>
             <div class="card__header-info">
               <span>手续费：{{ feeDisplay }}</span>
-              <span>当前参考单价：1UC={{ props.rate || 1 }}USDT</span>
+              <span>当前参考单价：1联盟币={{ props.rate || 1 }}USDT</span>
             </div>
           </div>
 

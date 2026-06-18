@@ -23,10 +23,10 @@ const backgroundStyle = computed(() => ({
 
 const title = computed(() => '我的账单')
 
-const tabs = ['UC', 'Club记分牌', '朋友桌记分牌', '钻石'] as const
+const tabs = ['联盟币', 'Club记分牌', '朋友桌记分牌', '钻石'] as const
 type BillTab = (typeof tabs)[number]
 
-const activeTab = ref<BillTab>('UC')
+const activeTab = ref<BillTab>('联盟币')
 const loading = ref(false)
 const loadingMore = ref(false)
 const hasMore = ref(true)
@@ -68,7 +68,7 @@ const walletDetailExpanded = ref(false)
 const expandedCardIds = ref<string[]>([])
 
 const billRequestByTab: Record<BillTab, { gold_type: number; origin_type?: number }> = {
-  UC: { gold_type: 1 },
+  联盟币: { gold_type: 1 },
   Club记分牌: { gold_type: 3, origin_type: 3 },
   朋友桌记分牌: { gold_type: 3, origin_type: 4 },
   钻石: { gold_type: 4 },
@@ -366,12 +366,12 @@ function mapWalletDetails(): WalletDetailItem[] {
   return userInfoStore.clubList
     .filter(
       (item): item is ClubInfo =>
-        !!item && typeof item === 'object' && !(activeTab.value === 'UC' && item.tribe_id === 0),
+        !!item && typeof item === 'object' && !(activeTab.value === '联盟币' && item.tribe_id === 0),
     )
     .map((item, index) => {
       const clubName = String(item.club_name ?? '').trim() || `俱乐部${index + 1}`
       const amount =
-        activeTab.value === 'UC'
+        activeTab.value === '联盟币'
           ? (item.user_gold ?? 0)
           : activeTab.value === 'Club记分牌'
             ? (item.user_credit ?? 0)
@@ -386,7 +386,7 @@ function mapWalletDetails(): WalletDetailItem[] {
 }
 
 const showWalletDetailButton = computed(() => {
-  if (activeTab.value === 'UC' || activeTab.value === 'Club记分牌') {
+  if (activeTab.value === '联盟币' || activeTab.value === 'Club记分牌') {
     return walletDetails.value.length > 0
   }
   return false
@@ -543,11 +543,11 @@ onMounted(() => {
       </div>
 
       <section v-if="activeTab !== '朋友桌记分牌'" class="glass-card total-card">
-        <div v-if="activeTab === 'UC'" class="label">UC总金额</div>
+        <div v-if="activeTab === '联盟币'" class="label">联盟币总金额</div>
         <div v-else-if="activeTab === 'Club记分牌'" class="label">俱乐部记分牌总额度</div>
         <div v-else-if="activeTab === '钻石'" class="label">钻石余额</div>
         <div class="amount-row">
-          <img v-if="activeTab === 'UC'" :src="iconUc" alt="chip" />
+          <img v-if="activeTab === '联盟币'" :src="iconUc" alt="chip" />
           <img v-else-if="activeTab === 'Club记分牌'" :src="iconCredit" alt="chip" />
           <img v-else :src="iconDiamond" alt="diamond" />
           <strong>{{ formatAmount(totalAmount) }}</strong>

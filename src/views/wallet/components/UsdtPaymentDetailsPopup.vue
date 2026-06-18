@@ -72,7 +72,7 @@ onUnmounted(() => {
             <h2 class="header__title">确认付款</h2>
             <div class="header__info">
               <p>汇率: {{ (rate * 100).toFixed(0) }}%</p>
-              <p>当前参考单价: 1UC=1USDT</p>
+              <p>当前参考单价: 1联盟币=1USDT</p>
             </div>
           </div>
 

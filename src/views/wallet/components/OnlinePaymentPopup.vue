@@ -175,7 +175,7 @@ onUnmounted(() => {
             <h2 class="header__title">确认付款</h2>
             <div class="header__info">
               <p>手续费：{{ props.feeRate > 0 ? (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%' : '0' }}</p>
-              <p>当前参考单价: 1UC={{ props.rate || 1 }}</p>
+              <p>当前参考单价: 1联盟币={{ props.rate || 1 }}</p>
             </div>
           </div>
 
@@ -214,7 +214,7 @@ onUnmounted(() => {
 
                 @click="handleRegister"
               >
-                {{ loading ? '提交中...' : '报名' }}
+                {{ loading ? '提交中...' : '支付' }}
               </button>
                <!-- :disabled="!userName.trim() || loading" -->
             </div>

@@ -99,7 +99,7 @@ onUnmounted(() => {
                     : '0'
                 }}
               </span>
-              <span>当前参考单价：1UC={{ props.rate || 1 }}USDT</span>
+              <span>当前参考单价：1联盟币={{ props.rate || 1 }}USDT</span>
             </div>
           </div>
 
@@ -168,7 +168,7 @@ onUnmounted(() => {
 
           <!-- Submit Button -->
           <div class="card__action">
-            <PrimaryButton text="报名" @click="submit" class="pay-cta" />
+            <PrimaryButton text="支付" @click="submit" class="pay-cta" />
           </div>
         </div>
       </div>

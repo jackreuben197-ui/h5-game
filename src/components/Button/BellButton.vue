@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { t } from '@/i18n'
 
 const props = defineProps<{
   count?: number
@@ -23,7 +24,7 @@ function onTouchStart(e: TouchEvent) {
   isDragging.value = false
   startX = e.touches[0].clientX
   startY = e.touches[0].clientY
-  
+
   initialX = position.value.x
   initialY = position.value.y
 }
@@ -31,16 +32,16 @@ function onTouchStart(e: TouchEvent) {
 function onTouchMove(e: TouchEvent) {
   const dx = e.touches[0].clientX - startX
   const dy = e.touches[0].clientY - startY
-  
+
   if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
     isDragging.value = true
   }
-  
+
   position.value = {
     x: initialX + dx,
-    y: initialY + dy
+    y: initialY + dy,
   }
-  
+
   e.preventDefault()
 }
 
@@ -50,7 +51,6 @@ function onTouchEnd() {
   }
   isDragging.value = false
 }
-
 </script>
 
 <template>
@@ -59,23 +59,16 @@ function onTouchEnd() {
     class="bell-wrapper"
     :style="{
       transform: `translate(${position.x}px, ${position.y}px)`,
-      transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+      transition: isDragging ? 'none' : 'transform 0.1s ease-out',
     }"
     @touchstart="onTouchStart"
     @touchmove="onTouchMove"
     @touchend="onTouchEnd"
   >
     <button class="bell">
-      <div class="bell__content">
-        <!-- Bell Icon SVG matching the reference image shape -->
-        <svg class="bell__svg" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22ZM18 16V11C18 7.93 16.37 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.64 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16Z" />
-        </svg>
-        
-        <!-- Badge positioned on the "shoulder" of the bell as in the picture -->
-        <div v-if="showBadge && count && count > 0" class="bell__badge">
-          {{ count }}
-        </div>
+      <span class="bell__text">{{ t('GlobalFloat_InTransaction') }}</span>
+      <div v-if="showBadge && count && count > 0" class="bell__badge">
+        {{ count }}
       </div>
     </button>
   </div>
@@ -91,39 +84,31 @@ function onTouchEnd() {
 .bell {
   position: relative;
   display: flex;
-  width: 52.554px;
-  height: 52.554px;
-  padding: 0;
-  justify-content: center;
   align-items: center;
-  border-radius: 50%;
-  background: linear-gradient(128deg, rgba(5, 231, 174, 0.40) 7.55%, rgba(2, 122, 92, 0.40) 71.92%);
+  justify-content: center;
+  padding: 0 0.4rem;
+  height: 0.8rem;
+  border-radius: 1rem;
+  background: #69BEFF;
   border: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  white-space: nowrap;
 }
 
-.bell__content {
-  position: relative;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.bell__svg {
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(0px 2px 2px rgba(0, 0, 0, 0.1));
+.bell__text {
+  color: #fff;
+  font-size: 0.37rem;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .bell__badge {
   position: absolute;
   top: -4px;
   right: -4px;
-  background: #FF2D46; /* Bright red matching the picture */
+  background: #FF2D46;
   color: white;
   border-radius: 50%;
   width: 18px;
@@ -133,7 +118,6 @@ function onTouchEnd() {
   justify-content: center;
   font-size: 11px;
   font-weight: 500;
-  border: 1.5px solid transparent; /* No thick white border in the pic, just a clean circle */
   line-height: 1;
   font-family: Arial, sans-serif;
   z-index: 1;

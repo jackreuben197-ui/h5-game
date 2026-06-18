@@ -222,7 +222,14 @@ export async function postGuildDataVipInfoApi(
   payload: GuildDataVipInfoRequest = {} as GuildDataVipInfoRequest,
 ): Promise<ApiResponse<GuildDataVipInfoResponseData>> {
   const endpoint = '/stats/club_data_stats/vip_game'
-  const response = await http.post<ApiResponse<GuildDataVipInfoResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<GuildDataVipInfoResponseData>>(
+    endpoint,
+    payload,
+    {
+      headers: {
+        'X-Club': userInfoStore.currentClub?.club_id,
+      },
+    },)
   return response.data
 }
 
@@ -234,6 +241,11 @@ export async function postStatsClubDataStatsVipUserApi(
   const response = await http.post<ApiResponse<StatsClubDataStatsVipUserResponseData>>(
     endpoint,
     payload,
+    {
+      headers: {
+        'X-Club': userInfoStore.currentClub?.club_id,
+      },
+    },
   )
   return response.data
 }
@@ -425,7 +437,11 @@ export async function postStatsJackpotGoldChangeLogsApi(
   const endpoint = '/stats/jackpot/gold_change_logs'
   const response = await http.post<ApiResponse<StatsJackpotGoldChangeLogsResponseData>>(
     endpoint,
-    payload,
+    payload, {
+      headers: {
+        'X-Club': userInfoStore.currentClub?.club_id,
+      },
+    }
   )
   return response.data
 }

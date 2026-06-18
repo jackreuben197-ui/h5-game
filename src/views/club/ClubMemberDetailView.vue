@@ -582,7 +582,9 @@ function onActionClick(key: string): void {
   }
 
   if (key === 'vip') {
-    pushWithContext(`/club/member/${memberId}/vip-statistics`)
+    pushWithContext(`/club/member/${memberId}/vip-statistics`, {
+      diamonds: String(assetDiamond.value),
+    })
     return
   }
 
@@ -598,10 +600,6 @@ function onActionClick(key: string): void {
       auid: currentAgentDisplayUid.value,
     })
     return
-  }
-
-  if (key === 'records') {
-    pushWithContext(`/club/member/${memberId}/vip-statistics`)
   }
 }
 
@@ -700,8 +698,9 @@ async function onToggleFreeze(): Promise<void> {
   }
 }
 
-onMounted(() => {
-  void Promise.all([fetchStats(), fetchMemberProfile(), fetchAgentList()])
+onMounted(async () => {
+  await fetchMemberProfile()
+  void Promise.all([fetchStats(), fetchAgentList()])
 })
 </script>
 

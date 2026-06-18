@@ -648,15 +648,15 @@ export interface OrgClubJackpotTemplateCreateRequest {
   name?: string // 模版名称
   gold?: number // 金额
   nlh_switch?: number // NLH开关
-  nlh_setting?: OrgClubJackpotTemplateCreateJackpotSetting // NLH配置
+  nlh_setting?: OrgClubJackpotTemplateSetting // NLH配置
   plo_switch?: number // PLO开关
-  plo_setting?: OrgClubJackpotTemplateCreateJackpotSetting // PLO配置
+  plo_setting?: OrgClubJackpotTemplateSetting // PLO配置
   six_plus_switch?: number // 6+开关
-  six_plus_setting?: OrgClubJackpotTemplateCreateJackpotSetting // 6+配置
+  six_plus_setting?: OrgClubJackpotTemplateSetting // 6+配置
   bombpot_switch?: number // BombPot开关
-  bombpot_setting?: OrgClubJackpotTemplateCreateJackpotSetting // BombPot配置
+  bombpot_setting?: OrgClubJackpotTemplateSetting // BombPot配置
   aof_switch?: number // AOF开关
-  aof_setting?: OrgClubJackpotTemplateCreateJackpotSetting // AOF配置
+  aof_setting?: OrgClubJackpotTemplateSetting // AOF配置
 
   [key: string]: unknown
 }
@@ -665,7 +665,7 @@ export interface OrgClubJackpotTemplateCreateResponseData extends OrgClubJackpot
   [key: string]: unknown
 }
 
-export interface OrgClubJackpotTemplateCreateJackpotSetting {
+export interface OrgClubJackpotTemplateSetting {
   game_play_ratio?: number // 玩法奖池比例，千分位
   blind_setting?: OrgClubJackpotTemplateCreateBlindsSetting[] // 小盲信息
   royal_flush_switch?: number // 皇家同花顺奖金比例开关
@@ -740,8 +740,33 @@ export interface OrgClubJackpotTemplateListResponseData extends OrgClubJackpotTe
 export interface OrgClubJackpotTemplateListData {
   limit?: number // 数据数量
   offset?: number // 当前偏移值
-  items?: unknown[]
+  items?: OrgClubJackpotTemplateListDataItem[]
 
+  [key: string]: unknown
+}
+export interface OrgClubJackpotTemplateListDataItem {
+  aof_setting?: OrgClubJackpotTemplateSetting;
+  aof_switch?: number;
+  bombpot_setting?: OrgClubJackpotTemplateSetting;
+  bombpot_switch?: number;
+  club_id?: number;
+  create_time?: string;
+  /**
+   * 奖池余额
+   */
+  gold?: number;
+  gold_type?: number;
+  id?: number;
+  name?: string;
+  nlh_setting?: OrgClubJackpotTemplateSetting;
+  nlh_switch?: number;
+  op_id?: number;
+  plo_setting?: OrgClubJackpotTemplateSetting;
+  plo_switch?: number;
+  six_plus_setting?: OrgClubJackpotTemplateSetting;
+  six_plus_switch?: number;
+  tribe_id?: number;
+  update_time?: string;
   [key: string]: unknown
 }
 
@@ -750,15 +775,15 @@ export interface OrgClubJackpotTemplateUpdateRequest {
   name?: string // 模版名称
   jackpot_id?: number // jackpot ID
   nlh_switch?: number // NLH开关
-  nlh_setting?: unknown // NLH配置
+  nlh_setting?: OrgClubJackpotTemplateSetting // NLH配置
   plo_switch?: number // PLO开关
-  plo_setting?: unknown // PLO配置
+  plo_setting?: OrgClubJackpotTemplateSetting // PLO配置
   six_plus_switch?: number // 6+开关
-  six_plus_setting?: unknown // 6+配置
+  six_plus_setting?: OrgClubJackpotTemplateSetting // 6+配置
   bombpot_switch?: number // BombPot开关
-  bombpot_setting?: unknown // BombPot配置
+  bombpot_setting?: OrgClubJackpotTemplateSetting // BombPot配置
   aof_switch?: number // AOF开关
-  aof_setting?: unknown // AOF配置
+  aof_setting?: OrgClubJackpotTemplateSetting // AOF配置
 
   [key: string]: unknown
 }
@@ -1500,7 +1525,7 @@ export interface OrgJackpotTemplateInfoCombineData {
 }
 
 export interface OrgJackpotTemplateInfoData {
-  item?: unknown
+  item?: OrgClubJackpotTemplateListDataItem
 
   [key: string]: unknown
 }

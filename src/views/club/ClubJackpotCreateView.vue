@@ -4,13 +4,15 @@ import { showFailToast, showSuccessToast, showToast } from 'vant'
 import { useRoute, useRouter } from 'vue-router'
 import type {
   OrgClubJackpotTemplateCreateBlindsSetting,
-  OrgClubJackpotTemplateCreateJackpotSetting,
+  OrgClubJackpotTemplateSetting,
 } from '@/api/models/org'
 import {
   postOrgClubJackpotTemplateCreateApi,
   postOrgClubJackpotTemplateUpdateApi,
   postOrgJackpotTemplateInfoApi,
+  postOrgClubJackpotRechargeApi,
 } from '@/api/org'
+import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 
 import mainBgUrl from '@/assets/images/main_bg.webp'
 // 主容器背景图：全页面共用一张底图。
@@ -30,6 +32,7 @@ interface PoolSettingItem {
   title: string
   checked: boolean
   ratio: string
+  cards: { rank: string; suit: 'c' | 'h' | 'd' | 's' }[]
 }
 
 interface BlindConfigForm {
@@ -69,16 +72,48 @@ const editJackpotId = computed(() => Number(route.query.id) || 0)
 const loading = ref(false)
 const jackpotName = ref('Jackpot')
 const jackpotGoldYuan = ref('0')
+const showRechargeKeypad = ref(false)
+
+function onRecharge(): void {
+  showRechargeKeypad.value = true
+}
+
+async function onRechargeSubmit(amount: number): Promise<void> {
+  if (amount <= 0) {
+    showToast('请输入有效金额')
+    return
+  }
+  loading.value = true
+  try {
+    const response = await postOrgClubJackpotRechargeApi({
+      jackpot_id: editJackpotId.value,
+      amount: Math.round(amount * 100),
+    })
+    if (Number(response.code) !== 0) {
+      const message = typeof response.msg === 'string' ? response.msg : '充值失败'
+      throw new Error(message)
+    }
+    showSuccessToast('充值成功')
+    // Refresh template info to update the displayed amount
+    await fetchTemplateInfo()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '充值失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+    showRechargeKeypad.value = false
+  }
+}
 
 const gameModes = ['NLH', 'PLO', '6+', 'Bombpot', 'AOF'] as const
 type GameMode = (typeof gameModes)[number]
-type StakeLevel = 'Micro' | 'Small' | 'Medium' | 'Large'
+type StakeLevel = '微' | '小' | '中' | '大'
 
 const JACKPOT_BLIND_CLASSIFY_RULES = [
-  { level: 'Micro', blindType: 1, sbValues: [10, 20, 30, 40, 50] },
-  { level: 'Small', blindType: 2, sbValues: [100, 200, 300, 400, 500] },
-  { level: 'Medium', blindType: 3, sbValues: [1000, 1500, 2000, 2500, 3000, 5000] },
-  { level: 'Large', blindType: 4, sbValues: [10000, 20000, 30000, 50000, 100000] },
+  { level: '微', blindType: 1, sbValues: [10, 20, 30, 40, 50] },
+  { level: '小', blindType: 2, sbValues: [100, 200, 300, 400, 500] },
+  { level: '中', blindType: 3, sbValues: [1000, 1500, 2000, 2500, 3000, 5000] },
+  { level: '大', blindType: 4, sbValues: [10000, 20000, 30000, 50000, 100000] },
 ] as const
 
 function getJackpotBlindTypeBySb(sb: number): number {
@@ -113,7 +148,7 @@ const modeEnabled = ref<Record<GameMode, boolean>>({
 })
 
 const activeGameMode = ref<GameMode>('NLH')
-const activeStakeLevel = ref<StakeLevel>('Micro')
+const activeStakeLevel = ref<StakeLevel>('微')
 
 function toSafeNumber(value: unknown): number {
   const num = Number(value)
@@ -159,9 +194,45 @@ function createDefaultBlindConfig(sb: number): BlindConfigForm {
 
 function createDefaultPoolSettings(): PoolSettingItem[] {
   return [
-    { id: 'royal', title: 'Royal Flush', checked: false, ratio: '' },
-    { id: 'straight', title: 'Straight flush', checked: false, ratio: '' },
-    { id: 'four', title: 'Four of a kind', checked: false, ratio: '' },
+    {
+      id: 'royal',
+      title: '皇家同花顺',
+      checked: false,
+      ratio: '',
+      cards: [
+        { rank: 'A', suit: 'h' },
+        { rank: 'K', suit: 'h' },
+        { rank: 'Q', suit: 'h' },
+        { rank: 'J', suit: 'h' },
+        { rank: '10', suit: 'h' },
+      ],
+    },
+    {
+      id: 'straight',
+      title: '同花顺',
+      checked: false,
+      ratio: '',
+      cards: [
+        { rank: '1', suit: 's' },
+        { rank: '2', suit: 's' },
+        { rank: '3', suit: 's' },
+        { rank: '4', suit: 's' },
+        { rank: '5', suit: 's' },
+      ],
+    },
+    {
+      id: 'four',
+      title: '四条',
+      checked: false,
+      ratio: '',
+      cards: [
+        { rank: 'A', suit: 'h' },
+        { rank: 'A', suit: 'd' },
+        { rank: 'A', suit: 'c' },
+        { rank: 'A', suit: 's' },
+        { rank: 'K', suit: 'h' },
+      ],
+    },
   ]
 }
 
@@ -173,7 +244,7 @@ function createDefaultStakeConfig(level: StakeLevel): StakeConfigForm {
   })
 
   return {
-    selectedSbs: level === 'Micro' ? [rule.sbValues[0]] : [],
+    selectedSbs: level === '微' ? [rule.sbValues[0]] : [],
     blindConfigs,
   }
 }
@@ -243,7 +314,7 @@ function toggleModeEnabled(mode: GameMode): void {
   modeEnabled.value[mode] = !modeEnabled.value[mode]
 }
 
-function buildModeSetting(modeConfig: ModeConfigForm): OrgClubJackpotTemplateCreateJackpotSetting {
+function buildModeSetting(modeConfig: ModeConfigForm): OrgClubJackpotTemplateSetting {
   const blindSetting: OrgClubJackpotTemplateCreateBlindsSetting[] = []
 
   JACKPOT_BLIND_CLASSIFY_RULES.forEach((rule) => {
@@ -289,7 +360,7 @@ function normalizeSelectedSb(stakeConfig: StakeConfigForm, level: StakeLevel): v
   const rule = stakeRuleByLevel[level]
   const validSbs = rule.sbValues as readonly number[]
   const uniqueSbs = Array.from(new Set(stakeConfig.selectedSbs))
-  stakeConfig.selectedSbs = uniqueSbs.filter((sb) => validSbs.includes(sb))
+  stakeConfig.selectedSbs = uniqueSbs.filter((sb: number) => validSbs.includes(sb))
 }
 
 function getLevelByBlindData(
@@ -300,7 +371,7 @@ function getLevelByBlindData(
   const sbCent = Math.round(toSafeNumber(sbValue) * multiplier)
   const fromBlindType = stakeLevelByBlindType[toSafeNumber(blindTypeValue)]
   const fromSb = stakeLevelByBlindType[getJackpotBlindTypeBySb(sbCent)]
-  return fromBlindType ?? fromSb ?? 'Micro'
+  return fromBlindType ?? fromSb ?? '微'
 }
 
 function detectSbMultiplier(blindSetting: Record<string, unknown>[]): number {
@@ -491,7 +562,7 @@ async function fetchTemplateInfo(): Promise<void> {
       throw new Error(typeof response.msg === 'string' ? response.msg : '获取模板信息失败')
     }
 
-    const data = response.data?.item as Record<string, unknown> | undefined
+    const data = response.data?.item
     if (!data) return
 
     if (typeof data.name === 'string') {
@@ -546,15 +617,12 @@ onMounted(() => {
             <i class="icon-info" aria-hidden="true">i</i>
           </div>
           <div class="summary-amount-input">
-            <span>¥</span>
-            <input
-              v-model="jackpotGoldYuan"
-              class="inline-input"
-              inputmode="decimal"
-              placeholder="0"
-            />
+            <span class="amount-display">{{ jackpotGoldYuan || '0' }}</span>
           </div>
         </div>
+        <button v-if="isEditMode" type="button" class="recharge-btn" @click="onRecharge">
+          注入
+        </button>
       </div>
 
       <div class="glass-card section-card">
@@ -598,7 +666,7 @@ onMounted(() => {
                 v-model="currentModeConfig.gamePlayRatio"
                 class="inline-input"
                 inputmode="decimal"
-                placeholder="Enter here"
+                placeholder="0"
               />
               <span>%</span>
             </div>
@@ -657,7 +725,7 @@ onMounted(() => {
                   v-model="getBlindConfigBySb(option.sb).prizeRatio"
                   class="inline-input"
                   inputmode="decimal"
-                  placeholder="Enter here"
+                  placeholder="0"
                 />
                 <span>%</span>
               </div>
@@ -681,7 +749,7 @@ onMounted(() => {
                   v-model="getBlindConfigBySb(option.sb).contributePotLimit"
                   class="inline-input"
                   inputmode="decimal"
-                  placeholder="BB amount"
+                  placeholder="0"
                 />
               </div>
             </div>
@@ -703,7 +771,7 @@ onMounted(() => {
                   v-model="getBlindConfigBySb(option.sb).awardBetLimit"
                   class="inline-input"
                   inputmode="decimal"
-                  placeholder="BB amount"
+                  placeholder="0"
                 />
               </div>
             </div>
@@ -725,7 +793,7 @@ onMounted(() => {
                   v-model="getBlindConfigBySb(option.sb).awardOtherRatio"
                   class="inline-input"
                   inputmode="decimal"
-                  placeholder="BB amount"
+                  placeholder="0"
                 />
               </div>
             </div>
@@ -757,7 +825,7 @@ onMounted(() => {
                   v-model="getBlindConfigBySb(option.sb).profitTriggerLimit"
                   class="inline-input"
                   inputmode="decimal"
-                  placeholder="BB amount"
+                  placeholder="0"
                 />
               </div>
             </div>
@@ -780,7 +848,7 @@ onMounted(() => {
                   v-model="getBlindConfigBySb(option.sb).jackpotContribValue"
                   class="inline-input"
                   inputmode="decimal"
-                  placeholder="BB amount"
+                  placeholder="0"
                 />
               </div>
             </div>
@@ -813,7 +881,7 @@ onMounted(() => {
       </div>
 
       <div class="glass-card pool-card">
-        <h3>Pool Settings</h3>
+        <h3>彩池设置</h3>
 
         <div v-for="item in currentModeConfig.poolSettings" :key="item.id" class="pool-row">
           <div class="pool-left">
@@ -827,18 +895,20 @@ onMounted(() => {
             </div>
 
             <div class="hand-cards">
-              <span class="card black">2♣</span>
-              <span class="card red">2♥</span>
-              <span class="card black">2♠</span>
-              <span class="card red">2♦</span>
-              <span class="card red">2♥</span>
+              <PokerCard
+                v-for="(card, idx) in item.cards"
+                :key="`show-${idx}`"
+                :rank="card.rank"
+                :suit="card.suit"
+                size="0.6rem"
+              />
             </div>
           </div>
 
           <div class="pool-right">
-            <span>Award ratio (%)</span>
+            <span>奖励比例 (%)</span>
             <div class="value-input value-input--narrow">
-              <input v-model="item.ratio" class="inline-input" placeholder="BB amount" />
+              <input v-model="item.ratio" class="inline-input" placeholder="0" />
             </div>
           </div>
         </div>
@@ -856,6 +926,17 @@ onMounted(() => {
         {{ loading ? '提交中...' : '确定' }}
       </button>
     </div>
+
+    <NumericKeypad
+      :open="showRechargeKeypad"
+      :allow-decimal="true"
+      :max="100000000"
+      title="注入金额"
+      confirm-text="确认"
+      :show-input-area="true"
+      @close="showRechargeKeypad = false"
+      @submit="onRechargeSubmit"
+    />
   </div>
 </template>
 
@@ -966,10 +1047,33 @@ onMounted(() => {
   min-width: 3.2rem;
 }
 
+.summary-amount-input .amount-display {
+  text-align: left;
+  font-size: inherit;
+  font-weight: inherit;
+  flex: 1;
+}
+
+.recharge-btn {
+  flex-shrink: 0;
+  height: 1.2rem;
+  padding: 0.2rem 0.662rem;
+  border-radius: 0.8rem;
+  border: 0;
+  background: linear-gradient(157.77deg, #05e7ae 7.55%, #027a5c 71.92%);
+  color: #fff;
+  font-size: 0.4rem;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
 .summary-amount-input .inline-input {
   text-align: left;
   font-size: inherit;
   font-weight: inherit;
+  flex: 1;
 }
 
 .section-card {

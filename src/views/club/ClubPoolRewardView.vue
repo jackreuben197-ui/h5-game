@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { postOrgClubJackpotTemplateListApi } from '@/api/org'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import type { OrgClubJackpotTemplateListDataItem } from '@/api/models/org'
+import { formatUC } from '@/utils/roomVisibility'
+import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -18,21 +22,19 @@ type TabKey = 'reward' | 'contribution'
 
 const activeTab = ref<TabKey>('reward')
 
-const rewardItems = ref<PoolRewardItem[]>([
-  { id: '1', name: 'Game Name', jpAmount: '666999', tags: ['NLH', 'PLO', '6+'] },
-  { id: '2', name: 'Game Name', jpAmount: '666999', tags: ['NLH', 'PLO', '6+'] },
-  { id: '3', name: 'Game Name', jpAmount: '666999', tags: ['NLH', 'PLO', '6+'] },
-  { id: '4', name: 'Game Name', jpAmount: '666999', tags: ['NLH', 'PLO', '6+'] },
-])
-
-const contributionItems = ref<PoolRewardItem[]>([
-  { id: '5', name: 'Game Name', jpAmount: '666999', tags: ['NLH', 'PLO', '6+'] },
-  { id: '6', name: 'Game Name', jpAmount: '666999', tags: ['NLH', 'PLO', '6+'] },
-])
+const rewardItems = ref<PoolRewardItem[]>([])
+const contributionItems = ref<PoolRewardItem[]>([])
+const loading = ref(false)
+const loadingMore = ref(false)
+const listOffset = ref(0)
+const hasMore = ref(true)
+const PAGE_SIZE = 10
 
 const currentItems = computed(() =>
   activeTab.value === 'reward' ? rewardItems.value : contributionItems.value,
 )
+
+const hasItems = computed(() => currentItems.value.length > 0)
 
 const router = useRouter()
 
@@ -50,10 +52,101 @@ function onOpenRecord(item: PoolRewardItem): void {
     query: { id: item.id },
   })
 }
+
+async function fetchJackpotList(reset = false): Promise<void> {
+  if (loading.value || loadingMore.value) {
+    return
+  }
+
+  if (!reset && !hasMore.value) {
+    return
+  }
+
+  if (reset) {
+    loading.value = true
+    listOffset.value = 0
+    hasMore.value = true
+  } else {
+    loadingMore.value = true
+  }
+
+  try {
+    const currentOffset = reset ? 0 : listOffset.value
+    const response = await postOrgClubJackpotTemplateListApi({
+      limit: PAGE_SIZE,
+      offset: currentOffset,
+    })
+
+    if (Number(response.code) !== 0) {
+      const message = typeof response.msg === 'string' ? response.msg : '加载奖池记录失败'
+      throw new Error(message)
+    }
+
+    const rawItems = Array.isArray(response.data?.items) ? response.data.items : []
+    const mappedItems = rawItems.map((item: OrgClubJackpotTemplateListDataItem, index: number) => {
+      const tags: string[] = []
+      if (item.nlh_switch === 1) tags.push('NLH')
+      if (item.plo_switch === 1) tags.push('PLO')
+      if (item.six_plus_switch === 1) tags.push('6+')
+      const jpAmount = item.gold ? formatUC(item.gold) : '0'
+      return {
+        id: String(item.id ?? index),
+        name: item.name ?? 'Game Name',
+        jpAmount,
+        tags,
+      }
+    })
+
+    if (reset) {
+      rewardItems.value = mappedItems
+      contributionItems.value = mappedItems
+    } else {
+      rewardItems.value = [...rewardItems.value, ...mappedItems]
+      contributionItems.value = [...contributionItems.value, ...mappedItems]
+    }
+
+    listOffset.value = currentOffset + rawItems.length
+    hasMore.value = rawItems.length >= PAGE_SIZE
+  } catch {
+    if (reset) {
+      rewardItems.value = []
+      contributionItems.value = []
+      hasMore.value = false
+    }
+  } finally {
+    if (reset) {
+      loading.value = false
+    } else {
+      loadingMore.value = false
+    }
+  }
+}
+
+function loadNextPage(): void {
+  if (!loading.value && !loadingMore.value && hasMore.value) {
+    void fetchJackpotList(false)
+  }
+}
+
+function onPageScroll(event: Event): void {
+  const target = event.target as HTMLElement | null
+  if (!target) {
+    return
+  }
+
+  const remain = target.scrollHeight - (target.scrollTop + target.clientHeight)
+  if (remain <= 80) {
+    loadNextPage()
+  }
+}
+
+onMounted(() => {
+  void fetchJackpotList(true)
+})
 </script>
 
 <template>
-  <div class="page-shell pool-reward-page" :style="backgroundStyle">
+  <div class="page-shell pool-reward-page" :style="backgroundStyle" @scroll="onPageScroll">
     <HeaderBack :title="'奖池记录'" />
 
     <section class="pool-body">
@@ -106,10 +199,22 @@ function onOpenRecord(item: PoolRewardItem): void {
           <span class="jp-badge">JP {{ item.jpAmount }}</span>
         </li>
       </ul>
+
+      <div v-if="!hasItems && loading" class="pool-empty">
+        <img class="empty-icon" :src="emptyStateIcon" alt="" />
+        <p>加载中...</p>
+      </div>
+      <div v-else-if="!hasItems && !loading" class="pool-empty">
+        <img class="empty-icon" :src="emptyStateIcon" alt="" />
+        <p>暂无数据</p>
+      </div>
+
+      <p v-if="hasItems && loadingMore" class="pool-loading-more">加载更多...</p>
+      <p v-else-if="hasItems && !hasMore" class="pool-loading-more">没有更多了</p>
     </section>
 
     <div class="footer-action">
-      <button type="button" class="create-btn">Create Jackpot Table</button>
+      <button type="button" class="create-btn">添加Jackpot奖池模板</button>
     </div>
   </div>
 </template>
@@ -283,6 +388,34 @@ function onOpenRecord(item: PoolRewardItem): void {
 
 .pool-card:active {
   opacity: 0.92;
+}
+
+/* Empty state */
+.pool-empty {
+  padding: 2rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.empty-icon {
+  width: 1.248rem;
+  height: 1.56rem;
+  object-fit: contain;
+}
+
+.pool-empty p {
+  margin: 0.24rem 0 0;
+  font-size: 0.3734rem;
+  color: rgba(225, 234, 248, 0.88);
+  text-align: center;
+}
+
+.pool-loading-more {
+  margin: 0.42rem 0 0;
+  text-align: center;
+  color: rgba(225, 234, 248, 0.88);
+  font-size: 0.32rem;
 }
 
 .footer-action {

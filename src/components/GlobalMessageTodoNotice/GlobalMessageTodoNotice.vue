@@ -337,10 +337,15 @@ onBeforeUnmount(() => {
                 <p class="meta-time">{{ formatTime(item.create_time) }}</p>
                 <div class="meta-club">
                   <img
+                    v-if="item.sender_icon && item.sender_icon.search('https') > 0"
                     :src="item.sender_icon ? String(item.sender_icon) : avatarDefault"
                     alt="club"
                   />
-                  <span>{{ item.sender_name || '--' }}</span>
+                  <span>
+                    {{
+                      item.sender_name === 'FRIEND ROOM' ? item.room_name : item.sender_name || '--'
+                    }}
+                  </span>
                 </div>
               </div>
 

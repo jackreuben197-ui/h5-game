@@ -98,7 +98,7 @@ function handleTableClick(room: RoomRecord): void {
 <style scoped lang="scss">
 .group-item {
   position: relative;
-  padding: 0.4rem 0.4559rem 0.12rem;
+  padding: 0.14rem 0.34rem 0.22rem;
 
   &::after {
     content: '';
@@ -227,11 +227,12 @@ function handleTableClick(room: RoomRecord): void {
 }
 
 .table-grid {
-  margin-top: 0.32rem;
-  margin-bottom: 0.32rem;
+  margin-top: 0.22rem;
+  margin-left: 0.3rem;
+  margin-bottom: 0.2rem;
   display: grid;
   grid-template-columns: repeat(2, max-content);
-  justify-content: space-around;
-  gap: 0.6rem;
+  justify-content: start;
+  gap: 0.4rem;
 }
 </style>

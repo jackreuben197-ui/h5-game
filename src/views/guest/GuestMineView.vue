@@ -70,7 +70,7 @@ function goToLogin(): void {
             <button class="left-avatar" type="button" @click="notifyNotLogin">
               <img :src="displayUser.avatar" alt="头像" />
             </button>
-            <div class="right-box" @click="notifyNotLogin">登陆/注册</div>
+            <div class="right-box" @click="notifyNotLogin">登录/注册</div>
           </div>
           <div class="card-line2">
             <div class="left-board">

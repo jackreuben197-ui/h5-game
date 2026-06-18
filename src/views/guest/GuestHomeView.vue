@@ -60,7 +60,7 @@ onMounted(() => {
         <button class="top-bar__btn top-bar__btn--register" @click="notifyNotLoginRegister">
           注册
         </button>
-        <button class="top-bar__btn top-bar__btn--login" @click="notifyNotLogin">登陆</button>
+        <button class="top-bar__btn top-bar__btn--login" @click="notifyNotLogin">登录</button>
       </div>
     </div>
     <!-- 1. 顶部俱乐部介绍图 -->

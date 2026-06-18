@@ -409,7 +409,7 @@ function handleOpenCustomerService(): void {
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
   padding-right: 0.38rem;
-  padding-bottom: 0.5333rem;
+  padding-bottom: 0.5rem;
   padding-left: 0.38rem;
   background: rgba(34, 34, 34, 0.5);
   backdrop-filter: blur(0.3533rem) saturate(1.04);

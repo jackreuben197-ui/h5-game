@@ -218,7 +218,7 @@ function goPoolReward(): void {
     <HeaderBack :title="'Jackpot'">
       <template #right>
         <button type="button" class="pool-trigger" aria-label="Pool Reward" @click="goPoolReward">
-          <span>Pool Reward</span>
+          <span>奖池纪录</span>
           <span class="trigger-caret" aria-hidden="true"></span>
         </button>
       </template>
@@ -277,9 +277,7 @@ function goPoolReward(): void {
     </section>
 
     <div class="footer-action">
-      <button type="button" class="create-btn" @click="goCreateJackpot">
-        Create Jackpot Table
-      </button>
+      <button type="button" class="create-btn" @click="goCreateJackpot">添加Jackpot奖池模板</button>
     </div>
 
     <!-- 删除确认弹窗 (Figma node-id=1451-5725, 1rem=37.5px) -->

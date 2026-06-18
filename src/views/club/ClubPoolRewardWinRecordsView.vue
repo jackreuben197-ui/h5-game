@@ -1,6 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { postStatsJackpotAwardLogsApi } from '@/api/stats'
+import { showFailToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import type { StatsJackpotAwardLogsJackpotConfig } from '@/api/models/stats'
+import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -31,108 +36,144 @@ function isRed(suit: string) {
   return suit === 'h' || suit === 'd'
 }
 
-const records: RewardRecord[] = [
-  {
-    id: '1',
-    player: 'name',
-    playerId: 'ID:187548724',
-    gameId: 'name',
-    gameIdSub: 'ID:187548724',
-    reward: '+123456',
-    gameType: 'NLH',
-    cards: [
-      { rank: '2', suit: 'c' },
-      { rank: '2', suit: 'h' },
-      { rank: '2', suit: 'd' },
-      { rank: '2', suit: 's' },
-      { rank: '2', suit: 'h' },
-    ],
+const PAGE_SIZE = 20
+const records = ref<RewardRecord[]>([])
+const route = useRoute()
+const loading = ref(false)
+const loadingMore = ref(false)
+const listOffset = ref(0)
+const hasMore = ref(true)
+
+const hasItems = computed(() => records.value.length > 0)
+
+function mapGameType(gameType: number | undefined): string {
+  switch (gameType) {
+    case 0:
+      return 'NLH'
+    case 1:
+      return 'PLO'
+    case 2:
+      return 'PLO5'
+    case 3:
+      return '6+'
+    default:
+      return 'NLH'
+  }
+}
+
+function generateCardsFromCardData(cardData: string | undefined): CardItem[] {
+  // card_data 格式: "58,28,53,13,8,"
+  // 每张牌 = rank + suit, rank = value % 13 (0=A, 1-12=2-K), suit = Math.floor(value / 13)
+  const result: CardItem[] = []
+  if (!cardData) return result
+  const values = cardData
+    .split(',')
+    .filter((v) => v.trim())
+    .map(Number)
+  const suitMap: ('c' | 'h' | 'd' | 's')[] = ['c', 'h', 'd', 's']
+  const rankMap = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
+  for (const v of values) {
+    if (v >= 0 && v < 52) {
+      const rank = v % 13
+      const suit = suitMap[Math.floor(v / 13)]
+      result.push({ rank: rankMap[rank], suit })
+    }
+  }
+  return result
+}
+
+async function fetchRewardRecords(reset = false): Promise<void> {
+  const jackpotId = Number(route.query.id)
+  if (!jackpotId) {
+    records.value = []
+    hasMore.value = false
+    return
+  }
+  if (!reset && !hasMore.value) return
+
+  if (reset) {
+    loading.value = true
+    listOffset.value = 0
+    hasMore.value = true
+  } else {
+    loadingMore.value = true
+  }
+
+  try {
+    const currentOffset = reset ? 0 : listOffset.value
+    const response = await postStatsJackpotAwardLogsApi({
+      jackpot_id: jackpotId,
+      op_codes: ['JACKPOTAWD'],
+      limit: PAGE_SIZE,
+      offset: currentOffset,
+    })
+    const rawItems = response.data.items ?? []
+    const mappedItems = rawItems.map((item: StatsJackpotAwardLogsJackpotConfig, index: number) => ({
+      id: `${reset ? '0' : String(currentOffset + index)}`,
+      player: item.user_name ?? 'name',
+      playerId: `ID:${item.user_id ?? ''}`,
+      gameId: item.room_name ?? 'name',
+      gameIdSub: `ID:${item.src_room_id ?? ''}`,
+      reward:
+        item.gold_change != null ? `${item.gold_change > 0 ? '+' : ''}${item.gold_change}` : '0',
+      gameType: mapGameType(item.game_type),
+      cards: generateCardsFromCardData(item.card_data),
+    }))
+
+    if (reset) {
+      records.value = mappedItems
+    } else {
+      records.value = [...records.value, ...mappedItems]
+    }
+
+    listOffset.value = currentOffset + rawItems.length
+    hasMore.value = rawItems.length >= PAGE_SIZE
+  } catch {
+    if (reset) {
+      records.value = []
+      hasMore.value = false
+    } else {
+      showFailToast('加载失败，请重试')
+    }
+  } finally {
+    if (reset) {
+      loading.value = false
+    } else {
+      loadingMore.value = false
+    }
+  }
+}
+
+function loadNextPage(): void {
+  if (!loading.value && !loadingMore.value && hasMore.value) {
+    void fetchRewardRecords(false)
+  }
+}
+
+function onPageScroll(event: Event): void {
+  const target = event.target as HTMLElement | null
+  if (!target) return
+  const remain = target.scrollHeight - (target.scrollTop + target.clientHeight)
+  if (remain <= 80) {
+    loadNextPage()
+  }
+}
+
+// Reset data when route query changes
+watch(
+  () => route.query.id,
+  () => {
+    void fetchRewardRecords(true)
   },
-  {
-    id: '2',
-    player: 'name',
-    playerId: 'ID:187548724',
-    gameId: 'name',
-    gameIdSub: 'ID:187548724',
-    reward: '+123456',
-    gameType: 'PLO',
-    cards: [
-      { rank: '2', suit: 'c' },
-      { rank: '2', suit: 'h' },
-      { rank: '2', suit: 'd' },
-      { rank: '2', suit: 's' },
-      { rank: '2', suit: 'h' },
-    ],
-  },
-  {
-    id: '3',
-    player: 'name',
-    playerId: 'ID:187548724',
-    gameId: 'name',
-    gameIdSub: 'ID:187548724',
-    reward: '-123456',
-    gameType: 'NLH',
-    cards: [
-      { rank: '2', suit: 'c' },
-      { rank: '2', suit: 'h' },
-      { rank: '2', suit: 'd' },
-      { rank: '2', suit: 's' },
-      { rank: '2', suit: 'h' },
-    ],
-  },
-  {
-    id: '4',
-    player: 'name',
-    playerId: 'ID:187548724',
-    gameId: 'name',
-    gameIdSub: 'ID:187548724',
-    reward: '-123456',
-    gameType: '6+',
-    cards: [
-      { rank: '2', suit: 'c' },
-      { rank: '2', suit: 'h' },
-      { rank: '2', suit: 'd' },
-      { rank: '2', suit: 's' },
-      { rank: '2', suit: 'h' },
-    ],
-  },
-  {
-    id: '5',
-    player: 'name',
-    playerId: 'ID:187548724',
-    gameId: 'name',
-    gameIdSub: 'ID:187548724',
-    reward: '+123456',
-    gameType: 'NLH',
-    cards: [
-      { rank: '2', suit: 'c' },
-      { rank: '2', suit: 'h' },
-      { rank: '2', suit: 'd' },
-      { rank: '2', suit: 's' },
-      { rank: '2', suit: 'h' },
-    ],
-  },
-  {
-    id: '6',
-    player: 'name',
-    playerId: 'ID:187548724',
-    gameId: 'name',
-    gameIdSub: 'ID:187548724',
-    reward: '-123456',
-    gameType: '6+',
-    cards: [
-      { rank: '2', suit: 'c' },
-      { rank: '2', suit: 'h' },
-      { rank: '2', suit: 'd' },
-      { rank: '2', suit: 's' },
-      { rank: '2', suit: 'h' },
-    ],
-  },
-]
+)
+
+onMounted(() => {
+  void fetchRewardRecords(true)
+})
 </script>
 
 <template>
-  <div class="page-shell record-page" :style="backgroundStyle">
+  <div class="page-shell record-page" :style="backgroundStyle" @scroll="onPageScroll">
     <HeaderBack :title="'获奖记录'" />
 
     <section class="record-table-wrap">
@@ -140,11 +181,11 @@ const records: RewardRecord[] = [
       <div class="record-header-wrap">
         <div class="record-header-glow"></div>
         <div class="record-header-pill">
-          <div class="col-player">Player</div>
-          <div class="col-gameid">Game ID</div>
-          <div class="col-value">Reward</div>
-          <div class="col-type">Game type</div>
-          <div class="col-hand">Hand</div>
+          <div class="col-player">玩家</div>
+          <div class="col-gameid">牌局名称</div>
+          <div class="col-value">获奖</div>
+          <div class="col-type">玩法</div>
+          <div class="col-hand">牌型</div>
         </div>
       </div>
 
@@ -182,6 +223,17 @@ const records: RewardRecord[] = [
           </div>
         </div>
       </div>
+
+      <div v-if="!hasItems && loading" class="record-empty">
+        <img class="empty-icon" :src="emptyStateIcon" alt="" />
+        <p>加载中...</p>
+      </div>
+      <div v-else-if="!hasItems && !loading" class="record-empty">
+        <img class="empty-icon" :src="emptyStateIcon" alt="" />
+        <p>暂无数据</p>
+      </div>
+      <div v-else-if="loadingMore" class="pool-loading-more">加载中...</div>
+      <div v-else-if="!hasMore && hasItems" class="pool-loading-more">没有更多了</div>
     </section>
   </div>
 </template>
@@ -375,5 +427,33 @@ const records: RewardRecord[] = [
       color: #fa2b4b;
     }
   }
+}
+
+/* Empty state */
+.record-empty {
+  padding: 2rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.empty-icon {
+  width: 1.248rem;
+  height: 1.56rem;
+  object-fit: contain;
+}
+
+.record-empty p {
+  margin: 0.24rem 0 0;
+  font-size: 0.3734rem;
+  color: rgba(225, 234, 248, 0.88);
+  text-align: center;
+}
+
+.pool-loading-more {
+  margin: 0.42rem 0 0;
+  text-align: center;
+  color: rgba(225, 234, 248, 0.88);
+  font-size: 0.32rem;
 }
 </style>

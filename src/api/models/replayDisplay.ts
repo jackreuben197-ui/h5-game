@@ -1,5 +1,3 @@
-
-
 export type ReplayActionTone = 'blue' | 'red' | 'black'
 export type ReplayMetricIcon = 'mushroom' | 'chips'
 export type CardSuit = 'c' | 'h' | 'd' | 's'
@@ -538,7 +536,6 @@ export function buildReplayDisplaySections(
 
   return sections
 }
-
 
 // /api/stats/user/game/record/list replay（标准牌局）
 export interface StatsReplaySpDetail {

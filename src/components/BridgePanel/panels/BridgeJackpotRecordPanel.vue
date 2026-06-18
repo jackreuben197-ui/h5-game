@@ -8,8 +8,6 @@ import type {
 import { postStatsJackpotAwardLogsApi } from '@/api/stats'
 import GameTable from '@/components/Table/GameTable.vue'
 import GameTableColumn from '@/components/Table/GameTableColumn.vue'
-import PokerCard from '@/components/GameCard/PokerCard.vue'
-import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
 import { t } from '@/i18n'
 import { decodeCard, parseHandRecordCards } from '@/api/models/replayDisplay'
 import type { CardItem } from '@/api/models/replayDisplay'

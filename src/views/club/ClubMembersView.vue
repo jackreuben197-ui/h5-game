@@ -32,7 +32,7 @@ const backgroundStyle = computed(() => ({
 }))
 
 type TabKey = 'account' | 'record'
-type MemberRole = '会长' | '管理员' | '代理人' | '成员'
+type MemberRole = '会长' | '管理员' | '代理' | '成员'
 type MemberIdentity = 'founder' | 'admin' | 'agent' | 'player'
 type FundAssetTab = 'coin' | 'quota' | 'diamond'
 type FundActionTab = 'grant' | 'recycle'
@@ -705,7 +705,7 @@ function resolveRole(record: OrgMemberListRecord): {
   }
 
   if (userLevel === 4 || memberType === 2) {
-    return { role: '代理人', identityType: 'agent' }
+    return { role: '代理', identityType: 'agent' }
   }
 
   return { role: '成员', identityType: 'player' }
@@ -966,7 +966,11 @@ async function submitQuotaUpdate(options: {
   const payload = {
     user_id: member.id,
     gold_type: 3,
-    amount: options.isReset ? 0 : signedAmount * 100,
+    amount: options.isReset
+      ? options.field === 'disposable'
+        ? -disposableQuota.value
+        : -reviewQuota.value
+      : signedAmount * 100,
     is_reset: options.isReset,
   }
 
@@ -1191,7 +1195,7 @@ function roleClass(role: MemberRole): string {
     return 'role-badge--member'
   }
 
-  if (role === '代理人') {
+  if (role === '代理') {
     return 'role-badge--agent'
   }
 

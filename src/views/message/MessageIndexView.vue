@@ -19,16 +19,17 @@ interface BoxItem {
   text: string
   type: 'system' | 'other'
   msgType: number
+  unreadCount: number
 }
 
 const userInfoStore = useUserInfoStore()
 
 const boxList = ref<BoxItem[]>([
-  { icon: iconBoxSystem, text: t('Msg3'), type: 'system', msgType: 4 },
-  { icon: iconBoxWallet, text: t('Msg4'), type: 'other', msgType: 3 },
-  { icon: iconBoxBag, text: t('Msg6'), type: 'other', msgType: 1 },
-  { icon: iconBoxClub, text: t('Msg1'), type: 'other', msgType: 2 },
-  { icon: iconBoxTribe, text: t('Msg2'), type: 'other', msgType: 5 },
+  { icon: iconBoxSystem, text: t('Msg3'), type: 'system', msgType: 4, unreadCount: 0 },
+  { icon: iconBoxWallet, text: t('Msg4'), type: 'other', msgType: 3, unreadCount: 0 },
+  { icon: iconBoxBag, text: t('Msg6'), type: 'other', msgType: 1, unreadCount: 0 },
+  { icon: iconBoxClub, text: t('Msg1'), type: 'other', msgType: 2, unreadCount: 0 },
+  { icon: iconBoxTribe, text: t('Msg2'), type: 'other', msgType: 5, unreadCount: 0 },
 ])
 
 const creditUnreadCount = ref(0)
@@ -75,10 +76,16 @@ async function fetchBellStatus(): Promise<void> {
   const records = Array.isArray(payload)
     ? (payload as Array<Record<string, unknown>>)
     : payload && typeof payload === 'object'
-    ? [payload as Record<string, unknown>]
-    : []
+      ? [payload as Record<string, unknown>]
+      : []
 
   showBell.value = records.some((item) => Number(item.num ?? 0) > 0)
+
+  // Map unread counts to each box item by msg_main_type
+  for (const box of boxList.value) {
+    const record = records.find((item) => Number(item.msg_main_type) === box.msgType)
+    box.unreadCount = Number(record?.num ?? 0)
+  }
 }
 
 function goToMessagePage(
@@ -152,6 +159,7 @@ onMounted(() => {
       >
         <div class="img">
           <img :src="box.icon" alt="消息" />
+          <span v-if="box.unreadCount > 0" class="unread-badge">{{ box.unreadCount }}</span>
         </div>
         <div class="text">{{ box.text }}</div>
       </div>
@@ -194,6 +202,50 @@ onMounted(() => {
             border: 0;
             cursor: pointer;
           }
+        }
+      }
+    }
+  }
+  .box-gallery {
+    margin-top: 0.913rem;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    gap: 0.5rem;
+    padding: 0 0.5rem;
+    .box-item {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      .img {
+        width: 1.62rem;
+        height: 1.62rem;
+        margin-bottom: 0.24rem;
+        position: relative;
+        img {
+          width: 100%;
+          height: 100%;
+        }
+        .unread-badge {
+          position: absolute;
+          top: 0;
+          right: 0;
+          min-width: 0.5rem;
+          height: 0.5rem;
+          padding: 0 0.12rem;
+          background-color: #ff3b30;
+          color: #fff;
+          font-size: 0.24rem;
+          font-weight: 600;
+          line-height: 0.5rem;
+          text-align: center;
+          border-radius: 0.25rem;
+          transform: translate(50%, -50%);
         }
       }
     }

@@ -17,6 +17,7 @@ import { t } from '@/i18n'
 import { formatDateTime } from '@/utils/time'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import avatarDefault from '@/assets/images/default_avatar.png'
+import clubRoleIcon from '@/assets/icons/club_role_icon.png'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconBalance from '@/assets/icons/icon_credit_chip.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
@@ -977,13 +978,14 @@ onBeforeUnmount(() => {
             </p>
 
             <button v-if="item.senderIcon" class="sender-btn" type="button" aria-label="sender">
-              <img :src="item.senderIcon" alt="sender" />
+              <img :src="clubRoleIcon" alt="sender" />
             </button>
           </div>
 
           <div class="other-meta-row">
             <div class="other-meta-club">
-              <img :src="avatarDefault" alt="club" />
+              <img v-if="item.senderIcon" :src="item.senderIcon" alt="club" />
+              <img v-else :src="avatarDefault" alt="system" />
               <span>{{ item.clubName }}</span>
             </div>
             <p class="other-time">{{ item.time }}</p>
@@ -1246,7 +1248,7 @@ onBeforeUnmount(() => {
   top: 0;
   width: 7.458rem;
   min-height: 1.385rem;
-  border-radius: 0.24rem;
+  border-radius: 0.72rem 0.72rem 0.72rem 0rem;
   overflow: hidden;
   padding: 0.2rem 1.36rem 0.2rem 0.467rem;
   box-sizing: border-box;

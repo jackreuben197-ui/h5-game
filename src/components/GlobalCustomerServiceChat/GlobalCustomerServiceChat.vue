@@ -651,6 +651,8 @@ async function openPanel(): Promise<void> {
   noServiceVisible.value = false
   messagesReady.value = false
 
+  visible.value = true
+
   if (!activeChannel.value) {
     await fetchChannel()
   }
@@ -662,8 +664,6 @@ async function openPanel(): Promise<void> {
     noServiceVisible.value = true
     return
   }
-
-  visible.value = true
   await fetchMessages({ setRead: true })
   await scrollToBottom()
   messagesReady.value = true
@@ -1290,8 +1290,8 @@ onMounted(() => {
 
   stopOpenListener = subscribeGlobalCustomerServiceChat((payload) => {
     applyContext(payload)
-    activeChannel.value = null
-    void fetchChannel().then(() => openPanel())
+    // activeChannel.value = null
+    openPanel()
   })
 
   initWsListener()

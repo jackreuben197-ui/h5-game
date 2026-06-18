@@ -22,7 +22,7 @@ import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgChips from '@/assets/icons/icon_chips.png'
-import imgBalance from '@/assets/icons/icon_balance.png'
+import imgBalance from '@/assets/icons/icon_credit_chip.png'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
 import mainBgUrl from '@/assets/images/main_bg.webp'
@@ -549,7 +549,9 @@ function patchActiveMemberOnList(): void {
   nextMembers[index] = {
     ...nextMembers[index],
     ...activeMember.value,
-    freeLimit: `${formatUC(activeMember.value.disposableCredit)}/${formatUC(activeMember.value.reviewCredit)}`,
+    freeLimit: `${formatUC(activeMember.value.disposableCredit)}/${formatUC(
+      activeMember.value.reviewCredit,
+    )}`,
   }
   members.value = nextMembers
 }
@@ -2132,8 +2134,7 @@ onMounted(() => {
   position: relative;
   padding: 0.16064rem 0.43919rem 0.28112rem;
   border-radius: 1.05574rem;
-  background:
-    radial-gradient(78% 88% at 12% 34%, rgba(188, 117, 151, 0.5), rgba(188, 117, 151, 0)),
+  background: radial-gradient(78% 88% at 12% 34%, rgba(188, 117, 151, 0.5), rgba(188, 117, 151, 0)),
     radial-gradient(94% 88% at 92% 74%, rgba(47, 161, 212, 0.46), rgba(47, 161, 212, 0)),
     rgba(0, 0, 0, 0.22);
   backdrop-filter: blur(0.21rem);

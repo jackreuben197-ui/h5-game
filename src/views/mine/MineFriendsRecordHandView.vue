@@ -84,8 +84,12 @@ async function fetchHandRows(): Promise<void> {
 
     const records = Array.isArray(response.data?.records) ? response.data.records : []
     const room = (records[0]?.room_record as Record<string, unknown>) ?? {}
-    const userRowsRaw = Array.isArray(records[0]?.user_game_records) ? records[0]?.user_game_records : []
-    const userRows = userRowsRaw.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+    const userRowsRaw = Array.isArray(records[0]?.user_game_records)
+      ? records[0]?.user_game_records
+      : []
+    const userRows = userRowsRaw.filter(
+      (item): item is Record<string, unknown> => !!item && typeof item === 'object',
+    )
 
     overviewTitle.value = String(room.name ?? '牌局名称')
     overviewId.value = `ID: ${String(room.room_id ?? roomId)}`
@@ -164,7 +168,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .record-hand-page {
   height: 100dvh;
-  padding-top: calc(env(safe-area-inset-top) + 0.46rem);
+  // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;
   background-size: cover;
@@ -197,36 +201,36 @@ onMounted(() => {
   align-items: center;
   gap: 0.16rem;
 
-   .avatar {
+  .avatar {
     width: 0.84rem;
     height: 0.84rem;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.48);
-   }
+  }
 
-   .name {
+  .name {
     font-size: 0.35rem;
-   }
+  }
 
-   .hands {
+  .hands {
     margin-top: 0.05rem;
     font-size: 0.27rem;
     color: rgba(255, 255, 255, 0.74);
-   }
+  }
 }
 
 .right-info {
   text-align: right;
 
-   .title {
+  .title {
     font-size: 0.42rem;
-   }
+  }
 
-   .sub {
+  .sub {
     margin-top: 0.08rem;
     font-size: 0.28rem;
     color: rgba(255, 255, 255, 0.78);
-   }
+  }
 }
 
 .list-wrap {
@@ -271,9 +275,9 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
 
-   &.red {
+  &.red {
     color: #df495f;
-   }
+  }
 }
 
 .title {
@@ -296,21 +300,21 @@ onMounted(() => {
 .profit {
   text-align: right;
 
-   .money {
+  .money {
     font-size: 0.52rem;
     color: #ff8498;
     font-weight: 700;
-   }
+  }
 
-   .hands-count {
+  .hands-count {
     margin-top: 0.04rem;
     font-size: 0.29rem;
-   }
+  }
 
-   &.positive {
-     .money {
+  &.positive {
+    .money {
       color: #65e89f;
-     }
-   }
+    }
+  }
 }
 </style>

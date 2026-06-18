@@ -66,11 +66,16 @@ const records = ref<RecordCard[]>([])
 
 function profitTitle(): string {
   switch (selectedTime.value) {
-    case '今天': return '今日收益'
-    case '7天': return '7天收益'
-    case '30天': return '30天收益'
-    case '生涯': return '生涯收益'
-    default: return '今日收益'
+    case '今天':
+      return '今日收益'
+    case '7天':
+      return '7天收益'
+    case '30天':
+      return '30天收益'
+    case '生涯':
+      return '生涯收益'
+    default:
+      return '今日收益'
   }
 }
 
@@ -115,7 +120,9 @@ function extractRecords(value: unknown, depth = 0): Record<string, unknown>[] {
   }
 
   if (Array.isArray(value)) {
-    return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+    return value.filter(
+      (item): item is Record<string, unknown> => !!item && typeof item === 'object',
+    )
   }
 
   if (typeof value !== 'object') {
@@ -158,16 +165,23 @@ function mapRecord(row: Record<string, unknown>, index: number): RecordCard {
 
 function resolveTimeType(): number {
   switch (selectedTime.value) {
-    case '今天': return 1
-    case '7天': return 2
-    case '30天': return 3
-    case '生涯': return 4
-    default: return 1
+    case '今天':
+      return 1
+    case '7天':
+      return 2
+    case '30天':
+      return 3
+    case '生涯':
+      return 4
+    default:
+      return 1
   }
 }
 
 function extractStatsFromResponse(data: unknown): void {
-  const roomData = (data as Record<string, unknown>)?.room_data as Record<string, unknown> | undefined
+  const roomData = (data as Record<string, unknown>)?.room_data as
+    | Record<string, unknown>
+    | undefined
   if (!roomData) return
 
   leftMetrics.value = [
@@ -177,7 +191,10 @@ function extractStatsFromResponse(data: unknown): void {
 
   rightMetrics.value = [
     { label: '全胜次数', value: toSafeNumber(roomData.full_win).toLocaleString('en-US') },
-    { label: '暗杠', value: toSafeNumber(roomData.mj_concealed_kong_count).toLocaleString('en-US') },
+    {
+      label: '暗杠',
+      value: toSafeNumber(roomData.mj_concealed_kong_count).toLocaleString('en-US'),
+    },
   ]
 
   bottomMetrics.value = [
@@ -259,7 +276,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell mahjong-page" :style="backgroundStyle">
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
       <section class="glass-card stats-card">
@@ -316,7 +333,9 @@ onMounted(() => {
           @click="goDetail(item)"
         >
           <div class="timeline">
-            <span v-if="isFirstOfDate(index)" class="date-label">{{ item.endMonth }}<br />{{ item.endDay }}</span>
+            <span v-if="isFirstOfDate(index)" class="date-label"
+              >{{ item.endMonth }}<br />{{ item.endDay }}</span
+            >
             <span v-else class="date-label"></span>
           </div>
           <div class="card-content">
@@ -344,7 +363,9 @@ onMounted(() => {
                   <span>{{ item.endAt }}</span>
                 </div>
               </div>
-              <div class="profit" :class="{ pos: item.profit.startsWith('+') }">{{ item.profit }}</div>
+              <div class="profit" :class="{ pos: item.profit.startsWith('+') }">
+                {{ item.profit }}
+              </div>
             </div>
           </div>
         </article>
@@ -357,7 +378,7 @@ onMounted(() => {
 .mahjong-page {
   position: relative;
   height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
+  padding: 0 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;

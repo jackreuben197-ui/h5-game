@@ -44,7 +44,9 @@ const endTime = ref('23:59')
 
 const isDatePickerVisible = ref(false)
 const pickingTarget = ref<'start' | 'end'>('start')
-const currentMonth = ref(new Date(endDateModel.value.getFullYear(), endDateModel.value.getMonth(), 1))
+const currentMonth = ref(
+  new Date(endDateModel.value.getFullYear(), endDateModel.value.getMonth(), 1),
+)
 
 const weekLabels = ['m', 't', 'w', 't', 'f', 's', 's']
 
@@ -60,7 +62,9 @@ const title = computed(() => '数据')
 
 const startDateText = computed(() => formatDateSlash(startDateModel.value))
 const endDateText = computed(() => formatDateSlash(endDateModel.value))
-const monthTitle = computed(() => `${currentMonth.value.getFullYear()}年${currentMonth.value.getMonth() + 1}月`)
+const monthTitle = computed(
+  () => `${currentMonth.value.getFullYear()}年${currentMonth.value.getMonth() + 1}月`,
+)
 
 type DayCell = {
   date: Date
@@ -151,7 +155,10 @@ async function fetchFriendsData(): Promise<void> {
         userId: String(item.user_random_id ?? '--'),
         profit: formatUC(profit),
         profitType: profit >= 0 ? 'red' : 'green',
-        avatar: typeof item.user_avatar === 'string' && item.user_avatar ? item.user_avatar : defaultAvatar,
+        avatar:
+          typeof item.user_avatar === 'string' && item.user_avatar
+            ? item.user_avatar
+            : defaultAvatar,
       }
     })
   } catch (error) {
@@ -188,19 +195,35 @@ function confirmDatePicker(): void {
 }
 
 function goPrevYear(): void {
-  currentMonth.value = new Date(currentMonth.value.getFullYear() - 1, currentMonth.value.getMonth(), 1)
+  currentMonth.value = new Date(
+    currentMonth.value.getFullYear() - 1,
+    currentMonth.value.getMonth(),
+    1,
+  )
 }
 
 function goPrevMonth(): void {
-  currentMonth.value = new Date(currentMonth.value.getFullYear(), currentMonth.value.getMonth() - 1, 1)
+  currentMonth.value = new Date(
+    currentMonth.value.getFullYear(),
+    currentMonth.value.getMonth() - 1,
+    1,
+  )
 }
 
 function goNextMonth(): void {
-  currentMonth.value = new Date(currentMonth.value.getFullYear(), currentMonth.value.getMonth() + 1, 1)
+  currentMonth.value = new Date(
+    currentMonth.value.getFullYear(),
+    currentMonth.value.getMonth() + 1,
+    1,
+  )
 }
 
 function goNextYear(): void {
-  currentMonth.value = new Date(currentMonth.value.getFullYear() + 1, currentMonth.value.getMonth(), 1)
+  currentMonth.value = new Date(
+    currentMonth.value.getFullYear() + 1,
+    currentMonth.value.getMonth(),
+    1,
+  )
 }
 
 function selectDay(date: Date): void {
@@ -223,13 +246,20 @@ function selectDay(date: Date): void {
     pickingTarget.value = 'start'
   }
 
-  if (selectedDate.getMonth() !== currentMonth.value.getMonth() || selectedDate.getFullYear() !== currentMonth.value.getFullYear()) {
+  if (
+    selectedDate.getMonth() !== currentMonth.value.getMonth() ||
+    selectedDate.getFullYear() !== currentMonth.value.getFullYear()
+  ) {
     currentMonth.value = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
   }
 }
 
 function isSameDay(a: Date, b: Date): boolean {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  )
 }
 
 function isRangeStart(date: Date): boolean {
@@ -280,7 +310,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell friends-data-page" :style="backgroundStyle">
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
       <nav class="game-tabs" aria-label="玩法切换">
@@ -321,7 +351,11 @@ onMounted(() => {
           <div v-for="(item, index) in summary" :key="item.label" class="metric">
             <p class="metric-label">{{ item.label }}</p>
             <p class="metric-value">{{ item.value }}</p>
-            <span v-if="index < summary.length - 1" class="metric-divider" aria-hidden="true"></span>
+            <span
+              v-if="index < summary.length - 1"
+              class="metric-divider"
+              aria-hidden="true"
+            ></span>
           </div>
         </div>
       </section>
@@ -344,7 +378,10 @@ onMounted(() => {
           </div>
 
           <div class="player-right">
-            <span class="profit" :class="item.profitType === 'green' ? 'profit-green' : 'profit-red'">
+            <span
+              class="profit"
+              :class="item.profitType === 'green' ? 'profit-green' : 'profit-red'"
+            >
               {{ item.profit }}
             </span>
             <img class="chip" :src="iconChips" alt="筹码" />
@@ -382,39 +419,19 @@ onMounted(() => {
 
           <div class="picker-month-row">
             <div class="month-arrows">
-              <button
-                type="button"
-                class="arrow-btn"
-                aria-label="上一年"
-                @click="goPrevYear"
-              >
+              <button type="button" class="arrow-btn" aria-label="上一年" @click="goPrevYear">
                 «
               </button>
-              <button
-                type="button"
-                class="arrow-btn"
-                aria-label="上一月"
-                @click="goPrevMonth"
-              >
+              <button type="button" class="arrow-btn" aria-label="上一月" @click="goPrevMonth">
                 ‹
               </button>
             </div>
             <p class="month-title">{{ monthTitle }}</p>
             <div class="month-arrows">
-              <button
-                type="button"
-                class="arrow-btn"
-                aria-label="下一月"
-                @click="goNextMonth"
-              >
+              <button type="button" class="arrow-btn" aria-label="下一月" @click="goNextMonth">
                 ›
               </button>
-              <button
-                type="button"
-                class="arrow-btn"
-                aria-label="下一年"
-                @click="goNextYear"
-              >
+              <button type="button" class="arrow-btn" aria-label="下一年" @click="goNextYear">
                 »
               </button>
             </div>
@@ -456,7 +473,7 @@ onMounted(() => {
 .friends-data-page {
   position: relative;
   height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
+  padding: 0 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;

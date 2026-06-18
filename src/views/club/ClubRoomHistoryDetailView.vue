@@ -432,7 +432,7 @@ onMounted(() => {
 }
 
 .metric-value {
-  font-size: 0.5rem;
+  font-size: 0.34rem;
   line-height: 1;
   color: #f9f9f9;
 }

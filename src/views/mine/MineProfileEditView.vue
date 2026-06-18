@@ -310,7 +310,7 @@ async function onConfirmGender(): Promise<void> {
 <style scoped lang="scss">
 .profile-edit-page {
   height: 100dvh;
-  padding-top: calc(env(safe-area-inset-top) + 0.4598rem);
+  // padding-top: calc(env(safe-area-inset-top) + 0.4598rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;
   background-size: cover;
@@ -348,8 +348,7 @@ async function onConfirmGender(): Promise<void> {
   align-items: center;
   gap: 0.5rem;
   backdrop-filter: blur(0.4rem);
-  background:
-    radial-gradient(
+  background: radial-gradient(
       70% 100% at 20% 30%,
       rgba(159, 62, 26, 0.72) 0%,
       rgba(159, 62, 26, 0.3) 58%,

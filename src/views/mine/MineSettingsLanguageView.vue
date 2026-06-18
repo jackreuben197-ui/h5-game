@@ -63,7 +63,7 @@ function selectLanguage(key: LocaleCode): void {
 <style scoped lang="scss">
 .settings-page {
   height: 100dvh;
-  padding-top: calc(env(safe-area-inset-top) + 0.48rem);
+  // padding-top: calc(env(safe-area-inset-top) + 0.48rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;
   background-size: cover;

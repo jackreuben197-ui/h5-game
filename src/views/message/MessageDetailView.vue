@@ -19,7 +19,7 @@ import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import avatarDefault from '@/assets/images/default_avatar.png'
 import clubRoleIcon from '@/assets/icons/club_role_icon.png'
 import iconPeople from '@/assets/icons/icon_people.png'
-import iconBalance from '@/assets/icons/icon_balance.png'
+import iconBalance from '@/assets/icons/icon_credit_chip.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { formatUC } from '@/utils/roomVisibility'
@@ -1000,7 +1000,7 @@ onBeforeUnmount(() => {
 .message-detail-page {
   height: 100dvh;
   color: #f3f3f3;
-  padding-top: calc(env(safe-area-inset-top) + 0.46rem);
+  // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: calc(env(safe-area-inset-bottom) + 0.7rem);
   background-size: cover;
   background-position: center;

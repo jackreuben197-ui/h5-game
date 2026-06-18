@@ -114,9 +114,11 @@ export async function replacePublicCacheEntries<T>(
 // 新增 store：① 加常量 ② 加进 UserCacheStoreName union 与 USER_CACHE_STORES
 // ③ 把 USER_CACHE_DB_VERSION + 1（旧用户下次 open 会触发 onupgradeneeded 补建 store）。
 const USER_CACHE_DB_PREFIX = 'user_cache_'
-const USER_CACHE_DB_VERSION = 2
+const USER_CACHE_DB_VERSION = 4
 
 export const USER_STORE_CLUB_LIST = 'club_list'
+export const USER_STORE_CAREER_DATA = 'career_data'
+export const USER_STORE_BILL_DATA = 'bill_data'
 
 // cocos 通过 bridge 写入的 store；与 h5 自己的 store 同库不同名，
 // h5 对 bridge 收到的 store 必须做白名单校验，未列入这里的请求一律忽略。
@@ -135,9 +137,18 @@ export const CC_CACHE_STORES: CcCacheStoreName[] = [
   CC_STORE_GAME_REPLAYS,
 ]
 
-export type UserCacheStoreName = typeof USER_STORE_CLUB_LIST | CcCacheStoreName
+export type UserCacheStoreName =
+  | typeof USER_STORE_CLUB_LIST
+  | typeof USER_STORE_CAREER_DATA
+  | typeof USER_STORE_BILL_DATA
+  | CcCacheStoreName
 
-const USER_CACHE_STORES: UserCacheStoreName[] = [USER_STORE_CLUB_LIST, ...CC_CACHE_STORES]
+const USER_CACHE_STORES: UserCacheStoreName[] = [
+  USER_STORE_CLUB_LIST,
+  USER_STORE_CAREER_DATA,
+  USER_STORE_BILL_DATA,
+  ...CC_CACHE_STORES,
+]
 
 export function openUserIndexedDB(userId: string | number): Promise<IDBDatabase> {
   const id = userId === undefined || userId === null ? '' : String(userId).trim()
@@ -155,6 +166,33 @@ export function openUserIndexedDB(userId: string | number): Promise<IDBDatabase>
       })
     }
     req.onsuccess = () => resolve(req.result)
+    req.onerror = () => reject(req.error)
+  })
+}
+
+export async function readUserCache<T>(
+  userId: string | number,
+  storeName: UserCacheStoreName,
+  key: string,
+): Promise<T | null> {
+  const db = await openUserIndexedDB(userId)
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(storeName, 'readonly').objectStore(storeName).get(key)
+    req.onsuccess = () => resolve((req.result as T | undefined) ?? null)
+    req.onerror = () => reject(req.error)
+  })
+}
+
+export async function writeUserCache<T>(
+  userId: string | number,
+  storeName: UserCacheStoreName,
+  value: T,
+  key: string,
+): Promise<void> {
+  const db = await openUserIndexedDB(userId)
+  await new Promise<void>((resolve, reject) => {
+    const req = db.transaction(storeName, 'readwrite').objectStore(storeName).put(value, key)
+    req.onsuccess = () => resolve()
     req.onerror = () => reject(req.error)
   })
 }

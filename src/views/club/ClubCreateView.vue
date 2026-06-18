@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import ImageUploadSheet from '@/components/ImageUploadSheet/ImageUploadSheet.vue'
-import imgClubCover from '@/assets/images/club_cover_avatar.png'
+import imgClubCover from '@/assets/images/default_avatar.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { postOrgClubCreateApi, postOrgClubCreateIsFirstApi } from '@/api/org'
@@ -91,7 +91,7 @@ async function onCreateClub(): Promise<void> {
 <template>
   <div class="page-shell club-create-bg" :style="backgroundStyle">
     <div class="club-create">
-      <HeaderBack :title="'创建俱乐部'" />
+      <HeaderBack :title="'创建俱乐部'" extra-padding />
 
       <section class="avatar-card">
         <ImageUploadSheet v-model="avatarPreviewUrl">
@@ -157,6 +157,8 @@ async function onCreateClub(): Promise<void> {
 <style scoped lang="scss">
 .club-create-bg {
   height: 100dvh;
+  padding-left: 0;
+  padding-right: 0;
   background-size: cover;
 }
 
@@ -165,7 +167,7 @@ async function onCreateClub(): Promise<void> {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.40524rem;
+  // gap: 0.40524rem;
   padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
 }
 
@@ -251,7 +253,7 @@ async function onCreateClub(): Promise<void> {
   gap: 0.4307rem;
   flex: 1;
   min-height: 0;
-  padding: 0.4307rem 0.4561rem 0;
+  padding: 0.3rem 0.4561rem 0;
 }
 
 .field-block {
@@ -283,9 +285,9 @@ async function onCreateClub(): Promise<void> {
 }
 
 .field-shell--multi {
-  min-height: 6.3176rem;
+  min-height: 6rem;
   border-radius: 0.72rem;
-  padding: 0.5405rem;
+  padding: 0.4rem;
   background: radial-gradient(95% 82% at 15% 30%, rgba(255, 193, 158, 0.42), rgba(255, 193, 158, 0)),
     radial-gradient(82% 78% at 60% 54%, rgba(185, 70, 151, 0.34), rgba(185, 70, 151, 0)),
     radial-gradient(66% 66% at 92% 56%, rgba(54, 208, 255, 0.34), rgba(54, 208, 255, 0)),
@@ -307,7 +309,7 @@ textarea {
 
 textarea {
   resize: none;
-  min-height: 5.776rem;
+  min-height: 5rem;
 }
 
 input::placeholder,
@@ -321,11 +323,11 @@ textarea::placeholder {
   flex-direction: column;
   align-items: center;
   gap: 0.2872rem;
-  padding: 0.2872rem 0 0;
+  padding: 1.5rem 0 0;
 }
 
 .create-btn {
-  width: 8.9046rem;
+  width: 8.9rem;
   min-height: 1.4349rem;
   border: 0;
   border-radius: 1.0557rem;

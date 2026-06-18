@@ -1610,7 +1610,7 @@ export interface StatsUserStatsCardTypeData {
   total?: number // 总数
   limit?: number // 数据数量
   offset?: number // 当前偏移值
-  records?: StatsUserStatsCardTypeRecord[]
+  list?: StatsUserStatsCardTypeRecord[] // API field name is "list" (not "records")
 
   [key: string]: unknown
 }

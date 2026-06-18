@@ -1,12 +1,25 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { showFailToast } from 'vant'
 import { postMiscCombineApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import tableCardBgUrl from '@/assets/images/table_card_bg.png'
+import iconArrowBottomUrl from '@/assets/icons/icon_arrow_bottom.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import RadarChart from '@/components/Chart/RadarChart.vue'
+import RingChart from '@/components/Chart/RingChart.vue'
+import PokerCard from '@/components/GameCard/PokerCard.vue'
+import { GameTable, GameTableColumn } from '@/components/Table'
+import type { SortOrder } from '@/components/Table'
+import FilterTabbar from '@/components/Tabbar/FilterTabbar.vue'
+import type { FilterTabOption } from '@/components/Tabbar/FilterTabbar.vue'
+import { decodeCard, parseHandRecordCards, type CardItem } from '@/api/models/replayDisplay'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useGameStore } from '@/stores/game'
+import { userCache } from '@/utils/userCache'
+import { USER_STORE_CAREER_DATA } from '@/utils/indexedDB'
 
-const title = computed(() => 'Data')
+const title = computed(() => '数据')
 
 type MainTabKey = 'personal' | 'opponent' | 'allin' | 'deck'
 
@@ -22,7 +35,7 @@ type ProfitRow = {
 
 type DeckRow = {
   id: string
-  cards: [string, string]
+  cards: [CardItem, CardItem]
   winCount: number
   totalHands: number
   winRate: number
@@ -41,10 +54,32 @@ const mainTabs: Array<{ key: MainTabKey; label: string }> = [
   { key: 'deck', label: '牌组' },
 ]
 
-const personalGameTabs = ['德州', '奥马哈', '短牌']
-const opponentPeriodTabs = ['本周', '本月', '历史']
-const allInModeTabs = ['Texas', 'Omaha', '6+', 'AOF 6+', 'AOF Texas', 'AOF Omaha']
-const deckModeTabs = ['Texas', 'Omaha', 'AOF Texas', 'AOF Omaha']
+const personalGameTabs = ['NLH', 'PLO', '6+']
+const opponentPeriodTabs = ['week', 'month', 'history']
+
+const personalGameTabOptions: FilterTabOption[] = personalGameTabs.map((t) => ({
+  name: t,
+  title: t,
+}))
+const OPPONENT_PERIOD_TAB_LABEL: Record<string, string> = {
+  week: '本周',
+  month: '本月',
+  history: '历史',
+}
+const opponentPeriodTabOptions: FilterTabOption[] = opponentPeriodTabs.map((t) => ({
+  name: t,
+  title: OPPONENT_PERIOD_TAB_LABEL[t] ?? t,
+}))
+const OPPONENT_PERIOD_LABEL: Record<string, string> = {
+  week: '近一周内玩牌数据统计',
+  month: '近一个月内玩牌数据统计',
+  history: '历史玩牌数据统计',
+}
+const opponentPeriodLabel = computed(
+  () => OPPONENT_PERIOD_LABEL[selectedOpponentPeriod.value] ?? '',
+)
+const allInModeTabs = ['NLH', 'PLO', '6+', 'AOF 6+', 'AOF NLH', 'AOF PLO']
+const deckModeTabs = ['NLH', '6+', 'AOF NLH', 'AOF 6+']
 
 const selectedMainTab = ref<MainTabKey>('personal')
 const selectedPersonalGame = ref(personalGameTabs[0])
@@ -53,6 +88,7 @@ const selectedAllInMode = ref(allInModeTabs[0])
 const selectedDeckMode = ref(deckModeTabs[0])
 const loading = ref(false)
 const userInfoStore = useUserInfoStore()
+const gameStore = useGameStore()
 
 const personalRingMeta = [
   { key: 'vpip', label: '入池率', color: '#ff5b5b' },
@@ -64,6 +100,7 @@ const personalRingMeta = [
 ] as const
 
 const personalRings = ref(personalRingMeta.map((item) => ({ ...item, value: 0 })))
+const personalBestHand = ref<(CardItem | null)[]>([])
 const opponentRows = ref<ProfitRow[]>([])
 const deckRows = ref<DeckRow[]>([])
 const allInSummary = ref([
@@ -80,31 +117,19 @@ const allInRateRows = ref([
   { key: 'behind', label: '落后', rate: 0, color: '#b519d8' },
 ])
 
-const allInOverallRate = computed(() => {
-  const winCount = toSafeNumber(allInSummary.value[3]?.value)
-  const totalHands = toSafeNumber(allInSummary.value[2]?.value)
-  if (totalHands <= 0) {
-    return 0
-  }
-  return clampRate((winCount / totalHands) * 100)
-})
-
-const radarCanvasRef = ref<HTMLCanvasElement | null>(null)
-const radarWrapRef = ref<HTMLDivElement | null>(null)
-let radarRafId = 0
-const onWindowResize = () => {
-  if (selectedMainTab.value === 'allin') {
-    scheduleRadarDraw()
-  }
-}
-
-const passiveRate = computed(() => allInRateRows.value.find((item) => item.key === 'passive')?.rate ?? 0)
-const backwardRate = computed(() => allInRateRows.value.find((item) => item.key === 'behind')?.rate ?? 0)
-const leadingRate = computed(() => allInRateRows.value.find((item) => item.key === 'ahead')?.rate ?? 0)
+const radarPoints = computed(() => ({
+  top: allInRateRows.value.find((r) => r.key === 'active')?.rate ?? 0,
+  right: allInRateRows.value.find((r) => r.key === 'behind')?.rate ?? 0,
+  bottom: allInRateRows.value.find((r) => r.key === 'ahead')?.rate ?? 0,
+  left: allInRateRows.value.find((r) => r.key === 'passive')?.rate ?? 0,
+}))
 
 const personalCache = new Map<string, typeof personalRings.value>()
-const opponentCache = new Map<string, ProfitRow[]>()
-const allInCache = new Map<string, { summary: typeof allInSummary.value; rates: typeof allInRateRows.value }>()
+const personalBestHandCache = new Map<string, (CardItem | null)[]>()
+const allInCache = new Map<
+  string,
+  { summary: typeof allInSummary.value; rates: typeof allInRateRows.value }
+>()
 const deckCache = new Map<string, DeckRow[]>()
 
 const personalHasData = computed(() => {
@@ -115,8 +140,31 @@ const personalHasData = computed(() => {
   return !!cacheValue
 })
 
+const OPPONENT_PAGE_SIZE = 30
+const opponentOrderAsc = ref(true)
+const opponentLoadingMore = ref(false)
+const opponentFinished = ref(false)
+const opponentSortCache = new Map<string, { rows: ProfitRow[]; finished: boolean }>()
+const deckSortProp = ref('')
+const deckSortOrder = ref<SortOrder>('')
+
+const sortedDeckRows = computed<Record<string, any>[]>(() => {
+  if (!deckSortProp.value || !deckSortOrder.value) return deckRows.value
+  const prop = deckSortProp.value
+  return [...deckRows.value].sort((a, b) => {
+    const aVal = Number(a[prop as keyof typeof a]) || 0
+    const bVal = Number(b[prop as keyof typeof b]) || 0
+    return deckSortOrder.value === 'asc' ? aVal - bVal : bVal - aVal
+  })
+})
+
 function setMainTab(tab: MainTabKey): void {
   selectedMainTab.value = tab
+}
+
+function onDeckSort(col: { prop: string }, order: SortOrder): void {
+  deckSortProp.value = col.prop
+  deckSortOrder.value = order
 }
 
 function formatProfit(value: number): string {
@@ -140,120 +188,6 @@ function toSafeNumber(value: unknown): number {
 
 function clampRate(value: number): number {
   return Math.max(0, Math.min(100, Math.round(value * 10) / 10))
-}
-
-function clearRadarRaf(): void {
-  if (radarRafId) {
-    cancelAnimationFrame(radarRafId)
-    radarRafId = 0
-  }
-}
-
-function scheduleRadarDraw(): void {
-  clearRadarRaf()
-  radarRafId = requestAnimationFrame(() => {
-    drawAllInRadar()
-  })
-}
-
-function drawAllInRadar(): void {
-  const canvas = radarCanvasRef.value
-  const wrap = radarWrapRef.value
-  if (!canvas || !wrap) {
-    return
-  }
-
-  const width = wrap.clientWidth
-  const height = wrap.clientHeight
-  if (!width || !height) {
-    return
-  }
-
-  const dpr = window.devicePixelRatio || 1
-  canvas.width = Math.round(width * dpr)
-  canvas.height = Math.round(height * dpr)
-  canvas.style.width = `${width}px`
-  canvas.style.height = `${height}px`
-
-  const ctx = canvas.getContext('2d')
-  if (!ctx) {
-    return
-  }
-
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-  ctx.clearRect(0, 0, width, height)
-
-  const centerX = width / 2
-  const centerY = height / 2 + 6
-  const radius = Math.min(width, height) * 0.26
-  const levels = 5
-
-  const pointAt = (axis: 'top' | 'right' | 'bottom' | 'left', value: number): [number, number] => {
-    const scale = clampRate(value) / 100
-    const length = radius * scale
-    if (axis === 'top') return [centerX, centerY - length]
-    if (axis === 'right') return [centerX + length, centerY]
-    if (axis === 'bottom') return [centerX, centerY + length]
-    return [centerX - length, centerY]
-  }
-
-  ctx.lineCap = 'round'
-  for (let level = levels; level >= 1; level -= 1) {
-    const ratio = level / levels
-    const ring = [
-      [centerX, centerY - radius * ratio],
-      [centerX + radius * ratio, centerY],
-      [centerX, centerY + radius * ratio],
-      [centerX - radius * ratio, centerY],
-    ]
-    ctx.beginPath()
-    ctx.moveTo(ring[0][0], ring[0][1])
-    for (let i = 1; i < ring.length; i += 1) {
-      ctx.lineTo(ring[i][0], ring[i][1])
-    }
-    ctx.closePath()
-    ctx.strokeStyle = level === levels ? 'rgba(249, 249, 249, 0.92)' : 'rgba(249, 249, 249, 0.16)'
-    ctx.lineWidth = level === levels ? 1.7 : 1
-    ctx.stroke()
-  }
-
-  ctx.beginPath()
-  ctx.moveTo(centerX, centerY - radius)
-  ctx.lineTo(centerX, centerY + radius)
-  ctx.moveTo(centerX - radius, centerY)
-  ctx.lineTo(centerX + radius, centerY)
-  ctx.strokeStyle = 'rgba(249, 249, 249, 0.24)'
-  ctx.lineWidth = 1
-  ctx.stroke()
-
-  const radarPoints: Array<[number, number]> = [
-    pointAt('top', allInOverallRate.value),
-    pointAt('right', backwardRate.value),
-    pointAt('bottom', leadingRate.value),
-    pointAt('left', passiveRate.value),
-  ]
-
-  const fill = ctx.createLinearGradient(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
-  fill.addColorStop(0, 'rgba(249, 249, 249, 0.34)')
-  fill.addColorStop(1, 'rgba(249, 249, 249, 0.14)')
-  ctx.beginPath()
-  ctx.moveTo(radarPoints[0][0], radarPoints[0][1])
-  for (let i = 1; i < radarPoints.length; i += 1) {
-    ctx.lineTo(radarPoints[i][0], radarPoints[i][1])
-  }
-  ctx.closePath()
-  ctx.fillStyle = fill
-  ctx.strokeStyle = 'rgba(249, 249, 249, 0.78)'
-  ctx.lineWidth = 1.3
-  ctx.fill()
-  ctx.stroke()
-
-  ctx.fillStyle = 'rgba(249, 249, 249, 0.84)'
-  for (const [x, y] of radarPoints) {
-    ctx.beginPath()
-    ctx.arc(x, y, 2, 0, Math.PI * 2)
-    ctx.fill()
-  }
 }
 
 function formatSigned(value: number): string {
@@ -282,27 +216,35 @@ function resolvePeriodRange(period: string): { start_time: number; end_time: num
   const endTime = nowSeconds()
   const daySeconds = 24 * 3600
   switch (period) {
-    case '本周':
+    case 'week':
       return { start_time: endTime - 7 * daySeconds, end_time: endTime }
-    case '本月':
+    case 'month':
       return { start_time: endTime - 30 * daySeconds, end_time: endTime }
     default:
       return { start_time: endTime - 90 * daySeconds, end_time: endTime }
   }
 }
 
-function resolvePersonalMode(mode: string): { game_types: number[]; poker_types: number[] } {
-  if (mode === '奥马哈') {
-    return { game_types: [1, 2, 3], poker_types: [0] }
+function resolvePersonalMode(mode: string): {
+  game_types: number[]
+  poker_types: number[]
+  max_card_game_type: number
+} {
+  if (mode === 'PLO') {
+    return { game_types: [1, 2, 3], poker_types: [0], max_card_game_type: 2 }
   }
-  if (mode === '短牌') {
-    return { game_types: [0], poker_types: [2] }
+  if (mode === '6+') {
+    return { game_types: [0], poker_types: [2], max_card_game_type: 3 }
   }
-  return { game_types: [0], poker_types: [0] }
+  return { game_types: [0], poker_types: [0], max_card_game_type: 1 }
 }
 
-function resolveAllInMode(mode: string): { game_types: number[]; poker_types: number[]; aof_type: number } {
-  if (mode === 'Omaha') {
+function resolveAllInMode(mode: string): {
+  game_types: number[]
+  poker_types: number[]
+  aof_type: number
+} {
+  if (mode === 'PLO') {
     return { game_types: [1, 2, 3], poker_types: [0], aof_type: 2 }
   }
   if (mode === '6+') {
@@ -311,26 +253,35 @@ function resolveAllInMode(mode: string): { game_types: number[]; poker_types: nu
   if (mode === 'AOF 6+') {
     return { game_types: [0], poker_types: [2], aof_type: 1 }
   }
-  if (mode === 'AOF Texas') {
+  if (mode === 'AOF NLH') {
     return { game_types: [0], poker_types: [0], aof_type: 1 }
   }
-  if (mode === 'AOF Omaha') {
+  if (mode === 'AOF PLO') {
     return { game_types: [1, 2, 3], poker_types: [0], aof_type: 1 }
   }
   return { game_types: [0], poker_types: [0], aof_type: 2 }
 }
 
-function resolveDeckMode(mode: string): { game_types: number[]; poker_types: number[]; aof_type: number } {
-  if (mode === 'Omaha') {
-    return { game_types: [1, 2, 3], poker_types: [0], aof_type: 2 }
+function resolveDeckMode(mode: string): {
+  game_types: number[]
+  poker_types: number[]
+  aof_type: number
+} {
+  if (mode === '6+') {
+    return { game_types: [0], poker_types: [2], aof_type: 2 }
   }
-  if (mode === 'AOF Texas') {
+  if (mode === 'AOF NLH') {
     return { game_types: [0], poker_types: [0], aof_type: 1 }
   }
-  if (mode === 'AOF Omaha') {
-    return { game_types: [1, 2, 3], poker_types: [0], aof_type: 1 }
+  if (mode === 'AOF 6+') {
+    return { game_types: [0], poker_types: [2], aof_type: 1 }
   }
   return { game_types: [0], poker_types: [0], aof_type: 2 }
+}
+
+const FACE_CARD_RANK: Record<string, string> = { '11': 'J', '12': 'Q', '13': 'K', '14': 'A' }
+function toDeckRank(str: string): string {
+  return FACE_CARD_RANK[str] || str
 }
 
 function parseDeckCards(value: unknown): [string, string] {
@@ -361,30 +312,21 @@ function setPersonalCache(mode: string, roomData: Record<string, unknown>): void
     allinWins: clampRate(toSafeNumber(roomData.allinWins)),
   }
 
-  personalCache.set(
-    mode,
-    personalRingMeta.map((item) => ({
-      ...item,
-      value: metricMap[item.key] ?? 0,
-    }))
-  )
-}
+  const rings = personalRingMeta.map((item) => ({
+    ...item,
+    value: metricMap[item.key] ?? 0,
+  }))
+  personalCache.set(mode, rings)
 
-function setOpponentCache(period: string, records: unknown): void {
-  const list = Array.isArray(records) ? records : []
-  const rows = list.map((item, index) => {
-    const row = typeof item === 'object' && item ? (item as Record<string, unknown>) : {}
-    return {
-      id: String(row.user_id ?? index),
-      name: String(row.nickname ?? '--'),
-      avatar: typeof row.avatar === 'string' ? row.avatar : undefined,
-      hands: toSafeNumber(row.hand_count),
-      lose: toSafeNumber(row.loss_count),
-      win: toSafeNumber(row.profit_count),
-      profit: toSafeNumber(row.profit_total),
-    }
+  const maxCardStr = typeof roomData.max_card_data === 'string' ? roomData.max_card_data : ''
+  const cardNums = maxCardStr ? parseHandRecordCards(maxCardStr) : []
+  const bestHand = Array.from({ length: 5 }, (_, i) => {
+    const n = cardNums[i]
+    return n != null && n > 0 ? decodeCard(n) : null
   })
-  opponentCache.set(period, rows)
+  personalBestHandCache.set(mode, bestHand)
+
+  void career().put(USER_STORE_CAREER_DATA, careerKey('personal', mode), { rings, bestHand })
 }
 
 function setAllInCache(mode: string, stats: Record<string, unknown>): void {
@@ -436,33 +378,130 @@ function setAllInCache(mode: string, stats: Record<string, unknown>): void {
       color: '#b519d8',
     },
   ]
-
   allInCache.set(mode, { summary, rates })
+  void career().put(USER_STORE_CAREER_DATA, careerKey('allin', mode), { summary, rates })
 }
 
 function setDeckCache(mode: string, records: unknown): void {
   const list = Array.isArray(records) ? records : []
   const rows = list.map((item, index) => {
     const row = typeof item === 'object' && item ? (item as Record<string, unknown>) : {}
-    const cards = parseDeckCards(row.hand_card_type)
+    const [s1, s2] = parseDeckCards(row.hand_card_type)
     return {
       id: `${mode}-${index}`,
-      cards,
+      cards: [
+        { rank: toDeckRank(s1), suit: 's' as const },
+        { rank: toDeckRank(s2), suit: 'h' as const },
+      ] as [CardItem, CardItem],
       winCount: toSafeNumber(row.profit_count),
       totalHands: toSafeNumber(row.hand_count),
       winRate: clampRate(toSafeNumber(row.profit_ratio)),
-      profit: toSafeNumber(row.profit_total),
+      profit: Math.round(toSafeNumber(row.profit_total) / 100),
     }
   })
   deckCache.set(mode, rows)
+  if (rows.length > 0) void career().put(USER_STORE_CAREER_DATA, careerKey('deck', mode), rows)
+}
+
+// ── IDB helpers ──────────────────────────────────────────────────────────────
+// DB partition: gameStore.loginUserId (same key used across the whole app)
+// Store: USER_STORE_CAREER_DATA (one store for all 4 main tabs)
+// Key pattern: `${clubId}-${tab}-${subKey}`
+//   e.g. "456-deck-NLH", "456-personal-PLO", "0-allin-NLH", "0-opponent-week"
+
+function careerKey(tab: string, subKey: string): string {
+  const clubId = userInfoStore.currentClub?.club_id || 0
+  return `${clubId}-${tab}-${subKey}`
+}
+
+function setOpponentCache(cacheKey: string, rows: ProfitRow[], finished: boolean): void {
+  const entry = { rows, finished }
+  opponentSortCache.set(cacheKey, entry)
+  void career().put(USER_STORE_CAREER_DATA, careerKey('opponent', cacheKey), entry)
+}
+
+function career() {
+  return userCache(gameStore.loginUserId)
+}
+
+async function restoreAllFromIDB(): Promise<void> {
+  const db = career()
+
+  // deck
+  await Promise.all(
+    deckModeTabs.map(async (mode) => {
+      const rows = await db.get<DeckRow[]>(USER_STORE_CAREER_DATA, careerKey('deck', mode))
+      if (rows?.length && !deckCache.has(mode)) deckCache.set(mode, rows)
+    }),
+  )
+
+  // personal
+  await Promise.all(
+    personalGameTabs.map(async (mode) => {
+      const entry = await db.get<{
+        rings: typeof personalRings.value
+        bestHand: (CardItem | null)[]
+      }>(USER_STORE_CAREER_DATA, careerKey('personal', mode))
+      if (entry && !personalCache.has(mode)) {
+        personalCache.set(mode, entry.rings)
+        personalBestHandCache.set(mode, entry.bestHand)
+      }
+    }),
+  )
+
+  // allin
+  await Promise.all(
+    allInModeTabs.map(async (mode) => {
+      const entry = await db.get<{
+        summary: typeof allInSummary.value
+        rates: typeof allInRateRows.value
+      }>(USER_STORE_CAREER_DATA, careerKey('allin', mode))
+      if (entry && !allInCache.has(mode)) allInCache.set(mode, entry)
+    }),
+  )
+
+  // opponent (first page per period)
+  await Promise.all(
+    opponentPeriodTabs.map(async (period) => {
+      const cacheKey = `${period}-${opponentOrderAsc.value ? 1 : 2}`
+      if (opponentSortCache.has(cacheKey)) return
+      const entry = await db.get<{ rows: ProfitRow[]; finished: boolean }>(
+        USER_STORE_CAREER_DATA,
+        careerKey('opponent', cacheKey),
+      )
+      if (entry) opponentSortCache.set(cacheKey, entry)
+    }),
+  )
+}
+
+async function refreshDeckMode(mode: string): Promise<void> {
+  const modeConfig = resolveDeckMode(mode)
+  const payload = {
+    api_list: [33],
+    user_card_type_room_stats_req: withClubId({
+      gold_type: 1,
+      order_type: 6,
+      limit: 50,
+      offset: 0,
+      start_time: 0,
+      end_time: 0,
+      ...modeConfig,
+    }),
+  }
+  const data = await requestCombine(payload, true)
+  if (!data) return
+  const cardTypeResp = (data.user_card_type_room_stats_resp ?? {}) as Record<string, unknown>
+  setDeckCache(mode, cardTypeResp.list)
+  if (selectedMainTab.value === 'deck' && selectedDeckMode.value === mode) {
+    applyCurrentDeck()
+  }
 }
 
 function applyCurrentPersonal(): void {
-  personalRings.value = personalCache.get(selectedPersonalGame.value) ?? personalRingMeta.map((item) => ({ ...item, value: 0 }))
-}
-
-function applyCurrentOpponent(): void {
-  opponentRows.value = opponentCache.get(selectedOpponentPeriod.value) ?? []
+  personalRings.value =
+    personalCache.get(selectedPersonalGame.value) ??
+    personalRingMeta.map((item) => ({ ...item, value: 0 }))
+  personalBestHand.value = personalBestHandCache.get(selectedPersonalGame.value) ?? []
 }
 
 function applyCurrentAllIn(): void {
@@ -486,7 +525,10 @@ function applyCurrentDeck(): void {
   deckRows.value = deckCache.get(selectedDeckMode.value) ?? []
 }
 
-async function requestCombine(payload: Record<string, unknown>, silent = false): Promise<Record<string, unknown> | null> {
+async function requestCombine(
+  payload: Record<string, unknown>,
+  silent = false,
+): Promise<Record<string, unknown> | null> {
   try {
     const response = await postMiscCombineApi(payload)
     if (response.code !== 0) {
@@ -522,38 +564,147 @@ async function loadPersonal(mode: string, silent = false): Promise<void> {
     return
   }
   const statsResp = (data.stats_user_stats_resp ?? {}) as Record<string, unknown>
-  const roomData = ((statsResp.room_data as Record<string, unknown>) ?? {})
+  const roomData = (statsResp.room_data as Record<string, unknown>) ?? {}
   setPersonalCache(mode, roomData)
 }
 
-async function loadOpponent(period: string, silent = false): Promise<void> {
-  if (opponentCache.has(period)) {
-    return
+async function loadOpponentPage(reset = false, silent = false): Promise<void> {
+  if (opponentLoadingMore.value) return
+  if (!reset && opponentFinished.value) return
+
+  opponentLoadingMore.value = true
+  const offset = reset ? 0 : opponentRows.value.length
+  const range = resolvePeriodRange(selectedOpponentPeriod.value)
+  const cacheKey = `${selectedOpponentPeriod.value}-${opponentOrderAsc.value ? 1 : 2}`
+
+  if (reset) {
+    const cached = opponentSortCache.get(cacheKey)
+    if (cached) {
+      opponentRows.value = cached.rows
+      opponentFinished.value = cached.finished
+      opponentLoadingMore.value = false
+      return
+    }
   }
-  const range = resolvePeriodRange(period)
-  const payload = {
-    api_list: [31],
-    user_rival_room_stats_req: withClubId({
-      gold_type: 1,
-      order_type: 2,
-      limit: 50,
-      offset: 0,
-      ...range,
-    }),
+
+  try {
+    const data = await requestCombine(
+      {
+        api_list: [31],
+        user_rival_room_stats_req: withClubId({
+          gold_type: 1,
+          order_type: opponentOrderAsc.value ? 1 : 2,
+          limit: OPPONENT_PAGE_SIZE,
+          offset,
+          ...range,
+        }),
+      },
+      silent || !reset,
+    )
+
+    if (!data) {
+      if (reset) opponentFinished.value = true
+      return
+    }
+
+    const rivalResp = (data.user_rival_room_stats_resp ?? {}) as Record<string, unknown>
+    const records = Array.isArray(rivalResp.records) ? rivalResp.records : []
+    const newRows: ProfitRow[] = records.map((item: unknown, idx: number) => {
+      const row = typeof item === 'object' && item ? (item as Record<string, unknown>) : {}
+      return {
+        id: String(row.user_id ?? offset + idx),
+        name: String(row.nickname ?? '--'),
+        avatar: typeof row.avatar === 'string' ? row.avatar : undefined,
+        hands: toSafeNumber(row.hand_count),
+        lose: toSafeNumber(row.loss_count),
+        win: toSafeNumber(row.profit_count),
+        profit: toSafeNumber(row.profit_total),
+      }
+    })
+
+    if (reset) {
+      opponentRows.value = newRows
+    } else {
+      opponentRows.value = [...opponentRows.value, ...newRows]
+    }
+
+    opponentFinished.value = newRows.length < OPPONENT_PAGE_SIZE
+
+    if (reset) {
+      setOpponentCache(cacheKey, opponentRows.value, opponentFinished.value)
+    }
+  } finally {
+    opponentLoadingMore.value = false
   }
-  const data = await requestCombine(payload, silent)
-  if (!data) {
-    return
-  }
+}
+
+async function refreshOpponentSilently(): Promise<void> {
+  const cacheKey = `${selectedOpponentPeriod.value}-${opponentOrderAsc.value ? 1 : 2}`
+  const data = await requestCombine(
+    {
+      api_list: [31],
+      user_rival_room_stats_req: withClubId({
+        gold_type: 1,
+        order_type: opponentOrderAsc.value ? 1 : 2,
+        limit: OPPONENT_PAGE_SIZE,
+        offset: 0,
+        ...resolvePeriodRange(selectedOpponentPeriod.value),
+      }),
+    },
+    true,
+  )
+  if (!data) return
+  // Discard if user changed period/sort while request was in-flight
+  if (cacheKey !== `${selectedOpponentPeriod.value}-${opponentOrderAsc.value ? 1 : 2}`) return
   const rivalResp = (data.user_rival_room_stats_resp ?? {}) as Record<string, unknown>
-  setOpponentCache(period, rivalResp.records)
+  const records = Array.isArray(rivalResp.records) ? rivalResp.records : []
+  const newRows: ProfitRow[] = records.map((item, idx) => {
+    const row = typeof item === 'object' && item ? (item as Record<string, unknown>) : {}
+    return {
+      id: String(row.user_id ?? idx),
+      name: String(row.nickname ?? '--'),
+      avatar: typeof row.avatar === 'string' ? row.avatar : undefined,
+      hands: toSafeNumber(row.hand_count),
+      lose: toSafeNumber(row.loss_count),
+      win: toSafeNumber(row.profit_count),
+      profit: toSafeNumber(row.profit_total),
+    }
+  })
+  opponentRows.value = newRows
+  opponentFinished.value = newRows.length < OPPONENT_PAGE_SIZE
+  setOpponentCache(cacheKey, newRows, opponentFinished.value)
+}
+
+function applyOpponentFromCache(cacheKey: string): boolean {
+  const cached = opponentSortCache.get(cacheKey)
+  if (!cached) return false
+  opponentRows.value = cached.rows
+  opponentFinished.value = cached.finished
+  return true
+}
+
+function toggleOpponentSort(): void {
+  opponentOrderAsc.value = !opponentOrderAsc.value
+  opponentFinished.value = false
+
+  const newKey = `${selectedOpponentPeriod.value}-${opponentOrderAsc.value ? 1 : 2}`
+  if (applyOpponentFromCache(newKey)) {
+    void refreshOpponentSilently()
+  } else {
+    opponentRows.value = []
+    void loadOpponentPage(true)
+  }
+}
+
+function onOpponentLoad(): void {
+  void loadOpponentPage()
 }
 
 async function loadAllIn(mode: string, silent = false): Promise<void> {
   if (allInCache.has(mode)) {
     return
   }
-  const range = resolvePeriodRange('历史')
+  const range = resolvePeriodRange('history')
   const modeConfig = resolveAllInMode(mode)
   const payload = {
     api_list: [32],
@@ -576,7 +727,6 @@ async function loadDeck(mode: string, silent = false): Promise<void> {
   if (deckCache.has(mode)) {
     return
   }
-  const range = resolvePeriodRange('历史')
   const modeConfig = resolveDeckMode(mode)
   const payload = {
     api_list: [33],
@@ -585,7 +735,8 @@ async function loadDeck(mode: string, silent = false): Promise<void> {
       order_type: 6,
       limit: 50,
       offset: 0,
-      ...range,
+      start_time: 0,
+      end_time: 0,
       ...modeConfig,
     }),
   }
@@ -594,73 +745,109 @@ async function loadDeck(mode: string, silent = false): Promise<void> {
     return
   }
   const cardTypeResp = (data.user_card_type_room_stats_resp ?? {}) as Record<string, unknown>
-  setDeckCache(mode, cardTypeResp.records)
+  setDeckCache(mode, cardTypeResp.list)
 }
 
 async function loadInitial(): Promise<void> {
   loading.value = true
   try {
-    const personalMode = selectedPersonalGame.value
-    const opponentPeriod = selectedOpponentPeriod.value
-    const allInMode = selectedAllInMode.value
-    const deckMode = selectedDeckMode.value
-
-    const payload = {
-      api_list: [28, 31, 32, 33],
+    const mode = selectedPersonalGame.value
+    const data = await requestCombine({
+      api_list: [28],
       stats_user_stats_req: withClubId({
         filter_type: 1,
         room_type: 0,
         time_type: 4,
         time_long: nowSeconds(),
-        ...resolvePersonalMode(personalMode),
+        ...resolvePersonalMode(mode),
       }),
-      user_rival_room_stats_req: withClubId({
-        gold_type: 1,
-        order_type: 2,
-        limit: 50,
-        offset: 0,
-        ...resolvePeriodRange(opponentPeriod),
-      }),
-      user_allin_room_stats_req: withClubId({
-        gold_type: 1,
-        ...resolvePeriodRange('历史'),
-        ...resolveAllInMode(allInMode),
-      }),
-      user_card_type_room_stats_req: withClubId({
-        gold_type: 1,
-        order_type: 6,
-        limit: 50,
-        offset: 0,
-        ...resolvePeriodRange('历史'),
-        ...resolveDeckMode(deckMode),
-      }),
+    })
+    if (data) {
+      const statsResp = (data.stats_user_stats_resp ?? {}) as Record<string, unknown>
+      setPersonalCache(mode, (statsResp.room_data as Record<string, unknown>) ?? {})
+      applyCurrentPersonal()
     }
-
-    const data = await requestCombine(payload)
-    if (!data) {
-      return
-    }
-
-    const statsResp = (data.stats_user_stats_resp ?? {}) as Record<string, unknown>
-    const roomData = ((statsResp.room_data as Record<string, unknown>) ?? {})
-    setPersonalCache(personalMode, roomData)
-
-    const rivalResp = (data.user_rival_room_stats_resp ?? {}) as Record<string, unknown>
-    setOpponentCache(opponentPeriod, rivalResp.records)
-
-    const allInResp = (data.user_allin_room_stats_resp ?? {}) as Record<string, unknown>
-    setAllInCache(allInMode, (allInResp.stats as Record<string, unknown>) ?? {})
-
-    const cardTypeResp = (data.user_card_type_room_stats_resp ?? {}) as Record<string, unknown>
-    setDeckCache(deckMode, cardTypeResp.records)
-
-    applyCurrentPersonal()
-    applyCurrentOpponent()
-    applyCurrentAllIn()
-    applyCurrentDeck()
   } finally {
     loading.value = false
   }
+}
+
+async function loadOtherInitial(): Promise<void> {
+  const opponentPeriod = selectedOpponentPeriod.value
+  const allInMode = selectedAllInMode.value
+  const deckMode = selectedDeckMode.value
+
+  const apiList: number[] = []
+  const payload: Record<string, unknown> = {}
+
+  if (opponentRows.value.length === 0 && !opponentLoadingMore.value) {
+    apiList.push(31)
+    payload.user_rival_room_stats_req = withClubId({
+      gold_type: 1,
+      order_type: opponentOrderAsc.value ? 1 : 2,
+      limit: OPPONENT_PAGE_SIZE,
+      offset: 0,
+      ...resolvePeriodRange(opponentPeriod),
+    })
+  }
+  if (!allInCache.has(allInMode)) {
+    apiList.push(32)
+    payload.user_allin_room_stats_req = withClubId({
+      gold_type: 1,
+      ...resolvePeriodRange('history'),
+      ...resolveAllInMode(allInMode),
+    })
+  }
+  if (!deckCache.has(deckMode)) {
+    apiList.push(33)
+    payload.user_card_type_room_stats_req = withClubId({
+      gold_type: 1,
+      order_type: 6,
+      limit: 50,
+      offset: 0,
+      start_time: 0,
+      end_time: 0,
+      ...resolveDeckMode(deckMode),
+    })
+  }
+
+  if (apiList.length === 0) return
+
+  const data = await requestCombine({ api_list: apiList, ...payload }, true)
+  if (!data) return
+
+  if (apiList.includes(31)) {
+    const rivalResp = (data.user_rival_room_stats_resp ?? {}) as Record<string, unknown>
+    const records = Array.isArray(rivalResp.records) ? rivalResp.records : []
+    const newRows: ProfitRow[] = records.map((item: unknown, idx: number) => {
+      const row = typeof item === 'object' && item ? (item as Record<string, unknown>) : {}
+      return {
+        id: String(row.user_id ?? idx),
+        name: String(row.nickname ?? '--'),
+        avatar: typeof row.avatar === 'string' ? row.avatar : undefined,
+        hands: toSafeNumber(row.hand_count),
+        lose: toSafeNumber(row.loss_count),
+        win: toSafeNumber(row.profit_count),
+        profit: toSafeNumber(row.profit_total),
+      }
+    })
+    opponentRows.value = newRows
+    opponentFinished.value = newRows.length < OPPONENT_PAGE_SIZE
+    const opponentCacheKey = `${opponentPeriod}-${opponentOrderAsc.value ? 1 : 2}`
+    setOpponentCache(opponentCacheKey, opponentRows.value, opponentFinished.value)
+  }
+  if (apiList.includes(32)) {
+    const allInResp = (data.user_allin_room_stats_resp ?? {}) as Record<string, unknown>
+    setAllInCache(allInMode, (allInResp.stats as Record<string, unknown>) ?? {})
+  }
+  if (apiList.includes(33)) {
+    const cardTypeResp = (data.user_card_type_room_stats_resp ?? {}) as Record<string, unknown>
+    setDeckCache(deckMode, cardTypeResp.list)
+  }
+
+  const tab = selectedMainTab.value
+  if (tab === 'allin') applyCurrentAllIn()
+  else if (tab === 'deck') applyCurrentDeck()
 }
 
 async function preloadAllTabs(): Promise<void> {
@@ -672,23 +859,13 @@ async function preloadAllTabs(): Promise<void> {
     }
   }
 
-  for (const period of opponentPeriodTabs) {
-    if (period !== selectedOpponentPeriod.value) {
-      preloadTasks.push(loadOpponent(period, true))
-    }
-  }
-
   for (const mode of allInModeTabs) {
     if (mode !== selectedAllInMode.value) {
       preloadTasks.push(loadAllIn(mode, true))
     }
   }
 
-  for (const mode of deckModeTabs) {
-    if (mode !== selectedDeckMode.value) {
-      preloadTasks.push(loadDeck(mode, true))
-    }
-  }
+  // Deck modes are handled by refreshDeckMode (stale-while-revalidate), skip here.
 
   await Promise.all(preloadTasks)
 }
@@ -705,12 +882,11 @@ async function ensureCurrentTabData(): Promise<void> {
   }
 
   if (selectedMainTab.value === 'opponent') {
-    if (!opponentCache.has(selectedOpponentPeriod.value)) {
+    if (opponentRows.value.length === 0 && !opponentLoadingMore.value) {
       loading.value = true
-      await loadOpponent(selectedOpponentPeriod.value)
+      await loadOpponentPage(true)
       loading.value = false
     }
-    applyCurrentOpponent()
     return
   }
 
@@ -724,21 +900,19 @@ async function ensureCurrentTabData(): Promise<void> {
     return
   }
 
-  if (!deckCache.has(selectedDeckMode.value)) {
+  if (deckCache.has(selectedDeckMode.value)) {
+    applyCurrentDeck()
+    void refreshDeckMode(selectedDeckMode.value)
+  } else {
     loading.value = true
     await loadDeck(selectedDeckMode.value)
     loading.value = false
+    applyCurrentDeck()
   }
-  applyCurrentDeck()
 }
 
 watch(selectedMainTab, () => {
   void ensureCurrentTabData()
-  if (selectedMainTab.value === 'allin') {
-    void nextTick(() => {
-      scheduleRadarDraw()
-    })
-  }
 })
 
 watch(selectedPersonalGame, () => {
@@ -746,49 +920,77 @@ watch(selectedPersonalGame, () => {
 })
 
 watch(selectedOpponentPeriod, () => {
-  void ensureCurrentTabData()
+  opponentFinished.value = false
+  const newKey = `${selectedOpponentPeriod.value}-${opponentOrderAsc.value ? 1 : 2}`
+  if (applyOpponentFromCache(newKey)) {
+    void refreshOpponentSilently()
+  } else {
+    opponentRows.value = []
+    void loadOpponentPage(true)
+  }
 })
 
 watch(selectedAllInMode, () => {
   void ensureCurrentTabData()
 })
 
-watch([allInRateRows, allInOverallRate], () => {
-  if (selectedMainTab.value !== 'allin') {
-    return
-  }
-  void nextTick(() => {
-    scheduleRadarDraw()
-  })
-}, { deep: true })
-
 watch(selectedDeckMode, () => {
   void ensureCurrentTabData()
 })
 
+watch(
+  () => userInfoStore.currentClubId,
+  () => {
+    // Club changed — clear memory caches, restore from IDB for new club, reload current tab
+    deckCache.clear()
+    personalCache.clear()
+    personalBestHandCache.clear()
+    allInCache.clear()
+    opponentSortCache.clear()
+    opponentRows.value = []
+    opponentFinished.value = false
+    void (async () => {
+      await restoreAllFromIDB()
+      void ensureCurrentTabData()
+    })()
+  },
+)
+
 onMounted(() => {
-  window.addEventListener('resize', onWindowResize)
-
   void (async () => {
-    await loadInitial()
-    await nextTick()
-    scheduleRadarDraw()
-    void preloadAllTabs()
-  })()
-})
+    // Restore all tabs from IDB first (fast), apply current tab immediately
+    await restoreAllFromIDB()
+    applyCurrentPersonal()
+    applyCurrentAllIn()
+    if (selectedMainTab.value === 'deck') applyCurrentDeck()
+    if (opponentSortCache.size > 0) {
+      const cacheKey = `${selectedOpponentPeriod.value}-${opponentOrderAsc.value ? 1 : 2}`
+      const cached = opponentSortCache.get(cacheKey)
+      if (cached) {
+        opponentRows.value = cached.rows
+        opponentFinished.value = cached.finished
+      }
+    }
 
-onBeforeUnmount(() => {
-  clearRadarRaf()
-  window.removeEventListener('resize', onWindowResize)
+    await loadInitial()
+    void (async () => {
+      await loadOtherInitial()
+      void preloadAllTabs()
+      // Background-refresh all deck modes (stale-while-revalidate)
+      for (const mode of deckModeTabs) {
+        void refreshDeckMode(mode)
+      }
+    })()
+  })()
 })
 </script>
 
 <template>
   <div class="page-shell club-data-page" :style="backgroundStyle">
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
-      <p v-if="loading" class="panel-status">加载中...</p>
+      <!-- <p v-if="loading" class="panel-status">加载中...</p> -->
       <div class="main-tabs">
         <button
           v-for="tab in mainTabs"
@@ -803,69 +1005,50 @@ onBeforeUnmount(() => {
       </div>
 
       <template v-if="selectedMainTab === 'personal'">
-        <div class="segmented game-segmented">
-          <button
-            v-for="tab in personalGameTabs"
-            :key="tab"
-            type="button"
-            class="segment"
-            :class="{ active: selectedPersonalGame === tab }"
-            @click="selectedPersonalGame = tab"
-          >
-            {{ tab }}
-          </button>
+        <div class="sub-tab-wrap">
+          <FilterTabbar v-model="selectedPersonalGame" :tabs="personalGameTabOptions" />
         </div>
 
         <template v-if="personalHasData">
           <section class="ring-grid">
-            <article
-              v-for="ring in personalRings"
-              :key="ring.key"
-              class="ring-card"
-            >
-              <van-circle
+            <article v-for="ring in personalRings" :key="ring.key" class="ring-card">
+              <RingChart
                 class="ring-donut"
-                :size="'1.92rem'"
-                :rate="ring.value"
-                :speed="100"
-                :stroke-width="60"
+                size="1.92rem"
+                :value="ring.value"
                 :color="ring.color"
-                layer-color="rgba(255, 255, 255, 0.16)"
+                track-color="rgba(255, 255, 255, 0.16)"
               >
                 <div class="ring-inner">
                   <div class="ring-value">{{ ring.value }}%</div>
                   <div class="ring-label">{{ ring.label }}</div>
                 </div>
-              </van-circle>
+              </RingChart>
             </article>
           </section>
 
           <section class="glass-pill title-pill">
             <span>近3个月内玩牌数据统计</span>
-            <span class="pie-icon" aria-hidden="true"></span>
+            <img src="@/assets/icons/icon_chart_pie.svg" />
           </section>
 
           <section class="glass-card biggest-card">
-            <div class="biggest-title">Possible Biggest Hand</div>
+            <div class="biggest-title">最大牌型</div>
             <div class="card-row">
-              <div class="poker-card">A ♣</div>
-              <div class="poker-card red">J ♥</div>
-              <div class="poker-card">10 ◆</div>
-              <div class="poker-card back"></div>
-              <div class="poker-card back"></div>
+              <template v-for="i in 5" :key="i">
+                <PokerCard
+                  v-if="personalBestHand[i - 1]"
+                  :rank="personalBestHand[i - 1]!.rank"
+                  :suit="personalBestHand[i - 1]!.suit"
+                  size="1rem"
+                />
+                <img v-else class="card-back" :src="tableCardBgUrl" alt="" />
+              </template>
             </div>
           </section>
         </template>
 
         <template v-else>
-          <section class="title-row">
-            <div class="title-text">Statistics of the week</div>
-            <button class="sort-btn" type="button">
-              Descending
-              <span class="arrow">▾</span>
-            </button>
-          </section>
-
           <section class="empty-wrap">
             <div class="empty-icon" aria-hidden="true">✕</div>
             <div class="empty-text">暂无数据</div>
@@ -874,47 +1057,54 @@ onBeforeUnmount(() => {
       </template>
 
       <template v-else-if="selectedMainTab === 'opponent'">
-        <div class="segmented period-segmented">
-          <button
-            v-for="tab in opponentPeriodTabs"
-            :key="tab"
-            type="button"
-            class="segment"
-            :class="{ active: selectedOpponentPeriod === tab }"
-            @click="selectedOpponentPeriod = tab"
-          >
-            {{ tab }}
-          </button>
+        <div class="sub-tab-wrap">
+          <FilterTabbar v-model="selectedOpponentPeriod" :tabs="opponentPeriodTabOptions" />
         </div>
-
         <section class="title-row">
-          <div class="title-text">Statistics of the week</div>
-          <button class="sort-btn" type="button">
-            Descending
-            <span class="arrow">▾</span>
+          <div class="title-text">{{ opponentPeriodLabel }}</div>
+          <button class="sort-btn" type="button" @click="toggleOpponentSort">
+            {{ opponentOrderAsc ? '升序' : '降序' }}
+            <img
+              class="sort-arrow"
+              :class="{ 'sort-arrow--asc': opponentOrderAsc }"
+              :src="iconArrowBottomUrl"
+              alt=""
+            />
           </button>
         </section>
-
-        <section class="glass-card table-card">
-          <header class="table-head">
-            <span>玩家</span>
-            <span>手数</span>
-            <span>负</span>
-            <span>胜</span>
-            <span>盈利</span>
-          </header>
-
-          <article v-for="row in opponentRows" :key="row.id" class="table-row">
-            <div class="player-cell">
-              <span class="avatar" :style="row.avatar ? { backgroundImage: `url(${row.avatar})` } : undefined" aria-hidden="true"></span>
-              <span class="name">{{ row.name }}</span>
-            </div>
-            <span>{{ row.hands }}</span>
-            <span>{{ row.lose }}</span>
-            <span>{{ row.win }}</span>
-            <span :class="profitClass(row.profit)">{{ formatProfit(row.profit) }}</span>
-          </article>
-        </section>
+        <div class="opponent-table-wrap">
+          <GameTable
+            :loading="opponentLoadingMore"
+            :data="opponentRows"
+            height="9rem"
+            flat
+            header-variant="ghost"
+            :finished="opponentFinished"
+            @load="onOpponentLoad"
+          >
+            <GameTableColumn prop="name" label="玩家" :flex="1.55" align="center">
+              <template #default="{ row }">
+                <div class="player-cell">
+                  <img
+                    class="avatar"
+                    :src="row.avatar || undefined"
+                    aria-hidden="true"
+                    @error="(e) => ((e.target as HTMLImageElement).src = '')"
+                  />
+                  <div class="name">{{ row.name }}</div>
+                </div>
+              </template>
+            </GameTableColumn>
+            <GameTableColumn prop="hands" label="手数" :flex="1" />
+            <GameTableColumn prop="lose" label="负" :flex="1" />
+            <GameTableColumn prop="win" label="胜" :flex="1" />
+            <GameTableColumn prop="profit" label="盈利" :flex="1.5">
+              <template #default="{ row }">
+                <span :class="profitClass(row.profit)">{{ formatProfit(row.profit) }}</span>
+              </template>
+            </GameTableColumn>
+          </GameTable>
+        </div>
       </template>
 
       <template v-else-if="selectedMainTab === 'allin'">
@@ -934,7 +1124,7 @@ onBeforeUnmount(() => {
 
           <div class="section-title">
             <span>近3个月内玩牌数据统计</span>
-            <span class="pie-icon" aria-hidden="true"></span>
+            <img src="@/assets/icons/icon_chart_pie.svg" />
           </div>
 
           <div class="summary-list">
@@ -948,27 +1138,25 @@ onBeforeUnmount(() => {
         <section class="glass-card radar-card">
           <div class="section-title">
             <span>ALL IN 胜率分布图</span>
-            <span class="pie-icon" aria-hidden="true"></span>
+            <img src="@/assets/icons/icon_chart_pie.svg" />
           </div>
-
-          <div ref="radarWrapRef" class="allin-radar-wrap">
-            <canvas ref="radarCanvasRef" class="allin-radar-canvas"></canvas>
-
+          <div class="allin-radar-wrap">
+            <RadarChart v-bind="radarPoints" />
             <div class="radar-badge radar-badge-top">
-              <span class="badge-label">rate</span>
-              <span class="badge-rate">{{ allInOverallRate }}%</span>
+              <span class="badge-label">主动</span>
+              <span class="badge-rate">{{ radarPoints.top }}%</span>
             </div>
             <div class="radar-badge radar-badge-left">
-              <span class="badge-label">Passive</span>
-              <span class="badge-rate">{{ passiveRate }}%</span>
+              <span class="badge-label">被动</span>
+              <span class="badge-rate">{{ radarPoints.left }}%</span>
             </div>
             <div class="radar-badge radar-badge-right">
-              <span class="badge-label">Backward</span>
-              <span class="badge-rate">{{ backwardRate }}%</span>
+              <span class="badge-label">落后</span>
+              <span class="badge-rate">{{ radarPoints.right }}%</span>
             </div>
             <div class="radar-badge radar-badge-bottom">
-              <span class="badge-label">Leading</span>
-              <span class="badge-rate">{{ leadingRate }}%</span>
+              <span class="badge-label">领先</span>
+              <span class="badge-rate">{{ radarPoints.bottom }}%</span>
             </div>
           </div>
         </section>
@@ -992,38 +1180,32 @@ onBeforeUnmount(() => {
 
         <section class="deck-title">近三个月内玩牌数据统计</section>
 
-        <section class="glass-card table-card deck-table-card">
-          <header class="table-head deck-head">
-            <span>hand type</span>
-            <span>获胜</span>
-            <span class="sortable-head">
-              总手数
-              <span class="sort-caret" aria-hidden="true"></span>
-            </span>
-            <span class="sortable-head">
-              胜率
-              <span class="sort-caret" aria-hidden="true"></span>
-            </span>
-            <span>盈利</span>
-          </header>
-
-          <article v-for="row in deckRows" :key="row.id" class="table-row deck-row">
-            <div class="deck-hand-cell">
-              <div class="mini-card">
-                <span class="rank">{{ row.cards[0].slice(0, -1) }}</span>
-                <span class="suit">{{ row.cards[0].slice(-1) }}</span>
-              </div>
-              <div class="mini-card red">
-                <span class="rank">{{ row.cards[1].slice(0, -1) }}</span>
-                <span class="suit">{{ row.cards[1].slice(-1) }}</span>
-              </div>
-            </div>
-            <span>{{ row.winCount }}</span>
-            <span>{{ row.totalHands }}</span>
-            <span>{{ row.winRate }}</span>
-            <span :class="profitClass(row.profit)">{{ formatProfit(row.profit) }}</span>
-          </article>
-        </section>
+        <div class="deck-table-wrap">
+          <GameTable
+            :data="sortedDeckRows"
+            height="9.15rem"
+            flat
+            header-variant="ghost"
+            @sort-change="onDeckSort"
+          >
+            <GameTableColumn prop="cards" label="牌型" :flex="1.5" align="center">
+              <template #default="{ row }">
+                <div class="deck-hand-cell">
+                  <PokerCard :rank="row.cards[0].rank" :suit="row.cards[0].suit" size="0.62rem" />
+                  <PokerCard :rank="row.cards[1].rank" :suit="row.cards[1].suit" size="0.62rem" />
+                </div>
+              </template>
+            </GameTableColumn>
+            <GameTableColumn prop="winCount" label="获胜" :flex="0.8" />
+            <GameTableColumn prop="totalHands" label="总手数" :flex="1" :sortable="true" />
+            <GameTableColumn prop="winRate" label="胜率" :flex="0.8" :sortable="true" />
+            <GameTableColumn prop="profit" label="盈利" :flex="1.5" :sortable="true">
+              <template #default="{ row }">
+                <span :class="profitClass(row.profit)">{{ formatProfit(row.profit) }}</span>
+              </template>
+            </GameTableColumn>
+          </GameTable>
+        </div>
       </template>
     </div>
   </div>
@@ -1033,7 +1215,8 @@ onBeforeUnmount(() => {
 .club-data-page {
   position: relative;
   height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.72rem;
+  overflow-y: auto;
+  padding: 0 0 0.72rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;
@@ -1043,6 +1226,13 @@ onBeforeUnmount(() => {
 .content-wrap {
   position: relative;
   padding: 0 0.49rem;
+}
+
+.panel-status {
+  margin: 0.3rem 0 0;
+  text-align: center;
+  font-size: 0.36rem;
+  color: rgba(249, 249, 249, 0.7);
 }
 
 .back-btn {
@@ -1080,54 +1270,33 @@ onBeforeUnmount(() => {
   }
 }
 
-.segmented {
-  margin-top: 0.34rem;
-  border-radius: 0.56rem;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.06rem;
-  display: grid;
-  gap: 0.06rem;
-}
+.sub-tab-wrap {
+  margin-top: 0.6rem;
 
-.game-segmented,
-.period-segmented {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.segment {
-  border: 0;
-  border-radius: 0.52rem;
-  background: transparent;
-  color: #f9f9f9;
-  font-size: 0.42rem;
-  padding: 0.2rem 0;
-
-  &.active {
-    background: rgba(255, 255, 255, 0.16);
-    border: 0.02rem solid rgba(249, 249, 249, 0.9);
-    font-weight: 700;
+  :deep(.filter-tabbar) {
+    margin: 0;
   }
 }
 
 .glass-card {
-  border-radius: 0.42rem;
+  border-radius: 0.9rem;
   border: 0.02rem solid rgba(249, 249, 249, 0.15);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.06rem);
 }
 
 .glass-pill {
-  border-radius: 0.4rem;
+  border-radius: 0.7rem;
   border: 0.02rem solid rgba(249, 249, 249, 0.12);
   background: rgba(0, 0, 0, 0.24);
   backdrop-filter: blur(0.06rem);
 }
 
 .ring-grid {
-  margin-top: 0.3rem;
+  margin-top: 0.6rem;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.3rem 0.34rem;
+  gap: 0.5rem 1rem;
 }
 
 .ring-card {
@@ -1137,13 +1306,13 @@ onBeforeUnmount(() => {
 
 .ring-donut {
   border-radius: 50%;
-  overflow: hidden;
-  box-shadow: 0 0.06rem 0.18rem rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0.06rem 0.18rem rgba(0, 0, 0, 0.2),
+    /* 左上高光 */ inset 0.2px 0.2px 0px 0px rgba(255, 255, 255, 0.85);
 }
 
 .ring-inner {
-  width: 1.34rem;
-  height: 1.34rem;
+  width: 1.18rem;
+  height: 1.18rem;
   border-radius: 9999px;
   background: rgba(116, 90, 116, 0.52);
   display: flex;
@@ -1153,21 +1322,21 @@ onBeforeUnmount(() => {
 }
 
 .ring-value {
-  font-size: 0.36rem;
+  font-size: 0.27rem;
   font-weight: 700;
   line-height: 1.1;
 }
 
 .ring-label {
   margin-top: 0.05rem;
-  font-size: 0.18rem;
+  font-size: 0.13rem;
   line-height: 1.1;
   color: rgba(249, 249, 249, 0.86);
 }
 
 .title-pill {
-  margin-top: 0.28rem;
-  padding: 0.25rem 0.42rem;
+  margin-top: 0.6rem;
+  padding: 0.35rem 0.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1175,79 +1344,43 @@ onBeforeUnmount(() => {
   font-weight: 600;
 }
 
-.pie-icon {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  border: 0.04rem solid rgba(249, 249, 249, 0.95);
-  border-right-color: transparent;
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    width: 0.24rem;
-    height: 0.04rem;
-    background: rgba(249, 249, 249, 0.95);
-    top: 0.18rem;
-    right: -0.02rem;
-    transform: rotate(-34deg);
-    border-radius: 0.03rem;
-  }
-}
-
 .biggest-card {
-  margin-top: 0.24rem;
-  padding: 0.3rem 0.35rem 0.36rem;
+  margin-top: 0.6rem;
+  padding: 0.2rem 0.35rem 0.5rem;
 }
 
 .biggest-title {
   text-align: center;
-  font-size: 0.44rem;
+  font-size: 0.37rem;
   color: rgba(249, 249, 249, 0.72);
   font-weight: 600;
 }
 
 .card-row {
-  margin-top: 0.24rem;
+  margin-top: 0.5rem;
   display: flex;
   justify-content: center;
-  gap: 0.08rem;
+  gap: 0.12rem;
 }
 
-.poker-card {
-  width: 0.76rem;
-  height: 1.1rem;
+.card-back {
+  width: 1.01rem;
+  height: 1.52rem;
   border-radius: 0.12rem;
-  background: #fff;
-  color: #1a1a1a;
-  font-size: 0.28rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &.red {
-    color: #fa2b4b;
-  }
-
-  &.back {
-    background:
-      repeating-linear-gradient(45deg, #30b6ff 0, #30b6ff 0.08rem, #2f86e7 0.08rem, #2f86e7 0.16rem);
-    border: 0.02rem solid rgba(249, 249, 249, 0.28);
-    box-shadow: inset 0 0 0 0.02rem rgba(255, 255, 255, 0.24);
-  }
+  flex-shrink: 0;
+  object-fit: cover;
+  display: block;
 }
 
 .title-row {
-  margin-top: 0.46rem;
+  margin-top: 0.55rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .title-text {
-  font-size: 0.46rem;
+  font-size: 0.43rem;
   font-weight: 500;
 }
 
@@ -1261,10 +1394,16 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.08rem;
+}
 
-  .arrow {
-    font-size: 0.24rem;
-    line-height: 1;
+.sort-arrow {
+  width: 0.3rem;
+  height: 0.3rem;
+  object-fit: contain;
+  transition: transform 0.25s ease;
+
+  &--asc {
+    transform: rotate(180deg);
   }
 }
 
@@ -1295,55 +1434,53 @@ onBeforeUnmount(() => {
   color: rgba(249, 249, 249, 0.9);
 }
 
-.table-card {
-  margin-top: 0.22rem;
-  padding: 0.2rem 0.22rem 0.12rem;
-}
-
-.table-head,
-.table-row {
-  display: grid;
-  grid-template-columns: 1.55fr repeat(4, 1fr);
-  align-items: center;
-}
-
-.table-head {
-  border-radius: 0.46rem;
-  background: rgba(255, 255, 255, 0.2);
-  min-height: 0.9rem;
-  padding: 0 0.2rem;
+.opponent-table-wrap,
+.deck-table-wrap {
+  border-radius: 0.6rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.15);
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(0.06rem);
+  padding: 0.5rem 0.4rem 0.16rem;
+  overflow: hidden;
   font-size: 0.28rem;
-  font-weight: 600;
+}
+:deep(.game-table__header-cell) {
+  padding: 0.4rem 0.2rem;
+}
+:deep(.game-table__header-label),
+:deep(.game-table__cell),
+:deep(.game-table__cell-text) {
+  font-size: 0.28rem !important;
 }
 
-.table-row {
-  min-height: 1.05rem;
-  padding: 0 0.2rem;
-  font-size: 0.32rem;
-  border-bottom: 0.02rem solid rgba(249, 249, 249, 0.11);
+.opponent-table-wrap {
+  margin-top: 0.6rem;
+}
 
-  &:last-child {
-    border-bottom: 0;
-  }
+.deck-table-wrap {
+  margin-top: 0.24rem;
 }
 
 .player-cell {
   display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 0.12rem;
+  // gap: 0.12rem;
 }
 
 .avatar {
-  width: 0.48rem;
-  height: 0.48rem;
+  width: 0.88rem;
+  height: 0.88rem;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 30% 28%, #ffd8b6 0%, #c88145 42%, #5e3a26 100%);
   border: 0.02rem solid rgba(249, 249, 249, 0.34);
+  background: rgba(249, 249, 249, 0.15);
+  object-fit: cover;
+  display: block;
 }
 
 .name {
-  font-size: 0.31rem;
+  font-size: 0.29rem;
 }
 
 .profit-up {
@@ -1392,6 +1529,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   font-size: 0.4rem;
   font-weight: 600;
+  color: #fff;
 }
 
 .summary-list {
@@ -1420,30 +1558,10 @@ onBeforeUnmount(() => {
   font-weight: 500;
 }
 
-.allin-summary-card .pie-icon,
-.radar-card .pie-icon {
-  width: 0.613rem;
-  height: 0.613rem;
-  border-width: 0.035rem;
-
-  &::after {
-    width: 0.27rem;
-    height: 0.03rem;
-    top: 0.24rem;
-  }
-}
-
 .allin-radar-wrap {
   position: relative;
   margin-top: 0.26rem;
   height: 6.75rem;
-}
-
-.allin-radar-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
 }
 
 .radar-badge {
@@ -1495,7 +1613,7 @@ onBeforeUnmount(() => {
 
 .radar-badge-bottom {
   left: 50%;
-  bottom: 0.24rem;
+  bottom: 0rem;
   transform: translateX(-50%);
   background: #109657;
   min-width: 1.94rem;
@@ -1534,89 +1652,11 @@ onBeforeUnmount(() => {
   font-weight: 500;
 }
 
-.deck-table-card {
-  margin-top: 0.24rem;
-  border-radius: 0.67rem;
-  padding: 0.36rem 0.36rem 0.24rem;
-  max-height: 9.15rem;
-  overflow: auto;
-}
-
-.deck-head,
-.deck-row {
-  grid-template-columns: 1.85fr 0.8fr 1fr 0.8fr 1fr;
-}
-
-.deck-head {
-  min-height: 0.96rem;
-  border-radius: 0.72rem;
-  font-size: 0.3rem;
-  padding: 0 0.24rem;
-}
-
-.deck-row {
-  min-height: 1rem;
-  padding: 0 0.24rem;
-  border-bottom: 0.01rem solid rgba(249, 249, 249, 0.2);
-  font-size: 0.28rem;
-
-  &:last-child {
-    border-bottom: 0;
-  }
-}
-
-.sortable-head {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.06rem;
-}
-
-.sort-caret {
-  width: 0;
-  height: 0;
-  border-left: 0.06rem solid transparent;
-  border-right: 0.06rem solid transparent;
-  border-top: 0.1rem solid rgba(249, 249, 249, 0.92);
-}
-
 .deck-hand-cell {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.08rem;
-}
-
-.mini-card {
-  width: 0.62rem;
-  height: 0.9rem;
-  border-radius: 0.1rem;
-  border: 0.01rem solid rgba(20, 44, 69, 0.28);
-  box-shadow: inset 0 0 0 0.01rem rgba(255, 255, 255, 0.35);
-  background-size: cover;
-  background-position: center;
-  background: linear-gradient(170deg, #ffffff 0%, #f1f6ff 100%);
-  color: #111;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: 0.04rem 0.06rem;
-
-  .rank {
-    font-size: 0.17rem;
-    line-height: 1;
-    font-weight: 700;
-  }
-
-  .suit {
-    margin-top: 0.03rem;
-    font-size: 0.15rem;
-    line-height: 1;
-    font-weight: 700;
-  }
-
-  &.red {
-    color: #fa2b4b;
-  }
 }
 
 @media (max-width: 360px) {

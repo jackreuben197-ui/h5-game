@@ -52,7 +52,7 @@ async function submitReport(): Promise<void> {
 
 <template>
   <div class="page-shell record-report-page" :style="backgroundStyle">
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
       <section class="glass-card option-card">
@@ -95,7 +95,7 @@ async function submitReport(): Promise<void> {
 .record-report-page {
   position: relative;
   height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 2.2rem;
+  padding: 0 0 2.2rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;

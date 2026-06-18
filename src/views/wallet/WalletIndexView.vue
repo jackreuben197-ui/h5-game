@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import ava1 from '@/assets/images/wallet/avatars/ava1.png'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
-import AppBar from '@/components/wallet/AppBar.vue'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import SegmentedToggle from '@/views/wallet/components/SegmentedToggle.vue'
 import UserCard from '@/views/wallet/components/UserCard.vue'
 import GlassButton from '@/components/Button/GlassButton.vue'
@@ -660,7 +660,7 @@ async function onUsdtSubmit(type: number) {
   <FixedDepositPanel v-if="isFixedDeposit" />
 
   <div v-else class="wallet-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
-    <AppBar :title="t('Wallet_Title')" :show-actions="false" />
+    <HeaderBack :title="t('Wallet_Title')" extra-padding />
 
     <div class="wallet-screen__content-top">
       <div class="tabs-row">

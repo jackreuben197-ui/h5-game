@@ -7,7 +7,10 @@ import type {
   MiscGameRoundListDataByRoomRoomRecord,
   MiscGameRoundListDataByRoomUserGameRecord,
 } from '@/api/models/misc'
-import type { StatsUserGameRecordListRecord, StatsUserGameRecordListRoom_record } from '@/api/models/stats'
+import type {
+  StatsUserGameRecordListRecord,
+  StatsUserGameRecordListRoom_record,
+} from '@/api/models/stats'
 import {
   decodeCard,
   GetWinDesc,
@@ -81,7 +84,7 @@ function resolveGameFilter(): { game_types: number[]; poker_types?: number[] } {
 
 function buildDisplayCards(record: { data?: unknown }): CardItem[] {
   const parsed = parseHandRecordCards(record.data)
-  const cards = parsed.slice(0, 2).map(item => decodeCard(item))
+  const cards = parsed.slice(0, 2).map((item) => decodeCard(item))
   const placeholder: CardItem = { rank: '--', suit: 's' }
   if (!cards.length) return [placeholder, placeholder]
   if (cards.length === 1) return [cards[0], placeholder]
@@ -96,18 +99,20 @@ function buildCardTitle(record: StatsUserGameRecordListRecord): string {
 
 type HandCollectionRow = {
   room_record?: StatsUserGameRecordListRoom_record | MiscGameRoundListDataByRoomRoomRecord
-  user_game_records?: Array<StatsUserGameRecordListRecord | MiscGameRoundListDataByRoomUserGameRecord>
+  user_game_records?: Array<
+    StatsUserGameRecordListRecord | MiscGameRoundListDataByRoomUserGameRecord
+  >
 }
 
 function mapRowToCards(row: HandCollectionRow, index: number): HandCard[] {
-  const roomRecord = (row.room_record ?? {})
+  const roomRecord = row.room_record ?? {}
   const gameRecords = Array.isArray(row.user_game_records) ? row.user_game_records : []
   let sb = toSafeNumber(roomRecord.small_blind)
   const handTable = `${formatUC(sb)}/${formatUC(sb * 2)}`
 
   return gameRecords.map((item, itemIndex) => {
-    const record = ({ ...(item ?? {}) } as StatsUserGameRecordListRecord)
-    const normalizedRoomRecord = ({ ...roomRecord } as StatsUserGameRecordListRoom_record)
+    const record = { ...(item ?? {}) } as StatsUserGameRecordListRecord
+    const normalizedRoomRecord = { ...roomRecord } as StatsUserGameRecordListRoom_record
     const handId = String(record.id ?? '--')
     const pot = formatUC(record.bet_pot ?? 0)
     const hands = toSafeNumber(record.hand_num).toLocaleString('en-US')
@@ -143,10 +148,10 @@ async function fetchHandCollection(): Promise<void> {
         throw new Error(typeof response.msg === 'string' ? response.msg : '加载收藏手牌失败')
       }
 
-      const rows = Array.isArray(response.data?.list)
-        ? response.data.list
-        : []
-      handCards.value = rows.flatMap((row, index) => mapRowToCards((row as MiscGameRoundListDataByRoomRecord) ?? {}, index))
+      const rows = Array.isArray(response.data?.list) ? response.data.list : []
+      handCards.value = rows.flatMap((row, index) =>
+        mapRowToCards((row as MiscGameRoundListDataByRoomRecord) ?? {}, index),
+      )
     } else {
       const response = await postStatsUserGameRecordListApi({
         ...filter,
@@ -159,7 +164,9 @@ async function fetchHandCollection(): Promise<void> {
       }
 
       const records = Array.isArray(response.data?.records) ? response.data.records : []
-      handCards.value = records.flatMap((row, index) => mapRowToCards((row as HandCollectionRow) ?? {}, index))
+      handCards.value = records.flatMap((row, index) =>
+        mapRowToCards((row as HandCollectionRow) ?? {}, index),
+      )
     }
   } catch (error) {
     handCards.value = []
@@ -277,7 +284,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .mine-glass-page {
   height: 100dvh;
-  padding-top: calc(env(safe-area-inset-top) + 0.46rem);
+  // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;
   background-size: cover;
@@ -369,7 +376,6 @@ onMounted(() => {
   display: flex;
   gap: 0.08rem;
 }
-
 
 .title {
   flex: 1;

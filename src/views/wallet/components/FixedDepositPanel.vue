@@ -7,7 +7,7 @@ import bannerBgUrl from '@/assets/images/wallet/banner_bg.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 import iconChips from '@/assets/icons/wallet/ic_coins.png'
 import icGift from '@/assets/icons/wallet/ic_gift.png'
-import AppBar from '@/components/wallet/AppBar.vue'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import TagPill from '@/components/wallet/TagPill.vue'
 import GlassButton from '@/components/Button/GlassButton.vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
@@ -21,22 +21,24 @@ const router = useRouter()
 const userInfoStore = useUserInfoStore()
 
 const currentClub = computed(() => userInfoStore.currentClub ?? userInfoStore.clubList[0] ?? null)
-const clubId = computed(() => (currentClub.value?.club_id ? Number(currentClub.value.club_id) : undefined))
+const clubId = computed(() =>
+  currentClub.value?.club_id ? Number(currentClub.value.club_id) : undefined,
+)
 const clubName = computed(() => String(currentClub.value?.club_name ?? '').trim())
 const clubBalance = computed(() => Number(currentClub.value?.user_gold ?? 0))
 
 const userName = computed(() => String(userInfoStore.userInfo?.user?.nickname ?? '-'))
 const userId = computed(() => userInfoStore.userInfo?.user?.un_id ?? '-')
-const avatarUrl = computed(() => String(userInfoStore.userInfo?.user?.avatar ?? '') || defaultAvatar)
+const avatarUrl = computed(
+  () => String(userInfoStore.userInfo?.user?.avatar ?? '') || defaultAvatar,
+)
 
 const depositAmount = ref('')
 const showConfirm = ref(false)
 const showSuccess = ref(false)
 const submitting = ref(false)
 
-const confirmText = computed(() =>
-  t('H5Deposit_ConfirmText', clubName.value, depositAmount.value),
-)
+const confirmText = computed(() => t('H5Deposit_ConfirmText', clubName.value, depositAmount.value))
 
 function goGiftUc(): void {
   void router.push('/wallet/gift-uc')
@@ -100,19 +102,22 @@ function onSuccessConfirm(): void {
 
 <template>
   <div class="deposit-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
-    <AppBar :title="t('UIGuildFund_RechargeText')" :show-actions="false">
-      <template #actions>
+    <HeaderBack :title="t('UIGuildFund_RechargeText')" extra-padding>
+      <template #right>
         <span class="details-btn">
           <GlassButton :label="t('Wallet_Details')" @click="goDetails" />
         </span>
       </template>
-    </AppBar>
+    </HeaderBack>
 
     <div class="deposit-scrollable">
       <div class="deposit-content">
         <div class="user-card-wrapper">
           <div class="user-card">
-            <div class="user-card__banner-bg" :style="{ backgroundImage: `url(${bannerBgUrl})` }"></div>
+            <div
+              class="user-card__banner-bg"
+              :style="{ backgroundImage: `url(${bannerBgUrl})` }"
+            ></div>
             <div class="user-card-inner">
               <div class="user-info-section">
                 <div class="avatar-box">
@@ -266,12 +271,8 @@ function onSuccessConfirm(): void {
       rgba(220, 175, 205, 0.4) 50%,
       rgba(240, 205, 225, 0.95) 100%
     );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;

@@ -54,10 +54,14 @@ const records = ref<RecordCard[]>([])
 
 function profitTitle(): string {
   switch (selectedTime.value) {
-    case '今天': return '今日收益'
-    case '7天': return '7天收益'
-    case '30天': return '30天收益'
-    default: return '今日收益'
+    case '今天':
+      return '今日收益'
+    case '7天':
+      return '7天收益'
+    case '30天':
+      return '30天收益'
+    default:
+      return '今日收益'
   }
 }
 
@@ -70,10 +74,14 @@ function toSafeNumber(value: unknown): number {
 
 function resolveTimeType(): number {
   switch (selectedTime.value) {
-    case '今天': return 1
-    case '7天': return 2
-    case '30天': return 3
-    default: return 1
+    case '今天':
+      return 1
+    case '7天':
+      return 2
+    case '30天':
+      return 3
+    default:
+      return 1
   }
 }
 
@@ -98,7 +106,9 @@ function extractRecords(value: unknown, depth = 0): Record<string, unknown>[] {
   if (depth > 4 || value === null || value === undefined) return []
 
   if (Array.isArray(value)) {
-    return value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+    return value.filter(
+      (item): item is Record<string, unknown> => !!item && typeof item === 'object',
+    )
   }
 
   if (typeof value !== 'object') return []
@@ -138,7 +148,9 @@ function mapRecord(row: Record<string, unknown>, index: number): RecordCard {
 }
 
 function extractStatsFromResponse(data: unknown): void {
-  const roomData = (data as Record<string, unknown>)?.room_data as Record<string, unknown> | undefined
+  const roomData = (data as Record<string, unknown>)?.room_data as
+    | Record<string, unknown>
+    | undefined
   if (!roomData) return
 
   const totalHand = toSafeNumber(roomData.total_hand)
@@ -227,7 +239,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell cowboy-page" :style="backgroundStyle">
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
       <section class="glass-card stats-card">
@@ -268,7 +280,9 @@ onMounted(() => {
           @click="goToDetail(item)"
         >
           <div class="timeline">
-            <span v-if="isFirstOfDate(index)" class="date-label">{{ item.endMonth }}<br />{{ item.endDay }}</span>
+            <span v-if="isFirstOfDate(index)" class="date-label"
+              >{{ item.endMonth }}<br />{{ item.endDay }}</span
+            >
             <span v-else class="date-label"></span>
           </div>
           <div class="card-content">
@@ -292,7 +306,9 @@ onMounted(() => {
                   <span>{{ item.endAt }}</span>
                 </div>
               </div>
-              <div class="profit" :class="{ positive: item.isProfitPositive }">{{ item.profit }}</div>
+              <div class="profit" :class="{ positive: item.isProfitPositive }">
+                {{ item.profit }}
+              </div>
             </div>
           </div>
         </article>
@@ -307,7 +323,7 @@ onMounted(() => {
   height: 100dvh;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
+  padding: 0 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;

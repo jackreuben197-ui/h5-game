@@ -6,6 +6,7 @@ const props = defineProps<{
   columns: ColumnConfig[]
   sortProp: string
   sortOrder: SortOrder
+  headerVariant?: 'primary' | 'ghost'
 }>()
 
 const emit = defineEmits<{
@@ -51,8 +52,8 @@ export default { name: 'GameTableHeader' }
 </script>
 
 <template>
-  <div class="game-table__header">
-    <div class="game-table__header-inner">
+  <div class="game-table__header" :class="{ 'game-table__header--ghost': headerVariant === 'ghost' }">
+    <div class="game-table__header-inner" :class="{ 'game-table__header-inner--ghost': headerVariant === 'ghost' }">
       <div
         v-for="col in columns"
         :key="col.prop"
@@ -135,6 +136,16 @@ export default { name: 'GameTableHeader' }
   box-shadow: 0 0 0.1rem 0.05rem rgba(0, 175, 131, 0.9);
   overflow: visible; // allow dropdowns to overflow
   font-family: 'HONOR Sans CN', sans-serif;
+
+  &--ghost {
+    background: rgba(255, 255, 255, 0.20);
+    box-shadow: none;
+  }
+}
+
+.game-table__header--ghost {
+  box-shadow: none;
+  padding: 0;
 }
 
 // ---- Column cell within header ----

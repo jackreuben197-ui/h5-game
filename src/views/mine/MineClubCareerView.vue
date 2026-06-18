@@ -13,6 +13,7 @@ import iconFilter from '@/assets/icons/icon_filters.png'
 import iconDropdown from '@/assets/icons/icon_dropdown.png'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
+import { showGameToast } from '@/components/Toast'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -124,6 +125,10 @@ function handleMenuClick(item: CareerMenuItem): void {
   if (!item.route) {
     return
   }
+  if (item.key === 'cowboy' || item.key == 'mahjong') {
+    showGameToast('功能开发中')
+    return
+  }
   void router.push(item.route)
 }
 
@@ -230,7 +235,7 @@ onMounted(() => {
 <template>
   <div class="page-shell career-page" :style="backgroundStyle" @click="closePopup">
     <div class="page-top"></div>
-    <HeaderBack title="生涯">
+    <HeaderBack title="生涯" extra-padding>
       <template #right>
         <div class="action-wrap">
           <TopActionButton
@@ -335,7 +340,7 @@ onMounted(() => {
 .career-page {
   position: relative;
   height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
+  padding: 0 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;

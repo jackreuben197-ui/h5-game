@@ -127,24 +127,36 @@ async function fetchMttDetail(): Promise<void> {
 
     detailTitle.value = String(roomData?.game_room_name ?? 'MTT')
     detailSub.value = `ID: ${String(roomData?.room_id ?? '--')}`
-    detailTime.value = `${formatDateText(roomData?.start_time)} - ${formatDateText(roomData?.end_time)}`
+    detailTime.value = `${formatDateText(roomData?.start_time)} - ${formatDateText(
+      roomData?.end_time,
+    )}`
 
     const totalPlayers = toSafeNumber(roomData?.player_count)
-    const awards = users.filter(item => toSafeNumber(item.award ?? item.hunter_award) > 0)
-    const currentUser = users.find(item => Boolean(item.is_current_user)) ?? users[0]
+    const awards = users.filter((item) => toSafeNumber(item.award ?? item.hunter_award) > 0)
+    const currentUser = users.find((item) => Boolean(item.is_current_user)) ?? users[0]
     const rank = toSafeNumber(currentUser?.rank)
     const reward = toSafeNumber(currentUser?.award ?? currentUser?.hunter_award)
 
     headMetrics.value = [
       { label: '总参赛', value: totalPlayers.toLocaleString('en-US') },
-      { label: '奖励池', value: awards.reduce((sum, item) => sum + toSafeNumber(item.award), 0).toLocaleString('en-US') },
+      {
+        label: '奖励池',
+        value: awards
+          .reduce((sum, item) => sum + toSafeNumber(item.award), 0)
+          .toLocaleString('en-US'),
+      },
       { label: '名次', value: rank > 0 ? String(rank) : '--' },
       { label: '奖励', value: reward.toLocaleString('en-US') },
     ]
 
     topMetricsV2.value = [
       { label: '总参赛人数', value: totalPlayers.toLocaleString('en-US') },
-      { label: '总奖池', value: awards.reduce((sum, item) => sum + toSafeNumber(item.award), 0).toLocaleString('en-US') },
+      {
+        label: '总奖池',
+        value: awards
+          .reduce((sum, item) => sum + toSafeNumber(item.award), 0)
+          .toLocaleString('en-US'),
+      },
       { label: '排名', value: rank > 0 ? String(rank) : '--' },
     ]
     sideMetricsV2.value = [
@@ -181,7 +193,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell club-mtt-detail-page" :style="backgroundStyle">
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
       <template v-if="variant === 'v1'">
@@ -207,11 +219,7 @@ onMounted(() => {
         </section>
 
         <section class="list-wrap">
-          <article
-            v-for="item in rankPlayers"
-            :key="item.id"
-            class="glass-card rank-row"
-          >
+          <article v-for="item in rankPlayers" :key="item.id" class="glass-card rank-row">
             <div class="left">
               <div class="avatar"></div>
               <div>
@@ -271,7 +279,11 @@ onMounted(() => {
         </section>
 
         <section class="list-wrap list-wrap--v2">
-          <article v-for="item in rankPlayersV2" :key="item.id" class="glass-card rank-row rank-row--v2">
+          <article
+            v-for="item in rankPlayersV2"
+            :key="item.id"
+            class="glass-card rank-row rank-row--v2"
+          >
             <div class="left">
               <div class="avatar"></div>
               <div>
@@ -296,7 +308,7 @@ onMounted(() => {
 .club-mtt-detail-page {
   position: relative;
   height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
+  padding: 0 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;

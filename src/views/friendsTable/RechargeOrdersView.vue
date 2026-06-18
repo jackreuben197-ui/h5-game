@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
-import AppBar from '@/components/wallet/AppBar.vue'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import TogglePillGroup from '@/components/wallet/TogglePillGroup.vue'
 import RecordItem from '@/components/wallet/RecordItem.vue'
 import OrderDetailsView from './OrderDetailsView.vue'
@@ -39,10 +39,7 @@ function mapClubFundOrderToRecord(
   row: ClubFundOrderListOrderInfo,
   order_type: number,
 ): ClubPlayerOrderRecordOrderInfo {
-  const amount =
-    typeof row.amount === 'number'
-      ? row.amount
-      : row.pay_price ?? row.dest_amount
+  const amount = typeof row.amount === 'number' ? row.amount : row.pay_price ?? row.dest_amount
   return {
     ...row,
     order_type,
@@ -70,7 +67,7 @@ async function loadOrders(): Promise<void> {
       })
       if (clubRes.code === 0) {
         const list = clubRes.data?.list ?? []
-        orders.value = list.map(row => mapClubFundOrderToRecord(row, order_type))
+        orders.value = list.map((row) => mapClubFundOrderToRecord(row, order_type))
         return
       }
     }
@@ -95,29 +92,17 @@ onMounted(loadOrders)
     class="wallet-orders-screen app-scroll-standalone"
     :style="{ backgroundImage: `url(${sharpBgUrl})` }"
   >
-    <AppBar
-      :title="t('Wallet_OrdersTitle')"
-      :show-actions="false"
-    >
-      <template #actions>
-        <TogglePillGroup
-          v-model="activeTab"
-          :tabs="tabs"
-        />
+    <HeaderBack :title="t('Wallet_OrdersTitle')" extra-padding>
+      <template #right>
+        <TogglePillGroup v-model="activeTab" :tabs="tabs" />
       </template>
-    </AppBar>
+    </HeaderBack>
 
-    <div
-      v-if="!loading && orders.length === 0"
-      class="wallet-orders-empty t-body"
-    >
+    <div v-if="!loading && orders.length === 0" class="wallet-orders-empty t-body">
       <img :src="icNoData" alt="" class="wallet-orders-empty__icon" />
       {{ $txt('Wallet_OrdersEmpty') }}
     </div>
-    <div
-      v-else
-      class="list"
-    >
+    <div v-else class="list">
       <RecordItem
         v-for="(order, idx) in orders"
         :key="order.order_no ?? String(idx)"
@@ -130,11 +115,7 @@ onMounted(loadOrders)
       />
     </div>
 
-    <OrderDetailsView
-      v-if="selectedOrder"
-      :order="selectedOrder"
-      @close="selectedOrder = null"
-    />
+    <OrderDetailsView v-if="selectedOrder" :order="selectedOrder" @close="selectedOrder = null" />
   </div>
 </template>
 
@@ -174,8 +155,7 @@ onMounted(loadOrders)
   display: flex;
   flex-direction: column;
   gap: 0.2667rem;
-  padding:
-    0.2667rem 0.4533rem calc(env(safe-area-inset-bottom) + 0.7467rem);
+  padding: 0.2667rem 0.4533rem calc(env(safe-area-inset-bottom) + 0.7467rem);
 }
 
 .wallet-orders-empty {
@@ -194,5 +174,4 @@ onMounted(loadOrders)
     height: 1.5733rem;
   }
 }
-
 </style>

@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import bannerBgUrl from '@/assets/images/wallet/banner_bg.png'
-import AppBar from '@/components/wallet/AppBar.vue'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import TagPill from '@/components/wallet/TagPill.vue'
 import iconChips from '@/assets/icons/wallet/ic_coins.png'
 import { postUserGoldChangeLogApi } from '@/api/user'
@@ -46,7 +46,7 @@ onMounted(async () => {
 
 <template>
   <div class="details-page" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
-    <AppBar title="明细" :show-actions="false" />
+    <HeaderBack title="明细" extra-padding />
 
     <div class="details-content">
       <div class="user-card-wrapper">
@@ -261,12 +261,8 @@ onMounted(async () => {
       rgba(220, 175, 205, 0.4) 50%,
       rgba(240, 205, 225, 0.95) 100%
     );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
@@ -474,12 +470,8 @@ onMounted(async () => {
     border-radius: inherit;
     padding: 0.0169rem;
     background: linear-gradient(139deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0) 100%);
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;

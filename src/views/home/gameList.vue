@@ -326,7 +326,7 @@ function handleOpenCustomerService(): void {
 <template>
   <div class="room-list-page themeType2" :style="pageStyle">
     <div class="bg-overlay"></div>
-    <HeaderBack :title="t('UIHomePokerArea')" @back="handleBack">
+    <HeaderBack :title="t('UIHomePokerArea')" extra-padding @back="handleBack">
       <template #right>
         <div class="action-wrap">
           <TopActionButton

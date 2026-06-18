@@ -737,11 +737,6 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div class="game-scroll-card coming-soon-card coming-soon-right">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_comming_lg.png" alt="即将开放" />
-          <div class="coming-soon-overlay"></div>
-          <span class="coming-soon-text"> {{ t('UIHomeComingSoon') }}</span>
-        </div>
       </div>
     </div>
 
@@ -1006,7 +1001,9 @@ onBeforeUnmount(() => {
 }
 
 .game-center-scroll {
-  width: 100%;
+  width: calc(100% + 0.8rem);
+  margin-left: -0.4rem;
+  margin-right: -0.4rem;
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -1020,6 +1017,7 @@ onBeforeUnmount(() => {
   display: flex;
   gap: 0.15rem;
   width: max-content;
+  padding-left: 0.4rem;
 }
 
 .game-scroll-card {
@@ -1030,7 +1028,7 @@ onBeforeUnmount(() => {
   overflow: hidden;
   position: relative;
   cursor: pointer;
-  background: #956EFF;
+  background: linear-gradient(135deg, #956EFF 0%, #7447EF 100%);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -1043,15 +1041,20 @@ onBeforeUnmount(() => {
 }
 
 .poker-card {
-  background: #78E490;
+  background: linear-gradient(135deg, #65A879 0%, #329147 100%);
 }
 
 .game-card-minigame {
-  background: #0088FF;
+  background: linear-gradient(135deg, #21B4FA 0%, #1B67F0 100%);
+
+  .zone-lg-bg {
+    object-fit: contain;
+    object-position: bottom right;
+  }
 }
 
 .game-card-mahjong {
-  background: #FF9CAB;
+  background: linear-gradient(135deg, #FF9CAB 0%, #DF2340 100%);
 }
 
 .zone-lg-bg {
@@ -1183,7 +1186,9 @@ onBeforeUnmount(() => {
 }
 
 .coming-soon-scroll {
-  width: 100%;
+  width: calc(100% + 0.8rem);
+  margin-left: -0.4rem;
+  margin-right: -0.4rem;
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -1197,6 +1202,7 @@ onBeforeUnmount(() => {
   display: flex;
   gap: 0.15rem;
   padding-bottom: 0.1rem;
+  padding-left: 0.4rem;
   width: max-content;
 }
 

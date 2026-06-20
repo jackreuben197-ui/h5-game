@@ -5,9 +5,11 @@ import { postClubFundOrderListApi } from '@/api/order'
 import { postOssUploadImageApi } from '@/api/oss'
 import type { ChatSupportMessageListChatData } from '@/api/models/chat'
 import { useUserInfoStore } from '@/stores/userInfo'
-import mainBgUrl from '@/assets/images/main_bg.webp'
-import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import customerServiceIcon from '@/assets/icons/customerserviceicon.png'
+import micIcon from '@/assets/icons/wallet/ic_microphone_chat.png'
+import sendIcon from '@/assets/icons/wallet/ic_send_chat.png'
+import addIcon from '@/assets/icons/wallet/ic_add_chat.png'
+import closeIcon from '@/assets/icons/wallet/ic_close_chat.png'
 
 const props = defineProps<{
   tribeId: number
@@ -29,6 +31,14 @@ let pollTimer: number | null = null
 let statusTimer: number | null = null
 
 const isApproved = computed(() => orderStatus.value === 2)
+
+const clubName = computed(
+  () => (userInfoStore.currentClub ?? userInfoStore.clubList[0])?.club_name || '',
+)
+
+const clubAvatar = computed(
+  () => (userInfoStore.currentClub ?? userInfoStore.clubList[0])?.logo || customerServiceIcon,
+)
 
 async function checkOrderStatus() {
   const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
@@ -158,12 +168,12 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <div class="chat-overlay" :style="{ backgroundImage: `url(${mainBgUrl})` }">
+    <div class="chat-overlay">
       <div class="chat-container">
         <!-- Top Visual Header -->
-        <div class="visual-header"></div>
+        <div class="visual-header" @click="emit('close')"></div>
 
-        <div class="chat-main-body" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
+        <div class="chat-main-body">
           <!-- Floating Agent Card -->
           <div class="agent-floating-card">
             <div class="agent-info">
@@ -175,9 +185,9 @@ onUnmounted(() => {
                   </foreignObject>
                   <path d="M28.196 0.150391C43.6857 0.150391 56.2427 12.7067 56.2429 28.1963C56.2429 43.686 43.6858 56.2432 28.196 56.2432C12.7065 56.243 0.150146 43.6859 0.150146 28.1963C0.150328 12.7068 12.7066 0.150572 28.196 0.150391ZM28.196 3.3291C14.4625 3.32928 3.32904 14.4627 3.32886 28.1963C3.32886 41.93 14.4623 53.0643 28.196 53.0645C41.9299 53.0645 53.0642 41.9301 53.0642 28.1963C53.064 14.4626 41.9298 3.3291 28.196 3.3291Z" fill="white" fill-opacity="0.83" />
                 </svg>
-                <img :src="customerServiceIcon" alt="agent" class="agent-avatar" />
+                <img :src="clubAvatar" alt="agent" class="agent-avatar" />
               </div>
-              <span class="agent-name">俱乐部名称</span>
+              <span class="agent-name">{{ clubName }}</span>
             </div>
           </div>
 
@@ -189,10 +199,10 @@ onUnmounted(() => {
                 <div class="bubble-wrapper">
                   <div class="transaction-bubble">
                     <div class="bubble-content">
-                      <p>充值用户：{{ userInfoStore.userInfo?.user.nickname }}/ID{{ userInfoStore.userInfo?.user.userid }}</p>
-                      <p>充值聯盟幣：{{ (orderData.gold_num || orderData.order?.gold_num || 0) / 100 }}</p>
-                      <p>支付金額：{{ orderData.pay_price || orderData.order?.pay_price || orderData.order?.amount || orderData.amount || 0 }}</p>
-                      <p>支付類型：{{ orderData.usdt_address?.name || orderData.pay_type_name || '客服撮合' }}</p>
+                      <p>提现用户：{{ userInfoStore.userInfo?.user.nickname }}/ID{{ userInfoStore.userInfo?.user.userid }}</p>
+                      <p>提现联盟币：{{ (orderData.gold_num || orderData.order?.gold_num || 0) / 100 }}</p>
+                      <p>提现金额：{{ orderData.pay_price || orderData.order?.pay_price || orderData.order?.amount || orderData.amount || 0 }}</p>
+                      <p>收款类型：{{ orderData.usdt_address?.name || orderData.pay_type_name || '客服撮合' }}</p>
                       <p>訂單號：{{ orderData.order_no || orderData.order?.order_no }}</p>
                       <p>申請時間：{{ new Date().toLocaleString() }}</p>
                     </div>
@@ -238,10 +248,7 @@ onUnmounted(() => {
           <!-- Bottom Navigation -->
           <div class="bottom-nav">
             <button class="nav-icon-btn mic-btn">
-              <svg width="15" height="20" viewBox="0 0 17 22" fill="none">
-                <path d="M12 4.5C12 2.567 10.433 1 8.5 1C6.567 1 5 2.567 5 4.5V11C5 12.933 6.567 14.5 8.5 14.5C10.433 14.5 12 12.933 12 11V4.5Z" fill="#05E7AE" stroke="#05E7AE" stroke-width="2" stroke-linejoin="round"/>
-                <path d="M1 10.5C1 14.642 4.358 18 8.5 18M8.5 18C12.642 18 16 14.642 16 10.5M8.5 18V21" stroke="#05E7AE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
+              <img :src="micIcon" alt="mic" />
             </button>
 
             <div class="input-bar-wrap">
@@ -254,23 +261,15 @@ onUnmounted(() => {
             </div>
 
             <button class="send-action-btn" @click="sendMessage">
-              <svg width="22" height="21" viewBox="0 0 24 23" fill="none">
-                <path d="M4.31042 5.23619C3.89719 5.10688 3.89323 4.89806 4.31833 4.76503L19.4289 0.0378811C19.8476 -0.0929126 20.0875 0.127059 19.9703 0.512008L15.6528 14.6957C15.5341 15.0888 15.2926 15.1022 15.1153 14.7291L12.2694 8.71783L17.0191 2.77266L10.6862 7.23153L4.31042 5.23619Z" fill="white"/>
-              </svg>
+              <img :src="sendIcon" alt="send" />
             </button>
 
             <button class="plus-btn" @click="triggerUpload">
-              <svg width="15.407" height="15.255" viewBox="0 0 18 18" fill="none">
-                <path d="M1.28424 8.91193H16.5397" stroke="#05E7AE" stroke-width="2.5684" stroke-linecap="round"/>
-                <path d="M8.76025 1.28418V16.5397" stroke="#05E7AE" stroke-width="2.5684" stroke-linecap="round"/>
-              </svg>
+              <img :src="addIcon" alt="add" />
             </button>
 
             <button class="close-chat-btn" @click="emit('close')">
-              <svg width="11.521" height="11.521" viewBox="0 0 15 15" fill="none">
-                <path d="M1.37148 1.37158L12.8923 12.8924" stroke="#F3F3F3" stroke-width="2.74306" stroke-linecap="round"/>
-                <path d="M12.8923 1.37158L1.37148 12.8924" stroke="#F3F3F3" stroke-width="2.74306" stroke-linecap="round"/>
-              </svg>
+              <img :src="closeIcon" alt="close" />
             </button>
 
             <input type="file" ref="fileInput" hidden accept="image/*" @change="onImageUpload" />
@@ -286,9 +285,6 @@ onUnmounted(() => {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   display: flex;
   flex-direction: column;
 }
@@ -298,6 +294,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   position: relative;
+  z-index: 1;
   overflow: hidden;
 }
 
@@ -311,10 +308,11 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   position: relative;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   z-index: 1;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  border-top-left-radius: 0.8rem;
+  border-top-right-radius: 0.8rem;
+  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
   overflow: hidden;
 }
 
@@ -322,11 +320,27 @@ onUnmounted(() => {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(7.580729961395264px);
-  -webkit-backdrop-filter: blur(7.580729961395264px);
+  border-radius: inherit;
+  background: rgba(23, 23, 23, 0.5);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
   pointer-events: none;
   z-index: 1;
+}
+
+.chat-main-body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 0.0255rem;
+  background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 4;
 }
 
 .agent-floating-card,
@@ -340,28 +354,62 @@ onUnmounted(() => {
   position: absolute;
   top: 20px;
   left: 20px;
-  width: 349px;
+  right: 20px;
   height: auto;
   z-index: 10;
-  background: rgba(0, 0, 0, 0.27);
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
   border-radius: 32px;
-  padding: 14px 22px;
+  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
+  padding: 8.4px 22px;
   display: flex;
   align-items: flex-start;
   gap: 15px;
+  overflow: hidden;
+}
+
+.agent-floating-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.agent-floating-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 0.0255rem;
+  background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.agent-floating-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .agent-info {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 4.8px;
 }
 
 .agent-avatar-wrap {
   position: relative;
-  width: 61px;
-  height: 61px;
+  width: 36.6px;
+  height: 36.6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -372,32 +420,35 @@ onUnmounted(() => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 61px;
-  height: 61px;
+  width: 36.6px;
+  height: 36.6px;
   pointer-events: none;
 }
 
 .agent-avatar {
-  width: 55px;
-  height: 55px;
+  width: 33px;
+  height: 33px;
   border-radius: 50%;
   object-fit: cover;
   z-index: 1;
 }
 
 .agent-name {
+  position: relative;
   display: flex;
-  padding: 5.393px 4.194px;
+  padding: 3.236px 2.516px;
   flex-direction: column;
   align-items: center;
-  gap: 2.696px;
-  border-radius: 7.343px;
-  background: rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(5.750523090362549px);
+  gap: 1.618px;
+  border: 0.02rem solid rgba(249, 249, 249, 0.1);
+  border-radius: 4.406px;
+  background: rgba(170, 170, 170, 0.1);
+  backdrop-filter: blur(18.5px);
+  -webkit-backdrop-filter: blur(18.5px);
   color: #fff;
-  font-size: 11px;
+  font-size: 6.6px;
   font-weight: 500;
-  margin-top: -0.4rem;
+  margin-top: -0.24rem;
   white-space: nowrap;
 }
 
@@ -481,7 +532,7 @@ onUnmounted(() => {
 }
 
 .text-bubble {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
   border-radius: 20px 20px 20px 4px;
   padding: 12px 16px;
   max-width: 75%;
@@ -490,7 +541,7 @@ onUnmounted(() => {
 }
 
 .text-bubble--self {
-  background: #118e74;
+  background: #1F9816;
   border-radius: 20px 20px 4px 20px;
 }
 
@@ -527,14 +578,17 @@ onUnmounted(() => {
 }
 
 .mic-btn {
-  background: #0F0F0F;
-  border-radius: 210.014px;
   width: 37.534px;
   height: 37.534px;
-  padding: 3.36px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  padding: 0;
+}
+
+.bottom-nav button img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
 }
 
 .input-bar-wrap {
@@ -566,12 +620,11 @@ onUnmounted(() => {
 }
 
 .send-action-btn {
-  background: #01CEAB;
+  background: transparent;
   border: none;
+  padding: 0;
   width: 37.331px;
   height: 37.331px;
-  padding: 3.342px;
-  border-radius: 22.014px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -584,12 +637,11 @@ onUnmounted(() => {
 }
 
 .plus-btn {
-  background: #0F0F0F;
+  background: transparent;
   border: none;
+  padding: 0;
   width: 37.331px;
   height: 37.331px;
-  padding: 3.342px;
-  border-radius: 22.014px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -602,11 +654,11 @@ onUnmounted(() => {
 }
 
 .close-chat-btn {
-  background: rgba(255, 255, 255, 0.10);
+  background: transparent;
   border: none;
+  padding: 0;
   width: 38.403px;
   height: 38.403px;
-  border-radius: 38.403px;
   display: flex;
   align-items: center;
   justify-content: center;

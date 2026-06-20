@@ -126,7 +126,7 @@ const payPrice = computed(() =>
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  // background: rgba(0, 0, 0, 0.70);
+  background: rgba(0, 0, 0, 0.5);
   box-shadow:
     0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
     0 0 0.2298rem 0 #000 inset,

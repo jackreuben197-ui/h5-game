@@ -52,6 +52,16 @@ const roundedPriceData = computed(() =>
 const exactPrice = computed(() => exactPriceData.value.totalUiPrice)
 const roundedPrice = computed(() => roundedPriceData.value.totalUiPrice)
 
+const exactAmountLabel = computed(() =>
+  (exactGoldCount.value / 100 + 0.01).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }),
+)
+const roundedAmountLabel = computed(() =>
+  (roundedGoldCount.value / 100).toLocaleString('en-US', { maximumFractionDigits: 0 }),
+)
+
 function close(): void {
   emit('close')
 }
@@ -115,7 +125,7 @@ onUnmounted(() => {
               @click="selectedOption = 0"
             >
               <div class="option-card__amount-row">
-                <span class="option-card__amount">{{ Math.floor(exactPrice) }}</span>
+                <span class="option-card__amount">{{ exactAmountLabel }}</span>
                 <img :src="icCoins" alt="" class="option-card__coin" />
               </div>
               <div class="option-card__desc">
@@ -141,7 +151,7 @@ onUnmounted(() => {
               @click="selectedOption = 1"
             >
               <div class="option-card__amount-row">
-                <span class="option-card__amount">{{ Math.floor(roundedPrice) }}</span>
+                <span class="option-card__amount">{{ roundedAmountLabel }}</span>
                 <img :src="icCoins" alt="" class="option-card__coin" />
               </div>
               <div class="option-card__desc">
@@ -205,9 +215,9 @@ onUnmounted(() => {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  // backdrop-filter: blur(34px);
-  // -webkit-backdrop-filter: blur(34px);
-  // background: rgba(12, 12, 12, 0.60);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  background: rgba(12, 12, 12, 0.20);
 }
 
 .card {
@@ -234,7 +244,7 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  // background: rgba(0, 0, 0, 0.70);
+  background: rgba(0, 0, 0, 0.5);
   box-shadow:
     0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
     0 0 0.2298rem 0 #000 inset,

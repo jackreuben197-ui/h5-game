@@ -365,13 +365,7 @@ watch(filteredWithdrawTypes, (list) => {
 
     <div class="wf__card wf__amount-card">
       <div class="wf__amount-input-wrap">
-        <input
-          v-model="withdrawAmount"
-          type="text"
-          inputmode="decimal"
-          class="wf__amount-input"
-          :placeholder="amountPlaceholder"
-        />
+        <div class="wf__amount-range">{{ amountPlaceholder }}</div>
       </div>
 
       <div class="wf__amount-display">
@@ -380,8 +374,14 @@ watch(filteredWithdrawTypes, (list) => {
         </span>
       </div>
 
-      <div class="wf__amount-footer" :class="{ 'wf__amount-footer--visible': parsedAmount > 0 }">
-        <span class="wf__amount-entered">{{ parsedAmount > 0 ? parsedAmount.toLocaleString() : '' }}</span>
+      <div class="wf__amount-footer wf__amount-footer--visible">
+        <input
+          v-model="withdrawAmount"
+          type="text"
+          inputmode="decimal"
+          class="wf__amount-entered-input"
+          :placeholder="tx('Wallet_InputPlaceholder', '输入需要回收的UC数量')"
+        />
         <span class="wf__amount-fee-tag">{{ tx('Wallet_ServiceFee', '手续费') }}：{{ (handlingFeeRate * 100).toFixed(0) }}%</span>
       </div>
     </div>
@@ -682,25 +682,19 @@ watch(filteredWithdrawTypes, (list) => {
   margin-top: 0.55rem;
 }
 
-.wf__amount-input {
+.wf__amount-range {
   width: 100%;
   height: 1.2rem;
   padding: 0 0.5rem;
   background: rgba(232,232,232,0.15);
-  border: none;
   border-radius: 0.75rem;
-  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--wallet-font-cn);
-  font-size: 0.38rem;
-  color: #fff;
-  text-align: center;
+  font-size: 0.28rem;
+  color: rgba(249,249,249,0.45);
   box-sizing: border-box;
-
-  &::placeholder {
-    font-size: 0.28rem;
-    color: rgba(249,249,249,0.45);
-    font-weight: 400;
-  }
 }
 
 .wf__amount-display {
@@ -735,10 +729,21 @@ watch(filteredWithdrawTypes, (list) => {
   &--visible { opacity: 1; background: rgba(255,255,255,0.9); }
 }
 
-.wf__amount-entered {
+.wf__amount-entered-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
   font-family: var(--wallet-font-num);
   font-size: 0.36rem;
   color: #000;
+
+  &::placeholder {
+    font-family: var(--wallet-font-cn);
+    font-size: 0.28rem;
+    color: rgba(0,0,0,0.4);
+  }
 }
 
 .wf__amount-fee-tag {

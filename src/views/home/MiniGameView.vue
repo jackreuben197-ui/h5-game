@@ -3,6 +3,8 @@ import { ref, onMounted, computed, onActivated } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useCasinoStore } from '@/stores/casino'
 import { useMinigameStore } from '@/stores/minigame'
+import { useGameStore } from '@/stores/game'
+import { useLoginModalStore } from '@/stores/loginModal'
 import { joinCasinoGame, getDeviceType, getPopularBannerGamesHome, getPopularBannerGamesClub } from '@/api/casino'
 import { showToast } from 'vant'
 import { t } from '@/i18n'
@@ -43,6 +45,10 @@ const props = defineProps<{ hideHeader?: boolean; clubId?: number }>()
 const router = useRouter()
 const route = useRoute()
 const casinoStore = useCasinoStore()
+const gameStore = useGameStore()
+const loginModalStore = useLoginModalStore()
+
+const isGuest = computed(() => !gameStore.sessionToken)
 
 const isGlobalMode = computed(() => {
   if (props.clubId && props.clubId > 0) return false
@@ -208,6 +214,11 @@ const handleImageError = (e: Event) => {
 const handleGameClick = (game: any) => {
   if (!game) return
 
+  // 游客仅能预览目录，进入具体游戏前先引导登录。
+  if (isGuest.value) {
+    loginModalStore.open({ mode: 'login' })
+    return
+  }
 
   if (game.gameType === 'cow_boy' || game.gameApiType === 'cow_boy' || game.game_type === 'cow_boy' || game.game_api_type === 'cow_boy') {
     showToast(t('UIMineClubCowboyDownloadTip') || '下载牛仔游戏')

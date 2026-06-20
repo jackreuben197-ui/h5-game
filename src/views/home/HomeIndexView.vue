@@ -715,7 +715,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div class="game-scroll-card game-card-mahjong" @click="showGameToast('功能开发中')">
+        <div class="game-scroll-card game-card-mahjong" @click="goToCasino">
           <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
           <div class="zone-info">
             <div class="zone-header">

@@ -19,7 +19,7 @@ import type {
   OrgMemberListRecord,
 } from '@/api/models/org'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-import imgAvatar from '@/assets/images/default_avatar.png'
+import imgAvatar from '@/assets/images/default_avatar_for_club.png'
 import imgDiamond from '@/assets/icons/ic_diamond_shadow.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgBalance from '@/assets/icons/icon_chip_green.png'

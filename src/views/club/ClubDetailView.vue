@@ -19,7 +19,7 @@ import type {
   OrgClubData,
   OrgClubSearchByIdResponseData,
 } from '@/api/models/org'
-import imgClubCover from '@/assets/images/default_avatar.png'
+import imgClubCover from '@/assets/images/default_avatar_for_club.png'
 import imgBalance from '@/assets/icons/icon_balance.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'

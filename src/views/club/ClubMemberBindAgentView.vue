@@ -5,7 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { postClubAgentAddApi, postOrgMemberListApi } from '@/api/org'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { getMemberRouteContext } from './clubMemberRoute'
-import imgAvatar from '@/assets/images/default_avatar.png'
+import imgAvatar from '@/assets/images/default_avatar_for_club.png'
 import { useUserInfoStore } from '@/stores/userInfo'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 

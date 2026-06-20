@@ -10,7 +10,7 @@ import {
 import type { ClubAgentUserListRecord, OrgMemberListRecord } from '@/api/models/org'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
-import imgAvatar from '@/assets/images/default_avatar.png'
+import imgAvatar from '@/assets/images/default_avatar_for_club.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgBalance from '@/assets/icons/icon_balance.png'

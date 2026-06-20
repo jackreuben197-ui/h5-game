@@ -324,7 +324,7 @@ onBeforeUnmount(() => {
 
               <div class="card-footer">
                 <img :src="iconPeople" alt="uc" />
-                <p>申请充值：{{ formatUcAmount(Number(item.gold_num) || Number(item.amount)) }}</p>
+                <p>申请充值：{{ formatUcAmount(item.amount) }}</p>
               </div>
             </article>
           </section>

@@ -252,9 +252,7 @@ function confirm(): void {
 .kp__dim {
   position: absolute;
   inset: 0;
-  background: rgba(12, 12, 12, 0.15);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: transparent;
   cursor: pointer;
 }
 
@@ -265,6 +263,8 @@ function confirm(): void {
   width: 100%;
   max-width: 430px;
   background-color: rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border: 0.96px solid rgba(242, 244, 244, 0.4);
   border-bottom: none;
   border-top-left-radius: 0.85rem;

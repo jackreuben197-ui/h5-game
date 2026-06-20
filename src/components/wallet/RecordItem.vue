@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
-import GlassCard from './GlassCard.vue'
 import TagPill from './TagPill.vue'
 
 interface Props {
@@ -12,25 +10,13 @@ interface Props {
 }
 
 defineProps<Props>()
-
-const sharpBgStyle = {
-  backgroundImage: `url(${sharpBgUrl})`,
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
-  backgroundRepeat: 'no-repeat',
-  backgroundAttachment: 'fixed',
-}
 </script>
 
 <template>
-  <GlassCard
-    tag="button"
+  <button
+    type="button"
     class="record"
   >
-    <div
-      class="record__bg"
-      :style="sharpBgStyle"
-    ></div>
     <div class="record__col record__col--left">
       <TagPill
         :label="type"
@@ -46,26 +32,35 @@ const sharpBgStyle = {
       <span class="record__value">{{ time }}</span>
       <span class="record__value">{{ status }}</span>
     </div>
-  </GlassCard>
+  </button>
 </template>
 
 <style scoped lang="scss">
 .record {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   text-align: left;
   width: 100%;
-  cursor: pointer;
-  box-shadow: none;
+  padding: 0.4rem 0.75rem;
+  border: 0.016rem solid rgba(242, 242, 242, 0.3);
+  border-radius: 0.94rem;
+  background: transparent;
+  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.05);
   overflow: hidden;
+  cursor: pointer;
 }
 
-.record__bg {
+.record::before {
+  content: '';
   position: absolute;
-  inset: -12px;
+  inset: 0;
   border-radius: inherit;
-  filter: blur(10px);
+  backdrop-filter: blur(16.6px);
+  -webkit-backdrop-filter: blur(16.6px);
+  background: linear-gradient(107.6deg, rgba(249, 249, 249, 0.1) 12.3%, rgba(249, 249, 249, 0.14) 33.3%, rgba(147, 147, 147, 0.2) 85.1%);
+  mix-blend-mode: hard-light;
   pointer-events: none;
   z-index: 0;
 }
@@ -75,18 +70,17 @@ const sharpBgStyle = {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: rgba(0, 0, 0, 0.28);
   pointer-events: none;
-  z-index: 1;
+  box-shadow:
+    inset 0 0 8.6px rgba(0, 0, 0, 0.5),
+    inset 3.4px 2.6px 8.6px rgba(0, 0, 0, 0.1),
+    inset 0 0 36.1px rgba(242, 242, 242, 0.3);
+  z-index: 0;
 }
 
-.record > *:not(.record__bg) {
+.record > * {
   position: relative;
-  z-index: 2;
-}
-
-.record.record::before {
-  z-index: 3;
+  z-index: 1;
 }
 
 .record__col {

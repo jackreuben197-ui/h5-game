@@ -28,6 +28,7 @@ const originType = computed(() => {
   const v = Number(route.query.origin_type)
   return Number.isFinite(v) && v > 0 ? v : undefined
 })
+const showJackpot = computed(() => originType.value !== 4)
 // 1.NLH 2.PLO 3.6+ 4.fantasy 5.牛仔 6.麻将 7.mtt 8.SNG 9.惯蛋
 const gameTypes: GameTypeItem[] = [
   { key: 'nlh', game_play_type: 1, title: '德州', icon: iconNlh },
@@ -86,6 +87,7 @@ onMounted(() => {
     <HeaderBack :title="t('创建牌桌')" @back="handleBack">
       <template #right>
         <TopActionButton
+          v-if="showJackpot"
           :name="t('jackpot')"
           icon-alt="wallet"
           large

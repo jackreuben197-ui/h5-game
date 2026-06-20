@@ -199,10 +199,10 @@ onUnmounted(() => {
                 <div class="bubble-wrapper">
                   <div class="transaction-bubble">
                     <div class="bubble-content">
-                      <p>充值用户：{{ userInfoStore.userInfo?.user.nickname }}/ID{{ userInfoStore.userInfo?.user.userid }}</p>
-                      <p>充值聯盟幣：{{ (orderData.gold_num || orderData.order?.gold_num || 0) / 100 }}</p>
-                      <p>支付金額：{{ orderData.pay_price || orderData.order?.pay_price || orderData.order?.amount || orderData.amount || 0 }}</p>
-                      <p>支付類型：{{ orderData.usdt_address?.name || orderData.pay_type_name || '客服撮合' }}</p>
+                      <p>提现用户：{{ userInfoStore.userInfo?.user.nickname }}/ID{{ userInfoStore.userInfo?.user.userid }}</p>
+                      <p>提现联盟币：{{ (orderData.gold_num || orderData.order?.gold_num || 0) / 100 }}</p>
+                      <p>提现金额：{{ orderData.pay_price || orderData.order?.pay_price || orderData.order?.amount || orderData.amount || 0 }}</p>
+                      <p>收款类型：{{ orderData.usdt_address?.name || orderData.pay_type_name || '客服撮合' }}</p>
                       <p>訂單號：{{ orderData.order_no || orderData.order?.order_no }}</p>
                       <p>申請時間：{{ new Date().toLocaleString() }}</p>
                     </div>

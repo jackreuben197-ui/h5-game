@@ -971,14 +971,11 @@ onBeforeUnmount(() => {
               </span>
             </p>
 
-            <button v-if="item.senderIcon" class="sender-btn" type="button" aria-label="sender">
-              <img :src="item.senderIcon" alt="sender" />
-            </button>
           </div>
 
           <div class="other-meta-row">
             <div class="other-meta-club">
-              <img :src="imgDefaultAva" alt="club" />
+              <img :src="item.senderIcon || imgDefaultAva" alt="club" />
               <span>{{ item.clubName }}</span>
             </div>
             <p class="other-time">{{ item.time }}</p>
@@ -1302,28 +1299,6 @@ onBeforeUnmount(() => {
 
 .green {
   color: rgba(85, 243, 41, 1);
-}
-
-.sender-btn {
-  position: absolute;
-  right: 0.264rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 0.88rem;
-  height: 0.88rem;
-  border: 0;
-  background: transparent;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-  }
 }
 
 .other-meta-row {

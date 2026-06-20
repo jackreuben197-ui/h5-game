@@ -894,7 +894,7 @@ async function onUsdtSubmit(type: number) {
 .presets-card {
   position: relative;
   padding: 0.55rem 0.42rem;
-  border: 0.016rem solid rgba(242, 242, 242, 0.7);
+  border: 0.016rem solid rgba(242, 242, 242, 0.3);
   border-radius: 0.94rem;
   box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
   display: flex;

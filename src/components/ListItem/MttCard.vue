@@ -286,6 +286,7 @@ function formatCentAmount(value: number): string {
   cursor: pointer;
   background: transparent;
   flex-shrink: 0;
+  min-width: 0;
 
   &:active {
     opacity: 0.88;

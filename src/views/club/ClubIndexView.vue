@@ -1941,13 +1941,14 @@ const handleBack = () => {
 
 .mtt-group {
   margin-bottom: 0.48rem;
+  padding: 0 0.4rem;
 }
 
 .mtt-group__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 0 0.4rem 0.32rem;
+  margin: 0 0 0.32rem;
 }
 
 .mtt-group__title {
@@ -1980,13 +1981,13 @@ const handleBack = () => {
 .mtt-grid--sm {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.16rem;
+  gap: 0.26rem;
 }
 
 .mtt-grid--md {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.13rem;
+  gap: 0.26rem;
 }
 
 .mtt-grid--lg {

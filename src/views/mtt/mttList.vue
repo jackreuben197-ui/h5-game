@@ -619,20 +619,20 @@ function handleOpenCustomerService() {
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
   padding: 0.4rem 0.38rem 2.5333rem;
-  // background: rgba(255, 255, 255, 0.24);
   backdrop-filter: blur(0.3533rem) saturate(1.04);
 }
 
 /* ---- 分组 ---- */
 .mtt-group {
   margin-bottom: 0.48rem;
+  padding: 0 0.4rem;
 }
 
 .mtt-group__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 0 0.4rem 0.32rem;
+  margin: 0 0 0.32rem;
 }
 
 .mtt-group__title {

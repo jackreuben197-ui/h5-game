@@ -4,8 +4,8 @@ import imgPokerSpade from '@/assets/icons/club_poker_spade.svg'
 import imgPokerHeart from '@/assets/icons/club_poker_heart.svg'
 import imgPokerClub from '@/assets/icons/club_poker_club.svg'
 import imgPokerDiamond from '@/assets/icons/club_poker_diamond.svg'
-import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shield.svg'
-import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.svg'
+import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shield.png'
+import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.png'
 import { useLoginModalStore } from '@/stores/loginModal'
 
 const loginModalStore = useLoginModalStore()

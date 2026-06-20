@@ -10,6 +10,8 @@ import { useRouter, useRoute } from 'vue-router'
 import { t } from '@/i18n'
 import { showGameToast } from '@/components/Toast'
 import { useCasinoStore } from '@/stores/casino'
+import { useGameStore } from '@/stores/game'
+import { useLoginModalStore } from '@/stores/loginModal'
 import {
   getDeviceType,
   getPopularGamesHome,
@@ -80,6 +82,10 @@ const route = useRoute()
 const props = defineProps<{ hideHeader?: boolean; clubId?: number }>()
 
 const casinoStore = useCasinoStore()
+const gameStore = useGameStore()
+const loginModalStore = useLoginModalStore()
+
+const isGuest = computed(() => !gameStore.sessionToken)
 
 // Global mode = entered from home/bottom-nav (no club context)
 const isGlobalMode = computed(() => {
@@ -675,6 +681,12 @@ const categoryTabs = computed(() => [
 async function handleGameClick(item: GameItem): Promise<void> {
   const { gameApiType, gameType } = item
 
+  // 游客仅能预览目录，进入具体游戏前先引导登录。
+  if (isGuest.value) {
+    loginModalStore.open({ mode: 'login' })
+    return
+  }
+
   // Step A: Cowboy intercept → show download prompt
   if (gameType === 'cow_boy' || gameApiType === 'cow_boy') {
     showGameToast('请下载客户端APP获取完整版本')
@@ -802,7 +814,7 @@ onActivated(async () => {
       <!-- ── Popular Banner (horizontal scroll) ─────────────────────── -->
       <section
       class="popular-banner-section"
-      v-show="(popularBannerGames.length > 0 || isInitLoading || loadingPopularBanner) && (hasGames || isInitLoading)"
+      v-show="popularBannerGames.length > 0 || isInitLoading || loadingPopularBanner"
     >
       <div class="popular-indicator-wrapper">
         <img :src="popularTextIcon" class="popular-text-img" />

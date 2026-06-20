@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useWalletStore } from '@/stores/wallet'
-import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
 import icCheckbox from '@/assets/icons/ic_checkbox.png'
 import icUncheckbox from '@/assets/icons/ic_uncheckbox.png'
@@ -72,17 +71,13 @@ function submit(): void {
   emit('submit', selectedOption.value)
 }
 
-function onRefresh() {
-  window.location.reload()
-}
-
 onMounted(() => {
-  // 15 minutes timeout
+  // 3 minutes timeout
   timer = window.setTimeout(
     () => {
       isTimedOut.value = true
     },
-    15 * 60 * 1000,
+    3 * 60 * 1000,
   )
 })
 
@@ -93,7 +88,7 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <div class="overlay" @click.self="close">
+    <div v-if="!isTimedOut" class="overlay" @click.self="close">
       <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
       <div class="card">
         <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
@@ -185,21 +180,14 @@ onUnmounted(() => {
     </div>
 
     <!-- Timeout Reminder Modal -->
-    <div
-      v-if="isTimedOut"
-      class="timeout-overlay"
-      :style="{ backgroundImage: `url(${sharpBgUrl})` }"
-      @click.self="isTimedOut = false"
-    >
-      <div class="timeout-card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
-        <div class="timeout-card__inner">
-          <div class="timeout-header">
-            <h2 class="timeout-title">提醒通知</h2>
-          </div>
-          <div class="timeout-body">
-            <p class="timeout-text">页面停留时间过长，</p>
-            <p class="timeout-text">请重新刷新页面后再充值</p>
-          </div>
+    <div v-if="isTimedOut" class="timeout-overlay" @click.self="isTimedOut = false">
+      <div class="timeout-card" data-node-id="19:46384">
+        <div class="timeout-card__header">
+          <h2 class="timeout-card__title">提醒通知</h2>
+        </div>
+        <div class="timeout-card__body">
+          <p class="timeout-card__text timeout-card__text--first">页面停留时间过长，</p>
+          <p class="timeout-card__text">请重新刷新页面后再充值</p>
         </div>
       </div>
     </div>
@@ -504,130 +492,85 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: clamp(20px, 7vw, 28px);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-}
-
-.timeout-overlay::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  backdrop-filter: blur(34px);
-  -webkit-backdrop-filter: blur(34px);
-  background: rgba(12, 12, 12, 0.6);
+  background: rgba(23, 23, 23, 0.7);
 }
 
 .timeout-card {
   position: relative;
   z-index: 1;
   display: flex;
-  width: 317.029px;
-  padding: 15.7px 15.399px 15.399px 15.399px;
+  width: 345px;
+  max-width: 100%;
+  padding: 14px 22px;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  gap: 18.116px;
-  border: 0.96px solid rgba(242, 242, 242, 0.4);
-  border-radius: clamp(28px, 10vw, 36.4px);
+  gap: 18px;
+  border: 1.314px solid rgba(242, 242, 242, 0.4);
+  border-radius: 32px;
+  background: linear-gradient(
+    129.105deg,
+    rgba(142, 142, 142, 0.12) 2.9315%,
+    rgba(103, 103, 103, 0.16) 43.621%,
+    rgba(73, 73, 73, 0.2) 89.787%
+  );
+  backdrop-filter: blur(7.580729961395264px);
+  -webkit-backdrop-filter: blur(7.580729961395264px);
   box-shadow:
-    3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25),
-    0 0 8.6px #000 inset,
-    2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
+    3.447px 4.309px 6.894px 0 rgba(0, 0, 0, 0.25),
+    inset 2.123px 4.245px 17.235px 0 rgba(242, 242, 242, 0.9),
+    inset 0 0 22.309px 0 #cb6e7d,
+    inset 0 0 8.618px 0 #000;
   overflow: hidden;
   animation: modal-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.timeout-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: rgba(0, 0, 0, 0.7);
-  box-shadow:
-    0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
-    0 0 0.2298rem 0 #000 inset,
-    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.9) inset;
-  backdrop-filter: blur(7.580729961395264px);
-  -webkit-backdrop-filter: blur(7.580729961395264px);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.timeout-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 0.0255rem;
-  background: linear-gradient(
-    180deg,
-    rgba(242, 242, 242, 0.4) 0%,
-    rgba(255, 255, 255, 0) 50%,
-    rgba(255, 255, 255, 0.5) 100%
-  );
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-.timeout-card__inner {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-self: stretch;
-}
-
-.timeout-header {
+.timeout-card__header {
   display: flex;
   align-self: stretch;
-  height: 45.58px;
-  padding: 17px 5.804px;
+  height: 45.577px;
+  margin: -14px -22px 0;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 45.58px;
-  margin: 0 -15.399px 0;
-  background: linear-gradient(
-    97deg,
-    rgba(255, 255, 255, 0.1) 21.11%,
-    rgba(230, 230, 230, 0.1) 71.43%
-  );
+  background: linear-gradient(170.655deg, rgb(54, 54, 54) 7.8962%, rgb(23, 23, 23) 80.242%);
 }
 
-.timeout-title {
-  background: linear-gradient(180deg, #fff 0%, #e6e6e6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.timeout-card__title {
+  margin: 0;
+  color: #fff;
+  text-align: center;
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
+  font-size: 23px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.timeout-card__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.timeout-card__text {
+  margin: 0;
+  color: #fff;
+  text-align: center;
   font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 16px;
-  font-weight: 600;
-  margin: 0;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.04;
   letter-spacing: 0.32px;
 }
 
-.timeout-body {
-  text-align: center;
-  margin-top: 18.12px;
-}
-
-.timeout-text {
-  color: #fff;
-  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
-  font-size: 15px;
-  line-height: 1.5;
-  margin: 0;
-  letter-spacing: 0.32px;
+.timeout-card__text--first {
+  margin-bottom: 4.537px;
 }
 
 @keyframes modal-pop {

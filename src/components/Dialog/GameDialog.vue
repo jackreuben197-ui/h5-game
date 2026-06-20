@@ -45,6 +45,8 @@ const props = withDefaults(
     cardStyle?: StyleValue
     bodyStyle?: StyleValue
     bgImage?: string
+    /** 卡片底色加深（仅用于个别需要高对比可读性的弹窗，如 MTT 报名） */
+    darkBackdrop?: boolean
     /** 关闭前回调，return false 阻止关闭 */
     beforeClose?: (action: string) => boolean | Promise<boolean>
   }>(),
@@ -63,6 +65,7 @@ const props = withDefaults(
     cardStyle: undefined,
     bodyStyle: undefined,
     bgImage: undefined,
+    darkBackdrop: false,
     beforeClose: undefined,
   },
 )
@@ -148,7 +151,7 @@ const bodyStyles = computed<StyleValue>(() => [
   >
     <!-- 完全自定义 dialog 内部内容 -->
     <template #default>
-      <div class="game-dialog__card">
+      <div class="game-dialog__card" :class="{ 'game-dialog__card--dark': darkBackdrop }">
         <!-- Background Overlay Layers matching Figma -->
         <div class="game-dialog__card-bg-gradient"></div>
         <div
@@ -245,10 +248,15 @@ const bodyStyles = computed<StyleValue>(() => [
   inset: 0;
   z-index: 0;
   background-image: none !important;
-  // background: rgba(6, 7, 10, 0.5);
   backdrop-filter: blur(0.18rem);
   -webkit-backdrop-filter: blur(0.18rem);
   pointer-events: none;
+}
+
+/* Затемнённая подложка — только для弹窗 с высоким требованием к читаемости (MTT 报名). */
+.game-dialog__card--dark .game-dialog__card-bg-gradient,
+.game-dialog__card--dark .game-dialog__card-bg-shadow {
+  background: rgba(6, 7, 10, 0.65);
 }
 
 .game-dialog__card-bg {

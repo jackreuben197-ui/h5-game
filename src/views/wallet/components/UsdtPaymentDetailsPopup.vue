@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { showToast } from 'vant'
+import { t } from '@/i18n'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import type { RechargeGoldData } from '@/api/models/order'
 
@@ -33,11 +35,29 @@ function startTimer() {
   }, 1000)
 }
 
+function fallbackCopy(text: string) {
+  const el = document.createElement('textarea')
+  el.value = text
+  el.style.position = 'fixed'
+  el.style.opacity = '0'
+  document.body.appendChild(el)
+  el.select()
+  document.execCommand('copy')
+  document.body.removeChild(el)
+}
+
 function onCopy() {
-  if (props.orderData.usdt_address?.address) {
-    navigator.clipboard.writeText(props.orderData.usdt_address.address)
-    // You might want to show a toast here
+  const address = props.orderData.usdt_address?.address
+  if (!address) {
+    showToast({ message: '暂无收款账号', duration: 1200, position: 'bottom' })
+    return
   }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(address).catch(() => fallbackCopy(address))
+  } else {
+    fallbackCopy(address)
+  }
+  showToast({ message: t('adaptation10106') || '已复制', duration: 800, position: 'bottom' })
 }
 
 function onCancel() {

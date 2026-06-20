@@ -891,10 +891,10 @@ async function generateInviteQrCode(): Promise<void> {
       return
     }
 
-    // const invitationLink = extractInvitationLink(response.data)
+    const inviteCode = extractInvitationCode(response.data)
     const finalLink = isChannelPackage
-      ? buildChannelClubInviteUrl()
-      : buildChannelRegisterUrl({ inviteCode: extractInvitationCode(response.data) })
+      ? buildChannelClubInviteUrl(inviteCode)
+      : buildChannelRegisterUrl({ inviteCode })
 
     if (!finalLink) {
       return

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
-import mainBgUrl from '@/assets/images/main_bg.webp'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import { t } from '@/i18n'
 
@@ -167,7 +166,6 @@ function confirm(): void {
       <div
         v-if="open"
         :class="['kp', { 'kp--plain': !showMask }]"
-        :style="showMask ? { backgroundImage: `url(${mainBgUrl})` } : undefined"
         @click.self="cancel"
         @dblclick.prevent
       >
@@ -254,7 +252,9 @@ function confirm(): void {
 .kp__dim {
   position: absolute;
   inset: 0;
-  background: rgba(12, 12, 12, 0.6);
+  background: rgba(12, 12, 12, 0.15);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   cursor: pointer;
 }
 

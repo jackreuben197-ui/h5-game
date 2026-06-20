@@ -6,6 +6,8 @@ import { t } from '@/i18n'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import icBack from '@/assets/icons/wallet/ic_arrow_left.svg'
 import icDropdown from '@/assets/icons/icon_dropdown.svg'
+import icCheckbox from '@/assets/icons/ic_checkbox.png'
+import icUncheckbox from '@/assets/icons/ic_uncheckbox.png'
 import { postPaymentInfoCreateApi } from '@/api/pay'
 
 const router = useRouter()
@@ -24,6 +26,32 @@ const saving = ref(false)
 const canSave = ref(false)
 function checkForm() {
   canSave.value = !!(cardName.value.trim() && cardBank.value.trim() && cardNumber.value.trim())
+}
+
+// ─── Bank name picker (hardcoded list, no API) ────────────────────────────────
+const bankNameOptions: string[] = [
+  '中国银行',
+  '中国建设银行',
+]
+const showBankNameModal = ref(false)
+const tempSelectedBank = ref('')
+
+function openBankNameModal() {
+  tempSelectedBank.value = cardBank.value
+  showBankNameModal.value = true
+}
+function closeBankNameModal() {
+  showBankNameModal.value = false
+}
+function selectTempBank(bank: string) {
+  tempSelectedBank.value = bank
+}
+function confirmBankSelection() {
+  if (tempSelectedBank.value) {
+    cardBank.value = tempSelectedBank.value
+    checkForm()
+  }
+  showBankNameModal.value = false
 }
 
 async function handleSave() {
@@ -90,13 +118,13 @@ async function handleSave() {
           {{ tx('Wallet_BankName', '请选择银行名称') }}
           <span class="abc-field__star">*</span>
         </label>
-        <div class="abc-field__input-wrap abc-field__input-wrap--dark">
+        <div class="abc-field__input-wrap abc-field__input-wrap--dark" @click="openBankNameModal">
           <input
             v-model="cardBank"
             type="text"
             class="abc-field__input"
             :placeholder="tx('Wallet_BankNameHint', '请选择银行名称')"
-            @input="checkForm"
+            readonly
           />
           <img :src="icDropdown" alt="" class="abc-field__arrow" />
         </div>
@@ -151,6 +179,40 @@ async function handleSave() {
       >
         {{ saving ? tx('Wallet_Saving', '保存中…') : tx('Save', '保存') }}
       </button>
+    </div>
+
+    <!-- Bank name picker modal -->
+    <div v-if="showBankNameModal" class="abc-modal-overlay" @click.self="closeBankNameModal">
+      <div class="abc-modal">
+        <h3 class="abc-modal__title">{{ tx('Wallet_BankName', '请选择银行名称') }}</h3>
+
+        <div class="abc-modal__list">
+          <button
+            v-for="bank in bankNameOptions"
+            :key="bank"
+            type="button"
+            class="abc-modal__item"
+            :class="{ 'abc-modal__item--active': tempSelectedBank === bank }"
+            @click="selectTempBank(bank)"
+          >
+            <span class="abc-modal__item-name">{{ bank }}</span>
+            <img
+              class="abc-modal__check"
+              :src="tempSelectedBank === bank ? icCheckbox : icUncheckbox"
+              alt=""
+            />
+          </button>
+        </div>
+
+        <div class="abc-modal__actions">
+          <button type="button" class="abc-modal__btn abc-modal__btn--cancel" @click="closeBankNameModal">
+            {{ tx('Wallet_Cancel', '取消') }}
+          </button>
+          <button type="button" class="abc-modal__btn abc-modal__btn--confirm" @click="confirmBankSelection">
+            {{ tx('Wallet_Ok', '确定') }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -356,5 +418,110 @@ async function handleSave() {
     opacity: 0.45;
     cursor: default;
   }
+}
+
+// ── Bank name picker modal ──────────────────────────────────────────────────────
+.abc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.abc-modal {
+  width: 100%;
+  max-width: 8rem;
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.05);
+  padding: 0.5rem 0.42rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.36rem;
+}
+
+.abc-modal__title {
+  margin: 0;
+  text-align: center;
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
+  font-size: 0.42rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+.abc-modal__list {
+  display: flex;
+  flex-direction: column;
+  max-height: 7rem;
+  overflow-y: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.abc-modal__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.34rem 0.2rem;
+  background: transparent;
+  border: none;
+  border-bottom: 0.008rem solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  &:active { opacity: 0.8; }
+  &--active .abc-modal__item-name { color: #fff; font-weight: 500; }
+}
+
+.abc-modal__item-name {
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
+  font-size: 0.36rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.abc-modal__check {
+  flex-shrink: 0;
+  width: 0.44rem;
+  height: 0.44rem;
+  object-fit: contain;
+}
+
+.abc-modal__actions {
+  display: flex;
+  gap: 0.24rem;
+}
+
+.abc-modal__btn {
+  flex: 1;
+  height: 1.1rem;
+  border-radius: 1rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.1);
+  background: rgba(170, 170, 170, 0.1);
+  backdrop-filter: blur(18.5px);
+  -webkit-backdrop-filter: blur(18.5px);
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
+  font-size: 0.36rem;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  &:active { opacity: 0.85; }
+}
+
+.abc-modal__btn--cancel {
+  color: #fff;
+}
+
+.abc-modal__btn--confirm {
+  color: #55f329;
 }
 </style>

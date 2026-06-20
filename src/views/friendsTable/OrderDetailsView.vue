@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import { t } from '@/i18n'
 import type { ClubPlayerOrderRecordOrderInfo } from '@/api/models/order'
 
@@ -44,10 +43,9 @@ function close(): void {
   <Teleport to="body">
     <div
       class="overlay"
-      :style="{ backgroundImage: `url(${sharpBgUrl})` }"
       @click.self="close"
     >
-      <div class="card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
+      <div class="card">
         <!-- <div class="card__bg" ></div> -->
         <h2 class="card__title">{{ t('Wallet_OrderTitle') }}</h2>
         <div class="card__rows">
@@ -85,10 +83,9 @@ function close(): void {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  backdrop-filter: blur(34px);
-  -webkit-backdrop-filter: blur(34px);
-  // background: rgba(0, 0, 0, 0.15);
-  background: rgba(12, 12, 12, 0.60);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  background: rgba(12, 12, 12, 0.15);
 }
 
 .card {
@@ -97,12 +94,9 @@ function close(): void {
   width: 100%;
   max-width: clamp(280px, 84.5vw, 317px);
   padding: clamp(14px, 4.6vw, 17px);
-  border: 0.96px solid rgba(242, 242, 242, 0.4);
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
   border-radius: clamp(28px, 10vw, 36.4px);
-  box-shadow:
-    3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25),
-    0 0 8.6px #000 inset,
-    2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
+  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
   gap: clamp(14px, 5vw, 18px);
@@ -125,14 +119,9 @@ function close(): void {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: rgba(0, 0, 0, 0.28);
-  background: rgba(0, 0, 0, 0.70);
-   box-shadow:
-    0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
-    0 0 0.2298rem 0 #000 inset,
-    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.90) inset;
-  backdrop-filter: blur(7.580729961395264px);
-  -webkit-backdrop-filter: blur(7.580729961395264px);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
   pointer-events: none;
   z-index: 1;
 }

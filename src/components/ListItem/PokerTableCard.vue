@@ -293,11 +293,11 @@ function shortName(name?: string): string {
 }
 
 .table-main {
-  border-radius: 0.48rem;
+  border-radius: 0.58rem;
   padding: 0.56rem 0.24rem 0.26rem;
-  width: 4rem;
+  width: 4.4rem;
   height: 4.4rem;
-  background: url('@/assets/images/game_list_card_bg.png') no-repeat center / 100% 100%;
+  background: rgba(0, 0, 0, 0.2);
   position: relative;
 }
 
@@ -327,7 +327,7 @@ function shortName(name?: string): string {
   width: 2.6rem;
   height: 0.47rem;
   transform: translate(-50%, -50%);
-  padding: 0.04rem 0rem;
+  padding: 0.04rem 0.1rem;
   text-align: center;
   font-size: 0.26rem;
   white-space: nowrap;
@@ -335,8 +335,10 @@ function shortName(name?: string): string {
   overflow: hidden;
   z-index: 4;
   border-radius: 0.24rem;
-  background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)),
-    url('@/assets/images/game_list_card_title_bg.png') no-repeat center / 100% 100%;
+  border: 0.02rem solid rgba(249, 249, 249, 0.05);
+  background: rgba(170, 170, 170, 0.1);
+  backdrop-filter: blur(18.5px);
+  -webkit-backdrop-filter: blur(18.5px);
 }
 
 .seat-area {

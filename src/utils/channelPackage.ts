@@ -221,8 +221,12 @@ export function shouldOpenRegisterMode(): boolean {
   return parseInviteParamsFromLocation().mode === 'register'
 }
 
-export function buildChannelClubInviteUrl(): string {
+export function buildChannelClubInviteUrl(inviteCode?: string): string {
   const currentUrl = new URL(window.location.href)
+  const code = readString(inviteCode)
+  if (code) {
+    return `${currentUrl.origin}/#/?invite_code=${encodeURIComponent(code)}`
+  }
   return `${currentUrl.origin}`
 }
 

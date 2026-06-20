@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { showToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import ava1 from '@/assets/images/wallet/avatars/ava1.png'
 import icCoins from '@/assets/icons/icon_chip_red.png'
@@ -21,7 +22,7 @@ import UsdtPaymentDetailsPopup from '@/views/wallet/components/UsdtPaymentDetail
 import CustomerServicePaymentPopup from '@/views/wallet/components/CustomerServicePaymentPopup.vue'
 import CustomerServiceChatPopup from '@/views/wallet/components/CustomerServiceChatPopup.vue'
 import OnlinePaymentPopup from '@/views/wallet/components/OnlinePaymentPopup.vue'
-import FixedDepositPanel from '@/views/wallet/components/FixedDepositPanel.vue'
+import ClubDepositPanel from '@/views/wallet/components/ClubDepositPanel.vue'
 import { t } from '@/i18n'
 
 // i18n helper: returns fallback when key not translated.
@@ -39,6 +40,7 @@ import {
 } from '@/api/order'
 import { postChatSupportChannelListApi } from '@/api/chat'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
+import { formatUC } from '@/utils/roomVisibility'
 
 const router = useRouter()
 const route = useRoute()
@@ -111,7 +113,7 @@ function handleOnlineSuccess() {
 
 function handleOnlineUnfinished() {
   onlinePopupOpen.value = false
-  void checkUnfinishedOrders()
+  showToast(tx('Wallet_OrderUnderReview', '订单审核中，请稍后再试'))
 }
 
 
@@ -550,7 +552,7 @@ async function onCsSubmit(displayPayPrice?: number) {
       activePreset.value = 0
       customAmount.value = ''
     } else if (res.code === 20066 || res.code === 90016) {
-      void checkUnfinishedOrders()
+      showToast(tx('Wallet_OrderUnderReview', '订单审核中，请稍后再试'))
     } else {
       alert(`Recharge failed: ${res.message}`)
     }
@@ -633,8 +635,8 @@ async function onUsdtSubmit(type: number) {
       activePreset.value = 0
       customAmount.value = ''
     } else if (res.code === 20066) {
-      // User has unfinished orders
-      void checkUnfinishedOrders()
+      // User has an order pending review — block new recharge per spec.
+      showToast(tx('Wallet_OrderUnderReview', '订单审核中，请稍后再试'))
     } else {
       alert(`Recharge failed: ${res.message}`)
     }
@@ -646,12 +648,19 @@ async function onUsdtSubmit(type: number) {
 </script>
 
 <template>
-  <FixedDepositPanel v-if="isFixedDeposit" />
+  <div class="wallet-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
+    <AppBar
+      :title="isFixedDeposit ? tx('Wallet_RechargeTitle', '充值') : t('Wallet_Title')"
+      :show-actions="false"
+    >
+      <template v-if="isFixedDeposit" #actions>
+        <button class="details-pill" @click="router.push('/wallet/details')">
+          <span class="wallet-t-button details-pill__label">{{ tx('Wallet_Details', '明细') }}</span>
+        </button>
+      </template>
+    </AppBar>
 
-  <div v-else class="wallet-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
-    <AppBar :title="t('Wallet_Title')" :show-actions="false" />
-
-    <div class="wallet-screen__content-top">
+    <div v-if="!isFixedDeposit" class="wallet-screen__content-top">
       <div class="tabs-row">
         <SegmentedToggle v-model="activeTab" :tabs="tabLabels" />
       </div>
@@ -660,6 +669,17 @@ async function onUsdtSubmit(type: number) {
     <div class="wallet-scrollable">
       <div class="wallet-screen__content">
         <UserCard
+          v-if="isFixedDeposit"
+          class="wallet-banner wallet-banner--deposit"
+          variant="glass"
+          :avatar="ava1"
+          name="Cooper&#10;Korsgaard"
+          user-id="8677650585"
+          :balance="formatUC(userInfoStore.userInfo?.user?.gold ?? 0)"
+        />
+
+        <UserCard
+          v-else
           class="wallet-banner"
           :avatar="ava1"
           name="Cooper&#10;Korsgaard"
@@ -673,7 +693,7 @@ async function onUsdtSubmit(type: number) {
             <div class="balance-row">
               <div class="balance-chip">
                 <span class="balance-chip__value">
-                  {{ (userInfoStore.userInfo?.user?.gold ?? 0).toLocaleString('en-US', { useGrouping: false }) }}
+                  {{ formatUC(userInfoStore.userInfo?.user?.gold ?? 0) }}
                 </span>
                 <img :src="icCoins" alt="" class="balance-chip__icon" />
               </div>
@@ -682,7 +702,9 @@ async function onUsdtSubmit(type: number) {
           </template>
         </UserCard>
 
-        <template v-if="activeTab === 0">
+        <ClubDepositPanel v-if="isFixedDeposit" />
+
+        <template v-else-if="activeTab === 0">
           <div class="recharge-content">
             <div class="presets-card">
               <PresetAmountGrid

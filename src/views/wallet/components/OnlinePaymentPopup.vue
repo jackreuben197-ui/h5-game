@@ -77,9 +77,27 @@ function startTimer() {
 }
 
 function copyText(text: string) {
-  if (!text) return
-  navigator.clipboard.writeText(text)
+  if (!text) {
+    showToast({ message: '暂无收款账号', duration: 1200, position: 'bottom' })
+    return
+  }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).catch(() => fallbackCopy(text))
+  } else {
+    fallbackCopy(text)
+  }
   showToast({ message: t('adaptation10106') || '已复制', duration: 800, position: 'bottom' })
+}
+
+function fallbackCopy(text: string) {
+  const el = document.createElement('textarea')
+  el.value = text
+  el.style.position = 'fixed'
+  el.style.opacity = '0'
+  document.body.appendChild(el)
+  el.select()
+  document.execCommand('copy')
+  document.body.removeChild(el)
 }
 
 async function handleRegister() {
@@ -90,14 +108,15 @@ async function handleRegister() {
   const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
 
   try {
+    const centPrice = Math.round(priceData.value.totalUiPrice * 100)
     const res = await postRechargeGoldApi(
       {
         amount: props.goldCount,
-        legal_tender: Math.round(priceData.value.totalUiPrice * 100),
+        legal_tender: centPrice,
         gold_type: 1,
         pay_id: props.payId,
         price_id: props.priceId,
-        pay_price: priceData.value.apiPayPrice,
+        pay_price: centPrice / 100,
         pay_address: '',
         pay_address_save: false,
         order_no: '',
@@ -345,7 +364,7 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  // background: rgba(0, 0, 0, 0.70);
+  background: rgba(0, 0, 0, 0.65);
   box-shadow:
     0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
     0 0 0.2298rem 0 #000 inset,

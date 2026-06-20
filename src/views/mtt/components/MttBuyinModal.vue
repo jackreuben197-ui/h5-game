@@ -340,6 +340,7 @@ function handleConfirm() {
     :confirm-button-text="t('UICowboy_JoinGame')"
     :confirm-button-disabled="!canConfirm && (mtt?.gold_type ?? 1) !== 1"
     :close-on-click-overlay="true"
+    dark-backdrop
     @confirm="handleConfirm"
     @update:show="emit('update:show', $event)"
   >

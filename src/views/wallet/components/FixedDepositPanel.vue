@@ -8,8 +8,8 @@ import defaultAvatar from '@/assets/images/default_avatar.png'
 import iconChips from '@/assets/icons/wallet/ic_coins.png'
 import icGift from '@/assets/icons/wallet/ic_gift.png'
 import AppBar from '@/components/wallet/AppBar.vue'
+import PillButton from '@/components/wallet/PillButton.vue'
 import TagPill from '@/components/wallet/TagPill.vue'
-import GlassButton from '@/components/Button/GlassButton.vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { t } from '@/i18n'
@@ -80,7 +80,8 @@ async function onConfirmDeposit(): Promise<void> {
     if (res.code === 0) {
       showSuccess.value = true
     } else if (res.code === 20066) {
-      showToast(t('H5Deposit_OrderUnderReview'))
+      const reviewMsg = t('Wallet_OrderUnderReview')
+      showToast(reviewMsg !== 'Wallet_OrderUnderReview' ? reviewMsg : '订单审核中，请稍后再试')
     } else {
       showFailToast(res.message || t('H5Deposit_Failed'))
     }
@@ -102,9 +103,7 @@ function onSuccessConfirm(): void {
   <div class="deposit-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
     <AppBar :title="t('UIGuildFund_RechargeText')" :show-actions="false">
       <template #actions>
-        <span class="details-btn">
-          <GlassButton :label="t('Wallet_Details')" @click="goDetails" />
-        </span>
+        <PillButton :label="`${t('Wallet_Details')} >`" @click="goDetails" />
       </template>
     </AppBar>
 
@@ -112,16 +111,11 @@ function onSuccessConfirm(): void {
       <div class="deposit-content">
         <div class="user-card-wrapper">
           <div class="user-card">
-            <div class="user-card__banner-bg" :style="{ backgroundImage: `url(${bannerBgUrl})` }"></div>
             <div class="user-card-inner">
               <div class="user-info-section">
                 <div class="avatar-box">
                   <img :src="avatarUrl" alt="avatar" />
                 </div>
-                <button class="gift-entry" @click="goGiftUc">
-                  <span class="gift-entry__label">赠送</span>
-                  <img :src="icGift" alt="gift" class="gift-entry__icon" />
-                </button>
                 <div class="user-text">
                   <span class="user-name">{{ userName }}</span>
                   <div class="user-id-badge">
@@ -129,6 +123,13 @@ function onSuccessConfirm(): void {
                     <span class="id-value">{{ userId }}</span>
                   </div>
                 </div>
+              </div>
+
+              <div class="gift-row">
+                <button class="gift-entry" @click="goGiftUc">
+                  <span class="gift-entry__label">赠送</span>
+                  <img :src="icGift" alt="gift" class="gift-entry__icon" />
+                </button>
               </div>
 
               <div class="balance-section">
@@ -195,15 +196,22 @@ function onSuccessConfirm(): void {
   background-repeat: no-repeat;
 }
 
-.details-btn {
-  display: inline-block;
-  width: 1.87rem;
+.deposit-screen::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  background: rgba(0, 0, 0, 0.15);
 }
 
-/* 明细按钮使用与「赠送」一致的深色玻璃样式 */
-.details-btn :deep(.gb) {
-  background: rgba(0, 0, 0, 0.5);
+.deposit-screen > * {
+  position: relative;
+  z-index: 1;
 }
+
 
 .deposit-scrollable {
   flex: 1;
@@ -249,7 +257,7 @@ function onSuccessConfirm(): void {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: rgba(0, 0, 0, 0.28);
+    background: rgba(0, 0, 0, 0.13);
     pointer-events: none;
     z-index: 1;
   }
@@ -259,12 +267,12 @@ function onSuccessConfirm(): void {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    padding: 0.055rem;
+    padding: 1.252px;
     background: linear-gradient(
-      180deg,
-      rgba(240, 205, 225, 0.95) 0%,
-      rgba(220, 175, 205, 0.4) 50%,
-      rgba(240, 205, 225, 0.95) 100%
+      135deg,
+      rgba(255, 255, 255, 0.25) 0%,
+      rgba(255, 255, 255, 0.8) 50%,
+      rgba(255, 255, 255, 0.25) 100%
     );
     -webkit-mask:
       linear-gradient(#fff 0 0) content-box,
@@ -279,7 +287,7 @@ function onSuccessConfirm(): void {
   }
 }
 
-.user-card > *:not(.user-card__banner-bg) {
+.user-card > * {
   position: relative;
   z-index: 2;
 }
@@ -303,21 +311,24 @@ function onSuccessConfirm(): void {
   justify-content: space-between;
 }
 
+.gift-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .gift-entry {
-  position: fixed;
-  right: 0.7024rem;
-  top: 2.0594rem;
-  width: 4.0976rem;
+  width: 3rem;
   height: 0.8273rem;
-  z-index: 4;
   border: none;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 0.7229rem;
-  padding: 0;
+  padding: 0 0.05rem 0 0.6rem;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  color: #fff;
+  justify-content: space-between;
+  color: #ffffffc6;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .gift-entry__icon {
@@ -386,7 +397,7 @@ function onSuccessConfirm(): void {
   align-items: center;
   justify-content: flex-end;
   gap: 0.16rem;
-  margin-top: 0.4rem;
+  margin-top: 0.2rem;
 }
 
 .balance-label {
@@ -406,8 +417,8 @@ function onSuccessConfirm(): void {
 }
 
 .chip-icon {
-  width: 29px;
-  height: 29px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
 }
 

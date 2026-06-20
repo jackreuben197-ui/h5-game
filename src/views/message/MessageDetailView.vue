@@ -734,7 +734,8 @@ async function fetchUcList(append = false): Promise<void> {
       time: formatTime(item.create_time),
       playerName: String(item.nickname ?? '--'),
       playerId: String(item.user_random_id ?? '--'),
-      amount: `+${formatUC(item.amount ?? 0)}`,
+      // 充值申请金额取「申请金豆」gold_num；fixed-deposit 模式下 amount(数额) 为 0。
+      amount: `+${formatUC(Number(item.gold_num) || Number(item.amount) || 0)}`,
       status: mapStatus(rawStatus),
       approverName: item.audit_name ? String(item.audit_name) : undefined,
       approverId: item.audit_user_id ? String(item.audit_user_id) : undefined,

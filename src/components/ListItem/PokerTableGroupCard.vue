@@ -228,7 +228,6 @@ function handleTableClick(room: RoomRecord): void {
 
 .table-grid {
   margin-top: 0.22rem;
-  margin-left: 0.3rem;
   margin-bottom: 0.2rem;
   display: grid;
   grid-template-columns: repeat(2, max-content);

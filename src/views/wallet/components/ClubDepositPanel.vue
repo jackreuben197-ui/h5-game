@@ -81,7 +81,7 @@ async function onConfirmRecharge(): Promise<void> {
       showSuccess.value = true
       void refreshBalance()
     } else if (res.code === 20066) {
-      showToast(tx('Wallet_DepositUnderReview', '您有正在审核中的订单'))
+      showToast(tx('Wallet_OrderUnderReview', '订单审核中，请稍后再试'))
     } else {
       showToast(res.message || tx('Wallet_DepositFailed', '充值申请失败'))
     }

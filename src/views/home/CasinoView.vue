@@ -791,7 +791,7 @@ onActivated(async () => {
     <div class="bg-overlay" aria-hidden="true" v-if="!hideHeader"></div>
 
     <!-- ── Header ─────────────────────────────────────────────────── -->
-    <HeaderBack v-if="!hideHeader" :title="t('UIHomeMinigameArea')">
+    <HeaderBack v-if="!hideHeader" title="娱乐场">
       <template #right>
         <div class="action-wrap">
           <TopActionButton

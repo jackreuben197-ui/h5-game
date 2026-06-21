@@ -27,9 +27,9 @@ export interface AppConfigDownloadInfo {
 }
 
 export interface AppConfig {
-  /** 基础请求地址（含 /api），生产环境优先使用 */
+  /** 生产环境基础请求地址（含 /api）：isTest 为 false 时使用 */
   baseApi: string
-  /** 可配置的 API 域名列表，便于切换 / 容灾 */
+  /** API 域名列表：测试环境（isTest 为 true）取首项 apiDomains[0]，同时用于切换 / 容灾 */
   apiDomains: string[]
   /** 新接口前缀 */
   baseApiNew: string
@@ -84,19 +84,77 @@ function resolveConfigUrl(): string {
   return `${base}${file}`.replace(/([^:])\/{2,}/g, '$1/')
 }
 
+// 测试环境所有 apiDomains 都不可达时的最终兜底地址。
+const TEST_API_FALLBACK = 'https://preview.trackyourchoice.com/api'
+
+// initAppConfig 解析后写入的当前生效基础地址（测试环境会先做可达性探测）。
+let resolvedApiBase = ''
+
+// 规范成「含 /api」的基础地址：去掉结尾斜杠，未带 /api 时补上。
+function normalizeApiBase(raw: string): string {
+  const value = (raw || '').trim().replace(/\/+$/, '')
+  if (!value) {
+    return ''
+  }
+  return /\/api$/i.test(value) ? value : `${value}/api`
+}
+
+// 探测某个基础地址是否可达：no-cors 只判断「服务器是否有响应」，network/DNS/超时失败视为不可用。
+async function probeApiBase(base: string, timeoutMs = 2500): Promise<boolean> {
+  if (typeof fetch === 'undefined') {
+    return false
+  }
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null
+  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null
+  try {
+    await fetch(base, { method: 'GET', mode: 'no-cors', cache: 'no-store', signal: controller?.signal })
+    return true
+  } catch {
+    return false
+  } finally {
+    if (timer) {
+      clearTimeout(timer)
+    }
+  }
+}
+
+// 测试环境：按 apiDomains 顺序探测，取第一个可达的；都不可达时回落到 preview。
+async function resolveTestApiBase(): Promise<string> {
+  const candidates = appConfig.apiDomains.map(normalizeApiBase).filter(Boolean)
+  if (!candidates.length) {
+    return TEST_API_FALLBACK
+  }
+  const results = await Promise.all(candidates.map((candidate) => probeApiBase(candidate)))
+  const firstReachable = candidates.find((_, index) => results[index])
+  return firstReachable || TEST_API_FALLBACK
+}
+
 /**
  * 解析最终生效的 API 基础地址。
- * 开发环境固定返回 /api（走 Vite 代理）；生产环境优先使用 config.json 的 baseApi。
+ * 开发环境固定返回 /api（走 Vite 代理）。
+ * 生产/测试环境返回 initAppConfig 解析好的 resolvedApiBase（测试环境为探测后的可用地址）。
  */
 export function resolveApiBaseUrl(): string {
   if (import.meta.env.DEV) {
     return import.meta.env.VITE_API_BASE_URL || '/api'
   }
   return (
+    resolvedApiBase ||
     appConfig.baseApi ||
     appConfig.apiDomains[0] ||
     import.meta.env.VITE_API_BASE_URL ||
     '/api'
+  )
+}
+
+// 当前生效的「绝对」基础地址（不含 DEV 的 /api 代理分支），供推导渠道主域名等使用。
+export function getActiveApiBase(): string {
+  return (
+    resolvedApiBase ||
+    (appConfig.isTest ? appConfig.apiDomains[0] : appConfig.baseApi) ||
+    appConfig.baseApi ||
+    appConfig.apiDomains[0] ||
+    ''
   )
 }
 
@@ -114,10 +172,15 @@ export async function initAppConfig(): Promise<AppConfig> {
     Object.assign(appConfig, data)
   } catch (error) {
     console.warn('[appConfig] load config.json failed, using fallback:', error)
-  } finally {
-    // 用运行时配置覆盖 axios 基础地址（开发环境保持 /api 走代理）。
-    http.defaults.baseURL = resolveApiBaseUrl()
   }
+
+  // 解析最终基础地址：测试环境探测 apiDomains（取第一个可达，最终兜底 preview），生产环境用 baseApi。
+  resolvedApiBase = appConfig.isTest
+    ? await resolveTestApiBase()
+    : appConfig.baseApi || appConfig.apiDomains[0] || ''
+
+  // 用运行时配置覆盖 axios 基础地址（开发环境保持 /api 走代理）。
+  http.defaults.baseURL = resolveApiBaseUrl()
   return appConfig
 }
 

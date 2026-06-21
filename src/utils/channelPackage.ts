@@ -1,8 +1,27 @@
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
-export const CHANNEL_MAIN_DOMAIN = (
-  import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || ''
-).trim().toLowerCase()
+import { getActiveApiBase } from '@/utils/appConfig'
+
+// 渠道包主域名：从运行时当前生效的 API（getActiveApiBase，测试环境为探测后的可用地址）推导主机名，
+// 回退到构建期 env。调用时读取以等待 config.json 异步加载与探测完成。
+// 例：当前 API=https://preview.trackyourchoice.com/api → preview.trackyourchoice.com。
+export function getChannelMainDomain(): string {
+  const fromApi = extractHostname(getActiveApiBase())
+  const raw = fromApi || import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || ''
+  return raw.trim().toLowerCase()
+}
+
+function extractHostname(url: unknown): string {
+  const value = typeof url === 'string' ? url.trim() : ''
+  if (!value) {
+    return ''
+  }
+  try {
+    return new URL(value).hostname
+  } catch {
+    return ''
+  }
+}
 // const TEST_CHANNEL_INVITE_CODE = 'DYyhWokm'
 
 interface ParsedQueryParams {
@@ -40,9 +59,11 @@ export function isChannelPackageHost(hostname: string = window.location.hostname
     return false
   }
 
-  return (
-    normalizedHost !== CHANNEL_MAIN_DOMAIN && normalizedHost.endsWith(`.${CHANNEL_MAIN_DOMAIN}`)
-  )
+  const mainDomain = getChannelMainDomain()
+  if (!mainDomain) {
+    return false
+  }
+  return normalizedHost !== mainDomain && normalizedHost.endsWith(`.${mainDomain}`)
 }
 
 /**
@@ -65,7 +86,7 @@ export function copyStorageToMainDomain(): void {
   }
   localStorage.clear()
   const currentUrl = new URL(window.location.href)
-  const targetUrl = `${currentUrl.protocol}//${CHANNEL_MAIN_DOMAIN}/#/`
+  const targetUrl = `${currentUrl.protocol}//${getChannelMainDomain()}/#/`
   // 将数据编码到 URL 参数中
   if (Object.keys(items).length > 0) {
     try {
@@ -133,7 +154,7 @@ export function extractInviteCodeFromSubdomain(hostname: string = window.locatio
     return ''
   }
 
-  const suffix = `.${CHANNEL_MAIN_DOMAIN}`
+  const suffix = `.${getChannelMainDomain()}`
   const withoutSuffix = normalizedHost.slice(0, -suffix.length)
   const firstLabel = withoutSuffix.split('.')[0] || ''
   return readString(firstLabel)
@@ -224,10 +245,20 @@ export function shouldOpenRegisterMode(): boolean {
 export function buildChannelClubInviteUrl(inviteCode?: string): string {
   const currentUrl = new URL(window.location.href)
   const code = readString(inviteCode)
-  if (code) {
-    return `${currentUrl.origin}/#/?invite_code=${encodeURIComponent(code)}`
+  if (!code) {
+    return `${currentUrl.origin}`
   }
-  return `${currentUrl.origin}`
+
+  // 邀请码作为子域名前缀：https://<邀请码>.<主域名>/#/guest/home（依赖泛域名解析）。
+  // 主域名取自 config.json 的 baseApi（生产/测试环境），接收端 extractInviteCodeFromSubdomain 据此还原邀请码。
+  const mainDomain = getChannelMainDomain()
+  if (mainDomain) {
+    return `${currentUrl.protocol}//${code}.${mainDomain}/#/guest/home`
+  }
+
+  // 兜底：没有可用主域名时（如本地开发），使用当前页面 host。
+  const portSuffix = currentUrl.port ? `:${currentUrl.port}` : ''
+  return `${currentUrl.protocol}//${code}.${currentUrl.hostname}${portSuffix}/#/guest/home`
 }
 
 export function buildChannelAgentInviteUrl(agentInviteCode: string): string {
@@ -258,6 +289,6 @@ export function buildChannelRegisterUrl(options?: {
 
   // 邀请码只放在 ?i= 参数里，不能再拼到域名前缀（否则会生成不存在的子域名导致无法访问）。
   // 旧逻辑（保留备查）：把邀请码拼成子域名，会生成不存在的域名导致无法访问。
-  // return `${currentUrl.protocol}//${inviteCode}.${currentUrl.hostname}/#/?${nextParams.toString()}`
-  return `${currentUrl.origin}/#/?${nextParams.toString()}`
+  return `${currentUrl.protocol}//${inviteCode}.${currentUrl.hostname}/#/?${nextParams.toString()}`
+  // return `${currentUrl.origin}/#/?${nextParams.toString()}`
 }

@@ -86,6 +86,7 @@ const csChatProps = ref({
   tribeId: 0,
   supportUserId: 0,
   orderData: null as any,
+  type: 'recharge' as 'recharge' | 'withdraw',
 })
 
 const onlinePopupOpen = ref(false)
@@ -204,6 +205,7 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
           tribeId: channel.tribe_id || 0,
           supportUserId: channel.support_user_id || 0,
           orderData: result,
+          type: 'recharge',
         }
         csChatPopupOpen.value = true
       } else {
@@ -435,6 +437,7 @@ async function onWithdrawCsChat(orderData: Record<string, unknown>) {
         tribeId: channel.tribe_id || 0,
         supportUserId: channel.support_user_id || 0,
         orderData,
+        type: 'withdraw',
       }
       csChatPopupOpen.value = true
     }
@@ -536,6 +539,7 @@ async function onCsSubmit(displayPayPrice?: number) {
               gold_num: goldCount,
               pay_price: apiPayPrice,
             },
+            type: 'recharge',
           }
           csChatPopupOpen.value = true
           await walletStore.refreshPendingCsOrder()
@@ -762,6 +766,7 @@ async function onUsdtSubmit(type: number) {
       :tribe-id="csChatProps.tribeId"
       :support-user-id="csChatProps.supportUserId"
       :order-data="csChatProps.orderData"
+      :order-type="csChatProps.type"
       @close="csChatPopupOpen = false"
     />
 

@@ -11,17 +11,31 @@ import sendIcon from '@/assets/icons/wallet/ic_send_chat.png'
 import addIcon from '@/assets/icons/wallet/ic_add_chat.png'
 import closeIcon from '@/assets/icons/wallet/ic_close_chat.png'
 
-const props = defineProps<{
-  tribeId: number
-  supportUserId: number
-  orderData: any
-}>()
+const props = withDefaults(
+  defineProps<{
+    tribeId: number
+    supportUserId: number
+    orderData: any
+    /** 区分充值/提现，决定交易气泡的文案 */
+    orderType?: 'recharge' | 'withdraw'
+  }>(),
+  {
+    orderType: 'recharge',
+  },
+)
 
 const emit = defineEmits<{
   close: []
 }>()
 
 const userInfoStore = useUserInfoStore()
+
+// 充值用 充值/付款 文案；提现用 提现/收款 文案。
+const txLabels = computed(() =>
+  props.orderType === 'withdraw'
+    ? { user: '提现用户', coin: '提现联盟币', amount: '提现金额', payType: '收款类型' }
+    : { user: '充值用户', coin: '充值联盟币', amount: '充值金额', payType: '付款类型' },
+)
 const messages = ref<ChatSupportMessageListChatData[]>([])
 const inputText = ref('')
 const orderStatus = ref<number>(1)
@@ -199,10 +213,10 @@ onUnmounted(() => {
                 <div class="bubble-wrapper">
                   <div class="transaction-bubble">
                     <div class="bubble-content">
-                      <p>提现用户：{{ userInfoStore.userInfo?.user.nickname }}/ID{{ userInfoStore.userInfo?.user.userid }}</p>
-                      <p>提现联盟币：{{ (orderData.gold_num || orderData.order?.gold_num || 0) / 100 }}</p>
-                      <p>提现金额：{{ orderData.pay_price || orderData.order?.pay_price || orderData.order?.amount || orderData.amount || 0 }}</p>
-                      <p>收款类型：{{ orderData.usdt_address?.name || orderData.pay_type_name || '客服撮合' }}</p>
+                      <p>{{ txLabels.user }}：{{ userInfoStore.userInfo?.user.nickname }}/ID{{ userInfoStore.userInfo?.user.userid }}</p>
+                      <p>{{ txLabels.coin }}：{{ (orderData.gold_num || orderData.order?.gold_num || 0) / 100 }}</p>
+                      <p>{{ txLabels.amount }}：{{ orderData.pay_price || orderData.order?.pay_price || orderData.order?.amount || orderData.amount || 0 }}</p>
+                      <p>{{ txLabels.payType }}：{{ orderData.usdt_address?.name || orderData.pay_type_name || '客服撮合' }}</p>
                       <p>訂單號：{{ orderData.order_no || orderData.order?.order_no }}</p>
                       <p>申請時間：{{ new Date().toLocaleString() }}</p>
                     </div>

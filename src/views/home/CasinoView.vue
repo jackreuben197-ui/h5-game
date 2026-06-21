@@ -1052,6 +1052,7 @@ onActivated(async () => {
   display: flex;
   align-items: center;
   gap: 0.26rem;
+  margin-right: 0.25rem;
 }
 
 /* ── Popular Banner Section ──────────────────────────────────────────────── */

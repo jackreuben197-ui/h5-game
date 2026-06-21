@@ -611,6 +611,7 @@ function handleOpenCustomerService() {
   display: flex;
   align-items: center;
   gap: 0.26rem;
+  margin-right: 0.25rem;
 }
 
 .mtt-content {
@@ -618,7 +619,7 @@ function handleOpenCustomerService() {
   z-index: 1;
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
-  padding: 0.4rem 0.38rem 2.5333rem;
+  padding: 0.34rem 0.38rem 2.2rem;
   backdrop-filter: blur(0.3533rem) saturate(1.04);
 }
 
@@ -668,14 +669,14 @@ function handleOpenCustomerService() {
 .mtt-grid--sm {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.16rem;
+  gap: 0.26rem;
 }
 
 /* 2列 */
 .mtt-grid--md {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.13rem;
+  gap: 0.26rem;
 }
 
 /* 1列 */

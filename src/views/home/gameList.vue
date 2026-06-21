@@ -399,20 +399,24 @@ function handleOpenCustomerService(): void {
   display: flex;
   align-items: center;
   gap: 0.26rem;
+  margin-right: 0.25rem;
 }
 
 .group-list {
   position: relative;
   z-index: 1;
-  margin-top: 0;
-  padding-top: 0;
+  margin-top: -0.03rem;
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
-  padding-right: 0.38rem;
-  padding-bottom: 0.5rem;
-  padding-left: 0.38rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  align-self: stretch;
+  border-radius: 0.533rem 0.533rem 0 0;
+  padding: 0.2rem 0 0.8rem;
   background: rgba(34, 34, 34, 0.5);
-  backdrop-filter: blur(0.3533rem) saturate(1.04);
+  backdrop-filter: blur(0.2213rem);
 }
 
 .empty-wrap {

@@ -35,6 +35,11 @@ type ChannelId = 'bankcard' | 'customercare'
 const activeChannel = ref<ChannelId>('bankcard')
 const isCustomerCare = computed(() => activeChannel.value === 'customercare')
 
+const paymentChannels: { id: ChannelId; image: string; label: string; key: string }[] = [
+  { id: 'bankcard', image: icBankcard, label: '银行卡', key: 'Wallet_BankCard' },
+  { id: 'customercare', image: icSupportService, label: '客服', key: 'Wallet_CsWithdraw' },
+]
+
 const withdrawTypes = ref<OnlineWithdrawTypeItem[]>([])
 const selectedWithdrawType = ref<OnlineWithdrawTypeItem | null>(null)
 
@@ -59,7 +64,7 @@ const bankWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
 )
 
 const csWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
-  withdrawTypes.value.filter((wt) => wt.status === 1 && !isBankcardWithdrawType(wt)),
+  withdrawTypes.value.filter((wt) => wt.status === 1 && wt.account_type === 0),
 )
 
 const filteredWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
@@ -169,10 +174,6 @@ async function fetchPaymentInfo(): Promise<void> {
 }
 
 function selectWithdrawType(wt: OnlineWithdrawTypeItem): void {
-  if (isCustomerCare.value) {
-    activeChannel.value = 'bankcard'
-    void fetchPaymentInfo()
-  }
   selectedWithdrawType.value = wt
 }
 
@@ -278,32 +279,18 @@ watch(filteredWithdrawTypes, (list) => {
         </button>
       </div>
 
-      <div class="wf__type-scroll">
+      <div class="wf__channels">
         <div
-          v-for="wt in bankWithdrawTypes"
-          :key="wt.id"
+          v-for="ch in paymentChannels"
+          :key="ch.id"
           class="wf__type-card"
-          :class="{ 'wf__type-card--active': !isCustomerCare && selectedWithdrawType?.id === wt.id }"
-          @click="selectWithdrawType(wt)"
+          :class="{ 'wf__type-card--active': activeChannel === ch.id }"
+          @click="applyChannel(ch.id)"
         >
-          <img class="wf__type-card-icon" :src="icBankcard" alt="" />
+          <img class="wf__type-card-icon" :src="ch.image" alt="" />
           <div class="wf__type-card-label">
             <div class="wf__type-card-text">
-              <span class="wf__type-card-name">{{ wt.name || tx('Wallet_BankCard', '银行卡') }}</span>
-              <span class="wf__type-card-sub">{{ tx('Wallet_Payment', '支付') }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div
-          class="wf__type-card"
-          :class="{ 'wf__type-card--active': isCustomerCare }"
-          @click="applyChannel('customercare')"
-        >
-          <img :src="icSupportService" alt="" class="wf__type-card-icon" />
-          <div class="wf__type-card-label">
-            <div class="wf__type-card-text">
-              <span class="wf__type-card-name">{{ tx('Wallet_CsWithdraw', '客服') }}</span>
+              <span class="wf__type-card-name">{{ tx(ch.key, ch.label) }}</span>
             </div>
           </div>
         </div>
@@ -337,8 +324,28 @@ watch(filteredWithdrawTypes, (list) => {
         </div>
       </template>
 
-      <!-- 客服渠道：可选择的提现方式 (usdt提现、撮合提现 等) -->
-      <template v-else>
+    </div>
+
+    <div class="wf__methods">
+      <div v-if="!isCustomerCare && bankWithdrawTypes.length > 0" class="wf__type-scroll">
+        <div
+          v-for="wt in bankWithdrawTypes"
+          :key="wt.id"
+          class="wf__type-card"
+          :class="{ 'wf__type-card--active': selectedWithdrawType?.id === wt.id }"
+          @click="selectWithdrawType(wt)"
+        >
+          <img class="wf__type-card-icon" :src="icBankcard" alt="" />
+          <div class="wf__type-card-label">
+            <div class="wf__type-card-text">
+              <span class="wf__type-card-name">{{ wt.name || tx('Wallet_BankCard', '银行卡') }}</span>
+              <span class="wf__type-card-sub">{{ tx('Wallet_Payment', '支付') }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <template v-else-if="isCustomerCare">
         <div v-if="csWithdrawTypes.length > 0" class="wf__type-scroll">
           <div
             v-for="wt in csWithdrawTypes"
@@ -360,7 +367,6 @@ watch(filteredWithdrawTypes, (list) => {
           {{ tx('Wallet_NoWithdrawMethod', '暂无可用提现方式') }}
         </div>
       </template>
-
     </div>
 
     <div class="wf__card wf__amount-card">
@@ -419,7 +425,7 @@ watch(filteredWithdrawTypes, (list) => {
 .wf__card {
   position: relative;
   padding: 0.55rem 0.42rem;
-  border: 0.016rem solid rgba(242, 242, 242, 0.7);
+  border: 0.016rem solid rgba(242, 242, 242, 0.3);
   border-radius: 0.94rem;
   box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
   display: flex;
@@ -489,6 +495,21 @@ watch(filteredWithdrawTypes, (list) => {
 }
 
 // Type cards horizontal scroll
+.wf__channels {
+  display: flex;
+  gap: 0.3rem;
+  justify-content: flex-start;
+  margin-bottom: 0.3rem;
+}
+
+.wf__methods {
+  margin-bottom: 0.3rem;
+}
+
+.wf__channels .wf__type-card-name {
+  font-size: 0.3rem;
+}
+
 .wf__type-scroll {
   display: flex;
   gap: 0.3rem;
@@ -598,14 +619,7 @@ watch(filteredWithdrawTypes, (list) => {
   gap: 0.2rem;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  padding: 0.12rem 0.08rem;
-  border-radius: 0.4rem;
-  border: 0.016rem solid transparent;
-  transition: background 0.15s, border-color 0.15s;
-  &--active {
-    background: rgba(255, 255, 255, 0.16);
-    border-color: rgba(255, 255, 255, 0.7);
-  }
+  padding: 0 0.08rem;
 }
 
 .wf__acct-icon {

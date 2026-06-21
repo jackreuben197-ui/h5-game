@@ -331,7 +331,7 @@ function startOfDay(date: Date): Date {
   padding: 0.64256rem 0.53211rem 0.5472rem;
   border-radius: 0.84459rem 0.84459rem 0 0;
   border: 0.02rem solid rgba(249, 249, 249, 0.14);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(18, 18, 22, 0.3);
   backdrop-filter: blur(8.5px);
   -webkit-backdrop-filter: blur(8.5px);
 }

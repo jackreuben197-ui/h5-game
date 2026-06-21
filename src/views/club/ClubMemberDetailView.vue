@@ -14,7 +14,7 @@ import {
 } from '@/api/org'
 import { postStatsClubDataStatsUserDetailApi } from '@/api/stats'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-import imgAvatar from '@/assets/images/default_avatar.png'
+import imgAvatar from '@/assets/images/default_avatar_for_club.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgBalance from '@/assets/icons/icon_balance.png'

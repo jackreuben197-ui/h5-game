@@ -150,6 +150,13 @@ onMounted(() => {
   background-repeat: no-repeat;
 }
 
+.action-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.26rem;
+  margin-right: 0.25rem;
+}
+
 .content-wrap {
   position: relative;
   padding: 0 0.49rem;

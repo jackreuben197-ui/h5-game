@@ -439,7 +439,7 @@ const joinGame = async (apiType: string, gameType: string, roomId = 0, clubId?: 
   display: flex;
   gap: 0.1rem;
   align-items: center;
-  margin-right: 0.2rem;
+  margin-right: 0.25rem;
 }
 
 .page-content {

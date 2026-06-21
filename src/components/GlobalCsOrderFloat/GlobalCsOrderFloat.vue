@@ -12,7 +12,7 @@ const walletStore = useWalletStore()
 
 const hasSeen = ref(false)
 const csChatOpen = ref(false)
-const csChatProps = ref({ tribeId: 0, supportUserId: 0, orderData: null as any })
+const csChatProps = ref({ tribeId: 0, supportUserId: 0, orderData: null as any, type: 'recharge' as 'recharge' | 'withdraw' })
 
 const isLoggedIn = computed(() => !!userInfoStore.userInfo?.user?.p_u_id)
 
@@ -32,6 +32,9 @@ async function openChat() {
   hasSeen.value = true
   const order = activeCsOrder.value
   if (!order) return
+
+  // recharge 优先（与 activeCsOrder 的取值逻辑一致），否则为提现。
+  const orderType: 'recharge' | 'withdraw' = walletStore.pendingCsRechargeOrder ? 'recharge' : 'withdraw'
 
   const qrCode =
     (order as any).qrcode || (order as any).qr_code || (order as any).pay_type_qr_code || ''
@@ -60,6 +63,7 @@ async function openChat() {
         tribeId: channel.tribe_id || 0,
         supportUserId: channel.support_user_id || 0,
         orderData,
+        type: orderType,
       }
       csChatOpen.value = true
     }
@@ -105,6 +109,7 @@ watch(isLoggedIn, (val) => {
       :tribe-id="csChatProps.tribeId"
       :support-user-id="csChatProps.supportUserId"
       :order-data="csChatProps.orderData"
+      :order-type="csChatProps.type"
       @close="csChatOpen = false"
     />
   </Teleport>

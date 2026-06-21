@@ -719,13 +719,12 @@ onBeforeUnmount(() => {
           <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
           <div class="zone-info">
             <div class="zone-header">
-              <span class="zone-title"> {{ t('UIHomeMahjongArea') }} </span>
+              <span class="zone-title"> 娱乐场 </span>
               <img class="zone-mini-icon" src="@/assets/icons/game_zone_mahjong_mini.png" alt="" />
             </div>
-            <div class="zone-desc">
-              <div class="mr-4">{{ t('Mahjong_BloodFight') }}</div>
-              <div class="mr-4">{{ t('Mahjong_BloodRiver') }}</div>
-              <div class="mr-4">{{ t('Mahjong_Standard') }}</div>
+            <div class="zone-desc casino-desc">
+              <p>真人视讯 电子娱乐 体育竞猜</p>
+              <p>全球一线厂商</p>
             </div>
           </div>
           <div class="zone-online-bar">
@@ -1018,6 +1017,7 @@ onBeforeUnmount(() => {
   gap: 0.15rem;
   width: max-content;
   padding-left: 0.4rem;
+  padding-right: 0.4rem;
 }
 
 .game-scroll-card {
@@ -1055,6 +1055,21 @@ onBeforeUnmount(() => {
 
 .game-card-mahjong {
   background: linear-gradient(135deg, #FF9CAB 0%, #DF2340 100%);
+
+  .zone-info {
+    position: relative;
+  }
+
+  .casino-desc {
+    text-shadow: 0 0.02rem 0.06rem rgba(0, 0, 0, 0.3);
+
+    p {
+      margin: 0;
+      white-space: nowrap;
+      font-size: 0.2rem;
+      line-height: 1.5;
+    }
+  }
 }
 
 .zone-lg-bg {
@@ -1203,6 +1218,7 @@ onBeforeUnmount(() => {
   gap: 0.15rem;
   padding-bottom: 0.1rem;
   padding-left: 0.4rem;
+  padding-right: 0.4rem;
   width: max-content;
 }
 

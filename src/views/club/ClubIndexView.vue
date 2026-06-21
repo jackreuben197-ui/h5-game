@@ -40,7 +40,8 @@ import { getLocale, t } from '@/i18n'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
 import twoPersonIcon from '@/assets/icons/2person.png'
-import clubCoverAvatar from '@/assets/images/default_avatar.png'
+import clubDetailButtonIcon from '@/assets/icons/img_club_detail_button.png'
+import clubCoverAvatar from '@/assets/images/default_avatar_for_club.png'
 import quickSafetyBg from '@/assets/images/club_header_quick_safety.png'
 import pokerMiniIcon from '@/assets/icons/game_zone_mtt_mini.png'
 import mahjongMiniIcon from '@/assets/icons/game_zone_mahjong_mini.png'
@@ -1371,9 +1372,7 @@ const handleBack = () => {
           aria-label="更多操作"
           @click="handleFloatingMenuClick"
         >
-          <span></span>
-          <span></span>
-          <span></span>
+          <img :src="clubDetailButtonIcon" alt="" />
         </button>
       </div>
 
@@ -1941,13 +1940,14 @@ const handleBack = () => {
 
 .mtt-group {
   margin-bottom: 0.48rem;
+  padding: 0 0.4rem;
 }
 
 .mtt-group__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 0 0.4rem 0.32rem;
+  margin: 0 0 0.32rem;
 }
 
 .mtt-group__title {
@@ -1980,13 +1980,13 @@ const handleBack = () => {
 .mtt-grid--sm {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.16rem;
+  gap: 0.26rem;
 }
 
 .mtt-grid--md {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.13rem;
+  gap: 0.26rem;
 }
 
 .mtt-grid--lg {
@@ -2024,17 +2024,15 @@ const handleBack = () => {
 .floating-menu-btn {
   margin-left: -0.58rem;
   margin-bottom: 0.8rem;
-  width: 1.104rem;
-  height: 1.104rem;
+  margin-right: 0.3rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
   border: none;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 25%, #056a57 0%, #01382f 75%);
+  background: transparent;
   display: inline-flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.08rem;
-  box-shadow: 0 0.14rem 0.3rem rgba(0, 0, 0, 0.38);
   z-index: 99;
 }
 
@@ -2042,11 +2040,10 @@ const handleBack = () => {
   margin-left: auto;
 }
 
-.floating-menu-btn span {
-  width: 0.25rem;
-  height: 0.06rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.95);
+.floating-menu-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .empty-wrap {

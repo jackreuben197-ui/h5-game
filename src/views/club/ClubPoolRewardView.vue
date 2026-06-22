@@ -2,6 +2,8 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import cardBgUrl from '@/assets/icons/ic_jackpot_card_bg.png'
+import iconTag from '@/assets/icons/ic_card_jackpot.svg'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -87,7 +89,7 @@ function onOpenRecord(item: PoolRewardItem): void {
           @keydown.enter="onOpenRecord(item)"
           @keydown.space.prevent="onOpenRecord(item)"
         >
-          <div class="card-bg"></div>
+          <div class="card-bg" :style="{ backgroundImage: `url(${cardBgUrl})` }"></div>
 
           <div class="jackpot-badge">
             <span>JACKPOT</span>
@@ -97,7 +99,7 @@ function onOpenRecord(item: PoolRewardItem): void {
             <p class="game-name">{{ item.name }}</p>
             <div class="pool-tags">
               <span v-for="tag in item.tags" :key="`${item.id}-${tag}`" class="tag-item">
-                <span class="suit-icon">♠</span>
+                <img class="tag-icon" :src="iconTag" alt="" aria-hidden="true" />
                 {{ tag }}
               </span>
             </div>
@@ -204,9 +206,11 @@ function onOpenRecord(item: PoolRewardItem): void {
   width: 8.7753rem;
   height: 2.2551rem;
   border-radius: 2.0848rem;
-  border: 0.0267rem solid #fff;
-  background: rgba(58, 149, 220, 0.6);
-  backdrop-filter: blur(0.1098rem);
+  border: 0.02rem solid rgba(249, 249, 249, 0.1);
+  background-color: rgba(170, 170, 170, 0.1);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   overflow: hidden;
 }
 
@@ -283,14 +287,11 @@ function onOpenRecord(item: PoolRewardItem): void {
   white-space: nowrap;
 }
 
-.suit-icon {
+.tag-icon {
   display: inline-block;
   width: 0.24rem;
   height: 0.2667rem;
-  font-size: 0.24rem;
-  line-height: 0.2667rem;
-  text-align: center;
-  color: #fff;
+  object-fit: contain;
   flex-shrink: 0;
 }
 

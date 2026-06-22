@@ -5,6 +5,10 @@ import { showFailToast, showSuccessToast } from 'vant'
 import { postOrgClubJackpotTemplateDelApi, postOrgClubJackpotTemplateListApi } from '@/api/org'
 import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
 import iconArrowRight from '@/assets/icons/ic_arrow_rightt.svg'
+import iconEdit from '@/assets/icons/ic_jackpot_edit.svg'
+import iconDelete from '@/assets/icons/icon_delete.svg'
+import cardBgUrl from '@/assets/icons/ic_jackpot_card_bg.png'
+import iconTag from '@/assets/icons/ic_card_jackpot.svg'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -228,7 +232,11 @@ function goPoolReward(): void {
     <section class="jackpot-body">
       <ul v-if="hasItems" class="jackpot-list">
         <li v-for="item in templates" :key="item.id" class="jackpot-card">
-          <div class="card-bg" aria-hidden="true"></div>
+          <div
+            class="card-bg"
+            :style="{ backgroundImage: `url(${cardBgUrl})` }"
+            aria-hidden="true"
+          ></div>
           <div class="jackpot-badge" aria-hidden="true"><span>JACKPOT</span></div>
 
           <div class="jackpot-info">
@@ -236,12 +244,12 @@ function goPoolReward(): void {
             <div class="tag-rows">
               <div class="tag-row">
                 <span v-for="tag in item.gameTags.slice(0, 2)" :key="tag" class="tag-item">
-                  <i class="tag-icon" aria-hidden="true"></i>{{ tag }}
+                  <img class="tag-icon" :src="iconTag" alt="" aria-hidden="true" />{{ tag }}
                 </span>
               </div>
               <div v-if="item.gameTags.length > 2" class="tag-row">
                 <span v-for="tag in item.gameTags.slice(2)" :key="`r2-${tag}`" class="tag-item">
-                  <i class="tag-icon" aria-hidden="true"></i>{{ tag }}
+                  <img class="tag-icon" :src="iconTag" alt="" aria-hidden="true" />{{ tag }}
                 </span>
               </div>
             </div>
@@ -251,7 +259,7 @@ function goPoolReward(): void {
             <div class="jp-badge">JP {{ item.jpAmount }}</div>
             <div class="action-row">
               <button type="button" class="action-btn" aria-label="编辑" @click.stop="onEdit(item)">
-                <i class="action-icon" aria-hidden="true">✎</i>
+                <img class="action-icon" :src="iconEdit" alt="" aria-hidden="true" />
                 <span class="action-label">编辑</span>
               </button>
               <button
@@ -260,7 +268,7 @@ function goPoolReward(): void {
                 aria-label="删除"
                 @click.stop="onDelete(item)"
               >
-                <i class="action-icon" aria-hidden="true">✕</i>
+                <img class="action-icon" :src="iconDelete" alt="" aria-hidden="true" />
                 <span class="action-label">删除</span>
               </button>
             </div>
@@ -401,11 +409,11 @@ function goPoolReward(): void {
   right: 0;
   height: 2.2551rem;
   border-radius: 2.0848rem;
-  background:
-    radial-gradient(74% 96% at 42% 42%, rgba(104, 75, 255, 0.3) 0%, rgba(104, 75, 255, 0) 62%),
-    rgba(5, 13, 231, 0.6);
-  backdrop-filter: blur(4.1px);
-  border: 0.0267rem solid rgba(255, 255, 255, 0.96);
+  background-color: rgba(170, 170, 170, 0.1);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 0.02rem solid rgba(249, 249, 249, 0.1);
   overflow: hidden;
 }
 
@@ -427,7 +435,7 @@ function goPoolReward(): void {
   height: 1.4888rem;
   border-radius: 1.7372rem;
   border: 0.0253rem solid rgba(242, 242, 242, 0.4);
-  background: #7a45d6;
+  background: #3a95dc;
   backdrop-filter: blur(10.5px);
   box-shadow: 0.0913rem 0.1141rem 0.0913rem rgba(0, 0, 0, 0.25);
   display: flex;
@@ -491,13 +499,11 @@ function goPoolReward(): void {
 }
 
 .tag-icon {
-  font-style: normal;
   display: inline-block;
   flex-shrink: 0;
   width: 0.24rem;
   height: 0.2667rem;
-  background: linear-gradient(180deg, rgba(190, 232, 255, 0.95), rgba(136, 188, 255, 0.85));
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  object-fit: contain;
 }
 
 /* Right section: JP badge + action buttons */
@@ -518,7 +524,7 @@ function goPoolReward(): void {
   width: 1.84rem;
   height: 0.4755rem;
   border-radius: 0.2232rem;
-  background: linear-gradient(180deg, #69ffe6, #079a8b);
+  background: linear-gradient(180deg, #69beff, #3a95dc);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -527,20 +533,26 @@ function goPoolReward(): void {
   color: #fff;
   letter-spacing: 0.0059rem;
   white-space: nowrap;
+  margin-right: 0.8rem;
 }
 
 .action-row {
   display: flex;
   align-items: center;
   gap: 0.2025rem;
+
+  margin-right: 0.8rem;
+  margin-top: 0.1rem;
 }
 
 .action-btn {
   width: 0.6218rem;
   height: 0.6218rem;
   border-radius: 0.4223rem;
-  border: 0.0112rem solid rgba(242, 242, 242, 0.4);
-  background: rgba(165, 165, 165, 0.8);
+  border: 0.02rem solid rgba(249, 249, 249, 0.1);
+  background: rgba(170, 170, 170, 0.1);
+  backdrop-filter: blur(18.5px);
+  -webkit-backdrop-filter: blur(18.5px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -548,17 +560,13 @@ function goPoolReward(): void {
   padding: 0.05rem 0 0.02rem;
   gap: 0.01rem;
   cursor: pointer;
-  box-shadow:
-    0 0.028rem 0.028rem rgba(0, 0, 0, 0.25),
-    inset 0 0 0.0559rem rgba(0, 0, 0, 0.8),
-    inset 0 0 0.1117rem rgba(242, 242, 242, 0.9);
 }
 
 .action-icon {
-  font-style: normal;
-  font-size: 0.1867rem;
-  color: #fff;
-  line-height: 1;
+  width: 0.24rem;
+  height: 0.24rem;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .action-label {

@@ -15,6 +15,7 @@ import imgChips from '@/assets/icons/icon_chips.png'
 import imgClubRoleIcon from '@/assets/icons/club_role_icon.png'
 import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shield.png'
 import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.png'
+import iconBoxClubT from '@/assets/icons/icon_box_club_t.png'
 import imgClubBannerFigma from '@/assets/images/club_banner_bg.png'
 import imgClubLogo from '@/assets/images/club_default_logo.png'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
@@ -24,8 +25,9 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import { readClubListCache, writeClubListCache } from '@/utils/userClubListCache'
+import { t } from '@/i18n'
 
-type QuickActionKind = 'create-club' | 'club-panel' | 'create-union'
+type QuickActionKind = 'create-club' | 'club-panel' | 'create-union' | 'club-career'
 
 interface QuickActionItem {
   id: number
@@ -64,8 +66,8 @@ const fallbackBanners = [imgClubBannerFigma]
 const isChannelPackage = isChannelPackageHost()
 
 const quickActions: QuickActionItem[] = [
-  { id: 1, title: '创建俱乐部', kind: 'create-club' },
-  { id: 2, title: '创建俱乐部', kind: 'club-panel', hidden: true },
+  { id: 1, title: t('UIClub_CreateClub'), kind: 'create-club' },
+  { id: 2, title: t('PageMineClubCareer'), kind: 'club-career' },
 ]
 
 const clubList = computed<ClubCardItem[]>(() => {
@@ -157,7 +159,7 @@ function onQuickAction(itemId: number): void {
   }
 
   if (itemId === 2) {
-    showFailToast('功能开发中')
+    void router.push('/mine/club-career')
     return
   }
 
@@ -373,6 +375,9 @@ onMounted(() => {
           <template v-else-if="item.kind === 'club-panel'">
             <img class="icon-board-chart" :src="imgQuickActionBoardChart" alt="" />
           </template>
+          <template v-else-if="item.kind === 'club-career'">
+            <img class="icon-board-chart" :src="iconBoxClubT" width="61" height="61" alt="" />
+          </template>
         </span>
         <span class="action-text">{{ item.title }}</span>
       </button>
@@ -525,7 +530,8 @@ onMounted(() => {
 .bg-shade {
   position: absolute;
   inset: 0;
-  background: radial-gradient(
+  background:
+    radial-gradient(
       120% 64% at 50% -8%,
       rgba(89, 36, 151, 0.44),
       rgba(23, 12, 53, 0.82) 46%,
@@ -596,7 +602,8 @@ onMounted(() => {
     rgba(178, 76, 51, 0.96) 72%,
     rgba(141, 59, 84, 0.96) 100%
   );
-  box-shadow: inset 0 0.01rem 0.045rem rgba(255, 255, 255, 0.35),
+  box-shadow:
+    inset 0 0.01rem 0.045rem rgba(255, 255, 255, 0.35),
     inset 0 -0.04rem 0.08rem rgba(70, 13, 34, 0.35);
   overflow: hidden;
 
@@ -675,8 +682,11 @@ onMounted(() => {
   justify-content: center;
   color: #fff;
   background: rgba(165, 165, 165, 0.1);
-  box-shadow: 0.018rem 0.022rem 0.036rem rgba(0, 0, 0, 0.25), inset 0 0 0.045rem rgba(0, 0, 0, 1),
-    inset 0.006rem 0.006rem 0.045rem rgba(0, 0, 0, 1), inset 0 0 0.09rem rgba(242, 242, 242, 0.9);
+  box-shadow:
+    0.018rem 0.022rem 0.036rem rgba(0, 0, 0, 0.25),
+    inset 0 0 0.045rem rgba(0, 0, 0, 1),
+    inset 0.006rem 0.006rem 0.045rem rgba(0, 0, 0, 1),
+    inset 0 0 0.09rem rgba(242, 242, 242, 0.9);
   overflow: hidden;
 
   &::before {
@@ -842,7 +852,9 @@ onMounted(() => {
   border-radius: 0.458rem;
   object-fit: cover;
   border: 0.01rem solid rgba(255, 255, 255, 0.28);
-  box-shadow: 0 0.08rem 0.22rem rgba(8, 8, 8, 0.3), inset 0 0 0.02rem rgba(255, 255, 255, 0.24);
+  box-shadow:
+    0 0.08rem 0.22rem rgba(8, 8, 8, 0.3),
+    inset 0 0 0.02rem rgba(255, 255, 255, 0.24);
 }
 
 .club-meta {
@@ -975,8 +987,11 @@ onMounted(() => {
       rgba(255, 255, 255, 0.5)
     )
     border-box;
-  box-shadow: 0.02rem 0.025rem 0.04rem rgba(0, 0, 0, 0.25), inset 0 0 0.05rem rgba(0, 0, 0, 1),
-    inset 0.007rem 0.007rem 0.05rem rgba(0, 0, 0, 1), inset 0 0 0.1rem rgba(242, 242, 242, 0.9);
+  box-shadow:
+    0.02rem 0.025rem 0.04rem rgba(0, 0, 0, 0.25),
+    inset 0 0 0.05rem rgba(0, 0, 0, 1),
+    inset 0.007rem 0.007rem 0.05rem rgba(0, 0, 0, 1),
+    inset 0 0 0.1rem rgba(242, 242, 242, 0.9);
 
   &::before {
     content: '';
@@ -1005,10 +1020,12 @@ onMounted(() => {
   height: 0.913rem;
   border-radius: 0.29rem 0.29rem 0.04rem 0.04rem;
   border: 0.01rem solid rgba(236, 236, 247, 0.24);
-  background: linear-gradient(180deg, rgba(123, 118, 139, 0.36), rgba(83, 79, 99, 0.22)),
+  background:
+    linear-gradient(180deg, rgba(123, 118, 139, 0.36), rgba(83, 79, 99, 0.22)),
     rgba(48, 44, 64, 0.32);
   backdrop-filter: blur(0.18rem);
-  box-shadow: inset 0 0.02rem 0.06rem rgba(255, 255, 255, 0.12),
+  box-shadow:
+    inset 0 0.02rem 0.06rem rgba(255, 255, 255, 0.12),
     0 0.06rem 0.12rem rgba(11, 10, 18, 0.22);
 }
 
@@ -1051,10 +1068,13 @@ onMounted(() => {
   padding: 0.42rem;
   border-radius: 0.97rem;
   border: 0.025rem solid rgba(255, 255, 255, 0.38);
-  background: linear-gradient(126deg, rgba(142, 142, 142, 0.6) 0%, rgba(72, 72, 72, 0.92) 100%),
+  background:
+    linear-gradient(126deg, rgba(142, 142, 142, 0.6) 0%, rgba(72, 72, 72, 0.92) 100%),
     rgba(30, 30, 30, 0.65);
-  box-shadow: 0.09rem 0.11rem 0.18rem rgba(0, 0, 0, 0.25),
-    inset 0.05rem 0.1rem 0.4rem rgba(242, 242, 242, 0.25), inset 0 0 0.23rem rgba(0, 0, 0, 0.55);
+  box-shadow:
+    0.09rem 0.11rem 0.18rem rgba(0, 0, 0, 0.25),
+    inset 0.05rem 0.1rem 0.4rem rgba(242, 242, 242, 0.25),
+    inset 0 0 0.23rem rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(0.4rem);
 }
 

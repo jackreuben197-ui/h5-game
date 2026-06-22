@@ -91,7 +91,33 @@ const panelBackgroundStyle = computed(() => ({
   backgroundImage: `url(${sharpBgUrl})`,
 }))
 
+// 拖动相关状态
+const floatPosition = ref({ top: '52%' })
 const currentUserId = computed(() => Number(userInfoStore.userInfo?.user?.p_u_id || 0))
+let isDragging = false
+let startY = 0
+let startTop = 0
+
+function onFloatPointerDown(event: PointerEvent): void {
+  isDragging = true
+  startY = event.clientY
+  const computedTop = floatPosition.value.top
+  startTop = parseFloat(computedTop) || 52
+  ;(event.currentTarget as HTMLElement)?.setPointerCapture(event.pointerId)
+}
+
+function onFloatPointerMove(event: PointerEvent): void {
+  if (!isDragging) return
+  const deltaY = event.clientY - startY
+  const percentageDelta = (deltaY / window.innerHeight) * 100
+  const newTop = Math.max(5, Math.min(95, startTop + percentageDelta))
+  floatPosition.value = { top: `${newTop}%` }
+}
+
+function onFloatPointerUp(): void {
+  if (!isDragging) return
+  isDragging = false
+}
 
 function isCurrentUserSupportInChannel(
   channel: ChatSupportChannelListServiceData | null | undefined,
@@ -502,8 +528,8 @@ async function fetchChannel(): Promise<void> {
     requestedClubId <= 0
       ? sortedList[0] || null
       : requestedClubMissing.value
-      ? null
-      : pickChannel(sortedList)
+        ? null
+        : pickChannel(sortedList)
   const currentSupportId = Number(activeChannel.value?.support_user_id || 0)
   const byCurrent = sortedList.find(
     (item) =>
@@ -1320,8 +1346,16 @@ watch(
 </script>
 
 <template>
-  <div v-if="shouldShowFloat" class="support-float-wrap">
-    <button class="support-float-btn" type="button" @click="openPanelByFloat">
+  <div
+    v-if="shouldShowFloat"
+    class="support-float-wrap"
+    :style="floatPosition"
+    @pointerdown="onFloatPointerDown"
+    @pointermove="onFloatPointerMove"
+    @pointerup="onFloatPointerUp"
+    @pointerleave="onFloatPointerUp"
+  >
+    <button class="support-float-btn" type="button" @click.stop="openPanelByFloat">
       <span class="support-float-text">客服消息</span>
       <span class="support-float-dot"></span>
     </button>
@@ -1606,6 +1640,8 @@ watch(
   right: -0.01rem;
   top: 52%;
   z-index: 119;
+  touch-action: none;
+  transition: top 0.15s ease-out;
 }
 
 .support-float-btn {
@@ -1776,7 +1812,8 @@ watch(
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  box-shadow: inset 0.017rem 0.017rem 0 rgba(242, 242, 242, 0.2),
+  box-shadow:
+    inset 0.017rem 0.017rem 0 rgba(242, 242, 242, 0.2),
     0.05rem 0.06rem 0.1rem rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(0.245rem);
 }
@@ -2178,7 +2215,8 @@ watch(
   min-height: 4.06rem;
   border-radius: 0.97rem;
   padding: 0.7rem 0.52rem;
-  background: linear-gradient(
+  background:
+    linear-gradient(
       124deg,
       rgba(142, 142, 142, 0.6) 0%,
       rgba(103, 103, 103, 0.8) 46.8%,

@@ -606,7 +606,8 @@ onUnmounted(() => {
 }
 
 .input-bar-wrap {
-  width: 176.591px;
+  flex: 1;
+  min-width: 0;
   height: 37.534px;
   background: #0F0F0F;
   border-radius: 210.014px;

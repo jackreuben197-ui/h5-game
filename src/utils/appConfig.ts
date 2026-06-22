@@ -41,6 +41,8 @@ export interface AppConfig {
   uploadApi: string
   /** Web 部署地址 */
   webHost: string
+  /** 渠道包主域名（前端部署域名）：泛域名邀请链接与渠道包判定都基于它。例：ccsgame.recognitionway.com */
+  channelMainDomain: string
   /** ipa 下载地址 */
   ipaUrl: string
   /** 下载信息接口配置 */
@@ -58,6 +60,7 @@ export const appConfig: AppConfig = {
   oldBaseApi: '',
   uploadApi: '',
   webHost: '',
+  channelMainDomain: '',
   ipaUrl: '',
   downloadInfo: {
     endpoint: '',

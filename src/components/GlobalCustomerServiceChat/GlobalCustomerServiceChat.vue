@@ -18,7 +18,6 @@ import { decodeSupportMessageNotify } from '@/bridge/ws/supportMessageNotify'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
-import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import customerServiceIcon from '@/assets/icons/customerserviceicon.png'
 import avatarDefault from '@/assets/images/default_avatar.png'
 import {
@@ -86,10 +85,6 @@ let startingRecord = false
 const shouldShowFloat = computed(
   () => !!gameStore.sessionToken && !visible.value && hasUnread.value,
 )
-
-const panelBackgroundStyle = computed(() => ({
-  backgroundImage: `url(${sharpBgUrl})`,
-}))
 
 const currentUserId = computed(() => Number(userInfoStore.userInfo?.user?.p_u_id || 0))
 
@@ -1328,13 +1323,11 @@ watch(
   </div>
 
   <Teleport to="body">
-    <div v-if="visible" class="chat-overlay" @click="closePanel">
-      <div class="chat-mask"></div>
-      :style="panelBackgroundStyle"
-      <div class="chat-sheet" @click.stop>
-        <div class="chat-sheet-frost"></div>
-
-        <div class="chat-sheet-inner">
+    <div v-if="visible" class="chat-overlay">
+      <div class="chat-container">
+        <!-- 顶部透明区：点击关闭，露出后方游戏画面（与交易弹窗一致的玻璃观感） -->
+        <div class="visual-header" @click="closePanel"></div>
+        <div class="chat-main-body">
           <div class="agent-floating-card" role="tablist" aria-label="客服会话列表">
             <button
               v-for="channel in availableChannels"
@@ -1641,62 +1634,98 @@ watch(
   position: fixed;
   inset: 0;
   z-index: 200;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.chat-mask {
-  position: absolute;
-  inset: 0;
-  /* Figma 背景：财神等装饰图经亮度混合 + 大模糊后呈现为翡翠绿渐变 */
-  background: radial-gradient(
-    125% 90% at 50% 60%,
-    #229a7c 0%,
-    #198063 42%,
-    #126149 74%,
-    #0d4338 100%
-  );
-}
-
-.chat-sheet {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 15.2267rem;
-  max-height: calc(100dvh - env(safe-area-inset-top));
-  border-radius: 0.86rem 0.86rem 0 0;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  overflow: hidden;
-}
-
-.chat-sheet-frost {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.84);
-  backdrop-filter: blur(0.2rem);
-}
-
-.chat-sheet-inner {
-  position: relative;
-  z-index: 1;
-  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.agent-floating-card {
-  margin: 0.373rem;
-  min-height: 2.4986rem;
-  border-radius: 0.8533rem;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(51, 51, 51, 0.09) 100%);
-  padding: 0.373rem 0.5867rem 0.373rem 0.5867rem;
+.chat-container {
+  flex: 1;
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+/* 顶部透明区：点击关闭，露出后方游戏画面 */
+.visual-header {
+  height: 30vh;
+  flex-shrink: 0;
+  position: relative;
+}
+
+/* 玻璃质感主体：半透明深色磨砂 + 渐变描边，透出后方背景 */
+.chat-main-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  border-top-left-radius: 0.86rem;
+  border-top-right-radius: 0.86rem;
+  box-shadow: 0.07rem 0.09rem 0.14rem rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.chat-main-body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(23, 23, 23, 0.5);
+  backdrop-filter: blur(0.18rem);
+  -webkit-backdrop-filter: blur(0.18rem);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.chat-main-body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 0.0255rem;
+  background: linear-gradient(
+    180deg,
+    rgba(242, 242, 242, 0.4) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* 内容置于磨砂底之上 */
+.messages-wrap,
+.bottom-nav {
+  position: relative;
+  z-index: 3;
+}
+
+.agent-floating-card {
+  position: relative;
+  z-index: 3;
+  margin: 0.373rem;
+  border-radius: 32px;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(51, 51, 51, 0.09) 100%);
+  box-shadow: 0.07rem 0.09rem 0.14rem rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(0.18rem);
+  -webkit-backdrop-filter: blur(0.18rem);
+  padding: 8.4px 22px;
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
@@ -1713,8 +1742,8 @@ watch(
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.05rem;
-  min-width: 1.488rem;
+  gap: 4.8px;
+  flex-shrink: 0;
 }
 
 .agent-strip-item--active {
@@ -1726,12 +1755,15 @@ watch(
 }
 
 .agent-avatar-wrap {
-  width: 1.488rem;
-  height: 1.488rem;
+  width: 36.6px;
+  height: 36.6px;
   border-radius: 50%;
   overflow: visible;
   flex-shrink: 0;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 头像外圈：白→透明→灰的玻璃质感描边，所有头像通用 */
@@ -1740,7 +1772,7 @@ watch(
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  padding: 0.08rem;
+  padding: 1.8px;
   background: linear-gradient(
     150deg,
     rgba(255, 255, 255, 0.7) 0%,
@@ -1762,25 +1794,25 @@ watch(
 .agent-unread-badge {
   position: absolute;
   z-index: 2;
-  top: -0.05rem;
-  right: -0.16rem;
-  min-width: 0.45rem;
-  height: 0.45rem;
-  border-radius: 0.42rem;
-  padding: 0 0.14rem;
+  top: -3px;
+  right: -5px;
+  min-width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  padding: 0 4px;
   background: #ff132b;
   color: #fff;
   font-family: 'HONOR Sans CN';
-  font-size: 0.25rem;
+  font-size: 9px;
   font-weight: 700;
-  line-height: 0.45rem;
+  line-height: 14px;
   text-align: center;
   box-sizing: border-box;
 }
 
 .agent-avatar {
-  width: 100%;
-  height: 100%;
+  width: 33px;
+  height: 33px;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -1790,38 +1822,31 @@ watch(
   z-index: 1;
   inset: 0;
   border-radius: 50%;
-  border: 0.048rem solid rgba(255, 255, 255, 0.83);
+  border: 1.5px solid rgba(255, 255, 255, 0.83);
   pointer-events: none;
 }
 
 .agent-name-tag {
   position: relative;
   z-index: 1;
-  margin-top: -0.237rem;
-  width: 1.454rem;
-  height: 0.4476rem;
-  border-radius: 0.1958rem;
-  padding: 0 0.112rem;
-  background: linear-gradient(
-    131deg,
-    rgba(142, 142, 142, 0.3) 3%,
-    rgba(103, 103, 103, 0.4) 44%,
-    rgba(73, 73, 73, 0.5) 90%
-  );
-  border: 0.01rem solid rgba(242, 242, 242, 0.4);
-  color: rgba(255, 255, 255, 0.96);
+  margin-top: -9px;
+  max-width: 60px;
+  padding: 3.236px 2.516px;
+  border-radius: 4.406px;
+  background: rgba(170, 170, 170, 0.1);
+  border: 0.02rem solid rgba(249, 249, 249, 0.1);
+  color: #fff;
   font-family: 'SF Pro';
-  font-size: 0.2876rem;
+  font-size: 6.6px;
+  font-weight: 500;
   letter-spacing: 0.02em;
-  line-height: 0.35rem;
+  line-height: 1.2;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  box-shadow:
-    inset 0.017rem 0.017rem 0 rgba(242, 242, 242, 0.2),
-    0.05rem 0.06rem 0.1rem rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(0.245rem);
+  backdrop-filter: blur(18.5px);
+  -webkit-backdrop-filter: blur(18.5px);
 }
 
 .agent-meta {

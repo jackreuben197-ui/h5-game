@@ -333,9 +333,9 @@ onUnmounted(() => {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  // backdrop-filter: blur(34px);
-  // -webkit-backdrop-filter: blur(34px);
-  // background: rgba(12, 12, 12, 0.60);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  background: rgba(12, 12, 12, 0.20);
 }
 
 .card {

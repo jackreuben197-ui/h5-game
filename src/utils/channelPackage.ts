@@ -1,13 +1,16 @@
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
-import { getActiveApiBase } from '@/utils/appConfig'
+import { appConfig, getActiveApiBase } from '@/utils/appConfig'
 
-// 渠道包主域名：从运行时当前生效的 API（getActiveApiBase，测试环境为探测后的可用地址）推导主机名，
-// 回退到构建期 env。调用时读取以等待 config.json 异步加载与探测完成。
-// 例：当前 API=https://preview.trackyourchoice.com/api → preview.trackyourchoice.com。
+// 渠道包主域名（前端部署域名）：优先取 config.json 的 channelMainDomain（按环境部署，与后端 API 域名解耦），
+// 其次构建期 env，最后回退到当前生效 API 推导的主机名（兼容旧逻辑）。
+// 例：config.json channelMainDomain=ccsgame.recognitionway.com → 邀请链接 <code>.ccsgame.recognitionway.com。
 export function getChannelMainDomain(): string {
-  const fromApi = extractHostname(getActiveApiBase())
-  const raw = fromApi || import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || ''
+  const raw =
+    appConfig.channelMainDomain ||
+    import.meta.env.VITE_CHANNEL_MAIN_DOMAIN ||
+    extractHostname(getActiveApiBase()) ||
+    ''
   return raw.trim().toLowerCase()
 }
 

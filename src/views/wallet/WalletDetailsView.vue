@@ -14,7 +14,7 @@ import { postUserGoldChangeLogApi } from '@/api/user'
 import type { UserGoldChangeLogRecord } from '@/api/models/user'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
-import { t } from '@/i18n'
+import { resolveOpCodeText } from '@/utils/opCodeText'
 
 const userInfoStore = useUserInfoStore()
 const router = useRouter()
@@ -40,9 +40,9 @@ function formatTime(raw?: string): string {
 
 function getOpLabel(code?: string): string {
   if (!code) return '-'
-  const key = `Wallet_OpCode_${code}`
-  const label = t(key)
-  return label !== key ? label : code
+  const text = resolveOpCodeText(code)
+  const label = text && text !== `OpCodeString_${code}` ? text : code
+  return label.replace(/\bUC\b/g, '联盟币')
 }
 
 function goGiftUc(): void {

@@ -5,13 +5,21 @@ import { useRouter } from 'vue-router'
 import { postRoomCenterHistoryListApi, postStatsUserStatsApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { formatDateTime, toTimestampMs } from '@/utils/time'
+import { localStore } from '@/utils/localStore'
 import dayjs from 'dayjs'
 
 const router = useRouter()
-const userInfoStore = useUserInfoStore()
+
+// 生涯页选择的俱乐部 id 持久化在 localStorage 的 dzpk_h5_CAREER_SELECTED_CLUB_ID。
+// 'all' 或缺失表示"全部"，返回 undefined；否则解析为数字 club_id。
+function getCareerSelectedClubId(): number | undefined {
+  const stored = localStore.getItem<string>('CAREER_SELECTED_CLUB_ID', null)
+  if (!stored || stored === 'all') return undefined
+  const id = Number(stored)
+  return Number.isFinite(id) && id > 0 ? id : undefined
+}
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -35,6 +43,9 @@ interface RecordCard {
   endAt: string
   endDay: string
   endMonth: string
+  dateKey: string
+  showDate: boolean
+  isDateLastData: boolean
   profit: string
 }
 
@@ -102,14 +113,16 @@ function formatDuration(minutes: number): string {
   return `${mins}m`
 }
 
-/**
- * 判断是否为某日期的第一条记录（用于 timeline 显示）
- */
-function isFirstOfDate(index: number): boolean {
-  if (index === 0) return true
-  const current = dayjs(toTimestampMs(records.value[index].endAt))
-  const prev = dayjs(toTimestampMs(records.value[index - 1].endAt))
-  return current.format('YYYY-MM-DD') !== prev.format('YYYY-MM-DD')
+function applyDateVisibility(cards: RecordCard[]): RecordCard[] {
+  return cards.map((card, index) => {
+    const prevCard = cards[index - 1]
+    const nextCard = cards[index + 1]
+    return {
+      ...card,
+      showDate: card.dateKey !== prevCard?.dateKey,
+      isDateLastData: card.dateKey !== nextCard?.dateKey,
+    }
+  })
 }
 
 function toSafeNumber(value: unknown): number {
@@ -164,8 +177,9 @@ function mapRecord(row: Record<string, unknown>, index: number): RecordCard {
   const change = toSafeNumber(row.Change ?? row.profit)
   const durationMinutes = Math.max(0, Math.round(toSafeNumber(row.play_duration) / 60))
   const endTs = toTimestampMs(row.end_time)
-  const endDay = endTs > 0 ? dayjs(endTs).format('DD') : ''
-  const endMonth = endTs > 0 ? dayjs(endTs).format('MMM') : ''
+  const endDay = endTs > 0 ? dayjs(endTs).format('DD') : '--'
+  const endMonth = endTs > 0 ? dayjs(endTs).format('M月') : '--'
+  const dateKey = endTs > 0 ? dayjs(endTs).format('YYYY-MM-DD') : '--'
   return {
     id: String(row.RoomID ?? row.MatchID ?? index + 1),
     roomName: String(row.Name ?? '--'),
@@ -173,9 +187,12 @@ function mapRecord(row: Record<string, unknown>, index: number): RecordCard {
     blinds: `${toSafeNumber(row.small_blind)}/${toSafeNumber(row.ante ?? 0)}`,
     hands: String(row.hand_num),
     duration: formatDuration(durationMinutes),
-    endAt: endTs > 0 ? formatDateTime(row.end_time) : '--',
+    endAt: endTs > 0 ? formatDateTime(row.end_time, 'MM/DD HH:mm') : '--',
     endDay,
     endMonth,
+    dateKey,
+    showDate: true,
+    isDateLastData: false,
     profit: formatUC(change),
   }
 }
@@ -202,8 +219,8 @@ function extractStatsFromResponse(data: unknown): void {
   const af = toSafeNumber(roomData.af)
 
   leftMetrics.value = [
-    { label: '总局数', value: totalGameCnt.toLocaleString('en-US') },
-    { label: '手数', value: totalHand.toLocaleString('en-US') },
+    { label: '总局数', value: totalGameCnt.toLocaleString() },
+    { label: '手数', value: totalHand.toLocaleString() },
   ]
 
   rightMetrics.value = [
@@ -212,7 +229,7 @@ function extractStatsFromResponse(data: unknown): void {
   ]
 
   detailRowsOne.value = [
-    { label: '局数', value: totalGameCnt.toLocaleString('en-US') },
+    { label: '局数', value: totalGameCnt.toLocaleString() },
     { label: '总盈亏', value: formatUC(totalEarn) },
     { label: '场均战绩', value: avgEarn },
     { label: '摊牌胜率', value: `${wtsd}%` },
@@ -222,7 +239,7 @@ function extractStatsFromResponse(data: unknown): void {
     { label: '翻牌前加注率', value: `${prf}%` },
     { label: '持续下注率', value: `${cbet}%` },
     { label: '全下胜率', value: `${allinWins}%` },
-    { label: '激进程度', value: af.toLocaleString('en-US') },
+    { label: '激进程度', value: af.toLocaleString() },
   ]
 
   todayProfit.value = formatUC(totalEarn)
@@ -236,7 +253,10 @@ async function fetchStatsSummary(): Promise<void> {
       time_type: resolveTimeType(),
       filter_type: 1, // 默认联盟币
       room_type: 0, // 生涯
-      ...(userInfoStore.currentClub?.club_id ? { club_id: userInfoStore.currentClub.club_id } : {}),
+      ...(() => {
+        const careerClubId = getCareerSelectedClubId()
+        return careerClubId ? { club_id: careerClubId } : {}
+      })(),
     })
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : '加载统计数据失败')
@@ -257,14 +277,14 @@ async function fetchClubRecords(): Promise<void> {
       game_types: resolveGameTypes(),
       poker_types: selectedGame.value === '短牌' ? [2] : [0],
       time_type: resolveTimeType(),
-      club_id: userInfoStore.currentClub?.club_id,
+      club_id: getCareerSelectedClubId(),
     })
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : '加载战绩失败')
     }
 
     const rows = extractRecords(response.data?.records)
-    records.value = rows.map((row, index) => mapRecord(row, index))
+    records.value = applyDateVisibility(rows.map((row, index) => mapRecord(row, index)))
   } catch (error) {
     records.value = []
     const message = error instanceof Error ? error.message : '加载战绩失败'
@@ -290,11 +310,13 @@ function goToDetail(item: RecordCard): void {
 }
 
 function selectGame(tab: string): void {
+  if (selectedGame.value == tab) return
   selectedGame.value = tab
   void refreshAll()
 }
 
 function selectTime(tab: string): void {
+  if (selectedTime.value == tab) return
   selectedTime.value = tab
   void refreshAll()
 }
@@ -376,49 +398,57 @@ onMounted(() => {
         </div>
       </section>
 
-      <section class="content-list">
+      <section class="timeline">
         <p v-if="loading" class="list-status">加载中...</p>
         <p v-else-if="!records.length" class="list-status">暂无战绩记录</p>
         <article
-          v-for="(item, index) in records"
-          :key="item.id"
-          class="glass-card record-card"
-          :class="{ 'is-first-of-date': isFirstOfDate(index) }"
-          @click="goToDetail(item)"
+          v-for="card in records"
+          :key="card.id"
+          class="timeline-item"
+          :class="{ 'timeline-item--top': card.showDate && records.length > 1 }"
         >
-          <div class="timeline">
-            <span v-if="isFirstOfDate(index)" class="date-label"
-              >{{ item.endMonth }}<br />{{ item.endDay }}</span
-            >
-            <span v-else class="date-label"></span>
+          <div
+            :class="[
+              'date-col',
+              {
+                'date-col--continued': !card.showDate,
+                'date-col--bottom': card.isDateLastData,
+              },
+            ]"
+          >
+            <div v-if="card.showDate" class="date">{{ card.endDay }}</div>
+            <div v-if="card.showDate" class="month">{{ card.endMonth }}</div>
+            <img v-if="card.showDate" src="@/assets/icons/icon_time.png" class="date-icon" alt="" />
           </div>
-          <div class="card-content">
+          <div class="glass-card record-card" @click="goToDetail(card)">
             <div class="card-head">
-              <div>{{ item.roomName }}</div>
-              <div class="id">ID: {{ item.roomId }}</div>
+              <div>{{ card.roomName }}</div>
+              <div class="id">ID: {{ card.roomId }}</div>
             </div>
-            <div class="line"></div>
+            <div class="line-content">
+              <div class="line"></div>
+            </div>
             <div class="card-body">
               <div class="meta">
                 <div>
                   <span>盲注级别:</span>
-                  <span>{{ item.blinds }}</span>
+                  <span>{{ card.blinds }}</span>
                 </div>
                 <div>
                   <span>手数:</span>
-                  <span>{{ item.hands }}</span>
+                  <span>{{ card.hands }}</span>
                 </div>
                 <div>
                   <span>时长:</span>
-                  <span>{{ item.duration }}</span>
+                  <span>{{ card.duration }}</span>
                 </div>
                 <div>
                   <span>结束时间:</span>
-                  <span>{{ item.endAt }}</span>
+                  <span>{{ card.endAt }}</span>
                 </div>
               </div>
-              <div class="profit" :class="{ pos: item.profit.startsWith('-') }">
-                {{ item.profit }}
+              <div class="profit" :class="{ pos: card.profit.startsWith('-') }">
+                {{ card.profit }}
               </div>
             </div>
           </div>
@@ -445,7 +475,7 @@ onMounted(() => {
 }
 
 .game-tabs {
-  margin-top: 0.38rem;
+  margin-top: 0rem;
   display: flex;
   justify-content: space-around;
 }
@@ -454,7 +484,7 @@ onMounted(() => {
   border: 0;
   background: transparent;
   color: rgba(255, 255, 255, 0.72);
-  font-size: 0.42rem;
+  font-size: 0.37rem;
   padding: 0.05rem 0;
 
   &.active {
@@ -464,7 +494,7 @@ onMounted(() => {
 }
 
 .glass-card {
-  border-radius: 0.42rem;
+  border-radius: 0.76rem;
   border: 0.02rem solid rgba(249, 249, 249, 0.2);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.04rem);
@@ -472,25 +502,25 @@ onMounted(() => {
 
 .stats-card {
   margin-top: 0.3rem;
-  padding: 0.3632rem 0.67864rem 0.36739rem 0.67864rem;
+  padding: 0.34rem 0.6rem 0.32rem;
 }
 
 .time-tabs {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.08rem;
-  border-radius: 0.5rem;
-  padding: 0.08rem;
+  border-radius: 0.62rem;
+  // padding: 0.08rem;
   background: rgba(255, 255, 255, 0.2);
 }
 
 .time-tab {
   border: 0;
-  border-radius: 0.42rem;
+  border-radius: 0.62rem;
   background: transparent;
   color: rgba(255, 255, 255, 0.9);
   font-size: 0.40541rem;
-  padding: 0.18rem 0;
+  padding: 0.36rem 0;
 
   &.active {
     background: rgba(255, 255, 255, 0.18);
@@ -499,7 +529,7 @@ onMounted(() => {
 }
 
 .main-metrics {
-  margin-top: 0.28rem;
+  margin-top: 0.4rem;
   display: grid;
   grid-template-columns: 1fr 1.2fr 1fr;
   gap: 0.2rem;
@@ -508,6 +538,7 @@ onMounted(() => {
 
 .metric-col {
   display: flex;
+  margin-top: 0.3rem;
   flex-direction: column;
   gap: 0.3rem;
   text-align: center;
@@ -534,17 +565,21 @@ onMounted(() => {
 }
 
 .profit-box {
+  border-radius: 0.5rem;
+  width: 3.7rem;
+  padding: 0.32rem 0;
   text-align: center;
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(0.1583614945411682px);
 
   .profit-title {
     font-size: 0.33821rem;
+    line-height: 0.7rem;
   }
 
   .profit-value {
-    margin-top: 0.12rem;
     font-size: 0.71789rem;
-    font-weight: 700;
-    color: #ff7a8f;
+    font-weight: 400;
     &.pos {
       color: #4ee58f;
     }
@@ -552,12 +587,12 @@ onMounted(() => {
 }
 
 .detail-grid {
-  margin-top: 0.22rem;
+  margin-top: 0.3rem;
 
   .line {
     height: 0.02rem;
     background: rgba(255, 255, 255, 0.18);
-    margin: 0.14rem 0;
+    margin: 0.2rem 0;
   }
 }
 
@@ -584,82 +619,89 @@ onMounted(() => {
   }
 }
 
-.content-list {
-  margin-top: 0.28rem;
+.timeline {
   display: flex;
   flex-direction: column;
-  gap: 0.22rem;
-  position: relative;
+  margin-top: 0.59rem;
 }
 
 .list-status {
   text-align: center;
-  font-size: 0.3rem;
-  opacity: 0.78;
-  margin: 0.2rem 0;
+  font-size: 0.26rem;
+  opacity: 0.76;
+  padding: 0.24rem 0;
 }
 
-.record-card {
-  padding: 0.28rem;
+.timeline-item {
   display: grid;
-  grid-template-columns: 0.8rem 1fr;
-  gap: 0.2rem;
-  position: relative;
+  grid-template-columns: 1.2rem 1fr;
+  gap: 0.18rem;
+  margin-bottom: 0.16rem;
+}
+.timeline-item--top {
+  margin-top: 0.6rem;
 }
 
-.timeline {
+.date-col {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding-top: 0.1rem;
-
-  .date-label {
-    font-size: 0.32rem;
-    color: rgba(255, 255, 255, 0.9);
-    text-align: center;
-    line-height: 1.2;
-    white-space: nowrap;
-  }
+  text-align: right;
+  font-size: 0.24rem;
+  min-height: 1rem;
+  width: 0.9rem;
+  padding-right: 0.3rem;
 
   &::after {
     content: '';
     position: absolute;
-    top: 0.5rem;
-    left: 50%;
-    transform: translateX(-50%);
+    right: -0rem;
+    top: 0.4rem;
     width: 0.02rem;
-    height: calc(100% - 0.3rem);
-    background: rgba(255, 255, 255, 0.35);
+    bottom: -0.3rem;
+    background: rgba(255, 255, 255, 1);
+  }
+  &.date-col--continued::after {
+    top: 0rem;
+  }
+  &.date-col--continued {
+    .date-icon {
+      top: 0.05rem;
+    }
+  }
+  &.date-col--bottom::after {
+    bottom: 0rem;
+  }
+  .date,
+  .month {
+    font-size: 0.3rem;
+    line-height: 0.2rem;
+    margin-bottom: 0.1rem;
+  }
+
+  .date-icon {
+    position: absolute;
+    right: -0.2rem;
+    top: 0rem;
+    width: 0.267rem;
+    height: 0.267rem;
+    border-radius: 50%;
   }
 }
 
-// 同一天的非第一条记录：只显示虚线
-.record-card:not(.is-first-of-date) .timeline {
-  &::after {
-    background: repeating-linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.35) 0,
-      rgba(255, 255, 255, 0.35) 4px,
-      transparent 4px,
-      transparent 8px
-    );
-  }
-}
+.record-card {
+  padding: 0.36rem 0.44rem 0.3rem;
+  height: 4.46rem;
+  display: flex;
+  flex-direction: column;
 
-// 第一条记录：显示实线
-.record-card.is-first-of-date .timeline {
-  &::after {
-    background: rgba(255, 255, 255, 0.35);
-  }
-}
-
-.card-content {
-  .line {
-    height: 0.02rem;
-    background: rgba(255, 255, 255, 0.15);
-    margin: 0.18rem 0;
+  .line-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    .line {
+      height: 0.02rem;
+      background: rgba(255, 255, 255, 0.4);
+    }
   }
 }
 
@@ -667,11 +709,12 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: 0.43rem;
+  font-size: 0.405rem;
+  font-weight: 400;
 
   .id {
-    font-size: 0.29rem;
-    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.33rem;
+    // color: rgba(255, 255, 255, 0.78);
   }
 }
 
@@ -684,12 +727,16 @@ onMounted(() => {
 .meta {
   display: flex;
   flex-direction: column;
-  gap: 0.07rem;
-  font-size: 0.3rem;
+  gap: 0.05rem;
+  font-size: 0.304rem;
 
   div {
     display: flex;
     gap: 0.16rem;
+    justify-content: space-between;
+    span:nth-child(2) {
+      font-size: 0.339rem;
+    }
   }
 }
 

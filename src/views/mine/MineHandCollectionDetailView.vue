@@ -20,8 +20,9 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import PokerCard from '@/components/GameCard/PokerCard.vue'
 import { getHandReplaySession } from '@/session/handReplaySession'
+import { t } from '@/i18n'
 
-const title = computed(() => 'Result')
+const title = computed(() => t('adaptation10210'))
 const route = useRoute()
 
 const backgroundStyle = computed(() => ({

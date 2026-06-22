@@ -63,6 +63,7 @@ interface BillCardItem {
   month: string
   dateKey: string
   showDate: boolean
+  isDateLastData: boolean
   name: string
   club: string
   inAmount: string
@@ -341,6 +342,7 @@ function mapBillCard(row: UserBillWallet, index: number): BillCardItem {
     month: timeInfo.month,
     dateKey: timeInfo.dateKey,
     showDate: true,
+    isDateLastData: false,
     name: cardName,
     club: club || '',
     inAmount: formatFlowAmount(inAmount),
@@ -414,13 +416,13 @@ function toggleWalletDetails(): void {
 }
 
 function applyDateVisibility(cards: BillCardItem[]): BillCardItem[] {
-  let previousDateKey = ''
-  return cards.map((card) => {
-    const showDate = card.dateKey !== previousDateKey
-    previousDateKey = card.dateKey
+  return cards.map((card, index) => {
+    const prevCard = cards[index - 1]
+    const nextCard = cards[index + 1]
     return {
       ...card,
-      showDate,
+      showDate: card.dateKey !== prevCard?.dateKey,
+      isDateLastData: card.dateKey !== nextCard?.dateKey,
     }
   })
 }
@@ -536,8 +538,8 @@ async function fetchBillData(reset = true, silent = false): Promise<void> {
     ? tab === 4
       ? fetchDiamondsWallet()
       : walletGold > 0
-        ? fetchWallet(walletGold)
-        : Promise.resolve(null)
+      ? fetchWallet(walletGold)
+      : Promise.resolve(null)
     : Promise.resolve(null)
 
   try {
@@ -725,9 +727,19 @@ onMounted(() => {
           v-for="card in flowCards"
           :key="card.id"
           class="timeline-item"
-          :class="{ 'timeline-item--top': card.showDate && flowCards.length > 1 }"
+          :class="{
+            'timeline-item--top': card.showDate && flowCards.length > 1,
+          }"
         >
-          <div :class="['date-col', { 'date-col--continued': !card.showDate }]">
+          <div
+            :class="[
+              'date-col',
+              {
+                'date-col--continued': !card.showDate,
+                'date-col--bottom': card.isDateLastData,
+              },
+            ]"
+          >
             <div v-if="card.showDate" class="date">{{ card.day }}</div>
             <div v-if="card.showDate" class="month">{{ card.month }}</div>
             <img v-if="card.showDate" src="@/assets/icons/icon_time.png" class="date-icon" alt="" />
@@ -1006,16 +1018,14 @@ onMounted(() => {
   }
   &.date-col--continued::after {
     top: 0rem;
-    bottom: 0rem;
   }
   &.date-col--continued {
     .date-icon {
       top: 0.05rem;
     }
-
-    &::after {
-      top: 0.16rem;
-    }
+  }
+  &.date-col--bottom::after {
+    bottom: 0rem;
   }
   .date,
   .month {

@@ -66,9 +66,7 @@ function restoreSelectedClub(): void {
     selectedClubIndex.value = 0
     return
   }
-  const idx = userInfoStore.clubList.findIndex(
-    (club) => String(club.club_id) === stored,
-  )
+  const idx = userInfoStore.clubList.findIndex((club) => String(club.club_id) === stored)
   selectedClubIndex.value = idx >= 0 ? idx + 1 : 0
 }
 
@@ -198,13 +196,17 @@ function resolveRequestParams() {
     gameTypes = [0]
   }
 
+  // 对齐 Unity CareerRecordPart：「全部」必须显式传 club_id=0，省略字段时服务端会回上一次的俱乐部数据。
+  const clubId =
+    selectedClubIndex.value === 0
+      ? 0
+      : userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id ?? 0
+
   return {
     filter_type: currencyTypes[selectedCurrencyIndex.value].value,
     game_types: gameTypes,
     poker_types: selectedGameTab.value === '短牌' ? [2] : [0],
-    ...(selectedClubIndex.value !== 0
-      ? { club_id: userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id }
-      : {}),
+    club_id: clubId,
   }
 }
 
@@ -224,7 +226,7 @@ function extractMetricsFromCache(): CareerMetric[] {
 
   const roomDataTotal = data.room_data_total as Record<string, unknown> | undefined
 
-  // one_day=今天, week_day=7天, all_day=30天
+  // one_day=今天, week_day=7天, mon_day==30天, all_day=生涯
   let dayData: Record<string, unknown> | undefined
   switch (selectedDateTab.value) {
     case '今天':
@@ -234,7 +236,7 @@ function extractMetricsFromCache(): CareerMetric[] {
       dayData = roomDataTotal?.week_day as Record<string, unknown> | undefined
       break
     case '30天':
-      dayData = roomDataTotal?.all_day as Record<string, unknown> | undefined
+      dayData = roomDataTotal?.mon_day as Record<string, unknown> | undefined
       break
   }
 
@@ -543,7 +545,7 @@ onMounted(() => {
 }
 
 .game-tabs {
-  margin-top: 0.6rem;
+  margin-top: 0.48rem;
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -564,9 +566,9 @@ onMounted(() => {
 }
 
 .stats-card {
-  margin-top: 0.4rem;
-  border-radius: 0.56rem;
-  padding: 0.34rem 0.44rem 0.28rem;
+  margin-top: 0.45rem;
+  border-radius: 0.7rem;
+  padding: 0.34rem 0.6rem 0.32rem;
   background: rgba(42, 26, 43, 0.34);
   backdrop-filter: blur(0.03rem);
 }
@@ -575,7 +577,7 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.1rem;
-  padding: 0.06rem;
+  padding: 0;
   border-radius: 0.68rem;
   background: rgba(255, 255, 255, 0.2);
 }
@@ -587,7 +589,7 @@ onMounted(() => {
   color: #f9f9f9;
   opacity: 0.86;
   font-size: 0.42rem;
-  padding: 0.2rem 0;
+  padding: 0.36rem 0;
 
   &.active {
     background: rgba(255, 255, 255, 0.16);
@@ -597,7 +599,7 @@ onMounted(() => {
 }
 
 .metric-row {
-  margin-top: 0.36rem;
+  margin-top: 0.3rem;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.1rem;
@@ -615,14 +617,14 @@ onMounted(() => {
   text-align: center;
 
   .value {
-    font-size: 0.57rem;
+    font-size: 0.54rem;
     line-height: 1.05;
+    font-weight: 400;
     color: #fff;
   }
 
   .label {
-    margin-top: 0.05rem;
-    font-size: 0.24rem;
+    font-size: 0.221rem;
     color: rgba(255, 255, 255, 0.58);
   }
 }
@@ -632,7 +634,7 @@ onMounted(() => {
   border-radius: 0.42rem;
   background: rgba(31, 24, 46, 0.34);
   backdrop-filter: blur(0.03rem);
-  padding: 0 0.36rem;
+  padding: 0.18rem 0.36rem;
 }
 
 .menu-item {
@@ -643,7 +645,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.28rem 0;
+  padding: 0.18rem 0.1rem;
+  margin: 0.05rem 0;
   border-bottom: 0.02rem solid rgba(255, 255, 255, 0.16);
 
   &:last-child {

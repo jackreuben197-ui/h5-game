@@ -4,7 +4,32 @@ import { showFailToast } from 'vant'
 import { useRoute, useRouter } from 'vue-router'
 import { postStatsRoomDetailApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import rankBgUrl from '@/assets/images/rank_bg.png'
+import defaultAvatarUrl from '@/assets/images/default_avatar.png'
+import insuranceIconUrl from '@/assets/icons/icon_insurance.svg'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { localStore } from '@/utils/localStore'
+import { formatUC } from '@/utils/roomVisibility'
+import { formatDateTime } from '@/utils/time'
+
+// 生涯页选择的俱乐部 id 持久化在 localStorage 的 dzpk_h5_CAREER_SELECTED_CLUB_ID。
+// 'all' 或缺失表示"全部"，返回 undefined；否则解析为数字 club_id。
+function getCareerSelectedClubId(): number | undefined {
+  const stored = localStore.getItem<string>('CAREER_SELECTED_CLUB_ID', null)
+  if (!stored || stored === 'all') return undefined
+  const id = Number(stored)
+  return Number.isFinite(id) && id > 0 ? id : undefined
+}
+
+// 头像 URL 缓存：跨组件重渲染保持同一引用，依赖浏览器 HTTP 缓存避免重复下载。
+const avatarUrlCache = new Map<string, string>()
+function resolveAvatar(url: string | undefined | null): string {
+  if (!url) return defaultAvatarUrl
+  const cached = avatarUrlCache.get(url)
+  if (cached) return cached
+  avatarUrlCache.set(url, url)
+  return url
+}
 
 const title = computed(() => '战绩详情')
 
@@ -16,63 +41,50 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-interface SeatPlayer {
+const rankSectionStyle = computed(() => ({
+  backgroundImage: `url(${rankBgUrl})`,
+}))
+
+type RankKind = 'mvp' | 'tuhao' | 'fish'
+
+interface PodiumSeat {
+  rank: 1 | 2 | 3
+  kind: RankKind
+  tagText: string
   name: string
-  chips: string
-  tag?: string
-  highlight?: boolean
+  value: string
+  avatar: string
 }
 
 interface PlayerResult {
   id: string
   name: string
   uid: string
+  avatar: string
   buyIn: string
   hands: string
   vpip: string
   profit: string
+  profitPositive: boolean
 }
 
 const loading = ref(false)
 
-const seatPlayers = ref<SeatPlayer[]>([
-  { name: 'Hanna', chips: '120', tag: '土豪' },
-  { name: 'Paityn', chips: '3340', tag: 'MVP', highlight: true },
-  { name: 'Giana', chips: '120', tag: '土豪' },
-])
+const podiumSeats = ref<PodiumSeat[]>([])
 
 const summaryItems = ref([
-  { label: '带入', value: '1200' },
-  { label: '底池', value: '3580' },
-  { label: '手数', value: '20' },
-  { label: '时长', value: '2.3h' },
+  { label: '总流水', value: '0' },
+  { label: '最大底池', value: '0' },
+  { label: '总手数', value: '0' },
+  { label: '总代入数', value: '0' },
 ])
 
-const playerResults = ref<PlayerResult[]>([
-  {
-    id: 'p1',
-    name: 'Player Name',
-    uid: '11440454',
-    buyIn: '200',
-    hands: '123',
-    vpip: '7%',
-    profit: '+800',
-  },
-  {
-    id: 'p2',
-    name: 'Player Name',
-    uid: '11440454',
-    buyIn: '200',
-    hands: '123',
-    vpip: '7%',
-    profit: '+400',
-  },
-])
+const playerResults = ref<PlayerResult[]>([])
 
 const detailTitle = ref('Hand Name')
 const detailSub = ref('ID: --')
 const detailTime = ref('--')
-const totalProfit = ref('+0')
+const insurancePool = ref('0')
 const currentRoomId = ref(0)
 
 function toSafeNumber(value: unknown): number {
@@ -80,18 +92,67 @@ function toSafeNumber(value: unknown): number {
   return Number.isFinite(numeric) ? numeric : 0
 }
 
-function formatSigned(value: number): string {
-  const abs = Math.abs(value).toLocaleString('en-US')
-  if (value === 0) {
-    return '0'
-  }
-  return value > 0 ? `+${abs}` : `-${abs}`
+// 金额展示（已除以 100，无逗号，对齐客户端 LanguageUtility.GetFormatLongNumber）。
+// 正数保留 + 号便于区分盈利/亏损，负数交由 formatUC 自带的 - 号。
+function formatAmount(value: number, withSign = false): string {
+  if (!Number.isFinite(value) || value === 0) return '0'
+  if (!withSign) return formatUC(value)
+  return value > 0 ? `+${formatUC(value)}` : formatUC(value)
 }
 
 function extractRoomId(): number {
   const raw = route.query.room_id ?? route.query.id
   const value = Number(raw)
   return Number.isFinite(value) ? value : 0
+}
+
+// 参考客户端 UIRecordDetailStatistics.cs UpdateRankInfo：
+// MVP=净盈利最高(finally - bringIn 最大), 土豪=带入最高(bringIn 最大), 大鱼=净盈利最低。
+// DOM 顺序排为 [土豪左, MVP中, 大鱼右] 以对齐领奖台底图。
+function buildPodiumSeats(users: Record<string, unknown>[]): PodiumSeat[] {
+  if (!users.length) return []
+  let mvp = users[0]
+  let tuhao = users[0]
+  let fish = users[0]
+  let mvpNet = toSafeNumber(mvp.finally_game_results) - toSafeNumber(mvp.bring_in)
+  let fishNet = mvpNet
+  for (const user of users) {
+    const net = toSafeNumber(user.finally_game_results) - toSafeNumber(user.bring_in)
+    if (toSafeNumber(user.bring_in) > toSafeNumber(tuhao.bring_in)) {
+      tuhao = user
+    }
+    if (net > mvpNet) {
+      mvp = user
+      mvpNet = net
+    }
+    if (net < fishNet) {
+      fish = user
+      fishNet = net
+    }
+  }
+
+  function makeSeat(
+    user: Record<string, unknown>,
+    rank: 1 | 2 | 3,
+    kind: RankKind,
+    tagText: string,
+    value: number,
+  ): PodiumSeat {
+    return {
+      rank,
+      kind,
+      tagText,
+      name: String(user.nick_name ?? '--'),
+      value: formatAmount(value, kind !== 'tuhao'),
+      avatar: resolveAvatar(typeof user.avatar === 'string' ? user.avatar : ''),
+    }
+  }
+
+  return [
+    makeSeat(tuhao, 2, 'tuhao', '土豪', toSafeNumber(tuhao.bring_in)),
+    makeSeat(mvp, 1, 'mvp', 'MVP', mvpNet),
+    makeSeat(fish, 3, 'fish', '大鱼', fishNet),
+  ]
 }
 
 async function fetchRecordDetail(): Promise<void> {
@@ -102,10 +163,12 @@ async function fetchRecordDetail(): Promise<void> {
 
   loading.value = true
   try {
+    const careerClubId = getCareerSelectedClubId()
     const response = await postStatsRoomDetailApi(
       {
         limit: 50,
         offset: 0,
+        ...(careerClubId ? { club_id: careerClubId } : {}),
       },
       { id: roomId },
     )
@@ -116,34 +179,25 @@ async function fetchRecordDetail(): Promise<void> {
 
     const roomData = response.data?.room_data
     const users = roomData?.user_list
-    const userList = Array.isArray(users) ? users : []
+    const userList = (Array.isArray(users) ? users : []) as Record<string, unknown>[]
 
     detailTitle.value = String(roomData?.game_room_name ?? 'Hand Name')
     currentRoomId.value = toSafeNumber(roomData?.room_id)
     detailSub.value = `ID: ${String(roomData?.room_id ?? '--')}`
-    detailTime.value = `${String(roomData?.start_time ?? '--')} - ${String(
-      roomData?.end_time ?? '--',
+    detailTime.value = `${formatDateTime(roomData?.start_time, 'DD/MM HH:mm')} - ${formatDateTime(
+      roomData?.end_time,
+      'DD/MM HH:mm',
     )}`
 
+    // 对齐客户端 UIRecordDetailStatistics.UpdateTexasInfo：总流水/最大底池/总手数/总代入数。
     summaryItems.value = [
-      { label: '带入', value: toSafeNumber(roomData?.all_bring_in).toLocaleString('en-US') },
-      {
-        label: '底池',
-        value: toSafeNumber(roomData?.all_bet_pot ?? roomData?.max_bet_pot).toLocaleString('en-US'),
-      },
-      { label: '手数', value: toSafeNumber(roomData?.room_total_hand_num).toLocaleString('en-US') },
-      {
-        label: '时长',
-        value: `${Math.max(0, Math.round(toSafeNumber(roomData?.player_duration) / 3600))}h`,
-      },
+      { label: '总流水', value: formatAmount(toSafeNumber(roomData?.all_bet_pot)) },
+      { label: '最大底池', value: formatAmount(toSafeNumber(roomData?.max_bet_pot)) },
+      { label: '总手数', value: String(toSafeNumber(roomData?.room_total_hand_num)) },
+      { label: '总代入数', value: formatAmount(toSafeNumber(roomData?.all_bring_in)) },
     ]
 
-    seatPlayers.value = userList.slice(0, 3).map((user, index) => ({
-      name: String(user.nick_name ?? `Player ${index + 1}`),
-      chips: toSafeNumber(user.bring_out ?? user.bring_in).toLocaleString('en-US'),
-      tag: index === 1 ? 'MVP' : undefined,
-      highlight: index === 1,
-    }))
+    podiumSeats.value = buildPodiumSeats(userList)
 
     playerResults.value = userList.map((user, index) => {
       const result = toSafeNumber(user.finally_game_results ?? user.original_results)
@@ -151,18 +205,16 @@ async function fetchRecordDetail(): Promise<void> {
         id: String(user.user_random_id ?? index + 1),
         name: String(user.nick_name ?? 'Player Name'),
         uid: String(user.user_random_id ?? '--'),
-        buyIn: toSafeNumber(user.bring_in).toLocaleString('en-US'),
-        hands: toSafeNumber(user.user_room_hand_num).toLocaleString('en-US'),
+        avatar: resolveAvatar(typeof user.avatar === 'string' ? user.avatar : ''),
+        buyIn: formatAmount(toSafeNumber(user.bring_in)),
+        hands: String(toSafeNumber(user.user_room_hand_num)),
         vpip: `${toSafeNumber(user.in_pool_cnt)}%`,
-        profit: formatSigned(result),
+        profit: formatAmount(result, true),
+        profitPositive: result >= 0,
       }
     })
 
-    const total = playerResults.value.reduce(
-      (sum, item) => sum + toSafeNumber(item.profit.replace(/,/g, '')),
-      0,
-    )
-    totalProfit.value = formatSigned(total)
+    insurancePool.value = formatAmount(toSafeNumber(roomData?.insurance_total), true)
   } catch (error) {
     const message = error instanceof Error ? error.message : '加载战绩详情失败'
     showFailToast(message)
@@ -180,6 +232,13 @@ function goToHands(): void {
   })
 }
 
+function onAvatarError(event: Event): void {
+  const target = event.target as HTMLImageElement
+  if (target && target.src !== defaultAvatarUrl) {
+    target.src = defaultAvatarUrl
+  }
+}
+
 onMounted(() => {
   void fetchRecordDetail()
 })
@@ -187,38 +246,42 @@ onMounted(() => {
 
 <template>
   <div class="page-shell record-detail-page" :style="backgroundStyle">
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" :extra-padding="true" />
 
     <div class="content-wrap">
-      <section class="glass-card sort-bar">
-        <span>按结束时间</span>
-        <span class="arrow">▾</span>
+      <section class="glass-card sort-bar" @click="goToHands">
+        <span>本局牌谱</span>
+        <img class="arrow" src="@/assets/icons/icon_arrow_bottom.png" />
+      </section>
+
+      <section class="rank-section" :style="rankSectionStyle">
+        <article
+          v-for="seat in podiumSeats"
+          :key="`rank-${seat.kind}-${seat.name}`"
+          class="rank-seat"
+          :class="[`rank-${seat.rank}`]"
+        >
+          <div class="rank-tag">
+            <img src="@/assets/icons/icon_chips.png" class="icon-chips" alt="" />
+            <span> {{ seat.tagText }}</span>
+          </div>
+          <img class="avatar" :src="seat.avatar" alt="avatar" @error="onAvatarError" />
+          <div class="rank-info">
+            <div class="name">{{ seat.name }}</div>
+            <div class="value">{{ seat.value }}</div>
+          </div>
+        </article>
       </section>
 
       <section class="glass-card table-section">
-        <div class="seat-row">
-          <article
-            v-for="(item, index) in seatPlayers"
-            :key="item.name + index"
-            class="seat"
-            :class="{ highlight: item.highlight }"
-          >
-            <div class="avatar"></div>
-            <div v-if="item.tag" class="tag">{{ item.tag }}</div>
-            <div class="name">{{ item.name }}</div>
-            <div class="chips">{{ item.chips }}</div>
-          </article>
-        </div>
-
         <div class="hand-summary">
           <div class="name-line">
-            <div>
-              <div class="title">Hand Name</div>
+            <div class="title-block">
               <div class="title">{{ detailTitle }}</div>
               <div class="sub">{{ detailSub }}</div>
             </div>
-            <div class="time">{{ detailTime }}</div>
           </div>
+          <div class="time">{{ detailTime }}</div>
           <div class="summary-grid">
             <div v-for="item in summaryItems" :key="item.label" class="summary-item">
               <span class="label">{{ item.label }}</span>
@@ -228,29 +291,43 @@ onMounted(() => {
         </div>
       </section>
 
-      <section class="glass-card result-section">
-        <div class="section-head">
-          <div>牌局结算</div>
-          <div class="total">{{ totalProfit }}</div>
+      <section class="result-section">
+        <div class="insurance-bar">
+          <div class="left">
+            <img class="icon" :src="insuranceIconUrl" alt="insurance" />
+            <span>保险池</span>
+          </div>
+          <div class="right">{{ insurancePool }}</div>
         </div>
 
         <p v-if="loading" class="list-status">加载中...</p>
         <p v-else-if="!playerResults.length" class="list-status">暂无结算数据</p>
 
-        <article v-for="item in playerResults" :key="item.id" class="result-row" @click="goToHands">
-          <div class="left">
-            <div class="avatar small"></div>
-            <div>
-              <div class="name">{{ item.name }}</div>
-              <div class="sub">ID: {{ item.uid }}</div>
+        <article v-for="item in playerResults" :key="item.id" class="glass-card player-card">
+          <div class="result-row">
+            <div class="left">
+              <img class="avatar small" :src="item.avatar" alt="avatar" @error="onAvatarError" />
+              <div>
+                <div class="name">{{ item.name }}</div>
+                <div class="sub">ID: {{ item.uid }}</div>
+              </div>
+            </div>
+            <div class="right">
+              <div class="profit" :class="{ pos: item.profitPositive }">{{ item.profit }}</div>
             </div>
           </div>
-          <div class="right">
-            <div class="profit">{{ item.profit }}</div>
-            <div class="sub-row">
-              <span>带入:{{ item.buyIn }}</span>
-              <span>手数:{{ item.hands }}</span>
-              <span>入池率:{{ item.vpip }}</span>
+          <div class="sub-row">
+            <div class="sub-cell">
+              <span class="sub-title">带入:</span>
+              <span class="sub-value">{{ item.buyIn }}</span>
+            </div>
+            <div class="sub-cell">
+              <span class="sub-title">手数:</span>
+              <span class="sub-value">{{ item.hands }}</span>
+            </div>
+            <div class="sub-cell">
+              <span class="sub-title">入池率:</span>
+              <span class="sub-value">{{ item.vpip }}</span>
             </div>
           </div>
         </article>
@@ -262,8 +339,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .record-detail-page {
   height: 100dvh;
-  // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
-  padding-bottom: 0.8rem;
+  padding: 0 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;
@@ -275,111 +351,189 @@ onMounted(() => {
 }
 
 .glass-card {
-  border-radius: 0.42rem;
+  border-radius: 0.76rem;
   border: 0.02rem solid rgba(249, 249, 249, 0.2);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.04rem);
 }
 
 .sort-bar {
-  margin-top: 0.36rem;
-  padding: 0.22rem 0.34rem;
+  margin-top: 0.2rem;
+  padding: 0.48rem 0.62rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.34rem;
+  font-size: 0.405rem;
 
   .arrow {
-    font-size: 0.26rem;
-    opacity: 0.82;
+    width: 0.4rem;
+    height: 0.4rem;
+    transform: rotate(-90deg);
+  }
+}
+
+.rank-section {
+  position: relative;
+  margin-top: 0.35rem;
+  height: 4.9rem;
+  background-size: 9.4rem 3.7rem;
+  background-position: bottom center;
+  background-repeat: no-repeat;
+  display: grid;
+  z-index: 2;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.rank-seat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  text-align: center;
+
+  .rank-tag {
+    position: relative;
+    z-index: 2;
+    padding: 0.08rem 0.22rem 0;
+    border-radius: 100rem;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(0.06rem);
+    font-size: 0.264rem;
+    line-height: 0.1rem;
+    color: #fff;
+    margin-bottom: -0.18rem;
+  }
+  span {
+    vertical-align: top;
+    line-height: 0.5rem;
+  }
+  .icon-chips {
+    width: 0.42rem;
+    margin-right: 0.1rem;
+    margin-top: 0.02rem;
+  }
+
+  .avatar {
+    position: relative;
+    z-index: 1;
+    width: 1.3rem;
+    height: 1.3rem;
+    border-radius: 50%;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.32);
+    border: 0.02rem solid rgba(255, 255, 255, 0.4);
+  }
+
+  .rank-info {
+    position: relative;
+    z-index: 2;
+    width: 1.49rem;
+    padding: 0.10587rem 0.08235rem;
+    border-radius: 0.24rem;
+    background: rgba(51, 48, 48, 0.28);
+    font-size: 0.23rem;
+    line-height: 0.23rem;
+    backdrop-filter: blur(0.06rem);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.04rem;
+    color: #fff;
+    margin-top: -0.24rem;
+
+    .name {
+      font-size: 0.23rem;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      border-bottom: 0.5px solid rgba($color: #fff, $alpha: 0.28);
+    }
+
+    .value {
+      font-size: 0.23rem;
+    }
+  }
+
+  &.rank-1 {
+    padding-bottom: 2.55rem;
+
+    .avatar {
+      width: 2.06rem;
+      height: 2.06rem;
+    }
+
+    .rank-tag {
+      margin-bottom: -0.22rem;
+    }
+
+    .rank-info {
+      margin-top: -0.4rem;
+      width: 2.04rem;
+      line-height: 0.35rem;
+      .value {
+        font-size: 0.25rem;
+        font-style: normal;
+        font-weight: 700;
+      }
+    }
+  }
+
+  &.rank-2 {
+    .rank-tag {
+      padding: 0 0.22rem;
+    }
+    padding-bottom: 2rem;
+  }
+
+  &.rank-3 {
+    .rank-tag {
+      padding: 0 0.22rem;
+    }
+    padding-bottom: 2rem;
   }
 }
 
 .table-section {
-  margin-top: 0.34rem;
-  padding: 0.28rem;
-}
-
-.seat-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.2rem;
-}
-
-.seat {
-  text-align: center;
-
-  .avatar {
-    width: 1rem;
-    height: 1rem;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.45);
-    margin: 0 auto;
-  }
-
-  .tag {
-    margin-top: 0.08rem;
-    display: inline-flex;
-    padding: 0.02rem 0.14rem;
-    border-radius: 0.2rem;
-    background: rgba(255, 210, 120, 0.2);
-    color: #ffd977;
-    font-size: 0.24rem;
-  }
-
-  .name {
-    margin-top: 0.09rem;
-    font-size: 0.28rem;
-  }
-
-  .chips {
-    margin-top: 0.02rem;
-    font-size: 0.3rem;
-    color: #f7e37f;
-  }
-
-  &.highlight {
-    .avatar {
-      width: 1.3rem;
-      height: 1.3rem;
-      background: rgba(255, 255, 255, 0.62);
-    }
-  }
+  margin-top: -0.6rem;
+  z-index: 1;
+  padding: 0.65rem 0.43rem 0.4rem;
 }
 
 .hand-summary {
-  margin-top: 0.26rem;
-  border-top: 0.02rem solid rgba(255, 255, 255, 0.16);
-  padding-top: 0.24rem;
+  padding-top: 0.04rem;
 }
 
 .name-line {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 0.16rem;
+  line-height: 0.5rem;
+  gap: 0.06rem;
 
   .title {
-    font-size: 0.44rem;
+    font-size: 0.45rem;
   }
 
   .sub {
-    margin-top: 0.06rem;
-    font-size: 0.3rem;
+    font-size: 0.38rem;
     color: rgba(255, 255, 255, 0.74);
-  }
-
-  .time {
-    font-size: 0.27rem;
-    color: rgba(255, 255, 255, 0.78);
-    text-align: right;
   }
 }
 
+.time {
+  margin-top: 0.12rem;
+  font-size: 0.45rem;
+  color: rgba(255, 255, 255, 0.78);
+}
+
 .summary-grid {
+  border-radius: 0.76rem;
+  background-color: rgba($color: #ffffff, $alpha: 0.2);
   margin-top: 0.25rem;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 0.02rem 0.51rem 0.1rem;
   gap: 0.08rem;
 }
 
@@ -387,41 +541,55 @@ onMounted(() => {
   text-align: center;
 
   .label {
-    font-size: 0.24rem;
+    font-size: 0.31rem;
+    line-height: 1.4;
     color: rgba(255, 255, 255, 0.72);
   }
 
   .value {
     display: block;
-    margin-top: 0.06rem;
-    font-size: 0.37rem;
+    font-size: 0.53rem;
+    line-height: 1.1;
     font-weight: 600;
   }
 }
 
 .result-section {
-  margin-top: 0.32rem;
-  padding: 0.26rem 0;
+  margin-top: 0.4rem;
 }
 
-.section-head {
-  padding: 0 0.35rem;
+.insurance-bar {
+  padding: 0.1rem 0.5rem 0.2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 0.33rem;
 
-  .total {
-    color: #65e89f;
-    font-size: 0.45rem;
-    font-weight: 700;
+  .left {
+    display: flex;
+    align-items: center;
+    gap: 0.12rem;
+  }
+
+  .icon {
+    width: 0.6rem;
+    height: 0.6rem;
+  }
+
+  .right {
+    font-size: 0.38rem;
+  }
+}
+
+.player-card {
+  padding: 0.35rem 0.5rem 0.2rem;
+
+  & + & {
+    margin-top: 0.2rem;
   }
 }
 
 .result-row {
-  margin-top: 0.16rem;
-  padding: 0.22rem 0.35rem;
-  border-top: 0.02rem solid rgba(255, 255, 255, 0.15);
   display: flex;
   justify-content: space-between;
   gap: 0.18rem;
@@ -436,13 +604,15 @@ onMounted(() => {
 
 .left {
   display: flex;
-  gap: 0.14rem;
+  gap: 0.2rem;
+  align-items: center;
 
   .avatar.small {
-    width: 0.66rem;
-    height: 0.66rem;
+    width: 0.86rem;
+    height: 0.86rem;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.52);
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.32);
   }
 
   .name {
@@ -450,9 +620,7 @@ onMounted(() => {
   }
 
   .sub {
-    margin-top: 0.05rem;
-    font-size: 0.25rem;
-    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.33rem;
   }
 }
 
@@ -461,16 +629,36 @@ onMounted(() => {
 
   .profit {
     font-size: 0.45rem;
-    color: #6be89d;
+    color: #ff7a8f;
     font-weight: 700;
+
+    &.pos {
+      color: #6be89d;
+    }
   }
 }
 
 .sub-row {
-  margin-top: 0.05rem;
+  margin-top: 0.23rem;
   display: flex;
-  gap: 0.15rem;
-  font-size: 0.24rem;
-  color: rgba(255, 255, 255, 0.78);
+  justify-content: space-around;
+  padding: 0.2rem 0rem 0rem;
+  border-top: 1px solid rgba(163, 163, 163, 0.2);
+}
+
+.sub-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.06rem;
+
+  .sub-title {
+    font-size: 0.27rem;
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .sub-value {
+    font-size: 0.32rem;
+    font-weight: 800;
+  }
 }
 </style>

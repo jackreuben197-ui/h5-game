@@ -1104,6 +1104,12 @@ onMounted(() => {
               </template>
             </GameTableColumn>
           </GameTable>
+          <div
+            v-if="!loading && !opponentLoadingMore && opponentRows.length === 0"
+            class="table-empty"
+          >
+            暂无数据
+          </div>
         </div>
       </template>
 
@@ -1205,6 +1211,9 @@ onMounted(() => {
               </template>
             </GameTableColumn>
           </GameTable>
+          <div v-if="!loading && sortedDeckRows.length === 0" class="table-empty">
+            暂无数据
+          </div>
         </div>
       </template>
     </div>
@@ -1436,6 +1445,7 @@ onMounted(() => {
 
 .opponent-table-wrap,
 .deck-table-wrap {
+  position: relative;
   border-radius: 0.6rem;
   border: 0.02rem solid rgba(249, 249, 249, 0.15);
   background: rgba(0, 0, 0, 0.2);
@@ -1443,6 +1453,21 @@ onMounted(() => {
   padding: 0.5rem 0.4rem 0.16rem;
   overflow: hidden;
   font-size: 0.28rem;
+}
+
+// 表格内无数据时显示的占位文本，覆盖在 GameTable 表体区域。
+.table-empty {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.4rem;
+  color: rgba(249, 249, 249, 0.7);
+  pointer-events: none;
 }
 :deep(.game-table__header-cell) {
   padding: 0.4rem 0.2rem;

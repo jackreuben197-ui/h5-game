@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { postStatsUserStatsAllApi } from '@/api/stats'
@@ -14,6 +14,10 @@ import iconDropdown from '@/assets/icons/icon_dropdown.png'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { showGameToast } from '@/components/Toast'
+import { localStore } from '@/utils/localStore'
+
+const CAREER_CLUB_STORE_KEY = 'CAREER_SELECTED_CLUB_ID'
+const CAREER_CLUB_ALL = 'all'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -38,13 +42,46 @@ const responseCache = ref<Record<string, unknown> | null>(null)
 const clubs = computed(() => {
   const list = userInfoStore.clubList
   if (!list.length) {
-    return ['All']
+    return ['全部']
   }
-  return ['All', ...list.map((club) => club.club_name || `Club ${club.club_id}`)]
+  return ['全部', ...list.map((club) => club.club_name || `Club ${club.club_id}`)]
 })
 
-// 当前选中的俱乐部索引（0 = All）
+// 当前选中的俱乐部索引（0 = 全部）
 const selectedClubIndex = ref(0)
+
+// 右上角按钮显示的俱乐部名称（默认"全部"）
+const selectedClubLabel = computed(() => {
+  if (selectedClubIndex.value === 0) {
+    return '全部'
+  }
+  const club = userInfoStore.clubList[selectedClubIndex.value - 1]
+  return club?.club_name || `Club ${club?.club_id ?? ''}`
+})
+
+// 持久化：从 localStorage 恢复 / 写入用户在生涯页上选择的俱乐部 id。
+function restoreSelectedClub(): void {
+  const stored = localStore.getItem<string>(CAREER_CLUB_STORE_KEY, null)
+  if (!stored || stored === CAREER_CLUB_ALL) {
+    selectedClubIndex.value = 0
+    return
+  }
+  const idx = userInfoStore.clubList.findIndex(
+    (club) => String(club.club_id) === stored,
+  )
+  selectedClubIndex.value = idx >= 0 ? idx + 1 : 0
+}
+
+function persistSelectedClub(): void {
+  if (selectedClubIndex.value === 0) {
+    localStore.setItem(CAREER_CLUB_STORE_KEY, CAREER_CLUB_ALL)
+    return
+  }
+  const club = userInfoStore.clubList[selectedClubIndex.value - 1]
+  if (club?.club_id != null) {
+    localStore.setItem(CAREER_CLUB_STORE_KEY, String(club.club_id))
+  }
+}
 
 // 货币类型定义：1-联盟币 2-USDT 3-记分牌 4-钻石
 const currencyTypes = [
@@ -112,6 +149,7 @@ function closePopup(): void {
 function selectClub(index: number): void {
   selectedClubIndex.value = index
   showClubDropdown.value = false
+  persistSelectedClub()
   void fetchClubCareerSummary()
 }
 
@@ -128,6 +166,16 @@ function handleMenuClick(item: CareerMenuItem): void {
   if (item.key === 'cowboy' || item.key == 'mahjong') {
     showGameToast('功能开发中')
     return
+  }
+  // 将本页面上选中的俱乐部同步到全局 currentClubId，保证子页面以当前选择为准；
+  // "全部" 时清空，子页面接口侧（withClubId / 可选链）会自然走"不限俱乐部"。
+  if (selectedClubIndex.value === 0) {
+    userInfoStore.currentClubId = ''
+  } else {
+    const club = userInfoStore.clubList[selectedClubIndex.value - 1]
+    if (club?.club_id != null) {
+      userInfoStore.setCurrentClubById(club.club_id)
+    }
   }
   void router.push(item.route)
 }
@@ -227,7 +275,16 @@ async function fetchClubCareerSummary(): Promise<void> {
   }
 }
 
+// 俱乐部列表异步加载时，按缓存的 club_id 重新定位选中项。
+watch(
+  () => userInfoStore.clubList,
+  () => {
+    restoreSelectedClub()
+  },
+)
+
 onMounted(() => {
+  restoreSelectedClub()
   void fetchClubCareerSummary()
 })
 </script>
@@ -239,9 +296,10 @@ onMounted(() => {
       <template #right>
         <div class="action-wrap">
           <TopActionButton
-            name="全部"
+            :name="selectedClubLabel"
             :icon="iconFilter"
             icon-alt="wallet"
+            class="club-action-btn"
             @click.stop="toggleClubDropdown"
           />
           <TopActionButton
@@ -406,6 +464,14 @@ onMounted(() => {
   gap: 0.26rem;
 }
 
+// 让俱乐部按钮中的长俱乐部名以省略号显示，避免溢出。
+.club-action-btn :deep(.action-label) {
+  max-width: 0.96rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .club-dropdown {
   position: absolute;
   left: 0;
@@ -480,8 +546,7 @@ onMounted(() => {
   margin-top: 0.6rem;
   display: flex;
   align-items: center;
-  gap: 0.72rem;
-  padding: 0 0.16rem;
+  justify-content: space-around;
 }
 
 .game-tab {

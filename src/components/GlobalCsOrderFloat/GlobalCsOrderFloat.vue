@@ -12,7 +12,7 @@ const walletStore = useWalletStore()
 
 const hasSeen = ref(false)
 const csChatOpen = ref(false)
-const csChatProps = ref({ tribeId: 0, supportUserId: 0, orderData: null as any, type: 'recharge' as 'recharge' | 'withdraw' })
+const csChatProps = ref({ tribeId: 0, supportUserId: 0, orders: [] as any[] })
 
 const isLoggedIn = computed(() => !!userInfoStore.userInfo?.user?.p_u_id)
 
@@ -28,18 +28,12 @@ watch(activeCsOrder, (next, prev) => {
   if (next && !prev) hasSeen.value = false
 })
 
-async function openChat() {
-  hasSeen.value = true
-  const order = activeCsOrder.value
-  if (!order) return
-
-  // recharge 优先（与 activeCsOrder 的取值逻辑一致），否则为提现。
-  const orderType: 'recharge' | 'withdraw' = walletStore.pendingCsRechargeOrder ? 'recharge' : 'withdraw'
-
+function buildOrderData(order: ClubFundOrderListOrderInfo, orderType: 'recharge' | 'withdraw') {
   const qrCode =
     (order as any).qrcode || (order as any).qr_code || (order as any).pay_type_qr_code || ''
 
-  const orderData = {
+  return {
+    orderType,
     order_no: order.order_no,
     gold_num: order.gold_num,
     pay_price: order.pay_price,
@@ -54,6 +48,15 @@ async function openChat() {
       name: (order as any).pay_type_name || '客服撮合',
     },
   }
+}
+
+async function openChat() {
+  hasSeen.value = true
+  const orders = [
+    ...walletStore.pendingCsRechargeOrders.map((o) => buildOrderData(o, 'recharge')),
+    ...walletStore.pendingCsWithdrawOrders.map((o) => buildOrderData(o, 'withdraw')),
+  ]
+  if (!orders.length) return
 
   try {
     const res = await postChatSupportChannelListApi({ im_service_types: [4], limit: 1, offset: 0 })
@@ -62,8 +65,7 @@ async function openChat() {
       csChatProps.value = {
         tribeId: channel.tribe_id || 0,
         supportUserId: channel.support_user_id || 0,
-        orderData,
-        type: orderType,
+        orders,
       }
       csChatOpen.value = true
     }
@@ -108,8 +110,7 @@ watch(isLoggedIn, (val) => {
       v-if="csChatOpen"
       :tribe-id="csChatProps.tribeId"
       :support-user-id="csChatProps.supportUserId"
-      :order-data="csChatProps.orderData"
-      :order-type="csChatProps.type"
+      :orders="csChatProps.orders"
       @close="csChatOpen = false"
     />
   </Teleport>

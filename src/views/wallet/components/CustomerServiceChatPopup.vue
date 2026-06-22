@@ -15,7 +15,9 @@ const props = withDefaults(
   defineProps<{
     tribeId: number
     supportUserId: number
-    orderData: any
+    orderData?: any
+    /** 多笔订单（充值+提现）一起展示；优先于 orderData */
+    orders?: any[]
     /** 区分充值/提现，决定交易气泡的文案 */
     orderType?: 'recharge' | 'withdraw'
   }>(),
@@ -31,11 +33,17 @@ const emit = defineEmits<{
 const userInfoStore = useUserInfoStore()
 
 // 充值用 充值/付款 文案；提现用 提现/收款 文案。
-const txLabels = computed(() =>
-  props.orderType === 'withdraw'
+function labelsFor(orderType?: string) {
+  return orderType === 'withdraw'
     ? { user: '提现用户', coin: '提现联盟币', amount: '提现金额', payType: '收款类型' }
-    : { user: '充值用户', coin: '充值联盟币', amount: '充值金额', payType: '付款类型' },
-)
+    : { user: '充值用户', coin: '充值联盟币', amount: '充值金额', payType: '付款类型' }
+}
+
+const orderList = computed<any[]>(() => {
+  if (props.orders?.length) return props.orders
+  if (props.orderData) return [{ ...props.orderData, orderType: props.orderType }]
+  return []
+})
 const messages = ref<ChatSupportMessageListChatData[]>([])
 const inputText = ref('')
 const orderStatus = ref<number>(1)
@@ -57,7 +65,9 @@ const clubAvatar = computed(
 async function checkOrderStatus() {
   const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
   const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
-  const orderNo = props.orderData.order?.order_no || props.orderData.order_no
+  const firstOrder = orderList.value[0]
+  if (!firstOrder) return
+  const orderNo = firstOrder.order?.order_no || firstOrder.order_no
 
   try {
     const res = await postClubFundOrderListApi({
@@ -208,16 +218,20 @@ onUnmounted(() => {
           <!-- Messages Area -->
           <div class="messages-wrap" ref="messageContainer">
             <div class="messages-inner">
-              <!-- Transaction Bubble -->
-              <div class="message-row message-row--self">
+              <!-- Transaction Bubbles -->
+              <div
+                v-for="(od, oi) in orderList"
+                :key="od.order_no || od.order?.order_no || oi"
+                class="message-row message-row--self"
+              >
                 <div class="bubble-wrapper">
                   <div class="transaction-bubble">
                     <div class="bubble-content">
-                      <p>{{ txLabels.user }}：{{ userInfoStore.userInfo?.user.nickname }}/ID{{ userInfoStore.userInfo?.user.userid }}</p>
-                      <p>{{ txLabels.coin }}：{{ (orderData.gold_num || orderData.order?.gold_num || 0) / 100 }}</p>
-                      <p>{{ txLabels.amount }}：{{ orderData.pay_price || orderData.order?.pay_price || orderData.order?.amount || orderData.amount || 0 }}</p>
-                      <p>{{ txLabels.payType }}：{{ orderData.usdt_address?.name || orderData.pay_type_name || '客服撮合' }}</p>
-                      <p>訂單號：{{ orderData.order_no || orderData.order?.order_no }}</p>
+                      <p>{{ labelsFor(od.orderType).user }}：{{ userInfoStore.userInfo?.user.nickname }}/ID{{ userInfoStore.userInfo?.user.userid }}</p>
+                      <p>{{ labelsFor(od.orderType).coin }}：{{ (od.gold_num || od.order?.gold_num || 0) / 100 }}</p>
+                      <p>{{ labelsFor(od.orderType).amount }}：{{ od.pay_price || od.order?.pay_price || od.order?.amount || od.amount || 0 }}</p>
+                      <p>{{ labelsFor(od.orderType).payType }}：{{ od.usdt_address?.name || od.pay_type_name || '客服撮合' }}</p>
+                      <p>訂單號：{{ od.order_no || od.order?.order_no }}</p>
                       <p>申請時間：{{ new Date().toLocaleString() }}</p>
                     </div>
                   </div>

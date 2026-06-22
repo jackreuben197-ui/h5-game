@@ -131,6 +131,32 @@ const pageBackgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
+// 拖动相关状态
+const floatPosition = ref({ top: '40%' })
+let isDragging = false
+let startY = 0
+let startTop = 0
+
+function onFloatPointerDown(event: PointerEvent): void {
+  isDragging = true
+  startY = event.clientY
+  const computedTop = floatPosition.value.top
+  startTop = parseFloat(computedTop) || 40
+  ;(event.currentTarget as HTMLElement)?.setPointerCapture(event.pointerId)
+}
+
+function onFloatPointerMove(event: PointerEvent): void {
+  if (!isDragging) return
+  const deltaY = event.clientY - startY
+  const percentageDelta = (deltaY / window.innerHeight) * 100
+  const newTop = Math.max(5, Math.min(95, startTop + percentageDelta))
+  floatPosition.value = { top: `${newTop}%` }
+}
+
+function onFloatPointerUp(): void {
+  isDragging = false
+}
+
 function formatTime(value: unknown): string {
   return formatDateTime(value, 'YYYY/M/D  HH:mm:ss')
 }
@@ -255,6 +281,9 @@ function initTodoWsListener(): void {
 }
 
 onMounted(() => {
+  // 随机初始化垂直位置，避免多个悬浮窗重叠
+  floatPosition.value = { top: `${30 + Math.random() * 30}%` }
+
   initTodoWsListener()
   void fetchTodoAllInfo()
 })
@@ -266,8 +295,16 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-if="shouldShowFloat" class="todo-float-wrap">
-    <button class="todo-float-btn" type="button" @click="openPanel">
+  <div
+    v-if="shouldShowFloat"
+    class="todo-float-wrap"
+    :style="floatPosition"
+    @pointerdown="onFloatPointerDown"
+    @pointermove="onFloatPointerMove"
+    @pointerup="onFloatPointerUp"
+    @pointerleave="onFloatPointerUp"
+  >
+    <button class="todo-float-btn" type="button" @click.stop="openPanel">
       <span class="todo-float-text">消息验证</span>
       <span v-if="totalCount > 0" class="todo-float-count">{{ totalCount }}</span>
     </button>
@@ -438,6 +475,8 @@ onBeforeUnmount(() => {
   right: -0.01rem;
   top: 40%;
   z-index: 120;
+  touch-action: none;
+  transition: top 0.15s ease-out;
 }
 
 .todo-float-btn {

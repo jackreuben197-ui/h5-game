@@ -9,7 +9,7 @@ import {
   postRoomcenterGuestContrastRoomsApi,
   postRoomcenterUserContrastRoomsApi,
 } from '@/api/roomcenter'
-import { Code, subscribeH5WsCode } from '@/bridge/ws'
+import { Code, subscribeH5WsCode, subscribeH5WsCodes } from '@/bridge/ws'
 import {
   decodeRoomChangeNotifyFromRawPacket,
   ROOM_CHANGE_TYPE,
@@ -61,6 +61,7 @@ let bootstrapRoomListTryTimes = 0
 const roomDetailLoadingRidSet = new Set<string>()
 
 let stopRoomChangeNotifyListener: (() => void) | null = null
+let stopClubMemberChangeListeners: (() => void) | null = null
 
 // IndexedDB 写入防抖：WS 高频 patch 时只在静默期落盘。
 // 200ms 兼顾「连续多条 WS 合并写一次」和「DevTools 能尽快观察到变化」。
@@ -208,6 +209,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
 
       const scope = resolveScope()
       this.ensureRoomChangeNotifyListener()
+      this.ensureClubMemberChangeListeners()
       log.debug('bootstrap scope:', scope, 'active:', activeScope, 'bootstrapped:', bootstrappedScope)
 
       if (scope !== activeScope) {
@@ -680,7 +682,19 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
       if (stopRoomChangeNotifyListener) return
       stopRoomChangeNotifyListener = subscribeH5WsCode(Code.MSG_S_ROOM_CHANGE_NOTIFY, (message) => {
         this.applyRoomChangeNotifyMessage(message.rawBuffer)
-      })
+       })
+     },
+
+    ensureClubMemberChangeListeners(): void {
+      if (stopClubMemberChangeListeners) return
+      stopClubMemberChangeListeners = subscribeH5WsCodes(
+        [Code.MSG_S_USER_JOIN_CLUB, Code.MSG_S_USER_KICKED_FROM_CLUB],
+        () => {
+          const scope = resolveScope()
+          if (scope !== activeScope) return
+          this.runInitialSync(scope)
+        },
+      )
     },
   },
 })

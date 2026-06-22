@@ -19,6 +19,7 @@ import { formatUC } from '@/utils/roomVisibility'
 import avatarDefault from '@/assets/images/default_avatar.png'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconBalance from '@/assets/icons/icon_balance.png'
+import iconChipRed from '@/assets/icons/icon_chip_red.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { useGameStore } from '@/stores/game'
 
@@ -324,7 +325,8 @@ onBeforeUnmount(() => {
 
               <div class="card-footer">
                 <img :src="iconPeople" alt="uc" />
-                <p>申请充值：{{ formatUcAmount(item.amount) }}</p>
+                <p>申请充值：{{ formatUcAmount(item.gold_num) }}</p>
+                <img class="card-footer__chip" :src="iconChipRed" alt="chip" />
               </div>
             </article>
           </section>
@@ -687,6 +689,12 @@ onBeforeUnmount(() => {
     font-size: 0.355rem;
     line-height: 1.2;
     color: #f9f9f9;
+  }
+
+  .card-footer__chip {
+    width: 0.4rem;
+    height: 0.4rem;
+    margin-left: calc(0.1rem - 0.26rem);
   }
 }
 

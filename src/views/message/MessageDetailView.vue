@@ -734,7 +734,7 @@ async function fetchUcList(append = false): Promise<void> {
       time: formatTime(item.create_time),
       playerName: String(item.nickname ?? '--'),
       playerId: String(item.user_random_id ?? '--'),
-      amount: `+${formatUC(item.amount ?? 0)}`,
+      amount: `+${formatUC(item.gold_num ?? 0)}`,
       status: mapStatus(rawStatus),
       approverName: item.audit_name ? String(item.audit_name) : undefined,
       approverId: item.audit_user_id ? String(item.audit_user_id) : undefined,

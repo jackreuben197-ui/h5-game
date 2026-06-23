@@ -8,6 +8,8 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import DateRangePicker from '@/components/DateRangePicker/DateRangePicker.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
 import imgClock from '@/assets/icons/icon_time.png'
+import imgGameBadge from '@/assets/icons/wallet/ic_game_badge.png'
+import imgArrowRight from '@/assets/icons/ic_arrow_right.svg'
 
 interface IncomeItem {
   label: string
@@ -450,7 +452,9 @@ onMounted(() => {
           class="record-row"
           @click="toDetail(item)"
         >
-          <div class="game-badge">{{ item.mode }}</div>
+          <div class="game-badge" :style="{ backgroundImage: `url(${imgGameBadge})` }">
+            <span>{{ item.mode }}</span>
+          </div>
 
           <div class="record-card">
             <div class="record-main">
@@ -476,12 +480,10 @@ onMounted(() => {
                   class="fee-line"
                 >
                   <span>{{ income.label }}</span>
-                  <span :class="income.positive ? 'value-up' : 'value-down'">
-                    {{ income.value }}
-                  </span>
+                  <span class="fee-value">{{ income.value }}</span>
                 </div>
               </div>
-              <span class="chevron">›</span>
+              <img class="chevron" :src="imgArrowRight" alt="" />
             </div>
           </div>
         </article>
@@ -522,6 +524,8 @@ onMounted(() => {
   flex-direction: column;
   gap: 0.2rem;
   height: 100dvh;
+  padding-left: 0.26667rem;
+  padding-right: 0.26667rem;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -684,38 +688,74 @@ onMounted(() => {
   top: 0.40533rem;
   width: 1.4888rem;
   height: 1.4888rem;
-  border: 0.02533rem solid rgba(242, 242, 242, 0.4);
-  border-radius: 1.7372rem;
-  background: rgba(20, 5, 47, 0.33);
-  backdrop-filter: blur(0.28112rem);
+  border-radius: 50%;
+  background-color: transparent;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow: 0.0913rem 0.1141rem 0.0913rem rgba(0, 0, 0, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   white-space: pre-line;
-  font-size: 0.36235rem;
+  font-size: 0.4rem;
   line-height: 1.1;
-  font-weight: 700;
+  font-weight: 800;
+  color: #fff;
   z-index: 2;
 }
 
 .record-card {
+  position: relative;
+  overflow: hidden;
   margin-left: 0.25333rem;
   min-height: 2.25507rem;
-  border-radius: 2.0848rem;
-  border: 0.02667rem solid rgba(255, 255, 255, 0.56);
-  background: linear-gradient(
-    95deg,
-    rgba(159, 22, 128, 0.64) 0%,
-    rgba(130, 26, 142, 0.56) 63%,
-    rgba(72, 82, 175, 0.56) 100%
-  );
-  backdrop-filter: blur(0.67653rem);
+  border-radius: 0.7rem;
+  border: 0.0266rem solid rgba(242, 242, 242, 0.146);
+  background: rgba(168, 27, 67, 0.886);
+  box-shadow: 0.08907rem 0.11133rem 0.17815rem rgba(0, 0, 0, 0.25);
   padding: 0.37333rem 0.53333rem 0.37333rem 1.2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
+}
+
+.record-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  backdrop-filter: blur(16.6px);
+  -webkit-backdrop-filter: blur(16.6px);
+  background: linear-gradient(
+    107.6deg,
+    rgba(249, 249, 249, 0.1) 12.3%,
+    rgba(249, 249, 249, 0.14) 33.3%,
+    rgba(147, 147, 147, 0.2) 85.1%
+  );
+  mix-blend-mode: hard-light;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.record-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 8.6px rgba(0, 0, 0, 0.5),
+    inset 3.4px 2.6px 8.6px rgba(0, 0, 0, 0.1),
+    inset 0 0 36.1px rgba(242, 242, 242, 0.3);
+  z-index: 0;
+}
+
+.record-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .record-main {
@@ -772,38 +812,46 @@ onMounted(() => {
 }
 
 .fee-chip {
-  min-width: 1.776rem;
-  border-radius: 0.20376rem;
-  background: rgba(0, 0, 0, 0.27);
-  padding: 0.13947rem 0.20853rem;
+  position: relative;
+  min-width: 1.9rem;
+  border-radius: 0.2196rem;
+  padding: 0.16rem 0.16rem;
   display: flex;
   flex-direction: column;
-  gap: 0.07053rem;
+  gap: 0.08rem;
+}
+
+.fee-chip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.15);
+  mix-blend-mode: plus-lighter;
+  pointer-events: none;
 }
 
 .fee-line {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.13333rem;
-  font-size: 0.2116rem;
+  font-size: 0.2rem;
   line-height: 1;
   letter-spacing: 0.00846rem;
-  font-weight: 590;
+  font-weight: 400;
+  color: #fff;
 }
 
-.value-up {
-  color: #ff5364;
-}
-
-.value-down {
-  color: rgba(85, 243, 41, 1);
+.fee-value {
+  color: #fff;
 }
 
 .chevron {
-  font-size: 0.648rem;
-  line-height: 1;
-  color: #f9f9f9;
+  width: 0.2667rem;
+  height: 0.48rem;
+  object-fit: contain;
 }
 
 .list-status {

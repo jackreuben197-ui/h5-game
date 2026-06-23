@@ -15,6 +15,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { showGameToast } from '@/components/Toast'
 import { localStore } from '@/utils/localStore'
+import { t } from '@/i18n'
 
 const CAREER_CLUB_STORE_KEY = 'CAREER_SELECTED_CLUB_ID'
 const CAREER_CLUB_ALL = 'all'
@@ -26,11 +27,23 @@ const userInfoStore = useUserInfoStore()
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
+interface TabItem {
+  label: string
+  key: string
+}
 
-const gameTabs = ['德州', '奥马哈', '短牌']
-const dateTabs = ['今天', '7天', '30天']
-const selectedGameTab = ref(gameTabs[0])
-const selectedDateTab = ref(dateTabs[0])
+const gameTabs: TabItem[] = [
+  { label: 'NLH', key: 'nlh' },
+  { label: 'PLO', key: 'plo' },
+  { label: '6+', key: '6+' },
+]
+const dateTabs: TabItem[] = [
+  { label: '今天', key: 'today' },
+  { label: '7天', key: 'week' },
+  { label: '30天', key: 'month' },
+]
+const selectedGameTab = ref(gameTabs[0].key)
+const selectedDateTab = ref(dateTabs[0].key)
 const showClubDropdown = ref(false)
 const showCurrencyDropdown = ref(false)
 const loading = ref(false)
@@ -110,12 +123,12 @@ const metrics = ref<CareerMetric[]>([
 ])
 
 const menuList: CareerMenuItem[] = [
-  { key: 'record', label: '战绩', icon: iconBoxClubT, route: '/mine/club-record' },
-  { key: 'mtt', label: 'MTT', icon: iconBoxDiamond, route: '/mine/club-mtt' },
-  { key: 'cowboy', label: 'Cowboy', icon: iconBoxFriendT, route: '/mine/club-cowboy' },
-  { key: 'mahjong', label: 'Mahjong', icon: iconBoxBag, route: '/mine/club-mahjong' },
+  { key: 'record', label: '战绩', icon: iconBoxClubT, route: '/mine/career/club/record' },
+  { key: 'mtt', label: 'MTT', icon: iconBoxDiamond, route: '/mine/career/club/mtt' },
+  { key: 'cowboy', label: 'Cowboy', icon: iconBoxFriendT, route: '/mine/career/club/cowboy' },
+  { key: 'mahjong', label: 'Mahjong', icon: iconBoxBag, route: '/mine/career/club/mahjong' },
   // { key: 'mahjong-mtt', label: '麻将MTT战绩', icon: iconBoxSave },
-  { key: 'data', label: '数据', icon: iconBoxSetting, route: '/mine/club-data' },
+  { key: 'data', label: '数据', icon: iconBoxSetting, route: '/mine/career/club/data' },
 ]
 
 function selectGameTab(tab: string): void {
@@ -229,13 +242,13 @@ function extractMetricsFromCache(): CareerMetric[] {
   // one_day=今天, week_day=7天, mon_day==30天, all_day=生涯
   let dayData: Record<string, unknown> | undefined
   switch (selectedDateTab.value) {
-    case '今天':
+    case 'today':
       dayData = roomDataTotal?.one_day as Record<string, unknown> | undefined
       break
-    case '7天':
+    case 'week':
       dayData = roomDataTotal?.week_day as Record<string, unknown> | undefined
       break
-    case '30天':
+    case 'month':
       dayData = roomDataTotal?.mon_day as Record<string, unknown> | undefined
       break
   }
@@ -294,7 +307,7 @@ onMounted(() => {
 <template>
   <div class="page-shell career-page" :style="backgroundStyle" @click="closePopup">
     <div class="page-top"></div>
-    <HeaderBack title="生涯" extra-padding>
+    <HeaderBack :title="t('PageMineClubCareer')" extra-padding>
       <template #right>
         <div class="action-wrap">
           <TopActionButton
@@ -342,13 +355,13 @@ onMounted(() => {
       <div class="game-tabs">
         <button
           v-for="tab in gameTabs"
-          :key="tab"
+          :key="tab.key"
           type="button"
           class="game-tab"
-          :class="{ active: selectedGameTab === tab }"
-          @click="selectGameTab(tab)"
+          :class="{ active: selectedGameTab === tab.key }"
+          @click="selectGameTab(tab.key)"
         >
-          {{ tab }}
+          {{ tab.label }}
         </button>
       </div>
 
@@ -356,13 +369,13 @@ onMounted(() => {
         <div class="date-tabs">
           <button
             v-for="tab in dateTabs"
-            :key="tab"
+            :key="tab.key"
             type="button"
             class="date-tab"
-            :class="{ active: selectedDateTab === tab }"
-            @click="selectDateTab(tab)"
+            :class="{ active: selectedDateTab === tab.key }"
+            @click="selectDateTab(tab.key)"
           >
-            {{ tab }}
+            {{ tab.label }}
           </button>
         </div>
 

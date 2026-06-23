@@ -192,7 +192,7 @@ async function fetchCowboyHistory(): Promise<void> {
 
 function openDetail(item: CowboyPlayerResult): void {
   void router.push({
-    path: '/mine/club-cowboy/detail',
+    path: '/mine/career/club/cowboy/detail',
     query: {
       room_id: item.roomId,
       match_id: item.matchId,

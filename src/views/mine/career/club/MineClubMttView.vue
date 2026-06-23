@@ -228,7 +228,7 @@ async function fetchMttHistory(): Promise<void> {
 
 function goDetail(item: MttRecord): void {
   void router.push({
-    path: '/mine/club-mtt/detail',
+    path: '/mine/career/club/mtt/detail',
     query: {
       variant: item.detailVariant,
       id: item.id,

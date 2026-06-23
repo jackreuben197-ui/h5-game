@@ -11,14 +11,19 @@ import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { localStore } from '@/utils/localStore'
 import { formatUC } from '@/utils/roomVisibility'
 import { formatDateTime } from '@/utils/time'
+import { userCache } from '@/utils/userCache'
+import { USER_STORE_CAREER } from '@/utils/indexedDB'
+import { useGameStore } from '@/stores/game'
 
 // 生涯页选择的俱乐部 id 持久化在 localStorage 的 dzpk_h5_CAREER_SELECTED_CLUB_ID。
-// 'all' 或缺失表示"全部"，返回 undefined；否则解析为数字 club_id。
-function getCareerSelectedClubId(): number | undefined {
+// 'all' 或缺失表示"全部"，返回 0；否则解析为数字 club_id。
+// 对齐 Unity CareerRecordPart：「全部」必须显式传 club_id=0，省略字段时服务端会回上一次的俱乐部数据（页面刷新后该值会回到用户信息的 club_id）。
+// 仅 source=club 使用；friends 端忽略 club_id。
+function getCareerSelectedClubId(): number {
   const stored = localStore.getItem<string>('CAREER_SELECTED_CLUB_ID', null)
-  if (!stored || stored === 'all') return undefined
+  if (!stored || stored === 'all') return 0
   const id = Number(stored)
-  return Number.isFinite(id) && id > 0 ? id : undefined
+  return Number.isFinite(id) && id > 0 ? id : 0
 }
 
 // 头像 URL 缓存：跨组件重渲染保持同一引用，依赖浏览器 HTTP 缓存避免重复下载。
@@ -35,6 +40,13 @@ const title = computed(() => '战绩详情')
 
 const router = useRouter()
 const route = useRoute()
+const gameStore = useGameStore()
+
+// 路由参数 source 决定数据来源：'club' = 俱乐部生涯，'friends' = 朋友桌生涯。
+const source = computed<'club' | 'friends'>(() =>
+  route.params.source === 'friends' ? 'friends' : 'club',
+)
+const isClub = computed(() => source.value === 'club')
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -155,20 +167,81 @@ function buildPodiumSeats(users: Record<string, unknown>[]): PodiumSeat[] {
   ]
 }
 
+// ── 缓存（IndexedDB career）──────────────────────────────────────────────────
+// 详情数据按 room_id 缓存，命中则不再请求（同一房间的结算数据固定不变）。
+// key 形如 `detail-${roomId}`，与战绩首页 `${clubId}-${game}-${time}` 的 key 形式分隔。
+interface RecordDetailCache {
+  detailTitle: string
+  detailSub: string
+  detailTime: string
+  summaryItems: { label: string; value: string }[]
+  podiumSeats: PodiumSeat[]
+  playerResults: PlayerResult[]
+  insurancePool: string
+  currentRoomId: number
+}
+
+// 房间结算数据按 room_id 全局唯一，不需要再加 source 前缀。
+function detailCacheKey(roomId: number): string {
+  return `detail-${roomId}`
+}
+
+function detailCache() {
+  return userCache(gameStore.loginUserId)
+}
+
+function plainClone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
+}
+
+function applyDetailCache(payload: RecordDetailCache): void {
+  detailTitle.value = payload.detailTitle
+  detailSub.value = payload.detailSub
+  detailTime.value = payload.detailTime
+  summaryItems.value = payload.summaryItems
+  podiumSeats.value = payload.podiumSeats
+  playerResults.value = payload.playerResults
+  insurancePool.value = payload.insurancePool
+  currentRoomId.value = payload.currentRoomId
+}
+
+function writeDetailCache(roomId: number): void {
+  const payload: RecordDetailCache = {
+    detailTitle: detailTitle.value,
+    detailSub: detailSub.value,
+    detailTime: detailTime.value,
+    summaryItems: plainClone(summaryItems.value),
+    podiumSeats: plainClone(podiumSeats.value),
+    playerResults: plainClone(playerResults.value),
+    insurancePool: insurancePool.value,
+    currentRoomId: currentRoomId.value,
+  }
+  void detailCache().put(USER_STORE_CAREER, detailCacheKey(roomId), payload)
+}
+
 async function fetchRecordDetail(): Promise<void> {
   const roomId = extractRoomId()
   if (roomId <= 0) {
     return
   }
 
+  const cached = await detailCache().get<RecordDetailCache>(
+    USER_STORE_CAREER,
+    detailCacheKey(roomId),
+  )
+  if (cached) {
+    applyDetailCache(cached)
+    return
+  }
+
   loading.value = true
   try {
-    const careerClubId = getCareerSelectedClubId()
+    // club 端按 club_id 收窄；friends 端不传 club_id。
     const response = await postStatsRoomDetailApi(
       {
         limit: 50,
         offset: 0,
-        ...(careerClubId ? { club_id: careerClubId } : {}),
+        ...(isClub.value ? { club_id: getCareerSelectedClubId() } : {}),
       },
       { id: roomId },
     )
@@ -215,6 +288,7 @@ async function fetchRecordDetail(): Promise<void> {
     })
 
     insurancePool.value = formatAmount(toSafeNumber(roomData?.insurance_total), true)
+    writeDetailCache(roomId)
   } catch (error) {
     const message = error instanceof Error ? error.message : '加载战绩详情失败'
     showFailToast(message)
@@ -225,7 +299,7 @@ async function fetchRecordDetail(): Promise<void> {
 
 function goToHands(): void {
   void router.push({
-    path: '/mine/club-record/hand',
+    path: `/mine/career/${source.value}/record/hand`,
     query: {
       room_id: currentRoomId.value > 0 ? String(currentRoomId.value) : undefined,
     },

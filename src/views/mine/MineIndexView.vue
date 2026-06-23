@@ -34,13 +34,13 @@ const boxList = ref<BoxItem[]>([
     key: 'club-career',
     icon: iconBoxClubT,
     text: t('PageMineClubCareer'),
-    route: '/mine/club-career',
+    route: '/mine/career/club',
   },
   {
     key: 'friends-career',
     icon: iconBoxFriendT,
     text: t('PageMineFriendTableCareer'),
-    route: '/mine/friends-career',
+    route: '/mine/career/friends',
   },
   { key: 'my-bill', icon: iconBoxDiamond, text: t('UIMine_Bill'), route: '/mine/bill' },
   {

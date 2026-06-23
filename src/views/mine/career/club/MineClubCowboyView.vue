@@ -219,7 +219,7 @@ async function refreshAll(): Promise<void> {
 function goToDetail(item: RecordCard): void {
   const roomId = Number(item.roomId.replace(/\D/g, '')) || 0
   void router.push({
-    path: '/mine/club-cowboy/detail',
+    path: '/mine/career/club/cowboy/detail',
     query: {
       room_id: roomId > 0 ? String(roomId) : undefined,
       time: item.endAt,

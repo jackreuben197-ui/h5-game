@@ -159,7 +159,7 @@ function onQuickAction(itemId: number): void {
   }
 
   if (itemId === 2) {
-    void router.push('/mine/club-career')
+    void router.push('/mine/career/club')
     return
   }
 

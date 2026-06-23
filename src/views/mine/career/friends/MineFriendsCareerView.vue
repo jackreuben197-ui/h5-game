@@ -6,6 +6,7 @@ import { postFriendRoomStatsApi } from '@/api/stats'
 import type { FriendRoomStatsRecord } from '@/api/models/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { showGameToast } from '@/components/Toast'
+import { t } from '@/i18n'
 
 const router = useRouter()
 
@@ -36,14 +37,12 @@ const rows = ref<DataRow[]>([
 const loading = ref(false)
 
 const menuList: MenuItem[] = [
-  { key: 'data', text: '数据', route: '/mine/friends-data' },
-  { key: 'record', text: '战绩', route: '/mine/friends-record' },
+  { key: 'data', text: '数据', route: '/mine/career/friends/data' },
+  { key: 'record', text: '战绩', route: '/mine/career/friends/record' },
   { key: 'mahjong', text: 'Mahjong' },
   { key: 'sng', text: 'SNG战绩' },
   { key: 'mahjong-mtt', text: '麻将MTT战绩' },
 ]
-
-const title = ref('数据')
 
 function handleMenuClick(item: MenuItem): void {
   if (!item.route) {
@@ -101,13 +100,15 @@ onMounted(() => {
 
 <template>
   <div class="page-shell mine-glass-page" :style="backgroundStyle">
-    <HeaderBack :title="title" extra-padding>
+    <HeaderBack :title="t('PageMineFriendTableCareer')" extra-padding>
       <template #right>
         <div class="action-wrap">
           <TopActionButton
             name="数据统计"
             icon-alt="wallet"
-            @click="handleMenuClick({ key: 'data', text: '数据', route: '/mine/friends-my-data' })"
+            @click="
+              handleMenuClick({ key: 'data', text: '数据', route: '/mine/career/friends/my-data' })
+            "
           />
         </div>
       </template>

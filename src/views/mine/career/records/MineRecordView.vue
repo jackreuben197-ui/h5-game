@@ -1,24 +1,38 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { postRoomCenterHistoryListApi, postStatsUserStatsApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { formatUC } from '@/utils/roomVisibility'
 import { formatDateTime, toTimestampMs } from '@/utils/time'
 import { localStore } from '@/utils/localStore'
+import { userCache } from '@/utils/userCache'
+import { USER_STORE_CAREER } from '@/utils/indexedDB'
+import { useGameStore } from '@/stores/game'
 import dayjs from 'dayjs'
 
 const router = useRouter()
+const route = useRoute()
+const gameStore = useGameStore()
+
+// 路由参数 source 决定数据来源：'club' = 俱乐部生涯，'friends' = 朋友桌生涯。
+// 共享同一组组件 + API 与缓存通道；下面所有 buildXxxParams 都根据 source 分支。
+const source = computed<'club' | 'friends'>(() =>
+  route.params.source === 'friends' ? 'friends' : 'club',
+)
+const isClub = computed(() => source.value === 'club')
 
 // 生涯页选择的俱乐部 id 持久化在 localStorage 的 dzpk_h5_CAREER_SELECTED_CLUB_ID。
-// 'all' 或缺失表示"全部"，返回 undefined；否则解析为数字 club_id。
-function getCareerSelectedClubId(): number | undefined {
+// 'all' 或缺失表示"全部"，返回 0；否则解析为数字 club_id。
+// 对齐 Unity CareerRecordPart：「全部」必须显式传 club_id=0，省略字段时服务端会回上一次的俱乐部数据（页面刷新后该值会回到用户信息的 club_id）。
+// 仅 source=club 使用；friends 端忽略 club_id。
+function getCareerSelectedClubId(): number {
   const stored = localStore.getItem<string>('CAREER_SELECTED_CLUB_ID', null)
-  if (!stored || stored === 'all') return undefined
+  if (!stored || stored === 'all') return 0
   const id = Number(stored)
-  return Number.isFinite(id) && id > 0 ? id : undefined
+  return Number.isFinite(id) && id > 0 ? id : 0
 }
 
 // 主容器背景图：全页面共用一张底图。
@@ -49,10 +63,23 @@ interface RecordCard {
   profit: string
 }
 
-const gameTabs = ['德州', '奥马哈', '短牌']
-const timeTabs = ['今天', '7天', '30天']
-const selectedGame = ref(gameTabs[0])
-const selectedTime = ref(timeTabs[0])
+interface TabItem {
+  label: string
+  key: string
+}
+
+const gameTabs: TabItem[] = [
+  { label: 'NLH', key: 'nlh' },
+  { label: 'PLO', key: 'plo' },
+  { label: '6+', key: '6+' },
+]
+const timeTabs: TabItem[] = [
+  { label: '今天', key: 'today' },
+  { label: '7天', key: 'week' },
+  { label: '30天', key: 'month' },
+]
+const selectedGame = ref(gameTabs[0].key)
+const selectedTime = ref(timeTabs[0].key)
 const loading = ref(false)
 
 // 统计数据（从 postStatsUserStatsApi 获取，默认值 0）
@@ -87,11 +114,11 @@ const records = ref<RecordCard[]>([])
 // 根据当前选中的时间 tab 返回收益标题
 function profitTitle(): string {
   switch (selectedTime.value) {
-    case '今天':
+    case 'today':
       return '今天收益'
-    case '7天':
+    case 'week':
       return '7天收益'
-    case '30天':
+    case 'month':
       return '30天收益'
     default:
       return '今天收益'
@@ -131,10 +158,10 @@ function toSafeNumber(value: unknown): number {
 }
 
 function resolveGameTypes(): number[] {
-  if (selectedGame.value === '奥马哈') {
+  if (selectedGame.value === 'plo') {
     return [1, 2, 3]
   }
-  if (selectedGame.value === '短牌') {
+  if (selectedGame.value === '6+') {
     return [0]
   }
   return [0]
@@ -142,11 +169,11 @@ function resolveGameTypes(): number[] {
 
 function resolveTimeType(): number {
   switch (selectedTime.value) {
-    case '今天':
+    case 'today':
       return 1
-    case '7天':
+    case 'week':
       return 2
-    case '30天':
+    case 'month':
       return 3
     default:
       return 1
@@ -245,18 +272,65 @@ function extractStatsFromResponse(data: unknown): void {
   todayProfit.value = formatUC(totalEarn)
 }
 
+// ── 缓存（IndexedDB career）──────────────────────────────────────────────────
+// 库按 loginUserId 分用户，store=USER_STORE_CAREER，
+// key = `${sourceId}_record_${time}_${game}`：
+//   sourceId = -1(朋友桌) / 0(全部俱乐部) / 俱乐部 id；
+//   time = today | week | month；game = nlh | plo | 6+。
+// 缓存战绩首页 [统计 + 记录列表] 完整状态。
+interface RecordSummaryCache {
+  leftMetrics: SummaryMetric[]
+  rightMetrics: SummaryMetric[]
+  detailRowsOne: SummaryMetric[]
+  detailRowsTwo: SummaryMetric[]
+  todayProfit: string
+  records: RecordCard[]
+}
+
+function recordCacheKey(): string {
+  const sourceId = isClub.value ? getCareerSelectedClubId() : -1
+  return `${sourceId}_record_${selectedTime.value}_${selectedGame.value}`
+}
+
+function recordCache() {
+  return userCache(gameStore.loginUserId)
+}
+
+function plainClone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
+}
+
+function writeRecordCache(key: string): void {
+  const payload: RecordSummaryCache = {
+    leftMetrics: plainClone(leftMetrics.value),
+    rightMetrics: plainClone(rightMetrics.value),
+    detailRowsOne: plainClone(detailRowsOne.value),
+    detailRowsTwo: plainClone(detailRowsTwo.value),
+    todayProfit: todayProfit.value,
+    records: plainClone(records.value),
+  }
+  void recordCache().put(USER_STORE_CAREER, key, payload)
+}
+
+function applyRecordCache(payload: RecordSummaryCache): void {
+  leftMetrics.value = payload.leftMetrics
+  rightMetrics.value = payload.rightMetrics
+  detailRowsOne.value = payload.detailRowsOne
+  detailRowsTwo.value = payload.detailRowsTwo
+  todayProfit.value = payload.todayProfit
+  records.value = payload.records
+}
+
 async function fetchStatsSummary(): Promise<void> {
   try {
+    // room_type：club 走生涯(0)，friends 走朋友桌(1)；club 额外带 club_id 收窄范围。
     const response = await postStatsUserStatsApi({
       game_types: resolveGameTypes(),
-      poker_types: selectedGame.value === '短牌' ? [2] : [0],
+      poker_types: selectedGame.value === '6+' ? [2] : [0],
       time_type: resolveTimeType(),
       filter_type: 1, // 默认联盟币
-      room_type: 0, // 生涯
-      ...(() => {
-        const careerClubId = getCareerSelectedClubId()
-        return careerClubId ? { club_id: careerClubId } : {}
-      })(),
+      room_type: isClub.value ? 0 : 1,
+      ...(isClub.value ? { club_id: getCareerSelectedClubId() } : {}),
     })
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : '加载统计数据失败')
@@ -268,16 +342,17 @@ async function fetchStatsSummary(): Promise<void> {
   }
 }
 
-async function fetchClubRecords(): Promise<void> {
-  loading.value = true
+async function fetchRecords(silent = false): Promise<void> {
+  if (!silent) loading.value = true
   try {
+    // club 只传 club_id（不传 room_type，对齐 Unity）；friends 传 room_type=1。
     const response = await postRoomCenterHistoryListApi({
       limit: 20,
       offset: 0,
       game_types: resolveGameTypes(),
-      poker_types: selectedGame.value === '短牌' ? [2] : [0],
+      poker_types: selectedGame.value === '6+' ? [2] : [0],
       time_type: resolveTimeType(),
-      club_id: getCareerSelectedClubId(),
+      ...(isClub.value ? { club_id: getCareerSelectedClubId() } : { room_type: 1 }),
     })
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : '加载战绩失败')
@@ -286,22 +361,44 @@ async function fetchClubRecords(): Promise<void> {
     const rows = extractRecords(response.data?.records)
     records.value = applyDateVisibility(rows.map((row, index) => mapRecord(row, index)))
   } catch (error) {
-    records.value = []
-    const message = error instanceof Error ? error.message : '加载战绩失败'
-    showFailToast(message)
+    if (!silent) records.value = []
+    if (!silent) {
+      const message = error instanceof Error ? error.message : '加载战绩失败'
+      showFailToast(message)
+    }
   } finally {
-    loading.value = false
+    if (!silent) loading.value = false
   }
 }
 
+// 缓存优先 + 静默刷新：命中缓存直接渲染、后台再请求覆盖缓存；未命中则正常 loading。
 async function refreshAll(): Promise<void> {
-  await Promise.all([fetchStatsSummary(), fetchClubRecords()])
+  const key = recordCacheKey()
+  const cached = await recordCache().get<RecordSummaryCache>(USER_STORE_CAREER, key)
+  // 请求期间 tab 被切换：丢弃此次缓存。
+  if (key !== recordCacheKey()) return
+
+  if (cached) {
+    loading.value = false
+    applyRecordCache(cached)
+    // 静默刷新
+    void (async () => {
+      await Promise.all([fetchStatsSummary(), fetchRecords(true)])
+      if (key !== recordCacheKey()) return
+      writeRecordCache(key)
+    })()
+    return
+  }
+
+  await Promise.all([fetchStatsSummary(), fetchRecords()])
+  if (key !== recordCacheKey()) return
+  writeRecordCache(key)
 }
 
 function goToDetail(item: RecordCard): void {
   const roomId = Number(item.roomId.replace(/\D/g, '')) || 0
   void router.push({
-    path: '/mine/club-record/detail',
+    path: `/mine/career/${source.value}/record/detail`,
     query: {
       room_id: roomId > 0 ? String(roomId) : undefined,
       id: item.roomId,
@@ -309,15 +406,15 @@ function goToDetail(item: RecordCard): void {
   })
 }
 
-function selectGame(tab: string): void {
-  if (selectedGame.value == tab) return
-  selectedGame.value = tab
+function selectGame(key: string): void {
+  if (selectedGame.value === key) return
+  selectedGame.value = key
   void refreshAll()
 }
 
-function selectTime(tab: string): void {
-  if (selectedTime.value == tab) return
-  selectedTime.value = tab
+function selectTime(key: string): void {
+  if (selectedTime.value === key) return
+  selectedTime.value = key
   void refreshAll()
 }
 
@@ -334,13 +431,13 @@ onMounted(() => {
       <div class="game-tabs">
         <button
           v-for="item in gameTabs"
-          :key="item"
+          :key="item.key"
           type="button"
           class="plain-tab"
-          :class="{ active: selectedGame === item }"
-          @click="selectGame(item)"
+          :class="{ active: selectedGame === item.key }"
+          @click="selectGame(item.key)"
         >
-          {{ item }}
+          {{ item.label }}
         </button>
       </div>
 
@@ -348,13 +445,13 @@ onMounted(() => {
         <div class="time-tabs">
           <button
             v-for="item in timeTabs"
-            :key="item"
+            :key="item.key"
             type="button"
             class="time-tab"
-            :class="{ active: selectedTime === item }"
-            @click="selectTime(item)"
+            :class="{ active: selectedTime === item.key }"
+            @click="selectTime(item.key)"
           >
-            {{ item }}
+            {{ item.label }}
           </button>
         </div>
 

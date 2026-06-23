@@ -101,7 +101,7 @@ async function fetchMahjongHands(): Promise<void> {
 }
 
 function goReport(): void {
-  void router.push('/mine/club-record/report')
+  void router.push('/mine/career/club/record/report')
 }
 
 onMounted(() => {

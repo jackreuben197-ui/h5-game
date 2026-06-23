@@ -23,12 +23,23 @@ import { setHandReplaySession } from '@/session/handReplaySession'
 import { t } from '@/i18n'
 import { formatUC } from '@/utils/roomVisibility'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useGameStore } from '@/stores/game'
+import { userCache } from '@/utils/userCache'
+import { USER_STORE_CAREER } from '@/utils/indexedDB'
 
 const title = computed(() => t('UIMine_Paipu_title'))
 
 const router = useRouter()
 const route = useRoute()
 const userInfoStore = useUserInfoStore()
+const gameStore = useGameStore()
+
+// 路由参数 source 决定数据来源；postStatsUserGameRecordListApi 的 room_type
+// 在 club 端是 2、friends 端是 1，与战绩列表 / 详情那两个 API 的取值不同。
+const source = computed<'club' | 'friends'>(() =>
+  route.params.source === 'friends' ? 'friends' : 'club',
+)
+const handApiRoomType = computed(() => (source.value === 'club' ? 2 : 1))
 
 // 当前登录用户的随机 id，传给 getTexasWinDesc 用于优先选取“自己作为赢家”的描述（对齐客户端 GameCache._userId）。
 const currentUserRandomId = computed(() => {
@@ -187,6 +198,52 @@ function mapHandRows(rows: Record<string, unknown>[]): HandRow[] {
   })
 }
 
+// ── 缓存（IndexedDB career）──────────────────────────────────────────────────
+// 牌谱列表按 room_id 缓存，命中则不再请求（同一房间的牌谱集合固定不变）。
+// key 形如 `hand-${roomId}`，与战绩详情 `detail-${roomId}` 隔开。
+interface HandListCache {
+  handRows: HandRow[]
+  overviewTitle: string
+  overviewId: string
+  overviewHands: string
+  overviewBlind: string
+  currentRoomRecord: StatsUserGameRecordListRoom_record
+}
+
+// 牌谱按 room_id 全局唯一，不需要再加 source 前缀。
+function handCacheKey(roomId: number): string {
+  return `hand-${roomId}`
+}
+
+function handCache() {
+  return userCache(gameStore.loginUserId)
+}
+
+function plainClone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
+}
+
+function applyHandCache(payload: HandListCache): void {
+  handRows.value = payload.handRows
+  overviewTitle.value = payload.overviewTitle
+  overviewId.value = payload.overviewId
+  overviewHands.value = payload.overviewHands
+  overviewBlind.value = payload.overviewBlind
+  currentRoomRecord.value = payload.currentRoomRecord
+}
+
+function writeHandCache(roomId: number): void {
+  const payload: HandListCache = {
+    handRows: plainClone(handRows.value),
+    overviewTitle: overviewTitle.value,
+    overviewId: overviewId.value,
+    overviewHands: overviewHands.value,
+    overviewBlind: overviewBlind.value,
+    currentRoomRecord: plainClone(currentRoomRecord.value),
+  }
+  void handCache().put(USER_STORE_CAREER, handCacheKey(roomId), payload)
+}
+
 async function fetchHandRows(): Promise<void> {
   const roomId = resolveRoomId()
   if (roomId <= 0) {
@@ -194,10 +251,19 @@ async function fetchHandRows(): Promise<void> {
     return
   }
 
+  const cached = await handCache().get<HandListCache>(
+    USER_STORE_CAREER,
+    handCacheKey(roomId),
+  )
+  if (cached) {
+    applyHandCache(cached)
+    return
+  }
+
   loading.value = true
   try {
     const response = await postStatsUserGameRecordListApi({
-      room_type: 2,
+      room_type: handApiRoomType.value,
       room_id: roomId,
       limit: 50,
       offset: 0,
@@ -229,6 +295,7 @@ async function fetchHandRows(): Promise<void> {
     const firstReplay = parseReplayLike<StatsReplayData>(userRows[0]?.replay)
     overviewBlind.value = formatBlindLevel(room, firstReplay)
     handRows.value = mapHandRows(userRows)
+    writeHandCache(roomId)
   } catch (error) {
     handRows.value = []
     const message = error instanceof Error ? error.message : '加载手牌详情失败'
@@ -319,7 +386,7 @@ async function collectReplay(row: HandRow): Promise<void> {
 // 举报：保留旧逻辑，跳转举报页。
 function goReport(): void {
   closeHandActions()
-  void router.push('/mine/club-record/report')
+  void router.push(`/mine/career/${source.value}/record/report`)
 }
 
 onMounted(() => {

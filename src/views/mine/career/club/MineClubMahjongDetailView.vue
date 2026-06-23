@@ -179,7 +179,7 @@ async function fetchDetail(): Promise<void> {
 
 function goToHands(): void {
   void router.push({
-    path: '/mine/club-mahjong/hand',
+    path: '/mine/career/club/mahjong/hand',
     query: {
       room_id: currentRoomId.value > 0 ? String(currentRoomId.value) : undefined,
     },

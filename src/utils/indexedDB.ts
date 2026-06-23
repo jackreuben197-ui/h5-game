@@ -114,10 +114,14 @@ export async function replacePublicCacheEntries<T>(
 // 新增 store：① 加常量 ② 加进 UserCacheStoreName union 与 USER_CACHE_STORES
 // ③ 把 USER_CACHE_DB_VERSION + 1（旧用户下次 open 会触发 onupgradeneeded 补建 store）。
 const USER_CACHE_DB_PREFIX = 'user_cache_'
-const USER_CACHE_DB_VERSION = 4
+const USER_CACHE_DB_VERSION = 6
 
 export const USER_STORE_CLUB_LIST = 'club_list'
-export const USER_STORE_CAREER_DATA = 'career_data'
+// 生涯单一 store：战绩(record)与数据(data)合用一个 object store，
+// key 形如 `${sourceId}_${type}_${filter}_${variant}` —— sourceId: -1=朋友桌 / 0=全部俱乐部 / n=俱乐部 id；
+// type: record | data；filter: today|week|month 或 allin|personal|deck|opponent；variant: nlh|plo|6+|cowboy|mahjong|mtt 等。
+// 牌谱与战绩详情仍走单 key：hand-${roomId} / detail-${roomId}（同 room_id 全局唯一，不需 source 区分）。
+export const USER_STORE_CAREER = 'career'
 export const USER_STORE_BILL_DATA = 'bill_data'
 
 // cocos 通过 bridge 写入的 store；与 h5 自己的 store 同库不同名，
@@ -139,13 +143,13 @@ export const CC_CACHE_STORES: CcCacheStoreName[] = [
 
 export type UserCacheStoreName =
   | typeof USER_STORE_CLUB_LIST
-  | typeof USER_STORE_CAREER_DATA
+  | typeof USER_STORE_CAREER
   | typeof USER_STORE_BILL_DATA
   | CcCacheStoreName
 
 const USER_CACHE_STORES: UserCacheStoreName[] = [
   USER_STORE_CLUB_LIST,
-  USER_STORE_CAREER_DATA,
+  USER_STORE_CAREER,
   USER_STORE_BILL_DATA,
   ...CC_CACHE_STORES,
 ]

@@ -552,14 +552,50 @@ onMounted(() => {
 }
 
 .summary-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.24rem;
   padding: 0.36rem 0.44rem;
   border-radius: 0.76rem;
-  background: rgba(0, 0, 0, 0.2);
-  border: 0.02rem solid rgba(243, 243, 243, 0.1);
-  box-shadow: inset 0 0 0.01rem rgba(255, 255, 255, 0.2);
+  border: 0.016rem solid rgba(242, 242, 242, 0.1);
+  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
+}
+
+.summary-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  backdrop-filter: blur(16.6px);
+  -webkit-backdrop-filter: blur(16.6px);
+  background: linear-gradient(
+    107.6deg,
+    rgba(249, 249, 249, 0.1) 12.3%,
+    rgba(249, 249, 249, 0.14) 33.3%,
+    rgba(147, 147, 147, 0.2) 85.1%
+  );
+  mix-blend-mode: hard-light;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.summary-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 8.6px rgba(0, 0, 0, 0.5),
+    inset 3.4px 2.6px 8.6px rgba(0, 0, 0, 0.1),
+    inset 0 0 36.1px rgba(242, 242, 242, 0.3);
+  z-index: 0;
+}
+
+.summary-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .date-range {

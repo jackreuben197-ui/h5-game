@@ -390,15 +390,51 @@ onMounted(() => {
 }
 
 .summary-card {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 0.18rem;
   border-radius: 0.6rem;
   padding: 0.34rem 0.3rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.2);
-  background: rgba(0, 0, 0, 0.2);
-  box-shadow: inset 0 0 0.02rem rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(0.32rem);
+  border: 0.016rem solid rgba(242, 242, 242, 0.1);
+  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
+}
+
+.summary-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  backdrop-filter: blur(16.6px);
+  -webkit-backdrop-filter: blur(16.6px);
+  background: linear-gradient(
+    107.6deg,
+    rgba(249, 249, 249, 0.1) 12.3%,
+    rgba(249, 249, 249, 0.14) 33.3%,
+    rgba(147, 147, 147, 0.2) 85.1%
+  );
+  mix-blend-mode: hard-light;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.summary-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 8.6px rgba(0, 0, 0, 0.5),
+    inset 3.4px 2.6px 8.6px rgba(0, 0, 0, 0.1),
+    inset 0 0 36.1px rgba(242, 242, 242, 0.3);
+  z-index: 0;
+}
+
+.summary-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .summary-row {
@@ -439,7 +475,7 @@ onMounted(() => {
 
 .summary-divider {
   height: 0.02rem;
-  background: rgba(249, 249, 249, 0.24);
+  background: rgba(249, 249, 249, 0.2);
 }
 
 .record-board {
@@ -457,9 +493,9 @@ onMounted(() => {
 .board-head-strip {
   position: absolute;
   inset: 0.16rem 0.1rem auto;
-  height: 0.44rem;
+  height: 0.462rem;
   border-radius: 999px;
-  background: #00af83;
+  background: #5699cd;
 }
 
 .board-head {
@@ -467,14 +503,16 @@ onMounted(() => {
   min-height: 0.62rem;
   border-radius: 999px;
   padding: 0 0.18rem;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(0.24rem);
+  -webkit-backdrop-filter: blur(0.24rem);
 }
 
 .board-grid {
   display: grid;
-  grid-template-columns: 1.5rem repeat(6, minmax(0, 1fr));
+  grid-template-columns: 2.25rem repeat(6, minmax(0, 1fr));
   align-items: center;
-  column-gap: 0.06rem;
+  column-gap: 0.09rem;
 }
 
 .head-cell {
@@ -492,27 +530,27 @@ onMounted(() => {
 .record-list {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.15rem;
 }
 
 .record-row {
-  min-height: 0.82rem;
+  min-height: 1.23rem;
   border-radius: 999px;
-  padding: 0.14rem 0.16rem;
-  background: rgba(0, 0, 0, 0.2);
+  padding: 0.21rem 0.24rem;
+  background: rgba(66, 66, 66, 0.2);
   color: #f9f9f9;
 }
 
 .user-cell {
   display: inline-flex;
   align-items: center;
-  gap: 0.08rem;
+  gap: 0.12rem;
   min-width: 0;
 }
 
 .user-avatar {
-  width: 0.38rem;
-  height: 0.38rem;
+  width: 0.57rem;
+  height: 0.57rem;
   border-radius: 50%;
   object-fit: cover;
   flex: none;
@@ -526,19 +564,19 @@ onMounted(() => {
 }
 
 .user-name {
-  font-size: 0.2rem;
+  font-size: 0.3rem;
   color: rgba(255, 255, 255, 0.95);
 }
 
 .user-id {
-  margin-top: 0.02rem;
-  font-size: 0.14rem;
+  margin-top: 0.03rem;
+  font-size: 0.21rem;
   color: rgba(255, 255, 255, 0.54);
 }
 
 .value-cell {
   text-align: center;
-  font-size: 0.22rem;
+  font-size: 0.33rem;
   color: rgba(249, 249, 249, 0.94);
   white-space: nowrap;
 }
@@ -553,12 +591,15 @@ onMounted(() => {
 
 @media (max-width: 340px) {
   .board-grid {
-    grid-template-columns: 1.28rem repeat(6, minmax(0, 1fr));
+    grid-template-columns: 1.92rem repeat(6, minmax(0, 1fr));
   }
 
-  .head-cell,
-  .value-cell {
+  .head-cell {
     font-size: 0.2rem;
+  }
+
+  .value-cell {
+    font-size: 0.3rem;
   }
 }
 </style>

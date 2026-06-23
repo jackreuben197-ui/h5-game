@@ -17,7 +17,7 @@ import type { DiamondConfigItem, DiamondSetting } from '@/api/models/config'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
 import { t } from '@/i18n'
-import icDiamondBalance from '@/assets/icons/ic_diamond_balance.svg'
+import icDiamondBalance from '@/assets/icons/icon_diamond.png'
 import { showFailToast } from 'vant'
 import { showGameToast } from '@/components/Toast'
 import { buildRoomConfigPayload, parseRoomConfigToFormState } from './mttSections/payload'
@@ -756,7 +756,7 @@ async function onCreateTable() {
 }
 
 .fee-diamond-icon {
-  width: 0.32rem;
+  width: 0.4rem;
   height: 0.32rem;
 }
 

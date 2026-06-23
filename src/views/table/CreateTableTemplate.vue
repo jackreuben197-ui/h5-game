@@ -19,7 +19,7 @@ import { useGameStore } from '@/stores/game'
 import { buildBuyinOptions, resolveBringinBbRange } from './tableSections/topSlides'
 import { getAnteOptions } from './tableSections/constants'
 import { t } from '@/i18n'
-import icDiamondBalance from '@/assets/icons/ic_diamond_balance.svg'
+import icDiamondBalance from '@/assets/icons/icon_diamond.png'
 import { showFailToast } from 'vant'
 import { showGameToast } from '@/components/Toast'
 import { buildRoomConfigPayload, parseRoomConfigToFormState } from './tableSections/payload'
@@ -500,12 +500,20 @@ async function onCreateTable() {
     isSubmitting.value = false
   }
 }
+
+function handleBack() {
+  if (Number(route.query.origin_type) == 5) {
+    router.push('/friendsTable')
+  } else {
+    router.push('/club')
+  }
+}
 </script>
 
 <template>
   <div class="create-table-page">
     <!-- Header with tabs -->
-    <HeaderBack>
+    <HeaderBack :extra-padding="true" @back="handleBack">
       <div class="header-tabs">
         <button
           :class="['header-tab', { 'header-tab--active': activeTab === 'quick' }]"
@@ -805,7 +813,7 @@ async function onCreateTable() {
 }
 
 .fee-diamond-icon {
-  width: 0.32rem;
+  width: 0.4rem;
   height: 0.32rem;
 }
 

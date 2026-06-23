@@ -15,8 +15,8 @@ importers:
         specifier: git+ssh://git@github.com/kingofake/agreement-web.git#master
         version: git+https://github.com/kingofake/agreement-web.git#cf5374e648b7d6be75fc37db1a20c7c426a976db
       '@silenthill/h5-cc-bridge':
-        specifier: git+ssh://git@github.com/soolary/h5-cc-bridge.git#main
-        version: git+https://git@github.com:soolary/h5-cc-bridge.git#6938cfebf6a3c29f45e86eb4f312cf3e78806ebd
+        specifier: github:soolary/h5-cc-bridge#main
+        version: git+https://git@github.com:soolary/h5-cc-bridge.git#e3566d5a11f9cf33abf848e60da9351f3df9c512
       '@silenthill/h5-cc-i18n':
         specifier: github:guysoup027/h5-cc-i18n
         version: git+https://github.com/guysoup027/h5-cc-i18n.git#bc317f3b3c0664b9efbcd6584a77abc2f2825c2f
@@ -1063,8 +1063,8 @@ packages:
     resolution: {commit: cf5374e648b7d6be75fc37db1a20c7c426a976db, repo: https://github.com/kingofake/agreement-web.git, type: git}
     version: 1.0.0
 
-  '@silenthill/h5-cc-bridge@git+https://git@github.com:soolary/h5-cc-bridge.git#6938cfebf6a3c29f45e86eb4f312cf3e78806ebd':
-    resolution: {commit: 6938cfebf6a3c29f45e86eb4f312cf3e78806ebd, repo: git@github.com:soolary/h5-cc-bridge.git, type: git}
+  '@silenthill/h5-cc-bridge@git+https://git@github.com:soolary/h5-cc-bridge.git#e3566d5a11f9cf33abf848e60da9351f3df9c512':
+    resolution: {commit: e3566d5a11f9cf33abf848e60da9351f3df9c512, repo: git@github.com:soolary/h5-cc-bridge.git, type: git}
     version: 0.1.0
 
   '@silenthill/h5-cc-i18n@git+https://github.com/guysoup027/h5-cc-i18n.git#bc317f3b3c0664b9efbcd6584a77abc2f2825c2f':
@@ -1279,6 +1279,11 @@ packages:
 
   acorn@8.16.0:
     resolution: {integrity: sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw==}
+    engines: {node: '>=0.4.0'}
+    hasBin: true
+
+  acorn@8.17.0:
+    resolution: {integrity: sha512-xRQbDb9BnwDafYNn6Vwl839DYVjqXYb1XVGtWAZ1kcDc6iwAL4hg3B1dZlRiuENFeO2H53gFG3in621AdERVAg==}
     engines: {node: '>=0.4.0'}
     hasBin: true
 
@@ -3496,7 +3501,7 @@ snapshots:
     dependencies:
       google-protobuf: 3.21.4
 
-  '@silenthill/h5-cc-bridge@git+https://git@github.com:soolary/h5-cc-bridge.git#6938cfebf6a3c29f45e86eb4f312cf3e78806ebd': {}
+  '@silenthill/h5-cc-bridge@git+https://git@github.com:soolary/h5-cc-bridge.git#e3566d5a11f9cf33abf848e60da9351f3df9c512': {}
 
   '@silenthill/h5-cc-i18n@git+https://github.com/guysoup027/h5-cc-i18n.git#bc317f3b3c0664b9efbcd6584a77abc2f2825c2f': {}
 
@@ -3789,6 +3794,8 @@ snapshots:
       acorn: 8.16.0
 
   acorn@8.16.0: {}
+
+  acorn@8.17.0: {}
 
   ajv@6.14.0:
     dependencies:
@@ -4724,7 +4731,7 @@ snapshots:
   terser@5.46.1:
     dependencies:
       '@jridgewell/source-map': 0.3.11
-      acorn: 8.16.0
+      acorn: 8.17.0
       commander: 2.20.3
       source-map-support: 0.5.21
 

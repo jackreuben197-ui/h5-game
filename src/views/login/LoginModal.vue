@@ -390,6 +390,11 @@ async function handleLogin(target: string) {
     throw new Error('登录接口返回缺少 token')
   }
 
+  // 先写 TOKEN_EXPIREAT，再 setSessionToken：后者会把最新 expireAt 一并同步给 Cocos。
+  const expireAt = Number((res as Record<string, unknown>).expire_at || 0)
+  if (Number.isFinite(expireAt) && expireAt > 0) {
+    localStore.setItem(StorageKey.TOKEN_EXPIREAT, expireAt)
+  }
   gameStore.setSessionToken(token)
   gameStore.setLoginUser({
     account: target,
@@ -397,10 +402,6 @@ async function handleLogin(target: string) {
     userId: '',
   })
   persistLoginDraft()
-  const expireAt = Number((res as Record<string, unknown>).expire_at || 0)
-  if (Number.isFinite(expireAt) && expireAt > 0) {
-    localStore.setItem(StorageKey.TOKEN_EXPIREAT, expireAt)
-  }
 
   // 把首页无关的拉取（userInfo/club/全局配置/收费配置/多语言模板/WS）统一收口到登录后处理。
   syncPostAuthData()

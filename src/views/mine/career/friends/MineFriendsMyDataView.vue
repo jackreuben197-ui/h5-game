@@ -8,6 +8,18 @@ import iconTime from '@/assets/icons/icon_time.png'
 import iconChips from '@/assets/icons/icon_chips.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 import { formatUC } from '@/utils/roomVisibility'
+import {
+  addDays,
+  addMonths,
+  endOfDay,
+  formatDateTime,
+  startOfDay,
+  toUnixSeconds,
+} from '@/utils/time'
+import { useGameStore } from '@/stores/game'
+import { userCache } from '@/utils/userCache'
+import { USER_STORE_CAREER } from '@/utils/indexedDB'
+import { t } from '@/i18n'
 
 interface SummaryItem {
   label: string
@@ -28,15 +40,24 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const gameTabs = ['德州', '麻将', '其他']
-const activeGameTab = ref(gameTabs[0])
+interface TabItem {
+  label: string
+  key: string
+}
+
+const gameTabs: TabItem[] = [
+  { label: '德州', key: 'nlh' },
+  { label: '麻将', key: 'mahjong' },
+  { label: '其他', key: 'other' },
+]
+const activeGameTab = ref(gameTabs[0].key)
 const loading = ref(false)
 
 const now = new Date()
 const maxSelectableDate = endOfDay(now)
 const minSelectableDate = startOfDay(addMonths(now, -3))
 
-const startDateModel = ref(endOfDay(now))
+const startDateModel = ref(startOfDay(addDays(now, -1)))
 const endDateModel = ref(endOfDay(now))
 
 const startTime = ref('00:00')
@@ -50,18 +71,39 @@ const currentMonth = ref(
 
 const weekLabels = ['m', 't', 'w', 't', 'f', 's', 's']
 
-const summary: SummaryItem[] = [
+const summary = ref<SummaryItem[]>([
   { label: '参与人数', value: '0' },
   { label: '总桌数', value: '0' },
   { label: '我的收益', value: '0' },
-]
+])
 
 const players = ref<PlayerItem[]>([])
 
-const title = computed(() => '数据')
+const gameStore = useGameStore()
 
-const startDateText = computed(() => formatDateSlash(startDateModel.value))
-const endDateText = computed(() => formatDateSlash(endDateModel.value))
+interface FriendsDataCacheEntry {
+  summary: SummaryItem[]
+  players: PlayerItem[]
+}
+
+// IDB partition: gameStore.loginUserId
+// Store: USER_STORE_CAREER
+// Key: `-1_statistics_${YYMMDD}_${gameKey}`
+//   -1：朋友桌生涯，不与俱乐部 id 冲突；YYMMDD 取结束日期。
+function buildCacheKey(): string {
+  const dateCode = formatDateTime(endDateModel.value, 'YYMMDD')
+  return `-1_statistics_${dateCode}_${activeGameTab.value}`
+}
+
+function applyCache(entry: FriendsDataCacheEntry): void {
+  summary.value = entry.summary.map((item) => ({ ...item }))
+  players.value = entry.players.map((item) => ({ ...item }))
+}
+
+const title = computed(() => t('UIClub_Mlistinfo_GiVUYG7E'))
+
+const startDateText = computed(() => formatDateTime(startDateModel.value, 'DD/MM/YYYY'))
+const endDateText = computed(() => formatDateTime(endDateModel.value, 'DD/MM/YYYY'))
 const monthTitle = computed(
   () => `${currentMonth.value.getFullYear()}年${currentMonth.value.getMonth() + 1}月`,
 )
@@ -123,12 +165,9 @@ function resolveGameType(): number[] {
   return [0]
 }
 
-function toUnixSeconds(date: Date): number {
-  return Math.floor(date.getTime() / 1000)
-}
-
-async function fetchFriendsData(): Promise<void> {
-  loading.value = true
+async function fetchFriendsData(silent = false): Promise<void> {
+  if (!silent) loading.value = true
+  const requestKey = buildCacheKey()
   try {
     const response = await postStatsFriendStatsDataApi({
       start_time: toUnixSeconds(startDateModel.value),
@@ -141,13 +180,18 @@ async function fetchFriendsData(): Promise<void> {
       throw new Error(typeof response.msg === 'string' ? response.msg : '加载朋友数据失败')
     }
 
+    // 用户在静默刷新期间改了 tab/日期，丢弃过时结果。
+    if (silent && requestKey !== buildCacheKey()) return
+
     const info = response.data?.info
-    summary[0].value = toSafeNumber(info?.user_num).toLocaleString('en-US')
-    summary[1].value = toSafeNumber(info?.table_num).toLocaleString('en-US')
-    summary[2].value = formatUC(toSafeNumber(info?.profit))
+    const nextSummary: SummaryItem[] = [
+      { label: '参与人数', value: toSafeNumber(info?.user_num).toLocaleString('en-US') },
+      { label: '总桌数', value: toSafeNumber(info?.table_num).toLocaleString('en-US') },
+      { label: '我的收益', value: formatUC(toSafeNumber(info?.profit)) },
+    ]
 
     const list = response.data?.list ?? []
-    players.value = list.map((item, index) => {
+    const nextPlayers: PlayerItem[] = list.map((item, index) => {
       const profit = toSafeNumber(item.final_result)
       return {
         id: String(item.user_random_id ?? index + 1),
@@ -161,17 +205,41 @@ async function fetchFriendsData(): Promise<void> {
             : defaultAvatar,
       }
     })
+
+    summary.value = nextSummary
+    players.value = nextPlayers
+
+    void userCache(gameStore.loginUserId).put<FriendsDataCacheEntry>(
+      USER_STORE_CAREER,
+      requestKey,
+      { summary: nextSummary, players: nextPlayers },
+    )
   } catch (error) {
+    if (silent) return
     const message = error instanceof Error ? error.message : '加载朋友数据失败'
     showFailToast(message)
   } finally {
-    loading.value = false
+    if (!silent) loading.value = false
+  }
+}
+
+async function loadFromCacheThenRefresh(): Promise<void> {
+  const key = buildCacheKey()
+  const cached = await userCache(gameStore.loginUserId).get<FriendsDataCacheEntry>(
+    USER_STORE_CAREER,
+    key,
+  )
+  if (cached) {
+    applyCache(cached)
+    void fetchFriendsData(true)
+  } else {
+    await fetchFriendsData()
   }
 }
 
 function setGameTab(tab: string): void {
   activeGameTab.value = tab
-  void fetchFriendsData()
+  void loadFromCacheThenRefresh()
 }
 
 function openDatePicker(target: 'start' | 'end'): void {
@@ -190,7 +258,7 @@ function confirmDatePicker(): void {
     startDateModel.value = endDateModel.value
     endDateModel.value = temp
   }
-  void fetchFriendsData()
+  void loadFromCacheThenRefresh()
   closeDatePicker()
 }
 
@@ -282,29 +350,8 @@ function isDisabledDay(date: Date): boolean {
   return target < minSelectableDate.getTime() || target > maxSelectableDate.getTime()
 }
 
-function formatDateSlash(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}/${m}/${d}`
-}
-
-function addMonths(date: Date, months: number): Date {
-  const d = new Date(date)
-  d.setMonth(d.getMonth() + months)
-  return d
-}
-
-function startOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
-}
-
-function endOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)
-}
-
 onMounted(() => {
-  void fetchFriendsData()
+  void loadFromCacheThenRefresh()
 })
 </script>
 
@@ -316,13 +363,13 @@ onMounted(() => {
       <nav class="game-tabs" aria-label="玩法切换">
         <button
           v-for="tab in gameTabs"
-          :key="tab"
+          :key="tab.key"
           type="button"
           class="game-tab"
-          :class="{ active: activeGameTab === tab }"
-          @click="setGameTab(tab)"
+          :class="{ active: activeGameTab === tab.key }"
+          @click="setGameTab(tab.key)"
         >
-          {{ tab }}
+          {{ tab.label }}
         </button>
       </nav>
 
@@ -336,7 +383,7 @@ onMounted(() => {
             </span>
           </button>
 
-          <span class="dash" aria-hidden="true">—</span>
+          <span class="dash" aria-hidden="true">——</span>
 
           <button type="button" class="date-pill" @click="openDatePicker('end')">
             <span class="date">{{ endDateText }}</span>
@@ -491,25 +538,23 @@ onMounted(() => {
 }
 
 .game-tabs {
-  margin-top: 0.40541rem;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 0.42rem;
+  display: flex;
   align-items: center;
-  padding: 0 0.77704rem;
+  justify-content: space-around;
 }
 
 .game-tab {
   border: 0;
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.37029rem;
-  font-weight: 500;
+  font-size: 0.42rem;
+  line-height: 1.1;
   padding: 0.06rem 0;
-  line-height: 0.95;
 
   &.active {
     color: #fff;
-    border-bottom: 0.03365rem solid rgba(255, 255, 255, 0.95);
+    border-bottom: 0.03rem solid rgba(255, 255, 255, 0.92);
   }
 }
 
@@ -521,14 +566,14 @@ onMounted(() => {
 
 .summary-card {
   margin-top: 0.40541rem;
-  padding: 0.36317rem 0.4392rem;
+  padding: 0.36317rem 0;
 }
 
 .date-range {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.21341rem;
+  gap: 0.2rem;
 }
 
 .date-pill {
@@ -616,14 +661,17 @@ onMounted(() => {
 .player-list {
   margin-top: 0.3208rem;
   display: grid;
-  gap: 0.3208rem;
+  gap: 0.33rem;
+  .list-status {
+    text-align: center;
+  }
 }
 
 .player-card {
   border-radius: 4.223rem;
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.00421rem);
-  padding: 0.36317rem 0.4392rem;
+  padding: 0.3rem 0.44rem;
   min-height: 1.93072rem;
   display: flex;
   align-items: center;

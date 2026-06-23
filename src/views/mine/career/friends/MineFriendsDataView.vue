@@ -6,6 +6,18 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
 import iconTime from '@/assets/icons/icon_time.png'
+import { t } from '@/i18n'
+import {
+  addDays,
+  addMonths,
+  endOfDay,
+  formatDateTime,
+  startOfDay,
+  toUnixSeconds,
+} from '@/utils/time'
+import { useGameStore } from '@/stores/game'
+import { userCache } from '@/utils/userCache'
+import { USER_STORE_CAREER } from '@/utils/indexedDB'
 
 interface SummaryMetric {
   label: string
@@ -26,23 +38,40 @@ interface RecordItem {
   feePositive?: boolean
 }
 
-const title = computed(() => '数据管理')
+const title = computed(() => t('UIClub_DataManager'))
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const filterTabs = ['今天', '14天', '7天', '自定义']
-const activeFilter = ref(filterTabs[0])
+interface FilterTab {
+  label: string
+  key: 'today' | 'week' | 'month' | 'customize'
+}
+
+const filterTabs: FilterTab[] = [
+  { label: '今天', key: 'today' },
+  { label: '7天', key: 'week' },
+  { label: '14天', key: 'month' },
+  { label: 'Customize', key: 'customize' },
+]
+const activeFilter = ref<FilterTab['key']>(filterTabs[0].key)
 const loading = ref(false)
 
 const now = new Date()
 const maxSelectableDate = endOfDay(now)
 const minSelectableDate = startOfDay(addMonths(now, -3))
 
-const startDateModel = ref(startOfDay(addDays(now, -6)))
-const endDateModel = ref(startOfDay(now))
+// 默认按"今天"展示。
+const startDateModel = ref<Date>(startOfDay(now))
+const endDateModel = ref<Date>(startOfDay(now))
+
+// 自定义日期是否已确认（点过 OK）。控制 Customize tab 是否显示日期。
+const customizeApplied = ref(false)
+// 打开 picker 前的日期快照，用于取消时回滚。
+let pickerSnapshotStart: Date | null = null
+let pickerSnapshotEnd: Date | null = null
 
 const isDatePickerVisible = ref(false)
 const pickingTarget = ref<'start' | 'end'>('start')
@@ -73,8 +102,64 @@ function formatSigned(value: unknown): string {
   return amount > 0 ? `+${abs}` : `-${abs}`
 }
 
-function toUnixSeconds(date: Date): number {
-  return Math.floor(startOfDay(date).getTime() / 1000)
+const gameStore = useGameStore()
+
+interface RecordCacheEntry {
+  metrics: SummaryMetric[]
+  records: RecordItem[]
+}
+
+// IDB partition: gameStore.loginUserId, store: USER_STORE_CAREER
+// Key: `-1_data_${tabKey}`，-1 表示朋友桌生涯。仅 today/week/month 写入，customize 不缓存。
+function buildCacheKey(): string | null {
+  if (activeFilter.value === 'customize') return null
+  return `-1_data_${activeFilter.value}`
+}
+
+function applyCache(entry: RecordCacheEntry): void {
+  metrics.value = entry.metrics.map((item) => ({ ...item }))
+  records.value = entry.records.map((item) => ({ ...item }))
+}
+
+function buildMockRecords(): RecordItem[] {
+  return [
+    {
+      id: 'mock-1',
+      game: 'NLH',
+      title: '德州 1/2',
+      subtitle: '盲注 : 2',
+      extra: '买入 : 200',
+      time: '2026-06-22 20:30',
+      feeText: '服务费',
+      feeValue: '-50',
+      insuranceLabel: '保险',
+      insuranceValue: '-20',
+      feePositive: false,
+    },
+    {
+      id: 'mock-2',
+      game: 'PLO',
+      title: 'PLO 短码桌',
+      subtitle: '盲注 : 5',
+      extra: '买入 : 500',
+      time: '2026-06-22 19:10',
+      feeText: '服务费',
+      feeValue: '+120',
+      insuranceLabel: '保险',
+      insuranceValue: '0',
+      feePositive: true,
+    },
+    {
+      id: 'mock-3',
+      game: '麻将',
+      title: '川麻 血战到底',
+      subtitle: '参赛人数: 4',
+      time: '2026-06-22 16:42',
+      feeText: '服务费',
+      feeValue: '-30',
+      feePositive: false,
+    },
+  ]
 }
 
 function mapGameBadge(gameType: unknown, pokerType: unknown): string {
@@ -119,12 +204,14 @@ function mapRecordItem(row: Record<string, unknown>, index: number): RecordItem 
   }
 }
 
-async function fetchFriendsRecord(): Promise<void> {
-  loading.value = true
+async function fetchFriendsRecord(silent = false): Promise<void> {
+  if (!silent) loading.value = true
+  const requestKey = buildCacheKey()
   try {
+    // 始终以 0 点对齐发送给后端，保留原有行为。
     const requestPayload = {
-      start_time: toUnixSeconds(startDateModel.value),
-      end_time: toUnixSeconds(endDateModel.value),
+      start_time: toUnixSeconds(startOfDay(startDateModel.value)),
+      end_time: toUnixSeconds(startOfDay(endDateModel.value)),
       limit: 20,
       offset: 0,
     }
@@ -145,30 +232,69 @@ async function fetchFriendsRecord(): Promise<void> {
       throw new Error(typeof infoRes.msg === 'string' ? infoRes.msg : '加载统计信息失败')
     }
 
+    // 静默刷新期间若 tab 已切换，丢弃过时结果。
+    if (silent && requestKey !== buildCacheKey()) return
+
     const list = Array.isArray(listRes.data?.list) ? listRes.data.list : []
-    records.value = list.map((item, index) =>
+    let nextRecords: RecordItem[] = list.map((item, index) =>
       mapRecordItem((item as Record<string, unknown>) ?? {}, index),
     )
 
     const info = (infoRes.data?.info as Record<string, unknown> | undefined) ?? {}
     const handNum = toSafeNumber(info.hand_num)
     const gameNum = toSafeNumber(info.game_num)
-    metrics.value = [
+    const nextMetrics: SummaryMetric[] = [
       { label: '手数/局数', value: `${handNum}/${gameNum}` },
       { label: '盈利', value: formatSigned(info.profit) },
       { label: '服務費', value: Math.abs(toSafeNumber(info.fee)).toLocaleString('en-US') },
     ]
+
+    // 接口返回为空时填充 mock 占位。
+    if (nextRecords.length === 0) {
+      nextRecords = buildMockRecords()
+    }
+
+    metrics.value = nextMetrics
+    records.value = nextRecords
+
+    if (requestKey) {
+      void userCache(gameStore.loginUserId).put<RecordCacheEntry>(USER_STORE_CAREER, requestKey, {
+        metrics: nextMetrics,
+        records: nextRecords,
+      })
+    }
   } catch (error) {
+    if (silent) return
     records.value = []
     const message = error instanceof Error ? error.message : '加载朋友战绩失败'
     showFailToast(message)
   } finally {
-    loading.value = false
+    if (!silent) loading.value = false
   }
 }
 
-const startDateText = computed(() => formatDateSlash(startDateModel.value))
-const endDateText = computed(() => formatDateSlash(endDateModel.value))
+async function loadFromCacheThenRefresh(): Promise<void> {
+  const key = buildCacheKey()
+  if (!key) {
+    await fetchFriendsRecord()
+    return
+  }
+  const cached = await userCache(gameStore.loginUserId).get<RecordCacheEntry>(
+    USER_STORE_CAREER,
+    key,
+  )
+  if (cached) {
+    applyCache(cached)
+    void fetchFriendsRecord(true)
+  } else {
+    await fetchFriendsRecord()
+  }
+}
+
+const startDateText = computed(() => formatDateTime(startDateModel.value, 'YYYY/MM/DD'))
+const endDateText = computed(() => formatDateTime(endDateModel.value, 'YYYY/MM/DD'))
+const customizeStartText = computed(() => formatDateTime(startDateModel.value, 'DD/MM/YYYY'))
+const customizeEndText = computed(() => formatDateTime(endDateModel.value, 'DD/MM/YYYY'))
 const monthTitle = computed(
   () => `${currentMonth.value.getFullYear()}年${currentMonth.value.getMonth() + 1}月`,
 )
@@ -215,33 +341,32 @@ const calendarCells = computed<DayCell[]>(() => {
   return cells.slice(0, 35)
 })
 
-function onFilterClick(tab: string): void {
-  if (tab === 'Customize') {
-    activeFilter.value = tab
+function onFilterClick(tab: FilterTab): void {
+  if (tab.key === 'customize') {
+    // 打开 picker 前快照当前日期，取消则回滚。
+    pickerSnapshotStart = startDateModel.value
+    pickerSnapshotEnd = endDateModel.value
+    // 首次进入 Customize，picker 内默认昨天 0 点 → 今天 23:59:59。
+    if (!customizeApplied.value) {
+      startDateModel.value = startOfDay(addDays(now, -1))
+      endDateModel.value = endOfDay(now)
+    }
     openDatePicker('start')
     return
   }
 
-  activeFilter.value = tab
-  if (tab === '今天') {
+  activeFilter.value = tab.key
+  if (tab.key === 'today') {
     startDateModel.value = startOfDay(now)
     endDateModel.value = startOfDay(now)
-    void fetchFriendsRecord()
-    return
-  }
-
-  if (tab === '7天') {
+  } else if (tab.key === 'week') {
     startDateModel.value = startOfDay(addDays(now, -6))
     endDateModel.value = startOfDay(now)
-    void fetchFriendsRecord()
-    return
-  }
-
-  if (tab === '14天') {
+  } else if (tab.key === 'month') {
     startDateModel.value = startOfDay(addDays(now, -13))
     endDateModel.value = startOfDay(now)
-    void fetchFriendsRecord()
   }
+  void loadFromCacheThenRefresh()
 }
 
 function openDatePicker(target: 'start' | 'end'): void {
@@ -251,6 +376,13 @@ function openDatePicker(target: 'start' | 'end'): void {
 }
 
 function closeDatePicker(): void {
+  // 用户未点 OK 直接关闭：回滚到打开 picker 前的日期范围。
+  if (pickerSnapshotStart && pickerSnapshotEnd) {
+    startDateModel.value = pickerSnapshotStart
+    endDateModel.value = pickerSnapshotEnd
+  }
+  pickerSnapshotStart = null
+  pickerSnapshotEnd = null
   isDatePickerVisible.value = false
 }
 
@@ -260,9 +392,12 @@ function confirmDatePicker(): void {
     startDateModel.value = endDateModel.value
     endDateModel.value = temp
   }
-  activeFilter.value = 'Customize'
-  void fetchFriendsRecord()
-  closeDatePicker()
+  customizeApplied.value = true
+  activeFilter.value = 'customize'
+  pickerSnapshotStart = null
+  pickerSnapshotEnd = null
+  isDatePickerVisible.value = false
+  void loadFromCacheThenRefresh()
 }
 
 function goPrevYear(): void {
@@ -353,58 +488,38 @@ function isDisabledDay(date: Date): boolean {
   return target < minSelectableDate.getTime() || target > maxSelectableDate.getTime()
 }
 
-function formatDateSlash(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}/${m}/${d}`
-}
-
-function addDays(date: Date, days: number): Date {
-  const d = new Date(date)
-  d.setDate(d.getDate() + days)
-  return d
-}
-
-function addMonths(date: Date, months: number): Date {
-  const d = new Date(date)
-  d.setMonth(d.getMonth() + months)
-  return d
-}
-
-function startOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
-}
-
-function endOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)
-}
-
 function openRecordDetail(_item: RecordItem): void {
   // 待后续接入战绩详情页。
 }
 
 onMounted(() => {
-  void fetchFriendsRecord()
+  void loadFromCacheThenRefresh()
 })
 </script>
 
 <template>
   <div class="page-shell friends-record-page" :style="backgroundStyle">
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" :extra-padding="true" />
 
     <div class="content-wrap">
       <section class="summary-card">
         <div class="filter-tabs">
           <button
             v-for="tab in filterTabs"
-            :key="tab"
+            :key="tab.key"
             type="button"
             class="filter-tab"
-            :class="{ active: activeFilter === tab, 'is-customize': tab === 'Customize' }"
+            :class="{ active: activeFilter === tab.key, 'is-customize': tab.key === 'customize' }"
             @click="onFilterClick(tab)"
           >
-            {{ tab }}
+            <div v-if="tab.key === 'customize' && customizeApplied" class="cunstomize-date">
+              <div>
+                <p>{{ customizeStartText }}</p>
+                <p>{{ customizeEndText }}</p>
+              </div>
+              <img src="@/assets/icons/wallet/ic_arrow_left.svg" class="icon-arrow" />
+            </div>
+            <span v-else>{{ tab.label }}</span>
           </button>
         </div>
 
@@ -450,9 +565,9 @@ onMounted(() => {
               <div class="fee-chip">
                 <div class="fee-line">
                   <span>{{ item.feeText }}</span>
-                  <span :class="item.feePositive ? 'value-up' : 'value-down'">{{
-                    item.feeValue
-                  }}</span>
+                  <span :class="item.feePositive ? 'value-up' : 'value-down'">
+                    {{ item.feeValue }}
+                  </span>
                 </div>
                 <div v-if="item.insuranceLabel && item.insuranceValue" class="fee-line">
                   <span>{{ item.insuranceLabel }}</span>
@@ -549,7 +664,7 @@ onMounted(() => {
 .friends-record-page {
   height: 100dvh;
   // padding-top: calc(env(safe-area-inset-top) + 0.459rem);
-  padding-bottom: 0.8rem;
+  padding: 0 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;
@@ -575,7 +690,7 @@ onMounted(() => {
 }
 
 .summary-card {
-  margin-top: 0.38941rem;
+  margin-top: 0.35rem;
   border-radius: 0.76013rem;
   background: rgba(0, 0, 0, 0.2);
   padding: 0.36317rem 0.4392rem;
@@ -589,8 +704,6 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
-  gap: 0.05912rem;
-  padding: 0.05912rem;
   overflow: hidden;
   margin: 0 auto;
 }
@@ -599,6 +712,7 @@ onMounted(() => {
   flex: 1 1 0;
   min-width: 0;
   border: 0;
+  height: 100%;
   border-radius: 1.3844rem;
   background: transparent;
   color: #f9f9f9;
@@ -607,10 +721,23 @@ onMounted(() => {
   padding: 0.11075rem 0.24rem;
 
   &.is-customize {
-    flex: 1.34 1 0;
+    flex: 1.5 1 0;
     font-size: 0.36235rem;
-    padding-left: 0.22rem;
-    padding-right: 0.22rem;
+    width: 3rem;
+    .cunstomize-date {
+      display: flex;
+      p {
+        margin: 0.1rem 0;
+        font-size: 0.3rem;
+      }
+      img {
+        width: 0.25rem;
+        height: 0.25rem;
+        margin-top: 0.3rem;
+        margin-left: 0.1rem;
+        transform: rotate(-90deg);
+      }
+    }
   }
 
   &.active {
@@ -654,7 +781,7 @@ onMounted(() => {
 }
 
 .timezone-text {
-  margin: 0.072rem 0.11rem 0;
+  margin: 0.2rem 0.4rem 0.6rem;
   text-align: right;
   font-size: 0.25861rem;
   line-height: 1.4;

@@ -328,8 +328,8 @@ async function fetchStatsSummary(): Promise<void> {
       game_types: resolveGameTypes(),
       poker_types: selectedGame.value === '6+' ? [2] : [0],
       time_type: resolveTimeType(),
-      filter_type: 1, // 默认联盟币
-      room_type: isClub.value ? 0 : 1,
+      filter_type: isClub.value ? 1 : 3,
+      room_type: isClub.value ? 2 : 1,
       ...(isClub.value ? { club_id: getCareerSelectedClubId() } : {}),
     })
     if (response.code !== 0) {
@@ -352,7 +352,7 @@ async function fetchRecords(silent = false): Promise<void> {
       game_types: resolveGameTypes(),
       poker_types: selectedGame.value === '6+' ? [2] : [0],
       time_type: resolveTimeType(),
-      ...(isClub.value ? { club_id: getCareerSelectedClubId() } : { room_type: 1 }),
+      ...(isClub.value ? { club_id: getCareerSelectedClubId(), room_type: 2 } : { room_type: 1 }),
     })
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : '加载战绩失败')

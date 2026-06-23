@@ -4,17 +4,20 @@ import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { postStatsUserStatsAllApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import iconBoxClubT from '@/assets/icons/icon_box_club_t.png'
-import iconBoxFriendT from '@/assets/icons/icon_box_friend_t.png'
-import iconBoxDiamond from '@/assets/icons/icon_box_diamond.png'
-import iconBoxBag from '@/assets/icons/icon_box_bag.png'
-import iconBoxSetting from '@/assets/icons/icon_box_setting.png'
+import iconData from '@/assets/icons/icon_data.svg'
+import iconRecord from '@/assets/icons/icon_record.svg'
+import iconMtt from '@/assets/icons/icon_mtt.svg'
+import iconCowboy from '@/assets/icons/icon_cowboy.svg'
+import iconMahjong from '@/assets/icons/icon_mahjong.svg'
 import iconFilter from '@/assets/icons/icon_filters.png'
 import iconDropdown from '@/assets/icons/icon_dropdown.png'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useGameStore } from '@/stores/game'
 import { formatUC } from '@/utils/roomVisibility'
 import { showGameToast } from '@/components/Toast'
 import { localStore } from '@/utils/localStore'
+import { userCache } from '@/utils/userCache'
+import { USER_STORE_CAREER } from '@/utils/indexedDB'
 import { t } from '@/i18n'
 
 const CAREER_CLUB_STORE_KEY = 'CAREER_SELECTED_CLUB_ID'
@@ -22,6 +25,7 @@ const CAREER_CLUB_ALL = 'all'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
+const gameStore = useGameStore()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -123,12 +127,12 @@ const metrics = ref<CareerMetric[]>([
 ])
 
 const menuList: CareerMenuItem[] = [
-  { key: 'record', label: '战绩', icon: iconBoxClubT, route: '/mine/career/club/record' },
-  { key: 'mtt', label: 'MTT', icon: iconBoxDiamond, route: '/mine/career/club/mtt' },
-  { key: 'cowboy', label: 'Cowboy', icon: iconBoxFriendT, route: '/mine/career/club/cowboy' },
-  { key: 'mahjong', label: 'Mahjong', icon: iconBoxBag, route: '/mine/career/club/mahjong' },
-  // { key: 'mahjong-mtt', label: '麻将MTT战绩', icon: iconBoxSave },
-  { key: 'data', label: '数据', icon: iconBoxSetting, route: '/mine/career/club/data' },
+  { key: 'record', label: '战绩', icon: iconRecord, route: '/mine/career/club/record' },
+  { key: 'mtt', label: 'MTT', icon: iconMtt, route: '/mine/career/club/mtt' },
+  { key: 'cowboy', label: '牛仔', icon: iconCowboy, route: '/mine/career/club/cowboy' },
+  { key: 'mahjong', label: '麻将', icon: iconMahjong, route: '/mine/career/club/mahjong' },
+  { key: 'mahjong-mtt', label: '麻将MTT战绩', icon: iconMahjong },
+  { key: 'data', label: '数据', icon: iconData, route: '/mine/career/club/data' },
 ]
 
 function selectGameTab(tab: string): void {
@@ -269,24 +273,62 @@ function extractMetricsFromCache(): CareerMetric[] {
   ]
 }
 
+// ── 缓存（IndexedDB career）──────────────────────────────────────────────────
+// store=USER_STORE_CAREER，key = `${clubId}_home_${currency}_${gameTab}`：
+//   clubId = 0(全部) / 俱乐部 id；currency = 1(UC)/3(记分牌)/4(钻石)；gameTab = nlh|plo|6+。
+// 接口返回 one_day/week_day/mon_day 全部时间窗的数据，所以 date tab 不进 key。
+function homeCacheKey(): string {
+  const clubId =
+    selectedClubIndex.value === 0
+      ? 0
+      : userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id ?? 0
+  const currency = currencyTypes[selectedCurrencyIndex.value].value
+  return `${clubId}_home_${currency}_${selectedGameTab.value}`
+}
+
+function homeCache() {
+  return userCache(gameStore.loginUserId)
+}
+
 async function fetchClubCareerSummary(): Promise<void> {
-  loading.value = true
+  const key = homeCacheKey()
+  const cached = await homeCache().get<Record<string, unknown>>(USER_STORE_CAREER, key)
+  // 请求期间 tab 被切换：丢弃此次缓存。
+  if (key !== homeCacheKey()) return
+
+  if (cached) {
+    loading.value = false
+    responseCache.value = cached
+    metrics.value = extractMetricsFromCache()
+    // 后台静默刷新覆盖缓存
+    void requestSummary(key, true)
+    return
+  }
+
+  await requestSummary(key, false)
+}
+
+async function requestSummary(key: string, silent: boolean): Promise<void> {
+  if (!silent) loading.value = true
   try {
     const params = resolveRequestParams()
     const response = await postStatsUserStatsAllApi(params)
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : '加载俱乐部生涯数据失败')
     }
+    if (key !== homeCacheKey()) return
 
-    // 缓存完整响应数据
-    responseCache.value = response.data as Record<string, unknown>
-    // 从缓存中提取指标
+    const data = response.data as Record<string, unknown>
+    responseCache.value = data
     metrics.value = extractMetricsFromCache()
+    void homeCache().put(USER_STORE_CAREER, key, data)
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加载俱乐部生涯数据失败'
-    showFailToast(message)
+    if (!silent) {
+      const message = error instanceof Error ? error.message : '加载俱乐部生涯数据失败'
+      showFailToast(message)
+    }
   } finally {
-    loading.value = false
+    if (!silent) loading.value = false
   }
 }
 
@@ -647,7 +689,7 @@ onMounted(() => {
   border-radius: 0.42rem;
   background: rgba(31, 24, 46, 0.34);
   backdrop-filter: blur(0.03rem);
-  padding: 0.18rem 0.36rem;
+  padding: 0.2rem 0.4rem;
 }
 
 .menu-item {
@@ -670,21 +712,19 @@ onMounted(() => {
 .menu-left {
   display: flex;
   align-items: center;
-  gap: 0.24rem;
+  gap: 0.4rem;
 }
 
 .icon-box {
   width: 0.62rem;
   height: 0.62rem;
-  border-radius: 0.22rem;
-  background: rgba(255, 255, 255, 0.14);
   display: flex;
   align-items: center;
   justify-content: center;
 
   img {
-    width: 0.42rem;
-    height: 0.42rem;
+    width: 1rem;
+    height: 1rem;
   }
 }
 

@@ -1030,7 +1030,7 @@ onMounted(() => {
 
           <section class="glass-pill title-pill">
             <span>近3个月内玩牌数据统计</span>
-            <img src="@/assets/icons/icon_chart_pie.svg" />
+            <img src="@/assets/icons/icon_data.svg" />
           </section>
 
           <section class="glass-card biggest-card">
@@ -1131,7 +1131,7 @@ onMounted(() => {
 
           <div class="section-title">
             <span>近3个月内玩牌数据统计</span>
-            <img src="@/assets/icons/icon_chart_pie.svg" />
+            <img src="@/assets/icons/icon_data.svg" />
           </div>
 
           <div class="summary-list">
@@ -1145,7 +1145,7 @@ onMounted(() => {
         <section class="glass-card radar-card">
           <div class="section-title">
             <span>ALL IN 胜率分布图</span>
-            <img src="@/assets/icons/icon_chart_pie.svg" />
+            <img src="@/assets/icons/icon_data.svg" />
           </div>
           <div class="allin-radar-wrap">
             <RadarChart v-bind="radarPoints" />
@@ -1212,9 +1212,7 @@ onMounted(() => {
               </template>
             </GameTableColumn>
           </GameTable>
-          <div v-if="!loading && sortedDeckRows.length === 0" class="table-empty">
-            暂无数据
-          </div>
+          <div v-if="!loading && sortedDeckRows.length === 0" class="table-empty">暂无数据</div>
         </div>
       </template>
     </div>

@@ -319,6 +319,7 @@ onUnmounted(() => {
 
 .chat-container {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -333,6 +334,7 @@ onUnmounted(() => {
 
 .chat-main-body {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -482,7 +484,10 @@ onUnmounted(() => {
 
 .messages-wrap {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: 100px 20px 20px;
   display: flex;
   flex-direction: column;

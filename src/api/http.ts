@@ -42,10 +42,6 @@ const PRE_LOGIN_PATHS = [
   '/roomcenter/guest/rooms/list',
   '/roomcenter/guest/all/mtt/sng/ids',
   '/roomcenter/guest/mtt/sng/rooms/list',
-  // 小游戏专区 / 娱乐场（首页公共目录）允许游客预览，无需登录即可拉取游戏列表。
-  '/extend/extend/game/record/list/popular/home',
-  '/extend/extend/game/record/list/popular/main/home',
-  '/extend/extend/game/record/list/home',
 ]
 
 const TELEGRAM_LOGIN_LOADING_MESSAGE = '正在通过 Telegram 自动登录...'

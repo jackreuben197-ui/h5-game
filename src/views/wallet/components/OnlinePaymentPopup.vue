@@ -20,6 +20,7 @@ const props = defineProps<{
   initialOrderNo?: string
   initialQrCode?: string
   initialPayAddress?: string
+  initialPaymentUrl?: string
 }>()
 
 const emit = defineEmits<{
@@ -38,6 +39,7 @@ const loading = ref(false)
 const orderNo = ref(props.initialOrderNo || '')
 const qrCodeUrl = ref(props.initialQrCode || '')
 const payAddress = ref(props.initialPayAddress || '')
+const paymentUrl = ref(props.initialPaymentUrl || '')
 
 const timeLeft = ref(900) // 15-minute countdown (900s)
 let timer: number | null = null
@@ -89,6 +91,19 @@ function copyText(text: string) {
   showToast({ message: t('adaptation10106') || '已复制', duration: 800, position: 'bottom' })
 }
 
+function getRecipientAccount() {
+  const target = paymentUrl.value || payAddress.value
+  if (!target) {
+    showToast({ message: '暂无收款账号', duration: 1200, position: 'bottom' })
+    return
+  }
+  if (/^https?:\/\//i.test(target)) {
+    window.location.href = target
+    return
+  }
+  copyText(target)
+}
+
 function fallbackCopy(text: string) {
   const el = document.createElement('textarea')
   el.value = text
@@ -129,6 +144,7 @@ async function handleRegister() {
       orderNo.value = res.data.order_no || res.data.order?.order_no || ''
       qrCodeUrl.value = (res.data.usdt_address?.qr_code || res.data.qrcode || res.data.qr_code || '') as string
       payAddress.value = res.data.usdt_address?.address || ''
+      paymentUrl.value = (res.data.payment_url || '') as string
       step.value = 2
       startTimer()
       emit('success')
@@ -262,7 +278,7 @@ onUnmounted(() => {
               </div>
 
               <!-- QR Code & Scanner Row -->
-              <div class="info-row info-row--qr" @click="copyText(payAddress)">
+              <div class="info-row info-row--qr" @click="getRecipientAccount">
                 <div class="info-row__left">
                   <span class="info-row__label">收款账户（点击此处获取收款账号）</span>
                 </div>

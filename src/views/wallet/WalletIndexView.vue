@@ -120,6 +120,7 @@ const onlinePopupInitialData = ref({
   orderNo: '',
   qrCode: '',
   payAddress: '',
+  paymentUrl: '',
 })
 
 function handleOnlineSuccess() {
@@ -254,6 +255,7 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
       orderNo: order.order_no || '',
       qrCode: qrCode,
       payAddress: order.pay_type_address || '',
+      paymentUrl: (order as any).payment_url || '',
     }
     onlinePopupOpen.value = true
   }
@@ -435,6 +437,7 @@ function onPayClick() {
       orderNo: '',
       qrCode: '',
       payAddress: '',
+      paymentUrl: '',
     }
     onlinePopupOpen.value = true
   }
@@ -813,6 +816,7 @@ async function onUsdtSubmit(type: number) {
       :initial-order-no="onlinePopupInitialData.orderNo"
       :initial-qr-code="onlinePopupInitialData.qrCode"
       :initial-pay-address="onlinePopupInitialData.payAddress"
+      :initial-payment-url="onlinePopupInitialData.paymentUrl"
       @close="onlinePopupOpen = false"
       @success="handleOnlineSuccess"
       @unfinished-order="handleOnlineUnfinished"

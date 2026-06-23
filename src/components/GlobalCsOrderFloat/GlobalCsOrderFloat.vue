@@ -28,34 +28,9 @@ watch(activeCsOrder, (next, prev) => {
   if (next && !prev) hasSeen.value = false
 })
 
-function buildOrderData(order: ClubFundOrderListOrderInfo, orderType: 'recharge' | 'withdraw') {
-  const qrCode =
-    (order as any).qrcode || (order as any).qr_code || (order as any).pay_type_qr_code || ''
-
-  return {
-    orderType,
-    order_no: order.order_no,
-    gold_num: order.gold_num,
-    pay_price: order.pay_price,
-    order: {
-      order_no: order.order_no,
-      amount: order.pay_price,
-      gold_num: order.gold_num,
-    },
-    usdt_address: {
-      address: order.pay_type_address || '',
-      qr_code: qrCode,
-      name: (order as any).pay_type_name || '客服撮合',
-    },
-  }
-}
-
 async function openChat() {
   hasSeen.value = true
-  const orders = [
-    ...walletStore.pendingCsRechargeOrders.map((o) => buildOrderData(o, 'recharge')),
-    ...walletStore.pendingCsWithdrawOrders.map((o) => buildOrderData(o, 'withdraw')),
-  ]
+  const orders = [...walletStore.csChatOrders]
   if (!orders.length) return
 
   try {
@@ -101,7 +76,7 @@ watch(isLoggedIn, (val) => {
   <Teleport to="body">
     <div v-if="shouldShowFloat" class="cs-order-float">
       <BellButton
-        :count="1"
+        :count="walletStore.pendingCsOrderCount"
         :show-badge="!hasSeen"
         @click="openChat"
       />

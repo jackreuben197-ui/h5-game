@@ -87,7 +87,22 @@ const csChatProps = ref({
   supportUserId: 0,
   orderData: null as any,
   type: 'recharge' as 'recharge' | 'withdraw',
+  orders: [] as any[],
 })
+
+async function buildCsChatOrders(
+  currentOrder: any,
+  type: 'recharge' | 'withdraw',
+): Promise<any[]> {
+  await walletStore.refreshPendingCsOrder()
+  const list = [...walletStore.csChatOrders]
+  const currentNo = currentOrder?.order_no || currentOrder?.order?.order_no
+  const exists = list.some((o) => (o.order_no || o.order?.order_no) === currentNo)
+  if (currentOrder && currentNo && !exists) {
+    list.unshift({ ...currentOrder, orderType: type })
+  }
+  return list
+}
 
 const onlinePopupOpen = ref(false)
 const onlinePopupProps = ref({
@@ -206,6 +221,7 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
           supportUserId: channel.support_user_id || 0,
           orderData: result,
           type: 'recharge',
+          orders: await buildCsChatOrders(result, 'recharge'),
         }
         csChatPopupOpen.value = true
       } else {
@@ -438,6 +454,7 @@ async function onWithdrawCsChat(orderData: Record<string, unknown>) {
         supportUserId: channel.support_user_id || 0,
         orderData,
         type: 'withdraw',
+        orders: await buildCsChatOrders(orderData, 'withdraw'),
       }
       csChatPopupOpen.value = true
     }
@@ -531,18 +548,19 @@ async function onCsSubmit(displayPayPrice?: number) {
 
         if (channelRes.code === 0 && channelRes.data?.list?.length) {
           const channel = channelRes.data.list[0]
+          const submittedOrder = {
+            ...res.data,
+            gold_num: goldCount,
+            pay_price: apiPayPrice,
+          }
           csChatProps.value = {
             tribeId: channel.tribe_id || 0,
             supportUserId: channel.support_user_id || 0,
-            orderData: {
-              ...res.data,
-              gold_num: goldCount,
-              pay_price: apiPayPrice,
-            },
+            orderData: submittedOrder,
             type: 'recharge',
+            orders: await buildCsChatOrders(submittedOrder, 'recharge'),
           }
           csChatPopupOpen.value = true
-          await walletStore.refreshPendingCsOrder()
         } else {
           rechargeResult.value = res.data
           usdtDetailsPopupOpen.value = true
@@ -767,6 +785,7 @@ async function onUsdtSubmit(type: number) {
       :support-user-id="csChatProps.supportUserId"
       :order-data="csChatProps.orderData"
       :order-type="csChatProps.type"
+      :orders="csChatProps.orders"
       @close="csChatPopupOpen = false"
     />
 

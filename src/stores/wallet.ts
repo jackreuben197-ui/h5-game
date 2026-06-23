@@ -60,9 +60,40 @@ export const useWalletStore = defineStore('wallet', () => {
 
   const pendingCsRechargeOrder = computed(() => pendingCsRechargeOrders.value[0] || null)
   const pendingCsRechargeCount = computed(() => pendingCsRechargeOrders.value.length)
-  
+
   const pendingCsWithdrawOrder = computed(() => pendingCsWithdrawOrders.value[0] || null)
   const pendingCsWithdrawCount = computed(() => pendingCsWithdrawOrders.value.length)
+
+  const pendingCsOrderCount = computed(
+    () => pendingCsRechargeOrders.value.length + pendingCsWithdrawOrders.value.length,
+  )
+
+  function buildCsOrderData(order: ClubFundOrderListOrderInfo, orderType: 'recharge' | 'withdraw') {
+    const qrCode =
+      (order as any).qrcode || (order as any).qr_code || (order as any).pay_type_qr_code || ''
+
+    return {
+      orderType,
+      order_no: order.order_no,
+      gold_num: order.gold_num,
+      pay_price: order.pay_price,
+      order: {
+        order_no: order.order_no,
+        amount: order.pay_price,
+        gold_num: order.gold_num,
+      },
+      usdt_address: {
+        address: order.pay_type_address || '',
+        qr_code: qrCode,
+        name: (order as any).pay_type_name || '客服撮合',
+      },
+    }
+  }
+
+  const csChatOrders = computed(() => [
+    ...pendingCsRechargeOrders.value.map((o) => buildCsOrderData(o, 'recharge')),
+    ...pendingCsWithdrawOrders.value.map((o) => buildCsOrderData(o, 'withdraw')),
+  ])
 
   async function refreshPendingCsOrder() {
     const userInfoStore = useUserInfoStore()
@@ -146,6 +177,9 @@ export const useWalletStore = defineStore('wallet', () => {
     pendingCsRechargeCount,
     pendingCsWithdrawOrder,
     pendingCsWithdrawCount,
+    pendingCsOrderCount,
+    csChatOrders,
+    buildCsOrderData,
     refreshPendingCsOrder,
     updateCsOrders,
     clearCsOrders

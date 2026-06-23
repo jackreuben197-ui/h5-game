@@ -17,13 +17,16 @@ import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import imgAvatar from '@/assets/images/default_avatar_for_club.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
-import imgBalance from '@/assets/icons/icon_balance.png'
+import imgStatsSwitcher from '@/assets/icons/ic_stats_switcher.png'
+import imgBalance from '@/assets/icons/icon_chip_green.png'
+import imgAdminLevel from '@/assets/icons/ic_admin_level.png'
+import imgFounderLevel from '@/assets/icons/ic_founder_level.png'
 import type { OrgClubUserInfoData, OrgMemberListRecord } from '@/api/models/org'
 import type { StatsClubDataStatsUserDetailTotalData } from '@/api/models/stats'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { getMemberRouteContext, type MemberIdentity } from './clubMemberRoute'
-import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgUrl from '@/assets/images/img_table_setting_bg.png'
 
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -111,6 +114,12 @@ const editableRoleOptions = computed<RoleOption[]>(() => {
 
 const roleLabel = computed(() => ROLE_LABEL_MAP[selectedIdentity.value])
 const badgeLabel = computed(() => ROLE_LABEL_MAP[selectedIdentity.value])
+
+const badgeLevelIcon = computed(() => {
+  if (selectedIdentity.value === 'founder') return imgFounderLevel
+  if (selectedIdentity.value === 'admin') return imgAdminLevel
+  return ''
+})
 
 const currentAgentId = computed(() => toSafeNumber(memberProfile.value?.agent_user_id))
 const currentAgent = computed(() => {
@@ -715,7 +724,10 @@ onMounted(() => {
           <div>
             <p class="name">{{ displayName }}</p>
             <p class="uid-line"><span>ID</span>{{ displayUid }}</p>
-            <p class="badge">{{ badgeLabel }}</p>
+            <p class="badge">
+              <img v-if="badgeLevelIcon" class="badge-level-icon" :src="badgeLevelIcon" alt="" />
+              {{ badgeLabel }}
+            </p>
           </div>
         </div>
         <div class="asset-stack">
@@ -773,6 +785,7 @@ onMounted(() => {
       <section class="glass-card stat-head-card">
         <div class="stat-head-top">
           <strong>数据统计</strong>
+          <img class="stat-head-switcher" :src="imgStatsSwitcher" alt="" />
         </div>
         <div class="pill-tabs">
           <button :class="{ active: gameType === 'all' }" @click="switchGameType('all')">
@@ -922,18 +935,58 @@ onMounted(() => {
 .member-detail-page {
   display: flex;
   flex-direction: column;
-  gap: figma-rem(7.282);
+  gap: figma-rem(9.7384);
   min-height: 100%;
   padding-top: figma-rem(17.244);
 }
 
 .glass-card {
-  border-radius: figma-rem(17.067);
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.16rem);
+  position: relative;
+  overflow: hidden;
+  border-radius: figma-rem(19);
+  background: transparent;
+  border: 0.016rem solid rgba(242, 242, 242, 0.2);
+  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.15);
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  backdrop-filter: blur(16.6px);
+  -webkit-backdrop-filter: blur(16.6px);
+  background: linear-gradient(
+    107.6deg,
+    rgba(249, 249, 249, 0.05) 12.3%,
+    rgba(249, 249, 249, 0.1) 33.3%,
+    rgba(147, 147, 147, 0.1) 85.1%
+  );
+  mix-blend-mode: hard-light;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glass-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 8.6px rgba(0, 0, 0, 0.5),
+    inset 3.4px 2.6px 8.6px rgba(0, 0, 0, 0.1),
+    inset 0 0 36.1px rgba(242, 242, 242, 0.3);
+  z-index: 0;
+}
+
+.glass-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .profile-card {
+  border-radius: 1rem;
   min-height: figma-rem(131.07);
   padding: figma-rem(4.751) figma-rem(21.854);
   display: flex;
@@ -968,10 +1021,11 @@ onMounted(() => {
   gap: figma-rem(2.457);
   color: rgba(255, 255, 255, 0.9);
   font-size: figma-rem(9.623);
+  margin-bottom: 0.2rem;
 }
 
 .uid-line span {
-  padding: figma-rem(2.808) figma-rem(4.914);
+  padding: figma-rem(0.808) figma-rem(2.914);
   border-radius: figma-rem(4.212);
   background: rgba(255, 255, 255, 0.36);
   font-size: figma-rem(8.098);
@@ -979,8 +1033,17 @@ onMounted(() => {
 
 .badge {
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: figma-rem(3.5);
   font-size: figma-rem(10.5);
   color: #f9f9f9;
+}
+
+.badge-level-icon {
+  height: figma-rem(13);
+  width: auto;
+  object-fit: contain;
 }
 
 .asset-stack {
@@ -1006,6 +1069,7 @@ onMounted(() => {
 }
 
 .role-card {
+  border-radius: figma-rem(30);
   min-height: figma-rem(57.01);
   padding: figma-rem(12.952) figma-rem(17.771);
   display: flex;
@@ -1054,7 +1118,7 @@ onMounted(() => {
   border-radius: figma-rem(30);
   min-height: figma-rem(42.124);
   padding: 0 figma-rem(9.568);
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(27, 27, 30, 0.4);
   color: #fff;
   font-size: figma-rem(10.135);
 }
@@ -1064,12 +1128,19 @@ onMounted(() => {
 }
 
 .remark-save-btn {
-  border: 1px solid rgba(242, 242, 242, 0.8);
+  border: 0.0267rem solid rgba(255, 255, 255, 0.1);
   border-radius: figma-rem(40.576);
   min-height: figma-rem(42.124);
-  color: #fff;
+  color: #78e490;
   font-size: figma-rem(14);
-  background: linear-gradient(168deg, rgba(85, 243, 41, 1) 8%, rgba(62, 173, 6, 1) 72%);
+  font-weight: 500;
+  background: linear-gradient(
+    125.587deg,
+    rgba(255, 255, 255, 0.1) 21.106%,
+    rgba(230, 230, 230, 0.1) 71.429%
+  );
+  backdrop-filter: blur(0.5px);
+  -webkit-backdrop-filter: blur(0.5px);
 }
 
 .remark-save-btn:disabled {
@@ -1091,37 +1162,50 @@ onMounted(() => {
   font-size: figma-rem(15.203);
 }
 
+.stat-head-switcher {
+  height: figma-rem(20);
+  width: auto;
+  object-fit: contain;
+}
+
 .pill-tabs {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  background: rgba(255, 255, 255, 0.16);
-  border-radius: figma-rem(30);
-  padding: figma-rem(1.5);
+  align-items: center;
+  gap: 0.1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0.88rem;
+  padding: 0.06rem;
 }
 
 .range-tabs {
   grid-template-columns: repeat(3, 1fr);
-  min-height: figma-rem(54.16);
+  min-height: figma-rem(50);
 }
 
 .pill-tabs button {
   border: 0;
   background: transparent;
-  color: #fff;
+  color: #f9f9f9;
+  opacity: 0.86;
   font-size: figma-rem(13.574);
-  min-height: figma-rem(54.16);
-  border-radius: figma-rem(51.915);
+  min-height: figma-rem(42);
+  border-radius: 0.62rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pill-tabs button.active {
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(249, 249, 249, 0.5);
+  font-weight: 700;
+  opacity: 1;
 }
 
 .stat-list {
   display: flex;
   flex-direction: column;
-  gap: figma-rem(2.534);
+  gap: figma-rem(5);
 }
 
 .stats-loading {
@@ -1132,14 +1216,16 @@ onMounted(() => {
 }
 
 .stat-row {
-  min-height: figma-rem(20.27);
-  padding: figma-rem(13.619) figma-rem(16.47);
+  min-height: figma-rem(10.135);
+  padding: figma-rem(4) figma-rem(16);
   border-radius: figma-rem(28.505);
+   background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: space-between;
   color: #fff;
   font-size: figma-rem(11.402);
+
 }
 
 .link-list {
@@ -1164,8 +1250,6 @@ onMounted(() => {
 
 .bound-row-card {
   border-radius: figma-rem(15.836);
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(figma-rem(0.3167));
 }
 
 .bound-link-item {

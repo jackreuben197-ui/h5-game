@@ -1869,7 +1869,9 @@ watch(
 
 .messages-wrap {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 0.28rem 0.36rem 0.2rem;
 }
 

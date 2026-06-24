@@ -194,7 +194,7 @@ function resolveBridgeTarget(raw: string | undefined): BridgeTarget {
 export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const bridgeTarget = resolveBridgeTarget(env.VITE_BRIDGE_TARGET)
-  const proxyTarget = env.VITE_PROXY_TARGET || 'https://test2.awanptest.com'
+  const proxyTarget = env.VITE_PROXY_TARGET || 'https://preview.trackyourchoice.com'
   const proxyImTarget = env.VITE_PROXY_IM_TARGET || 'https://test-impubnub.awanptest.com'
   const enableSourceMap = env.VITE_BUILD_SOURCEMAP === 'true'
   const enableDropConsole = toBoolean(env.VITE_DROP_CONSOLE)

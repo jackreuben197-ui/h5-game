@@ -164,3 +164,13 @@ export function addDays(value: unknown, days: number): Date {
   const base = timestampMs > 0 ? dayjs(timestampMs) : dayjs()
   return base.add(days, 'day').toDate()
 }
+
+// 取本地日期 YYYY-MM-DD，常用于按“自然日”做唯一标记。
+export function getLocalDateKey(value: unknown = Date.now()): string {
+  const timestampMs = toTimestampMs(value)
+  const date = timestampMs > 0 ? new Date(timestampMs) : new Date()
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}

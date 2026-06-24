@@ -15,42 +15,39 @@ const props = defineProps<{
   closePanel: (reason?: string, payload?: unknown) => void
 }>()
 
-// ==================== 类型定义（对齐服务端返回结构） ====================
-interface Page1Data {
+// ==================== 类型定义（对齐 /api/misc/h5/display 返回结构） ====================
+interface DownloadAppData {
   id?: number
-  type?: number
   name?: string
-  icon?: string
+  icon_url?: string
   title?: string
-  url?: string
+  download_url?: string
   status?: number
-  create_time?: number
+  publish_time?: string
 }
 
-interface Page2Item {
+interface PopupNoticeItem {
   id?: number
-  type?: number
   title: string
   content: string
   weight?: number
   status?: number
-  create_time?: number
+  publish_time?: string
 }
 
-interface Page3Data {
+interface FindUsData {
   id?: number
-  type?: number
   title?: string
   content?: string
-  urls?: string[]
+  link_list?: string[]
   status?: number
-  create_time?: number
+  publish_time?: string
 }
 
 interface NotificationPanelData {
-  page1?: Page1Data
-  page2?: Page2Item[]
-  page3?: Page3Data
+  download_app?: DownloadAppData
+  popup_notices?: PopupNoticeItem[]
+  find_us?: FindUsData
 }
 
 // ==================== 工具函数 ====================
@@ -58,7 +55,7 @@ function isRecord(raw: unknown): raw is Record<string, unknown> {
   return Boolean(raw) && typeof raw === 'object' && !Array.isArray(raw)
 }
 
-function isPage2Item(raw: unknown): raw is Page2Item {
+function isPopupNoticeItem(raw: unknown): raw is PopupNoticeItem {
   if (!isRecord(raw)) return false
   return typeof raw.title === 'string' && typeof raw.content === 'string'
 }
@@ -68,41 +65,43 @@ const resolvedData = computed<NotificationPanelData>(() => {
   const raw = props.panelProps
   if (!isRecord(raw)) return {}
   return {
-    page1: isRecord(raw.page1) ? (raw.page1 as Page1Data) : undefined,
-    page2: Array.isArray(raw.page2) ? raw.page2.filter(isPage2Item) : undefined,
-    page3: isRecord(raw.page3) ? (raw.page3 as Page3Data) : undefined,
+    download_app: isRecord(raw.download_app) ? (raw.download_app as DownloadAppData) : undefined,
+    popup_notices: Array.isArray(raw.popup_notices)
+      ? raw.popup_notices.filter(isPopupNoticeItem)
+      : undefined,
+    find_us: isRecord(raw.find_us) ? (raw.find_us as FindUsData) : undefined,
   }
 })
 
-const page1Data = computed<Page1Data>(() => ({
-  ...resolvedData.value.page1,
+const downloadAppData = computed<DownloadAppData>(() => ({
+  ...resolvedData.value.download_app,
 }))
 
-const page2List = computed<Page2Item[]>(() => {
-  const incoming = resolvedData.value.page2
+const popupNoticeList = computed<PopupNoticeItem[]>(() => {
+  const incoming = resolvedData.value.popup_notices
   return Array.isArray(incoming) && incoming.length ? incoming : []
 })
 
-const page3Data = computed<Page3Data & { urls: string[] }>(() => {
-  const incoming = resolvedData.value.page3
-  const urls = Array.isArray(incoming?.urls)
-    ? incoming.urls.filter((item): item is string => typeof item === 'string')
+const findUsData = computed<FindUsData & { link_list: string[] }>(() => {
+  const incoming = resolvedData.value.find_us
+  const linkList = Array.isArray(incoming?.link_list)
+    ? incoming.link_list.filter((item): item is string => typeof item === 'string')
     : []
   return {
     ...incoming,
-    urls,
+    link_list: linkList,
   }
 })
 
 // ==================== 状态 ====================
 const MAX_STEP = 3
 const currentStep = ref(1)
-const page2Index = ref(0)
+const popupNoticeIndex = ref(0)
 
-const currentPage2Item = computed<Page2Item | null>(() => {
-  const items = page2List.value
+const currentPopupNotice = computed<PopupNoticeItem | null>(() => {
+  const items = popupNoticeList.value
   if (!items.length) return null
-  const index = Math.max(0, Math.min(page2Index.value, items.length - 1))
+  const index = Math.max(0, Math.min(popupNoticeIndex.value, items.length - 1))
   return items[index] ?? null
 })
 
@@ -112,7 +111,7 @@ function onClose(): void {
     currentStep.value++
     // 进入步骤2时重置索引，确保从第一条开始展示
     if (currentStep.value === 2) {
-      page2Index.value = 0
+      popupNoticeIndex.value = 0
     }
     return
   }
@@ -120,19 +119,19 @@ function onClose(): void {
 }
 
 // ==================== 步骤2切换 ====================
-function selectPage2Tab(index: number): void {
-  page2Index.value = index
+function selectPopupNoticeTab(index: number): void {
+  popupNoticeIndex.value = index
 }
 
-function prevPage2(): void {
-  if (page2Index.value > 0) {
-    page2Index.value--
+function prevPopupNotice(): void {
+  if (popupNoticeIndex.value > 0) {
+    popupNoticeIndex.value--
   }
 }
 
-function nextPage2(): void {
-  if (page2Index.value < page2List.value.length - 1) {
-    page2Index.value++
+function nextPopupNotice(): void {
+  if (popupNoticeIndex.value < popupNoticeList.value.length - 1) {
+    popupNoticeIndex.value++
   }
 }
 
@@ -177,15 +176,15 @@ async function copyUrl(url: string): Promise<void> {
 }
 
 async function copyAllUrls(): Promise<void> {
-  const urls = page3Data.value.urls
-  if (!urls.length) {
+  const links = findUsData.value.link_list
+  if (!links.length) {
     showFailToast('复制内容为空')
     return
   }
   try {
-    await writeToClipboard(urls.join('\n'))
+    await writeToClipboard(links.join('\n'))
     showSuccessToast('全部已复制')
-    props.emitPanelEvent('copyAllUrls', urls)
+    props.emitPanelEvent('copyAllUrls', links)
   } catch {
     showFailToast('复制失败，请手动复制')
   }
@@ -193,7 +192,7 @@ async function copyAllUrls(): Promise<void> {
 
 // ==================== 步骤1/3 操作 ====================
 function onDownload(): void {
-  const url = page1Data.value.url
+  const url = downloadAppData.value.download_url
   props.emitPanelEvent('primaryAction', currentStep.value)
   if (url) {
     window.open(url, '_blank')
@@ -238,14 +237,14 @@ async function onSecondaryAction(): Promise<void> {
         <div class="notification-panel__app-row">
           <div class="notification-panel__app-info">
             <img
-              v-if="page1Data.icon"
+              v-if="downloadAppData.icon_url"
               class="notification-panel__app-icon"
-              :src="page1Data.icon"
+              :src="downloadAppData.icon_url"
               alt="icon"
             />
-            <span class="notification-panel__app-name">{{ page1Data.name }}</span>
+            <span class="notification-panel__app-name">{{ downloadAppData.name }}</span>
           </div>
-          <div class="notification-panel__app-title">{{ page1Data.title }}</div>
+          <div class="notification-panel__app-title">{{ downloadAppData.title }}</div>
         </div>
         <div class="notification-panel__actions">
           <button
@@ -270,14 +269,14 @@ async function onSecondaryAction(): Promise<void> {
 
     <!-- ========== 步骤2：富文本活动详情（可tab/箭头切换） ========== -->
     <div v-if="currentStep === 2" class="notification-panel__step">
-      <h3 class="notification-panel__title">{{ currentPage2Item?.title ?? '活动详情' }}</h3>
+      <h3 class="notification-panel__title">{{ currentPopupNotice?.title ?? '活动详情' }}</h3>
 
       <div class="notification-panel__carousel">
         <button
           class="notification-panel__arrow notification-panel__arrow--left"
           type="button"
-          :disabled="page2Index <= 0"
-          @click="prevPage2"
+          :disabled="popupNoticeIndex <= 0"
+          @click="prevPopupNotice"
         >
           <img src="@/assets/icons/wallet/ic_arrow_left.svg" alt="" />
         </button>
@@ -285,9 +284,9 @@ async function onSecondaryAction(): Promise<void> {
         <div class="notification-panel__content-box">
           <!-- eslint-disable vue/no-v-html -->
           <div
-            v-if="currentPage2Item"
+            v-if="currentPopupNotice"
             class="notification-panel__rich-text"
-            v-html="currentPage2Item.content"
+            v-html="currentPopupNotice.content"
           ></div>
           <!-- eslint-enable vue/no-v-html -->
           <div v-else class="notification-panel__empty">暂无内容</div>
@@ -296,8 +295,8 @@ async function onSecondaryAction(): Promise<void> {
         <button
           class="notification-panel__arrow notification-panel__arrow--right"
           type="button"
-          :disabled="page2Index >= page2List.length - 1"
-          @click="nextPage2"
+          :disabled="popupNoticeIndex >= popupNoticeList.length - 1"
+          @click="nextPopupNotice"
         >
           <img src="@/assets/icons/wallet/ic_arrow_left.svg" alt="" />
         </button>
@@ -305,19 +304,19 @@ async function onSecondaryAction(): Promise<void> {
 
       <div class="notification-panel__tabs">
         <button
-          v-for="(item, index) in page2List"
+          v-for="(item, index) in popupNoticeList"
           :key="index"
           type="button"
           class="notification-panel__tab"
-          :class="{ active: page2Index === index }"
-          @click="selectPage2Tab(index)"
+          :class="{ active: popupNoticeIndex === index }"
+          @click="selectPopupNoticeTab(index)"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
             height="16"
             viewBox="0 0 16 16"
-            :fill="page2Index === index ? '#05E7AE' : 'white'"
+            :fill="popupNoticeIndex === index ? '#05E7AE' : 'white'"
           >
             <path
               fill-rule="evenodd"
@@ -337,10 +336,10 @@ async function onSecondaryAction(): Promise<void> {
 
     <!-- ========== 步骤3：备用地址（USDT 充值/收藏网址） ========== -->
     <div v-if="currentStep === 3" class="notification-panel__step">
-      <h3 class="notification-panel__title">{{ page3Data.title }}</h3>
+      <h3 class="notification-panel__title">{{ findUsData.title }}</h3>
 
-      <div v-if="page3Data.content" class="notification-panel__url-tip">
-        {{ page3Data.content }}
+      <div v-if="findUsData.content" class="notification-panel__url-tip">
+        {{ findUsData.content }}
       </div>
       <div class="notification-panel__url-card">
         <div class="notification-panel__url-actions">
@@ -364,12 +363,12 @@ async function onSecondaryAction(): Promise<void> {
         </div>
         <div class="notification-panel__url-list">
           <div
-            v-for="(url, index) in page3Data.urls"
+            v-for="(link, index) in findUsData.link_list"
             :key="index"
             class="notification-panel__url-item"
           >
-            <span class="notification-panel__url-label">{{ url }}</span>
-            <div class="notification-panel__copy-btn" type="button" @click="copyUrl(url)">
+            <span class="notification-panel__url-label">{{ link }}</span>
+            <div class="notification-panel__copy-btn" type="button" @click="copyUrl(link)">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="16"

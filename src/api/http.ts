@@ -35,6 +35,7 @@ const PRE_LOGIN_PATHS = [
   '/user/check_email',
   '/user/modify/password',
   '/misc/article/info',
+  '/misc/h5/display',
   '/config/register/area',
   '/org/club/default',
   '/roomcenter/guest/all/rooms',

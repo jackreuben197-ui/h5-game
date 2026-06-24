@@ -14,6 +14,7 @@ import {
 } from './bridge/channels'
 import { setupWsProxyBridgeChannel } from './bridge/ws'
 import { installCcStorageProxy } from './bridge/sync/ccStorageProxy'
+import { setupDailyH5DisplayPanel } from './bridge/dailyH5DisplayPanel'
 import { syncPostAuthData } from './session/postAuthSync'
 import {
   checkLocalTokenAtBootstrap,
@@ -43,6 +44,7 @@ let stopWsProxyBridgeChannel: (() => void) | null = null
 let stopH5VisibilityBridgeChannel: (() => void) | null = null
 let stopCcStorageProxy: (() => void) | null = null
 let stopNativeMenuGuard: (() => void) | null = null
+let stopDailyH5DisplayPanel: (() => void) | null = null
 
 // 启动时缓存 URL 中的代理邀请码，防止跨页面丢失
 cacheAgentInviteCodeIfPresent()
@@ -144,6 +146,8 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
     // h5 与 cocos 共用 user_cache_${userId} 一个 IndexedDB；localStorage 用 dzpk_cc_ 前缀隔离。
     stopCcStorageProxy = installCcStorageProxy()
     app.mount(mountTarget)
+    // 每天首次进入 H5 自动弹一次大厅展示面板：挂载、可见性变化、Cocos h5Show 均会触发。
+    stopDailyH5DisplayPanel = setupDailyH5DisplayPanel()
     recordDebugEvent('[h5]', 'mount success', {
       route: window.location.hash || window.location.pathname,
       visible: window.__H5_VISIBLE__ !== false,
@@ -175,6 +179,8 @@ export function unmountH5App(): void {
   stopCcStorageProxy = null
   stopNativeMenuGuard?.()
   stopNativeMenuGuard = null
+  stopDailyH5DisplayPanel?.()
+  stopDailyH5DisplayPanel = null
   stopTokenRefreshLoop()
   app.unmount()
   app = null

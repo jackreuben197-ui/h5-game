@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import bannerBgUrl from '@/assets/images/card_bg3.png'
-import AppBar from '@/components/wallet/AppBar.vue'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import TagPill from '@/components/wallet/TagPill.vue'
 import iconChips from '@/assets/icons/icon_chip_red.png'
 import icIncome from '@/assets/icons/wallet/ic_income.svg'
@@ -14,7 +14,7 @@ import { postUserGoldChangeLogApi } from '@/api/user'
 import type { UserGoldChangeLogRecord } from '@/api/models/user'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
-import { resolveOpCodeText } from '@/utils/opCodeText'
+import { resolveOpCodeText } from '@/utils/transText'
 
 const userInfoStore = useUserInfoStore()
 const router = useRouter()
@@ -57,7 +57,7 @@ onMounted(async () => {
 
 <template>
   <div class="details-page" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
-    <AppBar title="明细" :show-actions="false" />
+    <HeaderBack title="明细" extra-padding />
 
     <div class="details-content">
       <div class="user-card-wrapper">

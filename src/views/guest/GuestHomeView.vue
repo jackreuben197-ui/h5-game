@@ -5,7 +5,6 @@ import { useLoginModalStore } from '@/stores/loginModal'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useCachedImage } from '@/utils/imageCache'
 import { computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 
 import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
@@ -14,7 +13,6 @@ import imgCowboy from '@/assets/images/minigame-newui/sg.svg'
 
 const loginModalStore = useLoginModalStore()
 const userInfoStore = useUserInfoStore()
-const router = useRouter()
 
 const clubBannerUrl = useCachedImage(
   () => userInfoStore.channelDefaultClub?.banner || homeHeaderFallback,
@@ -45,14 +43,12 @@ function notifyNotLoginRegister(): void {
   loginModalStore.open({ mode: 'register' })
 }
 
-// 小游戏专区对游客开放预览，进入具体游戏时再引导登录。
 function goToMinigame(): void {
-  void router.push('/minigame')
+  loginModalStore.open({ mode: 'login' })
 }
 
-// 麻将专区（娱乐场：真人/电子/捕鱼）对游客开放预览，进入具体游戏时再引导登录。
 function goToCasino(): void {
-  void router.push('/casino')
+  loginModalStore.open({ mode: 'login' })
 }
 
 onMounted(() => {

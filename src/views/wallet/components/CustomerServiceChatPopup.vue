@@ -51,6 +51,7 @@ const messageContainer = ref<HTMLElement | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 let pollTimer: number | null = null
 let statusTimer: number | null = null
+let isInitialLoad = true
 
 const isApproved = computed(() => orderStatus.value === 2)
 
@@ -101,8 +102,12 @@ async function loadMessages() {
       const newList = res.data.list.reverse()
       if (newList.length !== messages.value.length ||
           (newList.length > 0 && newList[newList.length-1].time_token !== messages.value[messages.value.length-1]?.time_token)) {
+        // Only stick to bottom on the first load or when the user is already
+        // near the bottom — don't yank them down while they scroll history.
+        const stick = isInitialLoad || isNearBottom()
         messages.value = newList
-        scrollToBottom()
+        if (stick) scrollToBottom()
+        isInitialLoad = false
       }
     }
   } catch (e) {
@@ -127,6 +132,7 @@ async function sendMessage() {
     })
     if (res.code === 0) {
       await loadMessages()
+      scrollToBottom()
     }
   } catch (e) {
     console.error('Failed to send message', e)
@@ -150,6 +156,7 @@ async function onImageUpload(e: Event) {
         url: url
       })
       await loadMessages()
+      scrollToBottom()
     }
   } catch (err) {
     console.error('Image upload failed', err)
@@ -162,6 +169,12 @@ function openUrl(url?: string) {
 
 function triggerUpload() {
   fileInput.value?.click()
+}
+
+function isNearBottom(threshold = 80) {
+  const el = messageContainer.value
+  if (!el) return true
+  return el.scrollHeight - el.scrollTop - el.clientHeight < threshold
 }
 
 function scrollToBottom() {
@@ -496,8 +509,7 @@ onUnmounted(() => {
 .messages-inner {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  min-height: 100%;
+  margin-top: auto;
   gap: 20px;
 }
 

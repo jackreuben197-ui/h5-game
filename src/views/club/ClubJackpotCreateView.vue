@@ -15,6 +15,7 @@ import {
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { t } from '@/i18n'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -80,7 +81,7 @@ function onRecharge(): void {
 
 async function onRechargeSubmit(amount: number): Promise<void> {
   if (amount <= 0) {
-    showToast('请输入有效金额')
+    showToast(t('H5Deposit_EnterValidAmount'))
     return
   }
   loading.value = true
@@ -90,14 +91,15 @@ async function onRechargeSubmit(amount: number): Promise<void> {
       amount: Math.round(amount * 100),
     })
     if (Number(response.code) !== 0) {
-      const message = typeof response.msg === 'string' ? response.msg : '充值失败'
+      const message =
+        typeof response.msg === 'string' ? response.msg : t('UISupplememtDetails_cz_fail')
       throw new Error(message)
     }
-    showSuccessToast('充值成功')
+    showSuccessToast(t('adaptation10104'))
     // Refresh template info to update the displayed amount
     await fetchTemplateInfo()
   } catch (error) {
-    const message = error instanceof Error ? error.message : '充值失败'
+    const message = error instanceof Error ? error.message : t('UISupplememtDetails_cz_fail')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -107,13 +109,13 @@ async function onRechargeSubmit(amount: number): Promise<void> {
 
 const gameModes = ['NLH', 'PLO', '6+', 'Bombpot', 'AOF'] as const
 type GameMode = (typeof gameModes)[number]
-type StakeLevel = '微' | '小' | '中' | '大'
+type StakeLevel = string
 
 const JACKPOT_BLIND_CLASSIFY_RULES = [
-  { level: '微', blindType: 1, sbValues: [10, 20, 30, 40, 50] },
-  { level: '小', blindType: 2, sbValues: [100, 200, 300, 400, 500] },
-  { level: '中', blindType: 3, sbValues: [1000, 1500, 2000, 2500, 3000, 5000] },
-  { level: '大', blindType: 4, sbValues: [10000, 20000, 30000, 50000, 100000] },
+  { level: t('UIGuild_Tiny'), blindType: 1, sbValues: [10, 20, 30, 40, 50] },
+  { level: t('UIGuild_Small'), blindType: 2, sbValues: [100, 200, 300, 400, 500] },
+  { level: t('UIGuild_Middle'), blindType: 3, sbValues: [1000, 1500, 2000, 2500, 3000, 5000] },
+  { level: t('UIGuild_Big'), blindType: 4, sbValues: [10000, 20000, 30000, 50000, 100000] },
 ] as const
 
 function getJackpotBlindTypeBySb(sb: number): number {
@@ -148,7 +150,7 @@ const modeEnabled = ref<Record<GameMode, boolean>>({
 })
 
 const activeGameMode = ref<GameMode>('NLH')
-const activeStakeLevel = ref<StakeLevel>('微')
+const activeStakeLevel = ref<StakeLevel>(t('UIGuild_Tiny'))
 
 function toSafeNumber(value: unknown): number {
   const num = Number(value)
@@ -196,7 +198,7 @@ function createDefaultPoolSettings(): PoolSettingItem[] {
   return [
     {
       id: 'royal',
-      title: '皇家同花顺',
+      title: t('adaptation10053'),
       checked: false,
       ratio: '',
       cards: [
@@ -209,7 +211,7 @@ function createDefaultPoolSettings(): PoolSettingItem[] {
     },
     {
       id: 'straight',
-      title: '同花顺',
+      title: t('adaptation10054'),
       checked: false,
       ratio: '',
       cards: [
@@ -222,7 +224,7 @@ function createDefaultPoolSettings(): PoolSettingItem[] {
     },
     {
       id: 'four',
-      title: '四条',
+      title: t('adaptation10055'),
       checked: false,
       ratio: '',
       cards: [
@@ -244,7 +246,7 @@ function createDefaultStakeConfig(level: StakeLevel): StakeConfigForm {
   })
 
   return {
-    selectedSbs: level === '微' ? [rule.sbValues[0]] : [],
+    selectedSbs: level === t('UIGuild_Tiny') ? [rule.sbValues[0]] : [],
     blindConfigs,
   }
 }
@@ -371,7 +373,7 @@ function getLevelByBlindData(
   const sbCent = Math.round(toSafeNumber(sbValue) * multiplier)
   const fromBlindType = stakeLevelByBlindType[toSafeNumber(blindTypeValue)]
   const fromSb = stakeLevelByBlindType[getJackpotBlindTypeBySb(sbCent)]
-  return fromBlindType ?? fromSb ?? '微'
+  return fromBlindType ?? fromSb ?? t('UIGuild_Tiny')
 }
 
 function detectSbMultiplier(blindSetting: Record<string, unknown>[]): number {
@@ -481,19 +483,19 @@ function onCancel(): void {
 
 async function onConfirm(): Promise<void> {
   if (!jackpotName.value.trim()) {
-    showToast('请输入牌局名称')
+    showToast(t('adaptation10112'))
     return
   }
 
   const goldYuan = toSafeNumber(jackpotGoldYuan.value)
   if (goldYuan < 0) {
-    showToast('奖池金额不能小于0')
+    showToast(t('UIClub_Jackpot2') + '0')
     return
   }
 
   const enabledModes = gameModes.filter((mode) => modeEnabled.value[mode])
   if (!enabledModes.length) {
-    showToast('请至少启用一个玩法')
+    showToast(t('UIClub_Text22'))
     return
   }
 
@@ -535,14 +537,15 @@ async function onConfirm(): Promise<void> {
     }
 
     if (Number(response.code) !== 0) {
-      const message = typeof response.msg === 'string' ? response.msg : '操作失败'
+      const message =
+        typeof response.msg === 'string' ? response.msg : t('Uiclubrechargeconfirmorderfailed')
       throw new Error(message)
     }
 
-    showSuccessToast(isEditMode.value ? '编辑成功' : '创建成功')
+    showSuccessToast(isEditMode.value ? t('UIClub_EditSuccess') : t('UIClub_CreateSuccess'))
     router.back()
   } catch (error) {
-    const message = error instanceof Error ? error.message : '操作失败'
+    const message = error instanceof Error ? error.message : t('Uiclubrechargeconfirmorderfailed')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -559,7 +562,7 @@ async function fetchTemplateInfo(): Promise<void> {
     })
 
     if (Number(response.code) !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '获取模板信息失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_FetchFail'))
     }
 
     const data = response.data?.item
@@ -587,7 +590,7 @@ async function fetchTemplateInfo(): Promise<void> {
       activeGameMode.value = 'NLH'
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : '获取模板信息失败'
+    const message = error instanceof Error ? error.message : t('UIClub_FetchFail')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -605,7 +608,7 @@ onMounted(() => {
 
     <section class="create-content">
       <div class="name-input-pill">
-        <span class="pill-label">牌局名称</span>
+        <span class="pill-label">{{ t('UIClub_RoomCreat_0HvQkjkd') }}</span>
         <input v-model="jackpotName" class="pill-input" maxlength="20" placeholder="Jackpot" />
         <span class="pill-count">{{ jackpotName.length }}/20</span>
       </div>
@@ -613,7 +616,7 @@ onMounted(() => {
       <div class="glass-card summary-card">
         <div class="summary-left">
           <div class="summary-title-row">
-            <span>Jackpot 奖池</span>
+            <span>Jackpot {{ t('UIMatch_MttDetailState_Prizepool') }}</span>
             <i class="icon-info" aria-hidden="true">i</i>
           </div>
           <div class="summary-amount-input">
@@ -621,7 +624,7 @@ onMounted(() => {
           </div>
         </div>
         <button v-if="isEditMode" type="button" class="recharge-btn" @click="onRecharge">
-          注入
+          {{ t('UICreateClubJackpotTemplate_InjectTip') }}
         </button>
       </div>
 
@@ -647,7 +650,7 @@ onMounted(() => {
               :checked="modeEnabled[activeGameMode]"
               @change="toggleModeEnabled(activeGameMode)"
             />
-            <span>{{ activeGameMode }} 开关</span>
+            <span>{{ activeGameMode }} {{ t('UIMinePsdSwitch') }}</span>
           </label>
         </div>
 
@@ -657,7 +660,7 @@ onMounted(() => {
           <div class="config-row config-row--stack">
             <div class="row-label">
               <i class="dot dot--active"></i>
-              <span>玩法奖池比例</span>
+              <span>{{ t('UIClub_Jackpot') }}</span>
               <i class="icon-info" aria-hidden="true">i</i>
             </div>
 
@@ -742,7 +745,11 @@ onMounted(() => {
                     ).contributePotChecked
                   "
                 ></i>
-                <span>底池触发jackpot贡献</span>
+                <span>
+                  {{ t('UIClub_Text20') }}jackpot{{
+                    t('UIClubJackpotRecordDetail_ContributionTip')
+                  }}
+                </span>
               </div>
               <div class="value-input value-input--narrow">
                 <input
@@ -764,7 +771,7 @@ onMounted(() => {
                       .awardBetChecked
                   "
                 ></i>
-                <span>投入底池触发jackpot奖励</span>
+                <span>{{ t('UIClub_Text21') }}jackpot{{ t('MTT_State_Reward') }}</span>
               </div>
               <div class="value-input value-input--narrow">
                 <input
@@ -786,7 +793,7 @@ onMounted(() => {
                       .awardOtherChecked
                   "
                 ></i>
-                <span>奖励全桌</span>
+                <span>{{ t('UICreateClubJackpotTemplate_AllTableTriggerTip') }}</span>
               </div>
               <div class="value-input value-input--narrow">
                 <input
@@ -802,7 +809,7 @@ onMounted(() => {
           <div class="divider"></div>
 
           <div class="title-line">
-            <span>jackpot 贡献</span>
+            <span>jackpot {{ t('UIClubJackpotRecordDetail_ContributionTip') }}</span>
             <i class="icon-info" aria-hidden="true">i</i>
           </div>
 
@@ -818,7 +825,7 @@ onMounted(() => {
                     ).profitTriggerChecked
                   "
                 ></i>
-                <span>盈利触发</span>
+                <span>{{ t('UICreateClubJackpotTemplate_ProfitTriggerTip') }}</span>
               </div>
               <div class="value-input value-input--narrow">
                 <input
@@ -841,7 +848,7 @@ onMounted(() => {
                     ).jackpotContribChecked
                   "
                 ></i>
-                <span>Jackpot 贡献</span>
+                <span>Jackpot {{ t('UIClubJackpotRecordDetail_ContributionTip') }}</span>
               </div>
               <div class="value-input value-input--narrow">
                 <input
@@ -864,7 +871,7 @@ onMounted(() => {
                     ).profitPercentChecked
                   "
                 ></i>
-                <span>触发盈利 (%)</span>
+                <span>{{ t('UICreateClubJackpotTemplate_TriggerProfitTip') }} (%)</span>
               </div>
               <div class="value-input value-input--narrow">
                 <input
@@ -881,7 +888,7 @@ onMounted(() => {
       </div>
 
       <div class="glass-card pool-card">
-        <h3>彩池设置</h3>
+        <h3>{{ t('UICreateClubJackpotTemplate_ColorPoolTip') }}</h3>
 
         <div v-for="item in currentModeConfig.poolSettings" :key="item.id" class="pool-row">
           <div class="pool-left">
@@ -906,7 +913,7 @@ onMounted(() => {
           </div>
 
           <div class="pool-right">
-            <span>奖励比例 (%)</span>
+            <span>{{ t('UIJackpotRecentAwardRecord_RewardRatio') }} (%)</span>
             <div class="value-input value-input--narrow">
               <input v-model="item.ratio" class="inline-input" placeholder="0" />
             </div>
@@ -916,14 +923,16 @@ onMounted(() => {
     </section>
 
     <div class="bottom-actions">
-      <button type="button" class="action-btn action-btn--cancel" @click="onCancel">取消</button>
+      <button type="button" class="action-btn action-btn--cancel" @click="onCancel">
+        {{ t('adaptation10013') }}
+      </button>
       <button
         type="button"
         class="action-btn action-btn--confirm"
         :disabled="loading"
         @click="onConfirm"
       >
-        {{ loading ? '提交中...' : '确定' }}
+        {{ loading ? t('UIClub_Submitting') + '...' : t('CommitOK') }}
       </button>
     </div>
 
@@ -931,8 +940,8 @@ onMounted(() => {
       :open="showRechargeKeypad"
       :allow-decimal="true"
       :max="100000000"
-      title="注入金额"
-      confirm-text="确认"
+      :title="t('UICreateClubJackpotTemplate_DialogInjectTip')"
+      :confirm-text="t('UI_Recharge_confirm')"
       :show-input-area="true"
       @close="showRechargeKeypad = false"
       @submit="onRechargeSubmit"

@@ -6,6 +6,7 @@ import { postFriendRoomStatsApi } from '@/api/stats'
 import type { FriendRoomStatsRecord } from '@/api/models/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { showGameToast } from '@/components/Toast'
+import { t } from '@/i18n'
 
 const router = useRouter()
 
@@ -36,18 +37,18 @@ const rows = ref<DataRow[]>([
 const loading = ref(false)
 
 const menuList: MenuItem[] = [
-  { key: 'data', text: '数据', route: '/mine/friends-data' },
-  { key: 'record', text: '战绩', route: '/mine/friends-record' },
+  { key: 'data', text: t('adaptation10124'), route: '/mine/friends-data' },
+  { key: 'record', text: t('UICareerRecord'), route: '/mine/friends-record' },
   { key: 'mahjong', text: 'Mahjong' },
-  { key: 'sng', text: 'SNG战绩' },
-  { key: 'mahjong-mtt', text: '麻将MTT战绩' },
+  { key: 'sng', text: "SNG" + t('UICareerRecord') },
+  { key: 'mahjong-mtt', text: t('Mahjong_Name') + "MTT" + t('UICareerRecord') },
 ]
 
-const title = ref('数据')
+const title = ref(t('adaptation10124'))
 
 function handleMenuClick(item: MenuItem): void {
   if (!item.route) {
-    showGameToast('功能开发中')
+    showGameToast(t('UIClub_InDeve'))
     return
   }
   void router.push(item.route)
@@ -63,7 +64,7 @@ async function fetchGameSummary(): Promise<void> {
   try {
     const response = await postFriendRoomStatsApi({})
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载朋友生涯数据失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadDataFail2'))
     }
 
     const data = response.data as Record<string, unknown> | undefined
@@ -87,7 +88,7 @@ async function fetchGameSummary(): Promise<void> {
       },
     ]
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加载朋友生涯数据失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadDataFail2')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -105,7 +106,7 @@ onMounted(() => {
       <template #right>
         <div class="action-wrap">
           <TopActionButton
-            name="数据统计"
+            :name="t('UIClub_Mlistinfo_GiVUYG7E')"
             icon-alt="wallet"
             @click="handleMenuClick({ key: 'data', text: '数据', route: '/mine/friends-my-data' })"
           />

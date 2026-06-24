@@ -5,8 +5,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { postStatsRoomDetailApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { t } from '@/i18n'
 
-const title = computed(() => '战绩详情')
+const title = computed(() => t('adaptation10217'))
 
 const router = useRouter()
 const route = useRoute()
@@ -36,16 +37,16 @@ interface PlayerResult {
 const loading = ref(false)
 
 const seatPlayers = ref<SeatPlayer[]>([
-  { name: 'Hanna', chips: '120', tag: '土豪' },
+  { name: 'Hanna', chips: '120', tag: t('UITexasGameEnding_richman') },
   { name: 'Paityn', chips: '3340', tag: 'MVP', highlight: true },
-  { name: 'Giana', chips: '120', tag: '土豪' },
+  { name: 'Giana', chips: '120', tag: t('UITexasGameEnding_richman') },
 ])
 
 const summaryItems = ref([
-  { label: '带入', value: '1200' },
-  { label: '底池', value: '3580' },
-  { label: '手数', value: '20' },
-  { label: '时长', value: '2.3h' },
+  { label: t('UIMine_RecordItemsNormal_eodrjcHJ'), value: '1200' },
+  { label: t('adaptation20005'), value: '3580' },
+  { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: '20' },
+  { label: t('UIClub_Text36'), value: '2.3h' },
 ])
 
 const playerResults = ref<PlayerResult[]>([
@@ -111,7 +112,7 @@ async function fetchRecordDetail(): Promise<void> {
     )
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载战绩详情失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadDetailFail5'))
     }
 
     const roomData = response.data?.room_data
@@ -126,14 +127,14 @@ async function fetchRecordDetail(): Promise<void> {
     )}`
 
     summaryItems.value = [
-      { label: '带入', value: toSafeNumber(roomData?.all_bring_in).toLocaleString('en-US') },
+      { label: t('UIMine_RecordItemsNormal_eodrjcHJ'), value: toSafeNumber(roomData?.all_bring_in).toLocaleString('en-US') },
       {
-        label: '底池',
+        label: t('adaptation20005'),
         value: toSafeNumber(roomData?.all_bet_pot ?? roomData?.max_bet_pot).toLocaleString('en-US'),
       },
-      { label: '手数', value: toSafeNumber(roomData?.room_total_hand_num).toLocaleString('en-US') },
+      { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: toSafeNumber(roomData?.room_total_hand_num).toLocaleString('en-US') },
       {
-        label: '时长',
+        label: t('UIClub_Text36'),
         value: `${Math.max(0, Math.round(toSafeNumber(roomData?.player_duration) / 3600))}h`,
       },
     ]
@@ -164,7 +165,7 @@ async function fetchRecordDetail(): Promise<void> {
     )
     totalProfit.value = formatSigned(total)
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加载战绩详情失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadDetailFail5')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -191,7 +192,7 @@ onMounted(() => {
 
     <div class="content-wrap">
       <section class="glass-card sort-bar">
-        <span>按结束时间</span>
+        <span>{{ t('UIClub_Time') }}</span>
         <span class="arrow">▾</span>
       </section>
 
@@ -230,12 +231,12 @@ onMounted(() => {
 
       <section class="glass-card result-section">
         <div class="section-head">
-          <div>牌局结算</div>
+          <div>{{ t('UIClub_TableGame') }}</div>
           <div class="total">{{ totalProfit }}</div>
         </div>
 
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!playerResults.length" class="list-status">暂无结算数据</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!playerResults.length" class="list-status">{{ t('UIClub_NoData') }}</p>
 
         <article v-for="item in playerResults" :key="item.id" class="result-row" @click="goToHands">
           <div class="left">
@@ -248,9 +249,9 @@ onMounted(() => {
           <div class="right">
             <div class="profit">{{ item.profit }}</div>
             <div class="sub-row">
-              <span>带入:{{ item.buyIn }}</span>
-              <span>手数:{{ item.hands }}</span>
-              <span>入池率:{{ item.vpip }}</span>
+              <span>{{ t('UIMine_RecordItemsNormal_eodrjcHJ') }}:{{ item.buyIn }}</span>
+              <span>{{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}:{{ item.hands }}</span>
+              <span>{{ t('UIClub_Mlistinfo_rRyW4JkW') }}:{{ item.vpip }}</span>
             </div>
           </div>
         </article>

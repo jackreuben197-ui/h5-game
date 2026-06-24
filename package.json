@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "sync:i18n": "node scripts/sync-i18n.mjs",
+    "sync:i18n:club-mine": "node scripts/i18n-club-mine.mjs",
     "sync:protocol": "bash scripts/update_protocol.sh",
     "predev": "pnpm sync:i18n",
     "prebuild": "pnpm sync:i18n",

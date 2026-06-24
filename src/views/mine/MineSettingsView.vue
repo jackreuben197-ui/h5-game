@@ -5,11 +5,11 @@ import { useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { GameDialog } from '@/components/Dialog'
-import { getLocale } from '@/i18n'
+import { getLocale, t } from '@/i18n'
 import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
 
-const title = computed(() => '设置')
+const title = computed(() => t('UIMine_btn_setting'))
 
 const router = useRouter()
 const gameStore = useGameStore()
@@ -30,31 +30,31 @@ interface SettingItem {
 }
 
 const sectionTop: SettingItem[] = [
-  { key: 'logout', label: '退出登录' },
-  { key: 'language', label: '切换语言', rightText: languageLabel() },
-  { key: 'account', label: '账号管理' },
+  { key: 'logout', label: t('UIMine_Setting114') },
+  { key: 'language', label: t('tc_PpNL8LVJ'), rightText: languageLabel() },
+  { key: 'account', label: t('UISettingPassword001') },
 ]
 
 const sectionMiddle: SettingItem[] = [
-  { key: 'sound', label: '游戏声音', toggle: true },
-  { key: 'line', label: '当前线路', rightText: '默认线路' },
-  { key: 'cancel', label: '注销账号' },
-  { key: 'about', label: '关于我们' },
-  { key: 'agreement', label: '用户协议' },
+  { key: 'sound', label: t('tc_TsALrril'), toggle: true },
+  { key: 'line', label: t('tc_FKurKJYR'), rightText: t('UIClub_Text73') },
+  { key: 'cancel', label: t('UIMine_DeleteUser') },
+  { key: 'about', label: t('tc_YQAGnw3p') },
+  { key: 'agreement', label: t('tc_5E0V3qlb') },
 ]
 
 const sectionBottom: SettingItem[] = [
-  { key: 'privacy', label: '用户隐私协议' },
-  { key: 'version', label: '版本号', rightText: 'v1.0.0', clickable: false },
+  { key: 'privacy', label: t('UIMine_Setting_UserSecret') },
+  { key: 'version', label: t('tc_NO5NT6aa'), rightText: 'v1.0.0', clickable: false },
 ]
 
 function languageLabel(): string {
   const locale = getLocale()
   if (locale === 'cn') {
-    return '简体中文'
+    return t('A')
   }
   if (locale === 'zh') {
-    return '繁體中文'
+    return t('UIClub_Text72')
   }
   if (locale === 'pt') {
     return 'Português'
@@ -103,7 +103,7 @@ function onRowClick(item: SettingItem): void {
   }
 
   if (item.key === 'line') {
-    showFailToast('线路切换功能开发中')
+    showFailToast(t('UIClub_InDeve4'))
   }
 }
 
@@ -111,7 +111,7 @@ function onLogoutConfirm(): void {
   showLogoutDialog.value = false
   gameStore.clearLogin()
   LoginSession.ClearWS()
-  showSuccessToast('已退出登录')
+  showSuccessToast(t('UIClub_DoneExit'))
   void router.replace('/guest/home')
 }
 

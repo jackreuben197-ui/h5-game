@@ -11,6 +11,7 @@ import { postOrgClubCreateApi, postOrgClubCreateIsFirstApi } from '@/api/org'
 import type { OrgClubCreateRequest } from '@/api/models/org'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { resolveDiamondPriceValue } from '@/utils/diamondPriceConfig'
+import { t } from '@/i18n'
 // 主容器背景图：全页面共用一张底图。
 
 const backgroundStyle = computed(() => ({
@@ -72,15 +73,15 @@ async function onCreateClub(): Promise<void> {
     const result = await postOrgClubCreateApi(payload)
 
     if (result?.code === 0) {
-      showToast('俱乐部创建成功')
+      showToast(t('UIClub_ClubSuccess'))
       setTimeout(() => {
         router.push('/club')
       }, 3000)
     } else {
-      showToast(result?.msg ?? '创建失败，请重试')
+      showToast(result?.msg ?? t('UIClub_Fail') + "，" + t('UIClub_Text4'))
     }
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : '创建失败，请重试'
+    const message = error instanceof Error ? error.message : t('UIClub_Fail') + "，" + t('UIClub_Text4')
     showToast(message)
   } finally {
     isSubmitting.value = false
@@ -96,8 +97,8 @@ async function onCreateClub(): Promise<void> {
       <section class="avatar-card">
         <ImageUploadSheet v-model="avatarPreviewUrl">
           <template #default="{ open, imageUrl }">
-            <button type="button" class="avatar-trigger" aria-label="选择俱乐部头像" @click="open">
-              <img class="avatar-image" :src="imageUrl || imgClubCover" alt="俱乐部头像" />
+            <button type="button" class="avatar-trigger" :aria-label="t('UIClub_ClubAvatar')" @click="open">
+              <img class="avatar-image" :src="imageUrl || imgClubCover" :alt="t('UIClub_ClubAvatar2')" />
               <span class="add-badge" aria-hidden="true">+</span>
             </button>
           </template>

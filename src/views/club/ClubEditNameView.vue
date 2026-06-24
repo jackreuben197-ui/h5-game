@@ -8,6 +8,7 @@ import { useAppConfigStore } from '@/stores/appConfig'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { t } from '@/i18n'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -111,10 +112,12 @@ const canUpdateByInterval = computed(() => {
 
 const renameHintText = computed(() => {
   const price = renameRule.value.price
-  const firstFreeText = renameRule.value.first_free === 1 ? '首次修改免费' : '首次修改不免费'
-  const costText = `后续每次消耗${price}钻石`
+  const firstFreeText = renameRule.value.first_free === 1 ? t('UIClub_Text8') : t('UIClub_Text9')
+  const costText = t('UIClub_Text10') + price + t('UIMine_VIP_diamond')
   const intervalText =
-    renameRule.value.interval > 0 ? `，每次间隔${renameRule.value.interval}小时` : ''
+    renameRule.value.interval > 0
+      ? '，' + t('UIClub_Text11') + renameRule.value.interval + t('UITimeHourTip')
+      : ''
   return `*${firstFreeText}，${costText}${intervalText}`
 })
 
@@ -133,20 +136,20 @@ function goRecharge(): void {
 async function onConfirm(): Promise<void> {
   if (!canConfirm.value) {
     if (!canUpdateByInterval.value) {
-      showFailToast(`请在${remainingIntervalHours.value}小时后再修改`)
+      showFailToast(t('UIClub_Text12') + remainingIntervalHours.value + t('UIClub_Again'))
     }
     return
   }
 
   if (!hasEnoughDiamond.value) {
-    showFailToast('钻石余额不足，请前往充值')
+    showFailToast(t('UIClub_Text6') + '，' + t('UIClub_Text13'))
     goRecharge()
     return
   }
 
   const clubId = Number(userInfoStore.currentClub?.club_id)
   if (!clubId) {
-    showFailToast('未找到俱乐部信息')
+    showFailToast(t('UIClub_NotFoundClub'))
     return
   }
 
@@ -160,7 +163,7 @@ async function onConfirm(): Promise<void> {
 
     if (response.code !== 0) {
       const fallback = (response.msg ?? response.message) as unknown
-      throw new Error(typeof fallback === 'string' ? fallback : '修改名称失败')
+      throw new Error(typeof fallback === 'string' ? fallback : t('UIClub_NameFail'))
     }
 
     userInfoStore.syncCurrentClubFields({
@@ -169,9 +172,9 @@ async function onConfirm(): Promise<void> {
       last_update_name_time: new Date().toISOString(),
     })
 
-    showSuccessToast('修改成功')
+    showSuccessToast(t('adaptation10079'))
   } catch (error) {
-    const message = error instanceof Error ? error.message : '修改名称失败'
+    const message = error instanceof Error ? error.message : t('UIClub_NameFail')
     showFailToast(message)
   } finally {
     isSubmitting.value = false
@@ -202,23 +205,25 @@ async function onConfirm(): Promise<void> {
 
         <div class="wallet-row">
           <div class="wallet-info">
-            <img :src="imgDiamond" alt="钻石" />
-            <span class="wallet-label">钻石余额:</span>
+            <img :src="imgDiamond" :alt="t('UIMine_VIP_diamond')" />
+            <span class="wallet-label">{{ t('UIMineAllDiamond') }}:</span>
             <span class="wallet-value">{{ diamondBalance }}</span>
           </div>
-          <button type="button" class="recharge-btn" @click="goRecharge">去充值</button>
+          <button type="button" class="recharge-btn" @click="goRecharge">
+            {{ t('UIHappyShop_ToRechange') }}
+          </button>
         </div>
       </section>
 
       <section class="footer-actions">
-        <p class="cost-line" aria-label="改名消耗说明">
-          <span>消费</span>
-          <img :src="imgDiamond" alt="钻石" />
+        <p class="cost-line" :aria-label="t('UIClub_Name')">
+          <span>{{ t('UICommunityFundConsumeTip') }}</span>
+          <img :src="imgDiamond" :alt="t('UIMine_VIP_diamond')" />
           <span class="cost-value">{{ renameCost }}</span>
         </p>
 
         <p v-if="!canUpdateByInterval" class="interval-line">
-          距离下次可修改还需 {{ remainingIntervalHours }} 小时
+          {{ t('UIClub_Can') }} {{ remainingIntervalHours }} {{ t('UITimeHourTip') }}
         </p>
 
         <button
@@ -228,7 +233,7 @@ async function onConfirm(): Promise<void> {
           :disabled="!canConfirm"
           @click="onConfirm"
         >
-          {{ isSubmitting ? '提交中...' : '确定' }}
+          {{ isSubmitting ? t('UIClub_Submitting') + '...' : t('CommitOK') }}
         </button>
       </section>
     </div>

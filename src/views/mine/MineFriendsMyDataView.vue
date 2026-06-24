@@ -8,6 +8,7 @@ import iconTime from '@/assets/icons/icon_time.png'
 import iconChips from '@/assets/icons/icon_chips.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 import { formatUC } from '@/utils/roomVisibility'
+import { t } from '@/i18n'
 
 interface SummaryItem {
   label: string
@@ -28,7 +29,7 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const gameTabs = ['德州', '麻将', '其他']
+const gameTabs = [t('adaptation10022'), t('Mahjong_Name'), t('Complanin007')]
 const activeGameTab = ref(gameTabs[0])
 const loading = ref(false)
 
@@ -51,19 +52,19 @@ const currentMonth = ref(
 const weekLabels = ['m', 't', 'w', 't', 'f', 's', 's']
 
 const summary: SummaryItem[] = [
-  { label: '参与人数', value: '0' },
-  { label: '总桌数', value: '0' },
-  { label: '我的收益', value: '0' },
+  { label: t('UINumberOfParticipants'), value: '0' },
+  { label: t('UITotalNumberOfTables'), value: '0' },
+  { label: t('UITableMyProfits'), value: '0' },
 ]
 
 const players = ref<PlayerItem[]>([])
 
-const title = computed(() => '数据')
+const title = computed(() => t('adaptation10124'))
 
 const startDateText = computed(() => formatDateSlash(startDateModel.value))
 const endDateText = computed(() => formatDateSlash(endDateModel.value))
 const monthTitle = computed(
-  () => `${currentMonth.value.getFullYear()}年${currentMonth.value.getMonth() + 1}月`,
+  () => (currentMonth.value.getFullYear()) + t('UIMine_VIP_year') + (currentMonth.value.getMonth() + 1) + t('UIMine_VIP_month'),
 )
 
 type DayCell = {
@@ -114,10 +115,10 @@ function toSafeNumber(value: unknown): number {
 }
 
 function resolveGameType(): number[] {
-  if (activeGameTab.value === '麻将') {
+  if (activeGameTab.value === t('Mahjong_Name')) {
     return [6]
   }
-  if (activeGameTab.value === '其他') {
+  if (activeGameTab.value === t('Complanin007')) {
     return [1, 2, 3, 4, 5, 7]
   }
   return [0]
@@ -138,7 +139,7 @@ async function fetchFriendsData(): Promise<void> {
       offset: 0,
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载朋友数据失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadDataFail3'))
     }
 
     const info = response.data?.info
@@ -162,7 +163,7 @@ async function fetchFriendsData(): Promise<void> {
       }
     })
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加载朋友数据失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadDataFail3')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -313,7 +314,7 @@ onMounted(() => {
     <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
-      <nav class="game-tabs" aria-label="玩法切换">
+      <nav class="game-tabs" :aria-label="t('UIClub_Text43')">
         <button
           v-for="tab in gameTabs"
           :key="tab"
@@ -331,7 +332,7 @@ onMounted(() => {
           <button type="button" class="date-pill" @click="openDatePicker('start')">
             <span class="date">{{ startDateText }}</span>
             <span class="time-line">
-              <img :src="iconTime" alt="时间" />
+              <img :src="iconTime" :alt="t('TimeItem')" />
               <span>{{ startTime }}</span>
             </span>
           </button>
@@ -341,7 +342,7 @@ onMounted(() => {
           <button type="button" class="date-pill" @click="openDatePicker('end')">
             <span class="date">{{ endDateText }}</span>
             <span class="time-line">
-              <img :src="iconTime" alt="时间" />
+              <img :src="iconTime" :alt="t('TimeItem')" />
               <span>{{ endTime }}</span>
             </span>
           </button>
@@ -361,13 +362,13 @@ onMounted(() => {
       </section>
 
       <section class="list-head">
-        <span>用户</span>
-        <span>盈亏</span>
+        <span>{{ t('UIClub_Text58') }}</span>
+        <span>{{ t('UITexasInfo_loss') }}</span>
       </section>
 
       <section class="player-list">
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!players.length" class="list-status">暂无朋友数据</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!players.length" class="list-status">{{ t('UIClub_NoData2') }}</p>
         <article v-for="item in players" :key="item.id" class="player-card">
           <div class="player-left">
             <img class="avatar" :src="item.avatar" :alt="item.name" />
@@ -384,7 +385,7 @@ onMounted(() => {
             >
               {{ item.profit }}
             </span>
-            <img class="chip" :src="iconChips" alt="筹码" />
+            <img class="chip" :src="iconChips" :alt="t('UITexasReport_Text_DeskScoreTip')" />
           </div>
         </article>
       </section>
@@ -392,7 +393,7 @@ onMounted(() => {
       <div v-if="isDatePickerVisible" class="date-picker-mask" @click="closeDatePicker">
         <div class="date-picker-sheet" @click.stop>
           <header class="picker-tip">
-            <p>只支持查询最近三个月数据</p>
+            <p>{{ t('UIGuildtThreeMonthDataTip') }}</p>
             <button type="button" class="picker-close" @click="closeDatePicker">×</button>
           </header>
 
@@ -419,19 +420,19 @@ onMounted(() => {
 
           <div class="picker-month-row">
             <div class="month-arrows">
-              <button type="button" class="arrow-btn" aria-label="上一年" @click="goPrevYear">
+              <button type="button" class="arrow-btn" :aria-label="t('UIClub_Text50')" @click="goPrevYear">
                 «
               </button>
-              <button type="button" class="arrow-btn" aria-label="上一月" @click="goPrevMonth">
+              <button type="button" class="arrow-btn" :aria-label="t('UIClub_Text51')" @click="goPrevMonth">
                 ‹
               </button>
             </div>
             <p class="month-title">{{ monthTitle }}</p>
             <div class="month-arrows">
-              <button type="button" class="arrow-btn" aria-label="下一月" @click="goNextMonth">
+              <button type="button" class="arrow-btn" :aria-label="t('UIClub_Text52')" @click="goNextMonth">
                 ›
               </button>
-              <button type="button" class="arrow-btn" aria-label="下一年" @click="goNextYear">
+              <button type="button" class="arrow-btn" :aria-label="t('UIClub_Text53')" @click="goNextYear">
                 »
               </button>
             </div>

@@ -6,6 +6,7 @@ import { postStatsUserGameRecordListApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import gameZoneMahjongMini from '@/assets/icons/game_zone_mahjong_mini.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { t } from '@/i18n'
 
 const title = computed(() => 'Result')
 
@@ -28,7 +29,7 @@ const backgroundStyle = computed(() => ({
 
 const loading = ref(false)
 const handRows = ref<HandRow[]>([])
-const overviewTitle = ref('牌局名称')
+const overviewTitle = ref(t('UIClub_RoomCreat_0HvQkjkd'))
 const overviewId = ref('ID: --')
 const overviewHands = ref('Hands 0')
 
@@ -68,7 +69,7 @@ async function fetchMahjongHands(): Promise<void> {
     } as unknown as Record<string, unknown>)
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载麻将手牌失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail6'))
     }
 
     const records = Array.isArray(response.data?.records) ? response.data.records : []
@@ -80,20 +81,20 @@ async function fetchMahjongHands(): Promise<void> {
       (item): item is Record<string, unknown> => !!item && typeof item === 'object',
     )
 
-    overviewTitle.value = String(room.name ?? '牌局名称')
+    overviewTitle.value = String(room.name ?? t('UIClub_RoomCreat_0HvQkjkd'))
     overviewId.value = `ID: ${String(room.room_id ?? roomId)}`
     overviewHands.value = `Hands ${userRows.length}`
     handRows.value = userRows.map((item, index) => ({
       id: String(item.id ?? item.room_unique_id ?? index + 1),
-      roundType: '推倒胡',
+      roundType: t('Mahjong_Standard'),
       handId: String(item.room_unique_id ?? item.id ?? '--'),
       result: toSafeNumber(item.change) >= 0 ? 'Win' : 'Lose',
       score: formatSigned(item.change),
-      fanText: `底池 x${toSafeNumber(item.bet_pot)}`,
+      fanText: t('adaptation20005') + " x" + (toSafeNumber(item.bet_pot)),
     }))
   } catch (error) {
     handRows.value = []
-    const message = error instanceof Error ? error.message : '加载麻将手牌失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadFail6')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -129,8 +130,8 @@ onMounted(() => {
       </section>
 
       <section class="list-wrap">
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!handRows.length" class="list-status">暂无麻将手牌</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!handRows.length" class="list-status">{{ t('UIClub_No5') }}</p>
         <article
           v-for="item in handRows"
           :key="item.id"
@@ -149,7 +150,7 @@ onMounted(() => {
           <div class="right-meta" :class="{ minus: item.score.startsWith('-') }">
             <div class="score">{{ item.score }}</div>
             <div class="fan-row">
-              <span class="tile">中</span>
+              <span class="tile">{{ t('UIGuild_Middle') }}</span>
               <span>{{ item.fanText }}</span>
             </div>
           </div>

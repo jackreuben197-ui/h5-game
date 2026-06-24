@@ -6,6 +6,7 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 
 import iconTime from '@/assets/icons/icon_time.png'
+import { t } from '@/i18n'
 
 interface SummaryMetric {
   label: string
@@ -26,14 +27,19 @@ interface RecordItem {
   feePositive?: boolean
 }
 
-const title = computed(() => '数据管理')
+const title = computed(() => t('UIClub_DataManager'))
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const filterTabs = ['今天', '14天', '7天', '自定义']
+const filterTabs = [
+  t('UIData_Today'),
+  '14' + t('UIHappyShop_ActivityShopDay'),
+  '7' + t('UIHappyShop_ActivityShopDay'),
+  t('UIGuild_MemberDetailsTimeCustom'),
+]
 const activeFilter = ref(filterTabs[0])
 const loading = ref(false)
 
@@ -52,9 +58,9 @@ const currentMonth = ref(
 const weekLabels = ['m', 't', 'w', 't', 'f', 's', 's']
 
 const metrics = ref<SummaryMetric[]>([
-  { label: '手数/局数', value: '0/0' },
-  { label: '盈利', value: '0' },
-  { label: '服务费', value: '0' },
+  { label: t('UIMine_RecordItemsNormal_3RCUa3w8') + '/' + t('UIData_YGvXd5iXr_003'), value: '0/0' },
+  { label: t('UIClub_GainNum'), value: '0' },
+  { label: t('UIMine_WalletPlatform_fee_f'), value: '0' },
 ])
 
 const records = ref<RecordItem[]>([])
@@ -84,15 +90,15 @@ function mapGameBadge(gameType: unknown, pokerType: unknown): string {
   if (type === 5) return 'Cowboy'
   if (type === 6) {
     if (poker === 1) {
-      return '血战\n到底'
+      return t('adaptation10181') + '\\n' + t('UIClub_Text54')
     } else if (poker === 2) {
-      return '血流\n成河'
+      return t('UIClub_Text55') + '\\n' + t('UIClub_Text56')
     } else if (poker === 3) {
-      return '推倒胡'
+      return t('Mahjong_Standard')
     }
-    return '麻将'
+    return t('Mahjong_Name')
   }
-  if (type === 7) return '掼蛋'
+  if (type === 7) return t('UIEgg')
   return 'NLH'
 }
 
@@ -107,13 +113,16 @@ function mapRecordItem(row: Record<string, unknown>, index: number): RecordItem 
   return {
     id: String(row.room_id ?? row.match_id ?? index + 1),
     game: mapGameBadge(row.game_type, row.poker_type),
-    title: String(row.name ?? row.room_name ?? row.game_room_name ?? '局抽数据'),
-    subtitle: matchPlayers > 0 ? `参赛人数: ${matchPlayers}` : `盲注 : ${sb}`,
-    extra: buyIn > 0 ? `买入 : ${buyIn}` : undefined,
+    title: String(row.name ?? row.room_name ?? row.game_room_name ?? t('UIClub_RoundData')),
+    subtitle:
+      matchPlayers > 0
+        ? t('UIMine_RecordDetailForMatchPariticipants') + ': ' + matchPlayers
+        : t('adaptation20006') + ' : ' + sb,
+    extra: buyIn > 0 ? t('MTT_xq_buy') + ' : ' + buyIn : undefined,
     time: startTime,
-    feeText: '服务费',
+    feeText: t('UIMine_WalletPlatform_fee_f'),
     feeValue,
-    insuranceLabel: '保险',
+    insuranceLabel: t('adaptation10179'),
     insuranceValue,
     feePositive: feeValue.startsWith('+'),
   }
@@ -138,11 +147,11 @@ async function fetchFriendsRecord(): Promise<void> {
     ])
 
     if (listRes.code !== 0) {
-      throw new Error(typeof listRes.msg === 'string' ? listRes.msg : '加载朋友战绩失败')
+      throw new Error(typeof listRes.msg === 'string' ? listRes.msg : t('UIClub_LoadFail10'))
     }
 
     if (infoRes.code !== 0) {
-      throw new Error(typeof infoRes.msg === 'string' ? infoRes.msg : '加载统计信息失败')
+      throw new Error(typeof infoRes.msg === 'string' ? infoRes.msg : t('UIClub_LoadFail'))
     }
 
     const list = Array.isArray(listRes.data?.list) ? listRes.data.list : []
@@ -154,13 +163,19 @@ async function fetchFriendsRecord(): Promise<void> {
     const handNum = toSafeNumber(info.hand_num)
     const gameNum = toSafeNumber(info.game_num)
     metrics.value = [
-      { label: '手数/局数', value: `${handNum}/${gameNum}` },
-      { label: '盈利', value: formatSigned(info.profit) },
-      { label: '服務費', value: Math.abs(toSafeNumber(info.fee)).toLocaleString('en-US') },
+      {
+        label: t('UIMine_RecordItemsNormal_3RCUa3w8') + '/' + t('UIData_YGvXd5iXr_003'),
+        value: `${handNum}/${gameNum}`,
+      },
+      { label: t('UIClub_GainNum'), value: formatSigned(info.profit) },
+      {
+        label: t('UIClub_Text57'),
+        value: Math.abs(toSafeNumber(info.fee)).toLocaleString('en-US'),
+      },
     ]
   } catch (error) {
     records.value = []
-    const message = error instanceof Error ? error.message : '加载朋友战绩失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadFail10')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -170,7 +185,11 @@ async function fetchFriendsRecord(): Promise<void> {
 const startDateText = computed(() => formatDateSlash(startDateModel.value))
 const endDateText = computed(() => formatDateSlash(endDateModel.value))
 const monthTitle = computed(
-  () => `${currentMonth.value.getFullYear()}年${currentMonth.value.getMonth() + 1}月`,
+  () =>
+    currentMonth.value.getFullYear() +
+    t('UIMine_VIP_year') +
+    (currentMonth.value.getMonth() + 1) +
+    t('UIMine_VIP_month'),
 )
 
 type DayCell = {
@@ -223,21 +242,21 @@ function onFilterClick(tab: string): void {
   }
 
   activeFilter.value = tab
-  if (tab === '今天') {
+  if (tab === t('UIData_Today')) {
     startDateModel.value = startOfDay(now)
     endDateModel.value = startOfDay(now)
     void fetchFriendsRecord()
     return
   }
 
-  if (tab === '7天') {
+  if (tab === '7' + t('UIHappyShop_ActivityShopDay')) {
     startDateModel.value = startOfDay(addDays(now, -6))
     endDateModel.value = startOfDay(now)
     void fetchFriendsRecord()
     return
   }
 
-  if (tab === '14天') {
+  if (tab === '14' + t('UIHappyShop_ActivityShopDay')) {
     startDateModel.value = startOfDay(addDays(now, -13))
     endDateModel.value = startOfDay(now)
     void fetchFriendsRecord()
@@ -417,11 +436,11 @@ onMounted(() => {
         </div>
       </section>
 
-      <p class="timezone-text">时区：UTC+0</p>
+      <p class="timezone-text">{{ t('UICommon_TimeZone') }}：UTC+0</p>
 
       <section class="record-list">
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!records.length" class="list-status">暂无朋友战绩</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!records.length" class="list-status">{{ t('UIClub_No7') }}</p>
         <article
           v-for="item in records"
           :key="item.id"
@@ -440,7 +459,7 @@ onMounted(() => {
                   <span v-if="item.extra" class="extra">{{ item.extra }}</span>
                 </div>
                 <div class="meta-time">
-                  <img :src="iconTime" alt="时间" />
+                  <img :src="iconTime" :alt="t('TimeItem')" />
                   <span>{{ item.time }}</span>
                 </div>
               </div>
@@ -450,9 +469,9 @@ onMounted(() => {
               <div class="fee-chip">
                 <div class="fee-line">
                   <span>{{ item.feeText }}</span>
-                  <span :class="item.feePositive ? 'value-up' : 'value-down'">{{
-                    item.feeValue
-                  }}</span>
+                  <span :class="item.feePositive ? 'value-up' : 'value-down'">
+                    {{ item.feeValue }}
+                  </span>
                 </div>
                 <div v-if="item.insuranceLabel && item.insuranceValue" class="fee-line">
                   <span>{{ item.insuranceLabel }}</span>
@@ -468,7 +487,7 @@ onMounted(() => {
       <div v-if="isDatePickerVisible" class="date-picker-mask" @click="closeDatePicker">
         <div class="date-picker-sheet" @click.stop>
           <header class="picker-tip">
-            <p>只支持查询最近三个月数据</p>
+            <p>{{ t('UIGuildtThreeMonthDataTip') }}</p>
             <button type="button" class="picker-close" @click="closeDatePicker">×</button>
           </header>
 
@@ -495,19 +514,39 @@ onMounted(() => {
 
           <div class="picker-month-row">
             <div class="month-arrows">
-              <button type="button" class="arrow-btn" aria-label="上一年" @click="goPrevYear">
+              <button
+                type="button"
+                class="arrow-btn"
+                :aria-label="t('UIClub_Text50')"
+                @click="goPrevYear"
+              >
                 «
               </button>
-              <button type="button" class="arrow-btn" aria-label="上一月" @click="goPrevMonth">
+              <button
+                type="button"
+                class="arrow-btn"
+                :aria-label="t('UIClub_Text51')"
+                @click="goPrevMonth"
+              >
                 ‹
               </button>
             </div>
             <p class="month-title">{{ monthTitle }}</p>
             <div class="month-arrows">
-              <button type="button" class="arrow-btn" aria-label="下一月" @click="goNextMonth">
+              <button
+                type="button"
+                class="arrow-btn"
+                :aria-label="t('UIClub_Text52')"
+                @click="goNextMonth"
+              >
                 ›
               </button>
-              <button type="button" class="arrow-btn" aria-label="下一年" @click="goNextYear">
+              <button
+                type="button"
+                class="arrow-btn"
+                :aria-label="t('UIClub_Text53')"
+                @click="goNextYear"
+              >
                 »
               </button>
             </div>

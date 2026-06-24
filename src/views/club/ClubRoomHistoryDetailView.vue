@@ -6,6 +6,7 @@ import { postClubDataStatsDataDetailApi, postClubDataStatsDataDetailInfoApi } fr
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
+import { t } from '@/i18n'
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -51,18 +52,18 @@ const detailInfo = ref<DetailInfo>({
   roomIdText: '--',
   jackpot: '0',
   topMetrics: [
-    { label: '买入', value: '--' },
-    { label: '底分', value: '--' },
-    { label: '服务费', value: '--' },
+    { label: t('MTT_xq_buy'), value: '--' },
+    { label: t('Mahjong_LowScore'), value: '--' },
+    { label: t('UIMine_WalletPlatform_fee_f'), value: '--' },
   ],
   middleMetrics: [
-    { label: '总人数', value: '--' },
-    { label: '保险', value: '0' },
-    { label: '总服务费', value: '0' },
+    { label: t('UIFriendsTable_playercount'), value: '--' },
+    { label: t('adaptation10179'), value: '0' },
+    { label: t('UIFriendsTable_totalfee'), value: '0' },
   ],
 })
 
-const tableHeaders = ['User', '赢', '服务费', '保险', '买入', '手数', 'JP']
+const tableHeaders = ['User', t('UIMine_Paipu_win'), t('UIMine_WalletPlatform_fee_f'), t('adaptation10179'), t('MTT_xq_buy'), t('UIMine_RecordItemsNormal_3RCUa3w8'), 'JP']
 
 const records = ref<PlayerRecord[]>([])
 
@@ -124,14 +125,14 @@ function mapDetailInfo(payload: unknown): DetailInfo {
     roomIdText: String(roomId.value || '--'),
     jackpot: formatNumber(jackpot),
     topMetrics: [
-      { label: '买入', value: buyInValue },
-      { label: '底分', value: `${formatUC(sb)}/${formatUC(bb)}` },
-      { label: '服务费', value: feeRate > 0 ? `${feeRate / 10}%` : '--' },
+      { label: t('MTT_xq_buy'), value: buyInValue },
+      { label: t('Mahjong_LowScore'), value: `${formatUC(sb)}/${formatUC(bb)}` },
+      { label: t('UIMine_WalletPlatform_fee_f'), value: feeRate > 0 ? `${feeRate / 10}%` : '--' },
     ],
     middleMetrics: [
-      { label: '总人数', value: String(totalPlayer || '--') },
-      { label: '保险', value: formatUC(insurance) },
-      { label: '总服务费', value: formatUC(totalFee) },
+      { label: t('UIFriendsTable_playercount'), value: String(totalPlayer || '--') },
+      { label: t('adaptation10179'), value: formatUC(insurance) },
+      { label: t('UIFriendsTable_totalfee'), value: formatUC(totalFee) },
     ],
   }
 }
@@ -161,7 +162,7 @@ async function fetchDetailInfo(): Promise<void> {
   })
 
   if (response.code !== 0) {
-    throw new Error(typeof response.msg === 'string' ? response.msg : '加载详情统计失败')
+    throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadDetailFail'))
   }
 
   detailInfo.value = mapDetailInfo(response.data?.info)
@@ -178,7 +179,7 @@ async function fetchDetailRows(): Promise<void> {
   })
 
   if (response.code !== 0) {
-    throw new Error(typeof response.msg === 'string' ? response.msg : '加载详情列表失败')
+    throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadDetailFail2'))
   }
 
   const list = Array.isArray(response.data?.list) ? response.data.list : []
@@ -196,7 +197,7 @@ async function fetchDetailRows(): Promise<void> {
 
 async function initPage(): Promise<void> {
   if (!roomId.value && !matchId.value) {
-    showFailToast('缺少 roomId/matchId 参数')
+    showFailToast(t('UIClub_Text31') + " roomId/matchId " + t('UIClub_Text32'))
     void router.back()
     return
   }
@@ -205,7 +206,7 @@ async function initPage(): Promise<void> {
   try {
     await Promise.all([fetchDetailInfo(), fetchDetailRows()])
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加载数据详情失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadDataDetailFail')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -223,13 +224,13 @@ onMounted(() => {
     <div class="club-room-history-detail">
       <section class="meta-panel">
         <div class="meta-title-row">
-          <span class="meta-title">完成的</span>
+          <span class="meta-title">{{ t('UIClub_Of') }}</span>
           <strong class="meta-main-value">{{ detailInfo.roomName }}</strong>
         </div>
 
         <div class="meta-sub-row">
           <div class="creator-wrap">
-            <span class="meta-sub-label">创作者</span>
+            <span class="meta-sub-label">{{ t('UIClub_Text30') }}</span>
             <span class="meta-sub-value">{{ detailInfo.creator }}</span>
             <div class="id-pill-wrap">
               <span class="id-pill">ID</span>
@@ -310,8 +311,8 @@ onMounted(() => {
             <span class="value-cell">{{ row.hands }}</span>
             <span class="value-cell">{{ row.jp }}</span>
           </article>
-          <p v-if="!records.length && !loading" class="list-status">暂无玩家记录</p>
-          <p v-if="loading" class="list-status">加载中...</p>
+          <p v-if="!records.length && !loading" class="list-status">{{ t('UIClub_NoPlayerRecord') }}</p>
+          <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
         </div>
       </section>
     </div>

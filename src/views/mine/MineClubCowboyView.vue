@@ -9,6 +9,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { formatDateTime, toTimestampMs } from '@/utils/time'
 import dayjs from 'dayjs'
+import { t } from '@/i18n'
 
 interface SummaryMetric {
   label: string
@@ -35,17 +36,21 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const title = computed(() => '牛仔战绩')
+const title = computed(() => t('Cowboy_Record'))
 
-const timeTabs = ['今天', '7天', '30天']
+const timeTabs = [
+  t('UIData_Today'),
+  '7' + t('UIHappyShop_ActivityShopDay'),
+  '30' + t('UIHappyShop_ActivityShopDay'),
+]
 const selectedTime = ref(timeTabs[0])
 const loading = ref(false)
 
 const summaryRows = ref<SummaryMetric[]>([
-  { label: '总手数', value: '0' },
-  { label: '押中率', value: '0%' },
-  { label: '总押注', value: '0' },
-  { label: '总盈利', value: '0' },
+  { label: t('UITexasGameEnding_allhand'), value: '0' },
+  { label: t('Career_StakeProbability'), value: '0%' },
+  { label: t('Career_TotalStake'), value: '0' },
+  { label: t('Career_TotalEarn'), value: '0' },
 ])
 
 const periodProfit = ref('0')
@@ -54,14 +59,14 @@ const records = ref<RecordCard[]>([])
 
 function profitTitle(): string {
   switch (selectedTime.value) {
-    case '今天':
-      return '今日收益'
-    case '7天':
-      return '7天收益'
-    case '30天':
-      return '30天收益'
+    case t('UIData_Today'):
+      return t('UIBill_payLookHandCardTodayWin')
+    case '7' + t('UIHappyShop_ActivityShopDay'):
+      return '7' + t('UIClub_Income')
+    case '30' + t('UIHappyShop_ActivityShopDay'):
+      return '30' + t('UIClub_Income')
     default:
-      return '今日收益'
+      return t('UIBill_payLookHandCardTodayWin')
   }
 }
 
@@ -74,11 +79,11 @@ function toSafeNumber(value: unknown): number {
 
 function resolveTimeType(): number {
   switch (selectedTime.value) {
-    case '今天':
+    case t('UIData_Today'):
       return 1
-    case '7天':
+    case '7' + t('UIHappyShop_ActivityShopDay'):
       return 2
-    case '30天':
+    case '30' + t('UIHappyShop_ActivityShopDay'):
       return 3
     default:
       return 1
@@ -159,10 +164,10 @@ function extractStatsFromResponse(data: unknown): void {
   const totalEarn = toSafeNumber(roomData.total_earn)
 
   summaryRows.value = [
-    { label: '总手数', value: totalHand.toLocaleString('en-US') },
-    { label: '押中率', value: `${cbWins}%` },
-    { label: '总押注', value: formatUC(cbBet) },
-    { label: '总盈利', value: formatUC(totalEarn) },
+    { label: t('UITexasGameEnding_allhand'), value: totalHand.toLocaleString('en-US') },
+    { label: t('Career_StakeProbability'), value: `${cbWins}%` },
+    { label: t('Career_TotalStake'), value: formatUC(cbBet) },
+    { label: t('Career_TotalEarn'), value: formatUC(totalEarn) },
   ]
 
   periodProfit.value = formatUC(totalEarn)
@@ -178,11 +183,11 @@ async function fetchStatsSummary(): Promise<void> {
       ...(userInfoStore.currentClub?.club_id ? { club_id: userInfoStore.currentClub.club_id } : {}),
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载牛仔统计失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail5'))
     }
     extractStatsFromResponse(response.data)
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加载牛仔统计失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadFail5')
     showFailToast(message)
   }
 }
@@ -198,14 +203,14 @@ async function fetchCowboyRecords(): Promise<void> {
       ...(userInfoStore.currentClub?.club_id ? { club_id: userInfoStore.currentClub.club_id } : {}),
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载牛仔战绩失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail4'))
     }
 
     const rows = extractRecords(response.data?.records)
     records.value = rows.map((row, index) => mapRecord(row, index))
   } catch (error) {
     records.value = []
-    const message = error instanceof Error ? error.message : '加载牛仔战绩失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadFail4')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -270,8 +275,8 @@ onMounted(() => {
       </section>
 
       <section class="content-list">
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!records.length" class="list-status">暂无牛仔战绩记录</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!records.length" class="list-status">{{ t('UIClub_NoRecord') }}</p>
         <article
           v-for="(item, index) in records"
           :key="item.id"
@@ -280,9 +285,9 @@ onMounted(() => {
           @click="goToDetail(item)"
         >
           <div class="timeline">
-            <span v-if="isFirstOfDate(index)" class="date-label"
-              >{{ item.endMonth }}<br />{{ item.endDay }}</span
-            >
+            <span v-if="isFirstOfDate(index)" class="date-label">
+              {{ item.endMonth }}<br />{{ item.endDay }}
+            </span>
             <span v-else class="date-label"></span>
           </div>
           <div class="card-content">
@@ -294,15 +299,15 @@ onMounted(() => {
             <div class="card-body">
               <div class="meta">
                 <div>
-                  <span>手数:</span>
+                  <span>{{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}:</span>
                   <span>{{ item.hands }}</span>
                 </div>
                 <div>
-                  <span>时长:</span>
+                  <span>{{ t('UIClub_Text36') }}:</span>
                   <span>{{ item.duration }}</span>
                 </div>
                 <div>
-                  <span>结束时间:</span>
+                  <span>{{ t('RecordDetail102') }}:</span>
                   <span>{{ item.endAt }}</span>
                 </div>
               </div>

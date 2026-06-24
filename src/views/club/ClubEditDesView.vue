@@ -5,6 +5,7 @@ import { postOrgClubModifyClubDescApi } from '@/api/org'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { t } from '@/i18n'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -26,7 +27,7 @@ async function onConfirm(): Promise<void> {
 
   const clubId = Number(userInfoStore.currentClub?.club_id)
   if (!clubId) {
-    showFailToast('未找到俱乐部信息')
+    showFailToast(t('UIClub_NotFoundClub'))
     return
   }
 
@@ -40,16 +41,16 @@ async function onConfirm(): Promise<void> {
 
     if (response.code !== 0) {
       const fallback = (response.msg ?? response.message) as unknown
-      throw new Error(typeof fallback === 'string' ? fallback : '修改简介失败')
+      throw new Error(typeof fallback === 'string' ? fallback : t('UIClub_DescriFail'))
     }
 
     if (userInfoStore.currentClub) {
       userInfoStore.syncCurrentClubDesc(intro.value.trim())
     }
 
-    showSuccessToast('修改成功')
+    showSuccessToast(t('adaptation10079'))
   } catch (error) {
-    const message = error instanceof Error ? error.message : '修改简介失败'
+    const message = error instanceof Error ? error.message : t('UIClub_DescriFail')
     showFailToast(message)
   } finally {
     isSubmitting.value = false
@@ -63,13 +64,15 @@ async function onConfirm(): Promise<void> {
 
     <div class="club-edit-des">
       <section class="editor-block">
-        <label class="field-label" for="club-intro-edit-input">俱乐部简介</label>
+        <label class="field-label" for="club-intro-edit-input">
+          {{ t('UIClub_Creat_ZizEgnjo') }}
+        </label>
         <div class="field-shell">
           <textarea
             id="club-intro-edit-input"
             v-model.trim="intro"
             maxlength="300"
-            placeholder="请输入简介"
+            :placeholder="t('UIClub_PleaseDescri')"
           ></textarea>
         </div>
       </section>
@@ -82,7 +85,7 @@ async function onConfirm(): Promise<void> {
           :disabled="!canConfirm"
           @click="onConfirm"
         >
-          {{ isSubmitting ? '提交中...' : '确定' }}
+          {{ isSubmitting ? t('UIClub_Submitting') + '...' : t('CommitOK') }}
         </button>
       </section>
     </div>

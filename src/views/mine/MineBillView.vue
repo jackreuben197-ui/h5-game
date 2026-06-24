@@ -32,13 +32,13 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const title = computed(() => '我的账单')
+const title = computed(() => t('UIMine_Bill'))
 
 const tabGoldTypes = [
   { label: 'UC', value: 1 },
-  { label: 'Club计分牌', value: 2 },
-  { label: '朋友桌计分牌', value: 3 },
-  { label: '钻石', value: 4 },
+  { label: 'Club' + t('UIClub_Text34'), value: 2 },
+  { label: t('UIClub_Table'), value: 3 },
+  { label: t('UIMine_VIP_diamond'), value: 4 },
 ] as const
 
 const activeTab = ref(1)
@@ -272,14 +272,14 @@ function mapBillRecord(row: UserBillRecord): BillRecordItem {
   const opCodeName = resolveOpCodeText(row.op_code)
 
   return {
-    name: opCodeName || '账单变动',
+    name: opCodeName || t('UIClub_Text35'),
     time: formatDate(row.create_time),
     amount: formatSigned(changeValue),
     positive: changeValue > 0,
   }
 }
 
-function mapBillCard(row: UserBillWallet, index: number): BillCardItem {
+function mapBillCard(row: UserBillWallet, _: number): BillCardItem {
   const roomInfo = (row.room_info as UserBillRoom_info | undefined) || undefined
   const records = Array.isArray(roomInfo?.records)
     ? roomInfo.records.map((item) => mapBillRecord(item))
@@ -300,7 +300,7 @@ function mapBillCard(row: UserBillWallet, index: number): BillCardItem {
     localizedNameByMultiObj ||
     localizedNameByKey ||
     rawName ||
-    '账单记录'
+    t('UIClub_Record')
   const roomName = localizedNameByMultiObj || localizedNameByKey || rawName
   const cardName = roomName || fallbackName
   const club = row.room_info && row.room_info.club_name ? row.room_info.club_name : row.club_name
@@ -354,7 +354,8 @@ function mapBillCard(row: UserBillWallet, index: number): BillCardItem {
 function mapWalletList(wallet: UserWalletWallet[] | undefined): WalletDetailItem[] {
   const list = Array.isArray(wallet) ? wallet : []
   return list.map((item, index) => {
-    const clubName = String(item.club_name ?? '').trim() || `俱乐部${index + 1}`
+    const clubName =
+      String(item.club_name ?? '').trim() || t('UILobby_Menu_menu_btn_club') + (index + 1)
     return {
       key: `${clubName}-${index}`,
       clubName,
@@ -543,7 +544,7 @@ async function fetchBillData(reset = true, silent = false): Promise<void> {
   try {
     const billRes = await postUserBillApi(payload)
     if (billRes.code !== 0) {
-      throw new Error(typeof billRes.msg === 'string' ? billRes.msg : '加载账单失败')
+      throw new Error(typeof billRes.msg === 'string' ? billRes.msg : t('UIClub_LoadFail3'))
     }
 
     const rows = extractList(billRes.data?.list) as UserBillWallet[]
@@ -589,7 +590,7 @@ async function fetchBillData(reset = true, silent = false): Promise<void> {
       hasMore.value = false
     }
     if (!silent) {
-      const message = error instanceof Error ? error.message : '加载账单失败'
+      const message = error instanceof Error ? error.message : t('UIClub_LoadFail3')
       showFailToast(message)
     }
   } finally {
@@ -650,7 +651,7 @@ onMounted(() => {
     <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
-      <p class="hint">只支持查询最近三个月数据</p>
+      <p class="hint">{{ t('UIGuildtThreeMonthDataTip') }}</p>
 
       <div class="bill-tabs">
         <button
@@ -665,9 +666,9 @@ onMounted(() => {
       </div>
 
       <section v-if="activeTab !== 3" class="glass-card total-card">
-        <div v-if="activeTab === 1" class="label">UC总金额</div>
-        <div v-else-if="activeTab === 2" class="label">俱乐部记分牌总额度</div>
-        <div v-else-if="activeTab === 4" class="label">钻石余额</div>
+        <div v-if="activeTab === 1" class="label">UC{{ t('UIClub_Text33') }}</div>
+        <div v-else-if="activeTab === 2" class="label">{{ t('UIMineAllClub') }}</div>
+        <div v-else-if="activeTab === 4" class="label">{{ t('UIMineAllDiamond') }}</div>
         <div class="amount-row">
           <img v-if="activeTab === 1" :src="iconUc" alt="chip" />
           <img v-else-if="activeTab === 2" :src="iconCredit" alt="chip" />
@@ -675,7 +676,7 @@ onMounted(() => {
           <strong>{{ formatAmount(totalAmount) }}</strong>
         </div>
         <div v-if="activeTab == 4" class="diamond-income">
-          今日收益：{{ formatAmount(diamondProfit.today_profit) }}
+          {{ t('UIBill_payLookHandCardTodayWin') }}：{{ formatAmount(diamondProfit.today_profit) }}
         </div>
         <div
           v-if="walletDetailExpanded"

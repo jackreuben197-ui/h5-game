@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { postStatsUserGameRecordListApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { t } from '@/i18n'
 
 const title = computed(() => 'Result')
 
@@ -27,7 +28,7 @@ interface HandRow {
 
 const loading = ref(false)
 const handRows = ref<HandRow[]>([])
-const overviewTitle = ref('牌局名称')
+const overviewTitle = ref(t('UIClub_RoomCreat_0HvQkjkd'))
 const overviewId = ref('ID: --')
 const overviewHands = ref('Hands 0')
 
@@ -79,7 +80,7 @@ async function fetchHandRows(): Promise<void> {
     } as unknown as Record<string, unknown>)
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载手牌详情失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadDetailFail6'))
     }
 
     const records = Array.isArray(response.data?.records) ? response.data.records : []
@@ -91,13 +92,13 @@ async function fetchHandRows(): Promise<void> {
       (item): item is Record<string, unknown> => !!item && typeof item === 'object',
     )
 
-    overviewTitle.value = String(room.name ?? '牌局名称')
+    overviewTitle.value = String(room.name ?? t('UIClub_RoomCreat_0HvQkjkd'))
     overviewId.value = `ID: ${String(room.room_id ?? roomId)}`
     overviewHands.value = `Hands ${userRows.length}`
     handRows.value = mapHandRows(userRows)
   } catch (error) {
     handRows.value = []
-    const message = error instanceof Error ? error.message : '加载手牌详情失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadDetailFail6')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -133,8 +134,8 @@ onMounted(() => {
       </section>
 
       <section class="list-wrap">
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!handRows.length" class="list-status">暂无手牌记录</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!handRows.length" class="list-status">{{ t('UIClub_NoRecord2') }}</p>
         <article
           v-for="item in handRows"
           :key="item.id"

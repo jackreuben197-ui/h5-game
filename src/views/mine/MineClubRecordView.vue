@@ -9,6 +9,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { formatDateTime, toTimestampMs } from '@/utils/time'
 import dayjs from 'dayjs'
+import { t } from '@/i18n'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -18,7 +19,7 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const title = computed(() => '战绩')
+const title = computed(() => t('UICareerRecord'))
 
 interface SummaryMetric {
   label: string
@@ -38,35 +39,39 @@ interface RecordCard {
   profit: string
 }
 
-const gameTabs = ['德州', '奥马哈', '短牌']
-const timeTabs = ['今天', '7天', '30天']
+const gameTabs = [t('adaptation10022'), t('adaptation10009'), t('PokerType_2')]
+const timeTabs = [
+  t('UIData_Today'),
+  '7' + t('UIHappyShop_ActivityShopDay'),
+  '30' + t('UIHappyShop_ActivityShopDay'),
+]
 const selectedGame = ref(gameTabs[0])
 const selectedTime = ref(timeTabs[0])
 const loading = ref(false)
 
 // 统计数据（从 postStatsUserStatsApi 获取，默认值 0）
 const leftMetrics = ref<SummaryMetric[]>([
-  { label: '总局数', value: '0' },
-  { label: '手数', value: '0' },
+  { label: t('UITexasInfo_games'), value: '0' },
+  { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: '0' },
 ])
 
 const rightMetrics = ref<SummaryMetric[]>([
-  { label: '入池率', value: '0%' },
-  { label: '胜率', value: '0%' },
+  { label: t('UIClub_Mlistinfo_rRyW4JkW'), value: '0%' },
+  { label: t('UITexasInfo_winrate'), value: '0%' },
 ])
 
 const detailRowsOne = ref<SummaryMetric[]>([
-  { label: '局数', value: '0' },
-  { label: '总盈亏', value: '0' },
-  { label: '场均战绩', value: '0' },
-  { label: '摊牌胜率', value: '0%' },
+  { label: t('UIData_YGvXd5iXr_003'), value: '0' },
+  { label: t('UIClub_Text46'), value: '0' },
+  { label: t('UIData_kpHsdqDe5'), value: '0' },
+  { label: t('UIClub_Text39'), value: '0%' },
 ])
 
 const detailRowsTwo = ref<SummaryMetric[]>([
-  { label: '翻牌前加注率', value: '0%' },
-  { label: '持续下注率', value: '0%' },
-  { label: '全下胜率', value: '0%' },
-  { label: '激进程度', value: '0' },
+  { label: t('UIClub_Text47'), value: '0%' },
+  { label: t('UIClub_Text48'), value: '0%' },
+  { label: t('adaptation10318'), value: '0%' },
+  { label: t('UIClub_Text49'), value: '0' },
 ])
 
 const todayProfit = ref('0')
@@ -76,14 +81,14 @@ const records = ref<RecordCard[]>([])
 // 根据当前选中的时间 tab 返回收益标题
 function profitTitle(): string {
   switch (selectedTime.value) {
-    case '今天':
-      return '今天收益'
-    case '7天':
-      return '7天收益'
-    case '30天':
-      return '30天收益'
+    case t('UIData_Today'):
+      return t('UIClub_Income3')
+    case '7' + t('UIHappyShop_ActivityShopDay'):
+      return '7' + t('UIClub_Income')
+    case '30' + t('UIHappyShop_ActivityShopDay'):
+      return '30' + t('UIClub_Income')
     default:
-      return '今天收益'
+      return t('UIClub_Income3')
   }
 }
 
@@ -118,10 +123,10 @@ function toSafeNumber(value: unknown): number {
 }
 
 function resolveGameTypes(): number[] {
-  if (selectedGame.value === '奥马哈') {
+  if (selectedGame.value === t('adaptation10009')) {
     return [1, 2, 3]
   }
-  if (selectedGame.value === '短牌') {
+  if (selectedGame.value === t('PokerType_2')) {
     return [0]
   }
   return [0]
@@ -129,11 +134,11 @@ function resolveGameTypes(): number[] {
 
 function resolveTimeType(): number {
   switch (selectedTime.value) {
-    case '今天':
+    case t('UIData_Today'):
       return 1
-    case '7天':
+    case '7' + t('UIHappyShop_ActivityShopDay'):
       return 2
-    case '30天':
+    case '30' + t('UIHappyShop_ActivityShopDay'):
       return 3
     default:
       return 1
@@ -202,27 +207,27 @@ function extractStatsFromResponse(data: unknown): void {
   const af = toSafeNumber(roomData.af)
 
   leftMetrics.value = [
-    { label: '总局数', value: totalGameCnt.toLocaleString('en-US') },
-    { label: '手数', value: totalHand.toLocaleString('en-US') },
+    { label: t('UITexasInfo_games'), value: totalGameCnt.toLocaleString('en-US') },
+    { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: totalHand.toLocaleString('en-US') },
   ]
 
   rightMetrics.value = [
-    { label: '入池率', value: `${vpip}%` },
-    { label: '胜率', value: `${wins}%` },
+    { label: t('UIClub_Mlistinfo_rRyW4JkW'), value: `${vpip}%` },
+    { label: t('UITexasInfo_winrate'), value: `${wins}%` },
   ]
 
   detailRowsOne.value = [
-    { label: '局数', value: totalGameCnt.toLocaleString('en-US') },
-    { label: '总盈亏', value: formatUC(totalEarn) },
-    { label: '场均战绩', value: avgEarn },
-    { label: '摊牌胜率', value: `${wtsd}%` },
+    { label: t('UIData_YGvXd5iXr_003'), value: totalGameCnt.toLocaleString('en-US') },
+    { label: t('UIClub_Text46'), value: formatUC(totalEarn) },
+    { label: t('UIData_kpHsdqDe5'), value: avgEarn },
+    { label: t('UIClub_Text39'), value: `${wtsd}%` },
   ]
 
   detailRowsTwo.value = [
-    { label: '翻牌前加注率', value: `${prf}%` },
-    { label: '持续下注率', value: `${cbet}%` },
-    { label: '全下胜率', value: `${allinWins}%` },
-    { label: '激进程度', value: af.toLocaleString('en-US') },
+    { label: t('UIClub_Text47'), value: `${prf}%` },
+    { label: t('UIClub_Text48'), value: `${cbet}%` },
+    { label: t('adaptation10318'), value: `${allinWins}%` },
+    { label: t('UIClub_Text49'), value: af.toLocaleString('en-US') },
   ]
 
   todayProfit.value = formatUC(totalEarn)
@@ -232,18 +237,18 @@ async function fetchStatsSummary(): Promise<void> {
   try {
     const response = await postStatsUserStatsApi({
       game_types: resolveGameTypes(),
-      poker_types: selectedGame.value === '短牌' ? [2] : [0],
+      poker_types: selectedGame.value === t('PokerType_2') ? [2] : [0],
       time_type: resolveTimeType(),
       filter_type: 1, // 默认联盟币
       room_type: 0, // 生涯
       ...(userInfoStore.currentClub?.club_id ? { club_id: userInfoStore.currentClub.club_id } : {}),
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载统计数据失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadDataFail'))
     }
     extractStatsFromResponse(response.data)
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加载统计数据失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadDataFail')
     showFailToast(message)
   }
 }
@@ -255,19 +260,19 @@ async function fetchClubRecords(): Promise<void> {
       limit: 20,
       offset: 0,
       game_types: resolveGameTypes(),
-      poker_types: selectedGame.value === '短牌' ? [2] : [0],
+      poker_types: selectedGame.value === t('PokerType_2') ? [2] : [0],
       time_type: resolveTimeType(),
       club_id: userInfoStore.currentClub?.club_id,
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载战绩失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail9'))
     }
 
     const rows = extractRecords(response.data?.records)
     records.value = rows.map((row, index) => mapRecord(row, index))
   } catch (error) {
     records.value = []
-    const message = error instanceof Error ? error.message : '加载战绩失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadFail9')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -377,8 +382,8 @@ onMounted(() => {
       </section>
 
       <section class="content-list">
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!records.length" class="list-status">暂无战绩记录</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!records.length" class="list-status">{{ t('UIClub_NoRecord3') }}</p>
         <article
           v-for="(item, index) in records"
           :key="item.id"
@@ -387,9 +392,9 @@ onMounted(() => {
           @click="goToDetail(item)"
         >
           <div class="timeline">
-            <span v-if="isFirstOfDate(index)" class="date-label"
-              >{{ item.endMonth }}<br />{{ item.endDay }}</span
-            >
+            <span v-if="isFirstOfDate(index)" class="date-label">
+              {{ item.endMonth }}<br />{{ item.endDay }}
+            </span>
             <span v-else class="date-label"></span>
           </div>
           <div class="card-content">
@@ -401,19 +406,19 @@ onMounted(() => {
             <div class="card-body">
               <div class="meta">
                 <div>
-                  <span>盲注级别:</span>
+                  <span>{{ t('UIJackPotInfo_blindLevel') }}:</span>
                   <span>{{ item.blinds }}</span>
                 </div>
                 <div>
-                  <span>手数:</span>
+                  <span>{{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}:</span>
                   <span>{{ item.hands }}</span>
                 </div>
                 <div>
-                  <span>时长:</span>
+                  <span>{{ t('UIClub_Text36') }}:</span>
                   <span>{{ item.duration }}</span>
                 </div>
                 <div>
-                  <span>结束时间:</span>
+                  <span>{{ t('RecordDetail102') }}:</span>
                   <span>{{ item.endAt }}</span>
                 </div>
               </div>

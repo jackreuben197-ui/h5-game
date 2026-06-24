@@ -14,6 +14,7 @@ import iconDropdown from '@/assets/icons/icon_dropdown.png'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { showGameToast } from '@/components/Toast'
+import { t } from '@/i18n'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -23,8 +24,8 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const gameTabs = ['德州', '奥马哈', '短牌']
-const dateTabs = ['今天', '7天', '30天']
+const gameTabs = [t('adaptation10022'), t('adaptation10009'), t('PokerType_2')]
+const dateTabs = [t('UIData_Today'), "7" + t('UIHappyShop_ActivityShopDay'), "30" + t('UIHappyShop_ActivityShopDay')]
 const selectedGameTab = ref(gameTabs[0])
 const selectedDateTab = ref(dateTabs[0])
 const showClubDropdown = ref(false)
@@ -50,8 +51,8 @@ const selectedClubIndex = ref(0)
 const currencyTypes = [
   { label: 'UC', value: 1 },
   // { label: 'USDT', value: 2 },
-  { label: '记分牌', value: 3 },
-  { label: '钻石', value: 4 },
+  { label: t('UIGuild_CoinType1'), value: 3 },
+  { label: t('UIMine_VIP_diamond'), value: 4 },
 ] as const
 const selectedCurrencyIndex = ref(0)
 
@@ -68,19 +69,19 @@ interface CareerMenuItem {
 }
 
 const metrics = ref<CareerMetric[]>([
-  { label: '局数', value: '0' },
-  { label: '手数', value: '0' },
-  { label: '入池率', value: '0%' },
-  { label: '盈亏', value: '0' },
+  { label: t('UIData_YGvXd5iXr_003'), value: '0' },
+  { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: '0' },
+  { label: t('UIClub_Mlistinfo_rRyW4JkW'), value: '0%' },
+  { label: t('UITexasInfo_loss'), value: '0' },
 ])
 
 const menuList: CareerMenuItem[] = [
-  { key: 'record', label: '战绩', icon: iconBoxClubT, route: '/mine/club-record' },
+  { key: 'record', label: t('UICareerRecord'), icon: iconBoxClubT, route: '/mine/club-record' },
   { key: 'mtt', label: 'MTT', icon: iconBoxDiamond, route: '/mine/club-mtt' },
   { key: 'cowboy', label: 'Cowboy', icon: iconBoxFriendT, route: '/mine/club-cowboy' },
   { key: 'mahjong', label: 'Mahjong', icon: iconBoxBag, route: '/mine/club-mahjong' },
   // { key: 'mahjong-mtt', label: '麻将MTT战绩', icon: iconBoxSave },
-  { key: 'data', label: '数据', icon: iconBoxSetting, route: '/mine/club-data' },
+  { key: 'data', label: t('adaptation10124'), icon: iconBoxSetting, route: '/mine/club-data' },
 ]
 
 function selectGameTab(tab: string): void {
@@ -126,7 +127,7 @@ function handleMenuClick(item: CareerMenuItem): void {
     return
   }
   if (item.key === 'cowboy' || item.key == 'mahjong') {
-    showGameToast('功能开发中')
+    showGameToast(t('UIClub_InDeve'))
     return
   }
   void router.push(item.route)
@@ -143,7 +144,7 @@ function toSafeNumber(value: unknown): number {
 function resolveRequestParams() {
   // game_types: 0-德州 1-OMAHA4 2-OMAHA5 3-OMAHA6 4-fantasy 5-牛仔 6-麻将 7-其他
   let gameTypes: number[]
-  if (selectedGameTab.value === '奥马哈') {
+  if (selectedGameTab.value === t('adaptation10009')) {
     gameTypes = [1, 2, 3]
   } else {
     // 德州（默认）或短牌都传 [0]
@@ -153,7 +154,7 @@ function resolveRequestParams() {
   return {
     filter_type: currencyTypes[selectedCurrencyIndex.value].value,
     game_types: gameTypes,
-    poker_types: selectedGameTab.value === '短牌' ? [2] : [0],
+    poker_types: selectedGameTab.value === t('PokerType_2') ? [2] : [0],
     ...(selectedClubIndex.value !== 0
       ? { club_id: userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id }
       : {}),
@@ -167,10 +168,10 @@ function extractMetricsFromCache(): CareerMetric[] {
   const data = responseCache.value
   if (!data) {
     return [
-      { label: '局数', value: '0' },
-      { label: '手数', value: '0' },
-      { label: '入池率', value: '0%' },
-      { label: '盈亏', value: '0' },
+      { label: t('UIData_YGvXd5iXr_003'), value: '0' },
+      { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: '0' },
+      { label: t('UIClub_Mlistinfo_rRyW4JkW'), value: '0%' },
+      { label: t('UITexasInfo_loss'), value: '0' },
     ]
   }
 
@@ -179,13 +180,13 @@ function extractMetricsFromCache(): CareerMetric[] {
   // one_day=今天, week_day=7天, all_day=30天
   let dayData: Record<string, unknown> | undefined
   switch (selectedDateTab.value) {
-    case '今天':
+    case t('UIData_Today'):
       dayData = roomDataTotal?.one_day as Record<string, unknown> | undefined
       break
-    case '7天':
+    case "7" + t('UIHappyShop_ActivityShopDay'):
       dayData = roomDataTotal?.week_day as Record<string, unknown> | undefined
       break
-    case '30天':
+    case "30" + t('UIHappyShop_ActivityShopDay'):
       dayData = roomDataTotal?.all_day as Record<string, unknown> | undefined
       break
   }
@@ -196,13 +197,13 @@ function extractMetricsFromCache(): CareerMetric[] {
   const totalEarn = toSafeNumber(dayData?.total_earn)
 
   return [
-    { label: '局数', value: `${totalGameCnt}` },
-    { label: '手数', value: totalHand.toLocaleString('en-US') },
+    { label: t('UIData_YGvXd5iXr_003'), value: `${totalGameCnt}` },
+    { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: totalHand.toLocaleString('en-US') },
     {
-      label: '入池率',
+      label: t('UIClub_Mlistinfo_rRyW4JkW'),
       value: totalHand > 0 ? `${Math.min(100, Math.round((inPoolCnt / totalHand) * 100))}%` : '0%',
     },
-    { label: '盈亏', value: `${formatUC(totalEarn)}` },
+    { label: t('UITexasInfo_loss'), value: `${formatUC(totalEarn)}` },
   ]
 }
 
@@ -212,7 +213,7 @@ async function fetchClubCareerSummary(): Promise<void> {
     const params = resolveRequestParams()
     const response = await postStatsUserStatsAllApi(params)
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载俱乐部生涯数据失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadClubDataFail'))
     }
 
     // 缓存完整响应数据
@@ -220,7 +221,7 @@ async function fetchClubCareerSummary(): Promise<void> {
     // 从缓存中提取指标
     metrics.value = extractMetricsFromCache()
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加载俱乐部生涯数据失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadClubDataFail')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -235,11 +236,11 @@ onMounted(() => {
 <template>
   <div class="page-shell career-page" :style="backgroundStyle" @click="closePopup">
     <div class="page-top"></div>
-    <HeaderBack title="生涯" extra-padding>
+    <HeaderBack :title="t('UIMine_VIP_dataAll')" extra-padding>
       <template #right>
         <div class="action-wrap">
           <TopActionButton
-            name="全部"
+            :name="t('UIMatch_GtO8YEdb')"
             :icon="iconFilter"
             icon-alt="wallet"
             @click.stop="toggleClubDropdown"

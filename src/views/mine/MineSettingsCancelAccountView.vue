@@ -7,6 +7,7 @@ import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { t } from '@/i18n'
 
 const router = useRouter()
 
@@ -77,9 +78,9 @@ const firstContactPlaceholder = computed(() =>
   isPhone.value ? '0000000000' : 'Enter your Mail Id',
 )
 const firstContactValue = computed(() => phone.value)
-const pageTitle = computed(() => (isPhone.value ? '6位数密码' : '注销账户'))
+const pageTitle = computed(() => (isPhone.value ? "6" + t('UIClub_Code8') : t('UIMine_DeleteAccount')))
 const otpButtonText = computed(() =>
-  otpCountdown.value > 0 ? `${otpCountdown.value}s` : '获取验证码',
+  otpCountdown.value > 0 ? `${otpCountdown.value}s` : t('UILogin_GetCode'),
 )
 const zoneCode = computed(() => {
   const fromUser = readFirstString(userRecord.value, ['area'])
@@ -115,7 +116,7 @@ async function requestOtp(): Promise<void> {
 
   const account = isPhone.value ? firstContactValue.value : emailFieldValue.value.trim()
   if (!account) {
-    showFailToast('账号信息缺失，请重新登录后重试')
+    showFailToast(t('UIClub_No9') + "，" + t('UIClub_Text71'))
     return
   }
 
@@ -128,11 +129,11 @@ async function requestOtp(): Promise<void> {
       lang: 0,
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '验证码发送失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_CodeFail3'))
     }
-    showSuccessToast('验证码已发送')
+    showSuccessToast(t('adaptation10133'))
   } catch (error) {
-    const message = error instanceof Error ? error.message : '验证码发送失败'
+    const message = error instanceof Error ? error.message : t('UIClub_CodeFail3')
     showFailToast(message)
     requestingOtp.value = false
     return
@@ -170,11 +171,11 @@ async function confirmDialog(): Promise<void> {
   const code = otp.value.trim()
   const account = isPhone.value ? firstContactValue.value : emailFieldValue.value.trim()
   if (!account) {
-    showFailToast('账号信息缺失，请重新登录后重试')
+    showFailToast(t('UIClub_No9') + "，" + t('UIClub_Text71'))
     return
   }
   if (!code) {
-    showFailToast('请输入验证码')
+    showFailToast(t('UILogin_Code'))
     return
   }
 
@@ -187,12 +188,12 @@ async function confirmDialog(): Promise<void> {
       code,
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '注销申请提交失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_ApplySubmitFail'))
     }
-    showSuccessToast('已提交注销申请')
+    showSuccessToast(t('UIClub_DoneSubmitApply2'))
     void router.replace('/mine/settings')
   } catch (error) {
-    const message = error instanceof Error ? error.message : '注销申请提交失败'
+    const message = error instanceof Error ? error.message : t('UIClub_ApplySubmitFail')
     showFailToast(message)
   } finally {
     deleting.value = false

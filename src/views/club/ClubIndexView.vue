@@ -202,7 +202,7 @@ const filteredRecords = computed(() => {
 const clubDisplayName = computed(() => {
   const name = String(currentClub.value?.club_name || '').trim()
   if (name) return name
-  return 'xx俱乐部'
+  return "xx" + t('UILobby_Menu_menu_btn_club')
 })
 
 const clubDisplayId = computed(() => {
@@ -223,7 +223,7 @@ const clubNoticeIntro = computed(() => {
   if (text) {
     return text
   }
-  return '暂未设置俱乐部简介'
+  return t('UIClub_NotClubDescri')
 })
 
 const clubNoticeText = computed(() => {
@@ -300,9 +300,9 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
 })
 
 const mttTabs = computed<TabOption[]>(() => [
-  { name: 'all', title: '全部' },
-  { name: 'poker', title: '扑克' },
-  { name: 'mahjong', title: '麻将', disabled: true, disabledToast: '功能开发中' },
+  { name: 'all', title: t('UIMatch_GtO8YEdb') },
+  { name: 'poker', title: t('UIClub_Text15') },
+  { name: 'mahjong', title: t('Mahjong_Name'), disabled: true, disabledToast: t('UIClub_InDeve') },
 ])
 
 const mttSourceRecords = computed<RawMttRecord[]>(() => mttListStore.records as RawMttRecord[])
@@ -523,7 +523,7 @@ async function handleTableClick(room: RoomRecord): Promise<void> {
     return
   }
   if (!gameStore.sessionToken) {
-    showFailToast('登录状态已失效，请重新登录')
+    showFailToast(t('UIClub_Done') + "，" + t('UIClub_Text16'))
     return
   }
 
@@ -533,7 +533,7 @@ async function handleTableClick(room: RoomRecord): Promise<void> {
       // 对齐 Cocos ProcedureEnterLobby：进入大厅阶段同步 websocket 端口。
       wsPort = await LoginSession.EnsureWS()
     } catch (error) {
-      const message = error instanceof Error ? error.message : '获取 websocket 端口失败'
+      const message = error instanceof Error ? error.message : t('UIClub_Fetch') + " websocket " + t('UIClub_Fail3')
       showFailToast(message)
       return
     }
@@ -564,7 +564,7 @@ function handleToggleGroup(groupKey: string): void {
 
 function handleClubHeaderTabClick(tab: ClubHeaderTabName): void {
   if (tab === 'mahjong') {
-    showFailToast('麻将专区开发中')
+    showFailToast(t('UIClub_Text17'))
     return
   }
   if (
@@ -579,20 +579,20 @@ function handleClubHeaderTabClick(tab: ClubHeaderTabName): void {
 function handleQuickActionClick(action: 'safety' | 'ranking'): void {
   if (action === 'safety') {
     if (selectedTribeId.value <= 0) {
-      showFailToast('当前俱乐部的此功能暂未开放')
+      showFailToast(t('UIClub_CurrentClubOfNot'))
       return
     }
 
     showSafetyGuardPopup.value = true
     return
   }
-  showFailToast('排行榜功能开发中')
+  showFailToast(t('UIClub_InDeve2'))
 }
 
 function handleOpenCustomerService(): void {
   const clubId = selectedClubId.value
   if (clubId <= 0) {
-    showFailToast('当前俱乐部信息无效')
+    showFailToast(t('UIClub_CurrentClubNo'))
     return
   }
 
@@ -605,7 +605,7 @@ function handleOpenCustomerService(): void {
 
 function handleCreateTableClick(): void {
   if (!canCreateTable.value) {
-    showFailToast('仅管理员或创始人可创建牌桌')
+    showFailToast(t('UIClub_AdminOrFounderCanTable'))
     return
   }
 
@@ -640,7 +640,7 @@ async function fetchClubNotice(options: { showPopup?: boolean } = {}): Promise<v
   try {
     const response = await postOrgClubNoticeApi({ club_id: clubId })
     if (Number(response.code) !== 0) {
-      throw new Error(String(response.msg || '俱乐部公告加载失败'))
+      throw new Error(String(response.msg || t('UIClub_ClubLoadFail')))
     }
 
     const info = response.data?.info
@@ -656,7 +656,7 @@ async function fetchClubNotice(options: { showPopup?: boolean } = {}): Promise<v
     if (tribeTitle || tribeContent) {
       queue.push({
         source: 'tribe',
-        title: tribeTitle || '联盟通知',
+        title: tribeTitle || t('UIClub_Union'),
         content: (tribeContent || tribeTitle).replace(/\[link\]|\[\/link\]/g, ''),
         dateText,
       })
@@ -665,7 +665,7 @@ async function fetchClubNotice(options: { showPopup?: boolean } = {}): Promise<v
     if (clubTitle || clubContent) {
       queue.push({
         source: 'club',
-        title: clubTitle || '俱乐部通知',
+        title: clubTitle || t('UIClub_Club2'),
         content: (clubContent || clubTitle).replace(/\[link\]|\[\/link\]/g, ''),
         dateText,
       })
@@ -685,7 +685,7 @@ async function fetchClubNotice(options: { showPopup?: boolean } = {}): Promise<v
   } catch (error) {
     clubNoticeQueue.value = []
     clubNoticeQueueIndex.value = 0
-    const message = error instanceof Error ? error.message : '俱乐部公告加载失败'
+    const message = error instanceof Error ? error.message : t('UIClub_ClubLoadFail')
     showFailToast(message)
   }
 }
@@ -705,11 +705,11 @@ async function handleIgnoreNoticeToday(): Promise<void> {
   try {
     const response = await postOrgClubNoticeIgnoreApi({ club_id: clubId })
     if (Number(response.code) !== 0) {
-      throw new Error(String(response.msg || '设置失败'))
+      throw new Error(String(response.msg || t('UIClub_Fail4')))
     }
     showClubNoticePopup.value = false
   } catch (error) {
-    const message = error instanceof Error ? error.message : '设置失败'
+    const message = error instanceof Error ? error.message : t('UIClub_Fail4')
     showFailToast(message)
   } finally {
     ignoringClubNotice.value = false
@@ -800,7 +800,7 @@ function buildGroupsBySeries(
 
   const clubItems = sortedItems.filter((item) => item.originType === ROOM_ORIGIN_TYPE.CLUB)
   if (clubItems.length) {
-    groups.push(buildGroup('club', resolveLabel('UIGuildMain_ClubGame', '俱乐部赛事'), clubItems))
+    groups.push(buildGroup('club', resolveLabel('UIGuildMain_ClubGame', t('UIClub_Club3')), clubItems))
   }
 
   const noSeriesItems: MttViewItem[] = []
@@ -829,7 +829,7 @@ function buildGroupsBySeries(
 
   seriesIds.forEach((seriesId) => {
     const seriesInfo = seriesMap[seriesId]
-    const seriesName = resolveNameByUnityRule(toSafeString(seriesInfo?.name)) || `系列 #${seriesId}`
+    const seriesName = resolveNameByUnityRule(toSafeString(seriesInfo?.name)) || t('UIClub_Text18') + " #" + (seriesId)
     const seriesItems = [...seriesBucketMap[seriesId]].sort(compareSeriesRoom)
     const seriesLayout = resolveSeriesLayoutByType(toSafeInt(seriesInfo?.type), seriesItems.length)
     groups.push(buildGroup(`series-${seriesId}`, seriesName, seriesItems, seriesLayout))
@@ -1073,9 +1073,9 @@ function matchTabRoom(room: RoomRecord, tabName: GameTypeTabName): boolean {
 
 function getGameName(gameType: number, pokerType: number): string {
   if (gameType === 0 && pokerType === POKER_TYPE_SHORT) return '6+'
-  if ([1, 2, 3].includes(gameType)) return '奥马哈'
-  if (gameType === 0) return '德州扑克'
-  return '扑克'
+  if ([1, 2, 3].includes(gameType)) return t('adaptation10009')
+  if (gameType === 0) return t('UIClub_Text19')
+  return t('UIClub_Text15')
 }
 
 function getGameIconImage(gameType: number, pokerType: number): string {
@@ -1178,7 +1178,7 @@ const handleBack = () => {
             type="button"
             @click="handleClubHeaderTabClick('poker')"
           >
-            扑克专区
+            {{ t('UIHomePokerArea') }}
           </button>
           <button
             class="club-header-tab"
@@ -1186,7 +1186,7 @@ const handleBack = () => {
             type="button"
             @click="handleClubHeaderTabClick('mahjong')"
           >
-            麻将专区
+            {{ t('UIHomeMahjongArea') }}
           </button>
           <button
             class="club-header-tab"
@@ -1194,7 +1194,7 @@ const handleBack = () => {
             type="button"
             @click="handleClubHeaderTabClick('event')"
           >
-            赛事
+            {{ t('UIClub_Text14') }}
           </button>
         </div>
 
@@ -1210,7 +1210,7 @@ const handleBack = () => {
               alt=""
               aria-hidden="true"
             />
-            <span class="quick-card-title">安全卫士</span>
+            <span class="quick-card-title">{{ t('UISafety') }}</span>
           </button>
 
           <button
@@ -1224,7 +1224,7 @@ const handleBack = () => {
               alt=""
               aria-hidden="true"
             />
-            <span class="quick-card-title">排行榜</span>
+            <span class="quick-card-title">{{ t('UINiuZai_RankListTitle') }}</span>
           </button>
         </div>
       </header>

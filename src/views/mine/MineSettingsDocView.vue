@@ -5,6 +5,7 @@ import { showFailToast } from 'vant'
 import { postMiscArtiCleInfoApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { t } from '@/i18n'
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -21,9 +22,9 @@ const docType = computed<'about' | 'agreement' | 'privacy'>(() => {
 })
 
 const title = computed(() => {
-  if (docType.value === 'agreement') return '用户协议'
-  if (docType.value === 'privacy') return '用户隐私协议'
-  return '关于我们'
+  if (docType.value === 'agreement') return t('tc_5E0V3qlb')
+  if (docType.value === 'privacy') return t('UIMine_Setting_UserSecret')
+  return t('tc_YQAGnw3p')
 })
 
 const loading = ref(false)
@@ -60,16 +61,16 @@ async function fetchDocContent(): Promise<void> {
       lang: 'zh_TW',
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载文档失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail12'))
     }
 
     const article = response.data?.article
     const raw = article?.content_ex?.[0]?.value ?? article?.content ?? ''
     const lines = extractContentLines(raw)
-    content.value = lines.length ? lines : ['暂无内容']
+    content.value = lines.length ? lines : [t('UIClub_No10')]
   } catch (error) {
-    content.value = ['暂无内容']
-    const message = error instanceof Error ? error.message : '加载文档失败'
+    content.value = [t('UIClub_No10')]
+    const message = error instanceof Error ? error.message : t('UIClub_LoadFail12')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -92,7 +93,7 @@ onMounted(() => {
     <div class="content-wrap">
       <section class="doc-card">
         <h2>{{ title }}</h2>
-        <p v-if="loading">加载中...</p>
+        <p v-if="loading">{{ t('SuperView2') }}...</p>
         <p v-for="(item, index) in content" :key="index">{{ item }}</p>
       </section>
     </div>

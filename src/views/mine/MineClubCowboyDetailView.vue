@@ -6,8 +6,9 @@ import { postStatsCowboyHistoryRoomDetailApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import iconTime from '@/assets/icons/icon_time.png'
+import { t } from '@/i18n'
 
-const title = computed(() => '牛仔战绩')
+const title = computed(() => t('Cowboy_Record'))
 
 interface CowboyRecordItem {
   id: string
@@ -71,14 +72,14 @@ async function fetchDetail(): Promise<void> {
       offset: 0,
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载详情失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadDetailFail3'))
     }
 
     const rows = response.data?.records ?? []
     records.value = rows.map((row, index) => mapRecord(row as Record<string, unknown>, index))
   } catch (error) {
     records.value = []
-    const message = error instanceof Error ? error.message : '加载详情失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadDetailFail3')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -96,8 +97,8 @@ onMounted(() => {
 
     <div class="content-wrap">
       <section class="list-wrap">
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!records.length" class="list-status">暂无战绩明细</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!records.length" class="list-status">{{ t('UIClub_No3') }}</p>
         <button v-for="item in records" :key="item.id" type="button" class="record-card">
           <div class="left">
             <div class="avatar-wrap">

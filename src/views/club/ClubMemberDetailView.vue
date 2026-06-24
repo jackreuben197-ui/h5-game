@@ -24,6 +24,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { getMemberRouteContext, type MemberIdentity } from './clubMemberRoute'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { t } from '@/i18n'
 
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -52,10 +53,10 @@ interface AdminPermissionItem {
 }
 
 const ROLE_LABEL_MAP: Record<MemberIdentity, string> = {
-  founder: '创始人',
-  admin: '管理员',
-  agent: '代理',
-  player: '成员',
+  founder: t('UIGuid_Founder'),
+  admin: t('UIGuild_FilterButtonManager'),
+  agent: t('UIClub_AgentItem'),
+  player: t('UIClub_Info_Members'),
 }
 
 const ROLE_LEVEL_MAP: Record<RoleOption, number> = {
@@ -124,7 +125,9 @@ const currentAgentDisplayName = computed(() => {
   if (!currentAgent.value) {
     return ''
   }
-  return String(currentAgent.value.remark_name || currentAgent.value.nick_name || '已绑定代理')
+  return String(
+    currentAgent.value.remark_name || currentAgent.value.nick_name || t('UIClub_DoneAgent'),
+  )
 })
 
 const currentAgentDisplayUid = computed(() => {
@@ -147,21 +150,27 @@ const currentAgentAvatar = computed(() => {
 const isMemberFrozen = computed(() => toSafeNumber(memberProfile.value?.freeze_status) > 0)
 
 const statRows = computed(() => [
-  { label: '总局数', value: formatCount(statsData.value.game_num) },
-  { label: '总手数', value: formatCount(statsData.value.hand_num) },
-  { label: '发放UC', value: formatAmount(statsData.value.grant_gold_amount) },
-  { label: '回收UC', value: formatAmount(statsData.value.recover_gold_amount) },
-  { label: '赢', value: formatAmount(statsData.value.profit) },
-  { label: '保险', value: formatAmount(statsData.value.insurance) },
-  { label: '服务费', value: formatAmount(statsData.value.fee) },
+  { label: t('UITexasInfo_games'), value: formatCount(statsData.value.game_num) },
+  { label: t('UITexasGameEnding_allhand'), value: formatCount(statsData.value.hand_num) },
+  {
+    label: t('UIClub_FundDetail_5iSXE2Uj') + 'UC',
+    value: formatAmount(statsData.value.grant_gold_amount),
+  },
+  {
+    label: t('UIClub_FundDetail_recycle') + 'UC',
+    value: formatAmount(statsData.value.recover_gold_amount),
+  },
+  { label: t('UIMine_Paipu_win'), value: formatAmount(statsData.value.profit) },
+  { label: t('adaptation10179'), value: formatAmount(statsData.value.insurance) },
+  { label: t('UIMine_WalletPlatform_fee_f'), value: formatAmount(statsData.value.fee) },
 ])
 
 const adminPermissions = ref<AdminPermissionItem[]>([
-  { key: 'create_room', label: '创建牌桌', enabled: false },
-  { key: 'club_manage', label: '俱乐部管理', enabled: false },
-  { key: 'member_manage', label: '会员管理', enabled: false },
-  { key: 'fund_manage', label: '基金管理', enabled: false },
-  { key: 'get_data', label: '查看数据', enabled: false },
+  { key: 'create_room', label: t('UIGuild_CreateTable'), enabled: false },
+  { key: 'club_manage', label: t('UIClub_ClubManager'), enabled: false },
+  { key: 'member_manage', label: t('UIClub_Text25'), enabled: false },
+  { key: 'fund_manage', label: t('UIGuildMemberDetailspermissions005'), enabled: false },
+  { key: 'get_data', label: t('UIGuildMemberDetailspermissions006'), enabled: false },
 ])
 
 const showAgentActions = computed(() => selectedIdentity.value === 'agent')
@@ -182,7 +191,7 @@ const displayName = computed(() => {
     context.value.name ||
     memberProfile.value?.remark_name ||
     ''
-  return String(source || '成员')
+  return String(source || t('UIClub_Info_Members'))
 })
 
 const displayUid = computed(() => {
@@ -324,14 +333,14 @@ async function fetchAdminPermissions(): Promise<void> {
     })
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '获取管理员权限失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_FetchAdminFail'))
     }
 
     const info = response.data?.info as Record<string, unknown> | undefined
     applyAdminPermissionsInfo(info)
   } catch (error) {
     resetAdminPermissions()
-    const message = error instanceof Error ? error.message : '获取管理员权限失败'
+    const message = error instanceof Error ? error.message : t('UIClub_FetchAdminFail')
     showFailToast(message)
   }
 }
@@ -359,7 +368,7 @@ async function fetchStats(): Promise<void> {
     })
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '获取统计数据失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_FetchDataFail'))
     }
 
     const data = response.data || {}
@@ -373,7 +382,7 @@ async function fetchStats(): Promise<void> {
   } catch (error) {
     statsByGameType.value = { all: {} }
     syncStatsByGameType()
-    const message = error instanceof Error ? error.message : '获取统计数据失败'
+    const message = error instanceof Error ? error.message : t('UIClub_FetchDataFail')
     showFailToast(message)
   } finally {
     loadingStats.value = false
@@ -396,7 +405,9 @@ async function fetchMemberProfile(): Promise<void> {
     })
 
     if (response.code !== 0 || !response.data) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '获取成员详情失败')
+      throw new Error(
+        typeof response.msg === 'string' ? response.msg : t('UIClub_FetchMemberDetailFail'),
+      )
     }
 
     memberProfile.value = response.data
@@ -413,7 +424,7 @@ async function fetchMemberProfile(): Promise<void> {
       resetAdminPermissions()
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : '获取成员详情失败'
+    const message = error instanceof Error ? error.message : t('UIClub_FetchMemberDetailFail')
     showFailToast(message)
   } finally {
     loadingMemberProfile.value = false
@@ -441,13 +452,13 @@ async function fetchAgentList(): Promise<void> {
     })
 
     if (response.code !== 0 || !response.data) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '获取代理列表失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_FetchAgentFail'))
     }
 
     agentList.value = Array.isArray(response.data.data) ? response.data.data : []
   } catch (error) {
     agentList.value = []
-    const message = error instanceof Error ? error.message : '获取代理列表失败'
+    const message = error instanceof Error ? error.message : t('UIClub_FetchAgentFail')
     showFailToast(message)
   }
 }
@@ -487,7 +498,7 @@ async function onConfirmRole(): Promise<void> {
 
   const memberId = getMemberId()
   if (!currentClubId.value || !memberId) {
-    showFailToast('缺少俱乐部或成员信息')
+    showFailToast(t('UIClub_ClubOrMember'))
     return
   }
 
@@ -500,11 +511,11 @@ async function onConfirmRole(): Promise<void> {
     })
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '修改成员角色失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_MemberFail'))
     }
 
     selectedIdentity.value = nextRole
-    showSuccessToast('成员角色修改成功')
+    showSuccessToast(t('UIClub_MemberSuccess'))
 
     if (nextRole === 'admin') {
       await fetchAdminPermissions()
@@ -512,7 +523,7 @@ async function onConfirmRole(): Promise<void> {
       resetAdminPermissions()
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : '修改成员角色失败'
+    const message = error instanceof Error ? error.message : t('UIClub_MemberFail')
     showFailToast(message)
   } finally {
     updatingRole.value = false
@@ -522,7 +533,7 @@ async function onConfirmRole(): Promise<void> {
 async function onSaveRemark(): Promise<void> {
   const memberId = getMemberId()
   if (!currentClubId.value || !memberId) {
-    showFailToast('缺少俱乐部或成员信息')
+    showFailToast(t('UIClub_ClubOrMember'))
     return
   }
 
@@ -536,7 +547,7 @@ async function onSaveRemark(): Promise<void> {
     })
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '保存备注失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_SaveFail3'))
     }
 
     if (memberProfile.value) {
@@ -546,9 +557,9 @@ async function onSaveRemark(): Promise<void> {
         remark_desc: descInput.value.trim(),
       }
     }
-    showSuccessToast('备注已保存')
+    showSuccessToast(t('UIClub_DoneSave2'))
   } catch (error) {
-    const message = error instanceof Error ? error.message : '保存备注失败'
+    const message = error instanceof Error ? error.message : t('UIClub_SaveFail3')
     showFailToast(message)
   } finally {
     savingRemark.value = false
@@ -623,13 +634,13 @@ async function togglePermission(index: number): Promise<void> {
     const response = await postOrgClubAdminPermissionSwitchApi(payload)
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '保存管理员权限失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_SaveAdminFail'))
     }
 
     adminPermissions.value[index].enabled = nextEnabled
-    showSuccessToast('权限已更新')
+    showSuccessToast(t('UIClub_DoneUpdate'))
   } catch (error) {
-    const message = error instanceof Error ? error.message : '保存管理员权限失败'
+    const message = error instanceof Error ? error.message : t('UIClub_SaveAdminFail')
     showFailToast(message)
   } finally {
     savingAdminPermission.value = false
@@ -650,13 +661,13 @@ async function onKickMember(): Promise<void> {
     })
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '踢出失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_Fail8'))
     }
 
-    showSuccessToast('已踢出成员')
+    showSuccessToast(t('UIClub_DoneMember'))
     void router.back()
   } catch (error) {
-    const message = error instanceof Error ? error.message : '踢出失败'
+    const message = error instanceof Error ? error.message : t('UIClub_Fail8')
     showFailToast(message)
   } finally {
     processingMemberAction.value = false
@@ -685,13 +696,15 @@ async function onToggleFreeze(): Promise<void> {
     }
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '操作失败')
+      throw new Error(
+        typeof response.msg === 'string' ? response.msg : t('Uiclubrechargeconfirmorderfailed'),
+      )
     }
 
-    showSuccessToast(isMemberFrozen.value ? '已解冻成员' : '已冻结成员')
+    showSuccessToast(isMemberFrozen.value ? t('UIClub_DoneMember2') : t('UIClub_DoneMember3'))
     await fetchMemberProfile()
   } catch (error) {
-    const message = error instanceof Error ? error.message : '操作失败'
+    const message = error instanceof Error ? error.message : t('Uiclubrechargeconfirmorderfailed')
     showFailToast(message)
   } finally {
     processingMemberAction.value = false
@@ -734,7 +747,7 @@ onMounted(async () => {
       </section>
 
       <section class="glass-card role-card">
-        <span>成员角色</span>
+        <span>{{ t('UIGuild_MemberDetailsRole') }}</span>
         <button
           type="button"
           class="role-trigger"
@@ -752,12 +765,12 @@ onMounted(async () => {
 
       <section class="glass-card form-card">
         <label>
-          <span>备注</span>
-          <input v-model="aliasInput" type="text" placeholder="此处输入" />
+          <span>{{ t('UINotesName') }}</span>
+          <input v-model="aliasInput" type="text" :placeholder="t('UIClub_Text23')" />
         </label>
         <label>
-          <span>注释</span>
-          <input v-model="descInput" type="text" placeholder="此处输入" />
+          <span>{{ t('UINotesComments') }}</span>
+          <input v-model="descInput" type="text" :placeholder="t('UIClub_Text23')" />
         </label>
         <button
           type="button"
@@ -765,44 +778,44 @@ onMounted(async () => {
           :disabled="savingRemark"
           @click="onSaveRemark"
         >
-          保存备注
+          {{ t('UIClub_Save2') }}
         </button>
       </section>
 
       <section class="glass-card stat-head-card">
         <div class="stat-head-top">
-          <strong>数据统计</strong>
+          <strong>{{ t('UIClub_Mlistinfo_GiVUYG7E') }}</strong>
         </div>
         <div class="pill-tabs">
           <button :class="{ active: gameType === 'all' }" @click="switchGameType('all')">
-            全部
+            {{ t('UIMatch_GtO8YEdb') }}
           </button>
           <button :class="{ active: gameType === 'texas' }" @click="switchGameType('texas')">
-            德州
+            {{ t('adaptation10022') }}
           </button>
           <button :class="{ active: gameType === 'mahjong' }" @click="switchGameType('mahjong')">
-            麻将
+            {{ t('Mahjong_Name') }}
           </button>
           <button :class="{ active: gameType === 'mini' }" @click="switchGameType('mini')">
-            小游戏
+            {{ t('UIClub_Text24') }}
           </button>
         </div>
       </section>
 
       <section class="pill-tabs range-tabs">
         <button :class="{ active: rangeType === 'today' }" @click="switchRangeType('today')">
-          今天
+          {{ t('UIData_Today') }}
         </button>
         <button :class="{ active: rangeType === 'week' }" @click="switchRangeType('week')">
-          7天
+          7{{ t('UIHappyShop_ActivityShopDay') }}
         </button>
         <button :class="{ active: rangeType === 'month' }" @click="switchRangeType('month')">
-          30天
+          30{{ t('UIHappyShop_ActivityShopDay') }}
         </button>
       </section>
 
       <section class="stat-list">
-        <p v-if="loadingStats" class="stats-loading">加载中...</p>
+        <p v-if="loadingStats" class="stats-loading">{{ t('SuperView2') }}...</p>
         <article v-for="row in statRows" :key="row.label" class="stat-row glass-card">
           <span>{{ row.label }}</span>
           <span>{{ row.value }}</span>
@@ -811,20 +824,21 @@ onMounted(async () => {
 
       <section v-if="showAgentActions" class="glass-card link-list">
         <button class="link-item" @click="onActionClick('offline')">
-          下线成员总数 <span class="friend-total">{{ memberProfile?.friend_total }}</span>
+          {{ t('UIGuild_VipCountOffLineMemberNumber') }}
+          <span class="friend-total">{{ memberProfile?.friend_total }}</span>
           <span class="arrow"></span>
         </button>
         <button class="link-item" @click="onActionClick('vip')">
-          代理统计 <span class="arrow"></span>
+          {{ t('UIClub_Agent') }} <span class="arrow"></span>
         </button>
         <button class="link-item" @click="onActionClick('profit')">
-          代理收益设置 <span class="arrow"></span>
+          {{ t('UIGuild_MemberDetails_ProxySetting') }} <span class="arrow"></span>
         </button>
       </section>
 
       <section v-if="showBindRow" class="glass-card link-list">
         <button class="link-item" @click="onActionClick('bind')">
-          未绑定 <span>绑定代理</span>
+          {{ t('UISetting_SecurityBindNo') }} <span>{{ t('UIGuild_MemberDetails_BindVip') }}</span>
         </button>
       </section>
 
@@ -833,7 +847,7 @@ onMounted(async () => {
           <span class="bound-left">
             <img class="bound-agent-avatar" :src="currentAgentAvatar" alt="agent" />
             <span class="bound-agent-info">
-              <strong>{{ currentAgentDisplayName || '已绑定代理' }}</strong>
+              <strong>{{ currentAgentDisplayName || t('UIClub_DoneAgent') }}</strong>
               <span class="bound-agent-id-row">
                 <em class="bound-agent-id-tag">ID</em>
                 <small>{{ currentAgentDisplayUid || '--' }}</small>
@@ -841,7 +855,7 @@ onMounted(async () => {
             </span>
           </span>
           <span class="bound-right">
-            <span class="bound-agent-action">解绑代理</span>
+            <span class="bound-agent-action">{{ t('UIGuild_MemberDetails_UnBindVip') }}</span>
             <span class="bound-agent-arrow" aria-hidden="true"></span>
           </span>
         </button>
@@ -869,7 +883,7 @@ onMounted(async () => {
           :disabled="processingMemberAction"
           @click="onKickMember"
         >
-          踢出
+          {{ t('UIGuild_MembeKickOut') }}
         </button>
         <button
           type="button"
@@ -877,7 +891,7 @@ onMounted(async () => {
           :disabled="processingMemberAction"
           @click="onToggleFreeze"
         >
-          {{ isMemberFrozen ? '解冻' : '冻结' }}
+          {{ isMemberFrozen ? t('OpCodeString_UNLOCK') : t('OpCodeString_LOCK') }}
         </button>
       </footer>
     </div>
@@ -900,7 +914,9 @@ onMounted(async () => {
           <span class="radio" :class="{ active: popupRole === item }"></span>
           <span>{{ ROLE_LABEL_MAP[item] }}</span>
         </button>
-        <button class="sheet-confirm" type="button" @click="onConfirmRole">确认</button>
+        <button class="sheet-confirm" type="button" @click="onConfirmRole">
+          {{ t('UI_Recharge_confirm') }}
+        </button>
       </div>
     </VanPopup>
   </div>

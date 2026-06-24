@@ -27,6 +27,7 @@ import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import PokerCard from '@/components/GameCard/PokerCard.vue'
 import { setHandReplaySession } from '@/session/handReplaySession'
 import { formatUC } from '@/utils/roomVisibility'
+import { t } from '@/i18n'
 
 const title = computed(() => 'Result')
 const router = useRouter()
@@ -36,8 +37,8 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const gameTabs = ['德州', '短牌', '奥马哈']
-const modeTabs = ['近期', '收藏']
+const gameTabs = [t('adaptation10022'), t('PokerType_2'), t('adaptation10009')]
+const modeTabs = [t('UIPaipu_Jinqi'), t('adaptation10212')]
 const selectedGame = ref(gameTabs[0])
 const selectedMode = ref(modeTabs[0])
 
@@ -73,10 +74,10 @@ function formatSigned(value: unknown): string {
 }
 
 function resolveGameFilter(): { game_types: number[]; poker_types?: number[] } {
-  if (selectedGame.value === '奥马哈') {
+  if (selectedGame.value === t('adaptation10009')) {
     return { game_types: [1, 2, 3] }
   }
-  if (selectedGame.value === '短牌') {
+  if (selectedGame.value === t('PokerType_2')) {
     return { game_types: [0], poker_types: [2] }
   }
   return { game_types: [0] }
@@ -137,7 +138,7 @@ async function fetchHandCollection(): Promise<void> {
   loading.value = true
   try {
     const filter = resolveGameFilter()
-    if (selectedMode.value === '收藏') {
+    if (selectedMode.value === t('adaptation10212')) {
       const response = await postMiscGameRoundListDataByRoomApi({
         ...filter,
         limit: 20,
@@ -145,7 +146,7 @@ async function fetchHandCollection(): Promise<void> {
       })
 
       if (response.code !== 0) {
-        throw new Error(typeof response.msg === 'string' ? response.msg : '加载收藏手牌失败')
+        throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail11'))
       }
 
       const rows = Array.isArray(response.data?.list) ? response.data.list : []
@@ -160,7 +161,7 @@ async function fetchHandCollection(): Promise<void> {
         offset: 0,
       })
       if (response.code !== 0) {
-        throw new Error(typeof response.msg === 'string' ? response.msg : '加载手牌记录失败')
+        throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadRecordFail'))
       }
 
       const records = Array.isArray(response.data?.records) ? response.data.records : []
@@ -170,7 +171,7 @@ async function fetchHandCollection(): Promise<void> {
     }
   } catch (error) {
     handCards.value = []
-    const message = error instanceof Error ? error.message : '加载手牌记录失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadRecordFail')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -191,7 +192,7 @@ function selectMode(tab: string): void {
 
 function goHandDetail(card: HandCard): void {
   if (!card.handRecord) {
-    showFailToast('牌谱数据异常')
+    showFailToast(t('UIClub_DataError'))
     return
   }
 
@@ -244,8 +245,8 @@ onMounted(() => {
       </div>
 
       <section class="list-wrap">
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!handCards.length" class="list-status">暂无手牌记录</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!handCards.length" class="list-status">{{ t('UIClub_NoRecord2') }}</p>
         <article
           v-for="card in handCards"
           :key="card.id"
@@ -268,7 +269,7 @@ onMounted(() => {
           <div class="bottom-row">
             <div class="meta">
               <div>Hand ID: {{ card.handId }}</div>
-              <div>{{ card.table }}&nbsp;&nbsp;&nbsp;底池: {{ card.pot }}</div>
+              <div>{{ card.table }}&nbsp;&nbsp;&nbsp;{{ t('adaptation20005') }}: {{ card.pot }}</div>
             </div>
             <div class="profit">
               <div :class="['money', { negative: card.negative !== false }]">{{ card.profit }}</div>

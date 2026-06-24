@@ -80,7 +80,7 @@ const clubList = computed<ClubCardItem[]>(() => {
     return {
       key,
       source: club,
-      name: toSafeString(club.club_name) || '未命名俱乐部',
+      name: toSafeString(club.club_name) || t('UIClub_UnnamedClub'),
       clubIdText: displayId || '--',
       roleText: getMemberRoleText(club.user_level),
       activeCount: toSafeNumber(club.user_gold),
@@ -115,7 +115,9 @@ const searchedClubDisplayId = computed(
   () => normalizeClubId(searchedClub.value?.random_id ?? searchedClub.value?.club_id) || '--',
 )
 
-const searchedClubName = computed(() => toSafeString(searchedClub.value?.club_name) || '俱乐部名称')
+const searchedClubName = computed(
+  () => toSafeString(searchedClub.value?.club_name) || t('UIClub_Creat_2LvGNmS7'),
+)
 
 const searchedClubMembers = computed(() => toSafeNumber(searchedClub.value?.club_members))
 
@@ -139,11 +141,11 @@ function toSafeNumber(value: unknown): number {
 
 function getMemberRoleText(value: unknown): string {
   const role = Number(value)
-  if (role === 1) return '会长'
-  if (role === 2) return '副会长'
-  if (role === 3) return '管理员'
-  if (role === 4) return '代理'
-  return '成员'
+  if (role === 1) return t('UIClub_UserLevelOwner')
+  if (role === 2) return t('UIClub_VicePr')
+  if (role === 3) return t('UIGuild_FilterButtonManager')
+  if (role === 4) return t('UIClub_AgentItem')
+  return t('UIClub_Info_Members')
 }
 
 function goToClubDetail(club?: ClubInfo): void {
@@ -231,7 +233,7 @@ async function loadMyClubList(force = false): Promise<void> {
   try {
     const response = await postOrgClubGetApi()
     if (Number(response.code) !== 0) {
-      throw new Error(response.message || '获取俱乐部失败')
+      throw new Error(response.message || t('UIClub_FetchClubFail'))
     }
 
     const list = Array.isArray(response.data) ? response.data : []
@@ -242,10 +244,10 @@ async function loadMyClubList(force = false): Promise<void> {
   } catch (error) {
     // 有缓存兜底时静默失败，避免在已有展示之上弹错。
     if (!hasInitialData) {
-      const message = error instanceof Error ? error.message : '获取俱乐部失败'
+      const message = error instanceof Error ? error.message : t('UIClub_FetchClubFail')
       showFailToast(message)
     } else {
-      console.warn('[club-list] 静默刷新失败:', error)
+      console.warn('[club-list] ' + t('UIClub_Fail7') + ':', error)
     }
   } finally {
     loadingMyClubs.value = false
@@ -255,7 +257,7 @@ async function loadMyClubList(force = false): Promise<void> {
 async function onSearchClub(): Promise<void> {
   const keyword = searchKeyword.value.trim()
   if (!keyword) {
-    showFailToast('请输入俱乐部ID')
+    showFailToast(t('tc_xDSyCM') + 'ID')
     return
   }
 
@@ -267,13 +269,13 @@ async function onSearchClub(): Promise<void> {
   try {
     const response = await postOrgClubSearchByIdApi({ club_random_id: Number(keyword) })
     if (Number(response.code) !== 0) {
-      showFailToast('找不到俱乐部')
+      showFailToast(t('UIClub_NotFoundClub2'))
       return
     }
 
     const targetClub = response.data
     if (!targetClub) {
-      showFailToast('未找到俱乐部')
+      showFailToast(t('UIClub_NotFoundClub3'))
       return
     }
 
@@ -287,7 +289,7 @@ async function onSearchClub(): Promise<void> {
     showJoinModal.value = true
   } catch (error) {
     const message = error instanceof Error ? error.message : ''
-    showFailToast(message || '找不到俱乐部')
+    showFailToast(message || t('UIClub_NotFoundClub2'))
   } finally {
     searchLoading.value = false
   }
@@ -304,7 +306,7 @@ async function onJoinClub(): Promise<void> {
 
   const clubId = Number(searchedClub.value.club_id)
   if (!Number.isFinite(clubId) || clubId <= 0) {
-    showFailToast('俱乐部信息异常，无法加入')
+    showFailToast(t('UIClub_ClubInfoError') + '，' + t('UIClub_NoJoin'))
     return
   }
 
@@ -312,16 +314,16 @@ async function onJoinClub(): Promise<void> {
   try {
     const response = await postOrgClubJoinApi({ club_id: clubId })
     if (Number(response.code) !== 0) {
-      throw new Error(response.message || '加入俱乐部失败')
+      throw new Error(response.message || t('UIClub_JoinClubFail'))
     }
 
-    showSuccessToast(response.message || '加入申请已提交')
+    showSuccessToast(response.message || t('UIClub_JoinApplyDoneSubmit'))
     showJoinModal.value = false
     setTimeout(() => {
       void loadMyClubList(true)
     }, 3000)
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加入俱乐部失败'
+    const message = error instanceof Error ? error.message : t('UIClub_JoinClubFail')
     showFailToast(message)
   } finally {
     joinLoading.value = false
@@ -336,7 +338,7 @@ onMounted(() => {
 <template>
   <div class="page-shell club-index">
     <section v-if="!isChannelPackage" class="search-row">
-      <div class="search-shell" aria-label="俱乐部搜索">
+      <div class="search-shell" :aria-label="t('UIClub_ClubSearch')">
         <label class="search-trigger" for="club-search-input">
           <img class="search-icon" :src="imgSearch" alt="" />
           <input
@@ -348,13 +350,15 @@ onMounted(() => {
             autocomplete="off"
             maxlength="6"
             readonly
-            placeholder="搜索俱乐部ID"
+            :placeholder="t('UIGuild_SearchBtn') + 'ID'"
             @focus="openSearchKeypad"
             @click="openSearchKeypad"
           />
         </label>
         <button type="button" class="search-btn" :disabled="searchLoading" @click="onSearchClub">
-          <span class="search-btn-label">{{ searchLoading ? '搜索中' : '搜索' }}</span>
+          <span class="search-btn-label">
+            {{ searchLoading ? t('UIClub_Search') : t('search') }}
+          </span>
         </button>
       </div>
     </section>

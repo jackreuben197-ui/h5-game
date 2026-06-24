@@ -507,6 +507,7 @@ export interface RechargeGoldData {
   digital_wallet_trc?: string
   tribe_name?: string // 联盟名称
   order_no?: string // 订单编号
+  payment_url?: string // 第三方支付页面链接（在线支付渠道）
   usdt_address?: OrderUserUsdtRechargePayInfo
   order?: OrderUserUsdtRechargeOrderInfo
 

@@ -1054,7 +1054,7 @@ packages:
     resolution: {integrity: sha512-izyXV/v+cHiRfozX62W9htOAvwMo4/bXKDrQ+vom1L1qRuexPock/7VZDAhnpHCLNejd3NJ6hiab+tO0D44Rgw==}
 
   '@silenthill/agreement-web@https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/78d9db052cdc74a643298130847a86185b5718fd':
-    resolution: {gitHosted: true, integrity: sha512-3h3dMJ32NY4BI7QJ9NnU2jKo7u/T7O3EV8nM2SXlekFdkewHRZUVlltGB45wKo2/F7ZuWIrEQZXijZAWnDzt9A==, tarball: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/78d9db052cdc74a643298130847a86185b5718fd}
+    resolution: {gitHosted: true, tarball: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/78d9db052cdc74a643298130847a86185b5718fd}
     version: 1.0.0
 
   '@tybys/wasm-util@0.10.1':
@@ -1265,6 +1265,11 @@ packages:
 
   acorn@8.16.0:
     resolution: {integrity: sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw==}
+    engines: {node: '>=0.4.0'}
+    hasBin: true
+
+  acorn@8.17.0:
+    resolution: {integrity: sha512-xRQbDb9BnwDafYNn6Vwl839DYVjqXYb1XVGtWAZ1kcDc6iwAL4hg3B1dZlRiuENFeO2H53gFG3in621AdERVAg==}
     engines: {node: '>=0.4.0'}
     hasBin: true
 
@@ -3768,6 +3773,8 @@ snapshots:
 
   acorn@8.16.0: {}
 
+  acorn@8.17.0: {}
+
   ajv@6.14.0:
     dependencies:
       fast-deep-equal: 3.1.3
@@ -4697,7 +4704,7 @@ snapshots:
   terser@5.46.1:
     dependencies:
       '@jridgewell/source-map': 0.3.11
-      acorn: 8.16.0
+      acorn: 8.17.0
       commander: 2.20.3
       source-map-support: 0.5.21
 

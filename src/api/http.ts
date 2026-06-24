@@ -8,6 +8,8 @@ import router from '@/router'
 import { showGameToast } from '@/components/Toast'
 import { t } from '@/i18n'
 import LoginSession from '@/session/loginSession'
+import StorageKey from '@/constants/storageKey'
+import { localStore } from '@/utils/localStore'
 import { resolveInviteCode, resolveTraceHash, resolveAgentInviteCode } from '@/utils/channelPackage'
 
 const http = axios.create({
@@ -313,6 +315,11 @@ async function doTelegramAutoLogin(): Promise<boolean> {
       throw new Error('telegram auto login token missing')
     }
 
+    // 先写 TOKEN_EXPIREAT，setSessionToken 会顺带把 expireAt 同步给 Cocos。
+    const expireAt = Number((loginRes.data as Record<string, unknown> | undefined)?.expire_at || 0)
+    if (Number.isFinite(expireAt) && expireAt > 0) {
+      localStore.setItem(StorageKey.TOKEN_EXPIREAT, expireAt)
+    }
     const gameStore = useGameStore(pinia)
     gameStore.setSessionToken(token)
     gameStore.setLoginUser({

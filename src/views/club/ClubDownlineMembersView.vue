@@ -14,7 +14,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import imgAvatar from '@/assets/images/default_avatar_for_club.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
-import imgBalance from '@/assets/icons/icon_balance.png'
+import imgBalance from '@/assets/icons/icon_credit_chip.png'
 import imgSearch from '@/assets/icons/club_search.svg'
 import imgInfo from '@/assets/icons/tips.svg'
 import { extractInvitationLink } from '@/utils/clubInvitation'
@@ -925,8 +925,7 @@ onMounted(async () => {
 
 .member-assets {
   border-radius: 1.44rem;
-  background:
-    linear-gradient(
+  background: linear-gradient(
       112deg,
       rgba(160, 40, 76, 0.58) 1%,
       rgba(86, 87, 128, 0.28) 42%,

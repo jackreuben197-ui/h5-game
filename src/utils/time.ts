@@ -136,3 +136,31 @@ export function safeHm(timestampMs: number): string {
   const text = formatDateTime(timestampMs, 'HH:mm')
   return text === '--:--' ? '' : text
 }
+
+// 取某一天的 00:00:00.000。
+export function startOfDay(value: unknown): Date {
+  const timestampMs = toTimestampMs(value)
+  const base = timestampMs > 0 ? dayjs(timestampMs) : dayjs()
+  return base.startOf('day').toDate()
+}
+
+// 取某一天的 23:59:59.999。
+export function endOfDay(value: unknown): Date {
+  const timestampMs = toTimestampMs(value)
+  const base = timestampMs > 0 ? dayjs(timestampMs) : dayjs()
+  return base.endOf('day').toDate()
+}
+
+// 在给定时间上偏移 N 个月（可为负）。
+export function addMonths(value: unknown, months: number): Date {
+  const timestampMs = toTimestampMs(value)
+  const base = timestampMs > 0 ? dayjs(timestampMs) : dayjs()
+  return base.add(months, 'month').toDate()
+}
+
+// 在给定时间上偏移 N 天（可为负）。
+export function addDays(value: unknown, days: number): Date {
+  const timestampMs = toTimestampMs(value)
+  const base = timestampMs > 0 ? dayjs(timestampMs) : dayjs()
+  return base.add(days, 'day').toDate()
+}

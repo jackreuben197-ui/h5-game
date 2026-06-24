@@ -647,6 +647,35 @@ export interface UserBillMember {
   [key: string]: unknown
 }
 
+// /api/user/user_diamonds_wallet (UserDiamondsWallet)
+
+export interface UserDiamondsWalletRequest {
+  [key: string]: unknown
+}
+
+export interface UserDiamondsWalletRecord {
+  user_id?: number // 用户ID
+  diamonds?: number // 用户钻石余额
+  diamonds_lock?: number // 是否锁住
+  wallet_status?: number // 用户钱包状态 1:正常 2 冻结 3 锁定
+  at?: string // 联盟币
+
+  [key: string]: unknown
+}
+
+export interface UserDiamondsWalletData {
+  all_profit?: number // 累计看牌收益
+  today_profit?: number // 今日看牌收益
+  yestoday_profit?: number // 昨日看牌收益
+  diamonds_wallet?: UserDiamondsWalletRecord // 钻石钱包
+
+  [key: string]: unknown
+}
+
+export interface UserDiamondsWalletResponseData extends UserDiamondsWalletData {
+  [key: string]: unknown
+}
+
 // /api/user/my_wallets (UserWallet)
 
 export interface UserWalletWallet {

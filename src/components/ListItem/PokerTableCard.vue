@@ -3,6 +3,7 @@ import { computed, type CSSProperties } from 'vue'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconTime from '@/assets/icons/wallet/ic_time.svg'
 import iconChips from '@/assets/icons/icon_chips.png'
+import iconBalance from '@/assets/icons/icon_credit_chip.png'
 import iconAof from '@/assets/icons/table_icon_Aof.png'
 import iconCritical from '@/assets/icons/table_icon_critical.png'
 import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
@@ -62,13 +63,13 @@ const featureIcons = computed<FeatureIconItem[]>(() => {
       alt: 'critical',
     })
   }
-  return result
+  return result.length > 1 ? [result[0]] : result
 })
 
 // 当前牌桌人数。
 const roomers = computed(() => {
   const fromCount = Number(props.room.roomers)
-  const valid = (Number.isFinite(fromCount) && fromCount > 0)
+  const valid = Number.isFinite(fromCount) && fromCount > 0
   return Array.isArray(props.room.users) ? props.room.users.length : valid ? fromCount : 0
 })
 
@@ -99,6 +100,10 @@ const timeText = computed(() => {
   const totalSeconds = Number(props.room.play_duration) || 0
   return formatRoomLeftAndTotalByUnity(props.room.start_time, totalSeconds)
 })
+
+const chipsIcon = computed(() => (Number(props.room.gold_type) === 1 ? iconChips : iconBalance))
+
+const showParticipation = computed(() => Number(props.room.participation_status) === 1)
 
 // 买入文案：根据最小倍率和小盲计算。
 const bringInText = computed(() => {
@@ -212,7 +217,6 @@ function shortName(name?: string): string {
   }
   return `${name}`.slice(0, 1)
 }
-
 </script>
 
 <template>
@@ -222,15 +226,13 @@ function shortName(name?: string): string {
     </div>
 
     <div class="table-main">
-      <div
-        v-if="featureIcons.length"
-        class="feature-icons"
-      >
+      <span v-if="showParticipation" class="participation-status">参与过</span>
+      <div v-if="featureIcons.length" class="feature-icons">
         <img
           v-for="item in featureIcons"
           :key="item.key"
           class="feature-icon"
-          :class="'icon-'+item.alt"
+          :class="'icon-' + item.alt"
           :src="item.src"
           :alt="item.alt"
         />
@@ -266,17 +268,13 @@ function shortName(name?: string): string {
 
       <div class="table-footer">
         <p>
-          <img
-            class="meta-icon"
-            :src="iconTime"
-            alt="time"
-          />
+          <img class="meta-icon" :src="iconTime" alt="time" />
           <span>
             {{ timeText }}
           </span>
         </p>
         <p>
-          <img class="meta-icon" :src="iconChips" alt="chips" />
+          <img class="meta-icon" :src="chipsIcon" alt="chips" />
           <span>
             {{ bringInText }}
           </span>
@@ -300,6 +298,16 @@ function shortName(name?: string): string {
   background: rgba(0, 0, 0, 0.2);
   position: relative;
 }
+.participation-status {
+  position: absolute;
+  top: 0.25rem;
+  left: 0.25rem;
+  font-size: 0.23rem;
+  border-radius: 0.5rem;
+  padding: 0.053rem 0.16rem;
+  background-color: rgba($color: #000000, $alpha: 0.24);
+  color: #fff;
+}
 
 /* 右上角玩法标识：仅显示 AOF / Mushroom / Squid / Critical。 */
 .feature-icons {
@@ -311,7 +319,7 @@ function shortName(name?: string): string {
   align-items: center;
   gap: 0.08rem;
 }
-.icon-aof{
+.icon-aof {
   margin-right: 0.15rem;
 }
 

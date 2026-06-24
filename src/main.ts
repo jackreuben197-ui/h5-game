@@ -15,6 +15,11 @@ import {
 import { setupWsProxyBridgeChannel } from './bridge/ws'
 import { installCcStorageProxy } from './bridge/sync/ccStorageProxy'
 import { syncPostAuthData } from './session/postAuthSync'
+import {
+  checkLocalTokenAtBootstrap,
+  startTokenRefreshLoop,
+  stopTokenRefreshLoop,
+} from './session/tokenRefresh'
 import './styles/main.scss'
 import { setupRem } from './utils/rem'
 import { initDebugConsole, recordDebugEvent } from './utils/debugConsole'
@@ -119,11 +124,16 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
     const gameStore = useGameStore(pinia)
     // 启动时若已有 token，则同步用户资料/配置/WS；任意路由刷新都不依赖首页布局。
     if (gameStore.sessionToken.trim()) {
-      syncPostAuthData()
+      // 本地 token 已过期：先清登录并弹登录窗，避免 syncPostAuthData/wsConnect 用旧 token。
+      if (checkLocalTokenAtBootstrap()) {
+        syncPostAuthData()
+      }
     } else {
       // Telegram Mini App: trigger auto-login at startup before the user sees any guest page.
       void ensureTelegramAutoLogin()
     }
+    // 无条件启动 token 续期循环：内部按 sessionToken 是否存在自动跳过，登录后无需额外触发。
+    startTokenRefreshLoop()
     // 启动 WS 代理通道：Cocos 发指令给 H5，由 H5 执行 websocket 收发并回传结果。
     stopWsProxyBridgeChannel = setupWsProxyBridgeChannel()
     // 启动全局桥接 dialog：接收 Cocos 消息后统一弹窗并回传交互结果。
@@ -169,6 +179,7 @@ export function unmountH5App(): void {
   stopCcStorageProxy = null
   stopNativeMenuGuard?.()
   stopNativeMenuGuard = null
+  stopTokenRefreshLoop()
   app.unmount()
   app = null
   recordDebugEvent('[h5]', 'unmount success')

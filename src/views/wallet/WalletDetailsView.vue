@@ -2,19 +2,15 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
-import bannerBgUrl from '@/assets/images/card_bg3.png'
-import AppBar from '@/components/wallet/AppBar.vue'
+import bannerBgUrl from '@/assets/images/wallet/banner_bg.png'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import TagPill from '@/components/wallet/TagPill.vue'
-import iconChips from '@/assets/icons/icon_chip_red.png'
-import icIncome from '@/assets/icons/wallet/ic_income.svg'
-import icOutcome from '@/assets/icons/wallet/ic_outcome.svg'
-import icTime from '@/assets/icons/wallet/ic_time.svg'
+import iconChips from '@/assets/icons/wallet/ic_coins.png'
 import { postUserGoldChangeLogApi } from '@/api/user'
 
 import type { UserGoldChangeLogRecord } from '@/api/models/user'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
-import { resolveOpCodeText } from '@/utils/opCodeText'
 
 const userInfoStore = useUserInfoStore()
 const router = useRouter()
@@ -38,13 +34,6 @@ function formatTime(raw?: string): string {
   return raw.replace('T', ' ').slice(11, 16)
 }
 
-function getOpLabel(code?: string): string {
-  if (!code) return '-'
-  const text = resolveOpCodeText(code)
-  const label = text && text !== `OpCodeString_${code}` ? text : code
-  return label.replace(/\bUC\b/g, '联盟币')
-}
-
 function goGiftUc(): void {
   void router.push('/wallet/gift-uc')
 }
@@ -57,7 +46,7 @@ onMounted(async () => {
 
 <template>
   <div class="details-page" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
-    <AppBar title="明细" :show-actions="false" />
+    <HeaderBack title="明细" extra-padding />
 
     <div class="details-content">
       <div class="user-card-wrapper">
@@ -71,6 +60,10 @@ onMounted(async () => {
               <div class="avatar-box">
                 <img :src="(userInfo?.avatar as string) || ''" alt="avatar" />
               </div>
+              <button class="gift-entry" @click="goGiftUc">
+                <span class="gift-entry__label">赠送</span>
+                <img src="@/assets/icons/wallet/ic_gift.png" alt="gift" class="gift-entry__icon" />
+              </button>
               <div class="user-text">
                 <span class="user-name">{{ userInfo?.nickname ?? '-' }}</span>
                 <div class="user-id-badge">
@@ -78,13 +71,6 @@ onMounted(async () => {
                   <span class="id-value">{{ userInfo?.un_id ?? userInfo?.unid ?? '-' }}</span>
                 </div>
               </div>
-            </div>
-
-            <div class="gift-row">
-              <button class="gift-entry" @click="goGiftUc">
-                <span class="gift-entry__label">赠送</span>
-                <img src="@/assets/icons/img_gift_btn.svg" alt="gift" class="gift-entry__icon" />
-              </button>
             </div>
 
             <div class="balance-section">
@@ -102,21 +88,48 @@ onMounted(async () => {
           <div class="transaction-card__top">
             <div class="transaction-card__left">
               <div :class="['icon-circle', (item.gold_change ?? 0) >= 0 ? 'in' : 'out']">
-                <img
+                <svg
                   v-if="(item.gold_change ?? 0) >= 0"
-                  :src="icIncome"
-                  alt=""
-                  class="icon-circle__img"
-                />
-                <img
+                  width="26"
+                  height="26"
+                  viewBox="0 0 26 26"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M9.38467 12.699L7.75448 14.328L12.6427 19.2163L17.531 14.328L15.902 12.699L13.7948 14.805L13.7948 6.1218L11.4907 6.1218L11.4907 14.805L9.38467 12.699Z"
+                    fill="#05E7AE"
+                  />
+                  <path
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    d="M25.3457 4.60831C25.3457 3.38611 24.8602 2.21397 23.996 1.34974C23.1317 0.485518 21.9596 2.96023e-07 20.7374 4.02871e-07L4.60831 1.81292e-06C3.38611 1.91977e-06 2.21397 0.48552 1.34974 1.34974C0.485518 2.21397 2.96023e-07 3.38611 4.02871e-07 4.60831L1.81292e-06 20.7374C1.91977e-06 21.9596 0.48552 23.1317 1.34974 23.996C2.21397 24.8602 3.38611 25.3457 4.60831 25.3457L20.7374 25.3457C21.9596 25.3457 23.1317 24.8602 23.996 23.996C24.8602 23.1317 25.3457 21.9596 25.3457 20.7374L25.3457 4.60831ZM20.7374 2.30415L4.60831 2.30416C3.99721 2.30416 3.41114 2.54692 2.97903 2.97903C2.54691 3.41114 2.30415 3.99721 2.30415 4.60831L2.30416 20.7374C2.30416 21.3485 2.54692 21.9346 2.97903 22.3667C3.41114 22.7988 3.99721 23.0416 4.60831 23.0416L20.7374 23.0415C21.3485 23.0415 21.9346 22.7988 22.3667 22.3667C22.7988 21.9346 23.0416 21.3485 23.0416 20.7374L23.0415 4.60831C23.0415 3.99721 22.7988 3.41114 22.3667 2.97903C21.9346 2.54691 21.3485 2.30415 20.7374 2.30415Z"
+                    fill="#05E7AE"
+                  />
+                </svg>
+                <svg
                   v-else
-                  :src="icOutcome"
-                  alt=""
-                  class="icon-circle__img"
-                />
+                  width="26"
+                  height="26"
+                  viewBox="0 0 26 26"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  style="transform: rotate(180deg)"
+                >
+                  <path
+                    d="M9.38467 12.699L7.75448 14.328L12.6427 19.2163L17.531 14.328L15.902 12.699L13.7948 14.805L13.7948 6.1218L11.4907 6.1218L11.4907 14.805L9.38467 12.699Z"
+                    fill="#FF4B4B"
+                  />
+                  <path
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    d="M25.3457 4.60831C25.3457 3.38611 24.8602 2.21397 23.996 1.34974C23.1317 0.485518 21.9596 2.96023e-07 20.7374 4.02871e-07L4.60831 1.81292e-06C3.38611 1.91977e-06 2.21397 0.48552 1.34974 1.34974C0.485518 2.21397 2.96023e-07 3.38611 4.02871e-07 4.60831L1.81292e-06 20.7374C1.91977e-06 21.9596 0.48552 23.1317 1.34974 23.996C2.21397 24.8602 3.38611 25.3457 4.60831 25.3457L20.7374 25.3457C21.9596 25.3457 23.1317 24.8602 23.996 23.996C24.8602 23.1317 25.3457 21.9596 25.3457 20.7374L25.3457 4.60831ZM20.7374 2.30415L4.60831 2.30416C3.99721 2.30416 3.41114 2.54692 2.97903 2.97903C2.54691 3.41114 2.30415 3.99721 2.30415 4.60831L2.30416 20.7374C2.30416 21.3485 2.54692 21.9346 2.97903 22.3667C3.41114 22.7988 3.99721 23.0416 4.60831 23.0416L20.7374 23.0415C21.3485 23.0415 21.9346 22.7988 22.3667 22.3667C22.7988 21.9346 23.0416 21.3485 23.0416 20.7374L23.0415 4.60831C23.0415 3.99721 22.7988 3.41114 22.3667 2.97903C21.9346 2.54691 21.3485 2.30415 20.7374 2.30415Z"
+                    fill="#FF4B4B"
+                  />
+                </svg>
               </div>
               <div class="info">
-                <div :class="['category-badge', (item.gold_change ?? 0) >= 0 ? 'category-badge--in' : 'category-badge--out']">{{ getOpLabel(item.op_code) }}</div>
+                <div class="category-badge">{{ item.op_code ?? '-' }}</div>
                 <div class="title-row">
                   <span class="title">{{ item.name ?? '-' }}</span>
                   <div v-if="item.src_random_id" class="id-row">
@@ -135,7 +148,18 @@ onMounted(async () => {
 
           <div class="transaction-card__bottom">
             <div class="time">
-              <img :src="icTime" alt="" class="time-icon" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+              >
+                <path
+                  d="M10 0C15.523 0 20 4.477 20 10C20 15.523 15.523 20 10 20C4.477 20 0 15.523 0 10C0 4.477 4.477 0 10 0ZM10 2C7.87827 2 5.84344 2.84285 4.34315 4.34315C2.84285 5.84344 2 7.87827 2 10C2 12.1217 2.84285 14.1566 4.34315 15.6569C5.84344 17.1571 7.87827 18 10 18C12.1217 18 14.1566 17.1571 15.6569 15.6569C17.1571 14.1566 18 12.1217 18 10C18 7.87827 17.1571 5.84344 15.6569 4.34315C14.1566 2.84285 12.1217 2 10 2ZM10 4C10.2449 4.00003 10.4813 4.08996 10.6644 4.25272C10.8474 4.41547 10.9643 4.63975 10.993 4.883L11 5V9.586L13.707 12.293C13.8863 12.473 13.9905 12.7144 13.9982 12.9684C14.006 13.2223 13.9168 13.4697 13.7488 13.6603C13.5807 13.8508 13.3464 13.9703 13.0935 13.9944C12.8406 14.0185 12.588 13.9454 12.387 13.79L12.293 13.707L9.293 10.707C9.13758 10.5514 9.03776 10.349 9.009 10.131L9 10V5C9 4.73478 9.10536 4.48043 9.29289 4.29289C9.48043 4.10536 9.73478 4 10 4Z"
+                  fill="white"
+                />
+              </svg>
               <span class="time-text">{{ formatTime(item.create_time) }}</span>
             </div>
             <div class="balance">
@@ -214,38 +238,35 @@ onMounted(async () => {
   backdrop-filter: blur(16.5px);
   -webkit-backdrop-filter: blur(16.5px);
   box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1.252px;
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.25) 0%,
-      rgba(255, 255, 255, 0.8) 50%,
-      rgba(255, 255, 255, 0.25) 100%
-    );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-    z-index: 3;
-  }
 
   &::after {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: rgba(0, 0, 0, 0.13);
+    background: rgba(0, 0, 0, 0.28);
     pointer-events: none;
     z-index: 1;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 0.055rem;
+    background: linear-gradient(
+      180deg,
+      rgba(240, 205, 225, 0.95) 0%,
+      rgba(220, 175, 205, 0.4) 50%,
+      rgba(240, 205, 225, 0.95) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 3;
   }
 }
 
@@ -274,25 +295,42 @@ onMounted(async () => {
 }
 
 .gift-entry {
-  width: 3rem;
+  position: fixed;
+  right: 0.7024rem;
+  top: 2.0594rem;
+  width: 4.0976rem;
   height: 0.8273rem;
+  z-index: 4;
   border: none;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.5);
   border-radius: 0.7229rem;
-  padding: 0 0.05rem 0 0.6rem;
+  padding: 0;
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  color: #ffffffc6;
-  cursor: pointer;
-  flex-shrink: 0;
+  justify-content: center;
+  color: #fff;
+}
+
+.gift-entry__icon-wrap {
+  position: absolute;
+  right: -0.009rem;
+  top: -0.012rem;
+  width: 0.987rem;
+  height: 0.851rem;
+  border-radius: 50%;
+  background: radial-gradient(110% 110% at 30% 25%, #3cd8ff 0%, #2588ef 64%, #1160d2 100%);
+  box-shadow: 0 0 0.02rem rgba(255, 255, 255, 0.85) inset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  float: left;
 }
 
 .gift-entry__icon {
-  width: 1.0rem;
-  height: 0.85rem;
-  object-fit: contain;
-  flex-shrink: 0;
+  width: 0.48rem;
+  height: 0.48rem;
+  right: 0.1rem;
+  position: absolute;
 }
 
 .gift-entry__label {
@@ -349,18 +387,12 @@ onMounted(async () => {
   color: #fff;
 }
 
-.gift-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 0;
-}
-
 .balance-section {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.12rem;
-  margin-top: 0.1rem;
+  gap: 0.16rem;
+  margin-top: 0.4rem;
 }
 
 .balance-label {
@@ -380,8 +412,8 @@ onMounted(async () => {
 }
 
 .chip-icon {
-  width: 24px;
-  height: 24px;
+  width: 29px;
+  height: 29px;
   object-fit: contain;
 }
 
@@ -438,12 +470,8 @@ onMounted(async () => {
     border-radius: inherit;
     padding: 0.0169rem;
     background: linear-gradient(139deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0) 100%);
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
@@ -479,18 +507,6 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 
-.icon-circle__img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.time-icon {
-  width: 0.53rem;
-  height: 0.53rem;
-  object-fit: contain;
-}
-
 .info {
   display: flex;
   flex-direction: column;
@@ -506,20 +522,13 @@ onMounted(async () => {
   justify-content: center;
   align-items: center;
   border-radius: 0.8267rem;
-  color: #ffffffaa;
+  background: rgba(255, 255, 255, 0.21);
+  color: #fff;
   font-family: 'HONOR Sans CN', sans-serif;
   font-size: 0.2997rem;
   font-weight: 500;
   line-height: 140%;
   width: fit-content;
-
-  &--in {
-    background: rgba(131, 239, 74, 0.52);
-  }
-
-  &--out {
-    background: rgba(249, 22, 57, 0.52);
-  }
 }
 
 .title-row {
@@ -569,7 +578,7 @@ onMounted(async () => {
   font-family: 'SF Pro', sans-serif;
 
   &.in {
-    color: #87f050;
+    color: #05e7ae;
   }
   &.out {
     color: #ff4b4b;

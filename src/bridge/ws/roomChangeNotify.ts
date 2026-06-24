@@ -132,6 +132,11 @@ function mapRoomRecord(room: PbRoomRecord): RoomRecord {
     users: roomUsersForView,
     currency: room.getCurrency() || '',
     cowboy_config: mapCowboyConfig(room.getCowboyConfig()),
+    participation_status: toSafeInt(room.getParticipationStatus()),
+    mushroom_mode: toSafeInt(room.getMushroomMode()),
+    // 对齐 Unity GameRoomDataPart.CreateRoomItemDataByRtcAdd：squid_on 由 SquidBase 派生。
+    squid_on: toSafeInt(room.getSquidBase()) > 0 ? 1 : 0,
+    critical_hit: toSafeInt(room.getCriticalHit()),
   }
 }
 

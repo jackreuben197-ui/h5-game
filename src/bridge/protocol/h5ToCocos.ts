@@ -146,6 +146,13 @@ export interface SyncDiamondConfigPayload {
   raw: unknown
 }
 
+// H5 -> Cocos：token 变更同步。token 为空字符串表示登出。
+export interface SyncTokenPayload {
+  token: string
+  // 秒级时间戳；缺省时 Cocos 不更新 TOKEN_EXPIREAT。
+  expireAt?: number
+}
+
 // Cocos 回执通用负载。
 export interface CocosAckPayload {
   ok: boolean

@@ -2,6 +2,7 @@ import dayjs from 'dayjs'
 import { defineStore } from 'pinia'
 import type { EnterTablePayload } from '@bridge-protocol'
 import StorageKey from '@/constants/storageKey'
+import { pushTokenClearToCocos, pushTokenToCocos } from '@/bridge/sync/tokenSync'
 import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { dzpkPersistStorage, localStore } from '@/utils/localStore'
@@ -41,6 +42,12 @@ export const useGameStore = defineStore(
         this.sessionToken = token
         // 双写到本地存储，便于非 Pinia 场景也能读取同一 token key。
         localStore.setItem(StorageKey.TOKEN, token)
+        // 同步到 Cocos：避免 H5 dzpk_h5_TOKEN 与 Cocos dzpk_cc_TOKEN 错开。
+        if (token) {
+          pushTokenToCocos(token)
+        } else {
+          pushTokenClearToCocos()
+        }
       },
       setWebsocketPort(port: number): void {
         const safePort = Number.isFinite(port) && port > 0 ? Math.floor(port) : 0
@@ -92,8 +99,11 @@ export const useGameStore = defineStore(
         userInfoStore.clearInfo()
         // 退出登录时同步清理 dzpk_TOKEN。
         localStore.removeItem(StorageKey.TOKEN)
+        localStore.removeItem(StorageKey.TOKEN_EXPIREAT)
         localStore.removeItem(StorageKey.WS_PORT)
         localStore.removeItem(StorageKey.WS_PORT_UPDATED_AT)
+        // 同步到 Cocos：清空 LoginSession.Token + dzpk_cc_TOKEN。
+        pushTokenClearToCocos()
         // 登录态清空时同步清理 MTT / 首页统计缓存。
         localStore.removeItem(StorageKey.MTT_LIST_CACHE)
         localStore.removeItem(StorageKey.HOME_ROOM_STATS_CACHE)

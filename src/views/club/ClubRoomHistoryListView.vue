@@ -693,7 +693,7 @@ onMounted(() => {
 }
 
 .stats-value {
-  font-size: 0.54rem;
+  font-size: 0.34rem;
   font-weight: 400;
   line-height: 1;
   color: rgba(243, 243, 243, 1);

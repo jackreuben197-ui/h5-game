@@ -7,9 +7,9 @@ import bannerBgUrl from '@/assets/images/wallet/banner_bg.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 import iconChips from '@/assets/icons/wallet/ic_coins.png'
 import icGift from '@/assets/icons/wallet/ic_gift.png'
-import AppBar from '@/components/wallet/AppBar.vue'
-import PillButton from '@/components/wallet/PillButton.vue'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import TagPill from '@/components/wallet/TagPill.vue'
+import GlassButton from '@/components/Button/GlassButton.vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { t } from '@/i18n'
@@ -21,22 +21,24 @@ const router = useRouter()
 const userInfoStore = useUserInfoStore()
 
 const currentClub = computed(() => userInfoStore.currentClub ?? userInfoStore.clubList[0] ?? null)
-const clubId = computed(() => (currentClub.value?.club_id ? Number(currentClub.value.club_id) : undefined))
+const clubId = computed(() =>
+  currentClub.value?.club_id ? Number(currentClub.value.club_id) : undefined,
+)
 const clubName = computed(() => String(currentClub.value?.club_name ?? '').trim())
 const clubBalance = computed(() => Number(currentClub.value?.user_gold ?? 0))
 
 const userName = computed(() => String(userInfoStore.userInfo?.user?.nickname ?? '-'))
 const userId = computed(() => userInfoStore.userInfo?.user?.un_id ?? '-')
-const avatarUrl = computed(() => String(userInfoStore.userInfo?.user?.avatar ?? '') || defaultAvatar)
+const avatarUrl = computed(
+  () => String(userInfoStore.userInfo?.user?.avatar ?? '') || defaultAvatar,
+)
 
 const depositAmount = ref('')
 const showConfirm = ref(false)
 const showSuccess = ref(false)
 const submitting = ref(false)
 
-const confirmText = computed(() =>
-  t('H5Deposit_ConfirmText', clubName.value, depositAmount.value),
-)
+const confirmText = computed(() => t('H5Deposit_ConfirmText', clubName.value, depositAmount.value))
 
 function goGiftUc(): void {
   void router.push('/wallet/gift-uc')
@@ -80,8 +82,7 @@ async function onConfirmDeposit(): Promise<void> {
     if (res.code === 0) {
       showSuccess.value = true
     } else if (res.code === 20066) {
-      const reviewMsg = t('Wallet_OrderUnderReview')
-      showToast(reviewMsg !== 'Wallet_OrderUnderReview' ? reviewMsg : '订单审核中，请稍后再试')
+      showToast(t('H5Deposit_OrderUnderReview'))
     } else {
       showFailToast(res.message || t('H5Deposit_Failed'))
     }
@@ -101,21 +102,31 @@ function onSuccessConfirm(): void {
 
 <template>
   <div class="deposit-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
-    <AppBar :title="t('UIGuildFund_RechargeText')" :show-actions="false">
-      <template #actions>
-        <PillButton :label="`${t('Wallet_Details')} >`" @click="goDetails" />
+    <HeaderBack :title="t('UIGuildFund_RechargeText')" extra-padding>
+      <template #right>
+        <span class="details-btn">
+          <GlassButton :label="t('Wallet_Details')" @click="goDetails" />
+        </span>
       </template>
-    </AppBar>
+    </HeaderBack>
 
     <div class="deposit-scrollable">
       <div class="deposit-content">
         <div class="user-card-wrapper">
           <div class="user-card">
+            <div
+              class="user-card__banner-bg"
+              :style="{ backgroundImage: `url(${bannerBgUrl})` }"
+            ></div>
             <div class="user-card-inner">
               <div class="user-info-section">
                 <div class="avatar-box">
                   <img :src="avatarUrl" alt="avatar" />
                 </div>
+                <button class="gift-entry" @click="goGiftUc">
+                  <span class="gift-entry__label">赠送</span>
+                  <img :src="icGift" alt="gift" class="gift-entry__icon" />
+                </button>
                 <div class="user-text">
                   <span class="user-name">{{ userName }}</span>
                   <div class="user-id-badge">
@@ -123,13 +134,6 @@ function onSuccessConfirm(): void {
                     <span class="id-value">{{ userId }}</span>
                   </div>
                 </div>
-              </div>
-
-              <div class="gift-row">
-                <button class="gift-entry" @click="goGiftUc">
-                  <span class="gift-entry__label">赠送</span>
-                  <img :src="icGift" alt="gift" class="gift-entry__icon" />
-                </button>
               </div>
 
               <div class="balance-section">
@@ -196,22 +200,15 @@ function onSuccessConfirm(): void {
   background-repeat: no-repeat;
 }
 
-.deposit-screen::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  background: rgba(0, 0, 0, 0.15);
+.details-btn {
+  display: inline-block;
+  width: 1.87rem;
 }
 
-.deposit-screen > * {
-  position: relative;
-  z-index: 1;
+/* 明细按钮使用与「赠送」一致的深色玻璃样式 */
+.details-btn :deep(.gb) {
+  background: rgba(0, 0, 0, 0.5);
 }
-
 
 .deposit-scrollable {
   flex: 1;
@@ -257,7 +254,7 @@ function onSuccessConfirm(): void {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: rgba(0, 0, 0, 0.13);
+    background: rgba(0, 0, 0, 0.28);
     pointer-events: none;
     z-index: 1;
   }
@@ -267,19 +264,15 @@ function onSuccessConfirm(): void {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    padding: 1.252px;
+    padding: 0.055rem;
     background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.25) 0%,
-      rgba(255, 255, 255, 0.8) 50%,
-      rgba(255, 255, 255, 0.25) 100%
+      180deg,
+      rgba(240, 205, 225, 0.95) 0%,
+      rgba(220, 175, 205, 0.4) 50%,
+      rgba(240, 205, 225, 0.95) 100%
     );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
@@ -287,7 +280,7 @@ function onSuccessConfirm(): void {
   }
 }
 
-.user-card > * {
+.user-card > *:not(.user-card__banner-bg) {
   position: relative;
   z-index: 2;
 }
@@ -311,24 +304,21 @@ function onSuccessConfirm(): void {
   justify-content: space-between;
 }
 
-.gift-row {
-  display: flex;
-  justify-content: flex-end;
-}
-
 .gift-entry {
-  width: 3rem;
+  position: fixed;
+  right: 0.7024rem;
+  top: 2.0594rem;
+  width: 4.0976rem;
   height: 0.8273rem;
+  z-index: 4;
   border: none;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.5);
   border-radius: 0.7229rem;
-  padding: 0 0.05rem 0 0.6rem;
+  padding: 0;
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  color: #ffffffc6;
-  cursor: pointer;
-  flex-shrink: 0;
+  justify-content: center;
+  color: #fff;
 }
 
 .gift-entry__icon {
@@ -397,7 +387,7 @@ function onSuccessConfirm(): void {
   align-items: center;
   justify-content: flex-end;
   gap: 0.16rem;
-  margin-top: 0.2rem;
+  margin-top: 0.4rem;
 }
 
 .balance-label {
@@ -417,8 +407,8 @@ function onSuccessConfirm(): void {
 }
 
 .chip-icon {
-  width: 24px;
-  height: 24px;
+  width: 29px;
+  height: 29px;
   object-fit: contain;
 }
 

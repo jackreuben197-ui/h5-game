@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { showToast } from 'vant'
+import { useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import ava1 from '@/assets/images/wallet/avatars/ava1.png'
-import icCoins from '@/assets/icons/icon_chip_red.png'
-import AppBar from '@/components/wallet/AppBar.vue'
+import icCoins from '@/assets/icons/wallet/ic_coins.png'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import SegmentedToggle from '@/views/wallet/components/SegmentedToggle.vue'
 import UserCard from '@/views/wallet/components/UserCard.vue'
 import GlassButton from '@/components/Button/GlassButton.vue'
+import BellButton from '@/components/Button/BellButton.vue'
 import PresetAmountGrid, { type Preset } from '@/views/wallet/components/PresetAmountGrid.vue'
 import PaymentMethodStrip, {
   type PaymentMethod,
@@ -21,15 +21,8 @@ import UnfinishedOrderPopup from '@/views/wallet/components/UnfinishedOrderPopup
 import UsdtPaymentDetailsPopup from '@/views/wallet/components/UsdtPaymentDetailsPopup.vue'
 import CustomerServicePaymentPopup from '@/views/wallet/components/CustomerServicePaymentPopup.vue'
 import CustomerServiceChatPopup from '@/views/wallet/components/CustomerServiceChatPopup.vue'
-import OnlinePaymentPopup from '@/views/wallet/components/OnlinePaymentPopup.vue'
-import ClubDepositPanel from '@/views/wallet/components/ClubDepositPanel.vue'
+import FixedDepositPanel from '@/views/wallet/components/FixedDepositPanel.vue'
 import { t } from '@/i18n'
-
-// i18n helper: returns fallback when key not translated.
-function tx(key: string, fallback: string): string {
-  const val = t(key)
-  return val !== key ? val : fallback
-}
 import { useWalletStore } from '@/stores/wallet'
 import { useUserInfoStore } from '@/stores/userInfo'
 import {
@@ -40,19 +33,17 @@ import {
 } from '@/api/order'
 import { postChatSupportChannelListApi } from '@/api/chat'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
-import { formatUC } from '@/utils/roomVisibility'
 
 const router = useRouter()
-const route = useRoute()
 const walletStore = useWalletStore()
 const userInfoStore = useUserInfoStore()
 
-// deposit_switch === 2 → fixed-deposit (simplified "apply to recharge") flow.
+// deposit_switch: 1 = deposit-free (normal wallet UI); 2 = fixed-deposit (simplified apply-recharge UI)
 const isFixedDeposit = computed(
-  () => Number(userInfoStore.currentClub?.deposit_switch) === 2,
+  () => (userInfoStore.currentClub ?? userInfoStore.clubList[0])?.deposit_switch === 2,
 )
 
-const activeTab = ref(Number(route.query.tab ?? 0))
+const activeTab = ref(0)
 const activePreset = ref(0)
 const activeMethod = ref(0)
 const keypadOpen = ref(false)
@@ -86,53 +77,87 @@ const csChatProps = ref({
   tribeId: 0,
   supportUserId: 0,
   orderData: null as any,
-  type: 'recharge' as 'recharge' | 'withdraw',
-  orders: [] as any[],
 })
 
-async function buildCsChatOrders(
-  currentOrder: any,
-  type: 'recharge' | 'withdraw',
-): Promise<any[]> {
+const activeCsOrder = computed(() => {
+  return activeTab.value === 0
+    ? walletStore.pendingCsRechargeOrder
+    : walletStore.pendingCsWithdrawOrder
+})
+
+const activeCsCount = computed(() => {
+  return activeTab.value === 0
+    ? walletStore.pendingCsRechargeCount
+    : walletStore.pendingCsWithdrawCount
+})
+
+const hasSeenRechargeNotification = ref(false)
+const hasSeenWithdrawNotification = ref(false)
+
+const currentHasSeen = computed(() => {
+  return activeTab.value === 0
+    ? hasSeenRechargeNotification.value
+    : hasSeenWithdrawNotification.value
+})
+
+let refreshInterval: any = null
+
+async function refreshPendingCsOrder() {
+  // We keep this method for manual refreshes within this view (e.g. after cancel/submit)
+  // but we will no longer run it on a 10s interval here as requested.
   await walletStore.refreshPendingCsOrder()
-  const list = [...walletStore.csChatOrders]
-  const currentNo = currentOrder?.order_no || currentOrder?.order?.order_no
-  const exists = list.some((o) => (o.order_no || o.order?.order_no) === currentNo)
-  if (currentOrder && currentNo && !exists) {
-    list.unshift({ ...currentOrder, orderType: type })
+}
+
+async function openCsChat() {
+  if (activeTab.value === 0) hasSeenRechargeNotification.value = true
+  else hasSeenWithdrawNotification.value = true
+
+  if (!activeCsOrder.value) return
+
+  const order = activeCsOrder.value
+  const qrCode =
+    (order as any).qrcode || (order as any).qr_code || (order as any).pay_type_qr_code || ''
+  const result = {
+    order_no: order.order_no,
+    gold_num: order.gold_num,
+    pay_price: order.pay_price,
+    order: {
+      order_no: order.order_no,
+      amount: order.pay_price,
+      gold_num: order.gold_num,
+    },
+    usdt_address: {
+      address: order.pay_type_address || '',
+      qr_code: qrCode,
+      name: (order as any).pay_type_name || '客服撮合',
+    },
   }
-  return list
+
+  try {
+    const channelRes = await postChatSupportChannelListApi({
+      im_service_types: [4],
+      limit: 1,
+      offset: 0,
+    })
+
+    if (channelRes.code === 0 && channelRes.data?.list?.length) {
+      const channel = channelRes.data.list[0]
+      const orders =
+        activeTab.value === 0
+          ? walletStore.pendingCsRechargeOrders
+          : walletStore.pendingCsWithdrawOrders
+
+      csChatProps.value = {
+        tribeId: channel.tribe_id || 0,
+        supportUserId: channel.support_user_id || 0,
+        orderData: result,
+      }
+      csChatPopupOpen.value = true
+    }
+  } catch (e) {
+    console.error('Failed to open CS chat from bell', e)
+  }
 }
-
-const onlinePopupOpen = ref(false)
-const onlinePopupProps = ref({
-  goldCount: 0,
-  rate: 0,
-  feeRate: 0,
-  feeType: 0,
-  discount: 0,
-  payId: 0,
-  priceId: 0,
-})
-
-const onlinePopupInitialData = ref({
-  step: 1,
-  orderNo: '',
-  qrCode: '',
-  payAddress: '',
-  paymentUrl: '',
-})
-
-function handleOnlineSuccess() {
-  activePreset.value = 0
-  customAmount.value = ''
-}
-
-function handleOnlineUnfinished() {
-  onlinePopupOpen.value = false
-  showToast(tx('Wallet_OrderUnderReview', '订单审核中，请稍后再试'))
-}
-
 
 async function checkUnfinishedOrders(showPopup = true) {
   const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
@@ -172,7 +197,7 @@ async function handleCancelOrder(orderNo: string) {
       unfinishedOrder.value = null
       // Refresh the list but don't show popup
       await checkUnfinishedOrders(false)
-      await walletStore.refreshPendingCsOrder()
+      await refreshPendingCsOrder()
     } else {
       alert(`Cancel failed: ${res.message}`)
     }
@@ -221,8 +246,6 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
           tribeId: channel.tribe_id || 0,
           supportUserId: channel.support_user_id || 0,
           orderData: result,
-          type: 'recharge',
-          orders: await buildCsChatOrders(result, 'recharge'),
         }
         csChatPopupOpen.value = true
       } else {
@@ -235,43 +258,26 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
       usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
       usdtDetailsPopupOpen.value = true
     }
-  } else if (orderType === 1) {
+  } else {
     // Standard USDT flow
     usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
     usdtDetailsPopupOpen.value = true
-  } else {
-    // WeChat, Alipay, Bank Card top-up type features (Types 2, 4-9)
-    onlinePopupProps.value = {
-      goldCount: Number(order.gold_num) || 0,
-      rate: (order as any).rate || (order as any).exchange_rate || 1,
-      feeRate: (order as any).fee_rate || 0,
-      feeType: (order as any).fee_type || 0,
-      discount: (order as any).discount || 0,
-      payId: (order as any).pay_id || (order as any).pay_type || 0,
-      priceId: (order as any).price_id || 0,
-    }
-    onlinePopupInitialData.value = {
-      step: 2,
-      orderNo: order.order_no || '',
-      qrCode: qrCode,
-      payAddress: order.pay_type_address || '',
-      paymentUrl: (order as any).payment_url || '',
-    }
-    onlinePopupOpen.value = true
   }
 }
 
 onMounted(() => {
   // We no longer check for unfinished orders on mount.
   // It will be checked only when a recharge attempt fails with code 20066.
-  void walletStore.refreshPendingCsOrder()
+  refreshPendingCsOrder()
   // 10s Interval removed as requested. Visibility will be handled by external calls.
 })
 
-onUnmounted(() => {})
+onUnmounted(() => {
+  if (refreshInterval) clearInterval(refreshInterval)
+})
 
 const filteredPayTypes = computed(() =>
-  (walletStore.goldPriceData?.pay_types ?? []),
+  (walletStore.goldPriceData?.pay_types ?? []).filter((pt) => pt.type === 1 || pt.type === 3),
 )
 
 const methods = computed<PaymentMethod[]>(() =>
@@ -314,7 +320,7 @@ const presets = computed<Preset[]>(() => {
   }
   const list = hasPriceList ? selected!.price_list! : walletStore.goldPriceData?.list ?? []
 
-  const isUsdt = selected?.type !== 3
+  const isUsdt = selected?.type === 1
   const rate = selected?.rate ?? 1
   const feeRate = selected?.fee_rate ?? 0
   const feeType = selected?.fee_type ?? 0
@@ -369,8 +375,8 @@ const displayPayAmount = computed(() => {
   const selected = payTypes[activeMethod.value]
   const amount = Number(selectedAmount.value)
 
-  if (selected?.type !== 3 && selected) {
-    // USDT/API/WeChat/Alipay/Bank Card
+  if (selected?.type === 1) {
+    // USDT
     const goldCount = amount * 100
     const rate = selected.rate ?? 1
     const feeRate = selected.fee_rate ?? 0
@@ -422,24 +428,6 @@ function onPayClick() {
       discount: selectedPayType.discount ?? 0,
     }
     csPopupOpen.value = true
-  } else if (selectedPayType) {
-    onlinePopupProps.value = {
-      goldCount: Number(selectedAmount.value) * 100,
-      rate: selectedPayType.rate ?? 1,
-      feeRate: selectedPayType.fee_rate ?? 0,
-      feeType: selectedPayType.fee_type ?? 0,
-      discount: selectedPayType.discount ?? 0,
-      payId: selectedPayType.id ?? 0,
-      priceId: activePreset.value === -1 ? 0 : presets.value[activePreset.value]?.id ?? 0,
-    }
-    onlinePopupInitialData.value = {
-      step: 1,
-      orderNo: '',
-      qrCode: '',
-      payAddress: '',
-      paymentUrl: '',
-    }
-    onlinePopupOpen.value = true
   }
 }
 
@@ -456,8 +444,6 @@ async function onWithdrawCsChat(orderData: Record<string, unknown>) {
         tribeId: channel.tribe_id || 0,
         supportUserId: channel.support_user_id || 0,
         orderData,
-        type: 'withdraw',
-        orders: await buildCsChatOrders(orderData, 'withdraw'),
       }
       csChatPopupOpen.value = true
     }
@@ -511,8 +497,8 @@ async function onCsSubmit(displayPayPrice?: number) {
     discount > 0
       ? Number((basePrice * (1 - discount)).toFixed(4))
       : feeType === 2 && feeRate > 0
-        ? Number((basePrice * (1 + feeRate)).toFixed(4))
-        : Number(basePrice.toFixed(4))
+      ? Number((basePrice * (1 + feeRate)).toFixed(4))
+      : Number(basePrice.toFixed(4))
 
   // legal_tender = what the player actually pays, in cents (same logic as pay_price)
   const playerPrice = isUniqueAmount
@@ -551,19 +537,17 @@ async function onCsSubmit(displayPayPrice?: number) {
 
         if (channelRes.code === 0 && channelRes.data?.list?.length) {
           const channel = channelRes.data.list[0]
-          const submittedOrder = {
-            ...res.data,
-            gold_num: goldCount,
-            pay_price: apiPayPrice,
-          }
           csChatProps.value = {
             tribeId: channel.tribe_id || 0,
             supportUserId: channel.support_user_id || 0,
-            orderData: submittedOrder,
-            type: 'recharge',
-            orders: await buildCsChatOrders(submittedOrder, 'recharge'),
+            orderData: {
+              ...res.data,
+              gold_num: goldCount,
+              pay_price: apiPayPrice,
+            },
           }
           csChatPopupOpen.value = true
+          await refreshPendingCsOrder()
         } else {
           rechargeResult.value = res.data
           usdtDetailsPopupOpen.value = true
@@ -577,7 +561,7 @@ async function onCsSubmit(displayPayPrice?: number) {
       activePreset.value = 0
       customAmount.value = ''
     } else if (res.code === 20066 || res.code === 90016) {
-      showToast(tx('Wallet_OrderUnderReview', '订单审核中，请稍后再试'))
+      void checkUnfinishedOrders()
     } else {
       alert(`Recharge failed: ${res.message}`)
     }
@@ -660,8 +644,8 @@ async function onUsdtSubmit(type: number) {
       activePreset.value = 0
       customAmount.value = ''
     } else if (res.code === 20066) {
-      // User has an order pending review — block new recharge per spec.
-      showToast(tx('Wallet_OrderUnderReview', '订单审核中，请稍后再试'))
+      // User has unfinished orders
+      void checkUnfinishedOrders()
     } else {
       alert(`Recharge failed: ${res.message}`)
     }
@@ -673,38 +657,27 @@ async function onUsdtSubmit(type: number) {
 </script>
 
 <template>
-  <div class="wallet-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
-    <AppBar
-      :title="isFixedDeposit ? tx('Wallet_RechargeTitle', '充值') : t('Wallet_Title')"
-      :show-actions="false"
-    >
-      <template v-if="isFixedDeposit" #actions>
-        <button class="details-pill" @click="router.push('/wallet/details')">
-          <span class="wallet-t-button details-pill__label">{{ tx('Wallet_Details', '明细') }}</span>
-        </button>
-      </template>
-    </AppBar>
+  <FixedDepositPanel v-if="isFixedDeposit" />
 
-    <div v-if="!isFixedDeposit" class="wallet-screen__content-top">
+  <div v-else class="wallet-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
+    <HeaderBack :title="t('Wallet_Title')" extra-padding />
+
+    <div class="wallet-screen__content-top">
       <div class="tabs-row">
         <SegmentedToggle v-model="activeTab" :tabs="tabLabels" />
+        <BellButton
+          v-if="activeCsOrder"
+          :count="1"
+          :show-badge="!currentHasSeen"
+          class="floating-bell"
+          @click="openCsChat"
+        />
       </div>
     </div>
 
     <div class="wallet-scrollable">
       <div class="wallet-screen__content">
         <UserCard
-          v-if="isFixedDeposit"
-          class="wallet-banner wallet-banner--deposit"
-          variant="glass"
-          :avatar="ava1"
-          name="Cooper&#10;Korsgaard"
-          user-id="8677650585"
-          :balance="formatUC(userInfoStore.userInfo?.user?.gold ?? 0)"
-        />
-
-        <UserCard
-          v-else
           class="wallet-banner"
           :avatar="ava1"
           name="Cooper&#10;Korsgaard"
@@ -718,7 +691,7 @@ async function onUsdtSubmit(type: number) {
             <div class="balance-row">
               <div class="balance-chip">
                 <span class="balance-chip__value">
-                  {{ formatUC(userInfoStore.userInfo?.user?.gold ?? 0) }}
+                  {{ (userInfoStore.userInfo?.user?.gold ?? 0).toLocaleString() }}
                 </span>
                 <img :src="icCoins" alt="" class="balance-chip__icon" />
               </div>
@@ -727,9 +700,7 @@ async function onUsdtSubmit(type: number) {
           </template>
         </UserCard>
 
-        <ClubDepositPanel v-if="isFixedDeposit" />
-
-        <template v-else-if="activeTab === 0">
+        <template v-if="activeTab === 0">
           <div class="recharge-content">
             <div class="presets-card">
               <PresetAmountGrid
@@ -747,19 +718,15 @@ async function onUsdtSubmit(type: number) {
             />
           </div>
 
-          <div class="pay-cta-wrapper">
-            <PrimaryButton
-              :text="`立即充值${displayPayAmount}`"
-              class="pay-cta"
-              @click="onPayClick"
-            />
-          </div>
+          <PrimaryButton
+            :text="`立即支付 ${displayPayAmount}`"
+            class="pay-cta"
+            @click="onPayClick"
+          />
         </template>
 
         <template v-else>
-          <div class="withdraw-content">
-            <WithdrawForm @open-cs-chat="onWithdrawCsChat" />
-          </div>
+          <WithdrawForm @open-cs-chat="onWithdrawCsChat" />
         </template>
       </div>
     </div>
@@ -787,8 +754,6 @@ async function onUsdtSubmit(type: number) {
       :tribe-id="csChatProps.tribeId"
       :support-user-id="csChatProps.supportUserId"
       :order-data="csChatProps.orderData"
-      :order-type="csChatProps.type"
-      :orders="csChatProps.orders"
       @close="csChatPopupOpen = false"
     />
 
@@ -801,25 +766,6 @@ async function onUsdtSubmit(type: number) {
       :discount="usdtPopupProps.discount"
       @close="usdtPopupOpen = false"
       @submit="onUsdtSubmit"
-    />
-
-    <OnlinePaymentPopup
-      v-if="onlinePopupOpen"
-      :gold-count="onlinePopupProps.goldCount"
-      :rate="onlinePopupProps.rate"
-      :fee-rate="onlinePopupProps.feeRate"
-      :fee-type="onlinePopupProps.feeType"
-      :discount="onlinePopupProps.discount"
-      :pay-id="onlinePopupProps.payId"
-      :price-id="onlinePopupProps.priceId"
-      :initial-step="onlinePopupInitialData.step"
-      :initial-order-no="onlinePopupInitialData.orderNo"
-      :initial-qr-code="onlinePopupInitialData.qrCode"
-      :initial-pay-address="onlinePopupInitialData.payAddress"
-      :initial-payment-url="onlinePopupInitialData.paymentUrl"
-      @close="onlinePopupOpen = false"
-      @success="handleOnlineSuccess"
-      @unfinished-order="handleOnlineUnfinished"
     />
 
     <UnfinishedOrderPopup
@@ -895,16 +841,18 @@ async function onUsdtSubmit(type: number) {
   justify-content: center;
 }
 
+.floating-bell {
+  position: fixed;
+  right: 0.03rem;
+  top: 2.4rem;
+  z-index: 1000;
+}
+
 .wallet-banner {
   margin: 0 22px;
   position: sticky;
   top: 0.2rem;
   z-index: 0;
-}
-
-// Glass deposit banner spans the full content width (matches the 340px Figma frame).
-.wallet-banner--deposit {
-  margin: 0;
 }
 
 .recharge-content {
@@ -913,56 +861,42 @@ async function onUsdtSubmit(type: number) {
   padding-bottom: 2.5rem;
 }
 
-.withdraw-content {
-  position: relative;
-  z-index: 1;
-  padding-bottom: 2.5rem;
-}
-
 .presets-card {
   position: relative;
-  padding: 0.55rem 0.42rem;
-  border: 0.016rem solid rgba(242, 242, 242, 0.3);
-  border-radius: 0.94rem;
+  padding: 0.7rem 0.48rem 0.55rem;
+  background: rgba(0, 0, 0, 0.01);
+  backdrop-filter: blur(16.6px);
+  -webkit-backdrop-filter: blur(16.6px);
+  border: 0.18px solid rgba(255, 255, 255, 0.3);
+  border-radius: 1rem;
   box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
-  display: flex;
-  flex-direction: column;
-  gap: 0.38rem;
   overflow: hidden;
   margin-top: -20px;
   z-index: 1;
   margin-bottom: 10px;
+}
 
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    backdrop-filter: blur(16.6px);
-    -webkit-backdrop-filter: blur(16.6px);
-    background: linear-gradient(107.6deg, rgba(249,249,249,0.18) 12.3%, rgba(249,249,249,0.24) 33.3%, rgba(147,147,147,0.3) 85.1%);
-    mix-blend-mode: hard-light;
-    pointer-events: none;
-    border-radius: inherit;
-    z-index: 0;
-  }
+.presets-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(16.6px);
+  -webkit-backdrop-filter: blur(16.6px);
+  background-image: linear-gradient(
+    110.6deg,
+    rgba(249, 249, 249, 0.18) 12%,
+    rgba(249, 249, 249, 0.24) 33%,
+    rgba(147, 147, 147, 0.3) 85%
+  );
+  mix-blend-mode: hard-light;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+}
 
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    border-radius: inherit;
-    box-shadow:
-      inset 0 0 8.6px rgba(0,0,0,1),
-      inset 3.4px 2.6px 8.6px rgba(0,0,0,0.1),
-      inset 0 0 36.1px rgba(242,242,242,0.3);
-    z-index: 0;
-  }
-
-  & > * {
-    position: relative;
-    z-index: 1;
-  }
+.presets-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .balance-row {
@@ -976,42 +910,18 @@ async function onUsdtSubmit(type: number) {
 }
 
 .balance-chip {
-  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.14rem;
-  border-radius: 0.6rem;
-  border: none;
-  background: transparent;
-  padding: 0.12rem 0.21rem 0.12rem 0.33rem;
-  box-shadow: 0.014rem 0.017rem 0.027rem 0 rgba(0, 0, 0, 0.25);
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    backdrop-filter: blur(3.7px);
-    -webkit-backdrop-filter: blur(3.7px);
-    background: linear-gradient(152.51deg, rgba(248, 253, 255, 0.8) 3.37%, rgba(199, 199, 199, 0.8) 37.46%);
-    mix-blend-mode: hard-light;
-    pointer-events: none;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    box-shadow: inset 0 0 0.069rem 0 rgba(242, 242, 242, 0.9);
-  }
+  background: rgba(0, 0, 0, 0.22);
+  border: 0.4px solid rgba(242, 242, 242, 0.4);
+  border-radius: 0.4rem;
+  padding: 0.18rem 0.21rem 0.18rem 0.33rem;
+  box-shadow: 0.8px 1px 1.6px rgba(0, 0, 0, 0.25);
+  height: 0.85rem;
 }
 
 .balance-chip__value {
-  position: relative;
-  z-index: 1;
   font-family: var(--wallet-font-num);
   font-weight: 600;
   font-size: 0.43rem;
@@ -1020,8 +930,6 @@ async function onUsdtSubmit(type: number) {
 }
 
 .balance-chip__icon {
-  position: relative;
-  z-index: 1;
   width: 0.7rem;
   height: 0.7rem;
 }
@@ -1033,46 +941,11 @@ async function onUsdtSubmit(type: number) {
   color: #f8f8f8;
 }
 
-.pay-cta-wrapper {
+.pay-cta {
   position: fixed;
   bottom: calc(env(safe-area-inset-bottom) + 0.6rem);
   left: 0.455rem;
   width: calc(100% - 0.91rem);
-  height: 1.47rem;
-  border-radius: 1.08rem;
-  background: rgba(18, 20, 24, 0.92);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   z-index: 10;
-  overflow: hidden;
-}
-
-.pay-cta {
-  width: 100% !important;
-  height: 100% !important;
-  background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%) !important;
-}
-
-// Fixed-deposit appbar action: dark-gradient "明细" pill (Figma node 53:63392).
-.details-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 0.747rem;
-  padding: 0 0.48rem;
-  border-radius: 0.74rem;
-  border: 0.016rem solid rgba(242, 242, 242, 0.8);
-  background: linear-gradient(145.4deg, rgb(67, 65, 66) 7.55%, rgb(34, 34, 34) 71.92%);
-  backdrop-filter: blur(0.597rem);
-  -webkit-backdrop-filter: blur(0.597rem);
-  box-shadow:
-    0.103rem 0.072rem 0.271rem rgba(51, 51, 51, 0.27),
-    0.398rem 0.271rem 0.486rem rgba(48, 48, 48, 0.24),
-    0.9rem 0.613rem 0.653rem rgba(50, 50, 50, 0.14);
-  cursor: pointer;
-}
-
-.details-pill__label {
-  white-space: nowrap;
 }
 </style>

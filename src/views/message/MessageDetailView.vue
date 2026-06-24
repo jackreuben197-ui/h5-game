@@ -17,9 +17,9 @@ import { t } from '@/i18n'
 import { formatDateTime } from '@/utils/time'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import avatarDefault from '@/assets/images/default_avatar.png'
-import imgDefaultAva from '@/assets/images/img_default_ava.png'
+import clubRoleIcon from '@/assets/icons/club_role_icon.png'
 import iconPeople from '@/assets/icons/icon_people.png'
-import iconDollars from '@/assets/icons/ic_dollars.png'
+import iconBalance from '@/assets/icons/icon_credit_chip.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { formatUC } from '@/utils/roomVisibility'
@@ -112,6 +112,9 @@ interface OtherMessageItem {
 
 const route = useRoute()
 
+const otherBannerBgFirst = mainBgUrl
+const otherBannerBgDefault = mainBgUrl
+
 const pageType = computed<MessagePageType>(() => {
   const type = route.query.type
   if (type === 'system' || type === 'credit' || type === 'uc' || type === 'other') {
@@ -126,7 +129,7 @@ const pageTitle = computed(() => {
 
   if (pageType.value === 'system') return '系统消息'
   if (pageType.value === 'credit') return '带入申请'
-  if (pageType.value === 'uc') return '联盟币申请'
+  if (pageType.value === 'uc') return 'UC申请'
   return '消息'
 })
 
@@ -164,7 +167,7 @@ const messageType = computed<number>(() => {
 })
 
 function formatTime(value: unknown): string {
-  return formatDateTime(value, 'YYYY/MM/DD HH:mm')
+  return formatDateTime(value, 'YYYY-MM-DD HH:mm')
 }
 
 function mapStatus(value: unknown): CreditStatus {
@@ -734,7 +737,7 @@ async function fetchUcList(append = false): Promise<void> {
       time: formatTime(item.create_time),
       playerName: String(item.nickname ?? '--'),
       playerId: String(item.user_random_id ?? '--'),
-      amount: `+${formatUC(item.gold_num ?? 0)}`,
+      amount: `+${formatUC(item.amount ?? 0)}`,
       status: mapStatus(rawStatus),
       approverName: item.audit_name ? String(item.audit_name) : undefined,
       approverId: item.audit_user_id ? String(item.audit_user_id) : undefined,
@@ -865,24 +868,20 @@ onBeforeUnmount(() => {
             </div>
 
             <div v-if="item.status === 'pending'" class="pending-actions">
-              <div class="action-wrap">
-                <button
-                  class="action-btn action-btn--ok"
-                  type="button"
-                  @click="auditCredit(item, true)"
-                >
-                  ✓
-                </button>
-              </div>
-              <div class="action-wrap">
-                <button
-                  class="action-btn action-btn--deny"
-                  type="button"
-                  @click="auditCredit(item, false)"
-                >
-                  ✕
-                </button>
-              </div>
+              <button
+                class="action-btn action-btn--ok"
+                type="button"
+                @click="auditCredit(item, true)"
+              >
+                ✓
+              </button>
+              <button
+                class="action-btn action-btn--deny"
+                type="button"
+                @click="auditCredit(item, false)"
+              >
+                ✕
+              </button>
             </div>
 
             <p v-else-if="item.status === 'rejected'" class="state-text">已拒绝</p>
@@ -897,7 +896,7 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="request-footer">
-            <img :src="iconDollars" alt="balance" />
+            <img :src="iconBalance" alt="balance" />
             <p>带入申请：{{ item.amount }}</p>
           </div>
         </article>
@@ -961,6 +960,13 @@ onBeforeUnmount(() => {
           :class="{ 'other-item--first': index === 0 }"
         >
           <div class="other-banner" :class="{ 'other-banner--wrap': item.wrap }">
+            <div
+              class="other-banner-bg"
+              :style="{
+                backgroundImage: `url(${index === 0 ? otherBannerBgFirst : otherBannerBgDefault})`,
+              }"
+              aria-hidden="true"
+            ></div>
             <p class="other-title" :class="{ 'other-title--wrap': item.wrap }">
               <span
                 v-for="(segment, segmentIndex) in item.segments"
@@ -971,11 +977,15 @@ onBeforeUnmount(() => {
               </span>
             </p>
 
+            <button v-if="item.senderIcon" class="sender-btn" type="button" aria-label="sender">
+              <img :src="clubRoleIcon" alt="sender" />
+            </button>
           </div>
 
           <div class="other-meta-row">
             <div class="other-meta-club">
-              <img :src="item.senderIcon || imgDefaultAva" alt="club" />
+              <img v-if="item.senderIcon" :src="item.senderIcon" alt="club" />
+              <img v-else :src="avatarDefault" alt="system" />
               <span>{{ item.clubName }}</span>
             </div>
             <p class="other-time">{{ item.time }}</p>
@@ -990,7 +1000,7 @@ onBeforeUnmount(() => {
 .message-detail-page {
   height: 100dvh;
   color: #f3f3f3;
-  padding-top: calc(env(safe-area-inset-top) + 0.46rem);
+  // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: calc(env(safe-area-inset-bottom) + 0.7rem);
   background-size: cover;
   background-position: center;
@@ -1045,12 +1055,9 @@ onBeforeUnmount(() => {
 }
 
 .request-card {
-  border-radius: 0.8rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.14);
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(8.5px);
-  -webkit-backdrop-filter: blur(8.5px);
-  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.08);
+  border-radius: 0.738rem;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(0.16rem);
   padding: 0.32rem 0.304rem 0.304rem;
 }
 
@@ -1112,17 +1119,13 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.14);
 }
 
-.status-pending {
-  background: rgba(199, 199, 199, 0.14);
-}
-
 .status-rejected {
-  background: rgba(250, 43, 75, 0.4);
+  background: rgba(255, 19, 43, 0.4);
 }
 
 .status-approved-by-user,
 .status-approved {
-  background: rgba(37, 221, 0, 0.3);
+  background: rgba(5, 231, 174, 0.3);
 }
 
 .player-block {
@@ -1163,23 +1166,13 @@ onBeforeUnmount(() => {
   gap: 0.35rem;
 }
 
-.action-wrap {
+.action-btn {
   width: 0.97rem;
   height: 0.97rem;
   border-radius: 50%;
-  border: 0.02rem solid rgba(249, 249, 249, 0.2);
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(8.5px);
-  -webkit-backdrop-filter: blur(8.5px);
-  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.12);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.action-btn {
-  border: 0;
-  background: transparent;
+  border: 0.013rem solid #fff;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
   font-size: 0.52rem;
   line-height: 1;
   padding: 0;
@@ -1252,14 +1245,11 @@ onBeforeUnmount(() => {
 .other-banner {
   position: relative;
   left: 1.301rem;
+  top: 0;
   width: 7.458rem;
   min-height: 1.385rem;
-  border-radius: 0.8rem 0.8rem 0.8rem 0;
-  border: 0.02rem solid rgba(0, 0, 0, 0.2);
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(8.5px);
-  -webkit-backdrop-filter: blur(8.5px);
-  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.08);
+  border-radius: 0.72rem 0.72rem 0.72rem 0rem;
+  overflow: hidden;
   padding: 0.2rem 1.36rem 0.2rem 0.467rem;
   box-sizing: border-box;
   display: flex;
@@ -1268,6 +1258,19 @@ onBeforeUnmount(() => {
 
 .other-banner--wrap {
   min-height: 1.439rem;
+}
+
+.other-banner-bg {
+  position: absolute;
+  inset: -0.1rem;
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  filter: blur(0.1rem);
+  transform: scale(1.05);
 }
 
 .other-title {
@@ -1294,11 +1297,33 @@ onBeforeUnmount(() => {
 }
 
 .highlight--green {
-  color: rgba(85, 243, 41, 1);
+  color: #05e7ae;
 }
 
 .green {
-  color: rgba(85, 243, 41, 1);
+  color: #05e7ae;
+}
+
+.sender-btn {
+  position: absolute;
+  right: 0.264rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.88rem;
+  height: 0.88rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
 }
 
 .other-meta-row {

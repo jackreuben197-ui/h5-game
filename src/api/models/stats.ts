@@ -574,8 +574,80 @@ export interface StatsJackpotGoldChangeLogsResponseData extends StatsJackpotGold
 export interface StatsJackpotGoldChangeLogsData {
   limit?: number // 数据数量
   offset?: number // 当前偏移值
-  items?: unknown[]
+  items?: StatsJackpotGoldChangeLogsDataItem[]
 
+  [key: string]: unknown
+}
+
+export interface StatsJackpotGoldChangeLogsDataItem {
+  /**
+   * bombpot开启 0 关闭 1 开启
+   */
+  bombpot?: number;
+  /**
+   * 获奖牌型；10-皇家同花顺;9-同花顺;8-四条
+   */
+  cards_type?: number;
+  /**
+   * 记录创建时间
+   */
+  create_time?: string;
+  /**
+   * 游戏类型：0-常规桌，1-OMAHA4，2-OMAHA5，3-OMAHA6
+   */
+  game_type?: number;
+  /**
+   * 变动金额
+   */
+  gold_change?: number;
+  /**
+   * GOld:1联盟币 2usdt;3 记分牌；4钻石
+   */
+  gold_type?: number;
+  /**
+   * 手数
+   */
+  hand?: number;
+  /**
+   * jackpot模版ID
+   */
+  jackpot_id?: number;
+  /**
+   * 底池限制类型：0-无底池限制，1-底池限制
+   */
+  limit_bet_type?: number;
+  /**
+   * 操作类型
+   */
+  op_code?: string;
+  /**
+   * 牌类型：0-标准,长牌，2-短牌
+   */
+  poker_type?: number;
+  /**
+   * 房间多语言名称
+   */
+  room_multi_lang_names?: string;
+  /**
+   * 房间名称
+   */
+  room_name?: string;
+  /**
+   * 来源房间ID
+   */
+  src_room_id?: number;
+  /**
+   * 用户ID
+   */
+  user_id?: number;
+  /**
+   * 用户名
+   */
+  user_name?: string;
+  /**
+   * 用户RID
+   */
+  user_rid?: number;
   [key: string]: unknown
 }
 
@@ -1538,7 +1610,7 @@ export interface StatsUserStatsCardTypeData {
   total?: number // 总数
   limit?: number // 数据数量
   offset?: number // 当前偏移值
-  records?: StatsUserStatsCardTypeRecord[]
+  list?: StatsUserStatsCardTypeRecord[] // API field name is "list" (not "records")
 
   [key: string]: unknown
 }

@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { postOrgClubJackpotTemplateListApi } from '@/api/org'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import cardBgUrl from '@/assets/icons/ic_jackpot_card_bg.png'
-import iconTag from '@/assets/icons/ic_card_jackpot.svg'
+import type { OrgClubJackpotTemplateListDataItem } from '@/api/models/org'
+import { formatUC } from '@/utils/roomVisibility'
+import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -20,21 +22,19 @@ type TabKey = 'reward' | 'contribution'
 
 const activeTab = ref<TabKey>('reward')
 
-const rewardItems = ref<PoolRewardItem[]>([
-  { id: '1', name: 'Game Name', jpAmount: '666999', tags: ['NLH', 'PLO', '6+'] },
-  { id: '2', name: 'Game Name', jpAmount: '666999', tags: ['NLH', 'PLO', '6+'] },
-  { id: '3', name: 'Game Name', jpAmount: '666999', tags: ['NLH', 'PLO', '6+'] },
-  { id: '4', name: 'Game Name', jpAmount: '666999', tags: ['NLH', 'PLO', '6+'] },
-])
-
-const contributionItems = ref<PoolRewardItem[]>([
-  { id: '5', name: 'Game Name', jpAmount: '666999', tags: ['NLH', 'PLO', '6+'] },
-  { id: '6', name: 'Game Name', jpAmount: '666999', tags: ['NLH', 'PLO', '6+'] },
-])
+const rewardItems = ref<PoolRewardItem[]>([])
+const contributionItems = ref<PoolRewardItem[]>([])
+const loading = ref(false)
+const loadingMore = ref(false)
+const listOffset = ref(0)
+const hasMore = ref(true)
+const PAGE_SIZE = 10
 
 const currentItems = computed(() =>
   activeTab.value === 'reward' ? rewardItems.value : contributionItems.value,
 )
+
+const hasItems = computed(() => currentItems.value.length > 0)
 
 const router = useRouter()
 
@@ -52,10 +52,101 @@ function onOpenRecord(item: PoolRewardItem): void {
     query: { id: item.id },
   })
 }
+
+async function fetchJackpotList(reset = false): Promise<void> {
+  if (loading.value || loadingMore.value) {
+    return
+  }
+
+  if (!reset && !hasMore.value) {
+    return
+  }
+
+  if (reset) {
+    loading.value = true
+    listOffset.value = 0
+    hasMore.value = true
+  } else {
+    loadingMore.value = true
+  }
+
+  try {
+    const currentOffset = reset ? 0 : listOffset.value
+    const response = await postOrgClubJackpotTemplateListApi({
+      limit: PAGE_SIZE,
+      offset: currentOffset,
+    })
+
+    if (Number(response.code) !== 0) {
+      const message = typeof response.msg === 'string' ? response.msg : '加载奖池记录失败'
+      throw new Error(message)
+    }
+
+    const rawItems = Array.isArray(response.data?.items) ? response.data.items : []
+    const mappedItems = rawItems.map((item: OrgClubJackpotTemplateListDataItem, index: number) => {
+      const tags: string[] = []
+      if (item.nlh_switch === 1) tags.push('NLH')
+      if (item.plo_switch === 1) tags.push('PLO')
+      if (item.six_plus_switch === 1) tags.push('6+')
+      const jpAmount = item.gold ? formatUC(item.gold) : '0'
+      return {
+        id: String(item.id ?? index),
+        name: item.name ?? 'Game Name',
+        jpAmount,
+        tags,
+      }
+    })
+
+    if (reset) {
+      rewardItems.value = mappedItems
+      contributionItems.value = mappedItems
+    } else {
+      rewardItems.value = [...rewardItems.value, ...mappedItems]
+      contributionItems.value = [...contributionItems.value, ...mappedItems]
+    }
+
+    listOffset.value = currentOffset + rawItems.length
+    hasMore.value = rawItems.length >= PAGE_SIZE
+  } catch {
+    if (reset) {
+      rewardItems.value = []
+      contributionItems.value = []
+      hasMore.value = false
+    }
+  } finally {
+    if (reset) {
+      loading.value = false
+    } else {
+      loadingMore.value = false
+    }
+  }
+}
+
+function loadNextPage(): void {
+  if (!loading.value && !loadingMore.value && hasMore.value) {
+    void fetchJackpotList(false)
+  }
+}
+
+function onPageScroll(event: Event): void {
+  const target = event.target as HTMLElement | null
+  if (!target) {
+    return
+  }
+
+  const remain = target.scrollHeight - (target.scrollTop + target.clientHeight)
+  if (remain <= 80) {
+    loadNextPage()
+  }
+}
+
+onMounted(() => {
+  void fetchJackpotList(true)
+})
 </script>
 
 <template>
-  <div class="page-shell pool-reward-page" :style="backgroundStyle">
+  <div class="page-shell pool-reward-page" :style="backgroundStyle" @scroll="onPageScroll">
     <HeaderBack :title="'奖池记录'" />
 
     <section class="pool-body">
@@ -89,7 +180,7 @@ function onOpenRecord(item: PoolRewardItem): void {
           @keydown.enter="onOpenRecord(item)"
           @keydown.space.prevent="onOpenRecord(item)"
         >
-          <div class="card-bg" :style="{ backgroundImage: `url(${cardBgUrl})` }"></div>
+          <div class="card-bg"></div>
 
           <div class="jackpot-badge">
             <span>JACKPOT</span>
@@ -99,7 +190,7 @@ function onOpenRecord(item: PoolRewardItem): void {
             <p class="game-name">{{ item.name }}</p>
             <div class="pool-tags">
               <span v-for="tag in item.tags" :key="`${item.id}-${tag}`" class="tag-item">
-                <img class="tag-icon" :src="iconTag" alt="" aria-hidden="true" />
+                <i class="tag-icon"></i>
                 {{ tag }}
               </span>
             </div>
@@ -108,10 +199,22 @@ function onOpenRecord(item: PoolRewardItem): void {
           <span class="jp-badge">JP {{ item.jpAmount }}</span>
         </li>
       </ul>
+
+      <div v-if="!hasItems && loading" class="pool-empty">
+        <img class="empty-icon" :src="emptyStateIcon" alt="" />
+        <p>加载中...</p>
+      </div>
+      <div v-else-if="!hasItems && !loading" class="pool-empty">
+        <img class="empty-icon" :src="emptyStateIcon" alt="" />
+        <p>暂无数据</p>
+      </div>
+
+      <p v-if="hasItems && loadingMore" class="pool-loading-more">加载更多...</p>
+      <p v-else-if="hasItems && !hasMore" class="pool-loading-more">没有更多了</p>
     </section>
 
     <div class="footer-action">
-      <button type="button" class="create-btn">Create Jackpot Table</button>
+      <button type="button" class="create-btn">添加Jackpot奖池模板</button>
     </div>
   </div>
 </template>
@@ -120,31 +223,7 @@ function onOpenRecord(item: PoolRewardItem): void {
 .pool-reward-page {
   position: relative;
   height: 100dvh;
-  padding: 0 0.4267rem calc(2.88rem + env(safe-area-inset-bottom));
-  overflow-x: hidden;
-  overflow-y: auto;
   background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.page-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  backdrop-filter: blur(0.9733rem);
-  background: rgba(0, 0, 0, 0.2);
-  mix-blend-mode: luminosity;
-  z-index: 0;
-}
-
-:deep(.page-back-header) {
-  position: relative;
-  z-index: 2;
-  padding-left: 0;
-  padding-right: 0;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
-  min-height: 1.46rem;
 }
 
 .pool-body {
@@ -206,11 +285,11 @@ function onOpenRecord(item: PoolRewardItem): void {
   width: 8.7753rem;
   height: 2.2551rem;
   border-radius: 2.0848rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.1);
-  background-color: rgba(170, 170, 170, 0.1);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  border: 0.0267rem solid rgba(255, 255, 255, 0.96);
+  background:
+    radial-gradient(74% 96% at 42% 42%, rgba(104, 75, 255, 0.3) 0%, rgba(104, 75, 255, 0) 62%),
+    rgba(5, 13, 231, 0.6);
+  backdrop-filter: blur(0.1098rem);
   overflow: hidden;
 }
 
@@ -232,7 +311,7 @@ function onOpenRecord(item: PoolRewardItem): void {
   border: 0.0253rem solid rgba(242, 242, 242, 0.4);
   box-shadow: 0.0913rem 0.1141rem 0.0913rem rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(0.2811rem);
-  background: #3a95dc;
+  background: #7a45d6;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -248,15 +327,11 @@ function onOpenRecord(item: PoolRewardItem): void {
 
 .pool-info {
   position: absolute;
-  left: 1.7533rem;
+  left: 1.4533rem;
   top: 50%;
   transform: translateY(-50%);
   width: 4.1rem;
   z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.1496rem;
 }
 
 .game-name {
@@ -265,10 +340,10 @@ function onOpenRecord(item: PoolRewardItem): void {
   line-height: 0.83;
   color: #f9f9f9;
   font-weight: 700;
-  white-space: nowrap;
 }
 
 .pool-tags {
+  margin-top: 0.1493rem;
   display: flex;
   align-items: center;
   gap: 0.3467rem;
@@ -277,22 +352,20 @@ function onOpenRecord(item: PoolRewardItem): void {
 .tag-item {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 0.1333rem;
   font-size: 0.2933rem;
   line-height: normal;
   color: #ffffff;
   font-weight: 700;
   letter-spacing: 0.0117rem;
-  white-space: nowrap;
 }
 
 .tag-icon {
-  display: inline-block;
   width: 0.24rem;
   height: 0.2667rem;
-  object-fit: contain;
-  flex-shrink: 0;
+  display: inline-block;
+  background: linear-gradient(180deg, rgba(190, 232, 255, 0.95), rgba(136, 188, 255, 0.85));
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
 }
 
 .jp-badge {
@@ -305,7 +378,7 @@ function onOpenRecord(item: PoolRewardItem): void {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, #69beff 0%, #3a95dc 100%);
+  background: linear-gradient(180deg, #69ffe6, #079a8b);
   font-size: 0.2951rem;
   font-weight: 700;
   line-height: 1;
@@ -315,6 +388,34 @@ function onOpenRecord(item: PoolRewardItem): void {
 
 .pool-card:active {
   opacity: 0.92;
+}
+
+/* Empty state */
+.pool-empty {
+  padding: 2rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.empty-icon {
+  width: 1.248rem;
+  height: 1.56rem;
+  object-fit: contain;
+}
+
+.pool-empty p {
+  margin: 0.24rem 0 0;
+  font-size: 0.3734rem;
+  color: rgba(225, 234, 248, 0.88);
+  text-align: center;
+}
+
+.pool-loading-more {
+  margin: 0.42rem 0 0;
+  text-align: center;
+  color: rgba(225, 234, 248, 0.88);
+  font-size: 0.32rem;
 }
 
 .footer-action {
@@ -330,17 +431,15 @@ function onOpenRecord(item: PoolRewardItem): void {
 .create-btn {
   width: 100%;
   height: 1.4716rem;
-  border: 0;
-  border-radius: 3.3333rem;
-  font-size: 0.4175rem;
-  font-weight: 500;
-  color: #78e490;
-  background: linear-gradient(
-    125.59deg,
-    rgba(255, 255, 255, 0.1) 21.1%,
-    rgba(230, 230, 230, 0.1) 71.4%
-  );
-  backdrop-filter: blur(0.0133rem);
+  border: 0.0358rem solid rgba(242, 242, 242, 0.8);
+  border-radius: 1.082rem;
+  font-size: 0.48rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(168.09deg, #05e7ae 7.55%, #027a5c 71.92%);
+  box-shadow:
+    inset 0 0.04rem 0.2rem rgba(255, 255, 255, 0.25),
+    0 0.16rem 0.36rem rgba(0, 120, 100, 0.45);
 }
 
 @media (max-width: 360px) {

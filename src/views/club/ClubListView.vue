@@ -16,8 +16,7 @@ import imgClubRoleIcon from '@/assets/icons/member_icon.png'
 import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shield.png'
 import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.png'
 import imgQuickActionAlliance from '@/assets/images/club_qa_data_board_alliance.png'
-import imgBalance from '@/assets/icons/icon_balance.png'
-import imgChips from '@/assets/icons/icon_chips.png'
+import iconBoxClubT from '@/assets/icons/icon_box_club_t.png'
 import imgClubBannerFigma from '@/assets/images/club_banner_bg.png'
 import imgClubLogo from '@/assets/images/club_default_logo.png'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
@@ -27,8 +26,9 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import { readClubListCache, writeClubListCache } from '@/utils/userClubListCache'
+import { t } from '@/i18n'
 
-type QuickActionKind = 'create-club' | 'club-panel' | 'create-union'
+type QuickActionKind = 'create-club' | 'club-panel' | 'create-union' | 'club-career'
 
 interface QuickActionItem {
   id: number
@@ -66,8 +66,8 @@ const fallbackBanners = [imgClubBannerFigma]
 const isChannelPackage = isChannelPackageHost()
 
 const quickActions: QuickActionItem[] = [
-  { id: 1, title: '创建俱乐部', kind: 'create-club' },
-  { id: 2, title: '创建俱乐部', kind: 'club-panel', hidden: true },
+  { id: 1, title: t('UIClub_CreateClub'), kind: 'create-club' },
+  { id: 2, title: t('PageMineClubCareer'), kind: 'club-career' },
 ]
 
 const clubList = computed<ClubCardItem[]>(() => {
@@ -157,7 +157,7 @@ function onQuickAction(itemId: number): void {
   }
 
   if (itemId === 2) {
-    showFailToast('功能开发中')
+    void router.push('/mine/career/club')
     return
   }
   void router.push('/club/create')
@@ -392,6 +392,9 @@ onMounted(() => {
               aria-hidden="true"
             />
           </template>
+          <template v-else-if="item.kind === 'club-career'">
+            <img class="icon-board-chart" :src="iconBoxClubT" width="61" height="61" alt="" />
+          </template>
         </div>
         <span class="action-text" :class="`action-text--${item.kind}`">{{ item.title }}</span>
       </button>
@@ -598,7 +601,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.24rem;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.24rem);
+  // padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top));
 }
 
 .search-row {

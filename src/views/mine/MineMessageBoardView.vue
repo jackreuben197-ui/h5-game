@@ -55,12 +55,7 @@ async function submitMessage(): Promise<void> {
         placeholder="在此输入您的反馈"
       ></textarea>
 
-      <button
-        class="submit-btn"
-        type="button"
-        :disabled="submitting"
-        @click="submitMessage"
-      >
+      <button class="submit-btn" type="button" :disabled="submitting" @click="submitMessage">
         {{ submitting ? '提交中...' : '提交' }}
       </button>
     </div>
@@ -79,7 +74,7 @@ async function submitMessage(): Promise<void> {
 .board-page {
   display: flex;
   flex-direction: column;
-  padding-top: calc(env(safe-area-inset-top) + 0.46rem);
+  // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: calc(env(safe-area-inset-bottom) + 0.7rem);
 }
 

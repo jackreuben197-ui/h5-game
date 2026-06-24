@@ -4,17 +4,17 @@ import { showFailToast, showSuccessToast, showToast } from 'vant'
 import { useRoute, useRouter } from 'vue-router'
 import type {
   OrgClubJackpotTemplateCreateBlindsSetting,
-  OrgClubJackpotTemplateCreateJackpotSetting,
+  OrgClubJackpotTemplateSetting,
 } from '@/api/models/org'
 import {
   postOrgClubJackpotTemplateCreateApi,
   postOrgClubJackpotTemplateUpdateApi,
   postOrgJackpotTemplateInfoApi,
+  postOrgClubJackpotRechargeApi,
 } from '@/api/org'
+import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import iconChecked from '@/assets/icons/ic_jackpot_checked.svg'
-import iconUnchecked from '@/assets/icons/ic_jackbot_unchecked.svg'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -27,18 +27,12 @@ interface OptionItem {
   sb: number
 }
 
-interface CardItem {
-  rank: string
-  suit: string
-  red: boolean
-}
-
 interface PoolSettingItem {
   id: string
   title: string
   checked: boolean
   ratio: string
-  cards: CardItem[]
+  cards: { rank: string; suit: 'c' | 'h' | 'd' | 's' }[]
 }
 
 interface BlindConfigForm {
@@ -78,16 +72,48 @@ const editJackpotId = computed(() => Number(route.query.id) || 0)
 const loading = ref(false)
 const jackpotName = ref('Jackpot')
 const jackpotGoldYuan = ref('0')
+const showRechargeKeypad = ref(false)
+
+function onRecharge(): void {
+  showRechargeKeypad.value = true
+}
+
+async function onRechargeSubmit(amount: number): Promise<void> {
+  if (amount <= 0) {
+    showToast('请输入有效金额')
+    return
+  }
+  loading.value = true
+  try {
+    const response = await postOrgClubJackpotRechargeApi({
+      jackpot_id: editJackpotId.value,
+      amount: Math.round(amount * 100),
+    })
+    if (Number(response.code) !== 0) {
+      const message = typeof response.msg === 'string' ? response.msg : '充值失败'
+      throw new Error(message)
+    }
+    showSuccessToast('充值成功')
+    // Refresh template info to update the displayed amount
+    await fetchTemplateInfo()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '充值失败'
+    showFailToast(message)
+  } finally {
+    loading.value = false
+    showRechargeKeypad.value = false
+  }
+}
 
 const gameModes = ['NLH', 'PLO', '6+', 'Bombpot', 'AOF'] as const
 type GameMode = (typeof gameModes)[number]
-type StakeLevel = 'Micro' | 'Small' | 'Medium' | 'Large'
+type StakeLevel = '微' | '小' | '中' | '大'
 
 const JACKPOT_BLIND_CLASSIFY_RULES = [
-  { level: 'Micro', blindType: 1, sbValues: [10, 20, 30, 40, 50] },
-  { level: 'Small', blindType: 2, sbValues: [100, 200, 300, 400, 500] },
-  { level: 'Medium', blindType: 3, sbValues: [1000, 1500, 2000, 2500, 3000, 5000] },
-  { level: 'Large', blindType: 4, sbValues: [10000, 20000, 30000, 50000, 100000] },
+  { level: '微', blindType: 1, sbValues: [10, 20, 30, 40, 50] },
+  { level: '小', blindType: 2, sbValues: [100, 200, 300, 400, 500] },
+  { level: '中', blindType: 3, sbValues: [1000, 1500, 2000, 2500, 3000, 5000] },
+  { level: '大', blindType: 4, sbValues: [10000, 20000, 30000, 50000, 100000] },
 ] as const
 
 function getJackpotBlindTypeBySb(sb: number): number {
@@ -122,7 +148,7 @@ const modeEnabled = ref<Record<GameMode, boolean>>({
 })
 
 const activeGameMode = ref<GameMode>('NLH')
-const activeStakeLevel = ref<StakeLevel>('Micro')
+const activeStakeLevel = ref<StakeLevel>('微')
 
 function toSafeNumber(value: unknown): number {
   const num = Number(value)
@@ -166,19 +192,47 @@ function createDefaultBlindConfig(sb: number): BlindConfigForm {
   }
 }
 
-const POOL_CARDS: CardItem[] = [
-  { rank: '7', suit: '♣', red: false },
-  { rank: '3', suit: '♦', red: true },
-  { rank: '6', suit: '♣', red: false },
-  { rank: '3', suit: '♦', red: true },
-  { rank: '6', suit: '♣', red: false },
-]
-
 function createDefaultPoolSettings(): PoolSettingItem[] {
   return [
-    { id: 'royal', title: 'Royal Flush', checked: false, ratio: '', cards: POOL_CARDS },
-    { id: 'straight', title: 'Straight flush', checked: false, ratio: '', cards: POOL_CARDS },
-    { id: 'four', title: 'Four of a kind', checked: false, ratio: '', cards: POOL_CARDS },
+    {
+      id: 'royal',
+      title: '皇家同花顺',
+      checked: false,
+      ratio: '',
+      cards: [
+        { rank: 'A', suit: 'h' },
+        { rank: 'K', suit: 'h' },
+        { rank: 'Q', suit: 'h' },
+        { rank: 'J', suit: 'h' },
+        { rank: '10', suit: 'h' },
+      ],
+    },
+    {
+      id: 'straight',
+      title: '同花顺',
+      checked: false,
+      ratio: '',
+      cards: [
+        { rank: '1', suit: 's' },
+        { rank: '2', suit: 's' },
+        { rank: '3', suit: 's' },
+        { rank: '4', suit: 's' },
+        { rank: '5', suit: 's' },
+      ],
+    },
+    {
+      id: 'four',
+      title: '四条',
+      checked: false,
+      ratio: '',
+      cards: [
+        { rank: 'A', suit: 'h' },
+        { rank: 'A', suit: 'd' },
+        { rank: 'A', suit: 'c' },
+        { rank: 'A', suit: 's' },
+        { rank: 'K', suit: 'h' },
+      ],
+    },
   ]
 }
 
@@ -190,7 +244,7 @@ function createDefaultStakeConfig(level: StakeLevel): StakeConfigForm {
   })
 
   return {
-    selectedSbs: level === 'Micro' ? [rule.sbValues[0]] : [],
+    selectedSbs: level === '微' ? [rule.sbValues[0]] : [],
     blindConfigs,
   }
 }
@@ -260,7 +314,7 @@ function toggleModeEnabled(mode: GameMode): void {
   modeEnabled.value[mode] = !modeEnabled.value[mode]
 }
 
-function buildModeSetting(modeConfig: ModeConfigForm): OrgClubJackpotTemplateCreateJackpotSetting {
+function buildModeSetting(modeConfig: ModeConfigForm): OrgClubJackpotTemplateSetting {
   const blindSetting: OrgClubJackpotTemplateCreateBlindsSetting[] = []
 
   JACKPOT_BLIND_CLASSIFY_RULES.forEach((rule) => {
@@ -306,7 +360,7 @@ function normalizeSelectedSb(stakeConfig: StakeConfigForm, level: StakeLevel): v
   const rule = stakeRuleByLevel[level]
   const validSbs = rule.sbValues as readonly number[]
   const uniqueSbs = Array.from(new Set(stakeConfig.selectedSbs))
-  stakeConfig.selectedSbs = uniqueSbs.filter((sb) => validSbs.includes(sb))
+  stakeConfig.selectedSbs = uniqueSbs.filter((sb: number) => validSbs.includes(sb))
 }
 
 function getLevelByBlindData(
@@ -317,7 +371,7 @@ function getLevelByBlindData(
   const sbCent = Math.round(toSafeNumber(sbValue) * multiplier)
   const fromBlindType = stakeLevelByBlindType[toSafeNumber(blindTypeValue)]
   const fromSb = stakeLevelByBlindType[getJackpotBlindTypeBySb(sbCent)]
-  return fromBlindType ?? fromSb ?? 'Micro'
+  return fromBlindType ?? fromSb ?? '微'
 }
 
 function detectSbMultiplier(blindSetting: Record<string, unknown>[]): number {
@@ -508,7 +562,7 @@ async function fetchTemplateInfo(): Promise<void> {
       throw new Error(typeof response.msg === 'string' ? response.msg : '获取模板信息失败')
     }
 
-    const data = response.data?.item as Record<string, unknown> | undefined
+    const data = response.data?.item
     if (!data) return
 
     if (typeof data.name === 'string') {
@@ -563,15 +617,12 @@ onMounted(() => {
             <i class="icon-info" aria-hidden="true">i</i>
           </div>
           <div class="summary-amount-input">
-            <span>¥</span>
-            <input
-              v-model="jackpotGoldYuan"
-              class="inline-input"
-              inputmode="decimal"
-              placeholder="0"
-            />
+            <span class="amount-display">{{ jackpotGoldYuan || '0' }}</span>
           </div>
         </div>
+        <button v-if="isEditMode" type="button" class="recharge-btn" @click="onRecharge">
+          注入
+        </button>
       </div>
 
       <div class="glass-card section-card">
@@ -596,7 +647,6 @@ onMounted(() => {
               :checked="modeEnabled[activeGameMode]"
               @change="toggleModeEnabled(activeGameMode)"
             />
-            <img class="check-icon" :src="modeEnabled[activeGameMode] ? iconChecked : iconUnchecked" aria-hidden="true" />
             <span>{{ activeGameMode }} 开关</span>
           </label>
         </div>
@@ -606,7 +656,7 @@ onMounted(() => {
         <div class="rows-wrap">
           <div class="config-row config-row--stack">
             <div class="row-label">
-              <img class="check-icon" :src="iconChecked" aria-hidden="true" />
+              <i class="dot dot--active"></i>
               <span>玩法奖池比例</span>
               <i class="icon-info" aria-hidden="true">i</i>
             </div>
@@ -616,7 +666,7 @@ onMounted(() => {
                 v-model="currentModeConfig.gamePlayRatio"
                 class="inline-input"
                 inputmode="decimal"
-                placeholder="Enter here"
+                placeholder="0"
               />
               <span>%</span>
             </div>
@@ -640,6 +690,22 @@ onMounted(() => {
 
         <div class="divider"></div>
 
+        <div class="blind-list blind-list--inline">
+          <label
+            v-for="option in blindOptions"
+            :key="option.id"
+            class="blind-item blind-item--checkbox"
+          >
+            <input
+              class="blind-checkbox"
+              type="checkbox"
+              :checked="option.selected"
+              @change="onBlindOptionClick(option)"
+            />
+            <span>{{ option.label }}</span>
+          </label>
+        </div>
+
         <div
           v-for="option in selectedBlindOptions"
           :key="`config-${activeStakeLevel}-${option.sb}`"
@@ -650,7 +716,7 @@ onMounted(() => {
           <div class="rows-wrap rows-wrap--gap-sm">
             <div class="config-row config-row--stack">
               <div class="row-label">
-                <img class="check-icon" :src="iconChecked" aria-hidden="true" />
+                <i class="dot dot--active"></i>
                 <span>{{ option.label }}</span>
                 <i class="icon-info" aria-hidden="true">i</i>
               </div>
@@ -659,7 +725,7 @@ onMounted(() => {
                   v-model="getBlindConfigBySb(option.sb).prizeRatio"
                   class="inline-input"
                   inputmode="decimal"
-                  placeholder="Enter here"
+                  placeholder="0"
                 />
                 <span>%</span>
               </div>
@@ -667,11 +733,15 @@ onMounted(() => {
 
             <div class="config-row">
               <div class="row-label row-label--small">
-                <img
-                  class="check-icon"
-                  :src="getBlindConfigBySb(option.sb).contributePotChecked ? iconChecked : iconUnchecked"
-                  @click="getBlindConfigBySb(option.sb).contributePotChecked = !getBlindConfigBySb(option.sb).contributePotChecked"
-                />
+                <i
+                  class="dot"
+                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).contributePotChecked }"
+                  @click="
+                    getBlindConfigBySb(option.sb).contributePotChecked = !getBlindConfigBySb(
+                      option.sb,
+                    ).contributePotChecked
+                  "
+                ></i>
                 <span>底池触发jackpot贡献</span>
               </div>
               <div class="value-input value-input--narrow">
@@ -679,18 +749,21 @@ onMounted(() => {
                   v-model="getBlindConfigBySb(option.sb).contributePotLimit"
                   class="inline-input"
                   inputmode="decimal"
-                  placeholder="BB amount"
+                  placeholder="0"
                 />
               </div>
             </div>
 
             <div class="config-row">
               <div class="row-label row-label--small">
-                <img
-                  class="check-icon"
-                  :src="getBlindConfigBySb(option.sb).awardBetChecked ? iconChecked : iconUnchecked"
-                  @click="getBlindConfigBySb(option.sb).awardBetChecked = !getBlindConfigBySb(option.sb).awardBetChecked"
-                />
+                <i
+                  class="dot"
+                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).awardBetChecked }"
+                  @click="
+                    getBlindConfigBySb(option.sb).awardBetChecked = !getBlindConfigBySb(option.sb)
+                      .awardBetChecked
+                  "
+                ></i>
                 <span>投入底池触发jackpot奖励</span>
               </div>
               <div class="value-input value-input--narrow">
@@ -698,18 +771,21 @@ onMounted(() => {
                   v-model="getBlindConfigBySb(option.sb).awardBetLimit"
                   class="inline-input"
                   inputmode="decimal"
-                  placeholder="BB amount"
+                  placeholder="0"
                 />
               </div>
             </div>
 
             <div class="config-row">
               <div class="row-label row-label--small">
-                <img
-                  class="check-icon"
-                  :src="getBlindConfigBySb(option.sb).awardOtherChecked ? iconChecked : iconUnchecked"
-                  @click="getBlindConfigBySb(option.sb).awardOtherChecked = !getBlindConfigBySb(option.sb).awardOtherChecked"
-                />
+                <i
+                  class="dot"
+                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).awardOtherChecked }"
+                  @click="
+                    getBlindConfigBySb(option.sb).awardOtherChecked = !getBlindConfigBySb(option.sb)
+                      .awardOtherChecked
+                  "
+                ></i>
                 <span>奖励全桌</span>
               </div>
               <div class="value-input value-input--narrow">
@@ -717,7 +793,7 @@ onMounted(() => {
                   v-model="getBlindConfigBySb(option.sb).awardOtherRatio"
                   class="inline-input"
                   inputmode="decimal"
-                  placeholder="BB amount"
+                  placeholder="0"
                 />
               </div>
             </div>
@@ -733,11 +809,15 @@ onMounted(() => {
           <div class="rows-wrap rows-wrap--gap-sm">
             <div class="config-row">
               <div class="row-label">
-                <img
-                  class="check-icon"
-                  :src="getBlindConfigBySb(option.sb).profitTriggerChecked ? iconChecked : iconUnchecked"
-                  @click="getBlindConfigBySb(option.sb).profitTriggerChecked = !getBlindConfigBySb(option.sb).profitTriggerChecked"
-                />
+                <i
+                  class="dot"
+                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).profitTriggerChecked }"
+                  @click="
+                    getBlindConfigBySb(option.sb).profitTriggerChecked = !getBlindConfigBySb(
+                      option.sb,
+                    ).profitTriggerChecked
+                  "
+                ></i>
                 <span>盈利触发</span>
               </div>
               <div class="value-input value-input--narrow">
@@ -745,18 +825,22 @@ onMounted(() => {
                   v-model="getBlindConfigBySb(option.sb).profitTriggerLimit"
                   class="inline-input"
                   inputmode="decimal"
-                  placeholder="BB amount"
+                  placeholder="0"
                 />
               </div>
             </div>
 
             <div class="config-row">
               <div class="row-label">
-                <img
-                  class="check-icon"
-                  :src="getBlindConfigBySb(option.sb).jackpotContribChecked ? iconChecked : iconUnchecked"
-                  @click="getBlindConfigBySb(option.sb).jackpotContribChecked = !getBlindConfigBySb(option.sb).jackpotContribChecked"
-                />
+                <i
+                  class="dot"
+                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).jackpotContribChecked }"
+                  @click="
+                    getBlindConfigBySb(option.sb).jackpotContribChecked = !getBlindConfigBySb(
+                      option.sb,
+                    ).jackpotContribChecked
+                  "
+                ></i>
                 <span>Jackpot 贡献</span>
               </div>
               <div class="value-input value-input--narrow">
@@ -764,18 +848,22 @@ onMounted(() => {
                   v-model="getBlindConfigBySb(option.sb).jackpotContribValue"
                   class="inline-input"
                   inputmode="decimal"
-                  placeholder="BB amount"
+                  placeholder="0"
                 />
               </div>
             </div>
 
             <div class="config-row">
               <div class="row-label">
-                <img
-                  class="check-icon"
-                  :src="getBlindConfigBySb(option.sb).profitPercentChecked ? iconChecked : iconUnchecked"
-                  @click="getBlindConfigBySb(option.sb).profitPercentChecked = !getBlindConfigBySb(option.sb).profitPercentChecked"
-                />
+                <i
+                  class="dot"
+                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).profitPercentChecked }"
+                  @click="
+                    getBlindConfigBySb(option.sb).profitPercentChecked = !getBlindConfigBySb(
+                      option.sb,
+                    ).profitPercentChecked
+                  "
+                ></i>
                 <span>触发盈利 (%)</span>
               </div>
               <div class="value-input value-input--narrow">
@@ -790,62 +878,40 @@ onMounted(() => {
             </div>
           </div>
         </div>
-
-        <div class="blind-list">
-          <label
-            v-for="option in blindOptions"
-            :key="option.id"
-            class="blind-item blind-item--checkbox"
-          >
-            <input
-              class="blind-checkbox"
-              type="checkbox"
-              :checked="option.selected"
-              @change="onBlindOptionClick(option)"
-            />
-            <img class="check-icon" :src="option.selected ? iconChecked : iconUnchecked" aria-hidden="true" />
-            <span>{{ option.label }}</span>
-          </label>
-        </div>
       </div>
 
       <div class="glass-card pool-card">
-        <p class="pool-settings-title">Pool Settings</p>
+        <h3>彩池设置</h3>
 
-        <template v-for="(item, index) in currentModeConfig.poolSettings" :key="item.id">
-          <div v-if="index > 0" class="divider"></div>
-          <div class="pool-row">
-            <div class="pool-left">
-              <div class="row-label">
-                <img
-                  class="check-icon"
-                  :src="item.checked ? iconChecked : iconUnchecked"
-                  @click="item.checked = !item.checked"
-                />
-                <span>{{ item.title }}</span>
-              </div>
-
-              <div class="hand-cards">
-                <div
-                  v-for="(card, ci) in item.cards"
-                  :key="ci"
-                  class="play-card"
-                  :class="card.red ? 'play-card--red' : 'play-card--black'"
-                >
-                  <span class="play-card__rank">{{ card.rank }}</span>
-                  <span class="play-card__suit">{{ card.suit }}</span>
-                </div>
-              </div>
+        <div v-for="item in currentModeConfig.poolSettings" :key="item.id" class="pool-row">
+          <div class="pool-left">
+            <div class="row-label">
+              <i
+                class="dot"
+                :class="{ 'dot--active': item.checked }"
+                @click="item.checked = !item.checked"
+              ></i>
+              <span>{{ item.title }}</span>
             </div>
 
-            <div class="pool-right">
-              <span>Award ratio (%)</span>
-              <div class="value-input value-input--narrow">
-                <input v-model="item.ratio" class="inline-input" placeholder="BB amount" />
-              </div>
+            <div class="hand-cards">
+              <PokerCard
+                v-for="(card, idx) in item.cards"
+                :key="`show-${idx}`"
+                :rank="card.rank"
+                :suit="card.suit"
+                size="0.6rem"
+              />
             </div>
           </div>
-        </template>
+
+          <div class="pool-right">
+            <span>奖励比例 (%)</span>
+            <div class="value-input value-input--narrow">
+              <input v-model="item.ratio" class="inline-input" placeholder="0" />
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -860,6 +926,17 @@ onMounted(() => {
         {{ loading ? '提交中...' : '确定' }}
       </button>
     </div>
+
+    <NumericKeypad
+      :open="showRechargeKeypad"
+      :allow-decimal="true"
+      :max="100000000"
+      title="注入金额"
+      confirm-text="确认"
+      :show-input-area="true"
+      @close="showRechargeKeypad = false"
+      @submit="onRechargeSubmit"
+    />
   </div>
 </template>
 
@@ -867,22 +944,7 @@ onMounted(() => {
 .jackpot-create-page {
   position: relative;
   height: 100dvh;
-  padding: 0 0.3733rem calc(2.0267rem + env(safe-area-inset-bottom));
-  overflow-x: hidden;
-  overflow-y: auto;
   background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.page-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.9733rem);
-  mix-blend-mode: luminosity;
-  pointer-events: none;
-  z-index: 0;
 }
 
 :deep(.page-back-header) {
@@ -941,8 +1003,8 @@ onMounted(() => {
 
 .glass-card {
   border-radius: 0.4328rem;
-  background: linear-gradient(103.95deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
-  backdrop-filter: blur(0.004rem);
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(0.0043rem);
 }
 
 .summary-card {
@@ -985,10 +1047,33 @@ onMounted(() => {
   min-width: 3.2rem;
 }
 
+.summary-amount-input .amount-display {
+  text-align: left;
+  font-size: inherit;
+  font-weight: inherit;
+  flex: 1;
+}
+
+.recharge-btn {
+  flex-shrink: 0;
+  height: 1.2rem;
+  padding: 0.2rem 0.662rem;
+  border-radius: 0.8rem;
+  border: 0;
+  background: linear-gradient(157.77deg, #05e7ae 7.55%, #027a5c 71.92%);
+  color: #fff;
+  font-size: 0.4rem;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
 .summary-amount-input .inline-input {
   text-align: left;
   font-size: inherit;
   font-weight: inherit;
+  flex: 1;
 }
 
 .section-card {
@@ -1000,13 +1085,13 @@ onMounted(() => {
 }
 
 .section-card--dense {
-  gap: 0.3733rem;
+  gap: 0.32rem;
 }
 
 .segment-row {
   height: 1.04rem;
   border-radius: 0.8rem;
-  background: rgba(27, 27, 30, 0.4);
+  background: rgba(255, 255, 255, 0.2);
   display: grid;
   align-items: center;
   padding: 0.0267rem;
@@ -1030,8 +1115,9 @@ onMounted(() => {
 }
 
 .segment-btn--active {
-  border: 0;
-  background: rgba(249, 249, 249, 0.5);
+  border: 0.0133rem solid #fff;
+  background: rgba(255, 255, 255, 0.17);
+  backdrop-filter: blur(0.4533rem);
 }
 
 .mode-switch-wrap {
@@ -1049,18 +1135,8 @@ onMounted(() => {
 }
 
 .mode-switch-checkbox {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.check-icon {
   width: 0.4rem;
   height: 0.4rem;
-  object-fit: contain;
-  flex-shrink: 0;
-  cursor: pointer;
 }
 
 .divider {
@@ -1075,7 +1151,7 @@ onMounted(() => {
 }
 
 .rows-wrap--gap-sm {
-  gap: 0.24rem;
+  gap: 0.16rem;
 }
 
 .config-row {
@@ -1123,7 +1199,8 @@ onMounted(() => {
 .value-input {
   height: 0.9291rem;
   border-radius: 1.5519rem;
-  background: rgba(27, 27, 30, 0.6);
+  background: rgba(255, 255, 255, 0.38);
+  mix-blend-mode: soft-light;
   padding: 0 0.304rem;
   color: #fff;
   font-size: 0.3716rem;
@@ -1131,7 +1208,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.1943rem;
+  gap: 0.1333rem;
 }
 
 .value-input--narrow {
@@ -1176,10 +1253,8 @@ onMounted(() => {
 }
 
 .blind-checkbox {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
+  width: 0.4rem;
+  height: 0.4rem;
 }
 
 .blind-config-panel {
@@ -1195,13 +1270,12 @@ onMounted(() => {
   gap: 0.2134rem;
 }
 
-.pool-settings-title {
+.pool-card h3 {
   margin: 0;
   font-size: 0.4392rem;
-  line-height: normal;
+  line-height: 1;
   color: #fff;
   font-weight: 500;
-  white-space: nowrap;
 }
 
 .pool-row {
@@ -1224,40 +1298,23 @@ onMounted(() => {
   gap: 0.0865rem;
 }
 
-.play-card {
+.card {
   width: 0.5549rem;
-  height: 0.8324rem;
-  border-radius: 0.876rem;
-  border: 0.0068rem solid rgba(255, 255, 255, 0.8);
-  background: linear-gradient(165.16deg, rgb(251, 251, 251) 2.45%, rgb(230, 227, 227) 92.49%);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 0.04rem;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-
-.play-card__rank {
-  font-size: 0.2933rem;
+  height: 0.8323rem;
+  border-radius: 0.1867rem;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.208rem;
   font-weight: 700;
-  line-height: 1;
 }
 
-.play-card__suit {
-  font-size: 0.2667rem;
-  line-height: 1;
-  align-self: flex-end;
+.card.black {
+  color: #111;
 }
 
-.play-card--black .play-card__rank,
-.play-card--black .play-card__suit {
-  color: #171717;
-}
-
-.play-card--red .play-card__rank,
-.play-card--red .play-card__suit {
+.card.red {
   color: #fa2b4b;
 }
 
@@ -1302,12 +1359,8 @@ onMounted(() => {
 }
 
 .action-btn--confirm {
-  border: 0;
-  border-radius: 3.3333rem;
-  background: linear-gradient(109.57deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
-  backdrop-filter: blur(0.0133rem);
-  color: #78e490;
-  font-size: 0.4175rem;
+  border: 0.0133rem solid rgba(242, 242, 242, 0.8);
+  background: linear-gradient(157.77deg, #05e7ae 7.55%, #027a5c 71.92%);
 
   &:disabled {
     opacity: 0.5;

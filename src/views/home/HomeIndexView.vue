@@ -769,7 +769,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 0.24rem;
-  padding: 0 0.4rem 3rem;
+  padding: 0 0.4rem 2.3rem;
   background: transparent;
   min-height: max-content;
   box-sizing: border-box;
@@ -1023,7 +1023,8 @@ onBeforeUnmount(() => {
 .game-scroll-card {
   flex-shrink: 0;
   width: 2.95rem;
-  height: 3.91rem;
+  // 同时兜底窄高(14PM 932)与窄矮(SE 667):用 vh 做陡峭斜率,clamp 在两端各自落到 min/max。
+  height: clamp(2.8rem, calc(25vh - 65px), 3.91rem);
   border-radius: 0.37rem;
   overflow: hidden;
   position: relative;

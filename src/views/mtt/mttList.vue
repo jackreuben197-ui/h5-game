@@ -510,7 +510,7 @@ function handleOpenCustomerService() {
   <div class="mtt-list-page themeType2" @back="handleBack">
     <div class="bg-overlay"></div>
 
-    <HeaderBack :title="t('UIHomeMttArea')">
+    <HeaderBack :title="t('UIHomeMttArea')" extra-padding>
       <template #right>
         <div class="action-wrap">
           <TopActionButton
@@ -601,8 +601,7 @@ function handleOpenCustomerService() {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
+  background: radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
     radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
     radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
 }

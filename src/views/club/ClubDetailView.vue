@@ -20,7 +20,7 @@ import type {
   OrgClubSearchByIdResponseData,
 } from '@/api/models/org'
 import imgClubCover from '@/assets/images/default_avatar_for_club.png'
-import imgBalance from '@/assets/icons/icon_balance.png'
+import imgBalance from '@/assets/icons/icon_credit_chip.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgPeople from '@/assets/icons/member_icon_redesigned.svg'
@@ -184,7 +184,9 @@ function formatDate(value?: string): string {
     return value
   }
 
-  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
+  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(
+    date.getDate(),
+  ).padStart(2, '0')}`
 }
 
 function toSafeNumber(value: unknown): number {
@@ -1865,8 +1867,7 @@ onMounted(async () => {
   border: 0.0255rem solid rgba(242, 242, 242, 0.4);
   background: linear-gradient(121deg, rgba(0, 0, 0, 0.2) 3%, rgba(0, 0, 0, 0.38) 89%);
   backdrop-filter: blur(1.20216rem);
-  box-shadow:
-    0 0 0.22981rem rgba(0, 0, 0, 0.85) inset,
+  box-shadow: 0 0 0.22981rem rgba(0, 0, 0, 0.85) inset,
     0.05672rem 0.11344rem 0.45908rem rgba(242, 242, 242, 0.5) inset,
     0.09192rem 0.11491rem 0.18384rem rgba(0, 0, 0, 0.28);
   color: #f9f9f9;
@@ -1879,13 +1880,10 @@ onMounted(async () => {
   padding: 0.42rem;
   border-radius: 0.97rem;
   border: 0.025rem solid rgba(255, 255, 255, 0.38);
-  background:
-    linear-gradient(126deg, rgba(142, 142, 142, 0.6) 0%, rgba(72, 72, 72, 0.92) 100%),
+  background: linear-gradient(126deg, rgba(142, 142, 142, 0.6) 0%, rgba(72, 72, 72, 0.92) 100%),
     rgba(30, 30, 30, 0.65);
-  box-shadow:
-    0.09rem 0.11rem 0.18rem rgba(0, 0, 0, 0.25),
-    inset 0.05rem 0.1rem 0.4rem rgba(242, 242, 242, 0.25),
-    inset 0 0 0.23rem rgba(0, 0, 0, 0.55);
+  box-shadow: 0.09rem 0.11rem 0.18rem rgba(0, 0, 0, 0.25),
+    inset 0.05rem 0.1rem 0.4rem rgba(242, 242, 242, 0.25), inset 0 0 0.23rem rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(0.4rem);
 }
 

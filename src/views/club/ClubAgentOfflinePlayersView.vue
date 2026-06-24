@@ -10,12 +10,13 @@ import {
 import type { ClubAgentUserListRecord, OrgMemberListRecord } from '@/api/models/org'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
-import imgAvatar from '@/assets/images/default_avatar_for_club.png'
+import imgAvatar from '@/assets/images/default_avatar.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
-import imgBalance from '@/assets/icons/icon_balance.png'
+import imgBalance from '@/assets/icons/icon_credit_chip.png'
 import imgSearch from '@/assets/icons/club_search.svg'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { formatUC } from '@/utils/roomVisibility'
 
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -134,6 +135,11 @@ async function loadDownlineMembers(): Promise<void> {
 }
 
 async function searchPlayers(): Promise<void> {
+  if (listMode.value === 'members') {
+    // Local filtering on downlineRows, no API call
+    return
+  }
+
   const search = keyword.value.trim()
   if (!search) {
     searchedRows.value = []
@@ -188,7 +194,13 @@ function toggleChecked(userId: number): void {
 }
 
 const displayedRows = computed<PlayerCard[]>(() => {
+  const search = keyword.value.trim().toLowerCase()
   if (listMode.value === 'members') {
+    if (search) {
+      return downlineRows.value.filter(
+        (item) => item.name.toLowerCase().includes(search) || item.uid.includes(search),
+      )
+    }
     return downlineRows.value
   }
 
@@ -287,7 +299,7 @@ onMounted(() => {
         <article
           v-for="row in displayedRows"
           :key="`${row.isDownline ? 'd' : 's'}-${row.userId}`"
-          class="glass card"
+          class="member-card"
         >
           <button
             v-if="listMode === 'edit'"
@@ -295,14 +307,44 @@ onMounted(() => {
             :class="{ on: isChecked(row.userId) }"
             @click="toggleChecked(row.userId)"
           ></button>
-          <img :src="row.avatar" :alt="row.name" />
-          <div class="meta">
-            <p>{{ row.name }}</p>
-            <span>ID {{ row.uid }}</span>
-            <div class="assets">
-              <b><img :src="imgChips" alt="" />联盟币 {{ row.uc }}</b>
-              <b><img :src="imgBalance" alt="" />免审额 {{ row.credit }}/{{ row.creditLimit }}</b>
-              <b><img :src="imgDiamond" alt="" />钻石 {{ row.diamonds }}</b>
+          <div class="glass card" :class="{ 'card-check': listMode === 'edit' }">
+            <div class="member-main">
+              <div class="member-left">
+                <img class="member-avatar" :src="row.avatar" :alt="`${row.name}头像`" />
+                <div class="member-base">
+                  <button type="button" class="member-name">
+                    {{ row.name }}
+                  </button>
+                  <p class="member-id-row">
+                    <span class="id-pill">ID</span>
+                    <span>{{ row.uid }}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="member-data-strip">
+              <div class="data-item">
+                <p class="data-label">
+                  <img :src="imgChips" alt="" aria-hidden="true" />
+                  <span>UC</span>
+                </p>
+                <p class="data-value">{{ formatUC(row.uc) }}</p>
+              </div>
+
+              <div class="data-item">
+                <p class="data-label">
+                  <img :src="imgBalance" alt="" aria-hidden="true" />
+                  <span>免审额</span>
+                </p>
+                <p class="data-value">{{ row.credit }}/{{ row.creditLimit }}</p>
+              </div>
+              <div class="data-item">
+                <p class="data-label">
+                  <img :src="imgDiamond" alt="" aria-hidden="true" />
+                  <span>钻石</span>
+                </p>
+                <p class="data-value">{{ row.diamonds }}</p>
+              </div>
             </div>
           </div>
         </article>
@@ -358,7 +400,7 @@ onMounted(() => {
 }
 
 .glass {
-  border-radius: figma-rem(170.596);
+  border-radius: 1.1rem;
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(figma-rem(6));
 }
@@ -435,10 +477,81 @@ onMounted(() => {
 
 .card {
   min-height: figma-rem(77.882);
-  padding: figma-rem(14.671) figma-rem(13.613);
-  display: flex;
+  padding: 0.2rem 0.36rem;
   align-items: center;
   gap: figma-rem(8.64);
+  clear: right;
+  float: right;
+  min-width: 100%;
+  &.card-check {
+    min-width: 90%;
+  }
+}
+
+.member-card {
+  position: relative;
+}
+
+.member-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.24rem;
+}
+
+.member-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32095rem;
+  min-width: 0;
+}
+
+.member-avatar {
+  width: 1.03614rem;
+  height: 1.03614rem;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.member-base {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25338rem;
+  min-width: 0;
+}
+
+.member-name {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font-size: 0.30522rem;
+  line-height: 1;
+  font-weight: 700;
+  color: #fff;
+}
+
+.member-id-row {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.06552rem;
+  font-size: 0.25661rem;
+  line-height: 1;
+  color: rgba(249, 249, 249, 0.92);
+}
+
+.id-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0.50208rem;
+  height: 0.30976rem;
+  border-radius: 0.075rem;
+  font-size: 0.21595rem;
+  background: rgba(255, 255, 255, 0.3);
+  color: #fff;
 }
 
 .check {
@@ -448,6 +561,8 @@ onMounted(() => {
   border-radius: 50%;
   background: transparent;
   flex: 0 0 auto;
+  float: left;
+  margin-top: 1rem;
 }
 
 .check.on {
@@ -455,8 +570,8 @@ onMounted(() => {
 }
 
 .card img {
-  width: figma-rem(55.882);
-  height: figma-rem(56.218);
+  width: 1rem;
+  height: 1rem;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -518,11 +633,56 @@ onMounted(() => {
   min-height: figma-rem(55.184);
   border-radius: figma-rem(40.576);
   color: #fff;
-  background: linear-gradient(168deg, rgba(85, 243, 41, 1) 8%, rgba(62, 173, 6, 1) 72%);
+  background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
   font-size: figma-rem(18.985);
 }
 
 .save:disabled {
   opacity: 0.72;
+}
+
+.member-data-strip {
+  margin-top: 0.16064rem;
+  padding: 0.11824rem 0.58277rem;
+  border-radius: 1.44001rem;
+  background: rgba(34, 34, 34, 0.62);
+  backdrop-filter: blur(1.60643rem);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.21rem;
+  cursor: pointer;
+}
+
+.data-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.075rem;
+  min-width: 0;
+}
+
+.data-label,
+.data-value {
+  margin: 0;
+  font-size: 0.25703rem;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.data-label {
+  opacity: 0.7;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.045rem;
+}
+
+.data-label img {
+  width: 0.24rem;
+  height: 0.24rem;
+  object-fit: contain;
+}
+
+.data-value {
+  font-weight: 500;
+  white-space: nowrap;
 }
 </style>

@@ -57,7 +57,9 @@ function mapBackpackItem(row: PropUserPropListRecord, index: number): BackpackIt
   name = resolveTemplateTextByKey(name, getLocale()) || t(name) || name
   const count = toSafeNumber(row.prop_amount)
   const displayName = count > 0 ? `${name} *${count}` : name
-  const expire = resolveTimeLabel(row.end_time_str ?? row.expired_time_str ?? row.end_time ?? row.expired_time)
+  const expire = resolveTimeLabel(
+    row.end_time_str ?? row.expired_time_str ?? row.end_time ?? row.expired_time,
+  )
 
   return {
     id: String(row.id ?? row.prop_id ?? index + 1),
@@ -94,7 +96,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell mine-glass-page" :style="backgroundStyle">
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
       <section class="item-list">
@@ -118,7 +120,7 @@ onMounted(() => {
 .mine-glass-page {
   position: relative;
   height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 0.8rem;
+  padding: 0 0 0.8rem;
   color: #f3f3f3;
   background-size: cover;
   background-position: center;

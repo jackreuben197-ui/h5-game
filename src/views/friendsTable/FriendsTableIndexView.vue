@@ -12,6 +12,9 @@ import iconPeople from '@/assets/icons/icon_people.png'
 import iconNlh from '@/assets/icons/game_type_nlh.svg'
 import iconPlo from '@/assets/icons/game_type_plo.svg'
 import iconSixPlus from '@/assets/icons/game_type_6+.svg'
+import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
+import iconSquid from '@/assets/icons/table_icon_squid.png'
+import iconCritical from '@/assets/icons/table_icon_critical.png'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import { showGameToast } from '@/components/Toast'
 import { t } from '@/i18n'
@@ -459,6 +462,28 @@ function isVideoTable(room: FriendRoomListItem): boolean {
   return toSafeNumber(room.anti_cheat_type) === 3
 }
 
+interface FeatureIconItem {
+  key: 'mushroom' | 'squid' | 'critical'
+  src: string
+  alt: string
+}
+
+function getFeatureIcons(room: FriendRoomListItem): FeatureIconItem[] {
+  const result: FeatureIconItem[] = []
+  if (toSafeNumber(room.mushroom_mode) > 0) {
+    result.push({ key: 'mushroom', src: iconMushroom, alt: 'mushroom' })
+  }
+  if (toSafeNumber(room.squid_on) === 1) {
+    result.push({ key: 'squid', src: iconSquid, alt: 'squid' })
+  }
+  if (toSafeNumber(room.critical_hit) === 1) {
+    result.push({ key: 'critical', src: iconCritical, alt: 'critical' })
+  }
+  return result
+}
+function isParticipated(room: FriendRoomListItem): boolean {
+  return room.participation_status == 1
+}
 function getRoomSeatRatio(room: FriendRoomListItem): string {
   const seatCount = toSafeNumber(room.seat_count)
   const emptySeat = toSafeNumber(room.empty_seat, -1)
@@ -612,6 +637,14 @@ watch(
                 <div class="media-icons">
                   <img v-if="isAudioTable(room)" class="icon-media" :src="iconAudio" alt="" />
                   <img v-if="isVideoTable(room)" class="icon-media" :src="iconVideo" alt="" />
+                  <img
+                    v-for="item in getFeatureIcons(room)"
+                    :key="item.key"
+                    class="icon-feature"
+                    :src="item.src"
+                    :alt="item.alt"
+                  />
+                  <span v-if="isParticipated(room)" class="participated">参与过</span>
                 </div>
               </div>
             </div>
@@ -1062,6 +1095,17 @@ watch(
   object-fit: contain;
 }
 
+.icon-feature {
+  width: 0.6rem;
+  height: 0.6rem;
+  object-fit: contain;
+}
+.participated {
+  font-size: 0.23rem;
+  border-radius: 0.5rem;
+  padding: 0.053rem 0.16rem;
+  background-color: rgba($color: #000000, $alpha: 0.24);
+}
 .media-label {
   font-size: 0.24rem;
   font-family: 'HONOR Sans CN', sans-serif;

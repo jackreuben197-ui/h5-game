@@ -18,8 +18,7 @@ import { formatDateTime } from '@/utils/time'
 import { formatUC } from '@/utils/roomVisibility'
 import avatarDefault from '@/assets/images/default_avatar.png'
 import iconPeople from '@/assets/icons/icon_people.png'
-import iconBalance from '@/assets/icons/icon_balance.png'
-import iconChipRed from '@/assets/icons/icon_chip_red.png'
+import iconBalance from '@/assets/icons/icon_credit_chip.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { useGameStore } from '@/stores/game'
 
@@ -131,6 +130,32 @@ const shouldShowFloat = computed(() => !!gameStore.sessionToken && totalCount.va
 const pageBackgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
+
+// 拖动相关状态
+const floatPosition = ref({ top: '40%' })
+let isDragging = false
+let startY = 0
+let startTop = 0
+
+function onFloatPointerDown(event: PointerEvent): void {
+  isDragging = true
+  startY = event.clientY
+  const computedTop = floatPosition.value.top
+  startTop = parseFloat(computedTop) || 40
+  ;(event.currentTarget as HTMLElement)?.setPointerCapture(event.pointerId)
+}
+
+function onFloatPointerMove(event: PointerEvent): void {
+  if (!isDragging) return
+  const deltaY = event.clientY - startY
+  const percentageDelta = (deltaY / window.innerHeight) * 100
+  const newTop = Math.max(5, Math.min(95, startTop + percentageDelta))
+  floatPosition.value = { top: `${newTop}%` }
+}
+
+function onFloatPointerUp(): void {
+  isDragging = false
+}
 
 function formatTime(value: unknown): string {
   return formatDateTime(value, 'YYYY/M/D  HH:mm:ss')
@@ -256,6 +281,9 @@ function initTodoWsListener(): void {
 }
 
 onMounted(() => {
+  // 随机初始化垂直位置，避免多个悬浮窗重叠
+  floatPosition.value = { top: `${30 + Math.random() * 30}%` }
+
   initTodoWsListener()
   void fetchTodoAllInfo()
 })
@@ -267,8 +295,16 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-if="shouldShowFloat" class="todo-float-wrap">
-    <button class="todo-float-btn" type="button" @click="openPanel">
+  <div
+    v-if="shouldShowFloat"
+    class="todo-float-wrap"
+    :style="floatPosition"
+    @pointerdown="onFloatPointerDown"
+    @pointermove="onFloatPointerMove"
+    @pointerup="onFloatPointerUp"
+    @pointerleave="onFloatPointerUp"
+  >
+    <button class="todo-float-btn" type="button" @click.stop="openPanel">
       <span class="todo-float-text">消息验证</span>
       <span v-if="totalCount > 0" class="todo-float-count">{{ totalCount }}</span>
     </button>
@@ -325,8 +361,7 @@ onBeforeUnmount(() => {
 
               <div class="card-footer">
                 <img :src="iconPeople" alt="uc" />
-                <p>申请充值：{{ formatUcAmount(item.gold_num) }}</p>
-                <img class="card-footer__chip" :src="iconChipRed" alt="chip" />
+                <p>申请充值：{{ formatUcAmount(item.amount) }}</p>
               </div>
             </article>
           </section>
@@ -339,10 +374,15 @@ onBeforeUnmount(() => {
                 <p class="meta-time">{{ formatTime(item.create_time) }}</p>
                 <div class="meta-club">
                   <img
+                    v-if="item.sender_icon && item.sender_icon.search('https') > 0"
                     :src="item.sender_icon ? String(item.sender_icon) : avatarDefault"
                     alt="club"
                   />
-                  <span>{{ item.sender_name || '--' }}</span>
+                  <span>
+                    {{
+                      item.sender_name === 'FRIEND ROOM' ? item.room_name : item.sender_name || '--'
+                    }}
+                  </span>
                 </div>
               </div>
 
@@ -435,6 +475,8 @@ onBeforeUnmount(() => {
   right: -0.01rem;
   top: 40%;
   z-index: 120;
+  touch-action: none;
+  transition: top 0.15s ease-out;
 }
 
 .todo-float-btn {
@@ -446,7 +488,7 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #55F329;
+  background: linear-gradient(148deg, rgba(5, 231, 174, 0.59) 7.5%, rgba(2, 122, 92, 0.59) 71.9%);
   color: #fff;
   position: relative;
   box-shadow: 0 0.08rem 0.24rem rgba(0, 0, 0, 0.28);
@@ -689,12 +731,6 @@ onBeforeUnmount(() => {
     font-size: 0.355rem;
     line-height: 1.2;
     color: #f9f9f9;
-  }
-
-  .card-footer__chip {
-    width: 0.4rem;
-    height: 0.4rem;
-    margin-left: calc(0.1rem - 0.26rem);
   }
 }
 

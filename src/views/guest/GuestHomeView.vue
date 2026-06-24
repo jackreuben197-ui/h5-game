@@ -5,7 +5,6 @@ import { useLoginModalStore } from '@/stores/loginModal'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useCachedImage } from '@/utils/imageCache'
 import { computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 
 import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
@@ -14,7 +13,6 @@ import imgCowboy from '@/assets/images/minigame-newui/sg.svg'
 
 const loginModalStore = useLoginModalStore()
 const userInfoStore = useUserInfoStore()
-const router = useRouter()
 
 const clubBannerUrl = useCachedImage(
   () => userInfoStore.channelDefaultClub?.banner || homeHeaderFallback,
@@ -45,15 +43,7 @@ function notifyNotLoginRegister(): void {
   loginModalStore.open({ mode: 'register' })
 }
 
-// 小游戏专区对游客开放预览，进入具体游戏时再引导登录。
-function goToMinigame(): void {
-  void router.push('/minigame')
-}
-
-// 麻将专区（娱乐场：真人/电子/捕鱼）对游客开放预览，进入具体游戏时再引导登录。
-function goToCasino(): void {
-  void router.push('/casino')
-}
+// 游客点击「小游戏专区 / 娱乐场」卡片同样需要先登录，统一走登录弹窗，不再直接跳转预览页。
 
 onMounted(() => {
   void userInfoStore.ensureChannelDefaultClub()
@@ -198,7 +188,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="game-scroll-card game-card-minigame" @click="goToMinigame">
+        <div class="game-scroll-card game-card-minigame" @click="notifyNotLogin">
           <img class="zone-lg-bg" src="@/assets/icons/game_zone_minigame_lg.png" alt="小游戏" />
           <div class="zone-info">
             <div class="zone-header">
@@ -214,7 +204,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="game-scroll-card game-card-mahjong" @click="goToCasino">
+        <div class="game-scroll-card game-card-mahjong" @click="notifyNotLogin">
           <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
           <div class="zone-info">
             <div class="zone-header">
@@ -234,8 +224,7 @@ onMounted(() => {
             <span class="online-num"> {{ mahjongPlayersText }} </span>
           </div>
         </div>
-
-      </div>
+</div>
     </div>
 
     <!-- 5. 热门游戏 -->

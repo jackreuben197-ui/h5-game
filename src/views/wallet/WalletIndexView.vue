@@ -8,7 +8,6 @@ import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import SegmentedToggle from '@/views/wallet/components/SegmentedToggle.vue'
 import UserCard from '@/views/wallet/components/UserCard.vue'
 import GlassButton from '@/components/Button/GlassButton.vue'
-import BellButton from '@/components/Button/BellButton.vue'
 import PresetAmountGrid, { type Preset } from '@/views/wallet/components/PresetAmountGrid.vue'
 import PaymentMethodStrip, {
   type PaymentMethod,
@@ -79,84 +78,12 @@ const csChatProps = ref({
   orderData: null as any,
 })
 
-const activeCsOrder = computed(() => {
-  return activeTab.value === 0
-    ? walletStore.pendingCsRechargeOrder
-    : walletStore.pendingCsWithdrawOrder
-})
-
-const activeCsCount = computed(() => {
-  return activeTab.value === 0
-    ? walletStore.pendingCsRechargeCount
-    : walletStore.pendingCsWithdrawCount
-})
-
-const hasSeenRechargeNotification = ref(false)
-const hasSeenWithdrawNotification = ref(false)
-
-const currentHasSeen = computed(() => {
-  return activeTab.value === 0
-    ? hasSeenRechargeNotification.value
-    : hasSeenWithdrawNotification.value
-})
-
 let refreshInterval: any = null
 
 async function refreshPendingCsOrder() {
   // We keep this method for manual refreshes within this view (e.g. after cancel/submit)
   // but we will no longer run it on a 10s interval here as requested.
   await walletStore.refreshPendingCsOrder()
-}
-
-async function openCsChat() {
-  if (activeTab.value === 0) hasSeenRechargeNotification.value = true
-  else hasSeenWithdrawNotification.value = true
-
-  if (!activeCsOrder.value) return
-
-  const order = activeCsOrder.value
-  const qrCode =
-    (order as any).qrcode || (order as any).qr_code || (order as any).pay_type_qr_code || ''
-  const result = {
-    order_no: order.order_no,
-    gold_num: order.gold_num,
-    pay_price: order.pay_price,
-    order: {
-      order_no: order.order_no,
-      amount: order.pay_price,
-      gold_num: order.gold_num,
-    },
-    usdt_address: {
-      address: order.pay_type_address || '',
-      qr_code: qrCode,
-      name: (order as any).pay_type_name || '客服撮合',
-    },
-  }
-
-  try {
-    const channelRes = await postChatSupportChannelListApi({
-      im_service_types: [4],
-      limit: 1,
-      offset: 0,
-    })
-
-    if (channelRes.code === 0 && channelRes.data?.list?.length) {
-      const channel = channelRes.data.list[0]
-      const orders =
-        activeTab.value === 0
-          ? walletStore.pendingCsRechargeOrders
-          : walletStore.pendingCsWithdrawOrders
-
-      csChatProps.value = {
-        tribeId: channel.tribe_id || 0,
-        supportUserId: channel.support_user_id || 0,
-        orderData: result,
-      }
-      csChatPopupOpen.value = true
-    }
-  } catch (e) {
-    console.error('Failed to open CS chat from bell', e)
-  }
 }
 
 async function checkUnfinishedOrders(showPopup = true) {
@@ -665,13 +592,6 @@ async function onUsdtSubmit(type: number) {
     <div class="wallet-screen__content-top">
       <div class="tabs-row">
         <SegmentedToggle v-model="activeTab" :tabs="tabLabels" />
-        <BellButton
-          v-if="activeCsOrder"
-          :count="1"
-          :show-badge="!currentHasSeen"
-          class="floating-bell"
-          @click="openCsChat"
-        />
       </div>
     </div>
 
@@ -839,13 +759,6 @@ async function onUsdtSubmit(type: number) {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.floating-bell {
-  position: fixed;
-  right: 0.03rem;
-  top: 2.4rem;
-  z-index: 1000;
 }
 
 .wallet-banner {

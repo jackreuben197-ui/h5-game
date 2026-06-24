@@ -222,10 +222,11 @@ function shortName(name?: string): string {
 <template>
   <article class="table-card" @click="handleClick">
     <div class="table-name">
-      {{ room.name || 'Poker Game Name' }}{{ showParticipation ? '（参与中）' : '' }}
+      {{ room.name || 'Poker Game Name' }}
     </div>
 
     <div class="table-main">
+      <span v-if="showParticipation" class="participation-status">参与过</span>
       <div v-if="featureIcons.length" class="feature-icons">
         <img
           v-for="item in featureIcons"
@@ -297,6 +298,16 @@ function shortName(name?: string): string {
   background: url('@/assets/images/game_list_card_bg.png') no-repeat center / 100% 100%;
   position: relative;
   // overflow: hidden;
+}
+.participation-status {
+  position: absolute;
+  top: 0.25rem;
+  left: 0.25rem;
+  font-size: 0.23rem;
+  border-radius: 0.5rem;
+  padding: 0.053rem 0.16rem;
+  background-color: rgba($color: #000000, $alpha: 0.24);
+  color: #fff;
 }
 
 /* 右上角玩法标识：仅显示 AOF / Mushroom / Squid / Critical。 */

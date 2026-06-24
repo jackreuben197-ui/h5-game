@@ -28,7 +28,7 @@
     "@silenthill/agreement-web": "git+ssh://git@github.com/kingofake/agreement-web.git#master",
     "@silenthill/h5-cc-i18n": "github:guysoup027/h5-cc-i18n",
     "google-protobuf": "^3.21.4",
-    "@silenthill/h5-cc-bridge": "git+ssh://git@github.com/soolary/h5-cc-bridge.git#main",
+    "@silenthill/h5-cc-bridge": "github:soolary/h5-cc-bridge#main",
     "html2canvas": "^1.4.1",
     "js-md5": "^0.8.3",
     "pinia": "^3.0.4",

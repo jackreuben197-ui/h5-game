@@ -17,7 +17,7 @@ import { decodeCard, parseHandRecordCards, type CardItem } from '@/api/models/re
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
 import { userCache } from '@/utils/userCache'
-import { USER_STORE_CAREER_DATA } from '@/utils/indexedDB'
+import { USER_STORE_CAREER } from '@/utils/indexedDB'
 import { t } from '@/i18n'
 
 const title = computed(() => t('adaptation10124'))
@@ -327,7 +327,7 @@ function setPersonalCache(mode: string, roomData: Record<string, unknown>): void
   })
   personalBestHandCache.set(mode, bestHand)
 
-  void career().put(USER_STORE_CAREER_DATA, careerKey('personal', mode), { rings, bestHand })
+  void career().put(USER_STORE_CAREER, careerKey('personal', mode), { rings, bestHand })
 }
 
 function setAllInCache(mode: string, stats: Record<string, unknown>): void {
@@ -380,7 +380,7 @@ function setAllInCache(mode: string, stats: Record<string, unknown>): void {
     },
   ]
   allInCache.set(mode, { summary, rates })
-  void career().put(USER_STORE_CAREER_DATA, careerKey('allin', mode), { summary, rates })
+  void career().put(USER_STORE_CAREER, careerKey('allin', mode), { summary, rates })
 }
 
 function setDeckCache(mode: string, records: unknown): void {
@@ -401,24 +401,25 @@ function setDeckCache(mode: string, records: unknown): void {
     }
   })
   deckCache.set(mode, rows)
-  if (rows.length > 0) void career().put(USER_STORE_CAREER_DATA, careerKey('deck', mode), rows)
+  if (rows.length > 0) void career().put(USER_STORE_CAREER, careerKey('deck', mode), rows)
 }
 
 // ── IDB helpers ──────────────────────────────────────────────────────────────
 // DB partition: gameStore.loginUserId (same key used across the whole app)
-// Store: USER_STORE_CAREER_DATA (one store for all 4 main tabs)
-// Key pattern: `${clubId}-${tab}-${subKey}`
-//   e.g. "456-deck-NLH", "456-personal-PLO", "0-allin-NLH", "0-opponent-week"
+// Store: USER_STORE_CAREER (战绩/数据共用，由 type 段区分)
+// Key pattern: `${clubId}_data_${tab}_${subKey}`
+//   e.g. "456_data_deck_NLH"、"0_data_allin_NLH"、"0_data_opponent_week_1"
+// 俱乐部 id 0 = 全部俱乐部；朋友桌生涯不进 data 这条线（friends 暂无数据子页）。
 
 function careerKey(tab: string, subKey: string): string {
   const clubId = userInfoStore.currentClub?.club_id || 0
-  return `${clubId}-${tab}-${subKey}`
+  return `${clubId}_data_${tab}_${subKey}`
 }
 
 function setOpponentCache(cacheKey: string, rows: ProfitRow[], finished: boolean): void {
   const entry = { rows, finished }
   opponentSortCache.set(cacheKey, entry)
-  void career().put(USER_STORE_CAREER_DATA, careerKey('opponent', cacheKey), entry)
+  void career().put(USER_STORE_CAREER, careerKey('opponent', cacheKey), entry)
 }
 
 function career() {
@@ -431,7 +432,7 @@ async function restoreAllFromIDB(): Promise<void> {
   // deck
   await Promise.all(
     deckModeTabs.map(async (mode) => {
-      const rows = await db.get<DeckRow[]>(USER_STORE_CAREER_DATA, careerKey('deck', mode))
+      const rows = await db.get<DeckRow[]>(USER_STORE_CAREER, careerKey('deck', mode))
       if (rows?.length && !deckCache.has(mode)) deckCache.set(mode, rows)
     }),
   )
@@ -442,7 +443,7 @@ async function restoreAllFromIDB(): Promise<void> {
       const entry = await db.get<{
         rings: typeof personalRings.value
         bestHand: (CardItem | null)[]
-      }>(USER_STORE_CAREER_DATA, careerKey('personal', mode))
+      }>(USER_STORE_CAREER, careerKey('personal', mode))
       if (entry && !personalCache.has(mode)) {
         personalCache.set(mode, entry.rings)
         personalBestHandCache.set(mode, entry.bestHand)
@@ -456,7 +457,7 @@ async function restoreAllFromIDB(): Promise<void> {
       const entry = await db.get<{
         summary: typeof allInSummary.value
         rates: typeof allInRateRows.value
-      }>(USER_STORE_CAREER_DATA, careerKey('allin', mode))
+      }>(USER_STORE_CAREER, careerKey('allin', mode))
       if (entry && !allInCache.has(mode)) allInCache.set(mode, entry)
     }),
   )
@@ -464,10 +465,10 @@ async function restoreAllFromIDB(): Promise<void> {
   // opponent (first page per period)
   await Promise.all(
     opponentPeriodTabs.map(async (period) => {
-      const cacheKey = `${period}-${opponentOrderAsc.value ? 1 : 2}`
+      const cacheKey = `${period}_${opponentOrderAsc.value ? 1 : 2}`
       if (opponentSortCache.has(cacheKey)) return
       const entry = await db.get<{ rows: ProfitRow[]; finished: boolean }>(
-        USER_STORE_CAREER_DATA,
+        USER_STORE_CAREER,
         careerKey('opponent', cacheKey),
       )
       if (entry) opponentSortCache.set(cacheKey, entry)
@@ -533,7 +534,9 @@ async function requestCombine(
   try {
     const response = await postMiscCombineApi(payload)
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadClubDataFail2'))
+      throw new Error(
+        typeof response.msg === 'string' ? response.msg : t('UIClub_LoadClubDataFail2'),
+      )
     }
     return (response.data as Record<string, unknown>) || {}
   } catch (error) {
@@ -576,7 +579,7 @@ async function loadOpponentPage(reset = false, silent = false): Promise<void> {
   opponentLoadingMore.value = true
   const offset = reset ? 0 : opponentRows.value.length
   const range = resolvePeriodRange(selectedOpponentPeriod.value)
-  const cacheKey = `${selectedOpponentPeriod.value}-${opponentOrderAsc.value ? 1 : 2}`
+  const cacheKey = `${selectedOpponentPeriod.value}_${opponentOrderAsc.value ? 1 : 2}`
 
   if (reset) {
     const cached = opponentSortCache.get(cacheKey)
@@ -640,7 +643,7 @@ async function loadOpponentPage(reset = false, silent = false): Promise<void> {
 }
 
 async function refreshOpponentSilently(): Promise<void> {
-  const cacheKey = `${selectedOpponentPeriod.value}-${opponentOrderAsc.value ? 1 : 2}`
+  const cacheKey = `${selectedOpponentPeriod.value}_${opponentOrderAsc.value ? 1 : 2}`
   const data = await requestCombine(
     {
       api_list: [31],
@@ -656,7 +659,7 @@ async function refreshOpponentSilently(): Promise<void> {
   )
   if (!data) return
   // Discard if user changed period/sort while request was in-flight
-  if (cacheKey !== `${selectedOpponentPeriod.value}-${opponentOrderAsc.value ? 1 : 2}`) return
+  if (cacheKey !== `${selectedOpponentPeriod.value}_${opponentOrderAsc.value ? 1 : 2}`) return
   const rivalResp = (data.user_rival_room_stats_resp ?? {}) as Record<string, unknown>
   const records = Array.isArray(rivalResp.records) ? rivalResp.records : []
   const newRows: ProfitRow[] = records.map((item, idx) => {
@@ -688,7 +691,7 @@ function toggleOpponentSort(): void {
   opponentOrderAsc.value = !opponentOrderAsc.value
   opponentFinished.value = false
 
-  const newKey = `${selectedOpponentPeriod.value}-${opponentOrderAsc.value ? 1 : 2}`
+  const newKey = `${selectedOpponentPeriod.value}_${opponentOrderAsc.value ? 1 : 2}`
   if (applyOpponentFromCache(newKey)) {
     void refreshOpponentSilently()
   } else {
@@ -834,7 +837,7 @@ async function loadOtherInitial(): Promise<void> {
     })
     opponentRows.value = newRows
     opponentFinished.value = newRows.length < OPPONENT_PAGE_SIZE
-    const opponentCacheKey = `${opponentPeriod}-${opponentOrderAsc.value ? 1 : 2}`
+    const opponentCacheKey = `${opponentPeriod}_${opponentOrderAsc.value ? 1 : 2}`
     setOpponentCache(opponentCacheKey, opponentRows.value, opponentFinished.value)
   }
   if (apiList.includes(32)) {
@@ -922,7 +925,7 @@ watch(selectedPersonalGame, () => {
 
 watch(selectedOpponentPeriod, () => {
   opponentFinished.value = false
-  const newKey = `${selectedOpponentPeriod.value}-${opponentOrderAsc.value ? 1 : 2}`
+  const newKey = `${selectedOpponentPeriod.value}_${opponentOrderAsc.value ? 1 : 2}`
   if (applyOpponentFromCache(newKey)) {
     void refreshOpponentSilently()
   } else {
@@ -965,7 +968,7 @@ onMounted(() => {
     applyCurrentAllIn()
     if (selectedMainTab.value === 'deck') applyCurrentDeck()
     if (opponentSortCache.size > 0) {
-      const cacheKey = `${selectedOpponentPeriod.value}-${opponentOrderAsc.value ? 1 : 2}`
+      const cacheKey = `${selectedOpponentPeriod.value}_${opponentOrderAsc.value ? 1 : 2}`
       const cached = opponentSortCache.get(cacheKey)
       if (cached) {
         opponentRows.value = cached.rows
@@ -1029,8 +1032,8 @@ onMounted(() => {
           </section>
 
           <section class="glass-pill title-pill">
-            <span>{{ t('UIClub_Text37') }}3{{ t('UIClub_Data') }}</span>
-            <img src="@/assets/icons/icon_chart_pie.svg" />
+            <span>近3个月内玩牌数据统计</span>
+            <img src="@/assets/icons/icon_data.svg" />
           </section>
 
           <section class="glass-card biggest-card">
@@ -1105,6 +1108,12 @@ onMounted(() => {
               </template>
             </GameTableColumn>
           </GameTable>
+          <div
+            v-if="!loading && !opponentLoadingMore && opponentRows.length === 0"
+            class="table-empty"
+          >
+            暂无数据
+          </div>
         </div>
       </template>
 
@@ -1125,7 +1134,7 @@ onMounted(() => {
 
           <div class="section-title">
             <span>近3个月内玩牌数据统计</span>
-            <img src="@/assets/icons/icon_chart_pie.svg" />
+            <img src="@/assets/icons/icon_data.svg" />
           </div>
 
           <div class="summary-list">
@@ -1139,7 +1148,7 @@ onMounted(() => {
         <section class="glass-card radar-card">
           <div class="section-title">
             <span>ALL IN 胜率分布图</span>
-            <img src="@/assets/icons/icon_chart_pie.svg" />
+            <img src="@/assets/icons/icon_data.svg" />
           </div>
           <div class="allin-radar-wrap">
             <RadarChart v-bind="radarPoints" />
@@ -1206,6 +1215,7 @@ onMounted(() => {
               </template>
             </GameTableColumn>
           </GameTable>
+          <div v-if="!loading && sortedDeckRows.length === 0" class="table-empty">暂无数据</div>
         </div>
       </template>
     </div>
@@ -1307,7 +1317,8 @@ onMounted(() => {
 
 .ring-donut {
   border-radius: 50%;
-  box-shadow: 0 0.06rem 0.18rem rgba(0, 0, 0, 0.2),
+  box-shadow:
+    0 0.06rem 0.18rem rgba(0, 0, 0, 0.2),
     /* 左上高光 */ inset 0.2px 0.2px 0px 0px rgba(255, 255, 255, 0.85);
 }
 
@@ -1437,6 +1448,7 @@ onMounted(() => {
 
 .opponent-table-wrap,
 .deck-table-wrap {
+  position: relative;
   border-radius: 0.6rem;
   border: 0.02rem solid rgba(249, 249, 249, 0.15);
   background: rgba(0, 0, 0, 0.2);
@@ -1444,6 +1456,21 @@ onMounted(() => {
   padding: 0.5rem 0.4rem 0.16rem;
   overflow: hidden;
   font-size: 0.28rem;
+}
+
+// 表格内无数据时显示的占位文本，覆盖在 GameTable 表体区域。
+.table-empty {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.4rem;
+  color: rgba(249, 249, 249, 0.7);
+  pointer-events: none;
 }
 :deep(.game-table__header-cell) {
   padding: 0.4rem 0.2rem;

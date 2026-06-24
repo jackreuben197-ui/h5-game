@@ -1,3 +1,6 @@
+import { t } from '@/i18n'
+import { getGameKindByRt, getWinRate } from '@/utils/texasEquity'
+
 export type ReplayActionTone = 'blue' | 'red' | 'black'
 export type ReplayMetricIcon = 'mushroom' | 'chips'
 export type CardSuit = 'c' | 'h' | 'd' | 's'
@@ -42,13 +45,24 @@ function formatNumber(value: unknown): string {
   return numeric.toLocaleString('en-US')
 }
 
+// 对齐客户端 TexasCardUtil.GetCardSuit / GetCardNumberSort：
+//   2..14  ♠ spade   rank = card           (2..14 → 2..10,J,Q,K,A)
+//   17..29 ♥ heart   rank = card - 15
+//   32..44 ♣ club    rank = card - 30
+//   47..59 ♦ diamond rank = card - 45
+// 落在 0/1/15/16/30/31/45/46 视为牌背（占位）。
 export function decodeCard(card: number): CardItem {
-  const rankMap = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
-  const suitMap: CardSuit[] = ['s', 'h', 'c', 'd']
-  const normalized = ((Math.floor(card) % 52) + 52) % 52
-  const rank = Number.isFinite(card) ? (rankMap[normalized % 13] ?? 'A') : '--'
-  const suit = suitMap[Math.floor(normalized / 13)] ?? 's'
-  return { rank, suit }
+  if (!Number.isFinite(card)) return { rank: '--', suit: 's' }
+  const value = Math.floor(card)
+  const rankByNumber = (n: number): string => {
+    if (n < 2 || n > 14) return '--'
+    return n <= 10 ? String(n) : (['J', 'Q', 'K', 'A'][n - 11] ?? '--')
+  }
+  if (value >= 2 && value <= 14) return { rank: rankByNumber(value), suit: 's' }
+  if (value >= 17 && value <= 29) return { rank: rankByNumber(value - 15), suit: 'h' }
+  if (value >= 32 && value <= 44) return { rank: rankByNumber(value - 30), suit: 'c' }
+  if (value >= 47 && value <= 59) return { rank: rankByNumber(value - 45), suit: 'd' }
+  return { rank: '--', suit: 's' }
 }
 
 export function parseReplayLike<T>(value: unknown): T | null {
@@ -83,75 +97,280 @@ function formatWinAmount(value: unknown): string {
   return toSafeNumber(value).toLocaleString('en-US')
 }
 
+// 对齐客户端 CardTypeUtil.GetCardTypeName：1..10 反向映射到 adaptation10062..10053。
 function cardTypeName(cardTypeRaw: unknown): string {
   const cardType = toSafeNumber(cardTypeRaw)
-  const map: Record<number, string> = {
-    1: '高牌',
-    2: '一对',
-    3: '两对',
-    4: '三条',
-    5: '顺子',
-    6: '同花',
-    7: '葫芦',
-    8: '四条',
-    9: '同花顺',
-    10: '皇家同花顺',
-  }
-  return '<font size="4">' + map[cardType] + '</font>'
+  if (cardType < 1 || cardType > 10) return ''
+  const langCode = 10063 - cardType
+  const name = t(`adaptation${langCode}`)
+  if (!name || name === `adaptation${langCode}`) return ''
+  return `<color=#F8C255FF>${name}</color>`
 }
 
-function getTexasWinDesc(replay: StatsReplayData, currentUserId?: number): string {
-  const players = replay.table?.pl ?? []
-  const results = [...(replay.result ?? [])]
-  if (!players.length || !results.length) return ''
+// 对齐客户端 ReplayMsgController.GetTexasWinDesc。
+// 关键“怪点”：result 与 table.pl 各自按 sn 排序后按 index 配对（不是按 sn 匹配），
+//   - 越界（result 比 pl 长，弃牌玩家不在 pl）的 result 直接跳过；
+//   - winName/winId 取自配对到的 pl，不是 result 本身。
+// 这两个表现都是客户端真实行为，不复现就会输出与客户端不一致的文案。
+export function getTexasWinDesc(replay: StatsReplayData, currentUserId?: number): string {
+  const resultsRaw = replay.result ?? []
+  const playersRaw = replay.table?.pl ?? []
+  if (!resultsRaw.length) return ''
 
-  const playerBySeat = players.reduce<Record<number, StatsReplayTablePlayer>>((acc, player) => {
-    const seat = toSafeNumber(player.sn)
-    if (seat > 0) acc[seat] = player
-    return acc
-  }, {})
+  const results = [...resultsRaw].sort(
+    (a, b) => toSafeNumber(a.sn) - toSafeNumber(b.sn),
+  )
+  const players = [...playersRaw].sort(
+    (a, b) => toSafeNumber(a.sn) - toSafeNumber(b.sn),
+  )
 
-  const winners = results.filter(item => toSafeNumber(item.win) > 0)
-  if (!winners.length) return ''
+  const procedure = replay.procedure
+  const isHaveSecondCard =
+    !!(procedure?.river?.scard && procedure.river.scard.length > 0) ||
+    !!(procedure?.flop?.scard && procedure.flop.scard.length > 0)
 
-  let selectedWinner = winners[0]
-  if (currentUserId) {
-    const self = winners.find(item => {
-      const seat = toSafeNumber(item.sn)
-      return toSafeNumber(playerBySeat[seat]?.uid) === currentUserId
-    })
-    if (self) {
-      selectedWinner = self
-    } else {
-      selectedWinner = winners.reduce((max, cur) => (toSafeNumber(cur.win) > toSafeNumber(max.win) ? cur : max), winners[0])
+  let curwin1 = 0
+  let wincount1 = 0
+  let selfIndex1 = -1
+  let cardType1 = 0
+  let winName1 = ''
+  let winId1 = -1
+
+  let curwin2 = 0
+  let wincount2 = 0
+  let cardType2 = 0
+  let winName2 = ''
+  let winId2 = -1
+
+  for (let i = 0; i < results.length; i++) {
+    const item = results[i]
+    if (i >= players.length) continue
+    const pl = players[i]
+
+    const win1 = computeWinAmount(item, procedure, 0, isHaveSecondCard)
+    if (win1 > 0) {
+      wincount1++
+      const plUid = toSafeNumber(pl.uid)
+      const plSn = toSafeNumber(pl.sn)
+      if (currentUserId && plUid === currentUserId) {
+        selfIndex1 = i
+        winName1 = String(pl.name ?? '')
+        winId1 = plSn
+        cardType1 = toSafeNumber(item.card_type)
+      } else if (win1 > curwin1 && selfIndex1 === -1) {
+        curwin1 = win1
+        winName1 = String(pl.name ?? '')
+        winId1 = plSn
+        cardType1 = toSafeNumber(item.card_type)
+      }
     }
-  } else {
-    selectedWinner = winners.reduce((max, cur) => (toSafeNumber(cur.win) > toSafeNumber(max.win) ? cur : max), winners[0])
+
+    if (isHaveSecondCard) {
+      const win2 = computeWinAmount(item, procedure, 1, isHaveSecondCard)
+      if (win2 > 0) {
+        wincount2++
+        const plUid = toSafeNumber(pl.uid)
+        const plSn = toSafeNumber(pl.sn)
+        if (currentUserId && plUid === currentUserId) {
+          winName2 = String(pl.name ?? '')
+          winId2 = plSn
+          cardType2 = toSafeNumber(item.card_type2)
+        } else if (win2 > curwin2 && selfIndex1 === -1) {
+          // 客户端这里就是判断 selfIndex1（不是 selfIndex2），完全照搬。
+          curwin2 = win2
+          winName2 = String(pl.name ?? '')
+          winId2 = plSn
+          cardType2 = toSafeNumber(item.card_type2)
+        }
+      }
+    }
   }
 
-  const winnerSeat = toSafeNumber(selectedWinner.sn)
-  const winnerName = String(playerBySeat[winnerSeat]?.name ?? `玩家${winnerSeat || ''}`)
-  const suffix = winners.length > 1 ? '...' : ''
+  if (wincount1 === 0 && wincount2 === 0) return ''
+
+  const deng1 = wincount1 > 1 ? '...' : ''
+  const deng2 = wincount2 > 1 ? '...' : ''
 
   const allActions = [
-    ...(replay.procedure?.ante?.pl ?? []),
-    ...(replay.procedure?.preflop?.pl ?? []),
-    ...(replay.procedure?.flop?.pl ?? []),
-    ...(replay.procedure?.turn?.pl ?? []),
-    ...(replay.procedure?.river?.pl ?? []),
+    ...(procedure?.ante?.pl ?? []),
+    ...(procedure?.preflop?.pl ?? []),
+    ...(procedure?.flop?.pl ?? []),
+    ...(procedure?.turn?.pl ?? []),
+    ...(procedure?.river?.pl ?? []),
   ]
-  const foldCount = allActions.filter(item => String(item.act ?? '').toLowerCase() === 'fold').length
-
-  if (foldCount >= (results.length - winners.length)) {
-    return `对手弃牌，${winnerName}获得胜利`
+  let foldCount = 0
+  const allinList: number[] = []
+  for (const action of allActions) {
+    const act = String(action.act ?? '').toLowerCase()
+    if (act === 'fold') foldCount++
+    else if (act === 'all in') {
+      const sn = toSafeNumber(action.sn)
+      if (sn > 0) allinList.push(sn)
+    }
   }
 
-  const typeName = cardTypeName(selectedWinner.card_type)
-  if (typeName) {
-    return `${winnerName}${suffix}以${typeName}牌型获得胜利`
+  let str2 = ''
+  if (isHaveSecondCard && winId2 !== -1) {
+    str2 = getSecondCardStr(replay, winId2, winName2, wincount2, foldCount, deng2, cardType2, allinList)
   }
 
-  return `${winnerName}${suffix}赢得最终胜利`
+  // UIPaipu_winTips_6：bad-beat 翻盘。判定使用 flop+turn 的胜率而非 river（与客户端一致）。
+  if (allinList.length >= 2 && winId1 !== -1 && allinList.includes(winId1)) {
+    const { nlh, sixPlus } = getGameKindByRt(toSafeNumber(replay.rt))
+    const publicCards: number[] = [
+      ...(procedure?.flop?.card ?? []),
+      ...(procedure?.turn?.card ?? []),
+    ]
+    const seatCards: Record<number, number[]> = {}
+    let seatCardsOk = true
+    for (const sn of allinList) {
+      const entry = results.find((r) => toSafeNumber(r.sn) === sn)
+      const cards = Array.isArray(entry?.card) ? entry?.card ?? [] : []
+      if (!cards.length || cards.every((c) => toSafeNumber(c) === 0)) {
+        // 弃牌玩家的 card 字段可能是 [0,0]，这里视为没有可用底牌，避免误算胜率。
+        seatCardsOk = false
+        break
+      }
+      seatCards[sn] = cards.map((c) => toSafeNumber(c))
+    }
+    if (seatCardsOk && publicCards.length > 0) {
+      const rates = getWinRate(publicCards, seatCards, nlh, sixPlus)
+      const winnerRate = rates[winId1] ?? 0
+      if (winnerRate < 1 / allinList.length) {
+        const ratePercent = `${Math.round(winnerRate * 100)}%`
+        const str = t('UIPaipu_winTips_6', winName1, ratePercent)
+        if (isHaveSecondCard && winId2 !== -1) return str + str2
+        return str
+      }
+    }
+  }
+
+  if (foldCount >= results.length - wincount1) {
+    return t('UIPaipu_winTips_4', winName1)
+  }
+
+  const typeName = cardTypeName(cardType1)
+  const str3 = t('UIPaipu_winTips_5', winName1, deng1, typeName)
+  if (isHaveSecondCard && winId2 !== -1) {
+    if (winId1 === -1) return str2
+    return str3 + str2
+  }
+  return str3
+}
+
+// 对齐客户端 Win()：累加该玩家在每条街的下注，识别保险；带二张牌时按 sp_detail 拆分输赢。
+// 没有保险/二张牌的简单场景下，结果就等价于 result.win。
+function computeWinAmount(
+  result: StatsReplayResult,
+  procedure: StatsReplayProcedure | undefined,
+  index: 0 | 1,
+  isHaveSecondCard: boolean,
+): number {
+  const seatID = toSafeNumber(result.sn)
+  let insure = 0
+  let handBet = 0
+  const streets: (StatsReplayProcedureCell | undefined)[] = [
+    procedure?.ante,
+    procedure?.preflop,
+    procedure?.flop,
+    procedure?.turn,
+    procedure?.river,
+  ]
+  for (let s = 0; s < streets.length; s++) {
+    const cell = streets[s]
+    const isRiver = s === streets.length - 1
+    if (!cell?.pl) continue
+    for (const action of cell.pl) {
+      if (toSafeNumber(action.sn) !== seatID) continue
+      if (String(action.act ?? '').toLowerCase() === 'insure') {
+        const ins = toSafeNumber(action.ins)
+        const amt = toSafeNumber(action.act_amt)
+        if (isRiver) {
+          if (ins === 0) insure -= amt
+          else insure += ins
+        } else {
+          if (ins === 0) insure += amt
+          else insure -= ins
+        }
+      }
+      handBet += toSafeNumber(action.act_amt)
+    }
+  }
+
+  const winAnte = toSafeNumber(result.win)
+  if (!isHaveSecondCard) {
+    return winAnte + (insure !== 0 ? insure : 0)
+  }
+
+  const spDetail = result.sp_detail ?? []
+  const isWin1 = spDetail[0]?.is_winner === true
+  const isWin2 = spDetail[1]?.is_winner === true
+  const win1 = toSafeNumber(spDetail[0]?.win)
+  const win2 = toSafeNumber(spDetail[1]?.win)
+  const fee = toSafeNumber(result.fee)
+  let fee1 = 0
+  let fee2 = 0
+  if (isWin1 && isWin2) {
+    if (fee !== 0 && win1 + win2 !== 0) {
+      fee1 = Math.floor((win1 * fee) / (win1 + win2))
+      fee2 = fee - fee1
+    }
+  } else {
+    fee1 = isWin1 ? fee : 0
+    fee2 = isWin2 ? fee : 0
+  }
+  const handBet1 = Math.floor(handBet / 2)
+  const handBet2 = handBet - handBet1
+  const winAnte2 = index === 0 ? win1 - fee1 - handBet1 : win2 - fee2 - handBet2
+  return winAnte2 + (insure !== 0 ? insure : 0)
+}
+
+// 二张牌（run-it-twice）的 bad-beat / 牌型胜利文案，结构对齐客户端 GetSecondCardStr。
+function getSecondCardStr(
+  replay: StatsReplayData,
+  winId: number,
+  winName: string,
+  wincount: number,
+  foldCount: number,
+  deng: string,
+  cardType: number,
+  allinList: number[],
+): string {
+  const procedure = replay.procedure
+  if (allinList.length >= 2 && winId !== -1 && allinList.includes(winId)) {
+    const publicCards: number[] = [
+      ...(procedure?.flop?.scard ?? []),
+      ...(procedure?.turn?.scard ?? []),
+      ...(procedure?.river?.scard ?? []),
+    ]
+    if (publicCards.length >= 5) {
+      const { nlh, sixPlus } = getGameKindByRt(toSafeNumber(replay.rt))
+      const seatCards: Record<number, number[]> = {}
+      let ok = true
+      for (const sn of allinList) {
+        const entry = (replay.result ?? []).find((r) => toSafeNumber(r.sn) === sn)
+        const cards = Array.isArray(entry?.card) ? entry?.card ?? [] : []
+        if (!cards.length || cards.every((c) => toSafeNumber(c) === 0)) {
+          ok = false
+          break
+        }
+        seatCards[sn] = cards.map((c) => toSafeNumber(c))
+      }
+      if (ok) {
+        const rates = getWinRate(publicCards, seatCards, nlh, sixPlus)
+        const rate = rates[winId] ?? 0
+        if (rate < 1 / allinList.length) {
+          const ratePercent = `${Math.round(rate * 100)}%`
+          return `\n${t('UIPaipu_winTips_6', winName, ratePercent)}`
+        }
+      }
+    }
+  }
+
+  const resultsCount = (replay.result ?? []).length
+  if (foldCount >= resultsCount - wincount) return ''
+  const typeName = cardTypeName(cardType)
+  return `\n${t('UIPaipu_winTips_5', winName, deng, typeName)}`
 }
 
 function getFantasyHighCardType(result: StatsReplayFantasyResult): number {

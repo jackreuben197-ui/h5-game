@@ -8,9 +8,6 @@ import RoomDataDetail from '@/components/RoomDataDetail/RoomDataDetail.vue'
 const route = useRoute()
 const router = useRouter()
 
-import { t } from '@/i18n'
-
-// 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
@@ -21,25 +18,24 @@ function toSafeNumber(value: unknown): number {
 }
 
 const roomId = computed(() => toSafeNumber(route.query.roomId))
-const matchId = computed(() => toSafeNumber(route.query.matchId))
 
 onMounted(() => {
-  if (!roomId.value && !matchId.value) {
-    showFailToast(t('UIClub_Text31') + ' roomId/matchId ' + t('UIClub_Text32'))
+  if (!roomId.value) {
+    showFailToast('缺少 roomId 参数')
     void router.back()
   }
 })
 </script>
 
 <template>
-  <div class="page-shell club-room-history-detail-bg" :style="backgroundStyle">
+  <div class="page-shell friends-data-detail-bg" :style="backgroundStyle">
     <HeaderBack :title="'数据详情'" />
-    <RoomDataDetail source="club" :room-id="roomId" :match-id="matchId" />
+    <RoomDataDetail source="friend" :room-id="roomId" />
   </div>
 </template>
 
 <style scoped lang="scss">
-.club-room-history-detail-bg {
+.friends-data-detail-bg {
   position: relative;
   height: 100dvh;
   background-size: cover;

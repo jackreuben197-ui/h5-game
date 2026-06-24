@@ -39,6 +39,8 @@ const props = withDefaults(
     confirmButtonText?: string
     confirmButtonDisabled?: boolean
     showFooter?: boolean
+    /** 是否显示卡片 box-shadow（含面板模式 ::after 的内阴影），默认 true */
+    showBoxShawdow?: boolean
     dialogWidth?: string
     cardMinHeight?: string
     bodyMaxHeight?: string
@@ -56,6 +58,7 @@ const props = withDefaults(
     confirmButtonText: t('adaptation10012'),
     confirmButtonDisabled: false,
     showFooter: true,
+    showBoxShawdow: true,
     dialogWidth: '9rem',
     cardMinHeight: '2rem',
     bodyMaxHeight: '12rem',
@@ -146,7 +149,11 @@ const bodyStyles = computed<StyleValue>(() => [
   >
     <!-- 完全自定义 dialog 内部内容 -->
     <template #default>
-      <div class="game-dialog__card" :style="cardStyles">
+      <div
+        class="game-dialog__card"
+        :class="{ 'game-dialog__card--no-shadow': !showBoxShawdow }"
+        :style="cardStyles"
+      >
         <!-- Title -->
         <div v-if="title || hasTitleSlotContent" class="game-dialog__title">
           <slot name="title">{{ title }}</slot>
@@ -215,7 +222,8 @@ const bodyStyles = computed<StyleValue>(() => [
   background-size: 100% auto;
   background-position: top center;
   background-repeat: no-repeat;
-  box-shadow: inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
+  box-shadow:
+    inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
     /* 左上高光 */ inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.85),
     inset 2px 2px 0px -2px rgba(255, 255, 255, 0.3),
     /* 右下高光 */ inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.85),
@@ -234,6 +242,10 @@ const bodyStyles = computed<StyleValue>(() => [
 
 .game-panel-dialog .game-dialog__card {
   background-color: transparent;
+}
+
+.game-dialog__card--no-shadow {
+  box-shadow: none !important;
 }
 
 .game-panel-dialog .game-dialog__card::before {
@@ -255,8 +267,10 @@ const bodyStyles = computed<StyleValue>(() => [
   z-index: 1;
   border-radius: inherit;
   background: rgba(8, 8, 8, 0.25);
-  box-shadow: inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
-    inset 0.5px 0.5px 0 0 rgba(255, 255, 255, 0.85), inset 2px 2px 0 -2px rgba(255, 255, 255, 0.3),
+  box-shadow:
+    inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
+    inset 0.5px 0.5px 0 0 rgba(255, 255, 255, 0.85),
+    inset 2px 2px 0 -2px rgba(255, 255, 255, 0.3),
     inset -0.5px -0.5px 0 0 rgba(255, 255, 255, 0.85),
     inset -2px -2px 0 -2px rgba(255, 255, 255, 0.3);
   pointer-events: none;

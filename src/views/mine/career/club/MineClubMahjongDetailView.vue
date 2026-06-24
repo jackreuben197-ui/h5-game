@@ -9,14 +9,6 @@ import { t } from '@/i18n'
 
 const title = computed(() => t('adaptation10217'))
 
-const router = useRouter()
-const route = useRoute()
-
-// 主容器背景图：全页面共用一张底图。
-const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
-}))
-
 interface SeatPlayer {
   name: string
   chips: string
@@ -28,13 +20,28 @@ interface PlayerResult {
   id: string
   name: string
   uid: string
-  buyIn: string
-  hands: string
-  vpip: string
-  profit: string
+  amount: string
+  selfDraw: string
+  catchWin: string
+  discardLose: string
+  concealedKong: string
+  exposedKong: string
 }
 
+const router = useRouter()
+const route = useRoute()
+
+// 主容器背景图：全页面共用一张底图。
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
 const loading = ref(false)
+const currentRoomId = ref(0)
+const detailTitle = ref('Hand Name')
+const detailSub = ref('ID: --')
+const detailTime = ref('--')
+const totalAmount = ref('+0')
 
 const seatPlayers = ref<SeatPlayer[]>([
   { name: 'Hanna', chips: '120', tag: t('UITexasGameEnding_richman') },
@@ -54,27 +61,25 @@ const playerResults = ref<PlayerResult[]>([
     id: 'p1',
     name: 'Player Name',
     uid: '11440454',
-    buyIn: '200',
-    hands: '123',
-    vpip: '7%',
-    profit: '+800',
+    amount: '+1200',
+    selfDraw: '20',
+    catchWin: '20',
+    discardLose: '20',
+    concealedKong: '20',
+    exposedKong: '20',
   },
   {
     id: 'p2',
     name: 'Player Name',
     uid: '11440454',
-    buyIn: '200',
-    hands: '123',
-    vpip: '7%',
-    profit: '+400',
+    amount: '-600',
+    selfDraw: '12',
+    catchWin: '8',
+    discardLose: '20',
+    concealedKong: '6',
+    exposedKong: '4',
   },
 ])
-
-const detailTitle = ref('Hand Name')
-const detailSub = ref('ID: --')
-const detailTime = ref('--')
-const totalProfit = ref('+0')
-const currentRoomId = ref(0)
 
 function toSafeNumber(value: unknown): number {
   const numeric = Number(value)
@@ -95,7 +100,7 @@ function extractRoomId(): number {
   return Number.isFinite(value) ? value : 0
 }
 
-async function fetchRecordDetail(): Promise<void> {
+async function fetchDetail(): Promise<void> {
   const roomId = extractRoomId()
   if (roomId <= 0) {
     return
@@ -112,15 +117,15 @@ async function fetchRecordDetail(): Promise<void> {
     )
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadDetailFail5'))
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadDetailFail4'))
     }
 
     const roomData = response.data?.room_data
-    const users = roomData?.user_list
-    const userList = Array.isArray(users) ? users : []
+    const usersRaw = roomData?.user_list
+    const users = Array.isArray(usersRaw) ? usersRaw : []
 
-    detailTitle.value = String(roomData?.game_room_name ?? 'Hand Name')
     currentRoomId.value = toSafeNumber(roomData?.room_id)
+    detailTitle.value = String(roomData?.game_room_name ?? 'Hand Name')
     detailSub.value = `ID: ${String(roomData?.room_id ?? '--')}`
     detailTime.value = `${String(roomData?.start_time ?? '--')} - ${String(
       roomData?.end_time ?? '--',
@@ -139,33 +144,34 @@ async function fetchRecordDetail(): Promise<void> {
       },
     ]
 
-    seatPlayers.value = userList.slice(0, 3).map((user, index) => ({
+    seatPlayers.value = users.slice(0, 3).map((user, index) => ({
       name: String(user.nick_name ?? `Player ${index + 1}`),
-      chips: toSafeNumber(user.bring_out ?? user.bring_in).toLocaleString('en-US'),
+      chips: toSafeNumber(user.finally_game_results ?? user.original_results).toLocaleString(
+        'en-US',
+      ),
       tag: index === 1 ? 'MVP' : undefined,
       highlight: index === 1,
     }))
 
-    playerResults.value = userList.map((user, index) => {
-      const result = toSafeNumber(user.finally_game_results ?? user.original_results)
-      return {
-        id: String(user.user_random_id ?? index + 1),
-        name: String(user.nick_name ?? 'Player Name'),
-        uid: String(user.user_random_id ?? '--'),
-        buyIn: toSafeNumber(user.bring_in).toLocaleString('en-US'),
-        hands: toSafeNumber(user.user_room_hand_num).toLocaleString('en-US'),
-        vpip: `${toSafeNumber(user.in_pool_cnt)}%`,
-        profit: formatSigned(result),
-      }
-    })
+    playerResults.value = users.map((user, index) => ({
+      id: String(user.user_random_id ?? index + 1),
+      name: String(user.nick_name ?? 'Player Name'),
+      uid: String(user.user_random_id ?? '--'),
+      amount: formatSigned(toSafeNumber(user.finally_game_results ?? user.original_results)),
+      selfDraw: String(toSafeNumber(user.mj_win_self_draw_count)),
+      catchWin: String(toSafeNumber(user.mj_win_discard_count)),
+      discardLose: String(toSafeNumber(user.mj_lose_discard_count)),
+      concealedKong: String(toSafeNumber(user.mj_concealed_kong_count)),
+      exposedKong: String(toSafeNumber(user.mj_exposed_kong_count)),
+    }))
 
     const total = playerResults.value.reduce(
-      (sum, item) => sum + toSafeNumber(item.profit.replace(/,/g, '')),
+      (sum, item) => sum + toSafeNumber(item.amount.replace(/,/g, '')),
       0,
     )
-    totalProfit.value = formatSigned(total)
+    totalAmount.value = formatSigned(total)
   } catch (error) {
-    const message = error instanceof Error ? error.message : t('UIClub_LoadDetailFail5')
+    const message = error instanceof Error ? error.message : t('UIClub_LoadDetailFail4')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -174,7 +180,7 @@ async function fetchRecordDetail(): Promise<void> {
 
 function goToHands(): void {
   void router.push({
-    path: '/mine/friends-record/hand',
+    path: '/mine/career/club/mahjong/hand',
     query: {
       room_id: currentRoomId.value > 0 ? String(currentRoomId.value) : undefined,
     },
@@ -182,7 +188,7 @@ function goToHands(): void {
 }
 
 onMounted(() => {
-  void fetchRecordDetail()
+  void fetchDetail()
 })
 </script>
 
@@ -214,7 +220,6 @@ onMounted(() => {
         <div class="hand-summary">
           <div class="name-line">
             <div>
-              <div class="title">Hand Name</div>
               <div class="title">{{ detailTitle }}</div>
               <div class="sub">{{ detailSub }}</div>
             </div>
@@ -232,27 +237,31 @@ onMounted(() => {
       <section class="glass-card result-section">
         <div class="section-head">
           <div>{{ t('UIClub_TableGame') }}</div>
-          <div class="total">{{ totalProfit }}</div>
+          <div class="total">{{ totalAmount }}</div>
         </div>
 
         <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
         <p v-else-if="!playerResults.length" class="list-status">{{ t('UIClub_NoData') }}</p>
 
         <article v-for="item in playerResults" :key="item.id" class="result-row" @click="goToHands">
-          <div class="left">
-            <div class="avatar small"></div>
-            <div>
-              <div class="name">{{ item.name }}</div>
-              <div class="sub">ID: {{ item.uid }}</div>
+          <div class="top">
+            <div class="left">
+              <div class="avatar small"></div>
+              <div>
+                <div class="name">{{ item.name }}</div>
+                <div class="sub">ID: {{ item.uid }}</div>
+              </div>
+            </div>
+            <div class="amount" :class="{ minus: item.amount.startsWith('-') }">
+              {{ item.amount }}
             </div>
           </div>
-          <div class="right">
-            <div class="profit">{{ item.profit }}</div>
-            <div class="sub-row">
-              <span>{{ t('UIMine_RecordItemsNormal_eodrjcHJ') }}:{{ item.buyIn }}</span>
-              <span>{{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}:{{ item.hands }}</span>
-              <span>{{ t('UIClub_Mlistinfo_rRyW4JkW') }}:{{ item.vpip }}</span>
-            </div>
+          <div class="stats-row">
+            <span>{{ t('UIMahjong_SelfDraw') }}:{{ item.selfDraw }}</span>
+            <span>{{ t('UIMahjong_WinDiscard') }}:{{ item.catchWin }}</span>
+            <span>{{ t('UIMahjong_LoseDiscard') }}:{{ item.discardLose }}</span>
+            <span>{{ t('UIMahjong_ConcealedKong') }}:{{ item.concealedKong }}</span>
+            <span>{{ t('UIMahjong_ExposedKong') }}:{{ item.exposedKong }}</span>
           </div>
         </article>
       </section>
@@ -321,136 +330,133 @@ onMounted(() => {
   .tag {
     margin-top: 0.08rem;
     display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 0.4rem;
-    height: 0.24rem;
-    border-radius: 0.12rem;
-    font-size: 0.2rem;
-    color: #fff;
-    background: rgba(255, 255, 255, 0.24);
+    padding: 0.02rem 0.14rem;
+    border-radius: 0.2rem;
+    background: rgba(255, 210, 120, 0.2);
+    color: #ffd977;
+    font-size: 0.24rem;
   }
 
   .name {
-    margin-top: 0.1rem;
-    font-size: 0.32rem;
+    margin-top: 0.09rem;
+    font-size: 0.28rem;
   }
 
   .chips {
-    margin-top: 0.06rem;
-    font-size: 0.34rem;
-    font-weight: 600;
+    margin-top: 0.02rem;
+    font-size: 0.3rem;
+    color: #f7e37f;
   }
 
   &.highlight {
     .avatar {
-      background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+      width: 1.3rem;
+      height: 1.3rem;
+      background: rgba(255, 255, 255, 0.62);
     }
   }
 }
 
 .hand-summary {
-  margin-top: 0.32rem;
+  margin-top: 0.26rem;
+  border-top: 0.02rem solid rgba(255, 255, 255, 0.16);
+  padding-top: 0.24rem;
 }
 
 .name-line {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-}
+  align-items: flex-end;
+  gap: 0.16rem;
 
-.title {
-  font-size: 0.38rem;
-  font-weight: 600;
-}
+  .title {
+    font-size: 0.44rem;
+  }
 
-.sub {
-  margin-top: 0.06rem;
-  font-size: 0.28rem;
-  color: rgba(255, 255, 255, 0.78);
-}
+  .sub {
+    margin-top: 0.06rem;
+    font-size: 0.3rem;
+    color: rgba(255, 255, 255, 0.74);
+  }
 
-.time {
-  font-size: 0.28rem;
-  color: rgba(255, 255, 255, 0.78);
-  text-align: right;
+  .time {
+    font-size: 0.27rem;
+    color: rgba(255, 255, 255, 0.78);
+    text-align: right;
+  }
 }
 
 .summary-grid {
-  margin-top: 0.18rem;
+  margin-top: 0.25rem;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.12rem;
+  gap: 0.08rem;
 }
 
 .summary-item {
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 0.06rem;
 
   .label {
     font-size: 0.24rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.72);
   }
 
   .value {
-    font-size: 0.34rem;
+    display: block;
+    margin-top: 0.06rem;
+    font-size: 0.37rem;
     font-weight: 600;
   }
 }
 
 .result-section {
-  margin-top: 0.34rem;
-  padding: 0.28rem;
+  margin-top: 0.32rem;
+  padding: 0.26rem 0;
 }
 
 .section-head {
+  padding: 0 0.35rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 0.36rem;
-  font-weight: 600;
+  justify-content: space-between;
+  font-size: 0.33rem;
 
   .total {
-    font-size: 0.48rem;
+    color: #65e89f;
+    font-size: 0.45rem;
     font-weight: 700;
-    color: #ff8498;
   }
 }
 
-.list-status {
-  text-align: center;
-  font-size: 0.3rem;
-  opacity: 0.78;
-  margin: 0.2rem 0;
+.result-row {
+  margin-top: 0.16rem;
+  padding: 0.22rem 0.35rem;
+  border-top: 0.02rem solid rgba(255, 255, 255, 0.15);
 }
 
-.result-row {
-  margin-top: 0.2rem;
-  padding: 0.24rem;
-  border-radius: 0.32rem;
-  background: rgba(255, 255, 255, 0.06);
+.list-status {
+  margin: 0.2rem 0;
+  text-align: center;
+  font-size: 0.3rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.top {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.2rem;
 }
 
 .left {
   display: flex;
-  align-items: center;
   gap: 0.14rem;
 
-  .avatar {
-    width: 0.72rem;
-    height: 0.72rem;
+  .avatar.small {
+    width: 0.66rem;
+    height: 0.66rem;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.4);
-
-    &.small {
-      width: 0.6rem;
-      height: 0.6rem;
-    }
+    background: rgba(255, 255, 255, 0.52);
   }
 
   .name {
@@ -458,29 +464,28 @@ onMounted(() => {
   }
 
   .sub {
-    margin-top: 0.04rem;
-    font-size: 0.26rem;
+    margin-top: 0.05rem;
+    font-size: 0.25rem;
     color: rgba(255, 255, 255, 0.7);
   }
 }
 
-.right {
-  text-align: right;
+.amount {
+  font-size: 0.45rem;
+  color: #6be89d;
+  font-weight: 700;
 
-  .profit {
-    font-size: 0.48rem;
-    font-weight: 700;
-    color: #ff8498;
+  &.minus {
+    color: #ff8ea2;
   }
+}
 
-  .sub-row {
-    margin-top: 0.04rem;
-    font-size: 0.26rem;
-    color: rgba(255, 255, 255, 0.7);
-    display: flex;
-    flex-direction: column;
-    gap: 0.02rem;
-    align-items: flex-end;
-  }
+.stats-row {
+  margin-top: 0.12rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.12rem 0.22rem;
+  font-size: 0.24rem;
+  color: rgba(255, 255, 255, 0.78);
 }
 </style>

@@ -259,7 +259,37 @@
           return Math.max(minTopGuard, contentTop)
         }
 
+        /**
+         * 检测软键盘是否弹出（用于守卫 applySafeAreaToCss，避免键盘引起的 viewport 变化
+         * 误触发 CSS 变量更新 → #app padding 重排 → CC canvas 渲染抖动/变形）。
+         * 3 路判断 fallback，任一命中即认为键盘弹出：
+         * (a) Telegram SDK viewportStableHeight - viewportHeight > 50px（最准，Telegram 专属）
+         * (b) visualViewport.height / innerHeight < 0.75（W3C 标准，最准）
+         * (c) innerHeight / screen.height < 0.6（兜底）
+         * 阈值与 CC 层 OrientationComponent.isKeyboardLikelyOpen 保持一致（已生产验证）
+         */
+        function isKeyboardOpen(tg) {
+          if (tg && tg.viewportHeight != null && tg.viewportStableHeight != null
+              && tg.viewportStableHeight - tg.viewportHeight > 50) {
+            return true
+          }
+          var vv = window.visualViewport
+          if (vv && window.innerHeight > 0 && vv.height / window.innerHeight < 0.75) {
+            return true
+          }
+          if (window.screen && window.screen.height > 0
+              && window.innerHeight / window.screen.height < 0.6) {
+            return true
+          }
+          return false
+        }
+
         function applySafeAreaToCss(tg) {
+          // ⚠️ Telegram 键盘守卫：键盘弹出时跳过，避免 CSS 变量更新引发 #app padding 重排
+          // （iOS Telegram 上实测：键盘弹出会触发 viewportChanged → 调用本函数 → 画面变形）
+          if (isKeyboardOpen(tg)) {
+            return
+          }
           console.log('[telegram] applying safe area to css with tg:', tg)
           var safe = tg.safeAreaInset || {}
           var contentSafe = tg.contentSafeAreaInset || {}
@@ -334,6 +364,150 @@
           tg.onEvent('fullscreenChanged', refresh)
         }
 
+        /**
+         * 强制 cocos 基于当前 canvas CSS 尺寸重新算内部缓冲区（bufW/bufH）。
+         * 用于 setupTelegramKeyboardFix 锁定 height 后 / 收起时，让 cocos 内部状态跟 CSS 同步。
+         *
+         * 关键设计（针对 cocos 2.4.x 内部行为）：
+         *  1. 同步调用（不用 RAF）：避免 cocos 在 RAF 等待期间按旧 bufH 渲染一帧
+         *  2. 主动同步 _frameSize：cocos 部分内部 API 用 _frameSize 而非 clientHeight，
+         *     不同步的话 setDesignResolutionSize 可能按旧 _frameSize 算 bufH（参考 CC 层
+         *     ProcedureInit.updateFitMode 中 view._frameSize.width/height 主动赋值的做法）
+         *  3. emit('canvas-resize')：让 cc.Widget 重新对齐
+         */
+        function forceCocosRefit(canvas) {
+          try {
+            if (!window.cc || !cc.view) return
+            var view = cc.view
+            var w = canvas.clientWidth
+            var h = canvas.clientHeight
+            if (view._frameSize) {
+              view._frameSize.width = w
+              view._frameSize.height = h
+            }
+            if (cc.Canvas && cc.Canvas.instance) {
+              var canvasNode = cc.Canvas.instance.node
+              var designRes = view.getDesignResolutionSize()
+              if (designRes && designRes.height && h > 0) {
+                var correctW = designRes.height * (w / h)
+                canvasNode.setContentSize(correctW, designRes.height)
+              }
+            }
+            view.emit('canvas-resize')
+          } catch (e) {}
+        }
+
+        /**
+         * Telegram 键盘修复：监听 viewportChanged，键盘弹出时锁定 canvas 高度 + translateY 上移，
+         * 避免 100dvh 在 iOS Telegram 中跟随键盘变化导致 cocos FIXED_HEIGHT 适配产生两侧留白。
+         * 参考 telegram_mini_app_keyboard_fix_report.md，但避开其 3 个问题：
+         *  1. 不动 cc.view._resizeCallback（2.4.x 不可靠，已用 updateFitMode 守卫替代）
+         *  2. 不改 canvas.position（保持 fixed,避免布局副作用）
+         *  3. 用 viewportStableHeight 替代 initialViewportHeight（SDK 提供的稳定基准值）
+         */
+        function setupTelegramKeyboardFix(tg) {
+          var canvas = document.getElementById('GameCanvas')
+          if (!canvas) return
+
+          // ⚠️ stableHeight 用 window.screen.height（固定值，不受键盘/dvh 影响）
+          //   实测：canvas.clientHeight 初始化时可能=690（Telegram 未全屏），100dvh 键盘收起瞬间可能=476（延迟恢复）
+          //   只有 window.screen.height=812 永远不变（设备屏幕高度）
+          var stableHeight = window.screen.height || window.innerHeight || canvas.clientHeight || tg.viewportStableHeight
+          if (!stableHeight) return
+
+          var isFixActive = false
+
+          function activateFix(reason) {
+            if (isFixActive) return
+            isFixActive = true
+            // 1. 阻止 alignWithScreen（它会用 innerHeight=476 算 Canvas node=2117.6）
+            if (window.cc && cc.Canvas && cc.Canvas.prototype) {
+              if (!cc.Canvas.prototype._origAlignWithScreen) {
+                cc.Canvas.prototype._origAlignWithScreen = cc.Canvas.prototype.alignWithScreen
+              }
+              cc.Canvas.prototype.alignWithScreen = function() {}
+            }
+            // 2. 锁定 CSS height
+            canvas.style.setProperty('height', stableHeight + 'px', 'important')
+            // 3. 手动设 Canvas node
+            forceCocosRefit(canvas)
+          }
+
+          function deactivateFix(reason) {
+            if (!isFixActive) return
+            isFixActive = false
+
+            // 1. 恢复 alignWithScreen 原型方法
+            if (window.cc && cc.Canvas && cc.Canvas.prototype && cc.Canvas.prototype._origAlignWithScreen) {
+              cc.Canvas.prototype.alignWithScreen = cc.Canvas.prototype._origAlignWithScreen
+            }
+
+            // 2. 锁定 CSS 高度（保持 stableHeight=screen.height=812 固定值）
+            canvas.style.setProperty('height', stableHeight + 'px', 'important')
+            canvas.style.removeProperty('transform')
+
+            // 3. ⚠️ v22 核心修复（Gemini 方案）：调 cc.view.setFrameSize 触发全套触摸矩阵重算
+            //    之前只改 _frameSize 属性，cocos 不会自动重算 _scaleY / 触摸转换矩阵。
+            //    setFrameSize 是 cocos 官方 API，内部会更新所有相关字段（_frameSize + _scaleX/Y + viewportRect）。
+            //    传入 stableHeight=812 确保用正确值（不用可能=476 的 clientHeight）。
+            if (window.cc && cc.view) {
+              try {
+                cc.view.setFrameSize(canvas.clientWidth, stableHeight)
+              } catch(e) {}
+            }
+
+            // 4. 主动调一次 alignWithScreen 让 Canvas 节点尺寸恢复
+            if (window.cc && cc.Canvas && cc.Canvas.instance && cc.Canvas.prototype._origAlignWithScreen) {
+              cc.Canvas.prototype._origAlignWithScreen.call(cc.Canvas.instance)
+            }
+
+            // 5. 延迟再次 setFrameSize + emit canvas-resize（防 iOS 底层 resize 冲掉）
+            setTimeout(function() {
+              try {
+                if (window.cc && cc.view) {
+                  cc.view.setFrameSize(canvas.clientWidth, stableHeight)
+                  cc.view.emit('canvas-resize')
+                }
+              } catch(e) {}
+            }, 500)
+          }
+
+          // ⚠️ 主触发：focusin/focusout（最可靠的键盘状态信号，不依赖 visualViewport/innerHeight）
+          //   viewportChanged + isKeyboardOpen 的判断在键盘收起时会因 vv 滞后误判（vvH=476 innerH=812），
+          //   导致走了"键盘弹出"分支，收起后画面无法恢复。focusin/focusout 由 DOM 焦点驱动，不滞后。
+          document.addEventListener('focusin', function(e) {
+            var tag = e.target.tagName
+            if (tag === 'INPUT' || tag === 'TEXTAREA') {
+              activateFix('focusin')
+            }
+          })
+
+          document.addEventListener('focusout', function(e) {
+            var tag = e.target.tagName
+            if (tag !== 'INPUT' && tag !== 'TEXTAREA') return
+            // 延迟恢复（防焦点切换误触发，比如从 input 切到另一个 input）
+            setTimeout(function() {
+              var active = document.activeElement
+              if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+                return
+              }
+              deactivateFix('focusout')
+            }, 200)
+          })
+
+          // 兜底：viewportChanged（只用于保持锁定，不用于激活）
+          // ⚠️ 不在 viewportChanged 里 activateFix —— 键盘收起时 vv 滞后会导致 isKeyboardOpen 误判，
+          //    再次激活 fix → emit('canvas-resize') → Widget 对齐错乱 → 按钮点击失效。
+          //    激活完全由 focusin 负责（最可靠的 DOM 焦点信号）。
+          tg.onEvent('viewportChanged', function() {
+            if (isFixActive) {
+              // fix 已激活（focusin 触发），保持 CSS 锁定
+              canvas.style.setProperty('height', stableHeight + 'px', 'important')
+            }
+            // fix 未激活时不做任何事
+          })
+        }
+
         function syncTelegramHeaderAndBackground(tg) {
           var fill = getSafeFillColor(tg)
           if (document && document.documentElement) {
@@ -401,6 +575,7 @@
 
           applySafeAreaToCss(tg)
           bindSafeAreaEvents(tg)
+          setupTelegramKeyboardFix(tg)
           syncTelegramHeaderAndBackground(tg)
 
           window.setTimeout(function () {

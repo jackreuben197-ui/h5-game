@@ -11,16 +11,6 @@ import { formatDateTime, toTimestampMs } from '@/utils/time'
 import dayjs from 'dayjs'
 import { t } from '@/i18n'
 
-const router = useRouter()
-const userInfoStore = useUserInfoStore()
-
-// 主容器背景图：全页面共用一张底图。
-const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
-}))
-
-const title = computed(() => t('UICareerRecord'))
-
 interface SummaryMetric {
   label: string
   value: string
@@ -30,106 +20,61 @@ interface RecordCard {
   id: string
   roomName: string
   roomId: string
-  blinds: string
   hands: string
   duration: string
   endAt: string
   endDay: string
   endMonth: string
   profit: string
+  isProfitPositive: boolean
 }
 
-const gameTabs = [t('adaptation10022'), t('adaptation10009'), t('PokerType_2')]
+const router = useRouter()
+const userInfoStore = useUserInfoStore()
+
+const backgroundStyle = computed(() => ({
+  backgroundImage: `url(${mainBgUrl})`,
+}))
+
+const title = computed(() => t('Cowboy_Record'))
+
 const timeTabs = [
   t('UIData_Today'),
   '7' + t('UIHappyShop_ActivityShopDay'),
   '30' + t('UIHappyShop_ActivityShopDay'),
 ]
-const selectedGame = ref(gameTabs[0])
 const selectedTime = ref(timeTabs[0])
 const loading = ref(false)
 
-// 统计数据（从 postStatsUserStatsApi 获取，默认值 0）
-const leftMetrics = ref<SummaryMetric[]>([
-  { label: t('UITexasInfo_games'), value: '0' },
-  { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: '0' },
+const summaryRows = ref<SummaryMetric[]>([
+  { label: t('UITexasGameEnding_allhand'), value: '0' },
+  { label: t('Career_StakeProbability'), value: '0%' },
+  { label: t('Career_TotalStake'), value: '0' },
+  { label: t('Career_TotalEarn'), value: '0' },
 ])
 
-const rightMetrics = ref<SummaryMetric[]>([
-  { label: t('UIClub_Mlistinfo_rRyW4JkW'), value: '0%' },
-  { label: t('UITexasInfo_winrate'), value: '0%' },
-])
-
-const detailRowsOne = ref<SummaryMetric[]>([
-  { label: t('UIData_YGvXd5iXr_003'), value: '0' },
-  { label: t('UIClub_Text46'), value: '0' },
-  { label: t('UIData_kpHsdqDe5'), value: '0' },
-  { label: t('UIClub_Text39'), value: '0%' },
-])
-
-const detailRowsTwo = ref<SummaryMetric[]>([
-  { label: t('UIClub_Text47'), value: '0%' },
-  { label: t('UIClub_Text48'), value: '0%' },
-  { label: t('adaptation10318'), value: '0%' },
-  { label: t('UIClub_Text49'), value: '0' },
-])
-
-const todayProfit = ref('0')
+const periodProfit = ref('0')
 
 const records = ref<RecordCard[]>([])
 
-// 根据当前选中的时间 tab 返回收益标题
 function profitTitle(): string {
   switch (selectedTime.value) {
     case t('UIData_Today'):
-      return t('UIClub_Income3')
+      return t('UIBill_payLookHandCardTodayWin')
     case '7' + t('UIHappyShop_ActivityShopDay'):
       return '7' + t('UIClub_Income')
     case '30' + t('UIHappyShop_ActivityShopDay'):
       return '30' + t('UIClub_Income')
     default:
-      return t('UIClub_Income3')
+      return t('UIBill_payLookHandCardTodayWin')
   }
 }
 
 const profitTitleText = computed(() => profitTitle())
 
-/**
- * 格式化时长：>=1小时显示 "XhXm"，<1小时显示 "Xm"
- */
-function formatDuration(minutes: number): string {
-  if (minutes <= 0) return '--'
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  if (hours > 0) {
-    return mins > 0 ? `${hours}h${mins}m` : `${hours}h`
-  }
-  return `${mins}m`
-}
-
-/**
- * 判断是否为某日期的第一条记录（用于 timeline 显示）
- */
-function isFirstOfDate(index: number): boolean {
-  if (index === 0) return true
-  const current = dayjs(toTimestampMs(records.value[index].endAt))
-  const prev = dayjs(toTimestampMs(records.value[index - 1].endAt))
-  return current.format('YYYY-MM-DD') !== prev.format('YYYY-MM-DD')
-}
-
 function toSafeNumber(value: unknown): number {
   const numeric = Number(value)
   return Number.isFinite(numeric) ? numeric : 0
-}
-
-function resolveGameTypes(): number[] {
-  if (selectedGame.value === t('adaptation10009')) {
-    return [1, 2, 3]
-  }
-  if (selectedGame.value === t('PokerType_2')) {
-    return [0]
-  }
-  return [0]
 }
 
 function resolveTimeType(): number {
@@ -145,134 +90,127 @@ function resolveTimeType(): number {
   }
 }
 
+function formatDuration(minutes: number): string {
+  if (minutes <= 0) return '--'
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  if (hours > 0) {
+    return mins > 0 ? `${hours}h${mins}m` : `${hours}h`
+  }
+  return `${mins}m`
+}
+
+function isFirstOfDate(index: number): boolean {
+  if (index === 0) return true
+  const current = dayjs(toTimestampMs(records.value[index].endAt))
+  const prev = dayjs(toTimestampMs(records.value[index - 1].endAt))
+  return current.format('YYYY-MM-DD') !== prev.format('YYYY-MM-DD')
+}
+
 function extractRecords(value: unknown, depth = 0): Record<string, unknown>[] {
   if (depth > 4 || value === null || value === undefined) return []
+
   if (Array.isArray(value)) {
     return value.filter(
       (item): item is Record<string, unknown> => !!item && typeof item === 'object',
     )
   }
+
   if (typeof value !== 'object') return []
+
   const obj = value as Record<string, unknown>
   for (const key of ['records', 'list', 'items', 'data']) {
     const nested = extractRecords(obj[key], depth + 1)
     if (nested.length) return nested
   }
+
   for (const nestedValue of Object.values(obj)) {
     const nested = extractRecords(nestedValue, depth + 1)
     if (nested.length) return nested
   }
+
   return []
 }
 
 function mapRecord(row: Record<string, unknown>, index: number): RecordCard {
-  const change = toSafeNumber(row.Change ?? row.profit)
+  const change = toSafeNumber(row.Change ?? row.change ?? row.profit)
   const durationMinutes = Math.max(0, Math.round(toSafeNumber(row.play_duration) / 60))
-  const endTs = toTimestampMs(row.end_time)
-  const endDay = endTs > 0 ? dayjs(endTs).format('DD') : ''
-  const endMonth = endTs > 0 ? dayjs(endTs).format('MMM') : ''
+  const endTimeRaw = row.end_time ?? row.Time
+  const endTs = toTimestampMs(endTimeRaw)
+
   return {
-    id: String(row.RoomID ?? row.MatchID ?? index + 1),
-    roomName: String(row.Name ?? '--'),
-    roomId: String(row.RoomID ?? row.MatchID ?? '--'),
-    blinds: `${toSafeNumber(row.small_blind)}/${toSafeNumber(row.ante ?? 0)}`,
-    hands: String(row.hand_num),
+    id: String(row.RoomID ?? row.room_id ?? row.MatchID ?? row.match_id ?? index + 1),
+    roomName: String(row.Name ?? row.name ?? row.game_room_name ?? '--'),
+    roomId: String(row.RoomID ?? row.room_id ?? row.MatchID ?? row.match_id ?? '--'),
+    hands: toSafeNumber(row.hand_num ?? row.Count ?? row.count).toLocaleString('en-US'),
     duration: formatDuration(durationMinutes),
-    endAt: endTs > 0 ? formatDateTime(row.end_time) : '--',
-    endDay,
-    endMonth,
+    endAt: endTs > 0 ? formatDateTime(endTimeRaw) : '--',
+    endDay: endTs > 0 ? dayjs(endTs).format('DD') : '',
+    endMonth: endTs > 0 ? dayjs(endTs).format('MMM') : '',
     profit: formatUC(change),
+    isProfitPositive: change >= 0,
   }
 }
 
-/**
- * 从 postStatsUserStatsApi 响应中提取统计数据
- */
 function extractStatsFromResponse(data: unknown): void {
   const roomData = (data as Record<string, unknown>)?.room_data as
     | Record<string, unknown>
     | undefined
   if (!roomData) return
 
-  const totalGameCnt = toSafeNumber(roomData.total_game_cnt)
   const totalHand = toSafeNumber(roomData.total_hand)
+  const cbWins = toSafeNumber(roomData.cb_wins)
+  const cbBet = toSafeNumber(roomData.cb_bet)
   const totalEarn = toSafeNumber(roomData.total_earn)
-  const vpip = toSafeNumber(roomData.vpip)
-  const wins = toSafeNumber(roomData.wins)
-  const avgEarn = formatUC(toSafeNumber(roomData.aveage_earn))
-  const wtsd = toSafeNumber(roomData.wtsd)
-  const prf = toSafeNumber(roomData.prf)
-  const cbet = toSafeNumber(roomData.cbet)
-  const allinWins = toSafeNumber(roomData.allinWins)
-  const af = toSafeNumber(roomData.af)
 
-  leftMetrics.value = [
-    { label: t('UITexasInfo_games'), value: totalGameCnt.toLocaleString('en-US') },
-    { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: totalHand.toLocaleString('en-US') },
+  summaryRows.value = [
+    { label: t('UITexasGameEnding_allhand'), value: totalHand.toLocaleString('en-US') },
+    { label: t('Career_StakeProbability'), value: `${cbWins}%` },
+    { label: t('Career_TotalStake'), value: formatUC(cbBet) },
+    { label: t('Career_TotalEarn'), value: formatUC(totalEarn) },
   ]
 
-  rightMetrics.value = [
-    { label: t('UIClub_Mlistinfo_rRyW4JkW'), value: `${vpip}%` },
-    { label: t('UITexasInfo_winrate'), value: `${wins}%` },
-  ]
-
-  detailRowsOne.value = [
-    { label: t('UIData_YGvXd5iXr_003'), value: totalGameCnt.toLocaleString('en-US') },
-    { label: t('UIClub_Text46'), value: formatUC(totalEarn) },
-    { label: t('UIData_kpHsdqDe5'), value: avgEarn },
-    { label: t('UIClub_Text39'), value: `${wtsd}%` },
-  ]
-
-  detailRowsTwo.value = [
-    { label: t('UIClub_Text47'), value: `${prf}%` },
-    { label: t('UIClub_Text48'), value: `${cbet}%` },
-    { label: t('adaptation10318'), value: `${allinWins}%` },
-    { label: t('UIClub_Text49'), value: af.toLocaleString('en-US') },
-  ]
-
-  todayProfit.value = formatUC(totalEarn)
+  periodProfit.value = formatUC(totalEarn)
 }
 
 async function fetchStatsSummary(): Promise<void> {
   try {
     const response = await postStatsUserStatsApi({
-      game_types: resolveGameTypes(),
-      poker_types: selectedGame.value === t('PokerType_2') ? [2] : [0],
+      game_types: [5],
       time_type: resolveTimeType(),
-      filter_type: 1, // 默认联盟币
-      room_type: 0, // 生涯
+      filter_type: 1,
+      room_type: 0,
       ...(userInfoStore.currentClub?.club_id ? { club_id: userInfoStore.currentClub.club_id } : {}),
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadDataFail'))
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail5'))
     }
     extractStatsFromResponse(response.data)
   } catch (error) {
-    const message = error instanceof Error ? error.message : t('UIClub_LoadDataFail')
+    const message = error instanceof Error ? error.message : t('UIClub_LoadFail5')
     showFailToast(message)
   }
 }
 
-async function fetchClubRecords(): Promise<void> {
+async function fetchCowboyRecords(): Promise<void> {
   loading.value = true
   try {
     const response = await postRoomCenterHistoryListApi({
       limit: 20,
       offset: 0,
-      game_types: resolveGameTypes(),
-      poker_types: selectedGame.value === t('PokerType_2') ? [2] : [0],
+      game_types: [5],
       time_type: resolveTimeType(),
-      club_id: userInfoStore.currentClub?.club_id,
+      ...(userInfoStore.currentClub?.club_id ? { club_id: userInfoStore.currentClub.club_id } : {}),
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail9'))
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail4'))
     }
 
     const rows = extractRecords(response.data?.records)
     records.value = rows.map((row, index) => mapRecord(row, index))
   } catch (error) {
     records.value = []
-    const message = error instanceof Error ? error.message : t('UIClub_LoadFail9')
+    const message = error instanceof Error ? error.message : t('UIClub_LoadFail4')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -280,23 +218,18 @@ async function fetchClubRecords(): Promise<void> {
 }
 
 async function refreshAll(): Promise<void> {
-  await Promise.all([fetchStatsSummary(), fetchClubRecords()])
+  await Promise.all([fetchStatsSummary(), fetchCowboyRecords()])
 }
 
 function goToDetail(item: RecordCard): void {
   const roomId = Number(item.roomId.replace(/\D/g, '')) || 0
   void router.push({
-    path: '/mine/club-record/detail',
+    path: '/mine/career/club/cowboy/detail',
     query: {
       room_id: roomId > 0 ? String(roomId) : undefined,
-      id: item.roomId,
+      time: item.endAt,
     },
   })
-}
-
-function selectGame(tab: string): void {
-  selectedGame.value = tab
-  void refreshAll()
 }
 
 function selectTime(tab: string): void {
@@ -310,23 +243,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell record-page" :style="backgroundStyle">
+  <div class="page-shell cowboy-page" :style="backgroundStyle">
     <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
-      <div class="game-tabs">
-        <button
-          v-for="item in gameTabs"
-          :key="item"
-          type="button"
-          class="plain-tab"
-          :class="{ active: selectedGame === item }"
-          @click="selectGame(item)"
-        >
-          {{ item }}
-        </button>
-      </div>
-
       <section class="glass-card stats-card">
         <div class="time-tabs">
           <button
@@ -341,49 +261,22 @@ onMounted(() => {
           </button>
         </div>
 
-        <div class="main-metrics">
-          <div class="metric-col">
-            <div v-for="item in leftMetrics" :key="item.label" class="metric-item">
-              <span class="metric-label">{{ item.label }}</span>
-              <span class="metric-value">{{ item.value }}</span>
-            </div>
-          </div>
-
-          <div class="profit-box">
-            <div class="profit-title">{{ profitTitleText }}</div>
-            <div :class="['profit-value', { pos: todayProfit.startsWith('-') }]">
-              {{ todayProfit }}
-            </div>
-          </div>
-
-          <div class="metric-col right">
-            <div v-for="item in rightMetrics" :key="item.label" class="metric-item">
-              <span class="metric-label">{{ item.label }}</span>
-              <span class="metric-value">{{ item.value }}</span>
-            </div>
-          </div>
+        <div class="period-profit-box">
+          <div class="profit-title">{{ profitTitleText }}</div>
+          <div class="profit-value">{{ periodProfit }}</div>
         </div>
 
-        <div class="detail-grid">
-          <div class="detail-row">
-            <div v-for="item in detailRowsOne" :key="item.label" class="detail-cell">
-              <span class="label">{{ item.label }}</span>
-              <span class="value">{{ item.value }}</span>
-            </div>
-          </div>
-          <div class="line"></div>
-          <div class="detail-row">
-            <div v-for="item in detailRowsTwo" :key="item.label" class="detail-cell">
-              <span class="label">{{ item.label }}</span>
-              <span class="value">{{ item.value }}</span>
-            </div>
+        <div class="summary-grid">
+          <div v-for="item in summaryRows" :key="item.label" class="summary-item">
+            <span class="summary-label">{{ item.label }}</span>
+            <span class="summary-value">{{ item.value }}</span>
           </div>
         </div>
       </section>
 
       <section class="content-list">
         <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
-        <p v-else-if="!records.length" class="list-status">{{ t('UIClub_NoRecord3') }}</p>
+        <p v-else-if="!records.length" class="list-status">{{ t('UIClub_NoRecord') }}</p>
         <article
           v-for="(item, index) in records"
           :key="item.id"
@@ -406,10 +299,6 @@ onMounted(() => {
             <div class="card-body">
               <div class="meta">
                 <div>
-                  <span>{{ t('UIJackPotInfo_blindLevel') }}:</span>
-                  <span>{{ item.blinds }}</span>
-                </div>
-                <div>
                   <span>{{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}:</span>
                   <span>{{ item.hands }}</span>
                 </div>
@@ -422,7 +311,7 @@ onMounted(() => {
                   <span>{{ item.endAt }}</span>
                 </div>
               </div>
-              <div class="profit" :class="{ pos: item.profit.startsWith('-') }">
+              <div class="profit" :class="{ positive: item.isProfitPositive }">
                 {{ item.profit }}
               </div>
             </div>
@@ -434,9 +323,11 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-.record-page {
+.cowboy-page {
   position: relative;
   height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 0 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;
@@ -449,25 +340,6 @@ onMounted(() => {
   padding: 0 0.49rem;
 }
 
-.game-tabs {
-  margin-top: 0.38rem;
-  display: flex;
-  justify-content: space-around;
-}
-
-.plain-tab {
-  border: 0;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 0.42rem;
-  padding: 0.05rem 0;
-
-  &.active {
-    color: #fff;
-    border-bottom: 0.03rem solid rgba(255, 255, 255, 0.92);
-  }
-}
-
 .glass-card {
   border-radius: 0.42rem;
   border: 0.02rem solid rgba(249, 249, 249, 0.2);
@@ -477,7 +349,7 @@ onMounted(() => {
 
 .stats-card {
   margin-top: 0.3rem;
-  padding: 0.3632rem 0.67864rem 0.36739rem 0.67864rem;
+  padding: 0.36rem 0.5rem;
 }
 
 .time-tabs {
@@ -503,89 +375,55 @@ onMounted(() => {
   }
 }
 
-.main-metrics {
-  margin-top: 0.28rem;
+.summary-grid {
+  margin-top: 0.24rem;
   display: grid;
-  grid-template-columns: 1fr 1.2fr 1fr;
-  gap: 0.2rem;
-  align-items: center;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.2rem 0.12rem;
 }
 
-.metric-col {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
+.period-profit-box {
+  margin-top: 0.2rem;
+  border-radius: 0.24rem;
+  border: 0.02rem solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
   text-align: center;
-}
-
-.metric-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.08rem;
-
-  .metric-label {
-    font-size: 0.27027rem;
-    color: rgba(255, 255, 255, 0.74);
-  }
-
-  .metric-value {
-    font-size: 0.35472rem;
-    font-weight: 600;
-  }
-}
-
-.metric-col.right {
-  text-align: center;
-}
-
-.profit-box {
-  text-align: center;
+  padding: 0.18rem 0.2rem 0.2rem;
 
   .profit-title {
-    font-size: 0.33821rem;
+    font-size: 0.31rem;
+    color: rgba(255, 255, 255, 0.78);
   }
 
   .profit-value {
-    margin-top: 0.12rem;
-    font-size: 0.71789rem;
+    margin-top: 0.08rem;
+    font-size: 0.62rem;
+    line-height: 1;
     font-weight: 700;
-    color: #ff7a8f;
-    &.pos {
-      color: #4ee58f;
-    }
+    color: #4ee58f;
   }
 }
 
-.detail-grid {
-  margin-top: 0.22rem;
-
-  .line {
-    height: 0.02rem;
-    background: rgba(255, 255, 255, 0.18);
-    margin: 0.14rem 0;
-  }
-}
-
-.detail-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.08rem;
-}
-
-.detail-cell {
-  text-align: center;
+.summary-item {
+  min-height: 1.2rem;
+  border-radius: 0.24rem;
+  border: 0.02rem solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
 
-  .label {
-    font-size: 0.27027rem;
-    color: rgba(255, 255, 255, 0.7);
+  .summary-label {
+    font-size: 0.29rem;
+    color: rgba(255, 255, 255, 0.72);
   }
 
-  .value {
-    margin-top: 0.06rem;
-    font-size: 0.36rem;
-    font-weight: 600;
+  .summary-value {
+    margin-top: 0.08rem;
+    font-size: 0.4rem;
+    font-weight: 700;
+    color: #fff;
   }
 }
 
@@ -594,7 +432,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.22rem;
-  position: relative;
 }
 
 .list-status {
@@ -640,7 +477,6 @@ onMounted(() => {
   }
 }
 
-// 同一天的非第一条记录：只显示虚线
 .record-card:not(.is-first-of-date) .timeline {
   &::after {
     background: repeating-linear-gradient(
@@ -653,7 +489,6 @@ onMounted(() => {
   }
 }
 
-// 第一条记录：显示实线
 .record-card.is-first-of-date .timeline {
   &::after {
     background: rgba(255, 255, 255, 0.35);
@@ -703,7 +538,7 @@ onMounted(() => {
   font-weight: 700;
   color: #ff7a8f;
 
-  &.pos {
+  &.positive {
     color: #4ee58f;
   }
 }

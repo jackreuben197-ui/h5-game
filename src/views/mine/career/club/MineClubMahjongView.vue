@@ -280,7 +280,7 @@ async function refreshAll(): Promise<void> {
 
 function goDetail(item: RecordCard): void {
   void router.push({
-    path: '/mine/club-mahjong/detail',
+    path: '/mine/career/club/mahjong/detail',
     query: {
       room_id: item.roomId || undefined,
       match_id: item.matchId || undefined,

@@ -5,10 +5,26 @@ import { useRouter } from 'vue-router'
 import { postFriendRoomStatsApi } from '@/api/stats'
 import type { FriendRoomStatsRecord } from '@/api/models/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import iconData from '@/assets/icons/icon_data.svg'
+import iconRecord from '@/assets/icons/icon_record.svg'
+import iconMtt from '@/assets/icons/icon_mtt.svg'
+import iconMahjong from '@/assets/icons/icon_mahjong.svg'
 import { showGameToast } from '@/components/Toast'
+import { useGameStore } from '@/stores/game'
+import { userCache } from '@/utils/userCache'
+import { USER_STORE_CAREER } from '@/utils/indexedDB'
 import { t } from '@/i18n'
 
 const router = useRouter()
+const gameStore = useGameStore()
+
+// 缓存（IndexedDB career）：store=USER_STORE_CAREER，key=`-1_home`。
+// 朋友桌首页接口无筛选参数（postFriendRoomStatsApi({}) 返回全部玩法的全量数据），
+// 单一 key 即可；-1 与俱乐部生涯的 sourceId(0/clubId) 隔开。
+const HOME_CACHE_KEY = '-1_home'
+function homeCache() {
+  return userCache(gameStore.loginUserId)
+}
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -23,7 +39,8 @@ interface DataRow {
 
 interface MenuItem {
   key: string
-  text: string
+  label: string
+  icon: string
   route?: string
 }
 
@@ -37,14 +54,12 @@ const rows = ref<DataRow[]>([
 const loading = ref(false)
 
 const menuList: MenuItem[] = [
-  { key: 'data', text: t('adaptation10124'), route: '/mine/friends-data' },
-  { key: 'record', text: t('UICareerRecord'), route: '/mine/friends-record' },
-  { key: 'mahjong', text: 'Mahjong' },
-  { key: 'sng', text: "SNG" + t('UICareerRecord') },
-  { key: 'mahjong-mtt', text: t('Mahjong_Name') + "MTT" + t('UICareerRecord') },
+  { key: 'data', label: '数据', icon: iconData, route: '/mine/career/friends/data' },
+  { key: 'record', label: '战绩', icon: iconRecord, route: '/mine/career/friends/record' },
+  { key: 'mahjong', label: '麻将', icon: iconMahjong },
+  { key: 'sng', label: 'SNG战绩', icon: iconMtt },
+  { key: 'mahjong-mtt', label: '麻将MTT战绩', icon: iconMahjong },
 ]
-
-const title = ref(t('adaptation10124'))
 
 function handleMenuClick(item: MenuItem): void {
   if (!item.route) {
@@ -59,8 +74,8 @@ function toSafeNumber(value: unknown): number {
   return Number.isFinite(numeric) ? numeric : 0
 }
 
-async function fetchGameSummary(): Promise<void> {
-  loading.value = true
+async function requestSummary(silent: boolean): Promise<void> {
+  if (!silent) loading.value = true
   try {
     const response = await postFriendRoomStatsApi({})
     if (response.code !== 0) {
@@ -73,7 +88,7 @@ async function fetchGameSummary(): Promise<void> {
     const sixPlus = data?.friend_room_stats_6 as FriendRoomStatsRecord | undefined
     const mahjong = data?.friend_room_stats_mj as FriendRoomStatsRecord | undefined
 
-    rows.value = [
+    const next: DataRow[] = [
       { game: 'NLH', playedGames: toSafeNumber(nlh?.game_num), hands: toSafeNumber(nlh?.hand_num) },
       { game: 'PLO', playedGames: toSafeNumber(plo?.game_num), hands: toSafeNumber(plo?.hand_num) },
       {
@@ -87,12 +102,28 @@ async function fetchGameSummary(): Promise<void> {
         hands: toSafeNumber(mahjong?.hand_num),
       },
     ]
+    rows.value = next
+    void homeCache().put(USER_STORE_CAREER, HOME_CACHE_KEY, next)
   } catch (error) {
-    const message = error instanceof Error ? error.message : t('UIClub_LoadDataFail2')
-    showFailToast(message)
+    if (!silent) {
+      const message = error instanceof Error ? error.message : '加载朋友生涯数据失败'
+      showFailToast(message)
+    }
   } finally {
-    loading.value = false
+    if (!silent) loading.value = false
   }
+}
+
+async function fetchGameSummary(): Promise<void> {
+  const cached = await homeCache().get<DataRow[]>(USER_STORE_CAREER, HOME_CACHE_KEY)
+  if (cached?.length) {
+    rows.value = cached
+    loading.value = false
+    // 后台静默刷新覆盖缓存
+    void requestSummary(true)
+    return
+  }
+  await requestSummary(false)
 }
 
 onMounted(() => {
@@ -102,13 +133,20 @@ onMounted(() => {
 
 <template>
   <div class="page-shell mine-glass-page" :style="backgroundStyle">
-    <HeaderBack :title="title" extra-padding>
+    <HeaderBack :title="t('PageMineFriendTableCareer')" extra-padding>
       <template #right>
         <div class="action-wrap">
           <TopActionButton
             :name="t('UIClub_Mlistinfo_GiVUYG7E')"
             icon-alt="wallet"
-            @click="handleMenuClick({ key: 'data', text: '数据', route: '/mine/friends-my-data' })"
+            @click="
+              handleMenuClick({
+                key: 'data',
+                label: '数据',
+                icon: '',
+                route: '/mine/career/friends/my-data',
+              })
+            "
           />
         </div>
       </template>
@@ -117,13 +155,15 @@ onMounted(() => {
     <div class="content-wrap">
       <section class="glass-card table-card">
         <div class="table-head">
-          <span>玩法</span>
-          <span>Played Games</span>
-          <span>Hands</span>
+          <div class="table-head-inner">
+            <span>玩法</span>
+            <span>局数</span>
+            <span>手数</span>
+          </div>
         </div>
         <div v-if="loading" class="table-status">加载中...</div>
         <div v-for="item in rows" :key="item.game" class="table-row">
-          <span>{{ item.game }}</span>
+          <span class="game-type-label">{{ item.game }}</span>
           <span>{{ item.playedGames }}</span>
           <span>{{ item.hands }}</span>
         </div>
@@ -137,8 +177,13 @@ onMounted(() => {
           class="line-item"
           @click="handleMenuClick(item)"
         >
-          <span>{{ item.text }}</span>
-          <span class="arrow">›</span>
+          <div class="menu-left">
+            <div class="icon-box">
+              <img :src="item.icon" :alt="item.label" />
+            </div>
+            <span class="menu-label">{{ item.label }}</span>
+          </div>
+          <span class="menu-arrow">›</span>
         </button>
       </section>
     </div>
@@ -179,18 +224,17 @@ onMounted(() => {
 }
 
 .glass-card {
-  border-radius: 0.44rem;
+  border-radius: 0.7rem;
   border: 0.02rem solid rgba(249, 249, 249, 0.25);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.04rem);
 }
 
 .table-card {
-  margin-top: 0.5rem;
-  padding: 0.3rem 0.3rem 0.22rem;
+  margin-top: 0.4rem;
+  padding: 0.4rem 0.5rem 0.35rem;
 }
 
-.table-head,
 .table-row {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -200,26 +244,44 @@ onMounted(() => {
 
 .table-head {
   border-radius: 0.4rem;
-  background: #00af83;
-  font-size: 0.33rem;
-  padding: 0.18rem 0;
+  // background: #00af83;
+  font-size: 0.361rem;
+  padding: 0.15rem 0.15rem;
+  margin-bottom: 0.1rem;
+  box-shadow:
+    0 0 0.9rem 0.1rem rgba(0, 175, 131, 0.9) inset,
+    /* 左上高光 */ inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.85),
+    /* 右下高光 */ inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.85);
+}
+.table-head-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  text-align: center;
+  border-radius: 0.4rem;
+  background: rgba(0, 175, 131, 0.9);
+  box-shadow: 0 0 0.1rem 0.05rem rgba(0, 175, 131, 0.9);
+  box-sizing: border-box;
 }
 
 .table-row {
-  font-size: 0.42rem;
-  padding: 0.3rem 0;
+  font-size: 0.337rem;
+  padding: 0.24rem 0;
 }
 
 .table-status {
   text-align: center;
-  font-size: 0.3rem;
+  font-size: 0.337rem;
   padding: 0.24rem 0;
   opacity: 0.78;
 }
+.game-type-label {
+  font-size: 0.4rem;
+}
 
 .list-card {
-  margin-top: 0.24rem;
-  padding: 0 0.36rem;
+  margin-top: 0.45rem;
+  padding: 0.2rem 0.4rem;
 }
 
 .line-item {
@@ -232,14 +294,40 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.3rem 0;
+  padding: 0.2rem 0;
 
   &:last-child {
     border-bottom: 0;
   }
 }
 
-.arrow {
-  font-size: 0.66rem;
+.menu-left {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.icon-box {
+  width: 0.62rem;
+  height: 0.62rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+.menu-label {
+  font-size: 0.42rem;
+  line-height: 1.2;
+}
+
+.menu-arrow {
+  font-size: 0.7rem;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.88);
 }
 </style>

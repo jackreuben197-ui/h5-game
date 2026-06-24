@@ -1,33 +1,53 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { postStatsUserStatsAllApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import iconBoxClubT from '@/assets/icons/icon_box_club_t.png'
-import iconBoxFriendT from '@/assets/icons/icon_box_friend_t.png'
-import iconBoxDiamond from '@/assets/icons/icon_box_diamond.png'
-import iconBoxBag from '@/assets/icons/icon_box_bag.png'
-import iconBoxSetting from '@/assets/icons/icon_box_setting.png'
+import iconData from '@/assets/icons/icon_data.svg'
+import iconRecord from '@/assets/icons/icon_record.svg'
+import iconMtt from '@/assets/icons/icon_mtt.svg'
+import iconCowboy from '@/assets/icons/icon_cowboy.svg'
+import iconMahjong from '@/assets/icons/icon_mahjong.svg'
 import iconFilter from '@/assets/icons/icon_filters.png'
 import iconDropdown from '@/assets/icons/icon_dropdown.png'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useGameStore } from '@/stores/game'
 import { formatUC } from '@/utils/roomVisibility'
 import { showGameToast } from '@/components/Toast'
+import { localStore } from '@/utils/localStore'
+import { userCache } from '@/utils/userCache'
+import { USER_STORE_CAREER } from '@/utils/indexedDB'
 import { t } from '@/i18n'
+
+const CAREER_CLUB_STORE_KEY = 'CAREER_SELECTED_CLUB_ID'
+const CAREER_CLUB_ALL = 'all'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
+const gameStore = useGameStore()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
+interface TabItem {
+  label: string
+  key: string
+}
 
-const gameTabs = [t('adaptation10022'), t('adaptation10009'), t('PokerType_2')]
-const dateTabs = [t('UIData_Today'), "7" + t('UIHappyShop_ActivityShopDay'), "30" + t('UIHappyShop_ActivityShopDay')]
-const selectedGameTab = ref(gameTabs[0])
-const selectedDateTab = ref(dateTabs[0])
+const gameTabs: TabItem[] = [
+  { label: 'NLH', key: 'nlh' },
+  { label: 'PLO', key: 'plo' },
+  { label: '6+', key: '6+' },
+]
+const dateTabs: TabItem[] = [
+  { label: '今天', key: 'today' },
+  { label: '7天', key: 'week' },
+  { label: '30天', key: 'month' },
+]
+const selectedGameTab = ref(gameTabs[0].key)
+const selectedDateTab = ref(dateTabs[0].key)
 const showClubDropdown = ref(false)
 const showCurrencyDropdown = ref(false)
 const loading = ref(false)
@@ -39,13 +59,44 @@ const responseCache = ref<Record<string, unknown> | null>(null)
 const clubs = computed(() => {
   const list = userInfoStore.clubList
   if (!list.length) {
-    return ['All']
+    return ['全部']
   }
-  return ['All', ...list.map((club) => club.club_name || `Club ${club.club_id}`)]
+  return ['全部', ...list.map((club) => club.club_name || `Club ${club.club_id}`)]
 })
 
-// 当前选中的俱乐部索引（0 = All）
+// 当前选中的俱乐部索引（0 = 全部）
 const selectedClubIndex = ref(0)
+
+// 右上角按钮显示的俱乐部名称（默认"全部"）
+const selectedClubLabel = computed(() => {
+  if (selectedClubIndex.value === 0) {
+    return '全部'
+  }
+  const club = userInfoStore.clubList[selectedClubIndex.value - 1]
+  return club?.club_name || `Club ${club?.club_id ?? ''}`
+})
+
+// 持久化：从 localStorage 恢复 / 写入用户在生涯页上选择的俱乐部 id。
+function restoreSelectedClub(): void {
+  const stored = localStore.getItem<string>(CAREER_CLUB_STORE_KEY, null)
+  if (!stored || stored === CAREER_CLUB_ALL) {
+    selectedClubIndex.value = 0
+    return
+  }
+  const idx = userInfoStore.clubList.findIndex((club) => String(club.club_id) === stored)
+  selectedClubIndex.value = idx >= 0 ? idx + 1 : 0
+}
+
+function persistSelectedClub(): void {
+  if (selectedClubIndex.value === 0) {
+    localStore.setItem(CAREER_CLUB_STORE_KEY, CAREER_CLUB_ALL)
+    return
+  }
+  const club = userInfoStore.clubList[selectedClubIndex.value - 1]
+  if (club?.club_id != null) {
+    localStore.setItem(CAREER_CLUB_STORE_KEY, String(club.club_id))
+  }
+}
 
 // 货币类型定义：1-联盟币 2-USDT 3-记分牌 4-钻石
 const currencyTypes = [
@@ -76,12 +127,12 @@ const metrics = ref<CareerMetric[]>([
 ])
 
 const menuList: CareerMenuItem[] = [
-  { key: 'record', label: t('UICareerRecord'), icon: iconBoxClubT, route: '/mine/club-record' },
-  { key: 'mtt', label: 'MTT', icon: iconBoxDiamond, route: '/mine/club-mtt' },
-  { key: 'cowboy', label: 'Cowboy', icon: iconBoxFriendT, route: '/mine/club-cowboy' },
-  { key: 'mahjong', label: 'Mahjong', icon: iconBoxBag, route: '/mine/club-mahjong' },
-  // { key: 'mahjong-mtt', label: '麻将MTT战绩', icon: iconBoxSave },
-  { key: 'data', label: t('adaptation10124'), icon: iconBoxSetting, route: '/mine/club-data' },
+  { key: 'record', label: '战绩', icon: iconRecord, route: '/mine/career/club/record' },
+  { key: 'mtt', label: 'MTT', icon: iconMtt, route: '/mine/career/club/mtt' },
+  { key: 'cowboy', label: '牛仔', icon: iconCowboy, route: '/mine/career/club/cowboy' },
+  { key: 'mahjong', label: '麻将', icon: iconMahjong, route: '/mine/career/club/mahjong' },
+  { key: 'mahjong-mtt', label: '麻将MTT战绩', icon: iconMahjong },
+  { key: 'data', label: '数据', icon: iconData, route: '/mine/career/club/data' },
 ]
 
 function selectGameTab(tab: string): void {
@@ -113,6 +164,7 @@ function closePopup(): void {
 function selectClub(index: number): void {
   selectedClubIndex.value = index
   showClubDropdown.value = false
+  persistSelectedClub()
   void fetchClubCareerSummary()
 }
 
@@ -129,6 +181,16 @@ function handleMenuClick(item: CareerMenuItem): void {
   if (item.key === 'cowboy' || item.key == 'mahjong') {
     showGameToast(t('UIClub_InDeve'))
     return
+  }
+  // 将本页面上选中的俱乐部同步到全局 currentClubId，保证子页面以当前选择为准；
+  // "全部" 时清空，子页面接口侧（withClubId / 可选链）会自然走"不限俱乐部"。
+  if (selectedClubIndex.value === 0) {
+    userInfoStore.currentClubId = ''
+  } else {
+    const club = userInfoStore.clubList[selectedClubIndex.value - 1]
+    if (club?.club_id != null) {
+      userInfoStore.setCurrentClubById(club.club_id)
+    }
   }
   void router.push(item.route)
 }
@@ -151,13 +213,17 @@ function resolveRequestParams() {
     gameTypes = [0]
   }
 
+  // 对齐 Unity CareerRecordPart：「全部」必须显式传 club_id=0，省略字段时服务端会回上一次的俱乐部数据。
+  const clubId =
+    selectedClubIndex.value === 0
+      ? 0
+      : (userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id ?? 0)
+
   return {
     filter_type: currencyTypes[selectedCurrencyIndex.value].value,
     game_types: gameTypes,
-    poker_types: selectedGameTab.value === t('PokerType_2') ? [2] : [0],
-    ...(selectedClubIndex.value !== 0
-      ? { club_id: userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id }
-      : {}),
+    poker_types: selectedGameTab.value === '短牌' ? [2] : [0],
+    club_id: clubId,
   }
 }
 
@@ -177,17 +243,17 @@ function extractMetricsFromCache(): CareerMetric[] {
 
   const roomDataTotal = data.room_data_total as Record<string, unknown> | undefined
 
-  // one_day=今天, week_day=7天, all_day=30天
+  // one_day=今天, week_day=7天, mon_day==30天, all_day=生涯
   let dayData: Record<string, unknown> | undefined
   switch (selectedDateTab.value) {
-    case t('UIData_Today'):
+    case 'today':
       dayData = roomDataTotal?.one_day as Record<string, unknown> | undefined
       break
-    case "7" + t('UIHappyShop_ActivityShopDay'):
+    case 'week':
       dayData = roomDataTotal?.week_day as Record<string, unknown> | undefined
       break
-    case "30" + t('UIHappyShop_ActivityShopDay'):
-      dayData = roomDataTotal?.all_day as Record<string, unknown> | undefined
+    case 'month':
+      dayData = roomDataTotal?.mon_day as Record<string, unknown> | undefined
       break
   }
 
@@ -207,28 +273,77 @@ function extractMetricsFromCache(): CareerMetric[] {
   ]
 }
 
+// ── 缓存（IndexedDB career）──────────────────────────────────────────────────
+// store=USER_STORE_CAREER，key = `${clubId}_home_${currency}_${gameTab}`：
+//   clubId = 0(全部) / 俱乐部 id；currency = 1(UC)/3(记分牌)/4(钻石)；gameTab = nlh|plo|6+。
+// 接口返回 one_day/week_day/mon_day 全部时间窗的数据，所以 date tab 不进 key。
+function homeCacheKey(): string {
+  const clubId =
+    selectedClubIndex.value === 0
+      ? 0
+      : (userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id ?? 0)
+  const currency = currencyTypes[selectedCurrencyIndex.value].value
+  return `${clubId}_home_${currency}_${selectedGameTab.value}`
+}
+
+function homeCache() {
+  return userCache(gameStore.loginUserId)
+}
+
 async function fetchClubCareerSummary(): Promise<void> {
-  loading.value = true
+  const key = homeCacheKey()
+  const cached = await homeCache().get<Record<string, unknown>>(USER_STORE_CAREER, key)
+  // 请求期间 tab 被切换：丢弃此次缓存。
+  if (key !== homeCacheKey()) return
+
+  if (cached) {
+    loading.value = false
+    responseCache.value = cached
+    metrics.value = extractMetricsFromCache()
+    // 后台静默刷新覆盖缓存
+    void requestSummary(key, true)
+    return
+  }
+
+  await requestSummary(key, false)
+}
+
+async function requestSummary(key: string, silent: boolean): Promise<void> {
+  if (!silent) loading.value = true
   try {
     const params = resolveRequestParams()
     const response = await postStatsUserStatsAllApi(params)
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadClubDataFail'))
+      throw new Error(
+        typeof response.msg === 'string' ? response.msg : t('UIClub_LoadClubDataFail'),
+      )
     }
+    if (key !== homeCacheKey()) return
 
-    // 缓存完整响应数据
-    responseCache.value = response.data as Record<string, unknown>
-    // 从缓存中提取指标
+    const data = response.data as Record<string, unknown>
+    responseCache.value = data
     metrics.value = extractMetricsFromCache()
+    void homeCache().put(USER_STORE_CAREER, key, data)
   } catch (error) {
-    const message = error instanceof Error ? error.message : t('UIClub_LoadClubDataFail')
-    showFailToast(message)
+    if (!silent) {
+      const message = error instanceof Error ? error.message : '加载俱乐部生涯数据失败'
+      showFailToast(message)
+    }
   } finally {
-    loading.value = false
+    if (!silent) loading.value = false
   }
 }
 
+// 俱乐部列表异步加载时，按缓存的 club_id 重新定位选中项。
+watch(
+  () => userInfoStore.clubList,
+  () => {
+    restoreSelectedClub()
+  },
+)
+
 onMounted(() => {
+  restoreSelectedClub()
   void fetchClubCareerSummary()
 })
 </script>
@@ -236,13 +351,14 @@ onMounted(() => {
 <template>
   <div class="page-shell career-page" :style="backgroundStyle" @click="closePopup">
     <div class="page-top"></div>
-    <HeaderBack :title="t('UIMine_VIP_dataAll')" extra-padding>
+    <HeaderBack :title="t('PageMineClubCareer')" extra-padding>
       <template #right>
         <div class="action-wrap">
           <TopActionButton
-            :name="t('UIMatch_GtO8YEdb')"
+            :name="selectedClubLabel"
             :icon="iconFilter"
             icon-alt="wallet"
+            class="club-action-btn"
             @click.stop="toggleClubDropdown"
           />
           <TopActionButton
@@ -283,13 +399,13 @@ onMounted(() => {
       <div class="game-tabs">
         <button
           v-for="tab in gameTabs"
-          :key="tab"
+          :key="tab.key"
           type="button"
           class="game-tab"
-          :class="{ active: selectedGameTab === tab }"
-          @click="selectGameTab(tab)"
+          :class="{ active: selectedGameTab === tab.key }"
+          @click="selectGameTab(tab.key)"
         >
-          {{ tab }}
+          {{ tab.label }}
         </button>
       </div>
 
@@ -297,13 +413,13 @@ onMounted(() => {
         <div class="date-tabs">
           <button
             v-for="tab in dateTabs"
-            :key="tab"
+            :key="tab.key"
             type="button"
             class="date-tab"
-            :class="{ active: selectedDateTab === tab }"
-            @click="selectDateTab(tab)"
+            :class="{ active: selectedDateTab === tab.key }"
+            @click="selectDateTab(tab.key)"
           >
-            {{ tab }}
+            {{ tab.label }}
           </button>
         </div>
 
@@ -407,6 +523,14 @@ onMounted(() => {
   gap: 0.26rem;
 }
 
+// 让俱乐部按钮中的长俱乐部名以省略号显示，避免溢出。
+.club-action-btn :deep(.action-label) {
+  max-width: 0.96rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .club-dropdown {
   position: absolute;
   left: 0;
@@ -478,11 +602,10 @@ onMounted(() => {
 }
 
 .game-tabs {
-  margin-top: 0.6rem;
+  margin-top: 0.48rem;
   display: flex;
   align-items: center;
-  gap: 0.72rem;
-  padding: 0 0.16rem;
+  justify-content: space-around;
 }
 
 .game-tab {
@@ -500,9 +623,9 @@ onMounted(() => {
 }
 
 .stats-card {
-  margin-top: 0.4rem;
-  border-radius: 0.56rem;
-  padding: 0.34rem 0.44rem 0.28rem;
+  margin-top: 0.45rem;
+  border-radius: 0.7rem;
+  padding: 0.34rem 0.6rem 0.32rem;
   background: rgba(42, 26, 43, 0.34);
   backdrop-filter: blur(0.03rem);
 }
@@ -511,7 +634,7 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.1rem;
-  padding: 0.06rem;
+  padding: 0;
   border-radius: 0.68rem;
   background: rgba(255, 255, 255, 0.2);
 }
@@ -523,7 +646,7 @@ onMounted(() => {
   color: #f9f9f9;
   opacity: 0.86;
   font-size: 0.42rem;
-  padding: 0.2rem 0;
+  padding: 0.36rem 0;
 
   &.active {
     background: rgba(255, 255, 255, 0.16);
@@ -533,7 +656,7 @@ onMounted(() => {
 }
 
 .metric-row {
-  margin-top: 0.36rem;
+  margin-top: 0.3rem;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.1rem;
@@ -551,14 +674,14 @@ onMounted(() => {
   text-align: center;
 
   .value {
-    font-size: 0.57rem;
+    font-size: 0.54rem;
     line-height: 1.05;
+    font-weight: 400;
     color: #fff;
   }
 
   .label {
-    margin-top: 0.05rem;
-    font-size: 0.24rem;
+    font-size: 0.221rem;
     color: rgba(255, 255, 255, 0.58);
   }
 }
@@ -568,7 +691,7 @@ onMounted(() => {
   border-radius: 0.42rem;
   background: rgba(31, 24, 46, 0.34);
   backdrop-filter: blur(0.03rem);
-  padding: 0 0.36rem;
+  padding: 0.2rem 0.4rem;
 }
 
 .menu-item {
@@ -579,7 +702,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.28rem 0;
+  padding: 0.18rem 0.1rem;
+  margin: 0.05rem 0;
   border-bottom: 0.02rem solid rgba(255, 255, 255, 0.16);
 
   &:last-child {
@@ -590,21 +714,19 @@ onMounted(() => {
 .menu-left {
   display: flex;
   align-items: center;
-  gap: 0.24rem;
+  gap: 0.4rem;
 }
 
 .icon-box {
   width: 0.62rem;
   height: 0.62rem;
-  border-radius: 0.22rem;
-  background: rgba(255, 255, 255, 0.14);
   display: flex;
   align-items: center;
   justify-content: center;
 
   img {
-    width: 0.42rem;
-    height: 0.42rem;
+    width: 1rem;
+    height: 1rem;
   }
 }
 

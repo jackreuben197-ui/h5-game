@@ -22,7 +22,7 @@ import PokerCard from '@/components/GameCard/PokerCard.vue'
 import { getHandReplaySession } from '@/session/handReplaySession'
 import { t } from '@/i18n'
 
-const title = computed(() => 'Result')
+const title = computed(() => t('adaptation10210'))
 const route = useRoute()
 
 const backgroundStyle = computed(() => ({
@@ -392,7 +392,7 @@ function onShare(): void {
 
 .action-row {
   display: grid;
-  grid-template-columns: 1.5fr 1fr auto;
+  grid-template-columns: minmax(3rem, 1.5fr) minmax(2.4rem, 1fr) 1.8rem;
   align-items: center;
   gap: 0.12rem;
   font-size: 0.3rem;
@@ -406,13 +406,14 @@ function onShare(): void {
   display: flex;
   align-items: center;
   gap: 0.12rem;
-  min-width: 3.45rem;
+  min-width: 0;
 }
 
 .move-part {
   display: flex;
   align-items: center;
   gap: 0.12rem;
+  min-width: 0;
 }
 
 .seat-tag,
@@ -455,6 +456,10 @@ function onShare(): void {
 
 .result-num {
   font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .showdown-card {

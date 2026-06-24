@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { showFailToast } from 'vant'
 import { postFriendRoomStatsDataApi, postFriendRoomStatsDataInfoApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import DateRangePicker from '@/components/DateRangePicker/DateRangePicker.vue'
 
 import iconTime from '@/assets/icons/icon_time.png'
 import { t } from '@/i18n'
@@ -13,11 +15,12 @@ import {
   endOfDay,
   formatDateTime,
   startOfDay,
-  toUnixSeconds,
+  toTimestampMs,
 } from '@/utils/time'
 import { useGameStore } from '@/stores/game'
 import { userCache } from '@/utils/userCache'
 import { USER_STORE_CAREER } from '@/utils/indexedDB'
+import { resolveBlindText } from '@/utils/transText'
 
 interface SummaryMetric {
   label: string
@@ -47,13 +50,13 @@ const backgroundStyle = computed(() => ({
 
 interface FilterTab {
   label: string
-  key: 'today' | 'week' | 'month' | 'customize'
+  key: 'today' | 'week' | 'halfmonth' | 'customize'
 }
 
 const filterTabs: FilterTab[] = [
   { label: '今天', key: 'today' },
   { label: '7天', key: 'week' },
-  { label: '14天', key: 'month' },
+  { label: '14天', key: 'halfmonth' },
   { label: 'Customize', key: 'customize' },
 ]
 const activeFilter = ref<FilterTab['key']>(filterTabs[0].key)
@@ -69,16 +72,8 @@ const endDateModel = ref<Date>(startOfDay(now))
 
 // 自定义日期是否已确认（点过 OK）。控制 Customize tab 是否显示日期。
 const customizeApplied = ref(false)
-// 打开 picker 前的日期快照，用于取消时回滚。
-let pickerSnapshotStart: Date | null = null
-let pickerSnapshotEnd: Date | null = null
 
 const isDatePickerVisible = ref(false)
-const pickingTarget = ref<'start' | 'end'>('start')
-const currentMonth = ref(
-  new Date(endDateModel.value.getFullYear(), endDateModel.value.getMonth(), 1),
-)
-const weekLabels = ['m', 't', 'w', 't', 'f', 's', 's']
 
 const metrics = ref<SummaryMetric[]>([
   { label: '手数/局数', value: '0/0' },
@@ -103,6 +98,7 @@ function formatSigned(value: unknown): string {
 }
 
 const gameStore = useGameStore()
+const router = useRouter()
 
 interface RecordCacheEntry {
   metrics: SummaryMetric[]
@@ -119,47 +115,6 @@ function buildCacheKey(): string | null {
 function applyCache(entry: RecordCacheEntry): void {
   metrics.value = entry.metrics.map((item) => ({ ...item }))
   records.value = entry.records.map((item) => ({ ...item }))
-}
-
-function buildMockRecords(): RecordItem[] {
-  return [
-    {
-      id: 'mock-1',
-      game: 'NLH',
-      title: '德州 1/2',
-      subtitle: '盲注 : 2',
-      extra: '买入 : 200',
-      time: '2026-06-22 20:30',
-      feeText: '服务费',
-      feeValue: '-50',
-      insuranceLabel: '保险',
-      insuranceValue: '-20',
-      feePositive: false,
-    },
-    {
-      id: 'mock-2',
-      game: 'PLO',
-      title: 'PLO 短码桌',
-      subtitle: '盲注 : 5',
-      extra: '买入 : 500',
-      time: '2026-06-22 19:10',
-      feeText: '服务费',
-      feeValue: '+120',
-      insuranceLabel: '保险',
-      insuranceValue: '0',
-      feePositive: true,
-    },
-    {
-      id: 'mock-3',
-      game: '麻将',
-      title: '川麻 血战到底',
-      subtitle: '参赛人数: 4',
-      time: '2026-06-22 16:42',
-      feeText: '服务费',
-      feeValue: '-30',
-      feePositive: false,
-    },
-  ]
 }
 
 function mapGameBadge(gameType: unknown, pokerType: unknown): string {
@@ -184,16 +139,22 @@ function mapGameBadge(gameType: unknown, pokerType: unknown): string {
 function mapRecordItem(row: Record<string, unknown>, index: number): RecordItem {
   const feeValue = formatSigned(row.fee)
   const insuranceValue = formatSigned(row.insurance)
-  const startTime = String(row.start_time_str ?? row.game_start_time ?? '--')
+  const startTime = formatDateTime(row.start_time_str ?? row.game_start_time, 'DD/MM/YYYY HH:mm')
   const matchPlayers = toSafeNumber(row.match_player_num)
-  const buyIn = toSafeNumber(row.buy_in)
-  const sb = toSafeNumber(row.sb)
+  const buyIn = toSafeNumber(row.buy_in) / 100
+  const sb = toSafeNumber(row.sb) / 100
+  const blind = resolveBlindText({
+    gameType: toSafeNumber(row.game_type),
+    pokerType: toSafeNumber(row.poker_type),
+    sb,
+    bombpot: toSafeNumber(row.bombpot),
+  })
 
   return {
     id: String(row.room_id ?? row.match_id ?? index + 1),
     game: mapGameBadge(row.game_type, row.poker_type),
     title: String(row.name ?? row.room_name ?? row.game_room_name ?? '局抽数据'),
-    subtitle: matchPlayers > 0 ? `参赛人数: ${matchPlayers}` : `盲注 : ${sb}`,
+    subtitle: matchPlayers > 0 ? `参赛人数: ${matchPlayers}` : `${blind.label} : ${blind.value}`,
     extra: buyIn > 0 ? `买入 : ${buyIn}` : undefined,
     time: startTime,
     feeText: '服务费',
@@ -208,10 +169,10 @@ async function fetchFriendsRecord(silent = false): Promise<void> {
   if (!silent) loading.value = true
   const requestKey = buildCacheKey()
   try {
-    // 始终以 0 点对齐发送给后端，保留原有行为。
+    // 单位为毫秒，对齐客户端协议；end 取当日 23:59:59 包含整天。
     const requestPayload = {
-      start_time: toUnixSeconds(startOfDay(startDateModel.value)),
-      end_time: toUnixSeconds(startOfDay(endDateModel.value)),
+      start_time: toTimestampMs(startOfDay(startDateModel.value)),
+      end_time: toTimestampMs(endOfDay(endDateModel.value)),
       limit: 20,
       offset: 0,
     }
@@ -236,7 +197,7 @@ async function fetchFriendsRecord(silent = false): Promise<void> {
     if (silent && requestKey !== buildCacheKey()) return
 
     const list = Array.isArray(listRes.data?.list) ? listRes.data.list : []
-    let nextRecords: RecordItem[] = list.map((item, index) =>
+    const nextRecords: RecordItem[] = list.map((item, index) =>
       mapRecordItem((item as Record<string, unknown>) ?? {}, index),
     )
 
@@ -248,11 +209,6 @@ async function fetchFriendsRecord(silent = false): Promise<void> {
       { label: '盈利', value: formatSigned(info.profit) },
       { label: '服務費', value: Math.abs(toSafeNumber(info.fee)).toLocaleString('en-US') },
     ]
-
-    // 接口返回为空时填充 mock 占位。
-    if (nextRecords.length === 0) {
-      nextRecords = buildMockRecords()
-    }
 
     metrics.value = nextMetrics
     records.value = nextRecords
@@ -291,67 +247,17 @@ async function loadFromCacheThenRefresh(): Promise<void> {
   }
 }
 
-const startDateText = computed(() => formatDateTime(startDateModel.value, 'YYYY/MM/DD'))
-const endDateText = computed(() => formatDateTime(endDateModel.value, 'YYYY/MM/DD'))
 const customizeStartText = computed(() => formatDateTime(startDateModel.value, 'DD/MM/YYYY'))
 const customizeEndText = computed(() => formatDateTime(endDateModel.value, 'DD/MM/YYYY'))
-const monthTitle = computed(
-  () => `${currentMonth.value.getFullYear()}年${currentMonth.value.getMonth() + 1}月`,
-)
-
-type DayCell = {
-  date: Date
-  day: number
-  inCurrentMonth: boolean
-}
-
-const calendarCells = computed<DayCell[]>(() => {
-  const firstDay = new Date(currentMonth.value.getFullYear(), currentMonth.value.getMonth(), 1)
-  const daysInMonth = new Date(firstDay.getFullYear(), firstDay.getMonth() + 1, 0).getDate()
-  const offset = (firstDay.getDay() + 6) % 7
-  const prevMonthLastDay = new Date(firstDay.getFullYear(), firstDay.getMonth(), 0).getDate()
-  const cells: DayCell[] = []
-
-  for (let i = 0; i < offset; i += 1) {
-    const day = prevMonthLastDay - offset + i + 1
-    cells.push({
-      date: new Date(firstDay.getFullYear(), firstDay.getMonth() - 1, day),
-      day,
-      inCurrentMonth: false,
-    })
-  }
-
-  for (let day = 1; day <= daysInMonth; day += 1) {
-    cells.push({
-      date: new Date(firstDay.getFullYear(), firstDay.getMonth(), day),
-      day,
-      inCurrentMonth: true,
-    })
-  }
-
-  const trailingCount = Math.max(0, 35 - cells.length)
-  for (let i = 1; i <= trailingCount; i += 1) {
-    cells.push({
-      date: new Date(firstDay.getFullYear(), firstDay.getMonth() + 1, i),
-      day: i,
-      inCurrentMonth: false,
-    })
-  }
-
-  return cells.slice(0, 35)
-})
 
 function onFilterClick(tab: FilterTab): void {
   if (tab.key === 'customize') {
-    // 打开 picker 前快照当前日期，取消则回滚。
-    pickerSnapshotStart = startDateModel.value
-    pickerSnapshotEnd = endDateModel.value
     // 首次进入 Customize，picker 内默认昨天 0 点 → 今天 23:59:59。
     if (!customizeApplied.value) {
       startDateModel.value = startOfDay(addDays(now, -1))
       endDateModel.value = endOfDay(now)
     }
-    openDatePicker('start')
+    isDatePickerVisible.value = true
     return
   }
 
@@ -362,134 +268,28 @@ function onFilterClick(tab: FilterTab): void {
   } else if (tab.key === 'week') {
     startDateModel.value = startOfDay(addDays(now, -6))
     endDateModel.value = startOfDay(now)
-  } else if (tab.key === 'month') {
+  } else if (tab.key === 'halfmonth') {
     startDateModel.value = startOfDay(addDays(now, -13))
     endDateModel.value = startOfDay(now)
   }
   void loadFromCacheThenRefresh()
 }
 
-function openDatePicker(target: 'start' | 'end'): void {
-  pickingTarget.value = target
-  isDatePickerVisible.value = true
-  currentMonth.value = new Date(endDateModel.value.getFullYear(), endDateModel.value.getMonth(), 1)
-}
-
-function closeDatePicker(): void {
-  // 用户未点 OK 直接关闭：回滚到打开 picker 前的日期范围。
-  if (pickerSnapshotStart && pickerSnapshotEnd) {
-    startDateModel.value = pickerSnapshotStart
-    endDateModel.value = pickerSnapshotEnd
-  }
-  pickerSnapshotStart = null
-  pickerSnapshotEnd = null
-  isDatePickerVisible.value = false
-}
-
-function confirmDatePicker(): void {
-  if (startDateModel.value > endDateModel.value) {
-    const temp = startDateModel.value
-    startDateModel.value = endDateModel.value
-    endDateModel.value = temp
-  }
+function onDatePickerConfirm(payload: { startDate: Date; endDate: Date }): void {
+  startDateModel.value = payload.startDate
+  endDateModel.value = payload.endDate
   customizeApplied.value = true
   activeFilter.value = 'customize'
-  pickerSnapshotStart = null
-  pickerSnapshotEnd = null
-  isDatePickerVisible.value = false
   void loadFromCacheThenRefresh()
 }
 
-function goPrevYear(): void {
-  currentMonth.value = new Date(
-    currentMonth.value.getFullYear() - 1,
-    currentMonth.value.getMonth(),
-    1,
-  )
-}
-
-function goPrevMonth(): void {
-  currentMonth.value = new Date(
-    currentMonth.value.getFullYear(),
-    currentMonth.value.getMonth() - 1,
-    1,
-  )
-}
-
-function goNextMonth(): void {
-  currentMonth.value = new Date(
-    currentMonth.value.getFullYear(),
-    currentMonth.value.getMonth() + 1,
-    1,
-  )
-}
-
-function goNextYear(): void {
-  currentMonth.value = new Date(
-    currentMonth.value.getFullYear() + 1,
-    currentMonth.value.getMonth(),
-    1,
-  )
-}
-
-function selectDay(date: Date): void {
-  if (isDisabledDay(date)) {
-    return
-  }
-
-  const selectedDate = startOfDay(date)
-  if (pickingTarget.value === 'start') {
-    startDateModel.value = selectedDate
-    if (selectedDate > endDateModel.value) {
-      endDateModel.value = selectedDate
-    }
-    pickingTarget.value = 'end'
-  } else {
-    endDateModel.value = selectedDate
-    if (selectedDate < startDateModel.value) {
-      startDateModel.value = selectedDate
-    }
-    pickingTarget.value = 'start'
-  }
-
-  if (
-    selectedDate.getMonth() !== currentMonth.value.getMonth() ||
-    selectedDate.getFullYear() !== currentMonth.value.getFullYear()
-  ) {
-    currentMonth.value = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
-  }
-}
-
-function isSameDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  )
-}
-
-function isRangeStart(date: Date): boolean {
-  return isSameDay(date, startDateModel.value)
-}
-
-function isRangeEnd(date: Date): boolean {
-  return isSameDay(date, endDateModel.value)
-}
-
-function isInRange(date: Date): boolean {
-  const target = startOfDay(date).getTime()
-  const start = startOfDay(startDateModel.value).getTime()
-  const end = startOfDay(endDateModel.value).getTime()
-  return target > start && target < end
-}
-
-function isDisabledDay(date: Date): boolean {
-  const target = startOfDay(date).getTime()
-  return target < minSelectableDate.getTime() || target > maxSelectableDate.getTime()
-}
-
-function openRecordDetail(_item: RecordItem): void {
-  // 待后续接入战绩详情页。
+function openRecordDetail(item: RecordItem): void {
+  const roomId = Number(item.id)
+  if (!Number.isFinite(roomId) || roomId <= 0) return
+  void router.push({
+    path: '/mine/career/friends/data/detail',
+    query: { roomId: String(roomId) },
+  })
 }
 
 onMounted(() => {
@@ -580,82 +380,14 @@ onMounted(() => {
         </article>
       </section>
 
-      <div v-if="isDatePickerVisible" class="date-picker-mask" @click="closeDatePicker">
-        <div class="date-picker-sheet" @click.stop>
-          <header class="picker-tip">
-            <p>只支持查询最近三个月数据</p>
-            <button type="button" class="picker-close" @click="closeDatePicker">×</button>
-          </header>
-
-          <div class="picker-range-row">
-            <button
-              type="button"
-              class="picker-date-btn"
-              :class="{ active: pickingTarget === 'start' }"
-              @click="pickingTarget = 'start'"
-            >
-              <span class="calendar-icon" aria-hidden="true"></span>
-              <span>{{ startDateText }}</span>
-            </button>
-            <button
-              type="button"
-              class="picker-date-btn"
-              :class="{ active: pickingTarget === 'end' }"
-              @click="pickingTarget = 'end'"
-            >
-              <span class="calendar-icon" aria-hidden="true"></span>
-              <span>{{ endDateText }}</span>
-            </button>
-          </div>
-
-          <div class="picker-month-row">
-            <div class="month-arrows">
-              <button type="button" class="arrow-btn" aria-label="上一年" @click="goPrevYear">
-                «
-              </button>
-              <button type="button" class="arrow-btn" aria-label="上一月" @click="goPrevMonth">
-                ‹
-              </button>
-            </div>
-            <p class="month-title">{{ monthTitle }}</p>
-            <div class="month-arrows">
-              <button type="button" class="arrow-btn" aria-label="下一月" @click="goNextMonth">
-                ›
-              </button>
-              <button type="button" class="arrow-btn" aria-label="下一年" @click="goNextYear">
-                »
-              </button>
-            </div>
-          </div>
-
-          <div class="calendar-wrap">
-            <div class="weekday-row">
-              <span v-for="(label, idx) in weekLabels" :key="`${label}-${idx}`">{{ label }}</span>
-            </div>
-
-            <div class="day-grid">
-              <button
-                v-for="cell in calendarCells"
-                :key="cell.date.toISOString()"
-                type="button"
-                class="day-cell"
-                :class="{
-                  muted: !cell.inCurrentMonth,
-                  disabled: isDisabledDay(cell.date),
-                  'in-range': isInRange(cell.date),
-                  'range-start': isRangeStart(cell.date),
-                  'range-end': isRangeEnd(cell.date),
-                }"
-                @click="selectDay(cell.date)"
-              >
-                <span>{{ String(cell.day).padStart(2, '0') }}</span>
-              </button>
-            </div>
-          </div>
-
-          <button type="button" class="picker-ok" @click="confirmDatePicker">OK</button>
-        </div>
-      </div>
+      <DateRangePicker
+        v-model:visible="isDatePickerVisible"
+        :start-date="startDateModel"
+        :end-date="endDateModel"
+        :min-date="minSelectableDate"
+        :max-date="maxSelectableDate"
+        @confirm="onDatePickerConfirm"
+      />
     </div>
   </div>
 </template>
@@ -933,225 +665,5 @@ onMounted(() => {
   font-size: 0.648rem;
   line-height: 1;
   color: #f9f9f9;
-}
-
-.date-picker-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 24;
-  background: rgba(12, 12, 12, 0.6);
-  display: flex;
-  align-items: flex-end;
-}
-
-.date-picker-sheet {
-  width: 100%;
-  padding: 0.64256rem 0.53211rem 0.5472rem;
-  border-radius: 0.84459rem 0.84459rem 0 0;
-  background: rgba(0, 0, 0, 0.86);
-  backdrop-filter: blur(0.16064rem);
-}
-
-.picker-tip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  p {
-    margin: 0;
-    font-size: 0.41861rem;
-    line-height: 1.4;
-    color: #fff;
-  }
-}
-
-.picker-close {
-  width: 1.024rem;
-  height: 1.024rem;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-size: 0.8rem;
-  line-height: 1;
-}
-
-.picker-range-row {
-  margin-top: 0.42667rem;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.42667rem;
-}
-
-.picker-date-btn {
-  border: 0;
-  height: 0.85141rem;
-  border-radius: 0.64157rem;
-  padding: 0 0.42208rem;
-  background: rgba(6, 6, 6, 0.4);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.1912rem;
-  font-size: 0.35893rem;
-  line-height: 1.2;
-
-  &.active {
-    box-shadow: 0 0 0 0.02rem rgba(5, 231, 174, 0.45) inset;
-  }
-}
-
-.calendar-icon {
-  width: 0.48rem;
-  height: 0.48rem;
-  border: 0.04rem solid rgba(243, 243, 243, 0.85);
-  border-radius: 0.1rem;
-  position: relative;
-
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -0.06rem;
-    width: 0.06rem;
-    height: 0.12rem;
-    border-radius: 0.03rem;
-    background: rgba(243, 243, 243, 0.85);
-  }
-
-  &::before {
-    left: 0.09rem;
-  }
-
-  &::after {
-    right: 0.09rem;
-  }
-}
-
-.picker-month-row {
-  margin-top: 0.372rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.month-arrows {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.18667rem;
-}
-
-.arrow-btn {
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 0.64rem;
-  width: 0.64rem;
-  height: 0.64rem;
-  line-height: 0.64rem;
-  padding: 0;
-}
-
-.month-title {
-  margin: 0;
-  color: #fff;
-  font-size: 0.49547rem;
-  line-height: 1.4;
-}
-
-.calendar-wrap {
-  margin-top: 0.16rem;
-  padding: 0.26667rem;
-}
-
-.weekday-row {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  justify-items: center;
-  opacity: 0.7;
-
-  span {
-    font-size: 0.26667rem;
-    line-height: 0.42667rem;
-    text-transform: lowercase;
-  }
-}
-
-.day-grid {
-  margin-top: 0.08rem;
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-}
-
-.day-cell {
-  border: 0;
-  background: transparent;
-  color: #fff;
-  height: 0.98667rem;
-  padding: 0;
-  position: relative;
-  font-size: 0.32rem;
-  line-height: 0.42667rem;
-  display: grid;
-  place-items: center;
-
-  > span {
-    position: relative;
-    z-index: 2;
-  }
-
-  &.disabled,
-  &.muted {
-    opacity: 0.3;
-  }
-
-  &.in-range::before,
-  &.range-start::before,
-  &.range-end::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0.14667rem;
-    bottom: 0.14667rem;
-    background: rgba(5, 231, 174, 0.17);
-    z-index: 1;
-  }
-
-  &.range-start::before {
-    border-radius: 0.49333rem 0 0 0.49333rem;
-  }
-
-  &.range-end::before {
-    border-radius: 0 0.49333rem 0.49333rem 0;
-  }
-
-  &.range-start.range-end::before {
-    border-radius: 0.49333rem;
-  }
-
-  &.range-start::after,
-  &.range-end::after {
-    content: '';
-    position: absolute;
-    width: 0.8rem;
-    height: 0.8rem;
-    border-radius: 50%;
-    background: #05e7ae;
-    z-index: 1;
-  }
-}
-
-.picker-ok {
-  margin-top: 0.37333rem;
-  width: 100%;
-  height: 1.43581rem;
-  border: 0.01333rem solid rgba(242, 242, 242, 0.8);
-  border-radius: 1.05573rem;
-  background: linear-gradient(168.11deg, #05e7ae 7.55%, #027a5c 71.92%);
-  color: #fff;
-  font-size: 0.4rem;
-  font-weight: 500;
 }
 </style>

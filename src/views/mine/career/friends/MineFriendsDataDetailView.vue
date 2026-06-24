@@ -18,25 +18,24 @@ function toSafeNumber(value: unknown): number {
 }
 
 const roomId = computed(() => toSafeNumber(route.query.roomId))
-const matchId = computed(() => toSafeNumber(route.query.matchId))
 
 onMounted(() => {
-  if (!roomId.value && !matchId.value) {
-    showFailToast('缺少 roomId/matchId 参数')
+  if (!roomId.value) {
+    showFailToast('缺少 roomId 参数')
     void router.back()
   }
 })
 </script>
 
 <template>
-  <div class="page-shell club-room-history-detail-bg" :style="backgroundStyle">
+  <div class="page-shell friends-data-detail-bg" :style="backgroundStyle">
     <HeaderBack :title="'数据详情'" />
-    <RoomDataDetail source="club" :room-id="roomId" :match-id="matchId" />
+    <RoomDataDetail source="friend" :room-id="roomId" />
   </div>
 </template>
 
 <style scoped lang="scss">
-.club-room-history-detail-bg {
+.friends-data-detail-bg {
   position: relative;
   height: 100dvh;
   background-size: cover;

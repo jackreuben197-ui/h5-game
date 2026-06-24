@@ -406,6 +406,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/mine/career/friends/data/detail',
+      name: 'mine-career-friends-data-detail',
+      component: () => import('@/views/mine/career/friends/MineFriendsDataDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/mine/hand-collection',
       name: 'mine-hand-collection',
       component: () => import('@/views/mine/handCollection/MineHandCollectionView.vue'),

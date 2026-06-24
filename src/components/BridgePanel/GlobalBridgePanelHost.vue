@@ -14,10 +14,11 @@ const renderedPanel = ref<ActiveBridgePanel | null>(null)
 const visible = computed(() => Boolean(activePanel.value))
 const title = computed(() => renderedPanel.value?.title ?? '')
 const showH5Bg = computed(() => renderedPanel.value?.showH5Bg === true)
+const noNotificationDialog = computed(() => renderedPanel.value?.panelType !== 'notification')
 const closeOnClickOverlay = computed(() => renderedPanel.value?.closeOnClickOverlay === true)
 const isMttRecord = computed(() => renderedPanel.value?.panelType === 'mttRecord')
 const currentPanelComponent = computed(() =>
-  renderedPanel.value ? bridgePanelRegistry[renderedPanel.value.panelType] ?? null : null,
+  renderedPanel.value ? (bridgePanelRegistry[renderedPanel.value.panelType] ?? null) : null,
 )
 const panelProps = computed(() => renderedPanel.value?.props ?? {})
 const shouldShowFallback = computed(() =>
@@ -70,12 +71,13 @@ function onDialogClose(): void {
   </van-popup>
 
   <GameDialog
-    :class="{ 'game-panel-dialog': !showH5Bg }"
+    :class="{ 'game-panel-dialog': !showH5Bg, 'notification-dialog': !noNotificationDialog }"
     :show="visible && !isMttRecord"
     :title="title"
     :show-footer="false"
     :show-confirm-button="false"
     :show-cancel-button="false"
+    :show-box-shawdow="noNotificationDialog"
     :close-on-click-overlay="closeOnClickOverlay"
     teleport="body"
     @update:show="onShowChange"
@@ -145,5 +147,10 @@ function onDialogClose(): void {
   display: flex;
   flex-direction: column;
   background: transparent;
+}
+.notification-dialog {
+  .game-dialog__card {
+    padding: 0.5rem 0.3rem;
+  }
 }
 </style>

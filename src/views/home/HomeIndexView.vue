@@ -15,6 +15,7 @@ import { useCachedImage } from '@/utils/imageCache'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { showGameToast } from '@/components/Toast'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
+import { openBridgePanel } from '@/bridge'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -225,22 +226,65 @@ function handleOpenCustomerService(): void {
 }
 
 function openMiniGamePanel(): void {
-  showGameToast('功能开发中')
-  // openBridgePanel({
-  //   // panelType: 'mttRecord',
-  //   panelType: 'mttSettlement',
-  //   closeOnClickOverlay: true,
-  //   // showH5Bg: true,
-  //   props: {
-  //     matchId: 92180450,
-  //     matchName: 'MTT202603121773282270383563',
-  //     isRebuy: false,
-  //     startTime: '',
-  //     currentBlindLevel: 0,
-  //     maxRebuyBlindLevel: 10,
-  //     remainRebuyTimes: 2,
-  //   },
-  // })
+  // showGameToast('功能开发中')
+  openBridgePanel({
+    panelType: 'notification',
+    title: '', // GameDialog 标题，可留空
+    props: {
+      page1: {
+        id: 1001,
+        type: 1,
+        name: 'XXXX123.com',
+        icon: 'https://static.awanptest.com/pint-intl-test/image-normal/20250904131213-AUVNG.png',
+        title: '立即下載XPoker立即下載XPoker立即下載XPoker',
+        url: 'https://download.example.com/xpoker.apk',
+        status: 1,
+        create_time: Math.floor(Date.now() / 1000) - 3600,
+      },
+      page2: [
+        {
+          id: 2001,
+          type: 2,
+          title: '系統維護公告',
+          content:
+            '<p style="margin-top:200px">今晚 22:00-24:00 系統升級，請提前下牌。</p><p style="margin-top:200px">今晚 22:00-24:00 系統升級，請提前下牌。</p>',
+          weight: 100,
+          status: 1,
+          create_time: Math.floor(Date.now() / 1000) - 1800,
+        },
+        {
+          id: 2002,
+          type: 2,
+          title: '活動上線',
+          content:
+            '<p>新春活動火熱進行中，登錄即送鑽石！</p><p><span style="color:#05E7AE">活动内容一：</span>参与指定牌局即可获得返水奖励，返水比例最高提升至 0.8%，上不封顶。</p>',
+          weight: 80,
+          status: 1,
+          create_time: Math.floor(Date.now() / 1000) - 86400,
+        },
+      ],
+      page3: {
+        id: 3001,
+        type: 3,
+        title: 'USDT 充值地址',
+        content: 'TRC20 網絡，請勿轉錯TRC20 網絡，請勿轉錯TRC20 網絡，請勿轉錯',
+        urls: [
+          'TXxxxxxxxxxxx',
+          'TYyyyyyyyyyyyy',
+          'TYyyyyyyyyyyyy',
+          'TYyyyyyyyyyyyy',
+          'TYyyyyyyyyyyyy',
+          '1',
+          '1',
+          '1',
+          '1',
+          'www.www.www',
+        ],
+        status: 1,
+        create_time: Math.floor(Date.now() / 1000) - 5400,
+      },
+    },
+  })
 }
 
 function getRoomPlayers(room: RoomRecord): number {
@@ -666,7 +710,10 @@ onBeforeUnmount(() => {
   font-size: 0.54rem;
   font-weight: 900;
   color: #000;
-  text-shadow: 0.5px 0 0 currentColor, -0.5px 0 0 currentColor, 0 0.5px 0 currentColor,
+  text-shadow:
+    0.5px 0 0 currentColor,
+    -0.5px 0 0 currentColor,
+    0 0.5px 0 currentColor,
     0 -0.5px 0 currentColor;
   letter-spacing: 0.05rem;
   font-family: 'HONOR Sans CN', sans-serif;
@@ -763,7 +810,8 @@ onBeforeUnmount(() => {
   min-height: 1.54rem;
   gap: 0;
   border: 0.302px solid rgba(0, 0, 0, 0.16);
-  box-shadow: inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
+  box-shadow:
+    inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
     inset -1px -1px 0px 0px rgba(255, 255, 255, 0.35);
 }
 

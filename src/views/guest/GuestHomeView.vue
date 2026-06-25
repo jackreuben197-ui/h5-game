@@ -17,17 +17,22 @@ const userInfoStore = useUserInfoStore()
 const clubBannerUrl = useCachedImage(
   () => userInfoStore.channelDefaultClub?.banner || homeHeaderFallback,
 )
-const clubNameText = computed<string>(() => userInfoStore.channelDefaultClub?.club_name || '俱乐部')
+const clubNameText = computed<string>(
+  () =>
+    (userInfoStore.channelDefaultClub?.club_name || '')
+      .replace(/[(（]\s*disband\s*[)）]?/gi, '')
+      .trim() ||
+    '俱乐部',
+)
 const noticeText = '欢迎来到德州扑克，登录后体验更多精彩内容'
 const clubGoldText = '0.00'
 const balanceVisible = true
 const pokerTablesText = '0'
 const pokerPlayersText = '0'
-const miniGamePlayersText = 0
+const miniGamePlayersText = 632
 const mttTablesText = '0'
 const mttPlayersText = '0'
-const mahjongTablesText = '0'
-const mahjongPlayersText = '0'
+const mahjongPlayersText = '788'
 
 const activeBannerGames = [
   { name: 'PA真人', svg: imgPa },
@@ -224,8 +229,6 @@ onMounted(() => {
           </div>
           <div class="zone-online-bar">
             <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
-            <span class="online-num"> {{ mahjongTablesText }} </span>
             <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
             <span class="online-num"> {{ mahjongPlayersText }} </span>
           </div>
@@ -442,6 +445,12 @@ onMounted(() => {
 .service-label {
   font-size: 0.3rem;
   color: #f9f9f9;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 4rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .club-balance-row {

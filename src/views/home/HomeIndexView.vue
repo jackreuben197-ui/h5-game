@@ -258,17 +258,20 @@ const noticeTrackStyle = computed<CSSProperties>(() => ({
   '--notice-distance': `${noticeDistancePx.value}px`,
   '--notice-duration': `${noticeDurationSec.value}s`,
 }))
-const clubNameText = computed(() => toSafeString(currentClub.value?.club_name) || '俱乐部')
+const clubNameText = computed(
+  () =>
+    toSafeString(currentClub.value?.club_name)
+      .replace(/[(（]\s*disband\s*[)）]?/gi, '')
+      .trim() || '俱乐部',
+)
 
 const clubGoldText = computed(() => toSafeNumber(currentClub.value?.user_gold) / 100)
 const pokerTablesText = computed(() => `${homeRoomStats.value.poker.tables}`)
 const pokerPlayersText = computed(() => `${homeRoomStats.value.poker.players}`)
 // const miniGamePlayersText = computed(() => `${homeRoomStats.value.miniGame.players}`)
-const miniGamePlayersText = 0
-// const mahjongTablesText = computed(() => `${homeRoomStats.value.mahjong.tables}`)
-const mahjongTablesText = 0
+const miniGamePlayersText = 632
 // const mahjongPlayersText = computed(() => `${homeRoomStats.value.mahjong.players}`)
-const mahjongPlayersText = 0
+const mahjongPlayersText = 788
 const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
 const mttPlayersText = computed(() => `${homeRoomStats.value.mtt.players}`)
 
@@ -729,8 +732,6 @@ onBeforeUnmount(() => {
           </div>
           <div class="zone-online-bar">
             <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
-            <span class="online-num"> {{ mahjongTablesText }} </span>
             <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
             <span class="online-num"> {{ mahjongPlayersText }} </span>
           </div>
@@ -905,6 +906,12 @@ onBeforeUnmount(() => {
 .service-label {
   font-size: 0.3rem;
   color: #f9f9f9;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 4rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .club-balance-row {

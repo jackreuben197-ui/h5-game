@@ -17,7 +17,6 @@ import { t } from '@/i18n'
 import { formatDateTime } from '@/utils/time'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import avatarDefault from '@/assets/images/default_avatar.png'
-import clubRoleIcon from '@/assets/icons/club_role_icon.png'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconBalance from '@/assets/icons/icon_credit_chip.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
@@ -976,10 +975,6 @@ onBeforeUnmount(() => {
                 {{ segment.text }}
               </span>
             </p>
-
-            <button v-if="item.senderIcon" class="sender-btn" type="button" aria-label="sender">
-              <img :src="clubRoleIcon" alt="sender" />
-            </button>
           </div>
 
           <div class="other-meta-row">
@@ -1302,28 +1297,6 @@ onBeforeUnmount(() => {
 
 .green {
   color: #05e7ae;
-}
-
-.sender-btn {
-  position: absolute;
-  right: 0.264rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 0.88rem;
-  height: 0.88rem;
-  border: 0;
-  background: transparent;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-  }
 }
 
 .other-meta-row {

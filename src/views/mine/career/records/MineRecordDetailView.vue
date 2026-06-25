@@ -88,7 +88,7 @@ const summaryItems = ref([
   { label: '总流水', value: '0' },
   { label: '最大底池', value: '0' },
   { label: '总手数', value: '0' },
-  { label: '总代入数', value: '0' },
+  { label: '总带入数', value: '0' },
 ])
 
 const playerResults = ref<PlayerResult[]>([])
@@ -262,12 +262,12 @@ async function fetchRecordDetail(): Promise<void> {
       'DD/MM HH:mm',
     )}`
 
-    // 对齐客户端 UIRecordDetailStatistics.UpdateTexasInfo：总流水/最大底池/总手数/总代入数。
+    // 对齐客户端 UIRecordDetailStatistics.UpdateTexasInfo：总流水/最大底池/总手数/总带入数。
     summaryItems.value = [
       { label: '总流水', value: formatAmount(toSafeNumber(roomData?.all_bet_pot)) },
       { label: '最大底池', value: formatAmount(toSafeNumber(roomData?.max_bet_pot)) },
       { label: '总手数', value: String(toSafeNumber(roomData?.room_total_hand_num)) },
-      { label: '总代入数', value: formatAmount(toSafeNumber(roomData?.all_bring_in)) },
+      { label: '总带入数', value: formatAmount(toSafeNumber(roomData?.all_bring_in)) },
     ]
 
     podiumSeats.value = buildPodiumSeats(userList)

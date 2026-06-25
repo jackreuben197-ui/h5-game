@@ -19,10 +19,12 @@ import iconBoxClubT from '@/assets/icons/icon_box_club_t.png'
 import imgClubBannerFigma from '@/assets/images/club_banner_bg.png'
 import imgClubLogo from '@/assets/images/club_default_logo.png'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
+import type { RoomRecord } from '@/api/models/roomcenter'
 import { useGameStore } from '@/stores/game'
+import { useRoomListStore } from '@/stores/roomList'
 import type { ClubInfo } from '@/stores/userInfo'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { formatUC } from '@/utils/roomVisibility'
+import { checkIsShowForClubAndTribe, formatUC } from '@/utils/roomVisibility'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import { readClubListCache, writeClubListCache } from '@/utils/userClubListCache'
 import { t } from '@/i18n'
@@ -53,6 +55,7 @@ interface ClubCardItem {
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
+const roomListStore = useRoomListStore()
 
 const searchKeyword = ref('')
 const loadingMyClubs = ref(false)
@@ -71,11 +74,13 @@ const quickActions: QuickActionItem[] = [
 ]
 
 const clubList = computed<ClubCardItem[]>(() => {
+  const records = roomListStore.records
   return userInfoStore.clubList.map((club, index) => {
     const fallbackBanner = fallbackBanners[index % fallbackBanners.length]
     const displayId = normalizeClubId(club.random_id ?? club.club_id)
     const clubId = normalizeClubId(club.club_id)
     const key = `${clubId || displayId || index}`
+    const stats = computeClubRoomStats(club, records)
 
     return {
       key,
@@ -85,8 +90,8 @@ const clubList = computed<ClubCardItem[]>(() => {
       roleText: getMemberRoleText(club.user_level),
       activeCount: toSafeNumber(club.user_gold),
       chipsCount: toSafeNumber(club.user_credit),
-      tableCount: toSafeNumber(club.tables),
-      memberCount: toSafeNumber(club.club_members),
+      tableCount: stats.tables,
+      memberCount: stats.players,
       cover: toSafeString(club.logo) || imgClubLogo,
       bannerBg: fallbackBanner,
     }
@@ -137,6 +142,42 @@ function toSafeString(value: unknown): string {
 function toSafeNumber(value: unknown): number {
   const num = Number(value)
   return Number.isFinite(num) ? num : 0
+}
+
+function toSafeInt(value: unknown): number {
+  const num = Number(value)
+  if (!Number.isFinite(num)) {
+    return 0
+  }
+  return Math.floor(num)
+}
+
+function getRoomPlayers(room: RoomRecord): number {
+  return Number(room.roomers) || (Array.isArray(room.users) ? room.users.length : 0)
+}
+
+// 与首页 pokerTablesText / pokerPlayersText 一致：按俱乐部/联盟过滤共享牌桌列表，
+// 只统计扑克玩法（game_type <= 4），保证列表与进入俱乐部后看到的数据一致。
+function computeClubRoomStats(
+  club: ClubInfo,
+  records: RoomRecord[],
+): { tables: number; players: number } {
+  const clubId = toSafeInt(club.club_id)
+  const tribeId = toSafeInt((club as Record<string, unknown>).tribe_id)
+  let tables = 0
+  let players = 0
+  records.forEach((room) => {
+    if (!checkIsShowForClubAndTribe(room, clubId, tribeId)) {
+      return
+    }
+    const gameType = Number(room.game_type)
+    if (!Number.isFinite(gameType) || gameType > 4) {
+      return
+    }
+    tables += 1
+    players += getRoomPlayers(room)
+  })
+  return { tables, players }
 }
 
 function getMemberRoleText(value: unknown): string {
@@ -332,6 +373,8 @@ async function onJoinClub(): Promise<void> {
 
 onMounted(() => {
   void loadMyClubList(true)
+  // 与首页/俱乐部详情共用同一份牌桌列表，进入此页时启动共享数据流。
+  roomListStore.bootstrapRoomList()
 })
 </script>
 

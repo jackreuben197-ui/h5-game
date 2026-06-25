@@ -39,6 +39,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { extractInvitationCode, extractInvitationLink } from '@/utils/clubInvitation'
 import {
   buildChannelClubInviteUrl,
+  buildChannelRegisterUrl,
   isChannelPackageHost,
 } from '@/utils/channelPackage'
 import { generateQrCodeUrl } from '@/utils/qrcode'
@@ -892,9 +893,10 @@ async function generateInviteQrCode(): Promise<void> {
       return
     }
 
-    const inviteCode = extractInvitationCode(response.data)
-    // 统一生成子域名邀请链接：https://<邀请码>.<主域名>/#/guest/home。
-    const finalLink = buildChannelClubInviteUrl(inviteCode)
+    // channel 模式：直接用当前 origin（邀请码已在子域名里）；否则用 origin + ?i= 注册链接。
+    const finalLink = isChannelPackage
+      ? buildChannelClubInviteUrl()
+      : buildChannelRegisterUrl({ inviteCode: extractInvitationCode(response.data) })
 
     if (!finalLink) {
       return

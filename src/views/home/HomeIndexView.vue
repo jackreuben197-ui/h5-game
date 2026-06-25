@@ -10,7 +10,7 @@ import homeHeaderFallback from '@/assets/images/home_header_2.png'
 import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
-import { t } from '@/i18n'
+import { t, getLocale } from '@/i18n'
 import { localStore } from '@/utils/localStore'
 import { useCachedImage } from '@/utils/imageCache'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
@@ -35,6 +35,9 @@ const popularBannerGamesStatic = [
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
+
+// 部分卡片文案为硬编码中文：en 用英文，其余语言回退中文（与 i18n 规则一致）。
+const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
 const roomListStore = useRoomListStore()
 const mttListStore = useMttListStore()
 const casinoStore = useCasinoStore()
@@ -654,7 +657,7 @@ onBeforeUnmount(() => {
 
     <!-- 4. 游戏模块 -->
     <div class="section-header">
-      <span class="section-title">游戏中心</span>
+      <span class="section-title">{{ localized('Game Center', '游戏中心') }}</span>
     </div>
     <div class="game-center-scroll">
       <div class="game-center-track">
@@ -722,12 +725,12 @@ onBeforeUnmount(() => {
           <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
           <div class="zone-info">
             <div class="zone-header">
-              <span class="zone-title"> 娱乐场 </span>
+              <span class="zone-title"> {{ localized('Casino', '娱乐场') }} </span>
               <img class="zone-mini-icon" src="@/assets/icons/game_zone_mahjong_mini.png" alt="" />
             </div>
             <div class="zone-desc casino-desc">
-              <p>真人视讯 电子娱乐 体育竞猜</p>
-              <p>全球一线厂商</p>
+              <p>{{ localized('Live · Slots · Sports', '真人视讯 电子娱乐 体育竞猜') }}</p>
+              <p>{{ localized('Top providers', '全球一线厂商') }}</p>
             </div>
           </div>
           <div class="zone-online-bar">
@@ -742,7 +745,7 @@ onBeforeUnmount(() => {
 
     <!-- 5. 热门游戏 -->
     <div class="section-header">
-      <span class="section-title">热门游戏</span>
+      <span class="section-title">{{ localized('Hot Games', '热门游戏') }}</span>
     </div>
     <div class="coming-soon-scroll">
       <div class="coming-soon-track">

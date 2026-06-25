@@ -5,6 +5,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { useWalletStore } from '@/stores/wallet'
 import BellButton from '@/components/Button/BellButton.vue'
 import CustomerServiceChatPopup from '@/views/wallet/components/CustomerServiceChatPopup.vue'
+import { subscribeCsOrderChat } from './channel'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 
 const userInfoStore = useUserInfoStore()
@@ -50,6 +51,13 @@ async function openChat() {
 }
 
 let refreshTimer: number | null = null
+let stopOpenListener: (() => void) | null = null
+
+// 外部（创建订单后）触发：刷新待处理订单后打开同一个浮动聊天，展示全部订单。
+async function openFromExternal() {
+  if (isLoggedIn.value) await walletStore.refreshPendingCsOrder()
+  await openChat()
+}
 
 function scheduleRefresh() {
   refreshTimer = window.setInterval(() => {
@@ -60,10 +68,14 @@ function scheduleRefresh() {
 onMounted(() => {
   if (isLoggedIn.value) void walletStore.refreshPendingCsOrder()
   scheduleRefresh()
+  stopOpenListener = subscribeCsOrderChat(() => {
+    void openFromExternal()
+  })
 })
 
 onBeforeUnmount(() => {
   if (refreshTimer !== null) clearInterval(refreshTimer)
+  stopOpenListener?.()
 })
 
 watch(isLoggedIn, (val) => {

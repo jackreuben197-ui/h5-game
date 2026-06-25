@@ -77,10 +77,12 @@ export const useWalletStore = defineStore('wallet', () => {
       order_no: order.order_no,
       gold_num: order.gold_num,
       pay_price: order.pay_price,
+      create_time: order.create_time,
       order: {
         order_no: order.order_no,
         amount: order.pay_price,
         gold_num: order.gold_num,
+        create_time: order.create_time,
       },
       usdt_address: {
         address: order.pay_type_address || '',
@@ -90,10 +92,21 @@ export const useWalletStore = defineStore('wallet', () => {
     }
   }
 
-  const csChatOrders = computed(() => [
-    ...pendingCsRechargeOrders.value.map((o) => buildCsOrderData(o, 'recharge')),
-    ...pendingCsWithdrawOrders.value.map((o) => buildCsOrderData(o, 'withdraw')),
-  ])
+  // 充值列表(order_type=1)与提现列表(order_type=2)合并：按 order_no 去重，
+  // 类型优先用订单自身 order_type（1充值/2提现），缺失时用所在列表兜底。
+  const csChatOrders = computed(() => {
+    const byNo = new Map<string, ReturnType<typeof buildCsOrderData>>()
+    const push = (o: ClubFundOrderListOrderInfo, fallback: 'recharge' | 'withdraw') => {
+      const realType = Number((o as any).order_type)
+      const type = realType === 1 ? 'recharge' : realType === 2 ? 'withdraw' : fallback
+      const key = o.order_no || `${fallback}-${byNo.size}`
+      if (byNo.has(key)) return
+      byNo.set(key, buildCsOrderData(o, type))
+    }
+    pendingCsRechargeOrders.value.forEach((o) => push(o, 'recharge'))
+    pendingCsWithdrawOrders.value.forEach((o) => push(o, 'withdraw'))
+    return [...byNo.values()]
+  })
 
   async function refreshPendingCsOrder() {
     const userInfoStore = useUserInfoStore()
@@ -130,8 +143,12 @@ export const useWalletStore = defineStore('wallet', () => {
 
       if (withdrawRes.code === 0 && withdrawRes.data?.list) {
         pendingCsWithdrawOrders.value = withdrawRes.data.list.filter(o => {
-          const ot = (o as any).pay_type || (o as any).api_type || (o as any).type
-          return ot === 3 || o.pay_type_name?.includes('撮合')
+          // 客服渠道提现进聊天（account_type 0：usdt提现 type1 / 撮合提现 type3）；
+          // 银行卡渠道(account_type 1)走在线流程，不进聊天。
+          const acct = Number((o as any).account_type)
+          if (acct === 1) return false
+          const ot = (o as any).pay_type ?? (o as any).api_type ?? (o as any).type
+          return acct === 0 || ot === 1 || ot === 3 || o.pay_type_name?.includes('撮合')
         })
       } else {
         pendingCsWithdrawOrders.value = []

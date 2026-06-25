@@ -245,23 +245,11 @@ export function shouldOpenRegisterMode(): boolean {
   return parseInviteParamsFromLocation().mode === 'register'
 }
 
-export function buildChannelClubInviteUrl(inviteCode?: string): string {
+// channel 模式下，分享链接直接用当前页面 origin —— 邀请码已“内嵌”在当前 <邀请码>.<基础域名> 子域名里，
+// 接收端从子域名还原邀请码。无需拼域名，自动适配测试/正式环境。
+export function buildChannelClubInviteUrl(): string {
   const currentUrl = new URL(window.location.href)
-  const code = readString(inviteCode)
-  if (!code) {
-    return `${currentUrl.origin}`
-  }
-
-  // 邀请码作为子域名前缀：https://<邀请码>.<主域名>/#/guest/home（依赖泛域名解析）。
-  // 主域名取自 config.json 的 baseApi（生产/测试环境），接收端 extractInviteCodeFromSubdomain 据此还原邀请码。
-  const mainDomain = getChannelMainDomain()
-  if (mainDomain) {
-    return `${currentUrl.protocol}//${code}.${mainDomain}/#/guest/home`
-  }
-
-  // 兜底：没有可用主域名时（如本地开发），使用当前页面 host。
-  const portSuffix = currentUrl.port ? `:${currentUrl.port}` : ''
-  return `${currentUrl.protocol}//${code}.${currentUrl.hostname}${portSuffix}/#/guest/home`
+  return `${currentUrl.origin}`
 }
 
 export function buildChannelAgentInviteUrl(agentInviteCode: string): string {
@@ -290,8 +278,6 @@ export function buildChannelRegisterUrl(options?: {
     nextParams.set('trace_hash', traceHash)
   }
 
-  // 邀请码只放在 ?i= 参数里，不能再拼到域名前缀（否则会生成不存在的子域名导致无法访问）。
-  // 旧逻辑（保留备查）：把邀请码拼成子域名，会生成不存在的域名导致无法访问。
-  return `${currentUrl.protocol}//${inviteCode}.${currentUrl.hostname}/#/?${nextParams.toString()}`
-  // return `${currentUrl.origin}/#/?${nextParams.toString()}`
+  // 邀请码只放在 ?i= 参数里，链接用当前页面 origin（无需拼子域名/硬编码域名）。
+  return `${currentUrl.origin}/#/?${nextParams.toString()}`
 }

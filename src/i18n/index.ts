@@ -5,6 +5,7 @@ import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 import { formatTxtMessage } from './parser'
 import { createLogger } from '@/utils/logger'
+import enOverrides from './en-overrides.json'
 
 const log = createLogger('[i18n]')
 
@@ -45,11 +46,34 @@ export function setLocale(locale: string): void {
   }
 }
 
+// 英文补全：包内 en 词条为空时用我们维护的英文覆盖（由 CN 翻译而来）。
+const EN_OVERRIDES = enOverrides as Record<string, string>
+
+// CN 值缓存：CN 词条运行时不变，临时切到 CN 取值后切回，避免重复切换 locale。
+const cnValueCache = new Map<string, string>()
+function getCnValue(key: string): string {
+  const cached = cnValueCache.get(key)
+  if (cached !== undefined) return cached
+  const packageLocale = LEGACY_TO_PACKAGE[currentLocale.value]
+  i18n.setLocale(LEGACY_TO_PACKAGE.cn)
+  const value = i18n.get(key, '') || ''
+  i18n.setLocale(packageLocale)
+  cnValueCache.set(key, value)
+  return value
+}
+
 export function t(key: string, ...args: Array<string | number>): string {
   // 读 ref 以便组件在 setLocale 时自动重渲染。
   const locale = currentLocale.value
-  void locale
-  const message = i18n.get(key, key) || key
+  // 英文优先用我们维护的覆盖词条：既补包内空缺，也可覆盖包内既有英文（如 Texas→Hold'em）。
+  if (locale === 'en' && EN_OVERRIDES[key]) {
+    return formatTxtMessage(EN_OVERRIDES[key], args)
+  }
+  let message = i18n.get(key, '') || ''
+  if (!message) {
+    // 其他语言缺失时复用 CN，最后兜底用 key。
+    message = getCnValue(key) || key
+  }
   return formatTxtMessage(message, args)
 }
 

@@ -19,7 +19,7 @@ import UsdtPaymentPopup from '@/views/wallet/components/UsdtPaymentPopup.vue'
 import UnfinishedOrderPopup from '@/views/wallet/components/UnfinishedOrderPopup.vue'
 import UsdtPaymentDetailsPopup from '@/views/wallet/components/UsdtPaymentDetailsPopup.vue'
 import CustomerServicePaymentPopup from '@/views/wallet/components/CustomerServicePaymentPopup.vue'
-import CustomerServiceChatPopup from '@/views/wallet/components/CustomerServiceChatPopup.vue'
+import { openCsOrderChat } from '@/components/GlobalCsOrderFloat/channel'
 import FixedDepositPanel from '@/views/wallet/components/FixedDepositPanel.vue'
 import { t } from '@/i18n'
 import { useWalletStore } from '@/stores/wallet'
@@ -69,13 +69,6 @@ const csPopupProps = ref({
   feeRate: 0,
   feeType: 0,
   discount: 0,
-})
-
-const csChatPopupOpen = ref(false)
-const csChatProps = ref({
-  tribeId: 0,
-  supportUserId: 0,
-  orderData: null as any,
 })
 
 let refreshInterval: any = null
@@ -168,13 +161,8 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
       })
 
       if (channelRes.code === 0 && channelRes.data?.list?.length) {
-        const channel = channelRes.data.list[0]
-        csChatProps.value = {
-          tribeId: channel.tribe_id || 0,
-          supportUserId: channel.support_user_id || 0,
-          orderData: result,
-        }
-        csChatPopupOpen.value = true
+        await refreshPendingCsOrder()
+        openCsOrderChat()
       } else {
         // Fallback to USDT details if no chat channel found
         usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
@@ -358,7 +346,7 @@ function onPayClick() {
   }
 }
 
-async function onWithdrawCsChat(orderData: Record<string, unknown>) {
+async function onWithdrawCsChat(_orderData: Record<string, unknown>) {
   try {
     const channelRes = await postChatSupportChannelListApi({
       im_service_types: [4],
@@ -366,13 +354,8 @@ async function onWithdrawCsChat(orderData: Record<string, unknown>) {
       offset: 0,
     })
     if (channelRes.code === 0 && channelRes.data?.list?.length) {
-      const channel = channelRes.data.list[0]
-      csChatProps.value = {
-        tribeId: channel.tribe_id || 0,
-        supportUserId: channel.support_user_id || 0,
-        orderData,
-      }
-      csChatPopupOpen.value = true
+      await refreshPendingCsOrder()
+      openCsOrderChat()
     }
   } catch (e) {
     console.error('Failed to fetch chat channel for withdraw', e)
@@ -463,18 +446,8 @@ async function onCsSubmit(displayPayPrice?: number) {
         })
 
         if (channelRes.code === 0 && channelRes.data?.list?.length) {
-          const channel = channelRes.data.list[0]
-          csChatProps.value = {
-            tribeId: channel.tribe_id || 0,
-            supportUserId: channel.support_user_id || 0,
-            orderData: {
-              ...res.data,
-              gold_num: goldCount,
-              pay_price: apiPayPrice,
-            },
-          }
-          csChatPopupOpen.value = true
           await refreshPendingCsOrder()
+          openCsOrderChat()
         } else {
           rechargeResult.value = res.data
           usdtDetailsPopupOpen.value = true
@@ -667,14 +640,6 @@ async function onUsdtSubmit(type: number) {
       :discount="csPopupProps.discount"
       @close="csPopupOpen = false"
       @submit="onCsSubmit"
-    />
-
-    <CustomerServiceChatPopup
-      v-if="csChatPopupOpen"
-      :tribe-id="csChatProps.tribeId"
-      :support-user-id="csChatProps.supportUserId"
-      :order-data="csChatProps.orderData"
-      @close="csChatPopupOpen = false"
     />
 
     <UsdtPaymentPopup

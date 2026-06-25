@@ -238,7 +238,7 @@ onMounted(() => {
                     </linearGradient>
                   </defs>
                 </svg>
-                <div class="uc-num" v-if="ucUnreadCount > 0">{{ ucUnreadCount }}</div>
+                <div class="uc-num">{{ ucUnreadCount }}</div>
               </div>
             </button>
           </div>

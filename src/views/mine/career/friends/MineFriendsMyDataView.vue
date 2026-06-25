@@ -46,9 +46,9 @@ interface TabItem {
 }
 
 const gameTabs: TabItem[] = [
-  { label: '德州', key: 'nlh' },
-  { label: '麻将', key: 'mahjong' },
-  { label: '其他', key: 'other' },
+  { label: t('adaptation10022'), key: 'nlh' },
+  { label: t('Mahjong_Name'), key: 'mahjong' },
+  { label: t('Complanin007'), key: 'other' },
 ]
 const activeGameTab = ref(gameTabs[0].key)
 const loading = ref(false)
@@ -72,9 +72,9 @@ const currentMonth = ref(
 const weekLabels = ['m', 't', 'w', 't', 'f', 's', 's']
 
 const summary = ref<SummaryItem[]>([
-  { label: '参与人数', value: '0' },
-  { label: '总桌数', value: '0' },
-  { label: '我的收益', value: '0' },
+  { label: t('UINumberOfParticipants'), value: '0' },
+  { label: t('UITotalNumberOfTables'), value: '0' },
+  { label: t('UITableMyProfits'), value: '0' },
 ])
 
 const players = ref<PlayerItem[]>([])
@@ -189,9 +189,9 @@ async function fetchFriendsData(silent = false): Promise<void> {
 
     const info = response.data?.info
     const nextSummary: SummaryItem[] = [
-      { label: '参与人数', value: toSafeNumber(info?.user_num).toLocaleString('en-US') },
-      { label: '总桌数', value: toSafeNumber(info?.table_num).toLocaleString('en-US') },
-      { label: '我的收益', value: formatUC(toSafeNumber(info?.profit)) },
+      { label: t('UINumberOfParticipants'), value: toSafeNumber(info?.user_num).toLocaleString('en-US') },
+      { label: t('UITotalNumberOfTables'), value: toSafeNumber(info?.table_num).toLocaleString('en-US') },
+      { label: t('UITableMyProfits'), value: formatUC(toSafeNumber(info?.profit)) },
     ]
 
     const list = response.data?.list ?? []
@@ -220,7 +220,7 @@ async function fetchFriendsData(silent = false): Promise<void> {
     )
   } catch (error) {
     if (silent) return
-    const message = error instanceof Error ? error.message : '加载朋友数据失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadDataFail3')
     showFailToast(message)
   } finally {
     if (!silent) loading.value = false

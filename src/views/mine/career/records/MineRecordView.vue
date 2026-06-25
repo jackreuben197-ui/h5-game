@@ -75,9 +75,9 @@ const gameTabs: TabItem[] = [
   { label: '6+', key: '6+' },
 ]
 const timeTabs: TabItem[] = [
-  { label: '今天', key: 'today' },
-  { label: '7天', key: 'week' },
-  { label: '30天', key: 'month' },
+  { label: t('UIData_Today'), key: 'today' },
+  { label: "7" + t('UIHappyShop_ActivityShopDay'), key: 'week' },
+  { label: "30" + t('UIHappyShop_ActivityShopDay'), key: 'month' },
 ]
 const selectedGame = ref(gameTabs[0].key)
 const selectedTime = ref(timeTabs[0].key)
@@ -116,11 +116,11 @@ const records = ref<RecordCard[]>([])
 function profitTitle(): string {
   switch (selectedTime.value) {
     case 'today':
-      return '今天收益'
+      return t('UIClub_Income3')
     case 'week':
-      return '7天收益'
+      return "7" + t('UIClub_Income')
     case 'month':
-      return '30天收益'
+      return "30" + t('UIClub_Income')
     default:
       return t('UIClub_Income3')
   }
@@ -206,7 +206,7 @@ function mapRecord(row: Record<string, unknown>, index: number): RecordCard {
   const durationMinutes = Math.max(0, Math.round(toSafeNumber(row.play_duration) / 60))
   const endTs = toTimestampMs(row.end_time)
   const endDay = endTs > 0 ? dayjs(endTs).format('DD') : '--'
-  const endMonth = endTs > 0 ? dayjs(endTs).format('M月') : '--'
+  const endMonth = endTs > 0 ? dayjs(endTs).format("M" + t('UIMine_VIP_month')) : '--'
   const dateKey = endTs > 0 ? dayjs(endTs).format('YYYY-MM-DD') : '--'
   return {
     id: String(row.RoomID ?? row.MatchID ?? index + 1),
@@ -247,8 +247,8 @@ function extractStatsFromResponse(data: unknown): void {
   const af = toSafeNumber(roomData.af)
 
   leftMetrics.value = [
-    { label: '总局数', value: totalGameCnt.toLocaleString() },
-    { label: '手数', value: totalHand.toLocaleString() },
+    { label: t('UITexasInfo_games'), value: totalGameCnt.toLocaleString() },
+    { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: totalHand.toLocaleString() },
   ]
 
   rightMetrics.value = [
@@ -257,17 +257,17 @@ function extractStatsFromResponse(data: unknown): void {
   ]
 
   detailRowsOne.value = [
-    { label: '局数', value: totalGameCnt.toLocaleString() },
-    { label: '总盈亏', value: formatUC(totalEarn) },
-    { label: '场均战绩', value: avgEarn },
-    { label: '摊牌胜率', value: `${wtsd}%` },
+    { label: t('UIData_YGvXd5iXr_003'), value: totalGameCnt.toLocaleString() },
+    { label: t('UIClub_Text46'), value: formatUC(totalEarn) },
+    { label: t('UIData_kpHsdqDe5'), value: avgEarn },
+    { label: t('UIClub_Text39'), value: `${wtsd}%` },
   ]
 
   detailRowsTwo.value = [
-    { label: '翻牌前加注率', value: `${prf}%` },
-    { label: '持续下注率', value: `${cbet}%` },
-    { label: '全下胜率', value: `${allinWins}%` },
-    { label: '激进程度', value: af.toLocaleString() },
+    { label: t('UIClub_Text47'), value: `${prf}%` },
+    { label: t('UIClub_Text48'), value: `${cbet}%` },
+    { label: t('adaptation10318'), value: `${allinWins}%` },
+    { label: t('UIClub_Text49'), value: af.toLocaleString() },
   ]
 
   todayProfit.value = formatUC(totalEarn)
@@ -364,7 +364,7 @@ async function fetchRecords(silent = false): Promise<void> {
   } catch (error) {
     if (!silent) records.value = []
     if (!silent) {
-      const message = error instanceof Error ? error.message : '加载战绩失败'
+      const message = error instanceof Error ? error.message : t('UIClub_LoadFail9')
       showFailToast(message)
     }
   } finally {
@@ -497,8 +497,8 @@ onMounted(() => {
       </section>
 
       <section class="timeline">
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!records.length" class="list-status">暂无战绩记录</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!records.length" class="list-status">{{ t('UIClub_NoRecord3') }}</p>
         <article
           v-for="card in records"
           :key="card.id"
@@ -529,19 +529,19 @@ onMounted(() => {
             <div class="card-body">
               <div class="meta">
                 <div>
-                  <span>盲注级别:</span>
+                  <span>{{ t('UIJackPotInfo_blindLevel') }}:</span>
                   <span>{{ card.blinds }}</span>
                 </div>
                 <div>
-                  <span>手数:</span>
+                  <span>{{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}:</span>
                   <span>{{ card.hands }}</span>
                 </div>
                 <div>
-                  <span>时长:</span>
+                  <span>{{ t('UIClub_Text36') }}:</span>
                   <span>{{ card.duration }}</span>
                 </div>
                 <div>
-                  <span>结束时间:</span>
+                  <span>{{ t('RecordDetail102') }}:</span>
                   <span>{{ card.endAt }}</span>
                 </div>
               </div>

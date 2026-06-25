@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { showFailToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import RoomDataDetail from '@/components/RoomDataDetail/RoomDataDetail.vue'
+import { t } from '@/i18n'
 
 const route = useRoute()
 const router = useRouter()
@@ -21,7 +22,7 @@ const roomId = computed(() => toSafeNumber(route.query.roomId))
 
 onMounted(() => {
   if (!roomId.value) {
-    showFailToast('缺少 roomId 参数')
+    showFailToast(t('UIClub_Text31') + " roomId " + t('UIClub_Text32'))
     void router.back()
   }
 })

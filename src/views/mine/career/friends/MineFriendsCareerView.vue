@@ -54,11 +54,11 @@ const rows = ref<DataRow[]>([
 const loading = ref(false)
 
 const menuList: MenuItem[] = [
-  { key: 'data', label: '数据', icon: iconData, route: '/mine/career/friends/data' },
-  { key: 'record', label: '战绩', icon: iconRecord, route: '/mine/career/friends/record' },
-  { key: 'mahjong', label: '麻将', icon: iconMahjong },
-  { key: 'sng', label: 'SNG战绩', icon: iconMtt },
-  { key: 'mahjong-mtt', label: '麻将MTT战绩', icon: iconMahjong },
+  { key: 'data', label: t('adaptation10124'), icon: iconData, route: '/mine/career/friends/data' },
+  { key: 'record', label: t('UICareerRecord'), icon: iconRecord, route: '/mine/career/friends/record' },
+  { key: 'mahjong', label: t('Mahjong_Name'), icon: iconMahjong },
+  { key: 'sng', label: "SNG" + t('UICareerRecord'), icon: iconMtt },
+  { key: 'mahjong-mtt', label: t('Mahjong_Name') + "MTT" + t('UICareerRecord'), icon: iconMahjong },
 ]
 
 function handleMenuClick(item: MenuItem): void {
@@ -106,7 +106,7 @@ async function requestSummary(silent: boolean): Promise<void> {
     void homeCache().put(USER_STORE_CAREER, HOME_CACHE_KEY, next)
   } catch (error) {
     if (!silent) {
-      const message = error instanceof Error ? error.message : '加载朋友生涯数据失败'
+      const message = error instanceof Error ? error.message : t('UIClub_LoadDataFail2')
       showFailToast(message)
     }
   } finally {

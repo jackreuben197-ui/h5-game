@@ -42,9 +42,9 @@ const gameTabs: TabItem[] = [
   { label: '6+', key: '6+' },
 ]
 const dateTabs: TabItem[] = [
-  { label: '今天', key: 'today' },
-  { label: '7天', key: 'week' },
-  { label: '30天', key: 'month' },
+  { label: t('UIData_Today'), key: 'today' },
+  { label: "7" + t('UIHappyShop_ActivityShopDay'), key: 'week' },
+  { label: "30" + t('UIHappyShop_ActivityShopDay'), key: 'month' },
 ]
 const selectedGameTab = ref(gameTabs[0].key)
 const selectedDateTab = ref(dateTabs[0].key)
@@ -59,9 +59,9 @@ const responseCache = ref<Record<string, unknown> | null>(null)
 const clubs = computed(() => {
   const list = userInfoStore.clubList
   if (!list.length) {
-    return ['全部']
+    return [t('UIMatch_GtO8YEdb')]
   }
-  return ['全部', ...list.map((club) => club.club_name || `Club ${club.club_id}`)]
+  return [t('UIMatch_GtO8YEdb'), ...list.map((club) => club.club_name || `Club ${club.club_id}`)]
 })
 
 // 当前选中的俱乐部索引（0 = 全部）
@@ -70,7 +70,7 @@ const selectedClubIndex = ref(0)
 // 右上角按钮显示的俱乐部名称（默认"全部"）
 const selectedClubLabel = computed(() => {
   if (selectedClubIndex.value === 0) {
-    return '全部'
+    return t('UIMatch_GtO8YEdb')
   }
   const club = userInfoStore.clubList[selectedClubIndex.value - 1]
   return club?.club_name || `Club ${club?.club_id ?? ''}`
@@ -127,12 +127,12 @@ const metrics = ref<CareerMetric[]>([
 ])
 
 const menuList: CareerMenuItem[] = [
-  { key: 'record', label: '战绩', icon: iconRecord, route: '/mine/career/club/record' },
+  { key: 'record', label: t('UICareerRecord'), icon: iconRecord, route: '/mine/career/club/record' },
   { key: 'mtt', label: 'MTT', icon: iconMtt, route: '/mine/career/club/mtt' },
-  { key: 'cowboy', label: '牛仔', icon: iconCowboy, route: '/mine/career/club/cowboy' },
-  { key: 'mahjong', label: '麻将', icon: iconMahjong, route: '/mine/career/club/mahjong' },
-  { key: 'mahjong-mtt', label: '麻将MTT战绩', icon: iconMahjong },
-  { key: 'data', label: '数据', icon: iconData, route: '/mine/career/club/data' },
+  { key: 'cowboy', label: t('UINiuZaiRule_title'), icon: iconCowboy, route: '/mine/career/club/cowboy' },
+  { key: 'mahjong', label: t('Mahjong_Name'), icon: iconMahjong, route: '/mine/career/club/mahjong' },
+  { key: 'mahjong-mtt', label: t('Mahjong_Name') + "MTT" + t('UICareerRecord'), icon: iconMahjong },
+  { key: 'data', label: t('adaptation10124'), icon: iconData, route: '/mine/career/club/data' },
 ]
 
 function selectGameTab(tab: string): void {
@@ -222,7 +222,7 @@ function resolveRequestParams() {
   return {
     filter_type: currencyTypes[selectedCurrencyIndex.value].value,
     game_types: gameTypes,
-    poker_types: selectedGameTab.value === '短牌' ? [2] : [0],
+    poker_types: selectedGameTab.value === t('PokerType_2') ? [2] : [0],
     club_id: clubId,
   }
 }
@@ -326,7 +326,7 @@ async function requestSummary(key: string, silent: boolean): Promise<void> {
     void homeCache().put(USER_STORE_CAREER, key, data)
   } catch (error) {
     if (!silent) {
-      const message = error instanceof Error ? error.message : '加载俱乐部生涯数据失败'
+      const message = error instanceof Error ? error.message : t('UIClub_LoadClubDataFail')
       showFailToast(message)
     }
   } finally {

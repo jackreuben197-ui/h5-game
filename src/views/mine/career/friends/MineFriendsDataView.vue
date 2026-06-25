@@ -54,9 +54,9 @@ interface FilterTab {
 }
 
 const filterTabs: FilterTab[] = [
-  { label: '今天', key: 'today' },
-  { label: '7天', key: 'week' },
-  { label: '14天', key: 'halfmonth' },
+  { label: t('UIData_Today'), key: 'today' },
+  { label: "7" + t('UIHappyShop_ActivityShopDay'), key: 'week' },
+  { label: "14" + t('UIHappyShop_ActivityShopDay'), key: 'halfmonth' },
   { label: 'Customize', key: 'customize' },
 ]
 const activeFilter = ref<FilterTab['key']>(filterTabs[0].key)
@@ -76,9 +76,9 @@ const customizeApplied = ref(false)
 const isDatePickerVisible = ref(false)
 
 const metrics = ref<SummaryMetric[]>([
-  { label: '手数/局数', value: '0/0' },
-  { label: '盈利', value: '0' },
-  { label: '服务费', value: '0' },
+  { label: t('UIMine_RecordItemsNormal_3RCUa3w8') + "/" + t('UIData_YGvXd5iXr_003'), value: '0/0' },
+  { label: t('UIClub_GainNum'), value: '0' },
+  { label: t('UIMine_WalletPlatform_fee_f'), value: '0' },
 ])
 
 const records = ref<RecordItem[]>([])
@@ -124,15 +124,15 @@ function mapGameBadge(gameType: unknown, pokerType: unknown): string {
   if (type === 5) return 'Cowboy'
   if (type === 6) {
     if (poker === 1) {
-      return '血战\n到底'
+      return t('adaptation10181') + "\\n" + t('UIClub_Text54')
     } else if (poker === 2) {
-      return '血流\n成河'
+      return t('UIClub_Text55') + "\\n" + t('UIClub_Text56')
     } else if (poker === 3) {
-      return '推倒胡'
+      return t('Mahjong_Standard')
     }
-    return '麻将'
+    return t('Mahjong_Name')
   }
-  if (type === 7) return '掼蛋'
+  if (type === 7) return t('UIEgg')
   return 'NLH'
 }
 
@@ -153,13 +153,13 @@ function mapRecordItem(row: Record<string, unknown>, index: number): RecordItem 
   return {
     id: String(row.room_id ?? row.match_id ?? index + 1),
     game: mapGameBadge(row.game_type, row.poker_type),
-    title: String(row.name ?? row.room_name ?? row.game_room_name ?? '局抽数据'),
-    subtitle: matchPlayers > 0 ? `参赛人数: ${matchPlayers}` : `${blind.label} : ${blind.value}`,
-    extra: buyIn > 0 ? `买入 : ${buyIn}` : undefined,
+    title: String(row.name ?? row.room_name ?? row.game_room_name ?? t('UIClub_RoundData')),
+    subtitle: matchPlayers > 0 ? t('UIMine_RecordDetailForMatchPariticipants') + ": " + (matchPlayers) : `${blind.label} : ${blind.value}`,
+    extra: buyIn > 0 ? t('MTT_xq_buy') + " : " + (buyIn) : undefined,
     time: startTime,
-    feeText: '服务费',
+    feeText: t('UIMine_WalletPlatform_fee_f'),
     feeValue,
-    insuranceLabel: '保险',
+    insuranceLabel: t('adaptation10179'),
     insuranceValue,
     feePositive: feeValue.startsWith('+'),
   }
@@ -186,11 +186,11 @@ async function fetchFriendsRecord(silent = false): Promise<void> {
     ])
 
     if (listRes.code !== 0) {
-      throw new Error(typeof listRes.msg === 'string' ? listRes.msg : '加载朋友战绩失败')
+      throw new Error(typeof listRes.msg === 'string' ? listRes.msg : t('UIClub_LoadFail10'))
     }
 
     if (infoRes.code !== 0) {
-      throw new Error(typeof infoRes.msg === 'string' ? infoRes.msg : '加载统计信息失败')
+      throw new Error(typeof infoRes.msg === 'string' ? infoRes.msg : t('UIClub_LoadFail'))
     }
 
     // 静默刷新期间若 tab 已切换，丢弃过时结果。
@@ -205,9 +205,9 @@ async function fetchFriendsRecord(silent = false): Promise<void> {
     const handNum = toSafeNumber(info.hand_num)
     const gameNum = toSafeNumber(info.game_num)
     const nextMetrics: SummaryMetric[] = [
-      { label: '手数/局数', value: `${handNum}/${gameNum}` },
-      { label: '盈利', value: formatSigned(info.profit) },
-      { label: '服務費', value: Math.abs(toSafeNumber(info.fee)).toLocaleString('en-US') },
+      { label: t('UIMine_RecordItemsNormal_3RCUa3w8') + "/" + t('UIData_YGvXd5iXr_003'), value: `${handNum}/${gameNum}` },
+      { label: t('UIClub_GainNum'), value: formatSigned(info.profit) },
+      { label: t('UIClub_Text57'), value: Math.abs(toSafeNumber(info.fee)).toLocaleString('en-US') },
     ]
 
     metrics.value = nextMetrics
@@ -222,7 +222,7 @@ async function fetchFriendsRecord(silent = false): Promise<void> {
   } catch (error) {
     if (silent) return
     records.value = []
-    const message = error instanceof Error ? error.message : '加载朋友战绩失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadFail10')
     showFailToast(message)
   } finally {
     if (!silent) loading.value = false
@@ -332,11 +332,11 @@ onMounted(() => {
         </div>
       </section>
 
-      <p class="timezone-text">时区：UTC+0</p>
+      <p class="timezone-text">{{ t('UICommon_TimeZone') }}：UTC+0</p>
 
       <section class="record-list">
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!records.length" class="list-status">暂无朋友战绩</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!records.length" class="list-status">{{ t('UIClub_No7') }}</p>
         <article
           v-for="item in records"
           :key="item.id"
@@ -355,7 +355,7 @@ onMounted(() => {
                   <span v-if="item.extra" class="extra">{{ item.extra }}</span>
                 </div>
                 <div class="meta-time">
-                  <img :src="iconTime" alt="时间" />
+                  <img :src="iconTime" :alt="t('TimeItem')" />
                   <span>{{ item.time }}</span>
                 </div>
               </div>

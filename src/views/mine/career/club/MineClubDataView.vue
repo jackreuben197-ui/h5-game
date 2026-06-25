@@ -1032,7 +1032,7 @@ onMounted(() => {
           </section>
 
           <section class="glass-pill title-pill">
-            <span>近3个月内玩牌数据统计</span>
+            <span>{{ t('UIClub_Text37') }}3{{ t('UIClub_Data') }}</span>
             <img src="@/assets/icons/icon_data.svg" />
           </section>
 

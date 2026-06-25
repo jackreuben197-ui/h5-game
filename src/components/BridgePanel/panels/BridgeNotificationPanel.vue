@@ -8,6 +8,12 @@ import {
   isStandaloneDisplay,
   showAddToHomeScreenPrompt,
 } from '@/utils/environment'
+import {
+  installIosWebClip,
+  isIos,
+  isIosNativeSafari,
+  isIosThirdPartyBrowser,
+} from '@/utils/iosWebClip'
 
 const props = defineProps<{
   panelProps?: Record<string, unknown>
@@ -207,6 +213,7 @@ async function onSecondaryAction(): Promise<void> {
     return
   }
 
+  // Android Chrome / Edge / 三星浏览器：原生 PWA 安装框（最佳路径）
   if (canPromptInstall()) {
     const result = await showAddToHomeScreenPrompt()
     if (result === 'accepted') {
@@ -216,6 +223,50 @@ async function onSecondaryAction(): Promise<void> {
     if (result === 'dismissed') return
   }
 
+  // iOS 原生 Safari：下发 mobileconfig 描述文件，一键添加到桌面（安装时需信任未签名描述文件）
+  if (isIosNativeSafari()) {
+    try {
+      showToast({ message: '正在准备安装文件…', duration: 1500 })
+      await installIosWebClip({
+        label: 'Newpkr',
+        url: window.location.origin + '/',
+        // 用 manifest 里同一张 192 图标，避免重复打包
+        iconUrl: '/icon-192.png',
+      })
+      // location.href 跳转后，iOS Safari 会接管显示"是否允许下载描述文件"对话框，
+      // 不需要再 toast；以下是兜底（极少数情况跳转未生效）
+      setTimeout(() => {
+        showToast({
+          message: '已下载描述文件，请到 设置 → 通用 → VPN 与设备管理 完成安装',
+          duration: 5000,
+        })
+      }, 1500)
+    } catch (err) {
+      console.error('[web-clip] install failed:', err)
+      showFailToast('安装文件生成失败，请稍后重试')
+    }
+    return
+  }
+
+  // iOS Chrome / Firefox / Edge：完全无法触发 mobileconfig 流程，必须引导到 Safari
+  if (isIosThirdPartyBrowser()) {
+    showToast({
+      message: 'iOS 上请用 Safari 打开本页面后再点击"添加桌面快捷方式"',
+      duration: 4000,
+    })
+    return
+  }
+
+  // iOS 内嵌 WebView（微信/抖音/TG 等）
+  if (isIos()) {
+    showToast({
+      message: '请点击右上角"在浏览器中打开"，使用 Safari 完成添加',
+      duration: 4000,
+    })
+    return
+  }
+
+  // 兜底：Android 上 PWA 资产未就绪 / 已 dismiss / 用户参与度未达标
   showToast(
     isIosSafari()
       ? '请点击底部分享按钮，选择"添加到主屏幕"'

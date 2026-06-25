@@ -7,6 +7,7 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import iconTicket from '@/assets/icons/icon_ticket.png'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
+import { t } from '@/i18n'
 
 const route = useRoute()
 
@@ -40,10 +41,10 @@ const detailSub = ref('ID: --')
 const detailTime = ref('--')
 
 const headMetrics = ref([
-  { label: '总参赛', value: '1200' },
-  { label: '奖励池', value: '5000' },
-  { label: '名次', value: '1' },
-  { label: '奖励', value: '1200' },
+  { label: t('UIClub_Text40'), value: '1200' },
+  { label: t('UIClub_Text41'), value: '5000' },
+  { label: t('UIMine_RecordItemMatch_LPe0Iy4I'), value: '1' },
+  { label: t('MTT_State_Reward'), value: '1200' },
 ])
 
 const rankPlayers = ref<RankPlayerV1[]>([
@@ -56,14 +57,14 @@ const rankPlayers = ref<RankPlayerV1[]>([
 ])
 
 const topMetricsV2 = ref([
-  { label: '总参赛人数', value: '1200' },
-  { label: '总奖池', value: '5000' },
-  { label: '排名', value: '1' },
+  { label: t('UIMTT_totalplayernum'), value: '1200' },
+  { label: t('UIMine_RecordDetailForMatchTotalBonus'), value: '5000' },
+  { label: t('Ranking'), value: '1' },
 ])
 
 const sideMetricsV2 = ref([
-  { label: '奖励', value: '1200' },
-  { label: '票数', value: '60' },
+  { label: t('MTT_State_Reward'), value: '1200' },
+  { label: t('UIClub_Text42'), value: '60' },
 ])
 
 const rankPlayersV2 = ref<RankPlayerV2[]>([
@@ -118,7 +119,7 @@ async function fetchMttDetail(): Promise<void> {
       { id: roomId },
     )
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载 MTT 详情失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_Load') + " MTT " + t('UIClub_DetailFail'))
     }
 
     const roomData = response.data?.room_data ?? response.data?.mtt_room_data
@@ -138,30 +139,30 @@ async function fetchMttDetail(): Promise<void> {
     const reward = toSafeNumber(currentUser?.award ?? currentUser?.hunter_award)
 
     headMetrics.value = [
-      { label: '总参赛', value: totalPlayers.toLocaleString('en-US') },
+      { label: t('UIClub_Text40'), value: totalPlayers.toLocaleString('en-US') },
       {
-        label: '奖励池',
+        label: t('UIClub_Text41'),
         value: awards
           .reduce((sum, item) => sum + toSafeNumber(item.award), 0)
           .toLocaleString('en-US'),
       },
-      { label: '名次', value: rank > 0 ? String(rank) : '--' },
-      { label: '奖励', value: reward.toLocaleString('en-US') },
+      { label: t('UIMine_RecordItemMatch_LPe0Iy4I'), value: rank > 0 ? String(rank) : '--' },
+      { label: t('MTT_State_Reward'), value: reward.toLocaleString('en-US') },
     ]
 
     topMetricsV2.value = [
-      { label: '总参赛人数', value: totalPlayers.toLocaleString('en-US') },
+      { label: t('UIMTT_totalplayernum'), value: totalPlayers.toLocaleString('en-US') },
       {
-        label: '总奖池',
+        label: t('UIMine_RecordDetailForMatchTotalBonus'),
         value: awards
           .reduce((sum, item) => sum + toSafeNumber(item.award), 0)
           .toLocaleString('en-US'),
       },
-      { label: '排名', value: rank > 0 ? String(rank) : '--' },
+      { label: t('Ranking'), value: rank > 0 ? String(rank) : '--' },
     ]
     sideMetricsV2.value = [
-      { label: '奖励', value: reward.toLocaleString('en-US') },
-      { label: '票数', value: toSafeNumber(currentUser?.buy_in_times).toLocaleString('en-US') },
+      { label: t('MTT_State_Reward'), value: reward.toLocaleString('en-US') },
+      { label: t('UIClub_Text42'), value: toSafeNumber(currentUser?.buy_in_times).toLocaleString('en-US') },
     ]
 
     rankPlayers.value = users.map((item, index) => ({
@@ -179,7 +180,7 @@ async function fetchMttDetail(): Promise<void> {
       reward: toSafeNumber(item.award ?? item.hunter_award).toLocaleString('en-US'),
     }))
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加载 MTT 详情失败'
+    const message = error instanceof Error ? error.message : t('UIClub_Load') + " MTT " + t('UIClub_DetailFail')
     showFailToast(message)
   } finally {
     loading.value = false

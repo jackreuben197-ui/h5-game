@@ -4,6 +4,7 @@ import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { postUserModifyQuickInfoApi } from '@/api/user'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { t } from '@/i18n'
 
 type SetupPhase = 'first' | 'confirm'
 type OverlayType = 'none' | 'loading' | 'success'
@@ -20,8 +21,12 @@ const firstInput = ref('')
 const overlayType = ref<OverlayType>('none')
 const submitting = ref(false)
 
-const titleText = computed(() => (phase.value === 'first' ? '设置6位数字密码' : '设置密码'))
-const subtitleText = computed(() => (phase.value === 'first' ? '第一次输入' : '再次输入以键认'))
+const titleText = computed(() =>
+  phase.value === 'first' ? t('UIMine_btn_setting') + '6' + t('UIClub_Code5') : t('UIClub_Code6'),
+)
+const subtitleText = computed(() =>
+  phase.value === 'first' ? t('6digit_password_firstInput') : t('UIClub_Again3'),
+)
 const showSubmit = computed(() => phase.value === 'confirm')
 const canSubmit = computed(() => digits.value.length === 6)
 
@@ -70,7 +75,7 @@ async function handleSubmit(): Promise<void> {
   }
 
   if (digits.value !== firstInput.value) {
-    showFailToast('两次输入不一致，请重新设置')
+    showFailToast(t('UIClub_Text69') + '，' + t('UIClub_Text70'))
     phase.value = 'first'
     digits.value = ''
     firstInput.value = ''
@@ -86,13 +91,13 @@ async function handleSubmit(): Promise<void> {
       password: digits.value,
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '设置安全密码失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_CodeFail2'))
     }
     overlayType.value = 'success'
-    showSuccessToast('安全密码设置成功')
+    showSuccessToast(t('UIClub_CodeSuccess'))
   } catch (error) {
     overlayType.value = 'none'
-    const message = error instanceof Error ? error.message : '设置安全密码失败'
+    const message = error instanceof Error ? error.message : t('UIClub_CodeFail2')
     showFailToast(message)
   } finally {
     submitting.value = false
@@ -128,7 +133,7 @@ function closeOverlay(): void {
         :disabled="submitting"
         @click="handleSubmit"
       >
-        完成
+        {{ t('UIMinePwFinish') }}
       </button>
     </section>
 
@@ -152,14 +157,14 @@ function closeOverlay(): void {
       <div class="overlay-card">
         <div v-if="overlayType === 'loading'" class="loader"></div>
         <div v-else class="success-icon">✓</div>
-        <p>{{ overlayType === 'loading' ? '请稍后' : '已开启' }}</p>
+        <p>{{ overlayType === 'loading' ? t('UIClub_Text66') : t('6digit_password_opened') }}</p>
         <button
           v-if="overlayType === 'success'"
           class="overlay-confirm"
           type="button"
           @click="closeOverlay"
         >
-          知道了
+          {{ t('adaptation10024') }}
         </button>
       </div>
     </div>
@@ -171,11 +176,8 @@ function closeOverlay(): void {
   height: 100dvh;
   // padding-top: calc(env(safe-area-inset-top) + 0.42rem);
   position: relative;
-  background: radial-gradient(
-      60% 42% at 20% 10%,
-      rgba(226, 163, 133, 0.62) 0%,
-      rgba(226, 163, 133, 0) 100%
-    ),
+  background:
+    radial-gradient(60% 42% at 20% 10%, rgba(226, 163, 133, 0.62) 0%, rgba(226, 163, 133, 0) 100%),
     radial-gradient(55% 45% at 26% 84%, rgba(206, 107, 160, 0.58) 0%, rgba(206, 107, 160, 0) 100%),
     radial-gradient(45% 38% at 88% 84%, rgba(0, 183, 212, 0.56) 0%, rgba(0, 183, 212, 0) 100%),
     linear-gradient(160deg, #b58eb1 0%, #8d668d 54%, #6f5988 100%);
@@ -310,7 +312,8 @@ function closeOverlay(): void {
     rgba(103, 103, 103, 0.4) 43.6%,
     rgba(73, 73, 73, 0.5) 89.8%
   );
-  box-shadow: inset 0 0 0.2298rem rgba(0, 0, 0, 1),
+  box-shadow:
+    inset 0 0 0.2298rem rgba(0, 0, 0, 1),
     inset 0.0566rem 0.1132rem 0.4596rem rgba(242, 242, 242, 0.9);
   backdrop-filter: blur(0.2rem);
   color: #fff;

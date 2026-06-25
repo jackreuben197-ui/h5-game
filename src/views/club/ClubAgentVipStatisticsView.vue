@@ -16,6 +16,7 @@ import imgCards from '@/assets/icons/icon_cards.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
+import { t } from '@/i18n'
 
 const userInfoStore = useUserInfoStore()
 const route = useRoute()
@@ -28,22 +29,22 @@ const filterType = ref<number>(1)
 const gameType = ref<number>(0)
 
 const gameTypeTabs = computed(() => [
-  { value: 0, label: '全部' },
-  { value: 1, label: '德州' },
-  { value: 2, label: '奥马哈' },
-  { value: 3, label: '短牌' },
+  { value: 0, label: t('UIMatch_GtO8YEdb') },
+  { value: 1, label: t('adaptation10022') },
+  { value: 2, label: t('adaptation10009') },
+  { value: 3, label: t('PokerType_2') },
 ])
 
 const filterTypeOptions = computed(() => [
   { value: 1, label: 'UC' },
-  { value: 3, label: '记分牌' },
+  { value: 3, label: t('UIGuild_CoinType1') },
 ])
 
 // Profile data
-const displayName = computed(() => context.value.name || '成员')
+const displayName = computed(() => context.value.name || t('UIClub_Info_Members'))
 const displayUid = computed(() => context.value.uid || '--')
 const displayAvatar = computed(() => imgAvatar)
-const badgeLabel = computed(() => '代理')
+const badgeLabel = computed(() => t('UIClub_AgentItem'))
 
 // Player balance from API (same as ClubMemberDetailView)
 const memberProfile = ref<OrgClubUserInfoData | null>(null)
@@ -104,11 +105,11 @@ async function fetchPlayerProfile(): Promise<void> {
       user_random_id: queryUid || undefined,
     })
     if (response.code !== 0 || !response.data) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '获取玩家信息失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_FetchPlayerFail'))
     }
     memberProfile.value = response.data
   } catch (error) {
-    const message = error instanceof Error ? error.message : '获取玩家信息失败'
+    const message = error instanceof Error ? error.message : t('UIClub_FetchPlayerFail')
     showFailToast(message)
   } finally {
     loadingProfile.value = false
@@ -124,7 +125,7 @@ async function fetchVipUserData(): Promise<void> {
   try {
     const response = await postStatsClubDataStatsVipUserApi({ vip_user_id: memberId })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '获取VIP用户数据失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_Fetch') + "VIP" + t('UIClub_DataFail'))
     }
     const info = response.data?.info
     if (info) {
@@ -133,7 +134,7 @@ async function fetchVipUserData(): Promise<void> {
       offlineUsdtTotal.value = Number(info.user_gold_usdt_total ?? 0)
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : '获取VIP用户数据失败'
+    const message = error instanceof Error ? error.message : t('UIClub_Fetch') + "VIP" + t('UIClub_DataFail')
     showFailToast(message)
   } finally {
     loadingVipUser.value = false
@@ -158,12 +159,12 @@ async function fetchStatsData(): Promise<void> {
     })
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '获取统计数据失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_FetchDataFail'))
     }
 
     rawStatsList.value = response.data?.list ?? []
   } catch (error) {
-    const message = error instanceof Error ? error.message : '获取统计数据失败'
+    const message = error instanceof Error ? error.message : t('UIClub_FetchDataFail')
     showFailToast(message)
     rawStatsList.value = []
   } finally {
@@ -175,12 +176,12 @@ async function fetchStatsData(): Promise<void> {
 const statsRows = computed(() => {
   const filtered = rawStatsList.value.filter((item) => item.game_type === gameType.value)
   const gameTypeNames: Record<number, string> = {
-    0: '全部',
-    1: '德州',
-    2: '奥马哈',
-    3: '短牌',
+    0: t('UIMatch_GtO8YEdb'),
+    1: t('adaptation10022'),
+    2: t('adaptation10009'),
+    3: t('PokerType_2'),
     4: 'Fantasy',
-    5: '麻将',
+    5: t('Mahjong_Name'),
   }
 
   const result: Array<{
@@ -202,7 +203,7 @@ const statsRows = computed(() => {
     if (!entry) {
       result.push({
         gameType: item.game_type ?? 0,
-        gameTypeName: gameTypeNames[item.game_type ?? 0] || '未知',
+        gameTypeName: gameTypeNames[item.game_type ?? 0] || t('ServerErrorCode_90002'),
         total: data,
         today: { hand_num: 0, profit: 0, fee: 0 },
         sevenDays: { hand_num: 0, profit: 0, fee: 0 },
@@ -245,7 +246,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell sub-bg" :style="{ backgroundImage: `url(${mainBgUrl})` }">
-    <HeaderBack title="代理数据" />
+    <HeaderBack :title="t('UIClub_AgentData')" />
 
     <section class="glass profile-card">
       <img class="avatar" :src="displayAvatar" :alt="`${displayName}头像`" />
@@ -263,12 +264,12 @@ onMounted(() => {
 
     <section class="offline-head">
       <div>
-        <p>下线成员数</p>
+        <p>{{ t('UIClub_Downli') }}</p>
         <strong v-if="loadingVipUser">--</strong>
         <strong v-else>{{ offlineUserCount }}</strong>
       </div>
       <div>
-        <p>下线UC</p>
+        <p>{{ t('UIClub_Text2') }}UC</p>
         <strong style="float: right">
           {{ displayBalance }} <img class="coin-icon" :src="imgChips" alt="" />
         </strong>
@@ -296,61 +297,61 @@ onMounted(() => {
     </section>
 
     <section class="cards">
-      <p v-if="loadingStats" class="stats-loading">加载中...</p>
+      <p v-if="loadingStats" class="stats-loading">{{ t('SuperView2') }}...</p>
       <template v-else>
         <template v-for="row in statsRows" :key="row.gameType">
           <article class="glass stat-card">
             <div class="left">
               <img :src="imgCards" alt="" />
-              手数
+              {{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}
             </div>
             <div class="metric">
               <b>{{ formatCount(row.total.hand_num) }}</b>
-              <span>总额</span>
+              <span>{{ t('UIClub_Text3') }}</span>
             </div>
             <div class="metric">
               <b>{{ formatCount(row.today.hand_num) }}</b>
-              <span>今天</span>
+              <span>{{ t('UIData_Today') }}</span>
             </div>
             <div class="metric">
               <b>{{ formatCount(row.sevenDays.hand_num) }}</b>
-              <span>7天</span>
+              <span>7{{ t('UIHappyShop_ActivityShopDay') }}</span>
             </div>
           </article>
           <article class="glass stat-card">
             <div class="left">
               <img :src="imgCards" alt="" />
-              盈利
+              {{ t('UIClub_GainNum') }}
             </div>
             <div class="metric">
               <b>{{ formatAmount(row.total.profit) }}</b>
-              <span>总额</span>
+              <span>{{ t('UIClub_Text3') }}</span>
             </div>
             <div class="metric">
               <b>{{ formatAmount(row.today.profit) }}</b>
-              <span>今天</span>
+              <span>{{ t('UIData_Today') }}</span>
             </div>
             <div class="metric">
               <b>{{ formatAmount(row.sevenDays.profit) }}</b>
-              <span>7天</span>
+              <span>7{{ t('UIHappyShop_ActivityShopDay') }}</span>
             </div>
           </article>
           <article class="glass stat-card">
             <div class="left">
               <img :src="imgCards" alt="" />
-              服务费
+              {{ t('UIMine_WalletPlatform_fee_f') }}
             </div>
             <div class="metric">
               <b>{{ formatAmount(row.total.fee) }}</b>
-              <span>总额</span>
+              <span>{{ t('UIClub_Text3') }}</span>
             </div>
             <div class="metric">
               <b>{{ formatAmount(row.today.fee) }}</b>
-              <span>今天</span>
+              <span>{{ t('UIData_Today') }}</span>
             </div>
             <div class="metric">
               <b>{{ formatAmount(row.sevenDays.fee) }}</b>
-              <span>7天</span>
+              <span>7{{ t('UIHappyShop_ActivityShopDay') }}</span>
             </div>
           </article>
         </template>

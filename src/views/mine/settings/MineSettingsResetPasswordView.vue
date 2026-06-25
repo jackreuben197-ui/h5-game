@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { postUserModifyPasswordApi, postUserSendCodeApi } from '@/api/user'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { t } from '@/i18n'
 
 const router = useRouter()
 
@@ -35,12 +36,12 @@ const isFilledPreview = computed(() => otpCountdown.value > 0)
 
 const headerTitle = computed(() => {
   if (isPhone.value) {
-    return isFilledPreview.value ? 'Forgot Password' : '修改密码'
+    return isFilledPreview.value ? 'Forgot Password' : t('tc_n53zSvpD')
   }
   return 'Forgot Password'
 })
 
-const submitText = computed(() => (isPhone.value ? '完成' : '注册'))
+const submitText = computed(() => (isPhone.value ? t('UIMinePwFinish') : t('UILogin_TitleRegister')))
 
 const formRowClass = computed(() => ({
   filled: isFilledPreview.value,
@@ -64,11 +65,11 @@ function requestOtp(): void {
   const phone = phoneNumber.value.trim()
   const mail = email.value.trim()
   if (isPhone.value && !phone) {
-    showFailToast('请输入手机号')
+    showFailToast(t('UILogin_InputMoblie'))
     return
   }
   if (!isPhone.value && !mail) {
-    showFailToast('请输入邮箱')
+    showFailToast(t('UILogin_InputEmail'))
     return
   }
 
@@ -80,10 +81,10 @@ function requestOtp(): void {
   void postUserSendCodeApi(payload)
     .then((response) => {
       if (response.code !== 0) {
-        throw new Error(typeof response.msg === 'string' ? response.msg : '验证码发送失败')
+        throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_CodeFail3'))
       }
 
-      showSuccessToast('验证码已发送')
+      showSuccessToast(t('adaptation10133'))
       otpCountdown.value = 60
       if (otpTimer !== null) {
         window.clearInterval(otpTimer)
@@ -102,7 +103,7 @@ function requestOtp(): void {
       }, 1000)
     })
     .catch((error) => {
-      const message = error instanceof Error ? error.message : '验证码发送失败'
+      const message = error instanceof Error ? error.message : t('UIClub_CodeFail3')
       showFailToast(message)
     })
     .finally(() => {
@@ -117,23 +118,23 @@ async function submitReset(): Promise<void> {
   const nextPassword = password.value.trim()
 
   if (isPhone.value && !phone) {
-    showFailToast('请输入手机号')
+    showFailToast(t('UILogin_InputMoblie'))
     return
   }
   if (!isPhone.value && !mail) {
-    showFailToast('请输入邮箱')
+    showFailToast(t('UILogin_InputEmail'))
     return
   }
   if (!code) {
-    showFailToast('请输入验证码')
+    showFailToast(t('UILogin_Code'))
     return
   }
   if (!nextPassword) {
-    showFailToast('请输入新密码')
+    showFailToast(t('UIClub_PleaseCode'))
     return
   }
   if (!acceptedPolicy.value) {
-    showFailToast('请先勾选协议')
+    showFailToast(t('UIClub_Please4'))
     return
   }
 
@@ -148,13 +149,13 @@ async function submitReset(): Promise<void> {
     })
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '重置密码失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_CodeFail4'))
     }
 
-    showSuccessToast('密码重置成功')
+    showSuccessToast(t('UIClub_CodeSuccess2'))
     void router.replace('/mine/settings/account')
   } catch (error) {
-    const message = error instanceof Error ? error.message : '重置密码失败'
+    const message = error instanceof Error ? error.message : t('UIClub_CodeFail4')
     showFailToast(message)
   } finally {
     submitting.value = false
@@ -180,7 +181,7 @@ onBeforeUnmount(() => {
           type="button"
           @click="switchTab('phone')"
         >
-          手机
+          {{ t('UISetting_SecurityBindTelItem') }}
         </button>
         <button
           class="tab-btn"
@@ -188,7 +189,7 @@ onBeforeUnmount(() => {
           type="button"
           @click="switchTab('email')"
         >
-          邮箱
+          {{ t('UISetting_SecurityBindEmailItem') }}
         </button>
       </section>
 

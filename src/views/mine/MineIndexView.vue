@@ -92,11 +92,11 @@ const displayUser = computed(() => {
       <div class="title">{{ t('UIMine_title') }}</div>
       <div class="currency-info" @click="goToMineShop">
         <div class="icon-diamond">
-          <img :src="iconDiamond" alt="钻石" />
+          <img :src="iconDiamond" :alt="t('UIMine_VIP_diamond')" />
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" alt="充值" />
+          <img :src="iconAdd" :alt="t('UIMine_WalletAdd_EjPOTlsz')" />
         </div>
       </div>
     </div>
@@ -105,7 +105,7 @@ const displayUser = computed(() => {
         <div class="card-bg-innner">
           <div class="card-line1">
             <button class="left-avatar" type="button" @click="goToProfileEdit">
-              <img :src="String(displayUser.avatar)" alt="头像" />
+              <img :src="String(displayUser.avatar)" :alt="t('UIMine_UserInfoSetting_btn_head')" />
             </button>
             <div class="right-box">
               <button class="name" type="button" @click="goToProfileEdit">
@@ -131,7 +131,7 @@ const displayUser = computed(() => {
             <button class="button" type="button" @click="goToMineShop">
               <div class="text">{{ t('UIHappyShop_ActivityShop') }}</div>
               <div class="round-icon">
-                <img :src="iconShop" alt="我的商城" />
+                <img :src="iconShop" :alt="t('UIHappyShop_ActivityShop')" />
               </div>
             </button>
           </div>
@@ -141,7 +141,7 @@ const displayUser = computed(() => {
     <div class="box-gallery">
       <div v-for="box in boxList" :key="box.key" class="box-item" @click="goToNextPage(box.route)">
         <div class="img">
-          <img :src="box.icon" alt="消息" />
+          <img :src="box.icon" :alt="t('UIMine_MsgSystemContent')" />
         </div>
         <div class="text">{{ box.text }}</div>
       </div>

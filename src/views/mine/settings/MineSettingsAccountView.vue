@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { t } from '@/i18n'
 
 interface AccountActionItem {
   key: string
@@ -13,7 +14,7 @@ interface AccountActionItem {
 
 const router = useRouter()
 
-const title = computed(() => '账号管理')
+const title = computed(() => t('UISettingPassword001'))
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -27,11 +28,11 @@ if (route.query.security === 'on') {
 }
 
 const rows: AccountActionItem[] = [
-  { key: 'reset-password', label: '重置密码', iconClass: 'icon-reset', arrow: true },
-  { key: 'security-password', label: '6位数密码', iconClass: 'icon-sound' },
+  { key: 'reset-password', label: t('UIClub_Code7'), iconClass: 'icon-reset', arrow: true },
+  { key: 'security-password', label: "6" + t('UIClub_Code8'), iconClass: 'icon-sound' },
   {
     key: 'reset-security-password',
-    label: '修改6位数密码',
+    label: t('UICommon_Edit') + "6" + t('UIClub_Code8'),
     iconClass: 'icon-reset',
     arrow: true,
   },

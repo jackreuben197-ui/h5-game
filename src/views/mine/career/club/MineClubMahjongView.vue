@@ -9,6 +9,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { formatDateTime, toTimestampMs } from '@/utils/time'
 import dayjs from 'dayjs'
+import { t } from '@/i18n'
 
 interface SummaryMetric {
   label: string
@@ -38,26 +39,31 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const title = computed(() => '麻将战绩')
+const title = computed(() => t('UIMahjong_Record'))
 
-const timeTabs = ['今天', '7天', '30天', '生涯']
+const timeTabs = [
+  t('UIData_Today'),
+  '7' + t('UIHappyShop_ActivityShopDay'),
+  '30' + t('UIHappyShop_ActivityShopDay'),
+  t('UIMine_VIP_dataAll'),
+]
 const selectedTime = ref(timeTabs[0])
 const loading = ref(false)
 
 const leftMetrics = ref<SummaryMetric[]>([
-  { label: '总场次', value: '0' },
-  { label: '明杠', value: '0' },
+  { label: t('UIData_YGvXd5iXr_005'), value: '0' },
+  { label: t('UIMahjong_ExposedKong'), value: '0' },
 ])
 
 const rightMetrics = ref<SummaryMetric[]>([
-  { label: '全胜次数', value: '0' },
-  { label: '暗杠', value: '0' },
+  { label: t('UIFantasy_allwinCount'), value: '0' },
+  { label: t('UIMahjong_ConcealedKong'), value: '0' },
 ])
 
 const bottomMetrics = ref<SummaryMetric[]>([
-  { label: '自摸', value: '0' },
-  { label: '点炮', value: '0' },
-  { label: '接炮', value: '0' },
+  { label: t('UIMahjong_SelfDraw'), value: '0' },
+  { label: t('UIMahjong_LoseDiscard'), value: '0' },
+  { label: t('UIMahjong_WinDiscard'), value: '0' },
 ])
 
 const todayProfit = ref('0')
@@ -66,16 +72,16 @@ const records = ref<RecordCard[]>([])
 
 function profitTitle(): string {
   switch (selectedTime.value) {
-    case '今天':
-      return '今日收益'
-    case '7天':
-      return '7天收益'
-    case '30天':
-      return '30天收益'
-    case '生涯':
-      return '生涯收益'
+    case t('UIData_Today'):
+      return t('UIBill_payLookHandCardTodayWin')
+    case '7' + t('UIHappyShop_ActivityShopDay'):
+      return '7' + t('UIClub_Income')
+    case '30' + t('UIHappyShop_ActivityShopDay'):
+      return '30' + t('UIClub_Income')
+    case t('UIMine_VIP_dataAll'):
+      return t('UIClub_Income2')
     default:
-      return '今日收益'
+      return t('UIBill_payLookHandCardTodayWin')
   }
 }
 
@@ -149,7 +155,7 @@ function mapRecord(row: Record<string, unknown>, index: number): RecordCard {
 
   return {
     id: roomId || matchId || String(index + 1),
-    roomName: String(row.Name ?? row.name ?? row.game_room_name ?? '麻将牌局'),
+    roomName: String(row.Name ?? row.name ?? row.game_room_name ?? t('UIClub_TableGame2')),
     roomId,
     matchId,
     endDay: endTs > 0 ? dayjs(endTs).format('DD') : '',
@@ -165,13 +171,13 @@ function mapRecord(row: Record<string, unknown>, index: number): RecordCard {
 
 function resolveTimeType(): number {
   switch (selectedTime.value) {
-    case '今天':
+    case t('UIData_Today'):
       return 1
-    case '7天':
+    case '7' + t('UIHappyShop_ActivityShopDay'):
       return 2
-    case '30天':
+    case '30' + t('UIHappyShop_ActivityShopDay'):
       return 3
-    case '生涯':
+    case t('UIMine_VIP_dataAll'):
       return 4
     default:
       return 1
@@ -185,22 +191,40 @@ function extractStatsFromResponse(data: unknown): void {
   if (!roomData) return
 
   leftMetrics.value = [
-    { label: '总场次', value: toSafeNumber(roomData.total_game_cnt).toLocaleString('en-US') },
-    { label: '明杠', value: toSafeNumber(roomData.mj_exposed_kong_count).toLocaleString('en-US') },
+    {
+      label: t('UIData_YGvXd5iXr_005'),
+      value: toSafeNumber(roomData.total_game_cnt).toLocaleString('en-US'),
+    },
+    {
+      label: t('UIMahjong_ExposedKong'),
+      value: toSafeNumber(roomData.mj_exposed_kong_count).toLocaleString('en-US'),
+    },
   ]
 
   rightMetrics.value = [
-    { label: '全胜次数', value: toSafeNumber(roomData.full_win).toLocaleString('en-US') },
     {
-      label: '暗杠',
+      label: t('UIFantasy_allwinCount'),
+      value: toSafeNumber(roomData.full_win).toLocaleString('en-US'),
+    },
+    {
+      label: t('UIMahjong_ConcealedKong'),
       value: toSafeNumber(roomData.mj_concealed_kong_count).toLocaleString('en-US'),
     },
   ]
 
   bottomMetrics.value = [
-    { label: '自摸', value: toSafeNumber(roomData.mj_win_self_draw_count).toLocaleString('en-US') },
-    { label: '点炮', value: toSafeNumber(roomData.mj_lose_discard_count).toLocaleString('en-US') },
-    { label: '接炮', value: toSafeNumber(roomData.mj_win_discard_count).toLocaleString('en-US') },
+    {
+      label: t('UIMahjong_SelfDraw'),
+      value: toSafeNumber(roomData.mj_win_self_draw_count).toLocaleString('en-US'),
+    },
+    {
+      label: t('UIMahjong_LoseDiscard'),
+      value: toSafeNumber(roomData.mj_lose_discard_count).toLocaleString('en-US'),
+    },
+    {
+      label: t('UIMahjong_WinDiscard'),
+      value: toSafeNumber(roomData.mj_win_discard_count).toLocaleString('en-US'),
+    },
   ]
 
   todayProfit.value = formatUC(toSafeNumber(roomData.total_earn))
@@ -216,11 +240,11 @@ async function fetchStatsSummary(): Promise<void> {
       ...(userInfoStore.currentClub?.club_id ? { club_id: userInfoStore.currentClub.club_id } : {}),
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载麻将汇总失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail7'))
     }
     extractStatsFromResponse(response.data)
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加载麻将汇总失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadFail7')
     showFailToast(message)
   }
 }
@@ -236,14 +260,14 @@ async function fetchMahjongHistory(): Promise<void> {
       ...(userInfoStore.currentClub?.club_id ? { club_id: userInfoStore.currentClub.club_id } : {}),
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载麻将战绩失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail8'))
     }
 
     const rawList = extractRecords(response.data?.records)
     records.value = rawList.map((row, index) => mapRecord(row, index))
   } catch (error) {
     records.value = []
-    const message = error instanceof Error ? error.message : '加载麻将战绩失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadFail8')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -323,8 +347,8 @@ onMounted(() => {
       </section>
 
       <section class="list-wrap">
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!records.length" class="list-status">暂无麻将战绩</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!records.length" class="list-status">{{ t('UIClub_No6') }}</p>
         <article
           v-for="(item, index) in records"
           :key="item.id"
@@ -333,9 +357,9 @@ onMounted(() => {
           @click="goDetail(item)"
         >
           <div class="timeline">
-            <span v-if="isFirstOfDate(index)" class="date-label"
-              >{{ item.endMonth }}<br />{{ item.endDay }}</span
-            >
+            <span v-if="isFirstOfDate(index)" class="date-label">
+              {{ item.endMonth }}<br />{{ item.endDay }}
+            </span>
             <span v-else class="date-label"></span>
           </div>
           <div class="card-content">
@@ -347,19 +371,19 @@ onMounted(() => {
             <div class="card-body">
               <div class="meta">
                 <div>
-                  <span>盲注级别:</span>
+                  <span>{{ t('UIJackPotInfo_blindLevel') }}:</span>
                   <span>{{ item.blind }}</span>
                 </div>
                 <div>
-                  <span>手数:</span>
+                  <span>{{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}:</span>
                   <span>{{ item.hands }}</span>
                 </div>
                 <div>
-                  <span>时长:</span>
+                  <span>{{ t('UIClub_Text36') }}:</span>
                   <span>{{ item.duration }}</span>
                 </div>
                 <div>
-                  <span>结束时间:</span>
+                  <span>{{ t('RecordDetail102') }}:</span>
                   <span>{{ item.endAt }}</span>
                 </div>
               </div>

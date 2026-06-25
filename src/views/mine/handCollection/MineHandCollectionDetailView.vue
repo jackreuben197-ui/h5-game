@@ -134,7 +134,7 @@ const showdownProfit = computed(() => {
 
 onMounted(() => {
   if (!handRecord.value) {
-    showFailToast('未找到牌谱数据，请从列表重新进入')
+    showFailToast(t('UIClub_NotFoundData') + "，" + t('UIClub_Enter'))
   }
 })
 
@@ -143,11 +143,11 @@ function metricIcon(metric: ReplayDisplayMetric): string {
 }
 
 function onFavorite(): void {
-  showSuccessToast('已收藏')
+  showSuccessToast(t('UIClub_Done2'))
 }
 
 function onShare(): void {
-  showSuccessToast('分享功能开发中')
+  showSuccessToast(t('UIClub_InDeve3'))
 }
 </script>
 
@@ -184,7 +184,7 @@ function onShare(): void {
                 size="0.6rem"
               />
             </div>
-            <p v-else class="street-sub">详细过程</p>
+            <p v-else class="street-sub">{{ t('UITexas_History_xxgc') }}</p>
           </div>
 
           <div class="head-right">
@@ -225,7 +225,7 @@ function onShare(): void {
         <header class="street-head">
           <div class="head-left">
             <h3 class="street-title">Showdown</h3>
-            <p class="street-sub">结果</p>
+            <p class="street-sub">{{ t('UIClub_Text59') }}</p>
           </div>
           <div class="head-right">
             <p class="head-stat strong">{{ showdownProfit }}</p>
@@ -253,11 +253,11 @@ function onShare(): void {
     <footer class="action-bar">
       <button type="button" class="action-btn" @click="onFavorite">
         <span class="icon">★</span>
-        <span>收藏</span>
+        <span>{{ t('adaptation10212') }}</span>
       </button>
       <button type="button" class="action-btn" @click="onShare">
         <span class="icon">↗</span>
-        <span>分享</span>
+        <span>{{ t('UITexasHistory_share') }}</span>
       </button>
     </footer>
   </div>

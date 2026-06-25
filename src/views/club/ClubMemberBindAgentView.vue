@@ -8,6 +8,7 @@ import { getMemberRouteContext } from './clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import { useUserInfoStore } from '@/stores/userInfo'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { t } from '@/i18n'
 
 interface AgentRow {
   userId: number
@@ -46,7 +47,7 @@ function mapAgentRow(item: Record<string, unknown>): AgentRow {
   const userId = toSafeNumber(item.user_id)
   const randomNum = item.random_num
   const uid = randomNum !== undefined && randomNum !== null ? String(randomNum) : '--'
-  const name = String(item.remark_name || item.nick_name || `代理${userId || '--'}`)
+  const name = String(item.remark_name || item.nick_name || t('UIClub_AgentItem') + (userId || '--'))
   const avatar = typeof item.avatar === 'string' && item.avatar.trim() ? item.avatar : imgAvatar
 
   return {
@@ -79,7 +80,7 @@ async function fetchAgents(): Promise<void> {
     })
 
     if (response.code !== 0 || !response.data) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '获取代理列表失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_FetchAgentFail'))
     }
 
     const rawRows = Array.isArray(response.data.data)
@@ -92,7 +93,7 @@ async function fetchAgents(): Promise<void> {
     }
   } catch (error) {
     rows.value = []
-    const message = error instanceof Error ? error.message : '获取代理列表失败'
+    const message = error instanceof Error ? error.message : t('UIClub_FetchAgentFail')
     showFailToast(message)
   } finally {
     loadingAgents.value = false
@@ -114,11 +115,11 @@ async function onConfirm(): Promise<void> {
     })
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '绑定代理失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_AgentFail'))
     }
 
     const selected = rows.value.find((item) => item.userId === selectedAgentId.value)
-    showSuccessToast('绑定代理成功')
+    showSuccessToast(t('UIClub_AgentSuccess'))
     await router.replace({
       path: `/club/member/${context.value.memberId}`,
       query: {
@@ -132,7 +133,7 @@ async function onConfirm(): Promise<void> {
       },
     })
   } catch (error) {
-    const message = error instanceof Error ? error.message : '绑定代理失败'
+    const message = error instanceof Error ? error.message : t('UIClub_AgentFail')
     showFailToast(message)
   } finally {
     submitting.value = false
@@ -146,7 +147,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell sub-bg" :style="backgroundStyle">
-    <HeaderBack title="绑定代理" />
+    <HeaderBack :title="t('UIGuild_MemberDetails_BindVip')" />
     <div class="sub-page">
       <section class="cards">
         <article
@@ -162,8 +163,8 @@ onMounted(() => {
           </div>
           <button class="dot" :class="{ on: selectedAgentId === row.userId }"></button>
         </article>
-        <p v-if="loadingAgents" class="status">加载中...</p>
-        <p v-else-if="!rows.length" class="status">暂无可绑定代理</p>
+        <p v-if="loadingAgents" class="status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!rows.length" class="status">{{ t('UIClub_NoCanAgent') }}</p>
       </section>
 
       <button
@@ -172,7 +173,7 @@ onMounted(() => {
         :disabled="submitting || !rows.length"
         @click="onConfirm"
       >
-        绑定代理
+        {{ t('UIGuild_MemberDetails_BindVip') }}
       </button>
     </div>
   </div>

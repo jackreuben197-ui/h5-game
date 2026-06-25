@@ -54,16 +54,16 @@ const rows = ref<DataRow[]>([
 const loading = ref(false)
 
 const menuList: MenuItem[] = [
-  { key: 'data', label: '数据', icon: iconData, route: '/mine/career/friends/data' },
-  { key: 'record', label: '战绩', icon: iconRecord, route: '/mine/career/friends/record' },
-  { key: 'mahjong', label: '麻将', icon: iconMahjong },
-  { key: 'sng', label: 'SNG战绩', icon: iconMtt },
-  { key: 'mahjong-mtt', label: '麻将MTT战绩', icon: iconMahjong },
+  { key: 'data', label: t('adaptation10124'), icon: iconData, route: '/mine/career/friends/data' },
+  { key: 'record', label: t('UICareerRecord'), icon: iconRecord, route: '/mine/career/friends/record' },
+  { key: 'mahjong', label: t('Mahjong_Name'), icon: iconMahjong },
+  { key: 'sng', label: "SNG" + t('UICareerRecord'), icon: iconMtt },
+  { key: 'mahjong-mtt', label: t('Mahjong_Name') + "MTT" + t('UICareerRecord'), icon: iconMahjong },
 ]
 
 function handleMenuClick(item: MenuItem): void {
   if (!item.route) {
-    showGameToast('功能开发中')
+    showGameToast(t('UIClub_InDeve'))
     return
   }
   void router.push(item.route)
@@ -79,7 +79,7 @@ async function requestSummary(silent: boolean): Promise<void> {
   try {
     const response = await postFriendRoomStatsApi({})
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载朋友生涯数据失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadDataFail2'))
     }
 
     const data = response.data as Record<string, unknown> | undefined
@@ -106,7 +106,7 @@ async function requestSummary(silent: boolean): Promise<void> {
     void homeCache().put(USER_STORE_CAREER, HOME_CACHE_KEY, next)
   } catch (error) {
     if (!silent) {
-      const message = error instanceof Error ? error.message : '加载朋友生涯数据失败'
+      const message = error instanceof Error ? error.message : t('UIClub_LoadDataFail2')
       showFailToast(message)
     }
   } finally {
@@ -137,7 +137,7 @@ onMounted(() => {
       <template #right>
         <div class="action-wrap">
           <TopActionButton
-            name="数据统计"
+            :name="t('UIClub_Mlistinfo_GiVUYG7E')"
             icon-alt="wallet"
             @click="
               handleMenuClick({
@@ -248,7 +248,8 @@ onMounted(() => {
   font-size: 0.361rem;
   padding: 0.15rem 0.15rem;
   margin-bottom: 0.1rem;
-  box-shadow: 0 0 0.9rem 0.1rem rgba(0, 175, 131, 0.9) inset,
+  box-shadow:
+    0 0 0.9rem 0.1rem rgba(0, 175, 131, 0.9) inset,
     /* 左上高光 */ inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.85),
     /* 右下高光 */ inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.85);
 }

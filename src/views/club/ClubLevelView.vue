@@ -8,6 +8,7 @@ import imgRankBadge from '@/assets/icons/club_rank_badge.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { showFailToast, showSuccessToast } from 'vant'
+import { t } from '@/i18n'
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -26,7 +27,7 @@ const memberLimit = ref(200)
 
 function openUpgradeConfirm(): void {
   if (!targetLevel.value || targetLevel.value <= currentLevel.value) {
-    showFailToast('当前已是可升级最高等级')
+    showFailToast(t('UIClub_CurrentDoneCanLevel'))
     return
   }
   showUpgradeConfirm.value = true
@@ -39,7 +40,7 @@ function closeUpgradeConfirm(): void {
 async function confirmUpgrade(): Promise<void> {
   const clubId = Number(userInfoStore.currentClub?.club_id)
   if (!clubId) {
-    showFailToast('未找到俱乐部信息')
+    showFailToast(t('UIClub_NotFoundClub'))
     return
   }
 
@@ -52,14 +53,14 @@ async function confirmUpgrade(): Promise<void> {
 
     if (response.code !== 0) {
       const fallback = (response.msg ?? response.message) as unknown
-      throw new Error(typeof fallback === 'string' ? fallback : '升级失败')
+      throw new Error(typeof fallback === 'string' ? fallback : t('UIClub_Fail6'))
     }
 
     showUpgradeConfirm.value = false
-    showSuccessToast('已提交升级申请')
+    showSuccessToast(t('UIClub_DoneSubmitApply'))
     await loadLevelData()
   } catch (error) {
-    const message = error instanceof Error ? error.message : '升级失败'
+    const message = error instanceof Error ? error.message : t('UIClub_Fail6')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -77,19 +78,19 @@ const progressActiveDots = computed(() => {
 const levelLabel = computed(() => `LEVEL ${currentLevel.value || 1}`)
 
 const levelDesc = computed(() => {
-  return `成员上限人数临时提升至${memberLimit.value}人`
+  return t('UIClub_MemberPeople') + (memberLimit.value) + t('Common_People')
 })
 
 const diamondBalance = computed(() => Number(userInfoStore.currentClub?.user_gold || 0))
 
 const confirmText = computed(() => {
-  return `确定花费${upgradeCost.value}钻石购买Level ${targetLevel.value}(${levelDuration.value}天)?`
+  return t('UIClub_Confirm') + (upgradeCost.value) + t('UICommunityFundDiamondBuyType') + "Level " + (targetLevel.value) + "(" + (levelDuration.value) + t('UIHappyShop_ActivityShopDay') + ")?"
 })
 
 async function loadLevelData(): Promise<void> {
   const clubId = Number(userInfoStore.currentClub?.club_id)
   if (!clubId) {
-    showFailToast('未找到俱乐部信息')
+    showFailToast(t('UIClub_NotFoundClub'))
     return
   }
 
@@ -116,7 +117,7 @@ async function loadLevelData(): Promise<void> {
     }
   } catch (error) {
     console.error('loadLevelData error', error)
-    showFailToast('获取俱乐部等级信息失败')
+    showFailToast(t('UIClub_FetchClubLevelFail'))
   } finally {
     loading.value = false
   }
@@ -134,7 +135,7 @@ onMounted(() => {
       <HeaderBack :title="'俱乐部等级'">
         <template #right>
           <div class="club-level-diamond">
-            <img :src="imgDiamond" alt="钻石" />
+            <img :src="imgDiamond" :alt="t('UIMine_VIP_diamond')" />
             <span>{{ diamondBalance }}</span>
           </div>
         </template>

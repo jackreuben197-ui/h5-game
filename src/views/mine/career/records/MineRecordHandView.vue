@@ -78,7 +78,7 @@ function buildHandCards(value: unknown): CardItem[] {
 
 const loading = ref(false)
 const handRows = ref<HandRow[]>([])
-const overviewTitle = ref('牌局名称')
+const overviewTitle = ref(t('UIClub_RoomCreat_0HvQkjkd'))
 const overviewId = ref('ID: --')
 const overviewHands = ref(t('UIMine_Paipu_handNum2', 0))
 const overviewBlind = ref('--')
@@ -270,7 +270,7 @@ async function fetchHandRows(): Promise<void> {
     } as unknown as Record<string, unknown>)
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载手牌详情失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadDetailFail6'))
     }
 
     const records = Array.isArray(response.data?.records) ? response.data.records : []
@@ -286,7 +286,7 @@ async function fetchHandRows(): Promise<void> {
     )
 
     currentRoomRecord.value = (room as StatsUserGameRecordListRoom_record) ?? {}
-    overviewTitle.value = String(room.name ?? '牌局名称')
+    overviewTitle.value = String(room.name ?? t('UIClub_RoomCreat_0HvQkjkd'))
     overviewId.value = `ID: ${String(room.room_id ?? roomId)}`
     // 对齐客户端 UIReplayComponent.LoadHistoryHandData：总手数取 item.total（该房间总手数）。
     const totalHands = toSafeNumber(targetRecord?.total)
@@ -298,7 +298,7 @@ async function fetchHandRows(): Promise<void> {
     writeHandCache(roomId)
   } catch (error) {
     handRows.value = []
-    const message = error instanceof Error ? error.message : '加载手牌详情失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadDetailFail6')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -372,11 +372,11 @@ async function collectReplay(row: HandRow): Promise<void> {
       open: toSafeNumber(raw.open),
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '收藏失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_Fail14'))
     }
     showSuccessToast(t('Collection_success'))
   } catch (error) {
-    const message = error instanceof Error ? error.message : '收藏失败'
+    const message = error instanceof Error ? error.message : t('UIClub_Fail14')
     showFailToast(message)
   } finally {
     collectPending.value = false
@@ -401,7 +401,7 @@ onMounted(() => {
     <div class="content-wrap">
       <section class="glass-card overview-card">
         <div class="left-blind">
-          <div class="label">盲注/Ante</div>
+          <div class="label">{{ t('adaptation20006') }}/Ante</div>
           <div class="value">{{ overviewBlind }}</div>
           <div class="hands">{{ overviewHands }}</div>
         </div>
@@ -412,8 +412,8 @@ onMounted(() => {
       </section>
 
       <section class="list-wrap">
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!handRows.length" class="list-status">暂无手牌记录</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!handRows.length" class="list-status">{{ t('UIClub_NoRecord2') }}</p>
         <article
           v-for="item in handRows"
           :key="item.id"
@@ -430,7 +430,7 @@ onMounted(() => {
                 size="0.7rem"
               />
             </div>
-            <!-- resolveHandTitle 已对所有动态文本做 HTML 转义，仅保留 <b> 牌型标签；可安全用 v-html。 -->
+            <!-- resolveHandTitle 已对所有动态文本做 HTML 转义，仅保留 <b> {{ t('UIClub_Text95') }}；{{ t('UIClub_Can4') }} v-html。 -->
             <!-- eslint-disable-next-line vue/no-v-html -->
             <div class="title" v-html="item.title"></div>
           </div>
@@ -456,7 +456,7 @@ onMounted(() => {
     <div v-if="actionRow" class="action-mask" @click="closeHandActions">
       <div class="action-sheet" :style="actionPopupStyle" @click.stop>
         <button type="button" class="action-item" @click="goReplayDetail(actionRow)">
-          牌谱详情
+          {{ t('adaptation10210') }}
         </button>
         <button
           type="button"
@@ -464,9 +464,9 @@ onMounted(() => {
           :disabled="collectPending"
           @click="collectReplay(actionRow)"
         >
-          收藏
+          {{ t('adaptation10212') }}
         </button>
-        <button type="button" class="action-item" @click="goReport">举报</button>
+        <button type="button" class="action-item" @click="goReport">{{ t('adaptation10231') }}</button>
       </div>
     </div>
   </div>

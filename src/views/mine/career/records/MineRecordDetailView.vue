@@ -14,6 +14,7 @@ import { formatDateTime } from '@/utils/time'
 import { userCache } from '@/utils/userCache'
 import { USER_STORE_CAREER } from '@/utils/indexedDB'
 import { useGameStore } from '@/stores/game'
+import { t } from '@/i18n'
 
 // 生涯页选择的俱乐部 id 持久化在 localStorage 的 dzpk_h5_CAREER_SELECTED_CLUB_ID。
 // 'all' 或缺失表示"全部"，返回 0；否则解析为数字 club_id。
@@ -36,7 +37,7 @@ function resolveAvatar(url: string | undefined | null): string {
   return url
 }
 
-const title = computed(() => '战绩详情')
+const title = computed(() => t('adaptation10217'))
 
 const router = useRouter()
 const route = useRoute()
@@ -85,10 +86,10 @@ const loading = ref(false)
 const podiumSeats = ref<PodiumSeat[]>([])
 
 const summaryItems = ref([
-  { label: '总流水', value: '0' },
-  { label: '最大底池', value: '0' },
-  { label: '总手数', value: '0' },
-  { label: '总代入数', value: '0' },
+  { label: t('UICareerRecord_totalLiushui'), value: '0' },
+  { label: t('UITexasGameEnding_BigPot'), value: '0' },
+  { label: t('UITexasGameEnding_allhand'), value: '0' },
+  { label: t('UIClub_Text94'), value: '0' },
 ])
 
 const playerResults = ref<PlayerResult[]>([])
@@ -161,9 +162,9 @@ function buildPodiumSeats(users: Record<string, unknown>[]): PodiumSeat[] {
   }
 
   return [
-    makeSeat(tuhao, 2, 'tuhao', '土豪', toSafeNumber(tuhao.bring_in)),
+    makeSeat(tuhao, 2, 'tuhao', t('UITexasGameEnding_richman'), toSafeNumber(tuhao.bring_in)),
     makeSeat(mvp, 1, 'mvp', 'MVP', mvpNet),
-    makeSeat(fish, 3, 'fish', '大鱼', fishNet),
+    makeSeat(fish, 3, 'fish', t('UITexasGameEnding_bigFish'), fishNet),
   ]
 }
 
@@ -247,7 +248,7 @@ async function fetchRecordDetail(): Promise<void> {
     )
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载战绩详情失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadDetailFail5'))
     }
 
     const roomData = response.data?.room_data
@@ -264,10 +265,10 @@ async function fetchRecordDetail(): Promise<void> {
 
     // 对齐客户端 UIRecordDetailStatistics.UpdateTexasInfo：总流水/最大底池/总手数/总代入数。
     summaryItems.value = [
-      { label: '总流水', value: formatAmount(toSafeNumber(roomData?.all_bet_pot)) },
-      { label: '最大底池', value: formatAmount(toSafeNumber(roomData?.max_bet_pot)) },
-      { label: '总手数', value: String(toSafeNumber(roomData?.room_total_hand_num)) },
-      { label: '总代入数', value: formatAmount(toSafeNumber(roomData?.all_bring_in)) },
+      { label: t('UICareerRecord_totalLiushui'), value: formatAmount(toSafeNumber(roomData?.all_bet_pot)) },
+      { label: t('UITexasGameEnding_BigPot'), value: formatAmount(toSafeNumber(roomData?.max_bet_pot)) },
+      { label: t('UITexasGameEnding_allhand'), value: String(toSafeNumber(roomData?.room_total_hand_num)) },
+      { label: t('UIClub_Text94'), value: formatAmount(toSafeNumber(roomData?.all_bring_in)) },
     ]
 
     podiumSeats.value = buildPodiumSeats(userList)
@@ -290,7 +291,7 @@ async function fetchRecordDetail(): Promise<void> {
     insurancePool.value = formatAmount(toSafeNumber(roomData?.insurance_total), true)
     writeDetailCache(roomId)
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加载战绩详情失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadDetailFail5')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -324,7 +325,7 @@ onMounted(() => {
 
     <div class="content-wrap">
       <section class="glass-card sort-bar" @click="goToHands">
-        <span>本局牌谱</span>
+        <span>{{ t('UIMine_RecordDetailForNormal_FENSVUz3') }}</span>
         <img class="arrow" src="@/assets/icons/icon_arrow_bottom.png" />
       </section>
 
@@ -369,13 +370,13 @@ onMounted(() => {
         <div class="insurance-bar">
           <div class="left">
             <img class="icon" :src="insuranceIconUrl" alt="insurance" />
-            <span>保险池</span>
+            <span>{{ t('UIMine_RecordDetailForNormal_soxaxJz1') }}</span>
           </div>
           <div class="right">{{ insurancePool }}</div>
         </div>
 
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!playerResults.length" class="list-status">暂无结算数据</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!playerResults.length" class="list-status">{{ t('UIClub_NoData') }}</p>
 
         <article v-for="item in playerResults" :key="item.id" class="glass-card player-card">
           <div class="result-row">
@@ -392,15 +393,15 @@ onMounted(() => {
           </div>
           <div class="sub-row">
             <div class="sub-cell">
-              <span class="sub-title">带入:</span>
+              <span class="sub-title">{{ t('UIMine_RecordItemsNormal_eodrjcHJ') }}:</span>
               <span class="sub-value">{{ item.buyIn }}</span>
             </div>
             <div class="sub-cell">
-              <span class="sub-title">手数:</span>
+              <span class="sub-title">{{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}:</span>
               <span class="sub-value">{{ item.hands }}</span>
             </div>
             <div class="sub-cell">
-              <span class="sub-title">入池率:</span>
+              <span class="sub-title">{{ t('UIClub_Mlistinfo_rRyW4JkW') }}:</span>
               <span class="sub-value">{{ item.vpip }}</span>
             </div>
           </div>

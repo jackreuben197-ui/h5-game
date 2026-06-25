@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-import { getLocale, setLocale, type LocaleCode } from '@/i18n'
+import { getLocale, setLocale, t, type LocaleCode } from '@/i18n'
 
 const title = computed(() => 'Language')
 
@@ -18,8 +18,8 @@ const backgroundStyle = computed(() => ({
 }))
 
 const options: LanguageOption[] = [
-  { key: 'cn', label: '简体中文' },
-  { key: 'zh', label: '繁體中文' },
+  { key: 'cn', label: t('A') },
+  { key: 'zh', label: t('UIClub_Text72') },
   { key: 'en', label: 'English' },
   { key: 'pt', label: 'Português' },
 ]
@@ -33,7 +33,7 @@ function selectLanguage(key: LocaleCode): void {
 
   activeLanguage.value = key
   setLocale(key)
-  showSuccessToast('语言切换成功')
+  showSuccessToast(t('UIClub_Success5'))
 }
 </script>
 

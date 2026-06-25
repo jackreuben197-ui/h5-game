@@ -8,6 +8,9 @@ import RoomDataDetail from '@/components/RoomDataDetail/RoomDataDetail.vue'
 const route = useRoute()
 const router = useRouter()
 
+import { t } from '@/i18n'
+
+// 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
@@ -22,7 +25,7 @@ const matchId = computed(() => toSafeNumber(route.query.matchId))
 
 onMounted(() => {
   if (!roomId.value && !matchId.value) {
-    showFailToast('缺少 roomId/matchId 参数')
+    showFailToast(t('UIClub_Text31') + ' roomId/matchId ' + t('UIClub_Text32'))
     void router.back()
   }
 })

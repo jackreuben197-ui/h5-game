@@ -9,10 +9,11 @@ import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import defaultAvatar from '@/assets/images/default_avatar.png'
+import { t } from '@/i18n'
 
 const router = useRouter()
 
-const title = computed(() => '编辑资料')
+const title = computed(() => t('UIMine_UserInfoSetting_title'))
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -131,17 +132,19 @@ async function onAvatarFileChange(event: Event): Promise<void> {
       formData as unknown as Parameters<typeof postOssUploadImageApi>[0],
     )
     if (uploadRes.code !== 0) {
-      throw new Error(typeof uploadRes.msg === 'string' ? uploadRes.msg : '头像上传失败')
+      throw new Error(typeof uploadRes.msg === 'string' ? uploadRes.msg : t('UIClub_AvatarFail'))
     }
 
     const avatarUrl = resolveUploadedAvatarUrl(uploadRes.data)
     if (!avatarUrl) {
-      throw new Error('头像上传失败')
+      throw new Error(t('UIClub_AvatarFail'))
     }
 
     const modifyRes = await postUserModifyInfoApi({ avatar: avatarUrl })
     if (modifyRes.code !== 0) {
-      throw new Error(typeof modifyRes.msg === 'string' ? modifyRes.msg : '头像保存失败')
+      throw new Error(
+        typeof modifyRes.msg === 'string' ? modifyRes.msg : t('UIClub_AvatarSaveFail'),
+      )
     }
 
     const userInfo = userInfoStore.userInfo
@@ -160,9 +163,9 @@ async function onAvatarFileChange(event: Event): Promise<void> {
       })
     }
 
-    showSuccessToast('头像已更新')
+    showSuccessToast(t('UIClub_AvatarDoneUpdate'))
   } catch (error) {
-    const message = error instanceof Error ? error.message : '头像更新失败'
+    const message = error instanceof Error ? error.message : t('UIClub_AvatarUpdateFail')
     showFailToast(message)
   } finally {
     if (target) {
@@ -179,7 +182,7 @@ async function onConfirmGender(): Promise<void> {
   try {
     const response = await postUserModifyInfoApi({ sex })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '性别更新失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_UpdateFail2'))
     }
 
     selectedGender.value = nextGender
@@ -201,9 +204,9 @@ async function onConfirmGender(): Promise<void> {
     }
 
     showGenderPopup.value = false
-    showSuccessToast('性别已更新')
+    showSuccessToast(t('UIClub_DoneUpdate2'))
   } catch (error) {
-    const message = error instanceof Error ? error.message : '性别更新失败'
+    const message = error instanceof Error ? error.message : t('UIClub_UpdateFail2')
     showFailToast(message)
   } finally {
     savingGender.value = false
@@ -236,7 +239,7 @@ async function onConfirmGender(): Promise<void> {
         <div class="profile-card__inner">
           <button class="avatar-wrap" type="button" @click="openAvatarPopup">
             <img :src="String(displayUser.avatar)" alt="avatar" />
-            <span class="edit-chip">编辑</span>
+            <span class="edit-chip">{{ t('UIGuild_EditorTemplate') }}</span>
           </button>
 
           <div class="user-box">
@@ -252,19 +255,19 @@ async function onConfirmGender(): Promise<void> {
 
       <section class="field-group">
         <button class="glass-input" type="button" @click="goNicknamePage">
-          {{ nickname || '输入昵称' }}
+          {{ nickname || t('UIMine_UserInfoSettingNick_InputName') }}
         </button>
-        <p class="input-hint">输入昵称</p>
+        <p class="input-hint">{{ t('UIMine_UserInfoSettingNick_InputName') }}</p>
       </section>
 
       <section class="gender-select" @click="openGenderPopup">
         <button class="gender-option" type="button">
           <span class="radio" :class="{ active: selectedGender === 'male' }"></span>
-          <span>男</span>
+          <span>{{ t('UIMine_UserInfoSetting_Male') }}</span>
         </button>
         <button class="gender-option" type="button">
           <span class="radio" :class="{ active: selectedGender === 'female' }"></span>
-          <span>女</span>
+          <span>{{ t('UIMine_UserInfoSetting_Female') }}</span>
         </button>
       </section>
 
@@ -276,10 +279,16 @@ async function onConfirmGender(): Promise<void> {
         :overlay-style="{ background: 'rgba(12,12,12,0.6)' }"
       >
         <div class="sheet-body">
-          <button class="sheet-row" type="button" @click="onAvatarAction('album')">相册</button>
+          <button class="sheet-row" type="button" @click="onAvatarAction('album')">
+            {{ t('UIMine_UserInfoSetting_album') }}
+          </button>
           <div class="sheet-divider"></div>
-          <button class="sheet-row" type="button" @click="onAvatarAction('camera')">相机</button>
-          <button class="sheet-confirm" type="button" @click="closeAvatarPopup">取消</button>
+          <button class="sheet-row" type="button" @click="onAvatarAction('camera')">
+            {{ t('UIClub_Text61') }}
+          </button>
+          <button class="sheet-confirm" type="button" @click="closeAvatarPopup">
+            {{ t('adaptation10013') }}
+          </button>
         </div>
       </VanPopup>
 
@@ -293,14 +302,16 @@ async function onConfirmGender(): Promise<void> {
         <div class="sheet-body">
           <button class="sheet-row gender-row" type="button" @click="popupGender = 'male'">
             <span class="radio" :class="{ active: popupGender === 'male' }"></span>
-            <span>男</span>
+            <span>{{ t('UIMine_UserInfoSetting_Male') }}</span>
           </button>
           <div class="sheet-divider"></div>
           <button class="sheet-row gender-row" type="button" @click="popupGender = 'female'">
             <span class="radio" :class="{ active: popupGender === 'female' }"></span>
-            <span>女</span>
+            <span>{{ t('UIMine_UserInfoSetting_Female') }}</span>
           </button>
-          <button class="sheet-confirm" type="button" @click="onConfirmGender">赠送</button>
+          <button class="sheet-confirm" type="button" @click="onConfirmGender">
+            {{ t('UISend_btn') }}
+          </button>
         </div>
       </VanPopup>
     </div>
@@ -348,7 +359,8 @@ async function onConfirmGender(): Promise<void> {
   align-items: center;
   gap: 0.5rem;
   backdrop-filter: blur(0.4rem);
-  background: radial-gradient(
+  background:
+    radial-gradient(
       70% 100% at 20% 30%,
       rgba(159, 62, 26, 0.72) 0%,
       rgba(159, 62, 26, 0.3) 58%,

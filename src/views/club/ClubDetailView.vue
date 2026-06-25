@@ -91,9 +91,9 @@ const isChannelPackage = isChannelPackageHost()
 const quickActions = computed<QuickActionItem[]>(() => {
   if (canManageClub.value) {
     return [
-      { id: 1, title: '活动管理', cover: imgQuickSafety },
-      { id: 2, title: '牌局记录', cover: imgQuickRanking },
-      { id: 3, title: '基金', cover: imgQuickFund },
+      { id: 1, title: t('UIClub_Info_Activity'), cover: imgQuickSafety },
+      { id: 2, title: t('UIClubTable_TableRecords'), cover: imgQuickRanking },
+      { id: 3, title: t('UIClub_Info_Fue61o7s'), cover: imgQuickFund },
     ]
   }
 
@@ -104,40 +104,40 @@ const settings = computed<SettingItem[]>(() => {
   const list: SettingItem[] = [
     {
       id: 1,
-      label: '创始人',
+      label: t('UIGuid_Founder'),
       kind: 'founder',
       value: displayClub.value?.club_creator_nickname || '--',
     },
-    { id: 2, label: '邀请分享', kind: 'arrow' },
-    { id: 3, label: '联盟', kind: 'tribe', value: displayClub.value?.tribe_name || '--' },
+    { id: 2, label: t('UIClub_Invite'), kind: 'arrow' },
+    { id: 3, label: t('UIClub_Info_rUC1C7lI'), kind: 'tribe', value: displayClub.value?.tribe_name || '--' },
   ]
 
   if (isFounder.value) {
     list.push(
       {
         id: 4,
-        label: '当前俱乐部等级',
+        label: t('UIGuild_Level'),
         kind: 'level',
         value: `LV. ${displayClub.value?.level || 0}`,
       },
-      { id: 5, label: '允许其他人搜索俱乐部', kind: 'switch', switchKey: 'allowSearch' },
-      { id: 6, label: '入会无需审批', kind: 'switch', switchKey: 'joinWithoutApproval' },
+      { id: 5, label: t('UIClub_AllowOthersSearchClub'), kind: 'switch', switchKey: 'allowSearch' },
+      { id: 6, label: t('UIGuild_Approve'), kind: 'switch', switchKey: 'joinWithoutApproval' },
     )
   }
 
   list.push({
     id: 7,
-    label: '创建时间',
+    label: t('UIClub_CreateTime'),
     kind: 'text',
     value: formatDate(displayClub.value?.create_time),
   })
 
   if (canManageClub.value) {
-    list.push({ id: 8, label: '复制俱乐部', kind: 'copy' })
+    list.push({ id: 8, label: t('UIClubCopy'), kind: 'copy' })
   }
 
   if (isAgent.value) {
-    list.push({ id: 9, label: '下线成员', kind: 'arrow' })
+    list.push({ id: 9, label: t('UIGuild_MemberDetails_VipOffLine'), kind: 'arrow' })
   }
 
   return list
@@ -164,7 +164,7 @@ const searchedTribe = ref<{ randomId: number; name: string; logo: string } | nul
 const clubAvatarUrl = ref('')
 const inviteModalRef = ref<HTMLElement | null>(null)
 
-const clubName = computed(() => displayClub.value?.club_name || '俱乐部名称')
+const clubName = computed(() => displayClub.value?.club_name || t('UIClub_Creat_2LvGNmS7'))
 const clubAlias = computed(() => displayClub.value?.tribe_name || 'XXXX')
 const clubId = computed(() => String(displayClub.value?.random_id || '--'))
 const tribeName = computed(() => String(displayClub.value?.tribe_name || '').trim())
@@ -316,13 +316,13 @@ async function submitTribeApply(): Promise<void> {
 
   const clubId = getCurrentClubId()
   if (!clubId) {
-    showFailToast('俱乐部信息异常')
+    showFailToast(t('UIClub_ClubInfoError'))
     return
   }
 
   const tribeRandomId = Number(tribeApplyIdInput.value)
   if (!Number.isFinite(tribeRandomId) || tribeRandomId <= 0) {
-    showFailToast('请输入联盟ID')
+    showFailToast(t('UIClub_PleaseUnion') + "ID")
     return
   }
 
@@ -337,20 +337,20 @@ async function submitTribeApply(): Promise<void> {
     const foundRandomId = Number(tribeBase?.random_id || 0)
     const foundName = String(tribeBase?.name || '').trim()
     if (Number(response.code) !== 0 || !foundRandomId || !foundName) {
-      showFailToast('找不到联盟')
+      showFailToast(t('UIClub_NotFoundUnion'))
       return
     }
 
     const relation = Number(response.data?.club_relation || 1)
     if (relation === 2) {
-      showFailToast('当前俱乐部已申请该联盟')
+      showFailToast(t('UIClub_CurrentClubDoneApplyUnion'))
       await fetchClubTribeApplyStatus()
       closeTribeSearchPopup()
       return
     }
 
     if (relation === 3) {
-      showFailToast('当前俱乐部已加入该联盟')
+      showFailToast(t('UIClub_CurrentClubDoneJoinUnion'))
       closeTribeSearchPopup()
       return
     }
@@ -364,7 +364,7 @@ async function submitTribeApply(): Promise<void> {
     showTribeApplyPopup.value = true
   } catch (error) {
     console.error('submitTribeApply search tribe error', error)
-    showFailToast('找不到联盟')
+    showFailToast(t('UIClub_NotFoundUnion'))
   } finally {
     tribeApplySubmitting.value = false
   }
@@ -377,19 +377,19 @@ async function confirmTribeApply(): Promise<void> {
 
   const clubId = getCurrentClubId()
   if (!clubId) {
-    showFailToast('俱乐部信息异常')
+    showFailToast(t('UIClub_ClubInfoError'))
     return
   }
 
   const tribeRandomId = Number(searchedTribe.value?.randomId || 0)
   if (!Number.isFinite(tribeRandomId) || tribeRandomId <= 0) {
-    showFailToast('联盟信息异常')
+    showFailToast(t('UIClub_UnionInfoError'))
     return
   }
 
   const contact = tribeApplyContactInput.value.trim()
   if (!contact) {
-    showFailToast('请输入联系方式')
+    showFailToast(t('UIClub_Please'))
     return
   }
 
@@ -403,16 +403,16 @@ async function confirmTribeApply(): Promise<void> {
 
     if (Number(response.code) !== 0) {
       const fallback = (response.msg ?? response.message) as unknown
-      throw new Error(typeof fallback === 'string' ? fallback : '申请加入失败')
+      throw new Error(typeof fallback === 'string' ? fallback : t('UIClub_ApplyJoinFail'))
     }
 
     const successMessage = (response.msg ?? response.message) as unknown
-    showSuccessToast(typeof successMessage === 'string' ? successMessage : '申请已提交')
+    showSuccessToast(typeof successMessage === 'string' ? successMessage : t('UIClub_ApplyDoneSubmit'))
     closeTribeApplyPopup()
     resetTribeApplyForm()
     await fetchClubTribeApplyStatus()
   } catch (error) {
-    const message = error instanceof Error ? error.message : '申请加入失败'
+    const message = error instanceof Error ? error.message : t('UIClub_ApplyJoinFail')
     showFailToast(message)
   } finally {
     tribeApplySubmitting.value = false
@@ -426,7 +426,7 @@ async function cancelTribeApply(): Promise<void> {
 
   const applyId = Number(tribeApplyId.value)
   if (!Number.isFinite(applyId) || applyId <= 0) {
-    showFailToast('未找到可取消的申请')
+    showFailToast(t('UIClub_NotFoundCanCancelOfApply'))
     return
   }
 
@@ -435,15 +435,15 @@ async function cancelTribeApply(): Promise<void> {
     const response = await postOrgClubCancleJoinTribeApi({ apply_id: applyId })
     if (Number(response.code) !== 0) {
       const fallback = (response.msg ?? response.message) as unknown
-      throw new Error(typeof fallback === 'string' ? fallback : '取消申请失败')
+      throw new Error(typeof fallback === 'string' ? fallback : t('UIClub_CancelApplyFail'))
     }
 
     const successMessage = (response.msg ?? response.message) as unknown
-    showSuccessToast(typeof successMessage === 'string' ? successMessage : '已取消申请')
+    showSuccessToast(typeof successMessage === 'string' ? successMessage : t('UIClub_DoneCancelApply'))
     closeCancelTribeApplyPopup()
     await fetchClubTribeApplyStatus()
   } catch (error) {
-    const message = error instanceof Error ? error.message : '取消申请失败'
+    const message = error instanceof Error ? error.message : t('UIClub_CancelApplyFail')
     showFailToast(message)
   } finally {
     cancelTribeApplyLoading.value = false
@@ -472,12 +472,12 @@ function syncCurrentClubFields(fields: Partial<OrgClubData>): void {
 
 async function submitClubDataPatch(payload: Partial<OrgChangeClubDataRequest>): Promise<void> {
   if (!isFounder.value) {
-    throw new Error('仅创始人可修改')
+    throw new Error(t('UIClub_FounderCan'))
   }
 
   const clubId = Number(displayClub.value?.club_id)
   if (!clubId) {
-    throw new Error('俱乐部信息异常')
+    throw new Error(t('UIClub_ClubInfoError'))
   }
 
   const response = await postOrgChangeClubDataApi({
@@ -487,7 +487,7 @@ async function submitClubDataPatch(payload: Partial<OrgChangeClubDataRequest>): 
 
   if (response.code !== 0) {
     const fallback = (response.msg ?? response.message) as unknown
-    throw new Error(typeof fallback === 'string' ? fallback : '更新失败')
+    throw new Error(typeof fallback === 'string' ? fallback : t('UIClub_UpdateFail'))
   }
 
   syncCurrentClubFields(payload as Partial<OrgClubData>)
@@ -496,7 +496,7 @@ async function submitClubDataPatch(payload: Partial<OrgChangeClubDataRequest>): 
 async function refreshClubDetail(): Promise<void> {
   const currentClub = userInfoStore.currentClub
   if (!currentClub?.random_id) {
-    showFailToast('未找到俱乐部信息')
+    showFailToast(t('UIClub_NotFoundClub'))
     void router.replace('/club/list')
     return
   }
@@ -512,7 +512,7 @@ async function refreshClubDetail(): Promise<void> {
     })
 
     if (response.code !== 0 || !response.data) {
-      showFailToast(response.msg || '获取俱乐部详情失败')
+      showFailToast(response.msg || t('UIClub_FetchClubDetailFail'))
       return
     }
 
@@ -524,7 +524,7 @@ async function refreshClubDetail(): Promise<void> {
     await fetchClubTribeApplyStatus()
   } catch (error) {
     console.error('refreshClubDetail error', error)
-    showFailToast('获取俱乐部详情失败')
+    showFailToast(t('UIClub_FetchClubDetailFail'))
   } finally {
     loading.value = false
   }
@@ -532,7 +532,7 @@ async function refreshClubDetail(): Promise<void> {
 
 function goEditDescription(): void {
   if (!isFounder.value) {
-    showFailToast('仅创始人可修改')
+    showFailToast(t('UIClub_FounderCan'))
     return
   }
 
@@ -541,7 +541,7 @@ function goEditDescription(): void {
 
 function goEditName(): void {
   if (!isFounder.value) {
-    showFailToast('仅创始人可修改')
+    showFailToast(t('UIClub_FounderCan'))
     return
   }
 
@@ -550,7 +550,7 @@ function goEditName(): void {
 
 function onQuickAction(actionId: number): void {
   if (actionId === 1) {
-    showFailToast('功能开发中')
+    showFailToast(t('UIClub_InDeve'))
     return
   }
 
@@ -579,14 +579,14 @@ function onSettingClick(item: SettingItem): void {
     return
   }
 
-  if (item.label === '邀请分享') {
+  if (item.label === t('UIClub_Invite')) {
     showInvitePopup.value = true
     return
   }
 
-  if (item.label === '复制俱乐部') {
+  if (item.label === t('UIClubCopy')) {
     if (!canManageClub.value) {
-      showFailToast('暂无权限')
+      showFailToast(t('UIClub_No'))
       return
     }
 
@@ -594,7 +594,7 @@ function onSettingClick(item: SettingItem): void {
     return
   }
 
-  if (item.label === '下线成员') {
+  if (item.label === t('UIGuild_MemberDetails_VipOffLine')) {
     void router.push('/club/downline-members')
     return
   }
@@ -611,13 +611,13 @@ function toggleSwitch(key: 'allowSearch' | 'joinWithoutApproval'): void {
 
 async function updateClubSwitch(key: 'allowSearch' | 'joinWithoutApproval'): Promise<void> {
   if (!isFounder.value) {
-    showFailToast('仅创始人可修改')
+    showFailToast(t('UIClub_FounderCan'))
     return
   }
 
   const clubId = Number(displayClub.value?.club_id)
   if (!clubId) {
-    showFailToast('俱乐部信息异常')
+    showFailToast(t('UIClub_ClubInfoError'))
     return
   }
 
@@ -642,24 +642,24 @@ async function updateClubSwitch(key: 'allowSearch' | 'joinWithoutApproval'): Pro
     } else {
       joinWithoutApproval.value = !nextAutoAudit
     }
-    const message = error instanceof Error ? error.message : '更新失败'
+    const message = error instanceof Error ? error.message : t('UIClub_UpdateFail')
     showFailToast(message)
   }
 }
 
 function onClubAvatarUploadError(message: string): void {
-  showFailToast(message || '图片上传失败')
+  showFailToast(message || t('UIClub_Upload'))
 }
 
 async function onClubAvatarUploaded(url: string): Promise<void> {
   if (!isFounder.value) {
-    showFailToast('仅创始人可修改')
+    showFailToast(t('UIClub_FounderCan'))
     return
   }
 
   const nextLogo = (url || '').trim()
   if (!nextLogo) {
-    showFailToast('图片上传失败')
+    showFailToast(t('UIClub_Upload'))
     return
   }
 
@@ -669,10 +669,10 @@ async function onClubAvatarUploaded(url: string): Promise<void> {
 
   try {
     await submitClubDataPatch({ logo: nextLogo })
-    showSuccessToast('俱乐部头像已更新')
+    showSuccessToast(t('UIClub_ClubAvatarDoneUpdate'))
   } catch (error) {
     clubAvatarUrl.value = previousLogo
-    const message = error instanceof Error ? error.message : '更新失败'
+    const message = error instanceof Error ? error.message : t('UIClub_UpdateFail')
     showFailToast(message)
   } finally {
     savingClubLogo.value = false
@@ -705,7 +705,7 @@ async function saveInviteShare(): Promise<void> {
   }
 
   if (!inviteModalRef.value) {
-    showFailToast('分享弹窗未准备好')
+    showFailToast(t('UIClub_Not'))
     return
   }
 
@@ -736,11 +736,11 @@ async function saveInviteShare(): Promise<void> {
       link.click()
     }
 
-    showSuccessToast('已保存分享图')
+    showSuccessToast(t('UIClub_DoneSave'))
     closeInvitePopup()
   } catch (error) {
     console.error('saveInviteShare error', error)
-    showFailToast('保存分享图失败')
+    showFailToast(t('UIClub_SaveFail2'))
   } finally {
     savingInviteShare.value = false
   }
@@ -748,7 +748,7 @@ async function saveInviteShare(): Promise<void> {
 
 async function submitCopyRequest(): Promise<void> {
   if (!isFounder.value) {
-    showFailToast('仅创始人可操作')
+    showFailToast(t('UIClub_FounderCan2'))
     return
   }
 
@@ -759,11 +759,11 @@ async function submitCopyRequest(): Promise<void> {
 
     if (response.code !== 0) {
       const fallback = t('ClubCopy_' + response.code) ?? response.msg
-      throw new Error(typeof fallback === 'string' ? fallback : '复制失败')
+      throw new Error(typeof fallback === 'string' ? fallback : t('UIReplicationFailed'))
     }
-    showSuccessToast('已提交复制申请')
+    showSuccessToast(t('UIClub_DoneSubmitCopyApply'))
   } catch (error) {
-    const message = error instanceof Error ? error.message : '复制失败'
+    const message = error instanceof Error ? error.message : t('UIReplicationFailed')
     showFailToast(message)
   }
   closeCopyPopup()
@@ -771,7 +771,7 @@ async function submitCopyRequest(): Promise<void> {
 
 async function onDeleteClub(): Promise<void> {
   if (!isFounder.value) {
-    showFailToast('仅创始人可操作')
+    showFailToast(t('UIClub_FounderCan2'))
     return
   }
 
@@ -780,14 +780,14 @@ async function onDeleteClub(): Promise<void> {
 
     if (response.code !== 0) {
       const fallback = (response.msg ?? response.message) as unknown
-      throw new Error(typeof fallback === 'string' ? fallback : '删除失败')
+      throw new Error(typeof fallback === 'string' ? fallback : t('UIClub_DeleteFail'))
     }
-    showSuccessToast('已删除俱乐部')
+    showSuccessToast(t('UIClub_DoneDeleteClub'))
     setTimeout(() => {
       void router.replace('/club')
     }, 1000)
   } catch (error) {
-    const message = error instanceof Error ? error.message : '删除失败'
+    const message = error instanceof Error ? error.message : t('UIClub_DeleteFail')
     showFailToast(message)
   }
 }
@@ -893,10 +893,10 @@ onMounted(async () => {
                 type="button"
                 class="club-avatar-trigger"
                 :disabled="savingClubLogo || uploading"
-                aria-label="修改俱乐部头像"
+                :aria-label="t('UIClub_ClubAvatar3')"
                 @click="open"
               >
-                <img class="club-avatar" :src="imageUrl || imgClubCover" alt="俱乐部头像" />
+                <img class="club-avatar" :src="imageUrl || imgClubCover" :alt="t('UIClub_ClubAvatar2')" />
                 <span class="club-avatar-edit" aria-hidden="true">+</span>
               </button>
             </template>

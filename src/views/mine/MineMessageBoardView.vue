@@ -4,8 +4,9 @@ import { showFailToast, showSuccessToast } from 'vant'
 import { postMiscReportFeedbackQuestIonApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { t } from '@/i18n'
 
-const title = computed(() => '留言板')
+const title = computed(() => t('PageMineMessageBoard'))
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -17,23 +18,23 @@ const submitting = ref(false)
 async function submitMessage(): Promise<void> {
   const description = content.value.trim()
   if (!description) {
-    showFailToast('请先填写反馈内容')
+    showFailToast(t('UIClub_Please3'))
     return
   }
 
   submitting.value = true
   try {
     const response = await postMiscReportFeedbackQuestIonApi({
-      title: 'H5游戏反馈',
+      title: 'H5' + t('UIClub_Text60'),
       description,
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '提交失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('Uiwithdrawfailed'))
     }
-    showSuccessToast('提交成功')
+    showSuccessToast(t('Uiwithdrawsuccessfully'))
     content.value = ''
   } catch (error) {
-    const message = error instanceof Error ? error.message : '提交失败'
+    const message = error instanceof Error ? error.message : t('Uiwithdrawfailed')
     showFailToast(message)
   } finally {
     submitting.value = false
@@ -46,17 +47,17 @@ async function submitMessage(): Promise<void> {
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
-      <p class="tip">请在此处留言您的反馈</p>
+      <p class="tip">{{ t('UIClub_Of3') }}</p>
 
       <textarea
         v-model="content"
         class="board-input"
         maxlength="1000"
-        placeholder="在此输入您的反馈"
+        :placeholder="t('UIClub_Of2')"
       ></textarea>
 
       <button class="submit-btn" type="button" :disabled="submitting" @click="submitMessage">
-        {{ submitting ? '提交中...' : '提交' }}
+        {{ submitting ? t('UIClub_Submitting') + '...' : t('sr_r9ccGtey') }}
       </button>
     </div>
   </div>

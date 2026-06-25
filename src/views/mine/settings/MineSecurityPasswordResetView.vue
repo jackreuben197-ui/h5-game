@@ -4,6 +4,7 @@ import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { postUserVerifyPasswordApi } from '@/api/user'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { t } from '@/i18n'
 
 type OverlayType = 'none' | 'loading' | 'error-soft' | 'error-hard'
 
@@ -29,9 +30,9 @@ const keyRows = [
 
 const modalText = computed(() => {
   if (overlayType.value === 'error-hard') {
-    return '密码错误达5次,账号被冻结,有疑问请联系客服'
+    return t('UIClub_Code2') + "5" + t('UIHappyShop_Time') + "," + t('UIClub_No8') + "," + t('UIClub_Text67')
   }
-  return `密码错误,还可尝试${Math.max(0, 5 - failedAttempts.value)}次,超过次数将被冻结`
+  return t('UIClub_Code3') + "," + t('UIClub_Can3') + (Math.max(0, 5 - failedAttempts.value)) + t('UIHappyShop_Time') + "," + t('UIClub_Text68')
 })
 
 function closePage(): void {
@@ -74,7 +75,7 @@ async function submitReset(): Promise<void> {
     })
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '密码校验失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_CodeFail'))
     }
 
     const verify = Boolean(response.data?.verify)
@@ -84,12 +85,12 @@ async function submitReset(): Promise<void> {
       return
     }
 
-    showSuccessToast('身份验证成功，请设置新安全密码')
+    showSuccessToast(t('UIClub_Success4') + "，" + t('UIClub_Code4'))
     overlayType.value = 'none'
     void router.replace('/mine/settings/account/security-password/setup?reset=1')
   } catch (error) {
     overlayType.value = 'none'
-    const message = error instanceof Error ? error.message : '密码校验失败'
+    const message = error instanceof Error ? error.message : t('UIClub_CodeFail')
     showFailToast(message)
   } finally {
     submitting.value = false
@@ -106,8 +107,8 @@ function closeOverlay(): void {
     <button class="close-btn" type="button" @click="closePage">×</button>
 
     <section class="password-panel">
-      <h1>修改密码</h1>
-      <p>输入原密码,验证身份</p>
+      <h1>{{ t('tc_n53zSvpD') }}</h1>
+      <p>{{ t('UIClub_Code') }},{{ t('UIClub_Text65') }}</p>
       <div class="dot-row">
         <span v-for="idx in 6" :key="idx" class="dot-cell">
           <span v-if="idx <= digits.length" class="digit">6</span>
@@ -120,7 +121,7 @@ function closeOverlay(): void {
         :disabled="submitting"
         @click="submitReset"
       >
-        完成
+        {{ t('UIMinePwFinish') }}
       </button>
     </section>
 
@@ -143,10 +144,10 @@ function closeOverlay(): void {
     <div v-if="overlayType !== 'none'" class="overlay-mask">
       <div class="overlay-card" :class="{ wide: overlayType !== 'loading' }">
         <div v-if="overlayType === 'loading'" class="loader"></div>
-        <p v-if="overlayType === 'loading'">请稍后</p>
+        <p v-if="overlayType === 'loading'">{{ t('UIClub_Text66') }}</p>
         <template v-else>
           <p class="multiline">{{ modalText }}</p>
-          <button class="overlay-confirm" type="button" @click="closeOverlay">知道了</button>
+          <button class="overlay-confirm" type="button" @click="closeOverlay">{{ t('adaptation10024') }}</button>
         </template>
       </div>
     </div>

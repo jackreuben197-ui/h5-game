@@ -425,10 +425,11 @@ onMounted(() => {
 }
 
 .glass-card {
-  border-radius: 0.76rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.2);
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.04rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
 }
 
 .sort-bar {
@@ -603,7 +604,7 @@ onMounted(() => {
 
 .summary-grid {
   border-radius: 0.76rem;
-  background-color: rgba($color: #ffffff, $alpha: 0.2);
+  background-color: rgba($color: #000000, $alpha: 0.2);
   margin-top: 0.25rem;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -703,7 +704,7 @@ onMounted(() => {
 
   .profit {
     font-size: 0.45rem;
-    color: #ff7a8f;
+    color: #27d300;
     font-weight: 700;
 
     &.pos {

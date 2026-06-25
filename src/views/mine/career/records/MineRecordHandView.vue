@@ -5,6 +5,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { postStatsUserGameRecordListApi } from '@/api/stats'
 import { postMiscGameRecordRoundApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import icHandsUrl from '@/assets/icons/ic_hands.svg'
+import icPotUrl from '@/assets/icons/ic_pot.svg'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import PokerCard from '@/components/GameCard/PokerCard.vue'
 import {
@@ -438,14 +440,20 @@ onMounted(() => {
           <div class="bottom-row">
             <div class="meta">
               <div>{{ t('UIMine_WalletMyPaiId') }}: {{ item.handId }}</div>
-              <div>{{ t('adaptation20005') }}: {{ item.pot }}</div>
+              <div class="meta-pot">
+                <img class="meta-icon" :src="icPotUrl" alt="" aria-hidden="true" />
+                {{ t('adaptation20005') }}: {{ item.pot }}
+              </div>
             </div>
             <div
               class="profit"
               :class="{ positive: item.profit.startsWith('+'), zero: item.profit == '0' }"
             >
               <div class="money">{{ item.profit }}</div>
-              <div class="hands-count">{{ t('UIMine_Paipu_handNum2', item.hands) }}</div>
+              <div class="hands-count">
+                <img class="hands-icon" :src="icHandsUrl" alt="" aria-hidden="true" />
+                {{ t('UIMine_Paipu_handNum2', item.hands) }}
+              </div>
             </div>
           </div>
         </article>
@@ -488,10 +496,11 @@ onMounted(() => {
 }
 
 .glass-card {
-  border-radius: 0.42rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.2);
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.04rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
 }
 
 .overview-card {
@@ -592,6 +601,18 @@ onMounted(() => {
 .meta {
   font-size: 0.3rem;
   line-height: 1.5;
+
+  .meta-pot {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.1rem;
+  }
+
+  .meta-icon {
+    width: 0.32rem;
+    height: 0.32rem;
+    object-fit: contain;
+  }
 }
 
 .profit {
@@ -599,7 +620,7 @@ onMounted(() => {
 
   .money {
     font-size: 0.52rem;
-    color: #65e89f;
+    color: #27d300;
 
     font-weight: 700;
   }
@@ -607,6 +628,16 @@ onMounted(() => {
   .hands-count {
     margin-top: 0.04rem;
     font-size: 0.29rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.08rem;
+
+    .hands-icon {
+      width: 0.3rem;
+      height: 0.3rem;
+      object-fit: contain;
+    }
   }
 
   &.positive {

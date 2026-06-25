@@ -74,7 +74,8 @@ export function t(key: string, ...args: Array<string | number>): string {
     // 其他语言缺失时复用 CN，最后兜底用 key。
     message = getCnValue(key) || key
   }
-  return formatTxtMessage(message, args)
+  const formatted = formatTxtMessage(message, args)
+  return locale === 'cn' ? formatted.replace(/\bUC\b/g, '联盟币') : formatted
 }
 
 export const SUPPORTED_LOCALES_OPTIONS = [

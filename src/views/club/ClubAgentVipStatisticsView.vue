@@ -35,7 +35,7 @@ const gameTypeTabs = computed(() => [
 ])
 
 const filterTypeOptions = computed(() => [
-  { value: 1, label: 'UC' },
+  { value: 1, label: '联盟币' },
   { value: 3, label: '记分牌' },
 ])
 
@@ -268,7 +268,7 @@ onMounted(() => {
         <strong v-else>{{ offlineUserCount }}</strong>
       </div>
       <div>
-        <p>下线UC</p>
+        <p>下线联盟币</p>
         <strong style="float: right">
           {{ displayBalance }} <img class="coin-icon" :src="imgChips" alt="" />
         </strong>

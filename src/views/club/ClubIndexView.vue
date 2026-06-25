@@ -1418,7 +1418,7 @@ const handleBack = () => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  padding-top: calc(env(safe-area-inset-top) + 0.4rem);
+  padding-top: 0;
 }
 
 .club-header {

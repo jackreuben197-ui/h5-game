@@ -45,6 +45,14 @@ export function setLocale(locale: string): void {
   }
 }
 
+// 对外 LocaleCode -> 服务端 lang 字符串：服务端各接口统一接 zh_CN / zh_TW / en_US / pt_BR。
+export function toServerLang(locale: LocaleCode = currentLocale.value): string {
+  if (locale === 'en') return 'en_US'
+  if (locale === 'zh') return 'zh_TW'
+  if (locale === 'pt') return 'pt_BR'
+  return 'zh_TW'
+}
+
 export function t(key: string, ...args: Array<string | number>): string {
   // 读 ref 以便组件在 setLocale 时自动重渲染。
   const locale = currentLocale.value

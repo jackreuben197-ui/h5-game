@@ -3,15 +3,17 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSPro
 import { useRouter } from 'vue-router'
 import { getUserClubApi } from '@/api/user'
 import { getCowboyRoomListApi } from '@/api/gc'
+import { postMiscBannerLobbyApi } from '@/api/misc'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import StorageKey from '@/constants/storageKey'
 import homeHeaderFallback from '@/assets/images/home_header_1.png'
 import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
-import { t } from '@/i18n'
+import { getLocale, t, toServerLang } from '@/i18n'
 import { localStore } from '@/utils/localStore'
 import { useCachedImage } from '@/utils/imageCache'
+import { readLobbyBannerCache, writeLobbyBannerCache } from '@/utils/lobbyBannerCache'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { showGameToast } from '@/components/Toast'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
@@ -132,9 +134,8 @@ const currentClub = computed<ClubInfo | null>(() => {
   return userInfoStore.clubList[0] || null
 })
 
-const clubBannerUrl = useCachedImage(
-  () => toSafeString(currentClub.value?.banner) || homeHeaderFallback,
-)
+const lobbyBannerUrl = ref('')
+const clubBannerUrl = useCachedImage(() => lobbyBannerUrl.value || homeHeaderFallback)
 const noticeText = computed(() => {
   return toSafeString(currentClub.value?.prologue)
 })
@@ -369,6 +370,32 @@ async function fetchHomeMiniGameStats(): Promise<void> {
   persistHomeRoomStatsCache(homeRoomStats.value)
 }
 
+// 首页顶部 banner：先读 public_cache 即刻渲染，再静默请求最新数据并回写缓存。
+async function fetchLobbyBanner(): Promise<void> {
+  const lang = toServerLang(getLocale())
+
+  const cached = await readLobbyBannerCache(lang)
+  const cachedUrl = toSafeString(cached?.lobby?.image_url)
+  if (cachedUrl) {
+    lobbyBannerUrl.value = cachedUrl
+  }
+
+  const response = await postMiscBannerLobbyApi({
+    lang,
+    type: 1,
+    offset: 0,
+    limit: 10,
+  })
+  if (Number(response.code) !== 0 || !response.data) {
+    return
+  }
+  const url = toSafeString(response.data?.lobby?.image_url)
+  if (url) {
+    lobbyBannerUrl.value = url
+  }
+  void writeLobbyBannerCache(lang, response.data)
+}
+
 // 首页 MTT 统计：直接复用共享 MTT 列表 store，避免首页和列表页分叉取数。
 function refreshHomeMttStatsFromStore(): void {
   const nextMtt = { tables: 0, players: 0 }
@@ -445,6 +472,9 @@ onMounted(() => {
   refreshHomeMttStatsFromStore()
   void fetchHomeMiniGameStats().catch((error) => {
     console.warn('[home] fetch mini game stats failed:', error)
+  })
+  void fetchLobbyBanner().catch((error) => {
+    console.warn('[home] fetch lobby banner failed:', error)
   })
   void updateNoticeMarquee()
 
@@ -729,7 +759,7 @@ onBeforeUnmount(() => {
 .home-header-img {
   width: 100%;
   height: 3.68rem;
-  object-fit: cover;
+  // object-fit: cover;
   display: block;
 }
 

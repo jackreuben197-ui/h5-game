@@ -115,7 +115,7 @@ function formatFlowAmount(value: unknown): string {
   if (activeTab.value === 4) {
     return toSafeNumber(value).toLocaleString('en-US')
   }
-  return Math.abs(toSafeNumber(Number(value) / 100)).toLocaleString('en-US')
+  return Math.abs(toSafeNumber(Number(value || 0) / 100)).toLocaleString('en-US')
 }
 
 function formatSigned(value: unknown): string {
@@ -811,7 +811,7 @@ onMounted(() => {
               </div>
               <div>
                 <span :class="['money money2', { positive: card.goldChange > 0 }]">
-                  {{ card.goldChange / 100 }}
+                  {{ card.goldChange || 0 / 100 }}
                 </span>
                 <van-icon
                   v-if="card.canExpand"
@@ -828,7 +828,7 @@ onMounted(() => {
                 <div v-if="card.goldAfter > 0" class="sub">变动后余额</div>
                 <div v-if="card.goldAfter > 0" class="sub">
                   <img :src="iconCredit" alt="" />
-                  {{ card.goldAfter / 100 }}
+                  {{ card.goldAfter || 0 / 100 }}
                 </div>
               </div>
               <div class="right-box2">

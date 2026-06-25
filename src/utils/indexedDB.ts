@@ -1,20 +1,23 @@
 const PUBLIC_CACHE_DB_NAME = 'public_cache'
-const PUBLIC_CACHE_DB_VERSION = 2
+const PUBLIC_CACHE_DB_VERSION = 3
 const PUBLIC_CACHE_RECORD_KEY = 'cache'
 
 export const PUBLIC_STORE_MULTI_LANGUAGE_TEMPLATE = 'multi_language_template'
 export const PUBLIC_STORE_APP_CONFIG = 'app_config'
 export const PUBLIC_STORE_DIAMOND_CONFIG = 'diamond_config'
+export const PUBLIC_STORE_BANNER_LOBBY = 'banner_lobby'
 
 export type PublicCacheStoreName =
   | typeof PUBLIC_STORE_MULTI_LANGUAGE_TEMPLATE
   | typeof PUBLIC_STORE_APP_CONFIG
   | typeof PUBLIC_STORE_DIAMOND_CONFIG
+  | typeof PUBLIC_STORE_BANNER_LOBBY
 
 const PUBLIC_CACHE_STORES: PublicCacheStoreName[] = [
   PUBLIC_STORE_MULTI_LANGUAGE_TEMPLATE,
   PUBLIC_STORE_APP_CONFIG,
   PUBLIC_STORE_DIAMOND_CONFIG,
+  PUBLIC_STORE_BANNER_LOBBY,
 ]
 
 export function openPublicIndexedDB(): Promise<IDBDatabase> {

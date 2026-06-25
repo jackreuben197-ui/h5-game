@@ -4,7 +4,7 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { postMiscArtiCleInfoApi } from '@/api/misc'
 import type { MiscArtiCleInfoContentData } from '@/api/models/misc'
-import { getLocale, t, type LocaleCode } from '@/i18n'
+import { getLocale, t, toServerLang } from '@/i18n'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 
@@ -131,19 +131,6 @@ function formatArticleContent(contentEx: MiscArtiCleInfoContentData[]): string {
     .replace(/&nbsp;/gi, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
-}
-
-function toServerLang(locale: LocaleCode): string {
-  if (locale === 'en') {
-    return 'en_US'
-  }
-  if (locale === 'zh') {
-    return 'zh_TW'
-  }
-  if (locale === 'pt') {
-    return 'pt_BR'
-  }
-  return 'zh_CN'
 }
 
 function resolveI18nText(key: string, fallback: string): string {

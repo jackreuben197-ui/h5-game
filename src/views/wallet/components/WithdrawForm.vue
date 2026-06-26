@@ -619,7 +619,15 @@ watch(filteredWithdrawTypes, (list) => {
   gap: 0.2rem;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  padding: 0 0.08rem;
+  padding: 0.12rem 0.16rem;
+  border-radius: 0.3rem;
+  border: 0.016rem solid transparent;
+  transition: background 0.2s ease, border-color 0.2s ease;
+
+  &--active {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(242, 242, 242, 0.4);
+  }
 }
 
 .wf__acct-icon {

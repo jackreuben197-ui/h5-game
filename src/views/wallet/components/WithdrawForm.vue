@@ -437,18 +437,27 @@ watch(filteredWithdrawTypes, (list) => {
   left: 0.455rem;
   width: calc(100% - 0.91rem);
   height: 1.47rem;
-  border-radius: 1.08rem;
-  background: rgba(18, 20, 24, 0.92);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   z-index: 10;
-  overflow: hidden;
 }
 
 .wf__cta {
+  position: relative;
   width: 100% !important;
   height: 100% !important;
-  background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%) !important;
+  border: 0.02rem solid rgba(249, 249, 249, 0.1) !important;
+  border-radius: 1.08rem !important;
+  background: rgba(170, 170, 170, 0.1) !important;
+  backdrop-filter: blur(18.5px);
+  -webkit-backdrop-filter: blur(18.5px);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0.0149rem rgba(255, 255, 255, 0.5);
+    pointer-events: none;
+  }
 
   &:not(.primary-btn--disabled) :deep(.primary-btn__text) {
     color: #78e490;

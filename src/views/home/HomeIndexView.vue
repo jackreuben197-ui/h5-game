@@ -7,6 +7,7 @@ import { postMiscBannerLobbyApi } from '@/api/misc'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import StorageKey from '@/constants/storageKey'
 import homeHeaderFallback from '@/assets/images/home_header_1.png'
+import { useAppConfigStore } from '@/stores/appConfig'
 import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
@@ -23,6 +24,7 @@ const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const roomListStore = useRoomListStore()
 const mttListStore = useMttListStore()
+const appConfigStore = useAppConfigStore()
 
 const loading = ref(false)
 const balanceVisible = ref(true)
@@ -208,8 +210,21 @@ async function refreshBalance(): Promise<void> {
 function goToRecharge(): void {
   void router.push('/wallet')
 }
-function handleService(): void {
-  showGameToast('功能开发中')
+function handleOpenEmail(): void {
+  const email = toSafeString(appConfigStore.globalConfig?.support_email)
+  window.open(`mailto:${email}`, '_blank')
+}
+
+function handleOpenTelegram(): void {
+  const raw = toSafeString(appConfigStore.globalConfig?.official_contact_address)
+  let telegramUrl = ''
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    telegramUrl = toSafeString(parsed?.telegram)
+  } catch (error) {
+    console.warn('[home] parse official_contact_address failed:', error)
+  }
+  window.open(telegramUrl, '_blank')
 }
 
 function handleOpenCustomerService(): void {
@@ -573,11 +588,11 @@ onBeforeUnmount(() => {
 
       <!-- 右侧：联系方式 -->
       <div class="club-right">
-        <div class="contact-item" @click="handleService">
+        <div class="contact-item" @click="handleOpenTelegram">
           <img class="contact-icon" src="@/assets/icons/icon_service_1.svg" alt="Telegram" />
           <span class="contact-label"> @game </span>
         </div>
-        <div class="contact-item" @click="handleService">
+        <div class="contact-item" @click="handleOpenEmail">
           <img class="contact-icon" src="@/assets/icons/icon_service_2.svg" alt="邮箱" />
           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>

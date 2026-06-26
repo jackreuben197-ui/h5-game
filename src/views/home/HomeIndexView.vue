@@ -649,7 +649,7 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- 小游戏专区 -->
-        <div class="game-scroll-card game-card-minigame" @click="openMiniGamePanel">
+        <div v-if="false" class="game-scroll-card game-card-minigame" @click="openMiniGamePanel">
           <img class="zone-lg-bg" src="@/assets/icons/game_zone_minigame_lg.png" alt="小游戏" />
           <div class="zone-info">
             <div class="zone-header">
@@ -666,7 +666,11 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- 麻将专区 -->
-        <div class="game-scroll-card game-card-mahjong" @click="showGameToast('功能开发中')">
+        <div
+          v-if="false"
+          class="game-scroll-card game-card-mahjong"
+          @click="showGameToast('功能开发中')"
+        >
           <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
           <div class="zone-info">
             <div class="zone-header">

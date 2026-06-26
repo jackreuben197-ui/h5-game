@@ -47,7 +47,7 @@ interface TabItem {
 
 const gameTabs: TabItem[] = [
   { label: t('adaptation10022'), key: 'nlh' },
-  { label: t('Mahjong_Name'), key: 'mahjong' },
+  // { label: t('Mahjong_Name'), key: 'mahjong' },
   { label: t('Complanin007'), key: 'other' },
 ]
 const activeGameTab = ref(gameTabs[0].key)
@@ -189,8 +189,14 @@ async function fetchFriendsData(silent = false): Promise<void> {
 
     const info = response.data?.info
     const nextSummary: SummaryItem[] = [
-      { label: t('UINumberOfParticipants'), value: toSafeNumber(info?.user_num).toLocaleString('en-US') },
-      { label: t('UITotalNumberOfTables'), value: toSafeNumber(info?.table_num).toLocaleString('en-US') },
+      {
+        label: t('UINumberOfParticipants'),
+        value: toSafeNumber(info?.user_num).toLocaleString('en-US'),
+      },
+      {
+        label: t('UITotalNumberOfTables'),
+        value: toSafeNumber(info?.table_num).toLocaleString('en-US'),
+      },
       { label: t('UITableMyProfits'), value: formatUC(toSafeNumber(info?.profit)) },
     ]
 

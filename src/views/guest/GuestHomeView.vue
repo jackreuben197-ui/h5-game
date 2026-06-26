@@ -213,7 +213,7 @@ onMounted(() => {
         </div>
 
         <!-- 小游戏专区 -->
-        <div class="game-scroll-card game-card-minigame" @click="notifyNotLogin">
+        <div v-if="false" class="game-scroll-card game-card-minigame" @click="notifyNotLogin">
           <img class="zone-lg-bg" src="@/assets/icons/game_zone_minigame_lg.png" alt="小游戏" />
           <div class="zone-info">
             <div class="zone-header">
@@ -229,7 +229,7 @@ onMounted(() => {
           </div>
         </div>
         <!-- 麻将专区 -->
-        <div class="game-scroll-card game-card-mahjong" @click="notifyNotLogin">
+        <div v-if="false" class="game-scroll-card game-card-mahjong" @click="notifyNotLogin">
           <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
           <div class="zone-info">
             <div class="zone-header">

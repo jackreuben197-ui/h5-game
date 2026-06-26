@@ -78,12 +78,12 @@ let ticker: number | null = null
 const mttTabs = computed<FilterTabOption[]>(() => [
   { name: 'all', title: resolveLabel('UIMatch_GtO8YEdb', '全部') },
   { name: 'poker', title: resolveLabel('UIHomePokerArea', '扑克赛事') },
-  {
-    name: 'mahjong',
-    title: resolveLabel('UIHomeMahjongArea', '麻将赛事'),
-    disabled: true,
-    disabledToast: '功能开发中',
-  },
+  // {
+  //   name: 'mahjong',
+  //   title: resolveLabel('UIHomeMahjongArea', '麻将赛事'),
+  //   disabled: true,
+  //   disabledToast: '功能开发中',
+  // },
 ])
 
 onMounted(() => {
@@ -601,7 +601,8 @@ function handleOpenCustomerService() {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
+  background:
+    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
     radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
     radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
 }

@@ -48,17 +48,22 @@ const rows = ref<DataRow[]>([
   { game: 'NLH', playedGames: 0, hands: 0 },
   { game: 'PLO', playedGames: 0, hands: 0 },
   { game: '6+', playedGames: 0, hands: 0 },
-  { game: 'Mahjong', playedGames: 0, hands: 0 },
+  // { game: 'Mahjong', playedGames: 0, hands: 0 },
 ])
 
 const loading = ref(false)
 
 const menuList: MenuItem[] = [
   { key: 'data', label: t('adaptation10124'), icon: iconData, route: '/mine/career/friends/data' },
-  { key: 'record', label: t('UICareerRecord'), icon: iconRecord, route: '/mine/career/friends/record' },
-  { key: 'mahjong', label: t('Mahjong_Name'), icon: iconMahjong },
-  { key: 'sng', label: "SNG" + t('UICareerRecord'), icon: iconMtt },
-  { key: 'mahjong-mtt', label: t('Mahjong_Name') + "MTT" + t('UICareerRecord'), icon: iconMahjong },
+  {
+    key: 'record',
+    label: t('UICareerRecord'),
+    icon: iconRecord,
+    route: '/mine/career/friends/record',
+  },
+  // { key: 'mahjong', label: t('Mahjong_Name'), icon: iconMahjong },
+  // { key: 'sng', label: "SNG" + t('UICareerRecord'), icon: iconMtt },
+  // { key: 'mahjong-mtt', label: t('Mahjong_Name') + "MTT" + t('UICareerRecord'), icon: iconMahjong },
 ]
 
 function handleMenuClick(item: MenuItem): void {
@@ -96,11 +101,11 @@ async function requestSummary(silent: boolean): Promise<void> {
         playedGames: toSafeNumber(sixPlus?.game_num),
         hands: toSafeNumber(sixPlus?.hand_num),
       },
-      {
-        game: 'Mahjong',
-        playedGames: toSafeNumber(mahjong?.game_num),
-        hands: toSafeNumber(mahjong?.hand_num),
-      },
+      // {
+      //   game: 'Mahjong',
+      //   playedGames: toSafeNumber(mahjong?.game_num),
+      //   hands: toSafeNumber(mahjong?.hand_num),
+      // },
     ]
     rows.value = next
     void homeCache().put(USER_STORE_CAREER, HOME_CACHE_KEY, next)

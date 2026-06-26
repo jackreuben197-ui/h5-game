@@ -202,7 +202,7 @@ const filteredRecords = computed(() => {
 const clubDisplayName = computed(() => {
   const name = String(currentClub.value?.club_name || '').trim()
   if (name) return name
-  return "xx" + t('UILobby_Menu_menu_btn_club')
+  return 'xx' + t('UILobby_Menu_menu_btn_club')
 })
 
 const clubDisplayId = computed(() => {
@@ -302,7 +302,7 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
 const mttTabs = computed<TabOption[]>(() => [
   { name: 'all', title: t('UIMatch_GtO8YEdb') },
   { name: 'poker', title: t('UIClub_Text15') },
-  { name: 'mahjong', title: t('Mahjong_Name'), disabled: true, disabledToast: t('UIClub_InDeve') },
+  // { name: 'mahjong', title: t('Mahjong_Name'), disabled: true, disabledToast: t('UIClub_InDeve') },
 ])
 
 const mttSourceRecords = computed<RawMttRecord[]>(() => mttListStore.records as RawMttRecord[])
@@ -523,7 +523,7 @@ async function handleTableClick(room: RoomRecord): Promise<void> {
     return
   }
   if (!gameStore.sessionToken) {
-    showFailToast(t('UIClub_Done') + "，" + t('UIClub_Text16'))
+    showFailToast(t('UIClub_Done') + '，' + t('UIClub_Text16'))
     return
   }
 
@@ -533,7 +533,10 @@ async function handleTableClick(room: RoomRecord): Promise<void> {
       // 对齐 Cocos ProcedureEnterLobby：进入大厅阶段同步 websocket 端口。
       wsPort = await LoginSession.EnsureWS()
     } catch (error) {
-      const message = error instanceof Error ? error.message : t('UIClub_Fetch') + " websocket " + t('UIClub_Fail3')
+      const message =
+        error instanceof Error
+          ? error.message
+          : t('UIClub_Fetch') + ' websocket ' + t('UIClub_Fail3')
       showFailToast(message)
       return
     }
@@ -800,7 +803,9 @@ function buildGroupsBySeries(
 
   const clubItems = sortedItems.filter((item) => item.originType === ROOM_ORIGIN_TYPE.CLUB)
   if (clubItems.length) {
-    groups.push(buildGroup('club', resolveLabel('UIGuildMain_ClubGame', t('UIClub_Club3')), clubItems))
+    groups.push(
+      buildGroup('club', resolveLabel('UIGuildMain_ClubGame', t('UIClub_Club3')), clubItems),
+    )
   }
 
   const noSeriesItems: MttViewItem[] = []
@@ -829,7 +834,8 @@ function buildGroupsBySeries(
 
   seriesIds.forEach((seriesId) => {
     const seriesInfo = seriesMap[seriesId]
-    const seriesName = resolveNameByUnityRule(toSafeString(seriesInfo?.name)) || t('UIClub_Text18') + " #" + (seriesId)
+    const seriesName =
+      resolveNameByUnityRule(toSafeString(seriesInfo?.name)) || t('UIClub_Text18') + ' #' + seriesId
     const seriesItems = [...seriesBucketMap[seriesId]].sort(compareSeriesRoom)
     const seriesLayout = resolveSeriesLayoutByType(toSafeInt(seriesInfo?.type), seriesItems.length)
     groups.push(buildGroup(`series-${seriesId}`, seriesName, seriesItems, seriesLayout))
@@ -1181,6 +1187,7 @@ const handleBack = () => {
             {{ t('UIHomePokerArea') }}
           </button>
           <button
+            v-if="false"
             class="club-header-tab"
             :class="{ 'club-header-tab--active': clubHeaderTab === 'mahjong' }"
             type="button"
@@ -1601,7 +1608,9 @@ const handleBack = () => {
     rgba(73, 73, 73, 0.5) 89.79%
   );
   backdrop-filter: blur(0.2rem);
-  box-shadow: 0.092rem 0.115rem 0.184rem rgba(0, 0, 0, 0.25), inset 0 0 0.23rem rgba(0, 0, 0, 1),
+  box-shadow:
+    0.092rem 0.115rem 0.184rem rgba(0, 0, 0, 0.25),
+    inset 0 0 0.23rem rgba(0, 0, 0, 1),
     inset 0.057rem 0.113rem 0.46rem rgba(242, 242, 242, 0.9);
 }
 
@@ -1731,8 +1740,10 @@ const handleBack = () => {
   inset: -0.0107rem;
   border-radius: inherit;
   border: 0.0107rem solid rgba(255, 255, 255, 0.58);
-  box-shadow: inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
-    inset 0 0 0.2rem rgba(255, 255, 255, 0.14), 0 0 0.08rem rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 0 0.08rem rgba(255, 255, 255, 0.34),
+    inset 0 0 0.2rem rgba(255, 255, 255, 0.14),
+    0 0 0.08rem rgba(255, 255, 255, 0.18);
   filter: blur(0.002rem);
   pointer-events: none;
   z-index: 4;

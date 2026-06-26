@@ -43,8 +43,8 @@ const gameTabs: TabItem[] = [
 ]
 const dateTabs: TabItem[] = [
   { label: t('UIData_Today'), key: 'today' },
-  { label: "7" + t('UIHappyShop_ActivityShopDay'), key: 'week' },
-  { label: "30" + t('UIHappyShop_ActivityShopDay'), key: 'month' },
+  { label: '7' + t('UIHappyShop_ActivityShopDay'), key: 'week' },
+  { label: '30' + t('UIHappyShop_ActivityShopDay'), key: 'month' },
 ]
 const selectedGameTab = ref(gameTabs[0].key)
 const selectedDateTab = ref(dateTabs[0].key)
@@ -127,11 +127,16 @@ const metrics = ref<CareerMetric[]>([
 ])
 
 const menuList: CareerMenuItem[] = [
-  { key: 'record', label: t('UICareerRecord'), icon: iconRecord, route: '/mine/career/club/record' },
+  {
+    key: 'record',
+    label: t('UICareerRecord'),
+    icon: iconRecord,
+    route: '/mine/career/club/record',
+  },
   { key: 'mtt', label: 'MTT', icon: iconMtt, route: '/mine/career/club/mtt' },
-  { key: 'cowboy', label: t('UINiuZaiRule_title'), icon: iconCowboy, route: '/mine/career/club/cowboy' },
-  { key: 'mahjong', label: t('Mahjong_Name'), icon: iconMahjong, route: '/mine/career/club/mahjong' },
-  { key: 'mahjong-mtt', label: t('Mahjong_Name') + "MTT" + t('UICareerRecord'), icon: iconMahjong },
+  // { key: 'cowboy', label: t('UINiuZaiRule_title'), icon: iconCowboy, route: '/mine/career/club/cowboy' },
+  // { key: 'mahjong', label: t('Mahjong_Name'), icon: iconMahjong, route: '/mine/career/club/mahjong' },
+  // { key: 'mahjong-mtt', label: t('Mahjong_Name') + "MTT" + t('UICareerRecord'), icon: iconMahjong },
   { key: 'data', label: t('adaptation10124'), icon: iconData, route: '/mine/career/club/data' },
 ]
 

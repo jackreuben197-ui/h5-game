@@ -403,11 +403,14 @@ watch(filteredWithdrawTypes, (list) => {
     </div>
 
 
-    <PrimaryButton
-      :text="isCustomerCare ? tx('Wallet_ContactCs', '联系客服') : tx('Wallet_SubmitWithdraw', '立即提现')"
-      :disabled="!canWithdraw || withdrawing"
-      @click="handleWithdraw"
-    />
+    <div class="wf__cta-wrapper">
+      <PrimaryButton
+        :text="isCustomerCare ? tx('Wallet_ContactCs', '联系客服') : tx('Wallet_SubmitWithdraw', '立即提现')"
+        :disabled="!canWithdraw || withdrawing"
+        class="wf__cta"
+        @click="handleWithdraw"
+      />
+    </div>
   </div>
 
   <WithdrawConfirmModal
@@ -425,6 +428,31 @@ watch(filteredWithdrawTypes, (list) => {
   flex-direction: column;
   gap: 0.32rem;
   width: 100%;
+  padding-bottom: 2.5rem;
+}
+
+.wf__cta-wrapper {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom) + 0.6rem);
+  left: 0.455rem;
+  width: calc(100% - 0.91rem);
+  height: 1.47rem;
+  border-radius: 1.08rem;
+  background: rgba(18, 20, 24, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 10;
+  overflow: hidden;
+}
+
+.wf__cta {
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%) !important;
+
+  &:not(.primary-btn--disabled) :deep(.primary-btn__text) {
+    color: #78e490;
+  }
 }
 
 // ── Glass card ────────────────────────────────────────────────────────────────

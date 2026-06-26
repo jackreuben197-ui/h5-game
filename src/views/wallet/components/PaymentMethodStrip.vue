@@ -48,8 +48,8 @@ const emit = defineEmits<{
 .strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  column-gap: 0.16rem;
-  row-gap: 0.21rem;
+  column-gap: 0.3rem;
+  row-gap: 0.3rem;
   width: 100%;
   justify-items: center;
 }
@@ -85,12 +85,11 @@ const emit = defineEmits<{
 
 .method__label {
   margin-top: -0.45rem;
-  padding: 0.55rem 0.15rem 0.1rem;
-  width: 65.367px;
-  height: 46.389px;
+  padding-bottom: 0.12rem;
+  width: 1.64rem;
+  height: 1.16rem;
   background: rgba(255, 255, 255, 0.2);
-  border: 0.357px solid transparent;
-  border-radius: 9.287px;
+  border-radius: 0.23rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -106,7 +105,7 @@ const emit = defineEmits<{
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  padding: 0.357px;
+  padding: 0.004rem;
   background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(153, 153, 153, 1) 100%);
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
@@ -120,7 +119,7 @@ const emit = defineEmits<{
 }
 
 .method--active .method__label {
-  border-radius: 10.543px;
+  border-radius: 0.26rem;
   background: #EE3955;
   border: none;
   font-weight: 600;
@@ -152,7 +151,6 @@ const emit = defineEmits<{
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   line-height: 1.1;
-  margin-bottom: 0.1rem;
 }
 
 .method__label-suffix {

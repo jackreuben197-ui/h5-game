@@ -765,11 +765,13 @@ async function onUsdtSubmit(type: number) {
             />
           </div>
 
-          <PrimaryButton
-            :text="`立即支付 ${displayPayAmount}`"
-            class="pay-cta"
-            @click="onPayClick"
-          />
+          <div class="pay-cta-wrapper">
+            <PrimaryButton
+              :text="`立即支付 ${displayPayAmount}`"
+              class="pay-cta"
+              @click="onPayClick"
+            />
+          </div>
         </template>
 
         <template v-else>
@@ -918,11 +920,8 @@ async function onUsdtSubmit(type: number) {
 .presets-card {
   position: relative;
   padding: 0.7rem 0.48rem 0.55rem;
-  background: rgba(0, 0, 0, 0.01);
-  backdrop-filter: blur(16.6px);
-  -webkit-backdrop-filter: blur(16.6px);
-  border: 0.18px solid rgba(255, 255, 255, 0.3);
-  border-radius: 1rem;
+  border: 0.016rem solid rgba(242, 242, 242, 0.3);
+  border-radius: 0.94rem;
   box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   margin-top: -20px;
@@ -936,15 +935,28 @@ async function onUsdtSubmit(type: number) {
   inset: 0;
   backdrop-filter: blur(16.6px);
   -webkit-backdrop-filter: blur(16.6px);
-  background-image: linear-gradient(
-    110.6deg,
-    rgba(249, 249, 249, 0.18) 12%,
-    rgba(249, 249, 249, 0.24) 33%,
-    rgba(147, 147, 147, 0.3) 85%
+  background: linear-gradient(
+    107.6deg,
+    rgba(249, 249, 249, 0.18) 12.3%,
+    rgba(249, 249, 249, 0.24) 33.3%,
+    rgba(147, 147, 147, 0.3) 85.1%
   );
   mix-blend-mode: hard-light;
   pointer-events: none;
   border-radius: inherit;
+  z-index: 0;
+}
+
+.presets-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 8.6px rgba(0, 0, 0, 1),
+    inset 3.4px 2.6px 8.6px rgba(0, 0, 0, 0.1),
+    inset 0 0 36.1px rgba(242, 242, 242, 0.3);
   z-index: 0;
 }
 
@@ -964,18 +976,42 @@ async function onUsdtSubmit(type: number) {
 }
 
 .balance-chip {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.14rem;
-  background: rgba(0, 0, 0, 0.22);
-  border: 0.4px solid rgba(242, 242, 242, 0.4);
-  border-radius: 0.4rem;
-  padding: 0.18rem 0.21rem 0.18rem 0.33rem;
-  box-shadow: 0.8px 1px 1.6px rgba(0, 0, 0, 0.25);
-  height: 0.85rem;
+  border-radius: 0.6rem;
+  border: none;
+  background: transparent;
+  padding: 0.12rem 0.21rem 0.12rem 0.33rem;
+  box-shadow: 0.014rem 0.017rem 0.027rem 0 rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    backdrop-filter: blur(3.7px);
+    -webkit-backdrop-filter: blur(3.7px);
+    background: linear-gradient(152.51deg, rgba(248, 253, 255, 0.8) 3.37%, rgba(199, 199, 199, 0.8) 37.46%);
+    mix-blend-mode: hard-light;
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: inset 0 0 0.069rem 0 rgba(242, 242, 242, 0.9);
+  }
 }
 
 .balance-chip__value {
+  position: relative;
+  z-index: 1;
   font-family: var(--wallet-font-num);
   font-weight: 600;
   font-size: 0.43rem;
@@ -984,6 +1020,8 @@ async function onUsdtSubmit(type: number) {
 }
 
 .balance-chip__icon {
+  position: relative;
+  z-index: 1;
   width: 0.7rem;
   height: 0.7rem;
 }
@@ -995,11 +1033,23 @@ async function onUsdtSubmit(type: number) {
   color: #f8f8f8;
 }
 
-.pay-cta {
+.pay-cta-wrapper {
   position: fixed;
   bottom: calc(env(safe-area-inset-bottom) + 0.6rem);
   left: 0.455rem;
   width: calc(100% - 0.91rem);
+  height: 1.47rem;
+  border-radius: 1.08rem;
+  background: rgba(18, 20, 24, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   z-index: 10;
+  overflow: hidden;
+}
+
+.pay-cta {
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%) !important;
 }
 </style>

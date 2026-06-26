@@ -34,6 +34,7 @@ import {
 import { postChatSupportChannelListApi } from '@/api/chat'
 import { generateQrCodeUrl } from '@/utils/qrcode'
 import { showToast } from 'vant'
+import { postClubUserWalletApi } from '@/api/org'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 
 const router = useRouter()
@@ -103,6 +104,39 @@ function handleOnlineUnfinished() {
 }
 
 let refreshInterval: any = null
+
+// 当前俱乐部成员余额（单位：分），用于钱包余额展示与回收可用额度
+const clubGold = ref(0)
+
+async function fetchClubBalance(): Promise<void> {
+  const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
+  const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
+  if (!clubId) {
+    clubGold.value = 0
+    return
+  }
+  try {
+    const res = await postClubUserWalletApi({ club_id: clubId })
+    if (res.code === 0 && res.data) {
+      const d = res.data as Record<string, unknown>
+      const raw = d.user_gold ?? d.gold ?? d.golds ?? d.balance ?? 0
+      clubGold.value = Number(raw) || 0
+    } else {
+      clubGold.value = 0
+    }
+  } catch (e) {
+    console.error('Failed to fetch club balance', e)
+    clubGold.value = 0
+  }
+}
+
+watch(
+  () => userInfoStore.currentClub?.club_id ?? userInfoStore.clubList[0]?.club_id,
+  (id) => {
+    if (id) void fetchClubBalance()
+  },
+  { immediate: true },
+)
 
 async function refreshPendingCsOrder() {
   // We keep this method for manual refreshes within this view (e.g. after cancel/submit)
@@ -442,7 +476,7 @@ function onPayClick() {
   }
 }
 
-async function onWithdrawCsChat(_orderData: Record<string, unknown>) {
+async function onWithdrawCsChat(orderData: Record<string, unknown>) {
   try {
     const channelRes = await postChatSupportChannelListApi({
       im_service_types: [4],
@@ -450,6 +484,21 @@ async function onWithdrawCsChat(_orderData: Record<string, unknown>) {
       offset: 0,
     })
     if (channelRes.code === 0 && channelRes.data?.list?.length) {
+      // 乐观插入刚创建的提现订单，保证立即出现在“交易中”聊天里，
+      // 不必等服务端 pending 列表把它返回
+      if (orderData?.order_no) {
+        walletStore.addOptimisticCsOrder(
+          {
+            order_no: String(orderData.order_no),
+            gold_num: Number(orderData.gold_num) || 0,
+            pay_price: Number(orderData.pay_price) || 0,
+            pay_type_name: String(orderData.pay_type_name ?? ''),
+            create_time: String(orderData.create_time ?? ''),
+            account_type: 0,
+          } as ClubFundOrderListOrderInfo,
+          'withdraw',
+        )
+      }
       await refreshPendingCsOrder()
       openCsOrderChat()
     }
@@ -689,7 +738,7 @@ async function onUsdtSubmit(type: number) {
             <div class="balance-row">
               <div class="balance-chip">
                 <span class="balance-chip__value">
-                  {{ ((userInfoStore.userInfo?.user?.gold ?? 0) / 100).toFixed(2) }}
+                  {{ (clubGold / 100).toFixed(2) }}
                 </span>
                 <img :src="icCoins" alt="" class="balance-chip__icon" />
               </div>
@@ -724,7 +773,11 @@ async function onUsdtSubmit(type: number) {
         </template>
 
         <template v-else>
-          <WithdrawForm @open-cs-chat="onWithdrawCsChat" />
+          <WithdrawForm
+            :available-uc="clubGold"
+            @open-cs-chat="onWithdrawCsChat"
+            @withdrawn="fetchClubBalance"
+          />
         </template>
       </div>
     </div>

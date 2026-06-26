@@ -35,6 +35,16 @@ function formatTime(raw?: string): string {
   return raw.replace('T', ' ').slice(0, 16)
 }
 
+// 联盟币金额（gold_num）后端单位为分，展示需 /100；支付金额（pay_price/amount）已是展示单位
+function goldAmount(o: ClubPlayerOrderRecordOrderInfo): number {
+  return (o.gold_num ?? 0) / 100
+}
+
+function payAmount(o: ClubPlayerOrderRecordOrderInfo): number {
+  const r = o as { pay_price?: number; amount?: number }
+  return r.pay_price ?? r.amount ?? 0
+}
+
 function mapClubFundOrderToRecord(
   row: ClubFundOrderListOrderInfo,
   order_type: number,
@@ -107,8 +117,8 @@ onMounted(loadOrders)
         v-for="(order, idx) in orders"
         :key="order.order_no ?? String(idx)"
         :type="activeTab === 0 ? t('Wallet_OrderAmountDeposit') : t('Wallet_OrderAmountWithdraw')"
-        :amount="order.gold_num ?? 0"
-        :pay-amount="order.amount ?? 0"
+        :amount="goldAmount(order)"
+        :pay-amount="payAmount(order)"
         :time="formatTime(order.create_time)"
         :status="statusLabel(order.status)"
         @click="selectedOrder = order"

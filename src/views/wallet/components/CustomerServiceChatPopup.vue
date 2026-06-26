@@ -53,6 +53,53 @@ const orderList = computed<any[]>(() => {
   })
 })
 const messages = ref<ChatSupportMessageListChatData[]>([])
+
+// 顶部“进行中”订单的 order_no 集合，用于和历史交易消息去重
+const topOrderNos = computed<Set<string>>(() => {
+  const s = new Set<string>()
+  orderList.value.forEach((o) => {
+    const no = o.order_no || o.order?.order_no
+    if (no) s.add(String(no))
+  })
+  return s
+})
+
+interface ChatTransaction {
+  user_info?: string
+  amount?: number | string
+  pay_price?: number | string
+  type_name?: string
+  order_no?: string
+  timestamp?: number | string
+}
+type ChatMessageItem = ChatSupportMessageListChatData & { transaction?: ChatTransaction }
+
+// 渲染用的消息流：解析 msg_type=6 的交易订单（extra 为订单 json），
+// 并过滤掉已经在顶部作为“进行中”订单展示的同 order_no，避免重复。
+const chatMessages = computed<ChatMessageItem[]>(() => {
+  return messages.value
+    .map((msg): ChatMessageItem => {
+      if (msg.msg_type === 6) {
+        let transaction: ChatTransaction = {}
+        try {
+          transaction = msg.extra ? JSON.parse(msg.extra) : {}
+        } catch {
+          transaction = {}
+        }
+        return { ...msg, transaction }
+      }
+      return msg
+    })
+    .filter((msg) => {
+      if (msg.msg_type !== 6) return true
+      const no = msg.transaction?.order_no
+      return !(no && topOrderNos.value.has(String(no)))
+    })
+})
+
+function txLabels(msg: { sub_type?: number }) {
+  return labelsFor(msg.sub_type === 2 ? 'withdraw' : 'recharge')
+}
 const inputText = ref('')
 const orderStatus = ref<number>(1)
 const messageContainer = ref<HTMLElement | null>(null)
@@ -75,7 +122,13 @@ async function checkOrderStatus() {
   const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
   const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
   const firstOrder = orderList.value[0]
-  if (!firstOrder) return
+  if (!firstOrder) {
+    if (statusTimer) {
+      clearInterval(statusTimer)
+      statusTimer = null
+    }
+    return
+  }
   const orderNo = firstOrder.order?.order_no || firstOrder.order_no
 
   try {
@@ -87,8 +140,9 @@ async function checkOrderStatus() {
     if (res.code === 0 && res.data?.list?.length) {
       const order = res.data.list[0]
       orderStatus.value = order.status || 1
-      if (orderStatus.value !== 1) {
-        if (statusTimer) clearInterval(statusTimer)
+      if (orderStatus.value !== 1 && statusTimer) {
+        clearInterval(statusTimer)
+        statusTimer = null
       }
     }
   } catch (e) {
@@ -226,6 +280,8 @@ onMounted(() => {
   loadMessages()
   checkOrderStatus()
   pollTimer = window.setInterval(loadMessages, 5000)
+  // 轮询订单状态：一旦不再是 pending(1)，checkOrderStatus 内部会自行停止
+  statusTimer = window.setInterval(checkOrderStatus, 10000)
 })
 
 onUnmounted(() => {
@@ -290,9 +346,20 @@ onUnmounted(() => {
                 </div>
               </div>
 
-              <div v-for="(msg, idx) in messages" :key="idx" class="message-row" :class="{ 'message-row--self': msg.user_send }">
+              <div v-for="(msg, idx) in chatMessages" :key="idx" class="message-row" :class="{ 'message-row--self': msg.user_send || msg.msg_type === 6 }">
                 <div class="bubble-wrapper" :class="{ 'bubble-wrapper--self': msg.user_send }">
-                  <div v-if="msg.msg_type === 1" class="text-bubble" :class="{ 'text-bubble--self': msg.user_send }">
+                  <!-- 历史交易订单（充值/提现） -->
+                  <div v-if="msg.msg_type === 6" class="transaction-bubble">
+                    <div class="bubble-content">
+                      <p>{{ txLabels(msg).user }}：{{ msg.transaction?.user_info || `${userInfoStore.userInfo?.user.nickname} / ID：${userInfoStore.userInfo?.user.un_id}` }}</p>
+                      <p>{{ txLabels(msg).coin }}：{{ msg.transaction?.amount || 0 }}</p>
+                      <p>{{ txLabels(msg).amount }}：{{ msg.transaction?.pay_price || 0 }}</p>
+                      <p>{{ txLabels(msg).payType }}：{{ msg.transaction?.type_name || '客服撮合' }}</p>
+                      <p>订单号：{{ msg.transaction?.order_no }}</p>
+                      <p>申请时间：{{ orderTimeText(msg.transaction?.timestamp) }}</p>
+                    </div>
+                  </div>
+                  <div v-else-if="msg.msg_type === 1" class="text-bubble" :class="{ 'text-bubble--self': msg.user_send }">
                     {{ msg.text }}
                   </div>
                   <div v-else-if="msg.msg_type === 2" class="image-bubble" :class="{ 'image-bubble--self': msg.user_send }">
@@ -301,7 +368,7 @@ onUnmounted(() => {
 
                   <div class="bubble-footer">
                     <span>{{ formatTime(msg.local_time) }}</span>
-                    <template v-if="msg.user_send">
+                    <template v-if="msg.user_send || msg.msg_type === 6">
                       <svg width="7.226" height="7.226" viewBox="0 0 8 8" fill="none">
                         <ellipse cx="2.93052" cy="2.91963" rx="2.38865" ry="2.42647" stroke="#05E7AE" stroke-width="0.955458"/>
                         <path d="M4.63672 4.65283L6.68413 6.73266" stroke="#05E7AE" stroke-width="0.955458" stroke-linecap="round"/>

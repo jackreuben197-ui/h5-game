@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useWalletStore } from '@/stores/wallet'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
+import PopupCloseButton from './PopupCloseButton.vue'
 
 const props = defineProps<{
   goldCount: number
@@ -42,6 +43,7 @@ const payPrice = computed(() =>
     >
       <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
       <div class="card" >
+        <PopupCloseButton @close="emit('close')" />
         <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
         <div class="card__inner">
           <!-- Header -->
@@ -184,6 +186,7 @@ const payPrice = computed(() =>
   flex-direction: column;
   align-items: flex-end;
   gap: 5px;
+  padding-right: 30px;
 }
 
 .card__header-info span {

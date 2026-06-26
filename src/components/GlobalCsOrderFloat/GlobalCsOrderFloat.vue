@@ -13,7 +13,7 @@ const walletStore = useWalletStore()
 
 const hasSeen = ref(false)
 const csChatOpen = ref(false)
-const csChatProps = ref({ tribeId: 0, supportUserId: 0, orders: [] as any[] })
+const csChatProps = ref({ tribeId: 0, supportUserId: 0 })
 
 const isLoggedIn = computed(() => !!userInfoStore.userInfo?.user?.p_u_id)
 
@@ -31,8 +31,7 @@ watch(activeCsOrder, (next, prev) => {
 
 async function openChat() {
   hasSeen.value = true
-  const orders = [...walletStore.csChatOrders]
-  if (!orders.length) return
+  if (!walletStore.csChatOrders.length) return
 
   try {
     const res = await postChatSupportChannelListApi({ im_service_types: [4], limit: 1, offset: 0 })
@@ -41,7 +40,6 @@ async function openChat() {
       csChatProps.value = {
         tribeId: channel.tribe_id || 0,
         supportUserId: channel.support_user_id || 0,
-        orders,
       }
       csChatOpen.value = true
     }
@@ -97,7 +95,7 @@ watch(isLoggedIn, (val) => {
       v-if="csChatOpen"
       :tribe-id="csChatProps.tribeId"
       :support-user-id="csChatProps.supportUserId"
-      :orders="csChatProps.orders"
+      :orders="walletStore.csChatOrders"
       @close="csChatOpen = false"
     />
   </Teleport>

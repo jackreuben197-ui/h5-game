@@ -230,7 +230,7 @@ export async function postRechargeGoldApi(
   const response = await http.post<ApiResponse<RechargeGoldResponseData>>(endpoint, payload, {
     headers,
     suppressBusinessCodes: options?.suppressBusinessCodes,
-  } as HttpRequestConfigExt)
+  } as unknown as HttpRequestConfigExt)
   return response.data
 }
 
@@ -245,7 +245,7 @@ export async function postOrderUserRechargeNoApi(
   const response = await http.post<ApiResponse<OrderUserRechargeNoResponseData>>(endpoint, payload, {
     headers,
     suppressBusinessCodes: options?.suppressBusinessCodes,
-  } as HttpRequestConfigExt)
+  } as unknown as HttpRequestConfigExt)
   return response.data
 }
 

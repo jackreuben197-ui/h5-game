@@ -58,15 +58,26 @@ export const useWalletStore = defineStore('wallet', () => {
   const pendingCsRechargeOrders = ref<ClubFundOrderListOrderInfo[]>([])
   const pendingCsWithdrawOrders = ref<ClubFundOrderListOrderInfo[]>([])
 
+  // 刚提交、服务端列表尚未返回的订单：本地乐观插入，保证立即进入“交易中”聊天；
+  // refreshPendingCsOrder 一旦在服务端列表里找到同 order_no，就把它从这里剔除（真实数据接管）。
+  const optimisticCsOrders = ref<{ order: ClubFundOrderListOrderInfo; orderType: 'recharge' | 'withdraw' }[]>([])
+
+  function addOptimisticCsOrder(
+    order: ClubFundOrderListOrderInfo,
+    orderType: 'recharge' | 'withdraw',
+  ): void {
+    if (!order.order_no) return
+    if (optimisticCsOrders.value.some((e) => e.order.order_no === order.order_no)) return
+    optimisticCsOrders.value = [...optimisticCsOrders.value, { order, orderType }]
+  }
+
   const pendingCsRechargeOrder = computed(() => pendingCsRechargeOrders.value[0] || null)
   const pendingCsRechargeCount = computed(() => pendingCsRechargeOrders.value.length)
 
   const pendingCsWithdrawOrder = computed(() => pendingCsWithdrawOrders.value[0] || null)
   const pendingCsWithdrawCount = computed(() => pendingCsWithdrawOrders.value.length)
 
-  const pendingCsOrderCount = computed(
-    () => pendingCsRechargeOrders.value.length + pendingCsWithdrawOrders.value.length,
-  )
+  const pendingCsOrderCount = computed(() => csChatOrders.value.length)
 
   function buildCsOrderData(order: ClubFundOrderListOrderInfo, orderType: 'recharge' | 'withdraw') {
     const qrCode =
@@ -105,6 +116,8 @@ export const useWalletStore = defineStore('wallet', () => {
     }
     pendingCsRechargeOrders.value.forEach((o) => push(o, 'recharge'))
     pendingCsWithdrawOrders.value.forEach((o) => push(o, 'withdraw'))
+    // 乐观订单放最后：若服务端已返回同 order_no，真实订单已先入 map，这里自动跳过
+    optimisticCsOrders.value.forEach((e) => push(e.order, e.orderType))
     return [...byNo.values()]
   })
 
@@ -154,6 +167,17 @@ export const useWalletStore = defineStore('wallet', () => {
         pendingCsWithdrawOrders.value = []
       }
 
+      // 服务端已经接管的 order_no，从乐观列表剔除，避免重复/僵尸数据
+      const knownNos = new Set(
+        [...pendingCsRechargeOrders.value, ...pendingCsWithdrawOrders.value]
+          .map((o) => o.order_no)
+          .filter(Boolean),
+      )
+      if (knownNos.size) {
+        optimisticCsOrders.value = optimisticCsOrders.value.filter(
+          (e) => !knownNos.has(e.order.order_no),
+        )
+      }
     } catch (e) {
       console.error('Failed to fetch pending CS orders', e)
       pendingCsRechargeOrders.value = []
@@ -180,6 +204,7 @@ export const useWalletStore = defineStore('wallet', () => {
   function clearCsOrders() {
     pendingCsRechargeOrders.value = []
     pendingCsWithdrawOrders.value = []
+    optimisticCsOrders.value = []
   }
 
   return {
@@ -197,6 +222,7 @@ export const useWalletStore = defineStore('wallet', () => {
     pendingCsOrderCount,
     csChatOrders,
     buildCsOrderData,
+    addOptimisticCsOrder,
     refreshPendingCsOrder,
     updateCsOrders,
     clearCsOrders

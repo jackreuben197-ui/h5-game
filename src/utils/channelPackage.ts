@@ -1,29 +1,24 @@
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
-import { appConfig, getActiveApiBase } from '@/utils/appConfig'
 
-// 渠道包主域名：优先从 config.json 当前生效的 API 推导主机名（生产取 baseApi，测试取 apiDomains 探测结果），
-// 其次 config.json 的 channelMainDomain，再次构建期 env。
-// 例：生产 baseApi=https://api.recognitionway.com/api → 邀请链接 <code>.api.recognitionway.com/#/guest/home。
-export function getChannelMainDomain(): string {
-  const raw =
-    extractHostname(getActiveApiBase()) ||
-    appConfig.channelMainDomain ||
-    import.meta.env.VITE_CHANNEL_MAIN_DOMAIN ||
-    ''
-  return raw.trim().toLowerCase()
+// 渠道包 = 邀请子域名 <邀请码>.<部署主域名>。部署主域名形如 sub.brand.tld（3 段，
+// 如 prvw-game.trackyourchoice.com / ccsgame.recognitionway.com），邀请码作为额外前缀 → 共 ≥4 段。
+// 主域名与邀请码全部从「当前网站 host」(window.location.hostname) 推导 —— 与 buildChannelClubInviteUrl 同源，
+// 故「生成链接」与「识别链接」天然一致，不依赖后端 API 域名 / config.json，自动适配每日轮换域名与独立测试域名。
+const DEPLOY_APEX_LABEL_COUNT = 3
+const RESERVED_SUBDOMAINS = new Set(['www'])
+
+function getHostLabels(hostname: string): string[] {
+  return readString(hostname).toLowerCase().split('.').filter(Boolean)
 }
 
-function extractHostname(url: unknown): string {
-  const value = typeof url === 'string' ? url.trim() : ''
-  if (!value) {
-    return ''
+// 部署主域名：取末尾 DEPLOY_APEX_LABEL_COUNT 段（裸主域名时即其自身）。
+export function getChannelMainDomain(hostname: string = window.location.hostname): string {
+  const labels = getHostLabels(hostname)
+  if (labels.length <= DEPLOY_APEX_LABEL_COUNT) {
+    return labels.join('.')
   }
-  try {
-    return new URL(value).hostname
-  } catch {
-    return ''
-  }
+  return labels.slice(labels.length - DEPLOY_APEX_LABEL_COUNT).join('.')
 }
 // const TEST_CHANNEL_INVITE_CODE = 'DYyhWokm'
 
@@ -55,18 +50,20 @@ function readParam(searchParams: URLSearchParams, hashParams: URLSearchParams, k
 }
 
 export function isChannelPackageHost(hostname: string = window.location.hostname): boolean {
-  // void hostname
-  // return true
-  const normalizedHost = readString(hostname).toLowerCase()
-  if (!normalizedHost) {
+  const labels = getHostLabels(hostname)
+  // 裸主域名 / localhost / 单段 host 不是邀请子域名
+  if (labels.length <= DEPLOY_APEX_LABEL_COUNT) {
     return false
   }
-
-  const mainDomain = getChannelMainDomain()
-  if (!mainDomain) {
+  // 纯 IP（hostname 已去端口）不算渠道子域名
+  if (labels.every((label) => /^\d+$/.test(label))) {
     return false
   }
-  return normalizedHost !== mainDomain && normalizedHost.endsWith(`.${mainDomain}`)
+  // www.<主域名> 之类保留前缀不是邀请码
+  if (RESERVED_SUBDOMAINS.has(labels[0])) {
+    return false
+  }
+  return true
 }
 
 /**
@@ -150,17 +147,11 @@ export function restoreStorageFromUrl(): void {
 }
 
 export function extractInviteCodeFromSubdomain(hostname: string = window.location.hostname): string {
-  // void hostname
-  // return TEST_CHANNEL_INVITE_CODE
-  const normalizedHost = readString(hostname).toLowerCase()
-  if (!isChannelPackageHost(normalizedHost)) {
+  if (!isChannelPackageHost(hostname)) {
     return ''
   }
-
-  const suffix = `.${getChannelMainDomain()}`
-  const withoutSuffix = normalizedHost.slice(0, -suffix.length)
-  const firstLabel = withoutSuffix.split('.')[0] || ''
-  return readString(firstLabel)
+  // 邀请码 = host 最前面的标签
+  return getHostLabels(hostname)[0] || ''
 }
 
 export function parseInviteParamsFromLocation(url: URL = new URL(window.location.href)): ParsedQueryParams {

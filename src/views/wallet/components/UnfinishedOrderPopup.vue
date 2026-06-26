@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
+import PopupCloseButton from './PopupCloseButton.vue'
 import dayjs from 'dayjs'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 
@@ -42,6 +43,7 @@ function onContinue(): void {
       @click.self="onCancel"
     >
       <div class="card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
+        <PopupCloseButton @close="onCancel" />
         <div class="card__inner">
           <!-- Header -->
           <div class="card__header">

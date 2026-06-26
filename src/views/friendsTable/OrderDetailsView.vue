@@ -26,10 +26,19 @@ function formatTime(raw?: string): string {
   return raw.replace('T', ' ').slice(0, 19)
 }
 
+// 联盟币金额（gold_num）后端单位为分，展示需 /100；支付金额（pay_price/amount）已是展示单位
+const payField = props.order as { pay_price?: number; amount?: number }
+
 const rows = computed<Row[]>(() => [
   { label: t('Wallet_OrderId'),     value: props.order.order_no ?? '-' },
-  { label: t('Wallet_OrderAmount'), value: String(props.order.gold_num ?? '-') },
-  { label: t('Wallet_OrderPayAmount'), value: String(props.order.amount ?? '-') },
+  {
+    label: t('Wallet_OrderAmount'),
+    value: props.order.gold_num != null ? String(props.order.gold_num / 100) : '-',
+  },
+  {
+    label: t('Wallet_OrderPayAmount'),
+    value: String(payField.pay_price ?? payField.amount ?? '-'),
+  },
   { label: t('Wallet_OrderTime'),   value: formatTime(props.order.create_time) },
   { label: t('Wallet_OrderStatus'), value: statusLabel(props.order.status) },
 ])

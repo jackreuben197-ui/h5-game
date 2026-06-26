@@ -5,6 +5,7 @@ import icCoins from '@/assets/icons/wallet/ic_coins.png'
 import icCheckbox from '@/assets/icons/ic_checkbox.png'
 import icUncheckbox from '@/assets/icons/ic_uncheckbox.png'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
+import PopupCloseButton from './PopupCloseButton.vue'
 
 const props = defineProps<{
   goldCount: number
@@ -95,6 +96,7 @@ onUnmounted(() => {
     <div v-if="!isTimedOut" class="overlay" @click.self="close">
       <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
       <div class="card">
+        <PopupCloseButton @close="close" />
         <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
         <div class="card__inner">
           <!-- Header -->
@@ -318,6 +320,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: flex-end;
   gap: 5px;
+  padding-right: 30px;
 }
 
 .card__header-info span {

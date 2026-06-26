@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { t } from '@/i18n'
+import PopupCloseButton from './PopupCloseButton.vue'
 
 const props = defineProps<{
   show: boolean
@@ -24,6 +25,7 @@ const serviceFeePercentage = computed(() => {
     <Transition name="wcm-fade">
       <div v-if="show" class="wcm-overlay" @click.self="emit('close')">
         <div class="wcm-card">
+          <PopupCloseButton @close="emit('close')" />
           <div class="wcm-card__inner">
             <!-- Header -->
             <div class="wcm-header">
@@ -147,6 +149,7 @@ const serviceFeePercentage = computed(() => {
   font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 0.3rem;
   font-weight: 400;
+  padding-right: 30px;
 }
 
 .wcm-divider {

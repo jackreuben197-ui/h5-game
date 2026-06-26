@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { showToast } from 'vant'
 import { t } from '@/i18n'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
+import PopupCloseButton from './PopupCloseButton.vue'
 import type { RechargeGoldData } from '@/api/models/order'
 
 const props = defineProps<{
@@ -85,6 +86,7 @@ onUnmounted(() => {
     >
       <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
       <div class="card" >
+        <PopupCloseButton @close="emit('close')" />
         <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
         <div class="card__inner">
           <!-- Header -->
@@ -253,6 +255,7 @@ onUnmounted(() => {
 
 .header__info {
   text-align: right;
+  padding-right: 30px;
   color: #FFF;
   font-family: "HONOR Sans CN";
   font-size: 11px;

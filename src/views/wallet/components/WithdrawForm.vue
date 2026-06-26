@@ -15,8 +15,13 @@ import type { PaymentInfo } from '@/api/models/pay'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useWalletStore } from '@/stores/wallet'
 
+const props = defineProps<{
+  availableUc?: number
+}>()
+
 const emit = defineEmits<{
   'open-cs-chat': [orderData: Record<string, unknown>]
+  withdrawn: []
 }>()
 
 const router = useRouter()
@@ -29,7 +34,7 @@ function tx(key: string, fallback: string): string {
   return val !== key ? val : fallback
 }
 
-const availableUc = computed(() => userInfoStore.userInfo?.user?.gold ?? 0)
+const availableUc = computed(() => props.availableUc ?? 0)
 
 type ChannelId = 'bankcard' | 'customercare'
 const activeChannel = ref<ChannelId>('bankcard')
@@ -228,11 +233,16 @@ async function confirmWithdraw(): Promise<void> {
     if (res.code === 0) {
       withdrawAmount.value = ''
       selectedPaymentAccount.value = paymentInfoList.value[0] ?? null
+      emit('withdrawn')
       if (isCustomerCare.value || res.data?.api_type === 3) {
         emit('open-cs-chat', {
-          pay_type_name: wt.name ?? tx('Wallet_CustomerService', '客服'),
+          orderType: 'withdraw',
+          order_no: res.data?.order_no ?? '',
+          gold_num: amountCents,
           pay_price: payPrice,
-          order: { gold_num: amountCents, pay_price: payPrice, order_no: '' },
+          pay_type_name: wt.name ?? tx('Wallet_CustomerService', '客服'),
+          create_time: new Date().toISOString(),
+          account_type: 0,
         })
       } else {
         showToast(tx('Wallet_SubmitWithdraw', '提款申请已提交'))

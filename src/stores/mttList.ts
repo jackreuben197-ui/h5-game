@@ -144,8 +144,6 @@ function toMttListRecordFromWsRecord(record: WsUserMttRecord): MttListRecord {
     series_id: toSafeInt(record.series_id),
     pinned_time: toSafeInt(record.pinned_time),
     status: toSafeInt(record.status),
-    // 对齐当前首页统计逻辑：单场 MTT 记 1 桌。
-    rooms: 1,
     participants: toSafeInt(record.participants),
     start_time: toSafeInt(record.start_time),
     apply_start_time: toSafeInt(record.apply_start_time),

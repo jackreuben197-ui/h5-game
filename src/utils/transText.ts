@@ -37,6 +37,8 @@ const OP_CODE_OVERRIDE_LABEL: Record<string, string> = {
   JACKPOTIN: 'Earning_JackPot',
   USERDEDUCTROOM: 'UIGuildClubPlayerProfitDeduction',
   MTTTICKETINSURPAY: 'UIMatch_BillInsuranceTips',
+  // 重置可支配额度：客户端 UIMineBillComponent 没处理这个 op_code，但 H5 想统一显示，借俱乐部资金记录的文案。
+  RESETCREDIT: 'UIClubCreditLimit6',
 }
 
 // 模板里 {0} 需要替换成"内部桌/外部桌/朋友桌"的 op_code 集合。

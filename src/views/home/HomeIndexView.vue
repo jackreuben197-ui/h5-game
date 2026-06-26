@@ -16,6 +16,7 @@ import { localStore } from '@/utils/localStore'
 import { useCachedImage } from '@/utils/imageCache'
 import { readLobbyBannerCache, writeLobbyBannerCache } from '@/utils/lobbyBannerCache'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
+import { filterVisibleMttRecords } from '@/utils/mttVisibility'
 import { showGameToast } from '@/components/Toast'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import { openBridgePanel } from '@/bridge'
@@ -159,6 +160,10 @@ const mahjongTablesText = 0
 const mahjongPlayersText = 0
 const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
 const mttPlayersText = computed(() => `${homeRoomStats.value.mtt.players}`)
+// 扑克专区为空但赛事专区有数据时，用 MTT 列表替换游戏中心/热门游戏两块。
+const shouldReplaceWithMtt = computed(
+  () => homeRoomStats.value.poker.tables === 0 && homeRoomStats.value.mtt.tables > 0,
+)
 
 function toSafeString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
@@ -411,17 +416,24 @@ async function fetchLobbyBanner(): Promise<void> {
   void writeLobbyBannerCache(lang, response.data)
 }
 
-// 首页 MTT 统计：直接复用共享 MTT 列表 store，避免首页和列表页分叉取数。
+// 首页 MTT 统计：和 MttContent 走同一份过滤口径（排麻将 + club/tribe 可见性），
+// 保证「首页显示 N 桌 M 人」和「进入 MTT 列表后看到的赛事数 / 报名总人数」完全一致。
+// tables = 可见赛事数；players = 可见赛事 participants 之和。
 function refreshHomeMttStatsFromStore(): void {
-  const nextMtt = { tables: 0, players: 0 }
-  mttListStore.records.forEach((item) => {
-    nextMtt.tables += toSafeNumber(item.rooms)
-    nextMtt.players += toSafeNumber(item.participants)
-  })
+  const visibleRecords = filterVisibleMttRecords(
+    mttListStore.records,
+    mttListStore.mttIdMetaMap,
+    selectedClubId.value,
+    selectedTribeId.value,
+  )
+  const players = visibleRecords.reduce((sum, item) => sum + toSafeNumber(item.participants), 0)
 
   homeRoomStats.value = {
     ...homeRoomStats.value,
-    mtt: nextMtt,
+    mtt: {
+      tables: visibleRecords.length,
+      players,
+    },
   }
   persistHomeRoomStatsCache(homeRoomStats.value)
 }
@@ -468,7 +480,7 @@ watch(
 )
 
 watch(
-  () => mttListStore.records,
+  [() => mttListStore.records, () => mttListStore.mttIdList, selectedClubId, selectedTribeId],
   () => {
     refreshHomeMttStatsFromStore()
   },
@@ -607,11 +619,14 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
+    <!-- 扑克专区为空但赛事专区有数据时，用 MTT 列表替换 4/5 两个模块。 -->
+    <MttContent v-if="shouldReplaceWithMtt" class="home-mtt-content" />
+
     <!-- 4. 游戏模块 -->
-    <div class="section-header">
+    <div v-if="!shouldReplaceWithMtt" class="section-header">
       <span class="section-title">游戏中心</span>
     </div>
-    <div class="game-center-scroll">
+    <div v-if="!shouldReplaceWithMtt" class="game-center-scroll">
       <div class="game-center-track">
         <!-- MTT赛事专区 -->
         <div class="game-scroll-card game-card-mtt" @click="goToMttList">
@@ -717,10 +732,10 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- 5. 即将开放横向滚动 -->
-    <div class="section-header">
+    <div v-if="!shouldReplaceWithMtt" class="section-header">
       <span class="section-title">热门游戏</span>
     </div>
-    <div class="coming-soon-scroll">
+    <div v-if="!shouldReplaceWithMtt" class="coming-soon-scroll">
       <div class="coming-soon-track">
         <div v-for="i in 4" :key="i" class="coming-soon-scroll-card">
           <div class="coming-soon-scroll-card__overlay"></div>
@@ -951,6 +966,16 @@ onBeforeUnmount(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.mtt-content {
+  :deep(.mtt-group) {
+    .mtt-group__title {
+      color: #000;
+    }
+    .mtt-group__toggle {
+      color: rgba($color: #000000, $alpha: 0.77);
+    }
+  }
 }
 
 .section-header {

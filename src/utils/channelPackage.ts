@@ -2,14 +2,14 @@ import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 import { appConfig, getActiveApiBase } from '@/utils/appConfig'
 
-// 渠道包主域名（前端部署域名）：优先取 config.json 的 channelMainDomain（按环境部署，与后端 API 域名解耦），
-// 其次构建期 env，最后回退到当前生效 API 推导的主机名（兼容旧逻辑）。
-// 例：config.json channelMainDomain=ccsgame.recognitionway.com → 邀请链接 <code>.ccsgame.recognitionway.com。
+// 渠道包主域名：优先从 config.json 当前生效的 API 推导主机名（生产取 baseApi，测试取 apiDomains 探测结果），
+// 其次 config.json 的 channelMainDomain，再次构建期 env。
+// 例：生产 baseApi=https://api.recognitionway.com/api → 邀请链接 <code>.api.recognitionway.com/#/guest/home。
 export function getChannelMainDomain(): string {
   const raw =
+    extractHostname(getActiveApiBase()) ||
     appConfig.channelMainDomain ||
     import.meta.env.VITE_CHANNEL_MAIN_DOMAIN ||
-    extractHostname(getActiveApiBase()) ||
     ''
   return raw.trim().toLowerCase()
 }
@@ -252,16 +252,16 @@ export function buildChannelClubInviteUrl(inviteCode?: string): string {
     return `${currentUrl.origin}`
   }
 
-  // 邀请码作为子域名前缀：https://<邀请码>.<主域名>/#/guest/home（依赖泛域名解析）。
-  // 主域名取自 config.json 的 baseApi（生产/测试环境），接收端 extractInviteCodeFromSubdomain 据此还原邀请码。
+  // 用「当前访问网站的域名」(window.location.hostname) 作为基准域名（可能每天变化，故动态读取，不写死/不取后端 API 域名）。
+  // 邀请码作为子域名前缀：https://<邀请码>.<当前网站域名>/#/guest/home（依赖泛域名解析）。
+  // 若当前已处于渠道子域名（host 带邀请码前缀），先去掉该前缀，避免二次拼接。
+  let baseHost = currentUrl.hostname
   const mainDomain = getChannelMainDomain()
-  if (mainDomain) {
-    return `${currentUrl.protocol}//${code}.${mainDomain}/#/guest/home`
+  if (mainDomain && isChannelPackageHost(currentUrl.hostname)) {
+    baseHost = mainDomain
   }
-
-  // 兜底：没有可用主域名时（如本地开发），使用当前页面 host。
   const portSuffix = currentUrl.port ? `:${currentUrl.port}` : ''
-  return `${currentUrl.protocol}//${code}.${currentUrl.hostname}${portSuffix}/#/guest/home`
+  return `${currentUrl.protocol}//${code}.${baseHost}${portSuffix}/#/guest/home`
 }
 
 export function buildChannelAgentInviteUrl(agentInviteCode: string): string {

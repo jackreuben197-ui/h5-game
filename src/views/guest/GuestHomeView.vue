@@ -43,13 +43,7 @@ function notifyNotLoginRegister(): void {
   loginModalStore.open({ mode: 'register' })
 }
 
-function goToMinigame(): void {
-  loginModalStore.open({ mode: 'login' })
-}
-
-function goToCasino(): void {
-  loginModalStore.open({ mode: 'login' })
-}
+// 游客点击「小游戏专区 / 娱乐场」卡片同样需要先登录，统一走登录弹窗，不再直接跳转预览页。
 
 onMounted(() => {
   void userInfoStore.ensureChannelDefaultClub()
@@ -177,7 +171,11 @@ onMounted(() => {
           <div class="zone-info poker-info">
             <div class="zone-header">
               <span class="zone-title"> {{ t('UIHomePokerArea') }} </span>
-              <img class="zone-mini-icon poker-mini" src="@/assets/icons/game_zone_poker_mini.png" alt="" />
+              <img
+                class="zone-mini-icon poker-mini"
+                src="@/assets/icons/game_zone_poker_mini.png"
+                alt=""
+              />
             </div>
             <div class="poker-desc-area">
               <p class="zone-sub-desc">{{ t('UITexasRule_texas') }}</p>
@@ -194,7 +192,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="game-scroll-card game-card-minigame" @click="goToMinigame">
+        <div class="game-scroll-card game-card-minigame" @click="notifyNotLogin">
           <img class="zone-lg-bg" src="@/assets/icons/game_zone_minigame_lg.png" alt="小游戏" />
           <div class="zone-info">
             <div class="zone-header">
@@ -210,7 +208,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="game-scroll-card game-card-mahjong" @click="goToCasino">
+        <div class="game-scroll-card game-card-mahjong" @click="notifyNotLogin">
           <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
           <div class="zone-info">
             <div class="zone-header">
@@ -230,7 +228,6 @@ onMounted(() => {
             <span class="online-num"> {{ mahjongPlayersText }} </span>
           </div>
         </div>
-
       </div>
     </div>
 
@@ -289,7 +286,6 @@ onMounted(() => {
   width: 1.8rem;
   height: 1.8rem;
   object-fit: contain;
-
 }
 
 .top-bar__logo-text {
@@ -562,7 +558,7 @@ onMounted(() => {
   overflow: hidden;
   position: relative;
   cursor: pointer;
-  background: linear-gradient(135deg, #956EFF 0%, #7447EF 100%);
+  background: linear-gradient(135deg, #956eff 0%, #7447ef 100%);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -575,11 +571,11 @@ onMounted(() => {
 }
 
 .poker-card {
-  background: linear-gradient(135deg, #65A879 0%, #329147 100%);
+  background: linear-gradient(135deg, #65a879 0%, #329147 100%);
 }
 
 .game-card-minigame {
-  background: linear-gradient(135deg, #21B4FA 0%, #1B67F0 100%);
+  background: linear-gradient(135deg, #21b4fa 0%, #1b67f0 100%);
 
   .zone-lg-bg {
     object-fit: contain;
@@ -588,7 +584,7 @@ onMounted(() => {
 }
 
 .game-card-mahjong {
-  background: linear-gradient(135deg, #FF9CAB 0%, #DF2340 100%);
+  background: linear-gradient(135deg, #ff9cab 0%, #df2340 100%);
 
   .zone-info {
     position: relative;

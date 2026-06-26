@@ -137,7 +137,9 @@ async function handleRegister() {
         order_no: '',
         name: userName.value.trim(),
       },
-      clubId
+      clubId,
+      // 「订单审核中」提示只在客服撮合充值时弹出，其它充值方式静默处理。
+      { suppressBusinessCodes: [20066, 90016] }
     )
 
     if (res.code === 0 && res.data) {

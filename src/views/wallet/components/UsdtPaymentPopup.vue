@@ -56,10 +56,14 @@ const exactAmountLabel = computed(() =>
   (exactGoldCount.value / 100 + 0.01).toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
+    useGrouping: false,
   }),
 )
 const roundedAmountLabel = computed(() =>
-  (roundedGoldCount.value / 100).toLocaleString('en-US', { maximumFractionDigits: 0 }),
+  (roundedGoldCount.value / 100).toLocaleString('en-US', {
+    maximumFractionDigits: 0,
+    useGrouping: false,
+  }),
 )
 
 function close(): void {

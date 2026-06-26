@@ -1,4 +1,4 @@
-import http from '@/api/http'
+import http, { type HttpRequestConfigExt } from '@/api/http'
 import type { ApiResponse } from '@/api/models/common'
 import type {
   ClubFundApplyListRequest,
@@ -222,22 +222,30 @@ export async function postClubPlayerOrderRecordApi(
 // 对齐 cocos WebRechargeGold.API
 export async function postRechargeGoldApi(
   payload: RechargeGoldRequest = {} as RechargeGoldRequest,
-  clubId?: number
+  clubId?: number,
+  options?: { suppressBusinessCodes?: number[] }
 ): Promise<ApiResponse<RechargeGoldResponseData>> {
   const endpoint = '/order/user/recharge'
   const headers = clubId != null ? { 'X-club': String(clubId) } : undefined
-  const response = await http.post<ApiResponse<RechargeGoldResponseData>>(endpoint, payload, { headers })
+  const response = await http.post<ApiResponse<RechargeGoldResponseData>>(endpoint, payload, {
+    headers,
+    suppressBusinessCodes: options?.suppressBusinessCodes,
+  } as HttpRequestConfigExt)
   return response.data
 }
 
 // 对齐 cocos WebOrderUserRechargeNo.API
 export async function postOrderUserRechargeNoApi(
   payload: OrderUserRechargeNoRequest = {} as OrderUserRechargeNoRequest,
-  clubId?: number
+  clubId?: number,
+  options?: { suppressBusinessCodes?: number[] }
 ): Promise<ApiResponse<OrderUserRechargeNoResponseData>> {
   const endpoint = '/order/user/recharge_no'
   const headers = clubId != null ? { 'X-Club': String(clubId) } : undefined
-  const response = await http.post<ApiResponse<OrderUserRechargeNoResponseData>>(endpoint, payload, { headers })
+  const response = await http.post<ApiResponse<OrderUserRechargeNoResponseData>>(endpoint, payload, {
+    headers,
+    suppressBusinessCodes: options?.suppressBusinessCodes,
+  } as HttpRequestConfigExt)
   return response.data
 }
 

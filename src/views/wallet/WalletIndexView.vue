@@ -19,6 +19,7 @@ import UsdtPaymentPopup from '@/views/wallet/components/UsdtPaymentPopup.vue'
 import UnfinishedOrderPopup from '@/views/wallet/components/UnfinishedOrderPopup.vue'
 import UsdtPaymentDetailsPopup from '@/views/wallet/components/UsdtPaymentDetailsPopup.vue'
 import CustomerServicePaymentPopup from '@/views/wallet/components/CustomerServicePaymentPopup.vue'
+import OnlinePaymentPopup from '@/views/wallet/components/OnlinePaymentPopup.vue'
 import { openCsOrderChat } from '@/components/GlobalCsOrderFloat/channel'
 import FixedDepositPanel from '@/views/wallet/components/FixedDepositPanel.vue'
 import { t } from '@/i18n'
@@ -31,6 +32,8 @@ import {
   postOrderUserClubOrderCancelApi,
 } from '@/api/order'
 import { postChatSupportChannelListApi } from '@/api/chat'
+import { generateQrCodeUrl } from '@/utils/qrcode'
+import { showToast } from 'vant'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 
 const router = useRouter()
@@ -71,12 +74,56 @@ const csPopupProps = ref({
   discount: 0,
 })
 
+// 微信 / 支付宝 / 银行卡等在线支付（pay_type 非 1=USDT、非 3=客服撮合）
+const onlinePopupOpen = ref(false)
+const onlinePopupProps = ref({
+  goldCount: 0,
+  rate: 0,
+  feeRate: 0,
+  feeType: 0,
+  discount: 0,
+  payId: 0,
+  priceId: 0,
+})
+const onlinePopupInitialData = ref({
+  step: 1,
+  orderNo: '',
+  qrCode: '',
+  payAddress: '',
+})
+
+function handleOnlineSuccess() {
+  activePreset.value = 0
+  customAmount.value = ''
+}
+
+function handleOnlineUnfinished() {
+  onlinePopupOpen.value = false
+  void checkUnfinishedOrders()
+}
+
 let refreshInterval: any = null
 
 async function refreshPendingCsOrder() {
   // We keep this method for manual refreshes within this view (e.g. after cancel/submit)
   // but we will no longer run it on a 10s interval here as requested.
   await walletStore.refreshPendingCsOrder()
+}
+
+// 订单列表项没有可靠的 pay_type 数字字段，用 pay_id / pay_type_name 匹配
+// goldPriceData.pay_types 取真实类型（1=数字钱包/USDT，2=API 在线支付，3=客服撮合）。
+function resolveOrderPayType(order: ClubFundOrderListOrderInfo): number | undefined {
+  const payTypes = walletStore.goldPriceData?.pay_types ?? []
+  const orderPayId = (order as any).pay_id
+  const matched =
+    payTypes.find((pt) => pt.id != null && pt.id === orderPayId) ??
+    payTypes.find((pt) => !!pt.name && pt.name === order.pay_type_name)
+  return (
+    matched?.type ??
+    (order as any).pay_type ??
+    (order as any).api_type ??
+    (order as any).type
+  )
 }
 
 async function checkUnfinishedOrders(showPopup = true) {
@@ -88,7 +135,7 @@ async function checkUnfinishedOrders(showPopup = true) {
       {
         order_type: 1, // Recharge
         my_order: true,
-        limit: 1,
+        limit: 10,
         offset: 0,
         status: 1, // Pending
       },
@@ -96,6 +143,9 @@ async function checkUnfinishedOrders(showPopup = true) {
     )
 
     if (res.code === 0 && res.data?.list?.length) {
+      // 「有未完成的订单」弹窗只在用户发起 USDT / 银行卡 / 支付宝 / 微信 等支付时触发
+      //（见 onUsdtSubmit / 在线支付流程），用于继续或取消未完成订单。
+      // 用户发起客服撮合充值时不会走到这里——那条路径只弹「订单审核中」提示（见 onCsSubmit）。
       unfinishedOrder.value = res.data.list[0]
       if (showPopup) {
         showUnfinishedPopup.value = true
@@ -130,8 +180,18 @@ async function handleCancelOrder(orderNo: string) {
 async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
   showUnfinishedPopup.value = false
 
-  const qrCode =
+  let qrCode =
     (order as any).qrcode || (order as any).qr_code || (order as any).pay_type_qr_code || ''
+  const payAddress = order.pay_type_address || ''
+  // 订单列表不返回二维码图片，只有收款地址：用地址即时生成二维码，
+  // 避免「继续支付」后 USDT/在线支付弹窗里二维码空白。
+  if (!qrCode && payAddress) {
+    try {
+      qrCode = await generateQrCodeUrl(payAddress, { size: 720, margin: 2 })
+    } catch (e) {
+      console.error('Failed to generate QR for unfinished order', e)
+    }
+  }
   const result = {
     order_no: order.order_no,
     gold_num: order.gold_num,
@@ -150,8 +210,8 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
 
   rechargeResult.value = result
 
-  // If it's a Customer Service order (Type 3 or api_type 3), open Chat Popup
-  const orderType = (order as any).pay_type || (order as any).api_type || (order as any).type
+  // 用 pay_id / pay_type_name 匹配真实支付类型：未完成 USDT 订单「继续支付」回到 USDT 弹窗，而非在线支付弹窗。
+  const orderType = resolveOrderPayType(order)
   if (orderType === 3 || (order as any).pay_type_name?.includes('撮合')) {
     try {
       const channelRes = await postChatSupportChannelListApi({
@@ -173,10 +233,28 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
       usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
       usdtDetailsPopupOpen.value = true
     }
-  } else {
+  } else if (orderType === 1) {
     // Standard USDT flow
     usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
     usdtDetailsPopupOpen.value = true
+  } else {
+    // 微信 / 支付宝 / 银行卡等在线支付（type 2、4-9）继续未完成订单
+    onlinePopupProps.value = {
+      goldCount: Number(order.gold_num) || 0,
+      rate: (order as any).rate || (order as any).exchange_rate || 1,
+      feeRate: (order as any).fee_rate || 0,
+      feeType: (order as any).fee_type || 0,
+      discount: (order as any).discount || 0,
+      payId: (order as any).pay_id || (order as any).pay_type || 0,
+      priceId: (order as any).price_id || 0,
+    }
+    onlinePopupInitialData.value = {
+      step: 2,
+      orderNo: order.order_no || '',
+      qrCode: qrCode,
+      payAddress: order.pay_type_address || '',
+    }
+    onlinePopupOpen.value = true
   }
 }
 
@@ -192,7 +270,7 @@ onUnmounted(() => {
 })
 
 const filteredPayTypes = computed(() =>
-  (walletStore.goldPriceData?.pay_types ?? []).filter((pt) => pt.type === 1 || pt.type === 3),
+  (walletStore.goldPriceData?.pay_types ?? []),
 )
 
 const methods = computed<PaymentMethod[]>(() =>
@@ -235,7 +313,7 @@ const presets = computed<Preset[]>(() => {
   }
   const list = hasPriceList ? selected!.price_list! : walletStore.goldPriceData?.list ?? []
 
-  const isUsdt = selected?.type === 1
+  const isUsdt = selected?.type !== 3
   const rate = selected?.rate ?? 1
   const feeRate = selected?.fee_rate ?? 0
   const feeType = selected?.fee_type ?? 0
@@ -290,8 +368,8 @@ const displayPayAmount = computed(() => {
   const selected = payTypes[activeMethod.value]
   const amount = Number(selectedAmount.value)
 
-  if (selected?.type === 1) {
-    // USDT
+  if (selected?.type !== 3 && selected) {
+    // USDT / 微信 / 支付宝 / 银行卡等在线支付
     const goldCount = amount * 100
     const rate = selected.rate ?? 1
     const feeRate = selected.fee_rate ?? 0
@@ -343,6 +421,24 @@ function onPayClick() {
       discount: selectedPayType.discount ?? 0,
     }
     csPopupOpen.value = true
+  } else if (selectedPayType) {
+    // 微信 / 支付宝 / 银行卡等在线支付
+    onlinePopupProps.value = {
+      goldCount: Number(selectedAmount.value) * 100,
+      rate: selectedPayType.rate ?? 1,
+      feeRate: selectedPayType.fee_rate ?? 0,
+      feeType: selectedPayType.fee_type ?? 0,
+      discount: selectedPayType.discount ?? 0,
+      payId: selectedPayType.id ?? 0,
+      priceId: activePreset.value === -1 ? 0 : presets.value[activePreset.value]?.id ?? 0,
+    }
+    onlinePopupInitialData.value = {
+      step: 1,
+      orderNo: '',
+      qrCode: '',
+      payAddress: '',
+    }
+    onlinePopupOpen.value = true
   }
 }
 
@@ -389,6 +485,8 @@ async function onCsSubmit(displayPayPrice?: number) {
           pay_id: selectedPayType.id,
         },
         clubId,
+        // 审核中提示统一由 checkUnfinishedOrders 处理，避免拦截器再弹一次 toast。
+        { suppressBusinessCodes: [20066, 90016] },
       )
       if (res.code === 0 && res.data) {
         goldCount = res.data.amount ?? goldCount
@@ -433,6 +531,8 @@ async function onCsSubmit(displayPayPrice?: number) {
         // order_no: "",
       },
       clubId,
+      // 审核中提示统一由 checkUnfinishedOrders 处理，避免拦截器再弹一次 toast。
+      { suppressBusinessCodes: [20066, 90016] },
     )
 
     if (res.code === 0 && res.data) {
@@ -461,7 +561,8 @@ async function onCsSubmit(displayPayPrice?: number) {
       activePreset.value = 0
       customAmount.value = ''
     } else if (res.code === 20066 || res.code === 90016) {
-      void checkUnfinishedOrders()
+      // 仅客服支付方式：有订单审核中时提示「订单审核中」（其它支付方式不弹此提示）。
+      showToast(t('ServerErrorCode_20066') || '订单审核中，请稍后再试')
     } else {
       alert(`Recharge failed: ${res.message}`)
     }
@@ -498,6 +599,8 @@ async function onUsdtSubmit(type: number) {
           pay_id: selectedPayType.id,
         },
         clubId,
+        // 「订单审核中」提示只在客服撮合充值时弹出，其它充值方式静默处理。
+        { suppressBusinessCodes: [20066, 90016] },
       )
       if (res.code === 0 && res.data) {
         goldCount = res.data.amount ?? goldCount
@@ -533,6 +636,8 @@ async function onUsdtSubmit(type: number) {
         name: 'USDT User',
       },
       clubId,
+      // 「订单审核中」提示只在客服撮合充值时弹出，其它充值方式静默处理。
+      { suppressBusinessCodes: [20066, 90016] },
     )
 
     if (res.code === 0 && res.data) {
@@ -584,7 +689,7 @@ async function onUsdtSubmit(type: number) {
             <div class="balance-row">
               <div class="balance-chip">
                 <span class="balance-chip__value">
-                  {{ (userInfoStore.userInfo?.user?.gold ?? 0).toLocaleString() }}
+                  {{ ((userInfoStore.userInfo?.user?.gold ?? 0) / 100).toFixed(2) }}
                 </span>
                 <img :src="icCoins" alt="" class="balance-chip__icon" />
               </div>
@@ -651,6 +756,24 @@ async function onUsdtSubmit(type: number) {
       :discount="usdtPopupProps.discount"
       @close="usdtPopupOpen = false"
       @submit="onUsdtSubmit"
+    />
+
+    <OnlinePaymentPopup
+      v-if="onlinePopupOpen"
+      :gold-count="onlinePopupProps.goldCount"
+      :rate="onlinePopupProps.rate"
+      :fee-rate="onlinePopupProps.feeRate"
+      :fee-type="onlinePopupProps.feeType"
+      :discount="onlinePopupProps.discount"
+      :pay-id="onlinePopupProps.payId"
+      :price-id="onlinePopupProps.priceId"
+      :initial-step="onlinePopupInitialData.step"
+      :initial-order-no="onlinePopupInitialData.orderNo"
+      :initial-qr-code="onlinePopupInitialData.qrCode"
+      :initial-pay-address="onlinePopupInitialData.payAddress"
+      @close="onlinePopupOpen = false"
+      @success="handleOnlineSuccess"
+      @unfinished-order="handleOnlineUnfinished"
     />
 
     <UnfinishedOrderPopup

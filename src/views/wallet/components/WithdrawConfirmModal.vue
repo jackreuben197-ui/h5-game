@@ -25,7 +25,6 @@ const serviceFeePercentage = computed(() => {
     <Transition name="wcm-fade">
       <div v-if="show" class="wcm-overlay" @click.self="emit('close')">
         <div class="wcm-card">
-          <PopupCloseButton @close="emit('close')" />
           <div class="wcm-card__inner">
             <!-- Header -->
             <div class="wcm-header">
@@ -34,6 +33,7 @@ const serviceFeePercentage = computed(() => {
                 {{ $txt('Wallet_ServiceFee') || '手续费' }}
                 {{ serviceFeePercentage }}%
               </span>
+              <PopupCloseButton @close="emit('close')" />
             </div>
 
             <!-- Divider -->
@@ -129,7 +129,17 @@ const serviceFeePercentage = computed(() => {
 .wcm-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
+}
+
+.wcm-header .wcm-title {
+  margin-right: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.wcm-header .wcm-fee-tag {
+  white-space: nowrap;
 }
 
 .wcm-title {
@@ -149,7 +159,6 @@ const serviceFeePercentage = computed(() => {
   font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 0.3rem;
   font-weight: 400;
-  padding-right: 30px;
 }
 
 .wcm-divider {

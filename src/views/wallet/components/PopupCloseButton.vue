@@ -1,12 +1,19 @@
 <script setup lang="ts">
+withDefaults(defineProps<{ absolute?: boolean }>(), { absolute: false })
 defineEmits<{
   close: []
 }>()
 </script>
 
 <template>
-  <button class="popup-close" type="button" aria-label="关闭" @click="$emit('close')">
-    <svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true">
+  <button
+    class="popup-close"
+    :class="{ 'popup-close--absolute': absolute }"
+    type="button"
+    aria-label="关闭"
+    @click="$emit('close')"
+  >
+    <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
       <path d="M5 5 19 19M19 5 5 19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
     </svg>
   </button>
@@ -14,15 +21,12 @@ defineEmits<{
 
 <style scoped lang="scss">
 .popup-close {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 6;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border-radius: 50%;
   border: 0.5px solid rgba(242, 242, 242, 0.4);
@@ -31,6 +35,13 @@ defineEmits<{
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: opacity 0.15s, transform 0.15s;
+}
+
+.popup-close--absolute {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 6;
 }
 
 .popup-close:active {

@@ -8,6 +8,7 @@ import { postRechargeGoldApi, postOrderUserClubOrderCancelApi } from '@/api/orde
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
 import PopupCloseButton from './PopupCloseButton.vue'
+import { generateQrCodeUrl } from '@/utils/qrcode'
 
 const props = defineProps<{
   goldCount: number
@@ -116,6 +117,25 @@ function fallbackCopy(text: string) {
   document.body.removeChild(el)
 }
 
+function isImageSource(value: string): boolean {
+  return /^data:image\//i.test(value) || /\.(png|jpe?g|gif|svg|webp|bmp)(\?|$)/i.test(value)
+}
+
+async function resolveQrCode(data: any): Promise<string> {
+  const direct = data.usdt_address?.qr_code || data.qrcode || data.qr_code || data.pay_type_qr_code || ''
+  if (direct && isImageSource(direct)) return direct
+
+  const link =
+    data.qrCode || direct || data.payUrl || data.pay_url || data.payment_url || data.usdt_address?.address || ''
+  if (!link) return ''
+  try {
+    return await generateQrCodeUrl(link, { size: 720, margin: 2 })
+  } catch (e) {
+    console.error('Failed to generate QR code', e)
+    return isImageSource(link) ? link : ''
+  }
+}
+
 async function handleRegister() {
   if (!userName.value.trim()) return
   loading.value = true
@@ -145,9 +165,9 @@ async function handleRegister() {
 
     if (res.code === 0 && res.data) {
       orderNo.value = res.data.order_no || res.data.order?.order_no || ''
-      qrCodeUrl.value = (res.data.usdt_address?.qr_code || res.data.qrcode || res.data.qr_code || '') as string
+      qrCodeUrl.value = await resolveQrCode(res.data)
       payAddress.value = res.data.usdt_address?.address || ''
-      paymentUrl.value = (res.data.payment_url || '') as string
+      paymentUrl.value = ((res.data as any).payment_url || (res.data as any).payUrl || (res.data as any).qrCode || '') as string
       step.value = 2
       startTimer()
       emit('success')
@@ -206,7 +226,6 @@ onUnmounted(() => {
     >
      <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
       <div class="card" >
-        <PopupCloseButton @close="handleClose" />
         <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
         <div class="card__inner">
           <!-- Header -->
@@ -216,6 +235,7 @@ onUnmounted(() => {
               <p>手续费：{{ props.feeRate > 0 ? (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%' : '0' }}</p>
               <p>当前参考单价: 1联盟币={{ props.rate || 1 }}</p>
             </div>
+            <PopupCloseButton @close="handleClose" />
           </div>
 
           <!-- Divider -->
@@ -424,8 +444,18 @@ onUnmounted(() => {
 .header {
   width: 100%;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 10px;
+}
+
+.header .header__title {
+  margin-right: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.header .header__info {
+  white-space: nowrap;
 }
 
 .header__title {
@@ -442,7 +472,6 @@ onUnmounted(() => {
 
 .header__info {
   text-align: right;
-  padding-right: 30px;
   color: #FFF;
   font-family: "HONOR Sans CN";
   font-size: 11px;
@@ -666,6 +695,7 @@ onUnmounted(() => {
   background: #FFF;
   padding: 2px;
   box-sizing: border-box;
+  object-fit: contain;
 }
 
 .info-row__qr-placeholder {

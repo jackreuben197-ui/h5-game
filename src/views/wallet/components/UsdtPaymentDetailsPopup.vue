@@ -86,7 +86,6 @@ onUnmounted(() => {
     >
       <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
       <div class="card" >
-        <PopupCloseButton @close="emit('close')" />
         <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
         <div class="card__inner">
           <!-- Header -->
@@ -96,6 +95,7 @@ onUnmounted(() => {
               <p>汇率: {{ (rate * 100).toFixed(0) }}%</p>
               <p>当前参考单价: 1联盟币=1USDT</p>
             </div>
+            <PopupCloseButton @close="emit('close')" />
           </div>
 
           <!-- Amount Display -->
@@ -237,8 +237,18 @@ onUnmounted(() => {
 .header {
   width: 100%;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 10px;
+}
+
+.header .header__title {
+  margin-right: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.header .header__info {
+  white-space: nowrap;
 }
 
 .header__title {
@@ -255,7 +265,6 @@ onUnmounted(() => {
 
 .header__info {
   text-align: right;
-  padding-right: 30px;
   color: #FFF;
   font-family: "HONOR Sans CN";
   font-size: 11px;

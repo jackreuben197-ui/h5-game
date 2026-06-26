@@ -96,7 +96,6 @@ onUnmounted(() => {
     <div v-if="!isTimedOut" class="overlay" @click.self="close">
       <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
       <div class="card">
-        <PopupCloseButton @close="close" />
         <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
         <div class="card__inner">
           <!-- Header -->
@@ -112,6 +111,7 @@ onUnmounted(() => {
               </span>
               <span>当前参考单价：1联盟币={{ props.rate || 1 }}USDT</span>
             </div>
+            <PopupCloseButton @close="close" />
           </div>
 
           <!-- Divider -->
@@ -294,8 +294,18 @@ onUnmounted(() => {
 .card__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
   margin-bottom: 0.2rem;
+}
+
+.card__header .card__title {
+  margin-right: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.card__header .card__header-info {
+  white-space: nowrap;
 }
 
 .card__title {
@@ -320,7 +330,6 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: flex-end;
   gap: 5px;
-  padding-right: 30px;
 }
 
 .card__header-info span {

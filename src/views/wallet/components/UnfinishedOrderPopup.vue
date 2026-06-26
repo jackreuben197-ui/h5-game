@@ -43,7 +43,7 @@ function onContinue(): void {
       @click.self="onCancel"
     >
       <div class="card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
-        <PopupCloseButton @close="onCancel" />
+        <PopupCloseButton absolute @close="onCancel" />
         <div class="card__inner">
           <!-- Header -->
           <div class="card__header">

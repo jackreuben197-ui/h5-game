@@ -43,7 +43,6 @@ const payPrice = computed(() =>
     >
       <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
       <div class="card" >
-        <PopupCloseButton @close="emit('close')" />
         <!-- :style="{ backgroundImage: `url(${sharpBgUrl})` }" -->
         <div class="card__inner">
           <!-- Header -->
@@ -53,6 +52,7 @@ const payPrice = computed(() =>
               <span>手续费：{{ feeDisplay }}</span>
               <span>当前参考单价：1联盟币={{ props.rate || 1 }}USDT</span>
             </div>
+            <PopupCloseButton @close="emit('close')" />
           </div>
 
           <!-- Divider -->
@@ -165,7 +165,17 @@ const payPrice = computed(() =>
 .card__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
+}
+
+.card__header .card__title {
+  margin-right: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.card__header .card__header-info {
+  white-space: nowrap;
 }
 
 .card__title {
@@ -186,7 +196,6 @@ const payPrice = computed(() =>
   flex-direction: column;
   align-items: flex-end;
   gap: 5px;
-  padding-right: 30px;
 }
 
 .card__header-info span {

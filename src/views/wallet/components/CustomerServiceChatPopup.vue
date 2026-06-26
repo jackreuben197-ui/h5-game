@@ -40,9 +40,17 @@ function labelsFor(orderType?: string) {
 }
 
 const orderList = computed<any[]>(() => {
-  if (props.orders?.length) return props.orders
-  if (props.orderData) return [{ ...props.orderData, orderType: props.orderType }]
-  return []
+  const list = props.orders?.length
+    ? [...props.orders]
+    : props.orderData
+      ? [{ ...props.orderData, orderType: props.orderType }]
+      : []
+  // 从旧到新排序（旧的在上，新的在下，与聊天顺序一致）。
+  return list.sort((a, b) => {
+    const ta = parseOrderTime(a.create_time || a.order?.create_time)?.getTime() ?? 0
+    const tb = parseOrderTime(b.create_time || b.order?.create_time)?.getTime() ?? 0
+    return ta - tb
+  })
 })
 const messages = ref<ChatSupportMessageListChatData[]>([])
 const inputText = ref('')
@@ -191,6 +199,29 @@ function formatTime(timestamp?: number) {
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
 }
 
+function parseOrderTime(raw?: unknown): Date | null {
+  if (raw == null || raw === '') return null
+  if (typeof raw === 'number') return new Date(raw < 1e12 ? raw * 1000 : raw)
+  const s = String(raw).trim()
+  if (/^\d+$/.test(s)) {
+    const n = Number(s)
+    return new Date(n < 1e12 ? n * 1000 : n)
+  }
+  const d = new Date(s.replace(' ', 'T'))
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+function orderTimeText(raw?: unknown) {
+  const d = parseOrderTime(raw)
+  return d ? d.toLocaleString() : ''
+}
+
+function orderClockText(raw?: unknown) {
+  const d = parseOrderTime(raw)
+  if (!d) return ''
+  return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
+}
+
 onMounted(() => {
   loadMessages()
   checkOrderStatus()
@@ -240,16 +271,16 @@ onUnmounted(() => {
                 <div class="bubble-wrapper">
                   <div class="transaction-bubble">
                     <div class="bubble-content">
-                      <p>{{ labelsFor(od.orderType).user }}：{{ userInfoStore.userInfo?.user.nickname }}/ID{{ userInfoStore.userInfo?.user.userid }}</p>
+                      <p>{{ labelsFor(od.orderType).user }}：{{ userInfoStore.userInfo?.user.nickname }} / ID：{{ userInfoStore.userInfo?.user.un_id }}</p>
                       <p>{{ labelsFor(od.orderType).coin }}：{{ (od.gold_num || od.order?.gold_num || 0) / 100 }}</p>
                       <p>{{ labelsFor(od.orderType).amount }}：{{ od.pay_price || od.order?.pay_price || od.order?.amount || od.amount || 0 }}</p>
                       <p>{{ labelsFor(od.orderType).payType }}：{{ od.usdt_address?.name || od.pay_type_name || '客服撮合' }}</p>
-                      <p>訂單號：{{ od.order_no || od.order?.order_no }}</p>
-                      <p>申請時間：{{ new Date().toLocaleString() }}</p>
+                      <p>订单号：{{ od.order_no || od.order?.order_no }}</p>
+                      <p>申请时间：{{ orderTimeText(od.create_time || od.order?.create_time) }}</p>
                     </div>
                   </div>
                   <div class="bubble-footer">
-                    <span>{{ formatTime(Date.now() / 1000) }}</span>
+                    <span>{{ orderClockText(od.create_time || od.order?.create_time) }}</span>
                     <svg width="7.226" height="7.226" viewBox="0 0 8 8" fill="none">
                       <ellipse cx="2.93052" cy="2.91963" rx="2.38865" ry="2.42647" stroke="#05E7AE" stroke-width="0.955458"/>
                       <path d="M4.63672 4.65283L6.68413 6.73266" stroke="#05E7AE" stroke-width="0.955458" stroke-linecap="round"/>

@@ -88,7 +88,7 @@ const summaryItems = ref([
   { label: '总流水', value: '0' },
   { label: '最大底池', value: '0' },
   { label: '总手数', value: '0' },
-  { label: '总代入数', value: '0' },
+  { label: '总带入数', value: '0' },
 ])
 
 const playerResults = ref<PlayerResult[]>([])
@@ -262,12 +262,12 @@ async function fetchRecordDetail(): Promise<void> {
       'DD/MM HH:mm',
     )}`
 
-    // 对齐客户端 UIRecordDetailStatistics.UpdateTexasInfo：总流水/最大底池/总手数/总代入数。
+    // 对齐客户端 UIRecordDetailStatistics.UpdateTexasInfo：总流水/最大底池/总手数/总带入数。
     summaryItems.value = [
       { label: '总流水', value: formatAmount(toSafeNumber(roomData?.all_bet_pot)) },
       { label: '最大底池', value: formatAmount(toSafeNumber(roomData?.max_bet_pot)) },
       { label: '总手数', value: String(toSafeNumber(roomData?.room_total_hand_num)) },
-      { label: '总代入数', value: formatAmount(toSafeNumber(roomData?.all_bring_in)) },
+      { label: '总带入数', value: formatAmount(toSafeNumber(roomData?.all_bring_in)) },
     ]
 
     podiumSeats.value = buildPodiumSeats(userList)
@@ -425,10 +425,11 @@ onMounted(() => {
 }
 
 .glass-card {
-  border-radius: 0.76rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.2);
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.04rem);
+  border-radius: 0.8rem;
+  border: 0.02rem solid rgba(249, 249, 249, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
 }
 
 .sort-bar {
@@ -603,7 +604,7 @@ onMounted(() => {
 
 .summary-grid {
   border-radius: 0.76rem;
-  background-color: rgba($color: #ffffff, $alpha: 0.2);
+  background-color: rgba($color: #000000, $alpha: 0.2);
   margin-top: 0.25rem;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -703,7 +704,7 @@ onMounted(() => {
 
   .profit {
     font-size: 0.45rem;
-    color: #ff7a8f;
+    color: #27d300;
     font-weight: 700;
 
     &.pos {

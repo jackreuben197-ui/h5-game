@@ -35,7 +35,7 @@ const backgroundStyle = computed(() => ({
 const title = computed(() => '我的账单')
 
 const tabGoldTypes = [
-  { label: 'UC', value: 1 },
+  { label: '联盟币', value: 1 },
   { label: 'Club计分牌', value: 2 },
   { label: '朋友桌计分牌', value: 3 },
   { label: '钻石', value: 4 },
@@ -667,7 +667,7 @@ onMounted(() => {
       </div>
 
       <section v-if="activeTab !== 3" class="glass-card total-card">
-        <div v-if="activeTab === 1" class="label">UC总金额</div>
+        <div v-if="activeTab === 1" class="label">联盟币总金额</div>
         <div v-else-if="activeTab === 2" class="label">俱乐部记分牌总额度</div>
         <div v-else-if="activeTab === 4" class="label">钻石余额</div>
         <div class="amount-row">

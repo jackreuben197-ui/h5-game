@@ -245,11 +245,13 @@ export function shouldOpenRegisterMode(): boolean {
   return parseInviteParamsFromLocation().mode === 'register'
 }
 
+// channel 模式下，分享链接直接用当前页面 origin —— 邀请码已“内嵌”在当前 <邀请码>.<基础域名> 子域名里，
+// 接收端从子域名还原邀请码。无需拼域名，自动适配测试/正式环境。
 export function buildChannelClubInviteUrl(inviteCode?: string): string {
   const currentUrl = new URL(window.location.href)
   const code = readString(inviteCode)
   if (!code) {
-    return `${currentUrl.origin}`
+    return `${currentUrl.origin}/#/guest/home`
   }
 
   // 用「当前访问网站的域名」(window.location.hostname) 作为基准域名（可能每天变化，故动态读取，不写死/不取后端 API 域名）。
@@ -290,8 +292,6 @@ export function buildChannelRegisterUrl(options?: {
     nextParams.set('trace_hash', traceHash)
   }
 
-  // 邀请码只放在 ?i= 参数里，不能再拼到域名前缀（否则会生成不存在的子域名导致无法访问）。
-  // 旧逻辑（保留备查）：把邀请码拼成子域名，会生成不存在的域名导致无法访问。
-  return `${currentUrl.protocol}//${inviteCode}.${currentUrl.hostname}/#/?${nextParams.toString()}`
-  // return `${currentUrl.origin}/#/?${nextParams.toString()}`
+  // 邀请码只放在 ?i= 参数里，链接用当前页面 origin（无需拼子域名/硬编码域名）。
+  return `${currentUrl.origin}/#/?${nextParams.toString()}`
 }

@@ -16,7 +16,7 @@ import imgClubRoleIcon from '@/assets/icons/member_icon.png'
 import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shield.png'
 import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.png'
 import imgQuickActionAlliance from '@/assets/images/club_qa_data_board_alliance.png'
-import iconBoxClubT from '@/assets/icons/icon_box_club_t.png'
+import iconClubCareer from '@/assets/icons/ic_club_q.png'
 import imgClubBannerFigma from '@/assets/images/club_banner_bg.png'
 import imgClubLogo from '@/assets/images/club_default_logo.png'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
@@ -393,7 +393,7 @@ onMounted(() => {
             />
           </template>
           <template v-else-if="item.kind === 'club-career'">
-            <img class="icon-board-chart" :src="iconBoxClubT" width="61" height="61" alt="" />
+            <img class="qa-img icon-board-chart" :src="iconClubCareer" alt="" aria-hidden="true" />
           </template>
         </div>
         <span class="action-text" :class="`action-text--${item.kind}`">{{ item.title }}</span>
@@ -783,7 +783,8 @@ onMounted(() => {
   cursor: pointer;
 
   &--create-club,
-  &--club-panel {
+  &--club-panel,
+  &--club-career {
     width: 1.621rem;
   }
 
@@ -809,6 +810,11 @@ onMounted(() => {
   }
 
   &--club-panel {
+    width: 1.621rem;
+    height: 1.621rem;
+  }
+
+  &--club-career {
     width: 1.621rem;
     height: 1.621rem;
   }
@@ -843,6 +849,13 @@ onMounted(() => {
 }
 
 .qa-img--cu-alliance {
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  object-fit: contain;
+}
+.icon-board-chart {
   width: 100%;
   height: 100%;
   left: 0;

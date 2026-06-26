@@ -6,12 +6,12 @@
     "https://preview.trackyourchoice.com"
   ],
   "baseApiNew": "/api",
+  "channelMainDomain": "ccsgame.recognitionway.com",
   "imageApi": "http://152.70.234.14:5039/",
   "isTest": false,
   "oldBaseApi": "http://152.70.234.14:5050/api",
   "uploadApi": "http://152.70.234.14:4038/api",
   "webHost": "http://152.70.234.14:4038/#/",
-  "channelMainDomain": "ccsgame.recognitionway.com",
   "ipaUrl": "itms-services:///?action=download-manifest&url=https://test.kefu.mayipoker.com/download/ios/download.plist",
   "downloadInfo": {
     "endpoint": "/api/misc/web/download/info/detail",

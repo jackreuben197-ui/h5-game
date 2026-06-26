@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import homeHeaderFallback from '@/assets/images/home_header_2.png'
-import { t } from '@/i18n'
+import { t, getLocale } from '@/i18n'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useCachedImage } from '@/utils/imageCache'
@@ -14,20 +14,28 @@ import imgCowboy from '@/assets/images/minigame-newui/sg.svg'
 const loginModalStore = useLoginModalStore()
 const userInfoStore = useUserInfoStore()
 
+// 部分卡片文案为硬编码中文：en 用英文，其余语言回退中文（与 i18n 规则一致）。
+const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
+
 const clubBannerUrl = useCachedImage(
   () => userInfoStore.channelDefaultClub?.banner || homeHeaderFallback,
 )
-const clubNameText = computed<string>(() => userInfoStore.channelDefaultClub?.club_name || '俱乐部')
+const clubNameText = computed<string>(
+  () =>
+    (userInfoStore.channelDefaultClub?.club_name || '')
+      .replace(/[(（]\s*disband\s*[)）]?/gi, '')
+      .trim() ||
+    '俱乐部',
+)
 const noticeText = '欢迎来到德州扑克，登录后体验更多精彩内容'
 const clubGoldText = '0.00'
 const balanceVisible = true
 const pokerTablesText = '0'
 const pokerPlayersText = '0'
-const miniGamePlayersText = 0
+const miniGamePlayersText = 632
 const mttTablesText = '0'
 const mttPlayersText = '0'
-const mahjongTablesText = '0'
-const mahjongPlayersText = '0'
+const mahjongPlayersText = '788'
 
 const activeBannerGames = [
   { name: 'PA真人', svg: imgPa },
@@ -60,9 +68,9 @@ onMounted(() => {
       </div>
       <div class="top-bar__actions">
         <button class="top-bar__btn top-bar__btn--register" @click="notifyNotLoginRegister">
-          注册
+          {{ localized('Register', '注册') }}
         </button>
-        <button class="top-bar__btn top-bar__btn--login" @click="notifyNotLogin">登录</button>
+        <button class="top-bar__btn top-bar__btn--login" @click="notifyNotLogin">{{ localized('Login', '登录') }}</button>
       </div>
     </div>
     <!-- 1. 顶部俱乐部介绍图 -->
@@ -140,7 +148,7 @@ onMounted(() => {
 
     <!-- 4. 游戏模块 -->
     <div class="section-header">
-      <span class="section-title">游戏中心</span>
+      <span class="section-title">{{ localized('Game Center', '游戏中心') }}</span>
     </div>
     <div class="game-center-scroll">
       <div class="game-center-track">
@@ -212,18 +220,16 @@ onMounted(() => {
           <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
           <div class="zone-info">
             <div class="zone-header">
-              <span class="zone-title"> 娱乐场 </span>
+              <span class="zone-title"> {{ localized('Casino', '娱乐场') }} </span>
               <img class="zone-mini-icon" src="@/assets/icons/game_zone_mahjong_mini.png" alt="" />
             </div>
             <div class="zone-desc casino-desc">
-              <p>真人视讯 电子娱乐 体育竞猜</p>
-              <p>全球一线厂商</p>
+              <p>{{ localized('Live · Slots · Sports', '真人视讯 电子娱乐 体育竞猜') }}</p>
+              <p>{{ localized('Top providers', '全球一线厂商') }}</p>
             </div>
           </div>
           <div class="zone-online-bar">
             <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
-            <span class="online-num"> {{ mahjongTablesText }} </span>
             <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
             <span class="online-num"> {{ mahjongPlayersText }} </span>
           </div>
@@ -233,7 +239,7 @@ onMounted(() => {
 
     <!-- 5. 热门游戏 -->
     <div class="section-header">
-      <span class="section-title">热门游戏</span>
+      <span class="section-title">{{ localized('Hot Games', '热门游戏') }}</span>
     </div>
     <div class="coming-soon-scroll">
       <div class="coming-soon-track">
@@ -438,6 +444,12 @@ onMounted(() => {
 .service-label {
   font-size: 0.3rem;
   color: #f9f9f9;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 4rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .club-balance-row {

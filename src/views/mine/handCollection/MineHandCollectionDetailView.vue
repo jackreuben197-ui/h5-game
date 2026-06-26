@@ -16,6 +16,10 @@ import {
 } from '@/api/models/replayDisplay'
 import iconChips from '@/assets/icons/icon_chips.png'
 import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
+import iconBlind from '@/assets/icons/ic_glif.svg'
+import iconTime from '@/assets/icons/wallet/ic_time.svg'
+import iconStar from '@/assets/icons/ic_star.svg'
+import iconShare from '@/assets/icons/ic_share.svg'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import PokerCard from '@/components/GameCard/PokerCard.vue'
@@ -160,11 +164,11 @@ function onShare(): void {
         <p class="summary-title">{{ summaryTitle }}</p>
         <div class="summary-meta">
           <div class="meta-item">
-            <span class="meta-icon">♠</span>
+            <img class="meta-icon" :src="iconBlind" alt="" aria-hidden="true" />
             <span>{{ blindInfo }}</span>
           </div>
           <div class="meta-item">
-            <span class="meta-icon">◷</span>
+            <img class="meta-icon" :src="iconTime" alt="" aria-hidden="true" />
             <span>{{ finishedAt }}</span>
           </div>
           <div class="meta-item hand-code">{{ headerHandId }}</div>
@@ -252,11 +256,11 @@ function onShare(): void {
 
     <footer class="action-bar">
       <button type="button" class="action-btn" @click="onFavorite">
-        <span class="icon">★</span>
+        <img class="icon" :src="iconStar" alt="" aria-hidden="true" />
         <span>收藏</span>
       </button>
       <button type="button" class="action-btn" @click="onShare">
-        <span class="icon">↗</span>
+        <img class="icon" :src="iconShare" alt="" aria-hidden="true" />
         <span>分享</span>
       </button>
     </footer>
@@ -304,21 +308,21 @@ function onShare(): void {
 }
 
 .meta-icon {
+  width: 0.34rem;
+  height: 0.34rem;
+  object-fit: contain;
   opacity: 0.9;
 }
 
 .hand-code {
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .street-card {
   margin-top: 0.34rem;
   border-radius: 0.8rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.14);
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(8.5px);
-  -webkit-backdrop-filter: blur(8.5px);
-  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.08);
+  border: none;
+  background: rgba(0, 0, 0, 0.25);
   padding: 0.28rem 0.32rem 0.24rem;
 }
 
@@ -335,9 +339,9 @@ function onShare(): void {
 }
 
 .street-title {
-  margin: 0;
-  font-size: 0.5rem;
-  font-weight: 500;
+  margin-left: 0.02rem;
+  font-size: 0.4rem;
+  font-weight: 400;
 }
 
 .street-sub {
@@ -361,9 +365,9 @@ function onShare(): void {
   justify-content: flex-end;
   gap: 0.08rem;
   margin: 0;
-  font-size: 0.5rem;
+  font-size: 0.4rem;
   line-height: 1.1;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .head-stat + .head-stat {
@@ -425,7 +429,7 @@ function onShare(): void {
   border-radius: 0.12rem;
   padding: 0 0.12rem;
   font-size: 0.26rem;
-  font-weight: 700;
+  font-weight: 400;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -457,7 +461,7 @@ function onShare(): void {
 }
 
 .result-num {
-  font-weight: 600;
+  font-weight: 400;
   text-align: right;
   white-space: nowrap;
   overflow: hidden;
@@ -489,10 +493,9 @@ function onShare(): void {
   right: 0;
   bottom: 0;
   padding: 0.24rem 0.24rem calc(env(safe-area-inset-bottom) + 0.24rem);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-top: 0.02rem solid rgba(249, 249, 249, 0.14);
   display: flex;
   gap: 0.2rem;
 }
@@ -501,21 +504,22 @@ function onShare(): void {
   flex: 1;
   height: 0.86rem;
   border-radius: 0.43rem;
-  border: 0.02rem solid rgba(249, 249, 249, 0.2);
-  background: rgba(255, 255, 255, 0.08);
+  border: 0.02rem solid rgba(242, 242, 242, 0.1);
+  background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%);
   backdrop-filter: blur(8.5px);
   -webkit-backdrop-filter: blur(8.5px);
-  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.12);
   color: #f9f9f9;
   font-size: 0.32rem;
-  font-weight: 600;
+  font-weight: 400;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.1rem;
+  gap: 0.2rem;
 }
 
 .icon {
-  font-size: 0.34rem;
+  width: 0.36rem;
+  height: 0.36rem;
+  object-fit: contain;
 }
 </style>

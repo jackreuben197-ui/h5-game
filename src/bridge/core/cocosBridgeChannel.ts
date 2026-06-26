@@ -17,6 +17,8 @@ import {
 import StorageKey from '@/constants/storageKey'
 import { createLogger } from '@/utils/logger'
 import { localStore } from '@/utils/localStore'
+import { showGameToast } from '@/components/Toast'
+import { showLocalBridgeDialog } from '../channels/dialogChannel'
 
 const log = createLogger('[bridge]')
 const logH5ToCC = createLogger('[bridge][h5->cc]')
@@ -54,12 +56,16 @@ const BRIDGE_HOST = 'bridge'
 const CC_WINDOW_SOURCE = 'cc'
 // 兼容历史字段。
 const COCOS_LEGACY_SOURCE = 'cocos-game'
+// 进入牌桌时等待 cocos 就绪的窗口期：在此期间内仅 toast 提示等待，超出则弹窗提示刷新。
+const COCOS_READY_TIMEOUT_MS = 5000
 const handlerEntries = new Set<MessageHandlerEntry>()
 const handshakeDoneHandlers = new Set<HandshakeDoneHandler>()
 
 let h5ReadySent = false
 let bridgeHandshakeDone = false
 let lastBridgeChannelName = ''
+// h5 就绪时间戳，用于判断 enterTable 时 cocos 仍未就绪是“起步阶段”还是“真异常”。
+let h5ReadyTime = 0
 
 function isNonForwardMessage(message: BridgeMessage): boolean {
   return normalizeBridgeMsgType(message.msgtype) === BRIDGE_MSG_TYPE.H5
@@ -342,15 +348,49 @@ export function sendBridgeMessage<TPayload>(
   return message
 }
 
+// 进入牌桌前校验 cocos 是否就绪：窗口期内 toast 等待提示，超出窗口期弹窗提示刷新。
+// 返回 true 表示可以继续发送进入牌桌消息。
+function ensureCocosReadyForEnter(): boolean {
+  if (bridgeHandshakeDone) {
+    return true
+  }
+
+  const elapsed = h5ReadyTime > 0 ? Date.now() - h5ReadyTime : 0
+  if (elapsed <= COCOS_READY_TIMEOUT_MS) {
+    showGameToast('游戏场景未就绪，请等待')
+  } else {
+    showLocalBridgeDialog({
+      message: '游戏场景加载失败，请刷新后重试',
+      showCancelButton: false,
+      showConfirmButton: true,
+      ensureVisible: false,
+      onConfirm: () => {
+        if (typeof window !== 'undefined') {
+          window.location.reload()
+        }
+      },
+    })
+  }
+  return false
+}
+
 // 业务快捷方法：请求 Cocos 进入普通牌桌。
-export function enterTable(payload: EnterTablePayload): BridgeMessage<EnterTablePayload> {
+export function enterTable(payload: EnterTablePayload): BridgeMessage<EnterTablePayload> | null {
+  if (!ensureCocosReadyForEnter()) {
+    return null
+  }
+
   return sendBridgeMessage(BRIDGE_ACTION.ENTER_TABLE, payload, {
     msgtype: BRIDGE_MSG_TYPE.H5,
   })
 }
 
 // 业务快捷方法：请求 Cocos 进入 MTT 赛事牌桌。
-export function enterMtt(payload: EnterMttPayload): BridgeMessage<EnterMttPayload> {
+export function enterMtt(payload: EnterMttPayload): BridgeMessage<EnterMttPayload> | null {
+  if (!ensureCocosReadyForEnter()) {
+    return null
+  }
+
   return sendBridgeMessage(BRIDGE_ACTION.ENTER_MTT, payload, {
     msgtype: BRIDGE_MSG_TYPE.H5,
   })
@@ -607,5 +647,6 @@ if (typeof window !== 'undefined') {
   })
 
   window.__H5_READY__ = true
+  h5ReadyTime = Date.now()
   maybeSendH5Ready()
 }

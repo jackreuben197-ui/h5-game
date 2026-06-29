@@ -905,7 +905,7 @@ export interface MiscGameRoundListDataByRoomData {
     limit?: number;
     offset?: number;
     total?: number;
-    list?: MiscGameRoundListDataByRoomRecord[];
+    records?: MiscGameRoundListDataByRoomRecord[];
 
   [key: string]: unknown
 }

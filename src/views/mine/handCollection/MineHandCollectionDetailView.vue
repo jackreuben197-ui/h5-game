@@ -20,6 +20,9 @@ import {
   postMiscGameRemoveRoundApi,
   postMiscGameRoundStatusApi,
 } from '@/api/misc'
+import { useGameStore } from '@/stores/game'
+import { userCache } from '@/utils/userCache'
+import { USER_STORE_H5_REPLAY } from '@/utils/indexedDB'
 import iconChips from '@/assets/icons/icon_chips.png'
 import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
 import iconPeople from '@/assets/icons/icon_people2.svg'
@@ -31,6 +34,17 @@ import { t } from '@/i18n'
 
 const title = computed(() => t('adaptation10210'))
 const route = useRoute()
+const gameStore = useGameStore()
+
+// 客户端 OnClickCollect 成功后会 Game.EventSystem.Run(UI_MINE_REFRESH_REPLAY) 让列表页刷新；
+// H5 用清缓存替代——下一次进入列表会触发完整 server fetch，避免看到旧的收藏状态。
+const COLLECTED_CACHE_KEYS = ['texas_collected', 'sixplus_collected', 'omaha_collected']
+async function invalidateCollectedCache(): Promise<void> {
+  const cache = userCache(gameStore.loginUserId)
+  await Promise.all(
+    COLLECTED_CACHE_KEYS.map((key) => cache.delete(USER_STORE_H5_REPLAY, key).catch(() => undefined)),
+  )
+}
 
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -161,12 +175,20 @@ function isHandHighlighted(highlights: Set<number> | null, handIdx: number): boo
 const isCollected = ref(false)
 const collectBusy = ref(false)
 
+// 对齐客户端：保存/取消/再次校验都用 _cacheUnique（来自 replay.unique），不是 listing 的 room_unique_id。
+// 两者通常一致，但在“收藏列表/最近列表”两种入口下偶有差异，用 replay.unique 才能确保和服务端规范一致。
+function canonicalUniqueId(): string {
+  const fromReplay = String(replay.value?.unique ?? '').trim()
+  if (fromReplay) return fromReplay
+  return String(handRecord.value?.room_unique_id ?? '').trim()
+}
+
 function buildCollectStatusPayload(): Record<string, unknown> | null {
   const record = handRecord.value
   if (!record) return null
   return {
     room_id: toSafeNumber(record.room_id) || toSafeNumber(roomRecord.value.room_id),
-    room_unique_id: record.room_unique_id ?? '',
+    room_unique_id: canonicalUniqueId(),
     hand_num: toSafeNumber(record.hand_num),
   }
 }
@@ -176,6 +198,7 @@ async function refreshCollectStatus(): Promise<void> {
   if (!payload) return
   try {
     const resp = await postMiscGameRoundStatusApi(payload)
+    if (resp?.code !== 0) return
     const records = resp?.data?.records ?? []
     const first = Array.isArray(records) ? records[0] : null
     isCollected.value = !!(first && first.remove === 0)
@@ -202,33 +225,50 @@ async function onFavorite(): Promise<void> {
   if (collectBusy.value) return
   const record = handRecord.value
   if (!record) return
+  const uniqueId = canonicalUniqueId()
+  if (!uniqueId) {
+    showFailToast(t('UIClub_DataError'))
+    return
+  }
+  const roomId = toSafeNumber(record.room_id) || toSafeNumber(roomRecord.value.room_id)
+  const handNum = toSafeNumber(record.hand_num)
   collectBusy.value = true
   try {
     if (isCollected.value) {
-      await postMiscGameRemoveRoundApi({
-        room_id: toSafeNumber(record.room_id) || toSafeNumber(roomRecord.value.room_id),
-        room_unique_id: record.room_unique_id ?? '',
-        hand_num: toSafeNumber(record.hand_num),
+      const resp = await postMiscGameRemoveRoundApi({
+        room_id: roomId,
+        room_unique_id: uniqueId,
+        hand_num: handNum,
       })
-      isCollected.value = false
+      if (resp?.code !== 0) {
+        showFailToast(typeof resp?.message === 'string' ? resp.message : t('UIClub_LoadFail11'))
+        return
+      }
       showSuccessToast(t('adaptation10211'))
     } else {
-      await postMiscGameRecordRoundApi({
+      const resp = await postMiscGameRecordRoundApi({
         id: toSafeNumber(record.id),
-        room_id: toSafeNumber(record.room_id) || toSafeNumber(roomRecord.value.room_id),
+        room_id: roomId,
         match_id: toSafeNumber(record.match_id),
-        room_unique_id: record.room_unique_id ?? '',
+        room_unique_id: uniqueId,
         name: record.name ?? '',
-        hand_num: toSafeNumber(record.hand_num),
+        hand_num: handNum,
         change: toSafeNumber(record.change),
         type: toSafeNumber(record.type),
         open: toSafeNumber(record.open),
       })
-      isCollected.value = true
+      if (resp?.code !== 0) {
+        showFailToast(typeof resp?.message === 'string' ? resp.message : t('UIClub_LoadFail11'))
+        return
+      }
       showSuccessToast(t('Collection_success'))
     }
+    // 以服务端为准回写一次，避免本地状态与服务端漂移（也覆盖跨入口的 unique 差异）。
+    await refreshCollectStatus()
+    // 收藏 / 取消都让列表的「收藏」缓存失效，等价于客户端的 UI_MINE_REFRESH_REPLAY 事件。
+    void invalidateCollectedCache()
   } catch {
-    showFailToast(t('UIClub_NotFoundData'))
+    showFailToast(t('UIClub_LoadFail11'))
   } finally {
     collectBusy.value = false
   }

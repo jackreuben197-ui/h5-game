@@ -29,7 +29,7 @@ import { setHandReplaySession } from '@/session/handReplaySession'
 import { formatUC } from '@/utils/roomVisibility'
 import { t } from '@/i18n'
 
-const title = computed(() => 'Result')
+const title = computed(() => t('UIMine_Paipu_title'))
 const router = useRouter()
 
 // 主容器背景图：全页面共用一张底图。
@@ -161,7 +161,9 @@ async function fetchHandCollection(): Promise<void> {
         offset: 0,
       })
       if (response.code !== 0) {
-        throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadRecordFail'))
+        throw new Error(
+          typeof response.msg === 'string' ? response.msg : t('UIClub_LoadRecordFail'),
+        )
       }
 
       const records = Array.isArray(response.data?.records) ? response.data.records : []
@@ -217,7 +219,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell mine-glass-page" :style="backgroundStyle">
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" :extra-padding="true" />
 
     <div class="content-wrap">
       <div class="tabs game-tabs">
@@ -260,7 +262,7 @@ onMounted(() => {
                 :key="`${card.id}-card-${idx}`"
                 :rank="value.rank"
                 :suit="value.suit"
-                size="0.64rem"
+                size="0.82rem"
               />
             </div>
             <div class="title" v-html="card.title"></div>
@@ -268,12 +270,20 @@ onMounted(() => {
           <div class="line"></div>
           <div class="bottom-row">
             <div class="meta">
-              <div>Hand ID: {{ card.handId }}</div>
-              <div>{{ card.table }}&nbsp;&nbsp;&nbsp;{{ t('adaptation20005') }}: {{ card.pot }}</div>
+              <div>{{ t('UIPaipu_HandId') }}: {{ card.handId }}</div>
+              <div class="bottom-info">
+                <img class="icon-sb" src="@/assets/icons/icon_sb.svg" alt="" />
+                <span>{{ card.table }}</span>
+                <span>{{ t('adaptation20005') }}:</span>
+                <span>{{ card.pot }}</span>
+              </div>
             </div>
             <div class="profit">
               <div :class="['money', { negative: card.negative !== false }]">{{ card.profit }}</div>
-              <div>Hands:{{ card.hands }}</div>
+              <div class="profit-hands">
+                <img class="icon-sb" src="@/assets/icons/icon_cards2.svg" alt="" />
+                <span>{{ t('UITexasReport_hand') }}:{{ card.hands }}</span>
+              </div>
             </div>
           </div>
         </article>
@@ -286,7 +296,7 @@ onMounted(() => {
 .mine-glass-page {
   height: 100dvh;
   // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
-  padding-bottom: 0.8rem;
+  padding: 0 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;
@@ -310,7 +320,7 @@ onMounted(() => {
   border: 0;
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.42rem;
+  font-size: 0.37rem;
   padding-bottom: 0.06rem;
 
   &.active {
@@ -321,19 +331,19 @@ onMounted(() => {
 
 .mode-tabs {
   margin-top: 0.3rem;
-  border-radius: 0.56rem;
+  border-radius: 1.38rem;
   background: rgba(255, 255, 255, 0.2);
-  padding: 0.08rem;
+  // padding: 0.08rem;
 }
 
 .capsule-tab {
   flex: 1;
   border: 0;
-  border-radius: 0.5rem;
+  border-radius: 1.38rem;
   background: transparent;
   color: #fff;
   font-size: 0.44rem;
-  padding: 0.2rem 0;
+  padding: 0.35rem 0;
 
   &.active {
     background: rgba(255, 255, 255, 0.2);
@@ -342,7 +352,7 @@ onMounted(() => {
 }
 
 .list-wrap {
-  margin-top: 0.38rem;
+  margin-top: 0.42rem;
   display: flex;
   flex-direction: column;
   gap: 0.24rem;
@@ -356,14 +366,17 @@ onMounted(() => {
 }
 
 .glass-card {
-  border-radius: 0.44rem;
+  border-radius: 0.76rem;
   border: 0.02rem solid rgba(249, 249, 249, 0.2);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.04rem);
 }
 
 .hand-card {
-  padding: 0.28rem 0.3rem 0.24rem;
+  padding: 0.5rem 0.45rem 0.24rem;
+}
+.poker-card {
+  margin-right: 0.1rem;
 }
 
 .top-row,
@@ -371,6 +384,22 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  .meta {
+    padding: 0.2rem 0;
+  }
+  .bottom-info {
+    display: flex;
+    align-items: center;
+    margin-top: 0.1rem;
+  }
+  .icon-sb {
+    width: 0.37rem;
+    height: 0.37rem;
+    margin-right: 0.1rem;
+  }
+  span {
+    margin-right: 0.1rem;
+  }
 }
 
 .poker-pair {
@@ -388,7 +417,7 @@ onMounted(() => {
 .line {
   height: 0.02rem;
   background: rgba(249, 249, 249, 0.2);
-  margin: 0.16rem 0;
+  margin: 0.25rem 0 0rem;
 }
 
 .meta {
@@ -399,12 +428,22 @@ onMounted(() => {
 .profit {
   text-align: right;
   font-size: 0.31rem;
+  .profit-hands {
+    img {
+      width: 0.37rem;
+      height: 0.37rem;
+    }
+    display: flex;
+    align-items: flex-end;
+  }
 }
 
 .money {
   color: #fa2b4b;
   font-size: 0.52rem;
   font-weight: 700;
+
+  line-height: 0.45rem;
 
   &.negative {
     color: #27d300;

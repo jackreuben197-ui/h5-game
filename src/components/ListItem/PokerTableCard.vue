@@ -345,7 +345,8 @@ function shortName(name?: string): string {
   overflow: hidden;
   z-index: 4;
   border-radius: 0.24rem;
-  background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)),
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)),
     url('@/assets/images/game_list_card_title_bg.png') no-repeat center / 100% 100%;
 }
 
@@ -416,7 +417,7 @@ function shortName(name?: string): string {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.29rem;
+  font-size: 0.26rem;
 }
 
 .table-footer p {

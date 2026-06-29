@@ -103,11 +103,15 @@ export async function postGuildGiveRecycleApi(
 // 对齐 cocos WebClubFundOrderList.API
 export async function postClubFundOrderListApi(
   payload: ClubFundOrderListRequest = {} as ClubFundOrderListRequest,
-  clubId?: number
+  clubId?: number,
+  options: { suppressBusinessToast?: boolean } = {},
 ): Promise<ApiResponse<ClubFundOrderListResponseData>> {
   const endpoint = '/order/club/order_list'
   const headers = clubId != null ? { 'X-Club': String(clubId) } : undefined
-  const response = await http.post<ApiResponse<ClubFundOrderListResponseData>>(endpoint, payload, { headers })
+  const response = await http.post<ApiResponse<ClubFundOrderListResponseData>>(endpoint, payload, {
+    headers,
+    ...options,
+  })
   return response.data
 }
 

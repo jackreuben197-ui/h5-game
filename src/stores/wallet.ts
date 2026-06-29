@@ -127,14 +127,14 @@ export const useWalletStore = defineStore('wallet', () => {
     const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
 
     try {
-      // Check Recharge orders
+      // Check Recharge orders（后台轮询，业务码非 0 静默处理，不弹错误提示）
       const rechargeRes = await postClubFundOrderListApi({
         order_type: 1, // Recharge
         my_order: true,
         limit: 10,
         offset: 0,
         status: 1, // Pending
-      }, clubId)
+      }, clubId, { suppressBusinessToast: true })
 
       if (rechargeRes.code === 0 && rechargeRes.data?.list) {
         pendingCsRechargeOrders.value = rechargeRes.data.list.filter(o => {
@@ -145,14 +145,14 @@ export const useWalletStore = defineStore('wallet', () => {
         pendingCsRechargeOrders.value = []
       }
 
-      // Check Withdraw orders
+      // Check Withdraw orders（后台轮询，业务码非 0 静默处理，不弹错误提示）
       const withdrawRes = await postClubFundOrderListApi({
         order_type: 2, // Withdraw
         my_order: true,
         limit: 10,
         offset: 0,
         status: 1, // Pending
-      }, clubId)
+      }, clubId, { suppressBusinessToast: true })
 
       if (withdrawRes.code === 0 && withdrawRes.data?.list) {
         pendingCsWithdrawOrders.value = withdrawRes.data.list.filter(o => {

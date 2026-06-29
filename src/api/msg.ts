@@ -1,3 +1,4 @@
+import type { AxiosRequestConfig } from 'axios'
 import http from '@/api/http'
 import type { ApiResponse } from '@/api/models/common'
 import type {
@@ -81,10 +82,15 @@ export async function postMsgMessageTodoApi(
 
 // 对齐 cocos WebMsgMessageTodoAllInfo.API
 export async function postMsgMessageTodoAllInfoApi(
-  payload: MsgMessageTodoAllInfoRequest = {} as MsgMessageTodoAllInfoRequest
+  payload: MsgMessageTodoAllInfoRequest = {} as MsgMessageTodoAllInfoRequest,
+  options: AxiosRequestConfig & { suppressBusinessToast?: boolean } = {},
 ): Promise<ApiResponse<MsgMessageTodoAllInfoResponseData>> {
   const endpoint = '/msg/message/todo/all_info'
-  const response = await http.post<ApiResponse<MsgMessageTodoAllInfoResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<MsgMessageTodoAllInfoResponseData>>(
+    endpoint,
+    payload,
+    options,
+  )
   return response.data
 }
 

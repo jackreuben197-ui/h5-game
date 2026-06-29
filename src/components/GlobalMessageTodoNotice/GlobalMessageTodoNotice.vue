@@ -182,7 +182,11 @@ async function fetchTodoAllInfo(): Promise<void> {
   if (!gameStore.sessionToken.trim()) return
 
   loading.value = true
-  const response = await postMsgMessageTodoAllInfoApi({ todo_types: [2, 3, 6] })
+  // 后台轮询：业务码非 0（如无俱乐部/无权限）属正常情况，静默处理，不弹错误提示。
+  const response = await postMsgMessageTodoAllInfoApi(
+    { todo_types: [2, 3, 6] },
+    { suppressBusinessToast: true },
+  )
   loading.value = false
 
   if (response.code !== 0) {

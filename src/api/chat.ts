@@ -1,3 +1,4 @@
+import type { AxiosRequestConfig } from 'axios'
 import http from '@/api/http'
 import type { ApiResponse } from '@/api/models/common'
 import type {
@@ -118,10 +119,15 @@ export async function postChatRoomMessageSyncApi(
 
 // 对齐 cocos WebChatSupportChannelList.API
 export async function postChatSupportChannelListApi(
-  payload: ChatSupportChannelListRequest = {} as ChatSupportChannelListRequest
+  payload: ChatSupportChannelListRequest = {} as ChatSupportChannelListRequest,
+  options: AxiosRequestConfig & { suppressBusinessToast?: boolean } = {},
 ): Promise<ApiResponse<ChatSupportChannelListResponseData>> {
   const endpoint = '/chat/support/channel/list'
-  const response = await http.post<ApiResponse<ChatSupportChannelListResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<ChatSupportChannelListResponseData>>(
+    endpoint,
+    payload,
+    options,
+  )
   return response.data
 }
 

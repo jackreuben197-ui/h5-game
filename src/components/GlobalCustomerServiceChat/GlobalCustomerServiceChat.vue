@@ -443,11 +443,15 @@ async function fetchChannel(): Promise<void> {
   }
 
   const queryTypes = contextType > 0 ? [contextType] : undefined
-  const response = await postChatSupportChannelListApi({
-    im_service_types: queryTypes,
-    limit: 100,
-    offset: 0,
-  })
+  // 后台拉取客服会话列表：业务码非 0 静默处理，不弹错误提示（无客服服务时组件已自有兜底）。
+  const response = await postChatSupportChannelListApi(
+    {
+      im_service_types: queryTypes,
+      limit: 100,
+      offset: 0,
+    },
+    { suppressBusinessToast: true },
+  )
 
   if (response.code !== 0) {
     channels.value = []

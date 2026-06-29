@@ -60,7 +60,8 @@ export const useWalletStore = defineStore('wallet', () => {
 
   // 刚提交、服务端列表尚未返回的订单：本地乐观插入，保证立即进入“交易中”聊天；
   // refreshPendingCsOrder 一旦在服务端列表里找到同 order_no，就把它从这里剔除（真实数据接管）。
-  const optimisticCsOrders = ref<{ order: ClubFundOrderListOrderInfo; orderType: 'recharge' | 'withdraw' }[]>([])
+  const optimisticCsOrders = ref<{ order: ClubFundOrderListOrderInfo; orderType: 'recharge' | 'withdraw'; addedAt: number }[]>([])
+  const OPTIMISTIC_TTL = 30_000
 
   function addOptimisticCsOrder(
     order: ClubFundOrderListOrderInfo,
@@ -68,7 +69,7 @@ export const useWalletStore = defineStore('wallet', () => {
   ): void {
     if (!order.order_no) return
     if (optimisticCsOrders.value.some((e) => e.order.order_no === order.order_no)) return
-    optimisticCsOrders.value = [...optimisticCsOrders.value, { order, orderType }]
+    optimisticCsOrders.value = [...optimisticCsOrders.value, { order, orderType, addedAt: Date.now() }]
   }
 
   const pendingCsRechargeOrder = computed(() => pendingCsRechargeOrders.value[0] || null)
@@ -138,7 +139,8 @@ export const useWalletStore = defineStore('wallet', () => {
 
       if (rechargeRes.code === 0 && rechargeRes.data?.list) {
         pendingCsRechargeOrders.value = rechargeRes.data.list.filter(o => {
-          const ot = (o as any).pay_type || (o as any).api_type || (o as any).type
+          if (Number(o.status) !== 1) return false
+          const ot = Number((o as any).pay_api_type ?? (o as any).pay_type ?? (o as any).api_type ?? (o as any).type)
           return ot === 3 || o.pay_type_name?.includes('撮合')
         })
       } else {
@@ -158,26 +160,26 @@ export const useWalletStore = defineStore('wallet', () => {
         pendingCsWithdrawOrders.value = withdrawRes.data.list.filter(o => {
           // 客服渠道提现进聊天（account_type 0：usdt提现 type1 / 撮合提现 type3）；
           // 银行卡渠道(account_type 1)走在线流程，不进聊天。
+          if (Number(o.status) !== 1) return false
           const acct = Number((o as any).account_type)
           if (acct === 1) return false
-          const ot = (o as any).pay_type ?? (o as any).api_type ?? (o as any).type
+          const ot = Number((o as any).pay_api_type ?? (o as any).pay_type ?? (o as any).api_type ?? (o as any).type)
           return acct === 0 || ot === 1 || ot === 3 || o.pay_type_name?.includes('撮合')
         })
       } else {
         pendingCsWithdrawOrders.value = []
       }
 
-      // 服务端已经接管的 order_no，从乐观列表剔除，避免重复/僵尸数据
+      // 服务端已接管的 order_no 从乐观列表剔除；超过 TTL 仍未被服务端确认的也丢弃，避免僵尸累积
       const knownNos = new Set(
         [...pendingCsRechargeOrders.value, ...pendingCsWithdrawOrders.value]
           .map((o) => o.order_no)
           .filter(Boolean),
       )
-      if (knownNos.size) {
-        optimisticCsOrders.value = optimisticCsOrders.value.filter(
-          (e) => !knownNos.has(e.order.order_no),
-        )
-      }
+      const now = Date.now()
+      optimisticCsOrders.value = optimisticCsOrders.value.filter(
+        (e) => !knownNos.has(e.order.order_no) && now - e.addedAt < OPTIMISTIC_TTL,
+      )
     } catch (e) {
       console.error('Failed to fetch pending CS orders', e)
       pendingCsRechargeOrders.value = []

@@ -33,30 +33,30 @@ const boxList = ref<BoxItem[]>([
   {
     key: 'club-career',
     icon: iconBoxClubT,
-    text: t('PageMineClubCareer'),
+    text: 'PageMineClubCareer',
     route: '/mine/career/club',
   },
   {
     key: 'friends-career',
     icon: iconBoxFriendT,
-    text: t('PageMineFriendTableCareer'),
+    text: 'PageMineFriendTableCareer',
     route: '/mine/career/friends',
   },
-  { key: 'my-bill', icon: iconBoxDiamond, text: t('UIMine_Bill'), route: '/mine/bill' },
+  { key: 'my-bill', icon: iconBoxDiamond, text: 'UIMine_Bill', route: '/mine/bill' },
   {
     key: 'hand-history',
     icon: iconBoxSave,
-    text: t('UIMine_btn_paipu'),
+    text: 'UIMine_btn_paipu',
     route: '/mine/hand-collection',
   },
-  { key: 'bag', icon: iconBoxBag, text: t('UIMine_btn_backpack'), route: '/mine/backpack' },
+  { key: 'bag', icon: iconBoxBag, text: 'UIMine_btn_backpack', route: '/mine/backpack' },
   {
     key: 'message-board',
     icon: iconBoxComment,
-    text: t('PageMineMessageBoard'),
+    text: 'PageMineMessageBoard',
     route: '/mine/message-board',
   },
-  { key: 'settings', icon: iconBoxSetting, text: t('UIMine_btn_setting'), route: '/mine/settings' },
+  { key: 'settings', icon: iconBoxSetting, text: 'UIMine_btn_setting', route: '/mine/settings' },
 ])
 
 function goToNextPage(path: string): void {
@@ -130,7 +130,7 @@ const displayUser = computed(() => {
         <div class="img">
           <img :src="box.icon" alt="消息" />
         </div>
-        <div class="text">{{ box.text }}</div>
+        <div class="text">{{ t(box.text) }}</div>
       </div>
     </div>
   </div>

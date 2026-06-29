@@ -224,8 +224,8 @@ onMounted(() => {
               <img class="zone-mini-icon" src="@/assets/icons/game_zone_mahjong_mini.png" alt="" />
             </div>
             <div class="zone-desc casino-desc">
-              <p>{{ localized('Live · Slots · Sports', '真人视讯 电子娱乐 体育竞猜') }}</p>
-              <p>{{ localized('Top providers', '全球一线厂商') }}</p>
+              <p>{{ localized('Live, Slots, Sports', '真人视讯 电子娱乐 体育竞猜') }}</p>
+              <p>{{ localized('Top Providers', '全球一线厂商') }}</p>
             </div>
           </div>
           <div class="zone-online-bar">

@@ -22,6 +22,11 @@ import iconBalance from '@/assets/icons/icon_credit_chip.png'
 import iconChipRed from '@/assets/icons/icon_chip_red.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { useGameStore } from '@/stores/game'
+import { getLocale } from '@/i18n'
+
+function tl(en: string, zh: string): string {
+  return getLocale() === 'en' ? en : zh
+}
 
 type TodoSectionType = 'uc' | 'bringIn' | 'joinClub'
 
@@ -31,10 +36,12 @@ interface TodoSection {
 }
 
 const sectionDefs: TodoSection[] = [
-  { type: 'uc', title: '俱乐部玩家充值申请' },
-  { type: 'bringIn', title: '买入申请' },
-  { type: 'joinClub', title: '加入俱乐部申请' },
+  { type: 'uc', title: tl('Player Recharge Requests', '俱乐部玩家充值申请') },
+  { type: 'bringIn', title: tl('Buy-in Requests', '买入申请') },
+  { type: 'joinClub', title: tl('Club Join Requests', '加入俱乐部申请') },
 ]
+
+const verifyLabel = computed(() => tl('Verify', '消息验证'))
 
 const visible = ref(false)
 const loading = ref(false)
@@ -306,7 +313,7 @@ onBeforeUnmount(() => {
     @pointerleave="onFloatPointerUp"
   >
     <button class="todo-float-btn" type="button" @click.stop="openPanel">
-      <span class="todo-float-text">消息验证</span>
+      <span class="todo-float-text">{{ verifyLabel }}</span>
       <span v-if="totalCount > 0" class="todo-float-count">{{ totalCount }}</span>
     </button>
   </div>

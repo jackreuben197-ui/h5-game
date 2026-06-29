@@ -165,15 +165,16 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-start;
-    align-items: center;
+    align-items: flex-start;
     width: 100%;
     gap: 0.5rem;
     padding: 0 0.5rem;
     .box-item {
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: flex-start;
       align-items: center;
+      width: calc((100% - 1.5rem) / 4);
       .img {
         width: 1.62rem;
         height: 1.62rem;
@@ -186,6 +187,8 @@
       .text {
         font-size: 0.32rem;
         line-height: 120%;
+        text-align: center;
+        word-break: break-word;
       }
     }
   }

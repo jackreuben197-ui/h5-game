@@ -2,7 +2,7 @@
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import iconAdd from '@/assets/icons/icon_add.svg'
 import iconChip from '@/assets/icons/icon_chips.png'
-import { t } from '@/i18n'
+import { getLocale, t } from '@/i18n'
 import iconBoxClubT from '@/assets/icons/icon_box_club_t.png'
 import iconBoxFriendT from '@/assets/icons/icon_box_friend_t.png'
 import iconBoxDiamond from '@/assets/icons/icon_box_diamond.png'
@@ -22,14 +22,16 @@ interface BoxItem {
 
 const loginModalStore = useLoginModalStore()
 
+const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
+
 const boxList: BoxItem[] = [
-  { key: 'club-career', icon: iconBoxClubT, text: t('PageMineClubCareer') },
-  { key: 'friends-career', icon: iconBoxFriendT, text: t('PageMineFriendTableCareer') },
-  { key: 'my-bill', icon: iconBoxDiamond, text: t('UIMine_Bill') },
-  { key: 'hand-history', icon: iconBoxSave, text: t('UIMine_btn_paipu') },
-  { key: 'bag', icon: iconBoxBag, text: t('UIMine_btn_backpack') },
-  { key: 'message-board', icon: iconBoxComment, text: t('PageMineMessageBoard') },
-  { key: 'settings', icon: iconBoxSetting, text: t('UIMine_btn_setting') },
+  { key: 'club-career', icon: iconBoxClubT, text: 'PageMineClubCareer' },
+  { key: 'friends-career', icon: iconBoxFriendT, text: 'PageMineFriendTableCareer' },
+  { key: 'my-bill', icon: iconBoxDiamond, text: 'UIMine_Bill' },
+  { key: 'hand-history', icon: iconBoxSave, text: 'UIMine_btn_paipu' },
+  { key: 'bag', icon: iconBoxBag, text: 'UIMine_btn_backpack' },
+  { key: 'message-board', icon: iconBoxComment, text: 'PageMineMessageBoard' },
+  { key: 'settings', icon: iconBoxSetting, text: 'UIMine_btn_setting' },
 ]
 
 const displayUser = {
@@ -70,7 +72,7 @@ function goToLogin(): void {
             <button class="left-avatar" type="button" @click="notifyNotLogin">
               <img :src="displayUser.avatar" alt="头像" />
             </button>
-            <div class="right-box" @click="notifyNotLogin">登录/注册</div>
+            <div class="right-box" @click="notifyNotLogin">{{ localized('Login/Register', '登录/注册') }}</div>
           </div>
           <div class="card-line2">
             <div class="left-board">
@@ -98,7 +100,7 @@ function goToLogin(): void {
         <div class="img">
           <img :src="box.icon" alt="消息" />
         </div>
-        <div class="text">{{ box.text }}</div>
+        <div class="text">{{ t(box.text) }}</div>
       </div>
     </div>
   </div>

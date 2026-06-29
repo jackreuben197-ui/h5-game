@@ -26,7 +26,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import { readClubListCache, writeClubListCache } from '@/utils/userClubListCache'
-import { t } from '@/i18n'
+import { t, getLocale } from '@/i18n'
 
 type QuickActionKind = 'create-club' | 'club-panel' | 'create-union' | 'club-career'
 
@@ -65,9 +65,11 @@ const searchedClub = ref<ClubInfo | null>(null)
 const fallbackBanners = [imgClubBannerFigma]
 const isChannelPackage = isChannelPackageHost()
 
+const enterLabel = computed(() => (getLocale() === 'en' ? t('UIClub_Enter') : '进入'))
+
 const quickActions: QuickActionItem[] = [
-  { id: 1, title: t('UIClub_CreateClub'), kind: 'create-club' },
-  { id: 2, title: t('PageMineClubCareer'), kind: 'club-career' },
+  { id: 1, title: 'UIClub_CreateClub', kind: 'create-club' },
+  { id: 2, title: 'PageMineClubCareer', kind: 'club-career' },
 ]
 
 const clubList = computed<ClubCardItem[]>(() => {
@@ -79,7 +81,7 @@ const clubList = computed<ClubCardItem[]>(() => {
     return {
       key,
       source: club,
-      name: toSafeString(club.club_name) || '未命名俱乐部',
+      name: toSafeString(club.club_name) || tl('Unnamed Club', '未命名俱乐部'),
       clubIdText: displayId || '--',
       roleText: getMemberRoleText(club.user_level),
       activeCount: toSafeNumber(club.user_gold),
@@ -113,7 +115,9 @@ const searchedClubDisplayId = computed(
   () => normalizeClubId(searchedClub.value?.random_id ?? searchedClub.value?.club_id) || '--',
 )
 
-const searchedClubName = computed(() => toSafeString(searchedClub.value?.club_name) || '俱乐部名称')
+const searchedClubName = computed(
+  () => toSafeString(searchedClub.value?.club_name) || t('UIClub_InfoName'),
+)
 
 const searchedClubMembers = computed(() => toSafeNumber(searchedClub.value?.club_members))
 
@@ -135,13 +139,17 @@ function toSafeNumber(value: unknown): number {
   return Number.isFinite(num) ? num : 0
 }
 
+function tl(en: string, zh: string): string {
+  return getLocale() === 'en' ? en : zh
+}
+
 function getMemberRoleText(value: unknown): string {
   const role = Number(value)
-  if (role === 1) return '会长'
-  if (role === 2) return '副会长'
-  if (role === 3) return '管理员'
-  if (role === 4) return '代理'
-  return '成员'
+  if (role === 1) return tl('Owner', '会长')
+  if (role === 2) return tl('Vice President', '副会长')
+  if (role === 3) return t('UIGuild_FilterButtonManager')
+  if (role === 4) return t('UIClub_AgentItem')
+  return t('UIGuild_FilterButtonMember')
 }
 
 function goToClubDetail(club?: ClubInfo): void {
@@ -228,7 +236,7 @@ async function loadMyClubList(force = false): Promise<void> {
   try {
     const response = await postOrgClubGetApi()
     if (Number(response.code) !== 0) {
-      throw new Error(response.message || '获取俱乐部失败')
+      throw new Error(response.message || tl('Failed to load clubs', '获取俱乐部失败'))
     }
 
     const list = Array.isArray(response.data) ? response.data : []
@@ -239,7 +247,7 @@ async function loadMyClubList(force = false): Promise<void> {
   } catch (error) {
     // 有缓存兜底时静默失败，避免在已有展示之上弹错。
     if (!hasInitialData) {
-      const message = error instanceof Error ? error.message : '获取俱乐部失败'
+      const message = error instanceof Error ? error.message : tl('Failed to load clubs', '获取俱乐部失败')
       showFailToast(message)
     } else {
       console.warn('[club-list] 静默刷新失败:', error)
@@ -252,7 +260,7 @@ async function loadMyClubList(force = false): Promise<void> {
 async function onSearchClub(): Promise<void> {
   const keyword = searchKeyword.value.trim()
   if (!keyword) {
-    showFailToast('请输入俱乐部ID')
+    showFailToast(t('UIClub_InputClubID'))
     return
   }
 
@@ -264,13 +272,13 @@ async function onSearchClub(): Promise<void> {
   try {
     const response = await postOrgClubSearchByIdApi({ club_random_id: Number(keyword) })
     if (Number(response.code) !== 0) {
-      showFailToast('找不到俱乐部')
+      showFailToast(tl('Club not found', '找不到俱乐部'))
       return
     }
 
     const targetClub = response.data
     if (!targetClub) {
-      showFailToast('未找到俱乐部')
+      showFailToast(tl('Club not found', '未找到俱乐部'))
       return
     }
 
@@ -284,7 +292,7 @@ async function onSearchClub(): Promise<void> {
     showJoinModal.value = true
   } catch (error) {
     const message = error instanceof Error ? error.message : ''
-    showFailToast(message || '找不到俱乐部')
+    showFailToast(message || tl('Club not found', '找不到俱乐部'))
   } finally {
     searchLoading.value = false
   }
@@ -301,7 +309,7 @@ async function onJoinClub(): Promise<void> {
 
   const clubId = Number(searchedClub.value.club_id)
   if (!Number.isFinite(clubId) || clubId <= 0) {
-    showFailToast('俱乐部信息异常，无法加入')
+    showFailToast(tl('Club info error, cannot join', '俱乐部信息异常，无法加入'))
     return
   }
 
@@ -309,16 +317,16 @@ async function onJoinClub(): Promise<void> {
   try {
     const response = await postOrgClubJoinApi({ club_id: clubId })
     if (Number(response.code) !== 0) {
-      throw new Error(response.message || '加入俱乐部失败')
+      throw new Error(response.message || tl('Failed to join club', '加入俱乐部失败'))
     }
 
-    showSuccessToast(response.message || '加入申请已提交')
+    showSuccessToast(response.message || tl('Join request submitted', '加入申请已提交'))
     showJoinModal.value = false
     setTimeout(() => {
       void loadMyClubList(true)
     }, 3000)
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加入俱乐部失败'
+    const message = error instanceof Error ? error.message : tl('Failed to join club', '加入俱乐部失败')
     showFailToast(message)
   } finally {
     joinLoading.value = false
@@ -333,7 +341,7 @@ onMounted(() => {
 <template>
   <div class="page-shell club-index">
     <section v-if="!isChannelPackage" class="search-row">
-      <div class="search-shell" aria-label="俱乐部搜索">
+      <div class="search-shell" :aria-label="tl('Club search', '俱乐部搜索')">
         <label class="search-trigger" for="club-search-input">
           <img class="search-icon" :src="imgSearch" alt="" />
           <input
@@ -345,14 +353,14 @@ onMounted(() => {
             autocomplete="off"
             maxlength="6"
             readonly
-            placeholder="搜索俱乐部ID"
+            :placeholder="tl('Search Club ID', '搜索俱乐部ID')"
             @focus="openSearchKeypad"
             @click="openSearchKeypad"
           />
         </label>
         <button type="button" class="search-btn" :disabled="searchLoading" @click="onSearchClub">
           <div class="search-btn-blur" aria-hidden="true" />
-          <span class="search-btn-label">{{ searchLoading ? '搜索中' : '搜索' }}</span>
+          <span class="search-btn-label">{{ searchLoading ? tl('Searching', '搜索中') : tl('Search', '搜索') }}</span>
           <div class="search-btn-inset" aria-hidden="true" />
         </button>
       </div>
@@ -396,7 +404,7 @@ onMounted(() => {
             <img class="qa-img icon-board-chart" :src="iconClubCareer" alt="" aria-hidden="true" />
           </template>
         </div>
-        <span class="action-text" :class="`action-text--${item.kind}`">{{ item.title }}</span>
+        <span class="action-text" :class="`action-text--${item.kind}`">{{ t(item.title) }}</span>
       </button>
     </section>
 
@@ -410,8 +418,8 @@ onMounted(() => {
     </section>
 
     <section class="club-list">
-      <p v-if="loadingMyClubs" class="club-empty-text">正在加载俱乐部...</p>
-      <p v-else-if="!displayClubList.length" class="club-empty-text">暂无俱乐部，先去创建一个吧</p>
+      <p v-if="loadingMyClubs" class="club-empty-text">{{ tl('Loading clubs...', '正在加载俱乐部...') }}</p>
+      <p v-else-if="!displayClubList.length" class="club-empty-text">{{ tl('No clubs yet — create one!', '暂无俱乐部，先去创建一个吧') }}</p>
       <article
         v-for="club in displayClubList"
         :key="club.key"
@@ -446,7 +454,7 @@ onMounted(() => {
 
             <div class="enter-btn-wrapper">
               <button type="button" class="enter-btn" @click.stop="goToClubDetail(club.source)">
-                <span class="enter-btn-label">进入</span>
+                <span class="enter-btn-label">{{ enterLabel }}</span>
               </button>
             </div>
           </div>
@@ -460,11 +468,11 @@ onMounted(() => {
             </span>
             <span class="stat-item">
               <img :src="imgTable" alt="" />
-              <span>{{ club.tableCount }}桌</span>
+              <span>{{ t('UIMatch_TableCount', club.tableCount) }}</span>
             </span>
             <span class="stat-item">
               <img :src="imgPeople" alt="" />
-              <span>{{ club.memberCount }}人</span>
+              <span>{{ t('UIMatch_Person', club.memberCount) }}</span>
             </span>
           </div>
         </div>
@@ -475,7 +483,7 @@ onMounted(() => {
       <div v-if="showJoinModal" class="join-modal-mask" @click="closeJoinModal">
         <section class="join-modal" @click.stop>
           <div class="join-modal-card">
-            <img class="join-modal-logo" :src="searchedClubLogo" alt="俱乐部头像" />
+            <img class="join-modal-logo" :src="searchedClubLogo" :alt="tl('Club avatar', '俱乐部头像')" />
             <h3 class="join-modal-name">{{ searchedClubName }}</h3>
             <p class="join-modal-id-row">
               <span class="join-modal-id-tag">ID</span>
@@ -483,7 +491,7 @@ onMounted(() => {
             </p>
             <p class="join-modal-member-row">
               <img :src="imgPeople" alt="" aria-hidden="true" />
-              <span>{{ searchedClubMembers }}人</span>
+              <span>{{ t('UIMatch_Person', searchedClubMembers) }}</span>
             </p>
           </div>
 
@@ -493,7 +501,7 @@ onMounted(() => {
               class="join-modal-btn join-modal-btn--cancel"
               @click="closeJoinModal"
             >
-              取消
+              {{ t('Wallet_Cancel') }}
             </button>
             <button
               type="button"
@@ -501,7 +509,7 @@ onMounted(() => {
               :disabled="joinLoading"
               @click="onJoinClub"
             >
-              {{ joinLoading ? '提交中' : '加入' }}
+              {{ joinLoading ? tl('Submitting...', '提交中') : tl('Join', '加入') }}
             </button>
           </div>
         </section>
@@ -516,8 +524,8 @@ onMounted(() => {
       :initial-value="searchKeyword"
       :show-input-area="true"
       :allow-leading-zero="true"
-      title="搜索俱乐部ID"
-      confirm-text="确定"
+      :title="tl('Search Club ID', '搜索俱乐部ID')"
+      :confirm-text="t('CommitOK')"
       @close="onSearchKeypadClose"
       @submit="onSearchKeypadSubmit"
       @key-press="onSearchKeypadKeyPress"
@@ -695,7 +703,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.166rem;
   color: #fff;
   background: transparent;

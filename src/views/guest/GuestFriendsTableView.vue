@@ -2,18 +2,21 @@
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import iconAdd from '@/assets/icons/icon_add.svg'
 import { useLoginModalStore } from '@/stores/loginModal'
+import { getLocale } from '@/i18n'
 
 const loginModalStore = useLoginModalStore()
+
+const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
 
 const INVITE_CODE_LENGTH = 7
 const inviteCode: string[] = Array(INVITE_CODE_LENGTH).fill('')
 
 const activeFilter = 'all'
 const filters = [
-  { key: 'all', label: '全部' },
-  { key: 'nlh', label: '德州' },
-  { key: 'plo', label: '奥马哈' },
-  { key: 'short', label: '6+' },
+  { key: 'all', labelEn: 'All', labelCn: '全部' },
+  { key: 'nlh', labelEn: "Hold'em", labelCn: '德州' },
+  { key: 'plo', labelEn: 'Omaha', labelCn: '奥马哈' },
+  { key: 'short', labelEn: '6+', labelCn: '6+' },
 ]
 
 const displayUser = {
@@ -28,7 +31,7 @@ function notifyNotLogin(): void {
 <template>
   <div class="friends-table-page">
     <div class="title-bar">
-      <div class="title">朋友桌</div>
+      <div class="title">{{ localized('Friend Tables', '朋友桌') }}</div>
       <div class="currency-info" @click="notifyNotLogin">
         <div class="icon-diamond">
           <img :src="iconDiamond" alt="钻石" />
@@ -43,8 +46,10 @@ function notifyNotLogin(): void {
     <div class="scroll-content">
       <div class="main-content">
         <div class="section join-section">
-          <div class="section-title">加入牌局</div>
-          <div class="section-subtitle">输入邀请码，和朋友一起切磋</div>
+          <div class="section-title">{{ localized('Join Table', '加入牌局') }}</div>
+          <div class="section-subtitle">
+            {{ localized('Enter an invite code to play with friends', '输入邀请码，和朋友一起切磋') }}
+          </div>
           <div class="invite-inputs" @click="notifyNotLogin">
             <div v-for="(digit, index) in inviteCode" :key="index" class="invite-input-wrap">
               <span class="invite-digit">{{ digit }}</span>
@@ -52,13 +57,13 @@ function notifyNotLogin(): void {
           </div>
 
           <button class="action-btn" @click="notifyNotLogin">
-            <span>立即加入</span>
+            <span>{{ localized('Join Now', '立即加入') }}</span>
           </button>
         </div>
 
         <div class="section create-section">
-          <div class="section-title">快速组局</div>
-          <button class="action-btn" @click="notifyNotLogin">开始创建</button>
+          <div class="section-title">{{ localized('Quick Game', '快速组局') }}</div>
+          <button class="action-btn" @click="notifyNotLogin">{{ localized('Create Now', '开始创建') }}</button>
         </div>
       </div>
 
@@ -66,8 +71,10 @@ function notifyNotLogin(): void {
         <div class="table-header">
           <div class="table-header-line"></div>
           <div class="table-header-center">
-            <div class="table-header-title">当前牌桌</div>
-            <div class="table-header-sub">显示目前有效的牌桌</div>
+            <div class="table-header-title">{{ localized('Active Tables', '当前牌桌') }}</div>
+            <div class="table-header-sub">
+              {{ localized('Currently available tables', '显示目前有效的牌桌') }}
+            </div>
           </div>
           <div class="table-header-line"></div>
         </div>
@@ -80,13 +87,13 @@ function notifyNotLogin(): void {
             :class="{ active: activeFilter === filter.key }"
             @click="notifyNotLogin"
           >
-            {{ filter.label }}
+            {{ localized(filter.labelEn, filter.labelCn) }}
           </div>
         </div>
 
         <div class="table-list">
           <div class="empty-state">
-            <div class="empty-text">登录后查看牌桌</div>
+            <div class="empty-text">{{ localized('Log in to view tables', '登录后查看牌桌') }}</div>
           </div>
         </div>
       </div>

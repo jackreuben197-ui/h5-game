@@ -24,11 +24,11 @@ interface BoxItem {
 const userInfoStore = useUserInfoStore()
 
 const boxList = ref<BoxItem[]>([
-  { icon: iconBoxSystem, text: t('Msg3'), type: 'system', msgType: 4, unreadCount: 0 },
-  { icon: iconBoxWallet, text: t('Msg4'), type: 'other', msgType: 3, unreadCount: 0 },
-  { icon: iconBoxBag, text: t('Msg6'), type: 'other', msgType: 1, unreadCount: 0 },
-  { icon: iconBoxClub, text: t('Msg1'), type: 'other', msgType: 2, unreadCount: 0 },
-  { icon: iconBoxTribe, text: t('Msg2'), type: 'other', msgType: 5, unreadCount: 0 },
+  { icon: iconBoxSystem, text: 'Msg3', type: 'system', msgType: 4, unreadCount: 0 },
+  { icon: iconBoxWallet, text: 'Msg4', type: 'other', msgType: 3, unreadCount: 0 },
+  { icon: iconBoxBag, text: 'Msg6', type: 'other', msgType: 1, unreadCount: 0 },
+  { icon: iconBoxClub, text: 'Msg1', type: 'other', msgType: 2, unreadCount: 0 },
+  { icon: iconBoxTribe, text: 'Msg2', type: 'other', msgType: 5, unreadCount: 0 },
 ])
 
 const creditUnreadCount = ref(0)
@@ -139,9 +139,9 @@ onMounted(() => {
             <button
               class="button btn-credit"
               type="button"
-              @click="goToMessagePage('credit', '授信额度申请')"
+              @click="goToMessagePage('credit', t('PageMessageApplyForCreditLimit'))"
             >
-              <div class="text">授信额度申请</div>
+              <div class="text">{{ t('PageMessageApplyForCreditLimit') }}</div>
               <div class="round-icon">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -193,9 +193,9 @@ onMounted(() => {
             <button
               class="button btn-credit"
               type="button"
-              @click="goToMessagePage('uc', '联盟币申请')"
+              @click="goToMessagePage('uc', t('PageMessageApplyForUC'))"
             >
-              <div class="text">联盟币申请</div>
+              <div class="text">{{ t('PageMessageApplyForUC') }}</div>
               <div class="round-icon">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -250,13 +250,13 @@ onMounted(() => {
         v-for="box in boxList"
         :key="box.text"
         class="box-item"
-        @click="goToMessagePage(box.type, box.text, box.msgType)"
+        @click="goToMessagePage(box.type, t(box.text), box.msgType)"
       >
         <div class="img">
           <img :src="box.icon" alt="消息" />
           <span v-if="box.unreadCount > 0" class="unread-badge">{{ box.unreadCount }}</span>
         </div>
-        <div class="text">{{ box.text }}</div>
+        <div class="text">{{ t(box.text) }}</div>
       </div>
     </div>
   </div>
@@ -289,6 +289,7 @@ onMounted(() => {
         }
         .card-line2 {
           padding: 0 0.4rem 0 0.45rem;
+          gap: 0.3rem;
           .button {
             border: 0;
             cursor: pointer;
@@ -337,10 +338,13 @@ onMounted(() => {
             background: rgba(38, 38, 38, 0.2);
             background-blend-mode: hard-light;
             position: relative;
-            /* 标签变长（授信额度申请 / 联盟币申请）后禁止压缩，避免 nowrap 文案被 overflow:hidden 裁掉。 */
-            flex-shrink: 0;
+            flex: 0 1 auto;
+            min-width: 0;
+            height: auto;
+            min-height: 31.909px;
             .text {
-              white-space: nowrap;
+              white-space: normal;
+              word-break: break-word;
             }
             &::before {
               content: '';

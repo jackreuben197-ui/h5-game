@@ -17,7 +17,7 @@ import iconSquid from '@/assets/icons/table_icon_squid.png'
 import iconCritical from '@/assets/icons/table_icon_critical.png'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import { showGameToast } from '@/components/Toast'
-import { t } from '@/i18n'
+import { t, getLocale } from '@/i18n'
 import { enterTable } from '@/bridge/core'
 import type { EnterTablePayload } from '@bridge-protocol'
 import LoginSession from '@/session/loginSession'
@@ -40,12 +40,14 @@ const inviteCodeValue = computed(() => inviteCode.value.join(''))
 const scrollContentRef = ref<HTMLElement | null>(null)
 
 const activeFilter = ref('all')
+const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
+
 const filters = [
-  { key: 'all', label: '全部' },
-  { key: 'nlh', label: '德州' },
-  { key: 'plo', label: '奥马哈' },
-  { key: 'short', label: '6+' },
-  // { key: 'mahjong', label: '麻将' },
+  { key: 'all', labelEn: 'All', labelCn: '全部' },
+  { key: 'nlh', labelEn: "Hold'em", labelCn: '德州' },
+  { key: 'plo', labelEn: 'Omaha', labelCn: '奥马哈' },
+  { key: 'short', labelEn: '6+', labelCn: '6+' },
+  // { key: 'mahjong', labelEn: 'Mahjong', labelCn: '麻将' },
 ]
 
 interface FriendRoomListItem {
@@ -539,7 +541,7 @@ watch(
   <div class="friends-table-page">
     <!-- 顶部标题栏 -->
     <div class="title-bar">
-      <div class="title">朋友桌</div>
+      <div class="title">{{ localized('Friend Tables', '朋友桌') }}</div>
       <div class="currency-info" @click="goToMineShop">
         <div class="icon-diamond">
           <img :src="iconDiamond" alt="钻石" />
@@ -556,8 +558,10 @@ watch(
       <div class="main-content">
         <!-- 加入牌局 -->
         <div class="section join-section">
-          <div class="section-title">加入牌局</div>
-          <div class="section-subtitle">输入邀请码，和朋友一起切磋</div>
+          <div class="section-title">{{ localized('Join Table', '加入牌局') }}</div>
+          <div class="section-subtitle">
+            {{ localized('Enter an invite code to play with friends', '输入邀请码，和朋友一起切磋') }}
+          </div>
           <div class="invite-inputs" @click="onInputCode">
             <div v-for="(digit, index) in inviteCode" :key="index" class="invite-input-wrap">
               <span class="invite-digit">{{ digit }}</span>
@@ -566,14 +570,14 @@ watch(
 
           <button class="action-btn" @click="handleJoinTable">
             <van-loading v-if="joinLoading" />
-            <span v-else>立即加入</span>
+            <span v-else>{{ localized('Join Now', '立即加入') }}</span>
           </button>
         </div>
 
         <!-- 快速组局 -->
         <div class="section create-section">
-          <div class="section-title">快速组局</div>
-          <button class="action-btn" @click="onCreateRoom">开始创建</button>
+          <div class="section-title">{{ localized('Quick Game', '快速组局') }}</div>
+          <button class="action-btn" @click="onCreateRoom">{{ localized('Create Now', '开始创建') }}</button>
         </div>
       </div>
 
@@ -582,8 +586,10 @@ watch(
         <div class="table-header">
           <div class="table-header-line"></div>
           <div class="table-header-center">
-            <div class="table-header-title">当前牌桌</div>
-            <div class="table-header-sub">显示目前有效的牌桌</div>
+            <div class="table-header-title">{{ localized('Active Tables', '当前牌桌') }}</div>
+            <div class="table-header-sub">
+              {{ localized('Currently available tables', '显示目前有效的牌桌') }}
+            </div>
           </div>
           <div class="table-header-line"></div>
         </div>
@@ -597,7 +603,7 @@ watch(
             :class="{ active: activeFilter === filter.key }"
             @click="activeFilter = filter.key"
           >
-            {{ filter.label }}
+            {{ localized(filter.labelEn, filter.labelCn) }}
           </div>
         </div>
 
@@ -644,7 +650,7 @@ watch(
                     :src="item.src"
                     :alt="item.alt"
                   />
-                  <span v-if="isParticipated(room)" class="participated">参与过</span>
+                  <span v-if="isParticipated(room)" class="participated">{{ localized('Joined', '参与过') }}</span>
                 </div>
               </div>
             </div>
@@ -660,7 +666,7 @@ watch(
 
           <!-- 空状态 -->
           <div v-if="filteredRooms.length === 0 && !loading" class="empty-state">
-            <div class="empty-text">暂无牌桌</div>
+            <div class="empty-text">{{ localized('No tables', '暂无牌桌') }}</div>
           </div>
         </div>
       </div>

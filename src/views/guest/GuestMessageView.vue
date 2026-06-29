@@ -18,11 +18,11 @@ interface BoxItem {
 }
 
 const boxList: BoxItem[] = [
-  { icon: iconBoxSystem, text: t('Msg3') },
-  { icon: iconBoxWallet, text: t('Msg4') },
-  { icon: iconBoxBag, text: t('Msg6') },
-  { icon: iconBoxClub, text: t('Msg1') },
-  { icon: iconBoxTribe, text: t('Msg2') },
+  { icon: iconBoxSystem, text: 'Msg3' },
+  { icon: iconBoxWallet, text: 'Msg4' },
+  { icon: iconBoxBag, text: 'Msg6' },
+  { icon: iconBoxClub, text: 'Msg1' },
+  { icon: iconBoxTribe, text: 'Msg2' },
 ]
 
 const displayUser = {
@@ -80,7 +80,7 @@ function notifyNotLogin(): void {
         <div class="img">
           <img :src="box.icon" alt="消息" />
         </div>
-        <div class="text">{{ box.text }}</div>
+        <div class="text">{{ t(box.text) }}</div>
       </div>
     </div>
   </div>
@@ -112,9 +112,15 @@ function notifyNotLogin(): void {
         }
         .card-line2 {
           padding: 0 0.4rem 0 0.45rem;
+          gap: 0.3rem;
           .button {
             border: 0;
             cursor: pointer;
+            min-width: 0;
+            .text {
+              white-space: normal;
+              word-break: break-word;
+            }
           }
         }
       }

@@ -20,7 +20,9 @@ import { getLocale } from '@/i18n'
 import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
 
-const title = computed(() => '设置')
+const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
+
+const title = computed(() => localized('Settings', '设置'))
 
 const router = useRouter()
 const gameStore = useGameStore()
@@ -42,22 +44,38 @@ interface SettingItem {
 }
 
 const sectionTop: SettingItem[] = [
-  { key: 'logout', label: '退出登录', icon: icLogout },
-  { key: 'language', label: '切换语言', icon: icChangeLanguage, rightText: languageLabel() },
-  { key: 'account', label: '账号管理', icon: icAccountCenter },
+  { key: 'logout', label: localized('Log out', '退出登录'), icon: icLogout },
+  {
+    key: 'language',
+    label: localized('Language', '切换语言'),
+    icon: icChangeLanguage,
+    rightText: languageLabel(),
+  },
+  { key: 'account', label: localized('Account Management', '账号管理'), icon: icAccountCenter },
 ]
 
 const sectionMiddle: SettingItem[] = [
-  { key: 'sound', label: '游戏声音', icon: icGameSound, toggle: true },
-  { key: 'line', label: '当前线路', icon: icCurrentLine, rightText: '默认线路' },
-  { key: 'cancel', label: '注销账号', icon: icDeleteAccount },
-  { key: 'about', label: '关于我们', icon: icAboutUs },
-  // { key: 'agreement', label: '用户协议', icon: icPolicePrivacy },
+  { key: 'sound', label: localized('Game Sound', '游戏声音'), icon: icGameSound, toggle: true },
+  {
+    key: 'line',
+    label: localized('Current Line', '当前线路'),
+    icon: icCurrentLine,
+    rightText: localized('Default Line', '默认线路'),
+  },
+  { key: 'cancel', label: localized('Delete Account', '注销账号'), icon: icDeleteAccount },
+  { key: 'about', label: localized('About Us', '关于我们'), icon: icAboutUs },
+  // { key: 'agreement', label: localized('User Agreement', '用户协议'), icon: icPolicePrivacy },
 ]
 
 const sectionBottom: SettingItem[] = [
-  // { key: 'privacy', label: '用户隐私协议', icon: icUserAgreement },
-  { key: 'version', label: '版本号', icon: icAppVersion, rightText: 'v1.0.0', clickable: false },
+  // { key: 'privacy', label: localized('Privacy Policy', '用户隐私协议'), icon: icUserAgreement },
+  {
+    key: 'version',
+    label: localized('Version', '版本号'),
+    icon: icAppVersion,
+    rightText: 'v1.0.0',
+    clickable: false,
+  },
 ]
 
 function languageLabel(): string {
@@ -115,7 +133,7 @@ async function onRowClick(item: SettingItem): Promise<void> {
   }
 
   if (item.key === 'line') {
-    showFailToast('线路切换功能开发中')
+    showFailToast(localized('Line switching is under development', '线路切换功能开发中'))
   }
 }
 
@@ -123,7 +141,7 @@ function onLogoutConfirm(): void {
   showLogoutDialog.value = false
   gameStore.clearLogin()
   LoginSession.ClearWS()
-  showSuccessToast('已退出登录')
+  showSuccessToast(localized('Logged out', '已退出登录'))
   void router.replace('/guest/home')
 }
 
@@ -215,15 +233,17 @@ function onLogoutCancel(): void {
 
     <GameDialog
       v-model:show="showLogoutDialog"
-      title="退出登录"
+      :title="localized('Log out', '退出登录')"
       :show-cancel-button="true"
       :close-on-click-overlay="true"
-      confirm-button-text="确认"
-      cancel-button-text="取消"
+      :confirm-button-text="localized('Confirm', '确认')"
+      :cancel-button-text="localized('Cancel', '取消')"
       @confirm="onLogoutConfirm"
       @cancel="onLogoutCancel"
     >
-      <div class="logout-confirm-text">确认退出当前账号吗？</div>
+      <div class="logout-confirm-text">
+        {{ localized('Are you sure you want to log out?', '确认退出当前账号吗？') }}
+      </div>
     </GameDialog>
   </div>
 </template>

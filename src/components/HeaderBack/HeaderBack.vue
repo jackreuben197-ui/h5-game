@@ -92,6 +92,8 @@ function handleBack(event: MouseEvent): void {
   background: transparent;
   display: inline-flex;
   align-items: center;
+  align-self: flex-start;
+  min-height: 0.78rem;
   padding: 0 0.25rem;
   gap: 0.4rem;
 }
@@ -113,6 +115,8 @@ function handleBack(event: MouseEvent): void {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
+  align-self: flex-start;
+  min-height: 0.78rem;
 }
 
 .full-slot-wrap {

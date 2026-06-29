@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import ava1 from '@/assets/images/wallet/avatars/ava1.png'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
@@ -38,6 +38,7 @@ import { postClubUserWalletApi } from '@/api/org'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 
 const router = useRouter()
+const route = useRoute()
 const walletStore = useWalletStore()
 const userInfoStore = useUserInfoStore()
 
@@ -46,7 +47,18 @@ const isFixedDeposit = computed(
   () => (userInfoStore.currentClub ?? userInfoStore.clubList[0])?.deposit_switch === 2,
 )
 
-const activeTab = ref(0)
+const activeTab = ref(route.query.tab === '1' ? 1 : 0)
+
+watch(
+  () => route.query.tab,
+  (newTab) => {
+    if (newTab === '1') {
+      activeTab.value = 1
+    } else if (newTab === '0') {
+      activeTab.value = 0
+    }
+  },
+)
 const activePreset = ref(0)
 const activeMethod = ref(0)
 const keypadOpen = ref(false)

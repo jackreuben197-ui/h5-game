@@ -312,19 +312,22 @@ function shortName(name?: string): string {
 /* 右上角玩法标识：仅显示 AOF / Mushroom / Squid / Critical。 */
 .feature-icons {
   position: absolute;
-  top: -0.4rem;
-  right: -0.1rem;
+  top: -0.3rem;
+  right: -0.05rem;
   z-index: 5;
   display: inline-flex;
   align-items: center;
   gap: 0.08rem;
 }
+/* AOF 银色徽标：仅放大并下移 AOF 本身，不影响其他标记（对齐 figma 设计） */
 .icon-aof {
-  margin-right: 0.15rem;
+  width: 2rem;
+  margin-right: 0;
+  transform: translateY(0.4rem);
 }
 
 .feature-icon {
-  width: 0.7rem;
+  width: 0.9rem;
   object-fit: contain;
 }
 

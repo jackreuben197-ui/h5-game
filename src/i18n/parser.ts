@@ -2,7 +2,7 @@
 // - 数字占位符 {0} {1}：按位置参数下标取值，例如 t(key, 'a', 'b')
 // - 命名占位符 {num} {name}：传单个对象作命名表，例如 t(key, { num: 3 })
 // 包 @silenthill/h5-cc-i18n 的 get 不做占位符替换，由这里统一处理。
-export type FormatArg = string | number
+export type FormatArg = string | number | null | undefined
 export type FormatArgs = Record<string, FormatArg>
 
 export function formatTxtMessage(

@@ -127,5 +127,6 @@
   "Msg4": "Wallet",
   "Msg6": "Items",
   "UILogin_AccountRegisterTip": "Please keep your account and password safe. They cannot be recovered if lost.",
-  "UILogin_Account": "Please enter account ID"
+  "UILogin_Account": "Please enter account ID",
+  "UIloginPhone_logintext": "Login"
 }

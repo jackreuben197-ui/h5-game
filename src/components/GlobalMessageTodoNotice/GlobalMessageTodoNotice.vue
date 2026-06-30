@@ -16,10 +16,8 @@ import type {
 } from '@/api/models/msg'
 import { formatDateTime } from '@/utils/time'
 import { formatUC } from '@/utils/roomVisibility'
+import ApproveRejectActions from '@/components/ApproveRejectActions/ApproveRejectActions.vue'
 import avatarDefault from '@/assets/images/default_avatar.png'
-import iconPeople from '@/assets/icons/icon_people.png'
-import iconBalance from '@/assets/icons/icon_credit_chip.png'
-import iconChipRed from '@/assets/icons/icon_chip_red.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { useGameStore } from '@/stores/game'
 import { getLocale } from '@/i18n'
@@ -339,15 +337,13 @@ onBeforeUnmount(() => {
               :key="String(item.order_no ?? item.user_random_id ?? '')"
               class="todo-card"
             >
-              <div class="card-top card-top--uc">
-                <div class="meta-club">
-                  <img :src="item.club_logo ? String(item.club_logo) : avatarDefault" alt="club" />
-                  <span>{{ item.club_name || '--' }}</span>
-                </div>
-                <p class="meta-time">{{ formatTime(item.create_time) }}</p>
+              <div class="card-footer">
+                <p>申请充值：{{ formatUcAmount(item.gold_num) }}</p>
               </div>
 
-              <div class="card-main">
+              <div class="card-divider"></div>
+
+              <div class="card-header">
                 <div class="player-block">
                   <img
                     class="player-avatar"
@@ -359,47 +355,35 @@ onBeforeUnmount(() => {
                     <p class="player-id">ID: {{ item.user_random_id || '--' }}</p>
                   </div>
                 </div>
-                <div class="pending-actions">
-                  <button class="action-btn" type="button" @click="auditUc(item, true)">✓</button>
-                  <button
-                    class="action-btn action-btn--deny"
-                    type="button"
-                    @click="auditUc(item, false)"
-                  >
-                    ✕
-                  </button>
+                <div class="card-aside">
+                  <div class="meta-club">
+                    <img
+                      :src="item.club_logo ? String(item.club_logo) : avatarDefault"
+                      alt="club"
+                    />
+                    <span>{{ item.club_name || '--' }}</span>
+                  </div>
+                  <p class="meta-time">{{ formatTime(item.create_time) }}</p>
                 </div>
               </div>
 
-              <div class="card-footer">
-                <img :src="iconPeople" alt="uc" />
-                <p>申请充值：{{ formatUcAmount(item.gold_num) }}</p>
-                <img class="card-footer__chip" :src="iconChipRed" alt="chip" />
-              </div>
+              <ApproveRejectActions
+                @approve="auditUc(item, true)"
+                @reject="auditUc(item, false)"
+              />
             </article>
           </section>
 
           <section v-if="bringInList.length > 0" class="todo-section">
             <h3>买入申请</h3>
             <article v-for="item in bringInList" :key="String(item.id ?? '')" class="todo-card">
-              <div class="card-top card-top--credit">
-                <p class="meta-left">德州 ID: {{ item.room_id || '--' }}</p>
-                <p class="meta-time">{{ formatTime(item.create_time) }}</p>
-                <div class="meta-club">
-                  <img
-                    v-if="item.sender_icon && item.sender_icon.search('https') > 0"
-                    :src="item.sender_icon ? String(item.sender_icon) : avatarDefault"
-                    alt="club"
-                  />
-                  <span>
-                    {{
-                      item.sender_name === 'FRIEND ROOM' ? item.room_name : item.sender_name || '--'
-                    }}
-                  </span>
-                </div>
+              <div class="card-footer card-footer--credit">
+                <p>买入申请：{{ formatBringInAmount(item.bring_in) }}</p>
               </div>
 
-              <div class="card-main">
+              <div class="card-divider"></div>
+
+              <div class="card-header">
                 <div class="player-block">
                   <img
                     class="player-avatar"
@@ -411,24 +395,29 @@ onBeforeUnmount(() => {
                     <p class="player-id">ID: {{ item.user_random_id || '--' }}</p>
                   </div>
                 </div>
-                <div class="pending-actions">
-                  <button class="action-btn" type="button" @click="auditBringIn(item, true)">
-                    ✓
-                  </button>
-                  <button
-                    class="action-btn action-btn--deny"
-                    type="button"
-                    @click="auditBringIn(item, false)"
-                  >
-                    ✕
-                  </button>
+                <div class="card-aside">
+                  <div class="meta-club">
+                    <img
+                      v-if="item.sender_icon && item.sender_icon.search('https') > 0"
+                      :src="item.sender_icon ? String(item.sender_icon) : avatarDefault"
+                      alt="club"
+                    />
+                    <span>
+                      {{
+                        item.sender_name === 'FRIEND ROOM'
+                          ? item.room_name
+                          : item.sender_name || '--'
+                      }}
+                    </span>
+                  </div>
+                  <p class="meta-time">{{ formatTime(item.create_time) }}</p>
                 </div>
               </div>
 
-              <div class="card-footer card-footer--credit">
-                <img :src="iconBalance" alt="bring in" />
-                <p>买入申请：{{ formatBringInAmount(item.bring_in) }}</p>
-              </div>
+              <ApproveRejectActions
+                @approve="auditBringIn(item, true)"
+                @reject="auditBringIn(item, false)"
+              />
             </article>
           </section>
 
@@ -437,9 +426,9 @@ onBeforeUnmount(() => {
             <article
               v-for="item in joinClubList"
               :key="String(item.id ?? '')"
-              class="todo-card todo-card--join"
+              class="todo-card"
             >
-              <div class="card-main card-main--join">
+              <div class="card-header">
                 <div class="player-block">
                   <img
                     class="player-avatar"
@@ -451,29 +440,19 @@ onBeforeUnmount(() => {
                     <p class="player-id">ID: {{ item.user_random_id || '--' }}</p>
                   </div>
                 </div>
-                <div class="pending-actions">
-                  <button class="action-btn" type="button" @click="auditJoinClub(item, true)">
-                    ✓
-                  </button>
-                  <button
-                    class="action-btn action-btn--deny"
-                    type="button"
-                    @click="auditJoinClub(item, false)"
-                  >
-                    ✕
-                  </button>
+                <div class="card-aside">
+                  <div class="meta-club">
+                    <img :src="item.logo ? String(item.logo) : avatarDefault" alt="club" />
+                    <span>{{ item.club_name || '--' }}</span>
+                  </div>
+                  <p class="meta-time">{{ formatTime(item.create_time) }}</p>
                 </div>
               </div>
 
-              <div class="join-divider"></div>
-
-              <div class="join-footer">
-                <div class="meta-club">
-                  <img :src="item.logo ? String(item.logo) : avatarDefault" alt="club" />
-                  <span>{{ item.club_name || '--' }}</span>
-                </div>
-                <p class="meta-time">{{ formatTime(item.create_time) }}</p>
-              </div>
+              <ApproveRejectActions
+                @approve="auditJoinClub(item, true)"
+                @reject="auditJoinClub(item, false)"
+              />
             </article>
           </section>
         </div>
@@ -612,27 +591,49 @@ onBeforeUnmount(() => {
 }
 
 .todo-card {
-  border-radius: 0.74rem;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.1rem);
+  position: relative;
+  border-radius: 1.036rem;
+  background: var(--wallet-glass-bg);
+  backdrop-filter: blur(16.5px);
+  -webkit-backdrop-filter: blur(16.5px);
+  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
   padding: 0.32rem 0.3rem;
   display: flex;
   flex-direction: column;
-  gap: 0.28rem;
+  gap: 0.32rem;
 }
 
-.card-top {
+.todo-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(139deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 100%);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.12rem;
+  gap: 0.21rem;
 }
 
-.card-top--credit {
-  .meta-time {
-    flex: 1;
-    text-align: center;
-  }
+.card-aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.03rem;
 }
 
 .meta-left,
@@ -655,23 +656,6 @@ onBeforeUnmount(() => {
     border-radius: 50%;
     object-fit: cover;
   }
-}
-
-.card-main {
-  border-radius: 4.23rem;
-  min-height: 1.5rem;
-  background: rgba(255, 255, 255, 0.14);
-  padding-right: 0.28rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.card-main--join {
-  border-radius: 0;
-  min-height: 1.58rem;
-  background: transparent;
-  padding-right: 0;
 }
 
 .player-block {
@@ -706,28 +690,6 @@ onBeforeUnmount(() => {
   color: rgba(243, 243, 243, 0.5);
 }
 
-.pending-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.34rem;
-}
-
-.action-btn {
-  width: 0.97rem;
-  height: 0.97rem;
-  border-radius: 50%;
-  border: 0.013rem solid #fff;
-  background: rgba(255, 255, 255, 0.2);
-  color: #f3f3f3;
-  font-size: 0.52rem;
-  line-height: 1;
-  padding: 0;
-}
-
-.action-btn--deny {
-  color: #ff3048;
-}
-
 .card-footer {
   display: inline-flex;
   align-items: center;
@@ -760,19 +722,10 @@ onBeforeUnmount(() => {
   }
 }
 
-.todo-card--join {
-  gap: 0.2rem;
+.card-divider {
+  height: 0.0267rem;
+  margin: 0 0.32rem;
+  background: #a3a3a333;
 }
 
-.join-divider {
-  width: 100%;
-  height: 0.013rem;
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.join-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
 </style>

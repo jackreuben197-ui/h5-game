@@ -17,9 +17,8 @@ import { t } from '@/i18n'
 import { formatDateTime } from '@/utils/time'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import avatarDefault from '@/assets/images/default_avatar.png'
-import iconPeople from '@/assets/icons/icon_people.png'
-import iconBalance from '@/assets/icons/icon_credit_chip.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import ApproveRejectActions from '@/components/ApproveRejectActions/ApproveRejectActions.vue'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { formatUC } from '@/utils/roomVisibility'
 
@@ -848,6 +847,12 @@ onBeforeUnmount(() => {
           :key="`credit-${index}`"
           class="request-card"
         >
+          <div class="request-footer">
+            <p>带入申请：{{ item.amount }}</p>
+          </div>
+
+          <div class="card-divider"></div>
+
           <div class="request-top request-top--credit">
             <p class="meta-left">{{ item.texasId }}</p>
             <p class="meta-time">{{ item.time }}</p>
@@ -857,7 +862,10 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <div class="request-body" :class="[`status-${item.status}`]">
+          <div
+            class="request-body"
+            :class="[`status-${item.status}`, { 'request-body--plain': item.status === 'pending' }]"
+          >
             <div class="player-block">
               <img class="player-avatar" :src="item.avatar" alt="avatar" />
               <div class="player-text">
@@ -866,24 +874,7 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <div v-if="item.status === 'pending'" class="pending-actions">
-              <button
-                class="action-btn action-btn--ok"
-                type="button"
-                @click="auditCredit(item, true)"
-              >
-                ✓
-              </button>
-              <button
-                class="action-btn action-btn--deny"
-                type="button"
-                @click="auditCredit(item, false)"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p v-else-if="item.status === 'rejected'" class="state-text">已拒绝</p>
+            <p v-if="item.status === 'rejected'" class="state-text">已拒绝</p>
 
             <div v-else-if="item.status === 'approved' && item.approverId" class="approver-block">
               <p class="approver-line">{{ item.approverName }}</p>
@@ -891,18 +882,25 @@ onBeforeUnmount(() => {
               <p class="state-text">已通过</p>
             </div>
 
-            <p v-else class="state-text">已通过</p>
+            <p v-else-if="item.status !== 'pending'" class="state-text">已通过</p>
           </div>
 
-          <div class="request-footer">
-            <img :src="iconBalance" alt="balance" />
-            <p>带入申请：{{ item.amount }}</p>
-          </div>
+          <ApproveRejectActions
+            v-if="item.status === 'pending'"
+            @approve="auditCredit(item, true)"
+            @reject="auditCredit(item, false)"
+          />
         </article>
       </section>
 
       <section v-else-if="pageType === 'uc'" class="request-list">
         <article v-for="(item, index) in ucMessages" :key="`uc-${index}`" class="request-card">
+          <div class="request-footer request-footer--uc">
+            <p>申请充值：{{ item.amount }}</p>
+          </div>
+
+          <div class="card-divider"></div>
+
           <div class="request-top">
             <div class="meta-club meta-club--lead">
               <img :src="item.clubLogo" alt="club" />
@@ -911,7 +909,10 @@ onBeforeUnmount(() => {
             <p class="meta-time">{{ item.time }}</p>
           </div>
 
-          <div class="request-body" :class="[`status-${item.status}`]">
+          <div
+            class="request-body"
+            :class="[`status-${item.status}`, { 'request-body--plain': item.status === 'pending' }]"
+          >
             <div class="player-block">
               <img class="player-avatar" :src="item.avatar" alt="avatar" />
               <div class="player-text">
@@ -920,20 +921,7 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <div v-if="item.status === 'pending'" class="pending-actions">
-              <button class="action-btn action-btn--ok" type="button" @click="auditUc(item, true)">
-                ✓
-              </button>
-              <button
-                class="action-btn action-btn--deny"
-                type="button"
-                @click="auditUc(item, false)"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p v-else-if="item.status === 'rejected'" class="state-text">已拒绝</p>
+            <p v-if="item.status === 'rejected'" class="state-text">已拒绝</p>
 
             <div v-else-if="item.status === 'approved' && item.approverId" class="approver-block">
               <p class="approver-line">{{ item.approverName }}</p>
@@ -941,13 +929,14 @@ onBeforeUnmount(() => {
               <p class="state-text">已通过</p>
             </div>
 
-            <p v-else class="state-text">已通过</p>
+            <p v-else-if="item.status !== 'pending'" class="state-text">已通过</p>
           </div>
 
-          <div class="request-footer request-footer--uc">
-            <img :src="iconPeople" alt="uc" />
-            <p>申请充值：{{ item.amount }}</p>
-          </div>
+          <ApproveRejectActions
+            v-if="item.status === 'pending'"
+            @approve="auditUc(item, true)"
+            @reject="auditUc(item, false)"
+          />
         </article>
       </section>
 
@@ -1050,10 +1039,34 @@ onBeforeUnmount(() => {
 }
 
 .request-card {
-  border-radius: 0.738rem;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(0.16rem);
+  position: relative;
+  border-radius: 1.033rem;
+  background: var(--wallet-glass-bg);
+  backdrop-filter: blur(16.5px);
+  -webkit-backdrop-filter: blur(16.5px);
+  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
   padding: 0.32rem 0.304rem 0.304rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+}
+
+.request-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(139deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 100%);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
 .request-top {
@@ -1104,7 +1117,6 @@ onBeforeUnmount(() => {
 }
 
 .request-body {
-  margin-top: 0.32rem;
   border-radius: 4.223rem;
   min-height: 1.499rem;
   padding: 0 0.28rem 0 0;
@@ -1112,6 +1124,13 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   background: rgba(255, 255, 255, 0.14);
+}
+
+.request-body--plain {
+  min-height: auto;
+  padding: 0;
+  background: transparent;
+  justify-content: flex-start;
 }
 
 .status-rejected {
@@ -1155,32 +1174,6 @@ onBeforeUnmount(() => {
   color: rgba(243, 243, 243, 0.5);
 }
 
-.pending-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.action-btn {
-  width: 0.97rem;
-  height: 0.97rem;
-  border-radius: 50%;
-  border: 0.013rem solid #fff;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-size: 0.52rem;
-  line-height: 1;
-  padding: 0;
-}
-
-.action-btn--ok {
-  color: #f3f3f3;
-}
-
-.action-btn--deny {
-  color: #ff3048;
-}
-
 .state-text {
   margin: 0;
   font-size: 0.312rem;
@@ -1203,11 +1196,11 @@ onBeforeUnmount(() => {
 }
 
 .request-footer {
-  margin-top: 0.31rem;
   padding-left: 0.345rem;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.27rem;
+  align-self: flex-start;
 
   img {
     width: 0.33rem;
@@ -1225,6 +1218,12 @@ onBeforeUnmount(() => {
 .request-footer--uc img {
   width: 0.72rem;
   height: 0.72rem;
+}
+
+.card-divider {
+  height: 0.0267rem;
+  margin: 0 0.32rem;
+  background: #a3a3a333;
 }
 
 .other-list {

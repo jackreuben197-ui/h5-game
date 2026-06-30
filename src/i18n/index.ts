@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import i18n from '@silenthill/h5-cc-i18n'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
-import { formatTxtMessage } from './parser'
+import { formatTxtMessage, type FormatArg, type FormatArgs } from './parser'
 import { createLogger } from '@/utils/logger'
 
 const log = createLogger('[i18n]')
@@ -53,7 +53,7 @@ export function toServerLang(locale: LocaleCode = currentLocale.value): string {
   return 'zh_TW'
 }
 
-export function t(key: string, ...args: Array<string | number>): string {
+export function t(key: string, ...args: FormatArg[] | [FormatArgs]): string {
   // 读 ref 以便组件在 setLocale 时自动重渲染。
   const locale = currentLocale.value
   void locale

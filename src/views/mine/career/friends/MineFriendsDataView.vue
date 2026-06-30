@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast } from 'vant'
 import { postFriendRoomStatsDataApi, postFriendRoomStatsDataInfoApi } from '@/api/stats'
@@ -19,6 +19,7 @@ import {
 } from '@/utils/time'
 import { useGameStore } from '@/stores/game'
 import { userCache } from '@/utils/userCache'
+import { createKeyedRefresh } from '@/utils/keyedRefresh'
 import { USER_STORE_CAREER } from '@/utils/indexedDB'
 import { resolveBlindText } from '@/utils/transText'
 
@@ -112,6 +113,10 @@ function buildCacheKey(): string | null {
   return `-1_data_${activeFilter.value}`
 }
 
+// 命中缓存后立即触发后台刷新；15s TTL 内同 key 跳过；同 key 已在飞行则合并。
+// customize 不进缓存所以也不走 refresh。fetchFriendsRecord 内部用 begin()/isCurrent() 兜底。
+const refresher = createKeyedRefresh(() => buildCacheKey() ?? '', { freshTtl: 15_000 })
+
 function applyCache(entry: RecordCacheEntry): void {
   metrics.value = entry.metrics.map((item) => ({ ...item }))
   records.value = entry.records.map((item) => ({ ...item }))
@@ -168,6 +173,7 @@ function mapRecordItem(row: Record<string, unknown>, index: number): RecordItem 
 async function fetchFriendsRecord(silent = false): Promise<void> {
   if (!silent) loading.value = true
   const requestKey = buildCacheKey()
+  const guard = refresher.begin()
   try {
     // 单位为毫秒，对齐客户端协议；end 取当日 23:59:59 包含整天。
     const requestPayload = {
@@ -185,6 +191,9 @@ async function fetchFriendsRecord(silent = false): Promise<void> {
       }),
     ])
 
+    // 切走则丢弃响应（不管 silent 与否，避免首次请求也被旧响应覆盖）。
+    if (!guard.isCurrent()) return
+
     if (listRes.code !== 0) {
       throw new Error(typeof listRes.msg === 'string' ? listRes.msg : t('UIClub_LoadFail10'))
     }
@@ -192,9 +201,6 @@ async function fetchFriendsRecord(silent = false): Promise<void> {
     if (infoRes.code !== 0) {
       throw new Error(typeof infoRes.msg === 'string' ? infoRes.msg : t('UIClub_LoadFail'))
     }
-
-    // 静默刷新期间若 tab 已切换，丢弃过时结果。
-    if (silent && requestKey !== buildCacheKey()) return
 
     const list = Array.isArray(listRes.data?.list) ? listRes.data.list : []
     const nextRecords: RecordItem[] = list.map((item, index) =>
@@ -220,6 +226,7 @@ async function fetchFriendsRecord(silent = false): Promise<void> {
       })
     }
   } catch (error) {
+    if (!guard.isCurrent()) return
     if (silent) return
     records.value = []
     const message = error instanceof Error ? error.message : t('UIClub_LoadFail10')
@@ -241,7 +248,8 @@ async function loadFromCacheThenRefresh(): Promise<void> {
   )
   if (cached) {
     applyCache(cached)
-    void fetchFriendsRecord(true)
+    // 命中缓存：立即触发静默刷新；15s TTL 内同 key 跳过；同 key 已在飞行则合并。
+    void refresher.refresh(() => fetchFriendsRecord(true))
   } else {
     await fetchFriendsRecord()
   }
@@ -294,6 +302,10 @@ function openRecordDetail(item: RecordItem): void {
 
 onMounted(() => {
   void loadFromCacheThenRefresh()
+})
+
+onBeforeUnmount(() => {
+  refresher.clear()
 })
 </script>
 

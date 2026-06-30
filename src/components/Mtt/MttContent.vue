@@ -504,7 +504,7 @@ function getDefaultGameIcon(category: MttCategory): string {
   z-index: 1;
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
-  padding-top: 0.1rem 0.38rem 0.5rem;
+  padding: 0.1rem 0.38rem 0.5rem;
   backdrop-filter: blur(0.3533rem) saturate(1.04);
 }
 

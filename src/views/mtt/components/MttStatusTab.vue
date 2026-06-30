@@ -14,8 +14,14 @@ const props = defineProps<{
 /* ===== 倒计时 tick ===== */
 const timerTick = ref(0)
 let timerInterval: ReturnType<typeof setInterval> | null = null
-onMounted(() => { timerInterval = setInterval(() => { timerTick.value++ }, 1000) })
-onUnmounted(() => { if (timerInterval) clearInterval(timerInterval) })
+onMounted(() => {
+  timerInterval = setInterval(() => {
+    timerTick.value++
+  }, 1000)
+})
+onUnmounted(() => {
+  if (timerInterval) clearInterval(timerInterval)
+})
 
 /* ===== 数据快捷引用 ===== */
 const mtt = computed(() => props.data?.mtt)
@@ -181,9 +187,10 @@ const matchInfo = computed(() => {
   const bl = more.value?.bl ?? 0
   const maxDelayBl = m.max_delay_apply_bl ?? 0
   if (maxDelayBl > bl) {
-    const limitStr = (m.limit_total_buy_times ?? 0) >= 1000
-      ? t('UIMTT_wuxianzhi')
-      : fmtNum(m.limit_total_buy_times)
+    const limitStr =
+      (m.limit_total_buy_times ?? 0) >= 1000
+        ? t('UIMTT_wuxianzhi')
+        : fmtNum(m.limit_total_buy_times)
     buyLimitLabel = t('MTT_State_DelayDetailNoAddOn', limitStr, String(maxDelayBl))
   } else {
     buyLimitLabel = t('MTT_State_CannotDelay')
@@ -195,8 +202,15 @@ const matchInfo = computed(() => {
   return [
     { label: t('UIMatchName'), value: resolveName(m.name) },
     { label: t('MTT_State_gametype'), value: betTypeLabel },
-    { label: t('UI_GameType'), value: gameTypeName.value, icon: (m.hunter_on ?? 0) > 0 ? hunterIcon : undefined },
-    { label: t('UIMTT_ListdistancestartText'), value: formatDateTime(m.start_time, 'DD/MM/YYYY-HH:mm') },
+    {
+      label: t('UI_GameType'),
+      value: gameTypeName.value,
+      icon: (m.hunter_on ?? 0) > 0 ? hunterIcon : undefined,
+    },
+    {
+      label: t('UIMTT_ListdistancestartText'),
+      value: formatDateTime(m.start_time, 'DD/MM/YYYY-HH:mm'),
+    },
     { label: t('MTT_xq_buy'), value: buyInLabel.value },
     { label: t('MTT_State_ShangXian'), value: buyLimitLabel, tip: true },
     { label: t('MTT_Rebuy'), value: fmtNum(m.rebuy_times) },
@@ -204,11 +218,26 @@ const matchInfo = computed(() => {
     { label: t('UIMTT_chouma1'), value: initialBB },
     { label: t('MTT_State_DelayApply'), value: enterTimeLabel },
     { label: t('UIMatchEstimatedDuration'), value: holdTimeLabel },
-    { label: t('UIMatchBlindInterval'), value: interval > 0 ? `${Math.floor(interval / 60)}${t('UIClubData_Text_time')}` : '-' },
-    { label: t('UITexas_TableType'), value: m.seat_count ? t('UIMatch_PersonTable', m.seat_count) : '-' },
-    { label: t('UIMatchMinMaxPlayers'), value: `${m.limit_min ?? '-'}~${realPrize.value?.participants ?? '-'}` },
+    {
+      label: t('UIMatchBlindInterval'),
+      value: interval > 0 ? `${Math.floor(interval / 60)}${t('UIClubData_Text_time')}` : '-',
+    },
+    {
+      label: t('UITexas_TableType'),
+      value: m.seat_count ? t('UIMatch_PersonTable', m.seat_count) : '-',
+    },
+    {
+      label: t('UIMatchMinMaxPlayers'),
+      value: `${m.limit_min ?? '-'}~${realPrize.value?.participants ?? '-'}`,
+    },
     { label: t('UIMatchStartCondition'), value: '-' },
-    { label: t('UIMatchBreakTime'), value: '-' },
+    {
+      label: t('UIMatchBreakTime'),
+      value:
+        m.break_interval && m.break_duration
+          ? `${t('BlindUpTimes', { num: m.break_interval })}，${t('UIMatchBreakTime')}${t('UITexasReport_Text_MatchZmsysj', String(m.break_duration))}`
+          : '-',
+    },
   ]
 })
 </script>
@@ -302,8 +331,7 @@ const matchInfo = computed(() => {
       </div>
 
       <!-- 分隔线 -->
-      <div class="stats-divider">
-      </div>
+      <div class="stats-divider"></div>
 
       <!-- 筹码统计 -->
       <div class="chips-row">
@@ -329,6 +357,10 @@ const matchInfo = computed(() => {
         </div>
       </div>
     </div>
+    <div class="event-desc">
+      <p>{{ t('eventDesc') }}</p>
+      <div>{{ mtt?.activity_detail }}</div>
+    </div>
 
     <!-- 赛事信息 -->
     <div class="info-section">
@@ -338,12 +370,7 @@ const matchInfo = computed(() => {
           <VanIcon v-if="item.tip" name="question-o" class="info-tip" />
         </div>
         <div class="info-value">
-          <img
-            v-if="item.icon"
-            :src="item.icon"
-            class="info-icon"
-            alt="icon"
-          />
+          <img v-if="item.icon" :src="item.icon" class="info-icon" alt="icon" />
           <span>{{ item.value }}</span>
         </div>
       </div>
@@ -440,7 +467,7 @@ const matchInfo = computed(() => {
 .stats-panel {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0.77rem;
-  padding: 0.30rem 0rem;
+  padding: 0.3rem 0rem;
   margin-bottom: 0.2rem;
 }
 
@@ -600,6 +627,29 @@ const matchInfo = computed(() => {
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
 }
+.event-desc {
+  p {
+    color: #fff;
+    font-family: 'HONOR Sans CN';
+    font-size: 0.38008rem;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 140%; /* 0.53211rem */
+    margin: 0 0.5rem;
+  }
+  div {
+    display: flex;
+    height: 1.98624rem;
+    padding: 0.2rem 0.45rem 0.25rem;
+    flex-direction: column;
+    gap: 0.39552rem;
+    align-self: stretch;
+    border-radius: 0.51592rem;
+    background: rgba(0, 0, 0, 0.2);
+    margin: 0.1rem 0 0.4rem;
+    color: rgba(255, 255, 255, 0.7);
+  }
+}
 
 /* ===== 赛事信息 ===== */
 .info-section {
@@ -612,7 +662,7 @@ const matchInfo = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.10rem 0.45rem;
+  padding: 0.1rem 0.45rem;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0.77rem;
   min-height: 0.72rem;

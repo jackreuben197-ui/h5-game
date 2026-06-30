@@ -18,8 +18,8 @@ importers:
         specifier: github:soolary/h5-cc-bridge#main
         version: git+https://git@github.com:soolary/h5-cc-bridge.git#e3566d5a11f9cf33abf848e60da9351f3df9c512
       '@silenthill/h5-cc-i18n':
-        specifier: github:guysoup027/h5-cc-i18n
-        version: git+https://git@github.com:guysoup027/h5-cc-i18n.git#336252d520a2600ad512abb74109b02a08f5f623
+        specifier: github:guysoup027/h5-cc-i18n#main
+        version: git+https://git@github.com:guysoup027/h5-cc-i18n.git#7ebe8f008d2f5fdcf204d6d04709aa8c474336b7
       '@vueuse/core':
         specifier: ^14.2.1
         version: 14.2.1(vue@3.5.32(typescript@6.0.2))
@@ -1067,8 +1067,8 @@ packages:
     resolution: {commit: e3566d5a11f9cf33abf848e60da9351f3df9c512, repo: git@github.com:soolary/h5-cc-bridge.git, type: git}
     version: 0.1.0
 
-  '@silenthill/h5-cc-i18n@git+https://git@github.com:guysoup027/h5-cc-i18n.git#336252d520a2600ad512abb74109b02a08f5f623':
-    resolution: {commit: 336252d520a2600ad512abb74109b02a08f5f623, repo: git@github.com:guysoup027/h5-cc-i18n.git, type: git}
+  '@silenthill/h5-cc-i18n@git+https://git@github.com:guysoup027/h5-cc-i18n.git#7ebe8f008d2f5fdcf204d6d04709aa8c474336b7':
+    resolution: {commit: 7ebe8f008d2f5fdcf204d6d04709aa8c474336b7, repo: git@github.com:guysoup027/h5-cc-i18n.git, type: git}
     version: 1.0.0
 
   '@tybys/wasm-util@0.10.1':
@@ -3503,7 +3503,7 @@ snapshots:
 
   '@silenthill/h5-cc-bridge@git+https://git@github.com:soolary/h5-cc-bridge.git#e3566d5a11f9cf33abf848e60da9351f3df9c512': {}
 
-  '@silenthill/h5-cc-i18n@git+https://git@github.com:guysoup027/h5-cc-i18n.git#336252d520a2600ad512abb74109b02a08f5f623': {}
+  '@silenthill/h5-cc-i18n@git+https://git@github.com:guysoup027/h5-cc-i18n.git#7ebe8f008d2f5fdcf204d6d04709aa8c474336b7': {}
 
   '@tybys/wasm-util@0.10.1':
     dependencies:

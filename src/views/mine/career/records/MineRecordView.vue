@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
 import { useRoute, useRouter } from 'vue-router'
 import { postRoomCenterHistoryListApi, postStatsUserStatsApi } from '@/api/stats'
@@ -9,6 +9,7 @@ import { formatUC } from '@/utils/roomVisibility'
 import { formatDateTime, toTimestampMs } from '@/utils/time'
 import { localStore } from '@/utils/localStore'
 import { userCache } from '@/utils/userCache'
+import { createKeyedRefresh } from '@/utils/keyedRefresh'
 import { USER_STORE_CAREER } from '@/utils/indexedDB'
 import { useGameStore } from '@/stores/game'
 import dayjs from 'dayjs'
@@ -293,6 +294,10 @@ function recordCacheKey(): string {
   return `${sourceId}_record_${selectedTime.value}_${selectedGame.value}`
 }
 
+// 命中缓存后立即触发后台刷新；30s TTL 内同 key 跳过；同 key 已在飞行则合并。
+// fetchXxx 内部用 begin()/isCurrent() 兜底，防止响应回来时已切走仍写 state。
+const refresher = createKeyedRefresh(recordCacheKey, { freshTtl: 30_000 })
+
 function recordCache() {
   return userCache(gameStore.loginUserId)
 }
@@ -323,6 +328,7 @@ function applyRecordCache(payload: RecordSummaryCache): void {
 }
 
 async function fetchStatsSummary(): Promise<void> {
+  const guard = refresher.begin()
   try {
     // room_type：club 走生涯(0)，friends 走朋友桌(1)；club 额外带 club_id 收窄范围。
     const response = await postStatsUserStatsApi({
@@ -333,11 +339,13 @@ async function fetchStatsSummary(): Promise<void> {
       room_type: isClub.value ? 2 : 1,
       ...(isClub.value ? { club_id: getCareerSelectedClubId() } : {}),
     })
+    if (!guard.isCurrent()) return
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadDataFail'))
     }
     extractStatsFromResponse(response.data)
   } catch (error) {
+    if (!guard.isCurrent()) return
     const message = error instanceof Error ? error.message : t('UIClub_LoadDataFail')
     showFailToast(message)
   }
@@ -345,6 +353,7 @@ async function fetchStatsSummary(): Promise<void> {
 
 async function fetchRecords(silent = false): Promise<void> {
   if (!silent) loading.value = true
+  const guard = refresher.begin()
   try {
     // club 只传 club_id（不传 room_type，对齐 Unity）；friends 传 room_type=1。
     const response = await postRoomCenterHistoryListApi({
@@ -355,6 +364,7 @@ async function fetchRecords(silent = false): Promise<void> {
       time_type: resolveTimeType(),
       ...(isClub.value ? { club_id: getCareerSelectedClubId(), room_type: 2 } : { room_type: 1 }),
     })
+    if (!guard.isCurrent()) return
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail9'))
     }
@@ -362,6 +372,7 @@ async function fetchRecords(silent = false): Promise<void> {
     const rows = extractRecords(response.data?.records)
     records.value = applyDateVisibility(rows.map((row, index) => mapRecord(row, index)))
   } catch (error) {
+    if (!guard.isCurrent()) return
     if (!silent) records.value = []
     if (!silent) {
       const message = error instanceof Error ? error.message : t('UIClub_LoadFail9')
@@ -372,27 +383,27 @@ async function fetchRecords(silent = false): Promise<void> {
   }
 }
 
-// 缓存优先 + 静默刷新：命中缓存直接渲染、后台再请求覆盖缓存；未命中则正常 loading。
+// 缓存优先 + 静默刷新：命中缓存直接渲染，立即触发后台刷新；30s 内同 key 跳过，
+// 同 key 已在飞则合并。未命中缓存正常 loading。fetchXxx 内部用 race guard 兜底。
 async function refreshAll(): Promise<void> {
+  const guard = refresher.begin()
   const key = recordCacheKey()
   const cached = await recordCache().get<RecordSummaryCache>(USER_STORE_CAREER, key)
-  // 请求期间 tab 被切换：丢弃此次缓存。
-  if (key !== recordCacheKey()) return
+  if (!guard.isCurrent()) return
 
   if (cached) {
     loading.value = false
     applyRecordCache(cached)
-    // 静默刷新
-    void (async () => {
+    void refresher.refresh(async () => {
       await Promise.all([fetchStatsSummary(), fetchRecords(true)])
-      if (key !== recordCacheKey()) return
+      if (recordCacheKey() !== key) return
       writeRecordCache(key)
-    })()
+    })
     return
   }
 
   await Promise.all([fetchStatsSummary(), fetchRecords()])
-  if (key !== recordCacheKey()) return
+  if (!guard.isCurrent()) return
   writeRecordCache(key)
 }
 
@@ -421,6 +432,10 @@ function selectTime(key: string): void {
 
 onMounted(() => {
   void refreshAll()
+})
+
+onBeforeUnmount(() => {
+  refresher.clear()
 })
 </script>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
 import { postStatsFriendStatsDataApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
@@ -18,6 +18,7 @@ import {
 } from '@/utils/time'
 import { useGameStore } from '@/stores/game'
 import { userCache } from '@/utils/userCache'
+import { createKeyedRefresh } from '@/utils/keyedRefresh'
 import { USER_STORE_CAREER } from '@/utils/indexedDB'
 import { t } from '@/i18n'
 
@@ -94,6 +95,10 @@ function buildCacheKey(): string {
   const dateCode = formatDateTime(endDateModel.value, 'YYMMDD')
   return `-1_statistics_${dateCode}_${activeGameTab.value}`
 }
+
+// 命中缓存后立即触发后台刷新；15s TTL 内同 key 跳过；同 key 已在飞行则合并。
+// fetchFriendsData 内部用 begin()/isCurrent() 兜底。
+const refresher = createKeyedRefresh(buildCacheKey, { freshTtl: 15_000 })
 
 function applyCache(entry: FriendsDataCacheEntry): void {
   summary.value = entry.summary.map((item) => ({ ...item }))
@@ -172,6 +177,7 @@ function resolveGameType(): number[] {
 async function fetchFriendsData(silent = false): Promise<void> {
   if (!silent) loading.value = true
   const requestKey = buildCacheKey()
+  const guard = refresher.begin()
   try {
     const response = await postStatsFriendStatsDataApi({
       start_time: toUnixSeconds(startDateModel.value),
@@ -180,12 +186,13 @@ async function fetchFriendsData(silent = false): Promise<void> {
       limit: 50,
       offset: 0,
     })
+
+    // 切走则丢弃响应（不管 silent 与否，避免首次请求也被旧响应覆盖）。
+    if (!guard.isCurrent()) return
+
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadDataFail3'))
     }
-
-    // 用户在静默刷新期间改了 tab/日期，丢弃过时结果。
-    if (silent && requestKey !== buildCacheKey()) return
 
     const info = response.data?.info
     const nextSummary: SummaryItem[] = [
@@ -225,6 +232,7 @@ async function fetchFriendsData(silent = false): Promise<void> {
       { summary: nextSummary, players: nextPlayers },
     )
   } catch (error) {
+    if (!guard.isCurrent()) return
     if (silent) return
     const message = error instanceof Error ? error.message : t('UIClub_LoadDataFail3')
     showFailToast(message)
@@ -241,7 +249,8 @@ async function loadFromCacheThenRefresh(): Promise<void> {
   )
   if (cached) {
     applyCache(cached)
-    void fetchFriendsData(true)
+    // 命中缓存：立即触发静默刷新；15s TTL 内同 key 跳过；同 key 已在飞行则合并。
+    void refresher.refresh(() => fetchFriendsData(true))
   } else {
     await fetchFriendsData()
   }
@@ -362,6 +371,10 @@ function isDisabledDay(date: Date): boolean {
 
 onMounted(() => {
   void loadFromCacheThenRefresh()
+})
+
+onBeforeUnmount(() => {
+  refresher.clear()
 })
 </script>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { showFailToast } from 'vant'
 import { postMiscCombineApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
@@ -17,6 +17,7 @@ import { decodeCard, parseHandRecordCards, type CardItem } from '@/api/models/re
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
 import { userCache } from '@/utils/userCache'
+import { createKeyedRefresh } from '@/utils/keyedRefresh'
 import { USER_STORE_CAREER } from '@/utils/indexedDB'
 import { t } from '@/i18n'
 
@@ -416,6 +417,18 @@ function careerKey(tab: string, subKey: string): string {
   return `${clubId}_data_${tab}_${subKey}`
 }
 
+// deck / opponent 两条数据流各自一个 refresher，getKey 写得更清晰。
+// 命中缓存的静默刷新走 refresh()：立即触发，20s TTL 内同 key 跳过，同 key 已在飞则合并。
+// cache miss 仍然 await + loading，不延迟。
+const deckRefresher = createKeyedRefresh(
+  () => careerKey('deck', selectedDeckMode.value),
+  { freshTtl: 20_000 },
+)
+const opponentRefresher = createKeyedRefresh(
+  () => careerKey('opponent', `${selectedOpponentPeriod.value}_${opponentOrderAsc.value ? 1 : 2}`),
+  { freshTtl: 20_000 },
+)
+
 function setOpponentCache(cacheKey: string, rows: ProfitRow[], finished: boolean): void {
   const entry = { rows, finished }
   opponentSortCache.set(cacheKey, entry)
@@ -591,6 +604,7 @@ async function loadOpponentPage(reset = false, silent = false): Promise<void> {
     }
   }
 
+  const guard = opponentRefresher.begin()
   try {
     const data = await requestCombine(
       {
@@ -606,6 +620,7 @@ async function loadOpponentPage(reset = false, silent = false): Promise<void> {
       silent || !reset,
     )
 
+    if (!guard.isCurrent()) return
     if (!data) {
       if (reset) opponentFinished.value = true
       return
@@ -693,7 +708,7 @@ function toggleOpponentSort(): void {
 
   const newKey = `${selectedOpponentPeriod.value}_${opponentOrderAsc.value ? 1 : 2}`
   if (applyOpponentFromCache(newKey)) {
-    void refreshOpponentSilently()
+    void opponentRefresher.refresh(() => refreshOpponentSilently())
   } else {
     opponentRows.value = []
     void loadOpponentPage(true)
@@ -835,10 +850,14 @@ async function loadOtherInitial(): Promise<void> {
         profit: toSafeNumber(row.profit_total),
       }
     })
-    opponentRows.value = newRows
-    opponentFinished.value = newRows.length < OPPONENT_PAGE_SIZE
     const opponentCacheKey = `${opponentPeriod}_${opponentOrderAsc.value ? 1 : 2}`
-    setOpponentCache(opponentCacheKey, opponentRows.value, opponentFinished.value)
+    // 数据缓存无条件写入（下次进入可命中）；UI 只在 period/sort 仍是 mount 时记录的值时才覆盖。
+    const finished = newRows.length < OPPONENT_PAGE_SIZE
+    setOpponentCache(opponentCacheKey, newRows, finished)
+    if (opponentCacheKey === `${selectedOpponentPeriod.value}_${opponentOrderAsc.value ? 1 : 2}`) {
+      opponentRows.value = newRows
+      opponentFinished.value = finished
+    }
   }
   if (apiList.includes(32)) {
     const allInResp = (data.user_allin_room_stats_resp ?? {}) as Record<string, unknown>
@@ -906,7 +925,8 @@ async function ensureCurrentTabData(): Promise<void> {
 
   if (deckCache.has(selectedDeckMode.value)) {
     applyCurrentDeck()
-    void refreshDeckMode(selectedDeckMode.value)
+    // 命中缓存：立即触发 SWR；20s TTL 内同 mode 跳过，避免来回切重发。
+    void deckRefresher.refresh(() => refreshDeckMode(selectedDeckMode.value))
   } else {
     loading.value = true
     await loadDeck(selectedDeckMode.value)
@@ -927,7 +947,7 @@ watch(selectedOpponentPeriod, () => {
   opponentFinished.value = false
   const newKey = `${selectedOpponentPeriod.value}_${opponentOrderAsc.value ? 1 : 2}`
   if (applyOpponentFromCache(newKey)) {
-    void refreshOpponentSilently()
+    void opponentRefresher.refresh(() => refreshOpponentSilently())
   } else {
     opponentRows.value = []
     void loadOpponentPage(true)
@@ -953,6 +973,9 @@ watch(
     opponentSortCache.clear()
     opponentRows.value = []
     opponentFinished.value = false
+    // 之前 club 的 debounce 调度也要取消，避免触发旧 key 的请求。
+    deckRefresher.clear()
+    opponentRefresher.clear()
     void (async () => {
       await restoreAllFromIDB()
       void ensureCurrentTabData()
@@ -986,6 +1009,11 @@ onMounted(() => {
       }
     })()
   })()
+})
+
+onBeforeUnmount(() => {
+  deckRefresher.clear()
+  opponentRefresher.clear()
 })
 </script>
 

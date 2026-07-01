@@ -161,9 +161,13 @@ const mahjongPlayersText = 0
 const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
 const mttPlayersText = computed(() => `${homeRoomStats.value.mtt.players}`)
 // 扑克专区为空但赛事专区有数据时，用 MTT 列表替换游戏中心/热门游戏两块。
-const shouldReplaceWithMtt = computed(
+const shouldReplaceWithMttRaw = computed(
   () => homeRoomStats.value.poker.tables === 0 && homeRoomStats.value.mtt.tables > 0,
 )
+// 首次进入时先按缓存渲染，等 room/mtt 两个 bootstrap 都完成再确定最终 UI，
+// 避免「默认 → MTT → 默认」的中间态闪烁；初始化完成后跟随实时数据变化。
+const initialized = ref(false)
+const shouldReplaceWithMtt = ref(shouldReplaceWithMttRaw.value)
 
 function toSafeString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
@@ -465,6 +469,13 @@ async function updateNoticeMarquee(): Promise<void> {
   shouldScrollNotice.value = true
 }
 
+watch(shouldReplaceWithMttRaw, (val) => {
+  // 初始化阶段忽略中间态；两个 bootstrap 完成后再让实时数据自由驱动展示。
+  if (initialized.value) {
+    shouldReplaceWithMtt.value = val
+  }
+})
+
 watch(noticeText, () => {
   void updateNoticeMarquee()
 })
@@ -492,9 +503,9 @@ watch(
 onMounted(() => {
   void ensureClubDataReady()
   // 首页和列表页共用同一个 room store，进入首页时启动共享数据流。
-  roomListStore.bootstrapRoomList()
+  const roomListReady = roomListStore.bootstrapRoomList()
   // 首页和 MTT 列表页共用同一个 mtt store，避免重复请求。
-  mttListStore.bootstrapMttList()
+  const mttListReady = mttListStore.bootstrapMttList()
   refreshHomePokerMahjongStatsFromStore()
   refreshHomeMttStatsFromStore()
   void fetchHomeMiniGameStats().catch((error) => {
@@ -504,6 +515,12 @@ onMounted(() => {
     console.warn('[home] fetch lobby banner failed:', error)
   })
   void updateNoticeMarquee()
+
+  // 等 room + mtt 都返回后再敲定「默认 vs MTT」布局，避免初始化阶段来回闪。
+  void Promise.allSettled([roomListReady, mttListReady]).then(() => {
+    shouldReplaceWithMtt.value = shouldReplaceWithMttRaw.value
+    initialized.value = true
+  })
 
   if (typeof ResizeObserver !== 'undefined') {
     noticeResizeObserver = new ResizeObserver(() => {
@@ -620,13 +637,15 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- 扑克专区为空但赛事专区有数据时，用 MTT 列表替换 4/5 两个模块。 -->
-    <MttContent v-if="shouldReplaceWithMtt" class="home-mtt-content" />
-
+    <div class="home-swap-container">
+      <Transition name="home-swap">
+        <MttContent v-if="shouldReplaceWithMtt" key="mtt" class="home-mtt-content home-swap-panel" />
+        <div v-else key="default" class="home-default-sections home-swap-panel">
     <!-- 4. 游戏模块 -->
-    <div v-if="!shouldReplaceWithMtt" class="section-header">
+    <div class="section-header">
       <span class="section-title">游戏中心</span>
     </div>
-    <div v-if="!shouldReplaceWithMtt" class="game-center-scroll">
+    <div class="game-center-scroll">
       <div class="game-center-track">
         <!-- MTT赛事专区 -->
         <div class="game-scroll-card game-card-mtt" @click="goToMttList">
@@ -732,16 +751,19 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- 5. 即将开放横向滚动 -->
-    <div v-if="!shouldReplaceWithMtt" class="section-header">
+    <div class="section-header">
       <span class="section-title">热门游戏</span>
     </div>
-    <div v-if="!shouldReplaceWithMtt" class="coming-soon-scroll">
+    <div class="coming-soon-scroll">
       <div class="coming-soon-track">
         <div v-for="i in 4" :key="i" class="coming-soon-scroll-card">
           <div class="coming-soon-scroll-card__overlay"></div>
           <span class="coming-soon-scroll-card__text">{{ t('UIHomeComingSoon') }}</span>
         </div>
       </div>
+    </div>
+      </div>
+      </Transition>
     </div>
   </div>
 </template>
@@ -976,6 +998,51 @@ onBeforeUnmount(() => {
       color: rgba($color: #000000, $alpha: 0.77);
     }
   }
+}
+
+// 保持和 .home-page 的直接子级同样的纵向堆叠 + 间距。
+.home-default-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 0.24rem;
+}
+
+// 默认模块 <=> MTT 列表切换的横向推入（新面板从右滑入，旧面板向左滑出）。
+.home-swap-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.home-swap-panel {
+  width: 100%;
+}
+
+.home-swap-enter-active,
+.home-swap-leave-active {
+  transition: transform 0.32s ease;
+  will-change: transform;
+}
+
+// 切换期间旧面板脱离流，避免撑高容器；新面板在流内决定容器高度。
+.home-swap-leave-active {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.home-swap-enter-from {
+  transform: translateX(100%);
+}
+.home-swap-enter-to {
+  transform: translateX(0);
+}
+.home-swap-leave-from {
+  transform: translateX(0);
+}
+.home-swap-leave-to {
+  transform: translateX(-100%);
 }
 
 .section-header {

@@ -265,7 +265,7 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
   },
   actions: {
     // 对外统一入口：恢复缓存 + 会话内静默拉取一次。
-    bootstrapMttList(): void {
+    async bootstrapMttList(): Promise<void> {
       if (isOfficialGuestMode()) {
         this.clearMttList()
         return
@@ -279,7 +279,7 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
 
       this.restoreMttListCacheForCurrentToken()
       this.ensureMttNotifyListeners()
-      void this.fetchMttListOncePerSession({ silent: true })
+      await this.fetchMttListOncePerSession({ silent: true })
     },
 
     // 退出登录或账号切换时清空。

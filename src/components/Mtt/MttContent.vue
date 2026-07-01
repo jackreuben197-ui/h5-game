@@ -431,12 +431,22 @@ function resolveMaxCount(record: RawMttRecord, participants: number): number {
   const upperLimit = Number(record.limit_participants ?? 0)
   return Math.max(upperLimit, seatCount, participants, 1)
 }
-
+//TODO 未计算休息时间
 function calcLateEndMs(record: RawMttRecord, startAtMs: number): number {
   const upblindIntervalSec = Number(record.upblind_interval ?? 0)
   const maxDelayApplyBl = Number(record.max_delay_apply_bl ?? 0)
   if (startAtMs <= 0 || upblindIntervalSec <= 0 || maxDelayApplyBl <= 1) return 0
-  return startAtMs + upblindIntervalSec * 1000 * (maxDelayApplyBl - 1)
+  // 升盲截止前经过的升盲次数
+  const upblindTimes = maxDelayApplyBl - 1
+  let endMs = startAtMs + upblindIntervalSec * 1000 * upblindTimes
+  // 期间会休息几次（每 break_interval 次升盲休息一次），每次休息 break_duration 分钟
+  const breakInterval = Number(record.break_interval ?? 0)
+  const breakDurationMin = Number(record.break_duration ?? 0)
+  if (breakInterval > 0 && breakDurationMin > 0) {
+    const breakTimes = Math.floor(upblindTimes / breakInterval)
+    endMs += breakTimes * breakDurationMin * 60 * 1000
+  }
+  return endMs
 }
 
 function getDefaultGameIcon(category: MttCategory): string {

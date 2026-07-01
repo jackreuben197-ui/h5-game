@@ -5,6 +5,7 @@ import { GameTable, GameTableColumn } from '@/components/Table'
 import defaultAvatar from '@/assets/icons/icon_mtt_avatar.png'
 import chipIcon from '@/assets/icons/icon_chips.png'
 import arrowIcon from '@/assets/icons/wallet/ic_arrow_left.svg'
+import closeIcon from '@/assets/icons/modal_close.svg'
 import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, toUnixSeconds } from '@/utils/time'
@@ -516,6 +517,11 @@ onUnmounted(() => {
 
 <template>
   <section class="mrp">
+    <!-- ── 关闭按钮 ── -->
+    <button class="mrp__close" type="button" aria-label="close" @click="closePanel('close')">
+      <img :src="closeIcon" alt="close" />
+    </button>
+
     <!-- ── 标题 ── -->
     <div class="mrp__title">{{ tournamentName }}</div>
 
@@ -800,7 +806,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100dvh;
+  height: 100%;
   box-sizing: border-box;
   color: #f9f9f9;
   font-family: 'HONOR Sans CN', sans-serif;
@@ -815,9 +821,36 @@ onUnmounted(() => {
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: rgba(8, 8, 8, 0.28);
+    background: rgba(8, 8, 8, 0.55);
     backdrop-filter: blur(0.08rem);
     -webkit-backdrop-filter: blur(0.08rem);
+  }
+}
+
+/* ── 关闭按钮（右上角，对齐现金战况弹窗的关闭图标）── */
+.mrp__close {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.24rem;
+  z-index: 6;
+  width: 0.8rem;
+  height: 0.8rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  &:active {
+    opacity: 0.7;
   }
 }
 

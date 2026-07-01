@@ -1,7 +1,7 @@
 import { t } from '@/i18n'
 import { getGameKindByRt, getWinRate } from '@/utils/texasEquity'
 
-export type ReplayActionTone = 'blue' | 'red' | 'black'
+export type ReplayActionTone = 'green' | 'red' | 'gray' | 'teal'
 export type ReplayMetricIcon = 'people' | 'chips' | 'mushroom'
 export type CardSuit = 'c' | 'h' | 'd' | 's'
 export interface CardItem {
@@ -577,15 +577,22 @@ function normalizeAction(actionRaw: unknown, raiseTimes: number): string {
   }
 }
 
-// 对齐客户端 SetPlayerItem chipbg 染色：SB/BB/C/X 绿，S/B/R/${n}B/A 红，F 灰，INS 黄。
-// 这边没有黄色档，INS 退到 black。
+// 对齐客户端 UITexasReplayCommonContent.SetPlayerItem chipbg 染色（UGUIUtil 常量）：
+// actList 1..4 (SB/BB/C/X) → TEXT_GREEN (#80CD10)
+// actList 5..9 (S/B/R/nB/A) → TEXT_RED (#FF4368)
+// actList 10  (F)           → TEXT_GRAY (#9D9D9D)
+// actList 11  (INS)         → TEXT_GREEN_DEEP (#39C2B2)
 function resolveActionTone(actionLabel: string): ReplayActionTone {
   if (actionLabel === 'SB' || actionLabel === 'BB' || actionLabel === 'C' || actionLabel === 'X') {
-    return 'blue'
+    return 'green'
   }
-  if (actionLabel === 'F' || actionLabel === 'INS') {
-    return 'black'
+  if (actionLabel === 'F') {
+    return 'gray'
   }
+  if (actionLabel === 'INS') {
+    return 'teal'
+  }
+  // S / B / R / nB / A
   return 'red'
 }
 

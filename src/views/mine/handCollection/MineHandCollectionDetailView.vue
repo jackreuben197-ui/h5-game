@@ -676,18 +676,24 @@ function onShare(): void {
   background: linear-gradient(180deg, #00d4a6 0%, #007e63 100%);
 }
 
-.tone-blue {
-  background: #4caaf4;
-  color: #222;
-}
-
-.tone-red {
-  background: #fa2b4b;
+// 对齐客户端 UGUIUtil（UITexasReplayCommonContent 里的 chipbg 染色）。
+.tone-green {
+  background: #80cd10;
   color: #f9f9f9;
 }
 
-.tone-black {
-  background: #222;
+.tone-red {
+  background: #ff4368;
+  color: #f9f9f9;
+}
+
+.tone-gray {
+  background: #9d9d9d;
+  color: #f9f9f9;
+}
+
+.tone-teal {
+  background: #39c2b2;
   color: #f9f9f9;
 }
 

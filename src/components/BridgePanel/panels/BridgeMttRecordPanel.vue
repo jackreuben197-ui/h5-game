@@ -827,30 +827,32 @@ onUnmounted(() => {
   }
 }
 
-/* ── 关闭按钮（右上角，对齐现金战况弹窗的关闭图标）── */
+/* ── 关闭按钮（右上角红色圆底 + 白色 X，对齐现金战况弹窗）── */
 .mrp__close {
   position: absolute;
-  top: 0.2rem;
+  top: 0.24rem;
   right: 0.24rem;
   z-index: 6;
   width: 0.8rem;
   height: 0.8rem;
   padding: 0;
   border: none;
-  background: transparent;
+  border-radius: 50%;
+  background: #f5334b;
+  box-shadow: 0 0.04rem 0.12rem rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
 
   img {
-    width: 100%;
-    height: 100%;
+    width: 54%;
+    height: 54%;
     object-fit: contain;
   }
 
   &:active {
-    opacity: 0.7;
+    opacity: 0.8;
   }
 }
 

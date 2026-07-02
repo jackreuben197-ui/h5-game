@@ -1216,8 +1216,8 @@ onBeforeUnmount(() => {
 .game-scroll-card {
   flex-shrink: 0;
   width: 2.95rem;
-  // 同时兜底窄高(14PM 932)与窄矮(SE 667):用 vh 做陡峭斜率,clamp 在两端各自落到 min/max。
-  height: clamp(2.8rem, calc(25vh - 65px), 3.91rem);
+  // 与热门游戏卡片同宽同比例（111:147），保证两行高度一致。
+  aspect-ratio: 111 / 147;
   border-radius: 0.37rem;
   overflow: hidden;
   position: relative;
@@ -1419,7 +1419,8 @@ onBeforeUnmount(() => {
 .coming-soon-scroll-card {
   flex-shrink: 0;
   width: 2.95rem;
-  height: clamp(2rem, calc(35vh - 158px), 3.91rem);
+  // 高度按图片自身比例（111:147）自适应，不再固定。
+  aspect-ratio: 111 / 147;
   border-radius: 0.51rem;
   overflow: hidden;
   position: relative;

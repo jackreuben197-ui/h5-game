@@ -66,7 +66,10 @@ const pendingGameInfo = ref<{ apiType: string; gameType: string; roomId: number 
 
 const activeBannerGames = computed(() => {
   const apiGames = casinoStore.popularBannerGames || []
-  return popularBannerGamesStatic.map(staticGame => {
+  // 临时隐藏牛仔（德州牛仔）入口。
+  return popularBannerGamesStatic
+    .filter(staticGame => staticGame.gameApiType !== 'cow_boy')
+    .map(staticGame => {
     let matched = apiGames.find(g => {
       if (staticGame.name === 'PA真人') {
         return g.game_name?.includes('PA') || g.game_api_type === 'pa_live' || g.game_name?.includes('DB视讯') || g.game_name === 'DB真人'

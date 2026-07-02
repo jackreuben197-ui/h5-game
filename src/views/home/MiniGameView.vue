@@ -195,6 +195,8 @@ const mahjongBlocks = computed(() => {
 
   const blocks = sortedGames
     .filter((game) => game.img)
+    // 隐藏牛仔（德州牛仔）入口。
+    .filter((game) => game.gameType !== 'cow_boy' && game.gameApiType !== 'cow_boy')
     .map((game, index) => ({
       key: `mj-api-${index}`,
       title: game.title || game.originalGame?.game_name || "",

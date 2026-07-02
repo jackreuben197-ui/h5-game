@@ -10,7 +10,8 @@ import { computed, onMounted, ref } from 'vue'
 import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
 import imgFb from '@/assets/images/minigame-newui/fb.svg'
-import imgCowboy from '@/assets/images/minigame-newui/sg.svg'
+// 牛仔入口临时隐藏，恢复时连同下方数组一起取消注释。
+// import imgCowboy from '@/assets/images/minigame-newui/sg.svg'
 
 const loginModalStore = useLoginModalStore()
 const userInfoStore = useUserInfoStore()
@@ -42,7 +43,8 @@ const activeBannerGames = [
   { name: 'PA真人', svg: imgPa },
   { name: '麻将胡了', svg: imgMahjong },
   { name: 'FB体育', svg: imgFb },
-  { name: '德州牛仔', svg: imgCowboy },
+  // 临时隐藏牛仔（德州牛仔）入口，需要时取消注释即可恢复。
+  // { name: '德州牛仔', svg: imgCowboy },
 ]
 
 function notifyNotLogin(): void {

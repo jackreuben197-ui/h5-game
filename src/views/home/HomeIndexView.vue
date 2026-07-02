@@ -31,10 +31,42 @@ import imgFb from '@/assets/images/minigame-newui/fb.svg'
 import imgCowboy from '@/assets/images/minigame-newui/sg.svg'
 
 const popularBannerGamesStatic = [
-  { name: 'PA真人', svg: imgPa, gameApiType: 'pa_live' },
-  { name: '麻将胡了', svg: imgMahjong, gameApiType: 'mahjong' },
-  { name: 'FB体育', svg: imgFb, gameApiType: 'fb_sports' },
-  { name: '德州牛仔', svg: imgCowboy, gameApiType: 'cow_boy' },
+  {
+    name: 'PA真人',
+    svg: imgPa,
+    gameApiType: 'pa_live',
+    title: '真人荷官',
+    titleEn: 'Live Dealer',
+    subtitle: ['美女荷官发牌', '沉浸真人体验'],
+    subtitleEn: ['Real live dealers', 'Immersive experience'],
+  },
+  {
+    name: '麻将胡了',
+    svg: imgMahjong,
+    gameApiType: 'mahjong',
+    title: '麻将胡了',
+    titleEn: 'Mahjong Ways',
+    subtitle: ['电子麻将畅玩', '胡牌乐翻天'],
+    subtitleEn: ['Play video mahjong', 'Big wins await'],
+  },
+  {
+    name: 'FB体育',
+    svg: imgFb,
+    gameApiType: 'fb_sports',
+    title: '体育竞猜',
+    titleEn: 'Sports Betting',
+    subtitle: ['全球赛事竞猜', '激情一触即发'],
+    subtitleEn: ['Global sports betting', 'Feel the excitement'],
+  },
+  {
+    name: '德州牛仔',
+    svg: imgCowboy,
+    gameApiType: 'cow_boy',
+    title: '德州牛仔',
+    titleEn: 'Texas Cowboy',
+    subtitle: [] as string[],
+    subtitleEn: [] as string[],
+  },
 ]
 
 const router = useRouter()
@@ -60,6 +92,21 @@ const NOTICE_SPEED_PX_PER_SEC = 40
 const NOTICE_GAP_PX = 48
 
 let noticeResizeObserver: ResizeObserver | null = null
+
+const homeRootRef = ref<HTMLElement | null>(null)
+
+// 小屏内容超出视口时，把初始滚动位置放到底部：保证底部两块（游戏中心/热门游戏）
+// 完整可见，顶部的 banner/公告 上滑查看。大屏内容不溢出则无副作用。
+function anchorScrollToBottomOnSmall(): void {
+  void nextTick(() => {
+    requestAnimationFrame(() => {
+      const scroller = homeRootRef.value?.closest('.main-layout-content') as HTMLElement | null
+      if (scroller && scroller.scrollHeight - scroller.clientHeight > 4) {
+        scroller.scrollTop = scroller.scrollHeight
+      }
+    })
+  })
+}
 
 const showGameClubSelector = ref(false)
 const pendingGameInfo = ref<{ apiType: string; gameType: string; roomId: number } | null>(null)
@@ -667,6 +714,8 @@ onMounted(() => {
   minigameStore.preloadMinigameData(undefined, true).catch((e) => {
     console.warn('[home] preload minigame data failed:', e)
   })
+
+  anchorScrollToBottomOnSmall()
 })
 
 onBeforeUnmount(() => {
@@ -678,7 +727,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="home-page">
+  <div ref="homeRootRef" class="home-page">
     <!-- 0. 顶部栏：登录态仅保留 POKER 品牌 -->
     <div class="top-bar">
       <div></div>
@@ -881,6 +930,18 @@ onBeforeUnmount(() => {
           @click="handleBannerGameClick(game)"
         >
           <img class="coming-soon-scroll-card__img" :src="game.svg" alt="" />
+          <div class="coming-soon-scroll-card__label">
+            <span class="coming-soon-scroll-card__title">{{
+              localized(game.titleEn, game.title || game.name)
+            }}</span>
+            <span
+              v-for="(line, i) in (getLocale() === 'en' ? game.subtitleEn : game.subtitle) || []"
+              :key="i"
+              class="coming-soon-scroll-card__subtitle"
+              :class="{ 'coming-soon-scroll-card__subtitle--first': i === 0 }"
+              >{{ line }}</span
+            >
+          </div>
         </div>
       </div>
     </div>
@@ -1216,8 +1277,8 @@ onBeforeUnmount(() => {
 .game-scroll-card {
   flex-shrink: 0;
   width: 2.95rem;
-  // 同时兜底窄高(14PM 932)与窄矮(SE 667):用 vh 做陡峭斜率,clamp 在两端各自落到 min/max。
-  height: clamp(2.8rem, calc(25vh - 65px), 3.91rem);
+  // 固定高度：小屏不再压缩卡片，改由页面向下滚动（内容延伸到 appbar 下方，用户滚动查看）。
+  height: 3.91rem;
   border-radius: 0.37rem;
   overflow: hidden;
   position: relative;
@@ -1419,7 +1480,8 @@ onBeforeUnmount(() => {
 .coming-soon-scroll-card {
   flex-shrink: 0;
   width: 2.95rem;
-  height: clamp(2rem, calc(35vh - 158px), 3.91rem);
+  // 与 .game-scroll-card 一致：固定高度，不再随屏幕压缩，改由页面滚动兜底。
+  height: 3.91rem;
   border-radius: 0.51rem;
   overflow: hidden;
   position: relative;
@@ -1434,8 +1496,45 @@ onBeforeUnmount(() => {
 .coming-soon-scroll-card__img {
   width: 100%;
   height: 100%;
+  // 图片无内置文字：靠上对齐、超出部分从底部裁掉，底部给代码 label 让位。
   object-fit: cover;
+  object-position: top center;
   display: block;
+}
+
+// 名称/描述改为代码渲染，缩放时不会像图片内文字那样被裁切/糊。
+.coming-soon-scroll-card__label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding: 0.36rem 0.24rem 0.16rem;
+  color: #fff;
+  text-align: left;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
+}
+
+.coming-soon-scroll-card__title {
+  font-size: 0.34rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.coming-soon-scroll-card__subtitle {
+  font-size: 0.22rem;
+  font-weight: 400;
+  line-height: 1.25;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+// 只在标题与副标题之间留 0.12rem，副标题各行仍靠 line-height 紧凑排列。
+.coming-soon-scroll-card__subtitle--first {
+  margin-top: 0.12rem;
 }
 
 </style>

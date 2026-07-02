@@ -5,7 +5,7 @@ import { useLoginModalStore } from '@/stores/loginModal'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useCachedImage } from '@/utils/imageCache'
 import { readLobbyBannerCache, writeLobbyBannerCache } from '@/utils/lobbyBannerCache'
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 
 import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
@@ -40,11 +40,32 @@ const mttPlayersText = '0'
 const mahjongPlayersText = '788'
 
 const activeBannerGames = [
-  { name: 'PA真人', svg: imgPa },
-  { name: '麻将胡了', svg: imgMahjong },
-  { name: 'FB体育', svg: imgFb },
+  {
+    name: 'PA真人',
+    svg: imgPa,
+    title: '真人荷官',
+    titleEn: 'Live Dealer',
+    subtitle: ['美女荷官发牌', '沉浸真人体验'],
+    subtitleEn: ['Real live dealers', 'Immersive experience'],
+  },
+  {
+    name: '麻将胡了',
+    svg: imgMahjong,
+    title: '麻将胡了',
+    titleEn: 'Mahjong Ways',
+    subtitle: ['电子麻将畅玩', '胡牌乐翻天'],
+    subtitleEn: ['Play video mahjong', 'Big wins await'],
+  },
+  {
+    name: 'FB体育',
+    svg: imgFb,
+    title: '体育竞猜',
+    titleEn: 'Sports Betting',
+    subtitle: ['全球赛事竞猜', '激情一触即发'],
+    subtitleEn: ['Global sports betting', 'Feel the excitement'],
+  },
   // 临时隐藏牛仔（德州牛仔）入口，需要时取消注释即可恢复。
-  // { name: '德州牛仔', svg: imgCowboy },
+  // { name: '德州牛仔', svg: imgCowboy, title: '德州牛仔', titleEn: 'Texas Cowboy', subtitle: [], subtitleEn: [] },
 ]
 
 function notifyNotLogin(): void {
@@ -56,13 +77,29 @@ function notifyNotLoginRegister(): void {
 
 // 游客点击「小游戏专区 / 娱乐场」卡片同样需要先登录，统一走登录弹窗，不再直接跳转预览页。
 
+const homeRootRef = ref<HTMLElement | null>(null)
+
+// 小屏内容超出视口时，把初始滚动位置放到底部：保证底部两块（游戏中心/热门游戏）
+// 完整可见，顶部的 banner/公告 上滑查看。大屏内容不溢出则无副作用。
+function anchorScrollToBottomOnSmall(): void {
+  void nextTick(() => {
+    requestAnimationFrame(() => {
+      const scroller = homeRootRef.value?.closest('.main-layout-content') as HTMLElement | null
+      if (scroller && scroller.scrollHeight - scroller.clientHeight > 4) {
+        scroller.scrollTop = scroller.scrollHeight
+      }
+    })
+  })
+}
+
 onMounted(() => {
   void userInfoStore.ensureChannelDefaultClub()
+  anchorScrollToBottomOnSmall()
 })
 </script>
 
 <template>
-  <div class="home-page">
+  <div ref="homeRootRef" class="home-page">
     <!-- 0. 顶部栏：POKER + 注册/登录 -->
     <div class="top-bar">
       <div class="top-bar__logo">
@@ -253,6 +290,18 @@ onMounted(() => {
           @click="notifyNotLogin"
         >
           <img class="coming-soon-scroll-card__img" :src="game.svg" alt="" />
+          <div class="coming-soon-scroll-card__label">
+            <span class="coming-soon-scroll-card__title">{{
+              localized(game.titleEn, game.title || game.name)
+            }}</span>
+            <span
+              v-for="(line, i) in (getLocale() === 'en' ? game.subtitleEn : game.subtitle) || []"
+              :key="i"
+              class="coming-soon-scroll-card__subtitle"
+              :class="{ 'coming-soon-scroll-card__subtitle--first': i === 0 }"
+              >{{ line }}</span
+            >
+          </div>
         </div>
       </div>
     </div>
@@ -770,11 +819,13 @@ onMounted(() => {
 .coming-soon-scroll-card {
   flex-shrink: 0;
   width: 2.95rem;
-  height: clamp(2rem, calc(35vh - 158px), 3.91rem);
+  // 固定高度：小屏不再压缩卡片，改由页面向下滚动兜底（与登录后首页一致）。
+  height: 3.91rem;
   border-radius: 0.51rem;
   overflow: hidden;
   position: relative;
   cursor: pointer;
+  border: 0.01rem solid rgba(249, 249, 249, 0.4);
 
   &:active {
     opacity: 0.85;
@@ -784,7 +835,44 @@ onMounted(() => {
 .coming-soon-scroll-card__img {
   width: 100%;
   height: 100%;
+  // 图片无内置文字：靠上对齐、底部裁掉，给代码 label 让位。
   object-fit: cover;
+  object-position: top center;
   display: block;
+}
+
+// 名称/描述改为代码渲染，缩放时不会像图片内文字那样被裁切/糊。
+.coming-soon-scroll-card__label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding: 0.36rem 0.24rem 0.16rem;
+  color: #fff;
+  text-align: left;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
+}
+
+.coming-soon-scroll-card__title {
+  font-size: 0.34rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.coming-soon-scroll-card__subtitle {
+  font-size: 0.22rem;
+  font-weight: 400;
+  line-height: 1.25;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+// 只在标题与副标题之间留 0.12rem，副标题各行仍靠 line-height 紧凑排列。
+.coming-soon-scroll-card__subtitle--first {
+  margin-top: 0.12rem;
 }
 </style>

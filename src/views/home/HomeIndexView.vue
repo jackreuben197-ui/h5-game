@@ -1143,10 +1143,10 @@ onBeforeUnmount(() => {
   gap: 0.24rem;
 }
 
-// 默认模块 <=> MTT 列表切换的横向推入（新面板从右滑入，旧面板向左滑出）。
+// 默认模块 <=> MTT 列表切换用淡入淡出：改用 opacity，去掉 overflow:hidden，
+// 否则容器会裁掉游戏中心横向滚动到屏幕边缘的“出血边”（与 dev_merge_0624 一致）。
 .home-swap-container {
   position: relative;
-  overflow: hidden;
   width: 100%;
 }
 
@@ -1156,8 +1156,8 @@ onBeforeUnmount(() => {
 
 .home-swap-enter-active,
 .home-swap-leave-active {
-  transition: transform 0.32s ease;
-  will-change: transform;
+  transition: opacity 0.32s ease;
+  will-change: opacity;
 }
 
 // 切换期间旧面板脱离流，避免撑高容器；新面板在流内决定容器高度。
@@ -1169,16 +1169,16 @@ onBeforeUnmount(() => {
 }
 
 .home-swap-enter-from {
-  transform: translateX(100%);
+  opacity: 0;
 }
 .home-swap-enter-to {
-  transform: translateX(0);
+  opacity: 1;
 }
 .home-swap-leave-from {
-  transform: translateX(0);
+  opacity: 1;
 }
 .home-swap-leave-to {
-  transform: translateX(-100%);
+  opacity: 0;
 }
 
 .section-header {

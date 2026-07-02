@@ -312,7 +312,9 @@ const joinGame = async (apiType: string, gameType: string, roomId = 0, clubId?: 
 
     <main class="page-content" :class="{ 'is-embedded': hideHeader }">
 
+      <!-- 热门游戏横向滚动条 暂时隐藏，后续可能恢复（删掉 v-if="false" 即可恢复） -->
       <section
+        v-if="false"
         class="popular-banner-section"
         v-show="popularBannerGames.length > 0 || loadingPopularBanner"
       >

@@ -227,11 +227,14 @@ async function onSecondaryAction(): Promise<void> {
   if (isIosNativeSafari()) {
     try {
       showToast({ message: '正在准备安装文件…', duration: 1500 })
+      // 部署可能位于站点子路径，用 BASE_URL 解析成绝对地址，
+      // 避免固定 '/' 打到站点根导致图标 404（manifest 用的也是同款相对路径）。
+      const appBaseUrl = new URL(import.meta.env.BASE_URL, window.location.href).toString()
       await installIosWebClip({
         label: 'Newpkr',
-        url: window.location.origin + '/',
+        url: appBaseUrl,
         // 用 manifest 里同一张 192 图标，避免重复打包
-        iconUrl: '/icon-192.png',
+        iconUrl: new URL('icon-192.png', appBaseUrl).toString(),
       })
       // location.href 跳转后，iOS Safari 会接管显示"是否允许下载描述文件"对话框，
       // 不需要再 toast；以下是兜底（极少数情况跳转未生效）

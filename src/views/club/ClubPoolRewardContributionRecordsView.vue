@@ -7,6 +7,7 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import type { StatsJackpotGoldChangeLogsDataItem } from '@/api/models/stats'
 import { formatUC } from '@/utils/roomVisibility'
 import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
+import { t } from '@/i18n'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -102,7 +103,7 @@ async function fetchContributionRecords(reset = false): Promise<void> {
       records.value = []
       hasMore.value = false
     } else {
-      showFailToast('加载失败，请重试')
+      showFailToast(t('MSG_LoadFail') + "，" + t('UIClub_Text4'))
     }
   } finally {
     if (reset) {
@@ -151,11 +152,11 @@ onMounted(() => {
       <div class="record-header-wrap">
         <div class="record-header-glow"></div>
         <div class="record-header-pill">
-          <div class="col-player">玩家</div>
-          <div class="col-gameid">牌局名称</div>
-          <div class="col-value">贡献</div>
-          <div class="col-type">玩法</div>
-          <div class="col-hand">时间</div>
+          <div class="col-player">{{ t('UIMine_RecordItemMatch_2TZCjaqM') }}</div>
+          <div class="col-gameid">{{ t('UIClub_RoomCreat_0HvQkjkd') }}</div>
+          <div class="col-value">{{ t('UIClubJackpotRecordDetail_ContributionTip') }}</div>
+          <div class="col-type">{{ t('UIData_game') }}</div>
+          <div class="col-hand">{{ t('TimeItem') }}</div>
         </div>
       </div>
 
@@ -187,14 +188,14 @@ onMounted(() => {
       <!-- 空状态 -->
       <div v-if="!hasItems && loading" class="record-empty">
         <img class="empty-icon" :src="emptyStateIcon" alt="" />
-        <p>加载中...</p>
+        <p>{{ t('SuperView2') }}...</p>
       </div>
       <div v-else-if="!hasItems && !loading" class="record-empty">
         <img class="empty-icon" :src="emptyStateIcon" alt="" />
-        <p>暂无数据</p>
+        <p>{{ t('UIClub_FundDetail_xYlV8VBZ') }}</p>
       </div>
-      <div v-else-if="loadingMore" class="pool-loading-more">加载中...</div>
-      <div v-else-if="!hasMore && hasItems" class="pool-loading-more">没有更多了</div>
+      <div v-else-if="loadingMore" class="pool-loading-more">{{ t('SuperView2') }}...</div>
+      <div v-else-if="!hasMore && hasItems" class="pool-loading-more">{{ t('UIClub_NoMore') }}</div>
     </section>
   </div>
 </template>

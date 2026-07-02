@@ -11,6 +11,7 @@ import icEye from '@/assets/icons/ic_eye.svg'
 import icCheckbox from '@/assets/icons/ic_checkbox.png'
 import icUncheckbox from '@/assets/icons/ic_uncheckbox.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { t } from '@/i18n'
 
 const router = useRouter()
 
@@ -62,10 +63,10 @@ function requestOtp(): void {
   void postUserSendCodeApi({ email: mail } as unknown as { phone: string; area: string })
     .then((response) => {
       if (response.code !== 0) {
-        throw new Error(typeof response.msg === 'string' ? response.msg : '验证码发送失败')
+        throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_CodeFail3'))
       }
 
-      showSuccessToast('验证码已发送')
+      showSuccessToast(t('adaptation10133'))
       otpCountdown.value = 60
       if (otpTimer !== null) {
         window.clearInterval(otpTimer)
@@ -84,7 +85,7 @@ function requestOtp(): void {
       }, 1000)
     })
     .catch((error) => {
-      const message = error instanceof Error ? error.message : '验证码发送失败'
+      const message = error instanceof Error ? error.message : t('UIClub_CodeFail3')
       showFailToast(message)
     })
     .finally(() => {
@@ -102,11 +103,11 @@ async function submitReset(): Promise<void> {
     return
   }
   if (!code) {
-    showFailToast('请输入验证码')
+    showFailToast(t('UILogin_Code'))
     return
   }
   if (!nextPassword) {
-    showFailToast('请输入新密码')
+    showFailToast(t('UIClub_PleaseCode'))
     return
   }
   // if (!acceptedPolicy.value) {
@@ -123,13 +124,13 @@ async function submitReset(): Promise<void> {
     })
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '重置密码失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_CodeFail4'))
     }
 
-    showSuccessToast('密码重置成功')
+    showSuccessToast(t('UIClub_CodeSuccess2'))
     void router.replace('/mine/settings/account')
   } catch (error) {
-    const message = error instanceof Error ? error.message : '重置密码失败'
+    const message = error instanceof Error ? error.message : t('UIClub_CodeFail4')
     showFailToast(message)
   } finally {
     submitting.value = false

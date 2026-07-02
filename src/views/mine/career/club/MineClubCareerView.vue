@@ -42,9 +42,9 @@ const gameTabs: TabItem[] = [
   { label: '6+', key: '6+' },
 ]
 const dateTabs: TabItem[] = [
-  { label: '今天', key: 'today' },
-  { label: '7天', key: 'week' },
-  { label: '30天', key: 'month' },
+  { label: t('UIData_Today'), key: 'today' },
+  { label: '7' + t('UIHappyShop_ActivityShopDay'), key: 'week' },
+  { label: '30' + t('UIHappyShop_ActivityShopDay'), key: 'month' },
 ]
 const selectedGameTab = ref(gameTabs[0].key)
 const selectedDateTab = ref(dateTabs[0].key)
@@ -59,9 +59,9 @@ const responseCache = ref<Record<string, unknown> | null>(null)
 const clubs = computed(() => {
   const list = userInfoStore.clubList
   if (!list.length) {
-    return ['全部']
+    return [t('UIMatch_GtO8YEdb')]
   }
-  return ['全部', ...list.map((club) => club.club_name || `Club ${club.club_id}`)]
+  return [t('UIMatch_GtO8YEdb'), ...list.map((club) => club.club_name || `Club ${club.club_id}`)]
 })
 
 // 当前选中的俱乐部索引（0 = 全部）
@@ -70,7 +70,7 @@ const selectedClubIndex = ref(0)
 // 右上角按钮显示的俱乐部名称（默认"全部"）
 const selectedClubLabel = computed(() => {
   if (selectedClubIndex.value === 0) {
-    return '全部'
+    return t('UIMatch_GtO8YEdb')
   }
   const club = userInfoStore.clubList[selectedClubIndex.value - 1]
   return club?.club_name || `Club ${club?.club_id ?? ''}`
@@ -102,8 +102,8 @@ function persistSelectedClub(): void {
 const currencyTypes = [
   { label: '联盟币', value: 1 },
   // { label: 'USDT', value: 2 },
-  { label: '记分牌', value: 3 },
-  { label: '钻石', value: 4 },
+  { label: t('UIGuild_CoinType1'), value: 3 },
+  { label: t('UIMine_VIP_diamond'), value: 4 },
 ] as const
 const selectedCurrencyIndex = ref(0)
 
@@ -120,19 +120,24 @@ interface CareerMenuItem {
 }
 
 const metrics = ref<CareerMetric[]>([
-  { label: '局数', value: '0' },
-  { label: '手数', value: '0' },
-  { label: '入池率', value: '0%' },
-  { label: '盈亏', value: '0' },
+  { label: t('UIData_YGvXd5iXr_003'), value: '0' },
+  { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: '0' },
+  { label: t('UIClub_Mlistinfo_rRyW4JkW'), value: '0%' },
+  { label: t('UITexasInfo_loss'), value: '0' },
 ])
 
 const menuList: CareerMenuItem[] = [
-  { key: 'record', label: '战绩', icon: iconRecord, route: '/mine/career/club/record' },
+  {
+    key: 'record',
+    label: t('UICareerRecord'),
+    icon: iconRecord,
+    route: '/mine/career/club/record',
+  },
   { key: 'mtt', label: 'MTT', icon: iconMtt, route: '/mine/career/club/mtt' },
-  { key: 'cowboy', label: '牛仔', icon: iconCowboy, route: '/mine/career/club/cowboy' },
-  { key: 'mahjong', label: '麻将', icon: iconMahjong, route: '/mine/career/club/mahjong' },
-  { key: 'mahjong-mtt', label: '麻将MTT战绩', icon: iconMahjong },
-  { key: 'data', label: '数据', icon: iconData, route: '/mine/career/club/data' },
+  // { key: 'cowboy', label: t('UINiuZaiRule_title'), icon: iconCowboy, route: '/mine/career/club/cowboy' },
+  // { key: 'mahjong', label: t('Mahjong_Name'), icon: iconMahjong, route: '/mine/career/club/mahjong' },
+  // { key: 'mahjong-mtt', label: t('Mahjong_Name') + "MTT" + t('UICareerRecord'), icon: iconMahjong },
+  { key: 'data', label: t('adaptation10124'), icon: iconData, route: '/mine/career/club/data' },
 ]
 
 function selectGameTab(tab: string): void {
@@ -179,7 +184,7 @@ function handleMenuClick(item: CareerMenuItem): void {
     return
   }
   if (item.key === 'cowboy' || item.key == 'mahjong') {
-    showGameToast('功能开发中')
+    showGameToast(t('UIClub_InDeve'))
     return
   }
   // 将本页面上选中的俱乐部同步到全局 currentClubId，保证子页面以当前选择为准；
@@ -206,7 +211,7 @@ function toSafeNumber(value: unknown): number {
 function resolveRequestParams() {
   // game_types: 0-德州 1-OMAHA4 2-OMAHA5 3-OMAHA6 4-fantasy 5-牛仔 6-麻将 7-其他
   let gameTypes: number[]
-  if (selectedGameTab.value === '奥马哈') {
+  if (selectedGameTab.value === t('adaptation10009')) {
     gameTypes = [1, 2, 3]
   } else {
     // 德州（默认）或短牌都传 [0]
@@ -217,12 +222,12 @@ function resolveRequestParams() {
   const clubId =
     selectedClubIndex.value === 0
       ? 0
-      : userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id ?? 0
+      : (userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id ?? 0)
 
   return {
     filter_type: currencyTypes[selectedCurrencyIndex.value].value,
     game_types: gameTypes,
-    poker_types: selectedGameTab.value === '短牌' ? [2] : [0],
+    poker_types: selectedGameTab.value === t('PokerType_2') ? [2] : [0],
     club_id: clubId,
   }
 }
@@ -234,10 +239,10 @@ function extractMetricsFromCache(): CareerMetric[] {
   const data = responseCache.value
   if (!data) {
     return [
-      { label: '局数', value: '0' },
-      { label: '手数', value: '0' },
-      { label: '入池率', value: '0%' },
-      { label: '盈亏', value: '0' },
+      { label: t('UIData_YGvXd5iXr_003'), value: '0' },
+      { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: '0' },
+      { label: t('UIClub_Mlistinfo_rRyW4JkW'), value: '0%' },
+      { label: t('UITexasInfo_loss'), value: '0' },
     ]
   }
 
@@ -263,13 +268,13 @@ function extractMetricsFromCache(): CareerMetric[] {
   const totalEarn = toSafeNumber(dayData?.total_earn)
 
   return [
-    { label: '局数', value: `${totalGameCnt}` },
-    { label: '手数', value: totalHand.toLocaleString('en-US') },
+    { label: t('UIData_YGvXd5iXr_003'), value: `${totalGameCnt}` },
+    { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: totalHand.toLocaleString('en-US') },
     {
-      label: '入池率',
+      label: t('UIClub_Mlistinfo_rRyW4JkW'),
       value: totalHand > 0 ? `${Math.min(100, Math.round((inPoolCnt / totalHand) * 100))}%` : '0%',
     },
-    { label: '盈亏', value: `${formatUC(totalEarn)}` },
+    { label: t('UITexasInfo_loss'), value: `${formatUC(totalEarn)}` },
   ]
 }
 
@@ -281,7 +286,7 @@ function homeCacheKey(): string {
   const clubId =
     selectedClubIndex.value === 0
       ? 0
-      : userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id ?? 0
+      : (userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id ?? 0)
   const currency = currencyTypes[selectedCurrencyIndex.value].value
   return `${clubId}_home_${currency}_${selectedGameTab.value}`
 }
@@ -314,7 +319,9 @@ async function requestSummary(key: string, silent: boolean): Promise<void> {
     const params = resolveRequestParams()
     const response = await postStatsUserStatsAllApi(params)
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载俱乐部生涯数据失败')
+      throw new Error(
+        typeof response.msg === 'string' ? response.msg : t('UIClub_LoadClubDataFail'),
+      )
     }
     if (key !== homeCacheKey()) return
 
@@ -324,7 +331,7 @@ async function requestSummary(key: string, silent: boolean): Promise<void> {
     void homeCache().put(USER_STORE_CAREER, key, data)
   } catch (error) {
     if (!silent) {
-      const message = error instanceof Error ? error.message : '加载俱乐部生涯数据失败'
+      const message = error instanceof Error ? error.message : t('UIClub_LoadClubDataFail')
       showFailToast(message)
     }
   } finally {

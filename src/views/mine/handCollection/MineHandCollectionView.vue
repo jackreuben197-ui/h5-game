@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
 import type {
@@ -29,17 +29,37 @@ import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import PokerCard from '@/components/GameCard/PokerCard.vue'
 import { setHandReplaySession } from '@/session/handReplaySession'
 import { formatUC } from '@/utils/roomVisibility'
+import { t } from '@/i18n'
+import { useGameStore } from '@/stores/game'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { userCache } from '@/utils/userCache'
+import { USER_STORE_H5_REPLAY } from '@/utils/indexedDB'
 
-const title = computed(() => 'Result')
+const title = computed(() => t('UIMine_Paipu_title'))
 const router = useRouter()
+const gameStore = useGameStore()
+const userInfoStore = useUserInfoStore()
+
+// 对齐客户端 UIReplayComponent：每页 limit=10。
+const PAGE_LIMIT = 10
+// 触底前提前加载的像素距离（IntersectionObserver rootMargin）。
+const LOAD_MORE_ROOT_MARGIN = '200px'
+
+// 客户端 RequestReplayData 显式带 club_id；服务端在按俱乐部过滤时取这个值。
+// 无俱乐部时回退 0（= 不按俱乐部过滤）。
+function currentClubIdNumber(): number {
+  const raw = userInfoStore.currentClubId
+  const num = Number(raw)
+  return Number.isFinite(num) ? num : 0
+}
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const gameTabs = ['德州', '短牌', '奥马哈']
-const modeTabs = ['近期', '收藏']
+const gameTabs = [t('adaptation10022'), t('PokerType_2'), t('adaptation10009')]
+const modeTabs = [t('UIPaipu_Jinqi'), t('adaptation10212')]
 const selectedGame = ref(gameTabs[0])
 const selectedMode = ref(modeTabs[0])
 
@@ -58,7 +78,61 @@ interface HandCard {
 }
 
 const loading = ref(false)
+const loadingMore = ref(false)
+const hasMore = ref(true)
+const offset = ref(0)
 const handCards = ref<HandCard[]>([])
+
+// ── 缓存（IndexedDB h5_replay）──────────────────────────────────────────────
+// key 形如 `${game}_${mode}`，game ∈ texas/sixplus/omaha，mode ∈ recent/collected。
+// 服务端牌谱一旦写入就不再变更，所以二次请求只会多不会少也不会变，可直接用 server ∪ cache（按 handId 去重）。
+function gameCacheToken(game: string): string {
+  if (game === gameTabs[1]) return 'sixplus'
+  if (game === gameTabs[2]) return 'omaha'
+  return 'texas'
+}
+
+function modeCacheToken(mode: string): string {
+  return mode === modeTabs[1] ? 'collected' : 'recent'
+}
+
+function currentCacheKey(): string {
+  return `${gameCacheToken(selectedGame.value)}_${modeCacheToken(selectedMode.value)}`
+}
+
+function handCardsCache() {
+  return userCache(gameStore.loginUserId)
+}
+
+function plainClone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
+}
+
+// 合并：server 优先（同一 handId 用 server 的字段），cache 仅补充 server 没返回的历史记录。
+function mergeHandCards(cached: HandCard[], fresh: HandCard[]): HandCard[] {
+  const seen = new Set<string>()
+  const merged: HandCard[] = []
+  for (const card of fresh) {
+    if (!card.handId || seen.has(card.handId)) continue
+    seen.add(card.handId)
+    merged.push(card)
+  }
+  for (const card of cached) {
+    if (!card.handId || seen.has(card.handId)) continue
+    seen.add(card.handId)
+    merged.push(card)
+  }
+  return merged
+}
+
+async function readHandCardsCache(): Promise<HandCard[]> {
+  const cached = await handCardsCache().get<HandCard[]>(USER_STORE_H5_REPLAY, currentCacheKey())
+  return Array.isArray(cached) ? cached : []
+}
+
+async function writeHandCardsCache(value: HandCard[]): Promise<void> {
+  await handCardsCache().put(USER_STORE_H5_REPLAY, currentCacheKey(), plainClone(value))
+}
 
 function toSafeNumber(value: unknown): number {
   const numeric = Number(value)
@@ -75,10 +149,10 @@ function formatSigned(value: unknown): string {
 }
 
 function resolveGameFilter(): { game_types: number[]; poker_types?: number[] } {
-  if (selectedGame.value === '奥马哈') {
+  if (selectedGame.value === t('adaptation10009')) {
     return { game_types: [1, 2, 3] }
   }
-  if (selectedGame.value === '短牌') {
+  if (selectedGame.value === t('PokerType_2')) {
     return { game_types: [0], poker_types: [2] }
   }
   return { game_types: [0] }
@@ -135,49 +209,131 @@ function mapRowToCards(row: HandCollectionRow, index: number): HandCard[] {
   })
 }
 
-async function fetchHandCollection(): Promise<void> {
-  loading.value = true
+async function fetchHandCollection(append = false): Promise<void> {
+  const cacheKey = currentCacheKey()
+  let cached: HandCard[] = []
+
+  if (append) {
+    if (!hasMore.value || loading.value || loadingMore.value) return
+    loadingMore.value = true
+  } else {
+    // 首屏 / tab 切换：复位分页，先用缓存渲染再静默刷新。
+    offset.value = 0
+    hasMore.value = true
+    cached = await readHandCardsCache()
+    if (cached.length) {
+      handCards.value = cached
+      loading.value = false
+    } else {
+      handCards.value = []
+      loading.value = true
+    }
+  }
+
   try {
     const filter = resolveGameFilter()
-    if (selectedMode.value === '收藏') {
+    let fresh: HandCard[] = []
+    if (selectedMode.value === t('adaptation10212')) {
+      // 对齐客户端 UIReplayComponent：collected list 必带 club_id + tribe_id。
       const response = await postMiscGameRoundListDataByRoomApi({
         ...filter,
-        limit: 20,
-        offset: 0,
+        club_id: currentClubIdNumber(),
+        tribe_id: 0,
+        limit: PAGE_LIMIT,
+        offset: offset.value,
       })
 
       if (response.code !== 0) {
-        throw new Error(typeof response.msg === 'string' ? response.msg : '加载收藏手牌失败')
+        throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail11'))
       }
 
-      const rows = Array.isArray(response.data?.list) ? response.data.list : []
-      handCards.value = rows.flatMap((row, index) =>
+      const rows = Array.isArray(response.data?.records) ? response.data.records : []
+      fresh = rows.flatMap((row, index) =>
         mapRowToCards((row as MiscGameRoundListDataByRoomRecord) ?? {}, index),
       )
     } else {
       const response = await postStatsUserGameRecordListApi({
         ...filter,
+        club_id: currentClubIdNumber(),
+        tribe_id: 0,
         room_type: 0,
-        limit: 20,
-        offset: 0,
+        limit: PAGE_LIMIT,
+        offset: offset.value,
       })
       if (response.code !== 0) {
-        throw new Error(typeof response.msg === 'string' ? response.msg : '加载手牌记录失败')
+        throw new Error(
+          typeof response.msg === 'string' ? response.msg : t('UIClub_LoadRecordFail'),
+        )
       }
 
       const records = Array.isArray(response.data?.records) ? response.data.records : []
-      handCards.value = records.flatMap((row, index) =>
+      fresh = records.flatMap((row, index) =>
         mapRowToCards((row as HandCollectionRow) ?? {}, index),
       )
     }
+
+    // 切 tab 期间 cacheKey 可能已经变了；只在 key 仍是当前选择时才落表，避免脏数据。
+    if (currentCacheKey() !== cacheKey) return
+
+    // 按 handId 去重：服务端返回的优先级最高，本地缓存（或之前页）补齐其余历史项。
+    const base = append ? handCards.value : cached
+    const merged = mergeHandCards(base, fresh)
+    handCards.value = merged
+    void writeHandCardsCache(merged)
+
+    // 收到 < limit 条说明这是最后一页；否则推进 offset 等待下一次 loadMore。
+    if (fresh.length < PAGE_LIMIT) {
+      hasMore.value = false
+    } else {
+      offset.value += PAGE_LIMIT
+    }
   } catch (error) {
-    handCards.value = []
-    const message = error instanceof Error ? error.message : '加载手牌记录失败'
-    showFailToast(message)
+    if (!append && !cached.length) {
+      handCards.value = []
+      const message = error instanceof Error ? error.message : t('UIClub_LoadRecordFail')
+      showFailToast(message)
+    }
+    // append 失败时不弹错也不清空，让用户保留已展示的列表，下次滚动可重试。
   } finally {
     loading.value = false
+    loadingMore.value = false
   }
 }
+
+function loadMoreHandCollection(): void {
+  void fetchHandCollection(true)
+}
+
+// IntersectionObserver 触底加载：把哨兵元素放在列表底部，进入视口就触发下一页。
+const bottomSentinel = ref<HTMLElement | null>(null)
+let bottomObserver: IntersectionObserver | null = null
+
+function attachBottomObserver(): void {
+  detachBottomObserver()
+  if (typeof IntersectionObserver === 'undefined') return
+  const target = bottomSentinel.value
+  if (!target) return
+  bottomObserver = new IntersectionObserver(
+    (entries) => {
+      const entry = entries[0]
+      if (entry?.isIntersecting) loadMoreHandCollection()
+    },
+    { rootMargin: LOAD_MORE_ROOT_MARGIN },
+  )
+  bottomObserver.observe(target)
+}
+
+function detachBottomObserver(): void {
+  bottomObserver?.disconnect()
+  bottomObserver = null
+}
+
+// 哨兵在 v-if (hasMore) 切换后会被销毁/重建，要等下一帧重新绑定观察器。
+watch([hasMore, handCards], () => {
+  void nextTick(attachBottomObserver)
+})
+
+onBeforeUnmount(detachBottomObserver)
 
 function selectGame(tab: string): void {
   if (selectedGame.value === tab) return
@@ -193,7 +349,7 @@ function selectMode(tab: string): void {
 
 function goHandDetail(card: HandCard): void {
   if (!card.handRecord) {
-    showFailToast('牌谱数据异常')
+    showFailToast(t('UIClub_DataError'))
     return
   }
 
@@ -218,7 +374,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell mine-glass-page" :style="backgroundStyle">
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" :extra-padding="true" />
 
     <div class="content-wrap">
       <div class="tabs game-tabs">
@@ -246,8 +402,8 @@ onMounted(() => {
       </div>
 
       <section class="list-wrap">
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!handCards.length" class="list-status">暂无手牌记录</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!handCards.length" class="list-status">{{ t('UIClub_NoRecord2') }}</p>
         <article
           v-for="card in handCards"
           :key="card.id"
@@ -261,7 +417,7 @@ onMounted(() => {
                 :key="`${card.id}-card-${idx}`"
                 :rank="value.rank"
                 :suit="value.suit"
-                size="0.64rem"
+                size="0.82rem"
               />
             </div>
             <div class="title" v-html="card.title"></div>
@@ -269,21 +425,36 @@ onMounted(() => {
           <div class="line"></div>
           <div class="bottom-row">
             <div class="meta">
-              <div>Hand ID: {{ card.handId }}</div>
+              <div>{{ t('UIPaipu_HandId') }}: {{ card.handId }}</div>
               <div class="meta-blind">
                 <img class="meta-icon" :src="icBlinde" alt="" />
-                {{ card.table }}&nbsp;&nbsp;&nbsp;底池: <strong>{{ card.pot }}</strong>
+                {{ card.table }}&nbsp;&nbsp;&nbsp;{{ t('adaptation20005') }}: <strong>{{ card.pot }}</strong>
               </div>
             </div>
             <div class="profit">
               <div :class="['money', { negative: card.negative !== false }]">{{ card.profit }}</div>
               <div class="hands-row">
                 <img class="meta-icon" :src="icHands" alt="" />
-                Hands: <strong>{{ card.hands }}</strong>
+                {{ t('UITexasReport_hand') }}: <strong>{{ card.hands }}</strong>
               </div>
             </div>
           </div>
         </article>
+
+        <!-- 触底加载哨兵：仅在还有下一页时挂上，IntersectionObserver 监听它进入视口。 -->
+        <div
+          v-if="hasMore && handCards.length"
+          ref="bottomSentinel"
+          class="list-sentinel"
+          aria-hidden="true"
+        ></div>
+        <p v-if="loadingMore" class="list-status">{{ t('SuperView2') }}...</p>
+        <p
+          v-else-if="!hasMore && handCards.length"
+          class="list-status list-status-end"
+        >
+          {{ t('UIClub_NoMore') }}
+        </p>
       </section>
     </div>
   </div>
@@ -293,7 +464,7 @@ onMounted(() => {
 .mine-glass-page {
   height: 100dvh;
   // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
-  padding-bottom: 0.8rem;
+  padding: 0 0 0.8rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;
@@ -317,7 +488,7 @@ onMounted(() => {
   border: 0;
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.42rem;
+  font-size: 0.37rem;
   padding-bottom: 0.06rem;
 
   &.active {
@@ -341,7 +512,7 @@ onMounted(() => {
   background: transparent;
   color: rgba(255, 255, 255, 0.6);
   font-size: 0.44rem;
-  padding: 0.2rem 0;
+  padding: 0.35rem 0;
 
   &.active {
     background: rgba(249, 249, 249, 0.5);
@@ -351,7 +522,7 @@ onMounted(() => {
 }
 
 .list-wrap {
-  margin-top: 0.38rem;
+  margin-top: 0.42rem;
   display: flex;
   flex-direction: column;
   gap: 0.24rem;
@@ -362,6 +533,15 @@ onMounted(() => {
   font-size: 0.3rem;
   opacity: 0.78;
   padding: 0.24rem 0;
+}
+
+.list-status-end {
+  opacity: 0.55;
+}
+
+.list-sentinel {
+  width: 100%;
+  height: 0.04rem;
 }
 
 .glass-card {
@@ -381,6 +561,22 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  .meta {
+    padding: 0.2rem 0;
+  }
+  .bottom-info {
+    display: flex;
+    align-items: center;
+    margin-top: 0.1rem;
+  }
+  .icon-sb {
+    width: 0.37rem;
+    height: 0.37rem;
+    margin-right: 0.1rem;
+  }
+  span {
+    margin-right: 0.1rem;
+  }
 }
 
 .poker-pair {
@@ -398,7 +594,7 @@ onMounted(() => {
 .line {
   height: 0.02rem;
   background: rgba(249, 249, 249, 0.2);
-  margin: 0.16rem 0;
+  margin: 0.25rem 0 0rem;
 }
 
 .meta {
@@ -423,6 +619,14 @@ onMounted(() => {
 .profit {
   text-align: right;
   font-size: 0.31rem;
+  .profit-hands {
+    img {
+      width: 0.37rem;
+      height: 0.37rem;
+    }
+    display: flex;
+    align-items: flex-end;
+  }
 }
 
 .hands-row {
@@ -433,6 +637,8 @@ onMounted(() => {
   color: #fa2b4b;
   font-size: 0.52rem;
   font-weight: 700;
+
+  line-height: 0.45rem;
 
   &.negative {
     color: #27d300;

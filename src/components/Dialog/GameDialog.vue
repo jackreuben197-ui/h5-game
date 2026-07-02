@@ -39,6 +39,8 @@ const props = withDefaults(
     confirmButtonText?: string
     confirmButtonDisabled?: boolean
     showFooter?: boolean
+    /** 是否显示卡片 box-shadow（含面板模式 ::after 的内阴影），默认 true */
+    showBoxShawdow?: boolean
     dialogWidth?: string
     cardMinHeight?: string
     bodyMaxHeight?: string
@@ -59,6 +61,7 @@ const props = withDefaults(
     confirmButtonText: t('adaptation10012'),
     confirmButtonDisabled: false,
     showFooter: true,
+    showBoxShawdow: true,
     dialogWidth: '9rem',
     cardMinHeight: '2rem',
     bodyMaxHeight: '12rem',

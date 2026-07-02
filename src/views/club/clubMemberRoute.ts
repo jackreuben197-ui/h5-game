@@ -1,4 +1,5 @@
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
+import { t } from '@/i18n'
 
 export type MemberIdentity = 'founder' | 'admin' | 'agent' | 'player'
 
@@ -35,7 +36,7 @@ export function getMemberRouteContext(route: RouteLocationNormalizedLoaded): Mem
   const memberId = toQueryValue(route.params.memberId as string | string[] | undefined) || '0'
   const identity = normalizeIdentity(toQueryValue(route.query.identity as string | string[] | undefined))
   const isBoundAgent = toQueryValue(route.query.bound as string | string[] | undefined) === '1'
-  const name = toQueryValue(route.query.name as string | string[] | undefined) || '成员'
+  const name = toQueryValue(route.query.name as string | string[] | undefined) || t('UIClub_Info_Members')
   const uid = toQueryValue(route.query.uid as string | string[] | undefined) || '--'
 
   return {
@@ -49,8 +50,8 @@ export function getMemberRouteContext(route: RouteLocationNormalizedLoaded): Mem
 }
 
 export function identityText(identity: MemberIdentity): string {
-  if (identity === 'founder') return '创始人'
-  if (identity === 'admin') return '管理员'
-  if (identity === 'agent') return '代理'
-  return '普通玩家'
+  if (identity === 'founder') return t('UIGuid_Founder')
+  if (identity === 'admin') return t('UIGuild_FilterButtonManager')
+  if (identity === 'agent') return t('UIClub_AgentItem')
+  return t('UIClub_Player2')
 }

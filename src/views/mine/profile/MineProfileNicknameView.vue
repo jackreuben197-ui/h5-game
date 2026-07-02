@@ -11,10 +11,11 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import icInfo from '@/assets/icons/ic_info.svg'
 import { resolveDiamondPriceValue } from '@/utils/diamondPriceConfig'
+import { t } from '@/i18n'
 
 const router = useRouter()
 
-const title = computed(() => '修改昵称')
+const title = computed(() => t('UIMine_UserInfoSettingNick_title'))
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -72,13 +73,13 @@ inputName.value = String(displayUser.value.nickname || '')
 
 function validateNickname(value: string): string | null {
   if (!value) {
-    return '请输入昵称'
+    return t('UIMine_SetNick_InputTips')
   }
   if (value.length < 2) {
-    return '昵称至少2个字符'
+    return t('UIClub_Text62') + '2' + t('UIClub_Text63')
   }
   if (value.length > 20) {
-    return '昵称最多20个字符'
+    return t('UIClub_Text64') + '20' + t('UIClub_Text63')
   }
   return null
 }
@@ -92,7 +93,7 @@ async function onSave(): Promise<void> {
   }
 
   if (nextNickname === displayUser.value.nickname) {
-    showSuccessToast('昵称未发生变化')
+    showSuccessToast(t('UIClub_Not2'))
     router.back()
     return
   }
@@ -101,12 +102,12 @@ async function onSave(): Promise<void> {
   try {
     const checkRes = await postUserCheckNicknameApi({ nickname: nextNickname })
     if (checkRes.code !== 0) {
-      throw new Error(typeof checkRes.msg === 'string' ? checkRes.msg : '昵称不可用')
+      throw new Error(typeof checkRes.msg === 'string' ? checkRes.msg : t('UIClub_Can2'))
     }
 
     const modifyRes = await postUserModifyInfoApi({ nick_name: nextNickname })
     if (modifyRes.code !== 0) {
-      throw new Error(typeof modifyRes.msg === 'string' ? modifyRes.msg : '昵称保存失败')
+      throw new Error(typeof modifyRes.msg === 'string' ? modifyRes.msg : t('UIClub_SaveFail4'))
     }
 
     const userInfo = userInfoStore.userInfo
@@ -128,10 +129,10 @@ async function onSave(): Promise<void> {
     }
     gameStore.loginNickname = nextNickname
 
-    showSuccessToast('昵称已保存')
+    showSuccessToast(t('UIClub_DoneSave3'))
     router.back()
   } catch (requestError) {
-    const message = requestError instanceof Error ? requestError.message : '昵称保存失败'
+    const message = requestError instanceof Error ? requestError.message : t('UIClub_SaveFail4')
     showFailToast(message)
   } finally {
     submitting.value = false
@@ -150,12 +151,12 @@ async function onSave(): Promise<void> {
           class="name-input"
           type="text"
           maxlength="20"
-          placeholder="请输入昵称"
+          :placeholder="t('UIMine_SetNick_InputTips')"
         />
-        <p class="input-hint">请输入昵称</p>
+        <p class="input-hint">{{ t('UIMine_SetNick_InputTips') }}</p>
 
         <div class="cost-row">
-          <span class="label">消耗</span>
+          <span class="label">{{ t('UIClub_FundRecharge_9jO4mlS6') }}</span>
           <img class="diamond" :src="iconDiamond" alt="diamond" />
           <span class="origin">{{ nicknameCost.original }}</span>
           <span class="current">{{ nicknameCost.current }}</span>
@@ -163,7 +164,7 @@ async function onSave(): Promise<void> {
         </div>
 
         <div class="cost-row balance-row">
-          <span class="label">钻石余额</span>
+          <span class="label">{{ t('UIMineAllDiamond') }}</span>
           <img class="diamond" :src="iconDiamond" alt="diamond" />
           <span class="balance">{{ displayUser.diamond }}</span>
         </div>
@@ -171,7 +172,7 @@ async function onSave(): Promise<void> {
 
       <div class="save-wrap">
         <button class="save-btn" type="button" :disabled="submitting" @click="onSave">
-          {{ submitting ? '保存中...' : '保存' }}
+          {{ submitting ? t('UIClub_Save3') + '...' : t('Save') }}
         </button>
       </div>
     </div>

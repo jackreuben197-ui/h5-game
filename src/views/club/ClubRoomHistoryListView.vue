@@ -10,6 +10,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import imgClock from '@/assets/icons/icon_time.png'
 import imgGameBadge from '@/assets/icons/wallet/ic_game_badge.png'
 import imgArrowRight from '@/assets/icons/ic_arrow_right.svg'
+import { t } from '@/i18n'
 
 interface IncomeItem {
   label: string
@@ -149,26 +150,26 @@ function resolveModeLabel(record: ClubDataStatsDataRecord): string {
   if (gameType === 0 && record.poker_types == 2) return '6+'
   if (gameType === 5) return 'Mahjong'
 
-  return '牌局'
+  return t('UIGameplayRule_GamblingParty')
 }
 
 function resolveDetailA(record: ClubDataStatsDataRecord): string {
   const playerCount = toSafeNumber(record.match_player_num)
   if (playerCount > 0) {
-    return `参赛人数: ${playerCount}`
+    return t('UIMine_RecordDetailForMatchPariticipants') + ": " + (playerCount)
   }
 
   const sb = toSafeNumber(record.sb)
   if (sb > 0) {
-    return `盲注: ${sb}/${sb * 2}`
+    return t('adaptation20006') + ": " + (sb) + "/" + (sb * 2)
   }
 
   const buyIn = toSafeNumber(record.buy_in)
   if (buyIn > 0) {
-    return `买入记分牌: ${buyIn}`
+    return t('UIClub_BuyIn') + ": " + (buyIn)
   }
 
-  return '牌局详情'
+  return t('UICareerRecordDetailForNiuZai')
 }
 
 function resolveStartAt(record: ClubDataStatsDataRecord): string {
@@ -181,16 +182,16 @@ function buildIncomeList(record: ClubDataStatsDataRecord): IncomeItem[] {
 
   const fee = toSafeNumber(record.fee)
   if (fee !== 0) {
-    incomes.push({ label: '服务费', value: formatSigned(fee), positive: fee > 0 })
+    incomes.push({ label: t('UIMine_WalletPlatform_fee_f'), value: formatSigned(fee), positive: fee > 0 })
   }
 
   const insurance = toSafeNumber(record.insurance)
   if (insurance !== 0) {
-    incomes.push({ label: '保险', value: formatSigned(insurance), positive: insurance > 0 })
+    incomes.push({ label: t('adaptation10179'), value: formatSigned(insurance), positive: insurance > 0 })
   }
 
   if (!incomes.length) {
-    incomes.push({ label: '服务费', value: '0', positive: false })
+    incomes.push({ label: t('UIMine_WalletPlatform_fee_f'), value: '0', positive: false })
   }
 
   return incomes
@@ -206,7 +207,7 @@ function mapHistoryItem(record: ClubDataStatsDataRecord, index: number): RoomHis
     roomId,
     matchId,
     mode: resolveModeLabel(record),
-    title: `局抽数据-${roomId || index}`,
+    title: t('UIClub_RoundData') + "-" + (roomId || index),
     detailA: resolveDetailA(record),
     detailB: jackpot > 0 ? `Jackpot: ${jackpot}` : undefined,
     startedAt: resolveStartAt(record),
@@ -229,7 +230,7 @@ async function fetchSummary(): Promise<void> {
     })
 
     if (response.code !== 0 || !response.data?.info) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载统计信息失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail'))
     }
 
     const info = response.data.info
@@ -252,7 +253,7 @@ async function fetchSummary(): Promise<void> {
       insurance: 0,
       miniGame: 0,
     }
-    const message = error instanceof Error ? error.message : '加载统计信息失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadFail')
     showFailToast(message)
   }
 }
@@ -288,7 +289,7 @@ async function fetchHistory(reset = false): Promise<void> {
     })
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载牌局记录失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadTableGameRecordFail'))
     }
 
     const rows = Array.isArray(response.data?.list) ? response.data.list : []
@@ -302,7 +303,7 @@ async function fetchHistory(reset = false): Promise<void> {
       historyList.value = []
       hasMore.value = false
     }
-    const message = error instanceof Error ? error.message : '加载牌局记录失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadTableGameRecordFail')
     showFailToast(message)
   } finally {
     if (reset) {
@@ -381,7 +382,7 @@ onMounted(() => {
           :class="{ 'coin-tab--active': activeCurrency === 1 }"
           @click="selectCurrency(1)"
         >
-          联盟币
+          {{ t('UIClubCreditLimit1') }}
         </button>
         <button
           type="button"
@@ -389,7 +390,7 @@ onMounted(() => {
           :class="{ 'coin-tab--active': activeCurrency === 3 }"
           @click="selectCurrency(3)"
         >
-          授信额度
+          {{ t('UIClubCreditLimit2') }}
         </button>
       </div>
 
@@ -414,18 +415,18 @@ onMounted(() => {
 
         <div class="stats-row">
           <div class="stats-item">
-            <span class="stats-label">总收益</span>
+            <span class="stats-label">{{ t('UIGUILDDATARecord_TotalRevenueTip01') }}</span>
             <strong class="stats-value">{{ formatAmount(summary.totalProfit) }}</strong>
           </div>
           <div class="stats-item">
-            <span class="stats-label">手数/局数</span>
+            <span class="stats-label">{{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}/{{ t('UIData_YGvXd5iXr_003') }}</span>
             <strong class="stats-value">{{ summary.handCount }}/{{ summary.gameCount }}</strong>
           </div>
         </div>
 
         <div class="stats-grid">
           <div class="stats-item">
-            <span class="stats-label">服务费</span>
+            <span class="stats-label">{{ t('UIMine_WalletPlatform_fee_f') }}</span>
             <strong class="stats-value">{{ formatAmount(summary.fee) }}</strong>
           </div>
           <div class="stats-item">
@@ -433,17 +434,17 @@ onMounted(() => {
             <strong class="stats-value">{{ formatAmount(summary.jackpot) }}</strong>
           </div>
           <div class="stats-item">
-            <span class="stats-label">保险</span>
+            <span class="stats-label">{{ t('adaptation10179') }}</span>
             <strong class="stats-value">{{ formatAmount(summary.insurance) }}</strong>
           </div>
           <div class="stats-item">
-            <span class="stats-label">小游戏</span>
+            <span class="stats-label">{{ t('UIClub_Text24') }}</span>
             <strong class="stats-value">{{ formatAmount(summary.miniGame) }}</strong>
           </div>
         </div>
       </section>
 
-      <p class="timezone">时区: {{ timezoneText }}</p>
+      <p class="timezone">{{ t('UICommon_TimeZone') }}: {{ timezoneText }}</p>
 
       <section class="record-list">
         <article
@@ -466,7 +467,7 @@ onMounted(() => {
                   <span v-if="item.detailB" class="extra">{{ item.detailB }}</span>
                 </div>
                 <div class="meta-time">
-                  <img :src="imgClock" alt="时间" />
+                  <img :src="imgClock" :alt="t('TimeItem')" />
                   <span>{{ item.startedAt }}</span>
                 </div>
               </div>
@@ -488,10 +489,10 @@ onMounted(() => {
           </div>
         </article>
 
-        <p v-if="!historyList.length && !loading" class="list-status">暂无牌局记录</p>
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="historyList.length && loadingMore" class="list-status">加载更多...</p>
-        <p v-else-if="historyList.length && !hasMore" class="list-status">没有更多了</p>
+        <p v-if="!historyList.length && !loading" class="list-status">{{ t('UIClub_NoTableGameRecord') }}</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="historyList.length && loadingMore" class="list-status">{{ t('UIClub_LoadMore') }}...</p>
+        <p v-else-if="historyList.length && !hasMore" class="list-status">{{ t('UIClub_NoMore') }}</p>
       </section>
     </div>
 
@@ -502,7 +503,7 @@ onMounted(() => {
       :min-date="minSelectableDate"
       :max-date="maxSelectableDate"
       :initial-target="datePickerTarget"
-      tip-text="只支持查询最近三个月数据"
+      :tip-text="t('UIGuildtThreeMonthDataTip')"
       @close="closeDatePicker"
       @confirm="onDateConfirm"
     />

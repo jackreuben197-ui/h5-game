@@ -17,7 +17,7 @@ import iconCredit from '@/assets/icons/icon_credit_chip.png'
 import { formatUC } from '@/utils/roomVisibility'
 import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
-import { resolveOpCodeText } from '@/utils/transText'
+import { resolveBillOpCodeText, resolveBillTitle } from '@/utils/transText'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
 import { userCache } from '@/utils/userCache'
@@ -32,13 +32,13 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const title = computed(() => '我的账单')
+const title = computed(() => t('UIMine_Bill'))
 
 const tabGoldTypes = [
-  { label: '联盟币', value: 1 },
-  { label: 'Club计分牌', value: 2 },
-  { label: '朋友桌计分牌', value: 3 },
-  { label: '钻石', value: 4 },
+  { label: 'UC', value: 1 },
+  { label: 'Club' + t('UIClub_Text34'), value: 2 },
+  { label: t('UIClub_Table'), value: 3 },
+  { label: t('UIMine_VIP_diamond'), value: 4 },
 ] as const
 
 const activeTab = ref(1)
@@ -58,18 +58,35 @@ interface BillRecordItem {
 }
 
 interface BillCardItem {
+  key: string
   id: string
+  // 当前卡片所属 tab，模板里用来决定行 4 左侧 icon 与是否走钻石分支。
+  tab: number
+  // 左侧时间线进度条：日/月分组显示，跨日才高亮，同日只画连接线。
   day: string
   month: string
   dateKey: string
   showDate: boolean
   isDateLastData: boolean
-  name: string
+  // 行 1：标题（非钻石含 src_type 前缀 + 房间名；钻石只取 op_code 文案）+ 内联 ID（仅非钻石）。
+  titleText: string
+  idInlineText: string
+  // 行 1 右：变动金额（非可展开卡片才展示）。
+  changeAmountText: string
+  changeAmountPositive: boolean
+  // 行 3 右 / 行 4 右复用。
   club: string
+  time: string
+  // 钻石专用：行 3 左 = 牌局名，行 4 左 = "ID:xxx"。
+  diamondTableName: string
+  diamondTableIdText: string
+  // UC/记分牌非可展开：行 4 左 = 变动后余额（gold_after）。
+  balanceAfterShown: boolean
+  balanceAfterText: string
+  // 可展开（牌桌带入带出）：行 4 左 = 总带入，右 = 总带出，展开后是 records 子列表。
+  canExpand: boolean
   inAmount: string
   outAmount: string
-  canExpand: boolean
-  diamondChange: number
   records: BillRecordItem[]
 }
 
@@ -112,7 +129,7 @@ function formatFlowAmount(value: unknown): string {
   if (activeTab.value === 4) {
     return toSafeNumber(value).toLocaleString('en-US')
   }
-  return Math.abs(toSafeNumber(Number(value) / 100)).toLocaleString('en-US')
+  return Math.abs(toSafeNumber(Number(value || 0) / 100)).toLocaleString('en-US')
 }
 
 function formatSigned(value: unknown): string {
@@ -270,10 +287,11 @@ const formatDate = (date: string | undefined) => formatDateTime(date, 'DD/MM/YYY
 
 function mapBillRecord(row: UserBillRecord): BillRecordItem {
   const changeValue = toSafeNumber(row.gold_change) / (row.gold_type != 4 ? 100 : 1)
-  const opCodeName = resolveOpCodeText(row.op_code)
+  // room_info.records 内嵌的子记录沿用同一份解析逻辑（含 CBBI/CBBO → BRINGIN/BRINGOUT 归一化）。
+  const opCodeName = resolveBillOpCodeText({ opCode: row.op_code }, activeTab.value)
 
   return {
-    name: opCodeName || '账单变动',
+    name: opCodeName || t('UIClub_Text35'),
     time: formatDate(row.create_time),
     amount: formatSigned(changeValue),
     positive: changeValue > 0,
@@ -281,6 +299,8 @@ function mapBillRecord(row: UserBillRecord): BillRecordItem {
 }
 
 function mapBillCard(row: UserBillWallet, index: number): BillCardItem {
+  const tab = activeTab.value
+  const isDiamondTab = tab === 4
   const roomInfo = (row.room_info as UserBillRoom_info | undefined) || undefined
   const records = Array.isArray(roomInfo?.records)
     ? roomInfo.records.map((item) => mapBillRecord(item))
@@ -296,23 +316,55 @@ function mapBillCard(row: UserBillWallet, index: number): BillCardItem {
   )
   const localizedNameByKey = resolveNameByLocale(rawName)
   const localizedNameByMultiObj = resolveNameFromMultiLangObj(row.multi_lang_names_obj)
-  const fallbackName =
-    resolveOpCodeText(row.op_code) ||
-    localizedNameByMultiObj ||
-    localizedNameByKey ||
-    rawName ||
-    '账单记录'
   const roomName = localizedNameByMultiObj || localizedNameByKey || rawName
-  const cardName = roomName || fallbackName
-  const club = row.room_info && row.room_info.club_name ? row.room_info.club_name : row.club_name
-  const inAmount = roomInfo?.bring_in_amount
-  const outAmount = roomInfo?.bring_out_amount
-  const changeAmount = pickRecordValue(row as Record<string, unknown>, [
-    'change_amount',
-    'gold_change',
-    'amount',
-    'change',
-  ])
+  const titleCtx = {
+    opCode: row.op_code,
+    goldType: row.gold_type,
+    srcType: row.src_type as number | undefined,
+    roomName,
+    roomInfo: {
+      originType: row.room_info?.origin_type,
+      shareTable: row.room_info?.share_table,
+      gameType: row.room_info?.game_type as number | undefined,
+      pokerType: row.room_info?.poker_type,
+    },
+  }
+  const opCodeLabel = resolveBillOpCodeText(titleCtx, tab)
+  const fullTitle = resolveBillTitle(titleCtx, tab)
+  const fallbackName = opCodeLabel || roomName || rawName || ''
+
+  const idNumber = row.src_room_id || row.src_match_id || 0
+  const idValue = String(idNumber)
+  const hasId = idNumber > 0
+
+  // 钻石卡片：标题位只放 op_code 文案，牌局名/ID 落到行 3 左 / 行 4 左。
+  // 其它 tab：沿用 Unity _titleSB（op_code + src_type 前缀 + 房间名）+ (ID:xxx) 内联。
+  const titleText = isDiamondTab
+    ? opCodeLabel || fallbackName
+    : fullTitle || roomName || fallbackName
+  const idInlineText = !isDiamondTab && hasId && titleText ? `(ID:${idValue})` : ''
+  const diamondTableName = isDiamondTab ? roomName || rawName || '' : ''
+  const diamondTableIdText = isDiamondTab && hasId ? `ID:${idValue}` : ''
+
+  const club = (row.room_info && row.room_info.club_name) || row.club_name || ''
+
+  // 变动金额：UC/记分牌按 Unity SetFallOrRiseLong 除 100；钻石按 SetFallOrRise 不除。
+  const goldChangeRaw = toSafeNumber(row.gold_change)
+  const goldChangeValue = isDiamondTab ? goldChangeRaw : goldChangeRaw / 100
+  const changeAmountText = formatSigned(goldChangeValue)
+  const changeAmountPositive = goldChangeValue > 0
+
+  // 变动后余额：钻石不展示；其它 tab 仅在 gold_after > 0 时展示，icon 走 tab 决定。
+  const goldAfterRaw = toSafeNumber(row.gold_after)
+  const balanceAfterShown = !isDiamondTab && goldAfterRaw > 0
+  const balanceAfterText = balanceAfterShown ? formatFlowAmount(row.gold_after) : ''
+
+  const bringInAmount = toSafeNumber(roomInfo?.bring_in_amount)
+  const bringOutAmount = toSafeNumber(roomInfo?.bring_out_amount)
+  const hasBringInAndOut = bringInAmount > 0 && bringOutAmount > 0
+  const isMtt = isMttCard(row, [titleText, fallbackName])
+  const canExpand = !isDiamondTab && !isMtt && hasBringInAndOut && records.length > 0
+
   const timeRaw = pickRecordValue(row as Record<string, unknown>, [
     'create_time_str',
     'create_time',
@@ -321,42 +373,37 @@ function mapBillCard(row: UserBillWallet, index: number): BillCardItem {
   ])
   const timeInfo = resolveDateParts(timeRaw)
 
-  const fallbackRecord: BillRecordItem = {
-    name: fallbackName,
-    time: timeInfo.text,
-    amount: formatSigned(changeAmount),
-    positive: toSafeNumber(changeAmount) > 0,
-  }
-
-  const finalRecords = records.length ? records : [fallbackRecord]
-  const bringInAmount = toSafeNumber(inAmount)
-  const bringOutAmount = toSafeNumber(outAmount)
-  const hasBringInAndOut = bringInAmount > 0 && bringOutAmount > 0
-  const isDiamondTab = activeTab.value === 4
-  const isMtt = isMttCard(row, [cardName, fallbackName])
-  const canExpand = !isDiamondTab && !isMtt && hasBringInAndOut && finalRecords.length > 0
-
   return {
-    id: String(row.src_room_id || row.src_match_id),
+    key: `${idNumber}_${row.create_time || index}`,
+    id: idValue,
+    tab,
     day: timeInfo.day,
     month: timeInfo.month,
     dateKey: timeInfo.dateKey,
     showDate: true,
     isDateLastData: false,
-    name: cardName,
-    club: club || '',
-    inAmount: formatFlowAmount(inAmount),
-    outAmount: formatFlowAmount(outAmount),
-    diamondChange: row.gold_change || 0,
+    titleText,
+    idInlineText,
+    changeAmountText,
+    changeAmountPositive,
+    club,
+    time: formatDate(row.create_time || ''),
+    diamondTableName,
+    diamondTableIdText,
+    balanceAfterShown,
+    balanceAfterText,
     canExpand,
-    records: finalRecords,
+    inAmount: formatFlowAmount(roomInfo?.bring_in_amount),
+    outAmount: formatFlowAmount(roomInfo?.bring_out_amount),
+    records,
   }
 }
 
 function mapWalletList(wallet: UserWalletWallet[] | undefined): WalletDetailItem[] {
   const list = Array.isArray(wallet) ? wallet : []
   return list.map((item, index) => {
-    const clubName = String(item.club_name ?? '').trim() || `俱乐部${index + 1}`
+    const clubName =
+      String(item.club_name ?? '').trim() || t('UILobby_Menu_menu_btn_club') + (index + 1)
     return {
       key: `${clubName}-${index}`,
       clubName,
@@ -390,6 +437,13 @@ const showWalletDetailButton = computed(() => {
   }
   return activeTab.value == 4
 })
+
+// 变动后余额行的 icon：UC=icon_chips、记分牌(2/3)=icon_credit_chip、钻石=icon_diamond（钻石实际不展示余额，留兜底）。
+function balanceIconFor(tab: number): string {
+  if (tab === 1) return iconUc
+  if (tab === 4) return iconDiamond
+  return iconCredit
+}
 
 function isCardExpanded(cardId: string): boolean {
   return expandedCardIds.value.includes(cardId)
@@ -471,7 +525,8 @@ function billCache() {
 
 function billCacheKey(tab: number): string {
   const clubId = userInfoStore.currentClub?.club_id ?? 0
-  return `${clubId}-${tab}`
+  // -v2：行结构变更（去 day/month/dateKey，新增 titleText/diamondTable* 等），需失效旧缓存。
+  return `${clubId}-${tab}-v2`
 }
 
 async function readBillCache(tab: number): Promise<BillCachePayload | null> {
@@ -538,16 +593,15 @@ async function fetchBillData(reset = true, silent = false): Promise<void> {
     ? tab === 4
       ? fetchDiamondsWallet()
       : walletGold > 0
-      ? fetchWallet(walletGold)
-      : Promise.resolve(null)
+        ? fetchWallet(walletGold)
+        : Promise.resolve(null)
     : Promise.resolve(null)
 
   try {
     const billRes = await postUserBillApi(payload)
     if (billRes.code !== 0) {
-      throw new Error(typeof billRes.msg === 'string' ? billRes.msg : '加载账单失败')
+      throw new Error(typeof billRes.msg === 'string' ? billRes.msg : t('UIClub_LoadFail3'))
     }
-
     const rows = extractList(billRes.data?.list) as UserBillWallet[]
     const mapped = rows.map((row, index) => mapBillCard(row, index))
 
@@ -591,7 +645,7 @@ async function fetchBillData(reset = true, silent = false): Promise<void> {
       hasMore.value = false
     }
     if (!silent) {
-      const message = error instanceof Error ? error.message : '加载账单失败'
+      const message = error instanceof Error ? error.message : t('UIClub_LoadFail3')
       showFailToast(message)
     }
   } finally {
@@ -652,7 +706,7 @@ onMounted(() => {
     <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
-      <p class="hint">只支持查询最近三个月数据</p>
+      <p class="hint">{{ t('UIGuildtThreeMonthDataTip') }}</p>
 
       <div class="bill-tabs">
         <button
@@ -667,9 +721,9 @@ onMounted(() => {
       </div>
 
       <section v-if="activeTab !== 3" class="glass-card total-card">
-        <div v-if="activeTab === 1" class="label">联盟币总金额</div>
-        <div v-else-if="activeTab === 2" class="label">俱乐部记分牌总额度</div>
-        <div v-else-if="activeTab === 4" class="label">钻石余额</div>
+        <div v-if="activeTab === 1" class="label">UC{{ t('UIClub_Text33') }}</div>
+        <div v-else-if="activeTab === 2" class="label">{{ t('UIMineAllClub') }}</div>
+        <div v-else-if="activeTab === 4" class="label">{{ t('UIMineAllDiamond') }}</div>
         <div class="amount-row">
           <img v-if="activeTab === 1" :src="iconUc" alt="chip" />
           <img v-else-if="activeTab === 2" :src="iconCredit" alt="chip" />
@@ -677,7 +731,7 @@ onMounted(() => {
           <strong>{{ formatAmount(totalAmount) }}</strong>
         </div>
         <div v-if="activeTab == 4" class="diamond-income">
-          今日收益：{{ formatAmount(diamondProfit.today_profit) }}
+          {{ t('UIBill_payLookHandCardTodayWin') }}：{{ formatAmount(diamondProfit.today_profit) }}
         </div>
         <div
           v-if="walletDetailExpanded"
@@ -725,7 +779,7 @@ onMounted(() => {
         <p v-else-if="!flowCards.length" class="list-status">暂无账单记录</p>
         <article
           v-for="card in flowCards"
-          :key="card.id"
+          :key="card.key"
           class="timeline-item"
           :class="{
             'timeline-item--top': card.showDate && flowCards.length > 1,
@@ -745,59 +799,72 @@ onMounted(() => {
             <img v-if="card.showDate" src="@/assets/icons/icon_time.png" class="date-icon" alt="" />
           </div>
 
-          <div v-if="activeTab != 4" class="glass-card flow-card">
-            <div class="flow-head">
-              <div>
-                <div class="title">
-                  {{ card.name }}
-                  <span>(ID:{{ card.id }})</span>
-                </div>
-                <div class="sub">{{ card.club }}</div>
-                <div class="sub">总带入:{{ card.inAmount }}</div>
+          <div class="glass-card flow-card">
+            <!-- 行 1：标题 + (ID 内联，仅非钻石) + 变动金额（仅非可展开）/ 展开箭头（仅可展开） -->
+            <div class="bill-row bill-row-title">
+              <div class="title-cell">
+                <span class="name">{{ card.titleText }}</span>
+                <span v-if="card.idInlineText" class="id-inline">{{ card.idInlineText }}</span>
               </div>
-              <div class="right-box">
+              <div class="title-right">
+                <span
+                  v-if="!card.canExpand"
+                  :class="['money', { positive: card.changeAmountPositive }]"
+                >
+                  {{ card.changeAmountText }}
+                </span>
                 <van-icon
+                  v-if="card.canExpand"
                   class="arrow"
                   :class="{ expanded: isCardExpanded(card.id) }"
                   name="arrow-down"
                   @click="toggleCardExpanded(card.id)"
                 />
-                <div class="sub right" :class="{ 'no-club': card.club == '' }">
-                  总带出: {{ card.outAmount }}
-                </div>
               </div>
             </div>
-            <div v-if="isCardExpanded(card.id)" class="divided club-divided"></div>
-            <div
-              v-for="row in card.canExpand && isCardExpanded(card.id) ? card.records : []"
-              :key="`${card.id}-${row.time}-${row.amount}`"
-              class="flow-row"
-            >
-              <div>
-                <div class="name">{{ row.name }}</div>
-                <div class="time">{{ row.time }}</div>
-              </div>
-              <div :class="['money', { positive: row.positive }]">{{ row.amount }}</div>
+
+            <!-- 行 3：左 = (钻石)牌局名 / (非钻石&有变动后余额)文案 / (可展开)空白；右 = 俱乐部名 -->
+            <div class="bill-row bill-row-3">
+              <span class="row-left">
+                <template v-if="card.canExpand"></template>
+                <template v-else-if="card.tab === 4">{{ card.diamondTableName }}</template>
+                <template v-else-if="card.balanceAfterShown">
+                  {{ t('UIMineChangeBalance') }}
+                </template>
+              </span>
+              <span class="row-right">{{ card.club }}</span>
             </div>
-          </div>
-          <div v-else class="glass-card flow-card diamond-card">
-            <!-- {{ card }} -->
-            <div class="flow-head">
-              <div>
-                <div class="title-item">
-                  <span class="title">
-                    {{ card.records[0].name }}
-                  </span>
-                  <div :class="['money', { positive: card.diamondChange > 0 }]">
-                    {{ card.diamondChange }}
-                  </div>
-                </div>
-                <div class="sub-item">
-                  <span class="left">{{ card.name }}(ID:{{ card.id }})</span>
-                  <span class="right">{{ formatDate(card.records[0].time) }}</span>
-                </div>
-              </div>
+
+            <!-- 行 4：左 = (钻石)牌局ID / (非钻石&有变动后余额)余额值+icon / (可展开)总带入；右 = (可展开)总带出 / 日期 -->
+            <div class="bill-row bill-row-4">
+              <span class="row-left">
+                <template v-if="card.canExpand">总带入: {{ card.inAmount }}</template>
+                <template v-else-if="card.tab === 4">{{ card.diamondTableIdText }}</template>
+                <template v-else-if="card.balanceAfterShown">
+                  <img :src="balanceIconFor(card.tab)" alt="" class="balance-icon" />
+                  <span>{{ card.balanceAfterText }}</span>
+                </template>
+              </span>
+              <span class="row-right">
+                <template v-if="card.canExpand">总带出: {{ card.outAmount }}</template>
+                <template v-else>{{ card.time }}</template>
+              </span>
             </div>
+
+            <template v-if="card.canExpand && isCardExpanded(card.id)">
+              <div class="divided club-divided"></div>
+              <div
+                v-for="row in card.records"
+                :key="`${card.id}-${row.time}-${row.amount}`"
+                class="flow-row"
+              >
+                <div>
+                  <div class="name">{{ row.name }}</div>
+                  <div class="time">{{ row.time }}</div>
+                </div>
+                <div :class="['money', { positive: row.positive }]">{{ row.amount }}</div>
+              </div>
+            </template>
           </div>
         </article>
         <p v-if="!loading && loadingMore" class="list-status">加载更多中...</p>
@@ -975,7 +1042,6 @@ onMounted(() => {
 .timeline {
   display: flex;
   flex-direction: column;
-  // gap: 0.26rem;
 }
 .timeline--friend {
   margin-top: 0.6rem;
@@ -1005,7 +1071,6 @@ onMounted(() => {
   min-height: 1rem;
   width: 0.9rem;
   padding-right: 0.3rem;
-  // border: 1px solid red;
 
   &::after {
     content: '';
@@ -1045,85 +1110,87 @@ onMounted(() => {
 }
 
 .flow-card {
-  padding: 0.32rem 0.4rem;
+  padding: 0.28rem 0.4rem;
 }
 
-.flow-head {
+.bill-row {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.16rem;
-  padding-bottom: 0.16rem;
-
-  .title {
-    font-size: 0.384rem;
-    line-height: 0.6rem;
-    span {
-      font-size: 0.27rem;
-      opacity: 0.94;
-    }
-
-    small {
-      opacity: 0.8;
-      font-size: 0.25rem;
-    }
-  }
-
-  .sub {
-    font-size: 0.306rem;
-    opacity: 0.7;
-  }
-
-  .right {
-    white-space: nowrap;
-    margin-top: 0.6rem;
-    text-align: right;
-  }
-  .no-club {
-    margin-top: 0.1rem;
-  }
 }
 
-.right-box {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.14rem;
+// 行 3 / 4 高度固定，俱乐部名 / 变动后余额都不显示时也保持卡片节奏。
+.bill-row-3,
+.bill-row-4 {
+  min-height: 0.45rem;
+  font-size: 0.306rem;
+  opacity: 0.85;
 }
-.diamond-card {
-  .flow-head {
-    display: block;
-    width: 100%;
-  }
-  .title {
-    margin-bottom: 0.22rem;
-  }
-  .title-item,
-  .sub-item {
+.bill-row-3 {
+  margin-top: 0.1rem;
+  font-size: 0.3rem;
+  color: rgba($color: #ffffff, $alpha: 0.7);
+}
+.bill-row-4 {
+  margin-top: 0.06rem;
+  font-size: 0.3rem;
+  color: rgba($color: #ffffff, $alpha: 0.7);
+}
+
+.bill-row-title {
+  line-height: 0.6rem;
+  min-height: 0.6rem;
+
+  .title-cell {
     display: flex;
-    width: 100%;
-    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.1rem;
+    min-width: 0;
+    flex: 1;
   }
-  .sub-item {
-    opacity: 0.7;
+  .name {
+    display: inline-block;
+    max-width: 3.7rem;
+    font-size: 0.32rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .left {
-    font-size: 0.279rem;
+  .id-inline {
+    font-size: 0.27rem;
+    opacity: 0.94;
+    flex-shrink: 0;
   }
-  .right {
-    margin-top: 0;
-    font-size: 0.304rem;
+  .title-right {
+    display: flex;
+    align-items: center;
+    gap: 0.18rem;
+    flex-shrink: 0;
   }
 }
 
-.record-toggle {
-  border: 0;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.82);
+.row-left {
   display: flex;
   align-items: center;
   gap: 0.08rem;
-  font-size: 0.24rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row-right {
+  white-space: nowrap;
+  text-align: right;
+  flex-shrink: 0;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.balance-icon {
+  width: 0.3rem;
+  height: 0.3rem;
+  flex-shrink: 0;
 }
 
 .flow-row {

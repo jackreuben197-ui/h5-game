@@ -8,6 +8,7 @@ import { getMemberRouteContext } from './clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar_for_club.png'
 import { useUserInfoStore } from '@/stores/userInfo'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { t } from '@/i18n'
 
 interface UserDisplay {
   name: string
@@ -28,12 +29,12 @@ const processing = ref(false)
 const loading = ref(false)
 const resolvedAgentId = ref(0)
 const memberDisplay = ref<UserDisplay>({
-  name: '成员',
+  name: t('UIClub_Info_Members'),
   uid: '--',
   avatar: imgAvatar,
 })
 const agentDisplay = ref<UserDisplay>({
-  name: '已绑定代理',
+  name: t('UIClub_DoneAgent'),
   uid: '--',
   avatar: imgAvatar,
 })
@@ -54,9 +55,9 @@ function toSafeNumber(value: unknown): number {
   return Number.isFinite(num) ? num : 0
 }
 
-const memberName = computed(() => queryText('name') || context.value.name || '成员')
+const memberName = computed(() => queryText('name') || context.value.name || t('UIClub_Info_Members'))
 const memberUid = computed(() => queryText('uid') || context.value.uid || '--')
-const agentName = computed(() => queryText('aname') || '已绑定代理')
+const agentName = computed(() => queryText('aname') || t('UIClub_DoneAgent'))
 const agentUid = computed(() => queryText('auid') || '--')
 const agentId = computed(() => toSafeNumber(queryText('aid')))
 
@@ -88,7 +89,7 @@ async function loadDisplayData(): Promise<void> {
             userInfo?.nick_name ||
             profileResponse.data.remark_name ||
             memberName.value ||
-            '成员',
+            t('UIClub_Info_Members'),
         ),
         uid: String(userInfo?.random_id || memberUid.value || '--'),
         avatar:
@@ -124,7 +125,7 @@ async function loadDisplayData(): Promise<void> {
 
           if (agent) {
             agentDisplay.value = {
-              name: String(agent.remark_name || agent.nick_name || agentName.value || '已绑定代理'),
+              name: String(agent.remark_name || agent.nick_name || agentName.value || t('UIClub_DoneAgent')),
               uid: String(agent.random_num || agentUid.value || '--'),
               avatar:
                 typeof agent.avatar === 'string' && agent.avatar.trim() ? agent.avatar : imgAvatar,
@@ -140,7 +141,7 @@ async function loadDisplayData(): Promise<void> {
       resolvedAgentId.value = agentId.value
     }
 
-    if (!memberDisplay.value.name || memberDisplay.value.name === '成员') {
+    if (!memberDisplay.value.name || memberDisplay.value.name === t('UIClub_Info_Members')) {
       memberDisplay.value = {
         name: memberName.value,
         uid: memberUid.value,
@@ -148,7 +149,7 @@ async function loadDisplayData(): Promise<void> {
       }
     }
 
-    if (!agentDisplay.value.name || agentDisplay.value.name === '已绑定代理') {
+    if (!agentDisplay.value.name || agentDisplay.value.name === t('UIClub_DoneAgent')) {
       agentDisplay.value = {
         name: agentName.value,
         uid: agentUid.value,
@@ -163,7 +164,7 @@ async function loadDisplayData(): Promise<void> {
 async function onConfirm(): Promise<void> {
   const memberId = getMemberId()
   if (!currentClubId.value || !memberId || !resolvedAgentId.value || processing.value) {
-    showFailToast('缺少解绑参数')
+    showFailToast(t('UIClub_Text26'))
     return
   }
 
@@ -176,10 +177,10 @@ async function onConfirm(): Promise<void> {
     })
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '解绑代理失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_AgentFail2'))
     }
 
-    showSuccessToast('解绑代理成功')
+    showSuccessToast(t('UIClub_AgentSuccess2'))
     await router.replace({
       path: `/club/member/${context.value.memberId}`,
       query: {
@@ -190,7 +191,7 @@ async function onConfirm(): Promise<void> {
       },
     })
   } catch (error) {
-    const message = error instanceof Error ? error.message : '解绑代理失败'
+    const message = error instanceof Error ? error.message : t('UIClub_AgentFail2')
     showFailToast(message)
   } finally {
     processing.value = false
@@ -205,7 +206,7 @@ onMounted(() => {
 <template>
   <div class="page-shell sub-bg" :style="backgroundStyle">
     <div class="sub-page">
-      <HeaderBack title="解绑代理" />
+      <HeaderBack :title="t('UIGuild_MemberDetails_UnBindVip')" />
 
       <section class="cards">
         <article class="glass card">
@@ -229,9 +230,9 @@ onMounted(() => {
         </article>
       </section>
 
-      <p class="hint">确定要解除该玩家与代理的绑定关系吗？</p>
+      <p class="hint">{{ t('UIClub_ConfirmPlayerAgentOf') }}？</p>
       <button type="button" class="confirm" :disabled="processing || loading" @click="onConfirm">
-        解绑代理
+        {{ t('UIGuild_MemberDetails_UnBindVip') }}
       </button>
     </div>
   </div>

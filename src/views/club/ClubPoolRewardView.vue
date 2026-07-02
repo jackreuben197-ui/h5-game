@@ -8,6 +8,7 @@ import iconTag from '@/assets/icons/ic_card_jackpot.svg'
 import type { OrgClubJackpotTemplateListDataItem } from '@/api/models/org'
 import { formatUC } from '@/utils/roomVisibility'
 import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
+import { t } from '@/i18n'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -80,7 +81,7 @@ async function fetchJackpotList(reset = false): Promise<void> {
     })
 
     if (Number(response.code) !== 0) {
-      const message = typeof response.msg === 'string' ? response.msg : '加载奖池记录失败'
+      const message = typeof response.msg === 'string' ? response.msg : t('UIClub_LoadJackpotRecordFail')
       throw new Error(message)
     }
 
@@ -152,14 +153,14 @@ onMounted(() => {
     <HeaderBack :title="'奖池记录'" />
 
     <section class="pool-body">
-      <div class="tab-switch" role="tablist" aria-label="奖池记录类型">
+      <div class="tab-switch" role="tablist" :aria-label="t('UIClub_JackpotRecord')">
         <button
           type="button"
           class="tab-btn"
           :class="{ 'tab-btn--active': activeTab === 'reward' }"
           @click="activeTab = 'reward'"
         >
-          获奖记录
+          {{ t('UIClubJackpotRecordManager_AwardRecord') }}
         </button>
         <button
           type="button"
@@ -167,7 +168,7 @@ onMounted(() => {
           :class="{ 'tab-btn--active': activeTab === 'contribution' }"
           @click="activeTab = 'contribution'"
         >
-          贡献记录
+          {{ t('UIClubJackpotRecordManager_ContributionRecord') }}
         </button>
       </div>
 
@@ -204,19 +205,19 @@ onMounted(() => {
 
       <div v-if="!hasItems && loading" class="pool-empty">
         <img class="empty-icon" :src="emptyStateIcon" alt="" />
-        <p>加载中...</p>
+        <p>{{ t('SuperView2') }}...</p>
       </div>
       <div v-else-if="!hasItems && !loading" class="pool-empty">
         <img class="empty-icon" :src="emptyStateIcon" alt="" />
-        <p>暂无数据</p>
+        <p>{{ t('UIClub_FundDetail_xYlV8VBZ') }}</p>
       </div>
 
-      <p v-if="hasItems && loadingMore" class="pool-loading-more">加载更多...</p>
-      <p v-else-if="hasItems && !hasMore" class="pool-loading-more">没有更多了</p>
+      <p v-if="hasItems && loadingMore" class="pool-loading-more">{{ t('UIClub_LoadMore') }}...</p>
+      <p v-else-if="hasItems && !hasMore" class="pool-loading-more">{{ t('UIClub_NoMore') }}</p>
     </section>
 
     <div class="footer-action">
-      <button type="button" class="create-btn">添加Jackpot奖池模板</button>
+      <button type="button" class="create-btn">{{ t('UIClub_AddSomething') }}Jackpot{{ t('UIClub_Jackpot4') }}</button>
     </div>
   </div>
 </template>

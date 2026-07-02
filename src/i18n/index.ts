@@ -3,9 +3,10 @@ import { ref } from 'vue'
 import i18n from '@silenthill/h5-cc-i18n'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
-import { formatTxtMessage } from './parser'
+import { formatTxtMessage, type FormatArg, type FormatArgs } from './parser'
 import { createLogger } from '@/utils/logger'
 import enOverrides from './en-overrides.json'
+import zhCnOverrides from './zh-cn-overrides.json'
 
 const log = createLogger('[i18n]')
 
@@ -49,9 +50,14 @@ export function setLocale(locale: string): void {
 // 英文补全：包内 en 词条为空时用我们维护的英文覆盖（由 CN 翻译而来）。
 const EN_OVERRIDES = enOverrides as Record<string, string>
 
+// CN 覆盖：从 dev_merge_0624 维护的中文覆盖，优先于包内 cn 词条
+// （既补包内空缺，也可覆盖包内被 refactor 改动的措辞，如 账号登录/账号注册）。
+const CN_OVERRIDES = zhCnOverrides as Record<string, string>
+
 // CN 值缓存：CN 词条运行时不变，临时切到 CN 取值后切回，避免重复切换 locale。
 const cnValueCache = new Map<string, string>()
 function getCnValue(key: string): string {
+  if (CN_OVERRIDES[key]) return CN_OVERRIDES[key]
   const cached = cnValueCache.get(key)
   if (cached !== undefined) return cached
   const packageLocale = LEGACY_TO_PACKAGE[currentLocale.value]
@@ -62,12 +68,24 @@ function getCnValue(key: string): string {
   return value
 }
 
-export function t(key: string, ...args: Array<string | number>): string {
+// 对外 LocaleCode -> 服务端 lang 字符串：服务端各接口统一接 zh_CN / zh_TW / en_US / pt_BR。
+export function toServerLang(locale: LocaleCode = currentLocale.value): string {
+  if (locale === 'en') return 'en_US'
+  if (locale === 'zh') return 'zh_TW'
+  if (locale === 'pt') return 'pt_BR'
+  return 'zh_TW'
+}
+
+export function t(key: string, ...args: FormatArg[] | [FormatArgs]): string {
   // 读 ref 以便组件在 setLocale 时自动重渲染。
   const locale = currentLocale.value
   // 英文优先用我们维护的覆盖词条：既补包内空缺，也可覆盖包内既有英文（如 Texas→Hold'em）。
   if (locale === 'en' && EN_OVERRIDES[key]) {
     return formatTxtMessage(EN_OVERRIDES[key], args)
+  }
+  // 简中优先用我们维护的覆盖词条（覆盖 refactor 改动的措辞）。
+  if (locale === 'cn' && CN_OVERRIDES[key]) {
+    return formatTxtMessage(CN_OVERRIDES[key], args).replace(/\bUC\b/g, '联盟币')
   }
   let message = i18n.get(key, '') || ''
   if (!message) {

@@ -877,7 +877,8 @@ onUnmounted(() => {
   border-radius: 0.64rem;
   padding: 0.37rem 0.15rem;
   box-shadow:
-  /* 左上高光 */ inset 0.2px 0.2px 0px 0px rgba(255, 255, 255, 0.85),
+  /* 左上高光 */
+    inset 0.2px 0.2px 0px 0px rgba(255, 255, 255, 0.85),
     /* 右下高光 */ inset -0.2px -0.2px 0px 0px rgba(255, 255, 255, 0.85);
 }
 
@@ -988,7 +989,9 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.17);
   border-radius: 4rem;
   color: #fff;
-  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 1), inset 0 0 0 0.5px rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 1),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.16);
 }
 
 /* ── Tab 内容 ── */

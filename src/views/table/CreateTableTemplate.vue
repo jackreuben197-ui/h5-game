@@ -28,6 +28,7 @@ import {
   postOrgCreateTemplateApi,
   postOrgRoomConfigCreateApi,
 } from '@/api/cmsext'
+import { GameDialog } from '@/components/Dialog'
 
 const formState = reactive<NlhFormState>({ ...defaultNlhFormState })
 const route = useRoute()
@@ -456,16 +457,31 @@ onMounted(() => {
 
 const isSubmitting = ref(false)
 
-async function onSaveTemplate() {
+const quickCreateRef = ref<InstanceType<typeof QuickCreateView> | null>(null)
+
+const templateDialog = reactive({
+  show: false,
+  name: '',
+})
+
+function onSaveTemplate() {
+  if (isSubmitting.value) return
+  templateDialog.name = ''
+  templateDialog.show = true
+}
+
+async function onConfirmSaveTemplate() {
   if (isSubmitting.value) return
   isSubmitting.value = true
+  templateDialog.show = false
   try {
     const res = await postOrgCreateTemplateApi({
-      name: formState.name || '自定义模板',
+      name: templateDialog.name.trim() || '自定义模板',
       room_config: buildRoomConfigPayload(formState),
     })
     if (res.code === 0) {
       showGameToast('保存成功')
+      void quickCreateRef.value?.refreshTemplates()
     } else {
       showFailToast(res.message || '保存失败')
     }
@@ -474,6 +490,10 @@ async function onSaveTemplate() {
   } finally {
     isSubmitting.value = false
   }
+}
+
+function onCancelSaveTemplate() {
+  templateDialog.show = false
 }
 
 async function onCreateTable() {
@@ -524,7 +544,7 @@ async function onCreateTable() {
 
     <!-- Quick create tab -->
     <div v-show="activeTab === 'quick'" class="quick-create-wrapper">
-      <QuickCreateView @edit-template="onQuickEditTemplate" />
+      <QuickCreateView ref="quickCreateRef" @edit-template="onQuickEditTemplate" />
     </div>
 
     <!-- Pro params tab -->
@@ -620,6 +640,26 @@ async function onCreateTable() {
         </div>
       </div>
     </div>
+
+    <GameDialog
+      v-model:show="templateDialog.show"
+      :title="t('UIGuild_TipsTitle')"
+      :show-cancel-button="true"
+      :confirm-button-text="t('Save')"
+      @confirm="onConfirmSaveTemplate"
+      @cancel="onCancelSaveTemplate"
+    >
+      <div class="template-dialog__body">
+        <span class="template-dialog__label">{{ t('UICreateTable_mubanName') }}</span>
+        <input
+          v-model="templateDialog.name"
+          class="template-dialog__input"
+          type="text"
+          :placeholder="t('UIGuild_PleaseInputName')"
+          :maxlength="20"
+        />
+      </div>
+    </GameDialog>
   </div>
 </template>
 
@@ -887,8 +927,41 @@ async function onCreateTable() {
   &--create {
     background: linear-gradient(157deg, #55f329 0%, #3ead06 100%);
     color: #fff;
-    box-shadow: inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
+    box-shadow:
+      inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
       inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
+  }
+}
+
+.template-dialog__body {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.1rem;
+}
+
+.template-dialog__label {
+  font-size: 0.4rem;
+  font-family: 'HONOR Sans CN', sans-serif;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.template-dialog__input {
+  flex: 1;
+  min-width: 0;
+  height: 1rem;
+  padding: 0 0.3rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.3rem;
+  outline: none;
+  font-size: 0.38rem;
+  font-family: 'HONOR Sans CN', sans-serif;
+  color: #fff;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.5);
   }
 }
 </style>

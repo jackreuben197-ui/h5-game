@@ -3,6 +3,8 @@ import type { ApiResponse } from '@/api/models/common'
 import type {
   MiscGameDescriptionInfoRequest,
   MiscGameDescriptionInfoData,
+  MiscH5DisplayRequest,
+  MiscH5DisplayResponseData,
   MiscAgoraTokenRequest,
   MiscAgoraTokenResponseData,
   MiscArtiCleIdRequest,
@@ -361,6 +363,17 @@ export async function postMiscGameDescriptionInfoApi(
 ): Promise<ApiResponse<MiscGameDescriptionInfoData>> {
   const response = await http.post<ApiResponse<MiscGameDescriptionInfoData>>(
     '/misc/game_description/info',
+    payload,
+  )
+  return response.data
+}
+
+// 大厅 H5 展示配置：下载APP / 弹窗公告 / 找到我们。
+export async function postMiscH5DisplayApi(
+  payload: MiscH5DisplayRequest = {} as MiscH5DisplayRequest,
+): Promise<ApiResponse<MiscH5DisplayResponseData>> {
+  const response = await http.post<ApiResponse<MiscH5DisplayResponseData>>(
+    '/misc/h5/display',
     payload,
   )
   return response.data

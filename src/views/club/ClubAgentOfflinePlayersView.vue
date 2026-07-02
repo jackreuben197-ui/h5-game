@@ -17,6 +17,7 @@ import imgBalance from '@/assets/icons/icon_credit_chip.png'
 import imgSearch from '@/assets/icons/club_search.svg'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { formatUC } from '@/utils/roomVisibility'
+import { t } from '@/i18n'
 
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -65,7 +66,7 @@ function mapDownlineCard(item: ClubAgentUserListRecord): PlayerCard {
   return {
     userId,
     uid: String(item.random_num ?? '--'),
-    name: String(item.remark_name || item.nick_name || `成员${userId || '--'}`),
+    name: String(item.remark_name || item.nick_name || t('UIClub_Info_Members') + (userId || '--')),
     avatar: typeof item.avatar === 'string' && item.avatar.trim() ? item.avatar : imgAvatar,
     uc: toSafeNumber(item.gold),
     credit: toSafeNumber(item.club_gold_credit),
@@ -80,7 +81,7 @@ function mapMemberCard(item: OrgMemberListRecord): PlayerCard {
   return {
     userId,
     uid: String(item.random_num ?? '--'),
-    name: String(item.remark_name || item.nick_name || `成员${userId || '--'}`),
+    name: String(item.remark_name || item.nick_name || t('UIClub_Info_Members') + (userId || '--')),
     avatar: typeof item.avatar === 'string' && item.avatar.trim() ? item.avatar : imgAvatar,
     uc: toSafeNumber(item.gold),
     credit: toSafeNumber(item.club_gold_credit),
@@ -119,7 +120,7 @@ async function loadDownlineMembers(): Promise<void> {
     })
 
     if (response.code !== 0 || !response.data) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '获取下线成员失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_FetchDownliFail'))
     }
 
     const rows = Array.isArray(response.data.data) ? response.data.data.map(mapDownlineCard) : []
@@ -127,7 +128,7 @@ async function loadDownlineMembers(): Promise<void> {
     ensureDownlineChecked(downlineRows.value)
   } catch (error) {
     downlineRows.value = []
-    const message = error instanceof Error ? error.message : '获取下线成员失败'
+    const message = error instanceof Error ? error.message : t('UIClub_FetchDownliFail')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -147,7 +148,7 @@ async function searchPlayers(): Promise<void> {
   }
 
   if (!currentClubRandomId.value) {
-    showFailToast('缺少俱乐部信息')
+    showFailToast(t('UIClub_Club'))
     return
   }
 
@@ -167,7 +168,7 @@ async function searchPlayers(): Promise<void> {
     })
 
     if (response.code !== 0 || !response.data) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '玩家查询失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_PlayerFail'))
     }
 
     const downlineSet = new Set(downlineRows.value.map((item) => item.userId))
@@ -175,7 +176,7 @@ async function searchPlayers(): Promise<void> {
     searchedRows.value = rows.filter((item) => item.userId > 0 && !downlineSet.has(item.userId))
   } catch (error) {
     searchedRows.value = []
-    const message = error instanceof Error ? error.message : '玩家查询失败'
+    const message = error instanceof Error ? error.message : t('UIClub_PlayerFail')
     showFailToast(message)
   } finally {
     searching.value = false
@@ -219,7 +220,7 @@ async function onSave(): Promise<void> {
   }
 
   if (!currentClubId.value || !currentAgentId.value || saving.value) {
-    showFailToast('缺少保存参数')
+    showFailToast(t('UIClub_Save'))
     return
   }
 
@@ -237,13 +238,13 @@ async function onSave(): Promise<void> {
     })
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '保存失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_SaveFail'))
     }
 
-    showSuccessToast('保存成功')
+    showSuccessToast(t('UIClub_SaveSuccess'))
     void router.back()
   } catch (error) {
-    const message = error instanceof Error ? error.message : '保存失败'
+    const message = error instanceof Error ? error.message : t('UIClub_SaveFail')
     showFailToast(message)
   } finally {
     saving.value = false
@@ -257,15 +258,15 @@ onMounted(() => {
 
 <template>
   <div class="page-shell sub-bg" :style="backgroundStyle">
-    <HeaderBack title="下线成员" />
+    <HeaderBack :title="t('UIGuild_MemberDetails_VipOffLine')" />
 
     <div class="member-detail-page">
       <section class="tabs">
         <button :class="{ active: listMode === 'members' }" @click="listMode = 'members'">
-          成员列表
+          {{ t('UIGuild_MemberList') }}
         </button>
         <button :class="{ active: listMode === 'edit' }" @click="listMode = 'edit'">
-          编辑下线
+          {{ t('UIGuild_MemberDetails_OffLineEdit') }}
         </button>
       </section>
 
@@ -275,15 +276,15 @@ onMounted(() => {
           v-model="keyword"
           class="search-input"
           type="text"
-          placeholder="玩家查询"
+          :placeholder="t('UIClub_Player')"
           @keyup.enter="searchPlayers"
         />
       </section>
 
       <section class="toggle-row">
-        <span>邀请链接</span>
+        <span>{{ t('UIClub_InviteLink') }}</span>
         <label v-if="listMode === 'edit'">
-          <span class="hidden-text">隐藏当前下线玩家</span>
+          <span class="hidden-text">{{ t('UIGuild_MemberEditHide') }}</span>
           <button
             type="button"
             class="switch"
@@ -334,14 +335,14 @@ onMounted(() => {
               <div class="data-item">
                 <p class="data-label">
                   <img :src="imgBalance" alt="" aria-hidden="true" />
-                  <span>免审额</span>
+                  <span>{{ t('UIClubTalbe_CreditTitle') }}</span>
                 </p>
                 <p class="data-value">{{ row.credit }}/{{ row.creditLimit }}</p>
               </div>
               <div class="data-item">
                 <p class="data-label">
                   <img :src="imgDiamond" alt="" aria-hidden="true" />
-                  <span>钻石</span>
+                  <span>{{ t('UIMine_VIP_diamond') }}</span>
                 </p>
                 <p class="data-value">{{ row.diamonds }}</p>
               </div>
@@ -349,13 +350,13 @@ onMounted(() => {
           </div>
         </article>
 
-        <p v-if="loading" class="status">加载中...</p>
-        <p v-else-if="searching" class="status">搜索中...</p>
-        <p v-else-if="!displayedRows.length" class="status">暂无成员数据</p>
+        <p v-if="loading" class="status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="searching" class="status">{{ t('UIClub_Search') }}...</p>
+        <p v-else-if="!displayedRows.length" class="status">{{ t('UIClub_NoMemberData') }}</p>
       </section>
 
       <button v-if="listMode === 'edit'" class="save" :disabled="saving" @click="onSave">
-        保存
+        {{ t('Save') }}
       </button>
     </div>
   </div>

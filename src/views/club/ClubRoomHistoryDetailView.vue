@@ -7,6 +7,8 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 
+import { t } from '@/i18n'
+
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -196,7 +198,7 @@ async function fetchDetailRows(): Promise<void> {
 
 async function initPage(): Promise<void> {
   if (!roomId.value && !matchId.value) {
-    showFailToast('缺少 roomId/matchId 参数')
+    showFailToast(t('UIClub_Text31') + ' roomId/matchId ' + t('UIClub_Text32'))
     void router.back()
     return
   }

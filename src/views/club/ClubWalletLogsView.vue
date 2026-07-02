@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import iconTime from '@/assets/icons/icon_time.png'
+import { t } from '@/i18n'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -16,15 +17,15 @@ const timeEnd = '23:59'
 
 const summaryCards = [
   [
-    { label: '联盟回收', value: '+999999', trend: 'up' },
-    { label: '回收联盟币', value: '0', trend: 'neutral' },
-    { label: '联盟发放', value: '-999999', trend: 'down' },
-    { label: '发放联盟币', value: '+999999', trend: 'up' },
+    { label: t('UIClub_league_recycling'), value: '+999999', trend: 'up' },
+    { label: t('UIClub_UnionCoin2'), value: '0', trend: 'neutral' },
+    { label: t('UIClub_league_issue'), value: '-999999', trend: 'down' },
+    { label: t('UIClub_UnionCoin3'), value: '+999999', trend: 'up' },
   ],
   [
-    { label: '服务费', value: '+999999', trend: 'up' },
-    { label: '保险盈', value: '-999999', trend: 'down' },
-    { label: 'MTT收益', value: '-999999', trend: 'down' },
+    { label: t('UIMine_WalletPlatform_fee_f'), value: '+999999', trend: 'up' },
+    { label: t('UIClub_Insurance'), value: '-999999', trend: 'down' },
+    { label: "MTT" + t('UIData_YGvXd5iXr_010'), value: '-999999', trend: 'down' },
   ],
 ] as const
 
@@ -66,18 +67,18 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
 
       <div class="balance-row">
         <div class="balance-col">
-          <p class="balance-label">初始基金余额</p>
+          <p class="balance-label">{{ t('UIGuildMgr_InitFund') }}</p>
           <p class="balance-value">123456</p>
         </div>
         <span class="balance-split" aria-hidden="true"></span>
         <div class="balance-col">
-          <p class="balance-label">实时基金余额</p>
+          <p class="balance-label">{{ t('UIGuildMgr_CrrentFund') }}</p>
           <p class="balance-value">123456</p>
         </div>
       </div>
     </section>
 
-    <p class="timezone">时区：UTC+0</p>
+    <p class="timezone">{{ t('UICommon_TimeZone') }}：UTC+0</p>
 
     <section class="metrics-wrap">
       <article v-for="(group, groupIndex) in summaryCards" :key="groupIndex" class="metrics-card">

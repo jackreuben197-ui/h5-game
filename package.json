@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "sync:i18n": "node scripts/sync-i18n.mjs",
+    "sync:i18n:club-mine": "node scripts/i18n-club-mine.mjs",
     "sync:protocol": "bash scripts/update_protocol.sh",
     "predev": "pnpm sync:i18n",
     "prebuild": "pnpm sync:i18n",
@@ -21,10 +22,10 @@
   },
   "dependencies": {
     "@iconify/vue": "^5.0.0",
+    "@silenthill/agreement-web": "git+ssh://git@github.com/jackreuben197-ui/agreement-web.git#dev_merge_0616",
     "@vueuse/core": "^14.2.1",
     "axios": "^1.15.0",
     "dayjs": "^1.11.20",
-    "@silenthill/agreement-web": "git+ssh://git@github.com/jackreuben197-ui/agreement-web.git#dev_merge_0616",
     "google-protobuf": "^3.21.4",
     "html2canvas": "^1.4.1",
     "js-md5": "^0.8.3",

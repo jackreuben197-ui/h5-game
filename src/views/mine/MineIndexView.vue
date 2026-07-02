@@ -92,11 +92,11 @@ const displayUser = computed(() => {
       <div class="title">{{ t('UIMine_title') }}</div>
       <div class="currency-info" @click="goToMineShop">
         <div class="icon-diamond">
-          <img :src="iconDiamond" alt="钻石" />
+          <img :src="iconDiamond" :alt="t('UIMine_VIP_diamond')" />
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" alt="充值" />
+          <img :src="iconAdd" :alt="t('UIMine_WalletAdd_EjPOTlsz')" />
         </div>
       </div>
     </div>
@@ -128,7 +128,7 @@ const displayUser = computed(() => {
     <div class="box-gallery">
       <div v-for="box in boxList" :key="box.key" class="box-item" @click="goToNextPage(box.route)">
         <div class="img">
-          <img :src="box.icon" alt="消息" />
+          <img :src="box.icon" :alt="t('UIMine_MsgSystemContent')" />
         </div>
         <div class="text">{{ t(box.text) }}</div>
       </div>

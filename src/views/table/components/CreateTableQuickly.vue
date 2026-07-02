@@ -441,6 +441,10 @@ onMounted(() => {
   void fetchQuickPresetConfig()
 })
 
+defineExpose({
+  refreshTemplates: fetchTemplates,
+})
+
 const currentGamePlayType = computed<number>(() => {
   return Math.floor(toNumber(route.query.game_play_type, 0)) || 1
 })

@@ -22,6 +22,7 @@ import { saveQrCodeImage } from '@/utils/qrcode'
 import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { t } from '@/i18n'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -73,7 +74,7 @@ const totalText = computed(() => {
   return `${current}/${max}`
 })
 
-const invitationPreview = computed(() => invitationLink.value || '未获取到邀请链接')
+const invitationPreview = computed(() => invitationLink.value || t('UIClub_NotFetch'))
 const shouldShowCoinFundTab = computed(
   () =>
     toSafeNumber(userInfoStore.currentClub?.tribe_id) > 0 &&
@@ -108,10 +109,10 @@ const currentFundBalanceText = computed(() => {
 
 const currentInputText = computed(() => {
   if (fundAssetTab.value === 'quota' && quotaEditField.value) {
-    return quotaInput.value || '请输入调整额度'
+    return quotaInput.value || t('UIClub_Please2')
   }
 
-  return fundAmountInput.value || '请输入发放数量'
+  return fundAmountInput.value || t('UIGuildMemberOperationGiveNumber')
 })
 
 function toSafeNumber(value: unknown): number {
@@ -123,7 +124,7 @@ function mapMember(record: ClubAgentUserListRecord): DownlineMemberItem {
   const id = toSafeNumber(record.user_id)
   return {
     id,
-    name: String(record.remark_name || record.nick_name || `成员${id || '--'}`),
+    name: String(record.remark_name || record.nick_name || t('UIClub_Info_Members') + (id || '--')),
     uid: String(record.random_num || '--'),
     avatar: String(record.avatar || imgAvatar),
     uc: toSafeNumber(record.gold),
@@ -164,7 +165,7 @@ async function loadMembers() {
     })
 
     if (response.code !== 0 || !response.data) {
-      showFailToast(response.msg || '获取下线成员失败')
+      showFailToast(response.msg || t('UIClub_FetchDownliFail'))
       members.value = []
       total.value = 0
       return
@@ -175,7 +176,7 @@ async function loadMembers() {
     total.value = Number(response.data.total ?? records.length)
   } catch (error) {
     console.error('loadMembers error', error)
-    showFailToast('获取下线成员失败')
+    showFailToast(t('UIClub_FetchDownliFail'))
     members.value = []
     total.value = 0
   } finally {
@@ -292,7 +293,7 @@ async function submitQuotaUpdate(options: {
 }): Promise<void> {
   const member = activeMember.value
   if (!member?.id) {
-    showFailToast('未找到成员信息')
+    showFailToast(t('UIClub_NotFoundMember'))
     return
   }
 
@@ -311,7 +312,7 @@ async function submitQuotaUpdate(options: {
       : await postOrgClubAgentCreditLimitApi(payload)
 
   if (response.code !== 0) {
-    throw new Error(typeof response.msg === 'string' ? response.msg : '额度发放失败')
+    throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_Fail2'))
   }
 }
 
@@ -322,19 +323,19 @@ async function onFundConfirm(): Promise<void> {
 
   const member = activeMember.value
   if (!member?.id) {
-    showFailToast('未找到成员信息')
+    showFailToast(t('UIClub_NotFoundMember'))
     return
   }
 
   if (fundAssetTab.value === 'quota') {
     if (!quotaEditField.value || !quotaInput.value) {
-      showFailToast('请输入正确的额度')
+      showFailToast(t('UIClub_PleaseOf'))
       return
     }
 
     const amount = Number.parseInt(quotaInput.value, 10)
     if (Number.isNaN(amount) || amount <= 0) {
-      showFailToast('请输入正确的额度')
+      showFailToast(t('UIClub_PleaseOf'))
       return
     }
 
@@ -342,7 +343,7 @@ async function onFundConfirm(): Promise<void> {
       const required = amount * 100
       const available = agentDisposableQuotaBalance.value
       if (required > available) {
-        showFailToast('额度余额不足')
+        showFailToast(t('UIClub_Text5'))
         return
       }
     }
@@ -372,9 +373,9 @@ async function onFundConfirm(): Promise<void> {
       patchMemberOnList({ ...member })
       quotaInput.value = ''
       quotaEditField.value = null
-      showSuccessToast('额度发放成功')
+      showSuccessToast(t('UIClub_Success'))
     } catch (error) {
-      const message = error instanceof Error ? error.message : '额度发放失败'
+      const message = error instanceof Error ? error.message : t('UIClub_Fail2')
       showFailToast(message)
     } finally {
       submittingFund.value = false
@@ -384,17 +385,17 @@ async function onFundConfirm(): Promise<void> {
 
   const amount = Number.parseInt(fundAmountInput.value, 10)
   if (Number.isNaN(amount) || amount <= 0) {
-    showFailToast('请输入正确的发放数量')
+    showFailToast(t('UIClub_PleaseOf2'))
     return
   }
 
   if (fundAssetTab.value === 'coin' && amount * 100 > agentCoinBalance.value) {
-    showFailToast('联盟币余额不足')
+    showFailToast(t('UIClub_UnionCoin'))
     return
   }
 
   if (fundAssetTab.value === 'diamond' && amount > agentDiamondBalance.value) {
-    showFailToast('钻石余额不足')
+    showFailToast(t('UIClub_Text6'))
     return
   }
 
@@ -422,7 +423,7 @@ async function onFundConfirm(): Promise<void> {
     }
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '发放失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_GiveFail'))
     }
 
     if (fundAssetTab.value === 'diamond') {
@@ -436,10 +437,10 @@ async function onFundConfirm(): Promise<void> {
     }
 
     patchMemberOnList({ ...member })
-    showSuccessToast('发放成功')
+    showSuccessToast(t('UIClub_SendPropsSucceed'))
     closeFundSheet()
   } catch (error) {
-    const message = error instanceof Error ? error.message : '发放失败'
+    const message = error instanceof Error ? error.message : t('UIClub_GiveFail')
     showFailToast(message)
   } finally {
     submittingFund.value = false
@@ -448,7 +449,7 @@ async function onFundConfirm(): Promise<void> {
 
 async function onSaveQrCode() {
   if (!invitationLink.value) {
-    showFailToast('邀请链接为空')
+    showFailToast(t('UIClub_Text7'))
     return
   }
 
@@ -456,10 +457,10 @@ async function onSaveQrCode() {
     await saveQrCodeImage(invitationLink.value, {
       fileName: `club-invite-${userInfoStore.currentClub?.random_id || Date.now()}.png`,
     })
-    showSuccessToast('二维码已保存')
+    showSuccessToast(t('UIClub_CodeDoneSave'))
   } catch (error) {
     console.error('onSaveQrCode error', error)
-    showFailToast(error instanceof Error ? error.message : '保存二维码失败')
+    showFailToast(error instanceof Error ? error.message : t('UIClub_SaveCodeFail'))
   }
 }
 
@@ -470,15 +471,15 @@ onMounted(async () => {
 
 <template>
   <div class="page-shell downline-page" :style="backgroundStyle">
-    <HeaderBack title="下线成员" />
+    <HeaderBack :title="t('UIGuild_MemberDetails_VipOffLine')" />
 
     <div v-loading="loading" class="content">
       <div class="invite-row">
         <div class="invite-title-wrap">
-          <span>邀请链接</span>
+          <span>{{ t('UIClub_InviteLink') }}</span>
           <img :src="imgInfo" alt="" aria-hidden="true" />
         </div>
-        <button type="button" class="qr-btn" @click="onSaveQrCode">保存二维码</button>
+        <button type="button" class="qr-btn" @click="onSaveQrCode">{{ t('UIMine_PromotersBecome_rTPhmznj') }}</button>
       </div>
 
       <p class="invite-link" :title="invitationLink">{{ invitationPreview }}</p>
@@ -489,13 +490,13 @@ onMounted(async () => {
           v-model="keyword"
           type="text"
           class="search-input"
-          placeholder="玩家查询"
+          :placeholder="t('UIClub_Player')"
           @keyup.enter="onSearch"
         />
       </div>
 
       <div class="total-row">
-        <span class="total-title">成员总数</span>
+        <span class="total-title">{{ t('UIClub_Member') }}</span>
         <span class="total-value">{{ totalText }}</span>
       </div>
 
@@ -520,26 +521,26 @@ onMounted(async () => {
             </p>
             <p class="asset-item">
               <img :src="imgBalance" alt="credit" />
-              <span class="asset-label">额度</span>
+              <span class="asset-label">{{ t('UIClubTalbe_CreditAmount') }}</span>
               <strong class="asset-value">
                 {{ formatUC(member.disposableCredit) }}/{{ formatUC(member.reviewCredit) }}
               </strong>
             </p>
             <p class="asset-item">
               <img :src="imgDiamond" alt="diamond" />
-              <span class="asset-label">钻石</span>
+              <span class="asset-label">{{ t('UIMine_VIP_diamond') }}</span>
               <strong class="asset-value">{{ member.diamond }}</strong>
             </p>
           </div>
         </div>
 
-        <div v-if="!members.length && !loading" class="empty-box">暂无下线成员</div>
+        <div v-if="!members.length && !loading" class="empty-box">{{ t('UIClub_NoDownli') }}</div>
       </div>
 
       <div v-if="showFundSheet" class="fund-sheet-mask" @click="closeFundSheet"></div>
 
       <section v-if="showFundSheet && activeMember" class="fund-sheet" @click.stop>
-        <div class="fund-tabs" role="tablist" aria-label="基金资产类型">
+        <div class="fund-tabs" role="tablist" :aria-label="t('UIClub_Fund')">
           <button
             v-if="shouldShowCoinFundTab"
             type="button"
@@ -547,7 +548,7 @@ onMounted(async () => {
             :class="{ 'fund-tab--active': fundAssetTab === 'coin' }"
             @click="switchFundAsset('coin')"
           >
-            联盟币
+            {{ t('UIClubCreditLimit1') }}
           </button>
           <button
             type="button"
@@ -555,7 +556,7 @@ onMounted(async () => {
             :class="{ 'fund-tab--active': fundAssetTab === 'quota' }"
             @click="switchFundAsset('quota')"
           >
-            额度
+            {{ t('UIClubTalbe_CreditAmount') }}
           </button>
           <button
             type="button"
@@ -563,13 +564,13 @@ onMounted(async () => {
             :class="{ 'fund-tab--active': fundAssetTab === 'diamond' }"
             @click="switchFundAsset('diamond')"
           >
-            钻石
+            {{ t('UIMine_VIP_diamond') }}
           </button>
         </div>
 
         <div v-if="fundAssetTab === 'quota'" class="quota-body">
           <div class="sheet-row sheet-row--top">
-            <p class="sheet-label">用户名</p>
+            <p class="sheet-label">{{ t('user_name') }}</p>
             <p class="sheet-username">
               <span>{{ activeMember.name }}</span>
               <span class="sheet-id-tag">ID</span>
@@ -579,7 +580,7 @@ onMounted(async () => {
 
           <div class="sheet-row">
             <div class="quota-group-label">
-              <p>可支配额度</p>
+              <p>{{ t('OpCodeString_CREDITBRINGOUT') }}</p>
               <p>{{ formatUC(disposableQuota) }}</p>
             </div>
             <div class="quota-actions">
@@ -588,7 +589,7 @@ onMounted(async () => {
                 class="quota-action quota-action--primary"
                 @click="editQuota('disposable')"
               >
-                发放
+                {{ t('UIClub_FundDetail_5iSXE2Uj') }}
               </button>
             </div>
           </div>
@@ -601,7 +602,7 @@ onMounted(async () => {
                 :class="{ 'quota-mode--active': quotaAdjustMode === 'increase' }"
                 @click="quotaAdjustMode = 'increase'"
               >
-                增加额度
+                {{ t('UICredit_AddAmount') }}
               </button>
               <button
                 type="button"
@@ -609,7 +610,7 @@ onMounted(async () => {
                 :class="{ 'quota-mode--active': quotaAdjustMode === 'decrease' }"
                 @click="quotaAdjustMode = 'decrease'"
               >
-                减少额度
+                {{ t('UICredit_SubAmount') }}
               </button>
             </div>
             <div class="quota-input-pill">{{ currentInputText }}</div>
@@ -617,7 +618,7 @@ onMounted(async () => {
 
           <div class="sheet-row">
             <div class="quota-group-label">
-              <p>免审核额度</p>
+              <p>{{ t('OpCodeString_CREDITGRANT') }}</p>
               <p>{{ formatUC(reviewQuota) }}</p>
             </div>
             <div class="quota-actions">
@@ -626,7 +627,7 @@ onMounted(async () => {
                 class="quota-action quota-action--primary"
                 @click="editQuota('review')"
               >
-                发放
+                {{ t('UIClub_FundDetail_5iSXE2Uj') }}
               </button>
             </div>
           </div>
@@ -639,7 +640,7 @@ onMounted(async () => {
                 :class="{ 'quota-mode--active': quotaAdjustMode === 'increase' }"
                 @click="quotaAdjustMode = 'increase'"
               >
-                增加额度
+                {{ t('UICredit_AddAmount') }}
               </button>
               <button
                 type="button"
@@ -647,7 +648,7 @@ onMounted(async () => {
                 :class="{ 'quota-mode--active': quotaAdjustMode === 'decrease' }"
                 @click="quotaAdjustMode = 'decrease'"
               >
-                减少额度
+                {{ t('UICredit_SubAmount') }}
               </button>
             </div>
             <div class="quota-input-pill">{{ currentInputText }}</div>
@@ -656,7 +657,7 @@ onMounted(async () => {
 
         <div v-else class="sheet-meta">
           <div class="sheet-row sheet-row--top">
-            <p class="sheet-label">用户名</p>
+            <p class="sheet-label">{{ t('user_name') }}</p>
             <p class="sheet-username">
               <span>{{ activeMember.name }}</span>
               <span class="sheet-id-tag">ID</span>
@@ -665,7 +666,7 @@ onMounted(async () => {
           </div>
 
           <div class="sheet-row">
-            <p class="sheet-label">余额</p>
+            <p class="sheet-label">{{ t('UIClub_CreateRoom31') }}</p>
             <p class="sheet-balance">
               <img
                 :src="fundAssetTab === 'diamond' ? imgDiamond : imgChips"
@@ -677,7 +678,7 @@ onMounted(async () => {
           </div>
 
           <div class="sheet-row">
-            <p class="sheet-label">发放数量</p>
+            <p class="sheet-label">{{ t('UIClub_SendItem_number') }}</p>
             <p class="sheet-balance">
               <img
                 :src="fundAssetTab === 'diamond' ? imgDiamond : imgChips"
@@ -709,13 +710,13 @@ onMounted(async () => {
         </div>
 
         <div class="sheet-footer-actions">
-          <button type="button" class="sheet-footer-btn" @click="closeFundSheet">取消</button>
+          <button type="button" class="sheet-footer-btn" @click="closeFundSheet">{{ t('adaptation10013') }}</button>
           <button
             type="button"
             class="sheet-footer-btn sheet-footer-btn--confirm"
             @click="onFundConfirm"
           >
-            发放
+            {{ t('UIClub_FundDetail_5iSXE2Uj') }}
           </button>
         </div>
       </section>

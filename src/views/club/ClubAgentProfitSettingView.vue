@@ -9,6 +9,7 @@ import imgAvatar from '@/assets/images/default_avatar_for_club.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { postOrgClubAgentRatioInfoApi, postOrgClubAgentRatioUpdateApi } from '@/api/org'
 import type { OrgClubAgentRatioInfoInfo } from '@/api/models/org'
+import { t } from '@/i18n'
 
 const route = useRoute()
 const context = computed(() => getMemberRouteContext(route))
@@ -19,10 +20,10 @@ const backgroundStyle = computed(() => ({
 }))
 
 const form = ref([
-  { key: 'service', label: '服务费分成比例', value: '0' },
-  { key: 'insurance', label: '保险分成比例', value: '0' },
-  { key: 'mtt', label: 'MTT分成比例', value: '0' },
-  { key: 'cowboy', label: '牛仔分成比例', value: '0' },
+  { key: 'service', label: t('UIGuildMemberProxyRevenueSettings_Text1'), value: '0' },
+  { key: 'insurance', label: t('UIGuildMemberProxyRevenueSettings_Text2'), value: '0' },
+  { key: 'mtt', label: 'MTT' + t('UIGuildClubManagerProportionTip'), value: '0' },
+  { key: 'cowboy', label: t('UIClub_Text'), value: '0' },
 ])
 
 const loading = ref(false)
@@ -192,8 +193,8 @@ onMounted(() => {
       :min="0"
       :max-length="4"
       :initial-value="form.find((i) => i.key === keypadField)?.value || '0'"
-      :title="form.find((i) => i.key === keypadField)?.label || '自定义金额'"
-      confirm-text="确定"
+      :title="form.find((i) => i.key === keypadField)?.label || t('UIMineUSDTSheet_CustomTip')"
+      :confirm-text="t('CommitOK')"
       @close="onKeypadClose"
       @submit="onKeypadSubmit"
       @key-press="onKeypadKeyPress"

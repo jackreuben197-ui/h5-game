@@ -276,6 +276,12 @@ export default defineConfig(({ mode, command }) => {
       },
       // 保持 css 拆分，避免所有样式打进一个大文件。
       cssCodeSplit: true,
+      // 关掉 CSS minify：@vitejs/plugin-legacy 会把 cssTarget 压到 chrome61 之类
+      // 的老目标，esbuild 据此把 backdrop-filter、inset、::before 等现代 CSS
+      // 直接降级/删掉（Chromium 不认 -webkit-backdrop-filter，毛玻璃失效）。
+      // 试过 config / configResolved 强行覆盖 cssTarget 都没拦住 legacy，
+      // 直接关掉 CSS minify 是最稳的兜底——体积影响很小。
+      cssMinify: false,
       rollupOptions: {
         output: {
           // 三方依赖采用稳定分组，避免按包名切分造成过多小文件请求。

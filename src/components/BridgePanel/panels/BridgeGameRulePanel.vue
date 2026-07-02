@@ -59,16 +59,16 @@ const INSURANCE_MODE = {
 } as const
 
 const RAW_HAND_SECTIONS: HandSection[] = [
-  { id: 'royal-flush', labelKey: 'adaptation10053', cards: [9, 10, 11, 12, 0] },
-  { id: 'straight-flush', labelKey: 'adaptation10054', cards: [19, 20, 21, 22, 23] },
-  { id: 'four-kind', labelKey: 'adaptation10055', cards: [0, 13, 26, 39, 37] },
-  { id: 'full-house', labelKey: 'adaptation10056', cards: [38, 51, 12, 35, 48] },
-  { id: 'flush', labelKey: 'adaptation10057', cards: [17, 18, 20, 21, 23] },
-  { id: 'straight', labelKey: 'adaptation10058', cards: [18, 32, 33, 21, 22] },
-  { id: 'three-kind', labelKey: 'adaptation10059', cards: [24, 37, 11, 35, 0] },
-  { id: 'two-pairs', labelKey: 'adaptation10060', cards: [19, 24, 50, 0, 13] },
-  { id: 'one-pair', labelKey: 'adaptation10061', cards: [6, 19, 33, 44, 48] },
-  { id: 'high-card', labelKey: 'adaptation10062', cards: [7, 24, 0, 48, 29] },
+  { id: 'royal-flush', labelKey: 'adaptation10053', cards: [14, 13, 12, 11, 10] },
+  { id: 'straight-flush', labelKey: 'adaptation10054', cards: [28, 27, 26, 25, 24] },
+  { id: 'four-kind', labelKey: 'adaptation10055', cards: [14, 29, 44, 59, 8] },
+  { id: 'full-house', labelKey: 'adaptation10056', cards: [28, 43, 58, 37, 52] },
+  { id: 'flush', labelKey: 'adaptation10057', cards: [27, 25, 23, 21, 22] },
+  { id: 'straight', labelKey: 'adaptation10058', cards: [26, 10, 24, 38, 52] },
+  { id: 'three-kind', labelKey: 'adaptation10059', cards: [25, 40, 55, 36, 50] },
+  { id: 'two-pairs', labelKey: 'adaptation10060', cards: [24, 39, 22, 37, 51] },
+  { id: 'one-pair', labelKey: 'adaptation10061', cards: [23, 38, 22, 39, 51] },
+  { id: 'high-card', labelKey: 'adaptation10062', cards: [22, 36, 24, 55, 58] },
 ]
 
 const activeTabKey = ref<RuleTab['key']>('rules')
@@ -242,15 +242,11 @@ const insuranceRuleText = computed(() => {
     'UITexasRule_detail13',
   ]
 
-  const details = detailKeys
-    .map((key) => getI18nText(key))
-    .filter(Boolean)
+  const details = detailKeys.map((key) => getI18nText(key)).filter(Boolean)
 
   const titleLine = title ? `<b><size=46>${title}</size></b>` : ''
 
-  return [titleLine, details.join('\n')]
-    .filter(Boolean)
-    .join('\n\n')
+  return [titleLine, details.join('\n')].filter(Boolean).join('\n\n')
 })
 
 const insuranceRuleBlocks = computed<RuleBlock[]>(() => parseRuleBlocks(insuranceRuleText.value))
@@ -324,7 +320,10 @@ function selectTab(key: RuleTab['key']): void {
 
     <div v-if="activeTabKey !== 'hands'" class="game-rule-panel__rules">
       <template v-if="activeRuleBlocks.length">
-        <template v-for="(block, index) in activeRuleBlocks" :key="`${block.type}-${index}-${block.text}`">
+        <template
+          v-for="(block, index) in activeRuleBlocks"
+          :key="`${block.type}-${index}-${block.text}`"
+        >
           <h4 v-if="block.type === 'title'" class="game-rule-panel__rich-title">
             {{ block.text }}
           </h4>
@@ -339,11 +338,7 @@ function selectTab(key: RuleTab['key']): void {
     </div>
 
     <div v-if="activeTabKey === 'hands'" class="game-rule-panel__list">
-      <div
-        v-for="hand in decodedHands"
-        :key="hand.id"
-        class="game-rule-panel__row"
-      >
+      <div v-for="hand in decodedHands" :key="hand.id" class="game-rule-panel__row">
         <div class="game-rule-panel__cards">
           <PokerCard
             v-for="(card, idx) in hand.boardCards"

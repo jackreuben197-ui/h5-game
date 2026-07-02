@@ -231,7 +231,13 @@ const matchInfo = computed(() => {
       value: `${m.limit_min ?? '-'}~${realPrize.value?.participants ?? '-'}`,
     },
     { label: t('UIMatchStartCondition'), value: '-' },
-    { label: t('UIMatchBreakTime'), value: '-' },
+    {
+      label: t('UIMatchBreakTime'),
+      value:
+        m.break_interval && m.break_duration
+          ? `${t('BlindUpTimes', { num: m.break_interval })}，${t('UIMatchBreakTime')}${t('UITexasReport_Text_MatchZmsysj', String(m.break_duration))}`
+          : '-',
+    },
   ]
 })
 </script>
@@ -352,6 +358,10 @@ const matchInfo = computed(() => {
           <div class="chip-bb">{{ initialChipsBB }}</div>
         </div>
       </div>
+    </div>
+    <div class="event-desc">
+      <p>{{ t('eventDesc') }}</p>
+      <div>{{ mtt?.activity_detail }}</div>
     </div>
 
     <!-- 赛事信息 -->
@@ -630,6 +640,29 @@ const matchInfo = computed(() => {
   color: #b6b6b6;
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
+}
+.event-desc {
+  p {
+    color: #fff;
+    font-family: 'HONOR Sans CN';
+    font-size: 0.38008rem;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 140%; /* 0.53211rem */
+    margin: 0 0.5rem;
+  }
+  div {
+    display: flex;
+    height: 1.98624rem;
+    padding: 0.2rem 0.45rem 0.25rem;
+    flex-direction: column;
+    gap: 0.39552rem;
+    align-self: stretch;
+    border-radius: 0.51592rem;
+    background: rgba(0, 0, 0, 0.2);
+    margin: 0.1rem 0 0.4rem;
+    color: rgba(255, 255, 255, 0.7);
+  }
 }
 
 /* ===== 赛事信息 ===== */

@@ -693,6 +693,8 @@ export interface RoomcenterMttDetails {
   force_video_close_time?: number
   force_video_start_time?: string
   force_close_time?: number
+  break_interval?: number
+  break_duration?: number
   blind_level_delay_time_table?: RoomcenterMttBlindLevelDelay[]
   club_id?: number
   // RoomCenterMttIdDetail 额外字段。

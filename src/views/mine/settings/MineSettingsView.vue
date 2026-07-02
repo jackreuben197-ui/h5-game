@@ -16,13 +16,13 @@ import icUserAgreement from '@/assets/icons/ic_user_agreement.svg'
 import icAppVersion from '@/assets/icons/ic_app_version.svg'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
-import { getLocale } from '@/i18n'
+import { getLocale, t } from '@/i18n'
 import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
 
 const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
 
-const title = computed(() => localized('Settings', '设置'))
+const title = computed(() => t('UIMine_btn_setting'))
 
 const router = useRouter()
 const gameStore = useGameStore()
@@ -44,34 +44,34 @@ interface SettingItem {
 }
 
 const sectionTop: SettingItem[] = [
-  { key: 'logout', label: localized('Log out', '退出登录'), icon: icLogout },
+  { key: 'logout', label: t('UIMine_Setting114'), icon: icLogout },
   {
     key: 'language',
-    label: localized('Language', '切换语言'),
+    label: t('tc_PpNL8LVJ'),
     icon: icChangeLanguage,
     rightText: languageLabel(),
   },
-  { key: 'account', label: localized('Account Management', '账号管理'), icon: icAccountCenter },
+  { key: 'account', label: t('UISettingPassword001'), icon: icAccountCenter },
 ]
 
 const sectionMiddle: SettingItem[] = [
-  { key: 'sound', label: localized('Game Sound', '游戏声音'), icon: icGameSound, toggle: true },
+  { key: 'sound', label: t('tc_TsALrril'), icon: icGameSound, toggle: true },
   {
     key: 'line',
-    label: localized('Current Line', '当前线路'),
+    label: t('tc_FKurKJYR'),
     icon: icCurrentLine,
-    rightText: localized('Default Line', '默认线路'),
+    rightText: t('UIClub_Text73'),
   },
-  { key: 'cancel', label: localized('Delete Account', '注销账号'), icon: icDeleteAccount },
-  { key: 'about', label: localized('About Us', '关于我们'), icon: icAboutUs },
-  // { key: 'agreement', label: localized('User Agreement', '用户协议'), icon: icPolicePrivacy },
+  { key: 'cancel', label: t('UIMine_DeleteUser'), icon: icDeleteAccount },
+  { key: 'about', label: t('tc_YQAGnw3p'), icon: icAboutUs },
+  // { key: 'agreement', label: t('tc_5E0V3qlb'), icon: icPolicePrivacy },
 ]
 
 const sectionBottom: SettingItem[] = [
-  // { key: 'privacy', label: localized('Privacy Policy', '用户隐私协议'), icon: icUserAgreement },
+  // { key: 'privacy', label: t('UIMine_Setting_UserSecret'), icon: icUserAgreement },
   {
     key: 'version',
-    label: localized('Version', '版本号'),
+    label: t('tc_NO5NT6aa'),
     icon: icAppVersion,
     rightText: 'v1.0.0',
     clickable: false,
@@ -81,10 +81,10 @@ const sectionBottom: SettingItem[] = [
 function languageLabel(): string {
   const locale = getLocale()
   if (locale === 'cn') {
-    return '简体中文'
+    return t('A')
   }
   if (locale === 'zh') {
-    return '繁體中文'
+    return t('UIClub_Text72')
   }
   if (locale === 'pt') {
     return 'Português'

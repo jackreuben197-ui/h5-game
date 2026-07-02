@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { showFailToast } from 'vant'
 import { postMiscCombineApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
@@ -17,9 +17,11 @@ import { decodeCard, parseHandRecordCards, type CardItem } from '@/api/models/re
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
 import { userCache } from '@/utils/userCache'
+import { createKeyedRefresh } from '@/utils/keyedRefresh'
 import { USER_STORE_CAREER } from '@/utils/indexedDB'
+import { t } from '@/i18n'
 
-const title = computed(() => '数据')
+const title = computed(() => t('adaptation10124'))
 
 type MainTabKey = 'personal' | 'opponent' | 'allin' | 'deck'
 
@@ -48,10 +50,10 @@ const backgroundStyle = computed(() => ({
 }))
 
 const mainTabs: Array<{ key: MainTabKey; label: string }> = [
-  { key: 'personal', label: '个人' },
-  { key: 'opponent', label: '对手' },
-  { key: 'allin', label: '全下' },
-  { key: 'deck', label: '牌组' },
+  { key: 'personal', label: t('UICareer_Person') },
+  { key: 'opponent', label: t('UICareer_Rivol') },
+  { key: 'allin', label: t('adaptation30074') },
+  { key: 'deck', label: t('UICareer_Deck') },
 ]
 
 const personalGameTabs = ['NLH', 'PLO', '6+']
@@ -62,18 +64,18 @@ const personalGameTabOptions: FilterTabOption[] = personalGameTabs.map((t) => ({
   title: t,
 }))
 const OPPONENT_PERIOD_TAB_LABEL: Record<string, string> = {
-  week: '本周',
-  month: '本月',
-  history: '历史',
+  week: t('UICareer_PersonWeek'),
+  month: t('UICareer_PersonMonth'),
+  history: t('UICareer_PersonCareer'),
 }
 const opponentPeriodTabOptions: FilterTabOption[] = opponentPeriodTabs.map((t) => ({
   name: t,
   title: OPPONENT_PERIOD_TAB_LABEL[t] ?? t,
 }))
 const OPPONENT_PERIOD_LABEL: Record<string, string> = {
-  week: '近一周内玩牌数据统计',
-  month: '近一个月内玩牌数据统计',
-  history: '历史玩牌数据统计',
+  week: t('UICareer_WeekCount'),
+  month: t('UICareer_MonthCount'),
+  history: t('UICareer_HistoryCount'),
 }
 const opponentPeriodLabel = computed(
   () => OPPONENT_PERIOD_LABEL[selectedOpponentPeriod.value] ?? '',
@@ -91,12 +93,12 @@ const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
 
 const personalRingMeta = [
-  { key: 'vpip', label: '入池率', color: '#ff5b5b' },
-  { key: 'wins', label: '胜率', color: '#3c6dff' },
-  { key: 'prf', label: '翻牌加注率', color: '#f7bb46' },
-  { key: 'wtsd', label: '摊牌胜率', color: '#ff2626' },
-  { key: 'bet3', label: '再加注率', color: '#66b7ff' },
-  { key: 'allinWins', label: '全下胜率', color: '#20f2c2' },
+  { key: 'vpip', label: t('UIClub_Mlistinfo_rRyW4JkW'), color: '#ff5b5b' },
+  { key: 'wins', label: t('UITexasInfo_winrate'), color: '#3c6dff' },
+  { key: 'prf', label: t('UIClub_Text38'), color: '#f7bb46' },
+  { key: 'wtsd', label: t('UIClub_Text39'), color: '#ff2626' },
+  { key: 'bet3', label: t('UIClub_Again2'), color: '#66b7ff' },
+  { key: 'allinWins', label: t('adaptation10318'), color: '#20f2c2' },
 ] as const
 
 const personalRings = ref(personalRingMeta.map((item) => ({ ...item, value: 0 })))
@@ -104,17 +106,17 @@ const personalBestHand = ref<(CardItem | null)[]>([])
 const opponentRows = ref<ProfitRow[]>([])
 const deckRows = ref<DeckRow[]>([])
 const allInSummary = ref([
-  { label: '累计盈利', value: '0', highlight: 'up' as const },
+  { label: t('UICareer_totalWin'), value: '0', highlight: 'up' as const },
   { label: 'All in', value: '0' },
-  { label: '手数', value: '0' },
-  { label: '获胜', value: '0' },
-  { label: '失利', value: '0' },
+  { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: '0' },
+  { label: t('UICareer_HuoWin'), value: '0' },
+  { label: t('UICareer_AllinLost'), value: '0' },
 ])
 const allInRateRows = ref([
-  { key: 'active', label: '主动', rate: 0, color: '#50a7ec' },
-  { key: 'passive', label: '被动', rate: 0, color: '#fa2b4b' },
-  { key: 'ahead', label: '领先', rate: 0, color: '#109657' },
-  { key: 'behind', label: '落后', rate: 0, color: '#b519d8' },
+  { key: 'active', label: t('UICareer_Zhudong'), rate: 0, color: '#50a7ec' },
+  { key: 'passive', label: t('UICareer_Beidong'), rate: 0, color: '#fa2b4b' },
+  { key: 'ahead', label: t('UICareer_Lingxian'), rate: 0, color: '#109657' },
+  { key: 'behind', label: t('UICareer_Luohou'), rate: 0, color: '#b519d8' },
 ])
 
 const radarPoints = computed(() => ({
@@ -336,11 +338,11 @@ function setAllInCache(mode: string, stats: Record<string, unknown>): void {
   const profit = toSafeNumber(stats.profit_total)
 
   const summary = [
-    { label: '累计盈利', value: formatSigned(profit), highlight: 'up' as const },
+    { label: t('UICareer_totalWin'), value: formatSigned(profit), highlight: 'up' as const },
     { label: 'All in', value: winCount.toLocaleString('en-US') },
-    { label: '手数', value: handCount.toLocaleString('en-US') },
-    { label: '获胜', value: winCount.toLocaleString('en-US') },
-    { label: '失利', value: loseCount.toLocaleString('en-US') },
+    { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: handCount.toLocaleString('en-US') },
+    { label: t('UICareer_HuoWin'), value: winCount.toLocaleString('en-US') },
+    { label: t('UICareer_AllinLost'), value: loseCount.toLocaleString('en-US') },
   ]
 
   const activeCount = toSafeNumber(stats.active_count)
@@ -355,25 +357,25 @@ function setAllInCache(mode: string, stats: Record<string, unknown>): void {
   const rates = [
     {
       key: 'active',
-      label: '主动',
+      label: t('UICareer_Zhudong'),
       rate: activeCount > 0 ? clampRate((activeProfitCount / activeCount) * 100) : 0,
       color: '#50a7ec',
     },
     {
       key: 'passive',
-      label: '被动',
+      label: t('UICareer_Beidong'),
       rate: passiveCount > 0 ? clampRate((passiveProfitCount / passiveCount) * 100) : 0,
       color: '#fa2b4b',
     },
     {
       key: 'ahead',
-      label: '领先',
+      label: t('UICareer_Lingxian'),
       rate: aheadCount > 0 ? clampRate((aheadProfitCount / aheadCount) * 100) : 0,
       color: '#109657',
     },
     {
       key: 'behind',
-      label: '落后',
+      label: t('UICareer_Luohou'),
       rate: behindCount > 0 ? clampRate((behindProfitCount / behindCount) * 100) : 0,
       color: '#b519d8',
     },
@@ -414,6 +416,18 @@ function careerKey(tab: string, subKey: string): string {
   const clubId = userInfoStore.currentClub?.club_id || 0
   return `${clubId}_data_${tab}_${subKey}`
 }
+
+// deck / opponent 两条数据流各自一个 refresher，getKey 写得更清晰。
+// 命中缓存的静默刷新走 refresh()：立即触发，20s TTL 内同 key 跳过，同 key 已在飞则合并。
+// cache miss 仍然 await + loading，不延迟。
+const deckRefresher = createKeyedRefresh(
+  () => careerKey('deck', selectedDeckMode.value),
+  { freshTtl: 20_000 },
+)
+const opponentRefresher = createKeyedRefresh(
+  () => careerKey('opponent', `${selectedOpponentPeriod.value}_${opponentOrderAsc.value ? 1 : 2}`),
+  { freshTtl: 20_000 },
+)
 
 function setOpponentCache(cacheKey: string, rows: ProfitRow[], finished: boolean): void {
   const entry = { rows, finished }
@@ -508,17 +522,17 @@ function applyCurrentPersonal(): void {
 function applyCurrentAllIn(): void {
   const value = allInCache.get(selectedAllInMode.value)
   allInSummary.value = value?.summary ?? [
-    { label: '累计盈利', value: '0', highlight: 'up' as const },
+    { label: t('UICareer_totalWin'), value: '0', highlight: 'up' as const },
     { label: 'All in', value: '0' },
-    { label: '手数', value: '0' },
-    { label: '获胜', value: '0' },
-    { label: '失利', value: '0' },
+    { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: '0' },
+    { label: t('UICareer_HuoWin'), value: '0' },
+    { label: t('UICareer_AllinLost'), value: '0' },
   ]
   allInRateRows.value = value?.rates ?? [
-    { key: 'active', label: '主动', rate: 0, color: '#50a7ec' },
-    { key: 'passive', label: '被动', rate: 0, color: '#fa2b4b' },
-    { key: 'ahead', label: '领先', rate: 0, color: '#109657' },
-    { key: 'behind', label: '落后', rate: 0, color: '#b519d8' },
+    { key: 'active', label: t('UICareer_Zhudong'), rate: 0, color: '#50a7ec' },
+    { key: 'passive', label: t('UICareer_Beidong'), rate: 0, color: '#fa2b4b' },
+    { key: 'ahead', label: t('UICareer_Lingxian'), rate: 0, color: '#109657' },
+    { key: 'behind', label: t('UICareer_Luohou'), rate: 0, color: '#b519d8' },
   ]
 }
 
@@ -533,12 +547,14 @@ async function requestCombine(
   try {
     const response = await postMiscCombineApi(payload)
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载俱乐部数据失败')
+      throw new Error(
+        typeof response.msg === 'string' ? response.msg : t('UIClub_LoadClubDataFail2'),
+      )
     }
     return (response.data as Record<string, unknown>) || {}
   } catch (error) {
     if (!silent) {
-      const message = error instanceof Error ? error.message : '加载俱乐部数据失败'
+      const message = error instanceof Error ? error.message : t('UIClub_LoadClubDataFail2')
       showFailToast(message)
     }
     return null
@@ -588,6 +604,7 @@ async function loadOpponentPage(reset = false, silent = false): Promise<void> {
     }
   }
 
+  const guard = opponentRefresher.begin()
   try {
     const data = await requestCombine(
       {
@@ -603,6 +620,7 @@ async function loadOpponentPage(reset = false, silent = false): Promise<void> {
       silent || !reset,
     )
 
+    if (!guard.isCurrent()) return
     if (!data) {
       if (reset) opponentFinished.value = true
       return
@@ -690,7 +708,7 @@ function toggleOpponentSort(): void {
 
   const newKey = `${selectedOpponentPeriod.value}_${opponentOrderAsc.value ? 1 : 2}`
   if (applyOpponentFromCache(newKey)) {
-    void refreshOpponentSilently()
+    void opponentRefresher.refresh(() => refreshOpponentSilently())
   } else {
     opponentRows.value = []
     void loadOpponentPage(true)
@@ -832,10 +850,14 @@ async function loadOtherInitial(): Promise<void> {
         profit: toSafeNumber(row.profit_total),
       }
     })
-    opponentRows.value = newRows
-    opponentFinished.value = newRows.length < OPPONENT_PAGE_SIZE
     const opponentCacheKey = `${opponentPeriod}_${opponentOrderAsc.value ? 1 : 2}`
-    setOpponentCache(opponentCacheKey, opponentRows.value, opponentFinished.value)
+    // 数据缓存无条件写入（下次进入可命中）；UI 只在 period/sort 仍是 mount 时记录的值时才覆盖。
+    const finished = newRows.length < OPPONENT_PAGE_SIZE
+    setOpponentCache(opponentCacheKey, newRows, finished)
+    if (opponentCacheKey === `${selectedOpponentPeriod.value}_${opponentOrderAsc.value ? 1 : 2}`) {
+      opponentRows.value = newRows
+      opponentFinished.value = finished
+    }
   }
   if (apiList.includes(32)) {
     const allInResp = (data.user_allin_room_stats_resp ?? {}) as Record<string, unknown>
@@ -903,7 +925,8 @@ async function ensureCurrentTabData(): Promise<void> {
 
   if (deckCache.has(selectedDeckMode.value)) {
     applyCurrentDeck()
-    void refreshDeckMode(selectedDeckMode.value)
+    // 命中缓存：立即触发 SWR；20s TTL 内同 mode 跳过，避免来回切重发。
+    void deckRefresher.refresh(() => refreshDeckMode(selectedDeckMode.value))
   } else {
     loading.value = true
     await loadDeck(selectedDeckMode.value)
@@ -924,7 +947,7 @@ watch(selectedOpponentPeriod, () => {
   opponentFinished.value = false
   const newKey = `${selectedOpponentPeriod.value}_${opponentOrderAsc.value ? 1 : 2}`
   if (applyOpponentFromCache(newKey)) {
-    void refreshOpponentSilently()
+    void opponentRefresher.refresh(() => refreshOpponentSilently())
   } else {
     opponentRows.value = []
     void loadOpponentPage(true)
@@ -950,6 +973,9 @@ watch(
     opponentSortCache.clear()
     opponentRows.value = []
     opponentFinished.value = false
+    // 之前 club 的 debounce 调度也要取消，避免触发旧 key 的请求。
+    deckRefresher.clear()
+    opponentRefresher.clear()
     void (async () => {
       await restoreAllFromIDB()
       void ensureCurrentTabData()
@@ -984,6 +1010,11 @@ onMounted(() => {
     })()
   })()
 })
+
+onBeforeUnmount(() => {
+  deckRefresher.clear()
+  opponentRefresher.clear()
+})
 </script>
 
 <template>
@@ -991,7 +1022,7 @@ onMounted(() => {
     <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
-      <!-- <p v-if="loading" class="panel-status">加载中...</p> -->
+      <!-- <p v-if="loading" class="panel-status">{{ t('SuperView2') }}...</p> -->
       <div class="main-tabs">
         <button
           v-for="tab in mainTabs"
@@ -1029,12 +1060,12 @@ onMounted(() => {
           </section>
 
           <section class="glass-pill title-pill">
-            <span>近3个月内玩牌数据统计</span>
+            <span>{{ t('UIClub_Text37') }}3{{ t('UIClub_Data') }}</span>
             <img src="@/assets/icons/icon_data.svg" />
           </section>
 
           <section class="glass-card biggest-card">
-            <div class="biggest-title">最大牌型</div>
+            <div class="biggest-title">{{ t('UICareer_MaxCadType') }}</div>
             <div class="card-row">
               <template v-for="i in 5" :key="i">
                 <PokerCard
@@ -1314,7 +1345,8 @@ onMounted(() => {
 
 .ring-donut {
   border-radius: 50%;
-  box-shadow: 0 0.06rem 0.18rem rgba(0, 0, 0, 0.2),
+  box-shadow:
+    0 0.06rem 0.18rem rgba(0, 0, 0, 0.2),
     /* 左上高光 */ inset 0.2px 0.2px 0px 0px rgba(255, 255, 255, 0.85);
 }
 

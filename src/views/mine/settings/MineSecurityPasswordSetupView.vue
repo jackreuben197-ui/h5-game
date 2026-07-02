@@ -6,6 +6,7 @@ import { postUserModifyQuickInfoApi } from '@/api/user'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import icDeleteKeyboard from '@/assets/icons/ic_delete_keyboard.svg'
 import btnClose from '@/assets/icons/btn_close.png'
+import { t } from '@/i18n'
 
 type SetupPhase = 'first' | 'confirm'
 type OverlayType = 'none' | 'loading' | 'success'
@@ -22,8 +23,12 @@ const firstInput = ref('')
 const overlayType = ref<OverlayType>('none')
 const submitting = ref(false)
 
-const titleText = computed(() => (phase.value === 'first' ? '设置6位数字密码' : '设置密码'))
-const subtitleText = computed(() => (phase.value === 'first' ? '第一次输入' : '再次输入以键认'))
+const titleText = computed(() =>
+  phase.value === 'first' ? t('UIMine_btn_setting') + '6' + t('UIClub_Code5') : t('UIClub_Code6'),
+)
+const subtitleText = computed(() =>
+  phase.value === 'first' ? t('6digit_password_firstInput') : t('UIClub_Again3'),
+)
 const showSubmit = computed(() => phase.value === 'confirm')
 const canSubmit = computed(() => digits.value.length === 6)
 
@@ -72,7 +77,7 @@ async function handleSubmit(): Promise<void> {
   }
 
   if (digits.value !== firstInput.value) {
-    showFailToast('两次输入不一致，请重新设置')
+    showFailToast(t('UIClub_Text69') + '，' + t('UIClub_Text70'))
     phase.value = 'first'
     digits.value = ''
     firstInput.value = ''
@@ -88,13 +93,13 @@ async function handleSubmit(): Promise<void> {
       password: digits.value,
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '设置安全密码失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_CodeFail2'))
     }
     overlayType.value = 'success'
-    showSuccessToast('安全密码设置成功')
+    showSuccessToast(t('UIClub_CodeSuccess'))
   } catch (error) {
     overlayType.value = 'none'
-    const message = error instanceof Error ? error.message : '设置安全密码失败'
+    const message = error instanceof Error ? error.message : t('UIClub_CodeFail2')
     showFailToast(message)
   } finally {
     submitting.value = false
@@ -130,7 +135,7 @@ function closeOverlay(): void {
         :disabled="submitting"
         @click="handleSubmit"
       >
-        完成
+        {{ t('UIMinePwFinish') }}
       </button>
     </section>
 
@@ -154,14 +159,14 @@ function closeOverlay(): void {
       <div class="overlay-card">
         <div v-if="overlayType === 'loading'" class="loader"></div>
         <div v-else class="success-icon">✓</div>
-        <p>{{ overlayType === 'loading' ? '请稍后' : '已开启' }}</p>
+        <p>{{ overlayType === 'loading' ? t('UIClub_Text66') : t('6digit_password_opened') }}</p>
         <button
           v-if="overlayType === 'success'"
           class="overlay-confirm"
           type="button"
           @click="closeOverlay"
         >
-          知道了
+          {{ t('adaptation10024') }}
         </button>
       </div>
     </div>

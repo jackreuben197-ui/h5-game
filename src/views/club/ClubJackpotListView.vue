@@ -10,6 +10,7 @@ import iconDelete from '@/assets/icons/icon_delete.svg'
 import cardBgUrl from '@/assets/icons/ic_jackpot_card_bg.png'
 import iconTag from '@/assets/icons/ic_card_jackpot.svg'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { t } from '@/i18n'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -67,7 +68,7 @@ async function fetchJackpotTemplates(reset = false): Promise<void> {
     })
 
     if (Number(response.code) !== 0) {
-      const message = typeof response.msg === 'string' ? response.msg : '加载 Jackpot 列表失败'
+      const message = typeof response.msg === 'string' ? response.msg : t('UIClub_Load') + " Jackpot " + t('UIClub_Fail5')
       throw new Error(message)
     }
 
@@ -87,7 +88,7 @@ async function fetchJackpotTemplates(reset = false): Promise<void> {
       templates.value = []
       hasMore.value = false
     }
-    const message = error instanceof Error ? error.message : '加载 Jackpot 列表失败'
+    const message = error instanceof Error ? error.message : t('UIClub_Load') + " Jackpot " + t('UIClub_Fail5')
     showFailToast(message)
   } finally {
     if (reset) {
@@ -181,18 +182,18 @@ async function confirmDelete(): Promise<void> {
     })
 
     if (Number(response.code) !== 0) {
-      const message = typeof response.msg === 'string' ? response.msg : '删除失败'
+      const message = typeof response.msg === 'string' ? response.msg : t('UIClub_DeleteFail')
       throw new Error(message)
     }
 
-    showSuccessToast('删除成功')
+    showSuccessToast(t('UIClub_DeleteSuccess'))
     showDeleteDialog.value = false
     deletingItem.value = null
 
     // 重新拉取列表
     void fetchJackpotTemplates(true)
   } catch (error) {
-    const message = error instanceof Error ? error.message : '删除失败'
+    const message = error instanceof Error ? error.message : t('UIClub_DeleteFail')
     showFailToast(message)
   } finally {
     deleting.value = false
@@ -222,8 +223,8 @@ function goPoolReward(): void {
   >
     <HeaderBack :title="'Jackpot'">
       <template #right>
-        <button type="button" class="pool-trigger" aria-label="Pool Reward" @click="goPoolReward">
-          <span>Pool Reward</span>
+        <button type="button" class="pool-trigger" :aria-label="t('UIClub_Jackpot3')" @click="goPoolReward">
+          <span>{{ t('UIClub_Jackpot3') }}</span>
           <img class="trigger-arrow" :src="iconArrowRight" alt="" aria-hidden="true" />
         </button>
       </template>

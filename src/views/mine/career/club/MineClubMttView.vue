@@ -4,6 +4,7 @@ import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { postStatsMttHistoryListApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import { t } from '@/i18n'
 
 const router = useRouter()
 
@@ -30,7 +31,7 @@ interface MttRecord {
 }
 
 const gameTabs = ['NLH', 'PLO', '6+']
-const timeTabs = ['今天', '7天', '30天']
+const timeTabs = [t('UIData_Today'), "7" + t('UIHappyShop_ActivityShopDay'), "30" + t('UIHappyShop_ActivityShopDay')]
 const selectedGame = ref(gameTabs[0])
 const selectedTime = ref(timeTabs[0])
 const loading = ref(false)
@@ -48,13 +49,13 @@ const mttRecords = ref<MttRecord[]>([
     id: 'm1',
     roomId: '1',
     matchId: '',
-    month: '6月',
+    month: "6" + t('UIMine_VIP_month'),
     nickname: 'Tour Nickname',
     playerId: '11440454',
     detailVariant: 'v1',
     rank: '#1',
     reward: '500',
-    rewardType: '积分',
+    rewardType: t('UIMine_RecordItemsNormal_fzCeKaD7'),
     finishTime: '06/04 22:56',
     blind: '1/4 (1)',
   },
@@ -62,13 +63,13 @@ const mttRecords = ref<MttRecord[]>([
     id: 'm2',
     roomId: '2',
     matchId: '',
-    month: '6月',
+    month: "6" + t('UIMine_VIP_month'),
     nickname: 'Tour Nickname',
     playerId: '11440454',
     detailVariant: 'v1',
     rank: '#3',
     reward: '200',
-    rewardType: '积分',
+    rewardType: t('UIMine_RecordItemsNormal_fzCeKaD7'),
     finishTime: '06/03 20:25',
     blind: '1/4 (1)',
   },
@@ -76,13 +77,13 @@ const mttRecords = ref<MttRecord[]>([
     id: 'm3',
     roomId: '3',
     matchId: '',
-    month: '5月',
+    month: "5" + t('UIMine_VIP_month'),
     nickname: 'Tour Nickname',
     playerId: '11440454',
     detailVariant: 'v2',
     rank: '#2',
     reward: '300',
-    rewardType: '积分',
+    rewardType: t('UIMine_RecordItemsNormal_fzCeKaD7'),
     finishTime: '05/28 18:40',
     blind: '2/4 (1)',
   },
@@ -90,13 +91,13 @@ const mttRecords = ref<MttRecord[]>([
     id: 'm4',
     roomId: '4',
     matchId: '',
-    month: '5月',
+    month: "5" + t('UIMine_VIP_month'),
     nickname: 'Tour Nickname',
     playerId: '11440454',
     detailVariant: 'v2',
     rank: '#6',
     reward: '80',
-    rewardType: '积分',
+    rewardType: t('UIMine_RecordItemsNormal_fzCeKaD7'),
     finishTime: '05/20 21:10',
     blind: '1/2 (1)',
   },
@@ -125,14 +126,14 @@ function formatDateText(raw: unknown): string {
 function formatMonthLabel(timeText: string): string {
   const match = timeText.match(/(\d{1,2})\//)
   if (match) {
-    return `${match[1]}月`
+    return (match[1]) + t('UIMine_VIP_month')
   }
-  return '本月'
+  return t('UICareer_PersonMonth')
 }
 
 function resolveTimeType(): number {
-  if (selectedTime.value === '7天') return 2
-  if (selectedTime.value === '30天') return 3
+  if (selectedTime.value === "7" + t('UIHappyShop_ActivityShopDay')) return 2
+  if (selectedTime.value === "30" + t('UIHappyShop_ActivityShopDay')) return 3
   return 1
 }
 
@@ -178,7 +179,7 @@ function mapMttRecord(row: Record<string, unknown>, index: number): MttRecord {
     detailVariant: rank > 0 && rank <= 3 ? 'v1' : 'v2',
     rank: rank > 0 ? `#${rank}` : '--',
     reward: String(toSafeNumber(row.award ?? row.hunter_award).toLocaleString('en-US')),
-    rewardType: '积分',
+    rewardType: t('UIMine_RecordItemsNormal_fzCeKaD7'),
     finishTime: timeText,
     blind: `${toSafeNumber(row.sb ?? row.small_blind)}/${toSafeNumber(
       row.ante ?? 0,
@@ -211,7 +212,7 @@ async function fetchMttHistory(): Promise<void> {
       offset: 0,
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载 MTT 战绩失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_Load') + " MTT " + t('UIClub_Fail11'))
     }
 
     const rows = extractMttRows(response.data)
@@ -219,7 +220,7 @@ async function fetchMttHistory(): Promise<void> {
     refreshSummary(mttRecords.value)
   } catch (error) {
     mttRecords.value = []
-    const message = error instanceof Error ? error.message : '加载 MTT 战绩失败'
+    const message = error instanceof Error ? error.message : t('UIClub_Load') + " MTT " + t('UIClub_Fail11')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -258,7 +259,7 @@ onMounted(() => {
     <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
-      <nav class="game-tabs" aria-label="玩法切换">
+      <nav class="game-tabs" :aria-label="t('UIClub_Text43')">
         <button
           v-for="item in gameTabs"
           :key="item"
@@ -293,8 +294,8 @@ onMounted(() => {
       </section>
 
       <section class="list-wrap">
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!mttRecords.length" class="list-status">暂无 MTT 战绩</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!mttRecords.length" class="list-status">{{ t('UIUCWalletAddress3') }} MTT {{ t('UICareerRecord') }}</p>
         <article
           v-for="item in mttRecords"
           :key="item.id"
@@ -315,8 +316,8 @@ onMounted(() => {
             </div>
             <div class="line"></div>
             <div class="row-bottom">
-              <div class="time">结束: {{ item.finishTime }}</div>
-              <div class="blind">盲注: {{ item.blind }}</div>
+              <div class="time">{{ t('UIClub_PlanRomList_End') }}: {{ item.finishTime }}</div>
+              <div class="blind">{{ t('adaptation20006') }}: {{ item.blind }}</div>
             </div>
           </div>
         </article>

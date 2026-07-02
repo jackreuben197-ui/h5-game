@@ -6,6 +6,7 @@ import icArrowRight from '@/assets/icons/ic_arrow_right.svg'
 import icReset from '@/assets/icons/ic_reset.svg'
 import icSecurity from '@/assets/icons/ic_security.svg'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { t } from '@/i18n'
 
 interface AccountActionItem {
   key: string
@@ -16,7 +17,7 @@ interface AccountActionItem {
 
 const router = useRouter()
 
-const title = computed(() => '账号管理')
+const title = computed(() => t('UISettingPassword001'))
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -30,9 +31,9 @@ if (route.query.security === 'on') {
 }
 
 const rows: AccountActionItem[] = [
-  { key: 'reset-password', label: '重置密码', icon: icReset, arrow: true },
-  { key: 'security-password', label: '6位数密码', icon: icSecurity },
-  { key: 'reset-security-password', label: '修改6位数密码', icon: icReset, arrow: true },
+  { key: 'reset-password', label: t('UIClub_Code7'), icon: icReset, arrow: true },
+  { key: 'security-password', label: '6' + t('UIClub_Code8'), icon: icSecurity },
+  { key: 'reset-security-password', label: t('UICommon_Edit') + '6' + t('UIClub_Code8'), icon: icReset, arrow: true },
 ]
 
 function onRowClick(item: AccountActionItem): void {

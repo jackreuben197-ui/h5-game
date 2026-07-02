@@ -905,7 +905,7 @@ export interface MiscGameRoundListDataByRoomData {
     limit?: number;
     offset?: number;
     total?: number;
-    list?: MiscGameRoundListDataByRoomRecord[];
+    records?: MiscGameRoundListDataByRoomRecord[];
 
   [key: string]: unknown
 }
@@ -1060,5 +1060,48 @@ export interface MiscPopupNewerPopup {
     type?: number;
     url?: string;
 
+  [key: string]: unknown
+}
+
+// /api/misc/h5/display (MiscH5Display)
+export interface MiscH5DisplayRequest {
+  [key: string]: unknown
+}
+
+export interface MiscH5DisplayDownloadApp {
+  id?: number
+  name?: string
+  icon_url?: string
+  title?: string
+  download_url?: string
+  status?: number
+  publish_time?: string
+  [key: string]: unknown
+}
+
+export interface MiscH5DisplayPopupNotice {
+  id?: number
+  title?: string
+  content?: string
+  status?: number
+  weight?: number
+  publish_time?: string
+  [key: string]: unknown
+}
+
+export interface MiscH5DisplayFindUs {
+  id?: number
+  title?: string
+  content?: string
+  link_list?: string[]
+  status?: number
+  publish_time?: string
+  [key: string]: unknown
+}
+
+export interface MiscH5DisplayResponseData {
+  download_app?: MiscH5DisplayDownloadApp | null
+  popup_notices?: MiscH5DisplayPopupNotice[]
+  find_us?: MiscH5DisplayFindUs | null
   [key: string]: unknown
 }

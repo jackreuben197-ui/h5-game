@@ -144,8 +144,6 @@ function toMttListRecordFromWsRecord(record: WsUserMttRecord): MttListRecord {
     series_id: toSafeInt(record.series_id),
     pinned_time: toSafeInt(record.pinned_time),
     status: toSafeInt(record.status),
-    // 对齐当前首页统计逻辑：单场 MTT 记 1 桌。
-    rooms: 1,
     participants: toSafeInt(record.participants),
     start_time: toSafeInt(record.start_time),
     apply_start_time: toSafeInt(record.apply_start_time),
@@ -267,7 +265,7 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
   },
   actions: {
     // 对外统一入口：恢复缓存 + 会话内静默拉取一次。
-    bootstrapMttList(): void {
+    async bootstrapMttList(): Promise<void> {
       if (isOfficialGuestMode()) {
         this.clearMttList()
         return
@@ -281,7 +279,7 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
 
       this.restoreMttListCacheForCurrentToken()
       this.ensureMttNotifyListeners()
-      void this.fetchMttListOncePerSession({ silent: true })
+      await this.fetchMttListOncePerSession({ silent: true })
     },
 
     // 退出登录或账号切换时清空。

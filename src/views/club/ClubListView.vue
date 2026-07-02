@@ -20,10 +20,12 @@ import iconClubCareer from '@/assets/icons/ic_club_q.png'
 import imgClubBannerFigma from '@/assets/images/club_banner_bg.png'
 import imgClubLogo from '@/assets/images/club_default_logo.png'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
+import type { RoomRecord } from '@/api/models/roomcenter'
 import { useGameStore } from '@/stores/game'
+import { useRoomListStore } from '@/stores/roomList'
 import type { ClubInfo } from '@/stores/userInfo'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { formatUC } from '@/utils/roomVisibility'
+import { checkIsShowForClubAndTribe, formatUC } from '@/utils/roomVisibility'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import { readClubListCache, writeClubListCache } from '@/utils/userClubListCache'
 import { t, getLocale } from '@/i18n'
@@ -53,6 +55,7 @@ interface ClubCardItem {
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
+const roomListStore = useRoomListStore()
 
 const searchKeyword = ref('')
 const loadingMyClubs = ref(false)
@@ -73,21 +76,23 @@ const quickActions: QuickActionItem[] = [
 ]
 
 const clubList = computed<ClubCardItem[]>(() => {
+  const records = roomListStore.records
   return userInfoStore.clubList.map((club, index) => {
     const displayId = normalizeClubId(club.random_id ?? club.club_id)
     const clubId = normalizeClubId(club.club_id)
     const key = `${clubId || displayId || index}`
+    const stats = computeClubRoomStats(club, records)
 
     return {
       key,
       source: club,
-      name: toSafeString(club.club_name) || tl('Unnamed Club', '未命名俱乐部'),
+      name: toSafeString(club.club_name) || t('UIClub_UnnamedClub'),
       clubIdText: displayId || '--',
       roleText: getMemberRoleText(club.user_level),
       activeCount: toSafeNumber(club.user_gold),
       chipsCount: toSafeNumber(club.user_credit),
-      tableCount: toSafeNumber(club.tables),
-      memberCount: toSafeNumber(club.club_members),
+      tableCount: stats.tables,
+      memberCount: stats.players,
       cover: toSafeString(club.logo) || imgClubLogo,
     }
   })
@@ -116,7 +121,7 @@ const searchedClubDisplayId = computed(
 )
 
 const searchedClubName = computed(
-  () => toSafeString(searchedClub.value?.club_name) || t('UIClub_InfoName'),
+  () => toSafeString(searchedClub.value?.club_name) || t('UIClub_Creat_2LvGNmS7'),
 )
 
 const searchedClubMembers = computed(() => toSafeNumber(searchedClub.value?.club_members))
@@ -143,13 +148,49 @@ function tl(en: string, zh: string): string {
   return getLocale() === 'en' ? en : zh
 }
 
+function toSafeInt(value: unknown): number {
+  const num = Number(value)
+  if (!Number.isFinite(num)) {
+    return 0
+  }
+  return Math.floor(num)
+}
+
+function getRoomPlayers(room: RoomRecord): number {
+  return Number(room.roomers) || (Array.isArray(room.users) ? room.users.length : 0)
+}
+
+// 与首页 pokerTablesText / pokerPlayersText 一致：按俱乐部/联盟过滤共享牌桌列表，
+// 只统计扑克玩法（game_type <= 4），保证列表与进入俱乐部后看到的数据一致。
+function computeClubRoomStats(
+  club: ClubInfo,
+  records: RoomRecord[],
+): { tables: number; players: number } {
+  const clubId = toSafeInt(club.club_id)
+  const tribeId = toSafeInt((club as Record<string, unknown>).tribe_id)
+  let tables = 0
+  let players = 0
+  records.forEach((room) => {
+    if (!checkIsShowForClubAndTribe(room, clubId, tribeId)) {
+      return
+    }
+    const gameType = Number(room.game_type)
+    if (!Number.isFinite(gameType) || gameType > 4) {
+      return
+    }
+    tables += 1
+    players += getRoomPlayers(room)
+  })
+  return { tables, players }
+}
+
 function getMemberRoleText(value: unknown): string {
   const role = Number(value)
-  if (role === 1) return tl('Owner', '会长')
-  if (role === 2) return tl('Vice President', '副会长')
+  if (role === 1) return t('UIClub_UserLevelOwner')
+  if (role === 2) return t('UIClub_VicePr')
   if (role === 3) return t('UIGuild_FilterButtonManager')
   if (role === 4) return t('UIClub_AgentItem')
-  return t('UIGuild_FilterButtonMember')
+  return t('UIClub_Info_Members')
 }
 
 function goToClubDetail(club?: ClubInfo): void {
@@ -236,7 +277,7 @@ async function loadMyClubList(force = false): Promise<void> {
   try {
     const response = await postOrgClubGetApi()
     if (Number(response.code) !== 0) {
-      throw new Error(response.message || tl('Failed to load clubs', '获取俱乐部失败'))
+      throw new Error(response.message || t('UIClub_FetchClubFail'))
     }
 
     const list = Array.isArray(response.data) ? response.data : []
@@ -247,10 +288,10 @@ async function loadMyClubList(force = false): Promise<void> {
   } catch (error) {
     // 有缓存兜底时静默失败，避免在已有展示之上弹错。
     if (!hasInitialData) {
-      const message = error instanceof Error ? error.message : tl('Failed to load clubs', '获取俱乐部失败')
+      const message = error instanceof Error ? error.message : t('UIClub_FetchClubFail')
       showFailToast(message)
     } else {
-      console.warn('[club-list] 静默刷新失败:', error)
+      console.warn('[club-list] ' + t('UIClub_Fail7') + ':', error)
     }
   } finally {
     loadingMyClubs.value = false
@@ -260,7 +301,7 @@ async function loadMyClubList(force = false): Promise<void> {
 async function onSearchClub(): Promise<void> {
   const keyword = searchKeyword.value.trim()
   if (!keyword) {
-    showFailToast(t('UIClub_InputClubID'))
+    showFailToast(t('tc_xDSyCM') + 'ID')
     return
   }
 
@@ -272,13 +313,13 @@ async function onSearchClub(): Promise<void> {
   try {
     const response = await postOrgClubSearchByIdApi({ club_random_id: Number(keyword) })
     if (Number(response.code) !== 0) {
-      showFailToast(tl('Club not found', '找不到俱乐部'))
+      showFailToast(t('UIClub_NotFoundClub2'))
       return
     }
 
     const targetClub = response.data
     if (!targetClub) {
-      showFailToast(tl('Club not found', '未找到俱乐部'))
+      showFailToast(t('UIClub_NotFoundClub3'))
       return
     }
 
@@ -292,7 +333,7 @@ async function onSearchClub(): Promise<void> {
     showJoinModal.value = true
   } catch (error) {
     const message = error instanceof Error ? error.message : ''
-    showFailToast(message || tl('Club not found', '找不到俱乐部'))
+    showFailToast(message || t('UIClub_NotFoundClub2'))
   } finally {
     searchLoading.value = false
   }
@@ -309,7 +350,7 @@ async function onJoinClub(): Promise<void> {
 
   const clubId = Number(searchedClub.value.club_id)
   if (!Number.isFinite(clubId) || clubId <= 0) {
-    showFailToast(tl('Club info error, cannot join', '俱乐部信息异常，无法加入'))
+    showFailToast(t('UIClub_ClubInfoError') + '，' + t('UIClub_NoJoin'))
     return
   }
 
@@ -317,16 +358,16 @@ async function onJoinClub(): Promise<void> {
   try {
     const response = await postOrgClubJoinApi({ club_id: clubId })
     if (Number(response.code) !== 0) {
-      throw new Error(response.message || tl('Failed to join club', '加入俱乐部失败'))
+      throw new Error(response.message || t('UIClub_JoinClubFail'))
     }
 
-    showSuccessToast(response.message || tl('Join request submitted', '加入申请已提交'))
+    showSuccessToast(response.message || t('UIClub_JoinApplyDoneSubmit'))
     showJoinModal.value = false
     setTimeout(() => {
       void loadMyClubList(true)
     }, 3000)
   } catch (error) {
-    const message = error instanceof Error ? error.message : tl('Failed to join club', '加入俱乐部失败')
+    const message = error instanceof Error ? error.message : t('UIClub_JoinClubFail')
     showFailToast(message)
   } finally {
     joinLoading.value = false
@@ -335,13 +376,15 @@ async function onJoinClub(): Promise<void> {
 
 onMounted(() => {
   void loadMyClubList(true)
+  // 与首页/俱乐部详情共用同一份牌桌列表，进入此页时启动共享数据流。
+  roomListStore.bootstrapRoomList()
 })
 </script>
 
 <template>
   <div class="page-shell club-index">
     <section v-if="!isChannelPackage" class="search-row">
-      <div class="search-shell" :aria-label="tl('Club search', '俱乐部搜索')">
+      <div class="search-shell" :aria-label="t('UIClub_ClubSearch')">
         <label class="search-trigger" for="club-search-input">
           <img class="search-icon" :src="imgSearch" alt="" />
           <input
@@ -353,15 +396,15 @@ onMounted(() => {
             autocomplete="off"
             maxlength="6"
             readonly
-            :placeholder="tl('Search Club ID', '搜索俱乐部ID')"
+            :placeholder="t('UIGuild_SearchBtn') + 'ID'"
             @focus="openSearchKeypad"
             @click="openSearchKeypad"
           />
         </label>
         <button type="button" class="search-btn" :disabled="searchLoading" @click="onSearchClub">
-          <div class="search-btn-blur" aria-hidden="true" />
-          <span class="search-btn-label">{{ searchLoading ? tl('Searching', '搜索中') : tl('Search', '搜索') }}</span>
-          <div class="search-btn-inset" aria-hidden="true" />
+          <span class="search-btn-label">
+            {{ searchLoading ? t('UIClub_Search') : t('search') }}
+          </span>
         </button>
       </div>
     </section>

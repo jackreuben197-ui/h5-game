@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { postMiscReportFeedbackQuestIonApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { t } from '@/i18n'
 
 const router = useRouter()
 
@@ -16,17 +17,17 @@ const backgroundStyle = computed(() => ({
 const title = computed(() => 'Result')
 
 const reason = ref('')
-const selectedPreset = ref('异常操作')
+const selectedPreset = ref(t('UIClub_Error'))
 const submitting = ref(false)
 
-const presetList = ['异常操作', '安全保护触发']
+const presetList = [t('UIClub_Error'), t('UIClub_Text45')]
 
 const reasonCount = computed(() => reason.value.length)
 
 async function submitReport(): Promise<void> {
   const detail = reason.value.trim()
   if (!detail) {
-    showFailToast('请输入举报原因')
+    showFailToast(t('UIChatReport009'))
     return
   }
 
@@ -37,12 +38,12 @@ async function submitReport(): Promise<void> {
       description: detail,
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '举报提交失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_SubmitFail'))
     }
-    showSuccessToast('举报提交成功')
+    showSuccessToast(t('UIClub_SubmitSuccess'))
     void router.back()
   } catch (error) {
-    const message = error instanceof Error ? error.message : '举报提交失败'
+    const message = error instanceof Error ? error.message : t('UIClub_SubmitFail')
     showFailToast(message)
   } finally {
     submitting.value = false
@@ -69,12 +70,12 @@ async function submitReport(): Promise<void> {
       </section>
 
       <section class="glass-card input-card">
-        <div class="input-title">请输入举报原因 {{ reasonCount }}/100</div>
+        <div class="input-title">{{ t('UIChatReport009') }} {{ reasonCount }}/100</div>
         <textarea
           v-model="reason"
           class="reason-input"
           maxlength="100"
-          placeholder="请详细描述问题..."
+          :placeholder="t('UIClub_Text44') + '...'"
         ></textarea>
       </section>
 
@@ -85,7 +86,7 @@ async function submitReport(): Promise<void> {
         :loading="submitting"
         @click="submitReport"
       >
-        提交
+        {{ t('sr_r9ccGtey') }}
       </VanButton>
     </div>
   </div>

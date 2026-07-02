@@ -24,8 +24,9 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
 import { useAppConfigStore } from '@/stores/appConfig'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { t } from '@/i18n'
 
-const title = computed(() => '我的商城')
+const title = computed(() => t('UIHappyShop_ActivityShop'))
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -80,7 +81,7 @@ const selectedPayTypeId = ref<number>(0)
 const creatingOrder = ref(false)
 const checkingStatus = ref(false)
 const orderNo = ref('')
-const statusText = ref('待支付')
+const statusText = ref(t('UIClub_Text84'))
 const payAddress = ref('')
 const imgQr = ref('')
 const paymentPrice = ref(0)
@@ -94,7 +95,9 @@ const orderRemainingSeconds = ref(0)
 const userDiamond = computed(() => Number(userInfoStore.userInfo?.user.diamonds ?? 0))
 const userName = computed(() => {
   const nickname = userInfoStore.userInfo?.user.nickname
-  return typeof nickname === 'string' && nickname.trim() ? nickname.trim() : '玩家'
+  return typeof nickname === 'string' && nickname.trim()
+    ? nickname.trim()
+    : t('UIMine_RecordItemMatch_2TZCjaqM')
 })
 const userIdText = computed(() => {
   const uid = userInfoStore.userInfo?.user.un_id || gameStore.loginUserId || '-'
@@ -168,14 +171,14 @@ const selectedItem = computed<ShopItem | null>(() => {
 const selectedNeedTrader = computed(() => Boolean(selectedItem.value?.wholesaleOnly))
 
 const payNowText = computed(() => {
-  if (!selectedItem.value) return '请选择商品'
+  if (!selectedItem.value) return t('UIClub_Text85')
   if (selectedNeedTrader.value && !isTrader.value) {
     if (hasPendingApply.value) {
-      return '审核中'
+      return t('UIMatchChecking')
     }
-    return '申请批发商'
+    return t('UIClub_Apply5')
   }
-  return `立即支付${formatMoney(selectedPrice.value)}`
+  return t('UIMineMallUSDTShop_PromptlyRechargeTip') + formatMoney(selectedPrice.value)
 })
 
 const selectedPayType = computed<PayTypeOption | null>(() => {
@@ -186,9 +189,11 @@ const selectedPayType = computed<PayTypeOption | null>(() => {
 const exchangeText = computed(() => {
   const rate = selectedPayType.value?.rate ?? 0
   if (rate > 0) {
-    return `汇率：1usdt=${Math.max(1, Math.round(1 / rate))}钻石`
+    return (
+      t('Wallet_Rate') + '：1usdt=' + Math.max(1, Math.round(1 / rate)) + t('UIMine_VIP_diamond')
+    )
   }
-  return '汇率：1usdt=333钻石'
+  return t('Wallet_Rate') + '：1usdt=333' + t('UIMine_VIP_diamond')
 })
 
 const selectedPrice = computed(() => {
@@ -224,7 +229,7 @@ function resolvePayIcon(name: string, image: unknown): string {
   const normalized = name.toLowerCase()
   if (normalized.includes('btc')) return iconBtc
   if (normalized.includes('eth')) return iconEth
-  if (normalized.includes('卡')) return iconCard
+  if (normalized.includes(t('UIClub_Text86'))) return iconCard
   return iconUsdt
 }
 
@@ -272,7 +277,7 @@ function isItemAuditing(item: ShopItem): boolean {
 function discountTag(discount: number): string {
   if (discount <= 0) return ''
   const percent = discount * 100
-  return `可减${trimNumberText(percent)}%`
+  return t('UIMineUSDTSheet_CanSubtractTip') + trimNumberText(percent) + '%'
 }
 
 function channelSuffix(name: string): string {
@@ -284,11 +289,11 @@ function channelSuffix(name: string): string {
 }
 
 function getStatusLabel(status: number): string {
-  if (status === 2) return '支付成功'
-  if (status === 3) return '支付失败'
-  if (status === 4) return '订单取消'
-  if (status === 5) return '订单超时'
-  return '待支付'
+  if (status === 2) return t('adaptation10235')
+  if (status === 3) return t('Pay_fail')
+  if (status === 4) return t('Order_Cancel')
+  if (status === 5) return t('UIMineMallUSDTShopPayDialogOrderTimeOut')
+  return t('UIClub_Text84')
 }
 
 function isOrderFinalStatus(status: number): boolean {
@@ -312,8 +317,8 @@ function tickOrderCountdown(): void {
   orderRemainingSeconds.value = delta
   if (delta <= 0) {
     clearOrderCountdown()
-    if (statusText.value === '待支付') {
-      statusText.value = '订单超时'
+    if (statusText.value === t('UIClub_Text84')) {
+      statusText.value = t('UIMineMallUSDTShopPayDialogOrderTimeOut')
     }
   }
 }
@@ -337,20 +342,20 @@ const orderCountdownText = computed(() => {
 
 const payingBtnSubText = computed(() => {
   if (!orderNo.value) {
-    return '等待订单创建'
+    return t('UIClub_Text87')
   }
-  if (statusText.value === '待支付') {
-    return `剩余支付时间：${orderCountdownText.value}`
+  if (statusText.value === t('UIClub_Text84')) {
+    return t('UIClub_Time2') + '：' + orderCountdownText.value
   }
   return statusText.value
 })
 
 function getUsdtOrderNotifyToast(status: number): string {
-  if (status === 2) return '订单审核通过'
-  if (status === 3) return '订单审核拒绝'
-  if (status === 4) return '订单已取消'
-  if (status === 5) return '订单已超时'
-  return '订单状态已更新'
+  if (status === 2) return t('UIClub_Text88')
+  if (status === 3) return t('UIClub_Text89')
+  if (status === 4) return t('UIClub_DoneCancel')
+  if (status === 5) return t('UIClub_Done3')
+  return t('UIClub_DoneUpdate3')
 }
 
 interface RefreshOptions {
@@ -372,7 +377,7 @@ async function fetchShopList(options: RefreshOptions = {}): Promise<void> {
       // 0,
     )
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载商品失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail13'))
     }
 
     const list = response.data?.list ?? []
@@ -409,7 +414,7 @@ async function fetchShopList(options: RefreshOptions = {}): Promise<void> {
         productId: String(row.product_id ?? ''),
         title: `${row.gold_count}`,
         goldCount,
-        diamondsText: `赠${num}钻石`,
+        diamondsText: t('UIClub_Text90') + num + t('UIMine_VIP_diamond'),
         diamondsValue: num,
         price,
         status,
@@ -434,7 +439,7 @@ async function fetchShopList(options: RefreshOptions = {}): Promise<void> {
     selectedItemId.value = 0
     selectedPayTypeId.value = 0
     if (!options.silent) {
-      const message = error instanceof Error ? error.message : '加载商品失败'
+      const message = error instanceof Error ? error.message : t('UIClub_LoadFail13')
       showFailToast(message)
     }
   } finally {
@@ -452,14 +457,14 @@ async function fetchApplyStatus(options: RefreshOptions = {}): Promise<void> {
   try {
     const response = await postUSDTApplyListApi({ status: 1 })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '查询申请状态失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_ApplyFail'))
     }
     const list = response.data?.list ?? []
     hasPendingApply.value = Array.isArray(list) && list.length > 0
   } catch (error) {
     hasPendingApply.value = false
     if (!options.silent) {
-      const message = error instanceof Error ? error.message : '查询申请状态失败'
+      const message = error instanceof Error ? error.message : t('UIClub_ApplyFail')
       showFailToast(message)
     }
   } finally {
@@ -535,13 +540,15 @@ async function onConfirmApply(): Promise<void> {
   try {
     const response = await postUSDTApplyApi({})
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '申请提交失败')
+      throw new Error(
+        typeof response.msg === 'string' ? response.msg : t('UIClub_ApplySubmitFail2'),
+      )
     }
     showApplyPopup.value = false
     hasPendingApply.value = true
-    showSuccessToast('申请已提交，请等待审核')
+    showSuccessToast(t('UIClub_ApplyDoneSubmit') + '，' + t('UIClub_Text91'))
   } catch (error) {
-    const message = error instanceof Error ? error.message : '申请提交失败'
+    const message = error instanceof Error ? error.message : t('UIClub_ApplySubmitFail2')
     showFailToast(message)
   } finally {
     applySubmitting.value = false
@@ -560,7 +567,7 @@ function onClickItem(item: ShopItem): void {
 
   selectedItemId.value = item.id
   if (isItemAuditing(item)) {
-    showFailToast('审核中，请留意系统消息')
+    showFailToast(t('UIMatchChecking') + '，' + t('UIClub_Text92'))
     return
   }
 
@@ -585,7 +592,7 @@ async function queryOrderStatus(showSuccessHint = true): Promise<void> {
   try {
     const response = await postOrderUserUsdtOrderListApi({ order_no: orderNo.value })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '查询订单失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_Fail12'))
     }
 
     const order = response.data?.list?.[0]?.order
@@ -595,10 +602,10 @@ async function queryOrderStatus(showSuccessHint = true): Promise<void> {
       clearOrderCountdown()
     }
     if (status === 2 && showSuccessHint) {
-      showSuccessToast('支付成功')
+      showSuccessToast(t('adaptation10235'))
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : '查询订单失败'
+    const message = error instanceof Error ? error.message : t('UIClub_Fail12')
     showFailToast(message)
   } finally {
     checkingStatus.value = false
@@ -607,17 +614,17 @@ async function queryOrderStatus(showSuccessHint = true): Promise<void> {
 
 function onCopyAddress(): void {
   if (!payAddress.value) {
-    showFailToast('钱包地址为空')
+    showFailToast(t('UIClub_Text93'))
     return
   }
 
   void navigator.clipboard
     ?.writeText(payAddress.value)
     .then(() => {
-      showSuccessToast('钱包地址已复制')
+      showSuccessToast(t('UIClub_DoneCopy'))
     })
     .catch(() => {
-      showFailToast('复制失败，请手动复制')
+      showFailToast(t('UIReplicationFailed') + '，' + t('UIClub_Copy2'))
     })
 }
 
@@ -631,13 +638,13 @@ function closePaymentPopup(): void {
 async function createOrderAndHandlePayment(item: ShopItem): Promise<void> {
   const payType = selectedPayType.value
   if (!payType || payType.id <= 0) {
-    showFailToast('请选择支付方式')
+    showFailToast(t('UIMine_WalletPlatform_plzpayway'))
     return
   }
 
   const payPrice = roundToPayPrice(getDisplayPrice(item))
   if (item.id <= 0 || item.goldCount <= 0 || payPrice <= 0) {
-    showFailToast('商品参数无效')
+    showFailToast(t('UIClub_No12'))
     return
   }
 
@@ -651,24 +658,24 @@ async function createOrderAndHandlePayment(item: ShopItem): Promise<void> {
     })
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '创建订单失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_Fail13'))
     }
 
     orderNo.value = String(response.data?.order?.order_no ?? '')
     if (!orderNo.value) {
-      throw new Error('订单号缺失')
+      throw new Error(t('UIClub_No13'))
     }
 
     paymentPrice.value = payPrice
     paymentGoldCount.value = item.goldCount
-    statusText.value = '待支付'
+    statusText.value = t('UIClub_Text84')
     startOrderCountdown(15)
 
     // API 型通道仅提交订单，无需展示支付二维码弹窗。
     if (payType.type === 2) {
-      statusText.value = '订单已提交'
+      statusText.value = t('UIMineMallUSDTShop_APIOrderSubmitTip')
       clearOrderCountdown()
-      showSuccessToast('订单已提交')
+      showSuccessToast(t('UIMineMallUSDTShop_APIOrderSubmitTip'))
       return
     }
 
@@ -679,7 +686,7 @@ async function createOrderAndHandlePayment(item: ShopItem): Promise<void> {
     showPaymentPopup.value = true
     await queryOrderStatus(false)
   } catch (error) {
-    const message = error instanceof Error ? error.message : '创建订单失败'
+    const message = error instanceof Error ? error.message : t('UIClub_Fail13')
     showFailToast(message)
   } finally {
     creatingOrder.value = false
@@ -697,17 +704,17 @@ function goPay(item: ShopItem): void {
 function onPayNow(): void {
   const item = selectedItem.value
   if (!item) {
-    showFailToast('请选择商品')
+    showFailToast(t('UIClub_Text85'))
     return
   }
 
   if (item.wholesaleOnly && !isTrader.value) {
     if (applyStatusLoading.value) {
-      showFailToast('申请状态加载中，请稍后')
+      showFailToast(t('UIClub_ApplyLoading') + '，' + t('UIClub_Text66'))
       return
     }
     if (hasPendingApply.value) {
-      showFailToast('审核中，请留意系统消息')
+      showFailToast(t('UIMatchChecking') + '，' + t('UIClub_Text92'))
       return
     }
     openApplyPopup()
@@ -753,15 +760,15 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="balance-row">
-          <span>余额:</span>
+          <span>{{ t('UIClub_CreateRoom31') }}:</span>
           <strong>{{ formatBalance(userDiamond) }}</strong>
           <img :src="diamondCoin" alt="coin" />
         </div>
       </section>
 
       <section class="shop-grid">
-        <p v-if="loading" class="grid-status">加载中...</p>
-        <p v-else-if="!items.length" class="grid-status">暂无商品</p>
+        <p v-if="loading" class="grid-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!items.length" class="grid-status">{{ t('UIClub_No11') }}</p>
         <button
           v-for="item in items"
           :key="item.id"
@@ -770,13 +777,17 @@ onBeforeUnmount(() => {
           :class="{ auditing: isItemAuditing(item), active: isItemActive(item.id) }"
           @click="onClickItem(item)"
         >
-          <span v-if="item.wholesaleOnly" class="wholesale-tag">批发商专属</span>
+          <span v-if="item.wholesaleOnly" class="wholesale-tag">
+            {{ t('UIMineMallUSDTShopDiamondWholesalerPrivteTip') }}
+          </span>
           <img class="chest" :src="item.image" :alt="item.title" />
           <p class="title">{{ item.title }}</p>
           <p v-if="item.diamondsValue > 0" class="desc">{{ item.diamondsText }}</p>
 
           <div class="price-pill">
-            <span>{{ isItemAuditing(item) ? '审核中' : formatMoney(getDisplayPrice(item)) }}</span>
+            <span>
+              {{ isItemAuditing(item) ? t('UIMatchChecking') : formatMoney(getDisplayPrice(item)) }}
+            </span>
             <img :src="imgCoin" alt="coin" />
           </div>
         </button>
@@ -798,11 +809,15 @@ onBeforeUnmount(() => {
             <div class="pay-texts">
               <p class="line-1">
                 <span class="name">{{ channel.name }}</span>
-                <span class="plain">支付</span>
+                <span class="plain">{{ t('UIMineMallUSDTShopDiamondPayTip') }}</span>
                 <span v-if="channelSuffix(channel.name)" class="plain">
                   {{ channelSuffix(channel.name) }}
                 </span>
-                <span v-if="index === 0" class="tag recommend">推荐</span>
+              </p>
+              <p class="line-2">
+                <span v-if="index === 0" class="tag recommend">
+                  {{ t('UIMineMallUSDTShop_RecommendTip') }}
+                </span>
                 <span v-if="discountTag(channel.discount)" class="tag reduce">
                   {{ discountTag(channel.discount) }}
                 </span>
@@ -839,27 +854,33 @@ onBeforeUnmount(() => {
         <button type="button" class="pay-close" @click="closePaymentPopup">×</button>
 
         <div class="amount-box">{{ formatMoney(paymentPrice) }}</div>
-        <p class="amount-label">付款金额</p>
+        <p class="amount-label">{{ t('UIMineMallUSDTShopPayDialogPayGoldTip') }}</p>
 
         <div class="pay-methods">
           <div class="method qr-method">
-            <p>扫描二维码转账</p>
+            <p>{{ t('UIMineMallUSDTShopPayDialogScanTip') }}</p>
             <div class="qr-wrap">
               <img :src="imgQr" alt="qr" />
             </div>
           </div>
 
           <div class="method usdt-method">
-            <p class="t1">复制钱包地址转账</p>
-            <p class="t2">复制钱包地址转币</p>
+            <p class="t1">{{ t('UIClub_Copy') }}</p>
+            <p class="t2">{{ t('UIMineMallUSDTShopPayDialogCopyAddress') }}</p>
             <p class="t3">{{ payAddress }}</p>
-            <button type="button" class="copy-btn" @click="onCopyAddress">复制</button>
+            <button type="button" class="copy-btn" @click="onCopyAddress">
+              {{ t('sd_X7o0UdXC') }}
+            </button>
           </div>
         </div>
 
-        <p class="tips">提示：复制上方钱包地址转币完，或使用钱包扫描二维码完成付款</p>
+        <p class="tips">
+          {{ t('UIGuild_TipsTitle') }}：{{ t('UIClub_CopyCoin') }}，{{ t('UIClub_OrCode') }}
+        </p>
         <p class="sub-tips">
-          购买钻石：{{ paymentGoldCount }}，账户钻石：{{ formatBalance(userDiamond) }}
+          {{ t('UIClub_Text74') }}：{{ paymentGoldCount }}，{{ t('UIClub_Text75') }}：{{
+            formatBalance(userDiamond)
+          }}
         </p>
 
         <button
@@ -869,7 +890,13 @@ onBeforeUnmount(() => {
           @click="queryOrderStatus()"
         >
           <span>
-            {{ creatingOrder ? '创建订单中...' : checkingStatus ? '查询中...' : statusText }}
+            {{
+              creatingOrder
+                ? t('UIClub_Text76') + '...'
+                : checkingStatus
+                  ? t('UIClub_Text77') + '...'
+                  : statusText
+            }}
           </span>
           <small>{{ payingBtnSubText }}</small>
         </button>
@@ -886,16 +913,16 @@ onBeforeUnmount(() => {
     >
       <section class="trader-apply-card">
         <p class="apply-rules">
-          1、钻石批发商申请费为
-          <span style="color: rgba(85, 243, 41, 1)">{{ applyCostText }}</span>
-          钻石，审核被拒后退还；<br />
-          2、申请通过后，需在
-          <span style="color: rgba(85, 243, 41, 1)">{{ traderExpireDayText }}</span>
-          天内购买批发商专属钻石，否则资格将失效；<br />
-          3、批发商资格失效或者审批被拒需重新付费
-          <span style="color: rgba(85, 243, 41, 1)">{{ applyCostText }}</span>
-          钻石申请；<br />
-          4、申请后，我们将通过系统消息联系您，请留意消息
+          1、{{ t('UIClub_Apply') }}
+          <span style="color: #05e7ae">{{ applyCostText }}</span>
+          {{ t('UIMine_VIP_diamond') }}，{{ t('UIClub_Text78') }}；<br />
+          2、{{ t('UIClub_Apply2') }}，{{ t('UIClub_Text79') }}
+          <span style="color: #05e7ae">{{ traderExpireDayText }}</span>
+          {{ t('UIClub_Text80') }}，{{ t('UIClub_Text81') }}；<br />
+          3、{{ t('UIClub_Or') }}
+          <span style="color: #05e7ae">{{ applyCostText }}</span>
+          {{ t('UIClub_Apply3') }}；<br />
+          4、{{ t('UIClub_Apply4') }}，{{ t('UIClub_Text82') }}，{{ t('UIClub_Text83') }}
         </p>
 
         <button
@@ -904,7 +931,11 @@ onBeforeUnmount(() => {
           :disabled="applySubmitting"
           @click="onConfirmApply"
         >
-          {{ applySubmitting ? '提交中...' : `支付${applyCostText}钻石` }}
+          {{
+            applySubmitting
+              ? t('UIClub_Submitting') + '...'
+              : `${t('UIMineMallUSDTShopDiamondPayTip')}${applyCostText}${t('UIMine_VIP_diamond')}`
+          }}
         </button>
       </section>
     </van-popup>

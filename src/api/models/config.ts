@@ -20,31 +20,9 @@ export interface DiamondConfigRequest {
 
 // /config/global/config 响应 data。
 export interface GlobalConfigData {
-  // 运营模式 1 直营模式 2 公会联盟模式。
-  operating_model?: number
-  // 直营模式下充豆开关 1 开 2 关。
-  recharge_gold?: number
-  // 直营模式下支桌号充值方式。
-  user_special_recharge?: number
-  // 直营模式下普通用户充值方式。
-  user_ordinary_recharge?: number
-  // 普通房模式开关。
-  normal_room_model?: number
-  // 苹果支付开关 1 开 2 关。
-  apple_pay_switch?: number
-  // 修改名字花费。
-  user_modify_name_cost?: number
-  // MTT 功能开关 1 开 2 关。
-  mtt_switch?: number
-  // 返水开关屏蔽 1 开 2 关。
-  normal_return_profit_switch?: number
-  // Android MTT 开关。
-  android_mtt_switch?: number
-  // Android 支付开关。
-  android_pay_switch?: number
-  // iOS MTT 开关。
-  apple_mtt_switch?: number
   support_email?: string
+  // 官方联系方式 JSON 字符串，结构如 {"telegram":"https://t.me/...","facebook":"...","instagram":"...","youtube":"...","twitter":"..."}
+  official_contact_address?: string
   scoreboard_club_price?: string
   scoreboard_friend_price?: string
   user_modify_name_price?: string

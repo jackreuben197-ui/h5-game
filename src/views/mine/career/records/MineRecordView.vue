@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
 import { useRoute, useRouter } from 'vue-router'
 import { postRoomCenterHistoryListApi, postStatsUserStatsApi } from '@/api/stats'
@@ -9,9 +9,11 @@ import { formatUC } from '@/utils/roomVisibility'
 import { formatDateTime, toTimestampMs } from '@/utils/time'
 import { localStore } from '@/utils/localStore'
 import { userCache } from '@/utils/userCache'
+import { createKeyedRefresh } from '@/utils/keyedRefresh'
 import { USER_STORE_CAREER } from '@/utils/indexedDB'
 import { useGameStore } from '@/stores/game'
 import dayjs from 'dayjs'
+import { t } from '@/i18n'
 
 const router = useRouter()
 const route = useRoute()
@@ -40,7 +42,7 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const title = computed(() => '战绩')
+const title = computed(() => t('UICareerRecord'))
 
 interface SummaryMetric {
   label: string
@@ -74,9 +76,9 @@ const gameTabs: TabItem[] = [
   { label: '6+', key: '6+' },
 ]
 const timeTabs: TabItem[] = [
-  { label: '今天', key: 'today' },
-  { label: '7天', key: 'week' },
-  { label: '30天', key: 'month' },
+  { label: t('UIData_Today'), key: 'today' },
+  { label: "7" + t('UIHappyShop_ActivityShopDay'), key: 'week' },
+  { label: "30" + t('UIHappyShop_ActivityShopDay'), key: 'month' },
 ]
 const selectedGame = ref(gameTabs[0].key)
 const selectedTime = ref(timeTabs[0].key)
@@ -84,27 +86,27 @@ const loading = ref(false)
 
 // 统计数据（从 postStatsUserStatsApi 获取，默认值 0）
 const leftMetrics = ref<SummaryMetric[]>([
-  { label: '总局数', value: '0' },
-  { label: '手数', value: '0' },
+  { label: t('UITexasInfo_games'), value: '0' },
+  { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: '0' },
 ])
 
 const rightMetrics = ref<SummaryMetric[]>([
-  { label: '入池率', value: '0%' },
-  { label: '胜率', value: '0%' },
+  { label: t('UIClub_Mlistinfo_rRyW4JkW'), value: '0%' },
+  { label: t('UITexasInfo_winrate'), value: '0%' },
 ])
 
 const detailRowsOne = ref<SummaryMetric[]>([
-  { label: '局数', value: '0' },
-  { label: '总盈亏', value: '0' },
-  { label: '场均战绩', value: '0' },
-  { label: '摊牌胜率', value: '0%' },
+  { label: t('UIData_YGvXd5iXr_003'), value: '0' },
+  { label: t('UIClub_Text46'), value: '0' },
+  { label: t('UIData_kpHsdqDe5'), value: '0' },
+  { label: t('UIClub_Text39'), value: '0%' },
 ])
 
 const detailRowsTwo = ref<SummaryMetric[]>([
-  { label: '翻牌前加注率', value: '0%' },
-  { label: '持续下注率', value: '0%' },
-  { label: '全下胜率', value: '0%' },
-  { label: '激进程度', value: '0' },
+  { label: t('UIClub_Text47'), value: '0%' },
+  { label: t('UIClub_Text48'), value: '0%' },
+  { label: t('adaptation10318'), value: '0%' },
+  { label: t('UIClub_Text49'), value: '0' },
 ])
 
 const todayProfit = ref('0')
@@ -115,13 +117,13 @@ const records = ref<RecordCard[]>([])
 function profitTitle(): string {
   switch (selectedTime.value) {
     case 'today':
-      return '今天收益'
+      return t('UIClub_Income3')
     case 'week':
-      return '7天收益'
+      return "7" + t('UIClub_Income')
     case 'month':
-      return '30天收益'
+      return "30" + t('UIClub_Income')
     default:
-      return '今天收益'
+      return t('UIClub_Income3')
   }
 }
 
@@ -205,7 +207,7 @@ function mapRecord(row: Record<string, unknown>, index: number): RecordCard {
   const durationMinutes = Math.max(0, Math.round(toSafeNumber(row.play_duration) / 60))
   const endTs = toTimestampMs(row.end_time)
   const endDay = endTs > 0 ? dayjs(endTs).format('DD') : '--'
-  const endMonth = endTs > 0 ? dayjs(endTs).format('M月') : '--'
+  const endMonth = endTs > 0 ? dayjs(endTs).format("M" + t('UIMine_VIP_month')) : '--'
   const dateKey = endTs > 0 ? dayjs(endTs).format('YYYY-MM-DD') : '--'
   return {
     id: String(row.RoomID ?? row.MatchID ?? index + 1),
@@ -246,27 +248,27 @@ function extractStatsFromResponse(data: unknown): void {
   const af = toSafeNumber(roomData.af)
 
   leftMetrics.value = [
-    { label: '总局数', value: totalGameCnt.toLocaleString() },
-    { label: '手数', value: totalHand.toLocaleString() },
+    { label: t('UITexasInfo_games'), value: totalGameCnt.toLocaleString() },
+    { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: totalHand.toLocaleString() },
   ]
 
   rightMetrics.value = [
-    { label: '入池率', value: `${vpip}%` },
-    { label: '胜率', value: `${wins}%` },
+    { label: t('UIClub_Mlistinfo_rRyW4JkW'), value: `${vpip}%` },
+    { label: t('UITexasInfo_winrate'), value: `${wins}%` },
   ]
 
   detailRowsOne.value = [
-    { label: '局数', value: totalGameCnt.toLocaleString() },
-    { label: '总盈亏', value: formatUC(totalEarn) },
-    { label: '场均战绩', value: avgEarn },
-    { label: '摊牌胜率', value: `${wtsd}%` },
+    { label: t('UIData_YGvXd5iXr_003'), value: totalGameCnt.toLocaleString() },
+    { label: t('UIClub_Text46'), value: formatUC(totalEarn) },
+    { label: t('UIData_kpHsdqDe5'), value: avgEarn },
+    { label: t('UIClub_Text39'), value: `${wtsd}%` },
   ]
 
   detailRowsTwo.value = [
-    { label: '翻牌前加注率', value: `${prf}%` },
-    { label: '持续下注率', value: `${cbet}%` },
-    { label: '全下胜率', value: `${allinWins}%` },
-    { label: '激进程度', value: af.toLocaleString() },
+    { label: t('UIClub_Text47'), value: `${prf}%` },
+    { label: t('UIClub_Text48'), value: `${cbet}%` },
+    { label: t('adaptation10318'), value: `${allinWins}%` },
+    { label: t('UIClub_Text49'), value: af.toLocaleString() },
   ]
 
   todayProfit.value = formatUC(totalEarn)
@@ -291,6 +293,10 @@ function recordCacheKey(): string {
   const sourceId = isClub.value ? getCareerSelectedClubId() : -1
   return `${sourceId}_record_${selectedTime.value}_${selectedGame.value}`
 }
+
+// 命中缓存后立即触发后台刷新；30s TTL 内同 key 跳过；同 key 已在飞行则合并。
+// fetchXxx 内部用 begin()/isCurrent() 兜底，防止响应回来时已切走仍写 state。
+const refresher = createKeyedRefresh(recordCacheKey, { freshTtl: 30_000 })
 
 function recordCache() {
   return userCache(gameStore.loginUserId)
@@ -322,6 +328,7 @@ function applyRecordCache(payload: RecordSummaryCache): void {
 }
 
 async function fetchStatsSummary(): Promise<void> {
+  const guard = refresher.begin()
   try {
     // room_type：club 走生涯(0)，friends 走朋友桌(1)；club 额外带 club_id 收窄范围。
     const response = await postStatsUserStatsApi({
@@ -332,18 +339,21 @@ async function fetchStatsSummary(): Promise<void> {
       room_type: isClub.value ? 2 : 1,
       ...(isClub.value ? { club_id: getCareerSelectedClubId() } : {}),
     })
+    if (!guard.isCurrent()) return
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载统计数据失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadDataFail'))
     }
     extractStatsFromResponse(response.data)
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加载统计数据失败'
+    if (!guard.isCurrent()) return
+    const message = error instanceof Error ? error.message : t('UIClub_LoadDataFail')
     showFailToast(message)
   }
 }
 
 async function fetchRecords(silent = false): Promise<void> {
   if (!silent) loading.value = true
+  const guard = refresher.begin()
   try {
     // club 只传 club_id（不传 room_type，对齐 Unity）；friends 传 room_type=1。
     const response = await postRoomCenterHistoryListApi({
@@ -354,16 +364,18 @@ async function fetchRecords(silent = false): Promise<void> {
       time_type: resolveTimeType(),
       ...(isClub.value ? { club_id: getCareerSelectedClubId(), room_type: 2 } : { room_type: 1 }),
     })
+    if (!guard.isCurrent()) return
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载战绩失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail9'))
     }
 
     const rows = extractRecords(response.data?.records)
     records.value = applyDateVisibility(rows.map((row, index) => mapRecord(row, index)))
   } catch (error) {
+    if (!guard.isCurrent()) return
     if (!silent) records.value = []
     if (!silent) {
-      const message = error instanceof Error ? error.message : '加载战绩失败'
+      const message = error instanceof Error ? error.message : t('UIClub_LoadFail9')
       showFailToast(message)
     }
   } finally {
@@ -371,27 +383,27 @@ async function fetchRecords(silent = false): Promise<void> {
   }
 }
 
-// 缓存优先 + 静默刷新：命中缓存直接渲染、后台再请求覆盖缓存；未命中则正常 loading。
+// 缓存优先 + 静默刷新：命中缓存直接渲染，立即触发后台刷新；30s 内同 key 跳过，
+// 同 key 已在飞则合并。未命中缓存正常 loading。fetchXxx 内部用 race guard 兜底。
 async function refreshAll(): Promise<void> {
+  const guard = refresher.begin()
   const key = recordCacheKey()
   const cached = await recordCache().get<RecordSummaryCache>(USER_STORE_CAREER, key)
-  // 请求期间 tab 被切换：丢弃此次缓存。
-  if (key !== recordCacheKey()) return
+  if (!guard.isCurrent()) return
 
   if (cached) {
     loading.value = false
     applyRecordCache(cached)
-    // 静默刷新
-    void (async () => {
+    void refresher.refresh(async () => {
       await Promise.all([fetchStatsSummary(), fetchRecords(true)])
-      if (key !== recordCacheKey()) return
+      if (recordCacheKey() !== key) return
       writeRecordCache(key)
-    })()
+    })
     return
   }
 
   await Promise.all([fetchStatsSummary(), fetchRecords()])
-  if (key !== recordCacheKey()) return
+  if (!guard.isCurrent()) return
   writeRecordCache(key)
 }
 
@@ -420,6 +432,10 @@ function selectTime(key: string): void {
 
 onMounted(() => {
   void refreshAll()
+})
+
+onBeforeUnmount(() => {
+  refresher.clear()
 })
 </script>
 
@@ -496,8 +512,8 @@ onMounted(() => {
       </section>
 
       <section class="timeline">
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!records.length" class="list-status">暂无战绩记录</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!records.length" class="list-status">{{ t('UIClub_NoRecord3') }}</p>
         <article
           v-for="card in records"
           :key="card.id"
@@ -528,19 +544,19 @@ onMounted(() => {
             <div class="card-body">
               <div class="meta">
                 <div>
-                  <span>盲注级别:</span>
+                  <span>{{ t('UIJackPotInfo_blindLevel') }}:</span>
                   <span>{{ card.blinds }}</span>
                 </div>
                 <div>
-                  <span>手数:</span>
+                  <span>{{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}:</span>
                   <span>{{ card.hands }}</span>
                 </div>
                 <div>
-                  <span>时长:</span>
+                  <span>{{ t('UIClub_Text36') }}:</span>
                   <span>{{ card.duration }}</span>
                 </div>
                 <div>
-                  <span>结束时间:</span>
+                  <span>{{ t('RecordDetail102') }}:</span>
                   <span>{{ card.endAt }}</span>
                 </div>
               </div>

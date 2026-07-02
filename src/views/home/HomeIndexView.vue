@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSPro
 import { useRouter } from 'vue-router'
 import { getUserClubApi } from '@/api/user'
 import { getCowboyRoomListApi } from '@/api/gc'
+import { postMiscBannerLobbyApi } from '@/api/misc'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import StorageKey from '@/constants/storageKey'
 import { joinCasinoGame, getDeviceType } from '@/api/casino'
@@ -10,10 +11,13 @@ import homeHeaderFallback from '@/assets/images/home_header_2.png'
 import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
-import { t, getLocale } from '@/i18n'
+import { useAppConfigStore } from '@/stores/appConfig'
+import { t, getLocale, toServerLang } from '@/i18n'
 import { localStore } from '@/utils/localStore'
 import { useCachedImage } from '@/utils/imageCache'
+import { readLobbyBannerCache, writeLobbyBannerCache } from '@/utils/lobbyBannerCache'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
+import { filterVisibleMttRecords } from '@/utils/mttVisibility'
 import { showGameToast } from '@/components/Toast'
 import { useCasinoStore } from '@/stores/casino'
 import { useMinigameStore } from '@/stores/minigame'
@@ -42,6 +46,7 @@ const roomListStore = useRoomListStore()
 const mttListStore = useMttListStore()
 const casinoStore = useCasinoStore()
 const minigameStore = useMinigameStore()
+const appConfigStore = useAppConfigStore()
 
 const loading = ref(false)
 const balanceVisible = ref(true)
@@ -250,9 +255,8 @@ const currentClub = computed<ClubInfo | null>(() => {
   return userInfoStore.clubList[0] || null
 })
 
-const clubBannerUrl = useCachedImage(
-  () => toSafeString(currentClub.value?.banner) || homeHeaderFallback,
-)
+const lobbyBannerUrl = ref('')
+const clubBannerUrl = useCachedImage(() => lobbyBannerUrl.value || homeHeaderFallback)
 const noticeText = computed(() => {
   return toSafeString(currentClub.value?.prologue)
 })
@@ -277,6 +281,14 @@ const miniGamePlayersText = 632
 const mahjongPlayersText = 788
 const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
 const mttPlayersText = computed(() => `${homeRoomStats.value.mtt.players}`)
+// 扑克专区为空但赛事专区有数据时，用 MTT 列表替换游戏中心/热门游戏两块。
+const shouldReplaceWithMttRaw = computed(
+  () => homeRoomStats.value.poker.tables === 0 && homeRoomStats.value.mtt.tables > 0,
+)
+// 首次进入时先按缓存渲染，等 room/mtt 两个 bootstrap 都完成再确定最终 UI，
+// 避免「默认 → MTT → 默认」的中间态闪烁；初始化完成后跟随实时数据变化。
+const initialized = ref(false)
+const shouldReplaceWithMtt = ref(shouldReplaceWithMttRaw.value)
 
 function toSafeString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
@@ -334,8 +346,21 @@ async function refreshBalance(): Promise<void> {
 function goToRecharge(): void {
   void router.push('/wallet')
 }
-function handleService(): void {
-  showGameToast('功能开发中')
+function handleOpenEmail(): void {
+  const email = toSafeString(appConfigStore.globalConfig?.support_email)
+  window.open(`mailto:${email}`, '_blank')
+}
+
+function handleOpenTelegram(): void {
+  const raw = toSafeString(appConfigStore.globalConfig?.official_contact_address)
+  let telegramUrl = ''
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    telegramUrl = toSafeString(parsed?.telegram)
+  } catch (error) {
+    console.warn('[home] parse official_contact_address failed:', error)
+  }
+  window.open(telegramUrl, '_blank')
 }
 
 function handleOpenCustomerService(): void {
@@ -355,18 +380,61 @@ function handleOpenCustomerService(): void {
 function openMiniGamePanel(): void {
   showGameToast('功能开发中')
   // openBridgePanel({
-  //   // panelType: 'mttRecord',
-  //   panelType: 'mttSettlement',
-  //   closeOnClickOverlay: true,
-  //   // showH5Bg: true,
+  //   panelType: 'notification',
+  //   title: '', // GameDialog 标题，可留空
   //   props: {
-  //     matchId: 92180450,
-  //     matchName: 'MTT202603121773282270383563',
-  //     isRebuy: false,
-  //     startTime: '',
-  //     currentBlindLevel: 0,
-  //     maxRebuyBlindLevel: 10,
-  //     remainRebuyTimes: 2,
+  //     page1: {
+  //       id: 1001,
+  //       type: 1,
+  //       name: 'XXXX123.com',
+  //       icon: 'https://static.awanptest.com/pint-intl-test/image-normal/20250904131213-AUVNG.png',
+  //       title: '立即下載XPoker立即下載XPoker立即下載XPoker',
+  //       url: 'https://download.example.com/xpoker.apk',
+  //       status: 1,
+  //       create_time: Math.floor(Date.now() / 1000) - 3600,
+  //     },
+  //     page2: [
+  //       {
+  //         id: 2001,
+  //         type: 2,
+  //         title: '系統維護公告',
+  //         content:
+  //           '<p style="margin-top:200px">今晚 22:00-24:00 系統升級，請提前下牌。</p><p style="margin-top:200px">今晚 22:00-24:00 系統升級，請提前下牌。</p>',
+  //         weight: 100,
+  //         status: 1,
+  //         create_time: Math.floor(Date.now() / 1000) - 1800,
+  //       },
+  //       {
+  //         id: 2002,
+  //         type: 2,
+  //         title: '活動上線',
+  //         content:
+  //           '<p>新春活動火熱進行中，登錄即送鑽石！</p><p><span style="color:#05E7AE">活动内容一：</span>参与指定牌局即可获得返水奖励，返水比例最高提升至 0.8%，上不封顶。</p>',
+  //         weight: 80,
+  //         status: 1,
+  //         create_time: Math.floor(Date.now() / 1000) - 86400,
+  //       },
+  //     ],
+  //     page3: {
+  //       id: 3001,
+  //       type: 3,
+  //       title: 'USDT 充值地址',
+  //       content: 'TRC20 網絡，請勿轉錯TRC20 網絡，請勿轉錯TRC20 網絡，請勿轉錯',
+  //       urls: [
+  //         'TXxxxxxxxxxxx',
+  //         'TYyyyyyyyyyyyy',
+  //         'TYyyyyyyyyyyyy',
+  //         'TYyyyyyyyyyyyy',
+  //         'TYyyyyyyyyyyyy',
+  //         '1',
+  //         '1',
+  //         '1',
+  //         '1',
+  //         'www.www.www',
+  //       ],
+  //       status: 1,
+  //       create_time: Math.floor(Date.now() / 1000) - 5400,
+  //     },
   //   },
   // })
 }
@@ -453,17 +521,50 @@ async function fetchHomeMiniGameStats(): Promise<void> {
   persistHomeRoomStatsCache(homeRoomStats.value)
 }
 
-// 首页 MTT 统计：直接复用共享 MTT 列表 store，避免首页和列表页分叉取数。
-function refreshHomeMttStatsFromStore(): void {
-  const nextMtt = { tables: 0, players: 0 }
-  mttListStore.records.forEach((item) => {
-    nextMtt.tables += toSafeNumber(item.rooms)
-    nextMtt.players += toSafeNumber(item.participants)
+// 首页顶部 banner：先读 public_cache 即刻渲染，再静默请求最新数据并回写缓存。
+async function fetchLobbyBanner(): Promise<void> {
+  const lang = toServerLang(getLocale())
+
+  const cached = await readLobbyBannerCache(lang)
+  const cachedUrl = toSafeString(cached?.lobby?.image_url)
+  if (cachedUrl) {
+    lobbyBannerUrl.value = cachedUrl
+  }
+
+  const response = await postMiscBannerLobbyApi({
+    lang,
+    type: 1,
+    offset: 0,
+    limit: 10,
   })
+  if (Number(response.code) !== 0 || !response.data) {
+    return
+  }
+  const url = toSafeString(response.data?.lobby?.image_url)
+  if (url) {
+    lobbyBannerUrl.value = url
+  }
+  void writeLobbyBannerCache(lang, response.data)
+}
+
+// 首页 MTT 统计：和 MttContent 走同一份过滤口径（排麻将 + club/tribe 可见性），
+// 保证「首页显示 N 桌 M 人」和「进入 MTT 列表后看到的赛事数 / 报名总人数」完全一致。
+// tables = 可见赛事数；players = 可见赛事 participants 之和。
+function refreshHomeMttStatsFromStore(): void {
+  const visibleRecords = filterVisibleMttRecords(
+    mttListStore.records,
+    mttListStore.mttIdMetaMap,
+    selectedClubId.value,
+    selectedTribeId.value,
+  )
+  const players = visibleRecords.reduce((sum, item) => sum + toSafeNumber(item.participants), 0)
 
   homeRoomStats.value = {
     ...homeRoomStats.value,
-    mtt: nextMtt,
+    mtt: {
+      tables: visibleRecords.length,
+      players,
+    },
   }
   persistHomeRoomStatsCache(homeRoomStats.value)
 }
@@ -495,6 +596,13 @@ async function updateNoticeMarquee(): Promise<void> {
   shouldScrollNotice.value = true
 }
 
+watch(shouldReplaceWithMttRaw, (val) => {
+  // 初始化阶段忽略中间态；两个 bootstrap 完成后再让实时数据自由驱动展示。
+  if (initialized.value) {
+    shouldReplaceWithMtt.value = val
+  }
+})
+
 watch(noticeText, () => {
   void updateNoticeMarquee()
 })
@@ -510,7 +618,7 @@ watch(
 )
 
 watch(
-  () => mttListStore.records,
+  [() => mttListStore.records, () => mttListStore.mttIdList, selectedClubId, selectedTribeId],
   () => {
     refreshHomeMttStatsFromStore()
   },
@@ -522,15 +630,24 @@ watch(
 onMounted(() => {
   void ensureClubDataReady()
   // 首页和列表页共用同一个 room store，进入首页时启动共享数据流。
-  roomListStore.bootstrapRoomList()
+  const roomListReady = roomListStore.bootstrapRoomList()
   // 首页和 MTT 列表页共用同一个 mtt store，避免重复请求。
-  mttListStore.bootstrapMttList()
+  const mttListReady = mttListStore.bootstrapMttList()
   refreshHomePokerMahjongStatsFromStore()
   refreshHomeMttStatsFromStore()
   void fetchHomeMiniGameStats().catch((error) => {
     console.warn('[home] fetch mini game stats failed:', error)
   })
+  void fetchLobbyBanner().catch((error) => {
+    console.warn('[home] fetch lobby banner failed:', error)
+  })
   void updateNoticeMarquee()
+
+  // 等 room + mtt 都返回后再敲定「默认 vs MTT」布局，避免初始化阶段来回闪。
+  void Promise.allSettled([roomListReady, mttListReady]).then(() => {
+    shouldReplaceWithMtt.value = shouldReplaceWithMttRaw.value
+    initialized.value = true
+  })
 
   if (typeof ResizeObserver !== 'undefined') {
     noticeResizeObserver = new ResizeObserver(() => {
@@ -636,11 +753,11 @@ onBeforeUnmount(() => {
 
       <!-- 右侧：联系方式 -->
       <div class="club-right">
-        <div class="contact-item" @click="handleService">
+        <div class="contact-item" @click="handleOpenTelegram">
           <img class="contact-icon" src="@/assets/icons/icon_service_1.svg" alt="Telegram" />
           <span class="contact-label"> @game </span>
         </div>
-        <div class="contact-item" @click="handleService">
+        <div class="contact-item" @click="handleOpenEmail">
           <img class="contact-icon" src="@/assets/icons/icon_service_2.svg" alt="邮箱" />
           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>
@@ -655,6 +772,11 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
+    <!-- 扑克专区为空但赛事专区有数据时，用 MTT 列表替换 4/5 两个模块。 -->
+    <div class="home-swap-container">
+      <Transition name="home-swap">
+        <MttContent v-if="shouldReplaceWithMtt" key="mtt" class="home-mtt-content home-swap-panel" />
+        <div v-else key="default" class="home-default-sections home-swap-panel">
     <!-- 4. 游戏模块 -->
     <div class="section-header">
       <span class="section-title">{{ localized('Game Center', '游戏中心') }}</span>
@@ -759,6 +881,9 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </div>
+        </div>
+      </Transition>
+    </div>
 
     <GameClubSelector
       v-model:show="showGameClubSelector"
@@ -803,7 +928,7 @@ onBeforeUnmount(() => {
 .home-header-img {
   width: 100%;
   height: 3.68rem;
-  object-fit: cover;
+  // object-fit: cover;
   display: block;
 }
 
@@ -996,6 +1121,61 @@ onBeforeUnmount(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.mtt-content {
+  :deep(.mtt-group) {
+    .mtt-group__title {
+      color: #000;
+    }
+    .mtt-group__toggle {
+      color: rgba($color: #000000, $alpha: 0.77);
+    }
+  }
+}
+
+// 保持和 .home-page 的直接子级同样的纵向堆叠 + 间距。
+.home-default-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 0.24rem;
+}
+
+// 默认模块 <=> MTT 列表切换的横向推入（新面板从右滑入，旧面板向左滑出）。
+.home-swap-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.home-swap-panel {
+  width: 100%;
+}
+
+.home-swap-enter-active,
+.home-swap-leave-active {
+  transition: transform 0.32s ease;
+  will-change: transform;
+}
+
+// 切换期间旧面板脱离流，避免撑高容器；新面板在流内决定容器高度。
+.home-swap-leave-active {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.home-swap-enter-from {
+  transform: translateX(100%);
+}
+.home-swap-enter-to {
+  transform: translateX(0);
+}
+.home-swap-leave-from {
+  transform: translateX(0);
+}
+.home-swap-leave-to {
+  transform: translateX(-100%);
 }
 
 .section-header {

@@ -1,0 +1,12 @@
+{
+  "GlobalFloat_InTransaction": "交易中",
+  "UILogin_Forget": "忘记密码",
+  "UIloginPhone_Registertext": "账号注册",
+  "UIloginPhone_logintext": "账号登录",
+  "UILogin_Account": "请输入账号名",
+  "UILogin_AccountRegisterTip": "请您妥善保管好帐号和密码，一旦遗失将无法找回",
+  "Wallet_ActualArrival": "实际到账",
+  "Wallet_ConfirmWithdraw": "确认提款",
+  "Wallet_ServiceFee": "手续费",
+  "Wallet_WithdrawAmount": "提款金额"
+}

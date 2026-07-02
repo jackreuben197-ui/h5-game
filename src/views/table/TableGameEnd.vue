@@ -191,7 +191,7 @@ onMounted(() => {
 
 <template>
   <div class="main-bg">
-    <HeaderBack title="牌局统计" @back="handleBack">
+    <HeaderBack title="牌局统计" :extra-padding="true" @back="handleBack">
       <template #right>
         <TopActionButton :name="t('OpCodeString_ROOMINSURFEE')" large />
       </template>

@@ -36,7 +36,7 @@ const backgroundStyle = computed(() => ({
 }))
 
 type TabKey = 'account' | 'record'
-type MemberRole = '会长' | '管理员' | '代理人' | '成员'
+type MemberRole = string
 type MemberIdentity = 'founder' | 'admin' | 'agent' | 'player'
 type FundAssetTab = 'coin' | 'quota' | 'diamond'
 type FundActionTab = 'grant' | 'recycle'
@@ -155,13 +155,17 @@ const currentFundBalanceText = computed(() => {
 
 const currentInputText = computed(() => {
   if (fundAssetTab.value === 'quota' && quotaEditField.value) {
-    return quotaInput.value || '请输入整数'
+    return quotaInput.value || t('UI_PleaseInputInteger')
   }
 
-  return fundAmountInput.value || '请输入发放数量'
+  return fundAmountInput.value || t('UIGuildMemberOperationGiveNumber')
 })
 
-const fundSubmitLabel = computed(() => (fundActionTab.value === 'grant' ? '发放' : '回收'))
+const fundSubmitLabel = computed(() =>
+  fundActionTab.value === 'grant'
+    ? t('UIClub_FundDetail_5iSXE2Uj')
+    : t('UIClub_FundDetail_recycle'),
+)
 const isFounderOfCurrentClub = computed(
   () => toSafeNumber(userInfoStore.currentClub?.user_level) === 1,
 )
@@ -234,132 +238,144 @@ const clubFundSummary = computed(() => {
 })
 
 const summaryTop = computed<SummaryItem[]>(() => [
-  { label: '俱乐部总余额', value: clubFundSummary.value.clubBalance, icon: 'chips' },
-  { label: '成员在桌余额', value: clubFundSummary.value.membersTableBalance, icon: 'chips' },
-  { label: '成员总余额', value: clubFundSummary.value.membersTotalBalance, icon: 'chips' },
+  { label: t('UIClub_Club4'), value: clubFundSummary.value.clubBalance, icon: 'chips' },
+  {
+    label: t('UIClub_FundDetail_TableBalance'),
+    value: clubFundSummary.value.membersTableBalance,
+    icon: 'chips',
+  },
+  {
+    label: t('UIClub_FundDetail_OverallBalance'),
+    value: clubFundSummary.value.membersTotalBalance,
+    icon: 'chips',
+  },
 ])
 
 const summaryBottom = computed<SummaryItem[]>(() => [
-  { label: '成员总免审额', value: clubFundSummary.value.membersCreditLimit, icon: 'balance' },
-  { label: '俱乐部钻石', value: clubFundSummary.value.clubDiamond, icon: 'diamond' },
+  { label: t('UIClub_Member2'), value: clubFundSummary.value.membersCreditLimit, icon: 'balance' },
+  {
+    label: t('UIClub_FundDetail_ClubDiamond'),
+    value: clubFundSummary.value.clubDiamond,
+    icon: 'diamond',
+  },
 ])
 
 const recordRanges: RecordRangeItem[] = [
-  { key: 'today', label: '今天' },
-  { key: 'seven', label: '7天' },
-  { key: 'thirty', label: '30天' },
-  { key: 'custom', label: '自定义' },
+  { key: 'today', label: t('UIData_Today') },
+  { key: 'seven', label: '7' + t('UIHappyShop_ActivityShopDay') },
+  { key: 'thirty', label: '30' + t('UIHappyShop_ActivityShopDay') },
+  { key: 'custom', label: t('UIGuild_MemberDetailsTimeCustom') },
 ]
 
 const recordStats = computed<RecordStatItem[]>(() => [
-  { id: 1, label: '发放', value: formatUC(grantAmountTotal.value) },
-  { id: 2, label: '回收', value: formatUC(recoverAmountTotal.value) },
-  { id: 3, label: '分润', value: formatUC(profitAmountTotal.value) },
-  { id: 4, label: '变动', value: formatUC(changeAmountTotal.value) },
+  { id: 1, label: t('UIClub_FundDetail_5iSXE2Uj'), value: formatUC(grantAmountTotal.value) },
+  { id: 2, label: t('UIClub_FundDetail_recycle'), value: formatUC(recoverAmountTotal.value) },
+  { id: 3, label: t('UIClub_Text28'), value: formatUC(profitAmountTotal.value) },
+  { id: 4, label: t('UIClub_Text29'), value: formatUC(changeAmountTotal.value) },
 ])
 
 const recordTypeOptions: RecordTypeOption[] = [
-  { key: 'all', textKey: 'adaptation10123', fallbackText: '所有', opCodes: null },
+  { key: 'all', textKey: 'adaptation10123', fallbackText: t('adaptation10123'), opCodes: null },
   {
     key: 'grant',
     textKey: 'UIClub_FundGive',
-    fallbackText: '发放',
+    fallbackText: t('UIClub_FundDetail_5iSXE2Uj'),
     opCodes: ['CLUBTOUSER', 'PAYUSER'],
   },
   {
     key: 'recycle',
     textKey: 'UIClub_FundDetail_recycle',
-    fallbackText: '回收',
+    fallbackText: t('UIClub_FundDetail_recycle'),
     opCodes: ['CLUBRECOVEUSER', 'TAKEOVER'],
   },
   {
     key: 'room_service_fee',
     textKey: 'UIGuildClubRoomFee',
-    fallbackText: '房间服务费',
+    fallbackText: t('UIGuildClubRoomFee'),
     opCodes: ['PFTROOM', 'PFTINSUR'],
   },
   {
     key: 'deposit',
     textKey: 'UIGuildClubManagerDepositsTip',
-    fallbackText: '存款',
+    fallbackText: t('UIGuildClubManagerDepositsTip'),
     opCodes: ['TRIBETOCLUB', 'RECHARGE', 'RECHGTRB'],
   },
   {
     key: 'withdraw',
     textKey: 'UIGuildClubManagerWithdrawTip',
-    fallbackText: '取款',
+    fallbackText: t('UIGuildClubManagerWithdrawTip'),
     opCodes: ['TRIBERECOVECLUB'],
   },
   {
     key: 'mtt_service_fee',
     textKey: 'UIGuildClubMTTFee',
-    fallbackText: 'MTT服务费',
+    fallbackText: 'MTT' + t('UIMine_WalletPlatform_fee_f'),
     opCodes: ['PFTMTT'],
   },
   {
     key: 'insurance_income',
     textKey: 'UIGuildClubInsuranceIncome',
-    fallbackText: '保险收入',
+    fallbackText: t('UIGuildClubInsuranceIncome'),
     opCodes: ['INSURIN', 'INSUROUT'],
   },
   {
     key: 'deposit_detail',
     textKey: 'UIGuildClubDepositFee',
-    fallbackText: '押金明细',
+    fallbackText: t('UIGuildClubDepositFee'),
     opCodes: ['DEPOSITADV', 'DEPOSITRTN'],
   },
   {
     key: 'player_profit_deduct',
     textKey: 'UIGuildClubPlayerProfitDeduction',
-    fallbackText: '玩家盈利扣除',
+    fallbackText: t('UIGuildClubPlayerProfitDeduction'),
     opCodes: ['USERDEDUCTROOM'],
   },
   {
     key: 'sng_service_fee',
     textKey: 'UISNGFee',
-    fallbackText: 'SNG服务费',
+    fallbackText: 'SNG' + t('UIMine_WalletPlatform_fee_f'),
     opCodes: ['PFTSNG'],
   },
   {
     key: 'club_balance_out',
     textKey: 'UIGuildClubAccountOut',
-    fallbackText: '联盟平账支出',
+    fallbackText: t('UIClub_Union2'),
     opCodes: ['TRIBEBALCLUB', 'CLUBBALUSER'],
   },
   {
     key: 'tribe_grant',
     textKey: 'UIAllianceRelease',
-    fallbackText: '联盟发放',
+    fallbackText: t('UIClub_league_issue'),
     opCodes: ['TRIBETOCLUB'],
   },
   {
     key: 'cowboy_income',
     textKey: 'UIGuildClubDetailsCowboyTip',
-    fallbackText: '牛仔收入',
+    fallbackText: t('UIGuildClubDetailsCowboyTip'),
     opCodes: ['PFTCBIN'],
   },
   {
     key: 'cowboy_compensation',
     textKey: 'UINiuZaiPFTCBOUT',
-    fallbackText: '牛仔赔付',
+    fallbackText: t('UINiuZaiPFTCBOUT'),
     opCodes: ['PFTCBOUT'],
   },
   {
     key: 'prop_exchange',
     textKey: 'UIPropExchangeDes',
-    fallbackText: '道具兑换',
+    fallbackText: t('UIPropExchangeDes'),
     opCodes: ['WHEELAWARD'],
   },
   {
     key: 'mahjong_mtt_fee',
     textKey: 'UIMahjongMTT12',
-    fallbackText: '麻将MTT服务费',
+    fallbackText: t('Mahjong_Name') + 'MTT' + t('UIMine_WalletPlatform_fee_f'),
     opCodes: ['MJPFTMTT'],
   },
   {
     key: 'other',
     textKey: 'UIChatReport008',
-    fallbackText: '其他',
+    fallbackText: t('Complanin007'),
     opCodes: ['OTHER'],
   },
 ]
@@ -505,7 +521,7 @@ function mapFundRecord(record: ClubFundChangeLogRecord, index: number): FundReco
     date: dateTime.date,
     time: dateTime.time,
     opCode,
-    type: opCodeText || opCode || '未知',
+    type: opCodeText || opCode || t('ServerErrorCode_90002'),
     quantity: formatSignedFenAmount(quantity),
     balance: formatUC(balance),
     remark: remarkName,
@@ -530,7 +546,7 @@ function resolveFundTypeText(opCode: string): string {
   }
 
   const otherType = recordTypeOptions.find((item) => item.key === 'other')
-  return otherType ? resolveRecordTypeLabel(otherType) : opCode || '未知'
+  return otherType ? resolveRecordTypeLabel(otherType) : opCode || t('ServerErrorCode_90002')
 }
 
 function patchActiveMemberOnList(): void {
@@ -570,13 +586,15 @@ async function fetchClubGoldSummary(): Promise<void> {
     })
 
     if (response.code !== 0 || !response.data) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '获取俱乐部基金失败')
+      throw new Error(
+        typeof response.msg === 'string' ? response.msg : t('UIClub_FetchClubFundFail'),
+      )
     }
 
     clubGoldSummary.value = response.data
   } catch (error) {
     clubGoldSummary.value = null
-    const message = error instanceof Error ? error.message : '获取俱乐部基金失败'
+    const message = error instanceof Error ? error.message : t('UIClub_FetchClubFundFail')
     showFailToast(message)
   } finally {
     loadingClubGold.value = false
@@ -625,7 +643,9 @@ async function fetchRecordRows(reset = false): Promise<void> {
     })
 
     if (response.code !== 0 || !response.data) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '获取基金记录失败')
+      throw new Error(
+        typeof response.msg === 'string' ? response.msg : t('UIClub_FetchFundRecordFail'),
+      )
     }
 
     const rawRows = Array.isArray(response.data.list) ? response.data.list : []
@@ -652,7 +672,7 @@ async function fetchRecordRows(reset = false): Promise<void> {
       hasMoreRecords.value = false
       recordsTotal.value = 0
     }
-    const message = error instanceof Error ? error.message : '获取基金记录失败'
+    const message = error instanceof Error ? error.message : t('UIClub_FetchFundRecordFail')
     showFailToast(message)
   } finally {
     if (reset) {
@@ -693,18 +713,18 @@ function resolveRole(record: OrgMemberListRecord): {
   const isBoss = toSafeNumber(record.is_boss) === 1
 
   if (isBoss || userLevel === 1) {
-    return { role: '会长', identityType: 'founder' }
+    return { role: t('UIClub_UserLevelOwner'), identityType: 'founder' }
   }
 
   if (userLevel === 2 || userLevel === 3) {
-    return { role: '管理员', identityType: 'admin' }
+    return { role: t('UIGuild_FilterButtonManager'), identityType: 'admin' }
   }
 
   if (userLevel === 4 || memberType === 2) {
-    return { role: '代理人', identityType: 'agent' }
+    return { role: t('UIClub_AgentItem'), identityType: 'agent' }
   }
 
-  return { role: '成员', identityType: 'player' }
+  return { role: t('UIClub_Info_Members'), identityType: 'player' }
 }
 
 function mapMember(record: OrgMemberListRecord): MemberItem {
@@ -715,7 +735,7 @@ function mapMember(record: OrgMemberListRecord): MemberItem {
 
   return {
     id,
-    name: String(record.remark_name || record.nick_name || `成员${id || '--'}`),
+    name: String(record.remark_name || record.nick_name || t('UIClub_Info_Members') + (id || '--')),
     uid: String(record.random_num || '--'),
     role: roleInfo.role,
     identityType: roleInfo.identityType,
@@ -771,7 +791,7 @@ async function fetchMembers(reset = false): Promise<void> {
       membersTotal.value = 0
       hasMoreMembers.value = false
     }
-    showFailToast('未找到俱乐部信息')
+    showFailToast(t('UIClub_NotFoundClub'))
     return
   }
 
@@ -799,7 +819,7 @@ async function fetchMembers(reset = false): Promise<void> {
     })
 
     if (response.code !== 0 || !response.data) {
-      const message = typeof response.msg === 'string' ? response.msg : '获取成员列表失败'
+      const message = typeof response.msg === 'string' ? response.msg : t('UIClub_FetchMemberFail')
       throw new Error(message)
     }
 
@@ -824,7 +844,7 @@ async function fetchMembers(reset = false): Promise<void> {
       membersTotal.value = 0
       hasMoreMembers.value = false
     }
-    const message = error instanceof Error ? error.message : '获取成员列表失败'
+    const message = error instanceof Error ? error.message : t('UIClub_FetchMemberFail')
     showFailToast(message)
   } finally {
     if (reset) {
@@ -953,7 +973,7 @@ async function submitQuotaUpdate(options: {
 }): Promise<void> {
   const member = activeMember.value
   if (!member?.id) {
-    showFailToast('未找到成员信息')
+    showFailToast(t('UIClub_NotFoundMember'))
     return
   }
 
@@ -972,7 +992,7 @@ async function submitQuotaUpdate(options: {
       : await postOrgClubCreditLimitApi(payload)
 
   if (response.code !== 0) {
-    throw new Error(typeof response.msg === 'string' ? response.msg : '额度修改失败')
+    throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_Fail9'))
   }
 }
 
@@ -989,7 +1009,7 @@ async function resetQuota(field: QuotaEditField): Promise<void> {
       isReset: true,
     })
 
-    showSuccessToast('重置成功')
+    showSuccessToast(t('UIClub_Success2'))
     if (field === 'disposable') {
       disposableQuota.value = 0
       if (activeMember.value) {
@@ -1011,7 +1031,7 @@ async function resetQuota(field: QuotaEditField): Promise<void> {
     quotaInput.value = ''
     await refreshFundData()
   } catch (error) {
-    const message = error instanceof Error ? error.message : '重置失败'
+    const message = error instanceof Error ? error.message : t('UIClub_Fail10')
     showFailToast(message)
   } finally {
     submittingFund.value = false
@@ -1047,7 +1067,7 @@ async function onFundConfirm(): Promise<void> {
 
     const amount = Number.parseInt(quotaInput.value, 10)
     if (Number.isNaN(amount) || amount <= 0) {
-      showFailToast('请输入正确的额度')
+      showFailToast(t('UIClub_PleaseOf'))
       return
     }
 
@@ -1064,7 +1084,7 @@ async function onFundConfirm(): Promise<void> {
         adjustMode: quotaAdjustMode.value,
       })
 
-      showSuccessToast('额度修改成功')
+      showSuccessToast(t('UIClub_Success3'))
       const factor = quotaAdjustMode.value === 'increase' ? 1 : -1
       if (quotaEditField.value === 'disposable') {
         disposableQuota.value = Math.max(0, disposableQuota.value + amount * factor * 100)
@@ -1088,7 +1108,7 @@ async function onFundConfirm(): Promise<void> {
       quotaEditField.value = null
       await refreshFundData()
     } catch (error) {
-      const message = error instanceof Error ? error.message : '额度修改失败'
+      const message = error instanceof Error ? error.message : t('UIClub_Fail9')
       showFailToast(message)
     } finally {
       submittingFund.value = false
@@ -1103,7 +1123,7 @@ async function onFundConfirm(): Promise<void> {
   const member = activeMember.value
   const amount = Number.parseInt(fundAmountInput.value, 10)
   if (!member?.id || Number.isNaN(amount) || amount <= 0) {
-    showFailToast('请输入正确的发放数量')
+    showFailToast(t('UIClub_PleaseOf2'))
     return
   }
 
@@ -1114,7 +1134,7 @@ async function onFundConfirm(): Promise<void> {
     if (fundAssetTab.value === 'diamond') {
       const clubId = toSafeNumber(userInfoStore.currentClub?.club_id)
       if (!clubId) {
-        throw new Error('未找到俱乐部信息')
+        throw new Error(t('UIClub_NotFoundClub'))
       }
 
       response = await postClubSendDiamondsApi(
@@ -1134,7 +1154,9 @@ async function onFundConfirm(): Promise<void> {
     }
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '操作失败')
+      throw new Error(
+        typeof response.msg === 'string' ? response.msg : t('Uiclubrechargeconfirmorderfailed'),
+      )
     }
 
     if (activeMember.value) {
@@ -1152,11 +1174,13 @@ async function onFundConfirm(): Promise<void> {
       }
     }
 
-    showSuccessToast(fundActionTab.value === 'grant' ? '发放成功' : '回收成功')
+    showSuccessToast(
+      fundActionTab.value === 'grant' ? t('UIClub_SendPropsSucceed') : t('UIClub_RecycleSucceed'),
+    )
     closeFundSheet()
     await refreshFundData()
   } catch (error) {
-    const message = error instanceof Error ? error.message : '操作失败'
+    const message = error instanceof Error ? error.message : t('Uiclubrechargeconfirmorderfailed')
     showFailToast(message)
   } finally {
     submittingFund.value = false
@@ -1183,11 +1207,11 @@ function chooseType(typeKey: string): void {
 }
 
 function roleClass(role: MemberRole): string {
-  if (role === '成员') {
+  if (role === t('UIClub_Info_Members')) {
     return 'role-badge--member'
   }
 
-  if (role === '代理人') {
+  if (role === t('UIClub_AgentItem')) {
     return 'role-badge--agent'
   }
 
@@ -1209,7 +1233,7 @@ onMounted(() => {
     <HeaderBack :title="'基金管理'">
       <template #right>
         <p class="member-total">
-          会员总数 <span>{{ memberTotalText }}</span>
+          {{ t('UIClub_Text27') }} <span>{{ memberTotalText }}</span>
         </p>
       </template>
     </HeaderBack>

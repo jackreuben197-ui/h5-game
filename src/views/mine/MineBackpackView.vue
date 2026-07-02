@@ -13,7 +13,7 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-const title = computed(() => '我的背包')
+const title = computed(() => t('UIMine_Backpack'))
 
 interface BackpackItem {
   id: string
@@ -74,7 +74,7 @@ async function fetchBackpackData(): Promise<void> {
   try {
     const response = await postPropUserPropListApi({})
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : '加载背包失败')
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail2'))
     }
     if (response.data?.total ?? 0 > 0) {
       const rows = response.data.list ?? []
@@ -82,7 +82,7 @@ async function fetchBackpackData(): Promise<void> {
     }
   } catch (error) {
     list.value = []
-    const message = error instanceof Error ? error.message : '加载背包失败'
+    const message = error instanceof Error ? error.message : t('UIClub_LoadFail2')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -100,8 +100,8 @@ onMounted(() => {
 
     <div class="content-wrap">
       <section class="item-list">
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!list.length" class="list-status">暂无道具</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!list.length" class="list-status">{{ t('UIClub_No2') }}</p>
         <article v-for="item in list" :key="item.id" class="glass-card item-card">
           <div class="icon-wrap">
             <img :src="item.icon" :alt="item.name" />

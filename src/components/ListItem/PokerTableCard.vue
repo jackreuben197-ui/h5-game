@@ -420,7 +420,7 @@ function shortName(name?: string): string {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.29rem;
+  font-size: 0.26rem;
 }
 
 .table-footer p {

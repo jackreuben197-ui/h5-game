@@ -4,7 +4,8 @@ import { t, getLocale } from '@/i18n'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useCachedImage } from '@/utils/imageCache'
-import { computed, onMounted } from 'vue'
+import { readLobbyBannerCache, writeLobbyBannerCache } from '@/utils/lobbyBannerCache'
+import { computed, onMounted, ref } from 'vue'
 
 import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
@@ -352,7 +353,7 @@ onMounted(() => {
 .home-header-img {
   width: 100%;
   height: 3.68rem;
-  object-fit: cover;
+  // object-fit: cover;
   display: block;
 }
 

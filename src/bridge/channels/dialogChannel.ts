@@ -10,7 +10,17 @@ import {
 import { setH5Visible } from './uiChannel'
 
 interface ActiveBridgeDialog extends CocosDialogPayload {
-  requestId: string
+  // 由 Cocos 发起时存在；H5 本地弹窗时为空。
+  requestId?: string
+  onConfirm?: () => void
+  onCancel?: () => void
+  onClose?: () => void
+}
+
+export interface LocalBridgeDialogOptions extends CocosDialogPayload {
+  onConfirm?: () => void
+  onCancel?: () => void
+  onClose?: () => void
 }
 
 let stopBridgeDialogListener: (() => void) | null = null
@@ -107,13 +117,29 @@ export function finishActiveBridgeDialog(action: DialogResultPayload['action']):
     return
   }
 
-  const payload: DialogResultPayload = {
-    dialogRequestId: currentDialog.requestId,
-    action,
+  activeBridgeDialog.value = null
+
+  if (currentDialog.requestId) {
+    const payload: DialogResultPayload = {
+      dialogRequestId: currentDialog.requestId,
+      action,
+    }
+    sendBridgeMessage(BRIDGE_ACTION.DIALOG_RESULT, payload, {
+      msgtype: BRIDGE_MSG_TYPE.H5,
+    })
+    return
   }
 
-  activeBridgeDialog.value = null
-  sendBridgeMessage(BRIDGE_ACTION.DIALOG_RESULT, payload, {
-    msgtype: BRIDGE_MSG_TYPE.H5,
-  })
+  if (action === 'confirm') {
+    currentDialog.onConfirm?.()
+  } else if (action === 'cancel') {
+    currentDialog.onCancel?.()
+  } else {
+    currentDialog.onClose?.()
+  }
+}
+
+// H5 本地发起的弹窗（不与 Cocos 双向交互），通过 onConfirm/onCancel/onClose 回调反馈结果。
+export function showLocalBridgeDialog(options: LocalBridgeDialogOptions): void {
+  activeBridgeDialog.value = { ...options }
 }

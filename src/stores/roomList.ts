@@ -196,7 +196,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
     records: [],
   }),
   actions: {
-    bootstrapRoomList(): void {
+    bootstrapRoomList(): Promise<void> {
       cleanupLegacyLocalStorageOnce()
       if (isOfficialGuestMode()) {
         this.records = []
@@ -204,7 +204,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
         bootstrappedScope = ''
         bootstrappingPromise = null
         lastNotifyTs = 0
-        return
+        return Promise.resolve()
       }
 
       const scope = resolveScope()
@@ -220,8 +220,8 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
         lastNotifyTs = 0
         this.records = []
       }
-      if (bootstrappedScope === scope) return
-      if (bootstrappingPromise) return
+      if (bootstrappedScope === scope) return Promise.resolve()
+      if (bootstrappingPromise) return bootstrappingPromise
 
       bootstrappingPromise = this.runInitialSync(scope)
         .then(() => {
@@ -246,6 +246,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
           }
           bootstrapRoomListTryTimes = 0
         })
+      return bootstrappingPromise
     },
 
     async runInitialSync(scope: RoomListScope): Promise<void> {

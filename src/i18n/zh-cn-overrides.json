@@ -8,5 +8,22 @@
   "Wallet_ActualArrival": "实际到账",
   "Wallet_ConfirmWithdraw": "确认提款",
   "Wallet_ServiceFee": "手续费",
-  "Wallet_WithdrawAmount": "提款金额"
+  "Wallet_WithdrawAmount": "提款金额",
+  "H5Display_DownloadTitle": "下载APP赢取777USDT奖金！",
+  "H5Display_OfficialSite": "品牌官网：",
+  "H5Display_FindUsTitle": "找到我们",
+  "H5Display_FindUsSub": "BOSS~避免走丢，请收藏备用网址与官方邮箱，随时直达",
+  "H5Display_RulesTab": "返水重磅升级",
+  "H5Display_RulesHeader": "真人视讯游戏规范公告",
+  "H5Display_RulesContent": "为保障平台游戏环境的公平、公正与稳定运行，切实维护全体会员的合法权益，现就相关事项公告如下：<br><br>1、因 <span style=\"color:#ff4d4f\">真人视讯骰宝、真人视讯区块链游戏</span> 无法进行独立关闭，凡在上述两个项目中产生的任何盈利将不予计算；<span style=\"color:#ff4d4f; text-decoration: underline;\">且由此造成的所有亏损需由会员自行承担，敬请理解。</span><br><br>2、平台将持续对异常玩法、套利行为、违规使用方式进行监控；一经发现并核实，平台将依照相关风控规则进行处理。",
+  "H5Display_TooltipAdd": "添加",
+  "H5Display_TooltipToMain": "到主屏幕优先",
+  "H5Display_GuideTitle": "添加到主屏幕",
+  "H5Display_GuideStep1Part1": "1. 请确认已在系统浏览器中打开，点击顶部的分享图标",
+  "H5Display_GuideStep1Part2": "并选择“添加到主屏幕”。",
+  "H5Display_GuideStep2": "2. 点击“添加”即可将快捷方式添加到主屏幕。",
+  "H5Display_NoticeDefaultTitle": "活动详情",
+  "H5Display_NoContent": "暂无内容",
+  "H5Display_SaveUrl": "保存网址",
+  "H5Display_UrlHint": "建议将以下网址保存至浏览器书签或手机备忘录，以便随时快速访问"
 }

@@ -155,7 +155,17 @@ function onDialogClose(): void {
 }
 .notification-dialog {
   .game-dialog__card {
-    padding: 0.5rem 0.3rem;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+  .game-dialog__card-bg,
+  .game-dialog__card-bg-gradient,
+  .game-dialog__card-bg-texture,
+  .game-dialog__card-bg-shadow {
+    display: none !important;
   }
 }
 </style>

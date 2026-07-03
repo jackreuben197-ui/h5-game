@@ -195,8 +195,22 @@ function renderDebugConsoleDom(): void {
   body.scrollTop = prevScrollTop + Math.max(0, heightDelta)
 }
 
+function isDebugConsoleUiEnabled(): boolean {
+  if (import.meta.env.DEV) return true
+  if (import.meta.env.VITE_DEBUG_CONSOLE === 'open') return true
+  try {
+    return typeof localStorage !== 'undefined' && localStorage.getItem('h5_debug') === '1'
+  } catch {
+    return false
+  }
+}
+
 function attachDebugConsoleDom(): void {
   if (typeof document === 'undefined' || !document.body || domReady) {
+    return
+  }
+
+  if (!isDebugConsoleUiEnabled()) {
     return
   }
 

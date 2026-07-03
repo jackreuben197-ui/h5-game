@@ -31,10 +31,42 @@ import imgFb from '@/assets/images/minigame-newui/fb.svg'
 import imgCowboy from '@/assets/images/minigame-newui/sg.svg'
 
 const popularBannerGamesStatic = [
-  { name: 'PA真人', svg: imgPa, gameApiType: 'pa_live' },
-  { name: '麻将胡了', svg: imgMahjong, gameApiType: 'mahjong' },
-  { name: 'FB体育', svg: imgFb, gameApiType: 'fb_sports' },
-  { name: '德州牛仔', svg: imgCowboy, gameApiType: 'cow_boy' },
+  {
+    name: 'PA真人',
+    svg: imgPa,
+    gameApiType: 'pa_live',
+    title: '真人荷官',
+    titleEn: 'Live Dealer',
+    subtitle: ['美女荷官发牌', '沉浸真人体验'],
+    subtitleEn: ['Real live dealers', 'Immersive experience'],
+  },
+  {
+    name: '麻将胡了',
+    svg: imgMahjong,
+    gameApiType: 'mahjong',
+    title: '麻将胡了',
+    titleEn: 'Mahjong Ways',
+    subtitle: ['电子麻将畅玩', '胡牌乐翻天'],
+    subtitleEn: ['Play video mahjong', 'Big wins await'],
+  },
+  {
+    name: 'FB体育',
+    svg: imgFb,
+    gameApiType: 'fb_sports',
+    title: '体育竞猜',
+    titleEn: 'Sports Betting',
+    subtitle: ['全球赛事竞猜', '激情一触即发'],
+    subtitleEn: ['Global sports betting', 'Feel the excitement'],
+  },
+  {
+    name: '德州牛仔',
+    svg: imgCowboy,
+    gameApiType: 'cow_boy',
+    title: '德州牛仔',
+    titleEn: 'Texas Cowboy',
+    subtitle: [] as string[],
+    subtitleEn: [] as string[],
+  },
 ]
 
 const router = useRouter()
@@ -61,6 +93,21 @@ const NOTICE_GAP_PX = 48
 
 let noticeResizeObserver: ResizeObserver | null = null
 
+const homeRootRef = ref<HTMLElement | null>(null)
+
+// 小屏内容超出视口时，把初始滚动位置放到底部：保证底部两块（游戏中心/热门游戏）
+// 完整可见，顶部的 banner/公告 上滑查看。大屏内容不溢出则无副作用。
+function anchorScrollToBottomOnSmall(): void {
+  void nextTick(() => {
+    requestAnimationFrame(() => {
+      const scroller = homeRootRef.value?.closest('.main-layout-content') as HTMLElement | null
+      if (scroller && scroller.scrollHeight - scroller.clientHeight > 4) {
+        scroller.scrollTop = scroller.scrollHeight
+      }
+    })
+  })
+}
+
 const showGameClubSelector = ref(false)
 const pendingGameInfo = ref<{ apiType: string; gameType: string; roomId: number } | null>(null)
 
@@ -68,42 +115,62 @@ const activeBannerGames = computed(() => {
   const apiGames = casinoStore.popularBannerGames || []
   // 临时隐藏牛仔（德州牛仔）入口。
   return popularBannerGamesStatic
-    .filter(staticGame => staticGame.gameApiType !== 'cow_boy')
-    .map(staticGame => {
-    let matched = apiGames.find(g => {
-      if (staticGame.name === 'PA真人') {
-        return g.game_name?.includes('PA') || g.game_api_type === 'pa_live' || g.game_name?.includes('DB视讯') || g.game_name === 'DB真人'
-      }
-      if (staticGame.name === '麻将胡了') {
-        return g.game_name === '麻将胡了' || g.game_api_type === 'slots_gpd'
-      }
-      if (staticGame.name === 'FB体育') {
-        return g.game_api_type === 'fb_sports' || g.game_name === 'FB体育'
-      }
-      if (staticGame.name === '德州牛仔') {
-        return g.game_type === 'cow_boy' || g.game_api_type === 'cow_boy' || g.game_name === '德州牛仔'
-      }
-      return false
-    })
-
-    // If not found in popularBannerGames, try gameRecords as fallback
-    if (!matched) {
-      const allGames = casinoStore.gameRecords || []
-      matched = allGames.find(g => {
-        if (staticGame.name === 'PA真人') return g.game_name?.includes('PA') || g.game_api_type === 'pa_live' || g.game_name?.includes('DB视讯') || g.game_name === 'DB真人'
-        if (staticGame.name === '麻将胡了') return g.game_name === '麻将胡了' || g.game_api_type === 'slots_gpd'
-        if (staticGame.name === 'FB体育') return g.game_api_type === 'fb_sports' || g.game_name === 'FB体育'
-        if (staticGame.name === '德州牛仔') return g.game_type === 'cow_boy' || g.game_api_type === 'cow_boy' || g.game_name === '德州牛仔'
+    .filter((staticGame) => staticGame.gameApiType !== 'cow_boy')
+    .map((staticGame) => {
+      let matched = apiGames.find((g) => {
+        if (staticGame.name === 'PA真人') {
+          return (
+            g.game_name?.includes('PA') ||
+            g.game_api_type === 'pa_live' ||
+            g.game_name?.includes('DB视讯') ||
+            g.game_name === 'DB真人'
+          )
+        }
+        if (staticGame.name === '麻将胡了') {
+          return g.game_name === '麻将胡了' || g.game_api_type === 'slots_gpd'
+        }
+        if (staticGame.name === 'FB体育') {
+          return g.game_api_type === 'fb_sports' || g.game_name === 'FB体育'
+        }
+        if (staticGame.name === '德州牛仔') {
+          return (
+            g.game_type === 'cow_boy' || g.game_api_type === 'cow_boy' || g.game_name === '德州牛仔'
+          )
+        }
         return false
       })
-    }
 
-    return {
-      ...staticGame,
-      gameApiType: matched?.game_api_type || staticGame.gameApiType,
-      roomId: matched?.id || matched?.game_room_id || 0
-    }
-  })
+      // If not found in popularBannerGames, try gameRecords as fallback
+      if (!matched) {
+        const allGames = casinoStore.gameRecords || []
+        matched = allGames.find((g) => {
+          if (staticGame.name === 'PA真人')
+            return (
+              g.game_name?.includes('PA') ||
+              g.game_api_type === 'pa_live' ||
+              g.game_name?.includes('DB视讯') ||
+              g.game_name === 'DB真人'
+            )
+          if (staticGame.name === '麻将胡了')
+            return g.game_name === '麻将胡了' || g.game_api_type === 'slots_gpd'
+          if (staticGame.name === 'FB体育')
+            return g.game_api_type === 'fb_sports' || g.game_name === 'FB体育'
+          if (staticGame.name === '德州牛仔')
+            return (
+              g.game_type === 'cow_boy' ||
+              g.game_api_type === 'cow_boy' ||
+              g.game_name === '德州牛仔'
+            )
+          return false
+        })
+      }
+
+      return {
+        ...staticGame,
+        gameApiType: matched?.game_api_type || staticGame.gameApiType,
+        roomId: matched?.id || matched?.game_room_id || 0,
+      }
+    })
 })
 
 function handleBannerGameClick(game: any) {
@@ -127,25 +194,28 @@ function handleWalletConfirm(clubId?: number) {
 const joinGame = async (apiType: string, gameType: string, roomId = 0, clubId?: number) => {
   try {
     const isRealNameGame = apiType === 'real_name' || apiType === 'pa_live'
-    const finalGameType = ""
+    const finalGameType = ''
     const deviceType = getDeviceType()
     const finalDeviceType = isRealNameGame ? 2 : deviceType
 
-    const res = await joinCasinoGame({
-      game_api_type: apiType,
-      game_room_id: roomId,
-      game_type: finalGameType,
-      device_type: finalDeviceType,
-      currency_type: 1,
-    }, clubId)
+    const res = await joinCasinoGame(
+      {
+        game_api_type: apiType,
+        game_room_id: roomId,
+        game_type: finalGameType,
+        device_type: finalDeviceType,
+        currency_type: 1,
+      },
+      clubId,
+    )
 
     if (res.code === 0 && res.data) {
       const gameUrl = res.data.url || res.data.game_url
       if (gameUrl) {
         if (isRealNameGame && deviceType === 1) {
-          const width = screen.width;
-          const height = screen.height;
-          const windowFeatures = `width=${width},height=${height},scrollbars=yes,resizable=yes,location=yes`;
+          const width = screen.width
+          const height = screen.height
+          const windowFeatures = `width=${width},height=${height},scrollbars=yes,resizable=yes,location=yes`
           window.open(gameUrl, '_blank', windowFeatures)
         } else {
           window.open(gameUrl, '_blank', 'noopener,noreferrer')
@@ -667,6 +737,8 @@ onMounted(() => {
   minigameStore.preloadMinigameData(undefined, true).catch((e) => {
     console.warn('[home] preload minigame data failed:', e)
   })
+
+  anchorScrollToBottomOnSmall()
 })
 
 onBeforeUnmount(() => {
@@ -678,7 +750,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="home-page">
+  <div ref="homeRootRef" class="home-page">
     <!-- 0. 顶部栏：登录态仅保留 POKER 品牌 -->
     <div class="top-bar">
       <div></div>
@@ -778,112 +850,148 @@ onBeforeUnmount(() => {
     <!-- 扑克专区为空但赛事专区有数据时，用 MTT 列表替换 4/5 两个模块。 -->
     <div class="home-swap-container">
       <Transition name="home-swap">
-        <MttContent v-if="shouldReplaceWithMtt" key="mtt" class="home-mtt-content home-swap-panel" />
+        <MttContent
+          v-if="shouldReplaceWithMtt"
+          key="mtt"
+          class="home-mtt-content home-swap-panel"
+        />
         <div v-else key="default" class="home-default-sections home-swap-panel">
-    <!-- 4. 游戏模块 -->
-    <div class="section-header">
-      <span class="section-title">{{ localized('Game Center', '游戏中心') }}</span>
-    </div>
-    <div class="game-center-scroll">
-      <div class="game-center-track">
-        <div class="game-scroll-card game-card-mtt" @click="goToMttList">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_mtt_lg.png" alt="MTT" />
-          <div class="zone-info">
-            <div class="zone-header">
-              <span class="zone-title"> {{ t('UIHomeMttArea') }} </span>
-              <img class="zone-mini-icon" src="@/assets/icons/game_zone_mtt_mini.png" alt="" />
-            </div>
-            <div class="zone-desc">
-              <span>{{ t('UIHomeMttPokerTip') }}</span>
-            </div>
-            <p class="zone-sub-desc">{{ t('UIHomeMttAreaTip') }}</p>
+          <!-- 4. 游戏模块 -->
+          <div class="section-header">
+            <span class="section-title">{{ localized('Game Center', '游戏中心') }}</span>
           </div>
-          <div class="zone-online-bar">
-            <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
-            <span class="online-num"> {{ mttTablesText }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> {{ mttPlayersText }} </span>
-          </div>
-        </div>
+          <div class="game-center-scroll">
+            <div class="game-center-track">
+              <div class="game-scroll-card game-card-mtt" @click="goToMttList">
+                <img class="zone-lg-bg" src="@/assets/icons/game_zone_mtt_lg.png" alt="MTT" />
+                <div class="zone-info">
+                  <div class="zone-header">
+                    <span class="zone-title"> {{ t('UIHomeMttArea') }} </span>
+                    <img
+                      class="zone-mini-icon"
+                      src="@/assets/icons/game_zone_mtt_mini.png"
+                      alt=""
+                    />
+                  </div>
+                  <div class="zone-desc">
+                    <span>{{ t('UIHomeMttPokerTip') }}</span>
+                  </div>
+                  <p class="zone-sub-desc">{{ t('UIHomeMttAreaTip') }}</p>
+                </div>
+                <div class="zone-online-bar">
+                  <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
+                  <span class="online-num"> {{ mttTablesText }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
+                  <span class="online-num"> {{ mttPlayersText }} </span>
+                </div>
+              </div>
 
-        <div class="game-scroll-card poker-card" @click="goToGameList">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_poker_lg.png" alt="扑克" />
-          <div class="poker-overlay"></div>
-          <div class="zone-info poker-info">
-            <div class="zone-header">
-              <span class="zone-title"> {{ t('UIHomePokerArea') }} </span>
-              <img class="zone-mini-icon poker-mini" src="@/assets/icons/game_zone_poker_mini.png" alt="" />
-            </div>
-            <div class="poker-desc-area">
-              <p class="zone-sub-desc">{{ t('UITexasRule_texas') }}</p>
-              <p class="zone-sub-desc">{{ t('UITexasRule_omaha') }}</p>
-              <p class="zone-sub-desc">{{ t('PokerType_2') }}</p>
-            </div>
-          </div>
-          <div class="zone-online-bar">
-            <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
-            <span class="online-num"> {{ pokerTablesText }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> {{ pokerPlayersText }} </span>
-          </div>
-        </div>
+              <div class="game-scroll-card poker-card" @click="goToGameList">
+                <img class="zone-lg-bg" src="@/assets/icons/game_zone_poker_lg.png" alt="扑克" />
+                <div class="poker-overlay"></div>
+                <div class="zone-info poker-info">
+                  <div class="zone-header">
+                    <span class="zone-title"> {{ t('UIHomePokerArea') }} </span>
+                    <img
+                      class="zone-mini-icon poker-mini"
+                      src="@/assets/icons/game_zone_poker_mini.png"
+                      alt=""
+                    />
+                  </div>
+                  <div class="poker-desc-area">
+                    <p class="zone-sub-desc">{{ t('UITexasRule_texas') }}</p>
+                    <p class="zone-sub-desc">{{ t('UITexasRule_omaha') }}</p>
+                    <p class="zone-sub-desc">{{ t('PokerType_2') }}</p>
+                  </div>
+                </div>
+                <div class="zone-online-bar">
+                  <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
+                  <span class="online-num"> {{ pokerTablesText }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
+                  <span class="online-num"> {{ pokerPlayersText }} </span>
+                </div>
+              </div>
 
-        <div class="game-scroll-card game-card-minigame" @click="goToMinigame">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_minigame_lg.png" alt="小游戏" />
-          <div class="zone-info">
-            <div class="zone-header">
-              <span class="zone-title"> {{ t('UIHomeMinigameArea') }} </span>
-              <img class="zone-mini-icon" src="@/assets/icons/game_zone_minigame_mini.png" alt="" />
-            </div>
-            <p class="zone-desc">{{ t('UIData_YGvXd5iXr_011') }}</p>
-          </div>
-          <div class="zone-online-bar">
-            <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> {{ miniGamePlayersText }} </span>
-          </div>
-        </div>
+              <div class="game-scroll-card game-card-minigame" @click="goToMinigame">
+                <img
+                  class="zone-lg-bg"
+                  src="@/assets/icons/game_zone_minigame_lg.png"
+                  alt="小游戏"
+                />
+                <div class="zone-info">
+                  <div class="zone-header">
+                    <span class="zone-title"> {{ t('UIHomeMinigameArea') }} </span>
+                    <img
+                      class="zone-mini-icon"
+                      src="@/assets/icons/game_zone_minigame_mini.png"
+                      alt=""
+                    />
+                  </div>
+                  <p class="zone-desc">{{ t('UIData_YGvXd5iXr_011') }}</p>
+                </div>
+                <div class="zone-online-bar">
+                  <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
+                  <span class="online-num"> {{ miniGamePlayersText }} </span>
+                </div>
+              </div>
 
-        <div class="game-scroll-card game-card-mahjong" @click="goToCasino">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
-          <div class="zone-info">
-            <div class="zone-header">
-              <span class="zone-title"> {{ localized('Casino', '娱乐场') }} </span>
-              <img class="zone-mini-icon" src="@/assets/icons/game_zone_mahjong_mini.png" alt="" />
-            </div>
-            <div class="zone-desc casino-desc">
-              <p>{{ localized('Live, Slots, Sports', '真人视讯 电子娱乐 体育竞猜') }}</p>
-              <p>{{ localized('Top Providers', '全球一线厂商') }}</p>
+              <div class="game-scroll-card game-card-mahjong" @click="goToCasino">
+                <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
+                <div class="zone-info">
+                  <div class="zone-header">
+                    <span class="zone-title"> {{ localized('Casino', '娱乐场') }} </span>
+                    <img
+                      class="zone-mini-icon"
+                      src="@/assets/icons/game_zone_mahjong_mini.png"
+                      alt=""
+                    />
+                  </div>
+                  <div class="zone-desc casino-desc">
+                    <p>{{ localized('Live, Slots, Sports', '真人视讯 电子娱乐 体育竞猜') }}</p>
+                    <p>{{ localized('Top Providers', '全球一线厂商') }}</p>
+                  </div>
+                </div>
+                <div class="zone-online-bar">
+                  <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
+                  <span class="online-num"> {{ mahjongPlayersText }} </span>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="zone-online-bar">
-            <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> {{ mahjongPlayersText }} </span>
+
+          <!-- 5. 热门游戏 -->
+          <div class="section-header">
+            <span class="section-title">{{ localized('Hot Games', '热门游戏') }}</span>
           </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- 5. 热门游戏 -->
-    <div class="section-header">
-      <span class="section-title">{{ localized('Hot Games', '热门游戏') }}</span>
-    </div>
-    <div class="coming-soon-scroll">
-      <div class="coming-soon-track">
-        <div
-          v-for="(game, index) in activeBannerGames"
-          :key="index"
-          class="coming-soon-scroll-card"
-          @click="handleBannerGameClick(game)"
-        >
-          <img class="coming-soon-scroll-card__img" :src="game.svg" alt="" />
-        </div>
-      </div>
-    </div>
+          <div class="coming-soon-scroll">
+            <div class="coming-soon-track">
+              <div
+                v-for="(game, index) in activeBannerGames"
+                :key="index"
+                class="coming-soon-scroll-card"
+                @click="handleBannerGameClick(game)"
+              >
+                <img class="coming-soon-scroll-card__img" :src="game.svg" alt="" />
+                <div class="coming-soon-scroll-card__label">
+                  <span class="coming-soon-scroll-card__title">{{
+                    localized(game.titleEn, game.title || game.name)
+                  }}</span>
+                  <span
+                    v-for="(line, i) in (getLocale() === 'en' ? game.subtitleEn : game.subtitle) ||
+                    []"
+                    :key="i"
+                    class="coming-soon-scroll-card__subtitle"
+                    :class="{ 'coming-soon-scroll-card__subtitle--first': i === 0 }"
+                    >{{ line }}</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </Transition>
     </div>
@@ -919,7 +1027,6 @@ onBeforeUnmount(() => {
   padding: 0.2rem 0 0;
   flex-shrink: 0;
 }
-
 
 .home-header {
   width: 100%;
@@ -1143,10 +1250,10 @@ onBeforeUnmount(() => {
   gap: 0.24rem;
 }
 
-// 默认模块 <=> MTT 列表切换的横向推入（新面板从右滑入，旧面板向左滑出）。
+// 默认模块 <=> MTT 列表切换用淡入淡出：改用 opacity，去掉 overflow:hidden，
+// 否则容器会裁掉游戏中心横向滚动到屏幕边缘的“出血边”（与 dev_merge_0624 一致）。
 .home-swap-container {
   position: relative;
-  overflow: hidden;
   width: 100%;
 }
 
@@ -1156,8 +1263,8 @@ onBeforeUnmount(() => {
 
 .home-swap-enter-active,
 .home-swap-leave-active {
-  transition: transform 0.32s ease;
-  will-change: transform;
+  transition: opacity 0.32s ease;
+  will-change: opacity;
 }
 
 // 切换期间旧面板脱离流，避免撑高容器；新面板在流内决定容器高度。
@@ -1169,16 +1276,16 @@ onBeforeUnmount(() => {
 }
 
 .home-swap-enter-from {
-  transform: translateX(100%);
+  opacity: 0;
 }
 .home-swap-enter-to {
-  transform: translateX(0);
+  opacity: 1;
 }
 .home-swap-leave-from {
-  transform: translateX(0);
+  opacity: 1;
 }
 .home-swap-leave-to {
-  transform: translateX(-100%);
+  opacity: 0;
 }
 
 .section-header {
@@ -1216,13 +1323,13 @@ onBeforeUnmount(() => {
 .game-scroll-card {
   flex-shrink: 0;
   width: 2.95rem;
-  // 与热门游戏卡片同宽同比例（111:147），保证两行高度一致。
-  aspect-ratio: 111 / 147;
+  // 固定高度：小屏不再压缩卡片，改由页面向下滚动（内容延伸到 appbar 下方，用户滚动查看）。
+  height: 3.91rem;
   border-radius: 0.37rem;
   overflow: hidden;
   position: relative;
   cursor: pointer;
-  background: linear-gradient(135deg, #956EFF 0%, #7447EF 100%);
+  background: linear-gradient(135deg, #956eff 0%, #7447ef 100%);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -1235,11 +1342,11 @@ onBeforeUnmount(() => {
 }
 
 .poker-card {
-  background: linear-gradient(135deg, #65A879 0%, #329147 100%);
+  background: linear-gradient(135deg, #65a879 0%, #329147 100%);
 }
 
 .game-card-minigame {
-  background: linear-gradient(135deg, #21B4FA 0%, #1B67F0 100%);
+  background: linear-gradient(135deg, #21b4fa 0%, #1b67f0 100%);
 
   .zone-lg-bg {
     object-fit: contain;
@@ -1248,7 +1355,7 @@ onBeforeUnmount(() => {
 }
 
 .game-card-mahjong {
-  background: linear-gradient(135deg, #FF9CAB 0%, #DF2340 100%);
+  background: linear-gradient(135deg, #ff9cab 0%, #df2340 100%);
 
   .zone-info {
     position: relative;
@@ -1419,8 +1526,8 @@ onBeforeUnmount(() => {
 .coming-soon-scroll-card {
   flex-shrink: 0;
   width: 2.95rem;
-  // 高度按图片自身比例（111:147）自适应，不再固定。
-  aspect-ratio: 111 / 147;
+  // 与 .game-scroll-card 一致：固定高度，不再随屏幕压缩，改由页面滚动兜底。
+  height: 3.91rem;
   border-radius: 0.51rem;
   overflow: hidden;
   position: relative;
@@ -1435,8 +1542,44 @@ onBeforeUnmount(() => {
 .coming-soon-scroll-card__img {
   width: 100%;
   height: 100%;
+  // 图片无内置文字：靠上对齐、超出部分从底部裁掉，底部给代码 label 让位。
   object-fit: cover;
+  object-position: top center;
   display: block;
 }
 
+// 名称/描述改为代码渲染，缩放时不会像图片内文字那样被裁切/糊。
+.coming-soon-scroll-card__label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding: 0.36rem 0.24rem 0.16rem;
+  color: #fff;
+  text-align: left;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
+}
+
+.coming-soon-scroll-card__title {
+  font-size: 0.34rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.coming-soon-scroll-card__subtitle {
+  font-size: 0.22rem;
+  font-weight: 400;
+  line-height: 1.25;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+// 只在标题与副标题之间留 0.12rem，副标题各行仍靠 line-height 紧凑排列。
+.coming-soon-scroll-card__subtitle--first {
+  margin-top: 0.12rem;
+}
 </style>

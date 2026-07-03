@@ -130,5 +130,6 @@
   "UILogin_AccountRegisterTip": "Please keep your account and password safe. They cannot be recovered if lost.",
   "UILogin_Account": "Please enter account ID",
   "UILogin_BtnLogin": "Login",
-  "UIloginPhone_logintext": "Login"
+  "UIloginPhone_logintext": "Login",
+  "UIloginPhone_Registertext": "Login"
 }

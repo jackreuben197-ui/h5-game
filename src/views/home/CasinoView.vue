@@ -812,7 +812,9 @@ onActivated(async () => {
 
     <div class="casino-content" :class="{ 'is-embedded': hideHeader }">
       <!-- ── Popular Banner (horizontal scroll) ─────────────────────── -->
+      <!-- 热门游戏横向滚动条 暂时隐藏，后续可能恢复（删掉 v-if="false" 即可恢复） -->
       <section
+      v-if="false"
       class="popular-banner-section"
       v-show="popularBannerGames.length > 0 || isInitLoading || loadingPopularBanner"
     >
@@ -912,6 +914,7 @@ onActivated(async () => {
         <img :src="img7" alt="棋牌" class="icon-img" />
         <span class="icon-label">棋牌</span>
       </button>
+      <!-- 彩票 分类 暂时隐藏，后续可能恢复
       <button
         class="icon-item"
         :class="{ selected: selectedCategory === 'lottery' }"
@@ -921,6 +924,7 @@ onActivated(async () => {
         <img :src="img8" alt="彩票" class="icon-img" />
         <span class="icon-label">彩票</span>
       </button>
+      -->
     </section>
 
     <!-- ── Category List ── -->

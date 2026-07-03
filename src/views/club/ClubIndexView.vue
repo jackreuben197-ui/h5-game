@@ -1434,6 +1434,30 @@ const handleBack = () => {
   padding: 0.22rem 0.4562rem 0;
 }
 
+// 用 flex 撑满视口：顶部/头部固定高度，内容区（列表/内嵌页）占满剩余空间并贴到底部，
+// 避免写死的 max-height: calc(100dvh - Nrem) 猜错头部高度导致底部被裁或留白。
+.club-auth-interaction-layer {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  // 不加 overflow: hidden：否则会裁掉 .group-list 用负 margin 铺满左右的“出血边”。
+  // 竖向溢出由 page-shell(overflow:hidden) 与列表自身 overflow-y:auto 兜住。
+
+  // HeaderBack（顶部栏）为第一个子元素，固定高度不压缩。
+  > :first-child {
+    flex-shrink: 0;
+  }
+
+  .club-header {
+    flex-shrink: 0;
+  }
+
+  // 玩法子标签（全部/德州/奥马哈…）固定高度，不随内容压缩。
+  .club-game-tabs {
+    flex-shrink: 0;
+  }
+}
+
 .club-header-row {
   display: flex;
   align-items: center;
@@ -1899,7 +1923,8 @@ const handleBack = () => {
   margin-top: -0.03rem;
   margin-left: calc(-1 * var(--app-side-padding));
   margin-right: calc(-1 * var(--app-side-padding));
-  max-height: calc(100dvh - 7.85rem);
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1915,10 +1940,11 @@ const handleBack = () => {
 .club-embedded-container {
   position: relative;
   z-index: 1;
-  max-height: calc(100dvh - 7.85rem);
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
   overflow-y: auto;
-  padding: 0.34rem 0.96rem 0.5rem 0.38rem;
+  padding: 0.34rem 0.96rem 2.2rem 0.38rem;
   background: transparent;
   width: 10.56rem;
   margin-left: -0.28rem;

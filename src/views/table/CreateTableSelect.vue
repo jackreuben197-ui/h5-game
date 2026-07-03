@@ -72,7 +72,7 @@ async function prefetchClubDiamondBalance(): Promise<void> {
   }
 }
 const handleBack = () => {
-  router.push('/club/index')
+  router.replace({ name: originType.value === 4 ? 'friendsTable' : 'club-index' })
 }
 
 onMounted(() => {

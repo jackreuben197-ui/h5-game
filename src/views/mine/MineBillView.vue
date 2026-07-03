@@ -14,7 +14,7 @@ import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import iconUc from '@/assets/icons/icon_chips.png'
 import iconCredit from '@/assets/icons/icon_credit_chip.png'
-import iconChipRed from '@/assets/icons/icon_chip_red.png'
+import iconChipGreen from '@/assets/icons/icon_chip_green.png'
 import { formatUC } from '@/utils/roomVisibility'
 import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
@@ -722,12 +722,12 @@ onMounted(() => {
       </div>
 
       <section v-if="activeTab !== 3" class="glass-card total-card">
-        <div v-if="activeTab === 1" class="label">UC{{ t('UIClub_Text33') }}</div>
+        <div v-if="activeTab === 1" class="label">{{ t('UC') }}{{ t('UIClub_Text33') }}</div>
         <div v-else-if="activeTab === 2" class="label">{{ t('UIMineAllClub') }}</div>
         <div v-else-if="activeTab === 4" class="label">{{ t('UIMineAllDiamond') }}</div>
         <div class="amount-row">
           <img v-if="activeTab === 1" :src="iconUc" alt="chip" />
-          <img v-else-if="activeTab === 2" :src="iconChipRed" alt="chip" />
+          <img v-else-if="activeTab === 2" :src="iconChipGreen" alt="chip" />
           <img v-else :src="iconDiamond" alt="diamond" />
           <strong>{{ formatAmount(totalAmount) }}</strong>
         </div>

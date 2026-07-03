@@ -748,15 +748,13 @@ watch(filteredWithdrawTypes, (list) => {
 
 .wf__amount-input-wrap {
   padding: 0 0.42rem;
-  margin-top: 0.55rem;
+  margin-top: 0.2rem;
 }
 
 .wf__amount-range {
   width: 100%;
-  height: 1.2rem;
-  padding: 0 0.5rem;
-  background: rgba(232,232,232,0.15);
-  border-radius: 0.75rem;
+  margin-top: 0.1rem;
+  padding: 0.08rem 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -767,7 +765,7 @@ watch(filteredWithdrawTypes, (list) => {
 }
 
 .wf__amount-display {
-  margin-top: 0.32rem;
+  margin-top: 0.1rem;
   width: 100%;
   min-height: 1.2rem;
   display: flex;
@@ -790,7 +788,7 @@ watch(filteredWithdrawTypes, (list) => {
   justify-content: space-between;
   height: 1.2rem;
   padding: 0 0.5rem;
-  margin: 0.2rem 0.42rem 0.55rem;
+  margin: 0.4rem 0.42rem 0.4rem;
   border-radius: 0.75rem;
   background: rgba(255,255,255,0.04);
   opacity: 0;

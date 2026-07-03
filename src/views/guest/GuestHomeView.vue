@@ -329,9 +329,12 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0;
+  margin-top: 0.2rem;
   flex-shrink: 0;
-  margin-bottom: -20px;
-  margin-top: -8px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #222627;
 }
 
 .top-bar__logo {
@@ -342,7 +345,9 @@ onMounted(() => {
 
 .top-bar__logo-img {
   width: 1.8rem;
-  height: 1.8rem;
+  height: auto;
+  margin-top: 0.1rem;
+  display: block;
   object-fit: contain;
 }
 

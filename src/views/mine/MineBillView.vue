@@ -14,6 +14,7 @@ import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import iconUc from '@/assets/icons/icon_chips.png'
 import iconCredit from '@/assets/icons/icon_credit_chip.png'
+import iconChipRed from '@/assets/icons/icon_chip_red.png'
 import { formatUC } from '@/utils/roomVisibility'
 import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
@@ -35,8 +36,8 @@ const backgroundStyle = computed(() => ({
 const title = computed(() => t('UIMine_Bill'))
 
 const tabGoldTypes = [
-  { label: 'UC', value: 1 },
-  { label: 'Club' + t('UIClub_Text34'), value: 2 },
+  { label: t('UC'), value: 1 },
+  { label: '俱乐部' + t('UIClub_Text34'), value: 2 },
   { label: t('UIClub_Table'), value: 3 },
   { label: t('UIMine_VIP_diamond'), value: 4 },
 ] as const
@@ -726,7 +727,7 @@ onMounted(() => {
         <div v-else-if="activeTab === 4" class="label">{{ t('UIMineAllDiamond') }}</div>
         <div class="amount-row">
           <img v-if="activeTab === 1" :src="iconUc" alt="chip" />
-          <img v-else-if="activeTab === 2" :src="iconCredit" alt="chip" />
+          <img v-else-if="activeTab === 2" :src="iconChipRed" alt="chip" />
           <img v-else :src="iconDiamond" alt="diamond" />
           <strong>{{ formatAmount(totalAmount) }}</strong>
         </div>

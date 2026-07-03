@@ -64,6 +64,11 @@ interface WebClipOptions {
  * 注意：图片必须支持 CORS 或与当前页同源，否则 fetch 会失败。
  */
 async function fetchIconAsBase64(iconUrl: string): Promise<string> {
+  if (iconUrl.startsWith('data:')) {
+    const commaIdx = iconUrl.indexOf(',')
+    return commaIdx >= 0 ? iconUrl.slice(commaIdx + 1) : ''
+  }
+
   const res = await fetch(iconUrl)
   if (!res.ok) throw new Error(`fetch icon failed: ${res.status}`)
   const blob = await res.blob()

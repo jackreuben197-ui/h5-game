@@ -38,6 +38,7 @@ const backgroundStyle = computed(() => ({
 }))
 
 const isHome = computed(() => route.meta.tabKey === 'home')
+const isGuestHome = computed(() => route.name === 'guest-home')
 const isClub = computed(() => route.meta.tabKey === 'club')
 const isMessage = computed(() => route.meta.tabKey === 'message')
 const isMine = computed(() => route.meta.tabKey === 'mine')
@@ -149,6 +150,7 @@ watch(
     class="main-layout"
     :class="{
       'is-home': isHome,
+      'is-guest-home': isGuestHome,
       'is-club': isClub,
       'is-message': isMessage,
       'is-mine': isMine,
@@ -236,12 +238,16 @@ watch(
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   overscroll-behavior-y: none;
-  padding: calc(env(safe-area-inset-top) + 0.4rem) 0rem calc(env(safe-area-inset-bottom) + 2.72rem);
+  padding: calc(env(safe-area-inset-top) + 0.2rem) 0rem calc(env(safe-area-inset-bottom) + 2.72rem);
 }
 
 .main-layout--home .main-layout-content {
   background: #222627;
   padding-top: env(safe-area-inset-top);
+}
+
+.main-layout.is-guest-home .main-layout-content {
+  overflow-y: hidden;
 }
 
 .module-slot {

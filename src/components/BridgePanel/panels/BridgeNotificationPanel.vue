@@ -16,6 +16,7 @@ import {
 } from '@/utils/iosWebClip'
 import hometab1 from '@/assets/images/hometab1.png'
 import hometab2 from '@/assets/images/hometab2.png'
+import webClipIcon from '@/assets/images/icon-192.png?inline'
 
 const props = defineProps<{
   panelProps?: Record<string, unknown>
@@ -247,14 +248,13 @@ async function onSecondaryAction(): Promise<void> {
   if (isIosNativeSafari()) {
     try {
       showToast({ message: '正在准备安装文件…', duration: 1500 })
-      // 部署可能位于站点子路径，用 BASE_URL 解析成绝对地址，
-      // 避免固定 '/' 打到站点根导致图标 404（manifest 用的也是同款相对路径）。
+      // 部署可能位于站点子路径，用 BASE_URL 解析成绝对地址作为快捷方式打开地址。
       const appBaseUrl = new URL(import.meta.env.BASE_URL, window.location.href).toString()
       await installIosWebClip({
         label: 'Newpkr',
         url: appBaseUrl,
-        // 用 manifest 里同一张 192 图标，避免重复打包
-        iconUrl: new URL('icon-192.png', appBaseUrl).toString(),
+        // 图标在构建期内联成 data URL，避免线上未部署 icon-192.png 时 fetch 404。
+        iconUrl: webClipIcon,
       })
       // location.href 跳转后，iOS Safari 会接管显示"是否允许下载描述文件"对话框，
       // 不需要再 toast；以下是兜底（极少数情况跳转未生效）

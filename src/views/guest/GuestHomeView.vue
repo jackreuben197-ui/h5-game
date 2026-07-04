@@ -116,13 +116,15 @@ onMounted(() => {
     </div>
     <!-- 1. 顶部俱乐部介绍图 -->
     <div class="home-header">
-      <img class="home-header-img" :src="clubBannerUrl" alt="俱乐部介绍" />
-      <div v-if="isFallbackBanner" class="home-header__hero">
-        <div class="home-header__text">
-          <p class="home-header__title">全民代理</p>
-          <p class="home-header__subtitle">一键创建你的线上俱乐部</p>
+      <div class="home-header__inner">
+        <img class="home-header-img" :src="clubBannerUrl" alt="俱乐部介绍" />
+        <div v-if="isFallbackBanner" class="home-header__hero">
+          <div class="home-header__text">
+            <p class="home-header__title">全民代理</p>
+            <p class="home-header__subtitle">一键创建你的线上俱乐部</p>
+          </div>
+          <span class="home-header__pill">xypk.com</span>
         </div>
-        <span class="home-header__pill">xypk.com</span>
       </div>
     </div>
 
@@ -321,7 +323,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.12rem;
-  padding: 0 0.4rem 0.24rem;
+  padding: 0 0.4rem 0;
   background: transparent;
   height: 100%;
   min-height: 0;
@@ -421,9 +423,15 @@ onMounted(() => {
   width: 100%;
   border-radius: 0.8rem;
   overflow: hidden;
-  flex: 0 1 3.68rem;
+  flex: 1 1 3.68rem;
   min-height: 0;
+  max-height: 4.5rem;
+}
+
+.home-header__inner {
   position: relative;
+  width: 100%;
+  height: 100%;
   container-type: size;
 }
 
@@ -439,7 +447,7 @@ onMounted(() => {
   left: 0;
   right: 0;
   top: 0.56rem;
-  top: 15.2cqh;
+  top: min(15.2cqh, 0.56rem);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -453,7 +461,7 @@ onMounted(() => {
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 700;
   font-size: 0.62rem;
-  font-size: 16.9cqh;
+  font-size: min(16.9cqh, 0.62rem);
   line-height: 1.2;
   letter-spacing: 0.01rem;
   color: #fff;
@@ -463,17 +471,17 @@ onMounted(() => {
 
 .home-header__pill {
   margin-top: 0.26rem;
-  margin-top: 7.1cqh;
+  margin-top: min(7.1cqh, 0.26rem);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0.12rem 0.5rem;
-  padding: 3.3cqh 13.6cqh;
+  padding: min(3.3cqh, 0.12rem) min(13.6cqh, 0.5rem);
   border-radius: 99px;
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 700;
   font-size: 0.6rem;
-  font-size: 16.3cqh;
+  font-size: min(16.3cqh, 0.6rem);
   color: #fff;
   white-space: nowrap;
   background: rgba(37, 37, 37, 0.49);
@@ -723,7 +731,7 @@ onMounted(() => {
 .game-scroll-card {
   flex-shrink: 0;
   width: 2.95rem;
-  height: 3.7rem;
+  height: 3.9rem;
   border-radius: 0.37rem;
   overflow: hidden;
   position: relative;
@@ -926,7 +934,7 @@ onMounted(() => {
   flex-shrink: 0;
   width: 2.95rem;
   // 固定高度：小屏不再压缩卡片，改由页面向下滚动兜底（与登录后首页一致）。
-  height: 3.8rem;
+  height: 3.9rem;
   border-radius: 0.51rem;
   overflow: hidden;
   position: relative;

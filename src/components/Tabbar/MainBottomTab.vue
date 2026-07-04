@@ -401,7 +401,7 @@ onBeforeUnmount(() => {
 .bottom-tab {
   position: fixed;
   left: 50%;
-  bottom: calc(env(safe-area-inset-bottom) + 0.06rem);
+  bottom: calc(env(safe-area-inset-bottom) + 0.1rem);
   transform: translateX(-50%);
   z-index: 24;
   width: 9rem;

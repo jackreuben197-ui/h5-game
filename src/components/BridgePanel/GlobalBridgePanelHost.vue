@@ -140,14 +140,9 @@ function onDialogClose(): void {
 
 <style lang="scss">
 .bridge-panel-left-popup {
-  /* 居中悬浮的有界卡片：不再占满整屏，高度对齐现金实时战况弹窗 */
-  left: 5vw !important;
   width: 90vw;
-  top: 6dvh !important;
-  bottom: auto !important;
-  height: 88dvh !important;
-  max-height: 88dvh !important;
-  border-radius: 0.6rem;
+  height: 100dvh;
+  max-height: 100dvh;
   overflow: hidden;
   display: flex;
   flex-direction: column;

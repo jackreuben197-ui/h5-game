@@ -5,7 +5,6 @@ import { GameTable, GameTableColumn } from '@/components/Table'
 import defaultAvatar from '@/assets/icons/icon_mtt_avatar.png'
 import chipIcon from '@/assets/icons/icon_chips.png'
 import arrowIcon from '@/assets/icons/wallet/ic_arrow_left.svg'
-import closeIcon from '@/assets/icons/modal_close.svg'
 import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, toUnixSeconds } from '@/utils/time'
@@ -517,11 +516,6 @@ onUnmounted(() => {
 
 <template>
   <section class="mrp">
-    <!-- ── 关闭按钮 ── -->
-    <button class="mrp__close" type="button" aria-label="close" @click="closePanel('close')">
-      <img :src="closeIcon" alt="close" />
-    </button>
-
     <!-- ── 标题 ── -->
     <div class="mrp__title">{{ tournamentName }}</div>
 
@@ -806,7 +800,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;
+  height: 100dvh;
   box-sizing: border-box;
   color: #f9f9f9;
   font-family: 'HONOR Sans CN', sans-serif;
@@ -821,38 +815,9 @@ onUnmounted(() => {
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: rgba(8, 8, 8, 0.55);
+    background: rgba(8, 8, 8, 0.28);
     backdrop-filter: blur(0.08rem);
     -webkit-backdrop-filter: blur(0.08rem);
-  }
-}
-
-/* ── 关闭按钮（右上角红色圆底 + 白色 X，对齐现金战况弹窗）── */
-.mrp__close {
-  position: absolute;
-  top: 0.24rem;
-  right: 0.24rem;
-  z-index: 6;
-  width: 0.8rem;
-  height: 0.8rem;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: #f5334b;
-  box-shadow: 0 0.04rem 0.12rem rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-
-  img {
-    width: 54%;
-    height: 54%;
-    object-fit: contain;
-  }
-
-  &:active {
-    opacity: 0.8;
   }
 }
 
@@ -877,8 +842,7 @@ onUnmounted(() => {
   border-radius: 0.64rem;
   padding: 0.37rem 0.15rem;
   box-shadow:
-  /* 左上高光 */
-    inset 0.2px 0.2px 0px 0px rgba(255, 255, 255, 0.85),
+  /* 左上高光 */ inset 0.2px 0.2px 0px 0px rgba(255, 255, 255, 0.85),
     /* 右下高光 */ inset -0.2px -0.2px 0px 0px rgba(255, 255, 255, 0.85);
 }
 
@@ -989,9 +953,7 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.17);
   border-radius: 4rem;
   color: #fff;
-  box-shadow:
-    inset 0 0 0 0.5px rgba(255, 255, 255, 1),
-    inset 0 0 0 0.5px rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 1), inset 0 0 0 0.5px rgba(255, 255, 255, 0.16);
 }
 
 /* ── Tab 内容 ── */

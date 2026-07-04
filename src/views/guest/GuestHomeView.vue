@@ -1,49 +1,14 @@
 <script setup lang="ts">
-import { postMiscBannerLobbyApi } from '@/api/misc'
-import homeHeaderFallback from '@/assets/images/home_header_1.png'
-import { getLocale, t, toServerLang } from '@/i18n'
+import { t } from '@/i18n'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { useCachedImage } from '@/utils/imageCache'
-import { readLobbyBannerCache, writeLobbyBannerCache } from '@/utils/lobbyBannerCache'
-import { computed, onMounted, ref } from 'vue'
+import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
+import { computed, onMounted } from 'vue'
 
 const loginModalStore = useLoginModalStore()
 const userInfoStore = useUserInfoStore()
 
-const lobbyBannerUrl = ref('')
-const clubBannerUrl = useCachedImage(() => lobbyBannerUrl.value || homeHeaderFallback)
-
-function extractLobbyImageUrl(data: { lobby?: { image_url?: string } } | null | undefined): string {
-  const raw = data?.lobby?.image_url
-  return typeof raw === 'string' ? raw.trim() : ''
-}
-
-// 游客首页顶部 banner：先读 public_cache 即刻渲染，再静默请求最新数据并回写缓存。
-async function fetchLobbyBanner(): Promise<void> {
-  const lang = toServerLang(getLocale())
-
-  const cached = await readLobbyBannerCache(lang)
-  const cachedUrl = extractLobbyImageUrl(cached)
-  if (cachedUrl) {
-    lobbyBannerUrl.value = cachedUrl
-  }
-
-  const response = await postMiscBannerLobbyApi({
-    lang,
-    type: 1,
-    offset: 0,
-    limit: 10,
-  })
-  if (Number(response.code) !== 0 || !response.data) {
-    return
-  }
-  const url = extractLobbyImageUrl(response.data)
-  if (url) {
-    lobbyBannerUrl.value = url
-  }
-  void writeLobbyBannerCache(lang, response.data)
-}
+const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
 const clubNameText = computed<string>(() => userInfoStore.channelDefaultClub?.club_name || '俱乐部')
 const noticeText = '欢迎来到德州扑克，登录后体验更多精彩内容'
 const clubGoldText = '0.00'
@@ -65,7 +30,7 @@ function notifyNotLoginRegister(): void {
 
 onMounted(() => {
   void userInfoStore.ensureChannelDefaultClub()
-  void fetchLobbyBanner().catch((error) => {
+  void fetchLobbyBannerImages().catch((error) => {
     console.warn('[guest-home] fetch lobby banner failed:', error)
   })
 })
@@ -83,9 +48,9 @@ onMounted(() => {
         <button class="top-bar__btn top-bar__btn--login" @click="notifyNotLogin">登陆</button>
       </div>
     </div>
-    <!-- 1. 顶部俱乐部介绍图 -->
+    <!-- 1. 顶部俱乐部介绍轮播图 -->
     <div class="home-header">
-      <img class="home-header-img" :src="clubBannerUrl" alt="俱乐部介绍" />
+      <HomeBannerSwiper :images="bannerImages" />
     </div>
 
     <!-- 2. 公告栏 -->
@@ -354,13 +319,6 @@ onMounted(() => {
   border-radius: 0.8rem;
   overflow: hidden;
   flex-shrink: 0;
-}
-
-.home-header-img {
-  width: 100%;
-  height: 3.68rem;
-  // object-fit: cover;
-  display: block;
 }
 
 .notice-bar {

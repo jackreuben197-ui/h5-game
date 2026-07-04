@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { showFailToast, showSuccessToast, showToast } from 'vant'
 import { t } from '@/i18n'
 import {
@@ -100,9 +100,32 @@ const findUsData = computed<FindUsData & { link_list: string[] }>(() => {
 })
 
 // ==================== 状态 ====================
-const MAX_STEP = 3
-const currentStep = ref(1)
+// 按需显示：只把有数据的步骤纳入递进序列（1=下载APP 2=弹窗公告 3=备用地址）
+const hasDownloadApp = computed(() => Object.keys(downloadAppData.value).length > 0)
+const hasPopupNotices = computed(() => popupNoticeList.value.length > 0)
+const hasFindUs = computed(() => {
+  const incoming = resolvedData.value.find_us
+  return isRecord(incoming) && Object.keys(incoming).length > 0
+})
+
+const availableSteps = computed<number[]>(() => {
+  const steps: number[] = []
+  if (hasDownloadApp.value) steps.push(1)
+  if (hasPopupNotices.value) steps.push(2)
+  if (hasFindUs.value) steps.push(3)
+  return steps
+})
+
+const stepIndex = ref(0)
+const currentStep = computed(() => availableSteps.value[stepIndex.value] ?? 0)
 const popupNoticeIndex = ref(0)
+
+// 兜底：三类数据全为空时直接关闭（正常情况下调用方不会打开面板）
+onMounted(() => {
+  if (!availableSteps.value.length) {
+    props.closePanel('empty')
+  }
+})
 
 const currentPopupNotice = computed<PopupNoticeItem | null>(() => {
   const items = popupNoticeList.value
@@ -111,10 +134,10 @@ const currentPopupNotice = computed<PopupNoticeItem | null>(() => {
   return items[index] ?? null
 })
 
-// ==================== 关闭逻辑：三步递进 ====================
+// ==================== 关闭逻辑：在有数据的步骤间递进 ====================
 function onClose(): void {
-  if (currentStep.value < MAX_STEP) {
-    currentStep.value++
+  if (stepIndex.value < availableSteps.value.length - 1) {
+    stepIndex.value++
     // 进入步骤2时重置索引，确保从第一条开始展示
     if (currentStep.value === 2) {
       popupNoticeIndex.value = 0
@@ -271,9 +294,7 @@ async function onSecondaryAction(): Promise<void> {
 
   // 兜底：Android 上 PWA 资产未就绪 / 已 dismiss / 用户参与度未达标
   showToast(
-    isIosSafari()
-      ? '请点击底部分享按钮，选择"添加到主屏幕"'
-      : '请在浏览器菜单中选择"添加到主屏幕"',
+    isIosSafari() ? '请点击底部分享按钮，选择"添加到主屏幕"' : '请在浏览器菜单中选择"添加到主屏幕"',
   )
 }
 </script>

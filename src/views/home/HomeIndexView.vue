@@ -3,18 +3,15 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSPro
 import { useRouter } from 'vue-router'
 import { getUserClubApi } from '@/api/user'
 import { getCowboyRoomListApi } from '@/api/gc'
-import { postMiscBannerLobbyApi } from '@/api/misc'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import StorageKey from '@/constants/storageKey'
-import homeHeaderFallback from '@/assets/images/home_header_1.png'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
-import { getLocale, t, toServerLang } from '@/i18n'
+import { t } from '@/i18n'
 import { localStore } from '@/utils/localStore'
-import { useCachedImage } from '@/utils/imageCache'
-import { readLobbyBannerCache, writeLobbyBannerCache } from '@/utils/lobbyBannerCache'
+import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { filterVisibleMttRecords } from '@/utils/mttVisibility'
 import { showGameToast } from '@/components/Toast'
@@ -137,8 +134,7 @@ const currentClub = computed<ClubInfo | null>(() => {
   return userInfoStore.clubList[0] || null
 })
 
-const lobbyBannerUrl = ref('')
-const clubBannerUrl = useCachedImage(() => lobbyBannerUrl.value || homeHeaderFallback)
+const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
 const noticeText = computed(() => {
   return toSafeString(currentClub.value?.prologue)
 })
@@ -394,32 +390,6 @@ async function fetchHomeMiniGameStats(): Promise<void> {
   persistHomeRoomStatsCache(homeRoomStats.value)
 }
 
-// 首页顶部 banner：先读 public_cache 即刻渲染，再静默请求最新数据并回写缓存。
-async function fetchLobbyBanner(): Promise<void> {
-  const lang = toServerLang(getLocale())
-
-  const cached = await readLobbyBannerCache(lang)
-  const cachedUrl = toSafeString(cached?.lobby?.image_url)
-  if (cachedUrl) {
-    lobbyBannerUrl.value = cachedUrl
-  }
-
-  const response = await postMiscBannerLobbyApi({
-    lang,
-    type: 1,
-    offset: 0,
-    limit: 10,
-  })
-  if (Number(response.code) !== 0 || !response.data) {
-    return
-  }
-  const url = toSafeString(response.data?.lobby?.image_url)
-  if (url) {
-    lobbyBannerUrl.value = url
-  }
-  void writeLobbyBannerCache(lang, response.data)
-}
-
 // 首页 MTT 统计：和 MttContent 走同一份过滤口径（排麻将 + club/tribe 可见性），
 // 保证「首页显示 N 桌 M 人」和「进入 MTT 列表后看到的赛事数 / 报名总人数」完全一致。
 // tables = 可见赛事数；players = 可见赛事 participants 之和。
@@ -511,7 +481,7 @@ onMounted(() => {
   void fetchHomeMiniGameStats().catch((error) => {
     console.warn('[home] fetch mini game stats failed:', error)
   })
-  void fetchLobbyBanner().catch((error) => {
+  void fetchLobbyBannerImages().catch((error) => {
     console.warn('[home] fetch lobby banner failed:', error)
   })
   void updateNoticeMarquee()
@@ -547,9 +517,9 @@ onBeforeUnmount(() => {
       <span class="top-bar__logo">POKER</span>
     </div>
 
-    <!-- 1. 顶部俱乐部介绍图 -->
+    <!-- 1. 顶部俱乐部介绍轮播图 -->
     <div class="home-header">
-      <img class="home-header-img" :src="clubBannerUrl" alt="俱乐部介绍" />
+      <HomeBannerSwiper :images="bannerImages" />
     </div>
 
     <!-- 2. 公告栏 -->
@@ -639,130 +609,158 @@ onBeforeUnmount(() => {
     <!-- 扑克专区为空但赛事专区有数据时，用 MTT 列表替换 4/5 两个模块。 -->
     <div class="home-swap-container">
       <Transition name="home-swap">
-        <MttContent v-if="shouldReplaceWithMtt" key="mtt" class="home-mtt-content home-swap-panel" />
+        <MttContent
+          v-if="shouldReplaceWithMtt"
+          key="mtt"
+          class="home-mtt-content home-swap-panel"
+        />
         <div v-else key="default" class="home-default-sections home-swap-panel">
-    <!-- 4. 游戏模块 -->
-    <div class="section-header">
-      <span class="section-title">游戏中心</span>
-    </div>
-    <div class="game-center-scroll">
-      <div class="game-center-track">
-        <!-- MTT赛事专区 -->
-        <div class="game-scroll-card game-card-mtt" @click="goToMttList">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_mtt_lg.png" alt="MTT" />
-          <div class="zone-info">
-            <div class="zone-header">
-              <span class="zone-title"> {{ t('UIHomeMttArea') }} </span>
-              <img class="zone-mini-icon" src="@/assets/icons/game_zone_mtt_mini.png" alt="" />
-            </div>
-            <div class="zone-desc">
-              <span>{{ t('UIHomeMttPokerTip') }}</span>
-            </div>
-            <p class="zone-sub-desc">{{ t('UIHomeMttAreaTip') }}</p>
+          <!-- 4. 游戏模块 -->
+          <div class="section-header">
+            <span class="section-title">游戏中心</span>
           </div>
-          <div class="zone-online-bar">
-            <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
-            <span class="online-num"> {{ mttTablesText }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> {{ mttPlayersText }} </span>
-          </div>
-        </div>
+          <div class="game-center-scroll">
+            <div class="game-center-track">
+              <!-- MTT赛事专区 -->
+              <div class="game-scroll-card game-card-mtt" @click="goToMttList">
+                <img class="zone-lg-bg" src="@/assets/icons/game_zone_mtt_lg.png" alt="MTT" />
+                <div class="zone-info">
+                  <div class="zone-header">
+                    <span class="zone-title"> {{ t('UIHomeMttArea') }} </span>
+                    <img
+                      class="zone-mini-icon"
+                      src="@/assets/icons/game_zone_mtt_mini.png"
+                      alt=""
+                    />
+                  </div>
+                  <div class="zone-desc">
+                    <span>{{ t('UIHomeMttPokerTip') }}</span>
+                  </div>
+                  <p class="zone-sub-desc">{{ t('UIHomeMttAreaTip') }}</p>
+                </div>
+                <div class="zone-online-bar">
+                  <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
+                  <span class="online-num"> {{ mttTablesText }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
+                  <span class="online-num"> {{ mttPlayersText }} </span>
+                </div>
+              </div>
 
-        <!-- 扑克专区 -->
-        <div class="game-scroll-card poker-card" @click="goToGameList">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_poker_lg.png" alt="扑克" />
-          <div class="poker-overlay"></div>
-          <div class="zone-info poker-info">
-            <div class="zone-header">
-              <span class="zone-title"> {{ t('UIHomePokerArea') }} </span>
-              <img
-                class="zone-mini-icon poker-mini"
-                src="@/assets/icons/game_zone_poker_mini.png"
-                alt=""
-              />
-            </div>
-            <div class="poker-desc-area">
-              <p class="zone-sub-desc">{{ t('UITexasRule_texas') }}</p>
-              <p class="zone-sub-desc">{{ t('UITexasRule_omaha') }}</p>
-              <p class="zone-sub-desc">{{ t('PokerType_2') }}</p>
-            </div>
-          </div>
-          <div class="zone-online-bar">
-            <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
-            <span class="online-num"> {{ pokerTablesText }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> {{ pokerPlayersText }} </span>
-          </div>
-        </div>
+              <!-- 扑克专区 -->
+              <div class="game-scroll-card poker-card" @click="goToGameList">
+                <img class="zone-lg-bg" src="@/assets/icons/game_zone_poker_lg.png" alt="扑克" />
+                <div class="poker-overlay"></div>
+                <div class="zone-info poker-info">
+                  <div class="zone-header">
+                    <span class="zone-title"> {{ t('UIHomePokerArea') }} </span>
+                    <img
+                      class="zone-mini-icon poker-mini"
+                      src="@/assets/icons/game_zone_poker_mini.png"
+                      alt=""
+                    />
+                  </div>
+                  <div class="poker-desc-area">
+                    <p class="zone-sub-desc">{{ t('UITexasRule_texas') }}</p>
+                    <p class="zone-sub-desc">{{ t('UITexasRule_omaha') }}</p>
+                    <p class="zone-sub-desc">{{ t('PokerType_2') }}</p>
+                  </div>
+                </div>
+                <div class="zone-online-bar">
+                  <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
+                  <span class="online-num"> {{ pokerTablesText }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
+                  <span class="online-num"> {{ pokerPlayersText }} </span>
+                </div>
+              </div>
 
-        <!-- 小游戏专区 -->
-        <div v-if="false" class="game-scroll-card game-card-minigame" @click="openMiniGamePanel">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_minigame_lg.png" alt="小游戏" />
-          <div class="zone-info">
-            <div class="zone-header">
-              <span class="zone-title"> {{ t('UIHomeMinigameArea') }} </span>
-              <img class="zone-mini-icon" src="@/assets/icons/game_zone_minigame_mini.png" alt="" />
-            </div>
-            <p class="zone-desc">{{ t('UIData_YGvXd5iXr_011') }}</p>
-          </div>
-          <div class="zone-online-bar">
-            <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> {{ miniGamePlayersText }} </span>
-          </div>
-        </div>
+              <!-- 小游戏专区 -->
+              <div
+                v-if="false"
+                class="game-scroll-card game-card-minigame"
+                @click="openMiniGamePanel"
+              >
+                <img
+                  class="zone-lg-bg"
+                  src="@/assets/icons/game_zone_minigame_lg.png"
+                  alt="小游戏"
+                />
+                <div class="zone-info">
+                  <div class="zone-header">
+                    <span class="zone-title"> {{ t('UIHomeMinigameArea') }} </span>
+                    <img
+                      class="zone-mini-icon"
+                      src="@/assets/icons/game_zone_minigame_mini.png"
+                      alt=""
+                    />
+                  </div>
+                  <p class="zone-desc">{{ t('UIData_YGvXd5iXr_011') }}</p>
+                </div>
+                <div class="zone-online-bar">
+                  <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
+                  <span class="online-num"> {{ miniGamePlayersText }} </span>
+                </div>
+              </div>
 
-        <!-- 麻将专区 -->
-        <div
-          v-if="false"
-          class="game-scroll-card game-card-mahjong"
-          @click="showGameToast('功能开发中')"
-        >
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
-          <div class="zone-info">
-            <div class="zone-header">
-              <span class="zone-title"> {{ t('UIHomeMahjongArea') }} </span>
-              <img class="zone-mini-icon" src="@/assets/icons/game_zone_mahjong_mini.png" alt="" />
-            </div>
-            <div class="zone-desc">
-              <div class="mr-4">{{ t('Mahjong_BloodFight') }}</div>
-              <div class="mr-4">{{ t('Mahjong_BloodRiver') }}</div>
-              <div class="mr-4">{{ t('Mahjong_Standard') }}</div>
+              <!-- 麻将专区 -->
+              <div
+                v-if="false"
+                class="game-scroll-card game-card-mahjong"
+                @click="showGameToast('功能开发中')"
+              >
+                <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
+                <div class="zone-info">
+                  <div class="zone-header">
+                    <span class="zone-title"> {{ t('UIHomeMahjongArea') }} </span>
+                    <img
+                      class="zone-mini-icon"
+                      src="@/assets/icons/game_zone_mahjong_mini.png"
+                      alt=""
+                    />
+                  </div>
+                  <div class="zone-desc">
+                    <div class="mr-4">{{ t('Mahjong_BloodFight') }}</div>
+                    <div class="mr-4">{{ t('Mahjong_BloodRiver') }}</div>
+                    <div class="mr-4">{{ t('Mahjong_Standard') }}</div>
+                  </div>
+                </div>
+                <div class="zone-online-bar">
+                  <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
+                  <span class="online-num"> {{ mahjongTablesText }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
+                  <span class="online-num"> {{ mahjongPlayersText }} </span>
+                </div>
+              </div>
+
+              <!-- 即将开放 -->
+              <div class="game-scroll-card coming-soon-card coming-soon-right">
+                <img
+                  class="zone-lg-bg"
+                  src="@/assets/icons/game_zone_comming_lg.png"
+                  alt="即将开放"
+                />
+                <div class="coming-soon-overlay"></div>
+                <span class="coming-soon-text"> {{ t('UIHomeComingSoon') }}</span>
+              </div>
             </div>
           </div>
-          <div class="zone-online-bar">
-            <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
-            <span class="online-num"> {{ mahjongTablesText }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> {{ mahjongPlayersText }} </span>
+
+          <!-- 5. 即将开放横向滚动 -->
+          <div class="section-header">
+            <span class="section-title">热门游戏</span>
+          </div>
+          <div class="coming-soon-scroll">
+            <div class="coming-soon-track">
+              <div v-for="i in 4" :key="i" class="coming-soon-scroll-card">
+                <div class="coming-soon-scroll-card__overlay"></div>
+                <span class="coming-soon-scroll-card__text">{{ t('UIHomeComingSoon') }}</span>
+              </div>
+            </div>
           </div>
         </div>
-
-        <!-- 即将开放 -->
-        <div class="game-scroll-card coming-soon-card coming-soon-right">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_comming_lg.png" alt="即将开放" />
-          <div class="coming-soon-overlay"></div>
-          <span class="coming-soon-text"> {{ t('UIHomeComingSoon') }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 5. 即将开放横向滚动 -->
-    <div class="section-header">
-      <span class="section-title">热门游戏</span>
-    </div>
-    <div class="coming-soon-scroll">
-      <div class="coming-soon-track">
-        <div v-for="i in 4" :key="i" class="coming-soon-scroll-card">
-          <div class="coming-soon-scroll-card__overlay"></div>
-          <span class="coming-soon-scroll-card__text">{{ t('UIHomeComingSoon') }}</span>
-        </div>
-      </div>
-    </div>
-      </div>
       </Transition>
     </div>
   </div>
@@ -810,13 +808,6 @@ onBeforeUnmount(() => {
   border-radius: 0.8rem;
   overflow: hidden;
   flex-shrink: 0;
-}
-
-.home-header-img {
-  width: 100%;
-  height: 3.68rem;
-  // object-fit: cover;
-  display: block;
 }
 
 .notice-bar {

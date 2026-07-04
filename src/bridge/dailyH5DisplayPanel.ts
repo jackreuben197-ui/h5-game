@@ -26,10 +26,16 @@ export async function tryShowDailyH5DisplayPanel(): Promise<void> {
   }
 
   const data = response.data || {}
+  // 空对象也视为无数据，面板侧会按需跳过对应步骤
   const downloadApp =
-    data.download_app && typeof data.download_app === 'object' ? data.download_app : null
+    data.download_app && typeof data.download_app === 'object' && Object.keys(data.download_app).length > 0
+      ? data.download_app
+      : null
   const popupNotices = Array.isArray(data.popup_notices) ? data.popup_notices : []
-  const findUs = data.find_us && typeof data.find_us === 'object' ? data.find_us : null
+  const findUs =
+    data.find_us && typeof data.find_us === 'object' && Object.keys(data.find_us).length > 0
+      ? data.find_us
+      : null
 
   // 三类数据全为空时不弹窗，但仍标记当天避免重复请求。
   if (!downloadApp && popupNotices.length === 0 && !findUs) {

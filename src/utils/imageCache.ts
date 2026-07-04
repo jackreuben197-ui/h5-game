@@ -69,3 +69,28 @@ export function useCachedImage(source: MaybeRefOrGetter<string>): ComputedRef<st
     return blobUrlCache[url] || url
   })
 }
+
+/**
+ * useCachedImage 的列表版：对一组远程图片 URL 做同样的 blob 缓存。
+ */
+export function useCachedImages(source: MaybeRefOrGetter<string[]>): ComputedRef<string[]> {
+  watch(
+    () => toValue(source),
+    (urls) => {
+      (urls || []).forEach((url) => {
+        const trimmed = (url || '').trim()
+        if (shouldPreload(trimmed)) {
+          void preload(trimmed)
+        }
+      })
+    },
+    { immediate: true },
+  )
+
+  return computed(() =>
+    (toValue(source) || []).map((url) => {
+      const trimmed = (url || '').trim()
+      return blobUrlCache[trimmed] || trimmed
+    }),
+  )
+}

@@ -26,6 +26,7 @@ import type {
   MttSeriesInfoRecord,
   RoomRecord,
 } from '@/api/models/roomcenter'
+import { useAppConfigStore } from '@/stores/appConfig'
 import { useGameStore } from '@/stores/game'
 import { useMttListStore } from '@/stores/mttList'
 import { useMainTabsStore } from '@/stores/mainTabs'
@@ -35,7 +36,11 @@ import { useLoginModalStore } from '@/stores/loginModal'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import { useCachedImage } from '@/utils/imageCache'
 import { localStore } from '@/utils/localStore'
-import { checkIsShowForClubAndTribe, ROOM_ORIGIN_TYPE } from '@/utils/roomVisibility'
+import {
+  checkIsShowForClubAndTribe,
+  checkIsShowForClubAndTribeAndPlatform,
+  ROOM_ORIGIN_TYPE,
+} from '@/utils/roomVisibility'
 import { getLocale, t } from '@/i18n'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
@@ -131,6 +136,7 @@ interface MttRenderGroup extends MttGroup {
 
 const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
 
+const appConfigStore = useAppConfigStore()
 const gameStore = useGameStore()
 const mttListStore = useMttListStore()
 const roomListStore = useRoomListStore()
@@ -360,6 +366,11 @@ onMounted(() => {
 })
 
 async function initializeClubIndex(): Promise<void> {
+  // 渠道游客无 token，postAuthSync 不会执行，这里补拉全局配置（平台 MTT 可见性等依赖它）。
+  if (!gameStore.sessionToken) {
+    void appConfigStore.ensureGuestGlobalConfig()
+  }
+
   if (isChannelPackage && !currentJoinedClub.value) {
     await userInfoStore.ensureChannelDefaultClub()
   }
@@ -894,7 +905,10 @@ function checkMttVisibility(item: MttViewItem, clubId: number, tribeId: number):
     relate_club_ids: item.relateClubIds,
     relate_tribe_club_list: item.relateTribeClubList,
   } as RoomRecord
-  return checkIsShowForClubAndTribe(roomLike, clubId, tribeId)
+  // 对齐 Unity UIMatchItemListComponent：club_display_platform_mtt 开启时平台赛事直接可见。
+  return appConfigStore.clubDisplayPlatformMtt
+    ? checkIsShowForClubAndTribeAndPlatform(roomLike, clubId, tribeId)
+    : checkIsShowForClubAndTribe(roomLike, clubId, tribeId)
 }
 
 function resolveCategory(record: RawMttRecord): MttCategory {

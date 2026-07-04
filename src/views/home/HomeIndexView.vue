@@ -399,6 +399,7 @@ function refreshHomeMttStatsFromStore(): void {
     mttListStore.mttIdMetaMap,
     selectedClubId.value,
     selectedTribeId.value,
+    appConfigStore.clubDisplayPlatformMtt,
   )
   const players = visibleRecords.reduce((sum, item) => sum + toSafeNumber(item.participants), 0)
 
@@ -461,7 +462,14 @@ watch(
 )
 
 watch(
-  [() => mttListStore.records, () => mttListStore.mttIdList, selectedClubId, selectedTribeId],
+  [
+    () => mttListStore.records,
+    () => mttListStore.mttIdList,
+    selectedClubId,
+    selectedTribeId,
+    // 全局配置异步到达后重算，平台 MTT 可见性依赖 club_display_platform_mtt。
+    () => appConfigStore.clubDisplayPlatformMtt,
+  ],
   () => {
     refreshHomeMttStatsFromStore()
   },

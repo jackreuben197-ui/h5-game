@@ -5,6 +5,7 @@ import type { MttItem, MttActionType } from '@/components/ListItem/MttCard.vue'
 import type { MttIdInfoRecord, MttListRecord, MttSeriesInfoRecord } from '@/api/models/roomcenter'
 import pokerMiniIcon from '@/assets/icons/game_zone_mtt_mini.png'
 import mahjongMiniIcon from '@/assets/icons/game_zone_mahjong_mini.png'
+import { useAppConfigStore } from '@/stores/appConfig'
 import { useMttListStore } from '@/stores/mttList'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { getLocale, t } from '@/i18n'
@@ -62,6 +63,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const router = useRouter()
+const appConfigStore = useAppConfigStore()
 const mttListStore = useMttListStore()
 const userInfoStore = useUserInfoStore()
 
@@ -107,6 +109,7 @@ const filteredItems = computed<MttViewItem[]>(() => {
         mttListStore.mttIdMetaMap[toSafeInt(item.raw.match_id)],
         selectedClubId.value,
         selectedTribeId.value,
+        appConfigStore.clubDisplayPlatformMtt,
       )
     ) {
       return false

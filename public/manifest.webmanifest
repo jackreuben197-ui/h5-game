@@ -1,6 +1,6 @@
 {
-  "name": "Newpkr",
-  "short_name": "Newpkr",
+  "name": "小鱼扑克",
+  "short_name": "小鱼扑克",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

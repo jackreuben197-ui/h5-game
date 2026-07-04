@@ -244,6 +244,7 @@ watch(
 .main-layout--home .main-layout-content {
   background: #222627;
   padding-top: env(safe-area-inset-top);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 2rem);
 }
 
 .main-layout.is-guest-home .main-layout-content {

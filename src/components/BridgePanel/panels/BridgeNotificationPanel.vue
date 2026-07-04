@@ -251,7 +251,7 @@ async function onSecondaryAction(): Promise<void> {
       // 部署可能位于站点子路径，用 BASE_URL 解析成绝对地址作为快捷方式打开地址。
       const appBaseUrl = new URL(import.meta.env.BASE_URL, window.location.href).toString()
       await installIosWebClip({
-        label: 'Newpkr',
+        label: '小鱼扑克',
         url: appBaseUrl,
         // 图标在构建期内联成 data URL，避免线上未部署 icon-192.png 时 fetch 404。
         iconUrl: webClipIcon,

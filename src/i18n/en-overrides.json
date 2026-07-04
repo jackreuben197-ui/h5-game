@@ -131,5 +131,22 @@
   "UILogin_Account": "Please enter account ID",
   "UILogin_BtnLogin": "Login",
   "UIloginPhone_logintext": "Login",
-  "UIloginPhone_Registertext": "Login"
+  "UIloginPhone_Registertext": "Login",
+  "H5Display_DownloadTitle": "Download the app to win a 777 USDT bonus!",
+  "H5Display_OfficialSite": "Official site: ",
+  "H5Display_FindUsTitle": "Find Us",
+  "H5Display_FindUsSub": "BOSS~ Don't lose us: bookmark our backup URL and official email for instant access anytime.",
+  "H5Display_RulesTab": "Cashback Upgrade",
+  "H5Display_RulesHeader": "Live Casino Game Rules",
+  "H5Display_RulesContent": "To ensure a fair, just, and stable gaming environment and protect the rights of all members, we announce the following:<br><br>1. Because <span style=\"color:#ff4d4f\">Live Sic Bo and Live Blockchain Games</span> cannot be closed independently, any winnings generated from these projects will not be calculated; <span style=\"color:#ff4d4f; text-decoration: underline;\">all losses incurred must be borne by the members. Thank you for your understanding.</span><br><br>2. The platform will continue to monitor abnormal gameplay, arbitrage, and illegal use; once discovered and verified, the platform will handle it according to relevant risk control rules.",
+  "H5Display_TooltipAdd": "Add",
+  "H5Display_TooltipToMain": "To the Main screen first",
+  "H5Display_GuideTitle": "Add to main screen",
+  "H5Display_GuideStep1Part1": "1. Click on the Share icon on the top right corner",
+  "H5Display_GuideStep1Part2": "Then click 'Add to Home Screen'.",
+  "H5Display_GuideStep2": "2. Click 'Add' and add shortcut to the Homescreen",
+  "H5Display_NoticeDefaultTitle": "Activity Details",
+  "H5Display_NoContent": "No content",
+  "H5Display_SaveUrl": "Save URL",
+  "H5Display_UrlHint": "We suggest saving the following URLs to your bookmarks or notes for quick access."
 }

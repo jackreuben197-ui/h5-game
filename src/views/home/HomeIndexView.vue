@@ -7,7 +7,7 @@ import { postMiscBannerLobbyApi } from '@/api/misc'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import StorageKey from '@/constants/storageKey'
 import { joinCasinoGame, getDeviceType } from '@/api/casino'
-import homeHeaderFallback from '@/assets/images/home_header_2.png'
+import homeHeaderFallback from '@/assets/images/home_header_large.png'
 import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
@@ -92,21 +92,6 @@ const NOTICE_SPEED_PX_PER_SEC = 40
 const NOTICE_GAP_PX = 48
 
 let noticeResizeObserver: ResizeObserver | null = null
-
-const homeRootRef = ref<HTMLElement | null>(null)
-
-// 小屏内容超出视口时，把初始滚动位置放到底部：保证底部两块（游戏中心/热门游戏）
-// 完整可见，顶部的 banner/公告 上滑查看。大屏内容不溢出则无副作用。
-function anchorScrollToBottomOnSmall(): void {
-  void nextTick(() => {
-    requestAnimationFrame(() => {
-      const scroller = homeRootRef.value?.closest('.main-layout-content') as HTMLElement | null
-      if (scroller && scroller.scrollHeight - scroller.clientHeight > 4) {
-        scroller.scrollTop = scroller.scrollHeight
-      }
-    })
-  })
-}
 
 const showGameClubSelector = ref(false)
 const pendingGameInfo = ref<{ apiType: string; gameType: string; roomId: number } | null>(null)
@@ -330,6 +315,7 @@ const currentClub = computed<ClubInfo | null>(() => {
 
 const lobbyBannerUrl = ref('')
 const clubBannerUrl = useCachedImage(() => lobbyBannerUrl.value || homeHeaderFallback)
+const isFallbackBanner = computed<boolean>(() => !lobbyBannerUrl.value)
 const noticeText = computed(() => {
   return toSafeString(currentClub.value?.prologue)
 })
@@ -737,8 +723,6 @@ onMounted(() => {
   minigameStore.preloadMinigameData(undefined, true).catch((e) => {
     console.warn('[home] preload minigame data failed:', e)
   })
-
-  anchorScrollToBottomOnSmall()
 })
 
 onBeforeUnmount(() => {
@@ -750,7 +734,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="homeRootRef" class="home-page">
+  <div class="home-page" :class="{ 'home-page--fit': !shouldReplaceWithMtt }">
     <!-- 0. 顶部栏：登录态仅保留 POKER 品牌 -->
     <div class="top-bar">
       <div></div>
@@ -759,6 +743,13 @@ onBeforeUnmount(() => {
     <!-- 1. 顶部俱乐部介绍图 -->
     <div class="home-header">
       <img class="home-header-img" :src="clubBannerUrl" alt="俱乐部介绍" />
+      <div v-if="isFallbackBanner" class="home-header__hero">
+        <div class="home-header__text">
+          <p class="home-header__title">全民代理</p>
+          <p class="home-header__subtitle">一键创建你的线上俱乐部</p>
+        </div>
+        <span class="home-header__pill">xypk.com</span>
+      </div>
     </div>
 
     <!-- 2. 公告栏 -->
@@ -1008,7 +999,7 @@ onBeforeUnmount(() => {
 .home-page {
   display: flex;
   flex-direction: column;
-  gap: 0.24rem;
+  gap: 0.12rem;
   padding: 0 0.4rem 2.3rem;
   background: transparent;
   min-height: max-content;
@@ -1018,6 +1009,19 @@ onBeforeUnmount(() => {
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+.home-page--fit {
+  height: 100%;
+  min-height: 0;
+  padding-bottom: 0.24rem;
+  overflow: hidden;
+}
+
+.home-page--fit .notice-bar,
+.home-page--fit .club-panel,
+.home-page--fit .home-swap-container {
+  flex-shrink: 0;
 }
 
 .top-bar {
@@ -1032,14 +1036,97 @@ onBeforeUnmount(() => {
   width: 100%;
   border-radius: 0.8rem;
   overflow: hidden;
-  flex-shrink: 0;
+  flex: 0 1 3.68rem;
+  min-height: 0;
+  position: relative;
+  container-type: size;
 }
 
 .home-header-img {
   width: 100%;
-  height: 3.68rem;
-  // object-fit: cover;
+  height: 100%;
+  object-fit: cover;
   display: block;
+}
+
+.home-header__hero {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0.56rem;
+  top: 15.2cqh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.home-header__title,
+.home-header__subtitle {
+  margin: 0;
+  font-family: 'HONOR Sans CN', sans-serif;
+  font-weight: 700;
+  font-size: 0.62rem;
+  font-size: 16.9cqh;
+  line-height: 1.2;
+  letter-spacing: 0.01rem;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.home-header__pill {
+  margin-top: 0.26rem;
+  margin-top: 7.1cqh;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.12rem 0.5rem;
+  padding: 3.3cqh 13.6cqh;
+  border-radius: 999px;
+  font-family: 'HONOR Sans CN', sans-serif;
+  font-weight: 700;
+  font-size: 0.6rem;
+  font-size: 16.3cqh;
+  color: #fff;
+  white-space: nowrap;
+  background: rgba(37, 37, 37, 0.49);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.home-header__text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@container (max-height: 2.6rem) {
+  .home-header__hero {
+    top: 0;
+    bottom: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0.5rem;
+  }
+
+  .home-header__text {
+    align-items: flex-start;
+  }
+
+  .home-header__title,
+  .home-header__subtitle {
+    font-size: 0.46rem;
+    text-align: left;
+  }
+
+  .home-header__pill {
+    margin-top: 0;
+    font-size: 0.4rem;
+    padding: 0.1rem 0.4rem;
+  }
 }
 
 .notice-bar {
@@ -1247,7 +1334,7 @@ onBeforeUnmount(() => {
 .home-default-sections {
   display: flex;
   flex-direction: column;
-  gap: 0.24rem;
+  gap: 0.12rem;
 }
 
 // 默认模块 <=> MTT 列表切换用淡入淡出：改用 opacity，去掉 overflow:hidden，
@@ -1324,7 +1411,7 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   width: 2.95rem;
   // 固定高度：小屏不再压缩卡片，改由页面向下滚动（内容延伸到 appbar 下方，用户滚动查看）。
-  height: 3.91rem;
+  height: 3.7rem;
   border-radius: 0.37rem;
   overflow: hidden;
   position: relative;
@@ -1527,7 +1614,7 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   width: 2.95rem;
   // 与 .game-scroll-card 一致：固定高度，不再随屏幕压缩，改由页面滚动兜底。
-  height: 3.91rem;
+  height: 3.8rem;
   border-radius: 0.51rem;
   overflow: hidden;
   position: relative;

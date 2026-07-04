@@ -14,6 +14,9 @@ import {
   isIosNativeSafari,
   isIosThirdPartyBrowser,
 } from '@/utils/iosWebClip'
+import hometab1 from '@/assets/images/hometab1.png'
+import hometab2 from '@/assets/images/hometab2.png'
+import webClipIcon from '@/assets/images/icon-192.png?inline'
 
 const props = defineProps<{
   panelProps?: Record<string, unknown>
@@ -35,6 +38,7 @@ interface DownloadAppData {
 interface PopupNoticeItem {
   id?: number
   title: string
+  headerTitle?: string
   content: string
   weight?: number
   status?: number
@@ -103,6 +107,23 @@ const findUsData = computed<FindUsData & { link_list: string[] }>(() => {
 const MAX_STEP = 3
 const currentStep = ref(1)
 const popupNoticeIndex = ref(0)
+
+// iOS 无法自动安装（第三方浏览器 / 内嵌 WebView）时的手动“添加到主屏幕”引导。
+const showAddHomeTooltip = ref(false)
+const showAddHomeGuide = ref(false)
+
+function openAddHomeGuide(): void {
+  showAddHomeTooltip.value = false
+  showAddHomeGuide.value = true
+}
+
+function closeAddHomeTooltip(): void {
+  showAddHomeTooltip.value = false
+}
+
+function closeAddHomeGuide(): void {
+  showAddHomeGuide.value = false
+}
 
 const currentPopupNotice = computed<PopupNoticeItem | null>(() => {
   const items = popupNoticeList.value
@@ -227,11 +248,13 @@ async function onSecondaryAction(): Promise<void> {
   if (isIosNativeSafari()) {
     try {
       showToast({ message: '正在准备安装文件…', duration: 1500 })
+      // 部署可能位于站点子路径，用 BASE_URL 解析成绝对地址作为快捷方式打开地址。
+      const appBaseUrl = new URL(import.meta.env.BASE_URL, window.location.href).toString()
       await installIosWebClip({
         label: 'Newpkr',
-        url: window.location.origin + '/',
-        // 用 manifest 里同一张 192 图标，避免重复打包
-        iconUrl: '/icon-192.png',
+        url: appBaseUrl,
+        // 图标在构建期内联成 data URL，避免线上未部署 icon-192.png 时 fetch 404。
+        iconUrl: webClipIcon,
       })
       // location.href 跳转后，iOS Safari 会接管显示"是否允许下载描述文件"对话框，
       // 不需要再 toast；以下是兜底（极少数情况跳转未生效）
@@ -248,21 +271,9 @@ async function onSecondaryAction(): Promise<void> {
     return
   }
 
-  // iOS Chrome / Firefox / Edge：完全无法触发 mobileconfig 流程，必须引导到 Safari
-  if (isIosThirdPartyBrowser()) {
-    showToast({
-      message: 'iOS 上请用 Safari 打开本页面后再点击"添加桌面快捷方式"',
-      duration: 4000,
-    })
-    return
-  }
-
-  // iOS 内嵌 WebView（微信/抖音/TG 等）
-  if (isIos()) {
-    showToast({
-      message: '请点击右上角"在浏览器中打开"，使用 Safari 完成添加',
-      duration: 4000,
-    })
+  // iOS 第三方浏览器 / 内嵌 WebView：无法触发 mobileconfig，改为手动“添加到主屏幕”图文引导。
+  if (isIosThirdPartyBrowser() || isIos()) {
+    showAddHomeTooltip.value = true
     return
   }
 
@@ -295,7 +306,9 @@ async function onSecondaryAction(): Promise<void> {
             />
             <span class="notification-panel__app-name">{{ downloadAppData.name }}</span>
           </div>
-          <div class="notification-panel__app-title">{{ downloadAppData.title }}</div>
+          <!-- eslint-disable vue/no-v-html -->
+          <div class="notification-panel__app-title" v-html="downloadAppData.title"></div>
+          <!-- eslint-enable vue/no-v-html -->
         </div>
         <div class="notification-panel__actions">
           <button
@@ -311,7 +324,7 @@ async function onSecondaryAction(): Promise<void> {
             type="button"
             @click="onDownload"
           >
-            <img src="@/assets/icons/icon_download.svg" alt="" />
+            <img src="@/assets/icons/download_icon.png" alt="" />
             <span>下载APP</span>
           </button>
         </div>
@@ -320,13 +333,15 @@ async function onSecondaryAction(): Promise<void> {
 
     <!-- ========== 步骤2：富文本活动详情（可tab/箭头切换） ========== -->
     <div v-if="currentStep === 2" class="notification-panel__step">
-      <h3 class="notification-panel__title">{{ currentPopupNotice?.title ?? '活动详情' }}</h3>
+      <h3 class="notification-panel__title">
+        {{ currentPopupNotice?.headerTitle || currentPopupNotice?.title || t('H5Display_NoticeDefaultTitle') }}
+      </h3>
 
       <div class="notification-panel__carousel">
         <button
           class="notification-panel__arrow notification-panel__arrow--left"
           type="button"
-          :disabled="popupNoticeIndex <= 0"
+          :style="{ visibility: popupNoticeIndex > 0 ? 'visible' : 'hidden' }"
           @click="prevPopupNotice"
         >
           <img src="@/assets/icons/wallet/ic_arrow_left.svg" alt="" />
@@ -340,13 +355,13 @@ async function onSecondaryAction(): Promise<void> {
             v-html="currentPopupNotice.content"
           ></div>
           <!-- eslint-enable vue/no-v-html -->
-          <div v-else class="notification-panel__empty">暂无内容</div>
+          <div v-else class="notification-panel__empty">{{ t('H5Display_NoContent') }}</div>
         </div>
 
         <button
           class="notification-panel__arrow notification-panel__arrow--right"
           type="button"
-          :disabled="popupNoticeIndex >= popupNoticeList.length - 1"
+          :style="{ visibility: popupNoticeIndex < popupNoticeList.length - 1 ? 'visible' : 'hidden' }"
           @click="nextPopupNotice"
         >
           <img src="@/assets/icons/wallet/ic_arrow_left.svg" alt="" />
@@ -367,7 +382,7 @@ async function onSecondaryAction(): Promise<void> {
             width="16"
             height="16"
             viewBox="0 0 16 16"
-            :fill="popupNoticeIndex === index ? '#05E7AE' : 'white'"
+            :fill="popupNoticeIndex === index ? '#2681FF' : 'white'"
           >
             <path
               fill-rule="evenodd"
@@ -396,7 +411,7 @@ async function onSecondaryAction(): Promise<void> {
         <div class="notification-panel__url-actions">
           <div class="notification-panel__url-btn--secondary" @click="onSecondaryAction">
             <img src="@/assets/icons/icon_earth.svg" alt="" />
-            <span>保存网址</span>
+            <span>{{ t('H5Display_SaveUrl') }}</span>
           </div>
 
           <button
@@ -410,7 +425,7 @@ async function onSecondaryAction(): Promise<void> {
         </div>
         <div class="notification-panel__url-tip2">
           <img src="@/assets/icons/icon_tag.svg" alt="" />
-          <span>建议将以下网址 保存至浏览器书签或手机备忘录,以便要时快速</span>
+          <span>{{ t('H5Display_UrlHint') }}</span>
         </div>
         <div class="notification-panel__url-list">
           <div
@@ -425,15 +440,15 @@ async function onSecondaryAction(): Promise<void> {
                 width="16"
                 height="16"
                 viewBox="0 0 16 16"
-                fill="#05E7AE"
+                fill="#2681FF"
               >
                 <path
                   d="M13.9507 4.716C14.4089 5.1746 14.6665 5.79634 14.6667 6.44467V12.222C14.6667 12.8704 14.4091 13.4922 13.9506 13.9506C13.4922 14.4091 12.8704 14.6667 12.222 14.6667H6.44467C5.7963 14.6667 5.17449 14.4091 4.71603 13.9506C4.25756 13.4922 4 12.8704 4 12.222V6.44467C4 6.42111 4.00111 6.39845 4.00333 6.37667C4.01986 5.74035 4.28438 5.13568 4.74048 4.69166C5.19658 4.24764 5.80813 3.99944 6.44467 4H12.222C12.8707 4 13.492 4.25733 13.9507 4.716Z"
-                  fill="#05E7AE"
+                  fill="#2681FF"
                 />
                 <path
                   d="M11.5827 2.34136C11.6253 2.41788 11.6523 2.50203 11.6623 2.589C11.6724 2.67598 11.6652 2.76408 11.6412 2.84827C11.6171 2.93246 11.5768 3.0111 11.5224 3.07969C11.4679 3.14828 11.4006 3.20548 11.324 3.24803C11.2475 3.29058 11.1634 3.31764 11.0764 3.32767C10.9894 3.3377 10.9013 3.33049 10.8171 3.30647C10.7329 3.28246 10.6543 3.24209 10.5857 3.18768C10.5171 3.13327 10.4599 3.06588 10.4174 2.98936C10.27 2.72403 10.1894 2.66536 10 2.66536H3.33337C2.96804 2.66536 2.66671 2.9667 2.66671 3.33203V9.99736C2.66671 10.2374 2.79604 10.4587 3.00471 10.5774C3.08079 10.6207 3.14759 10.6786 3.20129 10.7477C3.25499 10.8169 3.29455 10.896 3.3177 10.9804C3.34086 11.0648 3.34715 11.153 3.33623 11.2399C3.3253 11.3267 3.29738 11.4106 3.25404 11.4867C3.2107 11.5628 3.15281 11.6296 3.08366 11.6833C3.0145 11.737 2.93545 11.7765 2.85101 11.7997C2.76657 11.8228 2.6784 11.8291 2.59153 11.8182C2.50466 11.8073 2.42079 11.7794 2.34471 11.736C2.03778 11.5615 1.78253 11.3088 1.6049 11.0037C1.42727 10.6985 1.33359 10.3518 1.33337 9.9987V3.33203C1.33337 2.2307 2.23204 1.33203 3.33337 1.33203H10C10.7294 1.33203 11.2187 1.68736 11.5827 2.34136Z"
-                  fill="#05E7AE"
+                  fill="#2681FF"
                 />
               </svg>
               <span>{{ t('sd_X7o0UdXC') }}</span>
@@ -443,49 +458,187 @@ async function onSecondaryAction(): Promise<void> {
       </div>
     </div>
   </div>
+
+  <Teleport to="body">
+    <Transition name="a2h-glide">
+      <div v-if="showAddHomeTooltip" class="a2h-tooltip-overlay">
+        <div class="a2h-tooltip">
+          <div class="a2h-tooltip__left" @click="openAddHomeGuide">
+            <span class="a2h-tooltip__plus">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#ff1e4d" stroke-width="2.4" stroke-linecap="round">
+                <line x1="12" y1="6" x2="12" y2="18" />
+                <line x1="6" y1="12" x2="18" y2="12" />
+              </svg>
+            </span>
+            <span class="a2h-tooltip__add">{{ t('H5Display_TooltipAdd') }}</span>
+            <span class="a2h-tooltip__main">{{ t('H5Display_TooltipToMain') }}</span>
+          </div>
+          <button class="a2h-tooltip__close" type="button" @click="closeAddHomeTooltip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round">
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+
+  <Teleport to="body">
+    <Transition name="a2h-pop">
+      <div v-if="showAddHomeGuide" class="a2h-guide-overlay" @click.self="closeAddHomeGuide">
+        <div class="a2h-guide">
+          <div class="a2h-guide__header">
+            <h2 class="a2h-guide__title">{{ t('H5Display_GuideTitle') }}</h2>
+            <button class="a2h-guide__close" type="button" @click="closeAddHomeGuide">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round">
+                <line x1="6" y1="6" x2="18" y2="18" />
+                <line x1="18" y1="6" x2="6" y2="18" />
+              </svg>
+            </button>
+          </div>
+          <div class="a2h-guide__body">
+            <div class="a2h-guide__step">
+              <p class="a2h-guide__text">
+                {{ t('H5Display_GuideStep1Part1') }}
+                <svg class="a2h-guide__inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
+                </svg>
+                {{ t('H5Display_GuideStep1Part2') }}
+              </p>
+              <div class="a2h-guide__img-wrap">
+                <img :src="hometab1" alt="" class="a2h-guide__img" />
+              </div>
+            </div>
+            <div class="a2h-guide__step">
+              <p class="a2h-guide__text">{{ t('H5Display_GuideStep2') }}</p>
+              <div class="a2h-guide__img-wrap">
+                <img :src="hometab2" alt="" class="a2h-guide__img" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped lang="scss">
 .notification-panel {
   position: relative;
   width: 100%;
-  // min-height: 4.5rem;
-  padding: 0;
+  padding: 0.5rem 0.4rem;
   color: #f9f9f9;
   font-family: 'HONOR Sans CN', 'PingFang SC', sans-serif;
   box-sizing: border-box;
+  border: 0.96px solid rgba(242, 242, 242, 0.04);
+  border-radius: clamp(28px, 10vw, 36.4px);
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: rgba(135, 134, 134, 0.032);
+    box-shadow:
+      0.0919rem 0.1149rem 0.1838rem rgba(0, 0, 0, 0.25),
+      0 0 0.2298rem #000 inset,
+      0.0566rem 0.1132rem 0.4596rem rgba(242, 242, 242, 0.7) inset;
+    backdrop-filter: blur(0.58px);
+    -webkit-backdrop-filter: blur(0.58px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 0.0255rem;
+    background: linear-gradient(
+      180deg,
+      rgba(242, 242, 242, 0.4) 0%,
+      rgba(255, 255, 255, 0) 50%,
+      rgba(255, 255, 255, 0.5) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
+  }
 }
 
 /* ---- 关闭按钮 ---- */
 .notification-panel__close {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 0.3rem;
+  right: 0.4rem;
   z-index: 10;
   width: 0.71rem;
   height: 0.71rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
+  border: 0.016rem solid rgba(242, 242, 242, 0.24);
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.36);
-  background-blend-mode: hard-light;
-
+  background: rgba(0, 0, 0, 0.1);
+  overflow: hidden;
   cursor: pointer;
-  backdrop-filter: blur(0.12rem);
-  -webkit-backdrop-filter: blur(0.12rem);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    backdrop-filter: blur(16.6px);
+    -webkit-backdrop-filter: blur(16.6px);
+    background: linear-gradient(
+      107.6deg,
+      rgba(249, 249, 249, 0.08) 12.3%,
+      rgba(249, 249, 249, 0.14) 33.3%,
+      rgba(147, 147, 147, 0.03) 85.1%
+    );
+    mix-blend-mode: hard-light;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow:
+      inset 0 0 6px rgba(0, 0, 0, 0.4),
+      inset 0 0 18px rgba(242, 242, 242, 0.2);
+    pointer-events: none;
+    z-index: 0;
+  }
 
   &:active {
     opacity: 0.85;
   }
   img {
+    position: relative;
+    z-index: 1;
     width: 0.7rem;
   }
 }
 
 /* ---- 步骤容器 ---- */
 .notification-panel__step {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -561,10 +714,13 @@ async function onSecondaryAction(): Promise<void> {
 }
 
 .notification-panel__btn {
+  position: relative;
   flex: 1;
   height: 1.43rem;
-  border: none;
+  border: 0.016rem solid rgba(242, 242, 242, 0.1);
   border-radius: 1.05rem;
+  background: rgba(0, 0, 0, 0.01);
+  overflow: hidden;
   font-size: 0.34rem;
   font-weight: 500;
   color: #f9f9f9;
@@ -572,17 +728,54 @@ async function onSecondaryAction(): Promise<void> {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    backdrop-filter: blur(6.6px);
+    -webkit-backdrop-filter: blur(6.6px);
+    background: linear-gradient(
+      107.6deg,
+      rgba(249, 249, 249, 0.08) 12.3%,
+      rgba(249, 249, 249, 0.14) 33.3%,
+      rgba(147, 147, 147, 0.03) 85.1%
+    );
+    mix-blend-mode: hard-light;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow:
+      inset 0 0 8.6px rgba(0, 0, 0, 0.5),
+      inset 0 0 36.1px rgba(242, 242, 242, 0.2);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  img,
+  span {
+    position: relative;
+    z-index: 1;
+  }
   img {
     width: 0.64rem;
     height: 0.64rem;
   }
-  &--secondary {
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(0.05rem);
+
+  &--primary span {
+    color: #55F329;
   }
 
-  &--primary {
-    background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+  &--primary img {
+    width: 0.32rem;
+    height: 0.32rem;
   }
 
   &:active {
@@ -626,7 +819,7 @@ async function onSecondaryAction(): Promise<void> {
   }
 
   &:active:not(:disabled) {
-    color: #05e7ae;
+    color: #55F329;
   }
 }
 .notification-panel__arrow--right {
@@ -671,7 +864,7 @@ async function onSecondaryAction(): Promise<void> {
   }
 
   :deep(a) {
-    color: #05e7ae;
+    color: #55F329;
   }
 }
 
@@ -714,7 +907,7 @@ async function onSecondaryAction(): Promise<void> {
     margin-right: 0.2rem;
   }
   &.active {
-    background: rgba(5, 231, 174, 0.24);
+    background: rgba(38, 129, 255, 0.24);
     color: #fff;
   }
 
@@ -795,7 +988,7 @@ async function onSecondaryAction(): Promise<void> {
       width: 0.373rem;
       height: 0.373rem;
     }
-    background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+    background: #55F329;
   }
 
   &:active {
@@ -828,7 +1021,7 @@ async function onSecondaryAction(): Promise<void> {
 .notification-panel__url-label {
   min-width: 0;
   font-size: 0.373rem;
-  color: #05e7ae;
+  color: #2681ff;
   word-break: break-all;
 }
 
@@ -845,5 +1038,253 @@ async function onSecondaryAction(): Promise<void> {
   span {
     margin-left: 0.05rem;
   }
+}
+
+/* ============ 手动“添加到主屏幕”引导（tooltip + guide）============ */
+.a2h-tooltip-overlay {
+  position: fixed;
+  bottom: 20px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 100000005;
+}
+
+.a2h-tooltip {
+  pointer-events: auto;
+  background: #000;
+  height: 48px;
+  padding: 0 8px 0 16px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+
+    &:active {
+      opacity: 0.7;
+    }
+  }
+
+  &__plus {
+    width: 22px;
+    height: 22px;
+    border: 1px solid #ff1e4d;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  &__add {
+    color: #ff1e4d;
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  &__main {
+    color: #fff;
+    font-size: 15px;
+    letter-spacing: 0.2px;
+  }
+
+  &__close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    cursor: pointer;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    &:active {
+      opacity: 0.7;
+    }
+  }
+}
+
+.a2h-guide-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100000006;
+}
+
+.a2h-guide {
+  width: 100%;
+  height: 90vh;
+  border-top-left-radius: 40px;
+  border-top-right-radius: 40px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-top-left-radius: 40px;
+    border-top-right-radius: 40px;
+    padding: 1px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.08) 30%, rgba(255, 255, 255, 0) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  &__header {
+    padding: 20px 20px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    min-height: 60px;
+  }
+
+  &__title {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  &__close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    &:active {
+      transform: scale(0.9);
+    }
+  }
+
+  &__body {
+    padding: 0 16px 40px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  &__step {
+    flex-shrink: 0;
+  }
+
+  &__text {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.5;
+    margin: 0 auto 12px;
+    width: 90%;
+    max-width: 340px;
+  }
+
+  &__inline-icon {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+    margin: 0 2px 4px;
+  }
+
+  &__img-wrap {
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    width: 80%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  &__img {
+    width: 100%;
+    display: block;
+  }
+}
+
+.a2h-glide-enter-active,
+.a2h-glide-leave-active {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.a2h-glide-enter-from,
+.a2h-glide-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.a2h-pop-enter-active,
+.a2h-pop-leave-active {
+  transition: opacity 0.4s ease;
+}
+
+.a2h-pop-enter-active .a2h-guide,
+.a2h-pop-leave-active .a2h-guide {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.a2h-pop-enter-from,
+.a2h-pop-leave-to {
+  opacity: 0;
+}
+
+.a2h-pop-enter-from .a2h-guide,
+.a2h-pop-leave-to .a2h-guide {
+  transform: translateY(100%);
 }
 </style>

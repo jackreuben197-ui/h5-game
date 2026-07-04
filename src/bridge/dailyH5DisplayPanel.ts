@@ -1,11 +1,50 @@
 import { postMiscH5DisplayApi } from '@/api/misc'
+import type {
+  MiscH5DisplayDownloadApp,
+  MiscH5DisplayFindUs,
+  MiscH5DisplayPopupNotice,
+} from '@/api/models/misc'
 import { openBridgePanel } from '@/bridge/channels/panelChannel'
 import { subscribeCocosMessages } from '@/bridge/core/cocosBridgeChannel'
 import StorageKey from '@/constants/storageKey'
 import { BRIDGE_ACTION, BRIDGE_MSG_TYPE, type BridgeMessage } from '@bridge-protocol'
+import { t } from '@/i18n'
 import { localStore } from '@/utils/localStore'
 import { createLogger } from '@/utils/logger'
 import { getLocalDateKey } from '@/utils/time'
+
+// 后台未配置展示内容时的兜底品牌域名。TODO: 替换/确认为正式域名。
+const FALLBACK_BRAND_DOMAIN = 'xyylc888.com'
+
+// 后台三类数据全空时的内置多语言兜底（文案走 i18n，域名/链接为常量）。
+function buildFallbackDisplay(): {
+  download_app: MiscH5DisplayDownloadApp
+  popup_notices: MiscH5DisplayPopupNotice[]
+  find_us: MiscH5DisplayFindUs
+} {
+  const appBaseUrl = new URL(import.meta.env.BASE_URL, window.location.href).toString()
+  return {
+    download_app: {
+      name: FALLBACK_BRAND_DOMAIN,
+      icon_url: new URL('icon-192.png', appBaseUrl).toString(),
+      title: `${t('H5Display_DownloadTitle')}<br>${t('H5Display_OfficialSite')}<span style="color:#2681FF">${FALLBACK_BRAND_DOMAIN}</span>`,
+      download_url: `https://${FALLBACK_BRAND_DOMAIN}`,
+    },
+    popup_notices: [
+      {
+        id: -1,
+        title: t('H5Display_RulesTab'),
+        headerTitle: t('H5Display_RulesHeader'),
+        content: t('H5Display_RulesContent'),
+      },
+    ],
+    find_us: {
+      title: t('H5Display_FindUsTitle'),
+      content: t('H5Display_FindUsSub'),
+      link_list: [FALLBACK_BRAND_DOMAIN],
+    },
+  }
+}
 
 const log = createLogger('[h5-display]')
 
@@ -26,15 +65,17 @@ export async function tryShowDailyH5DisplayPanel(): Promise<void> {
   }
 
   const data = response.data || {}
-  const downloadApp =
+  let downloadApp =
     data.download_app && typeof data.download_app === 'object' ? data.download_app : null
-  const popupNotices = Array.isArray(data.popup_notices) ? data.popup_notices : []
-  const findUs = data.find_us && typeof data.find_us === 'object' ? data.find_us : null
+  let popupNotices = Array.isArray(data.popup_notices) ? data.popup_notices : []
+  let findUs = data.find_us && typeof data.find_us === 'object' ? data.find_us : null
 
-  // 三类数据全为空时不弹窗，但仍标记当天避免重复请求。
+  // 三类数据全为空时，用内置多语言 fallback 兜底，保证仍有内容展示。
   if (!downloadApp && popupNotices.length === 0 && !findUs) {
-    localStore.setItem(StorageKey.H5_DISPLAY_LAST_SHOWN_DATE, today)
-    return
+    const fallback = buildFallbackDisplay()
+    downloadApp = fallback.download_app
+    popupNotices = fallback.popup_notices
+    findUs = fallback.find_us
   }
 
   openBridgePanel({

@@ -16,7 +16,6 @@ import { enterTable } from '@/bridge/core'
 import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
 import LoginModal from '@/views/login/LoginModal.vue'
 import type { MttItem, MttActionType } from '@/components/ListItem/MttCard.vue'
-import type { TabOption } from '@/components/Tabbar/GameTypeTabbar.vue'
 import type { EnterTablePayload } from '@bridge-protocol'
 import StorageKey from '@/constants/storageKey'
 import LoginSession from '@/session/loginSession'
@@ -306,12 +305,6 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
       return a.sb - b.sb
     })
 })
-
-const mttTabs = computed<TabOption[]>(() => [
-  { name: 'all', title: t('UIMatch_GtO8YEdb') },
-  { name: 'poker', title: t('UIClub_Text15') },
-  // { name: 'mahjong', title: t('Mahjong_Name'), disabled: true, disabledToast: t('UIClub_InDeve') },
-])
 
 const mttSourceRecords = computed<RawMttRecord[]>(() => mttListStore.records as RawMttRecord[])
 
@@ -1264,9 +1257,7 @@ const handleBack = () => {
       </header>
 
       <template v-if="clubHeaderTab === 'event'">
-        <GameTypeTabbar v-model="mttActiveTab" class="club-game-tabs" :tabs="mttTabs" />
-
-        <section class="group-list">
+        <section class="group-list group-list--flush">
           <template v-if="renderGroups.length">
             <div v-for="group in renderGroups" :key="group.groupId" class="mtt-group">
               <div v-if="group.title || group.showViewAll" class="mtt-group__header">
@@ -1935,6 +1926,11 @@ const handleBack = () => {
   padding: 0.2rem 0 0.8rem;
   background: rgba(34, 34, 34, 0.5);
   backdrop-filter: blur(0.2213rem);
+}
+
+.group-list--flush {
+  background: transparent;
+  backdrop-filter: none;
 }
 
 .club-embedded-container {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import homeHeaderFallback from '@/assets/images/home_header_2.png'
+import homeHeaderFallback from '@/assets/images/home_header_large.png'
 import { t, getLocale } from '@/i18n'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -22,6 +22,7 @@ const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en
 const clubBannerUrl = useCachedImage(
   () => userInfoStore.channelDefaultClub?.banner || homeHeaderFallback,
 )
+const isFallbackBanner = computed<boolean>(() => !userInfoStore.channelDefaultClub?.banner)
 const clubNameText = computed<string>(
   () =>
     (userInfoStore.channelDefaultClub?.club_name || '')
@@ -116,6 +117,13 @@ onMounted(() => {
     <!-- 1. 顶部俱乐部介绍图 -->
     <div class="home-header">
       <img class="home-header-img" :src="clubBannerUrl" alt="俱乐部介绍" />
+      <div v-if="isFallbackBanner" class="home-header__hero">
+        <div class="home-header__text">
+          <p class="home-header__title">全民代理</p>
+          <p class="home-header__subtitle">一键创建你的线上俱乐部</p>
+        </div>
+        <span class="home-header__pill">xypk.com</span>
+      </div>
     </div>
 
     <!-- 2. 公告栏 -->
@@ -312,16 +320,26 @@ onMounted(() => {
 .home-page {
   display: flex;
   flex-direction: column;
-  gap: 0.24rem;
-  padding: 0 0.4rem 3rem;
+  gap: 0.12rem;
+  padding: 0 0.4rem 0.24rem;
   background: transparent;
-  min-height: max-content;
+  height: 100%;
+  min-height: 0;
   box-sizing: border-box;
+  overflow: hidden;
   overscroll-behavior-y: none;
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+.home-page > .notice-bar,
+.home-page > .club-panel,
+.home-page > .section-header,
+.home-page > .game-center-scroll,
+.home-page > .coming-soon-scroll {
+  flex-shrink: 0;
 }
 /* ========== 0. 顶部栏 ========== */
 .top-bar {
@@ -329,7 +347,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0;
-  margin-top: 0.2rem;
+  margin-top: 0.12rem;
   flex-shrink: 0;
   position: sticky;
   top: 0;
@@ -361,7 +379,7 @@ onMounted(() => {
 
 .top-bar__actions {
   display: flex;
-  gap: 0.1rem;
+  gap: 0.14rem;
 }
 
 .top-bar__btn {
@@ -371,7 +389,7 @@ onMounted(() => {
   font-weight: 500;
   font-family: 'PingFang SC', sans-serif;
   cursor: pointer;
-  padding: 0.14rem 0.65rem;
+  padding: 0.12rem 0.65rem;
   white-space: nowrap;
   display: flex;
   align-items: center;
@@ -403,14 +421,97 @@ onMounted(() => {
   width: 100%;
   border-radius: 0.8rem;
   overflow: hidden;
-  flex-shrink: 0;
+  flex: 0 1 3.68rem;
+  min-height: 0;
+  position: relative;
+  container-type: size;
 }
 
 .home-header-img {
   width: 100%;
-  height: 3.68rem;
-  // object-fit: cover;
+  height: 100%;
+  object-fit: cover;
   display: block;
+}
+
+.home-header__hero {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0.56rem;
+  top: 15.2cqh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.home-header__title,
+.home-header__subtitle {
+  margin: 0;
+  font-family: 'HONOR Sans CN', sans-serif;
+  font-weight: 700;
+  font-size: 0.62rem;
+  font-size: 16.9cqh;
+  line-height: 1.2;
+  letter-spacing: 0.01rem;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.home-header__pill {
+  margin-top: 0.26rem;
+  margin-top: 7.1cqh;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.12rem 0.5rem;
+  padding: 3.3cqh 13.6cqh;
+  border-radius: 99px;
+  font-family: 'HONOR Sans CN', sans-serif;
+  font-weight: 700;
+  font-size: 0.6rem;
+  font-size: 16.3cqh;
+  color: #fff;
+  white-space: nowrap;
+  background: rgba(37, 37, 37, 0.49);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.home-header__text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@container (max-height: 2.6rem) {
+  .home-header__hero {
+    top: 0;
+    bottom: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0.5rem;
+  }
+
+  .home-header__text {
+    align-items: flex-start;
+  }
+
+  .home-header__title,
+  .home-header__subtitle {
+    font-size: 0.46rem;
+    text-align: left;
+  }
+
+  .home-header__pill {
+    margin-top: 0;
+    font-size: 0.4rem;
+    padding: 0.1rem 0.4rem;
+  }
 }
 
 /* ===== 2. 公告栏 ===== */
@@ -622,7 +723,7 @@ onMounted(() => {
 .game-scroll-card {
   flex-shrink: 0;
   width: 2.95rem;
-  height: 3.91rem;
+  height: 3.7rem;
   border-radius: 0.37rem;
   overflow: hidden;
   position: relative;
@@ -825,7 +926,7 @@ onMounted(() => {
   flex-shrink: 0;
   width: 2.95rem;
   // 固定高度：小屏不再压缩卡片，改由页面向下滚动兜底（与登录后首页一致）。
-  height: 3.91rem;
+  height: 3.8rem;
   border-radius: 0.51rem;
   overflow: hidden;
   position: relative;

@@ -94,7 +94,8 @@ function resolveGameTypeName(gameType: number): string {
 }
 
 // ── 缓存（IndexedDB career）──────────────────────────────────────────────────
-// 与战绩详情同一套 `detail-${id}` 形式，战绩用 room_id，MTT 这里用 match_id。
+// 与战绩详情同一套 `detail-` 形式，战绩用 `detail-${room_id}`，MTT 这里加 mtt 段
+// （`detail-mtt-${match_id}`）避免 match_id 与 room_id 数值撞车时互相读错缓存结构。
 // 已结算的赛事数据固定不变，命中缓存则不再请求。
 // rawTitle 存模板原始字符，多语言名称由 detailTitle 每次渲染时重算，不落缓存。
 interface MttDetailCache {
@@ -106,7 +107,7 @@ interface MttDetailCache {
 }
 
 function detailCacheKey(matchId: number): string {
-  return `detail-${matchId}`
+  return `detail-mtt-${matchId}`
 }
 
 function detailCache() {

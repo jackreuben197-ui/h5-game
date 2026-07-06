@@ -10,6 +10,9 @@ import iconChips from '@/assets/icons/icon_chips.png'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import { formatUC } from '@/utils/roomVisibility'
 import { formatDateTime, formatDurationWithUnits, toUnixSeconds } from '@/utils/time'
+import { userCache } from '@/utils/userCache'
+import { USER_STORE_CAREER } from '@/utils/indexedDB'
+import { useGameStore } from '@/stores/game'
 import {
   multiLanguageTemplateVersion,
   resolveTemplateTextByKey,
@@ -17,6 +20,7 @@ import {
 import { getLocale, t } from '@/i18n'
 
 const route = useRoute()
+const gameStore = useGameStore()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -89,9 +93,61 @@ function resolveGameTypeName(gameType: number): string {
   return text || '--'
 }
 
+// ── 缓存（IndexedDB career）──────────────────────────────────────────────────
+// 与战绩详情同一套 `detail-${id}` 形式，战绩用 room_id，MTT 这里用 match_id。
+// 已结算的赛事数据固定不变，命中缓存则不再请求。
+// rawTitle 存模板原始字符，多语言名称由 detailTitle 每次渲染时重算，不落缓存。
+interface MttDetailCache {
+  rawTitle: string
+  detailSub: string
+  detailTime: string
+  headMetrics: { label: string; value: string }[]
+  rankPlayers: RankPlayer[]
+}
+
+function detailCacheKey(matchId: number): string {
+  return `detail-${matchId}`
+}
+
+function detailCache() {
+  return userCache(gameStore.loginUserId)
+}
+
+function plainClone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
+}
+
+function applyDetailCache(payload: MttDetailCache): void {
+  rawTitle.value = payload.rawTitle
+  detailSub.value = payload.detailSub
+  detailTime.value = payload.detailTime
+  headMetrics.value = payload.headMetrics
+  rankPlayers.value = payload.rankPlayers
+}
+
+function writeDetailCache(matchId: number): void {
+  const payload: MttDetailCache = {
+    rawTitle: rawTitle.value,
+    detailSub: detailSub.value,
+    detailTime: detailTime.value,
+    headMetrics: plainClone(headMetrics.value),
+    rankPlayers: plainClone(rankPlayers.value),
+  }
+  void detailCache().put(USER_STORE_CAREER, detailCacheKey(matchId), payload)
+}
+
 async function fetchMttDetail(): Promise<void> {
   const matchId = resolveMatchId()
   if (matchId <= 0) {
+    return
+  }
+
+  const cached = await detailCache().get<MttDetailCache>(
+    USER_STORE_CAREER,
+    detailCacheKey(matchId),
+  )
+  if (cached) {
+    applyDetailCache(cached)
     return
   }
 
@@ -165,6 +221,8 @@ async function fetchMttDetail(): Promise<void> {
         hasHunterReward: hunterAward > 0,
       }
     })
+
+    writeDetailCache(matchId)
   } catch (error) {
     const message =
       error instanceof Error ? error.message : t('UIClub_Load') + ' MTT ' + t('UIClub_DetailFail')

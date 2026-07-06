@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
@@ -9,8 +9,12 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import iconChips from '@/assets/icons/icon_chips.png'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useGameStore } from '@/stores/game'
 import { formatUC } from '@/utils/roomVisibility'
 import { formatDateTime } from '@/utils/time'
+import { createKeyedRefresh } from '@/utils/keyedRefresh'
+import { userCache } from '@/utils/userCache'
+import { USER_STORE_CAREER } from '@/utils/indexedDB'
 import {
   multiLanguageTemplateVersion,
   resolveTemplateTextByKey,
@@ -19,6 +23,7 @@ import { getLocale, t } from '@/i18n'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
+const gameStore = useGameStore()
 
 const title = computed(() => 'MTT')
 
@@ -109,6 +114,52 @@ const summary = ref([
   { label: t('UIData_YGvXd5iXr_008'), value: '0' },
 ])
 
+// ── 缓存（IndexedDB career）──────────────────────────────────────────────────
+// 与战绩首页同一套 key 形式 `${sourceId}_${type}_${filter}_${variant}`，type 用 mtt 区分：
+// key = `${sourceId}_mtt_${time}_${game}`，sourceId = 俱乐部 id（无则 0）。
+// 缓存 MTT 首页 [汇总 + 第一页记录列表] 完整状态；records 存 rawName，
+// 多语言模板名由 displayRecords 每次渲染时重算，不落缓存。
+interface MttSummaryCache {
+  summary: { label: string; value: string }[]
+  records: MttRecord[]
+  listOffset: number
+  hasMore: boolean
+}
+
+function mttCacheKey(): string {
+  const sourceId = userInfoStore.currentClub?.club_id ?? 0
+  return `${sourceId}_mtt_${selectedTime.value}_${selectedGame.value.key}`
+}
+
+// 命中缓存后立即触发后台刷新；30s TTL 内同 key 跳过；同 key 已在飞行则合并。
+// fetchXxx 内部用 begin()/isCurrent() 兜底，防止响应回来时已切走仍写 state。
+const refresher = createKeyedRefresh(mttCacheKey, { freshTtl: 30_000 })
+
+function mttCache() {
+  return userCache(gameStore.loginUserId)
+}
+
+function plainClone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
+}
+
+function writeMttCache(key: string): void {
+  const payload: MttSummaryCache = {
+    summary: plainClone(summary.value),
+    records: plainClone(records.value),
+    listOffset: listOffset.value,
+    hasMore: hasMore.value,
+  }
+  void mttCache().put(USER_STORE_CAREER, key, payload)
+}
+
+function applyMttCache(payload: MttSummaryCache): void {
+  summary.value = payload.summary
+  records.value = payload.records
+  listOffset.value = payload.listOffset
+  hasMore.value = payload.hasMore
+}
+
 function toSafeNumber(value: unknown): number {
   const numeric = Number(value)
   return Number.isFinite(numeric) ? numeric : 0
@@ -197,6 +248,7 @@ function flattenDateGroup(group: StatsMttHistoryDateGroup): MttRecord[] {
 }
 
 async function fetchSummary(): Promise<void> {
+  const guard = refresher.begin()
   try {
     const response = await postStatsUserStatsApi({
       game_types: selectedGame.value.gameTypes,
@@ -207,6 +259,7 @@ async function fetchSummary(): Promise<void> {
       time_zone: resolveTimeZone(),
       ...(userInfoStore.currentClub?.club_id ? { club_id: userInfoStore.currentClub.club_id } : {}),
     })
+    if (!guard.isCurrent()) return
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail5'))
     }
@@ -221,12 +274,13 @@ async function fetchSummary(): Promise<void> {
       { label: t('UIData_YGvXd5iXr_008'), value: String(toSafeNumber(mttData?.third_times)) },
     ]
   } catch (error) {
+    if (!guard.isCurrent()) return
     const message = error instanceof Error ? error.message : t('UIClub_LoadFail5')
     showFailToast(message)
   }
 }
 
-async function fetchMttHistory(reset = false): Promise<void> {
+async function fetchMttHistory(reset = false, silent = false): Promise<void> {
   if (loading.value || loadingMore.value) {
     return
   }
@@ -235,13 +289,16 @@ async function fetchMttHistory(reset = false): Promise<void> {
   }
 
   if (reset) {
-    loading.value = true
-    hasMore.value = true
-    listOffset.value = 0
+    if (!silent) {
+      loading.value = true
+      hasMore.value = true
+      listOffset.value = 0
+    }
   } else {
     loadingMore.value = true
   }
 
+  const guard = refresher.begin()
   try {
     const currentOffset = reset ? 0 : listOffset.value
     const response = await postStatsMttHistoryListByDateApi({
@@ -255,6 +312,7 @@ async function fetchMttHistory(reset = false): Promise<void> {
       offset: currentOffset,
       ...(userInfoStore.currentClub?.club_id ? { clubid: userInfoStore.currentClub.club_id } : {}),
     })
+    if (!guard.isCurrent()) return
     if (response.code !== 0) {
       throw new Error(
         typeof response.msg === 'string'
@@ -272,24 +330,47 @@ async function fetchMttHistory(reset = false): Promise<void> {
     const total = toSafeNumber(response.data?.total)
     hasMore.value = groups.length >= PAGE_SIZE && (total === 0 || listOffset.value < total)
   } catch (error) {
-    if (reset) {
+    if (!guard.isCurrent()) return
+    if (reset && !silent) {
       records.value = []
       hasMore.value = false
     }
-    const message =
-      error instanceof Error ? error.message : t('UIClub_Load') + ' MTT ' + t('UIClub_Fail11')
-    showFailToast(message)
+    if (!silent) {
+      const message =
+        error instanceof Error ? error.message : t('UIClub_Load') + ' MTT ' + t('UIClub_Fail11')
+      showFailToast(message)
+    }
   } finally {
     if (reset) {
-      loading.value = false
+      if (!silent) loading.value = false
     } else {
       loadingMore.value = false
     }
   }
 }
 
+// 缓存优先 + 静默刷新：命中缓存直接渲染，立即触发后台刷新；30s 内同 key 跳过，
+// 同 key 已在飞则合并。fetchXxx 内部用 race guard 兜底。
 async function refreshAll(): Promise<void> {
+  const guard = refresher.begin()
+  const key = mttCacheKey()
+  const cached = await mttCache().get<MttSummaryCache>(USER_STORE_CAREER, key)
+  if (!guard.isCurrent()) return
+
+  if (cached) {
+    loading.value = false
+    applyMttCache(cached)
+    void refresher.refresh(async () => {
+      await Promise.all([fetchSummary(), fetchMttHistory(true, true)])
+      if (mttCacheKey() !== key) return
+      writeMttCache(key)
+    })
+    return
+  }
+
   await Promise.all([fetchSummary(), fetchMttHistory(true)])
+  if (!guard.isCurrent()) return
+  writeMttCache(key)
 }
 
 function onPageScroll(event: Event): void {
@@ -339,6 +420,10 @@ function selectTime(tab: string): void {
 
 onMounted(() => {
   void refreshAll()
+})
+
+onBeforeUnmount(() => {
+  refresher.clear()
 })
 </script>
 

@@ -2,11 +2,23 @@
 import { computed, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
-import { postStatsMttHistoryListApi } from '@/api/stats'
+import dayjs from 'dayjs'
+import { postStatsMttHistoryListByDateApi, postStatsUserStatsApi } from '@/api/stats'
+import type { StatsMttHistoryDateGroup, StatsMttHistoryRecord } from '@/api/models/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import { t } from '@/i18n'
+import iconChips from '@/assets/icons/icon_chips.png'
+import iconDiamond from '@/assets/icons/icon_diamond.png'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { formatUC } from '@/utils/roomVisibility'
+import { formatDateTime } from '@/utils/time'
+import {
+  multiLanguageTemplateVersion,
+  resolveTemplateTextByKey,
+} from '@/utils/multiLanguageTemplate'
+import { getLocale, t } from '@/i18n'
 
 const router = useRouter()
+const userInfoStore = useUserInfoStore()
 
 const title = computed(() => 'MTT')
 
@@ -15,92 +27,86 @@ const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 
-interface MttRecord {
-  id: string
-  roomId: string
-  matchId: string
-  month: string
-  nickname: string
-  playerId: string
-  detailVariant: 'v1' | 'v2'
-  rank: string
-  reward: string
-  rewardType: string
-  finishTime: string
-  blind: string
+// 对齐客户端 TexasBusiness.CheckRequestPara：NLH/PLO/6+ 的 game_types + poker_types 组合。
+interface GameTab {
+  label: string
+  key: string
+  gameTypes: number[]
+  pokerTypes: number[]
+}
+interface TabItem {
+  label: string
+  key: string
 }
 
-const gameTabs = ['NLH', 'PLO', '6+']
-const timeTabs = [t('UIData_Today'), "7" + t('UIHappyShop_ActivityShopDay'), "30" + t('UIHappyShop_ActivityShopDay')]
+const gameTabs: GameTab[] = [
+  { label: 'NLH', key: 'nlh', gameTypes: [0], pokerTypes: [0] },
+  { label: 'PLO', key: 'plo', gameTypes: [1, 2, 3], pokerTypes: [0] },
+  { label: '6+', key: '6+', gameTypes: [0, 1, 2, 3], pokerTypes: [2] },
+]
+
+const dateTabs: TabItem[] = [
+  { label: t('UIData_Today'), key: 'today' },
+  { label: '7' + t('UIHappyShop_ActivityShopDay'), key: 'week' },
+  { label: '30' + t('UIHappyShop_ActivityShopDay'), key: 'month' },
+]
+
+// 币种筛选：1-USDT 2-联盟币 3-记分牌（俱乐部生涯固定记分牌）
+const FILTER_TYPE = 3
+const PAGE_SIZE = 10
+
 const selectedGame = ref(gameTabs[0])
-const selectedTime = ref(timeTabs[0])
+const selectedTime = ref(dateTabs[0].key)
 const loading = ref(false)
+const loadingMore = ref(false)
+const hasMore = ref(true)
+const listOffset = ref(0)
+
+interface MttRecord {
+  matchId: number
+  rawName: string
+  rankText: string
+  hasRank: boolean
+  rewardText: string
+  hasReward: boolean
+  isDiamond: boolean
+  goldType: number
+  endTimeText: string
+  dateKey: string
+  endDay: string
+  endMonth: string
+}
+
+interface MttRecordView extends MttRecord {
+  name: string
+  showDate: boolean
+  isDateLastData: boolean
+}
+
+const records = ref<MttRecord[]>([])
+
+// 名称走多语言模板映射（对齐客户端 GetRoomNameByKey），模板异步加载完成后随版本号重算；
+// 同时按 dateKey 计算日期列的显示/收尾状态（参考 MineRecordView）。
+const displayRecords = computed<MttRecordView[]>(() => {
+  void multiLanguageTemplateVersion.value
+  return records.value.map((card, index) => {
+    const prevCard = records.value[index - 1]
+    const nextCard = records.value[index + 1]
+    return {
+      ...card,
+      name: resolveTemplateTextByKey(card.rawName, getLocale()) || t(card.rawName) || card.rawName,
+      showDate: card.dateKey !== prevCard?.dateKey,
+      isDateLastData: card.dateKey !== nextCard?.dateKey,
+    }
+  })
+})
 
 const summary = ref([
-  { label: 'total games', value: '20' },
-  { label: 'awards', value: '15' },
-  { label: 'first', value: '1' },
-  { label: 'second', value: '6' },
-  { label: 'third', value: '6' },
-])
-
-const mttRecords = ref<MttRecord[]>([
-  {
-    id: 'm1',
-    roomId: '1',
-    matchId: '',
-    month: "6" + t('UIMine_VIP_month'),
-    nickname: 'Tour Nickname',
-    playerId: '11440454',
-    detailVariant: 'v1',
-    rank: '#1',
-    reward: '500',
-    rewardType: t('UIMine_RecordItemsNormal_fzCeKaD7'),
-    finishTime: '06/04 22:56',
-    blind: '1/4 (1)',
-  },
-  {
-    id: 'm2',
-    roomId: '2',
-    matchId: '',
-    month: "6" + t('UIMine_VIP_month'),
-    nickname: 'Tour Nickname',
-    playerId: '11440454',
-    detailVariant: 'v1',
-    rank: '#3',
-    reward: '200',
-    rewardType: t('UIMine_RecordItemsNormal_fzCeKaD7'),
-    finishTime: '06/03 20:25',
-    blind: '1/4 (1)',
-  },
-  {
-    id: 'm3',
-    roomId: '3',
-    matchId: '',
-    month: "5" + t('UIMine_VIP_month'),
-    nickname: 'Tour Nickname',
-    playerId: '11440454',
-    detailVariant: 'v2',
-    rank: '#2',
-    reward: '300',
-    rewardType: t('UIMine_RecordItemsNormal_fzCeKaD7'),
-    finishTime: '05/28 18:40',
-    blind: '2/4 (1)',
-  },
-  {
-    id: 'm4',
-    roomId: '4',
-    matchId: '',
-    month: "5" + t('UIMine_VIP_month'),
-    nickname: 'Tour Nickname',
-    playerId: '11440454',
-    detailVariant: 'v2',
-    rank: '#6',
-    reward: '80',
-    rewardType: t('UIMine_RecordItemsNormal_fzCeKaD7'),
-    finishTime: '05/20 21:10',
-    blind: '1/2 (1)',
-  },
+  { label: t('UIData_YGvXd5iXr_005'), value: '0' },
+  { label: t('UITexasInfo_wincount'), value: '0' },
+  { label: t('UIData_YGvXd5iXr_006'), value: '0' },
+  { label: t('UIData_YGvXd5iXr_007'), value: '0' },
+  { label: t('UIData_YGvXd5iXr_008'), value: '0' },
 ])
 
 function toSafeNumber(value: unknown): number {
@@ -108,149 +114,231 @@ function toSafeNumber(value: unknown): number {
   return Number.isFinite(numeric) ? numeric : 0
 }
 
-function formatDateText(raw: unknown): string {
-  if (typeof raw === 'string' && raw.trim()) {
-    return raw
-  }
-  const timestamp = toSafeNumber(raw)
-  if (timestamp <= 0) {
-    return '--'
-  }
-  const date = new Date(timestamp > 1_000_000_000_000 ? timestamp : timestamp * 1000)
-  if (Number.isNaN(date.getTime())) {
-    return '--'
-  }
-  return date.toLocaleString('zh-CN', { hour12: false })
-}
-
-function formatMonthLabel(timeText: string): string {
-  const match = timeText.match(/(\d{1,2})\//)
-  if (match) {
-    return (match[1]) + t('UIMine_VIP_month')
-  }
-  return t('UICareer_PersonMonth')
-}
-
 function resolveTimeType(): number {
-  if (selectedTime.value === "7" + t('UIHappyShop_ActivityShopDay')) return 2
-  if (selectedTime.value === "30" + t('UIHappyShop_ActivityShopDay')) return 3
-  return 1
+  switch (selectedTime.value) {
+    case 'week':
+      return 2
+    case 'month':
+      return 3
+    default:
+      return 1
+  }
 }
 
-function extractMttRows(value: unknown, depth = 0): Record<string, unknown>[] {
-  if (depth > 4 || value === null || value === undefined) {
-    return []
-  }
-  if (Array.isArray(value)) {
-    return value.filter(
-      (item): item is Record<string, unknown> => !!item && typeof item === 'object',
-    )
-  }
-  if (typeof value !== 'object') {
-    return []
-  }
-
-  const obj = value as Record<string, unknown>
-  for (const key of ['records', 'list', 'items', 'data']) {
-    const nested = extractMttRows(obj[key], depth + 1)
-    if (nested.length) {
-      return nested
-    }
-  }
-  for (const nestedValue of Object.values(obj)) {
-    const nested = extractMttRows(nestedValue, depth + 1)
-    if (nested.length) {
-      return nested
-    }
-  }
-  return []
+// 时区偏移（小时），对齐客户端 time_zone 语义。
+function resolveTimeZone(): number {
+  return -Math.round(new Date().getTimezoneOffset() / 60)
 }
 
-function mapMttRecord(row: Record<string, unknown>, index: number): MttRecord {
-  const timeText = formatDateText(row.end_time_str ?? row.end_time ?? row.time)
+// 奖金显示对齐客户端：钻石(4)按原值，其余币种按 1/100。
+function formatAward(value: number, goldType: number): string {
+  return goldType === 4 ? value.toLocaleString('en-US') : formatUC(value)
+}
+
+// 对齐客户端 UIRecordMatchListItem.UpdateListItemRecord 的奖金显示规则。
+function buildRewardText(row: StatsMttHistoryRecord): { text: string; visible: boolean } {
+  const goldType = toSafeNumber(row.gold_type)
+  const award = toSafeNumber(row.award)
+  const hunterAward = toSafeNumber(row.hunter_award)
+
+  if (toSafeNumber(row.apply_fee_hunter) > 0) {
+    if (award === 0 && hunterAward === 0) {
+      return { text: '', visible: false }
+    }
+    return {
+      text: `${formatAward(award, goldType)}/${formatAward(hunterAward, goldType)}`,
+      visible: true,
+    }
+  }
+  if (award === 0) {
+    return { text: '', visible: false }
+  }
+  return { text: formatAward(award, goldType), visible: true }
+}
+
+function mapMttRecord(
+  row: StatsMttHistoryRecord,
+  dateKey: string,
+  endDay: string,
+  endMonth: string,
+): MttRecord {
   const rank = toSafeNumber(row.rank)
+  const goldType = toSafeNumber(row.gold_type)
+  const reward = buildRewardText(row)
+  const endTime = toSafeNumber(row.end_time)
+
   return {
-    id: String(row.room_id ?? row.match_id ?? index + 1),
-    roomId: String(row.room_id ?? ''),
-    matchId: String(row.match_id ?? ''),
-    month: formatMonthLabel(timeText),
-    nickname: String(row.nick_name ?? row.user_name ?? 'Tour Nickname'),
-    playerId: String(row.user_random_id ?? '--'),
-    detailVariant: rank > 0 && rank <= 3 ? 'v1' : 'v2',
-    rank: rank > 0 ? `#${rank}` : '--',
-    reward: String(toSafeNumber(row.award ?? row.hunter_award).toLocaleString('en-US')),
-    rewardType: t('UIMine_RecordItemsNormal_fzCeKaD7'),
-    finishTime: timeText,
-    blind: `${toSafeNumber(row.sb ?? row.small_blind)}/${toSafeNumber(
-      row.ante ?? 0,
-    )} (${toSafeNumber(row.buy_in_times ?? 1)})`,
+    matchId: toSafeNumber(row.match_id),
+    rawName: String(row.match_name ?? '--'),
+    rankText: `${rank}/${toSafeNumber(row.all_apply_count)}(${toSafeNumber(row.all_award_count)})`,
+    hasRank: rank > 0,
+    rewardText: reward.text,
+    hasReward: reward.visible,
+    isDiamond: goldType === 4,
+    goldType,
+    endTimeText: endTime > 0 ? formatDateTime(endTime, 'DD/MM HH:mm') : '--',
+    dateKey,
+    endDay,
+    endMonth,
   }
 }
 
-function refreshSummary(list: MttRecord[]): void {
-  const totalGames = list.length
-  const top1 = list.filter((item) => item.rank === '#1').length
-  const top2 = list.filter((item) => item.rank === '#2').length
-  const top3 = list.filter((item) => item.rank === '#3').length
-  const awards = list.filter((item) => item.reward !== '0').length
-  summary.value = [
-    { label: 'total games', value: String(totalGames) },
-    { label: 'awards', value: String(awards) },
-    { label: 'first', value: String(top1) },
-    { label: 'second', value: String(top2) },
-    { label: 'third', value: String(top3) },
-  ]
+// 一个日期分组拍平为多条记录，日期信息挂在每条记录上（显隐由 displayRecords 统一计算）。
+function flattenDateGroup(group: StatsMttHistoryDateGroup): MttRecord[] {
+  const date = String(group.date ?? '')
+  const dateTs = date ? dayjs(date) : null
+  const isValid = Boolean(dateTs?.isValid())
+  const dateKey = isValid ? dateTs!.format('YYYY-MM-DD') : '--'
+  const endDay = isValid ? dateTs!.format('DD') : '--'
+  const endMonth = isValid ? dateTs!.format('M' + t('UIMine_VIP_month')) : '--'
+
+  const rows = Array.isArray(group.list) ? group.list : []
+  return rows.map((row) => mapMttRecord(row, dateKey, endDay, endMonth))
 }
 
-async function fetchMttHistory(): Promise<void> {
-  loading.value = true
+async function fetchSummary(): Promise<void> {
   try {
-    const response = await postStatsMttHistoryListApi({
+    const response = await postStatsUserStatsApi({
+      game_types: selectedGame.value.gameTypes,
+      poker_types: selectedGame.value.pokerTypes,
       time_type: resolveTimeType(),
-      filter_type: 3,
-      limit: 20,
-      offset: 0,
+      filter_type: FILTER_TYPE,
+      room_type: 0,
+      time_zone: resolveTimeZone(),
+      ...(userInfoStore.currentClub?.club_id ? { club_id: userInfoStore.currentClub.club_id } : {}),
     })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_Load') + " MTT " + t('UIClub_Fail11'))
+      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail5'))
     }
 
-    const rows = extractMttRows(response.data)
-    mttRecords.value = rows.map((row, index) => mapMttRecord(row, index))
-    refreshSummary(mttRecords.value)
+    // 汇总五项使用服务端聚合（对齐客户端 mtt_room_data），分页时不受当前页影响。
+    const mttData = response.data?.mtt_room_data
+    summary.value = [
+      { label: t('UIData_YGvXd5iXr_005'), value: String(toSafeNumber(mttData?.play_times)) },
+      { label: t('UITexasInfo_wincount'), value: String(toSafeNumber(mttData?.win_times)) },
+      { label: t('UIData_YGvXd5iXr_006'), value: String(toSafeNumber(mttData?.frist_times)) },
+      { label: t('UIData_YGvXd5iXr_007'), value: String(toSafeNumber(mttData?.second_times)) },
+      { label: t('UIData_YGvXd5iXr_008'), value: String(toSafeNumber(mttData?.third_times)) },
+    ]
   } catch (error) {
-    mttRecords.value = []
-    const message = error instanceof Error ? error.message : t('UIClub_Load') + " MTT " + t('UIClub_Fail11')
+    const message = error instanceof Error ? error.message : t('UIClub_LoadFail5')
+    showFailToast(message)
+  }
+}
+
+async function fetchMttHistory(reset = false): Promise<void> {
+  if (loading.value || loadingMore.value) {
+    return
+  }
+  if (!reset && !hasMore.value) {
+    return
+  }
+
+  if (reset) {
+    loading.value = true
+    hasMore.value = true
+    listOffset.value = 0
+  } else {
+    loadingMore.value = true
+  }
+
+  try {
+    const currentOffset = reset ? 0 : listOffset.value
+    const response = await postStatsMttHistoryListByDateApi({
+      timeType: resolveTimeType(),
+      filterType: FILTER_TYPE,
+      gameTypes: selectedGame.value.gameTypes,
+      pokerTypes: selectedGame.value.pokerTypes,
+      currentTimeStr: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+      timeZone: resolveTimeZone(),
+      limit: PAGE_SIZE,
+      offset: currentOffset,
+      ...(userInfoStore.currentClub?.club_id ? { clubid: userInfoStore.currentClub.club_id } : {}),
+    })
+    if (response.code !== 0) {
+      throw new Error(
+        typeof response.msg === 'string'
+          ? response.msg
+          : t('UIClub_Load') + ' MTT ' + t('UIClub_Fail11'),
+      )
+    }
+
+    const groups = Array.isArray(response.data?.records) ? response.data.records : []
+    const flattened = groups.flatMap((group) => flattenDateGroup(group))
+
+    records.value = reset ? flattened : [...records.value, ...flattened]
+
+    listOffset.value = currentOffset + groups.length
+    const total = toSafeNumber(response.data?.total)
+    hasMore.value = groups.length >= PAGE_SIZE && (total === 0 || listOffset.value < total)
+  } catch (error) {
+    if (reset) {
+      records.value = []
+      hasMore.value = false
+    }
+    const message =
+      error instanceof Error ? error.message : t('UIClub_Load') + ' MTT ' + t('UIClub_Fail11')
     showFailToast(message)
   } finally {
-    loading.value = false
+    if (reset) {
+      loading.value = false
+    } else {
+      loadingMore.value = false
+    }
+  }
+}
+
+async function refreshAll(): Promise<void> {
+  await Promise.all([fetchSummary(), fetchMttHistory(true)])
+}
+
+function onPageScroll(event: Event): void {
+  if (loading.value || loadingMore.value || !hasMore.value) {
+    return
+  }
+
+  const target = event.target as HTMLElement | null
+  if (!target) {
+    return
+  }
+
+  const remain = target.scrollHeight - (target.scrollTop + target.clientHeight)
+  if (remain <= 100) {
+    void fetchMttHistory(false)
   }
 }
 
 function goDetail(item: MttRecord): void {
+  if (item.matchId <= 0) {
+    return
+  }
   void router.push({
     path: '/mine/career/club/mtt/detail',
     query: {
-      variant: item.detailVariant,
-      id: item.id,
-      room_id: item.roomId || undefined,
-      match_id: item.matchId || undefined,
+      id: String(item.matchId),
+      gold_type: String(item.goldType),
     },
   })
 }
 
-function selectGame(tab: string): void {
+function selectGame(tab: GameTab): void {
+  if (selectedGame.value === tab) {
+    return
+  }
   selectedGame.value = tab
-  void fetchMttHistory()
+  void refreshAll()
 }
 
 function selectTime(tab: string): void {
+  if (selectedTime.value === tab) {
+    return
+  }
   selectedTime.value = tab
-  void fetchMttHistory()
+  void refreshAll()
 }
 
 onMounted(() => {
-  void fetchMttHistory()
+  void refreshAll()
 })
 </script>
 
@@ -258,31 +346,31 @@ onMounted(() => {
   <div class="page-shell club-mtt-page" :style="backgroundStyle">
     <HeaderBack :title="title" extra-padding />
 
-    <div class="content-wrap">
+    <div class="content-wrap" @scroll="onPageScroll">
       <nav class="game-tabs" :aria-label="t('UIClub_Text43')">
         <button
           v-for="item in gameTabs"
-          :key="item"
+          :key="item.key"
           type="button"
           class="plain-tab"
-          :class="{ active: selectedGame === item }"
+          :class="{ active: selectedGame.key === item.key }"
           @click="selectGame(item)"
         >
-          {{ item }}
+          {{ item.label }}
         </button>
       </nav>
 
       <section class="glass-card summary-card">
         <div class="time-tabs">
           <button
-            v-for="item in timeTabs"
-            :key="item"
+            v-for="item in dateTabs"
+            :key="item.key"
             type="button"
             class="time-tab"
-            :class="{ active: selectedTime === item }"
-            @click="selectTime(item)"
+            :class="{ active: selectedTime === item.key }"
+            @click="selectTime(item.key)"
           >
-            {{ item }}
+            {{ item.label }}
           </button>
         </div>
         <div class="summary-row">
@@ -293,34 +381,62 @@ onMounted(() => {
         </div>
       </section>
 
-      <section class="list-wrap">
+      <section class="timeline">
         <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
-        <p v-else-if="!mttRecords.length" class="list-status">{{ t('UIUCWalletAddress3') }} MTT {{ t('UICareerRecord') }}</p>
+        <p v-else-if="!displayRecords.length" class="list-status">
+          {{ t('UIUCWalletAddress3') }} MTT {{ t('UICareerRecord') }}
+        </p>
+
         <article
-          v-for="item in mttRecords"
-          :key="item.id"
-          class="glass-card mtt-card"
-          @click="goDetail(item)"
+          v-for="card in displayRecords"
+          :key="`${card.dateKey}-${card.matchId}`"
+          class="timeline-item"
+          :class="{ 'timeline-item--top': card.showDate && displayRecords.length > 1 }"
         >
-          <div class="timeline">{{ item.month }}</div>
-          <div class="card-content">
+          <div
+            :class="[
+              'date-col',
+              {
+                'date-col--continued': !card.showDate,
+                'date-col--bottom': card.isDateLastData,
+              },
+            ]"
+          >
+            <div v-if="card.showDate" class="date">{{ card.endDay }}</div>
+            <div v-if="card.showDate" class="month">{{ card.endMonth }}</div>
+            <img v-if="card.showDate" src="@/assets/icons/icon_time.png" class="date-icon" alt="" />
+          </div>
+
+          <div class="glass-card mtt-card" @click="goDetail(card)">
             <div class="row-top">
-              <div>
-                <div class="name">{{ item.nickname }}</div>
-                <div class="sub">(ID: {{ item.playerId }})</div>
+              <div class="match-info">
+                <div class="name">{{ card.name }}</div>
+                <div class="sub">(ID: {{ card.matchId }})</div>
               </div>
               <div class="result">
-                <div class="rank">{{ item.rank }}</div>
-                <div class="reward">{{ item.rewardType }} {{ item.reward }}</div>
+                <div v-if="card.hasReward" class="reward">
+                  <span class="reward-label">{{ t('MTT_State_Reward') }}</span>
+                  <img :src="card.isDiamond ? iconDiamond : iconChips" alt="coin" />
+                  <span>{{ card.rewardText }}</span>
+                </div>
               </div>
             </div>
             <div class="line"></div>
             <div class="row-bottom">
-              <div class="time">{{ t('UIClub_PlanRomList_End') }}: {{ item.finishTime }}</div>
-              <div class="blind">{{ t('adaptation20006') }}: {{ item.blind }}</div>
+              <div class="time">{{ t('RecordDetail102') }}: {{ card.endTimeText }}</div>
+              <div v-if="card.hasRank" class="rank">
+                {{ t('UIMTT_Howtoplay_mc') }}: {{ card.rankText }}
+              </div>
             </div>
           </div>
         </article>
+
+        <p v-if="displayRecords.length && loadingMore" class="list-status">
+          {{ t('UIClub_LoadMore') }}...
+        </p>
+        <p v-else-if="displayRecords.length && !hasMore" class="list-status">
+          {{ t('UIClub_NoMore') }}
+        </p>
       </section>
     </div>
   </div>
@@ -339,12 +455,16 @@ onMounted(() => {
 
 .content-wrap {
   position: relative;
+  height: calc(100% - 1.6rem);
   padding: 0 0.49rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .game-tabs {
-  margin-top: 0.34rem;
+  margin-top: 0.1rem;
   display: flex;
+  align-items: center;
   justify-content: space-around;
 }
 
@@ -352,7 +472,7 @@ onMounted(() => {
   border: 0;
   background: transparent;
   color: rgba(255, 255, 255, 0.74);
-  font-size: 0.42rem;
+  font-size: 0.37rem;
   padding-bottom: 0.06rem;
 
   &.active {
@@ -362,37 +482,41 @@ onMounted(() => {
 }
 
 .glass-card {
-  border-radius: 0.42rem;
+  border-radius: 0.7rem;
   border: 0.02rem solid rgba(249, 249, 249, 0.2);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.04rem);
 }
 
 .summary-card {
-  margin-top: 0.3rem;
-  padding: 0.24rem 0.28rem;
+  margin-top: 0.45rem;
+  padding: 0.34rem 0.8rem 0.32rem;
+  background: rgba(42, 26, 43, 0.2);
+  backdrop-filter: blur(0.03rem);
 }
 
 .time-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.08rem;
-  padding: 0.08rem;
-  border-radius: 0.52rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.1rem;
+  padding: 0;
+  border-radius: 0.68rem;
   background: rgba(255, 255, 255, 0.2);
 }
 
 .time-tab {
   border: 0;
-  border-radius: 0.44rem;
+  border-radius: 0.62rem;
   background: transparent;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.35rem;
-  padding: 0.18rem 0;
+  color: #f9f9f9;
+  opacity: 0.86;
+  font-size: 0.42rem;
+  padding: 0.36rem 0;
 
   &.active {
     background: rgba(255, 255, 255, 0.16);
     font-weight: 700;
+    opacity: 1;
   }
 }
 
@@ -407,22 +531,22 @@ onMounted(() => {
   text-align: center;
 
   .value {
-    font-size: 0.43rem;
+    font-size: 0.54rem;
     font-weight: 700;
+    line-height: 0.65rem;
   }
 
   .label {
-    margin-top: 0.06rem;
+    margin-top: 0rem;
     font-size: 0.22rem;
-    color: rgba(255, 255, 255, 0.72);
+    color: rgba(255, 255, 255, 0.5);
   }
 }
 
-.list-wrap {
-  margin-top: 0.26rem;
+.timeline {
   display: flex;
   flex-direction: column;
-  gap: 0.22rem;
+  margin-top: 0.46rem;
 }
 
 .list-status {
@@ -432,37 +556,83 @@ onMounted(() => {
   padding: 0.2rem 0;
 }
 
-.mtt-card {
-  padding: 0.26rem;
+.timeline-item {
   display: grid;
-  grid-template-columns: 0.74rem 1fr;
-  gap: 0.16rem;
+  grid-template-columns: 1.2rem 1fr;
+  gap: 0.18rem;
+  margin-bottom: 0.16rem;
 }
 
-.timeline {
-  font-size: 0.3rem;
-  color: rgba(255, 255, 255, 0.92);
+.date-col {
   position: relative;
+  text-align: right;
+  font-size: 0.24rem;
+  min-height: 1rem;
+  width: 0.9rem;
+  padding-right: 0.3rem;
 
   &::after {
     content: '';
     position: absolute;
-    top: 0.42rem;
-    left: 0.35rem;
+    right: -0rem;
+    top: 0.4rem;
     width: 0.02rem;
-    height: calc(100% - 0.28rem);
-    background: rgba(255, 255, 255, 0.28);
+    bottom: -0.3rem;
+    background: rgba(255, 255, 255, 1);
+  }
+
+  &.date-col--continued::after {
+    top: 0rem;
+  }
+
+  &.date-col--continued {
+    .date-icon {
+      top: 0.05rem;
+    }
+  }
+
+  &.date-col--bottom::after {
+    bottom: 0rem;
+  }
+
+  .date,
+  .month {
+    font-size: 0.3rem;
+    line-height: 0.2rem;
+    margin-bottom: 0.1rem;
+  }
+
+  .date-icon {
+    position: absolute;
+    right: -0.2rem;
+    top: 0rem;
+    width: 0.267rem;
+    height: 0.267rem;
+    border-radius: 50%;
   }
 }
 
-.name {
-  font-size: 0.36rem;
+.mtt-card {
+  padding: 0.36rem 0.42rem 0.32rem;
 }
 
-.sub {
-  margin-top: 0.03rem;
-  font-size: 0.27rem;
-  color: rgba(255, 255, 255, 0.76);
+.match-info {
+  min-width: 0;
+
+  .name {
+    font-size: 0.3844rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.4;
+    max-width: 4rem;
+  }
+
+  .sub {
+    margin-top: 0.03rem;
+    font-size: 0.3314rem;
+    color: rgba(255, 255, 255, 0.76);
+  }
 }
 
 .row-top {
@@ -473,21 +643,32 @@ onMounted(() => {
 
 .result {
   text-align: right;
+  flex-shrink: 0;
 
   .rank {
-    font-size: 0.34rem;
+    font-size: 0.32rem;
     font-weight: 700;
     color: #ffe084;
   }
 
   .reward {
     margin-top: 0.05rem;
-    font-size: 0.28rem;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.08rem;
+    font-size: 0.33rem;
+
+    img {
+      width: 0.36rem;
+      height: 0.36rem;
+      object-fit: contain;
+    }
   }
 }
 
 .line {
-  margin: 0.16rem 0;
+  margin: 0.24rem 0 0.3rem;
   height: 0.02rem;
   background: rgba(255, 255, 255, 0.16);
 }
@@ -495,7 +676,7 @@ onMounted(() => {
 .row-bottom {
   display: flex;
   justify-content: space-between;
-  font-size: 0.26rem;
+  font-size: 0.33rem;
   color: rgba(255, 255, 255, 0.8);
 }
 </style>

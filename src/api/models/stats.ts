@@ -677,10 +677,10 @@ export interface StatsMttRoomDetailUserInfo {
   rank: number //排名
   hunter_rank: number //带出筹码
   hunter_kill: number //玩家手数
-  award: number //原始战绩
-  hunter_award: number //金豆扣减
-  buy_in_times: number //最终战绩
-  goods_awrd: StatsMttRoomDetailGoods //保险买入
+  award: number //奖励金币
+  hunter_award: number //猎人赛奖励金币
+  buy_in_times: number //买入次数
+  goods_awrd: StatsMttRoomDetailGoods[] //奖励道具列表
 
   [key: string]: unknown
 }
@@ -689,14 +689,14 @@ export interface StatsMttRoomDetailRoomData {
   game_type: number //牌局类型(玩法) 游戏类型： 0-常规桌，1-OMAHA4，2-OMAHA5，3-OMAHA6
   game_room_name: string //牌局名称
   room_id: number //牌局ID
-  start_time: number //赛事开始时间
-  end_time: number //赛事结束时间
+  start_time: number | string //赛事开始时间（秒或时间字符串）
+  end_time: number | string //赛事结束时间（秒或时间字符串）
   player_count: number //参与人数
   buy_in_count: number //买入次数
   limit: number // 条目数
   offset: number
   total: string //总条数
-  user_list: StatsMttRoomDetailUserInfo //玩家列表
+  user_list: StatsMttRoomDetailUserInfo[] //玩家列表
 
   [key: string]: unknown
 }
@@ -740,7 +740,76 @@ export interface StatsMttHistoryListResponseData extends StatsMttHistoryListData
   [key: string]: unknown
 }
 
+// MTT 战绩单条记录（对齐客户端 user_mtt_list_info / RecordMatchSimpleData）
+export interface StatsMttHistoryRecord {
+  user_id: number
+  match_id: number // 比赛ID
+  match_name: string // 比赛名称
+  game_type: number // 游戏类型 0-德州 1-OMAHA4 2-OMAHA5 3-OMAHA6
+  room_type: number // 房间类型
+  poker_type: number // 牌类型 0-长牌 2-短牌
+  apply_fee_pool: number // 报名费
+  apply_fee_service: number // 服务费
+  apply_fee_hunter: number // 人头费
+  prize_base_pool: number // 基础奖池
+  rank: number // 名次
+  hunter_rank: number // 猎人名次
+  hunter_kill: number // 猎人击杀数
+  award: number // 奖金
+  hunter_award: number // 猎人奖金
+  gold_type: number // 币种
+  all_apply_count: number // 总报名人数
+  all_buy_in_times: number // 总买入次数
+  all_award_count: number // 总奖励人数
+  start_time: number // 比赛开始时间（秒）
+  end_time: number // 比赛结束时间（秒）
+
+  [key: string]: unknown
+}
+
 export interface StatsMttHistoryListData {
+  limit?: number
+  offset?: number
+  total?: number // 总条数
+  records?: StatsMttHistoryRecord[]
+
+  [key: string]: unknown
+}
+
+// /api/stats/mtt/history/list/data_by_date (StatsMttHistoryListByDate)
+export interface StatsMttHistoryListByDateRequest {
+  clubid?: number // 俱乐部id
+  currentTimeStr?: string // 本地时间格式化，2006-01-02 15:04:05
+  filterType?: number // 币种
+  gameTypes?: number[] // 游戏类型 0-德州 1-OMAHA4 2-OMAHA5 3-OMAHA6 4-fantasy 5-牛仔 6-麻将 7-其他
+  pokerTypes?: number[] // 牌类型 0-长牌 2-短牌
+  limit?: number
+  offset?: number
+  timeType?: number // 1-今日, 2-7天, 3-30天, 4-生涯
+  timeZone?: number // 时区
+
+  [key: string]: unknown
+}
+
+export interface StatsMttHistoryDateGroup {
+  date?: string // 例：2024-03-23
+  date_time?: string // 例：2024-03-23 00:00:00
+  list?: StatsMttHistoryRecord[]
+  total?: number // 当日条数
+
+  [key: string]: unknown
+}
+
+export interface StatsMttHistoryListByDateData {
+  limit?: number
+  offset?: number
+  total?: number // 总数
+  records?: StatsMttHistoryDateGroup[]
+
+  [key: string]: unknown
+}
+
+export interface StatsMttHistoryListByDateResponseData extends StatsMttHistoryListByDateData {
   [key: string]: unknown
 }
 

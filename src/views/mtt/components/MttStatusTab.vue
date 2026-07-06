@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import hunterIcon from '@/assets/icons/icon_mtt_hunter.png'
 import chipsIcon from '@/assets/icons/icon_chips.png'
+import diamondIcon from '@/assets/icons/icon_diamond.png'
 import type { RoomcenterMttDetailData } from '@/api/models/roomcenter'
 import { formatDateTime, toUnixSeconds } from '@/utils/time'
 import { getLocale, t } from '@/i18n'
@@ -35,6 +36,7 @@ function fmtNum(n: number | undefined | null): string {
 }
 
 const isDiamond = computed(() => (mtt.value?.gold_type ?? 1) === 4)
+const currencyIcon = computed(() => (isDiamond.value ? diamondIcon : chipsIcon))
 
 function fmtMoney(n: number | undefined | null): string {
   if (n === undefined || n === null) return '-'
@@ -68,6 +70,8 @@ const statusLabel = computed(() => {
 })
 
 const startTimeLabel = computed(() => formatDateTime(mtt.value?.start_time, 'HH:mm'))
+// 状态卡片带日/月；中列大倒计时宽度有限仍用 HH:mm
+const startTimeCardLabel = computed(() => formatDateTime(mtt.value?.start_time, 'DD/MM HH:mm'))
 
 const buyInTotal = computed(() => {
   const pool = mtt.value?.apply_fee_pool ?? 0
@@ -255,12 +259,12 @@ const matchInfo = computed(() => {
       <div class="status-meta">
         <div class="meta-row">
           <span class="meta-label">{{ t('MTT-Start Time') }}</span>
-          <span class="meta-value">{{ startTimeLabel }}</span>
+          <span class="meta-value">{{ startTimeCardLabel }}</span>
         </div>
         <div class="meta-row">
           <span class="meta-label">{{ t('MTT_xq_buy') }}:</span>
           <div class="meta-value-with-icon">
-            <img :src="chipsIcon" class="meta-icon" alt="coin" />
+            <img :src="currencyIcon" class="meta-icon" alt="coin" />
             <span>{{ fmtMoney(buyInTotal) }}</span>
           </div>
         </div>

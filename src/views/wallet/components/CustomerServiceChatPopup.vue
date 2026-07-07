@@ -91,6 +91,7 @@ const chatMessages = computed<ChatMessageItem[]>(() => {
       return msg
     })
     .filter((msg) => {
+      if (msg.msg_type === 1 && msg.text?.trim() === '失败') return false
       if (msg.msg_type !== 6) return true
       const no = msg.transaction?.order_no
       return !(no && topOrderNos.value.has(String(no)))
@@ -134,6 +135,7 @@ async function checkOrderStatus() {
   try {
     const res = await postClubFundOrderListApi({
       order_no: orderNo,
+      my_order: true,
       limit: 1
     }, clubId)
 

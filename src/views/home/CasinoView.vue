@@ -610,13 +610,15 @@ const displayBlocks = computed<GameBlock[]>(() => {
       }
       const info = categoryInfo[selectedCategory.value]
       if (info) {
+        const items =
+          selectedCategory.value === 'board' ? catGames.slice(1) : catGames
         return [
           {
             key: `category-${selectedCategory.value}`,
             title: info.title,
             subtitle: info.subtitle,
             icon: info.icon,
-            items: catGames,
+            items,
           },
         ]
       }

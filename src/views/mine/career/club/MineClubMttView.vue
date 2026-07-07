@@ -56,8 +56,9 @@ const dateTabs: TabItem[] = [
   { label: '30' + t('UIHappyShop_ActivityShopDay'), key: 'month' },
 ]
 
-// 币种筛选：1-USDT 2-联盟币 3-记分牌（俱乐部生涯固定记分牌）
-const FILTER_TYPE = 3
+// 币种筛选：1-联盟币 2-USDT 3-记分牌 4-钻石。
+// 对齐生涯首页（MineClubCareerView）默认 UC 与 MineRecordView 俱乐部分支的 filter_type=1。
+const FILTER_TYPE = 1
 const PAGE_SIZE = 10
 
 const selectedGame = ref(gameTabs[0])
@@ -255,7 +256,7 @@ async function fetchSummary(): Promise<void> {
       poker_types: selectedGame.value.pokerTypes,
       time_type: resolveTimeType(),
       filter_type: FILTER_TYPE,
-      room_type: 0,
+      room_type: 2,
       time_zone: resolveTimeZone(),
       ...(userInfoStore.currentClub?.club_id ? { club_id: userInfoStore.currentClub.club_id } : {}),
     })
@@ -302,15 +303,15 @@ async function fetchMttHistory(reset = false, silent = false): Promise<void> {
   try {
     const currentOffset = reset ? 0 : listOffset.value
     const response = await postStatsMttHistoryListByDateApi({
-      timeType: resolveTimeType(),
-      filterType: FILTER_TYPE,
-      gameTypes: selectedGame.value.gameTypes,
-      pokerTypes: selectedGame.value.pokerTypes,
-      currentTimeStr: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-      timeZone: resolveTimeZone(),
+      time_type: resolveTimeType(),
+      filter_type: FILTER_TYPE,
+      game_types: selectedGame.value.gameTypes,
+      poker_types: selectedGame.value.pokerTypes,
+      current_time_str: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+      time_zone: resolveTimeZone(),
       limit: PAGE_SIZE,
       offset: currentOffset,
-      ...(userInfoStore.currentClub?.club_id ? { clubid: userInfoStore.currentClub.club_id } : {}),
+      ...(userInfoStore.currentClub?.club_id ? { club_id: userInfoStore.currentClub.club_id } : {}),
     })
     if (!guard.isCurrent()) return
     if (response.code !== 0) {

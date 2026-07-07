@@ -777,16 +777,18 @@ export interface StatsMttHistoryListData {
 }
 
 // /api/stats/mtt/history/list/data_by_date (StatsMttHistoryListByDate)
+// 字段命名对齐客户端同族协议（HttpClubDataStatsDataByDate / HttpTribeStatsDataByDate）：
+// 统一 snake_case；接口文档里的 camelCase 是生成器展示格式，服务端不识别。
 export interface StatsMttHistoryListByDateRequest {
-  clubid?: number // 俱乐部id
-  currentTimeStr?: string // 本地时间格式化，2006-01-02 15:04:05
-  filterType?: number // 币种
-  gameTypes?: number[] // 游戏类型 0-德州 1-OMAHA4 2-OMAHA5 3-OMAHA6 4-fantasy 5-牛仔 6-麻将 7-其他
-  pokerTypes?: number[] // 牌类型 0-长牌 2-短牌
+  club_id?: number // 俱乐部id
+  current_time_str?: string // 本地时间格式化，2006-01-02 15:04:05
+  filter_type?: number // 币种 1-联盟币 2-USDT 3-记分牌 4-钻石
+  game_types?: number[] // 游戏类型 0-德州 1-OMAHA4 2-OMAHA5 3-OMAHA6 4-fantasy 5-牛仔 6-麻将 7-其他
+  poker_types?: number[] // 牌类型 0-长牌 2-短牌
   limit?: number
   offset?: number
-  timeType?: number // 1-今日, 2-7天, 3-30天, 4-生涯
-  timeZone?: number // 时区
+  time_type?: number // 1-今日, 2-7天, 3-30天, 4-生涯
+  time_zone?: number // 时区
 
   [key: string]: unknown
 }

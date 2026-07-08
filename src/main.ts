@@ -74,7 +74,9 @@ function setupNativeMenuGuard(): () => void {
     }
 
     // 在可编辑区域保留系统菜单，避免输入能力受影响。
-    const editable = target.closest('input, textarea, [contenteditable="true"], [contenteditable=""]')
+    const editable = target.closest(
+      'input, textarea, [contenteditable="true"], [contenteditable=""]',
+    )
     if (editable) {
       return
     }
@@ -104,8 +106,7 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
     route: window.location.hash || window.location.pathname,
   })
 
-  const mountTarget =
-    typeof container === 'string' ? document.querySelector(container) : container
+  const mountTarget = typeof container === 'string' ? document.querySelector(container) : container
 
   if (!mountTarget) {
     log.warn('mount target not found:', container)
@@ -129,6 +130,10 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
       // 本地 token 已过期：先清登录并弹登录窗，避免 syncPostAuthData/wsConnect 用旧 token。
       if (checkLocalTokenAtBootstrap()) {
         syncPostAuthData()
+
+        void import('@/session/telegramDeepLink').then(({ runTelegramDeepLinkAfterLogin }) => {
+          runTelegramDeepLinkAfterLogin()
+        })
       }
     } else {
       // Telegram Mini App: trigger auto-login at startup before the user sees any guest page.

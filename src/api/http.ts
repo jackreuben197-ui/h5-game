@@ -351,15 +351,23 @@ async function doTelegramAutoLogin(): Promise<boolean> {
       throw error
     }
 
-    const currentRoute = router.currentRoute.value
-    if (currentRoute.name === 'login') {
-      await router.replace({ name: 'lobby' })
-    } else if (typeof currentRoute.name === 'string') {
-      const realRouteName = REAL_ROUTE_BY_GUEST_NAME[currentRoute.name]
-      if (realRouteName) {
-        await router.replace({ name: realRouteName })
+    const { hasPendingTelegramDeepLink, runTelegramDeepLinkAfterLogin } =
+      await import('@/session/telegramDeepLink')
+
+    if (!hasPendingTelegramDeepLink()) {
+      const currentRoute = router.currentRoute.value
+      if (currentRoute.name === 'login') {
+        await router.replace({ name: 'lobby' })
+      } else if (typeof currentRoute.name === 'string') {
+        const realRouteName = REAL_ROUTE_BY_GUEST_NAME[currentRoute.name]
+        if (realRouteName) {
+          await router.replace({ name: realRouteName })
+        }
       }
     }
+
+    // 登录成功后分发 Telegram 深链动作（进桌 / 战绩详情），无意图时为空操作。
+    runTelegramDeepLinkAfterLogin()
 
     return true
   } catch (error) {

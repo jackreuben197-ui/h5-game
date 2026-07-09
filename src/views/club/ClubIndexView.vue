@@ -196,7 +196,7 @@ const showFloatingActionArea = computed(() => {
 
 const filteredRecords = computed(() => {
   const baseList = sourceRecords.value.filter((room) => {
-    if (Number(room.game_type) >= 6) {
+    if (Number(room.game_type) >= 5) {
       return false
     }
     return checkIsShowForClubAndTribe(room, selectedClubId.value, selectedTribeId.value)
@@ -509,7 +509,7 @@ function restoreRoomGroupExpandedCache(): void {
 function syncExpandedMapWithRecords(records: RoomRecord[]): void {
   const validGroupKeySet = new Set<string>()
   records
-    .filter((room) => Number(room.game_type) < 6)
+    .filter((room) => Number(room.game_type) < 5)
     .forEach((room) => {
       validGroupKeySet.add(buildGroupKey(room))
     })

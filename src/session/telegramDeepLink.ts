@@ -4,6 +4,7 @@ import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useRoomListStore } from '@/stores/roomList'
 import { enterTable, isBridgeHandshakeDone, onBridgeHandshakeDone } from '@/bridge/core'
+import { setH5Visible } from '@/bridge/channels/uiChannel'
 import type { EnterTablePayload } from '@bridge-protocol'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import { pinia } from '@/stores/pinia'
@@ -173,13 +174,20 @@ async function openRoomRecordDetail(roomId: string): Promise<void> {
     })
 }
 
-// login_<roomId>: open the room list and auto-enter that room's table.
+// login_<roomId>: enter that room's table directly, with no intermediate page shown.
 async function enterRoomTableByRoomId(roomId: string): Promise<void> {
   const gameStore = useGameStore(pinia)
   const userInfoStore = useUserInfoStore(pinia)
   const roomListStore = useRoomListStore(pinia)
 
-  // Show the room list as the H5 backdrop; Cocos takes over the screen once entered.
+  // Hide the H5 layer so neither the home nor the room list (扑克专区) page is ever shown.
+  // This is the same visibility toggle Cocos itself uses when a table opens, so it does
+  // not affect the game canvas or the bridge — it only keeps the H5 UI out of sight while
+  // we resolve the room and hand off to Cocos.
+  setH5Visible(false)
+
+  // Keep the H5 route on game-list (the proven working entry path) but hidden, so exiting
+  // the table lands the player on a sensible page.
   await router.replace({ name: 'game-list' }).catch(() => {
     /* already on target route or cancelled by a guard — ignore */
   })
@@ -187,6 +195,7 @@ async function enterRoomTableByRoomId(roomId: string): Promise<void> {
   const room = await resolveRoomRecord(roomListStore, roomId)
   if (!room) {
     log.warn('room not found for deep link, roomId:', roomId)
+    setH5Visible(true)
     showFailToast('房间不存在或已关闭')
     return
   }
@@ -197,6 +206,7 @@ async function enterRoomTableByRoomId(roomId: string): Promise<void> {
       wsPort = await LoginSession.EnsureWS()
     } catch (error) {
       const message = error instanceof Error ? error.message : '获取 websocket 端口失败'
+      setH5Visible(true)
       showFailToast(message)
       return
     }
@@ -225,8 +235,15 @@ async function enterRoomTableByRoomId(roomId: string): Promise<void> {
   // The Cocos scene may still be loading; wait for the handshake before entering so
   // the enter-table request isn't dropped.
   await whenBridgeReady()
-  enterTable(payload)
+  const entered = enterTable(payload)
   gameStore.setLastEnterTable(payload)
+
+  // If Cocos never received the enter (no game runtime, e.g. a plain browser), bring the
+  // H5 UI back so the user isn't stuck on a hidden/blank screen. In the real game shell
+  // this returns a message and Cocos takes over the screen, so H5 stays hidden.
+  if (!entered) {
+    setH5Visible(true)
+  }
 }
 
 // Get the room record from the room-list store: return the cached one if present,

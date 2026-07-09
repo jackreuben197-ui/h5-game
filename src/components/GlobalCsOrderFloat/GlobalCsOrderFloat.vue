@@ -13,7 +13,11 @@ const walletStore = useWalletStore()
 
 const hasSeen = ref(false)
 const csChatOpen = ref(false)
-const csChatProps = ref({ tribeId: 0, supportUserId: 0 })
+const csChatProps = ref<{ tribeId: number; supportUserId: number; clubId: number | undefined }>({
+  tribeId: 0,
+  supportUserId: 0,
+  clubId: undefined,
+})
 
 const isLoggedIn = computed(() => !!userInfoStore.userInfo?.user?.p_u_id)
 
@@ -40,6 +44,7 @@ async function openChat() {
       csChatProps.value = {
         tribeId: channel.tribe_id || 0,
         supportUserId: channel.support_user_id || 0,
+        clubId: channel.club_id,
       }
       csChatOpen.value = true
     }
@@ -95,6 +100,7 @@ watch(isLoggedIn, (val) => {
       v-if="csChatOpen"
       :tribe-id="csChatProps.tribeId"
       :support-user-id="csChatProps.supportUserId"
+      :club-id="csChatProps.clubId"
       :orders="walletStore.csChatOrders"
       @close="csChatOpen = false"
     />

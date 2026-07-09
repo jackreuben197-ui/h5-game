@@ -3,17 +3,11 @@ import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useRoomListStore } from '@/stores/roomList'
-import {
-  enterTable,
-  isBridgeHandshakeDone,
-  onBridgeHandshakeDone,
-  subscribeCocosMessages,
-} from '@/bridge/core'
-import { BRIDGE_ACTION, BRIDGE_MSG_TYPE, type EnterTablePayload } from '@bridge-protocol'
-import { setH5Visible } from '@/bridge/channels/uiChannel'
+import { enterTable, isBridgeHandshakeDone, onBridgeHandshakeDone } from '@/bridge/core'
+import type { EnterTablePayload } from '@bridge-protocol'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import { pinia } from '@/stores/pinia'
-import { closeToast, showFailToast, showLoadingToast } from 'vant'
+import { showFailToast } from 'vant'
 import { createLogger } from '@/utils/logger'
 
 const log = createLogger('[tg-deeplink]')
@@ -179,123 +173,60 @@ async function openRoomRecordDetail(roomId: string): Promise<void> {
     })
 }
 
-// login_<roomId>: enter that room's table directly, with NO intermediate page visible.
-// The H5 UI is hidden behind a spinner for the whole transition, so the user goes
-// straight from the Telegram login to the table (never the home / 扑克专区 pages).
+// login_<roomId>: open the room list and auto-enter that room's table.
 async function enterRoomTableByRoomId(roomId: string): Promise<void> {
   const gameStore = useGameStore(pinia)
   const userInfoStore = useUserInfoStore(pinia)
   const roomListStore = useRoomListStore(pinia)
 
-  // Hide the H5 layer and show only a spinner. Cocos renders the table on its own canvas
-  // underneath, so nothing of the H5 UI (home / room list) is ever shown.
-  setH5Visible(false)
-  showLoadingToast({
-    message: '进入牌桌中...',
-    forbidClick: true,
-    duration: 0,
-    loadingType: 'spinner',
-  })
-
-  // Point the (hidden) H5 route at the lobby so that when the player later exits the
-  // table and Cocos shows H5 again, they land on a proper logged-in page — not a guest page.
-  await router.replace({ name: 'lobby' }).catch(() => {
+  // Show the room list as the H5 backdrop; Cocos takes over the screen once entered.
+  await router.replace({ name: 'game-list' }).catch(() => {
     /* already on target route or cancelled by a guard — ignore */
   })
 
-  try {
-    const room = await resolveRoomRecord(roomListStore, roomId)
-    if (!room) {
-      log.warn('room not found for deep link, roomId:', roomId)
-      restoreH5AfterFailure('房间不存在或已关闭')
+  const room = await resolveRoomRecord(roomListStore, roomId)
+  if (!room) {
+    log.warn('room not found for deep link, roomId:', roomId)
+    showFailToast('房间不存在或已关闭')
+    return
+  }
+
+  let wsPort = Number(gameStore.websocketPort) || 0
+  if (!wsPort) {
+    try {
+      wsPort = await LoginSession.EnsureWS()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '获取 websocket 端口失败'
+      showFailToast(message)
       return
     }
-
-    let wsPort = Number(gameStore.websocketPort) || 0
-    if (!wsPort) {
-      try {
-        wsPort = await LoginSession.EnsureWS()
-      } catch (error) {
-        const message = error instanceof Error ? error.message : '获取 websocket 端口失败'
-        restoreH5AfterFailure(message)
-        return
-      }
-    }
-
-    const relateClubIds = Array.isArray(room.relate_club_ids) ? room.relate_club_ids : []
-    const clubId = toSafeInt(userInfoStore.currentClub?.club_id) || toSafeInt(relateClubIds[0])
-    const clubRandomId = toSafeInt(userInfoStore.currentClub?.random_id)
-
-    const payload: EnterTablePayload = {
-      userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',
-      userId: gameStore.loginUserId || gameStore.loginAccount || '',
-      token: gameStore.sessionToken,
-      websocketPort: wsPort,
-      // Reuse the standard club-room entry source so Cocos handles it identically to a
-      // manual tap (no game-side change needed for the Telegram deep link).
-      from: 'h5-club-table',
-      clubId,
-      clubRandomId,
-      roomId: String(room.rid ?? roomId),
-      roomName: String(room.name ?? ''),
-      roomInfo: room,
-    }
-
-    // The Cocos scene may still be loading; wait for the handshake before entering so
-    // the enter-table request isn't dropped.
-    await whenBridgeReady()
-    const sent = enterTable(payload)
-    if (!sent) {
-      // Cocos not ready (e.g. a plain browser with no game runtime): restore the H5 UI
-      // so the user isn't stuck behind the spinner.
-      restoreH5AfterFailure()
-      return
-    }
-    gameStore.setLastEnterTable(payload)
-
-    // Keep the spinner + hidden H5 until Cocos takes over the screen (sends H5_HIDE),
-    // so there is no blank flash between the spinner and the table appearing.
-    await waitForCocosTakeOver()
-    closeToast()
-  } catch (error) {
-    log.warn('enter room table failed:', error)
-    restoreH5AfterFailure()
   }
-}
 
-// Dismiss the spinner and bring the H5 UI back after a failed entry (optionally toasting why).
-function restoreH5AfterFailure(message?: string): void {
-  closeToast()
-  setH5Visible(true)
-  if (message) {
-    showFailToast(message)
+  const relateClubIds = Array.isArray(room.relate_club_ids) ? room.relate_club_ids : []
+  const clubId =
+    toSafeInt(userInfoStore.currentClub?.club_id) || toSafeInt(relateClubIds[0])
+  const clubRandomId = toSafeInt(userInfoStore.currentClub?.random_id)
+
+  const payload: EnterTablePayload = {
+    userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',
+    userId: gameStore.loginUserId || gameStore.loginAccount || '',
+    token: gameStore.sessionToken,
+    websocketPort: wsPort,
+    // Reuse the standard club-room entry source so Cocos handles it identically to a
+    // manual tap (no game-side change needed for the Telegram deep link).
+    from: 'h5-club-table',
+    clubId,
+    clubRandomId,
+    roomId: String(room.rid ?? roomId),
+    roomName: String(room.name ?? ''),
+    roomInfo: room,
   }
-}
 
-// Resolve once Cocos hides the H5 layer (i.e. the table is showing), or after a timeout.
-function waitForCocosTakeOver(timeoutMs = 8000): Promise<void> {
-  return new Promise((resolve) => {
-    let settled = false
-    const finish = (): void => {
-      if (settled) {
-        return
-      }
-      settled = true
-      off()
-      clearTimeout(timer)
-      resolve()
-    }
-
-    const off = subscribeCocosMessages(
-      (message) => {
-        if (message.action === BRIDGE_ACTION.H5_HIDE) {
-          finish()
-        }
-      },
-      { msgtype: BRIDGE_MSG_TYPE.H5 },
-    )
-    const timer = setTimeout(finish, timeoutMs)
-  })
+  // The Cocos scene may still be loading; wait for the handshake before entering so
+  // the enter-table request isn't dropped.
+  await whenBridgeReady()
+  enterTable(payload)
+  gameStore.setLastEnterTable(payload)
 }
 
 // Get the room record from the room-list store: return the cached one if present,

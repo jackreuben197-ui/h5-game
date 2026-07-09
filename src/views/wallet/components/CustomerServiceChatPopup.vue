@@ -20,6 +20,8 @@ const props = withDefaults(
     orders?: any[]
     /** 区分充值/提现，决定交易气泡的文案 */
     orderType?: 'recharge' | 'withdraw'
+    /** 撮合聊天频道所属 club_id（联盟级频道为 0），优先于 currentClub */
+    clubId?: number
   }>(),
   {
     orderType: 'recharge',
@@ -31,6 +33,14 @@ const emit = defineEmits<{
 }>()
 
 const userInfoStore = useUserInfoStore()
+
+const chatClubId = computed<number | undefined>(() =>
+  props.clubId != null
+    ? props.clubId
+    : userInfoStore.currentClub?.club_id != null
+      ? Number(userInfoStore.currentClub.club_id)
+      : undefined,
+)
 
 // 充值用 充值/付款 文案；提现用 提现/收款 文案。
 function labelsFor(orderType?: string) {
@@ -53,16 +63,6 @@ const orderList = computed<any[]>(() => {
   })
 })
 const messages = ref<ChatSupportMessageListChatData[]>([])
-
-// 顶部“进行中”订单的 order_no 集合，用于和历史交易消息去重
-const topOrderNos = computed<Set<string>>(() => {
-  const s = new Set<string>()
-  orderList.value.forEach((o) => {
-    const no = o.order_no || o.order?.order_no
-    if (no) s.add(String(no))
-  })
-  return s
-})
 
 interface ChatTransaction {
   user_info?: string
@@ -90,11 +90,43 @@ const chatMessages = computed<ChatMessageItem[]>(() => {
       }
       return msg
     })
-    .filter((msg) => {
-      if (msg.msg_type !== 6) return true
-      const no = msg.transaction?.order_no
-      return !(no && topOrderNos.value.has(String(no)))
-    })
+    .filter((msg) => !(msg.msg_type === 1 && msg.text?.trim() === '失败'))
+})
+
+type TimelineItem =
+  | { kind: 'order'; od: any; t: number }
+  | { kind: 'msg'; msg: ChatMessageItem; t: number }
+
+const historyOrderNos = computed<Set<string>>(() => {
+  const s = new Set<string>()
+  messages.value.forEach((m) => {
+    if (m.msg_type === 6 && m.extra) {
+      try {
+        const no = JSON.parse(m.extra)?.order_no
+        if (no) s.add(String(no))
+      } catch {
+        /* ignore */
+      }
+    }
+  })
+  return s
+})
+
+const timeline = computed<TimelineItem[]>(() => {
+  const items: TimelineItem[] = []
+
+  chatMessages.value.forEach((msg) => {
+    items.push({ kind: 'msg', msg, t: toMs(msg.local_time || msg.time_token) ?? 0 })
+  })
+
+  orderList.value.forEach((od) => {
+    const no = od.order_no || od.order?.order_no
+    if (no && historyOrderNos.value.has(String(no))) return
+    const t = parseOrderTime(od.create_time || od.order?.create_time)?.getTime() ?? Date.now()
+    items.push({ kind: 'order', od, t })
+  })
+
+  return items.sort((a, b) => a.t - b.t)
 })
 
 function txLabels(msg: { sub_type?: number }) {
@@ -134,6 +166,7 @@ async function checkOrderStatus() {
   try {
     const res = await postClubFundOrderListApi({
       order_no: orderNo,
+      my_order: true,
       limit: 1
     }, clubId)
 
@@ -154,7 +187,7 @@ async function loadMessages() {
   try {
     const res = await postChatSupportMessageListApi({
       tribe_id: props.tribeId,
-      club_id: userInfoStore.currentClub?.club_id ? Number(userInfoStore.currentClub.club_id) : undefined,
+      club_id: chatClubId.value,
       to_user_id: props.supportUserId,
       im_service_type: 4,
       limit: 50,
@@ -186,7 +219,7 @@ async function sendMessage() {
   try {
     const res = await postChatSupportMessageSendApi({
       tribe_id: props.tribeId,
-      club_id: userInfoStore.currentClub?.club_id ? Number(userInfoStore.currentClub.club_id) : undefined,
+      club_id: chatClubId.value,
       to_user_id: props.supportUserId,
       im_service_type: 4,
       msg_type: 1,
@@ -211,7 +244,7 @@ async function onImageUpload(e: Event) {
       const url = (res.data as any).url as string
       await postChatSupportMessageSendApi({
         tribe_id: props.tribeId,
-        club_id: userInfoStore.currentClub?.club_id ? Number(userInfoStore.currentClub.club_id) : undefined,
+        club_id: chatClubId.value,
         to_user_id: props.supportUserId,
         im_service_type: 4,
         msg_type: 2,
@@ -247,9 +280,19 @@ function scrollToBottom() {
   })
 }
 
+function toMs(raw?: number): number | null {
+  const n = Number(raw)
+  if (!raw || Number.isNaN(n)) return null
+  if (n >= 1e15) return Math.floor(n / 1e7) * 1000
+  if (n >= 1e12) return n
+  return n * 1000
+}
+
 function formatTime(timestamp?: number) {
-  if (!timestamp) return ''
-  const date = new Date(timestamp * 1000)
+  const ms = toMs(timestamp)
+  if (ms == null) return ''
+  const date = new Date(ms)
+  if (Number.isNaN(date.getTime())) return ''
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
 }
 
@@ -318,69 +361,72 @@ onUnmounted(() => {
           <!-- Messages Area -->
           <div class="messages-wrap" ref="messageContainer">
             <div class="messages-inner">
-              <!-- Transaction Bubbles -->
-              <div
-                v-for="(od, oi) in orderList"
-                :key="od.order_no || od.order?.order_no || oi"
-                class="message-row message-row--self"
-              >
-                <div class="bubble-wrapper">
-                  <div class="transaction-bubble">
-                    <div class="bubble-content">
-                      <p>{{ labelsFor(od.orderType).user }}：{{ userInfoStore.userInfo?.user.nickname }} / ID：{{ userInfoStore.userInfo?.user.un_id }}</p>
-                      <p>{{ labelsFor(od.orderType).coin }}：{{ (od.gold_num || od.order?.gold_num || 0) / 100 }}</p>
-                      <p>{{ labelsFor(od.orderType).amount }}：{{ od.pay_price || od.order?.pay_price || od.order?.amount || od.amount || 0 }}</p>
-                      <p>{{ labelsFor(od.orderType).payType }}：{{ od.usdt_address?.name || od.pay_type_name || '客服撮合' }}</p>
-                      <p>订单号：{{ od.order_no || od.order?.order_no }}</p>
-                      <p>申请时间：{{ orderTimeText(od.create_time || od.order?.create_time) }}</p>
+              <template v-for="(item, idx) in timeline" :key="idx">
+                <div
+                  v-if="item.kind === 'order'"
+                  class="message-row message-row--self"
+                >
+                  <div class="bubble-wrapper">
+                    <div class="transaction-bubble">
+                      <div class="bubble-content">
+                        <p>{{ labelsFor(item.od.orderType).user }}：{{ userInfoStore.userInfo?.user.nickname }} / ID：{{ userInfoStore.userInfo?.user.un_id }}</p>
+                        <p>{{ labelsFor(item.od.orderType).coin }}：{{ (item.od.gold_num || item.od.order?.gold_num || 0) / 100 }}</p>
+                        <p>{{ labelsFor(item.od.orderType).amount }}：{{ item.od.pay_price || item.od.order?.pay_price || item.od.order?.amount || item.od.amount || 0 }}</p>
+                        <p>{{ labelsFor(item.od.orderType).payType }}：{{ item.od.usdt_address?.name || item.od.pay_type_name || '客服撮合' }}</p>
+                        <p>订单号：{{ item.od.order_no || item.od.order?.order_no }}</p>
+                        <p>申请时间：{{ orderTimeText(item.od.create_time || item.od.order?.create_time) }}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div class="bubble-footer">
-                    <span>{{ orderClockText(od.create_time || od.order?.create_time) }}</span>
-                    <svg width="7.226" height="7.226" viewBox="0 0 8 8" fill="none">
-                      <ellipse cx="2.93052" cy="2.91963" rx="2.38865" ry="2.42647" stroke="#05E7AE" stroke-width="0.955458"/>
-                      <path d="M4.63672 4.65283L6.68413 6.73266" stroke="#05E7AE" stroke-width="0.955458" stroke-linecap="round"/>
-                    </svg>
-                    <span class="sender-name">{{ userInfoStore.userInfo?.user.nickname }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div v-for="(msg, idx) in chatMessages" :key="idx" class="message-row" :class="{ 'message-row--self': msg.user_send || msg.msg_type === 6 }">
-                <div class="bubble-wrapper" :class="{ 'bubble-wrapper--self': msg.user_send }">
-                  <!-- 历史交易订单（充值/提现） -->
-                  <div v-if="msg.msg_type === 6" class="transaction-bubble">
-                    <div class="bubble-content">
-                      <p>{{ txLabels(msg).user }}：{{ msg.transaction?.user_info || `${userInfoStore.userInfo?.user.nickname} / ID：${userInfoStore.userInfo?.user.un_id}` }}</p>
-                      <p>{{ txLabels(msg).coin }}：{{ msg.transaction?.amount || 0 }}</p>
-                      <p>{{ txLabels(msg).amount }}：{{ msg.transaction?.pay_price || 0 }}</p>
-                      <p>{{ txLabels(msg).payType }}：{{ msg.transaction?.type_name || '客服撮合' }}</p>
-                      <p>订单号：{{ msg.transaction?.order_no }}</p>
-                      <p>申请时间：{{ orderTimeText(msg.transaction?.timestamp) }}</p>
-                    </div>
-                  </div>
-                  <div v-else-if="msg.msg_type === 1" class="text-bubble" :class="{ 'text-bubble--self': msg.user_send }">
-                    {{ msg.text }}
-                  </div>
-                  <div v-else-if="msg.msg_type === 2" class="image-bubble" :class="{ 'image-bubble--self': msg.user_send }">
-                    <img :src="msg.url" alt="image" @click="openUrl(msg.url)" />
-                  </div>
-
-                  <div class="bubble-footer">
-                    <span>{{ formatTime(msg.local_time) }}</span>
-                    <template v-if="msg.user_send || msg.msg_type === 6">
+                    <div class="bubble-footer">
+                      <span>{{ orderClockText(item.od.create_time || item.od.order?.create_time) }}</span>
                       <svg width="7.226" height="7.226" viewBox="0 0 8 8" fill="none">
                         <ellipse cx="2.93052" cy="2.91963" rx="2.38865" ry="2.42647" stroke="#05E7AE" stroke-width="0.955458"/>
                         <path d="M4.63672 4.65283L6.68413 6.73266" stroke="#05E7AE" stroke-width="0.955458" stroke-linecap="round"/>
                       </svg>
                       <span class="sender-name">{{ userInfoStore.userInfo?.user.nickname }}</span>
-                    </template>
-                    <template v-else>
-                      <span class="sender-name">客服</span>
-                    </template>
+                    </div>
                   </div>
                 </div>
-              </div>
+
+                <div
+                  v-else
+                  class="message-row"
+                  :class="{ 'message-row--self': item.msg.user_send || item.msg.msg_type === 6 }"
+                >
+                  <div class="bubble-wrapper" :class="{ 'bubble-wrapper--self': item.msg.user_send }">
+                    <div v-if="item.msg.msg_type === 6" class="transaction-bubble">
+                      <div class="bubble-content">
+                        <p>{{ txLabels(item.msg).user }}：{{ item.msg.transaction?.user_info || `${userInfoStore.userInfo?.user.nickname} / ID：${userInfoStore.userInfo?.user.un_id}` }}</p>
+                        <p>{{ txLabels(item.msg).coin }}：{{ item.msg.transaction?.amount || 0 }}</p>
+                        <p>{{ txLabels(item.msg).amount }}：{{ item.msg.transaction?.pay_price || 0 }}</p>
+                        <p>{{ txLabels(item.msg).payType }}：{{ item.msg.transaction?.type_name || '客服撮合' }}</p>
+                        <p>订单号：{{ item.msg.transaction?.order_no }}</p>
+                        <p>申请时间：{{ orderTimeText(item.msg.transaction?.timestamp) }}</p>
+                      </div>
+                    </div>
+                    <div v-else-if="item.msg.msg_type === 1" class="text-bubble" :class="{ 'text-bubble--self': item.msg.user_send }">
+                      {{ item.msg.text }}
+                    </div>
+                    <div v-else-if="item.msg.msg_type === 2" class="image-bubble" :class="{ 'image-bubble--self': item.msg.user_send }">
+                      <img :src="item.msg.url" alt="image" @click="openUrl(item.msg.url)" />
+                    </div>
+
+                    <div class="bubble-footer">
+                      <span>{{ formatTime(item.msg.local_time || item.msg.time_token) }}</span>
+                      <template v-if="item.msg.user_send || item.msg.msg_type === 6">
+                        <svg width="7.226" height="7.226" viewBox="0 0 8 8" fill="none">
+                          <ellipse cx="2.93052" cy="2.91963" rx="2.38865" ry="2.42647" stroke="#05E7AE" stroke-width="0.955458"/>
+                          <path d="M4.63672 4.65283L6.68413 6.73266" stroke="#05E7AE" stroke-width="0.955458" stroke-linecap="round"/>
+                        </svg>
+                        <span class="sender-name">{{ userInfoStore.userInfo?.user.nickname }}</span>
+                      </template>
+                      <template v-else>
+                        <span class="sender-name">客服</span>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </template>
             </div>
           </div>
 
@@ -640,7 +686,7 @@ onUnmounted(() => {
   align-items: flex-start;
   gap: 6.093px;
   border-radius: 23.457px;
-  background: rgba(5, 231, 174, 0.50);
+  background: #1F9816;
   color: #F9F9F9;
 }
 
@@ -675,12 +721,15 @@ onUnmounted(() => {
 }
 
 .text-bubble {
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 20px 20px 20px 4px;
-  padding: 12px 16px;
-  max-width: 75%;
+  padding: 6px 12px;
   color: #fff;
   font-size: 14px;
+  word-break: break-word;
 }
 
 .text-bubble--self {

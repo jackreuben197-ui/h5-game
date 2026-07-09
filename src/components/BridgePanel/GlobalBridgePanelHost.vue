@@ -146,8 +146,8 @@ function onDialogClose(): void {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  /* 让内部卡片(.mrp)在整屏容器里垂直居中，形成上下留白的有界卡片，尺寸对齐现金战况弹窗 */
-  justify-content: center;
+  /* 底端对齐：卡片(.mrp)贴屏幕底部，留白落在顶部，底部不留空（对齐右侧牌桌弹窗） */
+  justify-content: flex-end;
   background: transparent;
 }
 .notification-dialog {

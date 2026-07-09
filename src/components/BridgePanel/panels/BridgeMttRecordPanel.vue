@@ -807,7 +807,8 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   width: 100%;
-  /* 固定高度：切换内部 Tab 时弹窗高度保持不变(对齐战绩弹窗)；父容器垂直居中 */
+  /* 固定高度：切换内部 Tab 时弹窗高度保持不变。底端对齐（父容器 flex-end），
+     贴住屏幕底部、留白落在顶部，底部不再出现留白。 */
   height: 88dvh;
   flex-shrink: 0;
   box-sizing: border-box;

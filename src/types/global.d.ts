@@ -60,6 +60,11 @@ declare global {
         }
         ready?: () => void
         expand?: () => void
+        isExpanded?: boolean
+        viewportHeight?: number
+        viewportStableHeight?: number
+        onEvent?: (event: string, handler: () => void) => void
+        offEvent?: (event: string, handler: () => void) => void
       }
     }
   }

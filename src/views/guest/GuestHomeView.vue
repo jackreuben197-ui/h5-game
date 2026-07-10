@@ -322,7 +322,7 @@ onMounted(() => {
 .home-page {
   display: flex;
   flex-direction: column;
-  gap: 0.12rem;
+  gap: 0.2rem;
   padding: 0 0.4rem 0;
   background: transparent;
   height: 100%;
@@ -338,10 +338,14 @@ onMounted(() => {
 
 .home-page > .notice-bar,
 .home-page > .club-panel,
-.home-page > .section-header,
+.home-page > .section-header {
+  flex-shrink: 0;
+}
+
 .home-page > .game-center-scroll,
 .home-page > .coming-soon-scroll {
-  flex-shrink: 0;
+  flex: 1 0 3.9rem;
+  min-height: 0;
 }
 /* ========== 0. 顶部栏 ========== */
 .top-bar {
@@ -425,7 +429,7 @@ onMounted(() => {
   overflow: hidden;
   flex: 1 1 3.68rem;
   min-height: 0;
-  max-height: 4.5rem;
+  max-height: 5.5rem;
 }
 
 .home-header__inner {
@@ -519,6 +523,14 @@ onMounted(() => {
     margin-top: 0;
     font-size: 0.4rem;
     padding: 0.1rem 0.4rem;
+  }
+}
+
+@container (min-height: 4rem) {
+  .home-header__hero {
+    top: 0;
+    bottom: 0;
+    justify-content: center;
   }
 }
 
@@ -723,6 +735,7 @@ onMounted(() => {
 }
 .game-center-track {
   display: flex;
+  height: 100%;
   gap: 0.15rem;
   width: max-content;
   padding-left: 0.4rem;
@@ -731,7 +744,7 @@ onMounted(() => {
 .game-scroll-card {
   flex-shrink: 0;
   width: 2.95rem;
-  height: 3.9rem;
+  height: 100%;
   border-radius: 0.37rem;
   overflow: hidden;
   position: relative;
@@ -923,6 +936,7 @@ onMounted(() => {
 
 .coming-soon-track {
   display: flex;
+  height: 100%;
   gap: 0.15rem;
   padding-bottom: 0.1rem;
   padding-left: 0.4rem;
@@ -934,7 +948,7 @@ onMounted(() => {
   flex-shrink: 0;
   width: 2.95rem;
   // 固定高度：小屏不再压缩卡片，改由页面向下滚动兜底（与登录后首页一致）。
-  height: 3.9rem;
+  height: 100%;
   border-radius: 0.51rem;
   overflow: hidden;
   position: relative;

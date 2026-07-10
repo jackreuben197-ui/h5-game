@@ -1001,7 +1001,7 @@ onBeforeUnmount(() => {
 .home-page {
   display: flex;
   flex-direction: column;
-  gap: 0.12rem;
+  gap: 0.2rem;
   padding: 0 0.4rem 2.3rem;
   background: transparent;
   min-height: max-content;
@@ -1021,9 +1021,26 @@ onBeforeUnmount(() => {
 }
 
 .home-page--fit .notice-bar,
-.home-page--fit .club-panel,
-.home-page--fit .home-swap-container {
+.home-page--fit .club-panel {
   flex-shrink: 0;
+}
+
+.home-page--fit .home-swap-container {
+  flex: 1 0 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-page--fit .home-default-sections {
+  flex: 1 0 auto;
+  min-height: 0;
+}
+
+.home-page--fit .game-center-scroll,
+.home-page--fit .coming-soon-scroll {
+  flex: 1 0 3.9rem;
+  min-height: 0;
 }
 
 .top-bar {
@@ -1040,7 +1057,7 @@ onBeforeUnmount(() => {
   overflow: hidden;
   flex: 1 1 3.68rem;
   min-height: 0;
-  max-height: 4.5rem;
+  max-height: 5.5rem;
 }
 
 .home-header__inner {
@@ -1134,6 +1151,14 @@ onBeforeUnmount(() => {
     margin-top: 0;
     font-size: 0.4rem;
     padding: 0.1rem 0.4rem;
+  }
+}
+
+@container (min-height: 4rem) {
+  .home-header__hero {
+    top: 0;
+    bottom: 0;
+    justify-content: center;
   }
 }
 
@@ -1342,7 +1367,7 @@ onBeforeUnmount(() => {
 .home-default-sections {
   display: flex;
   flex-direction: column;
-  gap: 0.12rem;
+  gap: 0.2rem;
 }
 
 // 默认模块 <=> MTT 列表切换用淡入淡出：改用 opacity，去掉 overflow:hidden，
@@ -1409,6 +1434,7 @@ onBeforeUnmount(() => {
 
 .game-center-track {
   display: flex;
+  height: 100%;
   gap: 0.15rem;
   width: max-content;
   padding-left: 0.4rem;
@@ -1419,7 +1445,7 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   width: 2.95rem;
   // 固定高度：小屏不再压缩卡片，改由页面向下滚动（内容延伸到 appbar 下方，用户滚动查看）。
-  height: 3.9rem;
+  height: 100%;
   border-radius: 0.37rem;
   overflow: hidden;
   position: relative;
@@ -1611,6 +1637,7 @@ onBeforeUnmount(() => {
 
 .coming-soon-track {
   display: flex;
+  height: 100%;
   gap: 0.15rem;
   padding-bottom: 0.1rem;
   padding-left: 0.4rem;
@@ -1622,7 +1649,7 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   width: 2.95rem;
   // 与 .game-scroll-card 一致：固定高度，不再随屏幕压缩，改由页面滚动兜底。
-  height: 3.9rem;
+  height: 100%;
   border-radius: 0.51rem;
   overflow: hidden;
   position: relative;

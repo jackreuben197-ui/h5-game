@@ -16,11 +16,13 @@ import iconBoxComment from '@/assets/icons/icon_box_comment.png'
 import iconBoxSetting from '@/assets/icons/icon_box_setting.png'
 import iconShop from '@/assets/icons/icon_shop.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
+import { isChannelPackageHost } from '@/utils/channelPackage'
 import { formatUC } from '@/utils/roomVisibility'
 
 const router = useRouter()
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
+const isChannelPackage = isChannelPackageHost()
 
 interface BoxItem {
   key: string
@@ -119,7 +121,7 @@ const displayUser = computed(() => {
           </div>
           <div class="card-line2">
             <div class="left-board">
-              <div class="currency">
+              <div v-if="isChannelPackage" class="currency">
                 <img class="icon-currency" :src="iconChip" alt="gold" />
                 <div class="num">{{ formatUC(displayUser.gold) }}</div>
               </div>

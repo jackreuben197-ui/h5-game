@@ -5,7 +5,7 @@ import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
 import { useGameStore } from '@/stores/game'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { t } from '@/i18n'
-import { isChannelPackageHost } from '@/utils/channelPackage'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
 
 type TabIconKey = 'home' | 'club' | 'wallet' | 'friendsTable' | 'message' | 'mine'
 
@@ -19,7 +19,7 @@ interface TabItem {
   icon: TabIconKey
 }
 
-const isChannelPackage = isChannelPackageHost()
+const isChannelPackage = isPrivateDomainMode()
 
 // 底部 5 个主模块入口与路由路径。
 // 底部 5 个主模块入口与路由路径（登录态走 path，未登录态走 guestPath）。

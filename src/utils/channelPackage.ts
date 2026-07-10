@@ -1,5 +1,10 @@
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
+import {
+  isTelegramMiniAppEnv,
+  resolveTelegramClubInviteCode,
+  resolveTelegramClubRandomId,
+} from '@/utils/telegramStartParam'
 
 // 渠道包 = 邀请子域名 <邀请码>.<部署主域名>。部署主域名形如 sub.brand.tld（3 段，
 // 如 prvw-game.trackyourchoice.com / ccsgame.recognitionway.com），邀请码作为额外前缀 → 共 ≥4 段。
@@ -64,6 +69,24 @@ export function isChannelPackageHost(hostname: string = window.location.hostname
     return false
   }
   return true
+}
+
+// A Telegram Mini App opened through a club channel is a private-domain context — the same as
+// a channel-package subdomain. Detected from the club-bearing start_param (club_<code>, a bare
+// invite code, or login_/home_<roomId>_<clubRandomId>).
+export function isTelegramClubContext(): boolean {
+  if (!isTelegramMiniAppEnv()) {
+    return false
+  }
+  return Boolean(resolveTelegramClubInviteCode() || resolveTelegramClubRandomId())
+}
+
+// Private-domain mode = channel-package subdomain OR Telegram club context. This drives the
+// private-domain UI (channel bottom nav: Home/Club/Deposit/Messages/My, single-club club page,
+// channel-scoped room list). For non-Telegram web it is identical to isChannelPackageHost(),
+// so existing flows are unchanged; it only adds the private-domain UI inside Telegram.
+export function isPrivateDomainMode(hostname: string = window.location.hostname): boolean {
+  return isChannelPackageHost(hostname) || isTelegramClubContext()
 }
 
 /**
@@ -173,6 +196,15 @@ export function resolveInviteCode(hostname: string = window.location.hostname): 
   const parsed = parseInviteParamsFromLocation()
   if (parsed.inviteCode) {
     return parsed.inviteCode
+  }
+
+  // Telegram Mini App: no invite subdomain / ?invite_code= exists, so the club invite
+  // code is carried in the deep-link start_param. Treated identically to a channel
+  // subdomain code — it flows into /org/club/default (preview) and the login payload
+  // (enrollment), so the channel-package auto-join mechanism works unchanged in Telegram.
+  const fromTelegram = resolveTelegramClubInviteCode()
+  if (fromTelegram) {
+    return fromTelegram
   }
 
   return extractInviteCodeFromSubdomain(hostname)

@@ -17,7 +17,7 @@ import {
 } from '@/bridge/ws/roomChangeNotify'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { isChannelPackageHost } from '@/utils/channelPackage'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
 import {
   bulkUpsertRooms,
   loadRoomsByRids,
@@ -95,11 +95,11 @@ function toSafeInt(value: unknown): number {
 
 function isOfficialGuestMode(): boolean {
   const gameStore = useGameStore()
-  return !gameStore.sessionToken.trim() && !isChannelPackageHost()
+  return !gameStore.sessionToken.trim() && !isPrivateDomainMode()
 }
 
 async function resolveGuestClubRid(): Promise<number> {
-  if (!isChannelPackageHost()) {
+  if (!isPrivateDomainMode()) {
     return 0
   }
 
@@ -123,7 +123,7 @@ function resolveScope(): RoomListScope {
   const gameStore = useGameStore()
   const uid = String(gameStore.loginUserId || '').trim()
   if (uid) return scopeForUser(uid)
-  if (!gameStore.sessionToken.trim() && isChannelPackageHost()) {
+  if (!gameStore.sessionToken.trim() && isPrivateDomainMode()) {
     return CHANNEL_GUEST_SCOPE
   }
   return SCOPE_GUEST

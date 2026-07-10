@@ -6,6 +6,7 @@ import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
 import { resolveInviteCode } from '@/utils/channelPackage'
 import { copyStorageToMainDomain } from '@/utils/channelPackage'
+import { resolveTelegramClubRandomId } from '@/utils/telegramStartParam'
 
 export type ClubInfo = OrgClubData
 
@@ -135,10 +136,16 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
         return channelDefaultClubInFlight
       }
 
+      // Channel subdomain / Telegram club_<code> links resolve to an invite_code; Telegram
+      // game links (login_/home_<roomId>_<clubRandomId>) resolve to a club random id. Both
+      // select the same private-domain club via /org/club/default.
       const inviteCode = resolveInviteCode()
+      const clubRandomId = Number(resolveTelegramClubRandomId())
       const payload = inviteCode
         ? { invite_code: inviteCode }
-        : {}
+        : clubRandomId
+          ? { random_id: clubRandomId }
+          : {}
 
       channelDefaultClubInFlight = (async () => {
         try {

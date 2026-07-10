@@ -21,7 +21,7 @@ import type {
 import StorageKey from '@/constants/storageKey'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { isChannelPackageHost } from '@/utils/channelPackage'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
 import { localStore } from '@/utils/localStore'
 import { createLogger } from '@/utils/logger'
 
@@ -69,7 +69,7 @@ function resolveMttSessionKey(): string {
     return `token_${sessionToken}`
   }
 
-  if (isChannelPackageHost()) {
+  if (isPrivateDomainMode()) {
     return CHANNEL_GUEST_SESSION_KEY
   }
 
@@ -78,7 +78,7 @@ function resolveMttSessionKey(): string {
 
 function isOfficialGuestMode(): boolean {
   const gameStore = useGameStore()
-  return !gameStore.sessionToken.trim() && !isChannelPackageHost()
+  return !gameStore.sessionToken.trim() && !isPrivateDomainMode()
 }
 
 function isChannelGuestSession(sessionKey: string): boolean {
@@ -86,7 +86,7 @@ function isChannelGuestSession(sessionKey: string): boolean {
 }
 
 async function resolveGuestClubRid(): Promise<number> {
-  if (!isChannelPackageHost()) {
+  if (!isPrivateDomainMode()) {
     return 0
   }
 

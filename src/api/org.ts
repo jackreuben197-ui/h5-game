@@ -558,9 +558,14 @@ export async function postClubFundChangeLogApi(
 // 对齐 cocos WebOrgClubSearchById.API
 export async function postOrgClubSearchByIdApi(
   payload: OrgClubSearchByIdRequest = {} as OrgClubSearchByIdRequest,
+  options: Partial<HttpRequestConfigExt> = {},
 ): Promise<ApiResponse<OrgClubSearchByIdResponseData>> {
   const endpoint = '/org/club/info'
-  const response = await http.post<ApiResponse<OrgClubSearchByIdResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<OrgClubSearchByIdResponseData>>(
+    endpoint,
+    payload,
+    options as HttpRequestConfigExt,
+  )
   return response.data
 }
 
@@ -924,10 +929,12 @@ export async function postOrgClubUserInfoApi(
 // 对齐 cocos WebOrgClubJoin.API
 export async function postOrgClubJoinApi(
   payload: OrgClubJoinRequest = {} as OrgClubJoinRequest,
+  options: Partial<HttpRequestConfigExt> = {},
 ): Promise<ApiResponse<OrgClubJoinResponseData>> {
   const endpoint = '/org/club/user/join/apply'
   const requestOptions = {
     xClub: false,
+    ...options,
   } as HttpRequestConfigExt
   const response = await http.post<ApiResponse<OrgClubJoinResponseData>>(
     endpoint,

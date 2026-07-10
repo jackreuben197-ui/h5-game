@@ -31,7 +31,7 @@ import { useMttListStore } from '@/stores/mttList'
 import { useMainTabsStore } from '@/stores/mainTabs'
 import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { isChannelPackageHost } from '@/utils/channelPackage'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
 import { useCachedImage } from '@/utils/imageCache'
 import { localStore } from '@/utils/localStore'
 import { checkIsShowForClubAndTribe, ROOM_ORIGIN_TYPE } from '@/utils/roomVisibility'
@@ -145,7 +145,7 @@ const casinoStore = useCasinoStore()
 const minigameStore = useMinigameStore()
 const tabsStore = useMainTabsStore()
 const router = useRouter()
-const isChannelPackage = isChannelPackageHost()
+const isChannelPackage = isPrivateDomainMode()
 
 // 顶部右侧切换风格开关：和旧版保持一致。
 const activeTab = ref<GameTypeTabName>('all')

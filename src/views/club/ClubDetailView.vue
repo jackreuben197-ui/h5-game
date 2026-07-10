@@ -39,7 +39,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { extractInvitationCode, extractInvitationLink } from '@/utils/clubInvitation'
 import {
   buildChannelClubInviteUrl,
-  isChannelPackageHost,
+  isPrivateDomainMode,
 } from '@/utils/channelPackage'
 import { generateQrCodeUrl } from '@/utils/qrcode'
 import { formatUC } from '@/utils/roomVisibility'
@@ -89,7 +89,7 @@ const displayClub = computed(() => clubDetail.value ?? userInfoStore.currentClub
 const cachedClub = computed(() => userInfoStore.currentClub)
 const currentClubGold = computed(() => Number(cachedClub.value?.user_gold ?? 0))
 const currentClubCredit = computed(() => Number(cachedClub.value?.user_credit ?? 0))
-const isChannelPackage = isChannelPackageHost()
+const isChannelPackage = isPrivateDomainMode()
 
 const quickActions = computed<QuickActionItem[]>(() => {
   if (canManageClub.value) {

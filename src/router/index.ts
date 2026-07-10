@@ -3,7 +3,7 @@ import { useGameStore } from '@/stores/game'
 import { useWalletStore } from '@/stores/wallet'
 import { pinia } from '@/stores/pinia'
 import { createLogger } from '@/utils/logger'
-import { isChannelPackageHost } from '@/utils/channelPackage'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
 import { syncPostAuthData } from '@/session/postAuthSync'
 
 const log = createLogger('[router]')
@@ -562,7 +562,7 @@ const GUEST_FALLBACK_BY_NAME: Record<string, string> = {
 router.beforeEach((to, from) => {
   const gameStore = useGameStore(pinia)
   const token = gameStore.sessionToken
-  const isChannelPackage = isChannelPackageHost()
+  const isChannelPackage = isPrivateDomainMode()
   log.info('beforeEach', {
     from: from.fullPath || '<init>',
     to: to.fullPath,

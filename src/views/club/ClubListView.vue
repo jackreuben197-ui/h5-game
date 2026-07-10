@@ -26,7 +26,7 @@ import { useRoomListStore } from '@/stores/roomList'
 import type { ClubInfo } from '@/stores/userInfo'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { checkIsShowForClubAndTribe, formatUC } from '@/utils/roomVisibility'
-import { isChannelPackageHost } from '@/utils/channelPackage'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
 import { readClubListCache, writeClubListCache } from '@/utils/userClubListCache'
 import { t, getLocale } from '@/i18n'
 
@@ -66,7 +66,7 @@ const joinLoading = ref(false)
 const searchedClub = ref<ClubInfo | null>(null)
 
 const fallbackBanners = [imgClubBannerFigma]
-const isChannelPackage = isChannelPackageHost()
+const isChannelPackage = isPrivateDomainMode()
 
 const enterLabel = computed(() => (getLocale() === 'en' ? t('UIClub_Enter') : '进入'))
 

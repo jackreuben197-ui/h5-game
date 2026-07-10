@@ -286,6 +286,9 @@ async function doTelegramAutoLogin(): Promise<boolean> {
     return false
   }
 
+  // resolveInviteCode() now also reads the Telegram start_param, so the club to
+  // auto-enroll into (spec 2.2) flows into the login payload exactly like a web channel
+  // invite code — the backend enrolls on invite_code at login_third_party.
   const inviteCode = resolveAgentInviteCode() || resolveInviteCode()
   const traceHash = resolveTraceHash()
 

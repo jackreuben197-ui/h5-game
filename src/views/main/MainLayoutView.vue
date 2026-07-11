@@ -174,7 +174,8 @@ watch(
 <style scoped lang="scss">
 .main-layout {
   position: relative;
-  min-height: var(--app-viewport-height, 100dvh);
+  height: 100%;
+  min-height: 100%;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -227,9 +228,10 @@ watch(
   position: relative;
   z-index: 2;
   // 统一作为“页面滚动容器”：在 html/body fixed 的场景下也可稳定滚动。
-  // Telegram Mini App 下用 --app-viewport-height（真实可见高度）替代 100dvh，避免底部被裁。
-  height: var(--app-viewport-height, 100dvh);
-  min-height: var(--app-viewport-height, 100dvh);
+  // #app 为 position:fixed;inset:0，其高度即真实可见区域（Telegram 下已含顶部 guard padding），
+  // 故用 height:100% 逐级继承而非 100dvh —— 避免 Telegram Mini App 底部被裁到导航栏下。
+  height: 100%;
+  min-height: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;

@@ -46,6 +46,54 @@
           root.setAttribute('data-ios-standalone', '1')
         }
 
+        function toPixelNumber(value) {
+          var next = parseFloat(String(value || '0'))
+          if (!isFinite(next) || next < 0) {
+            return 0
+          }
+          return Math.round(next)
+        }
+
+        function readSafeAreaTopFromCss() {
+          if (!document.body || typeof window.getComputedStyle !== 'function') {
+            return 0
+          }
+
+          var probe = document.createElement('div')
+          probe.style.position = 'fixed'
+          probe.style.top = '0'
+          probe.style.left = '0'
+          probe.style.width = '0'
+          probe.style.height = '0'
+          probe.style.paddingTop = 'env(safe-area-inset-top)'
+          probe.style.visibility = 'hidden'
+          probe.style.pointerEvents = 'none'
+          document.body.appendChild(probe)
+          var safeTop = toPixelNumber(window.getComputedStyle(probe).paddingTop)
+          document.body.removeChild(probe)
+          return safeTop
+        }
+
+        function syncStandaloneSafeArea() {
+          if (!isIosStandalone()) {
+            return
+          }
+
+          var safeTop = readSafeAreaTopFromCss()
+          root.style.setProperty('--app-visual-safe-area-top', safeTop + 'px')
+          window.__H5_SAFE_AREA_TOP__ = safeTop
+        }
+
+        function syncStandaloneSafeAreaWhenReady() {
+          if (document.body) {
+            syncStandaloneSafeArea()
+            window.setTimeout(syncStandaloneSafeArea, 250)
+            window.setTimeout(syncStandaloneSafeArea, 1000)
+            return
+          }
+          document.addEventListener('DOMContentLoaded', syncStandaloneSafeAreaWhenReady, { once: true })
+        }
+
         function getViewportHeight() {
           var innerHeight = Number(window.innerHeight) || 0
           var visualViewportHeight = window.visualViewport
@@ -72,16 +120,29 @@
 
         function syncViewportHeightLater() {
           syncViewportHeight()
+          syncStandaloneSafeArea()
           window.setTimeout(syncViewportHeight, 250)
           window.setTimeout(syncViewportHeight, 1000)
+          window.setTimeout(syncStandaloneSafeArea, 250)
+          window.setTimeout(syncStandaloneSafeArea, 1000)
         }
 
         syncViewportHeight()
-        window.addEventListener('resize', syncViewportHeight, { passive: true })
+        syncStandaloneSafeAreaWhenReady()
+        window.addEventListener('resize', function () {
+          syncViewportHeight()
+          syncStandaloneSafeArea()
+        }, { passive: true })
         window.addEventListener('orientationchange', syncViewportHeightLater, { passive: true })
-        document.addEventListener('visibilitychange', syncViewportHeight, { passive: true })
+        document.addEventListener('visibilitychange', function () {
+          syncViewportHeight()
+          syncStandaloneSafeArea()
+        }, { passive: true })
         if (window.visualViewport) {
-          window.visualViewport.addEventListener('resize', syncViewportHeight, { passive: true })
+          window.visualViewport.addEventListener('resize', function () {
+            syncViewportHeight()
+            syncStandaloneSafeArea()
+          }, { passive: true })
         }
       })()
     </script>
@@ -92,6 +153,8 @@
         --app-full-height: var(--app-viewport-height);
         --h5-main-bg-color: #c487a8;
         --app-bottom-bleed: 0px;
+        --app-content-safe-area-top: env(safe-area-inset-top);
+        --app-visual-safe-area-top: 0px;
       }
 
       @supports (height: 100dvh) {
@@ -103,6 +166,7 @@
       html[data-ios-standalone='1'] {
         --app-full-height: calc(var(--app-viewport-height) + env(safe-area-inset-bottom));
         --app-bottom-bleed: max(env(safe-area-inset-bottom), 120px);
+        --app-content-safe-area-top: 0px;
       }
 
       html {

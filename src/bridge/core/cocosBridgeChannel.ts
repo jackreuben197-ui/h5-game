@@ -470,8 +470,12 @@ function createH5ReadyPayload(): H5ReadyPayload {
     payload.token = token
   }
   const safeArea: SafeArea = { top: 0, left: 0, right: 0, bottom: 0, source: '' }
-  if (window.__H5_TG_MINI_APP__) {
-    safeArea.source = 'telegram'
+  if (window.__H5_SAFE_AREA_TOP__ !== undefined && window.__H5_SAFE_AREA_TOP__ > 0) {
+    if (window.__H5_TG_MINI_APP__) {
+      safeArea.source = 'telegram'
+    } else {
+      safeArea.source = 'safari'
+    }
     safeArea.top = window.__H5_SAFE_AREA_TOP__ || 0
     safeArea.left = window.__H5_SAFE_AREA_LEFT__ || 0
     safeArea.right = window.__H5_SAFE_AREA_RIGHT__ || 0

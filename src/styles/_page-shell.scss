@@ -2,7 +2,7 @@
 
 // App root height should follow dynamic viewport on mobile.
 #app {
-  min-height: 100dvh;
+  min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
 }
 
 // Shared page container used by all major views.

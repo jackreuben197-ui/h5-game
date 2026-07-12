@@ -44,7 +44,7 @@ watch(
 <style scoped lang="scss">
 .main-layout {
   position: relative;
-  min-height: 100dvh;
+  min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -59,8 +59,7 @@ watch(
   position: relative;
   z-index: 2;
   // 统一作为“页面滚动容器”：在 html/body fixed 的场景下也可稳定滚动。
-  height: 100dvh;
-  min-height: 100dvh;
+  height: var(--app-full-height, var(--app-viewport-height, 100dvh));
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -70,7 +69,7 @@ watch(
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   overscroll-behavior-y: none;
-  padding: calc(env(safe-area-inset-top) + 0.4rem) 0rem calc(env(safe-area-inset-bottom) + 2.72rem);
+  padding: calc(var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.4rem) 0rem calc(env(safe-area-inset-bottom) + 2.72rem);
 }
 
 .main-layout--home .main-layout-content {

@@ -831,6 +831,99 @@
         tryLockPortrait()
       })()
     </script>
+    <script>
+      ;(function () {
+        function isIosStandalone() {
+          var nav = window.navigator || {}
+          var ua = String(nav.userAgent || '')
+          var isIos = /iPad|iPhone|iPod/.test(ua)
+            || (nav.platform === 'MacIntel' && Number(nav.maxTouchPoints) > 1)
+          var isStandalone = nav.standalone === true
+            || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+          return isIos && isStandalone
+        }
+
+        if (!isIosStandalone()) {
+          return
+        }
+
+        var retryCount = 0
+        var timer = 0
+
+        function getCanvasSize(canvas) {
+          var rect = typeof canvas.getBoundingClientRect === 'function'
+            ? canvas.getBoundingClientRect()
+            : null
+          var width = Math.round((rect && rect.width) || canvas.clientWidth || window.innerWidth || 0)
+          var height = Math.round((rect && rect.height) || canvas.clientHeight || window.screen.height || window.innerHeight || 0)
+          return { width: width, height: height }
+        }
+
+        function syncCocosFrameToCanvas() {
+          var canvas = document.getElementById('GameCanvas')
+          if (!canvas || !window.cc || !cc.view) {
+            return false
+          }
+
+          var size = getCanvasSize(canvas)
+          if (!size.width || !size.height) {
+            return false
+          }
+
+          try {
+            if (typeof cc.view.setFrameSize === 'function') {
+              cc.view.setFrameSize(size.width, size.height)
+            } else if (cc.view._frameSize) {
+              cc.view._frameSize.width = size.width
+              cc.view._frameSize.height = size.height
+            }
+
+            if (cc.Canvas && cc.Canvas.instance) {
+              var design = cc.Canvas.instance.designResolution
+              if (design && design.width && design.height) {
+                var policy = size.width / size.height > 0.75
+                  ? cc.ResolutionPolicy.FIXED_HEIGHT
+                  : cc.ResolutionPolicy.FIXED_WIDTH
+                cc.view.setDesignResolutionSize(design.width, design.height, policy)
+              }
+            }
+
+            if (typeof cc.view.emit === 'function') {
+              cc.view.emit('canvas-resize')
+            }
+            return true
+          } catch (error) {
+            return false
+          }
+        }
+
+        function scheduleSync() {
+          window.clearTimeout(timer)
+          timer = window.setTimeout(function () {
+            if (syncCocosFrameToCanvas()) {
+              retryCount = 0
+              return
+            }
+            retryCount += 1
+            if (retryCount < 60) {
+              scheduleSync()
+            }
+          }, 100)
+        }
+
+        window.addEventListener('load', scheduleSync, { passive: true })
+        window.addEventListener('resize', scheduleSync, { passive: true })
+        window.addEventListener('orientationchange', scheduleSync, { passive: true })
+        document.addEventListener('visibilitychange', scheduleSync, { passive: true })
+        if (window.visualViewport && window.visualViewport.addEventListener) {
+          window.visualViewport.addEventListener('resize', scheduleSync, { passive: true })
+        }
+
+        scheduleSync()
+        window.setTimeout(scheduleSync, 500)
+        window.setTimeout(scheduleSync, 1500)
+      })()
+    </script>
 
     <!-- H5 独立入口：可被 Cocos 统一模板复用 -->
     <script type="module" src="/src/entry/cocos-h5-entry.ts"></script>

@@ -281,6 +281,15 @@ function resolveEffectiveImServiceType(
   return channelType > 0 ? channelType : undefined
 }
 
+// club_id 必须与 im_service_type 同源判断：仅俱乐部客服（type 1）允许携带 club_id，否则服务端要求为 0
+function resolveEffectiveClubId(
+  channel: ChatSupportChannelListServiceData | null | undefined,
+): number {
+  if (resolveEffectiveImServiceType(channel) !== CLUB_IM_SERVICE_TYPE) return 0
+  const clubId = Number(channel?.club_id || targetClubId.value || 0)
+  return clubId > 0 ? clubId : 0
+}
+
 function resolveChannelIdentity(
   channel: ChatSupportChannelListServiceData | null | undefined,
 ): string {
@@ -584,12 +593,11 @@ function buildMessageQuery(setRead: boolean) {
   const channel = activeChannel.value
   if (!channel) return null
 
-  const clubId = Number(channel.club_id || targetClubId.value || 0)
   const tribeId = Number(channel.tribe_id || chatContext.value.tribeId || 0)
   return {
     limit: 50,
     tribe_id: tribeId,
-    club_id: channel.im_service_type === 1 && clubId > 0 ? clubId : 0,
+    club_id: resolveEffectiveClubId(channel),
     to_user_id: resolveToUserId(channel),
     im_service_type: resolveEffectiveImServiceType(channel),
     set_read: setRead,
@@ -623,7 +631,7 @@ async function markAsRead(timeToken?: number): Promise<void> {
   const resolvedTimeToken = Number(timeToken || last?.time_token || 0) || undefined
 
   await postChatSupportMessageReadApi({
-    club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
+    club_id: resolveEffectiveClubId(channel),
     to_user_id: resolveToUserId(channel),
     time_token: resolvedTimeToken,
     im_service_type: resolveEffectiveImServiceType(channel),
@@ -716,7 +724,7 @@ async function sendMessage(): Promise<void> {
 
   const response = await postChatSupportMessageSendApi({
     tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
-    club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
+    club_id: resolveEffectiveClubId(channel),
     to_user_id: resolveToUserId(channel),
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 1,
@@ -870,7 +878,7 @@ async function onImageUpload(event: Event): Promise<void> {
 
   const sendResponse = await postChatSupportMessageSendApi({
     tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
-    club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
+    club_id: resolveEffectiveClubId(channel),
     to_user_id: resolveToUserId(channel),
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 2,
@@ -1033,7 +1041,7 @@ async function uploadAndSendVoice(blob: Blob, duration: number): Promise<void> {
 
   const sendResponse = await postChatSupportMessageSendApi({
     tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
-    club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
+    club_id: resolveEffectiveClubId(channel),
     to_user_id: resolveToUserId(channel),
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 3,
@@ -1180,7 +1188,7 @@ async function onFallbackAudioUpload(event: Event): Promise<void> {
 
   const sendResponse = await postChatSupportMessageSendApi({
     tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
-    club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
+    club_id: resolveEffectiveClubId(channel),
     to_user_id: resolveToUserId(channel),
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 3,
@@ -1316,7 +1324,9 @@ onMounted(() => {
 
   stopOpenListener = subscribeGlobalCustomerServiceChat((payload) => {
     applyContext(payload)
-    // activeChannel.value = null
+    // 每次带 context 打开都重选频道，避免沿用上次残留的 activeChannel 与新 context 类型不一致
+    activeChannel.value = null
+    requestedClubMissing.value = false
     openPanel()
   })
 

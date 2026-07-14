@@ -24,6 +24,37 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icon.png" />
 
+    <!-- 主题首帧防闪烁：在样式生效前设好 html[data-theme]，
+         正式逻辑（持久化/系统主题监听/meta 同步）由 src/utils/theme.ts 接管，
+         默认值与 utils/theme.ts 的 DEFAULT_THEME_MODE 保持同步 -->
+    <script>
+      ;(function () {
+        var mode = ''
+        try {
+          // localStore 统一 JSON 序列化存储，这里按同规则直读。
+          mode = JSON.parse(window.localStorage.getItem('dzpk_h5_THEME_MODE') || '""')
+        } catch (error) {}
+        // URL ?theme=light|dark|system 预览覆盖（hash 路由下 query 可能在 hash 段内）。
+        var match = (window.location.search + ' ' + window.location.hash).match(
+          /[?&]theme=(light|dark|system)\b/,
+        )
+        if (match) {
+          mode = match[1]
+        }
+        if (mode !== 'light' && mode !== 'dark' && mode !== 'system') {
+          mode = 'dark' // DEFAULT_THEME_MODE：浅色页面迁移完成后改为 'system'
+        }
+        var theme = mode
+        if (mode === 'system') {
+          theme =
+            window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+              ? 'light'
+              : 'dark'
+        }
+        document.documentElement.setAttribute('data-theme', theme)
+      })()
+    </script>
+
     <!-- @silenthill/h5-cc-i18n runtime: 必须先于 Vue 入口加载，挂 window.__H5_CC_I18N__ -->
     <script src="./h5-cc-i18n.min.js"></script>
     <script>

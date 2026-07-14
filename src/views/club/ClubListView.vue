@@ -3,22 +3,18 @@ import { computed, onMounted, ref } from 'vue'
 import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { postOrgClubGetApi, postOrgClubJoinApi, postOrgClubSearchByIdApi } from '@/api/org'
-import imgSearch from '@/assets/icons/club_search.svg'
-import imgPokerSpade from '@/assets/icons/club_poker_spade.svg'
-import imgPokerHeart from '@/assets/icons/club_poker_heart.svg'
-import imgPokerClub from '@/assets/icons/club_poker_club.svg'
-import imgPokerDiamond from '@/assets/icons/club_poker_diamond.svg'
-import imgTable from '@/assets/icons/icon_table.png'
-import imgPeople from '@/assets/icons/icon_people.png'
 import imgBalance from '@/assets/icons/icon_credit_chip.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgClubRoleIcon from '@/assets/icons/club_role_icon.png'
-import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shield.png'
-import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.png'
-import iconBoxClubT from '@/assets/icons/icon_box_club_t.png'
+import imgClubRoleIconLight from '@/assets/icons/club_role_icon_light.png'
+import iconClubCreate from '@/assets/icons/icon_club_shield.png'
+import iconClubCareer from '@/assets/icons/icon_club_data.png'
+import iconClubCreateL from '@/assets/icons/icon_club_shield_light.png'
+import iconClubCareerL from '@/assets/icons/icon_club_data_light.png'
 import imgClubBannerFigma from '@/assets/images/club_banner_bg.png'
 import imgClubLogo from '@/assets/images/club_default_logo.png'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import { useGameStore } from '@/stores/game'
 import { useRoomListStore } from '@/stores/roomList'
@@ -383,7 +379,7 @@ onMounted(() => {
     <section v-if="!isChannelPackage" class="search-row">
       <div class="search-shell" :aria-label="t('UIClub_ClubSearch')">
         <label class="search-trigger" for="club-search-input">
-          <img class="search-icon" :src="imgSearch" alt="" />
+          <AppSvgIcon class="search-icon" name="search" />
           <input
             id="club-search-input"
             class="search-input"
@@ -417,13 +413,36 @@ onMounted(() => {
       >
         <span class="action-icon">
           <template v-if="item.kind === 'create-club'">
-            <img class="icon-create-shield" :src="imgQuickActionCreateShield" alt="" />
-          </template>
-          <template v-else-if="item.kind === 'club-panel'">
-            <img class="icon-board-chart" :src="imgQuickActionBoardChart" alt="" />
+            <img
+              class="icon-create-shield only-dark"
+              :src="iconClubCreate"
+              width="61"
+              height="61"
+              alt=""
+            />
+            <img
+              class="icon-create-shield only-light"
+              :src="iconClubCreateL"
+              width="61"
+              height="61"
+              alt=""
+            />
           </template>
           <template v-else-if="item.kind === 'club-career'">
-            <img class="icon-board-chart" :src="iconBoxClubT" width="61" height="61" alt="" />
+            <img
+              class="icon-board-chart only-dark"
+              :src="iconClubCareer"
+              width="61"
+              height="61"
+              alt=""
+            />
+            <img
+              class="icon-board-chart only-light"
+              :src="iconClubCareerL"
+              width="61"
+              height="61"
+              alt=""
+            />
           </template>
         </span>
         <span class="action-text">{{ item.title }}</span>
@@ -433,10 +452,10 @@ onMounted(() => {
     <section class="cards-divider">
       <span class="divider-line"></span>
       <div class="cards-icons" aria-hidden="true">
-        <img :src="imgPokerSpade" alt="" />
-        <img :src="imgPokerHeart" alt="" />
-        <img :src="imgPokerClub" alt="" />
-        <img :src="imgPokerDiamond" alt="" />
+        <AppSvgIcon class="suit-icon suit-icon--spade" name="spade" />
+        <AppSvgIcon class="suit-icon suit-icon--heart" name="heart" />
+        <AppSvgIcon class="suit-icon suit-icon--club" name="club" />
+        <AppSvgIcon class="suit-icon suit-icon--diamond" name="diamond" />
       </div>
       <span class="divider-line"></span>
     </section>
@@ -483,15 +502,16 @@ onMounted(() => {
         <div class="club-stats-shell" aria-hidden="true">
           <div class="club-stats-inline">
             <span class="stat-item stat-item--role">
-              <img :src="imgClubRoleIcon" alt="" />
+              <img class="only-dark" :src="imgClubRoleIcon" alt="" />
+              <img class="only-light" :src="imgClubRoleIconLight" alt="" />
               <span>{{ club.roleText }}</span>
             </span>
             <span class="stat-item">
-              <img :src="imgTable" alt="" />
+              <AppSvgIcon class="stat-svg-icon stat-svg-icon--table" name="table" />
               <span>{{ club.tableCount }}桌</span>
             </span>
             <span class="stat-item">
-              <img :src="imgPeople" alt="" />
+              <AppSvgIcon class="stat-svg-icon stat-svg-icon--users" name="users" />
               <span>{{ club.memberCount }}人</span>
             </span>
           </div>
@@ -509,7 +529,7 @@ onMounted(() => {
             <span>{{ searchedClubDisplayId }}</span>
           </p>
           <p class="join-modal-member-row">
-            <img :src="imgPeople" alt="" aria-hidden="true" />
+            <AppSvgIcon class="join-modal-member-icon" name="users" />
             <span>{{ searchedClubMembers }}人</span>
           </p>
         </div>
@@ -552,74 +572,7 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-.club-index-bg {
-  position: relative;
-  height: 100dvh;
-  background-color: #0f122f;
-  background-size: cover;
-}
-
-.bg-image {
-  position: absolute;
-  pointer-events: none;
-  user-select: none;
-}
-
-.bg-image--main {
-  width: 7.46rem;
-  height: 16.28rem;
-  left: -0.05rem;
-  top: 0;
-  object-fit: cover;
-  opacity: 0.6;
-}
-
-.bg-shade {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(
-      120% 64% at 50% -8%,
-      rgba(89, 36, 151, 0.44),
-      rgba(23, 12, 53, 0.82) 46%,
-      rgba(8, 11, 35, 0.95)
-    ),
-    linear-gradient(180deg, rgba(18, 12, 49, 0.62), rgba(8, 12, 37, 0.98));
-}
-
-.bg-shine {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    60% 26% at 12% 10%,
-    rgba(239, 107, 226, 0.16),
-    rgba(239, 107, 226, 0)
-  );
-}
-
-.halo {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(1.1rem);
-  opacity: 0.55;
-  pointer-events: none;
-}
-
-.halo--top {
-  width: 2.76rem;
-  height: 2.76rem;
-  right: -0.88rem;
-  top: -0.7rem;
-  background: rgba(220, 72, 199, 0.52);
-}
-
-.halo--left {
-  width: 2.3rem;
-  height: 2.3rem;
-  left: -0.78rem;
-  top: 4.68rem;
-  background: rgba(63, 103, 255, 0.44);
-}
+@use '@/styles/mixins' as *;
 
 .club-index {
   position: relative;
@@ -627,6 +580,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.24rem;
+  color: var(--c-text);
   // padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top));
 }
 
@@ -650,9 +604,14 @@ onMounted(() => {
     rgba(141, 59, 84, 0.96) 100%
   );
   box-shadow:
-    inset 0 0.01rem 0.045rem rgba(255, 255, 255, 0.35),
-    inset 0 -0.04rem 0.08rem rgba(70, 13, 34, 0.35);
+    inset 0 0.01rem 0.045rem rgba(255, 255, 255, 0.31),
+    inset 0 -0.04rem 0.08rem rgba(0, 0, 0, 0.25);
   overflow: hidden;
+
+  @include theme-light {
+    background: #fff;
+    box-shadow: 0 0.04rem 0.14rem rgba(34, 34, 34, 0.08);
+  }
 
   &::before {
     content: '';
@@ -666,6 +625,10 @@ onMounted(() => {
       rgba(0, 0, 0, 0.2) 100%
     );
     pointer-events: none;
+
+    @include theme-light {
+      display: none;
+    }
   }
 }
 
@@ -682,20 +645,25 @@ onMounted(() => {
   gap: 0.218rem;
   justify-content: flex-start;
   background: transparent;
-  color: #fff;
+  color: var(--c-text);
 }
 
 .search-icon {
   flex: 0 0 auto;
   width: 0.557rem;
   height: 0.546rem;
+  color: #f9f9f9;
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.28);
+  }
 }
 
 .search-placeholder {
   font-family: 'HONOR Sans CN', 'PingFang SC', sans-serif;
   font-size: 0.3rem;
   line-height: 1.4;
-  color: #fff;
+  color: var(--c-text);
   opacity: 0.96;
 }
 
@@ -705,14 +673,14 @@ onMounted(() => {
   border: 0;
   outline: none;
   background: transparent;
-  color: #fff;
+  color: var(--c-text);
   font-family: 'HONOR Sans CN', 'PingFang SC', sans-serif;
   font-size: 0.393rem;
   line-height: 1.4;
 }
 
 .search-input::placeholder {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--c-text-muted);
 }
 
 .search-btn {
@@ -727,14 +695,20 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--c-text);
   background: rgba(165, 165, 165, 0.1);
   box-shadow:
     0.018rem 0.022rem 0.036rem rgba(0, 0, 0, 0.25),
-    inset 0 0 0.045rem rgba(0, 0, 0, 1),
-    inset 0.006rem 0.006rem 0.045rem rgba(0, 0, 0, 1),
+    inset 0 0 0.045rem #000,
+    inset 0.006rem 0.006rem 0.045rem #000,
     inset 0 0 0.09rem rgba(242, 242, 242, 0.9);
   overflow: hidden;
+
+  @include theme-light {
+    border-color: var(--c-brand);
+    background: rgba(105, 190, 255, 0.05);
+    box-shadow: none;
+  }
 
   &::before {
     content: '';
@@ -759,7 +733,11 @@ onMounted(() => {
   font-weight: 500;
   line-height: 0.946;
   letter-spacing: 0;
-  text-shadow: 0 0.01rem 0.02rem rgba(86, 64, 101, 0.35);
+  text-shadow: 0 0.01rem 0.02rem rgba(0, 0, 0, 0.25);
+
+  @include theme-light {
+    text-shadow: none;
+  }
 }
 
 .quick-actions {
@@ -780,7 +758,7 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 0.088rem;
-  color: #fff;
+  color: var(--c-text);
 }
 
 .quick-item--hidden {
@@ -809,10 +787,14 @@ onMounted(() => {
   font-size: 0.228rem;
   line-height: 1;
   font-weight: 500;
-  color: #fff;
+  color: var(--c-text);
   text-align: center;
   text-shadow: 0 0.025rem 0.317rem rgba(0, 0, 0, 0.6);
   white-space: nowrap;
+
+  @include theme-light {
+    text-shadow: none;
+  }
 }
 
 .cards-divider {
@@ -825,19 +807,39 @@ onMounted(() => {
 .divider-line {
   flex: 1;
   height: 0.02rem;
-  background: rgba(249, 249, 249, 0.42);
+  background: var(--c-divider);
 }
 
 .cards-icons {
   display: inline-flex;
   align-items: center;
   gap: 0.06rem;
+
+  @include theme-light {
+    .suit-icon--spade,
+    .suit-icon--club {
+      color: #222;
+    }
+
+    .suit-icon--heart,
+    .suit-icon--diamond {
+      color: var(--c-brand);
+    }
+  }
 }
 
-.cards-icons img {
+.suit-icon {
   width: 0.32rem;
   height: 0.32rem;
-  object-fit: contain;
+  color: #f9f9f9;
+}
+
+.suit-icon--heart {
+  color: #ff5f82;
+}
+
+.suit-icon--diamond {
+  color: #65dcff;
 }
 
 .club-list {
@@ -852,7 +854,7 @@ onMounted(() => {
   padding: 0.24rem 0;
   text-align: center;
   font-size: 0.28rem;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--c-text-muted);
 }
 
 .club-banner {
@@ -862,10 +864,23 @@ onMounted(() => {
   overflow: hidden;
   isolation: isolate;
   border: 0;
-  // background: rgba(84, 73, 106, 0.22);
-  // box-shadow:
-  //   0 0.16rem 0.32rem rgba(6, 10, 26, 0.34),
-  //   inset 0 0 0.03rem rgba(255, 255, 255, 0.24);
+  background: transparent;
+
+  @include theme-light {
+    border-radius: 0.95rem;
+    background: var(--c-surface);
+    box-shadow: 0 0.04rem 0.14rem rgba(34, 34, 34, 0.08);
+
+    &::before {
+      content: '';
+      position: absolute;
+      z-index: 2;
+      inset: 0.16rem;
+      border: 0.008rem solid var(--c-border);
+      border-radius: 0.802rem;
+      pointer-events: none;
+    }
+  }
 }
 
 .club-main {
@@ -885,6 +900,10 @@ onMounted(() => {
   height: 100%;
   object-fit: cover;
   opacity: 0.82;
+
+  @include theme-light {
+    display: none;
+  }
 }
 
 .club-identity {
@@ -900,8 +919,13 @@ onMounted(() => {
   object-fit: cover;
   border: 0.01rem solid rgba(255, 255, 255, 0.28);
   box-shadow:
-    0 0.08rem 0.22rem rgba(8, 8, 8, 0.3),
+    0 0.08rem 0.22rem rgba(0, 0, 0, 0.25),
     inset 0 0 0.02rem rgba(255, 255, 255, 0.24);
+
+  @include theme-light {
+    border-color: var(--c-border);
+    box-shadow: 0 0.08rem 0.22rem rgba(34, 34, 34, 0.08);
+  }
 }
 
 .club-meta {
@@ -916,7 +940,7 @@ onMounted(() => {
   font-size: 0.366rem;
   line-height: 1.08;
   font-weight: 500;
-  color: rgba(249, 249, 249, 0.98);
+  color: var(--c-text);
 }
 
 .club-id {
@@ -937,12 +961,16 @@ onMounted(() => {
   font-weight: 600;
   color: #444;
   background: rgba(255, 255, 255, 0.56);
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .club-id-value {
   font-size: 0.279rem;
   font-weight: 300;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--c-text);
 }
 
 .club-top-metrics {
@@ -956,7 +984,7 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.04rem;
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--c-text);
   font-size: 0.279rem;
   font-weight: 300;
   line-height: 1;
@@ -987,13 +1015,31 @@ onMounted(() => {
   gap: 0.05rem;
   font-size: 0.27rem;
   line-height: 0.95;
-  color: rgba(251, 251, 251, 0.95);
+  color: var(--c-text);
 }
 
 .stat-item img {
   width: 0.4rem;
   height: 0.4rem;
   object-fit: contain;
+}
+
+.stat-svg-icon {
+  width: 0.4rem;
+  height: 0.4rem;
+  color: #f9f9f9;
+}
+
+.stat-svg-icon--table {
+  @include theme-light {
+    color: #4caaff;
+  }
+}
+
+.stat-svg-icon--users {
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .stat-item--role {
@@ -1036,9 +1082,16 @@ onMounted(() => {
     border-box;
   box-shadow:
     0.02rem 0.025rem 0.04rem rgba(0, 0, 0, 0.25),
-    inset 0 0 0.05rem rgba(0, 0, 0, 1),
-    inset 0.007rem 0.007rem 0.05rem rgba(0, 0, 0, 1),
+    inset 0 0 0.05rem #000,
+    inset 0.007rem 0.007rem 0.05rem #000,
     inset 0 0 0.1rem rgba(242, 242, 242, 0.9);
+
+  @include theme-light {
+    border-color: transparent;
+    color: #fff;
+    background: var(--c-brand);
+    box-shadow: 0 0.04rem 0.14rem rgba(34, 34, 34, 0.08);
+  }
 
   &::before {
     content: '';
@@ -1049,6 +1102,10 @@ onMounted(() => {
     background: rgba(165, 165, 165, 0.8);
     mix-blend-mode: hard-light;
     pointer-events: none;
+
+    @include theme-light {
+      display: none;
+    }
   }
 }
 
@@ -1072,8 +1129,15 @@ onMounted(() => {
     rgba(48, 44, 64, 0.32);
   backdrop-filter: blur(0.18rem);
   box-shadow:
-    inset 0 0.02rem 0.06rem rgba(255, 255, 255, 0.12),
-    0 0.06rem 0.12rem rgba(11, 10, 18, 0.22);
+    inset 0 0.02rem 0.06rem rgba(255, 255, 255, 0.31),
+    0 0.06rem 0.12rem rgba(0, 0, 0, 0.25);
+
+  @include theme-light {
+    border-color: rgba(0, 0, 0, 0.04);
+    background:
+      linear-gradient(180deg, rgba(246, 250, 254, 0.98), rgba(238, 246, 252, 0.98)), #f3f8fd;
+    box-shadow: 0 0.06rem 0.12rem rgba(34, 34, 34, 0.08);
+  }
 }
 
 .club-stats-shell::before {
@@ -1081,12 +1145,12 @@ onMounted(() => {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(
-    120% 130% at 50% -22%,
-    rgba(255, 255, 255, 0.22),
-    rgba(255, 255, 255, 0)
-  );
+  background: radial-gradient(120% 130% at 50% -22%, rgba(255, 255, 255, 0.31), transparent);
   pointer-events: none;
+
+  @include theme-light {
+    display: none;
+  }
 }
 
 .club-stats-shell::after {
@@ -1094,15 +1158,19 @@ onMounted(() => {
   position: absolute;
   inset: 0.01rem;
   border-radius: inherit;
-  border: 0.01rem solid rgba(255, 255, 255, 0.18);
+  border: 0.01rem solid rgba(236, 236, 247, 0.24);
   pointer-events: none;
+
+  @include theme-light {
+    border-color: rgba(0, 0, 0, 0.04);
+  }
 }
 
 .join-modal-mask {
   position: fixed;
   inset: 0;
   z-index: 30;
-  background: rgba(12, 12, 12, 0.6);
+  background: var(--c-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1114,21 +1182,27 @@ onMounted(() => {
   max-width: 100%;
   padding: 0.42rem;
   border-radius: 0.97rem;
-  border: 0.025rem solid rgba(255, 255, 255, 0.38);
+  border: 0.025rem solid rgba(255, 255, 255, 0.31);
   background:
     linear-gradient(126deg, rgba(142, 142, 142, 0.6) 0%, rgba(72, 72, 72, 0.92) 100%),
     rgba(30, 30, 30, 0.65);
   box-shadow:
     0.09rem 0.11rem 0.18rem rgba(0, 0, 0, 0.25),
-    inset 0.05rem 0.1rem 0.4rem rgba(242, 242, 242, 0.25),
-    inset 0 0 0.23rem rgba(0, 0, 0, 0.55);
+    inset 0.05rem 0.1rem 0.4rem rgba(255, 255, 255, 0.31),
+    inset 0 0 0.23rem rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(0.4rem);
+
+  @include theme-light {
+    border-color: var(--c-border);
+    background: var(--c-surface);
+    box-shadow: 0 0.09rem 0.18rem rgba(34, 34, 34, 0.14);
+  }
 }
 
 .join-modal-card {
   min-height: 5.02rem;
   border-radius: 0.834rem;
-  border: 0.026rem solid rgba(255, 255, 255, 0.16);
+  border: 0.026rem solid var(--c-border);
   background: rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
@@ -1136,6 +1210,10 @@ onMounted(() => {
   justify-content: center;
   gap: 0.3rem;
   padding: 0.5rem 0.42rem;
+
+  @include theme-light {
+    background: var(--c-page);
+  }
 }
 
 .join-modal-logo {
@@ -1151,7 +1229,7 @@ onMounted(() => {
   font-size: 0.597rem;
   font-weight: 700;
   line-height: 1.2;
-  color: #fff;
+  color: var(--c-text);
   text-align: center;
 }
 
@@ -1163,7 +1241,7 @@ onMounted(() => {
   font-family: 'SF Pro', 'PingFang SC', sans-serif;
   font-size: 0.256rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--c-text);
 }
 
 .join-modal-id-tag {
@@ -1175,6 +1253,10 @@ onMounted(() => {
   border-radius: 0.075rem;
   background: rgba(255, 255, 255, 0.25);
   font-size: 0.216rem;
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .join-modal-member-row {
@@ -1187,12 +1269,17 @@ onMounted(() => {
   align-items: center;
   gap: 0.12rem;
   font-size: 0.427rem;
-  color: #f9f9f9;
+  color: var(--c-text);
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.04);
+  }
 }
 
-.join-modal-member-row img {
+.join-modal-member-icon {
   width: 0.453rem;
   height: 0.453rem;
+  color: var(--c-text);
 }
 
 .join-modal-actions {
@@ -1216,11 +1303,20 @@ onMounted(() => {
 
 .join-modal-btn--cancel {
   background: rgba(0, 0, 0, 0.3);
+  color: var(--c-text);
+
+  @include theme-light {
+    background: var(--c-page);
+  }
 }
 
 .join-modal-btn--confirm {
-  background: linear-gradient(180deg, #05e7ae 0%, #027a5b 100%);
-  border: 0.013rem solid rgba(255, 255, 255, 0.5);
+  background: linear-gradient(168deg, var(--c-brand) 7%, #027a5c 72%);
+  border: 0.013rem solid var(--c-border);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .join-modal-btn:disabled {
@@ -1259,16 +1355,6 @@ onMounted(() => {
   .club-banner {
     min-height: 2.7rem;
     border-radius: 0.4rem;
-
-    &::before {
-      inset: 0.06rem;
-      border-radius: 0.33rem;
-    }
-
-    &::after {
-      inset: 0.08rem;
-      border-radius: 0.31rem;
-    }
   }
 
   .club-main {

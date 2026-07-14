@@ -398,6 +398,8 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .bottom-tab {
   position: fixed;
   left: 50%;
@@ -421,12 +423,20 @@ onBeforeUnmount(() => {
 
 .tabbar-fill {
   fill: rgba(253, 253, 253, 0.9);
+
+  @include theme-light {
+    fill: #222;
+  }
 }
 
 .tabbar-stroke {
   fill: none;
   stroke: rgba(0, 0, 0, 0.3);
   stroke-width: 0.451px;
+
+  @include theme-light {
+    stroke: transparent;
+  }
 }
 
 .tabbar-fill-stop-start {
@@ -466,10 +476,18 @@ onBeforeUnmount(() => {
   padding: 0rem 0.06rem 0.08rem;
   border-radius: 0.44rem;
   -webkit-tap-highlight-color: transparent;
+
+  @include theme-light {
+    color: #a6a6a6;
+  }
 }
 
 .tab-button.is-active {
   color: #000;
+
+  @include theme-light {
+    color: var(--c-brand);
+  }
 }
 
 .tab-icon {

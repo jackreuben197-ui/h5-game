@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import iconDiamond from '@/assets/icons/icon_diamond.png'
-import iconAdd from '@/assets/icons/icon_add.svg'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { useLoginModalStore } from '@/stores/loginModal'
 
 const loginModalStore = useLoginModalStore()
@@ -35,7 +35,7 @@ function notifyNotLogin(): void {
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" alt="充值" />
+          <AppSvgIcon class="icon-recharge-svg" name="plus-circle" title="充值" />
         </div>
       </div>
     </div>
@@ -95,13 +95,17 @@ function notifyNotLogin(): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .friends-table-page {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  width: min(100%, var(--app-max-width));
+  margin: 0 auto;
   padding: 0 0;
-  color: var(--color-text-main2);
+  color: var(--c-text);
 }
 
 .title-bar {
@@ -115,16 +119,27 @@ function notifyNotLogin(): void {
     font-weight: 510;
     line-height: 120%;
     text-shadow: 0 0.22rem 0.5rem rgba(0, 0, 0, 0.35);
+
+    @include theme-light {
+      text-shadow: none;
+    }
   }
   .currency-info {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: var(--color-bg-shadow);
+    background-color: rgba(0, 0, 0, 0.2);
+    min-height: 0.8rem;
     padding: 0 0.24rem;
     border-radius: 0.6rem;
     overflow: hidden;
     gap: 0.2rem;
+
+    @include theme-light {
+      color: #000;
+      background: #fff;
+      box-shadow: 0 0.04rem 0.14rem rgba(34, 34, 34, 0.08);
+    }
     .icon-diamond {
       width: 0.59rem;
       height: 0.59rem;
@@ -147,9 +162,17 @@ function notifyNotLogin(): void {
       display: flex;
       align-items: center;
       justify-content: center;
-      img {
-        width: 100%;
+
+      color: #dadada;
+
+      @include theme-light {
+        color: var(--c-brand);
       }
+    }
+
+    .icon-recharge-svg {
+      width: 100%;
+      height: 100%;
     }
   }
 }
@@ -182,6 +205,10 @@ function notifyNotLogin(): void {
   background-size: 100% auto;
   opacity: 0.1;
   pointer-events: none;
+
+  @include theme-light {
+    opacity: 1;
+  }
 }
 .main-content::after {
   content: '  ';
@@ -194,9 +221,15 @@ function notifyNotLogin(): void {
   background-size: 100% auto;
   opacity: 0.5;
   pointer-events: none;
+
+  @include theme-light {
+    opacity: 0;
+  }
 }
 
 .section {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -211,6 +244,10 @@ function notifyNotLogin(): void {
   text-align: center;
   line-height: 1;
   margin-bottom: 0.35rem;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .section-subtitle {
@@ -221,6 +258,10 @@ function notifyNotLogin(): void {
   text-align: center;
   line-height: 1;
   margin-bottom: 0.85rem;
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.62);
+  }
 }
 
 .action-btn {
@@ -238,6 +279,12 @@ function notifyNotLogin(): void {
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
+
+  @include theme-light {
+    color: rgba(249, 249, 249, 0.9);
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .join-section {
@@ -258,6 +305,11 @@ function notifyNotLogin(): void {
     display: flex;
     align-items: center;
     justify-content: center;
+
+    @include theme-light {
+      background: rgba(0, 0, 0, 0.13);
+      border-color: rgba(255, 40, 40, 0.08);
+    }
   }
 
   .invite-digit {
@@ -272,6 +324,10 @@ function notifyNotLogin(): void {
     font-weight: 500;
     color: #f9f9f9;
     line-height: 1;
+
+    @include theme-light {
+      color: var(--c-text);
+    }
   }
 }
 
@@ -299,6 +355,10 @@ function notifyNotLogin(): void {
     height: 0.5px;
     margin-top: 0.2rem;
     background: rgba(249, 249, 249, 0.5);
+
+    @include theme-light {
+      background: rgba(0, 0, 0, 0.16);
+    }
   }
 
   .table-header-center {
@@ -315,6 +375,10 @@ function notifyNotLogin(): void {
     color: #f9f9f9;
     text-align: center;
     line-height: 1;
+
+    @include theme-light {
+      color: var(--c-text);
+    }
   }
 
   .table-header-sub {
@@ -325,11 +389,16 @@ function notifyNotLogin(): void {
     color: #f9f9f9;
     text-align: center;
     line-height: 1;
+
+    @include theme-light {
+      color: rgba(0, 0, 0, 0.62);
+    }
   }
 }
 
 .filter-tabs {
   display: flex;
+  justify-content: space-between;
   gap: 0.22rem;
   margin: 0.2em 0.9rem 0.3rem;
   overflow-x: auto;
@@ -353,10 +422,19 @@ function notifyNotLogin(): void {
   border-bottom: 1.2px solid transparent;
   transition: all 0.2s;
 
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.54);
+  }
+
   &.active {
     color: #fff;
     font-weight: 700;
     border-bottom-color: #eaeaea;
+
+    @include theme-light {
+      color: var(--c-brand);
+      border-bottom-color: var(--c-brand);
+    }
   }
 }
 
@@ -378,5 +456,9 @@ function notifyNotLogin(): void {
   font-size: 0.35rem;
   color: rgba(255, 255, 255, 0.5);
   text-align: center;
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 </style>

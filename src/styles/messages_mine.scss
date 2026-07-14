@@ -5,7 +5,7 @@
   justify-content: center;
   align-items: center;
   padding: 0 0.48rem;
-  color: var(--color-text-main2);
+  color: var(--c-text);
   .title-bar {
     display: flex;
     width: 100%;
@@ -22,7 +22,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background-color: var(--color-bg-shadow);
+      background-color: rgba(0, 0, 0, 0.2);
       padding: 0 0.24rem 0rem;
       border-radius: 0.6rem;
       overflow: hidden;

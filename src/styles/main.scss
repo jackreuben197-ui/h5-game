@@ -1,12 +1,6 @@
-// Global style entry: import order is important.
-// 1) tokens -> 2) reset -> 3) layout/components -> 4) responsive overrides -> 5) utilities.
-@use './fonts';
-@use './tokens';
-@use './reset';
-@use './page-shell';
-@use './app-components';
-@use './vant-overrides';
-@use './responsive';
+// 全局样式入口：主题 -> 基础 -> 公共组件 -> 工具类 -> 钱包域样式。
+@use './themes';
+@use './base';
+@use './components';
 @use './utilities';
-@use './text';
 @use './wallet';

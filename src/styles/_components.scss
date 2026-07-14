@@ -1,0 +1,149 @@
+@use './mixins' as *;
+
+// 全局复用块与第三方组件覆盖。
+.section-card {
+  margin-top: var(--section-gap);
+  padding: var(--space-card-padding);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-card);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.page-shell > .section-card:first-of-type {
+  margin-top: 0.32rem;
+}
+
+.section-title {
+  margin: 0 0 0.32rem;
+  color: var(--c-text);
+  font-size: var(--font-size-title);
+  font-weight: 600;
+}
+
+.info-line {
+  margin: 0.16rem 0;
+  color: var(--c-text-muted);
+  font-size: var(--font-size-info);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2667rem;
+  margin-top: 0.3733rem;
+}
+
+.quick-account-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2133rem;
+}
+
+.radio-circle {
+  display: flex;
+  width: 0.48rem;
+  height: 0.48rem;
+  align-items: center;
+  justify-content: center;
+  border: 0.027rem solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  box-shadow:
+    inset 0.5px 0.5px 0 rgba(255, 255, 255, 0.85),
+    inset -0.5px -0.5px 0 rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+
+  &--checked::after {
+    content: '';
+    width: 0.28rem;
+    height: 0.28rem;
+    border: 0.05rem solid var(--c-brand);
+    border-radius: 50%;
+    background: transparent;
+  }
+}
+
+.main-bg {
+  background-image: url('@/assets/images/main_bg.webp');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.van-nav-bar {
+  overflow: hidden;
+  border-radius: 0.3733rem;
+}
+
+.van-cell-group--inset {
+  margin: 0 !important;
+}
+
+.van-cell {
+  padding-top: var(--font-size-cell-padding-y);
+  padding-bottom: var(--font-size-cell-padding-y);
+}
+
+.van-field__label {
+  width: var(--field-label-width);
+}
+
+.van-button {
+  min-height: var(--space-button-min-height);
+}
+
+.van-overlay {
+  background-color: var(--c-overlay) !important;
+}
+
+.van-toast {
+  width: 8.45rem;
+  padding: 0.6rem 0.4rem;
+  border-radius: 0.9rem;
+  background-color: transparent;
+  background-image: url('@/assets/images/component_dialog_bg.png');
+  background-position: top center;
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+  box-shadow:
+    inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.9),
+    inset 0.5px 0.5px 0 rgba(255, 255, 255, 0.85),
+    inset 2px 2px 0 -2px rgba(255, 255, 255, 0.3),
+    inset -0.5px -0.5px 0 rgba(255, 255, 255, 0.85),
+    inset -2px -2px 0 -2px rgba(255, 255, 255, 0.3);
+
+  @include theme-light {
+    background: none;
+    backdrop-filter: blur(50px);
+    -webkit-backdrop-filter: blur(50px);
+  }
+
+  .van-toast__text {
+    color: #fff;
+    font-family: 'HONOR Sans CN', sans-serif;
+    font-size: 0.43rem;
+    font-weight: 400;
+    word-break: break-word;
+  }
+}
+
+.van-toast--fail.van-toast,
+.van-toast--success.van-toast {
+  min-height: 0;
+  flex-direction: row;
+  align-items: center;
+}
+
+.van-toast--fail.van-toast .van-toast__text,
+.van-toast--success.van-toast .van-toast__text {
+  margin-top: 0;
+  margin-left: 0.2rem;
+}
+
+.table-toast-msg {
+  background-color: rgba(12, 12, 12, 0.2);
+  background-image: none;
+  backdrop-filter: blur(10px);
+}

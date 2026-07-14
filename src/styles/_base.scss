@@ -1,0 +1,153 @@
+@use './mixins' as *;
+
+// 字体、尺寸令牌、reset 与页面骨架统一放在基础层。
+// 这里只保留全局真实使用的定义；颜色由 _themes.scss 负责。
+@font-face {
+  font-family: 'HONOR Sans CN';
+  src: url('/assets/fonts/HONORSansCN-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Keania One';
+  src:
+    url('/assets/fonts/KeaniaOne-Regular.woff2') format('woff2'),
+    url('/assets/fonts/KeaniaOne-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-family-sans: 'HONOR Sans CN', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB',
+    'Helvetica Neue', Arial, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  --font-family-sf: 'SF Pro', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB',
+    'Helvetica Neue', Arial, sans-serif;
+
+  --radius-card: 0.4267rem;
+  --radius-input: 0.32rem;
+  --shadow-card: 0 12px 28px rgba(42, 67, 98, 0.08);
+
+  --app-max-width: 10rem;
+  --app-side-padding: 0.32rem;
+  --app-top-padding: 0.32rem;
+  --app-bottom-padding: 2.04rem;
+  --section-gap: 0.2667rem;
+  --space-card-padding: 0.32rem;
+  --space-button-min-height: 1.12rem;
+
+  --font-size-title: 0.4267rem;
+  --font-size-info: 0.3467rem;
+  --font-size-cell-padding-y: 0.32rem;
+  --field-label-width: 1.9733rem;
+
+  // Vant 直接桥接当前主题，不再维护一套旧颜色变量。
+  --van-primary-color: var(--c-brand);
+  --van-danger-color: #d84b3e;
+  --van-success-color: #159f67;
+  --van-text-color: var(--c-text);
+  --van-text-color-2: var(--c-text-muted);
+  --van-background-2: var(--c-surface);
+  --van-border-color: var(--c-border);
+  --van-radius-lg: var(--radius-input);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+html {
+  font-size: 75px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-family-sans);
+  font-size: 0.3733rem;
+  line-height: 1.5;
+  color: var(--c-text);
+  background: var(--c-page);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+* {
+  -webkit-touch-callout: none;
+}
+
+input,
+textarea,
+[contenteditable=''],
+[contenteditable='true'] {
+  -webkit-touch-callout: default;
+}
+
+#app {
+  min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+}
+
+.page-shell {
+  width: min(100%, var(--app-max-width));
+  margin: 0 auto;
+  padding-left: var(--app-side-padding);
+  padding-right: var(--app-side-padding);
+  overflow-y: auto;
+  overflow-x: hidden;
+  @include safe-bottom-padding(var(--app-bottom-padding));
+}
+
+// 目前模板中仍在使用的两种通用排版；其余未使用 t-* 已删除。
+.t-body,
+.t-caption {
+  font-family: var(--font-family-sans);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--c-text);
+}
+
+.t-body {
+  font-size: clamp(12px, 3.52vw, 14.5px);
+}
+
+.t-caption {
+  font-size: clamp(9px, 2.67vw, 11px);
+}
+
+@include up(md) {
+  :root {
+    --app-max-width: 11.2rem;
+    --field-label-width: 2.4533rem;
+  }
+
+  .page-shell {
+    padding-top: max(var(--app-top-padding), 0.48rem);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .page-shell {
+    padding-top: 0.2667rem;
+  }
+
+  .section-card {
+    margin-top: 0.2133rem;
+    padding: 0.2667rem;
+  }
+}

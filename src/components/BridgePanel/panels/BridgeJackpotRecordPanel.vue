@@ -735,7 +735,7 @@ function trimTrailingZero(value: number): string {
 
 .jackpot-panel__amount {
   font-size: 0.24rem;
-  color: var(--color-danger);
+  color: #ff132b;
 }
 
 .jackpot-panel__cards {

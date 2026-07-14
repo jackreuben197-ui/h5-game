@@ -10,7 +10,6 @@ import {
   type VNode,
 } from 'vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
-import dialogBg from '@/assets/images/component_dialog_bg.png'
 import { t } from '@/i18n'
 
 /**
@@ -115,7 +114,6 @@ const dialogStyle = computed<StyleValue>(() => ({
 
 const cardStyles = computed<StyleValue>(() => [
   {
-    backgroundImage: `url(${dialogBg})`,
     '--game-dialog-card-min-height': props.cardMinHeight,
   },
   props.cardStyle,
@@ -213,12 +211,16 @@ const bodyStyles = computed<StyleValue>(() => [
 </style>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .game-dialog__card {
   position: relative;
   isolation: isolate;
   min-height: var(--game-dialog-card-min-height, 2rem);
   border-radius: 0.97rem;
   overflow: hidden;
+  background-color: transparent;
+  background-image: url('@/assets/images/component_dialog_bg.png');
   background-size: 100% auto;
   background-position: top center;
   background-repeat: no-repeat;
@@ -233,6 +235,12 @@ const bodyStyles = computed<StyleValue>(() => [
   padding: 0.5rem;
   box-sizing: border-box;
   gap: 0.32rem;
+
+  @include theme-light {
+    background: none;
+    backdrop-filter: blur(50px);
+    -webkit-backdrop-filter: blur(50px);
+  }
 }
 
 .game-dialog__card > * {
@@ -274,6 +282,10 @@ const bodyStyles = computed<StyleValue>(() => [
     inset -0.5px -0.5px 0 0 rgba(255, 255, 255, 0.85),
     inset -2px -2px 0 -2px rgba(255, 255, 255, 0.3);
   pointer-events: none;
+
+  @include theme-light {
+    background: transparent;
+  }
 }
 
 .game-dialog__title {

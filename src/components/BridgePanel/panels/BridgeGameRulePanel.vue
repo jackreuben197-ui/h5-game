@@ -419,7 +419,7 @@ function selectTab(key: RuleTab['key']): void {
   font-weight: 700;
   line-height: 1.35;
   text-align: left;
-  color: var(--color-primary);
+  color: var(--c-brand);
 }
 
 .game-rule-panel__paragraph {

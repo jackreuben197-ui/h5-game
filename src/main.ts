@@ -23,6 +23,7 @@ import {
 } from './session/tokenRefresh'
 import './styles/main.scss'
 import { setupRem } from './utils/rem'
+import { initTheme } from './utils/theme'
 import { initDebugConsole, recordDebugEvent } from './utils/debugConsole'
 import { createLogger } from './utils/logger'
 import { useGameStore } from './stores/game'
@@ -45,7 +46,8 @@ let stopH5VisibilityBridgeChannel: (() => void) | null = null
 let stopCcStorageProxy: (() => void) | null = null
 let stopNativeMenuGuard: (() => void) | null = null
 let stopDailyH5DisplayPanel: (() => void) | null = null
-
+// 启动即接管主题：恢复持久化模式 + 监听系统明暗变化（首帧由 index.html 内联脚本防闪烁）。
+initTheme()
 // 启动时缓存 URL 中的代理邀请码，防止跨页面丢失
 cacheAgentInviteCodeIfPresent()
 // 启动时从 URL 恢复可能的存储数据，子域名跳转主域名时使用。
@@ -73,7 +75,9 @@ function setupNativeMenuGuard(): () => void {
     }
 
     // 在可编辑区域保留系统菜单，避免输入能力受影响。
-    const editable = target.closest('input, textarea, [contenteditable="true"], [contenteditable=""]')
+    const editable = target.closest(
+      'input, textarea, [contenteditable="true"], [contenteditable=""]',
+    )
     if (editable) {
       return
     }
@@ -103,8 +107,7 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
     route: window.location.hash || window.location.pathname,
   })
 
-  const mountTarget =
-    typeof container === 'string' ? document.querySelector(container) : container
+  const mountTarget = typeof container === 'string' ? document.querySelector(container) : container
 
   if (!mountTarget) {
     log.warn('mount target not found:', container)

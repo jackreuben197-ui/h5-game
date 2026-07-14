@@ -1,0 +1,63 @@
+@use 'sass:map';
+
+// 全局只保留跨页面复用的基础语义色。
+// 页面特有的渐变、阴影、玻璃效果放回页面样式，并用 theme-light/theme-dark 局部覆盖。
+$theme-dark: (
+  brand: #05e7ae,
+  text: #ffffff,
+  text-muted: rgba(255, 255, 255, 0.5),
+  page: #0f0f0f,
+  surface: rgba(255, 255, 255, 0.1),
+  overlay: rgba(12, 12, 12, 0.6),
+  border: rgba(255, 255, 255, 0.2),
+  divider: rgba(255, 255, 255, 0.1),
+);
+
+$theme-light: (
+  brand: #69beff,
+  text: #222222,
+  text-muted: rgba(34, 34, 34, 0.55),
+  page: #f3f4f6,
+  surface: #ffffff,
+  overlay: rgba(12, 12, 12, 0.4),
+  border: rgba(0, 0, 0, 0.16),
+  divider: rgba(0, 0, 0, 0.16),
+);
+
+@each $key in map.keys($theme-dark) {
+  @if not map.has-key($theme-light, $key) {
+    @error "themes: light 主题缺少变量 `#{$key}`";
+  }
+}
+
+@each $key in map.keys($theme-light) {
+  @if not map.has-key($theme-dark, $key) {
+    @error "themes: dark 主题缺少变量 `#{$key}`";
+  }
+}
+
+@mixin emit-theme-vars($values) {
+  @each $name, $value in $values {
+    --c-#{$name}: #{$value};
+  }
+}
+
+:root,
+html[data-theme='dark'] {
+  @include emit-theme-vars($theme-dark);
+}
+
+html[data-theme='light'] {
+  @include emit-theme-vars($theme-light);
+  color-scheme: light;
+}
+
+.tc-text { color: var(--c-text); }
+.tc-muted { color: var(--c-text-muted); }
+.tc-brand { color: var(--c-brand); }
+.bg-c-page { background-color: var(--c-page); }
+.bg-c-surface { background-color: var(--c-surface); }
+
+// 仅保留给仍需两套位图素材的场景；单色 SVG 应使用 currentColor。
+html[data-theme='light'] .only-dark { display: none !important; }
+html[data-theme='dark'] .only-light { display: none !important; }

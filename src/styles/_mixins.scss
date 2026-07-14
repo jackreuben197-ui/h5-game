@@ -26,3 +26,21 @@ $breakpoints: (
 @mixin safe-bottom-padding($padding) {
   padding-bottom: calc(#{$padding} + env(safe-area-inset-bottom));
 }
+
+// 主题局部覆盖：var(--c-*) 表达不了的差异（背景图、阴影方向等）用它写例外。
+// 只能嵌套在选择器内部使用（依赖父选择器 &），Vue scoped 样式内可直接用：
+//   .page {
+//     background-image: url('@/assets/images/main_bg.webp');
+//     @include theme-light { background-image: url('@/assets/images/main_bg_light.png'); }
+//   }
+@mixin theme-light {
+  html[data-theme='light'] & {
+    @content;
+  }
+}
+
+@mixin theme-dark {
+  html[data-theme='dark'] & {
+    @content;
+  }
+}

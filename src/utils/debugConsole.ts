@@ -1,3 +1,5 @@
+import { resolvedThemeRef, setThemeMode, themeModeRef } from '@/utils/theme'
+
 export type DebugConsoleLevel = 'debug' | 'info' | 'warn' | 'error'
 export type DebugConsoleSource = 'logger' | 'console' | 'runtime'
 
@@ -33,11 +35,15 @@ let domRefs: {
   toggle: HTMLButtonElement | null
   panel: HTMLDivElement | null
   summary: HTMLDivElement | null
+  themeCurrent: HTMLSpanElement | null
+  themeButton: HTMLButtonElement | null
   body: HTMLDivElement | null
 } = {
   toggle: null,
   panel: null,
   summary: null,
+  themeCurrent: null,
+  themeButton: null,
   body: null,
 }
 
@@ -146,6 +152,7 @@ function getSummaryLines(): string[] {
     `visible: ${window.__H5_VISIBLE__ !== false ? 'true' : 'false'}`,
     `h5Ready: ${window.__H5_READY__ === true ? 'true' : 'false'}`,
     `ccReady: ${window.__CC_READY__ === true ? 'true' : 'false'}`,
+    `theme: ${resolvedThemeRef.value} (${themeModeRef.value})`,
     `build: ${typeof __APP_INFO__ !== 'undefined' ? __APP_INFO__.lastBuildTime : 'unknown'}`,
     `logs: ${state.entries.length}`,
   ]
@@ -156,8 +163,8 @@ function renderDebugConsoleDom(): void {
     return
   }
 
-  const { toggle, panel, summary, body } = domRefs
-  if (!toggle || !panel || !summary || !body) {
+  const { toggle, panel, summary, themeCurrent, themeButton, body } = domRefs
+  if (!toggle || !panel || !summary || !themeCurrent || !themeButton || !body) {
     return
   }
 
@@ -166,6 +173,7 @@ function renderDebugConsoleDom(): void {
   summary.innerHTML = getSummaryLines()
     .map((line) => `<div>${escapeHtml(line)}</div>`)
     .join('')
+  themeCurrent.textContent = resolvedThemeRef.value === 'light' ? '浅色' : '深色'
 
   const prevScrollTop = body.scrollTop
   const prevScrollHeight = body.scrollHeight
@@ -281,6 +289,33 @@ function attachDebugConsoleDom(): void {
       margin-top: 0.16rem;
     }
 
+    .h5-debug-console__theme {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.16rem;
+      margin-top: 0.14rem;
+      padding: 0.1rem 0.12rem;
+      border-radius: 0.12rem;
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.76);
+      font-size: 0.19rem;
+    }
+
+    .h5-debug-console__theme strong {
+      color: #fff;
+    }
+
+    .h5-debug-console__theme button {
+      height: 0.46rem;
+      padding: 0 0.18rem;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999rem;
+      background: #252834;
+      color: #fff;
+      font-size: 0.18rem;
+    }
+
     .h5-debug-console__body {
       flex: 1;
       margin-top: 0.16rem;
@@ -356,10 +391,16 @@ function attachDebugConsoleDom(): void {
       </div>
     </div>
     <div class="h5-debug-console__summary"></div>
+    <div class="h5-debug-console__theme">
+      <span>当前主题：<strong data-theme-current></strong></span>
+      <button type="button" data-action="theme">切换主题</button>
+    </div>
     <div class="h5-debug-console__body"></div>
   `
 
   const summary = panel.querySelector('.h5-debug-console__summary') as HTMLDivElement | null
+  const themeCurrent = panel.querySelector('[data-theme-current]') as HTMLSpanElement | null
+  const themeButton = panel.querySelector('[data-action="theme"]') as HTMLButtonElement | null
   const body = panel.querySelector('.h5-debug-console__body') as HTMLDivElement | null
   const copyButton = panel.querySelector('[data-action="copy"]') as HTMLButtonElement | null
   const clearButton = panel.querySelector('[data-action="clear"]') as HTMLButtonElement | null
@@ -386,13 +427,22 @@ function attachDebugConsoleDom(): void {
   })
   clearButton?.addEventListener('click', () => clearDebugConsoleEntries())
   closeButton?.addEventListener('click', () => closeDebugConsole())
+  themeButton?.addEventListener('click', () => {
+    setThemeMode(resolvedThemeRef.value === 'light' ? 'dark' : 'light')
+    renderDebugConsoleDom()
+    closeDebugConsole()
+  })
 
   document.head.appendChild(style)
   document.body.appendChild(toggle)
   document.body.appendChild(panel)
 
-  domRefs = { toggle, panel, summary, body }
+  domRefs = { toggle, panel, summary, themeCurrent, themeButton, body }
   domReady = true
+  new MutationObserver(() => renderDebugConsoleDom()).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme'],
+  })
   renderDebugConsoleDom()
 }
 
@@ -510,11 +560,7 @@ export function withDebugConsoleCaptureSuppressed<T>(fn: () => T): T {
   }
 }
 
-export function pushLoggerDebugEntry(
-  level: DebugConsoleLevel,
-  tag: string,
-  args: unknown[],
-): void {
+export function pushLoggerDebugEntry(level: DebugConsoleLevel, tag: string, args: unknown[]): void {
   initDebugConsole()
   appendEntry(level, 'logger', [tag, ...args])
 }
@@ -545,6 +591,8 @@ export function clearDebugConsoleEntries(): void {
 
 export function getDebugConsoleText(): string {
   return state.entries
-    .map((entry) => `[${formatTime(entry.timestamp)}][${entry.level}][${entry.source}] ${entry.text}`)
+    .map(
+      (entry) => `[${formatTime(entry.timestamp)}][${entry.level}][${entry.source}] ${entry.text}`,
+    )
     .join('\n')
 }

@@ -3,7 +3,7 @@ import iconDiamond from '@/assets/icons/icon_diamond.png'
 import iconAdd from '@/assets/icons/icon_add.svg'
 import iconChip from '@/assets/icons/icon_chips.png'
 import { t } from '@/i18n'
-import iconBoxClubT from '@/assets/icons/icon_box_club_t.png'
+import iconBoxClubT from '@/assets/icons/icon_club_data.png'
 import iconBoxFriendT from '@/assets/icons/icon_box_friend_t.png'
 import iconBoxDiamond from '@/assets/icons/icon_box_diamond.png'
 import iconBoxSave from '@/assets/icons/icon_box_save.png'
@@ -138,8 +138,8 @@ function goToLogin(): void {
             background: rgba(255, 255, 255, 0.2);
             background-blend-mode: hard-light;
             box-shadow:
-              /* 左上高光 */ inset 0.2px 0.2px 0px 0px
-                rgba(255, 255, 255, 0.85),
+              /* 左上高光 */
+              inset 0.2px 0.2px 0px 0px rgba(255, 255, 255, 0.85),
               /* 右下高光 */ inset -0.2px -0.2px 0px 0px rgba(255, 255, 255, 0.85);
           }
         }

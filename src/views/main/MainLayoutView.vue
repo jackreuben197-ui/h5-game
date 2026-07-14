@@ -2,15 +2,17 @@
 import { computed, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
 import LoginModal from '@/views/login/LoginModal.vue'
 
 const route = useRoute()
 const tabsStore = useMainTabsStore()
 
-// 主容器背景图：全页面共用一张底图。
+// 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--main-bg-dark': `url(${mainBgUrl})`,
+  '--main-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const isHomeRoute = computed(() => route.name === 'lobby' || route.name === 'guest-home')
@@ -42,12 +44,20 @@ watch(
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .main-layout {
   position: relative;
   min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  background-image: var(--main-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    background-color: var(--c-page);
+    background-image: var(--main-bg-light);
+  }
 }
 
 .main-layout--home {

@@ -14,6 +14,7 @@ interface Props {
   initialValue?: string
   allowLeadingZero?: boolean
   showMask?: boolean
+  showBackground?: boolean
   showInputArea?: boolean
   confirmText?: string
   title?: string
@@ -29,6 +30,7 @@ const props = withDefaults(defineProps<Props>(), {
   allowLeadingZero: false,
   title: '',
   showMask: true,
+  showBackground: true,
   showInputArea: false,
   confirmText: t('Wallet_Confirm'),
   allowDecimal: false,
@@ -179,7 +181,10 @@ function confirm(): void {
         @dblclick.prevent
       >
         <div v-if="showMask" class="kp__dim" @click="cancel"></div>
-        <div :class="['kp__sheet', { 'kp__sheet--plain': !showMask }]" @dblclick.prevent>
+        <div
+          :class="['kp__sheet', { 'kp__sheet--plain': !showMask && showBackground }]"
+          @dblclick.prevent
+        >
           <div v-if="showInputArea" class="kp__header">
             <span class="kp__title">{{ title || t('Wallet_CustomAmount') }}</span>
             <div class="kp__input">
@@ -278,6 +283,7 @@ function confirm(): void {
   width: 100%;
   max-width: 430px;
   background-color: rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(50px);
   border: 0.96px solid rgba(242, 244, 244, 0.4);
   border-bottom: none;
   border-top-left-radius: 0.85rem;

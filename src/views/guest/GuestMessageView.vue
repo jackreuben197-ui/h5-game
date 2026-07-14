@@ -6,7 +6,7 @@ import { t } from '@/i18n'
 import iconBoxSystem from '@/assets/icons/icon_box_system.png'
 import iconBoxWallet from '@/assets/icons/icon_box_wallet.png'
 import iconBoxBag from '@/assets/icons/icon_box_bag.png'
-import iconBoxClub from '@/assets/icons/icon_box_club.png'
+import iconBoxClub from '@/assets/icons/icon_club_shield.png'
 import iconBoxTribe from '@/assets/icons/icon_box_tribe.png'
 import { useLoginModalStore } from '@/stores/loginModal'
 
@@ -71,12 +71,7 @@ function notifyNotLogin(): void {
       </div>
     </div>
     <div class="box-gallery">
-      <div
-        v-for="box in boxList"
-        :key="box.text"
-        class="box-item"
-        @click="notifyNotLogin"
-      >
+      <div v-for="box in boxList" :key="box.text" class="box-item" @click="notifyNotLogin">
         <div class="img">
           <img :src="box.icon" alt="消息" />
         </div>

@@ -5,10 +5,6 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { postRoomcenterFriendRoomsApi, postRoomcenterInvitationRoomApi } from '@/api/roomcenter'
 import type { RoomRecord, RoomcenterFriendRoomRecord } from '@/api/models/roomcenter'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
-import iconAdd from '@/assets/icons/icon_add.svg'
-import iconAudio from '@/assets/icons/icon_audio.png'
-import iconVideo from '@/assets/icons/icon_video.png'
-import iconPeople from '@/assets/icons/icon_people.png'
 import iconNlh from '@/assets/icons/game_type_nlh.png'
 import iconPlo from '@/assets/icons/game_type_plo.png'
 import iconSixPlus from '@/assets/icons/game_type_6+.png'
@@ -16,6 +12,7 @@ import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
 import iconSquid from '@/assets/icons/table_icon_squid.png'
 import iconCritical from '@/assets/icons/table_icon_critical.png'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { showGameToast } from '@/components/Toast'
 import { t } from '@/i18n'
 import { enterTable } from '@/bridge/core'
@@ -544,7 +541,7 @@ watch(
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" alt="充值" />
+          <AppSvgIcon class="icon-recharge-svg" name="plus-circle" title="充值" />
         </div>
       </div>
     </div>
@@ -628,16 +625,16 @@ watch(
                 <span class="room-name ml-2">{{ room.name }}</span>
               </div>
               <div class="info-row">
-                <!-- <span class="tag">{{ getRoomStateLabel(room) }}</span> -->
+                <span class="tag">快速游戏</span>
               </div>
               <div class="info-row info-row-last">
                 <div class="duration">
-                  <img class="icon-time" src="@/assets/icons/icon_time.png" alt="" />
+                  <AppSvgIcon class="icon-time" name="clock" />
                   <span>{{ getRoomDuration(room) }}</span>
                 </div>
                 <div class="media-icons">
-                  <img v-if="isAudioTable(room)" class="icon-media" :src="iconAudio" alt="" />
-                  <img v-if="isVideoTable(room)" class="icon-media" :src="iconVideo" alt="" />
+                  <AppSvgIcon v-if="isAudioTable(room)" class="icon-media" name="microphone" />
+                  <AppSvgIcon v-if="isVideoTable(room)" class="icon-media" name="video" />
                   <img
                     v-for="item in getFeatureIcons(room)"
                     :key="item.key"
@@ -653,7 +650,7 @@ watch(
             <!-- 右侧人数 -->
             <div class="table-card-right">
               <div class="seat-ratio">
-                <img class="icon-people" :src="iconPeople" alt="" />
+                <AppSvgIcon class="room-users-icon" name="room-users" />
                 <span>{{ getRoomSeatRatio(room) }}</span>
               </div>
             </div>
@@ -673,6 +670,7 @@ watch(
       :allow-leading-zero="true"
       :show-input-area="false"
       :show-mask="false"
+      :show-background="false"
       :max="9999999"
       confirm-text="加入"
       @close="keypadOpen = false"
@@ -683,13 +681,17 @@ watch(
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .friends-table-page {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  width: min(100%, var(--app-max-width));
+  margin: 0 auto;
   padding: 0 0;
-  color: var(--color-text-main2);
+  color: var(--c-text);
 }
 
 /* ===== 顶部标题栏 ===== */
@@ -704,17 +706,27 @@ watch(
     font-weight: 510;
     line-height: 120%;
     text-shadow: 0 0.22rem 0.5rem rgba(0, 0, 0, 0.35);
+
+    @include theme-light {
+      text-shadow: none;
+    }
   }
   .currency-info {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: var(--color-bg-shadow);
-    // height: 0.8rem;
+    background-color: rgba(0, 0, 0, 0.2);
+    min-height: 0.8rem;
     padding: 0 0.24rem;
     border-radius: 0.6rem;
     overflow: hidden;
     gap: 0.2rem;
+
+    @include theme-light {
+      color: #000;
+      background: #fff;
+      box-shadow: 0 0.04rem 0.14rem rgba(34, 34, 34, 0.08);
+    }
     .icon-diamond {
       width: 0.59rem;
       height: 0.59rem;
@@ -737,9 +749,17 @@ watch(
       display: flex;
       align-items: center;
       justify-content: center;
-      img {
-        width: 100%;
+
+      color: #dadada;
+
+      @include theme-light {
+        color: var(--c-brand);
       }
+    }
+
+    .icon-recharge-svg {
+      width: 100%;
+      height: 100%;
     }
   }
 }
@@ -773,6 +793,10 @@ watch(
   background-size: 100% auto;
   opacity: 0.1;
   pointer-events: none;
+
+  @include theme-light {
+    opacity: 1;
+  }
 }
 .main-content::after {
   content: '  ';
@@ -785,10 +809,16 @@ watch(
   background-size: 100% auto;
   opacity: 0.5;
   pointer-events: none;
+
+  @include theme-light {
+    opacity: 0;
+  }
 }
 
 /* ===== 通用区块 ===== */
 .section {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -803,6 +833,10 @@ watch(
   text-align: center;
   line-height: 1;
   margin-bottom: 0.35rem;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .section-subtitle {
@@ -813,6 +847,10 @@ watch(
   text-align: center;
   line-height: 1;
   margin-bottom: 0.85rem;
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.62);
+  }
 }
 
 .action-btn {
@@ -831,6 +869,12 @@ watch(
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
+
+  @include theme-light {
+    color: rgba(249, 249, 249, 0.9);
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 /* ===== 加入牌局 ===== */
@@ -852,6 +896,11 @@ watch(
     display: flex;
     align-items: center;
     justify-content: center;
+
+    @include theme-light {
+      background: rgba(0, 0, 0, 0.13);
+      border-color: rgba(255, 40, 40, 0.08);
+    }
   }
 
   .invite-input {
@@ -878,6 +927,10 @@ watch(
     font-weight: 500;
     color: #f9f9f9;
     line-height: 1;
+
+    @include theme-light {
+      color: var(--c-text);
+    }
   }
 }
 
@@ -907,6 +960,10 @@ watch(
     height: 0.5px;
     margin-top: 0.2rem;
     background: rgba(249, 249, 249, 0.5);
+
+    @include theme-light {
+      background: rgba(0, 0, 0, 0.16);
+    }
   }
 
   .table-header-center {
@@ -923,6 +980,10 @@ watch(
     color: #f9f9f9;
     text-align: center;
     line-height: 1;
+
+    @include theme-light {
+      color: var(--c-text);
+    }
   }
 
   .table-header-sub {
@@ -933,12 +994,17 @@ watch(
     color: #f9f9f9;
     text-align: center;
     line-height: 1;
+
+    @include theme-light {
+      color: rgba(0, 0, 0, 0.62);
+    }
   }
 }
 
 /* 筛选标签 */
 .filter-tabs {
   display: flex;
+  justify-content: space-between;
   gap: 0.22rem;
   margin: 0.2em 0.9rem 0.3rem;
   overflow-x: auto;
@@ -962,10 +1028,19 @@ watch(
   border-bottom: 1.2px solid transparent;
   transition: all 0.2s;
 
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.54);
+  }
+
   &.active {
     color: #fff;
     font-weight: 700;
     border-bottom-color: #eaeaea;
+
+    @include theme-light {
+      color: var(--c-brand);
+      border-bottom-color: var(--c-brand);
+    }
   }
 }
 
@@ -984,10 +1059,16 @@ watch(
   height: 2.05rem;
   border-radius: 4rem;
   background: rgba(255, 255, 255, 0.15);
+  border: 0.5px solid transparent;
   padding: 0 0.3rem 0 0.15rem;
   // overflow: hidden;
   cursor: pointer;
   transition: opacity 0.2s;
+
+  @include theme-light {
+    background: #fff;
+    border-color: #000;
+  }
 
   &:active {
     opacity: 0.85;
@@ -1016,6 +1097,12 @@ watch(
     backdrop-filter: blur(10px);
     background: rgba($color: #fff, $alpha: 0.3);
     border: 0.5px solid rgba(255, 255, 255, 1);
+
+    @include theme-light {
+      background: #fff;
+      border-color: rgba(255, 255, 255, 0.78);
+      box-shadow: 0 0.027rem 0.4rem rgba(0, 0, 0, 0.25);
+    }
   }
 
   .type-card-icon {
@@ -1047,7 +1134,7 @@ watch(
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.09rem;
   padding: 0 0.2rem;
 }
 
@@ -1063,6 +1150,10 @@ watch(
   font-weight: 700;
   color: #f8f8f8;
   line-height: 1;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .room-name {
@@ -1072,6 +1163,10 @@ watch(
   color: #f8f8f8;
   letter-spacing: 0.15px;
   line-height: 1;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .tag {
@@ -1081,6 +1176,10 @@ watch(
   color: #f9f9f9;
   letter-spacing: 0.47px;
   line-height: 1;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .duration {
@@ -1094,10 +1193,15 @@ watch(
   letter-spacing: 0.47px;
   line-height: 1;
 
+  @include theme-light {
+    color: #000;
+  }
+
   .icon-time {
-    width: 0.35rem;
-    height: 0.35rem;
-    object-fit: contain;
+    width: 0.382rem;
+    height: 0.382rem;
+    color: currentColor;
+    opacity: 0.51;
   }
 }
 
@@ -1105,12 +1209,16 @@ watch(
   display: flex;
   align-items: center;
   gap: 0.08rem;
+  color: rgba(249, 249, 249, 0.65);
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.31);
+  }
 }
 
 .icon-media {
-  width: 0.35rem;
-  height: 0.35rem;
-  object-fit: contain;
+  width: 0.395rem;
+  height: 0.395rem;
 }
 
 .icon-feature {
@@ -1123,6 +1231,11 @@ watch(
   border-radius: 0.5rem;
   padding: 0.053rem 0.16rem;
   background-color: rgba($color: #000000, $alpha: 0.24);
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.62);
+    background: rgba(0, 0, 0, 0.08);
+  }
 }
 .media-label {
   font-size: 0.24rem;
@@ -1144,9 +1257,14 @@ watch(
   align-items: center;
   gap: 0.08rem;
   padding: 0.08rem 0.2rem;
+  min-width: 1.263rem;
+  height: 0.532rem;
+  justify-content: center;
+  border: 1px solid transparent;
   background: rgba(0, 0, 0, 0.05);
   box-shadow:
-  /* 左上高光 */ inset 0.4px 0.4px 0px 0px rgba(255, 255, 255, 0.5),
+  /* 左上高光 */
+    inset 0.4px 0.4px 0px 0px rgba(255, 255, 255, 0.5),
     /* 右下高光 */ inset -0.4px -0.4px 0px 0px rgba(255, 255, 255, 0.5);
   background-blend-mode: multiply;
   border-radius: 3.2rem;
@@ -1156,10 +1274,21 @@ watch(
   color: #fff;
   line-height: 1;
 
-  .icon-people {
-    width: 0.35rem;
-    height: 0.35rem;
-    object-fit: contain;
+  @include theme-light {
+    color: #000;
+    background: rgba(97, 74, 246, 0.05);
+    border-color: var(--c-brand);
+    box-shadow: none;
+  }
+
+  .room-users-icon {
+    width: 0.453rem;
+    height: 0.317rem;
+    color: currentColor;
+
+    @include theme-light {
+      color: var(--c-brand);
+    }
   }
 }
 
@@ -1175,5 +1304,9 @@ watch(
   font-size: 0.35rem;
   color: rgba(255, 255, 255, 0.5);
   text-align: center;
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 </style>

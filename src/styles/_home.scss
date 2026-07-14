@@ -1,0 +1,65 @@
+:root[data-theme='light'] .home-page {
+  .notice-bar {
+    background: rgba(255, 255, 255, 1);
+    border: 0.302px solid rgba(0, 0, 0, 0.16);
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .notice-icon {
+    filter: none;
+  }
+
+  .notice-label,
+  .notice-track {
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .club-panel {
+    background: rgba(255, 255, 255, 1);
+    border: 0.302px solid rgba(0, 0, 0, 0.16);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .balance-amount,
+  .service-label,
+  .contact-label {
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .recharge-btn {
+    background: transparent;
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .club-divider {
+    background: rgba(0, 0, 0, 0.12);
+  }
+
+  .section-title {
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .top-bar {
+    background: rgba(255, 255, 255, 1);
+    border-radius: 0.6rem;
+    padding: 0.1rem 0.24rem;
+  }
+
+  .top-bar__logo-text {
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .top-bar__btn--register {
+    background: linear-gradient(180deg, #808080 0%, #474747 100%);
+    border-color: transparent;
+    color: rgba(249, 249, 249, 1);
+  }
+
+  .top-bar__btn--login {
+    background: #07c09d;
+    border-color: transparent;
+    color: rgba(249, 249, 249, 1);
+  }
+}

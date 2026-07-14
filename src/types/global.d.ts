@@ -58,6 +58,7 @@ declare global {
           start_param?: string
           [key: string]: unknown
         }
+        colorScheme?: 'light' | 'dark'
         ready?: () => void
         expand?: () => void
         isExpanded?: boolean

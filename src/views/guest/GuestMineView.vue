@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
-import iconAdd from '@/assets/icons/icon_add.svg'
+import iconAddDark from '@/assets/icons/icon_add.svg'
+import iconAddLight from '@/assets/icons/icon_add_light.svg'
+import { theme } from '@/utils/theme'
 import iconChip from '@/assets/icons/icon_chips.png'
 import { getLocale, t } from '@/i18n'
 import iconBoxClubT from '@/assets/icons/icon_box_club_t.png'
@@ -21,6 +24,8 @@ interface BoxItem {
 }
 
 const loginModalStore = useLoginModalStore()
+
+const iconAdd = computed(() => (theme.value === 'light' ? iconAddLight : iconAddDark))
 
 const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
 

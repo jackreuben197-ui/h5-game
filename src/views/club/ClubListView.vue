@@ -3,20 +3,29 @@ import { computed, onMounted, ref } from 'vue'
 import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { postOrgClubGetApi, postOrgClubJoinApi, postOrgClubSearchByIdApi } from '@/api/org'
-import imgSearch from '@/assets/icons/club_search.svg'
-import imgPokerSpade from '@/assets/icons/club_poker_spade.svg'
-import imgPokerHeart from '@/assets/icons/club_poker_heart.svg'
-import imgPokerClub from '@/assets/icons/club_poker_club.svg'
-import imgPokerDiamond from '@/assets/icons/club_poker_diamond.svg'
-import imgPeople from '@/assets/icons/icon_people2.png'
+import imgSearchDark from '@/assets/icons/club_search.svg'
+import imgSearchLight from '@/assets/icons/club_search_light.svg'
+import imgPokerSpadeDark from '@/assets/icons/club_poker_spade.svg'
+import imgPokerSpadeLight from '@/assets/icons/club_poker_spade_light.svg'
+import imgPokerHeartDark from '@/assets/icons/club_poker_heart.svg'
+import imgPokerHeartLight from '@/assets/icons/club_poker_heart_light.svg'
+import imgPokerClubDark from '@/assets/icons/club_poker_club.svg'
+import imgPokerClubLight from '@/assets/icons/club_poker_club_light.svg'
+import imgPokerDiamondDark from '@/assets/icons/club_poker_diamond.svg'
+import imgPokerDiamondLight from '@/assets/icons/club_poker_diamond_light.svg'
+import { theme } from '@/utils/theme'
+import imgPeopleDark from '@/assets/icons/icon_people2.png'
+import imgPeopleLight from '@/assets/icons/icon_people2_light.png'
 import imgChipRed from '@/assets/icons/icon_chip_red.png'
 import imgChipGreen from '@/assets/icons/icon_chip_green.png'
-import imgTable from '@/assets/icons/icon_table2.png'
+import imgTableDark from '@/assets/icons/icon_table2.png'
+import imgTableLight from '@/assets/icons/icon_table2_light.png'
 import imgClubRoleIcon from '@/assets/icons/member_icon.png'
 import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shield.png'
 import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.png'
 import imgQuickActionAlliance from '@/assets/images/club_qa_data_board_alliance.png'
-import iconClubCareer from '@/assets/icons/ic_club_q.png'
+import iconClubCareerDark from '@/assets/icons/ic_club_q.png'
+import iconClubCareerLight from '@/assets/icons/ic_club_q_light.png'
 import imgClubBannerFigma from '@/assets/images/club_banner_bg.png'
 import imgClubLogo from '@/assets/images/club_default_logo.png'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
@@ -51,6 +60,20 @@ interface ClubCardItem {
   memberCount: number
   cover: string
 }
+
+const isLightTheme = computed(() => theme.value === 'light')
+const imgSearch = computed(() => (isLightTheme.value ? imgSearchLight : imgSearchDark))
+const imgPokerSpade = computed(() => (isLightTheme.value ? imgPokerSpadeLight : imgPokerSpadeDark))
+const imgPokerHeart = computed(() => (isLightTheme.value ? imgPokerHeartLight : imgPokerHeartDark))
+const imgPokerClub = computed(() => (isLightTheme.value ? imgPokerClubLight : imgPokerClubDark))
+const imgPokerDiamond = computed(() =>
+  isLightTheme.value ? imgPokerDiamondLight : imgPokerDiamondDark,
+)
+const imgPeople = computed(() => (isLightTheme.value ? imgPeopleLight : imgPeopleDark))
+const imgTable = computed(() => (isLightTheme.value ? imgTableLight : imgTableDark))
+const iconClubCareer = computed(() =>
+  isLightTheme.value ? iconClubCareerLight : iconClubCareerDark,
+)
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()

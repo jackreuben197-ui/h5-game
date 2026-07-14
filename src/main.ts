@@ -23,6 +23,7 @@ import {
 } from './session/tokenRefresh'
 import './styles/main.scss'
 import { setupRem } from './utils/rem'
+import { setupTheme } from './utils/theme'
 import { initDebugConsole, recordDebugEvent } from './utils/debugConsole'
 import { createLogger } from './utils/logger'
 import { useGameStore } from './stores/game'
@@ -45,6 +46,7 @@ let stopWsProxyBridgeChannel: (() => void) | null = null
 let stopH5VisibilityBridgeChannel: (() => void) | null = null
 let stopCcStorageProxy: (() => void) | null = null
 let stopNativeMenuGuard: (() => void) | null = null
+let stopTheme: (() => void) | null = null
 let stopDailyH5DisplayPanel: (() => void) | null = null
 
 // 启动时缓存 URL 中的代理邀请码，防止跨页面丢失
@@ -117,6 +119,7 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
   }
 
   setupRem()
+  stopTheme = setupTheme()
   stopNativeMenuGuard = setupNativeMenuGuard()
 
   try {
@@ -188,6 +191,8 @@ export function unmountH5App(): void {
   stopCcStorageProxy = null
   stopNativeMenuGuard?.()
   stopNativeMenuGuard = null
+  stopTheme?.()
+  stopTheme = null
   stopDailyH5DisplayPanel?.()
   stopDailyH5DisplayPanel = null
   stopTokenRefreshLoop()

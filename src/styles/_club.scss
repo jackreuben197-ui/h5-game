@@ -1,0 +1,101 @@
+:root[data-theme='light'] .club-index {
+  .search-shell {
+    background: rgba(255, 255, 255, 1);
+
+    &::before {
+      background: none;
+    }
+  }
+
+  .search-trigger,
+  .search-input,
+  .search-placeholder {
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .search-input::placeholder {
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .search-btn {
+    background: rgba(7, 192, 157, 0.05);
+    border: 1px solid #07c09d;
+    box-shadow: none;
+
+    &::before {
+      background: none;
+    }
+
+    .search-btn-label {
+      color: #241313;
+    }
+  }
+
+  .search-btn-blur,
+  .search-btn-inset {
+    display: none;
+  }
+
+  .action-text {
+    color: rgba(0, 0, 0, 0.56);
+    text-shadow: none;
+  }
+
+  .cards-divider {
+    mix-blend-mode: normal;
+    opacity: 1;
+  }
+
+  .divider-line {
+    background: rgba(0, 0, 0, 0.12);
+  }
+
+  .club-empty-text {
+    color: rgba(0, 0, 0, 0.5);
+  }
+
+  .club-banner {
+    &::before {
+      background: rgba(255, 255, 255, 1);
+      border: none;
+    }
+  }
+
+  .club-banner-glass {
+    &::before {
+      background: none;
+    }
+  }
+
+  .club-name,
+  .club-id-value,
+  .top-metric-item,
+  .stat-item {
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .club-id-tag {
+    background: rgba(255, 255, 255, 1);
+    color: #444;
+  }
+
+  .club-stats-shell {
+    background: rgba(255, 255, 255, 1);
+    backdrop-filter: none;
+
+    &::before {
+      background: none;
+    }
+  }
+
+  .enter-btn {
+    color: rgba(255, 255, 255, 1);
+
+    &::before {
+      background: #05c297;
+      backdrop-filter: none;
+      mix-blend-mode: normal;
+      box-shadow: none;
+    }
+  }
+}

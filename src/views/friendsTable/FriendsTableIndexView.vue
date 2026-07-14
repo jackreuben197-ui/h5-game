@@ -5,10 +5,17 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { postRoomcenterFriendRoomsApi, postRoomcenterInvitationRoomApi } from '@/api/roomcenter'
 import type { RoomRecord, RoomcenterFriendRoomRecord } from '@/api/models/roomcenter'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
-import iconAdd from '@/assets/icons/icon_add.svg'
-import iconAudio from '@/assets/icons/icon_audio.png'
-import iconVideo from '@/assets/icons/icon_video.png'
-import iconPeople from '@/assets/icons/icon_people.png'
+import iconAddDark from '@/assets/icons/icon_add.svg'
+import iconAddLight from '@/assets/icons/icon_add_light.svg'
+import { theme } from '@/utils/theme'
+import iconAudioDark from '@/assets/icons/icon_audio.png'
+import iconAudioLight from '@/assets/icons/icon_audio_light.png'
+import iconVideoDark from '@/assets/icons/icon_video.png'
+import iconVideoLight from '@/assets/icons/icon_video_light.png'
+import iconPeopleDark from '@/assets/icons/icon_people.png'
+import iconPeopleLight from '@/assets/icons/icon_people_light.png'
+import iconTimeDark from '@/assets/icons/icon_time.png'
+import iconTimeLight from '@/assets/icons/icon_time_light.png'
 import iconNlh from '@/assets/icons/game_type_nlh.svg'
 import iconPlo from '@/assets/icons/game_type_plo.svg'
 import iconSixPlus from '@/assets/icons/game_type_6+.svg'
@@ -26,6 +33,13 @@ import { useLoginModalStore } from '@/stores/loginModal'
 import { useRoomListStore } from '@/stores/roomList'
 import { ROOM_ORIGIN_TYPE } from '@/utils/roomVisibility'
 import { formatRoomLeftAndTotalByUnity } from '@/utils/time'
+
+const isLightTheme = computed(() => theme.value === 'light')
+const iconAdd = computed(() => (isLightTheme.value ? iconAddLight : iconAddDark))
+const iconAudio = computed(() => (isLightTheme.value ? iconAudioLight : iconAudioDark))
+const iconVideo = computed(() => (isLightTheme.value ? iconVideoLight : iconVideoDark))
+const iconPeople = computed(() => (isLightTheme.value ? iconPeopleLight : iconPeopleDark))
+const iconTime = computed(() => (isLightTheme.value ? iconTimeLight : iconTimeDark))
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -637,7 +651,7 @@ watch(
               </div>
               <div class="info-row info-row-last">
                 <div class="duration">
-                  <img class="icon-time" src="@/assets/icons/icon_time.png" alt="" />
+                  <img class="icon-time" :src="iconTime" alt="" />
                   <span>{{ getRoomDuration(room) }}</span>
                 </div>
                 <div class="media-icons">
@@ -798,7 +812,7 @@ watch(
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 1.6rem;
+  margin-bottom: 0.9rem;
 }
 
 .section-title {

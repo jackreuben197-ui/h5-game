@@ -3,6 +3,8 @@ import { computed, onMounted, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBg2Url from '@/assets/images/main_bg2.jpg'
+import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
+import { theme } from '@/utils/theme'
 import { getUserClubApi, getUserInfoApi } from '@/api/user'
 import { postDiamondConfigApi, postGlobalConfigApi } from '@/api/config'
 import {
@@ -26,16 +28,31 @@ const appConfigStore = useAppConfigStore()
 const { setLocale } = useTextI18n()
 
 // 主容器背景图：全页面共用一张底图，首页使用 main_bg2.png。
-const backgroundStyle = computed(() => ({
-  backgroundImage:
-    route.meta.tabKey === 'home' ||
-    route.meta.tabKey === 'club' ||
-    route.meta.tabKey === 'message' ||
-    route.meta.tabKey === 'mine' ||
-    route.meta.tabKey === 'friendsTable'
-      ? `url(${mainBg2Url})`
-      : `url(${mainBgUrl})`,
-}))
+const LIGHT_THEME_TABS: ReadonlyArray<MainTabKey> = [
+  'message',
+  'mine',
+  'friendsTable',
+  'club',
+  'home',
+]
+
+const backgroundStyle = computed(() => {
+  const tabKey = route.meta.tabKey as MainTabKey | undefined
+  if (theme.value === 'light' && tabKey && LIGHT_THEME_TABS.includes(tabKey)) {
+    return { backgroundImage: `url(${mainBgLightUrl})` }
+  }
+
+  return {
+    backgroundImage:
+      route.meta.tabKey === 'home' ||
+      route.meta.tabKey === 'club' ||
+      route.meta.tabKey === 'message' ||
+      route.meta.tabKey === 'mine' ||
+      route.meta.tabKey === 'friendsTable'
+        ? `url(${mainBg2Url})`
+        : `url(${mainBgUrl})`,
+  }
+})
 
 const isHome = computed(() => route.meta.tabKey === 'home')
 const isGuestHome = computed(() => route.name === 'guest-home')
@@ -112,7 +129,6 @@ async function fetchUserInfoOnEnter(): Promise<void> {
     })
   }
 
-  // websocket 就绪逻辑同样走后台，не阻塞首页进入。
   void LoginSession.EnsureWS().catch((error) => {
     console.warn('[main-layout] ensure ws failed:', error)
   })
@@ -215,6 +231,24 @@ watch(
 
   &.is-friends-table::before {
     backdrop-filter: blur(6px);
+  }
+}
+
+:root[data-theme='light'] .main-layout.is-message::before,
+:root[data-theme='light'] .main-layout.is-mine::before,
+:root[data-theme='light'] .main-layout.is-friends-table::before,
+:root[data-theme='light'] .main-layout.is-club::before,
+:root[data-theme='light'] .main-layout.is-home::before {
+  background-color: transparent;
+  backdrop-filter: none;
+}
+
+:root[data-theme='light'] .main-layout--home {
+  background-color: transparent;
+  background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+  .main-layout-content {
+    background: transparent;
   }
 }
 

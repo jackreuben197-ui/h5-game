@@ -4,8 +4,11 @@ import { useRouter } from 'vue-router'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { postMsgMessageTodoApi, postMsgMessageUnreadApi } from '@/api/msg'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
-import iconAdd from '@/assets/icons/icon_add.svg'
-import iconMessages from '@/assets/icons/icon_messages.png'
+import iconAddDark from '@/assets/icons/icon_add.svg'
+import iconAddLight from '@/assets/icons/icon_add_light.svg'
+import { theme } from '@/utils/theme'
+import iconMessagesDark from '@/assets/icons/icon_messages.png'
+import iconMessagesLight from '@/assets/icons/icon_messages_light.png'
 import { t } from '@/i18n'
 import iconBoxSystem from '@/assets/icons/icon_box_system.png'
 import iconBoxWallet from '@/assets/icons/icon_box_wallet.png'
@@ -22,6 +25,10 @@ interface BoxItem {
 }
 
 const userInfoStore = useUserInfoStore()
+
+const isLightTheme = computed(() => theme.value === 'light')
+const iconAdd = computed(() => (isLightTheme.value ? iconAddLight : iconAddDark))
+const iconMessages = computed(() => (isLightTheme.value ? iconMessagesLight : iconMessagesDark))
 
 const boxList = ref<BoxItem[]>([
   { icon: iconBoxSystem, text: 'Msg3', type: 'system', msgType: 4, unreadCount: 0 },
@@ -264,6 +271,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @use '@/styles/messages_mine.scss' as *;
+
 .message-page {
   .card-bg-highlight {
     .card-bg-outter {
@@ -330,18 +338,15 @@ onMounted(() => {
           }
           .btn-credit {
             display: inline-flex;
-            height: 31.909px;
-            padding: 9.933px 1.505px 10.234px 12px;
+            padding: 0.1rem 0.1rem 0.1rem 0.36rem;
             align-items: center;
-            gap: 5.566px;
-            border-radius: 15.05px;
+            gap: 0.2rem;
+            border-radius: 0.6rem;
             background: rgba(38, 38, 38, 0.2);
             background-blend-mode: hard-light;
             position: relative;
             flex: 0 1 auto;
             min-width: 0;
-            height: auto;
-            min-height: 31.909px;
             .text {
               white-space: normal;
               word-break: break-word;
@@ -368,10 +373,10 @@ onMounted(() => {
               mix-blend-mode: normal;
             }
             .round-icon {
-              width: 28.315px;
-              height: 28.315px;
+              width: 0.75rem;
+              height: 0.75rem;
               aspect-ratio: 1/1;
-              border-radius: 28.315px;
+              border-radius: 50%;
               background: transparent;
               backdrop-filter: blur(16.705px);
               -webkit-backdrop-filter: blur(16.705px);
@@ -397,7 +402,7 @@ onMounted(() => {
                   'liga' off,
                   'clig' off;
                 font-family: 'SF Pro', sans-serif;
-                font-size: 12.943px;
+                font-size: 0.345rem;
                 font-style: normal;
                 font-weight: 700;
                 line-height: 140%;

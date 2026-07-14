@@ -1,10 +1,15 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
-import iconAdd from '@/assets/icons/icon_add.svg'
+import iconAddDark from '@/assets/icons/icon_add.svg'
+import iconAddLight from '@/assets/icons/icon_add_light.svg'
+import { theme } from '@/utils/theme'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { getLocale } from '@/i18n'
 
 const loginModalStore = useLoginModalStore()
+
+const iconAdd = computed(() => (theme.value === 'light' ? iconAddLight : iconAddDark))
 
 const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
 
@@ -207,7 +212,7 @@ function notifyNotLogin(): void {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 1.6rem;
+  margin-bottom: 0.9rem;
 }
 
 .section-title {

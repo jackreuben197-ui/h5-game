@@ -256,7 +256,6 @@ const bodyStyles = computed<StyleValue>(() => [
   pointer-events: none;
 }
 
-/* Затемнённая подложка — только для弹窗 с высоким требованием к читаемости (MTT 报名). */
 .game-dialog__card--dark .game-dialog__card-bg-gradient,
 .game-dialog__card--dark .game-dialog__card-bg-shadow {
   background: rgba(6, 7, 10, 0.65);

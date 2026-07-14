@@ -1,3 +1,72 @@
+@mixin light-pill {
+  background-color: #05c297;
+  border-color: transparent;
+
+  &::before {
+    background: transparent;
+  }
+}
+
+:root[data-theme='light'] .message-page,
+:root[data-theme='light'] .mine-page {
+  .title-bar {
+    .title {
+      color: rgba(0, 0, 0, 1);
+      text-shadow: none;
+    }
+
+    .currency-info {
+      background-color: rgba(255, 255, 255, 1);
+
+      .num {
+        color: rgba(0, 0, 0, 1);
+      }
+    }
+  }
+
+  .box-gallery .box-item .text {
+    color: rgba(0, 0, 0, 0.64);
+  }
+
+  .card-bg-highlight {
+    background: rgba(0, 0, 0, 0.08);
+
+    .card-bg-outter {
+      background: rgba(255, 255, 255, 1);
+
+      &::before {
+        background-image: none;
+      }
+
+      .card-bg-innner .card-line2 .button {
+        @include light-pill;
+      }
+    }
+  }
+
+  .card-line2 .button {
+    @include light-pill;
+  }
+}
+
+:root[data-theme='light'] .message-page {
+  .card-bg-highlight .card-bg-outter .card-bg-innner .card-line1 .left-text {
+    color: rgba(15, 8, 8, 0.69);
+  }
+}
+
+:root[data-theme='light'] .mine-page {
+  .left-board .currency .num {
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .card-bg-highlight .card-bg-outter .card-bg-innner .card-line1 .right-box {
+    background: #05c297;
+    box-shadow: none;
+    color: rgba(255, 255, 255, 1);
+  }
+}
+
 .message-page,
 .mine-page {
   display: flex;

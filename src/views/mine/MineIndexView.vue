@@ -4,7 +4,9 @@ import { useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
-import iconAdd from '@/assets/icons/icon_add.svg'
+import iconAddDark from '@/assets/icons/icon_add.svg'
+import iconAddLight from '@/assets/icons/icon_add_light.svg'
+import { theme } from '@/utils/theme'
 import iconChip from '@/assets/icons/icon_chips.png'
 import { t } from '@/i18n'
 import iconBoxClubT from '@/assets/icons/icon_box_club_t.png'
@@ -58,6 +60,8 @@ const boxList = ref<BoxItem[]>([
   },
   { key: 'settings', icon: iconBoxSetting, text: 'UIMine_btn_setting', route: '/mine/settings' },
 ])
+
+const iconAdd = computed(() => (theme.value === 'light' ? iconAddLight : iconAddDark))
 
 function goToNextPage(path: string): void {
   void router.push(path)

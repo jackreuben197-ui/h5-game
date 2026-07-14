@@ -186,4 +186,36 @@ defineEmits<{
   flex-shrink: 0;
   opacity: 0.8;
 }
+
+:root[data-theme='light'] {
+  .profile-card {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  .profile-card__outer {
+    background-color: rgba(255, 255, 255, 1);
+    background-image: none !important;
+
+    &::before {
+      background-image: none;
+    }
+  }
+
+  .user-name {
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .id-tag {
+    background-color: rgba(0, 0, 0, 0.08);
+    color: rgba(0, 0, 0, 0.64);
+  }
+
+  .id-value {
+    color: rgba(0, 0, 0, 0.64);
+  }
+
+  .id-info-icon {
+    filter: invert(1);
+  }
+}
 </style>

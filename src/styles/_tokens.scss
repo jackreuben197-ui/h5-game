@@ -57,6 +57,11 @@ $color-bg-shadow: rgba(0, 0, 0, 0.2);
   --font-size-cell-padding-y: 0.32rem;
   --field-label-width: 1.9733rem;
 
+  --tabbar-surface: rgba(51, 55, 56, 0.77);
+  --tabbar-border: rgba(249, 249, 249, 0.4);
+  --tabbar-item: #f9f9f9;
+  --tabbar-item-active: #f9f9f9;
+
   // Vant theme bridge
   --van-primary-color: #{$color-primary};
   --van-danger-color: #d84b3e;
@@ -66,4 +71,11 @@ $color-bg-shadow: rgba(0, 0, 0, 0.2);
   --van-background-2: #{$color-card-bg};
   --van-border-color: #{$color-border-soft};
   --van-radius-lg: 0.32rem;
+}
+
+:root[data-theme='light'] {
+  --tabbar-surface: #222222;
+  --tabbar-border: transparent;
+  --tabbar-item: #7b7b7b;
+  --tabbar-item-active: #7bfbca;
 }

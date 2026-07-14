@@ -1,5 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
+import iconService1Dark from '@/assets/icons/icon_service_1.svg'
+import iconService1Light from '@/assets/icons/icon_service_1_light.svg'
+import iconService2Dark from '@/assets/icons/icon_service_2.svg'
+import iconService2Light from '@/assets/icons/icon_service_2_light.svg'
+import iconService3Dark from '@/assets/icons/icon_service_3.svg'
+import iconService3Light from '@/assets/icons/icon_service_3_light.svg'
+import { theme } from '@/utils/theme'
 import { useRouter } from 'vue-router'
 import { getUserClubApi } from '@/api/user'
 import { getCowboyRoomListApi } from '@/api/gc'
@@ -29,6 +36,11 @@ import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
 import imgFb from '@/assets/images/minigame-newui/fb.svg'
 import imgCowboy from '@/assets/images/minigame-newui/sg.svg'
+
+const isLightTheme = computed(() => theme.value === 'light')
+const iconService1 = computed(() => (isLightTheme.value ? iconService1Light : iconService1Dark))
+const iconService2 = computed(() => (isLightTheme.value ? iconService2Light : iconService2Dark))
+const iconService3 = computed(() => (isLightTheme.value ? iconService3Light : iconService3Dark))
 
 const popularBannerGamesStatic = [
   {
@@ -822,11 +834,11 @@ onBeforeUnmount(() => {
       <!-- 右侧：联系方式 -->
       <div class="club-right">
         <div class="contact-item" @click="handleOpenTelegram">
-          <img class="contact-icon" src="@/assets/icons/icon_service_1.svg" alt="Telegram" />
+          <img class="contact-icon" :src="iconService1" alt="Telegram" />
           <span class="contact-label"> @game </span>
         </div>
         <div class="contact-item" @click="handleOpenEmail">
-          <img class="contact-icon" src="@/assets/icons/icon_service_2.svg" alt="邮箱" />
+          <img class="contact-icon" :src="iconService2" alt="邮箱" />
           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>
         <div
@@ -834,7 +846,7 @@ onBeforeUnmount(() => {
           class="contact-item"
           @click="handleOpenCustomerService"
         >
-          <img class="contact-icon" src="@/assets/icons/icon_service_3.svg" alt="IM客服" />
+          <img class="contact-icon" :src="iconService3" alt="IM客服" />
           <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
         </div>
       </div>

@@ -1,15 +1,31 @@
 <script setup lang="ts">
-import imgSearch from '@/assets/icons/club_search.svg'
-import imgPokerSpade from '@/assets/icons/club_poker_spade.svg'
-import imgPokerHeart from '@/assets/icons/club_poker_heart.svg'
-import imgPokerClub from '@/assets/icons/club_poker_club.svg'
-import imgPokerDiamond from '@/assets/icons/club_poker_diamond.svg'
+import { computed } from 'vue'
+import imgSearchDark from '@/assets/icons/club_search.svg'
+import imgSearchLight from '@/assets/icons/club_search_light.svg'
+import imgPokerSpadeDark from '@/assets/icons/club_poker_spade.svg'
+import imgPokerSpadeLight from '@/assets/icons/club_poker_spade_light.svg'
+import imgPokerHeartDark from '@/assets/icons/club_poker_heart.svg'
+import imgPokerHeartLight from '@/assets/icons/club_poker_heart_light.svg'
+import imgPokerClubDark from '@/assets/icons/club_poker_club.svg'
+import imgPokerClubLight from '@/assets/icons/club_poker_club_light.svg'
+import imgPokerDiamondDark from '@/assets/icons/club_poker_diamond.svg'
+import imgPokerDiamondLight from '@/assets/icons/club_poker_diamond_light.svg'
+import { theme } from '@/utils/theme'
 import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shield.png'
 import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.png'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { getLocale } from '@/i18n'
 
 const loginModalStore = useLoginModalStore()
+
+const isLightTheme = computed(() => theme.value === 'light')
+const imgSearch = computed(() => (isLightTheme.value ? imgSearchLight : imgSearchDark))
+const imgPokerSpade = computed(() => (isLightTheme.value ? imgPokerSpadeLight : imgPokerSpadeDark))
+const imgPokerHeart = computed(() => (isLightTheme.value ? imgPokerHeartLight : imgPokerHeartDark))
+const imgPokerClub = computed(() => (isLightTheme.value ? imgPokerClubLight : imgPokerClubDark))
+const imgPokerDiamond = computed(() =>
+  isLightTheme.value ? imgPokerDiamondLight : imgPokerDiamondDark,
+)
 
 const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
 

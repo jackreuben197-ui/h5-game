@@ -60,9 +60,15 @@ watch(
   }
 }
 
+// 首页的深色方案仍使用白底；浅色方案才切换到浅色主题背景图。
 .main-layout--home {
-  background-color: #f7f8fa;
-  background-image: none !important;
+  background-color: #fff;
+  background-image: none;
+
+  @include theme-light {
+    background-color: var(--c-page);
+    background-image: var(--main-bg-light);
+  }
 }
 
 .main-layout-content {
@@ -80,10 +86,6 @@ watch(
   touch-action: pan-y;
   overscroll-behavior-y: none;
   padding: calc(var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.4rem) 0rem calc(env(safe-area-inset-bottom) + 2.72rem);
-}
-
-.main-layout--home .main-layout-content {
-  background: #f7f8fa;
 }
 
 .module-slot {

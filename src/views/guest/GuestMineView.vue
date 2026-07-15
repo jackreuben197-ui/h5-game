@@ -1,15 +1,22 @@
 <script setup lang="ts">
 import iconDiamond from '@/assets/icons/icon_diamond.png'
-import iconAdd from '@/assets/icons/icon_add.svg'
 import iconChip from '@/assets/icons/icon_chips.png'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { t } from '@/i18n'
 import iconBoxClubT from '@/assets/icons/icon_club_data.png'
+import iconBoxClubTLight from '@/assets/icons/icon_club_data_light.png'
 import iconBoxFriendT from '@/assets/icons/icon_box_friend_t.png'
+import iconBoxFriendTLight from '@/assets/icons/icon_box_friend_t_light.png'
 import iconBoxDiamond from '@/assets/icons/icon_box_diamond.png'
+import iconBoxDiamondLight from '@/assets/icons/icon_box_diamond_light.png'
 import iconBoxSave from '@/assets/icons/icon_box_save.png'
+import iconBoxSaveLight from '@/assets/icons/icon_box_save_light.png'
 import iconBoxBag from '@/assets/icons/icon_box_bag.png'
+import iconBoxBagLight from '@/assets/icons/icon_box_bag_light.png'
 import iconBoxComment from '@/assets/icons/icon_box_comment.png'
+import iconBoxCommentLight from '@/assets/icons/icon_box_comment_light.png'
 import iconBoxSetting from '@/assets/icons/icon_box_setting.png'
+import iconBoxSettingLight from '@/assets/icons/icon_box_setting_light.png'
 import iconShop from '@/assets/icons/icon_shop.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 import { useLoginModalStore } from '@/stores/loginModal'
@@ -17,19 +24,45 @@ import { useLoginModalStore } from '@/stores/loginModal'
 interface BoxItem {
   key: string
   icon: string
+  iconLight: string
   text: string
 }
 
 const loginModalStore = useLoginModalStore()
 
 const boxList: BoxItem[] = [
-  { key: 'club-career', icon: iconBoxClubT, text: t('PageMineClubCareer') },
-  { key: 'friends-career', icon: iconBoxFriendT, text: t('PageMineFriendTableCareer') },
-  { key: 'my-bill', icon: iconBoxDiamond, text: t('UIMine_Bill') },
-  { key: 'hand-history', icon: iconBoxSave, text: t('UIMine_btn_paipu') },
-  { key: 'bag', icon: iconBoxBag, text: t('UIMine_btn_backpack') },
-  { key: 'message-board', icon: iconBoxComment, text: t('PageMineMessageBoard') },
-  { key: 'settings', icon: iconBoxSetting, text: t('UIMine_btn_setting') },
+  {
+    key: 'club-career',
+    icon: iconBoxClubT,
+    iconLight: iconBoxClubTLight,
+    text: t('PageMineClubCareer'),
+  },
+  {
+    key: 'friends-career',
+    icon: iconBoxFriendT,
+    iconLight: iconBoxFriendTLight,
+    text: t('PageMineFriendTableCareer'),
+  },
+  { key: 'my-bill', icon: iconBoxDiamond, iconLight: iconBoxDiamondLight, text: t('UIMine_Bill') },
+  {
+    key: 'hand-history',
+    icon: iconBoxSave,
+    iconLight: iconBoxSaveLight,
+    text: t('UIMine_btn_paipu'),
+  },
+  { key: 'bag', icon: iconBoxBag, iconLight: iconBoxBagLight, text: t('UIMine_btn_backpack') },
+  {
+    key: 'message-board',
+    icon: iconBoxComment,
+    iconLight: iconBoxCommentLight,
+    text: t('PageMineMessageBoard'),
+  },
+  {
+    key: 'settings',
+    icon: iconBoxSetting,
+    iconLight: iconBoxSettingLight,
+    text: t('UIMine_btn_setting'),
+  },
 ]
 
 const displayUser = {
@@ -41,10 +74,6 @@ const displayUser = {
 }
 
 function notifyNotLogin(): void {
-  loginModalStore.open()
-}
-
-function goToLogin(): void {
   loginModalStore.open()
 }
 </script>
@@ -59,7 +88,7 @@ function goToLogin(): void {
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" alt="充值" />
+          <AppSvgIcon class="icon-recharge-svg" name="plus-circle" title="充值" />
         </div>
       </div>
     </div>
@@ -96,7 +125,8 @@ function goToLogin(): void {
     <div class="box-gallery">
       <div v-for="box in boxList" :key="box.key" class="box-item" @click="notifyNotLogin">
         <div class="img">
-          <img :src="box.icon" alt="消息" />
+          <img class="only-dark" :src="box.icon" :alt="box.text" />
+          <img class="only-light" :src="box.iconLight" :alt="box.text" />
         </div>
         <div class="text">{{ box.text }}</div>
       </div>
@@ -106,6 +136,7 @@ function goToLogin(): void {
 
 <style scoped lang="scss">
 @use '@/styles/messages_mine.scss' as *;
+@use '@/styles/mixins' as *;
 
 .mine-page {
   .card-bg-highlight {
@@ -141,6 +172,12 @@ function goToLogin(): void {
               /* 左上高光 */
               inset 0.2px 0.2px 0px 0px rgba(255, 255, 255, 0.85),
               /* 右下高光 */ inset -0.2px -0.2px 0px 0px rgba(255, 255, 255, 0.85);
+
+            @include theme-light {
+              color: #fff;
+              background: var(--c-brand);
+              box-shadow: none;
+            }
           }
         }
         .card-line2 {
@@ -162,6 +199,10 @@ function goToLogin(): void {
                 line-height: 120%;
                 font-weight: 500;
                 font-family: var(--font-family-SF);
+
+                @include theme-light {
+                  color: #000;
+                }
               }
             }
           }

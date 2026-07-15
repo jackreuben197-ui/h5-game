@@ -4,18 +4,25 @@ import { useRouter } from 'vue-router'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { postMsgMessageTodoApi, postMsgMessageUnreadApi } from '@/api/msg'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
-import iconAdd from '@/assets/icons/icon_add.svg'
 import iconMessages from '@/assets/icons/icon_messages.png'
+import iconMessagesLight from '@/assets/icons/icon_messages_light.png'
 import iconDing from '@/assets/icons/icon_ding.png'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { t } from '@/i18n'
 import iconBoxSystem from '@/assets/icons/icon_box_system.png'
+import iconBoxSystemLight from '@/assets/icons/icon_box_system_light.png'
 import iconBoxWallet from '@/assets/icons/icon_box_wallet.png'
+import iconBoxWalletLight from '@/assets/icons/icon_box_wallet_light.png'
 import iconBoxBag from '@/assets/icons/icon_box_bag.png'
+import iconBoxBagLight from '@/assets/icons/icon_box_message_bag_light.png'
 import iconBoxClub from '@/assets/icons/icon_club_shield.png'
+import iconBoxClubLight from '@/assets/icons/icon_club_shield_light.png'
 import iconBoxTribe from '@/assets/icons/icon_box_tribe.png'
+import iconBoxTribeLight from '@/assets/icons/icon_box_tribe_light.png'
 
 interface BoxItem {
   icon: string
+  iconLight: string
   text: string
   type: 'system' | 'other'
   msgType: number
@@ -25,11 +32,46 @@ interface BoxItem {
 const userInfoStore = useUserInfoStore()
 
 const boxList = ref<BoxItem[]>([
-  { icon: iconBoxSystem, text: t('Msg3'), type: 'system', msgType: 4, unreadCount: 0 },
-  { icon: iconBoxWallet, text: t('Msg4'), type: 'other', msgType: 3, unreadCount: 0 },
-  { icon: iconBoxBag, text: t('Msg6'), type: 'other', msgType: 1, unreadCount: 0 },
-  { icon: iconBoxClub, text: t('Msg1'), type: 'other', msgType: 2, unreadCount: 0 },
-  { icon: iconBoxTribe, text: t('Msg2'), type: 'other', msgType: 5, unreadCount: 0 },
+  {
+    icon: iconBoxSystem,
+    iconLight: iconBoxSystemLight,
+    text: t('Msg3'),
+    type: 'system',
+    msgType: 4,
+    unreadCount: 0,
+  },
+  {
+    icon: iconBoxWallet,
+    iconLight: iconBoxWalletLight,
+    text: t('Msg4'),
+    type: 'other',
+    msgType: 3,
+    unreadCount: 0,
+  },
+  {
+    icon: iconBoxBag,
+    iconLight: iconBoxBagLight,
+    text: t('Msg6'),
+    type: 'other',
+    msgType: 1,
+    unreadCount: 0,
+  },
+  {
+    icon: iconBoxClub,
+    iconLight: iconBoxClubLight,
+    text: t('Msg1'),
+    type: 'other',
+    msgType: 2,
+    unreadCount: 0,
+  },
+  {
+    icon: iconBoxTribe,
+    iconLight: iconBoxTribeLight,
+    text: t('Msg2'),
+    type: 'other',
+    msgType: 5,
+    unreadCount: 0,
+  },
 ])
 
 const creditUnreadCount = ref(0)
@@ -123,7 +165,7 @@ onMounted(() => {
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" alt="充值" />
+          <AppSvgIcon class="icon-recharge-svg" name="plus-circle" title="充值" />
         </div>
       </div>
     </div>
@@ -133,7 +175,8 @@ onMounted(() => {
           <div class="card-line1">
             <div class="left-text">MESSAGES</div>
             <div class="right-icon">
-              <img :src="iconMessages" alt="消息" />
+              <img class="only-dark" :src="iconMessages" alt="消息" />
+              <img class="only-light" :src="iconMessagesLight" alt="消息" />
               <img v-if="showBell" class="icon-ding" :src="iconDing" alt="铃铛" />
             </div>
           </div>
@@ -158,7 +201,8 @@ onMounted(() => {
         @click="goToMessagePage(box.type, box.text, box.msgType)"
       >
         <div class="img">
-          <img :src="box.icon" alt="消息" />
+          <img class="only-dark" :src="box.icon" :alt="box.text" />
+          <img class="only-light" :src="box.iconLight" :alt="box.text" />
           <span v-if="box.unreadCount > 0" class="unread-badge">{{ box.unreadCount }}</span>
         </div>
         <div class="text">{{ box.text }}</div>
@@ -169,6 +213,8 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @use '@/styles/messages_mine.scss' as *;
+@use '@/styles/mixins' as *;
+
 .message-page {
   .card-bg-highlight {
     .card-bg-outter {
@@ -181,13 +227,19 @@ onMounted(() => {
             color: rgba(252, 246, 246, 0.51);
             font-family: 'Afacad';
             font-weight: bold;
+
+            @include theme-light {
+              color: rgba(15, 8, 8, 0.69);
+            }
           }
           .right-icon {
             width: 1.47rem;
             height: 1.47rem;
+
             img {
               width: 100%;
               height: 100%;
+              object-fit: contain;
             }
             .icon-ding {
               width: 0.48rem;
@@ -197,8 +249,10 @@ onMounted(() => {
           }
         }
         .card-line2 {
-          padding: 0 0.4rem 0 0.45rem;
+          padding: 0 0.4rem;
+
           .button {
+            flex: 0 0 3.4rem;
             border: 0;
             cursor: pointer;
           }

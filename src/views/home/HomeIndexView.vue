@@ -16,6 +16,7 @@ import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { filterVisibleMttRecords } from '@/utils/mttVisibility'
 import { showGameToast } from '@/components/Toast'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { openBridgePanel } from '@/bridge'
 
 const router = useRouter()
@@ -596,11 +597,11 @@ onBeforeUnmount(() => {
       <!-- 右侧：联系方式 -->
       <div class="club-right">
         <div class="contact-item" @click="handleOpenTelegram">
-          <img class="contact-icon" src="@/assets/icons/icon_service_1.svg" alt="Telegram" />
+          <AppSvgIcon class="contact-icon" name="telegram" title="Telegram" />
           <span class="contact-label"> @game </span>
         </div>
         <div class="contact-item" @click="handleOpenEmail">
-          <img class="contact-icon" src="@/assets/icons/icon_service_2.svg" alt="邮箱" />
+          <AppSvgIcon class="contact-icon" name="contact-user" title="邮箱" />
           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>
         <div
@@ -608,7 +609,7 @@ onBeforeUnmount(() => {
           class="contact-item"
           @click="handleOpenCustomerService"
         >
-          <img class="contact-icon" src="@/assets/icons/icon_service_3.svg" alt="IM客服" />
+          <AppSvgIcon class="contact-icon" name="customer-service" title="IM客服" />
           <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
         </div>
       </div>
@@ -775,6 +776,8 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .home-page {
   display: flex;
   flex-direction: column;
@@ -824,9 +827,11 @@ onBeforeUnmount(() => {
   gap: 0.06rem;
   padding: 0rem 0.18rem;
   background-color: #fff;
+  border: 0.302px solid rgba(0, 0, 0, 0.16);
   border-radius: 1rem;
   height: 0.5rem;
   min-height: 0.5rem;
+  box-sizing: border-box;
 }
 
 .notice-icon {
@@ -895,6 +900,7 @@ onBeforeUnmount(() => {
   min-height: 1.54rem;
   gap: 0;
   border: 0.302px solid rgba(0, 0, 0, 0.16);
+  box-sizing: border-box;
   box-shadow:
     inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
     inset -1px -1px 0px 0px rgba(255, 255, 255, 0.35);
@@ -958,6 +964,7 @@ onBeforeUnmount(() => {
   font-size: 0.28rem;
   cursor: pointer;
   white-space: nowrap;
+
 }
 
 .club-right {
@@ -976,7 +983,14 @@ onBeforeUnmount(() => {
 .contact-icon {
   width: 0.8rem;
   height: 0.8rem;
-  object-fit: contain;
+  border-radius: 50%;
+  box-sizing: border-box;
+  color: #0ca7ef;
+  background: #f7f8fa;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .contact-label {
@@ -994,7 +1008,7 @@ onBeforeUnmount(() => {
       color: #000;
     }
     .mtt-group__toggle {
-      color: rgba($color: #000000, $alpha: 0.77);
+      color: rgba(0, 0, 0, 0.77);
     }
   }
 }

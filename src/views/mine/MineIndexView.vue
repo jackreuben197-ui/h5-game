@@ -4,16 +4,23 @@ import { useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
-import iconAdd from '@/assets/icons/icon_add.svg'
 import iconChip from '@/assets/icons/icon_chips.png'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { t } from '@/i18n'
 import iconBoxClubT from '@/assets/icons/icon_club_data.png'
+import iconBoxClubTLight from '@/assets/icons/icon_club_data_light.png'
 import iconBoxFriendT from '@/assets/icons/icon_box_friend_t.png'
+import iconBoxFriendTLight from '@/assets/icons/icon_box_friend_t_light.png'
 import iconBoxDiamond from '@/assets/icons/icon_box_diamond.png'
+import iconBoxDiamondLight from '@/assets/icons/icon_box_diamond_light.png'
 import iconBoxSave from '@/assets/icons/icon_box_save.png'
+import iconBoxSaveLight from '@/assets/icons/icon_box_save_light.png'
 import iconBoxBag from '@/assets/icons/icon_box_bag.png'
+import iconBoxBagLight from '@/assets/icons/icon_box_bag_light.png'
 import iconBoxComment from '@/assets/icons/icon_box_comment.png'
+import iconBoxCommentLight from '@/assets/icons/icon_box_comment_light.png'
 import iconBoxSetting from '@/assets/icons/icon_box_setting.png'
+import iconBoxSettingLight from '@/assets/icons/icon_box_setting_light.png'
 import iconShop from '@/assets/icons/icon_shop.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 import { isChannelPackageHost } from '@/utils/channelPackage'
@@ -27,6 +34,7 @@ const isChannelPackage = isChannelPackageHost()
 interface BoxItem {
   key: string
   icon: string
+  iconLight: string
   text: string
   route: string
 }
@@ -35,30 +43,52 @@ const boxList = ref<BoxItem[]>([
   {
     key: 'club-career',
     icon: iconBoxClubT,
+    iconLight: iconBoxClubTLight,
     text: t('PageMineClubCareer'),
     route: '/mine/career/club',
   },
   {
     key: 'friends-career',
     icon: iconBoxFriendT,
+    iconLight: iconBoxFriendTLight,
     text: t('PageMineFriendTableCareer'),
     route: '/mine/career/friends',
   },
-  { key: 'my-bill', icon: iconBoxDiamond, text: t('UIMine_Bill'), route: '/mine/bill' },
+  {
+    key: 'my-bill',
+    icon: iconBoxDiamond,
+    iconLight: iconBoxDiamondLight,
+    text: t('UIMine_Bill'),
+    route: '/mine/bill',
+  },
   {
     key: 'hand-history',
     icon: iconBoxSave,
+    iconLight: iconBoxSaveLight,
     text: t('UIMine_btn_paipu'),
     route: '/mine/hand-collection',
   },
-  { key: 'bag', icon: iconBoxBag, text: t('UIMine_btn_backpack'), route: '/mine/backpack' },
+  {
+    key: 'bag',
+    icon: iconBoxBag,
+    iconLight: iconBoxBagLight,
+    text: t('UIMine_btn_backpack'),
+    route: '/mine/backpack',
+  },
   {
     key: 'message-board',
     icon: iconBoxComment,
+    iconLight: iconBoxCommentLight,
     text: t('PageMineMessageBoard'),
     route: '/mine/message-board',
   },
-  { key: 'settings', icon: iconBoxSetting, text: t('UIMine_btn_setting'), route: '/mine/settings' },
+  {
+    key: 'settings',
+    icon: iconBoxSetting,
+    iconLight: iconBoxSettingLight,
+    text: t('UIMine_btn_setting'),
+    route: '/mine/settings',
+  },
 ])
 
 function goToNextPage(path: string): void {
@@ -98,7 +128,11 @@ const displayUser = computed(() => {
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" :alt="t('UIMine_WalletAdd_EjPOTlsz')" />
+          <AppSvgIcon
+            class="icon-recharge-svg"
+            name="plus-circle"
+            :title="t('UIMine_WalletAdd_EjPOTlsz')"
+          />
         </div>
       </div>
     </div>
@@ -143,7 +177,8 @@ const displayUser = computed(() => {
     <div class="box-gallery">
       <div v-for="box in boxList" :key="box.key" class="box-item" @click="goToNextPage(box.route)">
         <div class="img">
-          <img :src="box.icon" :alt="t('UIMine_MsgSystemContent')" />
+          <img class="only-dark" :src="box.icon" :alt="box.text" />
+          <img class="only-light" :src="box.iconLight" :alt="box.text" />
         </div>
         <div class="text">{{ box.text }}</div>
       </div>
@@ -153,6 +188,7 @@ const displayUser = computed(() => {
 
 <style scoped lang="scss">
 @use '@/styles/messages_mine.scss' as *;
+@use '@/styles/mixins' as *;
 
 .mine-page {
   .card-bg-highlight {
@@ -192,6 +228,10 @@ const displayUser = computed(() => {
               line-height: 100%;
               font-weight: bold;
               font-family: var(--font-family-SF);
+
+              @include theme-light {
+                color: #000;
+              }
             }
             .idbox {
               display: flex;
@@ -206,12 +246,21 @@ const displayUser = computed(() => {
                 align-items: center;
                 padding: 0 0.25rem;
                 border-radius: 0.5rem;
+
+                @include theme-light {
+                  color: #000;
+                  background: rgba(0, 0, 0, 0.06);
+                }
               }
               .id-value {
                 font-size: 0.3rem;
                 line-height: 120%;
                 font-weight: 500;
                 font-family: var(--font-family-SF);
+
+                @include theme-light {
+                  color: #000;
+                }
               }
             }
           }
@@ -235,6 +284,10 @@ const displayUser = computed(() => {
                 line-height: 120%;
                 font-weight: 500;
                 font-family: var(--font-family-SF);
+
+                @include theme-light {
+                  color: #000;
+                }
               }
             }
           }

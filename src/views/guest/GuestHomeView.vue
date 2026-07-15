@@ -3,6 +3,7 @@ import { t } from '@/i18n'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { computed, onMounted } from 'vue'
 
 const loginModalStore = useLoginModalStore()
@@ -105,15 +106,15 @@ onMounted(() => {
 
       <div class="club-right">
         <div class="contact-item" @click="notifyNotLogin">
-          <img class="contact-icon" src="@/assets/icons/icon_service_1.svg" alt="Telegram" />
+          <AppSvgIcon class="contact-icon" name="telegram" title="Telegram" />
           <span class="contact-label"> @game </span>
         </div>
         <div class="contact-item" @click="notifyNotLogin">
-          <img class="contact-icon" src="@/assets/icons/icon_service_2.svg" alt="邮箱" />
+          <AppSvgIcon class="contact-icon" name="contact-user" title="邮箱" />
           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>
         <div class="contact-item" @click="notifyNotLogin">
-          <img class="contact-icon" src="@/assets/icons/icon_service_3.svg" alt="IM客服" />
+          <AppSvgIcon class="contact-icon" name="customer-service" title="IM客服" />
           <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
         </div>
       </div>
@@ -239,6 +240,8 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .home-page {
   display: flex;
   flex-direction: column;
@@ -305,6 +308,10 @@ onMounted(() => {
   // outline: 0.01rem solid rgba(255, 255, 255, 0.5);
   outline-offset: -0.01rem;
   backdrop-filter: blur(0.14rem);
+
+  @include theme-light {
+    color: #fff;
+  }
 }
 
 .top-bar__btn--login {
@@ -313,6 +320,10 @@ onMounted(() => {
   // outline: 0.01rem solid rgba(255, 255, 255, 0.5);
   outline-offset: -0.01rem;
   backdrop-filter: blur(0.55rem);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 .home-header {
   width: 100%;
@@ -326,11 +337,12 @@ onMounted(() => {
   align-items: center;
   gap: 0.06rem;
   padding: 0rem 0.18rem;
-  // background: rgba(0, 0, 0, 0.22);
   background-color: #fff;
+  border: 0.302px solid rgba(0, 0, 0, 0.16);
   border-radius: 1rem;
   height: 0.5rem;
   min-height: 0.5rem;
+  box-sizing: border-box;
 }
 
 .notice-icon {
@@ -382,6 +394,8 @@ onMounted(() => {
   padding: 0.1rem 0.6rem;
   min-height: 1.54rem;
   gap: 0;
+  border: 0.302px solid rgba(0, 0, 0, 0.16);
+  box-sizing: border-box;
   box-shadow:
     inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
     inset -1px -1px 0px 0px rgba(255, 255, 255, 0.35);
@@ -445,6 +459,7 @@ onMounted(() => {
   font-size: 0.28rem;
   cursor: pointer;
   white-space: nowrap;
+
 }
 
 .club-divider {
@@ -471,7 +486,14 @@ onMounted(() => {
 .contact-icon {
   width: 0.8rem;
   height: 0.8rem;
-  object-fit: contain;
+  border-radius: 50%;
+  box-sizing: border-box;
+  color: #0ca7ef;
+  background: #f7f8fa;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .contact-label {

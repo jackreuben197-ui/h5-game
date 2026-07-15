@@ -59,6 +59,7 @@ declare global {
           [key: string]: unknown
         }
         colorScheme?: 'light' | 'dark'
+        platform?: string
         ready?: () => void
         expand?: () => void
         isExpanded?: boolean

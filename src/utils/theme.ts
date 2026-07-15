@@ -9,10 +9,10 @@ import { localStore } from '@/utils/localStore'
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type ThemeName = 'light' | 'dark'
 
-// 迁移期锁定深色（与当前线上观感一致）。浅色主题页面全部迁移完成后改为 'system'，
-// 即满足「跟随手机系统明暗自动切换」的需求。
+// 默认跟随当前运行环境：Telegram Mini App 优先使用 WebApp.colorScheme，
+// 普通手机浏览器使用 prefers-color-scheme。
 // ⚠️ index.html 首帧内联脚本中的默认值需同步修改。
-export const DEFAULT_THEME_MODE: ThemeMode = 'dark'
+export const DEFAULT_THEME_MODE: ThemeMode = 'system'
 
 // 各主题的地址栏 / PWA 状态栏着色。dark 与 index.html 现有取值保持一致。
 const THEME_COLOR_META: Record<ThemeName, string> = {
@@ -25,6 +25,8 @@ const resolvedTheme = ref<ThemeName>('dark')
 
 let initialized = false
 let systemThemeQuery: MediaQueryList | null = null
+let telegramThemeBound = false
+let telegramReadyListenerBound = false
 // URL ?theme=xxx 预览覆盖：仅当次会话生效不落存储，供美术/测试对照走查浅色稿。
 let urlOverrideMode: ThemeMode | null = null
 
@@ -51,9 +53,18 @@ function systemPrefersLight(): boolean {
     : false
 }
 
+function readTelegramTheme(): ThemeName | null {
+  const colorScheme = window.Telegram?.WebApp?.colorScheme
+  return colorScheme === 'light' || colorScheme === 'dark' ? colorScheme : null
+}
+
 function resolveTheme(mode: ThemeMode): ThemeName {
   if (mode === 'system') {
-    // 深色为产品基准：系统未明确表达浅色偏好（含旧 WebView 不支持该查询）时回退深色。
+    // Telegram Mini App 以应用自身主题为准；普通浏览器回退到系统媒体查询。
+    const telegramTheme = readTelegramTheme()
+    if (telegramTheme) {
+      return telegramTheme
+    }
     return systemPrefersLight() ? 'light' : 'dark'
   }
   return mode
@@ -90,6 +101,35 @@ function bindSystemThemeListener(): void {
   }
 }
 
+function bindTelegramThemeListener(): void {
+  if (telegramThemeBound) {
+    return
+  }
+  const webApp = window.Telegram?.WebApp
+  if (!webApp || typeof webApp.onEvent !== 'function') {
+    return
+  }
+  webApp.onEvent('themeChanged', () => {
+    if ((urlOverrideMode ?? themeMode.value) === 'system') {
+      applyTheme()
+    }
+  })
+  telegramThemeBound = true
+}
+
+function bindTelegramReadyListener(): void {
+  if (telegramReadyListenerBound) {
+    return
+  }
+  window.addEventListener('h5:telegram-ready', () => {
+    bindTelegramThemeListener()
+    if ((urlOverrideMode ?? themeMode.value) === 'system') {
+      applyTheme()
+    }
+  })
+  telegramReadyListenerBound = true
+}
+
 /** 应用启动时调用（可重入）：恢复持久化的主题模式并开始监听系统主题变化。 */
 export function initTheme(): void {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
@@ -103,6 +143,8 @@ export function initTheme(): void {
   urlOverrideMode = readUrlOverride()
   themeMode.value = readStoredMode() ?? DEFAULT_THEME_MODE
   bindSystemThemeListener()
+  bindTelegramReadyListener()
+  bindTelegramThemeListener()
   applyTheme()
 }
 

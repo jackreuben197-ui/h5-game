@@ -235,8 +235,8 @@ pnpm preview
 
 ### 8.3 主题体系（深浅双主题）
 
-产品需求：现有版本定义为**深色主题**，新增一套**浅色主题**。迁移期默认深色；运行时已支持
-深色、浅色和跟随系统三种模式。
+产品需求：现有版本定义为**深色主题**，新增一套**浅色主题**。默认跟随当前手机、浏览器或
+Telegram WebView 暴露的系统明暗偏好；运行时同时支持深色、浅色和跟随系统三种模式。
 
 #### 架构总览
 
@@ -254,15 +254,18 @@ pnpm preview
 三个概念区分：
 
 - **mode（模式）**：用户的选择，`light` / `dark` / `system`，持久化。
-- **theme（生效主题）**：`light` / `dark`，`system` 按 `prefers-color-scheme` 归一后的结果。
+- **theme（生效主题）**：`light` / `dark`，`system` 按 Telegram 或浏览器环境归一后的结果。
 - `html[data-theme='light'|'dark']`：CSS 的唯一切换开关。
 
-#### 发布开关
+#### 默认模式
 
-迁移期默认锁深色，全部页面迁移完成后把默认模式改为 `system`（两处同步改）：
+默认模式为 `system`，以下两处必须保持同步，确保首帧和 Vue 运行时不会切换闪烁：
 
 1. `src/utils/theme.ts` → `DEFAULT_THEME_MODE = 'system'`
-2. `index.html` 内联脚本 → `mode = 'system'`
+2. `index.html` 内联脚本 → 无有效存储时回退 `mode = 'system'`
+
+`system` 在 Telegram Mini App 中优先使用 `WebApp.colorScheme`，并监听 `themeChanged`；普通手机浏览器
+使用 `prefers-color-scheme`。Telegram SDK 尚未加载时先按浏览器环境判断，SDK 就绪后会自动校正。
 
 #### 预览方式
 

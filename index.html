@@ -42,7 +42,7 @@
           mode = match[1]
         }
         if (mode !== 'light' && mode !== 'dark' && mode !== 'system') {
-          mode = 'dark' // DEFAULT_THEME_MODE：浅色页面迁移完成后改为 'system'
+          mode = 'system' // DEFAULT_THEME_MODE：默认跟随当前设备 / 浏览器 / WebView 环境
         }
         var theme = mode
         if (mode === 'system') {
@@ -754,6 +754,8 @@
           if (document && document.documentElement) {
             document.documentElement.setAttribute('data-tg-mini-app', '1')
           }
+          // 通知运行时 Telegram 主题信息已可用；theme.ts 会优先读取 WebApp.colorScheme。
+          window.dispatchEvent(new Event('h5:telegram-ready'))
 
           var initData = String(tg.initData || '').trim()
           if (initData) {

@@ -54,8 +54,11 @@ declare global {
     Telegram?: {
       WebApp?: {
         initData?: string
+        colorScheme?: 'light' | 'dark'
         ready?: () => void
         expand?: () => void
+        onEvent?: (eventType: string, callback: () => void) => void
+        offEvent?: (eventType: string, callback: () => void) => void
       }
     }
   }

@@ -60,7 +60,7 @@
     <script>
       ;(function () {
         var root = document.documentElement
-        var lastHeight = ''
+        var lastViewportSignature = ''
 
         function isIosStandalone() {
           var nav = window.navigator || {}
@@ -142,11 +142,30 @@
 
         function syncViewportHeight() {
           var height = getViewportHeight()
-          if (height === lastHeight) {
+          var viewportWidth = Number(window.visualViewport && window.visualViewport.width)
+            || Number(window.innerWidth)
+            || 375
+          var viewportSignature = viewportWidth + 'x' + height
+          if (viewportSignature === lastViewportSignature) {
             return
           }
-          lastHeight = height
+          lastViewportSignature = viewportSignature
           root.style.setProperty('--app-viewport-height', height)
+
+          // On desktop/tablet, retain the mobile canvas width while capping its
+          // height to the iPhone 14 Plus portrait ratio (428 × 926).
+          var heightNumber = parseFloat(height)
+          if (isFinite(heightNumber) && heightNumber > 0) {
+            var frameWidth = Math.min(viewportWidth, 480)
+            var frameHeight = viewportWidth > 480
+              ? Math.min(heightNumber, (frameWidth * 926) / 428)
+              : heightNumber
+            root.style.setProperty('--app-frame-height', Math.round(frameHeight) + 'px')
+            root.style.setProperty(
+              '--app-frame-offset-top',
+              Math.max(0, Math.round((heightNumber - frameHeight) / 2)) + 'px',
+            )
+          }
         }
 
         function syncViewportHeightLater() {
@@ -180,6 +199,10 @@
 
     <style>
       :root {
+        --app-frame-max-width: 480px;
+        --app-frame-width: min(100%, var(--app-frame-max-width));
+        --app-frame-height: var(--app-viewport-height);
+        --app-frame-offset-top: 0px;
         --app-viewport-height: 100vh;
         --app-full-height: var(--app-viewport-height);
         /* Cocos uses this as its real frame height; do not include H5 bottom bleed. */
@@ -219,7 +242,10 @@
 
       body {
         margin: 0;
-        width: 100%;
+        width: var(--app-frame-width);
+        max-width: var(--app-frame-max-width);
+        margin-left: auto;
+        margin-right: auto;
         height: 100vh;
         height: 100dvh;
         height: var(--app-full-height);
@@ -232,6 +258,24 @@
         background-repeat: no-repeat;
         background-position: center top;
         background-size: cover;
+      }
+
+      /*
+       * Keep the mobile H5/Cocos coordinate system on wide screens. A transform
+       * makes body the containing block for position:fixed pages and popups,
+       * including Vue teleports mounted directly under body.
+       */
+      @media (min-width: 481px) {
+        :root,
+        html[data-ios-standalone='1'] {
+          --app-full-height: var(--app-frame-height);
+          --app-cocos-height: var(--app-frame-height);
+        }
+
+        body {
+          transform: translateZ(0);
+          box-shadow: 0 0 32px rgba(0, 0, 0, 0.28);
+        }
       }
 
       html[data-ios-standalone='1'] body {
@@ -321,14 +365,14 @@
         line-height: 1.5;
       }
 
-      html[data-screen-orientation='landscape'] #orientation-lock-mask {
+      html[data-orientation-lock='1'] #orientation-lock-mask {
         display: flex;
       }
 
-      html[data-screen-orientation='landscape'] #GameCanvas,
-      html[data-screen-orientation='landscape'] #drawCanvas,
-      html[data-screen-orientation='landscape'] #splash,
-      html[data-screen-orientation='landscape'] #app {
+      html[data-orientation-lock='1'] #GameCanvas,
+      html[data-orientation-lock='1'] #drawCanvas,
+      html[data-orientation-lock='1'] #splash,
+      html[data-orientation-lock='1'] #app {
         visibility: hidden;
         pointer-events: none;
       }
@@ -839,17 +883,26 @@
     <script>
       ;(function () {
         function syncOrientationState() {
-          if (!window.matchMedia) {
-            return
-          }
-          var isLandscape = window.matchMedia('(orientation: landscape)').matches
+          var isLandscape = window.matchMedia
+            ? window.matchMedia('(orientation: landscape)').matches
+            : window.innerWidth > window.innerHeight
+          var isShortViewport = Math.min(window.innerWidth, window.innerHeight) <= 500
+          var hasTouchInput = Number((window.navigator || {}).maxTouchPoints) > 0
+          var shouldLock = isLandscape && isShortViewport && hasTouchInput
+
           document.documentElement.setAttribute(
             'data-screen-orientation',
             isLandscape ? 'landscape' : 'portrait',
           )
+          document.documentElement.setAttribute('data-orientation-lock', shouldLock ? '1' : '0')
         }
 
         function tryLockPortrait() {
+          var isShortViewport = Math.min(window.innerWidth, window.innerHeight) <= 500
+          var hasTouchInput = Number((window.navigator || {}).maxTouchPoints) > 0
+          if (!isShortViewport || !hasTouchInput) {
+            return
+          }
           if (!screen.orientation || typeof screen.orientation.lock !== 'function') {
             return
           }

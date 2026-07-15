@@ -103,6 +103,17 @@ textarea,
   min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
 }
 
+// index.html establishes the desktop/tablet frame before Vue starts. Keep the
+// frame centered after the global reset above has normalized body margins.
+@media (min-width: 481px) {
+  body {
+    min-height: var(--app-frame-height);
+    margin-top: var(--app-frame-offset-top, 0px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
 .page-shell {
   width: min(100%, var(--app-max-width));
   margin: 0 auto;

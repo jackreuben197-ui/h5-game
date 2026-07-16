@@ -395,7 +395,7 @@ onMounted(() => {
   top: 50%;
   height: 0.12403rem;
   border-radius: 0.61851rem;
-  background: #05e7ae;
+  background: var(--c-brand);
   transform: translateY(-50%);
 }
 
@@ -416,7 +416,7 @@ onMounted(() => {
 }
 
 .club-upgrade-progress__dot--active {
-  background: #05e7ae;
+  background: var(--c-brand);
 }
 
 .club-upgrade-progress__dot:nth-of-type(3) {

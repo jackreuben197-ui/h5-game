@@ -908,13 +908,13 @@ onBeforeUnmount(() => {
       <section class="trader-apply-card">
         <p class="apply-rules">
           1、{{ t('UIClub_Apply') }}
-          <span style="color: #05e7ae">{{ applyCostText }}</span>
+          <span style="color: var(--c-brand)">{{ applyCostText }}</span>
           {{ t('UIMine_VIP_diamond') }}，{{ t('UIClub_Text78') }}；<br />
           2、{{ t('UIClub_Apply2') }}，{{ t('UIClub_Text79') }}
-          <span style="color: #05e7ae">{{ traderExpireDayText }}</span>
+          <span style="color: var(--c-brand)">{{ traderExpireDayText }}</span>
           {{ t('UIClub_Text80') }}，{{ t('UIClub_Text81') }}；<br />
           3、{{ t('UIClub_Or') }}
-          <span style="color: #05e7ae">{{ applyCostText }}</span>
+          <span style="color: var(--c-brand)">{{ applyCostText }}</span>
           {{ t('UIClub_Apply3') }}；<br />
           4、{{ t('UIClub_Apply4') }}，{{ t('UIClub_Text82') }}，{{ t('UIClub_Text83') }}
         </p>
@@ -1284,7 +1284,7 @@ onBeforeUnmount(() => {
 
 .pay-channel.active .radio {
   border-color: rgba(249, 249, 249, 0.8);
-  background: radial-gradient(circle, rgba(5, 231, 174, 1) 46%, rgba(5, 231, 174, 0) 47%);
+  background: radial-gradient(circle, rgba(var(--c-brand-rgb), 1) 46%, rgba(var(--c-brand-rgb), 0) 47%);
 }
 
 .pay-now {
@@ -1415,7 +1415,7 @@ onBeforeUnmount(() => {
   width: 2.2672rem;
   height: 2.2672rem;
   border-radius: 0.3869rem;
-  border: 0.019rem solid #05e7ae;
+  border: 0.019rem solid var(--c-brand);
   background: #fff;
   display: flex;
   align-items: center;

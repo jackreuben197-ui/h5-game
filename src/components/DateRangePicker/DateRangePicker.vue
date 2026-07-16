@@ -380,7 +380,7 @@ function startOfDay(date: Date): Date {
   line-height: 1.2;
 
   &.active {
-    box-shadow: 0 0 0 0.02rem rgba(5, 231, 174, 0.45) inset;
+    box-shadow: 0 0 0 0.02rem rgba(var(--c-brand-rgb), 0.45) inset;
   }
 }
 
@@ -497,7 +497,7 @@ function startOfDay(date: Date): Date {
     right: 0;
     top: 0.14667rem;
     bottom: 0.14667rem;
-    background: rgba(5, 231, 174, 0.17);
+    background: rgba(var(--c-brand-rgb), 0.17);
     z-index: 1;
   }
 
@@ -520,7 +520,7 @@ function startOfDay(date: Date): Date {
     width: 0.8rem;
     height: 0.8rem;
     border-radius: 50%;
-    background: #05e7ae;
+    background: var(--c-brand);
     z-index: 1;
   }
 }

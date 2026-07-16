@@ -920,7 +920,7 @@ function applyChannelInviteContext(): void {
   transition: background 0.2s;
 
   &--filled {
-    background: rgba(5, 231, 174, 0.65);
+    background: rgba(var(--c-brand-rgb), 0.65);
   }
 }
 

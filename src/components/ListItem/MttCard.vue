@@ -425,7 +425,7 @@ function formatCentAmount(value: number): string {
 
   &--success {
     background: rgba(255, 255, 255, 0.12);
-    color: #05e7ae;
+    color: var(--c-brand);
   }
 
   &--danger {
@@ -448,7 +448,7 @@ function formatCentAmount(value: number): string {
   // white-space: nowrap;
 
   &--register {
-    background: rgba(5, 231, 174, 0.8);
+    background: rgba(var(--c-brand-rgb), 0.8);
   }
 
   &--join {

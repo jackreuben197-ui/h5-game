@@ -1516,23 +1516,23 @@ watch(
               <svg v-if="!voiceMode" width="15" height="20" viewBox="0 0 17 22" fill="none">
                 <path
                   d="M12 4.5C12 2.567 10.433 1 8.5 1C6.567 1 5 2.567 5 4.5V11C5 12.933 6.567 14.5 8.5 14.5C10.433 14.5 12 12.933 12 11V4.5Z"
-                  fill="#05E7AE"
-                  stroke="#05E7AE"
+                  fill="var(--c-brand)"
+                  stroke="var(--c-brand)"
                   stroke-width="2"
                   stroke-linejoin="round"
                 />
                 <path
                   d="M1 10.5C1 14.642 4.358 18 8.5 18M8.5 18C12.642 18 16 14.642 16 10.5M8.5 18V21"
-                  stroke="#05E7AE"
+                  stroke="var(--c-brand)"
                   stroke-width="2"
                   stroke-linecap="round"
                   stroke-linejoin="round"
                 />
               </svg>
               <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="4" width="18" height="16" rx="2" stroke="#05E7AE" stroke-width="2" />
-                <path d="M7 16H17" stroke="#05E7AE" stroke-width="2" stroke-linecap="round" />
-                <path d="M7 12H11" stroke="#05E7AE" stroke-width="2" stroke-linecap="round" />
+                <rect x="3" y="4" width="18" height="16" rx="2" stroke="var(--c-brand)" stroke-width="2" />
+                <path d="M7 16H17" stroke="var(--c-brand)" stroke-width="2" stroke-linecap="round" />
+                <path d="M7 12H11" stroke="var(--c-brand)" stroke-width="2" stroke-linecap="round" />
               </svg>
             </button>
 
@@ -1645,6 +1645,8 @@ watch(
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .support-float-wrap {
   position: fixed;
   right: -0.01rem;
@@ -1664,9 +1666,13 @@ watch(
   align-items: center;
   justify-content: center;
   gap: 0.12rem;
-  background: linear-gradient(148deg, rgba(5, 231, 174, 0.59) 7.5%, rgba(2, 122, 92, 0.59) 71.9%);
+  background: linear-gradient(148deg, rgba(var(--c-brand-rgb), 0.59) 7.5%, rgba(2, 122, 92, 0.59) 71.9%);
   color: #fff;
   box-shadow: 0 0.08rem 0.24rem rgba(0, 0, 0, 0.28);
+
+  @include theme-light {
+    background: rgba(var(--c-brand-rgb), 0.59);
+  }
 }
 
 .support-float-text {
@@ -1892,7 +1898,7 @@ watch(
 }
 
 .text-bubble--self {
-  background: rgba(5, 231, 174, 0.5);
+  background: rgba(var(--c-brand-rgb), 0.5);
   border-radius: 0.24rem 0.24rem 0.06rem 0.24rem;
 }
 
@@ -1928,7 +1934,7 @@ watch(
 }
 
 .voice-message--self {
-  background: rgba(5, 231, 174, 0.5);
+  background: rgba(var(--c-brand-rgb), 0.5);
 }
 
 .voice-message--playing .voice-message-bar {
@@ -2022,7 +2028,7 @@ watch(
 }
 
 .voice-tip--send {
-  background: rgba(5, 231, 174, 0.18);
+  background: rgba(var(--c-brand-rgb), 0.18);
 }
 
 .voice-tip--cancel {

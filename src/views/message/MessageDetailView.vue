@@ -1125,7 +1125,7 @@ onBeforeUnmount(() => {
 
 .status-approved-by-user,
 .status-approved {
-  background: rgba(5, 231, 174, 0.3);
+  background: rgba(var(--c-brand-rgb), 0.3);
 }
 
 .player-block {
@@ -1297,11 +1297,11 @@ onBeforeUnmount(() => {
 }
 
 .highlight--green {
-  color: #05e7ae;
+  color: var(--c-brand);
 }
 
 .green {
-  color: #05e7ae;
+  color: var(--c-brand);
 }
 
 .sender-btn {

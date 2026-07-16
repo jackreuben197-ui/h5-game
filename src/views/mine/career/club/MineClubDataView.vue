@@ -1545,7 +1545,7 @@ onBeforeUnmount(() => {
 }
 
 .profit-down {
-  color: #05e7ae;
+  color: var(--c-brand);
   font-weight: 600;
 }
 
@@ -1573,7 +1573,7 @@ onBeforeUnmount(() => {
   transition: background-color 0.2s ease;
 
   &.active {
-    background: rgba(5, 231, 174, 0.6);
+    background: rgba(var(--c-brand-rgb), 0.6);
     font-weight: 600;
   }
 }
@@ -1695,7 +1695,7 @@ onBeforeUnmount(() => {
   background: rgba(0, 0, 0, 0.19);
 
   &.active {
-    background: rgba(5, 231, 174, 0.6);
+    background: rgba(var(--c-brand-rgb), 0.6);
     color: #fff;
     font-weight: 600;
   }

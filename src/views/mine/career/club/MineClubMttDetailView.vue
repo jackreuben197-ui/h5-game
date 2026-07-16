@@ -473,7 +473,7 @@ onMounted(() => {
 
   .plus {
     font-size: 0.28rem;
-    color: #05e7ae;
+    color: var(--c-brand);
     transform: translateY(-0.02rem);
   }
 

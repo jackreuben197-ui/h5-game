@@ -330,8 +330,8 @@ onMounted(() => {
 }
 
 .player-item__check--on {
-  border-color: #05e7ae;
-  background: #05e7ae;
+  border-color: var(--c-brand);
+  background: var(--c-brand);
   color: #052319;
 }
 

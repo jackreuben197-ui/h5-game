@@ -116,7 +116,7 @@ const isActive = computed(() => props.modelValue === props.activeValue)
   --van-switch-width: 0.9rem;
   --van-switch-height: 0.44rem;
   --van-switch-node-size: 0.36rem;
-  --van-switch-on-background: #05e7ae;
+  --van-switch-on-background: var(--c-brand);
   --van-switch-off-background: rgba(255, 255, 255, 0.3);
 
   :deep(.van-switch__node) {

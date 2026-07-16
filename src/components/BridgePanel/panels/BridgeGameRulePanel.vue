@@ -390,7 +390,7 @@ function selectTab(key: RuleTab['key']): void {
   margin-top: 0.04rem;
   width: 1.5rem;
   height: 0.07rem;
-  background: var(--primary, #05e7ae);
+  background: var(--primary, var(--c-brand));
   border-radius: 999px;
 }
 

@@ -270,13 +270,14 @@ Telegram WebView 暴露的系统明暗偏好；运行时同时支持深色、浅
 #### 预览方式
 
 URL 加 `?theme=light`（hash 路由内也可）可强制预览浅色，仅当次会话生效、不落存储，
-供美术走查 / 测试对照用。调试面板的“当前主题”下拉框也可即时切换三种模式。
+供美术走查 / 测试对照用。调试面板“当前主题”旁的切换按钮可即时轮换三种模式。
 
 #### 变量清单（`--c-*`）
 
 | 变量 | 语义 | 深色值（= 现网观感） |
 |------|------|---------------------|
 | `--c-brand` | 当前主题主色 | `#05e7ae`（浅色为 `#69beff`） |
+| `--c-brand-rgb` | 当前主题主色 RGB 通道，供透明度组合 | `5, 231, 174`（浅色为 `105, 190, 255`） |
 | `--c-text` | 主要文字 | `#fff` |
 | `--c-text-muted` | 次要 / 弱化文字 | `rgba(255,255,255,.5)` |
 | `--c-page` | 页面底色 | `#0f0f0f` |
@@ -286,6 +287,7 @@ URL 加 `?theme=light`（hash 路由内也可）可强制预览浅色，仅当�
 | `--c-divider` | 分隔线 | `rgba(255,255,255,.1)` |
 
 > `#69beff` 直接作为浅色主题的 `--c-brand`，不要再为渐变、按压态等拆出多组近似品牌色变量。
+> 需要不同透明度时写 `rgba(var(--c-brand-rgb), alpha)`，透明度保留在页面或组件语义位置；不要再硬编码两套 RGB。
 > 页面特有的渐变、玻璃和阴影放在页面样式中，用主题 mixin 覆盖；只有多个页面真正复用时才新增全局变量。
 
 #### 页面迁移写法
@@ -344,13 +346,12 @@ const { theme, isDark, setMode } = useTheme() // theme 是响应式的，watch �
 
 #### 迁移节奏
 
-1. ✅ 基础架构：变量层 / 运行时 / 防闪烁 / 预览参数，默认锁深色，线上零观感变化。
+1. ✅ 基础架构：变量层 / 运行时 / 防闪烁 / 预览参数，默认跟随 Telegram 或浏览器系统主题。
 2. ✅ 按首版 Figma 校准浅色基础色与俱乐部列表页，并收敛为少量全局语义变量。
-3. 逐页迁移 5 个一级页面（写死值 → `--c-*`，同时消灭该页对遗留变量的引用），
-   每页迁完用 `?theme=light` 对稿验收，深色对照现网确认无回归。
-4. 二级页面、公共组件（Dialog/Toast/Tabbar/Vant 覆盖）同法推进。
-5. 全部完成后：`DEFAULT_THEME_MODE` 改 `'system'`（两处）；
-   设置页如需手动切换入口，直接调 `useTheme().setMode`。
+3. ✅ 5 个一级页面及其游客页逐页对稿迁移，深色保持现有布局与观感。
+4. 🔄 二级页面、公共组件（Dialog/Toast/Tabbar/Vant 覆盖）继续按同一规则推进。
+5. ✅ 品牌纯色和透明色统一为 `--c-brand` / `--c-brand-rgb`；页面专属渐变仍由页面局部维护，
+   浅色必须使用 `theme-light` 给出完整覆盖，不能只替换渐变的第一个色阶。
 
 ## 9. Cocos Bridge 与 WS 协作规范
 
@@ -1011,7 +1012,7 @@ const show = ref(false)
   <!-- 自定义内容 -->
   <GameToast v-model:show="show" :duration="0" :close-on-click="true">
     <div style="display:flex;align-items:center;gap:0.2rem">
-      <van-icon name="success" size="0.5rem" color="#05e7ae" />
+      <van-icon name="success" size="0.5rem" color="var(--c-brand)" />
       <span style="color:#fff;font-size:0.43rem">充值成功</span>
     </div>
   </GameToast>

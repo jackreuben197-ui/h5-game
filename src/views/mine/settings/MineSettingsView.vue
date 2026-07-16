@@ -281,7 +281,7 @@ function onLogoutCancel(): void {
   }
 
   &.on {
-    background: #05e7ae;
+    background: var(--c-brand);
 
     .dot {
       transform: translateX(0.44rem);

@@ -857,7 +857,7 @@ async function handleSubmit(): Promise<void> {
   }
 
   &--active {
-    background: rgba(5, 231, 174, 0.1);
+    background: rgba(var(--c-brand-rgb), 0.1);
   }
 }
 
@@ -879,7 +879,7 @@ async function handleSubmit(): Promise<void> {
   width: 0.28rem;
   height: 0.28rem;
   border-radius: 50%;
-  background: #05e7ae;
+  background: var(--c-brand);
 }
 
 .wf__addr-panel-empty {

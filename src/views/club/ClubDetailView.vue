@@ -1637,7 +1637,7 @@ onMounted(async () => {
 
 .switch--on {
   justify-content: flex-end;
-  background: #05e7ae;
+  background: var(--c-brand);
 }
 
 .switch:not(.switch--on) {

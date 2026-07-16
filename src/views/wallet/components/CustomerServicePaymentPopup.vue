@@ -213,7 +213,7 @@ const payPrice = computed(() =>
 }
 
 .amount-value {
-  color: var(--primary, #05E7AE);
+  color: var(--primary, var(--c-brand));
   text-align: center;
   font-feature-settings: 'liga' off, 'clig' off;
   text-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);

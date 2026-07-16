@@ -347,7 +347,7 @@ input::placeholder {
   font-size: 0.36rem;
   line-height: 1;
   font-weight: 700;
-  color: #05e7ae;
+  color: var(--c-brand);
 }
 
 .recharge-btn {
@@ -389,7 +389,7 @@ input::placeholder {
 }
 
 .cost-value {
-  color: #05e7ae;
+  color: var(--c-brand);
   font-weight: 700;
 }
 

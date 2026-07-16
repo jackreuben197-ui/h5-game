@@ -242,7 +242,7 @@ function notifyNotLogin(): void {
 
   @include theme-light {
     border-color: var(--c-brand);
-    background: rgba(105, 190, 255, 0.05);
+    background: rgba(var(--c-brand-rgb), 0.05);
     box-shadow: none;
   }
 

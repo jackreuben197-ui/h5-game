@@ -239,7 +239,7 @@ onMounted(() => {
   }
 
   &.down {
-    color: #05e7ae;
+    color: var(--c-brand);
   }
 }
 

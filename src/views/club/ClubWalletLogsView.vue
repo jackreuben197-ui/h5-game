@@ -282,7 +282,7 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
 }
 
 .metric-value--down {
-  color: #05e7ae;
+  color: var(--c-brand);
 }
 
 .metric-value--neutral {

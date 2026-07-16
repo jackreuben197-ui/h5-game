@@ -1220,7 +1220,7 @@ onMounted(() => {
   font-weight: 700;
 
   &.positive {
-    color: #05e7ae;
+    color: var(--c-brand);
   }
 }
 </style>

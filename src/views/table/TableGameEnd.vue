@@ -444,7 +444,7 @@ onMounted(() => {
 }
 
 .score--neg {
-  color: var(--primary, #05e7ae);
+  color: var(--primary, var(--c-brand));
 }
 
 .score--zero {

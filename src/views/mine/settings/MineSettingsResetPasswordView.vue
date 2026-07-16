@@ -333,7 +333,7 @@ onBeforeUnmount(() => {
 }
 
 .form-row.filled {
-  background: rgba(5, 231, 174, 0.65);
+  background: rgba(var(--c-brand-rgb), 0.65);
 }
 
 .row-icon {
@@ -533,7 +533,7 @@ onBeforeUnmount(() => {
 }
 
 .policy-check.checked {
-  background: #05e7ae;
+  background: var(--c-brand);
 }
 
 .policy-text {
@@ -544,7 +544,7 @@ onBeforeUnmount(() => {
 }
 
 .policy-link {
-  color: #05e7ae;
+  color: var(--c-brand);
   text-decoration: underline;
 }
 

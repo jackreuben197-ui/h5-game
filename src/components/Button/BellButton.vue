@@ -82,6 +82,8 @@ function onTouchEnd() {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .bell-wrapper {
   position: absolute;
   z-index: 1000;
@@ -97,11 +99,15 @@ function onTouchEnd() {
   justify-content: center;
   align-items: center;
   border-radius: 50%;
-  background: linear-gradient(128deg, rgba(5, 231, 174, 0.40) 7.55%, rgba(2, 122, 92, 0.40) 71.92%);
+  background: linear-gradient(128deg, rgba(var(--c-brand-rgb), 0.40) 7.55%, rgba(2, 122, 92, 0.40) 71.92%);
   border: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+
+  @include theme-light {
+    background: rgba(var(--c-brand-rgb), 0.4);
+  }
 }
 
 .bell__content {

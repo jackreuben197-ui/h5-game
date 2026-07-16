@@ -201,7 +201,7 @@ function onPopoverVisibilityChange(next: boolean): void {
 }
 
 .table-select__option--active {
-  background: rgba(5, 231, 174, 0.9);
+  background: rgba(var(--c-brand-rgb), 0.9);
   color: #08392d;
 }
 </style>

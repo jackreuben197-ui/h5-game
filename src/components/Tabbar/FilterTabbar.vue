@@ -148,7 +148,7 @@ export default { name: 'FilterTabbar' }
   overflow: visible;
 //   border: 0.8px solid #fff;
   box-shadow:
-  0 0 0.1rem 0.05rem rgba(5,231,174, .9) inset,
+  0 0 0.1rem 0.05rem rgba(var(--c-brand-rgb), .9) inset,
     inset  1px  1px 0px  0px rgba(255, 255, 255, 0.85),
   inset  3px  3px 0px -2px rgba(255, 255, 255, 0.30),
     inset -1px -1px 0px  0px rgba(255, 255, 255, 0.85),
@@ -159,8 +159,8 @@ export default { name: 'FilterTabbar' }
     line-height: 1rem;
     border-radius: 0.65rem;
     // border: 1px solid red;
-    background-color: rgba(5,231,174, .9);
-    box-shadow: 0 0 0.1rem 0.05rem rgba(5,231,174, .9);
+    background-color: rgba(var(--c-brand-rgb), .9);
+    box-shadow: 0 0 0.1rem 0.05rem rgba(var(--c-brand-rgb), .9);
 }
   .filter-tab__text {
     color: #fff;

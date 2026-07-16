@@ -436,7 +436,7 @@ function handleConfirm() {
         </div>
       </div>
       <div v-if="loading" class="buyin-loading">
-        <van-loading color="#05e7ae" size="0.6rem" />
+        <van-loading color="var(--c-brand)" size="0.6rem" />
       </div>
       <!-- 钱包选择（默认展开，超出 5rem 滚动） -->
       <div v-else-if="wallets.length > 0" class="wallet-section">
@@ -649,7 +649,7 @@ function handleConfirm() {
   cursor: pointer;
 
   &--selected {
-    background: rgba(5, 231, 174, 0.12);
+    background: rgba(var(--c-brand-rgb), 0.12);
   }
 }
 
@@ -676,7 +676,7 @@ function handleConfirm() {
 
 .wallet-item-check {
   font-size: 0.3rem;
-  color: #05e7ae;
+  color: var(--c-brand);
   margin-left: 0.08rem;
 }
 
@@ -748,7 +748,7 @@ function handleConfirm() {
 .cost-item-free {
   font-size: 0.33rem;
   font-weight: 800;
-  color: #05e7ae;
+  color: var(--c-brand);
 }
 
 /* ===== 记录费 ===== */

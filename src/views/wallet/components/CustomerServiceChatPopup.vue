@@ -200,8 +200,8 @@ onUnmounted(() => {
                   <div class="bubble-footer">
                     <span>{{ formatTime(Date.now() / 1000) }}</span>
                     <svg width="7.226" height="7.226" viewBox="0 0 8 8" fill="none">
-                      <ellipse cx="2.93052" cy="2.91963" rx="2.38865" ry="2.42647" stroke="#05E7AE" stroke-width="0.955458"/>
-                      <path d="M4.63672 4.65283L6.68413 6.73266" stroke="#05E7AE" stroke-width="0.955458" stroke-linecap="round"/>
+                      <ellipse cx="2.93052" cy="2.91963" rx="2.38865" ry="2.42647" stroke="var(--c-brand)" stroke-width="0.955458"/>
+                      <path d="M4.63672 4.65283L6.68413 6.73266" stroke="var(--c-brand)" stroke-width="0.955458" stroke-linecap="round"/>
                     </svg>
                     <span class="sender-name">{{ userInfoStore.userInfo?.user.nickname }}</span>
                   </div>
@@ -221,8 +221,8 @@ onUnmounted(() => {
                     <span>{{ formatTime(msg.local_time) }}</span>
                     <template v-if="msg.user_send">
                       <svg width="7.226" height="7.226" viewBox="0 0 8 8" fill="none">
-                        <ellipse cx="2.93052" cy="2.91963" rx="2.38865" ry="2.42647" stroke="#05E7AE" stroke-width="0.955458"/>
-                        <path d="M4.63672 4.65283L6.68413 6.73266" stroke="#05E7AE" stroke-width="0.955458" stroke-linecap="round"/>
+                        <ellipse cx="2.93052" cy="2.91963" rx="2.38865" ry="2.42647" stroke="var(--c-brand)" stroke-width="0.955458"/>
+                        <path d="M4.63672 4.65283L6.68413 6.73266" stroke="var(--c-brand)" stroke-width="0.955458" stroke-linecap="round"/>
                       </svg>
                       <span class="sender-name">{{ userInfoStore.userInfo?.user.nickname }}</span>
                     </template>
@@ -239,8 +239,8 @@ onUnmounted(() => {
           <div class="bottom-nav">
             <button class="nav-icon-btn mic-btn">
               <svg width="15" height="20" viewBox="0 0 17 22" fill="none">
-                <path d="M12 4.5C12 2.567 10.433 1 8.5 1C6.567 1 5 2.567 5 4.5V11C5 12.933 6.567 14.5 8.5 14.5C10.433 14.5 12 12.933 12 11V4.5Z" fill="#05E7AE" stroke="#05E7AE" stroke-width="2" stroke-linejoin="round"/>
-                <path d="M1 10.5C1 14.642 4.358 18 8.5 18M8.5 18C12.642 18 16 14.642 16 10.5M8.5 18V21" stroke="#05E7AE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 4.5C12 2.567 10.433 1 8.5 1C6.567 1 5 2.567 5 4.5V11C5 12.933 6.567 14.5 8.5 14.5C10.433 14.5 12 12.933 12 11V4.5Z" fill="var(--c-brand)" stroke="var(--c-brand)" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M1 10.5C1 14.642 4.358 18 8.5 18M8.5 18C12.642 18 16 14.642 16 10.5M8.5 18V21" stroke="var(--c-brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
 
@@ -261,8 +261,8 @@ onUnmounted(() => {
 
             <button class="plus-btn" @click="triggerUpload">
               <svg width="15.407" height="15.255" viewBox="0 0 18 18" fill="none">
-                <path d="M1.28424 8.91193H16.5397" stroke="#05E7AE" stroke-width="2.5684" stroke-linecap="round"/>
-                <path d="M8.76025 1.28418V16.5397" stroke="#05E7AE" stroke-width="2.5684" stroke-linecap="round"/>
+                <path d="M1.28424 8.91193H16.5397" stroke="var(--c-brand)" stroke-width="2.5684" stroke-linecap="round"/>
+                <path d="M8.76025 1.28418V16.5397" stroke="var(--c-brand)" stroke-width="2.5684" stroke-linecap="round"/>
               </svg>
             </button>
 
@@ -446,7 +446,7 @@ onUnmounted(() => {
   align-items: flex-start;
   gap: 6.093px;
   border-radius: 23.457px;
-  background: rgba(5, 231, 174, 0.50);
+  background: rgba(var(--c-brand-rgb), 0.50);
   color: #F9F9F9;
 }
 

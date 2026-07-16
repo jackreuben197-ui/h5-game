@@ -4,6 +4,7 @@
 // 页面特有的渐变、阴影、玻璃效果放回页面样式，并用 theme-light/theme-dark 局部覆盖。
 $theme-dark: (
   brand: #05e7ae,
+  brand-rgb: (5, 231, 174),
   text: #ffffff,
   text-muted: rgba(255, 255, 255, 0.5),
   page: #0f0f0f,
@@ -15,6 +16,7 @@ $theme-dark: (
 
 $theme-light: (
   brand: #69beff,
+  brand-rgb: (105, 190, 255),
   text: #222222,
   text-muted: rgba(34, 34, 34, 0.55),
   page: #f3f4f6,

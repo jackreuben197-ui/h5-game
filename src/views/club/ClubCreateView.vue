@@ -369,7 +369,7 @@ textarea::placeholder {
 }
 
 .cost-current {
-  color: #05e7ae;
+  color: var(--c-brand);
   font-weight: 700;
 }
 

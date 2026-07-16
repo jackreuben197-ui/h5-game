@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import bannerBgUrl from '@/assets/images/wallet/banner_bg.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import TagPill from '@/components/wallet/TagPill.vue'
@@ -11,6 +10,7 @@ import { postUserGoldChangeLogApi } from '@/api/user'
 import type { UserGoldChangeLogRecord } from '@/api/models/user'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
+import { resolveBillOpCodeText } from '@/utils/transText'
 
 const userInfoStore = useUserInfoStore()
 const router = useRouter()
@@ -34,6 +34,21 @@ function formatTime(raw?: string): string {
   return raw.replace('T', ' ').slice(11, 16)
 }
 
+function formatOpCode(record: UserGoldChangeLogRecord): string {
+  return (
+    resolveBillOpCodeText(
+      {
+        opCode: record.op_code,
+        goldType: record.gold_type,
+        roomName: record.name,
+      },
+      1,
+    ) ||
+    String(record.op_code ?? '').trim() ||
+    '-'
+  )
+}
+
 function goGiftUc(): void {
   void router.push('/wallet/gift-uc')
 }
@@ -45,7 +60,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="details-page" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
+  <div class="details-page">
     <HeaderBack title="明细" extra-padding />
 
     <div class="details-content">
@@ -84,7 +99,7 @@ onMounted(async () => {
 
       <div class="transactions-list">
         <div v-for="(item, idx) in logs" :key="idx" class="transaction-card">
-          <div class="card__bg-blur" :style="{ backgroundImage: `url(${sharpBgUrl})` }"></div>
+          <div class="card__bg-blur"></div>
           <div class="transaction-card__top">
             <div class="transaction-card__left">
               <div :class="['icon-circle', (item.gold_change ?? 0) >= 0 ? 'in' : 'out']">
@@ -129,7 +144,7 @@ onMounted(async () => {
                 </svg>
               </div>
               <div class="info">
-                <div class="category-badge">{{ item.op_code ?? '-' }}</div>
+                <div class="category-badge">{{ formatOpCode(item) }}</div>
                 <div class="title-row">
                   <span class="title">{{ item.name ?? '-' }}</span>
                   <div v-if="item.src_random_id" class="id-row">
@@ -157,7 +172,7 @@ onMounted(async () => {
               >
                 <path
                   d="M10 0C15.523 0 20 4.477 20 10C20 15.523 15.523 20 10 20C4.477 20 0 15.523 0 10C0 4.477 4.477 0 10 0ZM10 2C7.87827 2 5.84344 2.84285 4.34315 4.34315C2.84285 5.84344 2 7.87827 2 10C2 12.1217 2.84285 14.1566 4.34315 15.6569C5.84344 17.1571 7.87827 18 10 18C12.1217 18 14.1566 17.1571 15.6569 15.6569C17.1571 14.1566 18 12.1217 18 10C18 7.87827 17.1571 5.84344 15.6569 4.34315C14.1566 2.84285 12.1217 2 10 2ZM10 4C10.2449 4.00003 10.4813 4.08996 10.6644 4.25272C10.8474 4.41547 10.9643 4.63975 10.993 4.883L11 5V9.586L13.707 12.293C13.8863 12.473 13.9905 12.7144 13.9982 12.9684C14.006 13.2223 13.9168 13.4697 13.7488 13.6603C13.5807 13.8508 13.3464 13.9703 13.0935 13.9944C12.8406 14.0185 12.588 13.9454 12.387 13.79L12.293 13.707L9.293 10.707C9.13758 10.5514 9.03776 10.349 9.009 10.131L9 10V5C9 4.73478 9.10536 4.48043 9.29289 4.29289C9.48043 4.10536 9.73478 4 10 4Z"
-                  fill="white"
+                  fill="currentColor"
                 />
               </svg>
               <span class="time-text">{{ formatTime(item.create_time) }}</span>
@@ -174,6 +189,8 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .details-page {
   position: relative;
   display: flex;
@@ -187,7 +204,13 @@ onMounted(async () => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  color: #fff;
+  color: var(--c-text);
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+
+  @include theme-light {
+    background-color: var(--c-page);
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .details-page::before {
@@ -199,6 +222,12 @@ onMounted(async () => {
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   background: rgba(0, 0, 0, 0.15);
+
+  @include theme-light {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .details-page > * {
@@ -239,6 +268,11 @@ onMounted(async () => {
   -webkit-backdrop-filter: blur(16.5px);
   box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
 
+  @include theme-light {
+    background: #fff;
+    box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.12);
+  }
+
   &::after {
     content: '';
     position: absolute;
@@ -247,6 +281,10 @@ onMounted(async () => {
     background: rgba(0, 0, 0, 0.28);
     pointer-events: none;
     z-index: 1;
+
+    @include theme-light {
+      background: #fff;
+    }
   }
 
   &::before {
@@ -267,6 +305,10 @@ onMounted(async () => {
     mask-composite: exclude;
     pointer-events: none;
     z-index: 3;
+
+    @include theme-light {
+      background: linear-gradient(139deg, rgba(0, 0, 0, 0.12) 0%, transparent 100%);
+    }
   }
 }
 
@@ -283,6 +325,10 @@ onMounted(async () => {
   background-repeat: no-repeat;
   z-index: 0;
   opacity: 0.65;
+
+  @include theme-light {
+    opacity: 0;
+  }
 }
 
 .user-card-inner {
@@ -309,6 +355,11 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   color: #fff;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.16);
+    color: var(--c-text);
+  }
 }
 
 .gift-entry__icon-wrap {
@@ -367,7 +418,7 @@ onMounted(async () => {
 }
 
 .user-name {
-  color: #fff;
+  color: var(--c-text);
   font-family: 'SF Pro', sans-serif;
   font-size: 22.394px;
   font-weight: 700;
@@ -384,7 +435,7 @@ onMounted(async () => {
   font-family: var(--wallet-font-num);
   font-weight: 400;
   font-size: 0.23rem;
-  color: #fff;
+  color: var(--c-text);
 }
 
 .balance-section {
@@ -396,7 +447,7 @@ onMounted(async () => {
 }
 
 .balance-label {
-  color: #f9f9f9;
+  color: var(--c-text);
   font-family: 'SF Pro', sans-serif;
   font-size: 11.33px;
   font-weight: 400;
@@ -404,7 +455,7 @@ onMounted(async () => {
 }
 
 .balance-value {
-  color: #f9f9f9;
+  color: var(--c-text);
   font-family: 'SF Pro', sans-serif;
   font-size: 16.33px;
   font-weight: 590;
@@ -437,6 +488,11 @@ onMounted(async () => {
   filter: blur(10px);
   pointer-events: none;
   z-index: 0;
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+
+  @include theme-light {
+    display: none;
+  }
 }
 
 .transaction-card {
@@ -453,6 +509,11 @@ onMounted(async () => {
   box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
   overflow: hidden;
 
+  @include theme-light {
+    background: #fff;
+    box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.12);
+  }
+
   &::after {
     content: '';
     position: absolute;
@@ -461,6 +522,10 @@ onMounted(async () => {
     background: rgba(0, 0, 0, 0.28);
     pointer-events: none;
     z-index: 1;
+
+    @include theme-light {
+      background: #fff;
+    }
   }
 
   &::before {
@@ -476,6 +541,10 @@ onMounted(async () => {
     mask-composite: exclude;
     pointer-events: none;
     z-index: 3;
+
+    @include theme-light {
+      background: linear-gradient(139deg, rgba(0, 0, 0, 0.12) 0%, transparent 100%);
+    }
   }
 }
 
@@ -523,12 +592,16 @@ onMounted(async () => {
   align-items: center;
   border-radius: 0.8267rem;
   background: rgba(255, 255, 255, 0.21);
-  color: #fff;
+  color: var(--c-text);
   font-family: 'HONOR Sans CN', sans-serif;
   font-size: 0.2997rem;
   font-weight: 500;
   line-height: 140%;
   width: fit-content;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.16);
+  }
 }
 
 .title-row {
@@ -537,7 +610,7 @@ onMounted(async () => {
 }
 
 .title {
-  color: #fff;
+  color: var(--c-text);
   font-family: 'HONOR Sans CN', sans-serif;
   font-size: 0.3264rem;
   font-weight: 600;
@@ -557,15 +630,19 @@ onMounted(async () => {
   align-items: center;
   border-radius: 0.1121rem;
   background: rgba(255, 255, 255, 0.4);
-  color: #fff;
+  color: var(--c-text);
   font-family: 'SF Pro', sans-serif;
   font-size: 0.2155rem;
   font-weight: 590;
   width: fit-content;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.22);
+  }
 }
 
 .id-number {
-  color: #fff;
+  color: var(--c-text);
   font-family: 'SF Pro', sans-serif;
   font-size: 0.256rem;
   font-weight: 590;
@@ -588,7 +665,7 @@ onMounted(async () => {
 .divider {
   width: 7.5906rem;
   height: 0.5px;
-  border-bottom: 0.5px dashed rgba(255, 255, 255, 0.5);
+  border-bottom: 0.5px dashed var(--c-divider);
   align-self: center;
   margin: 0.2rem 0;
 }
@@ -604,10 +681,14 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 0.16rem;
+
+  svg {
+    color: var(--c-text);
+  }
 }
 
 .time-text {
-  color: #fff;
+  color: var(--c-text);
   font-family: 'HONOR Sans CN', sans-serif;
   font-size: 0.32rem;
   font-weight: 400;
@@ -622,7 +703,7 @@ onMounted(async () => {
 }
 
 .balance-text {
-  color: #f9f9f9;
+  color: var(--c-text);
   font-family: 'SF Pro', sans-serif;
   font-size: 0.3562rem;
   font-weight: 590;

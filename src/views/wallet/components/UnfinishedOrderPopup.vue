@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import dayjs from 'dayjs'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 
@@ -36,12 +35,8 @@ function onContinue(): void {
 
 <template>
   <Teleport to="body">
-    <div
-      class="overlay"
-      :style="{ backgroundImage: `url(${sharpBgUrl})` }"
-      @click.self="onCancel"
-    >
-      <div class="card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
+    <div class="overlay" @click.self="onCancel">
+      <div class="card">
         <div class="card__inner">
           <!-- Header -->
           <div class="card__header">
@@ -81,6 +76,8 @@ function onContinue(): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -92,6 +89,12 @@ function onContinue(): void {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+
+  @include theme-light {
+    background-color: var(--c-page);
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .overlay::before {
@@ -102,7 +105,7 @@ function onContinue(): void {
   pointer-events: none;
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
-  background: rgba(12, 12, 12, 0.60);
+  background: var(--c-overlay);
 }
 
 .card {
@@ -122,6 +125,15 @@ function onContinue(): void {
     0 0 8.6px #000 inset,
     2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
   overflow: hidden;
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+  background-size: cover;
+  background-position: center;
+
+  @include theme-light {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 0.12rem 0.36rem rgba(0, 0, 0, 0.14);
+  }
 }
 
 .card::after {
@@ -138,6 +150,13 @@ function onContinue(): void {
   -webkit-backdrop-filter: blur(7.58px);
   pointer-events: none;
   z-index: 1;
+
+  @include theme-light {
+    background: #fff;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .card__inner {
@@ -154,7 +173,7 @@ function onContinue(): void {
 }
 
 .card__title {
-  color: rgba(255, 255, 255, 1);
+  color: var(--c-text);
   font-family: var(--wallet-font-cn, "HONOR Sans CN");
   font-size: 19px;
   font-weight: 500;
@@ -163,7 +182,7 @@ function onContinue(): void {
 }
 
 .card__notice {
-  color: rgba(255, 255, 255, 1);
+  color: var(--c-text);
   text-align: center;
   font-family: var(--wallet-font-cn, "HONOR Sans CN");
   font-size: 14px;
@@ -179,6 +198,10 @@ function onContinue(): void {
   flex-direction: column;
   gap: 12px;
   margin-bottom: 22px;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+  }
 }
 
 .info-row {
@@ -188,13 +211,13 @@ function onContinue(): void {
 }
 
 .label {
-  color: rgba(255, 255, 255, 1);
+  color: var(--c-text);
   font-family: var(--wallet-font-cn, "HONOR Sans CN");
   font-size: 14px;
 }
 
 .value {
-  color: rgba(255, 255, 255, 1);
+  color: var(--c-text);
   font-family: var(--wallet-font-num, "SF Pro");
   font-size: 14px;
   font-weight: 600;
@@ -210,6 +233,10 @@ function onContinue(): void {
   background: rgba(44, 45, 45, 0.31);
   background-blend-mode: color-burn;
   font-size: 13px;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.18);
+  }
 }
 
 .amount-text {
@@ -251,6 +278,11 @@ function onContinue(): void {
   background: rgba(0, 0, 0, 0.30);
   backdrop-filter: blur(0.0527px);
   color: #fff;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.16);
+    color: var(--c-text);
+  }
 }
 
 .btn--continue {
@@ -258,6 +290,10 @@ function onContinue(): void {
   background: linear-gradient(128deg, #05E7AE 7.55%, #027A5C 71.92%);
   backdrop-filter: blur(0.1584px);
   color: #fff;
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .btn--continue::before {

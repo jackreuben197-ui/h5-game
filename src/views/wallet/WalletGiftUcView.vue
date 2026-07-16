@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { showFailToast, showSuccessToast } from 'vant'
-import mainBgUrl from '@/assets/images/main_bg.webp'
 import iconChips from '@/assets/icons/wallet/ic_coins.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
@@ -131,7 +130,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="gift-page" :style="{ backgroundImage: `url(${mainBgUrl})` }">
+  <div class="gift-page">
     <HeaderBack title="赠送" extra-padding />
 
     <div class="gift-content">
@@ -191,6 +190,8 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .gift-page {
   min-height: 100vh;
   min-height: 100dvh;
@@ -199,7 +200,13 @@ onMounted(() => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  color: #fff;
+  color: var(--c-text);
+  background-image: url('@/assets/images/main_bg.webp');
+
+  @include theme-light {
+    background-color: var(--c-page);
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .gift-content {
@@ -214,7 +221,7 @@ onMounted(() => {
   font-family: 'HONOR Sans CN', sans-serif;
   font-size: 0.36rem;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.94);
+  color: var(--c-text);
 }
 
 .amount-input {
@@ -227,7 +234,12 @@ onMounted(() => {
   align-items: center;
   gap: 0.24rem;
   background: rgba(0, 0, 0, 0.2);
-  color: #fff;
+  color: var(--c-text);
+
+  @include theme-light {
+    background: #fff;
+    box-shadow: 0 0.08rem 0.24rem rgba(0, 0, 0, 0.08);
+  }
 }
 
 .amount-input__icon {
@@ -262,7 +274,7 @@ onMounted(() => {
   text-align: center;
   font-family: 'HONOR Sans CN', sans-serif;
   font-size: 0.32rem;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--c-text-muted);
 }
 
 .player-item {
@@ -275,7 +287,11 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #fff;
+  color: var(--c-text);
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .player-item__main {
@@ -311,7 +327,7 @@ onMounted(() => {
   margin: 0;
   font-family: var(--wallet-font-num);
   font-size: 0.25rem;
-  color: rgba(255, 255, 255, 0.74);
+  color: var(--c-text-muted);
   line-height: 1;
 }
 
@@ -319,7 +335,7 @@ onMounted(() => {
   width: 0.48rem;
   height: 0.48rem;
   border-radius: 50%;
-  border: 0.03rem solid rgba(255, 255, 255, 0.55);
+  border: 0.03rem solid var(--c-border);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -333,6 +349,10 @@ onMounted(() => {
   border-color: var(--c-brand);
   background: var(--c-brand);
   color: #052319;
+
+  @include theme-light {
+    color: #fff;
+  }
 }
 
 .submit-btn {
@@ -346,6 +366,10 @@ onMounted(() => {
   font-weight: 500;
   color: #fff;
   background: linear-gradient(120deg, #05e7ae 0%, #029d75 100%);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .submit-btn:disabled {

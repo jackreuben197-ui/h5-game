@@ -69,6 +69,8 @@ function onInput(value: string | number): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .table-stepper-row {
   display: flex;
   align-items: center;
@@ -88,6 +90,10 @@ function onInput(value: string | number): void {
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 400;
   color: #fff;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .table-stepper__field-wrap {
@@ -99,6 +105,10 @@ function onInput(value: string | number): void {
   border-radius: 1.55rem;
   background: rgba(255, 255, 255, 0.18);
   background-blend-mode: soft-light;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.18);
+  }
 
   &--disabled {
     opacity: 0.5;
@@ -124,10 +134,18 @@ function onInput(value: string | number): void {
     font-weight: 400;
     line-height: 0.76rem;
     text-align: center;
+
+    @include theme-light {
+      color: var(--c-text);
+    }
   }
 
   :deep(.van-stepper__input::placeholder) {
     color: rgba(255, 255, 255, 0.45);
+
+    @include theme-light {
+      color: var(--c-text-muted);
+    }
   }
 
   :deep(.van-stepper__minus),
@@ -144,6 +162,12 @@ function onInput(value: string | number): void {
     );
     box-shadow: 2.851px 2.534px 5.733px 0 rgba(255, 255, 255, 0.22) inset;
     color: #fff;
+
+    @include theme-light {
+      background: linear-gradient(180deg, #fff 0%, #e2e2e2 100%);
+      box-shadow: 2.851px 2.534px 5.733px rgba(255, 255, 255, 0.62) inset;
+      color: #000;
+    }
   }
 
   :deep(.van-stepper__minus::before),
@@ -174,11 +198,20 @@ function onInput(value: string | number): void {
       rgba(171, 171, 171, 0.16) 100%
     );
     color: rgba(255, 255, 255, 0.7);
+
+    @include theme-light {
+      background: rgba(134, 134, 134, 0.12);
+      color: rgba(0, 0, 0, 0.45);
+    }
   }
 
   :deep(.van-stepper--round .van-stepper__input:disabled) {
     background: transparent;
     -webkit-text-fill-color: rgba(255, 255, 255, 0.7);
+
+    @include theme-light {
+      -webkit-text-fill-color: rgba(0, 0, 0, 0.45);
+    }
   }
 }
 </style>

@@ -76,6 +76,8 @@ const bannerBg = `url(${bannerBgUrl})`
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .usercard {
   position: relative;
   overflow: hidden;
@@ -96,6 +98,11 @@ const bannerBg = `url(${bannerBgUrl})`
 .usercard--compact {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0.8rem;
+
+  @include theme-light {
+    background: #fff;
+    box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.12);
+  }
 }
 
 .usercard__head {
@@ -139,6 +146,10 @@ const bannerBg = `url(${bannerBgUrl})`
   color: #fff;
   line-height: 1.05;
   white-space: pre-line;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .usercard--expanded .usercard__name {
@@ -156,6 +167,10 @@ const bannerBg = `url(${bannerBgUrl})`
   font-weight: 400;
   font-size: 0.23rem;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .usercard--expanded .usercard__id-value {

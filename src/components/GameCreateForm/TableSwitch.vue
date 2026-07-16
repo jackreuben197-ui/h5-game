@@ -48,7 +48,6 @@ const getIcon = (name: string) => {
         :disabled="disabled"
         :active-value="activeValue"
         :inactive-value="inactiveValue"
-        inactive-color="rgba(255, 255, 255, 0.17)"
         class="table-switch__switch"
         @update:model-value="onChange"
       />
@@ -58,6 +57,8 @@ const getIcon = (name: string) => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .table-switch-root {
   width: 100%;
 }
@@ -83,6 +84,10 @@ const getIcon = (name: string) => {
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 400;
   color: #fff;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .table-switch__switch {
@@ -92,6 +97,10 @@ const getIcon = (name: string) => {
   --van-switch-node-size: 0.52rem;
   --van-switch-on-background: var(--c-brand);
   --van-switch-off-background: rgba(255, 255, 255, 0.3);
+
+  @include theme-light {
+    --van-switch-off-background: rgba(134, 134, 134, 0.34);
+  }
 
   :deep(.van-switch__node) {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -103,5 +112,9 @@ const getIcon = (name: string) => {
 }
 .table-switch__tip2 {
   color: #fff;
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 </style>

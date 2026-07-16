@@ -29,14 +29,22 @@ function handleClick(event: MouseEvent): void {
     </span>
     <img
       v-if="props.icon"
-      class="action-icon"
+      class="action-icon action-icon--dark"
       :src="props.icon"
       :alt="props.iconAlt || 'icon'"
     />
+    <span
+      v-if="props.icon"
+      class="action-icon action-icon--light"
+      :style="{ '--action-icon-url': `url(${props.icon})` }"
+      aria-hidden="true"
+    ></span>
   </button>
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .action-btn {
   width: 1.5644rem;
   height: 0.5856rem;
@@ -66,6 +74,13 @@ function handleClick(event: MouseEvent): void {
   inset -3px  3px 0px -2px rgba(200, 157, 149, 1),
   /* 整体内阴影 */
   inset  0    0   2px      rgba(0, 0, 0, 0.80);
+
+  @include theme-light {
+    color: #000;
+    background: #fff;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
 }
 
 .action-btn--with-icon {
@@ -88,6 +103,24 @@ function handleClick(event: MouseEvent): void {
 .action-icon {
   width: 0.399rem;
   height: 0.366rem;
+  flex-shrink: 0;
   object-fit: contain;
+}
+
+.action-icon--light {
+  display: none;
+
+  @include theme-light {
+    display: block;
+    background: var(--c-brand);
+    -webkit-mask: var(--action-icon-url) center / contain no-repeat;
+    mask: var(--action-icon-url) center / contain no-repeat;
+  }
+}
+
+.action-icon--dark {
+  @include theme-light {
+    display: none;
+  }
 }
 </style>

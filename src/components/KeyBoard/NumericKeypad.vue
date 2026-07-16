@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
-import keypadBgUrl from '@/assets/images/wallet/keyboard_numbers_bg.svg'
-import mainBgUrl from '@/assets/images/main_bg.webp'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import { t } from '@/i18n'
 
@@ -50,12 +48,6 @@ const emit = defineEmits<{
 }>()
 
 const value = ref('')
-const keyBgStyle = {
-  backgroundImage: `url(${keypadBgUrl})`,
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'center',
-  backgroundSize: '100% 100%',
-}
 const digits: readonly string[] = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
 const getMaxLength = (): number => {
   if (props.maxLength) return props.maxLength
@@ -176,13 +168,18 @@ function confirm(): void {
       <div
         v-if="open"
         :class="['kp', { 'kp--plain': !showMask }]"
-        :style="showMask ? { backgroundImage: `url(${mainBgUrl})` } : undefined"
         @click.self="cancel"
         @dblclick.prevent
       >
-        <div v-if="showMask" class="kp__dim" @click="cancel"></div>
+        <div v-if="showMask || showBackground" class="kp__dim" @click="cancel"></div>
         <div
-          :class="['kp__sheet', { 'kp__sheet--plain': !showMask && showBackground }]"
+          :class="[
+            'kp__sheet',
+            {
+              'kp__sheet--plain': !showMask && showBackground,
+              'kp__sheet--glass': !showBackground,
+            },
+          ]"
           @dblclick.prevent
         >
           <div v-if="showInputArea" class="kp__header">
@@ -203,7 +200,6 @@ function confirm(): void {
               :key="n"
               type="button"
               class="kp__key"
-              :style="keyBgStyle"
               @click="press(n)"
               @dblclick.prevent
             >
@@ -217,15 +213,7 @@ function confirm(): void {
             >
               {{ props.allowDecimal ? '.' : 'C' }}
             </button>
-            <button
-              type="button"
-              class="kp__key"
-              :style="keyBgStyle"
-              @click="press('0')"
-              @dblclick.prevent
-            >
-              0
-            </button>
+            <button type="button" class="kp__key" @click="press('0')" @dblclick.prevent>0</button>
             <button
               type="button"
               class="kp__key kp__key--accent"
@@ -249,6 +237,8 @@ function confirm(): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .kp {
   position: fixed;
   inset: 0;
@@ -259,15 +249,25 @@ function confirm(): void {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-image: url('@/assets/images/main_bg.webp');
   touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+
+  @include theme-light {
+    background-color: var(--c-page);
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .kp--plain {
   background-image: none !important;
   background-color: transparent;
+
+  @include theme-light {
+    background-color: transparent;
+  }
 }
 
 .kp__dim {
@@ -282,7 +282,7 @@ function confirm(): void {
   z-index: 1;
   width: 100%;
   max-width: 430px;
-  background-color: rgba(0, 0, 0, 0.34);
+  background-color: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(50px);
   border: 0.96px solid rgba(242, 244, 244, 0.4);
   border-bottom: none;
@@ -298,11 +298,15 @@ function confirm(): void {
     2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
   overflow: hidden;
   touch-action: manipulation;
+
+  @include theme-light {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: none;
+  }
 }
 
 .kp__sheet--plain {
-  background-color: #15171d;
-  border-color: #15171d;
   box-shadow: none;
 }
 
@@ -314,18 +318,21 @@ function confirm(): void {
   border-radius: inherit;
   backdrop-filter: blur(7.6px);
   -webkit-backdrop-filter: blur(7.6px);
-  background-image: linear-gradient(
-    106.9deg,
-    rgba(142, 142, 142, 0.3) 3%,
-    rgba(103, 103, 103, 0.4) 44%,
-    rgba(73, 73, 73, 0.5) 90%
-  );
+  background: rgba(0, 0, 0, 0.2);
   mix-blend-mode: hard-light;
   z-index: 0;
+
+  @include theme-light {
+    background: rgba(255, 255, 255, 0.2);
+    mix-blend-mode: hard-light;
+  }
 }
 
-.kp__sheet--plain::before {
-  display: none;
+// showBackground=false 时保留原页面作为键盘背景，不强制铺纯白面板。
+.kp__sheet--glass {
+  @include theme-light {
+    box-shadow: none;
+  }
 }
 
 .kp__sheet > * {
@@ -344,7 +351,7 @@ function confirm(): void {
   font-family: var(--wallet-font-cn);
   font-weight: 400;
   font-size: 0.355rem;
-  color: #f9f9f9;
+  color: var(--c-text);
   line-height: 1.2;
 }
 
@@ -358,6 +365,10 @@ function confirm(): void {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+  }
 }
 
 .kp__placeholder,
@@ -369,17 +380,20 @@ function confirm(): void {
 }
 
 .kp__placeholder {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--c-text-muted);
 }
 
 .kp__value {
-  color: #fff;
+  color: var(--c-text);
 }
 
 .kp__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.22rem;
+  width: calc(100% - 0.64rem);
+  align-self: center;
+  column-gap: 0.153rem;
+  row-gap: 0.205rem;
   touch-action: manipulation;
 }
 
@@ -390,23 +404,41 @@ function confirm(): void {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: transparent;
+  background-image: url('@/assets/images/wallet/keyboard_numbers_bg.svg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
   border: none;
   border-radius: 0.38rem;
   font-family: var(--wallet-font-num);
   font-weight: 500;
   font-size: 0.61rem;
-  color: #fff;
+  color: var(--c-text);
   cursor: pointer;
   touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
+
+  @include theme-light {
+    background-color: rgba(0, 0, 0, 0.19);
+    background-image: none;
+    border: 0.71px solid rgba(255, 255, 255, 0.5);
+    color: #fff;
+  }
 }
 
 .kp__key--accent {
-  background: rgba(4, 209, 157, 0.24);
+  background: rgba(var(--c-brand-rgb), 0.24);
+  background-image: none;
   border: none;
   border-radius: 1.35rem;
+
+  @include theme-light {
+    background: rgba(var(--c-brand-rgb), 0.49);
+    border: none;
+    color: #fff;
+  }
 }
 
 .kp__icon {
@@ -436,6 +468,11 @@ function confirm(): void {
   touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.16);
+    color: var(--c-text);
+  }
 }
 
 .kp__confirm {

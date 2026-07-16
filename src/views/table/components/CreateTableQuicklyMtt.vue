@@ -9,6 +9,7 @@ import {
 } from '@/api/cmsext'
 import { GameDialog } from '@/components/Dialog'
 import { showGameToast } from '@/components/Toast'
+import { useTheme } from '@/composables/useTheme'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconDelete from '@/assets/icons/icon_delete.svg'
 import iconEdit from '@/assets/icons/icon_edit.svg'
@@ -25,6 +26,7 @@ const emit = defineEmits<{
 const router = useRouter()
 const route = useRoute()
 const isSubmitting = ref(false)
+const { isDark } = useTheme()
 
 function toNumber(value: unknown, fallback = 0): number {
   const n = Number(value)
@@ -214,6 +216,23 @@ function getGameTypeColor(type: number): string {
   }
 }
 
+function getTemplateCardStyle(type: number): Record<string, string> {
+  if (isDark.value) {
+    return { backgroundImage: `url(${getGameTypeBg(type)})` }
+  }
+
+  const lightColors: Record<number, string> = {
+    1: 'rgba(5, 92, 231, 0.6)',
+    2: 'rgba(0, 176, 126, 0.6)',
+    3: 'rgba(171, 5, 231, 0.6)',
+  }
+
+  return {
+    backgroundImage: 'none',
+    backgroundColor: lightColors[type] ?? lightColors[1],
+  }
+}
+
 async function onCreateFromTemplate(tpl: TemplateItem) {
   onSelectTemplate(tpl)
   if (isSubmitting.value) return
@@ -281,7 +300,7 @@ async function onDeleteConfirm() {
         v-for="item in templates"
         :key="item.id"
         :class="['template-card', { 'template-card--active': activeTemplateId === item.id }]"
-        :style="{ backgroundImage: `url(${getGameTypeBg(item.game_play_type ?? 1)})` }"
+        :style="getTemplateCardStyle(item.game_play_type ?? 1)"
         @click="onSelectTemplate(item)"
       >
         <div class="template-card__left">
@@ -334,6 +353,8 @@ async function onDeleteConfirm() {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 /* 模板列表 */
 .template-list {
   min-height: 0;
@@ -357,6 +378,10 @@ async function onDeleteConfirm() {
   justify-content: center;
   font-size: 0.3rem;
   color: rgba(255, 255, 255, 0.7);
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .template-card {
@@ -375,6 +400,16 @@ async function onDeleteConfirm() {
   padding: 0 0.4rem 0 0.25rem;
   // overflow: hidden;
   border: 0.02rem solid transparent;
+
+  @include theme-light {
+    background-image: none;
+    border-color: #fff;
+    backdrop-filter: blur(4.117px);
+    -webkit-backdrop-filter: blur(4.117px);
+    box-shadow:
+      inset 0 0 0.03rem rgba(255, 255, 255, 0.5),
+      inset 0.04rem 0.04rem 0.12rem rgba(255, 255, 255, 0.32);
+  }
 }
 
 .template-card--active {

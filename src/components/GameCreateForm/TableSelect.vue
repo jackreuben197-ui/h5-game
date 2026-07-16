@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import FieldTip from './FieldTip.vue'
-import icDropdown from '@/assets/icons/icon_dropdown.svg'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
+import { useTheme } from '@/composables/useTheme'
 
 interface Option {
   text: string
@@ -27,6 +28,7 @@ const emit = defineEmits<{
 }>()
 
 const expanded = ref(false)
+const { isDark } = useTheme()
 
 const displayText = computed(() => {
   const opt = props.options.find((o) => o.value === props.modelValue)
@@ -58,18 +60,17 @@ function onPopoverVisibilityChange(next: boolean): void {
       class="table-select__popover"
       :show="expanded"
       placement="bottom-end"
-      theme="dark"
+      :theme="isDark ? 'dark' : 'light'"
       :show-arrow="false"
       @update:show="onPopoverVisibilityChange"
     >
       <template #reference>
         <div :class="['table-select__field', { 'table-select__field--disabled': disabled }]">
           <span class="table-select__value">{{ displayText }}</span>
-          <img
-            :src="icDropdown"
+          <AppSvgIcon
+            name="chevron-down"
             class="table-select__arrow"
             :class="{ 'table-select__arrow--up': expanded }"
-            alt=""
           />
         </div>
       </template>
@@ -90,6 +91,8 @@ function onPopoverVisibilityChange(next: boolean): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .table-select-row {
   display: flex;
   align-items: center;
@@ -110,6 +113,10 @@ function onPopoverVisibilityChange(next: boolean): void {
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 400;
   color: #fff;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .table-select__field {
@@ -125,6 +132,10 @@ function onPopoverVisibilityChange(next: boolean): void {
   gap: 0.11rem;
   cursor: pointer;
 
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.18);
+  }
+
   &--disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -138,12 +149,21 @@ function onPopoverVisibilityChange(next: boolean): void {
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 400;
   color: #fff;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .table-select__arrow {
   width: 0.3rem;
   height: 0.3rem;
   transition: transform 0.2s ease;
+  color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .table-select__arrow--up {
@@ -166,6 +186,12 @@ function onPopoverVisibilityChange(next: boolean): void {
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
+
+  @include theme-light {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 0.1rem 0.28rem rgba(0, 0, 0, 0.16);
+  }
 }
 
 .table-select__dropdown::-webkit-scrollbar {
@@ -198,10 +224,19 @@ function onPopoverVisibilityChange(next: boolean): void {
   line-height: 1;
   padding: 0.14rem 0.2rem;
   text-align: left;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.14);
+    color: var(--c-text);
+  }
 }
 
 .table-select__option--active {
   background: rgba(var(--c-brand-rgb), 0.9);
   color: #08392d;
+
+  @include theme-light {
+    color: #fff;
+  }
 }
 </style>

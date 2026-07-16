@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { showToast } from 'vant'
-import icRoundedArrowRight from '@/assets/icons/wallet/ic_rounded_arrow_right.svg'
-import icDropdown from '@/assets/icons/wallet/ic_dropdown.svg'
-import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { t } from '@/i18n'
 import { postOnlineWithdrawTypeListApi, postOnlineWithdrawDescriptionApi } from '@/api/config'
 import { postTiquGoldApi } from '@/api/order'
@@ -327,7 +325,7 @@ async function handleSubmit(): Promise<void> {
           </div>
           <button type="button" class="wf__pill" @click="openSheet">
             <span>{{ $txt('Wallet_GoEdit') }}</span>
-            <img :src="icRoundedArrowRight" alt="" class="wf__pill-icon" />
+            <AppSvgIcon name="round-arrow-right" class="wf__pill-icon" />
           </button>
         </div>
       </div>
@@ -390,12 +388,10 @@ async function handleSubmit(): Promise<void> {
       <div
         v-if="sheetOpen"
         class="wf__overlay"
-        :style="{ backgroundImage: `url(${sharpBgUrl})` }"
         @click.self="sheetOpen = false"
       >
         <div
           class="wf__sheet wf__sheet--fig"
-          :style="{ backgroundImage: `url(${sharpBgUrl})` }"
         >
           <div class="wf__sheet-fig-title">{{ $txt('Wallet_Records') }}</div>
 
@@ -414,7 +410,7 @@ async function handleSubmit(): Promise<void> {
               >
                 <span class="wf__fig-dropdown-value">{{ sheetPaymentLabel }}</span>
                 <span class="wf__fig-dropdown-chevron" aria-hidden="true">
-                  <img :src="icDropdown" alt="" class="wf__fig-chevron-svg" />
+                  <AppSvgIcon name="round-chevron-down" class="wf__fig-chevron-svg" />
                 </span>
               </button>
 
@@ -474,6 +470,8 @@ async function handleSubmit(): Promise<void> {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .wf {
   display: flex;
   flex-direction: column;
@@ -495,6 +493,15 @@ async function handleSubmit(): Promise<void> {
   gap: 0.3rem;
   overflow: hidden;
   z-index: 1;
+
+  @include theme-light {
+    background: #fff;
+    border-color: rgba(242, 242, 242, 0.7);
+    box-shadow:
+      3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25),
+      inset 3.4px 2.6px 8.6px rgba(0, 0, 0, 0.1),
+      inset 0 0 36px 6px rgba(242, 242, 242, 0.3);
+  }
 }
 
 .wf__card::before {
@@ -513,6 +520,11 @@ async function handleSubmit(): Promise<void> {
   pointer-events: none;
   border-radius: inherit;
   z-index: 0;
+
+  @include theme-light {
+    background: #fff;
+    mix-blend-mode: hard-light;
+  }
 }
 
 .wf__card > * {
@@ -536,6 +548,10 @@ async function handleSubmit(): Promise<void> {
   font-size: 0.285rem;
   color: #f9f9f9;
   padding-left: 0.1rem;
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .wf__row {
@@ -554,6 +570,10 @@ async function handleSubmit(): Promise<void> {
   align-items: center;
   justify-content: center;
   min-height: 1.2rem;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+  }
 }
 
 .wf__input-native {
@@ -566,10 +586,18 @@ async function handleSubmit(): Promise<void> {
   font-size: 0.4rem;
   color: #fff;
   text-align: center;
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .wf__input-native::placeholder {
   color: rgba(255, 255, 255, 0.65);
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.45);
+  }
 }
 
 .wf__input-native--static {
@@ -604,6 +632,12 @@ async function handleSubmit(): Promise<void> {
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+    border-color: rgba(153, 153, 153, 0.25);
+    box-shadow: none;
+  }
 }
 
 .wf__pill span {
@@ -612,11 +646,16 @@ async function handleSubmit(): Promise<void> {
   font-size: 0.32rem;
   color: #fff;
   line-height: 1.4;
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .wf__pill-icon {
   width: 0.38rem;
   height: 0.38rem;
+  color: var(--c-brand);
 }
 
 .wf__balance {
@@ -625,6 +664,10 @@ async function handleSubmit(): Promise<void> {
   padding: 0.26rem 0.4rem;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0.8rem;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+  }
 }
 
 .wf__balance-label {
@@ -633,6 +676,10 @@ async function handleSubmit(): Promise<void> {
   font-size: 0.415rem;
   color: #fff;
   line-height: 1.4;
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .wf__input-native--center {
@@ -646,6 +693,10 @@ async function handleSubmit(): Promise<void> {
   font-size: 0.29rem;
   color: rgba(255, 255, 255, 0.92);
   line-height: 1.2;
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.7);
+  }
 }
 
 /* Sheet overlay */
@@ -659,6 +710,12 @@ async function handleSubmit(): Promise<void> {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+
+  @include theme-light {
+    background-color: #f3f4f6;
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 
   &::before {
     content: '';
@@ -669,6 +726,10 @@ async function handleSubmit(): Promise<void> {
     backdrop-filter: blur(34px);
     -webkit-backdrop-filter: blur(34px);
     background: rgba(12, 12, 12, 0.60);
+
+    @include theme-light {
+      background: rgba(12, 12, 12, 0.4);
+    }
   }
 }
 
@@ -685,6 +746,12 @@ async function handleSubmit(): Promise<void> {
   flex-direction: column;
   gap: 0.32rem;
   overflow: hidden;
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+
+  @include theme-light {
+    background-color: #fff;
+    background-image: none;
+  }
 
   &::after {
     content: '';
@@ -696,6 +763,12 @@ async function handleSubmit(): Promise<void> {
     -webkit-backdrop-filter: blur(7.6px);
     pointer-events: none;
     z-index: 0;
+
+    @include theme-light {
+      background: #fff;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
   }
 
   &::before {
@@ -728,6 +801,11 @@ async function handleSubmit(): Promise<void> {
   box-shadow:
     inset 0.030rem 0.030rem 0.06rem rgba(242, 242, 242, 0.2),
     0.086rem 0.107rem 0.172rem rgba(0, 0, 0, 0.25);
+
+  @include theme-light {
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 0.107rem 0.24rem rgba(0, 0, 0, 0.12);
+  }
 }
 
 .wf__sheet-fig-title {
@@ -737,6 +815,10 @@ async function handleSubmit(): Promise<void> {
   color: #fff;
   text-align: center;
   line-height: 1.4;
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .wf__fig-stack {
@@ -756,6 +838,10 @@ async function handleSubmit(): Promise<void> {
   line-height: 1.2;
   color: #f9f9f9;
   width: 100%;
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .wf__fig-picker-shell {
@@ -764,6 +850,11 @@ async function handleSubmit(): Promise<void> {
   border: 0.026rem solid rgba(255, 255, 255, 0.14);
   border-radius: 0.589rem;
   overflow: hidden;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+    border-color: rgba(153, 153, 153, 0.25);
+  }
 }
 
 .wf__fig-dropdown {
@@ -782,6 +873,10 @@ async function handleSubmit(): Promise<void> {
 
 .wf__fig-dropdown--in-shell.wf__fig-dropdown--open {
   border-bottom: 0.026rem solid rgba(255, 255, 255, 0.14);
+
+  @include theme-light {
+    border-bottom-color: rgba(0, 0, 0, 0.12);
+  }
 }
 
 .wf__fig-picker-body {
@@ -800,6 +895,10 @@ async function handleSubmit(): Promise<void> {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .wf__fig-dropdown-chevron {
@@ -816,6 +915,7 @@ async function handleSubmit(): Promise<void> {
   width: 0.50rem;
   height: 0.50rem;
   transition: transform 0.2s ease;
+  color: var(--c-brand);
 }
 
 .wf__fig-dropdown--open .wf__fig-chevron-svg {
@@ -852,8 +952,16 @@ async function handleSubmit(): Promise<void> {
     border-bottom: none;
   }
 
+  @include theme-light {
+    border-bottom-color: rgba(0, 0, 0, 0.1);
+  }
+
   &:active {
     background: rgba(255, 255, 255, 0.06);
+
+    @include theme-light {
+      background: rgba(0, 0, 0, 0.06);
+    }
   }
 
   &--active {
@@ -872,6 +980,10 @@ async function handleSubmit(): Promise<void> {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.95);
+  }
 }
 
 .wf__addr-row-check {
@@ -886,6 +998,10 @@ async function handleSubmit(): Promise<void> {
   padding: 0.42rem 0.28rem;
   text-align: center;
   color: rgba(255, 255, 255, 0.52);
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.52);
+  }
 }
 
 .wf__fig-remark {
@@ -896,6 +1012,10 @@ async function handleSubmit(): Promise<void> {
   padding: 0.34rem 0.257rem;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 0.589rem;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+  }
 }
 
 .wf__fig-remark-input {
@@ -909,10 +1029,18 @@ async function handleSubmit(): Promise<void> {
   color: #fff;
   line-height: 1.4;
   text-align: center;
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .wf__fig-remark-input::placeholder {
   color: rgba(255, 255, 255, 0.65);
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.45);
+  }
 }
 
 .wf__fig-save {
@@ -936,6 +1064,11 @@ async function handleSubmit(): Promise<void> {
   &:disabled {
     opacity: 0.5;
     cursor: default;
+  }
+
+  @include theme-light {
+    background: var(--c-brand);
+    border-color: transparent;
   }
 }
 

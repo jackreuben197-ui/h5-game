@@ -309,8 +309,22 @@ function clampOptionIndex(value: number, length: number): number {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .table-slider-row {
+  --table-slider-inactive-color: rgba(255, 255, 255, 0.5);
+  --table-slider-button-color: rgba(198, 176, 186, 0.9);
+  --table-slider-button-border: rgba(255, 255, 255, 0.5);
+  --table-slider-button-filter: blur(100px) saturate(1.5);
+
   padding: 0.24rem 0;
+
+  @include theme-light {
+    --table-slider-inactive-color: #7d7d7d;
+    --table-slider-button-color: rgba(49, 49, 49, 0.08);
+    --table-slider-button-border: transparent;
+    --table-slider-button-filter: blur(10px) saturate(3.5);
+  }
 
   &--disabled {
     opacity: 0.5;
@@ -332,27 +346,37 @@ function clampOptionIndex(value: number, length: number): number {
 .table-slider__text {
   font-size: 0.37rem;
   color: #fff;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .table-slider__value {
   font-size: 0.44rem;
   color: rgba(255, 255, 255, 0.92);
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 :deep(.van-slider) {
   width: calc(100% - 0.4rem);
   margin: 0.56rem 0.2rem 0.3rem;
   height: 0.12rem;
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: var(--table-slider-inactive-color);
+  --van-slider-active-background: var(--c-brand);
+  --van-slider-inactive-background: var(--table-slider-inactive-color);
 }
 
 :deep(.van-slider__button) {
   width: 0.7rem;
   height: 0.7rem;
-  border: 0.01rem solid rgba(255, 255, 255, 0.5);
-  background: rgba(198, 176, 186, 0.9);
-  backdrop-filter: blur(100px) saturate(1.5);
-  -webkit-backdrop-filter: blur(100px) saturate(1.5);
+  border: 0.01rem solid var(--table-slider-button-border);
+  background: var(--table-slider-button-color);
+  backdrop-filter: var(--table-slider-button-filter);
+  -webkit-backdrop-filter: var(--table-slider-button-filter);
   box-shadow: none;
   will-change: backdrop-filter;
 }
@@ -382,10 +406,18 @@ function clampOptionIndex(value: number, length: number): number {
   line-height: 1;
   color: rgba(255, 255, 255, 0.4);
   font-family: 'Afacad', sans-serif;
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.4);
+  }
 }
 
 .table-slider__mark-label--active {
   color: #fff;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .table-slider__mark-label--empty {

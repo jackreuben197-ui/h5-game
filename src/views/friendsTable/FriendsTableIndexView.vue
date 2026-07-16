@@ -670,7 +670,7 @@ watch(
       :allow-leading-zero="true"
       :show-input-area="false"
       :show-mask="false"
-      :show-background="false"
+      :show-background="true"
       :max="9999999"
       confirm-text="加入"
       @close="keypadOpen = false"

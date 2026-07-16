@@ -5,8 +5,6 @@ import { postClubFundOrderListApi } from '@/api/order'
 import { postOssUploadImageApi } from '@/api/oss'
 import type { ChatSupportMessageListChatData } from '@/api/models/chat'
 import { useUserInfoStore } from '@/stores/userInfo'
-import mainBgUrl from '@/assets/images/main_bg.webp'
-import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import customerServiceIcon from '@/assets/icons/customerserviceicon.png'
 
 const props = defineProps<{
@@ -158,12 +156,12 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <div class="chat-overlay" :style="{ backgroundImage: `url(${mainBgUrl})` }">
+    <div class="chat-overlay">
       <div class="chat-container">
         <!-- Top Visual Header -->
         <div class="visual-header"></div>
 
-        <div class="chat-main-body" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
+        <div class="chat-main-body">
           <!-- Floating Agent Card -->
           <div class="agent-floating-card">
             <div class="agent-info">
@@ -173,7 +171,7 @@ onUnmounted(() => {
                   <foreignObject x="-4.4941" y="-4.4941" width="65.381" height="65.3813">
                     <div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(2.25px); height:100%; width:100%"></div>
                   </foreignObject>
-                  <path d="M28.196 0.150391C43.6857 0.150391 56.2427 12.7067 56.2429 28.1963C56.2429 43.686 43.6858 56.2432 28.196 56.2432C12.7065 56.243 0.150146 43.6859 0.150146 28.1963C0.150328 12.7068 12.7066 0.150572 28.196 0.150391ZM28.196 3.3291C14.4625 3.32928 3.32904 14.4627 3.32886 28.1963C3.32886 41.93 14.4623 53.0643 28.196 53.0645C41.9299 53.0645 53.0642 41.9301 53.0642 28.1963C53.064 14.4626 41.9298 3.3291 28.196 3.3291Z" fill="white" fill-opacity="0.83" />
+                  <path d="M28.196 0.150391C43.6857 0.150391 56.2427 12.7067 56.2429 28.1963C56.2429 43.686 43.6858 56.2432 28.196 56.2432C12.7065 56.243 0.150146 43.6859 0.150146 28.1963C0.150328 12.7068 12.7066 0.150572 28.196 0.150391ZM28.196 3.3291C14.4625 3.32928 3.32904 14.4627 3.32886 28.1963C3.32886 41.93 14.4623 53.0643 28.196 53.0645C41.9299 53.0645 53.0642 41.9301 53.0642 28.1963C53.064 14.4626 41.9298 3.3291 28.196 3.3291Z" fill="currentColor" fill-opacity="0.83" />
                 </svg>
                 <img :src="customerServiceIcon" alt="agent" class="agent-avatar" />
               </div>
@@ -255,7 +253,7 @@ onUnmounted(() => {
 
             <button class="send-action-btn" @click="sendMessage">
               <svg width="22" height="21" viewBox="0 0 24 23" fill="none">
-                <path d="M4.31042 5.23619C3.89719 5.10688 3.89323 4.89806 4.31833 4.76503L19.4289 0.0378811C19.8476 -0.0929126 20.0875 0.127059 19.9703 0.512008L15.6528 14.6957C15.5341 15.0888 15.2926 15.1022 15.1153 14.7291L12.2694 8.71783L17.0191 2.77266L10.6862 7.23153L4.31042 5.23619Z" fill="white"/>
+                <path d="M4.31042 5.23619C3.89719 5.10688 3.89323 4.89806 4.31833 4.76503L19.4289 0.0378811C19.8476 -0.0929126 20.0875 0.127059 19.9703 0.512008L15.6528 14.6957C15.5341 15.0888 15.2926 15.1022 15.1153 14.7291L12.2694 8.71783L17.0191 2.77266L10.6862 7.23153L4.31042 5.23619Z" fill="currentColor"/>
               </svg>
             </button>
 
@@ -268,8 +266,8 @@ onUnmounted(() => {
 
             <button class="close-chat-btn" @click="emit('close')">
               <svg width="11.521" height="11.521" viewBox="0 0 15 15" fill="none">
-                <path d="M1.37148 1.37158L12.8923 12.8924" stroke="#F3F3F3" stroke-width="2.74306" stroke-linecap="round"/>
-                <path d="M12.8923 1.37158L1.37148 12.8924" stroke="#F3F3F3" stroke-width="2.74306" stroke-linecap="round"/>
+                <path d="M1.37148 1.37158L12.8923 12.8924" stroke="currentColor" stroke-width="2.74306" stroke-linecap="round"/>
+                <path d="M12.8923 1.37158L1.37148 12.8924" stroke="currentColor" stroke-width="2.74306" stroke-linecap="round"/>
               </svg>
             </button>
 
@@ -282,6 +280,8 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .chat-overlay {
   position: fixed;
   inset: 0;
@@ -291,6 +291,12 @@ onUnmounted(() => {
   background-repeat: no-repeat;
   display: flex;
   flex-direction: column;
+  background-image: url('@/assets/images/main_bg.webp');
+
+  @include theme-light {
+    background-color: var(--c-page);
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .chat-container {
@@ -316,6 +322,12 @@ onUnmounted(() => {
   background-repeat: no-repeat;
   z-index: 1;
   overflow: hidden;
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+
+  @include theme-light {
+    background-color: #fff;
+    background-image: none;
+  }
 }
 
 .chat-main-body::after {
@@ -327,6 +339,12 @@ onUnmounted(() => {
   -webkit-backdrop-filter: blur(7.580729961395264px);
   pointer-events: none;
   z-index: 1;
+
+  @include theme-light {
+    background: #fff;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .agent-floating-card,
@@ -349,6 +367,11 @@ onUnmounted(() => {
   display: flex;
   align-items: flex-start;
   gap: 15px;
+
+  @include theme-light {
+    background: #fff;
+    box-shadow: 0 0.08rem 0.24rem rgba(0, 0, 0, 0.08);
+  }
 }
 
 .agent-info {
@@ -375,6 +398,11 @@ onUnmounted(() => {
   width: 61px;
   height: 61px;
   pointer-events: none;
+  color: rgba(255, 255, 255, 0.83);
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.24);
+  }
 }
 
 .agent-avatar {
@@ -399,6 +427,11 @@ onUnmounted(() => {
   font-weight: 500;
   margin-top: -0.4rem;
   white-space: nowrap;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.16);
+    color: var(--c-text);
+  }
 }
 
 .messages-wrap {
@@ -474,6 +507,10 @@ onUnmounted(() => {
   font-weight: 400;
   line-height: 100%;
   letter-spacing: 0.195px;
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .sender-name {
@@ -487,11 +524,21 @@ onUnmounted(() => {
   max-width: 75%;
   color: #fff;
   font-size: 14px;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.16);
+    color: var(--c-text);
+  }
 }
 
 .text-bubble--self {
   background: #118e74;
   border-radius: 20px 20px 4px 20px;
+
+  @include theme-light {
+    background: var(--c-brand);
+    color: #fff;
+  }
 }
 
 .image-bubble {
@@ -499,6 +546,10 @@ onUnmounted(() => {
   border-radius: 12px;
   padding: 4px;
   max-width: 200px;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+  }
 }
 
 .image-bubble img {
@@ -535,6 +586,10 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.16);
+  }
 }
 
 .input-bar-wrap {
@@ -546,13 +601,17 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 4.2px;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.16);
+  }
 }
 
 .input-bar-wrap input {
   flex: 1;
   background: transparent;
   border: none;
-  color: #F9F9F9;
+  color: var(--c-text);
   font-family: "PingFang SC";
   font-size: 13.226px;
   font-weight: 400;
@@ -561,12 +620,12 @@ onUnmounted(() => {
   outline: none;
 
   &::placeholder {
-    color: rgba(249, 249, 249, 0.4);
+    color: var(--c-text-muted);
   }
 }
 
 .send-action-btn {
-  background: #01CEAB;
+  background: var(--c-brand);
   border: none;
   width: 37.331px;
   height: 37.331px;
@@ -577,6 +636,7 @@ onUnmounted(() => {
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
+  color: #fff;
 
   &:active {
     opacity: 0.8;
@@ -596,6 +656,10 @@ onUnmounted(() => {
   cursor: pointer;
   flex-shrink: 0;
 
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.16);
+  }
+
   &:active {
     opacity: 0.8;
   }
@@ -612,6 +676,12 @@ onUnmounted(() => {
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
+  color: #f3f3f3;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.16);
+    color: var(--c-text);
+  }
 
   &:active {
     opacity: 0.8;

@@ -48,7 +48,6 @@ const isActive = computed(() => props.modelValue === props.activeValue)
         :disabled="disabled"
         :active-value="activeValue"
         :inactive-value="inactiveValue"
-        inactive-color="rgba(255, 255, 255, 0.17)"
         class="quick-switch-card__switch"
         @update:model-value="onChange"
       />
@@ -57,6 +56,8 @@ const isActive = computed(() => props.modelValue === props.activeValue)
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .quick-switch-card {
   position: relative;
   width: 100%;
@@ -70,6 +71,11 @@ const isActive = computed(() => props.modelValue === props.activeValue)
   flex-direction: column;
   justify-content: space-between;
   box-sizing: border-box;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.14);
+    backdrop-filter: none;
+  }
 }
 
 .quick-switch-card__badge {
@@ -93,6 +99,10 @@ const isActive = computed(() => props.modelValue === props.activeValue)
   font-weight: 400;
   color: #fff;
   line-height: 1.4;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .quick-switch-card__foot {
@@ -107,6 +117,10 @@ const isActive = computed(() => props.modelValue === props.activeValue)
   font-weight: 600;
   color: #fff;
   line-height: 1;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .quick-switch-card__switch {
@@ -118,6 +132,10 @@ const isActive = computed(() => props.modelValue === props.activeValue)
   --van-switch-node-size: 0.36rem;
   --van-switch-on-background: var(--c-brand);
   --van-switch-off-background: rgba(255, 255, 255, 0.3);
+
+  @include theme-light {
+    --van-switch-off-background: rgba(134, 134, 134, 0.34);
+  }
 
   :deep(.van-switch__node) {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);

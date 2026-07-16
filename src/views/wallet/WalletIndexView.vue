@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import mainBgUrl from '@/assets/images/main_bg.webp'
 import ava1 from '@/assets/images/wallet/avatars/ava1.png'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
@@ -659,7 +658,7 @@ async function onUsdtSubmit(type: number) {
 <template>
   <FixedDepositPanel v-if="isFixedDeposit" />
 
-  <div v-else class="wallet-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
+  <div v-else class="wallet-screen">
     <HeaderBack :title="t('Wallet_Title')" extra-padding />
 
     <div class="wallet-screen__content-top">
@@ -801,6 +800,8 @@ async function onUsdtSubmit(type: number) {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .wallet-screen {
   height: 100vh;
   height: 100dvh;
@@ -810,6 +811,12 @@ async function onUsdtSubmit(type: number) {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-image: url('@/assets/images/main_bg.webp');
+
+  @include theme-light {
+    background-color: #f3f4f6;
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .wallet-scrollable {
@@ -874,6 +881,15 @@ async function onUsdtSubmit(type: number) {
   margin-top: -20px;
   z-index: 1;
   margin-bottom: 10px;
+
+  @include theme-light {
+    background: #fff;
+    border-color: rgba(242, 242, 242, 0.7);
+    box-shadow:
+      3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25),
+      inset 3.4px 2.6px 8.6px rgba(0, 0, 0, 0.1),
+      inset 0 0 36px 6px rgba(242, 242, 242, 0.3);
+  }
 }
 
 .presets-card::before {
@@ -892,6 +908,11 @@ async function onUsdtSubmit(type: number) {
   pointer-events: none;
   border-radius: inherit;
   z-index: 0;
+
+  @include theme-light {
+    background: #fff;
+    mix-blend-mode: hard-light;
+  }
 }
 
 .presets-card > * {
@@ -919,6 +940,11 @@ async function onUsdtSubmit(type: number) {
   padding: 0.18rem 0.21rem 0.18rem 0.33rem;
   box-shadow: 0.8px 1px 1.6px rgba(0, 0, 0, 0.25);
   height: 0.85rem;
+
+  @include theme-light {
+    background: rgba(34, 34, 34, 0.34);
+    border-color: rgba(242, 242, 242, 0.4);
+  }
 }
 
 .balance-chip__value {
@@ -939,6 +965,10 @@ async function onUsdtSubmit(type: number) {
   font-weight: 600;
   font-size: 0.24rem;
   color: #f8f8f8;
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .pay-cta {

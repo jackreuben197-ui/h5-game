@@ -349,7 +349,8 @@ const { theme, isDark, setMode } = useTheme() // theme 是响应式的，watch �
 1. ✅ 基础架构：变量层 / 运行时 / 防闪烁 / 预览参数，默认跟随 Telegram 或浏览器系统主题。
 2. ✅ 按首版 Figma 校准浅色基础色与俱乐部列表页，并收敛为少量全局语义变量。
 3. ✅ 5 个一级页面及其游客页逐页对稿迁移，深色保持现有布局与观感。
-4. 🔄 二级页面、公共组件（Dialog/Toast/Tabbar/Vant 覆盖）继续按同一规则推进。
+4. 🔄 二级页面、公共组件（Dialog/Toast/Tabbar/Vant 覆盖）继续按同一规则推进；按钮与
+   `GameCreateForm` 已接入深浅主题，创建牌桌的专业参数 / 一键开桌模式已完成浅色迁移。
 5. ✅ 品牌纯色和透明色统一为 `--c-brand` / `--c-brand-rgb`；页面专属渐变仍由页面局部维护，
    浅色必须使用 `theme-light` 给出完整覆盖，不能只替换渐变的第一个色阶。
 
@@ -648,6 +649,8 @@ const text = t('Wallet_AddItem7', 100, 12)
 用途：
 
 - 顶部右侧常用操作按钮（文字 + 图标）
+- 深色使用原玻璃效果；浅色使用白色胶囊、黑色文字，并通过 CSS mask 将现有单色图标着色为主题色，
+  调用方无需维护 `_light` 图标或修改现有 Props。
 
 Props：
 
@@ -664,6 +667,12 @@ Events：
 ```vue
 <TopActionButton name="切换" :icon="walletIcon" icon-alt="wallet" @click="handleTodoClick" />
 ```
+
+`PrimaryButton` 的浅色样式统一为 `--c-brand` 纯色、白字、无深色高光阴影；页面不要再次覆盖一套浅色渐变。
+
+`src/components/GameCreateForm/` 下的输入、下拉、步进器、开关、滑杆、模式 Tab 和提示气泡均在组件内处理主题。
+页面层只负责卡片 / 页面背景等容器语义；下拉与提示气泡的 Vant `theme` 必须跟随 `useTheme()`，不能写死为
+`dark`。单色的提示、编辑和下拉图标统一由 `AppSvgIcon` 使用 `currentColor` 着色。
 
 ### 11.2 PageBackHeader
 

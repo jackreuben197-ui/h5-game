@@ -24,6 +24,7 @@ import {
 } from '@/api/cmsext'
 import { GameDialog } from '@/components/Dialog'
 import { showGameToast } from '@/components/Toast'
+import { useTheme } from '@/composables/useTheme'
 import FieldTip from '@/components/GameCreateForm/FieldTip.vue'
 import icDiamondBalance from '@/assets/icons/icon_diamond.png'
 import iconPeople from '@/assets/icons/icon_people.png'
@@ -47,6 +48,7 @@ const router = useRouter()
 const route = useRoute()
 const userInfoStore = useUserInfoStore()
 const appConfigStore = useAppConfigStore()
+const { isDark } = useTheme()
 
 const formState = reactive<NlhFormState>({
   ...defaultNlhFormState,
@@ -726,6 +728,23 @@ function getGameTypeColor(type: number): string {
   }
 }
 
+function getTemplateCardStyle(type: number): Record<string, string> {
+  if (isDark.value) {
+    return { backgroundImage: `url(${getGameTypeBg(type)})` }
+  }
+
+  const lightColors: Record<number, string> = {
+    1: 'rgba(5, 92, 231, 0.6)',
+    2: 'rgba(0, 176, 126, 0.6)',
+    3: 'rgba(171, 5, 231, 0.6)',
+  }
+
+  return {
+    backgroundImage: 'none',
+    backgroundColor: lightColors[type] ?? lightColors[1],
+  }
+}
+
 function formatBlinds(sb: number, ante?: number): string {
   const sbFace = sb / 100
   const bbFace = sbFace * 2
@@ -906,7 +925,7 @@ async function onDeleteConfirm() {
         v-for="item in filteredTemplates"
         :key="item.id"
         :class="['template-card', { 'template-card--active': activeTemplateId === item.id }]"
-        :style="{ backgroundImage: `url(${getGameTypeBg(item.game_play_type ?? 1)})` }"
+        :style="getTemplateCardStyle(item.game_play_type ?? 1)"
         @click="onSelectTemplate(item)"
       >
         <div class="template-card__left">
@@ -996,6 +1015,8 @@ async function onDeleteConfirm() {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .quick-create-view {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -1015,6 +1036,11 @@ async function onDeleteConfirm() {
   border-radius: 0.86rem;
   backdrop-filter: blur(0.16px);
   padding: 0.25rem 0.51rem 0.4rem;
+
+  @include theme-light {
+    background: #fff;
+    backdrop-filter: none;
+  }
   // margin-bottom: 0.5rem;
 }
 .table-slider-row {
@@ -1057,6 +1083,10 @@ async function onDeleteConfirm() {
   font-weight: 400;
   color: #fff;
   line-height: 1;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .quick-fee__icon {
@@ -1076,6 +1106,10 @@ async function onDeleteConfirm() {
   font-weight: 700;
   color: #fff;
   line-height: 1;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .quick-fee__original-wrap {
@@ -1094,6 +1128,10 @@ async function onDeleteConfirm() {
   color: rgba(255, 255, 255, 0.4);
   text-decoration: line-through;
   line-height: 1;
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.4);
+  }
 }
 
 .quick-fee__current {
@@ -1102,6 +1140,10 @@ async function onDeleteConfirm() {
   font-weight: 700;
   color: #fff;
   line-height: 1;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .quick-create-btn {
@@ -1120,6 +1162,11 @@ async function onDeleteConfirm() {
   justify-content: center;
   box-shadow: inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
     inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
+
+  @include theme-light {
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 /* 模板列表 */
@@ -1145,6 +1192,10 @@ async function onDeleteConfirm() {
   justify-content: center;
   font-size: 0.3rem;
   color: rgba(255, 255, 255, 0.7);
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .template-card {
@@ -1163,6 +1214,16 @@ async function onDeleteConfirm() {
   padding: 0 0.4rem 0 0.25rem;
   // overflow: hidden;
   border: 0.02rem solid transparent;
+
+  @include theme-light {
+    background-image: none;
+    border-color: #fff;
+    backdrop-filter: blur(4.117px);
+    -webkit-backdrop-filter: blur(4.117px);
+    box-shadow:
+      inset 0 0 0.03rem rgba(255, 255, 255, 0.5),
+      inset 0.04rem 0.04rem 0.12rem rgba(255, 255, 255, 0.32);
+  }
 }
 
 .template-card--active {

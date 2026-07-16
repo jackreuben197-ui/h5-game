@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useWalletStore } from '@/stores/wallet'
-import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 
@@ -78,8 +77,8 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <div class="overlay" :style="{ backgroundImage: `url(${sharpBgUrl})` }" @click.self="close">
-      <div class="card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
+    <div class="overlay" @click.self="close">
+      <div class="card">
         <div class="card__inner">
           <!-- Header -->
           <div class="card__header">
@@ -138,7 +137,7 @@ onUnmounted(() => {
                       cy="7.50662"
                       rx="7.50662"
                       ry="7.50662"
-                      fill="#F9F9F9"
+                      fill="currentColor"
                       fill-opacity="0.2"
                     />
                   </svg>
@@ -154,7 +153,7 @@ onUnmounted(() => {
                   >
                     <path
                       d="M5.20996 0.650391C7.72844 0.650391 9.7703 2.69153 9.77051 5.20996C9.77051 7.72857 7.72857 9.77051 5.20996 9.77051C2.69153 9.7703 0.650391 7.72844 0.650391 5.20996C0.650594 2.69165 2.69165 0.650594 5.20996 0.650391Z"
-                      stroke="#55FFE2"
+                      stroke="currentColor"
                       stroke-width="1.3"
                     />
                   </svg>
@@ -195,7 +194,7 @@ onUnmounted(() => {
                       cy="7.50662"
                       rx="7.50662"
                       ry="7.50662"
-                      fill="#F9F9F9"
+                      fill="currentColor"
                       fill-opacity="0.2"
                     />
                   </svg>
@@ -211,7 +210,7 @@ onUnmounted(() => {
                   >
                     <path
                       d="M5.20996 0.650391C7.72844 0.650391 9.7703 2.69153 9.77051 5.20996C9.77051 7.72857 7.72857 9.77051 5.20996 9.77051C2.69153 9.7703 0.650391 7.72844 0.650391 5.20996C0.650594 2.69165 2.69165 0.650594 5.20996 0.650391Z"
-                      stroke="#55FFE2"
+                      stroke="currentColor"
                       stroke-width="1.3"
                     />
                   </svg>
@@ -233,10 +232,9 @@ onUnmounted(() => {
     <div
       v-if="isTimedOut"
       class="timeout-overlay"
-      :style="{ backgroundImage: `url(${sharpBgUrl})` }"
       @click.self="isTimedOut = false"
     >
-      <div class="timeout-card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
+      <div class="timeout-card">
         <div class="timeout-card__inner">
           <div class="timeout-header">
             <h2 class="timeout-title">提醒通知</h2>
@@ -252,6 +250,8 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -263,6 +263,12 @@ onUnmounted(() => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+
+  @include theme-light {
+    background-color: var(--c-page);
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .overlay::before {
@@ -273,7 +279,7 @@ onUnmounted(() => {
   pointer-events: none;
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
-  background: rgba(12, 12, 12, 0.6);
+  background: var(--c-overlay);
 }
 
 .card {
@@ -291,6 +297,15 @@ onUnmounted(() => {
   box-shadow: 3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25), 0 0 8.6px #000 inset,
     2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
   overflow: hidden;
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+  background-size: cover;
+  background-position: center;
+
+  @include theme-light {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 0.12rem 0.36rem rgba(0, 0, 0, 0.14);
+  }
 }
 
 .card::after {
@@ -305,6 +320,13 @@ onUnmounted(() => {
   -webkit-backdrop-filter: blur(7.580729961395264px);
   pointer-events: none;
   z-index: 1;
+
+  @include theme-light {
+    background: #fff;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .card::before {
@@ -341,7 +363,7 @@ onUnmounted(() => {
 }
 
 .card__title {
-  color: #fff;
+  color: var(--c-text);
   text-align: center;
   leading-trim: both;
   text-edge: cap;
@@ -363,7 +385,7 @@ onUnmounted(() => {
 }
 
 .card__header-info span {
-  color: #fff;
+  color: var(--c-text);
   text-align: center;
   leading-trim: both;
   text-edge: cap;
@@ -379,13 +401,13 @@ onUnmounted(() => {
 .card__divider {
   width: 100%;
   height: 1px;
-  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.3) 50%, transparent 50%);
+  background-image: linear-gradient(to right, var(--c-divider) 50%, transparent 50%);
   background-size: 10px 1px;
   margin: 18.12px 0;
 }
 
 .card__notice {
-  color: #fff;
+  color: var(--c-text);
   text-align: center;
   leading-trim: both;
   text-edge: cap;
@@ -422,6 +444,10 @@ onUnmounted(() => {
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+  }
 }
 
 .option-card::before {
@@ -437,6 +463,12 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.3);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+  @include theme-light {
+    background: rgba(var(--c-brand-rgb), 0.16);
+    border: 1px solid rgba(var(--c-brand-rgb), 0.55);
+    box-shadow: none;
+  }
 }
 
 .option-card--active::before {
@@ -453,7 +485,7 @@ onUnmounted(() => {
 }
 
 .option-card__amount {
-  color: var(--White, #f9f9f9);
+  color: var(--c-text);
   font-feature-settings: 'liga' off, 'clig' off;
   font-family: var(--wallet-font-num, 'SF Pro');
   font-size: 17.317px;
@@ -469,7 +501,7 @@ onUnmounted(() => {
 }
 
 .option-card__desc {
-  color: rgba(255, 234, 234, 1);
+  color: var(--c-text);
   text-align: right;
   font-feature-settings: 'liga' off, 'clig' off;
   font-family: 'SF Pro';
@@ -492,7 +524,7 @@ onUnmounted(() => {
   border-radius: 27.601px;
   background: rgba(255, 255, 255, 0.12);
   margin-bottom: 0;
-  color: #fff;
+  color: var(--c-text);
   text-align: right;
   font-feature-settings: 'liga' off, 'clig' off;
   font-family: 'SF Pro';
@@ -504,11 +536,19 @@ onUnmounted(() => {
   z-index: 1;
   border: 1px solid transparent;
   box-sizing: border-box;
+
+  @include theme-light {
+    background: rgba(255, 255, 255, 0.75);
+  }
 }
 
 .option-card__badge--active {
   background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  color: var(--c-text);
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .badge-icon {
@@ -523,11 +563,17 @@ onUnmounted(() => {
 .badge-icon__bg {
   position: absolute;
   inset: 0;
+  color: rgba(249, 249, 249, 0.83);
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.28);
+  }
 }
 
 .badge-icon__check {
   position: absolute;
   z-index: 1;
+  color: var(--c-brand);
 }
 
 .card__action {
@@ -544,6 +590,12 @@ onUnmounted(() => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+
+  @include theme-light {
+    background-color: var(--c-page);
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .timeout-overlay::before {
@@ -554,7 +606,7 @@ onUnmounted(() => {
   pointer-events: none;
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
-  background: rgba(12, 12, 12, 0.6);
+  background: var(--c-overlay);
 }
 
 .timeout-card {
@@ -573,6 +625,15 @@ onUnmounted(() => {
     2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
   overflow: hidden;
   animation: modal-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+  background-size: cover;
+  background-position: center;
+
+  @include theme-light {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 0.12rem 0.36rem rgba(0, 0, 0, 0.14);
+  }
 }
 
 .timeout-card::after {
@@ -587,6 +648,13 @@ onUnmounted(() => {
   -webkit-backdrop-filter: blur(7.580729961395264px);
   pointer-events: none;
   z-index: 1;
+
+  @include theme-light {
+    background: #fff;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .timeout-card::before {
@@ -631,6 +699,10 @@ onUnmounted(() => {
     rgba(255, 255, 255, 0.1) 21.11%,
     rgba(230, 230, 230, 0.1) 71.43%
   );
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+  }
 }
 
 .timeout-title {
@@ -643,6 +715,12 @@ onUnmounted(() => {
   font-weight: 600;
   margin: 0;
   letter-spacing: 0.32px;
+
+  @include theme-light {
+    background: none;
+    -webkit-text-fill-color: var(--c-text);
+    color: var(--c-text);
+  }
 }
 
 .timeout-body {
@@ -651,7 +729,7 @@ onUnmounted(() => {
 }
 
 .timeout-text {
-  color: #fff;
+  color: var(--c-text);
   font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 15px;
   line-height: 1.5;

@@ -13,6 +13,8 @@ defineProps<Props>()
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .gb {
   // display: inline-flex;
   // align-items: center;
@@ -48,6 +50,11 @@ defineProps<Props>()
   transition: opacity 0.2s;
   -webkit-tap-highlight-color: transparent;
 
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+    color: #000;
+    box-shadow: none;
+  }
 
   &::before {
     content: '';
@@ -84,5 +91,9 @@ font-size: 13.448px;
 font-style: normal;
 font-weight: 500;
 line-height: 94.56%;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 </style>

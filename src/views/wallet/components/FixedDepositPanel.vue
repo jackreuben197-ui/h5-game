@@ -2,7 +2,6 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast, showToast } from 'vant'
-import mainBgUrl from '@/assets/images/main_bg.webp'
 import bannerBgUrl from '@/assets/images/wallet/banner_bg.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 import iconChips from '@/assets/icons/wallet/ic_coins.png'
@@ -101,7 +100,7 @@ function onSuccessConfirm(): void {
 </script>
 
 <template>
-  <div class="deposit-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
+  <div class="deposit-screen">
     <HeaderBack :title="t('UIGuildFund_RechargeText')" extra-padding>
       <template #right>
         <span class="details-btn">
@@ -189,6 +188,8 @@ function onSuccessConfirm(): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .deposit-screen {
   height: 100vh;
   height: 100dvh;
@@ -198,6 +199,12 @@ function onSuccessConfirm(): void {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-image: url('@/assets/images/main_bg.webp');
+
+  @include theme-light {
+    background-color: var(--c-page);
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .details-btn {
@@ -208,6 +215,11 @@ function onSuccessConfirm(): void {
 /* 明细按钮使用与「赠送」一致的深色玻璃样式 */
 .details-btn :deep(.gb) {
   background: rgba(0, 0, 0, 0.5);
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.16);
+    color: var(--c-text);
+  }
 }
 
 .deposit-scrollable {
@@ -249,6 +261,11 @@ function onSuccessConfirm(): void {
   -webkit-backdrop-filter: blur(16.5px);
   box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
 
+  @include theme-light {
+    background: #fff;
+    box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.12);
+  }
+
   &::after {
     content: '';
     position: absolute;
@@ -257,6 +274,10 @@ function onSuccessConfirm(): void {
     background: rgba(0, 0, 0, 0.28);
     pointer-events: none;
     z-index: 1;
+
+    @include theme-light {
+      background: #fff;
+    }
   }
 
   &::before {
@@ -277,6 +298,10 @@ function onSuccessConfirm(): void {
     mask-composite: exclude;
     pointer-events: none;
     z-index: 3;
+
+    @include theme-light {
+      background: linear-gradient(139deg, rgba(0, 0, 0, 0.12) 0%, transparent 100%);
+    }
   }
 }
 
@@ -293,6 +318,10 @@ function onSuccessConfirm(): void {
   background-repeat: no-repeat;
   z-index: 0;
   opacity: 0.65;
+
+  @include theme-light {
+    opacity: 0;
+  }
 }
 
 .user-card-inner {
@@ -319,6 +348,11 @@ function onSuccessConfirm(): void {
   align-items: center;
   justify-content: center;
   color: #fff;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.16);
+    color: var(--c-text);
+  }
 }
 
 .gift-entry__icon {
@@ -362,7 +396,7 @@ function onSuccessConfirm(): void {
 }
 
 .user-name {
-  color: #fff;
+  color: var(--c-text);
   font-family: 'SF Pro', sans-serif;
   font-size: 22.394px;
   font-weight: 700;
@@ -379,7 +413,7 @@ function onSuccessConfirm(): void {
   font-family: var(--wallet-font-num);
   font-weight: 400;
   font-size: 0.23rem;
-  color: #fff;
+  color: var(--c-text);
 }
 
 .balance-section {
@@ -391,7 +425,7 @@ function onSuccessConfirm(): void {
 }
 
 .balance-label {
-  color: #f9f9f9;
+  color: var(--c-text);
   font-family: 'SF Pro', sans-serif;
   font-size: 11.33px;
   font-weight: 400;
@@ -399,7 +433,7 @@ function onSuccessConfirm(): void {
 }
 
 .balance-value {
-  color: #f9f9f9;
+  color: var(--c-text);
   font-family: 'SF Pro', sans-serif;
   font-size: 16.33px;
   font-weight: 590;
@@ -422,7 +456,7 @@ function onSuccessConfirm(): void {
 .deposit-form__label {
   font-size: 0.36rem;
   font-weight: 500;
-  color: #f9f9f9;
+  color: var(--c-text);
 }
 
 .deposit-form__input-wrap {
@@ -434,6 +468,11 @@ function onSuccessConfirm(): void {
   padding: 0.36rem 0.48rem;
   backdrop-filter: blur(16.6px);
   -webkit-backdrop-filter: blur(16.6px);
+
+  @include theme-light {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.12);
+  }
 }
 
 .deposit-form__input {
@@ -442,13 +481,13 @@ function onSuccessConfirm(): void {
   background: transparent;
   border: none;
   outline: none;
-  color: #fff;
+  color: var(--c-text);
   font-size: 0.4rem;
   font-weight: 500;
   font-family: var(--wallet-font-num);
 
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--c-text-muted);
   }
 }
 

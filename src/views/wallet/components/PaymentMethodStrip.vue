@@ -45,6 +45,8 @@ const emit = defineEmits<{
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -97,13 +99,24 @@ const emit = defineEmits<{
   justify-content: flex-end;
   color: #fff;
   box-sizing: border-box;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+    border-color: rgba(153, 153, 153, 0.25);
+    color: #000;
+  }
 }
 
 .method--active .method__label {
   background: rgba(255, 255, 255, 0.79);
   border: none;
-  color: #009d68;
+  color: var(--c-brand);
   font-weight: 600;
+
+  @include theme-light {
+    background: #fff;
+    color: var(--c-brand);
+  }
 }
 
 .method__label-row {

@@ -575,6 +575,8 @@ async function onCreateTable() {
 </template>
 
 <style lang="scss" scoped>
+@use '@/styles/mixins' as *;
+
 .create-table-page {
   position: relative;
   min-height: 100dvh;
@@ -582,6 +584,10 @@ async function onCreateTable() {
   background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
   overflow-x: hidden;
   overflow-y: auto;
+
+  @include theme-light {
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 /* Header tabs */
@@ -604,9 +610,17 @@ async function onCreateTable() {
   padding: 0.08rem 0 0;
   position: relative;
 
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.55);
+  }
+
   &--active {
     font-weight: 700;
     color: #fff;
+
+    @include theme-light {
+      color: #000;
+    }
 
     &::after {
       content: '';
@@ -617,6 +631,10 @@ async function onCreateTable() {
       height: 1px;
       background: #fff;
       border-radius: 1px;
+
+      @include theme-light {
+        background: #000;
+      }
     }
   }
 }
@@ -649,6 +667,11 @@ async function onCreateTable() {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0.43rem;
   backdrop-filter: blur(0.16px);
+
+  @include theme-light {
+    background: #fff;
+    backdrop-filter: none;
+  }
 }
 .detail-form__section {
   margin: 0.38rem 0.35rem 0;
@@ -656,6 +679,11 @@ async function onCreateTable() {
   border-radius: 0.43rem;
   backdrop-filter: blur(0.16px);
   padding: 0.13rem 0.5rem;
+
+  @include theme-light {
+    background: #fff;
+    backdrop-filter: none;
+  }
 }
 
 .table-name__label {
@@ -664,6 +692,10 @@ async function onCreateTable() {
   font-weight: 400;
   color: #fff;
   white-space: nowrap;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .table-name__input {
@@ -678,8 +710,16 @@ async function onCreateTable() {
   font-weight: 400;
   color: #fff;
 
+  @include theme-light {
+    color: var(--c-text);
+  }
+
   &::placeholder {
     color: rgba(255, 255, 255, 0.6);
+
+    @include theme-light {
+      color: var(--c-text-muted);
+    }
   }
 }
 
@@ -700,6 +740,10 @@ async function onCreateTable() {
 
 .detail-form__item {
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+
+  @include theme-light {
+    border-bottom-color: var(--c-divider);
+  }
 
   &:last-of-type {
     border-bottom: none;
@@ -722,6 +766,12 @@ async function onCreateTable() {
   background: rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(0.18rem);
   -webkit-backdrop-filter: blur(0.18rem);
+
+  @include theme-light {
+    background: #f3f4f6;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .fee-info {
@@ -745,6 +795,10 @@ async function onCreateTable() {
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 400;
   color: #fff;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .fee-value-wrap {
@@ -766,6 +820,10 @@ async function onCreateTable() {
   font-weight: 700;
   color: rgba(255, 255, 255, 1);
   text-decoration: line-through;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .fee-current {
@@ -773,6 +831,10 @@ async function onCreateTable() {
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 700;
   color: #fff;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .fee-strike {
@@ -785,6 +847,10 @@ async function onCreateTable() {
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 700;
   color: #fff;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .action-buttons {
@@ -810,13 +876,25 @@ async function onCreateTable() {
     background: rgba(0, 0, 0, 0.3);
     color: #fff;
     backdrop-filter: blur(0.17px);
+
+    @include theme-light {
+      background: rgba(134, 134, 134, 0.22);
+      color: var(--c-text);
+      backdrop-filter: none;
+    }
   }
 
   &--create {
     background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
     color: #fff;
-    box-shadow: inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
+    box-shadow:
+      inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
       inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
+
+    @include theme-light {
+      background: var(--c-brand);
+      box-shadow: none;
+    }
   }
 }
 </style>

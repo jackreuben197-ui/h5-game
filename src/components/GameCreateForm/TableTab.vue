@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import FilterTabbar, { type FilterTabOption } from '@/components/Tabbar/FilterTabbar.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
+
+type TableTabSvgIconName = 'table' | 'microphone' | 'video'
 
 interface Option {
   text: string
@@ -53,6 +56,15 @@ function resolveIcon(iconName: string): string {
   return getIcon(iconName)
 }
 
+function resolveSvgIcon(iconName: string): TableTabSvgIconName | '' {
+  const iconMap: Record<string, TableTabSvgIconName> = {
+    icon_table: 'table',
+    icon_audio: 'microphone',
+    icon_video: 'video',
+  }
+  return iconMap[iconName] || ''
+}
+
 function onTabChange(nextName: string): void {
   if (props.disabled) return
   const selected = props.options.find((option) => String(option.value) === nextName)
@@ -70,8 +82,13 @@ function onTabChange(nextName: string): void {
       @update:model-value="onTabChange"
     >
       <template #tab="{ tab }">
+        <AppSvgIcon
+          v-if="resolveSvgIcon((tab as TabOption).icon || '')"
+          :name="resolveSvgIcon((tab as TabOption).icon || '') || 'table'"
+          class="table-tab__icon"
+        />
         <img
-          v-if="(tab as TabOption).icon"
+          v-else-if="(tab as TabOption).icon"
           :src="resolveIcon((tab as TabOption).icon || '')"
           class="table-tab__icon"
           alt=""
@@ -88,6 +105,8 @@ function onTabChange(nextName: string): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .table-tab {
   padding: 0.15rem 0;
 }
@@ -99,12 +118,21 @@ function onTabChange(nextName: string): void {
 
 .table-tab :deep(.filter-tabbar) {
   margin: 0;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.22);
+  }
 }
 
 .table-tab__icon {
   width: 0.55rem;
   height: 0.55rem;
   object-fit: contain;
+  color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .table-tab__text {
@@ -112,6 +140,10 @@ function onTabChange(nextName: string): void {
   font-weight: 400;
   line-height: 1;
   color: rgba(255, 255, 255, 1);
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .table-tab :deep(.inner-content) {
@@ -123,5 +155,12 @@ function onTabChange(nextName: string): void {
 
 .table-tab :deep(.filter-tab__item--active) .table-tab__text {
   font-weight: 700;
+}
+
+.table-tab :deep(.filter-tab__item--active) {
+  @include theme-light {
+    border-color: #fff;
+    background: #fff;
+  }
 }
 </style>

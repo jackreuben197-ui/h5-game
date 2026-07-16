@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import type { RechargeGoldData } from '@/api/models/order'
 
 const props = defineProps<{
@@ -58,12 +57,8 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <div
-      class="overlay"
-      :style="{ backgroundImage: `url(${sharpBgUrl})` }"
-      @click.self="emit('close')"
-    >
-      <div class="card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
+    <div class="overlay" @click.self="emit('close')">
+      <div class="card">
         <div class="card__inner">
           <!-- Header -->
           <div class="header">
@@ -122,6 +117,8 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -133,6 +130,12 @@ onUnmounted(() => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+
+  @include theme-light {
+    background-color: var(--c-page);
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .overlay::before {
@@ -143,7 +146,7 @@ onUnmounted(() => {
   pointer-events: none;
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
-  background: rgba(12, 12, 12, 0.60);
+  background: var(--c-overlay);
 }
 
 .card {
@@ -165,6 +168,13 @@ onUnmounted(() => {
   overflow: hidden;
   background-size: cover;
   background-position: center;
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+
+  @include theme-light {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 0.12rem 0.36rem rgba(0, 0, 0, 0.14);
+  }
 }
 
 .card::after {
@@ -181,6 +191,13 @@ onUnmounted(() => {
   -webkit-backdrop-filter: blur(7.580729961395264px);
   pointer-events: none;
   z-index: 1;
+
+  @include theme-light {
+    background: #fff;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .card::before {
@@ -217,7 +234,7 @@ onUnmounted(() => {
 }
 
 .header__title {
-  color: #FFF;
+  color: var(--c-text);
   text-align: center;
   font-family: "HONOR Sans CN";
   font-size: 16px;
@@ -230,7 +247,7 @@ onUnmounted(() => {
 
 .header__info {
   text-align: right;
-  color: #FFF;
+  color: var(--c-text);
   font-family: "HONOR Sans CN";
   font-size: 11px;
   font-weight: 400;
@@ -257,10 +274,14 @@ onUnmounted(() => {
   height: 100%;
   background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
   border-radius: 0;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+  }
 }
 
 .amount-display__value {
-  color: #FFF;
+  color: var(--c-text);
   text-align: center;
   text-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
   font-family: "Keania One", cursive;
@@ -272,7 +293,7 @@ onUnmounted(() => {
 }
 
 .payment-label {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--c-text);
   font-family: "HONOR Sans CN";
   font-size: 16px;
   font-weight: 400;
@@ -313,10 +334,14 @@ onUnmounted(() => {
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+  }
 }
 
 .address-card__title {
-  color: #FFEAEA;
+  color: var(--c-text);
   text-align: right;
   font-family: "SF Pro";
   font-size: 10.908px;
@@ -333,7 +358,7 @@ onUnmounted(() => {
 }
 
 .address-card__label {
-  color: #FFEAEA;
+  color: var(--c-text-muted);
   font-family: "SF Pro";
   font-size: 7px;
   font-weight: 590;
@@ -343,7 +368,7 @@ onUnmounted(() => {
 }
 
 .address-card__value {
-  color: #FFEAEA;
+  color: var(--c-text);
   font-family: "SF Pro";
   font-size: 7px;
   font-weight: 590;
@@ -374,6 +399,12 @@ onUnmounted(() => {
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.1s;
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .copy-btn:active {
@@ -381,7 +412,7 @@ onUnmounted(() => {
 }
 
 .hint {
-  color: #FFF;
+  color: var(--c-text);
   text-align: center;
   font-family: "HONOR Sans CN";
   font-size: 10px;
@@ -429,6 +460,11 @@ onUnmounted(() => {
   background: rgba(0, 0, 0, 0.30);
   backdrop-filter: blur(0.0527px);
   color: #fff;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.16);
+    color: var(--c-text);
+  }
 }
 
 .btn--paying {
@@ -438,6 +474,11 @@ onUnmounted(() => {
   border: 0.5px solid rgba(242, 242, 242, 0.80);
   background: linear-gradient(128deg, #05E7AE 7.55%, #027A5C 71.92%);
   backdrop-filter: blur(0.1583614945411682px);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+  }
 }
 
 .timer {

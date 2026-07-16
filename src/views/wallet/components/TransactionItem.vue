@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import icIncome from '@/assets/icons/wallet/ic_income.svg'
-import icOutcome from '@/assets/icons/wallet/ic_outcome.svg'
-import icTime from '@/assets/icons/wallet/ic_time.svg'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import GlassCard from '@/components/wallet/GlassCard.vue'
 import TagPill from '@/components/wallet/TagPill.vue'
 
@@ -29,10 +27,9 @@ withDefaults(defineProps<Props>(), {
 <template>
   <GlassCard class="tx">
     <div class="tx__head">
-      <img
-        :src="positive ? icIncome : icOutcome"
-        alt=""
-        class="tx__kind-icon"
+      <AppSvgIcon
+        name="wallet-flow"
+        :class="['tx__kind-icon', positive ? 'tx__kind-icon--in' : 'tx__kind-icon--out']"
       />
       <div class="tx__info">
         <TagPill
@@ -66,11 +63,7 @@ withDefaults(defineProps<Props>(), {
     <div class="tx__divider"></div>
     <div class="tx__foot">
       <div class="tx__time">
-        <img
-          :src="icTime"
-          alt=""
-          class="tx__time-icon"
-        />
+        <AppSvgIcon name="clock" class="tx__time-icon" />
         <span>{{ time }}</span>
       </div>
       <div class="tx__chip">
@@ -86,12 +79,18 @@ withDefaults(defineProps<Props>(), {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .tx {
   display: flex;
   flex-direction: column;
   gap: 0.27rem;
   background: rgba(0, 0, 0, 0.14);
   box-shadow: none;
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .tx__head {
@@ -104,6 +103,15 @@ withDefaults(defineProps<Props>(), {
   width: 0.675rem;
   height: 0.675rem;
   flex-shrink: 0;
+}
+
+.tx__kind-icon--in {
+  color: var(--c-brand);
+}
+
+.tx__kind-icon--out {
+  color: var(--wallet-color-danger);
+  transform: rotate(180deg);
 }
 
 .tx__info {
@@ -119,7 +127,7 @@ withDefaults(defineProps<Props>(), {
   font-family: var(--wallet-font-cn);
   font-weight: 600;
   font-size: 0.33rem;
-  color: #fff;
+  color: var(--c-text);
   line-height: 1.4;
 }
 
@@ -133,7 +141,7 @@ withDefaults(defineProps<Props>(), {
   font-family: var(--wallet-font-num);
   font-weight: 600;
   font-size: 0.25rem;
-  color: #fff;
+  color: var(--c-text);
 }
 
 .tx__amount {
@@ -155,7 +163,7 @@ withDefaults(defineProps<Props>(), {
 .tx__divider {
   width: 100%;
   height: 0;
-  border-top: 1px dashed rgba(255, 255, 255, 0.3);
+  border-top: 1px dashed var(--c-divider);
 }
 
 .tx__foot {
@@ -171,7 +179,7 @@ withDefaults(defineProps<Props>(), {
   font-family: var(--wallet-font-cn);
   font-weight: 400;
   font-size: 0.32rem;
-  color: #fff;
+  color: var(--c-text);
   letter-spacing: 0.24px;
   line-height: 0.78;
 }
@@ -191,7 +199,7 @@ withDefaults(defineProps<Props>(), {
   font-family: var(--wallet-font-num);
   font-weight: 600;
   font-size: 0.36rem;
-  color: #f9f9f9;
+  color: var(--c-text);
   line-height: 1.4;
 }
 

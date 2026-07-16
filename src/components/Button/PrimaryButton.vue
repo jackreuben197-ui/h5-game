@@ -39,6 +39,8 @@ function handleClick(event: MouseEvent): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .primary-btn {
   width: 100%;
   height: 1.47rem;
@@ -58,6 +60,11 @@ function handleClick(event: MouseEvent): void {
   /* 内嵌高光边框效果 */
   box-shadow: inset 0.5px 0.5px 0px 0px rgba(242, 242, 242, 0.8),
     inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.5);
+
+  @include theme-light {
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 
   &.primary-btn--no-shadow {
     box-shadow: none;
@@ -79,6 +86,10 @@ function handleClick(event: MouseEvent): void {
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
+
+    @include theme-light {
+      display: none;
+    }
   }
 
   &:active:not(:disabled) {

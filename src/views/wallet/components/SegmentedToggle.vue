@@ -71,6 +71,8 @@ watch(
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .seg {
   position: relative;
   display: flex;
@@ -93,6 +95,10 @@ watch(
     width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
     opacity 0.2s;
   pointer-events: none;
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .seg__tab {
@@ -114,10 +120,18 @@ watch(
   font-weight: 500;
   opacity: 0.7;
   transition: opacity 0.25s ease;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .seg__tab--active .seg__label {
   opacity: 1;
   font-weight: 700;
+
+  @include theme-light {
+    color: var(--c-brand);
+  }
 }
 </style>

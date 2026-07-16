@@ -15,6 +15,12 @@ type AppSvgIconName =
   | 'telegram'
   | 'contact-user'
   | 'customer-service'
+  | 'round-arrow-right'
+  | 'round-chevron-down'
+  | 'wallet-flow'
+  | 'info'
+  | 'edit'
+  | 'chevron-down'
 
 withDefaults(
   defineProps<{
@@ -31,7 +37,11 @@ withDefaults(
   <svg
     class="app-svg-icon"
     :viewBox="
-      name === 'telegram' || name === 'contact-user' || name === 'customer-service'
+      name === 'round-arrow-right' || name === 'round-chevron-down'
+        ? '0 0 18 18'
+        : name === 'wallet-flow'
+        ? '0 0 26 26'
+        : name === 'telegram' || name === 'contact-user' || name === 'customer-service'
         ? '0 0 31 31'
         : '0 0 24 24'
     "
@@ -43,7 +53,63 @@ withDefaults(
   >
     <title v-if="title">{{ title }}</title>
 
-    <template v-if="name === 'search'">
+    <g v-if="name === 'info'" fill="currentColor">
+      <path d="M12 1.5a10.5 10.5 0 1 0 0 21 10.5 10.5 0 0 0 0-21Zm0 5.25a1 1 0 1 1 0 2 1 1 0 0 1 0-2Zm1 10.5h-2v-7h2v7Z" />
+    </g>
+
+    <g
+      v-else-if="name === 'edit'"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.1"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="m14.08 5.63 2.82 2.82M12.2 18.75h7.52M4.68 15l-.94 3.75 3.76-.94L18.37 6.94a1.88 1.88 0 0 0 0-2.66l-.16-.16a1.88 1.88 0 0 0-2.65 0L4.68 15Z" />
+    </g>
+
+    <path
+      v-else-if="name === 'chevron-down'"
+      d="m6 9 6 6 6-6"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.4"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+
+    <g
+      v-else-if="name === 'round-arrow-right'"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linejoin="round"
+    >
+      <path d="M8.969 16.938a7.969 7.969 0 1 0 0-15.938 7.969 7.969 0 0 0 0 15.938Z" />
+      <path d="m7.773 12.555 3.586-3.586-3.586-3.586" stroke-linecap="round" />
+    </g>
+
+    <g v-else-if="name === 'wallet-flow'" fill="currentColor">
+      <path d="M9.385 12.699 7.754 14.328l4.889 4.888 4.888-4.888-1.629-1.629-2.107 2.106V6.122H11.49v8.683l-2.106-2.106Z" />
+      <path
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+        d="M25.346 4.608A4.608 4.608 0 0 0 20.737 0H4.608A4.608 4.608 0 0 0 0 4.608v16.13a4.608 4.608 0 0 0 4.608 4.608h16.13a4.608 4.608 0 0 0 4.608-4.609V4.608Zm-4.609-2.304H4.608a2.304 2.304 0 0 0-2.304 2.304v16.13a2.304 2.304 0 0 0 2.304 2.303h16.13a2.304 2.304 0 0 0 2.303-2.304V4.608a2.304 2.304 0 0 0-2.304-2.304Z"
+      />
+    </g>
+
+    <g
+      v-else-if="name === 'round-chevron-down'"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linejoin="round"
+    >
+      <path d="M1 8.969a7.969 7.969 0 1 0 15.938 0A7.969 7.969 0 0 0 1 8.969Z" />
+      <path d="m5.383 7.773 3.586 3.586 3.586-3.586" stroke-linecap="round" />
+    </g>
+
+    <template v-else-if="name === 'search'">
       <circle cx="10.7" cy="10.7" r="6.7" fill="none" stroke="currentColor" stroke-width="2.2" />
       <path
         d="m15.7 15.7 4.6 4.6"

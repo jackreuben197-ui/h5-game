@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useWalletStore } from '@/stores/wallet'
-import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 
 const props = defineProps<{
   goldCount: number
@@ -35,12 +34,8 @@ const payPrice = computed(() =>
 
 <template>
   <Teleport to="body">
-    <div
-      class="overlay"
-      :style="{ backgroundImage: `url(${sharpBgUrl})` }"
-      @click.self="emit('close')"
-    >
-      <div class="card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
+    <div class="overlay" @click.self="emit('close')">
+      <div class="card">
         <div class="card__inner">
           <!-- Header -->
           <div class="card__header">
@@ -74,6 +69,8 @@ const payPrice = computed(() =>
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -85,6 +82,12 @@ const payPrice = computed(() =>
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+
+  @include theme-light {
+    background-color: var(--c-page);
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .overlay::before {
@@ -95,7 +98,7 @@ const payPrice = computed(() =>
   pointer-events: none;
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
-  background: rgba(12, 12, 12, 0.60);
+  background: var(--c-overlay);
 }
 
 .card {
@@ -115,6 +118,15 @@ const payPrice = computed(() =>
     0 0 8.6px #000 inset,
     2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
   overflow: hidden;
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+  background-size: cover;
+  background-position: center;
+
+  @include theme-light {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 0.12rem 0.36rem rgba(0, 0, 0, 0.14);
+  }
 }
 
 .card::after {
@@ -131,6 +143,13 @@ const payPrice = computed(() =>
   -webkit-backdrop-filter: blur(7.580729961395264px);
   pointer-events: none;
   z-index: 1;
+
+  @include theme-light {
+    background: #fff;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .card::before {
@@ -173,6 +192,12 @@ const payPrice = computed(() =>
   line-height: 78%;
   letter-spacing: 0.32px;
   margin: 0;
+
+  @include theme-light {
+    background: none;
+    -webkit-text-fill-color: var(--c-text);
+    color: var(--c-text);
+  }
 }
 
 .card__header-info {
@@ -183,7 +208,7 @@ const payPrice = computed(() =>
 }
 
 .card__header-info span {
-  color: #fff;
+  color: var(--c-text);
   font-family: var(--wallet-font-cn, "HONOR Sans CN");
   font-size: 11px;
   font-weight: 400;
@@ -194,7 +219,7 @@ const payPrice = computed(() =>
 .card__divider {
   width: 100%;
   height: 1px;
-  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.3) 50%, transparent 50%);
+  background-image: linear-gradient(to right, var(--c-divider) 50%, transparent 50%);
   background-size: 10px 1px;
   margin: 0;
 }
@@ -210,6 +235,10 @@ const payPrice = computed(() =>
   gap: 11.608px;
   margin: 0 -15.399px 0;
   background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+  }
 }
 
 .amount-value {
@@ -230,7 +259,7 @@ const payPrice = computed(() =>
   height: 27px;
   flex-direction: column;
   justify-content: center;
-  color: rgba(255, 255, 255, 1);
+  color: var(--c-text);
   text-align: center;
   font-feature-settings: 'liga' off, 'clig' off;
   font-family: "HONOR Sans CN";
@@ -279,6 +308,11 @@ const payPrice = computed(() =>
   background: var(--secondary-button-fill, rgba(0, 0, 0, 0.30));
   backdrop-filter: blur(0.05274080112576485px);
   border: none;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.16);
+    color: var(--c-text);
+  }
 }
 
 .btn-pay {
@@ -286,6 +320,11 @@ const payPrice = computed(() =>
   box-shadow:
     inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
     inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
+
+  @include theme-light {
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 
   &::before {
     content: '';

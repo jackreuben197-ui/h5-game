@@ -6,12 +6,7 @@ import iconSixPlus from '@/assets/icons/game_type_6+.png'
 import { useRoute, useRouter } from 'vue-router'
 import { postOrgClubGoldApi } from '@/api/org'
 import { useUserInfoStore } from '@/stores/userInfo'
-import mainBgUrl from '@/assets/images/main_bg.webp'
 import { t } from '@/i18n'
-// 主容器背景图：全页面共用一张底图。
-const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
-}))
 
 interface GameTypeItem {
   key: string
@@ -80,7 +75,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell club-table-create-page" :style="backgroundStyle">
+  <div class="page-shell club-table-create-page">
     <HeaderBack :title="t('创建牌桌')" @back="handleBack">
       <template #right>
         <TopActionButton
@@ -123,10 +118,16 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-table-create-page {
   position: relative;
   height: 100dvh;
-  background-size: cover;
+  background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
+
+  @include theme-light {
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .club-table-create-overlay {
@@ -151,6 +152,10 @@ onMounted(() => {
 .title-wrap {
   text-align: center;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .title-wrap h1 {
@@ -173,6 +178,10 @@ onMounted(() => {
   width: 1.455rem;
   height: 0.013rem;
   background: rgba(255, 255, 255, 0.42);
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.18);
+  }
 }
 
 .title-wrap p {
@@ -206,6 +215,15 @@ onMounted(() => {
   gap: 0.18rem;
   color: #fff;
   padding: 0rem 0rem;
+
+  @include theme-light {
+    background: rgba(93, 93, 93, 0.17);
+    background-image: none;
+    border-color: rgba(173, 173, 173, 0.78);
+    box-shadow:
+      inset 0 0 0.03rem rgba(255, 255, 255, 0.5),
+      inset 0.04rem 0.04rem 0.12rem rgba(255, 255, 255, 0.32);
+  }
 }
 
 .type-card-icon {

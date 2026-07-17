@@ -1,5 +1,7 @@
 const DESIGN_WIDTH = 375
-const MAX_WIDTH = Infinity
+// H5 uses a portrait mobile design. The desktop/tablet frame height is capped
+// separately to the iPhone 14 Plus ratio (428:926) in index.html.
+const MAX_WIDTH = 480
 const BASE_REM_AT_DESIGN = 37.5
 const RESTORE_REFRESH_DELAYS = [0, 32, 120, 320]
 

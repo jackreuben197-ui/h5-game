@@ -5,6 +5,13 @@ const log = createLogger('[user-cache]')
 
 export type UserCacheKey = IDBValidKey
 
+// Vue 的 reactive Proxy 过不了 IndexedDB 的结构化克隆（DataCloneError，
+// put 内部只 warn 不抛，会静默写失败）。往 put 传 ref/reactive 里的数据前
+// 先用它深拷成 plain 对象；仅适用于 JSON 安全的数据（本项目缓存均满足）。
+export function toPlain<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
+}
+
 export interface UserCache {
   get<T>(store: UserCacheStoreName, key: UserCacheKey): Promise<T | null>
   getAll<T>(store: UserCacheStoreName, range?: IDBKeyRange): Promise<T[]>

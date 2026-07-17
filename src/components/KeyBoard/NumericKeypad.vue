@@ -173,7 +173,7 @@ function confirm(): void {
         @click.self="cancel"
         @dblclick.prevent
       >
-        <div v-if="showMask || showBackground" class="kp__dim" @click="cancel"></div>
+        <div v-if="showMask" class="kp__dim" @click="cancel"></div>
         <div
           :class="[
             'kp__sheet',

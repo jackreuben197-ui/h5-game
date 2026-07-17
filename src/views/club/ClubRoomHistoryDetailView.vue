@@ -46,6 +46,7 @@ onMounted(() => {
 .club-room-history-detail-bg {
   position: relative;
   height: 100dvh;
+  background-image: var(--club-room-history-detail-bg-dark);
   background-size: cover;
   background-image: var(--history-detail-bg-dark);
 

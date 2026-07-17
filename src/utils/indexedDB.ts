@@ -117,7 +117,7 @@ export async function replacePublicCacheEntries<T>(
 // 新增 store：① 加常量 ② 加进 UserCacheStoreName union 与 USER_CACHE_STORES
 // ③ 把 USER_CACHE_DB_VERSION + 1（旧用户下次 open 会触发 onupgradeneeded 补建 store）。
 const USER_CACHE_DB_PREFIX = 'user_cache_'
-const USER_CACHE_DB_VERSION = 7
+const USER_CACHE_DB_VERSION = 8
 
 export const USER_STORE_CLUB_LIST = 'club_list'
 // 生涯单一 store：战绩(record)与数据(data)合用一个 object store，
@@ -130,6 +130,12 @@ export const USER_STORE_BILL_DATA = 'bill_data'
 // key 形如 `${gameKey}_${modeKey}`，gameKey ∈ {texas, sixplus, omaha}，modeKey ∈ {recent, collected}。
 // 服务端牌谱写入后不再变更，所以二次请求只会增加，不会减少 / 修改，缓存可以放心和服务端结果做并集。
 export const USER_STORE_H5_REPLAY = 'h5_replay'
+// 俱乐部管理（基金管理 / 牌局记录 / 牌局详情）共用 store，key 首段区分业务：
+//   `${clubId}_fund_summary` / `${clubId}_fund_members` / `${clubId}_fund_records_${range}_${type}`
+//   `${clubId}_roomhistory_summary_${currency}` / `${clubId}_roomhistory_list_${currency}`
+//   `${clubId}_roomdetail_${roomId}_${matchId}`
+// 列表类 value 连同 offset/hasMore 一起存，触底加载后回写累计结果（更新而非覆盖）。
+export const USER_STORE_CLUB_MANAGE = 'club_manage'
 
 // cocos 通过 bridge 写入的 store；与 h5 自己的 store 同库不同名，
 // h5 对 bridge 收到的 store 必须做白名单校验，未列入这里的请求一律忽略。
@@ -153,6 +159,7 @@ export type UserCacheStoreName =
   | typeof USER_STORE_CAREER
   | typeof USER_STORE_BILL_DATA
   | typeof USER_STORE_H5_REPLAY
+  | typeof USER_STORE_CLUB_MANAGE
   | CcCacheStoreName
 
 const USER_CACHE_STORES: UserCacheStoreName[] = [
@@ -160,6 +167,7 @@ const USER_CACHE_STORES: UserCacheStoreName[] = [
   USER_STORE_CAREER,
   USER_STORE_BILL_DATA,
   USER_STORE_H5_REPLAY,
+  USER_STORE_CLUB_MANAGE,
   ...CC_CACHE_STORES,
 ]
 

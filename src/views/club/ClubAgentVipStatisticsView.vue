@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { showFailToast } from 'vant'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { getMemberRouteContext } from './clubMemberRoute'
 import { postGuildDataVipInfoApi, postStatsClubDataStatsVipUserApi } from '@/api/stats'
 import { postOrgClubUserInfoApi } from '@/api/org'
@@ -12,8 +13,8 @@ import imgAvatar from '@/assets/images/default_avatar.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgBalance from '@/assets/icons/icon_credit_chip.png'
-import imgCards from '@/assets/icons/icon_cards.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
@@ -45,15 +46,18 @@ const filterTypeOptions = computed(() => [
   { value: 3, label: t('UIGuild_CoinType1') },
 ])
 
+// Player balance and profile from API (same as ClubMemberDetailView)
+const memberProfile = ref<OrgClubUserInfoData | null>(null)
+const loadingProfile = ref(false)
+
 // Profile data
 const displayName = computed(() => context.value.name || t('UIClub_Info_Members'))
 const displayUid = computed(() => context.value.uid || '--')
-const displayAvatar = computed(() => imgAvatar)
+const displayAvatar = computed(() => {
+  const avatar = memberProfile.value?.user_info?.avatar
+  return typeof avatar === 'string' && avatar.trim() ? avatar : imgAvatar
+})
 const badgeLabel = computed(() => t('UIClub_AgentItem'))
-
-// Player balance from API (same as ClubMemberDetailView)
-const memberProfile = ref<OrgClubUserInfoData | null>(null)
-const loadingProfile = ref(false)
 
 const chips = computed(() => {
   const userInfo = memberProfile.value?.user_info as Record<string, unknown> | undefined
@@ -130,7 +134,11 @@ async function fetchVipUserData(): Promise<void> {
   try {
     const response = await postStatsClubDataStatsVipUserApi({ vip_user_id: memberId })
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_Fetch') + "VIP" + t('UIClub_DataFail'))
+      throw new Error(
+        typeof response.msg === 'string'
+          ? response.msg
+          : t('UIClub_Fetch') + 'VIP' + t('UIClub_DataFail'),
+      )
     }
     const info = response.data?.info
     if (info) {
@@ -139,7 +147,8 @@ async function fetchVipUserData(): Promise<void> {
       offlineUsdtTotal.value = Number(info.user_gold_usdt_total ?? 0)
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : t('UIClub_Fetch') + "VIP" + t('UIClub_DataFail')
+    const message =
+      error instanceof Error ? error.message : t('UIClub_Fetch') + 'VIP' + t('UIClub_DataFail')
     showFailToast(message)
   } finally {
     loadingVipUser.value = false
@@ -244,6 +253,13 @@ function switchGameType(type: number): void {
   gameType.value = type
 }
 
+function onAvatarError(event: Event): void {
+  const image = event.currentTarget as HTMLImageElement
+  if (image.dataset.fallbackApplied === 'true') return
+  image.dataset.fallbackApplied = 'true'
+  image.src = imgAvatar
+}
+
 onMounted(() => {
   void Promise.all([fetchPlayerProfile(), fetchVipUserData(), fetchStatsData()])
 })
@@ -254,7 +270,7 @@ onMounted(() => {
     <HeaderBack :title="t('UIClub_AgentData')" />
 
     <section class="glass profile-card">
-      <img class="avatar" :src="displayAvatar" :alt="`${displayName}头像`" />
+      <img class="avatar" :src="displayAvatar" :alt="`${displayName}头像`" @error="onAvatarError" />
       <div class="name-wrap">
         <p class="name">{{ displayName }}</p>
         <span class="uid">ID {{ displayUid }}</span>
@@ -293,11 +309,20 @@ onMounted(() => {
         </button>
       </div>
       <div class="filter-select-wrap">
-        <select :value="filterType" @change="onFilterTypeChange">
+        <select :value="filterType" aria-label="Currency type" @change="onFilterTypeChange">
           <option v-for="opt in filterTypeOptions" :key="opt.value" :value="opt.value">
             {{ opt.label }}
           </option>
         </select>
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path
+            d="m4 6 4 4 4-4"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
       </div>
     </section>
 
@@ -307,8 +332,8 @@ onMounted(() => {
         <template v-for="row in statsRows" :key="row.gameType">
           <article class="glass stat-card">
             <div class="left">
-              <img :src="imgCards" alt="" />
-              {{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}
+              <AppSvgIcon name="agent-stats" class="stat-type-icon" />
+              <span>{{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}</span>
             </div>
             <div class="metric">
               <b>{{ formatCount(row.total.hand_num) }}</b>
@@ -325,8 +350,8 @@ onMounted(() => {
           </article>
           <article class="glass stat-card">
             <div class="left">
-              <img :src="imgCards" alt="" />
-              {{ t('UIClub_GainNum') }}
+              <AppSvgIcon name="agent-stats" class="stat-type-icon" />
+              <span>{{ t('UIClub_GainNum') }}</span>
             </div>
             <div class="metric">
               <b>{{ formatAmount(row.total.profit) }}</b>
@@ -343,8 +368,8 @@ onMounted(() => {
           </article>
           <article class="glass stat-card">
             <div class="left">
-              <img :src="imgCards" alt="" />
-              {{ t('UIMine_WalletPlatform_fee_f') }}
+              <AppSvgIcon name="agent-stats" class="stat-type-icon" />
+              <span>{{ t('UIMine_WalletPlatform_fee_f') }}</span>
             </div>
             <div class="metric">
               <b>{{ formatAmount(row.total.fee) }}</b>
@@ -375,11 +400,12 @@ onMounted(() => {
 
 .sub-bg {
   height: 100dvh;
+  background-image: var(--agent-stats-bg-dark);
   background-size: cover;
   background-image: var(--vip-bg-dark);
 
   @include theme-light {
-    color: #111;
+    background-color: var(--c-page);
     background-image: var(--vip-bg-light);
   }
 }
@@ -395,7 +421,7 @@ onMounted(() => {
 }
 
 .profile-card {
-  min-height: figma-rem(105);
+  min-height: figma-rem(131.07);
   padding: figma-rem(4.751) figma-rem(21.854);
   display: flex;
   align-items: center;
@@ -416,7 +442,7 @@ onMounted(() => {
 .name {
   margin: 0;
   color: #fff;
-  font-size: figma-rem(18.44);
+  font-size: figma-rem(22.445);
   font-weight: 700;
 
   @include theme-light {
@@ -436,14 +462,16 @@ onMounted(() => {
 .badge {
   display: block;
   margin-top: figma-rem(7.601);
-  color: #7ed0ff;
+  color: #fff;
   font-size: figma-rem(10.5);
 }
 
 .coin {
+  display: flex;
+  flex-direction: column;
   color: #f9f9f9;
-  align-items: center;
-  gap: figma-rem(5.07);
+  align-items: flex-end;
+  gap: figma-rem(1.584);
   font-size: figma-rem(14.886);
   font-weight: 700;
 
@@ -453,9 +481,9 @@ onMounted(() => {
 }
 
 .coin div {
-  display: block;
-  clear: both;
-  float: right;
+  display: flex;
+  align-items: center;
+  gap: figma-rem(5.07);
 }
 
 .coin-icon {
@@ -474,7 +502,8 @@ onMounted(() => {
   justify-content: space-between;
   align-items: flex-end;
   color: #fff;
-  font-size: figma-rem(15.203);
+  margin-top: figma-rem(11.719);
+  font-size: figma-rem(14.247);
 
   @include theme-light {
     color: #111;
@@ -487,10 +516,10 @@ onMounted(() => {
 
   div {
     p {
-      font-size: figma-rem(18);
+      font-size: figma-rem(14.247);
     }
     strong {
-      font-size: figma-rem(16);
+      font-size: figma-rem(16.034);
     }
   }
 }
@@ -500,13 +529,14 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: figma-rem(8);
+  gap: figma-rem(8.865);
+  margin-top: figma-rem(11.719);
 }
 
 .tabs-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: figma-rem(2);
+  gap: 0;
   flex: 1;
   min-height: figma-rem(54.16);
   background: rgba(255, 255, 255, 0.16);
@@ -542,17 +572,28 @@ onMounted(() => {
 }
 
 .filter-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
   flex-shrink: 0;
+  color: #fff;
+
+  svg {
+    position: absolute;
+    right: 0;
+    width: figma-rem(15.196);
+    height: figma-rem(15.196);
+    pointer-events: none;
+  }
 }
 
 .filter-select-wrap select {
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: figma-rem(51.915);
+  border: 0;
+  background: transparent;
   color: #fff;
-  font-size: figma-rem(12);
-  padding: figma-rem(4) figma-rem(10);
-  min-width: figma-rem(70);
+  font-size: figma-rem(13.297);
+  padding: 0 figma-rem(18) 0 0;
+  width: figma-rem(64);
   outline: none;
   appearance: none;
   -webkit-appearance: none;
@@ -582,7 +623,8 @@ onMounted(() => {
 .cards {
   display: flex;
   flex-direction: column;
-  gap: figma-rem(2.534);
+  gap: figma-rem(5.699);
+  margin-top: figma-rem(11.719);
 }
 
 .stats-loading {
@@ -597,30 +639,43 @@ onMounted(() => {
 }
 
 .stat-card {
-  min-height: figma-rem(23.121);
-  padding: figma-rem(10) figma-rem(16.47);
+  min-height: figma-rem(72.816);
+  padding: figma-rem(8) figma-rem(16.873) figma-rem(8) figma-rem(19.144);
   display: grid;
-  grid-template-columns: 1fr repeat(3, 1fr);
+  grid-template-columns: 20% 30% 25% 25%;
   align-items: center;
-  gap: figma-rem(8);
-  margin-top: figma-rem(11.72);
+  gap: 0;
+  margin-top: 0;
 }
 
 .left {
   color: #fff;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: figma-rem(5.07);
-  font-size: figma-rem(11.402);
+  justify-content: center;
+  gap: figma-rem(4);
+  font-size: figma-rem(10.131);
 
   @include theme-light {
     color: #111;
+  }
+  opacity: 0.92;
+
+  span {
+    opacity: 0.62;
   }
 
   img {
     width: figma-rem(18);
     height: figma-rem(18);
   }
+}
+
+.left .stat-type-icon {
+  width: figma-rem(37);
+  height: figma-rem(29);
+  color: var(--c-brand);
 }
 
 .metric {
@@ -634,12 +689,62 @@ onMounted(() => {
   }
 
   b {
-    font-size: figma-rem(14);
+    font-size: figma-rem(15);
+    line-height: 1.02;
+    font-weight: 400;
   }
 
   span {
-    font-size: figma-rem(10);
-    opacity: 0.88;
+    font-size: figma-rem(10.131);
+    opacity: 0.5;
+  }
+}
+
+.sub-bg {
+  @include theme-light {
+    .glass {
+      background: #fff;
+      backdrop-filter: none;
+    }
+
+    .name,
+    .uid,
+    .badge,
+    .coin,
+    .offline-head,
+    .tabs-row button,
+    .filter-select-wrap,
+    .filter-select-wrap select,
+    .left,
+    .metric {
+      color: #000;
+    }
+
+    .uid {
+      color: rgba(0, 0, 0, 0.8);
+    }
+
+    .badge {
+      color: #000;
+    }
+
+    .tabs-row {
+      background: #e3e3e3;
+    }
+
+    .tabs-row button.active {
+      border-color: #fff;
+      background: #fff;
+    }
+
+    .filter-select-wrap select option {
+      background: #fff;
+      color: #000;
+    }
+
+    .stats-loading {
+      color: rgba(0, 0, 0, 0.62);
+    }
   }
 }
 </style>

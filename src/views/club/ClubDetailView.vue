@@ -13,6 +13,7 @@ import {
   postOrgTribeInfoByClubApi,
   postOrgClubApplyTribeListApi,
   postOrgClubCancleJoinTribeApi,
+  postOrgMemberListApi,
 } from '@/api/org'
 import type {
   OrgChangeClubDataRequest,
@@ -22,7 +23,6 @@ import type {
 import imgClubCover from '@/assets/images/default_avatar.png'
 import imgBalance from '@/assets/icons/icon_credit_chip.png'
 import imgChips from '@/assets/icons/icon_chips.png'
-import imgPeople from '@/assets/icons/icon_people.png'
 import imgQuickSafety from '@/assets/images/club_quick_activity.png'
 import imgQuickRanking from '@/assets/images/club_quick_room_history.png'
 import imgQuickFund from '@/assets/images/club_quick_fund.png'
@@ -73,6 +73,7 @@ const imgInviteQr = ref('')
 
 const loading = ref(false)
 const clubDetail = ref<OrgClubSearchByIdResponseData | null>(null)
+const authoritativeMemberTotal = ref<number | null>(null)
 
 // 用户等级：0 普通，1 会长，2 副会长，3 管理员，4 代理。
 const userLevel = computed(() =>
@@ -85,6 +86,9 @@ const isAgent = computed(() => userLevel.value === 4)
 const canManageClub = computed(() => isFounder.value || isVicePresident.value || isAdmin.value)
 
 const displayClub = computed(() => clubDetail.value ?? userInfoStore.currentClub)
+const clubMemberCount = computed(
+  () => authoritativeMemberTotal.value ?? toSafeNumber(displayClub.value?.club_members),
+)
 const cachedClub = computed(() => userInfoStore.currentClub)
 const currentClubGold = computed(() => Number(cachedClub.value?.user_gold ?? 0))
 const currentClubCredit = computed(() => Number(cachedClub.value?.user_credit ?? 0))
@@ -490,6 +494,36 @@ function syncCurrentClubFields(fields: Partial<OrgClubData>): void {
   }
 }
 
+async function fetchClubMemberTotal(): Promise<void> {
+  const currentClub = displayClub.value
+  if (!currentClub?.club_id && !currentClub?.random_id) {
+    return
+  }
+
+  try {
+    const response = await postOrgMemberListApi({
+      club_id: currentClub.club_id,
+      club_random_id: currentClub.random_id,
+      search: '',
+      sort_type: 8,
+      order_type: 2,
+      gold_type: 1,
+      simple: false,
+      hide_slave: true,
+      limit: 1,
+      offset: 0,
+    })
+    const total = Number(response.data?.total)
+    if (response.code === 0 && Number.isFinite(total) && total >= 0) {
+      authoritativeMemberTotal.value = total
+      syncCurrentClubFields({ club_members: total })
+    }
+  } catch (error) {
+    // 人数接口失败时继续使用俱乐部详情中的缓存值，不影响详情页加载。
+    console.error('fetchClubMemberTotal error', error)
+  }
+}
+
 async function submitClubDataPatch(payload: Partial<OrgChangeClubDataRequest>): Promise<void> {
   if (!isFounder.value) {
     throw new Error(t('UIClub_FounderCan'))
@@ -523,7 +557,7 @@ async function refreshClubDetail(): Promise<void> {
   clubDetail.value = currentClub
   clubAvatarUrl.value = currentClub.logo || ''
   updateSwitchesByClubData(currentClub)
-  await fetchClubTribeApplyStatus()
+  await Promise.all([fetchClubTribeApplyStatus(), fetchClubMemberTotal()])
 
   loading.value = true
   try {
@@ -538,7 +572,12 @@ async function refreshClubDetail(): Promise<void> {
 
     clubDetail.value = response.data
     userInfoStore.setCurrentClub(response.data)
-    // userInfoStore.syncCurrentClubFields(response.data)
+    // setCurrentClub 只切换 currentClubId，不会把详情接口的新字段写回 clubList。
+    // 显式同步后，基金页读取到的 upper_limit 才会与详情页一致。
+    syncCurrentClubFields(response.data)
+    if (authoritativeMemberTotal.value !== null) {
+      syncCurrentClubFields({ club_members: authoritativeMemberTotal.value })
+    }
     clubAvatarUrl.value = response.data.logo || ''
     updateSwitchesByClubData(response.data)
     await fetchClubTribeApplyStatus()
@@ -971,10 +1010,13 @@ onMounted(async () => {
         </div>
 
         <div class="club-size-pill" aria-label="俱乐部人数">
-          <span class="size-text">
-            {{ displayClub?.club_members }}/{{ displayClub?.upper_limit }}
-          </span>
-          <img :src="imgPeople" alt="" aria-hidden="true" />
+          <span class="size-text"> {{ clubMemberCount }}/{{ displayClub?.upper_limit }} </span>
+          <svg class="club-size-icon" viewBox="0 0 17 13" role="img" aria-label="俱乐部成员">
+            <path
+              d="M8.5 0c1.525 0 2.763 1.306 2.763 2.914S10.025 5.828 8.5 5.828 5.738 4.522 5.738 2.914 6.975 0 8.5 0ZM2.55 2.017c1.057 0 1.913.902 1.913 2.017S3.607 6.052 2.55 6.052.638 5.15.638 4.034s.855-2.017 1.912-2.017ZM0 11.207c0-1.981 1.522-3.586 3.4-3.586.34 0 .67.053.98.151-.874 1.031-1.405 2.392-1.405 3.883v.448c0 .32.064.622.178.897H.85a.87.87 0 0 1-.85-.897v-.896ZM13.847 13c.114-.275.178-.578.178-.897v-.448c0-1.49-.531-2.852-1.405-3.883.31-.098.64-.151.98-.151 1.878 0 3.4 1.605 3.4 3.586v.896a.87.87 0 0 1-.85.897h-2.303Zm-1.31-8.966c0-1.115.856-2.017 1.913-2.017s1.913.902 1.913 2.017-.856 2.018-1.913 2.018-1.913-.902-1.913-2.018ZM4.25 11.655c0-2.477 1.902-4.483 4.25-4.483s4.25 2.006 4.25 4.483v.448a.87.87 0 0 1-.85.897H5.1a.87.87 0 0 1-.85-.897v-.448Z"
+              fill="currentColor"
+            />
+          </svg>
         </div>
       </section>
 
@@ -1794,11 +1836,19 @@ onMounted(async () => {
   background: rgba(255, 255, 255, 0.22);
   display: inline-flex;
   align-items: center;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.34);
+  }
 }
 
 .switch--on {
   justify-content: flex-end;
   background: var(--c-brand);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .switch:not(.switch--on) {
@@ -1839,7 +1889,7 @@ onMounted(async () => {
 
 .danger-zone {
   margin-top: 0.40524rem;
-  padding: 0 0.64108rem 0.24rem;
+  padding: 0 0.34108rem 0.24rem;
 }
 
 .danger-btn {

@@ -9,6 +9,7 @@ import {
 } from '@/api/org'
 import type { ClubAgentUserListRecord, OrgMemberListRecord } from '@/api/models/org'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import imgChips from '@/assets/icons/icon_chips.png'
@@ -16,6 +17,7 @@ import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgBalance from '@/assets/icons/icon_credit_chip.png'
 import imgSearch from '@/assets/icons/club_search.svg'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { formatUC } from '@/utils/roomVisibility'
 import { t } from '@/i18n'
@@ -306,10 +308,16 @@ onMounted(() => {
         >
           <button
             v-if="listMode === 'edit'"
-            class="check"
-            :class="{ on: isChecked(row.userId) }"
+            type="button"
+            class="check-control"
+            :aria-label="row.name"
             @click="toggleChecked(row.userId)"
-          ></button>
+          >
+            <span
+              :class="['radio-circle', { 'radio-circle--checked': isChecked(row.userId) }]"
+              aria-hidden="true"
+            ></span>
+          </button>
           <div class="glass card" :class="{ 'card-check': listMode === 'edit' }">
             <div class="member-main">
               <div class="member-left">
@@ -357,9 +365,14 @@ onMounted(() => {
         <p v-else-if="!displayedRows.length" class="status">{{ t('UIClub_NoMemberData') }}</p>
       </section>
 
-      <button v-if="listMode === 'edit'" class="save" :disabled="saving" @click="onSave">
-        {{ t('Save') }}
-      </button>
+      <PrimaryButton
+        v-if="listMode === 'edit'"
+        class="save"
+        :text="t('Save')"
+        :disabled="saving"
+        :loading="saving"
+        @click="onSave"
+      />
     </div>
   </div>
 </template>
@@ -374,6 +387,7 @@ onMounted(() => {
 
 .sub-bg {
   height: 100dvh;
+  background-image: var(--offline-players-bg-dark);
   background-size: cover;
   background-image: var(--offline-bg-dark);
 
@@ -387,21 +401,22 @@ onMounted(() => {
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  gap: figma-rem(7.282);
+  gap: figma-rem(12.952);
 }
 
 .tabs {
   margin-top: figma-rem(2);
+  min-height: figma-rem(25.562);
   display: flex;
   justify-content: center;
-  gap: figma-rem(24.051);
+  gap: figma-rem(60.241);
 }
 
 .tabs button {
   border: 0;
   background: transparent;
   color: rgba(255, 255, 255, 0.75);
-  font-size: figma-rem(17.742);
+  font-size: figma-rem(13.886);
 
   @include theme-light {
     color: rgba(17, 17, 17, 0.64);
@@ -429,11 +444,11 @@ onMounted(() => {
 }
 
 .search {
-  min-height: 1.06827rem;
+  min-height: figma-rem(40.06);
   display: flex;
   align-items: center;
   gap: figma-rem(8.64);
-  padding: 0 figma-rem(13.613);
+  padding: 0 figma-rem(16.786);
 
   @include theme-light {
     background: #dadada;
@@ -441,8 +456,8 @@ onMounted(() => {
 }
 
 .search-icon {
-  width: figma-rem(16.2);
-  height: figma-rem(16.2);
+  width: figma-rem(21.961);
+  height: figma-rem(21.53);
 
   @include theme-light {
     filter: brightness(0);
@@ -455,7 +470,7 @@ onMounted(() => {
   outline: none;
   background: transparent;
   color: #fff;
-  font-size: figma-rem(17.742);
+  font-size: figma-rem(15.502);
 
   @include theme-light {
     color: #111;
@@ -475,7 +490,16 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   color: #fff;
-  font-size: figma-rem(10.135);
+  font-size: figma-rem(15.196);
+}
+
+.toggle-row > span {
+  min-width: figma-rem(182);
+}
+
+.toggle-row label {
+  display: inline-flex;
+  align-items: center;
 
   @include theme-light {
     color: #111;
@@ -483,14 +507,14 @@ onMounted(() => {
 }
 
 .hidden-text {
-  float: left;
-  padding-right: 0.1rem;
+  padding-right: figma-rem(8);
   line-height: figma-rem(18.5);
+  font-size: figma-rem(10.2);
 }
 
 .switch {
-  width: figma-rem(33);
-  height: figma-rem(18.5);
+  width: figma-rem(44.948);
+  height: figma-rem(21.178);
   border: 0;
   border-radius: figma-rem(20);
   background: rgba(255, 255, 255, 0.22);
@@ -505,15 +529,15 @@ onMounted(() => {
 
 .switch i {
   display: block;
-  width: figma-rem(16);
-  height: figma-rem(16);
+  width: figma-rem(19);
+  height: figma-rem(19);
   border-radius: 50%;
   background: #fff;
 }
 
 .switch.on {
   justify-content: flex-end;
-  background: #25dbc4;
+  background: var(--c-brand);
 
   @include theme-light {
     background: var(--c-brand);
@@ -523,24 +547,23 @@ onMounted(() => {
 .cards {
   display: flex;
   flex-direction: column;
-  gap: figma-rem(7.282);
+  gap: figma-rem(8);
 }
 
 .card {
-  min-height: figma-rem(77.882);
-  padding: 0.2rem 0.36rem;
+  min-height: figma-rem(92);
+  padding: figma-rem(8) figma-rem(16);
   align-items: center;
   gap: figma-rem(8.64);
-  clear: right;
-  float: right;
-  min-width: 100%;
-  &.card-check {
-    min-width: 90%;
-  }
+  width: 100%;
+  min-width: 0;
 }
 
 .member-card {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: figma-rem(9);
 }
 
 .member-main {
@@ -617,15 +640,16 @@ onMounted(() => {
   }
 }
 
-.check {
-  width: figma-rem(17);
-  height: figma-rem(17);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
+.check-control {
+  width: figma-rem(18);
+  height: figma-rem(18);
+  padding: 0;
+  border: 0;
   background: transparent;
   flex: 0 0 auto;
-  float: left;
-  margin-top: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   @include theme-light {
     border-color: #c7c7c7;
@@ -791,5 +815,68 @@ onMounted(() => {
 .data-value {
   font-weight: 500;
   white-space: nowrap;
+}
+
+.sub-bg {
+  @include theme-light {
+    .tabs button {
+      color: rgba(0, 0, 0, 0.7);
+    }
+
+    .tabs .active {
+      color: var(--c-brand);
+      border-color: var(--c-brand);
+    }
+
+    .search {
+      background: #dadada;
+      backdrop-filter: none;
+    }
+
+    .search-input,
+    .toggle-row,
+    .member-name,
+    .member-id-row,
+    .data-label,
+    .data-value {
+      color: #000;
+    }
+
+    .search-input::placeholder {
+      color: rgba(0, 0, 0, 0.82);
+    }
+
+    .switch {
+      background: rgba(46, 46, 46, 0.17);
+    }
+
+    .switch.on {
+      background: var(--c-brand);
+    }
+
+    .card {
+      background: #fff;
+      backdrop-filter: none;
+    }
+
+    .id-pill {
+      background: rgba(79, 79, 79, 0.4);
+      color: #fff;
+    }
+
+    .member-data-strip {
+      background: #dadada;
+      backdrop-filter: none;
+    }
+
+    .check-control .radio-circle {
+      border-color: rgba(34, 34, 34, 0.24);
+      box-shadow: none;
+    }
+
+    .status {
+      color: rgba(0, 0, 0, 0.62);
+    }
+  }
 }
 </style>

@@ -478,6 +478,31 @@
           return Math.max(minTopGuard, contentTop)
         }
 
+        /**
+         * 检测软键盘是否弹出（用于守卫 applySafeAreaToCss，避免键盘引起的 viewport 变化
+         * 误触发 CSS 变量更新 → #app padding 重排 → CC canvas 渲染抖动/变形）。
+         * 3 路判断 fallback，任一命中即认为键盘弹出：
+         * (a) Telegram SDK viewportStableHeight - viewportHeight > 50px（最准，Telegram 专属）
+         * (b) visualViewport.height / innerHeight < 0.75（W3C 标准，最准）
+         * (c) innerHeight / screen.height < 0.6（兜底）
+         * 阈值与 CC 层 OrientationComponent.isKeyboardLikelyOpen 保持一致（已生产验证）
+         */
+        function isKeyboardOpen(tg) {
+          if (tg && tg.viewportHeight != null && tg.viewportStableHeight != null
+              && tg.viewportStableHeight - tg.viewportHeight > 50) {
+            return true
+          }
+          var vv = window.visualViewport
+          if (vv && window.innerHeight > 0 && vv.height / window.innerHeight < 0.75) {
+            return true
+          }
+          if (window.screen && window.screen.height > 0
+              && window.innerHeight / window.screen.height < 0.6) {
+            return true
+          }
+          return false
+        }
+
         function applySafeAreaToCss(tg) {
           // ⚠️ Telegram 键盘守卫：键盘弹出时跳过，避免 CSS 变量更新引发 #app padding 重排
           // （iOS Telegram 上实测：键盘弹出会触发 viewportChanged → 调用本函数 → 画面变形）
@@ -534,29 +559,13 @@
           }
 
           var refresh = function () {
-            refreshTelegramSafeArea(tg)
+            applySafeAreaToCss(tg)
           }
 
           tg.onEvent('safeAreaChanged', refresh)
           tg.onEvent('contentSafeAreaChanged', refresh)
           tg.onEvent('viewportChanged', refresh)
           tg.onEvent('fullscreenChanged', refresh)
-        }
-
-        function isKeyboardOpen(tg) {
-          if (tg && tg.viewportHeight != null && tg.viewportStableHeight != null
-              && tg.viewportStableHeight - tg.viewportHeight > 50) {
-            return true
-          }
-          var vv = window.visualViewport
-          if (vv && window.innerHeight > 0 && vv.height / window.innerHeight < 0.75) {
-            return true
-          }
-          if (window.screen && window.screen.height > 0
-              && window.innerHeight / window.screen.height < 0.6) {
-            return true
-          }
-          return false
         }
 
         /**

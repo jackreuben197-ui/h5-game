@@ -8,6 +8,9 @@ import {
   postFriendRoomStatsDataDetailInfoApi,
 } from '@/api/stats'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useGameStore } from '@/stores/game'
+import { USER_STORE_CLUB_MANAGE } from '@/utils/indexedDB'
+import { toPlain, userCache } from '@/utils/userCache'
 import { formatUC } from '@/utils/roomVisibility'
 
 type Source = 'club' | 'friend'
@@ -49,10 +52,27 @@ interface DetailInfo {
 }
 
 const userInfoStore = useUserInfoStore()
+const gameStore = useGameStore()
 
 const loading = ref(false)
 const detailInfo = ref<DetailInfo>(buildEmptyDetailInfo())
 const records = ref<PlayerRecord[]>([])
+
+// club_manage 缓存：俱乐部牌局详情二次打开先渲染上次结果，再静默刷新覆盖
+//（key 约定见 utils/indexedDB.ts）；朋友桌详情不属于俱乐部管理，不缓存。
+interface CachedDetail {
+  info: DetailInfo
+  records: PlayerRecord[]
+}
+
+function clubManageCache() {
+  return userCache(gameStore.loginUserId)
+}
+
+function detailCacheKey(): string {
+  const clubId = toSafeNumber(userInfoStore.currentClub?.club_id)
+  return `${clubId}_roomdetail_${props.roomId || 0}_${props.matchId || 0}`
+}
 
 const tableHeaders = ['User', '赢', '服务费', '保险', '买入', '手数', 'JP']
 
@@ -160,6 +180,7 @@ function mapPlayerRecord(item: unknown, index: number): PlayerRecord {
 }
 
 async function fetchClubDetail(): Promise<void> {
+  const cacheKey = detailCacheKey()
   const slaveClubId = toSafeNumber(userInfoStore.currentClub?.club_id) || undefined
   const [infoRes, listRes] = await Promise.all([
     postClubDataStatsDataDetailInfoApi({
@@ -185,6 +206,11 @@ async function fetchClubDetail(): Promise<void> {
     throw new Error(typeof listRes.msg === 'string' ? listRes.msg : '加载详情列表失败')
   }
 
+  // 响应回来时 props 已切换 → 丢弃，避免旧房间数据覆盖新房间的展示与缓存。
+  if (cacheKey !== detailCacheKey()) {
+    return
+  }
+
   detailInfo.value = mapDetailInfo(infoRes.data?.info)
 
   const list = Array.isArray(listRes.data?.list) ? listRes.data.list : []
@@ -195,6 +221,15 @@ async function fetchClubDetail(): Promise<void> {
   if (jackpot > 0) {
     detailInfo.value = { ...detailInfo.value, jackpot: formatNumber(jackpot) }
   }
+
+  void clubManageCache().put(
+    USER_STORE_CLUB_MANAGE,
+    cacheKey,
+    toPlain({
+      info: detailInfo.value,
+      records: records.value,
+    } satisfies CachedDetail),
+  )
 }
 
 async function fetchFriendDetail(): Promise<void> {
@@ -225,7 +260,22 @@ async function loadDetail(): Promise<void> {
   if (!props.roomId && !props.matchId) {
     return
   }
-  loading.value = true
+
+  // 命中缓存 → 先渲染再静默刷新，不再展示 loading；未命中走原 loading 流程。
+  let silent = false
+  if (props.source === 'club') {
+    const cacheKey = detailCacheKey()
+    const cached = await clubManageCache().get<CachedDetail>(USER_STORE_CLUB_MANAGE, cacheKey)
+    if (cached && cacheKey === detailCacheKey()) {
+      detailInfo.value = cached.info
+      records.value = cached.records
+      silent = true
+    }
+  }
+
+  if (!silent) {
+    loading.value = true
+  }
   try {
     if (props.source === 'club') {
       await fetchClubDetail()
@@ -233,10 +283,14 @@ async function loadDetail(): Promise<void> {
       await fetchFriendDetail()
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加载数据详情失败'
-    showFailToast(message)
+    if (!silent) {
+      const message = error instanceof Error ? error.message : '加载数据详情失败'
+      showFailToast(message)
+    }
   } finally {
-    loading.value = false
+    if (!silent) {
+      loading.value = false
+    }
   }
 }
 

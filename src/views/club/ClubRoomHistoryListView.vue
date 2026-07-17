@@ -8,6 +8,9 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import DateRangePicker from '@/components/DateRangePicker/DateRangePicker.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useGameStore } from '@/stores/game'
+import { USER_STORE_CLUB_MANAGE } from '@/utils/indexedDB'
+import { toPlain, userCache } from '@/utils/userCache'
 import imgClock from '@/assets/icons/icon_time.png'
 import { t } from '@/i18n'
 import { formatDateTime } from '@/utils/time'
@@ -52,6 +55,7 @@ interface StatsSummary {
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
+const gameStore = useGameStore()
 
 const activeCurrency = ref<CurrencyTab>(1)
 
@@ -72,6 +76,31 @@ const summary = ref<StatsSummary>({
 })
 
 const PAGE_SIZE = 20
+
+// club_manage 缓存：二次进入先渲染上次查询结果，再静默刷新覆盖（key 约定见 utils/indexedDB.ts）。
+interface CachedHistoryList {
+  items: RoomHistoryItem[]
+  offset: number
+  hasMore: boolean
+}
+
+// 静默刷新在飞标记：期间列表展示的是缓存、listOffset 还未重算，须挡住触底加载防止重复拼页。
+let silentListRefreshing = false
+
+function clubManageCache() {
+  return userCache(gameStore.loginUserId)
+}
+
+function summaryCacheKey(): string {
+  const clubId = toSafeNumber(userInfoStore.currentClub?.club_id)
+  return `${clubId}_roomhistory_summary_${activeCurrency.value}`
+}
+
+function listCacheKey(): string {
+  const clubId = toSafeNumber(userInfoStore.currentClub?.club_id)
+  return `${clubId}_roomhistory_list_${activeCurrency.value}`
+}
+
 const now = new Date()
 const maxSelectableDate = endOfDay(now)
 const minSelectableDate = startOfDay(addMonths(now, -3))
@@ -230,10 +259,11 @@ function mapHistoryItem(record: ClubDataStatsDataRecord, index: number): RoomHis
   }
 }
 
-async function fetchSummary(): Promise<void> {
+async function fetchSummary(silent = false): Promise<void> {
   const clubId = toSafeNumber(userInfoStore.currentClub?.club_id)
   const startTime = parseTimestampMillSeconds(startDate.value, false)
   const endTime = parseTimestampMillSeconds(endDate.value, true)
+  const cacheKey = summaryCacheKey()
 
   try {
     const response = await postClubDataStatsDataInfoApi({
@@ -247,8 +277,13 @@ async function fetchSummary(): Promise<void> {
       throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail'))
     }
 
+    // 响应回来时已切换币种 → 丢弃，避免覆盖新页签的数据/缓存。
+    if (cacheKey !== summaryCacheKey()) {
+      return
+    }
+
     const info = response.data.info
-    summary.value = {
+    const next: StatsSummary = {
       totalProfit: toSafeNumber(info.club_total_profit),
       gameCount: toSafeNumber(info.game_num),
       handCount: toSafeNumber(info.hand_num),
@@ -257,7 +292,13 @@ async function fetchSummary(): Promise<void> {
       insurance: toSafeNumber(info.insurence),
       miniGame: toSafeNumber(info.mini_game),
     }
+    summary.value = next
+    void clubManageCache().put(USER_STORE_CLUB_MANAGE, cacheKey, next)
   } catch (error) {
+    // 静默刷新失败保留缓存展示，不打断用户。
+    if (silent || cacheKey !== summaryCacheKey()) {
+      return
+    }
     summary.value = {
       totalProfit: 0,
       gameCount: 0,
@@ -272,8 +313,8 @@ async function fetchSummary(): Promise<void> {
   }
 }
 
-async function fetchHistory(reset = false): Promise<void> {
-  if (loading.value || loadingMore.value) {
+async function fetchHistory(reset = false, silent = false): Promise<void> {
+  if (loading.value || loadingMore.value || silentListRefreshing) {
     return
   }
 
@@ -282,15 +323,21 @@ async function fetchHistory(reset = false): Promise<void> {
   }
 
   if (reset) {
-    loading.value = true
-    hasMore.value = true
-    listOffset.value = 0
+    // 静默刷新期间缓存仍在展示，offset/hasMore 等成功后一并重算。
+    if (silent) {
+      silentListRefreshing = true
+    } else {
+      loading.value = true
+      hasMore.value = true
+      listOffset.value = 0
+    }
   } else {
     loadingMore.value = true
   }
 
   const startTime = parseTimestampMillSeconds(startDate.value, false)
   const endTime = parseTimestampMillSeconds(endDate.value, true)
+  const cacheKey = listCacheKey()
 
   try {
     const currentOffset = reset ? 0 : listOffset.value
@@ -308,13 +355,31 @@ async function fetchHistory(reset = false): Promise<void> {
       )
     }
 
+    // 响应回来时已切换币种 → 丢弃，避免覆盖新页签的数据/缓存。
+    if (cacheKey !== listCacheKey()) {
+      return
+    }
+
     const rows = Array.isArray(response.data?.list) ? response.data.list : []
     const mapped = rows.map((item, index) => mapHistoryItem(item, currentOffset + index + 1))
 
     historyList.value = reset ? mapped : [...historyList.value, ...mapped]
     listOffset.value = currentOffset + rows.length
     hasMore.value = rows.length >= PAGE_SIZE
+    // 触底加载写回的是累计后的完整列表（更新而非覆盖）。
+    void clubManageCache().put(
+      USER_STORE_CLUB_MANAGE,
+      cacheKey,
+      toPlain({
+        items: historyList.value,
+        offset: listOffset.value,
+        hasMore: hasMore.value,
+      } satisfies CachedHistoryList),
+    )
   } catch (error) {
+    if (silent) {
+      return
+    }
     if (reset) {
       historyList.value = []
       hasMore.value = false
@@ -323,19 +388,47 @@ async function fetchHistory(reset = false): Promise<void> {
     showFailToast(message)
   } finally {
     if (reset) {
-      loading.value = false
+      if (silent) {
+        silentListRefreshing = false
+      } else {
+        loading.value = false
+      }
     } else {
       loadingMore.value = false
     }
   }
 }
 
-async function refreshData(): Promise<void> {
-  await Promise.all([fetchSummary(), fetchHistory(true)])
+async function refreshData(silent = false): Promise<void> {
+  await Promise.all([fetchSummary(silent), fetchHistory(true, silent)])
+}
+
+async function restoreFromCache(): Promise<boolean> {
+  const [cachedSummary, cachedList] = await Promise.all([
+    clubManageCache().get<StatsSummary>(USER_STORE_CLUB_MANAGE, summaryCacheKey()),
+    clubManageCache().get<CachedHistoryList>(USER_STORE_CLUB_MANAGE, listCacheKey()),
+  ])
+
+  if (cachedSummary) {
+    summary.value = cachedSummary
+  }
+  if (cachedList?.items?.length) {
+    historyList.value = cachedList.items
+    listOffset.value = cachedList.offset
+    hasMore.value = cachedList.hasMore
+  }
+
+  return Boolean(cachedSummary || cachedList?.items?.length)
+}
+
+// 命中缓存 → 先渲染再静默刷新；未命中 → 正常 loading 拉取。
+async function loadWithCache(): Promise<void> {
+  const hit = await restoreFromCache()
+  await refreshData(hit)
 }
 
 function onPageScroll(event: Event): void {
-  if (loading.value || loadingMore.value || !hasMore.value) {
+  if (loading.value || loadingMore.value || silentListRefreshing || !hasMore.value) {
     return
   }
 
@@ -356,7 +449,7 @@ function selectCurrency(tab: CurrencyTab): void {
   }
 
   activeCurrency.value = tab
-  void refreshData()
+  void loadWithCache()
 }
 
 function openDatePicker(target: PickTarget): void {
@@ -383,7 +476,7 @@ function toDetail(item: RoomHistoryItem): void {
 }
 
 onMounted(() => {
-  void refreshData()
+  void loadWithCache()
 })
 </script>
 

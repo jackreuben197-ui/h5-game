@@ -25,6 +25,9 @@ import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgBalance from '@/assets/icons/icon_credit_chip.png'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useGameStore } from '@/stores/game'
+import { USER_STORE_CLUB_MANAGE } from '@/utils/indexedDB'
+import { toPlain, userCache } from '@/utils/userCache'
 import { t } from '@/i18n'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
@@ -101,12 +104,12 @@ interface RecordTypeOption {
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
+const gameStore = useGameStore()
 const activeTab = ref<TabKey>('account')
 const searchKeyword = ref('')
 const activeRange = ref<RecordRangeKey>('today')
 const selectedRecordType = ref('all')
 const showTypeMenu = ref(false)
-const pageRef = ref<HTMLElement | null>(null)
 const recordListRef = ref<HTMLElement | null>(null)
 const showFundSheet = ref(false)
 const activeMember = ref<MemberItem | null>(null)
@@ -139,6 +142,51 @@ const changeAmountTotal = ref(0)
 const submittingFund = ref(false)
 
 const PAGE_SIZE = 20
+
+// club_manage 缓存：二次进入先渲染上次结果，再静默刷新覆盖（key 约定见 utils/indexedDB.ts）。
+// 列表连同 offset/hasMore/统计一起存，触底加载后回写累计结果（更新而非覆盖）。
+interface CachedMemberList {
+  items: MemberItem[]
+  total: number
+  totalGold: number
+  offset: number
+  hasMore: boolean
+}
+
+interface CachedFundRecords {
+  items: FundRecordItem[]
+  offset: number
+  hasMore: boolean
+  total: number
+  grantAmount: number
+  recoverAmount: number
+  profitAmount: number
+  changeAmount: number
+}
+
+// 静默刷新在飞标记：期间列表展示的是缓存、offset 还未重算，须挡住触底加载防止重复拼页。
+let silentMembersRefreshing = false
+let silentRecordsRefreshing = false
+
+function clubManageCache() {
+  return userCache(gameStore.loginUserId)
+}
+
+function fundClubId(): number {
+  return toSafeNumber(userInfoStore.currentClub?.club_id)
+}
+
+function fundSummaryCacheKey(): string {
+  return `${fundClubId()}_fund_summary`
+}
+
+function fundMembersCacheKey(): string {
+  return `${fundClubId()}_fund_members`
+}
+
+function fundRecordsCacheKey(): string {
+  return `${fundClubId()}_fund_records_${activeRange.value}_${selectedRecordType.value}`
+}
 
 const keypadRows = [
   ['1', '2', '3'],
@@ -574,7 +622,7 @@ function patchActiveMemberOnList(): void {
   members.value = nextMembers
 }
 
-async function fetchClubGoldSummary(): Promise<void> {
+async function fetchClubGoldSummary(silent = false): Promise<void> {
   if (loadingClubGold.value) {
     return
   }
@@ -598,10 +646,14 @@ async function fetchClubGoldSummary(): Promise<void> {
     }
 
     clubGoldSummary.value = response.data
+    void clubManageCache().put(USER_STORE_CLUB_MANAGE, fundSummaryCacheKey(), response.data)
   } catch (error) {
-    clubGoldSummary.value = null
-    const message = error instanceof Error ? error.message : t('UIClub_FetchClubFundFail')
-    showFailToast(message)
+    // 静默刷新失败保留缓存展示，不打断用户。
+    if (!silent) {
+      clubGoldSummary.value = null
+      const message = error instanceof Error ? error.message : t('UIClub_FetchClubFundFail')
+      showFailToast(message)
+    }
   } finally {
     loadingClubGold.value = false
   }
@@ -627,8 +679,8 @@ async function refreshClubCapacity(): Promise<void> {
   }
 }
 
-async function fetchRecordRows(reset = false): Promise<void> {
-  if (loadingRecords.value || loadingMoreRecords.value) {
+async function fetchRecordRows(reset = false, silent = false): Promise<void> {
+  if (loadingRecords.value || loadingMoreRecords.value || silentRecordsRefreshing) {
     return
   }
 
@@ -638,7 +690,7 @@ async function fetchRecordRows(reset = false): Promise<void> {
 
   const currentClub = userInfoStore.currentClub
   if (!currentClub?.random_id) {
-    if (reset) {
+    if (reset && !silent) {
       recordRows.value = []
       hasMoreRecords.value = false
       recordsTotal.value = 0
@@ -647,12 +699,19 @@ async function fetchRecordRows(reset = false): Promise<void> {
   }
 
   if (reset) {
-    loadingRecords.value = true
-    recordOffset.value = 0
-    hasMoreRecords.value = true
+    // 静默刷新期间缓存仍在展示，offset/hasMore 等成功后一并重算。
+    if (silent) {
+      silentRecordsRefreshing = true
+    } else {
+      loadingRecords.value = true
+      recordOffset.value = 0
+      hasMoreRecords.value = true
+    }
   } else {
     loadingMoreRecords.value = true
   }
+
+  const cacheKey = fundRecordsCacheKey()
 
   try {
     const currentOffset = reset ? 0 : recordOffset.value
@@ -674,6 +733,11 @@ async function fetchRecordRows(reset = false): Promise<void> {
       )
     }
 
+    // 响应回来时已切换时间/类型筛选 → 丢弃，避免覆盖新筛选的数据/缓存。
+    if (cacheKey !== fundRecordsCacheKey()) {
+      return
+    }
+
     const rawRows = Array.isArray(response.data.list) ? response.data.list : []
     const nextRows = rawRows.map((item, index) => mapFundRecord(item, currentOffset + index + 1))
 
@@ -692,7 +756,26 @@ async function fetchRecordRows(reset = false): Promise<void> {
     } else {
       hasMoreRecords.value = rawRows.length >= PAGE_SIZE
     }
+
+    // 触底加载写回的是累计后的完整列表（更新而非覆盖）。
+    void clubManageCache().put(
+      USER_STORE_CLUB_MANAGE,
+      cacheKey,
+      toPlain({
+        items: recordRows.value,
+        offset: recordOffset.value,
+        hasMore: hasMoreRecords.value,
+        total: recordsTotal.value,
+        grantAmount: grantAmountTotal.value,
+        recoverAmount: recoverAmountTotal.value,
+        profitAmount: profitAmountTotal.value,
+        changeAmount: changeAmountTotal.value,
+      } satisfies CachedFundRecords),
+    )
   } catch (error) {
+    if (silent) {
+      return
+    }
     if (reset) {
       recordRows.value = []
       hasMoreRecords.value = false
@@ -702,11 +785,42 @@ async function fetchRecordRows(reset = false): Promise<void> {
     showFailToast(message)
   } finally {
     if (reset) {
-      loadingRecords.value = false
+      if (silent) {
+        silentRecordsRefreshing = false
+      } else {
+        loadingRecords.value = false
+      }
     } else {
       loadingMoreRecords.value = false
     }
   }
+}
+
+function applyCachedRecords(cached: CachedFundRecords | null): boolean {
+  if (!cached?.items?.length) {
+    return false
+  }
+
+  recordRows.value = cached.items
+  recordOffset.value = cached.offset
+  hasMoreRecords.value = cached.hasMore
+  recordsTotal.value = cached.total
+  grantAmountTotal.value = cached.grantAmount
+  recoverAmountTotal.value = cached.recoverAmount
+  profitAmountTotal.value = cached.profitAmount
+  changeAmountTotal.value = cached.changeAmount
+  return true
+}
+
+// 切换筛选：命中该筛选的缓存 → 先渲染再静默刷新；未命中 → 正常 loading 拉取。
+async function loadRecordsWithCache(): Promise<void> {
+  const cacheKey = fundRecordsCacheKey()
+  const cached = await clubManageCache().get<CachedFundRecords>(USER_STORE_CLUB_MANAGE, cacheKey)
+  if (cacheKey !== fundRecordsCacheKey()) {
+    return
+  }
+  const hit = applyCachedRecords(cached)
+  await fetchRecordRows(true, hit)
 }
 
 function onRecordScroll(event: Event): void {
@@ -714,6 +828,7 @@ function onRecordScroll(event: Event): void {
     activeTab.value !== 'record' ||
     loadingRecords.value ||
     loadingMoreRecords.value ||
+    silentRecordsRefreshing ||
     !hasMoreRecords.value
   ) {
     return
@@ -795,14 +910,19 @@ function syncActiveMemberFromMembers(): void {
   reviewQuota.value = latest.reviewCredit
 }
 
+// 基金操作成功后的整体刷新：数据已在屏上，走静默刷新避免闪 loading。
 async function refreshFundData(): Promise<void> {
   patchActiveMemberOnList()
-  await Promise.all([fetchMembers(true), fetchClubGoldSummary(), fetchRecordRows(true)])
+  await Promise.all([
+    fetchMembers(true, true),
+    fetchClubGoldSummary(true),
+    fetchRecordRows(true, true),
+  ])
   syncActiveMemberFromMembers()
 }
 
-async function fetchMembers(reset = false): Promise<void> {
-  if (loadingMembers.value || loadingMoreMembers.value) {
+async function fetchMembers(reset = false, silent = false): Promise<void> {
+  if (loadingMembers.value || loadingMoreMembers.value || silentMembersRefreshing) {
     return
   }
 
@@ -812,7 +932,7 @@ async function fetchMembers(reset = false): Promise<void> {
 
   const currentClub = userInfoStore.currentClub
   if (!currentClub?.random_id && !currentClub?.club_id) {
-    if (reset) {
+    if (reset && !silent) {
       members.value = []
       membersTotal.value = 0
       hasMoreMembers.value = false
@@ -822,19 +942,27 @@ async function fetchMembers(reset = false): Promise<void> {
   }
 
   if (reset) {
-    loadingMembers.value = true
-    membersOffset.value = 0
-    hasMoreMembers.value = true
+    // 静默刷新期间缓存仍在展示，offset/hasMore 等成功后一并重算。
+    if (silent) {
+      silentMembersRefreshing = true
+    } else {
+      loadingMembers.value = true
+      membersOffset.value = 0
+      hasMoreMembers.value = true
+    }
   } else {
     loadingMoreMembers.value = true
   }
+
+  // 只有未筛选的成员列表才写缓存，搜索结果不落库。
+  const searchAtStart = searchKeyword.value.trim()
 
   try {
     const currentOffset = reset ? 0 : membersOffset.value
     const response = await postOrgMemberListApi({
       club_id: currentClub?.club_id,
       club_random_id: currentClub?.random_id,
-      search: searchKeyword.value.trim(),
+      search: searchAtStart,
       sort_type: 8,
       order_type: 2,
       gold_type: 1,
@@ -862,7 +990,7 @@ async function fetchMembers(reset = false): Promise<void> {
     memberListTotalGold.value = toSafeNumber(response.data.total_info?.total_gold)
 
     // 只有未筛选的列表总数才代表俱乐部真实人数，搜索结果不能覆盖页头人数。
-    if (reset && !searchKeyword.value.trim()) {
+    if (reset && !searchAtStart) {
       clubMemberTotal.value = total
       userInfoStore.syncCurrentClubFields({ club_members: total })
     }
@@ -872,7 +1000,25 @@ async function fetchMembers(reset = false): Promise<void> {
     } else {
       hasMoreMembers.value = rawMembers.length >= PAGE_SIZE
     }
+
+    // 触底加载写回的是累计后的完整列表（更新而非覆盖）。
+    if (!searchAtStart) {
+      void clubManageCache().put(
+        USER_STORE_CLUB_MANAGE,
+        fundMembersCacheKey(),
+        toPlain({
+          items: members.value,
+          total: membersTotal.value,
+          totalGold: memberListTotalGold.value,
+          offset: membersOffset.value,
+          hasMore: hasMoreMembers.value,
+        } satisfies CachedMemberList),
+      )
+    }
   } catch (error) {
+    if (silent) {
+      return
+    }
     if (reset) {
       members.value = []
       membersTotal.value = 0
@@ -882,7 +1028,11 @@ async function fetchMembers(reset = false): Promise<void> {
     showFailToast(message)
   } finally {
     if (reset) {
-      loadingMembers.value = false
+      if (silent) {
+        silentMembersRefreshing = false
+      } else {
+        loadingMembers.value = false
+      }
     } else {
       loadingMoreMembers.value = false
     }
@@ -895,11 +1045,7 @@ function loadNextPage(): void {
   }
 }
 
-function onPageScroll(event: Event): void {
-  if (activeTab.value !== 'account') {
-    return
-  }
-
+function onMembersScroll(event: Event): void {
   const target = event.target as HTMLElement | null
   if (!target) {
     return
@@ -1231,7 +1377,7 @@ function onSearchSubmit(): void {
 
 function switchRange(range: RecordRangeKey): void {
   activeRange.value = range
-  void fetchRecordRows(true)
+  void loadRecordsWithCache()
 }
 
 function toggleTypeMenu(): void {
@@ -1241,7 +1387,7 @@ function toggleTypeMenu(): void {
 function chooseType(typeKey: string): void {
   selectedRecordType.value = typeKey
   showTypeMenu.value = false
-  void fetchRecordRows(true)
+  void loadRecordsWithCache()
 }
 
 function roleClass(role: MemberRole): string {
@@ -1256,23 +1402,52 @@ function roleClass(role: MemberRole): string {
   return 'role-badge--admin'
 }
 
-onMounted(() => {
-  void Promise.all([
-    fetchMembers(true),
-    fetchClubGoldSummary(),
-    fetchRecordRows(true),
-    refreshClubCapacity(),
+// 进页面先读 club_manage 缓存渲染，命中的部分走静默刷新，未命中的照常 loading。
+async function restoreFundCache(): Promise<{
+  summary: boolean
+  members: boolean
+  records: boolean
+}> {
+  const [cachedSummary, cachedMembers, cachedRecords] = await Promise.all([
+    clubManageCache().get<OrgClubGoldData>(USER_STORE_CLUB_MANAGE, fundSummaryCacheKey()),
+    clubManageCache().get<CachedMemberList>(USER_STORE_CLUB_MANAGE, fundMembersCacheKey()),
+    clubManageCache().get<CachedFundRecords>(USER_STORE_CLUB_MANAGE, fundRecordsCacheKey()),
   ])
+
+  if (cachedSummary) {
+    clubGoldSummary.value = cachedSummary
+  }
+  if (cachedMembers?.items?.length) {
+    members.value = cachedMembers.items
+    membersTotal.value = cachedMembers.total
+    memberListTotalGold.value = cachedMembers.totalGold
+    membersOffset.value = cachedMembers.offset
+    hasMoreMembers.value = cachedMembers.hasMore
+    clubMemberTotal.value = cachedMembers.total
+  }
+
+  return {
+    summary: Boolean(cachedSummary),
+    members: Boolean(cachedMembers?.items?.length),
+    records: applyCachedRecords(cachedRecords),
+  }
+}
+
+onMounted(() => {
+  void (async () => {
+    const hit = await restoreFundCache()
+    await Promise.all([
+      fetchMembers(true, hit.members),
+      fetchClubGoldSummary(hit.summary),
+      fetchRecordRows(true, hit.records),
+      refreshClubCapacity(),
+    ])
+  })()
 })
 </script>
 
 <template>
-  <div
-    ref="pageRef"
-    class="page-shell club-members-bg"
-    :style="backgroundStyle"
-    @scroll="onPageScroll"
-  >
+  <div class="page-shell club-members-bg" :style="backgroundStyle">
     <HeaderBack :title="'基金管理'">
       <template #right>
         <p class="member-total">
@@ -1339,15 +1514,15 @@ onMounted(() => {
           />
         </section>
 
-        <section class="members-list" aria-label="成员列表">
+        <section class="members-list" aria-label="成员列表" @scroll="onMembersScroll">
           <article v-for="member in members" :key="member.id" class="member-card">
             <span class="role-badge" :class="roleClass(member.role)">{{ member.role }}</span>
 
-            <div class="member-main">
+            <div class="member-main" @click="openMemberDetail(member)">
               <div class="member-left">
                 <img class="member-avatar" :src="member.avatar" :alt="`${member.name}头像`" />
                 <div class="member-base">
-                  <button type="button" class="member-name" @click="openMemberDetail(member)">
+                  <button type="button" class="member-name">
                     {{ member.name }}
                   </button>
                   <p class="member-id-row">
@@ -1582,6 +1757,11 @@ onMounted(() => {
                 :class="{ 'quota-mode--active': quotaAdjustMode === 'increase' }"
                 @click="quotaAdjustMode = 'increase'"
               >
+                <span
+                  class="radio-circle quota-mode-radio"
+                  :class="{ 'radio-circle--checked': quotaAdjustMode === 'increase' }"
+                  aria-hidden="true"
+                ></span>
                 增加额度
               </button>
               <button
@@ -1590,6 +1770,11 @@ onMounted(() => {
                 :class="{ 'quota-mode--active': quotaAdjustMode === 'decrease' }"
                 @click="quotaAdjustMode = 'decrease'"
               >
+                <span
+                  class="radio-circle quota-mode-radio"
+                  :class="{ 'radio-circle--checked': quotaAdjustMode === 'decrease' }"
+                  aria-hidden="true"
+                ></span>
                 减少额度
               </button>
             </div>
@@ -1621,6 +1806,11 @@ onMounted(() => {
                 :class="{ 'quota-mode--active': quotaAdjustMode === 'increase' }"
                 @click="quotaAdjustMode = 'increase'"
               >
+                <span
+                  class="radio-circle quota-mode-radio"
+                  :class="{ 'radio-circle--checked': quotaAdjustMode === 'increase' }"
+                  aria-hidden="true"
+                ></span>
                 增加额度
               </button>
               <button
@@ -1629,6 +1819,11 @@ onMounted(() => {
                 :class="{ 'quota-mode--active': quotaAdjustMode === 'decrease' }"
                 @click="quotaAdjustMode = 'decrease'"
               >
+                <span
+                  class="radio-circle quota-mode-radio"
+                  :class="{ 'radio-circle--checked': quotaAdjustMode === 'decrease' }"
+                  aria-hidden="true"
+                ></span>
                 减少额度
               </button>
             </div>
@@ -1708,11 +1903,17 @@ onMounted(() => {
 <style scoped lang="scss">
 @use '@/styles/mixins' as *;
 
+// 整页只留列表一个滚动条：page-shell 不滚（覆盖基类 overflow-y:auto），
+// 页签/汇总卡/搜索框固定，members-list / record-list 自己滚。
 .club-members-bg {
   position: relative;
+  display: flex;
+  flex-direction: column;
   height: 100dvh;
+  overflow: hidden;
   background-image: var(--club-members-bg-dark);
   background-size: cover;
+  padding-bottom: 0.2rem;
 
   @include theme-light {
     background-color: #f3f4f6;
@@ -1725,7 +1926,8 @@ onMounted(() => {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  flex: 1;
+  min-height: 0;
   gap: 0.34rem;
   padding-top: 0.2rem;
 }
@@ -1911,8 +2113,15 @@ onMounted(() => {
 .members-list {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   gap: 0.27027rem;
+  padding-top: 0.15rem;
   padding-bottom: 0.21rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .member-list-status {
@@ -2515,22 +2724,20 @@ onMounted(() => {
   gap: 0.079rem;
 }
 
-.quota-mode::before {
-  content: '';
+.quota-mode-radio {
   width: 0.4rem;
   height: 0.4rem;
-  border-radius: 50%;
-  border: 0.03rem solid rgba(255, 255, 255, 0.5);
-  box-sizing: border-box;
+  flex: 0 0 auto;
 }
 
 .quota-mode--active {
   color: #fff;
 }
 
-.quota-mode--active::before {
-  border-color: rgba(95, 247, 209, 0.92);
-  box-shadow: inset 0 0 0 0.1rem rgba(95, 247, 209, 0.85);
+.quota-mode-radio.radio-circle--checked::after {
+  width: 0.24rem;
+  height: 0.24rem;
+  border-width: 0.045rem;
 }
 
 .quota-input-pill {
@@ -2836,6 +3043,57 @@ onMounted(() => {
     .from-id-pill {
       background: rgba(34, 34, 34, 0.16);
       color: #222;
+    }
+
+    // Figma 9394:27766 / 9394:28387：浅色页面上的基金操作浮窗仍保持
+    // 深灰玻璃层与白色内容，操作强调色切换为浅色主题蓝。
+    .fund-sheet {
+      background: linear-gradient(
+        180deg,
+        rgba(102, 106, 108, 0.96) 0%,
+        rgba(76, 79, 81, 0.97) 58%,
+        rgba(61, 63, 64, 0.98) 100%
+      );
+      box-shadow:
+        0 -0.12rem 0.48rem rgba(0, 0, 0, 0.2),
+        inset 0 0.02rem 0 rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(0.42rem);
+      -webkit-backdrop-filter: blur(0.42rem);
+    }
+
+    .quota-action--primary {
+      background: #69beff;
+      color: #fff;
+    }
+
+    .quota-action:not(.quota-action--primary) {
+      background: rgba(6, 6, 6, 0.4);
+      color: rgba(255, 255, 255, 0.55);
+      box-shadow: 0.014rem 0.016rem 0.032rem rgba(0, 0, 0, 0.25);
+    }
+
+    .quota-editor {
+      background: rgba(255, 255, 255, 0.18);
+      box-shadow: inset 0 0.02rem 0 rgba(255, 255, 255, 0.16);
+    }
+
+    .keypad-btn {
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(12, 12, 12, 0.38);
+    }
+
+    .keypad-btn--accent {
+      border-color: transparent;
+      background: rgba(105, 190, 255, 0.76);
+    }
+
+    .sheet-footer-btn {
+      background: rgba(6, 6, 6, 0.5);
+    }
+
+    .sheet-footer-btn--confirm {
+      border-color: rgba(242, 242, 242, 0.8);
+      background: #69beff;
     }
   }
 }

@@ -303,6 +303,8 @@ export interface MiscBannerListRequest {
 
     lang?: string; //语言(zh_CN:简体中文,zh_HK:繁体中文,en_US:英文
     type?: number; //1-大厅Banner,2-发现页(公会)Banner
+    display_scene?: number; //展示场景:1-h5,2-telegram
+    club_id?: number; //俱乐部id,配置了俱乐部banner时返回俱乐部的,否则返回平台的
     limit?: number; //条目
     offset?: number; //开始下标。例子（offset=0，limit=10，0-9。）
 
@@ -322,6 +324,8 @@ export interface MiscBannerListBannerInfo {
     id: number; //banner id
     lang: string; //语言
     banner_type: number; //1-大厅Banner,2-发现页(公会)Banner
+    display_scene?: number; //展示场景:1-h5,2-telegram
+    club_id?: number; //归属俱乐部id,0为平台(默认俱乐部)配置
     image_url: string; //Banner图片连接
     redirect_url: string; //跳转连接
     description: string; //描述

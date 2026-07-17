@@ -29,11 +29,23 @@ export function isStandaloneDisplay(): boolean {
   return nav.standalone === true
 }
 
+// 是否运行在 Telegram Mini App 内（原生注入的全局标记优先，其次是官方 WebApp SDK 对象）
+export function isTelegramMiniAppEnv(): boolean {
+  if (typeof window === 'undefined') {
+    return false
+  }
+  if (window.__H5_TG_MINI_APP__) {
+    return true
+  }
+  return Boolean(window.Telegram?.WebApp)
+}
+
 // 当前 WebView 底层是否为 iOS Safari —— 它不支持 beforeinstallprompt，需要引导用户走分享菜单
 export function isIosSafari(): boolean {
   if (typeof window === 'undefined') return false
   const ua = window.navigator.userAgent
-  const isIos = /iPad|iPhone|iPod/.test(ua) && !(window as unknown as { MSStream?: unknown }).MSStream
+  const isIos =
+    /iPad|iPhone|iPod/.test(ua) && !(window as unknown as { MSStream?: unknown }).MSStream
   const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua)
   return isIos && isSafari
 }

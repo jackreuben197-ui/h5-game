@@ -257,7 +257,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="room-data-detail">
+  <div class="room-data-detail" :class="`room-data-detail--${source}`">
     <section class="meta-panel">
       <div class="meta-title-row">
         <span class="meta-title">完成的</span>
@@ -357,6 +357,8 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .room-data-detail {
   position: relative;
   z-index: 2;
@@ -581,6 +583,75 @@ onMounted(() => {
   font-size: 0.24rem;
   color: rgba(255, 255, 255, 0.72);
   padding: 0.2rem 0;
+}
+
+.room-data-detail--club {
+  @include theme-light {
+    .meta-panel {
+      color: #222;
+    }
+
+    .meta-sub-row {
+      color: rgba(0, 0, 0, 0.5);
+    }
+
+    .id-pill {
+      color: #fff;
+      background: rgba(79, 79, 79, 0.4);
+    }
+
+    .id-number {
+      color: rgba(0, 0, 0, 0.78);
+    }
+
+    .summary-card {
+      border-color: transparent;
+      background: #fff;
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+
+    .metric-item,
+    .metric-value {
+      color: #222;
+    }
+
+    .metric-item--with-divider + .metric-item--with-divider {
+      border-left-color: rgba(34, 34, 34, 0.12);
+    }
+
+    .summary-divider {
+      background: rgba(34, 34, 34, 0.12);
+    }
+
+    .board-head-strip {
+      background: #69beff;
+    }
+
+    .board-head {
+      border: 0.02rem solid rgba(255, 255, 255, 0.72);
+      background: rgba(105, 190, 255, 0.78);
+      box-shadow: inset 0 0.06rem 0.16rem rgba(255, 255, 255, 0.42);
+    }
+
+    .record-row {
+      color: #222;
+      background: #fff;
+    }
+
+    .user-name,
+    .value-cell {
+      color: #222;
+    }
+
+    .user-id {
+      color: rgba(0, 0, 0, 0.5);
+    }
+
+    .list-status {
+      color: rgba(34, 34, 34, 0.62);
+    }
+  }
 }
 
 @media (max-width: 340px) {

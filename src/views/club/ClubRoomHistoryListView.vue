@@ -5,10 +5,12 @@ import { showFailToast } from 'vant'
 import { postClubDataStatsDataApi, postClubDataStatsDataInfoApi } from '@/api/stats'
 import type { ClubDataStatsDataRecord } from '@/api/models/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import DateRangePicker from '@/components/DateRangePicker/DateRangePicker.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
 import imgClock from '@/assets/icons/icon_time.png'
 import { t } from '@/i18n'
+import { formatDateTime } from '@/utils/time'
 
 interface IncomeItem {
   label: string
@@ -30,7 +32,8 @@ interface RoomHistoryItem {
 }
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--club-room-history-bg-dark': `url(${mainBgUrl})`,
+  '--club-room-history-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 type CurrencyTab = 1 | 3
@@ -154,25 +157,30 @@ function resolveModeLabel(record: ClubDataStatsDataRecord): string {
 function resolveDetailA(record: ClubDataStatsDataRecord): string {
   const playerCount = toSafeNumber(record.match_player_num)
   if (playerCount > 0) {
-    return t('UIMine_RecordDetailForMatchPariticipants') + ": " + (playerCount)
+    return t('UIMine_RecordDetailForMatchPariticipants') + ': ' + playerCount
   }
 
   const sb = toSafeNumber(record.sb)
   if (sb > 0) {
-    return t('adaptation20006') + ": " + (sb) + "/" + (sb * 2)
+    return t('adaptation20006') + ': ' + sb + '/' + sb * 2
   }
 
   const buyIn = toSafeNumber(record.buy_in)
   if (buyIn > 0) {
-    return t('UIClub_BuyIn') + ": " + (buyIn)
+    return t('UIClub_BuyIn') + ': ' + buyIn
   }
 
   return t('UICareerRecordDetailForNiuZai')
 }
 
 function resolveStartAt(record: ClubDataStatsDataRecord): string {
-  const raw = String(record.start_time_str || record.game_start_time || record.date || '').trim()
-  return raw || '--'
+  const raw = record.start_time_str || record.game_start_time || record.date
+  if (!raw) {
+    return '--'
+  }
+
+  const formatted = formatDateTime(raw, 'DD/MM/YYYY HH:mm')
+  return formatted === '--:--' ? String(raw).trim() || '--' : formatted
 }
 
 function buildIncomeList(record: ClubDataStatsDataRecord): IncomeItem[] {
@@ -180,12 +188,20 @@ function buildIncomeList(record: ClubDataStatsDataRecord): IncomeItem[] {
 
   const fee = toSafeNumber(record.fee)
   if (fee !== 0) {
-    incomes.push({ label: t('UIMine_WalletPlatform_fee_f'), value: formatSigned(fee), positive: fee > 0 })
+    incomes.push({
+      label: t('UIMine_WalletPlatform_fee_f'),
+      value: formatSigned(fee),
+      positive: fee > 0,
+    })
   }
 
   const insurance = toSafeNumber(record.insurance)
   if (insurance !== 0) {
-    incomes.push({ label: t('adaptation10179'), value: formatSigned(insurance), positive: insurance > 0 })
+    incomes.push({
+      label: t('adaptation10179'),
+      value: formatSigned(insurance),
+      positive: insurance > 0,
+    })
   }
 
   if (!incomes.length) {
@@ -205,7 +221,7 @@ function mapHistoryItem(record: ClubDataStatsDataRecord, index: number): RoomHis
     roomId,
     matchId,
     mode: resolveModeLabel(record),
-    title: t('UIClub_RoundData') + "-" + (roomId || index),
+    title: t('UIClub_RoundData') + '-' + (roomId || index),
     detailA: resolveDetailA(record),
     detailB: jackpot > 0 ? `Jackpot: ${jackpot}` : undefined,
     startedAt: resolveStartAt(record),
@@ -287,7 +303,9 @@ async function fetchHistory(reset = false): Promise<void> {
     })
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadTableGameRecordFail'))
+      throw new Error(
+        typeof response.msg === 'string' ? response.msg : t('UIClub_LoadTableGameRecordFail'),
+      )
     }
 
     const rows = Array.isArray(response.data?.list) ? response.data.list : []
@@ -372,7 +390,7 @@ onMounted(() => {
 <template>
   <div class="page-shell club-room-history-bg" :style="backgroundStyle">
     <HeaderBack :title="'牌局记录'" />
-    <div class="club-room-history app-scroll-standalone" @scroll="onPageScroll">
+    <div class="club-room-history">
       <div class="coin-tabs">
         <button
           type="button"
@@ -411,7 +429,9 @@ onMounted(() => {
             <strong class="stats-value">{{ formatAmount(summary.totalProfit) }}</strong>
           </div>
           <div class="stats-item">
-            <span class="stats-label">{{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}/{{ t('UIData_YGvXd5iXr_003') }}</span>
+            <span class="stats-label">
+              {{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}/{{ t('UIData_YGvXd5iXr_003') }}
+            </span>
             <strong class="stats-value">{{ summary.handCount }}/{{ summary.gameCount }}</strong>
           </div>
         </div>
@@ -438,7 +458,7 @@ onMounted(() => {
 
       <p class="timezone">{{ t('UICommon_TimeZone') }}: {{ timezoneText }}</p>
 
-      <section class="record-list">
+      <section class="record-list" @scroll="onPageScroll">
         <article
           v-for="item in historyList"
           :key="item.id"
@@ -481,10 +501,16 @@ onMounted(() => {
           </div>
         </article>
 
-        <p v-if="!historyList.length && !loading" class="list-status">{{ t('UIClub_NoTableGameRecord') }}</p>
+        <p v-if="!historyList.length && !loading" class="list-status">
+          {{ t('UIClub_NoTableGameRecord') }}
+        </p>
         <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
-        <p v-else-if="historyList.length && loadingMore" class="list-status">{{ t('UIClub_LoadMore') }}...</p>
-        <p v-else-if="historyList.length && !hasMore" class="list-status">{{ t('UIClub_NoMore') }}</p>
+        <p v-else-if="historyList.length && loadingMore" class="list-status">
+          {{ t('UIClub_LoadMore') }}...
+        </p>
+        <p v-else-if="historyList.length && !hasMore" class="list-status">
+          {{ t('UIClub_NoMore') }}
+        </p>
       </section>
     </div>
 
@@ -503,11 +529,24 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-room-history-bg {
   position: relative;
+  display: flex;
+  flex-direction: column;
   height: 100dvh;
+  padding-bottom: 0.5rem;
+  overflow: hidden;
+  background-image: var(--club-room-history-bg-dark);
   background-size: cover;
   color: #f9f9f9;
+
+  @include theme-light {
+    color: #222;
+    background-color: #f3f4f6;
+    background-image: var(--club-room-history-bg-light);
+  }
 }
 
 .club-room-history {
@@ -515,10 +554,11 @@ onMounted(() => {
   z-index: 2;
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   gap: 0.2rem;
-  height: 100dvh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  height: auto;
+  overflow: hidden;
 }
 
 .coin-tabs {
@@ -534,12 +574,21 @@ onMounted(() => {
   font-size: 0.34rem;
   line-height: 1.2;
   padding: 0;
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.7);
+  }
 }
 
 .coin-tab--active {
   color: #fff;
   padding-bottom: 0.08rem;
   border-bottom: 0.02rem solid rgba(255, 255, 255, 0.9);
+
+  @include theme-light {
+    color: #69beff;
+    border-bottom-color: #69beff;
+  }
 }
 
 .summary-card {
@@ -551,6 +600,12 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.2);
   border: 0.02rem solid rgba(243, 243, 243, 0.1);
   box-shadow: inset 0 0 0.01rem rgba(255, 255, 255, 0.2);
+
+  @include theme-light {
+    background: #fff;
+    border-color: transparent;
+    box-shadow: none;
+  }
 }
 
 .date-range {
@@ -573,6 +628,11 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   gap: 0.2rem;
+
+  @include theme-light {
+    color: #222;
+    background: rgba(139, 136, 136, 0.15);
+  }
 }
 
 .calendar-icon-inline {
@@ -581,6 +641,10 @@ onMounted(() => {
   border: 0.03rem solid rgba(243, 243, 243, 0.85);
   border-radius: 0.08rem;
   position: relative;
+
+  @include theme-light {
+    border-color: rgba(34, 34, 34, 0.82);
+  }
 
   &::before,
   &::after {
@@ -591,6 +655,10 @@ onMounted(() => {
     height: 0.1rem;
     border-radius: 0.03rem;
     background: rgba(243, 243, 243, 0.85);
+
+    @include theme-light {
+      background: rgba(34, 34, 34, 0.82);
+    }
   }
 
   &::before {
@@ -607,6 +675,10 @@ onMounted(() => {
   height: 0.02rem;
   border-radius: 999px;
   background: rgba(243, 243, 243, 0.55);
+
+  @include theme-light {
+    background: rgba(34, 34, 34, 0.58);
+  }
 }
 
 .stats-row,
@@ -626,6 +698,10 @@ onMounted(() => {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   padding-top: 0.24rem;
   border-top: 0.02rem solid rgba(243, 243, 243, 0.28);
+
+  @include theme-light {
+    border-top-color: rgba(34, 34, 34, 0.14);
+  }
 }
 
 .stats-item {
@@ -647,12 +723,20 @@ onMounted(() => {
 .stats-row .stats-item + .stats-item,
 .stats-grid .stats-item + .stats-item {
   border-left: 0.02rem solid rgba(243, 243, 243, 0.18);
+
+  @include theme-light {
+    border-left-color: rgba(34, 34, 34, 0.14);
+  }
 }
 
 .stats-label {
   font-size: 0.34rem;
   line-height: 1.4;
   color: rgba(243, 243, 243, 0.9);
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .stats-value {
@@ -660,6 +744,10 @@ onMounted(() => {
   font-weight: 400;
   line-height: 1;
   color: rgba(243, 243, 243, 1);
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .timezone {
@@ -667,12 +755,24 @@ onMounted(() => {
   text-align: right;
   color: rgba(235, 245, 255, 0.7);
   font-size: 0.26rem;
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.5);
+  }
 }
 
 .record-list {
   margin-top: 0.26667rem;
   display: grid;
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  grid-auto-rows: max-content;
   gap: 0.26667rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .record-row {
@@ -683,7 +783,7 @@ onMounted(() => {
 
 .game-badge {
   position: absolute;
-  left: -0.028rem;
+  left: -0.02rem;
   top: 0.40533rem;
   width: 1.4888rem;
   height: 1.4888rem;
@@ -699,6 +799,7 @@ onMounted(() => {
   font-size: 0.36235rem;
   line-height: 1.1;
   font-weight: 700;
+  color: #fff;
   z-index: 2;
 }
 
@@ -718,7 +819,15 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  color: #fff;
   cursor: pointer;
+
+  @include theme-light {
+    background: rgba(157, 18, 124, 0.59);
+    box-shadow:
+      inset 0 0.08rem 0.18rem rgba(255, 255, 255, 0.2),
+      inset 0 -0.08rem 0.16rem rgba(78, 0, 59, 0.12);
+  }
 }
 
 .record-main {
@@ -800,7 +909,7 @@ onMounted(() => {
 }
 
 .value-down {
-  color: var(--c-brand);
+  color: var(--c-loss);
 }
 
 .chevron {
@@ -815,6 +924,10 @@ onMounted(() => {
   color: rgba(235, 245, 255, 0.72);
   font-size: 0.28rem;
   padding: 0.18rem 0 0.2rem;
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.62);
+  }
 }
 
 @media (max-width: 340px) {

@@ -9,6 +9,7 @@ import {
   postOrgClubCreditBalanceApi,
   postOrgClubCreditLimitApi,
   postOrgClubGoldApi,
+  postOrgClubSearchByIdApi,
   postOrgMemberListApi,
 } from '@/api/org'
 import { postGuildGiveRecycleApi } from '@/api/order'
@@ -26,9 +27,11 @@ import imgBalance from '@/assets/icons/icon_credit_chip.png'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--club-members-bg-dark': `url(${mainBgUrl})`,
+  '--club-members-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 type TabKey = 'account' | 'record'
@@ -120,6 +123,7 @@ const loadingMoreMembers = ref(false)
 const hasMoreMembers = ref(true)
 const membersOffset = ref(0)
 const membersTotal = ref(0)
+const clubMemberTotal = ref<number | null>(null)
 const memberListTotalGold = ref(0)
 const clubGoldSummary = ref<OrgClubGoldData | null>(null)
 const loadingClubGold = ref(false)
@@ -187,10 +191,8 @@ const availableFundAssetTabs = computed<FundAssetTab[]>(() => {
 const members = ref<MemberItem[]>([])
 
 const memberTotalText = computed(() => {
-  const total =
-    membersTotal.value ||
-    toSafeNumber(userInfoStore.currentClub?.club_members) ||
-    members.value.length
+  const cachedTotal = toSafeNumber(userInfoStore.currentClub?.club_members)
+  const total = clubMemberTotal.value ?? (cachedTotal || members.value.length)
   const upperLimit = toSafeNumber(userInfoStore.currentClub?.upper_limit)
 
   if (upperLimit > 0) {
@@ -605,6 +607,26 @@ async function fetchClubGoldSummary(): Promise<void> {
   }
 }
 
+async function refreshClubCapacity(): Promise<void> {
+  const currentClub = userInfoStore.currentClub
+  if (!currentClub?.random_id) {
+    return
+  }
+
+  try {
+    const response = await postOrgClubSearchByIdApi({
+      club_random_id: currentClub.random_id,
+    })
+    const upperLimit = Number(response.data?.upper_limit)
+    if (response.code === 0 && Number.isFinite(upperLimit) && upperLimit >= 0) {
+      userInfoStore.syncCurrentClubFields({ upper_limit: upperLimit })
+    }
+  } catch (error) {
+    // 上限刷新失败时保留列表缓存值，成员列表仍可正常使用。
+    console.error('refreshClubCapacity error', error)
+  }
+}
+
 async function fetchRecordRows(reset = false): Promise<void> {
   if (loadingRecords.value || loadingMoreRecords.value) {
     return
@@ -833,11 +855,19 @@ async function fetchMembers(reset = false): Promise<void> {
     members.value = reset ? nextMembers : [...members.value, ...nextMembers]
     membersOffset.value = currentOffset + rawMembers.length
 
-    const total = toSafeNumber(response.data.total)
-    membersTotal.value = total > 0 ? total : members.value.length
+    const rawTotal = Number(response.data.total)
+    const hasValidTotal = Number.isFinite(rawTotal) && rawTotal >= 0
+    const total = hasValidTotal ? rawTotal : members.value.length
+    membersTotal.value = total
     memberListTotalGold.value = toSafeNumber(response.data.total_info?.total_gold)
 
-    if (total > 0) {
+    // 只有未筛选的列表总数才代表俱乐部真实人数，搜索结果不能覆盖页头人数。
+    if (reset && !searchKeyword.value.trim()) {
+      clubMemberTotal.value = total
+      userInfoStore.syncCurrentClubFields({ club_members: total })
+    }
+
+    if (hasValidTotal) {
       hasMoreMembers.value = membersOffset.value < total
     } else {
       hasMoreMembers.value = rawMembers.length >= PAGE_SIZE
@@ -1227,7 +1257,12 @@ function roleClass(role: MemberRole): string {
 }
 
 onMounted(() => {
-  void Promise.all([fetchMembers(true), fetchClubGoldSummary(), fetchRecordRows(true)])
+  void Promise.all([
+    fetchMembers(true),
+    fetchClubGoldSummary(),
+    fetchRecordRows(true),
+    refreshClubCapacity(),
+  ])
 })
 </script>
 
@@ -1671,10 +1706,18 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-members-bg {
   position: relative;
   height: 100dvh;
+  background-image: var(--club-members-bg-dark);
   background-size: cover;
+
+  @include theme-light {
+    background-color: #f3f4f6;
+    background-image: var(--club-members-bg-light);
+  }
 }
 
 .club-members {
@@ -1752,6 +1795,7 @@ onMounted(() => {
 .summary-item {
   display: flex;
   flex-direction: column;
+  text-align: center;
   gap: 0.06rem;
 }
 
@@ -1763,11 +1807,13 @@ onMounted(() => {
 }
 
 .summary-value {
+  display: flex;
+  justify-content: center;
   margin: 0;
   display: inline-flex;
   align-items: center;
   gap: 0.045rem;
-  font-size: 0.43204rem;
+  font-size: 0.3rem;
   line-height: 1;
   font-weight: 700;
   color: #f9f9f9;
@@ -2625,6 +2671,173 @@ onMounted(() => {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.85);
   flex: 0 0 auto;
+}
+
+.club-members-bg {
+  @include theme-light {
+    .member-total {
+      color: rgba(34, 34, 34, 0.82);
+    }
+
+    .tab-btn {
+      color: rgba(34, 34, 34, 0.62);
+    }
+
+    .tab-btn--active {
+      color: #222;
+    }
+
+    .tab-btn--active::after {
+      background: #69beff;
+    }
+
+    .summary-card,
+    .search-card,
+    .record-panel {
+      background: #fff;
+      backdrop-filter: none;
+      box-shadow: 0 0.06rem 0.2rem rgba(0, 0, 0, 0.05);
+    }
+
+    .summary-label,
+    .summary-value {
+      color: #222;
+    }
+
+    .income-btn {
+      background: rgba(139, 136, 136, 0.15);
+      color: #222;
+    }
+
+    .income-icon,
+    .income-icon::after {
+      border-color: rgba(34, 34, 34, 0.82);
+    }
+
+    .search-icon {
+      border-color: rgba(34, 34, 34, 0.7);
+    }
+
+    .search-icon::after {
+      background: rgba(34, 34, 34, 0.7);
+    }
+
+    .search-card input {
+      color: #222;
+    }
+
+    .search-card input::placeholder {
+      color: rgba(34, 34, 34, 0.48);
+    }
+
+    .member-list-status,
+    .record-list-status {
+      color: rgba(34, 34, 34, 0.58);
+    }
+
+    .member-card {
+      background: #fff;
+      backdrop-filter: none;
+      box-shadow: 0 0.06rem 0.2rem rgba(0, 0, 0, 0.06);
+    }
+
+    .role-badge--admin,
+    .role-badge--agent,
+    .role-badge--member {
+      background: linear-gradient(152deg, #8bd0ff 8%, #429de1 78%);
+    }
+
+    .member-name,
+    .member-diamond,
+    .member-id-row {
+      color: #222;
+    }
+
+    .id-pill {
+      background: rgba(79, 79, 79, 0.4);
+      color: #fff;
+    }
+
+    .member-data-strip {
+      background: rgba(34, 34, 34, 0.08);
+      backdrop-filter: none;
+    }
+
+    .data-label,
+    .data-value {
+      color: #222;
+    }
+
+    .data-label--agent::before {
+      background: rgba(34, 34, 34, 0.78);
+    }
+
+    .record-head,
+    .record-stat-label,
+    .record-stat-value {
+      color: #222;
+    }
+
+    .range-tabs {
+      background: rgba(139, 136, 136, 0.15);
+    }
+
+    .range-tab {
+      color: rgba(34, 34, 34, 0.72);
+    }
+
+    .range-tab--active {
+      background: #69beff;
+      color: #fff;
+    }
+
+    .record-table-head {
+      background: #69beff;
+    }
+
+    .type-dropdown {
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 0.08rem 0.28rem rgba(0, 0, 0, 0.12);
+      backdrop-filter: blur(0.18rem);
+    }
+
+    .type-option {
+      color: rgba(34, 34, 34, 0.78);
+      border-bottom-color: rgba(34, 34, 34, 0.12);
+    }
+
+    .type-option--active {
+      color: #429de1;
+    }
+
+    .record-row,
+    .record-row--pftroom {
+      background: rgba(34, 34, 34, 0.07);
+    }
+
+    .record-main-grid {
+      color: #222;
+    }
+
+    .sub-line {
+      color: rgba(34, 34, 34, 0.5);
+    }
+
+    .quantity-cell {
+      background: rgba(34, 34, 34, 0.09);
+    }
+
+    .from-chip {
+      background: rgba(34, 34, 34, 0.08);
+      border-color: rgba(34, 34, 34, 0.14);
+      color: rgba(34, 34, 34, 0.76);
+    }
+
+    .from-id-pill {
+      background: rgba(34, 34, 34, 0.16);
+      color: #222;
+    }
+  }
 }
 
 @media (max-width: 340px) {

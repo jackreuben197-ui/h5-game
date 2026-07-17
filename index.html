@@ -478,31 +478,6 @@
           return Math.max(minTopGuard, contentTop)
         }
 
-        /**
-         * 检测软键盘是否弹出（用于守卫 applySafeAreaToCss，避免键盘引起的 viewport 变化
-         * 误触发 CSS 变量更新 → #app padding 重排 → CC canvas 渲染抖动/变形）。
-         * 3 路判断 fallback，任一命中即认为键盘弹出：
-         * (a) Telegram SDK viewportStableHeight - viewportHeight > 50px（最准，Telegram 专属）
-         * (b) visualViewport.height / innerHeight < 0.75（W3C 标准，最准）
-         * (c) innerHeight / screen.height < 0.6（兜底）
-         * 阈值与 CC 层 OrientationComponent.isKeyboardLikelyOpen 保持一致（已生产验证）
-         */
-        function isKeyboardOpen(tg) {
-          if (tg && tg.viewportHeight != null && tg.viewportStableHeight != null
-              && tg.viewportStableHeight - tg.viewportHeight > 50) {
-            return true
-          }
-          var vv = window.visualViewport
-          if (vv && window.innerHeight > 0 && vv.height / window.innerHeight < 0.75) {
-            return true
-          }
-          if (window.screen && window.screen.height > 0
-              && window.innerHeight / window.screen.height < 0.6) {
-            return true
-          }
-          return false
-        }
-
         function applySafeAreaToCss(tg) {
           // ⚠️ Telegram 键盘守卫：键盘弹出时跳过，避免 CSS 变量更新引发 #app padding 重排
           // （iOS Telegram 上实测：键盘弹出会触发 viewportChanged → 调用本函数 → 画面变形）
@@ -548,21 +523,6 @@
           }
         }
 
-        function hideTelegramChromeButtons(tg) {
-          if (tg.BackButton && typeof tg.BackButton.hide === 'function') {
-            tg.BackButton.hide()
-          }
-          if (tg.MainButton && typeof tg.MainButton.hide === 'function') {
-            tg.MainButton.hide()
-          }
-          if (tg.SecondaryButton && typeof tg.SecondaryButton.hide === 'function') {
-            tg.SecondaryButton.hide()
-          }
-          if (tg.SettingsButton && typeof tg.SettingsButton.hide === 'function') {
-            tg.SettingsButton.hide()
-          }
-        }
-
         function bindSafeAreaEvents(tg) {
           if (window.__H5_TG_SAFE_AREA_BOUND__) {
             return
@@ -574,13 +534,29 @@
           }
 
           var refresh = function () {
-            applySafeAreaToCss(tg)
+            refreshTelegramSafeArea(tg)
           }
 
           tg.onEvent('safeAreaChanged', refresh)
           tg.onEvent('contentSafeAreaChanged', refresh)
           tg.onEvent('viewportChanged', refresh)
           tg.onEvent('fullscreenChanged', refresh)
+        }
+
+        function isKeyboardOpen(tg) {
+          if (tg && tg.viewportHeight != null && tg.viewportStableHeight != null
+              && tg.viewportStableHeight - tg.viewportHeight > 50) {
+            return true
+          }
+          var vv = window.visualViewport
+          if (vv && window.innerHeight > 0 && vv.height / window.innerHeight < 0.75) {
+            return true
+          }
+          if (window.screen && window.screen.height > 0
+              && window.innerHeight / window.screen.height < 0.6) {
+            return true
+          }
+          return false
         }
 
         /**
@@ -750,19 +726,19 @@
           }
 
           var tg = window.Telegram.WebApp
-          window.__H5_TG_MINI_APP__ = true
+
+          var initData = String(tg.initData || '').trim()
+          if (initData) {
+            window.__H5_TG_MINI_APP__ = true
+            window.__H5_TG_INIT_DATA__ = initData
+          }else{
+            return
+          }
           if (document && document.documentElement) {
             document.documentElement.setAttribute('data-tg-mini-app', '1')
           }
           // 通知运行时 Telegram 主题信息已可用；theme.ts 会优先读取 WebApp.colorScheme。
           window.dispatchEvent(new Event('h5:telegram-ready'))
-
-          var initData = String(tg.initData || '').trim()
-          if (initData) {
-            window.__H5_TG_INIT_DATA__ = initData
-          }
-
-          hideTelegramChromeButtons(tg)
           tg.ready()
           var isFullscreenRequested = false
           if (typeof tg.requestFullscreen === 'function') {
@@ -815,11 +791,11 @@
           }
 
           if (window.Telegram && window.Telegram.WebApp) {
-            window.__H5_TG_MINI_APP__ = true
             if (document && document.documentElement) {
               document.documentElement.setAttribute('data-tg-mini-app', '1')
             }
           }
+          console.log('[telegram] __H5_TG_MINI_APP__', window.__H5_TG_MINI_APP__)
         }
         initH5TelegramEnvironment()
         // 再异步加载官方 SDK，避免 head 同步脚本在弱网/不可达场景卡住首屏。

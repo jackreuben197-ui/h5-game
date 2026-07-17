@@ -548,21 +548,6 @@
           }
         }
 
-        function hideTelegramChromeButtons(tg) {
-          if (tg.BackButton && typeof tg.BackButton.hide === 'function') {
-            tg.BackButton.hide()
-          }
-          if (tg.MainButton && typeof tg.MainButton.hide === 'function') {
-            tg.MainButton.hide()
-          }
-          if (tg.SecondaryButton && typeof tg.SecondaryButton.hide === 'function') {
-            tg.SecondaryButton.hide()
-          }
-          if (tg.SettingsButton && typeof tg.SettingsButton.hide === 'function') {
-            tg.SettingsButton.hide()
-          }
-        }
-
         function bindSafeAreaEvents(tg) {
           if (window.__H5_TG_SAFE_AREA_BOUND__) {
             return
@@ -750,19 +735,19 @@
           }
 
           var tg = window.Telegram.WebApp
-          window.__H5_TG_MINI_APP__ = true
+
+          var initData = String(tg.initData || '').trim()
+          if (initData) {
+            window.__H5_TG_MINI_APP__ = true
+            window.__H5_TG_INIT_DATA__ = initData
+          }else{
+            return
+          }
           if (document && document.documentElement) {
             document.documentElement.setAttribute('data-tg-mini-app', '1')
           }
           // 通知运行时 Telegram 主题信息已可用；theme.ts 会优先读取 WebApp.colorScheme。
           window.dispatchEvent(new Event('h5:telegram-ready'))
-
-          var initData = String(tg.initData || '').trim()
-          if (initData) {
-            window.__H5_TG_INIT_DATA__ = initData
-          }
-
-          hideTelegramChromeButtons(tg)
           tg.ready()
           var isFullscreenRequested = false
           if (typeof tg.requestFullscreen === 'function') {
@@ -815,11 +800,11 @@
           }
 
           if (window.Telegram && window.Telegram.WebApp) {
-            window.__H5_TG_MINI_APP__ = true
             if (document && document.documentElement) {
               document.documentElement.setAttribute('data-tg-mini-app', '1')
             }
           }
+          console.log('[telegram] __H5_TG_MINI_APP__', window.__H5_TG_MINI_APP__)
         }
         initH5TelegramEnvironment()
         // 再异步加载官方 SDK，避免 head 同步脚本在弱网/不可达场景卡住首屏。

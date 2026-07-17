@@ -4,10 +4,12 @@ import { showFailToast, showSuccessToast } from 'vant'
 import { useRoute, useRouter } from 'vue-router'
 import { postClubAgentDelApi, postOrgClubUserInfoApi, postOrgMemberListApi } from '@/api/org'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import PrimaryButton from '@/components/Button/PrimaryButton.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { getMemberRouteContext } from './clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar.png'
+import imgAgentBind from '@/assets/icons/icon_agent_bind.png'
 import { useUserInfoStore } from '@/stores/userInfo'
-import mainBgUrl from '@/assets/images/main_bg.webp'
 import { t } from '@/i18n'
 
 interface UserDisplay {
@@ -15,10 +17,6 @@ interface UserDisplay {
   uid: string
   avatar: string
 }
-
-const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
-}))
 
 const route = useRoute()
 const router = useRouter()
@@ -55,7 +53,9 @@ function toSafeNumber(value: unknown): number {
   return Number.isFinite(num) ? num : 0
 }
 
-const memberName = computed(() => queryText('name') || context.value.name || t('UIClub_Info_Members'))
+const memberName = computed(
+  () => queryText('name') || context.value.name || t('UIClub_Info_Members'),
+)
 const memberUid = computed(() => queryText('uid') || context.value.uid || '--')
 const agentName = computed(() => queryText('aname') || t('UIClub_DoneAgent'))
 const agentUid = computed(() => queryText('auid') || '--')
@@ -125,7 +125,9 @@ async function loadDisplayData(): Promise<void> {
 
           if (agent) {
             agentDisplay.value = {
-              name: String(agent.remark_name || agent.nick_name || agentName.value || t('UIClub_DoneAgent')),
+              name: String(
+                agent.remark_name || agent.nick_name || agentName.value || t('UIClub_DoneAgent'),
+              ),
               uid: String(agent.random_num || agentUid.value || '--'),
               avatar:
                 typeof agent.avatar === 'string' && agent.avatar.trim() ? agent.avatar : imgAvatar,
@@ -204,42 +206,49 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell sub-bg" :style="backgroundStyle">
+  <div class="page-shell sub-bg">
     <div class="sub-page">
       <HeaderBack :title="t('UIGuild_MemberDetails_UnBindVip')" />
 
       <section class="cards">
         <article class="glass card">
-          <img :src="memberDisplay.avatar" alt="player" />
-          <div>
+          <img class="avatar" :src="memberDisplay.avatar" alt="player" />
+          <div class="card-info">
             <p>{{ memberDisplay.name }}</p>
-            <span>ID {{ memberDisplay.uid }}</span>
+            <span class="uid-line"><em>ID</em>{{ memberDisplay.uid }}</span>
           </div>
-          <i class="badge"></i>
+          <img class="agent-bind-icon" :src="imgAgentBind" alt="" aria-hidden="true" />
         </article>
 
-        <div class="link">🔗</div>
+        <div class="link" aria-hidden="true">
+          <AppSvgIcon class="link-icon" name="link" />
+        </div>
 
         <article class="glass card">
-          <img :src="agentDisplay.avatar" alt="agent" />
-          <div>
+          <img class="avatar" :src="agentDisplay.avatar" alt="agent" />
+          <div class="card-info">
             <p>{{ agentDisplay.name }}</p>
-            <span>ID {{ agentDisplay.uid }}</span>
+            <span class="uid-line"><em>ID</em>{{ agentDisplay.uid }}</span>
           </div>
-          <i class="badge"></i>
+          <img class="agent-bind-icon" :src="imgAgentBind" alt="" aria-hidden="true" />
         </article>
       </section>
 
       <p class="hint">{{ t('UIClub_ConfirmPlayerAgentOf') }}？</p>
-      <button type="button" class="confirm" :disabled="processing || loading" @click="onConfirm">
-        {{ t('UIGuild_MemberDetails_UnBindVip') }}
-      </button>
+      <PrimaryButton
+        class="confirm"
+        :text="t('UIGuild_MemberDetails_UnBindVip')"
+        :disabled="processing || loading"
+        :loading="processing"
+        @click="onConfirm"
+      />
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 @use 'sass:math';
+@use '@/styles/mixins' as *;
 
 @function figma-rem($px) {
   @return math.div($px, 37.5) * 1rem;
@@ -247,21 +256,30 @@ onMounted(() => {
 
 .sub-bg {
   height: 100dvh;
+  background-color: #101018;
+  background-image: url('@/assets/images/main_bg.webp');
   background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  @include theme-light {
+    background-color: #f3f4f6;
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .sub-page {
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  gap: figma-rem(7.282);
+  gap: figma-rem(12);
 }
 
 .cards {
-  margin-top: figma-rem(2);
+  margin: figma-rem(12) figma-rem(12) 0;
   display: flex;
   flex-direction: column;
-  gap: figma-rem(3);
+  gap: 0.6rem;
 }
 
 .glass {
@@ -272,16 +290,23 @@ onMounted(() => {
 
 .card {
   min-height: figma-rem(77.882);
-  padding: figma-rem(14.671) figma-rem(13.613);
+  padding: figma-rem(14.69) figma-rem(15.54);
   display: flex;
   align-items: center;
-  gap: figma-rem(8.64);
+  gap: figma-rem(8.231);
 }
 
-.card img {
-  width: figma-rem(55.882);
-  height: figma-rem(56.218);
+.avatar {
+  width: figma-rem(44.72);
+  height: figma-rem(44.988);
   border-radius: 50%;
+  object-fit: cover;
+}
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+  gap: figma-rem(1.922);
 }
 
 .card p {
@@ -291,23 +316,53 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.card span {
+.uid-line {
+  display: inline-flex;
+  align-items: center;
+  gap: figma-rem(2.337);
   color: rgba(255, 255, 255, 0.75);
-  font-size: figma-rem(9.623);
+  font-size: figma-rem(9.152);
 }
 
-.badge {
+.uid-line em {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: figma-rem(2.67) figma-rem(4.673);
+  border-radius: figma-rem(4.006);
+  background: rgba(255, 255, 255, 0.34);
+  color: #fff;
+  font-size: figma-rem(7.701);
+  font-style: normal;
+  line-height: 1;
+}
+
+.agent-bind-icon {
   margin-left: auto;
   width: figma-rem(30);
   height: figma-rem(30);
-  border-radius: 50%;
-  background: linear-gradient(168deg, #ffd77a 8%, #e8a22f 72%);
+  object-fit: contain;
 }
 
 .link {
-  align-self: center;
+  position: relative;
+  z-index: 1;
+  height: figma-rem(12);
+  margin: figma-rem(-6) figma-rem(25) figma-rem(-6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: figma-rem(53);
+}
+
+.link .link-icon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: figma-rem(31);
+  height: figma-rem(31);
   color: #fff;
-  font-size: figma-rem(32.51);
+  transform: translate(-50%, -50%);
 }
 
 .hint {
@@ -317,15 +372,35 @@ onMounted(() => {
 }
 
 .confirm {
-  border: 1px solid rgba(242, 242, 242, 0.8);
-  border-radius: figma-rem(40.576);
-  min-height: figma-rem(55.184);
-  color: #fff;
-  font-size: figma-rem(18.985);
-  background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
+  margin: 0 figma-rem(8) figma-rem(18);
 }
 
-.confirm:disabled {
-  opacity: 0.72;
+.sub-bg {
+  @include theme-light {
+    .glass {
+      background: #fff;
+      backdrop-filter: none;
+    }
+
+    .card p,
+    .uid-line,
+    .hint {
+      color: #000;
+    }
+
+    .uid-line em {
+      color: #fff;
+      background: rgba(79, 79, 79, 0.4);
+    }
+
+    .link::before,
+    .link::after {
+      background: rgba(218, 225, 235, 0.48);
+    }
+
+    .link .link-icon {
+      color: var(--c-brand);
+    }
+  }
 }
 </style>

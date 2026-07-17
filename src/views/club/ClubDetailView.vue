@@ -1793,13 +1793,17 @@ onMounted(async () => {
   align-items: center;
 
   @include theme-light {
-    background: rgba(34, 34, 34, 0.05);
+    background: rgba(134, 134, 134, 0.34);
   }
 }
 
 .switch--on {
   justify-content: flex-end;
   background: var(--c-brand);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .switch:not(.switch--on) {
@@ -1811,18 +1815,7 @@ onMounted(async () => {
   height: 0.667rem;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 0.02rem 0.04rem rgba(0, 0, 0, 0.22);
-
-  @include theme-light {
-    background: #f3f4f6;
-    box-shadow: none;
-  }
-}
-
-.switch--on .switch-knob {
-  @include theme-light {
-    background: #fff;
-  }
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .info-dot {

@@ -357,6 +357,8 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .room-data-detail {
   position: relative;
   z-index: 2;
@@ -370,6 +372,10 @@ onMounted(() => {
   flex-direction: column;
   gap: 0.1rem;
   color: #fff;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .meta-title-row,
@@ -393,6 +399,10 @@ onMounted(() => {
 .meta-sub-row {
   font-size: 0.3rem;
   color: rgba(255, 255, 255, 0.66);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.58);
+  }
 }
 
 .creator-wrap {
@@ -414,11 +424,19 @@ onMounted(() => {
   color: #fff;
   font-size: 0.2rem;
   line-height: 1;
+
+  @include theme-light {
+    background: rgba(79, 79, 79, 0.4);
+  }
 }
 
 .id-number {
   font-size: 0.25rem;
   color: rgba(255, 255, 255, 0.72);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.62);
+  }
 }
 
 .summary-card {
@@ -431,6 +449,12 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.2);
   box-shadow: inset 0 0 0.02rem rgba(255, 255, 255, 0.16);
   backdrop-filter: blur(0.32rem);
+
+  @include theme-light {
+    border-color: rgba(0, 0, 0, 0.04);
+    background: #fff;
+    box-shadow: none;
+  }
 }
 
 .summary-row {
@@ -452,10 +476,18 @@ onMounted(() => {
   text-align: center;
   gap: 0.06rem;
   color: #fff;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .metric-item--with-divider + .metric-item--with-divider {
   border-left: 0.02rem solid rgba(249, 249, 249, 0.16);
+
+  @include theme-light {
+    border-left-color: rgba(17, 17, 17, 0.12);
+  }
 }
 
 .metric-label {
@@ -467,11 +499,19 @@ onMounted(() => {
   font-size: 0.34rem;
   line-height: 1;
   color: #f9f9f9;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .summary-divider {
   height: 0.02rem;
   background: rgba(249, 249, 249, 0.24);
+
+  @include theme-light {
+    background: rgba(17, 17, 17, 0.14);
+  }
 }
 
 .record-board {
@@ -492,6 +532,10 @@ onMounted(() => {
   height: 0.44rem;
   border-radius: 999px;
   background: #00af83;
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .board-head {
@@ -500,6 +544,10 @@ onMounted(() => {
   border-radius: 999px;
   padding: 0 0.18rem;
   background: rgba(255, 255, 255, 0.12);
+
+  @include theme-light {
+    background: rgba(var(--c-brand-rgb), 0.82);
+  }
 }
 
 .board-grid {
@@ -533,6 +581,11 @@ onMounted(() => {
   padding: 0.14rem 0.16rem;
   background: rgba(0, 0, 0, 0.2);
   color: #f9f9f9;
+
+  @include theme-light {
+    color: #111;
+    background: #fff;
+  }
 }
 
 .user-cell {
@@ -560,12 +613,20 @@ onMounted(() => {
 .user-name {
   font-size: 0.2rem;
   color: rgba(255, 255, 255, 0.95);
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .user-id {
   margin-top: 0.02rem;
   font-size: 0.14rem;
   color: rgba(255, 255, 255, 0.54);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.48);
+  }
 }
 
 .value-cell {
@@ -573,6 +634,10 @@ onMounted(() => {
   font-size: 0.22rem;
   color: rgba(249, 249, 249, 0.94);
   white-space: nowrap;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .list-status {
@@ -581,6 +646,10 @@ onMounted(() => {
   font-size: 0.24rem;
   color: rgba(255, 255, 255, 0.72);
   padding: 0.2rem 0;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.58);
+  }
 }
 
 @media (max-width: 340px) {

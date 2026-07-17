@@ -3,6 +3,7 @@ import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showFailToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import RoomDataDetail from '@/components/RoomDataDetail/RoomDataDetail.vue'
 
 const route = useRoute()
@@ -12,7 +13,8 @@ import { t } from '@/i18n'
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--history-detail-bg-dark': `url(${mainBgUrl})`,
+  '--history-detail-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 function toSafeNumber(value: unknown): number {
@@ -39,9 +41,16 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-room-history-detail-bg {
   position: relative;
   height: 100dvh;
   background-size: cover;
+  background-image: var(--history-detail-bg-dark);
+
+  @include theme-light {
+    background-image: var(--history-detail-bg-light);
+  }
 }
 </style>

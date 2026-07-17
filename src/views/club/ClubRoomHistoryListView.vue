@@ -5,6 +5,7 @@ import { showFailToast } from 'vant'
 import { postClubDataStatsDataApi, postClubDataStatsDataInfoApi } from '@/api/stats'
 import type { ClubDataStatsDataRecord } from '@/api/models/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import DateRangePicker from '@/components/DateRangePicker/DateRangePicker.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
 import imgClock from '@/assets/icons/icon_time.png'
@@ -30,7 +31,8 @@ interface RoomHistoryItem {
 }
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--history-bg-dark': `url(${mainBgUrl})`,
+  '--history-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 type CurrencyTab = 1 | 3
@@ -503,11 +505,19 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-room-history-bg {
   position: relative;
   height: 100dvh;
   background-size: cover;
   color: #f9f9f9;
+  background-image: var(--history-bg-dark);
+
+  @include theme-light {
+    color: #111;
+    background-image: var(--history-bg-light);
+  }
 }
 
 .club-room-history {
@@ -534,12 +544,21 @@ onMounted(() => {
   font-size: 0.34rem;
   line-height: 1.2;
   padding: 0;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.66);
+  }
 }
 
 .coin-tab--active {
   color: #fff;
   padding-bottom: 0.08rem;
   border-bottom: 0.02rem solid rgba(255, 255, 255, 0.9);
+
+  @include theme-light {
+    color: var(--c-brand);
+    border-bottom-color: var(--c-brand);
+  }
 }
 
 .summary-card {
@@ -551,6 +570,12 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.2);
   border: 0.02rem solid rgba(243, 243, 243, 0.1);
   box-shadow: inset 0 0 0.01rem rgba(255, 255, 255, 0.2);
+
+  @include theme-light {
+    border-color: rgba(0, 0, 0, 0.04);
+    background: #fff;
+    box-shadow: none;
+  }
 }
 
 .date-range {
@@ -573,6 +598,11 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   gap: 0.2rem;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.78);
+    background: #efedef;
+  }
 }
 
 .calendar-icon-inline {
@@ -581,6 +611,10 @@ onMounted(() => {
   border: 0.03rem solid rgba(243, 243, 243, 0.85);
   border-radius: 0.08rem;
   position: relative;
+
+  @include theme-light {
+    border-color: rgba(17, 17, 17, 0.68);
+  }
 
   &::before,
   &::after {
@@ -600,6 +634,13 @@ onMounted(() => {
   &::after {
     right: 0.07rem;
   }
+
+  @include theme-light {
+    &::before,
+    &::after {
+      background: rgba(17, 17, 17, 0.68);
+    }
+  }
 }
 
 .date-sep {
@@ -607,6 +648,10 @@ onMounted(() => {
   height: 0.02rem;
   border-radius: 999px;
   background: rgba(243, 243, 243, 0.55);
+
+  @include theme-light {
+    background: rgba(17, 17, 17, 0.42);
+  }
 }
 
 .stats-row,
@@ -626,6 +671,10 @@ onMounted(() => {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   padding-top: 0.24rem;
   border-top: 0.02rem solid rgba(243, 243, 243, 0.28);
+
+  @include theme-light {
+    border-top-color: rgba(17, 17, 17, 0.16);
+  }
 }
 
 .stats-item {
@@ -647,12 +696,20 @@ onMounted(() => {
 .stats-row .stats-item + .stats-item,
 .stats-grid .stats-item + .stats-item {
   border-left: 0.02rem solid rgba(243, 243, 243, 0.18);
+
+  @include theme-light {
+    border-left-color: rgba(17, 17, 17, 0.12);
+  }
 }
 
 .stats-label {
   font-size: 0.34rem;
   line-height: 1.4;
   color: rgba(243, 243, 243, 0.9);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.78);
+  }
 }
 
 .stats-value {
@@ -660,6 +717,10 @@ onMounted(() => {
   font-weight: 400;
   line-height: 1;
   color: rgba(243, 243, 243, 1);
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .timezone {
@@ -667,6 +728,10 @@ onMounted(() => {
   text-align: right;
   color: rgba(235, 245, 255, 0.7);
   font-size: 0.26rem;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.5);
+  }
 }
 
 .record-list {
@@ -719,6 +784,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
+  color: #fff;
 }
 
 .record-main {
@@ -815,6 +881,10 @@ onMounted(() => {
   color: rgba(235, 245, 255, 0.72);
   font-size: 0.28rem;
   padding: 0.18rem 0 0.2rem;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.58);
+  }
 }
 
 @media (max-width: 340px) {

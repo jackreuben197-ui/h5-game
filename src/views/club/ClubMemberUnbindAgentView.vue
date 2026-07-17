@@ -8,6 +8,7 @@ import { getMemberRouteContext } from './clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import { useUserInfoStore } from '@/stores/userInfo'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'
 
 interface UserDisplay {
@@ -17,7 +18,8 @@ interface UserDisplay {
 }
 
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--unbind-bg-dark': `url(${mainBgUrl})`,
+  '--unbind-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const route = useRoute()
@@ -240,6 +242,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @use 'sass:math';
+@use '@/styles/mixins' as *;
 
 @function figma-rem($px) {
   @return math.div($px, 37.5) * 1rem;
@@ -248,6 +251,12 @@ onMounted(() => {
 .sub-bg {
   height: 100dvh;
   background-size: cover;
+  background-image: var(--unbind-bg-dark);
+
+  @include theme-light {
+    color: #111;
+    background-image: var(--unbind-bg-light);
+  }
 }
 
 .sub-page {
@@ -268,6 +277,10 @@ onMounted(() => {
   border-radius: figma-rem(30);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(figma-rem(6));
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .card {
@@ -289,11 +302,19 @@ onMounted(() => {
   color: #fff;
   font-size: figma-rem(14.415);
   font-weight: 600;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .card span {
   color: rgba(255, 255, 255, 0.75);
   font-size: figma-rem(9.623);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.68);
+  }
 }
 
 .badge {
@@ -308,12 +329,20 @@ onMounted(() => {
   align-self: center;
   color: #fff;
   font-size: figma-rem(32.51);
+
+  @include theme-light {
+    color: #dadada;
+  }
 }
 
 .hint {
   margin: auto auto 0;
   color: rgba(249, 249, 249, 0.86);
   font-size: figma-rem(11.534);
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .confirm {
@@ -323,6 +352,11 @@ onMounted(() => {
   color: #fff;
   font-size: figma-rem(18.985);
   background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+  }
 }
 
 .confirm:disabled {

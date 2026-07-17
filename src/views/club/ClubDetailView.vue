@@ -42,10 +42,12 @@ import { generateQrCodeUrl } from '@/utils/qrcode'
 import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'
-// 主容器背景图：全页面共用一张底图。
+// 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--club-detail-bg-dark': `url(${mainBgUrl})`,
+  '--club-detail-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 interface QuickActionItem {
@@ -109,7 +111,12 @@ const settings = computed<SettingItem[]>(() => {
       value: displayClub.value?.club_creator_nickname || '--',
     },
     { id: 2, label: t('UIClub_Invite'), kind: 'arrow' },
-    { id: 3, label: t('UIClub_Info_rUC1C7lI'), kind: 'tribe', value: displayClub.value?.tribe_name || '--' },
+    {
+      id: 3,
+      label: t('UIClub_Info_rUC1C7lI'),
+      kind: 'tribe',
+      value: displayClub.value?.tribe_name || '--',
+    },
   ]
 
   if (isFounder.value) {
@@ -150,11 +157,13 @@ const showCopyPopup = ref(false)
 const showTribeSearchPopup = ref(false)
 const showTribeApplyPopup = ref(false)
 const showCancelTribeApplyPopup = ref(false)
+const showDeleteClubPopup = ref(false)
 const savingInviteShare = ref(false)
 const savingClubLogo = ref(false)
 const tribeApplySubmitting = ref(false)
 const tribeApplyStatusLoading = ref(false)
 const cancelTribeApplyLoading = ref(false)
+const deletingClub = ref(false)
 const tribeApplyId = ref<number | null>(null)
 const tribeApplying = ref(false)
 const tribeApplyIdInput = ref('')
@@ -212,6 +221,13 @@ function closeTribeApplyPopup(): void {
 
 function closeCancelTribeApplyPopup(): void {
   showCancelTribeApplyPopup.value = false
+}
+
+function closeDeleteClubPopup(): void {
+  if (deletingClub.value) {
+    return
+  }
+  showDeleteClubPopup.value = false
 }
 
 function openTribeIdKeypad(): void {
@@ -322,7 +338,7 @@ async function submitTribeApply(): Promise<void> {
 
   const tribeRandomId = Number(tribeApplyIdInput.value)
   if (!Number.isFinite(tribeRandomId) || tribeRandomId <= 0) {
-    showFailToast(t('UIClub_PleaseUnion') + "ID")
+    showFailToast(t('UIClub_PleaseUnion') + 'ID')
     return
   }
 
@@ -407,7 +423,9 @@ async function confirmTribeApply(): Promise<void> {
     }
 
     const successMessage = (response.msg ?? response.message) as unknown
-    showSuccessToast(typeof successMessage === 'string' ? successMessage : t('UIClub_ApplyDoneSubmit'))
+    showSuccessToast(
+      typeof successMessage === 'string' ? successMessage : t('UIClub_ApplyDoneSubmit'),
+    )
     closeTribeApplyPopup()
     resetTribeApplyForm()
     await fetchClubTribeApplyStatus()
@@ -439,7 +457,9 @@ async function cancelTribeApply(): Promise<void> {
     }
 
     const successMessage = (response.msg ?? response.message) as unknown
-    showSuccessToast(typeof successMessage === 'string' ? successMessage : t('UIClub_DoneCancelApply'))
+    showSuccessToast(
+      typeof successMessage === 'string' ? successMessage : t('UIClub_DoneCancelApply'),
+    )
     closeCancelTribeApplyPopup()
     await fetchClubTribeApplyStatus()
   } catch (error) {
@@ -769,12 +789,21 @@ async function submitCopyRequest(): Promise<void> {
   closeCopyPopup()
 }
 
-async function onDeleteClub(): Promise<void> {
+function onDeleteClub(): void {
   if (!isFounder.value) {
     showFailToast(t('UIClub_FounderCan2'))
     return
   }
 
+  showDeleteClubPopup.value = true
+}
+
+async function confirmDeleteClub(): Promise<void> {
+  if (deletingClub.value) {
+    return
+  }
+
+  deletingClub.value = true
   try {
     const response = await postOrgClubDisbandApi({})
 
@@ -783,12 +812,15 @@ async function onDeleteClub(): Promise<void> {
       throw new Error(typeof fallback === 'string' ? fallback : t('UIClub_DeleteFail'))
     }
     showSuccessToast(t('UIClub_DoneDeleteClub'))
+    showDeleteClubPopup.value = false
     setTimeout(() => {
       void router.replace('/club')
     }, 1000)
   } catch (error) {
     const message = error instanceof Error ? error.message : t('UIClub_DeleteFail')
     showFailToast(message)
+  } finally {
+    deletingClub.value = false
   }
 }
 
@@ -896,7 +928,11 @@ onMounted(async () => {
                 :aria-label="t('UIClub_ClubAvatar3')"
                 @click="open"
               >
-                <img class="club-avatar" :src="imageUrl || imgClubCover" :alt="t('UIClub_ClubAvatar2')" />
+                <img
+                  class="club-avatar"
+                  :src="imageUrl || imgClubCover"
+                  :alt="t('UIClub_ClubAvatar2')"
+                />
                 <span class="club-avatar-edit" aria-hidden="true">+</span>
               </button>
             </template>
@@ -1222,6 +1258,30 @@ onMounted(async () => {
       </section>
     </div>
 
+    <div v-if="showDeleteClubPopup" class="club-modal-mask" @click="closeDeleteClubPopup">
+      <section class="copy-modal" role="alertdialog" aria-modal="true" @click.stop>
+        <p>删除俱乐部后无法恢复，是否确认删除？</p>
+        <div class="copy-modal__actions">
+          <button
+            type="button"
+            class="modal-secondary-btn"
+            :disabled="deletingClub"
+            @click="closeDeleteClubPopup"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            class="modal-primary-btn"
+            :disabled="deletingClub"
+            @click="confirmDeleteClub"
+          >
+            {{ deletingClub ? '删除中...' : '确认删除' }}
+          </button>
+        </div>
+      </section>
+    </div>
+
     <NumericKeypad
       :open="tribeIdKeypadOpen"
       :min="0"
@@ -1240,9 +1300,18 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-detail-bg {
   height: 100dvh;
   background-size: cover;
+  background-image: var(--club-detail-bg-dark);
+
+  @include theme-light {
+    color: var(--c-text);
+    background-color: var(--c-page);
+    background-image: var(--club-detail-bg-light);
+  }
 }
 
 .club-detail {
@@ -1293,6 +1362,11 @@ onMounted(async () => {
   border-radius: 1.00402rem;
   background: rgba(0, 0, 0, 0.22);
   backdrop-filter: blur(0.2rem);
+  position: relative;
+  @include theme-light {
+    background: var(--c-surface);
+    backdrop-filter: none;
+  }
 }
 
 .club-header-main {
@@ -1333,6 +1407,11 @@ onMounted(async () => {
   font-size: 0.45rem;
   line-height: 0.5rem;
   text-align: center;
+
+  @include theme-light {
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .club-summary {
@@ -1358,6 +1437,10 @@ onMounted(async () => {
   font-size: 0.5692rem;
   line-height: 1;
   font-weight: 700;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .name-edit-icon {
@@ -1377,6 +1460,10 @@ onMounted(async () => {
   border: 0.06rem solid rgba(249, 249, 249, 0.92);
   border-radius: 0.09rem;
   transform: rotate(-38deg);
+
+  @include theme-light {
+    border-color: rgba(34, 34, 34, 0.86);
+  }
 }
 
 .club-id-row {
@@ -1396,11 +1483,19 @@ onMounted(async () => {
   font-size: 0.20537rem;
   color: #fff;
   background: rgba(255, 255, 255, 0.28);
+
+  @include theme-light {
+    background: rgba(79, 79, 79, 0.4);
+  }
 }
 
 .id-text {
   font-size: 0.24404rem;
   color: rgba(249, 249, 249, 0.95);
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .metric-line {
@@ -1412,6 +1507,10 @@ onMounted(async () => {
   font-size: 0.3553rem;
   line-height: 1.2;
   font-weight: 600;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .metric-line img {
@@ -1432,6 +1531,10 @@ onMounted(async () => {
   right: 0.5rem;
   bottom: 0.3rem;
   position: absolute;
+
+  @include theme-light {
+    background: rgba(164, 164, 164, 0.2);
+  }
 }
 
 .size-text {
@@ -1439,6 +1542,10 @@ onMounted(async () => {
   font-size: 0.4739rem;
   line-height: 1;
   font-weight: 500;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .club-size-pill img {
@@ -1446,6 +1553,10 @@ onMounted(async () => {
   height: 0.48rem;
   object-fit: contain;
   opacity: 0.94;
+
+  @include theme-light {
+    filter: brightness(0.35);
+  }
 }
 
 .quick-actions {
@@ -1463,6 +1574,10 @@ onMounted(async () => {
   align-items: center;
   gap: 0.16027rem;
   color: #f9f9f9;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .quick-image-wrap {
@@ -1472,6 +1587,11 @@ onMounted(async () => {
   border: 0.02667rem solid rgba(255, 255, 255, 0.6);
   overflow: hidden;
   background: rgba(255, 255, 255, 0.26);
+
+  @include theme-light {
+    border-color: rgba(255, 255, 255, 0.78);
+    background: rgba(93, 93, 93, 0.17);
+  }
 }
 
 .quick-image-wrap img {
@@ -1497,6 +1617,12 @@ onMounted(async () => {
   justify-content: space-between;
   color: rgba(249, 249, 249, 0.96);
   font-size: 0.40524rem;
+
+  @include theme-light {
+    color: var(--c-text);
+    background: #dadada;
+    backdrop-filter: none;
+  }
 }
 
 .intro-edit {
@@ -1509,6 +1635,11 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   padding: 0;
+
+  @include theme-light {
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .edit-pen {
@@ -1535,13 +1666,15 @@ onMounted(async () => {
   gap: 0.28916rem;
   padding: 0.34538rem 0.41767rem;
   border-radius: 0.72289rem;
-  background: radial-gradient(
-      80% 100% at 100% 100%,
-      rgba(51, 169, 206, 0.26),
-      rgba(51, 169, 206, 0)
-    ),
+  background:
+    radial-gradient(80% 100% at 100% 100%, rgba(51, 169, 206, 0.26), rgba(51, 169, 206, 0)),
     rgba(0, 0, 0, 0.24);
   backdrop-filter: blur(0.15rem);
+
+  @include theme-light {
+    background: var(--c-surface);
+    backdrop-filter: none;
+  }
 }
 
 .settings-row {
@@ -1556,6 +1689,10 @@ onMounted(async () => {
   gap: 0;
   color: #f1f1f1;
   font-size: 0.40524rem;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .tribe-apply-btn {
@@ -1567,10 +1704,20 @@ onMounted(async () => {
   font-size: 0.28rem;
   font-weight: 500;
   background: linear-gradient(153deg, #05e7ae 8%, #027a5c 72%);
+
+  @include theme-light {
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .tribe-apply-btn--pending {
   background: rgba(255, 255, 255, 0.22);
+
+  @include theme-light {
+    color: var(--c-text-muted);
+    background: rgba(164, 164, 164, 0.2);
+  }
 }
 
 .tribe-apply-btn:disabled {
@@ -1595,6 +1742,10 @@ onMounted(async () => {
 .muted-text {
   color: rgba(228, 228, 228, 0.7);
   font-size: 0.40524rem;
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .mini-avatar {
@@ -1610,6 +1761,10 @@ onMounted(async () => {
   border-top: 0.02rem solid rgba(237, 237, 237, 0.85);
   border-right: 0.02rem solid rgba(237, 237, 237, 0.85);
   transform: rotate(45deg);
+
+  @include theme-light {
+    border-color: rgba(34, 34, 34, 0.82);
+  }
 }
 
 .level-pill {
@@ -1622,6 +1777,12 @@ onMounted(async () => {
   font-weight: 700;
   color: #f9f9f9;
   background: linear-gradient(152deg, #05e7ae 8%, #027a5c 72%);
+
+  @include theme-light {
+    color: #f9f9f9;
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .switch {
@@ -1642,6 +1803,10 @@ onMounted(async () => {
 
 .switch:not(.switch--on) {
   justify-content: flex-start;
+
+  @include theme-light {
+    background: rgba(164, 164, 164, 0.2);
+  }
 }
 
 .switch-knob {
@@ -1650,6 +1815,10 @@ onMounted(async () => {
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 0.02rem 0.04rem rgba(0, 0, 0, 0.22);
+
+  @include theme-light {
+    box-shadow: 0 0.02rem 0.05rem rgba(34, 34, 34, 0.16);
+  }
 }
 
 .info-dot {
@@ -1661,6 +1830,11 @@ onMounted(async () => {
   font-size: 0.22613rem;
   line-height: 0.3592rem;
   text-align: center;
+
+  @include theme-light {
+    color: #fff;
+    background: rgba(34, 34, 34, 0.5);
+  }
 }
 
 .danger-zone {
@@ -1677,6 +1851,12 @@ onMounted(async () => {
   font-size: 0.5066rem;
   font-weight: 500;
   background: linear-gradient(90deg, rgba(73, 29, 86, 0.8), rgba(19, 95, 125, 0.84));
+
+  @include theme-light {
+    color: #fff;
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .club-modal-mask {
@@ -1688,6 +1868,10 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   z-index: 80;
+
+  @include theme-light {
+    background: var(--c-overlay);
+  }
 }
 
 .invite-modal,
@@ -1697,10 +1881,19 @@ onMounted(async () => {
   border: 0.0255rem solid rgba(242, 242, 242, 0.4);
   background: linear-gradient(121deg, rgba(0, 0, 0, 0.2) 3%, rgba(0, 0, 0, 0.38) 89%);
   backdrop-filter: blur(1.20216rem);
-  box-shadow: 0 0 0.22981rem rgba(0, 0, 0, 0.85) inset,
+  box-shadow:
+    0 0 0.22981rem rgba(0, 0, 0, 0.85) inset,
     0.05672rem 0.11344rem 0.45908rem rgba(242, 242, 242, 0.5) inset,
     0.09192rem 0.11491rem 0.18384rem rgba(0, 0, 0, 0.28);
   color: #f9f9f9;
+
+  @include theme-light {
+    color: var(--c-text);
+    border-color: var(--c-border);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 0.12rem 0.4rem rgba(34, 34, 34, 0.16);
+    backdrop-filter: blur(0.35rem);
+  }
 }
 
 .tribe-search-modal {
@@ -1709,11 +1902,20 @@ onMounted(async () => {
   border: 0.0255rem solid rgba(242, 242, 242, 0.4);
   background: linear-gradient(121deg, rgba(0, 0, 0, 0.2) 3%, rgba(0, 0, 0, 0.38) 89%);
   backdrop-filter: blur(1.20216rem);
-  box-shadow: 0 0 0.22981rem rgba(0, 0, 0, 0.85) inset,
+  box-shadow:
+    0 0 0.22981rem rgba(0, 0, 0, 0.85) inset,
     0.05672rem 0.11344rem 0.45908rem rgba(242, 242, 242, 0.5) inset,
     0.09192rem 0.11491rem 0.18384rem rgba(0, 0, 0, 0.28);
   color: #f9f9f9;
   padding: 0.42rem;
+
+  @include theme-light {
+    color: var(--c-text);
+    border-color: var(--c-border);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 0.12rem 0.4rem rgba(34, 34, 34, 0.16);
+    backdrop-filter: blur(0.35rem);
+  }
 }
 
 .join-modal {
@@ -1722,11 +1924,22 @@ onMounted(async () => {
   padding: 0.42rem;
   border-radius: 0.97rem;
   border: 0.025rem solid rgba(255, 255, 255, 0.38);
-  background: linear-gradient(126deg, rgba(142, 142, 142, 0.6) 0%, rgba(72, 72, 72, 0.92) 100%),
+  background:
+    linear-gradient(126deg, rgba(142, 142, 142, 0.6) 0%, rgba(72, 72, 72, 0.92) 100%),
     rgba(30, 30, 30, 0.65);
-  box-shadow: 0.09rem 0.11rem 0.18rem rgba(0, 0, 0, 0.25),
-    inset 0.05rem 0.1rem 0.4rem rgba(242, 242, 242, 0.25), inset 0 0 0.23rem rgba(0, 0, 0, 0.55);
+  box-shadow:
+    0.09rem 0.11rem 0.18rem rgba(0, 0, 0, 0.25),
+    inset 0.05rem 0.1rem 0.4rem rgba(242, 242, 242, 0.25),
+    inset 0 0 0.23rem rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(0.4rem);
+
+  @include theme-light {
+    color: var(--c-text);
+    border-color: var(--c-border);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 0.12rem 0.4rem rgba(34, 34, 34, 0.16);
+    backdrop-filter: blur(0.35rem);
+  }
 }
 
 .join-modal-card {
@@ -1740,6 +1953,11 @@ onMounted(async () => {
   justify-content: center;
   gap: 0.28rem;
   padding: 0.5rem 0.42rem;
+
+  @include theme-light {
+    border-color: rgba(34, 34, 34, 0.1);
+    background: rgba(34, 34, 34, 0.06);
+  }
 }
 
 .join-modal-logo {
@@ -1757,6 +1975,10 @@ onMounted(async () => {
   line-height: 1.2;
   color: #fff;
   text-align: center;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .join-modal-id-row {
@@ -1768,6 +1990,10 @@ onMounted(async () => {
   font-size: 0.256rem;
   font-weight: 600;
   color: #fff;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .join-modal-id-tag {
@@ -1779,6 +2005,10 @@ onMounted(async () => {
   border-radius: 0.075rem;
   background: rgba(255, 255, 255, 0.25);
   font-size: 0.216rem;
+
+  @include theme-light {
+    background: rgba(34, 34, 34, 0.14);
+  }
 }
 
 .join-modal-actions {
@@ -1802,11 +2032,24 @@ onMounted(async () => {
 
 .join-modal-btn--cancel {
   background: rgba(0, 0, 0, 0.3);
+
+  @include theme-light {
+    color: var(--c-text);
+    background: rgba(34, 34, 34, 0.08);
+    box-shadow: none;
+  }
 }
 
 .join-modal-btn--confirm {
   background: linear-gradient(180deg, #05e7ae 0%, #027a5b 100%);
   border: 0.013rem solid rgba(255, 255, 255, 0.5);
+
+  @include theme-light {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.7);
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .join-modal-btn:disabled {
@@ -1821,6 +2064,11 @@ onMounted(async () => {
   flex-direction: column;
   gap: 0.24rem;
   padding: 0.42rem;
+
+  @include theme-light {
+    border-color: rgba(34, 34, 34, 0.1);
+    background: rgba(34, 34, 34, 0.06);
+  }
 }
 
 .tribe-apply-title {
@@ -1845,6 +2093,10 @@ onMounted(async () => {
     rgba(178, 76, 51, 0.96) 72%,
     rgba(141, 59, 84, 0.96) 100%
   );
+
+  @include theme-light {
+    background: rgba(34, 34, 34, 0.06);
+  }
 }
 
 .tribe-search-trigger {
@@ -1857,6 +2109,11 @@ onMounted(async () => {
 .tribe-search-icon {
   width: 0.56rem;
   height: 0.55rem;
+
+  @include theme-light {
+    opacity: 0.42;
+    filter: brightness(0);
+  }
 }
 
 .tribe-search-input {
@@ -1867,10 +2124,18 @@ onMounted(async () => {
   background: transparent;
   color: #fff;
   font-size: 0.38rem;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .tribe-search-input::placeholder {
   color: rgba(255, 255, 255, 0.88);
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .tribe-contact-shell {
@@ -1881,6 +2146,11 @@ onMounted(async () => {
   padding: 0 0.32rem;
   display: flex;
   align-items: center;
+
+  @include theme-light {
+    border-color: rgba(34, 34, 34, 0.1);
+    background: rgba(34, 34, 34, 0.06);
+  }
 }
 
 .tribe-contact-shell--modal {
@@ -1895,10 +2165,18 @@ onMounted(async () => {
   background: transparent;
   color: #fff;
   font-size: 0.34rem;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .tribe-contact-input::placeholder {
   color: rgba(255, 255, 255, 0.72);
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .invite-modal {
@@ -1939,6 +2217,11 @@ onMounted(async () => {
   width: 0.66rem;
   height: 0.66rem;
   object-fit: contain;
+
+  @include theme-light {
+    filter: brightness(0);
+    opacity: 0.68;
+  }
 }
 
 .invite-modal__body {
@@ -1949,6 +2232,11 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   gap: 0.08rem;
+
+  @include theme-light {
+    border-color: rgba(34, 34, 34, 0.1);
+    background: rgba(34, 34, 34, 0.06);
+  }
 }
 
 .invite-modal__subtitle {
@@ -2019,6 +2307,10 @@ onMounted(async () => {
   padding: 0.10667rem;
   border: 0.10067rem solid #00b184;
   overflow: hidden;
+
+  @include theme-light {
+    border-color: var(--c-brand);
+  }
 }
 
 .invite-modal__qr {
@@ -2072,6 +2364,13 @@ onMounted(async () => {
   border: 0.01333rem solid rgba(242, 242, 242, 0.8);
   background: linear-gradient(153deg, #05e7ae 8%, #027a5c 72%);
   box-shadow: inset 0 -0.16rem 0.3rem rgba(0, 0, 0, 0.14);
+
+  @include theme-light {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.7);
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .modal-primary-btn:disabled {
@@ -2106,6 +2405,12 @@ onMounted(async () => {
 .modal-secondary-btn {
   background: rgba(0, 0, 0, 0.34);
   box-shadow: inset 0 -0.2rem 0.24rem rgba(0, 0, 0, 0.24);
+
+  @include theme-light {
+    color: var(--c-text);
+    background: rgba(34, 34, 34, 0.08);
+    box-shadow: none;
+  }
 }
 
 @media (max-width: 340px) {

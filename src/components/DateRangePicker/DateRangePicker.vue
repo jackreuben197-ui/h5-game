@@ -317,6 +317,8 @@ function startOfDay(date: Date): Date {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .date-picker-mask {
   position: fixed;
   inset: 0;
@@ -332,12 +334,24 @@ function startOfDay(date: Date): Date {
   border-radius: 0.84459rem 0.84459rem 0 0;
   background: rgba(0, 0, 0, 0.86);
   backdrop-filter: blur(0.16064rem);
+
+  @include theme-light {
+    border: 0.013rem solid rgba(255, 255, 255, 0.7);
+    border-bottom: 0;
+    background: rgba(73, 73, 73, 0.82);
+    box-shadow: inset 0 0.08rem 0.3rem rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(0.42rem);
+  }
 }
 
 .picker-tip {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  @include theme-light {
+    display: none;
+  }
 
   p {
     margin: 0;
@@ -378,6 +392,10 @@ function startOfDay(date: Date): Date {
   gap: 0.1912rem;
   font-size: 0.35893rem;
   line-height: 1.2;
+
+  @include theme-light {
+    background: rgba(30, 30, 30, 0.58);
+  }
 
   &.active {
     box-shadow: 0 0 0 0.02rem rgba(var(--c-brand-rgb), 0.45) inset;
@@ -535,5 +553,10 @@ function startOfDay(date: Date): Date {
   color: #fff;
   font-size: 0.4rem;
   font-weight: 500;
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+  }
 }
 </style>

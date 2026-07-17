@@ -24,10 +24,12 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { getMemberRouteContext, type MemberIdentity } from './clubMemberRoute'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'
 
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--member-detail-bg-dark': `url(${mainBgUrl})`,
+  '--member-detail-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const route = useRoute()
@@ -924,6 +926,7 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 @use 'sass:math';
+@use '@/styles/mixins' as *;
 
 @function figma-rem($px) {
   @return math.div($px, 37.5) * 1rem;
@@ -932,6 +935,12 @@ onMounted(async () => {
 .member-detail-bg {
   height: 100dvh;
   background-size: cover;
+  background-image: var(--member-detail-bg-dark);
+
+  @include theme-light {
+    color: #111;
+    background-image: var(--member-detail-bg-light);
+  }
 }
 
 .member-detail-page {
@@ -946,6 +955,10 @@ onMounted(async () => {
   border-radius: figma-rem(17.067);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.16rem);
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .profile-card {
@@ -974,6 +987,10 @@ onMounted(async () => {
   font-size: figma-rem(22.445);
   font-weight: 700;
   color: #fff;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .uid-line {
@@ -983,6 +1000,10 @@ onMounted(async () => {
   gap: figma-rem(2.457);
   color: rgba(255, 255, 255, 0.9);
   font-size: figma-rem(9.623);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.76);
+  }
 }
 
 .uid-line span {
@@ -990,12 +1011,21 @@ onMounted(async () => {
   border-radius: figma-rem(4.212);
   background: rgba(255, 255, 255, 0.36);
   font-size: figma-rem(8.098);
+
+  @include theme-light {
+    color: #fff;
+    background: rgba(79, 79, 79, 0.4);
+  }
 }
 
 .badge {
   margin: 0;
   font-size: figma-rem(10.5);
   color: #f9f9f9;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .asset-stack {
@@ -1013,6 +1043,10 @@ onMounted(async () => {
   color: #f9f9f9;
   font-size: figma-rem(14.886);
   font-weight: 600;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .asset-stack img {
@@ -1028,6 +1062,11 @@ onMounted(async () => {
   justify-content: space-between;
   color: #fff;
   font-size: figma-rem(15.203);
+
+  @include theme-light {
+    color: #111;
+    background: #dadada;
+  }
 }
 
 .role-trigger {
@@ -1038,6 +1077,10 @@ onMounted(async () => {
   align-items: center;
   gap: figma-rem(5);
   font-size: figma-rem(15.203);
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .role-arrow {
@@ -1046,6 +1089,10 @@ onMounted(async () => {
   border-right: 1px solid rgba(255, 255, 255, 0.9);
   border-bottom: 1px solid rgba(255, 255, 255, 0.9);
   transform: rotate(45deg);
+
+  @include theme-light {
+    border-color: rgba(17, 17, 17, 0.86);
+  }
 }
 
 .form-card {
@@ -1062,6 +1109,10 @@ onMounted(async () => {
   color: #fff;
   font-size: figma-rem(15.203);
   font-weight: 600;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .form-card input {
@@ -1072,10 +1123,19 @@ onMounted(async () => {
   background: rgba(255, 255, 255, 0.22);
   color: #fff;
   font-size: figma-rem(10.135);
+
+  @include theme-light {
+    color: #111;
+    background: #dadada;
+  }
 }
 
 .form-card input::placeholder {
   color: rgba(255, 255, 255, 0.72);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.72);
+  }
 }
 
 .remark-save-btn {
@@ -1085,6 +1145,11 @@ onMounted(async () => {
   color: #fff;
   font-size: figma-rem(14);
   background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+  }
 }
 
 .remark-save-btn:disabled {
@@ -1104,6 +1169,10 @@ onMounted(async () => {
   justify-content: space-between;
   color: #fff;
   font-size: figma-rem(15.203);
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .pill-tabs {
@@ -1112,6 +1181,10 @@ onMounted(async () => {
   background: rgba(255, 255, 255, 0.16);
   border-radius: figma-rem(30);
   padding: figma-rem(1.5);
+
+  @include theme-light {
+    background: #dadada;
+  }
 }
 
 .range-tabs {
@@ -1126,11 +1199,20 @@ onMounted(async () => {
   font-size: figma-rem(13.574);
   min-height: figma-rem(54.16);
   border-radius: figma-rem(51.915);
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .pill-tabs button.active {
   border: 1px solid rgba(255, 255, 255, 0.8);
   background: rgba(255, 255, 255, 0.2);
+
+  @include theme-light {
+    border-color: transparent;
+    background: #fff;
+  }
 }
 
 .stat-list {
@@ -1144,6 +1226,10 @@ onMounted(async () => {
   color: rgba(255, 255, 255, 0.8);
   font-size: figma-rem(10.5);
   text-align: right;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.58);
+  }
 }
 
 .stat-row {
@@ -1155,6 +1241,11 @@ onMounted(async () => {
   justify-content: space-between;
   color: #fff;
   font-size: figma-rem(11.402);
+
+  @include theme-light {
+    color: #111;
+    background: #fff;
+  }
 }
 
 .link-list {
@@ -1175,12 +1266,21 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  @include theme-light {
+    color: #111;
+    background: #fff;
+  }
 }
 
 .bound-row-card {
   border-radius: figma-rem(15.836);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(figma-rem(0.3167));
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .bound-link-item {
@@ -1195,6 +1295,10 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   gap: figma-rem(9.502);
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .bound-left {
@@ -1222,6 +1326,10 @@ onMounted(async () => {
   font-weight: 500;
   color: #f3f3f3;
   line-height: figma-rem(19.44);
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .bound-agent-id-row {
@@ -1245,12 +1353,20 @@ onMounted(async () => {
   font-weight: 600;
   line-height: 1;
   background: rgba(255, 255, 255, 0.4);
+
+  @include theme-light {
+    background: rgba(79, 79, 79, 0.4);
+  }
 }
 
 .bound-agent-info small {
   font-size: figma-rem(9.623);
   color: rgba(255, 255, 255, 0.7);
   line-height: figma-rem(11.483);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.62);
+  }
 }
 
 .bound-right {
@@ -1264,6 +1380,10 @@ onMounted(async () => {
   font-weight: 500;
   line-height: 1.2;
   color: #fff;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .bound-agent-arrow {
@@ -1282,6 +1402,10 @@ onMounted(async () => {
   border-top: figma-rem(1.15) solid rgba(255, 255, 255, 0.96);
   border-right: figma-rem(1.15) solid rgba(255, 255, 255, 0.96);
   transform: translate(-60%, -50%) rotate(45deg);
+
+  @include theme-light {
+    border-color: rgba(17, 17, 17, 0.82);
+  }
 }
 
 .friend-total {
@@ -1295,6 +1419,10 @@ onMounted(async () => {
   border-top: figma-rem(1.2) solid rgba(255, 255, 255, 0.9);
   border-right: figma-rem(1.2) solid rgba(255, 255, 255, 0.9);
   transform: rotate(45deg);
+
+  @include theme-light {
+    border-color: rgba(17, 17, 17, 0.82);
+  }
 }
 
 .switch-list {
@@ -1310,6 +1438,10 @@ onMounted(async () => {
   justify-content: space-between;
   color: #fff;
   font-size: figma-rem(15.203);
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .switch {
@@ -1321,6 +1453,10 @@ onMounted(async () => {
   padding: figma-rem(1.2);
   display: flex;
   align-items: center;
+
+  @include theme-light {
+    background: #dedede;
+  }
 }
 
 .switch i {
@@ -1334,6 +1470,10 @@ onMounted(async () => {
 .switch.on {
   justify-content: flex-end;
   background: #25dbc4;
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .bottom-actions {
@@ -1353,10 +1493,18 @@ onMounted(async () => {
 
 .btn.secondary {
   background: rgba(35, 41, 84, 0.58);
+
+  @include theme-light {
+    background: #b7b7b7;
+  }
 }
 
 .btn.primary {
   background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .btn:disabled {

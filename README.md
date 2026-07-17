@@ -321,6 +321,35 @@ background: var(--c-surface);
 }
 ```
 
+主题 mixin 必须写在需要覆盖的原始 class 选择器内部，与该 class 的深色样式就地共置；禁止在页面
+根节点或其他父级选择器中集中嵌套多个子 class 的浅色覆盖。
+
+```scss
+// ✅ 正确：浅色差异紧跟原始 class，不改变选择器的父级关系
+.club-size-pill {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.3rem;
+  background: rgba(255, 255, 255, 0.2);
+
+  @include theme-light {
+    background: rgba(164, 164, 164, 0.2);
+  }
+}
+
+// ❌ 错误：集中覆盖会增加父级依赖和 specificity，可能干扰定位、状态类及响应式规则
+.club-detail-bg {
+  @include theme-light {
+    .club-size-pill {
+      background: rgba(164, 164, 164, 0.2);
+    }
+  }
+}
+```
+
+伪元素、状态选择器和组合选择器也遵循同一原则：在其已有选择器声明内直接加入
+`@include theme-light`，不要统一收口到文件末尾的主题覆盖区。
+
 **3. 图标与图片素材**：单色 SVG 统一封装组件，路径只写一份，使用 `currentColor`，主题只改
 `color`；不要为搜索、牌型等单色图标再维护 `_light.svg`。
 

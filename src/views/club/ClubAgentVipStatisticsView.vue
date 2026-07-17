@@ -14,6 +14,7 @@ import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgBalance from '@/assets/icons/icon_credit_chip.png'
 import imgCards from '@/assets/icons/icon_cards.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { t } from '@/i18n'
@@ -21,6 +22,10 @@ import { t } from '@/i18n'
 const userInfoStore = useUserInfoStore()
 const route = useRoute()
 const context = computed(() => getMemberRouteContext(route))
+const backgroundStyle = computed(() => ({
+  '--vip-bg-dark': `url(${mainBgUrl})`,
+  '--vip-bg-light': `url(${mainBgLightUrl})`,
+}))
 
 // filter_type: 1=UC, 2=USDT, 3=Chips
 const filterType = ref<number>(1)
@@ -245,7 +250,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell sub-bg" :style="{ backgroundImage: `url(${mainBgUrl})` }">
+  <div class="page-shell sub-bg" :style="backgroundStyle">
     <HeaderBack :title="t('UIClub_AgentData')" />
 
     <section class="glass profile-card">
@@ -362,6 +367,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @use 'sass:math';
+@use '@/styles/mixins' as *;
 
 @function figma-rem($px) {
   @return math.div($px, 37.5) * 1rem;
@@ -370,12 +376,22 @@ onMounted(() => {
 .sub-bg {
   height: 100dvh;
   background-size: cover;
+  background-image: var(--vip-bg-dark);
+
+  @include theme-light {
+    color: #111;
+    background-image: var(--vip-bg-light);
+  }
 }
 
 .glass {
   border-radius: figma-rem(39.59);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(figma-rem(6));
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .profile-card {
@@ -402,11 +418,19 @@ onMounted(() => {
   color: #fff;
   font-size: figma-rem(18.44);
   font-weight: 700;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .uid {
   color: rgba(255, 255, 255, 0.86);
   font-size: figma-rem(9.623);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.7);
+  }
 }
 
 .badge {
@@ -422,6 +446,10 @@ onMounted(() => {
   gap: figma-rem(5.07);
   font-size: figma-rem(14.886);
   font-weight: 700;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .coin div {
@@ -447,6 +475,10 @@ onMounted(() => {
   align-items: flex-end;
   color: #fff;
   font-size: figma-rem(15.203);
+
+  @include theme-light {
+    color: #111;
+  }
 
   p,
   strong {
@@ -480,6 +512,10 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.16);
   border-radius: figma-rem(30);
   padding: figma-rem(1.5);
+
+  @include theme-light {
+    background: #dadada;
+  }
 }
 
 .tabs-row button {
@@ -490,9 +526,18 @@ onMounted(() => {
   font-size: figma-rem(13.574);
   min-height: figma-rem(54.16);
 
+  @include theme-light {
+    color: #111;
+  }
+
   &.active {
     background: rgba(255, 255, 255, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.8);
+
+    @include theme-light {
+      border-color: transparent;
+      background: #fff;
+    }
   }
 }
 
@@ -515,11 +560,23 @@ onMounted(() => {
   background-repeat: no-repeat;
   background-position: right figma-rem(8) center;
   padding-right: figma-rem(24);
+
+  @include theme-light {
+    border-color: transparent;
+    color: #111;
+    background-color: #dadada;
+    background-image: url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L4 4L7 1' stroke='%23111' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
 }
 
 .filter-select-wrap select option {
   background: #1a1a2e;
   color: #fff;
+
+  @include theme-light {
+    color: #111;
+    background: #fff;
+  }
 }
 
 .cards {
@@ -533,6 +590,10 @@ onMounted(() => {
   color: rgba(255, 255, 255, 0.8);
   font-size: figma-rem(10.5);
   text-align: center;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.58);
+  }
 }
 
 .stat-card {
@@ -552,6 +613,10 @@ onMounted(() => {
   gap: figma-rem(5.07);
   font-size: figma-rem(11.402);
 
+  @include theme-light {
+    color: #111;
+  }
+
   img {
     width: figma-rem(18);
     height: figma-rem(18);
@@ -563,6 +628,10 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   color: #fff;
+
+  @include theme-light {
+    color: #111;
+  }
 
   b {
     font-size: figma-rem(14);

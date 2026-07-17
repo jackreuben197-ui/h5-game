@@ -108,6 +108,8 @@ async function handleFileChange(event: Event): Promise<void> {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .upload-file-input {
   position: fixed;
   width: 0;
@@ -138,6 +140,11 @@ async function handleFileChange(event: Event): Promise<void> {
   align-items: center;
   gap: 0.34rem;
   color: #f9f9f9;
+
+  @include theme-light {
+    color: var(--c-text);
+    background: #fff;
+  }
 }
 
 .upload-sheet-option {
@@ -162,5 +169,9 @@ async function handleFileChange(event: Event): Promise<void> {
   width: 100%;
   height: 0.01rem;
   background: rgba(249, 249, 249, 0.28);
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.16);
+  }
 }
 </style>

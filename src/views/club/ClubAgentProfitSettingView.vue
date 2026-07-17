@@ -7,6 +7,7 @@ import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import { getMemberRouteContext } from './clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { postOrgClubAgentRatioInfoApi, postOrgClubAgentRatioUpdateApi } from '@/api/org'
 import type { OrgClubAgentRatioInfoInfo } from '@/api/models/org'
 import { t } from '@/i18n'
@@ -16,7 +17,8 @@ const context = computed(() => getMemberRouteContext(route))
 const focusedKey = ref('service')
 
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--profit-bg-dark': `url(${mainBgUrl})`,
+  '--profit-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const form = ref([
@@ -187,14 +189,15 @@ onMounted(() => {
 
     <NumericKeypad
       :open="keypadOpen"
-      :show-input-area="true"
+      :show-input-area="false"
+      :show-cancel="false"
       :allow-decimal="true"
       :max="100"
       :min="0"
       :max-length="4"
       :initial-value="form.find((i) => i.key === keypadField)?.value || '0'"
       :title="form.find((i) => i.key === keypadField)?.label || t('UIMineUSDTSheet_CustomTip')"
-      :confirm-text="t('CommitOK')"
+      confirm-text="加入"
       @close="onKeypadClose"
       @submit="onKeypadSubmit"
       @key-press="onKeypadKeyPress"
@@ -204,6 +207,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @use 'sass:math';
+@use '@/styles/mixins' as *;
 
 @function figma-rem($px) {
   @return math.div($px, 37.5) * 1rem;
@@ -212,12 +216,22 @@ onMounted(() => {
 .profit-bg {
   height: 100dvh;
   background-size: cover;
+  background-image: var(--profit-bg-dark);
+
+  @include theme-light {
+    color: #111;
+    background-image: var(--profit-bg-light);
+  }
 }
 
 .glass {
   border-radius: figma-rem(39.59);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.16rem);
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .profile-card {
@@ -241,6 +255,10 @@ onMounted(() => {
   color: #f9f9f9;
   font-size: figma-rem(18.44);
   font-weight: 700;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .uid {
@@ -249,12 +267,21 @@ onMounted(() => {
   gap: figma-rem(2.457);
   color: #fff;
   font-size: figma-rem(9.623);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.72);
+  }
 }
 
 .uid span {
   border-radius: figma-rem(4.212);
   padding: figma-rem(2.808) figma-rem(4.914);
   background: rgba(255, 255, 255, 0.34);
+
+  @include theme-light {
+    color: #fff;
+    background: rgba(79, 79, 79, 0.4);
+  }
 }
 
 .form-list {
@@ -276,6 +303,10 @@ onMounted(() => {
   margin: 0;
   color: #fff;
   font-size: figma-rem(15);
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .value {
@@ -290,20 +321,39 @@ onMounted(() => {
   cursor: pointer;
   transition: border-color 0.2s;
 
+  @include theme-light {
+    border-color: transparent;
+    color: rgba(17, 17, 17, 0.76);
+    background: #dadada;
+  }
+
   &--focused {
     border-color: #04d19d;
     box-shadow: 0 0 0 2px rgba(4, 209, 157, 0.3);
+
+    @include theme-light {
+      border-color: var(--c-brand);
+      box-shadow: 0 0 0 2px rgba(var(--c-brand-rgb), 0.18);
+    }
   }
 
   &__number {
     font-weight: 600;
     color: #fff;
     font-size: figma-rem(18);
+
+    @include theme-light {
+      color: #111;
+    }
   }
 
   &__unit {
     color: rgba(255, 255, 255, 0.6);
     font-size: figma-rem(14);
+
+    @include theme-light {
+      color: rgba(17, 17, 17, 0.7);
+    }
   }
 }
 

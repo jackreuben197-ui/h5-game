@@ -8,10 +8,12 @@ import { useAppConfigStore } from '@/stores/appConfig'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'
-// 主容器背景图：全页面共用一张底图。
+// 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--club-edit-name-bg-dark': `url(${mainBgUrl})`,
+  '--club-edit-name-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const router = useRouter()
@@ -241,10 +243,18 @@ async function onConfirm(): Promise<void> {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-edit-name-bg {
   position: relative;
   height: 100dvh;
   background-size: cover;
+  background-image: var(--club-edit-name-bg-dark);
+
+  @include theme-light {
+    background-color: var(--c-page);
+    background-image: var(--club-edit-name-bg-light);
+  }
 }
 
 .club-edit-name {
@@ -278,6 +288,10 @@ async function onConfirm(): Promise<void> {
   line-height: 1.35;
   color: #f3f3f3;
   font-weight: 500;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .count-text {
@@ -285,6 +299,10 @@ async function onConfirm(): Promise<void> {
   line-height: 1;
   color: rgba(243, 243, 243, 0.95);
   white-space: nowrap;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .name-shell {
@@ -299,6 +317,10 @@ async function onConfirm(): Promise<void> {
   backdrop-filter: blur(0.3rem);
   display: flex;
   align-items: center;
+
+  @include theme-light {
+    background: #dadada;
+  }
 }
 
 input {
@@ -311,10 +333,18 @@ input {
   line-height: 1.4;
   font-weight: 500;
   color: #f9f9f9;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 input::placeholder {
   color: rgba(255, 255, 255, 0.71);
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.71);
+  }
 }
 
 .wallet-row {
@@ -341,6 +371,10 @@ input::placeholder {
   font-size: 0.36rem;
   line-height: 1;
   color: #f9f9f9;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .wallet-value {
@@ -360,6 +394,11 @@ input::placeholder {
   color: #f1f1f1;
   background: rgba(0, 0, 0, 0.24);
   backdrop-filter: blur(0.08rem);
+
+  @include theme-light {
+    color: var(--c-text);
+    background: rgba(0, 0, 0, 0.2);
+  }
 }
 
 .footer-actions {
@@ -380,6 +419,10 @@ input::placeholder {
   font-size: 0.36rem;
   line-height: 1;
   color: #f9f9f9;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .cost-line img {
@@ -398,6 +441,10 @@ input::placeholder {
   font-size: 0.3rem;
   line-height: 1.3;
   color: rgba(255, 235, 189, 0.95);
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .confirm-btn {
@@ -411,6 +458,12 @@ input::placeholder {
   font-weight: 500;
   box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.2);
   transition: opacity 0.2s ease;
+
+  @include theme-light {
+    color: #fff;
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .confirm-btn--disabled {

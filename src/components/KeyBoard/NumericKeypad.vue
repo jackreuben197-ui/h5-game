@@ -17,6 +17,7 @@ interface Props {
   confirmText?: string
   title?: string
   allowDecimal?: boolean // When true, replace 'C' with '.' and allow decimal input
+  showCancel?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -32,6 +33,7 @@ const props = withDefaults(defineProps<Props>(), {
   showInputArea: false,
   confirmText: t('Wallet_Confirm'),
   allowDecimal: false,
+  showCancel: true,
 })
 
 const emit = defineEmits<{
@@ -225,7 +227,13 @@ function confirm(): void {
           </div>
 
           <div class="kp__actions">
-            <button type="button" class="kp__cancel" @click="cancel" @dblclick.prevent>
+            <button
+              v-if="showCancel"
+              type="button"
+              class="kp__cancel"
+              @click="cancel"
+              @dblclick.prevent
+            >
               {{ t('Wallet_Cancel') }}
             </button>
             <PrimaryButton :text="confirmText" class="kp__confirm" @click="confirm" />
@@ -300,7 +308,7 @@ function confirm(): void {
   touch-action: manipulation;
 
   @include theme-light {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.78);
     border-color: rgba(255, 255, 255, 0.4);
     box-shadow: none;
   }
@@ -323,7 +331,7 @@ function confirm(): void {
   z-index: 0;
 
   @include theme-light {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.42);
     mix-blend-mode: hard-light;
   }
 }
@@ -421,7 +429,7 @@ function confirm(): void {
   user-select: none;
 
   @include theme-light {
-    background-color: rgba(0, 0, 0, 0.19);
+    background-color: #bdbdbd;
     background-image: none;
     border: 0.71px solid rgba(255, 255, 255, 0.5);
     color: #fff;
@@ -435,7 +443,7 @@ function confirm(): void {
   border-radius: 1.35rem;
 
   @include theme-light {
-    background: rgba(var(--c-brand-rgb), 0.49);
+    background: #9bd5fa;
     border: none;
     color: #fff;
   }

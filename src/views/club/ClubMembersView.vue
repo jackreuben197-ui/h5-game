@@ -19,6 +19,7 @@ import type {
   OrgMemberListRecord,
 } from '@/api/models/org'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import DateRangePicker from '@/components/DateRangePicker/DateRangePicker.vue'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgChips from '@/assets/icons/icon_chips.png'
@@ -26,9 +27,11 @@ import imgBalance from '@/assets/icons/icon_credit_chip.png'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--members-bg-dark': `url(${mainBgUrl})`,
+  '--members-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 type TabKey = 'account' | 'record'
@@ -111,6 +114,7 @@ const fundAssetTab = ref<FundAssetTab>('coin')
 const fundActionTab = ref<FundActionTab>('grant')
 const fundAmountInput = ref('')
 const quotaEditField = ref<QuotaEditField | null>(null)
+const resetQuotaField = ref<QuotaEditField | null>(null)
 const quotaAdjustMode = ref<QuotaAdjustMode>('increase')
 const quotaInput = ref('')
 const disposableQuota = ref(0)
@@ -133,6 +137,14 @@ const recoverAmountTotal = ref(0)
 const profitAmountTotal = ref(0)
 const changeAmountTotal = ref(0)
 const submittingFund = ref(false)
+const recordDatePickerVisible = ref(false)
+const recordDatePickerTarget = ref<'start' | 'end'>('start')
+
+const recordNow = new Date()
+const recordCustomStartDate = ref(startOfDay(new Date(recordNow.getTime() - 6 * 86400000)))
+const recordCustomEndDate = ref(startOfDay(recordNow))
+const recordMinDate = startOfDay(addMonths(recordNow, -3))
+const recordMaxDate = endOfDay(recordNow)
 
 const PAGE_SIZE = 20
 
@@ -167,6 +179,9 @@ const fundSubmitLabel = computed(() =>
   fundActionTab.value === 'grant'
     ? t('UIClub_FundDetail_5iSXE2Uj')
     : t('UIClub_FundDetail_recycle'),
+)
+const resetQuotaName = computed(() =>
+  resetQuotaField.value === 'disposable' ? '可支配额度' : '免审核额度',
 )
 const isFounderOfCurrentClub = computed(
   () => toSafeNumber(userInfoStore.currentClub?.user_level) === 1,
@@ -442,7 +457,28 @@ function resolveRecordRange(): { start_time?: number; end_time?: number } {
     return { start_time: start, end_time: endTime }
   }
 
+  if (activeRange.value === 'custom') {
+    return {
+      start_time: Math.floor(startOfDay(recordCustomStartDate.value).getTime() / 1000),
+      end_time: Math.floor(endOfDay(recordCustomEndDate.value).getTime() / 1000),
+    }
+  }
+
   return {}
+}
+
+function startOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+function endOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)
+}
+
+function addMonths(date: Date, amount: number): Date {
+  const next = new Date(date)
+  next.setMonth(next.getMonth() + amount)
+  return next
 }
 
 function getSelectedRecordOpCodes(): string[] | undefined {
@@ -931,6 +967,7 @@ function openFundSheet(member: MemberItem): void {
   fundAmountInput.value = ''
   quotaInput.value = ''
   quotaEditField.value = null
+  resetQuotaField.value = null
   quotaAdjustMode.value = 'increase'
   disposableQuota.value = member.disposableCredit
   reviewQuota.value = member.reviewCredit
@@ -939,6 +976,7 @@ function openFundSheet(member: MemberItem): void {
 function closeFundSheet(): void {
   showFundSheet.value = false
   quotaEditField.value = null
+  resetQuotaField.value = null
 }
 
 function switchFundAsset(tab: FundAssetTab): void {
@@ -1044,6 +1082,24 @@ async function resetQuota(field: QuotaEditField): Promise<void> {
   } finally {
     submittingFund.value = false
   }
+}
+
+function requestResetQuota(field: QuotaEditField): void {
+  resetQuotaField.value = field
+}
+
+function cancelResetQuota(): void {
+  resetQuotaField.value = null
+}
+
+async function confirmResetQuota(): Promise<void> {
+  const field = resetQuotaField.value
+  if (!field) {
+    return
+  }
+
+  resetQuotaField.value = null
+  await resetQuota(field)
 }
 
 function onKeypadPress(key: string): void {
@@ -1201,6 +1257,23 @@ function onSearchSubmit(): void {
 
 function switchRange(range: RecordRangeKey): void {
   activeRange.value = range
+
+  if (range === 'custom') {
+    recordDatePickerTarget.value = 'start'
+    recordDatePickerVisible.value = true
+    return
+  }
+
+  void fetchRecordRows(true)
+}
+
+function closeRecordDatePicker(): void {
+  recordDatePickerVisible.value = false
+}
+
+function confirmRecordDateRange(): void {
+  activeRange.value = 'custom'
+  recordDatePickerVisible.value = false
   void fetchRecordRows(true)
 }
 
@@ -1533,7 +1606,11 @@ onMounted(() => {
               >
                 修改
               </button>
-              <button type="button" class="quota-action" @click="resetQuota('disposable')">
+              <button
+                type="button"
+                class="quota-action"
+                @click="requestResetQuota('disposable')"
+              >
                 重置
               </button>
             </div>
@@ -1574,7 +1651,9 @@ onMounted(() => {
               >
                 修改
               </button>
-              <button type="button" class="quota-action" @click="resetQuota('review')">重置</button>
+              <button type="button" class="quota-action" @click="requestResetQuota('review')">
+                重置
+              </button>
             </div>
           </div>
 
@@ -1666,15 +1745,64 @@ onMounted(() => {
           </button>
         </div>
       </section>
+
+      <div
+        v-if="resetQuotaField"
+        class="reset-confirm-mask"
+        @click="cancelResetQuota"
+      ></div>
+      <section
+        v-if="resetQuotaField"
+        class="reset-confirm-dialog"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="reset-quota-message"
+        @click.stop
+      >
+        <p id="reset-quota-message" class="reset-confirm-message">
+          重置后，该玩家的{{ resetQuotaName }}数据将恢复为设置上限初始值
+        </p>
+        <div class="reset-confirm-actions">
+          <button type="button" class="reset-confirm-btn" @click="cancelResetQuota">取消</button>
+          <button
+            type="button"
+            class="reset-confirm-btn reset-confirm-btn--primary"
+            :disabled="submittingFund"
+            @click="confirmResetQuota"
+          >
+            确定
+          </button>
+        </div>
+      </section>
+
+      <DateRangePicker
+        v-model:visible="recordDatePickerVisible"
+        v-model:start-date="recordCustomStartDate"
+        v-model:end-date="recordCustomEndDate"
+        :min-date="recordMinDate"
+        :max-date="recordMaxDate"
+        :initial-target="recordDatePickerTarget"
+        tip-text="只支持查询最近三个月数据"
+        @close="closeRecordDatePicker"
+        @confirm="confirmRecordDateRange"
+      />
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-members-bg {
   position: relative;
   height: 100dvh;
   background-size: cover;
+  background-image: var(--members-bg-dark);
+
+  @include theme-light {
+    color: #111;
+    background-image: var(--members-bg-light);
+  }
 }
 
 .club-members {
@@ -1693,6 +1821,10 @@ onMounted(() => {
   line-height: 1;
   color: rgba(249, 249, 249, 0.9);
   padding-left: 0.32rem;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.76);
+  }
 }
 
 .member-tabs {
@@ -1711,11 +1843,19 @@ onMounted(() => {
   font-size: 0.37029rem;
   line-height: 1;
   font-weight: 500;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.66);
+  }
 }
 
 .tab-btn--active {
   color: #f9f9f9;
   font-weight: 700;
+
+  @include theme-light {
+    color: var(--c-brand);
+  }
 }
 
 .tab-btn--active::after {
@@ -1727,6 +1867,10 @@ onMounted(() => {
   height: 0.045rem;
   border-radius: 999px;
   background: rgba(234, 234, 234, 0.95);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .summary-card {
@@ -1737,6 +1881,10 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.39696rem;
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .summary-grid {
@@ -1760,6 +1908,10 @@ onMounted(() => {
   font-size: 0.32013rem;
   line-height: 1.2;
   color: #f3f3f3;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.76);
+  }
 }
 
 .summary-value {
@@ -1771,6 +1923,10 @@ onMounted(() => {
   line-height: 1;
   font-weight: 700;
   color: #f9f9f9;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .summary-value img {
@@ -1792,6 +1948,11 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   gap: 0.06rem;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.76);
+    background: rgba(208, 208, 208, 0.48);
+  }
 }
 
 .income-icon {
@@ -1800,6 +1961,10 @@ onMounted(() => {
   height: 0.24rem;
   border: 0.03rem solid rgba(243, 243, 243, 0.9);
   border-radius: 0.045rem;
+
+  @include theme-light {
+    border-color: rgba(17, 17, 17, 0.68);
+  }
 }
 
 .income-icon::after {
@@ -1812,6 +1977,11 @@ onMounted(() => {
   border: 0.03rem solid rgba(243, 243, 243, 0.9);
   border-bottom: 0;
   border-radius: 0.045rem 0.045rem 0 0;
+
+  @include theme-light {
+    border-color: rgba(17, 17, 17, 0.68);
+    border-bottom: 0;
+  }
 }
 
 .search-card {
@@ -1823,6 +1993,10 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.16649rem;
+
+  @include theme-light {
+    background: #dadada;
+  }
 }
 
 .search-icon {
@@ -1832,6 +2006,10 @@ onMounted(() => {
   border-radius: 50%;
   position: relative;
   flex: 0 0 auto;
+
+  @include theme-light {
+    border-color: rgba(17, 17, 17, 0.78);
+  }
 }
 
 .search-icon::after {
@@ -1844,6 +2022,10 @@ onMounted(() => {
   transform-origin: left center;
   right: -0.15rem;
   bottom: -0.03rem;
+
+  @include theme-light {
+    background: rgba(17, 17, 17, 0.78);
+  }
 }
 
 .search-card input {
@@ -1856,10 +2038,18 @@ onMounted(() => {
   line-height: 1;
   color: #fff;
   font-family: inherit;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .search-card input::placeholder {
   color: rgba(255, 255, 255, 0.95);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.72);
+  }
 }
 
 .members-list {
@@ -1875,6 +2065,10 @@ onMounted(() => {
   font-size: 0.292rem;
   color: rgba(249, 249, 249, 0.75);
   padding: 0.12rem 0;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.58);
+  }
 }
 
 .record-panel {
@@ -1887,6 +2081,10 @@ onMounted(() => {
   flex-direction: column;
   gap: 0.22727rem;
   min-height: 0;
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .record-head {
@@ -1897,6 +2095,10 @@ onMounted(() => {
   line-height: 1;
   color: rgba(249, 249, 249, 0.68);
   padding: 0;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.58);
+  }
 }
 
 .range-tabs {
@@ -1907,6 +2109,10 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.26667rem;
+
+  @include theme-light {
+    background: #efedef;
+  }
 }
 
 .range-tab {
@@ -1917,10 +2123,19 @@ onMounted(() => {
   font-size: 0.36197rem;
   line-height: 1;
   padding: 0.11075rem 0.12rem;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.76);
+  }
 }
 
 .range-tab--active {
   background: rgba(255, 255, 255, 0.24);
+
+  @include theme-light {
+    color: #111;
+    background: #ccc;
+  }
 }
 
 .record-stats {
@@ -1940,6 +2155,10 @@ onMounted(() => {
   margin: 0;
   font-size: 0.28213rem;
   color: rgba(249, 249, 249, 0.82);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.72);
+  }
 }
 
 .record-stat-value {
@@ -1947,6 +2166,10 @@ onMounted(() => {
   font-size: 0.54054rem;
   line-height: 1;
   color: #f9f9f9;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .record-table-wrap {
@@ -1974,6 +2197,10 @@ onMounted(() => {
   font-size: 0.27429rem;
   line-height: 1;
   font-weight: 500;
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .head-cell {
@@ -2008,6 +2235,11 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.42);
   backdrop-filter: blur(0.18rem);
   z-index: 5;
+
+  @include theme-light {
+    background: rgba(86, 86, 86, 0.74);
+    box-shadow: 0 0.08rem 0.24rem rgba(0, 0, 0, 0.2);
+  }
 }
 
 .type-option {
@@ -2020,6 +2252,11 @@ onMounted(() => {
   font-size: 0.304rem;
   line-height: 1.3;
   border-bottom: 0.015rem solid rgba(255, 255, 255, 0.2);
+
+  @include theme-light {
+    color: rgba(255, 255, 255, 0.94);
+    border-bottom-color: rgba(255, 255, 255, 0.18);
+  }
 }
 
 .type-option:last-child {
@@ -2029,6 +2266,10 @@ onMounted(() => {
 .type-option--active {
   color: #fff;
   font-weight: 700;
+
+  @include theme-light {
+    color: #fff;
+  }
 }
 
 .record-list {
@@ -2047,6 +2288,10 @@ onMounted(() => {
   font-size: 0.292rem;
   color: rgba(249, 249, 249, 0.75);
   padding: 0.12rem 0;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.58);
+  }
 }
 
 .record-row {
@@ -2056,10 +2301,18 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.06rem;
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .record-row--pftroom {
   background: rgba(0, 0, 0, 0.26);
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .from-chip {
@@ -2074,6 +2327,12 @@ onMounted(() => {
   gap: 0.08rem;
   color: rgba(249, 249, 249, 0.86);
   font-size: 0.224rem;
+
+  @include theme-light {
+    border-color: transparent;
+    color: #111;
+    background: var(--c-brand);
+  }
 }
 
 .from-label {
@@ -2085,6 +2344,11 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.3);
   padding: 0 0.08rem;
   color: #fff;
+
+  @include theme-light {
+    color: #111;
+    background: rgba(255, 255, 255, 0.38);
+  }
 }
 
 .record-main-grid {
@@ -2094,6 +2358,10 @@ onMounted(() => {
   align-items: center;
   padding: 0 0.16rem;
   color: #fff;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .record-main-grid p {
@@ -2137,6 +2405,10 @@ onMounted(() => {
 .sub-line {
   font-size: 0.22727rem;
   color: rgba(249, 249, 249, 0.55);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.5);
+  }
 }
 
 .quantity-cell {
@@ -2152,6 +2424,10 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  @include theme-light {
+    background: transparent;
+  }
 }
 
 .member-card {
@@ -2163,6 +2439,11 @@ onMounted(() => {
     radial-gradient(94% 88% at 92% 74%, rgba(47, 161, 212, 0.46), rgba(47, 161, 212, 0)),
     rgba(0, 0, 0, 0.22);
   backdrop-filter: blur(0.21rem);
+
+  @include theme-light {
+    background: #fff;
+    box-shadow: 0 0.04rem rgba(0, 0, 0, 0.04);
+  }
 }
 
 .role-badge {
@@ -2182,14 +2463,26 @@ onMounted(() => {
 
 .role-badge--admin {
   background: linear-gradient(152deg, #05e7ae 8%, #027a5c 72%);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .role-badge--agent {
   background: linear-gradient(152deg, #05e7ae 8%, #027a5c 72%);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .role-badge--member {
   background: linear-gradient(152deg, #15d39f 8%, #017157 72%);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .member-main {
@@ -2230,6 +2523,10 @@ onMounted(() => {
   line-height: 1;
   font-weight: 700;
   color: #fff;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .member-id-row {
@@ -2240,6 +2537,10 @@ onMounted(() => {
   font-size: 0.25661rem;
   line-height: 1;
   color: rgba(249, 249, 249, 0.92);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.82);
+  }
 }
 
 .id-pill {
@@ -2252,6 +2553,10 @@ onMounted(() => {
   font-size: 0.21595rem;
   background: rgba(255, 255, 255, 0.3);
   color: #fff;
+
+  @include theme-light {
+    background: rgba(79, 79, 79, 0.4);
+  }
 }
 
 .member-diamond {
@@ -2263,6 +2568,10 @@ onMounted(() => {
   line-height: 1;
   font-weight: 700;
   color: #fff;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .member-diamond img {
@@ -2281,6 +2590,10 @@ onMounted(() => {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.21rem;
   cursor: pointer;
+
+  @include theme-light {
+    background: rgba(208, 208, 208, 0.66);
+  }
 }
 
 .fund-sheet-mask {
@@ -2309,6 +2622,15 @@ onMounted(() => {
   flex-direction: column;
   gap: 0.43373rem;
   z-index: 41;
+
+  @include theme-light {
+    border: 0.013rem solid rgba(255, 255, 255, 0.72);
+    background: rgba(73, 73, 73, 0.78);
+    box-shadow:
+      inset 0 0.08rem 0.3rem rgba(255, 255, 255, 0.2),
+      0 -0.12rem 0.36rem rgba(0, 0, 0, 0.16);
+    backdrop-filter: blur(0.42rem);
+  }
 }
 
 .fund-tabs {
@@ -2340,6 +2662,10 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   padding: 0.09521rem;
+
+  @include theme-light {
+    background: rgba(218, 218, 218, 0.34);
+  }
 }
 
 .action-tab {
@@ -2353,6 +2679,11 @@ onMounted(() => {
 .action-tab--active {
   border: 0.005rem solid rgba(249, 249, 249, 0.85);
   background: rgba(255, 255, 255, 0.2);
+
+  @include theme-light {
+    border-color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.28);
+  }
 }
 
 .sheet-meta,
@@ -2442,6 +2773,10 @@ onMounted(() => {
 .quota-action--primary {
   background: rgba(var(--c-brand-rgb), 0.4);
   color: #fff;
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .quota-editor {
@@ -2451,6 +2786,10 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.33467rem;
+
+  @include theme-light {
+    background: rgba(218, 218, 218, 0.28);
+  }
 }
 
 .quota-mode-row {
@@ -2485,6 +2824,11 @@ onMounted(() => {
 .quota-mode--active::before {
   border-color: rgba(95, 247, 209, 0.92);
   box-shadow: inset 0 0 0 0.1rem rgba(95, 247, 209, 0.85);
+
+  @include theme-light {
+    border-color: var(--c-brand);
+    box-shadow: inset 0 0 0 0.1rem var(--c-brand);
+  }
 }
 
 .quota-input-pill {
@@ -2496,6 +2840,10 @@ onMounted(() => {
   align-items: center;
   color: rgba(249, 249, 249, 0.95);
   font-size: 0.325rem;
+
+  @include theme-light {
+    background: rgba(30, 30, 30, 0.34);
+  }
 }
 
 .fund-keypad {
@@ -2521,11 +2869,20 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
+  @include theme-light {
+    border-color: rgba(255, 255, 255, 0.32);
+    background: rgba(30, 30, 30, 0.48);
+  }
 }
 
 .keypad-btn--accent {
   background: rgba(4, 209, 157, 0.26);
   border-color: transparent;
+
+  @include theme-light {
+    background: #83b9df;
+  }
 }
 
 .keypad-btn--del {
@@ -2578,11 +2935,90 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.35);
   color: #fff;
   font-size: 0.4rem;
+
+  @include theme-light {
+    background: rgba(30, 30, 30, 0.58);
+  }
 }
 
 .sheet-footer-btn--confirm {
   border: 0.013rem solid rgba(242, 242, 242, 0.8);
   background: linear-gradient(156deg, #05e7ae 8%, #027a5c 72%);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+  }
+}
+
+.reset-confirm-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(12, 12, 12, 0.62);
+}
+
+.reset-confirm-dialog {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 51;
+  width: min(8.26rem, calc(100% - 1.76rem));
+  transform: translate(-50%, -50%);
+  border: 0.013rem solid rgba(255, 255, 255, 0.7);
+  border-radius: 0.8rem;
+  padding: 0.72rem 0.4rem 0.42rem;
+  color: #fff;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 8, 20, 0.95) 0%,
+    rgba(5, 5, 5, 0.95) 52%,
+    rgba(0, 8, 20, 0.95) 100%
+  );
+  box-shadow: 0 0.12rem 0.4rem rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(0.42rem);
+
+  @include theme-light {
+    background: rgba(73, 73, 73, 0.82);
+    box-shadow:
+      inset 0 0.08rem 0.3rem rgba(255, 255, 255, 0.2),
+      0 0.12rem 0.4rem rgba(0, 0, 0, 0.3);
+  }
+}
+
+.reset-confirm-message {
+  width: 6.3rem;
+  max-width: 100%;
+  margin: 0 auto 0.34rem;
+  text-align: center;
+  color: #fff;
+  font-size: 0.34rem;
+  line-height: 1.45;
+}
+
+.reset-confirm-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.24rem;
+}
+
+.reset-confirm-btn {
+  min-height: 1.42rem;
+  border: 0;
+  border-radius: 1rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.4);
+  font-size: 0.4rem;
+}
+
+.reset-confirm-btn--primary {
+  border: 0.013rem solid rgba(242, 242, 242, 0.8);
+  background: linear-gradient(156deg, #05e7ae 8%, #027a5c 72%);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+  }
 }
 
 .data-item {
@@ -2598,6 +3034,10 @@ onMounted(() => {
   font-size: 0.25703rem;
   line-height: 1.1;
   color: #fff;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .data-label {
@@ -2625,6 +3065,10 @@ onMounted(() => {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.85);
   flex: 0 0 auto;
+
+  @include theme-light {
+    background: rgba(17, 17, 17, 0.72);
+  }
 }
 
 @media (max-width: 340px) {

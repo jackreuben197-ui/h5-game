@@ -3,10 +3,12 @@ import { computed } from 'vue'
 
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--wallet-bg-dark': `url(${mainBgUrl})`,
+  '--wallet-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const dateStart = '11/03/2024'
@@ -88,10 +90,18 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-wallet-logs-bg {
   position: relative;
   height: 100dvh;
   background-size: cover;
+  background-image: var(--wallet-bg-dark);
+
+  @include theme-light {
+    color: #111;
+    background-image: var(--wallet-bg-light);
+  }
 }
 
 .top-bar {
@@ -133,6 +143,10 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
   display: flex;
   flex-direction: column;
   gap: 0.12rem;
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .date-row {
@@ -155,6 +169,12 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
   align-items: center;
   justify-content: center;
   gap: 0.1rem;
+
+  @include theme-light {
+    border-color: transparent;
+    color: rgba(17, 17, 17, 0.76);
+    background: #efedef;
+  }
 }
 
 .range-divider {
@@ -162,6 +182,10 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
   height: 0.03rem;
   border-radius: 999px;
   background: rgba(249, 249, 249, 0.72);
+
+  @include theme-light {
+    background: rgba(17, 17, 17, 0.42);
+  }
 }
 
 .calendar-icon {
@@ -170,6 +194,10 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
   border: 0.02rem solid rgba(249, 249, 249, 0.9);
   border-radius: 0.05rem;
   position: relative;
+
+  @include theme-light {
+    border-color: rgba(17, 17, 17, 0.68);
+  }
 }
 
 .calendar-icon::before,
@@ -181,6 +209,10 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
   height: 0.05rem;
   border-radius: 999px;
   background: rgba(249, 249, 249, 0.9);
+
+  @include theme-light {
+    background: rgba(17, 17, 17, 0.68);
+  }
 }
 
 .calendar-icon::before {
@@ -210,6 +242,10 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
   font-size: 0.27rem;
   line-height: 1.3;
   color: #f3f3f3;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.76);
+  }
 }
 
 .balance-value {
@@ -218,12 +254,20 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
   line-height: 1;
   color: #f9f9f9;
   font-weight: 500;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .balance-split {
   width: 0.01rem;
   height: 0.54rem;
   background: rgba(255, 255, 255, 0.24);
+
+  @include theme-light {
+    background: rgba(17, 17, 17, 0.14);
+  }
 }
 
 .timezone {
@@ -233,6 +277,10 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
   font-size: 0.22rem;
   line-height: 1;
   padding-right: 0.02rem;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.5);
+  }
 }
 
 .metrics-wrap {
@@ -248,6 +296,10 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
   backdrop-filter: blur(0.16rem);
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .metric-item {
@@ -261,6 +313,10 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
 
 .metric-item--with-divider {
   border-right: 0.01rem solid rgba(255, 255, 255, 0.18);
+
+  @include theme-light {
+    border-right-color: rgba(17, 17, 17, 0.12);
+  }
 }
 
 .metric-label {
@@ -268,6 +324,10 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
   font-size: 0.24rem;
   line-height: 1.2;
   color: #f9f9f9;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .metric-value {
@@ -283,10 +343,18 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
 
 .metric-value--down {
   color: var(--c-brand);
+
+  @include theme-light {
+    color: #00af83;
+  }
 }
 
 .metric-value--neutral {
   color: #f9f9f9;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 @media (max-width: 340px) {

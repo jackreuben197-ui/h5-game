@@ -6,13 +6,15 @@ import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgMedal from '@/assets/images/club_medal.png'
 import imgRankBadge from '@/assets/icons/club_rank_badge.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { showFailToast, showSuccessToast } from 'vant'
 import { t } from '@/i18n'
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--level-bg-dark': `url(${mainBgUrl})`,
+  '--level-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const userInfoStore = useUserInfoStore()
@@ -203,10 +205,18 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-level-page {
   position: relative;
   height: 100dvh;
   background-size: cover;
+  background-image: var(--level-bg-dark);
+
+  @include theme-light {
+    color: #111;
+    background-image: var(--level-bg-light);
+  }
 }
 
 .club-level-bg {
@@ -270,6 +280,11 @@ onMounted(() => {
   gap: 0.136rem;
   font-size: 0.48rem;
   font-weight: 600;
+
+  @include theme-light {
+    color: #fff;
+    background: var(--c-brand);
+  }
 }
 
 .club-level-diamond img {
@@ -372,6 +387,10 @@ onMounted(() => {
   padding: 0.46163rem;
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.16667rem);
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .club-upgrade-card__date {
@@ -380,6 +399,10 @@ onMounted(() => {
   font-size: 0.37317rem;
   line-height: 1.35;
   color: rgba(249, 249, 249, 0.9);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.76);
+  }
 }
 
 .club-upgrade-progress {
@@ -403,6 +426,10 @@ onMounted(() => {
   left: 50%;
   right: 0;
   background: rgba(255, 255, 255, 0.45);
+
+  @include theme-light {
+    background: #c7c7c7;
+  }
 }
 
 .club-upgrade-progress__dot {
@@ -413,6 +440,10 @@ onMounted(() => {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.5);
   transform: translate(-50%, -50%);
+
+  @include theme-light {
+    background: #c7c7c7;
+  }
 }
 
 .club-upgrade-progress__dot--active {
@@ -480,6 +511,10 @@ onMounted(() => {
   font-size: 0.32083rem;
   line-height: 1.35;
   color: rgba(249, 249, 249, 0.72);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.7);
+  }
 }
 
 .club-upgrade-cost__value {
@@ -525,6 +560,10 @@ onMounted(() => {
   font-size: 0.32083rem;
   line-height: 1.35;
   color: rgba(249, 249, 249, 0.74);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.72);
+  }
 }
 
 .club-level-footer {
@@ -546,6 +585,11 @@ onMounted(() => {
   font-size: 0.73822rem;
   font-weight: 500;
   line-height: 1.2;
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+  }
 }
 
 .club-level-mask {
@@ -603,6 +647,11 @@ onMounted(() => {
 .club-level-confirm__ok {
   border: 0.01333rem solid rgba(242, 242, 242, 0.8);
   background: linear-gradient(153deg, #05e7ae 8%, #027a5c 72%);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+  }
 }
 
 @media (max-width: 340px) {

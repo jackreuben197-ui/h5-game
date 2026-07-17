@@ -7,6 +7,7 @@ import ImageUploadSheet from '@/components/ImageUploadSheet/ImageUploadSheet.vue
 import imgClubCover from '@/assets/images/default_avatar.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { postOrgClubCreateApi, postOrgClubCreateIsFirstApi } from '@/api/org'
 import type { OrgClubCreateRequest } from '@/api/models/org'
 import { useAppConfigStore } from '@/stores/appConfig'
@@ -15,7 +16,8 @@ import { t } from '@/i18n'
 // 主容器背景图：全页面共用一张底图。
 
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--club-create-bg-dark': `url(${mainBgUrl})`,
+  '--club-create-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const router = useRouter()
@@ -156,11 +158,20 @@ async function onCreateClub(): Promise<void> {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-create-bg {
   height: 100dvh;
   padding-left: 0;
   padding-right: 0;
   background-size: cover;
+  background-image: var(--club-create-bg-dark);
+
+  @include theme-light {
+    color: #222;
+    background-color: #f3f4f6;
+    background-image: var(--club-create-bg-light);
+  }
 }
 
 .club-create {
@@ -211,6 +222,11 @@ async function onCreateClub(): Promise<void> {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+
+  @include theme-light {
+    background: #fff;
+    backdrop-filter: none;
+  }
 }
 
 .avatar-trigger {
@@ -246,6 +262,11 @@ async function onCreateClub(): Promise<void> {
   font-weight: 500;
   text-align: center;
   box-shadow: 0 0.0267rem 0.1067rem rgba(0, 0, 0, 0.2);
+
+  @include theme-light {
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .form-card {
@@ -268,6 +289,10 @@ async function onCreateClub(): Promise<void> {
   line-height: 1.4;
   font-weight: 500;
   color: #fbfbfb;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .field-shell {
@@ -275,6 +300,12 @@ async function onCreateClub(): Promise<void> {
   background: rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(0.8232rem);
   overflow: hidden;
+
+  @include theme-light {
+    border-color: transparent;
+    background: #d9d9d9;
+    backdrop-filter: none;
+  }
 }
 
 .field-shell--single {
@@ -293,6 +324,10 @@ async function onCreateClub(): Promise<void> {
     radial-gradient(82% 78% at 60% 54%, rgba(185, 70, 151, 0.34), rgba(185, 70, 151, 0)),
     radial-gradient(66% 66% at 92% 56%, rgba(54, 208, 255, 0.34), rgba(54, 208, 255, 0)),
     rgba(255, 255, 255, 0.18);
+
+  @include theme-light {
+    background: #d9d9d9;
+  }
 }
 
 input,
@@ -306,6 +341,10 @@ textarea {
   font-weight: 500;
   line-height: 1.4;
   font-family: inherit;
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 textarea {
@@ -316,6 +355,10 @@ textarea {
 input::placeholder,
 textarea::placeholder {
   color: rgba(255, 255, 255, 0.71);
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.78);
+  }
 }
 
 .footer-actions {
@@ -339,6 +382,11 @@ textarea::placeholder {
   background: linear-gradient(168.34deg, #05e7ae 7.55%, #027a5c 71.92%);
   box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.18);
   transition: opacity 0.2s ease;
+
+  @include theme-light {
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .create-btn--disabled {
@@ -353,6 +401,10 @@ textarea::placeholder {
   font-size: 0.359rem;
   line-height: 1.4;
   color: #fbfbfb;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .cost-line img {
@@ -366,6 +418,10 @@ textarea::placeholder {
   opacity: 0.86;
   text-decoration: line-through;
   text-decoration-color: rgba(255, 255, 255, 0.65);
+
+  @include theme-light {
+    text-decoration-color: rgba(34, 34, 34, 0.68);
+  }
 }
 
 .cost-current {

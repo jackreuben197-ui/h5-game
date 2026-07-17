@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 import tabActiveBg from '@/assets/images/game_type_tab_active_bg.svg?url'
 import tabActiveLgBg from '@/assets/images/game_type_tab_active_lg_bg.svg?url'
+import tabActiveLightMask from '@/assets/images/game_type_tab_active_light_mask.svg?url'
+import tabActiveLgLightMask from '@/assets/images/game_type_tab_active_lg_light_mask.svg?url'
 import { showGameToast } from '@/components/Toast'
 
 export interface TabOption {
@@ -34,8 +36,10 @@ const tabOptions = computed(() => props.tabs)
 const tabbarStyle = computed<Record<string, string>>(() => {
   // 根据 size 切换激活态背景图：普通版 / 大号版。
   const activeBg = props.size === 'lg' ? tabActiveLgBg : tabActiveBg
+  const activeLightMask = props.size === 'lg' ? tabActiveLgLightMask : tabActiveLightMask
   return {
     '--tab-active-bg': `url("${activeBg}")`,
+    '--tab-active-light-mask': `url("${activeLightMask}")`,
   }
 })
 
@@ -81,8 +85,11 @@ export default { name: 'GameTypeTabbar' }
 </template>
 
 <style lang="scss">
+@use '@/styles/mixins' as *;
+
 .room-tabs {
   --tab-active-bg: none;
+  --tab-active-light-mask: none;
   --tab-base-height: 0.9rem;
   --tab-top-cut: 0.25rem;
   --tab-bottom-overlap: 0.01rem;
@@ -95,6 +102,23 @@ export default { name: 'GameTypeTabbar' }
   position: relative;
   z-index: 1;
   margin-bottom: calc(-1 * var(--tab-bottom-overlap));
+
+  @include theme-light {
+    --van-tab-text-color: rgba(34, 34, 34, 0.72);
+    --van-tab-active-text-color: #111;
+  }
+}
+
+.room-tabs .van-tab {
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.72) !important;
+  }
+}
+
+.room-tabs .van-tab--active {
+  @include theme-light {
+    color: #111 !important;
+  }
 }
 
 .room-tabs .van-tabs__wrap {
@@ -141,5 +165,25 @@ export default { name: 'GameTypeTabbar' }
   background: center calc(100% + var(--tab-active-offset-y)) / 100% var(--tab-active-height)
     no-repeat;
   background-image: var(--tab-active-bg);
+
+  @include theme-light {
+    isolation: isolate;
+    background-image: none;
+  }
+}
+
+.themeType2 .room-tabs .van-tab--active .van-tab__text::before {
+  @include theme-light {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: #fff;
+    -webkit-mask: var(--tab-active-light-mask) center
+      calc(100% + var(--tab-active-offset-y)) / 100% var(--tab-active-height) no-repeat;
+    mask: var(--tab-active-light-mask) center calc(100% + var(--tab-active-offset-y)) / 100%
+      var(--tab-active-height) no-repeat;
+  }
 }
 </style>

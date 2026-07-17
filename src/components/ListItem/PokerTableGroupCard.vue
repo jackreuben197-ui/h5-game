@@ -4,6 +4,7 @@ import iconTable from '@/assets/icons/icon_table.png'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconDropDown from '@/assets/icons/icon_drop_down.png'
 import type { RoomRecord } from '@/api/models/roomcenter'
+import { useTheme } from '@/composables/useTheme'
 import { t } from '@/i18n'
 
 interface RoomGroupViewModel {
@@ -25,6 +26,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const { isDark } = useTheme()
 
 const emit = defineEmits<{
   toggle: [groupKey: string]
@@ -75,11 +77,23 @@ function handleTableClick(room: RoomRecord): void {
       </div>
       <div @click.stop="toggleGroup">
         <img
+          v-if="isDark"
           class="toggle-icon"
           :class="{ 'is-expanded': expanded }"
           :src="iconDropDown"
           alt="toggle"
         />
+        <svg
+          v-else
+          class="toggle-icon"
+          :class="{ 'is-expanded': expanded }"
+          viewBox="0 0 36 36"
+          role="img"
+          aria-label="toggle"
+        >
+          <circle class="toggle-icon-bg" cx="18" cy="18" r="18" />
+          <path class="toggle-icon-arrow" d="M11.5 15h13L18 22.2 11.5 15Z" />
+        </svg>
       </div>
     </div>
 
@@ -99,9 +113,15 @@ function handleTableClick(room: RoomRecord): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .group-item {
   border-bottom: 0.5px solid rgba(255, 255, 255, 0.5);
   padding: 0.2667rem 0 0.45rem;
+
+  @include theme-light {
+    border-bottom-color: rgba(34, 34, 34, 0.28);
+  }
 }
 
 .group-summary {
@@ -127,6 +147,13 @@ function handleTableClick(room: RoomRecord): void {
   backdrop-filter: blur(0.24rem);
   position: relative;
   overflow: hidden;
+
+  @include theme-light {
+    background: rgba(255, 255, 255, 0.48);
+    box-shadow:
+      0 0.08rem 0.2rem rgba(0, 0, 0, 0.24),
+      inset 0 0 0 0.0133rem rgba(34, 34, 34, 0.12);
+  }
 }
 
 .game-icon-img {
@@ -152,6 +179,13 @@ function handleTableClick(room: RoomRecord): void {
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   border: 0.0133rem solid rgba(255, 255, 255, 0.34);
+
+  @include theme-light {
+    color: #222;
+    text-shadow: none;
+    background: rgba(255, 255, 255, 0.62);
+    border-color: rgba(255, 255, 255, 0.8);
+  }
 }
 
 .summary-content {
@@ -163,6 +197,11 @@ function handleTableClick(room: RoomRecord): void {
   font-size: 0.35rem;
   line-height: 0.5333rem;
   font-weight: 400;
+
+  @include theme-light {
+    color: #111;
+  }
+
   .blind-label {
     margin-right: 0.3rem;
   }
@@ -176,6 +215,10 @@ function handleTableClick(room: RoomRecord): void {
   font-size: 0.3467rem;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.86);
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .count-text span {
@@ -188,6 +231,11 @@ function handleTableClick(room: RoomRecord): void {
   width: 0.4rem;
   height: 0.4rem;
   object-fit: contain;
+
+  @include theme-light {
+    filter: invert(69%) sepia(77%) saturate(1273%) hue-rotate(180deg) brightness(103%)
+      contrast(101%);
+  }
 }
 
 .toggle-icon {
@@ -196,6 +244,14 @@ function handleTableClick(room: RoomRecord): void {
   margin-top: 0.4rem;
   object-fit: contain;
   transition: transform 0.2s ease;
+}
+
+.toggle-icon-bg {
+  fill: #f3f4f6;
+}
+
+.toggle-icon-arrow {
+  fill: #050505;
 }
 
 .toggle-icon.is-expanded {
@@ -208,7 +264,10 @@ function handleTableClick(room: RoomRecord): void {
   grid-template-rows: 0fr;
   opacity: 0;
   transform: translateY(-0.2rem);
-  transition: grid-template-rows 0.45s ease, opacity 0.35s ease, transform 0.35s ease;
+  transition:
+    grid-template-rows 0.45s ease,
+    opacity 0.35s ease,
+    transform 0.35s ease;
 }
 
 .table-grid-wrap.is-expanded {

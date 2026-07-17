@@ -237,9 +237,15 @@ const bodyStyles = computed<StyleValue>(() => [
   gap: 0.32rem;
 
   @include theme-light {
-    background: none;
-    backdrop-filter: blur(50px);
-    -webkit-backdrop-filter: blur(50px);
+    background: linear-gradient(
+      148.19deg,
+      rgba(78, 78, 78, 0.78) 0%,
+      rgba(58, 58, 58, 0.82) 48%,
+      rgba(42, 42, 42, 0.86) 100%
+    );
+    border: 0.0255rem solid rgba(242, 242, 242, 0.4);
+    backdrop-filter: blur(0.2rem);
+    -webkit-backdrop-filter: blur(0.2rem);
   }
 }
 
@@ -284,7 +290,12 @@ const bodyStyles = computed<StyleValue>(() => [
   pointer-events: none;
 
   @include theme-light {
-    background: transparent;
+    background: linear-gradient(
+      148.19deg,
+      rgba(78, 78, 78, 0.78) 0%,
+      rgba(58, 58, 58, 0.82) 48%,
+      rgba(42, 42, 42, 0.86) 100%
+    );
   }
 }
 

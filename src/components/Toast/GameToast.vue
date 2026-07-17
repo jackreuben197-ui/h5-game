@@ -23,6 +23,7 @@ withDefaults(
     position?: 'top' | 'middle' | 'bottom'
   }>(),
   {
+    message: '',
     duration: 2000,
     overlay: false,
     closeOnClick: false,
@@ -107,9 +108,15 @@ const emit = defineEmits<{
   box-sizing: border-box;
 
   @include theme-light {
-    background: none;
-    backdrop-filter: blur(50px);
-    -webkit-backdrop-filter: blur(50px);
+    background: linear-gradient(
+      120.59deg,
+      rgba(78, 78, 78, 0.78) 2.93%,
+      rgba(58, 58, 58, 0.82) 43.62%,
+      rgba(42, 42, 42, 0.86) 89.79%
+    );
+    border: 0.0255rem solid rgba(242, 242, 242, 0.4);
+    backdrop-filter: blur(0.2rem);
+    -webkit-backdrop-filter: blur(0.2rem);
   }
 }
 

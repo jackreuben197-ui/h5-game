@@ -376,12 +376,19 @@ function handleOpenCustomerService(): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .room-list-page {
   position: relative;
   min-height: 100dvh;
   color: #fff;
   overflow: hidden;
   background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
+
+  @include theme-light {
+    color: #222;
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .bg-overlay {
@@ -391,6 +398,11 @@ function handleOpenCustomerService(): void {
   background: radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
     radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
     radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
+
+  @include theme-light {
+    background: radial-gradient(circle at 8% 4%, rgba(105, 190, 255, 0.2), transparent 30%),
+      radial-gradient(circle at 92% 9%, rgba(105, 190, 255, 0.14), transparent 26%);
+  }
 }
 
 .action-wrap {
@@ -411,6 +423,10 @@ function handleOpenCustomerService(): void {
   padding-left: 0.38rem;
   background: rgba(255, 255, 255, 0.24);
   backdrop-filter: blur(0.3533rem) saturate(1.04);
+
+  @include theme-light {
+    background: rgba(255, 255, 255, 0.72);
+  }
 }
 
 .empty-wrap {
@@ -421,5 +437,9 @@ function handleOpenCustomerService(): void {
   gap: 0.2133rem;
   font-size: 0.3467rem;
   color: rgba(255, 255, 255, 0.82);
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.58);
+  }
 }
 </style>

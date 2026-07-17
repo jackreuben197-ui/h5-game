@@ -63,9 +63,11 @@ import {
 import { formatDateTime, formatTodayAwareTimeLabel, toTimestampMs } from '@/utils/time'
 
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--club-page-bg-dark': `url(${mainBgUrl})`,
+  '--club-page-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
@@ -1396,12 +1398,20 @@ const handleBack = () => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .room-list-page {
   position: relative;
   height: 100dvh;
   color: #fff;
   background-size: cover;
+  background-image: var(--club-page-bg-dark);
   // padding-top: calc(env(safe-area-inset-top) + 0.4rem);
+
+  @include theme-light {
+    color: #222;
+    background-image: var(--club-page-bg-light);
+  }
 }
 
 .club-header {
@@ -1467,6 +1477,10 @@ const handleBack = () => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .club-sub-meta {
@@ -1476,6 +1490,10 @@ const handleBack = () => {
   gap: 0.1446rem;
   font-size: 0.257rem;
   opacity: 0.94;
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .club-id-wrap {
@@ -1495,6 +1513,11 @@ const handleBack = () => {
   align-items: center;
   justify-content: center;
   font-size: 0.216rem;
+
+  @include theme-light {
+    background: rgba(79, 79, 79, 0.4);
+    color: #fff;
+  }
 }
 
 .club-id-text {
@@ -1510,6 +1533,11 @@ const handleBack = () => {
 .club-member-icon {
   width: 0.4rem;
   height: 0.4rem;
+
+  @include theme-light {
+    filter: invert(69%) sepia(77%) saturate(1273%) hue-rotate(180deg) brightness(103%)
+      contrast(101%);
+  }
 }
 
 .action-wrap {
@@ -1562,6 +1590,12 @@ const handleBack = () => {
   box-shadow: inset 0 0 0 0.0133rem rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(0.8133rem);
   transition: min-height 0.2s ease;
+
+  @include theme-light {
+    color: #fff;
+    background: rgba(108, 119, 128, 0.5);
+    box-shadow: inset 0 0 0 0.0133rem rgba(255, 255, 255, 0.28);
+  }
 }
 
 .announce-bar--expanded {
@@ -1705,11 +1739,19 @@ const handleBack = () => {
   font-weight: 500;
   padding: 0 0 0.03rem;
   opacity: 0.92;
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.78);
+  }
 }
 
 .club-header-tab--active {
   color: #fff;
   font-weight: 700;
+
+  @include theme-light {
+    color: var(--c-brand);
+  }
 }
 
 .club-header-tab--active::after {
@@ -1717,11 +1759,16 @@ const handleBack = () => {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: -0.1rem;
   height: 0.032rem;
   border-radius: 999px;
   background: rgba(234, 234, 234, 0.92);
   box-shadow: 0 0 0.06rem rgba(255, 255, 255, 0.45);
+
+  @include theme-light {
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .club-quick-card {
@@ -1853,6 +1900,10 @@ const handleBack = () => {
   width: 10.56rem;
   margin-left: -0.28rem;
   margin-bottom: -2rem;
+
+  @include theme-light {
+    background: rgba(255, 255, 255, 0.76);
+  }
 }
 
 .mtt-content {
@@ -1892,6 +1943,10 @@ const handleBack = () => {
   font-weight: 700;
   color: #fff;
   line-height: 1.2;
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .mtt-group__title--empty {
@@ -1908,6 +1963,10 @@ const handleBack = () => {
   cursor: pointer;
   text-align: right;
   line-height: 0.6rem;
+
+  @include theme-light {
+    color: var(--c-brand);
+  }
 }
 
 .mtt-grid {
@@ -1955,6 +2014,12 @@ const handleBack = () => {
   text-align: center;
   backdrop-filter: blur(0.08rem);
   box-shadow: 0 0.16rem 0.32rem rgba(0, 0, 0, 0.22);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+    box-shadow: 0 0.12rem 0.28rem rgba(var(--c-brand-rgb), 0.25);
+  }
 }
 
 .floating-menu-btn {
@@ -1971,6 +2036,11 @@ const handleBack = () => {
   gap: 0.08rem;
   box-shadow: 0 0.14rem 0.3rem rgba(0, 0, 0, 0.38);
   z-index: 99;
+
+  @include theme-light {
+    background: #505050;
+    box-shadow: 0 0.12rem 0.28rem rgba(var(--c-brand-rgb), 0.28);
+  }
 }
 
 .floating-menu-btn--solo {
@@ -1992,5 +2062,9 @@ const handleBack = () => {
   gap: 0.2133rem;
   font-size: 0.3467rem;
   color: rgba(255, 255, 255, 0.82);
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.58);
+  }
 }
 </style>

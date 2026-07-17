@@ -268,7 +268,7 @@ function shortName(name?: string): string {
 
       <div class="table-footer">
         <p>
-          <img class="meta-icon" :src="iconTime" alt="time" />
+          <img class="meta-icon time-icon" :src="iconTime" alt="time" />
           <span>
             {{ timeText }}
           </span>
@@ -285,6 +285,8 @@ function shortName(name?: string): string {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .table-card {
   position: relative;
   padding-top: 0.15rem;
@@ -348,6 +350,13 @@ function shortName(name?: string): string {
   background:
     linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)),
     url('@/assets/images/game_list_card_title_bg.png') no-repeat center / 100% 100%;
+
+  @include theme-light {
+    color: #222;
+    background: rgba(255, 255, 255, 0.72);
+    border: 0.5px solid rgba(0, 0, 0, 0.21);
+    box-shadow: inset 0 0 0 0.0133rem rgba(34, 34, 34, 0.12);
+  }
 }
 
 .seat-area {
@@ -362,6 +371,10 @@ function shortName(name?: string): string {
   margin: 0.3rem auto 0;
   background: url('@/assets/images/game_list_card_table_bg.png') center / 100% 100% no-repeat;
   position: relative;
+
+  @include theme-light {
+    background-image: url('@/assets/images/game_list_card_table_bg_light.png');
+  }
 }
 
 .table-center {
@@ -400,6 +413,12 @@ function shortName(name?: string): string {
 
 .seat-avatar.empty {
   background: rgba(86, 76, 94, 0.7);
+
+  @include theme-light {
+    color: #222;
+    background: rgba(206, 211, 215, 0.92);
+    border-color: rgba(255, 255, 255, 0.72);
+  }
 }
 
 .seat-avatar img {
@@ -418,6 +437,10 @@ function shortName(name?: string): string {
   align-items: center;
   justify-content: space-between;
   font-size: 0.26rem;
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .table-footer p {
@@ -437,5 +460,11 @@ function shortName(name?: string): string {
   width: 0.61rem;
   height: 0.61rem;
   margin-right: 0.2rem;
+}
+
+.time-icon {
+  @include theme-light {
+    filter: brightness(0);
+  }
 }
 </style>

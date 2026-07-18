@@ -44,7 +44,7 @@ import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'
-// 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
+// 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   '--club-detail-bg-dark': `url(${mainBgUrl})`,
   '--club-detail-bg-light': `url(${mainBgLightUrl})`,
@@ -1299,30 +1299,18 @@ onMounted(async () => {
         </div>
       </section>
     </div>
-
-    <div v-if="showDeleteClubPopup" class="club-modal-mask" @click="closeDeleteClubPopup">
-      <section class="copy-modal" role="alertdialog" aria-modal="true" @click.stop>
-        <p>删除俱乐部后无法恢复，是否确认删除？</p>
-        <div class="copy-modal__actions">
-          <button
-            type="button"
-            class="modal-secondary-btn"
-            :disabled="deletingClub"
-            @click="closeDeleteClubPopup"
-          >
-            取消
-          </button>
-          <button
-            type="button"
-            class="modal-primary-btn"
-            :disabled="deletingClub"
-            @click="confirmDeleteClub"
-          >
-            {{ deletingClub ? '删除中...' : '确认删除' }}
-          </button>
-        </div>
-      </section>
-    </div>
+    <GameDialog
+      v-model:show="showDeleteClubPopup"
+      title="退出登录"
+      :show-cancel-button="true"
+      :close-on-click-overlay="true"
+      confirm-button-text="确认删除"
+      cancel-button-text="取消"
+      @confirm="confirmDeleteClub"
+      @cancel="closeDeleteClubPopup"
+    >
+      <div class="logout-confirm-text">删除俱乐部后无法恢复，是否确认删除？</div>
+    </GameDialog>
 
     <NumericKeypad
       :open="tribeIdKeypadOpen"
@@ -1346,8 +1334,8 @@ onMounted(async () => {
 
 .club-detail-bg {
   height: 100dvh;
-  background-size: cover;
   background-image: var(--club-detail-bg-dark);
+  background-size: cover;
 
   @include theme-light {
     color: var(--c-text);
@@ -1395,6 +1383,7 @@ onMounted(async () => {
 }
 
 .club-header-card {
+  position: relative;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -1404,7 +1393,7 @@ onMounted(async () => {
   border-radius: 1.00402rem;
   background: rgba(0, 0, 0, 0.22);
   backdrop-filter: blur(0.2rem);
-  position: relative;
+
   @include theme-light {
     background: var(--c-surface);
     backdrop-filter: none;
@@ -1527,6 +1516,7 @@ onMounted(async () => {
   background: rgba(255, 255, 255, 0.28);
 
   @include theme-light {
+    color: #fff;
     background: rgba(79, 79, 79, 0.4);
   }
 }
@@ -1590,14 +1580,14 @@ onMounted(async () => {
   }
 }
 
-.club-size-pill img {
-  width: 0.48rem;
-  height: 0.48rem;
-  object-fit: contain;
-  opacity: 0.94;
+.club-size-icon {
+  width: 0.46rem;
+  height: 0.36rem;
+  margin-left: 0.1rem;
+  color: #fff;
 
   @include theme-light {
-    filter: brightness(0.35);
+    color: #050505;
   }
 }
 
@@ -1633,6 +1623,8 @@ onMounted(async () => {
   @include theme-light {
     border-color: rgba(255, 255, 255, 0.78);
     background: rgba(93, 93, 93, 0.17);
+    backdrop-filter: blur(0.254rem);
+    -webkit-backdrop-filter: blur(0.254rem);
   }
 }
 
@@ -1805,7 +1797,7 @@ onMounted(async () => {
   transform: rotate(45deg);
 
   @include theme-light {
-    border-color: rgba(34, 34, 34, 0.82);
+    border-color: rgba(0, 0, 0, 0.82);
   }
 }
 
@@ -1853,10 +1845,6 @@ onMounted(async () => {
 
 .switch:not(.switch--on) {
   justify-content: flex-start;
-
-  @include theme-light {
-    background: rgba(164, 164, 164, 0.2);
-  }
 }
 
 .switch-knob {
@@ -1864,11 +1852,7 @@ onMounted(async () => {
   height: 0.667rem;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 0.02rem 0.04rem rgba(0, 0, 0, 0.22);
-
-  @include theme-light {
-    box-shadow: 0 0.02rem 0.05rem rgba(34, 34, 34, 0.16);
-  }
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .info-dot {
@@ -1883,7 +1867,7 @@ onMounted(async () => {
 
   @include theme-light {
     color: #fff;
-    background: rgba(34, 34, 34, 0.5);
+    background: rgba(34, 34, 34, 0.58);
   }
 }
 
@@ -1936,14 +1920,6 @@ onMounted(async () => {
     0.05672rem 0.11344rem 0.45908rem rgba(242, 242, 242, 0.5) inset,
     0.09192rem 0.11491rem 0.18384rem rgba(0, 0, 0, 0.28);
   color: #f9f9f9;
-
-  @include theme-light {
-    color: var(--c-text);
-    border-color: var(--c-border);
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: 0 0.12rem 0.4rem rgba(34, 34, 34, 0.16);
-    backdrop-filter: blur(0.35rem);
-  }
 }
 
 .tribe-search-modal {
@@ -1958,14 +1934,6 @@ onMounted(async () => {
     0.09192rem 0.11491rem 0.18384rem rgba(0, 0, 0, 0.28);
   color: #f9f9f9;
   padding: 0.42rem;
-
-  @include theme-light {
-    color: var(--c-text);
-    border-color: var(--c-border);
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: 0 0.12rem 0.4rem rgba(34, 34, 34, 0.16);
-    backdrop-filter: blur(0.35rem);
-  }
 }
 
 .join-modal {
@@ -1982,14 +1950,6 @@ onMounted(async () => {
     inset 0.05rem 0.1rem 0.4rem rgba(242, 242, 242, 0.25),
     inset 0 0 0.23rem rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(0.4rem);
-
-  @include theme-light {
-    color: var(--c-text);
-    border-color: var(--c-border);
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: 0 0.12rem 0.4rem rgba(34, 34, 34, 0.16);
-    backdrop-filter: blur(0.35rem);
-  }
 }
 
 .join-modal-card {
@@ -2267,11 +2227,6 @@ onMounted(async () => {
   width: 0.66rem;
   height: 0.66rem;
   object-fit: contain;
-
-  @include theme-light {
-    filter: brightness(0);
-    opacity: 0.68;
-  }
 }
 
 .invite-modal__body {
@@ -2282,11 +2237,6 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   gap: 0.08rem;
-
-  @include theme-light {
-    border-color: rgba(34, 34, 34, 0.1);
-    background: rgba(34, 34, 34, 0.06);
-  }
 }
 
 .invite-modal__subtitle {

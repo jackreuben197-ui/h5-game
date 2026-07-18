@@ -308,7 +308,7 @@ function confirm(): void {
   touch-action: manipulation;
 
   @include theme-light {
-    background-color: rgba(255, 255, 255, 0.78);
+    background-color: rgba(255, 255, 255, 0.2);
     border-color: rgba(255, 255, 255, 0.4);
     box-shadow: none;
   }
@@ -331,7 +331,7 @@ function confirm(): void {
   z-index: 0;
 
   @include theme-light {
-    background: rgba(255, 255, 255, 0.42);
+    background: rgba(255, 255, 255, 0.2);
     mix-blend-mode: hard-light;
   }
 }
@@ -429,7 +429,7 @@ function confirm(): void {
   user-select: none;
 
   @include theme-light {
-    background-color: #bdbdbd;
+    background-color: rgba(0, 0, 0, 0.19);
     background-image: none;
     border: 0.71px solid rgba(255, 255, 255, 0.5);
     color: #fff;
@@ -443,7 +443,7 @@ function confirm(): void {
   border-radius: 1.35rem;
 
   @include theme-light {
-    background: #9bd5fa;
+    background: rgba(var(--c-brand-rgb), 0.49);
     border: none;
     color: #fff;
   }

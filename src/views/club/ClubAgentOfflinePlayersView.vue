@@ -18,13 +18,12 @@ import imgBalance from '@/assets/icons/icon_credit_chip.png'
 import imgSearch from '@/assets/icons/club_search.svg'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
-import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { formatUC } from '@/utils/roomVisibility'
 import { t } from '@/i18n'
 
 const backgroundStyle = computed(() => ({
-  '--offline-bg-dark': `url(${mainBgUrl})`,
-  '--offline-bg-light': `url(${mainBgLightUrl})`,
+  '--offline-players-bg-dark': `url(${mainBgUrl})`,
+  '--offline-players-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 type ListMode = 'members' | 'edit'
@@ -389,11 +388,12 @@ onMounted(() => {
   height: 100dvh;
   background-image: var(--offline-players-bg-dark);
   background-size: cover;
-  background-image: var(--offline-bg-dark);
+  background-position: center;
+  background-repeat: no-repeat;
 
   @include theme-light {
-    color: #111;
-    background-image: var(--offline-bg-light);
+    background-color: var(--c-page);
+    background-image: var(--offline-players-bg-light);
   }
 }
 
@@ -417,10 +417,6 @@ onMounted(() => {
   background: transparent;
   color: rgba(255, 255, 255, 0.75);
   font-size: figma-rem(13.886);
-
-  @include theme-light {
-    color: rgba(17, 17, 17, 0.64);
-  }
 }
 
 .tabs .active {
@@ -449,10 +445,6 @@ onMounted(() => {
   align-items: center;
   gap: figma-rem(8.64);
   padding: 0 figma-rem(16.786);
-
-  @include theme-light {
-    background: #dadada;
-  }
 }
 
 .search-icon {
@@ -471,18 +463,10 @@ onMounted(() => {
   background: transparent;
   color: #fff;
   font-size: figma-rem(15.502);
-
-  @include theme-light {
-    color: #111;
-  }
 }
 
 .search-input::placeholder {
   color: rgba(255, 255, 255, 0.7);
-
-  @include theme-light {
-    color: rgba(17, 17, 17, 0.72);
-  }
 }
 
 .toggle-row {
@@ -500,10 +484,6 @@ onMounted(() => {
 .toggle-row label {
   display: inline-flex;
   align-items: center;
-
-  @include theme-light {
-    color: #111;
-  }
 }
 
 .hidden-text {
@@ -521,10 +501,6 @@ onMounted(() => {
   padding: figma-rem(1.2);
   display: flex;
   align-items: center;
-
-  @include theme-light {
-    background: #dedede;
-  }
 }
 
 .switch i {
@@ -538,10 +514,6 @@ onMounted(() => {
 .switch.on {
   justify-content: flex-end;
   background: var(--c-brand);
-
-  @include theme-light {
-    background: var(--c-brand);
-  }
 }
 
 .cards {
@@ -604,10 +576,6 @@ onMounted(() => {
   line-height: 1;
   font-weight: 700;
   color: #fff;
-
-  @include theme-light {
-    color: #111;
-  }
 }
 
 .member-id-row {
@@ -618,10 +586,6 @@ onMounted(() => {
   font-size: 0.25661rem;
   line-height: 1;
   color: rgba(249, 249, 249, 0.92);
-
-  @include theme-light {
-    color: rgba(17, 17, 17, 0.76);
-  }
 }
 
 .id-pill {
@@ -634,10 +598,6 @@ onMounted(() => {
   font-size: 0.21595rem;
   background: rgba(255, 255, 255, 0.3);
   color: #fff;
-
-  @include theme-light {
-    background: rgba(79, 79, 79, 0.4);
-  }
 }
 
 .check-control {
@@ -650,21 +610,6 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
-  @include theme-light {
-    border-color: #c7c7c7;
-    background: #c7c7c7;
-  }
-}
-
-.check.on {
-  background: #1bead0;
-
-  @include theme-light {
-    border-color: var(--c-brand);
-    background: #fff;
-    box-shadow: inset 0 0 0 figma-rem(4) var(--c-brand);
-  }
 }
 
 .card img {
@@ -683,19 +628,11 @@ onMounted(() => {
   color: #fff;
   font-size: figma-rem(17.742);
   font-weight: 700;
-
-  @include theme-light {
-    color: #111;
-  }
 }
 
 .meta span {
   color: rgba(255, 255, 255, 0.85);
   font-size: figma-rem(9.623);
-
-  @include theme-light {
-    color: rgba(17, 17, 17, 0.7);
-  }
 }
 
 .assets {
@@ -708,10 +645,6 @@ onMounted(() => {
   align-items: center;
   padding: 0 figma-rem(9.568);
   gap: figma-rem(5);
-
-  @include theme-light {
-    background: #dadada;
-  }
 }
 
 .assets b {
@@ -722,10 +655,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: figma-rem(2);
-
-  @include theme-light {
-    color: #111;
-  }
 }
 
 .assets img {
@@ -739,29 +668,10 @@ onMounted(() => {
   text-align: center;
   color: rgba(255, 255, 255, 0.82);
   font-size: figma-rem(11.5);
-
-  @include theme-light {
-    color: rgba(17, 17, 17, 0.58);
-  }
 }
 
 .save {
   margin-top: auto;
-  border: 1px solid rgba(242, 242, 242, 0.8);
-  min-height: figma-rem(55.184);
-  border-radius: figma-rem(40.576);
-  color: #fff;
-  background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
-  font-size: figma-rem(18.985);
-
-  @include theme-light {
-    border-color: transparent;
-    background: var(--c-brand);
-  }
-}
-
-.save:disabled {
-  opacity: 0.72;
 }
 
 .member-data-strip {
@@ -774,10 +684,6 @@ onMounted(() => {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.21rem;
   cursor: pointer;
-
-  @include theme-light {
-    background: #dadada;
-  }
 }
 
 .data-item {
@@ -793,10 +699,6 @@ onMounted(() => {
   font-size: 0.25703rem;
   line-height: 1.1;
   color: #fff;
-
-  @include theme-light {
-    color: #111;
-  }
 }
 
 .data-label {

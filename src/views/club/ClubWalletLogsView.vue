@@ -529,10 +529,6 @@ onMounted(() => {
 
 .metric-value--loss {
   color: var(--c-loss);
-
-  @include theme-light {
-    color: #00af83;
-  }
 }
 
 .metric-value--neutral {

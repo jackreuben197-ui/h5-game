@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { showFailToast } from 'vant'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
@@ -15,7 +15,6 @@ import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgBalance from '@/assets/icons/icon_credit_chip.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
-import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { t } from '@/i18n'
@@ -23,9 +22,10 @@ import { t } from '@/i18n'
 const userInfoStore = useUserInfoStore()
 const route = useRoute()
 const context = computed(() => getMemberRouteContext(route))
+
 const backgroundStyle = computed(() => ({
-  '--vip-bg-dark': `url(${mainBgUrl})`,
-  '--vip-bg-light': `url(${mainBgLightUrl})`,
+  '--agent-stats-bg-dark': `url(${mainBgUrl})`,
+  '--agent-stats-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 // filter_type: 1=UC, 2=USDT, 3=Chips
@@ -45,6 +45,11 @@ const filterTypeOptions = computed(() => [
   { value: 1, label: 'UC' },
   { value: 3, label: t('UIGuild_CoinType1') },
 ])
+const filterSelectRef = ref<HTMLElement | null>(null)
+const filterSelectOpen = ref(false)
+const selectedFilterLabel = computed(
+  () => filterTypeOptions.value.find((item) => item.value === filterType.value)?.label || 'UC',
+)
 
 // Player balance and profile from API (same as ClubMemberDetailView)
 const memberProfile = ref<OrgClubUserInfoData | null>(null)
@@ -241,11 +246,21 @@ const displayBalance = computed(() => {
   return formatAmount(offlineGoldTotal.value)
 })
 
-function onFilterTypeChange(event: Event): void {
-  const value = Number((event.target as HTMLSelectElement).value)
-  if (Number.isFinite(value)) {
-    filterType.value = value
-    void fetchStatsData()
+function toggleFilterSelect(): void {
+  filterSelectOpen.value = !filterSelectOpen.value
+}
+
+function selectFilterType(value: number): void {
+  filterSelectOpen.value = false
+  if (value === filterType.value) return
+  filterType.value = value
+  void fetchStatsData()
+}
+
+function closeFilterSelectOnOutside(event: PointerEvent): void {
+  const target = event.target
+  if (target instanceof Node && !filterSelectRef.value?.contains(target)) {
+    filterSelectOpen.value = false
   }
 }
 
@@ -261,7 +276,12 @@ function onAvatarError(event: Event): void {
 }
 
 onMounted(() => {
+  document.addEventListener('pointerdown', closeFilterSelectOnOutside)
   void Promise.all([fetchPlayerProfile(), fetchVipUserData(), fetchStatsData()])
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', closeFilterSelectOnOutside)
 })
 </script>
 
@@ -308,12 +328,17 @@ onMounted(() => {
           {{ tab.label }}
         </button>
       </div>
-      <div class="filter-select-wrap">
-        <select :value="filterType" aria-label="Currency type" @change="onFilterTypeChange">
-          <option v-for="opt in filterTypeOptions" :key="opt.value" :value="opt.value">
-            {{ opt.label }}
-          </option>
-        </select>
+      <div ref="filterSelectRef" class="filter-select-wrap">
+        <button
+          type="button"
+          class="filter-select-trigger"
+          aria-label="Currency type"
+          aria-haspopup="listbox"
+          :aria-expanded="filterSelectOpen"
+          @click="toggleFilterSelect"
+        >
+          <span>{{ selectedFilterLabel }}</span>
+        </button>
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <path
             d="m4 6 4 4 4-4"
@@ -323,6 +348,19 @@ onMounted(() => {
             stroke-linejoin="round"
           />
         </svg>
+        <div v-if="filterSelectOpen" class="filter-select-options" role="listbox">
+          <button
+            v-for="opt in filterTypeOptions"
+            :key="opt.value"
+            type="button"
+            role="option"
+            :aria-selected="filterType === opt.value"
+            :class="{ active: filterType === opt.value }"
+            @click="selectFilterType(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
       </div>
     </section>
 
@@ -402,11 +440,12 @@ onMounted(() => {
   height: 100dvh;
   background-image: var(--agent-stats-bg-dark);
   background-size: cover;
-  background-image: var(--vip-bg-dark);
+  background-position: center;
+  background-repeat: no-repeat;
 
   @include theme-light {
     background-color: var(--c-page);
-    background-image: var(--vip-bg-light);
+    background-image: var(--agent-stats-bg-light);
   }
 }
 
@@ -414,10 +453,6 @@ onMounted(() => {
   border-radius: figma-rem(39.59);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(figma-rem(6));
-
-  @include theme-light {
-    background: #fff;
-  }
 }
 
 .profile-card {
@@ -444,19 +479,11 @@ onMounted(() => {
   color: #fff;
   font-size: figma-rem(22.445);
   font-weight: 700;
-
-  @include theme-light {
-    color: #111;
-  }
 }
 
 .uid {
   color: rgba(255, 255, 255, 0.86);
   font-size: figma-rem(9.623);
-
-  @include theme-light {
-    color: rgba(17, 17, 17, 0.7);
-  }
 }
 
 .badge {
@@ -474,10 +501,6 @@ onMounted(() => {
   gap: figma-rem(1.584);
   font-size: figma-rem(14.886);
   font-weight: 700;
-
-  @include theme-light {
-    color: #111;
-  }
 }
 
 .coin div {
@@ -504,10 +527,6 @@ onMounted(() => {
   color: #fff;
   margin-top: figma-rem(11.719);
   font-size: figma-rem(14.247);
-
-  @include theme-light {
-    color: #111;
-  }
 
   p,
   strong {
@@ -542,10 +561,6 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.16);
   border-radius: figma-rem(30);
   padding: figma-rem(1.5);
-
-  @include theme-light {
-    background: #dadada;
-  }
 }
 
 .tabs-row button {
@@ -556,18 +571,9 @@ onMounted(() => {
   font-size: figma-rem(13.574);
   min-height: figma-rem(54.16);
 
-  @include theme-light {
-    color: #111;
-  }
-
   &.active {
     background: rgba(255, 255, 255, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.8);
-
-    @include theme-light {
-      border-color: transparent;
-      background: #fff;
-    }
   }
 }
 
@@ -587,37 +593,49 @@ onMounted(() => {
   }
 }
 
-.filter-select-wrap select {
+.filter-select-trigger {
   border: 0;
   background: transparent;
-  color: #fff;
+  color: inherit;
+  text-align: center;
   font-size: figma-rem(13.297);
   padding: 0 figma-rem(18) 0 0;
   width: figma-rem(64);
+  min-height: figma-rem(36);
   outline: none;
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L4 4L7 1' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right figma-rem(8) center;
-  padding-right: figma-rem(24);
-
-  @include theme-light {
-    border-color: transparent;
-    color: #111;
-    background-color: #dadada;
-    background-image: url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L4 4L7 1' stroke='%23111' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  }
+  cursor: pointer;
 }
 
-.filter-select-wrap select option {
-  background: #1a1a2e;
-  color: #fff;
+.filter-select-options {
+  position: absolute;
+  top: calc(100% + #{figma-rem(4)});
+  right: 0;
+  z-index: 30;
+  width: figma-rem(84);
+  padding: figma-rem(5);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: figma-rem(12);
+  background: rgba(26, 26, 46, 0.94);
+  box-shadow: 0 figma-rem(8) figma-rem(20) rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(figma-rem(12));
+  -webkit-backdrop-filter: blur(figma-rem(12));
+}
 
-  @include theme-light {
-    color: #111;
-    background: #fff;
-  }
+.filter-select-options button {
+  width: 100%;
+  min-height: figma-rem(34);
+  padding: 0 figma-rem(8);
+  border: 0;
+  border-radius: figma-rem(8);
+  background: transparent;
+  color: #fff;
+  font-size: figma-rem(13.297);
+  text-align: center;
+}
+
+.filter-select-options button.active {
+  background: rgba(105, 190, 255, 0.2);
+  color: var(--c-brand);
 }
 
 .cards {
@@ -632,10 +650,6 @@ onMounted(() => {
   color: rgba(255, 255, 255, 0.8);
   font-size: figma-rem(10.5);
   text-align: center;
-
-  @include theme-light {
-    color: rgba(17, 17, 17, 0.58);
-  }
 }
 
 .stat-card {
@@ -656,19 +670,10 @@ onMounted(() => {
   justify-content: center;
   gap: figma-rem(4);
   font-size: figma-rem(10.131);
-
-  @include theme-light {
-    color: #111;
-  }
   opacity: 0.92;
 
   span {
     opacity: 0.62;
-  }
-
-  img {
-    width: figma-rem(18);
-    height: figma-rem(18);
   }
 }
 
@@ -683,10 +688,6 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   color: #fff;
-
-  @include theme-light {
-    color: #111;
-  }
 
   b {
     font-size: figma-rem(15);
@@ -714,7 +715,7 @@ onMounted(() => {
     .offline-head,
     .tabs-row button,
     .filter-select-wrap,
-    .filter-select-wrap select,
+    .filter-select-trigger,
     .left,
     .metric {
       color: #000;
@@ -737,9 +738,21 @@ onMounted(() => {
       background: #fff;
     }
 
-    .filter-select-wrap select option {
+    .filter-select-options {
       background: #fff;
       color: #000;
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: 0 figma-rem(8) figma-rem(20) rgba(0, 0, 0, 0.12);
+      backdrop-filter: blur(figma-rem(12));
+      -webkit-backdrop-filter: blur(figma-rem(12));
+    }
+
+    .filter-select-options button {
+      color: #000;
+    }
+
+    .filter-select-options button.active {
+      color: var(--c-brand);
     }
 
     .stats-loading {

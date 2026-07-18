@@ -13,8 +13,8 @@ import { t } from '@/i18n'
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  '--history-detail-bg-dark': `url(${mainBgUrl})`,
-  '--history-detail-bg-light': `url(${mainBgLightUrl})`,
+  '--club-room-history-detail-bg-dark': `url(${mainBgUrl})`,
+  '--club-room-history-detail-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 function toSafeNumber(value: unknown): number {
@@ -48,10 +48,10 @@ onMounted(() => {
   height: 100dvh;
   background-image: var(--club-room-history-detail-bg-dark);
   background-size: cover;
-  background-image: var(--history-detail-bg-dark);
 
   @include theme-light {
-    background-image: var(--history-detail-bg-light);
+    background-color: #f3f4f6;
+    background-image: var(--club-room-history-detail-bg-light);
   }
 }
 </style>

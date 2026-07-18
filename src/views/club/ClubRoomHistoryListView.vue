@@ -35,8 +35,8 @@ interface RoomHistoryItem {
 }
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  '--history-bg-dark': `url(${mainBgUrl})`,
-  '--history-bg-light': `url(${mainBgLightUrl})`,
+  '--club-room-history-bg-dark': `url(${mainBgUrl})`,
+  '--club-room-history-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 type CurrencyTab = 1 | 3
@@ -634,11 +634,11 @@ onMounted(() => {
   background-image: var(--club-room-history-bg-dark);
   background-size: cover;
   color: #f9f9f9;
-  background-image: var(--history-bg-dark);
 
   @include theme-light {
-    color: #111;
-    background-image: var(--history-bg-light);
+    color: #222;
+    background-color: #f3f4f6;
+    background-image: var(--club-room-history-bg-light);
   }
 }
 
@@ -669,7 +669,7 @@ onMounted(() => {
   padding: 0;
 
   @include theme-light {
-    color: rgba(17, 17, 17, 0.66);
+    color: rgba(34, 34, 34, 0.7);
   }
 }
 
@@ -695,8 +695,8 @@ onMounted(() => {
   box-shadow: inset 0 0 0.01rem rgba(255, 255, 255, 0.2);
 
   @include theme-light {
-    border-color: rgba(0, 0, 0, 0.04);
     background: #fff;
+    border-color: transparent;
     box-shadow: none;
   }
 }
@@ -723,8 +723,8 @@ onMounted(() => {
   gap: 0.2rem;
 
   @include theme-light {
-    color: rgba(17, 17, 17, 0.78);
-    background: #efedef;
+    color: #222;
+    background: rgba(139, 136, 136, 0.15);
   }
 }
 
@@ -736,7 +736,7 @@ onMounted(() => {
   position: relative;
 
   @include theme-light {
-    border-color: rgba(17, 17, 17, 0.68);
+    border-color: rgba(34, 34, 34, 0.82);
   }
 
   &::before,
@@ -761,13 +761,6 @@ onMounted(() => {
   &::after {
     right: 0.07rem;
   }
-
-  @include theme-light {
-    &::before,
-    &::after {
-      background: rgba(17, 17, 17, 0.68);
-    }
-  }
 }
 
 .date-sep {
@@ -777,7 +770,7 @@ onMounted(() => {
   background: rgba(243, 243, 243, 0.55);
 
   @include theme-light {
-    background: rgba(17, 17, 17, 0.42);
+    background: rgba(34, 34, 34, 0.58);
   }
 }
 
@@ -800,7 +793,7 @@ onMounted(() => {
   border-top: 0.02rem solid rgba(243, 243, 243, 0.28);
 
   @include theme-light {
-    border-top-color: rgba(17, 17, 17, 0.16);
+    border-top-color: rgba(34, 34, 34, 0.14);
   }
 }
 
@@ -825,7 +818,7 @@ onMounted(() => {
   border-left: 0.02rem solid rgba(243, 243, 243, 0.18);
 
   @include theme-light {
-    border-left-color: rgba(17, 17, 17, 0.12);
+    border-left-color: rgba(34, 34, 34, 0.14);
   }
 }
 
@@ -835,7 +828,7 @@ onMounted(() => {
   color: rgba(243, 243, 243, 0.9);
 
   @include theme-light {
-    color: rgba(17, 17, 17, 0.78);
+    color: #222;
   }
 }
 
@@ -846,7 +839,7 @@ onMounted(() => {
   color: rgba(243, 243, 243, 1);
 
   @include theme-light {
-    color: #111;
+    color: #222;
   }
 }
 
@@ -857,7 +850,7 @@ onMounted(() => {
   font-size: 0.26rem;
 
   @include theme-light {
-    color: rgba(17, 17, 17, 0.5);
+    color: rgba(0, 0, 0, 0.5);
   }
 }
 
@@ -921,7 +914,13 @@ onMounted(() => {
   justify-content: space-between;
   color: #fff;
   cursor: pointer;
-  color: #fff;
+
+  @include theme-light {
+    background: rgba(157, 18, 124, 0.59);
+    box-shadow:
+      inset 0 0.08rem 0.18rem rgba(255, 255, 255, 0.2),
+      inset 0 -0.08rem 0.16rem rgba(78, 0, 59, 0.12);
+  }
 }
 
 .record-main {
@@ -1020,7 +1019,7 @@ onMounted(() => {
   padding: 0.18rem 0 0.2rem;
 
   @include theme-light {
-    color: rgba(17, 17, 17, 0.58);
+    color: rgba(34, 34, 34, 0.62);
   }
 }
 

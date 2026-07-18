@@ -10,8 +10,6 @@ import { getMemberRouteContext } from './clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import imgAgentBind from '@/assets/icons/icon_agent_bind.png'
 import { useUserInfoStore } from '@/stores/userInfo'
-import mainBgUrl from '@/assets/images/main_bg.webp'
-import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'
 
 interface UserDisplay {
@@ -19,11 +17,6 @@ interface UserDisplay {
   uid: string
   avatar: string
 }
-
-const backgroundStyle = computed(() => ({
-  '--unbind-bg-dark': `url(${mainBgUrl})`,
-  '--unbind-bg-light': `url(${mainBgLightUrl})`,
-}))
 
 const route = useRoute()
 const router = useRouter()
@@ -213,7 +206,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell sub-bg" :style="backgroundStyle">
+  <div class="page-shell sub-bg">
     <div class="sub-page">
       <HeaderBack :title="t('UIGuild_MemberDetails_UnBindVip')" />
 
@@ -264,12 +257,14 @@ onMounted(() => {
 .sub-bg {
   height: 100dvh;
   background-color: #101018;
+  background-image: url('@/assets/images/main_bg.webp');
   background-size: cover;
-  background-image: var(--unbind-bg-dark);
+  background-position: center;
+  background-repeat: no-repeat;
 
   @include theme-light {
-    color: #111;
-    background-image: var(--unbind-bg-light);
+    background-color: #f3f4f6;
+    background-image: url('@/assets/images/main_bg_light.png');
   }
 }
 
@@ -291,10 +286,6 @@ onMounted(() => {
   border-radius: figma-rem(30);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(figma-rem(6));
-
-  @include theme-light {
-    background: #fff;
-  }
 }
 
 .card {
@@ -323,10 +314,6 @@ onMounted(() => {
   color: #fff;
   font-size: figma-rem(14.415);
   font-weight: 600;
-
-  @include theme-light {
-    color: #111;
-  }
 }
 
 .uid-line {
@@ -335,10 +322,6 @@ onMounted(() => {
   gap: figma-rem(2.337);
   color: rgba(255, 255, 255, 0.75);
   font-size: figma-rem(9.152);
-
-  @include theme-light {
-    color: rgba(17, 17, 17, 0.68);
-  }
 }
 
 .uid-line em {
@@ -380,35 +363,16 @@ onMounted(() => {
   height: figma-rem(31);
   color: #fff;
   transform: translate(-50%, -50%);
-
-  @include theme-light {
-    color: #dadada;
-  }
 }
 
 .hint {
   margin: auto auto 0;
   color: rgba(249, 249, 249, 0.86);
   font-size: figma-rem(11.534);
-
-  @include theme-light {
-    color: #111;
-  }
 }
 
 .confirm {
   margin: 0 figma-rem(8) figma-rem(18);
-  border: 1px solid rgba(242, 242, 242, 0.8);
-  border-radius: figma-rem(40.576);
-  min-height: figma-rem(55.184);
-  color: #fff;
-  font-size: figma-rem(18.985);
-  background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
-
-  @include theme-light {
-    border-color: transparent;
-    background: var(--c-brand);
-  }
 }
 
 .sub-bg {
@@ -438,9 +402,5 @@ onMounted(() => {
       color: var(--c-brand);
     }
   }
-}
-
-.confirm:disabled {
-  opacity: 0.72;
 }
 </style>

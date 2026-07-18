@@ -24,8 +24,8 @@ const focusedKey = ref('')
 const profileAvatar = ref(imgAvatar)
 
 const backgroundStyle = computed(() => ({
-  '--profit-bg-dark': `url(${mainBgUrl})`,
-  '--profit-bg-light': `url(${mainBgLightUrl})`,
+  '--profit-setting-bg-dark': `url(${mainBgUrl})`,
+  '--profit-setting-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const form = ref([
@@ -232,7 +232,7 @@ onMounted(() => {
       :max-length="4"
       :initial-value="form.find((i) => i.key === keypadField)?.value || '0'"
       :title="form.find((i) => i.key === keypadField)?.label || t('UIMineUSDTSheet_CustomTip')"
-      confirm-text="加入"
+      :confirm-text="t('CommitOK')"
       @close="onKeypadClose"
       @submit="onKeypadSubmit"
       @key-press="onKeypadKeyPress"
@@ -254,11 +254,12 @@ onMounted(() => {
   flex-direction: column;
   background-image: var(--profit-setting-bg-dark);
   background-size: cover;
-  background-image: var(--profit-bg-dark);
+  background-position: center;
+  background-repeat: no-repeat;
 
   @include theme-light {
     background-color: var(--c-page);
-    background-image: var(--profit-bg-light);
+    background-image: var(--profit-setting-bg-light);
   }
 }
 
@@ -266,10 +267,6 @@ onMounted(() => {
   border-radius: figma-rem(39.59);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.16rem);
-
-  @include theme-light {
-    background: #fff;
-  }
 }
 
 .profile-card {
@@ -294,10 +291,6 @@ onMounted(() => {
   color: #f9f9f9;
   font-size: figma-rem(18.44);
   font-weight: 700;
-
-  @include theme-light {
-    color: #111;
-  }
 }
 
 .uid {
@@ -306,21 +299,12 @@ onMounted(() => {
   gap: figma-rem(2.457);
   color: #fff;
   font-size: figma-rem(9.623);
-
-  @include theme-light {
-    color: rgba(17, 17, 17, 0.72);
-  }
 }
 
 .uid span {
   border-radius: figma-rem(4.212);
   padding: figma-rem(2.808) figma-rem(4.914);
   background: rgba(255, 255, 255, 0.34);
-
-  @include theme-light {
-    color: #fff;
-    background: rgba(79, 79, 79, 0.4);
-  }
 }
 
 .form-list {
@@ -343,10 +327,6 @@ onMounted(() => {
   margin: 0;
   color: #fff;
   font-size: figma-rem(15);
-
-  @include theme-light {
-    color: #111;
-  }
 }
 
 .value {
@@ -361,39 +341,20 @@ onMounted(() => {
   cursor: pointer;
   transition: border-color 0.2s;
 
-  @include theme-light {
-    border-color: transparent;
-    color: rgba(17, 17, 17, 0.76);
-    background: #dadada;
-  }
-
   &--focused {
     border-color: var(--c-brand);
     box-shadow: 0 0 0 2px rgba(var(--c-brand-rgb), 0.24);
-
-    @include theme-light {
-      border-color: var(--c-brand);
-      box-shadow: 0 0 0 2px rgba(var(--c-brand-rgb), 0.18);
-    }
   }
 
   &__number {
     font-weight: 600;
     color: #fff;
     font-size: figma-rem(18);
-
-    @include theme-light {
-      color: #111;
-    }
   }
 
   &__unit {
     color: rgba(255, 255, 255, 0.6);
     font-size: figma-rem(14);
-
-    @include theme-light {
-      color: rgba(17, 17, 17, 0.7);
-    }
   }
 }
 

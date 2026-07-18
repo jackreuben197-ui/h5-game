@@ -5,10 +5,12 @@ import { postOrgClubModifyClubDescApi } from '@/api/org'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'
-// 主容器背景图：全页面共用一张底图。
+// 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--club-edit-des-bg-dark': `url(${mainBgUrl})`,
+  '--club-edit-des-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const userInfoStore = useUserInfoStore()
@@ -93,10 +95,18 @@ async function onConfirm(): Promise<void> {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-edit-des-bg {
   position: relative;
   height: 100dvh;
   background-size: cover;
+  background-image: var(--club-edit-des-bg-dark);
+
+  @include theme-light {
+    background-color: var(--c-page);
+    background-image: var(--club-edit-des-bg-light);
+  }
 }
 
 .bg-blur {
@@ -160,6 +170,10 @@ async function onConfirm(): Promise<void> {
   line-height: 1.4;
   font-weight: 500;
   color: #f7f7f7;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .field-shell {
@@ -174,6 +188,10 @@ async function onConfirm(): Promise<void> {
     rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(0.3rem);
   overflow: hidden;
+
+  @include theme-light {
+    background: #dadada;
+  }
 }
 
 textarea {
@@ -188,10 +206,18 @@ textarea {
   line-height: 1.4;
   font-weight: 500;
   color: #f9f9f9;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 textarea::placeholder {
   color: rgba(255, 255, 255, 0.71);
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.71);
+  }
 }
 
 .footer-actions {
@@ -211,6 +237,12 @@ textarea::placeholder {
   font-weight: 500;
   box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.2);
   transition: opacity 0.2s ease;
+
+  @include theme-light {
+    color: #fff;
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .confirm-btn--disabled {

@@ -787,12 +787,7 @@ onMounted(async () => {
       <section class="glass-card stat-head-card">
         <div class="stat-head-top">
           <strong>{{ t('UIClub_Mlistinfo_GiVUYG7E') }}</strong>
-          <svg
-            class="stat-head-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
+          <svg class="stat-head-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
               d="M10.25 3.2a8.8 8.8 0 1 0 10.55 10.55h-8.15a2.4 2.4 0 0 1-2.4-2.4V3.2Z"
               stroke="currentColor"
@@ -854,7 +849,12 @@ onMounted(async () => {
                 stroke-linecap="round"
                 stroke-linejoin="round"
               />
-              <path d="M14.9 2.7 18.3 6.1M4 21h16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              <path
+                d="M14.9 2.7 18.3 6.1M4 21h16"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+              />
             </svg>
             <span>{{ t('UIGuild_VipCountOffLineMemberNumber') }}</span>
           </span>
@@ -866,8 +866,22 @@ onMounted(async () => {
         <button class="link-item" @click="onActionClick('vip')">
           <span class="link-item-main">
             <svg class="agent-link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="2.5" y="3" width="19" height="18" rx="2.5" stroke="currentColor" stroke-width="1.7" />
-              <path d="m5.5 16 4-4 3.2 2.8 5.8-7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+              <rect
+                x="2.5"
+                y="3"
+                width="19"
+                height="18"
+                rx="2.5"
+                stroke="currentColor"
+                stroke-width="1.7"
+              />
+              <path
+                d="m5.5 16 4-4 3.2 2.8 5.8-7"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
             </svg>
             <span>{{ t('UIClub_Agent') }}</span>
           </span>
@@ -877,8 +891,18 @@ onMounted(async () => {
           <span class="link-item-main">
             <svg class="agent-link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <circle cx="10" cy="7" r="3.5" stroke="currentColor" stroke-width="1.7" />
-              <path d="M3.5 19.5c.45-4 2.55-6 6.5-6 1.3 0 2.4.22 3.3.68" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-              <path d="M18 13.8v1.4m0 3.6v1.4m-3.2-3.2h1.4m3.6 0h1.4m-1.1-2.1-1 1m-2.2 2.2-1 1m4.2 0-1-1m-2.2-2.2-1-1" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" />
+              <path
+                d="M3.5 19.5c.45-4 2.55-6 6.5-6 1.3 0 2.4.22 3.3.68"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+              />
+              <path
+                d="M18 13.8v1.4m0 3.6v1.4m-3.2-3.2h1.4m3.6 0h1.4m-1.1-2.1-1 1m-2.2 2.2-1 1m4.2 0-1-1m-2.2-2.2-1-1"
+                stroke="currentColor"
+                stroke-width="1.35"
+                stroke-linecap="round"
+              />
               <circle cx="18" cy="17" r="2.2" stroke="currentColor" stroke-width="1.35" />
             </svg>
             <span>{{ t('UIGuild_MemberDetails_ProxySetting') }}</span>

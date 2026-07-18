@@ -88,7 +88,9 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
     setClubList(list: ClubInfo[]): void {
       const normalized = (Array.isArray(list) ? list : []).filter(
         (club): club is ClubInfo =>
-          Boolean(club) && typeof club === 'object' && normalizeClubId((club as ClubInfo).club_id) !== '',
+          Boolean(club) &&
+          typeof club === 'object' &&
+          normalizeClubId((club as ClubInfo).club_id) !== '',
       )
 
       this.clubList = normalized
@@ -136,9 +138,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       }
 
       const inviteCode = resolveInviteCode()
-      const payload = inviteCode
-        ? { invite_code: inviteCode }
-        : {}
+      const payload = inviteCode ? { invite_code: inviteCode } : {}
 
       channelDefaultClubInFlight = (async () => {
         try {

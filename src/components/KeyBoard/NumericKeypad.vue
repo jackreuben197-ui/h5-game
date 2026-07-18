@@ -17,6 +17,7 @@ interface Props {
   confirmText?: string
   title?: string
   allowDecimal?: boolean // When true, replace 'C' with '.' and allow decimal input
+  showCancel?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -32,6 +33,7 @@ const props = withDefaults(defineProps<Props>(), {
   showInputArea: false,
   confirmText: t('Wallet_Confirm'),
   allowDecimal: false,
+  showCancel: true,
 })
 
 const emit = defineEmits<{
@@ -225,7 +227,13 @@ function confirm(): void {
           </div>
 
           <div class="kp__actions">
-            <button type="button" class="kp__cancel" @click="cancel" @dblclick.prevent>
+            <button
+              v-if="showCancel"
+              type="button"
+              class="kp__cancel"
+              @click="cancel"
+              @dblclick.prevent
+            >
               {{ t('Wallet_Cancel') }}
             </button>
             <PrimaryButton :text="confirmText" class="kp__confirm" @click="confirm" />

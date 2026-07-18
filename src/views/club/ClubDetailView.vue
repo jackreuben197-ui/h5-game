@@ -159,11 +159,13 @@ const showCopyPopup = ref(false)
 const showTribeSearchPopup = ref(false)
 const showTribeApplyPopup = ref(false)
 const showCancelTribeApplyPopup = ref(false)
+const showDeleteClubPopup = ref(false)
 const savingInviteShare = ref(false)
 const savingClubLogo = ref(false)
 const tribeApplySubmitting = ref(false)
 const tribeApplyStatusLoading = ref(false)
 const cancelTribeApplyLoading = ref(false)
+const deletingClub = ref(false)
 const tribeApplyId = ref<number | null>(null)
 const tribeApplying = ref(false)
 const tribeApplyIdInput = ref('')
@@ -221,6 +223,13 @@ function closeTribeApplyPopup(): void {
 
 function closeCancelTribeApplyPopup(): void {
   showCancelTribeApplyPopup.value = false
+}
+
+function closeDeleteClubPopup(): void {
+  if (deletingClub.value) {
+    return
+  }
+  showDeleteClubPopup.value = false
 }
 
 function openTribeIdKeypad(): void {
@@ -820,12 +829,21 @@ async function submitCopyRequest(): Promise<void> {
   closeCopyPopup()
 }
 
-async function onDeleteClub(): Promise<void> {
+function onDeleteClub(): void {
   if (!isFounder.value) {
     showFailToast(t('UIClub_FounderCan2'))
     return
   }
 
+  showDeleteClubPopup.value = true
+}
+
+async function confirmDeleteClub(): Promise<void> {
+  if (deletingClub.value) {
+    return
+  }
+
+  deletingClub.value = true
   try {
     const response = await postOrgClubDisbandApi({})
 
@@ -834,12 +852,15 @@ async function onDeleteClub(): Promise<void> {
       throw new Error(typeof fallback === 'string' ? fallback : t('UIClub_DeleteFail'))
     }
     showSuccessToast(t('UIClub_DoneDeleteClub'))
+    showDeleteClubPopup.value = false
     setTimeout(() => {
       void router.replace('/club')
     }, 1000)
   } catch (error) {
     const message = error instanceof Error ? error.message : t('UIClub_DeleteFail')
     showFailToast(message)
+  } finally {
+    deletingClub.value = false
   }
 }
 
@@ -931,9 +952,7 @@ onMounted(async () => {
         </div>
 
         <div class="club-size-pill" aria-label="俱乐部人数">
-          <span class="size-text">
-            {{ clubMemberCount }}/{{ displayClub?.upper_limit }}
-          </span>
+          <span class="size-text"> {{ clubMemberCount }}/{{ displayClub?.upper_limit }} </span>
           <svg class="club-size-icon" viewBox="0 0 17 13" role="img" aria-label="俱乐部成员">
             <path
               d="M8.5 0c1.525 0 2.763 1.306 2.763 2.914S10.025 5.828 8.5 5.828 5.738 4.522 5.738 2.914 6.975 0 8.5 0ZM2.55 2.017c1.057 0 1.913.902 1.913 2.017S3.607 6.052 2.55 6.052.638 5.15.638 4.034s.855-2.017 1.912-2.017ZM0 11.207c0-1.981 1.522-3.586 3.4-3.586.34 0 .67.053.98.151-.874 1.031-1.405 2.392-1.405 3.883v.448c0 .32.064.622.178.897H.85a.87.87 0 0 1-.85-.897v-.896ZM13.847 13c.114-.275.178-.578.178-.897v-.448c0-1.49-.531-2.852-1.405-3.883.31-.098.64-.151.98-.151 1.878 0 3.4 1.605 3.4 3.586v.896a.87.87 0 0 1-.85.897h-2.303Zm-1.31-8.966c0-1.115.856-2.017 1.913-2.017s1.913.902 1.913 2.017-.856 2.018-1.913 2.018-1.913-.902-1.913-2.018ZM4.25 11.655c0-2.477 1.902-4.483 4.25-4.483s4.25 2.006 4.25 4.483v.448a.87.87 0 0 1-.85.897H5.1a.87.87 0 0 1-.85-.897v-.448Z"
@@ -1240,6 +1259,18 @@ onMounted(async () => {
         </div>
       </section>
     </div>
+    <GameDialog
+      v-model:show="showDeleteClubPopup"
+      title="退出登录"
+      :show-cancel-button="true"
+      :close-on-click-overlay="true"
+      confirm-button-text="确认删除"
+      cancel-button-text="取消"
+      @confirm="confirmDeleteClub"
+      @cancel="closeDeleteClubPopup"
+    >
+      <div class="logout-confirm-text">删除俱乐部后无法恢复，是否确认删除？</div>
+    </GameDialog>
 
     <NumericKeypad
       :open="tribeIdKeypadOpen"
@@ -1267,7 +1298,8 @@ onMounted(async () => {
   background-size: cover;
 
   @include theme-light {
-    background-color: #f3f4f6;
+    color: var(--c-text);
+    background-color: var(--c-page);
     background-image: var(--club-detail-bg-light);
   }
 }
@@ -1323,7 +1355,7 @@ onMounted(async () => {
   backdrop-filter: blur(0.2rem);
 
   @include theme-light {
-    background: #fff;
+    background: var(--c-surface);
     backdrop-filter: none;
   }
 }
@@ -1368,7 +1400,8 @@ onMounted(async () => {
   text-align: center;
 
   @include theme-light {
-    background: #69beff;
+    background: var(--c-brand);
+    box-shadow: none;
   }
 }
 
@@ -1397,7 +1430,7 @@ onMounted(async () => {
   font-weight: 700;
 
   @include theme-light {
-    color: #222;
+    color: var(--c-text);
   }
 }
 
@@ -1420,7 +1453,7 @@ onMounted(async () => {
   transform: rotate(-38deg);
 
   @include theme-light {
-    border-color: rgba(34, 34, 34, 0.82);
+    border-color: rgba(34, 34, 34, 0.86);
   }
 }
 
@@ -1453,7 +1486,7 @@ onMounted(async () => {
   color: rgba(249, 249, 249, 0.95);
 
   @include theme-light {
-    color: #222;
+    color: var(--c-text);
   }
 }
 
@@ -1468,7 +1501,7 @@ onMounted(async () => {
   font-weight: 600;
 
   @include theme-light {
-    color: #222;
+    color: var(--c-text);
   }
 }
 
@@ -1503,7 +1536,7 @@ onMounted(async () => {
   font-weight: 500;
 
   @include theme-light {
-    color: #222;
+    color: var(--c-text);
   }
 }
 
@@ -1535,7 +1568,7 @@ onMounted(async () => {
   color: #f9f9f9;
 
   @include theme-light {
-    color: #222;
+    color: var(--c-text);
   }
 }
 
@@ -1545,7 +1578,7 @@ onMounted(async () => {
   border-radius: 0.75252rem;
   border: 0.02667rem solid rgba(255, 255, 255, 0.6);
   overflow: hidden;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.26);
 
   @include theme-light {
     border-color: rgba(255, 255, 255, 0.78);
@@ -1580,7 +1613,7 @@ onMounted(async () => {
   font-size: 0.40524rem;
 
   @include theme-light {
-    color: #222;
+    color: var(--c-text);
     background: #dadada;
     backdrop-filter: none;
   }
@@ -1598,7 +1631,8 @@ onMounted(async () => {
   padding: 0;
 
   @include theme-light {
-    background: #69beff;
+    background: var(--c-brand);
+    box-shadow: none;
   }
 }
 
@@ -1632,7 +1666,7 @@ onMounted(async () => {
   backdrop-filter: blur(0.15rem);
 
   @include theme-light {
-    background: #fff;
+    background: var(--c-surface);
     backdrop-filter: none;
   }
 }
@@ -1651,7 +1685,7 @@ onMounted(async () => {
   font-size: 0.40524rem;
 
   @include theme-light {
-    color: #222;
+    color: var(--c-text);
   }
 }
 
@@ -1666,7 +1700,8 @@ onMounted(async () => {
   background: linear-gradient(153deg, #05e7ae 8%, #027a5c 72%);
 
   @include theme-light {
-    background: #69beff;
+    background: var(--c-brand);
+    box-shadow: none;
   }
 }
 
@@ -1674,8 +1709,8 @@ onMounted(async () => {
   background: rgba(255, 255, 255, 0.22);
 
   @include theme-light {
-    color: rgba(34, 34, 34, 0.58);
-    background: rgba(34, 34, 34, 0.08);
+    color: var(--c-text-muted);
+    background: rgba(164, 164, 164, 0.2);
   }
 }
 
@@ -1703,7 +1738,7 @@ onMounted(async () => {
   font-size: 0.40524rem;
 
   @include theme-light {
-    color: rgba(0, 0, 0, 0.5);
+    color: var(--c-text-muted);
   }
 }
 
@@ -1738,7 +1773,9 @@ onMounted(async () => {
   background: linear-gradient(152deg, #05e7ae 8%, #027a5c 72%);
 
   @include theme-light {
-    background: #69beff;
+    color: #f9f9f9;
+    background: var(--c-brand);
+    box-shadow: none;
   }
 }
 
@@ -1810,7 +1847,9 @@ onMounted(async () => {
   background: linear-gradient(90deg, rgba(73, 29, 86, 0.8), rgba(19, 95, 125, 0.84));
 
   @include theme-light {
-    background: #69beff;
+    color: #fff;
+    background: var(--c-brand);
+    box-shadow: none;
   }
 }
 
@@ -1823,6 +1862,10 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   z-index: 80;
+
+  @include theme-light {
+    background: var(--c-overlay);
+  }
 }
 
 .copy-modal {
@@ -1879,6 +1922,11 @@ onMounted(async () => {
   justify-content: center;
   gap: 0.28rem;
   padding: 0.5rem 0.42rem;
+
+  @include theme-light {
+    border-color: rgba(34, 34, 34, 0.1);
+    background: rgba(34, 34, 34, 0.06);
+  }
 }
 
 .join-modal-logo {
@@ -1896,6 +1944,10 @@ onMounted(async () => {
   line-height: 1.2;
   color: #fff;
   text-align: center;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .join-modal-id-row {
@@ -1907,6 +1959,10 @@ onMounted(async () => {
   font-size: 0.256rem;
   font-weight: 600;
   color: #fff;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .join-modal-id-tag {
@@ -1918,6 +1974,10 @@ onMounted(async () => {
   border-radius: 0.075rem;
   background: rgba(255, 255, 255, 0.25);
   font-size: 0.216rem;
+
+  @include theme-light {
+    background: rgba(34, 34, 34, 0.14);
+  }
 }
 
 .join-modal-actions {
@@ -1941,11 +2001,24 @@ onMounted(async () => {
 
 .join-modal-btn--cancel {
   background: rgba(0, 0, 0, 0.3);
+
+  @include theme-light {
+    color: var(--c-text);
+    background: rgba(34, 34, 34, 0.08);
+    box-shadow: none;
+  }
 }
 
 .join-modal-btn--confirm {
   background: linear-gradient(180deg, #05e7ae 0%, #027a5b 100%);
   border: 0.013rem solid rgba(255, 255, 255, 0.5);
+
+  @include theme-light {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.7);
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .join-modal-btn:disabled {
@@ -1960,6 +2033,11 @@ onMounted(async () => {
   flex-direction: column;
   gap: 0.24rem;
   padding: 0.42rem;
+
+  @include theme-light {
+    border-color: rgba(34, 34, 34, 0.1);
+    background: rgba(34, 34, 34, 0.06);
+  }
 }
 
 .tribe-apply-title {
@@ -1984,6 +2062,10 @@ onMounted(async () => {
     rgba(178, 76, 51, 0.96) 72%,
     rgba(141, 59, 84, 0.96) 100%
   );
+
+  @include theme-light {
+    background: rgba(34, 34, 34, 0.06);
+  }
 }
 
 .tribe-search-trigger {
@@ -1996,6 +2078,11 @@ onMounted(async () => {
 .tribe-search-icon {
   width: 0.56rem;
   height: 0.55rem;
+
+  @include theme-light {
+    opacity: 0.42;
+    filter: brightness(0);
+  }
 }
 
 .tribe-search-input {
@@ -2006,10 +2093,18 @@ onMounted(async () => {
   background: transparent;
   color: #fff;
   font-size: 0.38rem;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .tribe-search-input::placeholder {
   color: rgba(255, 255, 255, 0.88);
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .tribe-contact-shell {
@@ -2020,6 +2115,11 @@ onMounted(async () => {
   padding: 0 0.32rem;
   display: flex;
   align-items: center;
+
+  @include theme-light {
+    border-color: rgba(34, 34, 34, 0.1);
+    background: rgba(34, 34, 34, 0.06);
+  }
 }
 
 .tribe-contact-shell--modal {
@@ -2034,10 +2134,18 @@ onMounted(async () => {
   background: transparent;
   color: #fff;
   font-size: 0.34rem;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .tribe-contact-input::placeholder {
   color: rgba(255, 255, 255, 0.72);
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .invite-modal {
@@ -2160,6 +2268,10 @@ onMounted(async () => {
   padding: 0.10667rem;
   border: 0.10067rem solid var(--c-brand);
   overflow: hidden;
+
+  @include theme-light {
+    border-color: var(--c-brand);
+  }
 }
 
 .invite-modal__qr {
@@ -2284,6 +2396,12 @@ onMounted(async () => {
 .modal-secondary-btn {
   background: rgba(0, 0, 0, 0.34);
   box-shadow: inset 0 -0.2rem 0.24rem rgba(0, 0, 0, 0.24);
+
+  @include theme-light {
+    color: var(--c-text);
+    background: rgba(34, 34, 34, 0.08);
+    box-shadow: none;
+  }
 }
 
 @media (max-width: 340px) {

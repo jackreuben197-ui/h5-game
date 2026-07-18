@@ -9,26 +9,29 @@ type DayCell = {
   inCurrentMonth: boolean
 }
 
-const props = withDefaults(defineProps<{
-  visible: boolean
-  startDate: Date
-  endDate: Date
-  minDate?: Date
-  maxDate?: Date
-  tipText?: string
-  initialTarget?: PickTarget
-}>(), {
-  minDate: undefined,
-  maxDate: undefined,
-  tipText: '只支持查询最近三个月数据',
-  initialTarget: 'start',
-})
+const props = withDefaults(
+  defineProps<{
+    visible: boolean
+    startDate: Date
+    endDate: Date
+    minDate?: Date
+    maxDate?: Date
+    tipText?: string
+    initialTarget?: PickTarget
+  }>(),
+  {
+    minDate: undefined,
+    maxDate: undefined,
+    tipText: '只支持查询最近三个月数据',
+    initialTarget: 'start',
+  },
+)
 
 const emit = defineEmits<{
   (e: 'update:visible', value: boolean): void
   (e: 'update:startDate', value: Date): void
   (e: 'update:endDate', value: Date): void
-  (e: 'confirm', payload: { startDate: Date, endDate: Date }): void
+  (e: 'confirm', payload: { startDate: Date; endDate: Date }): void
   (e: 'close'): void
 }>()
 
@@ -37,9 +40,13 @@ const weekLabels = ['m', 't', 'w', 't', 'f', 's', 's']
 const startDateModel = ref(startOfDay(props.startDate))
 const endDateModel = ref(startOfDay(props.endDate))
 const pickingTarget = ref<PickTarget>(props.initialTarget)
-const currentMonth = ref(new Date(endDateModel.value.getFullYear(), endDateModel.value.getMonth(), 1))
+const currentMonth = ref(
+  new Date(endDateModel.value.getFullYear(), endDateModel.value.getMonth(), 1),
+)
 
-const monthTitle = computed(() => `${currentMonth.value.getFullYear()}年${currentMonth.value.getMonth() + 1}月`)
+const monthTitle = computed(
+  () => `${currentMonth.value.getFullYear()}年${currentMonth.value.getMonth() + 1}月`,
+)
 const startDateText = computed(() => formatDateSlash(startDateModel.value))
 const endDateText = computed(() => formatDateSlash(endDateModel.value))
 
@@ -89,7 +96,11 @@ watch(
     startDateModel.value = startOfDay(props.startDate)
     endDateModel.value = startOfDay(props.endDate)
     pickingTarget.value = props.initialTarget
-    currentMonth.value = new Date(endDateModel.value.getFullYear(), endDateModel.value.getMonth(), 1)
+    currentMonth.value = new Date(
+      endDateModel.value.getFullYear(),
+      endDateModel.value.getMonth(),
+      1,
+    )
   },
 )
 
@@ -135,19 +146,35 @@ function confirmPicker(): void {
 }
 
 function goPrevYear(): void {
-  currentMonth.value = new Date(currentMonth.value.getFullYear() - 1, currentMonth.value.getMonth(), 1)
+  currentMonth.value = new Date(
+    currentMonth.value.getFullYear() - 1,
+    currentMonth.value.getMonth(),
+    1,
+  )
 }
 
 function goPrevMonth(): void {
-  currentMonth.value = new Date(currentMonth.value.getFullYear(), currentMonth.value.getMonth() - 1, 1)
+  currentMonth.value = new Date(
+    currentMonth.value.getFullYear(),
+    currentMonth.value.getMonth() - 1,
+    1,
+  )
 }
 
 function goNextMonth(): void {
-  currentMonth.value = new Date(currentMonth.value.getFullYear(), currentMonth.value.getMonth() + 1, 1)
+  currentMonth.value = new Date(
+    currentMonth.value.getFullYear(),
+    currentMonth.value.getMonth() + 1,
+    1,
+  )
 }
 
 function goNextYear(): void {
-  currentMonth.value = new Date(currentMonth.value.getFullYear() + 1, currentMonth.value.getMonth(), 1)
+  currentMonth.value = new Date(
+    currentMonth.value.getFullYear() + 1,
+    currentMonth.value.getMonth(),
+    1,
+  )
 }
 
 function selectDay(date: Date): void {
@@ -174,13 +201,20 @@ function selectDay(date: Date): void {
     pickingTarget.value = 'start'
   }
 
-  if (selectedDate.getMonth() !== currentMonth.value.getMonth() || selectedDate.getFullYear() !== currentMonth.value.getFullYear()) {
+  if (
+    selectedDate.getMonth() !== currentMonth.value.getMonth() ||
+    selectedDate.getFullYear() !== currentMonth.value.getFullYear()
+  ) {
     currentMonth.value = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
   }
 }
 
 function isSameDay(a: Date, b: Date): boolean {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  )
 }
 
 function isRangeStart(date: Date): boolean {
@@ -248,41 +282,17 @@ function startOfDay(date: Date): Date {
 
       <div class="picker-month-row">
         <div class="month-arrows">
-          <button
-            type="button"
-            class="arrow-btn"
-            aria-label="上一年"
-            @click="goPrevYear"
-          >
-            «
-          </button>
-          <button
-            type="button"
-            class="arrow-btn"
-            aria-label="上一月"
-            @click="goPrevMonth"
-          >
+          <button type="button" class="arrow-btn" aria-label="上一年" @click="goPrevYear">«</button>
+          <button type="button" class="arrow-btn" aria-label="上一月" @click="goPrevMonth">
             ‹
           </button>
         </div>
         <p class="month-title">{{ monthTitle }}</p>
         <div class="month-arrows">
-          <button
-            type="button"
-            class="arrow-btn"
-            aria-label="下一月"
-            @click="goNextMonth"
-          >
+          <button type="button" class="arrow-btn" aria-label="下一月" @click="goNextMonth">
             ›
           </button>
-          <button
-            type="button"
-            class="arrow-btn"
-            aria-label="下一年"
-            @click="goNextYear"
-          >
-            »
-          </button>
+          <button type="button" class="arrow-btn" aria-label="下一年" @click="goNextYear">»</button>
         </div>
       </div>
 
@@ -317,6 +327,8 @@ function startOfDay(date: Date): Date {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .date-picker-mask {
   position: fixed;
   inset: 0;
@@ -332,12 +344,24 @@ function startOfDay(date: Date): Date {
   border-radius: 0.84459rem 0.84459rem 0 0;
   background: rgba(0, 0, 0, 0.86);
   backdrop-filter: blur(0.16064rem);
+
+  @include theme-light {
+    border: 0.013rem solid rgba(255, 255, 255, 0.7);
+    border-bottom: 0;
+    background: rgba(73, 73, 73, 0.82);
+    box-shadow: inset 0 0.08rem 0.3rem rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(0.42rem);
+  }
 }
 
 .picker-tip {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  @include theme-light {
+    display: none;
+  }
 
   p {
     margin: 0;
@@ -378,6 +402,10 @@ function startOfDay(date: Date): Date {
   gap: 0.1912rem;
   font-size: 0.35893rem;
   line-height: 1.2;
+
+  @include theme-light {
+    background: rgba(30, 30, 30, 0.58);
+  }
 
   &.active {
     box-shadow: 0 0 0 0.02rem rgba(var(--c-brand-rgb), 0.45) inset;
@@ -535,5 +563,10 @@ function startOfDay(date: Date): Date {
   color: #fff;
   font-size: 0.4rem;
   font-weight: 500;
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+  }
 }
 </style>

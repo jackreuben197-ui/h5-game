@@ -20,6 +20,7 @@ import type {
   OrgMemberListRecord,
 } from '@/api/models/org'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import DateRangePicker from '@/components/DateRangePicker/DateRangePicker.vue'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgChips from '@/assets/icons/icon_chips.png'
@@ -110,6 +111,12 @@ const searchKeyword = ref('')
 const activeRange = ref<RecordRangeKey>('today')
 const selectedRecordType = ref('all')
 const showTypeMenu = ref(false)
+const recordOrderType = ref<1 | 2>(2)
+const isDatePickerVisible = ref(false)
+const customEndDate = ref(startOfDay(new Date()))
+const customStartDate = ref(startOfDay(addDays(customEndDate.value, -6)))
+const minSelectableDate = startOfDay(addMonths(new Date(), -3))
+const maxSelectableDate = endOfDay(new Date())
 const recordListRef = ref<HTMLElement | null>(null)
 const showFundSheet = ref(false)
 const activeMember = ref<MemberItem | null>(null)
@@ -185,7 +192,11 @@ function fundMembersCacheKey(): string {
 }
 
 function fundRecordsCacheKey(): string {
-  return `${fundClubId()}_fund_records_${activeRange.value}_${selectedRecordType.value}`
+  const customRangeKey =
+    activeRange.value === 'custom'
+      ? `_${customStartDate.value.getTime()}_${customEndDate.value.getTime()}`
+      : ''
+  return `${fundClubId()}_fund_records_${activeRange.value}_${selectedRecordType.value}_${recordOrderType.value}${customRangeKey}`
 }
 
 const keypadRows = [
@@ -323,7 +334,6 @@ const recordStats = computed<RecordStatItem[]>(() => [
   { id: 1, label: t('UIClub_FundDetail_5iSXE2Uj'), value: formatUC(grantAmountTotal.value) },
   { id: 2, label: t('UIClub_FundDetail_recycle'), value: formatUC(recoverAmountTotal.value) },
   { id: 3, label: t('UIClub_Text28'), value: formatUC(profitAmountTotal.value) },
-  { id: 4, label: t('UIClub_Text29'), value: formatUC(changeAmountTotal.value) },
 ])
 
 const recordTypeOptions: RecordTypeOption[] = [
@@ -492,7 +502,37 @@ function resolveRecordRange(): { start_time?: number; end_time?: number } {
     return { start_time: start, end_time: endTime }
   }
 
+  if (activeRange.value === 'custom') {
+    return {
+      start_time: Math.floor(startOfDay(customStartDate.value).getTime() / 1000),
+      end_time: Math.min(
+        Math.floor(endOfDay(customEndDate.value).getTime() / 1000),
+        Math.floor(Date.now() / 1000),
+      ),
+    }
+  }
+
   return {}
+}
+
+function startOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+function endOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)
+}
+
+function addDays(date: Date, days: number): Date {
+  const value = new Date(date)
+  value.setDate(value.getDate() + days)
+  return value
+}
+
+function addMonths(date: Date, months: number): Date {
+  const value = new Date(date)
+  value.setMonth(value.getMonth() + months)
+  return value
 }
 
 function getSelectedRecordOpCodes(): string[] | undefined {
@@ -723,7 +763,7 @@ async function fetchRecordRows(reset = false, silent = false): Promise<void> {
       gold_type: 1,
       op_codes: getSelectedRecordOpCodes(),
       sort_type: 1,
-      order_type: 2,
+      order_type: recordOrderType.value,
       ...rangePayload,
     })
 
@@ -1376,7 +1416,25 @@ function onSearchSubmit(): void {
 }
 
 function switchRange(range: RecordRangeKey): void {
+  if (range === 'custom') {
+    isDatePickerVisible.value = true
+    return
+  }
+
   activeRange.value = range
+  void loadRecordsWithCache()
+}
+
+function onCustomDateConfirm(): void {
+  activeRange.value = 'custom'
+  recordListRef.value?.scrollTo({ top: 0 })
+  void loadRecordsWithCache()
+}
+
+function toggleRecordOrder(): void {
+  recordOrderType.value = recordOrderType.value === 2 ? 1 : 2
+  showTypeMenu.value = false
+  recordListRef.value?.scrollTo({ top: 0 })
   void loadRecordsWithCache()
 }
 
@@ -1602,9 +1660,18 @@ onMounted(() => {
         </section>
         <div class="record-table-wrap">
           <div class="record-table-head">
-            <button type="button" class="head-cell head-cell--time">
+            <button
+              type="button"
+              class="head-cell head-cell--time"
+              :aria-label="recordOrderType === 2 ? '时间倒序' : '时间正序'"
+              @click="toggleRecordOrder"
+            >
               <span>时间</span>
-              <span class="tiny-arrow" aria-hidden="true"></span>
+              <span
+                class="tiny-arrow"
+                :class="{ 'tiny-arrow--up': recordOrderType === 1 }"
+                aria-hidden="true"
+              ></span>
             </button>
             <button type="button" class="head-cell head-cell--type" @click="toggleTypeMenu">
               <span>类型</span>
@@ -1633,26 +1700,26 @@ onMounted(() => {
               v-for="row in recordRows"
               :key="row.id"
               class="record-row"
-              :class="{ 'record-row--pftroom': row.opCode === 'PFTROOM' }"
+              :class="{
+                'record-row--pftroom': row.opCode === 'PFTROOM',
+                'record-row--from': row.showFromTag && row.fromName && row.fromId,
+              }"
             >
               <div v-if="row.showFromTag && row.fromName && row.fromId" class="from-chip">
-                <span class="from-label">From</span>
-                <span>{{ row.fromName }}</span>
-                <span class="from-id-pill">ID</span>
-                <span>{{ row.fromId }}</span>
+                From: {{ row.fromName }}（ID: {{ row.fromId }}）
               </div>
 
               <div class="record-main-grid">
                 <p class="time-cell">
-                  <span>{{ row.date }}</span>
-                  <span class="sub-line">{{ row.time }}</span>
+                  <span>{{ row.time }}</span>
+                  <span class="sub-line">{{ row.date }}</span>
                 </p>
                 <p class="type-cell">{{ row.type }}</p>
                 <p class="quantity-cell">{{ row.quantity }}</p>
                 <p class="balance-cell">{{ row.balance }}</p>
                 <p class="remark-cell">
                   <span class="remark-main" :title="row.remark">{{ row.remark }}</span>
-                  <span class="sub-line">{{ row.remarkId }}</span>
+                  <span class="sub-line">ID:{{ row.remarkId }}</span>
                 </p>
               </div>
             </article>
@@ -1897,6 +1964,16 @@ onMounted(() => {
         </div>
       </section>
     </div>
+
+    <DateRangePicker
+      v-model:visible="isDatePickerVisible"
+      v-model:start-date="customStartDate"
+      v-model:end-date="customEndDate"
+      :min-date="minSelectableDate"
+      :max-date="maxSelectableDate"
+      :show-tip="false"
+      @confirm="onCustomDateConfirm"
+    />
   </div>
 </template>
 
@@ -2142,12 +2219,14 @@ onMounted(() => {
   flex-direction: column;
   gap: 0.22727rem;
   min-height: 0;
+  margin-inline: 0.32rem;
 }
 
 .record-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 0.78371rem;
   font-size: 0.25862rem;
   line-height: 1;
   color: rgba(249, 249, 249, 0.68);
@@ -2161,7 +2240,7 @@ onMounted(() => {
   background: rgba(164, 143, 161, 0.3);
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.26667rem;
+  gap: 0;
 }
 
 .range-tab {
@@ -2180,33 +2259,57 @@ onMounted(() => {
 
 .record-stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.09028rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
   padding: 0;
 }
 
 .record-stat-item {
+  position: relative;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 0.07356rem;
+  text-align: center;
+}
+
+.record-stat-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 1px;
+  height: 0.718rem;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-50%);
 }
 
 .record-stat-label {
+  width: 100%;
   margin: 0;
   font-size: 0.28213rem;
   color: rgba(249, 249, 249, 0.82);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .record-stat-value {
+  width: 100%;
   margin: 0;
-  font-size: 0.54054rem;
+  font-size: 0.46rem;
   line-height: 1;
   color: #f9f9f9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .record-table-wrap {
-  --record-columns: 1.2fr 1fr 1fr 1fr 1.2fr;
-  --record-col-gap: 0.08rem;
+  --record-columns: 1fr 1.15fr 1.15fr 0.9fr 1.25fr;
+  --record-col-gap: 0.04rem;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -2214,6 +2317,7 @@ onMounted(() => {
   gap: 0.15674rem;
   min-height: 0;
   overflow: hidden;
+  margin-inline: 0.32rem;
 }
 
 .record-table-head {
@@ -2240,6 +2344,8 @@ onMounted(() => {
   line-height: inherit;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  text-align: center;
   gap: 0.06757rem;
 }
 
@@ -2251,17 +2357,22 @@ onMounted(() => {
   transform: rotate(-45deg);
 }
 
+.tiny-arrow--up {
+  transform: rotate(135deg);
+}
+
 .type-dropdown {
   position: absolute;
   top: 0.9rem;
-  left: 0.08rem;
+  left: 1.35rem;
   width: 3.9899rem;
   max-height: 10.2633rem;
   overflow: auto;
   border-radius: 0.42929rem;
   padding: 0.36195rem 0.43771rem;
-  background: rgba(0, 0, 0, 0.42);
-  backdrop-filter: blur(0.18rem);
+  background: rgba(0, 0, 0, 0.37);
+  backdrop-filter: blur(0.16rem);
+  -webkit-backdrop-filter: blur(0.16rem);
   z-index: 5;
 }
 
@@ -2292,8 +2403,12 @@ onMounted(() => {
   gap: 0.07837rem;
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   padding-right: 0;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 .record-list-status {
@@ -2305,12 +2420,22 @@ onMounted(() => {
 }
 
 .record-row {
+  position: relative;
+  overflow: hidden;
   border-radius: 0.37751rem;
   background: rgba(0, 0, 0, 0.22);
-  padding: 0.08rem 0;
+  padding: 0.16rem 0;
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   gap: 0.06rem;
+  min-height: 0.72rem;
+  box-sizing: border-box;
+}
+
+.record-row--from {
+  padding-top: 0.59rem;
+  min-height: 1.43rem;
 }
 
 .record-row--pftroom {
@@ -2318,28 +2443,23 @@ onMounted(() => {
 }
 
 .from-chip {
-  align-self: flex-start;
-  margin: 0 0.16rem;
-  border-radius: 0.34rem;
-  background: rgba(255, 255, 255, 0.17);
-  border: 0.02rem solid rgba(255, 255, 255, 0.32);
-  padding: 0.06rem 0.14rem;
-  display: inline-flex;
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: 84%;
+  border-radius: 0.37751rem 0 0.145rem 0;
+  background: var(--c-brand);
+  height: 0.44144rem;
+  padding: 0 0.29rem;
+  color: #0b1c20;
+  font-size: 0.264rem;
+  line-height: 1.4;
+  display: flex;
   align-items: center;
-  gap: 0.08rem;
-  color: rgba(249, 249, 249, 0.86);
-  font-size: 0.224rem;
-}
-
-.from-label {
-  opacity: 0.7;
-}
-
-.from-id-pill {
-  border-radius: 0.18153rem;
-  background: rgba(255, 255, 255, 0.3);
-  padding: 0 0.08rem;
-  color: #fff;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .record-main-grid {
@@ -2374,7 +2494,6 @@ onMounted(() => {
 
 .time-cell > span,
 .type-cell,
-.balance-cell,
 .sub-line {
   display: block;
   overflow: hidden;
@@ -2382,8 +2501,31 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+.balance-cell {
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
 .remark-main {
   display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remark-cell {
+  width: 100%;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+.remark-cell > span {
+  display: block;
+  width: 100%;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2395,15 +2537,11 @@ onMounted(() => {
 }
 
 .quantity-cell {
-  border-radius: 0.37751rem;
-  background: rgba(255, 255, 255, 0.15);
-  min-height: 0.51rem;
   width: 100%;
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 0.16rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2985,6 +3123,10 @@ onMounted(() => {
       color: #222;
     }
 
+    .record-stat-item:not(:last-child)::after {
+      background: rgba(34, 34, 34, 0.16);
+    }
+
     .range-tabs {
       background: rgba(139, 136, 136, 0.15);
     }
@@ -2994,8 +3136,8 @@ onMounted(() => {
     }
 
     .range-tab--active {
-      background: #69beff;
-      color: #fff;
+      background: #cfcfcf;
+      color: #222;
     }
 
     .record-table-head {
@@ -3003,23 +3145,24 @@ onMounted(() => {
     }
 
     .type-dropdown {
-      background: rgba(255, 255, 255, 0.96);
-      box-shadow: 0 0.08rem 0.28rem rgba(0, 0, 0, 0.12);
-      backdrop-filter: blur(0.18rem);
+      background: rgba(0, 0, 0, 0.37);
+      box-shadow: none;
+      backdrop-filter: blur(0.16rem);
+      -webkit-backdrop-filter: blur(0.16rem);
     }
 
     .type-option {
-      color: rgba(34, 34, 34, 0.78);
-      border-bottom-color: rgba(34, 34, 34, 0.12);
+      color: rgba(255, 255, 255, 0.92);
+      border-bottom-color: rgba(255, 255, 255, 0.2);
     }
 
     .type-option--active {
-      color: #429de1;
+      color: #fff;
     }
 
     .record-row,
     .record-row--pftroom {
-      background: rgba(34, 34, 34, 0.07);
+      background: #fff;
     }
 
     .record-main-grid {
@@ -3030,19 +3173,9 @@ onMounted(() => {
       color: rgba(34, 34, 34, 0.5);
     }
 
-    .quantity-cell {
-      background: rgba(34, 34, 34, 0.09);
-    }
-
     .from-chip {
-      background: rgba(34, 34, 34, 0.08);
-      border-color: rgba(34, 34, 34, 0.14);
-      color: rgba(34, 34, 34, 0.76);
-    }
-
-    .from-id-pill {
-      background: rgba(34, 34, 34, 0.16);
-      color: #222;
+      background: var(--c-brand);
+      color: #0b1c20;
     }
 
     // Figma 9394:27766 / 9394:28387：浅色页面上的基金操作浮窗仍保持

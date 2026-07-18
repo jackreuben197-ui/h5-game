@@ -8,6 +8,7 @@ import { getMemberRouteContext } from './clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import { useUserInfoStore } from '@/stores/userInfo'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'
 
 interface AgentRow {
@@ -18,7 +19,8 @@ interface AgentRow {
 }
 
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--bind-bg-dark': `url(${mainBgUrl})`,
+  '--bind-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const router = useRouter()
@@ -181,6 +183,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @use 'sass:math';
+@use '@/styles/mixins' as *;
 
 @function figma-rem($px) {
   @return math.div($px, 37.5) * 1rem;
@@ -189,6 +192,12 @@ onMounted(() => {
 .sub-bg {
   height: 100dvh;
   background-size: cover;
+  background-image: var(--bind-bg-dark);
+
+  @include theme-light {
+    color: #111;
+    background-image: var(--bind-bg-light);
+  }
 }
 
 .sub-page {
@@ -208,6 +217,10 @@ onMounted(() => {
   border-radius: figma-rem(170.596);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(figma-rem(6));
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .card {
@@ -233,11 +246,19 @@ onMounted(() => {
   color: #f3f3f3;
   font-size: figma-rem(17.742);
   font-weight: 600;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .meta small {
   color: rgba(255, 255, 255, 0.75);
   font-size: figma-rem(9.623);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.68);
+  }
 }
 
 .dot {
@@ -246,10 +267,21 @@ onMounted(() => {
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.66);
   background: rgba(255, 255, 255, 0.1);
+
+  @include theme-light {
+    border-color: #c7c7c7;
+    background: #c7c7c7;
+  }
 }
 
 .dot.on {
   background: #2ce3d3;
+
+  @include theme-light {
+    border-color: var(--c-brand);
+    background: #fff;
+    box-shadow: inset 0 0 0 figma-rem(4) var(--c-brand);
+  }
 }
 
 .status {
@@ -257,6 +289,10 @@ onMounted(() => {
   text-align: center;
   color: rgba(255, 255, 255, 0.82);
   font-size: figma-rem(11.5);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.58);
+  }
 }
 
 .confirm {
@@ -267,6 +303,11 @@ onMounted(() => {
   color: #fff;
   font-size: figma-rem(18.985);
   background: linear-gradient(168deg, #05e7ae 8%, #027a5c 72%);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+  }
 }
 
 .confirm:disabled {

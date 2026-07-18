@@ -88,7 +88,9 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
     setClubList(list: ClubInfo[]): void {
       const normalized = (Array.isArray(list) ? list : []).filter(
         (club): club is ClubInfo =>
-          Boolean(club) && typeof club === 'object' && normalizeClubId((club as ClubInfo).club_id) !== '',
+          Boolean(club) &&
+          typeof club === 'object' &&
+          normalizeClubId((club as ClubInfo).club_id) !== '',
       )
 
       this.clubList = normalized
@@ -136,9 +138,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       }
 
       const inviteCode = resolveInviteCode()
-      const payload = inviteCode
-        ? { invite_code: inviteCode }
-        : {}
+      const payload = inviteCode ? { invite_code: inviteCode } : {}
 
       channelDefaultClubInFlight = (async () => {
         try {
@@ -212,6 +212,20 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
         user_gold: normalized,
         diamonds: normalized,
       })
+    },
+    syncUserDiamond(diamond: number): boolean {
+      if (!this.userInfo?.user || !Number.isFinite(diamond)) {
+        return false
+      }
+
+      this.userInfo = {
+        ...this.userInfo,
+        user: {
+          ...this.userInfo.user,
+          diamonds: Math.max(0, Number(diamond)),
+        },
+      }
+      return true
     },
     clearInfo(): void {
       this.userInfo = null

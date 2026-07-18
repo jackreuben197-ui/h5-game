@@ -22,10 +22,12 @@ import { saveQrCodeImage } from '@/utils/qrcode'
 import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--downline-bg-dark': `url(${mainBgUrl})`,
+  '--downline-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 type FundAssetTab = 'coin' | 'quota' | 'diamond'
@@ -725,11 +727,19 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .downline-page {
   position: relative;
   height: 100dvh;
   background-size: cover;
   color: #fff;
+  background-image: var(--downline-bg-dark);
+
+  @include theme-light {
+    color: #111;
+    background-image: var(--downline-bg-light);
+  }
 }
 
 .page-backdrop {
@@ -777,6 +787,11 @@ onMounted(async () => {
   color: #fff;
   font-size: 0.32rem;
   background: linear-gradient(159deg, #05e7ae 8%, #027a5c 72%);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+  }
 }
 
 .invite-link {
@@ -787,6 +802,10 @@ onMounted(async () => {
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.58);
+  }
 }
 
 .search-box {
@@ -798,6 +817,10 @@ onMounted(async () => {
   border-radius: 9999px;
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.16rem);
+
+  @include theme-light {
+    background: #dadada;
+  }
 }
 
 .search-icon {
@@ -817,10 +840,18 @@ onMounted(async () => {
   color: #fff;
   font-size: 0.4134rem;
   line-height: 1.4;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .search-input::placeholder {
   color: rgba(255, 255, 255, 0.88);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.72);
+  }
 }
 
 .total-row {
@@ -835,6 +866,10 @@ onMounted(async () => {
   font-size: 0.3799rem;
   line-height: 1.2;
   font-weight: 700;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .total-value {
@@ -842,6 +877,10 @@ onMounted(async () => {
   font-size: 0.4267rem;
   line-height: 1.2;
   font-weight: 500;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .members-wrap {
@@ -860,6 +899,11 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 0.18rem;
+
+  @include theme-light {
+    background: #fff;
+    box-shadow: 0 0.04rem rgba(0, 0, 0, 0.04);
+  }
 }
 
 .member-head {
@@ -916,12 +960,20 @@ onMounted(async () => {
   color: #fff;
   font-size: 0.216rem;
   line-height: 1;
+
+  @include theme-light {
+    background: rgba(79, 79, 79, 0.4);
+  }
 }
 
 .member-id {
   font-size: 0.2566rem;
   color: rgba(255, 255, 255, 0.94);
   line-height: 1;
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.88);
+  }
 }
 
 .member-assets {
@@ -940,6 +992,10 @@ onMounted(async () => {
   gap: 0.18rem;
   min-height: 0.9rem;
   cursor: pointer;
+
+  @include theme-light {
+    background: rgba(208, 208, 208, 0.66);
+  }
 }
 
 .asset-item {
@@ -951,6 +1007,10 @@ onMounted(async () => {
   min-width: 0;
   color: #f3f6ff;
   font-size: 0.24rem;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .asset-item img {
@@ -977,6 +1037,10 @@ onMounted(async () => {
   font-size: 0.248rem;
   line-height: 1;
   font-weight: 600;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .empty-box {
@@ -986,6 +1050,11 @@ onMounted(async () => {
   text-align: center;
   font-size: 0.3467rem;
   color: rgba(255, 255, 255, 0.72);
+
+  @include theme-light {
+    color: rgba(17, 17, 17, 0.6);
+    background: #fff;
+  }
 }
 
 .fund-sheet-mask {
@@ -1166,6 +1235,11 @@ onMounted(async () => {
 .quota-mode--active::before {
   border-color: rgba(95, 247, 209, 0.92);
   box-shadow: inset 0 0 0 0.1rem rgba(95, 247, 209, 0.85);
+
+  @include theme-light {
+    border-color: var(--c-brand);
+    box-shadow: inset 0 0 0 0.1rem var(--c-brand);
+  }
 }
 
 .quota-input-pill {
@@ -1207,6 +1281,10 @@ onMounted(async () => {
 .keypad-btn--accent {
   background: rgba(4, 209, 157, 0.26);
   border-color: transparent;
+
+  @include theme-light {
+    background: rgba(var(--c-brand-rgb), 0.48);
+  }
 }
 
 .keypad-btn--del {
@@ -1231,6 +1309,11 @@ onMounted(async () => {
 .sheet-footer-btn--confirm {
   border: 0.013rem solid rgba(242, 242, 242, 0.8);
   background: linear-gradient(156deg, #05e7ae 8%, #027a5c 72%);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+  }
 }
 
 @media (max-width: 360px) {

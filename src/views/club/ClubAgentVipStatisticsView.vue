@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { showFailToast } from 'vant'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
@@ -45,6 +45,11 @@ const filterTypeOptions = computed(() => [
   { value: 1, label: 'UC' },
   { value: 3, label: t('UIGuild_CoinType1') },
 ])
+const filterSelectRef = ref<HTMLElement | null>(null)
+const filterSelectOpen = ref(false)
+const selectedFilterLabel = computed(
+  () => filterTypeOptions.value.find((item) => item.value === filterType.value)?.label || 'UC',
+)
 
 // Player balance and profile from API (same as ClubMemberDetailView)
 const memberProfile = ref<OrgClubUserInfoData | null>(null)
@@ -241,11 +246,21 @@ const displayBalance = computed(() => {
   return formatAmount(offlineGoldTotal.value)
 })
 
-function onFilterTypeChange(event: Event): void {
-  const value = Number((event.target as HTMLSelectElement).value)
-  if (Number.isFinite(value)) {
-    filterType.value = value
-    void fetchStatsData()
+function toggleFilterSelect(): void {
+  filterSelectOpen.value = !filterSelectOpen.value
+}
+
+function selectFilterType(value: number): void {
+  filterSelectOpen.value = false
+  if (value === filterType.value) return
+  filterType.value = value
+  void fetchStatsData()
+}
+
+function closeFilterSelectOnOutside(event: PointerEvent): void {
+  const target = event.target
+  if (target instanceof Node && !filterSelectRef.value?.contains(target)) {
+    filterSelectOpen.value = false
   }
 }
 
@@ -261,7 +276,12 @@ function onAvatarError(event: Event): void {
 }
 
 onMounted(() => {
+  document.addEventListener('pointerdown', closeFilterSelectOnOutside)
   void Promise.all([fetchPlayerProfile(), fetchVipUserData(), fetchStatsData()])
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', closeFilterSelectOnOutside)
 })
 </script>
 
@@ -270,12 +290,7 @@ onMounted(() => {
     <HeaderBack :title="t('UIClub_AgentData')" />
 
     <section class="glass profile-card">
-      <img
-        class="avatar"
-        :src="displayAvatar"
-        :alt="`${displayName}头像`"
-        @error="onAvatarError"
-      />
+      <img class="avatar" :src="displayAvatar" :alt="`${displayName}头像`" @error="onAvatarError" />
       <div class="name-wrap">
         <p class="name">{{ displayName }}</p>
         <span class="uid">ID {{ displayUid }}</span>
@@ -313,12 +328,17 @@ onMounted(() => {
           {{ tab.label }}
         </button>
       </div>
-      <div class="filter-select-wrap">
-        <select :value="filterType" aria-label="Currency type" @change="onFilterTypeChange">
-          <option v-for="opt in filterTypeOptions" :key="opt.value" :value="opt.value">
-            {{ opt.label }}
-          </option>
-        </select>
+      <div ref="filterSelectRef" class="filter-select-wrap">
+        <button
+          type="button"
+          class="filter-select-trigger"
+          aria-label="Currency type"
+          aria-haspopup="listbox"
+          :aria-expanded="filterSelectOpen"
+          @click="toggleFilterSelect"
+        >
+          <span>{{ selectedFilterLabel }}</span>
+        </button>
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <path
             d="m4 6 4 4 4-4"
@@ -328,6 +348,19 @@ onMounted(() => {
             stroke-linejoin="round"
           />
         </svg>
+        <div v-if="filterSelectOpen" class="filter-select-options" role="listbox">
+          <button
+            v-for="opt in filterTypeOptions"
+            :key="opt.value"
+            type="button"
+            role="option"
+            :aria-selected="filterType === opt.value"
+            :class="{ active: filterType === opt.value }"
+            @click="selectFilterType(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
       </div>
     </section>
 
@@ -560,21 +593,49 @@ onMounted(() => {
   }
 }
 
-.filter-select-wrap select {
+.filter-select-trigger {
   border: 0;
   background: transparent;
-  color: #fff;
+  color: inherit;
+  text-align: center;
   font-size: figma-rem(13.297);
   padding: 0 figma-rem(18) 0 0;
   width: figma-rem(64);
+  min-height: figma-rem(36);
   outline: none;
-  appearance: none;
-  -webkit-appearance: none;
+  cursor: pointer;
 }
 
-.filter-select-wrap select option {
-  background: #1a1a2e;
+.filter-select-options {
+  position: absolute;
+  top: calc(100% + #{figma-rem(4)});
+  right: 0;
+  z-index: 30;
+  width: figma-rem(84);
+  padding: figma-rem(5);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: figma-rem(12);
+  background: rgba(26, 26, 46, 0.94);
+  box-shadow: 0 figma-rem(8) figma-rem(20) rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(figma-rem(12));
+  -webkit-backdrop-filter: blur(figma-rem(12));
+}
+
+.filter-select-options button {
+  width: 100%;
+  min-height: figma-rem(34);
+  padding: 0 figma-rem(8);
+  border: 0;
+  border-radius: figma-rem(8);
+  background: transparent;
   color: #fff;
+  font-size: figma-rem(13.297);
+  text-align: center;
+}
+
+.filter-select-options button.active {
+  background: rgba(105, 190, 255, 0.2);
+  color: var(--c-brand);
 }
 
 .cards {
@@ -654,7 +715,7 @@ onMounted(() => {
     .offline-head,
     .tabs-row button,
     .filter-select-wrap,
-    .filter-select-wrap select,
+    .filter-select-trigger,
     .left,
     .metric {
       color: #000;
@@ -677,9 +738,21 @@ onMounted(() => {
       background: #fff;
     }
 
-    .filter-select-wrap select option {
+    .filter-select-options {
       background: #fff;
       color: #000;
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: 0 figma-rem(8) figma-rem(20) rgba(0, 0, 0, 0.12);
+      backdrop-filter: blur(figma-rem(12));
+      -webkit-backdrop-filter: blur(figma-rem(12));
+    }
+
+    .filter-select-options button {
+      color: #000;
+    }
+
+    .filter-select-options button.active {
+      color: var(--c-brand);
     }
 
     .stats-loading {

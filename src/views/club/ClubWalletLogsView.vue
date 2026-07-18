@@ -178,7 +178,9 @@ async function fetchStats(): Promise<void> {
     stats.value = response.data
   } catch (error) {
     stats.value = {}
-    showFailToast(error instanceof Error ? error.message : translated('UIClub_LoadFail', '加载失败'))
+    showFailToast(
+      error instanceof Error ? error.message : translated('UIClub_LoadFail', '加载失败'),
+    )
   } finally {
     loading.value = false
   }
@@ -196,7 +198,12 @@ onMounted(() => {
     <main class="wallet-logs-content">
       <section class="fund-card">
         <div class="date-range">
-          <button type="button" class="date-btn" :disabled="loading" @click="openDatePicker('start')">
+          <button
+            type="button"
+            class="date-btn"
+            :disabled="loading"
+            @click="openDatePicker('start')"
+          >
             <span class="calendar-icon" aria-hidden="true"></span>
             <span>{{ startDateText }}</span>
           </button>

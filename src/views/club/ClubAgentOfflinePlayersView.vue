@@ -422,12 +422,21 @@ onMounted(() => {
 .tabs .active {
   color: #fff;
   border-bottom: 1px solid rgba(255, 255, 255, 0.85);
+
+  @include theme-light {
+    color: var(--c-brand);
+    border-bottom-color: var(--c-brand);
+  }
 }
 
 .glass {
   border-radius: 1.1rem;
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(figma-rem(6));
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .search {
@@ -441,6 +450,10 @@ onMounted(() => {
 .search-icon {
   width: figma-rem(21.961);
   height: figma-rem(21.53);
+
+  @include theme-light {
+    filter: brightness(0);
+  }
 }
 
 .search-input {

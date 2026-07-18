@@ -679,8 +679,8 @@ onMounted(() => {
   border-bottom: 0.02rem solid rgba(255, 255, 255, 0.9);
 
   @include theme-light {
-    color: #69beff;
-    border-bottom-color: #69beff;
+    color: var(--c-brand);
+    border-bottom-color: var(--c-brand);
   }
 }
 

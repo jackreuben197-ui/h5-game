@@ -16,11 +16,13 @@ const props = withDefaults(defineProps<{
   minDate?: Date
   maxDate?: Date
   tipText?: string
+  showTip?: boolean
   initialTarget?: PickTarget
 }>(), {
   minDate: undefined,
   maxDate: undefined,
   tipText: '只支持查询最近三个月数据',
+  showTip: true,
   initialTarget: 'start',
 })
 
@@ -39,7 +41,11 @@ const endDateModel = ref(startOfDay(props.endDate))
 const pickingTarget = ref<PickTarget>(props.initialTarget)
 const currentMonth = ref(new Date(endDateModel.value.getFullYear(), endDateModel.value.getMonth(), 1))
 
-const monthTitle = computed(() => `${currentMonth.value.getFullYear()}年${currentMonth.value.getMonth() + 1}月`)
+const monthTitle = computed(() =>
+  formatDateSlash(
+    new Date(currentMonth.value.getFullYear(), currentMonth.value.getMonth() + 1, 0),
+  ),
+)
 const startDateText = computed(() => formatDateSlash(startDateModel.value))
 const endDateText = computed(() => formatDateSlash(endDateModel.value))
 
@@ -67,7 +73,8 @@ const calendarCells = computed<DayCell[]>(() => {
     })
   }
 
-  const trailingCount = Math.max(0, 35 - cells.length)
+  const cellCount = cells.length > 35 ? 42 : 35
+  const trailingCount = Math.max(0, cellCount - cells.length)
   for (let i = 1; i <= trailingCount; i += 1) {
     cells.push({
       date: new Date(firstDay.getFullYear(), firstDay.getMonth() + 1, i),
@@ -76,7 +83,7 @@ const calendarCells = computed<DayCell[]>(() => {
     })
   }
 
-  return cells.slice(0, 35)
+  return cells.slice(0, cellCount)
 })
 
 watch(
@@ -220,12 +227,12 @@ function startOfDay(date: Date): Date {
 <template>
   <div v-if="visible" class="date-picker-mask" @click="closePicker">
     <div class="date-picker-sheet" @click.stop>
-      <header class="picker-tip">
+      <header v-if="showTip" class="picker-tip">
         <p>{{ tipText }}</p>
         <button type="button" class="picker-close" @click="closePicker">×</button>
       </header>
 
-      <div class="picker-range-row">
+      <div class="picker-range-row" :class="{ 'picker-range-row--no-tip': !showTip }">
         <button
           type="button"
           class="picker-date-btn"
@@ -317,6 +324,8 @@ function startOfDay(date: Date): Date {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .date-picker-mask {
   position: fixed;
   inset: 0;
@@ -324,14 +333,17 @@ function startOfDay(date: Date): Date {
   background: rgba(12, 12, 12, 0.6);
   display: flex;
   align-items: flex-end;
+  justify-content: center;
 }
 
 .date-picker-sheet {
-  width: 100%;
+  width: min(100%, var(--app-max-width));
   padding: 0.64256rem 0.53211rem 0.5472rem;
   border-radius: 0.84459rem 0.84459rem 0 0;
-  background: rgba(0, 0, 0, 0.86);
-  backdrop-filter: blur(0.16064rem);
+  border-top: 0.01333rem solid rgba(242, 242, 242, 0.8);
+  background: rgba(0, 0, 0, 0.52);
+  backdrop-filter: blur(0.72rem);
+  -webkit-backdrop-filter: blur(0.72rem);
 }
 
 .picker-tip {
@@ -363,6 +375,10 @@ function startOfDay(date: Date): Date {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.42667rem;
+}
+
+.picker-range-row--no-tip {
+  margin-top: 0;
 }
 
 .picker-date-btn {
@@ -531,7 +547,7 @@ function startOfDay(date: Date): Date {
   height: 1.43581rem;
   border: 0.01333rem solid rgba(242, 242, 242, 0.8);
   border-radius: 1.05573rem;
-  background: linear-gradient(168.11deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background: var(--c-brand);
   color: #fff;
   font-size: 0.4rem;
   font-weight: 500;

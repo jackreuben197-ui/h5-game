@@ -5,8 +5,6 @@ import { useRouter } from 'vue-router'
 import {
   postOrgClubSearchByIdApi,
   postOrgChangeClubDataApi,
-  postOrgClubAgentInviTationApi,
-  postOrgClubInviTationApi,
   postOrgClubDisbandApi,
   postOrgClubCloneApplyApi,
   postOrgJoinTripApi,
@@ -31,8 +29,8 @@ import imgSearch from '@/assets/icons/club_search.svg'
 import imgModalClose from '@/assets/icons/modal_close.svg'
 import ImageUploadSheet from '@/components/ImageUploadSheet/ImageUploadSheet.vue'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
+import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { extractInvitationCode, extractInvitationLink } from '@/utils/clubInvitation'
 import {
   buildChannelClubInviteUrl,
   buildChannelRegisterUrl,
@@ -766,7 +764,10 @@ async function saveInviteShare(): Promise<void> {
     if (saveButton) {
       saveButton.style.display = 'none' // 隐藏保存按钮，避免被截图到
     }
-    const canvas = await html2canvas(inviteModalRef.value, {
+    const captureTarget =
+      (inviteModalRef.value.closest('.game-dialog__card') as HTMLElement | null) ||
+      inviteModalRef.value
+    const canvas = await html2canvas(captureTarget, {
       useCORS: true,
       backgroundColor: null,
       logging: false,
@@ -842,76 +843,18 @@ async function onDeleteClub(): Promise<void> {
   }
 }
 
-async function prefetchAgentInvitationLink(): Promise<void> {
-  if (!isAgent.value) {
-    return
-  }
-
-  const currentClub = displayClub.value
-  if (!currentClub?.random_id) {
-    return
-  }
-
-  const cached = userInfoStore.getClubAgentInvitation(currentClub.random_id)
-  if (cached) {
-    return
-  }
-
-  try {
-    const rawUserId = currentClub.user_id ?? userInfoStore.userInfo?.user?.id
-    const userId = Number(rawUserId)
-
-    const response = await postOrgClubAgentInviTationApi({
-      club_id: currentClub.club_id,
-      user_id: Number.isFinite(userId) ? userId : undefined,
-    })
-
-    if (response.code !== 0) {
-      return
-    }
-
-    const invitationLink = extractInvitationLink(response.data)
-    if (!invitationLink && !isChannelPackage) {
-      return
-    }
-
-    const finalLink = invitationLink
-
-    if (!finalLink) {
-      return
-    }
-
-    userInfoStore.setClubAgentInvitation(currentClub.random_id, finalLink)
-  } catch (error) {
-    console.error('prefetchAgentInvitationLink error', error)
-  }
-}
-
 async function generateInviteQrCode(): Promise<void> {
-  const currentClub = displayClub.value
-  if (!currentClub?.club_id) {
+  const inviteCode = String(userInfoStore.currentClub?.invitation_code || '').trim()
+  const finalLink = isChannelPackage
+    ? buildChannelClubInviteUrl()
+    : buildChannelRegisterUrl({ inviteCode })
+
+  if (!finalLink || (!isChannelPackage && !inviteCode)) {
+    imgInviteQr.value = ''
     return
   }
 
   try {
-    const response = await postOrgClubInviTationApi({
-      club_id: currentClub.club_id,
-    })
-
-    if (response.code !== 0) {
-      console.error('generateInviteQrCode API error', response.msg)
-      return
-    }
-
-    // const invitationLink = extractInvitationLink(response.data)
-    const finalLink = isChannelPackage
-      ? buildChannelClubInviteUrl()
-      : buildChannelRegisterUrl({ inviteCode: extractInvitationCode(response.data) })
-
-    if (!finalLink) {
-      return
-    }
-
     imgInviteQr.value = await generateQrCodeUrl(finalLink, { size: 720, margin: 2 })
   } catch (error) {
     console.error('generateInviteQrCode error', error)
@@ -920,7 +863,6 @@ async function generateInviteQrCode(): Promise<void> {
 
 onMounted(async () => {
   await refreshClubDetail()
-  await prefetchAgentInvitationLink()
   await generateInviteQrCode()
 })
 </script>
@@ -1117,8 +1059,16 @@ onMounted(async () => {
       </section>
     </div>
 
-    <div v-if="showInvitePopup" class="club-modal-mask" @click="closeInvitePopup">
-      <section ref="inviteModalRef" class="invite-modal" @click.stop>
+    <GameDialog
+      v-model:show="showInvitePopup"
+      class="invite-game-dialog"
+      :show-footer="false"
+      :show-confirm-button="false"
+      :close-on-click-overlay="true"
+      dialog-width="9.1rem"
+      body-max-height="16rem"
+    >
+      <template #title>
         <header class="invite-modal__head">
           <h3>邀请链接</h3>
           <button
@@ -1130,7 +1080,9 @@ onMounted(async () => {
             <img :src="imgModalClose" alt="" aria-hidden="true" />
           </button>
         </header>
+      </template>
 
+      <section ref="inviteModalRef" class="invite-modal">
         <div class="invite-modal__body">
           <p class="invite-modal__subtitle">开启你的竞技之旅</p>
           <div class="invite-modal__cover-wrap">
@@ -1145,7 +1097,15 @@ onMounted(async () => {
         </div>
 
         <div class="invite-modal__qr-wrap">
-          <img class="invite-modal__qr" :src="imgInviteQr" alt="扫码加入俱乐部" />
+          <img
+            v-if="imgInviteQr"
+            class="invite-modal__qr"
+            :src="imgInviteQr"
+            alt="扫码加入俱乐部"
+          />
+          <div v-else class="invite-modal__qr-placeholder" aria-label="二维码生成中">
+            <span></span>
+          </div>
         </div>
         <p class="invite-modal__qr-tip">扫码加入，一键开启</p>
 
@@ -1153,13 +1113,13 @@ onMounted(async () => {
           id="save-invite-share"
           type="button"
           class="modal-primary-btn"
-          :disabled="savingInviteShare"
+          :disabled="savingInviteShare || !imgInviteQr"
           @click="saveInviteShare"
         >
           {{ savingInviteShare ? '保存中...' : '保存分享' }}
         </button>
       </section>
-    </div>
+    </GameDialog>
 
     <div v-if="showCopyPopup" class="club-modal-mask" @click="closeCopyPopup">
       <section class="copy-modal" @click.stop>
@@ -1865,7 +1825,6 @@ onMounted(async () => {
   z-index: 80;
 }
 
-.invite-modal,
 .copy-modal {
   width: min(9.1rem, 100%);
   border-radius: 0.97035rem;
@@ -2082,13 +2041,15 @@ onMounted(async () => {
 }
 
 .invite-modal {
-  padding: 0.42rem 0.42rem 0.62rem;
+  width: 100%;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 0.22rem;
 }
 
 .invite-modal__head {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2197,7 +2158,7 @@ onMounted(async () => {
   border-radius: 0.30747rem;
   background: #fff;
   padding: 0.10667rem;
-  border: 0.10067rem solid #00b184;
+  border: 0.10067rem solid var(--c-brand);
   overflow: hidden;
 }
 
@@ -2205,6 +2166,31 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+.invite-modal__qr-placeholder {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.12rem;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(35, 35, 35, 0.08) 50%, transparent 50%) 0 0 / 0.28rem 0.28rem,
+    linear-gradient(rgba(35, 35, 35, 0.08) 50%, transparent 50%) 0 0 / 0.28rem 0.28rem,
+    #fff;
+}
+
+.invite-modal__qr-placeholder span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.58rem;
+  height: 0.58rem;
+  margin: -0.29rem 0 0 -0.29rem;
+  border: 0.055rem solid rgba(105, 190, 255, 0.26);
+  border-top-color: var(--c-brand);
+  border-radius: 50%;
+  animation: invite-qr-loading 0.8s linear infinite;
 }
 
 .invite-modal__qr-heart {
@@ -2252,10 +2238,22 @@ onMounted(async () => {
   border: 0.01333rem solid rgba(242, 242, 242, 0.8);
   background: linear-gradient(153deg, #05e7ae 8%, #027a5c 72%);
   box-shadow: inset 0 -0.16rem 0.3rem rgba(0, 0, 0, 0.14);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .modal-primary-btn:disabled {
   opacity: 0.72;
+}
+
+@keyframes invite-qr-loading {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .copy-modal {

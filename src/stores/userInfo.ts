@@ -213,6 +213,20 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
         diamonds: normalized,
       })
     },
+    syncUserDiamond(diamond: number): boolean {
+      if (!this.userInfo?.user || !Number.isFinite(diamond)) {
+        return false
+      }
+
+      this.userInfo = {
+        ...this.userInfo,
+        user: {
+          ...this.userInfo.user,
+          diamonds: Math.max(0, Number(diamond)),
+        },
+      }
+      return true
+    },
     clearInfo(): void {
       this.userInfo = null
       this.clubList = []

@@ -37,7 +37,7 @@ export function isTelegramMiniAppEnv(): boolean {
   if (window.__H5_TG_MINI_APP__) {
     return true
   }
-  return Boolean(window.Telegram?.WebApp)
+  return false
 }
 
 // 当前 WebView 底层是否为 iOS Safari —— 它不支持 beforeinstallprompt，需要引导用户走分享菜单

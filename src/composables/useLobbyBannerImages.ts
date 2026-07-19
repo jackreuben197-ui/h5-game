@@ -6,6 +6,7 @@ import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { getLocale, toServerLang } from '@/i18n'
 import { isTelegramMiniAppEnv } from '@/utils/environment'
+import { isChannelPackageHost } from '@/utils/channelPackage'
 import { readLobbyBannerListCache, writeLobbyBannerListCache } from '@/utils/lobbyBannerCache'
 
 // /config/before/login/config 聚合项：8 = banner 列表。
@@ -16,6 +17,15 @@ const BANNER_STATUS_ENABLED = 1
 // /misc/banner/list display_scene：1 = h5，2 = telegram。
 const DISPLAY_SCENE_H5 = 1
 const DISPLAY_SCENE_TELEGRAM = 2
+// 官方包未登录 banner 一键切换：
+// - 'platform'：只显示 CMS club_id=0 的平台 banner
+// - 'default-club'：优先显示 CMS club_id>0 的默认俱乐部 banner，没有时回退平台 banner
+const OFFICIAL_GUEST_BANNER_MODE: 'platform' | 'default-club' = 'platform'
+
+type CmsBannerScope =
+  | { type: 'platform' }
+  | { type: 'default-club' }
+  | { type: 'channel-club'; clubId: number }
 
 // 兼容 banner_list_resp 挂在 data 顶层或 data.data 内层两种返回结构。
 function extractBannerRecords(
@@ -32,12 +42,12 @@ function extractBannerRecords(
 // 过滤出当前语言、当前场景、启用中的大厅 banner 图片。
 // display_scene 由客户端过滤（登录前聚合接口不感知场景）；
 // 字段缺省、null 或 0 的旧 CMS 数据视为全场景可见。
-// 游客页优先展示默认俱乐部配置；登录页回退 CMS 时仅展示平台配置。
+// 官方包只展示平台配置；渠道包游客精确匹配渠道俱乐部，未配置时回退平台配置。
 function filterLobbyBannerUrls(
   records: MiscBannerListBannerInfo[],
   lang: string,
   displayScene: number,
-  preferDefaultClub: boolean,
+  scope: CmsBannerScope,
 ): string[] {
   const visible = records.filter(
     (item) =>
@@ -49,16 +59,23 @@ function filterLobbyBannerUrls(
         Number(item.display_scene) === displayScene),
   )
   const clubOwned = visible.filter((item) => Number(item?.club_id) > 0)
-  const platformOwned = visible.filter((item) => item?.club_id == null || Number(item.club_id) <= 0)
-  const selected = preferDefaultClub && clubOwned.length ? clubOwned : platformOwned
+  const platformOwned = visible.filter((item) => Number(item?.club_id) === 0)
+  let selected = platformOwned
+  if (scope.type === 'default-club') {
+    selected = clubOwned.length ? clubOwned : platformOwned
+  } else if (scope.type === 'channel-club') {
+    const channelOwned = clubOwned.filter((item) => Number(item.club_id) === scope.clubId)
+    // 渠道俱乐部未配置 banner 时回退平台配置，不能误用其他俱乐部的配置。
+    selected = channelOwned.length ? channelOwned : platformOwned
+  }
   return selected
     .map((item) => (typeof item.image_url === 'string' ? item.image_url.trim() : ''))
     .filter((url) => !!url)
 }
 
 // 登录后走 /misc/banner/list（带 display_scene 区分 h5 / telegram + club_id），
-// 服务端按俱乐部配置返回：俱乐部配置了返回俱乐部的，否则返回平台的。
-// 请求失败或列表为空时返回 []，由调用方回落到登录前聚合接口。
+// 这里只接受目标俱乐部自己的配置；接口返回的平台数据不在这里采用，
+// 统一由调用方回落到 before-login CMS 的 club_id=0 配置。
 async function fetchSceneBannerUrls(
   lang: string,
   displayScene: number,
@@ -83,9 +100,14 @@ async function fetchSceneBannerUrls(
     const rawList = Array.isArray(data.list) ? data.list : inner?.list
     const records = Array.isArray(rawList) ? (rawList as MiscBannerListBannerInfo[]) : []
 
-    // lang / type / display_scene / club_id 已由服务端过滤；status 字段缺省时视为启用。
+    // lang / type / display_scene 已由服务端过滤；客户端再次校验 club_id，
+    // 避免服务端用平台 banner 兜底后被误认为俱乐部配置。
     return records
-      .filter((item) => item?.status === undefined || Number(item.status) === BANNER_STATUS_ENABLED)
+      .filter(
+        (item) =>
+          (item?.status === undefined || Number(item.status) === BANNER_STATUS_ENABLED) &&
+          Number(item?.club_id) === clubId,
+      )
       .map((item) => (typeof item?.image_url === 'string' ? item.image_url.trim() : ''))
       .filter((url) => !!url)
   } catch {
@@ -97,7 +119,7 @@ async function fetchSceneBannerUrls(
 async function fetchCmsBannerUrls(
   lang: string,
   displayScene: number,
-  preferDefaultClub: boolean,
+  scope: CmsBannerScope,
 ): Promise<string[] | null> {
   try {
     const response = await postBeforeLoginConfigApi({
@@ -108,7 +130,7 @@ async function fetchCmsBannerUrls(
       return null
     }
     const records = extractBannerRecords(response.data)
-    const urls = filterLobbyBannerUrls(records, lang, displayScene, preferDefaultClub)
+    const urls = filterLobbyBannerUrls(records, lang, displayScene, scope)
     return urls
   } catch {
     return null
@@ -135,15 +157,33 @@ export function useLobbyBannerImages(): {
     // 和首页展示口径一致：优先当前选中俱乐部，取不到时回退到列表第一个。
     const userInfoStore = useUserInfoStore()
     const currentClub = userInfoStore.currentClub || userInfoStore.clubList[0] || null
-    const clubId = Math.floor(Number(currentClub?.club_id)) || 0
+    const currentClubId = Math.floor(Number(currentClub?.club_id)) || 0
+    const isChannelPackage = isChannelPackageHost()
+    let channelClubId = 0
+    if (isChannelPackage) {
+      const channelClub = await userInfoStore.ensureChannelDefaultClub()
+      channelClubId = Math.floor(Number(channelClub?.club_id)) || 0
+    }
+    const bannerClubId = isChannelPackage ? channelClubId : currentClubId
+    // 只有渠道包游客直接从 before-login CMS 中选渠道俱乐部 banner；
+    // 其他场景的 CMS 都是主数据源失败后的平台 club_id=0 回退。
+    const cmsScope: CmsBannerScope = !loggedIn && isChannelPackage && channelClubId > 0
+      ? { type: 'channel-club', clubId: channelClubId }
+      : !loggedIn && !isChannelPackage && OFFICIAL_GUEST_BANNER_MODE === 'default-club'
+        ? { type: 'default-club' }
+        : { type: 'platform' }
     // 缓存按场景分桶（登录态额外按俱乐部分桶），避免 h5/telegram、游客/登录态互相覆盖。
     const cacheKey = loggedIn
-      ? `${lang}_scene_${displayScene}_club_${clubId}`
-      : `${lang}_scene_${displayScene}`
-    // 游客 CMS 缓存可能包含默认俱乐部 banner；登录页的平台回退必须独立分桶。
+      ? isChannelPackage
+        ? `${lang}_scene_${displayScene}_channel_club_${channelClubId}`
+        : `${lang}_scene_${displayScene}_club_${currentClubId}`
+      : isChannelPackage && channelClubId > 0
+        ? `${lang}_scene_${displayScene}_channel_club_${channelClubId}`
+        : `${lang}_scene_${displayScene}_${OFFICIAL_GUEST_BANNER_MODE}`
+    // 登录页俱乐部缓存与平台 CMS 回退独立分桶。
     const cmsCacheKey = loggedIn
       ? `${lang}_scene_${displayScene}_platform`
-      : `${lang}_scene_${displayScene}`
+      : cacheKey
 
     const [cached, cmsCached] = await Promise.all([
       readLobbyBannerListCache(cacheKey),
@@ -157,10 +197,12 @@ export function useLobbyBannerImages(): {
 
     // 读取缓存后立即发起 CMS 请求。登录 banner 查询与 CMS 刷新并行，
     // 避免任何缓存命中或登录接口分支阻止 before-login 请求。
-    const cmsUrlsPromise = fetchCmsBannerUrls(lang, displayScene, !loggedIn)
+    const cmsUrlsPromise = fetchCmsBannerUrls(lang, displayScene, cmsScope)
 
-    if (loggedIn) {
-      const sceneUrls = await fetchSceneBannerUrls(lang, displayScene, clubId)
+    // 渠道俱乐部解析失败时不拿当前俱乐部或其他俱乐部代替，直接走平台 CMS 回退。
+    const shouldFetchClubBanner = loggedIn && (!isChannelPackage || bannerClubId > 0)
+    if (shouldFetchClubBanner) {
+      const sceneUrls = await fetchSceneBannerUrls(lang, displayScene, bannerClubId)
 
       if (sceneUrls.length) {
         bannerImages.value = sceneUrls

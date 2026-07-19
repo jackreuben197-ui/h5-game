@@ -1,4 +1,5 @@
 import { resolvedThemeRef, setThemeMode, themeModeRef } from '@/utils/theme'
+import { isTelegramMiniAppEnv } from '@/utils/environment'
 
 export type DebugConsoleLevel = 'debug' | 'info' | 'warn' | 'error'
 export type DebugConsoleSource = 'logger' | 'console' | 'runtime'
@@ -33,6 +34,7 @@ let originalConsole: {
 } | null = null
 let domRefs: {
   toggle: HTMLButtonElement | null
+  telegramStatus: HTMLSpanElement | null
   panel: HTMLDivElement | null
   summary: HTMLDivElement | null
   themeCurrent: HTMLSpanElement | null
@@ -40,6 +42,7 @@ let domRefs: {
   body: HTMLDivElement | null
 } = {
   toggle: null,
+  telegramStatus: null,
   panel: null,
   summary: null,
   themeCurrent: null,
@@ -152,6 +155,7 @@ function getSummaryLines(): string[] {
     `visible: ${window.__H5_VISIBLE__ !== false ? 'true' : 'false'}`,
     `h5Ready: ${window.__H5_READY__ === true ? 'true' : 'false'}`,
     `ccReady: ${window.__CC_READY__ === true ? 'true' : 'false'}`,
+    `telegram: ${isTelegramMiniAppEnv() ? 'true' : 'false'}`,
     `theme: ${resolvedThemeRef.value} (${themeModeRef.value})`,
     `build: ${typeof __APP_INFO__ !== 'undefined' ? __APP_INFO__.lastBuildTime : 'unknown'}`,
     `logs: ${state.entries.length}`,
@@ -163,8 +167,8 @@ function renderDebugConsoleDom(): void {
     return
   }
 
-  const { toggle, panel, summary, themeCurrent, themeButton, body } = domRefs
-  if (!toggle || !panel || !summary || !themeCurrent || !themeButton || !body) {
+  const { toggle, telegramStatus, panel, summary, themeCurrent, themeButton, body } = domRefs
+  if (!toggle || !telegramStatus || !panel || !summary || !themeCurrent || !themeButton || !body) {
     return
   }
 
@@ -217,7 +221,8 @@ function attachDebugConsoleDom(): void {
       right: 0.24rem;
       z-index: 99999;
       min-width: 0.8rem;
-      height: 0.52rem;
+      min-height: 0.72rem;
+      padding: 0.06rem 0.14rem;
       border: 0;
       border-radius: 999rem;
       background: rgba(12, 12, 12, 0.82);
@@ -226,6 +231,21 @@ function attachDebugConsoleDom(): void {
       font-weight: 700;
       letter-spacing: 0.04rem;
       box-shadow: 0 0.08rem 0.24rem rgba(0, 0, 0, 0.28);
+    }
+
+    .h5-debug-console__toggle-telegram,
+    .h5-debug-console__toggle-label {
+      display: block;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .h5-debug-console__toggle-telegram {
+      margin-bottom: 0.04rem;
+      color: #79e8b6;
+      font-size: 0.16rem;
+      font-weight: 600;
+      letter-spacing: 0;
     }
 
     .h5-debug-console__panel {
@@ -373,8 +393,14 @@ function attachDebugConsoleDom(): void {
   const toggle = document.createElement('button')
   toggle.type = 'button'
   toggle.className = 'h5-debug-console__toggle'
-  toggle.textContent = 'LOG'
+  toggle.innerHTML = `
+    <span class="h5-debug-console__toggle-telegram"></span>
+    <span class="h5-debug-console__toggle-label">LOG</span>
+  `
   toggle.addEventListener('click', () => openDebugConsole())
+  const telegramStatus = toggle.querySelector(
+    '.h5-debug-console__toggle-telegram',
+  ) as HTMLSpanElement | null
 
   const panel = document.createElement('div')
   panel.className = 'h5-debug-console__panel'
@@ -437,7 +463,7 @@ function attachDebugConsoleDom(): void {
   document.body.appendChild(toggle)
   document.body.appendChild(panel)
 
-  domRefs = { toggle, panel, summary, themeCurrent, themeButton, body }
+  domRefs = { toggle, telegramStatus, panel, summary, themeCurrent, themeButton, body }
   domReady = true
   new MutationObserver(() => renderDebugConsoleDom()).observe(document.documentElement, {
     attributes: true,

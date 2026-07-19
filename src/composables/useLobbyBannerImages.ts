@@ -30,22 +30,28 @@ function extractBannerRecords(
 }
 
 // 过滤出当前语言、当前场景、启用中的大厅 banner 图片。
-// display_scene 由客户端过滤（登录前聚合接口不感知场景）；字段缺省的旧数据视为全场景可见。
-// 服务端会把默认俱乐部配置的也写进列表：优先展示 club_id>0 的，一条都没有才展示平台的。
+// display_scene 由客户端过滤（登录前聚合接口不感知场景）；
+// 字段缺省、null 或 0 的旧 CMS 数据视为全场景可见。
+// 游客页优先展示默认俱乐部配置；登录页回退 CMS 时仅展示平台配置。
 function filterLobbyBannerUrls(
   records: MiscBannerListBannerInfo[],
   lang: string,
   displayScene: number,
+  preferDefaultClub: boolean,
 ): string[] {
   const visible = records.filter(
     (item) =>
       item?.lang === lang &&
       Number(item?.status) === BANNER_STATUS_ENABLED &&
       Number(item?.banner_type) === LOBBY_BANNER_TYPE &&
-      (item?.display_scene === undefined || Number(item.display_scene) === displayScene),
+      (item?.display_scene == null ||
+        Number(item.display_scene) <= 0 ||
+        Number(item.display_scene) === displayScene),
   )
   const clubOwned = visible.filter((item) => Number(item?.club_id) > 0)
-  return (clubOwned.length ? clubOwned : visible)
+  const platformOwned = visible.filter((item) => item?.club_id == null || Number(item.club_id) <= 0)
+  const selected = preferDefaultClub && clubOwned.length ? clubOwned : platformOwned
+  return selected
     .map((item) => (typeof item.image_url === 'string' ? item.image_url.trim() : ''))
     .filter((url) => !!url)
 }
@@ -82,8 +88,30 @@ async function fetchSceneBannerUrls(
       .filter((item) => item?.status === undefined || Number(item.status) === BANNER_STATUS_ENABLED)
       .map((item) => (typeof item?.image_url === 'string' ? item.image_url.trim() : ''))
       .filter((url) => !!url)
-  } catch (error) {
+  } catch {
     return []
+  }
+}
+
+// CMS banner 每次进入首页都静默刷新；缓存只用于首屏，不替代网络请求。
+async function fetchCmsBannerUrls(
+  lang: string,
+  displayScene: number,
+  preferDefaultClub: boolean,
+): Promise<string[] | null> {
+  try {
+    const response = await postBeforeLoginConfigApi({
+      no_auth_api_list: [NO_AUTH_API_BANNER_LIST],
+      banner_list_req: { last_update_time: 0 },
+    })
+    if (Number(response.code) !== 0 || !response.data) {
+      return null
+    }
+    const records = extractBannerRecords(response.data)
+    const urls = filterLobbyBannerUrls(records, lang, displayScene, preferDefaultClub)
+    return urls
+  } catch {
+    return null
   }
 }
 
@@ -112,11 +140,24 @@ export function useLobbyBannerImages(): {
     const cacheKey = loggedIn
       ? `${lang}_scene_${displayScene}_club_${clubId}`
       : `${lang}_scene_${displayScene}`
+    // 游客 CMS 缓存可能包含默认俱乐部 banner；登录页的平台回退必须独立分桶。
+    const cmsCacheKey = loggedIn
+      ? `${lang}_scene_${displayScene}_platform`
+      : `${lang}_scene_${displayScene}`
 
-    const cached = await readLobbyBannerListCache(cacheKey)
+    const [cached, cmsCached] = await Promise.all([
+      readLobbyBannerListCache(cacheKey),
+      cacheKey === cmsCacheKey ? Promise.resolve(null) : readLobbyBannerListCache(cmsCacheKey),
+    ])
     if (cached?.length) {
       bannerImages.value = cached
+    } else if (cmsCached?.length) {
+      bannerImages.value = cmsCached
     }
+
+    // 读取缓存后立即发起 CMS 请求。登录 banner 查询与 CMS 刷新并行，
+    // 避免任何缓存命中或登录接口分支阻止 before-login 请求。
+    const cmsUrlsPromise = fetchCmsBannerUrls(lang, displayScene, !loggedIn)
 
     if (loggedIn) {
       const sceneUrls = await fetchSceneBannerUrls(lang, displayScene, clubId)
@@ -124,20 +165,30 @@ export function useLobbyBannerImages(): {
       if (sceneUrls.length) {
         bannerImages.value = sceneUrls
         void writeLobbyBannerListCache(cacheKey, sceneUrls)
+
+        // 登录 banner 优先展示；CMS 结果仅静默刷新公共缓存。
+        void cmsUrlsPromise.then((cmsUrls) => {
+          if (cmsUrls) {
+            void writeLobbyBannerListCache(cmsCacheKey, cmsUrls)
+          }
+        })
         return
+      }
+
+      // 俱乐部/场景 banner 为空时，立即切回登录前缓存的 CMS banner，
+      // 避免继续展示该俱乐部上一次缓存的专属 banner。
+      if (cmsCached?.length) {
+        bannerImages.value = cmsCached
       }
     }
 
-    const response = await postBeforeLoginConfigApi({
-      no_auth_api_list: [NO_AUTH_API_BANNER_LIST],
-    })
-    if (Number(response.code) !== 0 || !response.data) {
+    const cmsUrls = await cmsUrlsPromise
+    if (!cmsUrls) {
       return
     }
 
-    const urls = filterLobbyBannerUrls(extractBannerRecords(response.data), lang, displayScene)
-    bannerImages.value = urls
-    void writeLobbyBannerListCache(cacheKey, urls)
+    bannerImages.value = cmsUrls
+    void writeLobbyBannerListCache(cmsCacheKey, cmsUrls)
   }
 
   return { bannerImages, fetchLobbyBannerImages }

@@ -49,6 +49,10 @@ function onOpenRecord(item: PoolRewardItem): void {
   })
 }
 
+function goCreateJackpot(): void {
+  void router.push('/club/jackpot/create')
+}
+
 async function fetchJackpotList(reset = false): Promise<void> {
   if (loading.value || loadingMore.value) {
     return
@@ -74,7 +78,8 @@ async function fetchJackpotList(reset = false): Promise<void> {
     })
 
     if (Number(response.code) !== 0) {
-      const message = typeof response.msg === 'string' ? response.msg : t('UIClub_LoadJackpotRecordFail')
+      const message =
+        typeof response.msg === 'string' ? response.msg : t('UIClub_LoadJackpotRecordFail')
       throw new Error(message)
     }
 
@@ -210,7 +215,9 @@ onMounted(() => {
     </section>
 
     <div class="footer-action">
-      <button type="button" class="create-btn">{{ t('UIClub_AddSomething') }}Jackpot{{ t('UIClub_Jackpot4') }}</button>
+      <button type="button" class="create-btn" @click="goCreateJackpot">
+        {{ t('UIClub_AddSomething') }}Jackpot{{ t('UIClub_Jackpot4') }}
+      </button>
     </div>
   </div>
 </template>

@@ -18,7 +18,6 @@ import { decodeSupportMessageNotify } from '@/bridge/ws/supportMessageNotify'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
-import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import customerServiceIcon from '@/assets/icons/customerserviceicon.png'
 import avatarDefault from '@/assets/images/default_avatar.png'
 import {
@@ -29,6 +28,7 @@ import {
   ensureOfficialServiceProfileCache,
   getOfficialServiceProfileCache,
 } from './officialServiceCache'
+import { t } from '@/i18n'
 
 interface ImGameConfig {
   oss_key: string
@@ -88,10 +88,6 @@ let startingRecord = false
 const shouldShowFloat = computed(
   () => !!gameStore.sessionToken && !visible.value && hasUnread.value,
 )
-
-const panelBackgroundStyle = computed(() => ({
-  backgroundImage: `url(${sharpBgUrl})`,
-}))
 
 // 拖动相关状态
 const floatPosition = ref({ top: '52%' })
@@ -234,12 +230,18 @@ const availableChannels = computed(() => {
   return list.map((item) => (isOfficialChannel(item) ? createOfficialDisplayChannel(item) : item))
 })
 
+const activeChannelAvatar = computed(() =>
+  activeChannel.value
+    ? resolveChannelDisplayAvatar(activeChannel.value) || avatarDefault
+    : avatarDefault,
+)
+
 const targetClubId = computed(() => {
   if (chatContext.value.clubId > 0) return chatContext.value.clubId
   return Number(userInfoStore.currentClub?.club_id || 0)
 })
 
-const supportHintText = computed(() => (voiceCancel.value ? '松开取消' : '松开发送'))
+const supportHintText = computed(() => (voiceCancel.value ? '松开取消' : '释放发送'))
 const supportHintClass = computed(() =>
   voiceCancel.value ? 'voice-tip--cancel' : 'voice-tip--send',
 )
@@ -1389,7 +1391,7 @@ watch(
   <Teleport to="body">
     <div v-if="visible" class="chat-overlay" @click="closePanel">
       <div class="chat-mask"></div>
-      <div class="chat-sheet" :style="panelBackgroundStyle" @click.stop>
+      <div class="chat-sheet" @click.stop>
         <div class="chat-sheet-frost"></div>
 
         <div class="chat-sheet-inner">
@@ -1429,13 +1431,15 @@ watch(
             <div class="voice-wave">
               <span v-for="idx in 15" :key="idx" class="voice-wave-bar"></span>
             </div>
-            <div class="voice-tip-bottom">
+            <div class="voice-timer-pill">
               <span class="voice-timer">{{ formatVoiceDuration(voiceSeconds) }}</span>
-              <span>{{ supportHintText }}</span>
             </div>
           </div>
+          <div v-if="voicePressed" class="voice-action-hint" :class="supportHintClass">
+            {{ supportHintText }}
+          </div>
 
-          <div v-if="imageUploading" class="sending-message-tip">Sending Message...</div>
+          <div v-if="imageUploading" class="sending-message-tip">{{ t('UIMsgSending') }}...</div>
 
           <div
             ref="messageContainer"
@@ -1449,6 +1453,12 @@ watch(
                 class="message-row"
                 :class="{ 'message-row--self': isSelfMessage(msg) }"
               >
+                <img
+                  v-if="!isSelfMessage(msg)"
+                  class="message-avatar"
+                  :src="activeChannelAvatar"
+                  alt=""
+                />
                 <div class="bubble-wrapper" :class="{ 'bubble-wrapper--self': isSelfMessage(msg) }">
                   <div
                     v-if="msg.msg_type === 1"
@@ -1493,16 +1503,16 @@ watch(
                       >
                         <path
                           d="M10.0938 6.32812L0.90625 12.2072V0.449084L10.0938 6.32812Z"
-                          fill="#F3F3F3"
+                          fill="currentColor"
                         />
                       </svg>
                       <svg v-else width="10" height="13" viewBox="0 0 10 13" fill="none">
-                        <rect x="0.5" y="0.5" width="3" height="12" rx="1" fill="#F3F3F3" />
-                        <rect x="6.5" y="0.5" width="3" height="12" rx="1" fill="#F3F3F3" />
+                        <rect x="0.5" y="0.5" width="3" height="12" rx="1" fill="currentColor" />
+                        <rect x="6.5" y="0.5" width="3" height="12" rx="1" fill="currentColor" />
                       </svg>
                     </span>
                     <div class="voice-message-wave">
-                      <span v-for="idy in 10" :key="idy" class="voice-message-bar"></span>
+                      <span v-for="idy in 15" :key="idy" class="voice-message-bar"></span>
                     </div>
                     <span class="voice-message-time">{{ formatVoiceDuration(msg.duration) }}</span>
                   </button>
@@ -1547,9 +1557,27 @@ watch(
                 />
               </svg>
               <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="4" width="18" height="16" rx="2" stroke="var(--c-brand)" stroke-width="2" />
-                <path d="M7 16H17" stroke="var(--c-brand)" stroke-width="2" stroke-linecap="round" />
-                <path d="M7 12H11" stroke="var(--c-brand)" stroke-width="2" stroke-linecap="round" />
+                <rect
+                  x="3"
+                  y="4"
+                  width="18"
+                  height="16"
+                  rx="2"
+                  stroke="var(--c-brand)"
+                  stroke-width="2"
+                />
+                <path
+                  d="M7 16H17"
+                  stroke="var(--c-brand)"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M7 12H11"
+                  stroke="var(--c-brand)"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
               </svg>
             </button>
 
@@ -1565,7 +1593,7 @@ watch(
               <button
                 class="send-action-btn"
                 type="button"
-                :disabled="sending || loading"
+                :disabled="sending || loading || !inputText.trim()"
                 @click="sendMessage"
               >
                 <svg width="22" height="21" viewBox="0 0 24 23" fill="none">
@@ -1590,11 +1618,18 @@ watch(
                 @touchend.prevent="onVoiceButtonUp"
                 @touchcancel.prevent="onVoiceButtonLeave"
               >
-                按住说话
+                {{ t('UIChatPressDownSpeak') }}
               </button>
             </template>
 
-            <button class="plus-btn" type="button" @click="toggleAttachmentPanel">+</button>
+            <button
+              class="plus-btn"
+              :class="{ 'plus-btn--expanded': attachmentPanelVisible }"
+              type="button"
+              @click="toggleAttachmentPanel"
+            >
+              <span aria-hidden="true">+</span>
+            </button>
 
             <button
               class="close-chat-btn close-chat-btn--icon"
@@ -1633,12 +1668,26 @@ watch(
             <button class="attachment-item" type="button" @click="triggerUpload">
               <span class="attachment-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <rect x="2.5" y="3.5" width="19" height="17" rx="3" stroke="currentColor" stroke-width="1.8" />
+                  <rect
+                    x="2.5"
+                    y="3.5"
+                    width="19"
+                    height="17"
+                    rx="3"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  />
                   <circle cx="8" cy="9" r="2" fill="currentColor" />
-                  <path d="M4.5 18L10 12.5L13.5 16L16 13.5L21 18.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                  <path
+                    d="M4.5 18L10 12.5L13.5 16L16 13.5L21 18.5"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
                 </svg>
               </span>
-              <span>画廊</span>
+              <span>{{ t('Picture') }}</span>
             </button>
           </div>
         </div>
@@ -1666,7 +1715,7 @@ watch(
   <Teleport to="body">
     <div v-if="noServiceVisible" class="no-service-mask" @click="closeNoServicePopup">
       <div class="no-service-card" @click.stop>
-        <p class="no-service-title">当前俱乐部暂未开通在线客服服务</p>
+        <p class="no-service-title">当前俱乐部暂未开通在线客服服务～</p>
         <p class="no-service-desc">请联系管理员开通后再试</p>
         <button class="no-service-btn" type="button" @click="closeNoServicePopup">好的</button>
       </div>
@@ -1696,7 +1745,11 @@ watch(
   align-items: center;
   justify-content: center;
   gap: 0.12rem;
-  background: linear-gradient(148deg, rgba(var(--c-brand-rgb), 0.59) 7.5%, rgba(2, 122, 92, 0.59) 71.9%);
+  background: linear-gradient(
+    148deg,
+    rgba(var(--c-brand-rgb), 0.59) 7.5%,
+    rgba(2, 122, 92, 0.59) 71.9%
+  );
   color: #fff;
   box-shadow: 0 0.08rem 0.24rem rgba(0, 0, 0, 0.28);
 
@@ -1725,10 +1778,6 @@ watch(
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-
-  @include theme-light {
-    background-image: url('@/assets/images/main_bg_light.png');
-  }
 }
 
 .chat-mask {
@@ -1878,6 +1927,10 @@ watch(
     inset 0.017rem 0.017rem 0 rgba(242, 242, 242, 0.2),
     0.05rem 0.06rem 0.1rem rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(0.245rem);
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.25);
+  }
 }
 
 .agent-meta {
@@ -1901,7 +1954,7 @@ watch(
 .messages-wrap {
   flex: 1;
   overflow-y: auto;
-  padding: 0.28rem 0.36rem 0.2rem;
+  padding: 0.28rem 0.5867rem 0.2rem;
 }
 
 .messages-wrap--hidden {
@@ -1911,11 +1964,13 @@ watch(
 .messages-inner {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.2667rem;
 }
 
 .message-row {
   display: flex;
+  align-items: flex-start;
+  gap: 0.24rem;
   width: 100%;
 }
 
@@ -1934,18 +1989,29 @@ watch(
   align-items: flex-end;
 }
 
+.message-avatar {
+  width: 0.88rem;
+  height: 0.88rem;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
 .text-bubble {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 0.24rem 0.24rem 0.24rem 0.06rem;
-  padding: 0.18rem 0.24rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 0.4106rem;
+  padding: 0.2267rem 0.3867rem;
   color: #fff;
-  font-size: 0.28rem;
+  font-size: 0.32rem;
   line-height: 1.4;
 }
 
 .text-bubble--self {
   background: rgba(var(--c-brand-rgb), 0.5);
-  border-radius: 0.24rem 0.24rem 0.06rem 0.24rem;
+
+  @include theme-light {
+    background: rgba(48, 165, 255, 0.5);
+  }
 }
 
 .image-bubble {
@@ -1969,9 +2035,9 @@ watch(
 .voice-message {
   border: none;
   border-radius: 0.4106rem;
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
   min-width: 2.7325rem;
-  height: 1.0667rem;
+  height: 0.96rem;
   padding: 0 0.21rem;
   display: inline-flex;
   align-items: center;
@@ -1981,6 +2047,10 @@ watch(
 
 .voice-message--self {
   background: rgba(var(--c-brand-rgb), 0.5);
+
+  @include theme-light {
+    background: rgba(48, 165, 255, 0.5);
+  }
 }
 
 .voice-message--playing .voice-message-bar {
@@ -1998,7 +2068,11 @@ watch(
 }
 
 .voice-message-play {
-  width: 0.42rem;
+  width: 0.5067rem;
+  height: 0.5067rem;
+  border-radius: 50%;
+  background: #fff;
+  color: rgba(0, 0, 0, 0.8);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2015,41 +2089,54 @@ watch(
 }
 
 .voice-message-bar:nth-child(1),
-.voice-message-bar:nth-child(10) {
+.voice-message-bar:nth-child(15) {
   height: 0.16rem;
 }
 
 .voice-message-bar:nth-child(2),
-.voice-message-bar:nth-child(9) {
+.voice-message-bar:nth-child(14) {
   height: 0.2rem;
 }
 
 .voice-message-bar:nth-child(3),
-.voice-message-bar:nth-child(8) {
+.voice-message-bar:nth-child(13) {
   height: 0.26rem;
 }
 
 .voice-message-bar:nth-child(4),
-.voice-message-bar:nth-child(7) {
+.voice-message-bar:nth-child(12) {
   height: 0.34rem;
 }
 
 .voice-message-bar:nth-child(5),
-.voice-message-bar:nth-child(6) {
+.voice-message-bar:nth-child(11) {
   height: 0.42rem;
 }
 
+.voice-message-bar:nth-child(6),
+.voice-message-bar:nth-child(10) {
+  height: 0.3rem;
+}
+
+.voice-message-bar:nth-child(7),
+.voice-message-bar:nth-child(9) {
+  height: 0.24rem;
+}
+
+.voice-message-bar:nth-child(8) {
+  height: 0.36rem;
+}
+
 .voice-message-time {
-  font-size: 0.309rem;
-  line-height: 1;
+  display: none;
 }
 
 .bubble-footer {
   display: flex;
   align-items: center;
   gap: 0.08rem;
-  color: rgba(255, 255, 255, 0.74);
-  font-size: 0.2rem;
+  color: #f9f9f9;
+  font-size: 0.2667rem;
 }
 
 .sender-name {
@@ -2074,7 +2161,7 @@ watch(
 }
 
 .voice-tip--send {
-  background: rgba(var(--c-brand-rgb), 0.18);
+  background: rgba(5, 231, 174, 0.18);
 }
 
 .voice-tip--cancel {
@@ -2101,16 +2188,43 @@ watch(
   height: 0.54rem;
 }
 
-.voice-tip-bottom {
-  height: 0.5083rem;
+.voice-timer-pill {
+  min-width: 1.4667rem;
+  height: 0.5067rem;
   border-radius: 0.6255rem;
-  padding: 0.08rem 0.28rem;
+  padding: 0 0.2667rem;
   background: rgba(0, 0, 0, 0.42);
   color: #f9f9f9;
   font-size: 0.3087rem;
   display: inline-flex;
   align-items: center;
-  gap: 0.18rem;
+  justify-content: center;
+}
+
+.voice-action-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 2.1067rem;
+  z-index: 6;
+  transform: translateX(-50%);
+  min-width: 1.8133rem;
+  height: 0.5067rem;
+  padding: 0 0.2667rem;
+  border-radius: 0.6255rem;
+  color: #f9f9f9;
+  font-size: 0.3087rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.voice-action-hint.voice-tip--send {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.voice-action-hint.voice-tip--cancel {
+  background: rgba(255, 19, 43, 0.6);
 }
 
 .sending-message-tip {
@@ -2184,7 +2298,7 @@ watch(
 }
 
 .input-bar-wrap input::placeholder {
-  color: rgba(249, 249, 249, 0.42);
+  color: #f9f9f9;
 }
 
 .voice-hold-btn {
@@ -2195,6 +2309,10 @@ watch(
   background: rgba(255, 255, 255, 0.2);
   color: #f9f9f9;
   font-size: 0.34rem;
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .send-action-btn,
@@ -2219,6 +2337,10 @@ watch(
   justify-content: center;
 }
 
+.send-action-btn:disabled {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 .send-action-btn svg {
   display: block;
 }
@@ -2228,8 +2350,23 @@ watch(
   min-width: 0.9955rem;
   padding: 0;
   background: #0f0f0f;
+  color: var(--c-brand);
   font-size: 0.54rem;
   line-height: 1;
+}
+
+.plus-btn span {
+  display: inline-block;
+  transition: transform 0.18s ease;
+}
+
+.plus-btn--expanded {
+  border: 0.02rem solid var(--c-brand);
+  color: #fff;
+}
+
+.plus-btn--expanded span {
+  transform: rotate(45deg);
 }
 
 .close-chat-btn {
@@ -2250,8 +2387,8 @@ watch(
 
 .attachment-panel {
   flex-shrink: 0;
-  min-height: 2.48rem;
-  padding: 0.18rem 0.48rem 0.3rem;
+  min-height: 1.4667rem;
+  padding: 0.4rem 0.48rem 0;
   display: flex;
   align-items: flex-start;
 }
@@ -2269,10 +2406,9 @@ watch(
 }
 
 .attachment-icon {
-  width: 1.06rem;
-  height: 1.06rem;
-  border-radius: 0.28rem;
-  background: rgba(255, 255, 255, 0.12);
+  width: 0.8267rem;
+  height: 0.6933rem;
+  color: rgba(255, 255, 255, 0.3);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2319,6 +2455,10 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
+
+  @include theme-light {
+    background: rgba(12, 12, 12, 0.6);
+  }
 }
 
 .no-service-card {
@@ -2339,6 +2479,19 @@ watch(
   flex-direction: column;
   align-items: center;
   gap: 0.22rem;
+
+  @include theme-light {
+    padding: 0.7rem 0.4rem;
+    border: 0.01rem solid rgba(255, 255, 255, 0.3);
+    background:
+      linear-gradient(
+        124deg,
+        rgba(142, 142, 142, 0.3) 0%,
+        rgba(103, 103, 103, 0.4) 46.8%,
+        rgba(72, 72, 72, 0.5) 100%
+      ),
+      url('@/assets/images/wallet/bg_sharp.webp') center / cover no-repeat;
+  }
 }
 
 .no-service-title {
@@ -2348,8 +2501,9 @@ watch(
 
   @include theme-light {
     width: 4rem;
+    font-size: 0.3733rem;
     text-align: center;
-    line-height: 1.35;
+    line-height: 1.3;
   }
 }
 

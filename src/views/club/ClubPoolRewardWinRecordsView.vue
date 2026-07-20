@@ -3,14 +3,9 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { postStatsJackpotAwardLogsApi } from '@/api/stats'
 import { showFailToast } from 'vant'
-import mainBgUrl from '@/assets/images/main_bg.webp'
 import type { StatsJackpotAwardLogsJackpotConfig } from '@/api/models/stats'
 import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
 import { t } from '@/i18n'
-// 主容器背景图：全页面共用一张底图。
-const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
-}))
 
 interface CardItem {
   rank: string
@@ -174,7 +169,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell record-page" :style="backgroundStyle" @scroll="onPageScroll">
+  <div class="page-shell record-page" @scroll="onPageScroll">
     <HeaderBack :title="'获奖记录'" />
 
     <section class="record-table-wrap">
@@ -240,12 +235,21 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 // 1rem = 37.5px
 
 .record-page {
   position: relative;
   height: 100dvh;
+  background-color: var(--c-page);
+  background-image: url('@/assets/images/main_bg.webp');
   background-size: cover;
+  background-position: center;
+
+  @include theme-light {
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 // 表格容器
@@ -275,6 +279,10 @@ onMounted(() => {
   height: 0.5073rem; // 19.024px / 37.5
   border-radius: 0.7136rem; // 26.763px / 37.5
   background: #00af83;
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .record-header-pill {
@@ -287,6 +295,12 @@ onMounted(() => {
   border-radius: 4.2992rem; // 161.221px / 37.5
   color: #f9f9f9;
   font-size: 0.308rem; // 11.54px / 37.5
+
+  @include theme-light {
+    color: #fff;
+    background: rgba(var(--c-brand-rgb), 0.72);
+    box-shadow: inset 0 0 0.16rem rgba(255, 255, 255, 0.7);
+  }
 }
 
 // 数据行
@@ -304,6 +318,11 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 4.2992rem;
   color: rgba(225, 238, 255, 0.9);
+
+  @include theme-light {
+    color: var(--c-text);
+    background: var(--c-surface);
+  }
 }
 
 // 列定义
@@ -341,6 +360,10 @@ onMounted(() => {
   font-size: 0.3009rem;
   color: #f9f9f9;
   white-space: nowrap;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .col-hand {
@@ -371,6 +394,10 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 1.547rem; // 58px / 37.5
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .info-sub {
@@ -378,6 +405,10 @@ onMounted(() => {
   color: rgba(255, 255, 255, 0.5);
   line-height: 1.2;
   white-space: nowrap;
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 // 金额颜色
@@ -387,6 +418,10 @@ onMounted(() => {
 
 .val-neg {
   color: rgba(225, 238, 255, 0.65);
+
+  @include theme-light {
+    color: var(--c-loss);
+  }
 }
 
 // 扑克牌
@@ -449,6 +484,10 @@ onMounted(() => {
   font-size: 0.3734rem;
   color: rgba(225, 234, 248, 0.88);
   text-align: center;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .pool-loading-more {
@@ -456,5 +495,9 @@ onMounted(() => {
   text-align: center;
   color: rgba(225, 234, 248, 0.88);
   font-size: 0.32rem;
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 </style>

@@ -50,6 +50,8 @@ const sharpBgStyle = {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .record {
   display: flex;
   align-items: center;
@@ -59,6 +61,10 @@ const sharpBgStyle = {
   cursor: pointer;
   box-shadow: none;
   overflow: hidden;
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .record__bg {
@@ -68,6 +74,10 @@ const sharpBgStyle = {
   filter: blur(10px);
   pointer-events: none;
   z-index: 0;
+
+  @include theme-light {
+    display: none;
+  }
 }
 
 .record::after {
@@ -78,6 +88,10 @@ const sharpBgStyle = {
   background: rgba(0, 0, 0, 0.28);
   pointer-events: none;
   z-index: 1;
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .record > *:not(.record__bg) {
@@ -111,5 +125,9 @@ const sharpBgStyle = {
   color: #fff;
   line-height: 1.4;
   white-space: nowrap;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 </style>

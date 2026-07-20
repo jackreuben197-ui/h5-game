@@ -93,7 +93,7 @@ function onContinue(): void {
 
   @include theme-light {
     background-color: var(--c-page);
-    background-image: url('@/assets/images/main_bg_light.png');
+    background-image: none;
   }
 }
 
@@ -106,6 +106,10 @@ function onContinue(): void {
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
   background: var(--c-overlay);
+
+  @include theme-light {
+    background: rgba(12, 12, 12, 0.6);
+  }
 }
 
 .card {
@@ -130,9 +134,9 @@ function onContinue(): void {
   background-position: center;
 
   @include theme-light {
-    background: #fff;
-    border-color: rgba(0, 0, 0, 0.12);
-    box-shadow: 0 0.12rem 0.36rem rgba(0, 0, 0, 0.14);
+    --c-text: #fff;
+    --c-text-muted: rgba(255, 255, 255, 0.5);
+    background-image: url('@/assets/images/wallet/bg_sharp.webp');
   }
 }
 
@@ -152,10 +156,7 @@ function onContinue(): void {
   z-index: 1;
 
   @include theme-light {
-    background: #fff;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    background: rgba(0, 0, 0, 0.7);
   }
 }
 
@@ -200,7 +201,7 @@ function onContinue(): void {
   margin-bottom: 22px;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.12);
+    background: rgba(255, 255, 255, 0.1);
   }
 }
 
@@ -235,7 +236,7 @@ function onContinue(): void {
   font-size: 13px;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.18);
+    background: rgba(44, 45, 45, 0.31);
   }
 }
 
@@ -280,8 +281,8 @@ function onContinue(): void {
   color: #fff;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.16);
-    color: var(--c-text);
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
   }
 }
 

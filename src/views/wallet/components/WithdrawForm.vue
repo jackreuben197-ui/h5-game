@@ -714,7 +714,7 @@ async function handleSubmit(): Promise<void> {
 
   @include theme-light {
     background-color: #f3f4f6;
-    background-image: url('@/assets/images/main_bg_light.png');
+    background-image: none;
   }
 
   &::before {
@@ -728,7 +728,7 @@ async function handleSubmit(): Promise<void> {
     background: rgba(12, 12, 12, 0.60);
 
     @include theme-light {
-      background: rgba(12, 12, 12, 0.4);
+      background: rgba(12, 12, 12, 0.6);
     }
   }
 }
@@ -749,8 +749,11 @@ async function handleSubmit(): Promise<void> {
   background-image: url('@/assets/images/wallet/bg_sharp.webp');
 
   @include theme-light {
-    background-color: #fff;
-    background-image: none;
+    --c-text: #fff;
+    --c-text-muted: rgba(255, 255, 255, 0.65);
+    --c-divider: rgba(255, 255, 255, 0.14);
+    background-color: #171717;
+    background-image: url('@/assets/images/wallet/bg_sharp.webp');
   }
 
   &::after {
@@ -765,9 +768,7 @@ async function handleSubmit(): Promise<void> {
     z-index: 0;
 
     @include theme-light {
-      background: #fff;
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
+      background: rgba(0, 0, 0, 0.7);
     }
   }
 
@@ -803,8 +804,7 @@ async function handleSubmit(): Promise<void> {
     0.086rem 0.107rem 0.172rem rgba(0, 0, 0, 0.25);
 
   @include theme-light {
-    border-color: rgba(0, 0, 0, 0.12);
-    box-shadow: 0 0.107rem 0.24rem rgba(0, 0, 0, 0.12);
+    border-color: rgba(242, 242, 242, 0.4);
   }
 }
 
@@ -817,7 +817,7 @@ async function handleSubmit(): Promise<void> {
   line-height: 1.4;
 
   @include theme-light {
-    color: #222;
+    color: #fff;
   }
 }
 
@@ -840,7 +840,7 @@ async function handleSubmit(): Promise<void> {
   width: 100%;
 
   @include theme-light {
-    color: #222;
+    color: #f9f9f9;
   }
 }
 
@@ -852,8 +852,8 @@ async function handleSubmit(): Promise<void> {
   overflow: hidden;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.12);
-    border-color: rgba(153, 153, 153, 0.25);
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.14);
   }
 }
 
@@ -875,7 +875,7 @@ async function handleSubmit(): Promise<void> {
   border-bottom: 0.026rem solid rgba(255, 255, 255, 0.14);
 
   @include theme-light {
-    border-bottom-color: rgba(0, 0, 0, 0.12);
+    border-bottom-color: rgba(255, 255, 255, 0.14);
   }
 }
 
@@ -897,7 +897,7 @@ async function handleSubmit(): Promise<void> {
   white-space: nowrap;
 
   @include theme-light {
-    color: #222;
+    color: #fff;
   }
 }
 
@@ -953,14 +953,14 @@ async function handleSubmit(): Promise<void> {
   }
 
   @include theme-light {
-    border-bottom-color: rgba(0, 0, 0, 0.1);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
   }
 
   &:active {
     background: rgba(255, 255, 255, 0.06);
 
     @include theme-light {
-      background: rgba(0, 0, 0, 0.06);
+      background: rgba(255, 255, 255, 0.06);
     }
   }
 
@@ -982,7 +982,7 @@ async function handleSubmit(): Promise<void> {
   white-space: nowrap;
 
   @include theme-light {
-    color: rgba(34, 34, 34, 0.95);
+    color: rgba(255, 255, 255, 0.95);
   }
 }
 
@@ -1000,7 +1000,7 @@ async function handleSubmit(): Promise<void> {
   color: rgba(255, 255, 255, 0.52);
 
   @include theme-light {
-    color: rgba(34, 34, 34, 0.52);
+    color: rgba(255, 255, 255, 0.52);
   }
 }
 
@@ -1014,7 +1014,7 @@ async function handleSubmit(): Promise<void> {
   border-radius: 0.589rem;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.12);
+    background: rgba(255, 255, 255, 0.2);
   }
 }
 
@@ -1031,7 +1031,7 @@ async function handleSubmit(): Promise<void> {
   text-align: center;
 
   @include theme-light {
-    color: #222;
+    color: #fff;
   }
 }
 
@@ -1039,7 +1039,7 @@ async function handleSubmit(): Promise<void> {
   color: rgba(255, 255, 255, 0.65);
 
   @include theme-light {
-    color: rgba(34, 34, 34, 0.45);
+    color: rgba(255, 255, 255, 0.65);
   }
 }
 

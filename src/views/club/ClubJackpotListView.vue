@@ -4,12 +4,7 @@ import { useRouter } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
 import { postOrgClubJackpotTemplateDelApi, postOrgClubJackpotTemplateListApi } from '@/api/org'
 import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
-import mainBgUrl from '@/assets/images/main_bg.webp'
 import { t } from '@/i18n'
-// 主容器背景图：全页面共用一张底图。
-const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
-}))
 
 interface JackpotTemplateItem {
   id: string
@@ -63,7 +58,10 @@ async function fetchJackpotTemplates(reset = false): Promise<void> {
     })
 
     if (Number(response.code) !== 0) {
-      const message = typeof response.msg === 'string' ? response.msg : t('UIClub_Load') + " Jackpot " + t('UIClub_Fail5')
+      const message =
+        typeof response.msg === 'string'
+          ? response.msg
+          : t('UIClub_Load') + ' Jackpot ' + t('UIClub_Fail5')
       throw new Error(message)
     }
 
@@ -83,7 +81,8 @@ async function fetchJackpotTemplates(reset = false): Promise<void> {
       templates.value = []
       hasMore.value = false
     }
-    const message = error instanceof Error ? error.message : t('UIClub_Load') + " Jackpot " + t('UIClub_Fail5')
+    const message =
+      error instanceof Error ? error.message : t('UIClub_Load') + ' Jackpot ' + t('UIClub_Fail5')
     showFailToast(message)
   } finally {
     if (reset) {
@@ -210,12 +209,7 @@ function goPoolReward(): void {
 </script>
 
 <template>
-  <div
-    ref="pageRef"
-    class="page-shell club-jackpot-page"
-    :style="backgroundStyle"
-    @scroll="onPageScroll"
-  >
+  <div ref="pageRef" class="page-shell club-jackpot-page" @scroll="onPageScroll">
     <HeaderBack :title="'Jackpot'">
       <template #right>
         <button type="button" class="pool-trigger" aria-label="Pool Reward" @click="goPoolReward">
@@ -286,7 +280,7 @@ function goPoolReward(): void {
       <transition name="dialog-fade">
         <div v-if="showDeleteDialog" class="delete-dialog-overlay" @click.self="cancelDelete">
           <div class="delete-dialog-card">
-            <p class="delete-dialog-title">Are you sure you want to delete this game table?</p>
+            <p class="delete-dialog-title">确认要删除这个模板吗？</p>
 
             <div class="delete-dialog-actions">
               <button
@@ -314,10 +308,19 @@ function goPoolReward(): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-jackpot-page {
   position: relative;
   height: 100dvh;
+  background-color: var(--c-page);
+  background-image: url('@/assets/images/main_bg.webp');
   background-size: cover;
+  background-position: center;
+
+  @include theme-light {
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 :deep(.page-back-header) {
@@ -340,6 +343,11 @@ function goPoolReward(): void {
   gap: 0.0475rem;
   cursor: pointer;
   line-height: 1.2;
+
+  @include theme-light {
+    color: #fff;
+    background: var(--c-brand);
+  }
 }
 
 .trigger-caret {
@@ -571,6 +579,10 @@ function goPoolReward(): void {
   font-size: 0.3734rem;
   color: rgba(225, 234, 248, 0.88);
   text-align: center;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .list-loading-more {
@@ -578,6 +590,10 @@ function goPoolReward(): void {
   text-align: center;
   color: rgba(225, 234, 248, 0.88);
   font-size: 0.32rem;
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 /* Fixed footer */
@@ -604,6 +620,12 @@ function goPoolReward(): void {
     inset 0 0.04rem 0.2rem rgba(255, 255, 255, 0.25),
     0 0.16rem 0.36rem rgba(0, 120, 100, 0.45);
   cursor: pointer;
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 /* ===== 删除确认弹窗 (Figma node-id=1451-5725, 1rem=37.5px) ===== */
@@ -618,6 +640,10 @@ function goPoolReward(): void {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  @include theme-light {
+    background: rgba(12, 12, 12, 0.58);
+  }
 }
 
 /* Card: 317.03×150.06px → 8.454×4.002rem, corner 36.39px → 0.97rem */
@@ -729,6 +755,11 @@ function goPoolReward(): void {
   border: 0.0267rem solid rgba(242, 242, 242, 0.8);
   background: linear-gradient(157.77deg, #05e7ae 7.55%, #027a5c 71.92%);
   backdrop-filter: blur(0.0591rem); // 2.22px
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+  }
 }
 
 /* Fade transition */

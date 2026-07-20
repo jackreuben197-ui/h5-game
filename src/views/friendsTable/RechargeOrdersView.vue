@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
-import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import TogglePillGroup from '@/components/wallet/TogglePillGroup.vue'
 import RecordItem from '@/components/wallet/RecordItem.vue'
@@ -88,10 +87,7 @@ onMounted(loadOrders)
 </script>
 
 <template>
-  <div
-    class="wallet-orders-screen app-scroll-standalone"
-    :style="{ backgroundImage: `url(${sharpBgUrl})` }"
-  >
+  <div class="wallet-orders-screen app-scroll-standalone">
     <HeaderBack :title="t('Wallet_OrdersTitle')" extra-padding>
       <template #right>
         <TogglePillGroup v-model="activeTab" :tabs="tabs" />
@@ -120,6 +116,8 @@ onMounted(loadOrders)
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .wallet-orders-screen {
   position: relative;
   height: 100vh;
@@ -133,6 +131,12 @@ onMounted(loadOrders)
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-color: var(--c-page);
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+
+  @include theme-light {
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .wallet-orders-screen::before {
@@ -144,6 +148,12 @@ onMounted(loadOrders)
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
   background: rgba(0, 0, 0, 0.15);
+
+  @include theme-light {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .wallet-orders-screen > * {
@@ -168,6 +178,10 @@ onMounted(loadOrders)
   padding: 0 0.5067rem;
   text-align: center;
   color: rgba(255, 255, 255, 0.65);
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 
   &__icon {
     width: 1.2533rem;

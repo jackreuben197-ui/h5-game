@@ -325,8 +325,10 @@ onUnmounted(() => {
   background-image: url('@/assets/images/wallet/bg_sharp.webp');
 
   @include theme-light {
-    background-color: #fff;
-    background-image: none;
+    --c-text: #fff;
+    --c-text-muted: rgba(255, 255, 255, 0.62);
+    background-color: #171717;
+    background-image: url('@/assets/images/wallet/bg_sharp.webp');
   }
 }
 
@@ -341,9 +343,7 @@ onUnmounted(() => {
   z-index: 1;
 
   @include theme-light {
-    background: #fff;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    background: rgba(0, 0, 0, 0.85);
   }
 }
 
@@ -369,8 +369,8 @@ onUnmounted(() => {
   gap: 15px;
 
   @include theme-light {
-    background: #fff;
-    box-shadow: 0 0.08rem 0.24rem rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.27);
+    box-shadow: none;
   }
 }
 
@@ -401,7 +401,7 @@ onUnmounted(() => {
   color: rgba(255, 255, 255, 0.83);
 
   @include theme-light {
-    color: rgba(34, 34, 34, 0.24);
+    color: rgba(255, 255, 255, 0.83);
   }
 }
 
@@ -429,8 +429,8 @@ onUnmounted(() => {
   white-space: nowrap;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.16);
-    color: var(--c-text);
+    background: rgba(0, 0, 0, 0.25);
+    color: #fff;
   }
 }
 
@@ -509,7 +509,7 @@ onUnmounted(() => {
   letter-spacing: 0.195px;
 
   @include theme-light {
-    color: var(--c-text-muted);
+    color: #f9f9f9;
   }
 }
 
@@ -526,8 +526,8 @@ onUnmounted(() => {
   font-size: 14px;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.16);
-    color: var(--c-text);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
   }
 }
 
@@ -548,7 +548,7 @@ onUnmounted(() => {
   max-width: 200px;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.12);
+    background: rgba(255, 255, 255, 0.05);
   }
 }
 
@@ -588,7 +588,7 @@ onUnmounted(() => {
   align-items: center;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.16);
+    background: #0f0f0f;
   }
 }
 
@@ -603,7 +603,7 @@ onUnmounted(() => {
   gap: 4.2px;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.16);
+    background: #0f0f0f;
   }
 }
 
@@ -657,7 +657,7 @@ onUnmounted(() => {
   flex-shrink: 0;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.16);
+    background: #0f0f0f;
   }
 
   &:active {
@@ -679,8 +679,8 @@ onUnmounted(() => {
   color: #f3f3f3;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.16);
-    color: var(--c-text);
+    background: rgba(255, 255, 255, 0.1);
+    color: #f3f3f3;
   }
 
   &:active {

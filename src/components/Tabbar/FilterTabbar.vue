@@ -87,6 +87,8 @@ export default { name: 'FilterTabbar' }
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 /* ---- 容器：全宽，等分每个 tab ---- */
 .filter-tabbar {
   display: flex;
@@ -97,6 +99,10 @@ export default { name: 'FilterTabbar' }
   border-radius: 0.67rem;
   margin: 0.45rem;
   font-family:'HONOR Sans CN';
+
+  @include theme-light {
+    background: #e3e3e3;
+  }
 }
 
 /* ---- 每个 tab 按钮：flex-1 等宽 ---- */
@@ -129,6 +135,10 @@ export default { name: 'FilterTabbar' }
   transition: color 0.18s;
   position: relative;
   z-index: 1;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 .filter-tab__item--active {
   background: rgba($color: #FFFFFF, $alpha: 0.17);
@@ -136,6 +146,15 @@ export default { name: 'FilterTabbar' }
 
   .filter-tab__text {
     font-weight: 700;
+  }
+
+  @include theme-light {
+    background: var(--c-brand);
+    border-color: #fff;
+
+    .filter-tab__text {
+      color: #fff;
+    }
   }
 }
 /* ========================================
@@ -166,6 +185,13 @@ export default { name: 'FilterTabbar' }
     color: #fff;
     font-weight: 700;
     z-index: 3;
+  }
+
+  @include theme-light {
+    box-shadow:
+      0 0 0.1rem 0.05rem rgba(var(--c-brand-rgb), 0.9) inset,
+      inset 1px 1px 0 0 rgba(255, 255, 255, 0.85),
+      inset -1px -1px 0 0 rgba(255, 255, 255, 0.85);
   }
 }
 </style>

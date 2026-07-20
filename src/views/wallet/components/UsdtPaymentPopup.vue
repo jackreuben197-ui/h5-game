@@ -267,7 +267,7 @@ onUnmounted(() => {
 
   @include theme-light {
     background-color: var(--c-page);
-    background-image: url('@/assets/images/main_bg_light.png');
+    background-image: none;
   }
 }
 
@@ -280,6 +280,10 @@ onUnmounted(() => {
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
   background: var(--c-overlay);
+
+  @include theme-light {
+    background: rgba(12, 12, 12, 0.6);
+  }
 }
 
 .card {
@@ -302,9 +306,10 @@ onUnmounted(() => {
   background-position: center;
 
   @include theme-light {
-    background: #fff;
-    border-color: rgba(0, 0, 0, 0.12);
-    box-shadow: 0 0.12rem 0.36rem rgba(0, 0, 0, 0.14);
+    --c-text: #fff;
+    --c-text-muted: rgba(255, 255, 255, 0.5);
+    --c-divider: rgba(255, 255, 255, 0.2);
+    background-image: url('@/assets/images/wallet/bg_sharp.webp');
   }
 }
 
@@ -322,10 +327,7 @@ onUnmounted(() => {
   z-index: 1;
 
   @include theme-light {
-    background: #fff;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    background: rgba(0, 0, 0, 0.7);
   }
 }
 
@@ -446,7 +448,7 @@ onUnmounted(() => {
   box-sizing: border-box;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.12);
+    background: rgba(245, 245, 245, 0.1);
   }
 }
 
@@ -465,9 +467,9 @@ onUnmounted(() => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 
   @include theme-light {
-    background: rgba(var(--c-brand-rgb), 0.16);
-    border: 1px solid rgba(var(--c-brand-rgb), 0.55);
-    box-shadow: none;
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
 }
 
@@ -538,7 +540,7 @@ onUnmounted(() => {
   box-sizing: border-box;
 
   @include theme-light {
-    background: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.12);
   }
 }
 
@@ -547,7 +549,7 @@ onUnmounted(() => {
   color: var(--c-text);
 
   @include theme-light {
-    background: #fff;
+    background: rgba(255, 255, 255, 0.12);
   }
 }
 
@@ -566,7 +568,7 @@ onUnmounted(() => {
   color: rgba(249, 249, 249, 0.83);
 
   @include theme-light {
-    color: rgba(34, 34, 34, 0.28);
+    color: rgba(249, 249, 249, 0.83);
   }
 }
 
@@ -594,7 +596,7 @@ onUnmounted(() => {
 
   @include theme-light {
     background-color: var(--c-page);
-    background-image: url('@/assets/images/main_bg_light.png');
+    background-image: none;
   }
 }
 
@@ -607,6 +609,10 @@ onUnmounted(() => {
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
   background: var(--c-overlay);
+
+  @include theme-light {
+    background: rgba(12, 12, 12, 0.6);
+  }
 }
 
 .timeout-card {
@@ -630,9 +636,9 @@ onUnmounted(() => {
   background-position: center;
 
   @include theme-light {
-    background: #fff;
-    border-color: rgba(0, 0, 0, 0.12);
-    box-shadow: 0 0.12rem 0.36rem rgba(0, 0, 0, 0.14);
+    --c-text: #fff;
+    --c-text-muted: rgba(255, 255, 255, 0.5);
+    background-image: url('@/assets/images/wallet/bg_sharp.webp');
   }
 }
 
@@ -650,10 +656,7 @@ onUnmounted(() => {
   z-index: 1;
 
   @include theme-light {
-    background: #fff;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    background: rgba(0, 0, 0, 0.7);
   }
 }
 
@@ -701,7 +704,7 @@ onUnmounted(() => {
   );
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.12);
+    background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%);
   }
 }
 
@@ -718,8 +721,8 @@ onUnmounted(() => {
 
   @include theme-light {
     background: none;
-    -webkit-text-fill-color: var(--c-text);
-    color: var(--c-text);
+    -webkit-text-fill-color: #fff;
+    color: #fff;
   }
 }
 

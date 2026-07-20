@@ -139,6 +139,8 @@ const rewardList = computed<RewardRecord[]>(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .mtt-rewards-tab {
   padding-top: 0.2rem;
 }
@@ -160,6 +162,10 @@ const rewardList = computed<RewardRecord[]>(() => {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 3.9rem;
   backdrop-filter: blur(0.16px);
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .rewards-stat-label {
@@ -168,6 +174,10 @@ const rewardList = computed<RewardRecord[]>(() => {
   font-family: 'SF Pro', 'HONOR Sans CN', sans-serif;
   font-weight: 700;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .rewards-stat-value {
@@ -178,6 +188,10 @@ const rewardList = computed<RewardRecord[]>(() => {
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 700;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .stat-chip-icon {

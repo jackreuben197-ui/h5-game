@@ -42,6 +42,8 @@ const gameStore = useGameStore()
 const visible = ref(false)
 const loading = ref(false)
 const sending = ref(false)
+const imageUploading = ref(false)
+const attachmentPanelVisible = ref(false)
 const messages = ref<ChatSupportMessageListChatData[]>([])
 const inputText = ref('')
 const messageContainer = ref<HTMLElement | null>(null)
@@ -695,6 +697,7 @@ async function openPanel(): Promise<void> {
     !activeChannel.value ||
     (requestedClubMissing.value && Number(chatContext.value.clubId || 0) > 0)
   ) {
+    visible.value = false
     noServiceVisible.value = true
     return
   }
@@ -707,6 +710,7 @@ function closePanel(): void {
   visible.value = false
   messagesReady.value = false
   voiceMode.value = false
+  attachmentPanelVisible.value = false
   closeImagePreview()
   stopVoicePlayback()
 }
@@ -754,6 +758,10 @@ function useVoiceMode(): void {
 
 function useTextMode(): void {
   voiceMode.value = false
+}
+
+function toggleAttachmentPanel(): void {
+  attachmentPanelVisible.value = !attachmentPanelVisible.value
 }
 
 function triggerUpload(): void {
@@ -847,8 +855,11 @@ async function onImageUpload(event: Event): Promise<void> {
   const channel = activeChannel.value
   if (!channel) return
 
+  imageUploading.value = true
+
   const runtime = await resolveUploadRuntime()
   if (!runtime) {
+    imageUploading.value = false
     input.value = ''
     return
   }
@@ -865,6 +876,7 @@ async function onImageUpload(event: Event): Promise<void> {
     getResponseCode(uploadResponse as unknown as Record<string, unknown>) !== 0 ||
     !uploadResponse.data
   ) {
+    imageUploading.value = false
     showFailToast(uploadResponse.message || '上传失败')
     input.value = ''
     return
@@ -872,6 +884,7 @@ async function onImageUpload(event: Event): Promise<void> {
 
   const url = pickFileUrl(uploadResponse.data)
   if (!url) {
+    imageUploading.value = false
     input.value = ''
     return
   }
@@ -901,6 +914,7 @@ async function onImageUpload(event: Event): Promise<void> {
     // await fetchMessages({ setRead: true })
   }
 
+  imageUploading.value = false
   input.value = ''
 }
 
@@ -1317,6 +1331,7 @@ function initWsListener(): void {
 
 function closeNoServicePopup(): void {
   noServiceVisible.value = false
+  visible.value = false
 }
 
 onMounted(() => {
@@ -1419,6 +1434,8 @@ watch(
               <span>{{ supportHintText }}</span>
             </div>
           </div>
+
+          <div v-if="imageUploading" class="sending-message-tip">Sending Message...</div>
 
           <div
             ref="messageContainer"
@@ -1577,7 +1594,7 @@ watch(
               </button>
             </template>
 
-            <button class="plus-btn" type="button" @click="triggerUpload">+</button>
+            <button class="plus-btn" type="button" @click="toggleAttachmentPanel">+</button>
 
             <button
               class="close-chat-btn close-chat-btn--icon"
@@ -1610,6 +1627,19 @@ watch(
               capture
               @change="onFallbackAudioUpload"
             />
+          </div>
+
+          <div v-if="attachmentPanelVisible" class="attachment-panel">
+            <button class="attachment-item" type="button" @click="triggerUpload">
+              <span class="attachment-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect x="2.5" y="3.5" width="19" height="17" rx="3" stroke="currentColor" stroke-width="1.8" />
+                  <circle cx="8" cy="9" r="2" fill="currentColor" />
+                  <path d="M4.5 18L10 12.5L13.5 16L16 13.5L21 18.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span>画廊</span>
+            </button>
           </div>
         </div>
       </div>
@@ -1695,12 +1725,20 @@ watch(
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .chat-mask {
   position: absolute;
   inset: 0;
   background: rgba(12, 12, 12, 0.3);
+
+  @include theme-light {
+    background: transparent;
+  }
 }
 
 .chat-sheet {
@@ -1716,6 +1754,10 @@ watch(
   background-repeat: no-repeat;
   overflow: hidden;
   opacity: 0.8;
+
+  @include theme-light {
+    opacity: 1;
+  }
 }
 
 .chat-sheet-frost {
@@ -1723,6 +1765,10 @@ watch(
   inset: 0;
   background: rgba(0, 0, 0, 0.84);
   backdrop-filter: blur(0.2rem);
+
+  @include theme-light {
+    background: rgba(23, 23, 23, 0.84);
+  }
 }
 
 .chat-sheet-inner {
@@ -2067,6 +2113,25 @@ watch(
   gap: 0.18rem;
 }
 
+.sending-message-tip {
+  position: absolute;
+  left: 50%;
+  bottom: 2.52rem;
+  z-index: 6;
+  transform: translateX(-50%);
+  width: 5.973rem;
+  height: 1.706rem;
+  border-radius: 0.64rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: #f9f9f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.42rem;
+  font-weight: 500;
+  backdrop-filter: blur(0.2rem);
+}
+
 .voice-timer {
   font-variant-numeric: tabular-nums;
 }
@@ -2144,7 +2209,7 @@ watch(
 }
 
 .send-action-btn {
-  background: #01ceab;
+  background: var(--c-brand);
   width: 0.9955rem;
   min-width: 0.9955rem;
   padding-top: 0.2rem;
@@ -2181,6 +2246,36 @@ watch(
   justify-content: center;
   background: rgba(255, 255, 255, 0.1);
   border: 0.01rem solid rgba(255, 255, 255, 0.35);
+}
+
+.attachment-panel {
+  flex-shrink: 0;
+  min-height: 2.48rem;
+  padding: 0.18rem 0.48rem 0.3rem;
+  display: flex;
+  align-items: flex-start;
+}
+
+.attachment-item {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #f9f9f9;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.12rem;
+  font-size: 0.22rem;
+}
+
+.attachment-icon {
+  width: 1.06rem;
+  height: 1.06rem;
+  border-radius: 0.28rem;
+  background: rgba(255, 255, 255, 0.12);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .image-preview-mask {
@@ -2250,12 +2345,22 @@ watch(
   margin: 0;
   color: #fff;
   font-size: 0.44rem;
+
+  @include theme-light {
+    width: 4rem;
+    text-align: center;
+    line-height: 1.35;
+  }
 }
 
 .no-service-desc {
   margin: 0;
   color: rgba(255, 255, 255, 0.8);
   font-size: 0.3rem;
+
+  @include theme-light {
+    display: none;
+  }
 }
 
 .no-service-btn {
@@ -2268,6 +2373,10 @@ watch(
   background: linear-gradient(180deg, #05e7ae 0%, #027a5c 100%);
   color: #fff;
   font-size: 0.5rem;
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 @keyframes voice-wave-playing {

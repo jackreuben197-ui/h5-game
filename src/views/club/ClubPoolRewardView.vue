@@ -2,15 +2,10 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { postOrgClubJackpotTemplateListApi } from '@/api/org'
-import mainBgUrl from '@/assets/images/main_bg.webp'
 import type { OrgClubJackpotTemplateListDataItem } from '@/api/models/org'
 import { formatUC } from '@/utils/roomVisibility'
 import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
 import { t } from '@/i18n'
-// 主容器背景图：全页面共用一张底图。
-const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
-}))
 
 interface PoolRewardItem {
   id: string
@@ -147,7 +142,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell pool-reward-page" :style="backgroundStyle" @scroll="onPageScroll">
+  <div class="page-shell pool-reward-page" @scroll="onPageScroll">
     <HeaderBack :title="'奖池记录'" />
 
     <section class="pool-body">
@@ -221,10 +216,19 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .pool-reward-page {
   position: relative;
   height: 100dvh;
+  background-color: var(--c-page);
+  background-image: url('@/assets/images/main_bg.webp');
   background-size: cover;
+  background-position: center;
+
+  @include theme-light {
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .pool-body {
@@ -256,12 +260,21 @@ onMounted(() => {
   font-size: 0.3991rem;
   line-height: 0.95;
   border-bottom: 0.0363rem solid transparent;
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.72);
+  }
 }
 
 .tab-btn--active {
   color: #ffffff;
   font-weight: 700;
   border-bottom-color: #ffffff;
+
+  @include theme-light {
+    color: var(--c-brand);
+    border-bottom-color: var(--c-brand);
+  }
 }
 
 .pool-list {
@@ -410,6 +423,10 @@ onMounted(() => {
   font-size: 0.3734rem;
   color: rgba(225, 234, 248, 0.88);
   text-align: center;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .pool-loading-more {
@@ -417,6 +434,10 @@ onMounted(() => {
   text-align: center;
   color: rgba(225, 234, 248, 0.88);
   font-size: 0.32rem;
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .footer-action {
@@ -441,6 +462,12 @@ onMounted(() => {
   box-shadow:
     inset 0 0.04rem 0.2rem rgba(255, 255, 255, 0.25),
     0 0.16rem 0.36rem rgba(0, 120, 100, 0.45);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 @media (max-width: 360px) {

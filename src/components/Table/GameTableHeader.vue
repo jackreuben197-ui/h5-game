@@ -113,6 +113,8 @@ export default { name: 'GameTableHeader' }
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 // ---- Outer container: white inner shadow ring (matches FilterTabbar--pill outer button) ----
 .game-table__header {
   display: flex;       // flex 让内层可垂直居中，形成四边均匀的环形间距
@@ -121,8 +123,11 @@ export default { name: 'GameTableHeader' }
   border-radius: 0.65rem;
   padding: 0.10rem 0.10rem;
   // border: 0.83px solid white;
-  box-shadow:
-    0 0 0.2rem 0.01rem rgba(0, 175, 131, 0.9) inset,
+  box-shadow: 0 0 0.2rem 0.01rem rgba(0, 175, 131, 0.9) inset;
+
+  @include theme-light {
+    box-shadow: 0 0 0.2rem 0.01rem rgba(var(--c-brand-rgb), 0.9) inset;
+  }
 }
 
 // ---- Inner container: green fill (matches FilterTabbar--pill .inner-content) ----
@@ -136,6 +141,11 @@ export default { name: 'GameTableHeader' }
   box-shadow: 0 0 0.1rem 0.05rem rgba(0, 175, 131, 0.9);
   overflow: visible; // allow dropdowns to overflow
   font-family: 'HONOR Sans CN', sans-serif;
+
+  @include theme-light {
+    background: var(--c-brand);
+    box-shadow: 0 0 0.1rem 0.05rem rgba(var(--c-brand-rgb), 0.9);
+  }
 
   &--ghost {
     background: rgba(255, 255, 255, 0.20);
@@ -220,6 +230,10 @@ export default { name: 'GameTableHeader' }
   background: rgba(0, 0, 0, 0.37);
   backdrop-filter: blur(0.16rem);
   -webkit-backdrop-filter: blur(0.16rem);
+
+  @include theme-light {
+    background: rgba(255, 255, 255, 0.96);
+  }
 }
 
 .game-table__dropdown-item {
@@ -233,12 +247,20 @@ export default { name: 'GameTableHeader' }
   font-family: 'HONOR Sans CN', sans-serif;
   transition: background 0.15s;
 
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.9);
+  }
+
   &:active {
     background: rgba(255, 255, 255, 0.08);
   }
 
   & + & {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+    @include theme-light {
+      border-top-color: rgba(0, 0, 0, 0.1);
+    }
   }
 }
 

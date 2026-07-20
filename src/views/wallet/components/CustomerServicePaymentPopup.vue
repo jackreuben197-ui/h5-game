@@ -86,7 +86,7 @@ const payPrice = computed(() =>
 
   @include theme-light {
     background-color: var(--c-page);
-    background-image: url('@/assets/images/main_bg_light.png');
+    background-image: none;
   }
 }
 
@@ -99,6 +99,10 @@ const payPrice = computed(() =>
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
   background: var(--c-overlay);
+
+  @include theme-light {
+    background: rgba(12, 12, 12, 0.6);
+  }
 }
 
 .card {
@@ -123,9 +127,10 @@ const payPrice = computed(() =>
   background-position: center;
 
   @include theme-light {
-    background: #fff;
-    border-color: rgba(0, 0, 0, 0.12);
-    box-shadow: 0 0.12rem 0.36rem rgba(0, 0, 0, 0.14);
+    --c-text: #fff;
+    --c-text-muted: rgba(255, 255, 255, 0.5);
+    --c-divider: rgba(255, 255, 255, 0.2);
+    background-image: url('@/assets/images/wallet/bg_sharp.webp');
   }
 }
 
@@ -145,10 +150,7 @@ const payPrice = computed(() =>
   z-index: 1;
 
   @include theme-light {
-    background: #fff;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    background: rgba(0, 0, 0, 0.7);
   }
 }
 
@@ -195,8 +197,8 @@ const payPrice = computed(() =>
 
   @include theme-light {
     background: none;
-    -webkit-text-fill-color: var(--c-text);
-    color: var(--c-text);
+    -webkit-text-fill-color: #fff;
+    color: #fff;
   }
 }
 
@@ -237,7 +239,7 @@ const payPrice = computed(() =>
   background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.12);
+    background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%);
   }
 }
 
@@ -310,8 +312,8 @@ const payPrice = computed(() =>
   border: none;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.16);
-    color: var(--c-text);
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
   }
 }
 

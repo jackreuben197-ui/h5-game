@@ -14,12 +14,7 @@ import {
 } from '@/api/org'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 
-import mainBgUrl from '@/assets/images/main_bg.webp'
 import { t } from '@/i18n'
-// 主容器背景图：全页面共用一张底图。
-const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
-}))
 
 interface OptionItem {
   id: string
@@ -603,7 +598,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell jackpot-create-page" :style="backgroundStyle">
+  <div class="page-shell jackpot-create-page">
     <HeaderBack :title="isEditMode ? 'Edit Jackpot' : 'Jackpot'" />
 
     <section class="create-content">
@@ -950,10 +945,19 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .jackpot-create-page {
   position: relative;
   height: 100dvh;
+  background-color: var(--c-page);
+  background-image: url('@/assets/images/main_bg.webp');
   background-size: cover;
+  background-position: center;
+
+  @include theme-light {
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 :deep(.page-back-header) {
@@ -982,6 +986,11 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   color: #fff;
+
+  @include theme-light {
+    color: var(--c-text);
+    background: var(--c-surface);
+  }
 }
 
 .pill-label,
@@ -1001,8 +1010,16 @@ onMounted(() => {
   text-align: center;
   outline: none;
 
+  @include theme-light {
+    color: var(--c-text);
+  }
+
   &::placeholder {
     color: rgba(255, 255, 255, 0.5);
+
+    @include theme-light {
+      color: var(--c-text-muted);
+    }
   }
 }
 
@@ -1014,6 +1031,11 @@ onMounted(() => {
   border-radius: 0.4328rem;
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.0043rem);
+
+  @include theme-light {
+    background: var(--c-surface);
+    backdrop-filter: none;
+  }
 }
 
 .summary-card {
@@ -1030,6 +1052,10 @@ onMounted(() => {
   color: #fff;
   font-size: 0.32rem;
   line-height: 1.4;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .icon-info {
@@ -1042,6 +1068,11 @@ onMounted(() => {
   text-align: center;
   color: rgba(255, 255, 255, 0.9);
   font-style: normal;
+
+  @include theme-light {
+    border-color: rgba(34, 34, 34, 0.58);
+    color: rgba(34, 34, 34, 0.72);
+  }
 }
 
 .summary-amount-input {
@@ -1054,6 +1085,10 @@ onMounted(() => {
   align-items: center;
   gap: 0.1067rem;
   min-width: 3.2rem;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .summary-amount-input .amount-display {
@@ -1072,6 +1107,10 @@ onMounted(() => {
   background: linear-gradient(157.77deg, #05e7ae 7.55%, #027a5c 71.92%);
   color: #fff;
   font-size: 0.4rem;
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 
   &:active {
     opacity: 0.8;
@@ -1104,6 +1143,10 @@ onMounted(() => {
   display: grid;
   align-items: center;
   padding: 0.0267rem;
+
+  @include theme-light {
+    background: rgba(34, 34, 34, 0.12);
+  }
 }
 
 .segment-row--five {
@@ -1121,12 +1164,22 @@ onMounted(() => {
   color: #fff;
   font-size: 0.362rem;
   border-radius: 1.3844rem;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .segment-btn--active {
   border: 0.0133rem solid #fff;
   background: rgba(255, 255, 255, 0.17);
   backdrop-filter: blur(0.4533rem);
+
+  @include theme-light {
+    border-color: transparent;
+    background: rgba(34, 34, 34, 0.1);
+    backdrop-filter: none;
+  }
 }
 
 .mode-switch-wrap {
@@ -1141,16 +1194,35 @@ onMounted(() => {
   gap: 0.1067rem;
   color: #fff;
   font-size: 0.32rem;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .mode-switch-checkbox {
   width: 0.4rem;
   height: 0.4rem;
+
+  @include theme-light {
+    appearance: none;
+    border: 0.0267rem solid rgba(var(--c-brand-rgb), 0.85);
+    border-radius: 50%;
+    background: #fff;
+
+    &:checked {
+      background: radial-gradient(circle, var(--c-brand) 0 46%, #fff 50%);
+    }
+  }
 }
 
 .divider {
   height: 0.0181rem;
   background: rgba(255, 255, 255, 0.25);
+
+  @include theme-light {
+    background: var(--c-divider);
+  }
 }
 
 .rows-wrap {
@@ -1182,6 +1254,10 @@ onMounted(() => {
   color: #fff;
   font-size: 0.4054rem;
   line-height: 1.4;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .row-label--small {
@@ -1195,6 +1271,11 @@ onMounted(() => {
   border: 0.0267rem solid rgba(255, 255, 255, 0.7);
   position: relative;
   flex-shrink: 0;
+
+  @include theme-light {
+    border-color: rgba(34, 34, 34, 0.22);
+    background: rgba(34, 34, 34, 0.18);
+  }
 }
 
 .dot--active::after {
@@ -1203,6 +1284,10 @@ onMounted(() => {
   inset: 0.0667rem;
   border-radius: 50%;
   background: linear-gradient(145deg, #33c6ff, #1b9fdb 80%);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .value-input {
@@ -1218,6 +1303,12 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 0.1333rem;
+
+  @include theme-light {
+    color: var(--c-text);
+    background: rgba(34, 34, 34, 0.16);
+    mix-blend-mode: normal;
+  }
 }
 
 .value-input--narrow {
@@ -1231,6 +1322,10 @@ onMounted(() => {
   gap: 0.1333rem;
   font-size: 0.3716rem;
   color: #fff;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .blind-list {
@@ -1255,6 +1350,10 @@ onMounted(() => {
   align-items: center;
   gap: 0.0792rem;
   width: fit-content;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .blind-item--checkbox {
@@ -1264,6 +1363,18 @@ onMounted(() => {
 .blind-checkbox {
   width: 0.4rem;
   height: 0.4rem;
+
+  @include theme-light {
+    appearance: none;
+    border: 0.0267rem solid rgba(34, 34, 34, 0.22);
+    border-radius: 50%;
+    background: rgba(34, 34, 34, 0.18);
+
+    &:checked {
+      border-color: rgba(var(--c-brand-rgb), 0.85);
+      background: radial-gradient(circle, var(--c-brand) 0 46%, #fff 50%);
+    }
+  }
 }
 
 .blind-config-panel {
@@ -1285,6 +1396,10 @@ onMounted(() => {
   line-height: 1;
   color: #fff;
   font-weight: 500;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .pool-row {
@@ -1339,6 +1454,10 @@ onMounted(() => {
   color: #fff;
   font-size: 0.2987rem;
   line-height: 1.4;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .bottom-actions {
@@ -1365,11 +1484,20 @@ onMounted(() => {
 
 .action-btn--cancel {
   background: rgba(0, 0, 0, 0.3);
+
+  @include theme-light {
+    background: rgba(34, 34, 34, 0.3);
+  }
 }
 
 .action-btn--confirm {
   border: 0.0133rem solid rgba(242, 242, 242, 0.8);
   background: linear-gradient(157.77deg, #05e7ae 7.55%, #027a5c 71.92%);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+  }
 
   &:disabled {
     opacity: 0.5;
@@ -1386,8 +1514,16 @@ onMounted(() => {
   text-align: center;
   outline: none;
 
+  @include theme-light {
+    color: var(--c-text);
+  }
+
   &::placeholder {
     color: rgba(255, 255, 255, 0.5);
+
+    @include theme-light {
+      color: var(--c-text-muted);
+    }
   }
 }
 </style>

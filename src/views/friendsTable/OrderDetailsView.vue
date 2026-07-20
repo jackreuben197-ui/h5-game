@@ -27,11 +27,25 @@ function formatTime(raw?: string): string {
   return raw.replace('T', ' ').slice(0, 19)
 }
 
+function orderValue(...keys: string[]): string {
+  for (const key of keys) {
+    const value = props.order[key]
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      return String(value)
+    }
+  }
+  return '-'
+}
+
 const rows = computed<Row[]>(() => [
-  { label: t('Wallet_OrderId'),     value: props.order.order_no ?? '-' },
+  { label: t('Wallet_OrderId'), value: props.order.order_no ?? '-' },
   { label: t('Wallet_OrderAmount'), value: String(props.order.gold_num ?? '-') },
+  { label: '手续费', value: orderValue('fee', 'fee_amount', 'service_fee') },
   { label: t('Wallet_OrderPayAmount'), value: String(props.order.amount ?? '-') },
-  { label: t('Wallet_OrderTime'),   value: formatTime(props.order.create_time) },
+  { label: '付款地址', value: orderValue('pay_address', 'from_address') },
+  { label: '收款名称', value: orderValue('name', 'payee_name', 'receive_name') },
+  { label: '收款地', value: orderValue('receive_address', 'to_address', 'dest_address') },
+  { label: t('Wallet_OrderTime'), value: formatTime(props.order.create_time) },
   { label: t('Wallet_OrderStatus'), value: statusLabel(props.order.status) },
 ])
 

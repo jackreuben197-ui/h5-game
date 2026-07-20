@@ -13,7 +13,7 @@ import type {
   MsgMessageListMsgInfo,
   MsgMessageListResponseData,
 } from '@/api/models/msg'
-import { t } from '@/i18n'
+import { getLocale, t, toServerLang } from '@/i18n'
 import { formatDateTime } from '@/utils/time'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import avatarDefault from '@/assets/images/default_avatar.png'
@@ -21,7 +21,9 @@ import clubRoleIcon from '@/assets/icons/club_role_icon.png'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconBalance from '@/assets/icons/icon_credit_chip.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { formatUC } from '@/utils/roomVisibility'
 
 type MessagePageType = 'system' | 'credit' | 'uc' | 'other'
@@ -134,7 +136,8 @@ const pageTitle = computed(() => {
 })
 
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--message-detail-bg-dark': `url(${mainBgUrl})`,
+  '--message-detail-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const systemMessages = ref<SystemMessageItem[]>([])
@@ -255,6 +258,40 @@ function normalizeBagTitleByType(msgType: number, rawTitle: string): string {
   }
 
   return `${truncateText(propName, 17)} x${count}`
+}
+
+const LOCALE_TAG_PATTERN = /^[a-z]{2}_[A-Z]{2}$/
+
+// 广播类系统通知（如 msg_type 4023）没有 content/title，文案放在 object_string 里，
+// 按 zh_TW/en_US/pt_BR... 语言码存了一份多语言 JSON，需要按当前语言取文案。
+function resolveObjectStringText(objectString: unknown): string {
+  if (typeof objectString !== 'string' || !objectString.trim()) return ''
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(objectString)
+  } catch {
+    return ''
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return ''
+  const localeMap = parsed as Record<string, unknown>
+
+  const localeKeys = Object.keys(localeMap).filter((key) => LOCALE_TAG_PATTERN.test(key))
+  if (localeKeys.length === 0) return ''
+
+  const preferredKeys = [toServerLang(getLocale()), 'en_US', 'zh_TW', 'zh_CN']
+  for (const key of preferredKeys) {
+    const value = localeMap[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+
+  for (const key of localeKeys) {
+    const value = localeMap[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+
+  return ''
 }
 
 function parseRemarkCoin(remark: string): { amount: string; coinType: number; coinName: string } {
@@ -401,7 +438,7 @@ function buildMessageContent(item: MsgMessageListMsgInfo): {
   const template =
     translatedTemplate && translatedTemplate !== templateKey
       ? translatedTemplate
-      : content || title || '--'
+      : content || title || resolveObjectStringText(item.object_string) || '--'
 
   if (msgType === MSG_SUB_TYPE.MsgClubTypeCloseClub) {
     const segments: MessageTextSegment[] = []
@@ -691,7 +728,7 @@ async function fetchCreditList(append = false): Promise<void> {
       playerName: String(item.user_name ?? '--'),
       playerId: String(item.user_random_id ?? '--'),
       amount: `${formatUC(item.bring_in ?? 0)}`,
-      status: mapStatus(item.status),
+      status: 'pending' as const,
       approverName: item.op_user_name ? String(item.op_user_name) : undefined,
       approverId: item.op_user_random_id ? String(item.op_user_random_id) : undefined,
       avatar: item.avatar ? String(item.avatar) : avatarDefault,
@@ -873,14 +910,14 @@ onBeforeUnmount(() => {
                 type="button"
                 @click="auditCredit(item, true)"
               >
-                ✓
+                <AppSvgIcon name="audit-ok" class="action-icon action-icon--ok" />
               </button>
               <button
                 class="action-btn action-btn--deny"
                 type="button"
                 @click="auditCredit(item, false)"
               >
-                ✕
+                <AppSvgIcon name="audit-deny" class="action-icon action-icon--deny" />
               </button>
             </div>
 
@@ -923,14 +960,14 @@ onBeforeUnmount(() => {
 
             <div v-if="item.status === 'pending'" class="pending-actions">
               <button class="action-btn action-btn--ok" type="button" @click="auditUc(item, true)">
-                ✓
+                <AppSvgIcon name="audit-ok" class="action-icon action-icon--ok" />
               </button>
               <button
                 class="action-btn action-btn--deny"
                 type="button"
                 @click="auditUc(item, false)"
               >
-                ✕
+                <AppSvgIcon name="audit-deny" class="action-icon action-icon--deny" />
               </button>
             </div>
 
@@ -997,6 +1034,8 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .message-detail-page {
   height: 100dvh;
   color: #f3f3f3;
@@ -1005,7 +1044,14 @@ onBeforeUnmount(() => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-color: var(--c-page);
+  background-image: var(--message-detail-bg-dark);
   box-sizing: border-box;
+
+  @include theme-light {
+    color: #000;
+    background-image: var(--message-detail-bg-light);
+  }
 }
 
 .content-wrap {
@@ -1034,6 +1080,12 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+
+  @include theme-light {
+    border-color: transparent;
+    background: #fff;
+    backdrop-filter: none;
+  }
 }
 
 .system-content {
@@ -1042,12 +1094,20 @@ onBeforeUnmount(() => {
   line-height: 1.4;
   font-weight: 600;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .system-time {
   margin: 0.24rem 0 0;
   font-size: 0.333rem;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .request-list {
@@ -1059,6 +1119,11 @@ onBeforeUnmount(() => {
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.16rem);
   padding: 0.32rem 0.304rem 0.304rem;
+
+  @include theme-light {
+    background: #fff;
+    backdrop-filter: none;
+  }
 }
 
 .request-top {
@@ -1082,6 +1147,10 @@ onBeforeUnmount(() => {
   font-size: 0.27rem;
   line-height: 1.4;
   color: #f3f3f3;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .meta-time {
@@ -1117,15 +1186,27 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   background: rgba(255, 255, 255, 0.14);
+
+  @include theme-light {
+    background: rgba(208, 208, 208, 0.66);
+  }
 }
 
 .status-rejected {
   background: rgba(255, 19, 43, 0.4);
+
+  @include theme-light {
+    background: rgba(255, 19, 43, 0.4);
+  }
 }
 
 .status-approved-by-user,
 .status-approved {
   background: rgba(var(--c-brand-rgb), 0.3);
+
+  @include theme-light {
+    background: rgba(5, 231, 174, 0.3);
+  }
 }
 
 .player-block {
@@ -1151,6 +1232,10 @@ onBeforeUnmount(() => {
   font-size: 0.44rem;
   line-height: 1.1;
   color: #f3f3f3;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .player-id {
@@ -1158,6 +1243,10 @@ onBeforeUnmount(() => {
   font-size: 0.304rem;
   line-height: 1;
   color: rgba(243, 243, 243, 0.5);
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.5);
+  }
 }
 
 .pending-actions {
@@ -1176,14 +1265,41 @@ onBeforeUnmount(() => {
   font-size: 0.52rem;
   line-height: 1;
   padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  @include theme-light {
+    border-color: rgba(0, 0, 0, 0.08);
+    background: #fff;
+  }
 }
 
 .action-btn--ok {
-  color: #f3f3f3;
+  color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .action-btn--deny {
-  color: #ff3048;
+  color: #ef2846;
+}
+
+.action-icon {
+  display: block;
+  flex: none;
+}
+
+.action-icon--ok {
+  width: 0.613rem;
+  height: 0.613rem;
+}
+
+.action-icon--deny {
+  width: 0.88rem;
+  height: 0.88rem;
 }
 
 .state-text {
@@ -1191,6 +1307,10 @@ onBeforeUnmount(() => {
   font-size: 0.312rem;
   font-weight: 500;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .approver-block {
@@ -1205,6 +1325,10 @@ onBeforeUnmount(() => {
   font-size: 0.26rem;
   line-height: 1;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .request-footer {
@@ -1224,6 +1348,10 @@ onBeforeUnmount(() => {
     font-size: 0.355rem;
     line-height: 1.2;
     color: #f9f9f9;
+
+    @include theme-light {
+      color: #000;
+    }
   }
 }
 
@@ -1246,7 +1374,7 @@ onBeforeUnmount(() => {
   position: relative;
   left: 1.301rem;
   top: 0;
-  width: 7.458rem;
+  width: calc(100% - 1.301rem);
   min-height: 1.385rem;
   border-radius: 0.72rem 0.72rem 0.72rem 0rem;
   overflow: hidden;
@@ -1254,6 +1382,10 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
   display: flex;
   align-items: center;
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .other-banner--wrap {
@@ -1271,6 +1403,10 @@ onBeforeUnmount(() => {
   background-attachment: fixed;
   filter: blur(0.1rem);
   transform: scale(1.05);
+
+  @include theme-light {
+    display: none;
+  }
 }
 
 .other-title {
@@ -1282,6 +1418,10 @@ onBeforeUnmount(() => {
   color: #fbfbfb;
   white-space: normal;
   word-break: break-word;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .other-title--wrap {
@@ -1297,11 +1437,11 @@ onBeforeUnmount(() => {
 }
 
 .highlight--green {
-  color: var(--c-brand);
+  color: var(--c-loss);
 }
 
 .green {
-  color: var(--c-brand);
+  color: var(--c-loss);
 }
 
 .sender-btn {
@@ -1350,6 +1490,10 @@ onBeforeUnmount(() => {
     font-size: 0.355rem;
     line-height: 1.4;
     color: #fbfbfb;
+
+    @include theme-light {
+      color: #000;
+    }
   }
 }
 
@@ -1359,5 +1503,9 @@ onBeforeUnmount(() => {
   line-height: 1;
   color: rgba(251, 251, 251, 0.59);
   white-space: nowrap;
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.59);
+  }
 }
 </style>

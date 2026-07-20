@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { postUserBillApi, postUserDiamondsWalletApi, postUserWalletApi } from '@/api/user'
 import type {
   UserBillRecord,
@@ -29,7 +30,8 @@ const gameStore = useGameStore()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--mine-bill-bg-dark': `url(${mainBgUrl})`,
+  '--mine-bill-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const title = computed(() => t('UIMine_Bill'))
@@ -877,6 +879,8 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .mine-glass-page {
   position: relative;
   height: 100%;
@@ -884,9 +888,16 @@ onMounted(() => {
   -webkit-overflow-scrolling: touch;
   padding: 0 0 0.8rem;
   color: #f3f3f3;
+  background-color: var(--c-page);
+  background-image: var(--mine-bill-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: #000;
+    background-image: var(--mine-bill-bg-light);
+  }
 }
 
 .content-wrap {
@@ -924,6 +935,15 @@ onMounted(() => {
     color: #fff;
     border-bottom: 0.03rem solid rgba(255, 255, 255, 0.9);
   }
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.7);
+
+    &.active {
+      color: var(--c-brand);
+      border-bottom-color: var(--c-brand);
+    }
+  }
 }
 
 .glass-card {
@@ -931,6 +951,11 @@ onMounted(() => {
   border: 0.02rem solid rgba(249, 249, 249, 0.2);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.04rem);
+
+  @include theme-light {
+    border-color: transparent;
+    background: #fff;
+  }
 }
 
 .total-card {
@@ -971,14 +996,26 @@ onMounted(() => {
   color: #f3f3f3;
   font-size: 0.28rem;
   padding-top: 0.3rem;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 .divided {
   margin-top: 0.32rem;
   border-top: 1px solid rgba(163, 163, 163, 0.2);
+
+  @include theme-light {
+    border-top-color: rgba(0, 0, 0, 0.06);
+  }
 }
 .club-divided {
   margin-top: 0.1rem;
   border-top: 1px solid rgba($color: #ffffff, $alpha: 0.4);
+
+  @include theme-light {
+    border-top-color: rgba(0, 0, 0, 0.06);
+  }
 }
 .diamond-income {
   font-size: 0.386rem;
@@ -990,6 +1027,10 @@ onMounted(() => {
   border-radius: 0.372rem;
   background: rgba($color: #000000, $alpha: 0.2);
   padding: 0.35rem 0.43rem 0.28rem;
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.06);
+  }
 }
 .wallet-detail-list-diamond {
   margin-top: 0.24rem;
@@ -1080,6 +1121,10 @@ onMounted(() => {
     width: 0.02rem;
     bottom: -0.3rem;
     background: rgba(255, 255, 255, 1);
+
+    @include theme-light {
+      background: rgba(0, 0, 0, 0.25);
+    }
   }
   &.date-col--continued::after {
     top: 0rem;
@@ -1131,11 +1176,19 @@ onMounted(() => {
   margin-top: 0.1rem;
   font-size: 0.3rem;
   color: rgba($color: #ffffff, $alpha: 0.7);
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.7);
+  }
 }
 .bill-row-4 {
   margin-top: 0.06rem;
   font-size: 0.3rem;
   color: rgba($color: #ffffff, $alpha: 0.7);
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.7);
+  }
 }
 
 .bill-row-title {
@@ -1200,6 +1253,10 @@ onMounted(() => {
   padding: 0.3rem 0;
   border-bottom: 0.02rem solid rgba(249, 249, 249, 0.18);
 
+  @include theme-light {
+    border-bottom-color: rgba(0, 0, 0, 0.06);
+  }
+
   &:last-child {
     border-bottom: 0;
   }
@@ -1216,11 +1273,11 @@ onMounted(() => {
 
 .money {
   font-size: 0.33rem;
-  color: #ff132b;
+  color: var(--c-loss);
   font-weight: 700;
 
   &.positive {
-    color: var(--c-brand);
+    color: var(--c-profit);
   }
 }
 </style>

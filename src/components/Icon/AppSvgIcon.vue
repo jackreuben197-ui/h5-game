@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 type AppSvgIconName =
   | 'search' //搜索
   | 'spade' //黑桃
@@ -24,8 +26,10 @@ type AppSvgIconName =
   | 'agent-stats' //代理收益-旋转卡片
   | 'club-level-badge' //俱乐部等级
   | 'link' //代理链接
+  | 'audit-ok' //审核通过
+  | 'audit-deny' //审核拒绝
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     name: AppSvgIconName
     title?: string
@@ -34,27 +38,30 @@ withDefaults(
     title: '',
   },
 )
+
+const DEFAULT_VIEW_BOX = '0 0 24 24'
+
+const VIEW_BOX_BY_NAME: Partial<Record<AppSvgIconName, string>> = {
+  'audit-ok': '0 0 23 23',
+  'audit-deny': '0 0 33 33',
+  'round-arrow-right': '0 0 18 18',
+  'round-chevron-down': '0 0 18 18',
+  'agent-stats': '0 0 37 29',
+  'club-level-badge': '0 0 21 21',
+  'wallet-flow': '0 0 26 26',
+  telegram: '0 0 31 31',
+  'contact-user': '0 0 31 31',
+  'customer-service': '0 0 31 31',
+  link: '0 0 31 31',
+}
+
+const viewBox = computed(() => VIEW_BOX_BY_NAME[props.name] ?? DEFAULT_VIEW_BOX)
 </script>
 
 <template>
   <svg
     class="app-svg-icon"
-    :viewBox="
-      name === 'round-arrow-right' || name === 'round-chevron-down'
-        ? '0 0 18 18'
-        : name === 'agent-stats'
-          ? '0 0 37 29'
-          : name === 'club-level-badge'
-            ? '0 0 21 21'
-            : name === 'wallet-flow'
-              ? '0 0 26 26'
-              : name === 'telegram' ||
-                  name === 'contact-user' ||
-                  name === 'customer-service' ||
-                  name === 'link'
-                ? '0 0 31 31'
-                : '0 0 24 24'
-    "
+    :viewBox="viewBox"
     width="1em"
     height="1em"
     xmlns="http://www.w3.org/2000/svg"
@@ -64,7 +71,27 @@ withDefaults(
     <title v-if="title">{{ title }}</title>
 
     <path
-      v-if="name === 'agent-stats'"
+      v-if="name === 'audit-ok'"
+      d="M18.929 6.62506L9.4646 16.0894L4.73242 11.3572"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="3.44771"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+
+    <path
+      v-else-if="name === 'audit-deny'"
+      d="M11.376 20.7462L16.0607 16.0616M16.0607 16.0616L20.7453 11.377M16.0607 16.0616L11.376 11.377M16.0607 16.0616L20.7453 20.7462"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.75817"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+
+    <path
+      v-else-if="name === 'agent-stats'"
       d="M9.95421 0.00184039C9.80441 0.00898968 9.65651 0.0394282 9.51547 0.0921323L1.00027 3.32505C0.632215 3.46477 0.302995 3.78007 0.138222 4.14812C-0.0265523 4.51591 -0.0455173 4.98036 0.0894544 5.36107L5.56714 20.8096C5.70203 21.1903 6.0067 21.5336 6.36235 21.704C6.71801 21.8746 7.16693 21.8943 7.53474 21.7546L16.0501 18.5215C16.4182 18.3818 16.7474 18.0666 16.9121 17.6987L16.9146 17.6933C17.0773 17.3262 17.0952 16.8645 16.9609 16.4856L11.4832 1.03701C11.349 0.658175 11.0466 0.316375 10.6931 0.145135L10.688 0.142587C10.5102 0.057222 10.3085 0.0104194 10.1056 0.0017555C10.0549 -0.000368009 10.0046 -0.000707817 9.95421 0.00184039ZM13.1613 1.15907L18.4028 15.9387C18.6825 16.7297 18.6474 17.6032 18.3053 18.3676C17.9633 19.1312 17.3423 19.7231 16.5787 20.0133L14.3259 20.868L19.2519 21.1042C19.6435 21.1231 20.0655 20.9632 20.3553 20.6902C20.645 20.4169 20.8372 19.9962 20.8555 19.591L21.5944 3.15508C21.6126 2.75009 21.4607 2.31094 21.1968 2.0111C20.9327 1.71126 20.5262 1.5125 20.1346 1.49356L13.1613 1.1589L13.1613 1.15907ZM23.0954 3.98333L22.3872 19.6655C22.3494 20.5068 21.9904 21.2982 21.3892 21.866C20.7873 22.4322 19.9928 22.7282 19.1802 22.6889L17.0406 22.5853L22.7362 24.547C23.1081 24.675 23.5582 24.641 23.9086 24.4595C24.2592 24.2777 24.5521 23.9258 24.6758 23.5409L29.6966 7.92805C29.8203 7.5431 29.7875 7.07754 29.612 6.71493C29.4364 6.35224 29.0962 6.04645 28.7242 5.91862L23.0955 3.9835L23.0954 3.98333ZM6.25973 5.54157C8.26772 7.65964 11.8441 7.04841 12.8893 9.4089C13.8642 11.6111 11.698 13.3167 9.77195 12.6712L11.1676 15.2858L9.62581 15.8724L8.72789 13.1808C7.87487 15.1025 5.19326 15.1978 4.28162 13.1358C3.17082 10.6235 6.25374 8.53206 6.25973 5.54157ZM31.0077 8.87293L26.1331 24.0426C25.8762 24.8414 25.3235 25.502 24.5962 25.8794L24.5885 25.882C23.8625 26.2555 23.0231 26.3165 22.2538 26.0519L20.5809 25.476L24.1368 28.6213C24.4348 28.8848 24.8646 29.0273 25.2554 28.9956C25.6462 28.964 26.0451 28.7544 26.2997 28.4461L36.634 15.9335C36.8887 15.6252 37.0265 15.1831 36.9958 14.7787C36.9652 14.3744 36.7601 13.9592 36.4621 13.6958L31.0077 8.87284L31.0077 8.87293Z"
       fill="currentColor"
     />
@@ -249,7 +276,7 @@ withDefaults(
       fill="currentColor"
     />
     <path v-else-if="name === 'diamond'" d="M12 2 20 12l-8 10-8-10 8-10Z" fill="currentColor" />
-    <g v-else fill="currentColor">
+    <g v-else-if="name === 'club'" fill="currentColor">
       <circle cx="12" cy="7.2" r="4.2" />
       <circle cx="7.6" cy="12.2" r="4.2" />
       <circle cx="16.4" cy="12.2" r="4.2" />

@@ -2,10 +2,11 @@
 import { computed, ref } from 'vue'
 import { showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { getLocale, setLocale, t, type LocaleCode } from '@/i18n'
 
-const title = computed(() => 'Language')
+const title = computed(() => t('tc_PpNL8LVJ'))
 
 interface LanguageOption {
   key: LocaleCode
@@ -14,7 +15,8 @@ interface LanguageOption {
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--settings-language-bg-dark': `url(${mainBgUrl})`,
+  '--settings-language-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const options: LanguageOption[] = [
@@ -51,9 +53,9 @@ function selectLanguage(key: LocaleCode): void {
           @click="selectLanguage(item.key)"
         >
           <span class="label">{{ item.label }}</span>
-          <span class="radio" :class="{ selected: activeLanguage === item.key }">
-            <span v-if="activeLanguage === item.key" class="inner"></span>
-          </span>
+          <span
+            :class="['radio-circle', { 'radio-circle--checked': activeLanguage === item.key }]"
+          ></span>
         </button>
       </section>
     </div>
@@ -61,14 +63,22 @@ function selectLanguage(key: LocaleCode): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .settings-page {
   height: 100dvh;
-  // padding-top: calc(env(safe-area-inset-top) + 0.48rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;
+  background-color: var(--c-page);
+  background-image: var(--settings-language-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: #000;
+    background-image: var(--settings-language-bg-light);
+  }
 }
 
 .content-wrap {
@@ -85,6 +95,10 @@ function selectLanguage(key: LocaleCode): void {
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.08rem);
   overflow: hidden;
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .language-row {
@@ -101,6 +115,11 @@ function selectLanguage(key: LocaleCode): void {
   &:last-child {
     border-bottom: 0;
   }
+
+  @include theme-light {
+    color: #000;
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+  }
 }
 
 .label {
@@ -109,28 +128,27 @@ function selectLanguage(key: LocaleCode): void {
   font-weight: 400;
   line-height: 1.4;
   color: rgba(255, 255, 255, 0.94);
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
-.radio {
-  width: 0.48rem;
-  height: 0.48rem;
-  border-radius: 50%;
-  border: 0.0133rem solid rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.15);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
+.radio-circle {
+  width: 0.35rem;
+  height: 0.35rem;
+  flex: none;
 
-.radio.selected {
-  border-color: #78ece6;
-}
+  &--checked::after {
+    width: 0.22rem;
+    height: 0.22rem;
+  }
 
-.inner {
-  width: 0.2667rem;
-  height: 0.2667rem;
-  border-radius: 50%;
-  background: #4ce2df;
-  box-shadow: 0 0 0.08rem rgba(82, 243, 231, 0.6);
+  @include theme-light {
+    border-color: rgba(0, 0, 0, 0.3);
+    box-shadow:
+      inset 0.5px 0.5px 0 rgba(0, 0, 0, 0.3),
+      inset -0.5px -0.5px 0 rgba(0, 0, 0, 0.3);
+  }
 }
 </style>

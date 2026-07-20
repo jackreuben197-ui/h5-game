@@ -6,6 +6,7 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import tableCardBgUrl from '@/assets/images/table_card_bg.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import CareerSvgIcon from '../../components/CareerSvgIcon.vue'
 import RadarChart from '@/components/Chart/RadarChart.vue'
 import RingChart from '@/components/Chart/RingChart.vue'
@@ -1086,7 +1087,7 @@ onBeforeUnmount(() => {
 
         <template v-else>
           <section class="empty-wrap">
-            <CareerSvgIcon name="empty-data" class="empty-icon" />
+            <AppSvgIcon name="empty-data" class="empty-icon" />
             <div class="empty-text">暂无数据</div>
           </section>
         </template>

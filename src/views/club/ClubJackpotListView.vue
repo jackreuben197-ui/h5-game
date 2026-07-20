@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
 import { postOrgClubJackpotTemplateDelApi, postOrgClubJackpotTemplateListApi } from '@/api/org'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { t } from '@/i18n'
@@ -236,12 +237,12 @@ function goPoolReward(): void {
             <div class="tag-rows">
               <div class="tag-row">
                 <span v-for="tag in item.gameTags.slice(0, 2)" :key="tag" class="tag-item">
-                  <i class="tag-icon" aria-hidden="true"></i>{{ tag }}
+                  <AppSvgIcon class="tag-icon" name="spade" />{{ tag }}
                 </span>
               </div>
               <div v-if="item.gameTags.length > 2" class="tag-row">
                 <span v-for="tag in item.gameTags.slice(2)" :key="`r2-${tag}`" class="tag-item">
-                  <i class="tag-icon" aria-hidden="true"></i>{{ tag }}
+                  <AppSvgIcon class="tag-icon" name="spade" />{{ tag }}
                 </span>
               </div>
             </div>
@@ -471,13 +472,10 @@ function goPoolReward(): void {
 }
 
 .tag-icon {
-  font-style: normal;
-  display: inline-block;
   flex-shrink: 0;
   width: 0.24rem;
   height: 0.2667rem;
-  background: linear-gradient(180deg, rgba(190, 232, 255, 0.95), rgba(136, 188, 255, 0.85));
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  color: #fff;
 }
 
 /* Right section: JP badge + action buttons */

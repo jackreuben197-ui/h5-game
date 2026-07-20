@@ -4,10 +4,12 @@ import { showFailToast } from 'vant'
 import { useRoute, useRouter } from 'vue-router'
 import { postStatsRoomDetailApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import rankBgUrl from '@/assets/images/rank_bg.png'
 import defaultAvatarUrl from '@/assets/images/default_avatar.png'
 import insuranceIconUrl from '@/assets/icons/icon_insurance.svg'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import CareerSvgIcon from '../../components/CareerSvgIcon.vue'
 import { localStore } from '@/utils/localStore'
 import { formatUC } from '@/utils/roomVisibility'
 import { formatDateTime } from '@/utils/time'
@@ -49,9 +51,10 @@ const source = computed<'club' | 'friends'>(() =>
 )
 const isClub = computed(() => source.value === 'club')
 
-// 主容器背景图：全页面共用一张底图。
+// 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--record-detail-bg-dark': `url(${mainBgUrl})`,
+  '--record-detail-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const rankSectionStyle = computed(() => ({
@@ -265,9 +268,18 @@ async function fetchRecordDetail(): Promise<void> {
 
     // 对齐客户端 UIRecordDetailStatistics.UpdateTexasInfo：总流水/最大底池/总手数/总代入数。
     summaryItems.value = [
-      { label: t('UICareerRecord_totalLiushui'), value: formatAmount(toSafeNumber(roomData?.all_bet_pot)) },
-      { label: t('UITexasGameEnding_BigPot'), value: formatAmount(toSafeNumber(roomData?.max_bet_pot)) },
-      { label: t('UITexasGameEnding_allhand'), value: String(toSafeNumber(roomData?.room_total_hand_num)) },
+      {
+        label: t('UICareerRecord_totalLiushui'),
+        value: formatAmount(toSafeNumber(roomData?.all_bet_pot)),
+      },
+      {
+        label: t('UITexasGameEnding_BigPot'),
+        value: formatAmount(toSafeNumber(roomData?.max_bet_pot)),
+      },
+      {
+        label: t('UITexasGameEnding_allhand'),
+        value: String(toSafeNumber(roomData?.room_total_hand_num)),
+      },
       { label: t('UIClub_Text94'), value: formatAmount(toSafeNumber(roomData?.all_bring_in)) },
     ]
 
@@ -326,7 +338,7 @@ onMounted(() => {
     <div class="content-wrap">
       <section class="glass-card sort-bar" @click="goToHands">
         <span>{{ t('UIMine_RecordDetailForNormal_FENSVUz3') }}</span>
-        <img class="arrow" src="@/assets/icons/icon_arrow_bottom.png" />
+        <CareerSvgIcon name="dropdown" class="arrow" />
       </section>
 
       <section class="rank-section" :style="rankSectionStyle">
@@ -412,13 +424,22 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .record-detail-page {
   height: 100dvh;
   padding: 0 0 0.8rem;
   color: #f9f9f9;
+  background-image: var(--record-detail-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: var(--c-text);
+    background-color: var(--c-page);
+    background-image: var(--record-detail-bg-light);
+  }
 }
 
 .content-wrap {
@@ -430,6 +451,11 @@ onMounted(() => {
   border: 0.02rem solid rgba(249, 249, 249, 0.2);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.04rem);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-surface);
+  }
 }
 
 .sort-bar {
@@ -443,7 +469,12 @@ onMounted(() => {
   .arrow {
     width: 0.4rem;
     height: 0.4rem;
+    color: #fff;
     transform: rotate(-90deg);
+
+    @include theme-light {
+      color: #000;
+    }
   }
 }
 
@@ -477,6 +508,9 @@ onMounted(() => {
     line-height: 0.1rem;
     color: #fff;
     margin-bottom: -0.18rem;
+    // @include theme-light {
+    //   color: #000;白色看不清
+    // }
   }
   span {
     vertical-align: top;
@@ -593,6 +627,10 @@ onMounted(() => {
   .sub {
     font-size: 0.38rem;
     color: rgba(255, 255, 255, 0.74);
+
+    @include theme-light {
+      color: rgba(0, 0, 0, 0.7);
+    }
   }
 }
 
@@ -600,6 +638,10 @@ onMounted(() => {
   margin-top: 0.12rem;
   font-size: 0.45rem;
   color: rgba(255, 255, 255, 0.78);
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.7);
+  }
 }
 
 .summary-grid {
@@ -610,6 +652,10 @@ onMounted(() => {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   padding: 0.02rem 0.51rem 0.1rem;
   gap: 0.08rem;
+
+  @include theme-light {
+    background-color: #e3e3e3;
+  }
 }
 
 .summary-item {
@@ -619,6 +665,10 @@ onMounted(() => {
     font-size: 0.31rem;
     line-height: 1.4;
     color: rgba(255, 255, 255, 0.72);
+
+    @include theme-light {
+      color: rgba(0, 0, 0, 0.7);
+    }
   }
 
   .value {
@@ -675,6 +725,10 @@ onMounted(() => {
   text-align: center;
   font-size: 0.28rem;
   color: rgba(255, 255, 255, 0.78);
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .left {
@@ -704,11 +758,11 @@ onMounted(() => {
 
   .profit {
     font-size: 0.45rem;
-    color: #ff7a8f;
+    color: var(--c-loss);
     font-weight: 700;
 
     &.pos {
-      color: #6be89d;
+      color: var(--c-profit);
     }
   }
 }
@@ -729,6 +783,10 @@ onMounted(() => {
   .sub-title {
     font-size: 0.27rem;
     color: rgba(255, 255, 255, 0.78);
+
+    @include theme-light {
+      color: rgba(0, 0, 0, 0.7);
+    }
   }
 
   .sub-value {

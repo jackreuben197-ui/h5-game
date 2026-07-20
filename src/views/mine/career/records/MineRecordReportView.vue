@@ -4,14 +4,16 @@ import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { postMiscReportFeedbackQuestIonApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { t } from '@/i18n'
 
 const router = useRouter()
 
-// 主容器背景图：全页面共用一张底图。
+// 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--record-report-bg-dark': `url(${mainBgUrl})`,
+  '--record-report-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const title = computed(() => 'Result')
@@ -65,7 +67,9 @@ async function submitReport(): Promise<void> {
           @click="selectedPreset = item"
         >
           <span>{{ item }}</span>
-          <span class="check" :class="{ active: selectedPreset === item }">✔</span>
+          <span
+            :class="['radio-circle', { 'radio-circle--checked': selectedPreset === item }]"
+          ></span>
         </button>
       </section>
 
@@ -93,14 +97,23 @@ async function submitReport(): Promise<void> {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .record-report-page {
   position: relative;
   height: 100dvh;
   padding: 0 0 2.2rem;
   color: #f9f9f9;
+  background-image: var(--record-report-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: var(--c-text);
+    background-color: var(--c-page);
+    background-image: var(--record-report-bg-light);
+  }
 }
 
 .content-wrap {
@@ -113,6 +126,11 @@ async function submitReport(): Promise<void> {
   border: 0.02rem solid rgba(249, 249, 249, 0.2);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.04rem);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-surface);
+  }
 }
 
 .option-card {
@@ -132,17 +150,26 @@ async function submitReport(): Promise<void> {
   font-size: 0.39rem;
   border-bottom: 0.02rem solid rgba(255, 255, 255, 0.16);
 
+  @include theme-light {
+    color: var(--c-text);
+    border-bottom-color: rgba(0, 0, 0, 0.1);
+  }
+
   &:last-child {
     border-bottom: 0;
   }
 }
 
-.check {
-  opacity: 0.3;
+.radio-circle {
+  @include theme-light {
+    border-color: rgba(32, 32, 32, 0.3);
+    box-shadow: none;
+  }
 
-  &.active {
-    opacity: 1;
-    color: #6be89d;
+  &--checked {
+    @include theme-light {
+      border-color: var(--c-brand);
+    }
   }
 }
 
@@ -154,6 +181,10 @@ async function submitReport(): Promise<void> {
 .input-title {
   font-size: 0.31rem;
   color: rgba(255, 255, 255, 0.82);
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .reason-input {
@@ -169,6 +200,17 @@ async function submitReport(): Promise<void> {
   font-size: 0.34rem;
   line-height: 1.4;
   padding: 0.22rem;
+
+  @include theme-light {
+    background: #d3d3d3;
+    color: var(--c-text);
+  }
+
+  @include theme-light {
+    &::placeholder {
+      color: #888;
+    }
+  }
 }
 
 .submit-btn {
@@ -179,5 +221,7 @@ async function submitReport(): Promise<void> {
   height: 0.96rem;
   font-size: 0.38rem;
   font-weight: 700;
+  --van-button-primary-background: var(--c-brand);
+  --van-button-primary-border-color: var(--c-brand);
 }
 </style>

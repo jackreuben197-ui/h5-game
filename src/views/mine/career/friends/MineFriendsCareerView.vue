@@ -5,10 +5,8 @@ import { useRouter } from 'vue-router'
 import { postFriendRoomStatsApi } from '@/api/stats'
 import type { FriendRoomStatsRecord } from '@/api/models/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import iconData from '@/assets/icons/icon_data.svg'
-import iconRecord from '@/assets/icons/icon_record.svg'
-import iconMtt from '@/assets/icons/icon_mtt.svg'
-import iconMahjong from '@/assets/icons/icon_mahjong.svg'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
+import CareerSvgIcon from '../../components/CareerSvgIcon.vue'
 import { showGameToast } from '@/components/Toast'
 import { useGameStore } from '@/stores/game'
 import { userCache } from '@/utils/userCache'
@@ -28,7 +26,8 @@ function homeCache() {
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--friends-career-bg-dark': `url(${mainBgUrl})`,
+  '--friends-career-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 interface DataRow {
@@ -40,7 +39,7 @@ interface DataRow {
 interface MenuItem {
   key: string
   label: string
-  icon: string
+  icon: 'data' | 'record' | 'mtt' | 'mahjong'
   route?: string
 }
 
@@ -54,16 +53,16 @@ const rows = ref<DataRow[]>([
 const loading = ref(false)
 
 const menuList: MenuItem[] = [
-  { key: 'data', label: t('adaptation10124'), icon: iconData, route: '/mine/career/friends/data' },
+  { key: 'data', label: t('adaptation10124'), icon: 'data', route: '/mine/career/friends/data' },
   {
     key: 'record',
     label: t('UICareerRecord'),
-    icon: iconRecord,
+    icon: 'record',
     route: '/mine/career/friends/record',
   },
-  // { key: 'mahjong', label: t('Mahjong_Name'), icon: iconMahjong },
-  // { key: 'sng', label: "SNG" + t('UICareerRecord'), icon: iconMtt },
-  // { key: 'mahjong-mtt', label: t('Mahjong_Name') + "MTT" + t('UICareerRecord'), icon: iconMahjong },
+  // { key: 'mahjong', label: t('Mahjong_Name'), icon: 'mahjong' },
+  // { key: 'sng', label: "SNG" + t('UICareerRecord'), icon: 'mtt' },
+  // { key: 'mahjong-mtt', label: t('Mahjong_Name') + "MTT" + t('UICareerRecord'), icon: 'mahjong' },
 ]
 
 function handleMenuClick(item: MenuItem): void {
@@ -91,7 +90,6 @@ async function requestSummary(silent: boolean): Promise<void> {
     const nlh = data?.friend_room_stats_nlh as FriendRoomStatsRecord | undefined
     const plo = data?.friend_room_stats_plo as FriendRoomStatsRecord | undefined
     const sixPlus = data?.friend_room_stats_6 as FriendRoomStatsRecord | undefined
-    const mahjong = data?.friend_room_stats_mj as FriendRoomStatsRecord | undefined
 
     const next: DataRow[] = [
       { game: 'NLH', playedGames: toSafeNumber(nlh?.game_num), hands: toSafeNumber(nlh?.hand_num) },
@@ -148,7 +146,7 @@ onMounted(() => {
               handleMenuClick({
                 key: 'data',
                 label: '数据',
-                icon: '',
+                icon: 'data',
                 route: '/mine/career/friends/my-data',
               })
             "
@@ -184,11 +182,11 @@ onMounted(() => {
         >
           <div class="menu-left">
             <div class="icon-box">
-              <img :src="item.icon" :alt="item.label" />
+              <CareerSvgIcon :name="item.icon" :title="item.label" class="menu-icon" />
             </div>
             <span class="menu-label">{{ item.label }}</span>
           </div>
-          <span class="menu-arrow">›</span>
+          <CareerSvgIcon name="arrow-right" class="menu-arrow" />
         </button>
       </section>
     </div>
@@ -196,14 +194,23 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .mine-glass-page {
   position: relative;
   height: 100dvh;
   padding: 0 0 0.8rem;
   color: #f9f9f9;
+  background-image: var(--friends-career-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: var(--c-text);
+    background-color: var(--c-page);
+    background-image: var(--friends-career-bg-light);
+  }
 }
 
 .content-wrap {
@@ -233,6 +240,12 @@ onMounted(() => {
   border: 0.02rem solid rgba(249, 249, 249, 0.25);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.04rem);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-surface);
+    backdrop-filter: none;
+  }
 }
 
 .table-card {
@@ -254,7 +267,7 @@ onMounted(() => {
   padding: 0.15rem 0.15rem;
   margin-bottom: 0.1rem;
   box-shadow:
-    0 0 0.9rem 0.1rem rgba(0, 175, 131, 0.9) inset,
+    0 0 0.9rem 0.1rem rgba(var(--c-brand-rgb), 0.9) inset,
     /* 左上高光 */ inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.85),
     /* 右下高光 */ inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.85);
 }
@@ -264,8 +277,9 @@ onMounted(() => {
   align-items: center;
   text-align: center;
   border-radius: 0.4rem;
-  background: rgba(0, 175, 131, 0.9);
-  box-shadow: 0 0 0.1rem 0.05rem rgba(0, 175, 131, 0.9);
+  color: #fff;
+  background: rgba(var(--c-brand-rgb), 0.9);
+  box-shadow: 0 0 0.1rem 0.05rem rgba(var(--c-brand-rgb), 0.9);
   box-sizing: border-box;
 }
 
@@ -301,6 +315,11 @@ onMounted(() => {
   align-items: center;
   padding: 0.2rem 0;
 
+  @include theme-light {
+    color: var(--c-text);
+    border-bottom-color: rgba(0, 0, 0, 0.1);
+  }
+
   &:last-child {
     border-bottom: 0;
   }
@@ -319,10 +338,14 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
 
-  img {
-    width: 1rem;
-    height: 1rem;
-  }
+}
+
+.menu-icon {
+  display: block;
+  width: 0.533rem;
+  height: 0.533rem;
+  color: var(--c-brand);
+  filter: drop-shadow(0 0 0.12rem rgba(var(--c-brand-rgb), 0.22));
 }
 
 .menu-label {
@@ -331,8 +354,22 @@ onMounted(() => {
 }
 
 .menu-arrow {
-  font-size: 0.7rem;
-  line-height: 1;
+  display: block;
+  width: 0.27rem;
+  height: 0.48rem;
   color: rgba(255, 255, 255, 0.88);
+
+  @include theme-light {
+    color: #888;
+  }
+}
+
+.action-wrap {
+  @include theme-light {
+    :deep(.action-btn) {
+      color: #fff;
+      background: var(--c-brand);
+    }
+  }
 }
 </style>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, watch } from 'vue'
 import { ref } from 'vue'
+import { useTheme } from '@/composables/useTheme'
 
 const props = withDefaults(
   defineProps<{
@@ -11,6 +12,8 @@ const props = withDefaults(
   }>(),
   { top: 0, right: 0, bottom: 0, left: 0 },
 )
+
+const { isLight } = useTheme()
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const wrapRef = ref<HTMLDivElement | null>(null)
@@ -83,8 +86,13 @@ function draw(): void {
     ctx.moveTo(ring[0][0], ring[0][1])
     for (let i = 1; i < ring.length; i += 1) ctx.lineTo(ring[i][0], ring[i][1])
     ctx.closePath()
-    ctx.strokeStyle =
-      level === levels ? 'rgba(249, 249, 249, 0.92)' : 'rgba(249, 249, 249, 0.16)'
+    ctx.strokeStyle = level === levels
+      ? isLight.value
+        ? 'rgba(0, 0, 0, 0.92)'
+        : 'rgba(249, 249, 249, 0.92)'
+      : isLight.value
+        ? 'rgba(0, 0, 0, 0.16)'
+        : 'rgba(249, 249, 249, 0.16)'
     ctx.lineWidth = level === levels ? 1.7 : 1
     ctx.stroke()
   }
@@ -94,7 +102,7 @@ function draw(): void {
   ctx.lineTo(centerX, centerY + radius)
   ctx.moveTo(centerX - radius, centerY)
   ctx.lineTo(centerX + radius, centerY)
-  ctx.strokeStyle = 'rgba(249, 249, 249, 0.24)'
+  ctx.strokeStyle = isLight.value ? 'rgba(0, 0, 0, 0.24)' : 'rgba(249, 249, 249, 0.24)'
   ctx.lineWidth = 1
   ctx.stroke()
 
@@ -111,20 +119,20 @@ function draw(): void {
     centerX + radius,
     centerY + radius,
   )
-  fill.addColorStop(0, 'rgba(249, 249, 249, 0.34)')
-  fill.addColorStop(1, 'rgba(249, 249, 249, 0.14)')
+  fill.addColorStop(0, isLight.value ? 'rgba(0, 0, 0, 0.34)' : 'rgba(249, 249, 249, 0.34)')
+  fill.addColorStop(1, isLight.value ? 'rgba(0, 0, 0, 0.14)' : 'rgba(249, 249, 249, 0.14)')
 
   ctx.beginPath()
   ctx.moveTo(points[0][0], points[0][1])
   for (let i = 1; i < points.length; i += 1) ctx.lineTo(points[i][0], points[i][1])
   ctx.closePath()
   ctx.fillStyle = fill
-  ctx.strokeStyle = 'rgba(249, 249, 249, 0.78)'
+  ctx.strokeStyle = isLight.value ? 'rgba(0, 0, 0, 0.78)' : 'rgba(249, 249, 249, 0.78)'
   ctx.lineWidth = 1.3
   ctx.fill()
   ctx.stroke()
 
-  ctx.fillStyle = 'rgba(249, 249, 249, 0.84)'
+  ctx.fillStyle = isLight.value ? 'rgba(0, 0, 0, 0.84)' : 'rgba(249, 249, 249, 0.84)'
   for (const [x, y] of points) {
     ctx.beginPath()
     ctx.arc(x, y, 2, 0, Math.PI * 2)
@@ -136,6 +144,8 @@ watch(
   () => [props.top, props.right, props.bottom, props.left],
   () => void nextTick(scheduleDraw),
 )
+
+watch(isLight, () => void nextTick(scheduleDraw))
 
 const onResize = () => scheduleDraw()
 

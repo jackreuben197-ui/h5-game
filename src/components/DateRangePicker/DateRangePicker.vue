@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import iconDateUrl from '@/assets/icons/icon_date.png'
 
 type PickTarget = 'start' | 'end'
 
@@ -269,7 +270,7 @@ function startOfDay(date: Date): Date {
           :class="{ active: pickingTarget === 'start' }"
           @click="pickingTarget = 'start'"
         >
-          <span class="calendar-icon" aria-hidden="true"></span>
+          <img class="calendar-icon" :src="iconDateUrl" alt="" aria-hidden="true" />
           <span>{{ startDateText }}</span>
         </button>
         <button
@@ -278,7 +279,7 @@ function startOfDay(date: Date): Date {
           :class="{ active: pickingTarget === 'end' }"
           @click="pickingTarget = 'end'"
         >
-          <span class="calendar-icon" aria-hidden="true"></span>
+          <img class="calendar-icon" :src="iconDateUrl" alt="" aria-hidden="true" />
           <span>{{ endDateText }}</span>
         </button>
       </div>
@@ -423,28 +424,8 @@ function startOfDay(date: Date): Date {
 .calendar-icon {
   width: 0.48rem;
   height: 0.48rem;
-  border: 0.04rem solid rgba(243, 243, 243, 0.85);
-  border-radius: 0.1rem;
-  position: relative;
-
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -0.06rem;
-    width: 0.06rem;
-    height: 0.12rem;
-    border-radius: 0.03rem;
-    background: rgba(243, 243, 243, 0.85);
-  }
-
-  &::before {
-    left: 0.09rem;
-  }
-
-  &::after {
-    right: 0.09rem;
-  }
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .picker-month-row {

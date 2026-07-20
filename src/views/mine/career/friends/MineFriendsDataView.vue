@@ -4,10 +4,11 @@ import { useRouter } from 'vue-router'
 import { showFailToast } from 'vant'
 import { postFriendRoomStatsDataApi, postFriendRoomStatsDataInfoApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import DateRangePicker from '@/components/DateRangePicker/DateRangePicker.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 
-import iconTime from '@/assets/icons/icon_time.png'
 import { t } from '@/i18n'
 import {
   addDays,
@@ -46,7 +47,8 @@ const title = computed(() => t('UIClub_DataManager'))
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--friends-record-bg-dark': `url(${mainBgUrl})`,
+  '--friends-record-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 interface FilterTab {
@@ -367,7 +369,7 @@ onBeforeUnmount(() => {
                   <span v-if="item.extra" class="extra">{{ item.extra }}</span>
                 </div>
                 <div class="meta-time">
-                  <img :src="iconTime" :alt="t('TimeItem')" />
+                  <AppSvgIcon name="clock" class="time-icon" />
                   <span>{{ item.time }}</span>
                 </div>
               </div>
@@ -405,14 +407,23 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .friends-record-page {
   height: 100dvh;
   // padding-top: calc(env(safe-area-inset-top) + 0.459rem);
   padding: 0 0 0.8rem;
   color: #f9f9f9;
+  background-image: var(--friends-record-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: var(--c-text);
+    background-color: var(--c-page);
+    background-image: var(--friends-record-bg-light);
+  }
 }
 
 .content-wrap {
@@ -438,6 +449,10 @@ onBeforeUnmount(() => {
   border-radius: 0.76013rem;
   background: rgba(0, 0, 0, 0.2);
   padding: 0.36317rem 0.4392rem;
+
+  @include theme-light {
+    background: var(--c-surface);
+  }
 }
 
 .filter-tabs {
@@ -450,6 +465,10 @@ onBeforeUnmount(() => {
   align-items: center;
   overflow: hidden;
   margin: 0 auto;
+
+  @include theme-light {
+    background: #e3e3e3;
+  }
 }
 
 .filter-tab {
@@ -463,6 +482,10 @@ onBeforeUnmount(() => {
   font-size: 0.40541rem;
   line-height: 0.44299rem;
   padding: 0.11075rem 0.24rem;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 
   &.is-customize {
     flex: 1.5 1 0;
@@ -480,6 +503,10 @@ onBeforeUnmount(() => {
         margin-top: 0.3rem;
         margin-left: 0.1rem;
         transform: rotate(-90deg);
+
+        @include theme-light {
+          filter: brightness(0);
+        }
       }
     }
   }
@@ -488,6 +515,10 @@ onBeforeUnmount(() => {
     background: rgba(255, 255, 255, 0.17);
     font-weight: 500;
     line-height: 0.83;
+
+    @include theme-light {
+      background: #cfcfcf;
+    }
   }
 }
 
@@ -522,6 +553,10 @@ onBeforeUnmount(() => {
   width: 0.0192rem;
   height: 0.718rem;
   background: rgba(255, 255, 255, 0.2);
+
+  @include theme-light {
+    background: var(--c-divider);
+  }
 }
 
 .timezone-text {
@@ -530,6 +565,10 @@ onBeforeUnmount(() => {
   font-size: 0.25861rem;
   line-height: 1.4;
   color: rgba(255, 255, 255, 0.5);
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .record-list {
@@ -570,6 +609,12 @@ onBeforeUnmount(() => {
   line-height: 1.1;
   font-weight: 700;
   z-index: 2;
+
+  @include theme-light {
+    border-color: rgba(0, 0, 0, 0.1);
+    background: var(--c-surface);
+    backdrop-filter: none;
+  }
 }
 
 .record-card {
@@ -589,6 +634,12 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-surface);
+    backdrop-filter: none;
+  }
 }
 
 .record-main {
@@ -631,10 +682,14 @@ onBeforeUnmount(() => {
   letter-spacing: 0.01126rem;
   font-weight: 590;
 
-  img {
+  .time-icon {
     width: 0.35829rem;
     height: 0.35829rem;
-    object-fit: contain;
+    color: #fff;
+
+    @include theme-light {
+      color: #000;
+    }
   }
 }
 
@@ -652,6 +707,10 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 0.07053rem;
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.07);
+  }
 }
 
 .fee-line {
@@ -666,16 +725,20 @@ onBeforeUnmount(() => {
 }
 
 .value-up {
-  color: #ff5364;
+  color: var(--c-profit);
 }
 
 .value-down {
-  color: var(--c-brand);
+  color: var(--c-loss);
 }
 
 .chevron {
   font-size: 0.648rem;
   line-height: 1;
   color: #f9f9f9;
+
+  @include theme-light {
+    color: #888;
+  }
 }
 </style>

@@ -23,6 +23,7 @@ import {
 import { postMiscGameRoundListDataByRoomApi } from '@/api/misc'
 import { postStatsUserGameRecordListApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import PokerCard from '@/components/GameCard/PokerCard.vue'
 import { setHandReplaySession } from '@/session/handReplaySession'
@@ -53,7 +54,8 @@ function currentClubIdNumber(): number {
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--hand-collection-bg-dark': `url(${mainBgUrl})`,
+  '--hand-collection-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const gameTabs = [t('adaptation10022'), t('PokerType_2'), t('adaptation10009')]
@@ -461,14 +463,23 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .mine-glass-page {
   height: 100dvh;
   // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding: 0 0 0.8rem;
   color: #f9f9f9;
+  background-image: var(--hand-collection-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: var(--c-text);
+    background-color: var(--c-page);
+    background-image: var(--hand-collection-bg-light);
+  }
 }
 
 .content-wrap {
@@ -491,9 +502,18 @@ onMounted(() => {
   font-size: 0.37rem;
   padding-bottom: 0.06rem;
 
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.7);
+  }
+
   &.active {
     color: #fff;
     border-bottom: 0.03rem solid rgba(255, 255, 255, 0.9);
+
+    @include theme-light {
+      color: var(--c-brand);
+      border-bottom-color: var(--c-brand);
+    }
   }
 }
 
@@ -502,6 +522,10 @@ onMounted(() => {
   border-radius: 1.38rem;
   background: rgba(255, 255, 255, 0.2);
   // padding: 0.08rem;
+
+  @include theme-light {
+    background: #e3e3e3;
+  }
 }
 
 .capsule-tab {
@@ -513,9 +537,17 @@ onMounted(() => {
   font-size: 0.44rem;
   padding: 0.35rem 0;
 
+  @include theme-light {
+    color: var(--c-text);
+  }
+
   &.active {
     background: rgba(255, 255, 255, 0.2);
     font-weight: 700;
+
+    @include theme-light {
+      background: #cfcfcf;
+    }
   }
 }
 
@@ -547,6 +579,12 @@ onMounted(() => {
   border: 0.02rem solid rgba(249, 249, 249, 0.2);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.04rem);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-surface);
+    backdrop-filter: none;
+  }
 }
 
 .hand-card {
@@ -573,6 +611,10 @@ onMounted(() => {
     width: 0.37rem;
     height: 0.37rem;
     margin-right: 0.1rem;
+
+    @include theme-light {
+      filter: brightness(0);
+    }
   }
   span {
     margin-right: 0.1rem;
@@ -595,6 +637,10 @@ onMounted(() => {
   height: 0.02rem;
   background: rgba(249, 249, 249, 0.2);
   margin: 0.25rem 0 0rem;
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.1);
+  }
 }
 
 .meta {
@@ -609,6 +655,10 @@ onMounted(() => {
     img {
       width: 0.37rem;
       height: 0.37rem;
+
+      @include theme-light {
+        filter: brightness(0);
+      }
     }
     display: flex;
     align-items: flex-end;
@@ -616,14 +666,14 @@ onMounted(() => {
 }
 
 .money {
-  color: #fa2b4b;
+  color: var(--c-profit);
   font-size: 0.52rem;
   font-weight: 700;
 
   line-height: 0.45rem;
 
   &.negative {
-    color: #27d300;
+    color: var(--c-loss);
   }
 }
 </style>

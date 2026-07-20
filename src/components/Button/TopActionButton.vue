@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed, useSlots } from 'vue'
+
 interface Props {
   name: string
   icon?: string
@@ -7,6 +9,8 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const slots = useSlots()
+const hasIcon = computed(() => Boolean(props.icon || slots.icon))
 
 const emit = defineEmits<{
   click: [event: MouseEvent]
@@ -20,25 +24,28 @@ function handleClick(event: MouseEvent): void {
 
 <template>
   <button
-    :class="['action-btn', { 'action-btn--with-icon': Boolean(props.icon), 'action-btn--large': props.large }]"
+    :class="['action-btn', { 'action-btn--with-icon': hasIcon, 'action-btn--large': props.large }]"
     type="button"
     @click="handleClick"
   >
     <span class="action-label">
       {{ props.name }}
     </span>
-    <img
-      v-if="props.icon"
-      class="action-icon action-icon--dark"
-      :src="props.icon"
-      :alt="props.iconAlt || 'icon'"
-    />
-    <span
-      v-if="props.icon"
-      class="action-icon action-icon--light"
-      :style="{ '--action-icon-url': `url(${props.icon})` }"
-      aria-hidden="true"
-    ></span>
+    <span v-if="slots.icon" class="action-icon action-icon--slot">
+      <slot name="icon"></slot>
+    </span>
+    <template v-else-if="props.icon">
+      <img
+        class="action-icon action-icon--dark"
+        :src="props.icon"
+        :alt="props.iconAlt || 'icon'"
+      />
+      <span
+        class="action-icon action-icon--light"
+        :style="{ '--action-icon-url': `url(${props.icon})` }"
+        aria-hidden="true"
+      ></span>
+    </template>
   </button>
 </template>
 
@@ -105,6 +112,17 @@ function handleClick(event: MouseEvent): void {
   height: 0.366rem;
   flex-shrink: 0;
   object-fit: contain;
+}
+
+.action-icon--slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  :deep(svg) {
+    width: 100%;
+    height: 100%;
+  }
 }
 
 .action-icon--light {

@@ -4,8 +4,9 @@ import { showFailToast } from 'vant'
 import { useRoute } from 'vue-router'
 import { postStatsMttRoomDetailApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-import iconTicket from '@/assets/icons/icon_ticket.png'
+import CareerSvgIcon from '../../components/CareerSvgIcon.vue'
 import iconChips from '@/assets/icons/icon_chips.png'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import { formatUC } from '@/utils/roomVisibility'
@@ -22,9 +23,10 @@ import { getLocale, t } from '@/i18n'
 const route = useRoute()
 const gameStore = useGameStore()
 
-// 主容器背景图：全页面共用一张底图。
+// 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--mtt-detail-bg-dark': `url(${mainBgUrl})`,
+  '--mtt-detail-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const title = computed(() => 'MTT')
@@ -281,7 +283,7 @@ onMounted(() => {
           <div class="right">
             <template v-if="item.hasTicket">
               <div class="right-item">
-                <img :src="iconTicket" alt="ticket" />
+                <CareerSvgIcon name="ticket" class="ticket-icon" title="ticket" />
                 <span>{{ item.ticketText }}</span>
               </div>
               <span class="plus">+</span>
@@ -305,14 +307,23 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-mtt-detail-page {
   position: relative;
   height: 100dvh;
   padding: 0 0 0.8rem;
   color: #f9f9f9;
+  background-image: var(--mtt-detail-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: var(--c-text);
+    background-color: var(--c-page);
+    background-image: var(--mtt-detail-bg-light);
+  }
 }
 
 .content-wrap {
@@ -328,6 +339,11 @@ onMounted(() => {
   border: 0.02rem solid rgba(249, 249, 249, 0.2);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.04rem);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-surface);
+  }
 }
 
 .top-card {
@@ -355,6 +371,10 @@ onMounted(() => {
     font-size: 0.387rem;
     line-height: 1.1;
     color: rgba(255, 255, 255, 0.76);
+
+    @include theme-light {
+      color: rgba(0, 0, 0, 0.7);
+    }
   }
 
   .time {
@@ -371,6 +391,10 @@ onMounted(() => {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: center;
   min-height: 1.32rem;
+
+  @include theme-light {
+    background: #e3e3e3;
+  }
 }
 
 .metric {
@@ -390,12 +414,20 @@ onMounted(() => {
     width: 0.02rem;
     height: 0.8rem;
     background: rgba(255, 255, 255, 0.2);
+
+    @include theme-light {
+      background: rgba(0, 0, 0, 0.1);
+    }
   }
 
   .label {
     font-size: 0.28rem;
     line-height: 1;
     color: rgba(255, 255, 255, 0.72);
+
+    @include theme-light {
+      color: rgba(0, 0, 0, 0.7);
+    }
   }
 
   .value {
@@ -446,6 +478,10 @@ onMounted(() => {
 
   .avatar--empty {
     background: rgba(255, 255, 255, 0.52);
+
+    @include theme-light {
+      background: rgba(0, 0, 0, 0.12);
+    }
   }
 
   .name {
@@ -487,6 +523,16 @@ onMounted(() => {
       width: 0.58rem;
       height: 0.58rem;
       object-fit: contain;
+    }
+
+    .ticket-icon {
+      width: 0.58rem;
+      height: 0.58rem;
+      color: #fff;
+
+      @include theme-light {
+        color: #000;
+      }
     }
 
     span {

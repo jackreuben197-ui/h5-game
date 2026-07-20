@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { postStatsUserGameRecordListApi } from '@/api/stats'
 import { postMiscGameRecordRoundApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import PokerCard from '@/components/GameCard/PokerCard.vue'
 import {
@@ -47,9 +48,10 @@ const currentUserRandomId = computed(() => {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 })
 
-// 主容器背景图：全页面共用一张底图。
+// 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--record-hand-bg-dark': `url(${mainBgUrl})`,
+  '--record-hand-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 interface HandRow {
@@ -473,14 +475,23 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .record-hand-page {
   height: 100dvh;
   // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;
+  background-image: var(--record-hand-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: var(--c-text);
+    background-color: var(--c-page);
+    background-image: var(--record-hand-bg-light);
+  }
 }
 
 .content-wrap {
@@ -492,6 +503,11 @@ onMounted(() => {
   border: 0.02rem solid rgba(249, 249, 249, 0.2);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.04rem);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-surface);
+  }
 }
 
 .overview-card {
@@ -501,6 +517,10 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   gap: 0.2rem;
+
+  @include theme-light {
+    background: rgba(227, 227, 227, 0.76);
+  }
 }
 
 .left-blind {
@@ -511,6 +531,10 @@ onMounted(() => {
   .label {
     font-size: 0.27rem;
     color: rgba(255, 255, 255, 0.74);
+
+    @include theme-light {
+      color: rgba(0, 0, 0, 0.7);
+    }
   }
 
   .value {
@@ -522,6 +546,10 @@ onMounted(() => {
     margin-top: 0.05rem;
     font-size: 0.27rem;
     color: rgba(255, 255, 255, 0.74);
+
+    @include theme-light {
+      color: rgba(0, 0, 0, 0.7);
+    }
   }
 }
 
@@ -536,6 +564,10 @@ onMounted(() => {
     margin-top: 0.08rem;
     font-size: 0.28rem;
     color: rgba(255, 255, 255, 0.78);
+
+    @include theme-light {
+      color: rgba(0, 0, 0, 0.5);
+    }
   }
 }
 
@@ -587,6 +619,10 @@ onMounted(() => {
   height: 0.02rem;
   margin: 0.16rem 0;
   background: rgba(255, 255, 255, 0.15);
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.1);
+  }
 }
 
 .meta {
@@ -599,7 +635,7 @@ onMounted(() => {
 
   .money {
     font-size: 0.52rem;
-    color: #65e89f;
+    color: var(--c-loss);
 
     font-weight: 700;
   }
@@ -611,7 +647,7 @@ onMounted(() => {
 
   &.positive {
     .money {
-      color: #ff8498;
+      color: var(--c-profit);
     }
   }
   &.zero {

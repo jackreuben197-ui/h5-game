@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 import { postStatsMttHistoryListByDateApi, postStatsUserStatsApi } from '@/api/stats'
 import type { StatsMttHistoryDateGroup, StatsMttHistoryRecord } from '@/api/models/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import iconChips from '@/assets/icons/icon_chips.png'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -27,9 +28,10 @@ const gameStore = useGameStore()
 
 const title = computed(() => 'MTT')
 
-// 主容器背景图：全页面共用一张底图。
+// 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--mtt-bg-dark': `url(${mainBgUrl})`,
+  '--mtt-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 // 对齐客户端 TexasBusiness.CheckRequestPara：NLH/PLO/6+ 的 game_types + poker_types 组合。
@@ -529,14 +531,23 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-mtt-page {
   position: relative;
   height: 100dvh;
   padding: 0 0 0.8rem;
   color: #f9f9f9;
+  background-image: var(--mtt-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: var(--c-text);
+    background-color: var(--c-page);
+    background-image: var(--mtt-bg-light);
+  }
 }
 
 .content-wrap {
@@ -561,9 +572,18 @@ onBeforeUnmount(() => {
   font-size: 0.37rem;
   padding-bottom: 0.06rem;
 
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.7);
+  }
+
   &.active {
     color: #fff;
     border-bottom: 0.03rem solid rgba(255, 255, 255, 0.92);
+
+    @include theme-light {
+      color: var(--c-brand);
+      border-bottom-color: var(--c-brand);
+    }
   }
 }
 
@@ -572,6 +592,11 @@ onBeforeUnmount(() => {
   border: 0.02rem solid rgba(249, 249, 249, 0.2);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.04rem);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-surface);
+  }
 }
 
 .summary-card {
@@ -579,6 +604,10 @@ onBeforeUnmount(() => {
   padding: 0.34rem 0.8rem 0.32rem;
   background: rgba(42, 26, 43, 0.2);
   backdrop-filter: blur(0.03rem);
+
+  @include theme-light {
+    background: var(--c-surface);
+  }
 }
 
 .time-tabs {
@@ -588,6 +617,10 @@ onBeforeUnmount(() => {
   padding: 0;
   border-radius: 0.68rem;
   background: rgba(255, 255, 255, 0.2);
+
+  @include theme-light {
+    background: #e3e3e3;
+  }
 }
 
 .time-tab {
@@ -599,10 +632,18 @@ onBeforeUnmount(() => {
   font-size: 0.42rem;
   padding: 0.36rem 0;
 
+  @include theme-light {
+    color: var(--c-text);
+  }
+
   &.active {
     background: rgba(255, 255, 255, 0.16);
     font-weight: 700;
     opacity: 1;
+
+    @include theme-light {
+      background: #cfcfcf;
+    }
   }
 }
 
@@ -626,6 +667,10 @@ onBeforeUnmount(() => {
     margin-top: 0rem;
     font-size: 0.22rem;
     color: rgba(255, 255, 255, 0.5);
+
+    @include theme-light {
+      color: var(--c-text-muted);
+    }
   }
 }
 
@@ -665,6 +710,10 @@ onBeforeUnmount(() => {
     width: 0.02rem;
     bottom: -0.3rem;
     background: rgba(255, 255, 255, 1);
+
+    @include theme-light {
+      background: #a3a3a3;
+    }
   }
 
   &.date-col--continued::after {
@@ -695,6 +744,10 @@ onBeforeUnmount(() => {
     width: 0.267rem;
     height: 0.267rem;
     border-radius: 50%;
+
+    @include theme-light {
+      filter: brightness(0);
+    }
   }
 }
 
@@ -718,6 +771,10 @@ onBeforeUnmount(() => {
     margin-top: 0.03rem;
     font-size: 0.3314rem;
     color: rgba(255, 255, 255, 0.76);
+
+    @include theme-light {
+      color: rgba(0, 0, 0, 0.7);
+    }
   }
 }
 
@@ -757,6 +814,10 @@ onBeforeUnmount(() => {
   margin: 0.24rem 0 0.3rem;
   height: 0.02rem;
   background: rgba(255, 255, 255, 0.16);
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.1);
+  }
 }
 
 .row-bottom {
@@ -764,5 +825,9 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   font-size: 0.33rem;
   color: rgba(255, 255, 255, 0.8);
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 </style>

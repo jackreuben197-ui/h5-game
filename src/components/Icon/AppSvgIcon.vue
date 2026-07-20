@@ -1,29 +1,29 @@
 <script setup lang="ts">
 type AppSvgIconName =
-  | 'search'
-  | 'spade'
-  | 'heart'
-  | 'club'
-  | 'diamond'
-  | 'table'
-  | 'users'
-  | 'plus-circle'
-  | 'clock'
-  | 'microphone'
-  | 'video'
-  | 'room-users'
-  | 'telegram'
-  | 'contact-user'
-  | 'customer-service'
-  | 'round-arrow-right'
+  | 'search' //搜索
+  | 'spade' //黑桃
+  | 'heart' //红心
+  | 'club' //梅花
+  | 'diamond' //方片
+  | 'table' //牌桌
+  | 'users' //玩家
+  | 'plus-circle' //加号
+  | 'clock' //时钟
+  | 'microphone' //右上角客服
+  | 'video' //视频
+  | 'room-users' //朋友桌列表人头
+  | 'telegram' //telegram
+  | 'contact-user' //主页邮箱
+  | 'customer-service' //主页客服
+  | 'round-arrow-right' //牌桌下箭头
   | 'round-chevron-down'
   | 'wallet-flow'
   | 'info'
   | 'edit'
-  | 'chevron-down'
-  | 'agent-stats'
-  | 'club-level-badge'
-  | 'link'
+  | 'chevron-down' //
+  | 'agent-stats' //代理收益-旋转卡片
+  | 'club-level-badge' //俱乐部等级
+  | 'link' //代理链接
 
 withDefaults(
   defineProps<{

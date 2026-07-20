@@ -44,9 +44,7 @@ function onContinue(): void {
           </div>
 
           <!-- Notice -->
-          <p class="card__notice">
-            您有一笔充值订单尚未完成<br />请确认是否继续发起新的充值?
-          </p>
+          <p class="card__notice">您有一笔充值订单尚未完成<br />请确认是否继续发起新的充值?</p>
 
           <!-- Order Info Card -->
           <div class="order-info-card">
@@ -86,15 +84,7 @@ function onContinue(): void {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-image: url('@/assets/images/wallet/bg_sharp.webp');
-
-  @include theme-light {
-    background-color: var(--c-page);
-    background-image: none;
-  }
+  background: var(--c-overlay);
 }
 
 .overlay::before {
@@ -106,10 +96,6 @@ function onContinue(): void {
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
   background: var(--c-overlay);
-
-  @include theme-light {
-    background: rgba(12, 12, 12, 0.6);
-  }
 }
 
 .card {
@@ -145,11 +131,11 @@ function onContinue(): void {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: rgba(0, 0, 0, 0.70);
+  background: rgba(0, 0, 0, 0.7);
   box-shadow:
     0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
     0 0 0.2298rem 0 #000 inset,
-    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.90) inset;
+    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.9) inset;
   backdrop-filter: blur(7.58px);
   -webkit-backdrop-filter: blur(7.58px);
   pointer-events: none;
@@ -175,7 +161,7 @@ function onContinue(): void {
 
 .card__title {
   color: var(--c-text);
-  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 19px;
   font-weight: 500;
   letter-spacing: 0.32px;
@@ -185,7 +171,7 @@ function onContinue(): void {
 .card__notice {
   color: var(--c-text);
   text-align: center;
-  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 14px;
   line-height: 1.5;
   margin: 0 0 20px 0;
@@ -213,13 +199,13 @@ function onContinue(): void {
 
 .label {
   color: var(--c-text);
-  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 14px;
 }
 
 .value {
   color: var(--c-text);
-  font-family: var(--wallet-font-num, "SF Pro");
+  font-family: var(--wallet-font-num, 'SF Pro');
   font-size: 14px;
   font-weight: 600;
 }
@@ -262,7 +248,7 @@ function onContinue(): void {
   flex: 1 0 0;
   border-radius: 39.59px;
   border: none;
-  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -276,7 +262,7 @@ function onContinue(): void {
 .btn--cancel {
   justify-content: center;
   border-radius: 39.59px;
-  background: rgba(0, 0, 0, 0.30);
+  background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(0.0527px);
   color: #fff;
 
@@ -288,7 +274,7 @@ function onContinue(): void {
 
 .btn--continue {
   position: relative;
-  background: linear-gradient(128deg, #05E7AE 7.55%, #027A5C 71.92%);
+  background: linear-gradient(128deg, #05e7ae 7.55%, #027a5c 71.92%);
   backdrop-filter: blur(0.1584px);
   color: #fff;
 
@@ -303,9 +289,18 @@ function onContinue(): void {
   inset: 0;
   border-radius: inherit;
   padding: 0.5px;
-  background: linear-gradient(180deg, rgba(242, 242, 242, 0.80) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  background: linear-gradient(
+    180deg,
+    rgba(242, 242, 242, 0.8) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;

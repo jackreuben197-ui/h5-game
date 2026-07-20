@@ -129,7 +129,7 @@ async function fetchRewardRecords(reset = false): Promise<void> {
       records.value = []
       hasMore.value = false
     } else {
-      showFailToast(t('MSG_LoadFail') + "，" + t('UIClub_Text4'))
+      showFailToast(t('MSG_LoadFail') + '，' + t('UIClub_Text4'))
     }
   } finally {
     if (reset) {
@@ -413,15 +413,11 @@ onMounted(() => {
 
 // 金额颜色
 .val-pos {
-  color: #ff132b;
+  color: var(--c-profit);
 }
 
 .val-neg {
-  color: rgba(225, 238, 255, 0.65);
-
-  @include theme-light {
-    color: var(--c-loss);
-  }
+  color: var(--c-loss);
 }
 
 // 扑克牌

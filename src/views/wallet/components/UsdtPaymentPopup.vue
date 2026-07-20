@@ -59,15 +59,14 @@ function submit(): void {
   emit('submit', selectedOption.value)
 }
 
-function onRefresh() {
-  window.location.reload()
-}
-
 onMounted(() => {
   // 15 minutes timeout
-  timer = window.setTimeout(() => {
-    isTimedOut.value = true
-  }, 15 * 60 * 1000)
+  timer = window.setTimeout(
+    () => {
+      isTimedOut.value = true
+    },
+    15 * 60 * 1000,
+  )
 })
 
 onUnmounted(() => {
@@ -229,11 +228,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Timeout Reminder Modal -->
-    <div
-      v-if="isTimedOut"
-      class="timeout-overlay"
-      @click.self="isTimedOut = false"
-    >
+    <div v-if="isTimedOut" class="timeout-overlay" @click.self="isTimedOut = false">
       <div class="timeout-card">
         <div class="timeout-card__inner">
           <div class="timeout-header">
@@ -260,15 +255,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: clamp(20px, 7vw, 28px);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-image: url('@/assets/images/wallet/bg_sharp.webp');
-
-  @include theme-light {
-    background-color: var(--c-page);
-    background-image: none;
-  }
+  background: var(--c-overlay);
 }
 
 .overlay::before {
@@ -280,10 +267,6 @@ onUnmounted(() => {
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
   background: var(--c-overlay);
-
-  @include theme-light {
-    background: rgba(12, 12, 12, 0.6);
-  }
 }
 
 .card {
@@ -298,7 +281,9 @@ onUnmounted(() => {
   gap: 18.116px;
   border: 0.96px solid rgba(242, 242, 242, 0.4);
   border-radius: clamp(28px, 10vw, 36.4px);
-  box-shadow: 3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25), 0 0 8.6px #000 inset,
+  box-shadow:
+    3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25),
+    0 0 8.6px #000 inset,
     2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
   overflow: hidden;
   background-image: url('@/assets/images/wallet/bg_sharp.webp');
@@ -319,7 +304,9 @@ onUnmounted(() => {
   inset: 0;
   border-radius: inherit;
   background: rgba(0, 0, 0, 0.7);
-  box-shadow: 0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25), 0 0 0.2298rem 0 #000 inset,
+  box-shadow:
+    0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
+    0 0 0.2298rem 0 #000 inset,
     0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.9) inset;
   backdrop-filter: blur(7.580729961395264px);
   -webkit-backdrop-filter: blur(7.580729961395264px);
@@ -343,8 +330,12 @@ onUnmounted(() => {
     rgba(255, 255, 255, 0) 50%,
     rgba(255, 255, 255, 0.5) 100%
   );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -367,9 +358,9 @@ onUnmounted(() => {
 .card__title {
   color: var(--c-text);
   text-align: center;
-  leading-trim: both;
-  text-edge: cap;
-  font-feature-settings: 'liga' off, 'clig' off;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
   font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 16px;
   font-style: normal;
@@ -389,9 +380,9 @@ onUnmounted(() => {
 .card__header-info span {
   color: var(--c-text);
   text-align: center;
-  leading-trim: both;
-  text-edge: cap;
-  font-feature-settings: 'liga' off, 'clig' off;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
   font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 11px;
   font-style: normal;
@@ -411,9 +402,9 @@ onUnmounted(() => {
 .card__notice {
   color: var(--c-text);
   text-align: center;
-  leading-trim: both;
-  text-edge: cap;
-  font-feature-settings: 'liga' off, 'clig' off;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
   font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 15px;
   font-style: normal;
@@ -488,7 +479,9 @@ onUnmounted(() => {
 
 .option-card__amount {
   color: var(--c-text);
-  font-feature-settings: 'liga' off, 'clig' off;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
   font-family: var(--wallet-font-num, 'SF Pro');
   font-size: 17.317px;
   font-style: normal;
@@ -505,7 +498,9 @@ onUnmounted(() => {
 .option-card__desc {
   color: var(--c-text);
   text-align: right;
-  font-feature-settings: 'liga' off, 'clig' off;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
   font-family: 'SF Pro';
   font-size: 10.908px;
   font-style: normal;
@@ -528,7 +523,9 @@ onUnmounted(() => {
   margin-bottom: 0;
   color: var(--c-text);
   text-align: right;
-  font-feature-settings: 'liga' off, 'clig' off;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
   font-family: 'SF Pro';
   font-size: 10.908px;
   font-style: normal;
@@ -609,10 +606,6 @@ onUnmounted(() => {
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
   background: var(--c-overlay);
-
-  @include theme-light {
-    background: rgba(12, 12, 12, 0.6);
-  }
 }
 
 .timeout-card {
@@ -627,7 +620,9 @@ onUnmounted(() => {
   gap: 18.116px;
   border: 0.96px solid rgba(242, 242, 242, 0.4);
   border-radius: clamp(28px, 10vw, 36.4px);
-  box-shadow: 3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25), 0 0 8.6px #000 inset,
+  box-shadow:
+    3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25),
+    0 0 8.6px #000 inset,
     2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
   overflow: hidden;
   animation: modal-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -648,7 +643,9 @@ onUnmounted(() => {
   inset: 0;
   border-radius: inherit;
   background: rgba(0, 0, 0, 0.7);
-  box-shadow: 0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25), 0 0 0.2298rem 0 #000 inset,
+  box-shadow:
+    0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
+    0 0 0.2298rem 0 #000 inset,
     0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.9) inset;
   backdrop-filter: blur(7.580729961395264px);
   -webkit-backdrop-filter: blur(7.580729961395264px);
@@ -672,8 +669,12 @@ onUnmounted(() => {
     rgba(255, 255, 255, 0) 50%,
     rgba(255, 255, 255, 0.5) 100%
   );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -704,7 +705,11 @@ onUnmounted(() => {
   );
 
   @include theme-light {
-    background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%);
+    background: linear-gradient(
+      97deg,
+      rgba(255, 255, 255, 0.1) 21.11%,
+      rgba(230, 230, 230, 0.1) 71.43%
+    );
   }
 }
 

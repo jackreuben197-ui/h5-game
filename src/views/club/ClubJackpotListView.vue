@@ -3,7 +3,10 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
 import { postOrgClubJackpotTemplateDelApi, postOrgClubJackpotTemplateListApi } from '@/api/org'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
+import iconDelete from '@/assets/icons/icon_delete.svg'
+import iconEdit from '@/assets/icons/icon_edit.svg'
 import { t } from '@/i18n'
 
 interface JackpotTemplateItem {
@@ -210,7 +213,7 @@ function goPoolReward(): void {
 
 <template>
   <div ref="pageRef" class="page-shell club-jackpot-page" @scroll="onPageScroll">
-    <HeaderBack :title="'Jackpot'">
+    <HeaderBack :title="'Jackpot'" :extra-padding="true">
       <template #right>
         <button type="button" class="pool-trigger" aria-label="Pool Reward" @click="goPoolReward">
           <span>{{ t('UIClub_Jackpot3') }}</span>
@@ -230,12 +233,12 @@ function goPoolReward(): void {
             <div class="tag-rows">
               <div class="tag-row">
                 <span v-for="tag in item.gameTags.slice(0, 2)" :key="tag" class="tag-item">
-                  <i class="tag-icon" aria-hidden="true"></i>{{ tag }}
+                  <AppSvgIcon class="tag-icon" name="spade" />{{ tag }}
                 </span>
               </div>
               <div v-if="item.gameTags.length > 2" class="tag-row">
                 <span v-for="tag in item.gameTags.slice(2)" :key="`r2-${tag}`" class="tag-item">
-                  <i class="tag-icon" aria-hidden="true"></i>{{ tag }}
+                  <AppSvgIcon class="tag-icon" name="spade" />{{ tag }}
                 </span>
               </div>
             </div>
@@ -245,7 +248,7 @@ function goPoolReward(): void {
             <div class="jp-badge">JP {{ item.jpAmount }}</div>
             <div class="action-row">
               <button type="button" class="action-btn" aria-label="编辑" @click.stop="onEdit(item)">
-                <i class="action-icon" aria-hidden="true">✎</i>
+                <img :src="iconEdit" class="action-icon" alt="" />
                 <span class="action-label">编辑</span>
               </button>
               <button
@@ -254,7 +257,7 @@ function goPoolReward(): void {
                 aria-label="删除"
                 @click.stop="onDelete(item)"
               >
-                <i class="action-icon" aria-hidden="true">✕</i>
+                <img :src="iconDelete" class="action-icon" alt="" />
                 <span class="action-label">删除</span>
               </button>
             </div>
@@ -317,6 +320,8 @@ function goPoolReward(): void {
   background-image: url('@/assets/images/main_bg.webp');
   background-size: cover;
   background-position: center;
+  padding-left: 0;
+  padding-right: 0;
 
   @include theme-light {
     background-image: url('@/assets/images/main_bg_light.png');
@@ -395,6 +400,21 @@ function goPoolReward(): void {
   backdrop-filter: blur(4.1px);
   border: 0.0267rem solid rgba(255, 255, 255, 0.96);
   overflow: hidden;
+
+  @include theme-light {
+    background:
+      radial-gradient(
+        70% 110% at 44% 45%,
+        rgba(123, 105, 255, 0.38) 0%,
+        rgba(71, 64, 244, 0.12) 58%,
+        rgba(5, 13, 231, 0) 100%
+      ),
+      rgba(5, 13, 231, 0.6);
+    border-color: #fff;
+    box-shadow:
+      inset 0.04rem 0.04rem 0.14rem rgba(255, 255, 255, 0.32),
+      inset -0.04rem -0.04rem 0.12rem rgba(51, 43, 190, 0.2);
+  }
 }
 
 .card-bg::after {
@@ -402,7 +422,9 @@ function goPoolReward(): void {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  box-shadow: inset 0 0 0.0149rem rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 0 0 0.0149rem rgba(255, 255, 255, 0.5),
+    inset 0 0 0.08rem rgba(255, 255, 255, 0.22);
   pointer-events: none;
 }
 
@@ -422,6 +444,13 @@ function goPoolReward(): void {
   align-items: center;
   justify-content: center;
   z-index: 2;
+
+  @include theme-light {
+    background: linear-gradient(140deg, #cf56ef 2%, #8b3de6 49%, #5737ef 100%);
+    box-shadow:
+      0.0913rem 0.1141rem 0.0913rem rgba(0, 0, 0, 0.25),
+      inset 0.02rem 0.02rem 0.08rem rgba(255, 255, 255, 0.24);
+  }
 
   span {
     font-size: 0.229rem;
@@ -479,13 +508,10 @@ function goPoolReward(): void {
 }
 
 .tag-icon {
-  font-style: normal;
-  display: inline-block;
   flex-shrink: 0;
   width: 0.24rem;
   height: 0.2667rem;
-  background: linear-gradient(180deg, rgba(190, 232, 255, 0.95), rgba(136, 188, 255, 0.85));
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  color: #fff;
 }
 
 /* Right section: JP badge + action buttons */
@@ -521,6 +547,7 @@ function goPoolReward(): void {
   display: flex;
   align-items: center;
   gap: 0.2025rem;
+  margin-top: 0.1rem;
 }
 
 .action-btn {
@@ -528,7 +555,8 @@ function goPoolReward(): void {
   height: 0.6218rem;
   border-radius: 0.4223rem;
   border: 0.0112rem solid rgba(242, 242, 242, 0.4);
-  background: rgba(165, 165, 165, 0.8);
+  background: rgba(255, 255, 255, 0.2);
+  background-blend-mode: hard-light;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -537,16 +565,15 @@ function goPoolReward(): void {
   gap: 0.01rem;
   cursor: pointer;
   box-shadow:
-    0 0.028rem 0.028rem rgba(0, 0, 0, 0.25),
-    inset 0 0 0.0559rem rgba(0, 0, 0, 0.8),
-    inset 0 0 0.1117rem rgba(242, 242, 242, 0.9);
+    0.0224rem 0.028rem 0.0447rem rgba(0, 0, 0, 0.25),
+    inset 0.0133rem 0.0133rem 0 rgba(255, 255, 255, 0.3),
+    inset -0.0133rem -0.0133rem 0 rgba(255, 255, 255, 0.3);
 }
 
 .action-icon {
-  font-style: normal;
-  font-size: 0.1867rem;
-  color: #fff;
-  line-height: 1;
+  width: 0.2rem;
+  height: 0.2rem;
+  object-fit: contain;
 }
 
 .action-label {

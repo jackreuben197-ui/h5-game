@@ -117,7 +117,7 @@ export async function replacePublicCacheEntries<T>(
 // 新增 store：① 加常量 ② 加进 UserCacheStoreName union 与 USER_CACHE_STORES
 // ③ 把 USER_CACHE_DB_VERSION + 1（旧用户下次 open 会触发 onupgradeneeded 补建 store）。
 const USER_CACHE_DB_PREFIX = 'user_cache_'
-const USER_CACHE_DB_VERSION = 8
+const USER_CACHE_DB_VERSION = 9
 
 export const USER_STORE_CLUB_LIST = 'club_list'
 // 生涯单一 store：战绩(record)与数据(data)合用一个 object store，
@@ -136,6 +136,15 @@ export const USER_STORE_H5_REPLAY = 'h5_replay'
 //   `${clubId}_roomdetail_${roomId}_${matchId}`
 // 列表类 value 连同 offset/hasMore 一起存，触底加载后回写累计结果（更新而非覆盖）。
 export const USER_STORE_CLUB_MANAGE = 'club_manage'
+// 消息中心（系统消息 / 带入申请 / UC 充值申请）共用 store，key 按接口的真实作用域拼，
+// 拼接规则集中在 utils/messageCenterCache.ts：
+//   `system_${msgType}` / `other_${msgType}` —— /msg/message/list 不带 X-Club，按 msg_type 分桶即可；
+//   `credit_apply` —— /roomcenter/user/apply/list 不带俱乐部参数，用户维度全局一份；
+//   `${clubId}_uc_apply` —— /order/club/member_order/list 请求会自动带 X-Club，按当前俱乐部分桶。
+// value 连同 offset/total/hasMore 一起存，触底加载后回写累计结果（更新而非覆盖）。
+// 审核（同意/拒绝）不止发生在消息页：GlobalMessageTodoNotice 悬浮窗和 MSG_S_TODO_LIST
+// WS 推送也会让 credit/uc 数据过期，这两处也需要经 messageCenterCache 的失效函数同步。
+export const USER_STORE_MESSAGE = 'message'
 
 // cocos 通过 bridge 写入的 store；与 h5 自己的 store 同库不同名，
 // h5 对 bridge 收到的 store 必须做白名单校验，未列入这里的请求一律忽略。
@@ -160,6 +169,7 @@ export type UserCacheStoreName =
   | typeof USER_STORE_BILL_DATA
   | typeof USER_STORE_H5_REPLAY
   | typeof USER_STORE_CLUB_MANAGE
+  | typeof USER_STORE_MESSAGE
   | CcCacheStoreName
 
 const USER_CACHE_STORES: UserCacheStoreName[] = [
@@ -168,6 +178,7 @@ const USER_CACHE_STORES: UserCacheStoreName[] = [
   USER_STORE_BILL_DATA,
   USER_STORE_H5_REPLAY,
   USER_STORE_CLUB_MANAGE,
+  USER_STORE_MESSAGE,
   ...CC_CACHE_STORES,
 ]
 

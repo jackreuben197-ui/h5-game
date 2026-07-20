@@ -23,6 +23,8 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { useGameStore } from '@/stores/game'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { invalidateCreditCache, invalidateUcCache } from '@/utils/messageCenterCache'
 
 type TodoSectionType = 'uc' | 'bringIn' | 'joinClub'
 
@@ -42,6 +44,7 @@ const loading = ref(false)
 const data = ref<MsgMessageTodoAllInfoData>({})
 const todoCountMap = ref<MsgMessageTodoAllInfoDataElement[]>([])
 const gameStore = useGameStore()
+const userInfoStore = useUserInfoStore()
 let stopTodoWsListener: (() => void) | null = null
 
 const watchedTodoTypes = [2, 3, 6] as const
@@ -203,6 +206,9 @@ async function auditUc(item: ClubMemberOrderListOrderInfo, pass: boolean): Promi
   })
 
   if (response.code === 0) {
+    // 悬浮窗审核拿不到消息页里已映射好的列表，直接让对应俱乐部的缓存失效即可，
+    // 下次打开消息页会重新拉取，不会读到已审核完的旧状态。
+    void invalidateUcCache(gameStore.loginUserId, item.club_id)
     await fetchTodoAllInfo()
   }
 }
@@ -216,6 +222,7 @@ async function auditBringIn(item: UserRoomSitApplyRecordsRecord, pass: boolean):
       action: pass ? 2 : 3,
     })
     if (response.code === 0) {
+      void invalidateCreditCache(gameStore.loginUserId)
       await fetchTodoAllInfo()
     }
     return
@@ -226,6 +233,7 @@ async function auditBringIn(item: UserRoomSitApplyRecordsRecord, pass: boolean):
     audit_op: pass ? 2 : 3,
   })
   if (response.code === 0) {
+    void invalidateCreditCache(gameStore.loginUserId)
     await fetchTodoAllInfo()
   }
 }
@@ -275,7 +283,16 @@ function initTodoWsListener(): void {
   stopTodoWsListener = subscribeH5WsCode(Code.MSG_S_TODO_LIST, (message) => {
     const payload = decodeTodoListNotify(message.rawBuffer)
     if (!payload) return
-    updateTodoTypeCount(Number(payload.type || 0), Number(payload.num || 0))
+    const type = Number(payload.type || 0)
+    updateTodoTypeCount(type, Number(payload.num || 0))
+
+    // 推送只带 type/num，不带俱乐部信息：带入/UC 数量变化可能来自其他管理员的审核，
+    // 消息页缓存也要跟着失效，避免下次打开先看到一瞬间的过期状态。
+    if (type === 2) {
+      void invalidateUcCache(gameStore.loginUserId, userInfoStore.currentClubId)
+    } else if (type === 6) {
+      void invalidateCreditCache(gameStore.loginUserId)
+    }
 
     if (totalCount.value <= 0) {
       visible.value = false

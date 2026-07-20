@@ -25,6 +25,16 @@ import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { formatUC } from '@/utils/roomVisibility'
+import { useGameStore } from '@/stores/game'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { USER_STORE_MESSAGE } from '@/utils/indexedDB'
+import { toPlain, userCache } from '@/utils/userCache'
+import {
+  CREDIT_CACHE_KEY,
+  type CachedMessageList,
+  msgListCacheKey,
+  ucCacheKey,
+} from '@/utils/messageCenterCache'
 
 type MessagePageType = 'system' | 'credit' | 'uc' | 'other'
 type CreditStatus = 'pending' | 'rejected' | 'approved'
@@ -113,6 +123,12 @@ interface OtherMessageItem {
 }
 
 const route = useRoute()
+const gameStore = useGameStore()
+const userInfoStore = useUserInfoStore()
+
+function msgCache() {
+  return userCache(gameStore.loginUserId)
+}
 
 const otherBannerBgFirst = mainBgUrl
 const otherBannerBgDefault = mainBgUrl
@@ -556,7 +572,11 @@ const hasMoreMsgList = computed(() => {
   return msgHasMore.value
 })
 
-async function fetchMsgList(target: 'system' | 'other', append = false): Promise<void> {
+async function fetchMsgList(
+  target: 'system' | 'other',
+  append = false,
+  silent = false,
+): Promise<void> {
   if (msgListLoading.value) return
   if (append && !hasMoreMsgList.value) return
 
@@ -570,10 +590,13 @@ async function fetchMsgList(target: 'system' | 'other', append = false): Promise
   msgListLoading.value = false
 
   if (response.code !== 0) {
-    if (!append && target === 'system') {
-      systemMessages.value = []
-    } else if (!append) {
-      otherMessages.value = []
+    // 静默刷新失败时缓存仍在展示，不清空，避免把已渲染的旧数据抹掉。
+    if (!append && !silent) {
+      if (target === 'system') {
+        systemMessages.value = []
+      } else {
+        otherMessages.value = []
+      }
     }
     return
   }
@@ -606,6 +629,17 @@ async function fetchMsgList(target: 'system' | 'other', append = false): Promise
     })
     otherMessages.value = append ? [...otherMessages.value, ...mapped] : mapped
   }
+
+  void msgCache().put(
+    USER_STORE_MESSAGE,
+    msgListCacheKey(target, messageType.value),
+    toPlain<CachedMessageList<SystemMessageItem | OtherMessageItem>>({
+      items: target === 'system' ? systemMessages.value : otherMessages.value,
+      offset: msgOffset.value,
+      total: msgTotal.value,
+      hasMore: msgHasMore.value,
+    }),
+  )
 
   if (!append) {
     await postMsgMessageUnreadClearApi({ msg_type: messageType.value })
@@ -692,7 +726,7 @@ function onPageScroll(): void {
   void loadMoreMessagesIfNeeded()
 }
 
-async function fetchCreditList(append = false): Promise<void> {
+async function fetchCreditList(append = false, silent = false): Promise<void> {
   if (creditLoading.value) return
   if (append && !creditHasMore.value) return
 
@@ -705,7 +739,7 @@ async function fetchCreditList(append = false): Promise<void> {
   creditLoading.value = false
 
   if (response.code !== 0) {
-    if (!append) {
+    if (!append && !silent) {
       creditMessages.value = []
     }
     return
@@ -737,9 +771,20 @@ async function fetchCreditList(append = false): Promise<void> {
   })
 
   creditMessages.value = append ? [...creditMessages.value, ...mapped] : mapped
+
+  void msgCache().put(
+    USER_STORE_MESSAGE,
+    CREDIT_CACHE_KEY,
+    toPlain<CachedMessageList<CreditMessageItem>>({
+      items: creditMessages.value,
+      offset: creditOffset.value,
+      total: creditTotal.value,
+      hasMore: creditHasMore.value,
+    }),
+  )
 }
 
-async function fetchUcList(append = false): Promise<void> {
+async function fetchUcList(append = false, silent = false): Promise<void> {
   if (ucLoading.value) return
   if (append && !ucHasMore.value) return
 
@@ -753,7 +798,7 @@ async function fetchUcList(append = false): Promise<void> {
   ucLoading.value = false
 
   if (response.code !== 0) {
-    if (!append) {
+    if (!append && !silent) {
       ucMessages.value = []
     }
     return
@@ -784,6 +829,17 @@ async function fetchUcList(append = false): Promise<void> {
   })
 
   ucMessages.value = append ? [...ucMessages.value, ...mapped] : mapped
+
+  void msgCache().put(
+    USER_STORE_MESSAGE,
+    ucCacheKey(userInfoStore.currentClubId),
+    toPlain<CachedMessageList<UcMessageItem>>({
+      items: ucMessages.value,
+      offset: ucOffset.value,
+      total: ucTotal.value,
+      hasMore: ucHasMore.value,
+    }),
+  )
 }
 
 async function auditCredit(item: CreditMessageItem, pass: boolean): Promise<void> {
@@ -820,6 +876,53 @@ async function auditUc(item: UcMessageItem, pass: boolean): Promise<void> {
   }
 }
 
+// 进页面先读消息中心缓存渲染，命中的走静默刷新（不清空、不闪 loading），未命中的照常加载。
+async function restoreMsgListCache(target: 'system' | 'other'): Promise<boolean> {
+  const cached = await msgCache().get<CachedMessageList<SystemMessageItem | OtherMessageItem>>(
+    USER_STORE_MESSAGE,
+    msgListCacheKey(target, messageType.value),
+  )
+  if (!cached?.items?.length) return false
+
+  if (target === 'system') {
+    systemMessages.value = cached.items as SystemMessageItem[]
+  } else {
+    otherMessages.value = cached.items as OtherMessageItem[]
+  }
+  msgOffset.value = cached.offset
+  msgTotal.value = cached.total
+  msgHasMore.value = cached.hasMore
+  return true
+}
+
+async function restoreCreditCache(): Promise<boolean> {
+  const cached = await msgCache().get<CachedMessageList<CreditMessageItem>>(
+    USER_STORE_MESSAGE,
+    CREDIT_CACHE_KEY,
+  )
+  if (!cached?.items?.length) return false
+
+  creditMessages.value = cached.items
+  creditOffset.value = cached.offset
+  creditTotal.value = cached.total
+  creditHasMore.value = cached.hasMore
+  return true
+}
+
+async function restoreUcCache(): Promise<boolean> {
+  const cached = await msgCache().get<CachedMessageList<UcMessageItem>>(
+    USER_STORE_MESSAGE,
+    ucCacheKey(userInfoStore.currentClubId),
+  )
+  if (!cached?.items?.length) return false
+
+  ucMessages.value = cached.items
+  ucOffset.value = cached.offset
+  ucTotal.value = cached.total
+  ucHasMore.value = cached.hasMore
+  return true
+}
+
 watch(
   () => [pageType.value, messageType.value],
   async ([type]) => {
@@ -827,21 +930,25 @@ watch(
     resetCreditPagination()
     resetUcPagination()
     if (type === 'credit') {
-      await fetchCreditList()
+      const hit = await restoreCreditCache()
+      await fetchCreditList(false, hit)
       await fillViewportCreditList()
       return
     }
     if (type === 'uc') {
-      await fetchUcList()
+      const hit = await restoreUcCache()
+      await fetchUcList(false, hit)
       await fillViewportUcList()
       return
     }
     if (type === 'system') {
-      await fetchMsgList('system')
+      const hit = await restoreMsgListCache('system')
+      await fetchMsgList('system', false, hit)
       await fillViewportMessages('system')
       return
     }
-    await fetchMsgList('other')
+    const hit = await restoreMsgListCache('other')
+    await fetchMsgList('other', false, hit)
     await fillViewportMessages('other')
   },
   { immediate: true },

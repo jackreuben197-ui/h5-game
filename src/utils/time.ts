@@ -16,6 +16,14 @@ export function toTimestampMs(value: unknown): number {
   if (typeof value === 'string') {
     const text = value.trim()
     if (!text) return 0
+
+    // 接口时间字段也可能以字符串形式返回秒/毫秒时间戳。
+    if (/^\d+(?:\.\d+)?$/.test(text)) {
+      const numeric = Number(text)
+      if (!Number.isFinite(numeric) || numeric <= 0) return 0
+      return numeric < 1e12 ? Math.floor(numeric * 1000) : Math.floor(numeric)
+    }
+
     const parsed = Date.parse(text)
     if (Number.isNaN(parsed) || parsed <= 0) return 0
     return parsed

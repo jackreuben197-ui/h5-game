@@ -20,7 +20,11 @@ import avatarDefault from '@/assets/images/default_avatar.png'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconBalance from '@/assets/icons/icon_credit_chip.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { useGameStore } from '@/stores/game'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { invalidateCreditCache, invalidateUcCache } from '@/utils/messageCenterCache'
 
 type TodoSectionType = 'uc' | 'bringIn' | 'joinClub'
 
@@ -40,6 +44,7 @@ const loading = ref(false)
 const data = ref<MsgMessageTodoAllInfoData>({})
 const todoCountMap = ref<MsgMessageTodoAllInfoDataElement[]>([])
 const gameStore = useGameStore()
+const userInfoStore = useUserInfoStore()
 let stopTodoWsListener: (() => void) | null = null
 
 const watchedTodoTypes = [2, 3, 6] as const
@@ -128,7 +133,8 @@ const hasAnyTodo = computed(() => displaySections.value.length > 0)
 const shouldShowFloat = computed(() => !!gameStore.sessionToken && totalCount.value > 0)
 
 const pageBackgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--todo-panel-bg-dark': `url(${mainBgUrl})`,
+  '--todo-panel-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 // 拖动相关状态
@@ -200,6 +206,9 @@ async function auditUc(item: ClubMemberOrderListOrderInfo, pass: boolean): Promi
   })
 
   if (response.code === 0) {
+    // 悬浮窗审核拿不到消息页里已映射好的列表，直接让对应俱乐部的缓存失效即可，
+    // 下次打开消息页会重新拉取，不会读到已审核完的旧状态。
+    void invalidateUcCache(gameStore.loginUserId, item.club_id)
     await fetchTodoAllInfo()
   }
 }
@@ -213,6 +222,7 @@ async function auditBringIn(item: UserRoomSitApplyRecordsRecord, pass: boolean):
       action: pass ? 2 : 3,
     })
     if (response.code === 0) {
+      void invalidateCreditCache(gameStore.loginUserId)
       await fetchTodoAllInfo()
     }
     return
@@ -223,6 +233,7 @@ async function auditBringIn(item: UserRoomSitApplyRecordsRecord, pass: boolean):
     audit_op: pass ? 2 : 3,
   })
   if (response.code === 0) {
+    void invalidateCreditCache(gameStore.loginUserId)
     await fetchTodoAllInfo()
   }
 }
@@ -272,7 +283,16 @@ function initTodoWsListener(): void {
   stopTodoWsListener = subscribeH5WsCode(Code.MSG_S_TODO_LIST, (message) => {
     const payload = decodeTodoListNotify(message.rawBuffer)
     if (!payload) return
-    updateTodoTypeCount(Number(payload.type || 0), Number(payload.num || 0))
+    const type = Number(payload.type || 0)
+    updateTodoTypeCount(type, Number(payload.num || 0))
+
+    // 推送只带 type/num，不带俱乐部信息：带入/UC 数量变化可能来自其他管理员的审核，
+    // 消息页缓存也要跟着失效，避免下次打开先看到一瞬间的过期状态。
+    if (type === 2) {
+      void invalidateUcCache(gameStore.loginUserId, userInfoStore.currentClubId)
+    } else if (type === 6) {
+      void invalidateCreditCache(gameStore.loginUserId)
+    }
 
     if (totalCount.value <= 0) {
       visible.value = false
@@ -348,13 +368,19 @@ onBeforeUnmount(() => {
                   </div>
                 </div>
                 <div class="pending-actions">
-                  <button class="action-btn" type="button" @click="auditUc(item, true)">✓</button>
+                  <button
+                    class="action-btn action-btn--ok"
+                    type="button"
+                    @click="auditUc(item, true)"
+                  >
+                    <AppSvgIcon name="audit-ok" class="action-icon action-icon--ok" />
+                  </button>
                   <button
                     class="action-btn action-btn--deny"
                     type="button"
                     @click="auditUc(item, false)"
                   >
-                    ✕
+                    <AppSvgIcon name="audit-deny" class="action-icon action-icon--deny" />
                   </button>
                 </div>
               </div>
@@ -399,15 +425,19 @@ onBeforeUnmount(() => {
                   </div>
                 </div>
                 <div class="pending-actions">
-                  <button class="action-btn" type="button" @click="auditBringIn(item, true)">
-                    ✓
+                  <button
+                    class="action-btn action-btn--ok"
+                    type="button"
+                    @click="auditBringIn(item, true)"
+                  >
+                    <AppSvgIcon name="audit-ok" class="action-icon action-icon--ok" />
                   </button>
                   <button
                     class="action-btn action-btn--deny"
                     type="button"
                     @click="auditBringIn(item, false)"
                   >
-                    ✕
+                    <AppSvgIcon name="audit-deny" class="action-icon action-icon--deny" />
                   </button>
                 </div>
               </div>
@@ -439,15 +469,19 @@ onBeforeUnmount(() => {
                   </div>
                 </div>
                 <div class="pending-actions">
-                  <button class="action-btn" type="button" @click="auditJoinClub(item, true)">
-                    ✓
+                  <button
+                    class="action-btn action-btn--ok"
+                    type="button"
+                    @click="auditJoinClub(item, true)"
+                  >
+                    <AppSvgIcon name="audit-ok" class="action-icon action-icon--ok" />
                   </button>
                   <button
                     class="action-btn action-btn--deny"
                     type="button"
                     @click="auditJoinClub(item, false)"
                   >
-                    ✕
+                    <AppSvgIcon name="audit-deny" class="action-icon action-icon--deny" />
                   </button>
                 </div>
               </div>
@@ -490,13 +524,17 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(148deg, rgba(var(--c-brand-rgb), 0.59) 7.5%, rgba(2, 122, 92, 0.59) 71.9%);
+  background: linear-gradient(
+    148deg,
+    rgba(var(--c-brand-rgb), 0.59) 7.5%,
+    rgba(2, 122, 92, 0.59) 71.9%
+  );
   color: #fff;
   position: relative;
   box-shadow: 0 0.08rem 0.24rem rgba(0, 0, 0, 0.28);
 
   @include theme-light {
-    background: rgba(var(--c-brand-rgb), 0.59);
+    background: linear-gradient(148deg, rgba(5, 231, 174, 0.59) 7.5%, rgba(2, 122, 92, 0.59) 71.9%);
   }
 }
 
@@ -534,6 +572,12 @@ onBeforeUnmount(() => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-color: var(--c-page);
+  background-image: var(--todo-panel-bg-dark);
+
+  @include theme-light {
+    background-image: var(--todo-panel-bg-light);
+  }
 }
 
 .todo-panel-frost {
@@ -542,6 +586,12 @@ onBeforeUnmount(() => {
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.98rem);
   mix-blend-mode: luminosity;
+
+  @include theme-light {
+    background: transparent;
+    backdrop-filter: none;
+    mix-blend-mode: normal;
+  }
 }
 
 .todo-panel-inner {
@@ -565,6 +615,10 @@ onBeforeUnmount(() => {
     font-size: 0.65rem;
     font-weight: 500;
     line-height: 1.2;
+
+    @include theme-light {
+      color: #000;
+    }
   }
 }
 
@@ -577,6 +631,10 @@ onBeforeUnmount(() => {
   font-size: 0.8rem;
   line-height: 1;
   padding: 0;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .todo-content {
@@ -601,6 +659,10 @@ onBeforeUnmount(() => {
     line-height: 1.4;
     color: #fff;
     font-weight: 500;
+
+    @include theme-light {
+      color: #000;
+    }
   }
 }
 
@@ -612,6 +674,11 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 0.28rem;
+
+  @include theme-light {
+    background: #fff;
+    backdrop-filter: none;
+  }
 }
 
 .card-top {
@@ -635,6 +702,10 @@ onBeforeUnmount(() => {
   font-size: 0.27rem;
   line-height: 1.4;
   color: #f3f3f3;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .meta-club {
@@ -658,6 +729,10 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  @include theme-light {
+    background: rgba(208, 208, 208, 0.66);
+  }
 }
 
 .card-main--join {
@@ -665,6 +740,16 @@ onBeforeUnmount(() => {
   min-height: 1.58rem;
   background: transparent;
   padding-right: 0;
+
+  @include theme-light {
+    background: transparent;
+  }
+}
+
+.card-main--join .action-btn {
+  @include theme-light {
+    background: rgba(208, 208, 208, 0.66);
+  }
 }
 
 .player-block {
@@ -690,6 +775,10 @@ onBeforeUnmount(() => {
   font-size: 0.44rem;
   line-height: 1.1;
   color: #f3f3f3;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .player-id {
@@ -697,6 +786,10 @@ onBeforeUnmount(() => {
   font-size: 0.304rem;
   line-height: 1;
   color: rgba(243, 243, 243, 0.5);
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.5);
+  }
 }
 
 .pending-actions {
@@ -715,10 +808,41 @@ onBeforeUnmount(() => {
   font-size: 0.52rem;
   line-height: 1;
   padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  @include theme-light {
+    border-color: rgba(0, 0, 0, 0.08);
+    background: #fff;
+  }
+}
+
+.action-btn--ok {
+  color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .action-btn--deny {
-  color: #ff3048;
+  color: #ef2846;
+}
+
+.action-icon {
+  display: block;
+  flex: none;
+}
+
+.action-icon--ok {
+  width: 0.613rem;
+  height: 0.613rem;
+}
+
+.action-icon--deny {
+  width: 0.88rem;
+  height: 0.88rem;
 }
 
 .card-footer {
@@ -737,6 +861,10 @@ onBeforeUnmount(() => {
     font-size: 0.355rem;
     line-height: 1.2;
     color: #f9f9f9;
+
+    @include theme-light {
+      color: #000;
+    }
   }
 }
 
@@ -755,6 +883,10 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 0.013rem;
   background: rgba(255, 255, 255, 0.25);
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.16);
+  }
 }
 
 .join-footer {

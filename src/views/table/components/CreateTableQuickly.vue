@@ -964,7 +964,7 @@ async function onDeleteConfirm() {
         </div>
         <div class="template-card__badges">
           <img
-            v-if="hasSquid(item)"
+            v-if="hasSquid(item) && !hasCriticalHit(item)"
             :src="tableIconSquid"
             class="template-card__badge-icon"
             alt=""

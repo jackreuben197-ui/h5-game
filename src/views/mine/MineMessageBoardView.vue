@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { showFailToast, showSuccessToast } from 'vant'
 import { postMiscReportFeedbackQuestIonApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { t } from '@/i18n'
 
@@ -10,7 +11,8 @@ const title = computed(() => t('PageMineMessageBoard'))
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--message-board-bg-dark': `url(${mainBgUrl})`,
+  '--message-board-bg-light': `url(${mainBgLightUrl})`,
 }))
 const content = ref('')
 const submitting = ref(false)
@@ -64,12 +66,21 @@ async function submitMessage(): Promise<void> {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .mine-glass-page {
   height: 100dvh;
   color: #f3f3f3;
+  background-color: var(--c-page);
+  background-image: var(--message-board-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: #000;
+    background-image: var(--message-board-bg-light);
+  }
 }
 
 .board-page {
@@ -100,6 +111,20 @@ async function submitMessage(): Promise<void> {
   font-size: 0.42rem;
   padding: 0.34rem;
   resize: none;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  @include theme-light {
+    border-color: rgba(249, 249, 249, 0.6);
+    background: #dadada;
+    color: rgba(0, 0, 0, 0.71);
+
+    &::placeholder {
+      color: rgba(0, 0, 0, 0.71);
+    }
+  }
 }
 
 .submit-btn {
@@ -111,5 +136,9 @@ async function submitMessage(): Promise<void> {
   font-size: 0.5rem;
   background: linear-gradient(165deg, #05e7ae 8%, #027a5c 72%);
   width: 100%;
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 </style>

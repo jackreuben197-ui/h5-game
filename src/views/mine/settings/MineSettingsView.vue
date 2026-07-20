@@ -3,11 +3,13 @@ import { computed, ref } from 'vue'
 import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { GameDialog } from '@/components/Dialog'
-import { getLocale, t } from '@/i18n'
+import { getLocale, SUPPORTED_LOCALES_OPTIONS, t } from '@/i18n'
 import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
+import SettingSvgIcon from '@/views/mine/components/SettingSvgIcon.vue'
 
 const title = computed(() => t('UIMine_btn_setting'))
 
@@ -16,50 +18,66 @@ const gameStore = useGameStore()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--settings-bg-dark': `url(${mainBgUrl})`,
+  '--settings-bg-light': `url(${mainBgLightUrl})`,
 }))
 const soundEnabled = ref(true)
 const showLogoutDialog = ref(false)
 
 interface SettingItem {
   key: string
-  label: string
+  labelKey: string
+  icon: SettingIconName
   rightText?: string
+  rightTextKey?: string
   toggle?: boolean
   clickable?: boolean
 }
 
+type SettingIconName =
+  | 'logout'
+  | 'language'
+  | 'account'
+  | 'sound'
+  | 'line'
+  | 'cancel-account'
+  | 'about'
+  | 'agreement'
+  | 'privacy'
+  | 'version'
+
 const sectionTop: SettingItem[] = [
-  { key: 'logout', label: t('UIMine_Setting114') },
-  { key: 'language', label: t('tc_PpNL8LVJ'), rightText: languageLabel() },
-  { key: 'account', label: t('UISettingPassword001') },
+  { key: 'logout', labelKey: 'UIMine_Setting114', icon: 'logout' },
+  {
+    key: 'language',
+    labelKey: 'tc_PpNL8LVJ',
+    icon: 'language',
+  },
+  { key: 'account', labelKey: 'UISettingPassword001', icon: 'account' },
 ]
 
 const sectionMiddle: SettingItem[] = [
-  { key: 'sound', label: t('tc_TsALrril'), toggle: true },
-  { key: 'line', label: t('tc_FKurKJYR'), rightText: t('UIClub_Text73') },
-  { key: 'cancel', label: t('UIMine_DeleteUser') },
-  { key: 'about', label: t('tc_YQAGnw3p') },
-  { key: 'agreement', label: t('tc_5E0V3qlb') },
+  { key: 'sound', labelKey: 'tc_TsALrril', icon: 'sound', toggle: true },
+  { key: 'line', labelKey: 'tc_FKurKJYR', icon: 'line', rightTextKey: 'UIClub_Text73' },
+  { key: 'cancel', labelKey: 'UIMine_DeleteUser', icon: 'cancel-account' },
+  { key: 'about', labelKey: 'tc_YQAGnw3p', icon: 'about' },
+  { key: 'agreement', labelKey: 'tc_5E0V3qlb', icon: 'agreement' },
 ]
 
 const sectionBottom: SettingItem[] = [
-  { key: 'privacy', label: t('UIMine_Setting_UserSecret') },
-  { key: 'version', label: t('tc_NO5NT6aa'), rightText: 'v1.0.0', clickable: false },
+  { key: 'privacy', labelKey: 'UIMine_Setting_UserSecret', icon: 'privacy' },
+  {
+    key: 'version',
+    labelKey: 'tc_NO5NT6aa',
+    icon: 'version',
+    rightText: 'v1.0.0',
+    clickable: false,
+  },
 ]
 
 function languageLabel(): string {
   const locale = getLocale()
-  if (locale === 'cn') {
-    return t('A')
-  }
-  if (locale === 'zh') {
-    return t('UIClub_Text72')
-  }
-  if (locale === 'pt') {
-    return 'Português'
-  }
-  return 'English'
+  return SUPPORTED_LOCALES_OPTIONS.find((item) => item.value === locale)?.label ?? 'English'
 }
 
 function onRowClick(item: SettingItem): void {
@@ -122,7 +140,7 @@ function onLogoutCancel(): void {
 
 <template>
   <div class="page-shell mine-glass-page" :style="backgroundStyle">
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
       <section class="glass-card section-card">
@@ -133,9 +151,14 @@ function onLogoutCancel(): void {
           class="line-item"
           @click="onRowClick(item)"
         >
-          <span>{{ item.label }}</span>
+          <span class="left">
+            <span class="icon-box">
+              <SettingSvgIcon :name="item.icon" />
+            </span>
+            <span>{{ t(item.labelKey) }}</span>
+          </span>
           <div class="right">
-            <span v-if="item.rightText" class="light">{{ item.rightText }}</span>
+            <span v-if="item.key === 'language'" class="light">{{ languageLabel() }}</span>
             <span class="arrow">›</span>
           </div>
         </button>
@@ -149,7 +172,12 @@ function onLogoutCancel(): void {
           class="line-item"
           @click="onRowClick(item)"
         >
-          <span>{{ item.label }}</span>
+          <span class="left">
+            <span class="icon-box">
+              <SettingSvgIcon :name="item.icon" />
+            </span>
+            <span>{{ t(item.labelKey) }}</span>
+          </span>
           <div class="right">
             <template v-if="item.toggle">
               <button
@@ -162,7 +190,7 @@ function onLogoutCancel(): void {
               </button>
             </template>
             <template v-else>
-              <span v-if="item.rightText" class="light">{{ item.rightText }}</span>
+              <span v-if="item.rightTextKey" class="light">{{ t(item.rightTextKey) }}</span>
               <span class="arrow">›</span>
             </template>
           </div>
@@ -177,7 +205,12 @@ function onLogoutCancel(): void {
           class="line-item"
           @click="onRowClick(item)"
         >
-          <span>{{ item.label }}</span>
+          <span class="left">
+            <span class="icon-box">
+              <SettingSvgIcon :name="item.icon" />
+            </span>
+            <span>{{ t(item.labelKey) }}</span>
+          </span>
           <div class="right">
             <span v-if="item.rightText" class="light">{{ item.rightText }}</span>
             <span v-if="item.clickable !== false" class="arrow">›</span>
@@ -202,12 +235,23 @@ function onLogoutCancel(): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .mine-glass-page {
   height: 100dvh;
+  overflow-y: auto;
+  padding: 0 0 0.8rem;
   color: #f9f9f9;
+  background-color: var(--c-page);
+  background-image: var(--settings-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: #000;
+    background-image: var(--settings-bg-light);
+  }
 }
 
 .content-wrap {
@@ -222,11 +266,16 @@ function onLogoutCancel(): void {
   border: 0.02rem solid rgba(249, 249, 249, 0.2);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.04rem);
+
+  @include theme-light {
+    border-color: transparent;
+    background: #fff;
+  }
 }
 
 .section-card {
-  margin-top: 0.34rem;
-  padding: 0 0.36rem;
+  margin-top: 0.44rem;
+  padding: 0.3rem 0.36rem;
 }
 
 .line-item {
@@ -238,11 +287,44 @@ function onLogoutCancel(): void {
   justify-content: space-between;
   align-items: center;
   font-size: 0.42rem;
-  padding: 0.28rem 0;
+  min-height: 1.1rem;
+  padding: 0;
   border-bottom: 0.02rem solid rgba(249, 249, 249, 0.2);
 
   &:last-child {
     border-bottom: 0;
+  }
+
+  @include theme-light {
+    color: #000;
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+  }
+}
+
+.left {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.icon-box {
+  width: 0.88rem;
+  height: 0.88rem;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  filter: drop-shadow(0 0 0.1267rem rgba(151, 71, 255, 0.2));
+
+  :deep(.setting-svg-icon) {
+    width: 0.533rem;
+    height: 0.533rem;
+  }
+
+  @include theme-light {
+    color: var(--c-brand);
   }
 }
 
@@ -255,11 +337,20 @@ function onLogoutCancel(): void {
 .light {
   font-size: 0.28rem;
   color: rgba(255, 255, 255, 0.84);
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.83);
+  }
 }
 
 .arrow {
   font-size: 0.66rem;
   line-height: 1;
+  color: rgba(255, 255, 255, 0.75);
+
+  @include theme-light {
+    color: #888;
+  }
 }
 
 .switch {
@@ -294,5 +385,9 @@ function onLogoutCancel(): void {
   font-size: 0.38rem;
   color: #fff;
   padding: 0.2rem 0;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 </style>

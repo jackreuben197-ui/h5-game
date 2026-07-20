@@ -36,8 +36,12 @@ export function getLocale(): LocaleCode {
 export function setLocale(locale: string): void {
   const previousLocale = currentLocale.value
   const resolvedLocale = normalizeLocale(locale) ?? DEFAULT_LOCALE
-  currentLocale.value = resolvedLocale
+
+  // 先切换底层词典，再更新响应式状态。否则依赖 locale 的 computed 可能在
+  // 词典仍是旧语言时重新求值，并缓存旧文案。
   applyPackageLocale(resolvedLocale)
+  currentLocale.value = resolvedLocale
+
   // 语言持久化键与 Cocos 对齐：dzpk_Language。
   localStore.setItem(StorageKey.Language, resolvedLocale)
   if (previousLocale !== resolvedLocale) {

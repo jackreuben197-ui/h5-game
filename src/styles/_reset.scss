@@ -6,11 +6,29 @@
 }
 
 html,
-body,
-#app {
+body {
   width: 100%;
   min-height: 100%;
   margin: 0;
+}
+
+#app {
+  width: 100%;
+  margin: 0;
+  min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+}
+
+// 该文件由 Vue bundle 在 index.html 内联 <style> 之后加载，
+// 同优先级下会覆盖画框宽度，故此处重新声明。
+@media (min-width: 481px) {
+  body {
+    width: var(--app-frame-width);
+    max-width: var(--app-frame-max-width);
+    min-height: var(--app-frame-height);
+    margin-top: var(--app-frame-offset-top, 0px);
+    margin-left: auto;
+    margin-right: auto;
+  }
 }
 
 html {

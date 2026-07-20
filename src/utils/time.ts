@@ -16,6 +16,14 @@ export function toTimestampMs(value: unknown): number {
   if (typeof value === 'string') {
     const text = value.trim()
     if (!text) return 0
+
+    // 接口时间字段也可能以字符串形式返回秒/毫秒时间戳。
+    if (/^\d+(?:\.\d+)?$/.test(text)) {
+      const numeric = Number(text)
+      if (!Number.isFinite(numeric) || numeric <= 0) return 0
+      return numeric < 1e12 ? Math.floor(numeric * 1000) : Math.floor(numeric)
+    }
+
     const parsed = Date.parse(text)
     if (Number.isNaN(parsed) || parsed <= 0) return 0
     return parsed
@@ -66,6 +74,30 @@ export function formatDurationByUnity(totalSeconds: number): string {
     return `${Math.trunc(safeSeconds / 60)}m`
   }
   return `${safeSeconds}s`
+}
+
+// 对齐 Unity ShowRemainingTimer(showSeconds=false)：按 天/时/分/秒 单位词格式化时长。
+// units 传入形如 ['天','小时','分钟','秒'] 的单位数组（i18n key UIMatch_itemTime 按 ^ 分隔）。
+export function formatDurationWithUnits(totalSeconds: number, units: string[]): string {
+  const [dayUnit = 'd', hourUnit = 'h', minuteUnit = 'm', secondUnit = 's'] = units
+  const safeSeconds = Number.isFinite(totalSeconds) ? Math.max(0, Math.trunc(totalSeconds)) : 0
+  const days = Math.trunc(safeSeconds / 86400)
+  const hours = Math.trunc((safeSeconds % 86400) / 3600)
+  const minutes = Math.trunc((safeSeconds % 3600) / 60)
+  const seconds = safeSeconds % 60
+
+  if (safeSeconds >= 86400) {
+    return `${days}${dayUnit}${hours}${hourUnit}${minutes}${minuteUnit}`
+  }
+  if (safeSeconds >= 3600) {
+    return minutes === 0
+      ? `${hours}${hourUnit}`
+      : `${hours}${hourUnit}${minutes}${minuteUnit}`
+  }
+  if (safeSeconds >= 60) {
+    return `${minutes}${minuteUnit}`
+  }
+  return `${seconds}${secondUnit}`
 }
 
 // 统一输出“剩余时长/总时长”。

@@ -15,6 +15,14 @@ if (typeof window !== 'undefined') {
   })
 }
 
+// 是否运行在 Telegram Mini App 内。判定源是 index.html 写入的 __H5_TG_MINI_APP__，
+// 该标记只在拿到非空 initData 时才置位——telegram-web-app.js 在普通浏览器也能加载成功，
+// 仅凭 window.Telegram.WebApp 存在会误判。
+export function isTelegramMiniAppEnv(): boolean {
+  if (typeof window === 'undefined') return false
+  return Boolean(window.__H5_TG_MINI_APP__)
+}
+
 // 当前 WebView 底层是否已暴露浏览器原生的 PWA 安装弹窗（beforeinstallprompt）
 // Chrome / Edge / Samsung Internet 系会触发；iOS Safari、原生 App 内嵌 WebView 一般不会触发
 export function canPromptInstall(): boolean {

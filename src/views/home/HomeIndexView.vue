@@ -3,7 +3,6 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSPro
 import { useRouter } from 'vue-router'
 import { getUserClubApi } from '@/api/user'
 import { getCowboyRoomListApi } from '@/api/gc'
-import { postMiscBannerLobbyApi } from '@/api/misc'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import StorageKey from '@/constants/storageKey'
 import { joinCasinoGame, getDeviceType } from '@/api/casino'
@@ -14,14 +13,14 @@ import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { t, getLocale, toServerLang } from '@/i18n'
 import { localStore } from '@/utils/localStore'
-import { useCachedImage } from '@/utils/imageCache'
-import { readLobbyBannerCache, writeLobbyBannerCache } from '@/utils/lobbyBannerCache'
+import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { filterVisibleMttRecords } from '@/utils/mttVisibility'
 import { showGameToast } from '@/components/Toast'
 import { useCasinoStore } from '@/stores/casino'
 import { useMinigameStore } from '@/stores/minigame'
 import GameClubSelector from '@/components/GameClubSelector.vue'
+import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
 import { openBridgePanel } from '@/bridge/channels'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 
@@ -313,9 +312,12 @@ const currentClub = computed<ClubInfo | null>(() => {
   return userInfoStore.clubList[0] || null
 })
 
-const lobbyBannerUrl = ref('')
-const clubBannerUrl = useCachedImage(() => lobbyBannerUrl.value || homeHeaderFallback)
-const isFallbackBanner = computed<boolean>(() => !lobbyBannerUrl.value)
+const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
+// 无后台配置时回落到内置单图，并叠加 hero 文案。
+const displayBannerImages = computed<string[]>(() =>
+  bannerImages.value.length ? bannerImages.value : [homeHeaderFallback],
+)
+const isFallbackBanner = computed<boolean>(() => !bannerImages.value.length)
 const noticeText = computed(() => {
   return toSafeString(currentClub.value?.prologue)
 })
@@ -580,32 +582,6 @@ async function fetchHomeMiniGameStats(): Promise<void> {
   persistHomeRoomStatsCache(homeRoomStats.value)
 }
 
-// 首页顶部 banner：先读 public_cache 即刻渲染，再静默请求最新数据并回写缓存。
-async function fetchLobbyBanner(): Promise<void> {
-  const lang = toServerLang(getLocale())
-
-  const cached = await readLobbyBannerCache(lang)
-  const cachedUrl = toSafeString(cached?.lobby?.image_url)
-  if (cachedUrl) {
-    lobbyBannerUrl.value = cachedUrl
-  }
-
-  const response = await postMiscBannerLobbyApi({
-    lang,
-    type: 1,
-    offset: 0,
-    limit: 10,
-  })
-  if (Number(response.code) !== 0 || !response.data) {
-    return
-  }
-  const url = toSafeString(response.data?.lobby?.image_url)
-  if (url) {
-    lobbyBannerUrl.value = url
-  }
-  void writeLobbyBannerCache(lang, response.data)
-}
-
 // 首页 MTT 统计：和 MttContent 走同一份过滤口径（排麻将 + club/tribe 可见性），
 // 保证「首页显示 N 桌 M 人」和「进入 MTT 列表后看到的赛事数 / 报名总人数」完全一致。
 // tables = 可见赛事数；players = 可见赛事 participants 之和。
@@ -615,6 +591,7 @@ function refreshHomeMttStatsFromStore(): void {
     mttListStore.mttIdMetaMap,
     selectedClubId.value,
     selectedTribeId.value,
+    appConfigStore.clubDisplayPlatformMtt,
   )
   const players = visibleRecords.reduce((sum, item) => sum + toSafeNumber(item.participants), 0)
 
@@ -677,7 +654,14 @@ watch(
 )
 
 watch(
-  [() => mttListStore.records, () => mttListStore.mttIdList, selectedClubId, selectedTribeId],
+  [
+    () => mttListStore.records,
+    () => mttListStore.mttIdList,
+    selectedClubId,
+    selectedTribeId,
+    // 全局配置异步到达后重算，平台 MTT 可见性依赖 club_display_platform_mtt。
+    () => appConfigStore.clubDisplayPlatformMtt,
+  ],
   () => {
     refreshHomeMttStatsFromStore()
   },
@@ -697,7 +681,7 @@ onMounted(() => {
   void fetchHomeMiniGameStats().catch((error) => {
     console.warn('[home] fetch mini game stats failed:', error)
   })
-  void fetchLobbyBanner().catch((error) => {
+  void fetchLobbyBannerImages().catch((error) => {
     console.warn('[home] fetch lobby banner failed:', error)
   })
   void updateNoticeMarquee()
@@ -743,7 +727,7 @@ onBeforeUnmount(() => {
     <!-- 1. 顶部俱乐部介绍图 -->
     <div class="home-header">
       <div class="home-header__inner">
-        <img class="home-header-img" :src="clubBannerUrl" alt="俱乐部介绍" />
+        <HomeBannerSwiper :images="displayBannerImages" />
         <div v-if="isFallbackBanner" class="home-header__hero">
           <div class="home-header__text">
             <p class="home-header__title">全民代理</p>
@@ -1065,13 +1049,6 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   container-type: size;
-}
-
-.home-header-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
 }
 
 .home-header__hero {

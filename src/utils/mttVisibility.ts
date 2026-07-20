@@ -1,5 +1,8 @@
 import type { MttIdInfoRecord, MttListRecord, RoomRecord } from '@/api/models/roomcenter'
-import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
+import {
+  checkIsShowForClubAndTribe,
+  checkIsShowForClubAndTribeAndPlatform,
+} from '@/utils/roomVisibility'
 
 // 与 MttContent.filteredItems 保持同一过滤口径：排除麻将 + 按 club/tribe 可见性筛选。
 // 任何「首页 MTT 统计 / MTT 列表 / 其它需要展示赛事的入口」都应走这个 helper，避免分叉。
@@ -26,6 +29,7 @@ export function isMttRecordVisible(
   meta: MttIdInfoRecord | undefined,
   clubId: number,
   tribeId: number,
+  displayPlatformMtt: boolean,
 ): boolean {
   // 对齐 MttContent：麻将赛事固定隐藏（暂未开放）。
   const gameType = Number(record.game_type ?? 0)
@@ -51,7 +55,9 @@ export function isMttRecordVisible(
     relate_tribe_club_list: relateTribeClubList,
   } as RoomRecord
 
-  return checkIsShowForClubAndTribe(roomLike, clubId, tribeId)
+  return displayPlatformMtt
+    ? checkIsShowForClubAndTribeAndPlatform(roomLike, clubId, tribeId)
+    : checkIsShowForClubAndTribe(roomLike, clubId, tribeId)
 }
 
 export function filterVisibleMttRecords(
@@ -59,9 +65,10 @@ export function filterVisibleMttRecords(
   metaMap: Record<number, MttIdInfoRecord>,
   clubId: number,
   tribeId: number,
+  displayPlatformMtt: boolean,
 ): MttListRecord[] {
   return records.filter((record) => {
     const matchId = toSafeInt(record.match_id)
-    return isMttRecordVisible(record, metaMap[matchId], clubId, tribeId)
+    return isMttRecordVisible(record, metaMap[matchId], clubId, tribeId, displayPlatformMtt)
   })
 }

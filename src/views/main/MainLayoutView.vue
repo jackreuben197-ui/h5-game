@@ -174,8 +174,7 @@ watch(
 <style scoped lang="scss">
 .main-layout {
   position: relative;
-  height: 100%;
-  min-height: 100%;
+  min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -228,10 +227,9 @@ watch(
   position: relative;
   z-index: 2;
   // 统一作为“页面滚动容器”：在 html/body fixed 的场景下也可稳定滚动。
-  // #app 为 position:fixed;inset:0，其高度即真实可见区域（Telegram 下已含顶部 guard padding），
-  // 故用 height:100% 逐级继承而非 100dvh —— 避免 Telegram Mini App 底部被裁到导航栏下。
-  height: 100%;
-  min-height: 100%;
+  // #app 带底部溢出量（--app-bottom-bleed）后高度为 auto，height:100% 失去参照，
+  // 故改用 --app-full-height（由 index.html 按真实视口写入）—— 仍避免 Telegram Mini App 底部被裁到导航栏下。
+  height: var(--app-full-height, var(--app-viewport-height, 100dvh));
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -241,12 +239,12 @@ watch(
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   overscroll-behavior-y: none;
-  padding: calc(env(safe-area-inset-top) + 0.2rem) 0rem calc(env(safe-area-inset-bottom) + 2.72rem);
+  padding: calc(var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.2rem) 0rem calc(env(safe-area-inset-bottom) + 2.72rem);
 }
 
 .main-layout--home .main-layout-content {
   background: #222627;
-  padding-top: env(safe-area-inset-top);
+  padding-top: var(--app-content-safe-area-top, env(safe-area-inset-top));
   padding-bottom: calc(env(safe-area-inset-bottom) + 2rem);
 }
 

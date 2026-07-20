@@ -82,7 +82,7 @@ function handleBack(event: MouseEvent): void {
   position: relative;
   z-index: 1;
   min-height: 1.1733rem;
-  padding: calc(env(safe-area-inset-top) + 0.4rem) 0rem 0.2rem;
+  padding: calc(var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.4rem) 0rem 0.2rem;
 }
 
 .back-trigger {

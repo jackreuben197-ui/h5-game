@@ -3,8 +3,8 @@ import homeHeaderFallback from '@/assets/images/home_header_large.png'
 import { t, getLocale } from '@/i18n'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { useCachedImage } from '@/utils/imageCache'
-import { readLobbyBannerCache, writeLobbyBannerCache } from '@/utils/lobbyBannerCache'
+import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
+import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
 import { computed, nextTick, onMounted, ref } from 'vue'
 
 import imgPa from '@/assets/images/minigame-newui/pa.svg'
@@ -19,10 +19,16 @@ const userInfoStore = useUserInfoStore()
 // 部分卡片文案为硬编码中文：en 用英文，其余语言回退中文（与 i18n 规则一致）。
 const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
 
-const clubBannerUrl = useCachedImage(
-  () => userInfoStore.channelDefaultClub?.banner || homeHeaderFallback,
+const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
+// 优先后台轮播图；没有配置时沿用渠道俱乐部自带 banner，最后才回落到内置单图 + hero 文案。
+const displayBannerImages = computed<string[]>(() => {
+  if (bannerImages.value.length) return bannerImages.value
+  const clubBanner = userInfoStore.channelDefaultClub?.banner
+  return [clubBanner || homeHeaderFallback]
+})
+const isFallbackBanner = computed<boolean>(
+  () => !bannerImages.value.length && !userInfoStore.channelDefaultClub?.banner,
 )
-const isFallbackBanner = computed<boolean>(() => !userInfoStore.channelDefaultClub?.banner)
 const clubNameText = computed<string>(
   () =>
     (userInfoStore.channelDefaultClub?.club_name || '')
@@ -95,6 +101,9 @@ function anchorScrollToBottomOnSmall(): void {
 
 onMounted(() => {
   void userInfoStore.ensureChannelDefaultClub()
+  void fetchLobbyBannerImages().catch((error) => {
+    console.warn('[guest-home] fetch lobby banner failed:', error)
+  })
   anchorScrollToBottomOnSmall()
 })
 </script>
@@ -117,7 +126,7 @@ onMounted(() => {
     <!-- 1. 顶部俱乐部介绍图 -->
     <div class="home-header">
       <div class="home-header__inner">
-        <img class="home-header-img" :src="clubBannerUrl" alt="俱乐部介绍" />
+        <HomeBannerSwiper :images="displayBannerImages" />
         <div v-if="isFallbackBanner" class="home-header__hero">
           <div class="home-header__text">
             <p class="home-header__title">全民代理</p>
@@ -437,13 +446,6 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   container-type: size;
-}
-
-.home-header-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
 }
 
 .home-header__hero {

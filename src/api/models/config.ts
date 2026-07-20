@@ -32,6 +32,8 @@ export interface GlobalConfigData {
   record_fee_mtt_diamond?: string
   record_fee_mtt_scoreboard?: string
   create_club_price?: string
+  // 赛事列表是否展示平台创建的 MTT/SNG（1 展示，对齐 Unity club_display_platform_mtt）
+  club_display_platform_mtt?: number | string
   [key: string]: unknown
 }
 

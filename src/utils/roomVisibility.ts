@@ -145,6 +145,18 @@ export function checkIsShowForClubAndTribe(
   return false
 }
 
+// C# CheckIsShowForClubAndTribeAndPlatform：平台（origin_type=1）直接展示，其余走俱乐部/联盟口径。
+export function checkIsShowForClubAndTribeAndPlatform(
+  room: RoomRecord,
+  clubId: number,
+  tribeId: number,
+): boolean {
+  if (getOriginType(room) === ROOM_ORIGIN_TYPE.PLATFORM) {
+    return true
+  }
+  return checkIsShowForClubAndTribe(room, clubId, tribeId)
+}
+
 export function formatUC(rawValue: number): string {
   const displayValue = rawValue / 100
   if (!Number.isFinite(displayValue)) {

@@ -59,6 +59,8 @@ import type {
   StatsJackpotAwardLogsResponseData,
   StatsJackpotGoldChangeLogsRequest,
   StatsJackpotGoldChangeLogsResponseData,
+  StatsMttHistoryListByDateRequest,
+  StatsMttHistoryListByDateResponseData,
   StatsMttHistoryListRequest,
   StatsMttHistoryListResponseData,
   StatsMttRoomDetailApiRequest,
@@ -475,6 +477,18 @@ export async function postStatsMttHistoryListApi(
 ): Promise<ApiResponse<StatsMttHistoryListResponseData>> {
   const endpoint = '/stats/mtt/history/list'
   const response = await http.post<ApiResponse<StatsMttHistoryListResponseData>>(endpoint, payload)
+  return response.data
+}
+
+// 对齐客户端 HttpCombineProtocol.MTT_HISTORY_LIST_BY_DATE（mtt战绩列表按日期汇总）
+export async function postStatsMttHistoryListByDateApi(
+  payload: StatsMttHistoryListByDateRequest = {} as StatsMttHistoryListByDateRequest,
+): Promise<ApiResponse<StatsMttHistoryListByDateResponseData>> {
+  const endpoint = '/stats/mtt/history/list/data_by_date'
+  const response = await http.post<ApiResponse<StatsMttHistoryListByDateResponseData>>(
+    endpoint,
+    payload,
+  )
   return response.data
 }
 

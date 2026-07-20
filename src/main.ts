@@ -23,7 +23,6 @@ import {
 } from './session/tokenRefresh'
 import './styles/main.scss'
 import { setupRem } from './utils/rem'
-import { setupTelegramViewport } from './utils/telegramViewport'
 import { initDebugConsole, recordDebugEvent } from './utils/debugConsole'
 import { createLogger } from './utils/logger'
 import { useGameStore } from './stores/game'
@@ -118,7 +117,6 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
   }
 
   setupRem()
-  setupTelegramViewport()
   stopNativeMenuGuard = setupNativeMenuGuard()
 
   try {

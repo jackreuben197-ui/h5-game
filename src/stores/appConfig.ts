@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { postBeforeLoginConfigApi } from '@/api/config'
 import type {
   DiamondConfigData,
   DiamondConfigItem,
@@ -20,6 +21,24 @@ import { localStore } from '@/utils/localStore'
 interface AppConfigState {
   globalConfig: GlobalConfigData | null
   diamondConfig: DiamondConfigMap | null
+}
+
+let guestGlobalConfigPromise: Promise<void> | null = null
+
+// 兼容 global_config_resp 挂在 data 顶层或 data.data 内层两种返回结构。
+function extractGuestGlobalConfig(
+  data: Record<string, unknown> | null | undefined,
+): GlobalConfigData | null {
+  if (!data) return null
+  const inner = data.data as Record<string, unknown> | null | undefined
+  const resp = (data.global_config_resp ?? inner?.global_config_resp) as {
+    global_config?: unknown
+  } | null
+  const config = resp?.global_config ?? inner?.global_config
+  if (config && typeof config === 'object' && !Array.isArray(config)) {
+    return config as GlobalConfigData
+  }
+  return null
 }
 
 function toNum(v: unknown): number {
@@ -65,6 +84,10 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
     diamondConfig: null,
   }),
   getters: {
+    // 对齐 Unity GameCache._clubDisplayPlatformMtt：赛事列表是否展示平台创建的 MTT/SNG。
+    clubDisplayPlatformMtt(state): boolean {
+      return Number(state.globalConfig?.club_display_platform_mtt) === 1
+    },
     getMttRecordFeeConfig(state): (goldType: number) => MttRecordFeeConfig | null {
       return (goldType: number) => {
         const d = state.globalConfig
@@ -86,6 +109,34 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
         .catch((error) => {
           console.warn('[appConfig] persist app_config cache failed:', error)
         })
+    },
+    // 游客（无 token）场景经免鉴权聚合接口补拉全局配置；登录用户走 postAuthSync 的 /config/global/config。
+    async ensureGuestGlobalConfig(): Promise<void> {
+      if (this.globalConfig) {
+        return
+      }
+      if (!guestGlobalConfigPromise) {
+        guestGlobalConfigPromise = postBeforeLoginConfigApi({
+          global_config_req: { last_update_time: 0 },
+        })
+          .then((response) => {
+            if (Number(response.code) !== 0 || !response.data) {
+              return
+            }
+            const config = extractGuestGlobalConfig(response.data)
+            // 登录竞态兜底：期间 postAuthSync 已写入时不覆盖。
+            if (config && !this.globalConfig) {
+              this.setGlobalConfig(config)
+            }
+          })
+          .catch((error) => {
+            console.warn('[appConfig] fetch guest global config failed:', error)
+          })
+          .finally(() => {
+            guestGlobalConfigPromise = null
+          })
+      }
+      await guestGlobalConfigPromise
     },
     setDiamondConfig(raw: DiamondConfigData): void {
       const map = buildDiamondConfigMap(raw)

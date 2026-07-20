@@ -5,7 +5,7 @@
     <title>小鱼扑克</title>
     <meta
       name="viewport"
-      content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1"
+      content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover"
     />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -26,41 +26,259 @@
     <!-- @silenthill/h5-cc-i18n runtime: 必须先于 Vue 入口加载，挂 window.__H5_CC_I18N__ -->
     <script src="./h5-cc-i18n.min.js"></script>
 
+    <script>
+      ;(function () {
+        var root = document.documentElement
+        var lastViewportSignature = ''
+
+        function isIosStandalone() {
+          var nav = window.navigator || {}
+          var ua = String(nav.userAgent || '')
+          var isIos = /iPad|iPhone|iPod/.test(ua)
+            || (nav.platform === 'MacIntel' && Number(nav.maxTouchPoints) > 1)
+          var isStandalone = nav.standalone === true
+            || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+
+          return isIos && isStandalone
+        }
+
+        if (isIosStandalone()) {
+          root.setAttribute('data-ios-standalone', '1')
+        }
+
+        function toPixelNumber(value) {
+          var next = parseFloat(String(value || '0'))
+          if (!isFinite(next) || next < 0) {
+            return 0
+          }
+          return Math.round(next)
+        }
+
+        function readSafeAreaTopFromCss() {
+          if (!document.body || typeof window.getComputedStyle !== 'function') {
+            return 0
+          }
+
+          var probe = document.createElement('div')
+          probe.style.position = 'fixed'
+          probe.style.top = '0'
+          probe.style.left = '0'
+          probe.style.width = '0'
+          probe.style.height = '0'
+          probe.style.paddingTop = 'env(safe-area-inset-top)'
+          probe.style.visibility = 'hidden'
+          probe.style.pointerEvents = 'none'
+          document.body.appendChild(probe)
+          var safeTop = toPixelNumber(window.getComputedStyle(probe).paddingTop)
+          document.body.removeChild(probe)
+          return safeTop
+        }
+
+        function syncStandaloneSafeArea() {
+          if (!isIosStandalone()) {
+            return
+          }
+
+          var safeTop = readSafeAreaTopFromCss()
+          root.style.setProperty('--app-visual-safe-area-top', safeTop + 'px')
+          window.__H5_SAFE_AREA_TOP__ = safeTop
+        }
+
+        function syncStandaloneSafeAreaWhenReady() {
+          if (document.body) {
+            syncStandaloneSafeArea()
+            window.setTimeout(syncStandaloneSafeArea, 250)
+            window.setTimeout(syncStandaloneSafeArea, 1000)
+            return
+          }
+          document.addEventListener('DOMContentLoaded', syncStandaloneSafeAreaWhenReady, { once: true })
+        }
+
+        function getViewportHeight() {
+          var innerHeight = Number(window.innerHeight) || 0
+          var visualViewportHeight = window.visualViewport
+            ? Number(window.visualViewport.height) || 0
+            : 0
+          var screenHeight = window.screen ? Number(window.screen.height) || 0 : 0
+
+          if (isIosStandalone() && screenHeight > 0) {
+            return Math.round(screenHeight) + 'px'
+          }
+
+          var height = Math.max(innerHeight, visualViewportHeight)
+          return height > 0 ? Math.round(height) + 'px' : '100vh'
+        }
+
+        function syncViewportHeight() {
+          var height = getViewportHeight()
+          var viewportWidth = Number(window.visualViewport && window.visualViewport.width)
+            || Number(window.innerWidth)
+            || 375
+          var viewportSignature = viewportWidth + 'x' + height
+          if (viewportSignature === lastViewportSignature) {
+            return
+          }
+          lastViewportSignature = viewportSignature
+          root.style.setProperty('--app-viewport-height', height)
+
+          // 桌面/平板下保持移动端画布宽度，高度收敛到 iPhone 14 Plus 竖屏比例 (428 × 926)。
+          var heightNumber = parseFloat(height)
+          if (isFinite(heightNumber) && heightNumber > 0) {
+            var frameWidth = Math.min(viewportWidth, 480)
+            var frameHeight = viewportWidth > 480
+              ? Math.min(heightNumber, (frameWidth * 926) / 428)
+              : heightNumber
+            root.style.setProperty('--app-frame-height', Math.round(frameHeight) + 'px')
+            root.style.setProperty(
+              '--app-frame-offset-top',
+              Math.max(0, Math.round((heightNumber - frameHeight) / 2)) + 'px',
+            )
+          }
+        }
+
+        function syncViewportHeightLater() {
+          syncViewportHeight()
+          syncStandaloneSafeArea()
+          window.setTimeout(syncViewportHeight, 250)
+          window.setTimeout(syncViewportHeight, 1000)
+          window.setTimeout(syncStandaloneSafeArea, 250)
+          window.setTimeout(syncStandaloneSafeArea, 1000)
+        }
+
+        syncViewportHeight()
+        syncStandaloneSafeAreaWhenReady()
+        window.addEventListener('resize', function () {
+          syncViewportHeight()
+          syncStandaloneSafeArea()
+        }, { passive: true })
+        window.addEventListener('orientationchange', syncViewportHeightLater, { passive: true })
+        document.addEventListener('visibilitychange', function () {
+          syncViewportHeight()
+          syncStandaloneSafeArea()
+        }, { passive: true })
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', function () {
+            syncViewportHeight()
+            syncStandaloneSafeArea()
+          }, { passive: true })
+        }
+      })()
+    </script>
+
     <style>
-      html,
-      body {
+      :root {
+        --app-frame-max-width: 480px;
+        --app-frame-width: min(100%, var(--app-frame-max-width));
+        --app-viewport-height: 100vh;
+        --app-frame-height: var(--app-viewport-height);
+        --app-frame-offset-top: 0px;
+        --app-full-height: var(--app-viewport-height);
+        /* Cocos 以此为真实画框高度，不含 H5 的底部溢出量。 */
+        --app-cocos-height: var(--app-viewport-height);
+        --app-bottom-bleed: 0px;
+        --app-content-safe-area-top: env(safe-area-inset-top);
+        --app-visual-safe-area-top: 0px;
+      }
+
+      @supports (height: 100dvh) {
+        :root {
+          --app-viewport-height: 100dvh;
+        }
+      }
+
+      html[data-ios-standalone='1'] {
+        --app-full-height: var(--app-viewport-height);
+        --app-cocos-height: var(--app-viewport-height);
+        --app-bottom-bleed: max(env(safe-area-inset-bottom), 120px);
+        /* 主屏模式下让 H5 控件保持在 iOS 状态栏之下。 */
+        --app-content-safe-area-top: env(safe-area-inset-top);
+      }
+
+      html {
         margin: 0;
         width: 100%;
+        height: 100%;
+        min-height: 100%;
+        min-height: -webkit-fill-available;
+        overflow: hidden;
+        background-color: #000;
+      }
+
+      body {
+        margin: 0 auto;
+        width: var(--app-frame-width);
+        max-width: var(--app-frame-max-width);
         height: 100vh;
         height: 100dvh;
+        height: var(--app-full-height);
+        min-height: 100%;
+        min-height: -webkit-fill-available;
         overflow: hidden;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        position: relative;
+      }
+
+      html[data-ios-standalone='1'] body {
+        height: var(--app-full-height);
+      }
+
+      /*
+       * 宽屏下保持移动端 H5/Cocos 坐标系。transform 让 body 成为
+       * position:fixed 页面与弹窗（含挂到 body 的 Vue teleport）的包含块。
+       */
+      @media (min-width: 481px) {
+        :root,
+        html[data-ios-standalone='1'] {
+          --app-full-height: var(--app-frame-height);
+          --app-cocos-height: var(--app-frame-height);
+        }
+
+        body {
+          transform: translateZ(0);
+          box-shadow: 0 0 32px rgba(0, 0, 0, 0.28);
+        }
       }
 
       /* Cocos 牌桌画布层：在最底层 */
       #GameCanvas {
         position: fixed;
-        inset: 0;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: auto;
         width: 100% !important;
         height: 100vh !important;
         height: 100dvh !important;
+        /* 画布尺寸与 H5 底部溢出解耦，避免 Cocos 缩放变形。 */
+        height: var(--app-cocos-height) !important;
+        display: block;
         z-index: 1;
+      }
+
+      html[data-ios-standalone='1'] #GameCanvas {
+        height: var(--app-cocos-height) !important;
       }
 
       /* H5 业务层：覆盖在 Cocos 之上 */
       #app {
         position: fixed;
-        inset: 0;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: calc(-1 * var(--app-bottom-bleed));
+        width: 100%;
+        height: auto;
+        min-height: 0;
         z-index: 10;
         box-sizing: border-box;
         background-image: var(--h5-main-bg-image, none);
         background-repeat: no-repeat;
         background-position: center top; /* 确保背景图从绝对顶部开始对齐 */
         background-size: cover;          /* 或者设置 100% 100% 铺满 */
+      }
+
+      html[data-ios-standalone='1'] #app {
+        height: auto;
+        min-height: 0;
       }
 
       /* 将 Telegram 安全区留白放到业务根节点，仅在 Telegram Mini App 环境启用 */
@@ -102,14 +320,14 @@
         line-height: 1.5;
       }
 
-      html[data-screen-orientation='landscape'] #orientation-lock-mask {
+      html[data-orientation-lock='1'] #orientation-lock-mask {
         display: flex;
       }
 
-      html[data-screen-orientation='landscape'] #GameCanvas,
-      html[data-screen-orientation='landscape'] #drawCanvas,
-      html[data-screen-orientation='landscape'] #splash,
-      html[data-screen-orientation='landscape'] #app {
+      html[data-orientation-lock='1'] #GameCanvas,
+      html[data-orientation-lock='1'] #drawCanvas,
+      html[data-orientation-lock='1'] #splash,
+      html[data-orientation-lock='1'] #app {
         visibility: hidden;
         pointer-events: none;
       }
@@ -538,14 +756,16 @@
           }
 
           var tg = window.Telegram.WebApp
-          window.__H5_TG_MINI_APP__ = true
-          if (document && document.documentElement) {
-            document.documentElement.setAttribute('data-tg-mini-app', '1')
-          }
-
+          // telegram-web-app.js 在任意浏览器都会加载成功，Telegram.WebApp 的存在并不代表运行在
+          // Mini App 内；只有非空 initData 才是真实标识。这里不提前 return——即使 initData 为空
+          // （桌面端 / 二次打开 / 被截断的启动参数），全屏与安全区初始化仍要照常执行。
           var initData = String(tg.initData || '').trim()
           if (initData) {
+            window.__H5_TG_MINI_APP__ = true
             window.__H5_TG_INIT_DATA__ = initData
+            if (document && document.documentElement) {
+              document.documentElement.setAttribute('data-tg-mini-app', '1')
+            }
           }
 
           hideTelegramChromeButtons(tg)
@@ -600,10 +820,15 @@
             window.__H5_TG_INIT_DATA__ = initDataFromUrl
           }
 
+          // 同 initTelegramWebApp：仅凭 Telegram.WebApp 存在不足以判定 Mini App，需有非空 initData。
           if (window.Telegram && window.Telegram.WebApp) {
-            window.__H5_TG_MINI_APP__ = true
-            if (document && document.documentElement) {
-              document.documentElement.setAttribute('data-tg-mini-app', '1')
+            var initDataFromSdk = String(window.Telegram.WebApp.initData || '').trim()
+            if (initDataFromSdk) {
+              window.__H5_TG_MINI_APP__ = true
+              window.__H5_TG_INIT_DATA__ = window.__H5_TG_INIT_DATA__ || initDataFromSdk
+              if (document && document.documentElement) {
+                document.documentElement.setAttribute('data-tg-mini-app', '1')
+              }
             }
           }
         }
@@ -625,17 +850,26 @@
     <script>
       ;(function () {
         function syncOrientationState() {
-          if (!window.matchMedia) {
-            return
-          }
-          var isLandscape = window.matchMedia('(orientation: landscape)').matches
+          var isLandscape = window.matchMedia
+            ? window.matchMedia('(orientation: landscape)').matches
+            : window.innerWidth > window.innerHeight
+          var isShortViewport = Math.min(window.innerWidth, window.innerHeight) <= 500
+          var hasTouchInput = Number((window.navigator || {}).maxTouchPoints) > 0
+          var shouldLock = isLandscape && isShortViewport && hasTouchInput
+
           document.documentElement.setAttribute(
             'data-screen-orientation',
             isLandscape ? 'landscape' : 'portrait',
           )
+          document.documentElement.setAttribute('data-orientation-lock', shouldLock ? '1' : '0')
         }
 
         function tryLockPortrait() {
+          var isShortViewport = Math.min(window.innerWidth, window.innerHeight) <= 500
+          var hasTouchInput = Number((window.navigator || {}).maxTouchPoints) > 0
+          if (!isShortViewport || !hasTouchInput) {
+            return
+          }
           if (!screen.orientation || typeof screen.orientation.lock !== 'function') {
             return
           }
@@ -648,6 +882,100 @@
         window.addEventListener('resize', syncOrientationState, { passive: true })
         window.addEventListener('orientationchange', syncOrientationState, { passive: true })
         tryLockPortrait()
+      })()
+    </script>
+
+    <script>
+      ;(function () {
+        function isIosStandalone() {
+          var nav = window.navigator || {}
+          var ua = String(nav.userAgent || '')
+          var isIos = /iPad|iPhone|iPod/.test(ua)
+            || (nav.platform === 'MacIntel' && Number(nav.maxTouchPoints) > 1)
+          var isStandalone = nav.standalone === true
+            || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+          return isIos && isStandalone
+        }
+
+        if (!isIosStandalone()) {
+          return
+        }
+
+        var retryCount = 0
+        var timer = 0
+
+        function getCanvasSize(canvas) {
+          var rect = typeof canvas.getBoundingClientRect === 'function'
+            ? canvas.getBoundingClientRect()
+            : null
+          var width = Math.round((rect && rect.width) || canvas.clientWidth || window.innerWidth || 0)
+          var height = Math.round((rect && rect.height) || canvas.clientHeight || window.screen.height || window.innerHeight || 0)
+          return { width: width, height: height }
+        }
+
+        function syncCocosFrameToCanvas() {
+          var canvas = document.getElementById('GameCanvas')
+          if (!canvas || !window.cc || !cc.view) {
+            return false
+          }
+
+          var size = getCanvasSize(canvas)
+          if (!size.width || !size.height) {
+            return false
+          }
+
+          try {
+            if (typeof cc.view.setFrameSize === 'function') {
+              cc.view.setFrameSize(size.width, size.height)
+            } else if (cc.view._frameSize) {
+              cc.view._frameSize.width = size.width
+              cc.view._frameSize.height = size.height
+            }
+
+            if (cc.Canvas && cc.Canvas.instance) {
+              var design = cc.Canvas.instance.designResolution
+              if (design && design.width && design.height) {
+                var policy = size.width / size.height > 0.75
+                  ? cc.ResolutionPolicy.FIXED_HEIGHT
+                  : cc.ResolutionPolicy.FIXED_WIDTH
+                cc.view.setDesignResolutionSize(design.width, design.height, policy)
+              }
+            }
+
+            if (typeof cc.view.emit === 'function') {
+              cc.view.emit('canvas-resize')
+            }
+            return true
+          } catch (error) {
+            return false
+          }
+        }
+
+        function scheduleSync() {
+          window.clearTimeout(timer)
+          timer = window.setTimeout(function () {
+            if (syncCocosFrameToCanvas()) {
+              retryCount = 0
+              return
+            }
+            retryCount += 1
+            if (retryCount < 60) {
+              scheduleSync()
+            }
+          }, 100)
+        }
+
+        window.addEventListener('load', scheduleSync, { passive: true })
+        window.addEventListener('resize', scheduleSync, { passive: true })
+        window.addEventListener('orientationchange', scheduleSync, { passive: true })
+        document.addEventListener('visibilitychange', scheduleSync, { passive: true })
+        if (window.visualViewport && window.visualViewport.addEventListener) {
+          window.visualViewport.addEventListener('resize', scheduleSync, { passive: true })
+        }
+
+        scheduleSync()
+        window.setTimeout(scheduleSync, 500)
+        window.setTimeout(scheduleSync, 1500)
       })()
     </script>
 

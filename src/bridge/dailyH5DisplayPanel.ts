@@ -65,10 +65,18 @@ export async function tryShowDailyH5DisplayPanel(): Promise<void> {
   }
 
   const data = response.data || {}
+  // 空对象也视为无数据，面板侧会按需跳过对应步骤
   let downloadApp =
-    data.download_app && typeof data.download_app === 'object' ? data.download_app : null
+    data.download_app &&
+    typeof data.download_app === 'object' &&
+    Object.keys(data.download_app).length > 0
+      ? data.download_app
+      : null
   let popupNotices = Array.isArray(data.popup_notices) ? data.popup_notices : []
-  let findUs = data.find_us && typeof data.find_us === 'object' ? data.find_us : null
+  let findUs =
+    data.find_us && typeof data.find_us === 'object' && Object.keys(data.find_us).length > 0
+      ? data.find_us
+      : null
 
   // 三类数据全为空时，用内置多语言 fallback 兜底，保证仍有内容展示。
   if (!downloadApp && popupNotices.length === 0 && !findUs) {

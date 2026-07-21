@@ -387,7 +387,7 @@ function onLogoutCancel(): void {
   padding: 0.2rem 0;
 
   @include theme-light {
-    color: #000;
+    // color: #000;
   }
 }
 </style>

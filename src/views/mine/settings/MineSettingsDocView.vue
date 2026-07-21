@@ -4,12 +4,14 @@ import { useRoute } from 'vue-router'
 import { showFailToast } from 'vant'
 import { postMiscArtiCleInfoApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { t } from '@/i18n'
 
-// 主容器背景图：全页面共用一张底图。
+// 主容器背景图：全页面共用一张底图，深浅色各一张。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--settings-doc-bg-dark': `url(${mainBgUrl})`,
+  '--settings-doc-bg-light': `url(${mainBgLightUrl})`,
 }))
 const route = useRoute()
 
@@ -92,7 +94,7 @@ onMounted(() => {
 
     <div class="content-wrap">
       <section class="doc-card">
-        <h2>{{ title }}</h2>
+        <!-- <h2>{{ title }}</h2> -->
         <p v-if="loading">{{ t('SuperView2') }}...</p>
         <p v-for="(item, index) in content" :key="index">{{ item }}</p>
       </section>
@@ -101,40 +103,48 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .settings-doc-page {
   height: 100dvh;
   color: #f9f9f9;
+  background-image: var(--settings-doc-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: #000;
+    background-image: var(--settings-doc-bg-light);
+  }
 }
 
 .content-wrap {
   padding: 0 0.4533rem;
 }
 
-.doc-card {
-  margin-top: 0.62rem;
-  border-radius: 0.4209rem;
-  border: 0.0133rem solid rgba(255, 255, 255, 0.22);
-  background: rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(0.08rem);
-  padding: 0.46rem;
+// .doc-card {
+//   margin-top: 0.62rem;
+//   border-radius: 0.4209rem;
+//   border: 0.0133rem solid rgba(255, 255, 255, 0.22);
+//   background: rgba(0, 0, 0, 0.22);
+//   backdrop-filter: blur(0.08rem);
+//   padding: 0.46rem;
 
-  h2 {
-    margin: 0;
-    font-size: 0.49rem;
-    font-weight: 600;
-    color: #fff;
-    line-height: 1.2;
-  }
+//   h2 {
+//     margin: 0;
+//     font-size: 0.49rem;
+//     font-weight: 600;
+//     color: #fff;
+//     line-height: 1.2;
+//   }
 
-  p {
-    margin: 0.28rem 0 0;
-    font-size: 0.36rem;
-    color: rgba(255, 255, 255, 0.9);
-    line-height: 1.7;
-    text-align: justify;
-  }
-}
+//   p {
+//     margin: 0.28rem 0 0;
+//     font-size: 0.36rem;
+//     color: rgba(255, 255, 255, 0.9);
+//     line-height: 1.7;
+//     text-align: justify;
+//   }
+// }
 </style>

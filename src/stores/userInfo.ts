@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { UserInfoData } from '@/api/models/user'
+import type { UserInfoData, UserInfoUser } from '@/api/models/user'
 import type { OrgClubSearchInfoData, OrgClubData } from '@/api/models/org'
 import { postOrgClubDefaultApi } from '@/api/org'
 import StorageKey from '@/constants/storageKey'
@@ -84,6 +84,20 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
   actions: {
     setUserInfo(userInfo: UserInfoData | null): void {
       this.userInfo = userInfo
+    },
+    syncUserFields(fields: Partial<UserInfoUser>): boolean {
+      if (!this.userInfo?.user) {
+        return false
+      }
+
+      this.userInfo = {
+        ...this.userInfo,
+        user: {
+          ...this.userInfo.user,
+          ...fields,
+        },
+      }
+      return true
     },
     setClubList(list: ClubInfo[]): void {
       const normalized = (Array.isArray(list) ? list : []).filter(

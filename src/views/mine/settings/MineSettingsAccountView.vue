@@ -1,46 +1,59 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { t } from '@/i18n'
+import { useUserInfoStore } from '@/stores/userInfo'
+import SettingSvgIcon from '@/views/mine/components/SettingSvgIcon.vue'
+
+type AccountSettingIconName = 'password-reset' | 'security-password'
 
 interface AccountActionItem {
   key: string
   label: string
-  iconClass: string
+  icon: AccountSettingIconName
   arrow?: boolean
 }
 
 const router = useRouter()
+const userInfoStore = useUserInfoStore()
 
 const title = computed(() => t('UISettingPassword001'))
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--account-bg-dark': `url(${mainBgUrl})`,
+  '--account-bg-light': `url(${mainBgLightUrl})`,
 }))
-const route = useRoute()
-const securityPasswordEnabled = ref(false)
+const securityPasswordEnabled = computed(
+  () => Number(userInfoStore.userInfo?.user?.digital_switch) === 1,
+)
 
-if (route.query.security === 'on') {
-  securityPasswordEnabled.value = true
-}
-
-const rows: AccountActionItem[] = [
-  { key: 'reset-password', label: t('UIClub_Code7'), iconClass: 'icon-reset', arrow: true },
-  { key: 'security-password', label: "6" + t('UIClub_Code8'), iconClass: 'icon-sound' },
+const rows = computed<AccountActionItem[]>(() => [
   {
-    key: 'reset-security-password',
-    label: t('UICommon_Edit') + "6" + t('UIClub_Code8'),
-    iconClass: 'icon-reset',
+    key: 'reset-password',
+    label: t('UIMine_SettingPassword'),
+    icon: 'password-reset',
     arrow: true,
   },
-]
+  {
+    key: 'security-password',
+    label: t('UIMine_SettingSixPassword'),
+    icon: 'security-password',
+  },
+  {
+    key: 'reset-security-password',
+    label: t('Change_6digit_password'),
+    icon: 'password-reset',
+    arrow: true,
+  },
+])
 
 function onRowClick(item: AccountActionItem): void {
   if (item.key === 'reset-password') {
-    void router.push('/mine/settings/account/reset-password?tab=phone')
+    void router.push('/mine/settings/account/reset-password')
     return
   }
 
@@ -51,7 +64,7 @@ function onRowClick(item: AccountActionItem): void {
 
 function openSecurityPasswordFlow(): void {
   if (securityPasswordEnabled.value) {
-    void router.push('/mine/settings/account/reset-security-password')
+    void router.push('/mine/settings/account/reset-security-password?mode=close')
     return
   }
 
@@ -61,7 +74,7 @@ function openSecurityPasswordFlow(): void {
 
 <template>
   <div class="page-shell settings-page settings-page--account" :style="backgroundStyle">
-    <HeaderBack :title="title" />
+    <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
       <section class="account-card">
@@ -73,7 +86,9 @@ function openSecurityPasswordFlow(): void {
           @click="onRowClick(item)"
         >
           <div class="left-wrap">
-            <span class="row-icon" :class="item.iconClass"></span>
+            <span class="row-icon">
+              <SettingSvgIcon :name="item.icon" />
+            </span>
             <span class="label">{{ item.label }}</span>
           </div>
 
@@ -88,7 +103,7 @@ function openSecurityPasswordFlow(): void {
             >
               <span class="dot"></span>
             </span>
-            <span v-else-if="item.arrow" class="arrow">›</span>
+            <SettingSvgIcon v-else-if="item.arrow" name="chevron-right" class="arrow" />
           </div>
         </button>
       </section>
@@ -97,14 +112,22 @@ function openSecurityPasswordFlow(): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .settings-page {
   height: 100dvh;
-  // padding-top: calc(env(safe-area-inset-top) + 0.48rem);
-  padding-bottom: 0.8rem;
+  padding: 0 0 0.8rem;
   color: #f9f9f9;
+  background-color: var(--c-page);
+  background-image: var(--account-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: #000;
+    background-image: var(--account-bg-light);
+  }
 }
 
 .content-wrap {
@@ -116,106 +139,105 @@ function openSecurityPasswordFlow(): void {
   border-radius: 0.4209rem;
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.08rem);
-  padding: 0.362rem 0.362rem 0.268rem;
+  padding: 0.362rem 0.4377rem 0.362rem 0.362rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2333rem;
+
+  @include theme-light {
+    background: #fff;
+    backdrop-filter: blur(0.0042rem);
+  }
 }
 
 .account-row {
   width: 100%;
+  min-height: 0.8875rem;
+  padding: 0;
   border: 0;
-  border-bottom: 0.0133rem solid rgba(255, 255, 255, 0.2);
   background: transparent;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 1.06rem;
+  position: relative;
 
-  &:last-child {
-    border-bottom: 0;
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 1.14rem;
+    right: 0;
+    bottom: -0.1166rem;
+    height: 0.0168rem;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  @include theme-light {
+    color: #000;
+
+    &:not(:last-child)::after {
+      background: rgba(0, 0, 0, 0.12);
+    }
   }
 }
 
 .left-wrap {
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 0.2525rem;
 }
 
 .label {
+  min-width: 0;
   font-family: var(--font-family-SF);
   font-size: 0.404rem;
   font-weight: 400;
   line-height: 1.2;
   color: rgba(255, 255, 255, 0.94);
+  white-space: nowrap;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .row-icon {
-  width: 0.533rem;
-  height: 0.533rem;
-  border-radius: 0.133rem;
-  position: relative;
-}
+  width: 0.8875rem;
+  height: 0.8875rem;
+  flex: none;
+  border-radius: 0.3039rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  filter: drop-shadow(0 0 0.1267rem rgba(151, 71, 255, 0.2));
 
-.icon-reset::before,
-.icon-reset::after {
-  content: '';
-  position: absolute;
-}
+  :deep(.setting-svg-icon) {
+    width: 0.533rem;
+    height: 0.533rem;
+  }
 
-.icon-reset::before {
-  inset: 0.066rem;
-  border: 0.053rem solid rgba(255, 255, 255, 0.95);
-  border-right-color: transparent;
-  border-top-color: transparent;
-  border-radius: 0.106rem;
-}
-
-.icon-reset::after {
-  right: 0.02rem;
-  top: 0.02rem;
-  width: 0.186rem;
-  height: 0.186rem;
-  border-top: 0.053rem solid rgba(255, 255, 255, 0.95);
-  border-right: 0.053rem solid rgba(255, 255, 255, 0.95);
-}
-
-.icon-sound::before,
-.icon-sound::after {
-  content: '';
-  position: absolute;
-}
-
-.icon-sound::before {
-  left: 0.026rem;
-  top: 0.133rem;
-  width: 0.16rem;
-  height: 0.266rem;
-  border-radius: 0.053rem;
-  background: rgba(255, 255, 255, 0.95);
-  clip-path: polygon(0 30%, 60% 30%, 100% 0, 100% 100%, 60% 70%, 0 70%);
-}
-
-.icon-sound::after {
-  right: 0.08rem;
-  top: 0.106rem;
-  width: 0.213rem;
-  height: 0.32rem;
-  border-right: 0.053rem solid rgba(255, 255, 255, 0.95);
-  border-top: 0.053rem solid rgba(255, 255, 255, 0.95);
-  border-bottom: 0.053rem solid rgba(255, 255, 255, 0.95);
-  border-left: 0;
-  border-radius: 0 0.266rem 0.266rem 0;
+  @include theme-light {
+    color: var(--c-brand);
+  }
 }
 
 .right-wrap {
+  flex: none;
   display: inline-flex;
   align-items: center;
 }
 
 .arrow {
-  font-size: 0.72rem;
-  line-height: 1;
+  width: 0.2623rem;
+  height: 0.4784rem;
   color: rgba(255, 255, 255, 0.95);
+  transform: rotate(180deg);
+
+  @include theme-light {
+    color: #888;
+  }
 }
 
 .switch {
@@ -227,6 +249,10 @@ function openSecurityPasswordFlow(): void {
   padding: 0.053rem;
   display: inline-flex;
   align-items: center;
+
+  @include theme-light {
+    background: rgba(46, 46, 46, 0.17);
+  }
 }
 
 .dot {
@@ -237,7 +263,15 @@ function openSecurityPasswordFlow(): void {
   transition: transform 0.2s ease;
 }
 
-.switch.on .dot {
-  transform: translateX(0.6rem);
+.switch.on {
+  background: var(--c-brand);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
+
+  .dot {
+    transform: translateX(0.6rem);
+  }
 }
 </style>

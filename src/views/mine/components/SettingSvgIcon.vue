@@ -12,14 +12,20 @@ type SettingSvgIconName =
   | 'agreement'
   | 'privacy'
   | 'version'
+  | 'password-reset'
+  | 'security-password'
+  | 'chevron-right'
 
 const props = defineProps<{
   name: SettingSvgIconName
 }>()
 
 const viewBox = computed(() => {
-  if (props.name === 'logout') return '0 0 16.0543 16.0543'
-  if (props.name === 'sound') return '0 0 18.1316 14.6154'
+  if (props.name === 'logout' || props.name === 'password-reset') return '0 0 16.0543 16.0543'
+  if (props.name === 'sound' || props.name === 'security-password') {
+    return '0 0 18.1316 14.6154'
+  }
+  if (props.name === 'chevron-right') return '0 0 9.83788 17.9394'
   if (props.name === 'cancel-account') return '0 0 15.9955 16.9013'
   if (props.name === 'about') return '0 0 19.9535 19.9535'
   return '0 0 19.98 19.98'
@@ -36,7 +42,7 @@ const viewBox = computed(() => {
     xmlns="http://www.w3.org/2000/svg"
     aria-hidden="true"
   >
-    <g v-if="name === 'logout'">
+    <g v-if="name === 'logout' || name === 'password-reset'">
       <path
         d="M7.91173 0.335562V1.66759H2.61095L9.79845 8.85509C9.92349 8.98013 9.99375 9.14995 9.99376 9.32677C9.99376 9.50361 9.9235 9.67341 9.79845 9.79845C9.67341 9.9235 9.50361 9.99376 9.32677 9.99376C9.14995 9.99375 8.98013 9.92349 8.85509 9.79845L1.66759 2.61095V7.91173H0.335562V0.335562H7.91173Z"
         fill="currentColor"
@@ -68,7 +74,12 @@ const viewBox = computed(() => {
       />
     </g>
 
-    <g v-else-if="name === 'sound'" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <g
+      v-else-if="name === 'sound' || name === 'security-password'"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+    >
       <path
         d="M1.44521 8.91416C1.15389 8.42885 1 7.87346 1 7.30743C1 6.7414 1.15389 6.18602 1.44521 5.70071C1.53474 5.55129 1.65454 5.42225 1.79691 5.32189C1.93927 5.22153 2.10107 5.15206 2.27188 5.11796L3.6813 4.83574C3.76536 4.81909 3.84117 4.77414 3.89609 4.70837L5.6177 2.64127C6.60171 1.45912 7.09455 0.868876 7.53328 1.02788C7.97201 1.18689 7.97367 1.95612 7.97367 3.49458V11.1219C7.97367 12.6596 7.97367 13.428 7.53411 13.5878C7.09539 13.746 6.60255 13.1557 5.61853 11.9744L3.89442 9.9065C3.83972 9.84089 3.76423 9.79594 3.68047 9.77912L2.27105 9.49691C2.10023 9.4628 1.93844 9.39333 1.79607 9.29297C1.6537 9.19261 1.53474 9.06358 1.44521 8.91416Z"
       />
@@ -76,6 +87,12 @@ const viewBox = computed(() => {
         d="M11.7499 4.36371C12.5266 5.14043 12.9649 6.19269 12.9691 7.29115C12.9733 8.3896 12.5431 9.44519 11.7724 10.2278M15.1806 2.59798C16.4234 3.84062 17.1246 5.52412 17.1315 7.28157C17.1384 9.03902 16.4503 10.7279 15.2173 11.9803"
       />
     </g>
+
+    <path
+      v-else-if="name === 'chevron-right'"
+      d="M8.96901 17.9394C8.7468 17.9394 8.52456 17.855 8.35559 17.6848L0.254322 9.58355C-0.084774 9.24446 -0.084774 8.69469 0.254322 8.35559L8.35559 0.254322C8.69469 -0.084774 9.24446 -0.084774 9.58355 0.254322C9.92265 0.593418 9.92265 1.14319 9.58355 1.48228L2.0957 8.97014L9.58355 16.458C9.92265 16.7971 9.92265 17.3469 9.58355 17.686C9.41343 17.8549 9.19122 17.9394 8.96901 17.9394Z"
+      fill="currentColor"
+    />
 
     <path
       v-else-if="name === 'line'"

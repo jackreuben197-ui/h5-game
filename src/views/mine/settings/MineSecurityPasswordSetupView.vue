@@ -1,28 +1,39 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { showFailToast, showSuccessToast } from 'vant'
-import { useRouter } from 'vue-router'
+import { showFailToast } from 'vant'
+import { useRoute, useRouter } from 'vue-router'
 import { postUserModifyQuickInfoApi } from '@/api/user'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
+import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import { t } from '@/i18n'
+import { useUserInfoStore } from '@/stores/userInfo'
 
 type SetupPhase = 'first' | 'confirm'
 type OverlayType = 'none' | 'loading' | 'success'
 
 const router = useRouter()
+const route = useRoute()
+const userInfoStore = useUserInfoStore()
 
-// 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--password-bg-dark': `url(${mainBgUrl})`,
+  '--password-bg-light': `url(${mainBgLightUrl})`,
 }))
 const phase = ref<SetupPhase>('first')
 const digits = ref('')
 const firstInput = ref('')
+const keypadKey = ref(0)
 const overlayType = ref<OverlayType>('none')
 const submitting = ref(false)
+const isReset = computed(() => route.query.reset === '1')
 
 const titleText = computed(() =>
-  phase.value === 'first' ? t('UIMine_btn_setting') + '6' + t('UIClub_Code5') : t('UIClub_Code6'),
+  phase.value === 'first'
+    ? isReset.value
+      ? t('Change_6digit_password')
+      : t('UIMine_SettingSixPassword')
+    : t('UIClub_Code6'),
 )
 const subtitleText = computed(() =>
   phase.value === 'first' ? t('6digit_password_firstInput') : t('UIClub_Again3'),
@@ -30,42 +41,22 @@ const subtitleText = computed(() =>
 const showSubmit = computed(() => phase.value === 'confirm')
 const canSubmit = computed(() => digits.value.length === 6)
 
-const keyRows = [
-  ['1', '2', '3'],
-  ['4', '5', '6'],
-  ['7', '8', '9'],
-  ['C', '0', '⌫'],
-]
-
 function closePage(): void {
   router.back()
 }
 
-function handleKey(key: string): void {
+function handleKeyPress(payload: { value: string }): void {
   if (overlayType.value !== 'none') {
     return
   }
 
-  if (key === 'C') {
-    digits.value = ''
-    return
-  }
-
-  if (key === '⌫') {
-    digits.value = digits.value.slice(0, -1)
-    return
-  }
-
-  if (digits.value.length >= 6) {
-    return
-  }
-
-  digits.value += key
+  digits.value = payload.value
 
   if (phase.value === 'first' && digits.value.length === 6) {
     firstInput.value = digits.value
     phase.value = 'confirm'
     digits.value = ''
+    keypadKey.value += 1
   }
 }
 
@@ -79,6 +70,7 @@ async function handleSubmit(): Promise<void> {
     phase.value = 'first'
     digits.value = ''
     firstInput.value = ''
+    keypadKey.value += 1
     return
   }
 
@@ -93,8 +85,12 @@ async function handleSubmit(): Promise<void> {
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_CodeFail2'))
     }
+    userInfoStore.syncUserFields({ digital_switch: 1 })
     overlayType.value = 'success'
-    showSuccessToast(t('UIClub_CodeSuccess'))
+    // showSuccessToast(t('UIClub_CodeSuccess'))
+    setTimeout(() => {
+      closeOverlay()
+    }, 2000)
   } catch (error) {
     overlayType.value = 'none'
     const message = error instanceof Error ? error.message : t('UIClub_CodeFail2')
@@ -106,7 +102,7 @@ async function handleSubmit(): Promise<void> {
 
 function closeOverlay(): void {
   if (overlayType.value === 'success') {
-    void router.replace('/mine/settings/account?security=on')
+    void router.replace('/mine/settings/account')
     return
   }
   overlayType.value = 'none'
@@ -115,14 +111,16 @@ function closeOverlay(): void {
 
 <template>
   <div class="page-shell security-password-page" :style="backgroundStyle">
-    <button class="close-btn" type="button" @click="closePage">×</button>
+    <button class="close-btn" type="button" :aria-label="t('Wallet_Cancel')" @click="closePage">
+      <span></span>
+    </button>
 
     <section class="password-panel">
       <h1>{{ titleText }}</h1>
       <p>{{ subtitleText }}</p>
       <div class="dot-row">
         <span v-for="idx in 6" :key="idx" class="dot-cell">
-          <span v-if="idx <= digits.length" class="digit">6</span>
+          <span v-if="idx <= digits.length" class="digit">{{ digits[idx - 1] }}</span>
         </span>
       </div>
       <button
@@ -130,75 +128,108 @@ function closeOverlay(): void {
         class="submit-btn"
         :class="{ active: canSubmit }"
         type="button"
-        :disabled="submitting"
+        :disabled="!canSubmit || submitting"
         @click="handleSubmit"
       >
         {{ t('UIMinePwFinish') }}
       </button>
     </section>
 
-    <section class="keyboard-wrap">
-      <div v-for="(row, rowIdx) in keyRows" :key="rowIdx" class="key-row">
-        <button
-          v-for="key in row"
-          :key="key"
-          type="button"
-          class="key"
-          :class="{ clear: key === 'C', erase: key === '⌫' }"
-          @click="handleKey(key)"
-        >
-          <span v-if="key !== '⌫'">{{ key }}</span>
-          <span v-else class="erase-icon">⌫</span>
-        </button>
-      </div>
-    </section>
+    <NumericKeypad
+      :key="keypadKey"
+      open
+      :max-length="6"
+      allow-leading-zero
+      :show-mask="false"
+      :show-background="false"
+      :show-actions="false"
+      allow-page-interaction
+      @key-press="handleKeyPress"
+    />
 
     <div v-if="overlayType !== 'none'" class="overlay-mask">
       <div class="overlay-card">
         <div v-if="overlayType === 'loading'" class="loader"></div>
         <div v-else class="success-icon">✓</div>
-        <p>{{ overlayType === 'loading' ? t('UIClub_Text66') : t('6digit_password_opened') }}</p>
-        <button
+        <p>
+          {{
+            overlayType === 'loading'
+              ? t('UIClub_Text66')
+              : isReset
+                ? t('adaptation10079')
+                : t('6digit_password_opened')
+          }}
+        </p>
+        <!-- <button
           v-if="overlayType === 'success'"
           class="overlay-confirm"
           type="button"
           @click="closeOverlay"
         >
           {{ t('adaptation10024') }}
-        </button>
+        </button> -->
       </div>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .security-password-page {
   height: 100dvh;
-  // padding-top: calc(env(safe-area-inset-top) + 0.42rem);
   position: relative;
-  background:
-    radial-gradient(60% 42% at 20% 10%, rgba(226, 163, 133, 0.62) 0%, rgba(226, 163, 133, 0) 100%),
-    radial-gradient(55% 45% at 26% 84%, rgba(206, 107, 160, 0.58) 0%, rgba(206, 107, 160, 0) 100%),
-    radial-gradient(45% 38% at 88% 84%, rgba(0, 183, 212, 0.56) 0%, rgba(0, 183, 212, 0) 100%),
-    linear-gradient(160deg, #b58eb1 0%, #8d668d 54%, #6f5988 100%);
+  overflow: hidden;
+  color: #fff;
+  background-color: var(--c-page);
+  background-image: var(--password-bg-dark);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  @include theme-light {
+    color: #000;
+    background-image: var(--password-bg-light);
+  }
 }
 
 .close-btn {
-  margin-left: 0.4rem;
+  position: absolute;
+  z-index: 2;
+  top: calc(env(safe-area-inset-top) + 0.48rem);
+  left: 0.3733rem;
   width: 1.024rem;
   height: 1.024rem;
-  border: 0.0133rem solid rgba(255, 255, 255, 0.5);
+  padding: 0;
+  border: 0.0133rem solid rgba(255, 255, 255, 0.32);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  font-size: 0.72rem;
-  line-height: 1;
+  background: rgba(87, 174, 255, 0.2);
+
+  span::before,
+  span::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0.42rem;
+    height: 0.0533rem;
+    border-radius: 999px;
+    background: #fff;
+  }
+
+  span::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  span::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+  }
 }
 
 .password-panel {
-  margin-top: 3.3rem;
+  padding-top: 5.78rem;
   text-align: center;
-  color: #fff;
+  color: inherit;
 
   h1 {
     margin: 0;
@@ -212,6 +243,10 @@ function closeOverlay(): void {
     font-size: 0.4026rem;
     color: rgba(255, 255, 255, 0.8);
     line-height: 1.2;
+
+    @include theme-light {
+      color: rgba(0, 0, 0, 0.8);
+    }
   }
 }
 
@@ -231,6 +266,11 @@ function closeOverlay(): void {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
+  @include theme-light {
+    border-color: rgba(239, 40, 70, 0.25);
+    background: rgba(0, 0, 0, 0.13);
+  }
 }
 
 .digit {
@@ -251,49 +291,15 @@ function closeOverlay(): void {
 
 .submit-btn.active {
   background: linear-gradient(168deg, #05e7ae 7.55%, #027a5c 71.92%);
-}
 
-.keyboard-wrap {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 0.8446rem 0.8446rem 0 0;
-  background: rgba(0, 0, 0, 0.37);
-  padding: 0.6426rem 0.5321rem 0.5472rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.206rem;
-}
-
-.key-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.1526rem;
-}
-
-.key {
-  height: 1.354rem;
-  border: 0.0133rem solid rgba(255, 255, 255, 0.3);
-  border-radius: 0.3775rem;
-  background: rgba(255, 255, 255, 0.23);
-  color: #fff;
-  font-size: 0.6105rem;
-  font-weight: 600;
-}
-
-.key.clear,
-.key.erase {
-  background: rgba(4, 209, 157, 0.24);
-  border-radius: 1.6064rem;
-}
-
-.erase-icon {
-  font-size: 0.56rem;
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .overlay-mask {
   position: absolute;
+  z-index: 300;
   inset: 0;
   background: rgba(12, 12, 12, 0.6);
   display: flex;
@@ -359,6 +365,10 @@ function closeOverlay(): void {
   background: linear-gradient(166deg, #05e7ae 7.55%, #027a5c 71.92%);
   color: #fff;
   font-size: 0.6rem;
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 @keyframes spin {

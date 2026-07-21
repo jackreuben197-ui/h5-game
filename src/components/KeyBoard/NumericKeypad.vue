@@ -18,6 +18,8 @@ interface Props {
   title?: string
   allowDecimal?: boolean // When true, replace 'C' with '.' and allow decimal input
   showCancel?: boolean
+  showActions?: boolean
+  allowPageInteraction?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -34,6 +36,8 @@ const props = withDefaults(defineProps<Props>(), {
   confirmText: t('Wallet_Confirm'),
   allowDecimal: false,
   showCancel: true,
+  showActions: true,
+  allowPageInteraction: false,
 })
 
 const emit = defineEmits<{
@@ -169,7 +173,13 @@ function confirm(): void {
     <Transition name="keypad">
       <div
         v-if="open"
-        :class="['kp', { 'kp--plain': !showMask }]"
+        :class="[
+          'kp',
+          {
+            'kp--plain': !showMask,
+            'kp--passthrough': allowPageInteraction,
+          },
+        ]"
         @click.self="cancel"
         @dblclick.prevent
       >
@@ -226,7 +236,7 @@ function confirm(): void {
             </button>
           </div>
 
-          <div class="kp__actions">
+          <div v-if="showActions" class="kp__actions">
             <button
               v-if="showCancel"
               type="button"
@@ -275,6 +285,14 @@ function confirm(): void {
 
   @include theme-light {
     background-color: transparent;
+  }
+}
+
+.kp--passthrough {
+  pointer-events: none;
+
+  .kp__sheet {
+    pointer-events: auto;
   }
 }
 

@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { postUserModifyInfoApi } from '@/api/user'
 import { postOssUploadImageApi } from '@/api/oss'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -17,7 +18,8 @@ const title = computed(() => t('UIMine_UserInfoSetting_title'))
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--profile-edit-bg-dark': `url(${mainBgUrl})`,
+  '--profile-edit-bg-light': `url(${mainBgLightUrl})`,
 }))
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
@@ -41,7 +43,7 @@ function readDisplayNickname(): string {
       return nickname.trim()
     }
   }
-  return gameStore.loginNickname || 'Carter Torff'
+  return gameStore.loginNickname || ''
 }
 
 function readDisplayUserId(): string {
@@ -53,7 +55,18 @@ function readDisplayUserId(): string {
       return String(id)
     }
   }
-  return gameStore.loginUserId || '8677650585'
+  return gameStore.loginUserId || ''
+}
+
+function readDisplayGender(): 'male' | 'female' {
+  const user = userInfoStore.userInfo?.user
+  if (user && typeof user === 'object') {
+    const sex = Number((user as Record<string, unknown>).sex)
+    if (sex === 2) {
+      return 'female'
+    }
+  }
+  return 'male'
 }
 
 function readDisplayAvatar(): string {
@@ -74,6 +87,7 @@ const displayUser = computed(() => ({
 }))
 
 nickname.value = String(displayUser.value.nickname || '')
+selectedGender.value = readDisplayGender()
 
 function goNicknamePage(): void {
   void router.push('/mine/profile/nickname')
@@ -247,7 +261,9 @@ async function onConfirmGender(): Promise<void> {
             <div class="user-id-row">
               <span class="id-tag">ID</span>
               <span class="id-value">{{ displayUser.userId }}</span>
-              <span class="id-copy" aria-hidden="true">◌</span>
+              <span class="gender-mark" aria-hidden="true">
+                {{ selectedGender === 'male' ? '♂' : '♀' }}
+              </span>
             </div>
           </div>
         </div>
@@ -310,7 +326,7 @@ async function onConfirmGender(): Promise<void> {
             <span>{{ t('UIMine_UserInfoSetting_Female') }}</span>
           </button>
           <button class="sheet-confirm" type="button" @click="onConfirmGender">
-            {{ t('UISend_btn') }}
+            {{ t('Save') }}
           </button>
         </div>
       </VanPopup>
@@ -319,14 +335,22 @@ async function onConfirmGender(): Promise<void> {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .profile-edit-page {
   height: 100dvh;
-  // padding-top: calc(env(safe-area-inset-top) + 0.4598rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;
+  background-color: var(--c-page);
+  background-image: var(--profile-edit-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: #000;
+    background-image: var(--profile-edit-bg-light);
+  }
 }
 
 .content-wrap {
@@ -339,6 +363,8 @@ async function onConfirmGender(): Promise<void> {
 
 .profile-card {
   margin-top: 0.9499rem;
+  margin-right: auto;
+  margin-left: auto;
   width: 8.7467rem;
   min-height: 3.7867rem;
   border-radius: 1.0418rem;
@@ -349,6 +375,16 @@ async function onConfirmGender(): Promise<void> {
     rgba(255, 255, 255, 0.25) 40%,
     rgba(255, 255, 255, 0.75) 100%
   );
+
+  @include theme-light {
+    padding: 0.0267rem;
+    border: 0.0133rem solid rgba(255, 255, 255, 0.8);
+    background: rgba(76, 88, 98, 0.32);
+    box-shadow:
+      inset 0 0.16rem 0.58rem rgba(255, 255, 255, 0.42),
+      inset 0 -0.18rem 0.56rem rgba(0, 0, 0, 0.18),
+      0 0.06rem 0.14rem rgba(0, 0, 0, 0.12);
+  }
 }
 
 .profile-card__inner {
@@ -374,6 +410,12 @@ async function onConfirmGender(): Promise<void> {
     ),
     rgba(0, 0, 0, 0.24);
   border: 0.0267rem solid rgba(255, 255, 255, 0.3);
+
+  @include theme-light {
+    border-color: rgba(255, 255, 255, 0.34);
+    background: rgba(107, 116, 124, 0.18);
+    box-shadow: inset 0 0 0.52rem rgba(255, 255, 255, 0.24);
+  }
 }
 
 .avatar-wrap {
@@ -406,6 +448,10 @@ async function onConfirmGender(): Promise<void> {
   line-height: 0.4664rem;
   text-align: center;
   background: linear-gradient(143deg, #05e7ae 7.55%, #027a5c 71.92%);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .user-box {
@@ -420,6 +466,10 @@ async function onConfirmGender(): Promise<void> {
   font-size: 0.5972rem;
   line-height: 1;
   font-weight: 700;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .user-id-row {
@@ -438,18 +488,27 @@ async function onConfirmGender(): Promise<void> {
   font-size: 0.2155rem;
   line-height: 0.374rem;
   text-align: center;
+
+  @include theme-light {
+    background: rgba(79, 79, 79, 0.4);
+    color: #fff;
+  }
 }
 
 .id-value {
   font-family: var(--font-family-SF);
   font-size: 0.256rem;
   line-height: 1;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
-.id-copy {
+.gender-mark {
   font-size: 0.2933rem;
   line-height: 1;
-  opacity: 0.8;
+  color: var(--c-brand);
 }
 
 .field-group {
@@ -469,6 +528,13 @@ async function onConfirmGender(): Promise<void> {
   line-height: 1.4;
   text-align: left;
   padding: 0 0.5539rem;
+
+  @include theme-light {
+    border-color: rgba(249, 249, 249, 0.6);
+    background: #dadada;
+    color: rgba(0, 0, 0, 0.71);
+    backdrop-filter: blur(0.8232rem);
+  }
 }
 
 .input-hint {
@@ -477,6 +543,10 @@ async function onConfirmGender(): Promise<void> {
   font-family: 'PingFang SC', var(--font-family-sans);
   font-size: 0.3467rem;
   line-height: 1.4;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .gender-select {
@@ -496,6 +566,10 @@ async function onConfirmGender(): Promise<void> {
   font-family: var(--font-family-SF);
   font-size: 0.4387rem;
   line-height: 1.25;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .radio {
@@ -506,12 +580,28 @@ async function onConfirmGender(): Promise<void> {
   background: rgba(255, 255, 255, 0.18);
   position: relative;
 
+  @include theme-light {
+    border-color: rgba(0, 0, 0, 0.08);
+    background: #d0d0d0;
+  }
+
   &.active::after {
     content: '';
     position: absolute;
     inset: 0.1rem;
     border-radius: 50%;
     background: #26f8e6;
+
+    @include theme-light {
+      background: var(--c-brand);
+    }
+  }
+
+  &.active {
+    @include theme-light {
+      border-color: var(--c-brand);
+      background: transparent;
+    }
   }
 }
 
@@ -526,6 +616,11 @@ async function onConfirmGender(): Promise<void> {
   padding: 0.6426rem 0.5321rem 0.7872rem;
   background: rgba(177, 126, 152, 0.94);
   backdrop-filter: blur(0.9733rem);
+
+  @include theme-light {
+    background: #fff;
+    color: #000;
+  }
 }
 
 .sheet-row {
@@ -537,6 +632,10 @@ async function onConfirmGender(): Promise<void> {
   font-size: 0.5493rem;
   line-height: 1.333;
   min-height: 0.9867rem;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .sheet-divider {
@@ -544,6 +643,10 @@ async function onConfirmGender(): Promise<void> {
   height: 0.0267rem;
   background: rgba(249, 249, 249, 0.2);
   margin: 0.08rem 0;
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.16);
+  }
 }
 
 .gender-row {
@@ -564,6 +667,10 @@ async function onConfirmGender(): Promise<void> {
   font-size: 0.5493rem;
   line-height: 1.2;
   background: linear-gradient(168.09deg, #05e7ae 7.55%, #027a5c 71.92%);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 
   &:disabled {
     opacity: 0.72;

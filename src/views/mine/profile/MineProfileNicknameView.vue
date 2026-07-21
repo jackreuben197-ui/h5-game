@@ -4,6 +4,7 @@ import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { postUserCheckNicknameApi, postUserModifyInfoApi } from '@/api/user'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { useGameStore } from '@/stores/game'
@@ -18,7 +19,8 @@ const title = computed(() => t('UIMine_UserInfoSettingNick_title'))
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--nickname-bg-dark': `url(${mainBgUrl})`,
+  '--nickname-bg-light': `url(${mainBgLightUrl})`,
 }))
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
@@ -53,7 +55,7 @@ function readDiamond(): number {
       return value
     }
   }
-  return 500
+  return 0
 }
 
 const displayUser = computed(() => ({
@@ -159,7 +161,6 @@ async function onSave(): Promise<void> {
           <img class="diamond" :src="iconDiamond" alt="diamond" />
           <span class="origin">{{ nicknameCost.original }}</span>
           <span class="current">{{ nicknameCost.current }}</span>
-          <span class="info">!</span>
         </div>
 
         <div class="cost-row balance-row">
@@ -179,15 +180,33 @@ async function onSave(): Promise<void> {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .nickname-page {
   height: 100dvh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
   color: #f9f9f9;
+  background-color: var(--c-page);
+  background-image: var(--nickname-bg-dark);
   background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  @include theme-light {
+    color: #000;
+    background-image: var(--nickname-bg-light);
+  }
 }
 
 .content-wrap {
+  min-height: 0;
+  flex: 1;
   padding: 0 0.48rem;
   margin-top: 0.6228rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .name-input {
@@ -202,9 +221,20 @@ async function onSave(): Promise<void> {
   font-size: 0.3885rem;
   line-height: 1.4;
   padding: 0 0.52rem;
+  outline: none;
 
   &::placeholder {
     color: rgba(255, 255, 255, 0.71);
+  }
+
+  @include theme-light {
+    border-color: rgba(249, 249, 249, 0.6);
+    background: #dadada;
+    color: rgba(0, 0, 0, 0.71);
+
+    &::placeholder {
+      color: rgba(0, 0, 0, 0.38);
+    }
   }
 }
 
@@ -214,6 +244,10 @@ async function onSave(): Promise<void> {
   font-family: 'PingFang SC', var(--font-family-sans);
   font-size: 0.3467rem;
   line-height: 1.4;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .cost-row {
@@ -225,6 +259,10 @@ async function onSave(): Promise<void> {
   font-family: 'Afacad', var(--font-family-sans);
   font-size: 0.3574rem;
   line-height: 1.4;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .balance-row {
@@ -246,12 +284,21 @@ async function onSave(): Promise<void> {
   text-decoration: line-through;
   text-decoration-thickness: 0.0267rem;
   text-decoration-color: rgba(255, 255, 255, 0.75);
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.75);
+    text-decoration-color: rgba(0, 0, 0, 0.75);
+  }
 }
 
 .current,
 .balance {
   color: #fff;
   font-weight: 600;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .info {
@@ -266,15 +313,20 @@ async function onSave(): Promise<void> {
   font-size: 0.2667rem;
   font-weight: 600;
   line-height: 1;
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.48);
+    color: #fff;
+  }
 }
 
 .save-wrap {
   margin-top: auto;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 0.08rem);
+  padding: 0 0.1067rem calc(env(safe-area-inset-bottom) + 1.0667rem);
 }
 
 .save-btn {
-  width: 8.9046rem;
+  width: 100%;
   height: 1.4349rem;
   border-radius: 1.0557rem;
   border: 0.0133rem solid rgba(242, 242, 242, 0.8);
@@ -284,6 +336,10 @@ async function onSave(): Promise<void> {
   font-weight: 500;
   line-height: 1.2;
   background: linear-gradient(168.34deg, #05e7ae 7.55%, #027a5c 71.92%);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 
   &:disabled {
     opacity: 0.72;

@@ -19,6 +19,7 @@ import { syncPostAuthData } from '@/session/postAuthSync'
 import { SUPPORTED_LOCALES_OPTIONS, getLocale, setLocale, t, type LocaleCode } from '@/i18n'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import icPhone from '@/assets/icons/ic_phone.svg'
+import icMail from '@/assets/icons/ic_mail.svg'
 import icArrowDrop from '@/assets/icons/ic_arrow_drop.svg'
 import icLock from '@/assets/icons/ic_lock.svg'
 import icKey from '@/assets/icons/ic_key.svg'
@@ -612,7 +613,7 @@ function applyChannelInviteContext(): void {
       <div class="form-fields">
         <div :class="['input-row', { 'input-row--filled': !!contactModel.trim() }]">
           <div class="input-icon-wrap">
-            <img class="input-icon" :src="icPhone" alt="" />
+            <img :src="isPhone ? icPhone : icMail" alt="" />
           </div>
           <div class="input-inner">
             <button
@@ -920,7 +921,7 @@ function applyChannelInviteContext(): void {
   transition: background 0.2s;
 
   &--filled {
-    background: rgba(var(--c-brand-rgb), 0.65);
+    background: rgba(var(--c-brand-rgb), 1);
   }
 }
 

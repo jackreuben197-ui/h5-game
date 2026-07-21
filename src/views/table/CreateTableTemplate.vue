@@ -1007,10 +1007,6 @@ function handleBack() {
   font-family: 'HONOR Sans CN', sans-serif;
   color: #fff;
   white-space: nowrap;
-
-  @include theme-light {
-    color: var(--c-text);
-  }
 }
 
 .template-dialog__input {
@@ -1018,7 +1014,7 @@ function handleBack() {
   min-width: 0;
   height: 1rem;
   padding: 0 0.3rem;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0.3rem;
   outline: none;
@@ -1026,18 +1022,8 @@ function handleBack() {
   font-family: 'HONOR Sans CN', sans-serif;
   color: #fff;
 
-  @include theme-light {
-    background: rgba(134, 134, 134, 0.14);
-    border-color: var(--c-border);
-    color: var(--c-text);
-  }
-
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
-
-    @include theme-light {
-      color: var(--c-text-muted);
-    }
+    color: rgba(255, 255, 255, 0.6);
   }
 }
 </style>

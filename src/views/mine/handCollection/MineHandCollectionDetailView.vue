@@ -25,9 +25,8 @@ import { userCache } from '@/utils/userCache'
 import { USER_STORE_H5_REPLAY } from '@/utils/indexedDB'
 import iconChips from '@/assets/icons/icon_chips.png'
 import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
-import iconPeople from '@/assets/icons/icon_people2.svg'
-import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import PokerCard from '@/components/GameCard/PokerCard.vue'
 import { getHandReplaySession } from '@/session/handReplaySession'
 import { t } from '@/i18n'
@@ -45,10 +44,6 @@ async function invalidateCollectedCache(): Promise<void> {
     COLLECTED_CACHE_KEYS.map((key) => cache.delete(USER_STORE_H5_REPLAY, key).catch(() => undefined)),
   )
 }
-
-const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
-}))
 
 function parseReplayLike<T>(value: unknown): T | null {
   if (!value) return null
@@ -216,7 +211,6 @@ onMounted(() => {
 })
 
 function metricIcon(metric: ReplayDisplayMetric): string {
-  if (metric.icon === 'people') return iconPeople
   if (metric.icon === 'mushroom') return iconMushroom
   return iconChips
 }
@@ -280,7 +274,7 @@ function onShare(): void {
 </script>
 
 <template>
-  <div class="page-shell hand-detail-page" :style="backgroundStyle">
+  <div class="page-shell hand-detail-page">
     <HeaderBack :title="title" :extra-padding="true" />
 
     <main class="page-content">
@@ -288,11 +282,11 @@ function onShare(): void {
         <p class="summary-title">{{ summaryTitle }}</p>
         <div class="summary-meta">
           <div class="meta-item">
-            <img class="meta-icon" src="@/assets/icons/icon_cards2.svg" />
+            <AppSvgIcon name="blind" class="meta-icon meta-icon--blind" />
             <span>{{ blindInfo }}</span>
           </div>
           <div class="meta-item">
-            <img class="meta-icon" src="@/assets/icons/wallet/ic_time.svg" />
+            <AppSvgIcon name="clock" class="meta-icon meta-icon--clock" />
             <span>{{ finishedAt }}</span>
           </div>
           <div class="meta-item hand-code">{{ headerHandId }}</div>
@@ -332,7 +326,12 @@ function onShare(): void {
               :key="`${section.id}-metric-${metricIdx}`"
               class="head-stat"
             >
-              <img class="head-icon" :src="metricIcon(metric)" alt="" />
+              <AppSvgIcon
+                v-if="metric.icon === 'people'"
+                name="room-users"
+                class="head-icon head-icon--users"
+              />
+              <img v-else class="head-icon" :src="metricIcon(metric)" alt="" />
               {{ metric.value }}
             </p>
           </div>
@@ -397,7 +396,12 @@ function onShare(): void {
               :key="`sd-${sdIdx}-metric-${metricIdx}`"
               class="head-stat"
             >
-              <img class="head-icon" :src="metricIcon(metric)" alt="" />
+              <AppSvgIcon
+                v-if="metric.icon === 'people'"
+                name="room-users"
+                class="head-icon head-icon--users"
+              />
+              <img v-else class="head-icon" :src="metricIcon(metric)" alt="" />
               {{ metric.value }}
             </p>
           </div>
@@ -478,11 +482,11 @@ function onShare(): void {
         :disabled="collectBusy"
         @click="onFavorite"
       >
-        <span class="icon">{{ isCollected ? '★' : '☆' }}</span>
+        <AppSvgIcon name="favorite" class="action-icon" />
         <span>{{ t('adaptation10212') }}</span>
       </button>
       <button type="button" class="action-btn" @click="onShare">
-        <span class="icon">↗</span>
+        <AppSvgIcon name="share" class="action-icon" />
         <span>{{ t('UITexasHistory_share') }}</span>
       </button>
     </footer>
@@ -490,6 +494,8 @@ function onShare(): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .hand-detail-page {
   height: 100dvh;
   // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
@@ -498,6 +504,12 @@ function onShare(): void {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-image: url('@/assets/images/main_bg.webp');
+
+  @include theme-light {
+    color: var(--c-text);
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .page-content {
@@ -530,7 +542,21 @@ function onShare(): void {
 }
 
 .meta-icon {
-  opacity: 0.9;
+  color: #fff;
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.64);
+  }
+}
+
+.meta-icon--blind {
+  width: 0.4rem;
+  height: 0.3467rem;
+}
+
+.meta-icon--clock {
+  width: 0.5128rem;
+  height: 0.5128rem;
 }
 
 .hand-code {
@@ -544,6 +570,12 @@ function onShare(): void {
   background: rgba(0, 0, 0, 0.33);
   backdrop-filter: blur(0.08rem);
   padding: 0.38rem 0.42rem 0.24rem;
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-surface);
+    backdrop-filter: none;
+  }
 }
 
 .street-head {
@@ -612,10 +644,18 @@ function onShare(): void {
   object-fit: contain;
 }
 
+.head-icon--users {
+  color: var(--c-brand);
+}
+
 .divider {
   height: 0.02rem;
   background: rgba(249, 249, 249, 0.1);
   margin: 0.3rem 0 0.16rem;
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.12);
+  }
 }
 
 .rows-wrap {
@@ -673,6 +713,7 @@ function onShare(): void {
 .seat-tag {
   padding: 0.09rem 0.18rem;
   font-size: 0.22rem;
+  color: #f3f3f3;
   background: linear-gradient(180deg, #00d4a6 0%, #007e63 100%);
 }
 
@@ -680,21 +721,39 @@ function onShare(): void {
 .tone-green {
   background: #80cd10;
   color: #f9f9f9;
+
+  @include theme-light {
+    color: #222;
+    background: #51b4ff;
+  }
 }
 
 .tone-red {
   background: #ff4368;
   color: #f9f9f9;
+
+  @include theme-light {
+    background: #fa2b4b;
+  }
 }
 
 .tone-gray {
   background: #9d9d9d;
   color: #f9f9f9;
+
+  @include theme-light {
+    background: #222;
+  }
 }
 
 .tone-teal {
   background: #39c2b2;
   color: #f9f9f9;
+
+  @include theme-light {
+    color: #222;
+    background: var(--c-brand);
+  }
 }
 
 .player-name,
@@ -727,6 +786,10 @@ function onShare(): void {
   font-size: 0.28rem;
   color: #f9f9f9;
   white-space: nowrap;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .mush-icon {
@@ -755,9 +818,17 @@ function onShare(): void {
 
   &.winner .player-name {
     color: #ffd673;
+
+    @include theme-light {
+      color: var(--c-text);
+    }
   }
   &.winner .showdown-win.positive {
-    color: red;
+    color: #ff5364;
+
+    @include theme-light {
+      color: var(--c-profit);
+    }
   }
 }
 
@@ -792,6 +863,14 @@ function onShare(): void {
   &.positive {
     color: #ffd673;
   }
+
+  @include theme-light {
+    color: var(--c-text);
+
+    &.positive {
+      color: var(--c-profit);
+    }
+  }
 }
 
 .showdown-cards {
@@ -820,15 +899,27 @@ function onShare(): void {
   border-radius: calc(0.32rem * 0.6 / 1.84);
   border: 1px dashed rgba(249, 249, 249, 0.45);
   box-sizing: border-box;
+
+  @include theme-light {
+    border-color: rgba(0, 0, 0, 0.4);
+  }
 }
 
 // 对齐客户端 SetPlayerItem：默认 Text_wins 颜色 TEXT_GREEN；actList==9 (all in) 染为 Color32(198,198,198,160)。
 .stack-green {
   color: #00d4a6;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .stack-allin {
   color: rgba(198, 198, 198, 0.63);
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.5);
+  }
 }
 
 .showdown-type {
@@ -849,6 +940,10 @@ function onShare(): void {
   backdrop-filter: blur(0.08rem);
   display: flex;
   gap: 0.2rem;
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.16);
+  }
 }
 
 .action-btn {
@@ -865,6 +960,11 @@ function onShare(): void {
   justify-content: center;
   gap: 0.1rem;
 
+  @include theme-light {
+    color: #fff;
+    background: rgba(0, 0, 0, 0.55);
+  }
+
   &.is-collected {
     color: #ffd673;
   }
@@ -874,7 +974,9 @@ function onShare(): void {
   }
 }
 
-.icon {
-  font-size: 0.34rem;
+.action-icon {
+  width: 0.5333rem;
+  height: 0.5333rem;
+  color: #fff;
 }
 </style>

@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import bannerBgUrl from '@/assets/images/wallet/banner_bg.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import TagPill from '@/components/wallet/TagPill.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import iconChips from '@/assets/icons/wallet/ic_coins.png'
 import { postUserGoldChangeLogApi } from '@/api/user'
 
@@ -103,45 +104,7 @@ onMounted(async () => {
           <div class="transaction-card__top">
             <div class="transaction-card__left">
               <div :class="['icon-circle', (item.gold_change ?? 0) >= 0 ? 'in' : 'out']">
-                <svg
-                  v-if="(item.gold_change ?? 0) >= 0"
-                  width="26"
-                  height="26"
-                  viewBox="0 0 26 26"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M9.38467 12.699L7.75448 14.328L12.6427 19.2163L17.531 14.328L15.902 12.699L13.7948 14.805L13.7948 6.1218L11.4907 6.1218L11.4907 14.805L9.38467 12.699Z"
-                    fill="var(--c-brand)"
-                  />
-                  <path
-                    fill-rule="evenodd"
-                    clip-rule="evenodd"
-                    d="M25.3457 4.60831C25.3457 3.38611 24.8602 2.21397 23.996 1.34974C23.1317 0.485518 21.9596 2.96023e-07 20.7374 4.02871e-07L4.60831 1.81292e-06C3.38611 1.91977e-06 2.21397 0.48552 1.34974 1.34974C0.485518 2.21397 2.96023e-07 3.38611 4.02871e-07 4.60831L1.81292e-06 20.7374C1.91977e-06 21.9596 0.48552 23.1317 1.34974 23.996C2.21397 24.8602 3.38611 25.3457 4.60831 25.3457L20.7374 25.3457C21.9596 25.3457 23.1317 24.8602 23.996 23.996C24.8602 23.1317 25.3457 21.9596 25.3457 20.7374L25.3457 4.60831ZM20.7374 2.30415L4.60831 2.30416C3.99721 2.30416 3.41114 2.54692 2.97903 2.97903C2.54691 3.41114 2.30415 3.99721 2.30415 4.60831L2.30416 20.7374C2.30416 21.3485 2.54692 21.9346 2.97903 22.3667C3.41114 22.7988 3.99721 23.0416 4.60831 23.0416L20.7374 23.0415C21.3485 23.0415 21.9346 22.7988 22.3667 22.3667C22.7988 21.9346 23.0416 21.3485 23.0416 20.7374L23.0415 4.60831C23.0415 3.99721 22.7988 3.41114 22.3667 2.97903C21.9346 2.54691 21.3485 2.30415 20.7374 2.30415Z"
-                    fill="var(--c-brand)"
-                  />
-                </svg>
-                <svg
-                  v-else
-                  width="26"
-                  height="26"
-                  viewBox="0 0 26 26"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  style="transform: rotate(180deg)"
-                >
-                  <path
-                    d="M9.38467 12.699L7.75448 14.328L12.6427 19.2163L17.531 14.328L15.902 12.699L13.7948 14.805L13.7948 6.1218L11.4907 6.1218L11.4907 14.805L9.38467 12.699Z"
-                    fill="#FF4B4B"
-                  />
-                  <path
-                    fill-rule="evenodd"
-                    clip-rule="evenodd"
-                    d="M25.3457 4.60831C25.3457 3.38611 24.8602 2.21397 23.996 1.34974C23.1317 0.485518 21.9596 2.96023e-07 20.7374 4.02871e-07L4.60831 1.81292e-06C3.38611 1.91977e-06 2.21397 0.48552 1.34974 1.34974C0.485518 2.21397 2.96023e-07 3.38611 4.02871e-07 4.60831L1.81292e-06 20.7374C1.91977e-06 21.9596 0.48552 23.1317 1.34974 23.996C2.21397 24.8602 3.38611 25.3457 4.60831 25.3457L20.7374 25.3457C21.9596 25.3457 23.1317 24.8602 23.996 23.996C24.8602 23.1317 25.3457 21.9596 25.3457 20.7374L25.3457 4.60831ZM20.7374 2.30415L4.60831 2.30416C3.99721 2.30416 3.41114 2.54692 2.97903 2.97903C2.54691 3.41114 2.30415 3.99721 2.30415 4.60831L2.30416 20.7374C2.30416 21.3485 2.54692 21.9346 2.97903 22.3667C3.41114 22.7988 3.99721 23.0416 4.60831 23.0416L20.7374 23.0415C21.3485 23.0415 21.9346 22.7988 22.3667 22.3667C22.7988 21.9346 23.0416 21.3485 23.0416 20.7374L23.0415 4.60831C23.0415 3.99721 22.7988 3.41114 22.3667 2.97903C21.9346 2.54691 21.3485 2.30415 20.7374 2.30415Z"
-                    fill="#FF4B4B"
-                  />
-                </svg>
+                <AppSvgIcon name="wallet-flow" class="flow-icon" />
               </div>
               <div class="info">
                 <div class="category-badge">{{ formatOpCode(item) }}</div>
@@ -163,18 +126,7 @@ onMounted(async () => {
 
           <div class="transaction-card__bottom">
             <div class="time">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="none"
-              >
-                <path
-                  d="M10 0C15.523 0 20 4.477 20 10C20 15.523 15.523 20 10 20C4.477 20 0 15.523 0 10C0 4.477 4.477 0 10 0ZM10 2C7.87827 2 5.84344 2.84285 4.34315 4.34315C2.84285 5.84344 2 7.87827 2 10C2 12.1217 2.84285 14.1566 4.34315 15.6569C5.84344 17.1571 7.87827 18 10 18C12.1217 18 14.1566 17.1571 15.6569 15.6569C17.1571 14.1566 18 12.1217 18 10C18 7.87827 17.1571 5.84344 15.6569 4.34315C14.1566 2.84285 12.1217 2 10 2ZM10 4C10.2449 4.00003 10.4813 4.08996 10.6644 4.25272C10.8474 4.41547 10.9643 4.63975 10.993 4.883L11 5V9.586L13.707 12.293C13.8863 12.473 13.9905 12.7144 13.9982 12.9684C14.006 13.2223 13.9168 13.4697 13.7488 13.6603C13.5807 13.8508 13.3464 13.9703 13.0935 13.9944C12.8406 14.0185 12.588 13.9454 12.387 13.79L12.293 13.707L9.293 10.707C9.13758 10.5514 9.03776 10.349 9.009 10.131L9 10V5C9 4.73478 9.10536 4.48043 9.29289 4.29289C9.48043 4.10536 9.73478 4 10 4Z"
-                  fill="currentColor"
-                />
-              </svg>
+              <AppSvgIcon name="clock" class="clock-icon" />
               <span class="time-text">{{ formatTime(item.create_time) }}</span>
             </div>
             <div class="balance">
@@ -269,8 +221,11 @@ onMounted(async () => {
   box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
 
   @include theme-light {
-    background: #fff;
-    box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.12);
+    border: 0.0133rem solid rgba(255, 255, 255, 0.8);
+    box-shadow:
+      inset 0 0.16rem 0.58rem rgba(255, 255, 255, 0.42),
+      inset 0 -0.18rem 0.56rem rgba(0, 0, 0, 0.18),
+      0 0.06rem 0.14rem rgba(0, 0, 0, 0.12);
   }
 
   &::after {
@@ -283,7 +238,7 @@ onMounted(async () => {
     z-index: 1;
 
     @include theme-light {
-      background: #fff;
+      background: rgba(107, 116, 124, 0.18);
     }
   }
 
@@ -307,7 +262,7 @@ onMounted(async () => {
     z-index: 3;
 
     @include theme-light {
-      background: linear-gradient(139deg, rgba(0, 0, 0, 0.12) 0%, transparent 100%);
+      display: none;
     }
   }
 }
@@ -574,6 +529,22 @@ onMounted(async () => {
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
+
+  &.in {
+    color: var(--c-loss);
+  }
+  &.out {
+    color: var(--c-profit);
+
+    .flow-icon {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.flow-icon {
+  width: 100%;
+  height: 100%;
 }
 
 .info {
@@ -655,10 +626,10 @@ onMounted(async () => {
   font-family: 'SF Pro', sans-serif;
 
   &.in {
-    color: var(--c-brand);
+    color: var(--c-loss);
   }
   &.out {
-    color: #ff4b4b;
+    color: var(--c-profit);
   }
 }
 
@@ -681,10 +652,12 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 0.16rem;
+}
 
-  svg {
-    color: var(--c-text);
-  }
+.clock-icon {
+  width: 0.53rem;
+  height: 0.53rem;
+  color: var(--c-text);
 }
 
 .time-text {

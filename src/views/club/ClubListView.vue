@@ -15,6 +15,7 @@ import imgClubBannerFigma from '@/assets/images/club_banner_bg.png'
 import imgClubLogo from '@/assets/images/club_default_logo.png'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
+import { GameDialog } from '@/components/Dialog'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import { useGameStore } from '@/stores/game'
 import { useRoomListStore } from '@/stores/roomList'
@@ -519,40 +520,30 @@ onMounted(() => {
       </article>
     </section>
 
-    <div v-if="showJoinModal" class="join-modal-mask" @click="closeJoinModal">
-      <section class="join-modal" @click.stop>
-        <div class="join-modal-card">
-          <img class="join-modal-logo" :src="searchedClubLogo" alt="俱乐部头像" />
-          <h3 class="join-modal-name">{{ searchedClubName }}</h3>
-          <p class="join-modal-id-row">
-            <span class="join-modal-id-tag">ID</span>
-            <span>{{ searchedClubDisplayId }}</span>
-          </p>
-          <p class="join-modal-member-row">
-            <AppSvgIcon class="join-modal-member-icon" name="users" />
-            <span>{{ searchedClubMembers }}人</span>
-          </p>
-        </div>
-
-        <div class="join-modal-actions">
-          <button
-            type="button"
-            class="join-modal-btn join-modal-btn--cancel"
-            @click="closeJoinModal"
-          >
-            取消
-          </button>
-          <button
-            type="button"
-            class="join-modal-btn join-modal-btn--confirm"
-            :disabled="joinLoading"
-            @click="onJoinClub"
-          >
-            {{ joinLoading ? '提交中' : '加入' }}
-          </button>
-        </div>
-      </section>
-    </div>
+    <GameDialog
+      v-model:show="showJoinModal"
+      dialog-width="8.454rem"
+      :show-cancel-button="true"
+      :close-on-click-overlay="true"
+      cancel-button-text="取消"
+      :confirm-button-text="joinLoading ? '提交中' : '加入'"
+      :confirm-button-disabled="joinLoading"
+      @confirm="onJoinClub"
+      @cancel="closeJoinModal"
+    >
+      <div class="join-modal-card">
+        <img class="join-modal-logo" :src="searchedClubLogo" alt="俱乐部头像" />
+        <h3 class="join-modal-name">{{ searchedClubName }}</h3>
+        <p class="join-modal-id-row">
+          <span class="join-modal-id-tag">ID</span>
+          <span>{{ searchedClubDisplayId }}</span>
+        </p>
+        <p class="join-modal-member-row">
+          <AppSvgIcon class="join-modal-member-icon" name="users" />
+          <span>{{ searchedClubMembers }}人</span>
+        </p>
+      </div>
+    </GameDialog>
 
     <NumericKeypad
       :open="searchKeypadOpen"
@@ -1166,43 +1157,10 @@ onMounted(() => {
   }
 }
 
-.join-modal-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  background: var(--c-overlay);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 0.72rem;
-}
-
-.join-modal {
-  width: 8.454rem;
-  max-width: 100%;
-  padding: 0.42rem;
-  border-radius: 0.97rem;
-  border: 0.025rem solid rgba(255, 255, 255, 0.31);
-  background:
-    linear-gradient(126deg, rgba(142, 142, 142, 0.6) 0%, rgba(72, 72, 72, 0.92) 100%),
-    rgba(30, 30, 30, 0.65);
-  box-shadow:
-    0.09rem 0.11rem 0.18rem rgba(0, 0, 0, 0.25),
-    inset 0.05rem 0.1rem 0.4rem rgba(255, 255, 255, 0.31),
-    inset 0 0 0.23rem rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(0.4rem);
-
-  @include theme-light {
-    border-color: var(--c-border);
-    background: var(--c-surface);
-    box-shadow: 0 0.09rem 0.18rem rgba(34, 34, 34, 0.14);
-  }
-}
-
 .join-modal-card {
   min-height: 5.02rem;
   border-radius: 0.834rem;
-  border: 0.026rem solid var(--c-border);
+  border: 0.026rem solid rgba(255, 255, 255, 0.3);
   background: rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
@@ -1210,10 +1168,6 @@ onMounted(() => {
   justify-content: center;
   gap: 0.3rem;
   padding: 0.5rem 0.42rem;
-
-  @include theme-light {
-    background: var(--c-page);
-  }
 }
 
 .join-modal-logo {
@@ -1229,7 +1183,7 @@ onMounted(() => {
   font-size: 0.597rem;
   font-weight: 700;
   line-height: 1.2;
-  color: var(--c-text);
+  color: #fff;
   text-align: center;
 }
 
@@ -1241,7 +1195,7 @@ onMounted(() => {
   font-family: 'SF Pro', 'PingFang SC', sans-serif;
   font-size: 0.256rem;
   font-weight: 600;
-  color: var(--c-text);
+  color: #fff;
 }
 
 .join-modal-id-tag {
@@ -1251,12 +1205,8 @@ onMounted(() => {
   width: 0.445rem;
   height: 0.316rem;
   border-radius: 0.075rem;
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.4);
   font-size: 0.216rem;
-
-  @include theme-light {
-    background: #fff;
-  }
 }
 
 .join-modal-member-row {
@@ -1264,63 +1214,18 @@ onMounted(() => {
   height: 0.88rem;
   padding: 0 0.3rem;
   border-radius: 0.667rem;
-  background: rgba(0, 0, 0, 0.31);
+  background: rgba(44, 45, 45, 0.31);
   display: inline-flex;
   align-items: center;
   gap: 0.12rem;
   font-size: 0.427rem;
-  color: var(--c-text);
-
-  @include theme-light {
-    background: rgba(0, 0, 0, 0.04);
-  }
+  color: #fff;
 }
 
 .join-modal-member-icon {
   width: 0.453rem;
   height: 0.453rem;
-  color: var(--c-text);
-}
-
-.join-modal-actions {
-  margin-top: 0.48rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.25rem;
-}
-
-.join-modal-btn {
-  flex: 1;
-  min-height: 1.436rem;
-  border-radius: 1.055rem;
-  border: 0;
   color: #fff;
-  font-family: 'Afacad', 'PingFang SC', sans-serif;
-  font-size: 0.4rem;
-  font-weight: 500;
-}
-
-.join-modal-btn--cancel {
-  background: rgba(0, 0, 0, 0.3);
-  color: var(--c-text);
-
-  @include theme-light {
-    background: var(--c-page);
-  }
-}
-
-.join-modal-btn--confirm {
-  background: linear-gradient(168deg, var(--c-brand) 7%, #027a5c 72%);
-  border: 0.013rem solid var(--c-border);
-
-  @include theme-light {
-    background: var(--c-brand);
-  }
-}
-
-.join-modal-btn:disabled {
-  opacity: 0.72;
 }
 
 @media (max-width: 340px) {

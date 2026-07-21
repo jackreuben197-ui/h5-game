@@ -159,13 +159,8 @@ onMounted(() => {
               </div>
             </div>
             <span
-              :class="[
-                'player-item__check',
-                { 'player-item__check--on': isSelected(item.user_id) },
-              ]"
-            >
-              <span v-if="isSelected(item.user_id)">✓</span>
-            </span>
+              :class="['radio-circle', { 'radio-circle--checked': isSelected(item.user_id) }]"
+            ></span>
           </button>
         </template>
       </div>
@@ -178,6 +173,8 @@ onMounted(() => {
     <NumericKeypad
       :open="keypadOpen"
       :show-input-area="true"
+      :show-mask="false"
+      show-background
       title="赠送金额"
       confirm-text="确定"
       :min="1"
@@ -352,6 +349,28 @@ onMounted(() => {
 
   @include theme-light {
     color: #fff;
+  }
+}
+.radio-circle {
+  width: 0.35rem;
+  height: 0.35rem;
+  flex: none;
+
+  &--checked::after {
+    width: 0.22rem;
+    height: 0.22rem;
+    border-color: var(--c-brand);
+  }
+
+  @include theme-light {
+    border-color: rgba(0, 0, 0, 0.3);
+    box-shadow:
+      inset 0.5px 0.5px 0 rgba(0, 0, 0, 0.3),
+      inset -0.5px -0.5px 0 rgba(0, 0, 0, 0.3);
+    &--checked {
+      box-shadow: none;
+      border-color: var(--c-brand);
+    }
   }
 }
 

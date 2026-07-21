@@ -96,12 +96,19 @@ function handleOpenCustomerService() {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .mtt-list-page {
   position: relative;
   min-height: 100dvh;
   color: #fff;
   overflow: hidden;
   background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
+
+  @include theme-light {
+    color: var(--c-text);
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .bg-overlay {
@@ -112,11 +119,36 @@ function handleOpenCustomerService() {
     radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
     radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
     radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
+
+  @include theme-light {
+    background:
+      radial-gradient(circle at 8% 4%, rgba(var(--c-brand-rgb), 0.2), transparent 30%),
+      radial-gradient(circle at 92% 9%, rgba(var(--c-brand-rgb), 0.14), transparent 26%);
+  }
 }
 
 .action-wrap {
   display: flex;
   align-items: center;
   gap: 0.26rem;
+}
+
+.mtt-list-page :deep(.filter-tabbar) {
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.22);
+  }
+}
+
+.mtt-list-page :deep(.filter-tab__text) {
+  @include theme-light {
+    color: var(--c-text);
+  }
+}
+
+.mtt-list-page :deep(.filter-tab__item--active) {
+  @include theme-light {
+    border-color: #fff;
+    background: #fff;
+  }
 }
 </style>

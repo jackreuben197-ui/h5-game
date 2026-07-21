@@ -58,8 +58,8 @@ interface FilterTab {
 
 const filterTabs: FilterTab[] = [
   { label: t('UIData_Today'), key: 'today' },
-  { label: "7" + t('UIHappyShop_ActivityShopDay'), key: 'week' },
-  { label: "14" + t('UIHappyShop_ActivityShopDay'), key: 'halfmonth' },
+  { label: '7' + t('UIHappyShop_ActivityShopDay'), key: 'week' },
+  { label: '14' + t('UIHappyShop_ActivityShopDay'), key: 'halfmonth' },
   { label: 'Customize', key: 'customize' },
 ]
 const activeFilter = ref<FilterTab['key']>(filterTabs[0].key)
@@ -79,7 +79,7 @@ const customizeApplied = ref(false)
 const isDatePickerVisible = ref(false)
 
 const metrics = ref<SummaryMetric[]>([
-  { label: t('UIMine_RecordItemsNormal_3RCUa3w8') + "/" + t('UIData_YGvXd5iXr_003'), value: '0/0' },
+  { label: t('UIMine_RecordItemsNormal_3RCUa3w8') + '/' + t('UIData_YGvXd5iXr_003'), value: '0/0' },
   { label: t('UIClub_GainNum'), value: '0' },
   { label: t('UIMine_WalletPlatform_fee_f'), value: '0' },
 ])
@@ -131,9 +131,9 @@ function mapGameBadge(gameType: unknown, pokerType: unknown): string {
   if (type === 5) return 'Cowboy'
   if (type === 6) {
     if (poker === 1) {
-      return t('adaptation10181') + "\\n" + t('UIClub_Text54')
+      return t('adaptation10181') + '\\n' + t('UIClub_Text54')
     } else if (poker === 2) {
-      return t('UIClub_Text55') + "\\n" + t('UIClub_Text56')
+      return t('UIClub_Text55') + '\\n' + t('UIClub_Text56')
     } else if (poker === 3) {
       return t('Mahjong_Standard')
     }
@@ -161,8 +161,11 @@ function mapRecordItem(row: Record<string, unknown>, index: number): RecordItem 
     id: String(row.room_id ?? row.match_id ?? index + 1),
     game: mapGameBadge(row.game_type, row.poker_type),
     title: String(row.name ?? row.room_name ?? row.game_room_name ?? t('UIClub_RoundData')),
-    subtitle: matchPlayers > 0 ? t('UIMine_RecordDetailForMatchPariticipants') + ": " + (matchPlayers) : `${blind.label} : ${blind.value}`,
-    extra: buyIn > 0 ? t('MTT_xq_buy') + " : " + (buyIn) : undefined,
+    subtitle:
+      matchPlayers > 0
+        ? t('UIMine_RecordDetailForMatchPariticipants') + ': ' + matchPlayers
+        : `${blind.label} : ${blind.value}`,
+    extra: buyIn > 0 ? t('MTT_xq_buy') + ' : ' + buyIn : undefined,
     time: startTime,
     feeText: t('UIMine_WalletPlatform_fee_f'),
     feeValue,
@@ -213,9 +216,15 @@ async function fetchFriendsRecord(silent = false): Promise<void> {
     const handNum = toSafeNumber(info.hand_num)
     const gameNum = toSafeNumber(info.game_num)
     const nextMetrics: SummaryMetric[] = [
-      { label: t('UIMine_RecordItemsNormal_3RCUa3w8') + "/" + t('UIData_YGvXd5iXr_003'), value: `${handNum}/${gameNum}` },
+      {
+        label: t('UIMine_RecordItemsNormal_3RCUa3w8') + '/' + t('UIData_YGvXd5iXr_003'),
+        value: `${handNum}/${gameNum}`,
+      },
       { label: t('UIClub_GainNum'), value: formatSigned(info.profit) },
-      { label: t('UIClub_Text57'), value: Math.abs(toSafeNumber(info.fee)).toLocaleString('en-US') },
+      {
+        label: t('UIClub_Text57'),
+        value: Math.abs(toSafeNumber(info.fee)).toLocaleString('en-US'),
+      },
     ]
 
     metrics.value = nextMetrics
@@ -611,9 +620,11 @@ onBeforeUnmount(() => {
   z-index: 2;
 
   @include theme-light {
-    border-color: rgba(0, 0, 0, 0.1);
-    background: var(--c-surface);
-    backdrop-filter: none;
+    color: #fff;
+    border-color: rgba(242, 242, 242, 0.4);
+    background: rgba(89, 42, 111, 0.62);
+    box-shadow: 0.09rem 0.11rem 0.18rem rgba(0, 0, 0, 0.14);
+    backdrop-filter: blur(0.28112rem);
   }
 }
 
@@ -636,9 +647,19 @@ onBeforeUnmount(() => {
   cursor: pointer;
 
   @include theme-light {
-    border-color: transparent;
-    background: var(--c-surface);
-    backdrop-filter: none;
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.92);
+    background:
+      radial-gradient(
+        70% 145% at 22% 12%,
+        rgba(255, 255, 255, 0.18) 0%,
+        rgba(255, 255, 255, 0) 72%
+      ),
+      linear-gradient(95deg, rgba(157, 18, 124, 0.62) 0%, rgba(183, 53, 158, 0.7) 100%);
+    box-shadow:
+      inset 0 0.08rem 0.24rem rgba(255, 255, 255, 0.18),
+      0 0.08rem 0.18rem rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(0.67653rem);
   }
 }
 
@@ -688,7 +709,7 @@ onBeforeUnmount(() => {
     color: #fff;
 
     @include theme-light {
-      color: #000;
+      color: #fff;
     }
   }
 }
@@ -709,7 +730,7 @@ onBeforeUnmount(() => {
   gap: 0.07053rem;
 
   @include theme-light {
-    background: rgba(0, 0, 0, 0.07);
+    background: rgba(0, 0, 0, 0.27);
   }
 }
 
@@ -738,7 +759,7 @@ onBeforeUnmount(() => {
   color: #f9f9f9;
 
   @include theme-light {
-    color: #888;
+    color: #fff;
   }
 }
 </style>

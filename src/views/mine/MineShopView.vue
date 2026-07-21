@@ -8,9 +8,11 @@ import { Code, subscribeH5WsCode } from '@/bridge/ws/messageCenter'
 import { decodeUserTraderOrderNotify } from '@/bridge/ws/traderOrderNotify'
 import { decodeUserUsdtOrderNotify } from '@/bridge/ws/usdtOrderNotify'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import imgCoin from '@/assets/icons/icon_credit_chip.png'
 import diamondCoin from '@/assets/icons/icon_diamond.png'
 import imgDiamonds from '@/assets/images/shop_diamonds.png'
+import iconClose from '@/assets/icons/wallet/ic_close.svg'
 import iconUsdt from '@/assets/icons/wallet/ic_usdt.svg'
 import iconBtc from '@/assets/icons/wallet/ic_btc.svg'
 import iconEth from '@/assets/icons/wallet/ic_eth.svg'
@@ -27,7 +29,8 @@ const title = computed(() => t('UIHappyShop_ActivityShop'))
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--shop-bg-dark': `url(${mainBgUrl})`,
+  '--shop-bg-light': `url(${mainBgLightUrl})`,
 }))
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
@@ -188,6 +191,12 @@ const exchangeText = computed(() => {
     )
   }
   return t('Wallet_Rate') + '：1usdt=333' + t('UIMine_VIP_diamond')
+})
+
+const paymentReferenceText = computed(() => {
+  const rate = selectedPayType.value?.rate ?? 0
+  const diamondCount = rate > 0 ? Math.max(1, Math.round(1 / rate)) : 333
+  return `${t('UIMineMallUSDTShopPayDialogReferencePriceTip')}1 USDT=${diamondCount}${t('UIMine_VIP_diamond')}`
 })
 
 const selectedPrice = computed(() => {
@@ -845,9 +854,15 @@ onBeforeUnmount(() => {
       @click-overlay="closePaymentPopup"
     >
       <section class="pay-card">
-        <button type="button" class="pay-close" @click="closePaymentPopup">×</button>
+        <header class="pay-card__header">
+          <h2>{{ t('UIMineMallUSDTShopPayDialogSurePay') }}</h2>
+          <p>{{ paymentReferenceText }}</p>
+        </header>
+        <button type="button" class="pay-close" @click="closePaymentPopup">
+          <img :src="iconClose" alt="close" />
+        </button>
 
-        <div class="amount-box">{{ formatMoney(paymentPrice) }}</div>
+        <div class="amount-box">{{ formatMoney(paymentPrice) }} USDT</div>
         <p class="amount-label">{{ t('UIMineMallUSDTShopPayDialogPayGoldTip') }}</p>
 
         <div class="pay-methods">
@@ -868,9 +883,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <p class="tips">
-          {{ t('UIGuild_TipsTitle') }}：{{ t('UIClub_CopyCoin') }}，{{ t('UIClub_OrCode') }}
-        </p>
+        <p class="tips">{{ t('UIMineMallUSDTShopPayDialogTip') }}</p>
         <p class="sub-tips">
           {{ t('UIClub_Text74') }}：{{ paymentGoldCount }}，{{ t('UIClub_Text75') }}：{{
             formatBalance(userDiamond)
@@ -937,15 +950,24 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .mine-shop-page {
   position: relative;
   height: 100dvh;
   padding: 0 0 calc(env(safe-area-inset-bottom) + 0.55rem);
   color: #f9f9f9;
+  background-color: var(--c-page);
+  background-image: var(--shop-bg-dark);
   background-size: cover;
   background-position: center;
-  background-repeat: repeat;
+  background-repeat: no-repeat;
   overflow-y: auto;
+
+  @include theme-light {
+    color: #222;
+    background-image: var(--shop-bg-light);
+  }
 }
 
 .bg-mask {
@@ -978,6 +1000,7 @@ onBeforeUnmount(() => {
   height: 4.1333rem;
   border-radius: 1.0418rem;
   padding: 0.5rem 0.56rem 0.44rem;
+  color: #fff;
   background:
     radial-gradient(
       94.22% 94.22% at 86.5% 19.3%,
@@ -987,6 +1010,22 @@ onBeforeUnmount(() => {
     rgba(0, 0, 0, 0.35);
   border: 0.027rem solid rgba(242, 242, 242, 0.65);
   box-shadow: 0 0.108rem 0.293rem rgba(0, 0, 0, 0.28);
+
+  @include theme-light {
+    border-color: rgba(255, 255, 255, 0.8);
+    background:
+      radial-gradient(
+        90% 145% at 16% 18%,
+        rgba(255, 255, 255, 0.48) 0%,
+        rgba(255, 255, 255, 0) 64%
+      ),
+      linear-gradient(123deg, rgba(74, 84, 92, 0.52) 0%, rgba(127, 136, 144, 0.38) 100%);
+    box-shadow:
+      inset 0 0.15rem 0.56rem rgba(255, 255, 255, 0.42),
+      inset 0 -0.18rem 0.52rem rgba(0, 0, 0, 0.2),
+      0 0.08rem 0.2rem rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(0.18rem);
+  }
 }
 
 .profile-main {
@@ -1080,6 +1119,10 @@ onBeforeUnmount(() => {
   text-align: center;
   font-size: 0.34rem;
   color: rgba(255, 255, 255, 0.86);
+
+  @include theme-light {
+    color: rgba(32, 32, 32, 0.66);
+  }
 }
 
 .shop-card {
@@ -1096,15 +1139,40 @@ onBeforeUnmount(() => {
   transition:
     transform 0.16s ease,
     box-shadow 0.16s ease;
+
+  @include theme-light {
+    color: #202020;
+    background: rgba(25, 25, 25, 0.14);
+    box-shadow:
+      inset 0 0.08rem 0.18rem rgba(255, 255, 255, 0.28),
+      0 0.05rem 0.12rem rgba(0, 0, 0, 0.08);
+  }
 }
 
 .shop-card.active {
   background: rgba(178, 0, 0, 0.29);
   box-shadow: 0 0.1067rem 0.2933rem rgba(0, 0, 0, 0.28);
+
+  @include theme-light {
+    background: rgba(var(--c-brand-rgb), 0.6);
+    box-shadow:
+      inset 0 0.08rem 0.18rem rgba(255, 255, 255, 0.32),
+      0 0.1067rem 0.2933rem rgba(0, 0, 0, 0.14);
+  }
 }
 
 .shop-card.auditing {
   background: linear-gradient(164deg, rgba(165, 188, 221, 0.25) 0%, rgba(67, 116, 171, 0.42) 100%);
+
+  @include theme-light {
+    background: rgba(25, 25, 25, 0.14);
+  }
+}
+
+.shop-card.auditing.active {
+  @include theme-light {
+    background: rgba(var(--c-brand-rgb), 0.6);
+  }
 }
 
 .shop-card:active {
@@ -1120,6 +1188,11 @@ onBeforeUnmount(() => {
   font-size: 0.2666rem;
   line-height: 0.4677rem;
   padding: 0 0.24rem;
+
+  @include theme-light {
+    color: #fff;
+    background: var(--c-brand);
+  }
 
   &::after {
     content: '';
@@ -1167,6 +1240,14 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   padding: 0 0.0866rem 0 0.1912rem;
 
+  @include theme-light {
+    border-color: rgba(255, 255, 255, 0.84);
+    background: var(--c-brand);
+    box-shadow:
+      inset 0 0.05rem 0.12rem rgba(255, 255, 255, 0.28),
+      0 0.04rem 0.09rem rgba(0, 0, 0, 0.12);
+  }
+
   span {
     font-family: 'HONOR Sans CN', 'PingFang SC', var(--font-family-sans);
     font-size: 0.3186rem;
@@ -1194,6 +1275,11 @@ onBeforeUnmount(() => {
   font-size: 0.3405rem;
   font-family: var(--font-family-SF);
   background: rgba(0, 0, 0, 0.22);
+
+  @include theme-light {
+    color: rgba(32, 32, 32, 0.68);
+    background: rgba(25, 25, 25, 0.12);
+  }
 }
 
 .pay-channel-list {
@@ -1212,6 +1298,10 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0.1rem 0;
+
+  @include theme-light {
+    color: #202020;
+  }
 }
 
 .pay-channel .left {
@@ -1272,6 +1362,11 @@ onBeforeUnmount(() => {
   line-height: 1;
   font-family: 'HONOR Sans CN', 'PingFang SC', var(--font-family-sans);
   background: linear-gradient(157deg, #05e7ae 7.55%, #027a5c 71.92%);
+
+  @include theme-light {
+    color: #fff;
+    background: var(--c-brand);
+  }
 }
 
 .radio {
@@ -1280,11 +1375,19 @@ onBeforeUnmount(() => {
   border-radius: 50%;
   border: 0.0267rem solid rgba(249, 249, 249, 0.45);
   transition: all 0.16s ease;
+
+  @include theme-light {
+    border-color: rgba(32, 32, 32, 0.42);
+  }
 }
 
 .pay-channel.active .radio {
   border-color: rgba(249, 249, 249, 0.8);
   background: radial-gradient(circle, rgba(var(--c-brand-rgb), 1) 46%, rgba(var(--c-brand-rgb), 0) 47%);
+
+  @include theme-light {
+    border-color: var(--c-brand);
+  }
 }
 
 .pay-now {
@@ -1303,6 +1406,14 @@ onBeforeUnmount(() => {
   font-size: 0.4rem;
   font-weight: 500;
   z-index: 8;
+
+  @include theme-light {
+    border-color: rgba(255, 255, 255, 0.84);
+    background: var(--c-brand);
+    box-shadow:
+      inset 0 0.08rem 0.22rem rgba(255, 255, 255, 0.28),
+      0 0.08rem 0.18rem rgba(0, 0, 0, 0.12);
+  }
 }
 
 .pay-now.pending {
@@ -1346,6 +1457,33 @@ onBeforeUnmount(() => {
     0.0919rem 0.1149rem 0.0919rem rgba(0, 0, 0, 0.25);
 }
 
+.pay-card__header {
+  min-height: 0.72rem;
+  padding: 0.05rem 0.82rem 0 0.12rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.14rem;
+
+  h2,
+  p {
+    margin: 0;
+  }
+
+  h2 {
+    flex: none;
+    font-family: 'HONOR Sans CN', 'PingFang SC', var(--font-family-sans);
+    font-size: 0.4267rem;
+    line-height: 1.2;
+    font-weight: 600;
+  }
+
+  p {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.2267rem;
+    line-height: 1.3;
+  }
+}
+
 .pay-close {
   position: absolute;
   right: 0.24rem;
@@ -1356,12 +1494,18 @@ onBeforeUnmount(() => {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
-  font-size: 0.56rem;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 0.38rem;
+    height: 0.38rem;
+  }
 }
 
 .amount-box {
-  margin-top: 0.2667rem;
+  margin-top: 0.12rem;
   height: 1.2155rem;
   display: flex;
   align-items: center;
@@ -1468,6 +1612,10 @@ onBeforeUnmount(() => {
   color: #fff;
   font-size: 0.2909rem;
   background: linear-gradient(161deg, #55f329 7.55%, #3ead06 71.92%);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .tips,
@@ -1496,6 +1644,11 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
+  @include theme-light {
+    border-color: rgba(255, 255, 255, 0.84);
+    background: var(--c-brand);
+  }
 
   &:disabled {
     opacity: 0.74;

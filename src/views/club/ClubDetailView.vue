@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import html2canvas from 'html2canvas'
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   postOrgClubSearchByIdApi,
@@ -216,6 +216,12 @@ function closeTribeSearchPopup(): void {
   showTribeSearchPopup.value = false
   tribeIdKeypadOpen.value = false
 }
+
+watch(showTribeSearchPopup, (visible) => {
+  if (!visible) {
+    tribeIdKeypadOpen.value = false
+  }
+})
 
 function closeTribeApplyPopup(): void {
   showTribeApplyPopup.value = false
@@ -1150,92 +1156,69 @@ onMounted(async () => {
       </section>
     </div>
 
-    <div v-if="showTribeSearchPopup" class="club-modal-mask" @click="closeTribeSearchPopup">
-      <section class="tribe-search-modal" @click.stop>
-        <div class="tribe-apply-card">
-          <h3 class="tribe-apply-title">搜索联盟</h3>
+    <GameDialog
+      v-model:show="showTribeSearchPopup"
+      title="搜索联盟"
+      dialog-width="8.8rem"
+      :show-cancel-button="true"
+      :close-on-click-overlay="true"
+      cancel-button-text="取消"
+      :confirm-button-text="tribeApplySubmitting ? '搜索中' : '确认'"
+      :confirm-button-disabled="tribeApplySubmitting"
+      @confirm="submitTribeApply"
+      @cancel="closeTribeSearchPopup"
+    >
+      <div class="tribe-search-shell" aria-label="联盟搜索">
+        <label class="tribe-search-trigger" for="tribe-id-input">
+          <img class="tribe-search-icon" :src="imgSearch" alt="" />
+          <input
+            id="tribe-id-input"
+            class="tribe-search-input"
+            :value="tribeApplyIdInput"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            readonly
+            placeholder="请输入联盟ID"
+            @focus="openTribeIdKeypad"
+            @click="openTribeIdKeypad"
+          />
+        </label>
+      </div>
+    </GameDialog>
 
-          <div class="tribe-search-shell" aria-label="联盟搜索">
-            <label class="tribe-search-trigger" for="tribe-id-input">
-              <img class="tribe-search-icon" :src="imgSearch" alt="" />
-              <input
-                id="tribe-id-input"
-                class="tribe-search-input"
-                :value="tribeApplyIdInput"
-                type="text"
-                inputmode="numeric"
-                autocomplete="off"
-                readonly
-                placeholder="请输入联盟ID"
-                @focus="openTribeIdKeypad"
-                @click="openTribeIdKeypad"
-              />
-            </label>
-          </div>
+    <GameDialog
+      v-model:show="showTribeApplyPopup"
+      dialog-width="8.454rem"
+      :show-cancel-button="true"
+      :close-on-click-overlay="true"
+      cancel-button-text="取消"
+      :confirm-button-text="tribeApplySubmitting ? '提交中' : '加入'"
+      :confirm-button-disabled="tribeApplySubmitting"
+      @confirm="confirmTribeApply"
+      @cancel="closeTribeApplyPopup"
+    >
+      <div class="join-modal-card">
+        <img class="join-modal-logo" :src="searchedTribe?.logo || imgClubCover" alt="联盟头像" />
+        <h3 class="join-modal-name">{{ searchedTribe?.name || '联盟名称' }}</h3>
+        <p class="join-modal-id-row">
+          <span class="join-modal-id-tag">ID</span>
+          <span>{{ searchedTribe?.randomId || '--' }}</span>
+        </p>
+
+        <div class="tribe-contact-shell tribe-contact-shell--modal">
+          <input
+            class="tribe-contact-input"
+            :value="tribeApplyContactInput"
+            type="text"
+            autocomplete="off"
+            maxlength="40"
+            placeholder="请输入联系方式"
+            @input="onTribeContactInput"
+          />
         </div>
-
-        <div class="join-modal-actions">
-          <button
-            type="button"
-            class="join-modal-btn join-modal-btn--cancel"
-            @click="closeTribeSearchPopup"
-          >
-            取消
-          </button>
-          <button
-            type="button"
-            class="join-modal-btn join-modal-btn--confirm"
-            :disabled="tribeApplySubmitting"
-            @click="submitTribeApply"
-          >
-            {{ tribeApplySubmitting ? '搜索中' : '确认' }}
-          </button>
-        </div>
-      </section>
-    </div>
-
-    <div v-if="showTribeApplyPopup" class="club-modal-mask" @click="closeTribeApplyPopup">
-      <section class="join-modal" @click.stop>
-        <div class="join-modal-card">
-          <img class="join-modal-logo" :src="searchedTribe?.logo || imgClubCover" alt="联盟头像" />
-          <h3 class="join-modal-name">{{ searchedTribe?.name || '联盟名称' }}</h3>
-          <p class="join-modal-id-row">
-            <span class="join-modal-id-tag">ID</span>
-            <span>{{ searchedTribe?.randomId || '--' }}</span>
-          </p>
-
-          <div class="tribe-contact-shell tribe-contact-shell--modal">
-            <input
-              class="tribe-contact-input"
-              :value="tribeApplyContactInput"
-              type="text"
-              autocomplete="off"
-              maxlength="40"
-              placeholder="请输入联系方式"
-              @input="onTribeContactInput"
-            />
-          </div>
-        </div>
-
-        <div class="join-modal-actions">
-          <button
-            type="button"
-            class="join-modal-btn join-modal-btn--cancel"
-            @click="closeTribeApplyPopup"
-          >
-            取消
-          </button>
-          <button
-            type="button"
-            class="join-modal-btn join-modal-btn--confirm"
-            :disabled="tribeApplySubmitting"
-            @click="confirmTribeApply"
-          >
-            {{ tribeApplySubmitting ? '提交中' : '加入' }}
-          </button>
-        </div>
-      </section>
-    </div>
+      </div>
+    </GameDialog>
 
     <div
       v-if="showCancelTribeApplyPopup"
@@ -1881,36 +1864,6 @@ onMounted(async () => {
   color: #f9f9f9;
 }
 
-.tribe-search-modal {
-  width: min(8.8rem, 100%);
-  border-radius: 0.97035rem;
-  border: 0.0255rem solid rgba(242, 242, 242, 0.4);
-  background: linear-gradient(121deg, rgba(0, 0, 0, 0.2) 3%, rgba(0, 0, 0, 0.38) 89%);
-  backdrop-filter: blur(1.20216rem);
-  box-shadow:
-    0 0 0.22981rem rgba(0, 0, 0, 0.85) inset,
-    0.05672rem 0.11344rem 0.45908rem rgba(242, 242, 242, 0.5) inset,
-    0.09192rem 0.11491rem 0.18384rem rgba(0, 0, 0, 0.28);
-  color: #f9f9f9;
-  padding: 0.42rem;
-}
-
-.join-modal {
-  width: min(8.454rem, 100%);
-  max-width: 100%;
-  padding: 0.42rem;
-  border-radius: 0.97rem;
-  border: 0.025rem solid rgba(255, 255, 255, 0.38);
-  background:
-    linear-gradient(126deg, rgba(142, 142, 142, 0.6) 0%, rgba(72, 72, 72, 0.92) 100%),
-    rgba(30, 30, 30, 0.65);
-  box-shadow:
-    0.09rem 0.11rem 0.18rem rgba(0, 0, 0, 0.25),
-    inset 0.05rem 0.1rem 0.4rem rgba(242, 242, 242, 0.25),
-    inset 0 0 0.23rem rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(0.4rem);
-}
-
 .join-modal-card {
   min-height: 5.02rem;
   border-radius: 0.834rem;
@@ -1922,11 +1875,6 @@ onMounted(async () => {
   justify-content: center;
   gap: 0.28rem;
   padding: 0.5rem 0.42rem;
-
-  @include theme-light {
-    border-color: rgba(34, 34, 34, 0.1);
-    background: rgba(34, 34, 34, 0.06);
-  }
 }
 
 .join-modal-logo {
@@ -1944,10 +1892,6 @@ onMounted(async () => {
   line-height: 1.2;
   color: #fff;
   text-align: center;
-
-  @include theme-light {
-    color: var(--c-text);
-  }
 }
 
 .join-modal-id-row {
@@ -1959,10 +1903,6 @@ onMounted(async () => {
   font-size: 0.256rem;
   font-weight: 600;
   color: #fff;
-
-  @include theme-light {
-    color: var(--c-text);
-  }
 }
 
 .join-modal-id-tag {
@@ -1974,78 +1914,6 @@ onMounted(async () => {
   border-radius: 0.075rem;
   background: rgba(255, 255, 255, 0.25);
   font-size: 0.216rem;
-
-  @include theme-light {
-    background: rgba(34, 34, 34, 0.14);
-  }
-}
-
-.join-modal-actions {
-  margin-top: 0.48rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.25rem;
-}
-
-.join-modal-btn {
-  flex: 1;
-  min-height: 1.436rem;
-  border-radius: 1.055rem;
-  border: 0;
-  color: #fff;
-  font-family: 'Afacad', 'PingFang SC', sans-serif;
-  font-size: 0.4rem;
-  font-weight: 500;
-}
-
-.join-modal-btn--cancel {
-  background: rgba(0, 0, 0, 0.3);
-
-  @include theme-light {
-    color: var(--c-text);
-    background: rgba(34, 34, 34, 0.08);
-    box-shadow: none;
-  }
-}
-
-.join-modal-btn--confirm {
-  background: linear-gradient(180deg, #05e7ae 0%, #027a5b 100%);
-  border: 0.013rem solid rgba(255, 255, 255, 0.5);
-
-  @include theme-light {
-    color: #fff;
-    border-color: rgba(255, 255, 255, 0.7);
-    background: var(--c-brand);
-    box-shadow: none;
-  }
-}
-
-.join-modal-btn:disabled {
-  opacity: 0.72;
-}
-
-.tribe-apply-card {
-  border-radius: 0.834rem;
-  border: 0.026rem solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.1);
-  display: flex;
-  flex-direction: column;
-  gap: 0.24rem;
-  padding: 0.42rem;
-
-  @include theme-light {
-    border-color: rgba(34, 34, 34, 0.1);
-    background: rgba(34, 34, 34, 0.06);
-  }
-}
-
-.tribe-apply-title {
-  margin: 0;
-  text-align: center;
-  font-size: 0.52rem;
-  line-height: 1.2;
-  font-weight: 600;
 }
 
 .tribe-search-shell {
@@ -2055,17 +1923,8 @@ onMounted(async () => {
   min-height: 1.2rem;
   border-radius: 1rem;
   padding: 0.12rem 0.28rem;
-  background: linear-gradient(
-    98deg,
-    rgba(133, 73, 115, 0.96) 0%,
-    rgba(177, 69, 87, 0.96) 44%,
-    rgba(178, 76, 51, 0.96) 72%,
-    rgba(141, 59, 84, 0.96) 100%
-  );
-
-  @include theme-light {
-    background: rgba(34, 34, 34, 0.06);
-  }
+  border: 0.013rem solid rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .tribe-search-trigger {
@@ -2078,11 +1937,6 @@ onMounted(async () => {
 .tribe-search-icon {
   width: 0.56rem;
   height: 0.55rem;
-
-  @include theme-light {
-    opacity: 0.42;
-    filter: brightness(0);
-  }
 }
 
 .tribe-search-input {
@@ -2093,18 +1947,10 @@ onMounted(async () => {
   background: transparent;
   color: #fff;
   font-size: 0.38rem;
-
-  @include theme-light {
-    color: var(--c-text);
-  }
 }
 
 .tribe-search-input::placeholder {
   color: rgba(255, 255, 255, 0.88);
-
-  @include theme-light {
-    color: var(--c-text-muted);
-  }
 }
 
 .tribe-contact-shell {
@@ -2115,11 +1961,6 @@ onMounted(async () => {
   padding: 0 0.32rem;
   display: flex;
   align-items: center;
-
-  @include theme-light {
-    border-color: rgba(34, 34, 34, 0.1);
-    background: rgba(34, 34, 34, 0.06);
-  }
 }
 
 .tribe-contact-shell--modal {
@@ -2134,18 +1975,10 @@ onMounted(async () => {
   background: transparent;
   color: #fff;
   font-size: 0.34rem;
-
-  @include theme-light {
-    color: var(--c-text);
-  }
 }
 
 .tribe-contact-input::placeholder {
   color: rgba(255, 255, 255, 0.72);
-
-  @include theme-light {
-    color: var(--c-text-muted);
-  }
 }
 
 .invite-modal {

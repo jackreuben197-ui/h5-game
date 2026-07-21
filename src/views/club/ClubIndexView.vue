@@ -55,6 +55,7 @@ import gameTypePlo from '@/assets/icons/game_type_plo.png'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
 import peopleBgUrl from '@/assets/icons/icon_people.png'
 import SafetyGuardDialog from '@/components/Dialog/SafetyGuardDialog.vue'
+import { GameDialog } from '@/components/Dialog'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import {
   multiLanguageTemplateVersion,
@@ -1366,15 +1367,13 @@ const handleBack = () => {
         </button>
       </div>
 
-      <van-popup
+      <GameDialog
         v-model:show="showClubNoticePopup"
-        class="club-notice-popup"
-        round
+        dialog-width="8.45rem"
+        :show-footer="false"
         :close-on-click-overlay="true"
-        :lock-scroll="true"
-        :overlay-style="{ background: 'rgba(8, 8, 8, 0.6)' }"
       >
-        <div class="club-notice-card">
+        <div class="club-notice-body">
           <div class="club-notice-club-pill">{{ clubDisplayName }}</div>
           <p class="club-notice-title">{{ activeClubNotice?.title }}</p>
           <p class="club-notice-date">{{ activeClubNotice?.dateText }}</p>
@@ -1388,7 +1387,7 @@ const handleBack = () => {
             今天不再显示提示
           </button>
         </div>
-      </van-popup>
+      </GameDialog>
 
       <SafetyGuardDialog v-model:show="showSafetyGuardPopup" :tribe-id="selectedTribeId" />
     </div>
@@ -1634,32 +1633,11 @@ const handleBack = () => {
   transform: rotate(-90deg);
 }
 
-.club-notice-popup {
-  width: min(6.86rem, calc(100vw - 1.2rem));
-  border-radius: 0.97rem;
-  background: transparent;
-}
-
-.club-notice-card {
-  position: relative;
-  border: 0.026rem solid rgba(242, 242, 242, 0.4);
-  border-radius: 0.97rem;
-  padding: 0.42rem 0.41rem;
+.club-notice-body {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.16rem;
-  background: linear-gradient(
-    102.74deg,
-    rgba(142, 142, 142, 0.3) 2.93%,
-    rgba(103, 103, 103, 0.4) 43.62%,
-    rgba(73, 73, 73, 0.5) 89.79%
-  );
-  backdrop-filter: blur(0.2rem);
-  box-shadow:
-    0.092rem 0.115rem 0.184rem rgba(0, 0, 0, 0.25),
-    inset 0 0 0.23rem rgba(0, 0, 0, 1),
-    inset 0.057rem 0.113rem 0.46rem rgba(242, 242, 242, 0.9);
 }
 
 .club-notice-club-pill {

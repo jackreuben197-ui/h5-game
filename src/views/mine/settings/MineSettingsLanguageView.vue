@@ -142,6 +142,7 @@ function selectLanguage(key: LocaleCode): void {
   &--checked::after {
     width: 0.22rem;
     height: 0.22rem;
+    border-color: var(--c-brand);
   }
 
   @include theme-light {
@@ -149,6 +150,10 @@ function selectLanguage(key: LocaleCode): void {
     box-shadow:
       inset 0.5px 0.5px 0 rgba(0, 0, 0, 0.3),
       inset -0.5px -0.5px 0 rgba(0, 0, 0, 0.3);
+    &--checked {
+      box-shadow: none;
+      border-color: var(--c-brand);
+    }
   }
 }
 </style>

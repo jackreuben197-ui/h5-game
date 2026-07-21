@@ -149,10 +149,6 @@ function formatBuyIn(_val: unknown, row: Record<string, unknown>): string {
   return formatChip(row.bring_in)
 }
 
-function handleFavorite(): void {
-  // 预留收藏逻辑，当前保持原 UI 行为不变。
-}
-
 async function fetchSettle(): Promise<void> {
   loading.value = true
   try {
@@ -190,7 +186,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="main-bg">
+  <div class="main-bg table-game-end">
     <HeaderBack title="牌局统计" :extra-padding="true" @back="handleBack">
       <template #right>
         <TopActionButton :name="t('OpCodeString_ROOMINSURFEE')" large />
@@ -199,7 +195,7 @@ onMounted(() => {
 
     <main class="settle-page settle-content">
       <div v-if="loading" class="settle-loading">
-        <van-loading size="0.5rem" color="rgba(255,255,255,0.6)" />
+        <van-loading size="0.5rem" color="var(--c-text-muted)" />
         <span>加载结算数据...</span>
       </div>
 
@@ -208,7 +204,10 @@ onMounted(() => {
           <div class="summary-top">
             <div class="summary-side">
               <p class="room-name">{{ roomInfo.room_name }}</p>
-              <p class="room-id">ID:{{ roomInfo.room_id }}</p>
+              <p class="room-id">
+                <span>{{ roomInfo.room_id }}</span>
+                <span class="room-id__tag">ID</span>
+              </p>
             </div>
             <div class="summary-side summary-side--right">
               <p class="room-meta">{{ roomInfo.end_time }}</p>
@@ -234,78 +233,103 @@ onMounted(() => {
           </div>
         </section>
 
-        <GameTable :data="tableData" height="auto" :show-header="true">
-          <template v-if="insuranceOn" #summary>
-            <div class="insurance-summary">
-              <img :src="iconInsurance" alt="insurance" class="icon-insurance" />
-              <span :class="insuranceClass">{{ insuranceText }}</span>
-            </div>
-          </template>
-
-          <GameTableColumn prop="nick_name" label="玩家" :flex="3" align="left">
-            <template #default="{ row }">
-              <img :src="row.avatar" class="user-avatar" alt="" />
-              <span>{{ row.nick_name }}</span>
-            </template>
-          </GameTableColumn>
-
-          <GameTableColumn
-            prop="bring_in"
-            label="买入"
-            :flex="1.8"
-            align="center"
-            :formatter="formatBuyIn"
-          />
-
-          <GameTableColumn prop="user_hand_num" label="手数" :flex="1" align="center" />
-
-          <GameTableColumn
-            v-if="isMushTable"
-            prop="mushroom_count"
-            label="蘑菇"
-            :flex="1.35"
-            align="center"
-          >
-            <template #default="{ row }">
-              <div class="extra-cell">
-                <span class="table-text">{{ Number(row.mushroom_count ?? 0) }}</span>
-                <span class="extra-sub">({{ formatChip(row.mushroom_amount) }})</span>
+        <section class="players-card">
+          <GameTable :data="tableData" height="auto" :show-header="true">
+            <template v-if="insuranceOn" #summary>
+              <div class="insurance-summary">
+                <img :src="iconInsurance" alt="insurance" class="icon-insurance" />
+                <span :class="insuranceClass">{{ insuranceText }}</span>
               </div>
             </template>
-          </GameTableColumn>
 
-          <GameTableColumn
-            v-if="isSquidTable"
-            prop="_squidNet"
-            label="鱿鱼"
-            :flex="1.2"
-            align="center"
-          >
-            <template #default="{ row }">
-              <span class="table-text" :class="amountClass(row._squidNet)">
-                {{ formatSignedChip(row._squidNet) }}
-              </span>
-            </template>
-          </GameTableColumn>
+            <GameTableColumn prop="nick_name" label="玩家" :flex="3" align="left">
+              <template #default="{ row }">
+                <img :src="row.avatar" class="user-avatar" alt="" />
+                <span>{{ row.nick_name }}</span>
+              </template>
+            </GameTableColumn>
 
-          <GameTableColumn prop="_score" label="积分" :flex="1.3" align="right">
-            <template #default="{ row }">
-              <span class="table-text" :class="amountClass(row._score)">
-                {{ formatSignedChip(row._score) }}
-              </span>
-            </template>
-          </GameTableColumn>
-        </GameTable>
+            <GameTableColumn
+              prop="bring_in"
+              label="买入"
+              :flex="1.8"
+              align="center"
+              :formatter="formatBuyIn"
+            />
+
+            <GameTableColumn prop="user_hand_num" label="手数" :flex="1" align="center" />
+
+            <GameTableColumn
+              v-if="isMushTable"
+              prop="mushroom_count"
+              label="蘑菇"
+              :flex="1.35"
+              align="center"
+            >
+              <template #default="{ row }">
+                <div class="extra-cell">
+                  <span class="table-text">{{ Number(row.mushroom_count ?? 0) }}</span>
+                  <span class="extra-sub">({{ formatChip(row.mushroom_amount) }})</span>
+                </div>
+              </template>
+            </GameTableColumn>
+
+            <GameTableColumn
+              v-if="isSquidTable"
+              prop="_squidNet"
+              label="鱿鱼"
+              :flex="1.2"
+              align="center"
+            >
+              <template #default="{ row }">
+                <span class="table-text" :class="amountClass(row._squidNet)">
+                  {{ formatSignedChip(row._squidNet) }}
+                </span>
+              </template>
+            </GameTableColumn>
+
+            <GameTableColumn prop="_score" label="积分" :flex="1.3" align="right">
+              <template #default="{ row }">
+                <span class="table-text" :class="amountClass(row._score)">
+                  {{ formatSignedChip(row._score) }}
+                </span>
+              </template>
+            </GameTableColumn>
+          </GameTable>
+        </section>
       </template>
     </main>
   </div>
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
+.table-game-end {
+  min-height: 100dvh;
+  background-color: var(--c-page);
+
+  @include theme-light {
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
+
+  :deep(.action-btn) {
+    @include theme-light {
+      color: #fff;
+      background: var(--c-brand);
+      box-shadow: none;
+    }
+  }
+}
+
 .settle-page {
   min-height: calc(100dvh - 1.2rem);
   padding-bottom: env(safe-area-inset-bottom);
   color: #f9f9f9;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .settle-content {
@@ -313,6 +337,10 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.28rem;
+
+  @include theme-light {
+    gap: 0.44rem;
+  }
 }
 
 .settle-loading {
@@ -324,12 +352,21 @@ onMounted(() => {
   padding: 3rem 0;
   font-size: 0.34rem;
   color: rgba(255, 255, 255, 0.55);
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .summary-card {
   background: rgba(0, 0, 0, 0.22);
   border-radius: 0.76rem;
   padding: 0.44rem 0.44rem;
+
+  @include theme-light {
+    background: #fff;
+    box-shadow: 0 0.04rem 0.14rem rgba(0, 0, 0, 0.03);
+  }
 }
 
 .summary-top {
@@ -359,16 +396,42 @@ onMounted(() => {
   font-size: 0.31rem;
   line-height: 1.35;
   color: rgba(255, 255, 255, 0.7);
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.7);
+  }
 }
 .room-id {
   font-size: 0.26rem;
   line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 0.08rem;
+}
+
+.room-id__tag {
+  min-width: 0.42rem;
+  padding: 0.015rem 0.08rem;
+  border-radius: 0.1067rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.4);
+  font-size: 0.19rem;
+  line-height: 1.25;
+  text-align: center;
+
+  @include theme-light {
+    background: rgba(79, 79, 79, 0.4);
+  }
 }
 
 .summary-divider {
   height: 1px;
   margin: 0.38rem 0 0.4rem;
   background: rgba(255, 255, 255, 0.1);
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.1);
+  }
 }
 
 .summary-title {
@@ -376,6 +439,10 @@ onMounted(() => {
   text-align: center;
   font-size: 0.38rem;
   font-weight: 600;
+
+  @include theme-light {
+    font-weight: 400;
+  }
 }
 
 .summary-stats {
@@ -392,12 +459,95 @@ onMounted(() => {
   font-size: 0.58rem;
   font-weight: 700;
   line-height: 1;
+
+  @include theme-light {
+    font-size: 0.647rem;
+  }
 }
 
 .summary-stat__label {
   margin: 0.15rem 0 0;
   font-size: 0.22rem;
   color: rgba(255, 255, 255, 0.56);
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.5);
+  }
+}
+
+.amount--positive {
+  color: var(--c-profit);
+}
+
+.players-card {
+  min-width: 0;
+
+  @include theme-light {
+    padding: 0.49rem 0.58rem 0.2rem;
+    border-radius: 0.667rem;
+    background: #fff;
+    overflow: hidden;
+
+    :deep(.game-table__header) {
+      margin: 0 0 0.1rem;
+      padding: 0;
+      border-radius: 0.76rem;
+      background: rgba(143, 143, 143, 0.2);
+      box-shadow: none;
+    }
+
+    :deep(.game-table__header-inner) {
+      border-radius: 0.76rem;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    :deep(.game-table__header-cell) {
+      min-height: 1.1rem;
+      padding: 0 0.08rem;
+    }
+
+    :deep(.game-table__header-label) {
+      color: #000;
+      font-size: 0.295rem;
+      font-weight: 500;
+    }
+
+    :deep(.game-table__body) {
+      gap: 0;
+      padding: 0;
+    }
+
+    :deep(.game-table__summary) {
+      min-height: 1rem;
+      border-radius: 0;
+      border-bottom: 0.02rem solid rgba(0, 0, 0, 0.1);
+      color: rgba(0, 0, 0, 0.7);
+      background: transparent;
+    }
+
+    :deep(.game-table__row) {
+      min-height: 1.35rem;
+      border-radius: 0;
+      border-bottom: 0.02rem solid rgba(0, 0, 0, 0.1);
+      background: transparent;
+    }
+
+    :deep(.game-table__cell) {
+      min-height: 1.35rem;
+      padding: 0.13rem 0.08rem;
+    }
+
+    :deep(.game-table__cell-text) {
+      color: #000;
+      font-size: 0.3rem;
+    }
+
+    :deep(.game-table__status) {
+      min-height: 0;
+      padding: 0;
+    }
+  }
 }
 
 .insurance-summary {
@@ -424,6 +574,10 @@ onMounted(() => {
   line-height: 1.4;
   word-break: break-all;
   color: rgba(255, 255, 255, 0.9);
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .extra-cell {
@@ -437,17 +591,25 @@ onMounted(() => {
   margin-top: 0.04rem;
   font-size: 0.22rem;
   color: rgba(255, 255, 255, 0.6);
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.6);
+  }
 }
 
 .score--pos {
-  color: var(--red, #ff132b);
+  color: var(--c-profit);
 }
 
 .score--neg {
-  color: var(--primary, var(--c-brand));
+  color: var(--c-loss);
 }
 
 .score--zero {
   color: rgba(255, 255, 255, 0.9);
+
+  @include theme-light {
+    color: #000;
+  }
 }
 </style>

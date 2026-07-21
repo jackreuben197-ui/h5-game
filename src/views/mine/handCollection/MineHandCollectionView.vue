@@ -451,10 +451,7 @@ onMounted(() => {
           aria-hidden="true"
         ></div>
         <p v-if="loadingMore" class="list-status">{{ t('SuperView2') }}...</p>
-        <p
-          v-else-if="!hasMore && handCards.length"
-          class="list-status list-status-end"
-        >
+        <p v-else-if="!hasMore && handCards.length" class="list-status list-status-end">
           {{ t('UIClub_NoMore') }}
         </p>
       </section>

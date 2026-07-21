@@ -1222,8 +1222,8 @@ watch(
 }
 
 .icon-feature {
-  width: 0.6rem;
-  height: 0.6rem;
+  width: 0.4rem;
+  height: 0.4rem;
   object-fit: contain;
 }
 .participated {

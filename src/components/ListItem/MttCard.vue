@@ -276,6 +276,8 @@ function formatCentAmount(value: number): string {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 /* ===========================
    公共基础样式
    =========================== */
@@ -289,6 +291,12 @@ function formatCentAmount(value: number): string {
 
   &:active {
     opacity: 0.88;
+  }
+
+  @include theme-light {
+    box-shadow:
+      0 0.08rem 0.2rem rgba(0, 0, 0, 0.12),
+      inset 0 0 0 0.0133rem rgba(34, 34, 34, 0.12);
   }
 }
 
@@ -320,6 +328,11 @@ function formatCentAmount(value: number): string {
   border-bottom-left-radius: inherit;
   border-bottom-right-radius: inherit;
   padding: 0.12rem 0.2rem;
+
+  @include theme-light {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(8px);
+  }
 }
 
 .mtt-card__icon-wrap {
@@ -353,6 +366,10 @@ function formatCentAmount(value: number): string {
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.2;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .mtt-card__count {
@@ -362,6 +379,10 @@ function formatCentAmount(value: number): string {
   font-size: 0.24rem;
   color: rgba(255, 255, 255, 0.8);
   line-height: 1;
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.72);
+  }
 }
 
 /* 保底赛标签：左右半圆胶囊背景（白色 25% 透明） */
@@ -376,6 +397,11 @@ function formatCentAmount(value: number): string {
   color: #fff;
   font-size: 0.21rem;
   line-height: 1;
+
+  @include theme-light {
+    color: var(--c-text);
+    background: rgba(34, 34, 34, 0.12);
+  }
 }
 
 /* A / R 标签：1px 圆形描边 */
@@ -391,6 +417,11 @@ function formatCentAmount(value: number): string {
   color: #fff;
   font-size: 0.21rem;
   line-height: 1;
+
+  @include theme-light {
+    color: var(--c-text);
+    border-color: rgba(34, 34, 34, 0.5);
+  }
 }
 
 .count-dot {
@@ -398,6 +429,16 @@ function formatCentAmount(value: number): string {
   width: 0.3rem;
   height: 0.3rem;
   background: url('@/assets/icons/icon_people.png') no-repeat center / contain;
+
+  @include theme-light {
+    filter: brightness(0);
+  }
+}
+
+.mtt-card-info-icon {
+  @include theme-light {
+    filter: brightness(0);
+  }
 }
 
 /* 顶部状态标签 */
@@ -456,8 +497,12 @@ function formatCentAmount(value: number): string {
   }
 
   &--progress {
-    background: rgba(231, 174, 5, 0.80);;
+    background: rgba(231, 174, 5, 0.8);
     color: rgba(255, 255, 255, 0.75);
+
+    @include theme-light {
+      color: rgba(34, 34, 34, 0.68);
+    }
   }
 
   &--late {
@@ -470,6 +515,11 @@ function formatCentAmount(value: number): string {
     background: rgba(255, 255, 255, 0.2);
     color: rgba(255, 255, 255, 0.65);
     cursor: not-allowed;
+
+    @include theme-light {
+      color: rgba(34, 34, 34, 0.45);
+      background: rgba(34, 34, 34, 0.12);
+    }
   }
 }
 

@@ -554,21 +554,6 @@
           }
         }
 
-        function hideTelegramChromeButtons(tg) {
-          if (tg.BackButton && typeof tg.BackButton.hide === 'function') {
-            tg.BackButton.hide()
-          }
-          if (tg.MainButton && typeof tg.MainButton.hide === 'function') {
-            tg.MainButton.hide()
-          }
-          if (tg.SecondaryButton && typeof tg.SecondaryButton.hide === 'function') {
-            tg.SecondaryButton.hide()
-          }
-          if (tg.SettingsButton && typeof tg.SettingsButton.hide === 'function') {
-            tg.SettingsButton.hide()
-          }
-        }
-
         function bindSafeAreaEvents(tg) {
           if (window.__H5_TG_SAFE_AREA_BOUND__) {
             return
@@ -768,7 +753,6 @@
             }
           }
 
-          hideTelegramChromeButtons(tg)
           tg.ready()
           var isFullscreenRequested = false
           if (typeof tg.requestFullscreen === 'function') {

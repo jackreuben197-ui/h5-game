@@ -34,10 +34,13 @@ async function checkOrderStatus() {
   const orderNo = props.orderData.order?.order_no || props.orderData.order_no
 
   try {
-    const res = await postClubFundOrderListApi({
-      order_no: orderNo,
-      limit: 1
-    }, clubId)
+    const res = await postClubFundOrderListApi(
+      {
+        order_no: orderNo,
+        limit: 1,
+      },
+      clubId,
+    )
 
     if (res.code === 0 && res.data?.list?.length) {
       const order = res.data.list[0]
@@ -55,16 +58,22 @@ async function loadMessages() {
   try {
     const res = await postChatSupportMessageListApi({
       tribe_id: props.tribeId,
-      club_id: userInfoStore.currentClub?.club_id ? Number(userInfoStore.currentClub.club_id) : undefined,
+      club_id: userInfoStore.currentClub?.club_id
+        ? Number(userInfoStore.currentClub.club_id)
+        : undefined,
       to_user_id: props.supportUserId,
       im_service_type: 4,
       limit: 50,
-      set_read: true
+      set_read: true,
     })
     if (res.code === 0 && res.data?.list) {
       const newList = res.data.list.reverse()
-      if (newList.length !== messages.value.length ||
-          (newList.length > 0 && newList[newList.length-1].time_token !== messages.value[messages.value.length-1]?.time_token)) {
+      if (
+        newList.length !== messages.value.length ||
+        (newList.length > 0 &&
+          newList[newList.length - 1].time_token !==
+            messages.value[messages.value.length - 1]?.time_token)
+      ) {
         messages.value = newList
         scrollToBottom()
       }
@@ -83,11 +92,13 @@ async function sendMessage() {
   try {
     const res = await postChatSupportMessageSendApi({
       tribe_id: props.tribeId,
-      club_id: userInfoStore.currentClub?.club_id ? Number(userInfoStore.currentClub.club_id) : undefined,
+      club_id: userInfoStore.currentClub?.club_id
+        ? Number(userInfoStore.currentClub.club_id)
+        : undefined,
       to_user_id: props.supportUserId,
       im_service_type: 4,
       msg_type: 1,
-      text: text
+      text: text,
     })
     if (res.code === 0) {
       await loadMessages()
@@ -107,11 +118,13 @@ async function onImageUpload(e: Event) {
       const url = (res.data as any).url as string
       await postChatSupportMessageSendApi({
         tribe_id: props.tribeId,
-        club_id: userInfoStore.currentClub?.club_id ? Number(userInfoStore.currentClub.club_id) : undefined,
+        club_id: userInfoStore.currentClub?.club_id
+          ? Number(userInfoStore.currentClub.club_id)
+          : undefined,
         to_user_id: props.supportUserId,
         im_service_type: 4,
         msg_type: 2,
-        url: url
+        url: url,
       })
       await loadMessages()
     }
@@ -167,11 +180,25 @@ onUnmounted(() => {
             <div class="agent-info">
               <div class="agent-avatar-wrap">
                 <!-- Figma SVG Ring -->
-                <svg class="avatar-ring" width="61" height="61" viewBox="0 0 57 57" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg
+                  class="avatar-ring"
+                  width="61"
+                  height="61"
+                  viewBox="0 0 57 57"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
                   <foreignObject x="-4.4941" y="-4.4941" width="65.381" height="65.3813">
-                    <div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(2.25px); height:100%; width:100%"></div>
+                    <div
+                      xmlns="http://www.w3.org/1999/xhtml"
+                      style="backdrop-filter: blur(2.25px); height: 100%; width: 100%"
+                    ></div>
                   </foreignObject>
-                  <path d="M28.196 0.150391C43.6857 0.150391 56.2427 12.7067 56.2429 28.1963C56.2429 43.686 43.6858 56.2432 28.196 56.2432C12.7065 56.243 0.150146 43.6859 0.150146 28.1963C0.150328 12.7068 12.7066 0.150572 28.196 0.150391ZM28.196 3.3291C14.4625 3.32928 3.32904 14.4627 3.32886 28.1963C3.32886 41.93 14.4623 53.0643 28.196 53.0645C41.9299 53.0645 53.0642 41.9301 53.0642 28.1963C53.064 14.4626 41.9298 3.3291 28.196 3.3291Z" fill="currentColor" fill-opacity="0.83" />
+                  <path
+                    d="M28.196 0.150391C43.6857 0.150391 56.2427 12.7067 56.2429 28.1963C56.2429 43.686 43.6858 56.2432 28.196 56.2432C12.7065 56.243 0.150146 43.6859 0.150146 28.1963C0.150328 12.7068 12.7066 0.150572 28.196 0.150391ZM28.196 3.3291C14.4625 3.32928 3.32904 14.4627 3.32886 28.1963C3.32886 41.93 14.4623 53.0643 28.196 53.0645C41.9299 53.0645 53.0642 41.9301 53.0642 28.1963C53.064 14.4626 41.9298 3.3291 28.196 3.3291Z"
+                    fill="currentColor"
+                    fill-opacity="0.83"
+                  />
                 </svg>
                 <img :src="customerServiceIcon" alt="agent" class="agent-avatar" />
               </div>
@@ -180,17 +207,37 @@ onUnmounted(() => {
           </div>
 
           <!-- Messages Area -->
-          <div class="messages-wrap" ref="messageContainer">
+          <div ref="messageContainer" class="messages-wrap">
             <div class="messages-inner">
               <!-- Transaction Bubble -->
               <div class="message-row message-row--self">
                 <div class="bubble-wrapper">
                   <div class="transaction-bubble">
                     <div class="bubble-content">
-                      <p>充值用户：{{ userInfoStore.userInfo?.user.nickname }}/ID{{ userInfoStore.userInfo?.user.userid }}</p>
-                      <p>充值聯盟幣：{{ (orderData.gold_num || orderData.order?.gold_num || 0) / 100 }}</p>
-                      <p>支付金額：{{ orderData.pay_price || orderData.order?.pay_price || orderData.order?.amount || orderData.amount || 0 }}</p>
-                      <p>支付類型：{{ orderData.usdt_address?.name || orderData.pay_type_name || '客服撮合' }}</p>
+                      <p>
+                        充值用户：{{ userInfoStore.userInfo?.user.nickname }}/ID{{
+                          userInfoStore.userInfo?.user.userid
+                        }}
+                      </p>
+                      <p>
+                        充值聯盟幣：{{
+                          (orderData.gold_num || orderData.order?.gold_num || 0) / 100
+                        }}
+                      </p>
+                      <p>
+                        支付金額：{{
+                          orderData.pay_price ||
+                          orderData.order?.pay_price ||
+                          orderData.order?.amount ||
+                          orderData.amount ||
+                          0
+                        }}
+                      </p>
+                      <p>
+                        支付類型：{{
+                          orderData.usdt_address?.name || orderData.pay_type_name || '客服撮合'
+                        }}
+                      </p>
                       <p>訂單號：{{ orderData.order_no || orderData.order?.order_no }}</p>
                       <p>申請時間：{{ new Date().toLocaleString() }}</p>
                     </div>
@@ -198,20 +245,45 @@ onUnmounted(() => {
                   <div class="bubble-footer">
                     <span>{{ formatTime(Date.now() / 1000) }}</span>
                     <svg width="7.226" height="7.226" viewBox="0 0 8 8" fill="none">
-                      <ellipse cx="2.93052" cy="2.91963" rx="2.38865" ry="2.42647" stroke="var(--c-brand)" stroke-width="0.955458"/>
-                      <path d="M4.63672 4.65283L6.68413 6.73266" stroke="var(--c-brand)" stroke-width="0.955458" stroke-linecap="round"/>
+                      <ellipse
+                        cx="2.93052"
+                        cy="2.91963"
+                        rx="2.38865"
+                        ry="2.42647"
+                        stroke="var(--c-brand)"
+                        stroke-width="0.955458"
+                      />
+                      <path
+                        d="M4.63672 4.65283L6.68413 6.73266"
+                        stroke="var(--c-brand)"
+                        stroke-width="0.955458"
+                        stroke-linecap="round"
+                      />
                     </svg>
                     <span class="sender-name">{{ userInfoStore.userInfo?.user.nickname }}</span>
                   </div>
                 </div>
               </div>
 
-              <div v-for="(msg, idx) in messages" :key="idx" class="message-row" :class="{ 'message-row--self': msg.user_send }">
+              <div
+                v-for="(msg, idx) in messages"
+                :key="idx"
+                class="message-row"
+                :class="{ 'message-row--self': msg.user_send }"
+              >
                 <div class="bubble-wrapper" :class="{ 'bubble-wrapper--self': msg.user_send }">
-                  <div v-if="msg.msg_type === 1" class="text-bubble" :class="{ 'text-bubble--self': msg.user_send }">
+                  <div
+                    v-if="msg.msg_type === 1"
+                    class="text-bubble"
+                    :class="{ 'text-bubble--self': msg.user_send }"
+                  >
                     {{ msg.text }}
                   </div>
-                  <div v-else-if="msg.msg_type === 2" class="image-bubble" :class="{ 'image-bubble--self': msg.user_send }">
+                  <div
+                    v-else-if="msg.msg_type === 2"
+                    class="image-bubble"
+                    :class="{ 'image-bubble--self': msg.user_send }"
+                  >
                     <img :src="msg.url" alt="image" @click="openUrl(msg.url)" />
                   </div>
 
@@ -219,8 +291,20 @@ onUnmounted(() => {
                     <span>{{ formatTime(msg.local_time) }}</span>
                     <template v-if="msg.user_send">
                       <svg width="7.226" height="7.226" viewBox="0 0 8 8" fill="none">
-                        <ellipse cx="2.93052" cy="2.91963" rx="2.38865" ry="2.42647" stroke="var(--c-brand)" stroke-width="0.955458"/>
-                        <path d="M4.63672 4.65283L6.68413 6.73266" stroke="var(--c-brand)" stroke-width="0.955458" stroke-linecap="round"/>
+                        <ellipse
+                          cx="2.93052"
+                          cy="2.91963"
+                          rx="2.38865"
+                          ry="2.42647"
+                          stroke="var(--c-brand)"
+                          stroke-width="0.955458"
+                        />
+                        <path
+                          d="M4.63672 4.65283L6.68413 6.73266"
+                          stroke="var(--c-brand)"
+                          stroke-width="0.955458"
+                          stroke-linecap="round"
+                        />
                       </svg>
                       <span class="sender-name">{{ userInfoStore.userInfo?.user.nickname }}</span>
                     </template>
@@ -237,8 +321,20 @@ onUnmounted(() => {
           <div class="bottom-nav">
             <button class="nav-icon-btn mic-btn">
               <svg width="15" height="20" viewBox="0 0 17 22" fill="none">
-                <path d="M12 4.5C12 2.567 10.433 1 8.5 1C6.567 1 5 2.567 5 4.5V11C5 12.933 6.567 14.5 8.5 14.5C10.433 14.5 12 12.933 12 11V4.5Z" fill="var(--c-brand)" stroke="var(--c-brand)" stroke-width="2" stroke-linejoin="round"/>
-                <path d="M1 10.5C1 14.642 4.358 18 8.5 18M8.5 18C12.642 18 16 14.642 16 10.5M8.5 18V21" stroke="var(--c-brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path
+                  d="M12 4.5C12 2.567 10.433 1 8.5 1C6.567 1 5 2.567 5 4.5V11C5 12.933 6.567 14.5 8.5 14.5C10.433 14.5 12 12.933 12 11V4.5Z"
+                  fill="var(--c-brand)"
+                  stroke="var(--c-brand)"
+                  stroke-width="2"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M1 10.5C1 14.642 4.358 18 8.5 18M8.5 18C12.642 18 16 14.642 16 10.5M8.5 18V21"
+                  stroke="var(--c-brand)"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
               </svg>
             </button>
 
@@ -253,25 +349,48 @@ onUnmounted(() => {
 
             <button class="send-action-btn" @click="sendMessage">
               <svg width="22" height="21" viewBox="0 0 24 23" fill="none">
-                <path d="M4.31042 5.23619C3.89719 5.10688 3.89323 4.89806 4.31833 4.76503L19.4289 0.0378811C19.8476 -0.0929126 20.0875 0.127059 19.9703 0.512008L15.6528 14.6957C15.5341 15.0888 15.2926 15.1022 15.1153 14.7291L12.2694 8.71783L17.0191 2.77266L10.6862 7.23153L4.31042 5.23619Z" fill="currentColor"/>
+                <path
+                  d="M4.31042 5.23619C3.89719 5.10688 3.89323 4.89806 4.31833 4.76503L19.4289 0.0378811C19.8476 -0.0929126 20.0875 0.127059 19.9703 0.512008L15.6528 14.6957C15.5341 15.0888 15.2926 15.1022 15.1153 14.7291L12.2694 8.71783L17.0191 2.77266L10.6862 7.23153L4.31042 5.23619Z"
+                  fill="currentColor"
+                />
               </svg>
             </button>
 
             <button class="plus-btn" @click="triggerUpload">
               <svg width="15.407" height="15.255" viewBox="0 0 18 18" fill="none">
-                <path d="M1.28424 8.91193H16.5397" stroke="var(--c-brand)" stroke-width="2.5684" stroke-linecap="round"/>
-                <path d="M8.76025 1.28418V16.5397" stroke="var(--c-brand)" stroke-width="2.5684" stroke-linecap="round"/>
+                <path
+                  d="M1.28424 8.91193H16.5397"
+                  stroke="var(--c-brand)"
+                  stroke-width="2.5684"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M8.76025 1.28418V16.5397"
+                  stroke="var(--c-brand)"
+                  stroke-width="2.5684"
+                  stroke-linecap="round"
+                />
               </svg>
             </button>
 
             <button class="close-chat-btn" @click="emit('close')">
               <svg width="11.521" height="11.521" viewBox="0 0 15 15" fill="none">
-                <path d="M1.37148 1.37158L12.8923 12.8924" stroke="currentColor" stroke-width="2.74306" stroke-linecap="round"/>
-                <path d="M12.8923 1.37158L1.37148 12.8924" stroke="currentColor" stroke-width="2.74306" stroke-linecap="round"/>
+                <path
+                  d="M1.37148 1.37158L12.8923 12.8924"
+                  stroke="currentColor"
+                  stroke-width="2.74306"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M12.8923 1.37158L1.37148 12.8924"
+                  stroke="currentColor"
+                  stroke-width="2.74306"
+                  stroke-linecap="round"
+                />
               </svg>
             </button>
 
-            <input type="file" ref="fileInput" hidden accept="image/*" @change="onImageUpload" />
+            <input ref="fileInput" type="file" hidden accept="image/*" @change="onImageUpload" />
           </div>
         </div>
       </div>
@@ -291,11 +410,11 @@ onUnmounted(() => {
   background-repeat: no-repeat;
   display: flex;
   flex-direction: column;
-  background-image: url('@/assets/images/main_bg.webp');
+  // background-image: url('@/assets/images/main_bg.webp');
 
   @include theme-light {
     background-color: var(--c-page);
-    background-image: url('@/assets/images/main_bg_light.png');
+    // background-image: url('@/assets/images/main_bg_light.png');
   }
 }
 
@@ -325,8 +444,10 @@ onUnmounted(() => {
   background-image: url('@/assets/images/wallet/bg_sharp.webp');
 
   @include theme-light {
-    background-color: #fff;
-    background-image: none;
+    --c-text: #fff;
+    --c-text-muted: rgba(255, 255, 255, 0.62);
+    background-color: #171717;
+    background-image: url('@/assets/images/wallet/bg_sharp.webp');
   }
 }
 
@@ -341,9 +462,7 @@ onUnmounted(() => {
   z-index: 1;
 
   @include theme-light {
-    background: #fff;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    background: rgba(0, 0, 0, 0.85);
   }
 }
 
@@ -369,8 +488,8 @@ onUnmounted(() => {
   gap: 15px;
 
   @include theme-light {
-    background: #fff;
-    box-shadow: 0 0.08rem 0.24rem rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.27);
+    box-shadow: none;
   }
 }
 
@@ -401,7 +520,7 @@ onUnmounted(() => {
   color: rgba(255, 255, 255, 0.83);
 
   @include theme-light {
-    color: rgba(34, 34, 34, 0.24);
+    color: rgba(255, 255, 255, 0.83);
   }
 }
 
@@ -429,8 +548,8 @@ onUnmounted(() => {
   white-space: nowrap;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.16);
-    color: var(--c-text);
+    background: rgba(0, 0, 0, 0.25);
+    color: #fff;
   }
 }
 
@@ -479,15 +598,17 @@ onUnmounted(() => {
   align-items: flex-start;
   gap: 6.093px;
   border-radius: 23.457px;
-  background: rgba(var(--c-brand-rgb), 0.50);
-  color: #F9F9F9;
+  background: rgba(var(--c-brand-rgb), 0.5);
+  color: #f9f9f9;
 }
 
 .bubble-content p {
   margin: 0;
-  color: #F9F9F9;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: "HONOR Sans CN";
+  color: #f9f9f9;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
+  font-family: 'HONOR Sans CN';
   font-size: 11.576px;
   font-style: normal;
   font-weight: 400;
@@ -501,15 +622,15 @@ onUnmounted(() => {
   justify-content: flex-end;
   align-items: center;
   gap: 4px;
-  color: #F9F9F9;
-  font-family: "HONOR Sans CN";
+  color: #f9f9f9;
+  font-family: 'HONOR Sans CN';
   font-size: 9.748px;
   font-weight: 400;
   line-height: 100%;
   letter-spacing: 0.195px;
 
   @include theme-light {
-    color: var(--c-text-muted);
+    color: #f9f9f9;
   }
 }
 
@@ -526,8 +647,8 @@ onUnmounted(() => {
   font-size: 14px;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.16);
-    color: var(--c-text);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
   }
 }
 
@@ -548,7 +669,7 @@ onUnmounted(() => {
   max-width: 200px;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.12);
+    background: rgba(255, 255, 255, 0.05);
   }
 }
 
@@ -578,7 +699,7 @@ onUnmounted(() => {
 }
 
 .mic-btn {
-  background: #0F0F0F;
+  background: #0f0f0f;
   border-radius: 210.014px;
   width: 37.534px;
   height: 37.534px;
@@ -588,14 +709,14 @@ onUnmounted(() => {
   align-items: center;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.16);
+    background: #0f0f0f;
   }
 }
 
 .input-bar-wrap {
   width: 176.591px;
   height: 37.534px;
-  background: #0F0F0F;
+  background: #0f0f0f;
   border-radius: 210.014px;
   padding: 3.36px 4.29px 3.36px 11.341px;
   display: flex;
@@ -603,7 +724,7 @@ onUnmounted(() => {
   gap: 4.2px;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.16);
+    background: #0f0f0f;
   }
 }
 
@@ -612,7 +733,7 @@ onUnmounted(() => {
   background: transparent;
   border: none;
   color: var(--c-text);
-  font-family: "PingFang SC";
+  font-family: 'PingFang SC';
   font-size: 13.226px;
   font-weight: 400;
   line-height: 78%;
@@ -644,7 +765,7 @@ onUnmounted(() => {
 }
 
 .plus-btn {
-  background: #0F0F0F;
+  background: #0f0f0f;
   border: none;
   width: 37.331px;
   height: 37.331px;
@@ -657,7 +778,7 @@ onUnmounted(() => {
   flex-shrink: 0;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.16);
+    background: #0f0f0f;
   }
 
   &:active {
@@ -666,7 +787,7 @@ onUnmounted(() => {
 }
 
 .close-chat-btn {
-  background: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.1);
   border: none;
   width: 38.403px;
   height: 38.403px;
@@ -679,8 +800,8 @@ onUnmounted(() => {
   color: #f3f3f3;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.16);
-    color: var(--c-text);
+    background: rgba(255, 255, 255, 0.1);
+    color: #f3f3f3;
   }
 
   &:active {

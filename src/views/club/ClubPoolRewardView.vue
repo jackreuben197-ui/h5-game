@@ -2,15 +2,9 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { postOrgClubJackpotTemplateListApi } from '@/api/org'
-import mainBgUrl from '@/assets/images/main_bg.webp'
 import type { OrgClubJackpotTemplateListDataItem } from '@/api/models/org'
 import { formatUC } from '@/utils/roomVisibility'
-import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
 import { t } from '@/i18n'
-// 主容器背景图：全页面共用一张底图。
-const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
-}))
 
 interface PoolRewardItem {
   id: string
@@ -54,6 +48,10 @@ function onOpenRecord(item: PoolRewardItem): void {
   })
 }
 
+function goCreateJackpot(): void {
+  void router.push('/club/jackpot/create')
+}
+
 async function fetchJackpotList(reset = false): Promise<void> {
   if (loading.value || loadingMore.value) {
     return
@@ -79,7 +77,8 @@ async function fetchJackpotList(reset = false): Promise<void> {
     })
 
     if (Number(response.code) !== 0) {
-      const message = typeof response.msg === 'string' ? response.msg : t('UIClub_LoadJackpotRecordFail')
+      const message =
+        typeof response.msg === 'string' ? response.msg : t('UIClub_LoadJackpotRecordFail')
       throw new Error(message)
     }
 
@@ -147,7 +146,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell pool-reward-page" :style="backgroundStyle" @scroll="onPageScroll">
+  <div class="page-shell pool-reward-page" @scroll="onPageScroll">
     <HeaderBack :title="'奖池记录'" />
 
     <section class="pool-body">
@@ -191,8 +190,7 @@ onMounted(() => {
             <p class="game-name">{{ item.name }}</p>
             <div class="pool-tags">
               <span v-for="tag in item.tags" :key="`${item.id}-${tag}`" class="tag-item">
-                <i class="tag-icon"></i>
-                {{ tag }}
+                <AppSvgIcon class="tag-icon" name="spade" />{{ tag }}
               </span>
             </div>
           </div>
@@ -202,11 +200,11 @@ onMounted(() => {
       </ul>
 
       <div v-if="!hasItems && loading" class="pool-empty">
-        <img class="empty-icon" :src="emptyStateIcon" alt="" />
+        <AppSvgIcon name="empty-data" class="empty-icon" />
         <p>{{ t('SuperView2') }}...</p>
       </div>
       <div v-else-if="!hasItems && !loading" class="pool-empty">
-        <img class="empty-icon" :src="emptyStateIcon" alt="" />
+        <AppSvgIcon name="empty-data" class="empty-icon" />
         <p>{{ t('UIClub_FundDetail_xYlV8VBZ') }}</p>
       </div>
 
@@ -215,16 +213,27 @@ onMounted(() => {
     </section>
 
     <div class="footer-action">
-      <button type="button" class="create-btn">{{ t('UIClub_AddSomething') }}Jackpot{{ t('UIClub_Jackpot4') }}</button>
+      <button type="button" class="create-btn" @click="goCreateJackpot">
+        {{ t('UIClub_AddSomething') }}Jackpot{{ t('UIClub_Jackpot4') }}
+      </button>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .pool-reward-page {
   position: relative;
   height: 100dvh;
+  background-color: var(--c-page);
+  background-image: url('@/assets/images/main_bg.webp');
   background-size: cover;
+  background-position: center;
+
+  @include theme-light {
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 .pool-body {
@@ -256,12 +265,21 @@ onMounted(() => {
   font-size: 0.3991rem;
   line-height: 0.95;
   border-bottom: 0.0363rem solid transparent;
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.72);
+  }
 }
 
 .tab-btn--active {
   color: #ffffff;
   font-weight: 700;
   border-bottom-color: #ffffff;
+
+  @include theme-light {
+    color: var(--c-brand);
+    border-bottom-color: var(--c-brand);
+  }
 }
 
 .pool-list {
@@ -328,7 +346,7 @@ onMounted(() => {
 
 .pool-info {
   position: absolute;
-  left: 1.4533rem;
+  left: 1.64rem;
   top: 50%;
   transform: translateY(-50%);
   width: 4.1rem;
@@ -362,11 +380,10 @@ onMounted(() => {
 }
 
 .tag-icon {
+  flex-shrink: 0;
   width: 0.24rem;
   height: 0.2667rem;
-  display: inline-block;
-  background: linear-gradient(180deg, rgba(190, 232, 255, 0.95), rgba(136, 188, 255, 0.85));
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  color: #fff;
 }
 
 .jp-badge {
@@ -403,6 +420,10 @@ onMounted(() => {
   width: 1.248rem;
   height: 1.56rem;
   object-fit: contain;
+
+  @include theme-light {
+    color: var(--c-brand);
+  }
 }
 
 .pool-empty p {
@@ -410,6 +431,10 @@ onMounted(() => {
   font-size: 0.3734rem;
   color: rgba(225, 234, 248, 0.88);
   text-align: center;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .pool-loading-more {
@@ -417,6 +442,10 @@ onMounted(() => {
   text-align: center;
   color: rgba(225, 234, 248, 0.88);
   font-size: 0.32rem;
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .footer-action {
@@ -441,6 +470,12 @@ onMounted(() => {
   box-shadow:
     inset 0 0.04rem 0.2rem rgba(255, 255, 255, 0.25),
     0 0.16rem 0.36rem rgba(0, 120, 100, 0.45);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 @media (max-width: 360px) {
@@ -449,7 +484,7 @@ onMounted(() => {
   }
 
   .pool-info {
-    left: 1.38rem;
+    left: 1.64rem;
     width: 3.8rem;
   }
 

@@ -40,6 +40,11 @@ withDefaults(defineProps<Props>(), {
 .tagpill--dark {
   background: rgba(40, 38, 38, 0.52);
   mix-blend-mode: color-burn;
+
+  @include theme-light {
+    background: rgba(194, 194, 194, 0.52);
+    mix-blend-mode: normal;
+  }
 }
 
 .tagpill--id {

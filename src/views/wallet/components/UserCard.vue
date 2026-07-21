@@ -100,8 +100,10 @@ const bannerBg = `url(${bannerBgUrl})`
   border-radius: 0.8rem;
 
   @include theme-light {
-    background: #fff;
-    box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.12);
+    background: linear-gradient(135deg, #cbd0d4 0%, #adb1b5 100%);
+    box-shadow:
+      inset 0.08rem 0.08rem 0.18rem rgba(255, 255, 255, 0.42),
+      0 0.08rem 0.2rem rgba(70, 79, 88, 0.12);
   }
 }
 

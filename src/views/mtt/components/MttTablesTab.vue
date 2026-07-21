@@ -152,6 +152,8 @@ function handleRowClick(row: Record<string, unknown>): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .mtt-tables-tab {
   padding-top: 0.2rem;
 }
@@ -173,6 +175,10 @@ function handleRowClick(row: Record<string, unknown>): void {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 3.9rem;
   backdrop-filter: blur(0.16px);
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .tables-stat-label {
@@ -181,6 +187,10 @@ function handleRowClick(row: Record<string, unknown>): void {
   font-family: 'SF Pro', 'HONOR Sans CN', sans-serif;
   font-weight: 700;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .tables-stat-value {
@@ -191,6 +201,10 @@ function handleRowClick(row: Record<string, unknown>): void {
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 600;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .stat-icon {

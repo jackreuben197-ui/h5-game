@@ -267,16 +267,11 @@ function confirm(): void {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  background-image: url('@/assets/images/main_bg.webp');
+  // background-image: url('@/assets/images/main_bg.webp');
   touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-
-  @include theme-light {
-    background-color: var(--c-page);
-    background-image: url('@/assets/images/main_bg_light.png');
-  }
 }
 
 .kp--plain {

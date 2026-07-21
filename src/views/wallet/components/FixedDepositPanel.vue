@@ -81,7 +81,13 @@ async function onConfirmDeposit(): Promise<void> {
     if (res.code === 0) {
       showSuccess.value = true
     } else if (res.code === 20066) {
-      showToast(t('H5Deposit_OrderUnderReview'))
+      showToast({
+        message: t('H5Deposit_OrderUnderReview'),
+        overlay: true,
+        duration: 2000,
+        className: 'fixed-deposit-review-toast',
+        overlayClass: 'fixed-deposit-review-overlay',
+      })
     } else {
       showFailToast(res.message || t('H5Deposit_Failed'))
     }
@@ -494,5 +500,27 @@ function onSuccessConfirm(): void {
 .deposit-cta {
   width: 100%;
   margin-top: 0.2rem;
+}
+
+:global(.fixed-deposit-review-overlay) {
+  background: rgba(12, 12, 12, 0.6) !important;
+  backdrop-filter: blur(0.9rem);
+  -webkit-backdrop-filter: blur(0.9rem);
+}
+
+:global(.fixed-deposit-review-toast.van-toast) {
+  width: calc(100% - 1.0667rem);
+  max-width: 9.0133rem;
+  min-height: 2.48rem;
+  padding: 0.4rem 0.48rem;
+  border: 0.0133rem solid rgba(255, 255, 255, 0.8);
+  border-radius: 1.28rem;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(1.3333rem);
+  -webkit-backdrop-filter: blur(1.3333rem);
+}
+
+:global(.fixed-deposit-review-toast .van-toast__text) {
+  font-size: 0.48rem;
 }
 </style>

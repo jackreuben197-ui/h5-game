@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
 import { postOrgClubJackpotTemplateDelApi, postOrgClubJackpotTemplateListApi } from '@/api/org'
 import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
-import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
 import iconDelete from '@/assets/icons/icon_delete.svg'
 import iconEdit from '@/assets/icons/icon_edit.svg'
 import { t } from '@/i18n'
@@ -266,7 +265,7 @@ function goPoolReward(): void {
       </ul>
 
       <div v-else class="jackpot-empty" :class="{ 'jackpot-empty--loading': loading }">
-        <img class="empty-icon" :src="emptyStateIcon" alt="" />
+        <AppSvgIcon name="empty-data" class="empty-icon" />
         <p>{{ loading ? '加载中...' : '暂无数据' }}</p>
       </div>
 
@@ -599,6 +598,10 @@ function goPoolReward(): void {
   width: 1.248rem;
   height: 1.56rem;
   object-fit: contain;
+
+  @include theme-light {
+    color: var(--c-brand);
+  }
 }
 
 .jackpot-empty p {

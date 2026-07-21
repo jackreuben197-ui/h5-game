@@ -5,7 +5,6 @@ import { postStatsJackpotGoldChangeLogsApi } from '@/api/stats'
 import { showFailToast } from 'vant'
 import type { StatsJackpotGoldChangeLogsDataItem } from '@/api/models/stats'
 import { formatUC } from '@/utils/roomVisibility'
-import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
 import { t } from '@/i18n'
 
 interface ContributionRecord {
@@ -182,11 +181,11 @@ onMounted(() => {
 
       <!-- 空状态 -->
       <div v-if="!hasItems && loading" class="record-empty">
-        <img class="empty-icon" :src="emptyStateIcon" alt="" />
+        <AppSvgIcon name="empty-data" class="empty-icon" />
         <p>{{ t('SuperView2') }}...</p>
       </div>
       <div v-else-if="!hasItems && !loading" class="record-empty">
-        <img class="empty-icon" :src="emptyStateIcon" alt="" />
+        <AppSvgIcon name="empty-data" class="empty-icon" />
         <p>{{ t('UIClub_FundDetail_xYlV8VBZ') }}</p>
       </div>
       <div v-else-if="loadingMore" class="pool-loading-more">{{ t('SuperView2') }}...</div>
@@ -319,12 +318,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   font-size: 0.3009rem;
-  color: #f9f9f9;
   white-space: nowrap;
-
-  @include theme-light {
-    color: var(--c-text);
-  }
 }
 
 .col-hand {
@@ -333,6 +327,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  line-height: 0.4rem;
 }
 
 // 表头列居中覆盖
@@ -434,6 +429,10 @@ onMounted(() => {
   width: 1.248rem;
   height: 1.56rem;
   object-fit: contain;
+
+  @include theme-light {
+    color: var(--c-brand);
+  }
 }
 
 .record-empty p {

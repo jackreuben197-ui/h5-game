@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { postOrgClubJackpotTemplateListApi } from '@/api/org'
 import type { OrgClubJackpotTemplateListDataItem } from '@/api/models/org'
 import { formatUC } from '@/utils/roomVisibility'
-import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
 import { t } from '@/i18n'
 
 interface PoolRewardItem {
@@ -191,8 +190,7 @@ onMounted(() => {
             <p class="game-name">{{ item.name }}</p>
             <div class="pool-tags">
               <span v-for="tag in item.tags" :key="`${item.id}-${tag}`" class="tag-item">
-                <i class="tag-icon"></i>
-                {{ tag }}
+                <AppSvgIcon class="tag-icon" name="spade" />{{ tag }}
               </span>
             </div>
           </div>
@@ -202,11 +200,11 @@ onMounted(() => {
       </ul>
 
       <div v-if="!hasItems && loading" class="pool-empty">
-        <img class="empty-icon" :src="emptyStateIcon" alt="" />
+        <AppSvgIcon name="empty-data" class="empty-icon" />
         <p>{{ t('SuperView2') }}...</p>
       </div>
       <div v-else-if="!hasItems && !loading" class="pool-empty">
-        <img class="empty-icon" :src="emptyStateIcon" alt="" />
+        <AppSvgIcon name="empty-data" class="empty-icon" />
         <p>{{ t('UIClub_FundDetail_xYlV8VBZ') }}</p>
       </div>
 
@@ -348,7 +346,7 @@ onMounted(() => {
 
 .pool-info {
   position: absolute;
-  left: 1.4533rem;
+  left: 1.64rem;
   top: 50%;
   transform: translateY(-50%);
   width: 4.1rem;
@@ -382,11 +380,10 @@ onMounted(() => {
 }
 
 .tag-icon {
+  flex-shrink: 0;
   width: 0.24rem;
   height: 0.2667rem;
-  display: inline-block;
-  background: linear-gradient(180deg, rgba(190, 232, 255, 0.95), rgba(136, 188, 255, 0.85));
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  color: #fff;
 }
 
 .jp-badge {
@@ -423,6 +420,10 @@ onMounted(() => {
   width: 1.248rem;
   height: 1.56rem;
   object-fit: contain;
+
+  @include theme-light {
+    color: var(--c-brand);
+  }
 }
 
 .pool-empty p {
@@ -483,7 +484,7 @@ onMounted(() => {
   }
 
   .pool-info {
-    left: 1.38rem;
+    left: 1.64rem;
     width: 3.8rem;
   }
 

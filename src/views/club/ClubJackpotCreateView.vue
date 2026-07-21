@@ -1233,20 +1233,52 @@ onMounted(() => {
   }
 }
 
-.mode-switch-checkbox {
+.mode-switch-checkbox,
+.blind-checkbox,
+.dot {
+  appearance: none;
   width: 0.4rem;
   height: 0.4rem;
+  margin: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: rgba(249, 249, 249, 0.2);
+  background-image: none;
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
 
   @include theme-light {
-    appearance: none;
-    border: 0.0267rem solid rgba(var(--c-brand-rgb), 0.85);
-    border-radius: 50%;
-    background: #fff;
-
-    &:checked {
-      background: radial-gradient(circle, var(--c-brand) 0 46%, #fff 50%);
-    }
+    background-color: rgba(0, 0, 0, 0.2);
   }
+}
+
+.mode-switch-checkbox:checked,
+.blind-checkbox:checked,
+.dot--active {
+  background-image: radial-gradient(
+    circle at center,
+    transparent 0 0.104rem,
+    #55ffe2 0.104rem 0.139rem,
+    transparent 0.139rem
+  );
+
+  @include theme-light {
+    background-color: #69beff;
+    background-image: radial-gradient(
+      circle at center,
+      transparent 0 0.104rem,
+      #fff 0.104rem 0.139rem,
+      transparent 0.139rem
+    );
+  }
+}
+
+.mode-switch-checkbox:focus-visible,
+.blind-checkbox:focus-visible,
+.dot:focus-visible {
+  outline: 0.04rem solid rgba(105, 190, 255, 0.45);
+  outline-offset: 0.04rem;
 }
 
 .divider {
@@ -1298,29 +1330,7 @@ onMounted(() => {
 }
 
 .dot {
-  width: 0.4rem;
-  height: 0.4rem;
-  border-radius: 50%;
-  border: 0.0267rem solid rgba(255, 255, 255, 0.7);
-  position: relative;
-  flex-shrink: 0;
-
-  @include theme-light {
-    border-color: rgba(34, 34, 34, 0.22);
-    background: rgba(34, 34, 34, 0.18);
-  }
-}
-
-.dot--active::after {
-  content: '';
-  position: absolute;
-  inset: 0.0667rem;
-  border-radius: 50%;
-  background: linear-gradient(145deg, #33c6ff, #1b9fdb 80%);
-
-  @include theme-light {
-    background: var(--c-brand);
-  }
+  display: inline-block;
 }
 
 .value-input {
@@ -1409,22 +1419,7 @@ onMounted(() => {
 }
 
 .blind-checkbox {
-  width: 0.4rem;
-  height: 0.4rem;
-  flex-shrink: 0;
-  cursor: pointer;
-
-  @include theme-light {
-    appearance: none;
-    border: 0.0267rem solid rgba(34, 34, 34, 0.22);
-    border-radius: 50%;
-    background: rgba(34, 34, 34, 0.18);
-
-    &:checked {
-      border-color: rgba(var(--c-brand-rgb), 0.85);
-      background: radial-gradient(circle, var(--c-brand) 0 46%, #fff 50%);
-    }
-  }
+  display: inline-block;
 }
 
 .blind-config-panel {

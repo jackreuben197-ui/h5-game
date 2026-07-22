@@ -122,12 +122,14 @@ onMounted(() => {
 
 <template>
   <div ref="homeRootRef" class="home-page">
-    <!-- 0. 顶部栏：POKER + 注册/登录 (временно скрыт)
+    <!-- 0. 顶部栏：POKER + 注册/登录 -->
     <div class="top-bar">
+      <!-- лого и текст временно скрыты
       <div class="top-bar__logo">
         <img class="top-bar__logo-img" src="@/assets/images/img_fish_browser_logo.png" alt="logo" />
         <span class="top-bar__logo-text">小鱼</span>
       </div>
+      -->
       <div class="top-bar__actions">
         <button class="top-bar__btn top-bar__btn--register" @click="notifyNotLoginRegister">
           {{ localized('Register', '注册') }}
@@ -135,8 +137,6 @@ onMounted(() => {
         <button class="top-bar__btn top-bar__btn--login" @click="notifyNotLogin">{{ localized('Login', '登录') }}</button>
       </div>
     </div>
-    -->
-
     <!-- 1. 顶部俱乐部介绍图 -->
     <div class="home-header">
       <div class="home-header__inner">
@@ -409,6 +409,7 @@ onMounted(() => {
 .top-bar__actions {
   display: flex;
   gap: 0.14rem;
+  flex: 1;
 }
 
 .top-bar__btn {
@@ -418,6 +419,8 @@ onMounted(() => {
   font-weight: 500;
   font-family: 'PingFang SC', sans-serif;
   cursor: pointer;
+  flex: 1 1 0;
+  min-width: 0;
   padding: 0.12rem 0.65rem;
   white-space: nowrap;
   display: flex;

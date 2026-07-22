@@ -194,6 +194,12 @@
         --app-content-safe-area-top: env(safe-area-inset-top);
       }
 
+      /* Telegram Mini App：顶部安全区已由 #app > * 的 guard padding 承担，
+         viewport-fit=cover 使 env(safe-area-inset-top) 非零，置零避免二次叠加。 */
+      html[data-tg-mini-app='1'] {
+        --app-content-safe-area-top: 0px;
+      }
+
       html {
         margin: 0;
         width: 100%;

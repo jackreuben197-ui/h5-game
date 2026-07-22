@@ -258,7 +258,7 @@ onMounted(() => {
 .club-level-header {
   position: relative;
   z-index: 2;
-  padding: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.18rem) 0.64rem 0;
+  padding: calc(var(--app-top-padding) + var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.18rem) 0.64rem 0;
   display: flex;
   align-items: center;
   justify-content: space-between;

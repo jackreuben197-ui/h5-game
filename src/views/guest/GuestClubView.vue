@@ -113,7 +113,7 @@ function notifyNotLogin(): void {
   display: flex;
   flex-direction: column;
   gap: 0.24rem;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.24rem);
+  padding-top: calc(var(--app-top-padding) + var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.24rem);
 }
 
 .search-row {

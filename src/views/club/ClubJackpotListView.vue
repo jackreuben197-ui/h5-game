@@ -349,7 +349,7 @@ function goPoolReward(): void {
 :deep(.page-back-header) {
   position: relative;
   z-index: 2;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
+  padding-top: calc(var(--app-top-padding) + var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.2rem);
   min-height: 1.9rem;
 }
 

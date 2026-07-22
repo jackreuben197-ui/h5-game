@@ -254,7 +254,7 @@ async function onConfirm(): Promise<void> {
   flex-direction: column;
   height: 100dvh;
   gap: 0.18rem;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
+  padding-top: calc(var(--app-top-padding) + var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.2rem);
   padding-bottom: calc(0.2rem + env(safe-area-inset-bottom));
 }
 

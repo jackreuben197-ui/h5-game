@@ -1307,7 +1307,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 0.40524rem;
-  padding-top: calc(var(--app-top-padding) + env(safe-area-inset-top) + 0.2rem);
+  padding-top: calc(var(--app-top-padding) + var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.2rem);
 }
 
 .top-bar {

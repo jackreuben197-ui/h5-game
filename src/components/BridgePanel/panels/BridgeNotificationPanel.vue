@@ -470,6 +470,8 @@ async function onSecondaryAction(): Promise<void> {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .notification-panel {
   position: relative;
   width: 100%;
@@ -607,6 +609,10 @@ async function onSecondaryAction(): Promise<void> {
 
   &--primary {
     background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+
+    @include theme-light {
+      background: var(--c-brand);
+    }
   }
 
   &:active {
@@ -820,6 +826,10 @@ async function onSecondaryAction(): Promise<void> {
       height: 0.373rem;
     }
     background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+
+    @include theme-light {
+      background: var(--c-brand);
+    }
   }
 
   &:active {

@@ -122,7 +122,7 @@ onMounted(() => {
 
 <template>
   <div ref="homeRootRef" class="home-page">
-    <!-- 0. 顶部栏：POKER + 注册/登录 -->
+    <!-- 0. 顶部栏：POKER + 注册/登录 (временно скрыт)
     <div class="top-bar">
       <div class="top-bar__logo">
         <img class="top-bar__logo-img" src="@/assets/images/img_fish_browser_logo.png" alt="logo" />
@@ -135,6 +135,8 @@ onMounted(() => {
         <button class="top-bar__btn top-bar__btn--login" @click="notifyNotLogin">{{ localized('Login', '登录') }}</button>
       </div>
     </div>
+    -->
+
     <!-- 1. 顶部俱乐部介绍图 -->
     <div class="home-header">
       <div class="home-header__inner">

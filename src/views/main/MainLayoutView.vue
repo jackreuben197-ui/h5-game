@@ -190,7 +190,9 @@ watch(
 <style scoped lang="scss">
 .main-layout {
   position: relative;
-  min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  // 固定高度（border-box）：Telegram guard padding-top 吃进自身高度，
+  // 子层用 height:100% 自动得到「可视高度 − guard」，底部不再被裁到导航栏下。
+  height: var(--app-full-height, var(--app-viewport-height, 100dvh));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -261,9 +263,9 @@ watch(
   position: relative;
   z-index: 2;
   // 统一作为“页面滚动容器”：在 html/body fixed 的场景下也可稳定滚动。
-  // #app 带底部溢出量（--app-bottom-bleed）后高度为 auto，height:100% 失去参照，
-  // 故改用 --app-full-height（由 index.html 按真实视口写入）—— 仍避免 Telegram Mini App 底部被裁到导航栏下。
-  height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  // 父层 .main-layout 已按 --app-full-height 定高，这里回到 dev_light 的 100% 继承，
+  // Telegram guard padding 自动从可用高度中扣除。
+  height: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;

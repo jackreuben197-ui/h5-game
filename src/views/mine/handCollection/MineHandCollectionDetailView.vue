@@ -351,7 +351,7 @@ function onShare(): void {
               <span class="player-name" :class="{ 'name-folded': row.muted }">{{ row.name }}</span>
             </div>
             <div class="move-part">
-              <div>
+              <div class="move-main">
                 <span class="move-tag" :class="`tone-${row.actionTone}`">{{ row.action }}</span>
                 <span class="move-amount">{{ row.amount }}</span>
               </div>
@@ -692,6 +692,11 @@ function onShare(): void {
   .move-amount {
     width: 1.2rem;
   }
+}
+
+.move-main {
+  display: inline-flex;
+  align-items: center;
 }
 
 .seat-tag,

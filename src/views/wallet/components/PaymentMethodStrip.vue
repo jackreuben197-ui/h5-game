@@ -115,7 +115,7 @@ const emit = defineEmits<{
 
   @include theme-light {
     background: #fff;
-    color: var(--c-brand);
+    color: #009d68;
   }
 }
 

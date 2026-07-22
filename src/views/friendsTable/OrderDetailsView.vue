@@ -27,11 +27,25 @@ function formatTime(raw?: string): string {
   return raw.replace('T', ' ').slice(0, 19)
 }
 
+function orderValue(...keys: string[]): string {
+  for (const key of keys) {
+    const value = props.order[key]
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      return String(value)
+    }
+  }
+  return '-'
+}
+
 const rows = computed<Row[]>(() => [
-  { label: t('Wallet_OrderId'),     value: props.order.order_no ?? '-' },
+  { label: t('Wallet_OrderId'), value: props.order.order_no ?? '-' },
   { label: t('Wallet_OrderAmount'), value: String(props.order.gold_num ?? '-') },
+  { label: '手续费', value: orderValue('fee', 'fee_amount', 'service_fee') },
   { label: t('Wallet_OrderPayAmount'), value: String(props.order.amount ?? '-') },
-  { label: t('Wallet_OrderTime'),   value: formatTime(props.order.create_time) },
+  { label: '付款地址', value: orderValue('pay_address', 'from_address') },
+  { label: '收款名称', value: orderValue('name', 'payee_name', 'receive_name') },
+  { label: '收款地', value: orderValue('receive_address', 'to_address', 'dest_address') },
+  { label: t('Wallet_OrderTime'), value: formatTime(props.order.create_time) },
   { label: t('Wallet_OrderStatus'), value: statusLabel(props.order.status) },
 ])
 
@@ -42,20 +56,12 @@ function close(): void {
 
 <template>
   <Teleport to="body">
-    <div
-      class="overlay"
-      :style="{ backgroundImage: `url(${sharpBgUrl})` }"
-      @click.self="close"
-    >
+    <div class="overlay" :style="{ backgroundImage: `url(${sharpBgUrl})` }" @click.self="close">
       <div class="card" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
         <!-- <div class="card__bg" ></div> -->
         <h2 class="card__title">{{ t('Wallet_OrderTitle') }}</h2>
         <div class="card__rows">
-          <div
-            v-for="r in rows"
-            :key="r.label"
-            class="card__row"
-          >
+          <div v-for="r in rows" :key="r.label" class="card__row">
             <span class="card__key">{{ r.label }}</span>
             <span class="card__val">{{ r.value }}</span>
           </div>
@@ -77,6 +83,7 @@ function close(): void {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background: var(--c-overlay);
 }
 
 .overlay::before {
@@ -87,8 +94,7 @@ function close(): void {
   pointer-events: none;
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
-  // background: rgba(0, 0, 0, 0.15);
-  background: rgba(12, 12, 12, 0.60);
+  background: var(--c-overlay);
 }
 
 .card {
@@ -126,11 +132,11 @@ function close(): void {
   inset: 0;
   border-radius: inherit;
   background: rgba(0, 0, 0, 0.28);
-  background: rgba(0, 0, 0, 0.70);
-   box-shadow:
+  background: rgba(0, 0, 0, 0.7);
+  box-shadow:
     0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
     0 0 0.2298rem 0 #000 inset,
-    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.90) inset;
+    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.9) inset;
   backdrop-filter: blur(7.580729961395264px);
   -webkit-backdrop-filter: blur(7.580729961395264px);
   pointer-events: none;
@@ -139,17 +145,25 @@ function close(): void {
 
 .card::before {
   content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 0.0255rem;
-    background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 0.0255rem;
+  background: linear-gradient(
+    180deg,
+    rgba(242, 242, 242, 0.4) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 .card__title,
 .card__rows {

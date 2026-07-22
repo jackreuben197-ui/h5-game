@@ -331,7 +331,7 @@
       html[data-tg-mini-app='1'] #app > * {
         box-sizing: border-box;
         min-height: 100%;
-        padding-top: max(
+        padding-top: min(
           env(safe-area-inset-top),
           calc(var(--tg-content-safe-area-inset-top, 0px) - var(--app-top-padding)),
           calc(var(--tg-safe-area-guard-top, 0px) - var(--app-top-padding))
@@ -844,12 +844,11 @@
             window.__H5_TG_INIT_DATA__ = initDataFromUrl
           }
 
-          if (window.Telegram && window.Telegram.WebApp) {
+          if (window.__H5_TG_MINI_APP__) {
             if (document && document.documentElement) {
               document.documentElement.setAttribute('data-tg-mini-app', '1')
             }
           }
-          console.log('[telegram] __H5_TG_MINI_APP__', window.__H5_TG_MINI_APP__)
         }
         initH5TelegramEnvironment()
         // 再异步加载官方 SDK，避免 head 同步脚本在弱网/不可达场景卡住首屏。

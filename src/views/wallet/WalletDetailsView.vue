@@ -62,7 +62,7 @@ onMounted(async () => {
 
 <template>
   <div class="details-page">
-    <HeaderBack title="明细" extra-padding />
+    <HeaderBack title="钱包" extra-padding />
 
     <div class="details-content">
       <div class="user-card-wrapper">
@@ -238,7 +238,7 @@ onMounted(async () => {
     z-index: 1;
 
     @include theme-light {
-      background: rgba(107, 116, 124, 0.18);
+      background: transparent;
     }
   }
 
@@ -254,8 +254,12 @@ onMounted(async () => {
       rgba(220, 175, 205, 0.4) 50%,
       rgba(240, 205, 225, 0.95) 100%
     );
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
@@ -312,8 +316,7 @@ onMounted(async () => {
   color: #fff;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.16);
-    color: var(--c-text);
+    display: none;
   }
 }
 
@@ -490,8 +493,12 @@ onMounted(async () => {
     border-radius: inherit;
     padding: 0.0169rem;
     background: linear-gradient(139deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0) 100%);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;

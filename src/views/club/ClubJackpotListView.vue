@@ -4,13 +4,9 @@ import { useRouter } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
 import { postOrgClubJackpotTemplateDelApi, postOrgClubJackpotTemplateListApi } from '@/api/org'
 import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
-import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
-import mainBgUrl from '@/assets/images/main_bg.webp'
+import iconDelete from '@/assets/icons/icon_delete.svg'
+import iconEdit from '@/assets/icons/icon_edit.svg'
 import { t } from '@/i18n'
-// 主容器背景图：全页面共用一张底图。
-const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
-}))
 
 interface JackpotTemplateItem {
   id: string
@@ -64,7 +60,10 @@ async function fetchJackpotTemplates(reset = false): Promise<void> {
     })
 
     if (Number(response.code) !== 0) {
-      const message = typeof response.msg === 'string' ? response.msg : t('UIClub_Load') + " Jackpot " + t('UIClub_Fail5')
+      const message =
+        typeof response.msg === 'string'
+          ? response.msg
+          : t('UIClub_Load') + ' Jackpot ' + t('UIClub_Fail5')
       throw new Error(message)
     }
 
@@ -84,7 +83,8 @@ async function fetchJackpotTemplates(reset = false): Promise<void> {
       templates.value = []
       hasMore.value = false
     }
-    const message = error instanceof Error ? error.message : t('UIClub_Load') + " Jackpot " + t('UIClub_Fail5')
+    const message =
+      error instanceof Error ? error.message : t('UIClub_Load') + ' Jackpot ' + t('UIClub_Fail5')
     showFailToast(message)
   } finally {
     if (reset) {
@@ -211,13 +211,8 @@ function goPoolReward(): void {
 </script>
 
 <template>
-  <div
-    ref="pageRef"
-    class="page-shell club-jackpot-page"
-    :style="backgroundStyle"
-    @scroll="onPageScroll"
-  >
-    <HeaderBack :title="'Jackpot'">
+  <div ref="pageRef" class="page-shell club-jackpot-page" @scroll="onPageScroll">
+    <HeaderBack :title="'Jackpot'" :extra-padding="true">
       <template #right>
         <button type="button" class="pool-trigger" aria-label="Pool Reward" @click="goPoolReward">
           <span>{{ t('UIClub_Jackpot3') }}</span>
@@ -252,7 +247,7 @@ function goPoolReward(): void {
             <div class="jp-badge">JP {{ item.jpAmount }}</div>
             <div class="action-row">
               <button type="button" class="action-btn" aria-label="编辑" @click.stop="onEdit(item)">
-                <i class="action-icon" aria-hidden="true">✎</i>
+                <img :src="iconEdit" class="action-icon" alt="" />
                 <span class="action-label">编辑</span>
               </button>
               <button
@@ -261,7 +256,7 @@ function goPoolReward(): void {
                 aria-label="删除"
                 @click.stop="onDelete(item)"
               >
-                <i class="action-icon" aria-hidden="true">✕</i>
+                <img :src="iconDelete" class="action-icon" alt="" />
                 <span class="action-label">删除</span>
               </button>
             </div>
@@ -270,7 +265,7 @@ function goPoolReward(): void {
       </ul>
 
       <div v-else class="jackpot-empty" :class="{ 'jackpot-empty--loading': loading }">
-        <img class="empty-icon" :src="emptyStateIcon" alt="" />
+        <AppSvgIcon name="empty-data" class="empty-icon" />
         <p>{{ loading ? '加载中...' : '暂无数据' }}</p>
       </div>
 
@@ -287,7 +282,7 @@ function goPoolReward(): void {
       <transition name="dialog-fade">
         <div v-if="showDeleteDialog" class="delete-dialog-overlay" @click.self="cancelDelete">
           <div class="delete-dialog-card">
-            <p class="delete-dialog-title">Are you sure you want to delete this game table?</p>
+            <p class="delete-dialog-title">确认要删除这个模板吗？</p>
 
             <div class="delete-dialog-actions">
               <button
@@ -315,10 +310,21 @@ function goPoolReward(): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-jackpot-page {
   position: relative;
   height: 100dvh;
+  background-color: var(--c-page);
+  background-image: url('@/assets/images/main_bg.webp');
   background-size: cover;
+  background-position: center;
+  padding-left: 0;
+  padding-right: 0;
+
+  @include theme-light {
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
 }
 
 :deep(.page-back-header) {
@@ -341,6 +347,11 @@ function goPoolReward(): void {
   gap: 0.0475rem;
   cursor: pointer;
   line-height: 1.2;
+
+  @include theme-light {
+    color: #fff;
+    background: var(--c-brand);
+  }
 }
 
 .trigger-caret {
@@ -388,6 +399,21 @@ function goPoolReward(): void {
   backdrop-filter: blur(4.1px);
   border: 0.0267rem solid rgba(255, 255, 255, 0.96);
   overflow: hidden;
+
+  @include theme-light {
+    background:
+      radial-gradient(
+        70% 110% at 44% 45%,
+        rgba(123, 105, 255, 0.38) 0%,
+        rgba(71, 64, 244, 0.12) 58%,
+        rgba(5, 13, 231, 0) 100%
+      ),
+      rgba(5, 13, 231, 0.6);
+    border-color: #fff;
+    box-shadow:
+      inset 0.04rem 0.04rem 0.14rem rgba(255, 255, 255, 0.32),
+      inset -0.04rem -0.04rem 0.12rem rgba(51, 43, 190, 0.2);
+  }
 }
 
 .card-bg::after {
@@ -395,7 +421,9 @@ function goPoolReward(): void {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  box-shadow: inset 0 0 0.0149rem rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 0 0 0.0149rem rgba(255, 255, 255, 0.5),
+    inset 0 0 0.08rem rgba(255, 255, 255, 0.22);
   pointer-events: none;
 }
 
@@ -415,6 +443,13 @@ function goPoolReward(): void {
   align-items: center;
   justify-content: center;
   z-index: 2;
+
+  @include theme-light {
+    background: linear-gradient(140deg, #cf56ef 2%, #8b3de6 49%, #5737ef 100%);
+    box-shadow:
+      0.0913rem 0.1141rem 0.0913rem rgba(0, 0, 0, 0.25),
+      inset 0.02rem 0.02rem 0.08rem rgba(255, 255, 255, 0.24);
+  }
 
   span {
     font-size: 0.229rem;
@@ -511,6 +546,7 @@ function goPoolReward(): void {
   display: flex;
   align-items: center;
   gap: 0.2025rem;
+  margin-top: 0.1rem;
 }
 
 .action-btn {
@@ -518,7 +554,8 @@ function goPoolReward(): void {
   height: 0.6218rem;
   border-radius: 0.4223rem;
   border: 0.0112rem solid rgba(242, 242, 242, 0.4);
-  background: rgba(165, 165, 165, 0.8);
+  background: rgba(255, 255, 255, 0.2);
+  background-blend-mode: hard-light;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -527,16 +564,15 @@ function goPoolReward(): void {
   gap: 0.01rem;
   cursor: pointer;
   box-shadow:
-    0 0.028rem 0.028rem rgba(0, 0, 0, 0.25),
-    inset 0 0 0.0559rem rgba(0, 0, 0, 0.8),
-    inset 0 0 0.1117rem rgba(242, 242, 242, 0.9);
+    0.0224rem 0.028rem 0.0447rem rgba(0, 0, 0, 0.25),
+    inset 0.0133rem 0.0133rem 0 rgba(255, 255, 255, 0.3),
+    inset -0.0133rem -0.0133rem 0 rgba(255, 255, 255, 0.3);
 }
 
 .action-icon {
-  font-style: normal;
-  font-size: 0.1867rem;
-  color: #fff;
-  line-height: 1;
+  width: 0.2rem;
+  height: 0.2rem;
+  object-fit: contain;
 }
 
 .action-label {
@@ -562,6 +598,10 @@ function goPoolReward(): void {
   width: 1.248rem;
   height: 1.56rem;
   object-fit: contain;
+
+  @include theme-light {
+    color: var(--c-brand);
+  }
 }
 
 .jackpot-empty p {
@@ -569,6 +609,10 @@ function goPoolReward(): void {
   font-size: 0.3734rem;
   color: rgba(225, 234, 248, 0.88);
   text-align: center;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .list-loading-more {
@@ -576,6 +620,10 @@ function goPoolReward(): void {
   text-align: center;
   color: rgba(225, 234, 248, 0.88);
   font-size: 0.32rem;
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 /* Fixed footer */
@@ -602,6 +650,12 @@ function goPoolReward(): void {
     inset 0 0.04rem 0.2rem rgba(255, 255, 255, 0.25),
     0 0.16rem 0.36rem rgba(0, 120, 100, 0.45);
   cursor: pointer;
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 /* ===== 删除确认弹窗 (Figma node-id=1451-5725, 1rem=37.5px) ===== */
@@ -616,6 +670,10 @@ function goPoolReward(): void {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  @include theme-light {
+    background: rgba(12, 12, 12, 0.58);
+  }
 }
 
 /* Card: 317.03×150.06px → 8.454×4.002rem, corner 36.39px → 0.97rem */
@@ -727,6 +785,11 @@ function goPoolReward(): void {
   border: 0.0267rem solid rgba(242, 242, 242, 0.8);
   background: linear-gradient(157.77deg, #05e7ae 7.55%, #027a5c 71.92%);
   backdrop-filter: blur(0.0591rem); // 2.22px
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+  }
 }
 
 /* Fade transition */

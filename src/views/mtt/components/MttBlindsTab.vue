@@ -177,6 +177,8 @@ const blindLevels = computed(() => blindList.value.length)
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .mtt-blinds-tab {
   padding-top: 0.2rem;
 }
@@ -195,6 +197,10 @@ const blindLevels = computed(() => blindList.value.length)
   background: rgba(0, 0, 0, 0.2);
   border-radius: 3.9rem;
   backdrop-filter: blur(0.16px);
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .blinds-stat-label {
@@ -203,6 +209,10 @@ const blindLevels = computed(() => blindList.value.length)
   font-family: 'SF Pro', 'HONOR Sans CN', sans-serif;
   font-weight: 700;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .blinds-stat-value {
@@ -210,6 +220,10 @@ const blindLevels = computed(() => blindList.value.length)
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 700;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 /* ===== 级别列：级别号 + 截止买入/增购标记 ===== */
@@ -225,6 +239,10 @@ const blindLevels = computed(() => blindList.value.length)
   font-size: 0.36rem;
   color: rgba(255, 255, 255, 0.9);
   line-height: 1.4;
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.9);
+  }
 }
 
 /* 标记文案（如 EN "Late Registration"）较长，列又窄：缩小字号并允许换行 */

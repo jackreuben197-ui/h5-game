@@ -82,7 +82,12 @@ onUnmounted(() => {
           <div class="payment-section">
             <!-- QR Code -->
             <div class="qr-container">
-              <img v-if="orderData.usdt_address?.qr_code" :src="orderData.usdt_address.qr_code" alt="QR Code" class="qr-image" />
+              <img
+                v-if="orderData.usdt_address?.qr_code"
+                :src="orderData.usdt_address.qr_code"
+                alt="QR Code"
+                class="qr-image"
+              />
               <div v-else class="qr-placeholder"></div>
             </div>
 
@@ -98,9 +103,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Hint -->
-          <p class="hint">
-            提示：复制上方钱包地址转账完，或使用钱包扫描二维码完成付款
-          </p>
+          <p class="hint">提示：复制上方钱包地址转账完，或使用钱包扫描二维码完成付款</p>
 
           <!-- Actions -->
           <div class="actions">
@@ -127,15 +130,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-image: url('@/assets/images/wallet/bg_sharp.webp');
-
-  @include theme-light {
-    background-color: var(--c-page);
-    background-image: url('@/assets/images/main_bg_light.png');
-  }
+  background: var(--c-overlay);
 }
 
 .overlay::before {
@@ -171,9 +166,9 @@ onUnmounted(() => {
   background-image: url('@/assets/images/wallet/bg_sharp.webp');
 
   @include theme-light {
-    background: #fff;
-    border-color: rgba(0, 0, 0, 0.12);
-    box-shadow: 0 0.12rem 0.36rem rgba(0, 0, 0, 0.14);
+    --c-text: #fff;
+    --c-text-muted: rgba(255, 255, 255, 0.5);
+    background-image: url('@/assets/images/wallet/bg_sharp.webp');
   }
 }
 
@@ -182,21 +177,18 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: rgba(0, 0, 0, 0.70);
+  background: rgba(0, 0, 0, 0.7);
   box-shadow:
     0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
     0 0 0.2298rem 0 #000 inset,
-    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.90) inset;
+    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.9) inset;
   backdrop-filter: blur(7.580729961395264px);
   -webkit-backdrop-filter: blur(7.580729961395264px);
   pointer-events: none;
   z-index: 1;
 
   @include theme-light {
-    background: #fff;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    background: rgba(0, 0, 0, 0.7);
   }
 }
 
@@ -206,9 +198,18 @@ onUnmounted(() => {
   inset: 0;
   border-radius: inherit;
   padding: 0.0255rem;
-  background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  background: linear-gradient(
+    180deg,
+    rgba(242, 242, 242, 0.4) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -236,24 +237,28 @@ onUnmounted(() => {
 .header__title {
   color: var(--c-text);
   text-align: center;
-  font-family: "HONOR Sans CN";
+  font-family: 'HONOR Sans CN';
   font-size: 16px;
   font-weight: 400;
   line-height: 78%;
   letter-spacing: 0.32px;
-  font-feature-settings: 'liga' off, 'clig' off;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
   margin: 0;
 }
 
 .header__info {
   text-align: right;
   color: var(--c-text);
-  font-family: "HONOR Sans CN";
+  font-family: 'HONOR Sans CN';
   font-size: 11px;
   font-weight: 400;
   line-height: 78%;
   letter-spacing: 0.22px;
-  font-feature-settings: 'liga' off, 'clig' off;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
 }
 
 .amount-display {
@@ -272,11 +277,19 @@ onUnmounted(() => {
   inset: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
+  background: linear-gradient(
+    97deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  );
   border-radius: 0;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.12);
+    background: linear-gradient(
+      97deg,
+      rgba(255, 255, 255, 0.1) 21.11%,
+      rgba(230, 230, 230, 0.1) 71.43%
+    );
   }
 }
 
@@ -284,17 +297,19 @@ onUnmounted(() => {
   color: var(--c-text);
   text-align: center;
   text-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
-  font-family: "Keania One", cursive;
+  font-family: 'Keania One', cursive;
   font-size: 29.361px;
   font-weight: 400;
   line-height: 100%;
-  font-feature-settings: 'liga' off, 'clig' off;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
   z-index: 1;
 }
 
 .payment-label {
   color: var(--c-text);
-  font-family: "HONOR Sans CN";
+  font-family: 'HONOR Sans CN';
   font-size: 16px;
   font-weight: 400;
   margin: 0;
@@ -336,18 +351,20 @@ onUnmounted(() => {
   align-items: center;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.12);
+    background: rgba(0, 0, 0, 0.29);
   }
 }
 
 .address-card__title {
   color: var(--c-text);
   text-align: right;
-  font-family: "SF Pro";
+  font-family: 'SF Pro';
   font-size: 10.908px;
   font-weight: 590;
   line-height: 132%;
-  font-feature-settings: 'liga' off, 'clig' off;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
   margin: 0;
   width: 100%;
 }
@@ -359,21 +376,25 @@ onUnmounted(() => {
 
 .address-card__label {
   color: var(--c-text-muted);
-  font-family: "SF Pro";
+  font-family: 'SF Pro';
   font-size: 7px;
   font-weight: 590;
   line-height: 132%;
-  font-feature-settings: 'liga' off, 'clig' off;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
   margin: 0;
 }
 
 .address-card__value {
   color: var(--c-text);
-  font-family: "SF Pro";
+  font-family: 'SF Pro';
   font-size: 7px;
   font-weight: 590;
   line-height: 132%;
-  font-feature-settings: 'liga' off, 'clig' off;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
   word-break: break-all;
   margin: 2px 0 0 0;
 }
@@ -385,8 +406,8 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   border-radius: 30.131px;
-  border: 0.648px solid rgba(242, 242, 242, 0.80);
-  background: linear-gradient(128deg, #55F329 7.55%, #3EAD06 71.92%);
+  border: 0.648px solid rgba(242, 242, 242, 0.8);
+  background: linear-gradient(128deg, #55f329 7.55%, #3ead06 71.92%);
   box-shadow:
     102.058px 69.335px 34.667px 0 rgba(15, 110, 2, 0.01),
     65.447px 44.387px 31.751px 0 rgba(33, 87, 3, 0.04),
@@ -401,9 +422,8 @@ onUnmounted(() => {
   transition: transform 0.1s;
 
   @include theme-light {
-    border-color: transparent;
-    background: var(--c-brand);
-    box-shadow: none;
+    border-color: rgba(242, 242, 242, 0.8);
+    background: linear-gradient(128deg, #55f329 7.55%, #3ead06 71.92%);
   }
 }
 
@@ -414,12 +434,14 @@ onUnmounted(() => {
 .hint {
   color: var(--c-text);
   text-align: center;
-  font-family: "HONOR Sans CN";
+  font-family: 'HONOR Sans CN';
   font-size: 10px;
   font-weight: 400;
   line-height: 78%;
   letter-spacing: 0.2px;
-  font-feature-settings: 'liga' off, 'clig' off;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
   margin: 0;
   padding: 0 10px;
 }
@@ -441,7 +463,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   color: #fff;
-  font-family: "HONOR Sans CN";
+  font-family: 'HONOR Sans CN';
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -457,13 +479,13 @@ onUnmounted(() => {
 .btn--cancel {
   justify-content: center;
   border-radius: 39.59px;
-  background: rgba(0, 0, 0, 0.30);
+  background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(0.0527px);
   color: #fff;
 
   @include theme-light {
-    background: rgba(134, 134, 134, 0.16);
-    color: var(--c-text);
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
   }
 }
 
@@ -471,8 +493,8 @@ onUnmounted(() => {
   justify-content: center;
   gap: 5px;
   border-radius: 39.59px;
-  border: 0.5px solid rgba(242, 242, 242, 0.80);
-  background: linear-gradient(128deg, #05E7AE 7.55%, #027A5C 71.92%);
+  border: 0.5px solid rgba(242, 242, 242, 0.8);
+  background: linear-gradient(128deg, #05e7ae 7.55%, #027a5c 71.92%);
   backdrop-filter: blur(0.1583614945411682px);
 
   @include theme-light {

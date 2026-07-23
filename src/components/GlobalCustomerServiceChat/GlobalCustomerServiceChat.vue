@@ -1772,7 +1772,8 @@ watch(
 }
 
 .chat-overlay {
-  position: fixed;
+  /* Teleport 到 body 后仍绑定稳定的应用外壳，避免键盘改变 fixed viewport。 */
+  position: absolute;
   inset: 0;
   z-index: 200;
   background-size: cover;
@@ -1794,11 +1795,13 @@ watch(
   position: absolute;
   left: 0;
   right: 0;
-  /* 软键盘弹出时整体抬到键盘上方（inset 由宿主 index.html 写入），
-     避免浏览器为露出输入框把整页上顶产生灰色过渡区 */
+  /* 键盘覆盖页面时只抬升客服面板，牌桌与应用外壳尺寸保持不变。 */
   bottom: var(--app-keyboard-inset, 0px);
   height: 15.2267rem;
-  max-height: calc(100dvh - env(safe-area-inset-top) - var(--app-keyboard-inset, 0px));
+  max-height: calc(
+    var(--app-viewport-height, 100vh) - env(safe-area-inset-top) -
+      var(--app-keyboard-inset, 0px)
+  );
   border-radius: 0.86rem 0.86rem 0 0;
   background-size: cover;
   background-position: center;

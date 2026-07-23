@@ -5,7 +5,7 @@
     <title>Newpkr</title>
     <meta
       name="viewport"
-      content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover"
+      content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover,interactive-widget=overlays-content"
     />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -143,7 +143,7 @@
         function syncViewportHeight() {
           // 软键盘弹出期间冻结视口 CSS 变量：Android 键盘会压缩 innerHeight，
           // 若跟着更新 --app-viewport-height / --app-cocos-height，Cocos canvas 会被压扁。
-          if (window.__H5_KEYBOARD_OPEN__) {
+          if (window.__H5_KEYBOARD_OPEN__ || window.__H5_KEYBOARD_CLOSING__) {
             return
           }
           var height = getViewportHeight()
@@ -200,20 +200,23 @@
           }, { passive: true })
         }
 
-        // ---- 通用软键盘适配（所有浏览器，非 Telegram 专属）----
-        // 键盘弹出期间：
-        //  1. 冻结 --app-viewport-height / --app-cocos-height（见 syncViewportHeight 顶部守卫），
-        //     并由 window.__H5_KEYBOARD_OPEN__ 通知 Cocos 侧 refit 逻辑暂停，
-        //     避免 Cocos 按键盘压缩后的视口重算适配（FIXED_HEIGHT 切换 → 画布宽度被压成 1/3）；
-        //  2. H5 输入框（客服聊天等）：把键盘遮挡高度写入 --app-keyboard-inset，
-        //     业务层（chat-sheet 等）用它把输入区抬到键盘上方；同时把浏览器为露出输入框
-        //     做的自动上顶滚动拉回 0，消除"内容和键盘之间的灰色过渡区"；
-        //  3. Cocos EditBox（.cocosEditBox）：不抬升不锁滚动，保持浏览器原生"整体上移"，
-        //     仅冻结适配，收起后恢复 scroll 并强制 refit 一次。
+        // ---- 通用软键盘适配（普通浏览器与 PWA 使用同一套覆盖式行为）----
+        // 牌桌和 H5 外壳始终保留键盘弹出前的逻辑尺寸；键盘只遮盖页面。
+        // Cocos EditBox 聚焦时平移 #GameDiv，H5 客服输入框聚焦时抬升 chat-sheet。
+        // 这样不会触发 FIXED_WIDTH/FIXED_HEIGHT 来回切换，也不会产生可滚动的灰色空白。
         function isTextInput(el) {
           if (!el || !el.tagName) return false
           var tag = el.tagName
-          return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable === true
+          if (tag === 'TEXTAREA' || el.isContentEditable === true) return true
+          if (tag !== 'INPUT') return false
+          var type = String(el.type || 'text').toLowerCase()
+          return type === 'text'
+            || type === 'search'
+            || type === 'email'
+            || type === 'url'
+            || type === 'tel'
+            || type === 'password'
+            || type === 'number'
         }
 
         function isCocosEditBoxInput(el) {
@@ -221,51 +224,212 @@
         }
 
         var keyboardCloseTimer = 0
+        var keyboardRestoreTimers = []
         var keyboardFocusIsCocos = false
+        var keyboardStableHeight = 0
+        var cocosKeyboardOffset = 0
+        var h5KeyboardOffset = 0
 
-        function pinKeyboardViewport() {
-          if (!window.__H5_KEYBOARD_OPEN__ || keyboardFocusIsCocos) return
-          var vv = window.visualViewport
-          if (!vv) return
-          // 键盘遮挡高度 = 布局视口高度 - 可视视口高度（Android 布局视口自缩时为 0）
-          var inset = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop))
-          root.style.setProperty('--app-keyboard-inset', inset + 'px')
-          // 只有当输入框已被 inset 抬进可视区（如 chat-sheet），才撤销浏览器的
-          // 自动上顶（灰色过渡区的来源）；未适配 inset 的输入框保持浏览器原生滚动，
-          // 否则会把正在输入的框压回键盘下面。rect 为布局视口坐标，回滚到 0 后
-          // 可视区即 [0, vv.height]。
-          var active = document.activeElement
-          if (active && isTextInput(active) && typeof active.getBoundingClientRect === 'function') {
-            if (active.getBoundingClientRect().bottom > vv.height + 1) {
-              return
-            }
+        function getCssPixel(name) {
+          if (typeof window.getComputedStyle !== 'function') return 0
+          return toPixelNumber(window.getComputedStyle(root).getPropertyValue(name))
+        }
+
+        function getStableViewportSize() {
+          var canvas = document.getElementById('GameCanvas')
+          var rect = canvas && typeof canvas.getBoundingClientRect === 'function'
+            ? canvas.getBoundingClientRect()
+            : null
+          var width = Math.round(
+            (rect && rect.width)
+              || Number(window.innerWidth)
+              || Number(root.clientWidth)
+              || 0,
+          )
+          var height = Math.round(
+            getCssPixel('--app-cocos-height')
+              || (rect && rect.height)
+              || Number(window.innerHeight)
+              || Number(root.clientHeight)
+              || 0,
+          )
+          return { width: width, height: height }
+        }
+
+        function setKeyboardOffset(name, value) {
+          root.style.setProperty(name, Math.max(0, Math.round(value || 0)) + 'px')
+        }
+
+        function clearKeyboardRestoreTimers() {
+          while (keyboardRestoreTimers.length) {
+            window.clearTimeout(keyboardRestoreTimers.pop())
           }
-          if (window.scrollY !== 0 || vv.offsetTop > 0.5) {
+        }
+
+        function enableOverlayKeyboard() {
+          try {
+            if (window.navigator && window.navigator.virtualKeyboard) {
+              window.navigator.virtualKeyboard.overlaysContent = true
+            }
+          } catch (error) {}
+        }
+
+        // 必须在 input 真正 focus 前启用；Cocos 侧 editing-did-began 也会调用此入口。
+        window.__H5_PREPARE_KEYBOARD__ = enableOverlayKeyboard
+        enableOverlayKeyboard()
+
+        function getKeyboardMetrics() {
+          var stableHeight = keyboardStableHeight || getStableViewportSize().height
+          var visibleTop = 0
+          var visibleBottom = stableHeight
+          var virtualKeyboard = window.navigator && window.navigator.virtualKeyboard
+          var keyboardRect = virtualKeyboard && virtualKeyboard.boundingRect
+
+          if (keyboardRect && Number(keyboardRect.height) > 0) {
+            visibleBottom = Math.min(stableHeight, Math.max(0, Number(keyboardRect.y) || 0))
+          } else if (window.visualViewport) {
+            visibleTop = Math.max(0, Number(window.visualViewport.offsetTop) || 0)
+            visibleBottom = Math.min(
+              stableHeight,
+              visibleTop + Math.max(0, Number(window.visualViewport.height) || 0),
+            )
+          } else if (Number(window.innerHeight) > 0) {
+            visibleBottom = Math.min(stableHeight, Number(window.innerHeight))
+          }
+
+          return {
+            stableHeight: stableHeight,
+            visibleTop: visibleTop,
+            visibleBottom: visibleBottom,
+            inset: Math.max(0, stableHeight - visibleBottom),
+          }
+        }
+
+        function resetBrowserScroll() {
+          if (window.scrollX !== 0 || window.scrollY !== 0) {
             window.scrollTo(0, 0)
+          }
+        }
+
+        function updateKeyboardLayout() {
+          if (!window.__H5_KEYBOARD_OPEN__) return
+          var metrics = getKeyboardMetrics()
+          var active = document.activeElement
+          setKeyboardOffset('--app-keyboard-inset', metrics.inset)
+
+          if (keyboardFocusIsCocos) {
+            // rect 已包含上一次的父容器 transform，先加回旧 offset 得到未平移位置。
+            var cocosRect = active && typeof active.getBoundingClientRect === 'function'
+              ? active.getBoundingClientRect()
+              : null
+            var originalBottom = cocosRect ? cocosRect.bottom + cocosKeyboardOffset : 0
+            cocosKeyboardOffset = originalBottom > 0
+              ? Math.max(0, originalBottom - metrics.visibleBottom + 12)
+              : Math.max(0, metrics.inset)
+            setKeyboardOffset('--app-cocos-keyboard-offset', cocosKeyboardOffset)
+            setKeyboardOffset('--app-h5-keyboard-offset', 0)
+          } else if (active && active.closest && active.closest('.chat-sheet')) {
+            // 客服面板自身使用 --app-keyboard-inset 抬升，不再平移整个 H5。
+            h5KeyboardOffset = 0
+            setKeyboardOffset('--app-h5-keyboard-offset', 0)
+          } else {
+            // 其他 H5 文本框只在被遮挡时平移外壳，行为等同浏览器正常的输入框上顶。
+            var activeRect = active && typeof active.getBoundingClientRect === 'function'
+              ? active.getBoundingClientRect()
+              : null
+            var originalH5Bottom = activeRect ? activeRect.bottom + h5KeyboardOffset : 0
+            h5KeyboardOffset = originalH5Bottom > 0
+              ? Math.max(0, originalH5Bottom - metrics.visibleBottom + 12)
+              : 0
+            setKeyboardOffset('--app-h5-keyboard-offset', h5KeyboardOffset)
+            setKeyboardOffset('--app-cocos-keyboard-offset', 0)
+          }
+
+          // Cocos 2.4.8 Android EditBox 会在 800ms 后主动 scrollIntoView。
+          // 持续把页面滚动归零，真正的可见性由上面的容器平移保证。
+          resetBrowserScroll()
+          window.requestAnimationFrame(resetBrowserScroll)
+        }
+
+        function rememberStableViewport() {
+          var size = getStableViewportSize()
+          if (size.height > 0) keyboardStableHeight = size.height
+          if (keyboardStableHeight > 0) {
+            root.style.setProperty('--app-viewport-height', keyboardStableHeight + 'px')
           }
         }
 
         function openKeyboardFix(target) {
           window.clearTimeout(keyboardCloseTimer)
+          clearKeyboardRestoreTimers()
+          enableOverlayKeyboard()
+          if (!window.__H5_KEYBOARD_OPEN__) {
+            rememberStableViewport()
+          }
+          window.__H5_KEYBOARD_CLOSING__ = false
           keyboardFocusIsCocos = isCocosEditBoxInput(target)
           window.__H5_KEYBOARD_OPEN__ = true
           root.setAttribute('data-keyboard-open', '1')
-          pinKeyboardViewport()
+          root.setAttribute('data-keyboard-owner', keyboardFocusIsCocos ? 'cocos' : 'h5')
+          updateKeyboardLayout()
+          window.requestAnimationFrame(updateKeyboardLayout)
+          keyboardRestoreTimers.push(window.setTimeout(updateKeyboardLayout, 80))
+          keyboardRestoreTimers.push(window.setTimeout(updateKeyboardLayout, 250))
+          keyboardRestoreTimers.push(window.setTimeout(updateKeyboardLayout, 850))
+        }
+
+        function viewportHasRecovered() {
+          if (!keyboardStableHeight) return true
+          var currentHeight = Math.max(
+            Number(window.innerHeight) || 0,
+            Number(window.visualViewport && window.visualViewport.height) || 0,
+          )
+          return currentHeight >= keyboardStableHeight - 48
+        }
+
+        function finishKeyboardRestore(force) {
+          if (window.__H5_KEYBOARD_OPEN__) return
+          if (!force && !viewportHasRecovered()) return
+          window.__H5_KEYBOARD_CLOSING__ = false
+          keyboardStableHeight = 0
+          lastViewportSignature = ''
+          syncViewportHeight()
+          syncStandaloneSafeArea()
+          resetBrowserScroll()
+          if (typeof window.__H5_FORCE_COCOS_REFIT__ === 'function') {
+            window.__H5_FORCE_COCOS_REFIT__()
+          }
+          window.dispatchEvent(new Event('h5:viewport-stable'))
         }
 
         function closeKeyboardFix() {
           window.__H5_KEYBOARD_OPEN__ = false
+          window.__H5_KEYBOARD_CLOSING__ = true
           keyboardFocusIsCocos = false
+          cocosKeyboardOffset = 0
+          h5KeyboardOffset = 0
           root.removeAttribute('data-keyboard-open')
-          root.style.setProperty('--app-keyboard-inset', '0px')
-          window.scrollTo(0, 0)
-          // 解除冻结后强制重算（签名相同会被跳过，先清空）
-          lastViewportSignature = ''
-          syncViewportHeight()
-          if (typeof window.__H5_FORCE_COCOS_REFIT__ === 'function') {
-            window.__H5_FORCE_COCOS_REFIT__()
-          }
+          root.removeAttribute('data-keyboard-owner')
+          setKeyboardOffset('--app-keyboard-inset', 0)
+          setKeyboardOffset('--app-cocos-keyboard-offset', 0)
+          setKeyboardOffset('--app-h5-keyboard-offset', 0)
+          resetBrowserScroll()
+          clearKeyboardRestoreTimers()
+          ;[50, 180, 350, 700].forEach(function (delay) {
+            keyboardRestoreTimers.push(window.setTimeout(function () {
+              finishKeyboardRestore(false)
+            }, delay))
+          })
+          keyboardRestoreTimers.push(window.setTimeout(function () {
+            finishKeyboardRestore(true)
+          }, 1200))
         }
+
+        document.addEventListener('pointerdown', function (event) {
+          if (isTextInput(event.target)) {
+            enableOverlayKeyboard()
+          }
+        }, true)
 
         document.addEventListener('focusin', function (event) {
           if (isTextInput(event.target)) {
@@ -275,19 +439,34 @@
 
         document.addEventListener('focusout', function (event) {
           if (!isTextInput(event.target)) return
-          // 延迟判定：输入框之间切换焦点不算键盘收起
           window.clearTimeout(keyboardCloseTimer)
           keyboardCloseTimer = window.setTimeout(function () {
-            if (isTextInput(document.activeElement)) return
+            if (isTextInput(document.activeElement)) {
+              openKeyboardFix(document.activeElement)
+              return
+            }
             closeKeyboardFix()
           }, 200)
         })
 
-        if (window.visualViewport) {
-          window.visualViewport.addEventListener('resize', pinKeyboardViewport, { passive: true })
-          window.visualViewport.addEventListener('scroll', pinKeyboardViewport, { passive: true })
+        function bindKeyboardGeometryEvents() {
+          if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', updateKeyboardLayout, { passive: true })
+            window.visualViewport.addEventListener('scroll', updateKeyboardLayout, { passive: true })
+          }
+          var virtualKeyboard = window.navigator && window.navigator.virtualKeyboard
+          if (virtualKeyboard && virtualKeyboard.addEventListener) {
+            virtualKeyboard.addEventListener('geometrychange', updateKeyboardLayout)
+          }
+          window.addEventListener('resize', updateKeyboardLayout, { passive: true })
+          window.addEventListener('scroll', function () {
+            if (!window.__H5_KEYBOARD_OPEN__) return
+            resetBrowserScroll()
+            updateKeyboardLayout()
+          }, { passive: true })
         }
-        window.addEventListener('scroll', pinKeyboardViewport, { passive: true })
+
+        bindKeyboardGeometryEvents()
       })()
     </script>
 
@@ -305,8 +484,10 @@
         --app-bottom-bleed: 0px;
         --app-content-safe-area-top: env(safe-area-inset-top);
         --app-visual-safe-area-top: 0px;
-        /* 软键盘遮挡高度，键盘弹出时由 JS 写入，业务层用它抬升输入区 */
+        /* 软键盘只改变下面三个位移值，不改变 Cocos 的逻辑画布尺寸。 */
         --app-keyboard-inset: 0px;
+        --app-cocos-keyboard-offset: 0px;
+        --app-h5-keyboard-offset: 0px;
       }
 
       @supports (height: 100dvh) {
@@ -330,6 +511,7 @@
         min-height: 100%;
         min-height: -webkit-fill-available;
         overflow: hidden;
+        overscroll-behavior: none;
         background-color: var(--h5-main-bg-color);
         background-image: var(--h5-main-bg-image, none);
         background-repeat: no-repeat;
@@ -349,7 +531,12 @@
         min-height: 100%;
         min-height: -webkit-fill-available;
         overflow: hidden;
-        position: relative;
+        overscroll-behavior: none;
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: auto;
+        left: 0;
         background-color: #000;
         background-image: var(--h5-main-bg-image, none);
         background-repeat: no-repeat;
@@ -388,6 +575,8 @@
         height: var(--app-cocos-height);
         overflow: hidden;
         z-index: 1;
+        transform: translate3d(0, calc(-1 * var(--app-cocos-keyboard-offset)), 0);
+        will-change: transform;
       }
 
       /* Cocos 牌桌画布层：在最底层 */
@@ -427,6 +616,11 @@
         background-repeat: no-repeat;
         background-position: center top; /* 确保背景图从绝对顶部开始对齐 */
         background-size: cover;          /* 或者设置 100% 100% 铺满 */
+      }
+
+      /* 普通 H5 输入框仅在会被键盘遮挡时平移；客服面板单独使用 keyboard inset。 */
+      html[data-keyboard-open='1'][data-keyboard-owner='h5'] #app {
+        transform: translate3d(0, calc(-1 * var(--app-h5-keyboard-offset)), 0);
       }
 
       html[data-ios-standalone='1'] #app {
@@ -740,10 +934,12 @@
           try {
             canvas = canvas || document.getElementById('GameCanvas')
             if (!window.cc || !cc.view || !canvas) return false
-            var vv = window.visualViewport
-            var doc = document.documentElement || {}
-            var w = Math.round((vv && vv.width) || window.innerWidth || doc.clientWidth || canvas.clientWidth || 0)
-            var h = Math.round(heightOverride || (vv && vv.height) || window.innerHeight || doc.clientHeight || canvas.clientHeight || 0)
+            var rect = typeof canvas.getBoundingClientRect === 'function'
+              ? canvas.getBoundingClientRect()
+              : null
+            // 必须取稳定的 Canvas CSS 尺寸；visualViewport.height 是键盘后的可见高度。
+            var w = Math.round((rect && rect.width) || canvas.clientWidth || window.innerWidth || 0)
+            var h = Math.round(heightOverride || (rect && rect.height) || canvas.clientHeight || window.innerHeight || 0)
             if (!w || !h) return false
 
             var view = cc.view
@@ -779,7 +975,7 @@
          * closeKeyboardFix 的 __H5_FORCE_COCOS_REFIT__ 恢复。
          */
         function isSoftKeyboardOpen() {
-          if (window.__H5_KEYBOARD_OPEN__ === true) return true
+          if (window.__H5_KEYBOARD_OPEN__ === true || window.__H5_KEYBOARD_CLOSING__ === true) return true
           var el = document.activeElement
           return !!(el && el.tagName && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA'))
         }
@@ -816,7 +1012,7 @@
           }
           var run = function () {
             // 键盘弹出期间冻结适配，收起时由 __H5_FORCE_COCOS_REFIT__ 恢复
-            if (window.__H5_KEYBOARD_OPEN__) return
+            if (window.__H5_KEYBOARD_OPEN__ || window.__H5_KEYBOARD_CLOSING__) return
             refitFromCanvasRect()
           }
           var schedule = function () {
@@ -1070,6 +1266,8 @@
     <script>
       ;(function () {
         function syncOrientationState() {
+          // 软键盘会暂时把可见视口变成“横向比例”，不能据此显示横屏遮罩。
+          if (window.__H5_KEYBOARD_OPEN__ || window.__H5_KEYBOARD_CLOSING__) return
           var isLandscape = window.matchMedia
             ? window.matchMedia('(orientation: landscape)').matches
             : window.innerWidth > window.innerHeight
@@ -1101,6 +1299,7 @@
         syncOrientationState()
         window.addEventListener('resize', syncOrientationState, { passive: true })
         window.addEventListener('orientationchange', syncOrientationState, { passive: true })
+        window.addEventListener('h5:viewport-stable', syncOrientationState, { passive: true })
         tryLockPortrait()
       })()
     </script>

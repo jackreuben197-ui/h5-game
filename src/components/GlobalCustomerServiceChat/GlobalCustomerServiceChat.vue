@@ -1794,9 +1794,11 @@ watch(
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
+  /* 软键盘弹出时整体抬到键盘上方（inset 由宿主 index.html 写入），
+     避免浏览器为露出输入框把整页上顶产生灰色过渡区 */
+  bottom: var(--app-keyboard-inset, 0px);
   height: 15.2267rem;
-  max-height: calc(100dvh - env(safe-area-inset-top));
+  max-height: calc(100dvh - env(safe-area-inset-top) - var(--app-keyboard-inset, 0px));
   border-radius: 0.86rem 0.86rem 0 0;
   background-size: cover;
   background-position: center;

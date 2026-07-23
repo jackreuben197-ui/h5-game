@@ -283,22 +283,33 @@
         height: var(--app-full-height);
       }
 
-      /* Cocos 牌桌画布层：在最底层 */
-      #GameCanvas {
+      #GameDiv {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
-        bottom: auto;
-        width: 100% !important;
-        height: 100vh !important;
-        height: 100dvh !important;
-        /* Keep canvas sizing independent from the H5 background bleed to avoid Cocos scale distortion. */
-        height: var(--app-cocos-height) !important;
-        display: block;
+        width: 100%;
+        height: var(--app-cocos-height);
+        overflow: hidden;
         z-index: 1;
       }
 
+      /* Cocos 牌桌画布层：在最底层 */
+      #GameCanvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: auto;
+        bottom: auto;
+        width: 100% !important;
+        height: 100% !important;
+        /* Keep canvas sizing independent from the H5 background bleed to avoid Cocos scale distortion. */
+        height: var(--app-cocos-height) !important;
+        display: block;
+        z-index: 0;
+      }
+
+      html[data-ios-standalone='1'] #GameDiv,
       html[data-ios-standalone='1'] #GameCanvas {
         height: var(--app-cocos-height) !important;
       }
@@ -371,6 +382,7 @@
       }
 
       html[data-orientation-lock='1'] #GameCanvas,
+      html[data-orientation-lock='1'] #GameDiv,
       html[data-orientation-lock='1'] #drawCanvas,
       html[data-orientation-lock='1'] #splash,
       html[data-orientation-lock='1'] #app {
@@ -382,9 +394,15 @@
   </head>
   <body>
     <!-- Cocos 运行节点（与 build-templates/web-mobile 对齐） -->
-    <canvas id="GameCanvas" oncontextmenu="event.preventDefault()" tabindex="0"></canvas>
+    <div id="GameDiv">
+      <canvas id="GameCanvas" oncontextmenu="event.preventDefault()" tabindex="0"></canvas>
+      <div id="splash">
+        <div class="progress-bar stripes">
+          <span></span>
+        </div>
+      </div>
+    </div>
     <canvas id="drawCanvas"></canvas>
-    <div id="splash"></div>
     <input id="OpenImageFile" type="file" accept=".png,.jpg,.jpeg" style="visibility: hidden" />
 
     <!-- H5 挂载节点 -->
@@ -900,99 +918,6 @@
         window.addEventListener('resize', syncOrientationState, { passive: true })
         window.addEventListener('orientationchange', syncOrientationState, { passive: true })
         tryLockPortrait()
-      })()
-    </script>
-    <script>
-      ;(function () {
-        function isIosStandalone() {
-          var nav = window.navigator || {}
-          var ua = String(nav.userAgent || '')
-          var isIos = /iPad|iPhone|iPod/.test(ua)
-            || (nav.platform === 'MacIntel' && Number(nav.maxTouchPoints) > 1)
-          var isStandalone = nav.standalone === true
-            || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
-          return isIos && isStandalone
-        }
-
-        if (!isIosStandalone()) {
-          return
-        }
-
-        var retryCount = 0
-        var timer = 0
-
-        function getCanvasSize(canvas) {
-          var rect = typeof canvas.getBoundingClientRect === 'function'
-            ? canvas.getBoundingClientRect()
-            : null
-          var width = Math.round((rect && rect.width) || canvas.clientWidth || window.innerWidth || 0)
-          var height = Math.round((rect && rect.height) || canvas.clientHeight || window.screen.height || window.innerHeight || 0)
-          return { width: width, height: height }
-        }
-
-        function syncCocosFrameToCanvas() {
-          var canvas = document.getElementById('GameCanvas')
-          if (!canvas || !window.cc || !cc.view) {
-            return false
-          }
-
-          var size = getCanvasSize(canvas)
-          if (!size.width || !size.height) {
-            return false
-          }
-
-          try {
-            if (typeof cc.view.setFrameSize === 'function') {
-              cc.view.setFrameSize(size.width, size.height)
-            } else if (cc.view._frameSize) {
-              cc.view._frameSize.width = size.width
-              cc.view._frameSize.height = size.height
-            }
-
-            if (cc.Canvas && cc.Canvas.instance) {
-              var design = cc.Canvas.instance.designResolution
-              if (design && design.width && design.height) {
-                var policy = size.width / size.height > 0.75
-                  ? cc.ResolutionPolicy.FIXED_HEIGHT
-                  : cc.ResolutionPolicy.FIXED_WIDTH
-                cc.view.setDesignResolutionSize(design.width, design.height, policy)
-              }
-            }
-
-            if (typeof cc.view.emit === 'function') {
-              cc.view.emit('canvas-resize')
-            }
-            return true
-          } catch (error) {
-            return false
-          }
-        }
-
-        function scheduleSync() {
-          window.clearTimeout(timer)
-          timer = window.setTimeout(function () {
-            if (syncCocosFrameToCanvas()) {
-              retryCount = 0
-              return
-            }
-            retryCount += 1
-            if (retryCount < 60) {
-              scheduleSync()
-            }
-          }, 100)
-        }
-
-        window.addEventListener('load', scheduleSync, { passive: true })
-        window.addEventListener('resize', scheduleSync, { passive: true })
-        window.addEventListener('orientationchange', scheduleSync, { passive: true })
-        document.addEventListener('visibilitychange', scheduleSync, { passive: true })
-        if (window.visualViewport && window.visualViewport.addEventListener) {
-          window.visualViewport.addEventListener('resize', scheduleSync, { passive: true })
-        }
-
-        scheduleSync()
-        window.setTimeout(scheduleSync, 500)
-        window.setTimeout(scheduleSync, 1500)
       })()
     </script>
 

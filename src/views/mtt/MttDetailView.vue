@@ -479,17 +479,23 @@ async function handleEnterTable(rid: number): Promise<void> {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .filter-bar {
   margin: 0.3rem;
 }
 .mtt-detail-page {
   position: relative;
   height: 100dvh;
-  color: #fff;
+  color: var(--c-text);
   background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
+  @include theme-light {
+    background-image: url('@/assets/images/main_bg_light.webp');
+  }
 }
 
 .bg-overlay {
@@ -499,6 +505,10 @@ async function handleEnterTable(rid: number): Promise<void> {
   background: radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
     radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
     radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
+
+  @include theme-light {
+    background: none;
+  }
 }
 
 /* ===== 内容滚动区 ===== */

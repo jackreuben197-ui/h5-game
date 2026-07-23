@@ -42,6 +42,8 @@ withDefaults(defineProps<Props>(), {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .tile {
   display: flex;
   flex-direction: column;
@@ -55,6 +57,10 @@ withDefaults(defineProps<Props>(), {
   min-width: 0;
   cursor: pointer;
   overflow: hidden;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+  }
 }
 
 .tile--active {
@@ -70,11 +76,20 @@ withDefaults(defineProps<Props>(), {
   background-blend-mode: soft-light;
   border: 0.134px solid rgba(242, 242, 242, 0.3);
   box-shadow: 0.9px 1.1px 1.8px rgba(0, 0, 0, 0.25);
+
+  @include theme-light {
+    background: var(--c-brand);
+    border-color: rgba(242, 242, 242, 0.3);
+  }
 }
 
 .tile--custom {
   background: rgba(0, 0, 0, 0.12);
   justify-content: center;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+  }
 }
 
 .tile__head {
@@ -100,6 +115,16 @@ withDefaults(defineProps<Props>(), {
   line-height: 1.4;
   white-space: nowrap;
   min-width: 0;
+
+  @include theme-light {
+    color: #000;
+  }
+}
+
+.tile--active .tile__amount {
+  @include theme-light {
+    color: #fff;
+  }
 }
 
 .tile__chip {
@@ -112,5 +137,9 @@ withDefaults(defineProps<Props>(), {
   font-size: 0.29rem;
   color: #f9f9f9;
   line-height: 1.4;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 </style>

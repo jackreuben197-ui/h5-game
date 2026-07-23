@@ -137,7 +137,7 @@ onMounted(() => {
         <button class="top-bar__btn top-bar__btn--login" @click="notifyNotLogin">{{ localized('Login', '登录') }}</button>
       </div>
     </div>
-    <!-- 1. 顶部俱乐部介绍图 -->
+    <!-- 1. 顶部俱乐部介绍轮播图 -->
     <div class="home-header">
       <div class="home-header__inner">
         <HomeBannerSwiper :images="displayBannerImages" />
@@ -342,6 +342,8 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .home-page {
   display: flex;
   flex-direction: column;
@@ -689,6 +691,7 @@ onMounted(() => {
   font-size: 0.28rem;
   cursor: pointer;
   white-space: nowrap;
+
 }
 
 .club-divider {
@@ -717,7 +720,14 @@ onMounted(() => {
 .contact-icon {
   width: 0.8rem;
   height: 0.8rem;
-  object-fit: contain;
+  border-radius: 50%;
+  box-sizing: border-box;
+  color: #0ca7ef;
+  background: #f7f8fa;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .contact-label {

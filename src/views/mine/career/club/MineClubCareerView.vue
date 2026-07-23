@@ -4,13 +4,8 @@ import { showFailToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { postStatsUserStatsAllApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import iconData from '@/assets/icons/icon_data.svg'
-import iconRecord from '@/assets/icons/icon_record.svg'
-import iconMtt from '@/assets/icons/icon_mtt.svg'
-import iconCowboy from '@/assets/icons/icon_cowboy.svg'
-import iconMahjong from '@/assets/icons/icon_mahjong.svg'
-import iconFilter from '@/assets/icons/icon_filters.png'
-import iconDropdown from '@/assets/icons/icon_dropdown.png'
+import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
+import CareerSvgIcon from '../../components/CareerSvgIcon.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
 import { formatUC } from '@/utils/roomVisibility'
@@ -27,9 +22,10 @@ const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
 
-// 主容器背景图：全页面共用一张底图。
+// 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--career-bg-dark': `url(${mainBgUrl})`,
+  '--career-bg-light': `url(${mainBgLightUrl})`,
 }))
 interface TabItem {
   label: string
@@ -112,10 +108,12 @@ interface CareerMetric {
   value: string
 }
 
+type CareerMenuIconName = 'record' | 'mtt' | 'cowboy' | 'mahjong' | 'data'
+
 interface CareerMenuItem {
   key: string
   label: string
-  icon: string
+  icon: CareerMenuIconName
   route?: string
 }
 
@@ -130,14 +128,28 @@ const menuList: CareerMenuItem[] = [
   {
     key: 'record',
     label: t('UICareerRecord'),
-    icon: iconRecord,
+    icon: 'record',
     route: '/mine/career/club/record',
   },
-  { key: 'mtt', label: 'MTT', icon: iconMtt, route: '/mine/career/club/mtt' },
-  // { key: 'cowboy', label: t('UINiuZaiRule_title'), icon: iconCowboy, route: '/mine/career/club/cowboy' },
-  // { key: 'mahjong', label: t('Mahjong_Name'), icon: iconMahjong, route: '/mine/career/club/mahjong' },
-  // { key: 'mahjong-mtt', label: t('Mahjong_Name') + "MTT" + t('UICareerRecord'), icon: iconMahjong },
-  { key: 'data', label: t('adaptation10124'), icon: iconData, route: '/mine/career/club/data' },
+  { key: 'mtt', label: 'MTT', icon: 'mtt', route: '/mine/career/club/mtt' },
+  // {
+  //   key: 'cowboy',
+  //   label: t('UINiuZaiRule_title'),
+  //   icon: 'cowboy',
+  //   route: '/mine/career/club/cowboy',
+  // },
+  // {
+  //   key: 'mahjong',
+  //   label: t('Mahjong_Name'),
+  //   icon: 'mahjong',
+  //   route: '/mine/career/club/mahjong',
+  // },
+  // {
+  //   key: 'mahjong-mtt',
+  //   label: t('Mahjong_Name') + 'MTT' + t('UICareerRecord'),
+  //   icon: 'mahjong',
+  // },
+  { key: 'data', label: t('adaptation10124'), icon: 'data', route: '/mine/career/club/data' },
 ]
 
 function selectGameTab(tab: string): void {
@@ -361,17 +373,24 @@ onMounted(() => {
         <div class="action-wrap">
           <TopActionButton
             :name="selectedClubLabel"
-            :icon="iconFilter"
             icon-alt="wallet"
             class="club-action-btn"
             @click.stop="toggleClubDropdown"
-          />
+          >
+            <template #icon>
+              <CareerSvgIcon name="filter" class="filter-icon" />
+            </template>
+          </TopActionButton>
           <TopActionButton
             :name="currencyTypes[selectedCurrencyIndex].label"
-            :icon="iconDropdown"
             icon-alt="service"
+            class="currency-action-btn"
             @click.stop="toggleCurrencyDropdown"
-          />
+          >
+            <template #icon>
+              <CareerSvgIcon name="dropdown" class="dropdown-icon" />
+            </template>
+          </TopActionButton>
           <div v-if="showClubDropdown" class="club-dropdown">
             <button
               v-for="(club, index) in clubs"
@@ -447,11 +466,11 @@ onMounted(() => {
         >
           <div class="menu-left">
             <div class="icon-box">
-              <img :src="item.icon" :alt="item.label" />
+              <CareerSvgIcon :name="item.icon" :title="item.label" class="menu-icon" />
             </div>
             <span class="menu-label">{{ item.label }}</span>
           </div>
-          <span class="menu-arrow">›</span>
+          <CareerSvgIcon name="arrow-right" class="menu-arrow" />
         </button>
       </section>
     </div>
@@ -459,14 +478,23 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .career-page {
   position: relative;
   height: 100dvh;
   padding: 0 0 0.8rem;
   color: #f9f9f9;
+  background-image: var(--career-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: var(--c-text);
+    background-color: var(--c-page);
+    background-image: var(--career-bg-light);
+  }
 }
 
 // .page-top {
@@ -528,6 +556,28 @@ onMounted(() => {
   gap: 0.26rem;
 }
 
+.filter-icon {
+  color: var(--c-brand);
+}
+
+.dropdown-icon {
+  color: #fff;
+
+  @include theme-light {
+    color: var(--c-brand);
+  }
+}
+
+.club-action-btn :deep(.action-icon--slot) {
+  width: 0.613rem;
+  height: 0.613rem;
+}
+
+.currency-action-btn :deep(.action-icon--slot) {
+  width: 0.427rem;
+  height: 0.427rem;
+}
+
 // 让俱乐部按钮中的长俱乐部名以省略号显示，避免溢出。
 .club-action-btn :deep(.action-label) {
   max-width: 0.96rem;
@@ -547,6 +597,11 @@ onMounted(() => {
   border: 0.02rem solid rgba(255, 255, 255, 0.16);
   overflow: hidden;
   z-index: 5;
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.37);
+    border-color: transparent;
+  }
 }
 
 .club-option {
@@ -600,6 +655,11 @@ onMounted(() => {
   border: 0.02rem solid rgba(255, 255, 255, 0.16);
   overflow: hidden;
   z-index: 5;
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.37);
+    border-color: transparent;
+  }
 }
 
 .content-wrap {
@@ -621,9 +681,18 @@ onMounted(() => {
   line-height: 1.1;
   padding: 0.06rem 0;
 
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.7);
+  }
+
   &.active {
     color: #fff;
     border-bottom: 0.03rem solid rgba(255, 255, 255, 0.92);
+
+    @include theme-light {
+      color: var(--c-brand);
+      border-bottom-color: var(--c-brand);
+    }
   }
 }
 
@@ -633,6 +702,11 @@ onMounted(() => {
   padding: 0.34rem 0.6rem 0.32rem;
   background: rgba(42, 26, 43, 0.34);
   backdrop-filter: blur(0.03rem);
+
+  @include theme-light {
+    background: var(--c-surface);
+    backdrop-filter: none;
+  }
 }
 
 .date-tabs {
@@ -642,6 +716,10 @@ onMounted(() => {
   padding: 0;
   border-radius: 0.68rem;
   background: rgba(255, 255, 255, 0.2);
+
+  @include theme-light {
+    background: #e3e3e3;
+  }
 }
 
 .date-tab {
@@ -653,10 +731,18 @@ onMounted(() => {
   font-size: 0.42rem;
   padding: 0.36rem 0;
 
+  @include theme-light {
+    color: var(--c-text);
+  }
+
   &.active {
     background: rgba(255, 255, 255, 0.16);
     font-weight: 700;
     opacity: 1;
+
+    @include theme-light {
+      background: #cfcfcf;
+    }
   }
 }
 
@@ -683,11 +769,19 @@ onMounted(() => {
     line-height: 1.05;
     font-weight: 400;
     color: #fff;
+
+    @include theme-light {
+      color: var(--c-text);
+    }
   }
 
   .label {
     font-size: 0.221rem;
     color: rgba(255, 255, 255, 0.58);
+
+    @include theme-light {
+      color: var(--c-text-muted);
+    }
   }
 }
 
@@ -697,6 +791,11 @@ onMounted(() => {
   background: rgba(31, 24, 46, 0.34);
   backdrop-filter: blur(0.03rem);
   padding: 0.2rem 0.4rem;
+
+  @include theme-light {
+    background: var(--c-surface);
+    backdrop-filter: none;
+  }
 }
 
 .menu-item {
@@ -710,6 +809,11 @@ onMounted(() => {
   padding: 0.18rem 0.1rem;
   margin: 0.05rem 0;
   border-bottom: 0.02rem solid rgba(255, 255, 255, 0.16);
+
+  @include theme-light {
+    color: var(--c-text);
+    border-bottom-color: rgba(0, 0, 0, 0.1);
+  }
 
   &:last-child {
     border-bottom: 0;
@@ -728,11 +832,14 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
 
-  img {
-    width: 1rem;
-    height: 1rem;
-  }
+.menu-icon {
+  display: block;
+  width: 0.533rem;
+  height: 0.533rem;
+  color: var(--c-brand);
+  filter: drop-shadow(0 0 0.12rem rgba(var(--c-brand-rgb), 0.22));
 }
 
 .menu-label {
@@ -741,8 +848,13 @@ onMounted(() => {
 }
 
 .menu-arrow {
-  font-size: 0.7rem;
-  line-height: 1;
+  display: block;
+  width: 0.27rem;
+  height: 0.48rem;
   color: rgba(255, 255, 255, 0.88);
+
+  @include theme-light {
+    color: #888;
+  }
 }
 </style>

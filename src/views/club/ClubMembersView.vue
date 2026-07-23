@@ -9,6 +9,7 @@ import {
   postOrgClubCreditBalanceApi,
   postOrgClubCreditLimitApi,
   postOrgClubGoldApi,
+  postOrgClubSearchByIdApi,
   postOrgMemberListApi,
 } from '@/api/org'
 import { postGuildGiveRecycleApi } from '@/api/order'
@@ -19,6 +20,7 @@ import type {
   OrgMemberListRecord,
 } from '@/api/models/org'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import DateRangePicker from '@/components/DateRangePicker/DateRangePicker.vue'
 import imgAvatar from '@/assets/images/default_avatar_for_club.png'
 import imgDiamond from '@/assets/icons/ic_diamond_shadow.png'
 import imgChips from '@/assets/icons/icon_chips.png'
@@ -28,11 +30,16 @@ import icSearch from '@/assets/icons/ic_search.svg'
 import icUserShadow from '@/assets/icons/ic_user_shadow.png'
 import icJackpotChecked from '@/assets/icons/ic_jackpot_checked.svg'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useGameStore } from '@/stores/game'
+import { USER_STORE_CLUB_MANAGE } from '@/utils/indexedDB'
+import { toPlain, userCache } from '@/utils/userCache'
 import { t } from '@/i18n'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--club-members-bg-dark': `url(${mainBgUrl})`,
+  '--club-members-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 type TabKey = 'account' | 'record'
@@ -102,12 +109,18 @@ interface RecordTypeOption {
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
+const gameStore = useGameStore()
 const activeTab = ref<TabKey>('account')
 const searchKeyword = ref('')
 const activeRange = ref<RecordRangeKey>('today')
 const selectedRecordType = ref('all')
 const showTypeMenu = ref(false)
-const pageRef = ref<HTMLElement | null>(null)
+const recordOrderType = ref<1 | 2>(2)
+const isDatePickerVisible = ref(false)
+const customEndDate = ref(startOfDay(new Date()))
+const customStartDate = ref(startOfDay(addDays(customEndDate.value, -6)))
+const minSelectableDate = startOfDay(addMonths(new Date(), -3))
+const maxSelectableDate = endOfDay(new Date())
 const recordListRef = ref<HTMLElement | null>(null)
 const showFundSheet = ref(false)
 const activeMember = ref<MemberItem | null>(null)
@@ -124,6 +137,7 @@ const loadingMoreMembers = ref(false)
 const hasMoreMembers = ref(true)
 const membersOffset = ref(0)
 const membersTotal = ref(0)
+const clubMemberTotal = ref<number | null>(null)
 const memberListTotalGold = ref(0)
 const clubGoldSummary = ref<OrgClubGoldData | null>(null)
 const loadingClubGold = ref(false)
@@ -140,6 +154,54 @@ const submittingFund = ref(false)
 
 const PAGE_SIZE = 20
 
+// club_manage 缓存：二次进入先渲染上次结果，再静默刷新覆盖（key 约定见 utils/indexedDB.ts）。
+// 列表连同 offset/hasMore/统计一起存，触底加载后回写累计结果（更新而非覆盖）。
+interface CachedMemberList {
+  items: MemberItem[]
+  total: number
+  totalGold: number
+  offset: number
+  hasMore: boolean
+}
+
+interface CachedFundRecords {
+  items: FundRecordItem[]
+  offset: number
+  hasMore: boolean
+  total: number
+  grantAmount: number
+  recoverAmount: number
+  profitAmount: number
+  changeAmount: number
+}
+
+// 静默刷新在飞标记：期间列表展示的是缓存、offset 还未重算，须挡住触底加载防止重复拼页。
+let silentMembersRefreshing = false
+let silentRecordsRefreshing = false
+
+function clubManageCache() {
+  return userCache(gameStore.loginUserId)
+}
+
+function fundClubId(): number {
+  return toSafeNumber(userInfoStore.currentClub?.club_id)
+}
+
+function fundSummaryCacheKey(): string {
+  return `${fundClubId()}_fund_summary`
+}
+
+function fundMembersCacheKey(): string {
+  return `${fundClubId()}_fund_members`
+}
+
+function fundRecordsCacheKey(): string {
+  const customRangeKey =
+    activeRange.value === 'custom'
+      ? `_${customStartDate.value.getTime()}_${customEndDate.value.getTime()}`
+      : ''
+  return `${fundClubId()}_fund_records_${activeRange.value}_${selectedRecordType.value}_${recordOrderType.value}${customRangeKey}`
+}
 
 const currentFundBalanceText = computed(() => {
   if (!activeMember.value) {
@@ -185,10 +247,8 @@ const availableFundAssetTabs = computed<FundAssetTab[]>(() => {
 const members = ref<MemberItem[]>([])
 
 const memberTotalText = computed(() => {
-  const total =
-    membersTotal.value ||
-    toSafeNumber(userInfoStore.currentClub?.club_members) ||
-    members.value.length
+  const cachedTotal = toSafeNumber(userInfoStore.currentClub?.club_members)
+  const total = clubMemberTotal.value ?? (cachedTotal || members.value.length)
   const upperLimit = toSafeNumber(userInfoStore.currentClub?.upper_limit)
 
   if (upperLimit > 0) {
@@ -271,7 +331,6 @@ const recordStats = computed<RecordStatItem[]>(() => [
   { id: 1, label: t('UIClub_FundDetail_5iSXE2Uj'), value: formatUC(grantAmountTotal.value) },
   { id: 2, label: t('UIClub_FundDetail_recycle'), value: formatUC(recoverAmountTotal.value) },
   { id: 3, label: t('UIClub_Text28'), value: formatUC(profitAmountTotal.value) },
-  { id: 4, label: t('UIClub_Text29'), value: formatUC(changeAmountTotal.value) },
 ])
 
 const recordTypeOptions: RecordTypeOption[] = [
@@ -440,7 +499,37 @@ function resolveRecordRange(): { start_time?: number; end_time?: number } {
     return { start_time: start, end_time: endTime }
   }
 
+  if (activeRange.value === 'custom') {
+    return {
+      start_time: Math.floor(startOfDay(customStartDate.value).getTime() / 1000),
+      end_time: Math.min(
+        Math.floor(endOfDay(customEndDate.value).getTime() / 1000),
+        Math.floor(Date.now() / 1000),
+      ),
+    }
+  }
+
   return {}
+}
+
+function startOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+function endOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)
+}
+
+function addDays(date: Date, days: number): Date {
+  const value = new Date(date)
+  value.setDate(value.getDate() + days)
+  return value
+}
+
+function addMonths(date: Date, months: number): Date {
+  const value = new Date(date)
+  value.setMonth(value.getMonth() + months)
+  return value
 }
 
 function getSelectedRecordOpCodes(): string[] | undefined {
@@ -568,7 +657,7 @@ function patchActiveMemberOnList(): void {
   members.value = nextMembers
 }
 
-async function fetchClubGoldSummary(): Promise<void> {
+async function fetchClubGoldSummary(silent = false): Promise<void> {
   if (loadingClubGold.value) {
     return
   }
@@ -592,17 +681,41 @@ async function fetchClubGoldSummary(): Promise<void> {
     }
 
     clubGoldSummary.value = response.data
+    void clubManageCache().put(USER_STORE_CLUB_MANAGE, fundSummaryCacheKey(), response.data)
   } catch (error) {
-    clubGoldSummary.value = null
-    const message = error instanceof Error ? error.message : t('UIClub_FetchClubFundFail')
-    showFailToast(message)
+    // 静默刷新失败保留缓存展示，不打断用户。
+    if (!silent) {
+      clubGoldSummary.value = null
+      const message = error instanceof Error ? error.message : t('UIClub_FetchClubFundFail')
+      showFailToast(message)
+    }
   } finally {
     loadingClubGold.value = false
   }
 }
 
-async function fetchRecordRows(reset = false): Promise<void> {
-  if (loadingRecords.value || loadingMoreRecords.value) {
+async function refreshClubCapacity(): Promise<void> {
+  const currentClub = userInfoStore.currentClub
+  if (!currentClub?.random_id) {
+    return
+  }
+
+  try {
+    const response = await postOrgClubSearchByIdApi({
+      club_random_id: currentClub.random_id,
+    })
+    const upperLimit = Number(response.data?.upper_limit)
+    if (response.code === 0 && Number.isFinite(upperLimit) && upperLimit >= 0) {
+      userInfoStore.syncCurrentClubFields({ upper_limit: upperLimit })
+    }
+  } catch (error) {
+    // 上限刷新失败时保留列表缓存值，成员列表仍可正常使用。
+    console.error('refreshClubCapacity error', error)
+  }
+}
+
+async function fetchRecordRows(reset = false, silent = false): Promise<void> {
+  if (loadingRecords.value || loadingMoreRecords.value || silentRecordsRefreshing) {
     return
   }
 
@@ -612,7 +725,7 @@ async function fetchRecordRows(reset = false): Promise<void> {
 
   const currentClub = userInfoStore.currentClub
   if (!currentClub?.random_id) {
-    if (reset) {
+    if (reset && !silent) {
       recordRows.value = []
       hasMoreRecords.value = false
       recordsTotal.value = 0
@@ -621,12 +734,19 @@ async function fetchRecordRows(reset = false): Promise<void> {
   }
 
   if (reset) {
-    loadingRecords.value = true
-    recordOffset.value = 0
-    hasMoreRecords.value = true
+    // 静默刷新期间缓存仍在展示，offset/hasMore 等成功后一并重算。
+    if (silent) {
+      silentRecordsRefreshing = true
+    } else {
+      loadingRecords.value = true
+      recordOffset.value = 0
+      hasMoreRecords.value = true
+    }
   } else {
     loadingMoreRecords.value = true
   }
+
+  const cacheKey = fundRecordsCacheKey()
 
   try {
     const currentOffset = reset ? 0 : recordOffset.value
@@ -638,7 +758,7 @@ async function fetchRecordRows(reset = false): Promise<void> {
       gold_type: 1,
       op_codes: getSelectedRecordOpCodes(),
       sort_type: 1,
-      order_type: 2,
+      order_type: recordOrderType.value,
       ...rangePayload,
     })
 
@@ -646,6 +766,11 @@ async function fetchRecordRows(reset = false): Promise<void> {
       throw new Error(
         typeof response.msg === 'string' ? response.msg : t('UIClub_FetchFundRecordFail'),
       )
+    }
+
+    // 响应回来时已切换时间/类型筛选 → 丢弃，避免覆盖新筛选的数据/缓存。
+    if (cacheKey !== fundRecordsCacheKey()) {
+      return
     }
 
     const rawRows = Array.isArray(response.data.list) ? response.data.list : []
@@ -666,7 +791,26 @@ async function fetchRecordRows(reset = false): Promise<void> {
     } else {
       hasMoreRecords.value = rawRows.length >= PAGE_SIZE
     }
+
+    // 触底加载写回的是累计后的完整列表（更新而非覆盖）。
+    void clubManageCache().put(
+      USER_STORE_CLUB_MANAGE,
+      cacheKey,
+      toPlain({
+        items: recordRows.value,
+        offset: recordOffset.value,
+        hasMore: hasMoreRecords.value,
+        total: recordsTotal.value,
+        grantAmount: grantAmountTotal.value,
+        recoverAmount: recoverAmountTotal.value,
+        profitAmount: profitAmountTotal.value,
+        changeAmount: changeAmountTotal.value,
+      } satisfies CachedFundRecords),
+    )
   } catch (error) {
+    if (silent) {
+      return
+    }
     if (reset) {
       recordRows.value = []
       hasMoreRecords.value = false
@@ -676,11 +820,42 @@ async function fetchRecordRows(reset = false): Promise<void> {
     showFailToast(message)
   } finally {
     if (reset) {
-      loadingRecords.value = false
+      if (silent) {
+        silentRecordsRefreshing = false
+      } else {
+        loadingRecords.value = false
+      }
     } else {
       loadingMoreRecords.value = false
     }
   }
+}
+
+function applyCachedRecords(cached: CachedFundRecords | null): boolean {
+  if (!cached?.items?.length) {
+    return false
+  }
+
+  recordRows.value = cached.items
+  recordOffset.value = cached.offset
+  hasMoreRecords.value = cached.hasMore
+  recordsTotal.value = cached.total
+  grantAmountTotal.value = cached.grantAmount
+  recoverAmountTotal.value = cached.recoverAmount
+  profitAmountTotal.value = cached.profitAmount
+  changeAmountTotal.value = cached.changeAmount
+  return true
+}
+
+// 切换筛选：命中该筛选的缓存 → 先渲染再静默刷新；未命中 → 正常 loading 拉取。
+async function loadRecordsWithCache(): Promise<void> {
+  const cacheKey = fundRecordsCacheKey()
+  const cached = await clubManageCache().get<CachedFundRecords>(USER_STORE_CLUB_MANAGE, cacheKey)
+  if (cacheKey !== fundRecordsCacheKey()) {
+    return
+  }
+  const hit = applyCachedRecords(cached)
+  await fetchRecordRows(true, hit)
 }
 
 function onRecordScroll(event: Event): void {
@@ -688,6 +863,7 @@ function onRecordScroll(event: Event): void {
     activeTab.value !== 'record' ||
     loadingRecords.value ||
     loadingMoreRecords.value ||
+    silentRecordsRefreshing ||
     !hasMoreRecords.value
   ) {
     return
@@ -769,14 +945,19 @@ function syncActiveMemberFromMembers(): void {
   reviewQuota.value = latest.reviewCredit
 }
 
+// 基金操作成功后的整体刷新：数据已在屏上，走静默刷新避免闪 loading。
 async function refreshFundData(): Promise<void> {
   patchActiveMemberOnList()
-  await Promise.all([fetchMembers(true), fetchClubGoldSummary(), fetchRecordRows(true)])
+  await Promise.all([
+    fetchMembers(true, true),
+    fetchClubGoldSummary(true),
+    fetchRecordRows(true, true),
+  ])
   syncActiveMemberFromMembers()
 }
 
-async function fetchMembers(reset = false): Promise<void> {
-  if (loadingMembers.value || loadingMoreMembers.value) {
+async function fetchMembers(reset = false, silent = false): Promise<void> {
+  if (loadingMembers.value || loadingMoreMembers.value || silentMembersRefreshing) {
     return
   }
 
@@ -786,7 +967,7 @@ async function fetchMembers(reset = false): Promise<void> {
 
   const currentClub = userInfoStore.currentClub
   if (!currentClub?.random_id && !currentClub?.club_id) {
-    if (reset) {
+    if (reset && !silent) {
       members.value = []
       membersTotal.value = 0
       hasMoreMembers.value = false
@@ -796,19 +977,27 @@ async function fetchMembers(reset = false): Promise<void> {
   }
 
   if (reset) {
-    loadingMembers.value = true
-    membersOffset.value = 0
-    hasMoreMembers.value = true
+    // 静默刷新期间缓存仍在展示，offset/hasMore 等成功后一并重算。
+    if (silent) {
+      silentMembersRefreshing = true
+    } else {
+      loadingMembers.value = true
+      membersOffset.value = 0
+      hasMoreMembers.value = true
+    }
   } else {
     loadingMoreMembers.value = true
   }
+
+  // 只有未筛选的成员列表才写缓存，搜索结果不落库。
+  const searchAtStart = searchKeyword.value.trim()
 
   try {
     const currentOffset = reset ? 0 : membersOffset.value
     const response = await postOrgMemberListApi({
       club_id: currentClub?.club_id,
       club_random_id: currentClub?.random_id,
-      search: searchKeyword.value.trim(),
+      search: searchAtStart,
       sort_type: 8,
       order_type: 2,
       gold_type: 1,
@@ -829,16 +1018,42 @@ async function fetchMembers(reset = false): Promise<void> {
     members.value = reset ? nextMembers : [...members.value, ...nextMembers]
     membersOffset.value = currentOffset + rawMembers.length
 
-    const total = toSafeNumber(response.data.total)
-    membersTotal.value = total > 0 ? total : members.value.length
+    const rawTotal = Number(response.data.total)
+    const hasValidTotal = Number.isFinite(rawTotal) && rawTotal >= 0
+    const total = hasValidTotal ? rawTotal : members.value.length
+    membersTotal.value = total
     memberListTotalGold.value = toSafeNumber(response.data.total_info?.total_gold)
 
-    if (total > 0) {
+    // 只有未筛选的列表总数才代表俱乐部真实人数，搜索结果不能覆盖页头人数。
+    if (reset && !searchAtStart) {
+      clubMemberTotal.value = total
+      userInfoStore.syncCurrentClubFields({ club_members: total })
+    }
+
+    if (hasValidTotal) {
       hasMoreMembers.value = membersOffset.value < total
     } else {
       hasMoreMembers.value = rawMembers.length >= PAGE_SIZE
     }
+
+    // 触底加载写回的是累计后的完整列表（更新而非覆盖）。
+    if (!searchAtStart) {
+      void clubManageCache().put(
+        USER_STORE_CLUB_MANAGE,
+        fundMembersCacheKey(),
+        toPlain({
+          items: members.value,
+          total: membersTotal.value,
+          totalGold: memberListTotalGold.value,
+          offset: membersOffset.value,
+          hasMore: hasMoreMembers.value,
+        } satisfies CachedMemberList),
+      )
+    }
   } catch (error) {
+    if (silent) {
+      return
+    }
     if (reset) {
       members.value = []
       membersTotal.value = 0
@@ -848,7 +1063,11 @@ async function fetchMembers(reset = false): Promise<void> {
     showFailToast(message)
   } finally {
     if (reset) {
-      loadingMembers.value = false
+      if (silent) {
+        silentMembersRefreshing = false
+      } else {
+        loadingMembers.value = false
+      }
     } else {
       loadingMoreMembers.value = false
     }
@@ -861,11 +1080,7 @@ function loadNextPage(): void {
   }
 }
 
-function onPageScroll(event: Event): void {
-  if (activeTab.value !== 'account') {
-    return
-  }
-
+function onMembersScroll(event: Event): void {
   const target = event.target as HTMLElement | null
   if (!target) {
     return
@@ -1192,8 +1407,26 @@ function onSearchSubmit(): void {
 }
 
 function switchRange(range: RecordRangeKey): void {
+  if (range === 'custom') {
+    isDatePickerVisible.value = true
+    return
+  }
+
   activeRange.value = range
-  void fetchRecordRows(true)
+  void loadRecordsWithCache()
+}
+
+function onCustomDateConfirm(): void {
+  activeRange.value = 'custom'
+  recordListRef.value?.scrollTo({ top: 0 })
+  void loadRecordsWithCache()
+}
+
+function toggleRecordOrder(): void {
+  recordOrderType.value = recordOrderType.value === 2 ? 1 : 2
+  showTypeMenu.value = false
+  recordListRef.value?.scrollTo({ top: 0 })
+  void loadRecordsWithCache()
 }
 
 function toggleTypeMenu(): void {
@@ -1203,7 +1436,7 @@ function toggleTypeMenu(): void {
 function chooseType(typeKey: string): void {
   selectedRecordType.value = typeKey
   showTypeMenu.value = false
-  void fetchRecordRows(true)
+  void loadRecordsWithCache()
 }
 
 function roleClass(role: MemberRole): string {
@@ -1218,18 +1451,52 @@ function roleClass(role: MemberRole): string {
   return 'role-badge--admin'
 }
 
+// 进页面先读 club_manage 缓存渲染，命中的部分走静默刷新，未命中的照常 loading。
+async function restoreFundCache(): Promise<{
+  summary: boolean
+  members: boolean
+  records: boolean
+}> {
+  const [cachedSummary, cachedMembers, cachedRecords] = await Promise.all([
+    clubManageCache().get<OrgClubGoldData>(USER_STORE_CLUB_MANAGE, fundSummaryCacheKey()),
+    clubManageCache().get<CachedMemberList>(USER_STORE_CLUB_MANAGE, fundMembersCacheKey()),
+    clubManageCache().get<CachedFundRecords>(USER_STORE_CLUB_MANAGE, fundRecordsCacheKey()),
+  ])
+
+  if (cachedSummary) {
+    clubGoldSummary.value = cachedSummary
+  }
+  if (cachedMembers?.items?.length) {
+    members.value = cachedMembers.items
+    membersTotal.value = cachedMembers.total
+    memberListTotalGold.value = cachedMembers.totalGold
+    membersOffset.value = cachedMembers.offset
+    hasMoreMembers.value = cachedMembers.hasMore
+    clubMemberTotal.value = cachedMembers.total
+  }
+
+  return {
+    summary: Boolean(cachedSummary),
+    members: Boolean(cachedMembers?.items?.length),
+    records: applyCachedRecords(cachedRecords),
+  }
+}
+
 onMounted(() => {
-  void Promise.all([fetchMembers(true), fetchClubGoldSummary(), fetchRecordRows(true)])
+  void (async () => {
+    const hit = await restoreFundCache()
+    await Promise.all([
+      fetchMembers(true, hit.members),
+      fetchClubGoldSummary(hit.summary),
+      fetchRecordRows(true, hit.records),
+      refreshClubCapacity(),
+    ])
+  })()
 })
 </script>
 
 <template>
-  <div
-    ref="pageRef"
-    class="page-shell club-members-bg"
-    :style="backgroundStyle"
-    @scroll="onPageScroll"
-  >
+  <div class="page-shell club-members-bg" :style="backgroundStyle">
     <HeaderBack :title="'基金管理'">
       <template #right>
         <p class="member-total">
@@ -1296,15 +1563,15 @@ onMounted(() => {
           />
         </section>
 
-        <section class="members-list" aria-label="成员列表">
+        <section class="members-list" aria-label="成员列表" @scroll="onMembersScroll">
           <article v-for="member in members" :key="member.id" class="member-card">
             <span class="role-badge" :class="roleClass(member.role)">{{ member.role }}</span>
 
-            <div class="member-main">
+            <div class="member-main" @click="openMemberDetail(member)">
               <div class="member-left">
                 <img class="member-avatar" :src="member.avatar" :alt="`${member.name}头像`" />
                 <div class="member-base">
-                  <button type="button" class="member-name" @click="openMemberDetail(member)">
+                  <button type="button" class="member-name">
                     {{ member.name }}
                   </button>
                   <p class="member-id-row">
@@ -1385,9 +1652,14 @@ onMounted(() => {
         </section>
         <div class="record-table-wrap">
           <div class="record-table-head">
-            <button type="button" class="head-cell head-cell--time">
+            <button
+              type="button"
+              class="head-cell head-cell--time"
+              :aria-label="recordOrderType === 2 ? '时间倒序' : '时间正序'"
+              @click="toggleRecordOrder"
+            >
               <span>时间</span>
-              <svg class="tiny-arrow" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <svg class="tiny-arrow" :class="{ 'tiny-arrow--open': recordOrderType === 1 }" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <path d="M3.5 4.5L6 7L8.5 4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </button>
@@ -1420,26 +1692,26 @@ onMounted(() => {
               v-for="row in recordRows"
               :key="row.id"
               class="record-row"
-              :class="{ 'record-row--pftroom': row.opCode === 'PFTROOM' }"
+              :class="{
+                'record-row--pftroom': row.opCode === 'PFTROOM',
+                'record-row--from': row.showFromTag && row.fromName && row.fromId,
+              }"
             >
               <div v-if="row.showFromTag && row.fromName && row.fromId" class="from-chip">
-                <span class="from-label">From</span>
-                <span>{{ row.fromName }}</span>
-                <span class="from-id-pill">ID</span>
-                <span>{{ row.fromId }}</span>
+                From: {{ row.fromName }}（ID: {{ row.fromId }}）
               </div>
 
               <div class="record-main-grid">
                 <p class="time-cell">
-                  <span>{{ row.date }}</span>
-                  <span class="sub-line">{{ row.time }}</span>
+                  <span>{{ row.time }}</span>
+                  <span class="sub-line">{{ row.date }}</span>
                 </p>
                 <p class="type-cell">{{ row.type }}</p>
                 <p class="quantity-cell">{{ row.quantity }}</p>
                 <p class="balance-cell">{{ row.balance }}</p>
                 <p class="remark-cell">
                   <span class="remark-main" :title="row.remark">{{ row.remark }}</span>
-                  <span class="sub-line">{{ row.remarkId }}</span>
+                  <span class="sub-line">ID:{{ row.remarkId }}</span>
                 </p>
               </div>
             </article>
@@ -1658,14 +1930,38 @@ onMounted(() => {
         </div>
       </section>
     </div>
+
+    <DateRangePicker
+      v-model:visible="isDatePickerVisible"
+      v-model:start-date="customStartDate"
+      v-model:end-date="customEndDate"
+      :min-date="minSelectableDate"
+      :max-date="maxSelectableDate"
+      :show-tip="false"
+      @confirm="onCustomDateConfirm"
+    />
   </div>
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
+// 整页只留列表一个滚动条：page-shell 不滚（覆盖基类 overflow-y:auto），
+// 页签/汇总卡/搜索框固定，members-list / record-list 自己滚。
 .club-members-bg {
   position: relative;
+  display: flex;
+  flex-direction: column;
   height: 100dvh;
+  overflow: hidden;
+  background-image: var(--club-members-bg-dark);
   background-size: cover;
+  padding-bottom: 0.2rem;
+
+  @include theme-light {
+    background-color: #f3f4f6;
+    background-image: var(--club-members-bg-light);
+  }
 }
 
 .club-members {
@@ -1673,7 +1969,8 @@ onMounted(() => {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  flex: 1;
+  min-height: 0;
   gap: 0.34rem;
   padding-top: 0.2rem;
 }
@@ -1745,6 +2042,7 @@ onMounted(() => {
 .summary-item {
   display: flex;
   flex-direction: column;
+  text-align: center;
   gap: 0.06rem;
 }
 
@@ -1756,11 +2054,13 @@ onMounted(() => {
 }
 
 .summary-value {
+  display: flex;
+  justify-content: center;
   margin: 0;
   display: inline-flex;
   align-items: center;
   gap: 0.045rem;
-  font-size: 0.43204rem;
+  font-size: 0.3rem;
   line-height: 1;
   font-weight: 700;
   color: #f9f9f9;
@@ -1835,8 +2135,15 @@ onMounted(() => {
 .members-list {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   gap: 0.27027rem;
+  padding-top: 0.15rem;
   padding-bottom: 0.21rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .member-list-status {
@@ -1859,12 +2166,14 @@ onMounted(() => {
   flex-direction: column;
   gap: 0.22727rem;
   min-height: 0;
+  margin-inline: 0.32rem;
 }
 
 .record-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 0.78371rem;
   font-size: 0.25862rem;
   line-height: 1;
   color: rgba(249, 249, 249, 0.68);
@@ -1904,12 +2213,14 @@ onMounted(() => {
 
 .record-stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.09028rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
   padding: 0;
 }
 
 .record-stat-item {
+  position: relative;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1918,21 +2229,29 @@ onMounted(() => {
 }
 
 .record-stat-label {
+  width: 100%;
   margin: 0;
   font-size: 0.28213rem;
   color: rgba(249, 249, 249, 0.82);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .record-stat-value {
+  width: 100%;
   margin: 0;
-  font-size: 0.54054rem;
+  font-size: 0.46rem;
   line-height: 1;
   color: #f9f9f9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .record-table-wrap {
-  --record-columns: 1.2fr 1fr 1fr 1fr 1.2fr;
-  --record-col-gap: 0.08rem;
+  --record-columns: 1fr 1.15fr 1.15fr 0.9fr 1.25fr;
+  --record-col-gap: 0.04rem;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1940,6 +2259,7 @@ onMounted(() => {
   gap: 0.15674rem;
   min-height: 0;
   overflow: hidden;
+  margin-inline: 0.32rem;
 }
 
 .record-table-head {
@@ -1996,6 +2316,8 @@ onMounted(() => {
   line-height: inherit;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  text-align: center;
   gap: 0.06757rem;
 
   &--quantity,
@@ -2015,17 +2337,22 @@ onMounted(() => {
   }
 }
 
+.tiny-arrow--up {
+  transform: rotate(135deg);
+}
+
 .type-dropdown {
   position: absolute;
   top: 0.9rem;
-  left: 0.08rem;
+  left: 1.35rem;
   width: 3.9899rem;
   max-height: 10.2633rem;
   overflow: auto;
   border-radius: 0.42929rem;
   padding: 0.36195rem 0.43771rem;
-  background: rgba(0, 0, 0, 0.42);
-  backdrop-filter: blur(0.18rem);
+  background: rgba(0, 0, 0, 0.37);
+  backdrop-filter: blur(0.16rem);
+  -webkit-backdrop-filter: blur(0.16rem);
   z-index: 5;
 }
 
@@ -2056,8 +2383,12 @@ onMounted(() => {
   gap: 0.07837rem;
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   padding-right: 0;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 .record-list-status {
@@ -2069,12 +2400,22 @@ onMounted(() => {
 }
 
 .record-row {
+  position: relative;
+  overflow: hidden;
   border-radius: 0.37751rem;
   background: rgba(0, 0, 0, 0.22);
-  padding: 0.08rem 0;
+  padding: 0.16rem 0;
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   gap: 0.06rem;
+  min-height: 0.72rem;
+  box-sizing: border-box;
+}
+
+.record-row--from {
+  padding-top: 0.59rem;
+  min-height: 1.43rem;
 }
 
 .record-row--pftroom {
@@ -2082,28 +2423,23 @@ onMounted(() => {
 }
 
 .from-chip {
-  align-self: flex-start;
-  margin: 0 0.16rem;
-  border-radius: 0.34rem;
-  background: rgba(255, 255, 255, 0.17);
-  border: 0.02rem solid rgba(255, 255, 255, 0.32);
-  padding: 0.06rem 0.14rem;
-  display: inline-flex;
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: 84%;
+  border-radius: 0.37751rem 0 0.145rem 0;
+  background: var(--c-brand);
+  height: 0.44144rem;
+  padding: 0 0.29rem;
+  color: #0b1c20;
+  font-size: 0.264rem;
+  line-height: 1.4;
+  display: flex;
   align-items: center;
-  gap: 0.08rem;
-  color: rgba(249, 249, 249, 0.86);
-  font-size: 0.224rem;
-}
-
-.from-label {
-  opacity: 0.7;
-}
-
-.from-id-pill {
-  border-radius: 0.18153rem;
-  background: rgba(255, 255, 255, 0.3);
-  padding: 0 0.08rem;
-  color: #fff;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .record-main-grid {
@@ -2138,7 +2474,6 @@ onMounted(() => {
 
 .time-cell > span,
 .type-cell,
-.balance-cell,
 .sub-line {
   display: block;
   overflow: hidden;
@@ -2146,8 +2481,31 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+.balance-cell {
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
 .remark-main {
   display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remark-cell {
+  width: 100%;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+.remark-cell > span {
+  display: block;
+  width: 100%;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2159,15 +2517,11 @@ onMounted(() => {
 }
 
 .quantity-cell {
-  border-radius: 0.37751rem;
-  background: rgba(255, 255, 255, 0.15);
-  min-height: 0.51rem;
   width: 100%;
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 0.16rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2491,13 +2845,10 @@ onMounted(() => {
   gap: 0.079rem;
 }
 
-.quota-mode::before {
-  content: '';
+.quota-mode-radio {
   width: 0.4rem;
   height: 0.4rem;
-  border-radius: 50%;
-  border: 0.03rem solid rgba(255, 255, 255, 0.5);
-  box-sizing: border-box;
+  flex: 0 0 auto;
 }
 
 .quota-mode--active {
@@ -2680,6 +3031,219 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+
+.club-members-bg {
+  @include theme-light {
+    .member-total {
+      color: rgba(34, 34, 34, 0.82);
+    }
+
+    .tab-btn {
+      color: rgba(34, 34, 34, 0.62);
+    }
+
+    .tab-btn--active {
+      color: #222;
+    }
+
+    .tab-btn--active::after {
+      background: #69beff;
+    }
+
+    .summary-card,
+    .search-card,
+    .record-panel {
+      background: #fff;
+      backdrop-filter: none;
+      box-shadow: 0 0.06rem 0.2rem rgba(0, 0, 0, 0.05);
+    }
+
+    .summary-label,
+    .summary-value {
+      color: #222;
+    }
+
+    .income-btn {
+      background: rgba(139, 136, 136, 0.15);
+      color: #222;
+    }
+
+    .income-icon,
+    .income-icon::after {
+      border-color: rgba(34, 34, 34, 0.82);
+    }
+
+    .search-icon {
+      border-color: rgba(34, 34, 34, 0.7);
+    }
+
+    .search-icon::after {
+      background: rgba(34, 34, 34, 0.7);
+    }
+
+    .search-card input {
+      color: #222;
+    }
+
+    .search-card input::placeholder {
+      color: rgba(34, 34, 34, 0.48);
+    }
+
+    .member-list-status,
+    .record-list-status {
+      color: rgba(34, 34, 34, 0.58);
+    }
+
+    .member-card {
+      background: #fff;
+      backdrop-filter: none;
+      box-shadow: 0 0.06rem 0.2rem rgba(0, 0, 0, 0.06);
+    }
+
+    .role-badge--admin,
+    .role-badge--agent,
+    .role-badge--member {
+      background: linear-gradient(152deg, #8bd0ff 8%, #429de1 78%);
+    }
+
+    .member-name,
+    .member-diamond,
+    .member-id-row {
+      color: #222;
+    }
+
+    .id-pill {
+      background: rgba(79, 79, 79, 0.4);
+      color: #fff;
+    }
+
+    .member-data-strip {
+      background: rgba(34, 34, 34, 0.08);
+      backdrop-filter: none;
+    }
+
+    .data-label,
+    .data-value {
+      color: #222;
+    }
+
+    .data-label--agent::before {
+      background: rgba(34, 34, 34, 0.78);
+    }
+
+    .record-head,
+    .record-stat-label,
+    .record-stat-value {
+      color: #222;
+    }
+
+    .record-stat-item:not(:last-child)::after {
+      background: rgba(34, 34, 34, 0.16);
+    }
+
+    .range-tabs {
+      background: rgba(139, 136, 136, 0.15);
+    }
+
+    .range-tab {
+      color: rgba(34, 34, 34, 0.72);
+    }
+
+    .range-tab--active {
+      background: #cfcfcf;
+      color: #222;
+    }
+
+    .record-table-head {
+      background: #69beff;
+    }
+
+    .type-dropdown {
+      background: rgba(0, 0, 0, 0.37);
+      box-shadow: none;
+      backdrop-filter: blur(0.16rem);
+      -webkit-backdrop-filter: blur(0.16rem);
+    }
+
+    .type-option {
+      color: rgba(255, 255, 255, 0.92);
+      border-bottom-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .type-option--active {
+      color: #fff;
+    }
+
+    .record-row,
+    .record-row--pftroom {
+      background: #fff;
+    }
+
+    .record-main-grid {
+      color: #222;
+    }
+
+    .sub-line {
+      color: rgba(34, 34, 34, 0.5);
+    }
+
+    .from-chip {
+      background: var(--c-brand);
+      color: #0b1c20;
+    }
+
+    // Figma 9394:27766 / 9394:28387：浅色页面上的基金操作浮窗仍保持
+    // 深灰玻璃层与白色内容，操作强调色切换为浅色主题蓝。
+    .fund-sheet {
+      background: linear-gradient(
+        180deg,
+        rgba(102, 106, 108, 0.96) 0%,
+        rgba(76, 79, 81, 0.97) 58%,
+        rgba(61, 63, 64, 0.98) 100%
+      );
+      box-shadow:
+        0 -0.12rem 0.48rem rgba(0, 0, 0, 0.2),
+        inset 0 0.02rem 0 rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(0.42rem);
+      -webkit-backdrop-filter: blur(0.42rem);
+    }
+
+    .quota-action--primary {
+      background: #69beff;
+      color: #fff;
+    }
+
+    .quota-action:not(.quota-action--primary) {
+      background: rgba(6, 6, 6, 0.4);
+      color: rgba(255, 255, 255, 0.55);
+      box-shadow: 0.014rem 0.016rem 0.032rem rgba(0, 0, 0, 0.25);
+    }
+
+    .quota-editor {
+      background: rgba(255, 255, 255, 0.18);
+      box-shadow: inset 0 0.02rem 0 rgba(255, 255, 255, 0.16);
+    }
+
+    .keypad-btn {
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(12, 12, 12, 0.38);
+    }
+
+    .keypad-btn--accent {
+      border-color: transparent;
+      background: rgba(105, 190, 255, 0.76);
+    }
+
+    .sheet-footer-btn {
+      background: rgba(6, 6, 6, 0.5);
+    }
+
+    .sheet-footer-btn--confirm {
+      border-color: rgba(242, 242, 242, 0.8);
+      background: #69beff;
+    }
+  }
+}
 
 @media (max-width: 340px) {
   .member-total {

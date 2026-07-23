@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import homeHeaderFallback from '@/assets/images/home_header_1.png'
 import { useCachedImages } from '@/utils/imageCache'
 
 const props = defineProps<{
   images: string[]
 }>()
 
-const cachedImages = useCachedImages(() => props.images)
+// 无数据时回落到默认单图；单图不启用轮播/圆点。
+const displayImages = computed(() => (props.images.length ? props.images : [homeHeaderFallback]))
+const cachedImages = useCachedImages(() => displayImages.value)
 const isSwipeEnabled = computed(() => cachedImages.value.length > 1)
 </script>
 

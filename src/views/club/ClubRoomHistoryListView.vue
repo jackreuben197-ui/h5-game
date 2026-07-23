@@ -5,12 +5,17 @@ import { showFailToast } from 'vant'
 import { postClubDataStatsDataApi, postClubDataStatsDataInfoApi } from '@/api/stats'
 import type { ClubDataStatsDataRecord } from '@/api/models/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import DateRangePicker from '@/components/DateRangePicker/DateRangePicker.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useGameStore } from '@/stores/game'
+import { USER_STORE_CLUB_MANAGE } from '@/utils/indexedDB'
+import { toPlain, userCache } from '@/utils/userCache'
 import imgClock from '@/assets/icons/icon_time.png'
 import imgGameBadge from '@/assets/icons/wallet/ic_game_badge.png'
 import imgArrowRight from '@/assets/icons/ic_arrow_right.svg'
 import { t } from '@/i18n'
+import { formatDateTime } from '@/utils/time'
 
 interface IncomeItem {
   label: string
@@ -32,7 +37,8 @@ interface RoomHistoryItem {
 }
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--club-room-history-bg-dark': `url(${mainBgUrl})`,
+  '--club-room-history-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 type CurrencyTab = 1 | 3
@@ -51,6 +57,7 @@ interface StatsSummary {
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
+const gameStore = useGameStore()
 
 const activeCurrency = ref<CurrencyTab>(1)
 
@@ -71,6 +78,31 @@ const summary = ref<StatsSummary>({
 })
 
 const PAGE_SIZE = 20
+
+// club_manage 缓存：二次进入先渲染上次查询结果，再静默刷新覆盖（key 约定见 utils/indexedDB.ts）。
+interface CachedHistoryList {
+  items: RoomHistoryItem[]
+  offset: number
+  hasMore: boolean
+}
+
+// 静默刷新在飞标记：期间列表展示的是缓存、listOffset 还未重算，须挡住触底加载防止重复拼页。
+let silentListRefreshing = false
+
+function clubManageCache() {
+  return userCache(gameStore.loginUserId)
+}
+
+function summaryCacheKey(): string {
+  const clubId = toSafeNumber(userInfoStore.currentClub?.club_id)
+  return `${clubId}_roomhistory_summary_${activeCurrency.value}`
+}
+
+function listCacheKey(): string {
+  const clubId = toSafeNumber(userInfoStore.currentClub?.club_id)
+  return `${clubId}_roomhistory_list_${activeCurrency.value}`
+}
+
 const now = new Date()
 const maxSelectableDate = endOfDay(now)
 const minSelectableDate = startOfDay(addMonths(now, -3))
@@ -156,25 +188,30 @@ function resolveModeLabel(record: ClubDataStatsDataRecord): string {
 function resolveDetailA(record: ClubDataStatsDataRecord): string {
   const playerCount = toSafeNumber(record.match_player_num)
   if (playerCount > 0) {
-    return t('UIMine_RecordDetailForMatchPariticipants') + ": " + (playerCount)
+    return t('UIMine_RecordDetailForMatchPariticipants') + ': ' + playerCount
   }
 
   const sb = toSafeNumber(record.sb)
   if (sb > 0) {
-    return t('adaptation20006') + ": " + (sb) + "/" + (sb * 2)
+    return t('adaptation20006') + ': ' + sb + '/' + sb * 2
   }
 
   const buyIn = toSafeNumber(record.buy_in)
   if (buyIn > 0) {
-    return t('UIClub_BuyIn') + ": " + (buyIn)
+    return t('UIClub_BuyIn') + ': ' + buyIn
   }
 
   return t('UICareerRecordDetailForNiuZai')
 }
 
 function resolveStartAt(record: ClubDataStatsDataRecord): string {
-  const raw = String(record.start_time_str || record.game_start_time || record.date || '').trim()
-  return raw || '--'
+  const raw = record.start_time_str || record.game_start_time || record.date
+  if (!raw) {
+    return '--'
+  }
+
+  const formatted = formatDateTime(raw, 'DD/MM/YYYY HH:mm')
+  return formatted === '--:--' ? String(raw).trim() || '--' : formatted
 }
 
 function buildIncomeList(record: ClubDataStatsDataRecord): IncomeItem[] {
@@ -182,12 +219,20 @@ function buildIncomeList(record: ClubDataStatsDataRecord): IncomeItem[] {
 
   const fee = toSafeNumber(record.fee)
   if (fee !== 0) {
-    incomes.push({ label: t('UIMine_WalletPlatform_fee_f'), value: formatSigned(fee), positive: fee > 0 })
+    incomes.push({
+      label: t('UIMine_WalletPlatform_fee_f'),
+      value: formatSigned(fee),
+      positive: fee > 0,
+    })
   }
 
   const insurance = toSafeNumber(record.insurance)
   if (insurance !== 0) {
-    incomes.push({ label: t('adaptation10179'), value: formatSigned(insurance), positive: insurance > 0 })
+    incomes.push({
+      label: t('adaptation10179'),
+      value: formatSigned(insurance),
+      positive: insurance > 0,
+    })
   }
 
   if (!incomes.length) {
@@ -207,7 +252,7 @@ function mapHistoryItem(record: ClubDataStatsDataRecord, index: number): RoomHis
     roomId,
     matchId,
     mode: resolveModeLabel(record),
-    title: t('UIClub_RoundData') + "-" + (roomId || index),
+    title: t('UIClub_RoundData') + '-' + (roomId || index),
     detailA: resolveDetailA(record),
     detailB: jackpot > 0 ? `Jackpot: ${jackpot}` : undefined,
     startedAt: resolveStartAt(record),
@@ -216,10 +261,11 @@ function mapHistoryItem(record: ClubDataStatsDataRecord, index: number): RoomHis
   }
 }
 
-async function fetchSummary(): Promise<void> {
+async function fetchSummary(silent = false): Promise<void> {
   const clubId = toSafeNumber(userInfoStore.currentClub?.club_id)
   const startTime = parseTimestampMillSeconds(startDate.value, false)
   const endTime = parseTimestampMillSeconds(endDate.value, true)
+  const cacheKey = summaryCacheKey()
 
   try {
     const response = await postClubDataStatsDataInfoApi({
@@ -233,8 +279,13 @@ async function fetchSummary(): Promise<void> {
       throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail'))
     }
 
+    // 响应回来时已切换币种 → 丢弃，避免覆盖新页签的数据/缓存。
+    if (cacheKey !== summaryCacheKey()) {
+      return
+    }
+
     const info = response.data.info
-    summary.value = {
+    const next: StatsSummary = {
       totalProfit: toSafeNumber(info.club_total_profit),
       gameCount: toSafeNumber(info.game_num),
       handCount: toSafeNumber(info.hand_num),
@@ -243,7 +294,13 @@ async function fetchSummary(): Promise<void> {
       insurance: toSafeNumber(info.insurence),
       miniGame: toSafeNumber(info.mini_game),
     }
+    summary.value = next
+    void clubManageCache().put(USER_STORE_CLUB_MANAGE, cacheKey, next)
   } catch (error) {
+    // 静默刷新失败保留缓存展示，不打断用户。
+    if (silent || cacheKey !== summaryCacheKey()) {
+      return
+    }
     summary.value = {
       totalProfit: 0,
       gameCount: 0,
@@ -258,8 +315,8 @@ async function fetchSummary(): Promise<void> {
   }
 }
 
-async function fetchHistory(reset = false): Promise<void> {
-  if (loading.value || loadingMore.value) {
+async function fetchHistory(reset = false, silent = false): Promise<void> {
+  if (loading.value || loadingMore.value || silentListRefreshing) {
     return
   }
 
@@ -268,15 +325,21 @@ async function fetchHistory(reset = false): Promise<void> {
   }
 
   if (reset) {
-    loading.value = true
-    hasMore.value = true
-    listOffset.value = 0
+    // 静默刷新期间缓存仍在展示，offset/hasMore 等成功后一并重算。
+    if (silent) {
+      silentListRefreshing = true
+    } else {
+      loading.value = true
+      hasMore.value = true
+      listOffset.value = 0
+    }
   } else {
     loadingMore.value = true
   }
 
   const startTime = parseTimestampMillSeconds(startDate.value, false)
   const endTime = parseTimestampMillSeconds(endDate.value, true)
+  const cacheKey = listCacheKey()
 
   try {
     const currentOffset = reset ? 0 : listOffset.value
@@ -289,7 +352,14 @@ async function fetchHistory(reset = false): Promise<void> {
     })
 
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadTableGameRecordFail'))
+      throw new Error(
+        typeof response.msg === 'string' ? response.msg : t('UIClub_LoadTableGameRecordFail'),
+      )
+    }
+
+    // 响应回来时已切换币种 → 丢弃，避免覆盖新页签的数据/缓存。
+    if (cacheKey !== listCacheKey()) {
+      return
     }
 
     const rows = Array.isArray(response.data?.list) ? response.data.list : []
@@ -298,7 +368,20 @@ async function fetchHistory(reset = false): Promise<void> {
     historyList.value = reset ? mapped : [...historyList.value, ...mapped]
     listOffset.value = currentOffset + rows.length
     hasMore.value = rows.length >= PAGE_SIZE
+    // 触底加载写回的是累计后的完整列表（更新而非覆盖）。
+    void clubManageCache().put(
+      USER_STORE_CLUB_MANAGE,
+      cacheKey,
+      toPlain({
+        items: historyList.value,
+        offset: listOffset.value,
+        hasMore: hasMore.value,
+      } satisfies CachedHistoryList),
+    )
   } catch (error) {
+    if (silent) {
+      return
+    }
     if (reset) {
       historyList.value = []
       hasMore.value = false
@@ -307,19 +390,47 @@ async function fetchHistory(reset = false): Promise<void> {
     showFailToast(message)
   } finally {
     if (reset) {
-      loading.value = false
+      if (silent) {
+        silentListRefreshing = false
+      } else {
+        loading.value = false
+      }
     } else {
       loadingMore.value = false
     }
   }
 }
 
-async function refreshData(): Promise<void> {
-  await Promise.all([fetchSummary(), fetchHistory(true)])
+async function refreshData(silent = false): Promise<void> {
+  await Promise.all([fetchSummary(silent), fetchHistory(true, silent)])
+}
+
+async function restoreFromCache(): Promise<boolean> {
+  const [cachedSummary, cachedList] = await Promise.all([
+    clubManageCache().get<StatsSummary>(USER_STORE_CLUB_MANAGE, summaryCacheKey()),
+    clubManageCache().get<CachedHistoryList>(USER_STORE_CLUB_MANAGE, listCacheKey()),
+  ])
+
+  if (cachedSummary) {
+    summary.value = cachedSummary
+  }
+  if (cachedList?.items?.length) {
+    historyList.value = cachedList.items
+    listOffset.value = cachedList.offset
+    hasMore.value = cachedList.hasMore
+  }
+
+  return Boolean(cachedSummary || cachedList?.items?.length)
+}
+
+// 命中缓存 → 先渲染再静默刷新；未命中 → 正常 loading 拉取。
+async function loadWithCache(): Promise<void> {
+  const hit = await restoreFromCache()
+  await refreshData(hit)
 }
 
 function onPageScroll(event: Event): void {
-  if (loading.value || loadingMore.value || !hasMore.value) {
+  if (loading.value || loadingMore.value || silentListRefreshing || !hasMore.value) {
     return
   }
 
@@ -340,7 +451,7 @@ function selectCurrency(tab: CurrencyTab): void {
   }
 
   activeCurrency.value = tab
-  void refreshData()
+  void loadWithCache()
 }
 
 function openDatePicker(target: PickTarget): void {
@@ -367,14 +478,14 @@ function toDetail(item: RoomHistoryItem): void {
 }
 
 onMounted(() => {
-  void refreshData()
+  void loadWithCache()
 })
 </script>
 
 <template>
   <div class="page-shell club-room-history-bg" :style="backgroundStyle">
     <HeaderBack :title="'牌局记录'" />
-    <div class="club-room-history app-scroll-standalone" @scroll="onPageScroll">
+    <div class="club-room-history">
       <div class="coin-tabs">
         <button
           type="button"
@@ -419,7 +530,9 @@ onMounted(() => {
             <strong class="stats-value">{{ formatAmount(summary.totalProfit) }}</strong>
           </div>
           <div class="stats-item">
-            <span class="stats-label">{{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}/{{ t('UIData_YGvXd5iXr_003') }}</span>
+            <span class="stats-label">
+              {{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}/{{ t('UIData_YGvXd5iXr_003') }}
+            </span>
             <strong class="stats-value">{{ summary.handCount }}/{{ summary.gameCount }}</strong>
           </div>
         </div>
@@ -446,7 +559,7 @@ onMounted(() => {
 
       <p class="timezone">{{ t('UICommon_TimeZone') }}: {{ timezoneText }}</p>
 
-      <section class="record-list">
+      <section class="record-list" @scroll="onPageScroll">
         <article
           v-for="item in historyList"
           :key="item.id"
@@ -489,10 +602,16 @@ onMounted(() => {
           </div>
         </article>
 
-        <p v-if="!historyList.length && !loading" class="list-status">{{ t('UIClub_NoTableGameRecord') }}</p>
+        <p v-if="!historyList.length && !loading" class="list-status">
+          {{ t('UIClub_NoTableGameRecord') }}
+        </p>
         <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
-        <p v-else-if="historyList.length && loadingMore" class="list-status">{{ t('UIClub_LoadMore') }}...</p>
-        <p v-else-if="historyList.length && !hasMore" class="list-status">{{ t('UIClub_NoMore') }}</p>
+        <p v-else-if="historyList.length && loadingMore" class="list-status">
+          {{ t('UIClub_LoadMore') }}...
+        </p>
+        <p v-else-if="historyList.length && !hasMore" class="list-status">
+          {{ t('UIClub_NoMore') }}
+        </p>
       </section>
     </div>
 
@@ -511,11 +630,24 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-room-history-bg {
   position: relative;
+  display: flex;
+  flex-direction: column;
   height: 100dvh;
+  padding-bottom: 0.5rem;
+  overflow: hidden;
+  background-image: var(--club-room-history-bg-dark);
   background-size: cover;
   color: #f9f9f9;
+
+  @include theme-light {
+    color: #222;
+    background-color: #f3f4f6;
+    background-image: var(--club-room-history-bg-light);
+  }
 }
 
 .club-room-history {
@@ -523,6 +655,8 @@ onMounted(() => {
   z-index: 2;
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   gap: 0.2rem;
   height: 100dvh;
   padding-left: 0.26667rem;
@@ -544,12 +678,21 @@ onMounted(() => {
   font-size: 0.34rem;
   line-height: 1.2;
   padding: 0;
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.7);
+  }
 }
 
 .coin-tab--active {
   color: #fff;
   padding-bottom: 0.08rem;
   border-bottom: 0.02rem solid rgba(255, 255, 255, 0.9);
+
+  @include theme-light {
+    color: var(--c-brand);
+    border-bottom-color: var(--c-brand);
+  }
 }
 
 .summary-card {
@@ -664,6 +807,10 @@ onMounted(() => {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   padding-top: 0.24rem;
   border-top: 0.02rem solid rgba(243, 243, 243, 0.28);
+
+  @include theme-light {
+    border-top-color: rgba(34, 34, 34, 0.14);
+  }
 }
 
 .stats-item {
@@ -685,12 +832,20 @@ onMounted(() => {
 .stats-row .stats-item + .stats-item,
 .stats-grid .stats-item + .stats-item {
   border-left: 0.02rem solid rgba(243, 243, 243, 0.18);
+
+  @include theme-light {
+    border-left-color: rgba(34, 34, 34, 0.14);
+  }
 }
 
 .stats-label {
   font-size: 0.34rem;
   line-height: 1.4;
   color: rgba(243, 243, 243, 0.9);
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .stats-value {
@@ -698,6 +853,10 @@ onMounted(() => {
   font-weight: 400;
   line-height: 1;
   color: rgba(243, 243, 243, 1);
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .timezone {
@@ -705,12 +864,24 @@ onMounted(() => {
   text-align: right;
   color: rgba(235, 245, 255, 0.7);
   font-size: 0.26rem;
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.5);
+  }
 }
 
 .record-list {
   margin-top: 0.26667rem;
   display: grid;
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  grid-auto-rows: max-content;
   gap: 0.26667rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .record-row {
@@ -721,7 +892,7 @@ onMounted(() => {
 
 .game-badge {
   position: absolute;
-  left: -0.028rem;
+  left: -0.02rem;
   top: 0.40533rem;
   width: 1.4888rem;
   height: 1.4888rem;
@@ -756,7 +927,15 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  color: #fff;
   cursor: pointer;
+
+  @include theme-light {
+    background: rgba(157, 18, 124, 0.59);
+    box-shadow:
+      inset 0 0.08rem 0.18rem rgba(255, 255, 255, 0.2),
+      inset 0 -0.08rem 0.16rem rgba(78, 0, 59, 0.12);
+  }
 }
 
 .record-card::before {
@@ -897,6 +1076,10 @@ onMounted(() => {
   color: rgba(235, 245, 255, 0.72);
   font-size: 0.28rem;
   padding: 0.18rem 0 0.2rem;
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.62);
+  }
 }
 
 @media (max-width: 340px) {

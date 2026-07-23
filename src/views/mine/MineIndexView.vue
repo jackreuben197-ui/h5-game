@@ -8,8 +8,9 @@ import iconAddDark from '@/assets/icons/icon_add.svg'
 import iconAddLight from '@/assets/icons/icon_add_light.svg'
 import { theme } from '@/utils/theme'
 import iconChip from '@/assets/icons/icon_chips.png'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { t } from '@/i18n'
-import iconBoxClubT from '@/assets/icons/icon_box_club_t.png'
+import iconBoxClubT from '@/assets/icons/icon_club_data.png'
 import iconBoxFriendT from '@/assets/icons/icon_box_friend_t.png'
 import iconBoxDiamond from '@/assets/icons/icon_box_diamond.png'
 import iconBoxSave from '@/assets/icons/icon_box_save.png'
@@ -19,10 +20,13 @@ import iconBoxSetting from '@/assets/icons/icon_box_setting.png'
 import iconShop from '@/assets/icons/icon_shop.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 import ProfileCard from '@/components/ProfileCard/ProfileCard.vue'
+import { isChannelPackageHost } from '@/utils/channelPackage'
+import { formatUC } from '@/utils/roomVisibility'
 
 const router = useRouter()
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
+const isChannelPackage = isChannelPackageHost()
 
 interface BoxItem {
   key: string
@@ -44,21 +48,36 @@ const boxList = ref<BoxItem[]>([
     text: 'PageMineFriendTableCareer',
     route: '/mine/career/friends',
   },
-  { key: 'my-bill', icon: iconBoxDiamond, text: 'UIMine_Bill', route: '/mine/bill' },
+  {
+    key: 'my-bill',
+    icon: iconBoxDiamond,
+    text: 'UIMine_Bill',
+    route: '/mine/bill',
+  },
   {
     key: 'hand-history',
     icon: iconBoxSave,
     text: 'UIMine_btn_paipu',
     route: '/mine/hand-collection',
   },
-  { key: 'bag', icon: iconBoxBag, text: 'UIMine_btn_backpack', route: '/mine/backpack' },
+  {
+    key: 'bag',
+    icon: iconBoxBag,
+    text: 'UIMine_btn_backpack',
+    route: '/mine/backpack',
+  },
   {
     key: 'message-board',
     icon: iconBoxComment,
     text: 'PageMineMessageBoard',
     route: '/mine/message-board',
   },
-  { key: 'settings', icon: iconBoxSetting, text: 'UIMine_btn_setting', route: '/mine/settings' },
+  {
+    key: 'settings',
+    icon: iconBoxSetting,
+    text: 'UIMine_btn_setting',
+    route: '/mine/settings',
+  },
 ])
 
 const iconAdd = computed(() => (theme.value === 'light' ? iconAddLight : iconAddDark))
@@ -100,7 +119,11 @@ const displayUser = computed(() => {
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" :alt="t('UIMine_WalletAdd_EjPOTlsz')" />
+          <AppSvgIcon
+            class="icon-recharge-svg"
+            name="plus-circle"
+            :title="t('UIMine_WalletAdd_EjPOTlsz')"
+          />
         </div>
       </div>
     </div>
@@ -112,9 +135,9 @@ const displayUser = computed(() => {
     >
       <template #bottom>
         <div class="left-board">
-          <div class="currency">
+          <div v-if="isChannelPackage" class="currency">
             <img class="icon-currency" :src="iconChip" alt="gold" />
-            <div class="num">{{ displayUser.gold.toLocaleString() }}</div>
+            <div class="num">{{ formatUC(displayUser.gold) }}</div>
           </div>
           <div class="currency">
             <img class="icon-currency" :src="iconDiamond" alt="diamond" />
@@ -132,7 +155,7 @@ const displayUser = computed(() => {
     <div class="box-gallery">
       <div v-for="box in boxList" :key="box.key" class="box-item" @click="goToNextPage(box.route)">
         <div class="img">
-          <img :src="box.icon" :alt="t('UIMine_MsgSystemContent')" />
+          <img :src="box.icon" :alt="box.text" />
         </div>
         <div class="text">{{ t(box.text) }}</div>
       </div>
@@ -142,6 +165,7 @@ const displayUser = computed(() => {
 
 <style scoped lang="scss">
 @use '@/styles/messages_mine.scss' as *;
+@use '@/styles/mixins' as *;
 
 .mine-page {
   :deep(.card-line2) {

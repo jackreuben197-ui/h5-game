@@ -4,10 +4,11 @@ import { useRouter } from 'vue-router'
 import { showFailToast } from 'vant'
 import { postFriendRoomStatsDataApi, postFriendRoomStatsDataInfoApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import DateRangePicker from '@/components/DateRangePicker/DateRangePicker.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 
-import iconTime from '@/assets/icons/icon_time.png'
 import { t } from '@/i18n'
 import {
   addDays,
@@ -46,7 +47,8 @@ const title = computed(() => t('UIClub_DataManager'))
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--friends-record-bg-dark': `url(${mainBgUrl})`,
+  '--friends-record-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 interface FilterTab {
@@ -56,8 +58,8 @@ interface FilterTab {
 
 const filterTabs: FilterTab[] = [
   { label: t('UIData_Today'), key: 'today' },
-  { label: "7" + t('UIHappyShop_ActivityShopDay'), key: 'week' },
-  { label: "14" + t('UIHappyShop_ActivityShopDay'), key: 'halfmonth' },
+  { label: '7' + t('UIHappyShop_ActivityShopDay'), key: 'week' },
+  { label: '14' + t('UIHappyShop_ActivityShopDay'), key: 'halfmonth' },
   { label: 'Customize', key: 'customize' },
 ]
 const activeFilter = ref<FilterTab['key']>(filterTabs[0].key)
@@ -77,7 +79,7 @@ const customizeApplied = ref(false)
 const isDatePickerVisible = ref(false)
 
 const metrics = ref<SummaryMetric[]>([
-  { label: t('UIMine_RecordItemsNormal_3RCUa3w8') + "/" + t('UIData_YGvXd5iXr_003'), value: '0/0' },
+  { label: t('UIMine_RecordItemsNormal_3RCUa3w8') + '/' + t('UIData_YGvXd5iXr_003'), value: '0/0' },
   { label: t('UIClub_GainNum'), value: '0' },
   { label: t('UIMine_WalletPlatform_fee_f'), value: '0' },
 ])
@@ -129,9 +131,9 @@ function mapGameBadge(gameType: unknown, pokerType: unknown): string {
   if (type === 5) return 'Cowboy'
   if (type === 6) {
     if (poker === 1) {
-      return t('adaptation10181') + "\\n" + t('UIClub_Text54')
+      return t('adaptation10181') + '\\n' + t('UIClub_Text54')
     } else if (poker === 2) {
-      return t('UIClub_Text55') + "\\n" + t('UIClub_Text56')
+      return t('UIClub_Text55') + '\\n' + t('UIClub_Text56')
     } else if (poker === 3) {
       return t('Mahjong_Standard')
     }
@@ -159,8 +161,11 @@ function mapRecordItem(row: Record<string, unknown>, index: number): RecordItem 
     id: String(row.room_id ?? row.match_id ?? index + 1),
     game: mapGameBadge(row.game_type, row.poker_type),
     title: String(row.name ?? row.room_name ?? row.game_room_name ?? t('UIClub_RoundData')),
-    subtitle: matchPlayers > 0 ? t('UIMine_RecordDetailForMatchPariticipants') + ": " + (matchPlayers) : `${blind.label} : ${blind.value}`,
-    extra: buyIn > 0 ? t('MTT_xq_buy') + " : " + (buyIn) : undefined,
+    subtitle:
+      matchPlayers > 0
+        ? t('UIMine_RecordDetailForMatchPariticipants') + ': ' + matchPlayers
+        : `${blind.label} : ${blind.value}`,
+    extra: buyIn > 0 ? t('MTT_xq_buy') + ' : ' + buyIn : undefined,
     time: startTime,
     feeText: t('UIMine_WalletPlatform_fee_f'),
     feeValue,
@@ -211,9 +216,15 @@ async function fetchFriendsRecord(silent = false): Promise<void> {
     const handNum = toSafeNumber(info.hand_num)
     const gameNum = toSafeNumber(info.game_num)
     const nextMetrics: SummaryMetric[] = [
-      { label: t('UIMine_RecordItemsNormal_3RCUa3w8') + "/" + t('UIData_YGvXd5iXr_003'), value: `${handNum}/${gameNum}` },
+      {
+        label: t('UIMine_RecordItemsNormal_3RCUa3w8') + '/' + t('UIData_YGvXd5iXr_003'),
+        value: `${handNum}/${gameNum}`,
+      },
       { label: t('UIClub_GainNum'), value: formatSigned(info.profit) },
-      { label: t('UIClub_Text57'), value: Math.abs(toSafeNumber(info.fee)).toLocaleString('en-US') },
+      {
+        label: t('UIClub_Text57'),
+        value: Math.abs(toSafeNumber(info.fee)).toLocaleString('en-US'),
+      },
     ]
 
     metrics.value = nextMetrics
@@ -367,7 +378,7 @@ onBeforeUnmount(() => {
                   <span v-if="item.extra" class="extra">{{ item.extra }}</span>
                 </div>
                 <div class="meta-time">
-                  <img :src="iconTime" :alt="t('TimeItem')" />
+                  <AppSvgIcon name="clock" class="time-icon" />
                   <span>{{ item.time }}</span>
                 </div>
               </div>
@@ -405,14 +416,23 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .friends-record-page {
   height: 100dvh;
   // padding-top: calc(env(safe-area-inset-top) + 0.459rem);
   padding: 0 0 0.8rem;
   color: #f9f9f9;
+  background-image: var(--friends-record-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: var(--c-text);
+    background-color: var(--c-page);
+    background-image: var(--friends-record-bg-light);
+  }
 }
 
 .content-wrap {
@@ -438,6 +458,10 @@ onBeforeUnmount(() => {
   border-radius: 0.76013rem;
   background: rgba(0, 0, 0, 0.2);
   padding: 0.36317rem 0.4392rem;
+
+  @include theme-light {
+    background: var(--c-surface);
+  }
 }
 
 .filter-tabs {
@@ -450,6 +474,10 @@ onBeforeUnmount(() => {
   align-items: center;
   overflow: hidden;
   margin: 0 auto;
+
+  @include theme-light {
+    background: #e3e3e3;
+  }
 }
 
 .filter-tab {
@@ -463,6 +491,10 @@ onBeforeUnmount(() => {
   font-size: 0.40541rem;
   line-height: 0.44299rem;
   padding: 0.11075rem 0.24rem;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 
   &.is-customize {
     flex: 1.5 1 0;
@@ -480,6 +512,10 @@ onBeforeUnmount(() => {
         margin-top: 0.3rem;
         margin-left: 0.1rem;
         transform: rotate(-90deg);
+
+        @include theme-light {
+          filter: brightness(0);
+        }
       }
     }
   }
@@ -488,6 +524,10 @@ onBeforeUnmount(() => {
     background: rgba(255, 255, 255, 0.17);
     font-weight: 500;
     line-height: 0.83;
+
+    @include theme-light {
+      background: #cfcfcf;
+    }
   }
 }
 
@@ -522,6 +562,10 @@ onBeforeUnmount(() => {
   width: 0.0192rem;
   height: 0.718rem;
   background: rgba(255, 255, 255, 0.2);
+
+  @include theme-light {
+    background: var(--c-divider);
+  }
 }
 
 .timezone-text {
@@ -530,6 +574,10 @@ onBeforeUnmount(() => {
   font-size: 0.25861rem;
   line-height: 1.4;
   color: rgba(255, 255, 255, 0.5);
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .record-list {
@@ -570,6 +618,14 @@ onBeforeUnmount(() => {
   line-height: 1.1;
   font-weight: 700;
   z-index: 2;
+
+  @include theme-light {
+    color: #fff;
+    border-color: rgba(242, 242, 242, 0.4);
+    background: rgba(89, 42, 111, 0.62);
+    box-shadow: 0.09rem 0.11rem 0.18rem rgba(0, 0, 0, 0.14);
+    backdrop-filter: blur(0.28112rem);
+  }
 }
 
 .record-card {
@@ -589,6 +645,22 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
+
+  @include theme-light {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.92);
+    background:
+      radial-gradient(
+        70% 145% at 22% 12%,
+        rgba(255, 255, 255, 0.18) 0%,
+        rgba(255, 255, 255, 0) 72%
+      ),
+      linear-gradient(95deg, rgba(157, 18, 124, 0.62) 0%, rgba(183, 53, 158, 0.7) 100%);
+    box-shadow:
+      inset 0 0.08rem 0.24rem rgba(255, 255, 255, 0.18),
+      0 0.08rem 0.18rem rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(0.67653rem);
+  }
 }
 
 .record-main {
@@ -631,10 +703,14 @@ onBeforeUnmount(() => {
   letter-spacing: 0.01126rem;
   font-weight: 590;
 
-  img {
+  .time-icon {
     width: 0.35829rem;
     height: 0.35829rem;
-    object-fit: contain;
+    color: #fff;
+
+    @include theme-light {
+      color: #fff;
+    }
   }
 }
 
@@ -652,6 +728,10 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 0.07053rem;
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.27);
+  }
 }
 
 .fee-line {
@@ -666,16 +746,20 @@ onBeforeUnmount(() => {
 }
 
 .value-up {
-  color: #ff5364;
+  color: var(--c-profit);
 }
 
 .value-down {
-  color: #05e7ae;
+  color: var(--c-loss);
 }
 
 .chevron {
   font-size: 0.648rem;
   line-height: 1;
   color: #f9f9f9;
+
+  @include theme-light {
+    color: #fff;
+  }
 }
 </style>

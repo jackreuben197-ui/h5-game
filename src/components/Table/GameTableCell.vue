@@ -45,6 +45,8 @@ export default { name: 'GameTableCell' }
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .game-table__cell {
   min-height: 0.85rem;
   display: flex;
@@ -59,5 +61,9 @@ export default { name: 'GameTableCell' }
   color: rgba(255, 255, 255, 0.9);
   line-height: 1.4;
   word-break: break-all;
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.9);
+  }
 }
 </style>

@@ -28,6 +28,7 @@ import {
   ensureOfficialServiceProfileCache,
   getOfficialServiceProfileCache,
 } from './officialServiceCache'
+import { t } from '@/i18n'
 
 interface ImGameConfig {
   oss_key: string
@@ -41,6 +42,8 @@ const gameStore = useGameStore()
 const visible = ref(false)
 const loading = ref(false)
 const sending = ref(false)
+const imageUploading = ref(false)
+const attachmentPanelVisible = ref(false)
 const messages = ref<ChatSupportMessageListChatData[]>([])
 const inputText = ref('')
 const messageContainer = ref<HTMLElement | null>(null)
@@ -201,12 +204,18 @@ const availableChannels = computed(() => {
   return list.map((item) => (isOfficialChannel(item) ? createOfficialDisplayChannel(item) : item))
 })
 
+const activeChannelAvatar = computed(() =>
+  activeChannel.value
+    ? resolveChannelDisplayAvatar(activeChannel.value) || avatarDefault
+    : avatarDefault,
+)
+
 const targetClubId = computed(() => {
   if (chatContext.value.clubId > 0) return chatContext.value.clubId
   return Number(userInfoStore.currentClub?.club_id || 0)
 })
 
-const supportHintText = computed(() => (voiceCancel.value ? '松开取消' : '松开发送'))
+const supportHintText = computed(() => (voiceCancel.value ? '松开取消' : '释放发送'))
 const supportHintClass = computed(() =>
   voiceCancel.value ? 'voice-tip--cancel' : 'voice-tip--send',
 )
@@ -248,6 +257,15 @@ function resolveEffectiveImServiceType(
 
   const channelType = Number(channel?.im_service_type || 0)
   return channelType > 0 ? channelType : undefined
+}
+
+// club_id 必须与 im_service_type 同源判断：仅俱乐部客服（type 1）允许携带 club_id，否则服务端要求为 0
+function resolveEffectiveClubId(
+  channel: ChatSupportChannelListServiceData | null | undefined,
+): number {
+  if (resolveEffectiveImServiceType(channel) !== CLUB_IM_SERVICE_TYPE) return 0
+  const clubId = Number(channel?.club_id || targetClubId.value || 0)
+  return clubId > 0 ? clubId : 0
 }
 
 function resolveChannelIdentity(
@@ -557,12 +575,11 @@ function buildMessageQuery(setRead: boolean) {
   const channel = activeChannel.value
   if (!channel) return null
 
-  const clubId = Number(channel.club_id || targetClubId.value || 0)
   const tribeId = Number(channel.tribe_id || chatContext.value.tribeId || 0)
   return {
     limit: 50,
     tribe_id: tribeId,
-    club_id: channel.im_service_type === 1 && clubId > 0 ? clubId : 0,
+    club_id: resolveEffectiveClubId(channel),
     to_user_id: resolveToUserId(channel),
     im_service_type: resolveEffectiveImServiceType(channel),
     set_read: setRead,
@@ -596,7 +613,7 @@ async function markAsRead(timeToken?: number): Promise<void> {
   const resolvedTimeToken = Number(timeToken || last?.time_token || 0) || undefined
 
   await postChatSupportMessageReadApi({
-    club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
+    club_id: resolveEffectiveClubId(channel),
     to_user_id: resolveToUserId(channel),
     time_token: resolvedTimeToken,
     im_service_type: resolveEffectiveImServiceType(channel),
@@ -658,6 +675,7 @@ async function openPanel(): Promise<void> {
     !activeChannel.value ||
     (requestedClubMissing.value && Number(chatContext.value.clubId || 0) > 0)
   ) {
+    visible.value = false
     noServiceVisible.value = true
     return
   }
@@ -672,6 +690,7 @@ function closePanel(): void {
   visible.value = false
   messagesReady.value = false
   voiceMode.value = false
+  attachmentPanelVisible.value = false
   closeImagePreview()
   stopVoicePlayback()
 }
@@ -689,7 +708,7 @@ async function sendMessage(): Promise<void> {
 
   const response = await postChatSupportMessageSendApi({
     tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
-    club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
+    club_id: resolveEffectiveClubId(channel),
     to_user_id: resolveToUserId(channel),
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 1,
@@ -719,6 +738,10 @@ function useVoiceMode(): void {
 
 function useTextMode(): void {
   voiceMode.value = false
+}
+
+function toggleAttachmentPanel(): void {
+  attachmentPanelVisible.value = !attachmentPanelVisible.value
 }
 
 function triggerUpload(): void {
@@ -812,8 +835,11 @@ async function onImageUpload(event: Event): Promise<void> {
   const channel = activeChannel.value
   if (!channel) return
 
+  imageUploading.value = true
+
   const runtime = await resolveUploadRuntime()
   if (!runtime) {
+    imageUploading.value = false
     input.value = ''
     return
   }
@@ -830,6 +856,7 @@ async function onImageUpload(event: Event): Promise<void> {
     getResponseCode(uploadResponse as unknown as Record<string, unknown>) !== 0 ||
     !uploadResponse.data
   ) {
+    imageUploading.value = false
     showFailToast(uploadResponse.message || '上传失败')
     input.value = ''
     return
@@ -837,13 +864,14 @@ async function onImageUpload(event: Event): Promise<void> {
 
   const url = pickFileUrl(uploadResponse.data)
   if (!url) {
+    imageUploading.value = false
     input.value = ''
     return
   }
 
   const sendResponse = await postChatSupportMessageSendApi({
     tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
-    club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
+    club_id: resolveEffectiveClubId(channel),
     to_user_id: resolveToUserId(channel),
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 2,
@@ -866,6 +894,7 @@ async function onImageUpload(event: Event): Promise<void> {
     // await fetchMessages({ setRead: true })
   }
 
+  imageUploading.value = false
   input.value = ''
 }
 
@@ -1006,7 +1035,7 @@ async function uploadAndSendVoice(blob: Blob, duration: number): Promise<void> {
 
   const sendResponse = await postChatSupportMessageSendApi({
     tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
-    club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
+    club_id: resolveEffectiveClubId(channel),
     to_user_id: resolveToUserId(channel),
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 3,
@@ -1153,7 +1182,7 @@ async function onFallbackAudioUpload(event: Event): Promise<void> {
 
   const sendResponse = await postChatSupportMessageSendApi({
     tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
-    club_id: channel.im_service_type === 1 ? Number(channel.club_id || targetClubId.value || 0) : 0,
+    club_id: resolveEffectiveClubId(channel),
     to_user_id: resolveToUserId(channel),
     im_service_type: resolveEffectiveImServiceType(channel),
     msg_type: 3,
@@ -1282,6 +1311,7 @@ function initWsListener(): void {
 
 function closeNoServicePopup(): void {
   noServiceVisible.value = false
+  visible.value = false
 }
 
 onMounted(() => {
@@ -1289,8 +1319,10 @@ onMounted(() => {
 
   stopOpenListener = subscribeGlobalCustomerServiceChat((payload) => {
     applyContext(payload)
+    // 每次带 context 打开都重选频道，避免沿用上次残留的 activeChannel 与新 context 类型不一致
     activeChannel.value = null
-    void fetchChannel().then(() => openPanel())
+    requestedClubMissing.value = false
+    openPanel()
   })
 
   initWsListener()
@@ -1368,11 +1400,15 @@ watch(
             <div class="voice-wave">
               <span v-for="idx in 15" :key="idx" class="voice-wave-bar"></span>
             </div>
-            <div class="voice-tip-bottom">
+            <div class="voice-timer-pill">
               <span class="voice-timer">{{ formatVoiceDuration(voiceSeconds) }}</span>
-              <span>{{ supportHintText }}</span>
             </div>
           </div>
+          <div v-if="voicePressed" class="voice-action-hint" :class="supportHintClass">
+            {{ supportHintText }}
+          </div>
+
+          <div v-if="imageUploading" class="sending-message-tip">{{ t('UIMsgSending') }}...</div>
 
           <div
             ref="messageContainer"
@@ -1386,6 +1422,12 @@ watch(
                 class="message-row"
                 :class="{ 'message-row--self': isSelfMessage(msg) }"
               >
+                <img
+                  v-if="!isSelfMessage(msg)"
+                  class="message-avatar"
+                  :src="activeChannelAvatar"
+                  alt=""
+                />
                 <div class="bubble-wrapper" :class="{ 'bubble-wrapper--self': isSelfMessage(msg) }">
                   <div
                     v-if="msg.msg_type === 1"
@@ -1430,16 +1472,16 @@ watch(
                       >
                         <path
                           d="M10.0938 6.32812L0.90625 12.2072V0.449084L10.0938 6.32812Z"
-                          fill="#F3F3F3"
+                          fill="currentColor"
                         />
                       </svg>
                       <svg v-else width="10" height="13" viewBox="0 0 10 13" fill="none">
-                        <rect x="0.5" y="0.5" width="3" height="12" rx="1" fill="#F3F3F3" />
-                        <rect x="6.5" y="0.5" width="3" height="12" rx="1" fill="#F3F3F3" />
+                        <rect x="0.5" y="0.5" width="3" height="12" rx="1" fill="currentColor" />
+                        <rect x="6.5" y="0.5" width="3" height="12" rx="1" fill="currentColor" />
                       </svg>
                     </span>
                     <div class="voice-message-wave">
-                      <span v-for="idy in 10" :key="idy" class="voice-message-bar"></span>
+                      <span v-for="idy in 15" :key="idy" class="voice-message-bar"></span>
                     </div>
                     <span class="voice-message-time">{{ formatVoiceDuration(msg.duration) }}</span>
                   </button>
@@ -1470,23 +1512,41 @@ watch(
               <svg v-if="!voiceMode" width="15" height="20" viewBox="0 0 17 22" fill="none">
                 <path
                   d="M12 4.5C12 2.567 10.433 1 8.5 1C6.567 1 5 2.567 5 4.5V11C5 12.933 6.567 14.5 8.5 14.5C10.433 14.5 12 12.933 12 11V4.5Z"
-                  fill="#05E7AE"
-                  stroke="#05E7AE"
+                  fill="var(--c-brand)"
+                  stroke="var(--c-brand)"
                   stroke-width="2"
                   stroke-linejoin="round"
                 />
                 <path
                   d="M1 10.5C1 14.642 4.358 18 8.5 18M8.5 18C12.642 18 16 14.642 16 10.5M8.5 18V21"
-                  stroke="#05E7AE"
+                  stroke="var(--c-brand)"
                   stroke-width="2"
                   stroke-linecap="round"
                   stroke-linejoin="round"
                 />
               </svg>
               <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="4" width="18" height="16" rx="2" stroke="#05E7AE" stroke-width="2" />
-                <path d="M7 16H17" stroke="#05E7AE" stroke-width="2" stroke-linecap="round" />
-                <path d="M7 12H11" stroke="#05E7AE" stroke-width="2" stroke-linecap="round" />
+                <rect
+                  x="3"
+                  y="4"
+                  width="18"
+                  height="16"
+                  rx="2"
+                  stroke="var(--c-brand)"
+                  stroke-width="2"
+                />
+                <path
+                  d="M7 16H17"
+                  stroke="var(--c-brand)"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M7 12H11"
+                  stroke="var(--c-brand)"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
               </svg>
             </button>
 
@@ -1502,7 +1562,7 @@ watch(
               <button
                 class="send-action-btn"
                 type="button"
-                :disabled="sending || loading"
+                :disabled="sending || loading || !inputText.trim()"
                 @click="sendMessage"
               >
                 <svg width="22" height="21" viewBox="0 0 24 23" fill="none">
@@ -1527,11 +1587,18 @@ watch(
                 @touchend.prevent="onVoiceButtonUp"
                 @touchcancel.prevent="onVoiceButtonLeave"
               >
-                按住说话
+                {{ t('UIChatPressDownSpeak') }}
               </button>
             </template>
 
-            <button class="plus-btn" type="button" @click="triggerUpload">+</button>
+            <button
+              class="plus-btn"
+              :class="{ 'plus-btn--expanded': attachmentPanelVisible }"
+              type="button"
+              @click="toggleAttachmentPanel"
+            >
+              <span aria-hidden="true">+</span>
+            </button>
 
             <button
               class="close-chat-btn close-chat-btn--icon"
@@ -1565,6 +1632,33 @@ watch(
               @change="onFallbackAudioUpload"
             />
           </div>
+
+          <div v-if="attachmentPanelVisible" class="attachment-panel">
+            <button class="attachment-item" type="button" @click="triggerUpload">
+              <span class="attachment-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect
+                    x="2.5"
+                    y="3.5"
+                    width="19"
+                    height="17"
+                    rx="3"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  />
+                  <circle cx="8" cy="9" r="2" fill="currentColor" />
+                  <path
+                    d="M4.5 18L10 12.5L13.5 16L16 13.5L21 18.5"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>{{ t('Picture') }}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1590,7 +1684,7 @@ watch(
   <Teleport to="body">
     <div v-if="noServiceVisible" class="no-service-mask" @click="closeNoServicePopup">
       <div class="no-service-card" @click.stop>
-        <p class="no-service-title">当前俱乐部暂未开通在线客服服务</p>
+        <p class="no-service-title">当前俱乐部暂未开通在线客服服务～</p>
         <p class="no-service-desc">请联系管理员开通后再试</p>
         <button class="no-service-btn" type="button" @click="closeNoServicePopup">好的</button>
       </div>
@@ -1599,6 +1693,8 @@ watch(
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .support-float-wrap {
   position: fixed;
   right: -0.01rem;
@@ -1616,9 +1712,17 @@ watch(
   align-items: center;
   justify-content: center;
   gap: 0.12rem;
-  background: linear-gradient(148deg, rgba(5, 231, 174, 0.59) 7.5%, rgba(2, 122, 92, 0.59) 71.9%);
+  background: linear-gradient(
+    148deg,
+    rgba(var(--c-brand-rgb), 0.59) 7.5%,
+    rgba(2, 122, 92, 0.59) 71.9%
+  );
   color: #fff;
   box-shadow: 0 0.08rem 0.24rem rgba(0, 0, 0, 0.28);
+
+  @include theme-light {
+    background: rgba(var(--c-brand-rgb), 0.59);
+  }
 }
 
 .support-float-text {
@@ -1886,11 +1990,13 @@ watch(
 .messages-inner {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.2667rem;
 }
 
 .message-row {
   display: flex;
+  align-items: flex-start;
+  gap: 0.24rem;
   width: 100%;
 }
 
@@ -1907,6 +2013,14 @@ watch(
 
 .bubble-wrapper--self {
   align-items: flex-end;
+}
+
+.message-avatar {
+  width: 0.88rem;
+  height: 0.88rem;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 .text-bubble {
@@ -1944,9 +2058,9 @@ watch(
 .voice-message {
   border: none;
   border-radius: 0.4106rem;
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
   min-width: 2.7325rem;
-  height: 1.0667rem;
+  height: 0.96rem;
   padding: 0 0.21rem;
   display: inline-flex;
   align-items: center;
@@ -1973,7 +2087,11 @@ watch(
 }
 
 .voice-message-play {
-  width: 0.42rem;
+  width: 0.5067rem;
+  height: 0.5067rem;
+  border-radius: 50%;
+  background: #fff;
+  color: rgba(0, 0, 0, 0.8);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1990,33 +2108,46 @@ watch(
 }
 
 .voice-message-bar:nth-child(1),
-.voice-message-bar:nth-child(10) {
+.voice-message-bar:nth-child(15) {
   height: 0.16rem;
 }
 
 .voice-message-bar:nth-child(2),
-.voice-message-bar:nth-child(9) {
+.voice-message-bar:nth-child(14) {
   height: 0.2rem;
 }
 
 .voice-message-bar:nth-child(3),
-.voice-message-bar:nth-child(8) {
+.voice-message-bar:nth-child(13) {
   height: 0.26rem;
 }
 
 .voice-message-bar:nth-child(4),
-.voice-message-bar:nth-child(7) {
+.voice-message-bar:nth-child(12) {
   height: 0.34rem;
 }
 
 .voice-message-bar:nth-child(5),
-.voice-message-bar:nth-child(6) {
+.voice-message-bar:nth-child(11) {
   height: 0.42rem;
 }
 
+.voice-message-bar:nth-child(6),
+.voice-message-bar:nth-child(10) {
+  height: 0.3rem;
+}
+
+.voice-message-bar:nth-child(7),
+.voice-message-bar:nth-child(9) {
+  height: 0.24rem;
+}
+
+.voice-message-bar:nth-child(8) {
+  height: 0.36rem;
+}
+
 .voice-message-time {
-  font-size: 0.309rem;
-  line-height: 1;
+  display: none;
 }
 
 .bubble-footer {
@@ -2076,16 +2207,62 @@ watch(
   height: 0.54rem;
 }
 
-.voice-tip-bottom {
-  height: 0.5083rem;
+.voice-timer-pill {
+  min-width: 1.4667rem;
+  height: 0.5067rem;
   border-radius: 0.6255rem;
-  padding: 0.08rem 0.28rem;
+  padding: 0 0.2667rem;
   background: rgba(0, 0, 0, 0.42);
   color: #f9f9f9;
   font-size: 0.3087rem;
   display: inline-flex;
   align-items: center;
-  gap: 0.18rem;
+  justify-content: center;
+}
+
+.voice-action-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 2.1067rem;
+  z-index: 6;
+  transform: translateX(-50%);
+  min-width: 1.8133rem;
+  height: 0.5067rem;
+  padding: 0 0.2667rem;
+  border-radius: 0.6255rem;
+  color: #f9f9f9;
+  font-size: 0.3087rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.voice-action-hint.voice-tip--send {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.voice-action-hint.voice-tip--cancel {
+  background: rgba(255, 19, 43, 0.6);
+}
+
+.sending-message-tip {
+  position: absolute;
+  left: 50%;
+  bottom: 2.52rem;
+  z-index: 6;
+  transform: translateX(-50%);
+  width: 5.973rem;
+  height: 1.706rem;
+  border-radius: 0.64rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: #f9f9f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.42rem;
+  font-weight: 500;
+  backdrop-filter: blur(0.2rem);
 }
 
 .voice-timer {
@@ -2140,7 +2317,7 @@ watch(
 }
 
 .input-bar-wrap input::placeholder {
-  color: rgba(249, 249, 249, 0.42);
+  color: #f9f9f9;
 }
 
 .voice-hold-btn {
@@ -2151,6 +2328,10 @@ watch(
   background: rgba(255, 255, 255, 0.2);
   color: #f9f9f9;
   font-size: 0.34rem;
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .send-action-btn,
@@ -2175,6 +2356,10 @@ watch(
   justify-content: center;
 }
 
+.send-action-btn:disabled {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 .send-action-btn svg {
   display: block;
 }
@@ -2184,8 +2369,23 @@ watch(
   min-width: 0.9955rem;
   padding: 0;
   background: #0f0f0f;
+  color: var(--c-brand);
   font-size: 0.54rem;
   line-height: 1;
+}
+
+.plus-btn span {
+  display: inline-block;
+  transition: transform 0.18s ease;
+}
+
+.plus-btn--expanded {
+  border: 0.02rem solid var(--c-brand);
+  color: #fff;
+}
+
+.plus-btn--expanded span {
+  transform: rotate(45deg);
 }
 
 .close-chat-btn {
@@ -2202,6 +2402,35 @@ watch(
   justify-content: center;
   background: #d40000;
   border: none;
+}
+
+.attachment-panel {
+  flex-shrink: 0;
+  min-height: 1.4667rem;
+  padding: 0.4rem 0.48rem 0;
+  display: flex;
+  align-items: flex-start;
+}
+
+.attachment-item {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #f9f9f9;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.12rem;
+  font-size: 0.22rem;
+}
+
+.attachment-icon {
+  width: 0.8267rem;
+  height: 0.6933rem;
+  color: rgba(255, 255, 255, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .image-preview-mask {
@@ -2245,6 +2474,10 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
+
+  @include theme-light {
+    background: rgba(12, 12, 12, 0.6);
+  }
 }
 
 .no-service-card {
@@ -2265,18 +2498,42 @@ watch(
   flex-direction: column;
   align-items: center;
   gap: 0.22rem;
+
+  @include theme-light {
+    padding: 0.7rem 0.4rem;
+    border: 0.01rem solid rgba(255, 255, 255, 0.3);
+    background:
+      linear-gradient(
+        124deg,
+        rgba(142, 142, 142, 0.3) 0%,
+        rgba(103, 103, 103, 0.4) 46.8%,
+        rgba(72, 72, 72, 0.5) 100%
+      ),
+      url('@/assets/images/wallet/bg_sharp.webp') center / cover no-repeat;
+  }
 }
 
 .no-service-title {
   margin: 0;
   color: #fff;
   font-size: 0.44rem;
+
+  @include theme-light {
+    width: 4rem;
+    font-size: 0.3733rem;
+    text-align: center;
+    line-height: 1.3;
+  }
 }
 
 .no-service-desc {
   margin: 0;
   color: rgba(255, 255, 255, 0.8);
   font-size: 0.3rem;
+
+  @include theme-light {
+    display: none;
+  }
 }
 
 .no-service-btn {
@@ -2289,6 +2546,10 @@ watch(
   background: linear-gradient(180deg, rgba(85, 243, 41, 1) 0%, rgba(62, 173, 6, 1) 100%);
   color: #fff;
   font-size: 0.5rem;
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 @keyframes voice-wave-playing {

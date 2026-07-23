@@ -191,7 +191,7 @@ async function loadMessages() {
       to_user_id: props.supportUserId,
       im_service_type: 4,
       limit: 50,
-      set_read: true
+      set_read: true,
     })
     if (res.code === 0 && res.data?.list) {
       const newList = res.data.list.reverse()
@@ -223,7 +223,7 @@ async function sendMessage() {
       to_user_id: props.supportUserId,
       im_service_type: 4,
       msg_type: 1,
-      text: text
+      text: text,
     })
     if (res.code === 0) {
       await loadMessages()
@@ -248,7 +248,7 @@ async function onImageUpload(e: Event) {
         to_user_id: props.supportUserId,
         im_service_type: 4,
         msg_type: 2,
-        url: url
+        url: url,
       })
       await loadMessages()
       scrollToBottom()
@@ -346,11 +346,25 @@ onUnmounted(() => {
             <div class="agent-info">
               <div class="agent-avatar-wrap">
                 <!-- Figma SVG Ring -->
-                <svg class="avatar-ring" width="61" height="61" viewBox="0 0 57 57" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg
+                  class="avatar-ring"
+                  width="61"
+                  height="61"
+                  viewBox="0 0 57 57"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
                   <foreignObject x="-4.4941" y="-4.4941" width="65.381" height="65.3813">
-                    <div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(2.25px); height:100%; width:100%"></div>
+                    <div
+                      xmlns="http://www.w3.org/1999/xhtml"
+                      style="backdrop-filter: blur(2.25px); height: 100%; width: 100%"
+                    ></div>
                   </foreignObject>
-                  <path d="M28.196 0.150391C43.6857 0.150391 56.2427 12.7067 56.2429 28.1963C56.2429 43.686 43.6858 56.2432 28.196 56.2432C12.7065 56.243 0.150146 43.6859 0.150146 28.1963C0.150328 12.7068 12.7066 0.150572 28.196 0.150391ZM28.196 3.3291C14.4625 3.32928 3.32904 14.4627 3.32886 28.1963C3.32886 41.93 14.4623 53.0643 28.196 53.0645C41.9299 53.0645 53.0642 41.9301 53.0642 28.1963C53.064 14.4626 41.9298 3.3291 28.196 3.3291Z" fill="white" fill-opacity="0.83" />
+                  <path
+                    d="M28.196 0.150391C43.6857 0.150391 56.2427 12.7067 56.2429 28.1963C56.2429 43.686 43.6858 56.2432 28.196 56.2432C12.7065 56.243 0.150146 43.6859 0.150146 28.1963C0.150328 12.7068 12.7066 0.150572 28.196 0.150391ZM28.196 3.3291C14.4625 3.32928 3.32904 14.4627 3.32886 28.1963C3.32886 41.93 14.4623 53.0643 28.196 53.0645C41.9299 53.0645 53.0642 41.9301 53.0642 28.1963C53.064 14.4626 41.9298 3.3291 28.196 3.3291Z"
+                    fill="currentColor"
+                    fill-opacity="0.83"
+                  />
                 </svg>
                 <img :src="clubAvatar" alt="agent" class="agent-avatar" />
               </div>
@@ -359,7 +373,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Messages Area -->
-          <div class="messages-wrap" ref="messageContainer">
+          <div ref="messageContainer" class="messages-wrap">
             <div class="messages-inner">
               <template v-for="(item, idx) in timeline" :key="idx">
                 <div
@@ -380,8 +394,20 @@ onUnmounted(() => {
                     <div class="bubble-footer">
                       <span>{{ orderClockText(item.od.create_time || item.od.order?.create_time) }}</span>
                       <svg width="7.226" height="7.226" viewBox="0 0 8 8" fill="none">
-                        <ellipse cx="2.93052" cy="2.91963" rx="2.38865" ry="2.42647" stroke="#05E7AE" stroke-width="0.955458"/>
-                        <path d="M4.63672 4.65283L6.68413 6.73266" stroke="#05E7AE" stroke-width="0.955458" stroke-linecap="round"/>
+                        <ellipse
+                          cx="2.93052"
+                          cy="2.91963"
+                          rx="2.38865"
+                          ry="2.42647"
+                          stroke="var(--c-brand)"
+                          stroke-width="0.955458"
+                        />
+                        <path
+                          d="M4.63672 4.65283L6.68413 6.73266"
+                          stroke="var(--c-brand)"
+                          stroke-width="0.955458"
+                          stroke-linecap="round"
+                        />
                       </svg>
                       <span class="sender-name">{{ userInfoStore.userInfo?.user.nickname }}</span>
                     </div>
@@ -457,7 +483,7 @@ onUnmounted(() => {
               <img :src="closeIcon" alt="close" />
             </button>
 
-            <input type="file" ref="fileInput" hidden accept="image/*" @change="onImageUpload" />
+            <input ref="fileInput" type="file" hidden accept="image/*" @change="onImageUpload" />
           </div>
         </div>
       </div>
@@ -466,12 +492,20 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .chat-overlay {
   position: fixed;
   inset: 0;
   z-index: 200;
   display: flex;
   flex-direction: column;
+  // background-image: url('@/assets/images/main_bg.webp');
+
+  @include theme-light {
+    background-color: var(--c-page);
+    // background-image: url('@/assets/images/main_bg_light.webp');
+  }
 }
 
 .chat-container {
@@ -501,6 +535,14 @@ onUnmounted(() => {
   border-top-right-radius: 0.8rem;
   box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
   overflow: hidden;
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+
+  @include theme-light {
+    --c-text: #fff;
+    --c-text-muted: rgba(255, 255, 255, 0.62);
+    background-color: #171717;
+    background-image: url('@/assets/images/wallet/bg_sharp.webp');
+  }
 }
 
 .chat-main-body::after {
@@ -513,6 +555,10 @@ onUnmounted(() => {
   -webkit-backdrop-filter: blur(8.5px);
   pointer-events: none;
   z-index: 1;
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.85);
+  }
 }
 
 .chat-main-body::before {
@@ -610,6 +656,11 @@ onUnmounted(() => {
   width: 36.6px;
   height: 36.6px;
   pointer-events: none;
+  color: rgba(255, 255, 255, 0.83);
+
+  @include theme-light {
+    color: rgba(255, 255, 255, 0.83);
+  }
 }
 
 .agent-avatar {
@@ -637,6 +688,11 @@ onUnmounted(() => {
   font-weight: 500;
   margin-top: -0.24rem;
   white-space: nowrap;
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.25);
+    color: #fff;
+  }
 }
 
 .messages-wrap {
@@ -692,9 +748,11 @@ onUnmounted(() => {
 
 .bubble-content p {
   margin: 0;
-  color: #F9F9F9;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: "HONOR Sans CN";
+  color: #f9f9f9;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
+  font-family: 'HONOR Sans CN';
   font-size: 11.576px;
   font-style: normal;
   font-weight: 400;
@@ -708,12 +766,16 @@ onUnmounted(() => {
   justify-content: flex-end;
   align-items: center;
   gap: 4px;
-  color: #F9F9F9;
-  font-family: "HONOR Sans CN";
+  color: #f9f9f9;
+  font-family: 'HONOR Sans CN';
   font-size: 9.748px;
   font-weight: 400;
   line-height: 100%;
   letter-spacing: 0.195px;
+
+  @include theme-light {
+    color: #f9f9f9;
+  }
 }
 
 .sender-name {
@@ -735,6 +797,11 @@ onUnmounted(() => {
 .text-bubble--self {
   background: #1F9816;
   border-radius: 20px 20px 4px 20px;
+
+  @include theme-light {
+    background: var(--c-brand);
+    color: #fff;
+  }
 }
 
 .image-bubble {
@@ -742,6 +809,10 @@ onUnmounted(() => {
   border-radius: 12px;
   padding: 4px;
   max-width: 200px;
+
+  @include theme-light {
+    background: rgba(255, 255, 255, 0.05);
+  }
 }
 
 .image-bubble img {
@@ -787,20 +858,24 @@ onUnmounted(() => {
   flex: 1;
   min-width: 0;
   height: 37.534px;
-  background: #0F0F0F;
+  background: #0f0f0f;
   border-radius: 210.014px;
   padding: 3.36px 4.29px 3.36px 11.341px;
   display: flex;
   align-items: center;
   gap: 4.2px;
+
+  @include theme-light {
+    background: #0f0f0f;
+  }
 }
 
 .input-bar-wrap input {
   flex: 1;
   background: transparent;
   border: none;
-  color: #F9F9F9;
-  font-family: "PingFang SC";
+  color: var(--c-text);
+  font-family: 'PingFang SC';
   font-size: 13.226px;
   font-weight: 400;
   line-height: 78%;
@@ -808,7 +883,7 @@ onUnmounted(() => {
   outline: none;
 
   &::placeholder {
-    color: rgba(249, 249, 249, 0.4);
+    color: var(--c-text-muted);
   }
 }
 
@@ -823,6 +898,7 @@ onUnmounted(() => {
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
+  color: #fff;
 
   &:active {
     opacity: 0.8;
@@ -841,6 +917,10 @@ onUnmounted(() => {
   cursor: pointer;
   flex-shrink: 0;
 
+  @include theme-light {
+    background: #0f0f0f;
+  }
+
   &:active {
     opacity: 0.8;
   }
@@ -857,6 +937,12 @@ onUnmounted(() => {
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
+  color: #f3f3f3;
+
+  @include theme-light {
+    background: rgba(255, 255, 255, 0.1);
+    color: #f3f3f3;
+  }
 
   &:active {
     opacity: 0.8;

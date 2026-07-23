@@ -79,3 +79,25 @@ $color-bg-shadow: rgba(0, 0, 0, 0.2);
   --tabbar-item: #7b7b7b;
   --tabbar-item-active: #7bfbca;
 }
+
+:root {
+  --c-brand: #05e7ae;
+  --c-brand-rgb: 5, 231, 174;
+  --c-loss: #05e7ae;
+  --c-profit: #ff5364;
+  --c-text: #ffffff;
+  --c-text-muted: rgba(255, 255, 255, 0.5);
+  --c-page: #0f0f0f;
+  --c-surface: rgba(255, 255, 255, 0.1);
+  --c-overlay: rgba(12, 12, 12, 0.6);
+  --c-border: rgba(255, 255, 255, 0.2);
+  --c-divider: rgba(255, 255, 255, 0.1);
+}
+
+html[data-theme='light'] .only-dark {
+  display: none !important;
+}
+
+html[data-theme='dark'] .only-light {
+  display: none !important;
+}

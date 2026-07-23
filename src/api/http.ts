@@ -11,6 +11,7 @@ import LoginSession from '@/session/loginSession'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 import { resolveInviteCode, resolveTraceHash, resolveAgentInviteCode } from '@/utils/channelPackage'
+import { isTelegramMiniAppEnv } from '@/utils/environment'
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
@@ -46,6 +47,7 @@ const PRE_LOGIN_PATHS = [
   '/roomcenter/guest/rooms/list',
   '/roomcenter/guest/all/mtt/sng/ids',
   '/roomcenter/guest/mtt/sng/rooms/list',
+  '/config/before/login/config',
 ]
 
 const TELEGRAM_LOGIN_LOADING_MESSAGE = '正在通过 Telegram 自动登录...'
@@ -216,16 +218,6 @@ function resolveContentType(config: InternalAxiosRequestConfig): void {
   if (!(config.data instanceof FormData)) {
     config.headers['Content-Type'] = 'application/json'
   }
-}
-
-function isTelegramMiniAppEnv(): boolean {
-  if (typeof window === 'undefined') {
-    return false
-  }
-  if (window.__H5_TG_MINI_APP__) {
-    return true
-  }
-  return Boolean(window.Telegram?.WebApp)
 }
 
 function getTelegramInitData(): string {

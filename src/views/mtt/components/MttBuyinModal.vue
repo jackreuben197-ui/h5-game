@@ -8,6 +8,7 @@ import iconRefresh2 from '@/assets/icons/icon_refresh2.png'
 import iconAdd from '@/assets/icons/icon_add.png'
 import type { RoomcenterMttDetails, MttWallet, MttWalletFreeLimit } from '@/api/models/roomcenter'
 import { getMttUserWalletApi } from '@/api/roomcenter'
+import { postUserDiamondsWalletApi } from '@/api/user'
 import { postGlobalConfigApi } from '@/api/config'
 import { forwardGlobalConfigToCocos } from '@/bridge/sync/h5BusinessSync'
 import { postPropUserPropInfoApi } from '@/api/prop'
@@ -39,7 +40,9 @@ const emit = defineEmits<{
 }>()
 
 /* ===== 工具 ===== */
-function isDiamondMtt() { return (props.mtt?.gold_type ?? 1) === 4 }
+const isDiamond = computed(() => (props.mtt?.gold_type ?? 1) === 4)
+function isDiamondMtt() { return isDiamond.value }
+const currencyIcon = computed(() => (isDiamond.value ? iconDiamond : iconChips))
 
 function fmtMoney(n: number | undefined | null): string {
   if (n == null) return '-'
@@ -80,6 +83,18 @@ async function fetchWalletAndConfig() {
         }
       })
 
+    // 钻石 MTT 不走俱乐部钱包，拉用户钻石余额（对齐 Unity ShowDiamond）
+    if (isDiamond.value) {
+      const [diamondRes] = await Promise.all([postUserDiamondsWalletApi(), extra])
+      if (diamondRes.code === 0 && diamondRes.data) {
+        diamondBalance.value = diamondRes.data.diamonds_wallet?.diamonds ?? 0
+        if (feeBreakdown.value.total > diamondBalance.value) {
+          showToast(t('UIMTTBuyInBuyContent'))
+        }
+      }
+      return
+    }
+
     const [walletRes] = await Promise.all([getMttUserWalletApi(props.mttId), extra])
 
     if (walletRes.code === 0 && walletRes.data) {
@@ -111,6 +126,8 @@ watch(() => props.show, (val) => {
 
 /* ===== 钱包选择 ===== */
 const selectedWallet = ref<MttWallet | null>(null)
+// 钻石 MTT 专用余额（平台赛无俱乐部钱包）
+const diamondBalance = ref(0)
 
 // prop_buy_type 优先取选中钱包的，回退到 mtt 字段
 const propBuyType = computed(() => props.mtt?.prop_buy_type ?? 0,
@@ -170,9 +187,10 @@ function onSelectRatio(newRatio: number) {
 }
 
 const walletBalance = computed(() => {
+  if (isDiamond.value) return diamondBalance.value
   const w = selectedWallet.value
   if (!w) return 0
-  return isDiamondMtt() ? w.gold : w.gold / 100
+  return w.gold / 100
 })
 
 /* ===== 倍率 ===== */
@@ -262,6 +280,7 @@ const canConfirm = computed(() => {
   const goldType = props.mtt?.gold_type ?? 1
   if (goldType === 3) return true // 记分牌：始终可点
   if (goldType === 1) return true // UC：允许超额（走充值流程）
+  if (goldType === 4) return feeBreakdown.value.total <= diamondBalance.value // 钻石：比对用户钻石余额
   if (!selectedWallet.value) return false
   return feeBreakdown.value.total <= selectedWallet.value.gold
 })
@@ -359,7 +378,7 @@ function handleConfirm() {
           @click="buyinType = 'chips'"
         >
           <div class="buyin-option-label">
-            <img class="buyin-option-icon" :src="iconChips" alt="" />
+            <img class="buyin-option-icon" :src="currencyIcon" alt="" />
             <span class="buyin-option-text">{{ feeBreakdown.display }}</span>
             <span v-if="isFreeJoin && buyinType === 'chips'" class="free-badge">
               {{ t('UIMTT_free') || 'FREE' }}
@@ -449,7 +468,7 @@ function handleConfirm() {
             alt=""
             @click="fetchWalletAndConfig"
           />
-          <img class="cost-icon" :src="iconChips" alt="" />
+          <img class="cost-icon" :src="currencyIcon" alt="" />
           <span class="cost-balance-num">{{ fmtMoney(walletBalance) }}</span>
           <img class="cost-add" :src="iconAdd" alt="" />
         </div>
@@ -631,7 +650,7 @@ function handleConfirm() {
   cursor: pointer;
 
   &--selected {
-    background: rgba(5, 231, 174, 0.12);
+    background: rgba(var(--c-brand-rgb), 0.12);
   }
 }
 

@@ -44,8 +44,6 @@ import img7 from '@/assets/images/img7.png'
 import img8 from '@/assets/images/img8.png'
 
 // @ts-ignore
-import fbSportsImg from '@/assets/images/minigame-newui/FB体育.png'
-// @ts-ignore
 import dbEsportsImg from '@/assets/images/minigame-newui/DB电竞.png'
 
 import sideYellowBtn from '@/assets/images/sideyellowbtn.png'
@@ -62,10 +60,6 @@ import legPokerSvg from '@/assets/images/minigame-newui/乐游棋牌.png'
 import kyPokerSvg from '@/assets/images/minigame-newui/开元棋牌.png'
 // @ts-ignore
 import cowboyBlueSvg from '@/assets/images/minigame-newui/德州牛仔.png'
-// @ts-ignore
-import mahjong1Svg from '@/assets/images/minigame-newui/麻将胡了.png'
-// @ts-ignore
-import mahjong2Svg from '@/assets/images/minigame-newui/麻将胡了2.png'
 
 interface GameBlock {
   key: string
@@ -163,11 +157,13 @@ const getHotCategoryByGameApiType = (gameApiType: string): string | null => {
     case 'slotsb_jdb':
       return 'hot-slot'
     case 'real_fish':
+    case 'sea_jdb':
     case 'panda_jdb':
     case 'slots_jdb':
       return 'hot-fish'
     case 'fb_sports':
     case 'panda_fbs':
+    case 'panda_sport':
       return 'hot-sports'
     case 'real_sports':
       return 'hot-esports'
@@ -196,11 +192,13 @@ const getCategoryByGameApiType = (gameApiType: string): string | null => {
     case 'slotsb_jdb':
       return 'dianzi'
     case 'real_fish':
+    case 'sea_jdb':
     case 'panda_jdb':
     case 'slots_jdb':
       return 'buyu'
     case 'fb_sports':
     case 'panda_fbs':
+    case 'panda_sport':
       return 'tiyu'
     case 'real_sports':
       return 'dianjing'
@@ -263,18 +261,12 @@ const transformGameToItem = (game: any, preferSvg: boolean = false): GameItem =>
 
   let gameImage = game.game_icon || game.game_url_p || ''
 
-  if (gameName === '麻将胡了') {
-    gameImage = mahjong1Svg
-  } else if (gameName === '麻将胡了2') {
-    gameImage = mahjong2Svg
-  } else if (gameName === '德州牛仔' || gameType === 'cow_boy' || gameApiType === 'cow_boy') {
+  if (gameName === '德州牛仔' || gameType === 'cow_boy' || gameApiType === 'cow_boy') {
     gameImage = cowboyBlueSvg
   } else if (gameName === 'DB真人' || (gameName && gameName.includes('DB视讯'))) {
     if (preferSvg) {
       gameImage = dbLiveSvg
     }
-  } else if (gameName === 'FB体育' || gameApiType === 'fb_sports') {
-     gameImage = fbSportsSvg
   } else if ((gameName && gameName.includes('乐游')) || gameApiType === 'leg_poker') {
     gameImage = legPokerSvg
   } else if ((gameName && gameName.includes('开元')) || gameApiType === 'ky_poker') {
@@ -558,11 +550,7 @@ const categoryBlocks = computed<GameBlock[]>(() => {
       title: '热门体育',
       subtitle: 'SPORTS',
       icon: img4,
-      layout: 'wide',
-      items:
-        hotSportsGames.length > 0
-          ? [{ ...hotSportsGames[0], img: fbSportsImg }]
-          : [{ title: '', img: fbSportsImg }],
+      items: getBlockItems('hot-sports', hotSportsGames, 3),
     },
     {
       key: 'hot-esports',
@@ -583,18 +571,16 @@ const displayBlocks = computed<GameBlock[]>(() => {
   if (selectedCategory.value !== 'hot') {
     if (selectedCategory.value === 'tiyu') {
       const hotSportsGames = getPopularGamesForCategory('hot-sports')
+      const items =
+        hotSportsGames.length > 0 ? hotSportsGames : [{ title: '', img: fbSportsSvg }]
       const sportsBlock = {
         key: 'hot-sports',
         title: '热门体育',
         subtitle: 'SPORTS',
         icon: img4,
-        layout: 'wide',
-        items:
-          hotSportsGames.length > 0
-            ? [{ ...hotSportsGames[0], img: fbSportsImg }]
-            : [{ title: '', img: fbSportsImg }],
+        items,
       }
-      return sportsBlock.items.length > 0 ? [sportsBlock] : []
+      return [sportsBlock]
     }
 
     if (selectedCategory.value === 'dianjing') {
@@ -624,13 +610,15 @@ const displayBlocks = computed<GameBlock[]>(() => {
       }
       const info = categoryInfo[selectedCategory.value]
       if (info) {
+        const items =
+          selectedCategory.value === 'board' ? catGames.slice(1) : catGames
         return [
           {
             key: `category-${selectedCategory.value}`,
             title: info.title,
             subtitle: info.subtitle,
             icon: info.icon,
-            items: catGames,
+            items,
           },
         ]
       }

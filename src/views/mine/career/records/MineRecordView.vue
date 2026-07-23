@@ -4,7 +4,9 @@ import { showFailToast } from 'vant'
 import { useRoute, useRouter } from 'vue-router'
 import { postRoomCenterHistoryListApi, postStatsUserStatsApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { formatUC } from '@/utils/roomVisibility'
 import { formatDateTime, toTimestampMs } from '@/utils/time'
 import { localStore } from '@/utils/localStore'
@@ -37,9 +39,10 @@ function getCareerSelectedClubId(): number {
   return Number.isFinite(id) && id > 0 ? id : 0
 }
 
-// 主容器背景图：全页面共用一张底图。
+// 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--record-bg-dark': `url(${mainBgUrl})`,
+  '--record-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const title = computed(() => t('UICareerRecord'))
@@ -531,7 +534,7 @@ onBeforeUnmount(() => {
           >
             <div v-if="card.showDate" class="date">{{ card.endDay }}</div>
             <div v-if="card.showDate" class="month">{{ card.endMonth }}</div>
-            <img v-if="card.showDate" src="@/assets/icons/icon_time.png" class="date-icon" alt="" />
+            <AppSvgIcon v-if="card.showDate" name="clock" class="tx__time-icon" />
           </div>
           <div class="glass-card record-card" @click="goToDetail(card)">
             <div class="card-head">
@@ -572,14 +575,23 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .record-page {
   position: relative;
   height: 100dvh;
   padding: 0 0 0.8rem;
   color: #f9f9f9;
+  background-image: var(--record-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: var(--c-text);
+    background-color: var(--c-page);
+    background-image: var(--record-bg-light);
+  }
 }
 
 .content-wrap {
@@ -600,9 +612,18 @@ onBeforeUnmount(() => {
   font-size: 0.37rem;
   padding: 0.05rem 0;
 
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.7);
+  }
+
   &.active {
     color: #fff;
     border-bottom: 0.03rem solid rgba(255, 255, 255, 0.92);
+
+    @include theme-light {
+      color: var(--c-brand);
+      border-bottom-color: var(--c-brand);
+    }
   }
 }
 
@@ -611,6 +632,11 @@ onBeforeUnmount(() => {
   border: 0.02rem solid rgba(249, 249, 249, 0.2);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.04rem);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-surface);
+  }
 }
 
 .stats-card {
@@ -625,6 +651,10 @@ onBeforeUnmount(() => {
   border-radius: 0.62rem;
   // padding: 0.08rem;
   background: rgba(255, 255, 255, 0.2);
+
+  @include theme-light {
+    background: #e3e3e3;
+  }
 }
 
 .time-tab {
@@ -635,9 +665,17 @@ onBeforeUnmount(() => {
   font-size: 0.40541rem;
   padding: 0.36rem 0;
 
+  @include theme-light {
+    color: var(--c-text);
+  }
+
   &.active {
     background: rgba(255, 255, 255, 0.18);
     font-weight: 700;
+
+    @include theme-light {
+      background: #cfcfcf;
+    }
   }
 }
 
@@ -665,6 +703,10 @@ onBeforeUnmount(() => {
   .metric-label {
     font-size: 0.27027rem;
     color: rgba(255, 255, 255, 0.74);
+
+    @include theme-light {
+      color: rgba(0, 0, 0, 0.7);
+    }
   }
 
   .metric-value {
@@ -685,6 +727,10 @@ onBeforeUnmount(() => {
   background: rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(0.1583614945411682px);
 
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.07);
+  }
+
   .profit-title {
     font-size: 0.33821rem;
     line-height: 0.7rem;
@@ -693,8 +739,10 @@ onBeforeUnmount(() => {
   .profit-value {
     font-size: 0.71789rem;
     font-weight: 400;
+    color: var(--c-profit);
+
     &.pos {
-      color: #4ee58f;
+      color: var(--c-loss);
     }
   }
 }
@@ -706,6 +754,10 @@ onBeforeUnmount(() => {
     height: 0.02rem;
     background: rgba(255, 255, 255, 0.18);
     margin: 0.2rem 0;
+
+    @include theme-light {
+      background: rgba(0, 0, 0, 0.1);
+    }
   }
 }
 
@@ -723,6 +775,10 @@ onBeforeUnmount(() => {
   .label {
     font-size: 0.27027rem;
     color: rgba(255, 255, 255, 0.7);
+
+    @include theme-light {
+      color: rgba(0, 0, 0, 0.7);
+    }
   }
 
   .value {
@@ -771,12 +827,16 @@ onBeforeUnmount(() => {
     width: 0.02rem;
     bottom: -0.3rem;
     background: rgba(255, 255, 255, 1);
+
+    @include theme-light {
+      background: #a3a3a3;
+    }
   }
   &.date-col--continued::after {
     top: 0rem;
   }
   &.date-col--continued {
-    .date-icon {
+    .tx__time-icon {
       top: 0.05rem;
     }
   }
@@ -790,13 +850,18 @@ onBeforeUnmount(() => {
     margin-bottom: 0.1rem;
   }
 
-  .date-icon {
+  .tx__time-icon {
     position: absolute;
     right: -0.2rem;
     top: 0rem;
     width: 0.267rem;
     height: 0.267rem;
     border-radius: 50%;
+    color: #fff;
+
+    @include theme-light {
+      color: #000;
+    }
   }
 }
 
@@ -814,6 +879,10 @@ onBeforeUnmount(() => {
     .line {
       height: 0.02rem;
       background: rgba(255, 255, 255, 0.4);
+
+      @include theme-light {
+        background: rgba(0, 0, 0, 0.1);
+      }
     }
   }
 }
@@ -856,10 +925,10 @@ onBeforeUnmount(() => {
 .profit {
   font-size: 0.54rem;
   font-weight: 700;
-  color: #ff7a8f;
+  color: var(--c-profit);
 
   &.pos {
-    color: #4ee58f;
+    color: var(--c-loss);
   }
 }
 </style>

@@ -60,6 +60,7 @@ import MiniGameView from '@/views/home/MiniGameView.vue'
 import CasinoView from '@/views/home/CasinoView.vue'
 import { useCasinoStore } from '@/stores/casino'
 import { useMinigameStore } from '@/stores/minigame'
+import { GameDialog } from '@/components/Dialog'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import {
   multiLanguageTemplateVersion,
@@ -68,9 +69,11 @@ import {
 import { formatDateTime, formatTodayAwareTimeLabel, toTimestampMs } from '@/utils/time'
 
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--club-page-bg-dark': `url(${mainBgUrl})`,
+  '--club-page-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
@@ -203,7 +206,7 @@ const showFloatingActionArea = computed(() => {
 
 const filteredRecords = computed(() => {
   const baseList = sourceRecords.value.filter((room) => {
-    if (Number(room.game_type) >= 6) {
+    if (Number(room.game_type) >= 5) {
       return false
     }
     return checkIsShowForClubAndTribe(room, selectedClubId.value, selectedTribeId.value)
@@ -513,7 +516,7 @@ function restoreRoomGroupExpandedCache(): void {
 function syncExpandedMapWithRecords(records: RoomRecord[]): void {
   const validGroupKeySet = new Set<string>()
   records
-    .filter((room) => Number(room.game_type) < 6)
+    .filter((room) => Number(room.game_type) < 5)
     .forEach((room) => {
       validGroupKeySet.add(buildGroupKey(room))
     })
@@ -1388,15 +1391,13 @@ const handleBack = () => {
         </button>
       </div>
 
-      <van-popup
+      <GameDialog
         v-model:show="showClubNoticePopup"
-        class="club-notice-popup"
-        round
+        dialog-width="8.45rem"
+        :show-footer="false"
         :close-on-click-overlay="true"
-        :lock-scroll="true"
-        :overlay-style="{ background: 'rgba(8, 8, 8, 0.6)' }"
       >
-        <div class="club-notice-card">
+        <div class="club-notice-body">
           <div class="club-notice-club-pill">{{ clubDisplayName }}</div>
           <p class="club-notice-title">{{ activeClubNotice?.title }}</p>
           <p class="club-notice-date">{{ activeClubNotice?.dateText }}</p>
@@ -1410,7 +1411,7 @@ const handleBack = () => {
             今天不再显示提示
           </button>
         </div>
-      </van-popup>
+      </GameDialog>
 
       <SafetyGuardDialog v-model:show="showSafetyGuardPopup" :tribe-id="selectedTribeId" />
     </div>
@@ -1420,6 +1421,8 @@ const handleBack = () => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .room-list-page {
   position: relative;
   width: min(100%, var(--app-max-width));
@@ -1430,6 +1433,7 @@ const handleBack = () => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-image: var(--club-page-bg-dark);
   padding-top: 0;
 }
 
@@ -1520,6 +1524,10 @@ const handleBack = () => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  @include theme-light {
+    color: #111;
+  }
 }
 
 .club-sub-meta {
@@ -1529,6 +1537,10 @@ const handleBack = () => {
   gap: 0.1446rem;
   font-size: 0.257rem;
   opacity: 0.94;
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .club-id-wrap {
@@ -1548,6 +1560,11 @@ const handleBack = () => {
   align-items: center;
   justify-content: center;
   font-size: 0.216rem;
+
+  @include theme-light {
+    background: rgba(79, 79, 79, 0.4);
+    color: #fff;
+  }
 }
 
 .club-id-text {
@@ -1620,6 +1637,12 @@ const handleBack = () => {
   box-shadow: inset 0 0 0 0.0133rem rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(0.0021rem);
   transition: min-height 0.2s ease;
+
+  @include theme-light {
+    color: #fff;
+    background: rgba(108, 119, 128, 0.5);
+    box-shadow: inset 0 0 0 0.0133rem rgba(255, 255, 255, 0.28);
+  }
 }
 
 .announce-bar--expanded {
@@ -1658,32 +1681,11 @@ const handleBack = () => {
   transform: rotate(-90deg);
 }
 
-.club-notice-popup {
-  width: min(6.86rem, calc(100vw - 1.2rem));
-  border-radius: 0.97rem;
-  background: transparent;
-}
-
-.club-notice-card {
-  position: relative;
-  border: 0.0255rem solid rgba(242, 242, 242, 0.4);
-  border-radius: 0.97rem;
-  padding: 0.42rem 0.41rem;
+.club-notice-body {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.16rem;
-  background: linear-gradient(
-    102.737deg,
-    rgba(142, 142, 142, 0.04) 2.93%,
-    rgba(103, 103, 103, 0.1) 33.62%,
-    rgba(73, 73, 73, 0.2) 69.79%
-  );
-  backdrop-filter: blur(0.2rem);
-  box-shadow:
-    0.092rem 0.115rem 0.184rem rgba(0, 0, 0, 0.25),
-    inset 0 0 0.23rem rgba(0, 0, 0, 1),
-    inset 0.057rem 0.113rem 0.46rem rgba(242, 242, 242, 0.9);
 }
 
 .club-notice-club-pill {
@@ -1793,11 +1795,16 @@ const handleBack = () => {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: -0.1rem;
   height: 0.032rem;
   border-radius: 999px;
   background: rgba(234, 234, 234, 0.92);
   box-shadow: 0 0 0.06rem rgba(255, 255, 255, 0.45);
+
+  @include theme-light {
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .club-quick-card {
@@ -1998,6 +2005,10 @@ const handleBack = () => {
   font-weight: 700;
   color: #fff;
   line-height: 1.2;
+
+  @include theme-light {
+    color: #222;
+  }
 }
 
 .mtt-group__title--empty {
@@ -2014,6 +2025,10 @@ const handleBack = () => {
   cursor: pointer;
   text-align: right;
   line-height: 0.6rem;
+
+  @include theme-light {
+    color: var(--c-brand);
+  }
 }
 
 .mtt-grid {
@@ -2077,6 +2092,11 @@ const handleBack = () => {
   align-items: center;
   justify-content: center;
   z-index: 99;
+
+  @include theme-light {
+    background: #505050;
+    box-shadow: 0 0.12rem 0.28rem rgba(var(--c-brand-rgb), 0.28);
+  }
 }
 
 .floating-menu-btn--solo {
@@ -2097,5 +2117,9 @@ const handleBack = () => {
   gap: 0.2133rem;
   font-size: 0.3467rem;
   color: rgba(255, 255, 255, 0.82);
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.58);
+  }
 }
 </style>

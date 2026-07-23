@@ -7,16 +7,25 @@ import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import { getMemberRouteContext } from './clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar_for_club.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import { postOrgClubAgentRatioInfoApi, postOrgClubAgentRatioUpdateApi } from '@/api/org'
+import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
+import {
+  postOrgClubAgentRatioInfoApi,
+  postOrgClubAgentRatioUpdateApi,
+  postOrgClubUserInfoApi,
+} from '@/api/org'
 import type { OrgClubAgentRatioInfoInfo } from '@/api/models/org'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
 
 const route = useRoute()
+const userInfoStore = useUserInfoStore()
 const context = computed(() => getMemberRouteContext(route))
-const focusedKey = ref('service')
+const focusedKey = ref('')
+const profileAvatar = ref(imgAvatar)
 
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--profit-setting-bg-dark': `url(${mainBgUrl})`,
+  '--profit-setting-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const form = ref([
@@ -86,6 +95,23 @@ async function fetchRatioInfo(): Promise<void> {
   }
 }
 
+async function fetchProfileAvatar(): Promise<void> {
+  const clubId = Number(userInfoStore.currentClub?.club_id ?? 0)
+  if (!clubId || !userId.value) return
+
+  try {
+    const response = await postOrgClubUserInfoApi({
+      club_id: clubId,
+      user_id: userId.value,
+      user_random_id: Number(context.value.uid) || undefined,
+    })
+    const avatar = response.data?.user_info?.avatar
+    if (typeof avatar === 'string' && avatar.trim()) profileAvatar.value = avatar
+  } catch {
+    profileAvatar.value = imgAvatar
+  }
+}
+
 function openKeypad(key: string): void {
   focusedKey.value = key
   keypadField.value = key
@@ -94,10 +120,19 @@ function openKeypad(key: string): void {
 
 function onKeypadClose(): void {
   keypadOpen.value = false
+  focusedKey.value = ''
+}
+
+function onProfileAvatarError(event: Event): void {
+  const image = event.currentTarget as HTMLImageElement
+  if (image.dataset.fallbackApplied === 'true') return
+  image.dataset.fallbackApplied = 'true'
+  image.src = imgAvatar
 }
 
 function onKeypadSubmit(value: number): void {
   keypadOpen.value = false
+  focusedKey.value = ''
   const item = form.value.find((i) => i.key === keypadField.value)
   if (!item) return
   // Cap at 100
@@ -145,7 +180,7 @@ async function submitRatios(): Promise<void> {
 }
 
 onMounted(() => {
-  fetchRatioInfo()
+  void Promise.all([fetchRatioInfo(), fetchProfileAvatar()])
 })
 </script>
 
@@ -154,7 +189,7 @@ onMounted(() => {
     <HeaderBack :title="loading ? '加载中...' : '代理收益设置'" />
 
     <section class="glass profile-card">
-      <img :src="imgAvatar" :alt="context.name" />
+      <img :src="profileAvatar" :alt="context.name" @error="onProfileAvatarError" />
       <div>
         <p class="name">{{ context.name || 'Donny' }}</p>
         <p class="uid"><span>ID</span>{{ context.uid }}</p>
@@ -178,8 +213,9 @@ onMounted(() => {
 
     <div class="form-actions">
       <PrimaryButton
-        :text="loading ? '加载中...' : '保存'"
+        :text="loading ? '加载中...' : t('CommitOK')"
         :disabled="loading || submitting"
+        :loading="submitting"
         class="save-btn"
         @click="submitRatios"
       />
@@ -188,6 +224,8 @@ onMounted(() => {
     <NumericKeypad
       :open="keypadOpen"
       :show-input-area="true"
+      :show-mask="false"
+      :show-background="true"
       :allow-decimal="true"
       :max="100"
       :min="0"
@@ -204,6 +242,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @use 'sass:math';
+@use '@/styles/mixins' as *;
 
 @function figma-rem($px) {
   @return math.div($px, 37.5) * 1rem;
@@ -211,7 +250,17 @@ onMounted(() => {
 
 .profit-bg {
   height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background-image: var(--profit-setting-bg-dark);
   background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  @include theme-light {
+    background-color: var(--c-page);
+    background-image: var(--profit-setting-bg-light);
+  }
 }
 
 .glass {
@@ -221,6 +270,7 @@ onMounted(() => {
 }
 
 .profile-card {
+  margin: 0 figma-rem(5);
   min-height: figma-rem(105);
   padding: figma-rem(4.751) figma-rem(21.854);
   display: flex;
@@ -262,7 +312,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: figma-rem(24);
-  padding: figma-rem(20) figma-rem(16);
+  padding: figma-rem(32) 0 0;
+  margin: 0 figma-rem(5.5);
   overflow-y: auto;
 }
 
@@ -291,8 +342,8 @@ onMounted(() => {
   transition: border-color 0.2s;
 
   &--focused {
-    border-color: #04d19d;
-    box-shadow: 0 0 0 2px rgba(4, 209, 157, 0.3);
+    border-color: var(--c-brand);
+    box-shadow: 0 0 0 2px rgba(var(--c-brand-rgb), 0.24);
   }
 
   &__number {
@@ -309,12 +360,48 @@ onMounted(() => {
 
 .form-actions {
   flex-shrink: 0;
-  padding: figma-rem(16) figma-rem(16) figma-rem(24);
+  padding: figma-rem(16) figma-rem(9) figma-rem(24);
   display: flex;
   gap: figma-rem(12);
 }
 
 .save-btn {
   flex: 1;
+}
+
+.profit-bg {
+  @include theme-light {
+    .glass {
+      background: #fff;
+      backdrop-filter: none;
+    }
+
+    .name,
+    .uid,
+    .form-item p {
+      color: #000;
+    }
+
+    .uid span {
+      color: #fff;
+      background: rgba(79, 79, 79, 0.4);
+    }
+
+    .value {
+      border-color: transparent;
+      background: #dadada;
+      color: rgba(0, 0, 0, 0.71);
+    }
+
+    .value--focused {
+      border-color: var(--c-brand);
+      box-shadow: 0 0 0 2px rgba(var(--c-brand-rgb), 0.16);
+    }
+
+    .value__number,
+    .value__unit {
+      color: rgba(0, 0, 0, 0.71);
+    }
+  }
 }
 </style>

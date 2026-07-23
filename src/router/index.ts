@@ -16,6 +16,18 @@ const router = createRouter({
       name: 'login',
       component: () => import('@/views/login/LoginViewNew.vue'),
     },
+    // 下载落地页：公开访问，无需登录（内容对齐 BridgeNotificationPanel 步骤1）
+    {
+      path: '/download',
+      name: 'download-landing',
+      component: () => import('@/views/landing/DownloadLandingView.vue'),
+    },
+    // 开发工具：AppSvgIcon 图标一览，公开访问，无需登录
+    {
+      path: '/dev/icons',
+      name: 'dev-icon-gallery',
+      component: () => import('@/views/dev/IconGalleryView.vue'),
+    },
     {
       path: '/',
 

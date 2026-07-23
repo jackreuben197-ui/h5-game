@@ -38,6 +38,8 @@ export default { name: 'GameTableRow' }
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .game-table__row {
   display: flex;
   align-items: stretch;
@@ -46,11 +48,20 @@ export default { name: 'GameTableRow' }
   background: rgba(0, 0, 0, 0.2);
   overflow: hidden;
 
+  @include theme-light {
+    background: #fff;
+  }
+
   &--flat {
     background: none;
     border-radius: 0;
     overflow: visible;
     border-bottom: 0.02rem solid rgba(249, 249, 249, 0.11);
+
+    @include theme-light {
+      background: none;
+      border-bottom-color: rgba(0, 0, 0, 0.11);
+    }
   }
 }
 </style>

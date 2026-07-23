@@ -6,6 +6,7 @@ import {
 
 // 与 MttContent.filteredItems 保持同一过滤口径：排除麻将 + 按 club/tribe 可见性筛选。
 // 任何「首页 MTT 统计 / MTT 列表 / 其它需要展示赛事的入口」都应走这个 helper，避免分叉。
+// displayPlatformMtt 对齐 Unity 全局配置 club_display_platform_mtt：开启时平台赛事（origin_type=1）直接可见。
 
 function toSafeInt(value: unknown): number {
   const num = Number(value)

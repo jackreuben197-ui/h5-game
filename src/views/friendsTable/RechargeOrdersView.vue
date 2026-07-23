@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
-import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import TogglePillGroup from '@/components/wallet/TogglePillGroup.vue'
 import RecordItem from '@/components/wallet/RecordItem.vue'
 import OrderDetailsView from './OrderDetailsView.vue'
 import { t } from '@/i18n'
-import icNoData from '@/assets/icons/ic_no_data.svg'
 import { postClubFundOrderListApi, postClubPlayerOrderRecordApi } from '@/api/order'
 import type { ClubFundOrderListOrderInfo, ClubPlayerOrderRecordOrderInfo } from '@/api/models/order'
 import { useWalletStore } from '@/stores/wallet'
@@ -49,7 +47,7 @@ function mapClubFundOrderToRecord(
   row: ClubFundOrderListOrderInfo,
   order_type: number,
 ): ClubPlayerOrderRecordOrderInfo {
-  const amount = typeof row.amount === 'number' ? row.amount : row.pay_price ?? row.dest_amount
+  const amount = typeof row.amount === 'number' ? row.amount : (row.pay_price ?? row.dest_amount)
   return {
     ...row,
     order_type,
@@ -98,10 +96,7 @@ onMounted(loadOrders)
 </script>
 
 <template>
-  <div
-    class="wallet-orders-screen app-scroll-standalone"
-    :style="{ backgroundImage: `url(${sharpBgUrl})` }"
-  >
+  <div class="wallet-orders-screen app-scroll-standalone">
     <HeaderBack :title="t('Wallet_OrdersTitle')" extra-padding>
       <template #right>
         <TogglePillGroup v-model="activeTab" :tabs="tabs" />
@@ -109,7 +104,7 @@ onMounted(loadOrders)
     </HeaderBack>
 
     <div v-if="!loading && orders.length === 0" class="wallet-orders-empty t-body">
-      <img :src="icNoData" alt="" class="wallet-orders-empty__icon" />
+      <AppSvgIcon name="empty-data" class="empty-icon" />
       {{ $txt('Wallet_OrdersEmpty') }}
     </div>
     <div v-else class="list">
@@ -130,6 +125,8 @@ onMounted(loadOrders)
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .wallet-orders-screen {
   position: relative;
   height: 100vh;
@@ -143,6 +140,12 @@ onMounted(loadOrders)
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-color: var(--c-page);
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+
+  @include theme-light {
+    background-image: url('@/assets/images/main_bg_light.webp');
+  }
 }
 
 .wallet-orders-screen::before {
@@ -154,6 +157,12 @@ onMounted(loadOrders)
   backdrop-filter: blur(34px);
   -webkit-backdrop-filter: blur(34px);
   background: rgba(0, 0, 0, 0.15);
+
+  @include theme-light {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .wallet-orders-screen > * {
@@ -179,9 +188,17 @@ onMounted(loadOrders)
   text-align: center;
   color: rgba(255, 255, 255, 0.65);
 
-  &__icon {
-    width: 1.2533rem;
-    height: 1.5733rem;
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
+  .empty-icon {
+    width: 1.248rem;
+    height: 1.56rem;
+    object-fit: contain;
+
+    @include theme-light {
+      color: var(--c-brand);
+    }
   }
 }
 </style>

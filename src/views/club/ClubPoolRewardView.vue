@@ -7,12 +7,7 @@ import cardBgUrl from '@/assets/icons/ic_jackpot_card_bg.png'
 import iconTag from '@/assets/icons/ic_card_jackpot.svg'
 import type { OrgClubJackpotTemplateListDataItem } from '@/api/models/org'
 import { formatUC } from '@/utils/roomVisibility'
-import emptyStateIcon from '@/assets/icons/jackpot_empty_state.png'
 import { t } from '@/i18n'
-// 主容器背景图：全页面共用一张底图。
-const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
-}))
 
 interface PoolRewardItem {
   id: string
@@ -56,6 +51,10 @@ function onOpenRecord(item: PoolRewardItem): void {
   })
 }
 
+function goCreateJackpot(): void {
+  void router.push('/club/jackpot/create')
+}
+
 async function fetchJackpotList(reset = false): Promise<void> {
   if (loading.value || loadingMore.value) {
     return
@@ -81,7 +80,8 @@ async function fetchJackpotList(reset = false): Promise<void> {
     })
 
     if (Number(response.code) !== 0) {
-      const message = typeof response.msg === 'string' ? response.msg : t('UIClub_LoadJackpotRecordFail')
+      const message =
+        typeof response.msg === 'string' ? response.msg : t('UIClub_LoadJackpotRecordFail')
       throw new Error(message)
     }
 
@@ -149,7 +149,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell pool-reward-page" :style="backgroundStyle" @scroll="onPageScroll">
+  <div class="page-shell pool-reward-page" @scroll="onPageScroll">
     <HeaderBack :title="'奖池记录'" />
 
     <section class="pool-body">
@@ -204,11 +204,11 @@ onMounted(() => {
       </ul>
 
       <div v-if="!hasItems && loading" class="pool-empty">
-        <img class="empty-icon" :src="emptyStateIcon" alt="" />
+        <AppSvgIcon name="empty-data" class="empty-icon" />
         <p>{{ t('SuperView2') }}...</p>
       </div>
       <div v-else-if="!hasItems && !loading" class="pool-empty">
-        <img class="empty-icon" :src="emptyStateIcon" alt="" />
+        <AppSvgIcon name="empty-data" class="empty-icon" />
         <p>{{ t('UIClub_FundDetail_xYlV8VBZ') }}</p>
       </div>
 
@@ -217,16 +217,27 @@ onMounted(() => {
     </section>
 
     <div class="footer-action">
-      <button type="button" class="create-btn">{{ t('UIClub_AddSomething') }}Jackpot{{ t('UIClub_Jackpot4') }}</button>
+      <button type="button" class="create-btn" @click="goCreateJackpot">
+        {{ t('UIClub_AddSomething') }}Jackpot{{ t('UIClub_Jackpot4') }}
+      </button>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .pool-reward-page {
   position: relative;
   height: 100dvh;
+  background-color: var(--c-page);
+  background-image: url('@/assets/images/main_bg.webp');
   background-size: cover;
+  background-position: center;
+
+  @include theme-light {
+    background-image: url('@/assets/images/main_bg_light.webp');
+  }
 }
 
 .pool-body {
@@ -258,12 +269,21 @@ onMounted(() => {
   font-size: 0.3991rem;
   line-height: 0.95;
   border-bottom: 0.0363rem solid transparent;
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.72);
+  }
 }
 
 .tab-btn--active {
   color: #ffffff;
   font-weight: 700;
   border-bottom-color: #ffffff;
+
+  @include theme-light {
+    color: var(--c-brand);
+    border-bottom-color: var(--c-brand);
+  }
 }
 
 .pool-list {
@@ -409,6 +429,10 @@ onMounted(() => {
   width: 1.248rem;
   height: 1.56rem;
   object-fit: contain;
+
+  @include theme-light {
+    color: var(--c-brand);
+  }
 }
 
 .pool-empty p {
@@ -416,6 +440,10 @@ onMounted(() => {
   font-size: 0.3734rem;
   color: rgba(225, 234, 248, 0.88);
   text-align: center;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .pool-loading-more {
@@ -423,6 +451,10 @@ onMounted(() => {
   text-align: center;
   color: rgba(225, 234, 248, 0.88);
   font-size: 0.32rem;
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .footer-action {
@@ -457,7 +489,7 @@ onMounted(() => {
   }
 
   .pool-info {
-    left: 1.38rem;
+    left: 1.64rem;
     width: 3.8rem;
   }
 

@@ -14,6 +14,7 @@ import {
 } from '@/api/org'
 import { postStatsClubDataStatsUserDetailApi } from '@/api/stats'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import imgAvatar from '@/assets/images/default_avatar_for_club.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
@@ -27,10 +28,12 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { getMemberRouteContext, type MemberIdentity } from './clubMemberRoute'
 import mainBgUrl from '@/assets/images/img_table_setting_bg.png'
+import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import { t } from '@/i18n'
 
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--member-detail-bg-dark': `url(${mainBgUrl})`,
+  '--member-detail-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const route = useRoute()
@@ -785,14 +788,13 @@ onMounted(() => {
           <span>{{ t('UINotesComments') }}</span>
           <input v-model="descInput" type="text" :placeholder="t('UIClub_Text23')" />
         </label>
-        <button
-          type="button"
+        <PrimaryButton
           class="remark-save-btn"
+          :text="t('UIClub_Save2')"
           :disabled="savingRemark"
+          :loading="savingRemark"
           @click="onSaveRemark"
-        >
-          {{ t('UIClub_Save2') }}
-        </button>
+        />
       </section>
 
       <section class="glass-card stat-head-card">
@@ -838,15 +840,74 @@ onMounted(() => {
 
       <section v-if="showAgentActions" class="glass-card link-list">
         <button class="link-item" @click="onActionClick('offline')">
-          {{ t('UIGuild_VipCountOffLineMemberNumber') }}
-          <span class="friend-total">{{ memberProfile?.friend_total }}</span>
-          <span class="arrow"></span>
+          <span class="link-item-main">
+            <svg class="agent-link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="m4 17 1.15-4.55L16.7.9a2.1 2.1 0 0 1 2.97 0l.43.43a2.1 2.1 0 0 1 0 2.97L8.55 15.85 4 17Z"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M14.9 2.7 18.3 6.1M4 21h16"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+              />
+            </svg>
+            <span>{{ t('UIGuild_VipCountOffLineMemberNumber') }}</span>
+          </span>
+          <span class="link-item-end">
+            <span class="friend-total">{{ memberProfile?.friend_total }}</span>
+            <span class="arrow"></span>
+          </span>
         </button>
         <button class="link-item" @click="onActionClick('vip')">
-          {{ t('UIClub_Agent') }} <span class="arrow"></span>
+          <span class="link-item-main">
+            <svg class="agent-link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect
+                x="2.5"
+                y="3"
+                width="19"
+                height="18"
+                rx="2.5"
+                stroke="currentColor"
+                stroke-width="1.7"
+              />
+              <path
+                d="m5.5 16 4-4 3.2 2.8 5.8-7"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span>{{ t('UIClub_Agent') }}</span>
+          </span>
+          <span class="arrow"></span>
         </button>
         <button class="link-item" @click="onActionClick('profit')">
-          {{ t('UIGuild_MemberDetails_ProxySetting') }} <span class="arrow"></span>
+          <span class="link-item-main">
+            <svg class="agent-link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="10" cy="7" r="3.5" stroke="currentColor" stroke-width="1.7" />
+              <path
+                d="M3.5 19.5c.45-4 2.55-6 6.5-6 1.3 0 2.4.22 3.3.68"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+              />
+              <path
+                d="M18 13.8v1.4m0 3.6v1.4m-3.2-3.2h1.4m3.6 0h1.4m-1.1-2.1-1 1m-2.2 2.2-1 1m4.2 0-1-1m-2.2-2.2-1-1"
+                stroke="currentColor"
+                stroke-width="1.35"
+                stroke-linecap="round"
+              />
+              <circle cx="18" cy="17" r="2.2" stroke="currentColor" stroke-width="1.35" />
+            </svg>
+            <span>{{ t('UIGuild_MemberDetails_ProxySetting') }}</span>
+          </span>
+          <span class="arrow"></span>
         </button>
       </section>
 
@@ -925,12 +986,19 @@ onMounted(() => {
           type="button"
           @click="popupRole = item"
         >
-          <span class="radio" :class="{ active: popupRole === item }"></span>
+          <span
+            :class="['radio-circle', { 'radio-circle--checked': popupRole === item }]"
+            aria-hidden="true"
+          ></span>
           <span>{{ ROLE_LABEL_MAP[item] }}</span>
         </button>
-        <button class="sheet-confirm" type="button" @click="onConfirmRole">
-          {{ t('UI_Recharge_confirm') }}
-        </button>
+        <PrimaryButton
+          class="sheet-confirm"
+          :text="t('UI_Recharge_confirm')"
+          :disabled="updatingRole"
+          :loading="updatingRole"
+          @click="onConfirmRole"
+        />
       </div>
     </VanPopup>
   </div>
@@ -938,6 +1006,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @use 'sass:math';
+@use '@/styles/mixins' as *;
 
 @function figma-rem($px) {
   @return math.div($px, 37.5) * 1rem;
@@ -945,7 +1014,15 @@ onMounted(() => {
 
 .member-detail-bg {
   height: 100dvh;
+  background-image: var(--member-detail-bg-dark);
   background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  @include theme-light {
+    background-color: var(--c-page);
+    background-image: var(--member-detail-bg-light);
+  }
 }
 
 .member-detail-page {
@@ -1264,6 +1341,27 @@ onMounted(() => {
   justify-content: space-between;
 }
 
+.link-item-main,
+.link-item-end {
+  display: inline-flex;
+  align-items: center;
+}
+
+.link-item-main {
+  gap: figma-rem(9.502);
+}
+
+.link-item-end {
+  gap: figma-rem(8);
+}
+
+.agent-link-icon {
+  width: figma-rem(22);
+  height: figma-rem(22);
+  flex: 0 0 auto;
+  color: #fff;
+}
+
 .bound-row-card {
   border-radius: figma-rem(15.836);
 }
@@ -1370,8 +1468,7 @@ onMounted(() => {
 }
 
 .friend-total {
-  position: absolute;
-  right: 0.8rem;
+  position: static;
 }
 
 .arrow {
@@ -1418,7 +1515,7 @@ onMounted(() => {
 
 .switch.on {
   justify-content: flex-end;
-  background: #25dbc4;
+  background: var(--c-brand);
 }
 
 .bottom-actions {
@@ -1457,7 +1554,7 @@ onMounted(() => {
   border-top-left-radius: 0.8445rem;
   border-top-right-radius: 0.8445rem;
   padding: 0.6426rem 0.5321rem 0.7872rem;
-  background: rgba(177, 126, 152, 0.94);
+  background: rgba(28, 32, 35, 0.96);
   backdrop-filter: blur(0.9733rem);
 }
 
@@ -1479,21 +1576,125 @@ onMounted(() => {
   gap: 0.3467rem;
 }
 
-.radio {
-  width: 0.56rem;
-  height: 0.56rem;
-  border-radius: 50%;
-  border: 0.0267rem solid rgba(249, 249, 249, 0.6);
-  background: rgba(255, 255, 255, 0.18);
-  position: relative;
+.sheet-confirm {
+  margin-top: 0.3467rem;
 }
 
-.radio.active::after {
-  content: '';
-  position: absolute;
-  inset: 0.1rem;
-  border-radius: 50%;
-  background: #26f8e6;
+.member-detail-bg {
+  @include theme-light {
+    .glass-card,
+    .bound-row-card {
+      background: #fff;
+      backdrop-filter: none;
+      box-shadow: 0 figma-rem(2) figma-rem(8) rgba(26, 35, 54, 0.04);
+    }
+
+    .name,
+    .role-card,
+    .role-trigger,
+    .form-card label,
+    .stat-head-top,
+    .pill-tabs button,
+    .stat-row,
+    .link-item,
+    .bound-link-item,
+    .bound-agent-info strong,
+    .bound-agent-action,
+    .switch-row {
+      color: #000;
+    }
+
+    .uid-line,
+    .badge,
+    .asset-stack p {
+      color: rgba(0, 0, 0, 0.78);
+    }
+
+    .uid-line span,
+    .bound-agent-id-tag {
+      color: #fff;
+      background: rgba(79, 79, 79, 0.4);
+    }
+
+    .role-card,
+    .form-card input {
+      background: #dadada;
+    }
+
+    .role-arrow {
+      border-color: rgba(0, 0, 0, 0.78);
+    }
+
+    .form-card input {
+      color: #000;
+    }
+
+    .form-card input::placeholder {
+      color: rgba(0, 0, 0, 0.62);
+    }
+
+    .stat-head-icon,
+    .agent-link-icon {
+      color: var(--c-brand);
+    }
+
+    .pill-tabs {
+      background: #e3e3e3;
+    }
+
+    .pill-tabs button.active {
+      border-color: #fff;
+      background: #cfcfcf;
+    }
+
+    .range-tabs button.active {
+      background: #fff;
+    }
+
+    .stats-loading,
+    .bound-agent-info small {
+      color: rgba(0, 0, 0, 0.62);
+    }
+
+    .link-list {
+      padding: 0 figma-rem(16);
+    }
+
+    .link-item {
+      border-radius: 0;
+      padding: 0;
+      background: transparent;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .link-item:last-child {
+      border-bottom: 0;
+    }
+
+    .arrow {
+      border-color: rgba(34, 34, 34, 0.55);
+    }
+
+    .bound-agent-arrow::before {
+      border-color: rgba(34, 34, 34, 0.55);
+    }
+
+    .switch {
+      background: rgba(34, 34, 34, 0.18);
+    }
+
+    .switch.on {
+      background: var(--c-brand);
+    }
+
+    .btn.secondary {
+      background: #b4b4b4;
+    }
+
+    .btn.primary {
+      background: var(--c-brand);
+    }
+  }
 }
 
 .sheet-confirm {

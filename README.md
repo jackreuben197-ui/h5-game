@@ -132,7 +132,7 @@ VITE_API_BASE_URL=https://your-api-domain pnpm dev
 
 - `src/utils/rem.ts` 在运行时设置 `html font-size`
 - 基准：设计稿宽度 `375`，`1rem = 37.5px(设计稿)`，会随屏宽等比缩放
-- 设计令牌 + SCSS 变量（`src/styles/_tokens.scss`）
+- 基础尺寸令牌 + SCSS 变量（`src/styles/_base.scss`）
 - 断点媒体查询（`src/styles/_mixins.scss`）
 - `safe-area-inset-*` 适配刘海屏/底部安全区
 - `viewport-fit=cover`（见 `index.html`）
@@ -206,8 +206,8 @@ pnpm preview
 当前项目字体接入约定如下：
 
 1. 字体文件统一放在 `public/assets/fonts/`。
-2. 全局 `@font-face` 统一写在 `src/styles/_fonts.scss`。
-3. 全局默认字体链在 `src/styles/_tokens.scss` 的 `$font-family-sans` 配置。
+2. 全局 `@font-face` 统一写在 `src/styles/_base.scss`。
+3. 全局默认字体链在 `src/styles/_base.scss` 的 `--font-family-sans` 配置。
 4. 页面局部特殊字体（例如 MTT 倒计时）在对应 SFC 局部样式中覆盖。
 
 当前已接入示例：
@@ -215,7 +215,7 @@ pnpm preview
 - `HONOR Sans CN`：`public/assets/fonts/HONORSansCN-Regular.woff2`
 - `Keania One`：`public/assets/fonts/KeaniaOne-Regular.woff2`
 
-`@font-face` 示例（见 `src/styles/_fonts.scss`）：
+`@font-face` 示例（见 `src/styles/_base.scss`）：
 
 ```scss
 @font-face {
@@ -232,6 +232,156 @@ pnpm preview
 - 仅写 `font-family` 不会自动下载字体；必须有 `@font-face + 对应文件`。
 - 推荐优先使用 `woff2`；文件较大时建议做子集化，避免首屏性能损耗。
 - 改完字体文件后建议硬刷新（`Cmd + Shift + R`）并在 Network 中确认字体请求返回 `200`。
+
+### 8.3 主题体系（深浅双主题）
+
+产品需求：现有版本定义为**深色主题**，新增一套**浅色主题**。默认跟随当前手机、浏览器或
+Telegram WebView 暴露的系统明暗偏好；运行时同时支持深色、浅色和跟随系统三种模式。
+
+#### 架构总览
+
+| 部分 | 位置 | 职责 |
+|------|------|------|
+| 主题变量层 | `src/styles/_themes.scss` | 只放跨页面通用语义色，按 `html[data-theme]` 切换 |
+| 全局基础层 | `src/styles/_base.scss` | 字体、尺寸令牌、reset、页面骨架与少量仍在使用的排版类 |
+| 公共组件层 | `src/styles/_components.scss` | 全局复用块与 Vant 覆盖 |
+| 局部覆盖 mixin | `src/styles/_mixins.scss` → `theme-light` / `theme-dark` | 变量表达不了的差异（背景图、阴影等） |
+| 运行时 | `src/utils/theme.ts` | 维护 `html[data-theme]`、持久化模式、监听系统明暗、同步 `<meta name="theme-color">` |
+| 组件侧 API | `src/composables/useTheme.ts` | JS 里读主题 / 切换模式（图表配色、动态图片、设置页开关） |
+| 首帧防闪烁 | `index.html` 内联脚本 | 样式生效前设好 `data-theme`，避免开屏闪错主题 |
+| 持久化 | `localStorage` `dzpk_h5_THEME_MODE`（`StorageKey.THEME_MODE`） | 存用户选择的模式 `light / dark / system` |
+
+三个概念区分：
+
+- **mode（模式）**：用户的选择，`light` / `dark` / `system`，持久化。
+- **theme（生效主题）**：`light` / `dark`，`system` 按 Telegram 或浏览器环境归一后的结果。
+- `html[data-theme='light'|'dark']`：CSS 的唯一切换开关。
+
+#### 默认模式
+
+默认模式为 `system`，以下两处必须保持同步，确保首帧和 Vue 运行时不会切换闪烁：
+
+1. `src/utils/theme.ts` → `DEFAULT_THEME_MODE = 'system'`
+2. `index.html` 内联脚本 → 无有效存储时回退 `mode = 'system'`
+
+`system` 在 Telegram Mini App 中优先使用 `WebApp.colorScheme`，并监听 `themeChanged`；普通手机浏览器
+使用 `prefers-color-scheme`。Telegram SDK 尚未加载时先按浏览器环境判断，SDK 就绪后会自动校正。
+
+#### 预览方式
+
+URL 加 `?theme=light`（hash 路由内也可）可强制预览浅色，仅当次会话生效、不落存储，
+供美术走查 / 测试对照用。调试面板“当前主题”旁的切换按钮可即时轮换三种模式。
+
+#### 变量清单（`--c-*`）
+
+| 变量 | 语义 | 深色值（= 现网观感） |
+|------|------|---------------------|
+| `--c-brand` | 当前主题主色 | `#05e7ae`（浅色为 `#69beff`） |
+| `--c-brand-rgb` | 当前主题主色 RGB 通道，供透明度组合 | `5, 231, 174`（浅色为 `105, 190, 255`） |
+| `--c-text` | 主要文字 | `#fff` |
+| `--c-text-muted` | 次要 / 弱化文字 | `rgba(255,255,255,.5)` |
+| `--c-page` | 页面底色 | `#0f0f0f` |
+| `--c-surface` | 通用卡片 / 容器底色 | `rgba(255,255,255,.1)` |
+| `--c-overlay` | 遮罩 | `rgba(12,12,12,.6)` |
+| `--c-border` | 通用边框 | `rgba(255,255,255,.2)` |
+| `--c-divider` | 分隔线 | `rgba(255,255,255,.1)` |
+
+> `#69beff` 直接作为浅色主题的 `--c-brand`，不要再为渐变、按压态等拆出多组近似品牌色变量。
+> 需要不同透明度时写 `rgba(var(--c-brand-rgb), alpha)`，透明度保留在页面或组件语义位置；不要再硬编码两套 RGB。
+> 页面特有的渐变、玻璃和阴影放在页面样式中，用主题 mixin 覆盖；只有多个页面真正复用时才新增全局变量。
+
+#### 页面迁移写法
+
+**1. 颜色一律换成变量**（最主要的工作量，全项目约 1300 处写死色值）：
+
+```scss
+// Before
+color: #fff;
+background: rgba(255, 255, 255, 0.1);
+
+// After
+color: var(--c-text);
+background: var(--c-surface);
+```
+
+常见写死值 → 变量对照：主题主色用 `--c-brand`，文字用 `--c-text/--c-text-muted`，
+页面与卡片用 `--c-page/--c-surface`。语义优先于色值，不要机械替换，也不要为页面独有颜色扩充全局变量。
+
+**2. 变量表达不了的差异用 mixin**（例如两套背景图）：
+
+```scss
+@use '@/styles/mixins' as *;
+
+.main-layout {
+  background-image: url('@/assets/images/main_bg.webp');
+
+  @include theme-light {
+    background-image: url('@/assets/images/main_bg_light.png');
+  }
+}
+```
+
+主题 mixin 必须写在需要覆盖的原始 class 选择器内部，与该 class 的深色样式就地共置；禁止在页面
+根节点或其他父级选择器中集中嵌套多个子 class 的浅色覆盖。
+
+```scss
+// ✅ 正确：浅色差异紧跟原始 class，不改变选择器的父级关系
+.club-size-pill {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.3rem;
+  background: rgba(255, 255, 255, 0.2);
+
+  @include theme-light {
+    background: rgba(164, 164, 164, 0.2);
+  }
+}
+
+// ❌ 错误：集中覆盖会增加父级依赖和 specificity，可能干扰定位、状态类及响应式规则
+.club-detail-bg {
+  @include theme-light {
+    .club-size-pill {
+      background: rgba(164, 164, 164, 0.2);
+    }
+  }
+}
+```
+
+伪元素、状态选择器和组合选择器也遵循同一原则：在其已有选择器声明内直接加入
+`@include theme-light`，不要统一收口到文件末尾的主题覆盖区。
+
+**3. 图标与图片素材**：单色 SVG 统一封装组件，路径只写一份，使用 `currentColor`，主题只改
+`color`；不要为搜索、牌型等单色图标再维护 `_light.svg`。
+
+只有多色位图或复杂装饰无法用 `currentColor` 时，才使用两套素材：
+
+```html
+<img class="only-dark" src="@/assets/images/logo_dark.png" />
+<img class="only-light" src="@/assets/images/logo_light.png" />
+```
+
+命名约定：浅色素材与深色同名加 `_light` 后缀。
+
+**4. JS 侧需要主题时**（图表、canvas、动态样式）：
+
+```ts
+import { useTheme } from '@/composables/useTheme'
+
+const { theme, isDark, setMode } = useTheme() // theme 是响应式的，watch 即可跟随切换
+```
+
+**5. 模板工具类**：`.tc-text/.tc-muted/.tc-brand`、`.bg-c-page/.bg-c-surface`（见 `_themes.scss`）。
+`_utilities.scss` 里的 `.text-white/.bg-white-10` 等白色系类不随主题变化，迁移时替换掉。
+
+#### 迁移节奏
+
+1. ✅ 基础架构：变量层 / 运行时 / 防闪烁 / 预览参数，默认跟随 Telegram 或浏览器系统主题。
+2. ✅ 按首版 Figma 校准浅色基础色与俱乐部列表页，并收敛为少量全局语义变量。
+3. ✅ 5 个一级页面及其游客页逐页对稿迁移，深色保持现有布局与观感。
+4. 🔄 二级页面、公共组件（Dialog/Toast/Tabbar/Vant 覆盖）继续按同一规则推进；按钮与
+   `GameCreateForm` 已接入深浅主题，创建牌桌的专业参数 / 一键开桌模式已完成浅色迁移。
+5. ✅ 品牌纯色和透明色统一为 `--c-brand` / `--c-brand-rgb`；页面专属渐变仍由页面局部维护，
+   浅色必须使用 `theme-light` 给出完整覆盖，不能只替换渐变的第一个色阶。
 
 ## 9. Cocos Bridge 与 WS 协作规范
 
@@ -528,6 +678,8 @@ const text = t('Wallet_AddItem7', 100, 12)
 用途：
 
 - 顶部右侧常用操作按钮（文字 + 图标）
+- 深色使用原玻璃效果；浅色使用白色胶囊、黑色文字，并通过 CSS mask 将现有单色图标着色为主题色，
+  调用方无需维护 `_light` 图标或修改现有 Props。
 
 Props：
 
@@ -544,6 +696,12 @@ Events：
 ```vue
 <TopActionButton name="切换" :icon="walletIcon" icon-alt="wallet" @click="handleTodoClick" />
 ```
+
+`PrimaryButton` 的浅色样式统一为 `--c-brand` 纯色、白字、无深色高光阴影；页面不要再次覆盖一套浅色渐变。
+
+`src/components/GameCreateForm/` 下的输入、下拉、步进器、开关、滑杆、模式 Tab 和提示气泡均在组件内处理主题。
+页面层只负责卡片 / 页面背景等容器语义；下拉与提示气泡的 Vant `theme` 必须跟随 `useTheme()`，不能写死为
+`dark`。单色的提示、编辑和下拉图标统一由 `AppSvgIcon` 使用 `currentColor` 着色。
 
 ### 11.2 PageBackHeader
 
@@ -838,7 +996,7 @@ const show = ref(false)
 - **body**：最大高 `12rem`，超出滚动（隐藏滚动条）
 - **确认按钮**：`PrimaryButton`（`:shadow="false"` 关闭高光阴影）
 - **取消按钮**：`rgba(0,0,0,0.3)` + `backdrop-filter: blur(0.05rem)`
-- **遮罩**：`rgba(12,12,12,0.6)`，同时写入 `_vant-overrides.scss` 全局生效
+- **遮罩**：使用 `--c-overlay`，Vant 全局覆盖集中在 `_components.scss`
 
 ---
 
@@ -892,7 +1050,7 @@ const show = ref(false)
   <!-- 自定义内容 -->
   <GameToast v-model:show="show" :duration="0" :close-on-click="true">
     <div style="display:flex;align-items:center;gap:0.2rem">
-      <van-icon name="success" size="0.5rem" color="#05e7ae" />
+      <van-icon name="success" size="0.5rem" color="var(--c-brand)" />
       <span style="color:#fff;font-size:0.43rem">充值成功</span>
     </div>
   </GameToast>

@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import html2canvas from 'html2canvas'
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   postOrgClubSearchByIdApi,
   postOrgChangeClubDataApi,
-  postOrgClubAgentInviTationApi,
-  postOrgClubInviTationApi,
   postOrgClubDisbandApi,
   postOrgClubCloneApplyApi,
   postOrgJoinTripApi,
   postOrgTribeInfoByClubApi,
   postOrgClubApplyTribeListApi,
   postOrgClubCancleJoinTribeApi,
+  postOrgMemberListApi,
 } from '@/api/org'
 import type {
   OrgChangeClubDataRequest,
@@ -24,6 +23,8 @@ import imgBalance from '@/assets/icons/icon_credit_chip.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgPeople from '@/assets/icons/member_icon_redesigned.svg'
+import { postOrgClubAgentInviTationApi, postOrgClubInviTationApi } from '@/api/org'
+import { extractInvitationCode, extractInvitationLink } from '@/utils/clubInvitation'
 import imgQuickSafety from '@/assets/images/club_quick_activity.png'
 import imgQuickRanking from '@/assets/images/club_quick_room_history.png'
 import imgQuickFund from '@/assets/images/club_quick_fund.png'
@@ -35,8 +36,8 @@ import imgModalClose from '@/assets/icons/modal_close.svg'
 import imgAvatarAdd from '@/assets/icons/avatar_add_badge.svg'
 // import ImageUploadSheet from '@/components/ImageUploadSheet/ImageUploadSheet.vue'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
+import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { extractInvitationCode, extractInvitationLink } from '@/utils/clubInvitation'
 import {
   buildChannelClubInviteUrl,
   isPrivateDomainMode,
@@ -45,10 +46,12 @@ import { generateQrCodeUrl } from '@/utils/qrcode'
 import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import { t } from '@/i18n'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--club-detail-bg-dark': `url(${mainBgUrl})`,
+  '--club-detail-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 interface QuickActionItem {
@@ -74,6 +77,7 @@ const imgInviteQr = ref('')
 
 const loading = ref(false)
 const clubDetail = ref<OrgClubSearchByIdResponseData | null>(null)
+const authoritativeMemberTotal = ref<number | null>(null)
 
 // 用户等级：0 普通，1 会长，2 副会长，3 管理员，4 代理。
 const userLevel = computed(() =>
@@ -86,6 +90,9 @@ const isAgent = computed(() => userLevel.value === 4)
 const canManageClub = computed(() => isFounder.value || isVicePresident.value || isAdmin.value)
 
 const displayClub = computed(() => clubDetail.value ?? userInfoStore.currentClub)
+const clubMemberCount = computed(
+  () => authoritativeMemberTotal.value ?? toSafeNumber(displayClub.value?.club_members),
+)
 const cachedClub = computed(() => userInfoStore.currentClub)
 const currentClubGold = computed(() => Number(cachedClub.value?.user_gold ?? 0))
 const currentClubCredit = computed(() => Number(cachedClub.value?.user_credit ?? 0))
@@ -112,7 +119,12 @@ const settings = computed<SettingItem[]>(() => {
       value: displayClub.value?.club_creator_nickname || '--',
     },
     { id: 2, label: t('UIClub_Invite'), kind: 'arrow' },
-    { id: 3, label: t('UIClub_Info_rUC1C7lI'), kind: 'tribe', value: displayClub.value?.tribe_name || '--' },
+    {
+      id: 3,
+      label: t('UIClub_Info_rUC1C7lI'),
+      kind: 'tribe',
+      value: displayClub.value?.tribe_name || '--',
+    },
   ]
 
   if (isFounder.value) {
@@ -153,12 +165,14 @@ const showCopyPopup = ref(false)
 const showTribeSearchPopup = ref(false)
 const showTribeApplyPopup = ref(false)
 const showCancelTribeApplyPopup = ref(false)
+const showDeleteClubPopup = ref(false)
 const savingInviteShare = ref(false)
 const savingInviteQr = ref(false)
 const savingClubLogo = ref(false)
 const tribeApplySubmitting = ref(false)
 const tribeApplyStatusLoading = ref(false)
 const cancelTribeApplyLoading = ref(false)
+const deletingClub = ref(false)
 const tribeApplyId = ref<number | null>(null)
 const tribeApplying = ref(false)
 const tribeApplyIdInput = ref('')
@@ -219,12 +233,25 @@ function closeTribeSearchPopup(): void {
   tribeIdKeypadOpen.value = false
 }
 
+watch(showTribeSearchPopup, (visible) => {
+  if (!visible) {
+    tribeIdKeypadOpen.value = false
+  }
+})
+
 function closeTribeApplyPopup(): void {
   showTribeApplyPopup.value = false
 }
 
 function closeCancelTribeApplyPopup(): void {
   showCancelTribeApplyPopup.value = false
+}
+
+function closeDeleteClubPopup(): void {
+  if (deletingClub.value) {
+    return
+  }
+  showDeleteClubPopup.value = false
 }
 
 function openTribeIdKeypad(): void {
@@ -335,7 +362,7 @@ async function submitTribeApply(): Promise<void> {
 
   const tribeRandomId = Number(tribeApplyIdInput.value)
   if (!Number.isFinite(tribeRandomId) || tribeRandomId <= 0) {
-    showFailToast(t('UIClub_PleaseUnion') + "ID")
+    showFailToast(t('UIClub_PleaseUnion') + 'ID')
     return
   }
 
@@ -420,7 +447,9 @@ async function confirmTribeApply(): Promise<void> {
     }
 
     const successMessage = (response.msg ?? response.message) as unknown
-    showSuccessToast(typeof successMessage === 'string' ? successMessage : t('UIClub_ApplyDoneSubmit'))
+    showSuccessToast(
+      typeof successMessage === 'string' ? successMessage : t('UIClub_ApplyDoneSubmit'),
+    )
     closeTribeApplyPopup()
     resetTribeApplyForm()
     await fetchClubTribeApplyStatus()
@@ -452,7 +481,9 @@ async function cancelTribeApply(): Promise<void> {
     }
 
     const successMessage = (response.msg ?? response.message) as unknown
-    showSuccessToast(typeof successMessage === 'string' ? successMessage : t('UIClub_DoneCancelApply'))
+    showSuccessToast(
+      typeof successMessage === 'string' ? successMessage : t('UIClub_DoneCancelApply'),
+    )
     closeCancelTribeApplyPopup()
     await fetchClubTribeApplyStatus()
   } catch (error) {
@@ -480,6 +511,36 @@ function syncCurrentClubFields(fields: Partial<OrgClubData>): void {
 
   if (typeof fields.logo === 'string') {
     clubAvatarUrl.value = fields.logo
+  }
+}
+
+async function fetchClubMemberTotal(): Promise<void> {
+  const currentClub = displayClub.value
+  if (!currentClub?.club_id && !currentClub?.random_id) {
+    return
+  }
+
+  try {
+    const response = await postOrgMemberListApi({
+      club_id: currentClub.club_id,
+      club_random_id: currentClub.random_id,
+      search: '',
+      sort_type: 8,
+      order_type: 2,
+      gold_type: 1,
+      simple: false,
+      hide_slave: true,
+      limit: 1,
+      offset: 0,
+    })
+    const total = Number(response.data?.total)
+    if (response.code === 0 && Number.isFinite(total) && total >= 0) {
+      authoritativeMemberTotal.value = total
+      syncCurrentClubFields({ club_members: total })
+    }
+  } catch (error) {
+    // 人数接口失败时继续使用俱乐部详情中的缓存值，不影响详情页加载。
+    console.error('fetchClubMemberTotal error', error)
   }
 }
 
@@ -516,7 +577,7 @@ async function refreshClubDetail(): Promise<void> {
   clubDetail.value = currentClub
   clubAvatarUrl.value = currentClub.logo || ''
   updateSwitchesByClubData(currentClub)
-  await fetchClubTribeApplyStatus()
+  await Promise.all([fetchClubTribeApplyStatus(), fetchClubMemberTotal()])
 
   loading.value = true
   try {
@@ -531,7 +592,12 @@ async function refreshClubDetail(): Promise<void> {
 
     clubDetail.value = response.data
     userInfoStore.setCurrentClub(response.data)
-    // userInfoStore.syncCurrentClubFields(response.data)
+    // setCurrentClub 只切换 currentClubId，不会把详情接口的新字段写回 clubList。
+    // 显式同步后，基金页读取到的 upper_limit 才会与详情页一致。
+    syncCurrentClubFields(response.data)
+    if (authoritativeMemberTotal.value !== null) {
+      syncCurrentClubFields({ club_members: authoritativeMemberTotal.value })
+    }
     clubAvatarUrl.value = response.data.logo || ''
     updateSwitchesByClubData(response.data)
     await fetchClubTribeApplyStatus()
@@ -734,7 +800,10 @@ async function saveInviteShare(): Promise<void> {
     if (actionsEl) {
       actionsEl.style.display = 'none'
     }
-    const canvas = await html2canvas(inviteModalRef.value, {
+    const captureTarget =
+      (inviteModalRef.value.closest('.game-dialog__card') as HTMLElement | null) ||
+      inviteModalRef.value
+    const canvas = await html2canvas(captureTarget, {
       useCORS: true,
       backgroundColor: null,
       logging: false,
@@ -808,12 +877,21 @@ async function submitCopyRequest(): Promise<void> {
   closeCopyPopup()
 }
 
-async function onDeleteClub(): Promise<void> {
+function onDeleteClub(): void {
   if (!isFounder.value) {
     showFailToast(t('UIClub_FounderCan2'))
     return
   }
 
+  showDeleteClubPopup.value = true
+}
+
+async function confirmDeleteClub(): Promise<void> {
+  if (deletingClub.value) {
+    return
+  }
+
+  deletingClub.value = true
   try {
     const response = await postOrgClubDisbandApi({})
 
@@ -822,12 +900,15 @@ async function onDeleteClub(): Promise<void> {
       throw new Error(typeof fallback === 'string' ? fallback : t('UIClub_DeleteFail'))
     }
     showSuccessToast(t('UIClub_DoneDeleteClub'))
+    showDeleteClubPopup.value = false
     setTimeout(() => {
       void router.replace('/club')
     }, 1000)
   } catch (error) {
     const message = error instanceof Error ? error.message : t('UIClub_DeleteFail')
     showFailToast(message)
+  } finally {
+    deletingClub.value = false
   }
 }
 
@@ -963,7 +1044,7 @@ onMounted(async () => {
 
         <div class="club-size-pill" aria-label="俱乐部人数">
           <span class="size-text">
-            {{ displayClub?.club_members || 0 }}
+            {{ clubMemberCount }}/{{ displayClub?.upper_limit }}
           </span>
           <div class="size-icon-wrap">
             <img :src="imgPeople" alt="" aria-hidden="true" />
@@ -1100,8 +1181,16 @@ onMounted(async () => {
       </section>
     </div>
 
-    <div v-if="showInvitePopup" class="club-modal-mask" @click="closeInvitePopup">
-      <section ref="inviteModalRef" class="invite-modal" @click.stop>
+    <GameDialog
+      v-model:show="showInvitePopup"
+      class="invite-game-dialog"
+      :show-footer="false"
+      :show-confirm-button="false"
+      :close-on-click-overlay="true"
+      dialog-width="9.1rem"
+      body-max-height="16rem"
+    >
+      <template #title>
         <header class="invite-modal__head">
           <h3>邀请链接</h3>
           <button
@@ -1113,7 +1202,9 @@ onMounted(async () => {
             <img :src="imgModalClose" alt="" aria-hidden="true" />
           </button>
         </header>
+      </template>
 
+      <section ref="inviteModalRef" class="invite-modal">
         <div class="invite-modal__body">
           <p class="invite-modal__subtitle">加入小鱼扑克，开启你的竞技之旅</p>
           <div class="invite-modal__cover-wrap">
@@ -1131,7 +1222,15 @@ onMounted(async () => {
         </div>
 
         <div class="invite-modal__qr-wrap">
-          <img class="invite-modal__qr" :src="imgInviteQr" alt="扫码加入俱乐部" />
+          <img
+            v-if="imgInviteQr"
+            class="invite-modal__qr"
+            :src="imgInviteQr"
+            alt="扫码加入俱乐部"
+          />
+          <div v-else class="invite-modal__qr-placeholder" aria-label="二维码生成中">
+            <span></span>
+          </div>
         </div>
         <p class="invite-modal__qr-tip">扫描二维码，一键开启</p>
 
@@ -1154,7 +1253,7 @@ onMounted(async () => {
           </button>
         </div>
       </section>
-    </div>
+    </GameDialog>
 
     <div v-if="showCopyPopup" class="club-modal-mask" @click="closeCopyPopup">
       <section class="copy-modal" @click.stop>
@@ -1166,92 +1265,69 @@ onMounted(async () => {
       </section>
     </div>
 
-    <div v-if="showTribeSearchPopup" class="club-modal-mask" @click="closeTribeSearchPopup">
-      <section class="tribe-search-modal" @click.stop>
-        <div class="tribe-apply-card">
-          <h3 class="tribe-apply-title">搜索联盟</h3>
+    <GameDialog
+      v-model:show="showTribeSearchPopup"
+      title="搜索联盟"
+      dialog-width="8.8rem"
+      :show-cancel-button="true"
+      :close-on-click-overlay="true"
+      cancel-button-text="取消"
+      :confirm-button-text="tribeApplySubmitting ? '搜索中' : '确认'"
+      :confirm-button-disabled="tribeApplySubmitting"
+      @confirm="submitTribeApply"
+      @cancel="closeTribeSearchPopup"
+    >
+      <div class="tribe-search-shell" aria-label="联盟搜索">
+        <label class="tribe-search-trigger" for="tribe-id-input">
+          <img class="tribe-search-icon" :src="imgSearch" alt="" />
+          <input
+            id="tribe-id-input"
+            class="tribe-search-input"
+            :value="tribeApplyIdInput"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            readonly
+            placeholder="请输入联盟ID"
+            @focus="openTribeIdKeypad"
+            @click="openTribeIdKeypad"
+          />
+        </label>
+      </div>
+    </GameDialog>
 
-          <div class="tribe-search-shell" aria-label="联盟搜索">
-            <label class="tribe-search-trigger" for="tribe-id-input">
-              <img class="tribe-search-icon" :src="imgSearch" alt="" />
-              <input
-                id="tribe-id-input"
-                class="tribe-search-input"
-                :value="tribeApplyIdInput"
-                type="text"
-                inputmode="numeric"
-                autocomplete="off"
-                readonly
-                placeholder="请输入联盟ID"
-                @focus="openTribeIdKeypad"
-                @click="openTribeIdKeypad"
-              />
-            </label>
-          </div>
+    <GameDialog
+      v-model:show="showTribeApplyPopup"
+      dialog-width="8.454rem"
+      :show-cancel-button="true"
+      :close-on-click-overlay="true"
+      cancel-button-text="取消"
+      :confirm-button-text="tribeApplySubmitting ? '提交中' : '加入'"
+      :confirm-button-disabled="tribeApplySubmitting"
+      @confirm="confirmTribeApply"
+      @cancel="closeTribeApplyPopup"
+    >
+      <div class="join-modal-card">
+        <img class="join-modal-logo" :src="searchedTribe?.logo || imgClubCover" alt="联盟头像" />
+        <h3 class="join-modal-name">{{ searchedTribe?.name || '联盟名称' }}</h3>
+        <p class="join-modal-id-row">
+          <span class="join-modal-id-tag">ID</span>
+          <span>{{ searchedTribe?.randomId || '--' }}</span>
+        </p>
+
+        <div class="tribe-contact-shell tribe-contact-shell--modal">
+          <input
+            class="tribe-contact-input"
+            :value="tribeApplyContactInput"
+            type="text"
+            autocomplete="off"
+            maxlength="40"
+            placeholder="请输入联系方式"
+            @input="onTribeContactInput"
+          />
         </div>
-
-        <div class="join-modal-actions">
-          <button
-            type="button"
-            class="join-modal-btn join-modal-btn--cancel"
-            @click="closeTribeSearchPopup"
-          >
-            取消
-          </button>
-          <button
-            type="button"
-            class="join-modal-btn join-modal-btn--confirm"
-            :disabled="tribeApplySubmitting"
-            @click="submitTribeApply"
-          >
-            {{ tribeApplySubmitting ? '搜索中' : '确认' }}
-          </button>
-        </div>
-      </section>
-    </div>
-
-    <div v-if="showTribeApplyPopup" class="club-modal-mask" @click="closeTribeApplyPopup">
-      <section class="join-modal" @click.stop>
-        <div class="join-modal-card">
-          <img class="join-modal-logo" :src="searchedTribe?.logo || imgClubCover" alt="联盟头像" />
-          <h3 class="join-modal-name">{{ searchedTribe?.name || '联盟名称' }}</h3>
-          <p class="join-modal-id-row">
-            <span class="join-modal-id-tag">ID</span>
-            <span>{{ searchedTribe?.randomId || '--' }}</span>
-          </p>
-
-          <div class="tribe-contact-shell tribe-contact-shell--modal">
-            <input
-              class="tribe-contact-input"
-              :value="tribeApplyContactInput"
-              type="text"
-              autocomplete="off"
-              maxlength="40"
-              placeholder="请输入联系方式"
-              @input="onTribeContactInput"
-            />
-          </div>
-        </div>
-
-        <div class="join-modal-actions">
-          <button
-            type="button"
-            class="join-modal-btn join-modal-btn--cancel"
-            @click="closeTribeApplyPopup"
-          >
-            取消
-          </button>
-          <button
-            type="button"
-            class="join-modal-btn join-modal-btn--confirm"
-            :disabled="tribeApplySubmitting"
-            @click="confirmTribeApply"
-          >
-            {{ tribeApplySubmitting ? '提交中' : '加入' }}
-          </button>
-        </div>
-      </section>
-    </div>
+      </div>
+    </GameDialog>
 
     <div
       v-if="showCancelTribeApplyPopup"
@@ -1275,6 +1351,18 @@ onMounted(async () => {
         </div>
       </section>
     </div>
+    <GameDialog
+      v-model:show="showDeleteClubPopup"
+      title="退出登录"
+      :show-cancel-button="true"
+      :close-on-click-overlay="true"
+      confirm-button-text="确认删除"
+      cancel-button-text="取消"
+      @confirm="confirmDeleteClub"
+      @cancel="closeDeleteClubPopup"
+    >
+      <div class="logout-confirm-text">删除俱乐部后无法恢复，是否确认删除？</div>
+    </GameDialog>
 
     <NumericKeypad
       :open="tribeIdKeypadOpen"
@@ -1294,8 +1382,11 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-detail-bg {
   height: 100dvh;
+  background-image: var(--club-detail-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -1438,6 +1529,11 @@ onMounted(async () => {
   font-size: 0.45rem;
   line-height: 0.5rem;
   text-align: center;
+
+  @include theme-light {
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .club-summary {
@@ -1464,6 +1560,10 @@ onMounted(async () => {
   font-size: 0.5692rem;
   line-height: 1.2;
   font-weight: 700;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .club-id-row {
@@ -1500,6 +1600,10 @@ onMounted(async () => {
   font-size: 0.3553rem;
   line-height: 1.2;
   font-weight: 600;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .metric-line img {
@@ -1529,6 +1633,10 @@ onMounted(async () => {
   font-size: 0.4739rem;
   line-height: 1;
   font-weight: 500;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .size-icon-wrap {
@@ -1562,6 +1670,10 @@ onMounted(async () => {
   align-items: center;
   gap: 0.186rem;
   color: #f9f9f9;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .quick-image-wrap {
@@ -1711,6 +1823,10 @@ onMounted(async () => {
   gap: 0;
   color: #f1f1f1;
   font-size: 0.40524rem;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .tribe-apply-btn {
@@ -1726,6 +1842,11 @@ onMounted(async () => {
 
 .tribe-apply-btn--pending {
   background: rgba(255, 255, 255, 0.22);
+
+  @include theme-light {
+    color: var(--c-text-muted);
+    background: rgba(164, 164, 164, 0.2);
+  }
 }
 
 .tribe-apply-btn:disabled {
@@ -1750,6 +1871,10 @@ onMounted(async () => {
 .muted-text {
   color: rgba(228, 228, 228, 0.5);
   font-size: 0.40524rem;
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .mini-avatar {
@@ -1765,6 +1890,10 @@ onMounted(async () => {
   border-top: 0.02rem solid rgba(237, 237, 237, 0.85);
   border-right: 0.02rem solid rgba(237, 237, 237, 0.85);
   transform: rotate(45deg);
+
+  @include theme-light {
+    border-color: rgba(0, 0, 0, 0.82);
+  }
 }
 
 .level-pill {
@@ -1787,6 +1916,10 @@ onMounted(async () => {
   background: #c1c1c1;
   display: inline-flex;
   align-items: center;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.34);
+  }
 }
 
 .switch--on {
@@ -1804,7 +1937,7 @@ onMounted(async () => {
   height: 0.667rem;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 0.02rem 0.04rem rgba(0, 0, 0, 0.22);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .info-dot {
@@ -1816,6 +1949,11 @@ onMounted(async () => {
   font-size: 0.22613rem;
   line-height: 0.3592rem;
   text-align: center;
+
+  @include theme-light {
+    color: #fff;
+    background: rgba(34, 34, 34, 0.58);
+  }
 }
 
 .danger-zone {
@@ -1846,9 +1984,12 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   z-index: 80;
+
+  @include theme-light {
+    background: var(--c-overlay);
+  }
 }
 
-.invite-modal,
 .copy-modal {
   width: min(9.1rem, 100%);
   border-radius: 0.97035rem;
@@ -1860,32 +2001,6 @@ onMounted(async () => {
     0.05672rem 0.11344rem 0.45908rem rgba(242, 242, 242, 0.5) inset,
     0.09192rem 0.11491rem 0.18384rem rgba(0, 0, 0, 0.28);
   color: #f9f9f9;
-}
-
-.tribe-search-modal {
-  width: min(8.8rem, 100%);
-  border-radius: 0.97035rem;
-  border: 0.0255rem solid rgba(242, 242, 242, 0.4);
-  background: linear-gradient(121deg, rgba(0, 0, 0, 0.2) 3%, rgba(0, 0, 0, 0.38) 89%);
-  backdrop-filter: blur(1.20216rem);
-  box-shadow: 0 0 0.22981rem rgba(0, 0, 0, 0.85) inset,
-    0.05672rem 0.11344rem 0.45908rem rgba(242, 242, 242, 0.5) inset,
-    0.09192rem 0.11491rem 0.18384rem rgba(0, 0, 0, 0.28);
-  color: #f9f9f9;
-  padding: 0.42rem;
-}
-
-.join-modal {
-  width: min(8.454rem, 100%);
-  max-width: 100%;
-  padding: 0.42rem;
-  border-radius: 0.97rem;
-  border: 0.025rem solid rgba(255, 255, 255, 0.38);
-  background: linear-gradient(126deg, rgba(142, 142, 142, 0.6) 0%, rgba(72, 72, 72, 0.92) 100%),
-    rgba(30, 30, 30, 0.65);
-  box-shadow: 0.09rem 0.11rem 0.18rem rgba(0, 0, 0, 0.25),
-    inset 0.05rem 0.1rem 0.4rem rgba(242, 242, 242, 0.25), inset 0 0 0.23rem rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(0.4rem);
 }
 
 .join-modal-card {
@@ -1940,56 +2055,6 @@ onMounted(async () => {
   font-size: 0.216rem;
 }
 
-.join-modal-actions {
-  margin-top: 0.48rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.25rem;
-}
-
-.join-modal-btn {
-  flex: 1;
-  min-height: 1.436rem;
-  border-radius: 1.055rem;
-  border: 0;
-  color: #fff;
-  font-family: 'Afacad', 'PingFang SC', sans-serif;
-  font-size: 0.4rem;
-  font-weight: 500;
-}
-
-.join-modal-btn--cancel {
-  background: rgba(0, 0, 0, 0.3);
-}
-
-.join-modal-btn--confirm {
-  background: linear-gradient(180deg, rgba(85, 243, 41, 1) 0%, rgba(62, 173, 6, 1) 100%);
-  border: 0.013rem solid rgba(255, 255, 255, 0.5);
-}
-
-.join-modal-btn:disabled {
-  opacity: 0.72;
-}
-
-.tribe-apply-card {
-  border-radius: 0.834rem;
-  border: 0.026rem solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.1);
-  display: flex;
-  flex-direction: column;
-  gap: 0.24rem;
-  padding: 0.42rem;
-}
-
-.tribe-apply-title {
-  margin: 0;
-  text-align: center;
-  font-size: 0.52rem;
-  line-height: 1.2;
-  font-weight: 600;
-}
-
 .tribe-search-shell {
   position: relative;
   display: flex;
@@ -1997,13 +2062,8 @@ onMounted(async () => {
   min-height: 1.2rem;
   border-radius: 1rem;
   padding: 0.12rem 0.28rem;
-  background: linear-gradient(
-    98deg,
-    rgba(133, 73, 115, 0.96) 0%,
-    rgba(177, 69, 87, 0.96) 44%,
-    rgba(178, 76, 51, 0.96) 72%,
-    rgba(141, 59, 84, 0.96) 100%
-  );
+  border: 0.013rem solid rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .tribe-search-trigger {
@@ -2061,13 +2121,15 @@ onMounted(async () => {
 }
 
 .invite-modal {
-  padding: 0.42rem 0.42rem 0.62rem;
+  width: 100%;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 0.22rem;
 }
 
 .invite-modal__head {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2196,13 +2258,62 @@ onMounted(async () => {
   border-radius: 0.30747rem;
   background: #fff;
   padding: 0.10667rem;
-  border: 0.10067rem solid #00b184;
+  border: 0.10067rem solid var(--c-brand);
   overflow: hidden;
+
+  @include theme-light {
+    border-color: var(--c-brand);
+  }
 }
 
 .invite-modal__qr {
   width: 100%;
   height: 100%;
+  object-fit: contain;
+}
+
+.invite-modal__qr-placeholder {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.12rem;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(35, 35, 35, 0.08) 50%, transparent 50%) 0 0 / 0.28rem 0.28rem,
+    linear-gradient(rgba(35, 35, 35, 0.08) 50%, transparent 50%) 0 0 / 0.28rem 0.28rem,
+    #fff;
+}
+
+.invite-modal__qr-placeholder span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.58rem;
+  height: 0.58rem;
+  margin: -0.29rem 0 0 -0.29rem;
+  border: 0.055rem solid rgba(105, 190, 255, 0.26);
+  border-top-color: var(--c-brand);
+  border-radius: 50%;
+  animation: invite-qr-loading 0.8s linear infinite;
+}
+
+.invite-modal__qr-heart {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.9888rem;
+  height: 0.9888rem;
+  border-radius: 50%;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.invite-modal__qr-heart img {
+  width: 0.64rem;
+  height: 0.64rem;
   object-fit: contain;
 }
 
@@ -2272,10 +2383,22 @@ onMounted(async () => {
   );
   backdrop-filter: blur(0.16230463981628418px);
   box-shadow: inset 0 -0.16rem 0.3rem rgba(0, 0, 0, 0.14);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 .modal-primary-btn:disabled {
   opacity: 0.72;
+}
+
+@keyframes invite-qr-loading {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .copy-modal {
@@ -2306,6 +2429,12 @@ onMounted(async () => {
 .modal-secondary-btn {
   background: rgba(0, 0, 0, 0.34);
   box-shadow: inset 0 -0.2rem 0.24rem rgba(0, 0, 0, 0.24);
+
+  @include theme-light {
+    color: var(--c-text);
+    background: rgba(34, 34, 34, 0.08);
+    box-shadow: none;
+  }
 }
 
 @media (max-width: 340px) {

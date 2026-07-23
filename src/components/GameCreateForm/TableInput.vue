@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import FieldTip from './FieldTip.vue'
-import icEdit from '@/assets/icons/icon_edit.svg'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 
 interface Props {
   label: string
@@ -123,12 +123,14 @@ function clampNumberInput(raw: string, decimalDigits: number, min?: number, max?
         @focus="onFocus"
         @blur="onBlur"
       />
-      <img v-if="!isEditing" :src="icEdit" class="table-input__edit-icon" alt="" />
+      <AppSvgIcon v-if="!isEditing" name="edit" class="table-input__edit-icon" />
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .table-input-row {
   display: flex;
   align-items: center;
@@ -147,6 +149,10 @@ function clampNumberInput(raw: string, decimalDigits: number, min?: number, max?
   font-size: 0.37rem;
   color: #fff;
   font-weight: 400;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .table-input__field {
@@ -159,6 +165,14 @@ function clampNumberInput(raw: string, decimalDigits: number, min?: number, max?
     text-align: right;
     color: #fff;
     padding-right: 0.2rem;
+
+    @include theme-light {
+      color: var(--c-text);
+    }
+  }
+
+  :deep(.van-field__control::placeholder) {
+    color: var(--c-text-muted);
   }
 
   :deep(.van-field__body) {
@@ -177,6 +191,10 @@ function clampNumberInput(raw: string, decimalDigits: number, min?: number, max?
   background-blend-mode: soft-light;
   padding: 0 0.18rem 0 0.3rem;
   gap: 0.08rem;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.18);
+  }
 }
 
 .table-input__field-wrap--editing {
@@ -192,6 +210,11 @@ function clampNumberInput(raw: string, decimalDigits: number, min?: number, max?
   height: 0.3rem;
   flex-shrink: 0;
   opacity: 0.9;
+  color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .van-field {

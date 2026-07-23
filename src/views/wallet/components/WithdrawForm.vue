@@ -423,6 +423,8 @@ watch(filteredWithdrawTypes, (list) => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .wf {
   display: flex;
   flex-direction: column;

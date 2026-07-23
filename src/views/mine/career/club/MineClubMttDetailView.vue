@@ -4,108 +4,153 @@ import { showFailToast } from 'vant'
 import { useRoute } from 'vue-router'
 import { postStatsMttRoomDetailApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-import iconTicket from '@/assets/icons/icon_ticket.png'
+import CareerSvgIcon from '../../components/CareerSvgIcon.vue'
+import iconChips from '@/assets/icons/icon_chips.png'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
-import { t } from '@/i18n'
+import { formatUC } from '@/utils/roomVisibility'
+import { formatDateTime, formatDurationWithUnits, toUnixSeconds } from '@/utils/time'
+import { userCache } from '@/utils/userCache'
+import { USER_STORE_CAREER } from '@/utils/indexedDB'
+import { useGameStore } from '@/stores/game'
+import {
+  multiLanguageTemplateVersion,
+  resolveTemplateTextByKey,
+} from '@/utils/multiLanguageTemplate'
+import { getLocale, t } from '@/i18n'
 
 const route = useRoute()
+const gameStore = useGameStore()
 
-// 主容器背景图：全页面共用一张底图。
+// 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--mtt-detail-bg-dark': `url(${mainBgUrl})`,
+  '--mtt-detail-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const title = computed(() => 'MTT')
 
-interface RankPlayerV1 {
+interface RankPlayer {
   id: string
   name: string
   uid: string
-  tickets: string
-  reward: string
+  avatar: string
+  ticketText: string
+  hasTicket: boolean
+  rewardText: string
+  hunterRewardText: string
+  hasHunterReward: boolean
 }
-
-interface RankPlayerV2 {
-  id: string
-  name: string
-  uid: string
-  reward: string
-}
-
-type VariantType = 'v1' | 'v2'
 
 const loading = ref(false)
-const detailTitle = ref('Hand Name')
+const rawTitle = ref('')
 const detailSub = ref('ID: --')
 const detailTime = ref('--')
 
-const headMetrics = ref([
-  { label: t('UIClub_Text40'), value: '1200' },
-  { label: t('UIClub_Text41'), value: '5000' },
-  { label: t('UIMine_RecordItemMatch_LPe0Iy4I'), value: '1' },
-  { label: t('MTT_State_Reward'), value: '1200' },
-])
-
-const rankPlayers = ref<RankPlayerV1[]>([
-  { id: '1', name: 'Player Name', uid: '11440454', tickets: '12', reward: '200' },
-  { id: '2', name: 'Player Name', uid: '11440454', tickets: '8', reward: '120' },
-  { id: '3', name: 'Player Name', uid: '11440454', tickets: '4', reward: '80' },
-  { id: '4', name: 'Player Name', uid: '11440454', tickets: '2', reward: '40' },
-  { id: '5', name: 'Player Name', uid: '11440454', tickets: '1', reward: '20' },
-  { id: '6', name: 'Player Name', uid: '11440454', tickets: '1', reward: '20' },
-])
-
-const topMetricsV2 = ref([
-  { label: t('UIMTT_totalplayernum'), value: '1200' },
-  { label: t('UIMine_RecordDetailForMatchTotalBonus'), value: '5000' },
-  { label: t('Ranking'), value: '1' },
-])
-
-const sideMetricsV2 = ref([
-  { label: t('MTT_State_Reward'), value: '1200' },
-  { label: t('UIClub_Text42'), value: '60' },
-])
-
-const rankPlayersV2 = ref<RankPlayerV2[]>([
-  { id: '1', name: 'Player Name', uid: '11440454', reward: '800' },
-  { id: '2', name: 'Player Name', uid: '11440454', reward: '300' },
-  { id: '3', name: 'Player Name', uid: '11440454', reward: '200' },
-  { id: '4', name: 'Player Name', uid: '11440454', reward: '150' },
-  { id: '5', name: 'Player Name', uid: '11440454', reward: '120' },
-  { id: '6', name: 'Player Name', uid: '11440454', reward: '90' },
-])
-
-const variant = computed<VariantType>(() => {
-  return route.query.variant === 'v2' ? 'v2' : 'v1'
+// 赛事名称走多语言模板映射（对齐客户端 GetRoomNameByKey），模板异步加载后随版本号重算。
+const detailTitle = computed(() => {
+  void multiLanguageTemplateVersion.value
+  const raw = rawTitle.value
+  if (!raw) {
+    return '--'
+  }
+  return resolveTemplateTextByKey(raw, getLocale()) || t(raw) || raw
 })
+
+// 币种来自列表记录 gold_type（详情接口不返回币种），钻石(4)用钻石图标，其余用筹码图标。
+const goldType = computed(() => {
+  const value = Number(route.query.gold_type)
+  return Number.isFinite(value) ? value : 0
+})
+const coinIcon = computed(() => (goldType.value === 4 ? iconDiamond : iconChips))
+
+// 对齐客户端 UIRecordDetailStatistics.UpdateMttInfo：类型 / 参赛人数 / 买入 / 耗时。
+const headMetrics = ref([
+  { label: t('UIMatchFilter_DPY5kR'), value: '--' },
+  { label: t('UIMine_RecordDetailForMatchPariticipants'), value: '--' },
+  { label: t('MTT_xq_buy'), value: '--' },
+  { label: t('UIMineDetail_UsedTime'), value: '--' },
+])
+
+const rankPlayers = ref<RankPlayer[]>([])
 
 function toSafeNumber(value: unknown): number {
   const numeric = Number(value)
   return Number.isFinite(numeric) ? numeric : 0
 }
 
-function resolveRoomId(): number {
-  const raw = route.query.room_id ?? route.query.id
-  const value = Number(raw)
+function resolveMatchId(): number {
+  const value = Number(route.query.id)
   return Number.isFinite(value) ? value : 0
 }
 
-function formatDateText(raw: unknown): string {
-  const timestamp = toSafeNumber(raw)
-  if (timestamp <= 0) {
-    return '--'
+// 奖金显示对齐客户端：钻石(4)按原值，其余币种按 1/100。
+function formatAward(value: number): string {
+  return goldType.value === 4 ? value.toLocaleString('en-US') : formatUC(value)
+}
+
+function resolveGameTypeName(gameType: number): string {
+  const text = t(`GameType_${gameType}`)
+  return text || '--'
+}
+
+// ── 缓存（IndexedDB career）──────────────────────────────────────────────────
+// 与战绩详情同一套 `detail-` 形式，战绩用 `detail-${room_id}`，MTT 这里加 mtt 段
+// （`detail-mtt-${match_id}`）避免 match_id 与 room_id 数值撞车时互相读错缓存结构。
+// 已结算的赛事数据固定不变，命中缓存则不再请求。
+// rawTitle 存模板原始字符，多语言名称由 detailTitle 每次渲染时重算，不落缓存。
+interface MttDetailCache {
+  rawTitle: string
+  detailSub: string
+  detailTime: string
+  headMetrics: { label: string; value: string }[]
+  rankPlayers: RankPlayer[]
+}
+
+function detailCacheKey(matchId: number): string {
+  return `detail-mtt-${matchId}`
+}
+
+function detailCache() {
+  return userCache(gameStore.loginUserId)
+}
+
+function plainClone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
+}
+
+function applyDetailCache(payload: MttDetailCache): void {
+  rawTitle.value = payload.rawTitle
+  detailSub.value = payload.detailSub
+  detailTime.value = payload.detailTime
+  headMetrics.value = payload.headMetrics
+  rankPlayers.value = payload.rankPlayers
+}
+
+function writeDetailCache(matchId: number): void {
+  const payload: MttDetailCache = {
+    rawTitle: rawTitle.value,
+    detailSub: detailSub.value,
+    detailTime: detailTime.value,
+    headMetrics: plainClone(headMetrics.value),
+    rankPlayers: plainClone(rankPlayers.value),
   }
-  const date = new Date(timestamp > 1_000_000_000_000 ? timestamp : timestamp * 1000)
-  if (Number.isNaN(date.getTime())) {
-    return '--'
-  }
-  return date.toLocaleString('zh-CN', { hour12: false })
+  void detailCache().put(USER_STORE_CAREER, detailCacheKey(matchId), payload)
 }
 
 async function fetchMttDetail(): Promise<void> {
-  const roomId = resolveRoomId()
-  if (roomId <= 0) {
+  const matchId = resolveMatchId()
+  if (matchId <= 0) {
+    return
+  }
+
+  const cached = await detailCache().get<MttDetailCache>(
+    USER_STORE_CAREER,
+    detailCacheKey(matchId),
+  )
+  if (cached) {
+    applyDetailCache(cached)
     return
   }
 
@@ -116,71 +161,74 @@ async function fetchMttDetail(): Promise<void> {
         limit: 50,
         offset: 0,
       },
-      { id: roomId },
+      { id: matchId },
     )
     if (response.code !== 0) {
-      throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_Load') + " MTT " + t('UIClub_DetailFail'))
+      throw new Error(
+        typeof response.msg === 'string'
+          ? response.msg
+          : t('UIClub_Load') + ' MTT ' + t('UIClub_DetailFail'),
+      )
     }
 
     const roomData = response.data?.room_data ?? response.data?.mtt_room_data
     const usersRaw = roomData?.user_list
     const users = Array.isArray(usersRaw) ? usersRaw : []
 
-    detailTitle.value = String(roomData?.game_room_name ?? 'MTT')
+    rawTitle.value = String(roomData?.game_room_name ?? '')
     detailSub.value = `ID: ${String(roomData?.room_id ?? '--')}`
-    detailTime.value = `${formatDateText(roomData?.start_time)} - ${formatDateText(
+
+    const startSeconds = toUnixSeconds(roomData?.start_time)
+    const endSeconds = toUnixSeconds(roomData?.end_time)
+    detailTime.value = `${formatDateTime(roomData?.start_time, 'DD/MM HH:mm')} - ${formatDateTime(
       roomData?.end_time,
+      'DD/MM HH:mm',
     )}`
 
-    const totalPlayers = toSafeNumber(roomData?.player_count)
-    const awards = users.filter((item) => toSafeNumber(item.award ?? item.hunter_award) > 0)
-    const currentUser = users.find((item) => Boolean(item.is_current_user)) ?? users[0]
-    const rank = toSafeNumber(currentUser?.rank)
-    const reward = toSafeNumber(currentUser?.award ?? currentUser?.hunter_award)
-
+    const durationSeconds = endSeconds > startSeconds ? endSeconds - startSeconds : 0
+    const durationUnits = String(t('UIMatch_itemTime') ?? '').split('^')
     headMetrics.value = [
-      { label: t('UIClub_Text40'), value: totalPlayers.toLocaleString('en-US') },
       {
-        label: t('UIClub_Text41'),
-        value: awards
-          .reduce((sum, item) => sum + toSafeNumber(item.award), 0)
-          .toLocaleString('en-US'),
+        label: t('UIMatchFilter_DPY5kR'),
+        value: resolveGameTypeName(toSafeNumber(roomData?.game_type)),
       },
-      { label: t('UIMine_RecordItemMatch_LPe0Iy4I'), value: rank > 0 ? String(rank) : '--' },
-      { label: t('MTT_State_Reward'), value: reward.toLocaleString('en-US') },
-    ]
-
-    topMetricsV2.value = [
-      { label: t('UIMTT_totalplayernum'), value: totalPlayers.toLocaleString('en-US') },
       {
-        label: t('UIMine_RecordDetailForMatchTotalBonus'),
-        value: awards
-          .reduce((sum, item) => sum + toSafeNumber(item.award), 0)
-          .toLocaleString('en-US'),
+        label: t('UIMine_RecordDetailForMatchPariticipants'),
+        value: toSafeNumber(roomData?.player_count).toLocaleString('en-US'),
       },
-      { label: t('Ranking'), value: rank > 0 ? String(rank) : '--' },
-    ]
-    sideMetricsV2.value = [
-      { label: t('MTT_State_Reward'), value: reward.toLocaleString('en-US') },
-      { label: t('UIClub_Text42'), value: toSafeNumber(currentUser?.buy_in_times).toLocaleString('en-US') },
+      {
+        label: t('MTT_xq_buy'),
+        value: toSafeNumber(roomData?.buy_in_count).toLocaleString('en-US'),
+      },
+      {
+        label: t('UIMineDetail_UsedTime'),
+        value: durationSeconds > 0 ? formatDurationWithUnits(durationSeconds, durationUnits) : '0',
+      },
     ]
 
-    rankPlayers.value = users.map((item, index) => ({
-      id: String(item.user_random_id ?? index + 1),
-      name: String(item.nick_name ?? 'Player Name'),
-      uid: String(item.user_random_id ?? '--'),
-      tickets: toSafeNumber(item.buy_in_times).toLocaleString('en-US'),
-      reward: toSafeNumber(item.award).toLocaleString('en-US'),
-    }))
+    rankPlayers.value = users.map((item, index) => {
+      // 门票对齐客户端：goods_awrd 数量求和显示 xN。
+      const goods = Array.isArray(item.goods_awrd) ? item.goods_awrd : []
+      const ticketCount = goods.reduce((sum, goodsItem) => sum + toSafeNumber(goodsItem?.n), 0)
+      const hunterAward = toSafeNumber(item.hunter_award)
 
-    rankPlayersV2.value = users.map((item, index) => ({
-      id: String(item.user_random_id ?? index + 1),
-      name: String(item.nick_name ?? 'Player Name'),
-      uid: String(item.user_random_id ?? '--'),
-      reward: toSafeNumber(item.award ?? item.hunter_award).toLocaleString('en-US'),
-    }))
+      return {
+        id: String(item.user_random_id ?? index + 1),
+        name: String(item.nick_name ?? '--'),
+        uid: String(item.user_random_id ?? '--'),
+        avatar: typeof item.avatar === 'string' ? item.avatar : '',
+        ticketText: `x${ticketCount}`,
+        hasTicket: ticketCount > 0,
+        rewardText: formatAward(toSafeNumber(item.award)),
+        hunterRewardText: formatAward(hunterAward),
+        hasHunterReward: hunterAward > 0,
+      }
+    })
+
+    writeDetailCache(matchId)
   } catch (error) {
-    const message = error instanceof Error ? error.message : t('UIClub_Load') + " MTT " + t('UIClub_DetailFail')
+    const message =
+      error instanceof Error ? error.message : t('UIClub_Load') + ' MTT ' + t('UIClub_DetailFail')
     showFailToast(message)
   } finally {
     loading.value = false
@@ -197,128 +245,93 @@ onMounted(() => {
     <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
-      <template v-if="variant === 'v1'">
-        <section class="glass-card top-card">
-          <div class="title-row">
-            <div>
-              <div class="title">{{ detailTitle }}</div>
-              <div class="sub">{{ detailSub }}</div>
-            </div>
-            <div class="time">{{ detailTime }}</div>
+      <section class="glass-card top-card">
+        <div class="title-row">
+          <div>
+            <div class="title">{{ detailTitle }}</div>
+            <div class="sub">{{ detailSub }}</div>
           </div>
-          <div class="metrics-row">
-            <div
-              v-for="(item, index) in headMetrics"
-              :key="item.label"
-              class="metric"
-              :class="{ split: index > 0 }"
-            >
-              <div class="label">{{ item.label }}</div>
-              <div class="value">{{ item.value }}</div>
-            </div>
+          <div class="time">{{ detailTime }}</div>
+        </div>
+        <div class="metrics-row">
+          <div
+            v-for="(item, index) in headMetrics"
+            :key="item.label"
+            class="metric"
+            :class="{ split: index > 0 }"
+          >
+            <div class="label">{{ item.label }}</div>
+            <div class="value">{{ item.value }}</div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section class="list-wrap">
-          <article v-for="item in rankPlayers" :key="item.id" class="glass-card rank-row">
-            <div class="left">
-              <div class="avatar"></div>
-              <div>
-                <div class="name">{{ item.name }}</div>
-                <div class="sub">ID: {{ item.uid }}</div>
-              </div>
+      <section class="list-wrap">
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!rankPlayers.length" class="list-status">
+          {{ t('UIUCWalletAddress3') }} MTT {{ t('UICareerRecord') }}
+        </p>
+        <article v-for="item in rankPlayers" :key="item.id" class="glass-card rank-row">
+          <div class="left">
+            <img v-if="item.avatar" class="avatar" :src="item.avatar" alt="avatar" />
+            <div v-else class="avatar avatar--empty"></div>
+            <div>
+              <div class="name">{{ item.name }}</div>
+              <div class="sub">ID: {{ item.uid }}</div>
             </div>
-            <div class="right">
+          </div>
+          <div class="right">
+            <template v-if="item.hasTicket">
               <div class="right-item">
-                <img :src="iconTicket" alt="ticket" />
-                <span>{{ item.tickets }}</span>
+                <CareerSvgIcon name="ticket" class="ticket-icon" title="ticket" />
+                <span>{{ item.ticketText }}</span>
               </div>
               <span class="plus">+</span>
+            </template>
+            <div class="right-item">
+              <img :src="coinIcon" alt="coin" />
+              <span>{{ item.rewardText }}</span>
+            </div>
+            <template v-if="item.hasHunterReward">
+              <span class="plus">+</span>
               <div class="right-item">
-                <img :src="iconDiamond" alt="diamond" />
-                <span>{{ item.reward }}</span>
+                <img :src="coinIcon" alt="hunter coin" />
+                <span>{{ item.hunterRewardText }}</span>
               </div>
-            </div>
-          </article>
-        </section>
-      </template>
-
-      <template v-else>
-        <section class="glass-card top-card top-card--v2">
-          <div class="title-row title-row--v2">
-            <div>
-              <div class="title">{{ detailTitle }}</div>
-              <div class="sub">{{ detailSub }}</div>
-            </div>
-            <div class="time">{{ detailTime }}</div>
+            </template>
           </div>
-
-          <div class="metrics-wrap-v2">
-            <div class="top-metrics-v2">
-              <div
-                v-for="(item, index) in topMetricsV2"
-                :key="item.label"
-                class="metric v2"
-                :class="{ split: index > 0 }"
-              >
-                <div class="label">{{ item.label }}</div>
-                <div class="value">{{ item.value }}</div>
-              </div>
-            </div>
-            <div class="bottom-metrics-v2">
-              <div
-                v-for="(item, index) in sideMetricsV2"
-                :key="item.label"
-                class="metric v2"
-                :class="{ split: index > 0 }"
-              >
-                <div class="label">{{ item.label }}</div>
-                <div class="value">{{ item.value }}</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="list-wrap list-wrap--v2">
-          <article
-            v-for="item in rankPlayersV2"
-            :key="item.id"
-            class="glass-card rank-row rank-row--v2"
-          >
-            <div class="left">
-              <div class="avatar"></div>
-              <div>
-                <div class="name">{{ item.name }}</div>
-                <div class="sub">ID: {{ item.uid }}</div>
-              </div>
-            </div>
-            <div class="right right--v2">
-              <div class="right-item right-item--inline">
-                <img :src="iconDiamond" alt="diamond" />
-                <span>{{ item.reward }}</span>
-              </div>
-            </div>
-          </article>
-        </section>
-      </template>
+        </article>
+      </section>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-mtt-detail-page {
   position: relative;
   height: 100dvh;
   padding: 0 0 0.8rem;
   color: #f9f9f9;
+  background-image: var(--mtt-detail-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: var(--c-text);
+    background-color: var(--c-page);
+    background-image: var(--mtt-detail-bg-light);
+  }
 }
 
 .content-wrap {
   position: relative;
+  height: calc(100% - 1.6rem);
   padding: 0 0.49rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .glass-card {
@@ -334,79 +347,50 @@ onMounted(() => {
   padding: 0.26rem 0.24rem 0.22rem;
 }
 
-.top-card--v2 {
-  padding: 0.28rem 0.22rem 0.24rem;
-}
-
 .title-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
+  gap: 0.18rem;
   padding: 0 0.16rem;
 
   .title {
-    font-size: 0.5rem;
+    font-size: 0.454rem;
     line-height: 1.05;
     font-weight: 500;
+    word-break: break-all;
   }
 
   .sub,
   .time {
     margin-top: 0.04rem;
-    font-size: 0.32rem;
+    font-size: 0.387rem;
     line-height: 1.1;
     color: rgba(255, 255, 255, 0.76);
+
+    @include theme-light {
+      color: rgba(0, 0, 0, 0.7);
+    }
   }
 
   .time {
-    transform: translateY(-0.03rem);
-  }
-}
-
-.title-row--v2 {
-  gap: 0.18rem;
-
-  .title {
-    font-size: 0.42rem;
-  }
-
-  .sub,
-  .time {
-    font-size: 0.28rem;
-  }
-
-  .time {
+    flex-shrink: 0;
     text-align: right;
-    transform: none;
   }
 }
 
 .metrics-row {
-  margin-top: 0.28rem;
+  margin-top: 0.34rem;
   display: grid;
+  border-radius: 0.76013rem;
+  background: rgba(255, 255, 255, 0.2);
   grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: center;
   min-height: 1.32rem;
-}
 
-.metrics-wrap-v2 {
-  margin-top: 0.24rem;
-  padding-top: 0.18rem;
-  border-top: 0.02rem solid rgba(255, 255, 255, 0.16);
-}
-
-.top-metrics-v2 {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  min-height: 1.12rem;
-}
-
-.bottom-metrics-v2 {
-  margin: 0.2rem auto 0;
-  width: 4.8rem;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  min-height: 1.12rem;
+  @include theme-light {
+    background: #e3e3e3;
+  }
 }
 
 .metric {
@@ -426,29 +410,27 @@ onMounted(() => {
     width: 0.02rem;
     height: 0.8rem;
     background: rgba(255, 255, 255, 0.2);
+
+    @include theme-light {
+      background: rgba(0, 0, 0, 0.1);
+    }
   }
 
   .label {
-    font-size: 0.3rem;
+    font-size: 0.28rem;
     line-height: 1;
     color: rgba(255, 255, 255, 0.72);
+
+    @include theme-light {
+      color: rgba(0, 0, 0, 0.7);
+    }
   }
 
   .value {
     margin-top: 0.11rem;
-    font-size: 0.56rem;
+    font-size: 0.44rem;
     line-height: 1;
     font-weight: 700;
-  }
-}
-
-.metric.v2 {
-  .label {
-    font-size: 0.28rem;
-  }
-
-  .value {
-    font-size: 0.48rem;
   }
 }
 
@@ -459,9 +441,11 @@ onMounted(() => {
   gap: 0.12rem;
 }
 
-.list-wrap--v2 {
-  margin-top: 0.3rem;
-  gap: 0.14rem;
+.list-status {
+  text-align: center;
+  font-size: 0.3rem;
+  opacity: 0.78;
+  padding: 0.2rem 0;
 }
 
 .rank-row {
@@ -470,49 +454,44 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.rank-row--v2 {
-  min-height: 1.82rem;
-  padding: 0.28rem 0.34rem;
-
-  .avatar {
-    width: 0.84rem;
-    height: 0.84rem;
-  }
-
-  .name {
-    font-size: 0.33rem;
-  }
-
-  .sub {
-    margin-top: 0.05rem;
-    font-size: 0.25rem;
-  }
+  gap: 0.2rem;
+  border-radius: 4.22rem;
 }
 
 .left {
   display: flex;
   align-items: center;
   gap: 0.22rem;
+  min-width: 0;
 
   .avatar {
     width: 1.27rem;
     height: 1.27rem;
     border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .avatar--empty {
     background: rgba(255, 255, 255, 0.52);
+
+    @include theme-light {
+      background: rgba(0, 0, 0, 0.12);
+    }
   }
 
   .name {
-    font-size: 0.4rem;
+    font-size: 0.3845rem;
     line-height: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .sub {
     margin-top: 0.09rem;
-    font-size: 0.3rem;
+    font-size: 0.3332rem;
     line-height: 1;
-    color: rgba(255, 255, 255, 0.74);
   }
 }
 
@@ -522,10 +501,11 @@ onMounted(() => {
   gap: 0.12rem;
   font-size: 0.34rem;
   font-weight: 500;
+  flex-shrink: 0;
 
   .plus {
     font-size: 0.28rem;
-    color: rgba(255, 255, 255, 0.72);
+    color: var(--c-brand);
     transform: translateY(-0.02rem);
   }
 
@@ -541,31 +521,20 @@ onMounted(() => {
       object-fit: contain;
     }
 
+    .ticket-icon {
+      width: 0.58rem;
+      height: 0.58rem;
+      color: #fff;
+
+      @include theme-light {
+        color: #000;
+      }
+    }
+
     span {
       margin-top: 0.06rem;
       font-size: 0.34rem;
       line-height: 1;
-    }
-  }
-}
-
-.right--v2 {
-  .right-item--inline {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.1rem;
-    min-width: auto;
-
-    img {
-      width: 0.46rem;
-      height: 0.46rem;
-    }
-
-    span {
-      margin-top: 0;
-      font-size: 0.33rem;
-      color: #ffe084;
     }
   }
 }

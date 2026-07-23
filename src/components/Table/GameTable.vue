@@ -181,7 +181,7 @@ export default { name: 'GameTable' }
       <!-- 底部状态区 -->
       <div class="game-table__status">
         <slot v-if="loading" name="loading">
-          <van-loading size="0.4rem" color="rgba(255,255,255,0.5)" />
+          <van-loading size="0.4rem" color="var(--c-text-muted)" />
         </slot>
         <slot v-else-if="finished && data.length" name="finished">
           <span class="game-table__finished-text">没有更多了</span>
@@ -197,6 +197,8 @@ export default { name: 'GameTable' }
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .game-table {
   width: 100%;
   font-family: 'HONOR Sans CN', sans-serif;
@@ -237,6 +239,11 @@ export default { name: 'GameTable' }
   font-size: 0.32rem;
   color: rgba(255, 255, 255, 0.75);
   font-family: 'HONOR Sans CN', sans-serif;
+
+  @include theme-light {
+    background: #fff;
+    color: rgba(0, 0, 0, 0.72);
+  }
 }
 
 .game-table__status {
@@ -250,6 +257,10 @@ export default { name: 'GameTable' }
 .game-table__finished-text {
   font-size: 0.32rem;
   color: rgba(255, 255, 255, 0.4);
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.4);
+  }
 }
 
 .game-table__columns-slot {

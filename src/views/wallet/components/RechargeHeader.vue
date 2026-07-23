@@ -46,7 +46,7 @@ const emit = defineEmits<{ back: [] }>()
 .recharge-header__back {
   min-width: 0;
   border: 0;
-  color: #fff;
+  color: var(--c-text);
   background: transparent;
   display: inline-flex;
   align-items: center;
@@ -60,14 +60,14 @@ const emit = defineEmits<{ back: [] }>()
 .back-icon {
   height: 0.31rem;
   width: auto;
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--c-text);
   display: block;
   flex-shrink: 0;
 }
 
 .recharge-header__title {
   margin: 0;
-  color: #fff;
+  color: var(--c-text);
   font-feature-settings: 'liga' off, 'clig' off;
   font-family: 'HONOR Sans CN', sans-serif;
   font-size: 0.6501rem;

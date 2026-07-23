@@ -12,6 +12,7 @@ interface BlindRecord {
   duration: string
   addTime: string
   marker: string
+  markerColor: string
 }
 
 const props = defineProps<{
@@ -69,21 +70,24 @@ const durationText = computed(() => {
   return text === 'UITexasReport_Text_MatchNextBlindTime' ? `${minutes}分钟` : text
 })
 
-function markerText(level: number): string {
+// 对齐 Unity UIMatchMttDetailBlindComponent.SetItemInfo 的级别标记：
+// 截止买入(max_rebuy_bl, TextColor28 红)、增购开启(addon_begin_bl, TextColor26 绿)、
+// 增购截止(addon_end_bl, TextColor27 黄)；同级别命中多个时按客户端覆盖顺序 end > begin > rebuy。
+function resolveMarker(level: number): { text: string; color: string } {
   const addonBegin = Number(mtt.value?.addon_begin_bl ?? 0)
   const addonEnd = Number(mtt.value?.addon_end_bl ?? 0)
   const maxRebuy = Number(mtt.value?.max_rebuy_bl ?? 0)
 
-  if (level === addonBegin && addonBegin > 0) {
-    return t('MTT_Blind_Deadline_add_op')
-  }
   if (level === addonEnd && addonEnd > 0) {
-    return t('MTT_Blind_Deadline_add_cl')
+    return { text: t('MTT_Blind_Deadline_add_cl'), color: '#FFC706' }
+  }
+  if (level === addonBegin && addonBegin > 0) {
+    return { text: t('MTT_Blind_Deadline_add_op'), color: '#80CD10' }
   }
   if (level === maxRebuy && maxRebuy > 0) {
-    return t('MTT_Blind_Deadline_to_buy')
+    return { text: t('MTT_Blind_Deadline_to_buy'), color: '#FF4368' }
   }
-  return '-'
+  return { text: '', color: '' }
 }
 
 const blindList = computed<BlindRecord[]>(() => {
@@ -94,6 +98,7 @@ const blindList = computed<BlindRecord[]>(() => {
     const level = index + 1
     const delayTimes = delayMap.value.get(level) ?? 0
     const isCurrent = currentLevel > 0 && currentLevel === level
+    const marker = resolveMarker(level)
 
     return {
       level: isCurrent ? `▶${level}` : String(level),
@@ -101,7 +106,8 @@ const blindList = computed<BlindRecord[]>(() => {
       ante: formatBlindUnit(item.ante),
       duration: durationText.value,
       addTime: `+${delayTimes}`,
-      marker: markerText(level),
+      marker: marker.text,
+      markerColor: marker.color,
     }
   })
 })
@@ -126,7 +132,16 @@ const blindLevels = computed(() => blindList.value.length)
         :label="t('UITexasReport_Text_BlindLevelTip')"
         :flex="1"
         align="center"
-      />
+      >
+        <template #default="{ row }">
+          <div class="level-cell">
+            <span class="level-text">{{ row.level }}</span>
+            <span v-if="row.marker" class="level-marker" :style="{ color: row.markerColor }">
+              {{ row.marker }}
+            </span>
+          </div>
+        </template>
+      </GameTableColumn>
       <GameTableColumn
         prop="blinds"
         :label="t('UITexasReport_Label_AllBarMZ')"
@@ -162,6 +177,8 @@ const blindLevels = computed(() => blindList.value.length)
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .mtt-blinds-tab {
   padding-top: 0.2rem;
 }
@@ -180,6 +197,10 @@ const blindLevels = computed(() => blindList.value.length)
   background: rgba(0, 0, 0, 0.2);
   border-radius: 3.9rem;
   backdrop-filter: blur(0.16px);
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .blinds-stat-label {
@@ -188,6 +209,10 @@ const blindLevels = computed(() => blindList.value.length)
   font-family: 'SF Pro', 'HONOR Sans CN', sans-serif;
   font-weight: 700;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .blinds-stat-value {
@@ -195,5 +220,38 @@ const blindLevels = computed(() => blindList.value.length)
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 700;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
+}
+
+/* ===== 级别列：级别号 + 截止买入/增购标记 ===== */
+.level-cell {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.04rem;
+}
+
+.level-text {
+  font-size: 0.36rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.4;
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.9);
+  }
+}
+
+/* 标记文案（如 EN "Late Registration"）较长，列又窄：缩小字号并允许换行 */
+.level-marker {
+  max-width: 100%;
+  font-size: 0.22rem;
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;
+  word-break: break-word;
 }
 </style>

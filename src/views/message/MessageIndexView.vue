@@ -13,7 +13,7 @@ import { t } from '@/i18n'
 import iconBoxSystem from '@/assets/icons/icon_box_system.png'
 import iconBoxWallet from '@/assets/icons/icon_box_wallet.png'
 import iconBoxBag from '@/assets/icons/icon_box_bag.png'
-import iconBoxClub from '@/assets/icons/icon_box_club.png'
+import iconBoxClub from '@/assets/icons/icon_club_shield.png'
 import iconBoxTribe from '@/assets/icons/icon_box_tribe.png'
 
 interface BoxItem {

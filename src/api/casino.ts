@@ -172,7 +172,7 @@ export const CATEGORY_API_TYPES: Record<CategoryKey, string[]> = {
   zhenren:  ['real_name', 'real_evo', 'real_obo', 'real_pa', 'panda_fblive', 'fb_live', 'panda_asg'],
   dianzi:   ['real_elect', 'panda_pgs', 'slots_pgsoft', 'zf_pgsoft', 'slots_fc', 'slots_cq9', 'slots_fg', 'slots_pa'],
   tiyu:     ['panda_fbs', 'fb_sports'],
-  buyu:     ['real_fish', 'panda_jdb', 'slots_jdb'],
+  buyu:     ['real_fish', 'sea_jdb', 'panda_jdb', 'slots_jdb'],
   dianjing: ['real_sports'],
   board:    ['go_poker'],
   lottery:  ['hn_marbles'],

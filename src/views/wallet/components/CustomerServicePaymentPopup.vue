@@ -19,18 +19,20 @@ const emit = defineEmits<{
 
 const walletStore = useWalletStore()
 
-const displayAmount = computed(() => (props.goldCount / 100).toLocaleString())
 const feeDisplay = computed(() => {
   if ((props.discount ?? 0) > 0) {
     return '-' + ((props.discount ?? 0) * 100).toFixed(2).replace(/\.00$/, '') + '%'
   }
-  return props.feeRate > 0
-    ? (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%'
-    : '0'
+  return props.feeRate > 0 ? (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%' : '0'
 })
 
 const payPrice = computed(() =>
-  walletStore.calculateCustomerServicePrice(props.goldCount, props.rate || 1, props.feeRate || 0, props.discount || 0)
+  walletStore.calculateCustomerServicePrice(
+    props.goldCount,
+    props.rate || 1,
+    props.feeRate || 0,
+    props.discount || 0,
+  ),
 )
 </script>
 
@@ -60,7 +62,15 @@ const payPrice = computed(() =>
 
           <!-- Amount -->
           <div class="amount-row">
-            <span class="amount-value">{{ payPrice.toLocaleString(undefined, { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+            <span class="amount-value">
+              {{
+                payPrice.toLocaleString(undefined, {
+                  useGrouping: false,
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }}
+            </span>
           </div>
 
           <!-- Label -->
@@ -78,6 +88,8 @@ const payPrice = computed(() =>
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -121,6 +133,16 @@ const payPrice = computed(() =>
     0 0 8.6px #000 inset,
     2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
   overflow: hidden;
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+  background-size: cover;
+  background-position: center;
+
+  @include theme-light {
+    --c-text: #fff;
+    --c-text-muted: rgba(255, 255, 255, 0.5);
+    --c-divider: rgba(255, 255, 255, 0.2);
+    background-image: url('@/assets/images/wallet/bg_sharp.webp');
+  }
 }
 
 .card::after {
@@ -132,11 +154,15 @@ const payPrice = computed(() =>
   box-shadow:
     0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
     0 0 0.2298rem 0 #000 inset,
-    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.90) inset;
+    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.9) inset;
   backdrop-filter: blur(7.580729961395264px);
   -webkit-backdrop-filter: blur(7.580729961395264px);
   pointer-events: none;
   z-index: 1;
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.7);
+  }
 }
 
 .card::before {
@@ -145,9 +171,18 @@ const payPrice = computed(() =>
   inset: 0;
   border-radius: inherit;
   padding: 0.0255rem;
-  background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  background: linear-gradient(
+    180deg,
+    rgba(242, 242, 242, 0.4) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -183,12 +218,18 @@ const payPrice = computed(() =>
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 16px;
   font-weight: 600;
   line-height: 78%;
   letter-spacing: 0.32px;
   margin: 0;
+
+  @include theme-light {
+    background: none;
+    -webkit-text-fill-color: #fff;
+    color: #fff;
+  }
 }
 
 .card__header-info {
@@ -199,8 +240,8 @@ const payPrice = computed(() =>
 }
 
 .card__header-info span {
-  color: #fff;
-  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  color: var(--c-text);
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   font-size: 11px;
   font-weight: 400;
   line-height: 78%;
@@ -210,7 +251,7 @@ const payPrice = computed(() =>
 .card__divider {
   width: 100%;
   height: 1px;
-  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.3) 50%, transparent 50%);
+  background-image: linear-gradient(to right, var(--c-divider) 50%, transparent 50%);
   background-size: 10px 1px;
   margin: 0;
 }
@@ -225,15 +266,29 @@ const payPrice = computed(() =>
   padding: 17px 5.804px;
   gap: 11.608px;
   margin: 0 -15.399px 0;
-  background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
+  background: linear-gradient(
+    97deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  );
+
+  @include theme-light {
+    background: linear-gradient(
+      97deg,
+      rgba(255, 255, 255, 0.1) 21.11%,
+      rgba(230, 230, 230, 0.1) 71.43%
+    );
+  }
 }
 
 .amount-value {
-  color: var(--primary, #05E7AE);
+  color: var(--primary, var(--c-brand));
   text-align: center;
-  font-feature-settings: 'liga' off, 'clig' off;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
   text-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
-  font-family: "Keania One";
+  font-family: 'Keania One';
   font-size: 29.361px;
   font-style: normal;
   font-weight: 400;
@@ -246,10 +301,12 @@ const payPrice = computed(() =>
   height: 27px;
   flex-direction: column;
   justify-content: center;
-  color: rgba(255, 255, 255, 1);
+  color: var(--c-text);
   text-align: center;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: "HONOR Sans CN";
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
+  font-family: 'HONOR Sans CN';
   font-size: 19.324px;
   font-style: normal;
   font-weight: 500;
@@ -272,7 +329,7 @@ const payPrice = computed(() =>
   border-radius: 39.59px;
   font-size: 0.5rem;
   font-weight: 500;
-  font-family: var(--wallet-font-cn, "HONOR Sans CN");
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
   cursor: pointer;
   border: none;
   color: #fff;
@@ -282,7 +339,9 @@ const payPrice = computed(() =>
   align-items: center;
   justify-content: center;
   padding: 4.751px 0;
-  transition: opacity 0.15s, transform 0.15s;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
 
   &:active {
     opacity: 0.92;
@@ -292,9 +351,14 @@ const payPrice = computed(() =>
 
 .btn-cancel {
   justify-content: center;
-  background: var(--secondary-button-fill, rgba(0, 0, 0, 0.30));
+  background: var(--secondary-button-fill, rgba(0, 0, 0, 0.3));
   backdrop-filter: blur(0.05274080112576485px);
   border: none;
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+  }
 }
 
 .btn-pay {
@@ -304,15 +368,29 @@ const payPrice = computed(() =>
     inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
     inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
 
+  @include theme-light {
+    background: var(--c-brand);
+    box-shadow: none;
+  }
+
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: inherit;
     padding: 1.34px;
-    background: linear-gradient(135deg, rgba(242, 242, 242, 0.8) 0%, rgba(255, 255, 255, 0) 44.5%, rgba(255, 255, 255, 0.5) 100%);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    background: linear-gradient(
+      135deg,
+      rgba(242, 242, 242, 0.8) 0%,
+      rgba(255, 255, 255, 0) 44.5%,
+      rgba(255, 255, 255, 0.5) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;

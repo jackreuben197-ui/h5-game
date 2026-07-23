@@ -111,6 +111,7 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
         })
     },
     // 游客（无 token）场景经免鉴权聚合接口补拉全局配置；登录用户走 postAuthSync 的 /config/global/config。
+    // 对齐 pokerqueen HotUpdateConfigCache：请求体为 { global_config_req: { last_update_time } }。
     async ensureGuestGlobalConfig(): Promise<void> {
       if (this.globalConfig) {
         return

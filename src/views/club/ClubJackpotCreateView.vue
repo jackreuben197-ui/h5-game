@@ -13,13 +13,9 @@ import {
   postOrgClubJackpotRechargeApi,
 } from '@/api/org'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
+import FieldTip from '@/components/GameCreateForm/FieldTip.vue'
 
-import mainBgUrl from '@/assets/images/main_bg.webp'
 import { t } from '@/i18n'
-// 主容器背景图：全页面共用一张底图。
-const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
-}))
 
 interface OptionItem {
   id: string
@@ -157,6 +153,19 @@ function toSafeNumber(value: unknown): number {
   return Number.isFinite(num) ? num : 0
 }
 
+const PERMILLE_PER_PERCENT = 10
+
+function formatPermilleToPercentText(value: unknown): string {
+  if (value === undefined || value === null || value === '') {
+    return ''
+  }
+  return (toSafeNumber(value) / PERMILLE_PER_PERCENT).toString()
+}
+
+function percentToPermille(value: unknown): number {
+  return Math.round(toSafeNumber(value) * PERMILLE_PER_PERCENT)
+}
+
 function toSwitch(value: boolean): number {
   return value ? 1 : 2
 }
@@ -288,9 +297,13 @@ const blindOptions = computed<OptionItem[]>(() => {
   }))
 })
 
-const selectedBlindOptions = computed<OptionItem[]>(() =>
-  blindOptions.value.filter((item) => item.selected),
-)
+const activeBlindSbs = ref<Record<string, number>>({})
+const activeBlindContextKey = computed(() => `${activeGameMode.value}-${activeStakeLevel.value}`)
+const activeBlindSb = computed<number | undefined>(() => {
+  const selectedSbs = currentStakeConfig.value.selectedSbs
+  const savedSb = activeBlindSbs.value[activeBlindContextKey.value]
+  return selectedSbs.includes(savedSb) ? savedSb : selectedSbs[0]
+})
 
 function getBlindConfigBySb(sb: number): BlindConfigForm {
   const existing = currentStakeConfig.value.blindConfigs[sb]
@@ -303,13 +316,34 @@ function getBlindConfigBySb(sb: number): BlindConfigForm {
   return created
 }
 
-function onBlindOptionClick(option: OptionItem): void {
+function activateBlindOption(option: OptionItem): void {
   const selectedSbs = currentStakeConfig.value.selectedSbs
-  if (selectedSbs.includes(option.sb)) {
-    currentStakeConfig.value.selectedSbs = selectedSbs.filter((sb) => sb !== option.sb)
+  if (!selectedSbs.includes(option.sb)) {
+    currentStakeConfig.value.selectedSbs = [...selectedSbs, option.sb]
+  }
+  activeBlindSbs.value[activeBlindContextKey.value] = option.sb
+}
+
+function onBlindOptionChange(option: OptionItem, checked: boolean): void {
+  const selectedSbs = currentStakeConfig.value.selectedSbs
+  if (checked) {
+    currentStakeConfig.value.selectedSbs = selectedSbs.includes(option.sb)
+      ? selectedSbs
+      : [...selectedSbs, option.sb]
+    activeBlindSbs.value[activeBlindContextKey.value] = option.sb
     return
   }
-  currentStakeConfig.value.selectedSbs = [...selectedSbs, option.sb]
+
+  const nextSelectedSbs = selectedSbs.filter((sb) => sb !== option.sb)
+  currentStakeConfig.value.selectedSbs = nextSelectedSbs
+  if (activeBlindSb.value === option.sb) {
+    const [nextSb] = nextSelectedSbs
+    if (nextSb === undefined) {
+      delete activeBlindSbs.value[activeBlindContextKey.value]
+    } else {
+      activeBlindSbs.value[activeBlindContextKey.value] = nextSb
+    }
+  }
 }
 
 function toggleModeEnabled(mode: GameMode): void {
@@ -328,16 +362,16 @@ function buildModeSetting(modeConfig: ModeConfigForm): OrgClubJackpotTemplateSet
         sb,
         status: levelConfig.selectedSbs.includes(sb) ? 1 : 0,
         blind_type: rule.blindType,
-        prize_ratio: toSafeNumber(blindConfig.prizeRatio),
+        prize_ratio: percentToPermille(blindConfig.prizeRatio),
         contribute_pot_switch: toSwitch(blindConfig.contributePotChecked),
         contribute_pot_limit: toSafeNumber(blindConfig.contributePotLimit),
         award_bet_switch: toSwitch(blindConfig.awardBetChecked),
         award_bet_limit: toSafeNumber(blindConfig.awardBetLimit),
         award_other_switch: toSwitch(blindConfig.awardOtherChecked),
-        award_other_ratio: toSafeNumber(blindConfig.awardOtherRatio),
+        award_other_ratio: percentToPermille(blindConfig.awardOtherRatio),
         contribute_fixed_limit: toSafeNumber(blindConfig.profitTriggerLimit),
-        contribute_ratio: toSafeNumber(blindConfig.jackpotContribValue),
-        contribute_fixed_rate: toSafeNumber(blindConfig.profitPercentValue),
+        contribute_fixed_rate: toSafeNumber(blindConfig.jackpotContribValue),
+        contribute_ratio: percentToPermille(blindConfig.profitPercentValue),
       })
     })
   })
@@ -347,14 +381,14 @@ function buildModeSetting(modeConfig: ModeConfigForm): OrgClubJackpotTemplateSet
   const four = modeConfig.poolSettings.find((item) => item.id === 'four')
 
   return {
-    game_play_ratio: toSafeNumber(modeConfig.gamePlayRatio),
+    game_play_ratio: percentToPermille(modeConfig.gamePlayRatio),
     blind_setting: blindSetting,
     royal_flush_switch: royal?.checked ? 1 : 0,
-    royal_flush_ratio: toSafeNumber(royal?.ratio),
+    royal_flush_ratio: percentToPermille(royal?.ratio),
     straight_flush_switch: straight?.checked ? 1 : 0,
-    straight_flush_ratio: toSafeNumber(straight?.ratio),
+    straight_flush_ratio: percentToPermille(straight?.ratio),
     four_ofa_kind_switch: four?.checked ? 1 : 0,
-    four_ofa_kind_ratio: toSafeNumber(four?.ratio),
+    four_ofa_kind_ratio: percentToPermille(four?.ratio),
   }
 }
 
@@ -408,24 +442,24 @@ function applyModeSetting(
     modeConfig.stakes[level] = createDefaultStakeConfig(level)
   })
 
-  modeConfig.gamePlayRatio = String(setting.game_play_ratio ?? '')
+  modeConfig.gamePlayRatio = formatPermilleToPercentText(setting.game_play_ratio)
 
   const royal = modeConfig.poolSettings.find((item) => item.id === 'royal')
   if (royal) {
     royal.checked = toSafeNumber(setting.royal_flush_switch) === 1
-    royal.ratio = String(setting.royal_flush_ratio ?? '')
+    royal.ratio = formatPermilleToPercentText(setting.royal_flush_ratio)
   }
 
   const straight = modeConfig.poolSettings.find((item) => item.id === 'straight')
   if (straight) {
     straight.checked = toSafeNumber(setting.straight_flush_switch) === 1
-    straight.ratio = String(setting.straight_flush_ratio ?? '')
+    straight.ratio = formatPermilleToPercentText(setting.straight_flush_ratio)
   }
 
   const four = modeConfig.poolSettings.find((item) => item.id === 'four')
   if (four) {
     four.checked = toSafeNumber(setting.four_ofa_kind_switch) === 1
-    four.ratio = String(setting.four_ofa_kind_ratio ?? '')
+    four.ratio = formatPermilleToPercentText(setting.four_ofa_kind_ratio)
   }
 
   const blindSetting = Array.isArray(setting.blind_setting)
@@ -451,25 +485,26 @@ function applyModeSetting(
       levelConfig.selectedSbs = [...levelConfig.selectedSbs, sbCent]
     }
 
-    target.prizeRatio = String(item.prize_ratio ?? target.prizeRatio ?? '')
+    target.prizeRatio = formatPermilleToPercentText(item.prize_ratio)
     target.contributePotChecked = toSafeNumber(item.contribute_pot_switch) === 1
     target.contributePotLimit = String(item.contribute_pot_limit ?? target.contributePotLimit ?? '')
     target.awardBetChecked = toSafeNumber(item.award_bet_switch) === 1
     target.awardBetLimit = String(item.award_bet_limit ?? target.awardBetLimit ?? '')
     target.awardOtherChecked = toSafeNumber(item.award_other_switch) === 1
-    target.awardOtherRatio = String(item.award_other_ratio ?? target.awardOtherRatio ?? '')
+    target.awardOtherRatio = formatPermilleToPercentText(item.award_other_ratio)
 
     const profitLimit = String(item.contribute_fixed_limit ?? '')
-    const jackpotContrib = String(item.contribute_ratio ?? '')
-    const profitPercent = String(item.contribute_fixed_rate ?? '')
+    const jackpotContrib = String(item.contribute_fixed_rate ?? '')
+    const profitPercent = formatPermilleToPercentText(item.contribute_ratio)
     target.profitTriggerLimit = profitLimit
     target.jackpotContribValue = jackpotContrib
     target.profitPercentValue = profitPercent
     target.profitTriggerChecked =
       profitLimit !== '' && toSafeNumber(item.contribute_fixed_limit) > 0
-    target.jackpotContribChecked = jackpotContrib !== '' && toSafeNumber(item.contribute_ratio) > 0
+    target.jackpotContribChecked =
+      jackpotContrib !== '' && toSafeNumber(item.contribute_fixed_rate) > 0
     target.profitPercentChecked =
-      profitPercent !== '' && toSafeNumber(item.contribute_fixed_rate) > 0
+      profitPercent !== '' && toSafeNumber(item.contribute_ratio) > 0
   })
 
   stakeLevels.forEach((level) => {
@@ -603,7 +638,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell jackpot-create-page" :style="backgroundStyle">
+  <div class="page-shell jackpot-create-page">
     <HeaderBack :title="isEditMode ? 'Edit Jackpot' : 'Jackpot'" />
 
     <section class="create-content">
@@ -617,7 +652,7 @@ onMounted(() => {
         <div class="summary-left">
           <div class="summary-title-row">
             <span>Jackpot {{ t('UIMatch_MttDetailState_Prizepool') }}</span>
-            <i class="icon-info" aria-hidden="true">i</i>
+            <FieldTip :tip="t('UICreateClubJackpotTemplate_JackpotWhy')" />
           </div>
           <div class="summary-amount-input">
             <span class="amount-display">{{ jackpotGoldYuan || '0' }}</span>
@@ -661,7 +696,7 @@ onMounted(() => {
             <div class="row-label">
               <i class="dot dot--active"></i>
               <span>{{ t('UIClub_Jackpot') }}</span>
-              <i class="icon-info" aria-hidden="true">i</i>
+              <FieldTip :tip="t('UICreateClubJackpotTemplate_GameTypeWhy')" />
             </div>
 
             <div class="value-input">
@@ -693,194 +728,204 @@ onMounted(() => {
 
         <div class="divider"></div>
 
-        <div class="blind-list blind-list--inline">
-          <label
+        <div class="blind-list">
+          <div
             v-for="option in blindOptions"
             :key="option.id"
-            class="blind-item blind-item--checkbox"
+            class="blind-level-item"
+            :class="{ 'blind-level-item--expanded': option.sb === activeBlindSb }"
           >
-            <input
-              class="blind-checkbox"
-              type="checkbox"
-              :checked="option.selected"
-              @change="onBlindOptionClick(option)"
-            />
-            <span>{{ option.label }}</span>
-          </label>
-        </div>
-
-        <div
-          v-for="option in selectedBlindOptions"
-          :key="`config-${activeStakeLevel}-${option.sb}`"
-          class="blind-config-panel"
-        >
-          <div class="divider"></div>
-
-          <div class="rows-wrap rows-wrap--gap-sm">
-            <div class="config-row config-row--stack">
-              <div class="row-label">
-                <i class="dot dot--active"></i>
-                <span>{{ option.label }}</span>
-                <i class="icon-info" aria-hidden="true">i</i>
-              </div>
-              <div class="value-input">
-                <input
-                  v-model="getBlindConfigBySb(option.sb).prizeRatio"
-                  class="inline-input"
-                  inputmode="decimal"
-                  placeholder="0"
-                />
-                <span>%</span>
-              </div>
+            <div
+              class="blind-item blind-item--checkbox"
+              role="button"
+              tabindex="0"
+              @click="activateBlindOption(option)"
+              @keydown.enter.prevent="activateBlindOption(option)"
+              @keydown.space.prevent="activateBlindOption(option)"
+            >
+              <input
+                class="blind-checkbox"
+                type="checkbox"
+                :checked="option.selected"
+                @click.stop
+                @change="onBlindOptionChange(option, ($event.target as HTMLInputElement).checked)"
+              />
+              <span>{{ option.label }}</span>
+              <FieldTip :tip="t('UICreateClubJackpotTemplate_BlindWhy')" @click.stop />
             </div>
 
-            <div class="config-row">
-              <div class="row-label row-label--small">
-                <i
-                  class="dot"
-                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).contributePotChecked }"
-                  @click="
-                    getBlindConfigBySb(option.sb).contributePotChecked = !getBlindConfigBySb(
-                      option.sb,
-                    ).contributePotChecked
-                  "
-                ></i>
-                <span>
-                  {{ t('UIClub_Text20') }}jackpot{{
-                    t('UIClubJackpotRecordDetail_ContributionTip')
-                  }}
-                </span>
-              </div>
-              <div class="value-input value-input--narrow">
-                <input
-                  v-model="getBlindConfigBySb(option.sb).contributePotLimit"
-                  class="inline-input"
-                  inputmode="decimal"
-                  placeholder="0"
-                />
-              </div>
-            </div>
+            <div v-if="option.selected && option.sb === activeBlindSb" class="blind-config-panel">
+              <div class="rows-wrap rows-wrap--gap-sm">
+                <div class="config-row config-row--stack">
+                  <!-- <div class="row-label">
+                    <i class="dot dot--active"></i>
+                    <span>{{ option.label }}</span>
+                  </div> -->
+                  <div class="value-input">
+                    <input
+                      v-model="getBlindConfigBySb(option.sb).prizeRatio"
+                      class="inline-input"
+                      inputmode="decimal"
+                      placeholder="0"
+                    />
+                    <span>%</span>
+                  </div>
+                </div>
 
-            <div class="config-row">
-              <div class="row-label row-label--small">
-                <i
-                  class="dot"
-                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).awardBetChecked }"
-                  @click="
-                    getBlindConfigBySb(option.sb).awardBetChecked = !getBlindConfigBySb(option.sb)
-                      .awardBetChecked
-                  "
-                ></i>
-                <span>{{ t('UIClub_Text21') }}jackpot{{ t('MTT_State_Reward') }}</span>
-              </div>
-              <div class="value-input value-input--narrow">
-                <input
-                  v-model="getBlindConfigBySb(option.sb).awardBetLimit"
-                  class="inline-input"
-                  inputmode="decimal"
-                  placeholder="0"
-                />
-              </div>
-            </div>
+                <div class="config-row">
+                  <div class="row-label row-label--small">
+                    <i
+                      class="dot"
+                      :class="{ 'dot--active': getBlindConfigBySb(option.sb).contributePotChecked }"
+                      @click="
+                        getBlindConfigBySb(option.sb).contributePotChecked = !getBlindConfigBySb(
+                          option.sb,
+                        ).contributePotChecked
+                      "
+                    ></i>
+                    <span>
+                      {{ t('UIClub_Text20') }}jackpot{{
+                        t('UIClubJackpotRecordDetail_ContributionTip')
+                      }}
+                    </span>
+                  </div>
+                  <div class="value-input value-input--narrow">
+                    <input
+                      v-model="getBlindConfigBySb(option.sb).contributePotLimit"
+                      class="inline-input"
+                      inputmode="decimal"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
 
-            <div class="config-row">
-              <div class="row-label row-label--small">
-                <i
-                  class="dot"
-                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).awardOtherChecked }"
-                  @click="
-                    getBlindConfigBySb(option.sb).awardOtherChecked = !getBlindConfigBySb(option.sb)
-                      .awardOtherChecked
-                  "
-                ></i>
-                <span>{{ t('UICreateClubJackpotTemplate_AllTableTriggerTip') }}</span>
-              </div>
-              <div class="value-input value-input--narrow">
-                <input
-                  v-model="getBlindConfigBySb(option.sb).awardOtherRatio"
-                  class="inline-input"
-                  inputmode="decimal"
-                  placeholder="0"
-                />
-              </div>
-            </div>
-          </div>
+                <div class="config-row">
+                  <div class="row-label row-label--small">
+                    <i
+                      class="dot"
+                      :class="{ 'dot--active': getBlindConfigBySb(option.sb).awardBetChecked }"
+                      @click="
+                        getBlindConfigBySb(option.sb).awardBetChecked = !getBlindConfigBySb(
+                          option.sb,
+                        ).awardBetChecked
+                      "
+                    ></i>
+                    <span>{{ t('UIClub_Text21') }}jackpot{{ t('MTT_State_Reward') }}</span>
+                  </div>
+                  <div class="value-input value-input--narrow">
+                    <input
+                      v-model="getBlindConfigBySb(option.sb).awardBetLimit"
+                      class="inline-input"
+                      inputmode="decimal"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
 
-          <div class="divider"></div>
+                <div class="config-row">
+                  <div class="row-label row-label--small">
+                    <i
+                      class="dot"
+                      :class="{ 'dot--active': getBlindConfigBySb(option.sb).awardOtherChecked }"
+                      @click="
+                        getBlindConfigBySb(option.sb).awardOtherChecked = !getBlindConfigBySb(
+                          option.sb,
+                        ).awardOtherChecked
+                      "
+                    ></i>
+                    <span>{{ t('UICreateClubJackpotTemplate_AllTableTriggerTip') }}</span>
+                  </div>
+                  <div class="value-input value-input--narrow">
+                  <input
+                    v-model="getBlindConfigBySb(option.sb).awardOtherRatio"
+                    class="inline-input"
+                    inputmode="decimal"
+                    placeholder="0"
+                  />
+                  <span>%</span>
+                </div>
+                </div>
+              </div>
 
-          <div class="title-line">
-            <span>jackpot {{ t('UIClubJackpotRecordDetail_ContributionTip') }}</span>
-            <i class="icon-info" aria-hidden="true">i</i>
-          </div>
+              <div class="divider"></div>
 
-          <div class="rows-wrap rows-wrap--gap-sm">
-            <div class="config-row">
-              <div class="row-label">
-                <i
-                  class="dot"
-                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).profitTriggerChecked }"
-                  @click="
-                    getBlindConfigBySb(option.sb).profitTriggerChecked = !getBlindConfigBySb(
-                      option.sb,
-                    ).profitTriggerChecked
-                  "
-                ></i>
-                <span>{{ t('UICreateClubJackpotTemplate_ProfitTriggerTip') }}</span>
+              <div class="title-line">
+                <span>jackpot {{ t('UIClubJackpotRecordDetail_ContributionTip') }}</span>
+                <FieldTip :tip="t('UICreateClubJackpotTemplate_JackpotPoolWhy')" />
               </div>
-              <div class="value-input value-input--narrow">
-                <input
-                  v-model="getBlindConfigBySb(option.sb).profitTriggerLimit"
-                  class="inline-input"
-                  inputmode="decimal"
-                  placeholder="0"
-                />
-              </div>
-            </div>
 
-            <div class="config-row">
-              <div class="row-label">
-                <i
-                  class="dot"
-                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).jackpotContribChecked }"
-                  @click="
-                    getBlindConfigBySb(option.sb).jackpotContribChecked = !getBlindConfigBySb(
-                      option.sb,
-                    ).jackpotContribChecked
-                  "
-                ></i>
-                <span>Jackpot {{ t('UIClubJackpotRecordDetail_ContributionTip') }}</span>
-              </div>
-              <div class="value-input value-input--narrow">
-                <input
-                  v-model="getBlindConfigBySb(option.sb).jackpotContribValue"
-                  class="inline-input"
-                  inputmode="decimal"
-                  placeholder="0"
-                />
-              </div>
-            </div>
+              <div class="rows-wrap rows-wrap--gap-sm">
+                <div class="config-row">
+                  <div class="row-label">
+                    <i
+                      class="dot"
+                      :class="{ 'dot--active': getBlindConfigBySb(option.sb).profitTriggerChecked }"
+                      @click="
+                        getBlindConfigBySb(option.sb).profitTriggerChecked = !getBlindConfigBySb(
+                          option.sb,
+                        ).profitTriggerChecked
+                      "
+                    ></i>
+                    <span>{{ t('UICreateClubJackpotTemplate_ProfitTriggerTip') }}</span>
+                  </div>
+                  <div class="value-input value-input--narrow">
+                    <input
+                      v-model="getBlindConfigBySb(option.sb).profitTriggerLimit"
+                      class="inline-input"
+                      inputmode="decimal"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
 
-            <div class="config-row">
-              <div class="row-label">
-                <i
-                  class="dot"
-                  :class="{ 'dot--active': getBlindConfigBySb(option.sb).profitPercentChecked }"
-                  @click="
-                    getBlindConfigBySb(option.sb).profitPercentChecked = !getBlindConfigBySb(
-                      option.sb,
-                    ).profitPercentChecked
-                  "
-                ></i>
-                <span>{{ t('UICreateClubJackpotTemplate_TriggerProfitTip') }} (%)</span>
-              </div>
-              <div class="value-input value-input--narrow">
-                <input
-                  v-model="getBlindConfigBySb(option.sb).profitPercentValue"
-                  class="inline-input"
-                  inputmode="decimal"
-                  placeholder="0"
-                />
-                <span>%</span>
+                <div class="config-row">
+                  <div class="row-label">
+                    <i
+                      class="dot"
+                      :class="{
+                        'dot--active': getBlindConfigBySb(option.sb).jackpotContribChecked,
+                      }"
+                      @click="
+                        getBlindConfigBySb(option.sb).jackpotContribChecked = !getBlindConfigBySb(
+                          option.sb,
+                        ).jackpotContribChecked
+                      "
+                    ></i>
+                    <span>Jackpot {{ t('UIClubJackpotRecordDetail_ContributionTip') }}</span>
+                  </div>
+                  <div class="value-input value-input--narrow">
+                    <input
+                      v-model="getBlindConfigBySb(option.sb).jackpotContribValue"
+                      class="inline-input"
+                      inputmode="decimal"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+
+                <div class="config-row">
+                  <div class="row-label">
+                    <i
+                      class="dot"
+                      :class="{ 'dot--active': getBlindConfigBySb(option.sb).profitPercentChecked }"
+                      @click="
+                        getBlindConfigBySb(option.sb).profitPercentChecked = !getBlindConfigBySb(
+                          option.sb,
+                        ).profitPercentChecked
+                      "
+                    ></i>
+                    <span>{{ t('UICreateClubJackpotTemplate_TriggerProfitTip') }} (%)</span>
+                  </div>
+                  <div class="value-input value-input--narrow">
+                    <input
+                      v-model="getBlindConfigBySb(option.sb).profitPercentValue"
+                      class="inline-input"
+                      inputmode="decimal"
+                      placeholder="0"
+                    />
+                    <span>%</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -950,10 +995,19 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .jackpot-create-page {
   position: relative;
   height: 100dvh;
+  background-color: var(--c-page);
+  background-image: url('@/assets/images/main_bg.webp');
   background-size: cover;
+  background-position: center;
+
+  @include theme-light {
+    background-image: url('@/assets/images/main_bg_light.webp');
+  }
 }
 
 :deep(.page-back-header) {
@@ -982,6 +1036,11 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   color: #fff;
+
+  @include theme-light {
+    color: var(--c-text);
+    background: var(--c-surface);
+  }
 }
 
 .pill-label,
@@ -1001,8 +1060,16 @@ onMounted(() => {
   text-align: center;
   outline: none;
 
+  @include theme-light {
+    color: var(--c-text);
+  }
+
   &::placeholder {
     color: rgba(255, 255, 255, 0.5);
+
+    @include theme-light {
+      color: var(--c-text-muted);
+    }
   }
 }
 
@@ -1014,6 +1081,11 @@ onMounted(() => {
   border-radius: 0.4328rem;
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.0043rem);
+
+  @include theme-light {
+    background: var(--c-surface);
+    backdrop-filter: none;
+  }
 }
 
 .summary-card {
@@ -1030,18 +1102,10 @@ onMounted(() => {
   color: #fff;
   font-size: 0.32rem;
   line-height: 1.4;
-}
 
-.icon-info {
-  width: 0.2667rem;
-  height: 0.2667rem;
-  border-radius: 50%;
-  border: 0.0187rem solid rgba(255, 255, 255, 0.72);
-  font-size: 0.2133rem;
-  line-height: 0.24rem;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.9);
-  font-style: normal;
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .summary-amount-input {
@@ -1054,6 +1118,10 @@ onMounted(() => {
   align-items: center;
   gap: 0.1067rem;
   min-width: 3.2rem;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .summary-amount-input .amount-display {
@@ -1072,6 +1140,10 @@ onMounted(() => {
   background: linear-gradient(157.77deg, #05e7ae 7.55%, #027a5c 71.92%);
   color: #fff;
   font-size: 0.4rem;
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 
   &:active {
     opacity: 0.8;
@@ -1104,6 +1176,10 @@ onMounted(() => {
   display: grid;
   align-items: center;
   padding: 0.0267rem;
+
+  @include theme-light {
+    background: rgba(34, 34, 34, 0.12);
+  }
 }
 
 .segment-row--five {
@@ -1121,12 +1197,22 @@ onMounted(() => {
   color: #fff;
   font-size: 0.362rem;
   border-radius: 1.3844rem;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .segment-btn--active {
   border: 0.0133rem solid #fff;
   background: rgba(255, 255, 255, 0.17);
   backdrop-filter: blur(0.4533rem);
+
+  @include theme-light {
+    border-color: transparent;
+    background: rgba(34, 34, 34, 0.1);
+    backdrop-filter: none;
+  }
 }
 
 .mode-switch-wrap {
@@ -1141,16 +1227,67 @@ onMounted(() => {
   gap: 0.1067rem;
   color: #fff;
   font-size: 0.32rem;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
-.mode-switch-checkbox {
+.mode-switch-checkbox,
+.blind-checkbox,
+.dot {
+  appearance: none;
   width: 0.4rem;
   height: 0.4rem;
+  margin: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: rgba(249, 249, 249, 0.2);
+  background-image: none;
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+
+  @include theme-light {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+}
+
+.mode-switch-checkbox:checked,
+.blind-checkbox:checked,
+.dot--active {
+  background-image: radial-gradient(
+    circle at center,
+    transparent 0 0.104rem,
+    #55ffe2 0.104rem 0.139rem,
+    transparent 0.139rem
+  );
+
+  @include theme-light {
+    background-color: #69beff;
+    background-image: radial-gradient(
+      circle at center,
+      transparent 0 0.104rem,
+      #fff 0.104rem 0.139rem,
+      transparent 0.139rem
+    );
+  }
+}
+
+.mode-switch-checkbox:focus-visible,
+.blind-checkbox:focus-visible,
+.dot:focus-visible {
+  outline: 0.04rem solid rgba(105, 190, 255, 0.45);
+  outline-offset: 0.04rem;
 }
 
 .divider {
   height: 0.0181rem;
   background: rgba(255, 255, 255, 0.25);
+
+  @include theme-light {
+    background: var(--c-divider);
+  }
 }
 
 .rows-wrap {
@@ -1182,6 +1319,10 @@ onMounted(() => {
   color: #fff;
   font-size: 0.4054rem;
   line-height: 1.4;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .row-label--small {
@@ -1189,20 +1330,7 @@ onMounted(() => {
 }
 
 .dot {
-  width: 0.4rem;
-  height: 0.4rem;
-  border-radius: 50%;
-  border: 0.0267rem solid rgba(255, 255, 255, 0.7);
-  position: relative;
-  flex-shrink: 0;
-}
-
-.dot--active::after {
-  content: '';
-  position: absolute;
-  inset: 0.0667rem;
-  border-radius: 50%;
-  background: linear-gradient(145deg, #33c6ff, #1b9fdb 80%);
+  display: inline-block;
 }
 
 .value-input {
@@ -1218,6 +1346,12 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 0.1333rem;
+
+  @include theme-light {
+    color: var(--c-text);
+    background: rgba(34, 34, 34, 0.16);
+    mix-blend-mode: normal;
+  }
 }
 
 .value-input--narrow {
@@ -1231,18 +1365,35 @@ onMounted(() => {
   gap: 0.1333rem;
   font-size: 0.3716rem;
   color: #fff;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .blind-list {
   display: flex;
   flex-direction: column;
-  gap: 0.1351rem;
+  gap: 0;
 }
 
-.blind-list--inline {
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 0.16rem 0.24rem;
+.blind-level-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.24rem;
+  padding: 0.12rem 0;
+
+  & + & {
+    border-top: 0.0181rem solid rgba(255, 255, 255, 0.18);
+
+    @include theme-light {
+      border-top-color: var(--c-divider);
+    }
+  }
+}
+
+.blind-level-item--expanded {
+  padding-bottom: 0.24rem;
 }
 
 .blind-item {
@@ -1254,7 +1405,13 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.0792rem;
-  width: fit-content;
+  width: 100%;
+  min-height: 0.56rem;
+  cursor: pointer;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .blind-item--checkbox {
@@ -1262,8 +1419,7 @@ onMounted(() => {
 }
 
 .blind-checkbox {
-  width: 0.4rem;
-  height: 0.4rem;
+  display: inline-block;
 }
 
 .blind-config-panel {
@@ -1285,6 +1441,10 @@ onMounted(() => {
   line-height: 1;
   color: #fff;
   font-weight: 500;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .pool-row {
@@ -1339,6 +1499,10 @@ onMounted(() => {
   color: #fff;
   font-size: 0.2987rem;
   line-height: 1.4;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .bottom-actions {
@@ -1365,11 +1529,20 @@ onMounted(() => {
 
 .action-btn--cancel {
   background: rgba(0, 0, 0, 0.3);
+
+  @include theme-light {
+    background: rgba(34, 34, 34, 0.3);
+  }
 }
 
 .action-btn--confirm {
   border: 0.0133rem solid rgba(242, 242, 242, 0.8);
   background: linear-gradient(157.77deg, #05e7ae 7.55%, #027a5c 71.92%);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+  }
 
   &:disabled {
     opacity: 0.5;
@@ -1386,8 +1559,16 @@ onMounted(() => {
   text-align: center;
   outline: none;
 
+  @include theme-light {
+    color: var(--c-text);
+  }
+
   &::placeholder {
     color: rgba(255, 255, 255, 0.5);
+
+    @include theme-light {
+      color: var(--c-text-muted);
+    }
   }
 }
 </style>

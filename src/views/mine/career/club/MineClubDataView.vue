@@ -3,9 +3,11 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { showFailToast } from 'vant'
 import { postMiscCombineApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import tableCardBgUrl from '@/assets/images/table_card_bg.png'
-import iconArrowBottomUrl from '@/assets/icons/icon_arrow_bottom.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
+import CareerSvgIcon from '../../components/CareerSvgIcon.vue'
 import RadarChart from '@/components/Chart/RadarChart.vue'
 import RingChart from '@/components/Chart/RingChart.vue'
 import PokerCard from '@/components/GameCard/PokerCard.vue'
@@ -20,6 +22,7 @@ import { userCache } from '@/utils/userCache'
 import { createKeyedRefresh } from '@/utils/keyedRefresh'
 import { USER_STORE_CAREER } from '@/utils/indexedDB'
 import { t } from '@/i18n'
+import { useTheme } from '@/composables/useTheme'
 
 const title = computed(() => t('adaptation10124'))
 
@@ -44,9 +47,10 @@ type DeckRow = {
   profit: number
 }
 
-// 主容器背景图：全页面共用一张底图。
+// 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--club-data-bg-dark': `url(${mainBgUrl})`,
+  '--club-data-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const mainTabs: Array<{ key: MainTabKey; label: string }> = [
@@ -91,6 +95,7 @@ const selectedDeckMode = ref(deckModeTabs[0])
 const loading = ref(false)
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
+const { isLight } = useTheme()
 
 const personalRingMeta = [
   { key: 'vpip', label: t('UIClub_Mlistinfo_rRyW4JkW'), color: '#ff5b5b' },
@@ -1049,7 +1054,7 @@ onBeforeUnmount(() => {
                 size="1.92rem"
                 :value="ring.value"
                 :color="ring.color"
-                track-color="rgba(255, 255, 255, 0.16)"
+                :track-color="isLight ? 'rgba(32, 32, 32, 0.12)' : 'rgba(255, 255, 255, 0.16)'"
               >
                 <div class="ring-inner">
                   <div class="ring-value">{{ ring.value }}%</div>
@@ -1061,7 +1066,7 @@ onBeforeUnmount(() => {
 
           <section class="glass-pill title-pill">
             <span>{{ t('UIClub_Text37') }}3{{ t('UIClub_Data') }}</span>
-            <img src="@/assets/icons/icon_data.svg" />
+            <CareerSvgIcon name="data" class="data-icon" />
           </section>
 
           <section class="glass-card biggest-card">
@@ -1082,7 +1087,7 @@ onBeforeUnmount(() => {
 
         <template v-else>
           <section class="empty-wrap">
-            <div class="empty-icon" aria-hidden="true">✕</div>
+            <AppSvgIcon name="empty-data" class="empty-icon" />
             <div class="empty-text">暂无数据</div>
           </section>
         </template>
@@ -1096,11 +1101,10 @@ onBeforeUnmount(() => {
           <div class="title-text">{{ opponentPeriodLabel }}</div>
           <button class="sort-btn" type="button" @click="toggleOpponentSort">
             {{ opponentOrderAsc ? '升序' : '降序' }}
-            <img
+            <CareerSvgIcon
+              name="dropdown"
               class="sort-arrow"
               :class="{ 'sort-arrow--asc': opponentOrderAsc }"
-              :src="iconArrowBottomUrl"
-              alt=""
             />
           </button>
         </section>
@@ -1162,7 +1166,7 @@ onBeforeUnmount(() => {
 
           <div class="section-title">
             <span>近3个月内玩牌数据统计</span>
-            <img src="@/assets/icons/icon_data.svg" />
+            <CareerSvgIcon name="data" class="data-icon" />
           </div>
 
           <div class="summary-list">
@@ -1176,7 +1180,7 @@ onBeforeUnmount(() => {
         <section class="glass-card radar-card">
           <div class="section-title">
             <span>ALL IN 胜率分布图</span>
-            <img src="@/assets/icons/icon_data.svg" />
+            <CareerSvgIcon name="data" class="data-icon" />
           </div>
           <div class="allin-radar-wrap">
             <RadarChart v-bind="radarPoints" />
@@ -1251,15 +1255,24 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-data-page {
   position: relative;
   height: 100dvh;
   overflow-y: auto;
   padding: 0 0 0.72rem;
   color: #f9f9f9;
+  background-image: var(--club-data-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: var(--c-text);
+    background-color: var(--c-page);
+    background-image: var(--club-data-bg-light);
+  }
 }
 
 .content-wrap {
@@ -1272,6 +1285,10 @@ onBeforeUnmount(() => {
   text-align: center;
   font-size: 0.36rem;
   color: rgba(249, 249, 249, 0.7);
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 
 .back-btn {
@@ -1302,10 +1319,19 @@ onBeforeUnmount(() => {
   font-size: 0.38rem;
   line-height: 1.1;
 
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.7);
+  }
+
   &.active {
     color: #fff;
     font-weight: 600;
     border-bottom: 0.03rem solid rgba(249, 249, 249, 0.95);
+
+    @include theme-light {
+      color: var(--c-brand);
+      border-bottom-color: var(--c-brand);
+    }
   }
 }
 
@@ -1315,6 +1341,21 @@ onBeforeUnmount(() => {
   :deep(.filter-tabbar) {
     margin: 0;
   }
+
+  @include theme-light {
+    :deep(.filter-tabbar) {
+      background: #e3e3e3;
+    }
+
+    :deep(.filter-tab__text) {
+      color: var(--c-text);
+    }
+
+    :deep(.filter-tab__item--active) {
+      border-color: #fff;
+      background: #fff;
+    }
+  }
 }
 
 .glass-card {
@@ -1322,6 +1363,11 @@ onBeforeUnmount(() => {
   border: 0.02rem solid rgba(249, 249, 249, 0.15);
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.06rem);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-surface);
+  }
 }
 
 .glass-pill {
@@ -1329,6 +1375,11 @@ onBeforeUnmount(() => {
   border: 0.02rem solid rgba(249, 249, 249, 0.12);
   background: rgba(0, 0, 0, 0.24);
   backdrop-filter: blur(0.06rem);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-surface);
+  }
 }
 
 .ring-grid {
@@ -1359,6 +1410,11 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  color: #fff;
+
+  @include theme-light {
+    background: rgba(128, 128, 128, 0.52);
+  }
 }
 
 .ring-value {
@@ -1384,6 +1440,16 @@ onBeforeUnmount(() => {
   font-weight: 600;
 }
 
+.data-icon {
+  width: 0.52rem;
+  height: 0.52rem;
+  color: #fff;
+
+  @include theme-light {
+    color: var(--c-brand);
+  }
+}
+
 .biggest-card {
   margin-top: 0.6rem;
   padding: 0.2rem 0.35rem 0.5rem;
@@ -1394,6 +1460,10 @@ onBeforeUnmount(() => {
   font-size: 0.37rem;
   color: rgba(249, 249, 249, 0.72);
   font-weight: 600;
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.7);
+  }
 }
 
 .card-row {
@@ -1439,7 +1509,7 @@ onBeforeUnmount(() => {
 .sort-arrow {
   width: 0.3rem;
   height: 0.3rem;
-  object-fit: contain;
+  color: #fff;
   transition: transform 0.25s ease;
 
   &--asc {
@@ -1455,23 +1525,23 @@ onBeforeUnmount(() => {
 }
 
 .empty-icon {
-  width: 0.98rem;
-  height: 1.08rem;
-  border: 0.1rem solid rgba(249, 249, 249, 0.65);
-  border-radius: 0.24rem;
-  clip-path: polygon(50% 0, 100% 18%, 100% 80%, 50% 100%, 0 80%, 0 18%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(249, 249, 249, 0.75);
-  font-size: 0.42rem;
-  line-height: 1;
+  width: 1.2533rem;
+  height: 1.5733rem;
+  color: rgba(255, 255, 255, 0.66);
+
+  @include theme-light {
+    color: var(--c-brand);
+  }
 }
 
 .empty-text {
-  margin-top: 0.18rem;
+  margin-top: 0.24rem;
   font-size: 0.42rem;
-  color: rgba(249, 249, 249, 0.9);
+  color: rgba(255, 255, 255, 0.66);
+
+  @include theme-light {
+    color: var(--c-brand);
+  }
 }
 
 .opponent-table-wrap,
@@ -1484,6 +1554,11 @@ onBeforeUnmount(() => {
   padding: 0.5rem 0.4rem 0.16rem;
   overflow: hidden;
   font-size: 0.28rem;
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-surface);
+  }
 }
 
 // 表格内无数据时显示的占位文本，覆盖在 GameTable 表体区域。
@@ -1499,6 +1574,10 @@ onBeforeUnmount(() => {
   font-size: 0.4rem;
   color: rgba(249, 249, 249, 0.7);
   pointer-events: none;
+
+  @include theme-light {
+    color: var(--c-text-muted);
+  }
 }
 :deep(.game-table__header-cell) {
   padding: 0.4rem 0.2rem;
@@ -1507,6 +1586,35 @@ onBeforeUnmount(() => {
 :deep(.game-table__cell),
 :deep(.game-table__cell-text) {
   font-size: 0.28rem !important;
+}
+
+.club-data-page {
+  @include theme-light {
+    :deep(.game-table__header-inner--ghost) {
+      background: #cfcfcf;
+    }
+
+    :deep(.game-table__header-label),
+    :deep(.game-table__cell-text) {
+      color: var(--c-text);
+    }
+
+    :deep(.game-table__sort-icon) {
+      color: rgba(0, 0, 0, 0.35);
+    }
+
+    :deep(.game-table__sort-icon--active) {
+      color: var(--c-text);
+    }
+
+    :deep(.game-table__row--flat) {
+      border-bottom-color: rgba(0, 0, 0, 0.1);
+    }
+
+    :deep(.game-table__finished-text) {
+      color: var(--c-text-muted);
+    }
+  }
 }
 
 .opponent-table-wrap {
@@ -1533,6 +1641,11 @@ onBeforeUnmount(() => {
   background: rgba(249, 249, 249, 0.15);
   object-fit: cover;
   display: block;
+
+  @include theme-light {
+    border-color: rgba(32, 32, 32, 0.18);
+    background: rgba(32, 32, 32, 0.08);
+  }
 }
 
 .name {
@@ -1540,12 +1653,12 @@ onBeforeUnmount(() => {
 }
 
 .profit-up {
-  color: #ff2748;
+  color: var(--c-profit);
   font-weight: 600;
 }
 
 .profit-down {
-  color: #05e7ae;
+  color: var(--c-loss);
   font-weight: 600;
 }
 
@@ -1572,9 +1685,19 @@ onBeforeUnmount(() => {
   font-weight: 500;
   transition: background-color 0.2s ease;
 
+  @include theme-light {
+    background: #cfcfcf;
+    color: var(--c-text);
+  }
+
   &.active {
-    background: rgba(5, 231, 174, 0.6);
+    background: rgba(var(--c-brand-rgb), 0.6);
     font-weight: 600;
+
+    @include theme-light {
+      background: var(--c-brand);
+      color: var(--c-text);
+    }
   }
 }
 
@@ -1586,6 +1709,10 @@ onBeforeUnmount(() => {
   font-size: 0.4rem;
   font-weight: 600;
   color: #fff;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .summary-list {
@@ -1695,9 +1822,13 @@ onBeforeUnmount(() => {
   background: rgba(0, 0, 0, 0.19);
 
   &.active {
-    background: rgba(5, 231, 174, 0.6);
+    background: rgba(var(--c-brand-rgb), 0.6);
     color: #fff;
     font-weight: 600;
+
+    @include theme-light {
+      color: var(--c-text);
+    }
   }
 }
 

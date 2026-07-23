@@ -101,6 +101,8 @@ const bannerBg = `url(${bannerBgUrl})`
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .usercard {
   position: relative;
   overflow: hidden;
@@ -121,6 +123,13 @@ const bannerBg = `url(${bannerBgUrl})`
 .usercard--compact {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0.8rem;
+
+  @include theme-light {
+    background: linear-gradient(135deg, #cbd0d4 0%, #adb1b5 100%);
+    box-shadow:
+      inset 0.08rem 0.08rem 0.18rem rgba(255, 255, 255, 0.42),
+      0 0.08rem 0.2rem rgba(70, 79, 88, 0.12);
+  }
 }
 
 /* ── Glass deposit banner (Figma node 53:63363) ──────────────────────────── */
@@ -272,6 +281,10 @@ const bannerBg = `url(${bannerBgUrl})`
   color: #fff;
   line-height: 1.05;
   white-space: pre-line;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .usercard--expanded .usercard__name {
@@ -289,6 +302,10 @@ const bannerBg = `url(${bannerBgUrl})`
   font-weight: 400;
   font-size: 0.23rem;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .usercard--expanded .usercard__id-value {

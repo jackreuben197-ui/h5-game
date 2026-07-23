@@ -201,6 +201,8 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -243,6 +245,16 @@ onUnmounted(() => {
     0 0 8.6px #000 inset,
     2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
   overflow: hidden;
+  background-image: url('@/assets/images/wallet/bg_sharp.webp');
+  background-size: cover;
+  background-position: center;
+
+  @include theme-light {
+    --c-text: #fff;
+    --c-text-muted: rgba(255, 255, 255, 0.5);
+    --c-divider: rgba(255, 255, 255, 0.2);
+    background-image: url('@/assets/images/wallet/bg_sharp.webp');
+  }
 }
 
 .card::after {
@@ -259,6 +271,10 @@ onUnmounted(() => {
   -webkit-backdrop-filter: blur(7.580729961395264px);
   pointer-events: none;
   z-index: 1;
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.7);
+  }
 }
 
 .card::before {
@@ -309,7 +325,7 @@ onUnmounted(() => {
 }
 
 .card__title {
-  color: #fff;
+  color: var(--c-text);
   text-align: center;
   leading-trim: both;
   text-edge: cap;
@@ -333,7 +349,7 @@ onUnmounted(() => {
 }
 
 .card__header-info span {
-  color: #fff;
+  color: var(--c-text);
   text-align: center;
   leading-trim: both;
   text-edge: cap;
@@ -351,13 +367,13 @@ onUnmounted(() => {
 .card__divider {
   width: 100%;
   height: 1px;
-  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.3) 50%, transparent 50%);
+  background-image: linear-gradient(to right, var(--c-divider) 50%, transparent 50%);
   background-size: 10px 1px;
   margin: 18.12px 0;
 }
 
 .card__notice {
-  color: #fff;
+  color: var(--c-text);
   text-align: center;
   leading-trim: both;
   text-edge: cap;
@@ -396,6 +412,10 @@ onUnmounted(() => {
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
+
+  @include theme-light {
+    background: rgba(245, 245, 245, 0.1);
+  }
 }
 
 .option-card::before {
@@ -411,6 +431,12 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.3);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+  @include theme-light {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
 }
 
 .option-card--active::before {
@@ -445,7 +471,7 @@ onUnmounted(() => {
 }
 
 .option-card__desc {
-  color: rgba(255, 234, 234, 1);
+  color: var(--c-text);
   text-align: right;
   font-feature-settings:
     'liga' off,
@@ -470,7 +496,7 @@ onUnmounted(() => {
   border-radius: 27.601px;
   background: rgba(255, 255, 255, 0.12);
   margin-bottom: 0;
-  color: #fff;
+  color: var(--c-text);
   text-align: right;
   font-feature-settings:
     'liga' off,
@@ -484,11 +510,19 @@ onUnmounted(() => {
   z-index: 1;
   border: 1px solid transparent;
   box-sizing: border-box;
+
+  @include theme-light {
+    background: rgba(255, 255, 255, 0.12);
+  }
 }
 
 .option-card__badge--active {
   background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  color: var(--c-text);
+
+  @include theme-light {
+    background: rgba(255, 255, 255, 0.12);
+  }
 }
 
 .badge-icon__check {

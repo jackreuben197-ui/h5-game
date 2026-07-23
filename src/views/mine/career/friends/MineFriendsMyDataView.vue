@@ -3,8 +3,9 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { showFailToast } from 'vant'
 import { postStatsFriendStatsDataApi } from '@/api/stats'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 
-import iconTime from '@/assets/icons/icon_time.png'
 import iconChips from '@/assets/icons/icon_chips.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 import { formatUC } from '@/utils/roomVisibility'
@@ -38,7 +39,8 @@ interface PlayerItem {
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--friends-data-bg-dark': `url(${mainBgUrl})`,
+  '--friends-data-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 interface TabItem {
@@ -401,7 +403,7 @@ onBeforeUnmount(() => {
           <button type="button" class="date-pill" @click="openDatePicker('start')">
             <span class="date">{{ startDateText }}</span>
             <span class="time-line">
-              <img :src="iconTime" :alt="t('TimeItem')" />
+              <AppSvgIcon name="clock" class="time-icon" />
               <span>{{ startTime }}</span>
             </span>
           </button>
@@ -411,7 +413,7 @@ onBeforeUnmount(() => {
           <button type="button" class="date-pill" @click="openDatePicker('end')">
             <span class="date">{{ endDateText }}</span>
             <span class="time-line">
-              <img :src="iconTime" :alt="t('TimeItem')" />
+              <AppSvgIcon name="clock" class="time-icon" />
               <span>{{ endTime }}</span>
             </span>
           </button>
@@ -560,14 +562,23 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .friends-data-page {
   position: relative;
   height: 100dvh;
   padding: 0 0 0.8rem;
   color: #f9f9f9;
+  background-image: var(--friends-data-bg-dark);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light {
+    color: var(--c-text);
+    background-color: var(--c-page);
+    background-image: var(--friends-data-bg-light);
+  }
 }
 
 .content-wrap {
@@ -595,9 +606,18 @@ onBeforeUnmount(() => {
   line-height: 1.1;
   padding: 0.06rem 0;
 
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.7);
+  }
+
   &.active {
     color: #fff;
     border-bottom: 0.03rem solid rgba(255, 255, 255, 0.92);
+
+    @include theme-light {
+      color: var(--c-brand);
+      border-bottom-color: var(--c-brand);
+    }
   }
 }
 
@@ -605,6 +625,11 @@ onBeforeUnmount(() => {
   border-radius: 0.76013rem;
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.00421rem);
+
+  @include theme-light {
+    background: var(--c-surface);
+    backdrop-filter: none;
+  }
 }
 
 .summary-card {
@@ -631,6 +656,11 @@ onBeforeUnmount(() => {
   align-content: center;
   gap: 0.2196rem;
 
+  @include theme-light {
+    color: var(--c-text);
+    background: rgba(139, 136, 136, 0.15);
+  }
+
   .date {
     font-size: 0.32013rem;
     line-height: 0.42685rem;
@@ -643,11 +673,15 @@ onBeforeUnmount(() => {
     font-size: 0.42685rem;
     line-height: 0.53355rem;
 
-    img {
+    .time-icon {
       width: 0.33147rem;
       height: 0.31867rem;
-      object-fit: contain;
+      color: #fff;
       opacity: 0.95;
+
+      @include theme-light {
+        color: #000;
+      }
     }
   }
 }
@@ -656,6 +690,10 @@ onBeforeUnmount(() => {
   font-size: 0.42685rem;
   line-height: 1;
   color: rgba(255, 255, 255, 0.9);
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .metrics {
@@ -689,6 +727,10 @@ onBeforeUnmount(() => {
   width: 0.0192rem;
   height: 0.718rem;
   background: rgba(255, 255, 255, 0.22);
+
+  @include theme-light {
+    background: var(--c-divider);
+  }
 }
 
 .list-head {
@@ -719,6 +761,11 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  @include theme-light {
+    background: var(--c-surface);
+    backdrop-filter: none;
+  }
 }
 
 .player-left {
@@ -763,11 +810,11 @@ onBeforeUnmount(() => {
 }
 
 .profit-green {
-  color: #05e7ae;
+  color: var(--c-loss);
 }
 
 .profit-red {
-  color: #ff132b;
+  color: var(--c-profit);
 }
 
 .chip {
@@ -783,6 +830,10 @@ onBeforeUnmount(() => {
   background: rgba(12, 12, 12, 0.6);
   display: flex;
   align-items: flex-end;
+
+  @include theme-light {
+    background: var(--c-overlay);
+  }
 }
 
 .date-picker-sheet {
@@ -791,6 +842,11 @@ onBeforeUnmount(() => {
   border-radius: 0.84459rem 0.84459rem 0 0;
   background: rgba(0, 0, 0, 0.86);
   backdrop-filter: blur(0.16064rem);
+
+  @include theme-light {
+    color: var(--c-text);
+    background: var(--c-surface);
+  }
 }
 
 .picker-tip {
@@ -803,6 +859,10 @@ onBeforeUnmount(() => {
     font-size: 0.41861rem;
     line-height: 1.4;
     color: #fff;
+
+    @include theme-light {
+      color: var(--c-text);
+    }
   }
 }
 
@@ -815,6 +875,11 @@ onBeforeUnmount(() => {
   color: #fff;
   font-size: 0.8rem;
   line-height: 1;
+
+  @include theme-light {
+    color: var(--c-text);
+    background: rgba(0, 0, 0, 0.1);
+  }
 }
 
 .picker-range-row {
@@ -838,8 +903,13 @@ onBeforeUnmount(() => {
   font-size: 0.35893rem;
   line-height: 1.2;
 
+  @include theme-light {
+    color: var(--c-text);
+    background: rgba(0, 0, 0, 0.08);
+  }
+
   &.active {
-    box-shadow: 0 0 0 0.02rem rgba(5, 231, 174, 0.45) inset;
+    box-shadow: 0 0 0 0.02rem rgba(var(--c-brand-rgb), 0.45) inset;
   }
 }
 
@@ -850,6 +920,10 @@ onBeforeUnmount(() => {
   border-radius: 0.1rem;
   position: relative;
 
+  @include theme-light {
+    border-color: var(--c-text);
+  }
+
   &::before,
   &::after {
     content: '';
@@ -859,6 +933,10 @@ onBeforeUnmount(() => {
     height: 0.12rem;
     border-radius: 0.03rem;
     background: rgba(243, 243, 243, 0.85);
+
+    @include theme-light {
+      background: var(--c-text);
+    }
   }
 
   &::before {
@@ -892,6 +970,10 @@ onBeforeUnmount(() => {
   height: 0.64rem;
   line-height: 0.64rem;
   padding: 0;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .month-title {
@@ -899,6 +981,10 @@ onBeforeUnmount(() => {
   color: #fff;
   font-size: 0.49547rem;
   line-height: 1.4;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .calendar-wrap {
@@ -937,6 +1023,10 @@ onBeforeUnmount(() => {
   display: grid;
   place-items: center;
 
+  @include theme-light {
+    color: var(--c-text);
+  }
+
   > span {
     position: relative;
     z-index: 2;
@@ -959,7 +1049,7 @@ onBeforeUnmount(() => {
     right: 0;
     top: 0.14667rem;
     bottom: 0.14667rem;
-    background: rgba(5, 231, 174, 0.17);
+    background: rgba(var(--c-brand-rgb), 0.17);
     z-index: 1;
   }
 
@@ -982,7 +1072,7 @@ onBeforeUnmount(() => {
     width: 0.8rem;
     height: 0.8rem;
     border-radius: 50%;
-    background: #05e7ae;
+    background: var(--c-brand);
     z-index: 1;
   }
 }
@@ -993,7 +1083,7 @@ onBeforeUnmount(() => {
   height: 1.43581rem;
   border: 0.01333rem solid rgba(242, 242, 242, 0.8);
   border-radius: 1.05573rem;
-  background: linear-gradient(168.11deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background: linear-gradient(168.11deg, var(--c-brand) 7.55%, rgba(var(--c-brand-rgb), 0.6) 71.92%);
   color: #fff;
   font-size: 0.4rem;
   font-weight: 500;

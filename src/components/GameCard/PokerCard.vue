@@ -31,6 +31,8 @@ const scale = computed(() => parseFloat(props.size) / 1.84)
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 // 1rem = 37.5px  Default card: 69×103px, scale factor applied via v-bind
 
 .poker-card {
@@ -41,6 +43,10 @@ const scale = computed(() => parseFloat(props.size) / 1.84)
   border-radius: calc(0.32rem * v-bind(scale));
   background: #ffffff;
   overflow: hidden;
+
+  @include theme-light {
+    border: 0.2px solid rgba(32, 32, 32, 0.5);
+  }
 
   &__rank {
     position: absolute;

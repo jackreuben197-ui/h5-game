@@ -81,6 +81,8 @@ export default { name: 'GameTypeTabbar' }
 </template>
 
 <style lang="scss">
+@use '@/styles/mixins' as *;
+
 .room-tabs {
   --tab-active-bg: none;
   --tab-base-height: 0.9rem;
@@ -95,6 +97,23 @@ export default { name: 'GameTypeTabbar' }
   position: relative;
   z-index: 1;
   margin-bottom: calc(-1 * var(--tab-bottom-overlap));
+
+  @include theme-light {
+    --van-tab-text-color: rgba(34, 34, 34, 0.72);
+    --van-tab-active-text-color: #111;
+  }
+}
+
+.room-tabs .van-tab {
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.72) !important;
+  }
+}
+
+.room-tabs .van-tab--active {
+  @include theme-light {
+    color: #111 !important;
+  }
 }
 
 .room-tabs .van-tabs__wrap {

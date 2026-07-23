@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useAttrs } from 'vue'
-import toastBg from '@/assets/images/component_dialog_bg.png'
 
 defineOptions({ name: 'GameToast', inheritAttrs: false })
 const attrs = useAttrs()
@@ -24,6 +23,7 @@ withDefaults(
     position?: 'top' | 'middle' | 'bottom'
   }>(),
   {
+    message: '',
     duration: 2000,
     overlay: false,
     closeOnClick: false,
@@ -55,7 +55,7 @@ const emit = defineEmits<{
     @close="emit('close')"
   >
     <template #default>
-      <div class="game-toast__card" :style="{ backgroundImage: `url(${toastBg})` }">
+      <div class="game-toast__card">
         <slot>
           <span class="game-toast__message">{{ message }}</span>
         </slot>
@@ -83,11 +83,15 @@ const emit = defineEmits<{
 </style>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .game-toast__card {
   width: 8.45rem;
   min-height: 1.6rem;
   border-radius: 0.9rem;
   overflow: hidden;
+  background-color: transparent;
+  background-image: url('@/assets/images/component_dialog_bg.png');
   background-size: 100% auto;
   background-position: top center;
   background-repeat: no-repeat;
@@ -102,6 +106,18 @@ const emit = defineEmits<{
   justify-content: center;
   padding: 0.6rem 0.4rem;
   box-sizing: border-box;
+
+  @include theme-light {
+    background: linear-gradient(
+      120.59deg,
+      rgba(78, 78, 78, 0.78) 2.93%,
+      rgba(58, 58, 58, 0.82) 43.62%,
+      rgba(42, 42, 42, 0.86) 89.79%
+    );
+    border: 0.0255rem solid rgba(242, 242, 242, 0.4);
+    backdrop-filter: blur(0.2rem);
+    -webkit-backdrop-filter: blur(0.2rem);
+  }
 }
 
 .game-toast__message {

@@ -24,6 +24,7 @@
     "@iconify/vue": "^5.0.0",
     "@silenthill/agreement-web": "git+ssh://git@github.com/jackreuben197-ui/agreement-web.git#dev_merge_0702",
     "@silenthill/h5-cc-bridge": "git+ssh://git@github.com/jackreuben197-ui/h5-cc-bridge.git#dev_refactor_0721",
+    "@silenthill/h5-cc-i18n": "git+ssh://git@github.com/jackreuben197-ui/h5-cc-i18n.git#dev_refactor_0721",
     "@vueuse/core": "^14.2.1",
     "axios": "^1.15.0",
     "dayjs": "^1.11.20",

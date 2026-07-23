@@ -12,10 +12,14 @@ interface Props {
   initialValue?: string
   allowLeadingZero?: boolean
   showMask?: boolean
+  showBackground?: boolean
   showInputArea?: boolean
   confirmText?: string
   title?: string
   allowDecimal?: boolean // When true, replace 'C' with '.' and allow decimal input
+  showCancel?: boolean
+  showActions?: boolean
+  allowPageInteraction?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -27,9 +31,13 @@ const props = withDefaults(defineProps<Props>(), {
   allowLeadingZero: false,
   title: '',
   showMask: true,
+  showBackground: true,
   showInputArea: false,
   confirmText: t('Wallet_Confirm'),
   allowDecimal: false,
+  showCancel: true,
+  showActions: true,
+  allowPageInteraction: false,
 })
 
 const emit = defineEmits<{
@@ -165,12 +173,27 @@ function confirm(): void {
     <Transition name="keypad">
       <div
         v-if="open"
-        :class="['kp', { 'kp--plain': !showMask }]"
+        :class="[
+          'kp',
+          {
+            'kp--plain': !showMask,
+            'kp--passthrough': allowPageInteraction,
+          },
+        ]"
         @click.self="cancel"
         @dblclick.prevent
       >
         <div v-if="showMask" class="kp__dim" @click="cancel"></div>
-        <div :class="['kp__sheet', { 'kp__sheet--plain': !showMask }]" @dblclick.prevent>
+        <div
+          :class="[
+            'kp__sheet',
+            {
+              'kp__sheet--plain': !showMask && showBackground,
+              'kp__sheet--glass': !showBackground,
+            },
+          ]"
+          @dblclick.prevent
+        >
           <div v-if="showInputArea" class="kp__header">
             <span class="kp__title">{{ title || t('Wallet_CustomAmount') }}</span>
             <div class="kp__input">
@@ -184,7 +207,14 @@ function confirm(): void {
           </div>
 
           <div class="kp__grid">
-            <button v-for="n in digits" :key="n" class="kp__key" @click="press(n)">
+            <button
+              v-for="n in digits"
+              :key="n"
+              type="button"
+              class="kp__key"
+              @click="press(n)"
+              @dblclick.prevent
+            >
               {{ n }}
             </button>
             <button
@@ -213,13 +243,17 @@ function confirm(): void {
             </button>
           </div>
 
-          <div class="kp__actions">
-            <PrimaryButton
-              :text="confirmText"
-              :shadow="false"
-              class="kp__confirm"
-              @click="confirm"
-            />
+          <div v-if="showActions" class="kp__actions">
+            <button
+              v-if="showCancel"
+              type="button"
+              class="kp__cancel"
+              @click="cancel"
+              @dblclick.prevent
+            >
+              {{ t('Wallet_Cancel') }}
+            </button>
+            <PrimaryButton :text="confirmText" :shadow="false" class="kp__confirm" @click="confirm" />
           </div>
         </div>
       </div>
@@ -228,6 +262,8 @@ function confirm(): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .kp {
   position: fixed;
   inset: 0;
@@ -238,6 +274,7 @@ function confirm(): void {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  // background-image: url('@/assets/images/main_bg.webp');
   touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
@@ -247,6 +284,18 @@ function confirm(): void {
 .kp--plain {
   background-image: none !important;
   background-color: transparent;
+
+  @include theme-light {
+    background-color: transparent;
+  }
+}
+
+.kp--passthrough {
+  pointer-events: none;
+
+  .kp__sheet {
+    pointer-events: auto;
+  }
 }
 
 .kp__dim {
@@ -279,6 +328,12 @@ function confirm(): void {
     2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
   overflow: hidden;
   touch-action: manipulation;
+
+  @include theme-light {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: none;
+  }
 }
 
 .kp__sheet::before,
@@ -322,7 +377,7 @@ function confirm(): void {
   font-family: var(--wallet-font-cn);
   font-weight: 400;
   font-size: 0.355rem;
-  color: #f9f9f9;
+  color: var(--c-text);
   line-height: 1.2;
 }
 
@@ -336,6 +391,10 @@ function confirm(): void {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.12);
+  }
 }
 
 .kp__placeholder,
@@ -347,11 +406,11 @@ function confirm(): void {
 }
 
 .kp__placeholder {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--c-text-muted);
 }
 
 .kp__value {
-  color: #fff;
+  color: var(--c-text);
 }
 
 .kp__grid {
@@ -378,7 +437,7 @@ function confirm(): void {
   font-family: var(--wallet-font-num);
   font-weight: 500;
   font-size: 0.61rem;
-  color: #fff;
+  color: var(--c-text);
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -413,6 +472,13 @@ function confirm(): void {
   touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
+
+  @include theme-light {
+    background-color: rgba(0, 0, 0, 0.19);
+    background-image: none;
+    border: 0.71px solid rgba(255, 255, 255, 0.5);
+    color: #fff;
+  }
 }
 
 .kp__key--accent {
@@ -455,6 +521,11 @@ function confirm(): void {
   touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
+
+  @include theme-light {
+    background: rgba(134, 134, 134, 0.16);
+    color: var(--c-text);
+  }
 }
 
 .kp__confirm {

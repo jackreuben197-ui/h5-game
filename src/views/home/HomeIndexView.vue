@@ -736,7 +736,7 @@ onBeforeUnmount(() => {
       <div></div>
     </div>
 
-    <!-- 1. 顶部俱乐部介绍图 -->
+    <!-- 1. 顶部俱乐部介绍轮播图 -->
     <div class="home-header">
       <div class="home-header__inner">
         <HomeBannerSwiper :images="displayBannerImages" />
@@ -994,6 +994,8 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .home-page {
   display: flex;
   flex-direction: column;
@@ -1301,6 +1303,7 @@ onBeforeUnmount(() => {
   font-size: 0.28rem;
   cursor: pointer;
   white-space: nowrap;
+
 }
 
 .club-divider {
@@ -1329,7 +1332,14 @@ onBeforeUnmount(() => {
 .contact-icon {
   width: 0.8rem;
   height: 0.8rem;
-  object-fit: contain;
+  border-radius: 50%;
+  box-sizing: border-box;
+  color: #0ca7ef;
+  background: #f7f8fa;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .contact-label {
@@ -1347,7 +1357,7 @@ onBeforeUnmount(() => {
       color: #000;
     }
     .mtt-group__toggle {
-      color: rgba($color: #000000, $alpha: 0.77);
+      color: rgba(0, 0, 0, 0.77);
     }
   }
 }

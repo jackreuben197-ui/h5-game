@@ -13,14 +13,25 @@ import type {
   MsgMessageListMsgInfo,
   MsgMessageListResponseData,
 } from '@/api/models/msg'
-import { t } from '@/i18n'
+import { getLocale, t, toServerLang } from '@/i18n'
 import { formatDateTime } from '@/utils/time'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import avatarDefault from '@/assets/images/default_avatar.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import ApproveRejectActions from '@/components/ApproveRejectActions/ApproveRejectActions.vue'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import { formatUC } from '@/utils/roomVisibility'
+import { useGameStore } from '@/stores/game'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { USER_STORE_MESSAGE } from '@/utils/indexedDB'
+import { toPlain, userCache } from '@/utils/userCache'
+import {
+  CREDIT_CACHE_KEY,
+  type CachedMessageList,
+  msgListCacheKey,
+  ucCacheKey,
+} from '@/utils/messageCenterCache'
 
 type MessagePageType = 'system' | 'credit' | 'uc' | 'other'
 type CreditStatus = 'pending' | 'rejected' | 'approved'
@@ -109,6 +120,12 @@ interface OtherMessageItem {
 }
 
 const route = useRoute()
+const gameStore = useGameStore()
+const userInfoStore = useUserInfoStore()
+
+function msgCache() {
+  return userCache(gameStore.loginUserId)
+}
 
 const otherBannerBgFirst = mainBgUrl
 const otherBannerBgDefault = mainBgUrl
@@ -132,7 +149,8 @@ const pageTitle = computed(() => {
 })
 
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--message-detail-bg-dark': `url(${mainBgUrl})`,
+  '--message-detail-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const systemMessages = ref<SystemMessageItem[]>([])
@@ -253,6 +271,40 @@ function normalizeBagTitleByType(msgType: number, rawTitle: string): string {
   }
 
   return `${truncateText(propName, 17)} x${count}`
+}
+
+const LOCALE_TAG_PATTERN = /^[a-z]{2}_[A-Z]{2}$/
+
+// 广播类系统通知（如 msg_type 4023）没有 content/title，文案放在 object_string 里，
+// 按 zh_TW/en_US/pt_BR... 语言码存了一份多语言 JSON，需要按当前语言取文案。
+function resolveObjectStringText(objectString: unknown): string {
+  if (typeof objectString !== 'string' || !objectString.trim()) return ''
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(objectString)
+  } catch {
+    return ''
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return ''
+  const localeMap = parsed as Record<string, unknown>
+
+  const localeKeys = Object.keys(localeMap).filter((key) => LOCALE_TAG_PATTERN.test(key))
+  if (localeKeys.length === 0) return ''
+
+  const preferredKeys = [toServerLang(getLocale()), 'en_US', 'zh_TW', 'zh_CN']
+  for (const key of preferredKeys) {
+    const value = localeMap[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+
+  for (const key of localeKeys) {
+    const value = localeMap[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+
+  return ''
 }
 
 function parseRemarkCoin(remark: string): { amount: string; coinType: number; coinName: string } {
@@ -399,7 +451,7 @@ function buildMessageContent(item: MsgMessageListMsgInfo): {
   const template =
     translatedTemplate && translatedTemplate !== templateKey
       ? translatedTemplate
-      : content || title || '--'
+      : content || title || resolveObjectStringText(item.object_string) || '--'
 
   if (msgType === MSG_SUB_TYPE.MsgClubTypeCloseClub) {
     const segments: MessageTextSegment[] = []
@@ -517,7 +569,11 @@ const hasMoreMsgList = computed(() => {
   return msgHasMore.value
 })
 
-async function fetchMsgList(target: 'system' | 'other', append = false): Promise<void> {
+async function fetchMsgList(
+  target: 'system' | 'other',
+  append = false,
+  silent = false,
+): Promise<void> {
   if (msgListLoading.value) return
   if (append && !hasMoreMsgList.value) return
 
@@ -531,10 +587,13 @@ async function fetchMsgList(target: 'system' | 'other', append = false): Promise
   msgListLoading.value = false
 
   if (response.code !== 0) {
-    if (!append && target === 'system') {
-      systemMessages.value = []
-    } else if (!append) {
-      otherMessages.value = []
+    // 静默刷新失败时缓存仍在展示，不清空，避免把已渲染的旧数据抹掉。
+    if (!append && !silent) {
+      if (target === 'system') {
+        systemMessages.value = []
+      } else {
+        otherMessages.value = []
+      }
     }
     return
   }
@@ -567,6 +626,17 @@ async function fetchMsgList(target: 'system' | 'other', append = false): Promise
     })
     otherMessages.value = append ? [...otherMessages.value, ...mapped] : mapped
   }
+
+  void msgCache().put(
+    USER_STORE_MESSAGE,
+    msgListCacheKey(target, messageType.value),
+    toPlain<CachedMessageList<SystemMessageItem | OtherMessageItem>>({
+      items: target === 'system' ? systemMessages.value : otherMessages.value,
+      offset: msgOffset.value,
+      total: msgTotal.value,
+      hasMore: msgHasMore.value,
+    }),
+  )
 
   if (!append) {
     await postMsgMessageUnreadClearApi({ msg_type: messageType.value })
@@ -653,7 +723,7 @@ function onPageScroll(): void {
   void loadMoreMessagesIfNeeded()
 }
 
-async function fetchCreditList(append = false): Promise<void> {
+async function fetchCreditList(append = false, silent = false): Promise<void> {
   if (creditLoading.value) return
   if (append && !creditHasMore.value) return
 
@@ -666,7 +736,7 @@ async function fetchCreditList(append = false): Promise<void> {
   creditLoading.value = false
 
   if (response.code !== 0) {
-    if (!append) {
+    if (!append && !silent) {
       creditMessages.value = []
     }
     return
@@ -689,7 +759,7 @@ async function fetchCreditList(append = false): Promise<void> {
       playerName: String(item.user_name ?? '--'),
       playerId: String(item.user_random_id ?? '--'),
       amount: `${formatUC(item.bring_in ?? 0)}`,
-      status: mapStatus(item.status),
+      status: 'pending' as const,
       approverName: item.op_user_name ? String(item.op_user_name) : undefined,
       approverId: item.op_user_random_id ? String(item.op_user_random_id) : undefined,
       avatar: item.avatar ? String(item.avatar) : avatarDefault,
@@ -698,9 +768,20 @@ async function fetchCreditList(append = false): Promise<void> {
   })
 
   creditMessages.value = append ? [...creditMessages.value, ...mapped] : mapped
+
+  void msgCache().put(
+    USER_STORE_MESSAGE,
+    CREDIT_CACHE_KEY,
+    toPlain<CachedMessageList<CreditMessageItem>>({
+      items: creditMessages.value,
+      offset: creditOffset.value,
+      total: creditTotal.value,
+      hasMore: creditHasMore.value,
+    }),
+  )
 }
 
-async function fetchUcList(append = false): Promise<void> {
+async function fetchUcList(append = false, silent = false): Promise<void> {
   if (ucLoading.value) return
   if (append && !ucHasMore.value) return
 
@@ -714,7 +795,7 @@ async function fetchUcList(append = false): Promise<void> {
   ucLoading.value = false
 
   if (response.code !== 0) {
-    if (!append) {
+    if (!append && !silent) {
       ucMessages.value = []
     }
     return
@@ -745,6 +826,17 @@ async function fetchUcList(append = false): Promise<void> {
   })
 
   ucMessages.value = append ? [...ucMessages.value, ...mapped] : mapped
+
+  void msgCache().put(
+    USER_STORE_MESSAGE,
+    ucCacheKey(userInfoStore.currentClubId),
+    toPlain<CachedMessageList<UcMessageItem>>({
+      items: ucMessages.value,
+      offset: ucOffset.value,
+      total: ucTotal.value,
+      hasMore: ucHasMore.value,
+    }),
+  )
 }
 
 async function auditCredit(item: CreditMessageItem, pass: boolean): Promise<void> {
@@ -781,6 +873,53 @@ async function auditUc(item: UcMessageItem, pass: boolean): Promise<void> {
   }
 }
 
+// 进页面先读消息中心缓存渲染，命中的走静默刷新（不清空、不闪 loading），未命中的照常加载。
+async function restoreMsgListCache(target: 'system' | 'other'): Promise<boolean> {
+  const cached = await msgCache().get<CachedMessageList<SystemMessageItem | OtherMessageItem>>(
+    USER_STORE_MESSAGE,
+    msgListCacheKey(target, messageType.value),
+  )
+  if (!cached?.items?.length) return false
+
+  if (target === 'system') {
+    systemMessages.value = cached.items as SystemMessageItem[]
+  } else {
+    otherMessages.value = cached.items as OtherMessageItem[]
+  }
+  msgOffset.value = cached.offset
+  msgTotal.value = cached.total
+  msgHasMore.value = cached.hasMore
+  return true
+}
+
+async function restoreCreditCache(): Promise<boolean> {
+  const cached = await msgCache().get<CachedMessageList<CreditMessageItem>>(
+    USER_STORE_MESSAGE,
+    CREDIT_CACHE_KEY,
+  )
+  if (!cached?.items?.length) return false
+
+  creditMessages.value = cached.items
+  creditOffset.value = cached.offset
+  creditTotal.value = cached.total
+  creditHasMore.value = cached.hasMore
+  return true
+}
+
+async function restoreUcCache(): Promise<boolean> {
+  const cached = await msgCache().get<CachedMessageList<UcMessageItem>>(
+    USER_STORE_MESSAGE,
+    ucCacheKey(userInfoStore.currentClubId),
+  )
+  if (!cached?.items?.length) return false
+
+  ucMessages.value = cached.items
+  ucOffset.value = cached.offset
+  ucTotal.value = cached.total
+  ucHasMore.value = cached.hasMore
+  return true
+}
+
 watch(
   () => [pageType.value, messageType.value],
   async ([type]) => {
@@ -788,21 +927,25 @@ watch(
     resetCreditPagination()
     resetUcPagination()
     if (type === 'credit') {
-      await fetchCreditList()
+      const hit = await restoreCreditCache()
+      await fetchCreditList(false, hit)
       await fillViewportCreditList()
       return
     }
     if (type === 'uc') {
-      await fetchUcList()
+      const hit = await restoreUcCache()
+      await fetchUcList(false, hit)
       await fillViewportUcList()
       return
     }
     if (type === 'system') {
-      await fetchMsgList('system')
+      const hit = await restoreMsgListCache('system')
+      await fetchMsgList('system', false, hit)
       await fillViewportMessages('system')
       return
     }
-    await fetchMsgList('other')
+    const hit = await restoreMsgListCache('other')
+    await fetchMsgList('other', false, hit)
     await fillViewportMessages('other')
   },
   { immediate: true },
@@ -981,6 +1124,8 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .message-detail-page {
   height: 100dvh;
   color: #f3f3f3;
@@ -989,7 +1134,14 @@ onBeforeUnmount(() => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-color: var(--c-page);
+  background-image: var(--message-detail-bg-dark);
   box-sizing: border-box;
+
+  @include theme-light {
+    color: #000;
+    background-image: var(--message-detail-bg-light);
+  }
 }
 
 .content-wrap {
@@ -1018,6 +1170,12 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+
+  @include theme-light {
+    border-color: transparent;
+    background: #fff;
+    backdrop-filter: none;
+  }
 }
 
 .system-content {
@@ -1026,12 +1184,20 @@ onBeforeUnmount(() => {
   line-height: 1.4;
   font-weight: 600;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .system-time {
   margin: 0.24rem 0 0;
   font-size: 0.333rem;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .request-list {
@@ -1090,6 +1256,10 @@ onBeforeUnmount(() => {
   font-size: 0.27rem;
   line-height: 1.4;
   color: #f3f3f3;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .meta-time {
@@ -1124,6 +1294,10 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   background: rgba(255, 255, 255, 0.14);
+
+  @include theme-light {
+    background: rgba(208, 208, 208, 0.66);
+  }
 }
 
 .request-body--plain {
@@ -1135,11 +1309,19 @@ onBeforeUnmount(() => {
 
 .status-rejected {
   background: rgba(255, 19, 43, 0.4);
+
+  @include theme-light {
+    background: rgba(255, 19, 43, 0.4);
+  }
 }
 
 .status-approved-by-user,
 .status-approved {
-  background: rgba(5, 231, 174, 0.3);
+  background: rgba(var(--c-brand-rgb), 0.3);
+
+  @include theme-light {
+    background: rgba(5, 231, 174, 0.3);
+  }
 }
 
 .player-block {
@@ -1165,6 +1347,10 @@ onBeforeUnmount(() => {
   font-size: 0.44rem;
   line-height: 1.1;
   color: #f3f3f3;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .player-id {
@@ -1172,6 +1358,10 @@ onBeforeUnmount(() => {
   font-size: 0.304rem;
   line-height: 1;
   color: rgba(243, 243, 243, 0.5);
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.5);
+  }
 }
 
 .state-text {
@@ -1179,6 +1369,10 @@ onBeforeUnmount(() => {
   font-size: 0.312rem;
   font-weight: 500;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .approver-block {
@@ -1193,6 +1387,10 @@ onBeforeUnmount(() => {
   font-size: 0.26rem;
   line-height: 1;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .request-footer {
@@ -1212,6 +1410,10 @@ onBeforeUnmount(() => {
     font-size: 0.355rem;
     line-height: 1.2;
     color: #f9f9f9;
+
+    @include theme-light {
+      color: #000;
+    }
   }
 }
 
@@ -1240,7 +1442,7 @@ onBeforeUnmount(() => {
   position: relative;
   left: 1.301rem;
   top: 0;
-  width: 7.458rem;
+  width: calc(100% - 1.301rem);
   min-height: 1.385rem;
   border-radius: 0.72rem 0.72rem 0.72rem 0rem;
   overflow: hidden;
@@ -1248,6 +1450,10 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
   display: flex;
   align-items: center;
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .other-banner--wrap {
@@ -1265,6 +1471,10 @@ onBeforeUnmount(() => {
   background-attachment: fixed;
   filter: blur(0.1rem);
   transform: scale(1.05);
+
+  @include theme-light {
+    display: none;
+  }
 }
 
 .other-title {
@@ -1276,6 +1486,10 @@ onBeforeUnmount(() => {
   color: #fbfbfb;
   white-space: normal;
   word-break: break-word;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .other-title--wrap {
@@ -1291,11 +1505,11 @@ onBeforeUnmount(() => {
 }
 
 .highlight--green {
-  color: #05e7ae;
+  color: var(--c-loss);
 }
 
 .green {
-  color: #05e7ae;
+  color: var(--c-loss);
 }
 
 .other-meta-row {
@@ -1322,6 +1536,10 @@ onBeforeUnmount(() => {
     font-size: 0.355rem;
     line-height: 1.4;
     color: #fbfbfb;
+
+    @include theme-light {
+      color: #000;
+    }
   }
 }
 
@@ -1331,5 +1549,9 @@ onBeforeUnmount(() => {
   line-height: 1;
   color: rgba(251, 251, 251, 0.59);
   white-space: nowrap;
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.59);
+  }
 }
 </style>

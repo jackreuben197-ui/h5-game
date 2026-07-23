@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { GameTable, GameTableColumn } from '@/components/Table'
 import chipIcon from '@/assets/icons/icon_chips.png'
+import diamondIcon from '@/assets/icons/icon_diamond.png'
 import type { RoomcenterMttDetailData, RoomcenterMttRealPrize, RoomcenterMttPrize } from '@/api/models/roomcenter'
 import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
@@ -24,6 +25,7 @@ const emit = defineEmits<{
 
 const mtt = computed(() => props.data?.mtt)
 const isDiamond = computed(() => (mtt.value?.gold_type ?? 1) === 4)
+const currencyIcon = computed(() => (isDiamond.value ? diamondIcon : chipIcon))
 
 function fmtMoney(n: number | undefined | null): string {
   if (n === undefined || n === null) return '-'
@@ -99,7 +101,7 @@ const rewardList = computed<RewardRecord[]>(() => {
       <div class="rewards-stat-row">
         <div class="rewards-stat-label">{{ t('UIMTT_zongjiangjin') }}</div>
         <div class="rewards-stat-value">
-          <img :src="chipIcon" class="stat-chip-icon" alt="chip" />
+          <img :src="currencyIcon" class="stat-chip-icon" alt="chip" />
           <span>{{ prizePool }}</span>
         </div>
       </div>
@@ -127,7 +129,7 @@ const rewardList = computed<RewardRecord[]>(() => {
       >
         <template #default="{ row }">
           <div class="reward-cell">
-            <img :src="chipIcon" class="cell-chip-icon" alt="chip" />
+            <img :src="currencyIcon" class="cell-chip-icon" alt="chip" />
             <span>{{ row.reward }}</span>
           </div>
         </template>
@@ -137,6 +139,8 @@ const rewardList = computed<RewardRecord[]>(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .mtt-rewards-tab {
   padding-top: 0.2rem;
 }
@@ -158,6 +162,10 @@ const rewardList = computed<RewardRecord[]>(() => {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 3.9rem;
   backdrop-filter: blur(0.16px);
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .rewards-stat-label {
@@ -166,6 +174,10 @@ const rewardList = computed<RewardRecord[]>(() => {
   font-family: 'SF Pro', 'HONOR Sans CN', sans-serif;
   font-weight: 700;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .rewards-stat-value {
@@ -176,6 +188,10 @@ const rewardList = computed<RewardRecord[]>(() => {
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 700;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .stat-chip-icon {

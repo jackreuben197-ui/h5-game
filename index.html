@@ -10,6 +10,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#c487a8" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="renderer" content="webkit" />
     <meta name="force-rendering" content="webkit" />
@@ -23,8 +24,178 @@
     <link rel="icon" type="image/png" href="/src/assets/images/img_fish_browser_logo.png" />
     <link rel="apple-touch-icon" href="/icon.png" />
 
+    <!-- 主题首帧防闪烁：在样式生效前设好 html[data-theme]，
+         正式逻辑（持久化/系统主题监听/meta 同步）由 src/utils/theme.ts 接管，
+         默认值与 utils/theme.ts 的 DEFAULT_THEME_MODE 保持同步 -->
+    <script>
+      ;(function () {
+        var mode = ''
+        try {
+          // localStore 统一 JSON 序列化存储，这里按同规则直读。
+          mode = JSON.parse(window.localStorage.getItem('dzpk_h5_THEME_MODE') || '""')
+        } catch (error) {}
+        // URL ?theme=light|dark|system 预览覆盖（hash 路由下 query 可能在 hash 段内）。
+        var match = (window.location.search + ' ' + window.location.hash).match(
+          /[?&]theme=(light|dark|system)\b/,
+        )
+        if (match) {
+          mode = match[1]
+        }
+        if (mode !== 'light' && mode !== 'dark' && mode !== 'system') {
+          mode = 'system' // DEFAULT_THEME_MODE：默认跟随当前设备 / 浏览器 / WebView 环境
+        }
+        var theme = mode
+        if (mode === 'system') {
+          theme =
+            window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+              ? 'light'
+              : 'dark'
+        }
+        document.documentElement.setAttribute('data-theme', theme)
+      })()
+    </script>
+
     <!-- @silenthill/h5-cc-i18n runtime: 必须先于 Vue 入口加载，挂 window.__H5_CC_I18N__ -->
     <script src="./h5-cc-i18n.min.js"></script>
+    <script>
+      ;(function () {
+        var root = document.documentElement
+        var lastViewportSignature = ''
+
+        function isIosStandalone() {
+          var nav = window.navigator || {}
+          var ua = String(nav.userAgent || '')
+          var isIos = /iPad|iPhone|iPod/.test(ua)
+            || (nav.platform === 'MacIntel' && Number(nav.maxTouchPoints) > 1)
+          var isStandalone = nav.standalone === true
+            || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+
+          return isIos && isStandalone
+        }
+
+        if (isIosStandalone()) {
+          root.setAttribute('data-ios-standalone', '1')
+        }
+
+        function toPixelNumber(value) {
+          var next = parseFloat(String(value || '0'))
+          if (!isFinite(next) || next < 0) {
+            return 0
+          }
+          return Math.round(next)
+        }
+
+        function readSafeAreaTopFromCss() {
+          if (!document.body || typeof window.getComputedStyle !== 'function') {
+            return 0
+          }
+
+          var probe = document.createElement('div')
+          probe.style.position = 'fixed'
+          probe.style.top = '0'
+          probe.style.left = '0'
+          probe.style.width = '0'
+          probe.style.height = '0'
+          probe.style.paddingTop = 'env(safe-area-inset-top)'
+          probe.style.visibility = 'hidden'
+          probe.style.pointerEvents = 'none'
+          document.body.appendChild(probe)
+          var safeTop = toPixelNumber(window.getComputedStyle(probe).paddingTop)
+          document.body.removeChild(probe)
+          return safeTop
+        }
+
+        function syncStandaloneSafeArea() {
+          if (!isIosStandalone()) {
+            return
+          }
+
+          var safeTop = readSafeAreaTopFromCss()
+          root.style.setProperty('--app-visual-safe-area-top', safeTop + 'px')
+          window.__H5_SAFE_AREA_TOP__ = safeTop
+        }
+
+        function syncStandaloneSafeAreaWhenReady() {
+          if (document.body) {
+            syncStandaloneSafeArea()
+            window.setTimeout(syncStandaloneSafeArea, 250)
+            window.setTimeout(syncStandaloneSafeArea, 1000)
+            return
+          }
+          document.addEventListener('DOMContentLoaded', syncStandaloneSafeAreaWhenReady, { once: true })
+        }
+
+        function getViewportHeight() {
+          var innerHeight = Number(window.innerHeight) || 0
+          var visualViewportHeight = window.visualViewport
+            ? Number(window.visualViewport.height) || 0
+            : 0
+          var screenHeight = window.screen ? Number(window.screen.height) || 0 : 0
+
+          if (isIosStandalone() && screenHeight > 0) {
+            return Math.round(screenHeight) + 'px'
+          }
+
+          var height = Math.max(innerHeight, visualViewportHeight)
+          return height > 0 ? Math.round(height) + 'px' : '100vh'
+        }
+
+        function syncViewportHeight() {
+          var height = getViewportHeight()
+          var viewportWidth = Number(window.visualViewport && window.visualViewport.width)
+            || Number(window.innerWidth)
+            || 375
+          var viewportSignature = viewportWidth + 'x' + height
+          if (viewportSignature === lastViewportSignature) {
+            return
+          }
+          lastViewportSignature = viewportSignature
+          root.style.setProperty('--app-viewport-height', height)
+
+          // On desktop/tablet, retain the mobile canvas width while capping its
+          // height to the iPhone 14 Plus portrait ratio (428 × 926).
+          var heightNumber = parseFloat(height)
+          if (isFinite(heightNumber) && heightNumber > 0) {
+            var frameWidth = Math.min(viewportWidth, 480)
+            var frameHeight = viewportWidth > 480
+              ? Math.min(heightNumber, (frameWidth * 926) / 428)
+              : heightNumber
+            root.style.setProperty('--app-frame-height', Math.round(frameHeight) + 'px')
+            root.style.setProperty(
+              '--app-frame-offset-top',
+              Math.max(0, Math.round((heightNumber - frameHeight) / 2)) + 'px',
+            )
+          }
+        }
+
+        function syncViewportHeightLater() {
+          syncViewportHeight()
+          syncStandaloneSafeArea()
+          window.setTimeout(syncViewportHeight, 250)
+          window.setTimeout(syncViewportHeight, 1000)
+          window.setTimeout(syncStandaloneSafeArea, 250)
+          window.setTimeout(syncStandaloneSafeArea, 1000)
+        }
+
+        syncViewportHeight()
+        syncStandaloneSafeAreaWhenReady()
+        window.addEventListener('resize', function () {
+          syncViewportHeight()
+          syncStandaloneSafeArea()
+        }, { passive: true })
+        window.addEventListener('orientationchange', syncViewportHeightLater, { passive: true })
+        document.addEventListener('visibilitychange', function () {
+          syncViewportHeight()
+          syncStandaloneSafeArea()
+        }, { passive: true })
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', function () {
+            syncViewportHeight()
+            syncStandaloneSafeArea()
+          }, { passive: true })
+        }
+      })()
+    </script>
 
     <script>
       ;(function () {
@@ -221,10 +392,11 @@
         min-height: -webkit-fill-available;
         overflow: hidden;
         position: relative;
-      }
-
-      html[data-ios-standalone='1'] body {
-        height: var(--app-full-height);
+        background-color: #000;
+        background-image: var(--h5-main-bg-image, none);
+        background-repeat: no-repeat;
+        background-position: center top;
+        background-size: cover;
       }
 
       /*
@@ -244,22 +416,37 @@
         }
       }
 
-      /* Cocos 牌桌画布层：在最底层 */
-      #GameCanvas {
+      html[data-ios-standalone='1'] body {
+        height: var(--app-full-height);
+      }
+
+      #GameDiv {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
-        bottom: auto;
-        width: 100% !important;
-        height: 100vh !important;
-        height: 100dvh !important;
-        /* 画布尺寸与 H5 底部溢出解耦，避免 Cocos 缩放变形。 */
-        height: var(--app-cocos-height) !important;
-        display: block;
+        width: 100%;
+        height: var(--app-cocos-height);
+        overflow: hidden;
         z-index: 1;
       }
 
+      /* Cocos 牌桌画布层：在最底层 */
+      #GameCanvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: auto;
+        bottom: auto;
+        width: 100% !important;
+        height: 100% !important;
+        /* 画布尺寸与 H5 底部溢出解耦，避免 Cocos 缩放变形。 */
+        height: var(--app-cocos-height) !important;
+        display: block;
+        z-index: 0;
+      }
+
+      html[data-ios-standalone='1'] #GameDiv,
       html[data-ios-standalone='1'] #GameCanvas {
         height: var(--app-cocos-height) !important;
       }
@@ -276,6 +463,7 @@
         min-height: 0;
         z-index: 10;
         box-sizing: border-box;
+        background-color: #fff;
         background-image: var(--h5-main-bg-image, none);
         background-repeat: no-repeat;
         background-position: center top; /* 确保背景图从绝对顶部开始对齐 */
@@ -291,7 +479,7 @@
       html[data-tg-mini-app='1'] #app > * {
         box-sizing: border-box;
         min-height: 100%;
-        padding-top: max(
+        padding-top: min(
           env(safe-area-inset-top),
           calc(var(--tg-content-safe-area-inset-top, 0px) - var(--app-top-padding)),
           calc(var(--tg-safe-area-guard-top, 0px) - var(--app-top-padding))
@@ -331,6 +519,7 @@
       }
 
       html[data-orientation-lock='1'] #GameCanvas,
+      html[data-orientation-lock='1'] #GameDiv,
       html[data-orientation-lock='1'] #drawCanvas,
       html[data-orientation-lock='1'] #splash,
       html[data-orientation-lock='1'] #app {
@@ -342,9 +531,15 @@
   </head>
   <body>
     <!-- Cocos 运行节点（与 build-templates/web-mobile 对齐） -->
-    <canvas id="GameCanvas" oncontextmenu="event.preventDefault()" tabindex="0"></canvas>
+    <div id="GameDiv">
+      <canvas id="GameCanvas" oncontextmenu="event.preventDefault()" tabindex="0"></canvas>
+      <div id="splash">
+        <div class="progress-bar stripes">
+          <span></span>
+        </div>
+      </div>
+    </div>
     <canvas id="drawCanvas"></canvas>
-    <div id="splash"></div>
     <input id="OpenImageFile" type="file" accept=".png,.jpg,.jpeg" style="visibility: hidden" />
 
     <!-- H5 挂载节点 -->
@@ -758,6 +953,9 @@
               document.documentElement.setAttribute('data-tg-mini-app', '1')
             }
           }
+
+          // 通知运行时 Telegram 主题信息已可用；theme.ts 会优先读取 WebApp.colorScheme。
+          window.dispatchEvent(new Event('h5:telegram-ready'))
 
           tg.ready()
           var isFullscreenRequested = false

@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import hunterIcon from '@/assets/icons/icon_mtt_hunter.png'
 import chipsIcon from '@/assets/icons/icon_chip_red.png'
+import diamondIcon from '@/assets/icons/icon_diamond.png'
 import type { RoomcenterMttDetailData } from '@/api/models/roomcenter'
 import { formatDateTime, toUnixSeconds } from '@/utils/time'
 import { getLocale, t } from '@/i18n'
@@ -35,6 +36,7 @@ function fmtNum(n: number | undefined | null): string {
 }
 
 const isDiamond = computed(() => (mtt.value?.gold_type ?? 1) === 4)
+const currencyIcon = computed(() => (isDiamond.value ? diamondIcon : chipsIcon))
 
 function fmtMoney(n: number | undefined | null): string {
   if (n === undefined || n === null) return '-'
@@ -68,6 +70,8 @@ const statusLabel = computed(() => {
 })
 
 const startTimeLabel = computed(() => formatDateTime(mtt.value?.start_time, 'HH:mm'))
+// 状态卡片带日/月；中列大倒计时宽度有限仍用 HH:mm
+const startTimeCardLabel = computed(() => formatDateTime(mtt.value?.start_time, 'DD/MM HH:mm'))
 
 const buyInTotal = computed(() => {
   const pool = mtt.value?.apply_fee_pool ?? 0
@@ -255,12 +259,12 @@ const matchInfo = computed(() => {
       <div class="status-meta">
         <div class="meta-row">
           <span class="meta-label">{{ t('MTT-Start Time') }}</span>
-          <span class="meta-value">{{ startTimeLabel }}</span>
+          <span class="meta-value">{{ startTimeCardLabel }}</span>
         </div>
         <div class="meta-row">
           <span class="meta-label">{{ t('MTT_xq_buy') }}:</span>
           <div class="meta-value-with-icon">
-            <img :src="chipsIcon" class="meta-icon" alt="coin" />
+            <img :src="currencyIcon" class="meta-icon" alt="coin" />
             <span>{{ fmtMoney(buyInTotal) }}</span>
           </div>
         </div>
@@ -381,6 +385,8 @@ const matchInfo = computed(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .mtt-status-tab {
   display: flex;
   flex-direction: column;
@@ -411,6 +417,11 @@ const matchInfo = computed(() => {
   border-radius: 0.66rem;
   box-shadow: 0 -0.21rem 0.54rem rgba(78, 135, 97, 0.54) inset;
   margin-bottom: 0.2rem;
+
+  @include theme-light {
+    background: #fff;
+    box-shadow: 0 -0.21rem 0.54rem rgba(var(--c-brand-rgb), 0.3) inset;
+  }
 }
 
 .status-badge {
@@ -426,6 +437,10 @@ const matchInfo = computed(() => {
   color: #fff;
   box-shadow: 0.03rem 0.04rem 0.07rem rgba(0, 0, 0, 0.18);
   flex-shrink: 0;
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .status-meta {
@@ -445,11 +460,19 @@ const matchInfo = computed(() => {
 .meta-label {
   color: #fff;
   font-weight: 400;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .meta-value {
   color: #fff;
   font-weight: 400;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .meta-value-with-icon {
@@ -457,6 +480,10 @@ const matchInfo = computed(() => {
   align-items: center;
   gap: 0.1rem;
   color: #fff;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .meta-icon {
@@ -524,6 +551,10 @@ const matchInfo = computed(() => {
   color: #fcfcfc;
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .stat-value {
@@ -531,6 +562,10 @@ const matchInfo = computed(() => {
   color: #fff;
   font-weight: 600;
   font-family: 'HONOR Sans CN', sans-serif;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 /* 级别卡片 */
@@ -557,6 +592,10 @@ const matchInfo = computed(() => {
   color: #fcfcfc;
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .level-timer {
@@ -572,6 +611,10 @@ const matchInfo = computed(() => {
   color: #fcfcfc;
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.7);
+  }
 }
 
 /* 盲注信息 */
@@ -592,6 +635,10 @@ const matchInfo = computed(() => {
   color: #fcfcfc;
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .blind-value {
@@ -599,6 +646,10 @@ const matchInfo = computed(() => {
   color: #fff;
   font-weight: 600;
   font-family: 'HONOR Sans CN', sans-serif;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 /* 分隔线 */
@@ -624,6 +675,10 @@ const matchInfo = computed(() => {
   color: #fcfcfc;
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .chip-value {
@@ -633,6 +688,10 @@ const matchInfo = computed(() => {
   height: 0.4rem;
   line-height: 0.4rem;
   font-family: 'HONOR Sans CN', sans-serif;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .chip-bb {
@@ -640,6 +699,10 @@ const matchInfo = computed(() => {
   color: #b6b6b6;
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
+
+  @include theme-light {
+    color: #696969;
+  }
 }
 .event-desc {
   p {
@@ -650,6 +713,10 @@ const matchInfo = computed(() => {
     font-weight: 600;
     line-height: 140%; /* 0.53211rem */
     margin: 0 0.5rem;
+
+    @include theme-light {
+      color: #000;
+    }
   }
   div {
     display: flex;
@@ -662,6 +729,11 @@ const matchInfo = computed(() => {
     background: rgba(0, 0, 0, 0.2);
     margin: 0.1rem 0 0.4rem;
     color: rgba(255, 255, 255, 0.7);
+
+    @include theme-light {
+      background: #fff;
+      color: rgba(0, 0, 0, 0.7);
+    }
   }
 }
 
@@ -680,6 +752,10 @@ const matchInfo = computed(() => {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0.77rem;
   min-height: 0.72rem;
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .info-label {
@@ -690,12 +766,20 @@ const matchInfo = computed(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.1rem;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .info-tip {
   font-size: 0.3rem;
   color: #ebebeb;
   opacity: 0.7;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .info-value {
@@ -706,6 +790,10 @@ const matchInfo = computed(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.1rem;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .info-icon {

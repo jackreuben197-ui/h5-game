@@ -38,6 +38,8 @@ export default class StorageKey {
   static PHONE = 'PHONE'
   // 当前语言。
   static Language = 'Language'
+  // 主题模式（light / dark / system，仅 H5 侧使用；index.html 内联脚本按同一 key 直读）。
+  static THEME_MODE = 'THEME_MODE'
 
   // 用户 ID 相关缓存。
   static KEY_USERID = 'KEY_USERID'

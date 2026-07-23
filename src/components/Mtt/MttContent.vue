@@ -512,6 +512,8 @@ function getDefaultGameIcon(category: MttCategory): string {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .mtt-content {
   position: relative;
   z-index: 1;
@@ -536,6 +538,10 @@ function getDefaultGameIcon(category: MttCategory): string {
   font-weight: 700;
   color: #fff;
   line-height: 1.2;
+
+  @include theme-light {
+    color: var(--c-text);
+  }
 }
 
 .mtt-group__title--empty {
@@ -552,6 +558,10 @@ function getDefaultGameIcon(category: MttCategory): string {
   cursor: pointer;
   text-align: right;
   line-height: 0.6rem;
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.72);
+  }
 }
 
 .mtt-grid {
@@ -584,5 +594,9 @@ function getDefaultGameIcon(category: MttCategory): string {
   gap: 0.2133rem;
   font-size: 0.3467rem;
   color: rgba(255, 255, 255, 0.82);
+
+  @include theme-light {
+    color: rgba(34, 34, 34, 0.58);
+  }
 }
 </style>

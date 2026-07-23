@@ -21,6 +21,8 @@ withDefaults(defineProps<Props>(), {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .tagpill {
   display: inline-flex;
   align-items: center;
@@ -38,12 +40,21 @@ withDefaults(defineProps<Props>(), {
 .tagpill--dark {
   background: rgba(40, 38, 38, 0.52);
   mix-blend-mode: color-burn;
+
+  @include theme-light {
+    background: rgba(194, 194, 194, 0.52);
+    mix-blend-mode: normal;
+  }
 }
 
 .tagpill--id {
   background: rgba(255, 255, 255, 0.2);
   padding: 0 0.13rem;
   border-radius: 0.121rem;
+
+  @include theme-light {
+    background: rgba(0, 0, 0, 0.06);
+  }
 }
 
 .tagpill__label {
@@ -52,6 +63,10 @@ withDefaults(defineProps<Props>(), {
   font-size: 0.28rem;
   color: #fff;
   letter-spacing: 0.1px;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .tagpill--id .tagpill__label {

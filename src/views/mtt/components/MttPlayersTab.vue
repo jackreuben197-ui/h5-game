@@ -248,6 +248,8 @@ watch(showHunterMode, (enabled) => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .mode-switch {
   display: flex;
   justify-content: center;
@@ -266,11 +268,20 @@ watch(showHunterMode, (enabled) => {
   background: transparent;
   font-size: 0.38rem;
   font-family: 'HONOR Sans CN', sans-serif;
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.65);
+  }
 }
 
 .mode-btn--active {
   color: #fff;
   border-bottom: 1px solid #fff;
+
+  @include theme-light {
+    color: #000;
+    border-bottom-color: #000;
+  }
 }
 
 /* ===== 顶部统计卡片 ===== */
@@ -280,6 +291,10 @@ watch(showHunterMode, (enabled) => {
   padding: 0.6rem 1rem;
   margin-bottom: 0.4rem;
   backdrop-filter: blur(0.16px);
+
+  @include theme-light {
+    background: #fff;
+  }
 }
 
 .stats-row {
@@ -306,6 +321,10 @@ watch(showHunterMode, (enabled) => {
   font-weight: 400;
   color: #fff;
   line-height: 1.2;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .stat-desc {
@@ -314,6 +333,10 @@ watch(showHunterMode, (enabled) => {
   font-weight: 400;
   color: rgba(255, 255, 255, 0.5);
   line-height: 1.2;
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.5);
+  }
 }
 
 /* ===== 玩家列自定义 ===== */
@@ -337,5 +360,9 @@ watch(showHunterMode, (enabled) => {
   font-size: 0.24rem;
   line-height: 1.3;
   color: rgba(255, 255, 255, 0.5);
+
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.5);
+  }
 }
 </style>

@@ -41,7 +41,8 @@ export function isStandaloneDisplay(): boolean {
 export function isIosSafari(): boolean {
   if (typeof window === 'undefined') return false
   const ua = window.navigator.userAgent
-  const isIos = /iPad|iPhone|iPod/.test(ua) && !(window as unknown as { MSStream?: unknown }).MSStream
+  const isIos =
+    /iPad|iPhone|iPod/.test(ua) && !(window as unknown as { MSStream?: unknown }).MSStream
   const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua)
   return isIos && isSafari
 }

@@ -1,6 +1,5 @@
 const DESIGN_WIDTH = 375
-// H5 使用竖屏移动端设计稿。桌面/平板的画框高度另在 index.html 按 iPhone 14 Plus (428:926) 收敛。
-const MAX_WIDTH = 480
+const MAX_WIDTH = Infinity
 const BASE_REM_AT_DESIGN = 37.5
 const RESTORE_REFRESH_DELAYS = [0, 32, 120, 320]
 

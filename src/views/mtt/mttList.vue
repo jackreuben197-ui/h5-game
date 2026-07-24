@@ -22,6 +22,9 @@ const selectedTribeId = computed(() =>
   toSafeInt((userInfoStore.currentClub as Record<string, unknown> | null)?.tribe_id),
 )
 
+// 目前没有麻将赛事，暂时隐藏「全部 / 扑克赛事」切换 tab；恢复时改回 true 即可。
+const showMttTabs = false
+
 const mttTabs = computed<FilterTabOption[]>(() => [
   { name: 'all', title: resolveLabel('UIMatch_GtO8YEdb', '全部') },
   { name: 'poker', title: resolveLabel('UIHomePokerArea', '扑克赛事') },
@@ -90,8 +93,8 @@ function handleOpenCustomerService() {
         </div>
       </template>
     </HeaderBack>
-    <FilterTabbar v-model="activeTab" :tabs="mttTabs" />
-    <MttContent :active-tab="activeTab" />
+    <FilterTabbar v-if="showMttTabs" v-model="activeTab" :tabs="mttTabs" />
+    <MttContent :active-tab="activeTab" :class="{ 'mtt-content--no-tabs': !showMttTabs }" />
   </div>
 </template>
 
@@ -131,6 +134,11 @@ function handleOpenCustomerService() {
   display: flex;
   align-items: center;
   gap: 0.26rem;
+}
+
+// tab 隐藏时列表不再有 tabbar 的外边距，补一点与 header 的间距。
+.mtt-list-page :deep(.mtt-content--no-tabs) {
+  margin-top: 0.3rem;
 }
 
 .mtt-list-page :deep(.filter-tabbar) {

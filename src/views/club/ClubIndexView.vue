@@ -308,6 +308,9 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
     })
 })
 
+// 目前没有麻将赛事，暂时隐藏「全部 / 扑克」筛选 tab（与 mttList.vue 同步）；恢复时改回 true 即可。
+const showMttTabs = false
+
 const mttTabs = computed<TabOption[]>(() => [
   { name: 'all', title: t('UIMatch_GtO8YEdb') },
   { name: 'poker', title: t('UIClub_Text15') },
@@ -1254,7 +1257,12 @@ const handleBack = () => {
       </header>
 
       <template v-if="clubHeaderTab === 'event'">
-        <GameTypeTabbar v-model="mttActiveTab" class="club-game-tabs" :tabs="mttTabs" />
+        <GameTypeTabbar
+          v-if="showMttTabs"
+          v-model="mttActiveTab"
+          class="club-game-tabs"
+          :tabs="mttTabs"
+        />
 
         <section class="group-list">
           <template v-if="renderGroups.length">

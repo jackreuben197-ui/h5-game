@@ -28,6 +28,7 @@ import {
   writeScopeMeta,
   type RoomListScope,
 } from '@/utils/roomListCache'
+import { sortRoomRecordsForDisplay } from '@/utils/roomListSort'
 import { createLogger } from '@/utils/logger'
 
 const log = createLogger('[roomList]')
@@ -261,8 +262,8 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
         const cached = await loadRoomsByRids<RoomRecord>(meta!.rids)
         if (scope !== activeScope) return
         if (cached.length) {
-          // 先把缓存灌入内存，让 UI 秒开。
-          this.records = cached
+          // 先把缓存灌入内存，让 UI 秒开；重排一次兜底旧缓存的顺序。
+          this.records = sortRoomRecordsForDisplay(cached)
         }
         await this.hotSync(scope, meta!.rids)
         return
@@ -331,8 +332,11 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
       }
 
       if (scope !== activeScope) return
-      this.records = collected
-      await flushPersist(scope, collected)
+      // 统一排序：参与过未满桌 > 其他未满桌 > 参与过满桌 > 其他满桌，同级按创建时间倒序。
+      // flushPersist 会按此顺序写 scope.rids，缓存恢复时顺序天然正确。
+      const sorted = sortRoomRecordsForDisplay(collected)
+      this.records = sorted
+      await flushPersist(scope, sorted)
     },
 
     // 热启动：并行拉「当前可见 rid 集合」+「本地已知房间的变化」。
@@ -487,7 +491,8 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
         relate_tribe_club_list:
           payload.relate_tribe_club_list ?? current.relate_tribe_club_list ?? [],
       }
-      this.records = list
+      // empty_seat 变化会影响满员分层，重排保持展示顺序正确。
+      this.records = sortRoomRecordsForDisplay(list)
     },
 
     // 退出登录或切号时调用：仅清内存与同步状态。
@@ -596,7 +601,8 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
         __wsUpdateTime: nextTimestamp,
       }
 
-      this.records = currentList
+      // empty_seat 变化会影响满员分层，重排保持展示顺序正确。
+      this.records = sortRoomRecordsForDisplay(currentList)
       this.persistRoomListCache()
     },
 
@@ -671,7 +677,8 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
         currentList.push(nextRoom)
       }
 
-      this.records = currentList
+      // 新增/更新都可能改变优先级（参与状态、空位、创建时间），统一重排。
+      this.records = sortRoomRecordsForDisplay(currentList)
     },
 
     persistRoomListCache(): void {

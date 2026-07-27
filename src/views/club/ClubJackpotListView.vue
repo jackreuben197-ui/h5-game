@@ -331,6 +331,30 @@ function goPoolReward(): void {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light-own {
+    // Семантические переменные глобально остаются тёмными, поэтому светлые значения
+    // задаём локально — на них написаны все блоки theme-light-own ниже.
+    --c-text: rgba(0, 0, 0, 1);
+    --c-text-muted: rgba(0, 0, 0, 0.62);
+    --c-surface: rgba(255, 255, 255, 1);
+    --c-divider: rgba(0, 0, 0, 0.12);
+    --c-border: rgba(0, 0, 0, 0.18);
+    --c-brand: #05c297;
+    --c-brand-rgb: 5, 194, 151;
+
+    background-image: url('@/assets/images/main_bg_light.webp');
+
+    // Шапка страницы (HeaderBack) на светлом фоне — тёмным.
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: var(--c-text);
+    }
+
+    :deep(.title) {
+      text-shadow: none;
+    }
+  }
 }
 
 .page-overlay {
@@ -341,6 +365,13 @@ function goPoolReward(): void {
   mix-blend-mode: luminosity;
   pointer-events: none;
   z-index: 0;
+
+  @include theme-light-own {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    mix-blend-mode: normal;
+  }
 }
 
 :deep(.page-back-header) {
@@ -366,7 +397,7 @@ function goPoolReward(): void {
   cursor: pointer;
   line-height: 1.2;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #fff;
     background: var(--c-brand);
   }
@@ -419,7 +450,7 @@ function goPoolReward(): void {
   border: 0.02rem solid rgba(249, 249, 249, 0.1);
   overflow: hidden;
 
-  @include theme-light {
+  @include theme-light-own {
     background:
       radial-gradient(
         70% 110% at 44% 45%,
@@ -463,7 +494,7 @@ function goPoolReward(): void {
   justify-content: center;
   z-index: 2;
 
-  @include theme-light {
+  @include theme-light-own {
     background: linear-gradient(140deg, #cf56ef 2%, #8b3de6 49%, #5737ef 100%);
     box-shadow:
       0.0913rem 0.1141rem 0.0913rem rgba(0, 0, 0, 0.25),
@@ -619,10 +650,6 @@ function goPoolReward(): void {
   width: 1.248rem;
   height: 1.56rem;
   object-fit: contain;
-
-  @include theme-light {
-    color: var(--c-brand);
-  }
 }
 
 .jackpot-empty p {
@@ -631,7 +658,7 @@ function goPoolReward(): void {
   color: rgba(225, 234, 248, 0.88);
   text-align: center;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 }
@@ -642,7 +669,7 @@ function goPoolReward(): void {
   color: rgba(225, 234, 248, 0.88);
   font-size: 0.32rem;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text-muted);
   }
 }
@@ -671,6 +698,13 @@ function goPoolReward(): void {
   backdrop-filter: blur(0.5px);
   cursor: pointer;
 
+  @include theme-light-own {
+    border-color: rgba(242, 242, 242, 0.8);
+    background: var(--c-brand);
+    backdrop-filter: none;
+    color: rgba(249, 249, 249, 0.95);
+  }
+
   &:active {
     opacity: 0.92;
     transform: scale(0.985);
@@ -690,7 +724,7 @@ function goPoolReward(): void {
   align-items: center;
   justify-content: center;
 
-  @include theme-light {
+  @include theme-light-own {
     background: rgba(12, 12, 12, 0.58);
   }
 }
@@ -805,7 +839,7 @@ function goPoolReward(): void {
   background: linear-gradient(157.77deg, rgba(85, 243, 41, 1) 7.55%, rgba(62, 173, 6, 1) 71.92%);
   backdrop-filter: blur(0.0591rem); // 2.22px
 
-  @include theme-light {
+  @include theme-light-own {
     border-color: transparent;
     background: var(--c-brand);
   }

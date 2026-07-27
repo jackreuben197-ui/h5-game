@@ -208,6 +208,30 @@ onMounted(() => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light-own {
+    // Семантические переменные глобально остаются тёмными, поэтому светлые значения
+    // задаём локально — на них написаны все блоки theme-light-own ниже.
+    --c-text: rgba(0, 0, 0, 1);
+    --c-text-muted: rgba(0, 0, 0, 0.62);
+    --c-surface: rgba(255, 255, 255, 1);
+    --c-divider: rgba(0, 0, 0, 0.12);
+    --c-border: rgba(0, 0, 0, 0.18);
+    --c-brand: #05c297;
+    --c-brand-rgb: 5, 194, 151;
+
+    background-image: url('@/assets/images/main_bg_light.webp');
+
+    // Шапка страницы (HeaderBack) на светлом фоне — тёмным.
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: var(--c-text);
+    }
+
+    :deep(.title) {
+      text-shadow: none;
+    }
+  }
 }
 
 .record-overlay {
@@ -218,6 +242,13 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.2);
   mix-blend-mode: luminosity;
   z-index: 0;
+
+  @include theme-light-own {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    mix-blend-mode: normal;
+  }
 }
 
 :deep(.page-back-header) {
@@ -256,6 +287,10 @@ onMounted(() => {
   height: 0.5073rem; // 19.024px / 37.5
   border-radius: 0.7136rem; // 26.763px / 37.5
   background: rgba(86, 153, 205, 1);
+
+  @include theme-light-own {
+    background: rgba(var(--c-brand-rgb), 0.45);
+  }
 }
 
 .record-header-pill {
@@ -269,7 +304,7 @@ onMounted(() => {
   color: #f9f9f9;
   font-size: 0.308rem; // 11.54px / 37.5
 
-  @include theme-light {
+  @include theme-light-own {
     color: #fff;
     background: rgba(var(--c-brand-rgb), 0.72);
     box-shadow: inset 0 0 0.16rem rgba(255, 255, 255, 0.7);
@@ -292,7 +327,7 @@ onMounted(() => {
   border-radius: 4.2992rem;
   color: rgba(225, 238, 255, 0.9);
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
     background: var(--c-surface);
   }
@@ -364,7 +399,7 @@ onMounted(() => {
   text-overflow: ellipsis;
   max-width: 1.547rem; // 58px / 37.5
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 }
@@ -375,7 +410,7 @@ onMounted(() => {
   line-height: 1.2;
   white-space: nowrap;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text-muted);
   }
 }
@@ -442,10 +477,6 @@ onMounted(() => {
   width: 1.248rem;
   height: 1.56rem;
   object-fit: contain;
-
-  @include theme-light {
-    color: var(--c-brand);
-  }
 }
 
 .record-empty p {
@@ -454,7 +485,7 @@ onMounted(() => {
   color: rgba(225, 234, 248, 0.88);
   text-align: center;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 }
@@ -465,7 +496,7 @@ onMounted(() => {
   color: rgba(225, 234, 248, 0.88);
   font-size: 0.32rem;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text-muted);
   }
 }

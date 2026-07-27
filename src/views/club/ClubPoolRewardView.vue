@@ -235,8 +235,28 @@ onMounted(() => {
   background-size: cover;
   background-position: center;
 
-  @include theme-light {
+  @include theme-light-own {
+    // Семантические переменные глобально остаются тёмными, поэтому светлые значения
+    // задаём локально — на них написаны все блоки theme-light-own ниже.
+    --c-text: rgba(0, 0, 0, 1);
+    --c-text-muted: rgba(0, 0, 0, 0.62);
+    --c-surface: rgba(255, 255, 255, 1);
+    --c-divider: rgba(0, 0, 0, 0.12);
+    --c-border: rgba(0, 0, 0, 0.18);
+    --c-brand: #05c297;
+    --c-brand-rgb: 5, 194, 151;
+
     background-image: url('@/assets/images/main_bg_light.webp');
+
+    // Шапка страницы (HeaderBack) на светлом фоне — тёмным.
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: var(--c-text);
+    }
+
+    :deep(.title) {
+      text-shadow: none;
+    }
   }
 }
 
@@ -270,7 +290,7 @@ onMounted(() => {
   line-height: 0.95;
   border-bottom: 0.0363rem solid transparent;
 
-  @include theme-light {
+  @include theme-light-own {
     color: rgba(34, 34, 34, 0.72);
   }
 }
@@ -280,7 +300,7 @@ onMounted(() => {
   font-weight: 700;
   border-bottom-color: #ffffff;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-brand);
     border-bottom-color: var(--c-brand);
   }
@@ -314,6 +334,22 @@ onMounted(() => {
   background-position: center;
   background-repeat: no-repeat;
   overflow: hidden;
+
+  // Карточка в светлой теме — тот же цветной градиент, что и в списке джекпотов.
+  @include theme-light-own {
+    background:
+      radial-gradient(
+        70% 110% at 44% 45%,
+        rgba(123, 105, 255, 0.38) 0%,
+        rgba(71, 64, 244, 0.12) 58%,
+        rgba(5, 13, 231, 0) 100%
+      ),
+      rgba(5, 13, 231, 0.6);
+    border-color: #fff;
+    box-shadow:
+      inset 0.04rem 0.04rem 0.14rem rgba(255, 255, 255, 0.32),
+      inset -0.04rem -0.04rem 0.12rem rgba(51, 43, 190, 0.2);
+  }
 }
 
 .card-bg::after {
@@ -429,10 +465,6 @@ onMounted(() => {
   width: 1.248rem;
   height: 1.56rem;
   object-fit: contain;
-
-  @include theme-light {
-    color: var(--c-brand);
-  }
 }
 
 .pool-empty p {
@@ -441,7 +473,7 @@ onMounted(() => {
   color: rgba(225, 234, 248, 0.88);
   text-align: center;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 }
@@ -452,7 +484,7 @@ onMounted(() => {
   color: rgba(225, 234, 248, 0.88);
   font-size: 0.32rem;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text-muted);
   }
 }
@@ -481,6 +513,12 @@ onMounted(() => {
     rgba(230, 230, 230, 0.1) 71.4%
   );
   backdrop-filter: blur(0.0133rem);
+
+  @include theme-light-own {
+    background: var(--c-brand);
+    backdrop-filter: none;
+    color: rgba(249, 249, 249, 0.95);
+  }
 }
 
 @media (max-width: 360px) {

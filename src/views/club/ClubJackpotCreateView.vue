@@ -1005,8 +1005,28 @@ onMounted(() => {
   background-size: cover;
   background-position: center;
 
-  @include theme-light {
+  @include theme-light-own {
+    // Семантические переменные глобально остаются тёмными, поэтому светлые значения
+    // задаём локально — на них написаны все блоки theme-light-own ниже.
+    --c-text: rgba(0, 0, 0, 1);
+    --c-text-muted: rgba(0, 0, 0, 0.62);
+    --c-surface: rgba(255, 255, 255, 1);
+    --c-divider: rgba(0, 0, 0, 0.12);
+    --c-border: rgba(0, 0, 0, 0.18);
+    --c-brand: #05c297;
+    --c-brand-rgb: 5, 194, 151;
+
     background-image: url('@/assets/images/main_bg_light.webp');
+
+    // Шапка страницы (HeaderBack) на светлом фоне — тёмным.
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: var(--c-text);
+    }
+
+    :deep(.title) {
+      text-shadow: none;
+    }
   }
 }
 
@@ -1037,7 +1057,7 @@ onMounted(() => {
   justify-content: space-between;
   color: #fff;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
     background: var(--c-surface);
   }
@@ -1060,14 +1080,14 @@ onMounted(() => {
   text-align: center;
   outline: none;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 
   &::placeholder {
     color: rgba(255, 255, 255, 0.5);
 
-    @include theme-light {
+    @include theme-light-own {
       color: var(--c-text-muted);
     }
   }
@@ -1082,7 +1102,7 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.0043rem);
 
-  @include theme-light {
+  @include theme-light-own {
     background: var(--c-surface);
     backdrop-filter: none;
   }
@@ -1103,7 +1123,7 @@ onMounted(() => {
   font-size: 0.32rem;
   line-height: 1.4;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 }
@@ -1119,7 +1139,7 @@ onMounted(() => {
   gap: 0.1067rem;
   min-width: 3.2rem;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 }
@@ -1141,7 +1161,7 @@ onMounted(() => {
   color: #fff;
   font-size: 0.4rem;
 
-  @include theme-light {
+  @include theme-light-own {
     background: var(--c-brand);
   }
 
@@ -1177,7 +1197,7 @@ onMounted(() => {
   align-items: center;
   padding: 0.0267rem;
 
-  @include theme-light {
+  @include theme-light-own {
     background: rgba(34, 34, 34, 0.12);
   }
 }
@@ -1198,7 +1218,7 @@ onMounted(() => {
   font-size: 0.362rem;
   border-radius: 1.3844rem;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 }
@@ -1208,7 +1228,7 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.17);
   backdrop-filter: blur(0.4533rem);
 
-  @include theme-light {
+  @include theme-light-own {
     border-color: transparent;
     background: rgba(34, 34, 34, 0.1);
     backdrop-filter: none;
@@ -1228,7 +1248,7 @@ onMounted(() => {
   color: #fff;
   font-size: 0.32rem;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 }
@@ -1248,7 +1268,7 @@ onMounted(() => {
   flex-shrink: 0;
   cursor: pointer;
 
-  @include theme-light {
+  @include theme-light-own {
     background-color: rgba(0, 0, 0, 0.2);
   }
 }
@@ -1263,7 +1283,7 @@ onMounted(() => {
     transparent 0.139rem
   );
 
-  @include theme-light {
+  @include theme-light-own {
     background-color: #69beff;
     background-image: radial-gradient(
       circle at center,
@@ -1285,7 +1305,7 @@ onMounted(() => {
   height: 0.0181rem;
   background: rgba(255, 255, 255, 0.25);
 
-  @include theme-light {
+  @include theme-light-own {
     background: var(--c-divider);
   }
 }
@@ -1320,7 +1340,7 @@ onMounted(() => {
   font-size: 0.4054rem;
   line-height: 1.4;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 }
@@ -1347,7 +1367,7 @@ onMounted(() => {
   justify-content: space-between;
   gap: 0.1333rem;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
     background: rgba(34, 34, 34, 0.16);
     mix-blend-mode: normal;
@@ -1366,7 +1386,7 @@ onMounted(() => {
   font-size: 0.3716rem;
   color: #fff;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 }
@@ -1386,7 +1406,7 @@ onMounted(() => {
   & + & {
     border-top: 0.0181rem solid rgba(255, 255, 255, 0.18);
 
-    @include theme-light {
+    @include theme-light-own {
       border-top-color: var(--c-divider);
     }
   }
@@ -1409,7 +1429,7 @@ onMounted(() => {
   min-height: 0.56rem;
   cursor: pointer;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 }
@@ -1442,7 +1462,7 @@ onMounted(() => {
   color: #fff;
   font-weight: 500;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 }
@@ -1500,7 +1520,7 @@ onMounted(() => {
   font-size: 0.2987rem;
   line-height: 1.4;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 }
@@ -1530,7 +1550,7 @@ onMounted(() => {
 .action-btn--cancel {
   background: rgba(0, 0, 0, 0.3);
 
-  @include theme-light {
+  @include theme-light-own {
     background: rgba(34, 34, 34, 0.3);
   }
 }
@@ -1539,7 +1559,7 @@ onMounted(() => {
   border: 0.0133rem solid rgba(242, 242, 242, 0.8);
   background: linear-gradient(157.77deg, #05e7ae 7.55%, #027a5c 71.92%);
 
-  @include theme-light {
+  @include theme-light-own {
     border-color: transparent;
     background: var(--c-brand);
   }
@@ -1559,14 +1579,14 @@ onMounted(() => {
   text-align: center;
   outline: none;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 
   &::placeholder {
     color: rgba(255, 255, 255, 0.5);
 
-    @include theme-light {
+    @include theme-light-own {
       color: var(--c-text-muted);
     }
   }

@@ -215,6 +215,10 @@ onUnmounted(() => {
   background-position: center;
   background-repeat: no-repeat;
   background: rgba(23, 23, 23, 0.7);
+
+  @include theme-light-own {
+    background: rgba(12, 12, 12, 0.6);
+  }
 }
 
 .overlay::before {
@@ -249,11 +253,11 @@ onUnmounted(() => {
   background-size: cover;
   background-position: center;
 
-  @include theme-light {
-    --c-text: #fff;
-    --c-text-muted: rgba(255, 255, 255, 0.5);
-    --c-divider: rgba(255, 255, 255, 0.2);
-    background-image: url('@/assets/images/wallet/bg_sharp.webp');
+  // Светлая тема: то же стекло, что и у модалки логина (light-panel), без растровой подложки.
+  @include theme-light-own {
+    @include light-panel;
+
+    background-image: none !important;
   }
 }
 
@@ -272,9 +276,7 @@ onUnmounted(() => {
   pointer-events: none;
   z-index: 1;
 
-  @include theme-light {
-    background: rgba(0, 0, 0, 0.7);
-  }
+
 }
 
 .card::before {
@@ -412,10 +414,6 @@ onUnmounted(() => {
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
-
-  @include theme-light {
-    background: rgba(245, 245, 245, 0.1);
-  }
 }
 
 .option-card::before {
@@ -432,10 +430,8 @@ onUnmounted(() => {
   border-color: rgba(255, 255, 255, 0.3);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 
-  @include theme-light {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  @include theme-light-own {
+    border: 1px solid var(--wallet-l-accent);
   }
 }
 
@@ -510,18 +506,15 @@ onUnmounted(() => {
   z-index: 1;
   border: 1px solid transparent;
   box-sizing: border-box;
-
-  @include theme-light {
-    background: rgba(255, 255, 255, 0.12);
-  }
 }
 
 .option-card__badge--active {
   background: rgba(255, 255, 255, 0.12);
   color: var(--c-text);
 
-  @include theme-light {
-    background: rgba(255, 255, 255, 0.12);
+  @include theme-light-own {
+    background: var(--wallet-l-accent);
+    color: var(--wallet-l-on-accent);
   }
 }
 
@@ -657,5 +650,15 @@ onUnmounted(() => {
     rgba(255, 255, 255, 0.1) 21.11%,
     rgba(230, 230, 230, 0.1) 71.43%
   ) !important;
+
+  @include theme-light-own {
+    background: var(--wallet-l-accent) !important;
+    border: 0.5px solid rgba(242, 242, 242, 0.8);
+    color: var(--wallet-l-on-accent);
+
+    :deep(.primary-btn__text) {
+      color: var(--wallet-l-on-accent);
+    }
+  }
 }
 </style>

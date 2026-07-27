@@ -328,7 +328,50 @@ URL 加 `?theme=light`（hash 路由内也可）可强制预览浅色，仅当�
 - контент внутри должен быть позиционирован с `z-index ≥ 1`, иначе его перекроет `::after`;
 - растровую подложку хоста гасить (`background-image: none`), иначе она проступит по краям.
 
-Применён: модалка логина `src/views/login/LoginModal.vue` (`.login-dialog`).
+Применён: модалка логина `src/views/login/LoginModal.vue` (`.login-dialog`), а также все модалки
+кошелька (пополнение / вывод / незавершённый заказ / реквизиты USDT / онлайн-оплата / чат с
+поддержкой / выбор банка).
+
+#### theme-light-own — наша светлая тема
+
+`theme-light` выключён флагом `$upstream-light-enabled: false` (значения апстрима не совпадают с
+нашим светлым макетом). Для страниц и компонентов, светлый вид которых рисуем мы, используется
+`theme-light-own` — тот же `html[data-theme='light'] &`, но всегда эмитится:
+
+```scss
+@use '@/styles/mixins' as *;
+
+.wf__card {
+  background: rgba(0, 0, 0, 0.2);
+
+  @include theme-light-own {
+    background: var(--wallet-l-surface);
+  }
+}
+```
+
+Правило co-location то же, что и у `theme-light`: блок пишется внутри исходного селектора, а не
+собирается в конце файла. Для состояний (`.x--active &`) вкладывать миксин нужно внутрь состояния,
+иначе `html[...]` окажется в середине селектора:
+
+```scss
+// ✅
+.wf__type-card--active & {
+  @include theme-light-own { background: var(--wallet-l-accent); }
+}
+
+// ❌ даёт `.wf__type-card--active html[data-theme=light] .label`
+@include theme-light-own {
+  .wf__type-card--active & { background: var(--wallet-l-accent); }
+}
+```
+
+Палитра светлого кошелька лежит в `src/styles/wallet.scss` (`:root[data-theme='light']`):
+`--wallet-l-accent` `#05c297`, `--wallet-l-text`, `--wallet-l-text-muted`, `--wallet-l-surface`,
+`--wallet-l-surface-soft`, `--wallet-l-border`, `--wallet-l-divider`, `--wallet-l-on-accent`.
+Страницы кошелька в светлой теме — фон `main_bg_light.webp`, белые карточки, тёмный текст;
+модалки — стекло `light-panel` поверх затемнённой подложки (белый текст, акцент `#05c297`),
+ровно как модалка логина.
 
 #### 页面迁移写法
 

@@ -44,6 +44,33 @@
   --wallet-glass-border-soft: rgba(242, 242, 242, 0.4);
 }
 
+// Светлая тема кошелька: страницы становятся светлыми (белые карточки, тёмный текст,
+// акцент #05c297), модалки повторяют стекло модалки логина (см. light-panel в _mixins.scss).
+:root[data-theme='light'] {
+  --wallet-text-shadow-title: none;
+  --wallet-text-shadow-soft: none;
+  --wallet-text-shadow-tiny: none;
+
+  --wallet-color-primary: #05c297;
+  --wallet-color-primary-dark: #04a882;
+  --wallet-color-danger: #e5384f;
+  --wallet-grad-primary: linear-gradient(168deg, #05c297 7%, #04a882 72%);
+  --wallet-glass-bg: rgba(255, 255, 255, 1);
+  --wallet-glass-border: rgba(0, 0, 0, 0.18);
+  --wallet-glass-border-soft: rgba(0, 0, 0, 0.12);
+
+  // Палитра светлых страниц кошелька (значения — как в _friends-table.scss).
+  --wallet-l-accent: #05c297;
+  --wallet-l-text: rgba(0, 0, 0, 1);
+  --wallet-l-text-muted: rgba(0, 0, 0, 0.62);
+  --wallet-l-surface: rgba(255, 255, 255, 1);
+  --wallet-l-surface-soft: rgba(0, 0, 0, 0.05);
+  --wallet-l-surface-input: rgba(0, 0, 0, 0.08);
+  --wallet-l-border: rgba(0, 0, 0, 0.18);
+  --wallet-l-divider: rgba(0, 0, 0, 0.12);
+  --wallet-l-on-accent: rgba(249, 249, 249, 0.95);
+}
+
 .wallet-t-title {
   font-family: var(--wallet-font-cn);
   font-weight: 500;
@@ -103,6 +130,16 @@
   img {
     display: block;
     max-width: 100%;
+  }
+}
+
+:root[data-theme='light'] {
+  .wallet-t-title,
+  .wallet-t-subtitle,
+  .wallet-t-body,
+  .wallet-t-caption,
+  .wallet-t-button {
+    color: var(--wallet-l-text);
   }
 }
 

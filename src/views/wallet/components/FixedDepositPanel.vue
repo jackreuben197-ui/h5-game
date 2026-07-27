@@ -55,6 +55,8 @@ function goDetails(): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .deposit-screen {
   min-height: 100vh;
   display: flex;
@@ -62,6 +64,20 @@ function goDetails(): void {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  // Фон задаётся инлайном (:style), поэтому светлый перебиваем через !important.
+  @include theme-light-own {
+    background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: var(--wallet-l-text);
+    }
+
+    :deep(.title) {
+      text-shadow: none;
+    }
+  }
 }
 
 .deposit-scrollable {
@@ -93,9 +109,21 @@ function goDetails(): void {
     0.398rem 0.271rem 0.486rem rgba(48, 48, 48, 0.24),
     0.9rem 0.613rem 0.653rem rgba(50, 50, 50, 0.14);
   cursor: pointer;
+
+  @include theme-light-own {
+    border-color: rgba(242, 242, 242, 0.8);
+    background: var(--wallet-l-accent);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+  }
 }
 
 .details-pill__label {
   white-space: nowrap;
+
+  @include theme-light-own {
+    color: var(--wallet-l-on-accent);
+  }
 }
 </style>

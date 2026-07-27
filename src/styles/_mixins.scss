@@ -44,6 +44,15 @@ $upstream-light-enabled: false;
   }
 }
 
+// Наша светлая тема (в отличие от theme-light, выключенного флагом выше — всегда эмитится).
+// Использовать для страниц/компонентов, светлый вид которых нарисован нами:
+// кошелёк и его модалки, см. README 8.3.
+@mixin theme-light-own {
+  html[data-theme='light'] & {
+    @content;
+  }
+}
+
 @mixin theme-dark {
   html[data-theme='dark'] & {
     @content;

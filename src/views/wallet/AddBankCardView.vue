@@ -218,6 +218,8 @@ async function handleSave() {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .abc-page {
   position: fixed;
   inset: 0;
@@ -228,6 +230,11 @@ async function handleSave() {
   background-position: center;
   background-repeat: no-repeat;
   overflow: hidden;
+
+  // Фон задаётся инлайном (:style), поэтому светлый перебиваем через !important.
+  @include theme-light-own {
+    background-image: url('@/assets/images/main_bg_light.webp') !important;
+  }
 }
 
 
@@ -241,6 +248,13 @@ async function handleSave() {
   background: rgba(71, 70, 70, 0.2);
   mix-blend-mode: luminosity;
   pointer-events: none;
+
+  @include theme-light-own {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    mix-blend-mode: normal;
+  }
 }
 
 // Header
@@ -272,6 +286,11 @@ async function handleSave() {
   width: 0.32rem;
   height: 0.32rem;
   filter: brightness(10);
+
+  // Иконка залита белым (fill="white"): brightness(0) делает её чёрной.
+  @include theme-light-own {
+    filter: brightness(0);
+  }
 }
 
 .abc-header__title {
@@ -281,6 +300,11 @@ async function handleSave() {
   color: #fff;
   line-height: 1.2;
   text-shadow: 0 0.075rem 0.166rem rgba(0, 0, 0, 0.25);
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+    text-shadow: none;
+  }
 }
 
 // Form
@@ -314,12 +338,20 @@ async function handleSave() {
   align-items: baseline;
   gap: 0.06rem;
   flex-wrap: wrap;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
 }
 
 .abc-field__required {
   font-size: 0.26rem;
   color: rgba(255, 255, 255, 0.7);
   font-weight: 400;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
+  }
 }
 
 .abc-field__star {
@@ -340,6 +372,15 @@ async function handleSave() {
     border: none;
     background: rgba(27, 27, 30, 0.4);
   }
+
+  @include theme-light-own {
+    border-color: var(--wallet-l-border);
+    background: var(--wallet-l-surface);
+
+    &--dark {
+      background: var(--wallet-l-surface-soft);
+    }
+  }
 }
 
 .abc-field__input {
@@ -355,6 +396,14 @@ async function handleSave() {
 
   &::placeholder {
     color: rgba(255, 255, 255, 0.5);
+  }
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+
+    &::placeholder {
+      color: var(--wallet-l-text-muted);
+    }
   }
 }
 
@@ -372,6 +421,10 @@ async function handleSave() {
   font-size: 0.25rem;
   color: rgba(255, 255, 255, 0.6);
   line-height: 1.6;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
+  }
 }
 
 // Footer (save button)
@@ -418,6 +471,17 @@ async function handleSave() {
     opacity: 0.45;
     cursor: default;
   }
+
+  @include theme-light-own {
+    border-color: rgba(242, 242, 242, 0.8);
+    background: var(--wallet-l-accent);
+    box-shadow: none;
+    color: var(--wallet-l-on-accent);
+
+    &::before {
+      display: none;
+    }
+  }
 }
 
 // ── Bank name picker modal ──────────────────────────────────────────────────────
@@ -432,6 +496,12 @@ async function handleSave() {
   background: rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+
+  @include theme-light-own {
+    background: rgba(12, 12, 12, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
 }
 
 .abc-modal {
@@ -447,6 +517,21 @@ async function handleSave() {
   display: flex;
   flex-direction: column;
   gap: 0.36rem;
+
+  // Модалка в светлой теме — то же стекло, что и у остальных модалок кошелька.
+  // Свои blur / фон / тень гасим, иначе карточка выходит темнее подложки.
+  @include theme-light-own {
+    @include light-panel($fill: rgba(255, 255, 255, 0.08), $radius: 0.8rem);
+
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+
+    > * {
+      position: relative;
+      z-index: 2;
+    }
+  }
 }
 
 .abc-modal__title {
@@ -477,6 +562,10 @@ async function handleSave() {
   border: none;
   border-bottom: 0.008rem solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
+
+  @include theme-light-own {
+    border-bottom-color: rgba(255, 255, 255, 0.16);
+  }
   -webkit-tap-highlight-color: transparent;
 
   &:active { opacity: 0.8; }
@@ -519,9 +608,22 @@ async function handleSave() {
 
 .abc-modal__btn--cancel {
   color: #fff;
+
+  @include theme-light-own {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .abc-modal__btn--confirm {
   color: #55f329;
+
+  @include theme-light-own {
+    background: var(--wallet-l-accent);
+    border-color: rgba(242, 242, 242, 0.8);
+    color: var(--wallet-l-on-accent);
+  }
 }
 </style>

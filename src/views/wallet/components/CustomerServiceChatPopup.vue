@@ -502,9 +502,11 @@ onUnmounted(() => {
   flex-direction: column;
   // background-image: url('@/assets/images/main_bg.webp');
 
-  @include theme-light {
-    background-color: var(--c-page);
-    // background-image: url('@/assets/images/main_bg_light.webp');
+  // Как у модалки логина: затемнённая подложка, поверх неё — стекло панели чата.
+  @include theme-light-own {
+    background-color: rgba(12, 12, 12, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 }
 
@@ -537,11 +539,12 @@ onUnmounted(() => {
   overflow: hidden;
   background-image: url('@/assets/images/wallet/bg_sharp.webp');
 
-  @include theme-light {
-    --c-text: #fff;
-    --c-text-muted: rgba(255, 255, 255, 0.62);
-    background-color: #171717;
-    background-image: url('@/assets/images/wallet/bg_sharp.webp');
+  // Светлая тема: то же стекло, что и у модалки логина (light-panel).
+  @include theme-light-own {
+    @include light-panel($radius: 0.8rem 0.8rem 0 0);
+
+    background-color: transparent;
+    background-image: none !important;
   }
 }
 
@@ -556,9 +559,6 @@ onUnmounted(() => {
   pointer-events: none;
   z-index: 1;
 
-  @include theme-light {
-    background: rgba(0, 0, 0, 0.85);
-  }
 }
 
 .chat-main-body::before {
@@ -658,9 +658,6 @@ onUnmounted(() => {
   pointer-events: none;
   color: rgba(255, 255, 255, 0.83);
 
-  @include theme-light {
-    color: rgba(255, 255, 255, 0.83);
-  }
 }
 
 .agent-avatar {
@@ -689,10 +686,6 @@ onUnmounted(() => {
   margin-top: -0.24rem;
   white-space: nowrap;
 
-  @include theme-light {
-    background: rgba(0, 0, 0, 0.25);
-    color: #fff;
-  }
 }
 
 .messages-wrap {
@@ -773,9 +766,6 @@ onUnmounted(() => {
   line-height: 100%;
   letter-spacing: 0.195px;
 
-  @include theme-light {
-    color: #f9f9f9;
-  }
 }
 
 .sender-name {
@@ -798,9 +788,9 @@ onUnmounted(() => {
   background: #1F9816;
   border-radius: 20px 20px 4px 20px;
 
-  @include theme-light {
-    background: var(--c-brand);
-    color: #fff;
+  @include theme-light-own {
+    background: var(--wallet-l-accent);
+    color: var(--wallet-l-on-accent);
   }
 }
 
@@ -810,9 +800,6 @@ onUnmounted(() => {
   padding: 4px;
   max-width: 200px;
 
-  @include theme-light {
-    background: rgba(255, 255, 255, 0.05);
-  }
 }
 
 .image-bubble img {
@@ -865,9 +852,6 @@ onUnmounted(() => {
   align-items: center;
   gap: 4.2px;
 
-  @include theme-light {
-    background: #0f0f0f;
-  }
 }
 
 .input-bar-wrap input {
@@ -917,9 +901,6 @@ onUnmounted(() => {
   cursor: pointer;
   flex-shrink: 0;
 
-  @include theme-light {
-    background: #0f0f0f;
-  }
 
   &:active {
     opacity: 0.8;
@@ -939,10 +920,6 @@ onUnmounted(() => {
   flex-shrink: 0;
   color: #f3f3f3;
 
-  @include theme-light {
-    background: rgba(255, 255, 255, 0.1);
-    color: #f3f3f3;
-  }
 
   &:active {
     opacity: 0.8;

@@ -63,14 +63,20 @@ const emit = defineEmits<{
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
+
+  @include theme-light-own {
+    display: none;
+  }
 }
 
 .tpg__pill--active {
   background: var(--wallet-grad-primary);
   box-shadow: 3.9px 2.7px 10.2px rgba(110, 2, 2, 0.27);
 
-  @include theme-light {
-    background: var(--c-brand);
+  @include theme-light-own {
+    background: var(--wallet-l-accent);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     box-shadow: none;
   }
 }
@@ -79,8 +85,10 @@ const emit = defineEmits<{
   background: rgba(0, 0, 0, 0.36);
   box-shadow: 3.9px 2.7px 10.2px rgba(51, 51, 51, 0.27);
 
-  @include theme-light {
-    background: rgba(34, 34, 34, 0.36);
+  @include theme-light-own {
+    background: #282626;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     box-shadow: none;
   }
 }

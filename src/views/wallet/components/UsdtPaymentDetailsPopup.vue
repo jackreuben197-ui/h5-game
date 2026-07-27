@@ -163,6 +163,10 @@ onUnmounted(() => {
   background-position: center;
   background-repeat: no-repeat;
    background: rgba(23, 23, 23, 0.70);
+
+  @include theme-light-own {
+    background: rgba(12, 12, 12, 0.6);
+  }
 }
 
 .overlay::before {
@@ -197,10 +201,11 @@ onUnmounted(() => {
   background-position: center;
   background-image: url('@/assets/images/wallet/bg_sharp.webp');
 
-  @include theme-light {
-    --c-text: #fff;
-    --c-text-muted: rgba(255, 255, 255, 0.5);
-    background-image: url('@/assets/images/wallet/bg_sharp.webp');
+  // Светлая тема: то же стекло, что и у модалки логина (light-panel), без растровой подложки.
+  @include theme-light-own {
+    @include light-panel;
+
+    background-image: none !important;
   }
 }
 
@@ -219,9 +224,6 @@ onUnmounted(() => {
   pointer-events: none;
   z-index: 1;
 
-  @include theme-light {
-    background: rgba(0, 0, 0, 0.7);
-  }
 }
 
 .card::before {
@@ -326,12 +328,9 @@ onUnmounted(() => {
   );
   border-radius: 0;
 
-  @include theme-light {
-    background: linear-gradient(
-      97deg,
-      rgba(255, 255, 255, 0.1) 21.11%,
-      rgba(230, 230, 230, 0.1) 71.43%
-    );
+  // Полоса с суммой одинаково тёмная в обеих темах (см. макет).
+  @include theme-light-own {
+    background: linear-gradient(97deg, #1f1f1f 21.11%, #191919 71.43%);
   }
 }
 
@@ -392,9 +391,6 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
 
-  @include theme-light {
-    background: rgba(0, 0, 0, 0.29);
-  }
 }
 
 .address-card__title {
@@ -463,9 +459,11 @@ onUnmounted(() => {
   cursor: pointer;
   transition: transform 0.1s;
 
-  @include theme-light {
+  @include theme-light-own {
     border-color: rgba(242, 242, 242, 0.8);
-    background: linear-gradient(128deg, #55f329 7.55%, #3ead06 71.92%);
+    background: var(--wallet-l-accent);
+    box-shadow: none;
+    color: var(--wallet-l-on-accent);
   }
 }
 
@@ -525,10 +523,6 @@ onUnmounted(() => {
   backdrop-filter: blur(0.0527px);
   color: #fff;
 
-  @include theme-light {
-    background: rgba(0, 0, 0, 0.3);
-    color: #fff;
-  }
 }
 
 .btn--paying {
@@ -538,6 +532,11 @@ onUnmounted(() => {
   border: 0.5px solid rgba(242, 242, 242, 0.80);
   color: rgba(120, 228, 144, 1);
   background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%) !important;
+
+  @include theme-light-own {
+    background: var(--wallet-l-accent) !important;
+    color: var(--wallet-l-on-accent);
+  }
   // backdrop-filter: blur(0.1583614945411682px);
 }
 

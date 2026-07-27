@@ -18,6 +18,8 @@ defineProps<Props>()
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .gb {
   position: relative;
   display: inline-flex;
@@ -48,6 +50,13 @@ defineProps<Props>()
   background: linear-gradient(152.51deg, rgba(248, 253, 255, 0.8) 3.37%, rgba(199, 199, 199, 0.8) 37.46%);
   mix-blend-mode: hard-light;
   pointer-events: none;
+
+  @include theme-light-own {
+    background: var(--wallet-l-accent, #05c297);
+    mix-blend-mode: normal;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .gb__label {
@@ -72,5 +81,9 @@ defineProps<Props>()
   border-radius: inherit;
   pointer-events: none;
   box-shadow: inset 0 0 0.069rem 0 rgba(242, 242, 242, 0.9);
+
+  @include theme-light-own {
+    box-shadow: none;
+  }
 }
 </style>

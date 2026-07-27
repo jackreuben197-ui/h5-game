@@ -96,8 +96,8 @@ watch(
     opacity 0.2s;
   pointer-events: none;
 
-  @include theme-light {
-    background: var(--c-brand);
+  @include theme-light-own {
+    background: var(--wallet-l-accent);
   }
 }
 
@@ -121,8 +121,8 @@ watch(
   opacity: 0.7;
   transition: opacity 0.25s ease;
 
-  @include theme-light {
-    color: #000;
+  @include theme-light-own {
+    color: var(--wallet-l-text);
   }
 }
 
@@ -130,8 +130,8 @@ watch(
   opacity: 1;
   font-weight: 700;
 
-  @include theme-light {
-    color: var(--c-brand);
+  @include theme-light-own {
+    color: var(--wallet-l-accent);
   }
 }
 </style>

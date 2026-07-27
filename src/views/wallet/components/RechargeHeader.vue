@@ -30,6 +30,8 @@ const emit = defineEmits<{ back: [] }>()
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .recharge-header {
   display: flex;
   align-items: center;
@@ -55,6 +57,10 @@ const emit = defineEmits<{ back: [] }>()
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   outline: none;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
 }
 
 .back-icon {
@@ -63,6 +69,10 @@ const emit = defineEmits<{ back: [] }>()
   color: var(--c-text);
   display: block;
   flex-shrink: 0;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
 }
 
 .recharge-header__title {
@@ -75,5 +85,9 @@ const emit = defineEmits<{ back: [] }>()
   font-weight: 500;
   line-height: 120%;
   white-space: nowrap;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
 }
 </style>

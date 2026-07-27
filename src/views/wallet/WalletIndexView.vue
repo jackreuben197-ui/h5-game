@@ -876,6 +876,8 @@ async function onUsdtSubmit(type: number) {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .wallet-screen {
   height: 100vh;
   height: 100dvh;
@@ -885,6 +887,21 @@ async function onUsdtSubmit(type: number) {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  // Фон задаётся инлайном (:style), поэтому светлый перебиваем через !important.
+  @include theme-light-own {
+    background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+    // Шапка страницы (HeaderBack) на светлом фоне — тёмным.
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: var(--wallet-l-text);
+    }
+
+    :deep(.title) {
+      text-shadow: none;
+    }
+  }
 }
 
 .wallet-scrollable {
@@ -939,6 +956,12 @@ async function onUsdtSubmit(type: number) {
   margin-top: -20px;
   z-index: 1;
   margin-bottom: 10px;
+
+  @include theme-light-own {
+    border-color: var(--wallet-l-border);
+    background: var(--wallet-l-surface);
+    box-shadow: 0 0.08rem 0.24rem rgba(70, 79, 88, 0.1);
+  }
 }
 
 .presets-card::before {
@@ -957,6 +980,13 @@ async function onUsdtSubmit(type: number) {
   pointer-events: none;
   border-radius: inherit;
   z-index: 0;
+
+  @include theme-light-own {
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    mix-blend-mode: normal;
+  }
 }
 
 .presets-card::after {
@@ -970,6 +1000,10 @@ async function onUsdtSubmit(type: number) {
     inset 3.4px 2.6px 8.6px rgba(0, 0, 0, 0.1),
     inset 0 0 36.1px rgba(242, 242, 242, 0.3);
   z-index: 0;
+
+  @include theme-light-own {
+    box-shadow: none;
+  }
 }
 
 .presets-card > * {
@@ -1018,6 +1052,19 @@ async function onUsdtSubmit(type: number) {
     border-radius: inherit;
     pointer-events: none;
     box-shadow: inset 0 0 0.069rem 0 rgba(242, 242, 242, 0.9);
+
+    @include theme-light-own {
+      box-shadow: inset 0 0 0 0.02rem var(--wallet-l-border);
+    }
+  }
+
+  @include theme-light-own {
+    box-shadow: none;
+
+    &::before {
+      background: var(--wallet-l-surface);
+      mix-blend-mode: normal;
+    }
   }
 }
 
@@ -1029,6 +1076,10 @@ async function onUsdtSubmit(type: number) {
   font-size: 0.43rem;
   color: #f9f9f9;
   line-height: 1.4;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
 }
 
 .balance-chip__icon {
@@ -1043,6 +1094,10 @@ async function onUsdtSubmit(type: number) {
   font-weight: 600;
   font-size: 0.24rem;
   color: #f8f8f8;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
+  }
 }
 
 .pay-cta-wrapper {
@@ -1075,6 +1130,21 @@ async function onUsdtSubmit(type: number) {
 
   :deep(.primary-btn__text) {
     color: #78e490;
+  }
+
+  @include theme-light-own {
+    border-color: rgba(242, 242, 242, 0.8) !important;
+    background: var(--wallet-l-accent) !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+
+    &::after {
+      box-shadow: none;
+    }
+
+    :deep(.primary-btn__text) {
+      color: var(--wallet-l-on-accent);
+    }
   }
 }
 </style>

@@ -68,6 +68,8 @@ const serviceFeePercentage = computed(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .wcm-overlay {
   position: fixed;
   inset: 0;
@@ -77,6 +79,10 @@ const serviceFeePercentage = computed(() => {
   justify-content: center;
   padding: clamp(20px, 7vw, 28px);
   background: rgba(23, 23, 23, 0.70);
+
+  @include theme-light-own {
+    background: rgba(12, 12, 12, 0.6);
+  }
 }
 
 .wcm-card {
@@ -116,6 +122,11 @@ const serviceFeePercentage = computed(() => {
     mask-composite: exclude;
     pointer-events: none;
   }
+
+  // Светлая тема: то же стекло, что и у модалки логина (light-panel).
+  @include theme-light-own {
+    @include light-panel($radius: 0.97rem);
+  }
 }
 
 .wcm-card__inner {
@@ -152,6 +163,12 @@ const serviceFeePercentage = computed(() => {
   font-size: 0.43rem;
   font-weight: 600;
   line-height: 78%;
+
+  @include theme-light-own {
+    background: none;
+    -webkit-text-fill-color: #fff;
+    color: #fff;
+  }
 }
 
 .wcm-fee-tag {
@@ -175,6 +192,11 @@ const serviceFeePercentage = computed(() => {
   padding: 0.32rem 0.2rem;
   background: linear-gradient(97deg, rgba(255, 255, 255, 0.08) 21%, rgba(230, 230, 230, 0.08) 71%);
   border-radius: 0.5rem;
+
+  // Плашка с суммой одинаково тёмная в обеих темах (см. макет).
+  @include theme-light-own {
+    background: linear-gradient(97deg, #1f1f1f 21%, #191919 71%);
+  }
 }
 
 .wcm-amount-row {
@@ -254,6 +276,16 @@ const serviceFeePercentage = computed(() => {
       -webkit-mask-composite: xor;
       mask-composite: exclude;
       pointer-events: none;
+    }
+
+    @include theme-light-own {
+      background: var(--wallet-l-accent);
+      box-shadow: none;
+      color: var(--wallet-l-on-accent);
+
+      &::before {
+        display: none;
+      }
     }
   }
 }

@@ -36,6 +36,8 @@ defineProps<Props>()
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .record {
   position: relative;
   display: flex;
@@ -50,6 +52,12 @@ defineProps<Props>()
   box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   cursor: pointer;
+
+  @include theme-light-own {
+    border-color: var(--wallet-l-border);
+    background: var(--wallet-l-surface);
+    box-shadow: 0 0.08rem 0.2rem rgba(70, 79, 88, 0.1);
+  }
 }
 
 .record::before {
@@ -63,6 +71,13 @@ defineProps<Props>()
   mix-blend-mode: hard-light;
   pointer-events: none;
   z-index: 0;
+
+  @include theme-light-own {
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    mix-blend-mode: normal;
+  }
 }
 
 .record::after {
@@ -76,6 +91,10 @@ defineProps<Props>()
     inset 3.4px 2.6px 8.6px rgba(0, 0, 0, 0.1),
     inset 0 0 36.1px rgba(242, 242, 242, 0.3);
   z-index: 0;
+
+  @include theme-light-own {
+    box-shadow: none;
+  }
 }
 
 .record > * {
@@ -105,5 +124,9 @@ defineProps<Props>()
   color: #fff;
   line-height: 1.4;
   white-space: nowrap;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
 }
 </style>

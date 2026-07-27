@@ -58,8 +58,8 @@ withDefaults(defineProps<Props>(), {
   cursor: pointer;
   overflow: hidden;
 
-  @include theme-light {
-    background: rgba(134, 134, 134, 0.12);
+  @include theme-light-own {
+    background: var(--wallet-l-surface-soft);
   }
 }
 
@@ -77,9 +77,11 @@ withDefaults(defineProps<Props>(), {
   border: 0.134px solid rgba(242, 242, 242, 0.3);
   box-shadow: 0.9px 1.1px 1.8px rgba(0, 0, 0, 0.25);
 
-  @include theme-light {
-    background: var(--c-brand);
+  @include theme-light-own {
+    background: var(--wallet-l-accent);
+    background-blend-mode: normal;
     border-color: rgba(242, 242, 242, 0.3);
+    box-shadow: none;
   }
 }
 
@@ -87,8 +89,8 @@ withDefaults(defineProps<Props>(), {
   background: rgba(0, 0, 0, 0.12);
   justify-content: center;
 
-  @include theme-light {
-    background: rgba(134, 134, 134, 0.12);
+  @include theme-light-own {
+    background: var(--wallet-l-surface-soft);
   }
 }
 
@@ -116,14 +118,14 @@ withDefaults(defineProps<Props>(), {
   white-space: nowrap;
   min-width: 0;
 
-  @include theme-light {
-    color: #000;
+  @include theme-light-own {
+    color: var(--wallet-l-text);
   }
 }
 
 .tile--active .tile__amount {
-  @include theme-light {
-    color: #fff;
+  @include theme-light-own {
+    color: var(--wallet-l-text);
   }
 }
 
@@ -138,8 +140,8 @@ withDefaults(defineProps<Props>(), {
   color: #f9f9f9;
   line-height: 1.4;
 
-  @include theme-light {
-    color: #000;
+  @include theme-light-own {
+    color: var(--wallet-l-text);
   }
 }
 </style>

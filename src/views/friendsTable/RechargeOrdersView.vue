@@ -143,8 +143,18 @@ onMounted(loadOrders)
   background-color: var(--c-page);
   background-image: url('@/assets/images/wallet/bg_sharp.webp');
 
-  @include theme-light {
+  @include theme-light-own {
     background-image: url('@/assets/images/main_bg_light.webp');
+
+    // Шапка страницы (HeaderBack) на светлом фоне — тёмным.
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: var(--wallet-l-text);
+    }
+
+    :deep(.title) {
+      text-shadow: none;
+    }
   }
 }
 
@@ -158,7 +168,7 @@ onMounted(loadOrders)
   -webkit-backdrop-filter: blur(34px);
   background: rgba(0, 0, 0, 0.15);
 
-  @include theme-light {
+  @include theme-light-own {
     background: transparent;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -188,16 +198,16 @@ onMounted(loadOrders)
   text-align: center;
   color: rgba(255, 255, 255, 0.65);
 
-  @include theme-light {
-    color: var(--c-text-muted);
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
   }
   .empty-icon {
     width: 1.248rem;
     height: 1.56rem;
     object-fit: contain;
 
-    @include theme-light {
-      color: var(--c-brand);
+    @include theme-light-own {
+      color: var(--wallet-l-accent);
     }
   }
 }

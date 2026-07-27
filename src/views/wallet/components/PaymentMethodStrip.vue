@@ -45,6 +45,8 @@ const emit = defineEmits<{
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -98,6 +100,11 @@ const emit = defineEmits<{
   box-sizing: border-box;
   position: relative;
   z-index: 1;
+
+  @include theme-light-own {
+    background: var(--wallet-l-surface-soft);
+    color: var(--wallet-l-text);
+  }
 }
 
 .method__label::before {
@@ -116,6 +123,10 @@ const emit = defineEmits<{
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
+
+  @include theme-light-own {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0.06) 100%);
+  }
 }
 
 .method--active .method__label {
@@ -123,6 +134,11 @@ const emit = defineEmits<{
   background: #EE3955;
   border: none;
   font-weight: 600;
+
+  @include theme-light-own {
+    background: var(--wallet-l-accent);
+    color: var(--wallet-l-text);
+  }
 }
 
 .method--active .method__label::before {

@@ -16,6 +16,8 @@ withDefaults(defineProps<Props>(), {})
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .chip {
   display: inline-flex;
   align-items: center;
@@ -26,6 +28,10 @@ withDefaults(defineProps<Props>(), {})
   min-width: 0;
   max-width: 100%;
   gap: 0.04rem;
+
+  @include theme-light-own {
+    box-shadow: inset 0 0 0 0.5px var(--wallet-l-border);
+  }
 }
 
 .chip__icon {

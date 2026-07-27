@@ -157,6 +157,8 @@ function onSuccessConfirm(): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-deposit {
   position: relative;
   z-index: 1;
@@ -181,6 +183,10 @@ function onSuccessConfirm(): void {
   font-size: 0.373rem;
   line-height: 1.2;
   color: #f9f9f9;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
 }
 
 .club-deposit__input {
@@ -201,6 +207,16 @@ function onSuccessConfirm(): void {
     font-family: var(--wallet-font-cn);
     font-weight: 500;
     color: rgba(249, 249, 249, 0.45);
+  }
+
+  @include theme-light-own {
+    background: var(--wallet-l-surface);
+    border: 0.5px solid var(--wallet-l-border);
+    color: var(--wallet-l-text);
+
+    &::placeholder {
+      color: var(--wallet-l-text-muted);
+    }
   }
 }
 
@@ -223,6 +239,14 @@ function onSuccessConfirm(): void {
     color: #78e490 !important;
     font-size: 0.493rem !important;
   }
+
+  @include theme-light-own {
+    background: var(--wallet-l-accent) !important;
+
+    :deep(.primary-btn__text) {
+      color: var(--wallet-l-on-accent) !important;
+    }
+  }
 }
 
 .club-deposit__success {
@@ -237,10 +261,18 @@ function onSuccessConfirm(): void {
   font-size: 0.4rem;
   font-weight: 600;
   color: #f9f9f9;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
 }
 
 .club-deposit__success-sub {
   font-size: 0.3rem;
   color: rgba(249, 249, 249, 0.7);
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
+  }
 }
 </style>

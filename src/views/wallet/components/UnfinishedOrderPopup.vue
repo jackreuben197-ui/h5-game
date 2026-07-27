@@ -92,6 +92,11 @@ function onContinue(): void {
   justify-content: center;
   padding: 20px;
   background: var(--c-overlay);
+
+  @include theme-light-own {
+    background: rgba(12, 12, 12, 0.6);
+    background-image: none !important;
+  }
 }
 
 .overlay::before {
@@ -126,10 +131,11 @@ function onContinue(): void {
   background-size: cover;
   background-position: center;
 
-  @include theme-light {
-    --c-text: #fff;
-    --c-text-muted: rgba(255, 255, 255, 0.5);
-    background-image: url('@/assets/images/wallet/bg_sharp.webp');
+  // Светлая тема: то же стекло, что и у модалки логина (light-panel), без растровой подложки.
+  @include theme-light-own {
+    @include light-panel;
+
+    background-image: none !important;
   }
 }
 
@@ -148,9 +154,6 @@ function onContinue(): void {
   pointer-events: none;
   z-index: 1;
 
-  @include theme-light {
-    background: rgba(0, 0, 0, 0.7);
-  }
 }
 
 .card__inner {
@@ -193,9 +196,6 @@ function onContinue(): void {
   gap: 12px;
   margin-bottom: 22px;
 
-  @include theme-light {
-    background: rgba(255, 255, 255, 0.1);
-  }
 }
 
 .info-row {
@@ -228,9 +228,6 @@ function onContinue(): void {
   background-blend-mode: color-burn;
   font-size: 13px;
 
-  @include theme-light {
-    background: rgba(44, 45, 45, 0.31);
-  }
 }
 
 .amount-text {
@@ -273,10 +270,6 @@ function onContinue(): void {
   backdrop-filter: blur(0.0527px);
   color: #fff;
 
-  @include theme-light {
-    background: rgba(0, 0, 0, 0.3);
-    color: #fff;
-  }
 }
 
 .btn--continue {
@@ -285,8 +278,9 @@ function onContinue(): void {
   backdrop-filter: blur(0.1584px);
   color: #fff;
 
-  @include theme-light {
-    background: var(--c-brand);
+  @include theme-light-own {
+    background: var(--wallet-l-accent);
+    color: var(--wallet-l-on-accent);
   }
 }
 

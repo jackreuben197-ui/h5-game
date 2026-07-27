@@ -150,6 +150,8 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .details-page {
   position: relative;
   display: flex;
@@ -164,6 +166,21 @@ onMounted(async () => {
   background-position: center;
   background-repeat: no-repeat;
   color: #fff;
+
+  // Фон задаётся инлайном (:style), поэтому светлый перебиваем через !important.
+  @include theme-light-own {
+    background-image: url('@/assets/images/main_bg_light.webp') !important;
+    color: var(--wallet-l-text);
+
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: var(--wallet-l-text);
+    }
+
+    :deep(.title) {
+      text-shadow: none;
+    }
+  }
 }
 
 .details-page::before {
@@ -175,6 +192,12 @@ onMounted(async () => {
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   background: rgba(0, 0, 0, 0.15);
+
+  @include theme-light-own {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .details-page > * {
@@ -247,6 +270,21 @@ onMounted(async () => {
     pointer-events: none;
     z-index: 1;
   }
+
+  @include theme-light-own {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(226, 226, 226, 0.7);
+    box-shadow: none;
+
+    &::before {
+      display: none;
+    }
+
+    &::after {
+      background: transparent;
+    }
+  }
 }
 
 .user-card > *:not(.card__bg-blur):not(.user-card__banner-bg) {
@@ -262,6 +300,10 @@ onMounted(async () => {
   background-repeat: no-repeat;
   z-index: 0;
   opacity: 0.65;
+
+  @include theme-light-own {
+    opacity: 0.12;
+  }
 }
 
 .user-card-inner {
@@ -286,6 +328,11 @@ onMounted(async () => {
   color: #ffffffc6;
   cursor: pointer;
   flex-shrink: 0;
+
+  @include theme-light-own {
+    background: var(--wallet-l-surface-soft);
+    color: var(--wallet-l-text);
+  }
 }
 
 .gift-entry__icon {
@@ -330,6 +377,11 @@ onMounted(async () => {
 
 .user-name {
   color: #fff;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
+
   font-family: 'SF Pro', sans-serif;
   font-size: 22.394px;
   font-weight: 700;
@@ -347,6 +399,10 @@ onMounted(async () => {
   font-weight: 400;
   font-size: 0.23rem;
   color: #fff;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
 }
 
 .gift-row {
@@ -365,6 +421,11 @@ onMounted(async () => {
 
 .balance-label {
   color: #f9f9f9;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
+  }
+
   font-family: 'SF Pro', sans-serif;
   font-size: 11.33px;
   font-weight: 400;
@@ -373,6 +434,11 @@ onMounted(async () => {
 
 .balance-value {
   color: #f9f9f9;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
+
   font-family: 'SF Pro', sans-serif;
   font-size: 16.33px;
   font-weight: 590;
@@ -405,6 +471,10 @@ onMounted(async () => {
   filter: blur(10px);
   pointer-events: none;
   z-index: 0;
+
+  @include theme-light-own {
+    display: none;
+  }
 }
 
 .transaction-card {
@@ -448,6 +518,21 @@ onMounted(async () => {
     mask-composite: exclude;
     pointer-events: none;
     z-index: 3;
+  }
+
+  @include theme-light-own {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--wallet-l-surface);
+    box-shadow: 0 0.08rem 0.2rem rgba(70, 79, 88, 0.1);
+
+    &::after {
+      background: transparent;
+    }
+
+    &::before {
+      background: linear-gradient(139deg, rgba(0, 0, 0, 0.16) 0%, rgba(0, 0, 0, 0.04) 100%);
+    }
   }
 }
 
@@ -520,6 +605,18 @@ onMounted(async () => {
   &--out {
     background: rgba(249, 22, 57, 0.52);
   }
+
+  @include theme-light-own {
+    &--in {
+      background: rgba(116, 221, 60, 0.18);
+      color: #74dd3c;
+    }
+
+    &--out {
+      background: rgba(249, 22, 57, 0.16);
+      color: #f91639;
+    }
+  }
 }
 
 .title-row {
@@ -529,6 +626,11 @@ onMounted(async () => {
 
 .title {
   color: #fff;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
+
   font-family: 'HONOR Sans CN', sans-serif;
   font-size: 0.3264rem;
   font-weight: 600;
@@ -553,10 +655,20 @@ onMounted(async () => {
   font-size: 0.2155rem;
   font-weight: 590;
   width: fit-content;
+
+  @include theme-light-own {
+    background: var(--wallet-l-surface-soft);
+    color: var(--wallet-l-text);
+  }
 }
 
 .id-number {
   color: #fff;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
+
   font-family: 'SF Pro', sans-serif;
   font-size: 0.256rem;
   font-weight: 590;
@@ -574,6 +686,16 @@ onMounted(async () => {
   &.out {
     color: #ff4b4b;
   }
+
+  // Цвет прихода совпадает с заливкой иконки ic_income.svg.
+  @include theme-light-own {
+    &.in {
+      color: #74dd3c;
+    }
+    &.out {
+      color: #f91639;
+    }
+  }
 }
 
 .divider {
@@ -582,6 +704,10 @@ onMounted(async () => {
   border-bottom: 0.5px dashed rgba(255, 255, 255, 0.5);
   align-self: center;
   margin: 0.2rem 0;
+
+  @include theme-light-own {
+    border-bottom-color: var(--wallet-l-divider);
+  }
 }
 
 .transaction-card__bottom {
@@ -599,6 +725,11 @@ onMounted(async () => {
 
 .time-text {
   color: #fff;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
+
   font-family: 'HONOR Sans CN', sans-serif;
   font-size: 0.32rem;
   font-weight: 400;
@@ -614,6 +745,11 @@ onMounted(async () => {
 
 .balance-text {
   color: #f9f9f9;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
+
   font-family: 'SF Pro', sans-serif;
   font-size: 0.3562rem;
   font-weight: 590;

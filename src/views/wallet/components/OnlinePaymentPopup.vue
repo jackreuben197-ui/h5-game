@@ -353,6 +353,8 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -365,6 +367,10 @@ onUnmounted(() => {
   background-position: center;
   background-repeat: no-repeat;
   background: rgba(23, 23, 23, 0.70);
+
+  @include theme-light-own {
+    background: rgba(12, 12, 12, 0.6);
+  }
 }
 
 .overlay::before {
@@ -397,6 +403,13 @@ onUnmounted(() => {
   overflow: hidden;
   background-size: cover;
   background-position: center;
+
+  // Светлая тема: то же стекло, что и у модалки логина (light-panel), без растровой подложки.
+  @include theme-light-own {
+    @include light-panel;
+
+    background-image: none !important;
+  }
 }
 
 .card::after {
@@ -503,6 +516,10 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
+
+  @include theme-light-own {
+    background: linear-gradient(97deg, #1f1f1f 21.11%, #191919 71.43%);
+  }
 }
 
 .amount-val {
@@ -612,6 +629,11 @@ onUnmounted(() => {
   border: 0.648px solid rgba(242, 242, 242, 0.80);
   background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%) !important;
   color: rgba(120, 228, 144, 1);
+
+  @include theme-light-own {
+    background: var(--wallet-l-accent) !important;
+    color: var(--wallet-l-on-accent);
+  }
 }
 
 .action-btn--submit:disabled {
@@ -723,6 +745,11 @@ onUnmounted(() => {
   border: 0.5px solid rgba(242, 242, 242, 0.80);
   background: rgba(255, 255, 255, 0.08);
   color: rgba(120, 228, 144, 1);
+
+  @include theme-light-own {
+    background: var(--wallet-l-accent);
+    color: var(--wallet-l-on-accent);
+  }
   display: flex;
   flex-direction: column;
   justify-content: center;

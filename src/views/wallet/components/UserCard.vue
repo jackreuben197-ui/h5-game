@@ -124,11 +124,11 @@ const bannerBg = `url(${bannerBgUrl})`
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0.8rem;
 
-  @include theme-light {
-    background: linear-gradient(135deg, #cbd0d4 0%, #adb1b5 100%);
-    box-shadow:
-      inset 0.08rem 0.08rem 0.18rem rgba(255, 255, 255, 0.42),
-      0 0.08rem 0.2rem rgba(70, 79, 88, 0.12);
+  @include theme-light-own {
+    border-radius: 29.219px;
+    background: rgba(0, 0, 0, 0.19);
+    border: none;
+    box-shadow: none;
   }
 }
 
@@ -282,8 +282,8 @@ const bannerBg = `url(${bannerBgUrl})`
   line-height: 1.05;
   white-space: pre-line;
 
-  @include theme-light {
-    color: #000;
+  @include theme-light-own {
+    color: var(--wallet-l-text);
   }
 }
 
@@ -303,8 +303,8 @@ const bannerBg = `url(${bannerBgUrl})`
   font-size: 0.23rem;
   color: #fff;
 
-  @include theme-light {
-    color: #000;
+  @include theme-light-own {
+    color: var(--wallet-l-text);
   }
 }
 

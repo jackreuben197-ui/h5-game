@@ -191,6 +191,8 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .gift-page {
   min-height: 100vh;
   min-height: 100dvh;
@@ -200,6 +202,21 @@ onMounted(() => {
   background-position: center;
   background-repeat: no-repeat;
   color: #fff;
+
+  // Фон задаётся инлайном (:style), поэтому светлый перебиваем через !important.
+  @include theme-light-own {
+    background-image: url('@/assets/images/main_bg_light.webp') !important;
+    color: var(--wallet-l-text);
+
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: var(--wallet-l-text);
+    }
+
+    :deep(.title) {
+      text-shadow: none;
+    }
+  }
 }
 
 .gift-content {
@@ -215,6 +232,10 @@ onMounted(() => {
   font-size: 0.36rem;
   line-height: 1.4;
   color: rgba(255, 255, 255, 0.94);
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
 }
 
 .amount-input {
@@ -228,6 +249,12 @@ onMounted(() => {
   gap: 0.24rem;
   background: rgba(0, 0, 0, 0.2);
   color: #fff;
+
+  @include theme-light-own {
+    background: var(--wallet-l-surface);
+    border: 0.5px solid var(--wallet-l-border);
+    color: var(--wallet-l-text);
+  }
 }
 
 .amount-input__icon {
@@ -263,6 +290,10 @@ onMounted(() => {
   font-family: 'HONOR Sans CN', sans-serif;
   font-size: 0.32rem;
   color: rgba(255, 255, 255, 0.78);
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
+  }
 }
 
 .player-item {
@@ -276,6 +307,12 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   color: #fff;
+
+  @include theme-light-own {
+    background: var(--wallet-l-surface);
+    border: 0.5px solid var(--wallet-l-border);
+    color: var(--wallet-l-text);
+  }
 }
 
 .player-item__main {
@@ -313,6 +350,10 @@ onMounted(() => {
   font-size: 0.25rem;
   color: rgba(255, 255, 255, 0.74);
   line-height: 1;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
+  }
 }
 
 .player-item__check {
@@ -327,12 +368,23 @@ onMounted(() => {
   font-size: 0.3rem;
   font-weight: 700;
   flex-shrink: 0;
+
+  @include theme-light-own {
+    border-color: var(--wallet-l-border);
+    color: var(--wallet-l-text);
+  }
 }
 
 .player-item__check--on {
   border-color: rgba(85, 243, 41, 1);
   background: rgba(85, 243, 41, 1);
   color: #052319;
+
+  @include theme-light-own {
+    border-color: var(--wallet-l-accent);
+    background: var(--wallet-l-accent);
+    color: var(--wallet-l-on-accent);
+  }
 }
 
 .submit-btn {
@@ -346,6 +398,11 @@ onMounted(() => {
   font-weight: 500;
   color: #fff;
   background: linear-gradient(120deg, rgba(85, 243, 41, 1) 0%, #029d75 100%);
+
+  @include theme-light-own {
+    background: var(--wallet-l-accent);
+    color: var(--wallet-l-on-accent);
+  }
 }
 
 .submit-btn:disabled {

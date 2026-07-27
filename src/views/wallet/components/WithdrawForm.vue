@@ -464,6 +464,22 @@ watch(filteredWithdrawTypes, (list) => {
   &:not(.primary-btn--disabled) :deep(.primary-btn__text) {
     color: #78e490;
   }
+
+  @include theme-light-own {
+    border-color: rgba(242, 242, 242, 0.8) !important;
+    background: var(--wallet-l-accent) !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+
+    &::after {
+      box-shadow: none;
+    }
+
+    :deep(.primary-btn__text),
+    &:not(.primary-btn--disabled) :deep(.primary-btn__text) {
+      color: var(--wallet-l-on-accent);
+    }
+  }
 }
 
 // ── Glass card ────────────────────────────────────────────────────────────────
@@ -510,6 +526,23 @@ watch(filteredWithdrawTypes, (list) => {
   }
 
   & > * { position: relative; z-index: 1; }
+
+  @include theme-light-own {
+    border-color: var(--wallet-l-border);
+    background: var(--wallet-l-surface);
+    box-shadow: 0 0.08rem 0.2rem rgba(70, 79, 88, 0.1);
+
+    &::before {
+      background: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      mix-blend-mode: normal;
+    }
+
+    &::after {
+      box-shadow: none;
+    }
+  }
 }
 
 // ── Account card ──────────────────────────────────────────────────────────────
@@ -525,6 +558,10 @@ watch(filteredWithdrawTypes, (list) => {
   font-size: 0.28rem;
   font-weight: 500;
   color: #fff;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
 }
 
 .wf__add-card-btn {
@@ -541,6 +578,11 @@ watch(filteredWithdrawTypes, (list) => {
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
   &:active { opacity: 0.85; }
+
+  @include theme-light-own {
+    background: var(--wallet-l-accent);
+    color: var(--wallet-l-on-accent);
+  }
 }
 
 // Type cards horizontal scroll
@@ -620,6 +662,20 @@ watch(filteredWithdrawTypes, (list) => {
 
     &::before { display: none; }
   }
+
+  @include theme-light-own {
+    background: var(--wallet-l-surface-soft);
+
+    &::before {
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0.06) 100%);
+    }
+  }
+
+  .wf__type-card--active & {
+    @include theme-light-own {
+      background: var(--wallet-l-accent);
+    }
+  }
 }
 
 .wf__type-card-text {
@@ -637,11 +693,22 @@ watch(filteredWithdrawTypes, (list) => {
   font-size: 0.22rem;
   font-weight: 500;
   color: #fff;
+
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   flex-shrink: 1;
   min-width: 0;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
+
+  .wf__type-card--active & {
+    @include theme-light-own {
+      color: var(--wallet-l-text);
+    }
+  }
 }
 
 
@@ -651,6 +718,16 @@ watch(filteredWithdrawTypes, (list) => {
   color: rgba(255, 255, 255, 0.6);
   flex-shrink: 0;
   white-space: nowrap;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
+  }
+
+  .wf__type-card--active & {
+    @include theme-light-own {
+      color: var(--wallet-l-text-muted);
+    }
+  }
 }
 
 // Account rows
@@ -660,6 +737,10 @@ watch(filteredWithdrawTypes, (list) => {
   font-size: 0.3rem;
   color: rgba(255,255,255,0.5);
   padding: 0.24rem 0;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
+  }
 }
 
 .wf__acct-row {
@@ -676,6 +757,13 @@ watch(filteredWithdrawTypes, (list) => {
   &--active {
     background: rgba(255, 255, 255, 0.18);
     border-color: rgba(242, 242, 242, 0.4);
+  }
+
+  @include theme-light-own {
+    &--active {
+      background: rgba(5, 194, 151, 0.08);
+      border-color: var(--wallet-l-accent);
+    }
   }
 }
 
@@ -705,6 +793,10 @@ watch(filteredWithdrawTypes, (list) => {
   font-size: 0.3rem;
   font-weight: 400;
   color: #fff;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -715,6 +807,10 @@ watch(filteredWithdrawTypes, (list) => {
   font-size: 0.3rem;
   color: rgba(255,255,255,0.8);
   white-space: nowrap;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
 }
 
 .wf__acct-no-pill {
@@ -729,6 +825,11 @@ watch(filteredWithdrawTypes, (list) => {
   font-size: 0.3rem;
   color: #fff;
   white-space: nowrap;
+
+  @include theme-light-own {
+    background: var(--wallet-l-surface-soft);
+    color: var(--wallet-l-text);
+  }
 }
 
 .wf__acct-empty {
@@ -737,6 +838,10 @@ watch(filteredWithdrawTypes, (list) => {
   font-size: 0.3rem;
   color: rgba(255,255,255,0.45);
   padding: 0.16rem 0;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
+  }
 }
 
 
@@ -764,6 +869,10 @@ watch(filteredWithdrawTypes, (list) => {
   font-size: 0.28rem;
   color: rgba(249,249,249,0.45);
   box-sizing: border-box;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
+  }
 }
 
 .wf__amount-display {
@@ -796,6 +905,13 @@ watch(filteredWithdrawTypes, (list) => {
   opacity: 0;
   transition: opacity 0.2s;
   &--visible { opacity: 1; background: rgba(255,255,255,0.9); }
+
+  @include theme-light-own {
+    &--visible {
+      background: var(--wallet-l-surface);
+      box-shadow: inset 0 0 0 0.5px var(--wallet-l-border);
+    }
+  }
 }
 
 .wf__amount-entered-input {
@@ -828,5 +944,9 @@ watch(filteredWithdrawTypes, (list) => {
   font-size: 0.26rem;
   color: rgba(255,255,255,0.5);
   span { line-height: 1.4; }
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
+  }
 }
 </style>

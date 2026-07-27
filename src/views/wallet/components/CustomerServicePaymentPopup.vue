@@ -103,6 +103,9 @@ const payPrice = computed(() =>
   background-repeat: no-repeat;
    background: rgba(23, 23, 23, 0.70);
 
+  @include theme-light-own {
+    background: rgba(12, 12, 12, 0.6);
+  }
 }
 
 .overlay::before {
@@ -137,11 +140,11 @@ const payPrice = computed(() =>
   background-size: cover;
   background-position: center;
 
-  @include theme-light {
-    --c-text: #fff;
-    --c-text-muted: rgba(255, 255, 255, 0.5);
-    --c-divider: rgba(255, 255, 255, 0.2);
-    background-image: url('@/assets/images/wallet/bg_sharp.webp');
+  // Светлая тема: то же стекло, что и у модалки логина (light-panel), без растровой подложки.
+  @include theme-light-own {
+    @include light-panel;
+
+    background-image: none !important;
   }
 }
 
@@ -160,9 +163,6 @@ const payPrice = computed(() =>
   pointer-events: none;
   z-index: 1;
 
-  @include theme-light {
-    background: rgba(0, 0, 0, 0.7);
-  }
 }
 
 .card::before {
@@ -224,12 +224,6 @@ const payPrice = computed(() =>
   line-height: 78%;
   letter-spacing: 0.32px;
   margin: 0;
-
-  @include theme-light {
-    background: none;
-    -webkit-text-fill-color: #fff;
-    color: #fff;
-  }
 }
 
 .card__header-info {
@@ -272,12 +266,9 @@ const payPrice = computed(() =>
     rgba(230, 230, 230, 0.1) 71.43%
   );
 
-  @include theme-light {
-    background: linear-gradient(
-      97deg,
-      rgba(255, 255, 255, 0.1) 21.11%,
-      rgba(230, 230, 230, 0.1) 71.43%
-    );
+  // Полоса с суммой одинаково тёмная в обеих темах (см. макет).
+  @include theme-light-own {
+    background: linear-gradient(97deg, #1f1f1f 21.11%, #191919 71.43%);
   }
 }
 
@@ -355,10 +346,6 @@ const payPrice = computed(() =>
   backdrop-filter: blur(0.05274080112576485px);
   border: none;
 
-  @include theme-light {
-    background: rgba(0, 0, 0, 0.3);
-    color: #fff;
-  }
 }
 
 .btn-pay {
@@ -368,9 +355,14 @@ const payPrice = computed(() =>
     inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
     inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
 
-  @include theme-light {
-    background: var(--c-brand);
+  @include theme-light-own {
+    background: var(--wallet-l-accent) !important;
     box-shadow: none;
+    color: var(--wallet-l-on-accent);
+
+    &::before {
+      display: none;
+    }
   }
 
   &::before {

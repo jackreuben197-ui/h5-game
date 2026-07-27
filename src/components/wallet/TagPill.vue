@@ -41,8 +41,9 @@ withDefaults(defineProps<Props>(), {
   background: rgba(40, 38, 38, 0.52);
   mix-blend-mode: color-burn;
 
-  @include theme-light {
-    background: rgba(194, 194, 194, 0.52);
+  @include theme-light-own {
+    border-radius: 31px;
+    background: rgba(40, 38, 38, 0.22);
     mix-blend-mode: normal;
   }
 }
@@ -52,8 +53,8 @@ withDefaults(defineProps<Props>(), {
   padding: 0 0.13rem;
   border-radius: 0.121rem;
 
-  @include theme-light {
-    background: rgba(0, 0, 0, 0.06);
+  @include theme-light-own {
+    background: var(--wallet-l-surface-soft);
   }
 }
 
@@ -64,8 +65,8 @@ withDefaults(defineProps<Props>(), {
   color: #fff;
   letter-spacing: 0.1px;
 
-  @include theme-light {
-    color: #000;
+  @include theme-light-own {
+    color: var(--wallet-l-text);
   }
 }
 

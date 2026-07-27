@@ -88,8 +88,12 @@ withDefaults(defineProps<Props>(), {
   background: rgba(0, 0, 0, 0.14);
   box-shadow: none;
 
-  @include theme-light {
-    background: #fff;
+  // Локально переопределяем семантические переменные: дочерние узлы читают их через var().
+  @include theme-light-own {
+    --c-text: var(--wallet-l-text);
+    --c-divider: var(--wallet-l-divider);
+
+    background: var(--wallet-l-surface);
   }
 }
 

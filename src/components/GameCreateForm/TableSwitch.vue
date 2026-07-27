@@ -105,3 +105,12 @@ const getIcon = (name: string) => {
   color: #fff;
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .table-switch-root {
+  .table-switch__text,
+  .table-switch__tip2 {
+    color: rgba(15, 8, 8, 0.85);
+  }
+}
+</style>

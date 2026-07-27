@@ -568,6 +568,71 @@ function confirm(): void {
   user-select: none;
 }
 
+:root[data-theme='light'] {
+  .kp__sheet,
+  .kp__sheet--plain {
+    background-color: rgba(116, 116, 116, 0.25);
+    backdrop-filter: blur(9.922px);
+    -webkit-backdrop-filter: blur(9.922px);
+    border-color: rgba(242, 242, 242, 0.4);
+    box-shadow:
+      3.222px 4.028px 6.445px rgba(0, 0, 0, 0.25),
+      inset 1.134px 1.134px 2.268px rgba(242, 242, 242, 0.2);
+  }
+
+  .kp__title,
+  .kp__value {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .kp__placeholder {
+    color: rgba(15, 8, 8, 0.4);
+  }
+
+  .kp__input {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  .kp__key {
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.2) 0%,
+      rgba(0, 0, 0, 0.05) 52%,
+      rgba(0, 0, 0, 0.23) 100%
+    );
+    mix-blend-mode: normal;
+    color: #000;
+  }
+
+  .kp__key::before {
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  .kp__key:active {
+    background: rgba(0, 0, 0, 0.19);
+  }
+
+  .kp__key--accent,
+  .kp__key--accent:active {
+    background: rgba(5, 194, 151, 0.43);
+    mix-blend-mode: normal;
+    color: #fff;
+  }
+
+  .kp__cancel {
+    display: none;
+  }
+
+  .kp__confirm {
+    background: #05c297 !important;
+    flex: 1 0 100% !important;
+  }
+
+  .kp__confirm :deep(.primary-btn__text) {
+    color: #fbfbfb !important;
+  }
+}
+
 .keypad-enter-active .kp__sheet,
 .keypad-leave-active .kp__sheet {
   transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);

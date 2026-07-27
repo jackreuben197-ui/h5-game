@@ -214,3 +214,35 @@ function onInput(value: string | number): void {
   }
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .table-stepper-row {
+  .table-stepper__text {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .table-stepper__field-wrap {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  .van-stepper__input {
+    color: rgba(15, 8, 8, 0.85);
+
+    &::placeholder {
+      color: rgba(15, 8, 8, 0.4);
+    }
+  }
+
+  .van-stepper__minus,
+  .van-stepper__plus {
+    background: linear-gradient(180deg, #ffffff 0%, #e2e2e2 100%);
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .van-stepper__minus--disabled,
+  .van-stepper__plus--disabled {
+    background: linear-gradient(180deg, #ffffff 0%, #e2e2e2 100%);
+    color: rgba(15, 8, 8, 0.35);
+  }
+}
+</style>

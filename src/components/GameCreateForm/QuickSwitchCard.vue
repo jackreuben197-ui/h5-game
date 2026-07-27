@@ -160,3 +160,15 @@ const isActive = computed(() => props.modelValue === props.activeValue)
   }
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .quick-switch-card {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.08);
+
+  .quick-switch-card__label,
+  .quick-switch-card__status {
+    color: rgba(15, 8, 8, 0.85);
+  }
+}
+</style>

@@ -164,3 +164,12 @@ function onTabChange(nextName: string): void {
   }
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .table-tab {
+  .table-tab__icon,
+  .table-tab__text {
+    color: rgba(15, 8, 8, 0.85);
+  }
+}
+</style>

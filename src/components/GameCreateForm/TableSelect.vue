@@ -204,3 +204,31 @@ function onPopoverVisibilityChange(next: boolean): void {
   color: #08392d;
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .table-select-row {
+  .table-select__text,
+  .table-select__value {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .table-select__field {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  .table-select__dropdown {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(0, 0, 0, 0.12);
+  }
+
+  .table-select__option {
+    background: rgba(0, 0, 0, 0.06);
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .table-select__option--active {
+    background: #78e490;
+    color: #08392d;
+  }
+}
+</style>

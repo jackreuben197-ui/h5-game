@@ -411,3 +411,20 @@ function clampOptionIndex(value: number, length: number): number {
   opacity: 0;
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .table-slider-row {
+  .table-slider__text,
+  .table-slider__value {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .table-slider__mark-label {
+    color: rgba(15, 8, 8, 0.4);
+  }
+
+  .table-slider__mark-label--active {
+    color: rgba(15, 8, 8, 0.85);
+  }
+}
+</style>

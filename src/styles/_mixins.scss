@@ -49,3 +49,58 @@ $upstream-light-enabled: false;
     @content;
   }
 }
+
+// light-panel: стеклянная подложка панели/модалки, эталон — .notification-panel.
+// Требования к хосту: свободные ::before / ::after, контент с z-index >= 1.
+// Описание и примеры — README, раздел 8.3 «light-panel».
+@mixin light-panel(
+  $fill: rgba(135, 134, 134, 0.032),
+  $blur: 0.58px,
+  $radius: clamp(28px, 10vw, 36.4px)
+) {
+  position: relative;
+  border: 0.96px solid rgba(242, 242, 242, 0.04);
+  border-radius: $radius;
+  box-shadow: none;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: $fill;
+    box-shadow:
+      0.0919rem 0.1149rem 0.1838rem rgba(0, 0, 0, 0.25),
+      0 0 0.2298rem #000 inset,
+      0.0566rem 0.1132rem 0.4596rem rgba(242, 242, 242, 0.7) inset;
+    backdrop-filter: blur($blur);
+    -webkit-backdrop-filter: blur($blur);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 0.0255rem;
+    background: linear-gradient(
+      180deg,
+      rgba(242, 242, 242, 0.4) 0%,
+      rgba(255, 255, 255, 0) 50%,
+      rgba(255, 255, 255, 0.5) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
+  }
+}

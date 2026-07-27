@@ -24,6 +24,7 @@ import icLock from '@/assets/icons/ic_lock.svg'
 import icKey from '@/assets/icons/ic_key.svg'
 import icEye from '@/assets/icons/ic_eye.svg'
 import icGlobe from '@/assets/icons/ic_globe.svg'
+import icModalClose from '@/assets/icons/modal_close.svg'
 import { showGameToast } from '@/components/Toast'
 import { Loading } from 'vant'
 import { DEBUG_ACCOUNTS, type DebugAccount } from '@/constants/debugAccounts'
@@ -533,6 +534,7 @@ function applyChannelInviteContext(): void {
 <template>
   <GameDialog
     v-model:show="loginModalStore.visible"
+    class="login-dialog"
     :show-footer="false"
     :show-confirm-button="false"
     :close-on-click-overlay="true"
@@ -547,6 +549,9 @@ function applyChannelInviteContext(): void {
           <span class="lang-text">{{ currentLang.toUpperCase() }}</span>
         </button>
       </div>
+      <button class="login-close" type="button" @click="loginModalStore.close()">
+        <img :src="icModalClose" alt="" />
+      </button>
     </template>
     <!-- <span class="debug-trigger" @click="openDebugAccountDialog">DEV</span> -->
     <div class="login-form">
@@ -801,6 +806,30 @@ function applyChannelInviteContext(): void {
   border-bottom: 0.2px solid rgba(255, 255, 255, 0.2);
   padding: 0 0.08rem;
   cursor: pointer;
+}
+
+.login-close {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 10;
+  width: 0.71rem;
+  height: 0.71rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+
+  &:active {
+    opacity: 0.85;
+  }
+
+  img {
+    width: 0.7rem;
+  }
 }
 
 .login-form {
@@ -1063,5 +1092,51 @@ function applyChannelInviteContext(): void {
   color: rgba(255, 255, 255, 0.85);
   line-height: 1.5;
   text-align: center;
+}
+</style>
+
+<style lang="scss">
+@use '@/styles/mixins' as *;
+
+:root[data-theme='dark'] .login-dialog .game-dialog__title {
+  display: none;
+}
+
+:root[data-theme='light'] .login-dialog {
+  .login-close {
+    display: flex;
+  }
+
+  .game-dialog__card {
+    @include light-panel;
+
+    background-image: none !important;
+  }
+
+  .game-dialog__card-bg-gradient,
+  .game-dialog__card-bg-texture,
+  .game-dialog__card-bg-shadow {
+    display: none;
+  }
+
+  .input-row--filled {
+    background: #05c297;
+  }
+
+  .otp-btn {
+    background: #05c297;
+  }
+
+  .primary-btn {
+    background: #05c297;
+    border: 0.5px solid rgba(242, 242, 242, 0.8);
+    color: #fbfbfb;
+  }
+
+  .register-tip {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: transparent;
+    color: rgba(15, 8, 8, 0.69);
+  }
 }
 </style>

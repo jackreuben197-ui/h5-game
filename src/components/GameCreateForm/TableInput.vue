@@ -224,3 +224,24 @@ function clampNumberInput(raw: string, decimalDigits: number, min?: number, max?
   border: none;
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .table-input-row {
+  .table-input__text,
+  .table-input__edit-icon {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .table-input__field-wrap {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  .van-field__control {
+    color: rgba(15, 8, 8, 0.85);
+
+    &::placeholder {
+      color: rgba(15, 8, 8, 0.4);
+    }
+  }
+}
+</style>

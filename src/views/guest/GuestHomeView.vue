@@ -123,7 +123,7 @@ onMounted(() => {
 <template>
   <div ref="homeRootRef" class="home-page">
     <!-- 0. 顶部栏：POKER + 注册/登录 -->
-    <div class="top-bar">
+    <div class="top-bar top-bar--guest">
       <!-- лого и текст временно скрыты
       <div class="top-bar__logo">
         <img class="top-bar__logo-img" src="@/assets/images/img_fish_browser_logo.png" alt="logo" />

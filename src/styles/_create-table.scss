@@ -1,0 +1,108 @@
+// Светлая тема флоу создания стола: выбор типа игры -> шаблон (обычный и MTT).
+// Оба шаблонных экрана используют одни и те же классы, поэтому правила общие.
+:root[data-theme='light'] {
+  .club-table-create-page {
+    background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+    .title-wrap {
+      color: rgba(15, 8, 8, 0.85);
+    }
+
+    .title-divider span {
+      background: rgba(0, 0, 0, 0.24);
+    }
+  }
+
+  .create-table-page {
+    background-image: url('@/assets/images/main_bg_light.webp');
+
+    .header-tab {
+      color: rgba(15, 8, 8, 0.55);
+    }
+
+    .header-tab--active {
+      color: rgba(15, 8, 8, 0.92);
+
+      &::after {
+        background: rgba(15, 8, 8, 0.92);
+      }
+    }
+
+    .table-name-row,
+    .detail-form__section,
+    .bottom-action-bar {
+      background: rgba(255, 255, 255, 0.8);
+      border-color: rgba(0, 0, 0, 0.08);
+    }
+
+    .detail-form__section--tab {
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .table-name__label,
+    .table-name__input,
+    .fee-label,
+    .fee-original,
+    .fee-current,
+    .fee-balance {
+      color: rgba(15, 8, 8, 0.85);
+    }
+
+    .table-name__input::placeholder {
+      color: rgba(15, 8, 8, 0.4);
+    }
+
+    .table-name__count {
+      color: rgba(15, 8, 8, 0.45);
+    }
+
+    .detail-form__item {
+      border-bottom-color: rgba(0, 0, 0, 0.08);
+    }
+
+    .action-btn--save {
+      background: rgba(0, 0, 0, 0.12);
+      color: rgba(15, 8, 8, 0.85);
+    }
+  }
+
+  .club-table-create-page,
+  .create-table-page {
+    .back-trigger,
+    .back-icon {
+      color: rgba(15, 8, 8, 0.85);
+    }
+
+    .title {
+      text-shadow: none;
+    }
+  }
+
+  .quick-create-view {
+    .quick-panel {
+      background: rgba(255, 255, 255, 0.8);
+      border-color: rgba(0, 0, 0, 0.08);
+    }
+
+    .quick-fee__label,
+    .quick-fee__value,
+    .quick-fee__current {
+      color: rgba(15, 8, 8, 0.85);
+    }
+
+    .quick-fee__original {
+      color: rgba(15, 8, 8, 0.4);
+    }
+
+    .quick-create-btn {
+      background: #05c297;
+      border-color: transparent;
+      color: #fbfbfb;
+    }
+
+    .template-list__placeholder {
+      color: rgba(15, 8, 8, 0.5);
+    }
+  }
+}

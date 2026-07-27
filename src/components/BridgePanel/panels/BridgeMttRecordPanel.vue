@@ -794,6 +794,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
 .mrp {
   position: relative;
   isolation: isolate;

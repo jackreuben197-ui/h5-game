@@ -167,6 +167,14 @@ function onTabChange(nextName: string): void {
 
 <style lang="scss">
 :root[data-theme='light'] .table-tab {
+  .filter-tabbar {
+    background: rgba(0, 0, 0, 0.17);
+  }
+
+  .filter-tab__item--active {
+    background: rgba(255, 255, 255, 0.5);
+  }
+
   .table-tab__icon,
   .table-tab__text {
     color: rgba(15, 8, 8, 0.85);

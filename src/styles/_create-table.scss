@@ -1,3 +1,5 @@
+@use './mixins' as *;
+
 // Светлая тема флоу создания стола: выбор типа игры -> шаблон (обычный и MTT).
 // Оба шаблонных экрана используют одни и те же классы, поэтому правила общие.
 :root[data-theme='light'] {
@@ -21,10 +23,10 @@
     }
 
     .header-tab--active {
-      color: rgba(15, 8, 8, 0.92);
+      color: #05c297;
 
       &::after {
-        background: rgba(15, 8, 8, 0.92);
+        background: #05c297;
       }
     }
 
@@ -65,6 +67,12 @@
       background: rgba(0, 0, 0, 0.12);
       color: rgba(15, 8, 8, 0.85);
     }
+
+    .action-btn--create {
+      background: #05c297;
+      color: #fbfbfb;
+      box-shadow: none;
+    }
   }
 
   .club-table-create-page,
@@ -81,8 +89,18 @@
 
   .quick-create-view {
     .quick-panel {
-      background: rgba(255, 255, 255, 0.8);
-      border-color: rgba(0, 0, 0, 0.08);
+      background: #fff;
+      border-color: transparent;
+
+      &::before {
+        background: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+      }
+
+      &::after {
+        box-shadow: none;
+      }
     }
 
     .quick-fee__label,
@@ -103,6 +121,31 @@
 
     .template-list__placeholder {
       color: rgba(15, 8, 8, 0.5);
+    }
+  }
+
+  .template-dialog {
+    .game-dialog__card {
+      @include light-panel;
+
+      background-image: none !important;
+    }
+
+    .game-dialog__card-bg-gradient,
+    .game-dialog__card-bg-texture,
+    .game-dialog__card-bg-shadow {
+      display: none;
+    }
+
+    .template-dialog__input {
+      background: rgba(0, 0, 0, 0.15);
+      border-color: rgba(242, 242, 242, 0.24);
+    }
+
+    .game-dialog__confirm-btn {
+      background: #05c297 !important;
+      border: 0.5px solid rgba(242, 242, 242, 0.8);
+      color: #fbfbfb;
     }
   }
 }

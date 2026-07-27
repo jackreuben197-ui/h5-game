@@ -426,5 +426,13 @@ function clampOptionIndex(value: number, length: number): number {
   .table-slider__mark-label--active {
     color: rgba(15, 8, 8, 0.85);
   }
+
+  .van-slider {
+    background-color: rgba(120, 120, 120, 0.5);
+  }
+
+  .van-slider__bar {
+    background: #05c297;
+  }
 }
 </style>

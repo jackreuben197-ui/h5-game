@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@iconify/vue": "^5.0.0",
-    "@silenthill/agreement-web": "git+ssh://git@github.com/kingofake/agreement-web.git#master",
+    "@silenthill/agreement-web": "github:kingofake/agreement-web#master",
     "@silenthill/h5-cc-bridge": "github:soolary/h5-cc-bridge#main",
     "@silenthill/h5-cc-i18n": "github:guysoup027/h5-cc-i18n#main",
     "@vueuse/core": "^14.2.1",

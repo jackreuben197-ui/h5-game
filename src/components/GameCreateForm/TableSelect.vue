@@ -213,7 +213,11 @@ function onPopoverVisibilityChange(next: boolean): void {
   }
 
   .table-select__field {
-    background: rgba(0, 0, 0, 0.06);
+    background: rgba(0, 0, 0, 0.15);
+  }
+
+  .table-select__arrow {
+    filter: invert(1);
   }
 
   .table-select__dropdown {

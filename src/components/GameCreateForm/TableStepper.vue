@@ -222,7 +222,7 @@ function onInput(value: string | number): void {
   }
 
   .table-stepper__field-wrap {
-    background: rgba(0, 0, 0, 0.06);
+    background: rgba(0, 0, 0, 0.15);
   }
 
   .van-stepper__input {

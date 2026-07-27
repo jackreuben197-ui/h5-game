@@ -163,12 +163,30 @@ const isActive = computed(() => props.modelValue === props.activeValue)
 
 <style lang="scss">
 :root[data-theme='light'] .quick-switch-card {
-  background: rgba(255, 255, 255, 0.8);
-  border-color: rgba(0, 0, 0, 0.08);
+  background: rgba(78, 78, 78, 0.1);
+  border-color: transparent;
+
+  &::before {
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  &::after {
+    box-shadow: none;
+  }
 
   .quick-switch-card__label,
   .quick-switch-card__status {
     color: rgba(15, 8, 8, 0.85);
+  }
+
+  .quick-switch-card__switch {
+    --van-switch-on-background: #05c297;
+
+    &:not(.van-switch--on) {
+      background-color: #69686b !important;
+    }
   }
 }
 </style>

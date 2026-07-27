@@ -643,6 +643,7 @@ async function onCreateTable() {
 
     <GameDialog
       v-model:show="templateDialog.show"
+      class="template-dialog"
       :title="t('UIGuild_TipsTitle')"
       :show-cancel-button="true"
       :confirm-button-text="t('Save')"

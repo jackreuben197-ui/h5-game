@@ -112,5 +112,13 @@ const getIcon = (name: string) => {
   .table-switch__tip2 {
     color: rgba(15, 8, 8, 0.85);
   }
+
+  .table-switch__switch {
+    --van-switch-on-background: #05c297;
+
+    &:not(.van-switch--on) {
+      background-color: #69686b !important;
+    }
+  }
 }
 </style>

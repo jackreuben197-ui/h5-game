@@ -233,7 +233,7 @@ function clampNumberInput(raw: string, decimalDigits: number, min?: number, max?
   }
 
   .table-input__field-wrap {
-    background: rgba(0, 0, 0, 0.06);
+    background: rgba(0, 0, 0, 0.15);
   }
 
   .van-field__control {

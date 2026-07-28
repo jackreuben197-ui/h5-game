@@ -1435,6 +1435,64 @@ const handleBack = () => {
   background-repeat: no-repeat;
   background-image: var(--club-page-bg-dark);
   padding-top: 0;
+
+  @include theme-light-own {
+    // Семантические переменные глобально остаются тёмными — светлые значения задаём локально.
+    --c-brand: #05c297;
+    --c-brand-rgb: 5, 194, 151;
+
+    color: rgba(0, 0, 0, 1);
+    background-image: var(--club-page-bg-light);
+
+    // HeaderBack задаёт себе color: #fff жёстко — наследование от страницы его не перебивает.
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: rgba(0, 0, 0, 1);
+    }
+
+    :deep(.action-wrap) {
+      .action-icon {
+        // 1x1 прозрачный GIF: гасит исходные пиксели, коробка остаётся в потоке.
+        content: url('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
+        background-color: var(--c-brand);
+        -webkit-mask-position: center;
+        mask-position: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+      }
+
+      .action-btn:first-child .action-icon {
+        -webkit-mask-image: url('@/assets/icons/icon_wallet.png');
+        mask-image: url('@/assets/icons/icon_wallet.png');
+      }
+
+      .action-btn + .action-btn .action-icon {
+        -webkit-mask-image: url('@/assets/icons/icon_server.png');
+        mask-image: url('@/assets/icons/icon_server.png');
+      }
+    }
+
+    // Активная вкладка (全部/德州/…): белая «выемка» вместо тёмной.
+    :deep(.club-game-tabs) {
+      --tab-active-bg: url('@/assets/images/game_type_tab_active_bg_light.svg') !important;
+    }
+
+    // GameTypeTabbar переиспользуется тёмной страницей лобби — красим его только здесь.
+    :deep(.club-game-tabs) {
+      --van-tab-text-color: rgba(34, 34, 34, 0.72);
+      --van-tab-active-text-color: #111;
+
+      .van-tab {
+        color: rgba(34, 34, 34, 0.72) !important;
+      }
+
+      .van-tab--active {
+        color: #111 !important;
+      }
+    }
+  }
 }
 
 .club-header {
@@ -1496,6 +1554,10 @@ const handleBack = () => {
 .header-back-btn svg {
   width: 0.189rem;
   height: 0.322rem;
+
+  @include theme-light-own {
+    color: rgba(0, 0, 0, 1);
+  }
 }
 
 .club-avatar {
@@ -1504,6 +1566,10 @@ const handleBack = () => {
   border-radius: 50%;
   overflow: hidden;
   border: 0.0133rem solid rgba(255, 255, 255, 0.24);
+
+  @include theme-light-own {
+    border-color: rgba(0, 0, 0, 0.12);
+  }
 }
 
 .club-avatar img {
@@ -1525,7 +1591,7 @@ const handleBack = () => {
   overflow: hidden;
   text-overflow: ellipsis;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #111;
   }
 }
@@ -1538,7 +1604,7 @@ const handleBack = () => {
   font-size: 0.257rem;
   opacity: 0.94;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #222;
   }
 }
@@ -1561,9 +1627,9 @@ const handleBack = () => {
   justify-content: center;
   font-size: 0.216rem;
 
-  @include theme-light {
-    background: rgba(79, 79, 79, 0.4);
-    color: #fff;
+  @include theme-light-own {
+    background: rgba(0, 0, 0, 0.08);
+    color: rgba(0, 0, 0, 0.72);
   }
 }
 
@@ -1603,12 +1669,24 @@ const handleBack = () => {
   justify-content: space-between;
   backdrop-filter: blur(0.08rem);
   box-shadow: 0 0.05rem 0.15rem rgba(0, 0, 0, 0.24);
+
+  @include theme-light-own {
+    border-color: rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 1);
+    color: rgba(0, 0, 0, 1);
+    backdrop-filter: none;
+    box-shadow: 0 0.05rem 0.15rem rgba(70, 79, 88, 0.12);
+  }
 }
 
 .head-action-label {
   font-size: 0.2246rem;
   line-height: 1.2;
   text-shadow: 0 0.03rem 0.12rem rgba(0, 0, 0, 0.32);
+
+  @include theme-light-own {
+    text-shadow: none;
+  }
 }
 
 .head-action-icon {
@@ -1638,10 +1716,10 @@ const handleBack = () => {
   backdrop-filter: blur(0.0021rem);
   transition: min-height 0.2s ease;
 
-  @include theme-light {
-    color: #fff;
-    background: rgba(108, 119, 128, 0.5);
-    box-shadow: inset 0 0 0 0.0133rem rgba(255, 255, 255, 0.28);
+  @include theme-light-own {
+    color: rgba(0, 0, 0, 1);
+    background: rgba(255, 255, 255, 0.86);
+    box-shadow: inset 0 0 0 0.0133rem rgba(0, 0, 0, 0.06);
   }
 }
 
@@ -1774,10 +1852,19 @@ const handleBack = () => {
   line-height: 95%;
   opacity: 0.7;
   padding: 0 0 0.03rem;
+
+  @include theme-light-own {
+    color: rgba(0, 0, 0, 1);
+  }
 }
 
 .club-header-tab--active {
   color: #fff;
+
+  @include theme-light-own {
+    color: var(--c-brand);
+  }
+
   text-align: center;
   font-feature-settings:
     'liga' off,
@@ -1801,7 +1888,7 @@ const handleBack = () => {
   background: rgba(234, 234, 234, 0.92);
   box-shadow: 0 0 0.06rem rgba(255, 255, 255, 0.45);
 
-  @include theme-light {
+  @include theme-light-own {
     background: var(--c-brand);
     box-shadow: none;
   }
@@ -1947,6 +2034,59 @@ const handleBack = () => {
   padding: 0.2rem 0 0.8rem;
   background: rgba(34, 34, 34, 0.5);
   backdrop-filter: blur(0.2213rem);
+
+  @include theme-light-own {
+    background: rgba(255, 255, 255, 0.72);
+  }
+
+  // Дети (GameTypeTabbar / PokerTableGroupCard / PokerTableCard) переиспользуются
+  // тёмной страницей лобби, поэтому их светлый вид задаём точечно отсюда.
+  @include theme-light-own {
+
+    :deep(.group-item) {
+      &::after {
+        background: rgba(0, 0, 0, 0.12);
+      }
+
+      .count-text {
+        color: rgba(0, 0, 0, 0.72);
+      }
+
+      .toggle-btn {
+        background: rgba(34, 34, 34, 0.16);
+      }
+
+      // Шеврон и часы — белые SVG: brightness(0) делает их чёрными, альфа сохраняется.
+      .toggle-icon {
+        filter: brightness(0);
+      }
+    }
+
+    :deep(.table-main) {
+      background: rgba(34, 34, 34, 0.16);
+      box-shadow: 0 0.08rem 0.2rem rgba(70, 79, 88, 0.08);
+    }
+
+    :deep(.table-name) {
+      border-color: rgba(0, 0, 0, 0.06);
+      background: rgba(0, 0, 0, 0.05);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+
+    :deep(.table-center) {
+      background: rgba(0, 0, 0, 0.22);
+    }
+
+    :deep(.seat-name) {
+      color: rgba(0, 0, 0, 0.28);
+    }
+
+    // Только иконка времени: фишки в футере остаются цветными.
+    :deep(.meta-icon[alt='time']) {
+      filter: brightness(0);
+    }
+  }
 }
 
 .group-list--flush {
@@ -1965,6 +2105,25 @@ const handleBack = () => {
   background: transparent;
   width: 10.56rem;
   margin-left: -0.28rem;
+
+  // Встроенные CasinoView / MiniGameView собственной светлой темы не имеют,
+  // а отдельные страницы /casino и /minigame остаются тёмными — красим только здесь.
+  @include theme-light-own {
+    :deep(.category-title),
+    :deep(.app-card-title),
+    :deep(.icon-label) {
+      color: rgba(0, 0, 0, 1);
+    }
+
+    :deep(.category-sub),
+    :deep(.empty-text) {
+      color: rgba(0, 0, 0, 0.62);
+    }
+
+    :deep(.icon-item.selected .icon-label) {
+      color: #fff;
+    }
+  }
 }
 
 .mtt-content {
@@ -1975,6 +2134,11 @@ const handleBack = () => {
   overflow-y: auto;
   padding: 0.34rem 0.38rem 2.2rem;
   backdrop-filter: blur(0.3533rem) saturate(1.04);
+
+  @include theme-light-own {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(0.3533rem);
+  }
 }
 
 .room-list-page--channel {
@@ -2006,7 +2170,7 @@ const handleBack = () => {
   color: #fff;
   line-height: 1.2;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #222;
   }
 }
@@ -2026,7 +2190,7 @@ const handleBack = () => {
   text-align: right;
   line-height: 0.6rem;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-brand);
   }
 }
@@ -2077,6 +2241,13 @@ const handleBack = () => {
   backdrop-filter: blur(0.08rem);
   box-shadow: 0 0.16rem 0.32rem rgba(0, 0, 0, 0.22);
   margin-bottom: 0.8rem;
+
+  @include theme-light-own {
+    border-color: rgba(242, 242, 242, 0.8);
+    background-image: none;
+    background-color: var(--c-brand);
+    box-shadow: 0 0.12rem 0.28rem rgba(var(--c-brand-rgb), 0.28);
+  }
 }
 
 .floating-menu-btn {
@@ -2093,7 +2264,7 @@ const handleBack = () => {
   justify-content: center;
   z-index: 99;
 
-  @include theme-light {
+  @include theme-light-own {
     background: #505050;
     box-shadow: 0 0.12rem 0.28rem rgba(var(--c-brand-rgb), 0.28);
   }
@@ -2118,7 +2289,7 @@ const handleBack = () => {
   font-size: 0.3467rem;
   color: rgba(255, 255, 255, 0.82);
 
-  @include theme-light {
+  @include theme-light-own {
     color: rgba(34, 34, 34, 0.58);
   }
 }

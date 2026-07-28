@@ -330,8 +330,10 @@ function onLogoutCancel(): void {
 }
 
 .arrow {
-  width: 0.44rem;
+  width: 0.2444rem;
   height: 0.44rem;
+  flex: none;
+  object-fit: contain;
 }
 
 .switch {

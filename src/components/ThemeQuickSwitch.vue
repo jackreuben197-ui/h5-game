@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import themeSun from '@/assets/icons/theme_sun.png'
 import { useTheme } from '@/composables/useTheme'
 
 const { isDark, setModeAnimated } = useTheme()
@@ -23,47 +22,29 @@ function toggleTheme(): void {
     :title="`切换到${targetThemeLabel}主题`"
     @click.stop="toggleTheme"
   >
-    <span class="theme-quick-switch__moon" aria-hidden="true"></span>
-    <img class="theme-quick-switch__sun" :src="themeSun" alt="" aria-hidden="true" />
     <span class="theme-quick-switch__thumb" aria-hidden="true"></span>
+    <span class="theme-quick-switch__moon" aria-hidden="true"></span>
+    <span class="theme-quick-switch__sun" aria-hidden="true">
+      <span class="theme-quick-switch__sun-glyph"></span>
+    </span>
   </button>
 </template>
 
 <style scoped lang="scss">
+$icon-active: #000;
+$icon-inactive: linear-gradient(128deg, #ff516c, #df2340);
+
 .theme-quick-switch {
   position: relative;
-  width: 0.723rem;
-  height: 0.414rem;
+  width: 1.3124rem;
+  height: 0.7526rem;
   flex: none;
   padding: 0;
-  overflow: hidden;
   border: 0;
   border-radius: 999px;
-  background: transparent;
+  background: rgba(249, 249, 249, 0.51);
   cursor: pointer;
-  isolation: isolate;
   -webkit-tap-highlight-color: transparent;
-
-  &::before,
-  &::after {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    border-radius: inherit;
-    content: '';
-    transition: opacity 320ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  &::before {
-    background: linear-gradient(144deg, #69beff 8%, #2d84c7 72%);
-    opacity: 1;
-  }
-
-  &::after {
-    background: linear-gradient(144deg, #08263d 8%, #000 72%);
-    box-shadow: inset 0 0 0 0.5px rgba(223, 223, 223, 0.18);
-    opacity: 0;
-  }
 
   &:focus-visible {
     outline: 2px solid #f9f9f9;
@@ -71,20 +52,16 @@ function toggleTheme(): void {
   }
 
   &:active .theme-quick-switch__thumb {
-    transform: translateX(0.307rem) scale(0.93);
+    transform: translateX(0.56rem) scale(0.93);
   }
 
   &.is-dark {
-    &::before {
-      opacity: 0;
-    }
-
-    &::after {
-      opacity: 1;
-    }
-
     .theme-quick-switch__moon {
-      color: #000;
+      background: $icon-active;
+    }
+
+    .theme-quick-switch__sun-glyph {
+      background: $icon-inactive;
     }
 
     .theme-quick-switch__thumb {
@@ -97,52 +74,58 @@ function toggleTheme(): void {
   }
 }
 
-.theme-quick-switch__moon,
-.theme-quick-switch__sun {
-  position: absolute;
-  top: 50%;
-  z-index: 2;
-  width: 0.212rem;
-  height: 0.212rem;
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-
-.theme-quick-switch__moon {
-  left: 0.1rem;
-  color: #fff;
-  background-color: currentColor;
-  -webkit-mask: url('@/assets/icons/theme_moon.svg') center / contain no-repeat;
-  mask: url('@/assets/icons/theme_moon.svg') center / contain no-repeat;
-  transition: color 260ms ease;
-}
-
-.theme-quick-switch__sun {
-  right: 0.1rem;
-  display: block;
-  object-fit: contain;
-}
-
 .theme-quick-switch__thumb {
   position: absolute;
-  top: 0.017rem;
-  left: 0.02rem;
+  top: 0.0412rem;
+  left: 0.0412rem;
   z-index: 1;
-  width: 0.369rem;
-  height: 0.369rem;
+  width: 0.6702rem;
+  height: 0.6702rem;
   border-radius: 50%;
   background: #f9f9f9;
-  transform: translateX(0.307rem);
+  transform: translateX(0.56rem);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16);
   transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
 }
 
+.theme-quick-switch__moon,
+.theme-quick-switch__sun {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.theme-quick-switch__moon {
+  left: 0.1836rem;
+  width: 0.3855rem;
+  height: 0.3855rem;
+  background: $icon-inactive;
+  -webkit-mask: url('@/assets/icons/theme_moon.svg') center / contain no-repeat;
+  mask: url('@/assets/icons/theme_moon.svg') center / contain no-repeat;
+}
+
+.theme-quick-switch__sun {
+  right: 0.1744rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.4038rem;
+  height: 0.4038rem;
+}
+
+.theme-quick-switch__sun-glyph {
+  display: block;
+  width: 0.3717rem;
+  height: 0.3717rem;
+  background: $icon-active;
+  -webkit-mask: url('@/assets/icons/theme_sun.svg') center / contain no-repeat;
+  mask: url('@/assets/icons/theme_sun.svg') center / contain no-repeat;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .theme-quick-switch,
-  .theme-quick-switch::before,
-  .theme-quick-switch::after,
-  .theme-quick-switch__moon,
   .theme-quick-switch__thumb {
     transition-duration: 0.01ms;
   }

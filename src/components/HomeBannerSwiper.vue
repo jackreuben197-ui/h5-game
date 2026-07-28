@@ -49,8 +49,6 @@ const isSwipeEnabled = computed(() => cachedImages.value.length > 1)
   top: 0.35rem;
   right: 0.3rem;
   z-index: 3;
-  transform: scale(2);
-  transform-origin: top right;
 }
 
 .home-banner__swipe {

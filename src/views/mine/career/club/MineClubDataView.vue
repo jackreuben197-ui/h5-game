@@ -1862,3 +1862,104 @@ onBeforeUnmount(() => {
   }
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .club-data-page {
+  --c-brand: #05c297;
+  --c-brand-rgb: 5, 194, 151;
+
+  color: rgba(15, 8, 8, 0.85);
+  background-color: #f3f4f6;
+  background-image: var(--club-data-bg-light);
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .panel-status,
+  .biggest-title,
+  .table-empty {
+    color: rgba(15, 8, 8, 0.6);
+  }
+
+  .main-tab {
+    color: rgba(15, 8, 8, 0.7);
+
+    &.active {
+      color: #05c297;
+      border-bottom-color: #05c297;
+    }
+  }
+
+  .filter-tabbar {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  .filter-tab__text {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .filter-tab__item--active {
+    background: rgba(255, 255, 255, 1);
+    border-color: transparent;
+  }
+
+  .glass-card,
+  .glass-pill,
+  .opponent-table-wrap,
+  .deck-table-wrap {
+    background: rgba(255, 255, 255, 1);
+    border-color: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .ring-center {
+    background: rgba(128, 128, 128, 0.52);
+  }
+
+  .data-icon,
+  .empty-icon,
+  .empty-text {
+    color: #05c297;
+  }
+
+  .section-title {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .avatar {
+    border-color: rgba(32, 32, 32, 0.18);
+    background: rgba(32, 32, 32, 0.08);
+  }
+
+  .mode-chip,
+  .deck-mode-chip {
+    background: rgba(0, 0, 0, 0.06);
+    color: rgba(15, 8, 8, 0.85);
+
+    &.active {
+      background: #05c297;
+      color: #fff;
+    }
+  }
+
+  .game-table__header-inner--ghost {
+    background: rgba(0, 0, 0, 0.12);
+  }
+
+  .game-table__header-label,
+  .game-table__cell-text {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .game-table__sort-icon {
+    color: rgba(0, 0, 0, 0.35);
+  }
+}
+</style>

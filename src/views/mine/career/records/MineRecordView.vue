@@ -443,7 +443,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page-shell record-page" :style="backgroundStyle">
+  <div class="page-shell record-page career-record-page" :style="backgroundStyle">
     <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
@@ -929,6 +929,79 @@ onBeforeUnmount(() => {
 
   &.pos {
     color: var(--c-loss);
+  }
+}
+</style>
+
+<style lang="scss">
+:root[data-theme='light'] .career-record-page {
+  --c-brand: #05c297;
+  --c-brand-rgb: 5, 194, 151;
+
+  color: rgba(15, 8, 8, 0.85);
+  background-color: #f3f4f6;
+  background-image: var(--record-bg-light);
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .plain-tab {
+    color: rgba(15, 8, 8, 0.7);
+
+    &.active {
+      color: #05c297;
+      border-bottom-color: #05c297;
+    }
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 1);
+    border-color: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .time-tabs {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  .time-tab {
+    color: rgba(15, 8, 8, 0.85);
+
+    &.active {
+      background: rgba(0, 0, 0, 0.14);
+    }
+  }
+
+  .metric-label,
+  .detail-item .label,
+  .profit-box .profit-title {
+    color: rgba(15, 8, 8, 0.6);
+  }
+
+  .profit-box {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  .detail-grid .line,
+  .flow-card .line {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  .date-col {
+    &::after {
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .date-icon {
+      color: rgba(15, 8, 8, 0.85);
+    }
   }
 }
 </style>

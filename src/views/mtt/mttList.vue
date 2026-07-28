@@ -9,6 +9,8 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import { showFailToast } from 'vant'
+import { isChannelPackageHost } from '@/utils/channelPackage'
+import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
 
 type MttTabName = 'all' | 'poker' | 'mahjong'
 
@@ -16,6 +18,7 @@ const activeTab = ref<MttTabName>('all')
 const mttListStore = useMttListStore()
 const userInfoStore = useUserInfoStore()
 const router = useRouter()
+const isChannelPackage = isChannelPackageHost()
 
 const selectedClubId = computed(() => toSafeInt(userInfoStore.currentClub?.club_id))
 const selectedTribeId = computed(() =>
@@ -93,6 +96,7 @@ function handleOpenCustomerService() {
         </div>
       </template>
     </HeaderBack>
+    <ClubZoneQuickActions v-if="isChannelPackage" />
     <FilterTabbar v-if="showMttTabs" v-model="activeTab" :tabs="mttTabs" />
     <MttContent :active-tab="activeTab" :class="{ 'mtt-content--no-tabs': !showMttTabs }" />
   </div>

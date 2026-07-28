@@ -23,10 +23,14 @@ interface RoomGroupViewModel {
 interface Props {
   group: RoomGroupViewModel
   expanded: boolean
+  forceLight?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  forceLight: false,
+})
 const { isDark } = useTheme()
+const isLightVisual = computed(() => props.forceLight || !isDark.value)
 
 const emit = defineEmits<{
   toggle: [groupKey: string]
@@ -46,7 +50,7 @@ function handleTableClick(room: RoomRecord): void {
 </script>
 
 <template>
-  <section class="group-item">
+  <section class="group-item" :class="{ 'group-item--force-light': props.forceLight }">
     <div class="group-summary" @click="toggleGroup">
       <div class="summary-left">
         <div class="game-icon-wrap">
@@ -77,7 +81,7 @@ function handleTableClick(room: RoomRecord): void {
       </div>
       <div @click.stop="toggleGroup">
         <img
-          v-if="isDark"
+          v-if="!isLightVisual"
           class="toggle-icon"
           :class="{ 'is-expanded': expanded }"
           :src="iconDropDown"
@@ -104,6 +108,7 @@ function handleTableClick(room: RoomRecord): void {
             v-for="room in group.rooms"
             :key="String(room.rid)"
             :room="room"
+            :force-light="props.forceLight"
             @click="handleTableClick"
           />
         </div>
@@ -285,5 +290,36 @@ function handleTableClick(room: RoomRecord): void {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.55rem;
+}
+
+.group-item--force-light {
+  border-bottom-color: rgba(34, 34, 34, 0.28);
+}
+
+.group-item--force-light .game-icon-wrap {
+  background: rgba(255, 255, 255, 0.48);
+  box-shadow:
+    0 0.08rem 0.2rem rgba(0, 0, 0, 0.24),
+    inset 0 0 0 0.0133rem rgba(34, 34, 34, 0.12);
+}
+
+.group-item--force-light .icon-tag {
+  color: #222;
+  text-shadow: none;
+  background: rgba(255, 255, 255, 0.62);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+.group-item--force-light .blind-text {
+  color: #111;
+}
+
+.group-item--force-light .count-text {
+  color: #222;
+}
+
+.group-item--force-light .count-icon {
+  filter: invert(69%) sepia(77%) saturate(1273%) hue-rotate(180deg) brightness(103%)
+    contrast(101%);
 }
 </style>

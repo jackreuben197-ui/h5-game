@@ -1,9 +1,9 @@
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
-export const CHANNEL_MAIN_DOMAIN = (
-  import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || ''
-).trim().toLowerCase()
-// const TEST_CHANNEL_INVITE_CODE = 'DYyhWokm'
+export const CHANNEL_MAIN_DOMAIN = (import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || '')
+  .trim()
+  .toLowerCase()
+// const TEST_CHANNEL_INVITE_CODE = 'ksGuBmMk'
 
 interface ParsedQueryParams {
   inviteCode: string
@@ -24,7 +24,11 @@ function getHashQueryParams(hashValue: string): URLSearchParams {
   return new URLSearchParams(hashValue.slice(queryIndex + 1))
 }
 
-function readParam(searchParams: URLSearchParams, hashParams: URLSearchParams, key: string): string {
+function readParam(
+  searchParams: URLSearchParams,
+  hashParams: URLSearchParams,
+  key: string,
+): string {
   const fromSearch = readString(searchParams.get(key))
   if (fromSearch) {
     return fromSearch
@@ -125,7 +129,9 @@ export function restoreStorageFromUrl(): void {
   }
 }
 
-export function extractInviteCodeFromSubdomain(hostname: string = window.location.hostname): string {
+export function extractInviteCodeFromSubdomain(
+  hostname: string = window.location.hostname,
+): string {
   // void hostname
   // return TEST_CHANNEL_INVITE_CODE
   const normalizedHost = readString(hostname).toLowerCase()
@@ -139,7 +145,9 @@ export function extractInviteCodeFromSubdomain(hostname: string = window.locatio
   return readString(firstLabel)
 }
 
-export function parseInviteParamsFromLocation(url: URL = new URL(window.location.href)): ParsedQueryParams {
+export function parseInviteParamsFromLocation(
+  url: URL = new URL(window.location.href),
+): ParsedQueryParams {
   const searchParams = url.searchParams
   const hashParams = getHashQueryParams(url.hash || '')
   const agentInviteCode = readParam(searchParams, hashParams, 'i')

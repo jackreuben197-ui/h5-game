@@ -100,6 +100,14 @@ const currentOriginType = computed(() => {
   const v = Math.floor(toNumber(route.query.origin_type, 5))
   return v > 0 ? v : 5
 })
+const shouldReturnHome = computed(
+  () => currentOriginType.value !== 4 && route.query.return_to === 'home',
+)
+
+const createReturnRouteName = computed(() => {
+  if (currentOriginType.value === 4) return 'friendsTable'
+  return shouldReturnHome.value ? 'lobby' : 'club-index'
+})
 
 function getTableTypeExt(): number {
   const fromQuery = toNumber(route.query.table_type_ext, 0)
@@ -510,7 +518,7 @@ async function onCreateTable() {
       : await postOrgRoomClubCreateApi(payload)
     if (res.code === 0) {
       showGameToast('创建成功')
-      await router.replace({ name: isFriendsTable ? 'friendsTable' : 'club-index' })
+      await router.replace({ name: createReturnRouteName.value })
     } else {
       showFailToast(res.message || '创建失败')
     }
@@ -522,11 +530,7 @@ async function onCreateTable() {
 }
 
 function handleBack() {
-  if (Number(route.query.origin_type) == 4) {
-    router.push('/friendsTable')
-  } else {
-    router.push('/club/index')
-  }
+  router.push({ name: createReturnRouteName.value })
 }
 </script>
 

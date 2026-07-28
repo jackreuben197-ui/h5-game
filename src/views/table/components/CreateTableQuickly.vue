@@ -156,6 +156,10 @@ const currentOriginType = computed(() => {
   const v = Math.floor(toNumber(route.query.origin_type, 5))
   return v > 0 ? v : 5
 })
+const createReturnRouteName = computed(() => {
+  if (currentOriginType.value === 4) return 'friendsTable'
+  return route.query.return_to === 'home' ? 'lobby' : 'club-index'
+})
 
 function getTableTypeExt(): number {
   const fromQuery = toNumber(route.query.table_type_ext, 0)
@@ -643,12 +647,11 @@ async function onQuickCreate() {
   }
   if (isSubmitting.value) return
   isSubmitting.value = true
-  const isFriendsTable = currentOriginType.value === 4
   try {
     const res = await postOrgRoomCreateApi(buildTopPanelCreateRequest())
     if (res.code === 0) {
       showGameToast('创建成功')
-      await router.replace({ name: isFriendsTable ? 'friendsTable' : 'club-index' })
+      await router.replace({ name: createReturnRouteName.value })
     } else {
       showGameToast((res as unknown as { message?: string }).message || '创建失败')
     }
@@ -792,7 +795,7 @@ async function onCreateFromTemplate(tpl: TemplateItem) {
     }
     if (res.code === 0) {
       showGameToast('创建成功')
-      await router.replace({ name: isFriendsTable ? 'friendsTable' : 'club-index' })
+      await router.replace({ name: createReturnRouteName.value })
     } else {
       showGameToast((res as unknown as { message?: string }).message || '创建失败')
     }

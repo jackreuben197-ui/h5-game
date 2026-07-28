@@ -13,9 +13,12 @@ import { formatRoomLeftAndTotalByUnity } from '@/utils/time'
 
 interface Props {
   room: RoomRecord
+  forceLight?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  forceLight: false,
+})
 
 const emit = defineEmits<{
   click: [room: RoomRecord]
@@ -220,7 +223,11 @@ function shortName(name?: string): string {
 </script>
 
 <template>
-  <article class="table-card" @click="handleClick">
+  <article
+    class="table-card"
+    :class="{ 'table-card--force-light': props.forceLight }"
+    @click="handleClick"
+  >
     <div class="table-name">
       {{ room.name || 'Poker Game Name' }}
     </div>
@@ -466,5 +473,30 @@ function shortName(name?: string): string {
   @include theme-light {
     filter: brightness(0);
   }
+}
+
+.table-card--force-light .table-name {
+  color: #222;
+  background: rgba(255, 255, 255, 0.72);
+  border: 0.5px solid rgba(0, 0, 0, 0.21);
+  box-shadow: inset 0 0 0 0.0133rem rgba(34, 34, 34, 0.12);
+}
+
+.table-card--force-light .table-bg {
+  background-image: url('@/assets/images/game_list_card_table_bg_light.png');
+}
+
+.table-card--force-light .seat-avatar.empty {
+  color: #222;
+  background: rgba(206, 211, 215, 0.92);
+  border-color: rgba(255, 255, 255, 0.72);
+}
+
+.table-card--force-light .table-footer {
+  color: #222;
+}
+
+.table-card--force-light .time-icon {
+  filter: brightness(0);
 }
 </style>

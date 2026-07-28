@@ -20,6 +20,16 @@ import gameTypePlo from '@/assets/icons/game_type_plo.png'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
 import { t } from '@/i18n'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
+import { isChannelPackageHost } from '@/utils/channelPackage'
+import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
+
+interface Props {
+  embedded?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  embedded: false,
+})
 
 type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
 const POKER_TYPE_LONG = 0
@@ -50,6 +60,7 @@ const router = useRouter()
 const gameStore = useGameStore()
 const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
+const isChannelPackage = isChannelPackageHost()
 
 // 顶部右侧切换风格开关：和旧版保持一致。
 const activeTab = ref<GameTypeTabName>('all')
@@ -64,7 +75,7 @@ const selectedTribeId = computed(() =>
 )
 
 const filteredRecords = computed(() => {
-  const baseList = roomListStore.records.filter((room) => Number(room.game_type) < 6)
+  const baseList = roomListStore.records.filter((room) => Number(room.game_type) < 5)
   const scopedList = baseList.filter((room) =>
     checkIsShowForClubAndTribe(room, selectedClubId.value, selectedTribeId.value),
   )
@@ -324,9 +335,18 @@ function handleOpenCustomerService(): void {
 </script>
 
 <template>
-  <div class="room-list-page themeType2" :style="pageStyle">
-    <div class="bg-overlay"></div>
-    <HeaderBack :title="t('UIHomePokerArea')" extra-padding @back="handleBack">
+  <div
+    class="room-list-page themeType2"
+    :class="{ 'room-list-page--embedded': props.embedded }"
+    :style="pageStyle"
+  >
+    <div v-if="!props.embedded" class="bg-overlay"></div>
+    <HeaderBack
+      v-if="!props.embedded"
+      :title="t('UIHomePokerArea')"
+      extra-padding
+      @back="handleBack"
+    >
       <template #right>
         <div class="action-wrap">
           <TopActionButton
@@ -345,8 +365,11 @@ function handleOpenCustomerService(): void {
         </div>
       </template>
     </HeaderBack>
+    <ClubZoneQuickActions v-if="isChannelPackage && !props.embedded" />
     <GameTypeTabbar
       v-model="activeTab"
+      :class="{ 'home-embedded-tabs': props.embedded }"
+      :force-light="props.embedded"
       :tabs="[
         { name: 'all', title: t('UIMatch_GtO8YEdb') },
         { name: 'texas', title: t('UITexasInfo_Texas') },
@@ -361,6 +384,7 @@ function handleOpenCustomerService(): void {
         :key="group.groupKey"
         :group="group"
         :expanded="expandedMap[group.groupKey] === true"
+        :force-light="props.embedded"
         @toggle="handleToggleGroup"
         @table-click="handleTableClick"
       />
@@ -391,16 +415,30 @@ function handleOpenCustomerService(): void {
   }
 }
 
+.room-list-page--embedded {
+  min-height: 0;
+  overflow: visible;
+  color: #000;
+  background-image: none;
+
+  @include theme-light {
+    color: #000;
+    background-image: none;
+  }
+}
+
 .bg-overlay {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
+  background:
+    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
     radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
     radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
 
   @include theme-light {
-    background: radial-gradient(circle at 8% 4%, rgba(105, 190, 255, 0.2), transparent 30%),
+    background:
+      radial-gradient(circle at 8% 4%, rgba(105, 190, 255, 0.2), transparent 30%),
       radial-gradient(circle at 92% 9%, rgba(105, 190, 255, 0.14), transparent 26%);
   }
 }
@@ -429,8 +467,36 @@ function handleOpenCustomerService(): void {
   }
 }
 
+.room-list-page--embedded .group-list {
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+  padding-bottom: 0.2rem;
+  padding-left: 0;
+  background: #fff;
+  backdrop-filter: none;
+
+  @include theme-light {
+    background: #fff;
+    backdrop-filter: none;
+  }
+}
+
+.room-list-page--embedded :deep(.home-embedded-tabs),
+.room-list-page--embedded :deep(.home-embedded-tabs .van-tabs__wrap),
+.room-list-page--embedded :deep(.home-embedded-tabs .van-tabs__nav) {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.room-list-page--embedded .empty-wrap {
+  color: rgba(34, 34, 34, 0.58);
+}
+
 .empty-wrap {
-  margin-top: 1.4933rem;
+  padding: 1.4933rem 0;
   display: flex;
   flex-direction: column;
   align-items: center;

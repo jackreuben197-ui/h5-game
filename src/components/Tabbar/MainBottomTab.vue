@@ -21,8 +21,7 @@ interface TabItem {
 
 const isChannelPackage = isChannelPackageHost()
 
-// 底部 5 个主模块入口与路由路径。
-// 底部 5 个主模块入口与路由路径（登录态走 path，未登录态走 guestPath）。
+// 官方包保留 5 个入口；渠道包将俱乐部能力合并到首页，仅保留 4 个入口。
 const tabs = computed<TabItem[]>(() => {
   const middleTab: TabItem = isChannelPackage
     ? {
@@ -40,21 +39,24 @@ const tabs = computed<TabItem[]>(() => {
         icon: 'friendsTable',
       }
 
+  const homeTab: TabItem = {
+    key: 'home',
+    label: t('UITabbarHome'),
+    path: '/home',
+    guestPath: '/guest/home',
+    icon: 'home',
+  }
+  const clubTab: TabItem = {
+    key: 'club',
+    label: t('UIClub_Info'),
+    path: '/club',
+    guestPath: '/guest/club',
+    icon: 'club',
+  }
+
   return [
-    {
-      key: 'home',
-      label: t('UITabbarHome'),
-      path: '/home',
-      guestPath: '/guest/home',
-      icon: 'home',
-    },
-    {
-      key: 'club',
-      label: t('UIClub_Info'),
-      path: isChannelPackage ? '/club/index' : '/club',
-      guestPath: isChannelPackage ? '/club/index' : '/guest/club',
-      icon: 'club',
-    },
+    homeTab,
+    ...(!isChannelPackage ? [clubTab] : []),
     middleTab,
     {
       key: 'message',
@@ -79,13 +81,10 @@ const gameStore = useGameStore()
 const loginModalStore = useLoginModalStore()
 
 function resolveTabPath(tab: TabItem): string {
-  if (isChannelPackage && tab.key === 'club') {
-    return tab.path
-  }
   return gameStore.sessionToken ? tab.path : tab.guestPath
 }
 
-// 当前激活项索引：用于驱动顶部凸起在 5 个 tab 间平滑移动。
+// 当前激活项索引：用于驱动顶部凸起在当前 tab 数量间平滑移动。
 const activeIndex = computed(() => {
   const index = tabs.value.findIndex((item) => item.key === tabsStore.activeTab)
   return index >= 0 ? index : 0
@@ -100,7 +99,6 @@ const BUMP_HEIGHT_REM = 0.25
 const TOTAL_HEIGHT_REM = BASE_HEIGHT_REM + BUMP_HEIGHT_REM
 const TABBAR_WIDTH_REM = 9
 const TABBAR_SIDE_PADDING_REM = 0.72
-const TAB_COUNT = 5
 const BUMP_WIDTH_IN_TAB = 0.9
 const TABBAR_Y_OFFSET_REM = 0.08
 const BUMP_SIDE_CTRL_RATIO = 0.24
@@ -132,7 +130,7 @@ function indexToCenter(index: number): number {
   const { width } = getSvgSize()
   const inset = width * (TABBAR_SIDE_PADDING_REM / TABBAR_WIDTH_REM)
   const availableWidth = Math.max(width - inset * 2, 1)
-  const tabWidth = availableWidth / TAB_COUNT
+  const tabWidth = availableWidth / Math.max(tabs.value.length, 1)
   return inset + tabWidth * index + tabWidth / 2
 }
 
@@ -147,7 +145,7 @@ function buildTabbarPath(bumpCenterX: number): string {
   const cornerRadius = bodyHeight / 2
   const inset = width * (TABBAR_SIDE_PADDING_REM / TABBAR_WIDTH_REM)
   const availableWidth = Math.max(width - inset * 2, 1)
-  const bumpWidth = (availableWidth / TAB_COUNT) * BUMP_WIDTH_IN_TAB
+  const bumpWidth = (availableWidth / Math.max(tabs.value.length, 1)) * BUMP_WIDTH_IN_TAB
   // 凸起中心约束按“tab 有效宽度”计算，避免首尾被圆角挤压导致偏移。
   const minCenter = inset + bumpWidth / 2
   const maxCenter = width - inset - bumpWidth / 2

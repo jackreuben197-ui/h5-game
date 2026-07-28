@@ -123,3 +123,39 @@ async function submitMessage(): Promise<void> {
   width: auto;
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .board-page {
+  color: rgba(15, 8, 8, 0.85);
+  background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .board-input {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.08);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    color: rgba(15, 8, 8, 0.85);
+
+    &::placeholder {
+      color: rgba(15, 8, 8, 0.4);
+    }
+  }
+
+  .submit-btn {
+    background: #05c297;
+    border-color: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    color: #fbfbfb;
+  }
+}
+</style>

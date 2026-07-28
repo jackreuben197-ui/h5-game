@@ -1,0 +1,248 @@
+@use './mixins' as *;
+
+// Светлая тема раздела 设置: сама страница настроек и все её вложенные экраны.
+// Класс `.settings-page` носят три вью (настройки, аккаунт, язык), поэтому правила
+// живут здесь, а не в SFC: иначе при прямом переходе на вложенный роут стили
+// родительского экрана в бандл не попадут.
+:root[data-theme='light'] {
+  .settings-page,
+  .settings-doc-page,
+  .reset-password-page,
+  .cancel-account-page,
+  .security-password-page {
+    background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+    .back-trigger,
+    .back-icon {
+      color: rgba(15, 8, 8, 0.85);
+    }
+
+    .title {
+      text-shadow: none;
+    }
+  }
+
+  .settings-page,
+  .settings-doc-page,
+  .reset-password-page,
+  .cancel-account-page {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .settings-page {
+    .glass-card,
+    .account-card,
+    .language-card {
+      background: rgba(255, 255, 255, 1);
+      border-color: rgba(0, 0, 0, 0.08);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+
+    .line-item,
+    .account-row,
+    .language-row {
+      color: rgba(15, 8, 8, 0.85);
+
+      &::after {
+        background: rgba(0, 0, 0, 0.08);
+      }
+    }
+
+    .label {
+      color: rgba(15, 8, 8, 0.85);
+    }
+
+    .light {
+      color: rgba(15, 8, 8, 0.45);
+    }
+
+    .arrow,
+    .arrow-icon {
+      filter: invert(1);
+      opacity: 0.45;
+    }
+
+    .switch {
+      background: #69686b;
+
+      &.on {
+        background: #05c297;
+      }
+    }
+  }
+
+  .settings-doc-page {
+    .about-logo__title,
+    .about-logo__subtitle,
+    .about-heading {
+      color: rgba(15, 8, 8, 0.85);
+    }
+
+    .doc-text {
+      color: rgba(15, 8, 8, 0.7);
+    }
+  }
+
+  .reset-password-page,
+  .cancel-account-page {
+    .form-row {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    .row-main {
+      background: rgba(255, 255, 255, 1);
+    }
+
+    .row-icon {
+      filter: invert(1);
+      opacity: 0.6;
+    }
+
+    .submit-btn {
+      background: #05c297;
+      border-color: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      color: #fbfbfb;
+    }
+  }
+
+  .reset-password-page {
+    .tab-switch {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    .tab-btn {
+      color: rgba(15, 8, 8, 0.55);
+    }
+
+    .tab-btn.active {
+      background: #05c297;
+      border-color: transparent;
+      color: #fbfbfb;
+    }
+
+    .form-row.filled {
+      background: rgba(5, 194, 151, 0.65);
+    }
+
+    .policy-text {
+      color: rgba(15, 8, 8, 0.85);
+    }
+  }
+
+  .cancel-account-page {
+    .dialog-card {
+      @include light-panel;
+
+      background: none;
+    }
+
+    .dialog-title,
+    .dialog-desc,
+    .dialog-actions {
+      position: relative;
+      z-index: 1;
+    }
+
+    .dialog-btn.primary {
+      color: #05c297;
+    }
+  }
+
+  .security-password-page {
+    .close-btn {
+      filter: invert(1);
+      opacity: 0.6;
+    }
+
+    .password-panel {
+      color: rgba(15, 8, 8, 0.85);
+
+      p {
+        color: rgba(15, 8, 8, 0.55);
+      }
+    }
+
+    .dot-cell {
+      background: rgba(255, 255, 255, 1);
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+
+    .submit-btn {
+      background: #05c297;
+      border-color: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      color: #fbfbfb;
+    }
+
+    .submit-btn.active {
+      background: rgba(245, 45, 45, 0.16);
+      border-color: rgba(245, 45, 45, 0.28);
+      color: rgba(15, 8, 8, 0.85);
+    }
+
+    .keyboard-wrap {
+      background: rgba(255, 255, 255, 0.92);
+      border-top-color: rgba(0, 0, 0, 0.08);
+    }
+
+    .key {
+      background: rgba(255, 255, 255, 1);
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      color: rgba(15, 8, 8, 0.85);
+    }
+
+    .key.clear,
+    .key.erase {
+      background: rgba(245, 45, 45, 0.16);
+      border-color: rgba(245, 45, 45, 0.28);
+    }
+
+    .erase-icon {
+      filter: invert(1);
+      opacity: 0.6;
+    }
+
+    .overlay-card {
+      @include light-panel;
+
+      background: none;
+
+      > * {
+        position: relative;
+        z-index: 1;
+      }
+    }
+  }
+
+  .logout-dialog {
+    .game-dialog__card {
+      @include light-panel;
+
+      background-image: none !important;
+    }
+
+    .game-dialog__card-bg-gradient,
+    .game-dialog__card-bg-texture,
+    .game-dialog__card-bg-shadow {
+      display: none;
+    }
+
+    .game-dialog__confirm-btn {
+      background: #05c297 !important;
+      border: 0.5px solid rgba(242, 242, 242, 0.8);
+      color: #fbfbfb;
+    }
+  }
+}

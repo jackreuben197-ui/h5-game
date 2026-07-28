@@ -1282,3 +1282,67 @@ onMounted(() => {
   }
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .bill-page {
+  --c-brand: #05c297;
+  --c-brand-rgb: 5, 194, 151;
+  --c-loss: #05c297;
+  --c-profit: #e5384f;
+
+  color: rgba(15, 8, 8, 0.85);
+  background-color: #f3f4f6;
+  background-image: var(--mine-bill-bg-light);
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .tab {
+    color: rgba(15, 8, 8, 0.7);
+
+    &.active {
+      color: #05c297;
+      border-bottom-color: #05c297;
+    }
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 1);
+    border-color: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .detail-btn {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .divided,
+  .club-divided {
+    border-top-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .wallet-detail-list {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  .date-col::after {
+    background: rgba(0, 0, 0, 0.25);
+  }
+
+  .bill-row-3,
+  .bill-row-4 {
+    color: rgba(15, 8, 8, 0.7);
+  }
+
+  .flow-row {
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+  }
+}
+</style>

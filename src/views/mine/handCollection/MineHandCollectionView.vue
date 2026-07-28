@@ -373,7 +373,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell mine-glass-page" :style="backgroundStyle">
+  <div class="page-shell mine-glass-page hand-collection-page" :style="backgroundStyle">
     <HeaderBack :title="title" :extra-padding="true" />
 
     <div class="content-wrap">
@@ -642,6 +642,59 @@ onMounted(() => {
 
   &.negative {
     color: #27d300;
+  }
+}
+</style>
+
+<style lang="scss">
+:root[data-theme='light'] .hand-collection-page {
+  color: rgba(15, 8, 8, 0.85);
+  background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .plain-tab {
+    color: rgba(15, 8, 8, 0.7);
+
+    &.active {
+      color: #05c297;
+      border-bottom-color: #05c297;
+    }
+  }
+
+  .mode-tabs {
+    background: rgba(0, 0, 0, 0.17);
+  }
+
+  .capsule-tab {
+    color: rgba(15, 8, 8, 0.55);
+
+    &.active {
+      background: rgba(255, 255, 255, 0.9);
+      color: rgba(15, 8, 8, 0.85);
+    }
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.08);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .line {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  .money.negative {
+    color: #05c297;
   }
 }
 </style>

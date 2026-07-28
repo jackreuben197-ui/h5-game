@@ -151,7 +151,7 @@ function onLogoutCancel(): void {
 </script>
 
 <template>
-  <div class="page-shell mine-glass-page" :style="backgroundStyle">
+  <div class="page-shell mine-glass-page settings-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -233,6 +233,7 @@ function onLogoutCancel(): void {
 
     <GameDialog
       v-model:show="showLogoutDialog"
+      class="logout-dialog"
       :title="localized('Log out', '退出登录')"
       :show-cancel-button="true"
       :close-on-click-overlay="true"

@@ -1555,3 +1555,108 @@ onBeforeUnmount(() => {
   }
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .message-detail-page {
+  color: rgba(15, 8, 8, 0.85);
+  background-image: var(--message-detail-bg-light);
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .system-card {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.08);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .system-content,
+  .meta-left,
+  .meta-time,
+  .meta-club span,
+  .player-name,
+  .state-text,
+  .approver-line,
+  .request-footer p,
+  .other-title,
+  .other-meta-club span,
+  .ar-label {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .system-time,
+  .player-id,
+  .other-time {
+    color: rgba(15, 8, 8, 0.45);
+  }
+
+  .green,
+  .highlight--green {
+    color: #05c297;
+  }
+
+  .request-card {
+    box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.08);
+
+    &::before {
+      background: rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  .request-body {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  .request-body--plain {
+    background: transparent;
+  }
+
+  .status-rejected {
+    background: rgba(229, 56, 79, 0.22);
+  }
+
+  .status-approved,
+  .status-approved-by-user {
+    background: rgba(5, 194, 151, 0.22);
+  }
+
+  .card-divider {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  .other-banner {
+    background: rgba(255, 255, 255, 1);
+    border: 0.02rem solid rgba(0, 0, 0, 0.08);
+  }
+
+  .other-banner-bg {
+    display: none;
+  }
+
+  .ar-btn {
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.08);
+
+    &::after {
+      background: rgba(255, 255, 255, 1);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+
+    &::before {
+      background: rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  .ar-icon--approve {
+    background-image: linear-gradient(180deg, #05c297 0%, #04a882 100%);
+  }
+}
+</style>

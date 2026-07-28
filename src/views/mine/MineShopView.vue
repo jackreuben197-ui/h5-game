@@ -1600,3 +1600,145 @@ onBeforeUnmount(() => {
   }
 }
 </style>
+
+<style lang="scss">
+@use '@/styles/mixins' as *;
+
+:root[data-theme='light'] .mine-shop-page {
+  color: rgba(15, 8, 8, 0.85);
+  background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .profile-card {
+    background-image: none !important;
+    background-color: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0.108rem 0.293rem rgba(0, 0, 0, 0.08);
+  }
+
+  .profile-meta .name,
+  .id-row {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .id-row .id-tag {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  .grid-status {
+    color: rgba(15, 8, 8, 0.5);
+  }
+
+  .shop-card {
+    background: rgba(255, 255, 255, 1);
+    border: 0.021rem solid rgba(0, 0, 0, 0.08);
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .shop-card.active {
+    background: rgba(5, 194, 151, 0.14);
+    border-color: #05c297;
+    box-shadow: 0 0.1067rem 0.2933rem rgba(0, 0, 0, 0.08);
+  }
+
+  .shop-card.auditing {
+    background: linear-gradient(164deg, rgba(165, 188, 221, 0.3) 0%, rgba(67, 116, 171, 0.24) 100%);
+  }
+
+  .wholesale-tag {
+    border-color: transparent;
+    color: #f9f9f9;
+  }
+
+  .price-pill {
+    border-color: transparent;
+    background: linear-gradient(158.976deg, #05c297 7.547%, #04a882 71.919%);
+  }
+
+  .rate-bar {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: none;
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .pay-channel {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .tag {
+    color: #f9f9f9;
+  }
+
+  .pay-now {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0.108rem 0.293rem rgba(0, 0, 0, 0.08);
+    color: #05c297;
+  }
+
+  .pay-now.pending {
+    color: rgba(5, 194, 151, 0.5);
+  }
+}
+
+:root[data-theme='light'] .shop-pay-popup {
+  .pay-card {
+    @include light-panel;
+
+    background: none;
+  }
+
+  .amount-box,
+  .amount-label,
+  .pay-methods,
+  .tips,
+  .sub-tips,
+  .paying-btn {
+    position: relative;
+    z-index: 1;
+  }
+
+  .pay-close {
+    z-index: 2;
+  }
+
+  .qr-wrap {
+    border-color: #05c297;
+  }
+
+  .copy-btn,
+  .paying-btn {
+    background: #05c297;
+  }
+}
+
+:root[data-theme='light'] .trader-apply-popup {
+  .trader-apply-card {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0.108rem 0.293rem rgba(0, 0, 0, 0.08);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .apply-rules span {
+    color: #05c297 !important;
+  }
+
+  .apply-confirm-btn {
+    background: #05c297;
+    border-color: transparent;
+    color: #fbfbfb;
+  }
+}
+</style>

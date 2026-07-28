@@ -858,3 +858,104 @@ onMounted(() => {
   }
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .career-page {
+  --c-brand: #05c297;
+  --c-brand-rgb: 5, 194, 151;
+
+  color: rgba(15, 8, 8, 0.85);
+  background-color: #f3f4f6;
+  background-image: var(--career-bg-light);
+
+  .back-trigger,
+  .back-icon,
+  .title-wrap {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .chip,
+  .mini-chip {
+    background: rgba(0, 0, 0, 0.06);
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .dropdown-icon {
+    color: #05c297;
+  }
+
+  .club-dropdown,
+  .currency-dropdown {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.08);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .club-option,
+  .currency-option {
+    color: rgba(15, 8, 8, 0.85);
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+
+    &.active {
+      background: rgba(0, 0, 0, 0.06);
+    }
+  }
+
+  .game-tab {
+    color: rgba(15, 8, 8, 0.7);
+
+    &.active {
+      color: #05c297;
+      border-bottom-color: #05c297;
+    }
+  }
+
+  .stats-card,
+  .menu-card {
+    background: rgba(255, 255, 255, 1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .date-tabs {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  .date-tab {
+    color: rgba(15, 8, 8, 0.85);
+
+    &.active {
+      background: rgba(0, 0, 0, 0.14);
+    }
+  }
+
+  .metric-item {
+    .value {
+      color: rgba(15, 8, 8, 0.85);
+    }
+
+    .label {
+      color: rgba(15, 8, 8, 0.45);
+    }
+  }
+
+  .menu-item {
+    color: rgba(15, 8, 8, 0.85);
+    border-bottom-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .menu-arrow {
+    color: rgba(15, 8, 8, 0.45);
+  }
+
+  .action-btn {
+    background: #05c297;
+    color: #fff;
+  }
+}
+</style>

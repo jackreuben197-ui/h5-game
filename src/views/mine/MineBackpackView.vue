@@ -95,7 +95,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell mine-glass-page" :style="backgroundStyle">
+  <div class="page-shell mine-glass-page backpack-page" :style="backgroundStyle">
     <HeaderBack :title="title" extra-padding />
 
     <div class="content-wrap">
@@ -185,5 +185,32 @@ onMounted(() => {
   margin-top: 0.06rem;
   font-size: 0.31rem;
   opacity: 0.86;
+}
+</style>
+
+<style lang="scss">
+:root[data-theme='light'] .backpack-page {
+  color: rgba(15, 8, 8, 0.85);
+  background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.08);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .icon-wrap {
+    background: rgba(0, 0, 0, 0.06);
+  }
 }
 </style>

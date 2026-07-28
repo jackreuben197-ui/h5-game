@@ -135,7 +135,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell mine-glass-page" :style="backgroundStyle">
+  <div class="page-shell mine-glass-page friends-career-page" :style="backgroundStyle">
     <HeaderBack :title="t('PageMineFriendTableCareer')" extra-padding>
       <template #right>
         <div class="action-wrap">
@@ -370,6 +370,47 @@ onMounted(() => {
       color: #fff;
       background: var(--c-brand);
     }
+  }
+}
+</style>
+
+<style lang="scss">
+:root[data-theme='light'] .friends-career-page {
+  --c-brand: #05c297;
+  --c-brand-rgb: 5, 194, 151;
+
+  color: rgba(15, 8, 8, 0.85);
+  background-color: #f3f4f6;
+  background-image: var(--friends-career-bg-light);
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 1);
+    border-color: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .line-item {
+    color: rgba(15, 8, 8, 0.85);
+    border-bottom-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .menu-arrow {
+    color: rgba(15, 8, 8, 0.45);
+  }
+
+  .action-btn {
+    background: #05c297;
+    color: #fff;
   }
 }
 </style>

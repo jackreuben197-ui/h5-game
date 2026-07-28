@@ -8,7 +8,6 @@ import iconAddDark from '@/assets/icons/icon_add.svg'
 import iconAddLight from '@/assets/icons/icon_add_light.svg'
 import { theme } from '@/utils/theme'
 import iconChip from '@/assets/icons/icon_chips.png'
-import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { t } from '@/i18n'
 import iconBoxClubT from '@/assets/icons/icon_club_data.png'
 import iconBoxFriendT from '@/assets/icons/icon_box_friend_t.png'
@@ -119,11 +118,7 @@ const displayUser = computed(() => {
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <AppSvgIcon
-            class="icon-recharge-svg"
-            name="plus-circle"
-            :title="t('UIMine_WalletAdd_EjPOTlsz')"
-          />
+          <img :src="iconAdd" :alt="t('UIMine_WalletAdd_EjPOTlsz')" />
         </div>
       </div>
     </div>

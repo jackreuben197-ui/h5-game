@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import homeHeaderFallback from '@/assets/images/home_header_1.png'
 import { useCachedImages } from '@/utils/imageCache'
+import ThemeQuickSwitch from '@/components/ThemeQuickSwitch.vue'
 
 const props = defineProps<{
   images: string[]
@@ -31,6 +32,7 @@ const isSwipeEnabled = computed(() => cachedImages.value.length > 1)
       </template>
     </van-swipe>
     <img v-else class="home-banner__img" :src="cachedImages[0]" alt="banner" />
+    <ThemeQuickSwitch class="home-banner__theme-switch" />
   </div>
 </template>
 
@@ -50,6 +52,15 @@ const isSwipeEnabled = computed(() => cachedImages.value.length > 1)
   display: block;
   // 图片自身圆角（和外层 .home-header 一致），滑动过程中露出的边缘也是圆角。
   border-radius: 0.8rem;
+}
+
+.home-banner__theme-switch {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.3rem;
+  z-index: 3;
+  transform: scale(2);
+  transform-origin: top right;
 }
 
 .home-banner__dots {

@@ -32,8 +32,13 @@ import {
 import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import { toUnixSeconds } from '@/utils/time'
-import { enterMtt } from '@/bridge/core'
-import type { EnterMttPayload } from '@bridge-protocol'
+import { enterMtt, subscribeCocosMessages } from '@/bridge/core'
+import {
+  BRIDGE_ACTION,
+  BRIDGE_MSG_TYPE,
+  type BridgeMessage,
+  type EnterMttPayload,
+} from '@bridge-protocol'
 import { useGameStore } from '@/stores/game'
 import LoginSession from '@/session/loginSession'
 
@@ -49,6 +54,8 @@ const buyinModalTitle = ref<string | undefined>(undefined)
 const buyinJoinMode = ref<'apply' | 'rebuy' | 'addon'>('apply')
 const tick = ref(0)
 let tickTimer: ReturnType<typeof setInterval> | null = null
+let stopCocosMessageListener: (() => void) | null = null
+let detailRequest: Promise<void> | null = null
 
 /* ===== 各 tab 子数据（提升到父级管理，跨 tab 切换时数据保留） ===== */
 const playersLoading = ref(false)
@@ -120,11 +127,23 @@ const btnConfig = computed<{ text: string; active: boolean }>(() => {
 
 async function loadDetail(): Promise<void> {
   if (!matchId.value) return
+  if (detailRequest) {
+    await detailRequest
+    return
+  }
+  const request = (async () => {
+    try {
+      const res = await getRoomcenterMttDetailApi(matchId.value)
+      if (res.code === 0 && res.data) detailData.value = res.data
+    } catch (error) {
+      console.error('[MttDetailView] 刷新 MTT 详情失败', error)
+    }
+  })()
+  detailRequest = request
   try {
-    const res = await getRoomcenterMttDetailApi(matchId.value)
-    if (res.code === 0 && res.data) detailData.value = res.data
-  } catch {
-    // silently ignore
+    await request
+  } finally {
+    if (detailRequest === request) detailRequest = null
   }
 }
 
@@ -272,13 +291,21 @@ function loadActiveTabData(): void {
   }
 }
 
-// 对齐 Unity UIMatchMttDetailComponent.Update()：
-// 当 state_code 为 WAITING_APPLY 时，每秒检查 apply_start_time，
-// 到达后重新拉取详情，服务端会返回新的 state_code（CAN_APPLY_NOT_START）。
+function getButtonStateRefreshTime(): number {
+  // 报名开放和允许进桌是两个独立时间点，均以服务端详情里的时间为准。
+  if (stateCode.value === MttPlayerStatus.WAITING_APPLY) {
+    return toUnixSeconds(detailData.value?.mtt?.apply_start_time)
+  }
+  if (stateCode.value === MttPlayerStatus.APPLIED_NOT_START) {
+    return toUnixSeconds(detailData.value?.mtt?.enter_time)
+  }
+  return 0
+}
+
+// 到达按钮状态切换时间后重新拉详情，状态码仍由服务端决定。
 watch(tick, () => {
-  if (stateCode.value !== MttPlayerStatus.WAITING_APPLY) return
-  const applyStart = toUnixSeconds(detailData.value?.mtt?.apply_start_time)
-  if (applyStart && Math.floor(Date.now() / 1000) >= applyStart) {
+  const refreshTime = getButtonStateRefreshTime()
+  if (refreshTime > 0 && Math.floor(Date.now() / 1000) >= refreshTime) {
     void loadDetail()
   }
 })
@@ -290,6 +317,15 @@ watch(activeTab, () => {
 
 onMounted(() => {
   void loadDetail()
+  // Cocos 返回 H5 时页面不会重新挂载，监听 h5Show 才能刷新淘汰后的重购状态。
+  stopCocosMessageListener = subscribeCocosMessages(
+    (message: BridgeMessage) => {
+      if (message.action === BRIDGE_ACTION.H5_SHOW) {
+        void loadDetail()
+      }
+    },
+    { msgtype: BRIDGE_MSG_TYPE.H5 },
+  )
   tickTimer = setInterval(() => {
     tick.value++
   }, 1000)
@@ -297,6 +333,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (tickTimer) clearInterval(tickTimer)
+  stopCocosMessageListener?.()
+  stopCocosMessageListener = null
 })
 
 async function handleBtnClick(): Promise<void> {

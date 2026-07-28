@@ -2,6 +2,7 @@ import { computed } from 'vue'
 import {
   resolvedThemeRef,
   setThemeMode,
+  setThemeModeAnimated,
   themeModeRef,
   type ThemeMode,
   type ThemeName,
@@ -21,6 +22,8 @@ export function useTheme() {
     isLight: computed(() => !isDark.value),
     // 设置页切换入口：setMode('system' | 'light' | 'dark')。
     setMode: setThemeMode,
+    // 首页等快捷入口：带跨主题渐变地切换到指定模式。
+    setModeAnimated: setThemeModeAnimated,
   }
 }
 

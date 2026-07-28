@@ -532,11 +532,7 @@
         min-height: -webkit-fill-available;
         overflow: hidden;
         overscroll-behavior: none;
-        position: fixed;
-        top: 0;
-        right: 0;
-        bottom: auto;
-        left: 0;
+        position: relative;
         background-color: #000;
         background-image: var(--h5-main-bg-image, none);
         background-repeat: no-repeat;
@@ -575,6 +571,11 @@
         height: var(--app-cocos-height);
         overflow: hidden;
         z-index: 1;
+      }
+
+      /* 仅在 Cocos 输入框唤起键盘时创建位移合成层。
+       * iOS 全屏下长期保留 translate3d(0, 0, 0) 会裁掉底部安全区。 */
+      html[data-keyboard-open='1'][data-keyboard-owner='cocos'] #GameDiv {
         transform: translate3d(0, calc(-1 * var(--app-cocos-keyboard-offset)), 0);
         will-change: transform;
       }

@@ -96,6 +96,7 @@ function mapRoomRecord(room: PbRoomRecord): RoomRecord {
     un: item.un,
   }))
   const startTime = toSafeInt(room.getStartTime())
+  const createTime = toSafeInt(room.getCreateTime())
 
   return {
     rid: toSafeInt(room.getRid()),
@@ -113,6 +114,8 @@ function mapRoomRecord(room: PbRoomRecord): RoomRecord {
     roomers: toSafeInt(room.getRoomers()) || users.length,
     play_duration: toSafeInt(room.getPlayDuration()),
     start_time: startTime > 0 ? new Date(startTime * 1000).toISOString() : '',
+    // 列表按创建时间倒序展示依赖此字段（对齐 HTTP 记录的 create_time）。
+    create_time: createTime > 0 ? new Date(createTime * 1000).toISOString() : '',
     hand_num: toSafeInt(room.getHandNum()),
     service_id: room.getServiceId() || '',
     straddle_on: toSafeInt(room.getStraddleOn()),

@@ -920,8 +920,20 @@ export interface RoomRecord {
   critical_hit?: number
   roomers?: number
   seat_count?: number
+  /**
+   * 剩余空座位：0 表示满员；HTTP 详情与 WS 增量都会带。
+   */
+  empty_seat?: number
   users?: RoomUser[]
   start_time?: string
+  /**
+   * 创建时间：HTTP 记录为字符串，WS ADD 映射为 ISO 字符串；用于列表按创建时间倒序。
+   */
+  create_time?: string | number
+  /**
+   * 参与状态：0 未参与，1 参与过/参与中。
+   */
+  participation_status?: number
   play_duration?: number
   min_rate?: number
   [key: string]: unknown

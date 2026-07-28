@@ -49,6 +49,29 @@ body {
     linear-gradient(180deg, var(--color-bg-top), var(--color-bg-bottom));
 }
 
+// 主题快捷切换：现代浏览器用整页快照交叉淡化，旧 WebView 回退到常用颜色属性渐变。
+html.theme-view-transition::view-transition-old(root),
+html.theme-view-transition::view-transition-new(root) {
+  animation-duration: 360ms;
+  animation-timing-function: ease-in-out;
+}
+
+html.theme-transitioning body,
+html.theme-transitioning #app,
+html.theme-transitioning #app * {
+  transition-property:
+    background-color, color, border-color, box-shadow, fill, stroke, opacity, transform;
+  transition-duration: 360ms;
+  transition-timing-function: ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-view-transition::view-transition-old(root),
+  html.theme-view-transition::view-transition-new(root) {
+    animation-duration: 0.01ms;
+  }
+}
+
 button,
 input,
 textarea {

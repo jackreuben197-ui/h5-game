@@ -312,26 +312,30 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
 
       mttListLoadingToken = sessionKey
       // 对齐 Unity：列表详情和可见性/系列索引都在启动阶段一次拉齐。
-      await this.fetchAllMttSngIds(options)
-      mttListLoadingPromise = Promise.all([
-        this.fetchMttList(options),
-      ])
-        .then(() => {
+      // 整个序列包在同一个 promise 里，避免并发 bootstrap（首页 + 列表页）重复拉取。
+      mttListLoadingPromise = (async () => {
+        const idsLoaded = await this.fetchAllMttSngIds(options)
+        // ids 拉取失败时跳过列表请求，保留缓存数据展示，避免把旧列表覆盖成空。
+        const listLoaded = idsLoaded ? await this.fetchMttList(options) : false
+        // 任一请求失败都不落「本会话已加载」标记，下次进入页面可重试；
+        // 否则首启时机不巧（token/网络未就绪）会把空列表锁死到大退。
+        if (idsLoaded && listLoaded) {
           mttListLoadedToken = sessionKey
-        })
-        .finally(() => {
-          mttListLoadingPromise = null
-          mttListLoadingToken = ''
-        })
+        }
+      })().finally(() => {
+        mttListLoadingPromise = null
+        mttListLoadingToken = ''
+      })
 
       await mttListLoadingPromise
     },
 
     // 全量拉取：按分页聚合 records，默认状态只取 CREATED/RUNNING（0/1）。
-    async fetchMttList(options: { silent?: boolean } = {}): Promise<void> {
+    // 返回是否拉取成功；失败时保留旧数据，由调用方决定是否重试。
+    async fetchMttList(options: { silent?: boolean } = {}): Promise<boolean> {
       const sessionKey = resolveMttSessionKey()
       if (!sessionKey) {
-        return
+        return false
       }
 
       const channelGuest = isChannelGuestSession(sessionKey)
@@ -339,7 +343,7 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
       if (channelGuest && guestClubRid <= 0) {
         this.records = []
         this.persistMttListCache()
-        return
+        return false
       }
 
       const mttIds = this.mttIdList
@@ -357,7 +361,7 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
       if (!requestCount) {
         this.records = []
         this.persistMttListCache()
-        return
+        return true
       }
 
       try {
@@ -381,10 +385,13 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
               room_type: 0,
             })
 
-          const records =
-            Number(response.code) === 0 && Array.isArray(response.data?.mtt_list)
-              ? response.data.mtt_list
-              : []
+          // 任一分页返回异常码都视为失败，不落地部分数据，保留旧列表等下次重试。
+          if (Number(response.code) !== 0) {
+            log.warn('fetch list failed, code:', response.code)
+            return false
+          }
+
+          const records = Array.isArray(response.data?.mtt_list) ? response.data.mtt_list : []
           if (records.length) {
             nextRecords.push(...records)
           }
@@ -392,20 +399,23 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
 
         this.records = nextRecords
         this.persistMttListCache()
+        return true
       } catch (error) {
         // 静默刷新失败时保留旧缓存，避免页面闪空。
         if (!options.silent) {
           log.warn('fetch list failed:', error)
         }
+        return false
       }
     },
 
     // 可见赛事 ID + 系列信息：用于列表按“赛事系列”分组，并按 club/tribe 做可见性过滤。
-    async fetchAllMttSngIds(options: { silent?: boolean } = {}): Promise<void> {
+    // 返回是否拉取成功；失败时保留旧索引，由调用方决定是否重试。
+    async fetchAllMttSngIds(options: { silent?: boolean } = {}): Promise<boolean> {
       try {
         const sessionKey = resolveMttSessionKey()
         if (!sessionKey) {
-          return
+          return false
         }
 
         const channelGuest = isChannelGuestSession(sessionKey)
@@ -415,23 +425,30 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
           this.sngIdList = []
           this.seriesList = []
           this.persistMttListCache()
-          return
+          return false
         }
 
         const response = channelGuest
           ? await getGuestAllMttSngIdsApi({ club_rid: guestClubRid })
           : await getAllMttSngIdsApi()
-        const data = Number(response.code) === 0 ? response.data : null
+        // 异常码不再把索引覆盖成空（否则会连带清空列表并被会话标记锁死），保留旧数据等重试。
+        if (Number(response.code) !== 0) {
+          log.warn('fetch all mtt/sng ids failed, code:', response.code)
+          return false
+        }
+        const data = response.data
 
         this.mttIdList = Array.isArray(data?.mtt_id_list) ? data.mtt_id_list : []
         this.sngIdList = Array.isArray(data?.sng_id_list) ? data.sng_id_list : []
         this.seriesList = Array.isArray(data?.mtt_series_list) ? data.mtt_series_list : []
         this.persistMttListCache()
+        return true
       } catch (error) {
         // 静默刷新失败时保留旧缓存，避免页面闪空。
         if (!options.silent) {
           log.warn('fetch all mtt/sng ids failed:', error)
         }
+        return false
       }
     },
 

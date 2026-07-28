@@ -801,6 +801,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
 .mrp {
   position: relative;
   isolation: isolate;
@@ -1112,6 +1113,10 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 0.08rem;
+  color: rgba(255, 255, 255, 0.9);
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.9);
+  }
 }
 
 .mrp__player-avatar {
@@ -1128,6 +1133,10 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 0.08rem;
+  color: rgba(255, 255, 255, 0.9);
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.9);
+  }
 }
 
 .mrp__chip-icon {

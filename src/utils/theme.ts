@@ -25,8 +25,17 @@ let initialized = false
 let systemThemeQuery: MediaQueryList | null = null
 let telegramThemeBound = false
 let telegramReadyListenerBound = false
+let transitionCleanupTimer = 0
 // URL ?theme=xxx 预览覆盖：仅当次会话生效不落存储，供美术/测试对照走查浅色稿。
 let urlOverrideMode: ThemeMode | null = null
+
+interface ThemeViewTransition {
+  finished: Promise<void>
+}
+
+type ThemeTransitionDocument = Document & {
+  startViewTransition?: (update: () => void) => ThemeViewTransition
+}
 
 type TelegramWebApp = NonNullable<NonNullable<Window['Telegram']>['WebApp']>
 
@@ -172,6 +181,40 @@ export function setThemeMode(mode: ThemeMode): void {
   themeMode.value = mode
   localStore.setItem(StorageKey.THEME_MODE, mode)
   applyTheme()
+}
+
+/** 带整页交叉淡化地切换主题；不支持 View Transition 时回退到 CSS 颜色渐变。 */
+export function setThemeModeAnimated(mode: ThemeMode): void {
+  if (
+    typeof window === 'undefined' ||
+    typeof document === 'undefined' ||
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  ) {
+    setThemeMode(mode)
+    return
+  }
+
+  const root = document.documentElement
+  const transitionDocument = document as ThemeTransitionDocument
+  if (typeof transitionDocument.startViewTransition === 'function') {
+    root.classList.add('theme-view-transition')
+    const transition = transitionDocument.startViewTransition(() => {
+      setThemeMode(mode)
+    })
+    void transition.finished.finally(() => {
+      root.classList.remove('theme-view-transition')
+    })
+    return
+  }
+
+  // Safari / 旧 WebView 回退：先挂过渡规则再修改 data-theme，让常用颜色属性平滑插值。
+  window.clearTimeout(transitionCleanupTimer)
+  root.classList.add('theme-transitioning')
+  void root.offsetWidth
+  setThemeMode(mode)
+  transitionCleanupTimer = window.setTimeout(() => {
+    root.classList.remove('theme-transitioning')
+  }, 360)
 }
 
 // 只读响应式出口，组件侧经 useTheme() 消费。

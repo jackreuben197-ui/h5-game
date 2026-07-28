@@ -1739,8 +1739,13 @@ watch(
 }
 
 .chat-overlay {
-  position: fixed;
-  inset: 0;
+  /* Teleport 到 body 后仍绑定稳定的应用外壳，避免键盘改变 fixed viewport。 */
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* 键盘覆盖页面时只抬升客服面板，牌桌与应用外壳尺寸保持不变。 */
+  bottom: var(--app-keyboard-inset, 0px);
   z-index: 200;
   display: flex;
   flex-direction: column;

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import homeHeaderFallback from '@/assets/images/home_header_1.png'
 import { useCachedImages } from '@/utils/imageCache'
+import ThemeQuickSwitch from '@/components/ThemeQuickSwitch.vue'
 
 const props = defineProps<{
   images: string[]
@@ -14,26 +15,44 @@ const isSwipeEnabled = computed(() => cachedImages.value.length > 1)
 </script>
 
 <template>
-  <van-swipe v-if="isSwipeEnabled" class="home-banner__swipe" loop :autoplay="3000">
-    <van-swipe-item v-for="(url, index) in cachedImages" :key="index">
-      <img class="home-banner__img" :src="url" alt="banner" />
-    </van-swipe-item>
-    <template #indicator="{ active, total }">
-      <div class="home-banner__dots">
-        <span
-          v-for="i in total"
-          :key="i"
-          class="home-banner__dot"
-          :class="{ 'is-active': i - 1 === active }"
-        ></span>
-      </div>
-    </template>
-  </van-swipe>
-  <img v-else class="home-banner__img" :src="cachedImages[0]" alt="banner" />
+  <div class="home-banner">
+    <van-swipe v-if="isSwipeEnabled" class="home-banner__swipe" loop :autoplay="3000">
+      <van-swipe-item v-for="(url, index) in cachedImages" :key="index">
+        <img class="home-banner__img" :src="url" alt="banner" />
+      </van-swipe-item>
+      <template #indicator="{ active, total }">
+        <div class="home-banner__dots">
+          <span
+            v-for="i in total"
+            :key="i"
+            class="home-banner__dot"
+            :class="{ 'is-active': i - 1 === active }"
+          ></span>
+        </div>
+      </template>
+    </van-swipe>
+    <img v-else class="home-banner__img" :src="cachedImages[0]" alt="banner" />
+    <ThemeQuickSwitch class="home-banner__theme-switch" />
+  </div>
 </template>
 
 <style scoped lang="scss">
 // 高度由外层 .home-header 决定（flex 伸缩 + max-height），此处只做铺满。
+.home-banner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.home-banner__theme-switch {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.3rem;
+  z-index: 3;
+  transform: scale(2);
+  transform-origin: top right;
+}
+
 .home-banner__swipe {
   width: 100%;
   height: 100%;

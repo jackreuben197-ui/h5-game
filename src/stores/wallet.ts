@@ -8,24 +8,47 @@ import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 
 export const useWalletStore = defineStore('wallet', () => {
   const goldPriceData = ref<PropGoldPriceListData | null>(null)
+  let priceListRequest: { clubId?: number; promise: Promise<void> } | null = null
+  let priceListRequestVersion = 0
 
-  async function loadPriceList(): Promise<void> {
+  function loadPriceList(): Promise<void> {
     const userInfoStore = useUserInfoStore()
     const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
     const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
-    const res = await postPropGoldPriceListApi({
-      club_id: clubId,
-      source_type: 0,
-      gold_types: [],
-    }, clubId)
-
-    if (res.data?.pay_types) {
-      res.data.pay_types = res.data.pay_types.filter(
-        (p) => p.type === 1 || p.type === 3
-      )
+    if (priceListRequest?.clubId === clubId) {
+      return priceListRequest.promise
     }
 
-    goldPriceData.value = res.data ?? null
+    const requestVersion = ++priceListRequestVersion
+    const promise = postPropGoldPriceListApi(
+      {
+        club_id: clubId,
+        source_type: 0,
+        gold_types: [],
+      },
+      clubId,
+    ).then((res) => {
+      if (requestVersion !== priceListRequestVersion) return
+
+      if (res.data?.pay_types) {
+        res.data.pay_types = res.data.pay_types.filter(
+          (p) => p.type === 1 || p.type === 3
+        )
+      }
+
+      goldPriceData.value = res.data ?? null
+    })
+
+    priceListRequest = { clubId, promise }
+    void promise
+      .finally(() => {
+        if (priceListRequest?.promise === promise) {
+          priceListRequest = null
+        }
+      })
+      .catch(() => {})
+
+    return promise
   }
 
   function calculateUsdtPrice(goldCount: number, rate: number, feeRate: number, feeType = 0, discount = 0) {

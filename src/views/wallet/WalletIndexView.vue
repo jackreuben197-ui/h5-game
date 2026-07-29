@@ -21,9 +21,12 @@ import UsdtPaymentDetailsPopup from '@/views/wallet/components/UsdtPaymentDetail
 import CustomerServicePaymentPopup from '@/views/wallet/components/CustomerServicePaymentPopup.vue'
 import CustomerServiceChatPopup from '@/views/wallet/components/CustomerServiceChatPopup.vue'
 import FixedDepositPanel from '@/views/wallet/components/FixedDepositPanel.vue'
+import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
 import { t } from '@/i18n'
 import { useWalletStore } from '@/stores/wallet'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useMainTabsStore } from '@/stores/mainTabs'
+import { isChannelPackageHost } from '@/utils/channelPackage'
 import {
   postOrderUserRechargeNoApi,
   postRechargeGoldApi,
@@ -36,6 +39,12 @@ import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 const router = useRouter()
 const walletStore = useWalletStore()
 const userInfoStore = useUserInfoStore()
+const tabsStore = useMainTabsStore()
+const isChannelPackage = isChannelPackageHost()
+
+if (isChannelPackage) {
+  tabsStore.setActiveTab('wallet')
+}
 
 // deposit_switch: 1 = deposit-free (normal wallet UI); 2 = fixed-deposit (simplified apply-recharge UI)
 const isFixedDeposit = computed(
@@ -656,9 +665,15 @@ async function onUsdtSubmit(type: number) {
 </script>
 
 <template>
-  <FixedDepositPanel v-if="isFixedDeposit" />
+  <div
+    v-if="isFixedDeposit"
+    class="wallet-fixed-deposit-shell"
+    :class="{ 'wallet-fixed-deposit-shell--channel': isChannelPackage }"
+  >
+    <FixedDepositPanel />
+  </div>
 
-  <div v-else class="wallet-screen">
+  <div v-else class="wallet-screen" :class="{ 'wallet-screen--channel': isChannelPackage }">
     <HeaderBack :title="t('Wallet_Title')" extra-padding />
 
     <div class="wallet-screen__content-top">
@@ -797,6 +812,8 @@ async function onUsdtSubmit(type: number) {
       @cancel="handleCancelOrder"
     />
   </div>
+
+  <MainBottomTab v-if="isChannelPackage" />
 </template>
 
 <style scoped lang="scss">
@@ -819,6 +836,12 @@ async function onUsdtSubmit(type: number) {
   }
 }
 
+.wallet-fixed-deposit-shell {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
 .wallet-scrollable {
   flex: 1;
   overflow-y: auto;
@@ -826,6 +849,11 @@ async function onUsdtSubmit(type: number) {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   padding-bottom: calc(env(safe-area-inset-bottom) + 0.64rem);
+}
+
+.wallet-screen--channel .wallet-scrollable,
+.wallet-fixed-deposit-shell--channel :deep(.deposit-scrollable) {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 3.2rem);
 }
 
 .wallet-screen__content-top {
@@ -977,5 +1005,9 @@ async function onUsdtSubmit(type: number) {
   left: 0.455rem;
   width: calc(100% - 0.91rem);
   z-index: 10;
+}
+
+.wallet-screen--channel .pay-cta {
+  bottom: calc(env(safe-area-inset-bottom) + 2.82rem);
 }
 </style>

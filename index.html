@@ -1302,18 +1302,53 @@
           }
         }
         initH5TelegramEnvironment()
-        // 再异步加载官方 SDK，避免 head 同步脚本在弱网/不可达场景卡住首屏。
-        var script = document.createElement('script')
-        script.src = 'https://telegram.org/js/telegram-web-app.js'
-        script.async = true
-        script.defer = true
-        script.crossOrigin = 'anonymous'
-        script.referrerPolicy = 'no-referrer'
-        script.onload = initTelegramWebApp
-        script.onerror = function () {
-          console.warn('[telegram] sdk load failed, continue without telegram bridge')
+
+        function hasTelegramWebApp() {
+          return !!(window.Telegram && window.Telegram.WebApp)
         }
-        document.head.appendChild(script)
+
+        function loadTelegramWebAppSdk() {
+          if (!window.__H5_TG_MINI_APP__) {
+            return
+          }
+          if (hasTelegramWebApp()) {
+            initTelegramWebApp()
+            return
+          }
+          if (window.__H5_TG_SDK_LOADING__) {
+            return
+          }
+
+          window.__H5_TG_SDK_LOADING__ = true
+          var script = document.createElement('script')
+          script.id = 'telegram-web-app-sdk'
+          script.src = 'https://telegram.org/js/telegram-web-app.js'
+          script.async = true
+          script.crossOrigin = 'anonymous'
+          script.referrerPolicy = 'no-referrer'
+          script.onload = function () {
+            window.__H5_TG_SDK_LOADING__ = false
+            initTelegramWebApp()
+          }
+          script.onerror = function () {
+            window.__H5_TG_SDK_LOADING__ = false
+            console.warn('[telegram] sdk load failed, continue without telegram bridge')
+          }
+          document.head.appendChild(script)
+        }
+
+        if (hasTelegramWebApp()) {
+          // Telegram 对象已由宿主注入时直接初始化，无需再次请求官方脚本。
+          initTelegramWebApp()
+        } else if (window.__H5_TG_MINI_APP__) {
+          // Cocos Creator 预览依赖 window.onload 才启动 quick_compile。
+          // 外部 async script 在 load 前插入仍会延迟该事件，因此等页面 load 后再请求 SDK。
+          if (document.readyState === 'complete') {
+            window.setTimeout(loadTelegramWebAppSdk, 0)
+          } else {
+            window.addEventListener('load', loadTelegramWebAppSdk, { once: true })
+          }
+        }
         bindCocosViewportResize()
 
         // 引擎脚本异步加载，轮询直到 cc.view 就绪后安装引擎 resize 键盘守卫

@@ -54,6 +54,21 @@
         document.documentElement.setAttribute('data-theme', theme)
       })()
     </script>
+    <!-- 游客桌面适配实验：仅 guest 路由启用，避免影响现有登录态页面。
+         desktop=bounded|ratio|fluid|phone 可直接切换四个 demo。 -->
+    <script>
+      ;(function () {
+        var locationText = window.location.search + ' ' + window.location.hash
+        var isGuestRoute = /#\/guest\//.test(window.location.hash)
+        var match = locationText.match(/[?&]desktop=(bounded|ratio|fluid|phone)\b/)
+        var layout = isGuestRoute ? (match ? match[1] : 'bounded') : 'phone'
+        var root = document.documentElement
+        root.setAttribute('data-desktop-layout', layout)
+        if (isGuestRoute) {
+          root.setAttribute('data-guest-desktop', '1')
+        }
+      })()
+    </script>
 
     <!-- @silenthill/h5-cc-i18n runtime: 必须先于 Vue 入口加载，挂 window.__H5_CC_I18N__ -->
     <script src="./h5-cc-i18n.min.js"></script>
@@ -150,25 +165,54 @@
           var viewportWidth = Number(window.visualViewport && window.visualViewport.width)
             || Number(window.innerWidth)
             || 375
-          var viewportSignature = viewportWidth + 'x' + height
+          var desktopLayout = root.getAttribute('data-desktop-layout') || 'phone'
+          var guestDesktop = root.getAttribute('data-guest-desktop') === '1'
+          var viewportSignature =
+            viewportWidth + 'x' + height + 'x' + desktopLayout + 'x' + String(guestDesktop)
           if (viewportSignature === lastViewportSignature) {
             return
           }
           lastViewportSignature = viewportSignature
           root.style.setProperty('--app-viewport-height', height)
 
-          // On desktop/tablet, retain the mobile canvas width while capping its
-          // height to the iPhone 14 Plus portrait ratio (428 × 926).
+          // 游客桌面 demo 支持三种画布策略；其他页面继续使用原来的手机框。
           var heightNumber = parseFloat(height)
           if (isFinite(heightNumber) && heightNumber > 0) {
-            var frameWidth = Math.min(viewportWidth, 480)
-            var frameHeight = viewportWidth > 480
-              ? Math.min(heightNumber, (frameWidth * 926) / 428)
-              : heightNumber
-            root.style.setProperty('--app-frame-height', Math.round(frameHeight) + 'px')
+            var adaptiveDesktop = guestDesktop && desktopLayout !== 'phone' && viewportWidth >= 600
+            var frameWidth
+            var frameHeight
+            if (adaptiveDesktop && desktopLayout === 'ratio') {
+              var ratioMaxWidth = Math.min(viewportWidth, 1600)
+              var ratioMaxHeight = Math.min(heightNumber, 1000)
+              frameWidth = Math.min(ratioMaxWidth, ratioMaxHeight * 1.6)
+              frameHeight = frameWidth / 1.6
+              root.style.setProperty('--app-frame-width', frameWidth.toFixed(3) + 'px')
+            } else {
+              root.style.removeProperty('--app-frame-width')
+              frameWidth = adaptiveDesktop
+                ? desktopLayout === 'bounded'
+                  ? Math.min(viewportWidth, 1600)
+                  : viewportWidth
+                : Math.min(viewportWidth, 480)
+              frameHeight = adaptiveDesktop
+                ? desktopLayout === 'bounded'
+                  ? Math.min(heightNumber, 1000)
+                  : heightNumber
+                : viewportWidth > 480
+                  ? Math.min(heightNumber, (frameWidth * 926) / 428)
+                  : heightNumber
+            }
+            root.style.setProperty(
+              '--app-frame-height',
+              desktopLayout === 'ratio'
+                ? frameHeight.toFixed(3) + 'px'
+                : Math.round(frameHeight) + 'px',
+            )
             root.style.setProperty(
               '--app-frame-offset-top',
-              Math.max(0, Math.round((heightNumber - frameHeight) / 2)) + 'px',
+              desktopLayout === 'ratio'
+                ? Math.max(0, (heightNumber - frameHeight) / 2).toFixed(3) + 'px'
+                : Math.max(0, Math.round((heightNumber - frameHeight) / 2)) + 'px',
             )
           }
         }
@@ -555,6 +599,25 @@
         body {
           transform: translateZ(0);
           box-shadow: 0 0 32px rgba(0, 0, 0, 0.28);
+        }
+      }
+
+      @media (min-width: 600px) {
+        html[data-guest-desktop='1'][data-desktop-layout='bounded'],
+        html[data-guest-desktop='1'][data-desktop-layout='ratio'] {
+          --app-frame-max-width: 1600px;
+        }
+
+        html[data-guest-desktop='1'][data-desktop-layout='fluid'] {
+          --app-frame-max-width: 100vw;
+        }
+
+        html[data-guest-desktop='1'][data-desktop-layout='ratio'] body {
+          width: var(--app-frame-width);
+        }
+
+        html[data-guest-desktop='1'][data-desktop-layout='fluid'] body {
+          box-shadow: none;
         }
       }
 

@@ -221,7 +221,7 @@ const matchInfo = computed(() => {
     { label: t('UIMatchGuaranteedPool'), value: fmtMoney(m.prize_base_pool) },
     { label: t('UIMTT_chouma1'), value: initialBB },
     { label: t('MTT_State_DelayApply'), value: enterTimeLabel },
-    { label: t('UIMatchEstimatedDuration'), value: holdTimeLabel },
+    // { label: t('UIMatchEstimatedDuration'), value: holdTimeLabel },
     {
       label: t('UIMatchBlindInterval'),
       value: interval > 0 ? `${Math.floor(interval / 60)}${t('UIClubData_Text_time')}` : '-',
@@ -234,7 +234,7 @@ const matchInfo = computed(() => {
       label: t('UIMatchMinMaxPlayers'),
       value: `${m.limit_min ?? '-'}~${realPrize.value?.participants ?? '-'}`,
     },
-    { label: t('UIMatchStartCondition'), value: '-' },
+    // { label: t('UIMatchStartCondition'), value: '-' },
     {
       label: t('UIMatchBreakTime'),
       value:

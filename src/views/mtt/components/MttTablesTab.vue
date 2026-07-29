@@ -176,7 +176,7 @@ function handleRowClick(row: Record<string, unknown>): void {
   border-radius: 3.9rem;
   backdrop-filter: blur(0.16px);
 
-  @include theme-light {
+  @include theme-light-own {
     background: #fff;
   }
 }
@@ -188,7 +188,7 @@ function handleRowClick(row: Record<string, unknown>): void {
   font-weight: 700;
   color: #fff;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }
@@ -202,7 +202,7 @@ function handleRowClick(row: Record<string, unknown>): void {
   font-weight: 600;
   color: #fff;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }

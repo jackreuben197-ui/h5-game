@@ -269,7 +269,7 @@ watch(showHunterMode, (enabled) => {
   font-size: 0.38rem;
   font-family: 'HONOR Sans CN', sans-serif;
 
-  @include theme-light {
+  @include theme-light-own {
     color: rgba(0, 0, 0, 0.65);
   }
 }
@@ -278,7 +278,7 @@ watch(showHunterMode, (enabled) => {
   color: #fff;
   border-bottom: 1px solid #fff;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
     border-bottom-color: #000;
   }
@@ -292,7 +292,7 @@ watch(showHunterMode, (enabled) => {
   margin-bottom: 0.4rem;
   backdrop-filter: blur(0.16px);
 
-  @include theme-light {
+  @include theme-light-own {
     background: #fff;
   }
 }
@@ -322,7 +322,7 @@ watch(showHunterMode, (enabled) => {
   color: #fff;
   line-height: 1.2;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }
@@ -334,7 +334,7 @@ watch(showHunterMode, (enabled) => {
   color: rgba(255, 255, 255, 0.5);
   line-height: 1.2;
 
-  @include theme-light {
+  @include theme-light-own {
     color: rgba(0, 0, 0, 0.5);
   }
 }
@@ -361,7 +361,7 @@ watch(showHunterMode, (enabled) => {
   line-height: 1.3;
   color: rgba(255, 255, 255, 0.5);
 
-  @include theme-light {
+  @include theme-light-own {
     color: rgba(0, 0, 0, 0.5);
   }
 }

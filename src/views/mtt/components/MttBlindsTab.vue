@@ -198,7 +198,7 @@ const blindLevels = computed(() => blindList.value.length)
   border-radius: 3.9rem;
   backdrop-filter: blur(0.16px);
 
-  @include theme-light {
+  @include theme-light-own {
     background: #fff;
   }
 }
@@ -210,7 +210,7 @@ const blindLevels = computed(() => blindList.value.length)
   font-weight: 700;
   color: #fff;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }
@@ -221,7 +221,7 @@ const blindLevels = computed(() => blindList.value.length)
   font-weight: 700;
   color: #fff;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }
@@ -240,7 +240,7 @@ const blindLevels = computed(() => blindList.value.length)
   color: rgba(255, 255, 255, 0.9);
   line-height: 1.4;
 
-  @include theme-light {
+  @include theme-light-own {
     color: rgba(0, 0, 0, 0.9);
   }
 }

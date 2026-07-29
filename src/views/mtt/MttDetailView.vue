@@ -452,7 +452,7 @@ async function handleEnterTable(rid: number): Promise<void> {
 </script>
 
 <template>
-  <div class="mtt-detail-page">
+  <div class="mtt-detail-page" data-theme="light">
     <div class="bg-overlay"></div>
 
     <!-- 顶部返回 -->
@@ -531,8 +531,105 @@ async function handleEnterTable(rid: number): Promise<void> {
   flex-direction: column;
   overflow: hidden;
 
-  @include theme-light {
+  @include theme-light-own {
+    // 上游 theme-light 全局关闭，语义变量在 light 下没有取值，这里页面内自定义。
+    --c-text: rgba(0, 0, 0, 1);
+    --c-text-muted: rgba(0, 0, 0, 0.62);
+    --c-surface: rgba(255, 255, 255, 1);
+    --c-divider: rgba(0, 0, 0, 0.12);
+    --c-border: rgba(0, 0, 0, 0.18);
+    --c-brand: #05c297;
+    --c-brand-rgb: 5, 194, 151;
+
+    color: var(--c-text);
     background-image: url('@/assets/images/main_bg_light.webp');
+
+    // HeaderBack 内部写死 color: #fff，继承覆盖不了。
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: var(--c-text);
+    }
+
+    :deep(.title) {
+      color: var(--c-text);
+      text-shadow: none;
+    }
+
+    // FilterTabbar：容器转浅色，未选中文字转黑；选中胶囊转为绿色。
+    :deep(.filter-tabbar) {
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    :deep(.filter-tab__text) {
+      color: rgba(0, 0, 0, 0.65);
+    }
+
+    :deep(.filter-tabbar--pill .filter-tab__item--active) {
+      box-shadow:
+        0 0 0.1rem 0.05rem rgba(5, 194, 151, 0.6) inset,
+        inset 1px 1px 0px 0px rgba(255, 255, 255, 0.85),
+        inset 3px 3px 0px -2px rgba(255, 255, 255, 0.3),
+        inset -1px -1px 0px 0px rgba(255, 255, 255, 0.85),
+        inset -3px -3px 0px -2px rgba(255, 255, 255, 0.3);
+
+      .inner-content {
+        background-color: #05c297;
+        box-shadow: 0 0 0.1rem 0.05rem rgba(5, 194, 151, 0.6);
+      }
+    }
+
+    :deep(.filter-tab__item--active) .filter-tab__text {
+      color: #fff;
+    }
+
+    // GameTable 是公共组件，其 theme-light 不生效，这里按页面作用域覆盖。
+    :deep(.game-table__header-inner) {
+      background: #05c297;
+      box-shadow: 0 0 0.1rem 0.05rem rgba(5, 194, 151, 0.6);
+    }
+
+    :deep(.game-table__row) {
+      background: var(--c-surface);
+    }
+
+    :deep(.game-table__row--flat) {
+      background: none;
+      border-bottom-color: rgba(0, 0, 0, 0.11);
+    }
+
+    :deep(.game-table__cell-text) {
+      color: rgba(0, 0, 0, 0.9);
+    }
+
+    :deep(.game-table__summary) {
+      background: var(--c-surface);
+      color: rgba(0, 0, 0, 0.72);
+    }
+
+    :deep(.game-table__finished-text) {
+      color: rgba(0, 0, 0, 0.4);
+    }
+
+    :deep(.primary-btn--glass) {
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+      .primary-btn__text {
+        color: rgba(0, 0, 0, 0.7);
+        font-weight: 600;
+      }
+
+      &:not(.primary-btn--disabled) {
+        background: linear-gradient(135deg, #05c297 0%, #049e7b 100%);
+        border: none;
+        box-shadow: 0 4px 14px rgba(5, 194, 151, 0.35);
+
+        .primary-btn__text {
+          color: #fff;
+        }
+      }
+    }
   }
 }
 
@@ -544,7 +641,7 @@ async function handleEnterTable(rid: number): Promise<void> {
     radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
     radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
 
-  @include theme-light {
+  @include theme-light-own {
     background: none;
   }
 }

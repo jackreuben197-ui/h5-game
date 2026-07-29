@@ -8,16 +8,17 @@ import imgClubCover from '@/assets/images/default_club_avatar.svg'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgAvatarAdd from '@/assets/icons/avatar_add_badge.svg'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import { postOrgClubCreateApi, postOrgClubCreateIsFirstApi } from '@/api/org'
 import type { OrgClubCreateRequest } from '@/api/models/org'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { resolveDiamondPriceValue } from '@/utils/diamondPriceConfig'
 import { t } from '@/i18n'
-// 主容器背景图：全页面共用一张底图。
 
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--club-create-bg-dark': `url(${mainBgUrl})`,
+  '--club-create-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const router = useRouter()
@@ -83,10 +84,11 @@ async function onCreateClub(): Promise<void> {
         router.push('/club')
       }, 3000)
     } else {
-      showToast(result?.msg ?? t('UIClub_Fail') + "，" + t('UIClub_Text4'))
+      showToast(result?.msg ?? t('UIClub_Fail') + '，' + t('UIClub_Text4'))
     }
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : t('UIClub_Fail') + "，" + t('UIClub_Text4')
+    const message =
+      error instanceof Error ? error.message : t('UIClub_Fail') + '，' + t('UIClub_Text4')
     showToast(message)
   } finally {
     isSubmitting.value = false
@@ -95,15 +97,24 @@ async function onCreateClub(): Promise<void> {
 </script>
 
 <template>
-  <div class="page-shell club-create-bg" :style="backgroundStyle">
+  <div class="page-shell club-create-bg" :style="backgroundStyle" data-theme="light">
     <div class="club-create">
       <HeaderBack :title="'创建俱乐部'" />
 
       <section class="avatar-card">
         <ImageUploadSheet v-model="avatarPreviewUrl">
           <template #default="{ open, imageUrl }">
-            <button type="button" class="avatar-trigger" :aria-label="t('UIClub_ClubAvatar')" @click="open">
-              <img class="avatar-image" :src="imageUrl || imgClubCover" :alt="t('UIClub_ClubAvatar2')" />
+            <button
+              type="button"
+              class="avatar-trigger"
+              :aria-label="t('UIClub_ClubAvatar')"
+              @click="open"
+            >
+              <img
+                class="avatar-image"
+                :src="imageUrl || imgClubCover"
+                :alt="t('UIClub_ClubAvatar2')"
+              />
               <img class="add-badge" :src="imgAvatarAdd" alt="" aria-hidden="true" />
             </button>
           </template>
@@ -111,14 +122,14 @@ async function onCreateClub(): Promise<void> {
 
         <div class="card-info">
           <p class="club-name-preview">
-            {{ clubName }}
+            {{ clubName || '联盟名称' }}
           </p>
-          <!-- <div class="club-id-badge">
+          <div class="club-id-badge">
             <div class="id-label">
               <span>ID</span>
             </div>
             <span class="id-value">{{ userDisplayId }}</span>
-          </div> -->
+          </div>
         </div>
       </section>
 
@@ -131,7 +142,7 @@ async function onCreateClub(): Promise<void> {
               v-model.trim="clubName"
               type="text"
               maxlength="30"
-              placeholder="请输入俱乐部名称"
+              placeholder="请输入名称"
               autocomplete="off"
             />
           </div>
@@ -173,11 +184,132 @@ async function onCreateClub(): Promise<void> {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-create-bg {
   height: 100dvh;
+  background-image: var(--club-create-bg-dark, url('@/assets/images/main_bg.webp'));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  &[data-theme='light'],
+  html[data-theme='light'] & {
+    background-image: var(--club-create-bg-light, url('@/assets/images/main_bg_light.webp')) !important;
+
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: #111111;
+    }
+
+    :deep(.title) {
+      color: #111111;
+      text-shadow: none;
+    }
+
+    .avatar-card {
+      background: #ffffff;
+      border: none;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+
+      &::before {
+        display: none;
+      }
+    }
+
+    .avatar-trigger,
+    .avatar-image {
+      background-color: #d5d5d5 !important;
+      border: none !important;
+      border-radius: 50% !important;
+    }
+
+    .club-name-preview {
+      color: #111111;
+      font-weight: 700;
+    }
+
+    .club-id-badge {
+      background: #8e8e93;
+      border-radius: 4px;
+      padding: 2px 6px;
+      height: auto;
+      gap: 3px;
+
+      .id-label {
+        background: transparent;
+        padding: 0;
+
+        span {
+          color: #ffffff;
+          font-size: 9px;
+        }
+      }
+
+      .id-value {
+        color: #ffffff;
+        font-size: 9px;
+      }
+    }
+
+    .field-label {
+      color: #111111;
+      font-weight: 600;
+    }
+
+    .field-shell--single,
+    .field-shell--multi {
+      background: #dcdcdc;
+      border: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+
+    input,
+    textarea {
+      color: #111111;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: #757575;
+    }
+
+    .create-btn {
+      background: #05c297;
+      color: #ffffff;
+      box-shadow: none;
+      font-weight: 600;
+
+      &::before {
+        display: none;
+      }
+    }
+
+    .create-btn--disabled {
+      background: #05c297 !important;
+      opacity: 0.92;
+      color: #ffffff !important;
+      box-shadow: none !important;
+    }
+
+    .cost-line {
+      color: #111111;
+    }
+
+    .cost-original {
+      color: #757575;
+
+      &::after {
+        background: #757575;
+      }
+    }
+
+    .cost-current {
+      color: #ff3b30;
+      font-weight: 700;
+    }
+  }
 }
 
 .club-create {
@@ -229,17 +361,27 @@ async function onCreateClub(): Promise<void> {
   flex-shrink: 0;
   align-self: stretch;
   border-radius: 39.59px;
-  background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
+  background: linear-gradient(
+    97deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  );
   backdrop-filter: blur(0.15836147964000702px);
 
   &::before {
-    content: "";
+    content: '';
     position: absolute;
     inset: 0;
     border-radius: 39.59px;
     padding: 1px;
-    background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    background: linear-gradient(
+      97deg,
+      rgba(255, 255, 255, 0.1) 21.11%,
+      rgba(230, 230, 230, 0.1) 71.43%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
@@ -370,7 +512,7 @@ async function onCreateClub(): Promise<void> {
   align-self: stretch;
   border-radius: 54px;
   border: none;
-  background: rgba(34, 34, 34, 0.30);
+  background: rgba(34, 34, 34, 0.3);
   background-blend-mode: soft-light;
   backdrop-filter: blur(30.120716094970703px);
 }
@@ -380,7 +522,7 @@ async function onCreateClub(): Promise<void> {
   border-radius: 0.72rem;
   padding: 0.5405rem;
   border: none;
-  background: rgba(34, 34, 34, 0.30);
+  background: rgba(34, 34, 34, 0.3);
   background-blend-mode: soft-light;
   backdrop-filter: blur(30.120716094970703px);
 }
@@ -422,7 +564,11 @@ textarea::placeholder {
   height: 53.807px;
   border: none;
   border-radius: 1.08rem;
- background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
+  background: linear-gradient(
+    97deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  );
   color: #fff;
   font-size: 0.5rem;
   font-weight: 500;
@@ -472,7 +618,11 @@ textarea::placeholder {
 }
 
 .create-btn--disabled {
-  background: linear-gradient(126.814deg, rgba(255, 255, 255, 0.1) 21.106%, rgba(230, 230, 230, 0.1) 71.429%) !important;
+  background: linear-gradient(
+    126.814deg,
+    rgba(255, 255, 255, 0.1) 21.106%,
+    rgba(230, 230, 230, 0.1) 71.429%
+  ) !important;
   backdrop-filter: blur(0.5px);
   box-shadow: none;
   opacity: 1;

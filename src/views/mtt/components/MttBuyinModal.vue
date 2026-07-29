@@ -490,6 +490,8 @@ function handleConfirm() {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .buyin-loading {
   text-align: center;
   color: #fff;
@@ -798,5 +800,100 @@ function handleConfirm() {
   font-size: 0.33rem;
   font-weight: 700;
   color: #fff;
+}
+
+@include theme-light-own {
+  .buyin-option-row {
+    background: rgba(255, 255, 255, 0.6);
+    border-color: rgba(0, 0, 0, 0.1);
+
+    &--active {
+      background: #fff;
+      border-color: #05c297;
+    }
+  }
+
+  .buyin-option-text {
+    color: #000;
+
+    &--none {
+      color: rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  .free-badge {
+    background: #05c297;
+    color: #fff;
+  }
+
+  .ratio-btn {
+    background: rgba(0, 0, 0, 0.06);
+    color: rgba(0, 0, 0, 0.65);
+
+    &--active {
+      background: #05c297;
+      color: #fff;
+    }
+  }
+
+  .radio-circle {
+    border-color: rgba(0, 0, 0, 0.25);
+
+    &--checked {
+      border-color: #05c297;
+      background-color: #05c297;
+    }
+  }
+
+  .wallet-title {
+    color: rgba(0, 0, 0, 0.65);
+  }
+
+  .wallet-item {
+    background: rgba(255, 255, 255, 0.6);
+    border-color: rgba(0, 0, 0, 0.1);
+
+    &--selected {
+      background: #fff;
+      border-color: #05c297;
+    }
+  }
+
+  .wallet-item-name,
+  .wallet-item-gold {
+    color: #000;
+  }
+
+  .cost-section {
+    background: rgba(255, 255, 255, 0.6);
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .cost-balance-num,
+  .cost-item-value,
+  .record-final {
+    color: #000;
+  }
+
+  .cost-label,
+  .record-fee-label {
+    color: rgba(0, 0, 0, 0.65);
+  }
+
+  .record-original {
+    color: rgba(0, 0, 0, 0.4);
+  }
+
+  .record-fee-section {
+    background: rgba(0, 0, 0, 0.04);
+  }
+
+  .rebuy-timer {
+    color: #05c297;
+  }
+
+  .buyin-loading {
+    color: #000;
+  }
 }
 </style>

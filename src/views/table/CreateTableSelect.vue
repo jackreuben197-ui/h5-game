@@ -146,7 +146,9 @@ onMounted(() => {
 :deep(.page-back-header) {
   padding-left: 0;
   padding-right: 0;
-  padding-top: calc(var(--app-top-padding) + var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.2rem);
+  padding-top: calc(
+    var(--app-top-padding) + var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.2rem
+  );
   padding-bottom: 0;
 }
 

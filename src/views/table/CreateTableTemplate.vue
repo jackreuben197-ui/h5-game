@@ -565,7 +565,11 @@ async function onCreateTable() {
       <!-- Form sections -->
       <div class="detail-form">
         <template v-for="(section, index) in renderedSections" :key="index">
-          <div v-if="section.length" class="detail-form__section" :class="{ 'detail-form__section--tab': section.some(f => f.type === 'tab') }">
+          <div
+            v-if="section.length"
+            class="detail-form__section"
+            :class="{ 'detail-form__section--tab': section.some((f) => f.type === 'tab') }"
+          >
             <component
               :is="componentMap[field.type]"
               v-for="field in section"
@@ -748,7 +752,6 @@ async function onCreateTable() {
   border-radius: 0.43rem;
   backdrop-filter: blur(0.16px);
   padding: 0.13rem 0.5rem;
-
 }
 
 .detail-form__section--tab {

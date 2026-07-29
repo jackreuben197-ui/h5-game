@@ -48,7 +48,8 @@ $upstream-light-enabled: false;
 // Использовать для страниц/компонентов, светлый вид которых нарисован нами:
 // кошелёк и его модалки, см. README 8.3.
 @mixin theme-light-own {
-  html[data-theme='light'] & {
+  html[data-theme='light'] &,
+  [data-theme='light'] & {
     @content;
   }
 }

@@ -503,8 +503,7 @@ function applyModeSetting(
       profitLimit !== '' && toSafeNumber(item.contribute_fixed_limit) > 0
     target.jackpotContribChecked =
       jackpotContrib !== '' && toSafeNumber(item.contribute_fixed_rate) > 0
-    target.profitPercentChecked =
-      profitPercent !== '' && toSafeNumber(item.contribute_ratio) > 0
+    target.profitPercentChecked = profitPercent !== '' && toSafeNumber(item.contribute_ratio) > 0
   })
 
   stakeLevels.forEach((level) => {
@@ -836,14 +835,14 @@ onMounted(() => {
                     <span>{{ t('UICreateClubJackpotTemplate_AllTableTriggerTip') }}</span>
                   </div>
                   <div class="value-input value-input--narrow">
-                  <input
-                    v-model="getBlindConfigBySb(option.sb).awardOtherRatio"
-                    class="inline-input"
-                    inputmode="decimal"
-                    placeholder="0"
-                  />
-                  <span>%</span>
-                </div>
+                    <input
+                      v-model="getBlindConfigBySb(option.sb).awardOtherRatio"
+                      class="inline-input"
+                      inputmode="decimal"
+                      placeholder="0"
+                    />
+                    <span>%</span>
+                  </div>
                 </div>
               </div>
 
@@ -1033,7 +1032,9 @@ onMounted(() => {
 :deep(.page-back-header) {
   position: relative;
   z-index: 3;
-  padding-top: calc(var(--app-top-padding) + var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.2rem);
+  padding-top: calc(
+    var(--app-top-padding) + var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.2rem
+  );
 }
 
 .create-content {

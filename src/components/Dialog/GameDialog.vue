@@ -222,6 +222,8 @@ const bodyStyles = computed<StyleValue>(() => [
 </style>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .game-dialog__card {
   position: relative;
   min-height: 2rem;
@@ -413,5 +415,34 @@ const bodyStyles = computed<StyleValue>(() => [
   ) !important;
   backdrop-filter: blur(0.0043rem) !important;
   -webkit-backdrop-filter: blur(0.0043rem) !important;
+}
+
+@include theme-light-own {
+  .game-dialog__card {
+    background-color: #ffffff;
+    border-color: rgba(0, 0, 0, 0.1);
+
+    &::after {
+      box-shadow: none;
+    }
+  }
+
+  .game-dialog__title {
+    color: #000000;
+  }
+
+  .game-dialog__body {
+    color: rgba(0, 0, 0, 0.85);
+  }
+
+  .game-dialog__card--dark .game-dialog__card-bg-gradient,
+  .game-dialog__card--dark .game-dialog__card-bg-shadow {
+    background: rgba(255, 255, 255, 0.95);
+  }
+
+  .game-dialog__card-bg-texture {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: none;
+  }
 }
 </style>

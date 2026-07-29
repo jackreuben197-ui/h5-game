@@ -163,7 +163,7 @@ const rewardList = computed<RewardRecord[]>(() => {
   border-radius: 3.9rem;
   backdrop-filter: blur(0.16px);
 
-  @include theme-light {
+  @include theme-light-own {
     background: #fff;
   }
 }
@@ -175,7 +175,7 @@ const rewardList = computed<RewardRecord[]>(() => {
   font-weight: 700;
   color: #fff;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }
@@ -189,7 +189,7 @@ const rewardList = computed<RewardRecord[]>(() => {
   font-weight: 700;
   color: #fff;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }

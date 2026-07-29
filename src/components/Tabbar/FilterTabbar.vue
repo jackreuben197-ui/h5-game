@@ -79,6 +79,8 @@ export default { name: 'FilterTabbar' }
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 /* ---- 容器：全宽，等分每个 tab ---- */
 .filter-tabbar {
   display: flex;
@@ -160,6 +162,34 @@ export default { name: 'FilterTabbar' }
     color: #fff;
     font-weight: 700;
     z-index: 3;
+  }
+}
+
+@include theme-light-own {
+  .filter-tabbar {
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  .filter-tab__text {
+    color: rgba(0, 0, 0, 0.65);
+  }
+
+  .filter-tabbar--pill .filter-tab__item--active {
+    box-shadow:
+      0 0 0.1rem 0.05rem rgba(5, 194, 151, 0.6) inset,
+      inset 1px 1px 0px 0px rgba(255, 255, 255, 0.85),
+      inset 3px 3px 0px -2px rgba(255, 255, 255, 0.3),
+      inset -1px -1px 0px 0px rgba(255, 255, 255, 0.85),
+      inset -3px -3px 0px -2px rgba(255, 255, 255, 0.3);
+
+    .inner-content {
+      background-color: #05c297;
+      box-shadow: 0 0 0.1rem 0.05rem rgba(5, 194, 151, 0.6);
+    }
+
+    .filter-tab__text {
+      color: #fff;
+    }
   }
 }
 </style>

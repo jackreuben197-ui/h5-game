@@ -418,7 +418,7 @@ const matchInfo = computed(() => {
   box-shadow: 0 -0.21rem 0.54rem rgba(78, 135, 97, 0.54) inset;
   margin-bottom: 0.2rem;
 
-  @include theme-light {
+  @include theme-light-own {
     background: #fff;
     box-shadow: 0 -0.21rem 0.54rem rgba(var(--c-brand-rgb), 0.3) inset;
   }
@@ -438,7 +438,7 @@ const matchInfo = computed(() => {
   box-shadow: 0.03rem 0.04rem 0.07rem rgba(0, 0, 0, 0.18);
   flex-shrink: 0;
 
-  @include theme-light {
+  @include theme-light-own {
     background: var(--c-brand);
   }
 }
@@ -461,7 +461,7 @@ const matchInfo = computed(() => {
   color: #fff;
   font-weight: 400;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }
@@ -470,7 +470,7 @@ const matchInfo = computed(() => {
   color: #fff;
   font-weight: 400;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }
@@ -481,7 +481,7 @@ const matchInfo = computed(() => {
   gap: 0.1rem;
   color: #fff;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }
@@ -506,6 +506,11 @@ const matchInfo = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 0.22rem;
+
+  @include theme-light-own {
+    background: #fff;
+    backdrop-filter: none;
+  }
 }
 
 .stats-grid {
@@ -544,6 +549,10 @@ const matchInfo = computed(() => {
   align-self: stretch;
   background: rgba(255, 255, 255, 0.2);
   margin: 0 0.08rem;
+
+  @include theme-light-own {
+    background: rgba(0, 0, 0, 0.12);
+  }
 }
 
 .stat-label {
@@ -552,7 +561,7 @@ const matchInfo = computed(() => {
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }
@@ -563,7 +572,7 @@ const matchInfo = computed(() => {
   font-weight: 600;
   font-family: 'HONOR Sans CN', sans-serif;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }
@@ -585,6 +594,10 @@ const matchInfo = computed(() => {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0.19rem;
+
+  @include theme-light-own {
+    background: rgba(0, 0, 0, 0.04);
+  }
 }
 
 .level-label {
@@ -593,7 +606,7 @@ const matchInfo = computed(() => {
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }
@@ -604,6 +617,10 @@ const matchInfo = computed(() => {
   font-weight: 400;
   font-family: 'Keania One';
   line-height: 1.1;
+
+  @include theme-light-own {
+    color: #000;
+  }
 }
 
 .level-break {
@@ -612,7 +629,7 @@ const matchInfo = computed(() => {
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
 
-  @include theme-light {
+  @include theme-light-own {
     color: rgba(0, 0, 0, 0.7);
   }
 }
@@ -636,7 +653,7 @@ const matchInfo = computed(() => {
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }
@@ -647,7 +664,7 @@ const matchInfo = computed(() => {
   font-weight: 600;
   font-family: 'HONOR Sans CN', sans-serif;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }
@@ -657,6 +674,10 @@ const matchInfo = computed(() => {
   height: 1px;
   background: rgba(255, 255, 255, 0.2);
   opacity: 0.5;
+
+  @include theme-light-own {
+    background: rgba(0, 0, 0, 0.12);
+  }
 }
 
 /* 筹码统计 */
@@ -676,7 +697,7 @@ const matchInfo = computed(() => {
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }
@@ -689,7 +710,7 @@ const matchInfo = computed(() => {
   line-height: 0.4rem;
   font-family: 'HONOR Sans CN', sans-serif;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }
@@ -700,7 +721,7 @@ const matchInfo = computed(() => {
   font-weight: 400;
   font-family: 'HONOR Sans CN', sans-serif;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #696969;
   }
 }
@@ -714,7 +735,7 @@ const matchInfo = computed(() => {
     line-height: 140%; /* 0.53211rem */
     margin: 0 0.5rem;
 
-    @include theme-light {
+    @include theme-light-own {
       color: #000;
     }
   }
@@ -730,7 +751,7 @@ const matchInfo = computed(() => {
     margin: 0.1rem 0 0.4rem;
     color: rgba(255, 255, 255, 0.7);
 
-    @include theme-light {
+    @include theme-light-own {
       background: #fff;
       color: rgba(0, 0, 0, 0.7);
     }
@@ -753,7 +774,7 @@ const matchInfo = computed(() => {
   border-radius: 0.77rem;
   min-height: 0.72rem;
 
-  @include theme-light {
+  @include theme-light-own {
     background: #fff;
   }
 }
@@ -767,7 +788,7 @@ const matchInfo = computed(() => {
   align-items: center;
   gap: 0.1rem;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }
@@ -777,7 +798,7 @@ const matchInfo = computed(() => {
   color: #ebebeb;
   opacity: 0.7;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }
@@ -791,7 +812,7 @@ const matchInfo = computed(() => {
   align-items: center;
   gap: 0.1rem;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #000;
   }
 }

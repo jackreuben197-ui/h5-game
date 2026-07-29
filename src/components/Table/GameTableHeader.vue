@@ -119,6 +119,8 @@ export default { name: 'GameTableHeader' }
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 // ---- Outer container: white inner shadow ring (matches FilterTabbar--pill outer button) ----
 .game-table__header {
   display: flex; // flex 让内层可垂直居中，形成四边均匀的环形间距
@@ -258,5 +260,16 @@ export default { name: 'GameTableHeader' }
 .gt-dropdown-leave-to {
   opacity: 0;
   transform: translateX(-50%) translateY(-0.08rem);
+}
+
+@include theme-light-own {
+  .game-table__header {
+    box-shadow: 0 0 0.2rem 0.01rem rgba(5, 194, 151, 0.6) inset;
+  }
+
+  .game-table__header-inner {
+    background: #05c297;
+    box-shadow: 0 0 0.1rem 0.05rem rgba(5, 194, 151, 0.6);
+  }
 }
 </style>

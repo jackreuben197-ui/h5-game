@@ -15,8 +15,9 @@ export const useWalletStore = defineStore('wallet', () => {
     const userInfoStore = useUserInfoStore()
     const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
     const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
-    if (priceListRequest?.clubId === clubId) {
-      return priceListRequest.promise
+    const activeRequest = priceListRequest
+    if (activeRequest !== null && activeRequest.clubId === clubId) {
+      return activeRequest.promise
     }
 
     const requestVersion = ++priceListRequestVersion

@@ -213,7 +213,7 @@ watch(showHunterMode, (enabled) => {
       <GameTableColumn prop="name" :label="t('UITexasReport_player')" :flex="2" align="center">
         <template #default="{ row }">
           <div class="player-cell">
-            <img :src="row.avatar" class="player-avatar" alt="avatar" />
+            <!-- <img :src="row.avatar" class="player-avatar" alt="avatar" /> -->
             <span>{{ row.name }}</span>
           </div>
         </template>

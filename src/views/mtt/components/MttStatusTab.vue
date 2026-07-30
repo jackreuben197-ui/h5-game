@@ -3,21 +3,43 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import hunterIcon from '@/assets/icons/icon_mtt_hunter.png'
 import chipsIcon from '@/assets/icons/icon_chips.png'
 import diamondIcon from '@/assets/icons/icon_diamond.png'
-import type { RoomcenterMttDetailData } from '@/api/models/roomcenter'
+import type {
+  RoomcenterMttDetailData,
+  RoomcenterMttRanksData,
+} from '@/api/models/roomcenter'
 import { formatDateTime, toUnixSeconds } from '@/utils/time'
 import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
+import { useGameStore } from '@/stores/game'
+import { useUserInfoStore } from '@/stores/userInfo'
 
 const props = defineProps<{
   data: RoomcenterMttDetailData | null
+  rankData: RoomcenterMttRanksData | null
 }>()
+const emit = defineEmits<{
+  refresh: []
+}>()
+
+const gameStore = useGameStore()
+const userInfoStore = useUserInfoStore()
 
 /* ===== 倒计时 tick ===== */
 const timerTick = ref(0)
 let timerInterval: ReturnType<typeof setInterval> | null = null
+let lastRefreshAt = 0
 onMounted(() => {
   timerInterval = setInterval(() => {
     timerTick.value++
+    const now = Date.now()
+    if (
+      isInProgress.value &&
+      centerTimerSeconds.value <= 0 &&
+      now - lastRefreshAt >= 3000
+    ) {
+      lastRefreshAt = now
+      emit('refresh')
+    }
   }, 1000)
 })
 onUnmounted(() => {
@@ -89,6 +111,7 @@ const nextPrize = computed(() => fmtMoney(realPrize.value?.prizes?.[1]?.award))
 /* ===== 数据统计面板 — 中列 ===== */
 const currentLevel = computed(() => more.value?.bl ?? 0)
 const isPreStart = computed(() => (mtt.value?.status ?? -1) === 0)
+const isInProgress = computed(() => (mtt.value?.status ?? -1) === 1)
 
 const centerTimerSeconds = computed(() => {
   void timerTick.value
@@ -102,10 +125,9 @@ const centerTimerSeconds = computed(() => {
   const nu = more.value?.nu ?? 0
   if (!nu) return interval
   const nowSec = Math.floor(Date.now() / 1000)
-  let remaining = interval - (nowSec - nu)
-  if (remaining > interval) remaining = remaining % interval || interval
-  if (remaining <= 0) return interval
-  return remaining
+  const remaining = interval - (nowSec - nu)
+  if (remaining > interval) return interval
+  return remaining > 0 ? remaining : 0
 })
 
 function fmtMMSS(totalSeconds: number, maxSeconds = 99 * 60 + 59): string {
@@ -124,6 +146,38 @@ const levelTimeLeftLabel = computed(() => {
   // 盲注级别倒计时：最大 99:59
   return fmtMMSS(sec)
 })
+
+const showNextBreak = computed(() => {
+  const breakInterval = Number(mtt.value?.break_interval ?? 0)
+  const breakDuration = Number(mtt.value?.break_duration ?? 0)
+  const upblindInterval = Number(mtt.value?.upblind_interval ?? 0)
+  return (
+    isInProgress.value &&
+    currentLevel.value > 0 &&
+    breakInterval > 0 &&
+    breakDuration > 0 &&
+    upblindInterval > 0
+  )
+})
+
+const nextBreakTimeLabel = computed(() => {
+  if (!showNextBreak.value) return ''
+
+  const breakInterval = Number(mtt.value?.break_interval ?? 0)
+  const upblindInterval = Number(mtt.value?.upblind_interval ?? 0)
+  // 级别 5、每 3 级休息时，5 属于本轮第 2 级，当前级结束后还需完整进行 1 级。
+  const levelPosition = ((currentLevel.value - 1) % breakInterval) + 1
+  const fullLevelsAfterCurrent = breakInterval - levelPosition
+  const seconds = centerTimerSeconds.value + fullLevelsAfterCurrent * upblindInterval
+  return fmtMMSS(seconds, Number.MAX_SAFE_INTEGER)
+})
+
+const nextBreakTitle = computed(() =>
+  t('UIMatchNextBreak')
+    .replace(/\s*[-–—]+\s*$/, '')
+    .trim(),
+)
+
 const blindsLabel = computed(() => fmtBlinds(more.value?.sb, more.value?.ante))
 const nextBlindsLabel = computed(() => fmtBlinds(more.value?.nsb, more.value?.nante))
 
@@ -142,7 +196,16 @@ const rebuyCount = computed(() => {
 })
 
 const moneyBubble = computed(() => fmtNum(realPrize.value?.award_num))
-const myRank = computed(() => '-')
+const currentRankingUserId = computed(() =>
+  Number(userInfoStore.userInfo?.user?.un_id ?? gameStore.loginUserId ?? 0),
+)
+const myRankLabel = computed(() => {
+  const myUrid = currentRankingUserId.value
+  if (!myUrid) return '-'
+  const record = props.rankData?.records?.find((item) => Number(item.urid) === myUrid)
+  const rank = Number(record?.rank ?? 0)
+  return rank > 0 ? String(rank) : '-'
+})
 
 /* ===== 筹码统计 ===== */
 const sb = computed(() => more.value?.sb)
@@ -299,7 +362,9 @@ const matchInfo = computed(() => {
           <div class="level-card">
             <div class="level-label">{{ isPreStart ? '距离开始' : `级别 ${currentLevel}` }}</div>
             <div class="level-timer">{{ levelTimeLeftLabel }}</div>
-            <div v-if="!isPreStart" class="level-break">{{ t('UIMatchNextBreak') }} -</div>
+            <div v-if="showNextBreak" class="level-break">
+              {{ nextBreakTitle }} {{ nextBreakTimeLabel }}
+            </div>
           </div>
           <div class="blind-info">
             <div class="blind-row">
@@ -329,7 +394,7 @@ const matchInfo = computed(() => {
           </div>
           <div class="stat-item">
             <div class="stat-label">{{ t('UITexasReportMTT_MyRank_Tip') }}</div>
-            <div class="stat-value">{{ myRank }}</div>
+            <div class="stat-value">{{ myRankLabel }}</div>
           </div>
         </div>
       </div>

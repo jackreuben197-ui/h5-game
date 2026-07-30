@@ -1426,8 +1426,20 @@ onMounted(async () => {
       color: #000000;
     }
 
+    .intro-edit {
+      background: var(--c-brand, #05c297);
+    }
+
     .edit-pen svg path {
-      fill: #000000;
+      fill: #ffffff;
+    }
+
+    .tribe-apply-btn {
+      background: var(--c-brand, #05c297);
+    }
+
+    .level-pill {
+      background: var(--c-brand, #05c297);
     }
 
     .club-size-pill {
@@ -1436,10 +1448,6 @@ onMounted(async () => {
     }
 
     .quick-card {
-      background: #ffffff;
-      border-color: rgba(0, 0, 0, 0.08);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-
       .quick-title {
         color: #000000;
       }
@@ -1913,7 +1921,7 @@ onMounted(async () => {
   width: 0.67539rem;
   height: 0.67539rem;
   border-radius: 0.435rem;
-  background: var(--c-brand, #05c297);
+  background: #fa2b4b;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1995,7 +2003,7 @@ onMounted(async () => {
   color: #fff;
   font-size: 0.28rem;
   font-weight: 500;
-  background: var(--c-brand, #05c297);
+  background: #fa2b4b;
 }
 
 .tribe-apply-btn--pending {
@@ -2062,7 +2070,7 @@ onMounted(async () => {
   font-size: 0.27857rem;
   font-weight: 700;
   color: #f9f9f9;
-  background: var(--c-brand, #05c297);
+  background: #fa2b4b;
 }
 
 .switch {
@@ -2082,7 +2090,7 @@ onMounted(async () => {
 
 .switch--on {
   justify-content: flex-end;
-  background: var(--c-brand, #05c297);
+  background: #fa2b4b;
 }
 
 .switch:not(.switch--on) {

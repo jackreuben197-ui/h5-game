@@ -452,7 +452,7 @@ async function handleEnterTable(rid: number): Promise<void> {
 </script>
 
 <template>
-  <div class="mtt-detail-page" data-theme="light">
+  <div class="mtt-detail-page">
     <div class="bg-overlay"></div>
 
     <!-- 顶部返回 -->

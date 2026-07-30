@@ -1,9 +1,5 @@
 @use './mixins' as *;
 
-// Светлая тема раздела 设置: сама страница настроек и все её вложенные экраны.
-// Класс `.settings-page` носят три вью (настройки, аккаунт, язык), поэтому правила
-// живут здесь, а не в SFC: иначе при прямом переходе на вложенный роут стили
-// родительского экрана в бандл не попадут.
 :root[data-theme='light'] {
   .settings-page,
   .settings-doc-page,
@@ -47,6 +43,16 @@
       &::after {
         background: rgba(0, 0, 0, 0.08);
       }
+    }
+
+    .item-icon,
+    .row-icon {
+      display: none;
+    }
+
+    .line-item::after,
+    .account-row::after {
+      left: 0;
     }
 
     .label {

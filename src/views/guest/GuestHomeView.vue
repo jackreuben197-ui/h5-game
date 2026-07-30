@@ -53,7 +53,6 @@ const clubGoldText = '0.00'
 const balanceVisible = true
 const pokerTablesText = '0'
 const pokerPlayersText = '0'
-const miniGamePlayersText = 632
 const mttTablesText = '0'
 const mttPlayersText = '0'
 const mahjongPlayersText = '788'
@@ -270,22 +269,6 @@ onMounted(() => {
             <span class="online-num"> {{ pokerTablesText }} </span>
             <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
             <span class="online-num"> {{ pokerPlayersText }} </span>
-          </div>
-        </div>
-
-        <div class="game-scroll-card game-card-minigame" @click="notifyNotLogin">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_minigame_lg.png" alt="小游戏" />
-          <div class="zone-info">
-            <div class="zone-header">
-              <span class="zone-title"> {{ t('UIHomeMinigameArea') }} </span>
-              <img class="zone-mini-icon" src="@/assets/icons/game_zone_minigame_mini.png" alt="" />
-            </div>
-            <p class="zone-desc">{{ t('UIData_YGvXd5iXr_011') }}</p>
-          </div>
-          <div class="zone-online-bar">
-            <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> {{ miniGamePlayersText }} </span>
           </div>
         </div>
 
@@ -794,14 +777,6 @@ onMounted(() => {
   background: linear-gradient(135deg, #65a879 0%, #329147 100%);
 }
 
-.game-card-minigame {
-  background: linear-gradient(135deg, #21b4fa 0%, #1b67f0 100%);
-
-  .zone-lg-bg {
-    object-fit: contain;
-    object-position: bottom right;
-  }
-}
 
 .game-card-mahjong {
   background: linear-gradient(135deg, #ff9cab 0%, #df2340 100%);

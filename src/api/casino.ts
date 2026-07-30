@@ -166,6 +166,7 @@ export type CategoryKey =
   | 'dianjing'
   | 'board'
   | 'lottery'
+  | 'minigame'
 
 /** Maps category key → game_api_type array (from API spec) */
 export const CATEGORY_API_TYPES: Record<CategoryKey, string[]> = {
@@ -176,6 +177,7 @@ export const CATEGORY_API_TYPES: Record<CategoryKey, string[]> = {
   dianjing: ['real_sports'],
   board:    ['go_poker'],
   lottery:  ['hn_marbles'],
+  minigame: ['ky_poker', 'leg_poker', 't1_game'],
 }
 
 /**

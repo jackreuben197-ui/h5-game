@@ -2631,3 +2631,161 @@ onMounted(async () => {
   }
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .club-detail-bg {
+  --c-brand: #05c297;
+  --c-brand-rgb: 5, 194, 151;
+  --c-text: rgba(15, 8, 8, 0.85);
+  --c-text-muted: rgba(15, 8, 8, 0.45);
+
+  color: rgba(15, 8, 8, 0.85);
+  background-image: var(--club-detail-bg-light);
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .club-header-card,
+  .intro-card,
+  .settings-card {
+    background: rgba(255, 255, 255, 1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+
+    &::before {
+      background: rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  .club-name,
+  .metric-line,
+  .size-text,
+  .settings-row,
+  .intro-card,
+  .quick-card {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .id-tag {
+    background: rgba(0, 0, 0, 0.18);
+  }
+
+  .club-size-pill {
+    background: rgba(0, 0, 0, 0.08);
+    mix-blend-mode: normal;
+  }
+
+  .muted-text {
+    color: rgba(15, 8, 8, 0.45);
+  }
+
+  .chevron {
+    border-color: rgba(0, 0, 0, 0.82);
+  }
+
+  .info-dot {
+    color: #fff;
+    background: rgba(34, 34, 34, 0.58);
+  }
+
+  .switch {
+    background: rgba(134, 134, 134, 0.34);
+  }
+
+  .tribe-apply-btn--pending {
+    color: rgba(15, 8, 8, 0.45);
+    background: rgba(164, 164, 164, 0.2);
+  }
+
+  .modal-primary-btn {
+    border-color: transparent;
+    background: #05c297;
+    box-shadow: none;
+  }
+
+  .modal-secondary-btn {
+    color: rgba(15, 8, 8, 0.85);
+    background: rgba(34, 34, 34, 0.08);
+    box-shadow: none;
+  }
+}
+
+:root[data-theme='light'] .invite-game-dialog {
+  --c-brand: #05c297;
+  --c-brand-rgb: 5, 194, 151;
+
+  .game-dialog__card {
+    background-color: rgba(255, 255, 255, 1);
+    background-image: none !important;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0.108rem 0.293rem rgba(0, 0, 0, 0.08);
+  }
+
+  .game-dialog__card-bg-gradient,
+  .game-dialog__card-bg-texture,
+  .game-dialog__card-bg-shadow {
+    display: none;
+  }
+
+  .invite-modal {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .invite-modal__head h3 {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .invite-modal__close img {
+    filter: invert(1);
+    opacity: 0.6;
+  }
+
+  .invite-modal__body {
+    background: #f6f7fb;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .invite-modal__subtitle,
+  .invite-modal__qr-tip {
+    color: rgba(15, 8, 8, 0.6);
+  }
+
+  .invite-modal__club-name {
+    color: rgba(15, 8, 8, 0.7);
+  }
+
+  .invite-modal__club-alias {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .invite-modal__id-row {
+    color: rgba(15, 8, 8, 0.7);
+  }
+
+  .invite-modal__id-tag {
+    background: rgba(0, 0, 0, 0.08);
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .invite-modal__btn--secondary {
+    background: rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .invite-modal__btn--primary {
+    background: #05c297;
+    border: none;
+    color: #fff;
+  }
+}
+</style>

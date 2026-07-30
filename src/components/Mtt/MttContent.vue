@@ -600,3 +600,19 @@ function getDefaultGameIcon(category: MttCategory): string {
   }
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .mtt-content {
+  .mtt-group__title {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .mtt-group__toggle {
+    color: rgba(34, 34, 34, 0.72);
+  }
+
+  .empty-wrap {
+    color: rgba(34, 34, 34, 0.58);
+  }
+}
+</style>

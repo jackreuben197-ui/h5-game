@@ -326,7 +326,7 @@ function handleOpenCustomerService(): void {
 </script>
 
 <template>
-  <div class="room-list-page themeType2" :style="pageStyle">
+  <div class="room-list-page poker-zone-page themeType2" :style="pageStyle">
     <div class="bg-overlay"></div>
     <HeaderBack :title="t('UIHomePokerArea')" extra-padding @back="handleBack">
       <template #right>
@@ -427,5 +427,88 @@ function handleOpenCustomerService(): void {
   gap: 0.2133rem;
   font-size: 0.3467rem;
   color: rgba(255, 255, 255, 0.82);
+}
+</style>
+
+<style lang="scss">
+:root[data-theme='light'] .poker-zone-page {
+  --c-brand: #05c297;
+  --c-brand-rgb: 5, 194, 151;
+
+  color: rgba(0, 0, 0, 1);
+  background-image: url('@/assets/images/main_bg_light.webp');
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .room-tabs {
+    --tab-active-bg: url('@/assets/images/game_type_tab_active_bg_light.svg') !important;
+    --van-tab-text-color: rgba(34, 34, 34, 0.72);
+    --van-tab-active-text-color: #111;
+
+    .van-tab {
+      color: rgba(34, 34, 34, 0.72) !important;
+    }
+
+    .van-tab--active {
+      color: #111 !important;
+    }
+  }
+
+  .group-list {
+    background: rgba(255, 255, 255, 0.72);
+
+    .group-item {
+      &::after {
+        background: rgba(0, 0, 0, 0.12);
+      }
+
+      .count-text {
+        color: rgba(0, 0, 0, 0.72);
+      }
+
+      .toggle-btn {
+        background: rgba(34, 34, 34, 0.16);
+      }
+
+      .toggle-icon {
+        filter: brightness(0);
+      }
+    }
+
+    .table-main {
+      background: rgba(34, 34, 34, 0.16);
+      box-shadow: 0 0.08rem 0.2rem rgba(70, 79, 88, 0.08);
+    }
+
+    .table-name {
+      border-color: rgba(0, 0, 0, 0.06);
+      background: rgba(0, 0, 0, 0.05);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+
+    .table-center {
+      background: rgba(0, 0, 0, 0.22);
+    }
+
+    .seat-name {
+      color: rgba(0, 0, 0, 0.28);
+    }
+
+    .meta-icon[alt='time'] {
+      filter: brightness(0);
+    }
+  }
+
+  .empty-wrap {
+    color: rgba(0, 0, 0, 0.6);
+  }
 }
 </style>

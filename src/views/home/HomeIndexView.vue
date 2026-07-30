@@ -9,7 +9,6 @@ import iconService3Light from '@/assets/icons/icon_service_3_light.svg'
 import { theme } from '@/utils/theme'
 import { useRouter } from 'vue-router'
 import { getUserClubApi } from '@/api/user'
-import { getCowboyRoomListApi } from '@/api/gc'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import StorageKey from '@/constants/storageKey'
 import { joinCasinoGame, getDeviceType } from '@/api/casino'
@@ -25,7 +24,6 @@ import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { filterVisibleMttRecords } from '@/utils/mttVisibility'
 import { showGameToast } from '@/components/Toast'
 import { useCasinoStore } from '@/stores/casino'
-import { useMinigameStore } from '@/stores/minigame'
 import GameClubSelector from '@/components/GameClubSelector.vue'
 import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
 import { openBridgePanel } from '@/bridge/channels'
@@ -88,7 +86,6 @@ const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en
 const roomListStore = useRoomListStore()
 const mttListStore = useMttListStore()
 const casinoStore = useCasinoStore()
-const minigameStore = useMinigameStore()
 const appConfigStore = useAppConfigStore()
 
 const loading = ref(false)
@@ -234,7 +231,6 @@ interface ZoneStats {
 
 interface HomeZoneStats {
   poker: ZoneStats
-  miniGame: ZoneStats
   mahjong: ZoneStats
   mtt: ZoneStats
 }
@@ -250,7 +246,6 @@ const HOME_ROOM_STATS_CACHE_VERSION = 1
 function createEmptyZoneStats(): HomeZoneStats {
   return {
     poker: { tables: 0, players: 0 },
-    miniGame: { tables: 0, players: 0 },
     mahjong: { tables: 0, players: 0 },
     mtt: { tables: 0, players: 0 },
   }
@@ -270,7 +265,6 @@ function normalizeHomeZoneStats(raw: unknown): HomeZoneStats {
   const data = (raw || {}) as Record<string, unknown>
   return {
     poker: normalizeZoneStats(data.poker),
-    miniGame: normalizeZoneStats(data.miniGame),
     mahjong: normalizeZoneStats(data.mahjong),
     mtt: normalizeZoneStats(data.mtt),
   }
@@ -348,8 +342,6 @@ const clubNameText = computed(
 const clubGoldText = computed(() => toSafeNumber(currentClub.value?.user_gold) / 100)
 const pokerTablesText = computed(() => `${homeRoomStats.value.poker.tables}`)
 const pokerPlayersText = computed(() => `${homeRoomStats.value.poker.players}`)
-// const miniGamePlayersText = computed(() => `${homeRoomStats.value.miniGame.players}`)
-const miniGamePlayersText = 632
 // const mahjongPlayersText = computed(() => `${homeRoomStats.value.mahjong.players}`)
 const mahjongPlayersText = 788
 const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
@@ -395,9 +387,6 @@ function goToMttList(): void {
 }
 function goToCasino(): void {
   void router.push('/casino')
-}
-function goToMinigame(): void {
-  void router.push('/minigame')
 }
 
 function toggleBalance(): void {
@@ -553,47 +542,6 @@ function refreshHomePokerMahjongStatsFromStore(): void {
   persistHomeRoomStatsCache(homeRoomStats.value)
 }
 
-// 从牛仔列表响应中提取在线人数：优先使用 data.online，其次汇总 records[*].online。
-function extractCowboyOnlineCount(raw: unknown): number {
-  if (!raw || typeof raw !== 'object') {
-    return 0
-  }
-  const data = raw as Record<string, unknown>
-  // 服务端直接返回 online 时，首页只使用这个字段。
-  if ('online' in data) {
-    return toSafeNumber(data.online)
-  }
-
-  const records = Array.isArray(data.records) ? data.records : []
-  if (records.length) {
-    return records.reduce((total, item) => {
-      const record = item as Record<string, unknown>
-      return total + toSafeNumber(record.online)
-    }, 0)
-  }
-
-  // 兼容 data.data 的嵌套结构。
-  return extractCowboyOnlineCount(data.data)
-}
-
-// 首页小游戏统计：使用 /api/gc/cowboy/room/list，仅取 online 字段。
-async function fetchHomeMiniGameStats(): Promise<void> {
-  const response = await getCowboyRoomListApi({
-    limit: 100,
-    offset: 0,
-  })
-  const online = Number(response.code) === 0 ? extractCowboyOnlineCount(response.data) : 0
-
-  homeRoomStats.value = {
-    ...homeRoomStats.value,
-    miniGame: {
-      tables: 0,
-      players: online,
-    },
-  }
-  persistHomeRoomStatsCache(homeRoomStats.value)
-}
-
 // 首页 MTT 统计：和 MttContent 走同一份过滤口径（排麻将 + club/tribe 可见性），
 // 保证「首页显示 N 桌 M 人」和「进入 MTT 列表后看到的赛事数 / 报名总人数」完全一致。
 // tables = 可见赛事数；players = 可见赛事 participants 之和。
@@ -690,9 +638,6 @@ onMounted(() => {
   const mttListReady = mttListStore.bootstrapMttList()
   refreshHomePokerMahjongStatsFromStore()
   refreshHomeMttStatsFromStore()
-  void fetchHomeMiniGameStats().catch((error) => {
-    console.warn('[home] fetch mini game stats failed:', error)
-  })
   void fetchLobbyBannerImages().catch((error) => {
     console.warn('[home] fetch lobby banner failed:', error)
   })
@@ -715,9 +660,6 @@ onMounted(() => {
 
   casinoStore.preloadCasinoData(undefined, true).catch((e) => {
     console.warn('[home] preload casino data failed:', e)
-  })
-  minigameStore.preloadMinigameData(undefined, true).catch((e) => {
-    console.warn('[home] preload minigame data failed:', e)
   })
 })
 
@@ -900,30 +842,6 @@ onBeforeUnmount(() => {
                   <span class="online-num"> {{ pokerTablesText }} </span>
                   <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
                   <span class="online-num"> {{ pokerPlayersText }} </span>
-                </div>
-              </div>
-
-              <div class="game-scroll-card game-card-minigame" @click="goToMinigame">
-                <img
-                  class="zone-lg-bg"
-                  src="@/assets/icons/game_zone_minigame_lg.png"
-                  alt="小游戏"
-                />
-                <div class="zone-info">
-                  <div class="zone-header">
-                    <span class="zone-title"> {{ t('UIHomeMinigameArea') }} </span>
-                    <img
-                      class="zone-mini-icon"
-                      src="@/assets/icons/game_zone_minigame_mini.png"
-                      alt=""
-                    />
-                  </div>
-                  <p class="zone-desc">{{ t('UIData_YGvXd5iXr_011') }}</p>
-                </div>
-                <div class="zone-online-bar">
-                  <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-                  <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-                  <span class="online-num"> {{ miniGamePlayersText }} </span>
                 </div>
               </div>
 
@@ -1465,14 +1383,6 @@ onBeforeUnmount(() => {
   background: linear-gradient(135deg, #65a879 0%, #329147 100%);
 }
 
-.game-card-minigame {
-  background: linear-gradient(135deg, #21b4fa 0%, #1b67f0 100%);
-
-  .zone-lg-bg {
-    object-fit: contain;
-    object-position: bottom right;
-  }
-}
 
 .game-card-mahjong {
   background: linear-gradient(135deg, #ff9cab 0%, #df2340 100%);

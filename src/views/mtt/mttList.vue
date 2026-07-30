@@ -135,3 +135,41 @@ function handleOpenCustomerService() {
   }
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .mtt-list-page {
+  --c-brand: #05c297;
+  --c-brand-rgb: 5, 194, 151;
+
+  color: rgba(15, 8, 8, 0.85);
+  background-image: url('@/assets/images/main_bg_light.webp');
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .bg-overlay {
+    background:
+      radial-gradient(circle at 8% 4%, rgba(var(--c-brand-rgb), 0.2), transparent 30%),
+      radial-gradient(circle at 92% 9%, rgba(var(--c-brand-rgb), 0.14), transparent 26%);
+  }
+
+  .filter-tabbar {
+    background: rgba(134, 134, 134, 0.22);
+  }
+
+  .filter-tab__text {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .filter-tab__item--active {
+    border-color: #fff;
+    background: #fff;
+  }
+}
+</style>

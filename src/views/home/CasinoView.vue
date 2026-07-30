@@ -42,6 +42,7 @@ import img5 from '@/assets/images/img5.png'
 import img6 from '@/assets/images/img6.png'
 import img7 from '@/assets/images/img7.png'
 import img8 from '@/assets/images/img8.png'
+import imgMinigame from '@/assets/images/icon_minigame.png'
 
 // @ts-ignore
 import dbEsportsImg from '@/assets/images/minigame-newui/DB电竞.png'
@@ -60,6 +61,11 @@ import legPokerSvg from '@/assets/images/minigame-newui/乐游棋牌.png'
 import kyPokerSvg from '@/assets/images/minigame-newui/开元棋牌.png'
 // @ts-ignore
 import cowboyBlueSvg from '@/assets/images/minigame-newui/德州牛仔.png'
+// @ts-ignore
+import kyPokerWide from '@/assets/images/minigame-newui/mustacheman.png'
+// @ts-ignore
+import legPokerWide from '@/assets/images/minigame-newui/skinnyman.png'
+import minigameBlockIcon from '@/assets/images/minigame-newui/games2.png'
 
 interface GameBlock {
   key: string
@@ -167,6 +173,10 @@ const getHotCategoryByGameApiType = (gameApiType: string): string | null => {
       return 'hot-sports'
     case 'real_sports':
       return 'hot-esports'
+    case 'ky_poker':
+    case 'leg_poker':
+    case 't1_game':
+      return 'hot-minigame'
     default:
       return null
   }
@@ -202,13 +212,14 @@ const getCategoryByGameApiType = (gameApiType: string): string | null => {
       return 'tiyu'
     case 'real_sports':
       return 'dianjing'
+    case 'leg_poker':
+    case 'ky_poker':
+    case 't1_game':
+      return 'minigame'
     case 'real_lottery':
     case 'panda_game':
     case 'panda_pd':
     case 'slots_gpd':
-    case 'leg_poker':
-    case 'ky_poker':
-    case 't1_game':
     case 'cow_boy':
       return null
     case 'go_poker':
@@ -232,6 +243,8 @@ const getHotCategoryKey = (category: string): string | null => {
       return 'hot-sports'
     case 'dianjing':
       return 'hot-esports'
+    case 'minigame':
+      return 'hot-minigame'
     default:
       return null
   }
@@ -249,6 +262,8 @@ const getCategoryFromBlockKey = (blockKey: string): string | null => {
       return 'tiyu'
     case 'hot-esports':
       return 'dianjing'
+    case 'hot-minigame':
+      return 'minigame'
     default:
       return null
   }
@@ -284,6 +299,42 @@ const transformGameToItem = (game: any, preferSvg: boolean = false): GameItem =>
     originalGame: game,
   }
 }
+
+// 小游戏沿用原「小游戏专区」的横幅素材：卡片按整条 banner 展示，而不是方形图标。
+const getMinigameWideImage = (item: GameItem): string => {
+  const gameName = item.originalGame?.game_name || ''
+
+  if (item.gameApiType === 'ky_poker' || gameName.includes('开元')) {
+    return kyPokerWide
+  }
+  if (item.gameApiType === 'leg_poker' || gameName.includes('乐游')) {
+    return legPokerWide
+  }
+
+  return item.originalGame?.game_icon || item.originalGame?.game_url_p || minigameBlockIcon
+}
+
+const MINIGAME_ORDER: Record<string, number> = {
+  ky_poker: 0,
+  leg_poker: 1,
+  t1_game: 2,
+}
+
+// 每款小游戏单独成块（标题 + 整条 banner），与原「小游戏专区」页保持一致。
+const buildMinigameBlocks = (games: GameItem[], keyPrefix: string): GameBlock[] =>
+  games
+    .map((item) => ({ ...item, img: getMinigameWideImage(item) }))
+    .sort(
+      (a, b) => (MINIGAME_ORDER[a.gameApiType] ?? 999) - (MINIGAME_ORDER[b.gameApiType] ?? 999),
+    )
+    .map((item, index) => ({
+      key: `${keyPrefix}-${index}`,
+      title: item.title || '',
+      subtitle: (item.originalGame as any)?.desc || item.title || '',
+      icon: minigameBlockIcon,
+      layout: 'wide',
+      items: [item],
+    }))
 
 const getPopularGamesForCategory = (categoryKey: string): GameItem[] => {
   const games: any[] = []
@@ -514,6 +565,7 @@ const categoryBlocks = computed<GameBlock[]>(() => {
   const hotFishGames = getPopularGamesForCategory('hot-fish')
   const hotSportsGames = getPopularGamesForCategory('hot-sports')
   const hotEsportsGames = getPopularGamesForCategory('hot-esports')
+  const hotMinigameGames = getPopularGamesForCategory('hot-minigame')
 
   const getBlockItems = (
     _blockKey: string,
@@ -552,6 +604,7 @@ const categoryBlocks = computed<GameBlock[]>(() => {
       icon: img4,
       items: getBlockItems('hot-sports', hotSportsGames, 3),
     },
+    ...buildMinigameBlocks(hotMinigameGames, 'hot-minigame'),
     {
       key: 'hot-esports',
       title: '热门电竞',
@@ -597,6 +650,10 @@ const displayBlocks = computed<GameBlock[]>(() => {
             : [{ title: '', img: dbEsportsImg }],
       }
       return esportsBlock.items.length > 0 ? [esportsBlock] : []
+    }
+
+    if (selectedCategory.value === 'minigame') {
+      return buildMinigameBlocks(getCategoryGames('minigame'), 'minigame')
     }
 
     const catGames = getCategoryGames(selectedCategory.value)
@@ -662,6 +719,7 @@ const categoryTabs = computed(() => [
   { key: 'buyu'     as HotCategoryKey, label: '捕鱼',  icon: '🎣' },
   { key: 'dianjing' as HotCategoryKey, label: '电竞',  icon: '🎮' },
   { key: 'board'    as HotCategoryKey, label: '棋牌',  icon: '♟️' },
+  { key: 'minigame' as HotCategoryKey, label: '小游戏', icon: '🕹️' },
   { key: 'lottery'  as HotCategoryKey, label: '彩票',  icon: '🎱' },
 ])
 
@@ -902,6 +960,15 @@ onActivated(async () => {
         <img :src="img7" alt="棋牌" class="icon-img" />
         <span class="icon-label">棋牌</span>
       </button>
+      <button
+        class="icon-item"
+        :class="{ selected: selectedCategory === 'minigame' }"
+        type="button"
+        @click="selectedCategory = 'minigame'"
+      >
+        <img :src="imgMinigame" alt="小游戏" class="icon-img" />
+        <span class="icon-label">小游戏</span>
+      </button>
       <!-- 彩票 分类 暂时隐藏，后续可能恢复
       <button
         class="icon-item"
@@ -938,7 +1005,10 @@ onActivated(async () => {
               :src="block.icon"
               alt=""
               class="category-icon-img"
-              :class="{ 'category-icon-small': block.icon === img3 }"
+              :class="{
+                'category-icon-small': block.icon === img3,
+                'category-icon-contain': block.icon === minigameBlockIcon,
+              }"
             />
             <div class="category-text">
               <span class="category-title">{{ block.title }}</span>
@@ -963,7 +1033,10 @@ onActivated(async () => {
               >
                 <div
                   class="app-card-img-wrapper"
-                  :class="[{ wide: block.layout === 'wide' }, block.key]"
+                  :class="[
+                    { wide: block.layout === 'wide', 'minigame-banner': block.key.includes('minigame') },
+                    block.key,
+                  ]"
                 >
                   <img
                     :src="item.img"
@@ -1255,7 +1328,7 @@ onActivated(async () => {
   overflow: visible;
   position: relative;
   z-index: 1;
-  padding: 0 0.1rem;
+  padding: 0 0.1rem 0.6rem;
   box-sizing: border-box;
 }
 
@@ -1423,6 +1496,24 @@ height: 112.952px;
   display: block;
 }
 
+.app-card-img-wrapper.wide.minigame-banner {
+  height: auto;
+  aspect-ratio: auto;
+  border-radius: 0.4rem;
+
+  .app-card-img.wide {
+    height: auto;
+    object-fit: contain;
+    border-radius: 0.4rem;
+    display: block;
+  }
+}
+
+.category-icon-contain {
+  object-fit: contain;
+  border-radius: 0;
+}
+
 .app-card-img {
   width: 100%;
   height: auto;
@@ -1500,6 +1591,58 @@ height: 112.952px;
   }
   .expand-btn-absolute {
     right: -20px;
+  }
+}
+</style>
+
+<style lang="scss">
+:root[data-theme='light'] .casino-page {
+  color: rgba(15, 8, 8, 0.85);
+
+  &:not(.is-embedded) {
+    background-color: #f3f4f6;
+    background-image: url('@/assets/images/main_bg_light.webp') !important;
+  }
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .icon-item {
+    color: rgba(15, 8, 8, 0.85);
+    text-shadow: none;
+  }
+
+  .icon-img {
+    filter: none;
+  }
+
+  .category-title {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .category-sub {
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .skeleton-item,
+  .game-skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.04) 25%,
+      rgba(0, 0, 0, 0.08) 50%,
+      rgba(0, 0, 0, 0.04) 75%
+    );
+    background-size: 200% 100%;
+  }
+
+  .empty-state .empty-text {
+    color: rgba(0, 0, 0, 0.45);
   }
 }
 </style>

@@ -520,6 +520,11 @@ function handleOpenCustomerService(): void {
         color: rgba(0, 0, 0, 0.72);
       }
 
+      .count-icon {
+        filter: brightness(0);
+        opacity: 0.72;
+      }
+
       .toggle-btn {
         background: rgba(34, 34, 34, 0.16);
       }

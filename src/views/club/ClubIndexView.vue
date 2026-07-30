@@ -44,7 +44,8 @@ import { getLocale, t } from '@/i18n'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
 import twoPersonIcon from '@/assets/icons/2person.png'
-import clubDetailButtonIcon from '@/assets/icons/img_club_detail_button.png'
+import clubDetailButtonIconDark from '@/assets/icons/img_club_detail_button.png'
+import clubDetailButtonIconLight from '@/assets/icons/img_club_detail_button_light.svg'
 import clubCoverAvatar from '@/assets/images/default_avatar_for_club.png'
 import quickSafetyBg from '@/assets/images/club_header_quick_safety.png'
 import pokerMiniIcon from '@/assets/icons/game_zone_mtt_mini.png'
@@ -70,6 +71,11 @@ import { formatDateTime, formatTodayAwareTimeLabel, toTimestampMs } from '@/util
 
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
+import { theme } from '@/utils/theme'
+
+const clubDetailButtonIcon = computed(() =>
+  theme.value === 'light' ? clubDetailButtonIconLight : clubDetailButtonIconDark,
+)
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   '--club-page-bg-dark': `url(${mainBgUrl})`,
@@ -1393,6 +1399,7 @@ const handleBack = () => {
 
       <GameDialog
         v-model:show="showClubNoticePopup"
+        class="club-notice-dialog"
         dialog-width="8.45rem"
         :show-footer="false"
         :close-on-click-overlay="true"
@@ -2052,6 +2059,11 @@ const handleBack = () => {
         color: rgba(0, 0, 0, 0.72);
       }
 
+      .count-icon {
+        filter: brightness(0);
+        opacity: 0.72;
+      }
+
       .toggle-btn {
         background: rgba(34, 34, 34, 0.16);
       }
@@ -2263,11 +2275,6 @@ const handleBack = () => {
   align-items: center;
   justify-content: center;
   z-index: 99;
-
-  @include theme-light-own {
-    background: #505050;
-    box-shadow: 0 0.12rem 0.28rem rgba(var(--c-brand-rgb), 0.28);
-  }
 }
 
 .floating-menu-btn--solo {
@@ -2291,6 +2298,30 @@ const handleBack = () => {
 
   @include theme-light-own {
     color: rgba(34, 34, 34, 0.58);
+  }
+}
+</style>
+
+<style lang="scss">
+@use '@/styles/mixins' as *;
+
+:root[data-theme='light'] .club-notice-dialog {
+  .game-dialog__card {
+    @include light-panel;
+
+    background-image: none !important;
+  }
+
+  .game-dialog__card-bg-gradient,
+  .game-dialog__card-bg-texture,
+  .game-dialog__card-bg-shadow {
+    display: none;
+  }
+
+  .club-notice-club-pill,
+  .club-notice-ignore-btn {
+    background: rgba(0, 0, 0, 0.15);
+    border-color: rgba(242, 242, 242, 0.24);
   }
 }
 </style>

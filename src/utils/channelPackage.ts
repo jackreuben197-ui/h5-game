@@ -46,7 +46,11 @@ function getHashQueryParams(hashValue: string): URLSearchParams {
   return new URLSearchParams(hashValue.slice(queryIndex + 1))
 }
 
-function readParam(searchParams: URLSearchParams, hashParams: URLSearchParams, key: string): string {
+function readParam(
+  searchParams: URLSearchParams,
+  hashParams: URLSearchParams,
+  key: string,
+): string {
   const fromSearch = readString(searchParams.get(key))
   if (fromSearch) {
     return fromSearch
@@ -177,7 +181,9 @@ export function extractInviteCodeFromSubdomain(hostname: string = window.locatio
   return getHostLabels(hostname)[0] || ''
 }
 
-export function parseInviteParamsFromLocation(url: URL = new URL(window.location.href)): ParsedQueryParams {
+export function parseInviteParamsFromLocation(
+  url: URL = new URL(window.location.href),
+): ParsedQueryParams {
   const searchParams = url.searchParams
   const hashParams = getHashQueryParams(url.hash || '')
   const agentInviteCode = readParam(searchParams, hashParams, 'i')

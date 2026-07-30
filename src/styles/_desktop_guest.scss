@@ -1,0 +1,228 @@
+// 游客页桌面 / Pad demo。
+// 移动端原样保留；桌面只固定 rem 的视觉尺度，横向空间由 Grid/Flex 和容器宽度消化。
+@media (min-width: 600px) {
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) {
+    --guest-content-max: 1440px;
+    --guest-page-gutter: 24px;
+    --guest-section-gap: 12px;
+    --app-max-width: 1440px;
+    --app-side-padding: 0px;
+    --app-top-padding: 0px;
+  }
+
+  html[data-guest-desktop='1'][data-desktop-layout='fluid'] {
+    --guest-content-max: 100%;
+    --guest-page-gutter: 28px;
+    --app-max-width: 100%;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .main-layout,
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .main-layout-content {
+    min-height: var(--app-full-height, 100dvh);
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .main-layout-content {
+    height: var(--app-full-height, 100dvh);
+    padding-top: 60px;
+    padding-bottom: 112px;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .module-slot {
+    width: 100%;
+  }
+
+  // 五个游客入口统一使用“有最大宽度的横向画布”。
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .home-page,
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .club-index,
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .friends-table-page,
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .message-page,
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .mine-page {
+    width: calc(100% - var(--guest-page-gutter) - var(--guest-page-gutter));
+    max-width: var(--guest-content-max);
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .home-page {
+    gap: var(--guest-section-gap);
+    padding: 0 0 24px;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .top-bar {
+    min-height: 40px;
+    padding-top: 0;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .home-header {
+    border-radius: 28px;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .home-banner__img {
+    height: 200px;
+    height: clamp(150px, 16vw, 220px);
+    border-radius: 28px;
+    object-fit: cover;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .notice-bar {
+    min-height: 28px;
+    height: 28px;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .club-panel {
+    min-height: 68px;
+    padding: 8px 24px;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .game-center-scroll,
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .coming-soon-scroll {
+    overflow: visible;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .game-center-track {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .game-scroll-card {
+    width: auto;
+    height: 180px;
+    height: clamp(150px, 13vw, 210px);
+    border-radius: 18px;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .coming-soon-track {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .coming-soon-scroll-card {
+    width: auto;
+    height: 150px;
+    height: clamp(126px, 11vw, 176px);
+    border-radius: 18px;
+  }
+
+  // 俱乐部：保留页面纵向结构，仅让搜索、分隔线和列表吃到横向空间。
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .club-index {
+    min-height: auto;
+    padding: 0 0 24px;
+    gap: 12px;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .club-index .search-shell {
+    min-height: 54px;
+    padding: 5px 8px 5px 18px;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .club-index .search-trigger,
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .club-index .search-btn {
+    min-height: 44px;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .club-index .quick-actions {
+    min-height: 84px;
+    gap: 28px;
+  }
+
+  // 朋友桌：标题占满画布，核心“椭圆牌桌”维持窄列，避免被横向拉扁。
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .friends-table-page {
+    max-width: var(--guest-content-max);
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .friends-table-page .title-bar {
+    padding: 0;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone'])
+    .friends-table-page
+    .scroll-content {
+    overflow: visible;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone'])
+    .friends-table-page
+    .main-content {
+    width: min(100%, 560px);
+    height: 670px;
+    margin: 0 auto;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone'])
+    .friends-table-page
+    .table-section {
+    width: 100%;
+    margin-top: 24px;
+  }
+
+  // 消息 / 我的：卡片横向展开，图标区保持内容宽度并居中。
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .message-page,
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .mine-page {
+    min-height: auto;
+    padding: 0 0 24px;
+    justify-content: flex-start;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .message-page .title-bar,
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .mine-page .title-bar {
+    padding: 0;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .message-page .card-bg-highlight,
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .mine-page .card-bg-highlight {
+    margin-top: 20px;
+    border-radius: 36px;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone'])
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter,
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone'])
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter {
+    height: 190px;
+    height: clamp(170px, 20vh, 230px);
+    border-radius: 36px;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .message-page .box-gallery,
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .mine-page .box-gallery {
+    width: min(100%, 820px);
+    margin-top: 34px;
+    padding: 0;
+    justify-content: center;
+    gap: 34px;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .bottom-tab {
+    bottom: 20px;
+    width: 390px;
+    height: 82px;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) {
+    --guest-page-gutter: 18px;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .main-layout-content {
+    padding-top: 58px;
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .game-center-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  html[data-guest-desktop='1']:not([data-desktop-layout='phone']) .coming-soon-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

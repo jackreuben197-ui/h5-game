@@ -13,9 +13,12 @@ import { formatRoomLeftAndTotalByUnity } from '@/utils/time'
 
 interface Props {
   room: RoomRecord
+  forceLight?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  forceLight: false,
+})
 
 const emit = defineEmits<{
   click: [room: RoomRecord]
@@ -220,7 +223,11 @@ function shortName(name?: string): string {
 </script>
 
 <template>
-  <article class="table-card" @click="handleClick">
+  <article
+    class="table-card"
+    :class="{ 'table-card--force-light': props.forceLight }"
+    @click="handleClick"
+  >
     <div class="table-name">
       {{ room.name || 'Poker Game Name' }}
     </div>

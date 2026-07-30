@@ -8,6 +8,14 @@ import { syncPostAuthData } from '@/session/postAuthSync'
 
 const log = createLogger('[router]')
 
+function preloadWalletPriceList(): true {
+  const walletStore = useWalletStore(pinia)
+  void walletStore.loadPriceList().catch((error: unknown) => {
+    log.warn('wallet price list preload failed', error)
+  })
+  return true
+}
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
@@ -476,20 +484,14 @@ const router = createRouter({
       name: 'wallet',
       component: () => import('@/views/wallet/WalletIndexView.vue'),
       meta: { requiresAuth: true, tabKey: 'wallet' },
-      beforeEnter: async () => {
-        const walletStore = useWalletStore(pinia)
-        await walletStore.loadPriceList()
-      },
+      beforeEnter: preloadWalletPriceList,
     },
     {
       path: '/wallet/orders',
       name: 'wallet-orders',
       component: () => import('@/views/friendsTable/RechargeOrdersView.vue'),
       meta: { requiresAuth: true, tabKey: 'wallet' },
-      beforeEnter: async () => {
-        const walletStore = useWalletStore(pinia)
-        await walletStore.loadPriceList()
-      },
+      beforeEnter: preloadWalletPriceList,
     },
     {
       path: '/wallet/details',
@@ -595,8 +597,7 @@ router.beforeEach((to, from) => {
     if (isChannelPackage && to.name === 'club-index') {
       return true
     }
-    const guestName =
-      typeof to.name === 'string' ? GUEST_FALLBACK_BY_NAME[to.name] : undefined
+    const guestName = typeof to.name === 'string' ? GUEST_FALLBACK_BY_NAME[to.name] : undefined
     if (guestName) {
       if (isChannelPackage && guestName === 'guest-club') {
         return { name: 'club-index' }

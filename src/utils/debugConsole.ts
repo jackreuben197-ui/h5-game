@@ -231,8 +231,8 @@ function attachDebugConsoleDom(): void {
   style.textContent = `
     .h5-debug-console__toggle {
       position: fixed;
-      bottom: 3rem;
-      right: 0.24rem;
+      top: 3rem;
+      left: 0.24rem;
       z-index: 99999;
       min-width: 0.8rem;
       min-height: 0.72rem;

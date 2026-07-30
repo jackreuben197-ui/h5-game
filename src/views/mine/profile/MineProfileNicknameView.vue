@@ -27,6 +27,56 @@ const appConfigStore = useAppConfigStore()
 
 const inputName = ref('')
 const submitting = ref(false)
+const isComposingNickname = ref(false)
+
+const NICKNAME_MIN_LENGTH = 2
+const NICKNAME_MAX_LENGTH = 10
+
+function getNicknameCharacterLength(value: string): number {
+  return Array.from(value).reduce((length, character) => {
+    return length + (/\p{Script=Han}/u.test(character) ? 2 : 1)
+  }, 0)
+}
+
+function truncateNickname(value: string, maxLength = NICKNAME_MAX_LENGTH): string {
+  let length = 0
+  let result = ''
+
+  for (const character of Array.from(value)) {
+    const characterLength = /\p{Script=Han}/u.test(character) ? 2 : 1
+    if (length + characterLength > maxLength) {
+      break
+    }
+    result += character
+    length += characterLength
+  }
+
+  return result
+}
+
+const nicknameCharacterLength = computed(() => getNicknameCharacterLength(inputName.value))
+
+function onNicknameInput(event: Event): void {
+  if (isComposingNickname.value) {
+    return
+  }
+
+  const input = event.target as HTMLInputElement
+  const limitedValue = truncateNickname(input.value)
+  inputName.value = limitedValue
+  if (input.value !== limitedValue) {
+    input.value = limitedValue
+  }
+}
+
+function onNicknameCompositionStart(): void {
+  isComposingNickname.value = true
+}
+
+function onNicknameCompositionEnd(event: CompositionEvent): void {
+  isComposingNickname.value = false
+  onNicknameInput(event)
+}
 
 function readNickname(): string {
   const user = userInfoStore.userInfo?.user
@@ -75,11 +125,12 @@ function validateNickname(value: string): string | null {
   if (!value) {
     return t('UIMine_SetNick_InputTips')
   }
-  if (value.length < 2) {
-    return t('UIClub_Text62') + '2' + t('UIClub_Text63')
+  const characterLength = getNicknameCharacterLength(value)
+  if (characterLength < NICKNAME_MIN_LENGTH) {
+    return t('UIClub_Text62') + NICKNAME_MIN_LENGTH + t('UIClub_Text63')
   }
-  if (value.length > 20) {
-    return t('UIClub_Text64') + '20' + t('UIClub_Text63')
+  if (characterLength > NICKNAME_MAX_LENGTH) {
+    return t('UIClub_Text64') + NICKNAME_MAX_LENGTH + t('UIClub_Text63')
   }
   return null
 }
@@ -146,13 +197,21 @@ async function onSave(): Promise<void> {
 
     <div class="content-wrap">
       <section class="nickname-content">
-        <input
-          v-model="inputName"
-          class="name-input"
-          type="text"
-          maxlength="20"
-          :placeholder="t('UIMine_SetNick_InputTips')"
-        />
+        <div class="name-input-wrap">
+          <input
+            v-model="inputName"
+            class="name-input"
+            type="text"
+            :placeholder="t('UIMine_SetNick_InputTips')"
+            aria-describedby="nickname-character-count"
+            @input="onNicknameInput"
+            @compositionstart="onNicknameCompositionStart"
+            @compositionend="onNicknameCompositionEnd"
+          />
+          <span id="nickname-character-count" class="name-input-count">
+            {{ nicknameCharacterLength }}/{{ NICKNAME_MAX_LENGTH }}
+          </span>
+        </div>
         <p class="input-hint">{{ t('UIMine_SetNick_InputTips') }}</p>
 
         <div class="cost-row">
@@ -200,9 +259,15 @@ async function onSave(): Promise<void> {
   flex-direction: column;
 }
 
-.name-input {
+.name-input-wrap {
+  position: relative;
   width: 9.0613rem;
   height: 1.6638rem;
+}
+
+.name-input {
+  width: 100%;
+  height: 100%;
   border-radius: 1.4759rem;
   border: none;
   background: linear-gradient(123.3deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
@@ -210,11 +275,24 @@ async function onSave(): Promise<void> {
   font-family: 'PingFang SC', var(--font-family-sans);
   font-size: 0.3885rem;
   line-height: 1.4;
-  padding: 0 0.52rem;
+  padding: 0 1.5rem 0 0.52rem;
+  outline: none;
 
   &::placeholder {
     color: rgba(255, 255, 255, 0.71);
   }
+}
+
+.name-input-count {
+  position: absolute;
+  top: 50%;
+  right: 0.52rem;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.71);
+  font-family: 'PingFang SC', var(--font-family-sans);
+  font-size: 0.3467rem;
+  line-height: 1;
+  pointer-events: none;
 }
 
 .input-hint {

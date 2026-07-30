@@ -28,6 +28,9 @@ import GameClubSelector from '@/components/GameClubSelector.vue'
 import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
 import { openBridgePanel } from '@/bridge/channels'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
+import { useGameStore } from '@/stores/game'
+import { isChannelPackageHost } from '@/utils/channelPackage'
+import PokerGameList from '@/views/home/gameList.vue'
 
 import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
@@ -87,6 +90,8 @@ const roomListStore = useRoomListStore()
 const mttListStore = useMttListStore()
 const casinoStore = useCasinoStore()
 const appConfigStore = useAppConfigStore()
+const gameStore = useGameStore()
+const isChannelPackage = isChannelPackageHost()
 
 const loading = ref(false)
 const balanceVisible = ref(true)
@@ -346,14 +351,35 @@ const pokerPlayersText = computed(() => `${homeRoomStats.value.poker.players}`)
 const mahjongPlayersText = 788
 const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
 const mttPlayersText = computed(() => `${homeRoomStats.value.mtt.players}`)
-// 扑克专区为空但赛事专区有数据时，用 MTT 列表替换游戏中心/热门游戏两块。
-const shouldReplaceWithMttRaw = computed(
-  () => homeRoomStats.value.poker.tables === 0 && homeRoomStats.value.mtt.tables > 0,
-)
-// 首次进入时先按缓存渲染，等 room/mtt 两个 bootstrap 都完成再确定最终 UI，
-// 避免「默认 → MTT → 默认」的中间态闪烁；初始化完成后跟随实时数据变化。
+type HomeContentMode = 'zones' | 'mtt' | 'poker'
+
+// 渠道包把俱乐部内容合并到首页：单一数据类型直接展示列表，两者都有时保留专区入口。
+// 官方包继续沿用原有的「仅有赛事时直接展示 MTT」行为。
+const homeContentModeRaw = computed<HomeContentMode>(() => {
+  const pokerTables = homeRoomStats.value.poker.tables
+  const mttTables = homeRoomStats.value.mtt.tables
+  if (mttTables > 0 && pokerTables === 0) {
+    return 'mtt'
+  }
+  if (isChannelPackage && pokerTables > 0 && mttTables === 0) {
+    return 'poker'
+  }
+  return 'zones'
+})
+// 首次进入时先按缓存渲染，等 room/mtt 两个 bootstrap 都完成再确定最终模式，
+// 避免列表与专区入口在初始化中来回切换；初始化完成后跟随实时数据变化。
 const initialized = ref(false)
-const shouldReplaceWithMtt = ref(shouldReplaceWithMttRaw.value)
+const homeContentMode = ref<HomeContentMode>(homeContentModeRaw.value)
+
+const currentJoinedClub = computed(() => userInfoStore.currentJoinedClub)
+const channelManagerLevel = computed(() => toSafeInt(currentJoinedClub.value?.user_level))
+const canManageChannelClub = computed(
+  () =>
+    isChannelPackage &&
+    Boolean(gameStore.sessionToken && currentJoinedClub.value) &&
+    channelManagerLevel.value >= 1 &&
+    channelManagerLevel.value <= 3,
+)
 
 function toSafeString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
@@ -387,6 +413,17 @@ function goToMttList(): void {
 }
 function goToCasino(): void {
   void router.push('/casino')
+}
+
+function goToClubDetail(): void {
+  void router.push('/club/detail')
+}
+
+function goToCreateTable(): void {
+  void router.push({
+    path: '/club/table/create',
+    query: { origin_type: 5, return_to: 'home' },
+  })
 }
 
 function toggleBalance(): void {
@@ -592,10 +629,10 @@ async function updateNoticeMarquee(): Promise<void> {
   shouldScrollNotice.value = true
 }
 
-watch(shouldReplaceWithMttRaw, (val) => {
+watch(homeContentModeRaw, (val) => {
   // 初始化阶段忽略中间态；两个 bootstrap 完成后再让实时数据自由驱动展示。
   if (initialized.value) {
-    shouldReplaceWithMtt.value = val
+    homeContentMode.value = val
   }
 })
 
@@ -643,9 +680,9 @@ onMounted(() => {
   })
   void updateNoticeMarquee()
 
-  // 等 room + mtt 都返回后再敲定「默认 vs MTT」布局，避免初始化阶段来回闪。
+  // 等 room + mtt 都返回后再敲定最终布局，避免初始化阶段来回闪。
   void Promise.allSettled([roomListReady, mttListReady]).then(() => {
-    shouldReplaceWithMtt.value = shouldReplaceWithMttRaw.value
+    homeContentMode.value = homeContentModeRaw.value
     initialized.value = true
   })
 
@@ -672,7 +709,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="home-page" :class="{ 'home-page--fit': !shouldReplaceWithMtt }">
+  <div class="home-page" :class="{ 'home-page--fit': homeContentMode === 'zones' }">
     <!-- 0. 顶部栏：登录态仅保留 POKER 品牌 -->
     <div class="top-bar">
       <div></div>
@@ -778,13 +815,17 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <!-- 扑克专区为空但赛事专区有数据时，用 MTT 列表替换 4/5 两个模块。 -->
+    <!-- 渠道包单类型直接展示列表；赛事和牌桌并存时展示专区入口。 -->
     <div class="home-swap-container">
       <Transition name="home-swap">
-        <MttContent
-          v-if="shouldReplaceWithMtt"
-          key="mtt"
-          class="home-mtt-content home-swap-panel"
+        <div v-if="homeContentMode === 'mtt'" key="mtt" class="home-swap-panel">
+          <MttContent class="home-mtt-content" />
+        </div>
+        <PokerGameList
+          v-else-if="homeContentMode === 'poker'"
+          key="poker"
+          embedded
+          class="home-poker-content home-swap-panel"
         />
         <div v-else key="default" class="home-default-sections home-swap-panel">
           <!-- 4. 游戏模块 -->
@@ -908,6 +949,20 @@ onBeforeUnmount(() => {
       @confirm="handleWalletConfirm"
       @cancel="showGameClubSelector = false"
     />
+
+    <div v-if="canManageChannelClub" class="floating-action-area">
+      <button class="create-table-btn" type="button" @click="goToCreateTable">创建牌桌</button>
+      <button
+        class="floating-menu-btn"
+        type="button"
+        aria-label="俱乐部管理"
+        @click="goToClubDetail"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -1221,7 +1276,6 @@ onBeforeUnmount(() => {
   font-size: 0.28rem;
   cursor: pointer;
   white-space: nowrap;
-
 }
 
 .club-divider {
@@ -1285,17 +1339,30 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  padding: 0 0.4rem;
 }
 
 // 默认模块 <=> MTT 列表切换用淡入淡出：改用 opacity，去掉 overflow:hidden，
 // 否则容器会裁掉游戏中心横向滚动到屏幕边缘的“出血边”（与 dev_merge_0624 一致）。
 .home-swap-container {
   position: relative;
-  width: 100%;
+  margin-left: -0.4rem;
+  margin-right: -0.4rem;
+  min-height: 5rem;
 }
 
 .home-swap-panel {
   width: 100%;
+}
+
+.home-poker-content {
+  :deep(.room-tabs) {
+    margin-right: 0;
+    margin-left: 0;
+  }
+  :deep(.group-list) {
+    padding: 0 0.2rem;
+  }
 }
 
 .home-swap-enter-active,
@@ -1612,5 +1679,56 @@ onBeforeUnmount(() => {
 // 只在标题与副标题之间留 0.12rem，副标题各行仍靠 line-height 紧凑排列。
 .coming-soon-scroll-card__subtitle--first {
   margin-top: 0.12rem;
+}
+
+.floating-action-area {
+  position: fixed;
+  right: 0.48rem;
+  bottom: calc(2.82rem + env(safe-area-inset-bottom));
+  z-index: 23;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.14rem;
+}
+
+.create-table-btn {
+  width: 3.1rem;
+  height: 0.94rem;
+  border: 0.0133rem solid rgba(242, 242, 242, 0.8);
+  border-radius: 0.6rem;
+  background-image: linear-gradient(168deg, #05e7ae 7.55%, #027a5c 71.92%);
+  color: #fbfbfb;
+  font-size: 0.34rem;
+  font-weight: 500;
+  box-shadow: 0 0.12rem 0.26rem rgba(0, 0, 0, 0.22);
+
+  @include theme-light {
+    border-color: transparent;
+    background: var(--c-brand);
+    box-shadow: 0 0.12rem 0.28rem rgba(var(--c-brand-rgb), 0.25);
+  }
+}
+
+.floating-menu-btn {
+  width: 0.86rem;
+  height: 0.86rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, #056a57 0%, #01382f 75%);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.07rem;
+  box-shadow: 0 0.12rem 0.26rem rgba(0, 0, 0, 0.34);
+}
+
+.floating-menu-btn span {
+  width: 0.23rem;
+  height: 0.055rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
 }
 </style>

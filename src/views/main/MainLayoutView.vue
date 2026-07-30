@@ -183,6 +183,7 @@ watch(
     </div>
     <!-- 公共底部导航：跨模块复用。 -->
     <MainBottomTab />
+    <DesktopLayoutDemoSwitch />
     <LoginModal />
   </div>
 </template>

@@ -8,20 +8,40 @@ import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 
 export const useWalletStore = defineStore('wallet', () => {
   const goldPriceData = ref<PropGoldPriceListData | null>(null)
+  let priceListRequest: { clubId?: number; promise: Promise<void> } | null = null
+  let priceListRequestVersion = 0
 
-  async function loadPriceList(): Promise<void> {
+  function loadPriceList(): Promise<void> {
     const userInfoStore = useUserInfoStore()
     const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
     const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
-    const res = await postPropGoldPriceListApi({
+    const activeRequest = priceListRequest
+    if (activeRequest !== null && activeRequest.clubId === clubId) {
+      return activeRequest.promise
+    }
+
+    const requestVersion = ++priceListRequestVersion
+    const promise = postPropGoldPriceListApi({
       club_id: clubId,
       source_type: 0,
       gold_types: [],
-    }/*, clubId */)
+    }/*, clubId */).then((res) => {
+      if (requestVersion !== priceListRequestVersion) return
 
-    // All payment types (types 1 to 9) should be loaded and shown.
+      // All payment types (types 1 to 9) should be loaded and shown.
+      goldPriceData.value = res.data ?? null
+    })
 
-    goldPriceData.value = res.data ?? null
+    priceListRequest = { clubId, promise }
+    void promise
+      .finally(() => {
+        if (priceListRequest?.promise === promise) {
+          priceListRequest = null
+        }
+      })
+      .catch(() => {})
+
+    return promise
   }
 
   function calculateUsdtPrice(goldCount: number, rate: number, feeRate: number, feeType = 0, discount = 0) {

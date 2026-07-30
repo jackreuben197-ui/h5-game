@@ -22,9 +22,12 @@ interface RoomGroupViewModel {
 interface Props {
   group: RoomGroupViewModel
   expanded: boolean
+  forceLight?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  forceLight: false,
+})
 
 const emit = defineEmits<{
   toggle: [groupKey: string]
@@ -44,7 +47,7 @@ function handleTableClick(room: RoomRecord): void {
 </script>
 
 <template>
-  <section class="group-item">
+  <section class="group-item" :class="{ 'group-item--force-light': props.forceLight }">
     <div class="group-summary" @click="toggleGroup">
       <div class="summary-left">
         <div class="game-icon-wrap">
@@ -87,6 +90,7 @@ function handleTableClick(room: RoomRecord): void {
             v-for="room in group.rooms"
             :key="String(room.rid)"
             :room="room"
+            :force-light="props.forceLight"
             @click="handleTableClick"
           />
         </div>

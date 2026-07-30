@@ -18,11 +18,13 @@ interface Props {
   modelValue: string
   tabs: TabOption[]
   size?: GameTypeTabbarSize
+  forceLight?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   // 默认普通尺寸，不传 size 时保持现有页面行为不变。
   size: 'md',
+  forceLight: false,
 })
 
 const emit = defineEmits<{
@@ -69,9 +71,13 @@ export default { name: 'GameTypeTabbar' }
     animated
     color="#ffffff"
     background="transparent"
-    title-active-color="#ffffff"
-    title-inactive-color="rgba(255, 255, 255, 0.65)"
-    :class="['room-tabs', props.size === 'lg' ? 'room-tabs--lg' : '']"
+    :title-active-color="props.forceLight ? '#111111' : '#ffffff'"
+    :title-inactive-color="props.forceLight ? 'rgba(34, 34, 34, 0.72)' : 'rgba(255, 255, 255, 0.65)'"
+    :class="[
+      'room-tabs',
+      props.size === 'lg' ? 'room-tabs--lg' : '',
+      props.forceLight ? 'room-tabs--force-light' : '',
+    ]"
     :style="tabbarStyle"
     :before-change="handleBeforeChange"
     @update:active="handleUpdate"
@@ -114,6 +120,19 @@ export default { name: 'GameTypeTabbar' }
   @include theme-light {
     color: #111 !important;
   }
+}
+
+.room-tabs--force-light {
+  --van-tab-text-color: rgba(34, 34, 34, 0.72);
+  --van-tab-active-text-color: #111;
+}
+
+.room-tabs--force-light .van-tab {
+  color: rgba(34, 34, 34, 0.72) !important;
+}
+
+.room-tabs--force-light .van-tab--active {
+  color: #111 !important;
 }
 
 .room-tabs .van-tabs__wrap {

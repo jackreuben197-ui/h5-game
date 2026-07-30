@@ -21,6 +21,16 @@ import gameTypePlo from '@/assets/icons/game_type_plo.svg'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
 import { t } from '@/i18n'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
+import { isChannelPackageHost } from '@/utils/channelPackage'
+import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
+
+interface Props {
+  embedded?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  embedded: false,
+})
 
 type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
 const POKER_TYPE_LONG = 0
@@ -52,6 +62,7 @@ const gameStore = useGameStore()
 const loginModalStore = useLoginModalStore()
 const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
+const isChannelPackage = isChannelPackageHost()
 
 // 顶部右侧切换风格开关：和旧版保持一致。
 const activeTab = ref<GameTypeTabName>('all')
@@ -66,7 +77,7 @@ const selectedTribeId = computed(() =>
 )
 
 const filteredRecords = computed(() => {
-  const baseList = roomListStore.records.filter((room) => Number(room.game_type) < 6)
+  const baseList = roomListStore.records.filter((room) => Number(room.game_type) < 5)
   const scopedList = baseList.filter((room) =>
     checkIsShowForClubAndTribe(room, selectedClubId.value, selectedTribeId.value),
   )
@@ -187,7 +198,7 @@ function restoreRoomGroupExpandedCache(): void {
 function syncExpandedMapWithRecords(records: RoomRecord[]): void {
   const validGroupKeySet = new Set<string>()
   records
-    .filter((room) => Number(room.game_type) < 6)
+    .filter((room) => Number(room.game_type) < 5)
     .forEach((room) => {
       validGroupKeySet.add(buildGroupKey(room))
     })
@@ -326,9 +337,18 @@ function handleOpenCustomerService(): void {
 </script>
 
 <template>
-  <div class="room-list-page poker-zone-page themeType2" :style="pageStyle">
-    <div class="bg-overlay"></div>
-    <HeaderBack :title="t('UIHomePokerArea')" extra-padding @back="handleBack">
+  <div
+    class="room-list-page poker-zone-page themeType2"
+    :class="{ 'room-list-page--embedded': props.embedded }"
+    :style="pageStyle"
+  >
+    <div v-if="!props.embedded" class="bg-overlay"></div>
+    <HeaderBack
+      v-if="!props.embedded"
+      :title="t('UIHomePokerArea')"
+      extra-padding
+      @back="handleBack"
+    >
       <template #right>
         <div class="action-wrap">
           <TopActionButton
@@ -347,8 +367,10 @@ function handleOpenCustomerService(): void {
         </div>
       </template>
     </HeaderBack>
+    <ClubZoneQuickActions v-if="isChannelPackage && !props.embedded" />
     <GameTypeTabbar
       v-model="activeTab"
+      :class="{ 'home-embedded-tabs': props.embedded }"
       :tabs="[
         { name: 'all', title: t('UIMatch_GtO8YEdb') },
         { name: 'texas', title: t('UITexasInfo_Texas') },
@@ -363,6 +385,7 @@ function handleOpenCustomerService(): void {
         :key="group.groupKey"
         :group="group"
         :expanded="expandedMap[group.groupKey] === true"
+        :force-light="props.embedded"
         @toggle="handleToggleGroup"
         @table-click="handleTableClick"
       />
@@ -386,11 +409,18 @@ function handleOpenCustomerService(): void {
   background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
 }
 
+.room-list-page--embedded {
+  min-height: 0;
+  overflow: visible;
+  background-image: none;
+}
+
 .bg-overlay {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
+  background:
+    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
     radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
     radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
 }
@@ -419,8 +449,25 @@ function handleOpenCustomerService(): void {
   backdrop-filter: blur(0.2213rem);
 }
 
+.room-list-page--embedded .group-list {
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+  padding-bottom: 0.2rem;
+  padding-left: 0;
+}
+
+.room-list-page--embedded :deep(.home-embedded-tabs),
+.room-list-page--embedded :deep(.home-embedded-tabs .van-tabs__wrap),
+.room-list-page--embedded :deep(.home-embedded-tabs .van-tabs__nav) {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
 .empty-wrap {
-  margin-top: 1.4933rem;
+  padding: 1.4933rem 0;
   display: flex;
   flex-direction: column;
   align-items: center;

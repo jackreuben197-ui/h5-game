@@ -321,10 +321,85 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-room-history-detail-bg {
   position: relative;
   height: 100dvh;
   background-size: cover;
+
+  @include theme-light-own {
+    background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: #000;
+    }
+
+    :deep(.title) {
+      color: #000;
+      text-shadow: none;
+    }
+
+    .meta-panel {
+      color: #000;
+    }
+
+    .meta-sub-row,
+    .id-number {
+      color: rgba(0, 0, 0, 0.65);
+    }
+
+    .summary-card {
+      background: #ffffff;
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+      &::before,
+      &::after {
+        display: none;
+      }
+    }
+
+    .metric-item {
+      color: #000000;
+    }
+
+    .metric-value {
+      color: #000000;
+    }
+
+    .summary-divider {
+      background: rgba(0, 0, 0, 0.08);
+    }
+
+    .board-head {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .head-cell {
+      color: rgba(0, 0, 0, 0.85);
+    }
+
+    .record-row {
+      background: #ffffff;
+      color: #000000;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .user-name {
+      color: #000000;
+    }
+
+    .user-id,
+    .list-status {
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    .value-cell {
+      color: #000000;
+    }
+  }
 }
 
 .club-room-history-detail {

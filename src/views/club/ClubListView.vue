@@ -600,11 +600,69 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-index-bg {
   position: relative;
   height: 100dvh;
   background-color: #0f122f;
   background-size: cover;
+
+  @include theme-light-own {
+    background-color: #f6f7fb;
+    background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+    .bg-shade,
+    .bg-shine,
+    .halo {
+      display: none;
+    }
+
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: #000;
+    }
+
+    :deep(.title) {
+      color: #000;
+      text-shadow: none;
+    }
+
+    .action-text,
+    .section-title,
+    .search-placeholder,
+    .search-input,
+    .club-name,
+    .club-id-value,
+    .top-metric-item,
+    .stat-item,
+    .no-data-text {
+      color: #000000;
+    }
+
+    .search-input::placeholder {
+      color: rgba(0, 0, 0, 0.45);
+    }
+
+    .search-shell {
+      background: #ffffff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .club-banner-card {
+      background: #ffffff;
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .club-stats-shell {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    .enter-btn {
+      color: #ffffff;
+    }
+  }
 }
 
 .bg-image {

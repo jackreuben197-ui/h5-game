@@ -270,6 +270,8 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .record-detail-page {
   height: 100dvh;
   // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
@@ -278,6 +280,56 @@ onMounted(() => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light-own {
+    background-image: url('@/assets/images/main_bg_light.webp') !important;
+    color: #000000;
+
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: #000;
+    }
+
+    :deep(.title) {
+      color: #000;
+      text-shadow: none;
+    }
+
+    .seat-card,
+    .summary-card,
+    .result-section {
+      background: #ffffff;
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      color: #000000;
+
+      &::before,
+      &::after {
+        display: none;
+      }
+    }
+
+    .title-row .hand-name,
+    .seat-item .name,
+    .seat-item .chips,
+    .item .value,
+    .section-head,
+    .left .name,
+    .list-status {
+      color: #000000;
+    }
+
+    .sub,
+    .label,
+    .left .sub,
+    .stats-row {
+      color: rgba(0, 0, 0, 0.62);
+    }
+
+    .result-row {
+      border-top-color: rgba(0, 0, 0, 0.08);
+    }
+  }
 }
 
 .content-wrap {

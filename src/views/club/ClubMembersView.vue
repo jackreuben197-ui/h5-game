@@ -2285,7 +2285,7 @@ onMounted(() => {
     right: 2.06%;
     height: 0.462rem;
     border-radius: 9999px;
-    background: #5699cd;
+    background: var(--c-brand, #05c297);
     z-index: 0;
     pointer-events: none;
   }
@@ -3033,7 +3033,19 @@ onMounted(() => {
 
 
 .club-members-bg {
-  @include theme-light {
+  @include theme-light-own {
+    background-image: var(--club-members-bg-light);
+
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: #000;
+    }
+
+    :deep(.title) {
+      color: #000;
+      text-shadow: none;
+    }
+
     .member-total {
       color: rgba(34, 34, 34, 0.82);
     }
@@ -3047,7 +3059,7 @@ onMounted(() => {
     }
 
     .tab-btn--active::after {
-      background: #69beff;
+      background: var(--c-brand, #05c297);
     }
 
     .summary-card,
@@ -3103,7 +3115,7 @@ onMounted(() => {
     .role-badge--admin,
     .role-badge--agent,
     .role-badge--member {
-      background: linear-gradient(152deg, #8bd0ff 8%, #429de1 78%);
+      background: linear-gradient(152deg, #65e89f 8%, #05c297 78%);
     }
 
     .member-name,
@@ -3155,7 +3167,10 @@ onMounted(() => {
     }
 
     .record-table-head {
-      background: #69beff;
+      background: var(--c-brand, #05c297);
+      &::before {
+        background: var(--c-brand, #05c297);
+      }
     }
 
     .type-dropdown {
@@ -3188,12 +3203,12 @@ onMounted(() => {
     }
 
     .from-chip {
-      background: var(--c-brand);
+      background: var(--c-brand, #05c297);
       color: #0b1c20;
     }
 
     // Figma 9394:27766 / 9394:28387：浅色页面上的基金操作浮窗仍保持
-    // 深灰玻璃层与白色内容，操作强调色切换为浅色主题蓝。
+    // 深灰玻璃层与白色内容，操作强调色切换为浅色主题绿。
     .fund-sheet {
       background: linear-gradient(
         180deg,
@@ -3209,7 +3224,7 @@ onMounted(() => {
     }
 
     .quota-action--primary {
-      background: #69beff;
+      background: var(--c-brand, #05c297);
       color: #fff;
     }
 
@@ -3231,7 +3246,7 @@ onMounted(() => {
 
     .keypad-btn--accent {
       border-color: transparent;
-      background: rgba(105, 190, 255, 0.76);
+      background: rgba(5, 194, 151, 0.76);
     }
 
     .sheet-footer-btn {
@@ -3240,7 +3255,7 @@ onMounted(() => {
 
     .sheet-footer-btn--confirm {
       border-color: rgba(242, 242, 242, 0.8);
-      background: #69beff;
+      background: var(--c-brand, #05c297);
     }
   }
 }

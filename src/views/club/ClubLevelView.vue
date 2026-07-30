@@ -229,10 +229,100 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-level-page {
   position: relative;
   height: 100dvh;
   background-size: cover;
+
+  @include theme-light-own {
+    background-image: url('@/assets/images/main_bg_light.webp') !important;
+    color: #000000;
+
+    .club-level-bg {
+      display: none;
+    }
+
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: #000;
+    }
+
+    :deep(.title) {
+      color: #000;
+      text-shadow: none;
+    }
+
+    .club-level-diamond {
+      background: rgba(0, 0, 0, 0.06);
+      color: #000000;
+    }
+
+    .club-upgrade-card {
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      color: #000000;
+    }
+
+    .club-upgrade-card__date,
+    .club-upgrade-card__desc,
+    .club-upgrade-cost p {
+      color: rgba(0, 0, 0, 0.65);
+    }
+
+    .club-upgrade-card__date--value,
+    .club-upgrade-card__desc--value {
+      color: #000000;
+    }
+
+    .club-upgrade-cost__amount {
+      color: var(--c-brand, #05c297);
+    }
+
+    .club-upgrade-progress__line--rest {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .club-upgrade-progress__dot {
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    .club-upgrade-progress__dot--active,
+    .club-upgrade-progress__line {
+      background: var(--c-brand, #05c297);
+    }
+
+    .club-upgrade-btn {
+      background: var(--c-brand, #05c297);
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 4px 16px rgba(5, 194, 151, 0.3);
+    }
+
+    .club-level-confirm {
+      background: #ffffff;
+      color: #000000;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+
+      p {
+        color: #000000;
+      }
+    }
+
+    .club-level-confirm__cancel {
+      background: rgba(0, 0, 0, 0.06);
+      color: #222222;
+    }
+
+    .club-level-confirm__actions .club-level-confirm__ok {
+      background: var(--c-brand, #05c297);
+      color: #ffffff;
+      border: none;
+    }
+  }
 }
 
 .club-level-bg {

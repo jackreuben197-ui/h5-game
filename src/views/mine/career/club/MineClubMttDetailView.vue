@@ -319,10 +319,47 @@ onMounted(() => {
   background-position: center;
   background-repeat: no-repeat;
 
-  @include theme-light {
-    color: var(--c-text);
-    background-color: var(--c-page);
+  @include theme-light-own {
+    color: #000000;
     background-image: var(--mtt-detail-bg-light);
+
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: #000;
+    }
+
+    :deep(.title) {
+      color: #000;
+      text-shadow: none;
+    }
+
+    .head-card,
+    .rank-row {
+      background: #ffffff;
+      color: #000000;
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+      &::before,
+      &::after {
+        display: none;
+      }
+    }
+
+    .head-top .title,
+    .left .name,
+    .right,
+    .metric .value,
+    .list-status {
+      color: #000000;
+    }
+
+    .head-top .sub,
+    .head-top .time,
+    .left .sub,
+    .metric .label {
+      color: rgba(0, 0, 0, 0.62);
+    }
   }
 }
 

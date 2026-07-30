@@ -1581,7 +1581,7 @@ onMounted(() => {
 }
 
 .member-detail-bg {
-  @include theme-light {
+  @include theme-light-own {
     .glass-card,
     .bound-row-card {
       background: #fff;
@@ -1638,6 +1638,10 @@ onMounted(() => {
       color: var(--c-brand);
     }
 
+    .stat-head-switcher {
+      filter: invert(1) hue-rotate(180deg);
+    }
+
     .pill-tabs {
       background: #e3e3e3;
     }
@@ -1645,10 +1649,17 @@ onMounted(() => {
     .pill-tabs button.active {
       border-color: #fff;
       background: #cfcfcf;
+      color: #000;
     }
 
     .range-tabs button.active {
       background: #fff;
+      color: #000;
+    }
+
+    .stat-row {
+      background: rgba(0, 0, 0, 0.04);
+      color: #000;
     }
 
     .stats-loading,

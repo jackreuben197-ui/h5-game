@@ -643,10 +643,70 @@ onMounted(() => {
   background-size: cover;
   color: #f9f9f9;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #222;
     background-color: #f3f4f6;
     background-image: var(--club-room-history-bg-light);
+
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: #000;
+    }
+
+    :deep(.title) {
+      color: #000;
+      text-shadow: none;
+    }
+
+    .summary-card,
+    .history-card {
+      background: #ffffff;
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      color: #000000;
+
+      &::before,
+      &::after {
+        display: none;
+      }
+    }
+
+    .date-pill {
+      background: rgba(0, 0, 0, 0.05);
+      color: #000000;
+
+      .date,
+      .time-line {
+        color: #000000;
+      }
+
+      .time-line img {
+        filter: invert(1);
+      }
+    }
+
+    .stats-label,
+    .sub-value,
+    .history-meta-sub,
+    .fee-line,
+    .list-status {
+      color: rgba(0, 0, 0, 0.65);
+    }
+
+    .stats-value,
+    .sub-metric strong,
+    .room-name,
+    .fee-value {
+      color: #000000;
+    }
+
+    .fee-chip {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    .chevron {
+      filter: invert(1);
+    }
   }
 }
 
@@ -679,7 +739,7 @@ onMounted(() => {
   line-height: 1.2;
   padding: 0;
 
-  @include theme-light {
+  @include theme-light-own {
     color: rgba(34, 34, 34, 0.7);
   }
 }
@@ -689,7 +749,7 @@ onMounted(() => {
   padding-bottom: 0.08rem;
   border-bottom: 0.02rem solid rgba(255, 255, 255, 0.9);
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-brand);
     border-bottom-color: var(--c-brand);
   }

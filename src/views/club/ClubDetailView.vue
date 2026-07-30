@@ -1390,6 +1390,164 @@ onMounted(async () => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light-own {
+    background-image: var(--club-detail-bg-light);
+
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: #000;
+    }
+
+    :deep(.title) {
+      color: #000;
+      text-shadow: none;
+    }
+
+    .club-header-card,
+    .intro-card,
+    .settings-card {
+      background: #ffffff;
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+      &::before,
+      &::after {
+        display: none;
+      }
+    }
+
+    .club-name,
+    .id-text,
+    .metric-line span,
+    .size-text,
+    .intro-card span,
+    .settings-row {
+      color: #000000;
+    }
+
+    .edit-pen svg path {
+      fill: #000000;
+    }
+
+    .club-size-pill {
+      background: rgba(0, 0, 0, 0.05);
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .quick-card {
+      background: #ffffff;
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+      .quick-title {
+        color: #000000;
+      }
+    }
+
+    .muted-text {
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    .chevron {
+      border-color: rgba(0, 0, 0, 0.6);
+    }
+
+    .switch {
+      background: rgba(0, 0, 0, 0.18);
+
+      &.switch--on {
+        background: var(--c-brand, #05c297);
+      }
+    }
+
+    .invite-modal,
+    .copy-modal,
+    .tribe-apply-modal,
+    .join-modal-card,
+    .logout-confirm-text {
+      color: #000000;
+    }
+
+    .invite-modal__head h3 {
+      color: #000000;
+    }
+
+    .invite-modal__close img {
+      filter: invert(1);
+    }
+
+    .invite-modal__body {
+      background: #f6f7fb;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      backdrop-filter: none;
+    }
+
+    .invite-modal__subtitle,
+    .invite-modal__qr-tip,
+    .copy-modal p {
+      color: rgba(0, 0, 0, 0.65);
+    }
+
+    .invite-modal__club-name {
+      color: rgba(0, 0, 0, 0.75);
+    }
+
+    .invite-modal__club-alias {
+      color: #000000;
+    }
+
+    .invite-modal__id-row {
+      color: rgba(0, 0, 0, 0.7);
+    }
+
+    .invite-modal__id-tag {
+      background: rgba(0, 0, 0, 0.08);
+      color: #333333;
+    }
+
+    .invite-modal__btn--secondary {
+      background: rgba(0, 0, 0, 0.06);
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      color: #222222;
+    }
+
+    .invite-modal__btn--primary {
+      background: var(--c-brand, #05c297);
+      border: none;
+      color: #ffffff;
+    }
+
+    .tribe-search-shell,
+    .tribe-contact-shell {
+      background: rgba(0, 0, 0, 0.04);
+      border-color: rgba(0, 0, 0, 0.12);
+    }
+
+    .tribe-search-input,
+    .tribe-contact-input {
+      color: #000000;
+    }
+
+    .tribe-search-input::placeholder,
+    .tribe-contact-input::placeholder {
+      color: rgba(0, 0, 0, 0.45);
+    }
+
+    .modal-secondary-btn {
+      background: rgba(0, 0, 0, 0.06);
+      color: #222222;
+      box-shadow: none;
+    }
+
+    .modal-primary-btn {
+      background: var(--c-brand, #05c297);
+      color: #ffffff;
+      box-shadow: none;
+      border: none;
+    }
+  }
 }
 
 .club-detail {
@@ -1755,7 +1913,7 @@ onMounted(async () => {
   width: 0.67539rem;
   height: 0.67539rem;
   border-radius: 0.435rem;
-  background: #fa2b4b;
+  background: var(--c-brand, #05c297);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1837,7 +1995,7 @@ onMounted(async () => {
   color: #fff;
   font-size: 0.28rem;
   font-weight: 500;
-  background: #fa2b4b;
+  background: var(--c-brand, #05c297);
 }
 
 .tribe-apply-btn--pending {
@@ -1904,7 +2062,7 @@ onMounted(async () => {
   font-size: 0.27857rem;
   font-weight: 700;
   color: #f9f9f9;
-  background: #fa2b4b;
+  background: var(--c-brand, #05c297);
 }
 
 .switch {
@@ -1924,7 +2082,7 @@ onMounted(async () => {
 
 .switch--on {
   justify-content: flex-end;
-  background: #fa2b4b;
+  background: var(--c-brand, #05c297);
 }
 
 .switch:not(.switch--on) {
@@ -2347,14 +2505,9 @@ onMounted(async () => {
 }
 
 .invite-modal__btn--primary {
-  background: linear-gradient(
-    108.128deg,
-    rgba(255, 255, 255, 0.1) 21.1%,
-    rgba(230, 230, 230, 0.1) 71.4%
-  );
-  backdrop-filter: blur(0.5px);
-  border: 0.01333rem solid rgba(242, 242, 242, 0.3);
-  color: #78e490;
+  background: var(--c-brand, #05c297);
+  border: none;
+  color: #ffffff;
 }
 
 .invite-modal__btn:disabled {

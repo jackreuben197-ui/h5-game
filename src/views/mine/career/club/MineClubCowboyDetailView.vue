@@ -124,6 +124,8 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .cowboy-page {
   position: relative;
   height: 100dvh;
@@ -132,6 +134,47 @@ onMounted(() => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  @include theme-light-own {
+    background-image: url('@/assets/images/main_bg_light.webp') !important;
+    color: #000000;
+
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: #000;
+    }
+
+    :deep(.title) {
+      color: #000;
+      text-shadow: none;
+    }
+
+    .list-status {
+      color: rgba(0, 0, 0, 0.65);
+    }
+
+    .record-card {
+      background: #ffffff;
+      color: #000000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+      .info .name {
+        color: #000000;
+      }
+
+      .info .uid {
+        color: rgba(0, 0, 0, 0.6);
+      }
+
+      .time-row {
+        color: rgba(0, 0, 0, 0.85);
+
+        img {
+          filter: invert(1);
+        }
+      }
+    }
+  }
 }
 
 .content-wrap {

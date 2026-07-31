@@ -1896,6 +1896,17 @@ onMounted(async () => {
   color: #f1f1f1;
   font-size: 0.40524rem;
 
+  @include theme-light-own {
+    background: rgba(0, 0, 0, 0.05) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+
+    &::before {
+      display: none !important;
+    }
+  }
+
   &::before {
     content: '';
     position: absolute;
@@ -2660,15 +2671,25 @@ onMounted(async () => {
   }
 
   .club-header-card,
-  .intro-card,
   .settings-card {
-    background: rgba(0, 0, 0, 0.05);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    box-shadow: none;
+    background: #ffffff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.04) !important;
 
     &::before {
-      display: none;
+      display: none !important;
+    }
+  }
+
+  .intro-card {
+    background: rgba(0, 0, 0, 0.05) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+
+    &::before {
+      display: none !important;
     }
   }
 

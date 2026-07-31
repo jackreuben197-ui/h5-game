@@ -3,10 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import hunterIcon from '@/assets/icons/icon_mtt_hunter.png'
 import chipsIcon from '@/assets/icons/icon_chips.png'
 import diamondIcon from '@/assets/icons/icon_diamond.png'
-import type {
-  RoomcenterMttDetailData,
-  RoomcenterMttRanksData,
-} from '@/api/models/roomcenter'
+import type { RoomcenterMttDetailData, RoomcenterMttRanksData } from '@/api/models/roomcenter'
 import { formatDateTime, toUnixSeconds } from '@/utils/time'
 import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
@@ -32,11 +29,7 @@ onMounted(() => {
   timerInterval = setInterval(() => {
     timerTick.value++
     const now = Date.now()
-    if (
-      isInProgress.value &&
-      centerTimerSeconds.value <= 0 &&
-      now - lastRefreshAt >= 3000
-    ) {
+    if (isInProgress.value && centerTimerSeconds.value <= 0 && now - lastRefreshAt >= 3000) {
       lastRefreshAt = now
       emit('refresh')
     }
@@ -126,7 +119,7 @@ const centerTimerSeconds = computed(() => {
   if (!nu) return interval
   const nowSec = Math.floor(Date.now() / 1000)
   const remaining = interval - (nowSec - nu)
-  if (remaining > interval) return interval
+  if (remaining > interval) return remaining % interval || interval
   return remaining > 0 ? remaining : 0
 })
 
@@ -265,6 +258,9 @@ const matchInfo = computed(() => {
 
   const limitBetType = m.limit_bet_type ?? 0
   const betTypeLabel = t(`BetType_${limitBetType}`)
+  const breakInterval = Number(m.break_interval ?? 0)
+  const breakDuration = Number(m.break_duration ?? 0)
+  const hasBreak = breakInterval > 0 && breakDuration > 0
 
   return [
     { label: t('UIMatchName'), value: resolveName(m.name) },
@@ -298,13 +294,14 @@ const matchInfo = computed(() => {
       value: `${m.limit_min ?? '-'}~${realPrize.value?.participants ?? '-'}`,
     },
     // { label: t('UIMatchStartCondition'), value: '-' },
-    {
-      label: t('UIMatchBreakTime'),
-      value:
-        m.break_interval && m.break_duration
-          ? `${t('BlindUpTimes', { num: m.break_interval })}，${t('UIMatchBreakTime')}${t('UITexasReport_Text_MatchZmsysj', String(m.break_duration))}`
-          : '-',
-    },
+    ...(hasBreak
+      ? [
+          {
+            label: t('UIMatchBreakTime'),
+            value: `${t('BlindUpTimes', { num: breakInterval })}，${t('UIMatchBreakTime')}${breakDuration}${t('UIClubData_Text_time')}`,
+          },
+        ]
+      : []),
   ]
 })
 </script>

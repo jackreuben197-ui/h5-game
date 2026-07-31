@@ -236,7 +236,8 @@ function onPopoverVisibilityChange(next: boolean): void {
   color: #08392d;
 
   @include theme-light {
-    color: #fff;
+    background: rgba(var(--c-brand-rgb), 0.16);
+    color: var(--c-brand);
   }
 }
 </style>

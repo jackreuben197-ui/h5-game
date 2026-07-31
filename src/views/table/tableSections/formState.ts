@@ -467,7 +467,8 @@ export interface NlhFormState {
 
   /**
    * 视频桌模式 → anti_cheat_video_type（anti_cheat_type=3 时有效）
-   * 1=全时长(FULL_TIME)  2=随机(RANDOM)  3=麦序(SEQUENCE)
+   * 1=全时长(FULL_TIME) 2=随机(RANDOM) 3=麦序(SEQUENCE)
+   * 5=特效模式(EFFECT) 6=真人模式(REAL)
    */
   anti_cheat_video_type: number
 

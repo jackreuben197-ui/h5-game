@@ -9,11 +9,15 @@ const ANTI_CHEAT_OPTIONS = [
   // { text: '人脸识别', value: 4 },
 ]
 
-// anti_cheat_video_type: 1=全时长(FULL_TIME) 2=随机(RANDOM) 3=麦序(SEQUENCE)
+// anti_cheat_video_type:
+// 1=全时长(FULL_TIME) 2=随机(RANDOM) 3=麦序(SEQUENCE)
+// 5=特效模式(EFFECT) 6=真人模式(REAL)，5/6 的子配置由平台统一提供
 const VIDEO_MODE_OPTIONS = [
   { text: t('UICreateRoomOptions14'), value: 1 },
   { text: t('UICreateRoomOptions15'), value: 2 },
   { text: t('UICreateRoomOptions16'), value: 3 },
+  { text: t('videoRealMode'), value: 6 },
+  { text: t('videoEffectMode'), value: 5 },
 ]
 
 // video_verify_type: 1=视频+麦克风 2=仅开启视频
@@ -84,12 +88,16 @@ export const securitySection: TableFormFieldConfig[] = [
 
   {
     // video_verify_type: 验证模式，1=视频+麦克风 2=仅开启视频
+    // 真人模式和特效模式使用平台配置，不展示自定义子选项
     type: 'select',
     label: '验证模式',
     modelValue: 'video_verify_type',
     defaultValue: 1,
     options: VIDEO_VERIFY_OPTIONS,
-    visibleWhen: [{ field: 'anti_cheat_type', equals: 3 }],
+    visibleWhen: [
+      { field: 'anti_cheat_type', equals: 3 },
+      { field: 'anti_cheat_video_type', notEquals: [5, 6] },
+    ],
   },
   {
     // video_effect_type: 视频特效桌，1=开启 2=关闭
@@ -99,7 +107,10 @@ export const securitySection: TableFormFieldConfig[] = [
     defaultValue: 2,
     activeValue: 1,
     inactiveValue: 2,
-    visibleWhen: [{ field: 'anti_cheat_type', equals: 3 }],
+    visibleWhen: [
+      { field: 'anti_cheat_type', equals: 3 },
+      { field: 'anti_cheat_video_type', notEquals: [5, 6] },
+    ],
   },
   {
     // power_saving: 节能模式，1=开启 2=关闭
@@ -110,6 +121,9 @@ export const securitySection: TableFormFieldConfig[] = [
     defaultValue: 2,
     activeValue: 1,
     inactiveValue: 2,
-    visibleWhen: [{ field: 'anti_cheat_type', equals: 3 }],
+    visibleWhen: [
+      { field: 'anti_cheat_type', equals: 3 },
+      { field: 'anti_cheat_video_type', notEquals: [5, 6] },
+    ],
   },
 ]

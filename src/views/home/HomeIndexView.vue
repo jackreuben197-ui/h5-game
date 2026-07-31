@@ -368,22 +368,39 @@ const hasChannelCasinoGames = computed(
   () => channelCasinoClubId.value > 0 && casinoStore.gameRecords.length > 0,
 )
 
+// 私域版首页三块内容：赛事 / 扑克 / 娱乐场。赛事、扑克按「是否创建了内容」判断，
+// 娱乐场按俱乐部维度的游戏列表是否非空判断（没开权限时后台返回空）。
+const channelSections = computed(() => ({
+  mtt: homeRoomStats.value.mtt.tables > 0,
+  poker: homeRoomStats.value.poker.tables > 0,
+  casino: hasChannelCasinoGames.value,
+}))
+
+const channelSectionCount = computed(
+  () => Object.values(channelSections.value).filter(Boolean).length,
+)
+
 type HomeContentMode = 'zones' | 'mtt' | 'poker' | 'casino'
 
-// 渠道包把俱乐部内容合并到首页：单一数据类型直接展示列表，两者都有时保留专区入口。
+// 私域版：只开一块内容时不给入口，直接铺列表；开两块及以上（以及一块都没有）时展示专区入口。
 // 官方包继续沿用原有的「仅有赛事时直接展示 MTT」行为。
 const homeContentModeRaw = computed<HomeContentMode>(() => {
   const pokerTables = homeRoomStats.value.poker.tables
   const mttTables = homeRoomStats.value.mtt.tables
-  // 只开了娱乐场（第三方小游戏）的俱乐部：不给入口按钮，直接铺游戏列表。
-  if (isChannelPackage && pokerTables === 0 && mttTables === 0 && hasChannelCasinoGames.value) {
-    return 'casino'
+  if (isChannelPackage) {
+    if (channelSectionCount.value === 1) {
+      if (channelSections.value.poker) {
+        return 'poker'
+      }
+      if (channelSections.value.mtt) {
+        return 'mtt'
+      }
+      return 'casino'
+    }
+    return 'zones'
   }
   if (mttTables > 0 && pokerTables === 0) {
     return 'mtt'
-  }
-  if (isChannelPackage && pokerTables > 0 && mttTables === 0) {
-    return 'poker'
   }
   return 'zones'
 })
@@ -392,14 +409,16 @@ const homeContentModeRaw = computed<HomeContentMode>(() => {
 const initialized = ref(false)
 const homeContentMode = ref<HomeContentMode>(homeContentModeRaw.value)
 
-// 列表直显（poker / mtt）时专区入口整块被替换掉，娱乐场入口会连同小游戏一起消失，
-// 故渠道包在列表上方单独保留一个入口；casino 模式本身就是列表，不需要入口。
-const showChannelCasinoEntry = computed(() => {
-  if (!isChannelPackage || homeContentMode.value === 'zones' || homeContentMode.value === 'casino') {
-    return false
-  }
-  return !casinoStore.hasFetchedInitialData || hasChannelCasinoGames.value
-})
+// 私域版只展示已开启的入口；一块都没开时按需求兜底展示扑克 + 赛事（点进去各自是空列表）。
+const showMttZoneCard = computed(
+  () => !isChannelPackage || channelSections.value.mtt || channelSectionCount.value === 0,
+)
+const showPokerZoneCard = computed(
+  () => !isChannelPackage || channelSections.value.poker || channelSectionCount.value === 0,
+)
+const showCasinoZoneCard = computed(() => !isChannelPackage || channelSections.value.casino)
+// 热门游戏整条都是娱乐场的游戏，没开娱乐场的俱乐部不该看到。
+const showHotGamesSection = computed(() => !isChannelPackage || channelSections.value.casino)
 
 const currentJoinedClub = computed(() => userInfoStore.currentJoinedClub)
 const channelManagerLevel = computed(() => toSafeInt(currentJoinedClub.value?.user_level))
@@ -853,27 +872,6 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div v-if="showChannelCasinoEntry" class="channel-casino-zone">
-      <div class="game-scroll-card game-card-mahjong" @click="goToCasino">
-        <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
-        <div class="zone-info">
-          <div class="zone-header">
-            <span class="zone-title"> {{ localized('Casino', '娱乐场') }} </span>
-            <img class="zone-mini-icon" src="@/assets/icons/game_zone_mahjong_mini.png" alt="" />
-          </div>
-          <div class="zone-desc casino-desc">
-            <p>{{ localized('Live, Slots, Sports', '真人视讯 电子娱乐 体育竞猜') }}</p>
-            <p>{{ localized('Top Providers', '全球一线厂商') }}</p>
-          </div>
-        </div>
-        <div class="zone-online-bar">
-          <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-          <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-          <span class="online-num"> {{ mahjongPlayersText }} </span>
-        </div>
-      </div>
-    </div>
-
     <!-- 渠道包单类型直接展示列表；赛事和牌桌并存时展示专区入口。 -->
     <div class="home-swap-container">
       <Transition name="home-swap">
@@ -900,7 +898,11 @@ onBeforeUnmount(() => {
           </div>
           <div class="game-center-scroll">
             <div class="game-center-track">
-              <div class="game-scroll-card game-card-mtt" @click="goToMttList">
+              <div
+                v-if="showMttZoneCard"
+                class="game-scroll-card game-card-mtt"
+                @click="goToMttList"
+              >
                 <img class="zone-lg-bg" src="@/assets/icons/game_zone_mtt_lg.png" alt="MTT" />
                 <div class="zone-info">
                   <div class="zone-header">
@@ -925,7 +927,11 @@ onBeforeUnmount(() => {
                 </div>
               </div>
 
-              <div class="game-scroll-card poker-card" @click="goToGameList">
+              <div
+                v-if="showPokerZoneCard"
+                class="game-scroll-card poker-card"
+                @click="goToGameList"
+              >
                 <img class="zone-lg-bg" src="@/assets/icons/game_zone_poker_lg.png" alt="扑克" />
                 <div class="poker-overlay"></div>
                 <div class="zone-info poker-info">
@@ -952,7 +958,11 @@ onBeforeUnmount(() => {
                 </div>
               </div>
 
-              <div class="game-scroll-card game-card-mahjong" @click="goToCasino">
+              <div
+                v-if="showCasinoZoneCard"
+                class="game-scroll-card game-card-mahjong"
+                @click="goToCasino"
+              >
                 <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
                 <div class="zone-info">
                   <div class="zone-header">
@@ -978,10 +988,10 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- 5. 热门游戏 -->
-          <div class="section-header">
+          <div v-if="showHotGamesSection" class="section-header">
             <span class="section-title">{{ localized('Hot Games', '热门游戏') }}</span>
           </div>
-          <div class="coming-soon-scroll">
+          <div v-if="showHotGamesSection" class="coming-soon-scroll">
             <div class="coming-soon-track">
               <div
                 v-for="(game, index) in activeBannerGames"
@@ -1405,15 +1415,6 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 0.2rem;
   padding: 0 0.4rem;
-}
-
-// 列表直显时的娱乐场入口：复用游戏中心的专区卡片，只是单张铺满一行。
-.channel-casino-zone {
-  height: 2.6rem;
-
-  .game-scroll-card {
-    width: 100%;
-  }
 }
 
 // 默认模块 <=> MTT 列表切换用淡入淡出：改用 opacity，去掉 overflow:hidden，

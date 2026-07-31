@@ -3,7 +3,8 @@ import { ref, watch } from 'vue'
 import { postOrgClubGetApi } from '@/api/org'
 import type { OrgClubData } from '@/api/models/org'
 import iconChipRed from '@/assets/icons/icon_chip_red.png'
-import { showToast } from 'vant'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
+import { useUserInfoStore } from '@/stores/userInfo'
 
 const props = defineProps<{
   show: boolean
@@ -15,10 +16,37 @@ const emit = defineEmits<{
   (e: 'cancel'): void
 }>()
 
+const userInfoStore = useUserInfoStore()
+
 const clubs = ref<OrgClubData[]>([])
 const selectedClubId = ref<number | null>(null)
 const loading = ref(false)
 const hasFetched = ref(false)
+
+function toClubId(value: unknown): number | undefined {
+  const clubId = Number(value)
+  return Number.isFinite(clubId) && clubId > 0 ? clubId : undefined
+}
+
+// 渠道包子域名 / Telegram 俱乐部链接：钱包所属俱乐部已由邀请码确定，不再弹选择框。
+const resolvePrivateDomainClubId = async (): Promise<number | undefined> => {
+  if (!isPrivateDomainMode()) {
+    return undefined
+  }
+
+  const fromCurrentClub = toClubId(userInfoStore.currentClub?.club_id)
+  if (fromCurrentClub) {
+    return fromCurrentClub
+  }
+
+  const fromChannelClub = toClubId(userInfoStore.channelDefaultClub?.club_id)
+  if (fromChannelClub) {
+    return fromChannelClub
+  }
+
+  const channelClub = await userInfoStore.ensureChannelDefaultClub()
+  return toClubId(channelClub?.club_id)
+}
 
 const fetchClubs = async () => {
   loading.value = true
@@ -44,14 +72,23 @@ const fetchClubs = async () => {
   }
 }
 
-watch(() => props.show, (newVal) => {
-  if (newVal) {
-    if (!hasFetched.value) {
-      fetchClubs()
-    } else if (clubs.value.length === 0) {
-      emit('update:show', false)
-      emit('confirm', undefined)
-    }
+watch(() => props.show, async (newVal) => {
+  if (!newVal) {
+    return
+  }
+
+  const privateDomainClubId = await resolvePrivateDomainClubId()
+  if (privateDomainClubId) {
+    emit('update:show', false)
+    emit('confirm', privateDomainClubId)
+    return
+  }
+
+  if (!hasFetched.value) {
+    fetchClubs()
+  } else if (clubs.value.length === 0) {
+    emit('update:show', false)
+    emit('confirm', undefined)
   }
 })
 

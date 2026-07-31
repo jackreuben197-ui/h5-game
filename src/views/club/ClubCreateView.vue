@@ -98,7 +98,7 @@ async function onCreateClub(): Promise<void> {
 </script>
 
 <template>
-  <div class="page-shell club-create-bg" :style="backgroundStyle" data-theme="light">
+  <div class="page-shell club-create-bg" :style="backgroundStyle">
     <div class="club-create">
       <HeaderBack :title="'创建俱乐部'" />
 
@@ -205,8 +205,7 @@ async function onCreateClub(): Promise<void> {
   background-position: center;
   background-repeat: no-repeat;
 
-  &[data-theme='light'],
-  html[data-theme='light'] & {
+  @include theme-light-own {
     background-image: var(--club-create-bg-light, url('@/assets/images/main_bg_light.webp')) !important;
 
     :deep(.back-trigger),

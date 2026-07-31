@@ -2327,17 +2327,7 @@ const handleBack = () => {
 @use '@/styles/mixins' as *;
 
 :root[data-theme='light'] .club-notice-dialog {
-  .game-dialog__card {
-    @include light-panel;
-
-    background-image: none !important;
-  }
-
-  .game-dialog__card-bg-gradient,
-  .game-dialog__card-bg-texture,
-  .game-dialog__card-bg-shadow {
-    display: none;
-  }
+  @include light-panel-dialog;
 
   .club-notice-club-pill,
   .club-notice-ignore-btn {

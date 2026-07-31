@@ -1107,17 +1107,7 @@ function applyChannelInviteContext(): void {
     display: flex;
   }
 
-  .game-dialog__card {
-    @include light-panel;
-
-    background-image: none !important;
-  }
-
-  .game-dialog__card-bg-gradient,
-  .game-dialog__card-bg-texture,
-  .game-dialog__card-bg-shadow {
-    display: none;
-  }
+  @include light-panel-dialog;
 
   .input-row--filled {
     background: #05c297;

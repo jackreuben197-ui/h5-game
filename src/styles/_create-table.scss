@@ -125,17 +125,7 @@
   }
 
   .template-dialog {
-    .game-dialog__card {
-      @include light-panel;
-
-      background-image: none !important;
-    }
-
-    .game-dialog__card-bg-gradient,
-    .game-dialog__card-bg-texture,
-    .game-dialog__card-bg-shadow {
-      display: none;
-    }
+    @include light-panel-dialog;
 
     .template-dialog__input {
       background: rgba(0, 0, 0, 0.15);

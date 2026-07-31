@@ -237,17 +237,7 @@
   }
 
   .logout-dialog {
-    .game-dialog__card {
-      @include light-panel;
-
-      background-image: none !important;
-    }
-
-    .game-dialog__card-bg-gradient,
-    .game-dialog__card-bg-texture,
-    .game-dialog__card-bg-shadow {
-      display: none;
-    }
+    @include light-panel-dialog;
 
     .game-dialog__confirm-btn {
       background: #05c297 !important;

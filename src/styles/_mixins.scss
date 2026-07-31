@@ -48,8 +48,7 @@ $upstream-light-enabled: false;
 // Использовать для страниц/компонентов, светлый вид которых нарисован нами:
 // кошелёк и его модалки, см. README 8.3.
 @mixin theme-light-own {
-  html[data-theme='light'] &,
-  [data-theme='light'] & {
+  html[data-theme='light'] & {
     @content;
   }
 }
@@ -69,13 +68,15 @@ $upstream-light-enabled: false;
   $radius: clamp(28px, 10vw, 36.4px)
 ) {
   position: relative;
-  border: 0.96px solid rgba(242, 242, 242, 0.04);
+  background: transparent !important;
+  border: 0.96px solid rgba(242, 242, 242, 0.04) !important;
   border-radius: $radius;
-  box-shadow: none;
+  box-shadow: none !important;
   overflow: hidden;
 
   &::after {
     content: '';
+    display: block !important;
     position: absolute;
     inset: 0;
     border-radius: inherit;
@@ -112,5 +113,39 @@ $upstream-light-enabled: false;
     mask-composite: exclude;
     pointer-events: none;
     z-index: 1;
+  }
+}
+
+// light-panel-dialog: стеклянная модалка на GameDialog.
+// Светлая тема красит .game-dialog__card в плоский белый (GameDialog.vue) — миксин возвращает
+// стекло и светлый текст поверх него. Использовать как `:root[data-theme='light'] .my-dialog`.
+@mixin light-panel-dialog($radius: clamp(28px, 10vw, 36.4px)) {
+  .game-dialog__card {
+    @include light-panel($radius: $radius);
+
+    background-image: none !important;
+  }
+
+  .game-dialog__card-bg-gradient,
+  .game-dialog__card-bg-texture,
+  .game-dialog__card-bg-shadow {
+    display: none !important;
+  }
+
+  .game-dialog__title,
+  .game-dialog__body {
+    color: #f9f9f9 !important;
+  }
+
+  .game-dialog__cancel-btn {
+    background: rgba(146, 146, 146, 0.4) !important;
+    color: #f9f9f9 !important;
+    box-shadow:
+      inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
+      inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5) !important;
+
+    &::before {
+      display: block !important;
+    }
   }
 }

@@ -7,7 +7,6 @@ import { postUserModifyInfoApi } from '@/api/user'
 import { postOssUploadImageApi } from '@/api/oss'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import cardBg3 from '@/assets/images/card_bg3.png'
-import bottomSheetBg from '@/assets/images/bottom_sheet_bg.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -280,7 +279,7 @@ async function onConfirmGender(): Promise<void> {
         class="sheet-popup"
         :overlay-style="{ background: 'rgba(12,12,12,0.6)' }"
       >
-        <div class="sheet-body" :style="{ backgroundImage: `url(${bottomSheetBg})` }">
+        <div class="sheet-body">
           <button class="sheet-row" type="button" @click="onAvatarAction('album')">
             {{ t('UIMine_UserInfoSetting_album') }}
           </button>
@@ -381,44 +380,35 @@ async function onConfirmGender(): Promise<void> {
 .sheet-body {
   position: relative;
   overflow: hidden;
-  width: 10rem;
+  width: 100%;
   border-top-left-radius: 0.8445rem;
   border-top-right-radius: 0.8445rem;
-  padding: 0.6426rem 0.5321rem 0.7872rem;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    z-index: 0;
-  }
-
-  > * {
-    position: relative;
-    z-index: 1;
-  }
+  padding: 0.6426rem 0.5321rem calc(0.7872rem + env(safe-area-inset-bottom));
+  background: linear-gradient(164deg, rgba(62, 62, 62, 0.92) 5.88%, rgba(23, 23, 23, 0.95) 94.12%);
+  backdrop-filter: blur(1.9rem);
+  -webkit-backdrop-filter: blur(1.9rem);
 }
 
 .sheet-row {
   width: 100%;
   border: 0;
   background: transparent;
-  color: #fff;
+  color: #f9f9f9;
   font-family: 'HONOR Sans CN', 'PingFang SC', var(--font-family-sans);
   font-size: 0.5493rem;
   line-height: 1.333;
   min-height: 0.9867rem;
+  transition: opacity 0.15s ease;
+
+  &:active {
+    opacity: 0.55;
+  }
 }
 
 .sheet-divider {
   width: 100%;
-  height: 0.0267rem;
-  background: rgba(249, 249, 249, 0.2);
+  height: 0.0133rem;
+  background: rgba(249, 249, 249, 0.22);
   margin: 0.08rem 0;
 }
 
@@ -440,8 +430,12 @@ async function onConfirmGender(): Promise<void> {
   font-size: 0.5493rem;
   line-height: 1.2;
   background: linear-gradient(124.88deg, rgba(255, 255, 255, 0.1) 21.1%, rgba(230, 230, 230, 0.1) 71.4%);
-  backdrop-filter: blur(0.02rem);
-  -webkit-backdrop-filter: blur(0.02rem);
+  border: 0.0133rem solid rgba(249, 249, 249, 0.12);
+  transition: opacity 0.15s ease;
+
+  &:active {
+    opacity: 0.6;
+  }
 
   &:disabled {
     opacity: 0.72;

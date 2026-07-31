@@ -165,4 +165,12 @@ function onDialogClose(): void {
     display: none !important;
   }
 }
+
+:root[data-theme='light'] .notification-dialog {
+  .game-dialog__card {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+}
 </style>

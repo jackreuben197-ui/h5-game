@@ -343,6 +343,10 @@ onMounted(async () => {
   height: 0.85rem;
   object-fit: contain;
   flex-shrink: 0;
+
+  @include theme-light-own {
+    filter: invert(1);
+  }
 }
 
 .gift-entry__label {

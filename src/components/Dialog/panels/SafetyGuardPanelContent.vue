@@ -11,6 +11,7 @@ import clubCoverAvatar from '@/assets/images/default_avatar.png'
 import iconSafetyGuard from '@/assets/icons/icon_safety_guard.png'
 import safetyGuardSprite from '@/assets/icons/safety_guard_sprite.png'
 import { formatDateTime } from '@/utils/time'
+import { t } from '@/i18n'
 
 interface SafetyGuardBlacklistUser {
   id: number
@@ -38,19 +39,19 @@ const DEFAULT_PAGE_LIMIT = 100
 type SafetyTabName = 'overview' | 'blacklist'
 
 const CORE_SYSTEM_ITEMS = [
-  '作弊工具检测',
-  '伙牌检测',
-  '禁止数据采集',
-  '机器人检测',
-  'AI行为建模引擎',
-  '深度神经识别',
-  '数据特征聚类分析',
-  '职业牌手双重审核',
-  '实时对局风险预警',
-  'AI代打检测',
-  '账号关系识别',
-  '行为画像分析',
-  '对战录像与回放分析',
+  t('UIDialog_Text3'),
+  t('UITableCheck6'),
+  t('UIDialog_Data'),
+  t('UIDialog_People'),
+  "AI" + t('UIDialog_Text4'),
+  t('UIDialog_Text5'),
+  t('UINewSafeTip7'),
+  t('UINewSafeTip8'),
+  t('UIDialog_Round'),
+  "AI" + t('UIDialog_Text6'),
+  t('UIDialog_No'),
+  t('UIDialog_Text7'),
+  t('UIDialog_Text8'),
 ]
 const SAFETY_GUARD_SPRITE_WIDTH = 1171
 const SAFETY_GUARD_SPRITE_HEIGHT = 83
@@ -191,7 +192,7 @@ async function fetchBlacklistByTribeId(
     })
 
     if (Number(response.code) !== 0) {
-      throw new Error(String(response.msg || '安全卫士数据加载失败'))
+      throw new Error(String(response.msg || t('UIDialog_DataLoadFail')))
     }
 
     const records = Array.isArray(response.data?.data) ? response.data?.data : []
@@ -207,7 +208,7 @@ async function fetchBlacklistByTribeId(
     }
   } catch (error) {
     if (!options.silent && shouldUpdateViewState) {
-      showFailToast(error instanceof Error ? error.message : '安全卫士数据加载失败')
+      showFailToast(error instanceof Error ? error.message : t('UIDialog_DataLoadFail'))
     }
   } finally {
     if (shouldShowLoading) {
@@ -341,7 +342,7 @@ function toSafeInt(value: unknown): number {
         type="button"
         @click="handleTabClick('overview')"
       >
-        安全卫士
+        {{ t('UISafety') }}
       </button>
       <button
         class="safety-guard-tab"
@@ -349,7 +350,7 @@ function toSafeInt(value: unknown): number {
         type="button"
         @click="handleTabClick('blacklist')"
       >
-        封禁名单
+        {{ t('UINewSafeTip10') }}
       </button>
     </div>
 
@@ -358,14 +359,14 @@ function toSafeInt(value: unknown): number {
         <img :src="iconSafetyGuard" alt="" />
       </div>
 
-      <p class="safety-overview__sub-title">7*24小时智能AI风控巡航已启动</p>
+      <p class="safety-overview__sub-title">7*24{{ t('UIDialog_Text') }}AI{{ t('UIDialog_Done') }}</p>
 
       <div class="safety-overview__stat-card">
         <p class="safety-overview__stat-value">{{ blockedTotal }}</p>
-        <p class="safety-overview__stat-label">累计封禁人数</p>
+        <p class="safety-overview__stat-label">{{ t('UINewSafeTip3') }}</p>
       </div>
 
-      <p class="safety-overview__title">9大核心安全系统</p>
+      <p class="safety-overview__title">9{{ t('UIDialog_Text2') }}</p>
 
       <div class="safety-overview__system-grid">
         <div
@@ -382,12 +383,12 @@ function toSafeInt(value: unknown): number {
     <div v-else class="safety-blacklist">
       <div v-if="loading" class="safety-blacklist__status-wrap">
         <van-loading size="0.56rem" color="#55ffe2" />
-        <p>加载中...</p>
+        <p>{{ t('SuperView2') }}...</p>
       </div>
 
       <div v-else-if="!blockedUsers.length" class="safety-blacklist__status-wrap">
         <van-icon name="shield-o" size="0.62rem" />
-        <p>暂无封禁记录</p>
+        <p>{{ t('UIDialog_NoRecord') }}</p>
       </div>
 
       <ul v-else class="safety-blacklist__list">
@@ -400,7 +401,7 @@ function toSafeInt(value: unknown): number {
             <img :src="user.avatar" alt="avatar" />
             <!-- <img :src="baned" class="icon-baned" alt="avatar" /> -->
             <span class="safety-blacklist__badge">
-              <span>已封禁</span>
+              <span>{{ t('UIDialog_Done2') }}</span>
             </span>
           </div>
           <div class="safety-blacklist__meta">

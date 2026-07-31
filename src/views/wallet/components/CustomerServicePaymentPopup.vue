@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useWalletStore } from '@/stores/wallet'
+import { t } from '@/i18n'
 
 const props = defineProps<{
   goldCount: number
@@ -41,10 +42,10 @@ const payPrice = computed(() =>
         <div class="card__inner">
           <!-- Header -->
           <div class="card__header">
-            <h2 class="card__title">确认付款</h2>
+            <h2 class="card__title">{{ t('UIMineMallUSDTShopPayDialogSurePay') }}</h2>
             <div class="card__header-info">
-              <span>手续费：{{ feeDisplay }}</span>
-              <span>当前参考单价：1UC={{ props.rate || 1 }}USDT</span>
+              <span>{{ t('UIMine_WalletPlatform_fee_s') }}：{{ feeDisplay }}</span>
+              <span>{{ t('UIWallet_Current') }}：1UC={{ props.rate || 1 }}USDT</span>
             </div>
           </div>
 
@@ -65,12 +66,12 @@ const payPrice = computed(() =>
           </div>
 
           <!-- Label -->
-          <p class="confirm-label">确认付款</p>
+          <p class="confirm-label">{{ t('UIMineMallUSDTShopPayDialogSurePay') }}</p>
 
           <!-- Actions -->
           <div class="actions">
-            <button class="btn-cancel" @click="emit('close')">取消</button>
-            <button class="btn-pay" @click="emit('submit', payPrice)">支付</button>
+            <button class="btn-cancel" @click="emit('close')">{{ t('adaptation10013') }}</button>
+            <button class="btn-pay" @click="emit('submit', payPrice)">{{ t('UIMineMallUSDTShopDiamondPayTip') }}</button>
           </div>
         </div>
       </div>

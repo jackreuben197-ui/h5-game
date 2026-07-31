@@ -66,7 +66,7 @@ const boxList: BoxItem[] = [
 ]
 
 const displayUser = {
-  nickname: '游客',
+  nickname: t('UIGuest_Text8'),
   userID: '-',
   avatar: defaultAvatar,
   diamond: 0,
@@ -84,11 +84,11 @@ function notifyNotLogin(): void {
       <div class="title">{{ t('UIMine_title') }}</div>
       <div class="currency-info" @click="notifyNotLogin">
         <div class="icon-diamond">
-          <img :src="iconDiamond" alt="钻石" />
+          <img :src="iconDiamond" :alt="t('UIMine_VIP_diamond')" />
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <AppSvgIcon class="icon-recharge-svg" name="plus-circle" title="充值" />
+          <AppSvgIcon class="icon-recharge-svg" name="plus-circle" :title="t('UIMine_WalletAdd_EjPOTlsz')" />
         </div>
       </div>
     </div>
@@ -97,9 +97,9 @@ function notifyNotLogin(): void {
         <div class="card-bg-innner">
           <div class="card-line1">
             <button class="left-avatar" type="button" @click="notifyNotLogin">
-              <img :src="displayUser.avatar" alt="头像" />
+              <img :src="displayUser.avatar" :alt="t('UIMine_UserInfoSetting_btn_head')" />
             </button>
-            <div class="right-box" @click="notifyNotLogin">登陆/注册</div>
+            <div class="right-box" @click="notifyNotLogin">{{ t('UIGuild_MemberManagerSortByLastLoginTime') }}/{{ t('UILogin_TitleRegister') }}</div>
           </div>
           <div class="card-line2">
             <div class="left-board">
@@ -115,7 +115,7 @@ function notifyNotLogin(): void {
             <button class="button" type="button" @click="notifyNotLogin">
               <div class="text">{{ t('UIHappyShop_ActivityShop') }}</div>
               <div class="round-icon">
-                <img :src="iconShop" alt="我的商城" />
+                <img :src="iconShop" :alt="t('UIHappyShop_ActivityShop')" />
               </div>
             </button>
           </div>

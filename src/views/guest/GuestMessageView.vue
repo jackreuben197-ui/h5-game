@@ -47,11 +47,11 @@ function notifyNotLogin(): void {
       <div class="title">{{ t('UIMine_MsgSystemContent') }}</div>
       <div class="currency-info" @click="notifyNotLogin">
         <div class="icon-diamond">
-          <img :src="iconDiamond" alt="钻石" />
+          <img :src="iconDiamond" :alt="t('UIMine_VIP_diamond')" />
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <AppSvgIcon class="icon-recharge-svg" name="plus-circle" title="充值" />
+          <AppSvgIcon class="icon-recharge-svg" name="plus-circle" :title="t('UIMine_WalletAdd_EjPOTlsz')" />
         </div>
       </div>
     </div>
@@ -61,8 +61,8 @@ function notifyNotLogin(): void {
           <div class="card-line1">
             <div class="left-text">MESSAGES</div>
             <div class="right-icon">
-              <img class="only-dark" :src="iconMessages" alt="消息" />
-              <img class="only-light" :src="iconMessagesLight" alt="消息" />
+              <img class="only-dark" :src="iconMessages" :alt="t('UIMine_MsgSystemContent')" />
+              <img class="only-light" :src="iconMessagesLight" :alt="t('UIMine_MsgSystemContent')" />
             </div>
           </div>
           <div class="card-line2">

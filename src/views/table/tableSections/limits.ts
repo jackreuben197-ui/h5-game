@@ -11,7 +11,7 @@ import {
 export const limitsSection: TableFormFieldConfig[] = [
   {
     type: 'select',
-    label: '入池率限制',
+    label: t('pool_limit'),
     tip: t('UICreateTable_poolRules'),
     modelValue: 'limit_hc_pool_rate',
     defaultValue: 0,
@@ -19,22 +19,22 @@ export const limitsSection: TableFormFieldConfig[] = [
   },
   {
     type: 'select',
-    label: '总手数限制',
-    tip: '玩家在此桌累计游戏手数达到上限后将无法继续带入',
+    label: t('UICreateRoomOptions13'),
+    tip: t('UITable_PlayerTableHandsNo'),
     modelValue: 'limit_hc_total_hands',
     defaultValue: 0,
     options: TOTAL_HAND_OPTIONS,
   },
   {
     type: 'select',
-    label: '聊天',
+    label: t('UITableSetting_chat'),
     modelValue: 'chat_type',
     defaultValue: 0,
     options: CHAT_TYPE_OPTIONS,
   },
   {
     type: 'switch',
-    label: '限制观战',
+    label: t('UICreateLimitSeeHand'),
     tip: t('UICreateLimitSeeHandTips'),
     modelValue: 'limit_watch_hand',
     activeValue: 1,
@@ -43,7 +43,7 @@ export const limitsSection: TableFormFieldConfig[] = [
   },
   {
     type: 'input',
-    label: '限制观战(手数)',
+    label: t('UICreateLimitSeeHand') + "(" + t('UIMine_RecordItemsNormal_3RCUa3w8') + ")",
     modelValue: 'limit_hand_num',
     defaultValue: false,
     numberOnly: true,
@@ -51,7 +51,7 @@ export const limitsSection: TableFormFieldConfig[] = [
   },
   {
     type: 'switch',
-    label: '带入审核',
+    label: t('UICreateRoom_ControlBringIn'),
     tip: t('UICreateTable_BringIn_Tips'),
     modelValue: 'limit_bring_in',
     activeValue: 1,
@@ -60,7 +60,7 @@ export const limitsSection: TableFormFieldConfig[] = [
   },
   {
     type: 'select',
-    label: '限制加时次数',
+    label: t('UICreateTable_DelayTime'),
     tip: t('UICreateTable_DelayTimeTips'),
     modelValue: 'game_delay_times',
     options: GAME_DELAY_TIMES_OPTIONS,
@@ -68,15 +68,15 @@ export const limitsSection: TableFormFieldConfig[] = [
   },
   {
     type: 'switch',
-    label: 'IP限制',
-    tip: '开启后，同一网络IP下只允许一名玩家同时在桌',
+    label: "IP" + t('adaptation20008'),
+    tip: t('UITable_Text15') + "，" + t('UITable_Text16') + "IP" + t('UITable_AllowNamePlayerTable'),
     modelValue: 'limit_ip',
     defaultValue: false,
   },
   {
     type: 'switch',
-    label: 'GPS限制',
-    tip: '开启后，地理位置过近的玩家不能同时在此桌游戏',
+    label: "GPS" + t('adaptation20008'),
+    tip: t('UITable_Text15') + "，" + t('UITable_OfPlayerTable'),
     modelValue: 'limit_gps',
     defaultValue: false,
   },

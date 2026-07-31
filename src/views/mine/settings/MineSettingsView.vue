@@ -221,15 +221,15 @@ function onLogoutCancel(): void {
 
     <GameDialog
       v-model:show="showLogoutDialog"
-      title="退出登录"
+      :title="t('UIMine_Setting114')"
       :show-cancel-button="true"
       :close-on-click-overlay="true"
-      confirm-button-text="确认"
-      cancel-button-text="取消"
+      :confirm-button-text="t('UI_Recharge_confirm')"
+      :cancel-button-text="t('adaptation10013')"
       @confirm="onLogoutConfirm"
       @cancel="onLogoutCancel"
     >
-      <div class="logout-confirm-text">确认退出当前账号吗？</div>
+      <div class="logout-confirm-text">{{ t('UIClub_ConfirmExitCurrentNo') }}？</div>
     </GameDialog>
   </div>
 </template>

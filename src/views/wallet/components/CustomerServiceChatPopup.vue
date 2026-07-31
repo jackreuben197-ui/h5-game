@@ -6,6 +6,7 @@ import { postOssUploadImageApi } from '@/api/oss'
 import type { ChatSupportMessageListChatData } from '@/api/models/chat'
 import { useUserInfoStore } from '@/stores/userInfo'
 import customerServiceIcon from '@/assets/icons/customerserviceicon.png'
+import { t } from '@/i18n'
 
 const props = defineProps<{
   tribeId: number
@@ -202,7 +203,7 @@ onUnmounted(() => {
                 </svg>
                 <img :src="customerServiceIcon" alt="agent" class="agent-avatar" />
               </div>
-              <span class="agent-name">俱乐部名称</span>
+              <span class="agent-name">{{ t('UIClub_Creat_2LvGNmS7') }}</span>
             </div>
           </div>
 
@@ -215,17 +216,17 @@ onUnmounted(() => {
                   <div class="transaction-bubble">
                     <div class="bubble-content">
                       <p>
-                        充值用户：{{ userInfoStore.userInfo?.user.nickname }}/ID{{
+                        {{ t('UIRechargeUCChatRecord1') }}：{{ userInfoStore.userInfo?.user.nickname }}/ID{{
                           userInfoStore.userInfo?.user.userid
                         }}
                       </p>
                       <p>
-                        充值聯盟幣：{{
+                        {{ t('UIWallet_Text5') }}：{{
                           (orderData.gold_num || orderData.order?.gold_num || 0) / 100
                         }}
                       </p>
                       <p>
-                        支付金額：{{
+                        {{ t('UIWallet_Text6') }}：{{
                           orderData.pay_price ||
                           orderData.order?.pay_price ||
                           orderData.order?.amount ||
@@ -234,12 +235,12 @@ onUnmounted(() => {
                         }}
                       </p>
                       <p>
-                        支付類型：{{
-                          orderData.usdt_address?.name || orderData.pay_type_name || '客服撮合'
+                        {{ t('UIWallet_Text7') }}：{{
+                          orderData.usdt_address?.name || orderData.pay_type_name || t('UIWallet_Text3')
                         }}
                       </p>
-                      <p>訂單號：{{ orderData.order_no || orderData.order?.order_no }}</p>
-                      <p>申請時間：{{ new Date().toLocaleString() }}</p>
+                      <p>{{ t('UIWallet_Text8') }}：{{ orderData.order_no || orderData.order?.order_no }}</p>
+                      <p>{{ t('UIWallet_Text9') }}：{{ new Date().toLocaleString() }}</p>
                     </div>
                   </div>
                   <div class="bubble-footer">
@@ -309,7 +310,7 @@ onUnmounted(() => {
                       <span class="sender-name">{{ userInfoStore.userInfo?.user.nickname }}</span>
                     </template>
                     <template v-else>
-                      <span class="sender-name">客服</span>
+                      <span class="sender-name">{{ t('UIMineMain01') }}</span>
                     </template>
                   </div>
                 </div>
@@ -342,7 +343,7 @@ onUnmounted(() => {
               <input
                 v-model="inputText"
                 type="text"
-                placeholder="说点什么..."
+                :placeholder="t('UIWallet_Text10') + '...'"
                 @keyup.enter="sendMessage"
               />
             </div>

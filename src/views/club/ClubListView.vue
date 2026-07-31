@@ -462,8 +462,8 @@ onMounted(() => {
     </section>
 
     <section class="club-list">
-      <p v-if="loadingMyClubs" class="club-empty-text">正在加载俱乐部...</p>
-      <p v-else-if="!displayClubList.length" class="club-empty-text">暂无俱乐部，先去创建一个吧</p>
+      <p v-if="loadingMyClubs" class="club-empty-text">{{ t('UIClub_LoadClub') }}...</p>
+      <p v-else-if="!displayClubList.length" class="club-empty-text">{{ t('UIClub_NoClub') }}，{{ t('UIClub_Text109') }}</p>
       <article
         v-for="club in displayClubList"
         :key="club.key"
@@ -497,7 +497,7 @@ onMounted(() => {
           </div>
 
           <button type="button" class="enter-btn" @click.stop="goToClubDetail(club.source)">
-            <span class="enter-btn-label">进入</span>
+            <span class="enter-btn-label">{{ t('UICopyFriendRoomEnterRoom') }}</span>
           </button>
         </div>
         <div class="club-stats-shell" aria-hidden="true">
@@ -509,11 +509,11 @@ onMounted(() => {
             </span>
             <span class="stat-item">
               <AppSvgIcon class="stat-svg-icon stat-svg-icon--table" name="table" />
-              <span>{{ club.tableCount }}桌</span>
+              <span>{{ club.tableCount }}{{ t('UIClub_Table2') }}</span>
             </span>
             <span class="stat-item">
               <AppSvgIcon class="stat-svg-icon stat-svg-icon--users" name="users" />
-              <span>{{ club.memberCount }}人</span>
+              <span>{{ club.memberCount }}{{ t('Common_People') }}</span>
             </span>
           </div>
         </div>
@@ -525,14 +525,14 @@ onMounted(() => {
       dialog-width="8.454rem"
       :show-cancel-button="true"
       :close-on-click-overlay="true"
-      cancel-button-text="取消"
-      :confirm-button-text="joinLoading ? '提交中' : '加入'"
+      :cancel-button-text="t('adaptation10013')"
+      :confirm-button-text="joinLoading ? t('UIClub_Submitting') : t('UIClub_RoomJoin')"
       :confirm-button-disabled="joinLoading"
       @confirm="onJoinClub"
       @cancel="closeJoinModal"
     >
       <div class="join-modal-card">
-        <img class="join-modal-logo" :src="searchedClubLogo" alt="俱乐部头像" />
+        <img class="join-modal-logo" :src="searchedClubLogo" :alt="t('UIClub_ClubAvatar2')" />
         <h3 class="join-modal-name">{{ searchedClubName }}</h3>
         <p class="join-modal-id-row">
           <span class="join-modal-id-tag">ID</span>
@@ -540,7 +540,7 @@ onMounted(() => {
         </p>
         <p class="join-modal-member-row">
           <AppSvgIcon class="join-modal-member-icon" name="users" />
-          <span>{{ searchedClubMembers }}人</span>
+          <span>{{ searchedClubMembers }}{{ t('Common_People') }}</span>
         </p>
       </div>
     </GameDialog>
@@ -553,8 +553,8 @@ onMounted(() => {
       :initial-value="searchKeyword"
       :show-input-area="true"
       :allow-leading-zero="true"
-      title="搜索俱乐部ID"
-      confirm-text="确定"
+      :title="t('UIGuild_SearchBtn') + 'ID'"
+      :confirm-text="t('CommitOK')"
       @close="onSearchKeypadClose"
       @submit="onSearchKeypadSubmit"
       @key-press="onSearchKeypadKeyPress"

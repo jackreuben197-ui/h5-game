@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { t } from '@/i18n'
 
 const props = defineProps<{
   panelProps?: Record<string, unknown>
@@ -39,7 +40,7 @@ function formatAward(value: number): string {
 <template>
   <section class="jackpot-award-panel">
     <!-- 标题 -->
-    <div class="jackpot-award-panel__title">恭喜中奖</div>
+    <div class="jackpot-award-panel__title">{{ t('UIBridgePanel_Text') }}</div>
 
     <!-- 中奖者信息 -->
     <div v-if="winner" class="jackpot-award-panel__card">
@@ -58,7 +59,7 @@ function formatAward(value: number): string {
     </div>
 
     <!-- 无数据占位 -->
-    <div v-else class="jackpot-award-panel__empty">暂无中奖信息</div>
+    <div v-else class="jackpot-award-panel__empty">{{ t('UIBridgePanel_No') }}</div>
   </section>
 </template>
 

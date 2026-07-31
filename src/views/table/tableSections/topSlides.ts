@@ -2,6 +2,7 @@ import type { FieldOption, TableFormFieldConfig } from '../template'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 import { TABLE_TIME_OPTIONS } from './constants'
+import { t } from '@/i18n'
 const BASE_SB_LIST = [
   10, 20, 30, 40, 50, 100, 200, 300, 400, 500, 1000, 1500, 2000, 2500, 3000, 5000, 10000, 20000,
   30000, 50000, 100000,
@@ -19,7 +20,7 @@ export const ANTE_OPTIONS = BASE_SB_LIST.map((v) => ({
 export const blindsSection: TableFormFieldConfig[] = [
   {
     type: 'slider',
-    label: '小盲/大盲',
+    label: t('UISB') + "/" + t('UIBB'),
     modelValue: 'sb',
     defaultValue: 1000,
     options: SB_OPTIONS,
@@ -127,7 +128,7 @@ function formatAmount(value: number): string {
 export const buyinSection: TableFormFieldConfig[] = [
   {
     type: 'slider',
-    label: '带入计分牌',
+    label: t('UITable_Text18'),
     modelValue: 'buyin_range',
     defaultValue: [50, 300],
     options: [],
@@ -148,7 +149,7 @@ export const buyinSection: TableFormFieldConfig[] = [
 export const durationSection: TableFormFieldConfig[] = [
   {
     type: 'slider',
-    label: '时长 (h)',
+    label: t('UIClub_Text36') + " (h)",
     modelValue: 'play_duration',
     defaultValue: 1800,
     options: TABLE_TIME_OPTIONS,

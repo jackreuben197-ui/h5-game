@@ -7,6 +7,7 @@ import {
   useBridgePanelState,
 } from '@/bridge/channels/panelChannel'
 import { bridgePanelRegistry } from './panelRegistry'
+import { t } from '@/i18n'
 
 const activePanel = useBridgePanelState()
 const renderedPanel = ref<ActiveBridgePanel | null>(null)
@@ -92,7 +93,7 @@ function onDialogClose(): void {
     />
 
     <div v-else-if="shouldShowFallback" class="game-panel-dialog__fallback">
-      <p class="game-panel-dialog__fallback-title">未注册的面板类型</p>
+      <p class="game-panel-dialog__fallback-title">{{ t('UIBridgePanel_NotOf') }}</p>
       <p class="game-panel-dialog__fallback-text">
         {{ renderedPanel?.panelType || 'unknown' }}
       </p>
@@ -101,7 +102,7 @@ function onDialogClose(): void {
         type="button"
         @click="closeActiveBridgePanel('close', { from: 'fallback' })"
       >
-        关闭
+        {{ t('UIBackDialog_ticketsbtnClose') }}
       </button>
     </div>
   </GameDialog>

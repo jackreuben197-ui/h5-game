@@ -129,7 +129,7 @@ function onSuccessConfirm(): void {
                   <img :src="avatarUrl" alt="avatar" />
                 </div>
                 <button class="gift-entry" @click="goGiftUc">
-                  <span class="gift-entry__label">赠送</span>
+                  <span class="gift-entry__label">{{ t('UISend_btn') }}</span>
                   <img :src="icGift" alt="gift" class="gift-entry__icon" />
                 </button>
                 <div class="user-text">

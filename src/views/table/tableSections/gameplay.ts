@@ -10,20 +10,20 @@ import {
 
 // insurance: 0=关，1=低水位，2=EV，3=经典新版
 const INSURANCE_OPTIONS = [
-  { text: '关闭', value: 0 },
-  { text: '低水保险', value: 1 },
-  { text: 'EV保险', value: 2 },
-  { text: '新经典保险', value: 3 },
+  { text: t('UIBackDialog_ticketsbtnClose'), value: 0 },
+  { text: t('UICreateTable_LowWaterIns'), value: 1 },
+  { text: "EV" + t('adaptation10179'), value: 2 },
+  { text: t('UICreateClassicInsurancesNew'), value: 3 },
 ]
 
 const SQUID_MODE_OPTIONS = [
-  { text: '经典模式', value: 0 },
-  { text: '血战模式', value: 1 },
+  { text: t('UICreateSquidClassicMode'), value: 0 },
+  { text: t('UIClub_RoomCreat_EWzFul7w'), value: 1 },
 ]
 export const gamePlayInsuranceSection: TableFormFieldConfig[] = [
   {
     type: 'select',
-    label: '保险',
+    label: t('adaptation10179'),
     tip: t('UICreateTable_InsTips'),
     modelValue: 'insurance',
     defaultValue: 0,
@@ -62,7 +62,7 @@ export const gamePlayMushroomModeSection: TableFormFieldConfig[] = [
 export const gamePlaySquidGameSection: TableFormFieldConfig[] = [
   {
     type: 'switch',
-    label: '鱿鱼玩法',
+    label: t('UICreateRoomOptions11'),
     tip: t('UISquidDetail'),
     modelValue: 'squid',
     icon: 'table_icon_squid',
@@ -72,7 +72,7 @@ export const gamePlaySquidGameSection: TableFormFieldConfig[] = [
   },
   {
     type: 'select',
-    label: '鱿鱼模式',
+    label: t('UITable_Text14'),
     modelValue: 'squid_mode',
     defaultValue: 0,
     options: SQUID_MODE_OPTIONS,
@@ -88,11 +88,11 @@ export const gamePlaySquidGameSection: TableFormFieldConfig[] = [
   },
   {
     type: 'select',
-    label: '鱿鱼个数',
+    label: t('UICreateSquidNumber'),
     modelValue: 'squid_extra_count',
     defaultValue: 3,
     options: Array.from({ length: 18 }, (_, i) => ({
-      text: '在桌玩家+' + String(i + 1),
+      text: t('UITable_TablePlayer') + "+" + String(i + 1),
       value: i + 1,
     })),
     visibleWhen: [
@@ -102,7 +102,7 @@ export const gamePlaySquidGameSection: TableFormFieldConfig[] = [
   },
   {
     type: 'switch',
-    label: '鱿鱼翻倍',
+    label: t('UISquidDouble'),
     tip: t('UISquidGetDoubleTips'),
     modelValue: 'squid_double_mode',
     defaultValue: 0,
@@ -221,7 +221,7 @@ export const gamePlayCallTimeSection: TableFormFieldConfig[] = [
 export const gamePlayCriticalHitSection: TableFormFieldConfig[] = [
   {
     type: 'switch',
-    label: '暴击玩法',
+    label: t('UIHitGamePlayTips1'),
     tip: t('UIHitGamePlayTips6'),
     modelValue: 'critical_hit',
     icon: 'table_icon_critical',
@@ -231,7 +231,7 @@ export const gamePlayCriticalHitSection: TableFormFieldConfig[] = [
   },
   {
     type: 'select',
-    label: '游戏轮次',
+    label: t('UICreateTable_GameRound'),
     modelValue: 'rounds',
     defaultValue: 1,
     options: CRIT_ROUNDS_OPTIONS,
@@ -239,10 +239,10 @@ export const gamePlayCriticalHitSection: TableFormFieldConfig[] = [
   },
   {
     type: 'input',
-    label: '暴击数量(BB)',
+    label: t('UIHitGamePlayTips4') + "(BB)",
     modelValue: 'critical_ante',
     defaultValue: '',
-    placeholder: '请输入',
+    placeholder: t('UIMine_PleaseEnter'),
     numberOnly: true,
     visibleWhen: [{ field: 'critical_hit', equals: 1 }],
   },

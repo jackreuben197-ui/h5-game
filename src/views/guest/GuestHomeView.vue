@@ -10,8 +10,8 @@ const loginModalStore = useLoginModalStore()
 const userInfoStore = useUserInfoStore()
 
 const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
-const clubNameText = computed<string>(() => userInfoStore.channelDefaultClub?.club_name || '俱乐部')
-const noticeText = '欢迎来到德州扑克，登录后体验更多精彩内容'
+const clubNameText = computed<string>(() => userInfoStore.channelDefaultClub?.club_name || t('UILobby_Menu_menu_btn_club'))
+const noticeText = t('UIGuest_Text6') + "，" + t('UIGuest_Text7')
 const clubGoldText = '0.00'
 const pokerTablesText = '0'
 const pokerPlayersText = '0'
@@ -44,9 +44,9 @@ onMounted(() => {
       <span class="top-bar__logo">POKER</span>
       <div class="top-bar__actions">
         <button class="top-bar__btn top-bar__btn--register" @click="notifyNotLoginRegister">
-          注册
+          {{ t('UILogin_TitleRegister') }}
         </button>
-        <button class="top-bar__btn top-bar__btn--login" @click="notifyNotLogin">登陆</button>
+        <button class="top-bar__btn top-bar__btn--login" @click="notifyNotLogin">{{ t('UIGuild_MemberManagerSortByLastLoginTime') }}</button>
       </div>
     </div>
     <!-- 1. 顶部俱乐部介绍轮播图 -->
@@ -56,7 +56,7 @@ onMounted(() => {
 
     <!-- 2. 公告栏 -->
     <div class="notice-bar">
-      <img class="notice-icon" src="@/assets/icons/icon_notice.svg" alt="公告" />
+      <img class="notice-icon" src="@/assets/icons/icon_notice.svg" :alt="t('Serverbulletin')" />
       <div class="notice-marquee">
         <span class="notice-label mr-4"> {{ $txt('Serverbulletin') }}: </span>
         <div class="notice-scroll">
@@ -75,12 +75,12 @@ onMounted(() => {
           <img
             class="icon-sm icon-eye"
             src="@/assets/icons/icon_eye_open.svg"
-            alt="显示/隐藏"
+            :alt="t('UIGuest_Text2') + '/' + t('UIGuest_Text3')"
             @click="notifyNotLogin"
           />
         </div>
         <div class="club-balance-row">
-          <img class="icon-sm" src="@/assets/icons/icon_chips.png" alt="余额" />
+          <img class="icon-sm" src="@/assets/icons/icon_chips.png" :alt="t('UIClub_CreateRoom31')" />
           <span class="balance-amount">
             {{ balanceVisible ? clubGoldText : '****' }}
           </span>
@@ -110,11 +110,11 @@ onMounted(() => {
           <span class="contact-label"> @game </span>
         </div>
         <div class="contact-item" @click="notifyNotLogin">
-          <AppSvgIcon class="contact-icon" name="contact-user" title="邮箱" />
+          <AppSvgIcon class="contact-icon" name="contact-user" :title="t('UISetting_SecurityBindEmailItem')" />
           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>
         <div class="contact-item" @click="notifyNotLogin">
-          <AppSvgIcon class="contact-icon" name="customer-service" title="IM客服" />
+          <AppSvgIcon class="contact-icon" name="customer-service" :title="'IM' + t('UIMineMain01')" />
           <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
         </div>
       </div>
@@ -122,7 +122,7 @@ onMounted(() => {
 
     <!-- 4. 游戏模块 -->
     <div class="section-header">
-      <span class="section-title">游戏中心</span>
+      <span class="section-title">{{ t('UIGuest_Text4') }}</span>
     </div>
     <div class="game-center-scroll">
       <div class="game-center-track">
@@ -180,7 +180,7 @@ onMounted(() => {
 
         <!-- 小游戏专区 -->
         <div v-if="false" class="game-scroll-card game-card-minigame" @click="notifyNotLogin">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_minigame_lg.png" alt="小游戏" />
+          <img class="zone-lg-bg" src="@/assets/icons/game_zone_minigame_lg.png" :alt="t('UIClub_Text24')" />
           <div class="zone-info">
             <div class="zone-header">
               <span class="zone-title"> {{ t('UIHomeMinigameArea') }} </span>
@@ -196,7 +196,7 @@ onMounted(() => {
         </div>
         <!-- 麻将专区 -->
         <div v-if="false" class="game-scroll-card game-card-mahjong" @click="notifyNotLogin">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
+          <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" :alt="t('Mahjong_Name')" />
           <div class="zone-info">
             <div class="zone-header">
               <span class="zone-title"> {{ t('UIHomeMahjongArea') }} </span>
@@ -226,7 +226,7 @@ onMounted(() => {
     </div>
     <!-- 5. 即将开放横向滚动 -->
     <div class="section-header">
-      <span class="section-title">热门游戏</span>
+      <span class="section-title">{{ t('UIGuest_Text5') }}</span>
     </div>
     <div class="coming-soon-scroll">
       <div class="coming-soon-track">

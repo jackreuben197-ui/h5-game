@@ -35,7 +35,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell club-room-history-detail-bg" :style="backgroundStyle">
-    <HeaderBack :title="'数据详情'" />
+    <HeaderBack :title="t('UIGuildDataRecordsDetails')" />
     <RoomDataDetail source="club" :room-id="roomId" :match-id="matchId" />
   </div>
 </template>

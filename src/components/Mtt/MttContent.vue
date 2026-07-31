@@ -162,7 +162,7 @@ function buildGroupsBySeries(
 
   const clubItems = sortedItems.filter((item) => item.originType === ROOM_ORIGIN_TYPE.CLUB)
   if (clubItems.length) {
-    groups.push(buildGroup('club', resolveLabel('UIGuildMain_ClubGame', '俱乐部赛事'), clubItems))
+    groups.push(buildGroup('club', resolveLabel('UIGuildMain_ClubGame', t('UIClub_Club3')), clubItems))
   }
 
   const noSeriesItems: MttViewItem[] = []
@@ -191,7 +191,7 @@ function buildGroupsBySeries(
 
   seriesIds.forEach((seriesId) => {
     const seriesInfo = seriesMap[seriesId]
-    const seriesName = resolveNameByUnityRule(toSafeString(seriesInfo?.name)) || `系列 #${seriesId}`
+    const seriesName = resolveNameByUnityRule(toSafeString(seriesInfo?.name)) || t('UIClub_Text18') + " #" + (seriesId)
     const seriesItems = [...seriesBucketMap[seriesId]].sort(compareSeriesRoom)
     const seriesLayout = resolveSeriesLayoutByType(toSafeInt(seriesInfo?.type), seriesItems.length)
     groups.push(buildGroup(`series-${seriesId}`, seriesName, seriesItems, seriesLayout))

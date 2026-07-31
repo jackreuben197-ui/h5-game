@@ -16,6 +16,7 @@ import {
   isIosThirdPartyBrowser,
 } from '@/utils/iosWebClip'
 import { createLogger } from '@/utils/logger'
+import { t } from '@/i18n'
 
 const log = createLogger('[download-landing]')
 
@@ -25,7 +26,7 @@ const loading = ref(true)
 
 const appName = computed(() => downloadApp.value.name || 'Newpkr')
 const appTitle = computed(
-  () => downloadApp.value.title || '全球正版德州扑克平台，安全公平，尽享博弈',
+  () => downloadApp.value.title || t('UILanding_Text8') + "，" + t('UILanding_Text9') + "，" + t('UILanding_Text10'),
 )
 const appIcon = computed(() => downloadApp.value.icon_url || '')
 
@@ -44,10 +45,10 @@ onMounted(async () => {
 
 // ==================== 亮点：对齐产品参考页的分区文案 ====================
 const highlights = [
-  { title: '安全卫士', desc: '7×24 小时守护对局，重拳打击伙牌与作弊' },
-  { title: '好友桌', desc: '自建房间 + 灵活规则，随时和朋友组局' },
-  { title: 'MTT 锦标赛', desc: '超高奖池持续开放，公平竞技一较高下' },
-  { title: '前沿玩法', desc: '全鱿鱼、Spingo、十三水等热门玩法首发' },
+  { title: t('UISafety'), desc: "7×24 " + t('UILanding_Round2') + "，" + t('UILanding_Text11') },
+  { title: t('UILanding_Table2'), desc: t('UILanding_Text12') + " + " + t('UILanding_Text13') + "，" + t('UILanding_AndRound') },
+  { title: "MTT " + t('adaptation10190'), desc: t('UILanding_Jackpot') + "，" + t('UILanding_Text14') },
+  { title: t('UILanding_Text15'), desc: t('UILanding_Text16') + "、Spingo、" + t('UILanding_Text17') },
 ]
 
 // ==================== 下载 / 添加桌面（逻辑对齐 BridgeNotificationPanel 步骤1） ====================
@@ -56,13 +57,13 @@ function onDownload(): void {
   if (url) {
     window.open(url, '_blank')
   } else {
-    showToast('下载地址暂未配置')
+    showToast(t('UILanding_Not'))
   }
 }
 
 async function onAddToHomeScreen(): Promise<void> {
   if (isStandaloneDisplay()) {
-    showSuccessToast('已添加到桌面')
+    showSuccessToast(t('UILanding_DoneTable'))
     return
   }
 
@@ -70,7 +71,7 @@ async function onAddToHomeScreen(): Promise<void> {
   if (canPromptInstall()) {
     const result = await showAddToHomeScreenPrompt()
     if (result === 'accepted') {
-      showSuccessToast('已添加到桌面')
+      showSuccessToast(t('UILanding_DoneTable'))
       return
     }
     if (result === 'dismissed') return
@@ -79,7 +80,7 @@ async function onAddToHomeScreen(): Promise<void> {
   // iOS 原生 Safari：下发 mobileconfig 描述文件，一键添加到桌面（安装时需信任未签名描述文件）
   if (isIosNativeSafari()) {
     try {
-      showToast({ message: '正在准备安装文件…', duration: 1500 })
+      showToast({ message: t('UILanding_Text18') + "…", duration: 1500 })
       // 部署可能位于站点子路径，用 BASE_URL 解析成绝对地址，避免固定 '/' 打到站点根导致 404。
       const appBaseUrl = new URL(import.meta.env.BASE_URL, window.location.href).toString()
       await installIosWebClip({
@@ -89,13 +90,13 @@ async function onAddToHomeScreen(): Promise<void> {
       })
       setTimeout(() => {
         showToast({
-          message: '已下载描述文件，请到 设置 → 通用 → VPN 与设备管理 完成安装',
+          message: t('UILanding_Done') + "，" + t('UILanding_Text19') + " " + t('UIMine_btn_setting') + " → " + t('UILanding_Text20') + " → VPN " + t('UILanding_Text21') + " " + t('UILanding_Text22'),
           duration: 5000,
         })
       }, 1500)
     } catch (err) {
       log.error('[web-clip] install failed:', err)
-      showFailToast('安装文件生成失败，请稍后重试')
+      showFailToast(t('UILanding_Fail') + "，" + t('UILanding_Text23'))
     }
     return
   }
@@ -103,7 +104,7 @@ async function onAddToHomeScreen(): Promise<void> {
   // iOS Chrome / Firefox / Edge：无法触发 mobileconfig 流程，引导到 Safari
   if (isIosThirdPartyBrowser()) {
     showToast({
-      message: 'iOS 上请用 Safari 打开本页面后再点击"添加桌面快捷方式"',
+      message: "iOS " + t('UILanding_Text24') + " Safari " + t('UILanding_Again') + "\"" + t('UILanding_Table') + "\"",
       duration: 4000,
     })
     return
@@ -112,7 +113,7 @@ async function onAddToHomeScreen(): Promise<void> {
   // iOS 内嵌 WebView（微信/抖音/TG 等）
   if (isIos()) {
     showToast({
-      message: '请点击右上角"在浏览器中打开"，使用 Safari 完成添加',
+      message: t('UILanding_Text25') + "\"" + t('UILanding_Text26') + "\"，" + t('adaptation10200') + " Safari " + t('UILanding_Text27'),
       duration: 4000,
     })
     return
@@ -120,7 +121,7 @@ async function onAddToHomeScreen(): Promise<void> {
 
   // 兜底：Android 上 PWA 资产未就绪 / 已 dismiss / 用户参与度未达标
   showToast(
-    isIosSafari() ? '请点击底部分享按钮，选择"添加到主屏幕"' : '请在浏览器菜单中选择"添加到主屏幕"',
+    isIosSafari() ? t('UILanding_Text28') + "，" + t('UILanding_Text29') + "\"" + t('UILanding_Text30') + "\"" : t('UILanding_Text31') + "\"" + t('UILanding_Text30') + "\"",
   )
 }
 </script>
@@ -140,7 +141,7 @@ async function onAddToHomeScreen(): Promise<void> {
             <div v-else class="landing__icon landing__icon--placeholder">
               {{ appName.slice(0, 1) }}
             </div>
-            <span class="landing__badge">正版官方</span>
+            <span class="landing__badge">{{ t('UILanding_Text') }}</span>
           </div>
           <h1 class="landing__name">{{ appName }}</h1>
           <p class="landing__slogan">{{ appTitle }}</p>
@@ -149,17 +150,17 @@ async function onAddToHomeScreen(): Promise<void> {
         <div class="landing__stats">
           <div class="landing__stat">
             <span class="landing__stat-num">7×24h</span>
-            <span class="landing__stat-label">安全守护</span>
+            <span class="landing__stat-label">{{ t('UILanding_Text2') }}</span>
           </div>
           <div class="landing__stat-divider"></div>
           <div class="landing__stat">
-            <span class="landing__stat-num">全球</span>
-            <span class="landing__stat-label">热门玩法</span>
+            <span class="landing__stat-num">{{ t('UILanding_Text3') }}</span>
+            <span class="landing__stat-label">{{ t('UILanding_Text4') }}</span>
           </div>
           <div class="landing__stat-divider"></div>
           <div class="landing__stat">
-            <span class="landing__stat-num">公平</span>
-            <span class="landing__stat-label">竞技对局</span>
+            <span class="landing__stat-num">{{ t('UILanding_Text5') }}</span>
+            <span class="landing__stat-label">{{ t('UILanding_Round') }}</span>
           </div>
         </div>
       </header>
@@ -175,18 +176,18 @@ async function onAddToHomeScreen(): Promise<void> {
         </div>
       </section>
 
-      <p class="landing__tip">请认准官方唯一正版下载渠道，谨防第三方盗版链接</p>
+      <p class="landing__tip">{{ t('UILanding_Text6') }}，{{ t('UILanding_Text7') }}</p>
     </div>
 
     <!-- ========== 底部下载栏（sticky） ========== -->
     <footer class="landing__actions">
       <button class="landing__btn landing__btn--secondary" type="button" @click="onAddToHomeScreen">
         <img src="@/assets/icons/icon_layer.svg" alt="" />
-        <span>添加桌面快捷方式</span>
+        <span>{{ t('UILanding_Table') }}</span>
       </button>
       <button class="landing__btn landing__btn--primary" type="button" @click="onDownload">
         <img src="@/assets/icons/icon_download.svg" alt="" />
-        <span>下载 APP</span>
+        <span>{{ t('UIGuildDownloadFightData_Tip17') }} APP</span>
       </button>
     </footer>
   </div>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { t } from '@/i18n'
 
 type DesktopLayoutMode = 'bounded' | 'ratio' | 'fluid' | 'phone'
 
@@ -11,10 +12,10 @@ interface LayoutOption {
 }
 
 const options: LayoutOption[] = [
-  { mode: 'bounded', label: '推荐容器', hint: '最大 1600 × 1000' },
-  { mode: 'ratio', label: '固定宽高比', hint: '固定 16:10，最大 1600 × 1000' },
-  { mode: 'fluid', label: '全屏拉伸', hint: '铺满浏览器' },
-  { mode: 'phone', label: '手机框', hint: '原 480px 方案' },
+  { mode: 'bounded', label: t('UIComponent_Text'), hint: t('Maximum') + " 1600 × 1000" },
+  { mode: 'ratio', label: t('UIComponent_Text2'), hint: t('UITexas_History_Pin') + " 16:10，" + t('Maximum') + " 1600 × 1000" },
+  { mode: 'fluid', label: t('UIComponent_Text3'), hint: t('UIComponent_Text4') },
+  { mode: 'phone', label: t('UIComponent_Text5'), hint: t('UIComponent_Text6') + " 480px " + t('UIComponent_Text7') },
 ]
 
 const route = useRoute()
@@ -71,8 +72,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <aside v-if="isGuestRoute" class="desktop-layout-demo" aria-label="桌面布局 Demo">
-    <span class="desktop-layout-demo__title">桌面 Demo</span>
+  <aside v-if="isGuestRoute" class="desktop-layout-demo" :aria-label="t('UIComponent_TableRound') + ' Demo'">
+    <span class="desktop-layout-demo__title">{{ t('UIComponent_Table') }} Demo</span>
     <div class="desktop-layout-demo__options">
       <button
         v-for="option in options"

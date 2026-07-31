@@ -136,7 +136,7 @@ async function loadDetail(): Promise<void> {
       const res = await getRoomcenterMttDetailApi(matchId.value)
       if (res.code === 0 && res.data) detailData.value = res.data
     } catch (error) {
-      console.error('[MttDetailView] 刷新 MTT 详情失败', error)
+      console.error("[MttDetailView] " + t('UIPayWithdrawBtn01') + " MTT " + t('UIClub_DetailFail'), error)
     }
   })()
   detailRequest = request

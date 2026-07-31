@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import iconDateUrl from '@/assets/icons/icon_date.png'
+import { t } from '@/i18n'
 
 type PickTarget = 'start' | 'end'
 
@@ -24,7 +25,7 @@ const props = withDefaults(
   {
     minDate: undefined,
     maxDate: undefined,
-    tipText: '只支持查询最近三个月数据',
+    tipText: t('UIGuildtThreeMonthDataTip'),
     showTip: true,
     initialTarget: 'start',
   },
@@ -286,17 +287,17 @@ function startOfDay(date: Date): Date {
 
       <div class="picker-month-row">
         <div class="month-arrows">
-          <button type="button" class="arrow-btn" aria-label="上一年" @click="goPrevYear">«</button>
-          <button type="button" class="arrow-btn" aria-label="上一月" @click="goPrevMonth">
+          <button type="button" class="arrow-btn" :aria-label="t('UIClub_Text50')" @click="goPrevYear">«</button>
+          <button type="button" class="arrow-btn" :aria-label="t('UIClub_Text51')" @click="goPrevMonth">
             ‹
           </button>
         </div>
         <p class="month-title">{{ monthTitle }}</p>
         <div class="month-arrows">
-          <button type="button" class="arrow-btn" aria-label="下一月" @click="goNextMonth">
+          <button type="button" class="arrow-btn" :aria-label="t('UIClub_Text52')" @click="goNextMonth">
             ›
           </button>
-          <button type="button" class="arrow-btn" aria-label="下一年" @click="goNextYear">»</button>
+          <button type="button" class="arrow-btn" :aria-label="t('UIClub_Text53')" @click="goNextYear">»</button>
         </div>
       </div>
 

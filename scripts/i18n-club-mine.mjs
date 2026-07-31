@@ -14,12 +14,28 @@ const LANG_FILES = {
   TW: path.resolve(i18nRoot, 'USER_TW.txt'),
 }
 
-const TARGET_DIRS = [
-  path.resolve(projectRoot, 'src/views/club'),
-  path.resolve(projectRoot, 'src/views/mine'),
-]
+const VIEWS_ROOT = path.resolve(projectRoot, 'src/views')
+const COMPONENTS_ROOT = path.resolve(projectRoot, 'src/components')
+const SOURCE_ROOTS = [VIEWS_ROOT, COMPONENTS_ROOT]
 
-const CHINESE_RE = /[\u4e00-\u9fff]+/g
+const DIRECTORY_PREFIXES = new Map([
+  ['club', 'UIClub_'],
+  ['dev', 'UIDev_'],
+  ['friendsTable', 'UIFriendsTable_'],
+  ['guest', 'UIGuest_'],
+  ['home', 'UIHome_'],
+  ['landing', 'UILanding_'],
+  ['login', 'UILogin_'],
+  ['main', 'UIMain_'],
+  ['message', 'UIMessage_'],
+  ['mine', 'UIMine_'],
+  ['mtt', 'UIMTT_'],
+  ['table', 'UITable_'],
+  ['wallet', 'UIWallet_'],
+])
+
+const CHINESE_RE = /[\u3400-\u9fff\uf900-\ufaff]+/g
+const HAS_CHINESE_RE = /[\u3400-\u9fff\uf900-\ufaff]/
 
 const PHRASE_MAP = new Map([
   ['俱乐部', 'Club'],
@@ -166,6 +182,26 @@ function pascalCase(input) {
     .join('')
 }
 
+function getKeyPrefix(filePath) {
+  const isView = !path.relative(VIEWS_ROOT, filePath).startsWith(`..${path.sep}`)
+  if (isView) {
+    const relative = path.relative(VIEWS_ROOT, filePath)
+    const [directory] = relative.split(path.sep)
+    if (DIRECTORY_PREFIXES.has(directory)) {
+      return DIRECTORY_PREFIXES.get(directory)
+    }
+    const fallback = pascalCase(directory || 'View') || 'View'
+    return `UI${fallback}_`
+  }
+
+  const relative = path.relative(COMPONENTS_ROOT, filePath)
+  const parts = relative.split(path.sep)
+  if (parts.length <= 1) return 'UIComponent_'
+  const directory = pascalCase(parts[0]) || 'Component'
+  if (directory === 'Mtt') return 'UIMTT_'
+  return `UI${directory}_`
+}
+
 function tokenizeChinese(zh) {
   const tokens = []
   let i = 0
@@ -193,14 +229,14 @@ function tokenizeChinese(zh) {
   return tokens.filter(Boolean)
 }
 
-function buildKeyBase(zh) {
+function buildKeyBase(zh, prefix) {
   const tokens = tokenizeChinese(zh)
-  if (!tokens.length) return 'UIClub_Text'
+  if (!tokens.length) return `${prefix}Text`
 
   const compact = tokens.map((token) => (token.length > 10 ? token.slice(0, 6) : token))
   const limited = compact.length > 6 ? compact.slice(0, 6) : compact
   const keyName = pascalCase(limited.join(' ')) || 'Text'
-  return `UIClub_${keyName}`
+  return `${prefix}${keyName}`
 }
 
 function escapeSingleQuoted(str) {
@@ -213,16 +249,17 @@ function toJsSingleQuoted(str) {
 
 function createContext(zhLang) {
   const existingKeys = new Set(zhLang.keyToValue.keys())
-  const valueToKey = new Map(zhLang.valueToKey)
+  const existingValueToKey = new Map(zhLang.valueToKey)
   const newEntries = new Map()
 
-  function ensureKeyFor(zh) {
-    const hit = valueToKey.get(zh)
+  function ensureKeyFor(zh, prefix) {
+    const hit = existingValueToKey.get(zh)
     if (hit) return hit
 
-    if (newEntries.has(zh)) return newEntries.get(zh)
+    const entryId = `${prefix}\u0000${zh}`
+    if (newEntries.has(entryId)) return newEntries.get(entryId).key
 
-    let base = buildKeyBase(zh)
+    let base = buildKeyBase(zh, prefix)
     let key = base
     let suffix = 2
     while (existingKeys.has(key)) {
@@ -231,8 +268,7 @@ function createContext(zhLang) {
     }
 
     existingKeys.add(key)
-    valueToKey.set(zh, key)
-    newEntries.set(zh, key)
+    newEntries.set(entryId, { zh, key })
     return key
   }
 
@@ -240,7 +276,7 @@ function createContext(zhLang) {
 }
 
 function buildExprFromText(text, ensureKeyFor, preferWhole = true, useSingleQuotedText = false) {
-  if (!/[\u4e00-\u9fff]/.test(text)) return null
+  if (!HAS_CHINESE_RE.test(text)) return null
 
   if (preferWhole) {
     const wholeKey = ensureKeyFor(text)
@@ -280,48 +316,131 @@ function buildExprFromText(text, ensureKeyFor, preferWhole = true, useSingleQuot
 }
 
 function buildTemplateTextReplacement(text, ensureKeyFor) {
-  if (!/[\u4e00-\u9fff]/.test(text)) return text
+  if (!HAS_CHINESE_RE.test(text)) return text
   return text.replace(CHINESE_RE, (segment) => `{{ t('${ensureKeyFor(segment)}') }}`)
 }
 
-function processTemplate(templateCode, ensureKeyFor) {
-  let code = templateCode
-  let changed = false
-
-  code = code.replace(/\{\{([\s\S]*?)\}\}/g, (full, expr) => {
-    const transformed = transformJsLike(expr, ensureKeyFor)
-    if (!transformed.changed || transformed.code === expr) {
-      return full
+function findTagEnd(code, startIndex) {
+  let quote = null
+  for (let i = startIndex + 1; i < code.length; i += 1) {
+    const ch = code[i]
+    if (quote) {
+      if (ch === '\\') {
+        i += 1
+      } else if (ch === quote) {
+        quote = null
+      }
+      continue
     }
-    changed = true
-    return `{{${transformed.code}}}`
-  })
+    if (ch === '"' || ch === "'") {
+      quote = ch
+      continue
+    }
+    if (ch === '>') return i
+  }
+  return -1
+}
 
-  code = code.replace(
-    /(\s)([A-Za-z_][\w-]*?)="([^"]*[\u4e00-\u9fff][^"]*)"/g,
-    (full, space, attr, value) => {
-      if (attr.startsWith('v-') || attr.startsWith(':') || attr.startsWith('@')) {
-        return full
+function isJsExpressionAttribute(attr) {
+  return (
+    attr.startsWith(':') ||
+    attr.startsWith('@') ||
+    attr.startsWith('#') ||
+    attr.startsWith('v-')
+  )
+}
+
+function processTag(tagCode, ensureKeyFor) {
+  let changed = false
+  const code = tagCode.replace(
+    /(\s)([^\s=/>]+)(\s*=\s*)(["'])([\s\S]*?)\4/g,
+    (full, space, attr, equals, quote, value) => {
+      if (!HAS_CHINESE_RE.test(value)) return full
+
+      if (isJsExpressionAttribute(attr)) {
+        const transformed = transformJsLike(value, ensureKeyFor, true)
+        if (!transformed.changed || transformed.code === value) return full
+        changed = true
+        return `${space}${attr}${equals}${quote}${transformed.code}${quote}`
       }
 
       const exprInfo = buildExprFromText(value, ensureKeyFor, false, true)
       if (!exprInfo) return full
       changed = true
-      return `${space}:${attr}="${exprInfo.expr}"`
+      return `${space}:${attr}${equals}"${exprInfo.expr}"`
     },
   )
-
-  code = code.replace(/>([^<]*[\u4e00-\u9fff][^<]*)</g, (full, text) => {
-    if (text.includes('{{') || text.includes('}}')) {
-      return full
-    }
-    const replaced = buildTemplateTextReplacement(text, ensureKeyFor)
-    if (replaced === text) return full
-    changed = true
-    return `>${replaced}<`
-  })
-
   return { code, changed }
+}
+
+function processTemplateText(text, ensureKeyFor) {
+  let out = ''
+  let changed = false
+  let cursor = 0
+
+  while (cursor < text.length) {
+    const open = text.indexOf('{{', cursor)
+    const rawEnd = open === -1 ? text.length : open
+    const raw = text.slice(cursor, rawEnd)
+    const replacedRaw = buildTemplateTextReplacement(raw, ensureKeyFor)
+    out += replacedRaw
+    if (replacedRaw !== raw) changed = true
+
+    if (open === -1) break
+    const close = text.indexOf('}}', open + 2)
+    if (close === -1) {
+      out += text.slice(open)
+      break
+    }
+
+    const expr = text.slice(open + 2, close)
+    const transformed = transformJsLike(expr, ensureKeyFor)
+    out += transformed.changed ? `{{${transformed.code}}}` : text.slice(open, close + 2)
+    if (transformed.changed) changed = true
+    cursor = close + 2
+  }
+
+  return { code: out, changed }
+}
+
+function processTemplate(templateCode, ensureKeyFor) {
+  let out = ''
+  let changed = false
+  let cursor = 0
+
+  while (cursor < templateCode.length) {
+    if (templateCode.startsWith('<!--', cursor)) {
+      const end = templateCode.indexOf('-->', cursor + 4)
+      const next = end === -1 ? templateCode.length : end + 3
+      out += templateCode.slice(cursor, next)
+      cursor = next
+      continue
+    }
+
+    if (templateCode[cursor] === '<') {
+      const end = findTagEnd(templateCode, cursor)
+      if (end === -1) {
+        out += templateCode.slice(cursor)
+        break
+      }
+      const tag = templateCode.slice(cursor, end + 1)
+      const transformed = processTag(tag, ensureKeyFor)
+      out += transformed.code
+      if (transformed.changed) changed = true
+      cursor = end + 1
+      continue
+    }
+
+    const nextTag = templateCode.indexOf('<', cursor)
+    const end = nextTag === -1 ? templateCode.length : nextTag
+    const text = templateCode.slice(cursor, end)
+    const transformed = processTemplateText(text, ensureKeyFor)
+    out += transformed.code
+    if (transformed.changed) changed = true
+    cursor = end
+  }
+
+  return { code: out, changed }
 }
 
 function parseQuotedString(code, startIndex, quote) {
@@ -398,7 +517,7 @@ function parseTemplateLiteral(code, startIndex) {
   return null
 }
 
-function transformJsLike(code, ensureKeyFor) {
+function transformJsLike(code, ensureKeyFor, useSingleQuotedText = false) {
   let i = 0
   let out = ''
   let changed = false
@@ -438,8 +557,13 @@ function transformJsLike(code, ensureKeyFor) {
       }
 
       const literalText = parsed.raw.slice(1, -1)
-      if (/[\u4e00-\u9fff]/.test(literalText)) {
-        const exprInfo = buildExprFromText(literalText, ensureKeyFor, false)
+      if (HAS_CHINESE_RE.test(literalText)) {
+        const exprInfo = buildExprFromText(
+          literalText,
+          ensureKeyFor,
+          false,
+          useSingleQuotedText,
+        )
         if (exprInfo) {
           out += exprInfo.expr
           changed = true
@@ -461,7 +585,7 @@ function transformJsLike(code, ensureKeyFor) {
         continue
       }
 
-      const hasChinese = parsed.quasis.some((q) => /[\u4e00-\u9fff]/.test(q))
+      const hasChinese = parsed.quasis.some((q) => HAS_CHINESE_RE.test(q))
       if (!hasChinese) {
         out += parsed.raw
         i = parsed.end + 1
@@ -476,7 +600,7 @@ function transformJsLike(code, ensureKeyFor) {
           if (exprInfo) {
             parts.push(exprInfo.expr)
           } else {
-            parts.push(JSON.stringify(quasi))
+            parts.push(useSingleQuotedText ? toJsSingleQuoted(quasi) : JSON.stringify(quasi))
           }
         }
         if (idx < parsed.exprs.length) {
@@ -531,7 +655,15 @@ function ensureI18nImport(code) {
 }
 
 function processVueFile(content, ensureKeyFor) {
-  const templateMatch = content.match(/<template>[\s\S]*?<\/template>/)
+  const templateOpen = content.match(/^<template(?:\s[^>]*)?>/m)
+  const templateCloseIndex = content.lastIndexOf('</template>')
+  const templateMatch =
+    templateOpen && templateCloseIndex > templateOpen.index
+      ? [
+          content.slice(templateOpen.index, templateCloseIndex + '</template>'.length),
+          templateOpen[0],
+        ]
+      : null
   const scriptMatch = content.match(/<script[\s\S]*?<\/script>/)
 
   let changed = false
@@ -540,12 +672,13 @@ function processVueFile(content, ensureKeyFor) {
 
   if (templateMatch) {
     const fullTemplate = templateMatch[0]
-    const inner = fullTemplate.replace(/^<template>/, '').replace(/<\/template>$/, '')
+    const openTag = templateMatch[1]
+    const inner = fullTemplate.slice(openTag.length, -'</template>'.length)
     const transformed = processTemplate(inner, ensureKeyFor)
     if (transformed.changed) {
       changed = true
       needsImport = true
-      const replaced = `<template>${transformed.code}</template>`
+      const replaced = `${openTag}${transformed.code}</template>`
       next = next.replace(fullTemplate, replaced)
     }
   }
@@ -590,7 +723,7 @@ function processJsTsFile(content, ensureKeyFor) {
 function syncLangFiles(langFiles, newEntries) {
   if (!newEntries.size) return 0
   const appended = []
-  for (const [zh, key] of newEntries.entries()) {
+  for (const { zh, key } of newEntries.values()) {
     appended.push([key, zh])
   }
 
@@ -617,19 +750,21 @@ function main() {
   const dryRun = process.argv.includes('--dry-run')
   const zhLang = readLangFile(LANG_FILES.ZH)
   const ctx = createContext(zhLang)
-  const files = TARGET_DIRS.flatMap((dir) => listFilesRecursive(dir)).sort()
+  const files = SOURCE_ROOTS.flatMap((root) => listFilesRecursive(root)).sort()
 
   let touched = 0
 
   for (const filePath of files) {
     const original = fs.readFileSync(filePath, 'utf8')
     const ext = path.extname(filePath)
+    const keyPrefix = getKeyPrefix(filePath)
+    const ensureKeyFor = (zh) => ctx.ensureKeyFor(zh, keyPrefix)
 
     let processed
     if (ext === '.vue') {
-      processed = processVueFile(original, ctx.ensureKeyFor)
+      processed = processVueFile(original, ensureKeyFor)
     } else {
-      processed = processJsTsFile(original, ctx.ensureKeyFor)
+      processed = processJsTsFile(original, ensureKeyFor)
     }
 
     if (!processed.changed || processed.content === original) continue
@@ -642,14 +777,14 @@ function main() {
 
   const added = dryRun ? ctx.newEntries.size : syncLangFiles(LANG_FILES, ctx.newEntries)
 
-  console.log(`[i18n-club-mine] files scanned: ${files.length}`)
-  console.log(`[i18n-club-mine] files changed: ${touched}`)
-  console.log(`[i18n-club-mine] keys added: ${added}`)
+  console.log(`[i18n-ui] files scanned: ${files.length}`)
+  console.log(`[i18n-ui] files changed: ${touched}`)
+  console.log(`[i18n-ui] keys added: ${added}`)
 
   if (ctx.newEntries.size) {
-    const preview = [...ctx.newEntries.entries()].slice(0, 20)
-    console.log('[i18n-club-mine] new key preview:')
-    for (const [zh, key] of preview) {
+    const preview = [...ctx.newEntries.values()].slice(0, 20)
+    console.log('[i18n-ui] new key preview:')
+    for (const { zh, key } of preview) {
       console.log(`  ${key}=${zh}`)
     }
     if (ctx.newEntries.size > preview.length) {

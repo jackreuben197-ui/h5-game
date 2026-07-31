@@ -29,8 +29,8 @@ const selectedTribeId = computed(() =>
 const showMttTabs = false
 
 const mttTabs = computed<FilterTabOption[]>(() => [
-  { name: 'all', title: resolveLabel('UIMatch_GtO8YEdb', '全部') },
-  { name: 'poker', title: resolveLabel('UIHomePokerArea', '扑克赛事') },
+  { name: 'all', title: resolveLabel('UIMatch_GtO8YEdb', t('UIMatch_GtO8YEdb')) },
+  { name: 'poker', title: resolveLabel('UIHomePokerArea', t('UIMatchPokerTournament')) },
 ])
 
 onMounted(() => {
@@ -61,7 +61,7 @@ function handleBack() {
 function handleOpenCustomerService() {
   const clubId = selectedClubId.value
   if (clubId <= 0) {
-    showFailToast('当前俱乐部信息无效')
+    showFailToast(t('UIClub_CurrentClubNo'))
     return
   }
 

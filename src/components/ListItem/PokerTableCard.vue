@@ -10,6 +10,7 @@ import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
 import iconSquid from '@/assets/icons/table_icon_squid.png'
 import type { RoomRecord, RoomUser } from '@/api/models/roomcenter'
 import { formatRoomLeftAndTotalByUnity } from '@/utils/time'
+import { t } from '@/i18n'
 
 interface Props {
   room: RoomRecord
@@ -114,9 +115,9 @@ const bringInText = computed(() => {
   const sb = Number(props.room.sb) || 0
   const bringInValue = Math.round(((minRate * sb * 2) / 100) * 100) / 100
   if (!bringInValue) {
-    return '不限买入'
+    return t('UIListItem_BuyIn')
   }
-  return `${bringInValue}买入`
+  return (bringInValue) + t('MTT_xq_buy')
 })
 
 // 预设常见人数桌位坐标，保持和旧版一致。
@@ -216,7 +217,7 @@ function seatStyle(index: number): CSSProperties {
 
 function shortName(name?: string): string {
   if (!name) {
-    return '空'
+    return t('UISeatEmpty')
   }
   return `${name}`.slice(0, 1)
 }
@@ -233,7 +234,7 @@ function shortName(name?: string): string {
     </div>
 
     <div class="table-main">
-      <span v-if="showParticipation" class="participation-status">参与过</span>
+      <span v-if="showParticipation" class="participation-status">{{ t('UIFriendsTable_Text3') }}</span>
       <div v-if="featureIcons.length" class="feature-icons">
         <img
           v-for="item in featureIcons"

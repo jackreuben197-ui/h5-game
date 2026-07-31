@@ -290,7 +290,7 @@ onBeforeUnmount(() => {
     <HeaderBack :title="t('UIClub_AgentData')" />
 
     <section class="glass profile-card">
-      <img class="avatar" :src="displayAvatar" :alt="`${displayName}头像`" @error="onAvatarError" />
+      <img class="avatar" :src="displayAvatar" :alt="(displayName) + t('UIMine_UserInfoSetting_btn_head')" @error="onAvatarError" />
       <div class="name-wrap">
         <p class="name">{{ displayName }}</p>
         <span class="uid">ID {{ displayUid }}</span>

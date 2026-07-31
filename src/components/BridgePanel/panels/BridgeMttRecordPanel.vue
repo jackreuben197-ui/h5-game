@@ -388,7 +388,7 @@ const durationText = computed(() => {
   if (interval <= 0) return '-'
   const minutes = Math.floor(interval / 60)
   const text = t('UITexasReport_Text_MatchNextBlindTime', minutes)
-  return text === 'UITexasReport_Text_MatchNextBlindTime' ? `${minutes}分钟` : text
+  return text === 'UITexasReport_Text_MatchNextBlindTime' ? (minutes) + t('UIClubData_Text_time') : text
 })
 
 interface BlindRow {

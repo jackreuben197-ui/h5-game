@@ -28,9 +28,6 @@ const LEGACY_TO_PACKAGE: Record<LocaleCode, string> = {
 
 const currentLocale = ref<LocaleCode>(resolveInitialLocale())
 
-// 初始化时把 package 的 locale 拉齐到外部 code，避免 i18n.get 在握手前取到默认值。
-applyPackageLocale(currentLocale.value)
-
 export function getLocale(): LocaleCode {
   return currentLocale.value
 }
@@ -39,9 +36,6 @@ export function setLocale(locale: string): void {
   const previousLocale = currentLocale.value
   const resolvedLocale = normalizeLocale(locale) ?? DEFAULT_LOCALE
 
-  // 先切换底层词典，再更新响应式状态。否则依赖 locale 的 computed 可能在
-  // 词典仍是旧语言时重新求值，并缓存旧文案。
-  applyPackageLocale(resolvedLocale)
   currentLocale.value = resolvedLocale
 
   // 语言持久化键与 Cocos 对齐：dzpk_Language。
@@ -58,16 +52,33 @@ const EN_OVERRIDES = enOverrides as Record<string, string>
 // （既补包内空缺，也可覆盖包内被 refactor 改动的措辞，如 账号登录/账号注册）。
 const CN_OVERRIDES = zhCnOverrides as Record<string, string>
 
-// CN 值缓存：CN 词条运行时不变，临时切到 CN 取值后切回，避免重复切换 locale。
+// 词典实例（window.__H5_CC_I18N__）由 H5 与 Cocos 共用，且 CC 层在 ProcedureInit 里强制切到
+// zh-CN 并忽略 syncLanguage。故每次取词都临时切到目标语言，取完还原成调用前的值：H5 拿到自己的
+// 语言，CC 侧状态不被改动。
+function readPackageValue(key: string, locale: LocaleCode): string {
+  const target = LEGACY_TO_PACKAGE[locale]
+  if (!target) {
+    return ''
+  }
+
+  const previous = getPackageLocale()
+  if (previous !== target) {
+    setPackageLocale(target)
+  }
+  const value = i18n.get(key, '') || ''
+  if (previous && previous !== target) {
+    setPackageLocale(previous)
+  }
+  return value
+}
+
+// CN 值缓存：CN 词条运行时不变。
 const cnValueCache = new Map<string, string>()
 function getCnValue(key: string): string {
   if (CN_OVERRIDES[key]) return CN_OVERRIDES[key]
   const cached = cnValueCache.get(key)
   if (cached !== undefined) return cached
-  const packageLocale = LEGACY_TO_PACKAGE[currentLocale.value]
-  i18n.setLocale(LEGACY_TO_PACKAGE.cn)
-  const value = i18n.get(key, '') || ''
-  i18n.setLocale(packageLocale)
+  const value = readPackageValue(key, 'cn')
   cnValueCache.set(key, value)
   return value
 }
@@ -91,7 +102,7 @@ export function t(key: string, ...args: FormatArg[] | [FormatArgs]): string {
   if (locale === 'cn' && CN_OVERRIDES[key]) {
     return formatTxtMessage(CN_OVERRIDES[key], args).replace(/\bUC\b/g, '联盟币')
   }
-  let message = i18n.get(key, '') || ''
+  let message = readPackageValue(key, locale)
   if (!message) {
     // 其他语言缺失时复用 CN，最后兜底用 key。
     message = getCnValue(key) || key
@@ -123,11 +134,19 @@ export const textI18nPlugin = {
   },
 }
 
-function applyPackageLocale(locale: LocaleCode): void {
-  const target = LEGACY_TO_PACKAGE[locale]
-  if (!target) {
-    return
+function getPackageLocale(): string {
+  try {
+    if (typeof i18n.getCurrentLocale === 'function') {
+      return i18n.getCurrentLocale() || ''
+    }
+    return typeof i18n.currentLocale === 'string' ? i18n.currentLocale : ''
+  } catch (error) {
+    log.warn('i18n.getCurrentLocale failed:', error)
+    return ''
   }
+}
+
+function setPackageLocale(target: string): void {
   try {
     i18n.setLocale(target)
   } catch (error) {

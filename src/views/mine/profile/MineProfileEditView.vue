@@ -464,12 +464,15 @@ async function onConfirmGender(): Promise<void> {
   }
 
   .glass-input {
-    background: rgba(0, 0, 0, 0.06);
+    background: rgba(255, 255, 255, 1);
+    border: 0.0213rem solid rgba(0, 0, 0, 0.08);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     color: rgba(15, 8, 8, 0.85);
   }
 
   .input-hint {
-    color: rgba(15, 8, 8, 0.55);
+    color: rgba(15, 8, 8, 0.85);
   }
 
   .gender-option {
@@ -478,23 +481,24 @@ async function onConfirmGender(): Promise<void> {
 
   .sheet-body {
     background-image: none !important;
-    background-color: #ffffff;
-    color: rgba(15, 8, 8, 0.85);
+    background-color: rgba(249, 249, 249, 0.94);
   }
 
   .sheet-row {
-    color: rgba(15, 8, 8, 0.85);
+    color: #000000;
   }
 
   .sheet-divider {
-    background: rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.18);
   }
 
   .sheet-confirm {
     background: #05c297;
-    color: #ffffff;
+    border-color: transparent;
+    box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
+    color: #f9f9f9;
   }
 }
 </style>

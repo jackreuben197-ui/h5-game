@@ -428,3 +428,69 @@ input::placeholder {
   }
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .club-edit-name-bg {
+  color: rgba(15, 8, 8, 0.85);
+  background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .hint-text {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .count-text {
+    color: rgba(15, 8, 8, 0.45);
+  }
+
+  .name-shell {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.08);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  input {
+    color: rgba(15, 8, 8, 0.85);
+
+    &::placeholder {
+      color: rgba(15, 8, 8, 0.4);
+    }
+  }
+
+  .wallet-label,
+  .cost-line {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .wallet-value,
+  .cost-value {
+    color: #05c297;
+  }
+
+  .recharge-btn {
+    background: rgba(0, 0, 0, 0.08);
+    color: rgba(15, 8, 8, 0.85);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .interval-line {
+    color: rgba(15, 8, 8, 0.6);
+  }
+
+  .confirm-btn {
+    background: #05c297;
+    color: #fbfbfb;
+    box-shadow: none;
+  }
+}
+</style>

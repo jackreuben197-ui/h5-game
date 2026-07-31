@@ -389,11 +389,12 @@ async function onSave(): Promise<void> {
   }
 
   .name-input {
-    background: rgba(0, 0, 0, 0.06);
+    background: rgba(255, 255, 255, 1);
+    border: 0.0213rem solid rgba(0, 0, 0, 0.08);
     color: rgba(15, 8, 8, 0.85);
 
     &::placeholder {
-      color: rgba(15, 8, 8, 0.4);
+      color: rgba(15, 8, 8, 0.45);
     }
   }
 
@@ -402,7 +403,7 @@ async function onSave(): Promise<void> {
   }
 
   .input-hint {
-    color: rgba(15, 8, 8, 0.55);
+    color: rgba(15, 8, 8, 0.85);
   }
 
   .cost-row {
@@ -427,9 +428,10 @@ async function onSave(): Promise<void> {
   .save-btn {
     background: #05c297;
     border-color: transparent;
-    color: #ffffff;
+    box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
+    color: #fbfbfb;
   }
 }
 </style>

@@ -320,7 +320,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell record-detail-page" :style="backgroundStyle">
+  <div class="page-shell record-detail-page career-record-detail-page" :style="backgroundStyle">
     <HeaderBack :title="title" :extra-padding="true" />
 
     <div class="content-wrap">
@@ -735,6 +735,63 @@ onMounted(() => {
   .sub-value {
     font-size: 0.32rem;
     font-weight: 800;
+  }
+}
+</style>
+
+<style lang="scss">
+:root[data-theme='light'] .career-record-detail-page {
+  color: rgba(15, 8, 8, 0.85);
+  background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.08);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .sort-bar .arrow {
+    filter: brightness(0);
+    opacity: 0.6;
+  }
+
+  .name-line .sub,
+  .time,
+  .summary-item .label,
+  .list-status,
+  .sub-cell .sub-title,
+  .left .sub {
+    color: rgba(15, 8, 8, 0.6);
+  }
+
+  .summary-grid {
+    background-color: rgba(0, 0, 0, 0.06);
+  }
+
+  .left .avatar.small {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  .right .profit {
+    color: #05c297;
+
+    &.pos {
+      color: #e5384f;
+    }
+  }
+
+  .sub-row {
+    border-top-color: rgba(0, 0, 0, 0.08);
   }
 }
 </style>

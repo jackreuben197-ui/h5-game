@@ -655,6 +655,11 @@ onMounted(() => {
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
 
+    .club-id-tag {
+      background: rgba(0, 0, 0, 0.08);
+      color: rgba(0, 0, 0, 0.72);
+    }
+
     .club-stats-shell {
       background: rgba(0, 0, 0, 0.04);
     }

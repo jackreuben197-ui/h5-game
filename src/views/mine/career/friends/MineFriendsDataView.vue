@@ -763,3 +763,57 @@ onBeforeUnmount(() => {
   }
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .friends-record-page {
+  --c-brand: #05c297;
+  --c-brand-rgb: 5, 194, 151;
+  --c-loss: #05c297;
+  --c-profit: #e5384f;
+
+  color: rgba(15, 8, 8, 0.85);
+  background-color: #f3f4f6;
+  background-image: var(--friends-record-bg-light);
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .summary-card {
+    background: rgba(255, 255, 255, 1);
+  }
+
+  .filter-tabs {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  .filter-tab {
+    color: rgba(15, 8, 8, 0.85);
+
+    &.is-customize img {
+      filter: brightness(0);
+    }
+
+    &.active {
+      background: rgba(0, 0, 0, 0.14);
+    }
+  }
+
+  .metric-divider {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  .timezone-text {
+    color: rgba(15, 8, 8, 0.45);
+  }
+
+  .list-status {
+    color: rgba(15, 8, 8, 0.6);
+  }
+}
+</style>

@@ -350,6 +350,11 @@ onMounted(() => {
       color: rgba(0, 0, 0, 0.65);
     }
 
+    .id-pill {
+      background: rgba(0, 0, 0, 0.08);
+      color: rgba(0, 0, 0, 0.72);
+    }
+
     .summary-card {
       background: #ffffff;
       border-color: rgba(0, 0, 0, 0.08);

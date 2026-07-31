@@ -206,3 +206,25 @@ async function handleFileChange(event: Event): Promise<void> {
   }
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .upload-sheet {
+  background: rgba(249, 249, 249, 0.94);
+  color: #000000;
+
+  .upload-sheet-option {
+    color: #000000;
+  }
+
+  .upload-sheet-divider {
+    background: rgba(0, 0, 0, 0.18);
+  }
+
+  .upload-sheet-confirm {
+    background: #05c297;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    color: #f9f9f9;
+  }
+}
+</style>

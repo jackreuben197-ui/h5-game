@@ -34,6 +34,7 @@ import imgInviteHeart from '@/assets/icons/club_invite_heart.png'
 import imgSearch from '@/assets/icons/club_search.svg'
 import imgModalClose from '@/assets/icons/modal_close.svg'
 import imgAvatarAdd from '@/assets/icons/avatar_add_badge.svg'
+import imgAvatarAddLight from '@/assets/icons/avatar_add_badge_light.svg'
 // import ImageUploadSheet from '@/components/ImageUploadSheet/ImageUploadSheet.vue'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
@@ -1016,7 +1017,18 @@ onMounted(async () => {
                   aria-label="修改俱乐部头像"
                   @click="open"
                 >
-                  <img class="add-badge" :src="imgAvatarAdd" alt="添加" aria-hidden="true" />
+                  <img
+                    class="add-badge add-badge--dark"
+                    :src="imgAvatarAdd"
+                    alt="添加"
+                    aria-hidden="true"
+                  />
+                  <img
+                    class="add-badge add-badge--light"
+                    :src="imgAvatarAddLight"
+                    alt="添加"
+                    aria-hidden="true"
+                  />
                 </button>
               </template>
             </ImageUploadSheet>
@@ -1267,6 +1279,7 @@ onMounted(async () => {
 
     <GameDialog
       v-model:show="showTribeSearchPopup"
+      class="tribe-search-dialog"
       title="搜索联盟"
       dialog-width="8.8rem"
       :show-cancel-button="true"
@@ -1493,9 +1506,12 @@ onMounted(async () => {
     }
 
     .invite-modal__subtitle,
-    .invite-modal__qr-tip,
-    .copy-modal p {
+    .invite-modal__qr-tip {
       color: rgba(0, 0, 0, 0.65);
+    }
+
+    .copy-modal p {
+      color: rgba(15, 8, 8, 0.85);
     }
 
     .invite-modal__club-name {
@@ -1671,6 +1687,10 @@ onMounted(async () => {
   height: 100%;
   border-radius: 50%;
   display: block;
+}
+
+.add-badge--light {
+  display: none;
 }
 
 .club-avatar-trigger {
@@ -2703,12 +2723,20 @@ onMounted(async () => {
   }
 
   .id-tag {
-    background: rgba(0, 0, 0, 0.40);
-    color: #ffffff;
+    background: rgba(0, 0, 0, 0.08);
+    color: rgba(0, 0, 0, 0.72);
   }
 
   .id-text {
     color: rgba(15, 8, 8, 0.6);
+  }
+
+  .add-badge--dark {
+    display: none;
+  }
+
+  .add-badge--light {
+    display: block;
   }
 
   .club-size-pill {
@@ -2756,6 +2784,15 @@ onMounted(async () => {
     background: rgba(164, 164, 164, 0.2);
   }
 
+  .copy-modal {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0.108rem 0.293rem rgba(0, 0, 0, 0.08);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    color: rgba(15, 8, 8, 0.85);
+  }
+
   .modal-primary-btn {
     border-color: transparent;
     background: #05c297;
@@ -2766,6 +2803,65 @@ onMounted(async () => {
     color: rgba(15, 8, 8, 0.85);
     background: rgba(34, 34, 34, 0.08);
     box-shadow: none;
+  }
+}
+
+:root[data-theme='light'] .tribe-search-dialog {
+  --c-brand: #05c297;
+  --c-brand-rgb: 5, 194, 151;
+
+  .game-dialog__card {
+    background-color: rgba(255, 255, 255, 1);
+    background-image: none !important;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0.108rem 0.293rem rgba(0, 0, 0, 0.08);
+  }
+
+  .game-dialog__card-bg-gradient,
+  .game-dialog__card-bg-texture,
+  .game-dialog__card-bg-shadow {
+    display: none;
+  }
+
+  .game-dialog__title {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .tribe-search-shell {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.12);
+  }
+
+  .tribe-search-icon {
+    filter: invert(1);
+    opacity: 0.6;
+  }
+
+  .tribe-search-input {
+    color: rgba(15, 8, 8, 0.85);
+
+    &::placeholder {
+      color: rgba(15, 8, 8, 0.45);
+    }
+  }
+
+  .game-dialog__cancel-btn {
+    background: rgba(34, 34, 34, 0.08);
+    color: rgba(15, 8, 8, 0.85);
+    box-shadow: none;
+
+    &::before {
+      display: none;
+    }
+  }
+
+  .game-dialog__confirm-btn {
+    background: #05c297 !important;
+    box-shadow: none;
+
+    .primary-btn__text {
+      color: #fff;
+    }
   }
 }
 

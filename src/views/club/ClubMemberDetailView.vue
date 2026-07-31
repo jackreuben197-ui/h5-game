@@ -1636,8 +1636,8 @@ onMounted(() => {
 
     .uid-line span,
     .bound-agent-id-tag {
-      color: #fff;
-      background: rgba(79, 79, 79, 0.4);
+      color: rgba(0, 0, 0, 0.72);
+      background: rgba(0, 0, 0, 0.08);
     }
 
     .form-card input {
@@ -1728,6 +1728,29 @@ onMounted(() => {
 
     .btn.primary {
       background: var(--c-brand);
+    }
+
+    .sheet-body {
+      background: rgba(249, 249, 249, 0.94);
+    }
+
+    .sheet-row {
+      color: #000000;
+    }
+
+    .radio-circle {
+      border-color: rgba(34, 34, 34, 0.24);
+      box-shadow: none;
+
+      &--checked::after {
+        border-color: #05c297;
+      }
+    }
+
+    .sheet-confirm {
+      border-color: transparent;
+      background: #05c297;
+      color: #f9f9f9;
     }
   }
 }

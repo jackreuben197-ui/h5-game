@@ -417,7 +417,7 @@ const bodyStyles = computed<StyleValue>(() => [
   -webkit-backdrop-filter: blur(0.0043rem) !important;
 }
 
-@include theme-light-own {
+:root[data-theme='light'] {
   .game-dialog__card {
     background: #ffffff !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
@@ -458,8 +458,8 @@ const bodyStyles = computed<StyleValue>(() => [
   }
 
   .game-dialog__confirm-btn {
-    background: var(--c-brand, #05c297) !important;
-    color: #ffffff !important;
+    background: #05c297 !important;
+    color: #f9f9f9 !important;
     border: none !important;
   }
 }

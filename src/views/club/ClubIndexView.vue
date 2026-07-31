@@ -43,7 +43,8 @@ import {
 import { getLocale, t } from '@/i18n'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
-import twoPersonIcon from '@/assets/icons/2person.png'
+import twoPersonIconDark from '@/assets/icons/2person.png'
+import twoPersonIconLight from '@/assets/icons/icon_people2_light.png'
 import clubDetailButtonIconDark from '@/assets/icons/img_club_detail_button.png'
 import clubDetailButtonIconLight from '@/assets/icons/img_club_detail_button_light.svg'
 import clubCoverAvatar from '@/assets/images/default_avatar_for_club.png'
@@ -57,10 +58,8 @@ import gameTypePlo from '@/assets/icons/game_type_plo.svg'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
 import peopleBgUrl from '@/assets/icons/icon_people.png'
 import SafetyGuardDialog from '@/components/Dialog/SafetyGuardDialog.vue'
-import MiniGameView from '@/views/home/MiniGameView.vue'
 import CasinoView from '@/views/home/CasinoView.vue'
 import { useCasinoStore } from '@/stores/casino'
-import { useMinigameStore } from '@/stores/minigame'
 import { GameDialog } from '@/components/Dialog'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import {
@@ -76,6 +75,9 @@ import { theme } from '@/utils/theme'
 const clubDetailButtonIcon = computed(() =>
   theme.value === 'light' ? clubDetailButtonIconLight : clubDetailButtonIconDark,
 )
+const twoPersonIcon = computed(() =>
+  theme.value === 'light' ? twoPersonIconLight : twoPersonIconDark,
+)
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   '--club-page-bg-dark': `url(${mainBgUrl})`,
@@ -83,7 +85,7 @@ const backgroundStyle = computed(() => ({
 }))
 
 type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
-type ClubHeaderTabName = 'poker' | 'mahjong' | 'event' | 'minigame' | 'casino'
+type ClubHeaderTabName = 'poker' | 'mahjong' | 'event' | 'casino'
 type MttTabName = 'all' | 'poker' | 'mahjong'
 type MttCategory = 'poker' | 'mahjong' | 'unknown'
 type MttStage = 'upcoming' | 'registering' | 'late' | 'running' | 'finished'
@@ -157,7 +159,6 @@ const mttListStore = useMttListStore()
 const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
 const casinoStore = useCasinoStore()
-const minigameStore = useMinigameStore()
 const tabsStore = useMainTabsStore()
 const router = useRouter()
 const isChannelPackage = isPrivateDomainMode()
@@ -365,7 +366,6 @@ const renderGroups = computed<MttRenderGroup[]>(() =>
 
 onMounted(() => {
   casinoStore.preloadCasinoData(selectedClubId.value, false).catch(console.warn)
-  minigameStore.preloadMinigameData(selectedClubId.value, false).catch(console.warn)
 
   if (isChannelPackage) {
     tabsStore.setActiveTab('club')
@@ -1200,7 +1200,19 @@ const handleBack = () => {
         >
           <span class="announce-text">{{ clubNoticeText }}</span>
           <span class="announce-arrow" :class="{ 'announce-arrow--expanded': announceExpanded }">
-            ›
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 6.62651 11.4458"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M6.36184 0.264663C6.71473 0.617546 6.71473 1.18968 6.36184 1.54257L2.18152 5.72289L6.36184 9.90322C6.71473 10.2561 6.71473 10.8282 6.36184 11.1811C6.00896 11.534 5.43682 11.534 5.08394 11.1811L0.264663 6.36184C-0.0882208 6.00896 -0.0882208 5.43682 0.264663 5.08394L5.08394 0.264663C5.43682 -0.0882208 6.00896 -0.0882208 6.36184 0.264663Z"
+                fill="currentColor"
+              />
+            </svg>
           </span>
         </button>
 
@@ -1229,14 +1241,6 @@ const handleBack = () => {
             @click="handleClubHeaderTabClick('event')"
           >
             {{ t('UIClub_Text14') }}
-          </button>
-          <button
-            class="club-header-tab"
-            :class="{ 'club-header-tab--active': clubHeaderTab === 'minigame' }"
-            type="button"
-            @click="handleClubHeaderTabClick('minigame')"
-          >
-            小游戏专区
           </button>
           <button
             class="club-header-tab"
@@ -1367,10 +1371,6 @@ const handleBack = () => {
           </div>
         </section>
       </template>
-
-      <div v-if="clubHeaderTab === 'minigame'" class="club-embedded-container">
-        <MiniGameView :hideHeader="true" :clubId="selectedClubId" />
-      </div>
 
       <div v-if="clubHeaderTab === 'casino'" class="club-embedded-container">
         <CasinoView :hideHeader="true" :clubId="selectedClubId" />
@@ -1654,6 +1654,11 @@ const handleBack = () => {
   width: 0.249rem;
   height: 0.211rem;
   object-fit: contain;
+
+  @include theme-light-own {
+    width: 0.3113rem;
+    height: 0.3113rem;
+  }
 }
 
 .action-wrap {
@@ -1707,13 +1712,13 @@ const handleBack = () => {
   width: 100%;
   // min-height: 1.0577rem;
   border: 0;
-  border-radius: 0.5279rem;
-  padding: 0.1325rem 0.1446rem;
+  border-radius: 1.0557rem;
+  padding: 0.1665rem 0.2891rem;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.0832rem;
+  gap: 0.1665rem;
   background: linear-gradient(
     97deg,
     rgba(255, 255, 255, 0.1) 21.11%,
@@ -1725,8 +1730,9 @@ const handleBack = () => {
 
   @include theme-light-own {
     color: rgba(0, 0, 0, 1);
-    background: rgba(255, 255, 255, 0.86);
-    box-shadow: inset 0 0 0 0.0133rem rgba(0, 0, 0, 0.06);
+    background: rgba(18, 18, 18, 0.1);
+    box-shadow: none;
+    backdrop-filter: blur(0.0042rem);
   }
 }
 
@@ -1754,16 +1760,24 @@ const handleBack = () => {
 }
 
 .announce-arrow {
-  margin-left: 0.08rem;
-  font-size: 0.42rem;
-  line-height: 1;
+  flex-shrink: 0;
+  width: 0.3052rem;
+  height: 0.1767rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0.88;
-  transform: rotate(90deg);
-  transition: transform 0.2s ease;
+
+  svg {
+    width: 0.1767rem;
+    height: 0.3052rem;
+    transform: rotate(-90deg);
+    transition: transform 0.2s ease;
+  }
 }
 
-.announce-arrow--expanded {
-  transform: rotate(-90deg);
+.announce-arrow--expanded svg {
+  transform: rotate(90deg);
 }
 
 .club-notice-body {
@@ -2086,12 +2100,19 @@ const handleBack = () => {
       -webkit-backdrop-filter: none;
     }
 
+    :deep(.table-bg) {
+      background: rgba(49, 49, 49, 0.2);
+      -webkit-mask: url('@/assets/images/game_list_card_table_bg.png') center / 100% 100% no-repeat;
+      mask: url('@/assets/images/game_list_card_table_bg.png') center / 100% 100% no-repeat;
+    }
+
     :deep(.table-center) {
       background: rgba(0, 0, 0, 0.22);
+      color: #fff;
     }
 
     :deep(.seat-name) {
-      color: rgba(0, 0, 0, 0.28);
+      color: #fff;
     }
 
     // Только иконка времени: фишки в футере остаются цветными.
@@ -2118,8 +2139,8 @@ const handleBack = () => {
   width: 10.56rem;
   margin-left: -0.28rem;
 
-  // Встроенные CasinoView / MiniGameView собственной светлой темы не имеют,
-  // а отдельные страницы /casino и /minigame остаются тёмными — красим только здесь.
+  // Встроенный CasinoView собственной светлой темы не имеет,
+  // а отдельная страница /casino остаётся тёмной — красим только здесь.
   @include theme-light-own {
     :deep(.category-title),
     :deep(.app-card-title),

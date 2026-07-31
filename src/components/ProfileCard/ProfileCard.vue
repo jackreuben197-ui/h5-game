@@ -207,7 +207,7 @@ defineEmits<{
 
   .id-tag {
     background-color: rgba(0, 0, 0, 0.08);
-    color: rgba(0, 0, 0, 0.64);
+    color: rgba(0, 0, 0, 0.72);
   }
 
   .id-value {

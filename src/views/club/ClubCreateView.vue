@@ -7,6 +7,7 @@ import ImageUploadSheet from '@/components/ImageUploadSheet/ImageUploadSheet.vue
 import imgClubCover from '@/assets/images/default_club_avatar.svg'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgAvatarAdd from '@/assets/icons/avatar_add_badge.svg'
+import imgAvatarAddLight from '@/assets/icons/avatar_add_badge_light.svg'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import { postOrgClubCreateApi, postOrgClubCreateIsFirstApi } from '@/api/org'
@@ -115,7 +116,18 @@ async function onCreateClub(): Promise<void> {
                 :src="imageUrl || imgClubCover"
                 :alt="t('UIClub_ClubAvatar2')"
               />
-              <img class="add-badge" :src="imgAvatarAdd" alt="" aria-hidden="true" />
+              <img
+                class="add-badge add-badge--dark"
+                :src="imgAvatarAdd"
+                alt=""
+                aria-hidden="true"
+              />
+              <img
+                class="add-badge add-badge--light"
+                :src="imgAvatarAddLight"
+                alt=""
+                aria-hidden="true"
+              />
             </button>
           </template>
         </ImageUploadSheet>
@@ -229,26 +241,38 @@ async function onCreateClub(): Promise<void> {
       font-weight: 700;
     }
 
+    .add-badge--dark {
+      display: none;
+    }
+
+    .add-badge--light {
+      display: block;
+    }
+
     .club-id-badge {
-      background: #8e8e93;
-      border-radius: 4px;
-      padding: 2px 6px;
+      background: transparent;
+      border-radius: 0;
+      padding: 0;
       height: auto;
-      gap: 3px;
+      gap: 2.457px;
 
       .id-label {
-        background: transparent;
-        padding: 0;
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: 4.212px;
+        padding: 2.808px 4.914px;
 
         span {
           color: #ffffff;
-          font-size: 9px;
+          font-size: 8.098px;
+          font-weight: 590;
         }
       }
 
       .id-value {
-        color: #ffffff;
-        font-size: 9px;
+        font-family: 'HONOR Sans CN', 'PingFang SC', sans-serif;
+        font-weight: 500;
+        font-size: 9.639px;
+        color: #000000;
       }
     }
 
@@ -417,6 +441,10 @@ async function onCreateClub(): Promise<void> {
   height: 27.252px;
   border-radius: 50%;
   display: block;
+}
+
+.add-badge--light {
+  display: none;
 }
 
 .card-info {

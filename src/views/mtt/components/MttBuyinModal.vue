@@ -802,14 +802,45 @@ function handleConfirm() {
   color: #fff;
 }
 
-@include theme-light-own {
+:root[data-theme='light'] {
+  .buyin-modal {
+    --c-brand: #05c297;
+    --c-brand-rgb: 5, 194, 151;
+
+    .buyin-options,
+    .wallet-list {
+      background: rgba(0, 0, 0, 0.06);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+
+    .cost-refresh,
+    .cost-add {
+      filter: brightness(0);
+    }
+
+    .radio-circle {
+      border: 0;
+      box-shadow: none;
+      background: url('@/assets/icons/ic_uncheckbox.png') center / contain no-repeat;
+
+      &--checked {
+        background-image: url('@/assets/icons/ic_checkbox.png');
+
+        &::after {
+          display: none;
+        }
+      }
+    }
+  }
+
   .buyin-option-row {
-    background: rgba(255, 255, 255, 0.6);
-    border-color: rgba(0, 0, 0, 0.1);
+    background: transparent;
+    border-color: transparent;
 
     &--active {
-      background: #fff;
-      border-color: #05c297;
+      background: transparent;
+      border-color: transparent;
     }
   }
 
@@ -837,11 +868,11 @@ function handleConfirm() {
   }
 
   .radio-circle {
-    border-color: rgba(0, 0, 0, 0.25);
+    border-color: rgba(34, 34, 34, 0.24);
+    box-shadow: none;
 
-    &--checked {
+    &--checked::after {
       border-color: #05c297;
-      background-color: #05c297;
     }
   }
 
@@ -850,12 +881,12 @@ function handleConfirm() {
   }
 
   .wallet-item {
-    background: rgba(255, 255, 255, 0.6);
-    border-color: rgba(0, 0, 0, 0.1);
+    background: transparent;
+    border-color: transparent;
 
     &--selected {
-      background: #fff;
-      border-color: #05c297;
+      background: rgba(5, 194, 151, 0.12);
+      border-color: transparent;
     }
   }
 

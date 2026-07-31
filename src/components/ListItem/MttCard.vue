@@ -443,28 +443,19 @@ function formatCentAmount(value: number): string {
   cursor: pointer;
   font-weight: 700;
   color: #fff;
-  border-radius: 0.5rem;
+  border-radius: 0.5067rem;
   padding: 0 0.18rem;
   line-height: 1;
   // white-space: nowrap;
 
   &--register {
-    background: rgba(5, 231, 174, 0.8);
+    background: rgba(0, 255, 43, 0.25);
   }
 
-  &--join {
-    background: rgba(255, 67, 104, 0.9);
-  }
-
-  &--progress {
-    background: rgba(231, 174, 5, 0.80);;
-    color: rgba(255, 255, 255, 0.75);
-  }
-
+  &--join,
+  &--progress,
   &--late {
-    background: rgba(255, 199, 6, 0.2);
-    color: rgba(255, 199, 6, 1);
-    border: 0.013rem solid rgba(255, 199, 6, 0.7);
+    background: rgba(255, 217, 0, 0.25);
   }
 
   &--disabled {

@@ -3129,8 +3129,8 @@ onMounted(() => {
     }
 
     .id-pill {
-      background: rgba(79, 79, 79, 0.4);
-      color: #fff;
+      background: rgba(0, 0, 0, 0.08);
+      color: rgba(0, 0, 0, 0.72);
     }
 
     .member-data-strip {

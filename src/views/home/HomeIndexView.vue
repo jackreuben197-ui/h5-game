@@ -6,6 +6,8 @@ import iconService2Dark from '@/assets/icons/icon_service_2.svg'
 import iconService2Light from '@/assets/icons/icon_service_2_light.svg'
 import iconService3Dark from '@/assets/icons/icon_service_3.svg'
 import iconService3Light from '@/assets/icons/icon_service_3_light.svg'
+import clubDetailButtonIconDark from '@/assets/icons/img_club_detail_button.png'
+import clubDetailButtonIconLight from '@/assets/icons/img_club_detail_button_light.svg'
 import { theme } from '@/utils/theme'
 import { useRouter } from 'vue-router'
 import { getUserClubApi } from '@/api/user'
@@ -41,6 +43,9 @@ const isLightTheme = computed(() => theme.value === 'light')
 const iconService1 = computed(() => (isLightTheme.value ? iconService1Light : iconService1Dark))
 const iconService2 = computed(() => (isLightTheme.value ? iconService2Light : iconService2Dark))
 const iconService3 = computed(() => (isLightTheme.value ? iconService3Light : iconService3Dark))
+const clubDetailButtonIcon = computed(() =>
+  isLightTheme.value ? clubDetailButtonIconLight : clubDetailButtonIconDark,
+)
 
 const popularBannerGamesStatic = [
   {
@@ -958,9 +963,7 @@ onBeforeUnmount(() => {
         aria-label="俱乐部管理"
         @click="goToClubDetail"
       >
-        <span></span>
-        <span></span>
-        <span></span>
+        <img :src="clubDetailButtonIcon" alt="" />
       </button>
     </div>
   </div>
@@ -1693,42 +1696,45 @@ onBeforeUnmount(() => {
 }
 
 .create-table-btn {
-  width: 3.1rem;
-  height: 0.94rem;
-  border: 0.0133rem solid rgba(242, 242, 242, 0.8);
-  border-radius: 0.6rem;
-  background-image: linear-gradient(168deg, #05e7ae 7.55%, #027a5c 71.92%);
-  color: #fbfbfb;
-  font-size: 0.34rem;
+  width: 4.2667rem;
+  height: 1.28rem;
+  border: 0.0177rem solid rgba(242, 242, 242, 0.8);
+  border-radius: 0.8252rem;
+  background-image: linear-gradient(158.98deg, #55f329 7.55%, #3ead06 71.92%);
+  color: #f9f9f9;
+  font-size: 0.4052rem;
   font-weight: 500;
-  box-shadow: 0 0.12rem 0.26rem rgba(0, 0, 0, 0.22);
+  line-height: 1.39;
+  text-align: center;
+  backdrop-filter: blur(0.6655rem);
+  box-shadow:
+    2.795rem 1.8988rem 0.9494rem rgba(15, 110, 2, 0.01),
+    1.7923rem 1.2156rem 0.8695rem rgba(33, 87, 3, 0.04),
+    1.0026rem 0.6832rem 0.7276rem rgba(17, 91, 2, 0.14),
+    0.4437rem 0.3017rem 0.5413rem rgba(31, 101, 5, 0.24),
+    0.1154rem 0.0799rem 0.3017rem rgba(40, 91, 4, 0.27);
 
-  @include theme-light {
-    border-color: transparent;
-    background: var(--c-brand);
-    box-shadow: 0 0.12rem 0.28rem rgba(var(--c-brand-rgb), 0.25);
+  @include theme-light-own {
+    background-image: none;
+    background-color: #05c297;
+    box-shadow: none;
   }
 }
 
 .floating-menu-btn {
-  width: 0.86rem;
-  height: 0.86rem;
+  width: 1.4117rem;
+  height: 1.4117rem;
   padding: 0;
   border: none;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 25%, #056a57 0%, #01382f 75%);
+  background: transparent;
   display: inline-flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.07rem;
-  box-shadow: 0 0.12rem 0.26rem rgba(0, 0, 0, 0.34);
 }
 
-.floating-menu-btn span {
-  width: 0.23rem;
-  height: 0.055rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.95);
+.floating-menu-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 </style>

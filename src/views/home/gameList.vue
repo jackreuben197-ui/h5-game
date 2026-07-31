@@ -546,12 +546,19 @@ function handleOpenCustomerService(): void {
       -webkit-backdrop-filter: none;
     }
 
+    .table-bg {
+      background: rgba(49, 49, 49, 0.2);
+      -webkit-mask: url('@/assets/images/game_list_card_table_bg.png') center / 100% 100% no-repeat;
+      mask: url('@/assets/images/game_list_card_table_bg.png') center / 100% 100% no-repeat;
+    }
+
     .table-center {
       background: rgba(0, 0, 0, 0.22);
+      color: #fff;
     }
 
     .seat-name {
-      color: rgba(0, 0, 0, 0.28);
+      color: #fff;
     }
 
     .meta-icon[alt='time'] {

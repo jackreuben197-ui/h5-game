@@ -397,7 +397,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell record-hand-page" :style="backgroundStyle">
+  <div class="page-shell record-hand-page career-record-hand-page" :style="backgroundStyle">
     <HeaderBack :title="title" />
 
     <div class="content-wrap">
@@ -692,6 +692,65 @@ onMounted(() => {
 
   &:disabled {
     opacity: 0.6;
+  }
+}
+</style>
+
+<style lang="scss">
+:root[data-theme='light'] .career-record-hand-page {
+  color: rgba(15, 8, 8, 0.85);
+  background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.08);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .left-blind .label,
+  .left-blind .hands,
+  .right-info .sub,
+  .list-status {
+    color: rgba(15, 8, 8, 0.6);
+  }
+
+  .line {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  .profit .money {
+    color: #05c297;
+  }
+
+  .profit.positive .money {
+    color: #e5384f;
+  }
+
+  .profit.zero .money {
+    color: rgba(15, 8, 8, 0.45);
+  }
+
+  .action-sheet {
+    background: rgba(255, 255, 255, 0.96);
+    border: 0.02rem solid rgba(0, 0, 0, 0.08);
+  }
+
+  .action-item {
+    color: rgba(15, 8, 8, 0.85);
+
+    & + & {
+      border-top-color: rgba(0, 0, 0, 0.1);
+    }
   }
 }
 </style>

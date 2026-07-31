@@ -153,19 +153,19 @@ function persistAreaRows(rows: RegisterAreaRecord[]): void {
 
 <template>
   <div class="phone-area-page">
-    <HeaderBack :title="resolveI18nText('UILogin_AreaCode', '选择区号')" @back="emit('back', $event)" />
+    <HeaderBack :title="resolveI18nText('UILogin_AreaCode', t('UILogin_No2'))" @back="emit('back', $event)" />
 
     <div class="search-wrap">
       <input
         v-model="keyword"
         class="search-input"
         type="text"
-        :placeholder="resolveI18nText('UIMttSearchHint', '搜索国家或区号')"
+        :placeholder="resolveI18nText('UIMttSearchHint', t('UILogin_SearchOrNo'))"
       />
     </div>
 
     <section class="list-wrap">
-      <p v-if="loading" class="status-line">{{ resolveI18nText('SuperView2', '加载中...') }}</p>
+      <p v-if="loading" class="status-line">{{ resolveI18nText('SuperView2', t('SuperView2') + "...") }}</p>
 
       <template v-else-if="hasData">
         <button
@@ -181,7 +181,7 @@ function persistAreaRows(rows: RegisterAreaRecord[]): void {
       </template>
 
       <p v-else class="status-line">
-        {{ errorMessage || resolveI18nText('MsgContentUnRead', '暂无内容') }}
+        {{ errorMessage || resolveI18nText('MsgContentUnRead', t('UIClub_No10')) }}
       </p>
     </section>
   </div>

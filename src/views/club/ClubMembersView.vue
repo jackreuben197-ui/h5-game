@@ -1506,7 +1506,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell club-members-bg" :style="backgroundStyle">
-    <HeaderBack :title="'基金管理'">
+    <HeaderBack :title="t('UIGuildMemberDetailspermissions005')">
       <template #right>
         <p class="member-total">
           {{ t('UIClub_Text27') }} <span>{{ memberTotalText }}</span>
@@ -1514,14 +1514,14 @@ onMounted(() => {
       </template>
     </HeaderBack>
     <div class="club-members">
-      <nav class="member-tabs" aria-label="基金页签">
+      <nav class="member-tabs" :aria-label="t('UIClub_Fund3')">
         <button
           type="button"
           class="tab-btn"
           :class="{ 'tab-btn--active': activeTab === 'account' }"
           @click="switchTab('account')"
         >
-          账户
+          {{ t('UIGuild_Fund_Acount') }}
         </button>
         <button
           type="button"
@@ -1529,7 +1529,7 @@ onMounted(() => {
           :class="{ 'tab-btn--active': activeTab === 'record' }"
           @click="switchTab('record')"
         >
-          记录
+          {{ t('Text_RecordLine') }}
         </button>
       </nav>
 
@@ -1556,7 +1556,7 @@ onMounted(() => {
             </div>
 
             <button type="button" class="income-btn" @click="onIncomeQuery">
-              <span>收益查询</span>
+              <span>{{ t('UIClub_Income5') }}</span>
               <span class="income-icon" aria-hidden="true"></span>
             </button>
           </div>
@@ -1567,18 +1567,18 @@ onMounted(() => {
           <input
             v-model.trim="searchKeyword"
             type="text"
-            placeholder="玩家查询"
+            :placeholder="t('UIClub_Player')"
             @keydown.enter="onSearchSubmit"
           />
         </section>
 
-        <section class="members-list" aria-label="成员列表" @scroll="onMembersScroll">
+        <section class="members-list" :aria-label="t('UIGuild_MemberList')" @scroll="onMembersScroll">
           <article v-for="member in members" :key="member.id" class="member-card">
             <span class="role-badge" :class="roleClass(member.role)">{{ member.role }}</span>
 
             <div class="member-main" @click="openMemberDetail(member)">
               <div class="member-left">
-                <img class="member-avatar" :src="member.avatar" :alt="`${member.name}头像`" />
+                <img class="member-avatar" :src="member.avatar" :alt="(member.name) + t('UIMine_UserInfoSetting_btn_head')" />
                 <div class="member-base">
                   <button type="button" class="member-name">
                     {{ member.name }}
@@ -1608,34 +1608,34 @@ onMounted(() => {
               <div class="data-item">
                 <p class="data-label">
                   <img :src="imgBalance" alt="" aria-hidden="true" />
-                  <span>免审额</span>
+                  <span>{{ t('UIClubTalbe_CreditTitle') }}</span>
                 </p>
                 <p class="data-value">{{ member.freeLimit }}</p>
               </div>
 
               <div class="data-item">
                 <p class="data-label data-label--agent">
-                  <span>所属代理</span>
+                  <span>{{ t('UIClub_Agent2') }}</span>
                 </p>
                 <p class="data-value">{{ member.agentName }}</p>
               </div>
             </div>
           </article>
 
-          <p v-if="!members.length && !loadingMembers" class="member-list-status">暂无成员数据</p>
-          <p v-if="loadingMembers" class="member-list-status">加载中...</p>
+          <p v-if="!members.length && !loadingMembers" class="member-list-status">{{ t('UIClub_NoMemberData') }}</p>
+          <p v-if="loadingMembers" class="member-list-status">{{ t('SuperView2') }}...</p>
           <p v-else-if="members.length && loadingMoreMembers" class="member-list-status">
-            加载更多...
+            {{ t('UIClub_LoadMore') }}...
           </p>
-          <p v-else-if="members.length && !hasMoreMembers" class="member-list-status">没有更多了</p>
+          <p v-else-if="members.length && !hasMoreMembers" class="member-list-status">{{ t('UIClub_NoMore') }}</p>
         </section>
       </template>
 
       <template v-else>
         <section class="record-panel">
           <header class="record-head">
-            <span>支持查询三个月数据</span>
-            <span>时区 UTC+0</span>
+            <span>{{ t('UIClub_Data2') }}</span>
+            <span>{{ t('UICommon_TimeZone') }} UTC+0</span>
           </header>
 
           <div class="range-tabs">
@@ -1663,10 +1663,10 @@ onMounted(() => {
             <button
               type="button"
               class="head-cell head-cell--time"
-              :aria-label="recordOrderType === 2 ? '时间倒序' : '时间正序'"
+              :aria-label="recordOrderType === 2 ? t('UIClub_Time3') : t('UIClub_Time4')"
               @click="toggleRecordOrder"
             >
-              <span>时间</span>
+              <span>{{ t('TimeItem') }}</span>
               <span
                 class="tiny-arrow"
                 :class="{ 'tiny-arrow--up': recordOrderType === 1 }"
@@ -1674,12 +1674,12 @@ onMounted(() => {
               ></span>
             </button>
             <button type="button" class="head-cell head-cell--type" @click="toggleTypeMenu">
-              <span>类型</span>
+              <span>{{ t('UIMatchFilter_DPY5kR') }}</span>
               <span class="tiny-arrow" aria-hidden="true"></span>
             </button>
-            <span class="head-cell">数量</span>
-            <span class="head-cell">余额</span>
-            <span class="head-cell">备注</span>
+            <span class="head-cell">{{ t('UIGuild_MembeDetailNumberTip') }}</span>
+            <span class="head-cell">{{ t('UIClub_CreateRoom31') }}</span>
+            <span class="head-cell">{{ t('UINotesName') }}</span>
           </div>
 
           <div v-if="showTypeMenu" class="type-dropdown">
@@ -1724,13 +1724,13 @@ onMounted(() => {
               </div>
             </article>
 
-            <p v-if="!recordRows.length && !loadingRecords" class="record-list-status">暂无记录</p>
-            <p v-if="loadingRecords" class="record-list-status">加载中...</p>
+            <p v-if="!recordRows.length && !loadingRecords" class="record-list-status">{{ t('UIClub_NoRecord4') }}</p>
+            <p v-if="loadingRecords" class="record-list-status">{{ t('SuperView2') }}...</p>
             <p v-else-if="recordRows.length && loadingMoreRecords" class="record-list-status">
-              加载更多...
+              {{ t('UIClub_LoadMore') }}...
             </p>
             <p v-else-if="recordRows.length && !hasMoreRecords" class="record-list-status">
-              没有更多了
+              {{ t('UIClub_NoMore') }}
             </p>
           </section>
         </div>
@@ -1739,7 +1739,7 @@ onMounted(() => {
       <div v-if="showFundSheet" class="fund-sheet-mask" @click="closeFundSheet"></div>
 
       <section v-if="showFundSheet && activeMember" class="fund-sheet" @click.stop>
-        <div class="fund-tabs" role="tablist" aria-label="基金资产类型">
+        <div class="fund-tabs" role="tablist" :aria-label="t('UIClub_Fund')">
           <button
             v-if="shouldShowCoinFundTab"
             type="button"
@@ -1747,7 +1747,7 @@ onMounted(() => {
             :class="{ 'fund-tab--active': fundAssetTab === 'coin' }"
             @click="switchFundAsset('coin')"
           >
-            联盟币
+            {{ t('UIClubCreditLimit1') }}
           </button>
           <button
             type="button"
@@ -1755,7 +1755,7 @@ onMounted(() => {
             :class="{ 'fund-tab--active': fundAssetTab === 'quota' }"
             @click="switchFundAsset('quota')"
           >
-            额度
+            {{ t('UIClubTalbe_CreditAmount') }}
           </button>
           <button
             v-if="shouldShowDiamondFundTab"
@@ -1764,7 +1764,7 @@ onMounted(() => {
             :class="{ 'fund-tab--active': fundAssetTab === 'diamond' }"
             @click="switchFundAsset('diamond')"
           >
-            钻石
+            {{ t('UIMine_VIP_diamond') }}
           </button>
         </div>
 
@@ -1775,7 +1775,7 @@ onMounted(() => {
             :class="{ 'action-tab--active': fundActionTab === 'grant' }"
             @click="switchFundAction('grant')"
           >
-            发放
+            {{ t('UIClub_FundDetail_5iSXE2Uj') }}
           </button>
           <button
             type="button"
@@ -1783,13 +1783,13 @@ onMounted(() => {
             :class="{ 'action-tab--active': fundActionTab === 'recycle' }"
             @click="switchFundAction('recycle')"
           >
-            回收
+            {{ t('UIClub_FundDetail_recycle') }}
           </button>
         </div>
 
         <div v-if="fundAssetTab === 'quota'" class="quota-body">
           <div class="sheet-row sheet-row--top">
-            <p class="sheet-label">用户名</p>
+            <p class="sheet-label">{{ t('user_name') }}</p>
             <p class="sheet-username">
               <span>{{ activeMember.name }}</span>
               <span class="sheet-id-tag">ID</span>
@@ -1799,7 +1799,7 @@ onMounted(() => {
 
           <div class="sheet-row">
             <div class="quota-group-label">
-              <p>可支配额度</p>
+              <p>{{ t('OpCodeString_CREDITBRINGOUT') }}</p>
               <p>{{ formatUC(disposableQuota) }}</p>
             </div>
             <div class="quota-actions">
@@ -1808,10 +1808,10 @@ onMounted(() => {
                 class="quota-action quota-action--primary"
                 @click="editQuota('disposable')"
               >
-                修改
+                {{ t('UICommon_Edit') }}
               </button>
               <button type="button" class="quota-action" @click="resetQuota('disposable')">
-                重置
+                {{ t('UIlobbyfilterTips02') }}
               </button>
             </div>
           </div>
@@ -1829,7 +1829,7 @@ onMounted(() => {
                   :class="{ 'radio-circle--checked': quotaAdjustMode === 'increase' }"
                   aria-hidden="true"
                 ></span>
-                增加额度
+                {{ t('UICredit_AddAmount') }}
               </button>
               <button
                 type="button"
@@ -1842,7 +1842,7 @@ onMounted(() => {
                   :class="{ 'radio-circle--checked': quotaAdjustMode === 'decrease' }"
                   aria-hidden="true"
                 ></span>
-                减少额度
+                {{ t('UICredit_SubAmount') }}
               </button>
             </div>
             <div class="quota-input-pill">{{ currentInputText }}</div>
@@ -1850,7 +1850,7 @@ onMounted(() => {
 
           <div class="sheet-row">
             <div class="quota-group-label">
-              <p>免审核额度</p>
+              <p>{{ t('OpCodeString_CREDITGRANT') }}</p>
               <p>{{ formatUC(reviewQuota) }}</p>
             </div>
             <div class="quota-actions">
@@ -1859,9 +1859,9 @@ onMounted(() => {
                 class="quota-action quota-action--primary"
                 @click="editQuota('review')"
               >
-                修改
+                {{ t('UICommon_Edit') }}
               </button>
-              <button type="button" class="quota-action" @click="resetQuota('review')">重置</button>
+              <button type="button" class="quota-action" @click="resetQuota('review')">{{ t('UIlobbyfilterTips02') }}</button>
             </div>
           </div>
 
@@ -1878,7 +1878,7 @@ onMounted(() => {
                   :class="{ 'radio-circle--checked': quotaAdjustMode === 'increase' }"
                   aria-hidden="true"
                 ></span>
-                增加额度
+                {{ t('UICredit_AddAmount') }}
               </button>
               <button
                 type="button"
@@ -1891,7 +1891,7 @@ onMounted(() => {
                   :class="{ 'radio-circle--checked': quotaAdjustMode === 'decrease' }"
                   aria-hidden="true"
                 ></span>
-                减少额度
+                {{ t('UICredit_SubAmount') }}
               </button>
             </div>
             <div class="quota-input-pill">{{ currentInputText }}</div>
@@ -1900,7 +1900,7 @@ onMounted(() => {
 
         <div v-else class="sheet-meta">
           <div class="sheet-row sheet-row--top">
-            <p class="sheet-label">用户名</p>
+            <p class="sheet-label">{{ t('user_name') }}</p>
             <p class="sheet-username">
               <span>{{ activeMember.name }}</span>
               <span class="sheet-id-tag">ID</span>
@@ -1909,7 +1909,7 @@ onMounted(() => {
           </div>
 
           <div class="sheet-row">
-            <p class="sheet-label">余额</p>
+            <p class="sheet-label">{{ t('UIClub_CreateRoom31') }}</p>
             <p class="sheet-balance">
               <img
                 :src="fundAssetTab === 'diamond' ? imgDiamond : imgChips"
@@ -1921,7 +1921,7 @@ onMounted(() => {
           </div>
 
           <div class="sheet-row">
-            <p class="sheet-label">发放数量</p>
+            <p class="sheet-label">{{ t('UIClub_SendItem_number') }}</p>
             <p class="sheet-balance">
               <img
                 :src="fundAssetTab === 'diamond' ? imgDiamond : imgChips"
@@ -1953,7 +1953,7 @@ onMounted(() => {
         </div>
 
         <div class="sheet-footer-actions">
-          <button type="button" class="sheet-footer-btn" @click="closeFundSheet">取消</button>
+          <button type="button" class="sheet-footer-btn" @click="closeFundSheet">{{ t('adaptation10013') }}</button>
           <button
             type="button"
             class="sheet-footer-btn sheet-footer-btn--confirm"

@@ -8,15 +8,15 @@ import {
 } from './constants'
 
 const SETTLEMENT_TYPE_OPTIONS = [
-  { text: '局抽', value: 0 },
-  { text: '把抽', value: 1 },
+  { text: t('UITable_Round'), value: 0 },
+  { text: t('UITable_Text8'), value: 1 },
 ]
 
 export const activitySection: TableFormFieldConfig[] = [
   {
     // settlement_type: 0=局抽 1=把抽
     type: 'select',
-    label: '结算类型',
+    label: t('UITable_Text9'),
     modelValue: 'settlement_type',
     defaultValue: 0,
     options: SETTLEMENT_TYPE_OPTIONS,
@@ -24,7 +24,7 @@ export const activitySection: TableFormFieldConfig[] = [
   {
     // fee_permillage: 服务费千分比，0–500 对应 0–5%，步长 0.5%
     type: 'select',
-    label: '服务费',
+    label: t('UIMine_WalletPlatform_fee_f'),
     modelValue: 'fee_permillage',
     defaultValue: 0,
     options: TEXAS_SERVER_FEE_OPTIONS,
@@ -35,7 +35,7 @@ export const activitySection: TableFormFieldConfig[] = [
   {
     // settle_profit_type: 收费方式，0=按比例 1=固定
     type: 'select',
-    label: '收费方式',
+    label: t('UICreateTalble_winType'),
     modelValue: 'settle_profit_type',
     defaultValue: 0,
     options: PAYMENT_METHOD_OPTIONS,
@@ -100,7 +100,7 @@ export const activitySection: TableFormFieldConfig[] = [
   {
     // cap_bigblind: 封顶大盲倍数（面值 0–10）；提交时 ×10 → max_per_hand
     type: 'select',
-    label: '封顶(BB)',
+    label: t('UICreateRoom_ServiceMaxWinRate') + "(BB)",
     modelValue: 'cap_bigblind',
     defaultValue: 0,
     options: CAP_BIGBLIND_OPTIONS,

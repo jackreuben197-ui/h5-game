@@ -357,7 +357,7 @@ const matchInfo = computed(() => {
         <!-- 中列 -->
         <div class="stats-col--center">
           <div class="level-card">
-            <div class="level-label">{{ isPreStart ? '距离开始' : `级别 ${currentLevel}` }}</div>
+            <div class="level-label">{{ isPreStart ? t('UIMTT_ListdistancestartTip') : t('UITexasReport_Text_BlindLevelTip') + " " + (currentLevel) }}</div>
             <div class="level-timer">{{ levelTimeLeftLabel }}</div>
             <div v-if="showNextBreak" class="level-break">
               {{ nextBreakTitle }} {{ nextBreakTimeLabel }}

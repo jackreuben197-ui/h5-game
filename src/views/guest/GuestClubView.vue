@@ -111,7 +111,7 @@ function notifyNotLogin(): void {
     </section>
 
     <section class="club-list">
-      <p class="club-empty-text">登录后查看俱乐部</p>
+      <p class="club-empty-text">{{ t('UIGuest_Club') }}</p>
     </section>
   </div>
 </template>

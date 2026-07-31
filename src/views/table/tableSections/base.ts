@@ -10,7 +10,7 @@ import {
 export const baseSection: TableFormFieldConfig[] = [
   {
     type: 'select',
-    label: '手牌数',
+    label: t('UICreateTable_HandsCardCount'),
     modelValue: 'plo_game_type',
     defaultValue: 4,
     options: PLO_CARD_OPTIONS,
@@ -18,35 +18,35 @@ export const baseSection: TableFormFieldConfig[] = [
   },
   {
     type: 'select',
-    label: '最大人数',
+    label: t('UICreateTable_MaxSeatCount'),
     modelValue: 'seat_count',
     defaultValue: 2,
     options: SEAT_COUNT_NLH_OPTIONS,
   },
   {
     type: 'select',
-    label: '人满开局',
+    label: t('UICreateTable_AutoSeatCount'),
     modelValue: 'autostart_min_players',
     defaultValue: 2,
     options: SEAT_COUNT_NLH_OPTIONS,
   },
   {
     type: 'select',
-    label: '思考时间',
+    label: t('UIClub_RoomCreat_vCP1YSI0'),
     modelValue: 'op_duration',
     defaultValue: 15,
     options: OP_DURATION_OPTIONS,
   },
   {
     type: 'select',
-    label: '游戏节奏',
+    label: t('UICreateRoomOptions4'),
     modelValue: 'game_rhythm',
     defaultValue: 0,
     options: GAME_RHYTHM_OPTIONS,
   },
   {
     type: 'switch',
-    label: '空桌自动关闭',
+    label: t('UIGuildVIPEmptyTableCloseTip'),
     modelValue: 'auto_close',
     defaultValue: false,
   },
@@ -75,7 +75,7 @@ export const baseSection: TableFormFieldConfig[] = [
     label: t('UIAnteRandomJump2'),
     modelValue: 'min_ante',
     defaultValue: '',
-    placeholder: '请输入',
+    placeholder: t('UIMine_PleaseEnter'),
     numberOnly: true,
     decimalDigits: 1,
     visibleWhen: [
@@ -88,7 +88,7 @@ export const baseSection: TableFormFieldConfig[] = [
     label: t('UIAnteRandomJump3'),
     modelValue: 'max_ante',
     defaultValue: '',
-    placeholder: '请输入',
+    placeholder: t('UIMine_PleaseEnter'),
     numberOnly: true,
     decimalDigits: 1,
     visibleWhen: [
@@ -101,7 +101,7 @@ export const baseSection: TableFormFieldConfig[] = [
     label: t('UIAnteRandomJump5'),
     modelValue: 'ante_interval',
     defaultValue: '',
-    placeholder: '请输入',
+    placeholder: t('UIMine_PleaseEnter'),
     numberOnly: true,
     decimalDigits: 1,
     visibleWhen: [

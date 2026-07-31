@@ -39,6 +39,7 @@ import tableIconCritical from '@/assets/icons/table_icon_critical.png'
 import blueBlur from '@/assets/images/blue_blur.png'
 import greenBlur from '@/assets/images/green_blur.png'
 import purpleBlur from '@/assets/images/purple_blur.png'
+import { t } from '@/i18n'
 
 const emit = defineEmits<{
   'edit-template': [roomConfig: Record<string, unknown>]
@@ -61,8 +62,8 @@ const formState = reactive<NlhFormState>({
 
 // 防作弊玩法 Tab 选项
 const antiCheatOptions = [
-  { text: '语音桌', value: 2 },
-  { text: '视频桌', value: 3 },
+  { text: t('UIRoom_RealVoice'), value: 2 },
+  { text: t('UIRoom_RealVedio'), value: 3 },
 ]
 
 // 俱乐部钻石余额
@@ -498,7 +499,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
   const createPrice = getConfigPrice(createConfig, sb)
   const durationMultiple = Math.max(1, Math.floor(playDuration / 1800))
   details.push({
-    label: '创建牌桌',
+    label: t('UIGuild_CreateTable'),
     unitOrigin: createPrice.originPrice,
     unitCurrent: createPrice.discountPrice,
     multiple: durationMultiple,
@@ -515,7 +516,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
     const banPrice = getConfigPrice(banConfig, sb)
     const banMultiple = getBanMultiple(antiCheatType, playDuration)
     details.push({
-      label: '防作弊',
+      label: t('UITable_Text4'),
       unitOrigin: banPrice.originPrice,
       unitCurrent: banPrice.discountPrice,
       multiple: banMultiple,
@@ -532,7 +533,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
     const chatConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.CHAT, chatTypeExt)
     const chatPrice = getConfigPrice(chatConfig, sb)
     details.push({
-      label: '聊天消耗',
+      label: t('UITable_Text5'),
       unitOrigin: chatPrice.originPrice,
       unitCurrent: chatPrice.discountPrice,
       multiple: 1,
@@ -548,7 +549,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
     const blockchainConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.BLOCKCHAIN, tableTypeExt)
     const blockchainPrice = getConfigPrice(blockchainConfig, sb)
     details.push({
-      label: '洗切牌',
+      label: t('UITable_Text7'),
       unitOrigin: blockchainPrice.originPrice,
       unitCurrent: blockchainPrice.discountPrice,
       multiple: durationMultiple,
@@ -563,7 +564,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
     const insuranceConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.INSURANCE, tableTypeExt)
     const insurancePrice = getConfigPrice(insuranceConfig, sb)
     details.push({
-      label: '保险',
+      label: t('adaptation10179'),
       unitOrigin: insurancePrice.originPrice,
       unitCurrent: insurancePrice.discountPrice,
       multiple: 1,
@@ -578,7 +579,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
     const squidConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.SQUID, tableTypeExt)
     const squidPrice = getConfigPrice(squidConfig, sb)
     details.push({
-      label: '鱿鱼玩法',
+      label: t('UICreateRoomOptions11'),
       unitOrigin: squidPrice.originPrice,
       unitCurrent: squidPrice.discountPrice,
       multiple: 1,
@@ -607,11 +608,11 @@ const createFeeTip = computed(() =>
   feeDetails.value
     .map((item) => {
       const unitPart = `${formatFeeCount(item.unitCurrent)} x ${item.multiple}`
-      if (item.totalCurrent <= 0) return `${item.label}: 免费`
+      if (item.totalCurrent <= 0) return (item.label) + ": " + t('UIChatFree')
       if (item.isDiscount && item.totalOrigin > item.totalCurrent) {
-        return `${item.label}: ${unitPart} = ${formatFeeCount(
+        return (item.label) + ": " + (unitPart) + " = " + (formatFeeCount(
           item.totalCurrent,
-        )} (原价${formatFeeCount(item.totalOrigin)})`
+        )) + " (" + t('UIShoppingActiveNromal') + (formatFeeCount(item.totalOrigin)) + ")"
       }
       return `${item.label}: ${unitPart} = ${formatFeeCount(item.totalCurrent)}`
     })
@@ -642,7 +643,7 @@ const isSubmitting = ref(false)
 
 async function onQuickCreate() {
   if (!quickPresetConfig.value?.templateId) {
-    showGameToast('暂无可用模板')
+    showGameToast(t('UITable_NoCan'))
     return
   }
   if (isSubmitting.value) return
@@ -650,13 +651,13 @@ async function onQuickCreate() {
   try {
     const res = await postOrgRoomCreateApi(buildTopPanelCreateRequest())
     if (res.code === 0) {
-      showGameToast('创建成功')
+      showGameToast(t('UIClub_CreateSuccess'))
       await router.replace({ name: createReturnRouteName.value })
     } else {
-      showGameToast((res as unknown as { message?: string }).message || '创建失败')
+      showGameToast((res as unknown as { message?: string }).message || t('UIClub_Fail'))
     }
   } catch {
-    showGameToast('创建失败')
+    showGameToast(t('UIClub_Fail'))
   } finally {
     isSubmitting.value = false
   }
@@ -698,12 +699,12 @@ function hasCriticalHit(tpl: TemplateItem): boolean {
 function getGameTypeName(type: number): string {
   switch (type) {
     case 2:
-      return '奥马哈'
+      return t('adaptation10009')
     case 3:
-      return '短牌'
+      return t('PokerType_2')
     case 1:
     default:
-      return '德州\n扑克'
+      return t('adaptation10022') + "\\n" + t('UIClub_Text15')
   }
 }
 
@@ -794,13 +795,13 @@ async function onCreateFromTemplate(tpl: TemplateItem) {
       })
     }
     if (res.code === 0) {
-      showGameToast('创建成功')
+      showGameToast(t('UIClub_CreateSuccess'))
       await router.replace({ name: createReturnRouteName.value })
     } else {
-      showGameToast((res as unknown as { message?: string }).message || '创建失败')
+      showGameToast((res as unknown as { message?: string }).message || t('UIClub_Fail'))
     }
   } catch {
-    showGameToast('创建失败')
+    showGameToast(t('UIClub_Fail'))
   } finally {
     isSubmitting.value = false
   }
@@ -826,10 +827,10 @@ async function onDeleteConfirm() {
   deleteDialog.show = false
   const res = await postOrgTemplateDeleteApi({ id: tpl.id })
   if (res.code === 0) {
-    showGameToast('删除成功')
+    showGameToast(t('UIClub_DeleteSuccess'))
     templates.value = templates.value.filter((t) => t.id !== tpl.id)
   } else {
-    showGameToast((res as unknown as { message?: string }).message || '删除失败')
+    showGameToast((res as unknown as { message?: string }).message || t('UIClub_DeleteFail'))
   }
 }
 </script>
@@ -849,7 +850,7 @@ async function onDeleteConfirm() {
       <TableSlider
         v-model:model-value="formState.sb"
         class="quick-panel__slider"
-        :label="currentGamePlayType === 3 ? 'Ante' : '小盲/大盲'"
+        :label="currentGamePlayType === 3 ? 'Ante' : t('UISB') + '/' + t('UIBB')"
         :options="currentGamePlayType === 3 ? ANTE_OPTIONS : SB_OPTIONS"
         mark-mode="none"
       />
@@ -858,23 +859,23 @@ async function onDeleteConfirm() {
       <TableSlider
         v-model:model-value="formState.seat_count"
         class="quick-panel__slider"
-        label="最大人数"
+        :label="t('UICreateTable_MaxSeatCount')"
         :options="seatCountOptions"
         mark-mode="all"
       />
 
       <!-- 开关小卡片 -->
       <div class="quick-switches">
-        <QuickSwitchCard v-model:model-value="formState.fee_on" label="活跃度积分" />
+        <QuickSwitchCard v-model:model-value="formState.fee_on" :label="t('UICommon_ActivityPoints')" />
         <QuickSwitchCard
           v-model:model-value="formState.insurance"
-          label="保险"
+          :label="t('adaptation10179')"
           :active-value="1"
           :inactive-value="0"
         />
         <QuickSwitchCard
           v-model:model-value="formState.squid"
-          label="鱿鱼玩法"
+          :label="t('UICreateRoomOptions11')"
           :active-value="1"
           :inactive-value="0"
           :badge="tableIconSquid"
@@ -885,7 +886,7 @@ async function onDeleteConfirm() {
       <div class="quick-bottom-bar">
         <div v-if="quickPresetConfig" class="quick-fee">
           <div class="quick-fee__row">
-            <span class="quick-fee__label">消耗:</span>
+            <span class="quick-fee__label">{{ t('UIClub_FundRecharge_9jO4mlS6') }}:</span>
             <div class="quick-fee__original-wrap">
               <img
                 v-if="createFee.isDiscount"
@@ -902,7 +903,7 @@ async function onDeleteConfirm() {
             </div>
           </div>
           <div class="quick-fee__row">
-            <span class="quick-fee__label">余额:</span>
+            <span class="quick-fee__label">{{ t('UIClub_CreateRoom31') }}:</span>
             <img :src="icDiamondBalance" class="quick-fee__icon" alt="" />
             <span class="quick-fee__value">{{ clubDiamondBalance.toLocaleString() }}</span>
           </div>
@@ -913,16 +914,16 @@ async function onDeleteConfirm() {
           :disabled="isSubmitting"
           @click="onQuickCreate"
         >
-          立即创建
+          {{ t('UICreateNow') }}
         </button>
       </div>
     </div>
 
     <!-- 模板列表 -->
     <div class="template-list">
-      <div v-if="loadingTemplates" class="template-list__placeholder">模板加载中...</div>
+      <div v-if="loadingTemplates" class="template-list__placeholder">{{ t('UITable_Loading') }}...</div>
       <div v-else-if="!filteredTemplates.length" class="template-list__placeholder">
-        暂无可用模板
+        {{ t('UITable_NoCan') }}
       </div>
       <div
         v-for="item in filteredTemplates"
@@ -990,17 +991,17 @@ async function onDeleteConfirm() {
           <div class="template-card__actions">
             <div class="template-card__action-btn" @click.stop="onEditTemplate(item)">
               <img :src="iconEdit" class="template-card__action-icon" alt="" />
-              <span>编辑</span>
+              <span>{{ t('UIGuild_EditorTemplate') }}</span>
             </div>
             <div class="template-card__action-btn" @click.stop="onDeleteTemplate(item)">
               <img :src="iconDelete" class="template-card__action-icon" alt="" />
-              <span>删除</span>
+              <span>{{ t('UIClub_DeleteSomeone') }}</span>
             </div>
           </div>
         </div>
         <div class="template-card__create-btn">
           <button class="template-card__create" @click.stop="onCreateFromTemplate(item)">
-            立即创建
+            {{ t('UICreateNow') }}
           </button>
         </div>
       </div>
@@ -1009,8 +1010,8 @@ async function onDeleteConfirm() {
 
   <GameDialog
     v-model:show="deleteDialog.show"
-    title="确认删除"
-    :message="`确定删除模板「${deleteDialog.template?.name ?? ''}」？`"
+    :title="t('UIClub_ConfirmDelete')"
+    :message="t('UITable_ConfirmDelete') + '「' + (deleteDialog.template?.name ?? '') + '」？'"
     :show-cancel-button="true"
     @confirm="onDeleteConfirm"
     @cancel="deleteDialog.show = false"

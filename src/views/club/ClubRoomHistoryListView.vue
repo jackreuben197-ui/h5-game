@@ -482,7 +482,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell club-room-history-bg" :style="backgroundStyle">
-    <HeaderBack :title="'牌局记录'" />
+    <HeaderBack :title="t('UIClubTable_TableRecords')" />
     <div class="club-room-history">
       <div class="coin-tabs">
         <button

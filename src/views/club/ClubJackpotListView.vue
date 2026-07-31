@@ -246,18 +246,18 @@ function goPoolReward(): void {
           <div class="jackpot-right">
             <div class="jp-badge">JP {{ item.jpAmount }}</div>
             <div class="action-row">
-              <button type="button" class="action-btn" aria-label="编辑" @click.stop="onEdit(item)">
+              <button type="button" class="action-btn" :aria-label="t('UIGuild_EditorTemplate')" @click.stop="onEdit(item)">
                 <img :src="iconEdit" class="action-icon" alt="" />
-                <span class="action-label">编辑</span>
+                <span class="action-label">{{ t('UIGuild_EditorTemplate') }}</span>
               </button>
               <button
                 type="button"
                 class="action-btn"
-                aria-label="删除"
+                :aria-label="t('UIClub_DeleteSomeone')"
                 @click.stop="onDelete(item)"
               >
                 <img :src="iconDelete" class="action-icon" alt="" />
-                <span class="action-label">删除</span>
+                <span class="action-label">{{ t('UIClub_DeleteSomeone') }}</span>
               </button>
             </div>
           </div>
@@ -266,15 +266,15 @@ function goPoolReward(): void {
 
       <div v-else class="jackpot-empty" :class="{ 'jackpot-empty--loading': loading }">
         <AppSvgIcon name="empty-data" class="empty-icon" />
-        <p>{{ loading ? '加载中...' : '暂无数据' }}</p>
+        <p>{{ loading ? t('SuperView2') + "..." : t('UIClub_FundDetail_xYlV8VBZ') }}</p>
       </div>
 
-      <p v-if="hasItems && loadingMore" class="list-loading-more">加载更多...</p>
-      <p v-else-if="hasItems && !hasMore" class="list-loading-more">没有更多了</p>
+      <p v-if="hasItems && loadingMore" class="list-loading-more">{{ t('UIClub_LoadMore') }}...</p>
+      <p v-else-if="hasItems && !hasMore" class="list-loading-more">{{ t('UIClub_NoMore') }}</p>
     </section>
 
     <div class="footer-action">
-      <button type="button" class="create-btn" @click="goCreateJackpot">添加Jackpot奖池模板</button>
+      <button type="button" class="create-btn" @click="goCreateJackpot">{{ t('UIClub_AddSomething') }}Jackpot{{ t('UIClub_Jackpot4') }}</button>
     </div>
 
     <!-- 删除确认弹窗 (Figma node-id=1451-5725, 1rem=37.5px) -->
@@ -282,7 +282,7 @@ function goPoolReward(): void {
       <transition name="dialog-fade">
         <div v-if="showDeleteDialog" class="delete-dialog-overlay" @click.self="cancelDelete">
           <div class="delete-dialog-card">
-            <p class="delete-dialog-title">确认要删除这个模板吗？</p>
+            <p class="delete-dialog-title">{{ t('UIClub_ConfirmDelete3') }}？</p>
 
             <div class="delete-dialog-actions">
               <button

@@ -49,7 +49,7 @@ const backgroundStyle = computed(() => ({
   '--club-wallet-bg-light': `url(${mainBgLightUrl})`,
 }))
 
-const pageTitle = computed(() => translated('UIGuildRevenueManagement', '收益管理'))
+const pageTitle = computed(() => translated('UIGuildRevenueManagement', t('UIGuildRevenueManagement')))
 const startDateText = computed(() => formatDate(startDate.value))
 const endDateText = computed(() => formatDate(endDate.value))
 const timezoneText = computed(() => {
@@ -58,21 +58,21 @@ const timezoneText = computed(() => {
 })
 
 const transferMetrics = computed<MetricItem[]>(() => [
-  { key: 'recover_club', label: translated('UIClub_league_recycling', '联盟回收') },
-  { key: 'recover_user', label: translated('UIClub_UnionCoin2', '成员回收') },
-  { key: 'to_club', label: translated('UIClub_league_issue', '联盟发放') },
-  { key: 'to_user', label: translated('UIClub_UnionCoin3', '成员发放') },
+  { key: 'recover_club', label: translated('UIClub_league_recycling', t('UIClub_league_recycling')) },
+  { key: 'recover_user', label: translated('UIClub_UnionCoin2', t('UIClub_Member3')) },
+  { key: 'to_club', label: translated('UIClub_league_issue', t('UIClub_league_issue')) },
+  { key: 'to_user', label: translated('UIClub_UnionCoin3', t('UIClub_Member4')) },
 ])
 
 const revenueMetrics = computed<MetricItem[]>(() => {
-  const revenue = translated('UIData_YGvXd5iXr_010', '收益')
+  const revenue = translated('UIData_YGvXd5iXr_010', t('UIData_YGvXd5iXr_010'))
   return [
-    { key: 'room_profit', label: translated('UIMine_WalletPlatform_fee_f', '牌局服务费') },
-    { key: 'insurance', label: translated('UIClub_Insurance', '保险') },
+    { key: 'room_profit', label: translated('UIMine_WalletPlatform_fee_f', t('UIClub_TableGameServiceFee')) },
+    { key: 'insurance', label: translated('UIClub_Insurance', t('adaptation10179')) },
     { key: 'mtt_profit', label: `MTT${revenue}` },
     { key: 'sng_profit', label: `SNG${revenue}` },
     { key: 'jackpot_profit', label: `Jackpot${revenue}` },
-    { key: 'mini_game_profit', label: translated('UIClub_Text24', '小游戏收益') },
+    { key: 'mini_game_profit', label: translated('UIClub_Text24', t('UIClub_Income4')) },
   ]
 })
 
@@ -172,14 +172,14 @@ async function fetchStats(): Promise<void> {
     })
     if (response.code !== 0 || !response.data) {
       throw new Error(
-        typeof response.msg === 'string' ? response.msg : translated('UIClub_LoadFail', '加载失败'),
+        typeof response.msg === 'string' ? response.msg : translated('UIClub_LoadFail', t('MSG_LoadFail')),
       )
     }
     stats.value = response.data
   } catch (error) {
     stats.value = {}
     showFailToast(
-      error instanceof Error ? error.message : translated('UIClub_LoadFail', '加载失败'),
+      error instanceof Error ? error.message : translated('UIClub_LoadFail', t('MSG_LoadFail')),
     )
   } finally {
     loading.value = false
@@ -216,11 +216,11 @@ onMounted(() => {
 
         <div class="fund-balances">
           <div class="fund-balance-item">
-            <span class="fund-label">{{ translated('UIGuildMgr_InitFund', '初始基金') }}</span>
+            <span class="fund-label">{{ translated('UIGuildMgr_InitFund', t('UIClub_Fund2')) }}</span>
             <strong class="fund-value">{{ formatBalance(stats.gold_before) }}</strong>
           </div>
           <div class="fund-balance-item">
-            <span class="fund-label">{{ translated('UIGuildMgr_CrrentFund', '当前基金') }}</span>
+            <span class="fund-label">{{ translated('UIGuildMgr_CrrentFund', t('UIClub_CurrentFund')) }}</span>
             <strong class="fund-value">{{ formatBalance(stats.gold_after) }}</strong>
           </div>
         </div>

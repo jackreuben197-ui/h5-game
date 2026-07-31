@@ -187,7 +187,7 @@ onMounted(() => {
 
 <template>
   <div class="main-bg table-game-end">
-    <HeaderBack title="牌局统计" :extra-padding="true" @back="handleBack">
+    <HeaderBack :title="t('UITexasGameEnd')" :extra-padding="true" @back="handleBack">
       <template #right>
         <TopActionButton :name="t('OpCodeString_ROOMINSURFEE')" large />
       </template>
@@ -196,7 +196,7 @@ onMounted(() => {
     <main class="settle-page settle-content">
       <div v-if="loading" class="settle-loading">
         <van-loading size="0.5rem" color="var(--c-text-muted)" />
-        <span>加载结算数据...</span>
+        <span>{{ t('UITable_LoadData') }}...</span>
       </div>
 
       <template v-else>
@@ -217,18 +217,18 @@ onMounted(() => {
 
           <div class="summary-divider"></div>
 
-          <p class="summary-title">{{ t('MySelfRecord') || '个人战绩' }}</p>
+          <p class="summary-title">{{ t('MySelfRecord') || t('MySelfRecord') }}</p>
 
           <div class="summary-stats">
             <div class="summary-stat">
               <p class="summary-stat__value amount--positive">{{ myHands }}</p>
-              <p class="summary-stat__label">{{ t('UITexasGameEnding_allhand') || '总手数' }}</p>
+              <p class="summary-stat__label">{{ t('UITexasGameEnding_allhand') || t('UITexasGameEnding_allhand') }}</p>
             </div>
             <div class="summary-stat">
               <p class="summary-stat__value" :class="amountClass(myProfit)">
                 {{ formatSignedChip(myProfit) }}
               </p>
-              <p class="summary-stat__label">{{ t('UICareerRecord') || '战绩' }}</p>
+              <p class="summary-stat__label">{{ t('UICareerRecord') || t('UICareerRecord') }}</p>
             </div>
           </div>
         </section>
@@ -242,7 +242,7 @@ onMounted(() => {
               </div>
             </template>
 
-            <GameTableColumn prop="nick_name" label="玩家" :flex="3" align="left">
+            <GameTableColumn prop="nick_name" :label="t('UIMine_RecordItemMatch_2TZCjaqM')" :flex="3" align="left">
               <template #default="{ row }">
                 <img :src="row.avatar" class="user-avatar" alt="" />
                 <span>{{ row.nick_name }}</span>
@@ -251,18 +251,18 @@ onMounted(() => {
 
             <GameTableColumn
               prop="bring_in"
-              label="买入"
+              :label="t('MTT_xq_buy')"
               :flex="1.8"
               align="center"
               :formatter="formatBuyIn"
             />
 
-            <GameTableColumn prop="user_hand_num" label="手数" :flex="1" align="center" />
+            <GameTableColumn prop="user_hand_num" :label="t('UIMine_RecordItemsNormal_3RCUa3w8')" :flex="1" align="center" />
 
             <GameTableColumn
               v-if="isMushTable"
               prop="mushroom_count"
-              label="蘑菇"
+              :label="t('UIMush')"
               :flex="1.35"
               align="center"
             >
@@ -277,7 +277,7 @@ onMounted(() => {
             <GameTableColumn
               v-if="isSquidTable"
               prop="_squidNet"
-              label="鱿鱼"
+              :label="t('UISquid')"
               :flex="1.2"
               align="center"
             >
@@ -288,7 +288,7 @@ onMounted(() => {
               </template>
             </GameTableColumn>
 
-            <GameTableColumn prop="_score" label="积分" :flex="1.3" align="right">
+            <GameTableColumn prop="_score" :label="t('UIMine_RecordItemsNormal_fzCeKaD7')" :flex="1.3" align="right">
               <template #default="{ row }">
                 <span class="table-text" :class="amountClass(row._score)">
                   {{ formatSignedChip(row._score) }}

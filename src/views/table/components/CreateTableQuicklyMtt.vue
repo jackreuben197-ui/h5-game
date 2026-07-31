@@ -18,6 +18,7 @@ import iconCards from '@/assets/icons/icon_cards.png'
 import blueBlur from '@/assets/images/blue_blur.png'
 import greenBlur from '@/assets/images/green_blur.png'
 import purpleBlur from '@/assets/images/purple_blur.png'
+import { t } from '@/i18n'
 
 const emit = defineEmits<{
   'edit-template': [roomConfig: Record<string, unknown>]
@@ -183,12 +184,12 @@ const currentGamePlayType = computed<number>(() => {
 function getGameTypeName(type: number): string {
   switch (type) {
     case 2:
-      return '奥马哈'
+      return t('adaptation10009')
     case 3:
-      return '短牌'
+      return t('PokerType_2')
     case 1:
     default:
-      return '德州\n扑克'
+      return t('adaptation10022') + "\\n" + t('UIClub_Text15')
   }
 }
 
@@ -250,13 +251,13 @@ async function onCreateFromTemplate(tpl: TemplateItem) {
       ],
     })
     if (res.code === 0) {
-      showGameToast('创建成功')
+      showGameToast(t('UIClub_CreateSuccess'))
       await router.replace({ name: 'club-index' })
     } else {
-      showGameToast((res as unknown as { message?: string }).message || '创建失败')
+      showGameToast((res as unknown as { message?: string }).message || t('UIClub_Fail'))
     }
   } catch {
-    showGameToast('创建失败')
+    showGameToast(t('UIClub_Fail'))
   } finally {
     isSubmitting.value = false
   }
@@ -282,10 +283,10 @@ async function onDeleteConfirm() {
   deleteDialog.show = false
   const res = await postOrgTemplateDeleteApi({ id: tpl.id })
   if (res.code === 0) {
-    showGameToast('删除成功')
+    showGameToast(t('UIClub_DeleteSuccess'))
     templates.value = templates.value.filter((t) => t.id !== tpl.id)
   } else {
-    showGameToast((res as unknown as { message?: string }).message || '删除失败')
+    showGameToast((res as unknown as { message?: string }).message || t('UIClub_DeleteFail'))
   }
 }
 </script>
@@ -294,8 +295,8 @@ async function onDeleteConfirm() {
   <div class="quick-create-view">
     <!-- 模板列表 -->
     <div class="template-list">
-      <div v-if="loadingTemplates" class="template-list__placeholder">模板加载中...</div>
-      <div v-else-if="!templates.length" class="template-list__placeholder">暂无可用模板</div>
+      <div v-if="loadingTemplates" class="template-list__placeholder">{{ t('UITable_Loading') }}...</div>
+      <div v-else-if="!templates.length" class="template-list__placeholder">{{ t('UITable_NoCan') }}</div>
       <div
         v-for="item in templates"
         :key="item.id"
@@ -325,17 +326,17 @@ async function onDeleteConfirm() {
           <div class="template-card__actions">
             <div class="template-card__action-btn" @click.stop="onEditTemplate(item)">
               <img :src="iconEdit" class="template-card__action-icon" alt="" />
-              <span>编辑</span>
+              <span>{{ t('UIGuild_EditorTemplate') }}</span>
             </div>
             <div class="template-card__action-btn" @click.stop="onDeleteTemplate(item)">
               <img :src="iconDelete" class="template-card__action-icon" alt="" />
-              <span>删除</span>
+              <span>{{ t('UIClub_DeleteSomeone') }}</span>
             </div>
           </div>
         </div>
         <div class="template-card__create-btn">
           <button class="template-card__create" @click.stop="onCreateFromTemplate(item)">
-            立即创建
+            {{ t('UICreateNow') }}
           </button>
         </div>
       </div>
@@ -344,8 +345,8 @@ async function onDeleteConfirm() {
 
   <GameDialog
     v-model:show="deleteDialog.show"
-    title="确认删除"
-    :message="`确定删除模板「${deleteDialog.template?.name ?? ''}」？`"
+    :title="t('UIClub_ConfirmDelete')"
+    :message="t('UITable_ConfirmDelete') + '「' + (deleteDialog.template?.name ?? '') + '」？'"
     :show-cancel-button="true"
     @confirm="onDeleteConfirm"
     @cancel="deleteDialog.show = false"

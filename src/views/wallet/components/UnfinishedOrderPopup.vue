@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import dayjs from 'dayjs'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
+import { t } from '@/i18n'
 
 const props = defineProps<{
   order: ClubFundOrderListOrderInfo
@@ -40,32 +41,32 @@ function onContinue(): void {
         <div class="card__inner">
           <!-- Header -->
           <div class="card__header">
-            <h2 class="card__title">有未完成的订单</h2>
+            <h2 class="card__title">{{ t('UIRechargeUC_NoCompleteTitle') }}</h2>
           </div>
 
           <!-- Notice -->
-          <p class="card__notice">您有一笔充值订单尚未完成<br />请确认是否继续发起新的充值?</p>
+          <p class="card__notice">{{ t('UIRechargeUC_NoCompleteContent') }}<br />{{ t('UIWallet_ConfirmOf') }}?</p>
 
           <!-- Order Info Card -->
           <div class="order-info-card">
             <div class="info-row">
-              <span class="label">订单号</span>
+              <span class="label">{{ t('uititleOreder001') }}</span>
               <span class="value order-no-badge">{{ order.order_no }}</span>
             </div>
             <div class="info-row">
-              <span class="label">金额</span>
+              <span class="label">{{ t('Uimine_ptcz_paygold') }}</span>
               <span class="value amount-text">{{ displayAmount }}</span>
             </div>
             <div class="info-row">
-              <span class="label">时间</span>
+              <span class="label">{{ t('TimeItem') }}</span>
               <span class="value">{{ formattedDate }}</span>
             </div>
           </div>
 
           <!-- Actions -->
           <div class="card__actions">
-            <button class="btn btn--cancel" @click="onCancel">取消</button>
-            <button class="btn btn--continue" @click="onContinue">继续支付</button>
+            <button class="btn btn--cancel" @click="onCancel">{{ t('adaptation10013') }}</button>
+            <button class="btn btn--continue" @click="onContinue">{{ t('UIWallet_Text11') }}</button>
           </div>
         </div>
       </div>

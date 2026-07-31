@@ -264,7 +264,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <nav class="bottom-tab" aria-label="底部切换栏">
+  <nav class="bottom-tab" :aria-label="t('UITabbar_Text')">
     <svg
       ref="svgRef"
       class="tabbar-svg"

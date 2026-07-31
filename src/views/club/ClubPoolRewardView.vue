@@ -147,7 +147,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell pool-reward-page" @scroll="onPageScroll">
-    <HeaderBack :title="'奖池记录'" />
+    <HeaderBack :title="t('UICreateClubJackpotTemplate_RecordTip')" />
 
     <section class="pool-body">
       <div class="tab-switch" role="tablist" :aria-label="t('UIClub_JackpotRecord')">

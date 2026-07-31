@@ -40,11 +40,11 @@ function orderValue(...keys: string[]): string {
 const rows = computed<Row[]>(() => [
   { label: t('Wallet_OrderId'), value: props.order.order_no ?? '-' },
   { label: t('Wallet_OrderAmount'), value: String(props.order.gold_num ?? '-') },
-  { label: '手续费', value: orderValue('fee', 'fee_amount', 'service_fee') },
+  { label: t('UIMine_WalletPlatform_fee_s'), value: orderValue('fee', 'fee_amount', 'service_fee') },
   { label: t('Wallet_OrderPayAmount'), value: String(props.order.amount ?? '-') },
-  { label: '付款地址', value: orderValue('pay_address', 'from_address') },
-  { label: '收款名称', value: orderValue('name', 'payee_name', 'receive_name') },
-  { label: '收款地', value: orderValue('receive_address', 'to_address', 'dest_address') },
+  { label: t('UICommon_PayAddress'), value: orderValue('pay_address', 'from_address') },
+  { label: t('UITribeRechargeUSDTShopPayeetNameTip'), value: orderValue('name', 'payee_name', 'receive_name') },
+  { label: t('Wallet_OrderRecvAddr'), value: orderValue('receive_address', 'to_address', 'dest_address') },
   { label: t('Wallet_OrderTime'), value: formatTime(props.order.create_time) },
   { label: t('Wallet_OrderStatus'), value: statusLabel(props.order.status) },
 ])

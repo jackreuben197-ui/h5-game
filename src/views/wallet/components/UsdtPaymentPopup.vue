@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useWalletStore } from '@/stores/wallet'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
+import { t } from '@/i18n'
 
 const props = defineProps<{
   goldCount: number
@@ -81,16 +82,16 @@ onUnmounted(() => {
         <div class="card__inner">
           <!-- Header -->
           <div class="card__header">
-            <h2 class="card__title">确认付款</h2>
+            <h2 class="card__title">{{ t('UIMineMallUSDTShopPayDialogSurePay') }}</h2>
             <div class="card__header-info">
               <span>
-                手续费：{{
+                {{ t('UIMine_WalletPlatform_fee_s') }}：{{
                   props.feeRate > 0
                     ? (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%'
                     : '0'
                 }}
               </span>
-              <span>当前参考单价：1UC={{ props.rate || 1 }}USDT</span>
+              <span>{{ t('UIWallet_Current') }}：1UC={{ props.rate || 1 }}USDT</span>
             </div>
           </div>
 
@@ -99,7 +100,7 @@ onUnmounted(() => {
 
           <!-- Notice -->
           <p class="card__notice">
-            为确保交易成功，请在付款时按完整金额<br />（含小数点后4位）支付。
+            {{ t('UIWallet_Success') }}，{{ t('UIWallet_Text13') }}<br />（{{ t('UIWallet_Text14') }}4{{ t('UIWallet_Text15') }}）{{ t('UIMineMallUSDTShopDiamondPayTip') }}。
           </p>
 
           <!-- Options -->
@@ -115,7 +116,7 @@ onUnmounted(() => {
                 <img :src="icCoins" alt="" class="option-card__coin" />
               </div>
               <div class="option-card__desc">
-                需支付 {{ walletStore.formatUsdtPrice(exactPrice) }}
+                {{ t('UIWallet_Text16') }} {{ walletStore.formatUsdtPrice(exactPrice) }}
               </div>
               <div
                 class="option-card__badge"
@@ -157,7 +158,7 @@ onUnmounted(() => {
                     />
                   </svg>
                 </span>
-                秒到账
+                {{ t('UIUCWalletAddress1') }}
               </div>
             </div>
 
@@ -172,7 +173,7 @@ onUnmounted(() => {
                 <img :src="icCoins" alt="" class="option-card__coin" />
               </div>
               <div class="option-card__desc">
-                需支付 {{ walletStore.formatUsdtPrice(roundedPrice) }}
+                {{ t('UIWallet_Text16') }} {{ walletStore.formatUsdtPrice(roundedPrice) }}
               </div>
               <div
                 class="option-card__badge"
@@ -214,14 +215,14 @@ onUnmounted(() => {
                     />
                   </svg>
                 </span>
-                30分钟到账
+                30{{ t('UIWallet_Text17') }}
               </div>
             </div>
           </div>
 
           <!-- Submit Button -->
           <div class="card__action">
-            <PrimaryButton text="支付" @click="submit" />
+            <PrimaryButton :text="t('UIMineMallUSDTShopDiamondPayTip')" @click="submit" />
           </div>
         </div>
       </div>
@@ -232,11 +233,11 @@ onUnmounted(() => {
       <div class="timeout-card">
         <div class="timeout-card__inner">
           <div class="timeout-header">
-            <h2 class="timeout-title">提醒通知</h2>
+            <h2 class="timeout-title">{{ t('UICommon_RemindAndNotice') }}</h2>
           </div>
           <div class="timeout-body">
-            <p class="timeout-text">页面停留时间过长，</p>
-            <p class="timeout-text">请重新刷新页面后再充值</p>
+            <p class="timeout-text">{{ t('UIWallet_Time') }}，</p>
+            <p class="timeout-text">{{ t('UIWallet_Again') }}</p>
           </div>
         </div>
       </div>

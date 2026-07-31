@@ -2,6 +2,7 @@
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { useLoginModalStore } from '@/stores/loginModal'
+import { t } from '@/i18n'
 
 const loginModalStore = useLoginModalStore()
 
@@ -10,9 +11,9 @@ const inviteCode: string[] = Array(INVITE_CODE_LENGTH).fill('')
 
 const activeFilter = 'all'
 const filters = [
-  { key: 'all', label: '全部' },
-  { key: 'nlh', label: '德州' },
-  { key: 'plo', label: '奥马哈' },
+  { key: 'all', label: t('UIMatch_GtO8YEdb') },
+  { key: 'nlh', label: t('adaptation10022') },
+  { key: 'plo', label: t('adaptation10009') },
   { key: 'short', label: '6+' },
 ]
 
@@ -28,14 +29,14 @@ function notifyNotLogin(): void {
 <template>
   <div class="friends-table-page">
     <div class="title-bar">
-      <div class="title">朋友桌</div>
+      <div class="title">{{ t('UIMessage_Default') }}</div>
       <div class="currency-info" @click="notifyNotLogin">
         <div class="icon-diamond">
-          <img :src="iconDiamond" alt="钻石" />
+          <img :src="iconDiamond" :alt="t('UIMine_VIP_diamond')" />
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <AppSvgIcon class="icon-recharge-svg" name="plus-circle" title="充值" />
+          <AppSvgIcon class="icon-recharge-svg" name="plus-circle" :title="t('UIMine_WalletAdd_EjPOTlsz')" />
         </div>
       </div>
     </div>
@@ -43,8 +44,8 @@ function notifyNotLogin(): void {
     <div class="scroll-content">
       <div class="main-content">
         <div class="section join-section">
-          <div class="section-title">加入牌局</div>
-          <div class="section-subtitle">输入邀请码，和朋友一起切磋</div>
+          <div class="section-title">{{ t('UIGuest_JoinTableGame') }}</div>
+          <div class="section-subtitle">{{ t('UIDialogInvitationCodeTitle') }}，{{ t('UIGuest_And') }}</div>
           <div class="invite-inputs" @click="notifyNotLogin">
             <div v-for="(digit, index) in inviteCode" :key="index" class="invite-input-wrap">
               <span class="invite-digit">{{ digit }}</span>
@@ -52,13 +53,13 @@ function notifyNotLogin(): void {
           </div>
 
           <button class="action-btn" @click="notifyNotLogin">
-            <span>立即加入</span>
+            <span>{{ t('UIGuest_Join') }}</span>
           </button>
         </div>
 
         <div class="section create-section">
-          <div class="section-title">快速组局</div>
-          <button class="action-btn" @click="notifyNotLogin">开始创建</button>
+          <div class="section-title">{{ t('UIGuest_Round') }}</div>
+          <button class="action-btn" @click="notifyNotLogin">{{ t('UIGuest_Text') }}</button>
         </div>
       </div>
 
@@ -66,8 +67,8 @@ function notifyNotLogin(): void {
         <div class="table-header">
           <div class="table-header-line"></div>
           <div class="table-header-center">
-            <div class="table-header-title">当前牌桌</div>
-            <div class="table-header-sub">显示目前有效的牌桌</div>
+            <div class="table-header-title">{{ t('UIGuest_CurrentTable') }}</div>
+            <div class="table-header-sub">{{ t('UIGuest_OfTable') }}</div>
           </div>
           <div class="table-header-line"></div>
         </div>
@@ -86,7 +87,7 @@ function notifyNotLogin(): void {
 
         <div class="table-list">
           <div class="empty-state">
-            <div class="empty-text">登录后查看牌桌</div>
+            <div class="empty-text">{{ t('UIGuest_Table') }}</div>
           </div>
         </div>
       </div>

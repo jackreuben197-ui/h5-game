@@ -62,7 +62,7 @@ async function onConfirm(): Promise<void> {
 
 <template>
   <div class="page-shell club-edit-des-bg" :style="backgroundStyle">
-    <HeaderBack :title="'编辑简介'" />
+    <HeaderBack :title="t('UIClub_EditIntro')" />
 
     <div class="club-edit-des">
       <section class="editor-block">

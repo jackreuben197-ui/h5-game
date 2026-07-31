@@ -25,6 +25,7 @@ import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { invalidateCreditCache, invalidateUcCache } from '@/utils/messageCenterCache'
+import { t } from '@/i18n'
 
 type TodoSectionType = 'uc' | 'bringIn' | 'joinClub'
 
@@ -34,9 +35,9 @@ interface TodoSection {
 }
 
 const sectionDefs: TodoSection[] = [
-  { type: 'uc', title: '俱乐部玩家充值申请' },
-  { type: 'bringIn', title: '买入申请' },
-  { type: 'joinClub', title: '加入俱乐部申请' },
+  { type: 'uc', title: t('UIUIMSG_PlayerRecharge') },
+  { type: 'bringIn', title: t('UIMessage_BuyInApply') },
+  { type: 'joinClub', title: t('UIMSG_JoinClub') },
 ]
 
 const visible = ref(false)
@@ -325,7 +326,7 @@ onBeforeUnmount(() => {
     @pointerleave="onFloatPointerUp"
   >
     <button class="todo-float-btn" type="button" @click.stop="openPanel">
-      <span class="todo-float-text">消息验证</span>
+      <span class="todo-float-text">{{ t('UIGlobalMessageTodoNotice_Text') }}</span>
       <span v-if="totalCount > 0" class="todo-float-count">{{ totalCount }}</span>
     </button>
   </div>
@@ -336,12 +337,12 @@ onBeforeUnmount(() => {
       <div class="todo-panel-inner">
         <header class="todo-panel-header">
           <button class="back-btn" type="button" aria-label="back" @click="closePanel">‹</button>
-          <h2>消息</h2>
+          <h2>{{ t('UIMine_MsgSystemContent') }}</h2>
         </header>
 
         <div class="todo-content">
           <section v-if="ucList.length > 0" class="todo-section">
-            <h3>俱乐部玩家充值申请</h3>
+            <h3>{{ t('UIUIMSG_PlayerRecharge') }}</h3>
             <article
               v-for="item in ucList"
               :key="String(item.order_no ?? item.user_random_id ?? '')"
@@ -387,16 +388,16 @@ onBeforeUnmount(() => {
 
               <div class="card-footer">
                 <img :src="iconPeople" alt="uc" />
-                <p>申请充值：{{ formatUcAmount(item.amount) }}</p>
+                <p>{{ t('UIPlatformrecharge') }}：{{ formatUcAmount(item.amount) }}</p>
               </div>
             </article>
           </section>
 
           <section v-if="bringInList.length > 0" class="todo-section">
-            <h3>买入申请</h3>
+            <h3>{{ t('UIMessage_BuyInApply') }}</h3>
             <article v-for="item in bringInList" :key="String(item.id ?? '')" class="todo-card">
               <div class="card-top card-top--credit">
-                <p class="meta-left">德州 ID: {{ item.room_id || '--' }}</p>
+                <p class="meta-left">{{ t('adaptation10022') }} ID: {{ item.room_id || '--' }}</p>
                 <p class="meta-time">{{ formatTime(item.create_time) }}</p>
                 <div class="meta-club">
                   <img
@@ -444,13 +445,13 @@ onBeforeUnmount(() => {
 
               <div class="card-footer card-footer--credit">
                 <img :src="iconBalance" alt="bring in" />
-                <p>买入申请：{{ formatBringInAmount(item.bring_in) }}</p>
+                <p>{{ t('UIMessage_BuyInApply') }}：{{ formatBringInAmount(item.bring_in) }}</p>
               </div>
             </article>
           </section>
 
           <section v-if="joinClubList.length > 0" class="todo-section">
-            <h3>加入俱乐部申请</h3>
+            <h3>{{ t('UIMSG_JoinClub') }}</h3>
             <article
               v-for="item in joinClubList"
               :key="String(item.id ?? '')"

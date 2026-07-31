@@ -161,11 +161,11 @@ onMounted(() => {
       <div class="title">{{ t('UIMine_MsgSystemContent') }}</div>
       <div class="currency-info" @click="goToMineShop">
         <div class="icon-diamond">
-          <img :src="iconDiamond" alt="钻石" />
+          <img :src="iconDiamond" :alt="t('UIMine_VIP_diamond')" />
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <AppSvgIcon class="icon-recharge-svg" name="plus-circle" title="充值" />
+          <AppSvgIcon class="icon-recharge-svg" name="plus-circle" :title="t('UIMine_WalletAdd_EjPOTlsz')" />
         </div>
       </div>
     </div>
@@ -175,17 +175,17 @@ onMounted(() => {
           <div class="card-line1">
             <div class="left-text">MESSAGES</div>
             <div class="right-icon">
-              <img class="only-dark" :src="iconMessages" alt="消息" />
-              <img class="only-light" :src="iconMessagesLight" alt="消息" />
-              <img v-if="showBell" class="icon-ding" :src="iconDing" alt="铃铛" />
+              <img class="only-dark" :src="iconMessages" :alt="t('UIMine_MsgSystemContent')" />
+              <img class="only-light" :src="iconMessagesLight" :alt="t('UIMine_MsgSystemContent')" />
+              <img v-if="showBell" class="icon-ding" :src="iconDing" :alt="t('UIMessage_Text2')" />
             </div>
           </div>
           <div class="card-line2">
-            <button class="button" type="button" @click="goToMessagePage('credit', '买入申请')">
+            <button class="button" type="button" @click="goToMessagePage('credit', t('UIMessage_BuyInApply'))">
               <div class="text">{{ t('PageMessageApplyForCreditLimit') }}</div>
               <div class="round-icon num">{{ creditUnreadCount }}</div>
             </button>
-            <button class="button" type="button" @click="goToMessagePage('uc', 'UC申请')">
+            <button class="button" type="button" @click="goToMessagePage('uc', 'UC' + t('UIGuild_Fund_Apply'))">
               <div class="text">{{ t('PageMessageApplyForUC') }}</div>
               <div class="round-icon num">{{ ucUnreadCount }}</div>
             </button>

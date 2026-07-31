@@ -186,7 +186,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell profit-bg" :style="backgroundStyle">
-    <HeaderBack :title="loading ? '加载中...' : '代理收益设置'" />
+    <HeaderBack :title="t('UIGuild_MemberDetails_ProxySetting')" />
 
     <section class="glass profile-card">
       <img :src="profileAvatar" :alt="context.name" @error="onProfileAvatarError" />
@@ -213,7 +213,7 @@ onMounted(() => {
 
     <div class="form-actions">
       <PrimaryButton
-        :text="loading ? '加载中...' : t('CommitOK')"
+        :text="loading ? t('DataLoading') : t('CommitOK')"
         :disabled="loading || submitting"
         :loading="submitting"
         class="save-btn"

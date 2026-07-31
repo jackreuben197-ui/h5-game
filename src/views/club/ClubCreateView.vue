@@ -94,7 +94,7 @@ async function onCreateClub(): Promise<void> {
 <template>
   <div class="page-shell club-create-bg" :style="backgroundStyle">
     <div class="club-create">
-      <HeaderBack :title="'创建俱乐部'" extra-padding />
+      <HeaderBack :title="t('club_2')" extra-padding />
 
       <section class="avatar-card">
         <ImageUploadSheet v-model="avatarPreviewUrl">
@@ -109,27 +109,27 @@ async function onCreateClub(): Promise<void> {
 
       <section class="form-card">
         <label class="field-block" for="club-name-input">
-          <span class="field-label">俱乐部名称</span>
+          <span class="field-label">{{ t('UIClub_Creat_2LvGNmS7') }}</span>
           <div class="field-shell field-shell--single">
             <input
               id="club-name-input"
               v-model.trim="clubName"
               type="text"
               maxlength="30"
-              placeholder="请输入俱乐部名称"
+              :placeholder="t('adaptation10081')"
               autocomplete="off"
             />
           </div>
         </label>
 
         <label class="field-block" for="club-intro-input">
-          <span class="field-label">俱乐部简介</span>
+          <span class="field-label">{{ t('UIClub_Creat_ZizEgnjo') }}</span>
           <div class="field-shell field-shell--multi">
             <textarea
               id="club-intro-input"
               v-model.trim="clubIntro"
               maxlength="300"
-              placeholder="请输入简介"
+              :placeholder="t('UIClub_PleaseDescri')"
             ></textarea>
           </div>
         </label>
@@ -143,12 +143,12 @@ async function onCreateClub(): Promise<void> {
           :disabled="!canCreate"
           @click="onCreateClub"
         >
-          {{ isSubmitting ? '创建中...' : '创建' }}
+          {{ isSubmitting ? t('UIClub_Text99') + "..." : t('UIGuild_CreateDes') }}
         </button>
 
-        <p class="cost-line" aria-label="创建费用说明">
-          <span>共计</span>
-          <img :src="imgDiamond" alt="钻石" />
+        <p class="cost-line" :aria-label="t('UIClub_Text100')">
+          <span>{{ t('UIClub_Text101') }}</span>
+          <img :src="imgDiamond" :alt="t('UIMine_VIP_diamond')" />
           <span class="cost-original">{{ createCostOriginal }}</span>
           <span class="cost-current">{{ createCostCurrent }}</span>
         </p>

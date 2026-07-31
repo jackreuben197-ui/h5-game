@@ -52,14 +52,24 @@ const canUpgrade = computed(
     !loading.value &&
     !upgrading.value,
 )
-const levelDesc = computed(() => `成员上限人数临时提升至${memberLimit.value}人`)
-const durationText = computed(() => (isPermanent.value ? '永久' : `${levelDuration.value}天`))
+const levelDesc = computed(() => t('UIClub_MemberPeople') + memberLimit.value + t('Common_People'))
+const durationText = computed(() =>
+  isPermanent.value ? t('UILevelForever') : levelDuration.value + t('UIHappyShop_ActivityShopDay'),
+)
 const expiryText = computed(() =>
-  currentLimitType.value === 1 ? '永久' : levelExpireTime.value || '--',
+  currentLimitType.value === 1 ? t('UILevelForever') : levelExpireTime.value || '--',
 )
 const confirmText = computed(
   () =>
-    `确认消耗${upgradeCost.value}钻石升级至 Level ${targetLevel.value}（${durationText.value}）吗？`,
+    t('UIClub_Confirm2') +
+    upgradeCost.value +
+    t('UIClub_Text96') +
+    ' Level ' +
+    targetLevel.value +
+    '（' +
+    durationText.value +
+    '）' +
+    t('UIClub_Text97'),
 )
 
 function dotStyle(index: number): Record<string, string> {
@@ -176,7 +186,7 @@ onMounted(() => {
   <div class="page-shell club-level-page" :style="backgroundStyle">
     <div class="club-level-bg" aria-hidden="true"></div>
     <div class="club-level-content">
-      <HeaderBack title="俱乐部等级">
+      <HeaderBack :title="t('UIGuid_Level')">
         <template #right>
           <div class="club-level-diamond">
             <img :src="imgDiamond" :alt="t('UIMine_VIP_diamond')" />
@@ -187,14 +197,14 @@ onMounted(() => {
 
       <main v-loading="loading" class="club-level-main">
         <section class="club-medal">
-          <img class="club-medal__coin-bg" :src="imgMedal" alt="勋章" />
+          <img class="club-medal__coin-bg" :src="imgMedal" :alt="t('UIClub_Text105')" />
           <div class="club-medal__level-pill">{{ levelLabel }}</div>
         </section>
 
         <section class="club-upgrade-card">
-          <p class="club-upgrade-card__date">有效日期至：{{ expiryText }}</p>
+          <p class="club-upgrade-card__date">{{ t('UIClub_Text106') }}：{{ expiryText }}</p>
 
-          <div class="club-upgrade-progress" aria-label="选择俱乐部等级">
+          <div class="club-upgrade-progress" :aria-label="t('UIClub_ClubLevel')">
             <VanSlider
               v-model="selectedBenefitIndex"
               :min="0"
@@ -211,21 +221,21 @@ onMounted(() => {
           </div>
 
           <div class="club-upgrade-cost">
-            <p>升级至{{ targetLevel }}级俱乐部需消耗钻石</p>
+            <p>{{ t('UIClub_Text107') }}{{ targetLevel }}{{ t('UIClub_Club5') }}</p>
             <div class="club-upgrade-cost__value">
               <span class="club-upgrade-cost__badge">
                 <AppSvgIcon name="club-level-badge" />
                 <i>{{ targetLevel }}</i>
               </span>
               <span>{{ upgradeCost }}</span>
-              <img :src="imgDiamond" alt="钻石" />
+              <img :src="imgDiamond" :alt="t('UIMine_VIP_diamond')" />
             </div>
           </div>
 
           <div class="club-upgrade-card__details">
             <p>{{ levelDesc }}</p>
             <p>
-              有效期：<strong>{{ durationText }}</strong>
+              {{ t('UIMineLimitTime') }}：<strong>{{ durationText }}</strong>
             </p>
           </div>
         </section>
@@ -233,7 +243,7 @@ onMounted(() => {
 
       <footer class="club-level-footer">
         <PrimaryButton
-          text="升级俱乐部等级"
+          :text="t('UIClub_ClubLevel2')"
           :disabled="!canUpgrade"
           :loading="loading || upgrading"
           @click="openUpgradeConfirm"
@@ -250,7 +260,7 @@ onMounted(() => {
               :disabled="upgrading"
               @click="closeUpgradeConfirm"
             >
-              取消
+              {{ t('adaptation10013') }}
             </button>
             <button
               type="button"
@@ -259,7 +269,7 @@ onMounted(() => {
               @click="confirmUpgrade"
             >
               <span v-if="upgrading" class="club-level-confirm__spinner"></span>
-              {{ upgrading ? '升级中...' : '确定' }}
+              {{ upgrading ? t('UIClub_Text108') + '...' : t('CommitOK') }}
             </button>
           </div>
         </section>

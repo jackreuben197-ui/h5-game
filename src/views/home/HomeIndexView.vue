@@ -34,7 +34,6 @@ import { useGameStore } from '@/stores/game'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import PokerGameList from '@/views/home/gameList.vue'
 import CasinoView from '@/views/home/CasinoView.vue'
-import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 
 import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
@@ -854,21 +853,26 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <button
-      v-if="showChannelCasinoEntry"
-      class="channel-casino-entry"
-      type="button"
-      @click="goToCasino"
-    >
-      <img class="channel-casino-entry__bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="" />
-      <span class="channel-casino-entry__text">
-        <span class="channel-casino-entry__title">{{ localized('Casino', '娱乐场') }}</span>
-        <span class="channel-casino-entry__desc">
-          {{ localized('Live, Slots, Mini games', '真人视讯 电子娱乐 小游戏') }}
-        </span>
-      </span>
-      <AppSvgIcon class="channel-casino-entry__arrow" name="round-arrow-right" />
-    </button>
+    <div v-if="showChannelCasinoEntry" class="channel-casino-zone">
+      <div class="game-scroll-card game-card-mahjong" @click="goToCasino">
+        <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
+        <div class="zone-info">
+          <div class="zone-header">
+            <span class="zone-title"> {{ localized('Casino', '娱乐场') }} </span>
+            <img class="zone-mini-icon" src="@/assets/icons/game_zone_mahjong_mini.png" alt="" />
+          </div>
+          <div class="zone-desc casino-desc">
+            <p>{{ localized('Live, Slots, Sports', '真人视讯 电子娱乐 体育竞猜') }}</p>
+            <p>{{ localized('Top Providers', '全球一线厂商') }}</p>
+          </div>
+        </div>
+        <div class="zone-online-bar">
+          <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+          <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
+          <span class="online-num"> {{ mahjongPlayersText }} </span>
+        </div>
+      </div>
+    </div>
 
     <!-- 渠道包单类型直接展示列表；赛事和牌桌并存时展示专区入口。 -->
     <div class="home-swap-container">
@@ -1403,67 +1407,13 @@ onBeforeUnmount(() => {
   padding: 0 0.4rem;
 }
 
-.channel-casino-entry {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 0.24rem;
-  width: 100%;
-  height: 1.5rem;
-  padding: 0 0.36rem;
-  border: 0.01rem solid rgba(249, 249, 249, 0.18);
-  border-radius: 0.42rem;
-  overflow: hidden;
-  background: rgba(20, 36, 54, 0.5);
-  color: #fff;
-  text-align: left;
+// 列表直显时的娱乐场入口：复用游戏中心的专区卡片，只是单张铺满一行。
+.channel-casino-zone {
+  height: 2.6rem;
 
-  &:active {
-    opacity: 0.92;
+  .game-scroll-card {
+    width: 100%;
   }
-
-  @include theme-light-own {
-    border-color: rgba(0, 0, 0, 0.08);
-  }
-}
-
-.channel-casino-entry__bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.channel-casino-entry__text {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 0.08rem;
-  text-shadow: 0 0.04rem 0.12rem rgba(0, 0, 0, 0.55);
-}
-
-.channel-casino-entry__title {
-  font-size: 0.38rem;
-  font-weight: 800;
-  font-family: 'HONOR Sans CN', sans-serif;
-}
-
-.channel-casino-entry__desc {
-  font-size: 0.24rem;
-  font-weight: 400;
-  opacity: 0.9;
-}
-
-.channel-casino-entry__arrow {
-  position: relative;
-  z-index: 1;
-  width: 0.48rem;
-  height: 0.48rem;
-  flex-shrink: 0;
-  color: #fff;
 }
 
 // 默认模块 <=> MTT 列表切换用淡入淡出：改用 opacity，去掉 overflow:hidden，

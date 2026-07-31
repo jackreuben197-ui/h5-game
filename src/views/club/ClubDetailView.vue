@@ -1768,7 +1768,7 @@ onMounted(async () => {
   border-radius: 0.10682rem;
   font-size: 0.20537rem;
   color: #fff;
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.4);
 }
 
 .id-text {
@@ -2723,8 +2723,8 @@ onMounted(async () => {
   }
 
   .id-tag {
-    background: rgba(0, 0, 0, 0.08);
-    color: rgba(0, 0, 0, 0.72);
+    background: rgba(0, 0, 0, 0.4);
+    color: #fff;
   }
 
   .id-text {

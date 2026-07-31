@@ -1627,7 +1627,7 @@ const handleBack = () => {
   min-width: 0.36rem;
   border-radius: 0.112rem;
   padding: 0 0.089rem;
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.4);
   color: #fff;
   display: inline-flex;
   align-items: center;
@@ -1635,8 +1635,8 @@ const handleBack = () => {
   font-size: 0.216rem;
 
   @include theme-light-own {
-    background: rgba(0, 0, 0, 0.08);
-    color: rgba(0, 0, 0, 0.72);
+    background: rgba(0, 0, 0, 0.4);
+    color: #fff;
   }
 }
 

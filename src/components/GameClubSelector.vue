@@ -72,25 +72,28 @@ const fetchClubs = async () => {
   }
 }
 
-watch(() => props.show, async (newVal) => {
-  if (!newVal) {
-    return
-  }
+watch(
+  () => props.show,
+  async (newVal) => {
+    if (!newVal) {
+      return
+    }
 
-  const privateDomainClubId = await resolvePrivateDomainClubId()
-  if (privateDomainClubId) {
-    emit('update:show', false)
-    emit('confirm', privateDomainClubId)
-    return
-  }
+    const privateDomainClubId = await resolvePrivateDomainClubId()
+    if (privateDomainClubId) {
+      emit('update:show', false)
+      emit('confirm', privateDomainClubId)
+      return
+    }
 
-  if (!hasFetched.value) {
-    fetchClubs()
-  } else if (clubs.value.length === 0) {
-    emit('update:show', false)
-    emit('confirm', undefined)
-  }
-})
+    if (!hasFetched.value) {
+      fetchClubs()
+    } else if (clubs.value.length === 0) {
+      emit('update:show', false)
+      emit('confirm', undefined)
+    }
+  },
+)
 
 const handleCancel = () => {
   emit('update:show', false)
@@ -135,7 +138,7 @@ const formatGold = (gold?: number) => {
             </button>
           </div>
           <div v-else class="loading-state">
-             <div class="loader"></div>
+            <div class="loader"></div>
           </div>
 
           <div class="popup-actions">
@@ -167,10 +170,18 @@ const formatGold = (gold?: number) => {
   align-items: center;
   gap: 18px;
   border-radius: 32px;
-  border: 1.314px solid rgba(242, 242, 242, 0.40);
-  background: linear-gradient(107deg, rgba(142, 142, 142, 0.12) 2.93%, rgba(103, 103, 103, 0.16) 43.62%, rgba(73, 73, 73, 0.20) 89.79%);
+  border: 1.314px solid rgba(242, 242, 242, 0.4);
+  background: linear-gradient(
+    107deg,
+    rgba(142, 142, 142, 0.12) 2.93%,
+    rgba(103, 103, 103, 0.16) 43.62%,
+    rgba(73, 73, 73, 0.2) 89.79%
+  );
   background-blend-mode: overlay, normal;
-  box-shadow: 3.447px 4.309px 6.894px 0 rgba(0, 0, 0, 0.25), 0 0 8.618px 0 #000 inset, 2.123px 4.245px 17.235px 0 rgba(242, 242, 242, 0.90) inset;
+  box-shadow:
+    3.447px 4.309px 6.894px 0 rgba(0, 0, 0, 0.25),
+    0 0 8.618px 0 #000 inset,
+    2.123px 4.245px 17.235px 0 rgba(242, 242, 242, 0.9) inset;
   backdrop-filter: blur(7.5807294845581055px);
   max-width: 90vw;
   box-sizing: border-box;
@@ -217,7 +228,7 @@ const formatGold = (gold?: number) => {
 }
 
 .loader {
-  border: 3px solid rgba(255,255,255,0.1);
+  border: 3px solid rgba(255, 255, 255, 0.1);
   border-top: 3px solid #fff;
   border-radius: 50%;
   width: 24px;
@@ -226,8 +237,12 @@ const formatGold = (gold?: number) => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .club-item {
@@ -261,8 +276,8 @@ const formatGold = (gold?: number) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .club-logo {
@@ -328,8 +343,10 @@ const formatGold = (gold?: number) => {
   transition: opacity 0.2s;
 
   text-align: center;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: "HONOR Sans CN", sans-serif;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
+  font-family: 'HONOR Sans CN', sans-serif;
   font-size: 15.658px;
   font-style: normal;
   font-weight: 500;
@@ -341,15 +358,23 @@ const formatGold = (gold?: number) => {
 }
 
 .btn-cancel {
-  background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
+  background: linear-gradient(
+    97deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  );
   backdrop-filter: blur(0.162px);
   color: #fff;
 }
 
 .btn-confirm {
-  background: linear-gradient(97deg, rgba(255, 255, 255, 0.10) 21.11%, rgba(230, 230, 230, 0.10) 71.43%);
+  background: linear-gradient(
+    97deg,
+    rgba(255, 255, 255, 0.1) 21.11%,
+    rgba(230, 230, 230, 0.1) 71.43%
+  );
   backdrop-filter: blur(0.162px);
-  color: #78E490;
+  color: #78e490;
 }
 
 .popup-fade-enter-active,

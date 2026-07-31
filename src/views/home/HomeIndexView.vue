@@ -33,6 +33,8 @@ import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServic
 import { useGameStore } from '@/stores/game'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import PokerGameList from '@/views/home/gameList.vue'
+import CasinoView from '@/views/home/CasinoView.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 
 import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
@@ -356,13 +358,28 @@ const pokerPlayersText = computed(() => `${homeRoomStats.value.poker.players}`)
 const mahjongPlayersText = 788
 const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
 const mttPlayersText = computed(() => `${homeRoomStats.value.mtt.players}`)
-type HomeContentMode = 'zones' | 'mtt' | 'poker'
+const channelCasinoClubId = computed(() =>
+  isChannelPackage
+    ? toSafeInt(currentClub.value?.club_id || userInfoStore.channelDefaultClub?.club_id)
+    : 0,
+)
+
+// 渠道包下 casinoStore 按俱乐部维度取数，非空即代表后台给该俱乐部开了娱乐场/小游戏。
+const hasChannelCasinoGames = computed(
+  () => channelCasinoClubId.value > 0 && casinoStore.gameRecords.length > 0,
+)
+
+type HomeContentMode = 'zones' | 'mtt' | 'poker' | 'casino'
 
 // 渠道包把俱乐部内容合并到首页：单一数据类型直接展示列表，两者都有时保留专区入口。
 // 官方包继续沿用原有的「仅有赛事时直接展示 MTT」行为。
 const homeContentModeRaw = computed<HomeContentMode>(() => {
   const pokerTables = homeRoomStats.value.poker.tables
   const mttTables = homeRoomStats.value.mtt.tables
+  // 只开了娱乐场（第三方小游戏）的俱乐部：不给入口按钮，直接铺游戏列表。
+  if (isChannelPackage && pokerTables === 0 && mttTables === 0 && hasChannelCasinoGames.value) {
+    return 'casino'
+  }
   if (mttTables > 0 && pokerTables === 0) {
     return 'mtt'
   }
@@ -375,6 +392,15 @@ const homeContentModeRaw = computed<HomeContentMode>(() => {
 // 避免列表与专区入口在初始化中来回切换；初始化完成后跟随实时数据变化。
 const initialized = ref(false)
 const homeContentMode = ref<HomeContentMode>(homeContentModeRaw.value)
+
+// 列表直显（poker / mtt）时专区入口整块被替换掉，娱乐场入口会连同小游戏一起消失，
+// 故渠道包在列表上方单独保留一个入口；casino 模式本身就是列表，不需要入口。
+const showChannelCasinoEntry = computed(() => {
+  if (!isChannelPackage || homeContentMode.value === 'zones' || homeContentMode.value === 'casino') {
+    return false
+  }
+  return !casinoStore.hasFetchedInitialData || hasChannelCasinoGames.value
+})
 
 const currentJoinedClub = computed(() => userInfoStore.currentJoinedClub)
 const channelManagerLevel = computed(() => toSafeInt(currentJoinedClub.value?.user_level))
@@ -417,6 +443,11 @@ function goToMttList(): void {
   void router.push('/mttList')
 }
 function goToCasino(): void {
+  // 渠道包只有一个俱乐部：娱乐场（含小游戏）按俱乐部维度取数，跟随后台的俱乐部开关。
+  if (isChannelPackage && channelCasinoClubId.value > 0) {
+    void router.push({ path: '/casino', query: { clubId: String(channelCasinoClubId.value) } })
+    return
+  }
   void router.push('/casino')
 }
 
@@ -685,8 +716,15 @@ onMounted(() => {
   })
   void updateNoticeMarquee()
 
-  // 等 room + mtt 都返回后再敲定最终布局，避免初始化阶段来回闪。
-  void Promise.allSettled([roomListReady, mttListReady]).then(() => {
+  const casinoClubId = channelCasinoClubId.value
+  const casinoReady = casinoStore
+    .preloadCasinoData(casinoClubId || undefined, casinoClubId <= 0)
+    .catch((e) => {
+      console.warn('[home] preload casino data failed:', e)
+    })
+
+  // 等 room + mtt + 娱乐场 都返回后再敲定最终布局，避免初始化阶段来回闪。
+  void Promise.allSettled([roomListReady, mttListReady, casinoReady]).then(() => {
     homeContentMode.value = homeContentModeRaw.value
     initialized.value = true
   })
@@ -699,10 +737,6 @@ onMounted(() => {
       noticeResizeObserver.observe(noticeScrollRef.value)
     }
   }
-
-  casinoStore.preloadCasinoData(undefined, true).catch((e) => {
-    console.warn('[home] preload casino data failed:', e)
-  })
 })
 
 onBeforeUnmount(() => {
@@ -820,6 +854,22 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
+    <button
+      v-if="showChannelCasinoEntry"
+      class="channel-casino-entry"
+      type="button"
+      @click="goToCasino"
+    >
+      <img class="channel-casino-entry__bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="" />
+      <span class="channel-casino-entry__text">
+        <span class="channel-casino-entry__title">{{ localized('Casino', '娱乐场') }}</span>
+        <span class="channel-casino-entry__desc">
+          {{ localized('Live, Slots, Mini games', '真人视讯 电子娱乐 小游戏') }}
+        </span>
+      </span>
+      <AppSvgIcon class="channel-casino-entry__arrow" name="round-arrow-right" />
+    </button>
+
     <!-- 渠道包单类型直接展示列表；赛事和牌桌并存时展示专区入口。 -->
     <div class="home-swap-container">
       <Transition name="home-swap">
@@ -832,6 +882,13 @@ onBeforeUnmount(() => {
           embedded
           class="home-poker-content home-swap-panel"
         />
+        <div
+          v-else-if="homeContentMode === 'casino'"
+          key="casino"
+          class="home-casino-content home-swap-panel"
+        >
+          <CasinoView :hide-header="true" :club-id="channelCasinoClubId" />
+        </div>
         <div v-else key="default" class="home-default-sections home-swap-panel">
           <!-- 4. 游戏模块 -->
           <div class="section-header">
@@ -930,17 +987,18 @@ onBeforeUnmount(() => {
               >
                 <img class="coming-soon-scroll-card__img" :src="game.svg" alt="" />
                 <div class="coming-soon-scroll-card__label">
-                  <span class="coming-soon-scroll-card__title">{{
-                    localized(game.titleEn, game.title || game.name)
-                  }}</span>
+                  <span class="coming-soon-scroll-card__title">
+                    {{ localized(game.titleEn, game.title || game.name) }}
+                  </span>
                   <span
                     v-for="(line, i) in (getLocale() === 'en' ? game.subtitleEn : game.subtitle) ||
                     []"
                     :key="i"
                     class="coming-soon-scroll-card__subtitle"
                     :class="{ 'coming-soon-scroll-card__subtitle--first': i === 0 }"
-                    >{{ line }}</span
                   >
+                    {{ line }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1345,6 +1403,69 @@ onBeforeUnmount(() => {
   padding: 0 0.4rem;
 }
 
+.channel-casino-entry {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.24rem;
+  width: 100%;
+  height: 1.5rem;
+  padding: 0 0.36rem;
+  border: 0.01rem solid rgba(249, 249, 249, 0.18);
+  border-radius: 0.42rem;
+  overflow: hidden;
+  background: rgba(20, 36, 54, 0.5);
+  color: #fff;
+  text-align: left;
+
+  &:active {
+    opacity: 0.92;
+  }
+
+  @include theme-light-own {
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+}
+
+.channel-casino-entry__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.channel-casino-entry__text {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.08rem;
+  text-shadow: 0 0.04rem 0.12rem rgba(0, 0, 0, 0.55);
+}
+
+.channel-casino-entry__title {
+  font-size: 0.38rem;
+  font-weight: 800;
+  font-family: 'HONOR Sans CN', sans-serif;
+}
+
+.channel-casino-entry__desc {
+  font-size: 0.24rem;
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+.channel-casino-entry__arrow {
+  position: relative;
+  z-index: 1;
+  width: 0.48rem;
+  height: 0.48rem;
+  flex-shrink: 0;
+  color: #fff;
+}
+
 // 默认模块 <=> MTT 列表切换用淡入淡出：改用 opacity，去掉 overflow:hidden，
 // 否则容器会裁掉游戏中心横向滚动到屏幕边缘的“出血边”（与 dev_merge_0624 一致）。
 .home-swap-container {
@@ -1356,6 +1477,10 @@ onBeforeUnmount(() => {
 
 .home-swap-panel {
   width: 100%;
+}
+
+.home-casino-content {
+  padding: 0 0.4rem 1.2rem;
 }
 
 .home-poker-content {
@@ -1452,7 +1577,6 @@ onBeforeUnmount(() => {
 .poker-card {
   background: linear-gradient(135deg, #65a879 0%, #329147 100%);
 }
-
 
 .game-card-mahjong {
   background: linear-gradient(135deg, #ff9cab 0%, #df2340 100%);

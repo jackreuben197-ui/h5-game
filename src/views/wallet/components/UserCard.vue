@@ -166,6 +166,62 @@ const bannerBg = `url(${bannerBgUrl})`
       0.96rem 0.65rem 0.699rem rgba(69, 69, 69, 0.14);
     z-index: 0;
   }
+
+  @include theme-light-own {
+    aspect-ratio: auto;
+    background: rgba(226, 226, 226, 0.7);
+    border: 1.252px solid #fff;
+    border-radius: 1.42rem;
+    opacity: 0.8;
+    backdrop-filter: blur(0.47px);
+    -webkit-backdrop-filter: blur(0.47px);
+    box-shadow: none;
+    padding: 0.35rem 0.45rem;
+
+    &::before {
+      display: none;
+    }
+
+    .usercard__shelf {
+      display: none;
+    }
+
+    .usercard__head {
+      position: relative;
+      top: auto;
+      left: auto;
+      gap: 0.35rem;
+    }
+
+    .usercard__avatar {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    .usercard__name {
+      color: rgba(0, 0, 0, 1);
+      font-weight: 700;
+      font-size: 0.44rem;
+    }
+
+    .usercard__id-value {
+      color: rgba(0, 0, 0, 0.6);
+      font-size: 0.26rem;
+    }
+
+    .usercard__gbal {
+      position: relative;
+      right: auto;
+      bottom: auto;
+      margin-top: 0.2rem;
+      justify-content: flex-end;
+    }
+
+    .usercard__gbal-value {
+      color: rgba(0, 0, 0, 0.85);
+      font-weight: 700;
+    }
+  }
 }
 
 // frosted glass shelf backing the balance (Rectangle 2)

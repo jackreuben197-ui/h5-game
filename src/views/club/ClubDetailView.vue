@@ -2662,12 +2662,13 @@ onMounted(async () => {
   .club-header-card,
   .intro-card,
   .settings-card {
-    background: rgba(255, 255, 255, 1);
+    background: rgba(0, 0, 0, 0.05);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
+    box-shadow: none;
 
     &::before {
-      background: rgba(0, 0, 0, 0.08);
+      display: none;
     }
   }
 
@@ -2681,12 +2682,35 @@ onMounted(async () => {
   }
 
   .id-tag {
-    background: rgba(0, 0, 0, 0.18);
+    background: rgba(0, 0, 0, 0.40);
+    color: #ffffff;
+  }
+
+  .id-text {
+    color: rgba(15, 8, 8, 0.6);
   }
 
   .club-size-pill {
     background: rgba(0, 0, 0, 0.08);
     mix-blend-mode: normal;
+  }
+
+  .size-icon-wrap img {
+    filter: invert(52%) sepia(68%) saturate(1758%) hue-rotate(131deg) brightness(95%) contrast(97%);
+  }
+
+  .intro-edit {
+    background: #05c297;
+  }
+
+  .quick-title {
+    color: rgba(15, 8, 8, 0.85);
+    font-weight: 600;
+  }
+
+  .quick-image-wrap {
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.06);
   }
 
   .muted-text {

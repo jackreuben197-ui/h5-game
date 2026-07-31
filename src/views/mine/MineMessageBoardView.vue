@@ -139,8 +139,8 @@ async function submitMessage(): Promise<void> {
   }
 
   .board-input {
-    background: rgba(255, 255, 255, 1);
-    border-color: rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.12);
+    border-color: transparent;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     color: rgba(15, 8, 8, 0.85);

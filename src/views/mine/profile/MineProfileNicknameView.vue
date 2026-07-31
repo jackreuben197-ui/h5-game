@@ -373,3 +373,63 @@ async function onSave(): Promise<void> {
   }
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .nickname-page {
+  color: rgba(15, 8, 8, 0.85);
+  background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .name-input {
+    background: rgba(0, 0, 0, 0.06);
+    color: rgba(15, 8, 8, 0.85);
+
+    &::placeholder {
+      color: rgba(15, 8, 8, 0.4);
+    }
+  }
+
+  .name-input-count {
+    color: rgba(15, 8, 8, 0.45);
+  }
+
+  .input-hint {
+    color: rgba(15, 8, 8, 0.55);
+  }
+
+  .cost-row {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .origin {
+    color: rgba(15, 8, 8, 0.45);
+    text-decoration-color: rgba(15, 8, 8, 0.45);
+  }
+
+  .current,
+  .balance {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .info-icon {
+    filter: invert(1);
+    opacity: 0.6;
+  }
+
+  .save-btn {
+    background: #05c297;
+    border-color: transparent;
+    color: #ffffff;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+</style>

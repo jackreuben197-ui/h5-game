@@ -8,13 +8,15 @@ import imgLevelThumb from '@/assets/images/club_level_thumb.svg'
 import imgLevelBadge from '@/assets/images/club_level_badge.svg'
 import imgRankBadge from '@/assets/icons/club_rank_badge.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { showFailToast, showSuccessToast } from 'vant'
 import { t } from '@/i18n'
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  '--club-level-bg-dark': `url(${mainBgUrl})`,
+  '--club-level-bg-light': `url(${mainBgLightUrl})`,
 }))
 
 const userInfoStore = useUserInfoStore()
@@ -255,8 +257,9 @@ onMounted(() => {
     }
 
     .club-level-diamond {
-      background: rgba(0, 0, 0, 0.06);
+      background: #ffffff !important;
       color: #000000;
+      box-shadow: 0 0.04rem 0.12rem rgba(0, 0, 0, 0.06);
     }
 
     .club-upgrade-card {
@@ -278,27 +281,30 @@ onMounted(() => {
     }
 
     .club-upgrade-cost__amount {
-      color: var(--c-brand, #05c297);
+      color: var(--primary-button, #05c297);
+    }
+
+    .club-upgrade-progress__line {
+      background: var(--primary-button, #05c297);
     }
 
     .club-upgrade-progress__line--rest {
-      background: rgba(0, 0, 0, 0.1);
+      background: rgba(0, 0, 0, 0.2);
     }
 
     .club-upgrade-progress__dot {
-      background: rgba(0, 0, 0, 0.15);
-    }
+      background: rgba(0, 0, 0, 0.2);
 
-    .club-upgrade-progress__dot--active,
-    .club-upgrade-progress__line {
-      background: var(--c-brand, #05c297);
+      &--active {
+        background: var(--primary-button, #05c297);
+      }
     }
 
     .club-upgrade-btn {
-      background: var(--c-brand, #05c297);
-      color: #ffffff;
-      border: none;
-      box-shadow: 0 4px 16px rgba(5, 194, 151, 0.3);
+      background: var(--primary-button, #05c297) !important;
+      border: none !important;
+      color: #ffffff !important;
+      box-shadow: none !important;
     }
 
     .club-level-confirm {

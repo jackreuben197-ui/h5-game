@@ -1019,9 +1019,8 @@ onMounted(() => {
   background-position: center;
   background-repeat: no-repeat;
 
-  @include theme-light {
-    background-color: var(--c-page);
-    background-image: var(--member-detail-bg-light);
+  @include theme-light-own {
+    background-image: var(--member-detail-bg-light) !important;
   }
 }
 
@@ -1582,11 +1581,36 @@ onMounted(() => {
 
 .member-detail-bg {
   @include theme-light-own {
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: rgba(0, 0, 0, 1) !important;
+    }
+
+    :deep(.title) {
+      color: rgba(15, 8, 8, 0.85) !important;
+      text-shadow: none !important;
+    }
+
+    .glass-card::before,
+    .glass-card::after {
+      display: none !important;
+    }
+
     .glass-card,
-    .bound-row-card {
-      background: #fff;
-      backdrop-filter: none;
-      box-shadow: 0 figma-rem(2) figma-rem(8) rgba(26, 35, 54, 0.04);
+    .bound-row-card,
+    .role-card {
+      background: #ffffff;
+      border: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      box-shadow: none !important;
+    }
+
+    .stat-row {
+      background: rgba(0, 0, 0, 0.05);
+      border: none !important;
+      box-shadow: none !important;
+      color: rgba(15, 8, 8, 0.85);
     }
 
     .name,
@@ -1616,9 +1640,9 @@ onMounted(() => {
       background: rgba(79, 79, 79, 0.4);
     }
 
-    .role-card,
     .form-card input {
-      background: #dadada;
+      background: rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.06);
     }
 
     .role-arrow {
@@ -1630,7 +1654,7 @@ onMounted(() => {
     }
 
     .form-card input::placeholder {
-      color: rgba(0, 0, 0, 0.62);
+      color: rgba(0, 0, 0, 0.45);
     }
 
     .stat-head-icon,

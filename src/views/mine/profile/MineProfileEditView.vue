@@ -448,3 +448,53 @@ async function onConfirmGender(): Promise<void> {
   }
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .profile-edit-page {
+  color: rgba(15, 8, 8, 0.85);
+  background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .glass-input {
+    background: rgba(0, 0, 0, 0.06);
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .input-hint {
+    color: rgba(15, 8, 8, 0.55);
+  }
+
+  .gender-option {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .sheet-body {
+    background-image: none !important;
+    background-color: #ffffff;
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .sheet-row {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .sheet-divider {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  .sheet-confirm {
+    background: #05c297;
+    color: #ffffff;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+</style>

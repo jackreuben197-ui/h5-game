@@ -1619,9 +1619,9 @@ onBeforeUnmount(() => {
 
   .profile-card {
     background-image: none !important;
-    background-color: rgba(255, 255, 255, 1);
-    border-color: rgba(0, 0, 0, 0.08);
-    box-shadow: 0 0.108rem 0.293rem rgba(0, 0, 0, 0.08);
+    background-color: rgba(0, 0, 0, 0.06);
+    border-color: transparent;
+    box-shadow: none;
   }
 
   .profile-meta .name,
@@ -1644,7 +1644,7 @@ onBeforeUnmount(() => {
   }
 
   .shop-card.active {
-    background: rgba(5, 194, 151, 0.14);
+    background: rgba(255, 255, 255, 1);
     border-color: #05c297;
     box-shadow: 0 0.1067rem 0.2933rem rgba(0, 0, 0, 0.08);
   }
@@ -1660,14 +1660,19 @@ onBeforeUnmount(() => {
 
   .price-pill {
     border-color: transparent;
-    background: linear-gradient(158.976deg, #05c297 7.547%, #04a882 71.919%);
+    background: linear-gradient(135deg, #ff4d6a 0%, #e5384f 100%);
+    color: #ffffff;
+
+    span {
+      color: #ffffff;
+    }
   }
 
   .rate-bar {
-    background: rgba(255, 255, 255, 1);
-    border-color: rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.06);
+    border-color: transparent;
     box-shadow: none;
-    color: rgba(15, 8, 8, 0.85);
+    color: rgba(15, 8, 8, 0.7);
   }
 
   .pay-channel {
@@ -1679,14 +1684,15 @@ onBeforeUnmount(() => {
   }
 
   .pay-now {
-    background: rgba(255, 255, 255, 1);
-    border-color: rgba(0, 0, 0, 0.08);
-    box-shadow: 0 0.108rem 0.293rem rgba(0, 0, 0, 0.08);
-    color: #05c297;
+    background: #05c297;
+    border-color: transparent;
+    box-shadow: none;
+    color: #ffffff;
   }
 
   .pay-now.pending {
-    color: rgba(5, 194, 151, 0.5);
+    background: rgba(5, 194, 151, 0.5);
+    color: rgba(255, 255, 255, 0.8);
   }
 }
 

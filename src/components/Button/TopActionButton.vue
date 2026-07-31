@@ -20,19 +20,21 @@ function handleClick(event: MouseEvent): void {
 
 <template>
   <button
-    :class="['action-btn', { 'action-btn--with-icon': Boolean(props.icon), 'action-btn--large': props.large }]"
+    :class="['action-btn', { 'action-btn--with-icon': Boolean(props.icon || $slots.icon), 'action-btn--large': props.large }]"
     type="button"
     @click="handleClick"
   >
     <span class="action-label">
       {{ props.name }}
     </span>
-    <img
-      v-if="props.icon"
-      class="action-icon"
-      :src="props.icon"
-      :alt="props.iconAlt || 'icon'"
-    />
+    <slot name="icon">
+      <img
+        v-if="props.icon"
+        class="action-icon"
+        :src="props.icon"
+        :alt="props.iconAlt || 'icon'"
+      />
+    </slot>
   </button>
 </template>
 
@@ -80,5 +82,13 @@ function handleClick(event: MouseEvent): void {
   width: 0.300rem;
   height: 0.300rem;
   object-fit: contain;
+}
+</style>
+
+<style lang="scss">
+:root[data-theme='light'] .action-btn {
+  .action-icon {
+    filter: invert(52%) sepia(68%) saturate(1758%) hue-rotate(131deg) brightness(95%) contrast(97%);
+  }
 }
 </style>

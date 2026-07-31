@@ -556,16 +556,9 @@ onMounted(() => {
   gap: 0.26rem;
 }
 
-.filter-icon {
-  color: var(--c-brand);
-}
-
+.filter-icon,
 .dropdown-icon {
-  color: #fff;
-
-  @include theme-light {
-    color: var(--c-brand);
-  }
+  color: #000000;
 }
 
 .club-action-btn :deep(.action-icon--slot) {
@@ -884,25 +877,33 @@ onMounted(() => {
     color: rgba(15, 8, 8, 0.85);
   }
 
-  .dropdown-icon {
+  .filter-icon,
+  .dropdown-icon,
+  .menu-icon {
     color: #05c297;
   }
 
   .club-dropdown,
   .currency-dropdown {
-    background: rgba(255, 255, 255, 1);
-    border-color: rgba(0, 0, 0, 0.08);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    background: rgba(79, 79, 79, 0.45);
+    border-color: transparent;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 0.4rem;
   }
 
   .club-option,
   .currency-option {
-    color: rgba(15, 8, 8, 0.85);
-    border-bottom-color: rgba(0, 0, 0, 0.08);
+    color: #ffffff;
+    border-bottom: 0.5px dashed rgba(255, 255, 255, 0.3);
 
     &.active {
-      background: rgba(0, 0, 0, 0.06);
+      background: rgba(255, 255, 255, 0.16);
+      font-weight: 700;
+    }
+
+    &:last-child {
+      border-bottom: none;
     }
   }
 
@@ -954,8 +955,11 @@ onMounted(() => {
   }
 
   .action-btn {
-    background: #05c297;
-    color: #fff;
+    background: #ffffff;
+
+    .action-label {
+      color: #000000;
+    }
   }
 }
 </style>

@@ -317,6 +317,8 @@ function startOfDay(date: Date): Date {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .date-picker-mask {
   position: fixed;
   inset: 0;
@@ -354,7 +356,7 @@ function startOfDay(date: Date): Date {
   height: 1.024rem;
   border: 0;
   border-radius: 50%;
-  background: #e02542;
+  background: rgba(255, 255, 255, 0.15);
   color: #fff;
   font-size: 0.8rem;
   line-height: 1;
@@ -501,7 +503,7 @@ function startOfDay(date: Date): Date {
     right: 0;
     top: 0.14667rem;
     bottom: 0.14667rem;
-    background: rgba(224, 37, 66, 0.17);
+    background: rgba(5, 194, 151, 0.2);
     z-index: 1;
   }
 
@@ -524,7 +526,7 @@ function startOfDay(date: Date): Date {
     width: 0.8rem;
     height: 0.8rem;
     border-radius: 50%;
-    background: #e02542;
+    background: #05c297;
     z-index: 1;
   }
 }
@@ -535,11 +537,79 @@ function startOfDay(date: Date): Date {
   height: 1.43581rem;
   border: 0;
   border-radius: 1.05573rem;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(8.5px);
-  -webkit-backdrop-filter: blur(8.5px);
-  color: #78e490;
+  background: #05c297;
+  color: #ffffff;
   font-size: 0.4rem;
-  font-weight: 500;
+  font-weight: 600;
+}
+
+@include theme-light-own {
+  .date-picker-sheet {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 -0.1rem 0.3rem rgba(0, 0, 0, 0.08);
+  }
+
+  .picker-tip p {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .picker-close {
+    background: rgba(0, 0, 0, 0.08);
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .picker-date-btn {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: rgba(15, 8, 8, 0.85);
+
+    &.active {
+      border-color: #05c297;
+    }
+  }
+
+  .calendar-icon {
+    border-color: rgba(15, 8, 8, 0.7);
+
+    &::before,
+    &::after {
+      background: rgba(15, 8, 8, 0.7);
+    }
+  }
+
+  .arrow-btn,
+  .month-title,
+  .day-cell {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .weekday-row {
+    color: rgba(15, 8, 8, 0.5);
+  }
+
+  .day-cell {
+    &.disabled,
+    &.muted {
+      color: rgba(15, 8, 8, 0.25);
+    }
+
+    &.in-range::before,
+    &.range-start::before,
+    &.range-end::before {
+      background: rgba(5, 194, 151, 0.2);
+    }
+
+    &.range-start::after,
+    &.range-end::after {
+      background: #05c297;
+      color: #ffffff;
+    }
+  }
+
+  .picker-ok {
+    background: #05c297;
+    color: #ffffff;
+  }
 }
 </style>

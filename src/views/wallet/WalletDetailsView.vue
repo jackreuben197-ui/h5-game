@@ -272,9 +272,12 @@ onMounted(async () => {
   }
 
   @include theme-light-own {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
     background: rgba(226, 226, 226, 0.7);
+    border: 1.252px solid #fff;
+    border-radius: 1.42rem;
+    opacity: 0.8;
+    backdrop-filter: blur(0.47px);
+    -webkit-backdrop-filter: blur(0.47px);
     box-shadow: none;
 
     &::before {
@@ -302,7 +305,7 @@ onMounted(async () => {
   opacity: 0.65;
 
   @include theme-light-own {
-    opacity: 0.12;
+    display: none;
   }
 }
 
@@ -574,6 +577,10 @@ onMounted(async () => {
   width: 0.53rem;
   height: 0.53rem;
   object-fit: contain;
+
+  @include theme-light-own {
+    filter: brightness(0);
+  }
 }
 
 .info {

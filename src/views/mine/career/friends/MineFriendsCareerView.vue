@@ -395,8 +395,12 @@ onMounted(() => {
   .glass-card {
     background: rgba(255, 255, 255, 1);
     border-color: transparent;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+
+  .menu-icon {
+    color: #05c297;
   }
 
   .line-item {
@@ -409,8 +413,11 @@ onMounted(() => {
   }
 
   .action-btn {
-    background: #05c297;
-    color: #fff;
+    background: #ffffff;
+
+    .action-label {
+      color: #000000;
+    }
   }
 }
 </style>

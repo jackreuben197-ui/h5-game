@@ -173,11 +173,12 @@
     }
 
     .dot-cell {
-      background: rgba(255, 255, 255, 1);
-      border-color: rgba(0, 0, 0, 0.08);
+      background: rgba(0, 0, 0, 0.12);
+      border-color: transparent;
       box-shadow: none;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
+      color: rgba(15, 8, 8, 0.85);
     }
 
     .submit-btn {
@@ -190,19 +191,21 @@
     }
 
     .submit-btn.active {
-      background: rgba(245, 45, 45, 0.16);
-      border-color: rgba(245, 45, 45, 0.28);
-      color: rgba(15, 8, 8, 0.85);
+      background: #05c297;
+      border-color: transparent;
+      color: #ffffff;
     }
 
     .keyboard-wrap {
-      background: rgba(255, 255, 255, 0.92);
-      border-top-color: rgba(0, 0, 0, 0.08);
+      background: rgba(0, 0, 0, 0.08);
+      border-top-color: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
     }
 
     .key {
-      background: rgba(255, 255, 255, 1);
-      border-color: rgba(0, 0, 0, 0.08);
+      background: rgba(0, 0, 0, 0.12);
+      border-color: transparent;
       box-shadow: none;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
@@ -211,13 +214,14 @@
 
     .key.clear,
     .key.erase {
-      background: rgba(245, 45, 45, 0.16);
-      border-color: rgba(245, 45, 45, 0.28);
+      background: #05c297;
+      border-color: transparent;
+      color: #ffffff;
     }
 
     .erase-icon {
-      filter: invert(1);
-      opacity: 0.6;
+      filter: brightness(0) invert(1);
+      opacity: 1;
     }
 
     .overlay-card {

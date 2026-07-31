@@ -78,7 +78,7 @@ withDefaults(defineProps<Props>(), {
   box-shadow: 0.9px 1.1px 1.8px rgba(0, 0, 0, 0.25);
 
   @include theme-light-own {
-    background: var(--wallet-l-accent);
+    background: rgba(123, 251, 202, 1);
     background-blend-mode: normal;
     border-color: rgba(242, 242, 242, 0.3);
     box-shadow: none;

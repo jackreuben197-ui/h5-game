@@ -3063,7 +3063,6 @@ onMounted(() => {
     }
 
     .summary-card,
-    .search-card,
     .record-panel {
       background: #fff;
       backdrop-filter: none;
@@ -3085,20 +3084,25 @@ onMounted(() => {
       border-color: rgba(34, 34, 34, 0.82);
     }
 
-    .search-icon {
-      border-color: rgba(34, 34, 34, 0.7);
+    .search-card {
+      background: rgba(0, 0, 0, 0.05);
+      border-color: rgba(0, 0, 0, 0.06);
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
     }
 
-    .search-icon::after {
-      background: rgba(34, 34, 34, 0.7);
+    .search-icon {
+      filter: brightness(0);
+      opacity: 0.7;
     }
 
     .search-card input {
-      color: #222;
+      color: rgba(15, 8, 8, 0.85);
     }
 
     .search-card input::placeholder {
-      color: rgba(34, 34, 34, 0.48);
+      color: rgba(15, 8, 8, 0.45);
     }
 
     .member-list-status,

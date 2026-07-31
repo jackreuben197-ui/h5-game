@@ -115,7 +115,7 @@ async function fetchSceneBannerUrls(
   }
 }
 
-// CMS banner 每次进入首页都静默刷新；缓存只用于首屏，不替代网络请求。
+// 公开聚合 banner 在官方包、渠道未登录或渠道登录兜底时请求；缓存只用于首屏。
 async function fetchCmsBannerUrls(
   lang: string,
   displayScene: number,
@@ -124,7 +124,10 @@ async function fetchCmsBannerUrls(
   try {
     const response = await postBeforeLoginConfigApi({
       no_auth_api_list: [NO_AUTH_API_BANNER_LIST],
-      banner_list_req: { last_update_time: 0 },
+      banner_list_req: {
+        last_update_time: 0,
+        ...(scope.type === 'channel-club' ? { club_id: scope.clubId } : {}),
+      },
     })
     if (Number(response.code) !== 0 || !response.data) {
       return null
@@ -162,9 +165,8 @@ export function useLobbyBannerImages(): {
       channelClubId = Math.floor(Number(channelClub?.club_id)) || 0
     }
     const hasChannelClub = isChannelPackage && channelClubId > 0
-    // 只有渠道包游客直接从 before-login CMS 中选渠道俱乐部 banner；
-    // 其他场景的 CMS 都是主数据源失败后的平台 club_id=0 回退。
-    const cmsScope: CmsBannerScope = !loggedIn && hasChannelClub
+    // 渠道包调用 before-login CMS 时传渠道 club_id；官方包不传，只取平台配置。
+    const cmsScope: CmsBannerScope = hasChannelClub
       ? { type: 'channel-club', clubId: channelClubId }
       : !loggedIn && !isChannelPackage && OFFICIAL_GUEST_BANNER_MODE === 'default-club'
         ? { type: 'default-club' }
@@ -176,22 +178,10 @@ export function useLobbyBannerImages(): {
       : !loggedIn && !isChannelPackage && OFFICIAL_GUEST_BANNER_MODE === 'default-club'
         ? `${lang}_scene_${displayScene}_default-club`
         : platformCacheKey
-    // 渠道登录 banner 与平台 CMS 回退独立分桶。
-    const cmsCacheKey = loggedIn && hasChannelClub ? platformCacheKey : cacheKey
-
-    const [cached, cmsCached] = await Promise.all([
-      readLobbyBannerListCache(cacheKey),
-      cacheKey === cmsCacheKey ? Promise.resolve(null) : readLobbyBannerListCache(cmsCacheKey),
-    ])
+    const cached = await readLobbyBannerListCache(cacheKey)
     if (cached?.length) {
       bannerImages.value = cached
-    } else if (cmsCached?.length) {
-      bannerImages.value = cmsCached
     }
-
-    // 读取缓存后立即发起 CMS 请求。登录 banner 查询与 CMS 刷新并行，
-    // 避免任何缓存命中或登录接口分支阻止 before-login 请求。
-    const cmsUrlsPromise = fetchCmsBannerUrls(lang, displayScene, cmsScope)
 
     // 只有渠道链接才请求俱乐部 banner。平台链接即使账号是俱乐部创始人，也只展示平台 banner。
     const shouldFetchClubBanner = loggedIn && hasChannelClub
@@ -201,30 +191,19 @@ export function useLobbyBannerImages(): {
       if (sceneUrls.length) {
         bannerImages.value = sceneUrls
         void writeLobbyBannerListCache(cacheKey, sceneUrls)
-
-        // 登录 banner 优先展示；CMS 结果仅静默刷新公共缓存。
-        void cmsUrlsPromise.then((cmsUrls) => {
-          if (cmsUrls) {
-            void writeLobbyBannerListCache(cmsCacheKey, cmsUrls)
-          }
-        })
         return
-      }
-
-      // 俱乐部/场景 banner 为空时，立即切回登录前缓存的 CMS banner，
-      // 避免继续展示该俱乐部上一次缓存的专属 banner。
-      if (cmsCached?.length) {
-        bannerImages.value = cmsCached
       }
     }
 
-    const cmsUrls = await cmsUrlsPromise
+    // 渠道未登录或登录接口无俱乐部 banner 时，传渠道 club_id 请求公开聚合接口；
+    // 返回后精确匹配该俱乐部，没有才回退平台 banner。
+    const cmsUrls = await fetchCmsBannerUrls(lang, displayScene, cmsScope)
     if (!cmsUrls) {
       return
     }
 
     bannerImages.value = cmsUrls
-    void writeLobbyBannerListCache(cmsCacheKey, cmsUrls)
+    void writeLobbyBannerListCache(cacheKey, cmsUrls)
   }
 
   return { bannerImages, fetchLobbyBannerImages }

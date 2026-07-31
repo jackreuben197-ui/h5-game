@@ -60,9 +60,8 @@ export function toServerLang(locale: LocaleCode = currentLocale.value): string {
 export function t(key: string, ...args: FormatArg[] | [FormatArgs]): string {
   // 读 ref 以便组件在 setLocale 时自动重渲染。
   const locale = currentLocale.value
-  // H5 与 Cocos 共用页面级词典运行时。旧版 Cocos 初始化时会把底层 locale
-  // 重设为简中，因此每次读取前都以 H5 自己的响应式状态为准重新对齐。
-  // 新版 i18n proxy 也有同样的隔离保护，这里保留兜底以兼容线上旧产物。
+  // H5 是语言状态来源；读取时保证页面级词典与 H5 当前状态一致，
+  // setLocale 产生的变化会通过 syncLanguage 同步给 Cocos。
   applyPackageLocale(locale)
   const message = i18n.get(key, key) || key
   return formatTxtMessage(message, args)

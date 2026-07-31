@@ -42,7 +42,7 @@ onMounted(() => {
 
 .friends-data-detail-bg {
   position: relative;
-  height: 100dvh;
+  min-height: 100dvh;
   color: var(--c-text);
   background-color: var(--c-page);
   background-image: var(--friends-data-detail-bg-dark);
@@ -50,8 +50,20 @@ onMounted(() => {
   background-position: center;
   background-repeat: no-repeat;
 
-  @include theme-light {
-    background-image: var(--friends-data-detail-bg-light);
+  @include theme-light-own {
+    color: #1a1a1a;
+    background-color: #f4f6f8;
+    background-image: var(--friends-data-detail-bg-light) !important;
+
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: #1a1a1a;
+    }
+
+    :deep(.title) {
+      color: #1a1a1a;
+      text-shadow: none;
+    }
   }
 }
 </style>

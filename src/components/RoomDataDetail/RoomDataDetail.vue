@@ -427,7 +427,7 @@ onMounted(() => {
   gap: 0.1rem;
   color: #fff;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #111;
   }
 }
@@ -454,7 +454,7 @@ onMounted(() => {
   font-size: 0.3rem;
   color: rgba(255, 255, 255, 0.66);
 
-  @include theme-light {
+  @include theme-light-own {
     color: rgba(17, 17, 17, 0.58);
   }
 }
@@ -474,13 +474,14 @@ onMounted(() => {
 .id-pill {
   padding: 0.03rem 0.09rem;
   border-radius: 0.09rem;
-  background: rgba(255, 255, 255, 0.36);
+  background: rgba(0, 0, 0, 0.4);
   color: #fff;
   font-size: 0.2rem;
   line-height: 1;
 
-  @include theme-light {
-    background: rgba(79, 79, 79, 0.4);
+  @include theme-light-own {
+    background: rgba(0, 0, 0, 0.4);
+    color: #fff;
   }
 }
 
@@ -488,7 +489,7 @@ onMounted(() => {
   font-size: 0.25rem;
   color: rgba(255, 255, 255, 0.72);
 
-  @include theme-light {
+  @include theme-light-own {
     color: rgba(17, 17, 17, 0.62);
   }
 }
@@ -504,7 +505,7 @@ onMounted(() => {
   box-shadow: inset 0 0 0.02rem rgba(255, 255, 255, 0.16);
   backdrop-filter: blur(0.32rem);
 
-  @include theme-light {
+  @include theme-light-own {
     border-color: rgba(0, 0, 0, 0.04);
     background: #fff;
     box-shadow: none;
@@ -531,7 +532,7 @@ onMounted(() => {
   gap: 0.06rem;
   color: #fff;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #111;
   }
 }
@@ -539,7 +540,7 @@ onMounted(() => {
 .metric-item--with-divider + .metric-item--with-divider {
   border-left: 0.02rem solid rgba(249, 249, 249, 0.16);
 
-  @include theme-light {
+  @include theme-light-own {
     border-left-color: rgba(17, 17, 17, 0.12);
   }
 }
@@ -554,7 +555,7 @@ onMounted(() => {
   line-height: 1;
   color: #f9f9f9;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #111;
   }
 }
@@ -563,7 +564,7 @@ onMounted(() => {
   height: 0.02rem;
   background: rgba(249, 249, 249, 0.24);
 
-  @include theme-light {
+  @include theme-light-own {
     background: rgba(17, 17, 17, 0.14);
   }
 }
@@ -587,7 +588,7 @@ onMounted(() => {
   border-radius: 999px;
   background: #00af83;
 
-  @include theme-light {
+  @include theme-light-own {
     background: var(--c-brand);
   }
 }
@@ -599,7 +600,7 @@ onMounted(() => {
   padding: 0 0.18rem;
   background: rgba(255, 255, 255, 0.12);
 
-  @include theme-light {
+  @include theme-light-own {
     background: rgba(var(--c-brand-rgb), 0.82);
   }
 }
@@ -636,7 +637,7 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.2);
   color: #f9f9f9;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #111;
     background: #fff;
   }
@@ -668,7 +669,7 @@ onMounted(() => {
   font-size: 0.2rem;
   color: rgba(255, 255, 255, 0.95);
 
-  @include theme-light {
+  @include theme-light-own {
     color: #111;
   }
 }
@@ -678,7 +679,7 @@ onMounted(() => {
   font-size: 0.14rem;
   color: rgba(255, 255, 255, 0.54);
 
-  @include theme-light {
+  @include theme-light-own {
     color: rgba(17, 17, 17, 0.48);
   }
 }
@@ -689,7 +690,7 @@ onMounted(() => {
   color: rgba(249, 249, 249, 0.94);
   white-space: nowrap;
 
-  @include theme-light {
+  @include theme-light-own {
     color: #111;
   }
 }
@@ -701,13 +702,13 @@ onMounted(() => {
   color: rgba(255, 255, 255, 0.72);
   padding: 0.2rem 0;
 
-  @include theme-light {
+  @include theme-light-own {
     color: rgba(17, 17, 17, 0.58);
   }
 }
 
 .room-data-detail--club {
-  @include theme-light {
+  @include theme-light-own {
     .meta-panel {
       color: #222;
     }
@@ -718,7 +719,7 @@ onMounted(() => {
 
     .id-pill {
       color: #fff;
-      background: rgba(79, 79, 79, 0.4);
+      background: rgba(0, 0, 0, 0.4);
     }
 
     .id-number {

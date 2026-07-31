@@ -889,3 +889,124 @@ function onShare(): void {
   object-fit: contain;
 }
 </style>
+
+<style lang="scss">
+:root[data-theme='light'] .hand-detail-page {
+  color: rgba(15, 8, 8, 0.85);
+  background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+  .back-trigger,
+  .back-icon {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .title {
+    text-shadow: none;
+  }
+
+  .summary-title {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .summary-meta {
+    color: rgba(15, 8, 8, 0.6);
+
+    .meta-icon {
+      filter: brightness(0);
+    }
+  }
+
+  .street-card {
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow: 0 0.04rem 0.16rem rgba(0, 0, 0, 0.04);
+  }
+
+  .street-title {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .street-sub {
+    color: rgba(15, 8, 8, 0.55);
+  }
+
+  .head-stat {
+    color: rgba(15, 8, 8, 0.85);
+
+    &.strong {
+      color: #05c297;
+    }
+  }
+
+  .divider {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  .player-name {
+    color: rgba(15, 8, 8, 0.85);
+
+    &.name-folded {
+      color: rgba(15, 8, 8, 0.4);
+    }
+  }
+
+  .move-amount {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .result-num {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .stack-green {
+    color: #05c297;
+  }
+
+  .stack-allin {
+    color: rgba(15, 8, 8, 0.45);
+  }
+
+  .card-placeholder {
+    border-color: rgba(0, 0, 0, 0.25);
+  }
+
+  .showdown-player {
+    &.winner .player-name {
+      color: #d97706;
+    }
+    &.winner .showdown-win.positive {
+      color: #e5384f;
+    }
+  }
+
+  .showdown-win {
+    color: rgba(15, 8, 8, 0.85);
+
+    &.positive {
+      color: #d97706;
+    }
+  }
+
+  .mush-gain {
+    color: rgba(15, 8, 8, 0.85);
+  }
+
+  .action-bar {
+    background: rgba(255, 255, 255, 0.85);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .action-btn {
+    border-color: rgba(0, 0, 0, 0.1);
+    background: linear-gradient(97deg, rgba(0, 0, 0, 0.04) 21.11%, rgba(0, 0, 0, 0.08) 71.43%);
+    color: rgba(15, 8, 8, 0.85);
+
+    .icon {
+      filter: brightness(0);
+    }
+
+    &.is-collected {
+      color: #d97706;
+    }
+  }
+}
+</style>

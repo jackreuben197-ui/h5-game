@@ -596,7 +596,7 @@ onMounted(() => {
   height: 0.30976rem;
   border-radius: 0.075rem;
   font-size: 0.21595rem;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.4);
   color: #fff;
 }
 
@@ -762,7 +762,7 @@ onMounted(() => {
     }
 
     .id-pill {
-      background: rgba(79, 79, 79, 0.4);
+      background: rgba(0, 0, 0, 0.4);
       color: #fff;
     }
 

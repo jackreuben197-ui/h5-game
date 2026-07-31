@@ -50,7 +50,7 @@ interface TabItem {
 
 const gameTabs: TabItem[] = [
   { label: t('adaptation10022'), key: 'nlh' },
-  // { label: t('Mahjong_Name'), key: 'mahjong' },
+  { label: t('Mahjong_Name'), key: 'mahjong' },
   { label: t('Complanin007'), key: 'other' },
 ]
 const activeGameTab = ref(gameTabs[0].key)
@@ -167,10 +167,10 @@ function toSafeNumber(value: unknown): number {
 }
 
 function resolveGameType(): number[] {
-  if (activeGameTab.value === t('Mahjong_Name')) {
+  if (activeGameTab.value === 'mahjong' || activeGameTab.value === t('Mahjong_Name')) {
     return [6]
   }
-  if (activeGameTab.value === t('Complanin007')) {
+  if (activeGameTab.value === 'other' || activeGameTab.value === t('Complanin007')) {
     return [1, 2, 3, 4, 5, 7]
   }
   return [0]
@@ -408,7 +408,7 @@ onBeforeUnmount(() => {
             </span>
           </button>
 
-          <span class="dash" aria-hidden="true">——</span>
+          <span class="dash" aria-hidden="true">-</span>
 
           <button type="button" class="date-pill" @click="openDatePicker('end')">
             <span class="date">{{ endDateText }}</span>
@@ -566,7 +566,7 @@ onBeforeUnmount(() => {
 
 .friends-data-page {
   position: relative;
-  height: 100dvh;
+  min-height: 100dvh;
   padding: 0 0 0.8rem;
   color: #f9f9f9;
   background-image: var(--friends-data-bg-dark);
@@ -574,10 +574,20 @@ onBeforeUnmount(() => {
   background-position: center;
   background-repeat: no-repeat;
 
-  @include theme-light {
-    color: var(--c-text);
-    background-color: var(--c-page);
-    background-image: var(--friends-data-bg-light);
+  @include theme-light-own {
+    color: #1a1a1a;
+    background-color: #f4f6f8;
+    background-image: linear-gradient(180deg, #e4f7f4 0%, #f4f6f8 30%, #f4f6f8 100%) !important;
+
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: #1a1a1a;
+    }
+
+    :deep(.title) {
+      color: #1a1a1a;
+      text-shadow: none;
+    }
   }
 }
 
@@ -592,7 +602,7 @@ onBeforeUnmount(() => {
 }
 
 .game-tabs {
-  margin-top: 0.42rem;
+  margin-top: 0.35rem;
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -604,37 +614,40 @@ onBeforeUnmount(() => {
   color: rgba(255, 255, 255, 0.7);
   font-size: 0.42rem;
   line-height: 1.1;
-  padding: 0.06rem 0;
+  padding: 0.08rem 0;
+  border-bottom: 0.05rem solid transparent;
 
-  @include theme-light {
-    color: rgba(0, 0, 0, 0.7);
+  @include theme-light-own {
+    color: #666666;
   }
 
   &.active {
     color: #fff;
-    border-bottom: 0.03rem solid rgba(255, 255, 255, 0.92);
+    font-weight: 600;
+    border-bottom: 0.05rem solid rgba(255, 255, 255, 0.92);
 
-    @include theme-light {
-      color: var(--c-brand);
-      border-bottom-color: var(--c-brand);
+    @include theme-light-own {
+      color: #05c297;
+      border-bottom-color: #05c297;
     }
   }
 }
 
 .glass-card {
-  border-radius: 0.76013rem;
+  border-radius: 0.64rem;
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.00421rem);
 
-  @include theme-light {
-    background: var(--c-surface);
+  @include theme-light-own {
+    background: #ffffff;
     backdrop-filter: none;
+    box-shadow: 0 0.04rem 0.16rem rgba(0, 0, 0, 0.03);
   }
 }
 
 .summary-card {
-  margin-top: 0.40541rem;
-  padding: 0.36317rem 0;
+  margin-top: 0.35rem;
+  padding: 0.4rem 0 0.36rem;
 }
 
 .date-range {
@@ -646,58 +659,61 @@ onBeforeUnmount(() => {
 
 .date-pill {
   border: 0;
-  border-radius: 1.05573rem;
+  border-radius: 0.75rem;
   background: rgba(0, 0, 0, 0.24);
-  width: 3.2204rem;
-  height: 1.50483rem;
+  width: 3.3rem;
+  height: 1.4rem;
   color: #fff;
-  display: grid;
-  justify-items: center;
-  align-content: center;
-  gap: 0.2196rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
 
-  @include theme-light {
-    color: var(--c-text);
-    background: rgba(139, 136, 136, 0.15);
+  @include theme-light-own {
+    color: #1a1a1a;
+    background: #dddddd;
   }
 
   .date {
-    font-size: 0.32013rem;
-    line-height: 0.42685rem;
+    font-size: 0.32rem;
+    line-height: 1.2;
+    font-weight: 500;
   }
 
   .time-line {
     display: inline-flex;
     align-items: center;
-    gap: 0.21341rem;
-    font-size: 0.42685rem;
-    line-height: 0.53355rem;
+    gap: 0.12rem;
+    font-size: 0.38rem;
+    line-height: 1.2;
+    font-weight: 500;
 
     .time-icon {
-      width: 0.33147rem;
-      height: 0.31867rem;
+      width: 0.34rem;
+      height: 0.34rem;
       color: #fff;
       opacity: 0.95;
 
-      @include theme-light {
-        color: #000;
+      @include theme-light-own {
+        color: #333;
       }
     }
   }
 }
 
 .dash {
-  font-size: 0.42685rem;
+  font-size: 0.4rem;
   line-height: 1;
   color: rgba(255, 255, 255, 0.9);
 
-  @include theme-light {
-    color: var(--c-text);
+  @include theme-light-own {
+    color: #666666;
   }
 }
 
 .metrics {
-  margin-top: 0.276rem;
+  margin-top: 0.35rem;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -708,75 +724,92 @@ onBeforeUnmount(() => {
 
   .metric-label {
     margin: 0;
-    font-size: 0.33784rem;
+    font-size: 0.32rem;
     line-height: 1.4;
+
+    @include theme-light-own {
+      color: #333333;
+    }
   }
 
   .metric-value {
-    margin: 0.07357rem 0 0;
-    font-size: 0.54053rem;
-    line-height: 0.55376rem;
-    font-weight: 400;
+    margin: 0.08rem 0 0;
+    font-size: 0.54rem;
+    line-height: 1.1;
+    font-weight: 600;
+
+    @include theme-light-own {
+      color: #1a1a1a;
+    }
   }
 }
 
 .metric-divider {
   position: absolute;
   right: 0;
-  top: 0.05rem;
-  width: 0.0192rem;
-  height: 0.718rem;
+  top: 0.08rem;
+  width: 0.02rem;
+  height: 0.72rem;
   background: rgba(255, 255, 255, 0.22);
 
-  @include theme-light {
-    background: var(--c-divider);
+  @include theme-light-own {
+    background: rgba(0, 0, 0, 0.08);
   }
 }
 
 .list-head {
-  margin: 0.338rem auto 0;
-  width: 7.2044rem;
+  margin: 0.38rem 0 0.22rem;
+  padding: 0 0.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.33784rem;
-  font-weight: 590;
+  font-size: 0.34rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+
+  @include theme-light-own {
+    color: #333333;
+  }
 }
 
 .player-list {
-  margin-top: 0.3208rem;
   display: grid;
-  gap: 0.33rem;
+  gap: 0.3rem;
   .list-status {
     text-align: center;
+
+    @include theme-light-own {
+      color: #666666;
+    }
   }
 }
 
 .player-card {
-  border-radius: 4.223rem;
+  border-radius: 0.8rem;
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(0.00421rem);
-  padding: 0.3rem 0.44rem;
-  min-height: 1.93072rem;
+  padding: 0.28rem 0.44rem;
+  min-height: 1.8rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
 
-  @include theme-light {
-    background: var(--c-surface);
+  @include theme-light-own {
+    background: #ffffff;
     backdrop-filter: none;
+    box-shadow: 0 0.04rem 0.12rem rgba(0, 0, 0, 0.03);
   }
 }
 
 .player-left {
   display: flex;
   align-items: center;
-  gap: 0.21387rem;
+  gap: 0.24rem;
 }
 
 .avatar {
-  width: 1.3693rem;
-  height: 1.3775rem;
+  width: 1.32rem;
+  height: 1.32rem;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -784,42 +817,59 @@ onBeforeUnmount(() => {
 .player-meta {
   .name {
     margin: 0;
-    font-size: 0.4392rem;
-    line-height: 0.4812rem;
-    font-weight: 500;
+    font-size: 0.38rem;
+    line-height: 1.3;
+    font-weight: 600;
+
+    @include theme-light-own {
+      color: #1a1a1a;
+    }
   }
 
   .id {
-    margin: 0.06rem 0 0;
-    font-size: 0.30405rem;
-    line-height: 0.42776rem;
-    opacity: 0.55;
+    margin: 0.04rem 0 0;
+    font-size: 0.28rem;
+    line-height: 1.3;
+    opacity: 0.6;
+
+    @include theme-light-own {
+      color: #888888;
+      opacity: 1;
+    }
   }
 }
 
 .player-right {
   display: inline-flex;
   align-items: center;
-  gap: 0.1352rem;
+  gap: 0.14rem;
 }
 
 .profit {
-  font-size: 0.42267rem;
+  font-size: 0.42rem;
   line-height: 1.4;
   font-weight: 600;
 }
 
 .profit-green {
   color: var(--c-loss);
+
+  @include theme-light-own {
+    color: #05c297;
+  }
 }
 
 .profit-red {
   color: var(--c-profit);
+
+  @include theme-light-own {
+    color: #e5384f;
+  }
 }
 
 .chip {
-  width: 0.53333rem;
-  height: 0.53333rem;
+  width: 0.54rem;
+  height: 0.54rem;
   object-fit: contain;
 }
 
@@ -831,7 +881,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: flex-end;
 
-  @include theme-light {
+  @include theme-light-own {
     background: var(--c-overlay);
   }
 }
@@ -843,7 +893,7 @@ onBeforeUnmount(() => {
   background: rgba(0, 0, 0, 0.86);
   backdrop-filter: blur(0.16064rem);
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
     background: var(--c-surface);
   }
@@ -860,7 +910,7 @@ onBeforeUnmount(() => {
     line-height: 1.4;
     color: #fff;
 
-    @include theme-light {
+    @include theme-light-own {
       color: var(--c-text);
     }
   }
@@ -876,7 +926,7 @@ onBeforeUnmount(() => {
   font-size: 0.8rem;
   line-height: 1;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
     background: rgba(0, 0, 0, 0.1);
   }
@@ -903,7 +953,7 @@ onBeforeUnmount(() => {
   font-size: 0.35893rem;
   line-height: 1.2;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
     background: rgba(0, 0, 0, 0.08);
   }
@@ -920,7 +970,7 @@ onBeforeUnmount(() => {
   border-radius: 0.1rem;
   position: relative;
 
-  @include theme-light {
+  @include theme-light-own {
     border-color: var(--c-text);
   }
 
@@ -934,7 +984,7 @@ onBeforeUnmount(() => {
     border-radius: 0.03rem;
     background: rgba(243, 243, 243, 0.85);
 
-    @include theme-light {
+    @include theme-light-own {
       background: var(--c-text);
     }
   }
@@ -971,7 +1021,7 @@ onBeforeUnmount(() => {
   line-height: 0.64rem;
   padding: 0;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 }
@@ -982,7 +1032,7 @@ onBeforeUnmount(() => {
   font-size: 0.49547rem;
   line-height: 1.4;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 }
@@ -1023,7 +1073,7 @@ onBeforeUnmount(() => {
   display: grid;
   place-items: center;
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-text);
   }
 
@@ -1074,6 +1124,13 @@ onBeforeUnmount(() => {
     border-radius: 50%;
     background: var(--c-brand);
     z-index: 1;
+  }
+
+  &.range-start,
+  &.range-end {
+    @include theme-light-own {
+      color: #fff;
+    }
   }
 }
 

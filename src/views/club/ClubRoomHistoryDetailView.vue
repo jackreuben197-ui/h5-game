@@ -351,8 +351,8 @@ onMounted(() => {
     }
 
     .id-pill {
-      background: rgba(0, 0, 0, 0.08);
-      color: rgba(0, 0, 0, 0.72);
+      background: rgba(0, 0, 0, 0.4);
+      color: #fff;
     }
 
     .summary-card {
@@ -460,7 +460,7 @@ onMounted(() => {
 .id-pill {
   padding: 0.03rem 0.09rem;
   border-radius: 0.09rem;
-  background: rgba(255, 255, 255, 0.36);
+  background: rgba(0, 0, 0, 0.4);
   color: #fff;
   font-size: 0.2rem;
   line-height: 1;

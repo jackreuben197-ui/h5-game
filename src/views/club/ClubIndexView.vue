@@ -2134,10 +2134,9 @@ const handleBack = () => {
   min-height: 0;
   width: 100%;
   overflow-y: auto;
-  padding: 0.34rem 0.96rem 2.2rem 0.38rem;
+  padding: 0.1rem 0.38rem 2.2rem 0.38rem;
   background: transparent;
-  width: 10.56rem;
-  margin-left: -0.28rem;
+  box-sizing: border-box;
 
   // Встроенный CasinoView собственной светлой темы не имеет,
   // а отдельная страница /casino остаётся тёмной — красим только здесь.

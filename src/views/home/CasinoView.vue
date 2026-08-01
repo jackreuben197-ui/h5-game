@@ -1212,7 +1212,7 @@ onActivated(async () => {
   max-width: 360px;
   margin-left: auto;
   margin-right: auto;
-  margin-top: 0.5rem;
+  margin-top: 0.15rem;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   align-items: center;
@@ -1222,6 +1222,10 @@ onActivated(async () => {
   z-index: 1;
   padding: 0 0.1rem;
   box-sizing: border-box;
+}
+
+.casino-page.is-embedded .icon-row {
+  margin-top: 0.05rem;
 }
 
 .icon-item {
@@ -1324,18 +1328,18 @@ onActivated(async () => {
   display: flex;
   flex-direction: column;
   gap: 0;
-  margin-top: 0.15rem;
+  margin-top: 0.05rem;
   overflow: visible;
   position: relative;
   z-index: 1;
-  padding: 0 0.1rem 0.6rem;
+  padding: 0 0.1rem 0.15rem;
   box-sizing: border-box;
 }
 
 .category-block {
   background: transparent;
   border-radius: 0.32rem;
-  padding: 0.45rem 0.15rem 0.4rem;
+  padding: 0.12rem 0.05rem 0.08rem;
   box-shadow: none;
   border: none;
   overflow: visible;
@@ -1347,10 +1351,10 @@ onActivated(async () => {
   align-items: center;
   gap: 4.217px;
   align-self: stretch;
-  margin-bottom: -1px;
-  margin-top: 8px;
-  padding-bottom: 4px;
-  margin-left: -0.50rem;
+  margin-bottom: 6px;
+  margin-top: 4px;
+  padding-bottom: 0;
+  margin-left: 0;
 }
 
 .category-title-wrap {
@@ -1447,8 +1451,8 @@ onActivated(async () => {
 .game-card-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.3rem;
-  margin-bottom: -14px;
+  gap: 0.18rem;
+  margin-bottom: 0;
 }
 
 .game-card-grid.wide {
@@ -1481,8 +1485,9 @@ onActivated(async () => {
 
 .app-card-img-wrapper {
   position: relative;
-  width: 106.627px;
-height: 112.952px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 106.627 / 112.952;
   border-radius: 0.36rem;
   overflow: hidden;
 }

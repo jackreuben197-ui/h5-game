@@ -831,8 +831,8 @@ onMounted(() => {
   display: block;
   width: 0.533rem;
   height: 0.533rem;
-  color: var(--c-brand);
-  filter: drop-shadow(0 0 0.12rem rgba(var(--c-brand-rgb), 0.22));
+  color: #ffffff;
+  filter: none;
 }
 
 .menu-label {

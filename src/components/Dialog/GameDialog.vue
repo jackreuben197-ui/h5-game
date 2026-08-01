@@ -401,66 +401,17 @@ const bodyStyles = computed<StyleValue>(() => [
   }
 }
 
-// 确认按钮：玻璃拟态风格，占满剩余空间
-// height 55.18px / radius 30.131px / 97deg 玻璃渐变 / 微量背景模糊
 .game-dialog__confirm-btn {
   flex: 1 0 0;
-  height: 1.47rem !important;
-  border-radius: 0.8rem !important;
+  height: 1.43rem !important;
+  border-radius: 0.825rem !important;
   padding: 0 !important;
-  background: linear-gradient(
-    97deg,
-    rgba(255, 255, 255, 0.1) 21.11%,
-    rgba(230, 230, 230, 0.1) 71.43%
-  ) !important;
-  backdrop-filter: blur(0.0043rem) !important;
-  -webkit-backdrop-filter: blur(0.0043rem) !important;
-}
+  background: var(--c-brand, #05c297) !important;
+  border: none !important;
 
-:root[data-theme='light'] {
-  .game-dialog__card {
-    background: #ffffff !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    box-shadow: 0 0.2rem 0.6rem rgba(0, 0, 0, 0.12) !important;
-
-    &::after {
-      display: none !important;
-    }
-  }
-
-  .game-dialog__title {
-    color: #000000 !important;
-  }
-
-  .game-dialog__body {
-    color: rgba(0, 0, 0, 0.85) !important;
-  }
-
-  .game-dialog__card-bg-gradient,
-  .game-dialog__card-bg-shadow,
-  .game-dialog__card-bg-texture,
-  .game-dialog__card--dark .game-dialog__card-bg-gradient,
-  .game-dialog__card--dark .game-dialog__card-bg-shadow {
-    opacity: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    display: none !important;
-  }
-
-  .game-dialog__cancel-btn {
-    background: rgba(0, 0, 0, 0.06) !important;
-    color: #222222 !important;
-    box-shadow: none !important;
-
-    &::before {
-      display: none !important;
-    }
-  }
-
-  .game-dialog__confirm-btn {
-    background: #05c297 !important;
-    color: #f9f9f9 !important;
-    border: none !important;
+  :deep(.primary-btn__text) {
+    color: #ffffff !important;
+    font-size: 0.439rem !important;
   }
 }
 </style>

@@ -262,12 +262,11 @@ onMounted(() => {
 
 .table-head {
   border-radius: 0.4rem;
-  // background: #00af83;
   font-size: 0.361rem;
   padding: 0.15rem 0.15rem;
   margin-bottom: 0.1rem;
   box-shadow:
-    0 0 0.9rem 0.1rem rgba(var(--c-brand-rgb), 0.9) inset,
+    0 0 0.9rem 0.1rem rgba(0, 175, 131, 0.9) inset,
     /* 左上高光 */ inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.85),
     /* 右下高光 */ inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.85);
 }
@@ -278,8 +277,8 @@ onMounted(() => {
   text-align: center;
   border-radius: 0.4rem;
   color: #fff;
-  background: rgba(var(--c-brand-rgb), 0.9);
-  box-shadow: 0 0 0.1rem 0.05rem rgba(var(--c-brand-rgb), 0.9);
+  background: #05c297;
+  box-shadow: 0 0 0.1rem 0.05rem rgba(5, 194, 151, 0.35);
   box-sizing: border-box;
 }
 
@@ -344,8 +343,8 @@ onMounted(() => {
   display: block;
   width: 0.533rem;
   height: 0.533rem;
-  color: var(--c-brand);
-  filter: drop-shadow(0 0 0.12rem rgba(var(--c-brand-rgb), 0.22));
+  color: #ffffff;
+  filter: none;
 }
 
 .menu-label {
@@ -397,6 +396,19 @@ onMounted(() => {
     border-color: transparent;
     backdrop-filter: blur(0px);
     -webkit-backdrop-filter: blur(0px);
+  }
+
+  .table-head {
+    box-shadow:
+      0 0 0.9rem 0.1rem rgba(5, 194, 151, 0.45) inset,
+      /* 左上高光 */ inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.85),
+      /* 右下高光 */ inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.85);
+  }
+
+  .table-head-inner {
+    background: #05c297;
+    color: #ffffff;
+    box-shadow: 0 0.04rem 0.15rem rgba(5, 194, 151, 0.4);
   }
 
   .menu-icon {

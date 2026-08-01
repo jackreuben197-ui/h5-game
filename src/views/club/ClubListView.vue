@@ -656,8 +656,8 @@ onMounted(() => {
     }
 
     .club-id-tag {
-      background: rgba(0, 0, 0, 0.08);
-      color: rgba(0, 0, 0, 0.72);
+      background: rgba(0, 0, 0, 0.4);
+      color: #fff;
     }
 
     .club-stats-shell {
@@ -1188,7 +1188,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 0.077rem 0.135rem;
-  border-radius: 0.116rem;
+  border-radius: 0.1123rem;
   font-size: 0.222rem;
   font-weight: 600;
   color: #444;
@@ -1500,7 +1500,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 0.075rem 0.13rem;
-  border-radius: 0.112rem;
+  border-radius: 0.1123rem;
   background: rgba(255, 255, 255, 0.56);
   color: #444;
   font-family: 'SF Pro Display', 'PingFang SC', sans-serif;

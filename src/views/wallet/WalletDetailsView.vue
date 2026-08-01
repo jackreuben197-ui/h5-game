@@ -660,7 +660,7 @@ onMounted(async () => {
   padding: 0.0747rem 0.1307rem;
   justify-content: center;
   align-items: center;
-  border-radius: 0.1121rem;
+  border-radius: 0.1123rem;
   background: rgba(255, 255, 255, 0.4);
   color: #fff;
   font-family: 'SF Pro', sans-serif;
@@ -669,8 +669,8 @@ onMounted(async () => {
   width: fit-content;
 
   @include theme-light-own {
-    background: var(--wallet-l-surface-soft);
-    color: var(--wallet-l-text);
+    background: rgba(0, 0, 0, 0.4);
+    color: #fff;
   }
 }
 

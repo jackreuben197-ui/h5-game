@@ -247,6 +247,8 @@ export default defineConfig(({ mode, command }) => {
       allowedHosts: [
         'h5.com',
         '.h5.com',
+        // 本地复现渠道包时把线上前端域名指到 127.0.0.1（API 仍走 /api 代理到真实后端）。
+        '.trackyourchoice.com',
       ],
       port: 80,
       proxy: {

@@ -946,7 +946,7 @@ onBeforeUnmount(() => {
 .mine-shop-page {
   position: relative;
   height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 0.52rem) 0 calc(env(safe-area-inset-bottom) + 0.55rem);
+  padding: 0 0 calc(env(safe-area-inset-bottom) + 0.55rem);
   color: #f9f9f9;
   background-size: cover;
   background-position: center;
@@ -1034,10 +1034,10 @@ onBeforeUnmount(() => {
   color: #fff;
 
   .id-tag {
-    border-radius: 0.1067rem;
+    border-radius: 0.1123rem;
     background: rgba(255, 255, 255, 0.4);
-    padding: 0.032rem 0.12rem;
-    font-size: 0.215rem;
+    padding: 0.0216rem 0.1311rem;
+    font-size: 0.2159rem;
     line-height: 1.2;
   }
 }
@@ -1630,8 +1630,8 @@ onBeforeUnmount(() => {
   }
 
   .id-row .id-tag {
-    background: rgba(0, 0, 0, 0.08);
-    color: rgba(0, 0, 0, 0.72);
+    background: rgba(0, 0, 0, 0.4);
+    color: #fff;
   }
 
   .grid-status {

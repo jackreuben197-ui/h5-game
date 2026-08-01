@@ -241,7 +241,6 @@ async function onSave(): Promise<void> {
 <style scoped lang="scss">
 .nickname-page {
   height: 100dvh;
-  padding-top: calc(env(safe-area-inset-top) + 0.4598rem);
   padding-bottom: 0;
   color: #f9f9f9;
   background-size: cover;

@@ -419,13 +419,8 @@ const homeContentModeRaw = computed<HomeContentMode>(() => {
 const initialized = ref(false)
 const homeContentMode = ref<HomeContentMode>(homeContentModeRaw.value)
 
-// 私域版只展示已开启的入口；一块都没开时按需求兜底展示扑克 + 赛事（点进去各自是空列表）。
-const showMttZoneCard = computed(
-  () => !isChannelPackage || channelSections.value.mtt || channelSectionCount.value === 0,
-)
-const showPokerZoneCard = computed(
-  () => !isChannelPackage || channelSections.value.poker || channelSectionCount.value === 0,
-)
+// 专区入口只在 zones 模式渲染：赛事 / 扑克常驻（没内容也保留入口，点进去是空态），
+// 娱乐场没给俱乐部开通时隐藏——那里点进去只会报错。
 const showCasinoZoneCard = computed(() => !isChannelPackage || channelSections.value.casino)
 // 热门游戏整条都是娱乐场的游戏，没开娱乐场的俱乐部不该看到。
 const showHotGamesSection = computed(() => !isChannelPackage || channelSections.value.casino)
@@ -908,11 +903,7 @@ onBeforeUnmount(() => {
           </div>
           <div class="game-center-scroll">
             <div class="game-center-track">
-              <div
-                v-if="showMttZoneCard"
-                class="game-scroll-card game-card-mtt"
-                @click="goToMttList"
-              >
+              <div class="game-scroll-card game-card-mtt" @click="goToMttList">
                 <img class="zone-lg-bg" src="@/assets/icons/game_zone_mtt_lg.png" alt="MTT" />
                 <div class="zone-info">
                   <div class="zone-header">
@@ -937,11 +928,7 @@ onBeforeUnmount(() => {
                 </div>
               </div>
 
-              <div
-                v-if="showPokerZoneCard"
-                class="game-scroll-card poker-card"
-                @click="goToGameList"
-              >
+              <div class="game-scroll-card poker-card" @click="goToGameList">
                 <img class="zone-lg-bg" src="@/assets/icons/game_zone_poker_lg.png" :alt="t('UIClub_Text15')" />
                 <div class="poker-overlay"></div>
                 <div class="zone-info poker-info">
@@ -1097,6 +1084,9 @@ onBeforeUnmount(() => {
 .home-page--fit .coming-soon-scroll {
   flex: 1 0 3.9rem;
   min-height: 0;
+  // 卡片素材 444×587，宽 2.95rem 时原始高度就是 3.9rem。没有这个上限时，
+  // 只剩一行的场景（俱乐部没开娱乐场 → 热门游戏整条隐藏）会把卡片拉满整屏。
+  max-height: 3.9rem;
 }
 
 .top-bar {

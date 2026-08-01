@@ -1623,16 +1623,16 @@ const handleBack = () => {
 }
 
 .club-id-tag {
-  height: 0.306rem;
-  min-width: 0.36rem;
-  border-radius: 0.112rem;
-  padding: 0 0.089rem;
+  border-radius: 0.1123rem;
+  padding: 0.0216rem 0.1311rem;
   background: rgba(0, 0, 0, 0.4);
   color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.216rem;
+  font-size: 0.2159rem;
+  font-weight: 600;
+  line-height: 1.2;
 
   @include theme-light-own {
     background: rgba(0, 0, 0, 0.4);

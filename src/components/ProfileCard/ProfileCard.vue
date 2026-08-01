@@ -163,14 +163,15 @@ defineEmits<{
 }
 
 .id-tag {
-  font-size: 0.28rem;
-  line-height: 150%;
+  font-size: 0.2159rem;
+  font-weight: 600;
+  line-height: 1.2;
   background-color: rgba(255, 255, 255, 0.4);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0 0.25rem;
-  border-radius: 0.5rem;
+  padding: 0.0216rem 0.1311rem;
+  border-radius: 0.1123rem;
 }
 
 .id-value {
@@ -206,8 +207,8 @@ defineEmits<{
   }
 
   .id-tag {
-    background-color: rgba(0, 0, 0, 0.08);
-    color: rgba(0, 0, 0, 0.72);
+    background-color: rgba(0, 0, 0, 0.4);
+    color: #fff;
   }
 
   .id-value {

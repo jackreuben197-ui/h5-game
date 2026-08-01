@@ -113,7 +113,9 @@ export function copyStorageToMainDomain(): void {
   }
   localStorage.clear()
   const currentUrl = new URL(window.location.href)
-  const targetUrl = `${currentUrl.protocol}//${getChannelMainDomain()}/#/`
+  // 与 buildChannelClubInviteUrl 一致：保留端口，否则本地 / 非 80 端口部署会跳到打不开的地址。
+  const portSuffix = currentUrl.port ? `:${currentUrl.port}` : ''
+  const targetUrl = `${currentUrl.protocol}//${getChannelMainDomain()}${portSuffix}/#/`
   // 将数据编码到 URL 参数中
   if (Object.keys(items).length > 0) {
     try {

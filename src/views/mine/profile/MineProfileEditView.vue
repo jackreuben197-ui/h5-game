@@ -301,7 +301,6 @@ async function onConfirmGender(): Promise<void> {
 .profile-edit-page {
   position: relative;
   height: 100dvh;
-  padding-top: calc(env(safe-area-inset-top) + 0.4598rem);
   padding-bottom: 0.8rem;
   color: #f9f9f9;
   background-size: cover;

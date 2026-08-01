@@ -1501,8 +1501,8 @@ onMounted(async () => {
     }
 
     .join-modal-id-tag {
-      background: rgba(0, 0, 0, 0.08);
-      color: #333333;
+      background: rgba(0, 0, 0, 0.4);
+      color: #fff;
     }
 
     .invite-modal__head h3 {
@@ -1542,8 +1542,8 @@ onMounted(async () => {
     }
 
     .invite-modal__id-tag {
-      background: rgba(0, 0, 0, 0.08);
-      color: #333333;
+      background: rgba(0, 0, 0, 0.4);
+      color: #fff;
     }
 
     .invite-modal__btn--secondary {
@@ -1778,10 +1778,10 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 0.48924rem;
-  height: 0.27575rem;
-  border-radius: 0.10682rem;
-  font-size: 0.20537rem;
+  padding: 0.0216rem 0.1311rem;
+  border-radius: 0.1123rem;
+  font-size: 0.21595rem;
+  font-weight: 600;
   color: #fff;
   background: rgba(0, 0, 0, 0.4);
 }
@@ -2262,7 +2262,7 @@ onMounted(async () => {
   justify-content: center;
   width: 0.445rem;
   height: 0.316rem;
-  border-radius: 0.075rem;
+  border-radius: 0.1123rem;
   background: rgba(255, 255, 255, 0.25);
   font-size: 0.216rem;
 }
@@ -2455,7 +2455,7 @@ onMounted(async () => {
   min-width: 0.46rem;
   height: 0.3rem;
   padding: 0 0.12rem;
-  border-radius: 0.13rem;
+  border-radius: 0.1123rem;
   background: rgba(255, 255, 255, 0.3);
   font-size: 0.23111rem;
   color: #444;
@@ -2936,8 +2936,8 @@ onMounted(async () => {
   }
 
   .invite-modal__id-tag {
-    background: rgba(0, 0, 0, 0.08);
-    color: rgba(15, 8, 8, 0.85);
+    background: rgba(0, 0, 0, 0.4);
+    color: #fff;
   }
 
   .invite-modal__btn--secondary {

@@ -49,12 +49,12 @@ withDefaults(defineProps<Props>(), {
 }
 
 .tagpill--id {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0 0.13rem;
-  border-radius: 0.121rem;
+  background: rgba(255, 255, 255, 0.4);
+  padding: 0.0216rem 0.1311rem;
+  border-radius: 0.1123rem;
 
   @include theme-light-own {
-    background: var(--wallet-l-surface-soft);
+    background: rgba(0, 0, 0, 0.4);
   }
 }
 
@@ -73,6 +73,10 @@ withDefaults(defineProps<Props>(), {
 .tagpill--id .tagpill__label {
   font-family: var(--wallet-font-num);
   font-weight: 600;
-  font-size: 0.215rem;
+  font-size: 0.2159rem;
+
+  @include theme-light-own {
+    color: #fff;
+  }
 }
 </style>

@@ -19,12 +19,14 @@ import imgAvatar from '@/assets/images/default_avatar_for_club.png'
 import imgChips from '@/assets/icons/icon_chips.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgStatsSwitcher from '@/assets/icons/ic_stats_switcher.png'
+import imgStatsSwitcherLight from '@/assets/icons/ic_graph_light.svg'
 import imgBalance from '@/assets/icons/icon_chip_green.png'
 import imgAdminLevel from '@/assets/icons/ic_admin_level.png'
 import imgFounderLevel from '@/assets/icons/ic_founder_level.png'
 import type { OrgClubUserInfoData, OrgMemberListRecord } from '@/api/models/org'
 import type { StatsClubDataStatsUserDetailTotalData } from '@/api/models/stats'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useTheme } from '@/composables/useTheme'
 import { formatUC } from '@/utils/roomVisibility'
 import { getMemberRouteContext, type MemberIdentity } from './clubMemberRoute'
 import mainBgUrl from '@/assets/images/img_table_setting_bg.png'
@@ -39,6 +41,9 @@ const backgroundStyle = computed(() => ({
 const route = useRoute()
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
+const { isLight } = useTheme()
+
+const statsSwitcherIcon = computed(() => (isLight.value ? imgStatsSwitcherLight : imgStatsSwitcher))
 
 const context = computed(() => getMemberRouteContext(route))
 
@@ -800,7 +805,7 @@ onMounted(() => {
       <section class="glass-card stat-head-card">
         <div class="stat-head-top">
           <strong>{{ t('UIClub_Mlistinfo_GiVUYG7E') }}</strong>
-          <img class="stat-head-switcher" :src="imgStatsSwitcher" alt="" />
+          <img class="stat-head-switcher" :src="statsSwitcherIcon" alt="" />
         </div>
         <div class="pill-tabs">
           <button :class="{ active: gameType === 'all' }" @click="switchGameType('all')">
@@ -1117,9 +1122,9 @@ onMounted(() => {
 }
 
 .uid-line span {
-  padding: figma-rem(0.808) figma-rem(2.914);
+  padding: figma-rem(0.808) figma-rem(4.914);
   border-radius: figma-rem(4.212);
-  background: rgba(255, 255, 255, 0.36);
+  background: rgba(255, 255, 255, 0.4);
   font-size: figma-rem(8.098);
 }
 
@@ -1552,7 +1557,7 @@ onMounted(() => {
   width: 10rem;
   border-top-left-radius: 0.8445rem;
   border-top-right-radius: 0.8445rem;
-  padding: 0.6426rem 0.5321rem 0.7872rem;
+  padding: 0.6426rem 0.5321rem calc(0.7872rem + env(safe-area-inset-bottom));
   background: rgba(28, 32, 35, 0.96);
   backdrop-filter: blur(0.9733rem);
 }
@@ -1597,13 +1602,16 @@ onMounted(() => {
     }
 
     .glass-card,
-    .bound-row-card,
-    .role-card {
+    .bound-row-card {
       background: #ffffff;
       border: none !important;
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
       box-shadow: none !important;
+    }
+
+    .role-card {
+      background: rgba(34, 34, 34, 0.13);
     }
 
     .stat-row {
@@ -1636,13 +1644,8 @@ onMounted(() => {
 
     .uid-line span,
     .bound-agent-id-tag {
-      color: rgba(0, 0, 0, 0.72);
-      background: rgba(0, 0, 0, 0.08);
-    }
-
-    .form-card input {
-      background: rgba(0, 0, 0, 0.05);
-      border: 1px solid rgba(0, 0, 0, 0.06);
+      color: #fff;
+      background: rgba(0, 0, 0, 0.4);
     }
 
     .role-arrow {
@@ -1650,20 +1653,27 @@ onMounted(() => {
     }
 
     .form-card input {
+      background: rgba(0, 0, 0, 0.17);
+      border: 0;
       color: #000;
     }
 
     .form-card input::placeholder {
-      color: rgba(0, 0, 0, 0.45);
+      color: rgba(0, 0, 0, 0.9);
+    }
+
+    .remark-save-btn {
+      background: #05c297;
+      border-color: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      color: #f9f9f9;
     }
 
     .stat-head-icon,
     .agent-link-icon {
       color: var(--c-brand);
-    }
-
-    .stat-head-switcher {
-      filter: invert(1) hue-rotate(180deg);
     }
 
     .pill-tabs {
@@ -1731,7 +1741,8 @@ onMounted(() => {
     }
 
     .sheet-body {
-      background: rgba(249, 249, 249, 0.94);
+      background-image: none !important;
+      background-color: rgba(249, 249, 249, 0.94);
     }
 
     .sheet-row {
@@ -1739,17 +1750,25 @@ onMounted(() => {
     }
 
     .radio-circle {
-      border-color: rgba(34, 34, 34, 0.24);
+      border: 0;
       box-shadow: none;
+      background: url('@/assets/icons/ic_uncheckbox.png') center / contain no-repeat;
 
-      &--checked::after {
-        border-color: #05c297;
+      &--checked {
+        background-image: url('@/assets/icons/ic_checkbox.png');
+
+        &::after {
+          display: none;
+        }
       }
     }
 
     .sheet-confirm {
       border-color: transparent;
       background: #05c297;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
       color: #f9f9f9;
     }
   }

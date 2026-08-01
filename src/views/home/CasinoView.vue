@@ -7,7 +7,7 @@ import {
   watch,
 } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { t } from '@/i18n'
+import { t, getLocale } from '@/i18n'
 import { showGameToast } from '@/components/Toast'
 import { useCasinoStore } from '@/stores/casino'
 import { useGameStore } from '@/stores/game'
@@ -169,6 +169,7 @@ const getHotCategoryByGameApiType = (gameApiType: string): string | null => {
       return 'hot-fish'
     case 'fb_sports':
     case 'panda_fbs':
+    case 'shaba_sport':
     case 'panda_sport':
       return 'hot-sports'
     case 'real_sports':
@@ -208,6 +209,7 @@ const getCategoryByGameApiType = (gameApiType: string): string | null => {
       return 'buyu'
     case 'fb_sports':
     case 'panda_fbs':
+    case 'shaba_sport':
     case 'panda_sport':
       return 'tiyu'
     case 'real_sports':
@@ -335,6 +337,58 @@ const buildMinigameBlocks = (games: GameItem[], keyPrefix: string): GameBlock[] 
       layout: 'wide',
       items: [item],
     }))
+
+const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
+
+const SPORTS_ORDER: Record<string, number> = {
+  fb_sports: 0,
+  panda_fbs: 0,
+  shaba_sport: 1,
+  panda_sport: 2,
+}
+
+const sortSportsGames = (games: GameItem[]): GameItem[] =>
+  [...games].sort(
+    (a, b) => (SPORTS_ORDER[a.gameApiType] ?? 999) - (SPORTS_ORDER[b.gameApiType] ?? 999),
+  )
+
+const HOT_SLOT_ORDER: Record<string, number> = {
+  麻将胡了2: 0,
+  麻将胡了: 1,
+  少林足球: 2,
+  亡灵大盗: 3,
+  赏金大对决: 4,
+  唐伯虎点秋香: 5,
+}
+
+const sortHotSlotGames = (games: GameItem[]): GameItem[] =>
+  [...games].sort(
+    (a, b) => (HOT_SLOT_ORDER[a.title] ?? 999) - (HOT_SLOT_ORDER[b.title] ?? 999),
+  )
+
+const HOT_FISH_ORDER: Record<string, number> = {
+  财神捕鱼: 0,
+  捕鱼迪斯科: 1,
+}
+
+const sortHotFishGames = (games: GameItem[]): GameItem[] =>
+  [...games].sort(
+    (a, b) => (HOT_FISH_ORDER[a.title] ?? 999) - (HOT_FISH_ORDER[b.title] ?? 999),
+  )
+
+const HOT_REAL_ORDER: Record<string, number> = {
+  real_name: 0,
+  real_obo: 1,
+  real_pa: 2,
+}
+
+const sortHotRealGames = (games: GameItem[]): GameItem[] => {
+  const preferred = games
+    .filter((item) => HOT_REAL_ORDER[item.gameApiType] !== undefined)
+    .sort((a, b) => HOT_REAL_ORDER[a.gameApiType] - HOT_REAL_ORDER[b.gameApiType])
+  const rest = games.filter((item) => HOT_REAL_ORDER[item.gameApiType] === undefined)
+  return [...preferred, ...rest]
+}
 
 const getPopularGamesForCategory = (categoryKey: string): GameItem[] => {
   const games: any[] = []
@@ -560,10 +614,10 @@ const toggleBlockExpand = async (blockKey: string) => {
 
 // ─── Computed: categoryBlocks ────────────────────────────────────────────────
 const categoryBlocks = computed<GameBlock[]>(() => {
-  const hotRealGames = getPopularGamesForCategory('hot-real')
-  const hotSlotGames = getPopularGamesForCategory('hot-slot')
-  const hotFishGames = getPopularGamesForCategory('hot-fish')
-  const hotSportsGames = getPopularGamesForCategory('hot-sports')
+  const hotRealGames = sortHotRealGames(getPopularGamesForCategory('hot-real'))
+  const hotSlotGames = sortHotSlotGames(getPopularGamesForCategory('hot-slot'))
+  const hotFishGames = sortHotFishGames(getPopularGamesForCategory('hot-fish'))
+  const hotSportsGames = sortSportsGames(getPopularGamesForCategory('hot-sports'))
   const hotEsportsGames = getPopularGamesForCategory('hot-esports')
   const hotMinigameGames = getPopularGamesForCategory('hot-minigame')
 
@@ -588,19 +642,19 @@ const categoryBlocks = computed<GameBlock[]>(() => {
       title: '热门电子',
       subtitle: '火爆游戏 轻松爆奖',
       icon: img3,
-      items: getBlockItems('hot-slot', hotSlotGames, 3),
+      items: hotSlotGames,
     },
     {
       key: 'hot-fish',
       title: '热门捕鱼',
       subtitle: '经典捕鱼 轻松爆奖',
       icon: img5,
-      items: getBlockItems('hot-fish', hotFishGames, 3),
+      items: hotFishGames,
     },
     {
       key: 'hot-sports',
       title: '热门体育',
-      subtitle: 'SPORTS',
+      subtitle: localized('SPORTS', '最全赛事 实时结算'),
       icon: img4,
       items: getBlockItems('hot-sports', hotSportsGames, 3),
     },
@@ -608,7 +662,7 @@ const categoryBlocks = computed<GameBlock[]>(() => {
     {
       key: 'hot-esports',
       title: '热门电竞',
-      subtitle: 'ESPORTS',
+      subtitle: localized('ESPORTS', '最全赛事 实时结算'),
       icon: img6,
       layout: 'wide',
       items:
@@ -623,13 +677,16 @@ const categoryBlocks = computed<GameBlock[]>(() => {
 const displayBlocks = computed<GameBlock[]>(() => {
   if (selectedCategory.value !== 'hot') {
     if (selectedCategory.value === 'tiyu') {
-      const hotSportsGames = getPopularGamesForCategory('hot-sports')
+      const sportsGames = getCategoryGames('tiyu')
+      const hotSportsGames = sortSportsGames(
+        sportsGames.length > 0 ? sportsGames : getPopularGamesForCategory('hot-sports'),
+      )
       const items =
         hotSportsGames.length > 0 ? hotSportsGames : [{ title: '', img: fbSportsSvg }]
       const sportsBlock = {
         key: 'hot-sports',
         title: '热门体育',
-        subtitle: 'SPORTS',
+        subtitle: localized('SPORTS', '最全赛事 实时结算'),
         icon: img4,
         items,
       }
@@ -641,7 +698,7 @@ const displayBlocks = computed<GameBlock[]>(() => {
       const esportsBlock = {
         key: 'hot-esports',
         title: '热门电竞',
-        subtitle: 'ESPORTS',
+        subtitle: localized('ESPORTS', '最全赛事 实时结算'),
         icon: img6,
         layout: 'wide',
         items:
@@ -1212,7 +1269,7 @@ onActivated(async () => {
   max-width: 360px;
   margin-left: auto;
   margin-right: auto;
-  margin-top: 0.15rem;
+  margin-top: 0;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   align-items: center;
@@ -1220,12 +1277,13 @@ onActivated(async () => {
   gap: 2px;
   position: relative;
   z-index: 1;
-  padding: 0 0.1rem;
+  padding: 0.16rem 0.1rem 0;
+  overflow: visible;
   box-sizing: border-box;
 }
 
 .casino-page.is-embedded .icon-row {
-  margin-top: 0.05rem;
+  margin-top: 0;
 }
 
 .icon-item {
@@ -1257,6 +1315,9 @@ onActivated(async () => {
   margin: 0 auto;
   flex-shrink: 0;
   filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.35));
+  transition:
+    transform 0.25s ease,
+    filter 0.25s ease;
 }
 
 .icon-img-wrapper {
@@ -1279,12 +1340,46 @@ onActivated(async () => {
   display: block;
   line-height: 1.1;
   font-size: 10px;
+  transition:
+    box-shadow 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.25s ease;
 }
 
 .icon-item.selected {
   transform: translateY(-2px);
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
   gap: 0.8px;
+  position: relative;
+}
+
+.icon-item.selected::before {
+  --glow-width: 1.35rem;
+  --glow-height: 1.15rem;
+  --glow-offset-top: 0.-12rem;
+  content: '';
+  position: absolute;
+  top: var(--glow-offset-top);
+  left: 50%;
+  width: var(--glow-width);
+  height: var(--glow-height);
+  transform: translateX(-50%);
+  border-radius: 50%;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 122, 58, 0.42) 0%,
+    rgba(255, 87, 8, 0.18) 45%,
+    rgba(255, 87, 8, 0) 75%
+  );
+  pointer-events: none;
+}
+
+.icon-item.selected .icon-img {
+  transform: scale(1.12);
+  filter:
+    drop-shadow(0 0 4px rgba(205, 170, 154, 0.511))
+    drop-shadow(0 3px 20px rgba(255, 87, 8, 0.5));
 }
 
 .icon-item.selected .icon-label {
@@ -1292,16 +1387,18 @@ onActivated(async () => {
   align-items: center;
   justify-content: center;
   padding: 4px;
-  background: #ff5708;
+  background:
+    radial-gradient(120% 140% at 50% -20%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 60%),
+    linear-gradient(180deg, #ff7a3a 0%, #ff5708 58%, #ec4a00 100%);
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.38);
   border-radius: 50px;
   box-shadow:
-    -14px -177px 49px rgba(212, 201, 201, 0.02),
-    -8px -113px 45px rgba(255, 255, 255, 0.13),
-    -5px -63px 38px rgba(255, 255, 255, 0.44),
-    -2px -28px 28px rgba(255, 255, 255, 0.74),
-    -1px -6px 15px rgba(255, 255, 255, 0.85);
+    0 1px 6px rgba(255, 87, 8, 0.55),
+    0 4px 14px rgba(255, 87, 8, 0.35),
+    0 8px 24px rgba(255, 87, 8, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0 -10px 6px rgba(180, 52, 0, 0.35);
   white-space: nowrap;
   transform: scale(0.85);
   padding-left: 0.16rem;
@@ -1366,7 +1463,7 @@ onActivated(async () => {
 .category-text {
   display: flex;
   flex-direction: row;
-  align-items: baseline;
+  align-items: center;
   gap: 0.35rem;
 }
 

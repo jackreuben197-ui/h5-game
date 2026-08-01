@@ -813,9 +813,8 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   width: 100%;
-  /* 固定高度：切换内部 Tab 时弹窗高度保持不变。底端对齐（父容器 flex-end），
-     贴住屏幕底部、留白落在顶部，底部不再出现留白。 */
-  height: 88dvh;
+  /* 全屏高度：切换内部 Tab 时弹窗高度保持不变，充满整个屏幕高度 (100dvh) */
+  height: 100dvh;
   flex-shrink: 0;
   box-sizing: border-box;
   color: #f9f9f9;

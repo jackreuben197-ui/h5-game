@@ -1267,15 +1267,17 @@ onMounted(async () => {
       </section>
     </GameDialog>
 
-    <div v-if="showCopyPopup" class="club-modal-mask" @click="closeCopyPopup">
-      <section class="copy-modal" @click.stop>
-        <p>申请复制俱乐部需要等待审核，是否现在提交申请</p>
-        <div class="copy-modal__actions">
-          <button type="button" class="modal-secondary-btn" @click="closeCopyPopup">取消</button>
-          <button type="button" class="modal-primary-btn" @click="submitCopyRequest">确定</button>
-        </div>
-      </section>
-    </div>
+    <GameDialog
+      v-model:show="showCopyPopup"
+      message="申请复制俱乐部需要等待审核，是否现在提交申请"
+      dialog-width="8.454rem"
+      :show-cancel-button="true"
+      :close-on-click-overlay="true"
+      cancel-button-text="取消"
+      confirm-button-text="确定"
+      @confirm="submitCopyRequest"
+      @cancel="closeCopyPopup"
+    />
 
     <GameDialog
       v-model:show="showTribeSearchPopup"
@@ -1342,28 +1344,18 @@ onMounted(async () => {
       </div>
     </GameDialog>
 
-    <div
-      v-if="showCancelTribeApplyPopup"
-      class="club-modal-mask"
-      @click="closeCancelTribeApplyPopup"
-    >
-      <section class="copy-modal" @click.stop>
-        <p>当前申请正在审核中，是否取消申请？</p>
-        <div class="copy-modal__actions">
-          <button type="button" class="modal-secondary-btn" @click="closeCancelTribeApplyPopup">
-            返回
-          </button>
-          <button
-            type="button"
-            class="modal-primary-btn"
-            :disabled="cancelTribeApplyLoading"
-            @click="cancelTribeApply"
-          >
-            {{ cancelTribeApplyLoading ? '取消中...' : '取消申请' }}
-          </button>
-        </div>
-      </section>
-    </div>
+    <GameDialog
+      v-model:show="showCancelTribeApplyPopup"
+      message="当前申请正在审核中，是否取消申请？"
+      dialog-width="8.454rem"
+      :show-cancel-button="true"
+      :close-on-click-overlay="true"
+      cancel-button-text="返回"
+      confirm-button-text="取消申请"
+      :confirm-button-disabled="cancelTribeApplyLoading"
+      @confirm="cancelTribeApply"
+      @cancel="closeCancelTribeApplyPopup"
+    />
     <GameDialog
       v-model:show="showDeleteClubPopup"
       title="退出登录"
@@ -1463,6 +1455,7 @@ onMounted(async () => {
     .quick-card {
       .quick-title {
         color: #000000;
+        text-shadow: none;
       }
     }
 
@@ -1480,96 +1473,6 @@ onMounted(async () => {
       &.switch--on {
         background: var(--c-brand, #05c297);
       }
-    }
-
-    .invite-modal,
-    .copy-modal,
-    .tribe-apply-modal,
-    .join-modal-card,
-    .logout-confirm-text {
-      color: #000000;
-    }
-
-    .invite-modal__head h3 {
-      color: #000000;
-    }
-
-    .invite-modal__close img {
-      filter: invert(1);
-    }
-
-    .invite-modal__body {
-      background: #f6f7fb;
-      border: 1px solid rgba(0, 0, 0, 0.06);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
-      backdrop-filter: none;
-    }
-
-    .invite-modal__subtitle,
-    .invite-modal__qr-tip {
-      color: rgba(0, 0, 0, 0.65);
-    }
-
-    .copy-modal p {
-      color: rgba(15, 8, 8, 0.85);
-    }
-
-    .invite-modal__club-name {
-      color: rgba(0, 0, 0, 0.75);
-    }
-
-    .invite-modal__club-alias {
-      color: #000000;
-    }
-
-    .invite-modal__id-row {
-      color: rgba(0, 0, 0, 0.7);
-    }
-
-    .invite-modal__id-tag {
-      background: rgba(0, 0, 0, 0.08);
-      color: #333333;
-    }
-
-    .invite-modal__btn--secondary {
-      background: rgba(0, 0, 0, 0.06);
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      color: #222222;
-    }
-
-    .invite-modal__btn--primary {
-      background: var(--c-brand, #05c297);
-      border: none;
-      color: #ffffff;
-    }
-
-    .tribe-search-shell,
-    .tribe-contact-shell {
-      background: rgba(0, 0, 0, 0.04);
-      border-color: rgba(0, 0, 0, 0.12);
-    }
-
-    .tribe-search-input,
-    .tribe-contact-input {
-      color: #000000;
-    }
-
-    .tribe-search-input::placeholder,
-    .tribe-contact-input::placeholder {
-      color: rgba(0, 0, 0, 0.45);
-    }
-
-    .modal-secondary-btn {
-      background: rgba(0, 0, 0, 0.06);
-      color: #222222;
-      box-shadow: none;
-    }
-
-    .modal-primary-btn {
-      background: var(--c-brand, #05c297);
-      color: #ffffff;
-      box-shadow: none;
-      border: none;
     }
   }
 }
@@ -1897,6 +1800,10 @@ onMounted(async () => {
   font-weight: 510;
   text-shadow: 0px 0.0338rem 0.253rem rgba(0, 0, 0, 0.4);
   text-align: center;
+
+  @include theme-light-own {
+    text-shadow: none;
+  }
 }
 
 .intro-card {
@@ -2362,11 +2269,8 @@ onMounted(async () => {
 .invite-modal__body {
   padding: 0.347rem 0.42rem 0.178rem;
   border-radius: 0.72464rem;
-  background: linear-gradient(
-    100.095deg,
-    rgba(255, 255, 255, 0.1) 21.1%,
-    rgba(230, 230, 230, 0.1) 71.4%
-  );
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(0.151px);
   display: flex;
   flex-direction: column;
@@ -2672,6 +2576,8 @@ onMounted(async () => {
 </style>
 
 <style lang="scss">
+@use '@/styles/mixins' as *;
+
 :root[data-theme='light'] .club-detail-bg {
   --c-brand: #05c297;
   --c-brand-rgb: 5, 194, 151;
@@ -2754,7 +2660,8 @@ onMounted(async () => {
 
   .quick-title {
     color: rgba(15, 8, 8, 0.85);
-    font-weight: 600;
+    // font-weight: 600;
+    text-shadow: none !important;
   }
 
   .quick-image-wrap {
@@ -2783,158 +2690,14 @@ onMounted(async () => {
     color: rgba(15, 8, 8, 0.45);
     background: rgba(164, 164, 164, 0.2);
   }
-
-  .copy-modal {
-    background: rgba(255, 255, 255, 1);
-    border-color: rgba(0, 0, 0, 0.08);
-    box-shadow: 0 0.108rem 0.293rem rgba(0, 0, 0, 0.08);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    color: rgba(15, 8, 8, 0.85);
-  }
-
-  .modal-primary-btn {
-    border-color: transparent;
-    background: #05c297;
-    box-shadow: none;
-  }
-
-  .modal-secondary-btn {
-    color: rgba(15, 8, 8, 0.85);
-    background: rgba(34, 34, 34, 0.08);
-    box-shadow: none;
-  }
 }
 
-:root[data-theme='light'] .tribe-search-dialog {
-  --c-brand: #05c297;
-  --c-brand-rgb: 5, 194, 151;
-
-  .game-dialog__card {
-    background-color: rgba(255, 255, 255, 1);
-    background-image: none !important;
-    border-color: rgba(0, 0, 0, 0.08);
-    box-shadow: 0 0.108rem 0.293rem rgba(0, 0, 0, 0.08);
-  }
-
-  .game-dialog__card-bg-gradient,
-  .game-dialog__card-bg-texture,
-  .game-dialog__card-bg-shadow {
-    display: none;
-  }
-
-  .game-dialog__title {
-    color: rgba(15, 8, 8, 0.85);
-  }
-
-  .tribe-search-shell {
-    background: rgba(0, 0, 0, 0.04);
-    border-color: rgba(0, 0, 0, 0.12);
-  }
-
-  .tribe-search-icon {
-    filter: invert(1);
-    opacity: 0.6;
-  }
-
-  .tribe-search-input {
-    color: rgba(15, 8, 8, 0.85);
-
-    &::placeholder {
-      color: rgba(15, 8, 8, 0.45);
-    }
-  }
-
-  .game-dialog__cancel-btn {
-    background: rgba(34, 34, 34, 0.08);
-    color: rgba(15, 8, 8, 0.85);
-    box-shadow: none;
-
-    &::before {
-      display: none;
-    }
-  }
-
-  .game-dialog__confirm-btn {
-    background: #05c297 !important;
-    box-shadow: none;
-
-    .primary-btn__text {
-      color: #fff;
-    }
-  }
-}
-
-:root[data-theme='light'] .invite-game-dialog {
-  --c-brand: #05c297;
-  --c-brand-rgb: 5, 194, 151;
-
-  .game-dialog__card {
-    background-color: rgba(255, 255, 255, 1);
-    background-image: none !important;
-    border-color: rgba(0, 0, 0, 0.08);
-    box-shadow: 0 0.108rem 0.293rem rgba(0, 0, 0, 0.08);
-  }
-
-  .game-dialog__card-bg-gradient,
-  .game-dialog__card-bg-texture,
-  .game-dialog__card-bg-shadow {
-    display: none;
-  }
-
-  .invite-modal {
-    color: rgba(15, 8, 8, 0.85);
-  }
-
-  .invite-modal__head h3 {
-    color: rgba(15, 8, 8, 0.85);
-  }
-
-  .invite-modal__close img {
-    filter: invert(1);
-    opacity: 0.6;
-  }
-
-  .invite-modal__body {
-    background: #f6f7fb;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-
-  .invite-modal__subtitle,
-  .invite-modal__qr-tip {
-    color: rgba(15, 8, 8, 0.6);
-  }
-
-  .invite-modal__club-name {
-    color: rgba(15, 8, 8, 0.7);
-  }
-
-  .invite-modal__club-alias {
-    color: rgba(15, 8, 8, 0.85);
-  }
-
-  .invite-modal__id-row {
-    color: rgba(15, 8, 8, 0.7);
-  }
-
-  .invite-modal__id-tag {
-    background: rgba(0, 0, 0, 0.08);
-    color: rgba(15, 8, 8, 0.85);
-  }
-
-  .invite-modal__btn--secondary {
-    background: rgba(0, 0, 0, 0.06);
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    color: rgba(15, 8, 8, 0.85);
-  }
-
-  .invite-modal__btn--primary {
-    background: #05c297;
-    border: none;
-    color: #fff;
+:root[data-theme='light'] {
+  .game-dialog,
+  .invite-game-dialog,
+  .tribe-search-dialog,
+  .logout-dialog {
+    @include light-panel-dialog;
   }
 }
 </style>

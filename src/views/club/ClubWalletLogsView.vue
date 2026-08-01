@@ -3,11 +3,18 @@ import { computed } from 'vue'
 
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import iconTime from '@/assets/icons/icon_time.png'
+import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
+import iconTimeDark from '@/assets/icons/icon_time.png'
+import iconTimeLight from '@/assets/icons/icon_time_light.png'
+import { theme } from '@/utils/theme'
 import { t } from '@/i18n'
+
+const isLightTheme = computed(() => theme.value === 'light')
+const iconTime = computed(() => (isLightTheme.value ? iconTimeLight : iconTimeDark))
+
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
-  backgroundImage: `url(${mainBgUrl})`,
+  backgroundImage: `url(${isLightTheme.value ? mainBgLightUrl : mainBgUrl})`,
 }))
 
 const dateStart = '11/03/2024'
@@ -97,10 +104,77 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .club-wallet-logs-bg {
   position: relative;
   height: 100dvh;
   background-size: cover;
+
+  @include theme-light-own {
+    background-image: url('@/assets/images/main_bg_light.webp') !important;
+    color: #000000;
+
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: #000000;
+    }
+
+    :deep(.title) {
+      color: #000000;
+      text-shadow: none;
+    }
+
+    .range-card {
+      border: 0.02rem solid rgba(0, 0, 0, 0.08);
+      background: #ffffff;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .date-pill {
+      border: 0.02rem solid rgba(0, 0, 0, 0.08);
+      background: rgba(0, 0, 0, 0.04);
+      color: #000000;
+    }
+
+    .dash {
+      color: rgba(0, 0, 0, 0.85);
+    }
+
+    .balance-label {
+      color: rgba(0, 0, 0, 0.65);
+    }
+
+    .balance-value {
+      color: #000000;
+    }
+
+    .balance-split {
+      background: rgba(0, 0, 0, 0.12);
+    }
+
+    .timezone {
+      color: rgba(0, 0, 0, 0.52);
+    }
+
+    .metrics-card {
+      border: 0.02rem solid rgba(0, 0, 0, 0.08);
+      background: #ffffff;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .metric-item--with-divider {
+      border-right: 0.01rem solid rgba(0, 0, 0, 0.08);
+    }
+
+    .metric-label {
+      color: rgba(0, 0, 0, 0.65);
+    }
+
+    .metric-value--neutral {
+      color: #000000;
+    }
+  }
 }
 
 .top-bar {

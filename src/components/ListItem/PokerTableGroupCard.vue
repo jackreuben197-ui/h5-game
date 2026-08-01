@@ -65,10 +65,10 @@ function handleTableClick(room: RoomRecord): void {
           </p>
           <p class="count-text">
             <span>
-              <img class="count-icon" :src="iconTable" alt="table" />{{ group.tableCount }}桌
+              <img class="count-icon" :src="iconTable" alt="table" />{{ group.tableCount }}{{ t('UIClub_Table2') }}
             </span>
             <span>
-              <img class="count-icon" :src="iconPeople" alt="people" />{{ group.playerCount }}人
+              <img class="count-icon" :src="iconPeople" alt="people" />{{ group.playerCount }}{{ t('Common_People') }}
             </span>
           </p>
         </div>

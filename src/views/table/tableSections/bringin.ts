@@ -11,7 +11,7 @@ export const bringinSection: TableFormFieldConfig[] = [
   {
     // min_player_chip_rate: 允许最低筹码（BB倍数），0=不限
     type: 'select',
-    label: '允许最低筹码',
+    label: t('UITable_AllowCode'),
     modelValue: 'min_player_chip_rate',
     tip: t('UICreateTable_chipinMinChipTips'),
     defaultValue: 0,
@@ -20,7 +20,7 @@ export const bringinSection: TableFormFieldConfig[] = [
   {
     // max_bringin_total_rate: 计分牌买入上限（BB倍数），0=无限制
     type: 'select',
-    label: '计分牌买入上限',
+    label: t('UITable_BuyIn'),
     modelValue: 'max_bringin_total_rate',
     tip: t('UICreateTable_chipinMaxChipTips'),
     defaultValue: 0,
@@ -29,7 +29,7 @@ export const bringinSection: TableFormFieldConfig[] = [
   {
     // bringin_equal_leader: 追平Chipleader百分比（0–100%）
     type: 'select',
-    label: '追平Chipleader',
+    label: t('UITable_Text10') + "Chipleader",
     modelValue: 'bringin_equal_leader',
     tip: t('UICreateTable_chipinLeaderTips'),
     defaultValue: 0,
@@ -48,7 +48,7 @@ export const bringinSection: TableFormFieldConfig[] = [
   {
     // retain_type: 补撤计分牌方式，0=关闭 1=自动 2=手动
     type: 'select',
-    label: '补撤计分牌',
+    label: t('UITable_Text11'),
     modelValue: 'retain_type',
     defaultValue: 0,
     options: BRING_OUT_OPTIONS,
@@ -56,7 +56,7 @@ export const bringinSection: TableFormFieldConfig[] = [
   {
     // retain_min_rate: 补撤最小保留筹码倍数（BB），自动+手动均展示
     type: 'input',
-    label: '最小保留筹码(BB)',
+    label: t('UITable_Code') + "(BB)",
     modelValue: 'retain_min_rate',
     defaultValue: 0,
     numberOnly: true,
@@ -66,7 +66,7 @@ export const bringinSection: TableFormFieldConfig[] = [
   {
     // retain_max_rate: 补撤最大筹码倍数（BB），仅自动模式展示
     type: 'input',
-    label: '最大保留筹码(BB)',
+    label: t('UITable_Code2') + "(BB)",
     modelValue: 'retain_max_rate',
     defaultValue: 0,
     numberOnly: true,

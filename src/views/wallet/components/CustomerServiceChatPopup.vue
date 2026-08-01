@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { postChatSupportMessageListApi, postChatSupportMessageSendApi } from '@/api/chat'
+import { t } from '@/i18n'
 import { postClubFundOrderListApi } from '@/api/order'
 import { postOssUploadImageApi } from '@/api/oss'
 import type { ChatSupportMessageListChatData } from '@/api/models/chat'
@@ -45,8 +46,18 @@ const chatClubId = computed<number | undefined>(() =>
 // 充值用 充值/付款 文案；提现用 提现/收款 文案。
 function labelsFor(orderType?: string) {
   return orderType === 'withdraw'
-    ? { user: '提现用户', coin: '提现联盟币', amount: '提现金额', payType: '收款类型' }
-    : { user: '充值用户', coin: '充值联盟币', amount: '充值金额', payType: '付款类型' }
+    ? {
+        user: t('UIRechargeUCChatRecord3'),
+        coin: t('Wallet_OrderAmountWithdraw'),
+        amount: t('UITribeRechargeUSDTRecord_WithdrawGold'),
+        payType: t('UIRechargeUCChatRecord4'),
+      }
+    : {
+        user: t('UIRechargeUCChatRecord1'),
+        coin: t('UIWallet_Text5'),
+        amount: t('UIWallet_Text6'),
+        payType: t('UIWallet_Text7'),
+      }
 }
 
 const orderList = computed<any[]>(() => {
@@ -386,9 +397,9 @@ onUnmounted(() => {
                         <p>{{ labelsFor(item.od.orderType).user }}：{{ userInfoStore.userInfo?.user.nickname }} / ID：{{ userInfoStore.userInfo?.user.un_id }}</p>
                         <p>{{ labelsFor(item.od.orderType).coin }}：{{ (item.od.gold_num || item.od.order?.gold_num || 0) / 100 }}</p>
                         <p>{{ labelsFor(item.od.orderType).amount }}：{{ item.od.pay_price || item.od.order?.pay_price || item.od.order?.amount || item.od.amount || 0 }}</p>
-                        <p>{{ labelsFor(item.od.orderType).payType }}：{{ item.od.usdt_address?.name || item.od.pay_type_name || '客服撮合' }}</p>
-                        <p>订单号：{{ item.od.order_no || item.od.order?.order_no }}</p>
-                        <p>申请时间：{{ orderTimeText(item.od.create_time || item.od.order?.create_time) }}</p>
+                        <p>{{ labelsFor(item.od.orderType).payType }}：{{ item.od.usdt_address?.name || item.od.pay_type_name || t('UIWallet_Text3') }}</p>
+                        <p>{{ t('UIWallet_Text8') }}：{{ item.od.order_no || item.od.order?.order_no }}</p>
+                        <p>{{ t('UIWallet_Text9') }}：{{ orderTimeText(item.od.create_time || item.od.order?.create_time) }}</p>
                       </div>
                     </div>
                     <div class="bubble-footer">
@@ -426,8 +437,8 @@ onUnmounted(() => {
                         <p>{{ txLabels(item.msg).coin }}：{{ item.msg.transaction?.amount || 0 }}</p>
                         <p>{{ txLabels(item.msg).amount }}：{{ item.msg.transaction?.pay_price || 0 }}</p>
                         <p>{{ txLabels(item.msg).payType }}：{{ item.msg.transaction?.type_name || '客服撮合' }}</p>
-                        <p>订单号：{{ item.msg.transaction?.order_no }}</p>
-                        <p>申请时间：{{ orderTimeText(item.msg.transaction?.timestamp) }}</p>
+                        <p>{{ t('UIWallet_Text8') }}：{{ item.msg.transaction?.order_no }}</p>
+                        <p>{{ t('UIWallet_Text9') }}：{{ orderTimeText(item.msg.transaction?.timestamp) }}</p>
                       </div>
                     </div>
                     <div v-else-if="item.msg.msg_type === 1" class="text-bubble" :class="{ 'text-bubble--self': item.msg.user_send }">
@@ -466,7 +477,7 @@ onUnmounted(() => {
               <input
                 v-model="inputText"
                 type="text"
-                placeholder="说点什么..."
+                :placeholder="t('UIWallet_Text10') + '...'"
                 @keyup.enter="sendMessage"
               />
             </div>

@@ -1088,7 +1088,7 @@ onBeforeUnmount(() => {
         <template v-else>
           <section class="empty-wrap">
             <AppSvgIcon name="empty-data" class="empty-icon" />
-            <div class="empty-text">暂无数据</div>
+            <div class="empty-text">{{ t('UIClub_FundDetail_xYlV8VBZ') }}</div>
           </section>
         </template>
       </template>
@@ -1100,7 +1100,7 @@ onBeforeUnmount(() => {
         <section class="title-row">
           <div class="title-text">{{ opponentPeriodLabel }}</div>
           <button class="sort-btn" type="button" @click="toggleOpponentSort">
-            {{ opponentOrderAsc ? '升序' : '降序' }}
+            {{ opponentOrderAsc ? t('UICareer_PersonShengxu') : t('UICareer_PersonJiangxu') }}
             <CareerSvgIcon
               name="dropdown"
               class="sort-arrow"
@@ -1118,7 +1118,7 @@ onBeforeUnmount(() => {
             :finished="opponentFinished"
             @load="onOpponentLoad"
           >
-            <GameTableColumn prop="name" label="玩家" :flex="1.55" align="center">
+            <GameTableColumn prop="name" :label="t('UIMine_RecordItemMatch_2TZCjaqM')" :flex="1.55" align="center">
               <template #default="{ row }">
                 <div class="player-cell">
                   <img
@@ -1131,10 +1131,10 @@ onBeforeUnmount(() => {
                 </div>
               </template>
             </GameTableColumn>
-            <GameTableColumn prop="hands" label="手数" :flex="1" />
-            <GameTableColumn prop="lose" label="负" :flex="1" />
-            <GameTableColumn prop="win" label="胜" :flex="1" />
-            <GameTableColumn prop="profit" label="盈利" :flex="1.5">
+            <GameTableColumn prop="hands" :label="t('UIMine_RecordItemsNormal_3RCUa3w8')" :flex="1" />
+            <GameTableColumn prop="lose" :label="t('UICareer_Defeat')" :flex="1" />
+            <GameTableColumn prop="win" :label="t('UICareer_Win')" :flex="1" />
+            <GameTableColumn prop="profit" :label="t('UIClub_GainNum')" :flex="1.5">
               <template #default="{ row }">
                 <span :class="profitClass(row.profit)">{{ formatProfit(row.profit) }}</span>
               </template>
@@ -1144,7 +1144,7 @@ onBeforeUnmount(() => {
             v-if="!loading && !opponentLoadingMore && opponentRows.length === 0"
             class="table-empty"
           >
-            暂无数据
+            {{ t('UIClub_FundDetail_xYlV8VBZ') }}
           </div>
         </div>
       </template>
@@ -1165,7 +1165,7 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="section-title">
-            <span>近3个月内玩牌数据统计</span>
+            <span>{{ t('UIClub_Text37') }}3{{ t('UIClub_Data') }}</span>
             <CareerSvgIcon name="data" class="data-icon" />
           </div>
 
@@ -1179,25 +1179,25 @@ onBeforeUnmount(() => {
 
         <section class="glass-card radar-card">
           <div class="section-title">
-            <span>ALL IN 胜率分布图</span>
+            <span>ALL IN {{ t('UIClub_Text111') }}</span>
             <CareerSvgIcon name="data" class="data-icon" />
           </div>
           <div class="allin-radar-wrap">
             <RadarChart v-bind="radarPoints" />
             <div class="radar-badge radar-badge-top">
-              <span class="badge-label">主动</span>
+              <span class="badge-label">{{ t('UICareer_Zhudong') }}</span>
               <span class="badge-rate">{{ radarPoints.top }}%</span>
             </div>
             <div class="radar-badge radar-badge-left">
-              <span class="badge-label">被动</span>
+              <span class="badge-label">{{ t('UICareer_Beidong') }}</span>
               <span class="badge-rate">{{ radarPoints.left }}%</span>
             </div>
             <div class="radar-badge radar-badge-right">
-              <span class="badge-label">落后</span>
+              <span class="badge-label">{{ t('UICareer_Luohou') }}</span>
               <span class="badge-rate">{{ radarPoints.right }}%</span>
             </div>
             <div class="radar-badge radar-badge-bottom">
-              <span class="badge-label">领先</span>
+              <span class="badge-label">{{ t('UICareer_Lingxian') }}</span>
               <span class="badge-rate">{{ radarPoints.bottom }}%</span>
             </div>
           </div>
@@ -1220,7 +1220,7 @@ onBeforeUnmount(() => {
           </div>
         </section>
 
-        <section class="deck-title">近三个月内玩牌数据统计</section>
+        <section class="deck-title">{{ t('UICareer_Month3Count') }}</section>
 
         <div class="deck-table-wrap">
           <GameTable
@@ -1230,7 +1230,7 @@ onBeforeUnmount(() => {
             header-variant="ghost"
             @sort-change="onDeckSort"
           >
-            <GameTableColumn prop="cards" label="牌型" :flex="1.5" align="center">
+            <GameTableColumn prop="cards" :label="t('UIMine_RecordDetailForNormal_BYh6JqX4')" :flex="1.5" align="center">
               <template #default="{ row }">
                 <div class="deck-hand-cell">
                   <PokerCard :rank="row.cards[0].rank" :suit="row.cards[0].suit" size="0.62rem" />
@@ -1238,16 +1238,16 @@ onBeforeUnmount(() => {
                 </div>
               </template>
             </GameTableColumn>
-            <GameTableColumn prop="winCount" label="获胜" :flex="0.8" />
-            <GameTableColumn prop="totalHands" label="总手数" :flex="1" :sortable="true" />
-            <GameTableColumn prop="winRate" label="胜率" :flex="0.8" :sortable="true" />
-            <GameTableColumn prop="profit" label="盈利" :flex="1.5" :sortable="true">
+            <GameTableColumn prop="winCount" :label="t('UICareer_HuoWin')" :flex="0.8" />
+            <GameTableColumn prop="totalHands" :label="t('UITexasGameEnding_allhand')" :flex="1" :sortable="true" />
+            <GameTableColumn prop="winRate" :label="t('UITexasInfo_winrate')" :flex="0.8" :sortable="true" />
+            <GameTableColumn prop="profit" :label="t('UIClub_GainNum')" :flex="1.5" :sortable="true">
               <template #default="{ row }">
                 <span :class="profitClass(row.profit)">{{ formatProfit(row.profit) }}</span>
               </template>
             </GameTableColumn>
           </GameTable>
-          <div v-if="!loading && sortedDeckRows.length === 0" class="table-empty">暂无数据</div>
+          <div v-if="!loading && sortedDeckRows.length === 0" class="table-empty">{{ t('UIClub_FundDetail_xYlV8VBZ') }}</div>
         </div>
       </template>
     </div>

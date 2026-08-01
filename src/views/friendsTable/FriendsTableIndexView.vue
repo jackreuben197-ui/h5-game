@@ -24,7 +24,7 @@ import iconSquid from '@/assets/icons/table_icon_squid.png'
 import iconCritical from '@/assets/icons/table_icon_critical.png'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import { showGameToast } from '@/components/Toast'
-import { t, getLocale } from '@/i18n'
+import { t } from '@/i18n'
 import { enterTable } from '@/bridge/core'
 import type { EnterTablePayload } from '@bridge-protocol'
 import LoginSession from '@/session/loginSession'
@@ -54,14 +54,13 @@ const inviteCodeValue = computed(() => inviteCode.value.join(''))
 const scrollContentRef = ref<HTMLElement | null>(null)
 
 const activeFilter = ref('all')
-const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
 
 const filters = [
-  { key: 'all', labelEn: 'All', labelCn: '全部' },
-  { key: 'nlh', labelEn: "Hold'em", labelCn: '德州' },
-  { key: 'plo', labelEn: 'Omaha', labelCn: '奥马哈' },
-  { key: 'short', labelEn: '6+', labelCn: '6+' },
-  // { key: 'mahjong', labelEn: 'Mahjong', labelCn: '麻将' },
+  { key: 'all', label: t('UIMatch_GtO8YEdb') },
+  { key: 'nlh', label: t('adaptation10022') },
+  { key: 'plo', label: t('adaptation10009') },
+  { key: 'short', label: '6+' },
+  // { key: 'mahjong', label: '麻将' },
 ]
 
 interface FriendRoomListItem {
@@ -160,11 +159,11 @@ function isShortPokerType(pokerType: unknown): boolean {
 }
 
 function getGameTypeName(gameType: number, pokerType?: number): string {
-  if (isShortPokerType(pokerType)) return '短牌'
-  if (gameType === 6) return '麻将'
-  if (gameType === 0) return '德州'
-  if (gameType >= 1 && gameType <= 3) return '奥马哈'
-  return '德州'
+  if (isShortPokerType(pokerType)) return t('PokerType_2')
+  if (gameType === 6) return t('Mahjong_Name')
+  if (gameType === 0) return t('adaptation10022')
+  if (gameType >= 1 && gameType <= 3) return t('adaptation10009')
+  return t('adaptation10022')
 }
 
 function getGameTypeIcon(gameType: number, pokerType?: number): string {
@@ -319,12 +318,12 @@ async function joinByInvitationCode(code: string): Promise<void> {
 
     // 对齐当前 H5 能力：仅处理普通朋友桌；SNG/MTT 先给出提示。
     if (!normalRoom) {
-      showGameToast('该邀请码对应赛事暂不支持在 H5 进入')
+      showGameToast(t('UIFriendsTable_Code') + " H5 " + t('UICopyFriendRoomEnterRoom'))
       return
     }
 
     if (Number(normalRoom.private_room) === 1) {
-      showGameToast('私密房间请在客户端输入密码进入')
+      showGameToast(t('UIFriendsTable_CodeEnter'))
       return
     }
 
@@ -338,7 +337,7 @@ async function joinByInvitationCode(code: string): Promise<void> {
     keypadOpen.value = false
     syncInviteCode('')
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加入牌局失败'
+    const message = error instanceof Error ? error.message : t('UIFriendsTable_JoinTableGameFail')
     showGameToast(message)
   } finally {
     joinLoading.value = false
@@ -362,11 +361,11 @@ async function onEnterRoom(room: FriendRoomListItem): Promise<void> {
 
   const status = toSafeNumber(room.status) as RoomStatus
   if (status === 3) {
-    showGameToast('该牌桌已被强制关闭')
+    showGameToast(t('UIFriendsTable_TableDone'))
     return
   }
   if (status === 5) {
-    showGameToast('该牌桌已关闭')
+    showGameToast(t('UIFriendsTable_TableDone2'))
     return
   }
 
@@ -379,12 +378,12 @@ async function onEnterRoom(room: FriendRoomListItem): Promise<void> {
 
     const rid = Number(room.rid)
     if (!Number.isFinite(rid) || rid <= 0) {
-      showGameToast('房间信息异常')
+      showGameToast(t('UIFriendsTable_InfoError'))
       return
     }
 
     if (Number(room.private_room) === 1) {
-      showGameToast('私密房间请通过邀请码进入')
+      showGameToast(t('UIFriendsTable_CodeEnter2'))
       return
     }
 
@@ -555,14 +554,14 @@ watch(
   <div class="friends-table-page">
     <!-- 顶部标题栏 -->
     <div class="title-bar">
-      <div class="title">{{ localized('Friend Tables', '朋友桌') }}</div>
+      <div class="title">{{ t('UIMessage_Default') }}</div>
       <div class="currency-info" @click="goToMineShop">
         <div class="icon-diamond">
-          <img :src="iconDiamond" alt="钻石" />
+          <img :src="iconDiamond" :alt="t('UIMine_VIP_diamond')" />
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" alt="充值" />
+          <img :src="iconAdd" :alt="t('UIMine_WalletAdd_EjPOTlsz')" />
         </div>
       </div>
     </div>
@@ -572,10 +571,8 @@ watch(
       <div class="main-content">
         <!-- 加入牌局 -->
         <div class="section join-section">
-          <div class="section-title">{{ localized('Join Table', '加入牌局') }}</div>
-          <div class="section-subtitle">
-            {{ localized('Enter an invite code to play with friends', '输入邀请码，和朋友一起切磋') }}
-          </div>
+          <div class="section-title">{{ t('UIFriendsTable_JoinTableGame') }}</div>
+          <div class="section-subtitle">{{ t('UIDialogInvitationCodeTitle') }}，{{ t('UIFriendsTable_And') }}</div>
           <div class="invite-inputs" @click="onInputCode">
             <div v-for="(digit, index) in inviteCode" :key="index" class="invite-input-wrap">
               <span class="invite-digit">{{ digit }}</span>
@@ -584,14 +581,14 @@ watch(
 
           <button class="action-btn" @click="handleJoinTable">
             <van-loading v-if="joinLoading" />
-            <span v-else>{{ localized('Join Now', '立即加入') }}</span>
+            <span v-else>{{ t('UIFriendsTable_Join') }}</span>
           </button>
         </div>
 
         <!-- 快速组局 -->
         <div class="section create-section">
-          <div class="section-title">{{ localized('Quick Game', '快速组局') }}</div>
-          <button class="action-btn" @click="onCreateRoom">{{ localized('Create Now', '开始创建') }}</button>
+          <div class="section-title">{{ t('UIFriendsTable_Round') }}</div>
+          <button class="action-btn" @click="onCreateRoom">{{ t('UIFriendsTable_Text') }}</button>
         </div>
       </div>
 
@@ -600,10 +597,8 @@ watch(
         <div class="table-header">
           <div class="table-header-line"></div>
           <div class="table-header-center">
-            <div class="table-header-title">{{ localized('Active Tables', '当前牌桌') }}</div>
-            <div class="table-header-sub">
-              {{ localized('Currently available tables', '显示目前有效的牌桌') }}
-            </div>
+            <div class="table-header-title">{{ t('UIFriendsTable_CurrentTable') }}</div>
+            <div class="table-header-sub">{{ t('UIFriendsTable_OfTable') }}</div>
           </div>
           <div class="table-header-line"></div>
         </div>
@@ -617,7 +612,7 @@ watch(
             :class="{ active: activeFilter === filter.key }"
             @click="activeFilter = filter.key"
           >
-            {{ localized(filter.labelEn, filter.labelCn) }}
+            {{ filter.label }}
           </div>
         </div>
 
@@ -664,7 +659,7 @@ watch(
                     :src="item.src"
                     :alt="item.alt"
                   />
-                  <span v-if="isParticipated(room)" class="participated">{{ localized('Joined', '参与过') }}</span>
+                  <span v-if="isParticipated(room)" class="participated">{{ t('UIFriendsTable_Text3') }}</span>
                 </div>
               </div>
             </div>
@@ -680,7 +675,7 @@ watch(
 
           <!-- 空状态 -->
           <div v-if="filteredRooms.length === 0 && !loading" class="empty-state">
-            <div class="empty-text">{{ localized('No tables', '暂无牌桌') }}</div>
+            <div class="empty-text">{{ t('UIFriendsTable_NoTable') }}</div>
           </div>
         </div>
       </div>
@@ -693,7 +688,7 @@ watch(
       :show-input-area="false"
       :show-mask="false"
       :max="9999999"
-      confirm-text="加入"
+      :confirm-text="t('UIClub_RoomJoin')"
       @close="keypadOpen = false"
       @key-press="onKeypadKeyPress"
       @submit="handleJoinTable"

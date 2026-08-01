@@ -229,7 +229,7 @@ async function handleTableClick(room: RoomRecord): Promise<void> {
       // 对齐 Cocos ProcedureEnterLobby：进入大厅阶段同步 websocket 端口。
       wsPort = await LoginSession.EnsureWS()
     } catch (error) {
-      const message = error instanceof Error ? error.message : '获取 websocket 端口失败'
+      const message = error instanceof Error ? error.message : t('UIClub_Fetch') + " websocket " + t('UIClub_Fail3')
       showFailToast(message)
       return
     }
@@ -324,7 +324,7 @@ function handleBack() {
 function handleOpenCustomerService(): void {
   const clubId = selectedClubId.value
   if (clubId <= 0) {
-    showFailToast('当前俱乐部信息无效')
+    showFailToast(t('UIClub_CurrentClubNo'))
     return
   }
 

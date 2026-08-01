@@ -201,7 +201,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
   const durationMultiple = getHalfHourMultiple()
   const createPrice = getConfigPrice(createConfig, sb)
   details.push({
-    label: '创建牌桌',
+    label: t('UIGuild_CreateTable'),
     unitOrigin: createPrice.originPrice,
     unitCurrent: createPrice.discountPrice,
     multiple: durationMultiple,
@@ -219,7 +219,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
     const banPrice = getConfigPrice(banConfig, sb)
     const banMultiple = getBanMultiple(antiCheatType)
     details.push({
-      label: '防作弊',
+      label: t('UITable_Text4'),
       unitOrigin: banPrice.originPrice,
       unitCurrent: banPrice.discountPrice,
       multiple: banMultiple,
@@ -236,7 +236,7 @@ const feeDetails = computed<FeeDetailItem[]>(() => {
     const chatConfig = findDiamondConfig(DIAMOND_CONFIG_TYPE.CHAT, chatTypeExt)
     const chatPrice = getConfigPrice(chatConfig, sb)
     details.push({
-      label: '聊天消耗',
+      label: t('UITable_Text5'),
       unitOrigin: chatPrice.originPrice,
       unitCurrent: chatPrice.discountPrice,
       multiple: 1,
@@ -268,12 +268,12 @@ const createFeeTip = computed<string>(() => {
   const lines = feeDetails.value.map((item) => {
     const unitPart = `${formatFeeCount(item.unitCurrent)} x ${item.multiple}`
     if (item.totalCurrent <= 0) {
-      return `${item.label}: 免费`
+      return (item.label) + ": " + t('UIChatFree')
     }
     if (item.isDiscount && item.totalOrigin > item.totalCurrent) {
-      return `${item.label}: ${unitPart} = ${formatFeeCount(
+      return (item.label) + ": " + (unitPart) + " = " + (formatFeeCount(
         item.totalCurrent,
-      )} (原价${formatFeeCount(item.totalOrigin)})`
+      )) + " (" + t('UIShoppingActiveNromal') + (formatFeeCount(item.totalOrigin)) + ")"
     }
     return `${item.label}: ${unitPart} = ${formatFeeCount(item.totalCurrent)}`
   })
@@ -309,7 +309,7 @@ function syncRouteParamsToFormState(): void {
   if (!formState.name) {
     const nickname = gameStore.loginNickname || gameStore.loginAccount || ''
     if (nickname) {
-      formState.name = `${nickname}的牌桌`
+      formState.name = (nickname) + t('UITable_OfTable')
     }
   }
 }
@@ -484,17 +484,17 @@ async function onConfirmSaveTemplate() {
   templateDialog.show = false
   try {
     const res = await postOrgCreateTemplateApi({
-      name: templateDialog.name.trim() || '自定义模板',
+      name: templateDialog.name.trim() || t('UITable_Text6'),
       room_config: buildRoomConfigPayload(formState),
     })
     if (res.code === 0) {
-      showGameToast('保存成功')
+      showGameToast(t('UIClub_SaveSuccess'))
       void quickCreateRef.value?.refreshTemplates()
     } else {
-      showFailToast(res.message || '保存失败')
+      showFailToast(res.message || t('UIClub_SaveFail'))
     }
   } catch {
-    showFailToast('保存失败')
+    showFailToast(t('UIClub_SaveFail'))
   } finally {
     isSubmitting.value = false
   }
@@ -510,20 +510,20 @@ async function onCreateTable() {
   const isFriendsTable = currentOriginType.value === 4
   try {
     const payload = {
-      name: formState.name || '自定义牌桌',
+      name: formState.name || t('UITable_Table'),
       room_config: buildRoomConfigPayload(formState),
     }
     const res = isFriendsTable
       ? await postOrgRoomConfigCreateApi({ ...payload, standard: false })
       : await postOrgRoomClubCreateApi(payload)
     if (res.code === 0) {
-      showGameToast('创建成功')
+      showGameToast(t('UIClub_CreateSuccess'))
       await router.replace({ name: createReturnRouteName.value })
     } else {
-      showFailToast(res.message || '创建失败')
+      showFailToast(res.message || t('UIClub_Fail'))
     }
   } catch {
-    showFailToast('创建失败')
+    showFailToast(t('UIClub_Fail'))
   } finally {
     isSubmitting.value = false
   }
@@ -539,13 +539,13 @@ async function onCreateTable() {
           :class="['header-tab', { 'header-tab--active': activeTab === 'quick' }]"
           @click="activeTab = 'quick'"
         >
-          一键开桌
+          {{ t('UIQuickCreateTable') }}
         </button>
         <button
           :class="['header-tab', { 'header-tab--active': activeTab === 'pro' }]"
           @click="activeTab = 'pro'"
         >
-          专业参数
+          {{ t('UITable_Text3') }}
         </button>
       </div>
     </HeaderBack>
@@ -559,12 +559,12 @@ async function onCreateTable() {
     <div v-show="activeTab === 'pro'" class="create-table-form">
       <!-- Table name row -->
       <div class="table-name-row">
-        <span class="table-name__label">牌局名称</span>
+        <span class="table-name__label">{{ t('UIClub_RoomCreat_0HvQkjkd') }}</span>
         <input
           v-model="formState.name"
           class="table-name__input"
           type="text"
-          placeholder="德州/短牌/奥马哈"
+          :placeholder="t('adaptation10022') + '/' + t('PokerType_2') + '/' + t('adaptation10009')"
           :maxlength="20"
         />
         <span class="table-name__count">{{ formState.name.length }}/20</span>
@@ -617,7 +617,7 @@ async function onCreateTable() {
       <div class="bottom-action-bar">
         <div class="fee-info">
           <div class="fee-row">
-            <span class="fee-label">消耗:</span>
+            <span class="fee-label">{{ t('UIClub_FundRecharge_9jO4mlS6') }}:</span>
             <div v-if="createFee.isDiscount" class="fee-value-wrap">
               <img :src="icDiamondBalance" class="fee-diamond-icon" alt="" />
               <span class="fee-original">{{ createFee.originalPrice.toLocaleString() }}</span>
@@ -629,7 +629,7 @@ async function onCreateTable() {
             <FieldTip :tip="createFeeTip" />
           </div>
           <div class="fee-row">
-            <span class="fee-label">余额:</span>
+            <span class="fee-label">{{ t('UIClub_CreateRoom31') }}:</span>
             <img :src="icDiamondBalance" class="fee-diamond-icon" alt="" />
             <span class="fee-balance">{{ clubDiamondBalance.toLocaleString() }}</span>
           </div>
@@ -640,14 +640,14 @@ async function onCreateTable() {
             :disabled="isSubmitting"
             @click="onSaveTemplate"
           >
-            保存模板
+            {{ t('UITable_Save') }}
           </button>
           <button
             class="action-btn action-btn--create"
             :disabled="isSubmitting"
             @click="onCreateTable"
           >
-            立即创建
+            {{ t('UICreateNow') }}
           </button>
         </div>
       </div>

@@ -998,13 +998,13 @@ onMounted(async () => {
 
 <template>
   <div class="page-shell club-detail-bg" :style="backgroundStyle">
-    <HeaderBack :title="'俱乐部管理'" />
+    <HeaderBack :title="t('UIClub_ClubManager')" />
 
     <div v-loading="loading" class="club-detail">
       <section class="club-header-card">
         <div class="club-header-main">
           <div class="club-avatar-wrap">
-            <img class="club-avatar" :src="displayClub?.logo || imgClubCover" alt="俱乐部头像" />
+            <img class="club-avatar" :src="displayClub?.logo || imgClubCover" :alt="t('UIClub_ClubAvatar2')" />
             <ImageUploadSheet
               v-if="isFounder"
               :model-value="displayClub?.logo"
@@ -1014,7 +1014,7 @@ onMounted(async () => {
                 <button
                   type="button"
                   class="avatar-edit-btn"
-                  aria-label="修改俱乐部头像"
+                  :aria-label="t('UIClub_ClubAvatar3')"
                   @click="open"
                 >
                   <img
@@ -1036,7 +1036,7 @@ onMounted(async () => {
 
           <div class="club-summary">
             <button type="button" class="club-name-edit" @click="goEditName">
-              <h1 class="club-name">{{ displayClub?.club_name || '俱乐部名称' }}</h1>
+              <h1 class="club-name">{{ displayClub?.club_name || t('UIClub_Creat_2LvGNmS7') }}</h1>
             </button>
             <div class="club-id-row">
               <span class="id-tag">ID</span>
@@ -1054,7 +1054,7 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="club-size-pill" aria-label="俱乐部人数">
+        <div class="club-size-pill" :aria-label="t('UIGuild_Member')">
           <span class="size-text">
             {{ clubMemberCount }}/{{ displayClub?.upper_limit }}
           </span>
@@ -1080,12 +1080,12 @@ onMounted(async () => {
       </section>
 
       <section class="intro-card">
-        <span>俱乐部简介</span>
+        <span>{{ t('UIClub_Creat_ZizEgnjo') }}</span>
         <button
           v-if="isFounder"
           type="button"
           class="intro-edit"
-          aria-label="编辑俱乐部简介"
+          :aria-label="t('UIClub_EditClubDescri')"
           @click="goEditDescription"
         >
           <span class="edit-pen">
@@ -1134,7 +1134,7 @@ onMounted(async () => {
               <img
                 class="mini-avatar"
                 :src="displayClub?.club_creator_avatar || imgClubCover"
-                alt="创始人头像"
+                :alt="t('UIClub_FounderAvatar')"
               />
             </template>
 
@@ -1155,7 +1155,7 @@ onMounted(async () => {
                   :disabled="tribeApplyStatusLoading"
                   @click.stop="onTribeAction"
                 >
-                  {{ tribeApplying ? '申请中' : '申请加入' }}
+                  {{ tribeApplying ? t('UIApplying') : t('UIGuild_ApplyJoin') }}
                 </button>
                 <span v-else class="muted-text">--</span>
               </template>
@@ -1189,7 +1189,7 @@ onMounted(async () => {
       </section>
 
       <section v-if="isFounder" class="danger-zone">
-        <PrimaryButton text="删除俱乐部" class="danger-btn" @click="onDeleteClub" />
+        <PrimaryButton :text="t('UIClub_DeleteClub')" class="danger-btn" @click="onDeleteClub" />
       </section>
     </div>
 
@@ -1204,11 +1204,11 @@ onMounted(async () => {
     >
       <template #title>
         <header class="invite-modal__head">
-          <h3>邀请链接</h3>
+          <h3>{{ t('UIClub_InviteLink') }}</h3>
           <button
             type="button"
             class="invite-modal__close"
-            aria-label="关闭"
+            :aria-label="t('UIBackDialog_ticketsbtnClose')"
             @click="closeInvitePopup"
           >
             <img :src="imgModalClose" alt="" aria-hidden="true" />
@@ -1218,9 +1218,9 @@ onMounted(async () => {
 
       <section ref="inviteModalRef" class="invite-modal">
         <div class="invite-modal__body">
-          <p class="invite-modal__subtitle">加入小鱼扑克，开启你的竞技之旅</p>
+          <p class="invite-modal__subtitle">{{ t('UIClub_Of4') }}</p>
           <div class="invite-modal__cover-wrap">
-            <img class="invite-modal__cover" :src="imgInviteCover" alt="邀请海报" />
+            <img class="invite-modal__cover" :src="imgInviteCover" :alt="t('UIClub_Text102')" />
             <!-- <img class="invite-modal__cover-subtract" :src="imgInviteSubtract" alt="" aria-hidden="true" /> -->
           </div>
           <div class="invite-modal__club-info">
@@ -1238,13 +1238,13 @@ onMounted(async () => {
             v-if="imgInviteQr"
             class="invite-modal__qr"
             :src="imgInviteQr"
-            alt="扫码加入俱乐部"
+            :alt="t('UIClub_CodeJoinClub')"
           />
-          <div v-else class="invite-modal__qr-placeholder" aria-label="二维码生成中">
+          <div v-else class="invite-modal__qr-placeholder" :aria-label="t('UIClub_Code9')">
             <span></span>
           </div>
         </div>
-        <p class="invite-modal__qr-tip">扫描二维码，一键开启</p>
+        <p class="invite-modal__qr-tip">{{ t('UIClub_CodeJoin') }}，{{ t('UIClub_Text103') }}</p>
 
         <div id="invite-modal-actions" class="invite-modal__actions">
           <button
@@ -1253,7 +1253,7 @@ onMounted(async () => {
             :disabled="savingInviteQr"
             @click="saveInviteQr"
           >
-            {{ savingInviteQr ? '保存中...' : '保存二维码' }}
+            {{ savingInviteQr ? t('UIClub_Save3') + '...' : t('UIMine_Setting115') }}
           </button>
           <button
             type="button"
@@ -1261,7 +1261,7 @@ onMounted(async () => {
             :disabled="savingInviteShare"
             @click="saveInviteShare"
           >
-            {{ savingInviteShare ? '保存中...' : '保存图片' }}
+            {{ savingInviteShare ? t('UIClub_Save3') + '...' : t('UIClub_Save4') }}
           </button>
         </div>
       </section>
@@ -1269,10 +1269,10 @@ onMounted(async () => {
 
     <div v-if="showCopyPopup" class="club-modal-mask" @click="closeCopyPopup">
       <section class="copy-modal" @click.stop>
-        <p>申请复制俱乐部需要等待审核，是否现在提交申请</p>
+        <p>{{ t('UIClub_ApplyCopyClub') }}，{{ t('UIClub_SubmitApply') }}</p>
         <div class="copy-modal__actions">
-          <button type="button" class="modal-secondary-btn" @click="closeCopyPopup">取消</button>
-          <button type="button" class="modal-primary-btn" @click="submitCopyRequest">确定</button>
+          <button type="button" class="modal-secondary-btn" @click="closeCopyPopup">{{ t('adaptation10013') }}</button>
+          <button type="button" class="modal-primary-btn" @click="submitCopyRequest">{{ t('CommitOK') }}</button>
         </div>
       </section>
     </div>
@@ -1280,17 +1280,17 @@ onMounted(async () => {
     <GameDialog
       v-model:show="showTribeSearchPopup"
       class="tribe-search-dialog"
-      title="搜索联盟"
+      :title="t('UIClub_SearchUnion')"
       dialog-width="8.8rem"
       :show-cancel-button="true"
       :close-on-click-overlay="true"
-      cancel-button-text="取消"
-      :confirm-button-text="tribeApplySubmitting ? '搜索中' : '确认'"
+      :cancel-button-text="t('adaptation10013')"
+      :confirm-button-text="tribeApplySubmitting ? t('UIClub_Search') : t('UI_Recharge_confirm')"
       :confirm-button-disabled="tribeApplySubmitting"
       @confirm="submitTribeApply"
       @cancel="closeTribeSearchPopup"
     >
-      <div class="tribe-search-shell" aria-label="联盟搜索">
+      <div class="tribe-search-shell" :aria-label="t('UIClub_UnionSearch')">
         <label class="tribe-search-trigger" for="tribe-id-input">
           <img class="tribe-search-icon" :src="imgSearch" alt="" />
           <input
@@ -1301,7 +1301,7 @@ onMounted(async () => {
             inputmode="numeric"
             autocomplete="off"
             readonly
-            placeholder="请输入联盟ID"
+            :placeholder="t('UIClub_PleaseUnion') + 'ID'"
             @focus="openTribeIdKeypad"
             @click="openTribeIdKeypad"
           />
@@ -1314,15 +1314,15 @@ onMounted(async () => {
       dialog-width="8.454rem"
       :show-cancel-button="true"
       :close-on-click-overlay="true"
-      cancel-button-text="取消"
-      :confirm-button-text="tribeApplySubmitting ? '提交中' : '加入'"
+      :cancel-button-text="t('adaptation10013')"
+      :confirm-button-text="tribeApplySubmitting ? t('UIClub_Submitting') : t('UIClub_RoomJoin')"
       :confirm-button-disabled="tribeApplySubmitting"
       @confirm="confirmTribeApply"
       @cancel="closeTribeApplyPopup"
     >
       <div class="join-modal-card">
-        <img class="join-modal-logo" :src="searchedTribe?.logo || imgClubCover" alt="联盟头像" />
-        <h3 class="join-modal-name">{{ searchedTribe?.name || '联盟名称' }}</h3>
+        <img class="join-modal-logo" :src="searchedTribe?.logo || imgClubCover" :alt="t('UIClub_UnionAvatar')" />
+        <h3 class="join-modal-name">{{ searchedTribe?.name || t('UIClub_TribeCreat_0HvQpjkd') }}</h3>
         <p class="join-modal-id-row">
           <span class="join-modal-id-tag">ID</span>
           <span>{{ searchedTribe?.randomId || '--' }}</span>
@@ -1335,7 +1335,7 @@ onMounted(async () => {
             type="text"
             autocomplete="off"
             maxlength="40"
-            placeholder="请输入联系方式"
+            :placeholder="t('UIClub_Please')"
             @input="onTribeContactInput"
           />
         </div>
@@ -1348,10 +1348,10 @@ onMounted(async () => {
       @click="closeCancelTribeApplyPopup"
     >
       <section class="copy-modal" @click.stop>
-        <p>当前申请正在审核中，是否取消申请？</p>
+        <p>{{ t('UIClub_CurrentApply') }}，{{ t('UIClub_CancelApply') }}？</p>
         <div class="copy-modal__actions">
           <button type="button" class="modal-secondary-btn" @click="closeCancelTribeApplyPopup">
-            返回
+            {{ t('UIHappyShop_Return') }}
           </button>
           <button
             type="button"
@@ -1359,22 +1359,22 @@ onMounted(async () => {
             :disabled="cancelTribeApplyLoading"
             @click="cancelTribeApply"
           >
-            {{ cancelTribeApplyLoading ? '取消中...' : '取消申请' }}
+            {{ cancelTribeApplyLoading ? t('UIClub_Cancel') + "..." : t('UIGuild_CancleApplyJoin') }}
           </button>
         </div>
       </section>
     </div>
     <GameDialog
       v-model:show="showDeleteClubPopup"
-      title="退出登录"
+      :title="t('UIMine_Setting114')"
       :show-cancel-button="true"
       :close-on-click-overlay="true"
-      confirm-button-text="确认删除"
-      cancel-button-text="取消"
+      :confirm-button-text="t('UIClub_ConfirmDelete')"
+      :cancel-button-text="t('adaptation10013')"
       @confirm="confirmDeleteClub"
       @cancel="closeDeleteClubPopup"
     >
-      <div class="logout-confirm-text">删除俱乐部后无法恢复，是否确认删除？</div>
+      <div class="logout-confirm-text">{{ t('UIClub_DeleteClubNo') }}，{{ t('UIClub_ConfirmDelete2') }}？</div>
     </GameDialog>
 
     <NumericKeypad
@@ -1385,8 +1385,8 @@ onMounted(async () => {
       :initial-value="tribeApplyIdInput"
       :show-input-area="true"
       :allow-leading-zero="true"
-      title="联盟ID"
-      confirm-text="确定"
+      :title="t('UIClub_Info_rUC1C7lI') + 'ID'"
+      :confirm-text="t('CommitOK')"
       @close="onTribeIdKeypadClose"
       @submit="onTribeIdKeypadSubmit"
       @key-press="onTribeIdKeypadKeyPress"

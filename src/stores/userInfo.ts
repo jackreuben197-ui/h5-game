@@ -116,7 +116,11 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
           (item) => item.invitation_code?.toLowerCase() === subDomainInviteCode.toLowerCase(),
         )
         if (targetClub) {
-          this.channelDefaultClub = null
+          // 登录后以用户俱乐部列表中的渠道俱乐部刷新游客态数据。
+          // 不能清成 null：ensureChannelDefaultClub 可能已标记 loaded，随后会一直返回 null，
+          // 导致首页拿不到渠道 club_id，从而跳过 /misc/banner/list。
+          this.channelDefaultClub = targetClub
+          channelDefaultClubLoaded = true
           this.currentClubId = normalizeClubId(targetClub.club_id)
           return
         } else {

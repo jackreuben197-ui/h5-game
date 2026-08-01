@@ -185,7 +185,7 @@ async function onConfirm(): Promise<void> {
 <template>
   <div class="page-shell club-edit-name-bg" :style="backgroundStyle">
     <div class="club-edit-name">
-      <HeaderBack :title="'修改名称'" />
+      <HeaderBack :title="t('UIClub_Name2')" />
 
       <section class="editor-block">
         <div class="hint-row">

@@ -46,9 +46,9 @@ const clubNameText = computed<string>(
     (userInfoStore.channelDefaultClub?.club_name || '')
       .replace(/[(（]\s*disband\s*[)）]?/gi, '')
       .trim() ||
-    '俱乐部',
+    t('UILobby_Menu_menu_btn_club'),
 )
-const noticeText = '欢迎来到德州扑克，登录后体验更多精彩内容'
+const noticeText = t('UIGuest_Text6') + '，' + t('UIGuest_Text7')
 const clubGoldText = '0.00'
 const balanceVisible = true
 const pokerTablesText = '0'
@@ -131,9 +131,9 @@ onMounted(() => {
       -->
       <div class="top-bar__actions">
         <button class="top-bar__btn top-bar__btn--register" @click="notifyNotLoginRegister">
-          {{ localized('Register', '注册') }}
+          {{ t('UILogin_TitleRegister') }}
         </button>
-        <button class="top-bar__btn top-bar__btn--login" @click="notifyNotLogin">{{ localized('Login', '登录') }}</button>
+        <button class="top-bar__btn top-bar__btn--login" @click="notifyNotLogin">{{ t('UIClub_Mlist_denglu') }}</button>
       </div>
     </div>
     <!-- 1. 顶部俱乐部介绍轮播图 -->
@@ -152,7 +152,7 @@ onMounted(() => {
 
     <!-- 2. 公告栏 -->
     <div class="notice-bar">
-      <img class="notice-icon" src="@/assets/icons/icon_notice.svg" alt="公告" />
+      <img class="notice-icon" src="@/assets/icons/icon_notice.svg" :alt="t('Serverbulletin')" />
       <div class="notice-marquee">
         <span class="notice-label mr-4"> {{ $txt('Serverbulletin') }}: </span>
         <div class="notice-scroll">
@@ -171,12 +171,12 @@ onMounted(() => {
           <img
             class="icon-sm icon-eye"
             src="@/assets/icons/icon_eye_open.svg"
-            alt="显示/隐藏"
+            :alt="t('UIGuest_Text2') + '/' + t('UIGuest_Text3')"
             @click="notifyNotLogin"
           />
         </div>
         <div class="club-balance-row">
-          <img class="icon-sm" src="@/assets/icons/diamondicon.svg" alt="余额" />
+          <img class="icon-sm" src="@/assets/icons/diamondicon.svg" :alt="t('UIClub_CreateRoom31')" />
           <span class="balance-amount">
             {{ balanceVisible ? clubGoldText : '****' }}
           </span>
@@ -208,11 +208,11 @@ onMounted(() => {
           <span class="contact-label"> @game </span>
         </div>
         <div class="contact-item" @click="notifyNotLogin">
-          <img class="contact-icon" :src="iconService2" alt="邮箱" />
+          <img class="contact-icon" :src="iconService2" :alt="t('UISetting_SecurityBindEmailItem')" />
           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>
         <div class="contact-item" @click="notifyNotLogin">
-          <img class="contact-icon" :src="iconService3" alt="IM客服" />
+          <img class="contact-icon" :src="iconService3" :alt="'IM' + t('UIMineMain01')" />
           <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
         </div>
       </div>
@@ -220,7 +220,7 @@ onMounted(() => {
 
     <!-- 4. 游戏模块 -->
     <div class="section-header">
-      <span class="section-title">{{ localized('Game Center', '游戏中心') }}</span>
+      <span class="section-title">{{ t('UIGuest_Text4') }}</span>
     </div>
     <div class="game-center-scroll">
       <div class="game-center-track">
@@ -273,7 +273,7 @@ onMounted(() => {
         </div>
 
         <div class="game-scroll-card game-card-mahjong" @click="notifyNotLogin">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
+          <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" :alt="t('Mahjong_Name')" />
           <div class="zone-info">
             <div class="zone-header">
               <span class="zone-title"> {{ localized('Casino', '娱乐场') }} </span>
@@ -295,7 +295,7 @@ onMounted(() => {
 
     <!-- 5. 热门游戏 -->
     <div class="section-header">
-      <span class="section-title">{{ localized('Hot Games', '热门游戏') }}</span>
+      <span class="section-title">{{ t('UIGuest_Text5') }}</span>
     </div>
     <div class="coming-soon-scroll">
       <div class="coming-soon-track">

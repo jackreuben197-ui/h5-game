@@ -140,7 +140,7 @@ onMounted(() => {
   <div class="page-shell club-level-page" :style="backgroundStyle">
     <div class="club-level-bg" aria-hidden="true"></div>
     <div class="club-members">
-      <HeaderBack :title="'俱乐部等级'">
+      <HeaderBack :title="t('UIGuid_Level')">
         <template #right>
           <div class="club-level-diamond">
             <img :src="imgDiamond" :alt="t('UIMine_VIP_diamond')" />
@@ -151,13 +151,13 @@ onMounted(() => {
 
       <main v-loading="loading" class="club-level-main">
         <section class="club-medal">
-          <div><img class="club-medal__coin-bg" :src="imgMedal" alt="勋章" /></div>
+          <div><img class="club-medal__coin-bg" :src="imgMedal" :alt="t('UIClub_Text105')" /></div>
           <!-- <div class="club-medal__level-pill">{{ levelLabel }}</div> -->
         </section>
 
         <section class="club-upgrade-card">
           <p class="club-upgrade-card__date">
-            <span>有效日期至：</span
+            <span>{{ t('UIClub_Text106') }}：</span
             ><span class="club-upgrade-card__date--value">{{ levelExpireTime }}</span>
           </p>
 
@@ -186,22 +186,22 @@ onMounted(() => {
           </div>
 
           <div class="club-upgrade-cost">
-            <p>升级至{{ targetLevel }}级俱乐部需消耗钻石</p>
+            <p>{{ t('UIClub_Text107') }}{{ targetLevel }}{{ t('UIClub_Club5') }}</p>
             <div class="club-upgrade-cost__value">
               <span class="club-upgrade-cost__badge">
                 <img :src="imgLevelBadge" alt="" aria-hidden="true" />
                 <i>{{ targetLevel }}</i>
               </span>
               <span class="club-upgrade-cost__amount">{{ upgradeCost }}</span>
-              <img :src="imgDiamond" alt="钻石" />
+              <img :src="imgDiamond" :alt="t('UIMine_VIP_diamond')" />
             </div>
           </div>
 
           <div class="club-upgrade-card__desc">
             <p>{{ levelDesc }}</p>
             <p>
-              <span>有效期：</span
-              ><span class="club-upgrade-card__desc--value">{{ levelDuration }}天</span>
+              <span>{{ t('UIMineLimitTime') }}：</span
+              ><span class="club-upgrade-card__desc--value">{{ levelDuration }}{{ t('UIHappyShop_ActivityShopDay') }}</span>
             </p>
           </div>
         </section>

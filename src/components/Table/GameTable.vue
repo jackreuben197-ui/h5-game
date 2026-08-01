@@ -4,6 +4,7 @@ import GameTableHeader from './GameTableHeader.vue'
 import GameTableRow from './GameTableRow.vue'
 import { TABLE_INJECT_KEY } from './types'
 import type { ColumnConfig, SelectOption, SortOrder } from './types'
+import { t } from '@/i18n'
 
 interface DefaultSort {
   prop: string
@@ -184,7 +185,7 @@ export default { name: 'GameTable' }
           <van-loading size="0.4rem" color="var(--c-text-muted)" />
         </slot>
         <slot v-else-if="finished && data.length" name="finished">
-          <span class="game-table__finished-text">没有更多了</span>
+          <span class="game-table__finished-text">{{ t('UIClub_NoMore') }}</span>
         </slot>
       </div>
     </div>

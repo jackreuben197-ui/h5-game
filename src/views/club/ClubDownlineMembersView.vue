@@ -503,7 +503,7 @@ onMounted(async () => {
       <div class="members-wrap">
         <div v-for="member in members" :key="member.id" class="member-card">
           <div class="member-head">
-            <img class="member-avatar" :src="member.avatar" :alt="`${member.name}头像`" />
+            <img class="member-avatar" :src="member.avatar" :alt="(member.name) + t('UIMine_UserInfoSetting_btn_head')" />
             <div class="member-head-main">
               <p class="member-name">{{ member.name }}</p>
               <div class="member-id-row">

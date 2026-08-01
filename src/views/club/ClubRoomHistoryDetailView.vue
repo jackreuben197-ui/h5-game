@@ -221,7 +221,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell club-room-history-detail-bg" :style="backgroundStyle">
-    <HeaderBack :title="'数据详情'" />
+    <HeaderBack :title="t('UIGuildDataRecordsDetails')" />
     <div class="club-room-history-detail">
       <section class="meta-panel">
         <div class="meta-title-row">

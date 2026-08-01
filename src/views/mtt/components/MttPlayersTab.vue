@@ -145,7 +145,7 @@ function handleRowClick(row: Record<string, unknown>): void {
   }
 
   // TODO: Gameplay 联调后接入真正的观战/入桌流程
-  showToast(`准备进入牌桌 ${rid}`)
+  showToast(t('UIMTT_EnterTable') + " " + (rid))
 }
 
 function handleRefresh(): void {
@@ -169,13 +169,13 @@ watch(showHunterMode, (enabled) => {
     <!-- 排名 / 猎人榜切换 -->
     <div v-if="showHunterMode" class="mode-switch">
       <button :class="['mode-btn', { 'mode-btn--active': mode === 'rank' }]" @click="mode = 'rank'">
-        排名
+        {{ t('Ranking') }}
       </button>
       <button
         :class="['mode-btn', { 'mode-btn--active': mode === 'hunter' }]"
         @click="mode = 'hunter'"
       >
-        猎人排名
+        {{ t('Hunter_Rank') }}
       </button>
     </div>
 
@@ -213,7 +213,7 @@ watch(showHunterMode, (enabled) => {
       <GameTableColumn prop="name" :label="t('UITexasReport_player')" :flex="2" align="center">
         <template #default="{ row }">
           <div class="player-cell">
-            <img :src="row.avatar" class="player-avatar" alt="avatar" />
+            <!-- <img :src="row.avatar" class="player-avatar" alt="avatar" /> -->
             <span>{{ row.name }}</span>
           </div>
         </template>

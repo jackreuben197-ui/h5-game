@@ -484,8 +484,8 @@ onMounted(() => {
     </section>
 
     <section class="club-list">
-      <p v-if="loadingMyClubs" class="club-empty-text">{{ tl('Loading clubs...', '正在加载俱乐部...') }}</p>
-      <p v-else-if="!displayClubList.length" class="club-empty-text">{{ tl('No clubs yet — create one!', '暂无俱乐部，先去创建一个吧') }}</p>
+      <p v-if="loadingMyClubs" class="club-empty-text">{{ t('UIClub_LoadClub') }}...</p>
+      <p v-else-if="!displayClubList.length" class="club-empty-text">{{ t('UIClub_NoClub') }}，{{ t('UIClub_Text109') }}</p>
       <article
         v-for="club in displayClubList"
         :key="club.key"

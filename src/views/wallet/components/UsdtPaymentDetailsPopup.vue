@@ -90,10 +90,10 @@ onUnmounted(() => {
         <div class="card__inner">
           <!-- Header -->
           <div class="header">
-            <h2 class="header__title">确认付款</h2>
+            <h2 class="header__title">{{ t('UIMineMallUSDTShopPayDialogSurePay') }}</h2>
             <div class="header__info">
-              <p>汇率: {{ (rate * 100).toFixed(0) }}%</p>
-              <p>当前参考单价: 1联盟币=1USDT</p>
+              <p>{{ t('Wallet_Rate') }}: {{ (rate * 100).toFixed(0) }}%</p>
+              <p>{{ t('UIWallet_Current') }}: 1{{ t('UC') }}=1USDT</p>
             </div>
             <PopupCloseButton @close="emit('close')" />
           </div>
@@ -105,7 +105,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Payment Label -->
-          <h3 class="payment-label">付款金额</h3>
+          <h3 class="payment-label">{{ t('UIMineMallUSDTShopPayDialogPayGoldTip') }}</h3>
 
           <!-- Payment Section -->
           <div class="payment-section">
@@ -122,23 +122,23 @@ onUnmounted(() => {
 
             <!-- Address Section -->
             <div class="address-card">
-              <p class="address-card__title">复制钱包地址转币</p>
+              <p class="address-card__title">{{ t('UIMineMallUSDTShopPayDialogCopyAddress') }}</p>
               <div class="address-card__box">
-                <p class="address-card__label">支持支付地址支付</p>
+                <p class="address-card__label">{{ t('UIWallet_Text12') }}</p>
                 <p class="address-card__value">{{ orderData.usdt_address?.address }}</p>
               </div>
-              <button class="copy-btn" @click="onCopy">复制</button>
+              <button class="copy-btn" @click="onCopy">{{ t('sd_X7o0UdXC') }}</button>
             </div>
           </div>
 
           <!-- Hint -->
-          <p class="hint">提示：复制上方钱包地址转账完，或使用钱包扫描二维码完成付款</p>
+          <p class="hint">{{ t('UIGuild_TipsTitle') }}：{{ t('UIWallet_Copy') }}，{{ t('UIClub_OrCode') }}</p>
 
           <!-- Actions -->
           <div class="actions">
-            <button class="btn btn--cancel" @click="onCancel">取消订单</button>
+            <button class="btn btn--cancel" @click="onCancel">{{ t('UIWallet_Cancel') }}</button>
             <div class="btn btn--paying">
-              <span>支付中</span>
+              <span>{{ t('UIMineMallUSDTShopDiamondPay') }}</span>
               <span class="timer">{{ formattedTime }}</span>
             </div>
           </div>

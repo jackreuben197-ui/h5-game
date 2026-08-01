@@ -5,7 +5,7 @@ import iconAddDark from '@/assets/icons/icon_add.svg'
 import iconAddLight from '@/assets/icons/icon_add_light.svg'
 import { theme } from '@/utils/theme'
 import iconChip from '@/assets/icons/icon_chips.png'
-import { getLocale, t } from '@/i18n'
+import { t } from '@/i18n'
 import iconBoxClubT from '@/assets/icons/icon_club_data.png'
 import iconBoxFriendT from '@/assets/icons/icon_box_friend_t.png'
 import iconBoxDiamond from '@/assets/icons/icon_box_diamond.png'
@@ -27,7 +27,6 @@ const loginModalStore = useLoginModalStore()
 
 const iconAdd = computed(() => (theme.value === 'light' ? iconAddLight : iconAddDark))
 
-const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
 
 const boxList: BoxItem[] = [
   { key: 'club-career', icon: iconBoxClubT, text: 'PageMineClubCareer' },
@@ -40,7 +39,7 @@ const boxList: BoxItem[] = [
 ]
 
 const displayUser = {
-  nickname: '游客',
+  nickname: t('UIGuest_Text8'),
   userID: '-',
   avatar: defaultAvatar,
   diamond: 0,
@@ -62,11 +61,11 @@ function goToLogin(): void {
       <div class="title">{{ t('UIMine_title') }}</div>
       <div class="currency-info" @click="notifyNotLogin">
         <div class="icon-diamond">
-          <img :src="iconDiamond" alt="钻石" />
+          <img :src="iconDiamond" :alt="t('UIMine_VIP_diamond')" />
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" alt="充值" />
+          <img :src="iconAdd" :alt="t('UIMine_WalletAdd_EjPOTlsz')" />
         </div>
       </div>
     </div>
@@ -75,9 +74,9 @@ function goToLogin(): void {
         <div class="card-bg-innner">
           <div class="card-line1">
             <button class="left-avatar" type="button" @click="notifyNotLogin">
-              <img :src="displayUser.avatar" alt="头像" />
+              <img :src="displayUser.avatar" :alt="t('UIMine_UserInfoSetting_btn_head')" />
             </button>
-            <div class="right-box" @click="notifyNotLogin">{{ localized('Login/Register', '登录/注册') }}</div>
+            <div class="right-box" @click="notifyNotLogin">{{ t('UIClub_Mlist_denglu') }}/{{ t('UILogin_TitleRegister') }}</div>
           </div>
           <div class="card-line2">
             <div class="left-board">
@@ -93,7 +92,7 @@ function goToLogin(): void {
             <button class="button" type="button" @click="notifyNotLogin">
               <div class="text">{{ t('UIHappyShop_ActivityShop') }}</div>
               <div class="round-icon">
-                <img :src="iconShop" alt="我的商城" />
+                <img :src="iconShop" :alt="t('UIHappyShop_ActivityShop')" />
               </div>
             </button>
           </div>

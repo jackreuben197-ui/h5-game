@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useGameStore } from '@/stores/game'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { GameTable, GameTableColumn } from '@/components/Table'
 import defaultAvatar from '@/assets/icons/icon_mtt_avatar.png'
 import chipIcon from '@/assets/icons/icon_chips.png'
@@ -42,6 +43,7 @@ const matchId = computed(() => {
 
 // ── remote data ──────────────────────────────────────────────────────────────
 const gameStore = useGameStore()
+const userInfoStore = useUserInfoStore()
 const detailData = ref<RoomcenterMttDetailData | null>(null)
 const rankData = ref<RoomcenterMttRanksData | null>(null)
 const hunterData = ref<RoomcenterMttHunterRanksData | null>(null)
@@ -148,8 +150,11 @@ const nextBlindsLabel = computed(() => fmtBlinds(more.value?.nsb, more.value?.na
 
 // overview stats
 const prizePool = computed(() => fmtMoney(more.value?.prize_pool ?? realPrize.value?.award))
+const currentRankingUserId = computed(() =>
+  Number(userInfoStore.userInfo?.user?.un_id ?? gameStore.loginUserId ?? 0),
+)
 const myRank = computed(() => {
-  const myUrid = Number(gameStore.loginUserId)
+  const myUrid = currentRankingUserId.value
   if (!myUrid) return '-'
   const record = rankData.value?.records?.find((r) => Number(r.urid) === myUrid)
   if (!record?.rank) return '-'
@@ -385,7 +390,7 @@ const durationText = computed(() => {
   if (interval <= 0) return '-'
   const minutes = Math.floor(interval / 60)
   const text = t('UITexasReport_Text_MatchNextBlindTime', minutes)
-  return text === 'UITexasReport_Text_MatchNextBlindTime' ? `${minutes}分钟` : text
+  return text === 'UITexasReport_Text_MatchNextBlindTime' ? (minutes) + t('UIClubData_Text_time') : text
 })
 
 interface BlindRow {

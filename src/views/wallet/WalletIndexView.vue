@@ -259,7 +259,7 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
     usdt_address: {
       address: order.pay_type_address || '',
       qr_code: qrCode,
-      name: (order as any).pay_type_name || '客服撮合',
+      name: (order as any).pay_type_name || t('UIWallet_Text3'),
     },
   }
 
@@ -799,7 +799,7 @@ async function onUsdtSubmit(type: number) {
 
           <div class="pay-cta-wrapper">
             <PrimaryButton
-              :text="`立即支付 ${displayPayAmount}`"
+              :text="`${t('UIMineMallUSDTShop_PromptlyRechargeTip')} ${displayPayAmount}`"
               class="pay-cta"
               @click="onPayClick"
             />

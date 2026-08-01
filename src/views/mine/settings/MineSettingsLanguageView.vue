@@ -20,8 +20,8 @@ const backgroundStyle = computed(() => ({
 }))
 
 const options: LanguageOption[] = [
-  { key: 'cn', label: t('A') },
-  { key: 'zh', label: t('UIClub_Text72') },
+  { key: 'cn', label: '简体中文' },
+  { key: 'zh', label: '繁體中文' },
   { key: 'en', label: 'English' },
   { key: 'pt', label: 'Português' },
 ]

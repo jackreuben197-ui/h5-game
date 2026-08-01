@@ -732,11 +732,11 @@ onMounted(() => {
 
 <template>
   <div class="page-shell member-detail-bg" :style="backgroundStyle">
-    <HeaderBack :title="'成员详情'" />
+    <HeaderBack :title="t('UIClub_MlistInfo')" />
     <div class="member-detail-page">
       <section class="glass-card profile-card">
         <div class="profile-left">
-          <img class="avatar" :src="displayAvatar" :alt="`${displayName}头像`" />
+          <img class="avatar" :src="displayAvatar" :alt="(displayName) + t('UIMine_UserInfoSetting_btn_head')" />
           <div>
             <p class="name">{{ displayName }}</p>
             <p class="uid-line"><span>ID</span>{{ displayUid }}</p>

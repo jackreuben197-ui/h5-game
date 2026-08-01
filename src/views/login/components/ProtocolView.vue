@@ -52,9 +52,9 @@ const cacheKey = computed(() => `${articleType.value}:${toServerLang(localeCode.
 
 const pageTitle = computed(() => {
   if (articleType.value === PRIVACY_TYPE) {
-    return resolveI18nText('UIMine_Setting_UserSecret', '用户隐私协议')
+    return resolveI18nText('UIMine_Setting_UserSecret', t('UIMine_Setting_UserSecret'))
   }
-  return resolveI18nText('tc_5E0V3qlb', '用户协议')
+  return resolveI18nText('tc_5E0V3qlb', t('tc_5E0V3qlb'))
 })
 
 const backgroundStyle = computed(() => ({
@@ -227,7 +227,7 @@ function resolveArticleVersion(article: unknown): string {
     <div class="content-wrap">
       <section class="content-card">
         <p v-if="loading" class="status-line">
-          {{ resolveI18nText('SuperView2', '加载中...') }}
+          {{ resolveI18nText('SuperView2', t('SuperView2') + "...") }}
         </p>
 
         <template v-else-if="hasArticle">
@@ -236,10 +236,10 @@ function resolveArticleVersion(article: unknown): string {
 
         <div v-else class="status-wrap">
           <p class="status-line">
-            {{ errorMessage || resolveI18nText('MsgContentUnRead', '暂无内容') }}
+            {{ errorMessage || resolveI18nText('MsgContentUnRead', t('UIClub_No10')) }}
           </p>
           <button class="retry-btn" type="button" @click="loadArticle">
-            {{ resolveI18nText('MSG_LoadFail', '重新加载') }}
+            {{ resolveI18nText('MSG_LoadFail', t('UILogin_Load')) }}
           </button>
         </div>
       </section>

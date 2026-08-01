@@ -136,7 +136,7 @@ async function loadDetail(): Promise<void> {
       const res = await getRoomcenterMttDetailApi(matchId.value)
       if (res.code === 0 && res.data) detailData.value = res.data
     } catch (error) {
-      console.error('[MttDetailView] 刷新 MTT 详情失败', error)
+      console.error("[MttDetailView] " + t('UIPayWithdrawBtn01') + " MTT " + t('UIClub_DetailFail'), error)
     }
   })()
   detailRequest = request
@@ -282,13 +282,23 @@ function syncRankDataToDetail(ranks: RoomcenterMttRanksData): void {
 
 /** tab 切换时静默刷新对应子数据（已有数据则后台刷新，不展示 loading 占位） */
 function loadActiveTabData(): void {
-  if (activeTab.value === 'players') {
+  if (activeTab.value === 'status') {
+    refreshStatusAndRankData()
+  } else if (activeTab.value === 'players') {
     void loadPlayersData()
   } else if (activeTab.value === 'tables') {
     void loadRoomsData()
   } else if (activeTab.value === 'rewards') {
     void loadRewardsData()
   }
+}
+
+function refreshStatusData(): void {
+  void loadDetail()
+}
+
+function refreshStatusAndRankData(): void {
+  void Promise.all([loadDetail(), loadRankList()])
 }
 
 function getButtonStateRefreshTime(): number {
@@ -316,12 +326,12 @@ watch(activeTab, () => {
 })
 
 onMounted(() => {
-  void loadDetail()
-  // Cocos 返回 H5 时页面不会重新挂载，监听 h5Show 才能刷新淘汰后的重购状态。
+  refreshStatusAndRankData()
+  // Cocos 返回 H5 时页面不会重新挂载，同时刷新淘汰状态和最终排名。
   stopCocosMessageListener = subscribeCocosMessages(
     (message: BridgeMessage) => {
       if (message.action === BRIDGE_ACTION.H5_SHOW) {
-        void loadDetail()
+        refreshStatusAndRankData()
       }
     },
     { msgtype: BRIDGE_MSG_TYPE.H5 },
@@ -463,7 +473,12 @@ async function handleEnterTable(rid: number): Promise<void> {
 
     <!-- 内容区 -->
     <div class="mtt-detail-content">
-      <MttStatusTab v-if="activeTab === 'status'" :data="detailData" />
+      <MttStatusTab
+        v-if="activeTab === 'status'"
+        :data="detailData"
+        :rank-data="rankData"
+        @refresh="refreshStatusData"
+      />
       <MttPlayersTab
         v-else-if="activeTab === 'players'"
         :data="detailData"

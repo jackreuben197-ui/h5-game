@@ -748,16 +748,16 @@ onMounted(() => {
             </div>
           </template>
           <div v-else>
-            <div class="diamond-detail-title">被查看手牌收益</div>
+            <div class="diamond-detail-title">{{ t('UIBill_payLookHandCardTitle') }}</div>
             <div class="diamond-detail-item">
-              <span class="diamond-detail-label">累积收益</span>
+              <span class="diamond-detail-label">{{ t('UIClub_Income6') }}</span>
               <span>
                 {{ formatAmount(diamondProfit.all_profit) }}
                 <img :src="iconDiamond" alt="diamond" />
               </span>
             </div>
             <div class="diamond-detail-item">
-              <span class="diamond-detail-label">昨日收益</span>
+              <span class="diamond-detail-label">{{ t('UIBill_payLookHandCardTtdWin') }}</span>
               <span>
                 {{ formatAmount(diamondProfit.yestoday_profit) }}
                 <img :src="iconDiamond" alt="diamond" />
@@ -772,14 +772,14 @@ onMounted(() => {
           type="button"
           @click="toggleWalletDetails"
         >
-          {{ walletDetailExpanded ? '收起' : '查看明细' }}
+          {{ walletDetailExpanded ? t('UIMinePutAway') : t('UIClub_Text110') }}
           <van-icon class="arrow" :class="{ expanded: walletDetailExpanded }" name="arrow-down" />
         </button>
       </section>
 
       <section class="timeline" :class="{ 'timeline--friend': activeTab == 3 }">
-        <p v-if="loading" class="list-status">加载中...</p>
-        <p v-else-if="!flowCards.length" class="list-status">暂无账单记录</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
+        <p v-else-if="!flowCards.length" class="list-status">{{ t('UIClub_NoRecord5') }}</p>
         <article
           v-for="card in flowCards"
           :key="card.key"
@@ -841,7 +841,7 @@ onMounted(() => {
             <!-- 行 4：左 = (钻石)牌局ID / (非钻石&有变动后余额)余额值+icon / (可展开)总带入；右 = (可展开)总带出 / 日期 -->
             <div class="bill-row bill-row-4">
               <span class="row-left">
-                <template v-if="card.canExpand">总带入: {{ card.inAmount }}</template>
+                <template v-if="card.canExpand">{{ t('UITexasGameEnding_allBring') }}: {{ card.inAmount }}</template>
                 <template v-else-if="card.tab === 4">{{ card.diamondTableIdText }}</template>
                 <template v-else-if="card.balanceAfterShown">
                   <img :src="balanceIconFor(card.tab)" alt="" class="balance-icon" />
@@ -849,7 +849,7 @@ onMounted(() => {
                 </template>
               </span>
               <span class="row-right">
-                <template v-if="card.canExpand">总带出: {{ card.outAmount }}</template>
+                <template v-if="card.canExpand">{{ t('UIMineAllBringOut') }}: {{ card.outAmount }}</template>
                 <template v-else>{{ card.time }}</template>
               </span>
             </div>
@@ -870,9 +870,9 @@ onMounted(() => {
             </template>
           </div>
         </article>
-        <p v-if="!loading && loadingMore" class="list-status">加载更多中...</p>
+        <p v-if="!loading && loadingMore" class="list-status">{{ t('UIClub_LoadMore2') }}...</p>
         <p v-else-if="!loading && flowCards.length && !hasMore" class="list-status">
-          没有更多记录了
+          {{ t('UIClub_NoMoreRecord') }}
         </p>
       </section>
     </div>

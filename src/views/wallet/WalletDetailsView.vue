@@ -15,6 +15,7 @@ import type { UserGoldChangeLogRecord } from '@/api/models/user'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { resolveOpCodeText } from '@/utils/transText'
+import { t } from '@/i18n'
 
 const userInfoStore = useUserInfoStore()
 const router = useRouter()
@@ -57,7 +58,7 @@ onMounted(async () => {
 
 <template>
   <div class="details-page" :style="{ backgroundImage: `url(${sharpBgUrl})` }">
-    <HeaderBack title="明细" extra-padding />
+    <HeaderBack :title="t('Wallet_Details')" extra-padding />
 
     <div class="details-content">
       <div class="user-card-wrapper">

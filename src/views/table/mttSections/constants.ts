@@ -13,6 +13,6 @@ export const OP_DURATION_OPTIONS = [13, 15, 18, 20, 25].map((n) => ({ text: `${n
 // ── 游戏节奏 ───────────────────────────────────────────────────
 
 export const GAME_RHYTHM_OPTIONS = [
-  { text: 'GG模式', value: 0 },
-  { text: 'HH模式', value: 1 },
+  { text: "GG" + t('Mahjong_KnockdownMode'), value: 0 },
+  { text: "HH" + t('Mahjong_KnockdownMode'), value: 1 },
 ]

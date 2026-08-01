@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { showToast } from 'vant'
 import { postOssUploadImageApi } from '@/api/oss'
+import { t } from '@/i18n'
 
 withDefaults(
   defineProps<{
@@ -59,12 +60,12 @@ async function handleFileChange(event: Event): Promise<void> {
     if (result?.data) {
       emit('update:modelValue', result.data as unknown as string)
     } else {
-      showToast('图片上传失败')
-      emit('error', '图片上传失败')
+      showToast(t('UIClub_Upload'))
+      emit('error', t('UIClub_Upload'))
     }
   } catch {
-    showToast('图片上传失败')
-    emit('error', '图片上传失败')
+    showToast(t('UIClub_Upload'))
+    emit('error', t('UIClub_Upload'))
   } finally {
     uploading.value = false
     emit('upload-end')
@@ -95,16 +96,16 @@ async function handleFileChange(event: Event): Promise<void> {
   <teleport to="body">
     <transition name="sheet">
       <div v-if="sheetVisible" class="upload-sheet-mask" @click="close">
-        <div class="upload-sheet" role="dialog" aria-label="选择图片来源" @click.stop>
+        <div class="upload-sheet" role="dialog" :aria-label="t('UIImageUploadSheet_Text')" @click.stop>
           <button type="button" class="upload-sheet-option" @click="selectSource('camera')">
-            拍照
+            {{ t('UIMine_UserInfoSetting_Camera') }}
           </button>
           <div class="upload-sheet-divider" aria-hidden="true"></div>
           <button type="button" class="upload-sheet-option" @click="selectSource('gallery')">
-            相册
+            {{ t('UIMine_UserInfoSetting_album') }}
           </button>
           <button type="button" class="upload-sheet-confirm" @click="close">
-            确认
+            {{ t('UI_Recharge_confirm') }}
           </button>
         </div>
       </div>

@@ -11,6 +11,7 @@ import {
 } from '@/api/org'
 import type { OrgClubUserWalletRelationListUserData } from '@/api/models/org'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { t } from '@/i18n'
 
 const userInfoStore = useUserInfoStore()
 
@@ -69,14 +70,14 @@ async function loadRelations(): Promise<void> {
     })
 
     if (res.code !== 0) {
-      showFailToast(res.message || '获取玩家列表失败')
+      showFailToast(res.message || t('UIWallet_FetchPlayerFail'))
       relations.value = []
       return
     }
 
     relations.value = res.data?.data ?? []
   } catch {
-    showFailToast('获取玩家列表失败')
+    showFailToast(t('UIWallet_FetchPlayerFail'))
     relations.value = []
   } finally {
     loading.value = false
@@ -86,17 +87,17 @@ async function loadRelations(): Promise<void> {
 async function submitGift(): Promise<void> {
   const n = Number(amount.value)
   if (!n || n <= 0) {
-    showFailToast('请输入赠送金额')
+    showFailToast(t('UIWallet_Please'))
     return
   }
 
   if (!selectedUserIds.value.length) {
-    showFailToast('请选择赠送玩家')
+    showFailToast(t('UIWallet_Player'))
     return
   }
 
   if (n > maxAmount.value) {
-    showFailToast('赠送金额超过余额')
+    showFailToast(t('UIWallet_Text2'))
     return
   }
 
@@ -110,16 +111,16 @@ async function submitGift(): Promise<void> {
     })
 
     if (res.code !== 0) {
-      showFailToast(res.message || '赠送失败')
+      showFailToast(res.message || t('UISend_DoneFail'))
       return
     }
 
-    showSuccessToast('赠送成功')
+    showSuccessToast(t('UISend_Done'))
     amount.value = ''
     selectedUserIds.value = []
     await loadRelations()
   } catch {
-    showFailToast('赠送失败')
+    showFailToast(t('UISend_DoneFail'))
   } finally {
     submitting.value = false
   }
@@ -132,10 +133,10 @@ onMounted(() => {
 
 <template>
   <div class="gift-page" :style="{ backgroundImage: `url(${mainBgUrl})` }">
-    <HeaderBack title="赠送" extra-padding />
+    <HeaderBack :title="t('UISend_btn')" extra-padding />
 
     <div class="gift-content">
-      <p class="max-amount">最大赠送金额: {{ displayMaxAmount }}</p>
+      <p class="max-amount">{{ t('UIClubMembeGift_MaxGoldUC') }}: {{ displayMaxAmount }}</p>
 
       <button class="amount-input" @click="keypadOpen = true">
         <img :src="iconChips" alt="chips" class="amount-input__icon" />
@@ -143,8 +144,8 @@ onMounted(() => {
       </button>
 
       <div class="player-list">
-        <div v-if="loading" class="list-state">加载中...</div>
-        <div v-else-if="!relations.length" class="list-state">暂无可赠送玩家</div>
+        <div v-if="loading" class="list-state">{{ t('SuperView2') }}...</div>
+        <div v-else-if="!relations.length" class="list-state">{{ t('UIWallet_NoCanPlayer') }}</div>
         <template v-else>
           <button
             v-for="item in relations"
@@ -172,15 +173,15 @@ onMounted(() => {
       </div>
 
       <button class="submit-btn" :disabled="!canSubmit" @click="submitGift">
-        {{ submitting ? '提交中...' : 'OK' }}
+        {{ submitting ? t('UIClub_Submitting') + "..." : 'OK' }}
       </button>
     </div>
 
     <NumericKeypad
       :open="keypadOpen"
       :show-input-area="true"
-      title="赠送金额"
-      confirm-text="确定"
+      :title="t('UIWallet_Text')"
+      :confirm-text="t('CommitOK')"
       :min="1"
       :max="Math.max(maxAmount, 1)"
       :initial-value="amount"

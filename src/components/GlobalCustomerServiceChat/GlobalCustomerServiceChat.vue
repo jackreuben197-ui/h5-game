@@ -121,8 +121,8 @@ function resolveSenderName(
   message: ChatSupportMessageListChatData,
   channel: ChatSupportChannelListServiceData | null | undefined = activeChannel.value,
 ): string {
-  if (isSelfMessage(message, channel)) return '我'
-  return isCurrentUserSupportInChannel(channel) ? '玩家' : '客服'
+  if (isSelfMessage(message, channel)) return t('UILobby_Menu_menu_btn_my')
+  return isCurrentUserSupportInChannel(channel) ? t('UIMine_RecordItemMatch_2TZCjaqM') : t('UIMineMain01')
 }
 
 function resolveOutgoingMessageUserSend(
@@ -150,7 +150,7 @@ function createOfficialDisplayChannel(
   return {
     ...source,
     im_service_type: OFFICIAL_IM_SERVICE_TYPE,
-    club_name: '官方客服',
+    club_name: t('UIMatch_ServerHead'),
     club_logo: avatar,
     user_avatar: avatar,
     unread_count: Number(source?.unread_count || 0),
@@ -161,10 +161,10 @@ function createOfficialDisplayChannel(
 }
 
 function resolveChannelDisplayName(channel: ChatSupportChannelListServiceData): string {
-  if (isOfficialChannel(channel)) return '官方客服'
+  if (isOfficialChannel(channel)) return t('UIMatch_ServerHead')
   return channel.user_id !== userInfoStore.userInfo?.user?.p_u_id
-    ? channel.user_nickname || '玩家'
-    : channel.club_name || '俱乐部'
+    ? channel.user_nickname || t('UIMine_RecordItemMatch_2TZCjaqM')
+    : channel.club_name || t('UILobby_Menu_menu_btn_club')
 }
 
 function resolveChannelDisplayAvatar(channel: ChatSupportChannelListServiceData): string {
@@ -215,7 +215,7 @@ const targetClubId = computed(() => {
   return Number(userInfoStore.currentClub?.club_id || 0)
 })
 
-const supportHintText = computed(() => (voiceCancel.value ? '松开取消' : '释放发送'))
+const supportHintText = computed(() => (voiceCancel.value ? t('UIChatUndoCancel') : t('UIGlobalCustomerServiceChat_Text3')))
 const supportHintClass = computed(() =>
   voiceCancel.value ? 'voice-tip--cancel' : 'voice-tip--send',
 )
@@ -729,7 +729,7 @@ async function sendMessage(): Promise<void> {
     return
   }
 
-  showFailToast(response.message || '发送失败')
+  showFailToast(response.message || t('UIGlobalCustomerServiceChat_Fail'))
 }
 
 function useVoiceMode(): void {
@@ -815,7 +815,7 @@ function resolveImageOriginalUrl(message: ChatSupportMessageListChatData): strin
 function openImagePreview(message: ChatSupportMessageListChatData): void {
   const original = resolveImageOriginalUrl(message)
   if (!original) {
-    showFailToast('图片地址无效')
+    showFailToast(t('UIGlobalCustomerServiceChat_No'))
     return
   }
   imagePreviewUrl.value = original
@@ -857,7 +857,7 @@ async function onImageUpload(event: Event): Promise<void> {
     !uploadResponse.data
   ) {
     imageUploading.value = false
-    showFailToast(uploadResponse.message || '上传失败')
+    showFailToast(uploadResponse.message || t('UIGlobalCustomerServiceChat_Fail2'))
     input.value = ''
     return
   }
@@ -923,7 +923,7 @@ async function startVoiceRecord(): Promise<void> {
   } catch {
     // iPhone/Safari 可能不弹授权或不支持 MediaRecorder，降级为系统语音文件上传。
     triggerAudioUploadFallback()
-    showFailToast('当前设备请使用系统录音上传')
+    showFailToast(t('UIGlobalCustomerServiceChat_Current'))
     startingRecord = false
     return
   }
@@ -986,13 +986,13 @@ async function stopVoiceRecord(shouldSend: boolean): Promise<void> {
   }
 
   if (!blob || blob.size <= 0) {
-    showFailToast('语音录制失败')
+    showFailToast(t('UIGlobalCustomerServiceChat_Fail3'))
     voiceCancel.value = false
     return
   }
 
   if (voiceSeconds.value <= 0) {
-    showFailToast('语音太短')
+    showFailToast(t('UIGlobalCustomerServiceChat_Text4'))
     voiceCancel.value = false
     return
   }
@@ -1023,13 +1023,13 @@ async function uploadAndSendVoice(blob: Blob, duration: number): Promise<void> {
     getResponseCode(uploadResponse as unknown as Record<string, unknown>) !== 0 ||
     !uploadResponse.data
   ) {
-    showFailToast(uploadResponse.message || '语音上传失败')
+    showFailToast(uploadResponse.message || t('UIGlobalCustomerServiceChat_Fail4'))
     return
   }
 
   const url = pickFileUrl(uploadResponse.data)
   if (!url) {
-    showFailToast('语音上传地址无效')
+    showFailToast(t('UIGlobalCustomerServiceChat_No2'))
     return
   }
 
@@ -1057,7 +1057,7 @@ async function uploadAndSendVoice(blob: Blob, duration: number): Promise<void> {
     return
   }
 
-  showFailToast(sendResponse.message || '语音发送失败')
+  showFailToast(sendResponse.message || t('UIGlobalCustomerServiceChat_Fail5'))
 }
 
 function onVoiceButtonDown(): void {
@@ -1110,7 +1110,7 @@ function stopVoicePlayback(): void {
 async function handleVoiceMessageClick(message: ChatSupportMessageListChatData): Promise<void> {
   const url = resolveVoiceUrl(message)
   if (!url) {
-    showFailToast('语音地址无效')
+    showFailToast(t('UIGlobalCustomerServiceChat_No3'))
     return
   }
 
@@ -1130,14 +1130,14 @@ async function handleVoiceMessageClick(message: ChatSupportMessageListChatData):
   }
   audio.onerror = () => {
     stopVoicePlayback()
-    showFailToast('语音播放失败')
+    showFailToast(t('UIGlobalCustomerServiceChat_Fail6'))
   }
 
   try {
     await audio.play()
   } catch {
     stopVoicePlayback()
-    showFailToast('语音播放失败')
+    showFailToast(t('UIGlobalCustomerServiceChat_Fail6'))
   }
 }
 
@@ -1168,14 +1168,14 @@ async function onFallbackAudioUpload(event: Event): Promise<void> {
     getResponseCode(uploadResponse as unknown as Record<string, unknown>) !== 0 ||
     !uploadResponse.data
   ) {
-    showFailToast(uploadResponse.message || '语音上传失败')
+    showFailToast(uploadResponse.message || t('UIGlobalCustomerServiceChat_Fail4'))
     input.value = ''
     return
   }
 
   const url = pickFileUrl(uploadResponse.data)
   if (!url) {
-    showFailToast('语音上传地址无效')
+    showFailToast(t('UIGlobalCustomerServiceChat_No2'))
     input.value = ''
     return
   }
@@ -1353,7 +1353,7 @@ watch(
 <template>
   <div v-if="shouldShowFloat" class="support-float-wrap">
     <button class="support-float-btn" type="button" @click="openPanelByFloat">
-      <span class="support-float-text">客服消息</span>
+      <span class="support-float-text">{{ t('UIGlobalCustomerServiceChat_Text') }}</span>
       <span class="support-float-dot"></span>
     </button>
   </div>
@@ -1361,10 +1361,9 @@ watch(
   <Teleport to="body">
     <div v-if="visible" class="chat-overlay">
       <div class="chat-container">
-        <!-- 顶部透明区：点击关闭，露出后方游戏画面（与交易弹窗一致的玻璃观感） -->
         <div class="visual-header" @click="closePanel"></div>
         <div class="chat-main-body">
-          <div class="agent-floating-card" role="tablist" aria-label="客服会话列表">
+          <div class="agent-floating-card" role="tablist" :aria-label="t('UIGlobalCustomerServiceChat_Text2')">
             <button
               v-for="channel in availableChannels"
               :key="`${channel.club_id}-${channel.user_id}`"
@@ -1491,7 +1490,7 @@ watch(
                     class="text-bubble"
                     :class="{ 'text-bubble--self': isSelfMessage(msg) }"
                   >
-                    暂不支持的消息类型
+                    {{ t('UIGlobalCustomerServiceChat_Of') }}
                   </div>
 
                   <div class="bubble-footer">
@@ -1555,7 +1554,7 @@ watch(
                 <input
                   v-model="inputText"
                   type="text"
-                  placeholder="说点什么..."
+                  :placeholder="t('UIWallet_Text10') + '...'"
                   @keyup.enter="sendMessage"
                 />
               </div>
@@ -1684,9 +1683,9 @@ watch(
   <Teleport to="body">
     <div v-if="noServiceVisible" class="no-service-mask" @click="closeNoServicePopup">
       <div class="no-service-card" @click.stop>
-        <p class="no-service-title">当前俱乐部暂未开通在线客服服务～</p>
-        <p class="no-service-desc">请联系管理员开通后再试</p>
-        <button class="no-service-btn" type="button" @click="closeNoServicePopup">好的</button>
+        <p class="no-service-title">{{ t('UIGlobalCustomerServiceChat_CurrentClubNot') }}～</p>
+        <p class="no-service-desc">{{ t('UIGlobalCustomerServiceChat_AdminAgain') }}</p>
+        <button class="no-service-btn" type="button" @click="closeNoServicePopup">{{ t('adaptation10008') }}</button>
       </div>
     </div>
   </Teleport>

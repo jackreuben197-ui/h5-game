@@ -213,30 +213,30 @@ async function writeToClipboard(text: string): Promise<void> {
 
 async function copyUrl(url: string): Promise<void> {
   if (!url) {
-    showFailToast('复制内容为空')
+    showFailToast(t('UIBridgePanel_Copy'))
     return
   }
   try {
     await writeToClipboard(url)
-    showSuccessToast('已复制')
+    showSuccessToast(t('UIDev_DoneCopy'))
     props.emitPanelEvent('copyUrl', url)
   } catch {
-    showFailToast('复制失败，请手动复制')
+    showFailToast(t('UIReplicationFailed') + "，" + t('UIClub_Copy2'))
   }
 }
 
 async function copyAllUrls(): Promise<void> {
   const links = findUsData.value.link_list
   if (!links.length) {
-    showFailToast('复制内容为空')
+    showFailToast(t('UIBridgePanel_Copy'))
     return
   }
   try {
     await writeToClipboard(links.join('\n'))
-    showSuccessToast('全部已复制')
+    showSuccessToast(t('UIBridgePanel_DoneCopy'))
     props.emitPanelEvent('copyAllUrls', links)
   } catch {
-    showFailToast('复制失败，请手动复制')
+    showFailToast(t('UIReplicationFailed') + "，" + t('UIClub_Copy2'))
   }
 }
 
@@ -253,7 +253,7 @@ async function onSecondaryAction(): Promise<void> {
   props.emitPanelEvent('secondaryAction', currentStep.value)
 
   if (isStandaloneDisplay()) {
-    showSuccessToast('已添加到桌面')
+    showSuccessToast(t('UILanding_DoneTable'))
     return
   }
 
@@ -261,7 +261,7 @@ async function onSecondaryAction(): Promise<void> {
   if (canPromptInstall()) {
     const result = await showAddToHomeScreenPrompt()
     if (result === 'accepted') {
-      showSuccessToast('已添加到桌面')
+      showSuccessToast(t('UILanding_DoneTable'))
       return
     }
     if (result === 'dismissed') return
@@ -270,7 +270,7 @@ async function onSecondaryAction(): Promise<void> {
   // iOS 原生 Safari：下发 mobileconfig 描述文件，一键添加到桌面（安装时需信任未签名描述文件）
   if (isIosNativeSafari()) {
     try {
-      showToast({ message: '正在准备安装文件…', duration: 1500 })
+      showToast({ message: t('UILanding_Text18') + '…', duration: 1500 })
       // 部署可能位于站点子路径，用 BASE_URL 解析成绝对地址作为快捷方式打开地址。
       const appBaseUrl = new URL(import.meta.env.BASE_URL, window.location.href).toString()
       await installIosWebClip({
@@ -283,13 +283,13 @@ async function onSecondaryAction(): Promise<void> {
       // 不需要再 toast；以下是兜底（极少数情况跳转未生效）
       setTimeout(() => {
         showToast({
-          message: '已下载描述文件，请到 设置 → 通用 → VPN 与设备管理 完成安装',
+          message: t('UILanding_Done') + "，" + t('UILanding_Text19') + " " + t('UIMine_btn_setting') + " → " + t('UILanding_Text20') + " → VPN " + t('UILanding_Text21') + " " + t('UILanding_Text22'),
           duration: 5000,
         })
       }, 1500)
     } catch (err) {
       console.error('[web-clip] install failed:', err)
-      showFailToast('安装文件生成失败，请稍后重试')
+      showFailToast(t('UILanding_Fail') + "，" + t('UILanding_Text23'))
     }
     return
   }
@@ -302,7 +302,7 @@ async function onSecondaryAction(): Promise<void> {
 
   // 兜底：Android 上 PWA 资产未就绪 / 已 dismiss / 用户参与度未达标
   showToast(
-    isIosSafari() ? '请点击底部分享按钮，选择"添加到主屏幕"' : '请在浏览器菜单中选择"添加到主屏幕"',
+    isIosSafari() ? t('UILanding_Text28') + "，" + t('UILanding_Text29') + "\"" + t('UILanding_Text30') + "\"" : t('UILanding_Text31') + "\"" + t('UILanding_Text30') + "\"",
   )
 }
 </script>
@@ -338,7 +338,7 @@ async function onSecondaryAction(): Promise<void> {
             @click="onSecondaryAction"
           >
             <img src="@/assets/icons/icon_layer.svg" alt="" />
-            <span>添加桌面快捷方式</span>
+            <span>{{ t('UILanding_Table') }}</span>
           </button>
           <button
             class="notification-panel__btn notification-panel__btn--primary"
@@ -346,7 +346,7 @@ async function onSecondaryAction(): Promise<void> {
             @click="onDownload"
           >
             <img src="@/assets/icons/download_icon.png" alt="" />
-            <span>下载APP</span>
+            <span>{{ t('UIGuildDownloadFightData_Tip17') }}APP</span>
           </button>
         </div>
       </div>

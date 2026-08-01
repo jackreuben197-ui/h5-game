@@ -354,7 +354,7 @@ async function handleLogin(target: string) {
   }
   const token = String(res.token || '').trim()
   if (!token) {
-    throw new Error('登录接口返回缺少 token')
+    throw new Error(t('UILogin_Text') + " token")
   }
 
   // 先写 TOKEN_EXPIREAT，再 setSessionToken：后者会把最新 expireAt 一并同步给 Cocos。
@@ -697,7 +697,7 @@ function applyChannelInviteContext(): void {
 
   <GameDialog
     v-model:show="showDebugAccountDialog"
-    :title="'测试账号'"
+    :title="t('UILogin_No')"
     :show-confirm-button="false"
     :close-on-click-overlay="true"
   >

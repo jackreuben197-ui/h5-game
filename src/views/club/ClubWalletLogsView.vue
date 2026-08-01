@@ -44,7 +44,7 @@ function valueClass(trend: 'up' | 'down' | 'neutral'): string {
 
 <template>
   <div class="page-shell club-wallet-logs-bg" :style="backgroundStyle">
-    <HeaderBack :title="'收益管理'" />
+    <HeaderBack :title="t('UIGuildRevenueManagement')" />
 
     <section class="range-card">
       <div class="date-range">

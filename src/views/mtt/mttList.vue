@@ -41,7 +41,7 @@ function handleBack() {
 function handleOpenCustomerService() {
   const clubId = selectedClubId.value
   if (clubId <= 0) {
-    showFailToast('当前俱乐部信息无效')
+    showFailToast(t('UIClub_CurrentClubNo'))
     return
   }
 

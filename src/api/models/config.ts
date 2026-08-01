@@ -101,6 +101,10 @@ export interface BeforeLoginConfigRequestItem {
   last_update_time?: number
 }
 
+export interface BeforeLoginBannerListRequestItem extends BeforeLoginConfigRequestItem {
+  club_id?: number
+}
+
 // /config/before/login/config 请求参数。
 export interface BeforeLoginConfigRequest {
   no_auth_api_list?: number[]
@@ -110,7 +114,7 @@ export interface BeforeLoginConfigRequest {
   multi_language_req?: BeforeLoginConfigRequestItem
   user_subscription_config_req?: BeforeLoginConfigRequestItem
   popup_list_req?: BeforeLoginConfigRequestItem
-  banner_list_req?: BeforeLoginConfigRequestItem
+  banner_list_req?: BeforeLoginBannerListRequestItem
   club_subscription_config_list_req?: BeforeLoginConfigRequestItem
   room_template_list_req?: BeforeLoginConfigRequestItem
   maintenance_info_req?: BeforeLoginConfigRequestItem

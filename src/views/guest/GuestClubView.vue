@@ -14,7 +14,7 @@ import { theme } from '@/utils/theme'
 import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shield.png'
 import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.png'
 import { useLoginModalStore } from '@/stores/loginModal'
-import { getLocale } from '@/i18n'
+import { getLocale, t } from '@/i18n'
 
 const loginModalStore = useLoginModalStore()
 
@@ -117,7 +117,7 @@ function notifyNotLogin(): void {
     </section>
 
     <section class="club-list">
-      <p class="club-empty-text">{{ localized('Log in to view clubs', '登录后查看俱乐部') }}</p>
+      <p class="club-empty-text">{{ t('UIGuest_Club') }}</p>
     </section>
   </div>
 </template>

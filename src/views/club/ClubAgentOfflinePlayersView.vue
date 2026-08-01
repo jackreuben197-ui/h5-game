@@ -320,7 +320,7 @@ onMounted(() => {
           <div class="glass card" :class="{ 'card-check': listMode === 'edit' }">
             <div class="member-main">
               <div class="member-left">
-                <img class="member-avatar" :src="row.avatar" :alt="`${row.name}头像`" />
+                <img class="member-avatar" :src="row.avatar" :alt="(row.name) + t('UIMine_UserInfoSetting_btn_head')" />
                 <div class="member-base">
                   <button type="button" class="member-name">
                     {{ row.name }}

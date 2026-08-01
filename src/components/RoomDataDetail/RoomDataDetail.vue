@@ -12,6 +12,7 @@ import { useGameStore } from '@/stores/game'
 import { USER_STORE_CLUB_MANAGE } from '@/utils/indexedDB'
 import { toPlain, userCache } from '@/utils/userCache'
 import { formatUC } from '@/utils/roomVisibility'
+import { t } from '@/i18n'
 
 type Source = 'club' | 'friend'
 
@@ -74,7 +75,7 @@ function detailCacheKey(): string {
   return `${clubId}_roomdetail_${props.roomId || 0}_${props.matchId || 0}`
 }
 
-const tableHeaders = ['User', '赢', '服务费', '保险', '买入', '手数', 'JP']
+const tableHeaders = ['User', t('UIMine_Paipu_win'), t('UIMine_WalletPlatform_fee_f'), t('adaptation10179'), t('MTT_xq_buy'), t('UIMine_RecordItemsNormal_3RCUa3w8'), 'JP']
 
 function buildEmptyDetailInfo(): DetailInfo {
   return {
@@ -84,14 +85,14 @@ function buildEmptyDetailInfo(): DetailInfo {
     roomIdText: '--',
     jackpot: '0',
     topMetrics: [
-      { label: '买入', value: '--' },
-      { label: '底分', value: '--' },
-      { label: '服务费', value: '--' },
+      { label: t('MTT_xq_buy'), value: '--' },
+      { label: t('Mahjong_LowScore'), value: '--' },
+      { label: t('UIMine_WalletPlatform_fee_f'), value: '--' },
     ],
     middleMetrics: [
-      { label: '总人数', value: '--' },
-      { label: '保险', value: '0' },
-      { label: '总服务费', value: '0' },
+      { label: t('UIFriendsTable_playercount'), value: '--' },
+      { label: t('adaptation10179'), value: '0' },
+      { label: t('UIFriendsTable_totalfee'), value: '0' },
     ],
   }
 }
@@ -151,14 +152,14 @@ function mapDetailInfo(payload: unknown): DetailInfo {
     roomIdText: String(props.roomId || '--'),
     jackpot: formatNumber(jackpot),
     topMetrics: [
-      { label: '买入', value: buyInValue },
-      { label: '底分', value: `${formatUC(sb)}/${formatUC(bb)}` },
-      { label: '服务费', value: feeRate > 0 ? `${feeRate / 10}%` : '--' },
+      { label: t('MTT_xq_buy'), value: buyInValue },
+      { label: t('Mahjong_LowScore'), value: `${formatUC(sb)}/${formatUC(bb)}` },
+      { label: t('UIMine_WalletPlatform_fee_f'), value: feeRate > 0 ? `${feeRate / 10}%` : '--' },
     ],
     middleMetrics: [
-      { label: '总人数', value: String(totalPlayer || '--') },
-      { label: '保险', value: formatUC(insurance) },
-      { label: '总服务费', value: formatUC(totalFee) },
+      { label: t('UIFriendsTable_playercount'), value: String(totalPlayer || '--') },
+      { label: t('adaptation10179'), value: formatUC(insurance) },
+      { label: t('UIFriendsTable_totalfee'), value: formatUC(totalFee) },
     ],
   }
 }
@@ -200,10 +201,10 @@ async function fetchClubDetail(): Promise<void> {
   ])
 
   if (infoRes.code !== 0) {
-    throw new Error(typeof infoRes.msg === 'string' ? infoRes.msg : '加载详情统计失败')
+    throw new Error(typeof infoRes.msg === 'string' ? infoRes.msg : t('UIClub_LoadDetailFail'))
   }
   if (listRes.code !== 0) {
-    throw new Error(typeof listRes.msg === 'string' ? listRes.msg : '加载详情列表失败')
+    throw new Error(typeof listRes.msg === 'string' ? listRes.msg : t('UIClub_LoadDetailFail2'))
   }
 
   // 响应回来时 props 已切换 → 丢弃，避免旧房间数据覆盖新房间的展示与缓存。
@@ -245,10 +246,10 @@ async function fetchFriendDetail(): Promise<void> {
   ])
 
   if (infoRes.code !== 0) {
-    throw new Error(typeof infoRes.msg === 'string' ? infoRes.msg : '加载详情统计失败')
+    throw new Error(typeof infoRes.msg === 'string' ? infoRes.msg : t('UIClub_LoadDetailFail'))
   }
   if (listRes.code !== 0) {
-    throw new Error(typeof listRes.msg === 'string' ? listRes.msg : '加载详情列表失败')
+    throw new Error(typeof listRes.msg === 'string' ? listRes.msg : t('UIClub_LoadDetailFail2'))
   }
 
   detailInfo.value = mapDetailInfo(infoRes.data?.info)
@@ -284,7 +285,7 @@ async function loadDetail(): Promise<void> {
     }
   } catch (error) {
     if (!silent) {
-      const message = error instanceof Error ? error.message : '加载数据详情失败'
+      const message = error instanceof Error ? error.message : t('UIClub_LoadDataDetailFail')
       showFailToast(message)
     }
   } finally {
@@ -314,13 +315,13 @@ onMounted(() => {
   <div class="room-data-detail" :class="`room-data-detail--${source}`">
     <section class="meta-panel">
       <div class="meta-title-row">
-        <span class="meta-title">完成的</span>
+        <span class="meta-title">{{ t('UIClub_Of') }}</span>
         <strong class="meta-main-value">{{ detailInfo.roomName }}</strong>
       </div>
 
       <div class="meta-sub-row">
         <div class="creator-wrap">
-          <span class="meta-sub-label">创作者</span>
+          <span class="meta-sub-label">{{ t('UIClub_Text30') }}</span>
           <span class="meta-sub-value">{{ detailInfo.creator }}</span>
           <div class="id-pill-wrap">
             <span class="id-pill">ID</span>
@@ -402,9 +403,9 @@ onMounted(() => {
           <span class="value-cell">{{ row.jp }}</span>
         </article>
         <p v-if="!records.length && !loading && hasIdentifier" class="list-status">
-          暂无玩家记录
+          {{ t('UIClub_NoPlayerRecord') }}
         </p>
-        <p v-if="loading" class="list-status">加载中...</p>
+        <p v-if="loading" class="list-status">{{ t('SuperView2') }}...</p>
       </div>
     </section>
   </div>

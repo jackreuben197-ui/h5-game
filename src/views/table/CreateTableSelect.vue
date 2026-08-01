@@ -31,8 +31,8 @@ const showJackpot = computed(() => originType.value !== 4)
 const shouldReturnHome = computed(() => route.query.return_to === 'home')
 // 1.NLH 2.PLO 3.6+ 4.fantasy 5.牛仔 6.麻将 7.mtt 8.SNG 9.惯蛋
 const gameTypes: GameTypeItem[] = [
-  { key: 'nlh', game_play_type: 1, title: '德州', icon: iconNlh },
-  { key: 'plo', game_play_type: 2, title: '奥马哈', icon: iconPlo },
+  { key: 'nlh', game_play_type: 1, title: t('adaptation10022'), icon: iconNlh },
+  { key: 'plo', game_play_type: 2, title: t('adaptation10009'), icon: iconPlo },
   { key: 'six_plus', game_play_type: 3, title: '6+', icon: iconSixPlus },
   // { key: 'aof', title: 'AOF', icon: iconAof },
   // { key: 'mushroom', title: '蘑菇桌', icon: iconMushroom },
@@ -90,7 +90,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell club-table-create-page" :style="backgroundStyle">
-    <HeaderBack :title="t('创建牌桌')" @back="handleBack">
+    <HeaderBack :title="t('UIGuild_CreateTable')" @back="handleBack">
       <template #right>
         <TopActionButton
           v-if="showJackpot"
@@ -105,12 +105,12 @@ onMounted(() => {
 
     <section class="club-table-create-body">
       <div class="title-wrap">
-        <h1>选择游戏类型</h1>
+        <h1>{{ t('UITable_Text') }}</h1>
         <div class="title-divider" aria-hidden="true">
           <span></span>
           <span></span>
         </div>
-        <p>开始创建</p>
+        <p>{{ t('UITable_Text2') }}</p>
       </div>
 
       <div class="type-grid">

@@ -1383,14 +1383,14 @@ const handleBack = () => {
           type="button"
           @click="handleCreateTableClick"
         >
-          创建牌桌
+          {{ t('UIGuild_CreateTable') }}
         </button>
         <button
           v-if="canManageClub"
           :class="{ 'floating-menu-btn--solo': clubHeaderTab === 'event' || !canCreateTable }"
           class="floating-menu-btn"
           type="button"
-          aria-label="更多操作"
+          :aria-label="t('UIClub_Text104')"
           @click="handleFloatingMenuClick"
         >
           <img :src="clubDetailButtonIcon" alt="" />
@@ -1415,7 +1415,7 @@ const handleBack = () => {
             :disabled="ignoringClubNotice"
             @click="handleIgnoreNoticeToday"
           >
-            今天不再显示提示
+            {{ t('UIClub_Again4') }}
           </button>
         </div>
       </GameDialog>

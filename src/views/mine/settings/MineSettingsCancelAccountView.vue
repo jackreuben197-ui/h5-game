@@ -268,23 +268,23 @@ onBeforeUnmount(() => {
 
     <div class="bottom-bar">
       <button class="submit-btn" type="button" :disabled="deleting" @click="onSubmit">
-        注销账号
+        {{ deleting ? t('UIClub_Submitting') : t('UIMine_DeleteAccount') }}
       </button>
     </div>
 
     <div v-if="showConfirm" class="dialog-mask">
         <section class="dialog-card">
-          <p class="dialog-title">确认要注销当前账号吗？</p>
-          <p class="dialog-desc">注销后账号信息将无法恢复，请谨慎操作。</p>
+          <p class="dialog-title">{{ t('UIClub_ConfirmCurrentNo') }}？</p>
+          <p class="dialog-desc">{{ t('UIClub_NoNo') }}，{{ t('UIClub_Text98') }}。</p>
           <div class="dialog-actions">
-            <button class="dialog-btn ghost" type="button" @click="cancelDialog">取消</button>
+            <button class="dialog-btn ghost" type="button" @click="cancelDialog">{{ t('adaptation10013') }}</button>
             <button
               class="dialog-btn primary"
               type="button"
               :disabled="deleting"
               @click="confirmDialog"
             >
-              确认注销
+              {{ t('UIClub_Confirm3') }}
             </button>
           </div>
         </section>

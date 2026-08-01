@@ -1,4 +1,5 @@
 import { postCmsExtImServiceListApi } from '@/api/cmsext'
+import { t } from '@/i18n'
 
 export interface OfficialServiceProfile {
   avatar: string
@@ -6,7 +7,7 @@ export interface OfficialServiceProfile {
 }
 
 const OFFICIAL_IM_SERVICE_TYPE = 2
-const OFFICIAL_SERVICE_NAME = '官方客服'
+const OFFICIAL_SERVICE_NAME = t('UIMatch_ServerHead')
 
 let cachedOfficialProfile: OfficialServiceProfile | null = null
 let loadingPromise: Promise<OfficialServiceProfile> | null = null

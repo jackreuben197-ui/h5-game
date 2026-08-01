@@ -142,10 +142,10 @@ const pageTitle = computed(() => {
   const titleFromQuery = route.query.title
   if (typeof titleFromQuery === 'string' && titleFromQuery.trim()) return titleFromQuery
 
-  if (pageType.value === 'system') return '系统消息'
-  if (pageType.value === 'credit') return '带入申请'
-  if (pageType.value === 'uc') return 'UC申请'
-  return '消息'
+  if (pageType.value === 'system') return t('Msg3')
+  if (pageType.value === 'credit') return t('UIClub_RoomSitApplyRecords_title')
+  if (pageType.value === 'uc') return "UC" + t('UIGuild_Fund_Apply')
+  return t('UIMine_MsgSystemContent')
 })
 
 const backgroundStyle = computed(() => ({
@@ -218,7 +218,7 @@ function truncateText(value: string, maxLength: number): string {
 function getCoinTypeName(coinType: number): string {
   if (coinType === 1) {
     const i18nText = t('UIGuild_VipCountGoldType1')
-    return i18nText && i18nText !== 'UIGuild_VipCountGoldType1' ? i18nText : '联盟币'
+    return i18nText && i18nText !== 'UIGuild_VipCountGoldType1' ? i18nText : t('UIClubCreditLimit1')
   }
   if (coinType === 2) {
     const i18nText = t('UIGuild_VipCountGoldType2')
@@ -458,10 +458,10 @@ function buildMessageContent(item: MsgMessageListMsgInfo): {
     if (content) {
       segments.push({ text: content, green: true })
     }
-    segments.push({ text: '已解散' })
+    segments.push({ text: t('UIMessage_Done2') })
     return {
       segments,
-      text: `${content}已解散`,
+      text: (content) + t('UIMessage_Done2'),
     }
   }
 
@@ -616,7 +616,7 @@ async function fetchMsgList(
     const mapped = records.map((item) => {
       const messageContent = buildMessageContent(item)
       return {
-        clubName: String(item.sender_name ?? '系统消息'),
+        clubName: String(item.sender_name ?? t('Msg3')),
         senderIcon: item.sender_icon ? String(item.sender_icon) : '',
         time: formatTime(item.create_time),
         wrap: computeWrap(messageContent.text),
@@ -753,7 +753,7 @@ async function fetchCreditList(append = false, silent = false): Promise<void> {
     return {
       id: item.id,
       roomId: item.room_id,
-      texasId: `房间ID: ${String(item.room_id ?? '--')}`,
+      texasId: t('UIMessage_Text') + "ID: " + (String(item.room_id ?? '--')),
       clubName: String(item.sender_name ?? item.room_name ?? '--'),
       time: formatTime(item.create_time),
       playerName: String(item.user_name ?? '--'),
@@ -991,7 +991,7 @@ onBeforeUnmount(() => {
           class="request-card"
         >
           <div class="request-footer">
-            <p>带入申请：{{ item.amount }}</p>
+            <p>{{ t('UIClub_RoomSitApplyRecords_title') }}：{{ item.amount }}</p>
           </div>
 
           <div class="card-divider"></div>
@@ -1017,15 +1017,15 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <p v-if="item.status === 'rejected'" class="state-text">已拒绝</p>
+            <p v-if="item.status === 'rejected'" class="state-text">{{ t('UIClub_AuditRecords_no') }}</p>
 
             <div v-else-if="item.status === 'approved' && item.approverId" class="approver-block">
               <p class="approver-line">{{ item.approverName }}</p>
               <p class="approver-line">ID: {{ item.approverId }}</p>
-              <p class="state-text">已通过</p>
+              <p class="state-text">{{ t('UIMessage_Done') }}</p>
             </div>
 
-            <p v-else-if="item.status !== 'pending'" class="state-text">已通过</p>
+            <p v-else-if="item.status !== 'pending'" class="state-text">{{ t('UIMessage_Done') }}</p>
           </div>
 
           <ApproveRejectActions
@@ -1039,7 +1039,7 @@ onBeforeUnmount(() => {
       <section v-else-if="pageType === 'uc'" class="request-list">
         <article v-for="(item, index) in ucMessages" :key="`uc-${index}`" class="request-card">
           <div class="request-footer request-footer--uc">
-            <p>申请充值：{{ item.amount }}</p>
+            <p>{{ t('UIPlatformrecharge') }}：{{ item.amount }}</p>
           </div>
 
           <div class="card-divider"></div>
@@ -1064,15 +1064,15 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <p v-if="item.status === 'rejected'" class="state-text">已拒绝</p>
+            <p v-if="item.status === 'rejected'" class="state-text">{{ t('UIClub_AuditRecords_no') }}</p>
 
             <div v-else-if="item.status === 'approved' && item.approverId" class="approver-block">
               <p class="approver-line">{{ item.approverName }}</p>
               <p class="approver-line">ID: {{ item.approverId }}</p>
-              <p class="state-text">已通过</p>
+              <p class="state-text">{{ t('UIMessage_Done') }}</p>
             </div>
 
-            <p v-else-if="item.status !== 'pending'" class="state-text">已通过</p>
+            <p v-else-if="item.status !== 'pending'" class="state-text">{{ t('UIMessage_Done') }}</p>
           </div>
 
           <ApproveRejectActions

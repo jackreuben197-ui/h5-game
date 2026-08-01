@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { t } from '@/i18n'
 
 type PickTarget = 'start' | 'end'
 
@@ -20,7 +21,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   minDate: undefined,
   maxDate: undefined,
-  tipText: '只支持查询最近三个月数据',
+  tipText: t('UIGuildtThreeMonthDataTip'),
   initialTarget: 'start',
 })
 
@@ -251,7 +252,7 @@ function startOfDay(date: Date): Date {
           <button
             type="button"
             class="arrow-btn"
-            aria-label="上一年"
+            :aria-label="t('UIClub_Text50')"
             @click="goPrevYear"
           >
             «
@@ -259,7 +260,7 @@ function startOfDay(date: Date): Date {
           <button
             type="button"
             class="arrow-btn"
-            aria-label="上一月"
+            :aria-label="t('UIClub_Text51')"
             @click="goPrevMonth"
           >
             ‹
@@ -270,7 +271,7 @@ function startOfDay(date: Date): Date {
           <button
             type="button"
             class="arrow-btn"
-            aria-label="下一月"
+            :aria-label="t('UIClub_Text52')"
             @click="goNextMonth"
           >
             ›
@@ -278,7 +279,7 @@ function startOfDay(date: Date): Date {
           <button
             type="button"
             class="arrow-btn"
-            aria-label="下一年"
+            :aria-label="t('UIClub_Text53')"
             @click="goNextYear"
           >
             »

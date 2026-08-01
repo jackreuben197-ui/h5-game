@@ -98,9 +98,9 @@ const MODE_META_LIST: JackpotModeMeta[] = [
 ]
 
 const REWARD_TYPE_LABELS: Record<number, string> = {
-  10: '皇家同花顺',
-  9: '同花顺',
-  8: '四条',
+  10: t('adaptation10053'),
+  9: t('adaptation10054'),
+  8: t('adaptation10055'),
 }
 
 const props = defineProps<{
@@ -274,19 +274,19 @@ const rewardTierRows = computed<RewardTierRow[]>(() => {
   const rows = [
     {
       id: 'royal',
-      handType: '皇家同花顺',
+      handType: t('adaptation10053'),
       enabled: toSafeNumber(setting.royal_flush_switch) === 1,
       ratio: toSafeNumber(setting.royal_flush_ratio),
     },
     {
       id: 'straight',
-      handType: '同花顺',
+      handType: t('adaptation10054'),
       enabled: toSafeNumber(setting.straight_flush_switch) === 1,
       ratio: toSafeNumber(setting.straight_flush_ratio),
     },
     {
       id: 'four',
-      handType: '四条',
+      handType: t('adaptation10055'),
       enabled: toSafeNumber(setting.four_ofa_kind_switch) === 1,
       ratio: toSafeNumber(setting.four_ofa_kind_ratio),
     },
@@ -447,7 +447,7 @@ async function loadRecords(reset = false, options: { silent?: boolean } = {}): P
     }
     const response = await postStatsJackpotAwardLogsApi(payload)
     if (toSafeNumber(response.code) !== 0) {
-      throw new Error(String(response.msg || 'Jackpot 奖励列表加载失败'))
+      throw new Error(String(response.msg || "Jackpot " + t('UIBridgePanel_LoadFail')))
     }
 
     const items = Array.isArray(response.data?.items)
@@ -465,7 +465,7 @@ async function loadRecords(reset = false, options: { silent?: boolean } = {}): P
     if (silent) {
       console.warn('[BridgeJackpotRecordPanel] refresh reward records failed', error)
     } else {
-      showFailToast(error instanceof Error ? error.message : 'Jackpot 奖励列表加载失败')
+      showFailToast(error instanceof Error ? error.message : "Jackpot " + t('UIBridgePanel_LoadFail'))
     }
   } finally {
     recordRequestPending = false
@@ -533,7 +533,7 @@ function trimTrailingZero(value: number): string {
         type="button"
         @click="activeTab = 'awardList'"
       >
-        获奖记录
+        {{ t('UIClubJackpotRecordManager_AwardRecord') }}
       </button>
       <button
         class="jackpot-tab"
@@ -541,7 +541,7 @@ function trimTrailingZero(value: number): string {
         type="button"
         @click="activeTab = 'rule'"
       >
-        奖励说明
+        {{ t('UIBridgePanel_Text2') }}
       </button>
       <button
         class="jackpot-tab"
@@ -549,7 +549,7 @@ function trimTrailingZero(value: number): string {
         type="button"
         @click="activeTab = 'awardRatio'"
       >
-        奖励表
+        {{ t('UIDialogRewardDescription_RewardTable') }}
       </button>
     </div>
 
@@ -566,7 +566,7 @@ function trimTrailingZero(value: number): string {
           height="8rem"
           @load="loadRecords(false)"
         >
-          <GameTableColumn prop="userName" label="玩家" :flex="2" align="left">
+          <GameTableColumn prop="userName" :label="t('UIMine_RecordItemMatch_2TZCjaqM')" :flex="2" align="left">
             <template #default="{ row }">
               <div class="jackpot-panel__player-cell">
                 <div class="jackpot-panel__player-copy">
@@ -576,14 +576,14 @@ function trimTrailingZero(value: number): string {
               </div>
             </template>
           </GameTableColumn>
-          <GameTableColumn prop="blindText" label="盲注" :flex="1.35" align="center">
+          <GameTableColumn prop="blindText" :label="t('adaptation20006')" :flex="1.35" align="center">
             <template #default="{ row }">
               <span class="table-text">
                 {{ row.blindText }}
               </span>
             </template>
           </GameTableColumn>
-          <GameTableColumn prop="rewardValue" label="金额" :flex="1.45" align="center">
+          <GameTableColumn prop="rewardValue" :label="t('Uimine_ptcz_paygold')" :flex="1.45" align="center">
             <template #default="{ row }">
               <span class="jackpot-panel__amount"> +{{ row.rewardText }} </span>
             </template>
@@ -602,7 +602,7 @@ function trimTrailingZero(value: number): string {
               </div>
             </template>
           </GameTableColumn> -->
-          <GameTableColumn prop="createText" label="时间" :flex="1.6" align="right">
+          <GameTableColumn prop="createText" :label="t('TimeItem')" :flex="1.6" align="right">
             <template #default="{ row }">
               <span class="table-text">
                 {{ row.createText }}
@@ -613,8 +613,8 @@ function trimTrailingZero(value: number): string {
       </div>
 
       <div v-else-if="!recordLoading" class="jackpot-panel__empty">
-        <p class="jackpot-panel__empty-title">暂无奖励记录</p>
-        <p class="jackpot-panel__empty-text">当前 Jackpot 还没有可展示的奖励列表。</p>
+        <p class="jackpot-panel__empty-title">{{ t('UIBridgePanel_NoRecord') }}</p>
+        <p class="jackpot-panel__empty-text">{{ t('UIBridgePanel_Current') }} Jackpot {{ t('UIBridgePanel_CanOf') }}。</p>
       </div>
     </section>
 
@@ -635,8 +635,8 @@ function trimTrailingZero(value: number): string {
           </template>
         </template>
         <div v-else class="jackpot-panel__empty jackpot-panel__empty--reward">
-          <p class="jackpot-panel__empty-title">暂无奖励说明</p>
-          <p class="jackpot-panel__empty-text">未找到当前玩法对应的 Jackpot 规则配置。</p>
+          <p class="jackpot-panel__empty-title">{{ t('UIBridgePanel_No2') }}</p>
+          <p class="jackpot-panel__empty-text">{{ t('UIBridgePanel_NotFoundCurrentOf') }} Jackpot {{ t('UIBridgePanel_Text3') }}。</p>
         </div>
       </div>
     </section>
@@ -645,12 +645,12 @@ function trimTrailingZero(value: number): string {
       <div v-if="hasRewardTableData" class="jackpot-panel__table-wrap">
         <div class="table-text table-desc">{{ t('UIJackpotRewardDescription_Tip') }}</div>
         <GameTable :data="rewardTierRows" height="7rem">
-          <GameTableColumn prop="handType" label="牌型" :flex="2.4" align="center">
+          <GameTableColumn prop="handType" :label="t('UIMine_RecordDetailForNormal_BYh6JqX4')" :flex="2.4" align="center">
             <template #default="{ row }">
               <span class="table-text">{{ row.handType }}</span>
             </template>
           </GameTableColumn>
-          <GameTableColumn prop="awardText" label="奖励金额" :flex="1.8" align="center">
+          <GameTableColumn prop="awardText" :label="t('UIBridgePanel_Text4')" :flex="1.8" align="center">
             <template #default="{ row }">
               <span class="table-text jackpot-panel__amount">{{ row.awardText }}</span>
             </template>
@@ -659,8 +659,8 @@ function trimTrailingZero(value: number): string {
       </div>
 
       <div v-else class="jackpot-panel__empty jackpot-panel__empty--reward">
-        <p class="jackpot-panel__empty-title">暂无奖励表</p>
-        <p class="jackpot-panel__empty-text">未找到当前玩法对应的 Jackpot 奖励配置。</p>
+        <p class="jackpot-panel__empty-title">{{ t('UIBridgePanel_No3') }}</p>
+        <p class="jackpot-panel__empty-text">{{ t('UIBridgePanel_NotFoundCurrentOf') }} Jackpot {{ t('UIBridgePanel_Text5') }}。</p>
       </div>
     </section>
   </section>

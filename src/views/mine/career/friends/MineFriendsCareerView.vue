@@ -145,7 +145,7 @@ onMounted(() => {
             @click="
               handleMenuClick({
                 key: 'data',
-                label: '数据',
+                label: t('adaptation10124'),
                 icon: 'data',
                 route: '/mine/career/friends/my-data',
               })
@@ -159,12 +159,12 @@ onMounted(() => {
       <section class="glass-card table-card">
         <div class="table-head">
           <div class="table-head-inner">
-            <span>玩法</span>
-            <span>局数</span>
-            <span>手数</span>
+            <span>{{ t('UIData_game') }}</span>
+            <span>{{ t('UIData_YGvXd5iXr_003') }}</span>
+            <span>{{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}</span>
           </div>
         </div>
-        <div v-if="loading" class="table-status">加载中...</div>
+        <div v-if="loading" class="table-status">{{ t('SuperView2') }}...</div>
         <div v-for="item in rows" :key="item.game" class="table-row">
           <span class="game-type-label">{{ item.game }}</span>
           <span>{{ item.playedGames }}</span>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import FieldTip from './FieldTip.vue'
+import { t } from '@/i18n'
 
 interface Props {
   label: string
@@ -42,7 +43,7 @@ const isActive = computed(() => props.modelValue === props.activeValue)
       <FieldTip :tip="tip" />
     </div>
     <div class="quick-switch-card__foot">
-      <span class="quick-switch-card__status">{{ isActive ? '已开启' : '未开启' }}</span>
+      <span class="quick-switch-card__status">{{ isActive ? t('6digit_password_opened') : t('UIMine_AccountNotOpen') }}</span>
       <VanSwitch
         :model-value="modelValue"
         :disabled="disabled"

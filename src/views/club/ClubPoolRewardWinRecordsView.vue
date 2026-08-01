@@ -169,7 +169,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell record-page" @scroll="onPageScroll">
-    <HeaderBack :title="'获奖记录'" />
+    <HeaderBack :title="t('UIClubJackpotRecordManager_AwardRecord')" />
 
     <section class="record-table-wrap">
       <!-- 表头：底层绿色光晕 + 半透明 pill -->

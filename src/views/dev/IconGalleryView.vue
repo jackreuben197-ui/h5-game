@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { showToast } from 'vant'
 import AppSvgIcon, { APP_SVG_ICON_ENTRIES } from '@/components/Icon/AppSvgIcon.vue'
+import { t } from '@/i18n'
 
 const keyword = ref('')
 
@@ -18,9 +19,9 @@ const filteredEntries = computed(() => {
 async function copyName(name: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(name)
-    showToast(`已复制: ${name}`)
+    showToast(t('UIDev_DoneCopy') + ": " + (name))
   } catch {
-    showToast(`复制失败: ${name}`)
+    showToast(t('UIReplicationFailed') + ": " + (name))
   }
 }
 </script>
@@ -28,15 +29,15 @@ async function copyName(name: string): Promise<void> {
 <template>
   <div class="icon-gallery">
     <header class="icon-gallery__header">
-      <h1 class="icon-gallery__title">AppSvgIcon 图标一览</h1>
+      <h1 class="icon-gallery__title">AppSvgIcon {{ t('UIDev_Text') }}</h1>
       <p class="icon-gallery__hint">
-        共 {{ APP_SVG_ICON_ENTRIES.length }} 个图标，点击卡片可复制 name 值到剪贴板
+        {{ t('UIDev_Text2') }} {{ APP_SVG_ICON_ENTRIES.length }} {{ t('UIDev_Text3') }}，{{ t('UIDev_CanCopy') }} name {{ t('UIDev_Text4') }}
       </p>
       <input
         v-model="keyword"
         class="icon-gallery__search"
         type="text"
-        placeholder="按 name 或说明搜索"
+        :placeholder="t('UIDev_Text5') + ' name ' + t('UIDev_OrSearch')"
       />
     </header>
 
@@ -54,7 +55,7 @@ async function copyName(name: string): Promise<void> {
       </button>
     </div>
 
-    <p v-if="filteredEntries.length === 0" class="icon-gallery__empty">没有匹配的图标</p>
+    <p v-if="filteredEntries.length === 0" class="icon-gallery__empty">{{ t('UIDev_Of') }}</p>
   </div>
 </template>
 

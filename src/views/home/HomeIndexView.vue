@@ -347,7 +347,7 @@ const clubNameText = computed(
   () =>
     toSafeString(currentClub.value?.club_name)
       .replace(/[(（]\s*disband\s*[)）]?/gi, '')
-      .trim() || '俱乐部',
+      .trim() || t('UILobby_Menu_menu_btn_club'),
 )
 
 const clubGoldText = computed(() => toSafeNumber(currentClub.value?.user_gold) / 100)
@@ -489,7 +489,7 @@ async function refreshBalance(): Promise<void> {
     loading.value = true
     await getUserClubApi()
   } catch (error) {
-    const message = error instanceof Error ? error.message : '刷新余额失败'
+    const message = error instanceof Error ? error.message : t('UIHome_Fail')
     showGameToast(message)
   } finally {
     loading.value = false
@@ -519,7 +519,7 @@ function handleOpenTelegram(): void {
 function handleOpenCustomerService(): void {
   const clubId = selectedClubId.value
   if (clubId <= 0) {
-    showGameToast('当前俱乐部信息无效')
+    showGameToast(t('UIClub_CurrentClubNo'))
     return
   }
 
@@ -531,7 +531,7 @@ function handleOpenCustomerService(): void {
 }
 
 function openMiniGamePanel(): void {
-  showGameToast('功能开发中')
+  showGameToast(t('UIClub_InDeve'))
   // openBridgePanel({
   //   panelType: 'notification',
   //   title: '', // GameDialog 标题，可留空
@@ -788,7 +788,7 @@ onBeforeUnmount(() => {
 
     <!-- 2. 公告栏 -->
     <div class="notice-bar">
-      <img class="notice-icon" src="@/assets/icons/icon_notice.svg" alt="公告" />
+      <img class="notice-icon" src="@/assets/icons/icon_notice.svg" :alt="t('Serverbulletin')" />
       <div class="notice-marquee">
         <span class="notice-label mr-4"> {{ $txt('Serverbulletin') }}: </span>
         <div ref="noticeScrollRef" class="notice-scroll">
@@ -817,12 +817,12 @@ onBeforeUnmount(() => {
           <img
             class="icon-sm icon-eye"
             src="@/assets/icons/icon_eye_open.svg"
-            alt="显示/隐藏"
+            :alt="t('UIHome_Text') + '/' + t('UIHome_Text2')"
             @click="toggleBalance"
           />
         </div>
         <div class="club-balance-row">
-          <img class="icon-sm" src="@/assets/icons/diamondicon.svg" alt="余额" />
+          <img class="icon-sm" src="@/assets/icons/diamondicon.svg" :alt="t('UIClub_CreateRoom31')" />
           <span v-if="loading" class="balance-amount">
             <van-loading size="16" />
           </span>
@@ -858,7 +858,7 @@ onBeforeUnmount(() => {
           <span class="contact-label"> @game </span>
         </div>
         <div class="contact-item" @click="handleOpenEmail">
-          <img class="contact-icon" :src="iconService2" alt="邮箱" />
+          <img class="contact-icon" :src="iconService2" :alt="t('UISetting_SecurityBindEmailItem')" />
           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>
         <div
@@ -866,7 +866,7 @@ onBeforeUnmount(() => {
           class="contact-item"
           @click="handleOpenCustomerService"
         >
-          <img class="contact-icon" :src="iconService3" alt="IM客服" />
+          <img class="contact-icon" :src="iconService3" :alt="'IM' + t('UIMineMain01')" />
           <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
         </div>
       </div>
@@ -894,7 +894,7 @@ onBeforeUnmount(() => {
         <div v-else key="default" class="home-default-sections home-swap-panel">
           <!-- 4. 游戏模块 -->
           <div class="section-header">
-            <span class="section-title">{{ localized('Game Center', '游戏中心') }}</span>
+            <span class="section-title">{{ t('UIHome_Text3') }}</span>
           </div>
           <div class="game-center-scroll">
             <div class="game-center-track">
@@ -932,7 +932,7 @@ onBeforeUnmount(() => {
                 class="game-scroll-card poker-card"
                 @click="goToGameList"
               >
-                <img class="zone-lg-bg" src="@/assets/icons/game_zone_poker_lg.png" alt="扑克" />
+                <img class="zone-lg-bg" src="@/assets/icons/game_zone_poker_lg.png" :alt="t('UIClub_Text15')" />
                 <div class="poker-overlay"></div>
                 <div class="zone-info poker-info">
                   <div class="zone-header">
@@ -963,7 +963,7 @@ onBeforeUnmount(() => {
                 class="game-scroll-card game-card-mahjong"
                 @click="goToCasino"
               >
-                <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" alt="麻将" />
+                <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" :alt="t('Mahjong_Name')" />
                 <div class="zone-info">
                   <div class="zone-header">
                     <span class="zone-title"> {{ localized('Casino', '娱乐场') }} </span>
@@ -989,7 +989,7 @@ onBeforeUnmount(() => {
 
           <!-- 5. 热门游戏 -->
           <div v-if="showHotGamesSection" class="section-header">
-            <span class="section-title">{{ localized('Hot Games', '热门游戏') }}</span>
+            <span class="section-title">{{ t('UIHome_Text4') }}</span>
           </div>
           <div v-if="showHotGamesSection" class="coming-soon-scroll">
             <div class="coming-soon-track">
@@ -1028,11 +1028,11 @@ onBeforeUnmount(() => {
     />
 
     <div v-if="canManageChannelClub" class="floating-action-area">
-      <button class="create-table-btn" type="button" @click="goToCreateTable">创建牌桌</button>
+      <button class="create-table-btn" type="button" @click="goToCreateTable">{{ t('UIGuild_CreateTable') }}</button>
       <button
         class="floating-menu-btn"
         type="button"
-        aria-label="俱乐部管理"
+        :aria-label="t('UIClub_ClubManager')"
         @click="goToClubDetail"
       >
         <img :src="clubDetailButtonIcon" alt="" />

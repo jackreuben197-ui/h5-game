@@ -22,6 +22,9 @@ const currentPanelComponent = computed(() =>
   renderedPanel.value ? (bridgePanelRegistry[renderedPanel.value.panelType] ?? null) : null,
 )
 const panelProps = computed(() => renderedPanel.value?.props ?? {})
+const panelDialogClass = computed(() =>
+  renderedPanel.value ? `bridge-panel-dialog--${renderedPanel.value.panelType}` : '',
+)
 const shouldShowFallback = computed(() =>
   Boolean(renderedPanel.value && !currentPanelComponent.value),
 )
@@ -72,7 +75,10 @@ function onDialogClose(): void {
   </van-popup>
 
   <GameDialog
-    :class="{ 'game-panel-dialog': !showH5Bg, 'notification-dialog': !noNotificationDialog }"
+    :class="[
+      panelDialogClass,
+      { 'game-panel-dialog': !showH5Bg, 'notification-dialog': !noNotificationDialog },
+    ]"
     :show="visible && !isMttRecord"
     :title="title"
     :show-footer="false"

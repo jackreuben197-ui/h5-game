@@ -276,13 +276,13 @@ const joinGame = async (apiType: string, gameType: string, roomId = 0, clubId?: 
           window.open(gameUrl, '_blank', 'noopener,noreferrer')
         }
       } else {
-        showToast(t('UIErrorNetwork') || 'No game URL available')
+        showToast(t('UICasino_ClubNotEnabled'))
       }
     } else {
-      showToast(res.msg || t('UIErrorNetwork'))
+      showToast(res.msg || t('UICasino_ClubNotEnabled'))
     }
   } catch (error: any) {
-    showToast(error?.response?.data?.msg || t('UIErrorNetwork'))
+    showToast(error?.response?.data?.msg || t('UICasino_ClubNotEnabled'))
   }
 }
 </script>

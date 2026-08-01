@@ -7,6 +7,8 @@ import { formatTxtMessage, type FormatArg, type FormatArgs } from './parser'
 import { createLogger } from '@/utils/logger'
 import enOverrides from './en-overrides.json'
 import zhCnOverrides from './zh-cn-overrides.json'
+import zhTwOverrides from './zh-tw-overrides.json'
+import ptOverrides from './pt-overrides.json'
 
 const log = createLogger('[i18n]')
 
@@ -51,6 +53,12 @@ const EN_OVERRIDES = enOverrides as Record<string, string>
 // CN 覆盖：从 dev_merge_0624 维护的中文覆盖，优先于包内 cn 词条
 // （既补包内空缺，也可覆盖包内被 refactor 改动的措辞，如 账号登录/账号注册）。
 const CN_OVERRIDES = zhCnOverrides as Record<string, string>
+
+// 繁中 / 葡语覆盖：包内缺词时原本直接回退简中，这里先查我们自己维护的词条。
+const OVERRIDES_BY_LOCALE: Partial<Record<LocaleCode, Record<string, string>>> = {
+  zh: zhTwOverrides as Record<string, string>,
+  pt: ptOverrides as Record<string, string>,
+}
 
 // 词典实例（window.__H5_CC_I18N__）由 H5 与 Cocos 共用，且 CC 层在 ProcedureInit 里强制切到
 // zh-CN 并忽略 syncLanguage。故每次取词都临时切到目标语言，取完还原成调用前的值：H5 拿到自己的
@@ -101,6 +109,10 @@ export function t(key: string, ...args: FormatArg[] | [FormatArgs]): string {
   // 简中优先用我们维护的覆盖词条（覆盖 refactor 改动的措辞）。
   if (locale === 'cn' && CN_OVERRIDES[key]) {
     return formatTxtMessage(CN_OVERRIDES[key], args).replace(/\bUC\b/g, '联盟币')
+  }
+  const override = OVERRIDES_BY_LOCALE[locale]?.[key]
+  if (override) {
+    return formatTxtMessage(override, args)
   }
   let message = readPackageValue(key, locale)
   if (!message) {

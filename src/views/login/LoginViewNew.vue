@@ -819,6 +819,8 @@ function consumePhoneAreaSelection(): void {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .login-page {
   background: url(@/assets/images/main_bg.webp) no-repeat center/cover;
   min-height: 100vh;
@@ -861,6 +863,10 @@ function consumePhoneAreaSelection(): void {
     right: 0.2rem;
     height: 0.2px;
     background: rgba(255, 255, 255, 0.1);
+
+    @include theme-light-own {
+      background: rgba(0, 0, 0, 0.1);
+    }
   }
 
   &:last-child::after {

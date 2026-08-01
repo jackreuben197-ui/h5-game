@@ -1490,6 +1490,21 @@ onMounted(async () => {
       color: #000000;
     }
 
+    .join-modal-card {
+      background: rgba(0, 0, 0, 0.04);
+      border-color: rgba(0, 0, 0, 0.08);
+    }
+
+    .join-modal-name,
+    .join-modal-id-row {
+      color: #000000;
+    }
+
+    .join-modal-id-tag {
+      background: rgba(0, 0, 0, 0.08);
+      color: #333333;
+    }
+
     .invite-modal__head h3 {
       color: #000000;
     }

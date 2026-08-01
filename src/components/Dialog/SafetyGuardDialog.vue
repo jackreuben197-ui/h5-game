@@ -26,6 +26,7 @@ const popupShow = computed({
 
 <template>
   <GameDialog
+    class="safety-guard-dialog"
     :show="popupShow"
     :show-footer="false"
     :show-confirm-button="false"

@@ -662,3 +662,14 @@ function toSafeInt(value: unknown): number {
   font-weight: 500;
 }
 </style>
+
+<style lang="scss">
+@use '@/styles/mixins' as *;
+
+:root[data-theme='light'] {
+  .safety-guard-dialog.van-dialog,
+  .bridge-panel-dialog--safetyGuard.van-dialog {
+    @include light-panel-dialog;
+  }
+}
+</style>

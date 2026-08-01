@@ -183,6 +183,12 @@ function handleBannerGameClick(game: any) {
     return
   }
 
+  // 后台没给该俱乐部开娱乐场时，游戏列表为空，直接提示，不再发起必然失败的进游戏请求。
+  if (!hasCasinoAccess.value) {
+    showGameToast(t('UICasino_ClubNotEnabled'))
+    return
+  }
+
   pendingGameInfo.value = { apiType: game.gameApiType, gameType: '', roomId: game.roomId }
   showGameClubSelector.value = true
 }
@@ -225,13 +231,13 @@ const joinGame = async (apiType: string, gameType: string, roomId = 0, clubId?: 
           window.open(gameUrl, '_blank', 'noopener,noreferrer')
         }
       } else {
-        showGameToast(t('UIErrorNetwork') || 'No game URL available')
+        showGameToast(t('UICasino_ClubNotEnabled'))
       }
     } else {
-      showGameToast((res.msg as string) || t('UIErrorNetwork'))
+      showGameToast((res.msg as string) || t('UICasino_ClubNotEnabled'))
     }
   } catch (error: any) {
-    showGameToast(error?.response?.data?.msg || t('UIErrorNetwork'))
+    showGameToast(error?.response?.data?.msg || t('UICasino_ClubNotEnabled'))
   }
 }
 
@@ -367,6 +373,10 @@ const channelCasinoClubId = computed(() =>
 const hasChannelCasinoGames = computed(
   () => channelCasinoClubId.value > 0 && casinoStore.gameRecords.length > 0,
 )
+
+// 热门游戏三个入口都是娱乐场（第三方）游戏：俱乐部没开通时游戏列表为空。
+// popularBannerGames 带本地缓存，可能是上一次全局数据的残留，故只认实时拉取的 gameRecords。
+const hasCasinoAccess = computed(() => !initialized.value || casinoStore.gameRecords.length > 0)
 
 // 私域版首页三块内容：赛事 / 扑克 / 娱乐场。赛事、扑克按「是否创建了内容」判断，
 // 娱乐场按俱乐部维度的游戏列表是否非空判断（没开权限时后台返回空）。
@@ -1398,17 +1408,6 @@ onBeforeUnmount(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.mtt-content {
-  :deep(.mtt-group) {
-    .mtt-group__title {
-      color: #000;
-    }
-    .mtt-group__toggle {
-      color: rgba(0, 0, 0, 0.77);
-    }
-  }
-}
-
 // 保持和 .home-page 的直接子级同样的纵向堆叠 + 间距。
 .home-default-sections {
   display: flex;

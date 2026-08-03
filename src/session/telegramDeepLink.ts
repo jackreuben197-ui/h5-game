@@ -21,9 +21,11 @@ const log = createLogger('[tg-deeplink]')
 //   home_<roomId>_<clubRandomId>  → after login, auto-join the club then open the record detail.
 // The trailing <clubRandomId> is the designated club's random id (backend-provided); it is
 // optional so legacy `login_<roomId>` / `home_<roomId>` links still work (club derived from room).
-type DeepLinkAction = 'login' | 'home'
+import { useTelegramClubJoinStore } from '@/stores/telegramClubJoin'
 
-interface DeepLinkIntent {
+export type DeepLinkAction = 'login' | 'home'
+
+export interface DeepLinkIntent {
   action: DeepLinkAction
   roomId: string
   clubRandomId: string
@@ -99,9 +101,19 @@ export function runTelegramDeepLinkAfterLogin(): void {
   })
 }
 
+// Resume a Telegram deep-link action after user completes Quick Join from the modal.
+export async function resumeTelegramDeepLink(intent: DeepLinkIntent): Promise<void> {
+  log.info('resume telegram deep link after quick join:', intent)
+  await dispatchIntent(intent)
+}
+
 async function dispatchIntent(intent: DeepLinkIntent): Promise<void> {
   if (intent.action === 'home') {
-    await ensureDeepLinkClubMembership(intent)
+    const isMember = await ensureDeepLinkClubMembership(intent)
+    if (!isMember) {
+      log.warn('user is not a member of the club, opening Quick Join dialog')
+      return
+    }
     await openRoomRecordDetail(intent.roomId)
     return
   }
@@ -115,11 +127,10 @@ async function dispatchIntent(intent: DeepLinkIntent): Promise<void> {
 async function ensureDeepLinkClubMembership(
   intent: DeepLinkIntent,
   room?: RoomRecord,
-): Promise<void> {
+): Promise<boolean> {
   const clubRandomId = toSafeInt(intent.clubRandomId)
   if (clubRandomId) {
-    await ensureClubMembershipByRandomId(clubRandomId)
-    return
+    return ensureClubMembershipByRandomId(clubRandomId, intent)
   }
 
   // Legacy link without a club id: derive the club from the room.
@@ -127,7 +138,8 @@ async function ensureDeepLinkClubMembership(
   const relateClubIds = Array.isArray(resolvedRoom?.relate_club_ids)
     ? resolvedRoom?.relate_club_ids ?? []
     : []
-  await ensureClubMembership(toSafeInt(relateClubIds[0]))
+  const derivedClubId = toSafeInt(relateClubIds[0])
+  return ensureClubMembership({ clubId: derivedClubId, clubRandomId: 0, pendingIntent: intent })
 }
 
 async function resolveRoomForIntent(roomId: string): Promise<RoomRecord | undefined> {
@@ -137,61 +149,120 @@ async function resolveRoomForIntent(roomId: string): Promise<RoomRecord | undefi
 
 // Resolve a club random id to its internal club_id, then ensure membership. Used for
 // the backend's login_<roomId>_<clubRandomId> / home_<roomId>_<clubRandomId> links.
-async function ensureClubMembershipByRandomId(clubRandomId: number): Promise<void> {
+async function ensureClubMembershipByRandomId(
+  clubRandomId: number,
+  intent: DeepLinkIntent,
+): Promise<boolean> {
   if (!clubRandomId) {
-    return
+    return true
   }
 
   const userInfoStore = useUserInfoStore(pinia)
+  // Ensure user clubs are up to date
+  try {
+    await getUserClubApi()
+  } catch {
+    /* ignore error */
+  }
+
   const existing = userInfoStore.clubList.find(
     (club) => toSafeInt(club.random_id) === clubRandomId,
   )
   if (existing) {
     userInfoStore.setCurrentClubById(toSafeInt(existing.club_id))
-    return
+    return true
   }
 
   let clubId = 0
+  let clubName = ''
   try {
     const res = await postOrgClubSearchByIdApi(
       { club_random_id: clubRandomId },
       { suppressBusinessToast: true },
     )
-    clubId = toSafeInt((res.data as Record<string, unknown> | undefined)?.club_id)
+    const data = res.data as Record<string, unknown> | undefined
+    clubId = toSafeInt(data?.club_id)
+    clubName = String(data?.club_name || '')
   } catch (error) {
     log.warn('resolve club by random id failed:', clubRandomId, error)
   }
 
-  await ensureClubMembership(clubId)
+  return ensureClubMembership({ clubId, clubRandomId, clubName, pendingIntent: intent })
 }
 
-// If the user is not already a member of the club, programmatically trigger "join this club"
-// (the same /org/club/user/join/apply call the Join button makes). Clubs configured with
-// auto-audit (joinWithoutApproval) enroll immediately; others file a pending application.
-// Runs silently (no toast) since it happens automatically during deep-link handling.
-async function ensureClubMembership(clubId: number): Promise<void> {
-  if (!clubId) {
-    return
+// 1) Verify if current account has joined the club.
+// 2) If not, initiate automatic join.
+// 3) If auto-join fails, recheck whether the account has successfully joined the club.
+// 4) If final verification shows account still not joined, display prompt dialog and return false.
+async function ensureClubMembership(params: {
+  clubId: number
+  clubRandomId: number
+  clubName?: string
+  pendingIntent: DeepLinkIntent
+}): Promise<boolean> {
+  const { clubId, clubRandomId, clubName, pendingIntent } = params
+  if (!clubId && !clubRandomId) {
+    return true
   }
 
   const userInfoStore = useUserInfoStore(pinia)
-  const alreadyMember = userInfoStore.clubList.some(
-    (club) => toSafeInt(club.club_id) === clubId,
+
+  // Initial check
+  let alreadyMember = userInfoStore.clubList.some(
+    (club) =>
+      (clubId > 0 && toSafeInt(club.club_id) === clubId) ||
+      (clubRandomId > 0 && toSafeInt(club.random_id) === clubRandomId),
   )
   if (alreadyMember) {
-    userInfoStore.setCurrentClubById(clubId)
-    return
+    if (clubId > 0) {
+      userInfoStore.setCurrentClubById(clubId)
+    }
+    return true
   }
 
-  try {
-    log.info('auto-join club for telegram deep link, clubId:', clubId)
-    await postOrgClubJoinApi({ club_id: clubId }, { suppressBusinessToast: true })
-    // Refresh membership so an auto-audit club shows up immediately, then select it.
-    await getUserClubApi()
-    userInfoStore.setCurrentClubById(clubId)
-  } catch (error) {
-    log.warn('auto-join club failed:', error)
+  // Auto-join attempt
+  let autoJoinSuccess = false
+  if (clubId > 0) {
+    try {
+      log.info('auto-join club for telegram deep link, clubId:', clubId)
+      await postOrgClubJoinApi({ club_id: clubId }, { suppressBusinessToast: true })
+      autoJoinSuccess = true
+    } catch (error) {
+      log.warn('auto-join club failed:', error)
+    }
   }
+
+  // Recheck membership status (runs regardless of whether autoJoin threw an exception or succeeded)
+  try {
+    await getUserClubApi()
+  } catch (error) {
+    log.warn('recheck getUserClubApi failed:', error)
+  }
+
+  alreadyMember = userInfoStore.clubList.some(
+    (club) =>
+      (clubId > 0 && toSafeInt(club.club_id) === clubId) ||
+      (clubRandomId > 0 && toSafeInt(club.random_id) === clubRandomId),
+  )
+
+  if (alreadyMember) {
+    if (clubId > 0) {
+      userInfoStore.setCurrentClubById(clubId)
+    }
+    return true
+  }
+
+  // Final verification shows user has STILL not joined: open prompt dialog
+  setH5Visible(true)
+  const telegramClubJoinStore = useTelegramClubJoinStore(pinia)
+  telegramClubJoinStore.openModal({
+    clubId,
+    clubRandomId,
+    clubName,
+    pendingIntent,
+  })
+
+  return false
 }
 
 // home_<roomId>: open that room's record/result detail page.
@@ -215,10 +286,15 @@ async function enterRoomTableByRoomId(intent: DeepLinkIntent): Promise<void> {
   const userInfoStore = useUserInfoStore(pinia)
   const roomListStore = useRoomListStore(pinia)
 
-  // Hide the H5 layer so neither the home nor the room list (扑克专区) page is ever shown.
-  // This is the same visibility toggle Cocos itself uses when a table opens, so it does
-  // not affect the game canvas or the bridge — it only keeps the H5 UI out of sight while
-  // we resolve the room and hand off to Cocos.
+  // 1. Enroll / verify club membership FIRST before hiding H5 layer or resolving room
+  const isMember = await ensureDeepLinkClubMembership(intent)
+  if (!isMember) {
+    log.warn('user is not a member of the club, halting table entry for Quick Join modal')
+    setH5Visible(true)
+    return
+  }
+
+  // 2. Once membership is verified, hide H5 layer so room table canvas takes over
   setH5Visible(false)
 
   // Keep the H5 route on game-list (the proven working entry path) but hidden, so exiting
@@ -235,10 +311,7 @@ async function enterRoomTableByRoomId(intent: DeepLinkIntent): Promise<void> {
     return
   }
 
-  // Enroll the user into the designated club before entering (auto-join if not a member):
-  // the start_param's club random id, or the room's own club for legacy links.
   const roomRelateClubIds = Array.isArray(room.relate_club_ids) ? room.relate_club_ids : []
-  await ensureDeepLinkClubMembership(intent, room)
 
   let wsPort = Number(gameStore.websocketPort) || 0
   if (!wsPort) {

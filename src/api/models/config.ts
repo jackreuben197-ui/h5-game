@@ -18,6 +18,12 @@ export interface DiamondConfigRequest {
   [key: string]: unknown
 }
 
+export interface HomeAnnouncementConfig {
+  h5?: string
+  tg?: string
+  [key: string]: unknown
+}
+
 // /config/global/config 响应 data。
 export interface GlobalConfigData {
   support_email?: string
@@ -32,6 +38,8 @@ export interface GlobalConfigData {
   record_fee_mtt_diamond?: string
   record_fee_mtt_scoreboard?: string
   create_club_price?: string
+  // 首页公告 JSON：{"h5":"H5公告","tg":"Telegram公告"}
+  home_announcement_config?: string | HomeAnnouncementConfig
   // 赛事列表是否展示平台创建的 MTT/SNG（1 展示，对齐 Unity club_display_platform_mtt）
   club_display_platform_mtt?: number | string
   [key: string]: unknown

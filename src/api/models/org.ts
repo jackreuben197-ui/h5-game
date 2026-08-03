@@ -586,6 +586,7 @@ export interface OrgClubSearchByIdResponseData {
   currency?: string
   master_type?: number
   banner?: string
+  announcement?: string
   fantasy_room_switch?: number
   uc_deposit_advance?: number
   banner_audit?: number
@@ -1097,6 +1098,7 @@ export interface OrgChangeClubDataRequest {
   welcomes_switch?: number // 欢迎语开关
   welcomes?: string // 欢迎语
   banner?: string // banner
+  announcement?: string // 首页公告
   prologue?: string // 开场白
   prologue_switch?: number // 开场白 1开 2关
 
@@ -2520,6 +2522,7 @@ export interface OrgClubData {
   currency?: string
   master_type?: number
   banner?: string
+  announcement?: string
   fantasy_room_switch?: number
   uc_deposit_advance?: number
   banner_audit?: number

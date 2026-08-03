@@ -12,6 +12,7 @@ import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
 import { localStore } from '@/utils/localStore'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
+import { useHomeAnnouncement } from '@/composables/useHomeAnnouncement'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { filterVisibleMttRecords } from '@/utils/mttVisibility'
 import { showGameToast } from '@/components/Toast'
@@ -140,9 +141,7 @@ const currentClub = computed<ClubInfo | null>(() => {
 })
 
 const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
-const noticeText = computed(() => {
-  return toSafeString(currentClub.value?.prologue)
-})
+const { noticeText, ensureHomeAnnouncementConfig } = useHomeAnnouncement()
 const noticeTrackStyle = computed<CSSProperties>(() => ({
   '--notice-gap': `${NOTICE_GAP_PX}px`,
   '--notice-distance': `${noticeDistancePx.value}px`,
@@ -182,13 +181,19 @@ const initialized = ref(false)
 const homeContentMode = ref<HomeContentMode>(homeContentModeRaw.value)
 
 const currentJoinedClub = computed(() => userInfoStore.currentJoinedClub)
-const channelManagerLevel = computed(() => toSafeInt(currentJoinedClub.value?.user_level))
-const canManageChannelClub = computed(
+const channelUserLevel = computed(() => toSafeInt(currentJoinedClub.value?.user_level))
+const canCreateChannelTable = computed(
   () =>
     isChannelPackage &&
     Boolean(gameStore.sessionToken && currentJoinedClub.value) &&
-    channelManagerLevel.value >= 1 &&
-    channelManagerLevel.value <= 3,
+    channelUserLevel.value >= 1 &&
+    channelUserLevel.value <= 3,
+)
+const canManageChannelClub = computed(
+  () => isChannelPackage && Boolean(gameStore.sessionToken && currentJoinedClub.value),
+)
+const showChannelFloatingActions = computed(
+  () => canCreateChannelTable.value || canManageChannelClub.value,
 )
 
 function toSafeString(value: unknown): string {
@@ -517,6 +522,9 @@ watch(
 
 onMounted(() => {
   void ensureClubDataReady()
+  void ensureHomeAnnouncementConfig().catch((error) => {
+    console.warn('[home] fetch announcement config failed:', error)
+  })
   // 首页和列表页共用同一个 room store，进入首页时启动共享数据流。
   const roomListReady = roomListStore.bootstrapRoomList()
   // 首页和 MTT 列表页共用同一个 mtt store，避免重复请求。
@@ -813,9 +821,17 @@ onBeforeUnmount(() => {
       </Transition>
     </div>
 
-    <div v-if="canManageChannelClub" class="floating-action-area">
-      <button class="create-table-btn" type="button" @click="goToCreateTable">{{ t('UIGuild_CreateTable') }}</button>
+    <div v-if="showChannelFloatingActions" class="floating-action-area">
       <button
+        v-if="canCreateChannelTable"
+        class="create-table-btn"
+        type="button"
+        @click="goToCreateTable"
+      >
+        {{ t('UIGuild_CreateTable') }}
+      </button>
+      <button
+        v-if="canManageChannelClub"
         class="floating-menu-btn"
         type="button"
         :aria-label="t('UIClub_ClubManager')"

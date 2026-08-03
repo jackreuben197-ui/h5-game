@@ -27,6 +27,28 @@ type CmsBannerScope =
   | { type: 'default-club' }
   | { type: 'channel-club'; clubId: number }
 
+// 路由切换会销毁并重新创建首页组件。IndexedDB 虽然有缓存，但读取仍是异步的，
+// 会让 HomeBannerSwiper 在首帧短暂回退到 home_header_1。这里保留当前 SPA
+// 生命周期内已经解析过的 Banner，使首页重新挂载时可以同步拿到正确图片。
+const runtimeBannerImages = new Map<string, string[]>()
+
+function createRuntimeBannerKey(
+  lang: string,
+  displayScene: number,
+  isChannelPackage: boolean,
+  channelClubId: number,
+): string {
+  const hostname = typeof window === 'undefined' ? '' : window.location.hostname.toLowerCase()
+  const scope = isChannelPackage ? `channel_${channelClubId || 'pending'}` : 'platform'
+  return `${hostname}_${lang}_scene_${displayScene}_${scope}`
+}
+
+function normalizeBannerUrls(urls: string[]): string[] {
+  return urls
+    .map((url) => (typeof url === 'string' ? url.trim() : ''))
+    .filter((url) => !!url)
+}
+
 // 兼容 banner_list_resp 挂在 data 顶层或 data.data 内层两种返回结构。
 function extractBannerRecords(
   data: Record<string, unknown> | null | undefined,
@@ -150,7 +172,33 @@ export function useLobbyBannerImages(): {
   bannerImages: Ref<string[]>
   fetchLobbyBannerImages: () => Promise<void>
 } {
-  const bannerImages = ref<string[]>([])
+  const initialLang = toServerLang(getLocale())
+  const initialDisplayScene = isTelegramMiniAppEnv()
+    ? DISPLAY_SCENE_TELEGRAM
+    : DISPLAY_SCENE_H5
+  const initialUserInfoStore = useUserInfoStore()
+  const initialIsChannelPackage = isChannelPackageHost()
+  const initialChannelClubId = initialIsChannelPackage
+    ? Math.floor(
+        Number(
+          initialUserInfoStore.channelDefaultClub?.club_id ??
+            initialUserInfoStore.currentClub?.club_id,
+        ),
+      ) || 0
+    : 0
+  const initialRuntimeKey = createRuntimeBannerKey(
+    initialLang,
+    initialDisplayScene,
+    initialIsChannelPackage,
+    initialChannelClubId,
+  )
+  const bannerImages = ref<string[]>([...(runtimeBannerImages.get(initialRuntimeKey) || [])])
+
+  function commitBannerImages(runtimeKey: string, urls: string[]): void {
+    const normalized = normalizeBannerUrls(urls)
+    bannerImages.value = normalized
+    runtimeBannerImages.set(runtimeKey, [...normalized])
+  }
 
   async function fetchLobbyBannerImages(): Promise<void> {
     const lang = toServerLang(getLocale())
@@ -165,6 +213,21 @@ export function useLobbyBannerImages(): {
       channelClubId = Math.floor(Number(channelClub?.club_id)) || 0
     }
     const hasChannelClub = isChannelPackage && channelClubId > 0
+    const runtimeKey = createRuntimeBannerKey(
+      lang,
+      displayScene,
+      isChannelPackage,
+      channelClubId,
+    )
+
+    // 初始化时渠道俱乐部尚未恢复完成的极少数场景，在这里命中最终分桶后立即补上；
+    // 正常的底部导航往返会在 setup 阶段就同步命中，不产生默认图闪现。
+    if (!bannerImages.value.length) {
+      const runtimeCached = runtimeBannerImages.get(runtimeKey)
+      if (runtimeCached?.length) {
+        bannerImages.value = [...runtimeCached]
+      }
+    }
     // 渠道包调用 before-login CMS 时传渠道 club_id；官方包不传，只取平台配置。
     const cmsScope: CmsBannerScope = hasChannelClub
       ? { type: 'channel-club', clubId: channelClubId }
@@ -180,7 +243,7 @@ export function useLobbyBannerImages(): {
         : platformCacheKey
     const cached = await readLobbyBannerListCache(cacheKey)
     if (cached?.length) {
-      bannerImages.value = cached
+      commitBannerImages(runtimeKey, cached)
     }
 
     // 只有渠道链接才请求俱乐部 banner。平台链接即使账号是俱乐部创始人，也只展示平台 banner。
@@ -189,7 +252,7 @@ export function useLobbyBannerImages(): {
       const sceneUrls = await fetchSceneBannerUrls(lang, displayScene, channelClubId)
 
       if (sceneUrls.length) {
-        bannerImages.value = sceneUrls
+        commitBannerImages(runtimeKey, sceneUrls)
         void writeLobbyBannerListCache(cacheKey, sceneUrls)
         return
       }
@@ -202,7 +265,7 @@ export function useLobbyBannerImages(): {
       return
     }
 
-    bannerImages.value = cmsUrls
+    commitBannerImages(runtimeKey, cmsUrls)
     void writeLobbyBannerListCache(cacheKey, cmsUrls)
   }
 

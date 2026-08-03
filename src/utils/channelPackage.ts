@@ -4,6 +4,7 @@ export const CHANNEL_MAIN_DOMAIN = (import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || 
   .trim()
   .toLowerCase()
 // const TEST_CHANNEL_INVITE_CODE = 'ksGuBmMk'
+// const TEST_CHANNEL_INVITE_CODE = 'rhswehjy'
 
 interface ParsedQueryParams {
   inviteCode: string

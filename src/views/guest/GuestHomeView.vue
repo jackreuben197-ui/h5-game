@@ -3,6 +3,7 @@ import { t } from '@/i18n'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
+import { useHomeAnnouncement } from '@/composables/useHomeAnnouncement'
 import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { computed, onMounted } from 'vue'
 
@@ -10,8 +11,8 @@ const loginModalStore = useLoginModalStore()
 const userInfoStore = useUserInfoStore()
 
 const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
+const { noticeText, ensureHomeAnnouncementConfig } = useHomeAnnouncement()
 const clubNameText = computed<string>(() => userInfoStore.channelDefaultClub?.club_name || t('UILobby_Menu_menu_btn_club'))
-const noticeText = t('UIGuest_Text6') + "，" + t('UIGuest_Text7')
 const clubGoldText = '0.00'
 const pokerTablesText = '0'
 const pokerPlayersText = '0'
@@ -31,6 +32,9 @@ function notifyNotLoginRegister(): void {
 
 onMounted(() => {
   void userInfoStore.ensureChannelDefaultClub()
+  void ensureHomeAnnouncementConfig().catch((error) => {
+    console.warn('[guest-home] fetch announcement config failed:', error)
+  })
   void fetchLobbyBannerImages().catch((error) => {
     console.warn('[guest-home] fetch lobby banner failed:', error)
   })

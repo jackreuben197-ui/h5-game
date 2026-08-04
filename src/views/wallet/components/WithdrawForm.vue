@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { showToast } from 'vant'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
@@ -7,16 +7,18 @@ import { t } from '@/i18n'
 import { postOnlineWithdrawTypeListApi, postOnlineWithdrawDescriptionApi } from '@/api/config'
 import { postTiquGoldApi } from '@/api/order'
 import type { OnlineWithdrawTypeItem, OnlineWithdrawTypeListData } from '@/api/models/config'
-import { useUserInfoStore } from '@/stores/userInfo'
 import { useWalletStore } from '@/stores/wallet'
 
 const emit = defineEmits<{
   'open-cs-chat': [orderData: Record<string, unknown>]
 }>()
+const props = defineProps<{
+  clubId?: number
+  balance?: number
+}>()
 
-const userInfoStore = useUserInfoStore()
 const walletStore = useWalletStore()
-const availableUc = computed(() => userInfoStore.userInfo?.user?.gold ?? 0)
+const availableUc = computed(() => props.balance ?? 0)
 
 const savedAddresses = ref<OnlineWithdrawTypeItem[]>([])
 const selectedAddress = ref<OnlineWithdrawTypeItem | null>(null)
@@ -81,8 +83,7 @@ const sheetPaymentLabel = computed(() => {
 })
 
 function withdrawClubPayload(): Record<string, number> {
-  const club = userInfoStore.currentClub ?? userInfoStore.clubList[0]
-  const clubId = club?.club_id !== undefined ? Number(club.club_id) : NaN
+  const clubId = Number(props.clubId)
   return Number.isFinite(clubId) && clubId > 0 ? { club_id: clubId } : {}
 }
 
@@ -110,23 +111,15 @@ function parseWithdrawGoldCents(raw: string): number | null {
   return cents >= 1 ? cents : null
 }
 
-onMounted(() => {
-  // club_id может ещё не загрузиться — грузим когда он появится
-  if (userInfoStore.clubList.length > 0 || userInfoStore.currentClub) {
-    loadSavedAddresses()
-  } else {
-    const stop = watch(
-      () => userInfoStore.clubList.length,
-      (len) => {
-        if (len > 0) {
-          stop()
-          loadSavedAddresses()
-        }
-      },
-      { immediate: false },
-    )
-  }
-})
+watch(
+  () => props.clubId,
+  (clubId) => {
+    if (Number(clubId) > 0) {
+      void loadSavedAddresses()
+    }
+  },
+  { immediate: true },
+)
 
 async function loadSavedAddresses(): Promise<void> {
   const base = withdrawClubPayload()
@@ -289,7 +282,7 @@ async function handleSubmit(): Promise<void> {
     amount.value = ''
 
     // Refresh pending orders to show/update the bell icon for withdrawal
-    await walletStore.refreshPendingCsOrder()
+    await walletStore.refreshPendingCsOrder(props.clubId)
 
     // type 3 = 手动/撮合 — открываем чат с поддержкой
     // api_type из ответа не надёжен (может быть 0), поэтому смотрим на тип канала

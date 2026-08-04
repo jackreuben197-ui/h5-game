@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { postChatSupportMessageListApi, postChatSupportMessageSendApi } from '@/api/chat'
 import { postClubFundOrderListApi } from '@/api/order'
 import { postOssUploadImageApi } from '@/api/oss'
@@ -11,6 +11,7 @@ import { t } from '@/i18n'
 const props = defineProps<{
   tribeId: number
   supportUserId: number
+  clubId?: number
   orderData: any
 }>()
 
@@ -27,11 +28,7 @@ const fileInput = ref<HTMLInputElement | null>(null)
 let pollTimer: number | null = null
 let statusTimer: number | null = null
 
-const isApproved = computed(() => orderStatus.value === 2)
-
 async function checkOrderStatus() {
-  const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
-  const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
   const orderNo = props.orderData.order?.order_no || props.orderData.order_no
 
   try {
@@ -40,7 +37,7 @@ async function checkOrderStatus() {
         order_no: orderNo,
         limit: 1,
       },
-      clubId,
+      props.clubId,
     )
 
     if (res.code === 0 && res.data?.list?.length) {
@@ -59,9 +56,7 @@ async function loadMessages() {
   try {
     const res = await postChatSupportMessageListApi({
       tribe_id: props.tribeId,
-      club_id: userInfoStore.currentClub?.club_id
-        ? Number(userInfoStore.currentClub.club_id)
-        : undefined,
+      club_id: props.clubId,
       to_user_id: props.supportUserId,
       im_service_type: 4,
       limit: 50,
@@ -93,9 +88,7 @@ async function sendMessage() {
   try {
     const res = await postChatSupportMessageSendApi({
       tribe_id: props.tribeId,
-      club_id: userInfoStore.currentClub?.club_id
-        ? Number(userInfoStore.currentClub.club_id)
-        : undefined,
+      club_id: props.clubId,
       to_user_id: props.supportUserId,
       im_service_type: 4,
       msg_type: 1,
@@ -119,9 +112,7 @@ async function onImageUpload(e: Event) {
       const url = (res.data as any).url as string
       await postChatSupportMessageSendApi({
         tribe_id: props.tribeId,
-        club_id: userInfoStore.currentClub?.club_id
-          ? Number(userInfoStore.currentClub.club_id)
-          : undefined,
+        club_id: props.clubId,
         to_user_id: props.supportUserId,
         im_service_type: 4,
         msg_type: 2,

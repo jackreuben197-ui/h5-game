@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { showFailToast, showToast } from 'vant'
 import bannerBgUrl from '@/assets/images/wallet/banner_bg.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
@@ -12,19 +12,24 @@ import GlassButton from '@/components/Button/GlassButton.vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { t } from '@/i18n'
-import { useUserInfoStore } from '@/stores/userInfo'
+import { useUserInfoStore, type ClubInfo } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { postRechargeGoldApi } from '@/api/order'
 
+const props = defineProps<{
+  club: ClubInfo | null
+}>()
+const emit = defineEmits<{
+  back: []
+}>()
+
 const router = useRouter()
+const route = useRoute()
 const userInfoStore = useUserInfoStore()
 
-const currentClub = computed(() => userInfoStore.currentClub ?? userInfoStore.clubList[0] ?? null)
-const clubId = computed(() =>
-  currentClub.value?.club_id ? Number(currentClub.value.club_id) : undefined,
-)
-const clubName = computed(() => String(currentClub.value?.club_name ?? '').trim())
-const clubBalance = computed(() => Number(currentClub.value?.user_gold ?? 0))
+const clubId = computed(() => (props.club?.club_id ? Number(props.club.club_id) : undefined))
+const clubName = computed(() => String(props.club?.club_name ?? '').trim())
+const clubBalance = computed(() => Number(props.club?.user_gold ?? 0))
 
 const userName = computed(() => String(userInfoStore.userInfo?.user?.nickname ?? '-'))
 const userId = computed(() => userInfoStore.userInfo?.user?.un_id ?? '-')
@@ -40,11 +45,11 @@ const submitting = ref(false)
 const confirmText = computed(() => t('H5Deposit_ConfirmText', clubName.value, depositAmount.value))
 
 function goGiftUc(): void {
-  void router.push('/wallet/gift-uc')
+  void router.push({ path: '/wallet/gift-uc', query: route.query })
 }
 
 function goDetails(): void {
-  void router.push('/wallet/details')
+  void router.push({ path: '/wallet/details', query: route.query })
 }
 
 function onNext(): void {
@@ -107,7 +112,7 @@ function onSuccessConfirm(): void {
 
 <template>
   <div class="deposit-screen">
-    <HeaderBack :title="t('UIGuildFund_RechargeText')" extra-padding>
+    <HeaderBack :title="t('UIGuildFund_RechargeText')" extra-padding @back="emit('back')">
       <template #right>
         <span class="details-btn">
           <GlassButton :label="t('Wallet_Details')" @click="goDetails" />

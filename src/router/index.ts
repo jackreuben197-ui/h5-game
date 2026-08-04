@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHashHistory, type RouteLocationNormalized } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { useWalletStore } from '@/stores/wallet'
 import { pinia } from '@/stores/pinia'
@@ -8,9 +8,15 @@ import { syncPostAuthData } from '@/session/postAuthSync'
 
 const log = createLogger('[router]')
 
-function preloadWalletPriceList(): true {
+function walletRouteClubId(to: RouteLocationNormalized): number | undefined {
+  const raw = Array.isArray(to.query.clubId) ? to.query.clubId[0] : to.query.clubId
+  const clubId = Number(raw)
+  return Number.isFinite(clubId) && clubId > 0 ? clubId : undefined
+}
+
+function preloadWalletPriceList(to: RouteLocationNormalized): true {
   const walletStore = useWalletStore(pinia)
-  void walletStore.loadPriceList().catch((error: unknown) => {
+  void walletStore.loadPriceList(walletRouteClubId(to)).catch((error: unknown) => {
     log.warn('wallet price list preload failed', error)
   })
   return true

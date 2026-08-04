@@ -8,16 +8,29 @@ import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 
 export const useWalletStore = defineStore('wallet', () => {
   const goldPriceData = ref<PropGoldPriceListData | null>(null)
+  let goldPriceClubId: number | undefined
   let priceListRequest: { clubId?: number; promise: Promise<void> } | null = null
   let priceListRequestVersion = 0
 
-  function loadPriceList(): Promise<void> {
+  function resolveClubId(clubIdOverride?: number): number | undefined {
+    if (Number.isFinite(clubIdOverride) && Number(clubIdOverride) > 0) {
+      return Number(clubIdOverride)
+    }
     const userInfoStore = useUserInfoStore()
     const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
-    const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
+    const clubId = Number(currentClub?.club_id)
+    return Number.isFinite(clubId) && clubId > 0 ? clubId : undefined
+  }
+
+  function loadPriceList(clubIdOverride?: number): Promise<void> {
+    const clubId = resolveClubId(clubIdOverride)
     const activeRequest = priceListRequest
     if (activeRequest !== null && activeRequest.clubId === clubId) {
       return activeRequest.promise
+    }
+
+    if (goldPriceClubId !== clubId) {
+      goldPriceData.value = null
     }
 
     const requestVersion = ++priceListRequestVersion
@@ -38,6 +51,7 @@ export const useWalletStore = defineStore('wallet', () => {
       }
 
       goldPriceData.value = res.data ?? null
+      goldPriceClubId = clubId
     })
 
     priceListRequest = { clubId, promise }
@@ -92,10 +106,8 @@ export const useWalletStore = defineStore('wallet', () => {
   const pendingCsWithdrawOrder = computed(() => pendingCsWithdrawOrders.value[0] || null)
   const pendingCsWithdrawCount = computed(() => pendingCsWithdrawOrders.value.length)
 
-  async function refreshPendingCsOrder() {
-    const userInfoStore = useUserInfoStore()
-    const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
-    const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
+  async function refreshPendingCsOrder(clubIdOverride?: number) {
+    const clubId = resolveClubId(clubIdOverride)
 
     try {
       // Check Recharge orders

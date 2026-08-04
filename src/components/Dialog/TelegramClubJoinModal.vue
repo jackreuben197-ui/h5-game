@@ -127,6 +127,7 @@ async function handleQuickJoin(): Promise<void> {
           class="quick-join-btn"
           :text="store.loading ? '加入中...' : '一键加入'"
           :disabled="store.loading"
+          :loading="store.loading"
           @click="handleQuickJoin"
         />
       </div>

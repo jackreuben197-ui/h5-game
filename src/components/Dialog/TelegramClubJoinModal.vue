@@ -100,6 +100,7 @@ async function handleQuickJoin(): Promise<void> {
 <template>
   <GameDialog
     v-model:show="showModal"
+    class="telegram-club-join-dialog"
     title="加入俱乐部"
     :show-confirm-button="false"
     :show-cancel-button="false"
@@ -118,10 +119,6 @@ async function handleQuickJoin(): Promise<void> {
         </div>
       </div>
 
-      <div class="join-prompt">
-        您尚未加入该俱乐部，请点击下方按钮一键加入。
-      </div>
-
       <div class="action-footer">
         <PrimaryButton
           class="quick-join-btn"
@@ -135,7 +132,17 @@ async function handleQuickJoin(): Promise<void> {
   </GameDialog>
 </template>
 
+<style lang="scss">
+@use '@/styles/mixins' as *;
+
+:root[data-theme='light'] .telegram-club-join-dialog {
+  @include light-panel-dialog;
+}
+</style>
+
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .telegram-club-join {
   display: flex;
   flex-direction: column;
@@ -152,17 +159,29 @@ async function handleQuickJoin(): Promise<void> {
     text-align: center;
     margin-bottom: 0.3rem;
 
+    @include theme-light-own {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
     .club-name {
       font-size: 0.34rem;
       font-weight: 600;
       color: #ffffff;
       margin-bottom: 0.12rem;
       word-break: break-word;
+
+      @include theme-light-own {
+        color: #ffffff;
+      }
     }
 
     .club-id {
       font-size: 0.28rem;
       color: rgba(255, 255, 255, 0.7);
+
+      @include theme-light-own {
+        color: rgba(255, 255, 255, 0.85);
+      }
 
       .label {
         margin-right: 0.1rem;
@@ -175,14 +194,6 @@ async function handleQuickJoin(): Promise<void> {
     }
   }
 
-  .join-prompt {
-    font-size: 0.26rem;
-    color: rgba(255, 255, 255, 0.85);
-    text-align: center;
-    line-height: 1.4;
-    margin-bottom: 0.4rem;
-  }
-
   .action-footer {
     width: 100%;
 
@@ -191,6 +202,10 @@ async function handleQuickJoin(): Promise<void> {
       height: 0.84rem;
       font-size: 0.3rem;
       font-weight: 600;
+
+      @include theme-light-own {
+        background: var(--c-brand, #05c297) !important;
+      }
     }
   }
 }

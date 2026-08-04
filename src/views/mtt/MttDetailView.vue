@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import FilterTabbar from '@/components/Tabbar/FilterTabbar.vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
@@ -45,6 +45,7 @@ import LoginSession from '@/session/loginSession'
 type DetailTabName = 'status' | 'players' | 'rewards' | 'tables' | 'blinds'
 
 const route = useRoute()
+const router = useRouter()
 const gameStore = useGameStore()
 const activeTab = ref<DetailTabName>('status')
 const detailData = ref<RoomcenterMttDetailData | null>(null)
@@ -56,6 +57,7 @@ const tick = ref(0)
 let tickTimer: ReturnType<typeof setInterval> | null = null
 let stopCocosMessageListener: (() => void) | null = null
 let detailRequest: Promise<void> | null = null
+const navigatingToRecharge = ref(false)
 
 /* ===== 各 tab 子数据（提升到父级管理，跨 tab 切换时数据保留） ===== */
 const playersLoading = ref(false)
@@ -432,6 +434,22 @@ async function handleBuyinConfirm(payload: {
   }
 }
 
+async function handleBuyinRecharge(payload: { clubId: number }): Promise<void> {
+  if (payload.clubId <= 0 || navigatingToRecharge.value) return
+  navigatingToRecharge.value = true
+  try {
+    await router.push({
+      path: '/wallet',
+      query: {
+        clubId: String(payload.clubId),
+        from: 'mtt-registration',
+      },
+    })
+  } finally {
+    navigatingToRecharge.value = false
+  }
+}
+
 /* ===== 子组件事件处理 ===== */
 function handlePlayersRefresh(mode: 'rank' | 'hunter'): void {
   void loadPlayersData(mode)
@@ -526,6 +544,7 @@ async function handleEnterTable(rid: number): Promise<void> {
       :join-mode="buyinJoinMode"
       :title="buyinModalTitle"
       @confirm="handleBuyinConfirm"
+      @recharge="handleBuyinRecharge"
     />
   </div>
 </template>

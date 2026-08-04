@@ -77,6 +77,10 @@ const isFromCocosTable = computed(() => {
   const raw = Array.isArray(route.query.from) ? route.query.from[0] : route.query.from
   return raw === 'cocos-table'
 })
+const isFromMttRegistration = computed(() => {
+  const raw = Array.isArray(route.query.from) ? route.query.from[0] : route.query.from
+  return raw === 'mtt-registration'
+})
 
 const activeTab = ref(0)
 const activePreset = ref(0)
@@ -311,7 +315,7 @@ watch(
 watch(
   () => route.fullPath,
   () => {
-    if (isFromCocosTable.value) {
+    if (isFromCocosTable.value || isFromMttRegistration.value) {
       activeTab.value = 0
     }
   },

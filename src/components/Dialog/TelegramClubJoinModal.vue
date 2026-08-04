@@ -51,9 +51,7 @@ async function handleQuickJoin(): Promise<void> {
       }
     }
 
-    if (targetClubId > 0) {
-      await postOrgClubJoinApi({ club_id: targetClubId }, { suppressBusinessToast: true })
-    }
+    const res = await postOrgClubJoinApi({ club_id: targetClubId }, { suppressBusinessToast: true })
     await getUserClubApi()
 
     const isMember = userInfoStore.clubList.some(
@@ -61,14 +59,15 @@ async function handleQuickJoin(): Promise<void> {
     )
 
     if (isMember) {
-      showSuccessToast('加入成功')
+      showSuccessToast(res.message || '加入成功')
       const intent = store.pendingIntent
       store.closeModal()
       if (intent) {
         await resumeTelegramDeepLink(intent)
       }
     } else {
-      showFailToast('未能成功加入俱乐部，请重试')
+      // If server returned a message (e.g. "申请成功，等待审核" or status message), show that; otherwise show general failure
+      showFailToast(res.message || '申请已提交，等待审核')
     }
   } catch (error) {
     // Re-check membership in case auto-audit or async backend join succeeded despite network error
@@ -104,6 +103,7 @@ async function handleQuickJoin(): Promise<void> {
     title="加入俱乐部"
     :show-confirm-button="false"
     :show-cancel-button="false"
+    :close-on-click-overlay="true"
     dialog-width="8.8rem"
     card-min-height="4.5rem"
   >
@@ -125,11 +125,10 @@ async function handleQuickJoin(): Promise<void> {
       <div class="action-footer">
         <PrimaryButton
           class="quick-join-btn"
+          :text="store.loading ? '加入中...' : '一键加入'"
           :disabled="store.loading"
           @click="handleQuickJoin"
-        >
-          {{ store.loading ? '加入中...' : '一键加入' }}
-        </PrimaryButton>
+        />
       </div>
     </div>
   </GameDialog>

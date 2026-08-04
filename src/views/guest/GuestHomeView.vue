@@ -12,7 +12,9 @@ const userInfoStore = useUserInfoStore()
 
 const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
 const { noticeText, ensureHomeAnnouncementConfig } = useHomeAnnouncement()
-const clubNameText = computed<string>(() => userInfoStore.channelDefaultClub?.club_name || t('UILobby_Menu_menu_btn_club'))
+const clubNameText = computed<string>(
+  () => userInfoStore.channelDefaultClub?.club_name || t('UILobby_Menu_menu_btn_club'),
+)
 const clubGoldText = '0.00'
 const pokerTablesText = '0'
 const pokerPlayersText = '0'
@@ -31,7 +33,6 @@ function notifyNotLoginRegister(): void {
 }
 
 onMounted(() => {
-  void userInfoStore.ensureChannelDefaultClub()
   void ensureHomeAnnouncementConfig().catch((error) => {
     console.warn('[guest-home] fetch announcement config failed:', error)
   })
@@ -50,7 +51,9 @@ onMounted(() => {
         <button class="top-bar__btn top-bar__btn--register" @click="notifyNotLoginRegister">
           {{ t('UILogin_TitleRegister') }}
         </button>
-        <button class="top-bar__btn top-bar__btn--login" @click="notifyNotLogin">{{ t('UIGuild_MemberManagerSortByLastLoginTime') }}</button>
+        <button class="top-bar__btn top-bar__btn--login" @click="notifyNotLogin">
+          {{ t('UIGuild_MemberManagerSortByLastLoginTime') }}
+        </button>
       </div>
     </div>
     <!-- 1. 顶部俱乐部介绍轮播图 -->
@@ -84,7 +87,11 @@ onMounted(() => {
           />
         </div>
         <div class="club-balance-row">
-          <img class="icon-sm" src="@/assets/icons/icon_chips.png" :alt="t('UIClub_CreateRoom31')" />
+          <img
+            class="icon-sm"
+            src="@/assets/icons/icon_chips.png"
+            :alt="t('UIClub_CreateRoom31')"
+          />
           <span class="balance-amount">
             {{ balanceVisible ? clubGoldText : '****' }}
           </span>
@@ -114,11 +121,19 @@ onMounted(() => {
           <span class="contact-label"> @game </span>
         </div>
         <div class="contact-item" @click="notifyNotLogin">
-          <AppSvgIcon class="contact-icon" name="contact-user" :title="t('UISetting_SecurityBindEmailItem')" />
+          <AppSvgIcon
+            class="contact-icon"
+            name="contact-user"
+            :title="t('UISetting_SecurityBindEmailItem')"
+          />
           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>
         <div class="contact-item" @click="notifyNotLogin">
-          <AppSvgIcon class="contact-icon" name="customer-service" :title="'IM' + t('UIMineMain01')" />
+          <AppSvgIcon
+            class="contact-icon"
+            name="customer-service"
+            :title="'IM' + t('UIMineMain01')"
+          />
           <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
         </div>
       </div>
@@ -184,7 +199,11 @@ onMounted(() => {
 
         <!-- 小游戏专区 -->
         <div v-if="false" class="game-scroll-card game-card-minigame" @click="notifyNotLogin">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_minigame_lg.png" :alt="t('UIClub_Text24')" />
+          <img
+            class="zone-lg-bg"
+            src="@/assets/icons/game_zone_minigame_lg.png"
+            :alt="t('UIClub_Text24')"
+          />
           <div class="zone-info">
             <div class="zone-header">
               <span class="zone-title"> {{ t('UIHomeMinigameArea') }} </span>
@@ -200,7 +219,11 @@ onMounted(() => {
         </div>
         <!-- 麻将专区 -->
         <div v-if="false" class="game-scroll-card game-card-mahjong" @click="notifyNotLogin">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" :alt="t('Mahjong_Name')" />
+          <img
+            class="zone-lg-bg"
+            src="@/assets/icons/game_zone_mahjong_lg.png"
+            :alt="t('Mahjong_Name')"
+          />
           <div class="zone-info">
             <div class="zone-header">
               <span class="zone-title"> {{ t('UIHomeMahjongArea') }} </span>
@@ -221,7 +244,12 @@ onMounted(() => {
           </div>
         </div>
         <!-- 即将开放 -->
-        <div class="game-scroll-card coming-soon-card coming-soon-right" @click="notifyNotLogin">
+        <div
+          v-for="i in 2"
+          :key="`game-coming-${i}`"
+          class="game-scroll-card coming-soon-card coming-soon-right"
+          @click="notifyNotLogin"
+        >
           <img class="zone-lg-bg" src="@/assets/icons/game_zone_comming_lg.png" alt="MTT" />
           <div class="coming-soon-overlay"></div>
           <span class="coming-soon-text"> {{ t('UIHomeComingSoon') }}</span>
@@ -463,7 +491,6 @@ onMounted(() => {
   font-size: 0.28rem;
   cursor: pointer;
   white-space: nowrap;
-
 }
 
 .club-divider {

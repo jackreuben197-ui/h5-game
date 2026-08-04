@@ -1,8 +1,8 @@
 const DESIGN_WIDTH = 375
 const MAX_WIDTH = 480
 const BASE_REM_AT_DESIGN = 37.5
-// 桌面 / Pad 不再按整屏宽度放大 rem。40px 让 0.35~0.4rem 的正文稳定在 14~16px，
-// 组件仍可复用移动端 rem 尺寸，横向布局交给媒体查询和 Grid/Flex。
+// 游客桌面 / Pad 不再按整屏宽度放大 rem。固定 40px 保持正文可读，
+// 页面横向尺寸由响应式 Grid/Flex 负责。
 const DESKTOP_REM = 40
 const DESKTOP_BREAKPOINT = 600
 const RESTORE_REFRESH_DELAYS = [0, 32, 120, 320]
@@ -35,11 +35,7 @@ function getViewportWidth(): number {
 
 function usesAdaptiveDesktopLayout(width: number): boolean {
   const root = document.documentElement
-  return (
-    width >= DESKTOP_BREAKPOINT &&
-    root.dataset.guestDesktop === '1' &&
-    root.dataset.desktopLayout !== 'phone'
-  )
+  return width >= DESKTOP_BREAKPOINT && root.dataset.guestLayout === '1'
 }
 
 function refreshRem(): void {
@@ -115,7 +111,7 @@ export function setupRem(): void {
   window.addEventListener('orientationchange', handleRestore)
   window.addEventListener('pageshow', handleRestore)
   window.addEventListener('focus', handleRestore)
-  window.addEventListener('h5:desktop-layout-change', handleResize)
+  window.addEventListener('h5:guest-layout-change', handleResize)
   document.addEventListener('visibilitychange', handleVisibilityChange)
   window.visualViewport?.addEventListener('resize', handleResize)
 
@@ -126,7 +122,7 @@ export function setupRem(): void {
     window.removeEventListener('orientationchange', handleRestore)
     window.removeEventListener('pageshow', handleRestore)
     window.removeEventListener('focus', handleRestore)
-    window.removeEventListener('h5:desktop-layout-change', handleResize)
+    window.removeEventListener('h5:guest-layout-change', handleResize)
     document.removeEventListener('visibilitychange', handleVisibilityChange)
     window.visualViewport?.removeEventListener('resize', handleResize)
     teardownRem = null

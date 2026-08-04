@@ -1,0 +1,86 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="843.69" height="1124.64" viewBox="0 0 843.69 1124.64" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Icon background" filter="url(#filter0_d_0_25)">
+<g id="Base blur 20">
+<path d="M121.952 271.13C144.43 147.098 252.428 56.9132 378.48 56.9132C505.24 56.9132 613.629 148.089 635.335 272.976L692.774 603.452C726.816 799.311 576.05 978.541 377.255 978.541C177.525 978.541 26.5222 797.714 62.1381 601.185L121.952 271.13Z" fill="white" style="mix-blend-mode:plus-darker"/>
+</g>
+<g id="Mask group">
+<mask id="mask0_0_25" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="71" y="65" width="615" height="902">
+<path id="Base blur 20_2" d="M134.698 271.713C155.352 152.38 258.887 65.2252 379.994 65.2252C501.749 65.2252 605.639 153.292 625.577 273.403L681.431 609.886C712.459 796.812 568.286 966.889 378.803 966.889C188.464 966.889 44.0678 795.354 76.5285 607.803L134.698 271.713Z" fill="white" fill-opacity="0.01"/>
+</mask>
+<g mask="url(#mask0_0_25)">
+<foreignObject x="-120.642" y="-153.604" width="988.122" height="1324.46"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(73.16px);clip-path:url(#bgblur_0_0_25_clip_path);height:100%;width:100%"></div></foreignObject><g id="BG blur 80" filter="url(#filter1_g_0_25)" data-figma-bg-blur-radius="146.318">
+<rect x="25.6762" y="-7.28624" width="695.487" height="1031.83" rx="73.1589" fill="white"/>
+</g>
+</g>
+</g>
+<g id="Mask group_2">
+<mask id="mask1_0_25" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="66" y="68" width="623" height="894">
+<path id="Base blur 20_3" d="M129.421 276.219C151.207 155.735 256.097 68.1095 378.535 68.1095C501.546 68.1095 606.753 156.535 627.915 277.712L683.755 597.456C716.968 787.635 570.605 961.774 377.548 961.774C183.735 961.774 37.1809 786.344 71.6667 595.623L129.421 276.219Z" fill="white" fill-opacity="0.01"/>
+</mask>
+<g mask="url(#mask1_0_25)">
+<rect id="BG blur 20" x="14.6461" y="-4.98999" width="703.025" height="1039.37" rx="279.265" fill="white"/>
+</g>
+</g>
+<g id="Base blur 21" opacity="0.8" filter="url(#filter2_f_0_25)">
+<path d="M121.952 271.13C144.43 147.098 252.428 56.9132 378.48 56.9132C505.24 56.9132 613.629 148.089 635.335 272.976L692.775 603.452C726.816 799.311 576.05 978.541 377.255 978.541C177.525 978.541 26.5222 797.714 62.1381 601.185L121.952 271.13Z" stroke="white" stroke-width="2.34337"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_d_0_25" x="0" y="-11.0922" width="843.69" height="1142.87" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dx="44.5932" dy="44.5932"/>
+<feGaussianBlur stdDeviation="50.1673"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.0231746 0 0 0 0 0.0231746 0 0 0 0 0.0231746 0 0 0 0.15 0"/>
+<feBlend mode="plus-darker" in2="BackgroundImageFix" result="effect1_dropShadow_0_25"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_25" result="shape"/>
+</filter>
+<filter id="filter1_g_0_25" x="-120.642" y="-153.604" width="988.122" height="1324.46" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feTurbulence type="fractalNoise" baseFrequency="0.02054760605096817 0.02054760605096817" numOctaves="3" seed="9055" result="displacementX"/>
+<feTurbulence type="fractalNoise" baseFrequency="0.02054760605096817 0.02054760605096817" numOctaves="3" seed="9056" result="displacementY"/>
+<feColorMatrix in="displacementX" type="matrix" values="0 0 0 1 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 1" result="displacementXRed"/>
+<feColorMatrix in="displacementY" type="matrix" values="0 0 0 0 0  0 0 0 1 0  0 0 0 0 0  0 0 0 0 1"/>
+<feComposite in="displacementXRed" operator="arithmetic" k1="0" k2="1" k3="1" k4="0"/>
+<feDisplacementMap in="shape" scale="18.289714813232422" xChannelSelector="R" yChannelSelector="G" width="100%" height="100%"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+<feComponentTransfer result="sourceDisplacedAlpha">
+<feFuncA type="gamma" exponent="0.2"/>
+</feComponentTransfer>
+<feColorMatrix in="shape" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+<feComponentTransfer result="inputSourceAlpha">
+<feFuncA type="gamma" exponent="0.2"/>
+</feComponentTransfer>
+<feComposite in="sourceDisplacedAlpha" operator="arithmetic" k1="1" k2="0" k3="0" k4="0" result="displacementAlphasMultiplied"/>
+<feComposite in="displacementAlphasMultiplied" operator="arithmetic" k1="0" k2="0" k3="-0.5" k4="0.5" result="centeringAdjustment"/>
+<feComposite in="displacementX" in2="displacementAlphasMultiplied" operator="arithmetic" k1="1" k2="0" k3="0" k4="0"/>
+<feComposite in="centeringAdjustment" operator="arithmetic" k1="0" k2="1" k3="1" k4="0"/>
+<feColorMatrix type="matrix" values="0 0 0 1 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 1" result="displacementXFinal"/>
+<feComposite in="displacementY" in2="displacementAlphasMultiplied" operator="arithmetic" k1="1" k2="0" k3="0" k4="0"/>
+<feComposite in="centeringAdjustment" operator="arithmetic" k1="0" k2="1" k3="1" k4="0"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 1 0  0 0 0 0 0  0 0 0 0 1" result="displacementYFinal"/>
+<feComposite in="displacementXFinal" in2="displacementYFinal" operator="arithmetic" k1="0" k2="1" k3="1" k4="0"/>
+<feComposite in2="displacementAlphasMultiplied" operator="in" result="displacementMap"/>
+<feFlood flood-color="rgb(127, 127, 127)" flood-opacity="1"/>
+<feComposite in2="displacementAlphasMultiplied" operator="out"/>
+<feComposite in2="displacementMap" operator="over" result="displacementMapWithBg"/>
+<feDisplacementMap in="shape" scale="18.289714813232422" xChannelSelector="R" yChannelSelector="G" width="100%" height="100%" result="displacedImage"/>
+<feColorMatrix in="shape" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 127 0" result="imageOpaque"/>
+<feDisplacementMap in="imageOpaque" in2="displacementMapWithBg" scale="18.289714813232422" xChannelSelector="R" yChannelSelector="G" width="100%" height="100%" result="displacedImageOpaque"/>
+<feColorMatrix in="displacedImage" type="matrix" values="0 0 0 1 0  0 0 0 0 0  0 0 0 0 0  0 0 0 127 0" result="displacedImageRed"/>
+<feColorMatrix in="shape" type="matrix" values="0 0 0 1 0  0 0 0 0 0  0 0 0 0 0  0 0 0 127 0"/>
+<feComposite in="displacedImageRed" operator="atop" result="transparencyRedMap"/>
+<feColorMatrix in="transparencyRedMap" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1 0 0 0 0" result="transparencyAlphaMap"/>
+<feComposite in="displacedImageOpaque" in2="imageOpaque" operator="over"/>
+<feComposite in2="transparencyAlphaMap" operator="in" result="effect1_texture_0_25"/>
+</filter>
+<clipPath id="bgblur_0_0_25_clip_path" transform="translate(120.642 153.604)"><rect x="25.6762" y="-7.28624" width="695.487" height="1031.83" rx="73.1589"/></clipPath>
+<filter id="filter2_f_0_25" x="53.984" y="53.984" width="646.536" height="927.486" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="0.878764" result="effect1_foregroundBlur_0_25"/>
+</filter>
+</defs>
+</svg>

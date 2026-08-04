@@ -126,16 +126,122 @@ VITE_API_BASE_URL=https://your-api-domain pnpm dev
 - 这样浏览器端不再直接跨域到后端，登录接口可正常调用
 - 注意：生产环境若仍是跨域访问，仍需要服务端配置 CORS 或走同域网关
 
-## 5. 自适应方案（当前实现）
+## 5. 移动端、Pad 和桌面端自适应规范
 
-当前采用 `rem + 动态根字体` 方案（基于 375 设计稿）：
+移动端和桌面端共用 Vue 模板和业务逻辑，只在尺寸策略及布局层区分：
 
-- `src/utils/rem.ts` 在运行时设置 `html font-size`
-- 基准：设计稿宽度 `375`，`1rem = 37.5px(设计稿)`，会随屏宽等比缩放
-- 基础尺寸令牌 + SCSS 变量（`src/styles/_base.scss`）
-- 断点媒体查询（`src/styles/_mixins.scss`）
-- `safe-area-inset-*` 适配刘海屏/底部安全区
-- `viewport-fit=cover`（见 `index.html`）
+- 小于 `600px`：沿用移动端 `375` 设计稿，基准为 `1rem = 37.5px`，最大按 `480px` 手机框计算。
+- `600px` 及以上：只有路由明确声明了桌面框架才进入桌面布局；一级页固定
+  `1rem = 40px`，字体不随浏览器宽度无限放大。
+- 一级页背景铺满浏览器；交互内容位于最大 `1440 × 1024` 的居中舞台，常规内容最大宽度为
+  `1360px`。
+- `src/utils/rem.ts` 只计算根字号，`src/utils/mainLayout.ts` 管理当前页面框架，
+  `src/styles/_main_desktop.scss` 只维护五个一级页面的桌面样式。
+- 基础尺寸令牌放在 `src/styles/_base.scss`，主题颜色放在 `src/styles/_themes.scss`。
+
+### 5.1 桌面布局如何开启
+
+路由 `meta` 是唯一开关，不在 `index.html` 维护路由白名单，也不按 `/mine/*`、`/club/*`
+这样的路径前缀自动匹配：
+
+```ts
+{
+  path: 'mine',
+  component: () => import('@/views/mine/MineIndexView.vue'),
+  meta: {
+    desktopLayout: 'primary',
+  },
+}
+```
+
+导航成功后，路由统一调用 `syncMainLayout()`，把布局类型写到
+`html[data-main-layout="primary"]`。视口、`rem` 和桌面 CSS 都读取同一状态。因此：
+
+- 写 `desktopLayout: 'primary'`：该页面在 `600px` 以上使用一级桌面布局。
+- 不写：继续使用原移动端/手机框布局。
+- 导航被取消或发生重定向时，不会提前污染当前页面布局。
+
+`src/router/meta.d.ts` 是 Vue Router 的 TypeScript 类型补充。它让编辑器知道
+`route.meta.desktopLayout` 是合法字段，并限制其值必须来自 `MainLayout`；它不生成运行时代码。
+以后新增布局类型，只需先在 `src/utils/mainLayout.ts` 的 `MAIN_LAYOUTS` 中登记，路由类型会自动同步。
+
+页面继续使用已有业务根类，例如 `.home-page`、`.club-index`、`.message-page`。不要为了“可能以后
+会用”增加空的标记类。只有真正被公共 CSS 消费的结构才增加公共类，例如当前共用标题和余额区域的：
+
+```html
+<div class="title-bar main-primary-header">
+  <div class="currency-info main-primary-currency"></div>
+</div>
+```
+
+### 5.2 `rem`、`clamp()` 和 `cqw` 怎么选
+
+| 单位 | 用途 | 本项目规则 |
+| --- | --- | --- |
+| `rem` | 字体、固定可读尺寸 | 一级桌面页固定以 `40px` 为 `1rem`，正文和按钮文字优先使用 |
+| `clamp()` | 有上下限的自适应尺寸 | 页边距、列表间距、普通卡片和图标优先使用 |
+| `cqw` | 相对组件自身宽度的比例尺寸 | 只用于必须整块等比缩放的复合组件内部 |
+| `px` | 不应缩放的细节 | 1px 边线、固定底部导航或设计明确要求的尺寸 |
+
+`1cqw` 等于最近一个声明了 `container-type: inline-size` 的容器宽度的 `1%`。它与 `vw`
+不同：浏览器再宽，也只按当前卡片自身宽度计算。
+
+当前看起来 `cqw` 较多，是因为朋友桌主视觉和消息/我的顶部卡片都属于“按设计稿整体等比缩放”的
+复合组件，内部每一个坐标、圆角和图标都要跟随自己的容器。它只集中在这两个容器中，不是全站单位。
+设计稿标注换算公式为：
+
+```text
+cqw = 设计稿中的像素值 / 组件设计宽度 × 100
+```
+
+例如宽度为 `606px` 的朋友桌主视觉，设计稿内 `33px` 的偏移约为 `5.45cqw`。
+普通正文禁止使用 `cqw`；朋友桌主视觉里与牌桌构图绑定的标题属于复合视觉的一部分，可以随整桌缩放。
+消息和“我的”卡片内需要保持可读的文字已经使用固定 `rem`。
+
+### 5.3 样式分层
+
+| 层级 | 放置位置 | 内容 |
+| --- | --- | --- |
+| 全局令牌 | `_base.scss`、`_themes.scss` | 颜色、基础尺寸、主题变量 |
+| 公共能力 | `_mixins.scss`、`_utilities.scss` | 主题 mixin、滚动和安全区等无业务能力 |
+| 一级桌面框架 | `_main_desktop.scss` | 当前五个一级页和公共底部 Tab |
+| 页面移动端样式 | 页面 `.vue` 的 scoped style | 页面原有移动端布局和局部状态 |
+| 新页面族桌面样式 | 独立的 `_*_desktop.scss` | 详情、表单、列表等后续页面族 |
+
+公共样式的抽取标准：至少两个页面实际复用，并且结构语义一致。只出现一次的样式留在页面或页面族
+文件中，避免公共文件变成无法追踪的全局覆盖集合。
+
+### 5.4 剩余页面迁移步骤
+
+每次迁移按下面顺序处理：
+
+1. **先分类**：确定它是一级 Tab 页、普通内容页（列表/详情/表单），还是沉浸式牌桌/游戏页。
+2. **保留移动端**：不要重写现有模板和移动端样式，先确认 `375 × 812` 不回归。
+3. **确定桌面舞台**：按设计稿明确最大宽高、内容最大宽度、是否整页滚动，以及背景是否铺满。
+4. **建立页面族**：二三级普通页面第一次迁移时，新建例如 `_content_desktop.scss`，不要把规则继续堆到
+   `_main_desktop.scss`。
+5. **登记布局类型**：新页面族成熟后，在 `MAIN_LAYOUTS` 增加例如 `content`，为
+   `html[data-main-layout="content"]` 编写基础舞台，再给对应路由加
+   `meta: { desktopLayout: 'content' }`。不要把二三级页面误标为 `primary`。
+6. **优先复用业务类**：现有根类足够定位时不增加新类；只有多个页面共享同一结构时才增加公共契约类。
+7. **选择单位**：普通文字用 `rem`，有限缩放用 `clamp()`，只有独立等比复合组件才启用
+   `container-type` 和 `cqw`。
+8. **回归检查**：至少检查 `375 × 812`、`768 × 1024`、`1440 × 1024`、`1920 × 1080`，并验证
+   Chrome、Edge、Safari 下的滚动、弹窗、键盘、安全区及主题切换。
+
+一级 Tab 页如果以后再增加，只需复用已实现的 `primary`；新类型页面必须先完成对应的公共舞台样式，
+再向路由开放，不能只加 `meta` 而没有配套 CSS。
+
+### 5.5 缩放性能约束
+
+- 大面积、会随窗口缩放的静态背景，不要直接使用从 Figma 导出的复杂 SVG。若文件含
+  `foreignObject`、`backdrop-filter`、`feTurbulence`、大范围 `feGaussianBlur` 或位移滤镜，
+  应预栅格化为带透明通道的 `2x WebP`；SVG 可保留为设计源文件，但不在运行时引用。
+- `window.resize` 与 `visualViewport.resize` 可能在同一帧重复触发，监听器必须通过同一个
+  `requestAnimationFrame` 合并，并在写 CSS 变量前比较新旧值。
+- 桌面一级页根字号固定为 `40px`，缩放过程中禁止重复写入相同 `font-size`。
+- 长列表中谨慎使用 `backdrop-filter`、大模糊和多层阴影；静态卡片优先使用普通半透明背景或
+  预合成图片。列表数量较多时，再根据真实数据量引入虚拟列表。
 
 ## 6. 打包与发布
 

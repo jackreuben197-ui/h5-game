@@ -54,27 +54,6 @@
         document.documentElement.setAttribute('data-theme', theme)
       })()
     </script>
-    <!-- 游客页使用横向自适应画布；登录态页面继续沿用现有移动端画布。 -->
-    <script>
-      ;(function () {
-        var root = document.documentElement
-
-        function syncGuestLayout() {
-          var isGuestRoute = /#\/guest\//.test(window.location.hash)
-          if (isGuestRoute) {
-            root.setAttribute('data-guest-layout', '1')
-          } else {
-            root.removeAttribute('data-guest-layout')
-          }
-          window.dispatchEvent(new Event('h5:guest-layout-change'))
-          window.dispatchEvent(new Event('resize'))
-        }
-
-        syncGuestLayout()
-        window.addEventListener('hashchange', syncGuestLayout)
-      })()
-    </script>
-
     <!-- @silenthill/h5-cc-i18n runtime: 必须先于 Vue 入口加载，挂 window.__H5_CC_I18N__ -->
     <script src="./h5-cc-i18n.min.js"></script>
     <script>
@@ -170,19 +149,21 @@
           var viewportWidth = Number(window.visualViewport && window.visualViewport.width)
             || Number(window.innerWidth)
             || 375
-          var guestLayout = root.getAttribute('data-guest-layout') === '1'
-          var viewportSignature = viewportWidth + 'x' + height + 'x' + String(guestLayout)
+          var primaryLayout = root.getAttribute('data-main-layout') === 'primary'
+          var adaptiveDesktop = primaryLayout && viewportWidth >= 600
+          var frameWidth = adaptiveDesktop ? viewportWidth : Math.min(viewportWidth, 480)
+          // 桌面横向缩放时 frame 高度不变，宽度由 CSS 100vw 自行处理；不重复写高度变量。
+          var widthSignature = adaptiveDesktop ? 'desktop' : String(Math.round(frameWidth))
+          var viewportSignature = widthSignature + 'x' + height + 'x' + String(primaryLayout)
           if (viewportSignature === lastViewportSignature) {
             return
           }
           lastViewportSignature = viewportSignature
           root.style.setProperty('--app-viewport-height', height)
 
-          // 游客页在桌面 / Pad 上占满浏览器可视区，移动端及其他页面沿用手机框。
+          // 一级主页面在桌面 / Pad 上占满浏览器可视区，移动端及二三级页面沿用手机框。
           var heightNumber = parseFloat(height)
           if (isFinite(heightNumber) && heightNumber > 0) {
-            var adaptiveDesktop = guestLayout && viewportWidth >= 600
-            var frameWidth = adaptiveDesktop ? viewportWidth : Math.min(viewportWidth, 480)
             var frameHeight = adaptiveDesktop
               ? heightNumber
               : viewportWidth > 480
@@ -586,12 +567,12 @@
       }
 
       @media (min-width: 600px) {
-        html[data-guest-layout='1'] {
+        html[data-main-layout='primary'] {
           --app-frame-max-width: 100vw;
           --app-frame-width: 100vw;
         }
 
-        html[data-guest-layout='1'] body {
+        html[data-main-layout='primary'] body {
           box-shadow: none;
         }
       }
@@ -1339,6 +1320,8 @@
     </script>
     <script>
       ;(function () {
+        var lastOrientationSignature = ''
+
         function syncOrientationState() {
           // 软键盘会暂时把可见视口变成“横向比例”，不能据此显示横屏遮罩。
           if (window.__H5_KEYBOARD_OPEN__ || window.__H5_KEYBOARD_CLOSING__) return
@@ -1348,10 +1331,15 @@
           var isShortViewport = Math.min(window.innerWidth, window.innerHeight) <= 500
           var hasTouchInput = Number((window.navigator || {}).maxTouchPoints) > 0
           var shouldLock = isLandscape && isShortViewport && hasTouchInput
+          var orientation = isLandscape ? 'landscape' : 'portrait'
+          var orientationSignature = orientation + ':' + String(shouldLock)
+
+          if (orientationSignature === lastOrientationSignature) return
+          lastOrientationSignature = orientationSignature
 
           document.documentElement.setAttribute(
             'data-screen-orientation',
-            isLandscape ? 'landscape' : 'portrait',
+            orientation,
           )
           document.documentElement.setAttribute('data-orientation-lock', shouldLock ? '1' : '0')
         }

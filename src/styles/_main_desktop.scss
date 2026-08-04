@@ -1,0 +1,981 @@
+// 五个一级主页面（登录前 / 登录后）的桌面与 Pad 适配。
+// 背景占满浏览器；除背景外的页面内容统一收在居中的 1440 × 1024 舞台内。
+@media (min-width: 600px) {
+  html[data-main-layout='primary'] {
+    --main-stage-width: min(100%, 1440px);
+    --main-stage-height: min(var(--app-full-height, 100dvh), 1024px);
+    --main-content-max: 1360px;
+    --main-page-gutter: clamp(28px, 2.7778vw, 40px);
+    --main-page-top: clamp(23px, 2.2222vw, 32px);
+    --app-max-width: 1360px;
+    --app-side-padding: 0px;
+    --app-top-padding: 0px;
+  }
+
+  html[data-main-layout='primary'] .main-layout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--app-full-height, 100dvh);
+  }
+
+  // 浅色背景原图为 375 × 812 的移动端素材。桌面端保留整张构图，
+  // 只做横向展开，避免 cover 从中间裁切后丢失顶部的蓝色渐变。
+  html[data-main-layout='primary'][data-theme='light'] .main-layout {
+    background-position: center top;
+    background-size: 100% 100%;
+  }
+
+  html[data-main-layout='primary'] .main-layout-content {
+    width: var(--main-stage-width);
+    height: var(--main-stage-height);
+    min-height: 0;
+    margin: auto;
+    padding-top: var(--main-page-top);
+    padding-bottom: 122px;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='primary'] .main-layout-content::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='primary'] .module-slot {
+    width: 100%;
+  }
+
+  // 一级页公共标题栏契约：页面模板只需组合 main-primary-header / currency。
+  html[data-main-layout='primary'] .main-primary-header .title {
+    font-size: clamp(28px, 2.6vw, 37.4px);
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='primary'] .main-primary-currency {
+    min-height: clamp(30px, 2.57vw, 37px);
+    padding: 0 clamp(9px, 0.83vw, 12px);
+    gap: clamp(5px, 0.49vw, 7px);
+  }
+
+  html[data-main-layout='primary'] .main-primary-currency .icon-diamond {
+    width: clamp(21px, 1.94vw, 28px);
+    height: clamp(21px, 1.94vw, 28px);
+  }
+
+  html[data-main-layout='primary'] .main-primary-currency .num {
+    font-size: clamp(15px, 1.39vw, 20px);
+  }
+
+  html[data-main-layout='primary'] .main-primary-currency .icon-recharge {
+    width: clamp(18px, 1.67vw, 24px);
+    height: clamp(18px, 1.67vw, 24px);
+  }
+
+  html[data-main-layout='primary'] .home-page,
+  html[data-main-layout='primary'] .club-index {
+    width: calc(100% - var(--main-page-gutter) * 2);
+    max-width: var(--main-content-max);
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  // 首页
+  html[data-main-layout='primary'] .home-page {
+    display: block;
+    padding: 0 0 28px;
+  }
+
+  html[data-main-layout='primary'] .home-page .top-bar {
+    display: none;
+  }
+
+  html[data-main-layout='primary'] .home-header {
+    border-radius: clamp(44px, 5.69vw, 82px);
+  }
+
+  html[data-main-layout='primary'] .home-banner,
+  html[data-main-layout='primary'] .home-banner__swipe,
+  html[data-main-layout='primary'] .home-banner__swipe .van-swipe__track,
+  html[data-main-layout='primary'] .home-banner__swipe .van-swipe-item {
+    height: 100%;
+  }
+
+  html[data-main-layout='primary'] .home-banner__img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1360 / 270;
+    border-radius: clamp(44px, 5.69vw, 82px);
+    object-fit: cover;
+  }
+
+  html[data-main-layout='primary'] .home-banner__theme-switch {
+    display: none;
+  }
+
+  html[data-main-layout='primary'] .notice-bar {
+    height: clamp(25px, 2.4306vw, 35px);
+    min-height: clamp(25px, 2.4306vw, 35px);
+    margin-top: clamp(6px, 0.625vw, 9px);
+    padding: 0 clamp(9px, 0.9028vw, 13px);
+    gap: clamp(5px, 0.4861vw, 7px);
+  }
+
+  html[data-main-layout='primary'] .notice-icon {
+    width: clamp(14px, 1.3194vw, 19px);
+    height: clamp(14px, 1.3194vw, 19px);
+  }
+
+  html[data-main-layout='primary'] .notice-label,
+  html[data-main-layout='primary'] .notice-item {
+    font-size: clamp(14px, 1.39vw, 20px);
+    line-height: clamp(25px, 2.4306vw, 35px);
+  }
+
+  html[data-main-layout='primary'] .club-panel {
+    height: clamp(60px, 5.9028vw, 85px);
+    min-height: clamp(60px, 5.9028vw, 85px);
+    margin-top: clamp(6px, 0.625vw, 9px);
+    padding: clamp(5px, 0.5556vw, 8px) clamp(19px, 1.875vw, 27px)
+      clamp(5px, 0.5556vw, 8px) clamp(24px, 2.3611vw, 34px);
+    border-radius: 999px;
+  }
+
+  html[data-main-layout='primary'] .club-left {
+    gap: 6px;
+  }
+
+  html[data-main-layout='primary'] .service-label {
+    font-size: clamp(14px, 1.25vw, 18px);
+  }
+
+  html[data-main-layout='primary'] .club-service-row,
+  html[data-main-layout='primary'] .club-balance-row {
+    gap: 8px;
+  }
+
+  html[data-main-layout='primary'] .icon-sm {
+    width: 22px;
+    height: 22px;
+  }
+
+  html[data-main-layout='primary'] .icon-eye {
+    width: 23px;
+    height: 18px;
+  }
+
+  html[data-main-layout='primary'] .balance-amount {
+    font-size: clamp(16px, 1.39vw, 20px);
+  }
+
+  html[data-main-layout='primary'] .recharge-btn {
+    width: auto;
+    min-width: 64px;
+    padding: 3px 12px;
+    font-size: clamp(13px, 1.18vw, 17px);
+  }
+
+  html[data-main-layout='primary'] .club-right {
+    gap: clamp(20px, 2.22vw, 32px);
+  }
+
+  html[data-main-layout='primary'] .contact-item {
+    min-width: 44px;
+    gap: 1px;
+  }
+
+  html[data-main-layout='primary'] .contact-icon {
+    width: clamp(33px, 3.1944vw, 46px);
+    height: clamp(33px, 3.1944vw, 46px);
+  }
+
+  html[data-main-layout='primary'] .contact-label {
+    max-width: 64px;
+    font-size: clamp(9px, 0.83vw, 12px);
+  }
+
+  html[data-main-layout='primary'] .club-panel + .section-header {
+    margin-top: clamp(16px, 1.5278vw, 22px);
+  }
+
+  html[data-main-layout='primary'] .game-center-scroll + .section-header {
+    margin-top: clamp(16px, 1.5972vw, 23px);
+  }
+
+  html[data-main-layout='primary'] .section-header {
+    padding: 0;
+    line-height: 1;
+  }
+
+  html[data-main-layout='primary'] .section-header .section-title {
+    font-size: clamp(18px, 1.67vw, 24px);
+    line-height: 1.35;
+  }
+
+  html[data-main-layout='primary'] .game-center-scroll,
+  html[data-main-layout='primary'] .coming-soon-scroll {
+    margin-top: clamp(8px, 0.8333vw, 12px);
+    overflow: visible;
+  }
+
+  html[data-main-layout='primary'] .game-center-track,
+  html[data-main-layout='primary'] .coming-soon-track {
+    display: grid;
+    width: 100%;
+    padding: 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(12px, 1.39vw, 20px);
+  }
+
+  html[data-main-layout='primary'] .game-scroll-card,
+  html[data-main-layout='primary'] .coming-soon-scroll-card {
+    width: auto;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 325 / 194;
+    border-radius: clamp(18px, 1.87vw, 27px);
+  }
+
+  html[data-main-layout='primary'] .game-scroll-card {
+    padding: clamp(12px, 1.32vw, 19px) clamp(10px, 1.11vw, 16px)
+      clamp(9px, 0.9vw, 13px);
+  }
+
+  html[data-main-layout='primary'] .zone-lg-bg {
+    inset: 0;
+    object-fit: cover;
+  }
+
+  html[data-main-layout='primary'] .zone-title {
+    margin-bottom: 5px;
+    font-size: clamp(14px, 1.53vw, 22px);
+  }
+
+  html[data-main-layout='primary'] .zone-desc,
+  html[data-main-layout='primary'] .zone-sub-desc,
+  html[data-main-layout='primary'] .online-text,
+  html[data-main-layout='primary'] .online-num {
+    font-size: clamp(10px, 0.9vw, 13px);
+  }
+
+  html[data-main-layout='primary'] .zone-mini-icon {
+    width: clamp(18px, 1.81vw, 26px);
+    height: clamp(18px, 1.81vw, 26px);
+  }
+
+  html[data-main-layout='primary'] .zone-online-bar {
+    height: clamp(20px, 1.74vw, 25px);
+    margin-top: 8px;
+    padding: 2px 10px;
+    gap: 5px;
+  }
+
+  html[data-main-layout='primary'] .online-icon {
+    width: 13px;
+    height: 13px;
+    margin-left: 4px;
+  }
+
+  html[data-main-layout='primary'] .coming-soon-text,
+  html[data-main-layout='primary'] .coming-soon-scroll-card__text {
+    font-size: clamp(15px, 1.53vw, 22px);
+  }
+
+  // 俱乐部
+  html[data-main-layout='primary'] .club-index {
+    min-height: auto;
+    padding: clamp(24px, 2.3611vw, 34px) 0 28px;
+    gap: 0;
+  }
+
+  html[data-main-layout='primary'] .club-index .search-shell {
+    min-height: clamp(46px, 4.5139vw, 65px);
+    padding: clamp(6px, 0.5556vw, 8px) clamp(6px, 0.625vw, 9px)
+      clamp(6px, 0.5556vw, 8px) clamp(14px, 1.3889vw, 20px);
+    border-radius: 999px;
+  }
+
+  html[data-main-layout='primary'] .club-index .search-trigger,
+  html[data-main-layout='primary'] .club-index .search-btn {
+    min-height: clamp(34px, 3.4028vw, 49px);
+  }
+
+  html[data-main-layout='primary'] .club-index .search-trigger {
+    gap: 10px;
+  }
+
+  html[data-main-layout='primary'] .club-index .search-icon {
+    width: clamp(20px, 1.875vw, 27px);
+    height: clamp(20px, 1.875vw, 27px);
+  }
+
+  html[data-main-layout='primary'] .club-index .search-input,
+  html[data-main-layout='primary'] .club-index .search-btn-label {
+    font-size: clamp(15px, 1.25vw, 18px);
+  }
+
+  html[data-main-layout='primary'] .club-index .search-btn {
+    width: clamp(64px, 6.1806vw, 89px);
+    padding: 0;
+    border-radius: 999px;
+  }
+
+  html[data-main-layout='primary'] .club-index .quick-actions {
+    min-height: clamp(90px, 8.75vw, 126px);
+    align-items: flex-start;
+    margin-top: clamp(23px, 2.2222vw, 32px);
+    gap: clamp(28px, 2.7083vw, 39px);
+  }
+
+  html[data-main-layout='primary'] .club-index .action-icon {
+    width: clamp(68px, 6.5972vw, 95px);
+    height: clamp(68px, 6.5972vw, 95px);
+  }
+
+  html[data-main-layout='primary'] .club-index .action-icon img {
+    width: clamp(68px, 6.5972vw, 95px);
+    height: clamp(68px, 6.5972vw, 95px);
+  }
+
+  html[data-main-layout='primary'] .club-index .action-text {
+    font-size: clamp(13px, 1.25vw, 18px);
+  }
+
+  html[data-main-layout='primary'] .club-index .quick-item {
+    gap: clamp(6px, 0.625vw, 9px);
+  }
+
+  html[data-main-layout='primary'] .club-index .cards-divider {
+    width: min(44%, 594px);
+    margin: clamp(31px, 2.9861vw, 43px) auto 0;
+    gap: clamp(10px, 0.9722vw, 14px);
+  }
+
+  html[data-main-layout='primary'] .club-index .divider-line {
+    height: 1px;
+  }
+
+  html[data-main-layout='primary'] .club-index .cards-icons {
+    gap: clamp(6px, 0.625vw, 9px);
+  }
+
+  html[data-main-layout='primary'] .club-index .suit-icon {
+    width: clamp(21px, 2.0139vw, 29px);
+    height: clamp(21px, 2.0139vw, 29px);
+  }
+
+  html[data-main-layout='primary'] .club-index .club-list {
+    margin-top: clamp(18px, 1.7361vw, 25px);
+    padding: 0 0 28px;
+    gap: clamp(17px, 1.6667vw, 24px);
+  }
+
+  // 朋友桌：首屏完整展示一张牌桌，牌桌列表顺着外层页面向下滚动。
+  html[data-main-layout='primary'] .friends-table-page {
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: none;
+    min-height: var(--main-stage-height);
+    margin-top: calc(-1 * var(--main-page-top));
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .title-bar {
+    position: absolute;
+    z-index: 3;
+    top: clamp(38px, 3.61vw, 52px);
+    left: 0;
+    width: 100%;
+    padding: 0 var(--main-page-gutter);
+    pointer-events: none;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .currency-info {
+    pointer-events: auto;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .scroll-content {
+    width: 100%;
+    min-height: var(--main-stage-height);
+    overflow: visible;
+    padding: 0 0 28px;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .main-content {
+    container-type: inline-size;
+    width: min(606px, calc(100vw - 64px), calc(65.6vh - 24px));
+    height: auto;
+    margin: 0 auto;
+    aspect-ratio: 606 / 930;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .main-content::before {
+    top: -5.5cqw;
+    left: -12.22cqw;
+    width: 139.22cqw;
+    height: 185.58cqw;
+    // Figma SVG 含大范围 backdrop-filter、fractalNoise 和位移滤镜，缩放时会持续重栅格化。
+    // 桌面端改用带透明通道的 2x 预栅格图，外观不变且浏览器只需做纹理缩放。
+    background-image: url('@/assets/images/friend_table_bg_desktop.webp');
+    background-size: 100% 100%;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .main-content::after {
+    top: 12cqw;
+    width: 100%;
+    height: 165cqw;
+    background-size: 100% auto;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .main-content .section {
+    margin-bottom: 0;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .main-content .join-section {
+    padding-top: 34.2cqw;
+    margin-bottom: 16.8cqw;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .main-content .section-title {
+    margin-bottom: 3cqw;
+    font-size: 7.23cqw;
+    line-height: 1;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .main-content .section-subtitle {
+    margin-bottom: 8.1cqw;
+    font-size: 4cqw;
+    line-height: 1;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .join-section .invite-inputs {
+    gap: 1.56cqw;
+    margin-bottom: 8.1cqw;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .join-section .invite-input-wrap {
+    width: 10.72cqw;
+    height: 10.72cqw;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .join-section .invite-digit {
+    font-size: 5cqw;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .main-content .action-btn {
+    width: 64.19cqw;
+    height: 14.14cqw;
+    padding: 0;
+    font-size: 4.8cqw;
+    line-height: 14.14cqw;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .create-section .section-title {
+    margin-bottom: 6cqw;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .table-section {
+    width: 100%;
+    min-height: var(--main-stage-height);
+    margin: clamp(110px, 8.33vw, 120px) 0 0;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .table-header {
+    gap: clamp(28px, 3.06vw, 44px);
+    margin-bottom: clamp(16px, 1.67vw, 24px);
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .table-header .table-header-line {
+    width: clamp(72px, 6.67vw, 96px);
+    margin-top: 10px;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .table-header .table-header-center {
+    gap: 7px;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .table-header .table-header-title {
+    font-size: clamp(26px, 2.36vw, 34px);
+    line-height: 1;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .table-header .table-header-sub {
+    margin-top: 0;
+    font-size: clamp(16px, 1.39vw, 20px);
+    line-height: 1;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .filter-tabs {
+    width: min(520px, calc(100% - 80px));
+    margin: 0 auto clamp(25px, 2.43vw, 35px);
+    gap: clamp(30px, 3.33vw, 48px);
+    justify-content: center;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .filter-tab {
+    padding-top: 0;
+    margin: 0;
+    font-size: clamp(18px, 1.67vw, 24px);
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .table-list {
+    width: calc(100% - var(--main-page-gutter) * 2);
+    max-width: var(--main-content-max);
+    margin: 0 auto;
+    padding: 0 0 122px;
+  }
+
+  // 列表最多 200 条，逐卡 backdrop-filter 会在窗口缩放时产生大量离屏合成层。
+  html[data-main-layout='primary'] .friends-table-page .table-card .type-card {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .empty-state {
+    min-height: 120px;
+    padding: 20px 0;
+  }
+
+  html[data-main-layout='primary'] .friends-table-page .empty-text {
+    font-size: clamp(15px, 1.25vw, 18px);
+  }
+
+  // 消息 / 我的：复用移动端元素，按 1440 × 1024 设计稿重排。
+  html[data-main-layout='primary'] .message-page,
+  html[data-main-layout='primary'] .mine-page {
+    display: flex;
+    width: 100%;
+    max-width: none;
+    min-height: auto;
+    margin: 0;
+    padding: 15px var(--main-page-gutter) 28px;
+    overflow: visible;
+  }
+
+  html[data-main-layout='primary'] .message-page .title-bar,
+  html[data-main-layout='primary'] .mine-page .title-bar {
+    width: 100%;
+    min-height: 45px;
+    padding: 0;
+  }
+
+  html[data-main-layout='primary'] .message-page .card-bg-highlight,
+  html[data-main-layout='primary'] .mine-page .card-bg-highlight {
+    container-type: inline-size;
+    position: relative;
+    flex: none;
+    width: min(100%, 1357px, 132.52vh);
+    height: auto;
+    margin-top: 13px;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 4.245cqw;
+    aspect-ratio: 1357 / 302;
+  }
+
+  html[data-main-layout='primary'] .message-page .card-bg-highlight .card-bg-outter,
+  html[data-main-layout='primary'] .mine-page .card-bg-highlight .card-bg-outter,
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner,
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border-radius: inherit;
+  }
+
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line1 {
+    position: absolute;
+    inset: 0;
+    display: block;
+    padding: 0;
+  }
+
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line1
+    .left-text {
+    position: absolute;
+    top: 1.82cqw;
+    left: 3.76cqw;
+    // 桌面端根字号固定为 40px；卡片缩放时文字不再跟随容器宽度缩放。
+    font-size: 3rem;
+    line-height: 1;
+  }
+
+  html[data-main-layout='primary'][data-theme='light']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line1
+    .left-text {
+    color: rgba(15, 8, 8, 0.19) !important;
+  }
+
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line1
+    .right-icon {
+    position: absolute;
+    top: 2.54cqw;
+    right: 6.37cqw;
+    width: 13.93cqw;
+    height: 15.52cqw;
+  }
+
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2 {
+    position: absolute;
+    right: 2.03cqw;
+    bottom: 2.5cqw;
+    left: 3.65cqw;
+    padding: 0;
+  }
+
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .button {
+    flex: 0 0 auto;
+    min-width: 0;
+    height: 3.584cqw;
+    padding: 0.45cqw 0.17cqw 0.45cqw 1.72cqw;
+    gap: 0.625cqw;
+    border-radius: 1.69cqw;
+  }
+
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .button
+    .text {
+    font-size: 0.46rem;
+    line-height: 1;
+  }
+
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .button
+    .round-icon {
+    flex: none;
+    width: 3.18cqw;
+    height: 3.18cqw;
+    margin-left: 0;
+    font-size: 0.49rem;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line1 {
+    position: absolute;
+    top: 2.54cqw;
+    left: 2.97cqw;
+    display: flex;
+    gap: 2.06cqw;
+    padding: 0;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line1
+    .left-avatar {
+    width: 10.95cqw;
+    height: 10.95cqw;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line1
+    .right-box {
+    margin-top: 2.65cqw;
+    padding: 1.02cqw 1.72cqw;
+    border-radius: 999px;
+    font-size: 0.445rem;
+    line-height: 1;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2 {
+    position: absolute;
+    right: 2cqw;
+    bottom: 2.45cqw;
+    left: 3.2cqw;
+    padding: 0;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .left-board {
+    gap: 0.39cqw;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .left-board
+    .currency {
+    gap: 0.46cqw;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .left-board
+    .currency
+    .icon-currency {
+    width: 1.9cqw;
+    max-height: 2.2cqw;
+    object-fit: contain;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .left-board
+    .currency
+    .num {
+    font-size: 0.49rem;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .button {
+    height: 3.47cqw;
+    padding: 0.42cqw 0.16cqw 0.42cqw 1.67cqw;
+    border-radius: 1.64cqw;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .button
+    .text {
+    font-size: 0.445rem;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .button
+    .round-icon {
+    width: 3.47cqw;
+    height: 3.47cqw;
+    margin-left: 0.13cqw;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .button
+    .round-icon
+    img {
+    width: 1.4cqw;
+  }
+
+  // 登录态卡片比游客卡片多昵称、ID 与消息角标；只补充结构差异，不复制整套布局。
+  html[data-main-layout='primary']
+    .main-layout--authenticated
+    .mine-page
+    .card-line1
+    .right-box {
+    margin-top: 2.65cqw;
+    padding: 0;
+    gap: 0.3rem;
+    border-radius: 0;
+  }
+
+  html[data-main-layout='primary']
+    .main-layout--authenticated
+    .mine-page
+    .card-line1
+    .right-box
+    .name {
+    margin-top: 0;
+    font-size: 0.6rem;
+  }
+
+  html[data-main-layout='primary']
+    .main-layout--authenticated
+    .mine-page
+    .card-line1
+    .right-box
+    .id-label {
+    font-size: 0.28rem;
+  }
+
+  html[data-main-layout='primary']
+    .main-layout--authenticated
+    .mine-page
+    .card-line1
+    .right-box
+    .id-value {
+    font-size: 0.3rem;
+  }
+
+  html[data-main-layout='primary']
+    .main-layout--authenticated
+    .message-page
+    .card-line1
+    .right-icon
+    .icon-ding {
+    position: absolute;
+    top: -0.15rem;
+    right: -0.15rem;
+    width: 0.9rem;
+    height: 0.9rem;
+    transform: none;
+  }
+
+  html[data-main-layout='primary'] .message-page .box-gallery,
+  html[data-main-layout='primary'] .mine-page .box-gallery {
+    --main-gallery-icon: clamp(68px, min(6.94vw, 9.77vh), 100px);
+    --main-gallery-column-gap: clamp(24px, 2.78vw, 40px);
+    width: min(
+      calc(
+        var(--main-gallery-icon) + var(--main-gallery-icon) + var(--main-gallery-icon) +
+          var(--main-gallery-icon) + var(--main-gallery-column-gap) +
+          var(--main-gallery-column-gap) + var(--main-gallery-column-gap)
+      ),
+      calc(100% - 80px)
+    );
+    margin-top: clamp(32px, min(4.31vw, 6.05vh), 62px);
+    padding: 0;
+    justify-content: center;
+    align-items: flex-start;
+    gap: clamp(22px, 1.94vw, 28px) var(--main-gallery-column-gap);
+  }
+
+  html[data-main-layout='primary'] .message-page .box-gallery .box-item,
+  html[data-main-layout='primary'] .mine-page .box-gallery .box-item {
+    flex: 0 0 var(--main-gallery-icon);
+    width: var(--main-gallery-icon);
+  }
+
+  html[data-main-layout='primary'] .message-page .box-gallery .box-item .img,
+  html[data-main-layout='primary'] .mine-page .box-gallery .box-item .img {
+    width: var(--main-gallery-icon);
+    height: var(--main-gallery-icon);
+    margin-bottom: clamp(6px, 0.49vw, 7px);
+  }
+
+  html[data-main-layout='primary'] .message-page .box-gallery .box-item .text,
+  html[data-main-layout='primary'] .mine-page .box-gallery .box-item .text {
+    font-size: clamp(14px, 1.25vw, 18px);
+    line-height: 1.25;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='primary'] .bottom-tab {
+    // 高于 1024px 的浏览器中仍贴着内容舞台底部，而不是浏览器底部。
+    bottom: max(23px, calc((var(--app-full-height, 100dvh) - 1024px) / 2 + 23px));
+    width: 360px;
+    height: 82px;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+  // Pad 使用单独的固定字号档位，不随容器连续缩放，同时避免与右侧图标重叠。
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line1
+    .left-text {
+    font-size: 1.8rem;
+  }
+
+  html[data-main-layout='primary'] .main-layout-content {
+    padding-bottom: 104px;
+  }
+
+  html[data-main-layout='primary'] .game-center-track,
+  html[data-main-layout='primary'] .coming-soon-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  html[data-main-layout='primary'] .club-index {
+    padding-top: 18px;
+  }
+
+  html[data-main-layout='primary'] .club-index .quick-actions {
+    margin-top: 22px;
+  }
+
+  html[data-main-layout='primary'] .club-index .cards-divider {
+    margin-top: 28px;
+  }
+
+}

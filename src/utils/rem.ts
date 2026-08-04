@@ -1,7 +1,7 @@
 const DESIGN_WIDTH = 375
 const MAX_WIDTH = 480
 const BASE_REM_AT_DESIGN = 37.5
-// 游客桌面 / Pad 不再按整屏宽度放大 rem。固定 40px 保持正文可读，
+// 一级主页面的桌面 / Pad 不再按整屏宽度放大 rem。固定 40px 保持正文可读，
 // 页面横向尺寸由响应式 Grid/Flex 负责。
 const DESKTOP_REM = 40
 const DESKTOP_BREAKPOINT = 600
@@ -9,6 +9,8 @@ const RESTORE_REFRESH_DELAYS = [0, 32, 120, 320]
 
 let teardownRem: (() => void) | null = null
 let pendingTimers: number[] = []
+let refreshFrame: number | null = null
+let notifyHostOnRefresh = false
 
 function getPositiveWidth(value: number | undefined): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
@@ -18,33 +20,40 @@ function getPositiveWidth(value: number | undefined): number | null {
 }
 
 function getViewportWidth(): number {
-  const docEl = document.documentElement
-  const widths = [
+  // 正常缩放只读取视口值，避免每一帧读取 clientWidth 强制刷新布局。
+  const viewportWidths = [
     getPositiveWidth(window.visualViewport?.width),
     getPositiveWidth(window.innerWidth),
-    getPositiveWidth(docEl.clientWidth),
-    getPositiveWidth(document.body?.clientWidth),
   ].filter((width): width is number => width !== null)
 
-  if (!widths.length) {
-    return DESIGN_WIDTH
+  if (viewportWidths.length) {
+    return Math.min(...viewportWidths)
   }
 
-  return Math.min(...widths)
+  return (
+    getPositiveWidth(document.documentElement.clientWidth) ??
+    getPositiveWidth(document.body?.clientWidth) ??
+    DESIGN_WIDTH
+  )
 }
 
-function usesAdaptiveDesktopLayout(width: number): boolean {
+function usesAdaptiveMainLayout(width: number): boolean {
   const root = document.documentElement
-  return width >= DESKTOP_BREAKPOINT && root.dataset.guestLayout === '1'
+  return width >= DESKTOP_BREAKPOINT && root.dataset.mainLayout === 'primary'
 }
 
 function refreshRem(): void {
   const docEl = document.documentElement
   const width = getViewportWidth()
-  const rem = usesAdaptiveDesktopLayout(width)
+  const rem = usesAdaptiveMainLayout(width)
     ? DESKTOP_REM
     : (Math.min(width, MAX_WIDTH) / DESIGN_WIDTH) * BASE_REM_AT_DESIGN
-  docEl.style.fontSize = `${rem}px`
+  const nextFontSize = `${rem}px`
+
+  // primary 桌面布局始终是 40px；窗口拖动时不重复写相同值，避免整页样式重算。
+  if (docEl.style.fontSize !== nextFontSize) {
+    docEl.style.fontSize = nextFontSize
+  }
 }
 
 function dispatchSyntheticResize(): void {
@@ -74,9 +83,17 @@ function notifyCocosResize(): void {
 }
 
 function scheduleRefresh(notifyHost = false): void {
-  window.requestAnimationFrame(() => {
+  notifyHostOnRefresh ||= notifyHost
+  if (refreshFrame !== null) {
+    return
+  }
+
+  refreshFrame = window.requestAnimationFrame(() => {
+    refreshFrame = null
+    const shouldNotifyHost = notifyHostOnRefresh
+    notifyHostOnRefresh = false
     refreshRem()
-    if (notifyHost) {
+    if (shouldNotifyHost) {
       notifyCocosResize()
     }
   })
@@ -99,6 +116,8 @@ export function setupRem(): void {
   }
 
   const handleResize = (): void => scheduleRefresh()
+  // 路由布局切换发生在新页面渲染前，根字号需要同步刷新，避免首帧使用旧布局字号。
+  const handleMainLayoutChange = (): void => refreshRem()
   const handleRestore = (): void => scheduleRestoreRefresh()
   const handleVisibilityChange = (): void => {
     if (!document.hidden) {
@@ -111,18 +130,23 @@ export function setupRem(): void {
   window.addEventListener('orientationchange', handleRestore)
   window.addEventListener('pageshow', handleRestore)
   window.addEventListener('focus', handleRestore)
-  window.addEventListener('h5:guest-layout-change', handleResize)
+  window.addEventListener('h5:main-layout-change', handleMainLayoutChange)
   document.addEventListener('visibilitychange', handleVisibilityChange)
   window.visualViewport?.addEventListener('resize', handleResize)
 
   teardownRem = () => {
     pendingTimers.forEach((timer) => window.clearTimeout(timer))
     pendingTimers = []
+    if (refreshFrame !== null) {
+      window.cancelAnimationFrame(refreshFrame)
+      refreshFrame = null
+    }
+    notifyHostOnRefresh = false
     window.removeEventListener('resize', handleResize)
     window.removeEventListener('orientationchange', handleRestore)
     window.removeEventListener('pageshow', handleRestore)
     window.removeEventListener('focus', handleRestore)
-    window.removeEventListener('h5:guest-layout-change', handleResize)
+    window.removeEventListener('h5:main-layout-change', handleMainLayoutChange)
     document.removeEventListener('visibilitychange', handleVisibilityChange)
     window.visualViewport?.removeEventListener('resize', handleResize)
     teardownRem = null

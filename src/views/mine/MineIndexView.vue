@@ -120,9 +120,9 @@ const displayUser = computed(() => {
 
 <template>
   <div class="page-shell mine-page">
-    <div class="title-bar">
+    <div class="title-bar main-primary-header">
       <div class="title">{{ t('UIMine_title') }}</div>
-      <div class="currency-info" @click="goToMineShop">
+      <div class="currency-info main-primary-currency" @click="goToMineShop">
         <div class="icon-diamond">
           <img :src="iconDiamond" :alt="t('UIMine_VIP_diamond')" />
         </div>

@@ -80,9 +80,9 @@ function notifyNotLogin(): void {
 
 <template>
   <div class="page-shell mine-page">
-    <div class="title-bar">
+    <div class="title-bar main-primary-header">
       <div class="title">{{ t('UIMine_title') }}</div>
-      <div class="currency-info" @click="notifyNotLogin">
+      <div class="currency-info main-primary-currency" @click="notifyNotLogin">
         <div class="icon-diamond">
           <img :src="iconDiamond" :alt="t('UIMine_VIP_diamond')" />
         </div>

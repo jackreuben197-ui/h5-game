@@ -16,6 +16,8 @@ const backgroundStyle = computed(() => ({
 }))
 
 const isHomeRoute = computed(() => route.name === 'lobby' || route.name === 'guest-home')
+const isPrimaryLayout = computed(() => route.meta.desktopLayout === 'primary')
+const isGuestRoute = computed(() => String(route.name ?? '').startsWith('guest-'))
 
 // 路由变化时同步底部 Tab 共享状态，确保子页面也能维持正确高亮。
 watch(
@@ -30,7 +32,16 @@ watch(
 </script>
 
 <template>
-  <div class="main-layout" :class="{ 'main-layout--home': isHomeRoute }" :style="backgroundStyle">
+  <div
+    class="main-layout"
+    :class="{
+      'main-layout--home': isHomeRoute,
+      'main-layout--primary': isPrimaryLayout,
+      'main-layout--guest': isGuestRoute,
+      'main-layout--authenticated': isPrimaryLayout && !isGuestRoute,
+    }"
+    :style="backgroundStyle"
+  >
     <div class="main-layout-content">
       <!-- 子模块页面内容区域：由路由子页面渲染。 -->
       <section class="module-slot">

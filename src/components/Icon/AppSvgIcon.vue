@@ -54,7 +54,8 @@ const props = withDefaults(
 const DEFAULT_VIEW_BOX = '0 0 24 24'
 
 const VIEW_BOX_BY_NAME: Partial<Record<AppSvgIconName, string>> = {
-  spade: '0 0 9 10',
+  // 原始路径几乎占满 9 × 10 画布；补足外围留白，使视觉尺寸与其他 24 × 24 花色一致。
+  spade: '-2 -1.5 13 13',
   calendar: '0 0 14 13',
   blind: '0 0 15 13',
   favorite: '0 0 20 20',

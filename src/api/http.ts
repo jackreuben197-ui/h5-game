@@ -207,7 +207,10 @@ http.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    const backendMessage = error.response?.data?.message
+    let backendMessage = error.response?.data?.message
+    if (backendMessage && /user have apply/i.test(backendMessage)) {
+      backendMessage = '已提交加入申请，等待审核'
+    }
     showFailToast(backendMessage || error.message || '请求失败，请稍后再试')
     return Promise.reject(error)
   },

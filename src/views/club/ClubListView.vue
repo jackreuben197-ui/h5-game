@@ -384,13 +384,20 @@ async function onJoinClub(): Promise<void> {
       throw new Error(response.message || t('UIClub_JoinClubFail'))
     }
 
-    showSuccessToast(response.message || t('UIClub_JoinApplyDoneSubmit'))
+    let msg = response.message || t('UIClub_JoinApplyDoneSubmit')
+    if (/user have apply/i.test(msg)) {
+      msg = '已提交加入申请，等待审核'
+    }
+    showSuccessToast(msg)
     showJoinModal.value = false
     setTimeout(() => {
       void loadMyClubList(true)
     }, 3000)
   } catch (error) {
-    const message = error instanceof Error ? error.message : t('UIClub_JoinClubFail')
+    let message = error instanceof Error ? error.message : t('UIClub_JoinClubFail')
+    if (/user have apply/i.test(message)) {
+      message = '已提交加入申请，等待审核'
+    }
     showFailToast(message)
   } finally {
     joinLoading.value = false

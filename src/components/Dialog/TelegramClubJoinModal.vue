@@ -66,8 +66,9 @@ async function handleQuickJoin(): Promise<void> {
         await resumeTelegramDeepLink(intent)
       }
     } else {
-      // If server returned a message (e.g. "申请成功，等待审核" or status message), show that; otherwise show general failure
-      showFailToast(res.message || '申请已提交，等待审核')
+      const rawMsg = res.message || ''
+      const msg = !rawMsg || /user have apply/i.test(rawMsg) ? '已提交加入申请，等待审核' : rawMsg
+      showFailToast(msg)
     }
   } catch (error) {
     // Re-check membership in case auto-audit or async backend join succeeded despite network error
@@ -89,7 +90,10 @@ async function handleQuickJoin(): Promise<void> {
       /* ignore */
     }
 
-    const message = error instanceof Error ? error.message : '加入失败，请重试'
+    let message = error instanceof Error ? error.message : '加入失败，请重试'
+    if (/user have apply/i.test(message)) {
+      message = '已提交加入申请，等待审核'
+    }
     showFailToast(message)
   } finally {
     store.setLoading(false)

@@ -150,11 +150,13 @@
             || Number(window.innerWidth)
             || 375
           var primaryLayout = root.getAttribute('data-main-layout') === 'primary'
-          var adaptiveDesktop = primaryLayout && viewportWidth >= 600
+          var cocosActive = root.getAttribute('data-cocos-active') === '1'
+          var adaptiveDesktop = (primaryLayout || cocosActive) && viewportWidth >= 600
           var frameWidth = adaptiveDesktop ? viewportWidth : Math.min(viewportWidth, 480)
           // 桌面横向缩放时 frame 高度不变，宽度由 CSS 100vw 自行处理；不重复写高度变量。
           var widthSignature = adaptiveDesktop ? 'desktop' : String(Math.round(frameWidth))
-          var viewportSignature = widthSignature + 'x' + height + 'x' + String(primaryLayout)
+          var viewportSignature = widthSignature + 'x' + height + 'x'
+            + String(primaryLayout) + 'x' + String(cocosActive)
           if (viewportSignature === lastViewportSignature) {
             return
           }
@@ -197,6 +199,7 @@
           syncStandaloneSafeArea()
         }, { passive: true })
         window.addEventListener('orientationchange', syncViewportHeightLater, { passive: true })
+        window.addEventListener('h5:cocos-layout-change', syncViewportHeightLater)
         document.addEventListener('visibilitychange', function () {
           syncViewportHeight()
           syncStandaloneSafeArea()
@@ -567,12 +570,14 @@
       }
 
       @media (min-width: 600px) {
-        html[data-main-layout='primary'] {
+        html[data-main-layout='primary'],
+        html[data-cocos-active='1'] {
           --app-frame-max-width: 100vw;
           --app-frame-width: 100vw;
         }
 
-        html[data-main-layout='primary'] body {
+        html[data-main-layout='primary'] body,
+        html[data-cocos-active='1'] body {
           box-shadow: none;
         }
       }
@@ -1015,6 +1020,7 @@
           }
           window.addEventListener('resize', schedule, { passive: true })
           window.addEventListener('orientationchange', schedule, { passive: true })
+          window.addEventListener('h5:cocos-layout-change', schedule)
           if (window.visualViewport && window.visualViewport.addEventListener) {
             window.visualViewport.addEventListener('resize', schedule, { passive: true })
           }

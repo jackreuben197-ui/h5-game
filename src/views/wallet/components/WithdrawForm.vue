@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import icSupportService from '@/assets/images/ic_support_service.png'
@@ -17,6 +17,7 @@ import { useWalletStore } from '@/stores/wallet'
 
 const props = defineProps<{
   availableUc?: number
+  clubId?: number
 }>()
 
 const emit = defineEmits<{
@@ -121,6 +122,10 @@ function formatAccountNumber(accountNo: string | undefined): string {
 }
 
 function withdrawClubPayload(): Record<string, number> {
+  const directed = Number(props.clubId)
+  if (Number.isFinite(directed) && directed > 0) {
+    return { club_id: directed }
+  }
   const club = userInfoStore.currentClub ?? userInfoStore.clubList[0]
   const clubId = club?.club_id !== undefined ? Number(club.club_id) : NaN
   return Number.isFinite(clubId) && clubId > 0 ? { club_id: clubId } : {}
@@ -246,7 +251,7 @@ async function confirmWithdraw(): Promise<void> {
         })
       } else {
         showToast(tx('Wallet_SubmitWithdraw', '提款申请已提交'))
-        await walletStore.refreshPendingCsOrder()
+        await walletStore.refreshPendingCsOrder(props.clubId)
       }
     } else {
       showToast((res.message ?? tx('Wallet_SubmitWithdraw', '提款失败')) || '提款失败')
@@ -259,16 +264,13 @@ async function confirmWithdraw(): Promise<void> {
   }
 }
 
-onMounted(() => {
-  if (userInfoStore.clubList.length > 0 || userInfoStore.currentClub) {
-    void fetchWithdrawTypes()
-  } else {
-    const stop = watch(
-      () => userInfoStore.clubList.length,
-      (len) => { if (len > 0) { stop(); void fetchWithdrawTypes() } },
-    )
-  }
-})
+watch(
+  () => withdrawClubPayload().club_id,
+  (clubId) => {
+    if (Number(clubId) > 0) void fetchWithdrawTypes()
+  },
+  { immediate: true },
+)
 
 watch(filteredWithdrawTypes, (list) => {
   if (!list.includes(selectedWithdrawType.value!)) {

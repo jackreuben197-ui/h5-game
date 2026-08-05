@@ -5,6 +5,7 @@ import { useLoginModalStore } from '@/stores/loginModal'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
 import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
+import { useHomeAnnouncement } from '@/composables/useHomeAnnouncement'
 import { computed, nextTick, onMounted, ref } from 'vue'
 import iconService1Dark from '@/assets/icons/icon_service_1.svg'
 import iconService1Light from '@/assets/icons/icon_service_1_light.svg'
@@ -48,7 +49,7 @@ const clubNameText = computed<string>(
       .trim() ||
     t('UILobby_Menu_menu_btn_club'),
 )
-const noticeText = t('UIGuest_Text6') + '，' + t('UIGuest_Text7')
+const { noticeText, ensureHomeAnnouncementConfig } = useHomeAnnouncement()
 const clubGoldText = '0.00'
 const balanceVisible = true
 const pokerTablesText = '0'
@@ -112,6 +113,9 @@ function anchorScrollToBottomOnSmall(): void {
 
 onMounted(() => {
   void userInfoStore.ensureChannelDefaultClub()
+  void ensureHomeAnnouncementConfig().catch((error) => {
+    console.warn('[guest-home] fetch announcement config failed:', error)
+  })
   void fetchLobbyBannerImages().catch((error) => {
     console.warn('[guest-home] fetch lobby banner failed:', error)
   })
@@ -674,7 +678,6 @@ onMounted(() => {
   font-size: 0.28rem;
   cursor: pointer;
   white-space: nowrap;
-
 }
 
 .club-divider {

@@ -162,8 +162,7 @@ const clubAvatar = computed(
 )
 
 async function checkOrderStatus() {
-  const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
-  const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
+  const clubId = chatClubId.value
   const firstOrder = orderList.value[0]
   if (!firstOrder) {
     if (statusTimer) {

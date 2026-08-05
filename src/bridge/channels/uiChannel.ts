@@ -10,6 +10,8 @@ const log = createLogger('[bridge]')
 
 let stopH5VisibilityListener: (() => void) | null = null
 
+const COCOS_ACTIVE_ATTRIBUTE = 'data-cocos-active'
+
 function getH5Root(): HTMLElement | null {
   if (typeof document === 'undefined') {
     return null
@@ -27,6 +29,23 @@ export function setH5Visible(visible: boolean): void {
   root.style.display = visible ? '' : 'none'
   if (typeof window !== 'undefined') {
     window.__H5_VISIBLE__ = visible
+
+    // 进入牌桌后，桌面浏览器需要让 Cocos 画布使用完整视口。
+    // 移动端是否放宽由宿主页的断点控制，这里只维护牌桌显示状态。
+    const documentRoot = document.documentElement
+    const cocosWasActive = documentRoot.hasAttribute(COCOS_ACTIVE_ATTRIBUTE)
+    const cocosIsActive = !visible
+    if (cocosIsActive) {
+      documentRoot.setAttribute(COCOS_ACTIVE_ATTRIBUTE, '1')
+    } else {
+      documentRoot.removeAttribute(COCOS_ACTIVE_ATTRIBUTE)
+    }
+
+    if (cocosWasActive !== cocosIsActive) {
+      window.requestAnimationFrame(() => {
+        window.dispatchEvent(new Event('h5:cocos-layout-change'))
+      })
+    }
   }
 
   log.info('[h5-visibility]', {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import ava1 from '@/assets/images/wallet/avatars/ava1.png'
@@ -27,6 +27,7 @@ import { t } from '@/i18n'
 import { useWalletStore } from '@/stores/wallet'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useMainTabsStore } from '@/stores/mainTabs'
+import { setH5Visible } from '@/bridge/channels/uiChannel'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import {
   postOrderUserRechargeNoApi,
@@ -51,10 +52,33 @@ if (isChannelPackage) {
   tabsStore.setActiveTab('wallet')
 }
 
-// deposit_switch: 1 = deposit-free (normal wallet UI); 2 = fixed-deposit (simplified apply-recharge UI)
-const isFixedDeposit = computed(
-  () => (userInfoStore.currentClub ?? userInfoStore.clubList[0])?.deposit_switch === 2,
+const directedClubId = computed(() => {
+  const raw = Array.isArray(route.query.clubId) ? route.query.clubId[0] : route.query.clubId
+  const clubId = Number(raw)
+  return Number.isFinite(clubId) && clubId > 0 ? clubId : undefined
+})
+const walletClub = computed(() => {
+  if (directedClubId.value) {
+    return (
+      userInfoStore.clubList.find(
+        (club) => Number(club.club_id) === directedClubId.value,
+      ) ?? null
+    )
+  }
+  return userInfoStore.currentClub ?? userInfoStore.clubList[0] ?? null
+})
+const walletClubId = computed(
+  () => directedClubId.value ?? (Number(walletClub.value?.club_id) || undefined),
 )
+const isFixedDeposit = computed(() => walletClub.value?.deposit_switch === 2)
+const isFromCocosTable = computed(() => {
+  const raw = Array.isArray(route.query.from) ? route.query.from[0] : route.query.from
+  return raw === 'cocos-table'
+})
+const isFromMttRegistration = computed(() => {
+  const raw = Array.isArray(route.query.from) ? route.query.from[0] : route.query.from
+  return raw === 'mtt-registration'
+})
 
 const activeTab = ref(route.query.tab === '1' ? 1 : 0)
 
@@ -124,14 +148,22 @@ function handleOnlineUnfinished() {
   void checkUnfinishedOrders()
 }
 
-let refreshInterval: any = null
+function handleWalletBack(): void {
+  if (isFromCocosTable.value) {
+    setH5Visible(false)
+  }
+  router.back()
+}
+
+function openWalletChild(path: string): void {
+  void router.push({ path, query: route.query })
+}
 
 // 当前俱乐部成员余额（单位：分），用于钱包余额展示与回收可用额度
 const clubGold = ref(0)
 
 async function fetchClubBalance(): Promise<void> {
-  const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
-  const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
+  const clubId = walletClubId.value
   if (!clubId) {
     clubGold.value = 0
     return
@@ -152,7 +184,7 @@ async function fetchClubBalance(): Promise<void> {
 }
 
 watch(
-  () => userInfoStore.currentClub?.club_id ?? userInfoStore.clubList[0]?.club_id,
+  walletClubId,
   (id) => {
     if (id) void fetchClubBalance()
   },
@@ -162,7 +194,7 @@ watch(
 async function refreshPendingCsOrder() {
   // We keep this method for manual refreshes within this view (e.g. after cancel/submit)
   // but we will no longer run it on a 10s interval here as requested.
-  await walletStore.refreshPendingCsOrder()
+  await walletStore.refreshPendingCsOrder(walletClubId.value)
 }
 
 // 订单列表项没有可靠的 pay_type 数字字段，用 pay_id / pay_type_name 匹配
@@ -182,8 +214,7 @@ function resolveOrderPayType(order: ClubFundOrderListOrderInfo): number | undefi
 }
 
 async function checkUnfinishedOrders(showPopup = true) {
-  const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
-  const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
+  const clubId = walletClubId.value
 
   try {
     const res = await postClubFundOrderListApi(
@@ -215,7 +246,10 @@ async function checkUnfinishedOrders(showPopup = true) {
 
 async function handleCancelOrder(orderNo: string) {
   try {
-    const res = await postOrderUserClubOrderCancelApi({ order_no: orderNo })
+    const res = await postOrderUserClubOrderCancelApi({
+      order_no: orderNo,
+      club_id: walletClubId.value,
+    })
     if (res.code === 0) {
       showUnfinishedPopup.value = false
       usdtDetailsPopupOpen.value = false
@@ -313,16 +347,25 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
   }
 }
 
-onMounted(() => {
-  // We no longer check for unfinished orders on mount.
-  // It will be checked only when a recharge attempt fails with code 20066.
-  refreshPendingCsOrder()
-  // 10s Interval removed as requested. Visibility will be handled by external calls.
-})
+watch(
+  walletClubId,
+  (clubId) => {
+    walletStore.clearCsOrders()
+    void walletStore.loadPriceList(clubId)
+    void refreshPendingCsOrder()
+  },
+  { immediate: true },
+)
 
-onUnmounted(() => {
-  if (refreshInterval) clearInterval(refreshInterval)
-})
+watch(
+  () => route.fullPath,
+  () => {
+    if (isFromCocosTable.value || isFromMttRegistration.value) {
+      activeTab.value = 0
+    }
+  },
+  { immediate: true },
+)
 
 const filteredPayTypes = computed(() =>
   (walletStore.goldPriceData?.pay_types ?? []),
@@ -528,15 +571,14 @@ async function onWithdrawCsChat(orderData: Record<string, unknown>) {
   }
 }
 
-async function onCsSubmit(displayPayPrice?: number) {
+async function onCsSubmit() {
   csPopupOpen.value = false
 
   const payTypes = filteredPayTypes.value
   const selectedPayType = payTypes[activeMethod.value]
   if (!selectedPayType) return
 
-  const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
-  const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
+  const clubId = walletClubId.value
 
   let goldCount = csPopupProps.value.goldCount
   const rate = selectedPayType.rate ?? 1
@@ -546,7 +588,6 @@ async function onCsSubmit(displayPayPrice?: number) {
   let priceId = activePreset.value === -1 ? 0 : presets.value[activePreset.value]?.id ?? 0
 
   // 1. Unique-amount channel: server adjusts amount with a tail for payment matching
-  let isUniqueAmount = false
   if ((selectedPayType.increase_interval ?? 0) > 0) {
     try {
       const res = await postOrderUserRechargeNoApi(
@@ -561,7 +602,6 @@ async function onCsSubmit(displayPayPrice?: number) {
       if (res.code === 0 && res.data) {
         goldCount = res.data.amount ?? goldCount
         priceId = res.data.price_id ?? 0
-        isUniqueAmount = true
       }
     } catch (e) {
       console.error('Failed to get unique recharge amount', e)
@@ -577,13 +617,6 @@ async function onCsSubmit(displayPayPrice?: number) {
       : feeType === 2 && feeRate > 0
       ? Number((basePrice * (1 + feeRate)).toFixed(4))
       : Number(basePrice.toFixed(4))
-
-  // legal_tender = what the player actually pays, in cents (same logic as pay_price)
-  const playerPrice = isUniqueAmount
-    ? walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)
-    : displayPayPrice ??
-      walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)
-  const legalTender = Math.round(playerPrice * 100)
 
   try {
     const res = await postRechargeGoldApi(
@@ -649,8 +682,7 @@ async function onUsdtSubmit(type: number) {
   const selectedPayType = payTypes[activeMethod.value]
   if (!selectedPayType) return
 
-  const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
-  const clubId = currentClub?.club_id ? Number(currentClub.club_id) : undefined
+  const clubId = walletClubId.value
 
   // type 0: exact, 1: rounded
   let goldCount =
@@ -737,7 +769,7 @@ async function onUsdtSubmit(type: number) {
     class="wallet-fixed-deposit-shell"
     :class="{ 'wallet-fixed-deposit-shell--channel': isChannelPackage }"
   >
-    <FixedDepositPanel />
+    <FixedDepositPanel :club="walletClub" @back="handleWalletBack" />
   </div>
 
   <div
@@ -746,7 +778,7 @@ async function onUsdtSubmit(type: number) {
     :class="{ 'wallet-screen--channel': isChannelPackage }"
     :style="{ backgroundImage: `url(${mainBgUrl})` }"
   >
-    <HeaderBack :title="t('Wallet_Title')" extra-padding />
+    <HeaderBack :title="t('Wallet_Title')" extra-padding @back="handleWalletBack" />
 
     <div class="wallet-screen__content-top">
       <div class="tabs-row">
@@ -763,8 +795,8 @@ async function onUsdtSubmit(type: number) {
           user-id="8677650585"
         >
           <template #actions>
-            <GlassButton :label="$txt('Wallet_Records')" @click="router.push('/wallet/orders')" />
-            <GlassButton :label="$txt('Wallet_Details')" @click="router.push('/wallet/details')" />
+            <GlassButton :label="$txt('Wallet_Records')" @click="openWalletChild('/wallet/orders')" />
+            <GlassButton :label="$txt('Wallet_Details')" @click="openWalletChild('/wallet/details')" />
           </template>
           <template #extra>
             <div class="balance-row">
@@ -808,6 +840,7 @@ async function onUsdtSubmit(type: number) {
 
         <template v-else>
           <WithdrawForm
+            :club-id="walletClubId"
             :available-uc="clubGold"
             @open-cs-chat="onWithdrawCsChat"
             @withdrawn="fetchClubBalance"

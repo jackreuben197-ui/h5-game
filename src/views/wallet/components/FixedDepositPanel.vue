@@ -1,19 +1,29 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import UserCard from '@/views/wallet/components/UserCard.vue'
 import ClubDepositPanel from '@/views/wallet/components/ClubDepositPanel.vue'
 import { t } from '@/i18n'
-import { useUserInfoStore } from '@/stores/userInfo'
+import { useUserInfoStore, type ClubInfo } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 
+const props = defineProps<{
+  club?: ClubInfo | null
+}>()
+const emit = defineEmits<{
+  back: []
+}>()
+
 const router = useRouter()
+const route = useRoute()
 const userInfoStore = useUserInfoStore()
 
-const currentClub = computed(() => userInfoStore.currentClub ?? userInfoStore.clubList[0] ?? null)
+const currentClub = computed(
+  () => props.club ?? userInfoStore.currentClub ?? userInfoStore.clubList[0] ?? null,
+)
 const clubBalance = computed(() => Number(currentClub.value?.user_gold ?? 0))
 
 const userName = computed(() => String(userInfoStore.userInfo?.user?.nickname ?? '-'))
@@ -23,13 +33,13 @@ const avatarUrl = computed(
 )
 
 function goDetails(): void {
-  void router.push('/wallet/details')
+  void router.push({ path: '/wallet/details', query: route.query })
 }
 </script>
 
 <template>
   <div class="deposit-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
-    <HeaderBack :title="t('UIGuildFund_RechargeText')" extra-padding>
+    <HeaderBack :title="t('UIGuildFund_RechargeText')" extra-padding @back="emit('back')">
       <template #right>
         <button class="details-pill" @click="goDetails">
           <span class="wallet-t-button details-pill__label">{{ t('Wallet_Details') }}</span>
@@ -48,7 +58,7 @@ function goDetails(): void {
           :balance="formatUC(clubBalance)"
         />
 
-        <ClubDepositPanel />
+        <ClubDepositPanel :club="currentClub" />
       </div>
     </div>
   </div>

@@ -26,6 +26,7 @@ import { setupRem } from './utils/rem'
 import { initTheme } from './utils/theme'
 import { initDebugConsole, recordDebugEvent } from './utils/debugConsole'
 import { createLogger } from './utils/logger'
+import { clearMainLayout } from './utils/mainLayout'
 import { useGameStore } from './stores/game'
 import {
   cacheAgentInviteCodeIfPresent,
@@ -194,6 +195,7 @@ export function unmountH5App(): void {
   stopDailyH5DisplayPanel = null
   stopTokenRefreshLoop()
   app.unmount()
+  clearMainLayout()
   app = null
   recordDebugEvent('[h5]', 'unmount success')
 }

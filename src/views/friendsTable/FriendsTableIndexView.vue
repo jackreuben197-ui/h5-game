@@ -553,9 +553,9 @@ watch(
 <template>
   <div class="friends-table-page">
     <!-- 顶部标题栏 -->
-    <div class="title-bar">
+    <div class="title-bar main-primary-header">
       <div class="title">{{ t('UIMessage_Default') }}</div>
-      <div class="currency-info" @click="goToMineShop">
+      <div class="currency-info main-primary-currency" @click="goToMineShop">
         <div class="icon-diamond">
           <img :src="iconDiamond" :alt="t('UIMine_VIP_diamond')" />
         </div>

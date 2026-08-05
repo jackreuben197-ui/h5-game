@@ -37,6 +37,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:show': [value: boolean]
   confirm: [payload: { ticket: boolean; ratio: number; useFree: boolean; clubId: number }]
+  recharge: [payload: { clubId: number }]
 }>()
 
 /* ===== 工具 ===== */
@@ -285,6 +286,13 @@ const canConfirm = computed(() => {
   return feeBreakdown.value.total <= selectedWallet.value.gold
 })
 
+const showInsufficientBalanceDialog = ref(false)
+const isSelectedClubBalanceInsufficient = computed(() => {
+  if (props.joinMode !== 'apply' || buyinType.value !== 'chips') return false
+  if ((props.mtt?.gold_type ?? 1) !== 1 || !selectedWallet.value) return false
+  return feeBreakdown.value.total > selectedWallet.value.gold
+})
+
 /* ===== 重购倒计时 ===== */
 const rebuySecondsLeft = ref(0)
 let rebuyTimer: ReturnType<typeof setInterval> | null = null
@@ -335,11 +343,12 @@ function handleConfirm() {
     return
   }
 
+  if (isSelectedClubBalanceInsufficient.value) {
+    showInsufficientBalanceDialog.value = true
+    return
+  }
+
   if (!canConfirm.value) {
-    // UC 余额不足时提示，但不阻止（游戏服务端再验证）
-    if ((props.mtt?.gold_type ?? 1) === 1 && feeBreakdown.value.total > (selectedWallet.value?.gold ?? 0)) {
-      showToast(t('UItexasUCyuebuzutips'))
-    }
     return
   }
   emit('confirm', {
@@ -349,6 +358,18 @@ function handleConfirm() {
     clubId: selectedWallet.value?.club_id ?? 0,
   })
   emit('update:show', false)
+}
+
+function handleInsufficientBalanceCancel() {
+  showInsufficientBalanceDialog.value = false
+}
+
+function handleRecharge() {
+  const clubId = Number(selectedWallet.value?.club_id ?? 0)
+  showInsufficientBalanceDialog.value = false
+  if (clubId <= 0) return
+  emit('update:show', false)
+  emit('recharge', { clubId })
 }
 </script>
 
@@ -487,6 +508,18 @@ function handleConfirm() {
       </div>
     </div>
   </GameDialog>
+
+  <GameDialog
+    :show="showInsufficientBalanceDialog"
+    :message="t('ServerErrorCode_20004')"
+    :show-cancel-button="true"
+    :cancel-button-text="t('Wallet_Cancel')"
+    :confirm-button-text="t('UIHappyShop_ToRechange')"
+    :close-on-click-overlay="false"
+    @cancel="handleInsufficientBalanceCancel"
+    @confirm="handleRecharge"
+    @update:show="showInsufficientBalanceDialog = $event"
+  />
 </template>
 
 <style scoped lang="scss">

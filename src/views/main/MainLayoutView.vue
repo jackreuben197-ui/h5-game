@@ -61,6 +61,8 @@ const isMessage = computed(() => route.meta.tabKey === 'message')
 const isMine = computed(() => route.meta.tabKey === 'mine')
 const isFriendsTable = computed(() => route.meta.tabKey === 'friendsTable')
 const isHomeRoute = computed(() => route.name === 'lobby' || route.name === 'guest-home')
+const isPrimaryLayout = computed(() => route.meta.desktopLayout === 'primary')
+const isGuestRoute = computed(() => String(route.name ?? '').startsWith('guest-'))
 
 async function fetchUserInfoOnEnter(): Promise<void> {
   const token = gameStore.sessionToken.trim()
@@ -172,6 +174,9 @@ watch(
       'is-mine': isMine,
       'is-friends-table': isFriendsTable,
       'main-layout--home': isHomeRoute,
+      'main-layout--primary': isPrimaryLayout,
+      'main-layout--guest': isGuestRoute,
+      'main-layout--authenticated': isPrimaryLayout && !isGuestRoute,
     }"
     :style="backgroundStyle"
   >
@@ -183,7 +188,6 @@ watch(
     </div>
     <!-- 公共底部导航：跨模块复用。 -->
     <MainBottomTab />
-    <DesktopLayoutDemoSwitch />
     <LoginModal />
   </div>
 </template>

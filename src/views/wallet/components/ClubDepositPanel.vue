@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { t } from '@/i18n'
-import { useUserInfoStore } from '@/stores/userInfo'
+import { useUserInfoStore, type ClubInfo } from '@/stores/userInfo'
 import { postRechargeGoldApi } from '@/api/order'
 import { getUserInfoApi } from '@/api/user'
 
@@ -15,17 +15,24 @@ function tx(key: string, fallback: string): string {
   return val !== key ? val : fallback
 }
 
+const props = defineProps<{
+  club?: ClubInfo | null
+}>()
+
 const router = useRouter()
+const route = useRoute()
 const userInfoStore = useUserInfoStore()
+
+const activeClub = computed(() => props.club ?? userInfoStore.currentClub ?? null)
 
 const amount = ref('')
 const submitting = ref(false)
 const showConfirm = ref(false)
 const showSuccess = ref(false)
 
-const clubName = computed(() => userInfoStore.currentClub?.club_name ?? '')
+const clubName = computed(() => activeClub.value?.club_name ?? '')
 const clubId = computed(() => {
-  const id = userInfoStore.currentClub?.club_id
+  const id = activeClub.value?.club_id
   return id != null ? Number(id) : undefined
 })
 
@@ -97,7 +104,7 @@ async function onConfirmRecharge(): Promise<void> {
 function onSuccessConfirm(): void {
   showSuccess.value = false
   amount.value = ''
-  void router.push('/wallet/details')
+  void router.push({ path: '/wallet/details', query: route.query })
 }
 </script>
 

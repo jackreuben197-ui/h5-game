@@ -1,16 +1,23 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHashHistory, type RouteLocationNormalized } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { useWalletStore } from '@/stores/wallet'
 import { pinia } from '@/stores/pinia'
 import { createLogger } from '@/utils/logger'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
+import { syncMainLayout } from '@/utils/mainLayout'
 import { syncPostAuthData } from '@/session/postAuthSync'
 
 const log = createLogger('[router]')
 
-function preloadWalletPriceList(): true {
+function walletRouteClubId(to: RouteLocationNormalized): number | undefined {
+  const raw = Array.isArray(to.query.clubId) ? to.query.clubId[0] : to.query.clubId
+  const clubId = Number(raw)
+  return Number.isFinite(clubId) && clubId > 0 ? clubId : undefined
+}
+
+function preloadWalletPriceList(to: RouteLocationNormalized): true {
   const walletStore = useWalletStore(pinia)
-  void walletStore.loadPriceList().catch((error: unknown) => {
+  void walletStore.loadPriceList(walletRouteClubId(to)).catch((error: unknown) => {
     log.warn('wallet price list preload failed', error)
   })
   return true
@@ -51,6 +58,7 @@ const router = createRouter({
             requiresAuth: true,
             tabKey: 'home',
             moduleTitle: '首页',
+            desktopLayout: 'primary',
           },
         },
         {
@@ -61,6 +69,7 @@ const router = createRouter({
             requiresAuth: true,
             tabKey: 'club',
             moduleTitle: '俱乐部',
+            desktopLayout: 'primary',
           },
         },
         {
@@ -71,6 +80,7 @@ const router = createRouter({
             requiresAuth: true,
             tabKey: 'friendsTable',
             moduleTitle: '朋友桌',
+            desktopLayout: 'primary',
           },
         },
         {
@@ -81,6 +91,7 @@ const router = createRouter({
             requiresAuth: true,
             tabKey: 'message',
             moduleTitle: '消息',
+            desktopLayout: 'primary',
           },
         },
         {
@@ -91,6 +102,7 @@ const router = createRouter({
             requiresAuth: true,
             tabKey: 'mine',
             moduleTitle: '我的',
+            desktopLayout: 'primary',
           },
         },
         // 访客（未登录）专用页面，与登录版共用 MainLayoutView 与底部 Tab。
@@ -98,31 +110,31 @@ const router = createRouter({
           path: 'guest/home',
           name: 'guest-home',
           component: () => import('@/views/guest/GuestHomeView.vue'),
-          meta: { tabKey: 'home', moduleTitle: '首页' },
+          meta: { tabKey: 'home', moduleTitle: '首页', desktopLayout: 'primary' },
         },
         {
           path: 'guest/club',
           name: 'guest-club',
           component: () => import('@/views/guest/GuestClubView.vue'),
-          meta: { tabKey: 'club', moduleTitle: '俱乐部' },
+          meta: { tabKey: 'club', moduleTitle: '俱乐部', desktopLayout: 'primary' },
         },
         {
           path: 'guest/friendsTable',
           name: 'guest-friendsTable',
           component: () => import('@/views/guest/GuestFriendsTableView.vue'),
-          meta: { tabKey: 'friendsTable', moduleTitle: '朋友桌' },
+          meta: { tabKey: 'friendsTable', moduleTitle: '朋友桌', desktopLayout: 'primary' },
         },
         {
           path: 'guest/message',
           name: 'guest-message',
           component: () => import('@/views/guest/GuestMessageView.vue'),
-          meta: { tabKey: 'message', moduleTitle: '消息' },
+          meta: { tabKey: 'message', moduleTitle: '消息', desktopLayout: 'primary' },
         },
         {
           path: 'guest/mine',
           name: 'guest-mine',
           component: () => import('@/views/guest/GuestMineView.vue'),
-          meta: { tabKey: 'mine', moduleTitle: '我的' },
+          meta: { tabKey: 'mine', moduleTitle: '我的', desktopLayout: 'primary' },
         },
       ],
     },
@@ -654,6 +666,10 @@ router.afterEach((to, from, failure) => {
     })
     return
   }
+
+  // 导航确认后再切换布局，避免被取消或重定向的导航污染当前页面状态。
+  // 这也是桌面布局的唯一运行时入口，不再在 index.html 维护第二份路径白名单。
+  syncMainLayout(to.meta.desktopLayout)
 
   log.info('afterEach', {
     from: from.fullPath || '<init>',

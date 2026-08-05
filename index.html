@@ -670,36 +670,6 @@
       .cocosEditBox {
         z-index: 20 !important;
       }
-
-      #orientation-lock-mask {
-        position: fixed;
-        inset: 0;
-        z-index: 99999;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        padding: 24px;
-        box-sizing: border-box;
-        text-align: center;
-        color: #fff;
-        background: rgba(10, 10, 20, 0.92);
-        font-size: 18px;
-        line-height: 1.5;
-      }
-
-      html[data-orientation-lock='1'] #orientation-lock-mask {
-        display: flex;
-      }
-
-      html[data-orientation-lock='1'] #GameCanvas,
-      html[data-orientation-lock='1'] #GameDiv,
-      html[data-orientation-lock='1'] #drawCanvas,
-      html[data-orientation-lock='1'] #splash,
-      html[data-orientation-lock='1'] #app {
-        visibility: hidden;
-        pointer-events: none;
-      }
-
     </style>
   </head>
   <body>
@@ -717,7 +687,6 @@
 
     <!-- H5 挂载节点 -->
     <div id="app"></div>
-    <div id="orientation-lock-mask">请将设备旋转为竖屏后继续使用</div>
 
     <!-- Cocos 引擎加载（与旧模板一致） -->
     <script src="src/settings.js" charset="utf-8"></script>
@@ -1318,54 +1287,6 @@
         }, 30000)
       })()
     </script>
-    <script>
-      ;(function () {
-        var lastOrientationSignature = ''
-
-        function syncOrientationState() {
-          // 软键盘会暂时把可见视口变成“横向比例”，不能据此显示横屏遮罩。
-          if (window.__H5_KEYBOARD_OPEN__ || window.__H5_KEYBOARD_CLOSING__) return
-          var isLandscape = window.matchMedia
-            ? window.matchMedia('(orientation: landscape)').matches
-            : window.innerWidth > window.innerHeight
-          var isShortViewport = Math.min(window.innerWidth, window.innerHeight) <= 500
-          var hasTouchInput = Number((window.navigator || {}).maxTouchPoints) > 0
-          var shouldLock = isLandscape && isShortViewport && hasTouchInput
-          var orientation = isLandscape ? 'landscape' : 'portrait'
-          var orientationSignature = orientation + ':' + String(shouldLock)
-
-          if (orientationSignature === lastOrientationSignature) return
-          lastOrientationSignature = orientationSignature
-
-          document.documentElement.setAttribute(
-            'data-screen-orientation',
-            orientation,
-          )
-          document.documentElement.setAttribute('data-orientation-lock', shouldLock ? '1' : '0')
-        }
-
-        function tryLockPortrait() {
-          var isShortViewport = Math.min(window.innerWidth, window.innerHeight) <= 500
-          var hasTouchInput = Number((window.navigator || {}).maxTouchPoints) > 0
-          if (!isShortViewport || !hasTouchInput) {
-            return
-          }
-          if (!screen.orientation || typeof screen.orientation.lock !== 'function') {
-            return
-          }
-          screen.orientation.lock('portrait').catch(function () {
-            // 兜底由横屏遮罩处理。
-          })
-        }
-
-        syncOrientationState()
-        window.addEventListener('resize', syncOrientationState, { passive: true })
-        window.addEventListener('orientationchange', syncOrientationState, { passive: true })
-        window.addEventListener('h5:viewport-stable', syncOrientationState, { passive: true })
-        tryLockPortrait()
-      })()
-    </script>
-
     <!-- H5 独立入口：可被 Cocos 统一模板复用 -->
     <script type="module" src="/src/entry/cocos-h5-entry.ts"></script>
   </body>

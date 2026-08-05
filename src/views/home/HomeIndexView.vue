@@ -147,7 +147,9 @@ const noticeTrackStyle = computed<CSSProperties>(() => ({
   '--notice-distance': `${noticeDistancePx.value}px`,
   '--notice-duration': `${noticeDurationSec.value}s`,
 }))
-const clubNameText = computed(() => toSafeString(currentClub.value?.club_name) || t('UILobby_Menu_menu_btn_club'))
+const clubNameText = computed(
+  () => toSafeString(currentClub.value?.club_name) || t('UILobby_Menu_menu_btn_club'),
+)
 
 const clubGoldText = computed(() => toSafeNumber(currentClub.value?.user_gold) / 100)
 const pokerTablesText = computed(() => `${homeRoomStats.value.poker.tables}`)
@@ -611,7 +613,11 @@ onBeforeUnmount(() => {
           />
         </div>
         <div class="club-balance-row">
-          <img class="icon-sm" src="@/assets/icons/icon_chips.png" :alt="t('UIClub_CreateRoom31')" />
+          <img
+            class="icon-sm"
+            src="@/assets/icons/icon_chips.png"
+            :alt="t('UIClub_CreateRoom31')"
+          />
           <span v-if="loading" class="balance-amount">
             <van-loading size="16" />
           </span>
@@ -645,7 +651,11 @@ onBeforeUnmount(() => {
           <span class="contact-label"> @game </span>
         </div>
         <div class="contact-item" @click="handleOpenEmail">
-          <AppSvgIcon class="contact-icon" name="contact-user" :title="t('UISetting_SecurityBindEmailItem')" />
+          <AppSvgIcon
+            class="contact-icon"
+            name="contact-user"
+            :title="t('UISetting_SecurityBindEmailItem')"
+          />
           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
         </div>
         <div
@@ -653,7 +663,11 @@ onBeforeUnmount(() => {
           class="contact-item"
           @click="handleOpenCustomerService"
         >
-          <AppSvgIcon class="contact-icon" name="customer-service" :title="'IM' + t('UIMineMain01')" />
+          <AppSvgIcon
+            class="contact-icon"
+            name="customer-service"
+            :title="'IM' + t('UIMineMain01')"
+          />
           <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
         </div>
       </div>
@@ -706,7 +720,11 @@ onBeforeUnmount(() => {
 
               <!-- 扑克专区 -->
               <div class="game-scroll-card poker-card" @click="goToGameList">
-                <img class="zone-lg-bg" src="@/assets/icons/game_zone_poker_lg.png" :alt="t('UIClub_Text15')" />
+                <img
+                  class="zone-lg-bg"
+                  src="@/assets/icons/game_zone_poker_lg.png"
+                  :alt="t('UIClub_Text15')"
+                />
                 <div class="poker-overlay"></div>
                 <div class="zone-info poker-info">
                   <div class="zone-header">
@@ -767,7 +785,11 @@ onBeforeUnmount(() => {
                 class="game-scroll-card game-card-mahjong"
                 @click="showGameToast(t('UIClub_InDeve'))"
               >
-                <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" :alt="t('Mahjong_Name')" />
+                <img
+                  class="zone-lg-bg"
+                  src="@/assets/icons/game_zone_mahjong_lg.png"
+                  :alt="t('Mahjong_Name')"
+                />
                 <div class="zone-info">
                   <div class="zone-header">
                     <span class="zone-title"> {{ t('UIHomeMahjongArea') }} </span>

@@ -21,6 +21,7 @@ import type {
 } from '@/api/models/org'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import DateRangePicker from '@/components/DateRangePicker/DateRangePicker.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import imgAvatar from '@/assets/images/default_avatar.png'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
 import imgChips from '@/assets/icons/icon_chips.png'
@@ -1505,7 +1506,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell club-members-bg" :style="backgroundStyle">
+  <div class="page-shell club-members-desktop-page club-members-bg" :style="backgroundStyle">
     <HeaderBack :title="t('UIGuildMemberDetailspermissions005')">
       <template #right>
         <p class="member-total">
@@ -1572,13 +1573,21 @@ onMounted(() => {
           />
         </section>
 
-        <section class="members-list" :aria-label="t('UIGuild_MemberList')" @scroll="onMembersScroll">
+        <section
+          class="members-list"
+          :aria-label="t('UIGuild_MemberList')"
+          @scroll="onMembersScroll"
+        >
           <article v-for="member in members" :key="member.id" class="member-card">
             <span class="role-badge" :class="roleClass(member.role)">{{ member.role }}</span>
 
             <div class="member-main" @click="openMemberDetail(member)">
               <div class="member-left">
-                <img class="member-avatar" :src="member.avatar" :alt="(member.name) + t('UIMine_UserInfoSetting_btn_head')" />
+                <img
+                  class="member-avatar"
+                  :src="member.avatar"
+                  :alt="member.name + t('UIMine_UserInfoSetting_btn_head')"
+                />
                 <div class="member-base">
                   <button type="button" class="member-name">
                     {{ member.name }}
@@ -1615,6 +1624,7 @@ onMounted(() => {
 
               <div class="data-item">
                 <p class="data-label data-label--agent">
+                  <AppSvgIcon name="user" class="data-user-icon" />
                   <span>{{ t('UIClub_Agent2') }}</span>
                 </p>
                 <p class="data-value">{{ member.agentName }}</p>
@@ -1622,12 +1632,16 @@ onMounted(() => {
             </div>
           </article>
 
-          <p v-if="!members.length && !loadingMembers" class="member-list-status">{{ t('UIClub_NoMemberData') }}</p>
+          <p v-if="!members.length && !loadingMembers" class="member-list-status">
+            {{ t('UIClub_NoMemberData') }}
+          </p>
           <p v-if="loadingMembers" class="member-list-status">{{ t('SuperView2') }}...</p>
           <p v-else-if="members.length && loadingMoreMembers" class="member-list-status">
             {{ t('UIClub_LoadMore') }}...
           </p>
-          <p v-else-if="members.length && !hasMoreMembers" class="member-list-status">{{ t('UIClub_NoMore') }}</p>
+          <p v-else-if="members.length && !hasMoreMembers" class="member-list-status">
+            {{ t('UIClub_NoMore') }}
+          </p>
         </section>
       </template>
 
@@ -1724,7 +1738,9 @@ onMounted(() => {
               </div>
             </article>
 
-            <p v-if="!recordRows.length && !loadingRecords" class="record-list-status">{{ t('UIClub_NoRecord4') }}</p>
+            <p v-if="!recordRows.length && !loadingRecords" class="record-list-status">
+              {{ t('UIClub_NoRecord4') }}
+            </p>
             <p v-if="loadingRecords" class="record-list-status">{{ t('SuperView2') }}...</p>
             <p v-else-if="recordRows.length && loadingMoreRecords" class="record-list-status">
               {{ t('UIClub_LoadMore') }}...
@@ -1861,7 +1877,9 @@ onMounted(() => {
               >
                 {{ t('UICommon_Edit') }}
               </button>
-              <button type="button" class="quota-action" @click="resetQuota('review')">{{ t('UIlobbyfilterTips02') }}</button>
+              <button type="button" class="quota-action" @click="resetQuota('review')">
+                {{ t('UIlobbyfilterTips02') }}
+              </button>
             </div>
           </div>
 
@@ -1953,7 +1971,9 @@ onMounted(() => {
         </div>
 
         <div class="sheet-footer-actions">
-          <button type="button" class="sheet-footer-btn" @click="closeFundSheet">{{ t('adaptation10013') }}</button>
+          <button type="button" class="sheet-footer-btn" @click="closeFundSheet">
+            {{ t('adaptation10013') }}
+          </button>
           <button
             type="button"
             class="sheet-footer-btn sheet-footer-btn--confirm"
@@ -3009,12 +3029,9 @@ onMounted(() => {
   white-space: nowrap;
 }
 
-.data-label--agent::before {
-  content: '';
+.data-user-icon {
   width: 0.195rem;
   height: 0.195rem;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.85);
   flex: 0 0 auto;
 }
 

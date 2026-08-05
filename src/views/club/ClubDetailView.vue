@@ -752,14 +752,68 @@ function closeCopyPopup(): void {
 
 async function downloadBlob(blob: Blob, fileName: string): Promise<void> {
   const objectUrl = URL.createObjectURL(blob)
-  try {
-    const link = document.createElement('a')
-    link.href = objectUrl
-    link.download = fileName
-    link.click()
-  } finally {
-    URL.revokeObjectURL(objectUrl)
-  }
+  const link = document.createElement('a')
+  link.href = objectUrl
+  link.download = fileName
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000)
+}
+
+function createInviteCaptureTarget(source: HTMLElement): {
+  host: HTMLDivElement
+  target: HTMLElement
+} {
+  const sourceRect = source.getBoundingClientRect()
+  const captureWidth = Math.max(1, Math.ceil(sourceRect.width))
+  const host = document.createElement('div')
+  const target = source.cloneNode(true) as HTMLElement
+
+  host.setAttribute('aria-hidden', 'true')
+  Object.assign(host.style, {
+    position: 'fixed',
+    top: '0',
+    left: '-10000px',
+    width: `${captureWidth}px`,
+    background: '#242424',
+    pointerEvents: 'none',
+  })
+
+  target.classList.add('invite-share-export')
+  target.style.width = '100%'
+  target.style.maxWidth = 'none'
+  target.style.height = 'auto'
+  target.style.transform = 'none'
+  target.querySelectorAll('[data-invite-export-ignore]').forEach((element) => element.remove())
+
+  host.appendChild(target)
+  document.body.appendChild(host)
+  return { host, target }
+}
+
+async function waitForInviteCaptureAssets(target: HTMLElement): Promise<void> {
+  const imageTasks = Array.from(target.querySelectorAll('img')).map(
+    (image) =>
+      new Promise<void>((resolve) => {
+        if (image.complete && image.naturalWidth > 0) {
+          resolve()
+          return
+        }
+
+        const finish = () => {
+          image.removeEventListener('load', finish)
+          image.removeEventListener('error', finish)
+          resolve()
+        }
+        image.addEventListener('load', finish, { once: true })
+        image.addEventListener('error', finish, { once: true })
+        window.setTimeout(finish, 5000)
+      }),
+  )
+
+  await Promise.all(imageTasks)
+  await document.fonts?.ready
 }
 
 async function saveInviteShare(): Promise<void> {
@@ -773,33 +827,39 @@ async function saveInviteShare(): Promise<void> {
   }
 
   savingInviteShare.value = true
+  let captureHost: HTMLDivElement | null = null
   try {
     await nextTick()
-    const saveButton = document.getElementById('save-invite-share')
-    if (saveButton) {
-      saveButton.style.display = 'none' // 隐藏保存按钮，避免被截图到
-    }
-    const captureTarget =
+    const sourceTarget =
       (inviteModalRef.value.closest('.game-dialog__card') as HTMLElement | null) ||
       inviteModalRef.value
-    const canvas = await html2canvas(captureTarget, {
+    const capture = createInviteCaptureTarget(sourceTarget)
+    captureHost = capture.host
+    await waitForInviteCaptureAssets(capture.target)
+
+    const canvas = await html2canvas(capture.target, {
       useCORS: true,
-      backgroundColor: null,
+      allowTaint: false,
+      backgroundColor: '#242424',
       logging: false,
       scale: Math.min(window.devicePixelRatio || 1, 3),
+      foreignObjectRendering: false,
+      removeContainer: true,
     })
 
     const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob((result) => resolve(result), 'image/jpeg', 1)
+      canvas.toBlob((result) => resolve(result), 'image/jpeg', 0.96)
     })
 
     if (blob) {
       await downloadBlob(blob, `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`)
     } else {
       const link = document.createElement('a')
-      link.href = canvas.toDataURL('image/jpeg')
+      link.href = canvas.toDataURL('image/jpeg', 0.96)
       link.download = `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`
+      document.body.appendChild(link)
       link.click()
+      link.remove()
     }
 
     showSuccessToast(t('UIClub_DoneSave'))
@@ -808,6 +868,7 @@ async function saveInviteShare(): Promise<void> {
     console.error('saveInviteShare error', error)
     showFailToast(t('UIClub_SaveFail2'))
   } finally {
+    captureHost?.remove()
     savingInviteShare.value = false
   }
 }
@@ -895,10 +956,14 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="page-shell club-detail-bg" :style="backgroundStyle">
-    <HeaderBack :title="t('UIClub_ClubManager')" />
+  <div
+    class="page-shell room-list-page club-management-page club-detail-bg"
+    :style="backgroundStyle"
+  >
+    <div class="room-list-stage club-management-stage">
+      <HeaderBack :title="t('UIClub_ClubManager')" />
 
-    <div v-loading="loading" class="club-detail">
+      <div v-loading="loading" class="club-detail">
       <section class="club-header-card">
         <div class="club-header-main">
           <ImageUploadSheet
@@ -1079,9 +1144,12 @@ onMounted(async () => {
         </button>
       </section>
 
-      <section v-if="isFounder" class="danger-zone">
-        <button type="button" class="danger-btn" @click="onDeleteClub">{{ t('UIClub_DeleteClub') }}</button>
-      </section>
+        <section v-if="isFounder" class="danger-zone">
+          <button type="button" class="danger-btn" @click="onDeleteClub">
+            {{ t('UIClub_DeleteClub') }}
+          </button>
+        </section>
+      </div>
     </div>
 
     <GameDialog
@@ -1099,6 +1167,7 @@ onMounted(async () => {
           <button
             type="button"
             class="invite-modal__close"
+            data-invite-export-ignore
             :aria-label="t('UIBackDialog_ticketsbtnClose')"
             @click="closeInvitePopup"
           >
@@ -1138,6 +1207,7 @@ onMounted(async () => {
           id="save-invite-share"
           type="button"
           class="modal-primary-btn"
+          data-invite-export-ignore
           :disabled="savingInviteShare || !imgInviteQr"
           @click="saveInviteShare"
         >
@@ -1987,6 +2057,40 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 0.22rem;
+}
+
+:global(.invite-share-export) {
+  min-height: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  background: #242424 !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:global(.invite-share-export::before),
+:global(.invite-share-export::after) {
+  display: none !important;
+}
+
+:global(.invite-share-export *),
+:global(.invite-share-export *::before),
+:global(.invite-share-export *::after) {
+  animation: none !important;
+  transition: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:global(.invite-share-export .game-dialog__body) {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+:global(.invite-share-export .invite-modal__head h3) {
+  padding-left: 0 !important;
 }
 
 .invite-modal__head {

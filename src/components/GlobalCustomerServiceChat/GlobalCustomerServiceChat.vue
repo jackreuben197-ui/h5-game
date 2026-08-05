@@ -148,7 +148,9 @@ function resolveSenderName(
   channel: ChatSupportChannelListServiceData | null | undefined = activeChannel.value,
 ): string {
   if (isSelfMessage(message, channel)) return t('UILobby_Menu_menu_btn_my')
-  return isCurrentUserSupportInChannel(channel) ? t('UIMine_RecordItemMatch_2TZCjaqM') : t('UIMineMain01')
+  return isCurrentUserSupportInChannel(channel)
+    ? t('UIMine_RecordItemMatch_2TZCjaqM')
+    : t('UIMineMain01')
 }
 
 function resolveOutgoingMessageUserSend(
@@ -241,7 +243,9 @@ const targetClubId = computed(() => {
   return Number(userInfoStore.currentClub?.club_id || 0)
 })
 
-const supportHintText = computed(() => (voiceCancel.value ? t('UIChatUndoCancel') : t('UIGlobalCustomerServiceChat_Text3')))
+const supportHintText = computed(() =>
+  voiceCancel.value ? t('UIChatUndoCancel') : t('UIGlobalCustomerServiceChat_Text3'),
+)
 const supportHintClass = computed(() =>
   voiceCancel.value ? 'voice-tip--cancel' : 'voice-tip--send',
 )
@@ -1395,7 +1399,11 @@ watch(
         <div class="chat-sheet-frost"></div>
 
         <div class="chat-sheet-inner">
-          <div class="agent-floating-card" role="tablist" :aria-label="t('UIGlobalCustomerServiceChat_Text2')">
+          <div
+            class="agent-floating-card"
+            role="tablist"
+            :aria-label="t('UIGlobalCustomerServiceChat_Text2')"
+          >
             <button
               v-for="channel in availableChannels"
               :key="`${channel.club_id}-${channel.user_id}`"
@@ -1717,7 +1725,9 @@ watch(
       <div class="no-service-card" @click.stop>
         <p class="no-service-title">{{ t('UIGlobalCustomerServiceChat_CurrentClubNot') }}～</p>
         <p class="no-service-desc">{{ t('UIGlobalCustomerServiceChat_AdminAgain') }}</p>
-        <button class="no-service-btn" type="button" @click="closeNoServicePopup">{{ t('adaptation10008') }}</button>
+        <button class="no-service-btn" type="button" @click="closeNoServicePopup">
+          {{ t('adaptation10008') }}
+        </button>
       </div>
     </div>
   </Teleport>
@@ -1799,8 +1809,7 @@ watch(
   bottom: var(--app-keyboard-inset, 0px);
   height: 15.2267rem;
   max-height: calc(
-    var(--app-viewport-height, 100vh) - env(safe-area-inset-top) -
-      var(--app-keyboard-inset, 0px)
+    var(--app-viewport-height, 100vh) - env(safe-area-inset-top) - var(--app-keyboard-inset, 0px)
   );
   border-radius: 0.86rem 0.86rem 0 0;
   background-size: cover;

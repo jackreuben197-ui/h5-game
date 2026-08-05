@@ -481,7 +481,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell club-room-history-bg" :style="backgroundStyle">
+  <div
+    class="page-shell club-room-history-page club-room-history-bg"
+    :style="backgroundStyle"
+  >
     <HeaderBack :title="t('UIClubTable_TableRecords')" />
     <div class="club-room-history">
       <div class="coin-tabs">

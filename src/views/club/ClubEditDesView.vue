@@ -61,35 +61,40 @@ async function onConfirm(): Promise<void> {
 </script>
 
 <template>
-  <div class="page-shell club-edit-des-bg" :style="backgroundStyle">
-    <HeaderBack :title="t('UIClub_EditIntro')" />
+  <div
+    class="page-shell room-list-page club-editor-page club-edit-des-page club-edit-des-bg"
+    :style="backgroundStyle"
+  >
+    <div class="room-list-stage club-editor-stage club-edit-des-stage">
+      <HeaderBack :title="t('UIClub_EditIntro')" />
 
-    <div class="club-edit-des">
-      <section class="editor-block">
-        <label class="field-label" for="club-intro-edit-input">
-          {{ t('UIClub_Creat_ZizEgnjo') }}
-        </label>
-        <div class="field-shell">
-          <textarea
-            id="club-intro-edit-input"
-            v-model.trim="intro"
-            maxlength="300"
-            :placeholder="t('UIClub_PleaseDescri')"
-          ></textarea>
-        </div>
-      </section>
+      <div class="club-edit-des">
+        <section class="editor-block">
+          <label class="field-label" for="club-intro-edit-input">
+            {{ t('UIClub_Creat_ZizEgnjo') }}
+          </label>
+          <div class="field-shell">
+            <textarea
+              id="club-intro-edit-input"
+              v-model.trim="intro"
+              maxlength="300"
+              :placeholder="t('UIClub_PleaseDescri')"
+            ></textarea>
+          </div>
+        </section>
 
-      <section class="footer-actions">
-        <button
-          type="button"
-          class="confirm-btn"
-          :class="{ 'confirm-btn--disabled': !canConfirm }"
-          :disabled="!canConfirm"
-          @click="onConfirm"
-        >
-          {{ isSubmitting ? t('UIClub_Submitting') + '...' : t('CommitOK') }}
-        </button>
-      </section>
+        <section class="footer-actions">
+          <button
+            type="button"
+            class="confirm-btn"
+            :class="{ 'confirm-btn--disabled': !canConfirm }"
+            :disabled="!canConfirm"
+            @click="onConfirm"
+          >
+            {{ isSubmitting ? t('UIClub_Submitting') + '...' : t('CommitOK') }}
+          </button>
+        </section>
+      </div>
     </div>
   </div>
 </template>

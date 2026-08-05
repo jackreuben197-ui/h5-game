@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-const props = defineProps<{
+defineProps<{
   count?: number
   showBadge?: boolean
 }>()
@@ -63,9 +63,9 @@ function onTouchEnd() {
     }"
     @touchstart="onTouchStart"
     @touchmove="onTouchMove"
-    @touchend="onTouchEnd"
+    @touchend.prevent="onTouchEnd"
   >
-    <button class="bell">
+    <button type="button" class="bell" @click="emit('click')">
       <div class="bell__content">
         <!-- Bell Icon SVG matching the reference image shape -->
         <svg class="bell__svg" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">

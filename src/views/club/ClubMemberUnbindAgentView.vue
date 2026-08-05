@@ -206,7 +206,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell sub-bg">
+  <div class="page-shell sub-bg unbind-agent-desktop-page">
     <div class="sub-page">
       <HeaderBack :title="t('UIGuild_MemberDetails_UnBindVip')" />
 

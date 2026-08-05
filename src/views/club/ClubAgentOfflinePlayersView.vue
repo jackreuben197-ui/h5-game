@@ -260,7 +260,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell sub-bg" :style="backgroundStyle">
+  <div class="page-shell agent-offline-players-page sub-bg" :style="backgroundStyle">
     <HeaderBack :title="t('UIGuild_MemberDetails_VipOffLine')" />
 
     <div class="member-detail-page">

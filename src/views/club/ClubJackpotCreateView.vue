@@ -503,8 +503,7 @@ function applyModeSetting(
       profitLimit !== '' && toSafeNumber(item.contribute_fixed_limit) > 0
     target.jackpotContribChecked =
       jackpotContrib !== '' && toSafeNumber(item.contribute_fixed_rate) > 0
-    target.profitPercentChecked =
-      profitPercent !== '' && toSafeNumber(item.contribute_ratio) > 0
+    target.profitPercentChecked = profitPercent !== '' && toSafeNumber(item.contribute_ratio) > 0
   })
 
   stakeLevels.forEach((level) => {
@@ -639,7 +638,9 @@ onMounted(() => {
 
 <template>
   <div class="page-shell jackpot-create-page">
-    <HeaderBack :title="isEditMode ? 'Edit Jackpot' : 'Jackpot'" />
+    <HeaderBack
+      :title="(isEditMode ? t('UIGuild_EditorTemplate') : t('UIGuild_CreateDes')) + 'Jackpot'"
+    />
 
     <section class="create-content">
       <div class="name-input-pill">
@@ -836,14 +837,14 @@ onMounted(() => {
                     <span>{{ t('UICreateClubJackpotTemplate_AllTableTriggerTip') }}</span>
                   </div>
                   <div class="value-input value-input--narrow">
-                  <input
-                    v-model="getBlindConfigBySb(option.sb).awardOtherRatio"
-                    class="inline-input"
-                    inputmode="decimal"
-                    placeholder="0"
-                  />
-                  <span>%</span>
-                </div>
+                    <input
+                      v-model="getBlindConfigBySb(option.sb).awardOtherRatio"
+                      class="inline-input"
+                      inputmode="decimal"
+                      placeholder="0"
+                    />
+                    <span>%</span>
+                  </div>
                 </div>
               </div>
 

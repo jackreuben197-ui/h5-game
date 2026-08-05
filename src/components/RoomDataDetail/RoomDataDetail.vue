@@ -12,7 +12,11 @@ import { useGameStore } from '@/stores/game'
 import { USER_STORE_CLUB_MANAGE } from '@/utils/indexedDB'
 import { toPlain, userCache } from '@/utils/userCache'
 import { formatUC } from '@/utils/roomVisibility'
-import { t } from '@/i18n'
+import { getLocale, t } from '@/i18n'
+import {
+  multiLanguageTemplateVersion,
+  resolveTemplateTextByKey,
+} from '@/utils/multiLanguageTemplate'
 
 type Source = 'club' | 'friend'
 
@@ -59,6 +63,16 @@ const loading = ref(false)
 const detailInfo = ref<DetailInfo>(buildEmptyDetailInfo())
 const records = ref<PlayerRecord[]>([])
 
+// MTT 名称由服务端返回模板 key，按客户端 GetRoomNameByKey 规则解析；普通牌桌保留原名称。
+const displayRoomName = computed(() => {
+  void multiLanguageTemplateVersion.value
+  const rawName = detailInfo.value.roomName
+  if (!props.matchId || !rawName || rawName === '--') {
+    return rawName
+  }
+  return resolveTemplateTextByKey(rawName, getLocale()) || t(rawName) || rawName
+})
+
 // club_manage 缓存：俱乐部牌局详情二次打开先渲染上次结果，再静默刷新覆盖
 //（key 约定见 utils/indexedDB.ts）；朋友桌详情不属于俱乐部管理，不缓存。
 interface CachedDetail {
@@ -75,7 +89,15 @@ function detailCacheKey(): string {
   return `${clubId}_roomdetail_${props.roomId || 0}_${props.matchId || 0}`
 }
 
-const tableHeaders = ['User', t('UIMine_Paipu_win'), t('UIMine_WalletPlatform_fee_f'), t('adaptation10179'), t('MTT_xq_buy'), t('UIMine_RecordItemsNormal_3RCUa3w8'), 'JP']
+const tableHeaders = [
+  'User',
+  t('UIMine_Paipu_win'),
+  t('UIMine_WalletPlatform_fee_f'),
+  t('adaptation10179'),
+  t('MTT_xq_buy'),
+  t('UIMine_RecordItemsNormal_3RCUa3w8'),
+  'JP',
+]
 
 function buildEmptyDetailInfo(): DetailInfo {
   return {
@@ -315,8 +337,8 @@ onMounted(() => {
   <div class="room-data-detail" :class="`room-data-detail--${source}`">
     <section class="meta-panel">
       <div class="meta-title-row">
-        <span class="meta-title">{{ t('UIClub_Of') }}</span>
-        <strong class="meta-main-value">{{ detailInfo.roomName }}</strong>
+        <span class="meta-title">{{ t('Mtt_Complete') }}</span>
+        <strong class="meta-main-value">{{ displayRoomName }}</strong>
       </div>
 
       <div class="meta-sub-row">

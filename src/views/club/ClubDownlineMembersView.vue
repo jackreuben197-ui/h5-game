@@ -472,7 +472,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="page-shell downline-page" :style="backgroundStyle">
+  <div class="page-shell downline-page downline-desktop-page" :style="backgroundStyle">
     <HeaderBack :title="t('UIGuild_MemberDetails_VipOffLine')" />
 
     <div v-loading="loading" class="content">

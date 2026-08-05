@@ -135,6 +135,8 @@ VITE_API_BASE_URL=https://your-api-domain pnpm dev
   `1rem = 40px`，字体不随浏览器宽度无限放大。
 - 页面背景铺满浏览器；交互内容位于最大 `1440 × 1024` 的居中舞台。一级页常规内容最大宽度为
   `1360px`，二三级内容页按设计稿确定内部宽度和滚动区域。
+- `1440 × 1024` 是最大内容舞台，不是强制宽高比，也不是把页面整体缩放到这个分辨率。窗口不足时宽高
+  分别收缩，优先压缩留白并让中间内容滚动；窗口更大时只有背景继续铺满，内容不再放大。
 - `src/utils/rem.ts` 只计算根字号，`src/utils/mainLayout.ts` 管理当前页面框架，
   `src/styles/_main_desktop.scss` 维护五个一级页面，`src/styles/_content_desktop.scss` 维护已迁移的
   二三级内容页。
@@ -169,8 +171,10 @@ VITE_API_BASE_URL=https://your-api-domain pnpm dev
 `route.meta.desktopLayout` 是合法字段，并限制其值必须来自 `MainLayout`；它不生成运行时代码。
 以后新增布局类型，只需先在 `src/utils/mainLayout.ts` 的 `MAIN_LAYOUTS` 中登记，路由类型会自动同步。
 
-页面继续使用已有业务根类，例如 `.home-page`、`.club-index`、`.message-page`。不要为了“可能以后
-会用”增加空的标记类。只有真正被公共 CSS 消费的结构才增加公共类，例如当前共用标题和余额区域的：
+页面继续使用已有业务根类，例如 `.home-page`、`.club-index`、`.message-page`。如果已有根类不能稳定
+限定公共桌面规则，可以增加语义明确的页面根类，例如 `.club-members-desktop-page`，但必须在
+`_content_desktop.scss` 中立即被使用。不要为了“可能以后会用”增加空标记类，也不要给每个断点重复
+创建一套类名。只有真正被公共 CSS 消费的结构才增加公共类，例如当前共用标题和余额区域的：
 
 ```html
 <div class="title-bar main-primary-header">
@@ -182,10 +186,10 @@ VITE_API_BASE_URL=https://your-api-domain pnpm dev
 
 | 单位 | 用途 | 本项目规则 |
 | --- | --- | --- |
-| `rem` | 字体、固定可读尺寸 | 已迁移桌面页固定以 `40px` 为 `1rem`，正文和按钮文字优先使用 |
+| `rem` | 字体、固定可读尺寸 | 已迁移桌面页固定以 `40px` 为 `1rem`，页面原有文字可以继续使用 |
 | `clamp()` | 有上下限的自适应尺寸 | 页边距、列表间距、普通卡片和图标优先使用 |
 | `cqw` | 相对组件自身宽度的比例尺寸 | 只用于必须整块等比缩放的复合组件内部 |
-| `px` | 不应缩放的细节 | 1px 边线、固定底部导航或设计明确要求的尺寸 |
+| `px` | 桌面端明确固定的尺寸 | 桌面覆盖层里的字号、卡片、按钮、底部导航、1px 边线可直接使用 |
 
 `1cqw` 等于最近一个声明了 `container-type: inline-size` 的容器宽度的 `1%`。它与 `vw`
 不同：浏览器再宽，也只按当前卡片自身宽度计算。
@@ -201,6 +205,10 @@ cqw = 设计稿中的像素值 / 组件设计宽度 × 100
 例如宽度为 `606px` 的朋友桌主视觉，设计稿内 `33px` 的偏移约为 `5.45cqw`。
 普通正文禁止使用 `cqw`；朋友桌主视觉里与牌桌构图绑定的标题属于复合视觉的一部分，可以随整桌缩放。
 消息和“我的”卡片内需要保持可读的文字已经使用固定 `rem`。
+
+在集中维护的桌面覆盖层中，不必为了形式统一把设计稿的每个 `px` 换算成 `rem`。桌面根字号虽然固定，
+但直接写固定 `px` 更容易核对设计稿，也更能表达“此尺寸不跟随窗口缩放”。`clamp()` 只给确实需要在
+Pad 与桌面之间变化的尺寸，并且必须同时给出合理的最小值和最大值。
 
 ### 5.3 样式分层
 
@@ -233,10 +241,12 @@ cqw = 设计稿中的像素值 / 组件设计宽度 × 100
    新类型并编写配套基础舞台。普通二三级页面给对应路由加
    `meta: { desktopLayout: 'content' }`，不要误标为 `primary`。
 6. **优先复用业务类**：现有根类足够定位时不增加新类；只有多个页面共享同一结构时才增加公共契约类。
-7. **选择单位**：普通文字用 `rem`，有限缩放用 `clamp()`，只有独立等比复合组件才启用
-   `container-type` 和 `cqw`。
-8. **回归检查**：至少检查 `375 × 812`、`768 × 1024`、`1440 × 1024`、`1920 × 1080`，并验证
-   Chrome、Edge、Safari 下的滚动、弹窗、键盘、安全区及主题切换。
+7. **选择单位**：保留页面原有文字的 `rem`；桌面覆盖层中设计明确固定的尺寸可用 `px`；有限缩放用
+   `clamp()`；只有独立等比复合组件才启用 `container-type` 和 `cqw`。
+8. **只迁移布局**：默认只调整尺寸、间距、位置、排列和滚动，不增删业务元素，不改原有颜色、阴影、
+   边框和明暗主题。为了建立舞台或滚动区可以增加无业务含义的结构容器。
+9. **回归检查**：至少检查 `375 × 812`、`768 × 1024`、`1024 × 768`、`1366 × 768`、
+   `1440 × 1024`、`1920 × 1080`，并验证 Chrome、Edge、Safari 下的滚动、弹窗、键盘、安全区及主题切换。
 
 创建牌桌 `/createTable` 可作为桌面长表单的参考：顶部导航固定在内容舞台内，“一键开桌”和“专业参数”
 共用同一套 1360px 内容边界；页签下方分别管理自己的纵向滚动。专业参数的操作栏位于长表单末尾，
@@ -245,16 +255,153 @@ cqw = 设计稿中的像素值 / 组件设计宽度 × 100
 一级 Tab 页如果以后再增加，只需复用已实现的 `primary`；新类型页面必须先完成对应的公共舞台样式，
 再向路由开放，不能只加 `meta` 而没有配套 CSS。
 
+#### 5.4.1 普通内容页的标准舞台
+
+页面背景与内容舞台要分开：页面根节点负责铺满浏览器，舞台负责限制业务内容。不要给根节点直接写
+`max-width: 1440px`，否则背景也会被截成一条。普通二三级页可按下面的结构实现：
+
+```scss
+@media (min-width: 600px) {
+  html[data-main-layout='content'] .example-page {
+    --example-gutter: clamp(24px, 2.7778vw, 40px);
+    --example-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .example-page__stage {
+    position: absolute;
+    top: var(--example-stage-top);
+    left: 50%;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    width: var(--content-stage-width);
+    height: var(--content-stage-height);
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .example-page__body {
+    min-width: 0;
+    min-height: 0;
+    padding: 0 var(--example-gutter);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+```
+
+如果页面现有根结构本身已经可以充当舞台，可用 `display: flex` 居中而不新增 `__stage`。关键是始终保留
+“全浏览器背景”和“最大 1440 × 1024 内容”这两个层次。
+
+#### 5.4.2 顶部、滚动区和底部操作
+
+- 顶部导航、筛选区和底部操作栏占固定行，中间列表或表单使用 `minmax(0, 1fr)`、`min-height: 0` 和
+  `overflow-y: auto`。缺少 `min-height: 0` 是 Flex/Grid 子项无法滚动、只能看到一半内容的常见原因。
+- 窗口高度不足时滚动中间内容，不把卡片、字号和按钮一起纵向压扁；长列表也不要依赖整个 `body` 滚动。
+- 底部按钮固定在舞台内，可保持设计稿明确的按钮宽度；不要直接相对浏览器使用全局
+  `position: fixed`。悬浮菜单同理，应固定在舞台右下角，不需要和主操作按钮贴在一起。
+- 牌桌卡片、赛事卡片等重复项应左对齐，数量不足一行时不要用 `space-between` 拉开。优先使用
+  `grid-template-columns: repeat(auto-fill, 固定或有限宽度)` 配合 `justify-content: start`。
+- 列表卡片需要占满内容行时，给列表列轨道或卡片写 `width: 100%`，不要只让外层容器变宽。
+
+#### 5.4.3 Teleport 弹窗和底部抽屉
+
+Vant 的 Popup、Dialog 等组件经常 `Teleport` 到 `body`，因此它们不再是页面根元素的后代，页面 scoped
+选择器和只定义在页面根节点上的 CSS 变量都可能失效。桌面适配时按以下规则处理：
+
+1. 给 Teleport 的实体节点增加唯一类，例如 `class="sheet-popup member-role-sheet-popup"`。
+2. 在 `_content_desktop.scss` 使用
+   `html[data-main-layout='content'] .member-role-sheet-popup` 定位，不要写成
+   `.member-detail-page .member-role-sheet-popup`。
+3. 遮罩继续覆盖整个浏览器，抽屉本体限制为 `var(--content-stage-width)` 并水平居中；舞台未占满窗口高度时，
+   底边偏移应与舞台一致。
+4. 抽屉外层可以铺满舞台宽度，内部表单、单选项和按钮仍可保持设计稿的固定最大宽度并居中。
+5. 不要用 `transform: translateX(-50%)` 居中 Vant 底部 Popup，Vant 的进出场动画也会写 `transform`。
+   使用 `left: 0; right: 0; margin-inline: auto`，避免覆盖动画。
+
+参考写法：
+
+```scss
+@media (min-width: 600px) {
+  html[data-main-layout='content'] .example-sheet-popup.van-popup--bottom {
+    right: 0;
+    bottom: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+    left: 0;
+    width: var(--content-stage-width);
+    margin-inline: auto;
+  }
+}
+```
+
+#### 5.4.4 表单控件、拉杆和数字键盘
+
+- 数字输入统一复用 `src/components/KeyBoard/NumericKeypad.vue`。它已经在 `600px` 以上横向扩展到最大
+  `1440px`，按键高度根据视口高度独立调整，不要在页面内再复制一套键盘。
+- 键盘和 Popup 一样会 Teleport 到 `body`；打开键盘后应让中间表单保持可滚动，避免最后一项和操作按钮
+  永久被遮住。
+- 桌面拉杆使用 Pointer Event；拖动开始后调用 `setPointerCapture()`，根据真实轨道
+  `getBoundingClientRect()` 计算百分比。不要拿设计稿宽度或放大后的 `cqw` 反推坐标，否则鼠标会比圆球快。
+- 全局禁止拖拽和文本选择时，不要在父层统一阻断 `pointerdown`/`pointermove`。`input`、`textarea`、
+  `[contenteditable]`、`range` 和自定义拉杆必须保留正常指针事件。
+
+#### 5.4.5 可直接参考的已迁移页面
+
+| 场景 | 参考实现 | 重点 |
+| --- | --- | --- |
+| 五个一级页 | `src/views/home/HomeIndexView.vue` 等五个 `*IndexView.vue` | 背景全屏、1360px 常规内容、固定大小的 `MainBottomTab` |
+| 牌桌/赛事列表 | `src/views/home/gameList.vue`、`src/views/mtt/mttList.vue`、俱乐部牌桌列表 | 卡片左对齐、赛事卡片整行宽度、列表独立滚动 |
+| 长表单 | `src/views/table/CreateTableTemplate.vue`、`src/views/club/ClubAgentProfitSettingView.vue` | 固定顶部、滚动表单、舞台内底部操作、键盘 |
+| 设置列表 | `src/views/club/ClubDetailView.vue`、`src/views/club/ClubMembersView.vue` | 1360px 内容边界、整行条目、浮动按钮、弹窗 |
+| 长详情 | `src/views/club/ClubMemberDetailView.vue`、`src/views/club/ClubRoomHistoryDetailView.vue`、`src/components/RoomDataDetail/RoomDataDetail.vue` | 内容舞台内纵向滚动，底部抽屉单独适配 |
+| 成员关系页 | `src/views/club/ClubAgentVipStatisticsView.vue`、`ClubMemberBindAgentView.vue`、`ClubMemberUnbindAgentView.vue` | 顶部摘要固定、长列表滚动、底部主按钮 |
+| 窄内容构图 | `src/views/club/ClubLevelView.vue` | 宽舞台内保持窄主体，矮窗口下允许内容滚动 |
+
+迁移新页面时，先选择同交互模型的参考，而不是只找视觉最相似的页面。例如页面长得像列表，但底部存在
+固定确认按钮，应优先参考“成员关系页”的滚动和底部结构。
+
+#### 5.4.6 样式应该放在哪里
+
+- 页面 `.vue` 的 scoped style：保留移动端布局、业务状态、颜色、阴影、主题和只出现一次的视觉规则。
+- `_content_desktop.scss`：已迁移普通内容页在桌面端的几何尺寸、排列、定位和滚动边界。所有规则必须以
+  `html[data-main-layout='content'] .页面根类` 收口。
+- `_main_desktop.scss`：只维护五个一级页和 `MainBottomTab`，不要继续塞二三级页面。
+- 公共组件内部的桌面媒体查询：只有行为确实被多个页面共享时使用，例如 `NumericKeypad`、
+  `MainBottomTab`。不要为了一个页面把页面专属位置写进公共组件。
+- 独立 `_*_desktop.scss`：仅用于牌桌、沉浸式游戏等舞台和交互模型明显不同的页面族。
+
+若桌面与移动端仅布局不同，不要复制一份 `*DesktopView.vue` 独立维护。只有 DOM 结构或业务交互确实不同，
+且共享模板会产生大量条件分支时，才考虑拆分组件。
+
 ### 5.5 缩放性能约束
 
 - 大面积、会随窗口缩放的静态背景，不要直接使用从 Figma 导出的复杂 SVG。若文件含
   `foreignObject`、`backdrop-filter`、`feTurbulence`、大范围 `feGaussianBlur` 或位移滤镜，
   应预栅格化为带透明通道的 `2x WebP`；SVG 可保留为设计源文件，但不在运行时引用。
+- 不要给普通页面根节点或每一张列表卡片都加 `container-type`。`cqw` 仅放在需要整块等比缩放的独立
+  复合视觉容器，普通列表使用 Grid/Flex、固定尺寸和 `clamp()`。
 - `window.resize` 与 `visualViewport.resize` 可能在同一帧重复触发，监听器必须通过同一个
   `requestAnimationFrame` 合并，并在写 CSS 变量前比较新旧值。
 - 已迁移桌面页根字号固定为 `40px`，缩放过程中禁止重复写入相同 `font-size`。
 - 长列表中谨慎使用 `backdrop-filter`、大模糊和多层阴影；静态卡片优先使用普通半透明背景或
   预合成图片。列表数量较多时，再根据真实数据量引入虚拟列表。
+- 不要在连续 `resize`、`pointermove` 中交替读取布局并写入样式。先读取所有
+  `getBoundingClientRect()`，再在同一帧更新状态；只有尺寸确实变化时才触发 Vue 更新。
+- 用浏览器拖动窗口回归时，如果只有复杂大图区域卡顿，先临时关闭 SVG/滤镜确认瓶颈；如果全页卡顿，
+  再检查 resize 监听、根字号写入和大范围响应式状态更新，避免凭感觉只调 CSS 动画。
 
 ### 5.6 Cocos 牌桌的桌面画布
 
@@ -273,6 +420,63 @@ pnpm run sync:h5-game:local
 该命令会构建本地 `h5-game`、同步到 Cocos 的 Web 模板，并清理旧的 Cocos `build`，之后需要重新构建
 或预览 `h5-cc-game`。不要通过删除 `--app-frame-max-width` 或把全站默认宽度永久改为 `100vw` 来调试，
 否则未完成桌面迁移的页面也会被一并拉伸。
+
+如果 Cocos 期望的 Canvas 宽度是 `1440px`，实际却始终为 `1438px`，优先检查 `GameDiv`、
+`GameCanvas` 及其父节点是否存在左右各 `1px` 的边框或内边距，并区分 `clientWidth` 与
+`getBoundingClientRect().width`。牌桌宿主应使用 `box-sizing: border-box` 且不带边框/内边距；不要用
+给 Canvas 再加 `2px` 的方式掩盖宿主尺寸错误。
+
+### 5.7 DOM 截图和海报导出
+
+邀请链接等海报不能直接截图正在显示的 Vant Dialog 节点。实时弹窗通常带有 Teleport、进出场
+`transform`、半透明背景、`backdrop-filter` 和圆角裁切，`html2canvas` 在移动端可能导出粗白边，在
+桌面端还可能把滤镜分块渲染成白色网格。
+
+当前 `ClubDetailView.vue` 的邀请海报是参考实现，处理顺序如下：
+
+1. 获取可见卡片宽度，把源节点克隆到屏幕外的独立宿主，不修改正在显示的弹窗。
+2. 导出副本去掉 `transform`、动画、滤镜、阴影等渲染上下文，并设置明确的不透明背景；导出 JPEG 时
+   不能依赖透明背景。
+3. 用 `data-*-export-ignore` 标记关闭、保存等不应出现在图片中的控件，只在副本中删除它们。不要临时
+   给原按钮写 `display: none`，否则异常或异步下载会让页面按钮无法恢复。
+4. 等待副本中的所有图片完成 `load`/`error`，并等待 `document.fonts.ready` 后再调用 `html2canvas`。
+5. 下载时把 `<a>` 临时加入 `document.body`，点击后移除；Object URL 延迟约一秒再释放，兼容 Safari。
+6. 无论成功或失败都在 `finally` 删除离屏宿主并恢复保存状态。
+
+`html2canvas` 适合结构简单的业务海报。若海报依赖复杂滤镜、视频、跨域背景或需要像素级一致，应改为
+Canvas 主动绘制或使用预合成图片，不要继续堆截图兼容样式。
+
+### 5.8 桌面迁移验收清单
+
+单个页面只有满足下面项目才算完成桌面迁移：
+
+- 路由已声明正确的 `desktopLayout`，直接刷新、返回和重定向后 `html[data-main-layout]` 状态正确。
+- `375 × 812` 移动端无回归；`768 × 1024` Pad、`1024 × 768` 横屏 Pad、`1366 × 768` 常见笔记本、
+  `1440 × 1024` 设计舞台和 `1920 × 1080` 大屏均无内容截断。
+- 大于 `1440 × 1024` 时只有背景扩展，交互内容仍在居中舞台内；不足舞台时无强制宽高比，无整页缩放。
+- 使用 0 条、1 条、少量和多条数据检查列表；卡片左对齐或整行占满符合页面类型，滚动区能到达最后一项。
+- 用长俱乐部名、长玩家名、较大数字和不同语言检查省略、换行与按钮挤压，不只验证中文短文案。
+- 顶部导航、底部按钮、悬浮菜单、Popup/Dialog、角色抽屉、数字键盘和拉杆都位于内容舞台的正确位置。
+- 浅色和深色主题分别检查；桌面样式没有意外覆盖移动端已有颜色、阴影、背景图和状态样式。
+- 在 Windows Chrome、Windows Edge、macOS Safari、macOS Chrome 中验证滚轮、触控板、鼠标拖动、
+  Pad 触摸和窗口连续缩放，观察是否有明显卡顿。
+- 需要登录的页面使用真实登录态做视觉检查，不为截图向 localStorage 填假数据或绕过权限逻辑。
+- 最后执行 `pnpm build`；若本次涉及较多样式或模板调整，再执行 `pnpm lint`，只处理本次改动产生的问题。
+
+### 5.9 常见问题快速定位
+
+| 现象 | 优先检查 |
+| --- | --- |
+| 桌面字体随窗口变得很大 | 路由是否缺少 `desktopLayout`；页面是否错误使用 `vw`/`cqw` 字号 |
+| 页面只能看到一半且无法滚动 | Flex/Grid 滚动子项是否缺少 `min-height: 0`；是否错误禁用了中间区滚动 |
+| 大屏上按钮跑到内容区外 | 是否相对浏览器使用了 `position: fixed`，而不是相对舞台定位 |
+| Popup 仍保持手机宽度 | 是否 Teleport 到 `body`；桌面全局选择器是否能直接命中 Popup 实体类 |
+| Popup 动画或位置错乱 | 是否用 `transform` 居中并覆盖了 Vant 自己的进出场 transform |
+| 少量牌桌被平均拉得很开 | Grid/Flex 是否使用了 `space-between`；改为左对齐固定/有限列宽 |
+| 缩放窗口明显卡顿 | 复杂 SVG/滤镜、重复 resize 监听、重复根字号写入、每卡片 `container-type` |
+| 拉杆圆球落后鼠标 | 是否按设计宽度计算；应使用当前轨道 DOMRect、Pointer Event 和 pointer capture |
+| 导出图片有粗白边或白色网格 | 是否直接截图带 transform/backdrop-filter 的实时弹窗；改为离屏纯色副本 |
+| 深色桌面和深色移动端不一致 | `_content_desktop.scss` 是否越权覆盖了颜色、阴影、滤镜或主题变量 |
 
 ## 6. 打包与发布
 

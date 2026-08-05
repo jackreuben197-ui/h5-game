@@ -161,7 +161,7 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <div class="chat-overlay">
+    <div class="chat-overlay recharge-support-chat">
       <div class="chat-container">
         <!-- Top Visual Header -->
         <div class="visual-header"></div>

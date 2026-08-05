@@ -125,17 +125,7 @@ const currentStep = computed(() => availableSteps.value[stepIndex.value] ?? 0)
 const popupNoticeIndex = ref(0)
 
 // iOS 无法自动安装（第三方浏览器 / 内嵌 WebView）时的手动“添加到主屏幕”引导。
-const showAddHomeTooltip = ref(false)
 const showAddHomeGuide = ref(false)
-
-function openAddHomeGuide(): void {
-  showAddHomeTooltip.value = false
-  showAddHomeGuide.value = true
-}
-
-function closeAddHomeTooltip(): void {
-  showAddHomeTooltip.value = false
-}
 
 function closeAddHomeGuide(): void {
   showAddHomeGuide.value = false
@@ -296,7 +286,7 @@ async function onSecondaryAction(): Promise<void> {
 
   // iOS 第三方浏览器 / 内嵌 WebView：无法触发 mobileconfig，改为手动“添加到主屏幕”图文引导。
   if (isIosThirdPartyBrowser() || isIos()) {
-    showAddHomeTooltip.value = true
+    showAddHomeGuide.value = true
     return
   }
 
@@ -479,31 +469,6 @@ async function onSecondaryAction(): Promise<void> {
       </div>
     </div>
   </div>
-
-  <Teleport to="body">
-    <Transition name="a2h-glide">
-      <div v-if="showAddHomeTooltip" class="a2h-tooltip-overlay">
-        <div class="a2h-tooltip">
-          <div class="a2h-tooltip__left" @click="openAddHomeGuide">
-            <span class="a2h-tooltip__plus">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#ff1e4d" stroke-width="2.4" stroke-linecap="round">
-                <line x1="12" y1="6" x2="12" y2="18" />
-                <line x1="6" y1="12" x2="18" y2="12" />
-              </svg>
-            </span>
-            <span class="a2h-tooltip__add">{{ t('H5Display_TooltipAdd') }}</span>
-            <span class="a2h-tooltip__main">{{ t('H5Display_TooltipToMain') }}</span>
-          </div>
-          <button class="a2h-tooltip__close" type="button" @click="closeAddHomeTooltip">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round">
-              <line x1="6" y1="6" x2="18" y2="18" />
-              <line x1="18" y1="6" x2="6" y2="18" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
 
   <Teleport to="body">
     <Transition name="a2h-pop">
@@ -1064,89 +1029,6 @@ async function onSecondaryAction(): Promise<void> {
 }
 
 /* ============ 手动“添加到主屏幕”引导（tooltip + guide）============ */
-.a2h-tooltip-overlay {
-  position: fixed;
-  bottom: 20px;
-  left: 0;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
-  z-index: 100000005;
-}
-
-.a2h-tooltip {
-  pointer-events: auto;
-  background: #000;
-  height: 48px;
-  padding: 0 8px 0 16px;
-  border-radius: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-
-  &__left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-
-    &:active {
-      opacity: 0.7;
-    }
-  }
-
-  &__plus {
-    width: 22px;
-    height: 22px;
-    border: 1px solid #ff1e4d;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    svg {
-      width: 14px;
-      height: 14px;
-    }
-  }
-
-  &__add {
-    color: #ff1e4d;
-    font-weight: 600;
-    font-size: 15px;
-  }
-
-  &__main {
-    color: #fff;
-    font-size: 15px;
-    letter-spacing: 0.2px;
-  }
-
-  &__close {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    cursor: pointer;
-
-    svg {
-      width: 14px;
-      height: 14px;
-    }
-
-    &:active {
-      opacity: 0.7;
-    }
-  }
-}
-
 .a2h-guide-overlay {
   position: fixed;
   inset: 0;
@@ -1278,17 +1160,6 @@ async function onSecondaryAction(): Promise<void> {
     width: 100%;
     display: block;
   }
-}
-
-.a2h-glide-enter-active,
-.a2h-glide-leave-active {
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.a2h-glide-enter-from,
-.a2h-glide-leave-to {
-  opacity: 0;
-  transform: translateY(20px);
 }
 
 .a2h-pop-enter-active,

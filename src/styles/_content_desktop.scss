@@ -1,0 +1,1159 @@
+// 已完成桌面迁移的二三级内容页。
+// 背景占满浏览器，业务内容限制在居中的 1440 × 1024 舞台内；字体固定按 1rem = 40px。
+@media (min-width: 600px) {
+  html[data-main-layout='content'] {
+    --content-stage-width: min(100%, 1440px);
+    --content-stage-height: min(var(--app-full-height, 100dvh), 1024px);
+    --app-max-width: 1440px;
+    --app-side-padding: 0px;
+    --app-top-padding: 0px;
+  }
+
+  html[data-main-layout='content'] .room-list-page:not(.room-list-page--embedded) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .room-list-page:not(.room-list-page--embedded) .room-list-stage {
+    width: var(--content-stage-width);
+    height: var(--content-stage-height);
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .room-list-page .page-back-header {
+    width: 100%;
+    height: 112px;
+    min-height: 112px;
+    padding: 50px 40px 25px;
+  }
+
+  html[data-main-layout='content'] .room-list-page .back-trigger {
+    gap: 20px;
+    padding: 0 15px;
+  }
+
+  html[data-main-layout='content'] .room-list-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .room-list-page .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .room-list-page .action-wrap {
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .room-list-page .action-wrap .action-btn {
+    width: 98px;
+    height: 37px;
+    padding: 0 10px;
+    border-radius: 25px;
+    font-size: 14px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .room-list-page .action-wrap .action-icon {
+    width: 25px;
+    height: 26px;
+  }
+
+  html[data-main-layout='content'] .room-list-page > .room-list-stage > .room-tabs {
+    --tab-base-height: 41px;
+    --tab-top-cut: 9px;
+    --tab-bottom-overlap: 0px;
+    --tab-item-padding-x: 0px;
+    --tab-text-padding-x: 10px;
+
+    width: min(100%, 466.6px);
+    height: 41px;
+    margin: 0 auto;
+  }
+
+  html[data-main-layout='content'] .room-list-page > .room-list-stage > .room-tabs .van-tabs__wrap {
+    height: 41px;
+    margin: 0;
+  }
+
+  html[data-main-layout='content'] .room-list-page > .room-list-stage > .room-tabs .van-tab {
+    font-size: 17.5px;
+  }
+
+  html[data-main-layout='content'] .room-list-page:not(.room-list-page--embedded) .group-list {
+    width: 100%;
+    max-height: calc(100% - 153px);
+    margin: 0;
+    padding: 0 0 50px;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  html[data-main-layout='content'] .room-list-page .group-item {
+    padding: 0;
+    border-bottom-width: 0.5px;
+  }
+
+  html[data-main-layout='content'] .room-list-page .group-summary {
+    min-height: 103.6px;
+    padding: 0 40.7px;
+    gap: 20px;
+  }
+
+  html[data-main-layout='content'] .room-list-page .summary-left {
+    gap: 16.7px;
+  }
+
+  html[data-main-layout='content'] .room-list-page .game-icon-wrap {
+    flex: 0 0 auto;
+    width: 68.4px;
+    height: 76px;
+    border-radius: 19.6px;
+  }
+
+  html[data-main-layout='content'] .room-list-page .icon-tag {
+    bottom: 6px;
+    width: 53.2px;
+    height: 19.2px;
+    border-radius: 999px;
+    font-size: 9.3px;
+    line-height: 19.2px;
+  }
+
+  html[data-main-layout='content'] .room-list-page .summary-content {
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .room-list-page .blind-text {
+    font-size: 15.6px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .room-list-page .blind-text .blind-label {
+    margin-right: 11.8px;
+  }
+
+  html[data-main-layout='content'] .room-list-page .count-text {
+    gap: 11.8px;
+    margin-top: 11.8px;
+    font-size: 15.6px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .room-list-page .count-text span {
+    gap: 3.4px;
+  }
+
+  html[data-main-layout='content'] .room-list-page .count-icon {
+    width: 17.8px;
+    height: 17.8px;
+  }
+
+  html[data-main-layout='content'] .room-list-page .toggle-icon {
+    width: 42.5px;
+    height: 42.5px;
+    margin-top: 0;
+  }
+
+  html[data-main-layout='content'] .room-list-page .table-grid {
+    margin: 9px 44.8px 20px;
+    grid-template-columns: repeat(auto-fit, 175.3px);
+    column-gap: 20px;
+    row-gap: 42px;
+    justify-content: start;
+  }
+
+  html[data-main-layout='content'] .room-list-page .table-card {
+    width: 175.3px;
+    height: 175.3px;
+    padding-top: 0;
+  }
+
+  html[data-main-layout='content'] .room-list-page .table-main {
+    width: 175.3px;
+    height: 175.3px;
+    border-radius: 24.1px;
+  }
+
+  html[data-main-layout='content'] .room-list-page .table-name {
+    top: 1.25px;
+    width: 104px;
+    height: 18.7px;
+    padding: 2px 0;
+    border-radius: 999px;
+    font-size: 10.3px;
+    line-height: 1.35;
+  }
+
+  html[data-main-layout='content'] .room-list-page .feature-icons {
+    top: -6.6px;
+    right: -2px;
+  }
+
+  html[data-main-layout='content'] .room-list-page .feature-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  html[data-main-layout='content'] .room-list-page .empty-wrap {
+    min-height: 360px;
+    justify-content: center;
+  }
+
+  // 俱乐部首页：顶部信息按设计稿保持紧凑，列表复用同一内容页舞台。
+  html[data-main-layout='content'] .club-lobby-page .club-auth-interaction-layer {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: var(--content-stage-width);
+    height: var(--content-stage-height);
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .page-back-header {
+    flex: 0 0 108px;
+    height: 108px;
+    min-height: 108px;
+    gap: 4px;
+    padding: 45.7px 40px 17.9px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .back-trigger {
+    flex: 0 0 34.2px;
+    width: 34.2px;
+    height: 44.4px;
+    padding: 0;
+    gap: 0;
+    justify-content: center;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .full-slot-wrap {
+    height: 44.4px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .club-identity {
+    gap: 7.5px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .club-avatar {
+    flex: 0 0 44.4px;
+    width: 44.4px;
+    height: 44.4px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .club-name {
+    max-width: 260px;
+    font-size: 17px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .club-sub-meta {
+    gap: 7px;
+    margin-top: 2px;
+    font-size: 12.7px;
+    line-height: 15px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .club-member-icon {
+    width: 12.7px;
+    height: 12.7px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .club-header {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .announce-bar {
+    display: flex;
+    width: min(calc(100% - 48px), 421.4px);
+    min-height: 36.8px;
+    margin: 0 auto;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .club-header-tabs {
+    width: min(calc(100% - 48px), 444.7px);
+    height: 28.9px;
+    margin: 21.6px auto 0;
+    padding: 0 20.3px;
+    gap: 29.3px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .club-header-tab {
+    font-size: 14.1px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .club-quick-actions {
+    width: min(calc(100% - 48px), 425px);
+    height: 86.2px;
+    margin: 18.6px auto 0;
+    gap: 14.7px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .club-quick-card {
+    height: 86.2px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .quick-card-title {
+    font-size: 16.7px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .club-game-tabs {
+    --tab-base-height: 41px;
+    --tab-top-cut: 9px;
+    --tab-bottom-overlap: 0px;
+    --tab-item-padding-x: 0px;
+    --tab-text-padding-x: 10px;
+
+    flex: 0 0 41px;
+    width: min(calc(100% - 48px), 466.6px);
+    height: 41px;
+    margin: 29.9px auto 0;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .club-game-tabs .van-tabs__wrap {
+    height: 41px;
+    margin: 0;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .club-game-tabs .van-tab {
+    font-size: 17.5px;
+  }
+
+  html[data-main-layout='content'] .room-list-page.club-lobby-page .group-list {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    max-height: none;
+    margin: 0;
+    padding: 0 0 50px;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  // 赛事页暂时没有二级筛选，仍与扑克筛选栏的顶部位置对齐。
+  html[data-main-layout='content'] .club-lobby-page .club-header + .group-list {
+    margin-top: 29.9px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .mtt-group {
+    margin: 0;
+    padding: 24px 44.8px 20px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .mtt-group__header {
+    margin: 0 0 16px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .mtt-grid--sm {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .mtt-grid--md {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .mtt-grid--lg {
+    width: 100%;
+    gap: 20px;
+  }
+
+  // 独立赛事专区与俱乐部赛事列表使用同一套 3 / 2 / 1 列满宽规则。
+  html[data-main-layout='content'] .mtt-list-page .mtt-list-stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  html[data-main-layout='content'] .room-list-page.mtt-list-page .mtt-list-stage .mtt-content {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    max-height: none;
+    margin: 0;
+    padding: 24px 44.8px 50px;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  html[data-main-layout='content'] .mtt-list-page .mtt-group {
+    margin: 0 0 24px;
+  }
+
+  html[data-main-layout='content'] .mtt-list-page .mtt-group__header {
+    margin: 0 0 16px;
+  }
+
+  html[data-main-layout='content'] .mtt-list-page .mtt-grid--sm {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  html[data-main-layout='content'] .mtt-list-page .mtt-grid--md {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  html[data-main-layout='content'] .mtt-list-page .mtt-grid--lg {
+    width: 100%;
+    gap: 20px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .floating-action-area {
+    position: absolute;
+    left: 44.8px;
+    right: 44.8px;
+    bottom: 20px;
+    justify-content: center;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .create-table-btn {
+    flex: 0 0 10rem;
+    width: 10rem;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .floating-menu-btn {
+    position: absolute;
+    left: calc(50% + 5rem - 0.58rem);
+    margin-left: 0;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .floating-menu-btn--solo {
+    right: 0;
+    left: auto;
+    margin-left: 0;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page.room-list-page--channel .floating-action-area {
+    bottom: calc(105.6px + env(safe-area-inset-bottom));
+  }
+
+  // 创建模板玩法选择：保持移动端三列结构，桌面端按 Figma 节点居中并限制在 1440 × 1024 舞台内。
+  html[data-main-layout='content'] .club-table-create-page .club-table-create-stage {
+    position: relative;
+  }
+
+  html[data-main-layout='content'] .club-table-create-page .page-back-header {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 3;
+  }
+
+  html[data-main-layout='content']
+    .club-table-create-page
+    .jackpot-action.action-btn {
+    width: auto;
+    min-width: 106px;
+    height: 41px;
+    padding: 0 20px;
+    border-radius: 24px;
+    font-size: 20.66px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'][data-theme='light']
+    .club-table-create-page
+    .jackpot-action.action-btn {
+    color: #fff;
+    background: var(--c-brand);
+    box-shadow: none;
+  }
+
+  html[data-main-layout='content'] .club-table-create-page .club-table-create-body {
+    position: absolute;
+    top: clamp(64px, 8.1055dvh, 83px);
+    left: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: min(calc(100% - 48px), 444.77px);
+    margin: 0;
+    gap: clamp(28px, 4.0242dvh, 41.21px);
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .club-table-create-page .title-wrap {
+    width: min(100%, 322.37px);
+  }
+
+  html[data-main-layout='content'] .club-table-create-page .title-wrap h1,
+  html[data-main-layout='content'] .club-table-create-page .title-wrap p {
+    font-size: 22.6px;
+    line-height: 1.1;
+  }
+
+  html[data-main-layout='content'] .club-table-create-page .title-divider {
+    width: 100%;
+    margin-top: 6.1px;
+  }
+
+  html[data-main-layout='content'] .club-table-create-page .title-divider span {
+    width: 64.78px;
+    height: 0.5px;
+  }
+
+  html[data-main-layout='content'] .club-table-create-page .title-wrap p {
+    margin-top: 6.1px;
+  }
+
+  html[data-main-layout='content'] .club-table-create-page .type-grid {
+    width: min(100%, 401.69px);
+    margin: 0;
+    padding: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 16.43px;
+    row-gap: 14.69px;
+  }
+
+  html[data-main-layout='content'] .club-table-create-page .type-card {
+    width: 100%;
+    min-height: 0;
+    height: clamp(112px, 12.8906dvh, 132px);
+    padding: 0;
+    gap: 0;
+    border-width: 1px;
+    border-radius: clamp(28px, 2.4363vw, 35.08px);
+  }
+
+  html[data-main-layout='content'] .club-table-create-page .type-card-title {
+    bottom: clamp(7px, 0.7813dvh, 8px);
+    width: min(calc(100% - 24px), 95.21px);
+    height: 32px;
+    border-width: 0.5px;
+    font-size: 16.69px;
+    line-height: 32px;
+  }
+
+  // 创建牌桌：一键开桌与专业参数共用 1440 × 1024 舞台，背景仍由页面自身铺满浏览器。
+  html[data-main-layout='content'] .create-table-page {
+    --create-table-gutter: clamp(24px, 2.7778vw, 40px);
+  }
+
+  html[data-main-layout='content'] .create-table-page .create-table-stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  html[data-main-layout='content'] .create-table-page .page-back-header {
+    position: relative;
+    z-index: 3;
+    flex: 0 0 105px;
+    width: 100%;
+    height: 105px;
+    min-height: 105px;
+    padding: 50px var(--create-table-gutter) 25px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .header-tabs {
+    position: absolute;
+    left: 50%;
+    gap: clamp(48px, 5.6688vw, 82px);
+    margin: 0;
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .create-table-page .header-tab {
+    min-width: 62px;
+    padding: 0 0 5px;
+    font-size: 15px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .quick-create-wrapper,
+  html[data-main-layout='content'] .create-table-page .create-table-form {
+    flex: 1 1 auto;
+    width: 100%;
+    height: auto;
+    min-width: 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .create-table-page .quick-create-wrapper::-webkit-scrollbar,
+  html[data-main-layout='content'] .create-table-page .create-table-form::-webkit-scrollbar {
+    display: none;
+  }
+
+  // 一键开桌：主配置卡占满 1360 内容宽度，模板卡改为纵向全宽排列。
+  html[data-main-layout='content'] .create-table-page .quick-create-view {
+    display: block;
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+    padding: 0 var(--create-table-gutter) 40px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .quick-panel {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: clamp(420px, 45.8008dvh, 469px);
+    padding: 17px 20px 15px;
+    border-radius: clamp(24px, 2.6944vw, 39px);
+  }
+
+  html[data-main-layout='content'] .create-table-page .quick-panel__tab.table-tab {
+    flex: 0 0 65px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .create-table-page .quick-panel__tab .filter-tabbar,
+  html[data-main-layout='content'] .create-table-page .quick-panel__tab .filter-tab__item {
+    height: 65px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .quick-panel__tab .table-tab__icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .quick-panel__tab .table-tab__text {
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .quick-panel__slider.table-slider-row {
+    flex: 1 1 0;
+    min-height: 82px;
+    padding: 7px 0;
+  }
+
+  html[data-main-layout='content'] .create-table-page .quick-panel__slider .van-slider {
+    width: calc(100% - 28px);
+    margin: 20px 14px 10px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .quick-panel__slider .table-slider__marks {
+    width: calc(100% - 14px);
+    margin: 18px auto 0;
+  }
+
+  html[data-main-layout='content'] .create-table-page .quick-switches {
+    flex: 0 0 91px;
+    gap: 10px;
+    margin: 8px 0 12px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .quick-switch-card {
+    height: 91px;
+    padding: 12px 20px;
+    border-radius: 23px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .quick-switch-card__label {
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .quick-switch-card__status {
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .quick-bottom-bar {
+    flex: 0 0 66px;
+    min-height: 66px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .quick-create-btn {
+    width: 95px;
+    height: 41px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-list {
+    width: 100%;
+    margin-top: 30px;
+    padding: 0 10px 8px 46px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card {
+    width: 100%;
+    height: 132px;
+    min-height: 132px;
+    margin: 0 0 18px;
+    padding: 0 28px 0 0;
+    border-radius: 66px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__left {
+    flex: 1 1 48%;
+    min-width: 0;
+    transform: none;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__badge-wrap {
+    margin-right: 20px;
+    margin-left: -25px;
+    transform: none;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__badge {
+    width: 90px;
+    height: 90px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__game-name,
+  html[data-main-layout='content'] .create-table-page .template-card__blinds {
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__info {
+    display: grid;
+    flex: 1 1 auto;
+    grid-template-areas:
+      'blinds blinds'
+      'tags tags'
+      'people media';
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    justify-content: start;
+    gap: 7px 12px;
+    width: auto;
+    min-width: 0;
+    transform: none;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__blinds {
+    grid-area: blinds;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__tags {
+    grid-area: tags;
+    overflow: hidden;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__people,
+  html[data-main-layout='content'] .create-table-page .template-card__media {
+    margin-top: 0;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__people {
+    grid-area: people;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__media {
+    grid-area: media;
+    justify-self: start;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__people-icon,
+  html[data-main-layout='content'] .create-table-page .template-card__media-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__people span {
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__middle {
+    flex: 0 1 200%;
+    min-width: 250px;
+    justify-content: center;
+    gap: clamp(16px, 2.0833vw, 30px);
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__badges {
+    right: 2.5rem;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__badge-icon {
+    width: 80px;
+    height: 64px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__right {
+    gap: 12px;
+    margin-left: 0;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__cards {
+    width: 72px;
+    height: 66px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__actions {
+    gap: 8px;
+    margin-bottom: 0;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__action-btn {
+    width: 42px;
+    height: 42px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__action-icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__action-btn span {
+    font-size: 8px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__create-btn {
+    flex: 0 0 auto;
+    margin-left: auto;
+    padding-left: 24px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .template-card__create {
+    width: 104px;
+    height: 46px;
+    border-radius: 24px;
+    font-size: 14px;
+  }
+
+  // 专业参数：各分组铺满内容区，表单自身滚动，底部操作区位于长表单末尾。
+  html[data-main-layout='content'] .create-table-page .create-table-form {
+    width: calc(100% - var(--create-table-gutter) - var(--create-table-gutter));
+    margin: 0 auto;
+    padding: 0 0 40px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .table-name-row {
+    width: 100%;
+    height: 48px;
+    margin: 0;
+    padding: 0 20px;
+    border-radius: 999px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .table-name__input {
+    margin-left: 20px;
+    text-align: center;
+  }
+
+  html[data-main-layout='content'] .create-table-page .table-name__count {
+    margin-left: 20px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .detail-form {
+    width: 100%;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .create-table-page .detail-form__section {
+    width: 100%;
+    margin: 16px 0 0;
+    padding: 15px 20px;
+    border-radius: 17px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .detail-form__section .table-select-row,
+  html[data-main-layout='content'] .create-table-page .detail-form__section .table-input-row,
+  html[data-main-layout='content'] .create-table-page .detail-form__section .table-stepper-row,
+  html[data-main-layout='content'] .create-table-page .detail-form__section .table-switch-row {
+    height: 52px;
+  }
+
+  html[data-main-layout='content']
+    .create-table-page
+    .detail-form__section
+    .table-switch-row-with-icon {
+    height: 72px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .detail-form__section .table-slider-row {
+    padding: 14px 0 16px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .detail-form__section .table-select__field,
+  html[data-main-layout='content']
+    .create-table-page
+    .detail-form__section
+    .table-input__field-wrap,
+  html[data-main-layout='content']
+    .create-table-page
+    .detail-form__section
+    .table-stepper__field-wrap {
+    height: 37px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .detail-form__section .table-select__field {
+    min-width: 90px;
+    padding: 0 12px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .detail-form__section .table-select__value {
+    min-width: 48px;
+  }
+
+  html[data-main-layout='content']
+    .create-table-page
+    .detail-form__section
+    .table-input__field-wrap,
+  html[data-main-layout='content']
+    .create-table-page
+    .detail-form__section
+    .table-stepper__field-wrap {
+    width: 132px;
+    min-width: 132px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .detail-form__section .table-tab {
+    padding: 0;
+  }
+
+  html[data-main-layout='content']
+    .create-table-page
+    .detail-form__section
+    .table-tab
+    .filter-tabbar,
+  html[data-main-layout='content']
+    .create-table-page
+    .detail-form__section
+    .table-tab
+    .filter-tab__item {
+    height: 65px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .bottom-action-bar {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    min-height: 91px;
+    margin: 16px 0 0;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .create-table-page .fee-info {
+    width: 224px;
+    gap: 5px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .action-buttons {
+    gap: 8px;
+  }
+
+  html[data-main-layout='content'] .create-table-page .action-btn {
+    width: 95px;
+    height: 41px;
+    font-size: 15px;
+  }
+
+  // 创建俱乐部：按 1440 × 1024 设计稿排布，较矮窗口由舞台内部滚动承载。
+  html[data-main-layout='content'] .club-create-page {
+    --club-create-gutter: clamp(24px, 2.9861vw, 43px);
+  }
+
+  html[data-main-layout='content'] .club-create-page .club-create {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    padding-bottom: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .club-create-page .club-create::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .club-create-page .page-back-header {
+    flex: 0 0 112px;
+    height: 112px;
+    min-height: 112px;
+    padding: 50px var(--club-create-gutter) 25px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .back-trigger {
+    gap: 20px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-create-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .club-create-page .avatar-card {
+    flex: 0 0 144px;
+    width: calc(100% - var(--club-create-gutter) - var(--club-create-gutter));
+    min-height: 144px;
+    margin: 4px auto 0;
+    padding: 6px 26px;
+    border-radius: 47px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .avatar-trigger {
+    width: 80px;
+    height: 80px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .avatar-image {
+    border-width: 0.5px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .add-badge {
+    right: -4px;
+    bottom: -4px;
+    width: 32px;
+    height: 32px;
+    font-size: 28px;
+    line-height: 32px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .form-card {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 28px;
+    width: 100%;
+    min-height: 0;
+    padding: 20px var(--club-create-gutter) 0;
+  }
+
+  html[data-main-layout='content'] .club-create-page .field-block {
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .field-label {
+    font-size: 21px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .club-create-page .field-shell--single {
+    height: 74px;
+    padding: 0 25px;
+    border-radius: 66px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .field-shell--multi {
+    height: 281px;
+    min-height: 281px;
+    padding: 24px;
+    border-radius: 32px;
+  }
+
+  html[data-main-layout='content'] .club-create-page input,
+  html[data-main-layout='content'] .club-create-page textarea {
+    font-size: 17px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .club-create-page textarea {
+    min-height: 220px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .footer-actions {
+    flex: 0 0 auto;
+    gap: 13px;
+    margin-top: auto;
+    padding: 0 0 31px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .create-btn {
+    width: min(calc(100% - 48px), 396px);
+    height: 64px;
+    min-height: 64px;
+    border-radius: 47px;
+    font-size: 22px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .cost-line {
+    gap: 7px;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .club-create-page .cost-line img {
+    width: 18px;
+    height: 14px;
+  }
+
+  @media (max-width: 900px) {
+    html[data-main-layout='content'] .create-table-page .template-list {
+      padding-right: 8px;
+      padding-left: 38px;
+    }
+
+    html[data-main-layout='content'] .create-table-page .template-card {
+      height: 120px;
+      min-height: 120px;
+      padding-right: 16px;
+      border-radius: 60px;
+    }
+
+    html[data-main-layout='content'] .create-table-page .template-card__badge-wrap {
+      margin-right: 12px;
+      margin-left: -40px;
+    }
+
+    html[data-main-layout='content'] .create-table-page .template-card__badge {
+      width: 80px;
+      height: 80px;
+    }
+
+    html[data-main-layout='content'] .create-table-page .template-card__info {
+      grid-template-columns: auto 1fr;
+      gap: 3px 8px;
+    }
+
+    html[data-main-layout='content'] .create-table-page .template-card__middle {
+      flex-basis: 150%;
+      min-width: 150px;
+      gap: 8px;
+    }
+
+    html[data-main-layout='content'] .create-table-page .template-card__badge-icon {
+      width: 52px;
+      height: 42px;
+    }
+
+    html[data-main-layout='content'] .create-table-page .template-card__right {
+      gap: 6px;
+      margin-left: 8px;
+    }
+
+    html[data-main-layout='content'] .create-table-page .template-card__cards {
+      width: 36px;
+      height: 36px;
+    }
+
+    html[data-main-layout='content'] .create-table-page .template-card__action-btn {
+      width: 30px;
+      height: 30px;
+    }
+
+    html[data-main-layout='content'] .create-table-page .template-card__create-btn {
+      padding-left: 8px;
+    }
+
+    html[data-main-layout='content'] .create-table-page .template-card__create {
+      width: 88px;
+      height: 42px;
+    }
+  }
+}

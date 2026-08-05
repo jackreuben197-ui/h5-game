@@ -79,45 +79,49 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell club-table-create-page">
-    <HeaderBack :title="t(t('UIGuild_CreateTable'))" @back="handleBack">
-      <template #right>
-        <TopActionButton
-          :name="t('jackpot')"
-          icon-alt="wallet"
-          @click="router.push('/club/jackpot')"
-        />
-      </template>
-    </HeaderBack>
+  <div class="page-shell room-list-page club-table-create-page">
     <div class="club-table-create-overlay"></div>
 
-    <section class="club-table-create-body">
-      <div class="title-wrap">
-        <h1>{{ t('UITable_Text') }}</h1>
-        <div class="title-divider" aria-hidden="true">
-          <span></span>
-          <span></span>
-        </div>
-        <p>{{ t('UITable_Text2') }}</p>
-      </div>
+    <div class="room-list-stage club-table-create-stage">
+      <HeaderBack :title="t(t('UIGuild_CreateTable'))" @back="handleBack">
+        <template #right>
+          <TopActionButton
+            class="jackpot-action"
+            :name="t('jackpot')"
+            icon-alt="wallet"
+            @click="router.push('/club/jackpot')"
+          />
+        </template>
+      </HeaderBack>
 
-      <div class="type-grid">
-        <button
-          v-for="item in gameTypes"
-          :key="item.key"
-          type="button"
-          class="type-card"
-          :class="{
-            'type-card--active': selectedKey === item.key,
-            'custom-card-icon': item.key === 'mtt',
-          }"
-          @click="onSelect(item)"
-        >
-          <img class="type-card-icon" :src="item.icon" :alt="item.title" />
-          <span class="type-card-title">{{ item.title }}</span>
-        </button>
-      </div>
-    </section>
+      <section class="club-table-create-body">
+        <div class="title-wrap">
+          <h1>{{ t('UITable_Text') }}</h1>
+          <div class="title-divider" aria-hidden="true">
+            <span></span>
+            <span></span>
+          </div>
+          <p>{{ t('UITable_Text2') }}</p>
+        </div>
+
+        <div class="type-grid">
+          <button
+            v-for="item in gameTypes"
+            :key="item.key"
+            type="button"
+            class="type-card"
+            :class="{
+              'type-card--active': selectedKey === item.key,
+              'custom-card-icon': item.key === 'mtt',
+            }"
+            @click="onSelect(item)"
+          >
+            <img class="type-card-icon" :src="item.icon" :alt="item.title" />
+            <span class="type-card-title">{{ item.title }}</span>
+          </button>
+        </div>
+      </section>
+    </div>
   </div>
 </template>
 

@@ -1136,7 +1136,7 @@ const handleBack = () => {
 
 <template>
   <div
-    class="page-shell room-list-page themeType2"
+    class="page-shell room-list-page club-lobby-page themeType2"
     :class="{ 'room-list-page--channel': showChannelTabbar }"
     :style="[backgroundStyle, pageStyle]"
   >

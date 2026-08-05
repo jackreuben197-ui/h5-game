@@ -106,6 +106,9 @@ textarea {
 
 * {
   -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 input,
@@ -113,6 +116,8 @@ textarea,
 [contenteditable=''],
 [contenteditable='true'] {
   -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 #app {

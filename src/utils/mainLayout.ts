@@ -1,4 +1,4 @@
-export const MAIN_LAYOUTS = ['primary'] as const
+export const MAIN_LAYOUTS = ['primary', 'content'] as const
 
 export type MainLayout = (typeof MAIN_LAYOUTS)[number]
 
@@ -8,7 +8,7 @@ function isMainLayout(layout: unknown): layout is MainLayout {
 
 /**
  * 把路由声明的页面框架同步到 html，供首层画布、rem 和桌面样式共同读取。
- * 当前只实现了五个一级 Tab 页使用的 primary 框架。
+ * primary 用于五个一级 Tab 页，content 用于已完成桌面适配的二三级内容页。
  */
 export function syncMainLayout(layout: unknown): void {
   if (typeof window === 'undefined' || typeof document === 'undefined') {

@@ -802,6 +802,19 @@ onBeforeUnmount(() => {
                 <div class="coming-soon-overlay"></div>
                 <span class="coming-soon-text"> {{ t('UIHomeComingSoon') }}</span>
               </div>
+
+              <!-- 桌面端补齐第四张卡片，移动端维持原来的三张。 -->
+              <div
+                class="game-scroll-card coming-soon-card coming-soon-right desktop-only-game-card"
+              >
+                <img
+                  class="zone-lg-bg"
+                  src="@/assets/icons/game_zone_comming_lg.png"
+                  :alt="t('UIHomeComingSoon')"
+                />
+                <div class="coming-soon-overlay"></div>
+                <span class="coming-soon-text"> {{ t('UIHomeComingSoon') }}</span>
+              </div>
             </div>
           </div>
 
@@ -1292,6 +1305,10 @@ onBeforeUnmount(() => {
 
 .coming-soon-card {
   padding: 0;
+}
+
+.desktop-only-game-card {
+  display: none;
 }
 
 .coming-soon-right {

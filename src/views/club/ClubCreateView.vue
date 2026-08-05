@@ -92,8 +92,8 @@ async function onCreateClub(): Promise<void> {
 </script>
 
 <template>
-  <div class="page-shell club-create-bg" :style="backgroundStyle">
-    <div class="club-create">
+  <div class="page-shell room-list-page club-create-page club-create-bg" :style="backgroundStyle">
+    <div class="room-list-stage club-create">
       <HeaderBack :title="t('club_2')" extra-padding />
 
       <section class="avatar-card">

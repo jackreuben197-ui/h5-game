@@ -143,19 +143,19 @@ const router = createRouter({
       path: '/club/create',
       name: 'club-create',
       component: () => import('@/views/club/ClubCreateView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/club/index',
       name: 'club-index',
       component: () => import('@/views/club/ClubIndexView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/club/table/create',
       name: 'club-table-create',
       component: () => import('@/views/table/CreateTableSelect.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/club/jackpot/create',
@@ -521,13 +521,13 @@ const router = createRouter({
       path: '/gameList',
       name: 'game-list',
       component: () => import('@/views/home/gameList.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/mttList',
       name: 'mtt-list',
       component: () => import('@/views/mtt/mttList.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/mtt/detail',
@@ -539,7 +539,7 @@ const router = createRouter({
       path: '/createTable',
       name: 'createTable',
       component: () => import('@/views/table/CreateTableTemplate.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/createMtt',

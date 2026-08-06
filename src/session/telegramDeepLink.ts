@@ -114,7 +114,7 @@ async function dispatchIntent(intent: DeepLinkIntent): Promise<void> {
       log.warn('user is not a member of the club, opening Quick Join dialog')
       return
     }
-    await openRoomRecordDetail(intent.roomId)
+    await openRoomRecordDetail(intent.roomId, intent.clubRandomId)
     return
   }
   await enterRoomTableByRoomId(intent)
@@ -266,12 +266,16 @@ async function ensureClubMembership(params: {
 }
 
 // home_<roomId>: open that room's record/result detail page.
-async function openRoomRecordDetail(roomId: string): Promise<void> {
+async function openRoomRecordDetail(roomId: string, clubRandomId?: string): Promise<void> {
   await router
     .replace({
       name: 'mine-career-record-detail',
       params: { source: 'club' },
-      query: { room_id: roomId, id: roomId },
+      query: {
+        room_id: roomId,
+        id: roomId,
+        ...(clubRandomId ? { club_random_id: clubRandomId } : {}),
+      },
     })
     .catch((error) => {
       log.warn('navigate to record detail failed:', error)

@@ -14,17 +14,40 @@ import { formatDateTime } from '@/utils/time'
 import { userCache } from '@/utils/userCache'
 import { USER_STORE_CAREER } from '@/utils/indexedDB'
 import { useGameStore } from '@/stores/game'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { pinia } from '@/stores/pinia'
+import { readTelegramStartParam } from '@/utils/telegramStartParam'
 import { t } from '@/i18n'
 
 // 生涯页选择的俱乐部 id 持久化在 localStorage 的 dzpk_h5_CAREER_SELECTED_CLUB_ID。
 // 'all' 或缺失表示"全部"，返回 0；否则解析为数字 club_id。
-// 对齐 Unity CareerRecordPart：「全部」必须显式传 club_id=0，省略字段时服务端会回上一次的俱乐部数据（页面刷新后该值会回到用户信息的 club_id）。
 // 仅 source=club 使用；friends 端忽略 club_id。
 function getCareerSelectedClubId(): number {
   const stored = localStore.getItem<string>('CAREER_SELECTED_CLUB_ID', null)
   if (!stored || stored === 'all') return 0
   const id = Number(stored)
   return Number.isFinite(id) && id > 0 ? id : 0
+}
+
+function extractClubId(): number {
+  const queryClubId = Number(route.query.club_id ?? route.query.clubId)
+  if (Number.isFinite(queryClubId) && queryClubId > 0) return queryClubId
+
+  const storedId = getCareerSelectedClubId()
+  if (storedId > 0) return storedId
+
+  const userInfoStore = useUserInfoStore(pinia)
+  const currentClubId = Number(userInfoStore.currentClub?.club_id)
+  if (Number.isFinite(currentClubId) && currentClubId > 0) return currentClubId
+
+  const startParam = readTelegramStartParam()
+  if (startParam) {
+    const parts = startParam.split('_')
+    if ((parts[0] === 'home' || parts[0] === 'login') && /^\d+$/.test(parts[2] || '')) {
+      return Number(parts[2])
+    }
+  }
+  return 0
 }
 
 // 头像 URL 缓存：跨组件重渲染保持同一引用，依赖浏览器 HTTP 缓存避免重复下载。
@@ -114,9 +137,18 @@ function formatAmount(value: number, withSign = false): string {
 }
 
 function extractRoomId(): number {
-  const raw = route.query.room_id ?? route.query.id
+  const raw = route.query.room_id ?? route.query.id ?? route.query.roomId
   const value = Number(raw)
-  return Number.isFinite(value) ? value : 0
+  if (Number.isFinite(value) && value > 0) return value
+
+  const startParam = readTelegramStartParam()
+  if (startParam) {
+    const parts = startParam.split('_')
+    if ((parts[0] === 'home' || parts[0] === 'login') && /^\d+$/.test(parts[1] || '')) {
+      return Number(parts[1])
+    }
+  }
+  return 0
 }
 
 // 参考客户端 UIRecordDetailStatistics.cs UpdateRankInfo：
@@ -237,12 +269,14 @@ async function fetchRecordDetail(): Promise<void> {
 
   loading.value = true
   try {
+    const clubId = extractClubId()
     // club 端按 club_id 收窄；friends 端不传 club_id。
+    // 注意：仅当 clubId > 0 时才传 club_id；显式传 club_id: 0 会导致服务端按 club_id=0 过滤出空数据。
     const response = await postStatsRoomDetailApi(
       {
         limit: 50,
         offset: 0,
-        ...(isClub.value ? { club_id: getCareerSelectedClubId() } : {}),
+        ...(isClub.value && clubId > 0 ? { club_id: clubId } : {}),
       },
       { id: roomId },
     )

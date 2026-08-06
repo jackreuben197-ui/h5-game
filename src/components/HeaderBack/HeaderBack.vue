@@ -42,7 +42,11 @@ function handleBack(event: MouseEvent): void {
     return
   }
 
-  router.back()
+  if (window.history.state?.back) {
+    router.back()
+  } else {
+    void router.replace({ name: 'lobby' })
+  }
 }
 </script>
 

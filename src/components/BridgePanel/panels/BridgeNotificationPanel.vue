@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { showFailToast, showSuccessToast, showToast } from 'vant'
-import { getLocale, t } from '@/i18n'
+import { t } from '@/i18n'
 import {
   canPromptInstall,
   isIosSafari,
@@ -16,8 +16,6 @@ import {
 } from '@/utils/iosWebClip'
 import hometab1 from '@/assets/images/hometab1.png'
 import hometab2 from '@/assets/images/hometab2.png'
-import hometab1Eng from '@/assets/images/hometab1_eng.png'
-import hometab2Eng from '@/assets/images/hometab2_eng.png'
 import webClipIcon from '@/assets/images/icon-192.png?inline'
 
 const props = defineProps<{
@@ -128,12 +126,6 @@ const popupNoticeIndex = ref(0)
 
 // iOS 无法自动安装（第三方浏览器 / 内嵌 WebView）时的手动“添加到主屏幕”引导。
 const showAddHomeGuide = ref(false)
-const isChineseLocale = computed(() => {
-  const locale = getLocale()
-  return locale === 'cn' || locale === 'zh'
-})
-const guideStep1Image = computed(() => (isChineseLocale.value ? hometab1 : hometab1Eng))
-const guideStep2Image = computed(() => (isChineseLocale.value ? hometab2 : hometab2Eng))
 
 function closeAddHomeGuide(): void {
   showAddHomeGuide.value = false
@@ -503,13 +495,13 @@ async function onSecondaryAction(): Promise<void> {
                 {{ t('H5Display_GuideStep1Part2') }}
               </p>
               <div class="a2h-guide__img-wrap">
-                <img :src="guideStep1Image" alt="" class="a2h-guide__img" />
+                <img :src="hometab1" alt="" class="a2h-guide__img" />
               </div>
             </div>
             <div class="a2h-guide__step">
               <p class="a2h-guide__text">{{ t('H5Display_GuideStep2') }}</p>
               <div class="a2h-guide__img-wrap">
-                <img :src="guideStep2Image" alt="" class="a2h-guide__img" />
+                <img :src="hometab2" alt="" class="a2h-guide__img" />
               </div>
             </div>
           </div>

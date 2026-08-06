@@ -14,6 +14,13 @@ import { getUserClubApi } from '@/api/user'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import StorageKey from '@/constants/storageKey'
 import { joinCasinoGame, getDeviceType } from '@/api/casino'
+import { useGameLaunchStore } from '@/stores/gameLaunch'
+import {
+  reserveGameWindow,
+  navigateGameWindow,
+  releaseGameWindow,
+  type ReservedGameWindow,
+} from '@/utils/externalGameWindow'
 import homeHeaderFallback from '@/assets/images/home_header_large.png'
 import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
@@ -98,6 +105,7 @@ const mttListStore = useMttListStore()
 const casinoStore = useCasinoStore()
 const appConfigStore = useAppConfigStore()
 const gameStore = useGameStore()
+const gameLaunchStore = useGameLaunchStore()
 const isChannelPackage = isChannelPackageHost()
 
 const loading = ref(false)
@@ -195,14 +203,36 @@ function handleBannerGameClick(game: any) {
 }
 
 function handleWalletConfirm(clubId?: number) {
+  const reserved = pendingGameInfo.value
+    ? reserveWindowForGame(pendingGameInfo.value.apiType)
+    : null
   showGameClubSelector.value = false
-  if (!pendingGameInfo.value) return
+  if (!pendingGameInfo.value) {
+    releaseGameWindow(reserved)
+    return
+  }
   const { apiType, gameType, roomId } = pendingGameInfo.value
-  joinGame(apiType, gameType, roomId, clubId)
+  joinGame(apiType, gameType, roomId, clubId, reserved)
   pendingGameInfo.value = null
 }
 
-const joinGame = async (apiType: string, gameType: string, roomId = 0, clubId?: number) => {
+function reserveWindowForGame(apiType: string): ReservedGameWindow {
+  const isRealNameGame = apiType === 'real_name' || apiType === 'pa_live'
+  if (isRealNameGame && getDeviceType() === 1) {
+    return reserveGameWindow(
+      `width=${screen.width},height=${screen.height},scrollbars=yes,resizable=yes,location=yes`,
+    )
+  }
+  return reserveGameWindow()
+}
+
+const joinGame = async (
+  apiType: string,
+  gameType: string,
+  roomId = 0,
+  clubId?: number,
+  reserved: ReservedGameWindow = null,
+) => {
   try {
     const isRealNameGame = apiType === 'real_name' || apiType === 'pa_live'
     const finalGameType = ''
@@ -223,21 +253,20 @@ const joinGame = async (apiType: string, gameType: string, roomId = 0, clubId?: 
     if (res.code === 0 && res.data) {
       const gameUrl = res.data.url || res.data.game_url
       if (gameUrl) {
-        if (isRealNameGame && deviceType === 1) {
-          const width = screen.width
-          const height = screen.height
-          const windowFeatures = `width=${width},height=${height},scrollbars=yes,resizable=yes,location=yes`
-          window.open(gameUrl, '_blank', windowFeatures)
-        } else {
-          window.open(gameUrl, '_blank', 'noopener,noreferrer')
+        if (!navigateGameWindow(reserved, gameUrl, isRealNameGame && deviceType === 1)) {
+          releaseGameWindow(reserved)
+          gameLaunchStore.openFallback(gameUrl)
         }
       } else {
+        releaseGameWindow(reserved)
         showGameToast(t('UICasino_ClubNotEnabled'))
       }
     } else {
+      releaseGameWindow(reserved)
       showGameToast((res.msg as string) || t('UICasino_ClubNotEnabled'))
     }
   } catch (error: any) {
+    releaseGameWindow(reserved)
     showGameToast(error?.response?.data?.msg || t('UICasino_ClubNotEnabled'))
   }
 }

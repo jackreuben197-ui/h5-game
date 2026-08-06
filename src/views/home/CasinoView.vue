@@ -12,6 +12,13 @@ import { showGameToast } from '@/components/Toast'
 import { useCasinoStore } from '@/stores/casino'
 import { useGameStore } from '@/stores/game'
 import { useLoginModalStore } from '@/stores/loginModal'
+import { useGameLaunchStore } from '@/stores/gameLaunch'
+import {
+  reserveGameWindow,
+  navigateGameWindow,
+  releaseGameWindow,
+  type ReservedGameWindow,
+} from '@/utils/externalGameWindow'
 import {
   getDeviceType,
   getPopularGamesHome,
@@ -84,6 +91,7 @@ const props = defineProps<{ hideHeader?: boolean; clubId?: number }>()
 const casinoStore = useCasinoStore()
 const gameStore = useGameStore()
 const loginModalStore = useLoginModalStore()
+const gameLaunchStore = useGameLaunchStore()
 
 const isGuest = computed(() => !gameStore.sessionToken)
 
@@ -804,21 +812,39 @@ async function handleGameClick(item: GameItem): Promise<void> {
   }
 
   // Step C: Join game directly
-  await doJoinGame(item, routeClubId.value)
+  await doJoinGame(item, routeClubId.value, reserveWindowForGame(item))
 }
 
 async function handleWalletConfirm(clubId?: number): Promise<void> {
+  const reserved = pendingGame.value ? reserveWindowForGame(pendingGame.value) : null
   showWalletPopup.value = false
   if (!pendingGame.value) return
-  await doJoinGame(pendingGame.value, clubId)
+  await doJoinGame(pendingGame.value, clubId, reserved)
   pendingGame.value = null
 }
 
-async function doJoinGame(item: GameItem, clubId?: number): Promise<void> {
+function isDbRealNameGame(item: GameItem): boolean {
+  return item.gameApiType === 'real_name' ||
+    item.originalGame?.game_name === 'DB真人' ||
+    !!(item.originalGame?.game_name?.includes('DB视讯'))
+}
+
+function reserveWindowForGame(item: GameItem): ReservedGameWindow {
+  if (isDbRealNameGame(item) && getDeviceType() === 1) {
+    return reserveGameWindow(
+      `width=${screen.width},height=${screen.height},scrollbars=yes,resizable=yes,location=yes`,
+    )
+  }
+  return reserveGameWindow()
+}
+
+async function doJoinGame(
+  item: GameItem,
+  clubId?: number,
+  reserved: ReservedGameWindow = null,
+): Promise<void> {
   try {
-    const isDbRealName = item.gameApiType === 'real_name' ||
-      item.originalGame?.game_name === 'DB真人' ||
-      !!(item.originalGame?.game_name?.includes('DB视讯'))
+    const isDbRealName = isDbRealNameGame(item)
 
     const deviceType = getDeviceType()
 
@@ -836,21 +862,20 @@ async function doJoinGame(item: GameItem, clubId?: number): Promise<void> {
     if (res.code === 0 && res.data) {
       const gameUrl = res.data.url || res.data.game_url
       if (gameUrl) {
-        if (isDbRealName && deviceType === 1) {
-          const width = screen.width;
-          const height = screen.height;
-          const windowFeatures = `width=${width},height=${height},scrollbars=yes,resizable=yes,location=yes`;
-          window.open(gameUrl, '_blank', windowFeatures)
-        } else {
-          window.open(gameUrl, '_blank', 'noopener,noreferrer')
+        if (!navigateGameWindow(reserved, gameUrl, isDbRealName && deviceType === 1)) {
+          releaseGameWindow(reserved)
+          gameLaunchStore.openFallback(gameUrl)
         }
       } else {
+        releaseGameWindow(reserved)
         showGameToast('游戏跳转失败，请稍后重试')
       }
     } else {
+      releaseGameWindow(reserved)
       showGameToast((res.msg as string) || '游戏跳转失败，请稍后重试')
     }
   } catch (error: any) {
+    releaseGameWindow(reserved)
     showGameToast(error?.response?.data?.msg || '游戏跳转失败，请稍后重试')
   }
 }

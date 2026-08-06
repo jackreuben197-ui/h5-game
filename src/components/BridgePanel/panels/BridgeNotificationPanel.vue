@@ -1038,12 +1038,14 @@ async function onSecondaryAction(): Promise<void> {
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  padding: 12% 8% 0;
   z-index: 100000006;
 }
 
 .a2h-guide {
   width: 100%;
-  height: 90vh;
+  height: auto;
+  max-height: 100%;
   border-top-left-radius: 40px;
   border-top-right-radius: 40px;
   display: flex;
@@ -1112,7 +1114,8 @@ async function onSecondaryAction(): Promise<void> {
 
   &__body {
     padding: 0 16px 40px;
-    flex: 1;
+    flex: 0 1 auto;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     gap: 12px;

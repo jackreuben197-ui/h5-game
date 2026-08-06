@@ -3,6 +3,10 @@ import { computed, onMounted, ref } from 'vue'
 import iconNlh from '@/assets/icons/game_type_nlh.svg'
 import iconPlo from '@/assets/icons/game_type_plo.svg'
 import iconSixPlus from '@/assets/icons/game_type_6+.svg'
+import iconNlhLight from '@/assets/icons/game_type_nlh_light.png'
+import iconPloLight from '@/assets/icons/game_type_plo_light.png'
+import iconSixPlusLight from '@/assets/icons/game_type_6_light.png'
+import { theme } from '@/utils/theme'
 import { useRoute, useRouter } from 'vue-router'
 import { postOrgClubGoldApi } from '@/api/org'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -15,8 +19,9 @@ const backgroundStyle = computed(() => ({
 
 interface GameTypeItem {
   key: string
-  title: string
+  titleKey: string
   icon: string
+  iconLight: string
   game_play_type: number
 }
 const router = useRouter()
@@ -31,9 +36,27 @@ const showJackpot = computed(() => originType.value !== 4)
 const shouldReturnHome = computed(() => route.query.return_to === 'home')
 // 1.NLH 2.PLO 3.6+ 4.fantasy 5.牛仔 6.麻将 7.mtt 8.SNG 9.惯蛋
 const gameTypes: GameTypeItem[] = [
-  { key: 'nlh', game_play_type: 1, title: t('adaptation10022'), icon: iconNlh },
-  { key: 'plo', game_play_type: 2, title: t('adaptation10009'), icon: iconPlo },
-  { key: 'six_plus', game_play_type: 3, title: '6+', icon: iconSixPlus },
+  {
+    key: 'nlh',
+    game_play_type: 1,
+    titleKey: 'UIClub_Text19',
+    icon: iconNlh,
+    iconLight: iconNlhLight,
+  },
+  {
+    key: 'plo',
+    game_play_type: 2,
+    titleKey: 'adaptation10009',
+    icon: iconPlo,
+    iconLight: iconPloLight,
+  },
+  {
+    key: 'six_plus',
+    game_play_type: 3,
+    titleKey: 'UIFriendsTable_Create_6P',
+    icon: iconSixPlus,
+    iconLight: iconSixPlusLight,
+  },
   // { key: 'aof', title: 'AOF', icon: iconAof },
   // { key: 'mushroom', title: '蘑菇桌', icon: iconMushroom },
   // { key: 'squid', title: '深海桌', icon: iconSquid },
@@ -41,6 +64,12 @@ const gameTypes: GameTypeItem[] = [
   // { key: 'mahjong', title: '麻将', icon: iconMahjong },
   // { key: 'custom', title: '自定义', icon: iconCustom },
 ]
+
+const isLightTheme = computed(() => theme.value === 'light')
+
+function resolveIcon(item: GameTypeItem): string {
+  return isLightTheme.value ? item.iconLight : item.icon
+}
 
 function onSelect(item: GameTypeItem): void {
   selectedKey.value = item.key
@@ -125,7 +154,13 @@ onMounted(() => {
           }"
           @click="onSelect(item)"
         >
-          <img class="type-card-icon" :src="item.icon" :alt="item.title" />
+          <img
+            class="type-card-icon"
+            :class="{ 'type-card-icon--light': isLightTheme }"
+            :src="resolveIcon(item)"
+            :alt="t(item.titleKey)"
+          />
+          <span v-if="isLightTheme" class="type-card-label">{{ t(item.titleKey) }}</span>
         </button>
       </div>
     </section>
@@ -231,6 +266,26 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.type-card .type-card-icon--light {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.type-card-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.26rem;
+  padding: 0 0.16rem;
+  font-size: 0.42rem;
+  font-weight: 600;
+  line-height: 1.15;
+  color: #fff;
+  text-align: center;
+  pointer-events: none;
 }
 .custom-card-icon {
   overflow: hidden;

@@ -12,7 +12,11 @@ import type { UserGoldChangeLogRecord } from '@/api/models/user'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { resolveBillOpCodeText } from '@/utils/transText'
-import { t } from '@/i18n'
+import { getLocale, t } from '@/i18n'
+import {
+  multiLanguageTemplateVersion,
+  resolveTemplateTextByKey,
+} from '@/utils/multiLanguageTemplate'
 
 const userInfoStore = useUserInfoStore()
 const router = useRouter()
@@ -49,6 +53,23 @@ function formatOpCode(record: UserGoldChangeLogRecord): string {
     String(record.op_code ?? '').trim() ||
     '-'
   )
+}
+
+function isMttRecord(record: UserGoldChangeLogRecord): boolean {
+  if (Number(record.src_type || 0) === 2) return true
+  if (Number(record.src_match_id || 0) > 0) return true
+  if (String(record.match_tribe_name || '').trim()) return true
+
+  const opCode = String(record.op_code || '').toUpperCase()
+  return opCode.includes('MTT') || opCode.includes('SNG')
+}
+
+function formatRecordName(record: UserGoldChangeLogRecord): string {
+  void multiLanguageTemplateVersion.value
+  const rawName = String(record.name || '').trim()
+  if (!rawName) return '-'
+  if (!isMttRecord(record)) return rawName
+  return resolveTemplateTextByKey(rawName, getLocale()) || t(rawName) || rawName
 }
 
 function goGiftUc(): void {
@@ -110,7 +131,7 @@ onMounted(async () => {
               <div class="info">
                 <div class="category-badge">{{ formatOpCode(item) }}</div>
                 <div class="title-row">
-                  <span class="title">{{ item.name ?? '-' }}</span>
+                  <span class="title">{{ formatRecordName(item) }}</span>
                   <div v-if="item.src_random_id" class="id-row">
                     <span class="id-badge">ID</span>
                     <span class="id-number">{{ item.src_random_id }}</span>

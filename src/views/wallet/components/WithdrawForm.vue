@@ -291,6 +291,7 @@ async function handleSubmit(): Promise<void> {
       const orderData: Record<string, unknown> = {
         pay_type_name: channel.name ?? 'USDT',
         pay_price: priceData.apiPayPrice,
+        address: addrTrim,
         order: {
           gold_num: goldCents,
           pay_price: priceData.apiPayPrice,

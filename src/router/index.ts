@@ -336,7 +336,7 @@ const router = createRouter({
       path: '/mine/career/club',
       name: 'mine-career-club',
       component: () => import('@/views/mine/career/club/MineClubCareerView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/mine/career/friends',
@@ -349,25 +349,25 @@ const router = createRouter({
       path: '/mine/career/:source(club|friends)/record',
       name: 'mine-career-record',
       component: () => import('@/views/mine/career/records/MineRecordView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/mine/career/:source(club|friends)/record/detail',
       name: 'mine-career-record-detail',
       component: () => import('@/views/mine/career/records/MineRecordDetailView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/mine/career/:source(club|friends)/record/hand',
       name: 'mine-career-record-hand',
       component: () => import('@/views/mine/career/records/MineRecordHandView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/mine/career/:source(club|friends)/record/report',
       name: 'mine-career-record-report',
       component: () => import('@/views/mine/career/records/MineRecordReportView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     // club 专属子页
     {
@@ -453,7 +453,7 @@ const router = createRouter({
       path: '/mine/hand-collection/detail',
       name: 'mine-hand-collection-detail',
       component: () => import('@/views/mine/handCollection/MineHandCollectionDetailView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/mine/bill',
@@ -533,7 +533,7 @@ const router = createRouter({
       path: '/mtt/detail',
       name: 'mtt-detail',
       component: () => import('@/views/mtt/MttDetailView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/createTable',

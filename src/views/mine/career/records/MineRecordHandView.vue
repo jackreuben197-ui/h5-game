@@ -444,7 +444,7 @@ onMounted(() => {
             </div>
             <div
               class="profit"
-              :class="{ positive: item.profit.startsWith('+'), zero: item.profit == '0' }"
+              :class="{ positive: item.profit.startsWith('+'), zero: item.profit === '0' }"
             >
               <div class="money">{{ item.profit }}</div>
               <div class="hands-count">{{ t('UIMine_Paipu_handNum2', item.hands) }}</div>

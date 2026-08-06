@@ -19,9 +19,12 @@ import UsdtPaymentPopup from '@/views/wallet/components/UsdtPaymentPopup.vue'
 import UnfinishedOrderPopup from '@/views/wallet/components/UnfinishedOrderPopup.vue'
 import UsdtPaymentDetailsPopup from '@/views/wallet/components/UsdtPaymentDetailsPopup.vue'
 import CustomerServicePaymentPopup from '@/views/wallet/components/CustomerServicePaymentPopup.vue'
-import CustomerServiceChatPopup from '@/views/wallet/components/CustomerServiceChatPopup.vue'
 import FixedDepositPanel from '@/views/wallet/components/FixedDepositPanel.vue'
 import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
+import {
+  openGlobalCustomerServiceChat,
+  type MatchSupportOrderMessagePayload,
+} from '@/components/GlobalCustomerServiceChat/channel'
 import { t } from '@/i18n'
 import { useWalletStore } from '@/stores/wallet'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -111,13 +114,6 @@ const csPopupProps = ref({
   discount: 0,
 })
 
-const csChatPopupOpen = ref(false)
-const csChatProps = ref({
-  tribeId: 0,
-  supportUserId: 0,
-  orderData: null as any,
-})
-
 const activeCsOrder = computed(() => {
   return activeTab.value === 0
     ? walletStore.pendingCsRechargeOrder
@@ -132,6 +128,89 @@ const currentHasSeen = computed(() => {
     ? hasSeenRechargeNotification.value
     : hasSeenWithdrawNotification.value
 })
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
+}
+
+function firstPresent(...values: unknown[]): unknown {
+  return values.find((value) => value !== undefined && value !== null && value !== '')
+}
+
+function toFiniteNumber(value: unknown): number {
+  const number = Number(value)
+  return Number.isFinite(number) ? number : 0
+}
+
+function toOrderTimestamp(value: unknown): number {
+  const numeric = Number(value)
+  if (Number.isFinite(numeric) && numeric > 0) {
+    return Math.floor(numeric > 1_000_000_000_000 ? numeric / 1000 : numeric)
+  }
+  const parsed = Date.parse(String(value || ''))
+  return Number.isFinite(parsed) && parsed > 0
+    ? Math.floor(parsed / 1000)
+    : Math.floor(Date.now() / 1000)
+}
+
+function buildMatchOrderMessage(
+  orderData: Record<string, unknown>,
+  subType: number,
+): MatchSupportOrderMessagePayload {
+  const order = asRecord(orderData.order)
+  const addressInfo = asRecord(orderData.usdt_address)
+  const user = asRecord(userInfoStore.userInfo?.user)
+  const nickname = String(user.nickname || '-').trim() || '-'
+  const displayId = firstPresent(user.userid, user.un_id, user.unid, user.random_id)
+  const goldCents = toFiniteNumber(firstPresent(orderData.gold_num, order.gold_num, orderData.amount))
+
+  return {
+    subType,
+    userInfo: displayId ? `${nickname}/ID${String(displayId)}` : nickname,
+    amount: goldCents / 100,
+    payPrice: toFiniteNumber(
+      firstPresent(orderData.pay_price, order.pay_price, order.amount, orderData.amount),
+    ),
+    typeName: String(
+      firstPresent(addressInfo.name, orderData.pay_type_name, order.type_name) || t('UIWallet_Text3'),
+    ),
+    orderNo: String(firstPresent(orderData.order_no, order.order_no) || ''),
+    timestamp: toOrderTimestamp(
+      firstPresent(orderData.timestamp, order.timestamp, orderData.create_time, order.create_time),
+    ),
+    address: String(
+      firstPresent(orderData.address, addressInfo.address, order.address, orderData.pay_type_address) ||
+        '',
+    ),
+  }
+}
+
+async function openMatchOrderChat(
+  orderData: Record<string, unknown>,
+  subType: number,
+): Promise<boolean> {
+  try {
+    const channelRes = await postChatSupportChannelListApi({
+      im_service_types: [4],
+      limit: 1,
+      offset: 0,
+    })
+    const channel = channelRes.code === 0 ? channelRes.data?.list?.[0] : undefined
+    if (!channel) return false
+
+    openGlobalCustomerServiceChat({
+      imServiceType: 4,
+      clubId: Number(channel.club_id || walletClubId.value || 0),
+      tribeId: Number(channel.tribe_id || 0),
+      supportUserId: Number(channel.support_user_id || 0),
+      orderMessage: buildMatchOrderMessage(orderData, subType),
+    })
+    return true
+  } catch (error) {
+    console.error('Failed to open matching-order customer service chat', error)
+    return false
+  }
+}
 
 async function refreshPendingCsOrder() {
   await walletStore.refreshPendingCsOrder(walletClubId.value)
@@ -173,25 +252,7 @@ async function openCsChat() {
     },
   }
 
-  try {
-    const channelRes = await postChatSupportChannelListApi({
-      im_service_types: [4],
-      limit: 1,
-      offset: 0,
-    })
-
-    if (channelRes.code === 0 && channelRes.data?.list?.length) {
-      const channel = channelRes.data.list[0]
-      csChatProps.value = {
-        tribeId: channel.tribe_id || 0,
-        supportUserId: channel.support_user_id || 0,
-        orderData: result,
-      }
-      csChatPopupOpen.value = true
-    }
-  } catch (e) {
-    console.error('Failed to open CS chat from bell', e)
-  }
+  await openMatchOrderChat(result, activeTab.value === 0 ? 1 : 2)
 }
 
 async function checkUnfinishedOrders(showPopup = true) {
@@ -270,28 +331,9 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
   // If it's a Customer Service order (Type 3 or api_type 3), open Chat Popup
   const orderType = (order as any).pay_type || (order as any).api_type || (order as any).type
   if (orderType === 3 || (order as any).pay_type_name?.includes(t('UIWallet_Text4'))) {
-    try {
-      const channelRes = await postChatSupportChannelListApi({
-        im_service_types: [4],
-        limit: 1,
-        offset: 0,
-      })
-
-      if (channelRes.code === 0 && channelRes.data?.list?.length) {
-        const channel = channelRes.data.list[0]
-        csChatProps.value = {
-          tribeId: channel.tribe_id || 0,
-          supportUserId: channel.support_user_id || 0,
-          orderData: result,
-        }
-        csChatPopupOpen.value = true
-      } else {
-        // Fallback to USDT details if no chat channel found
-        usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
-        usdtDetailsPopupOpen.value = true
-      }
-    } catch (e) {
-      console.error('Failed to fetch chat channel for unfinished order', e)
+    const opened = await openMatchOrderChat(result, 1)
+    if (!opened) {
+      // Fallback to USDT details if no chat channel found
       usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
       usdtDetailsPopupOpen.value = true
     }
@@ -478,24 +520,7 @@ function onPayClick() {
 }
 
 async function onWithdrawCsChat(orderData: Record<string, unknown>) {
-  try {
-    const channelRes = await postChatSupportChannelListApi({
-      im_service_types: [4],
-      limit: 1,
-      offset: 0,
-    })
-    if (channelRes.code === 0 && channelRes.data?.list?.length) {
-      const channel = channelRes.data.list[0]
-      csChatProps.value = {
-        tribeId: channel.tribe_id || 0,
-        supportUserId: channel.support_user_id || 0,
-        orderData,
-      }
-      csChatPopupOpen.value = true
-    }
-  } catch (e) {
-    console.error('Failed to fetch chat channel for withdraw', e)
-  }
+  await openMatchOrderChat(orderData, 2)
 }
 
 async function onCsSubmit() {
@@ -564,32 +589,17 @@ async function onCsSubmit() {
     if (res.code === 0 && res.data) {
       rechargeResult.value = res.data
 
-      try {
-        const channelRes = await postChatSupportChannelListApi({
-          im_service_types: [4],
-          limit: 1,
-          offset: 0,
-        })
-
-        if (channelRes.code === 0 && channelRes.data?.list?.length) {
-          const channel = channelRes.data.list[0]
-          csChatProps.value = {
-            tribeId: channel.tribe_id || 0,
-            supportUserId: channel.support_user_id || 0,
-            orderData: {
-              ...res.data,
-              gold_num: goldCount,
-              pay_price: apiPayPrice,
-            },
-          }
-          csChatPopupOpen.value = true
-          await refreshPendingCsOrder()
-        } else {
-          rechargeResult.value = res.data
-          usdtDetailsPopupOpen.value = true
-        }
-      } catch (chatError) {
-        console.error('Failed to fetch chat channel', chatError)
+      const opened = await openMatchOrderChat(
+        {
+          ...res.data,
+          gold_num: goldCount,
+          pay_price: apiPayPrice,
+        },
+        1,
+      )
+      if (opened) {
+        await refreshPendingCsOrder()
+      } else {
         rechargeResult.value = res.data
         usdtDetailsPopupOpen.value = true
       }
@@ -725,8 +735,16 @@ async function onUsdtSubmit(type: number) {
           user-id="8677650585"
         >
           <template #actions>
-            <GlassButton :label="$txt('Wallet_Records')" @click="openWalletChild('/wallet/orders')" />
-            <GlassButton :label="$txt('Wallet_Details')" @click="openWalletChild('/wallet/details')" />
+            <GlassButton
+              :label="$txt('Wallet_Records')"
+              variant="brand"
+              @click="openWalletChild('/wallet/orders')"
+            />
+            <GlassButton
+              :label="$txt('Wallet_Details')"
+              variant="brand"
+              @click="openWalletChild('/wallet/details')"
+            />
           </template>
           <template #extra>
             <div class="balance-row">
@@ -792,15 +810,6 @@ async function onUsdtSubmit(type: number) {
       :discount="csPopupProps.discount"
       @close="csPopupOpen = false"
       @submit="onCsSubmit"
-    />
-
-    <CustomerServiceChatPopup
-      v-if="csChatPopupOpen"
-      :tribe-id="csChatProps.tribeId"
-      :support-user-id="csChatProps.supportUserId"
-      :club-id="walletClubId"
-      :order-data="csChatProps.orderData"
-      @close="csChatPopupOpen = false"
     />
 
     <UsdtPaymentPopup

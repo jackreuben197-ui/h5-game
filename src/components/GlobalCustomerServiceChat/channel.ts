@@ -6,6 +6,18 @@ export interface OpenGlobalCustomerServiceChatPayload {
   clubId?: number
   tribeId?: number
   supportUserId?: number
+  orderMessage?: MatchSupportOrderMessagePayload
+}
+
+export interface MatchSupportOrderMessagePayload {
+  subType?: number
+  userInfo?: string
+  amount?: number
+  payPrice?: number
+  typeName?: string
+  orderNo?: string
+  timestamp?: number
+  address?: string
 }
 
 type GlobalCustomerServiceChatListener = (
@@ -15,6 +27,7 @@ type GlobalCustomerServiceChatListener = (
 const listeners = new Set<GlobalCustomerServiceChatListener>()
 
 const OFFICIAL_IM_SERVICE_TYPE = 2
+const MATCH_ORDER_IM_SERVICE_TYPE = 4
 
 function toSafeInt(value: unknown): number {
   const num = Number(value)
@@ -43,6 +56,12 @@ function preprocessOpenPayload(
     clubId: toSafeInt(payload.clubId),
     tribeId: toSafeInt(payload.tribeId),
     supportUserId: toSafeInt(payload.supportUserId),
+    orderMessage: payload.orderMessage ? { ...payload.orderMessage } : undefined,
+  }
+
+  // 撮合订单客服有独立的 type 4 频道，不依赖俱乐部客服开关。
+  if (normalized.imServiceType === MATCH_ORDER_IM_SERVICE_TYPE) {
+    return normalized
   }
 
   const clubId = Number(normalized.clubId || 0)

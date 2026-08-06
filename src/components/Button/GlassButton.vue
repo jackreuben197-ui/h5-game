@@ -1,13 +1,16 @@
 <script setup lang="ts">
 interface Props {
   label: string
+  variant?: 'glass' | 'brand'
 }
 
-defineProps<Props>()
+withDefaults(defineProps<Props>(), {
+  variant: 'glass',
+})
 </script>
 
 <template>
-  <button class="gb">
+  <button class="gb" :class="{ 'gb--brand': variant === 'brand' }">
     <span class="gb__label">{{ label }}</span>
   </button>
 </template>
@@ -95,5 +98,15 @@ line-height: 94.56%;
   @include theme-light {
     color: #000;
   }
+}
+
+.gb--brand {
+  background: var(--c-brand);
+  color: #fff;
+  box-shadow: none;
+}
+
+.gb--brand .gb__label {
+  color: #fff;
 }
 </style>

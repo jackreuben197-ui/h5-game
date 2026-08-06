@@ -132,7 +132,12 @@ const payPrice = computed(() =>
     --c-text: #fff;
     --c-text-muted: rgba(255, 255, 255, 0.5);
     --c-divider: rgba(255, 255, 255, 0.2);
-    background-image: url('@/assets/images/wallet/bg_sharp.webp');
+    background: linear-gradient(
+      148.19deg,
+      rgba(78, 78, 78, 0.78) 0%,
+      rgba(58, 58, 58, 0.82) 48%,
+      rgba(42, 42, 42, 0.86) 100%
+    );
   }
 }
 
@@ -152,7 +157,7 @@ const payPrice = computed(() =>
   z-index: 1;
 
   @include theme-light {
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(8, 8, 8, 0.25);
   }
 }
 

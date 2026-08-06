@@ -964,7 +964,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="pageShellRef" class="page-shell message-detail-page" :style="backgroundStyle">
+  <div
+    ref="pageShellRef"
+    class="page-shell message-detail-page"
+    :class="`message-detail-page--${pageType}`"
+    :style="backgroundStyle"
+  >
     <HeaderBack :title="pageTitle" />
 
     <div class="content-wrap">

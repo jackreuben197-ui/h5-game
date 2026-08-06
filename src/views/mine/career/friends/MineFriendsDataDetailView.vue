@@ -31,7 +31,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell friends-data-detail-bg" :style="backgroundStyle">
+  <div
+    class="page-shell friends-data-detail-bg club-room-history-detail-page"
+    :style="backgroundStyle"
+  >
     <HeaderBack :title="t('UIGuildDataRecordsDetails')" />
     <RoomDataDetail source="friend" :room-id="roomId" />
   </div>

@@ -35,8 +35,8 @@ interface TabItem {
 const gameTabs: TabItem[] = [
   { label: t('GameType_0'), key: 'nlh' },
   { label: t('adaptation10009'), key: 'plo' },
-  { label: t('PokerType_2'), key: '6+' },
-  { label: t('Mahjong_Name'), key: 'mahjong' },
+  { label: '6+', key: '6+' },
+  // { label: t('Mahjong_Name'), key: 'mahjong' },
 ]
 const dateTabs: TabItem[] = [
   { label: t('UIData_Today'), key: 'today' },
@@ -133,23 +133,23 @@ const menuList: CareerMenuItem[] = [
     route: '/mine/career/club/record',
   },
   { key: 'mtt', label: 'MTT', icon: 'mtt', route: '/mine/career/club/mtt' },
-  {
-    key: 'cowboy',
-    label: 'Cowboy',
-    icon: 'cowboy',
-    route: '/mine/career/club/cowboy',
-  },
-  {
-    key: 'mahjong',
-    label: 'Mahjong',
-    icon: 'mahjong',
-    route: '/mine/career/club/mahjong',
-  },
-  {
-    key: 'mahjong-mtt',
-    label: t('Mahjong_Name') + 'MTT' + t('UICareerRecord'),
-    icon: 'mahjong',
-  },
+  // {
+  //   key: 'cowboy',
+  //   label: 'Cowboy',
+  //   icon: 'cowboy',
+  //   route: '/mine/career/club/cowboy',
+  // },
+  // {
+  //   key: 'mahjong',
+  //   label: 'Mahjong',
+  //   icon: 'mahjong',
+  //   route: '/mine/career/club/mahjong',
+  // },
+  // {
+  //   key: 'mahjong-mtt',
+  //   label: t('Mahjong_Name') + 'MTT' + t('UICareerRecord'),
+  //   icon: 'mahjong',
+  // },
   { key: 'data', label: t('adaptation10124'), icon: 'data', route: '/mine/career/club/data' },
 ]
 

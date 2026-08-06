@@ -135,7 +135,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell mine-glass-page" :style="backgroundStyle">
+  <div class="page-shell mine-glass-page friends-career-page" :style="backgroundStyle">
     <HeaderBack :title="t('PageMineFriendTableCareer')" extra-padding>
       <template #right>
         <div class="action-wrap">

@@ -444,7 +444,7 @@ onBeforeUnmount(() => {
           :class="{ active: selectedGame.key === item.key }"
           @click="selectGame(item)"
         >
-          {{ item.label }}
+          <span class="plain-tab-label">{{ item.label }}</span>
         </button>
       </nav>
 

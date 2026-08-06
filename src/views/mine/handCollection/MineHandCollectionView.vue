@@ -373,7 +373,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell mine-glass-page" :style="backgroundStyle">
+  <div class="page-shell mine-glass-page hand-collection-page" :style="backgroundStyle">
     <HeaderBack :title="title" :extra-padding="true" />
 
     <div class="content-wrap">

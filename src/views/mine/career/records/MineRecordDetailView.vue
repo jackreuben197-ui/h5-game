@@ -16,7 +16,7 @@ import { USER_STORE_CAREER } from '@/utils/indexedDB'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { pinia } from '@/stores/pinia'
-import { readTelegramStartParam } from '@/utils/telegramStartParam'
+import { readTelegramStartParam, resolveTelegramClubRandomId } from '@/utils/telegramStartParam'
 import { t } from '@/i18n'
 
 // 生涯页选择的俱乐部 id 持久化在 localStorage 的 dzpk_h5_CAREER_SELECTED_CLUB_ID。
@@ -33,20 +33,40 @@ function extractClubId(): number {
   const queryClubId = Number(route.query.club_id ?? route.query.clubId)
   if (Number.isFinite(queryClubId) && queryClubId > 0) return queryClubId
 
+  const userInfoStore = useUserInfoStore(pinia)
+
+  // Telegram deep-link or route query carries `club_random_id` (public display ID), not internal `club_id`.
+  // Attempt to match against user's joined club list to get internal `club_id`.
+  const queryClubRandomId = Number(route.query.club_random_id ?? route.query.clubRandomId)
+  const tgClubRandomId = Number(resolveTelegramClubRandomId())
+  const targetRandomId =
+    queryClubRandomId > 0 ? queryClubRandomId : tgClubRandomId > 0 ? tgClubRandomId : 0
+
+  if (targetRandomId > 0) {
+    const matched = userInfoStore.clubList.find(
+      (club) => Number(club.random_id) === targetRandomId,
+    )
+    if (matched && Number(matched.club_id) > 0) {
+      return Number(matched.club_id)
+    }
+  }
+
+  // If opening via a deep link or specific room query where club_id cannot be matched,
+  // DO NOT fall back to stale stored CAREER_SELECTED_CLUB_ID or raw random_id.
+  // Returning 0 omits club_id so the backend fetches room details directly by room_id.
+  const isDeepLinkOrDirectRoom = Boolean(
+    route.query.room_id || route.query.id || readTelegramStartParam(),
+  )
+  if (isDeepLinkOrDirectRoom) {
+    return 0
+  }
+
   const storedId = getCareerSelectedClubId()
   if (storedId > 0) return storedId
 
-  const userInfoStore = useUserInfoStore(pinia)
   const currentClubId = Number(userInfoStore.currentClub?.club_id)
   if (Number.isFinite(currentClubId) && currentClubId > 0) return currentClubId
 
-  const startParam = readTelegramStartParam()
-  if (startParam) {
-    const parts = startParam.split('_')
-    if ((parts[0] === 'home' || parts[0] === 'login') && /^\d+$/.test(parts[2] || '')) {
-      return Number(parts[2])
-    }
-  }
   return 0
 }
 
@@ -333,10 +353,11 @@ async function fetchRecordDetail(): Promise<void> {
 }
 
 function goToHands(): void {
+  const roomId = currentRoomId.value > 0 ? currentRoomId.value : extractRoomId()
   void router.push({
     path: `/mine/career/${source.value}/record/hand`,
     query: {
-      room_id: currentRoomId.value > 0 ? String(currentRoomId.value) : undefined,
+      room_id: roomId > 0 ? String(roomId) : undefined,
     },
   })
 }

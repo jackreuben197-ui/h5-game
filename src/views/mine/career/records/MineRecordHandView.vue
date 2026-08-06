@@ -28,6 +28,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
 import { userCache } from '@/utils/userCache'
 import { USER_STORE_CAREER } from '@/utils/indexedDB'
+import { readTelegramStartParam } from '@/utils/telegramStartParam'
 
 const title = computed(() => t('UIMine_Paipu_title'))
 
@@ -109,9 +110,18 @@ function formatAmount(value: unknown, withSign = false): string {
 }
 
 function resolveRoomId(): number {
-  const raw = route.query.room_id
+  const raw = route.query.room_id ?? route.query.id ?? route.query.roomId
   const value = Number(raw)
-  return Number.isFinite(value) ? value : 0
+  if (Number.isFinite(value) && value > 0) return value
+
+  const startParam = readTelegramStartParam()
+  if (startParam) {
+    const parts = startParam.split('_')
+    if ((parts[0] === 'home' || parts[0] === 'login') && /^\d+$/.test(parts[1] || '')) {
+      return Number(parts[1])
+    }
+  }
+  return 0
 }
 
 // 解析 random_ante 字符串 "[100,500]" → "1~5"（除 100 显示）。

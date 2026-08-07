@@ -279,14 +279,7 @@ async function fetchRecordDetail(): Promise<void> {
     return
   }
 
-  const cached = await detailCache().get<RecordDetailCache>(
-    USER_STORE_CAREER,
-    detailCacheKey(roomId),
-  )
-  if (cached) {
-    applyDetailCache(cached)
-    return
-  }
+
 
   loading.value = true
   try {
@@ -329,13 +322,15 @@ async function fetchRecordDetail(): Promise<void> {
     podiumSeats.value = buildPodiumSeats(userList)
 
     playerResults.value = userList.map((user, index) => {
-      const result = toSafeNumber(user.finally_game_results ?? user.original_results)
+      const totalResults = toSafeNumber(user.finally_game_results ?? user.original_results)
+      const bringIn = toSafeNumber(user.bring_in)
+      const result = totalResults - bringIn
       return {
         id: String(user.user_random_id ?? index + 1),
         name: String(user.nick_name ?? 'Player Name'),
         uid: String(user.user_random_id ?? '--'),
         avatar: resolveAvatar(typeof user.avatar === 'string' ? user.avatar : ''),
-        buyIn: formatAmount(toSafeNumber(user.bring_in)),
+        buyIn: formatAmount(bringIn),
         hands: String(toSafeNumber(user.user_room_hand_num)),
         vpip: `${toSafeNumber(user.in_pool_cnt)}%`,
         profit: formatAmount(result, true),
@@ -761,11 +756,11 @@ onMounted(() => {
 
   .profit {
     font-size: 0.45rem;
-    color: #27d300;
+    color: #49eb8b;
     font-weight: 700;
 
     &.pos {
-      color: #6be89d;
+      color: #ff5252;
     }
   }
 }

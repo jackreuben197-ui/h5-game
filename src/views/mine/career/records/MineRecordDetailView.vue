@@ -49,10 +49,11 @@ function extractClubId(): number {
     if (matched && Number(matched.club_id) > 0) {
       return Number(matched.club_id)
     }
+    return 0
   }
 
   // If opening via a deep link or specific room query where club_id cannot be matched,
-  // DO NOT fall back to stale stored CAREER_SELECTED_CLUB_ID or raw random_id.
+
   // Returning 0 omits club_id so the backend fetches room details directly by room_id.
   const isDeepLinkOrDirectRoom = Boolean(
     route.query.room_id || route.query.id || readTelegramStartParam(),

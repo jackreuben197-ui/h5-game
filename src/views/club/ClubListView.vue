@@ -1070,9 +1070,9 @@ onMounted(() => {
     position: absolute;
     inset: -0.213rem;
     border-radius: 1.015rem;
-    border: 0.213rem solid rgba(60, 24, 13, 0.8);
-    background: #241108;
-    backdrop-filter: blur(0.446rem);
+    border: 0.02rem solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(0.5rem);
     pointer-events: none;
     z-index: 0;
 
@@ -1347,7 +1347,7 @@ onMounted(() => {
   width: 5.69rem;
   height: 0.917rem;
   border-radius: 0.4rem 0.4rem 0 0;
-  background: transparent;
+  background: rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(0.446rem);
   bottom: -0.213rem;
   overflow: hidden;
@@ -1523,7 +1523,7 @@ onMounted(() => {
   border-radius: 4.22rem;
   border: 0.01rem solid rgba(242, 242, 242, 0.4);
   background: rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(1.631px);
+  backdrop-filter: blur(0.446rem);
   -webkit-backdrop-filter: blur(1.631px);
   box-shadow:
     inset 0px 0px 1.799px 0px black,

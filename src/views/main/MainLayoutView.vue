@@ -43,14 +43,7 @@ const backgroundStyle = computed(() => {
   }
 
   return {
-    backgroundImage:
-      route.meta.tabKey === 'home' ||
-      route.meta.tabKey === 'club' ||
-      route.meta.tabKey === 'message' ||
-      route.meta.tabKey === 'mine' ||
-      route.meta.tabKey === 'friendsTable'
-        ? `url(${mainBg2Url})`
-        : `url(${mainBgUrl})`,
+    backgroundImage: route.meta.tabKey === 'home' ? `url(${mainBg2Url})` : `url(${mainBgUrl})`,
   }
 })
 
@@ -210,34 +203,8 @@ watch(
     background-size: cover;
 
     &::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-color: rgba(0, 0, 0, 0.7);
-      mix-blend-mode: luminosity;
-      pointer-events: none;
-      z-index: 1;
+      display: none;
     }
-  }
-
-  &.is-home::before {
-    backdrop-filter: blur(1.5px);
-  }
-
-  &.is-club::before {
-    backdrop-filter: blur(6px);
-  }
-
-  &.is-message::before {
-    backdrop-filter: blur(1.5px);
-  }
-
-  &.is-mine::before {
-    backdrop-filter: blur(1.5px);
-  }
-
-  &.is-friends-table::before {
-    backdrop-filter: blur(6px);
   }
 }
 

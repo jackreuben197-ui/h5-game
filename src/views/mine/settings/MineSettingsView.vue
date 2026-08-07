@@ -344,9 +344,19 @@ function onLogoutCancel(): void {
 }
 
 .arrow {
-  font-size: 0.66rem;
-  line-height: 1;
-  color: rgba(255, 255, 255, 0.75);
+  --settings-chevron-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9.83788 17.9394'%3E%3Cpath d='M8.96901 17.9394C8.7468 17.9394 8.52456 17.855 8.35559 17.6848L0.254322 9.58355C-0.084774 9.24446 -0.084774 8.69469 0.254322 8.35559L8.35559 0.254322C8.69469 -0.084774 9.24446 -0.084774 9.58355 0.254322C9.92265 0.593418 9.92265 1.14319 9.58355 1.48228L2.0957 8.97014L9.58355 16.458C9.92265 16.7971 9.92265 17.3469 9.58355 17.686C9.41343 17.8549 9.19122 17.9394 8.96901 17.9394Z' fill='black'/%3E%3C/svg%3E");
+
+  display: inline-block;
+  width: 0.2623rem;
+  height: 0.4784rem;
+  flex: none;
+  background: currentColor;
+  -webkit-mask: var(--settings-chevron-mask) center / 100% 100% no-repeat;
+  mask: var(--settings-chevron-mask) center / 100% 100% no-repeat;
+  transform: rotate(180deg);
+  font-size: 0;
+  line-height: 0;
+  color: rgba(255, 255, 255, 0.95);
 
   @include theme-light {
     color: #888;

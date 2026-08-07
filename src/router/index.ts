@@ -36,6 +36,7 @@ const router = createRouter({
       path: '/download',
       name: 'download-landing',
       component: () => import('@/views/landing/DownloadLandingView.vue'),
+      meta: { desktopLayout: 'content' },
     },
     // 开发工具：AppSvgIcon 图标一览，公开访问，无需登录
     {
@@ -263,7 +264,7 @@ const router = createRouter({
       path: '/club/wallet/logs',
       name: 'club-wallet-logs',
       component: () => import('@/views/club/ClubWalletLogsView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/club/room/history',
@@ -299,37 +300,37 @@ const router = createRouter({
       path: '/mine/settings/account',
       name: 'mine-settings-account',
       component: () => import('@/views/mine/settings/MineSettingsAccountView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/mine/settings/account/reset-password',
       name: 'mine-settings-account-reset-password',
       component: () => import('@/views/mine/settings/MineSettingsResetPasswordView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/mine/settings/account/security-password/setup',
       name: 'mine-settings-account-security-password-setup',
       component: () => import('@/views/mine/settings/MineSecurityPasswordSetupView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/mine/settings/account/reset-security-password',
       name: 'mine-settings-account-reset-security-password',
       component: () => import('@/views/mine/settings/MineSecurityPasswordResetView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/mine/settings/cancel-account',
       name: 'mine-settings-cancel-account',
       component: () => import('@/views/mine/settings/MineSettingsCancelAccountView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/mine/settings/doc/:type',
       name: 'mine-settings-doc',
       component: () => import('@/views/mine/settings/MineSettingsDocView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     // 生涯主入口 ─────────────────────────────────────────────────────────────
     {
@@ -477,19 +478,19 @@ const router = createRouter({
       path: '/mine/profile/edit',
       name: 'mine-profile-edit',
       component: () => import('@/views/mine/profile/MineProfileEditView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/mine/profile/nickname',
       name: 'mine-profile-nickname',
       component: () => import('@/views/mine/profile/MineProfileNicknameView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/mine/shop',
       name: 'mine-shop',
       component: () => import('@/views/mine/MineShopView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/wallet',
@@ -515,7 +516,7 @@ const router = createRouter({
       path: '/wallet/gift-uc',
       name: 'wallet-gift-uc',
       component: () => import('@/views/wallet/WalletGiftUcView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
     {
       path: '/gameList',
@@ -551,7 +552,7 @@ const router = createRouter({
       path: '/tableGameEnd',
       name: 'tableGameEnd',
       component: () => import('@/views/table/TableGameEnd.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, desktopLayout: 'content' },
     },
   ],
 })

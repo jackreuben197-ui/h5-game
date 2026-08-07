@@ -606,5 +606,46 @@ function confirm(): void {
   :deep(.kp__confirm .primary-btn__text) {
     font-size: clamp(16px, 1.3889vw, 20px);
   }
+
+  // 数字密码页会让页面本身保持可交互；此状态仅由设置/验证数字密码复用。
+  // 将 Teleport 键盘限制在居中的内容舞台内，并按桌面稿固定九宫格几何尺寸。
+  .kp--passthrough {
+    inset: auto;
+    top: 50%;
+    left: 50%;
+    width: var(--content-stage-width, min(100%, 1440px));
+    height: var(--content-stage-height, min(100dvh, 1024px));
+    transform: translate(-50%, -50%);
+  }
+
+  .kp--passthrough .kp__sheet {
+    width: 100%;
+    max-width: none;
+    max-height: 100%;
+    padding: 25px 21px 26px;
+    gap: 8px;
+    border-top-left-radius: 34px;
+    border-top-right-radius: 34px;
+  }
+
+  .kp--passthrough .kp__grid {
+    column-gap: 6px;
+    row-gap: 8px;
+  }
+
+  .kp--passthrough .kp__key {
+    height: 53px;
+    border-radius: 15px;
+    font-size: 24px;
+  }
+
+  .kp--passthrough .kp__key--accent {
+    border-radius: 63px;
+  }
+
+  .kp--passthrough .kp__icon {
+    width: 34px;
+    height: 22px;
+  }
 }
 </style>

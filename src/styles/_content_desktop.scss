@@ -3411,10 +3411,63 @@
     font-size: 18px;
   }
 
-  // 玩家详情的角色选择由 Vant Teleport 到 body，使用独立类限制到内容舞台。
+  // 底部抽屉由 Vant Teleport 到 body，横向限制在内容舞台内，纵向贴浏览器底边。
+  html[data-main-layout='content'] .sheet-popup.van-popup--bottom {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--content-stage-width);
+    max-width: 100%;
+    margin-right: auto;
+    margin-left: auto;
+    overflow: hidden;
+    border-top-left-radius: 34px !important;
+    border-top-right-radius: 34px !important;
+  }
+
+  html[data-main-layout='content'] .sheet-popup .sheet-body {
+    width: 100%;
+    padding: 26px clamp(24px, 2.7778vw, 40px) 32px;
+    border-top-left-radius: 34px;
+    border-top-right-radius: 34px;
+  }
+
+  html[data-main-layout='content'] .sheet-popup .sheet-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min(100%, 397px);
+    min-height: 54px;
+    margin-right: auto;
+    margin-left: auto;
+    font-size: 20px;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  html[data-main-layout='content'] .sheet-popup .sheet-divider {
+    width: min(100%, 397px);
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .sheet-popup .sheet-confirm {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min(100%, 397px);
+    height: 64px;
+    min-height: 64px;
+    margin: 14px auto 0;
+    border-radius: 47px;
+    font-size: 20px;
+    text-align: center;
+  }
+
+  // 玩家详情的角色选择沿用相同抽屉舞台，保留页面自己的内容间距。
   html[data-main-layout='content'] .member-role-sheet-popup.van-popup--bottom {
     right: 0;
-    bottom: max(0px, calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2));
+    bottom: 0;
     left: 0;
     width: var(--content-stage-width);
     margin-right: auto;
@@ -3455,12 +3508,15 @@
 
   html[data-main-layout='content'] .member-role-sheet-popup .sheet-confirm {
     display: flex;
+    align-items: center;
+    justify-content: center;
     width: min(100%, 397px);
     height: 64px;
     min-height: 64px;
     margin: 14px auto 0;
     border-radius: 47px;
     font-size: 20px;
+    text-align: center;
   }
 
   // 玩家详情：设计稿内容高度为 1398px，桌面舞台内纵向滚动，背景继续铺满浏览器。
@@ -8342,9 +8398,7 @@
     line-height: 19px;
   }
 
-  html[data-main-layout='content']
-    .bill-page:has(.bill-tabs .tab:nth-child(4).active)
-    .hint {
+  html[data-main-layout='content'] .bill-page:has(.bill-tabs .tab:nth-child(4).active) .hint {
     display: none;
   }
 
@@ -8359,9 +8413,7 @@
     overflow: visible;
   }
 
-  html[data-main-layout='content']
-    .bill-page:has(.bill-tabs .tab:nth-child(4).active)
-    .bill-tabs {
+  html[data-main-layout='content'] .bill-page:has(.bill-tabs .tab:nth-child(4).active) .bill-tabs {
     margin-top: 0;
   }
 
@@ -8547,10 +8599,7 @@
     height: 12px;
   }
 
-  html[data-main-layout='content']
-    .bill-page
-    .date-col.date-col--continued
-    .date-icon {
+  html[data-main-layout='content'] .bill-page .date-col.date-col--continued .date-icon {
     top: 2px;
   }
 
@@ -8638,10 +8687,7 @@
   // 普通消息、系统广播、买入申请和 UC 申请共用内容舞台，各类型只切换卡片形态。
   html[data-main-layout='content'] .message-detail-page {
     --message-detail-gutter: clamp(24px, 2.7083vw, 39px);
-    --message-detail-content-width: min(
-      calc(100% - var(--message-detail-gutter) * 2),
-      1362px
-    );
+    --message-detail-content-width: min(calc(100% - var(--message-detail-gutter) * 2), 1362px);
     --message-detail-stage-top: max(
       0px,
       calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
@@ -8967,8 +9013,7 @@
   // 消息验证悬浮入口（Figma 11222:23896）。内联拖动位置仅在移动端生效，桌面固定到内容舞台右上角。
   html[data-main-layout='content'] .todo-float-wrap {
     top: calc(
-      max(0px, calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)) +
-        100px
+      max(0px, calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)) + 100px
     ) !important;
     right: max(40px, calc((100vw - var(--content-stage-width)) / 2 + 40px));
   }
@@ -9006,10 +9051,7 @@
   html[data-main-layout='content']
     :is(.friends-career-page, .friends-data-page, .friends-record-page) {
     --friends-career-gutter: clamp(24px, 2.7083vw, 39px);
-    --friends-career-content-width: min(
-      calc(100% - var(--friends-career-gutter) * 2),
-      1362px
-    );
+    --friends-career-content-width: min(calc(100% - var(--friends-career-gutter) * 2), 1362px);
     --friends-career-stage-top: max(
       0px,
       calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
@@ -9460,10 +9502,7 @@
     font-size: 16px;
   }
 
-  html[data-main-layout='content']
-    .friends-record-page
-    .filter-tab.is-customize
-    .cunstomize-date {
+  html[data-main-layout='content'] .friends-record-page .filter-tab.is-customize .cunstomize-date {
     align-items: center;
     justify-content: center;
   }
@@ -9620,10 +9659,7 @@
   // 牌谱列表（Figma 11222:25051）：双层筛选与牌谱卡片共用 1362px 内容舞台。
   html[data-main-layout='content'] .hand-collection-page {
     --hand-collection-gutter: clamp(24px, 2.7083vw, 39px);
-    --hand-collection-content-width: min(
-      calc(100% - var(--hand-collection-gutter) * 2),
-      1362px
-    );
+    --hand-collection-content-width: min(calc(100% - var(--hand-collection-gutter) * 2), 1362px);
     --hand-collection-stage-top: max(
       0px,
       calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
@@ -9776,9 +9812,7 @@
     font-weight: 700;
   }
 
-  html[data-theme='light'][data-main-layout='content']
-    .hand-collection-page
-    .capsule-tab.active {
+  html[data-theme='light'][data-main-layout='content'] .hand-collection-page .capsule-tab.active {
     border-color: #fff;
     background: #cfcfcf;
   }
@@ -9931,7 +9965,7 @@
     font-size: 40px !important;
   }
 
-html[data-main-layout='content'] .main-layout {
+  html[data-main-layout='content'] .main-layout {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -10149,7 +10183,9 @@ html[data-main-layout='content'] .main-layout {
   html[data-main-layout='content'] .club-data-page .ring-donut {
     width: 89px !important;
     height: 89px !important;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2), inset 0.2px 0.2px 0 rgba(255, 255, 255, 0.85);
+    box-shadow:
+      0 3px 8px rgba(0, 0, 0, 0.2),
+      inset 0.2px 0.2px 0 rgba(255, 255, 255, 0.85);
   }
 
   html[data-main-layout='content'] .club-data-page .ring-inner {
@@ -10372,7 +10408,10 @@ html[data-main-layout='content'] .main-layout {
     overflow: visible;
   }
 
-  html[data-main-layout='content'] .club-data-page .opponent-table-wrap:has(.table-empty) .game-table,
+  html[data-main-layout='content']
+    .club-data-page
+    .opponent-table-wrap:has(.table-empty)
+    .game-table,
   html[data-main-layout='content'] .club-data-page .deck-table-wrap:has(.table-empty) .game-table {
     visibility: hidden;
   }
@@ -10598,16 +10637,11 @@ html[data-main-layout='content'] .main-layout {
 
   // 背包、设置与切换语言（Figma 11222:24527 / 27426 / 27956）。
   // 三页复用现有 DOM 和图标，仅在桌面内容布局下还原 1440 × 1024 舞台。
-  html[data-main-layout='content']
-    .mine-glass-page:has(> .content-wrap > .item-list),
-  html[data-main-layout='content']
-    .mine-glass-page:has(> .content-wrap > .section-card),
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .item-list),
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .section-card),
   html[data-main-layout='content'] .settings-page--language {
     --mine-settings-gutter: clamp(24px, 2.7083vw, 39px);
-    --mine-settings-content-width: min(
-      calc(100% - var(--mine-settings-gutter) * 2),
-      1362px
-    );
+    --mine-settings-content-width: min(calc(100% - var(--mine-settings-gutter) * 2), 1362px);
     --mine-settings-stage-top: max(
       0px,
       calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
@@ -10708,9 +10742,7 @@ html[data-main-layout='content'] .main-layout {
   }
 
   // 背包：桌面端全宽胶囊卡片列表。
-  html[data-main-layout='content']
-    .mine-glass-page:has(> .content-wrap > .item-list)
-    .item-list {
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .item-list) .item-list {
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -10718,9 +10750,7 @@ html[data-main-layout='content'] .main-layout {
     margin: 0;
   }
 
-  html[data-main-layout='content']
-    .mine-glass-page:has(> .content-wrap > .item-list)
-    .item-card {
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .item-list) .item-card {
     display: flex;
     align-items: center;
     width: 100%;
@@ -10732,9 +10762,7 @@ html[data-main-layout='content'] .main-layout {
     backdrop-filter: blur(0.2px);
   }
 
-  html[data-main-layout='content']
-    .mine-glass-page:has(> .content-wrap > .item-list)
-    .icon-wrap {
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .item-list) .icon-wrap {
     width: 69px;
     height: 71px;
     border-radius: 20px;
@@ -10747,9 +10775,7 @@ html[data-main-layout='content'] .main-layout {
     min-width: 0;
   }
 
-  html[data-main-layout='content']
-    .mine-glass-page:has(> .content-wrap > .item-list)
-    .name {
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .item-list) .name {
     overflow: hidden;
     font-size: 20px;
     line-height: 22px;
@@ -10757,9 +10783,7 @@ html[data-main-layout='content'] .main-layout {
     white-space: nowrap;
   }
 
-  html[data-main-layout='content']
-    .mine-glass-page:has(> .content-wrap > .item-list)
-    .time {
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .item-list) .time {
     gap: 6px;
     margin-top: 0;
     font-size: 14px;
@@ -10773,9 +10797,7 @@ html[data-main-layout='content'] .main-layout {
     height: 17px;
   }
 
-  html[data-main-layout='content']
-    .mine-glass-page:has(> .content-wrap > .item-list)
-    .list-status {
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .item-list) .list-status {
     padding: 24px 0;
     font-size: 16px;
     line-height: 22px;
@@ -10793,10 +10815,13 @@ html[data-main-layout='content'] .main-layout {
   html[data-main-layout='content']
     .mine-glass-page:has(> .content-wrap > .section-card)
     .section-card {
+    display: flex;
+    flex-direction: column;
     width: 100%;
     margin: 0;
-    padding: 16px 19px 16px 16px;
-    border-width: 1px;
+    padding: 16px 20px 16px 16px;
+    gap: 5px;
+    border: 1px solid rgba(249, 249, 249, 0.2);
     border-radius: 19px;
     backdrop-filter: blur(0.2px);
   }
@@ -10804,9 +10829,11 @@ html[data-main-layout='content'] .main-layout {
   html[data-main-layout='content']
     .mine-glass-page:has(> .content-wrap > .section-card)
     .line-item {
-    min-height: 49px;
+    position: relative;
+    height: 40px;
+    min-height: 40px;
     padding: 0;
-    border-bottom-width: 1px;
+    border-bottom: 0;
     font-size: 18px;
     line-height: 22px;
   }
@@ -10814,20 +10841,41 @@ html[data-main-layout='content'] .main-layout {
   html[data-main-layout='content']
     .mine-glass-page:has(> .content-wrap > .section-card)
     .line-item:last-child {
-    min-height: 39px;
+    min-height: 40px;
   }
 
   html[data-main-layout='content']
     .mine-glass-page:has(> .content-wrap > .section-card)
-    .left {
+    .line-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: -3px;
+    width: min(320px, calc(100% - 51px));
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  html[data-theme='light'][data-main-layout='content']
+    .mine-glass-page:has(> .content-wrap > .section-card)
+    .section-card,
+  html[data-theme='light'][data-main-layout='content'] .settings-page--account .account-card {
+    border-color: transparent;
+  }
+
+  html[data-theme='light'][data-main-layout='content']
+    .mine-glass-page:has(> .content-wrap > .section-card)
+    .line-item:not(:last-child)::after {
+    background: rgba(0, 0, 0, 0.12);
+  }
+
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .section-card) .left {
     gap: 11px;
   }
 
-  html[data-main-layout='content']
-    .mine-glass-page:has(> .content-wrap > .section-card)
-    .icon-box {
-    width: 39px;
-    height: 39px;
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .section-card) .icon-box {
+    width: 40px;
+    height: 40px;
     filter: drop-shadow(0 0 6px rgba(151, 71, 255, 0.2));
   }
 
@@ -10839,33 +10887,26 @@ html[data-main-layout='content'] .main-layout {
     height: 24px;
   }
 
-  html[data-main-layout='content']
-    .mine-glass-page:has(> .content-wrap > .section-card)
-    .right {
-    min-width: 150px;
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .section-card) .right {
+    width: 154px;
+    min-width: 154px;
     justify-content: flex-end;
     gap: 6px;
   }
 
-  html[data-main-layout='content']
-    .mine-glass-page:has(> .content-wrap > .section-card)
-    .light {
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .section-card) .light {
     font-size: 14px;
     line-height: 20px;
   }
 
-  html[data-main-layout='content']
-    .mine-glass-page:has(> .content-wrap > .section-card)
-    .arrow {
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .section-card) .arrow {
     width: 12px;
-    font-size: 30px;
-    line-height: 21px;
-    text-align: center;
+    height: 22px;
+    font-size: 0;
+    line-height: 0;
   }
 
-  html[data-main-layout='content']
-    .mine-glass-page:has(> .content-wrap > .section-card)
-    .switch {
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .section-card) .switch {
     width: 53px;
     height: 26px;
     padding: 1px;
@@ -10913,22 +10954,1850 @@ html[data-main-layout='content'] .main-layout {
     border-width: 1px;
   }
 
-  html[data-main-layout='content']
-    .settings-page--language
-    .radio-circle--checked {
+  html[data-main-layout='content'] .settings-page--language .radio-circle--checked {
     width: 24px;
     height: 24px;
     border: 2px solid var(--c-brand);
     box-shadow: none;
   }
 
-  html[data-main-layout='content']
-    .settings-page--language
-    .radio-circle--checked::after {
+  html[data-main-layout='content'] .settings-page--language .radio-circle--checked::after {
     width: 17px;
     height: 17px;
     border: 0;
     background: var(--c-brand);
+  }
+
+  // 设置页族的账号、密码、注销账号与文档页面。
+  // 保留页面原有 DOM、主题和交互，只把移动端内容放进居中的 1440 × 1024 桌面舞台。
+  html[data-main-layout='content']
+    :is(.settings-page--account, .reset-password-page, .cancel-account-page, .settings-doc-page) {
+    --password-settings-gutter: clamp(24px, 2.7083vw, 39px);
+    --password-settings-content-width: min(
+      calc(100% - var(--password-settings-gutter) * 2),
+      1362px
+    );
+    --password-settings-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content']
+    :is(
+      .settings-page--account,
+      .reset-password-page,
+      .cancel-account-page,
+      .settings-doc-page
+    )::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content']
+    :is(.settings-page--account, .reset-password-page, .cancel-account-page, .settings-doc-page)
+    > .page-back-header {
+    position: absolute;
+    top: var(--password-settings-stage-top);
+    right: 0;
+    left: 0;
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 106px;
+    min-height: 106px;
+    margin-right: auto;
+    margin-left: auto;
+    padding: 45px var(--password-settings-gutter) 13px;
+  }
+
+  html[data-main-layout='content']
+    :is(.settings-page--account, .reset-password-page, .cancel-account-page, .settings-doc-page)
+    .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content']
+    :is(.settings-page--account, .reset-password-page, .cancel-account-page, .settings-doc-page)
+    .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content']
+    :is(.settings-page--account, .reset-password-page, .cancel-account-page, .settings-doc-page)
+    .page-back-header
+    .title {
+    overflow: hidden;
+    max-width: min(70vw, 960px);
+    font-size: 29px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content']
+    :is(.settings-page--account, .reset-password-page, .cancel-account-page, .settings-doc-page)
+    > .content-wrap {
+    position: relative;
+    width: var(--password-settings-content-width);
+    min-height: var(--content-stage-height);
+    margin: 0 auto;
+    padding: calc(var(--password-settings-stage-top) + 106px) 0 28px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .account-card {
+    width: 100%;
+    margin: 0;
+    padding: 16px 20px 16px 16px;
+    gap: 5px;
+    border: 1px solid rgba(249, 249, 249, 0.2);
+    border-radius: 19px;
+    backdrop-filter: blur(0.2px);
+  }
+
+  html[data-main-layout='content'] .settings-page--account .account-row {
+    height: 40px;
+    min-height: 40px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .account-row:not(:last-child)::after {
+    right: 0;
+    bottom: -3px;
+    left: auto;
+    width: min(320px, calc(100% - 51px));
+    height: 1px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .left-wrap {
+    gap: 11px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .right-wrap {
+    width: 154px;
+    min-width: 154px;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .label {
+    font-size: 18px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .row-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .row-icon .setting-svg-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .arrow {
+    width: 12px;
+    height: 22px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .switch {
+    width: 54px;
+    height: 26px;
+    padding: 1px;
+    border-radius: 33px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .dot {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .switch.on .dot {
+    transform: translateX(26px);
+  }
+
+  html[data-main-layout='content'] .reset-password-page .tab-switch {
+    width: 100%;
+    height: 64px;
+    margin: 0;
+    border-radius: 35px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .tab-btn {
+    font-size: 18px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .form-stack {
+    margin-top: 10px;
+    gap: 13px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .form-row {
+    height: 63px;
+    padding-left: 18px;
+    border-radius: 75px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .row-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 7px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .row-icon img {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .row-main {
+    padding: 0 16px 0 23px;
+    border-radius: 75px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .account-row-main {
+    padding: 0 9px 0 18px;
+    gap: 15px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .password-row-main {
+    padding-right: 16px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .prefix {
+    min-width: 72px;
+    height: 42px;
+    padding: 0 12px;
+    border-radius: 56px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page :is(.account-value, .input-field) {
+    font-size: 17px;
+    line-height: 21px;
+  }
+
+  html[data-main-layout='content']
+    .reset-password-page
+    .password-input[type='password']:not(:placeholder-shown) {
+    font-size: 22px;
+    letter-spacing: 1px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .otp-btn {
+    min-width: 100px;
+    height: 42px;
+    padding: 0 12px;
+    border-radius: 56px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .eye-btn {
+    width: 25px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .eye-btn img {
+    width: 25px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .submit-btn {
+    display: block;
+    width: min(100%, 400px);
+    height: 64px;
+    margin: 40px auto 0;
+    border-radius: 56px;
+    font-size: 18px;
+  }
+
+  // 注销账号（Figma 11222:27903）：两组表单固定在舞台顶部，确认按钮停靠舞台底部。
+  html[data-main-layout='content'] .cancel-account-page > .content-wrap {
+    position: absolute;
+    top: var(--password-settings-stage-top);
+    left: 50%;
+    width: var(--password-settings-content-width);
+    height: var(--content-stage-height);
+    min-height: 0;
+    padding: 106px 0 30px;
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .form-stack {
+    margin: 0;
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .field-group {
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .form-label {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .form-row {
+    height: 64px;
+    padding-left: 18px;
+    border-radius: 75px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .row-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 7px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .row-icon img {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .row-main {
+    padding: 0 16px 0 24px;
+    border-radius: 75px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .account-row-main {
+    padding: 0 9px 0 18px;
+    gap: 15px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .prefix {
+    min-width: 72px;
+    height: 42px;
+    padding: 0 12px;
+    border-radius: 56px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page :is(.account-value, .input-field) {
+    font-size: 17px;
+    line-height: 21px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .otp-btn {
+    min-width: 100px;
+    height: 42px;
+    padding: 0 12px;
+    border-radius: 56px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .submit-btn {
+    width: min(100%, 402px);
+    height: 65px;
+    margin: auto auto 0;
+    border-width: 1px;
+    border-radius: 48px;
+    font-size: 23px;
+  }
+
+  // 关于我们及同族文档页（Figma 11222:27881）。
+  html[data-main-layout='content'] .settings-doc-page .doc-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .settings-doc-page .doc-card p {
+    width: 100%;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  // 设置、验证、关闭和重置数字密码共用同一个沉浸式舞台（Figma 11222:28507）。
+  html[data-main-layout='content'] .security-password-page {
+    --security-password-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+    --security-password-panel-top: clamp(175px, calc(36.72dvh - 57px), 319px);
+
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .security-password-page .close-btn {
+    top: calc(var(--security-password-stage-top) + 23px);
+    left: calc((100% - var(--content-stage-width)) / 2 + 29px);
+    width: 58px;
+    height: 58px;
+    border-width: 0;
+  }
+
+  html[data-main-layout='content'] .security-password-page .close-btn span::before,
+  html[data-main-layout='content'] .security-password-page .close-btn span::after {
+    width: 24px;
+    height: 4px;
+  }
+
+  html[data-main-layout='content'] .security-password-page .password-panel {
+    padding-top: calc(var(--security-password-stage-top) + var(--security-password-panel-top));
+  }
+
+  html[data-main-layout='content'] .security-password-page .password-panel h1 {
+    font-size: 32px;
+    line-height: 39px;
+  }
+
+  html[data-main-layout='content'] .security-password-page .password-panel p {
+    margin-top: 7px;
+    font-size: 18px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .security-password-page .dot-row {
+    margin-top: 35px;
+    gap: 6px;
+  }
+
+  html[data-main-layout='content'] .security-password-page .dot-cell {
+    width: 48px;
+    height: 48px;
+    border-width: 1px;
+    border-radius: 45px;
+  }
+
+  html[data-main-layout='content'] .security-password-page .digit {
+    font-size: 34px;
+    line-height: 41px;
+  }
+
+  html[data-main-layout='content'] .security-password-page .submit-btn {
+    width: min(calc(100% - 48px), 400px);
+    height: 64px;
+    margin-top: 38px;
+    border-radius: 56px;
+    font-size: 18px;
+  }
+
+  // 编辑个人信息与修改昵称（Figma 11222:28579 / 11222:28945）。
+  // 两页共用同一套 1440 × 1024 舞台和导航尺寸，页面切换时只更新内容。
+  html[data-main-layout='content'] :is(.profile-edit-page, .nickname-page) {
+    --profile-settings-gutter: clamp(24px, 2.7083vw, 39px);
+    --profile-settings-content-width: min(
+      calc(100% - var(--profile-settings-gutter) * 2),
+      1361px
+    );
+    --profile-settings-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content']
+    :is(.profile-edit-page, .nickname-page)::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content']
+    :is(.profile-edit-page, .nickname-page)
+    > .page-back-header {
+    position: absolute;
+    top: var(--profile-settings-stage-top);
+    right: 0;
+    left: 0;
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 101px;
+    min-height: 101px;
+    margin-right: auto;
+    margin-left: auto;
+    padding: 45px var(--profile-settings-gutter) 14px;
+  }
+
+  html[data-main-layout='content']
+    :is(.profile-edit-page, .nickname-page)
+    .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content']
+    :is(.profile-edit-page, .nickname-page)
+    .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content']
+    :is(.profile-edit-page, .nickname-page)
+    .page-back-header
+    .title {
+    overflow: hidden;
+    max-width: min(70vw, 960px);
+    font-size: 29px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content']
+    :is(.profile-edit-page, .nickname-page)
+    > .content-wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: var(--profile-settings-content-width);
+    min-height: var(--content-stage-height);
+    margin: 0 auto;
+    padding: calc(var(--profile-settings-stage-top) + 101px) 0 28px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .profile-card {
+    width: 100%;
+    height: 177px;
+    min-height: 177px;
+    margin: 0;
+    padding: 1px;
+    border-radius: 45px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .profile-card__inner {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 32px 42px;
+    gap: 20px;
+    border-radius: 44px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .avatar-wrap {
+    width: 100px;
+    height: 103px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .avatar-wrap img {
+    width: 100px;
+    height: 103px;
+    border-radius: 63px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .edit-chip {
+    bottom: -8px;
+    min-width: 39px;
+    height: 23px;
+    border-radius: 47px;
+    font-size: 12px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .user-box {
+    gap: 11px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .user-name {
+    font-size: 26px;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .user-id-row {
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .id-tag {
+    min-width: 24px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 5px;
+    font-size: 9px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .id-value {
+    font-size: 11px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .gender-mark {
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .field-group {
+    margin-top: 36px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .glass-input,
+  html[data-main-layout='content'] .nickname-page .name-input-wrap {
+    width: 100%;
+    height: 76px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .glass-input,
+  html[data-main-layout='content'] .nickname-page .name-input {
+    border-radius: 68px;
+    font-size: 18px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .glass-input {
+    padding: 0 26px;
+  }
+
+  html[data-main-layout='content']
+    :is(.profile-edit-page, .nickname-page)
+    .input-hint {
+    margin-top: 10px;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .gender-select {
+    margin-top: 46px;
+    gap: 20px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .gender-option {
+    gap: 5px;
+    font-size: 20px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .radio {
+    width: 25px;
+    height: 25px;
+    border-width: 1px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .radio.active::after {
+    inset: 4px;
+  }
+
+  html[data-main-layout='content'] .nickname-page .content-wrap {
+    margin-top: 0;
+  }
+
+  html[data-main-layout='content'] .nickname-page .nickname-content {
+    width: 100%;
+  }
+
+  html[data-main-layout='content'] .nickname-page .name-input {
+    padding: 0 64px 0 25px;
+  }
+
+  html[data-main-layout='content'] .nickname-page .name-input-count {
+    right: 25px;
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .nickname-page .cost-row {
+    margin-top: 35px;
+    gap: 7px;
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .nickname-page .balance-row {
+    margin-top: 5px;
+  }
+
+  html[data-main-layout='content'] .nickname-page .diamond {
+    width: 19px;
+    height: 15px;
+  }
+
+  html[data-main-layout='content'] .nickname-page .save-wrap {
+    width: 402px;
+    max-width: 100%;
+    margin: auto auto 0;
+    padding: 0 0 2px;
+  }
+
+  html[data-main-layout='content'] .nickname-page .save-btn {
+    width: 100%;
+    height: 64px;
+    border-radius: 56px;
+    font-size: 18px;
+  }
+
+  // 我的商城（Figma 11222:28740）：全宽账户卡片、居中的三列商品和纵向支付方式列表。
+  html[data-main-layout='content'] .mine-shop-page {
+    --mine-shop-gutter: clamp(24px, 2.7083vw, 39px);
+    --mine-shop-content-width: min(calc(100% - var(--mine-shop-gutter) * 2), 1361px);
+    --mine-shop-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page > .page-back-header {
+    position: absolute;
+    top: var(--mine-shop-stage-top);
+    right: 0;
+    left: 0;
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 101px;
+    min-height: 101px;
+    margin-right: auto;
+    margin-left: auto;
+    padding: 45px var(--mine-shop-gutter) 14px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .page-back-header .title {
+    overflow: hidden;
+    max-width: min(70vw, 960px);
+    font-size: 29px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page > .content-wrap {
+    position: relative;
+    box-sizing: border-box;
+    width: var(--mine-shop-content-width);
+    max-width: none;
+    min-height: var(--content-stage-height);
+    margin: 0 auto;
+    padding: calc(var(--mine-shop-stage-top) + 101px) 0 40px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .profile-card {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    height: 177px;
+    margin: 0;
+    padding: 20px 34px;
+    border-radius: 45px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .profile-main {
+    gap: 18px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .avatar-wrap {
+    width: 81px;
+    height: 81px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .profile-meta {
+    gap: 14px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .profile-meta .name {
+    overflow: hidden;
+    max-width: min(50vw, 720px);
+    font-size: 26px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-theme='light'][data-main-layout='content']
+    .mine-shop-page
+    :is(.profile-meta .name, .id-row, .balance-row) {
+    color: #202020;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .id-row {
+    gap: 4px;
+    font-size: 11px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .id-row .id-tag {
+    padding: 2px 5px;
+    border-radius: 5px;
+    font-size: 9px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .balance-row {
+    position: absolute;
+    right: 40px;
+    bottom: 16px;
+    margin: 0;
+    gap: 5px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .balance-row span {
+    font-size: 13px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .balance-row strong {
+    font-size: 19px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .balance-row img {
+    width: 33px;
+    height: 33px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .shop-grid {
+    grid-template-columns: repeat(3, 143px);
+    justify-content: center;
+    width: min(100%, 463px);
+    margin: 36px auto 0;
+    column-gap: 17px;
+    row-gap: 16px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .grid-status {
+    margin: 20px 0;
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .shop-card {
+    width: 143px;
+    height: 185px;
+    padding: 7px 12px 8px;
+    border-radius: 27px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .chest {
+    width: 78px;
+    height: 74px;
+    margin-top: 1px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .shop-card .title {
+    margin-top: 5px;
+    font-size: 22px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .shop-card .desc {
+    margin-top: 3px;
+    font-size: 17px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .price-pill {
+    width: 103px;
+    height: 31px;
+    padding: 0 4px 0 10px;
+    border-radius: 52px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .price-pill span {
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .price-pill img {
+    width: 25px;
+    height: 25px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .wholesale-tag {
+    top: -1px;
+    right: -1px;
+    padding: 0 13px;
+    font-size: 14px;
+    line-height: 24px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .rate-bar {
+    width: 100%;
+    min-height: 26px;
+    margin-top: 36px;
+    padding: 5px 12px;
+    border-radius: 27px;
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .pay-channel-list {
+    margin-top: 36px;
+    gap: 35px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .pay-channel {
+    min-height: 53px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .pay-channel .left {
+    gap: 9px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .pay-icon {
+    width: 53px;
+    height: 53px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .pay-texts {
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .line-1 {
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .line-1 .name {
+    font-size: 20px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .line-1 .plain {
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .line-2 {
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .tag {
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 40px;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .radio {
+    width: 19px;
+    height: 19px;
+    border-width: 1px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .pay-now {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 411px;
+    max-width: 100%;
+    height: 65px;
+    min-height: 65px;
+    margin: 40px auto 0;
+    transform: none;
+    border-radius: 48px;
+    font-size: 18px;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  html[data-main-layout='content'] .shop-pay-popup.van-popup--center {
+    width: auto;
+    max-width: calc(100% - 48px);
+    max-height: min(calc(var(--content-stage-height) - 48px), calc(100dvh - 48px));
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  html[data-main-layout='content'] .shop-pay-popup .pay-card {
+    box-sizing: border-box;
+    width: 357px;
+    max-width: calc(100vw - 48px);
+    padding: 17px;
+    border-radius: 41px;
+  }
+
+  html[data-main-layout='content'] .trader-apply-popup.van-popup--center {
+    width: min(calc(100% - 48px), 520px);
+    max-height: min(calc(var(--content-stage-height) - 48px), calc(100dvh - 48px));
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  html[data-main-layout='content'] .trader-apply-popup .trader-apply-card {
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+    padding: 36px 24px 26px;
+    border-radius: 40px;
+  }
+
+  // 俱乐部钱包收支：日期、资金概览和收支指标组成桌面数据面板。
+  html[data-main-layout='content'] .club-wallet-logs-bg {
+    --club-wallet-gutter: clamp(24px, 2.7083vw, 39px);
+    --club-wallet-content-width: min(calc(100% - var(--club-wallet-gutter) * 2), 1080px);
+    --club-wallet-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg > .page-back-header {
+    position: absolute;
+    top: var(--club-wallet-stage-top);
+    right: 0;
+    left: 0;
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 105px;
+    min-height: 105px;
+    margin: 0 auto;
+    padding: 50px var(--club-wallet-gutter) 25px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .back-trigger {
+    height: 30px;
+    gap: 20px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg > .wallet-logs-content {
+    position: absolute;
+    top: calc(var(--club-wallet-stage-top) + 105px);
+    right: 0;
+    left: 0;
+    display: flex;
+    width: var(--club-wallet-content-width);
+    height: calc(var(--content-stage-height) - 105px);
+    min-height: 0;
+    margin: 0 auto;
+    padding: 0 0 40px;
+    gap: 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content']
+    .club-wallet-logs-bg
+    > .wallet-logs-content::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg :is(.fund-card, .metrics-card) {
+    flex: 0 0 auto;
+    width: 100%;
+    border-width: 1px;
+    backdrop-filter: blur(9px);
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .fund-card {
+    display: grid;
+    grid-template-columns: minmax(360px, 0.9fr) minmax(400px, 1.1fr);
+    align-items: center;
+    gap: 42px;
+    min-height: 154px;
+    padding: 24px 30px;
+    border-radius: 32px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .date-range {
+    gap: 12px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .date-btn {
+    min-height: 52px;
+    padding: 0 18px;
+    gap: 8px;
+    border-width: 1px;
+    border-radius: 28px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .date-separator {
+    width: 14px;
+    height: 1px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .date-btn .calendar-icon {
+    width: 16px;
+    height: 15px;
+    border-width: 1px;
+    border-radius: 3px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .date-btn .calendar-icon::before {
+    top: 4px;
+    right: -1px;
+    left: -1px;
+    border-top-width: 1px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .date-btn .calendar-icon::after {
+    top: -3px;
+    right: 3px;
+    left: 3px;
+    height: 4px;
+    border-right-width: 1px;
+    border-left-width: 1px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .fund-balances {
+    margin-top: 0;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .fund-balance-item {
+    min-height: 84px;
+    gap: 8px;
+  }
+
+  html[data-main-layout='content']
+    .club-wallet-logs-bg
+    .fund-balance-item
+    + .fund-balance-item::before {
+    top: 12px;
+    bottom: 12px;
+    width: 1px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .fund-label {
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .fund-value {
+    font-size: 25px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .timezone {
+    margin: -4px 4px 0 0;
+    padding: 0;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .metrics-card {
+    padding: 12px 18px;
+    border-radius: 30px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .metrics-card--transfer {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .metrics-card--revenue {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .metric-item {
+    min-height: 92px;
+    padding: 10px 8px;
+    gap: 9px;
+  }
+
+  html[data-main-layout='content']
+    .club-wallet-logs-bg
+    .metrics-card--transfer
+    .metric-item
+    + .metric-item::before,
+  html[data-main-layout='content']
+    .club-wallet-logs-bg
+    .metrics-card--revenue
+    .metric-item:not(:first-child)::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 14px;
+    bottom: 14px;
+    width: 1px;
+    background: rgba(243, 243, 243, 0.18);
+  }
+
+  html[data-theme='light'][data-main-layout='content']
+    .club-wallet-logs-bg
+    .metric-item::before {
+    background: rgba(34, 34, 34, 0.14);
+  }
+
+  html[data-main-layout='content']
+    .club-wallet-logs-bg
+    .metrics-card--revenue
+    .metric-item:nth-child(n + 4)::after {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .metric-label {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .metric-value {
+    font-size: 20px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .loading-text {
+    margin: 0;
+    font-size: 13px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .date-picker-mask {
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .date-picker-sheet {
+    width: min(100%, 520px);
+    max-height: calc(100dvh - 48px);
+    padding: 26px 22px 22px;
+    overflow-y: auto;
+    border-radius: 34px;
+  }
+
+  @media (max-width: 900px) {
+    html[data-main-layout='content'] .club-wallet-logs-bg .fund-card {
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+
+    html[data-main-layout='content'] .club-wallet-logs-bg .metrics-card--revenue {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    html[data-main-layout='content']
+      .club-wallet-logs-bg
+      .metrics-card--revenue
+      .metric-item:nth-child(4)::before {
+      display: none;
+    }
+
+    html[data-main-layout='content']
+      .club-wallet-logs-bg
+      .metrics-card--revenue
+      .metric-item:nth-child(n + 4)::after {
+      display: block;
+      left: 12px;
+      right: 12px;
+      top: 0;
+      height: 1px;
+    }
+  }
+
+  // 赠送 UC：金额输入、玩家列表和提交按钮共用 1360px 内容边界。
+  html[data-main-layout='content'] .gift-page {
+    --gift-page-gutter: clamp(24px, 2.7083vw, 39px);
+    --gift-page-content-width: min(calc(100% - var(--gift-page-gutter) * 2), 1362px);
+    --gift-page-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .gift-page > .page-back-header {
+    position: absolute;
+    top: var(--gift-page-stage-top);
+    right: 0;
+    left: 0;
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 105px;
+    min-height: 105px;
+    margin: 0 auto;
+    padding: 50px var(--gift-page-gutter) 25px;
+  }
+
+  html[data-main-layout='content'] .gift-page .back-trigger {
+    height: 30px;
+    gap: 20px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .gift-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .gift-page .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .gift-page > .gift-content {
+    position: absolute;
+    top: calc(var(--gift-page-stage-top) + 105px);
+    right: 0;
+    left: 0;
+    display: flex;
+    width: var(--gift-page-content-width);
+    height: calc(var(--content-stage-height) - 105px);
+    min-height: 0;
+    margin: 0 auto;
+    padding: 0 0 40px;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .gift-page .max-amount {
+    flex: 0 0 auto;
+    margin: 0 0 10px;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .gift-page .amount-input {
+    flex: 0 0 64px;
+    width: 100%;
+    height: 64px;
+    padding: 0 22px;
+    gap: 12px;
+    border-radius: 32px;
+  }
+
+  html[data-main-layout='content'] .gift-page .amount-input__icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  html[data-main-layout='content'] .gift-page .amount-input__value {
+    font-size: 29px;
+  }
+
+  html[data-main-layout='content'] .gift-page .player-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: 16px;
+    padding-right: 2px;
+    gap: 10px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .gift-page .player-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .gift-page .player-item {
+    flex: 0 0 70px;
+    width: 100%;
+    min-height: 70px;
+    padding: 10px 20px;
+    border-radius: 35px;
+  }
+
+  html[data-main-layout='content'] .gift-page .player-item__main {
+    min-width: 0;
+    gap: 12px;
+  }
+
+  html[data-main-layout='content'] .gift-page .player-item__avatar {
+    width: 46px;
+    height: 46px;
+  }
+
+  html[data-main-layout='content'] .gift-page .player-item__meta {
+    min-width: 0;
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .gift-page .player-item__name {
+    overflow: hidden;
+    max-width: min(70vw, 1000px);
+    font-size: 18px;
+    line-height: 22px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .gift-page .player-item__id {
+    font-size: 12px;
+    line-height: 16px;
+  }
+
+  html[data-main-layout='content'] .gift-page .radio-circle {
+    width: 19px;
+    height: 19px;
+  }
+
+  html[data-main-layout='content'] .gift-page .radio-circle--checked::after {
+    width: 12px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .gift-page .list-state {
+    padding: 24px 0;
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .gift-page .submit-btn {
+    flex: 0 0 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min(100%, 417px);
+    height: 64px;
+    min-height: 64px;
+    margin: 16px auto 0;
+    border-radius: 47px;
+    font-size: 20px;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  // 下载页：宽屏左右分栏，背景铺满浏览器，操作按钮保持在内容舞台底部。
+  html[data-main-layout='content'] .landing {
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+  }
+
+  html[data-main-layout='content'] .landing__glow--top {
+    top: -140px;
+    right: -80px;
+    width: 420px;
+    height: 420px;
+  }
+
+  html[data-main-layout='content'] .landing__glow--bottom {
+    bottom: 80px;
+    left: -100px;
+    width: 460px;
+    height: 460px;
+  }
+
+  html[data-main-layout='content'] .landing__scroll {
+    display: grid;
+    grid-template-columns: minmax(300px, 0.9fr) minmax(400px, 1.1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    align-items: center;
+    column-gap: clamp(48px, 6vw, 96px);
+    width: min(calc(100% - 80px), 1120px);
+    margin: 0 auto;
+    padding: 40px 0 28px;
+  }
+
+  html[data-main-layout='content'] .landing__hero {
+    grid-row: 1 / span 2;
+    grid-column: 1;
+  }
+
+  html[data-main-layout='content'] .landing__icon-wrap {
+    margin-bottom: 16px;
+  }
+
+  html[data-main-layout='content'] .landing__icon {
+    width: 112px;
+    height: 112px;
+    border-radius: 28px;
+  }
+
+  html[data-main-layout='content'] .landing__icon--placeholder {
+    font-size: 44px;
+  }
+
+  html[data-main-layout='content'] .landing__badge {
+    bottom: -8px;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .landing__name {
+    margin: 18px 0 8px;
+    font-size: 34px;
+    letter-spacing: 1px;
+  }
+
+  html[data-main-layout='content'] .landing__slogan {
+    max-width: 380px;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+
+  html[data-main-layout='content'] .landing__stats {
+    gap: 18px;
+    margin-top: 30px;
+    padding: 16px 22px;
+    border-width: 1px;
+    border-radius: 20px;
+  }
+
+  html[data-main-layout='content'] .landing__stat {
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .landing__stat-num {
+    font-size: 21px;
+  }
+
+  html[data-main-layout='content'] .landing__stat-label {
+    font-size: 13px;
+  }
+
+  html[data-main-layout='content'] .landing__stat-divider {
+    width: 1px;
+    height: 30px;
+  }
+
+  html[data-main-layout='content'] .landing__features {
+    grid-row: 1;
+    grid-column: 2;
+    gap: 12px;
+    margin-top: 0;
+  }
+
+  html[data-main-layout='content'] .landing__feature {
+    gap: 14px;
+    padding: 17px 20px;
+    border-width: 1px;
+    border-radius: 18px;
+  }
+
+  html[data-main-layout='content'] .landing__feature-dot {
+    width: 9px;
+    height: 9px;
+    margin-top: 7px;
+  }
+
+  html[data-main-layout='content'] .landing__feature-title {
+    margin-bottom: 4px;
+    font-size: 19px;
+  }
+
+  html[data-main-layout='content'] .landing__feature-desc {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  html[data-main-layout='content'] .landing__tip {
+    grid-row: 2;
+    grid-column: 2;
+    margin: 16px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  html[data-main-layout='content'] .landing__actions {
+    justify-content: center;
+    width: min(calc(100% - 80px), 620px);
+    margin: 0 auto;
+    padding: 18px 0 max(20px, env(safe-area-inset-bottom));
+    gap: 14px;
+    background: transparent;
+  }
+
+  html[data-main-layout='content'] .landing__btn {
+    flex: 1 1 0;
+    height: 56px;
+    border-radius: 30px;
+    gap: 8px;
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .landing__btn img {
+    width: 22px;
+    height: 22px;
+  }
+
+  html[data-main-layout='content'] .landing__btn--secondary {
+    flex: 0 0 260px;
+    padding: 0 22px;
+    border-width: 1px;
+  }
+
+  // 牌桌结算：顶部汇总卡和玩家表格在桌面舞台内纵向排布并独立滚动。
+  html[data-main-layout='content'] .table-game-end {
+    --settle-page-gutter: clamp(24px, 2.7083vw, 39px);
+    --settle-page-content-width: min(calc(100% - var(--settle-page-gutter) * 2), 1362px);
+    --settle-page-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .table-game-end > .page-back-header {
+    position: absolute;
+    top: var(--settle-page-stage-top);
+    right: 0;
+    left: 0;
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 105px;
+    min-height: 105px;
+    margin: 0 auto;
+    padding: 50px var(--settle-page-gutter) 25px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .back-trigger {
+    height: 30px;
+    gap: 20px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .table-game-end .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .table-game-end .page-back-header .action-btn {
+    width: 110px;
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 24px;
+    font-size: 14px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .table-game-end > .settle-content {
+    position: absolute;
+    top: calc(var(--settle-page-stage-top) + 105px);
+    right: 0;
+    left: 0;
+    display: flex;
+    width: var(--settle-page-content-width);
+    height: calc(var(--content-stage-height) - 105px);
+    min-height: 0;
+    margin: 0 auto;
+    padding: 0 0 40px;
+    gap: 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .table-game-end > .settle-content::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .table-game-end .settle-loading {
+    flex: 1 1 auto;
+    min-height: 280px;
+    padding: 40px 0;
+    gap: 12px;
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .summary-card {
+    flex: 0 0 auto;
+    width: 100%;
+    padding: 24px 34px;
+    border-radius: 34px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .summary-top {
+    gap: 20px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .room-name {
+    font-size: 20px;
+  }
+
+  html[data-main-layout='content'] .table-game-end :is(.room-id, .room-meta) {
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .room-id__tag {
+    min-width: 22px;
+    padding: 1px 5px;
+    border-radius: 5px;
+    font-size: 10px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .summary-divider {
+    margin: 18px 0;
+  }
+
+  html[data-main-layout='content'] .table-game-end .summary-title {
+    font-size: 19px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .summary-stats {
+    justify-content: center;
+    gap: clamp(100px, 16vw, 230px);
+    margin-top: 16px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .summary-stat {
+    min-width: 160px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .summary-stat__value {
+    font-size: 29px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .summary-stat__label {
+    margin-top: 7px;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .players-card {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    padding: 20px 24px 12px;
+    border-radius: 28px;
+    overflow-x: auto;
+  }
+
+  html[data-main-layout='content'] .table-game-end .game-table {
+    min-width: 680px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .game-table__header {
+    margin: 0 0 8px;
+    padding: 4px;
+    border-radius: 26px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .game-table__header-inner {
+    border-radius: 22px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .game-table__header-cell {
+    min-height: 44px;
+    padding: 0 10px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .game-table__header-label {
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .game-table__body {
+    gap: 6px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content']
+    .table-game-end
+    :is(.game-table__row, .game-table__summary) {
+    min-height: 54px;
+    border-radius: 27px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .game-table__cell {
+    min-height: 54px;
+    padding: 6px 10px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .game-table__cell-text,
+  html[data-main-layout='content'] .table-game-end .table-text {
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .user-avatar {
+    width: 40px;
+    height: 40px;
+    margin-right: 8px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .insurance-summary {
+    margin: 0 14px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .insurance-summary img {
+    width: 28px;
+    height: 28px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .extra-sub {
+    margin-top: 2px;
+    font-size: 12px;
+  }
+
+  @media (max-width: 900px) {
+    html[data-main-layout='content'] .landing__scroll {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      width: min(calc(100% - 48px), 640px);
+      padding: 32px 0 24px;
+    }
+
+    html[data-main-layout='content'] .landing__features {
+      width: 100%;
+      margin-top: 28px;
+    }
+
+    html[data-main-layout='content'] .landing__tip {
+      margin-top: 16px;
+    }
+
+    html[data-main-layout='content'] .landing__actions {
+      width: min(calc(100% - 48px), 640px);
+    }
+
+    html[data-main-layout='content'] .landing__btn--secondary {
+      flex: 1 1 0;
+    }
+
+    html[data-main-layout='content'] .table-game-end .summary-stats {
+      gap: 40px;
+    }
   }
 
   @media (max-width: 760px) {

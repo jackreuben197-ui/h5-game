@@ -191,7 +191,7 @@ onBeforeUnmount(() => {
     <main class="content-wrap">
       <section class="form-stack">
         <div class="field-group">
-          <div class="form-label">Passcode</div>
+          <div class="form-label">{{ t('UIGuild_Fund_Acount') }}</div>
           <div class="form-row" :class="{ filled: Boolean(accountValue) }">
             <span class="row-icon">
               <img :src="isPhone ? icPhone : icMail" alt="" />
@@ -245,8 +245,12 @@ onBeforeUnmount(() => {
         <p class="dialog-title">{{ t('UIClub_ConfirmCurrentNo') }}？</p>
         <p class="dialog-desc">{{ t('UIClub_NoNo') }}，{{ t('UIClub_Text98') }}。</p>
         <div class="dialog-actions">
-          <button class="dialog-btn ghost" type="button" @click="cancelDialog">{{ t('adaptation10013') }}</button>
-          <button class="dialog-btn primary" type="button" @click="confirmDialog">{{ t('UIClub_Confirm3') }}</button>
+          <button class="dialog-btn ghost" type="button" @click="cancelDialog">
+            {{ t('adaptation10013') }}
+          </button>
+          <button class="dialog-btn primary" type="button" @click="confirmDialog">
+            {{ t('UIClub_Confirm3') }}
+          </button>
         </div>
       </section>
     </div>

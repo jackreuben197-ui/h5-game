@@ -201,9 +201,9 @@ function closeOverlay(): void {
   width: 1.024rem;
   height: 1.024rem;
   padding: 0;
-  border: 0.0133rem solid rgba(255, 255, 255, 0.32);
+  border: 0;
   border-radius: 50%;
-  background: rgba(87, 174, 255, 0.2);
+  background: rgba(0, 0, 0, 0.22);
 
   span::before,
   span::after {
@@ -214,7 +214,7 @@ function closeOverlay(): void {
     width: 0.42rem;
     height: 0.0533rem;
     border-radius: 999px;
-    background: #fff;
+    background: #f3f3f3;
   }
 
   span::before {

@@ -515,24 +515,26 @@
 
       /* Telegram Mini App：顶部安全区拆成两段，避免与 #app > * 的 guard padding 二次叠加。 */
       html[data-tg-mini-app='1'] {
+        /* 顶部总留白，也是绕过 guard 的元素（body teleport 弹层、自行覆盖根节点 padding
+           的页面）直接消费的值。SDK 未回调（非全屏 / 尚未就绪）时 --tg-safe-area-guard-top
+           为 0，以 env() 兜底，避免出现内容贴顶的空窗。 */
+        --app-viewport-safe-area-top: max(
+          env(safe-area-inset-top),
+          var(--tg-safe-area-guard-top, 0px)
+        );
         --app-tg-guard-top: max(
           0px,
           min(
             env(safe-area-inset-top),
             calc(var(--tg-content-safe-area-inset-top, 0px) - var(--app-top-padding, 0px)),
-            calc(var(--tg-safe-area-guard-top, 0px) - var(--app-top-padding, 0px))
+            calc(var(--app-viewport-safe-area-top) - var(--app-top-padding, 0px))
           )
         );
         /* 全屏 Mini App 的关闭/展开按钮浮在内容上，guard padding 只补到内容安全区之内，
            余下的高度交给 --app-content-safe-area-top，由各页头部自行消费。 */
         --app-content-safe-area-top: max(
           0px,
-          calc(var(--tg-safe-area-guard-top, 0px) - var(--app-tg-guard-top))
-        );
-        /* 供绕过 guard 的元素（body teleport 弹层、自行覆盖根节点 padding 的页面）直接使用。 */
-        --app-viewport-safe-area-top: max(
-          env(safe-area-inset-top),
-          var(--tg-safe-area-guard-top, 0px)
+          calc(var(--app-viewport-safe-area-top) - var(--app-tg-guard-top))
         );
       }
 
@@ -1170,6 +1172,41 @@
           }
         }
 
+        // Mini App 判定的唯一入口：URL 与 SDK 任一给出 initData 都要落到 <html> 上，
+        // data-tg-mini-app 是全部 Telegram 安全区 CSS 的开关，漏挂等于整套适配失效。
+        var TG_MINI_APP_SESSION_KEY = '__H5_TG_MINI_APP__'
+
+        function enableTelegramMiniAppMode() {
+          window.__H5_TG_MINI_APP__ = true
+          if (document && document.documentElement) {
+            document.documentElement.setAttribute('data-tg-mini-app', '1')
+          }
+          // 页面重载后 tgWebAppData 已不在地址里，靠会话标记保住 Mini App 模式。
+          try {
+            window.sessionStorage.setItem(TG_MINI_APP_SESSION_KEY, '1')
+          } catch (error) {}
+        }
+
+        function markTelegramMiniApp(initData) {
+          var value = String(initData || '').trim()
+          if (!value) {
+            return false
+          }
+          window.__H5_TG_INIT_DATA__ = window.__H5_TG_INIT_DATA__ || value
+          enableTelegramMiniAppMode()
+          return true
+        }
+
+        function restoreTelegramMiniAppMode() {
+          try {
+            if (window.sessionStorage.getItem(TG_MINI_APP_SESSION_KEY) === '1') {
+              enableTelegramMiniAppMode()
+              return true
+            }
+          } catch (error) {}
+          return false
+        }
+
         function initTelegramWebApp() {
           if (!window.Telegram || !window.Telegram.WebApp) {
             console.warn('[telegram] sdk loaded but Telegram.WebApp is not available, continue without telegram bridge')
@@ -1183,13 +1220,7 @@
           // Mini App 内；只有非空 initData 才是真实标识。这里不提前 return——即使 initData 为空
           // （桌面端 / 二次打开 / 被截断的启动参数），全屏与安全区初始化仍要照常执行。
           var initData = String(tg.initData || '').trim()
-          if (initData) {
-            window.__H5_TG_MINI_APP__ = true
-            window.__H5_TG_INIT_DATA__ = initData
-            if (document && document.documentElement) {
-              document.documentElement.setAttribute('data-tg-mini-app', '1')
-            }
-          }
+          markTelegramMiniApp(initData || window.__H5_TG_INIT_DATA__)
 
           // 通知运行时 Telegram 主题信息已可用；theme.ts 会优先读取 WebApp.colorScheme。
           window.dispatchEvent(new Event('h5:telegram-ready'))
@@ -1239,22 +1270,12 @@
         }
 
         function initH5TelegramEnvironment() {
-          var initDataFromUrl = readTelegramInitDataFromLocation()
-          if (initDataFromUrl) {
-            window.__H5_TG_MINI_APP__ = true
-            window.__H5_TG_INIT_DATA__ = initDataFromUrl
-          }
+          restoreTelegramMiniAppMode()
+          markTelegramMiniApp(readTelegramInitDataFromLocation())
 
           // 同 initTelegramWebApp：仅凭 Telegram.WebApp 存在不足以判定 Mini App，需有非空 initData。
           if (window.Telegram && window.Telegram.WebApp) {
-            var initDataFromSdk = String(window.Telegram.WebApp.initData || '').trim()
-            if (initDataFromSdk) {
-              window.__H5_TG_MINI_APP__ = true
-              window.__H5_TG_INIT_DATA__ = window.__H5_TG_INIT_DATA__ || initDataFromSdk
-              if (document && document.documentElement) {
-                document.documentElement.setAttribute('data-tg-mini-app', '1')
-              }
-            }
+            markTelegramMiniApp(window.Telegram.WebApp.initData)
           }
         }
         initH5TelegramEnvironment()

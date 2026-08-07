@@ -2450,7 +2450,7 @@ watch(
 
 .image-preview-close {
   position: absolute;
-  top: calc(env(safe-area-inset-top) + 0.24rem);
+  top: calc(var(--app-viewport-safe-area-top, env(safe-area-inset-top)) + 0.24rem);
   right: 0.24rem;
   width: 0.88rem;
   height: 0.88rem;

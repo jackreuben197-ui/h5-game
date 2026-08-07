@@ -174,9 +174,9 @@ function closeOverlay(): void {
 </template>
 
 <style scoped lang="scss">
-.security-password-page {
+#app > .security-password-page {
   height: 100dvh;
-  padding-top: calc(env(safe-area-inset-top) + 0.42rem);
+  padding-top: calc(var(--app-viewport-safe-area-top, env(safe-area-inset-top)) + 0.42rem);
   position: relative;
   background-size: cover;
   background-position: center;

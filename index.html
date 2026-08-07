@@ -1220,6 +1220,10 @@
           // Mini App 内；只有非空 initData 才是真实标识。这里不提前 return——即使 initData 为空
           // （桌面端 / 二次打开 / 被截断的启动参数），全屏与安全区初始化仍要照常执行。
           var initData = String(tg.initData || '').trim()
+          // SDK 的 initData 是后端校验签名的原文，优先级高于从 URL 解析出来的副本。
+          if (initData) {
+            window.__H5_TG_INIT_DATA__ = initData
+          }
           markTelegramMiniApp(initData || window.__H5_TG_INIT_DATA__)
 
           // 通知运行时 Telegram 主题信息已可用；theme.ts 会优先读取 WebApp.colorScheme。

@@ -576,8 +576,8 @@ onBeforeUnmount(() => {
 }
 
 .todo-panel-header {
-  height: calc(env(safe-area-inset-top) + 1.46rem);
-  padding: calc(env(safe-area-inset-top) + 0.34rem) 0.46rem 0.26rem;
+  height: calc(var(--app-viewport-safe-area-top, env(safe-area-inset-top)) + 1.46rem);
+  padding: calc(var(--app-viewport-safe-area-top, env(safe-area-inset-top)) + 0.34rem) 0.46rem 0.26rem;
   display: flex;
   align-items: center;
   gap: 0.12rem;

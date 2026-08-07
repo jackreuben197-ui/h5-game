@@ -491,6 +491,8 @@
         --app-bottom-bleed: 0px;
         --app-content-safe-area-top: env(safe-area-inset-top);
         --app-visual-safe-area-top: 0px;
+        --app-tg-guard-top: 0px;
+        --app-viewport-safe-area-top: env(safe-area-inset-top);
         /* 软键盘只改变下面三个位移值，不改变 Cocos 的逻辑画布尺寸。 */
         --app-keyboard-inset: 0px;
         --app-cocos-keyboard-offset: 0px;
@@ -511,10 +513,27 @@
         --app-content-safe-area-top: env(safe-area-inset-top);
       }
 
-      /* Telegram Mini App：顶部安全区已由 #app > * 的 guard padding 承担，
-         viewport-fit=cover 使 env(safe-area-inset-top) 非零，置零避免二次叠加。 */
+      /* Telegram Mini App：顶部安全区拆成两段，避免与 #app > * 的 guard padding 二次叠加。 */
       html[data-tg-mini-app='1'] {
-        --app-content-safe-area-top: 0px;
+        --app-tg-guard-top: max(
+          0px,
+          min(
+            env(safe-area-inset-top),
+            calc(var(--tg-content-safe-area-inset-top, 0px) - var(--app-top-padding, 0px)),
+            calc(var(--tg-safe-area-guard-top, 0px) - var(--app-top-padding, 0px))
+          )
+        );
+        /* 全屏 Mini App 的关闭/展开按钮浮在内容上，guard padding 只补到内容安全区之内，
+           余下的高度交给 --app-content-safe-area-top，由各页头部自行消费。 */
+        --app-content-safe-area-top: max(
+          0px,
+          calc(var(--tg-safe-area-guard-top, 0px) - var(--app-tg-guard-top))
+        );
+        /* 供绕过 guard 的元素（body teleport 弹层、自行覆盖根节点 padding 的页面）直接使用。 */
+        --app-viewport-safe-area-top: max(
+          env(safe-area-inset-top),
+          var(--tg-safe-area-guard-top, 0px)
+        );
       }
 
       html {
@@ -652,11 +671,7 @@
       html[data-tg-mini-app='1'] #app > * {
         box-sizing: border-box;
         min-height: 100%;
-        padding-top: min(
-          env(safe-area-inset-top),
-          calc(var(--tg-content-safe-area-inset-top, 0px) - var(--app-top-padding)),
-          calc(var(--tg-safe-area-guard-top, 0px) - var(--app-top-padding))
-        );
+        padding-top: var(--app-tg-guard-top);
       }
 
       #drawCanvas {

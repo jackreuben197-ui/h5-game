@@ -264,7 +264,7 @@ async function handleSave() {
   display: flex;
   align-items: center;
   gap: 0.23rem;
-  padding: calc(env(safe-area-inset-top) + 0.43rem) 0.34rem 0.33rem;
+  padding: calc(var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.43rem) 0.34rem 0.33rem;
 }
 
 .abc-header__back {

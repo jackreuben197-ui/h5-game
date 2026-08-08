@@ -14,6 +14,9 @@ import type { OnlineWithdrawTypeItem } from '@/api/models/config'
 import type { PaymentInfo } from '@/api/models/pay'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useWalletStore } from '@/stores/wallet'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
+
+const isChannelPackage = isPrivateDomainMode()
 
 const props = defineProps<{
   availableUc?: number
@@ -405,7 +408,10 @@ watch(filteredWithdrawTypes, (list) => {
     </div>
 
 
-    <div class="wf__cta-wrapper">
+    <div
+      class="wf__cta-wrapper"
+      :class="{ 'wf__cta-wrapper--channel': isChannelPackage }"
+    >
       <PrimaryButton
         :text="isCustomerCare ? tx('Wallet_ContactCs', '联系客服') : tx('Wallet_SubmitWithdraw', '立即提现')"
         :disabled="!canWithdraw || withdrawing"
@@ -442,6 +448,10 @@ watch(filteredWithdrawTypes, (list) => {
   width: calc(100% - 0.91rem);
   height: 1.47rem;
   z-index: 10;
+}
+
+.wf__cta-wrapper--channel {
+  bottom: calc(env(safe-area-inset-bottom) + 2.82rem);
 }
 
 .wf__cta {

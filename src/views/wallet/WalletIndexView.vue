@@ -1214,7 +1214,10 @@ async function onUsdtSubmit(type: number) {
   }
 }
 
-.wallet-screen--channel .pay-cta {
+.wallet-screen--channel .pay-cta-wrapper,
+.wallet-screen--channel :deep(.club-deposit__cta-wrapper),
+.wallet-screen--channel :deep(.wf__cta-wrapper),
+.wallet-fixed-deposit-shell--channel :deep(.club-deposit__cta-wrapper) {
   bottom: calc(env(safe-area-inset-bottom) + 2.82rem);
 }
 </style>

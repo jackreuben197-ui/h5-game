@@ -175,7 +175,9 @@ export function restoreStorageFromUrl(): void {
   }
 }
 
-export function extractInviteCodeFromSubdomain(hostname: string = window.location.hostname): string {
+export function extractInviteCodeFromSubdomain(
+  hostname: string = window.location.hostname,
+): string {
   if (!isChannelPackageHost(hostname)) {
     return ''
   }

@@ -217,9 +217,18 @@ const mahjongBlocks = computed(() => {
   return blocks;
 });
 
-const handleImageError = (e: Event) => {
-  (e.target as HTMLImageElement).style.visibility = 'hidden';
-};
+const handleImageError = (event: Event, item?: any): void => {
+  const imgEl = event.target as HTMLImageElement
+  imgEl.style.display = 'none'
+  const parent = imgEl.parentElement
+  if (parent && !parent.querySelector('.app-card-placeholder')) {
+    const placeholder = document.createElement('div')
+    placeholder.className = 'app-card-placeholder'
+    const titleText = item?.title || imgEl.alt || ''
+    placeholder.innerHTML = `<span class="placeholder-title">${titleText}</span>`
+    parent.appendChild(placeholder)
+  }
+}
 
 const handleGameClick = (game: any) => {
   if (!game) return
@@ -416,7 +425,7 @@ const joinGame = async (
                       :alt="item.title || 'item'"
                       class="app-card-img"
                       :class="{ wide: block.layout === 'wide' }"
-                      @error="handleImageError($event)"
+                      @error="handleImageError($event, item)"
                     />
                   </div>
                   <span v-if="!block.layout && item.title" class="app-card-title">

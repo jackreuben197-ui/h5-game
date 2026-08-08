@@ -880,6 +880,19 @@ async function doJoinGame(
   }
 }
 
+function handleCardImgError(event: Event, item: GameItem): void {
+  const imgEl = event.target as HTMLImageElement
+  imgEl.style.display = 'none'
+  const parent = imgEl.parentElement
+  if (parent && !parent.querySelector('.app-card-placeholder')) {
+    const placeholder = document.createElement('div')
+    placeholder.className = 'app-card-placeholder'
+    const titleText = item.title || ''
+    placeholder.innerHTML = `<span class="placeholder-title">${titleText}</span>`
+    parent.appendChild(placeholder)
+  }
+}
+
 // ─── Service handler ──────────────────────────────────────────────────────────
 function handleServiceClick(): void {
   showGameToast(t('UIMineMain01') + '开发中')
@@ -1121,11 +1134,16 @@ onActivated(async () => {
                   ]"
                 >
                   <img
+                    v-if="item.img"
                     :src="item.img"
                     :alt="item.title || 'item'"
                     class="app-card-img"
                     :class="{ wide: block.layout === 'wide' }"
+                    @error="handleCardImgError($event, item)"
                   />
+                  <div v-else class="app-card-placeholder">
+                    <span class="placeholder-title">{{ item.title }}</span>
+                  </div>
                 </div>
                 <span v-if="!block.layout && item.title" class="app-card-title">
                   {{ item.title }}
@@ -1645,6 +1663,28 @@ onActivated(async () => {
   width: 100%;
   height: auto;
   object-fit: cover;
+}
+
+.app-card-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.36rem;
+  background: linear-gradient(135deg, rgba(45, 52, 65, 0.95) 0%, rgba(20, 24, 32, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.placeholder-title {
+  font-size: 0.32rem;
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 600;
+  line-height: 1.25;
+  word-break: break-word;
 }
 
 .app-card-img.wide {

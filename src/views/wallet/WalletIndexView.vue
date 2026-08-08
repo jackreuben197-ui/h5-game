@@ -664,8 +664,8 @@ async function onCsSubmit() {
       activePreset.value = 0
       customAmount.value = ''
     } else if (res.code === 20066 || res.code === 90016) {
-      // 仅客服支付方式：有订单审核中时提示「订单审核中」（其它支付方式不弹此提示）。
-      showToast(t('ServerErrorCode_20066') || '订单审核中，请稍后再试')
+      // User has unfinished order: show unfinished order check dialog
+      void checkUnfinishedOrders()
     } else {
       alert(`Recharge failed: ${res.message}`)
     }

@@ -36,8 +36,8 @@ export const useWalletStore = defineStore('wallet', () => {
     const requestVersion = ++priceListRequestVersion
     const promise = postPropGoldPriceListApi({
       club_id: clubId,
-      source_type: 0,
-      gold_types: [],
+      source_type: 2,
+      gold_types: [1],
     }/*, clubId */).then((res) => {
       if (requestVersion !== priceListRequestVersion) return
 

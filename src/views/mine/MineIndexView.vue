@@ -19,13 +19,13 @@ import iconBoxSetting from '@/assets/icons/icon_box_setting.png'
 import iconShop from '@/assets/icons/icon_shop.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 import ProfileCard from '@/components/ProfileCard/ProfileCard.vue'
-import { isChannelPackageHost } from '@/utils/channelPackage'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
 import { formatUC } from '@/utils/roomVisibility'
 
 const router = useRouter()
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
-const isChannelPackage = isChannelPackageHost()
+const isChannelPackage = isPrivateDomainMode()
 
 interface BoxItem {
   key: string

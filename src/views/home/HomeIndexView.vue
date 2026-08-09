@@ -39,7 +39,7 @@ import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
 import { openBridgePanel } from '@/bridge/channels'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import { useGameStore } from '@/stores/game'
-import { isChannelPackageHost } from '@/utils/channelPackage'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
 import PokerGameList from '@/views/home/gameList.vue'
 import CasinoView from '@/views/home/CasinoView.vue'
 
@@ -106,7 +106,7 @@ const casinoStore = useCasinoStore()
 const appConfigStore = useAppConfigStore()
 const gameStore = useGameStore()
 const gameLaunchStore = useGameLaunchStore()
-const isChannelPackage = isChannelPackageHost()
+const isChannelPackage = isPrivateDomainMode()
 
 const loading = ref(false)
 const balanceVisible = ref(true)

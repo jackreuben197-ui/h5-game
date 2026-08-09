@@ -28,7 +28,7 @@ import { useWalletStore } from '@/stores/wallet'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useMainTabsStore } from '@/stores/mainTabs'
 import { setH5Visible } from '@/bridge/channels/uiChannel'
-import { isChannelPackageHost } from '@/utils/channelPackage'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
 import {
   postOrderUserRechargeNoApi,
   postRechargeGoldApi,
@@ -46,7 +46,7 @@ const route = useRoute()
 const walletStore = useWalletStore()
 const userInfoStore = useUserInfoStore()
 const tabsStore = useMainTabsStore()
-const isChannelPackage = isChannelPackageHost()
+const isChannelPackage = isPrivateDomainMode()
 
 if (isChannelPackage) {
   tabsStore.setActiveTab('wallet')
@@ -70,7 +70,15 @@ const walletClub = computed(() => {
 const walletClubId = computed(
   () => directedClubId.value ?? (Number(walletClub.value?.club_id) || undefined),
 )
-const isFixedDeposit = computed(() => walletClub.value?.deposit_switch === 2)
+const hasConfiguredPayTypes = computed(
+  () => (walletStore.goldPriceData?.pay_types?.length ?? 0) > 0,
+)
+const isFixedDeposit = computed(() => {
+  if (walletClub.value?.deposit_switch === 2) {
+    return !hasConfiguredPayTypes.value
+  }
+  return false
+})
 const isFromCocosTable = computed(() => {
   const raw = Array.isArray(route.query.from) ? route.query.from[0] : route.query.from
   return raw === 'cocos-table'

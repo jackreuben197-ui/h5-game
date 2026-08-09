@@ -120,14 +120,13 @@ export async function postPropChatPropUsedApi(
 
 // 对齐 cocos WebPropGoldPriceList.API
 export async function postPropGoldPriceListApi(
-  payload: PropGoldPriceListRequest = {} as PropGoldPriceListRequest
-  // clubId?: number
+  payload: PropGoldPriceListRequest = {} as PropGoldPriceListRequest,
+  clubId?: number,
 ): Promise<ApiResponse<PropGoldPriceListData>> {
   const endpoint = '/prop/gold/price/list'
-  // 该接口不再携带 X-Club。
-  // const headers = clubId != null ? { 'X-Club': String(clubId) } : undefined
-  // const response = await http.post<ApiResponse<PropGoldPriceListData>>(endpoint, payload, { headers })
-  const response = await http.post<ApiResponse<PropGoldPriceListData>>(endpoint, payload)
+  const xClubId = clubId ?? payload.club_id
+  const headers = xClubId != null ? { 'X-Club': String(xClubId) } : undefined
+  const response = await http.post<ApiResponse<PropGoldPriceListData>>(endpoint, payload, { headers })
   return response.data
 }
 

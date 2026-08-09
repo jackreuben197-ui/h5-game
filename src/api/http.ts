@@ -69,6 +69,9 @@ function shouldAttachXClub(url: string): boolean {
   if (/^\/?config\/online_withdraw/.test(url)) {
     return true
   }
+  if (/^\/?prop\/(?:gold|tribe_gold)\/price\/list/.test(url)) {
+    return true
+  }
   return /^\/?order\/user\/(?:withdraw|recharge_no|recharge|club_order\/cancel)\b/.test(url)
 }
 

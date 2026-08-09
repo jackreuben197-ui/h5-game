@@ -21,7 +21,7 @@ import gameTypePlo from '@/assets/icons/game_type_plo.svg'
 import tabBg from '@/assets/icons/game_type_tab_bg.png'
 import { t } from '@/i18n'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
-import { isChannelPackageHost } from '@/utils/channelPackage'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
 import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
 
 interface Props {
@@ -62,7 +62,7 @@ const gameStore = useGameStore()
 const loginModalStore = useLoginModalStore()
 const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
-const isChannelPackage = isChannelPackageHost()
+const isChannelPackage = isPrivateDomainMode()
 
 // 顶部右侧切换风格开关：和旧版保持一致。
 const activeTab = ref<GameTypeTabName>('all')

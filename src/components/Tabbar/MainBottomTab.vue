@@ -158,14 +158,16 @@ function buildTabbarPath(bumpCenterX: number): string {
   const safeLeft = Math.max(cornerRadius, bumpLeft)
   const safeRight = Math.min(width - cornerRadius, bumpRight)
 
+  // Ensure control points are strictly monotonic to prevent self-intersecting Bezier loops that spill over the screen
+  const c1x = Math.max(safeLeft, Math.min(clampedCenter, bumpLeft + sideControlOffset))
+  const c2x = Math.max(c1x, Math.min(clampedCenter, clampedCenter - apexControlOffsetX))
+  const c3x = Math.max(clampedCenter, Math.min(safeRight, clampedCenter + apexControlOffsetX))
+  const c4x = Math.max(c3x, Math.min(safeRight, bumpRight - sideControlOffset))
+
   let d = `M ${cornerRadius} ${topY}`
   d += ` L ${safeLeft} ${topY}`
-  d += ` C ${bumpLeft + sideControlOffset} ${topY}, ${
-    clampedCenter - apexControlOffsetX
-  } ${apexY}, ${clampedCenter} ${apexY}`
-  d += ` C ${clampedCenter + apexControlOffsetX} ${apexY}, ${
-    bumpRight - sideControlOffset
-  } ${topY}, ${safeRight} ${topY}`
+  d += ` C ${c1x} ${topY}, ${c2x} ${apexY}, ${clampedCenter} ${apexY}`
+  d += ` C ${c3x} ${apexY}, ${c4x} ${topY}, ${safeRight} ${topY}`
   d += ` L ${width - cornerRadius} ${topY}`
   d += ` A ${cornerRadius} ${cornerRadius} 0 0 1 ${width} ${topY + cornerRadius}`
   d += ` L ${width} ${height - cornerRadius}`

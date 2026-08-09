@@ -76,13 +76,9 @@ export function isChannelPackageHost(hostname: string = window.location.hostname
 }
 
 // A Telegram Mini App opened through a club channel is a private-domain context — the same as
-// a channel-package subdomain. Detected from the club-bearing start_param (club_<code>, a bare
-// invite code, or login_/home_<roomId>_<clubRandomId>).
+// a channel-package subdomain.
 export function isTelegramClubContext(): boolean {
-  if (!isTelegramMiniAppEnv()) {
-    return false
-  }
-  return Boolean(resolveTelegramClubInviteCode() || resolveTelegramClubRandomId())
+  return isTelegramMiniAppEnv()
 }
 
 // Private-domain mode = channel-package subdomain OR Telegram club context. This drives the

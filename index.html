@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <title>U POKER</title>
+    <link rel="preconnect" href="https://telegram.org" crossorigin />
+    <link rel="dns-prefetch" href="https://telegram.org" />
     <meta
       name="viewport"
       content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover,interactive-widget=overlays-content"
@@ -1225,6 +1227,93 @@
           return false
         }
 
+        // 全屏是异步授予的：requestFullscreen 只是请求，结果由 fullscreenChanged /
+        // fullscreenFailed 回报。瞬时失败值得重试，UNSUPPORTED 则重试无意义。
+        var FULLSCREEN_MAX_RETRY = 5
+        var fullscreenRetryCount = 0
+        var fullscreenRetryTimer = 0
+        var fullscreenUnsupported = false
+
+        function requestTelegramFullscreen(tg) {
+          if (fullscreenUnsupported) {
+            return false
+          }
+          if (typeof tg.requestFullscreen !== 'function') {
+            fullscreenUnsupported = true
+            console.warn('[telegram] requestFullscreen is unsupported, staying expanded')
+            return false
+          }
+          if (tg.isFullscreen) {
+            return true
+          }
+          try {
+            tg.requestFullscreen()
+            return true
+          } catch (error) {
+            console.warn('[telegram] requestFullscreen threw, falling back to expand:', error)
+            if (typeof tg.expand === 'function') {
+              tg.expand()
+            }
+            return false
+          }
+        }
+
+        function scheduleFullscreenRetry(tg) {
+          if (fullscreenUnsupported || fullscreenRetryCount >= FULLSCREEN_MAX_RETRY) {
+            return
+          }
+          fullscreenRetryCount += 1
+          window.clearTimeout(fullscreenRetryTimer)
+          fullscreenRetryTimer = window.setTimeout(function () {
+            requestTelegramFullscreen(tg)
+          }, 300 * fullscreenRetryCount)
+        }
+
+        // 键盘修复按 screen.height 锁死 canvas，只有真正全屏时该基准才成立，
+        // 半屏 sheet 里套用会把牌桌压变形。
+        var keyboardFixBound = false
+
+        function ensureTelegramKeyboardFix(tg) {
+          if (keyboardFixBound || !tg.isFullscreen) {
+            return
+          }
+          keyboardFixBound = true
+          setupTelegramKeyboardFix(tg)
+        }
+
+        function bindFullscreenEvents(tg) {
+          if (window.__H5_TG_FULLSCREEN_BOUND__ || typeof tg.onEvent !== 'function') {
+            return
+          }
+          window.__H5_TG_FULLSCREEN_BOUND__ = true
+
+          tg.onEvent('fullscreenFailed', function (payload) {
+            var reason = String((payload && payload.error) || '')
+            console.warn('[telegram] fullscreen request failed:', reason)
+            if (reason === 'ALREADY_FULLSCREEN') {
+              return
+            }
+            if (reason === 'UNSUPPORTED') {
+              fullscreenUnsupported = true
+              return
+            }
+            scheduleFullscreenRetry(tg)
+          })
+
+          tg.onEvent('fullscreenChanged', function () {
+            if (tg.isFullscreen) {
+              fullscreenRetryCount = 0
+              window.clearTimeout(fullscreenRetryTimer)
+              ensureTelegramKeyboardFix(tg)
+            }
+          })
+
+          // 从后台回到前台后重新拿全屏：Telegram 可能在最小化 / 恢复时把窗口退回 sheet。
+          tg.onEvent('activated', function () {
+            requestTelegramFullscreen(tg)
+          })
+        }
+
         function initTelegramWebApp() {
           if (!window.Telegram || !window.Telegram.WebApp) {
             console.warn('[telegram] sdk loaded but Telegram.WebApp is not available, continue without telegram bridge')
@@ -1248,20 +1337,13 @@
           window.dispatchEvent(new Event('h5:telegram-ready'))
 
           tg.ready()
-          var isFullscreenRequested = false
-          if (typeof tg.requestFullscreen === 'function') {
-            try {
-              tg.requestFullscreen()
-              isFullscreenRequested = true
-            } catch (error) {
-              console.warn('[telegram] requestFullscreen failed, falling back to expand:', error)
-              if (typeof tg.expand === 'function') {
-                tg.expand()
-              }
-            }
-          } else if (typeof tg.expand === 'function') {
+          // 先 expand：全屏请求是异步的，且老客户端可能完全不支持，
+          // 至少保证不停留在半屏的 bottom sheet 里。
+          if (typeof tg.expand === 'function') {
             tg.expand()
           }
+          requestTelegramFullscreen(tg)
+          bindFullscreenEvents(tg)
 
           if (typeof tg.disableVerticalSwipes === 'function') {
             tg.disableVerticalSwipes()
@@ -1272,15 +1354,13 @@
           if (typeof tg.lockOrientation === 'function') {
             tg.lockOrientation()
           }
-          // 不是全屏不需要适配安全区。
-          if (!isFullscreenRequested){
-            console.log('[telegram] not fullscreen, skip applying safe area')
-            return
-          }
 
+          // 安全区照常初始化：非全屏时 getTopControlsCompensation 返回 0，写入的值本就为空档；
+          // 而全屏是异步生效的，若此处提前 return，fullscreenChanged 将无人监听，
+          // 真正进入全屏后顶部安全区永远不会重算。
           applySafeAreaToCss(tg)
           bindSafeAreaEvents(tg)
-          setupTelegramKeyboardFix(tg)
+          ensureTelegramKeyboardFix(tg)
           syncTelegramHeaderAndBackground(tg)
 
           window.setTimeout(function () {
@@ -1343,12 +1423,15 @@
           // Telegram 对象已由宿主注入时直接初始化，无需再次请求官方脚本。
           initTelegramWebApp()
         } else if (window.__H5_TG_MINI_APP__) {
-          // Cocos Creator 预览依赖 window.onload 才启动 quick_compile。
-          // 外部 async script 在 load 前插入仍会延迟该事件，因此等页面 load 后再请求 SDK。
-          if (document.readyState === 'complete') {
-            window.setTimeout(loadTelegramWebAppSdk, 0)
-          } else {
+          // Cocos Creator 预览依赖 window.onload 才启动 quick_compile，外部 async script
+          // 在 load 前插入会推迟该事件——但仅预览（debug）需要迁就。正式包必须立即请求 SDK：
+          // 等到 load 意味着要等整个 Cocos 引擎与资源加载完，全屏请求晚到好几秒，
+          // 首次进入（缓存为空）便一直停在半屏 bottom sheet 里。
+          var isCocosPreview = !!(window._CCSettings && window._CCSettings.debug)
+          if (isCocosPreview && document.readyState !== 'complete') {
             window.addEventListener('load', loadTelegramWebAppSdk, { once: true })
+          } else {
+            loadTelegramWebAppSdk()
           }
         }
         bindCocosViewportResize()

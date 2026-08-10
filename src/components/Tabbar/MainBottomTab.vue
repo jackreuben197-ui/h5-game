@@ -266,7 +266,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <nav class="bottom-tab" :aria-label="t('UITabbar_Text')">
+  <nav class="bottom-tab" data-app-overlay :aria-label="t('UITabbar_Text')">
     <svg
       ref="svgRef"
       class="tabbar-svg"
@@ -406,13 +406,16 @@ onBeforeUnmount(() => {
   width: 9rem;
   height: 2.05rem;
   overflow: visible;
+  pointer-events: none;
 }
 
 .tabbar-svg {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100%;
-  height: 100%;
+  height: 2.05rem;
   overflow: visible;
   pointer-events: none;
   z-index: 0;
@@ -447,6 +450,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: flex-end;
   z-index: 1;
+  pointer-events: auto;
 }
 
 .tab-button {

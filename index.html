@@ -670,7 +670,7 @@
       }
 
       /* 将 Telegram 安全区留白放到业务根节点，仅在 Telegram Mini App 环境启用 */
-      html[data-tg-mini-app='1'] #app > * {
+      html[data-tg-mini-app='1'] #app > *:not([data-app-overlay]) {
         box-sizing: border-box;
         min-height: 100%;
         padding-top: var(--app-tg-guard-top);
@@ -756,7 +756,7 @@
           return Math.floor(next)
         }
 
-        function readTelegramInitDataFromLocation() {
+        function readUrlParamFromLocation(name) {
           try {
             if (!window.location || typeof URLSearchParams !== 'function') {
               return ''
@@ -767,28 +767,32 @@
             var hashQueryIndex = hash.indexOf('?')
             var hashQuery = hashQueryIndex >= 0 ? hash.slice(hashQueryIndex) : ''
 
-            var fromSearch = new URLSearchParams(search).get('tgWebAppData')
+            var fromSearch = new URLSearchParams(search).get(name)
             if (fromSearch) {
               return fromSearch
             }
 
-            var fromHash = new URLSearchParams(hashQuery).get('tgWebAppData')
+            var fromHash = new URLSearchParams(hashQuery).get(name)
             if (fromHash) {
               return fromHash
             }
 
             var hashRaw = hash.replace(/^#\/?/, '')
-            var fromHashDirect = new URLSearchParams(hashRaw).get('tgWebAppData')
+            var fromHashDirect = new URLSearchParams(hashRaw).get(name)
             if (fromHashDirect) {
               try { fromHashDirect = decodeURIComponent(fromHashDirect) } catch (e) {}
               return fromHashDirect
             }
           } catch (error) {
             if (typeof console !== 'undefined' && typeof console.warn === 'function') {
-              console.warn('[telegram] parse tgWebAppData failed:', error)
+              console.warn('[telegram] parse ' + name + ' failed:', error)
             }
           }
           return ''
+        }
+
+        function readTelegramInitDataFromLocation() {
+          return readUrlParamFromLocation('tgWebAppData')
         }
 
         function getSafeFillColor(tg) {
@@ -1175,6 +1179,9 @@
         // Mini App 判定的唯一入口：URL 与 SDK 任一给出 initData 都要落到 <html> 上，
         // data-tg-mini-app 是全部 Telegram 安全区 CSS 的开关，漏挂等于整套适配失效。
         var TG_MINI_APP_SESSION_KEY = '__H5_TG_MINI_APP__'
+        // 与 utils/channelPackage.ts 的 TG_MINI_APP_PARAM 保持一致：跨 origin 跳转时
+        // sessionStorage 不跟着走，Telegram 身份靠这个参数传递。
+        var TG_MINI_APP_PARAM = 'tg_mini_app'
 
         function enableTelegramMiniAppMode() {
           window.__H5_TG_MINI_APP__ = true
@@ -1182,8 +1189,13 @@
             document.documentElement.setAttribute('data-tg-mini-app', '1')
           }
           // 页面重载后 tgWebAppData 已不在地址里，靠会话标记保住 Mini App 模式。
+          // localStorage 兜底：copyStorageToMainDomain 会清空并换 origin，
+          // sessionStorage 未必存活，重载时 WebView 也可能已丢会话。
           try {
             window.sessionStorage.setItem(TG_MINI_APP_SESSION_KEY, '1')
+          } catch (error) {}
+          try {
+            window.localStorage.setItem(TG_MINI_APP_SESSION_KEY, '1')
           } catch (error) {}
         }
 
@@ -1200,6 +1212,12 @@
         function restoreTelegramMiniAppMode() {
           try {
             if (window.sessionStorage.getItem(TG_MINI_APP_SESSION_KEY) === '1') {
+              enableTelegramMiniAppMode()
+              return true
+            }
+          } catch (error) {}
+          try {
+            if (window.localStorage.getItem(TG_MINI_APP_SESSION_KEY) === '1') {
               enableTelegramMiniAppMode()
               return true
             }
@@ -1275,6 +1293,9 @@
 
         function initH5TelegramEnvironment() {
           restoreTelegramMiniAppMode()
+          if (readUrlParamFromLocation(TG_MINI_APP_PARAM) === '1') {
+            enableTelegramMiniAppMode()
+          }
           markTelegramMiniApp(readTelegramInitDataFromLocation())
 
           // 同 initTelegramWebApp：仅凭 Telegram.WebApp 存在不足以判定 Mini App，需有非空 initData。

@@ -12,6 +12,8 @@ import {
 // 故「生成链接」与「识别链接」天然一致，不依赖后端 API 域名 / config.json，自动适配每日轮换域名与独立测试域名。
 const DEPLOY_APEX_LABEL_COUNT = 3
 const RESERVED_SUBDOMAINS = new Set(['www'])
+// 与 index.html 的 TG_MINI_APP_PARAM 保持一致。
+const TG_MINI_APP_PARAM = 'tg_mini_app'
 
 function getHostLabels(hostname: string): string[] {
   return readString(hostname).toLowerCase().split('.').filter(Boolean)
@@ -89,6 +91,25 @@ export function isPrivateDomainMode(hostname: string = window.location.hostname)
   return isChannelPackageHost(hostname) || isTelegramClubContext()
 }
 
+// 跳主域名会换 origin：sessionStorage 里的 Mini App 标记随之丢失，新地址里也不再有
+// tgWebAppData，于是 Telegram 环境「消失」——底部导航、安全区适配、initData 兜底登录全部失效。
+// 与 storage_data 同理，把 Telegram 身份一并带到目标地址，由 index.html 在新 origin 上还原。
+function collectTelegramHandoffParams(): URLSearchParams {
+  const params = new URLSearchParams()
+  if (!isTelegramMiniAppEnv()) {
+    return params
+  }
+
+  params.set(TG_MINI_APP_PARAM, '1')
+  const initData = String(
+    window.__H5_TG_INIT_DATA__ || window.Telegram?.WebApp?.initData || '',
+  ).trim()
+  if (initData) {
+    params.set('tgWebAppData', initData)
+  }
+  return params
+}
+
 /**
  * 将 localStorage 中的数据拷贝到主域名。
  * 通过主域名的 URL 参数传递数据，主域名页面读取后写入自己的 storage。
@@ -112,20 +133,18 @@ export function copyStorageToMainDomain(): void {
   // 与 buildChannelClubInviteUrl 一致：保留端口，否则本地 / 非 80 端口部署会跳到打不开的地址。
   const portSuffix = currentUrl.port ? `:${currentUrl.port}` : ''
   const targetUrl = `${currentUrl.protocol}//${getChannelMainDomain()}${portSuffix}/#/`
+  const params = collectTelegramHandoffParams()
   // 将数据编码到 URL 参数中
   if (Object.keys(items).length > 0) {
     try {
-      const encodedData = btoa(encodeURIComponent(JSON.stringify(items)))
-      const separator = targetUrl.includes('?') ? '&' : '?'
-      const url = `${targetUrl}${separator}storage_data=${encodeURIComponent(encodedData)}`
-      window.location.href = url
+      params.set('storage_data', btoa(encodeURIComponent(JSON.stringify(items))))
     } catch (error) {
       console.warn('[channelPackage] failed to encode storage data:', error)
-      window.location.href = targetUrl
     }
-  } else {
-    window.location.href = targetUrl
   }
+
+  const query = params.toString()
+  window.location.href = query ? `${targetUrl}?${query}` : targetUrl
 }
 
 /**

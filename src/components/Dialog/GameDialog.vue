@@ -245,6 +245,11 @@ const bodyStyles = computed<StyleValue>(() => [
   padding: 0.5rem;
   box-sizing: border-box;
   gap: 0.32rem;
+
+  @include theme-light-own {
+    @include light-panel($radius: 0.485rem);
+    background-image: none !important;
+  }
 }
 
 .game-dialog__card-bg-gradient,
@@ -256,11 +261,10 @@ const bodyStyles = computed<StyleValue>(() => [
   backdrop-filter: blur(0.18rem);
   -webkit-backdrop-filter: blur(0.18rem);
   pointer-events: none;
-}
 
-.game-dialog__card--dark .game-dialog__card-bg-gradient,
-.game-dialog__card--dark .game-dialog__card-bg-shadow {
-  background: rgba(6, 7, 10, 0.65);
+  @include theme-light-own {
+    display: none !important;
+  }
 }
 
 .game-dialog__card-bg {
@@ -296,6 +300,10 @@ const bodyStyles = computed<StyleValue>(() => [
     inset -0.5px -0.5px 0 0 rgba(255, 255, 255, 0.85),
     inset -2px -2px 0 -2px rgba(255, 255, 255, 0.3);
   pointer-events: none;
+
+  @include theme-light-own {
+    display: none !important;
+  }
 }
 
 .game-dialog__title {
@@ -307,6 +315,10 @@ const bodyStyles = computed<StyleValue>(() => [
   text-align: center;
   line-height: 1.3;
   font-family: 'HONOR Sans CN', sans-serif;
+
+  @include theme-light-own {
+    color: #ffffff !important;
+  }
 }
 
 .game-dialog__body {
@@ -322,6 +334,10 @@ const bodyStyles = computed<StyleValue>(() => [
   text-align: center;
   line-height: 1.6;
   font-family: 'HONOR Sans CN', sans-serif;
+
+  @include theme-light-own {
+    color: #ffffff !important;
+  }
 
   &::-webkit-scrollbar {
     display: none;
@@ -343,6 +359,10 @@ const bodyStyles = computed<StyleValue>(() => [
 
 .game-dialog__message {
   display: block;
+
+  @include theme-light-own {
+    color: #ffffff !important;
+  }
 }
 
 .game-dialog__footer {

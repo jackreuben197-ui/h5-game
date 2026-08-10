@@ -164,6 +164,11 @@ const payPrice = computed(() =>
   pointer-events: none;
   z-index: 1;
 
+  @include theme-light-own {
+    background: rgba(135, 134, 134, 0.032) !important;
+    backdrop-filter: blur(0.58px) !important;
+    -webkit-backdrop-filter: blur(0.58px) !important;
+  }
 }
 
 .card::before {

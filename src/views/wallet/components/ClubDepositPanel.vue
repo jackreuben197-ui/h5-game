@@ -280,7 +280,7 @@ function onSuccessConfirm(): void {
   color: #f9f9f9;
 
   @include theme-light-own {
-    color: var(--wallet-l-text);
+    color: #ffffff !important;
   }
 }
 
@@ -289,7 +289,7 @@ function onSuccessConfirm(): void {
   color: rgba(249, 249, 249, 0.7);
 
   @include theme-light-own {
-    color: var(--wallet-l-text-muted);
+    color: rgba(255, 255, 255, 0.85) !important;
   }
 }
 </style>

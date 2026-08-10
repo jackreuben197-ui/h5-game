@@ -46,10 +46,22 @@ async function openChat() {
         supportUserId: channel.support_user_id || 0,
         clubId: channel.club_id,
       }
-      csChatOpen.value = true
+    } else {
+      csChatProps.value = {
+        tribeId: 0,
+        supportUserId: 0,
+        clubId: undefined,
+      }
     }
   } catch (e) {
     console.error('[GlobalCsOrderFloat] open chat failed', e)
+    csChatProps.value = {
+      tribeId: 0,
+      supportUserId: 0,
+      clubId: undefined,
+    }
+  } finally {
+    csChatOpen.value = true
   }
 }
 

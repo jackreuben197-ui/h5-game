@@ -170,10 +170,21 @@ export const useWalletStore = defineStore('wallet', () => {
       }, clubId, { suppressBusinessToast: true })
 
       if (rechargeRes.code === 0 && rechargeRes.data?.list) {
-        pendingCsRechargeOrders.value = rechargeRes.data.list.filter(o => {
+        pendingCsRechargeOrders.value = rechargeRes.data.list.filter((o) => {
           if (Number(o.status) !== 1) return false
-          const ot = Number((o as any).pay_api_type ?? (o as any).pay_type ?? (o as any).api_type ?? (o as any).type)
-          return ot === 3 || o.pay_type_name?.includes('撮合')
+          const ot = Number(
+            (o as any).pay_api_type ??
+              (o as any).pay_type ??
+              (o as any).api_type ??
+              (o as any).type,
+          )
+          return (
+            ot === 3 ||
+            o.pay_type_name?.includes('撮合') ||
+            o.pay_type_name?.includes('客服') ||
+            o.pay_type_name?.toLowerCase().includes('cs') ||
+            o.pay_type_name?.toLowerCase().includes('service')
+          )
         })
       } else {
         pendingCsRechargeOrders.value = []
@@ -189,14 +200,27 @@ export const useWalletStore = defineStore('wallet', () => {
       }, clubId, { suppressBusinessToast: true })
 
       if (withdrawRes.code === 0 && withdrawRes.data?.list) {
-        pendingCsWithdrawOrders.value = withdrawRes.data.list.filter(o => {
+        pendingCsWithdrawOrders.value = withdrawRes.data.list.filter((o) => {
           // 客服渠道提现进聊天（account_type 0：usdt提现 type1 / 撮合提现 type3）；
           // 银行卡渠道(account_type 1)走在线流程，不进聊天。
           if (Number(o.status) !== 1) return false
           const acct = Number((o as any).account_type)
           if (acct === 1) return false
-          const ot = Number((o as any).pay_api_type ?? (o as any).pay_type ?? (o as any).api_type ?? (o as any).type)
-          return acct === 0 || ot === 1 || ot === 3 || o.pay_type_name?.includes('撮合')
+          const ot = Number(
+            (o as any).pay_api_type ??
+              (o as any).pay_type ??
+              (o as any).api_type ??
+              (o as any).type,
+          )
+          return (
+            acct === 0 ||
+            ot === 1 ||
+            ot === 3 ||
+            o.pay_type_name?.includes('撮合') ||
+            o.pay_type_name?.includes('客服') ||
+            o.pay_type_name?.toLowerCase().includes('cs') ||
+            o.pay_type_name?.toLowerCase().includes('service')
+          )
         })
       } else {
         pendingCsWithdrawOrders.value = []

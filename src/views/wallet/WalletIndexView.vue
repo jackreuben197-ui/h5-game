@@ -309,27 +309,26 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
 
   // 用 pay_id / pay_type_name 匹配真实支付类型：未完成 USDT 订单「继续支付」回到 USDT 弹窗，而非在线支付弹窗。
   const orderType = resolveOrderPayType(order)
-  if (orderType === 3 || (order as any).pay_type_name?.includes('撮合')) {
-    try {
-      const channelRes = await postChatSupportChannelListApi({
-        im_service_types: [4],
-        limit: 1,
-        offset: 0,
-      })
-
-      if (channelRes.code === 0 && channelRes.data?.list?.length) {
-        await refreshPendingCsOrder()
-        openCsOrderChat()
-      } else {
-        // Fallback to USDT details if no chat channel found
-        usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
-        usdtDetailsPopupOpen.value = true
-      }
-    } catch (e) {
-      console.error('Failed to fetch chat channel for unfinished order', e)
-      usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
-      usdtDetailsPopupOpen.value = true
-    }
+  if (
+    orderType === 3 ||
+    (order as any).pay_type_name?.includes('撮合') ||
+    (order as any).pay_type_name?.includes('客服') ||
+    (order as any).pay_type_name?.toLowerCase().includes('cs') ||
+    (order as any).pay_type_name?.toLowerCase().includes('service')
+  ) {
+    walletStore.addOptimisticCsOrder(
+      {
+        order_no: String(order.order_no),
+        gold_num: Number(order.gold_num) || 0,
+        pay_price: Number(order.pay_price) || 0,
+        pay_type_name: String(order.pay_type_name ?? '客服撮合'),
+        create_time: String(order.create_time ?? ''),
+        account_type: 0,
+      } as ClubFundOrderListOrderInfo,
+      Number((order as any).order_type) === 2 ? 'withdraw' : 'recharge',
+    )
+    await refreshPendingCsOrder()
+    openCsOrderChat()
   } else if (orderType === 1) {
     // Standard USDT flow
     usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
@@ -649,25 +648,24 @@ async function onCsSubmit() {
     if (res.code === 0 && res.data) {
       rechargeResult.value = res.data
 
-      try {
-        const channelRes = await postChatSupportChannelListApi({
-          im_service_types: [4],
-          limit: 1,
-          offset: 0,
-        })
+      walletStore.addOptimisticCsOrder(
+        {
+          order_no: String(res.data.order_no || res.data.order?.order_no || ''),
+          gold_num: Number(res.data.gold_num || res.data.amount || goldCount) || 0,
+          pay_price: Number(res.data.pay_price || apiPayPrice) || 0,
+          pay_type_name: String(res.data.usdt_address?.name || selectedPayType.name || '客服撮合'),
+          create_time: String(res.data.create_time || ''),
+          account_type: 0,
+        } as ClubFundOrderListOrderInfo,
+        'recharge',
+      )
 
-        if (channelRes.code === 0 && channelRes.data?.list?.length) {
-          await refreshPendingCsOrder()
-          openCsOrderChat()
-        } else {
-          rechargeResult.value = res.data
-          usdtDetailsPopupOpen.value = true
-        }
+      try {
+        await refreshPendingCsOrder()
       } catch (chatError) {
-        console.error('Failed to fetch chat channel', chatError)
-        rechargeResult.value = res.data
-        usdtDetailsPopupOpen.value = true
+        console.error('Failed to refresh pending CS order', chatError)
       }
+      openCsOrderChat()
 
       activePreset.value = 0
       customAmount.value = ''

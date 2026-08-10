@@ -6,7 +6,7 @@ import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { getLocale, toServerLang } from '@/i18n'
 import { isTelegramMiniAppEnv } from '@/utils/environment'
-import { isChannelPackageHost } from '@/utils/channelPackage'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
 import { readLobbyBannerListCache, writeLobbyBannerListCache } from '@/utils/lobbyBannerCache'
 
 // /config/before/login/config 聚合项：8 = banner 列表。
@@ -71,15 +71,54 @@ function filterLobbyBannerUrls(
   displayScene: number,
   scope: CmsBannerScope,
 ): string[] {
-  const visible = records.filter(
-    (item) =>
-      item?.lang === lang &&
-      Number(item?.status) === BANNER_STATUS_ENABLED &&
-      Number(item?.banner_type) === LOBBY_BANNER_TYPE &&
-      (item?.display_scene == null ||
-        Number(item.display_scene) <= 0 ||
-        Number(item.display_scene) === displayScene),
+  const isEnabledLobbyBanner = (item: MiscBannerListBannerInfo) =>
+    item?.lang === lang &&
+    Number(item?.status) === BANNER_STATUS_ENABLED &&
+    Number(item?.banner_type) === LOBBY_BANNER_TYPE
+
+  const matchesScene = (item: MiscBannerListBannerInfo, scene: number) =>
+    item?.display_scene == null ||
+    Number(item.display_scene) <= 0 ||
+    Number(item.display_scene) === scene
+
+  if (scope.type === 'channel-club') {
+    // 1. 优先查当前场景（如 Telegram 场景 2）下该渠道俱乐部的 banner
+    const channelClubScene = records.filter(
+      (item) =>
+        isEnabledLobbyBanner(item) &&
+        Number(item.club_id) === scope.clubId &&
+        matchesScene(item, displayScene),
+    )
+    if (channelClubScene.length) {
+      return channelClubScene
+        .map((item) => (typeof item.image_url === 'string' ? item.image_url.trim() : ''))
+        .filter((url) => !!url)
+    }
+
+    // 2. 若 Telegram 场景下该渠道俱乐部未单独配置，则回退到该渠道俱乐部的 H5 场景 banner（如 CMS 中配置的 H5 日落图）
+    if (displayScene !== DISPLAY_SCENE_H5) {
+      const channelClubH5 = records.filter(
+        (item) =>
+          isEnabledLobbyBanner(item) &&
+          Number(item.club_id) === scope.clubId &&
+          matchesScene(item, DISPLAY_SCENE_H5),
+      )
+      if (channelClubH5.length) {
+        return channelClubH5
+          .map((item) => (typeof item.image_url === 'string' ? item.image_url.trim() : ''))
+          .filter((url) => !!url)
+      }
+    }
+  }
+
+  let visible = records.filter(
+    (item) => isEnabledLobbyBanner(item) && matchesScene(item, displayScene),
   )
+  if (!visible.length && displayScene !== DISPLAY_SCENE_H5) {
+    visible = records.filter(
+      (item) => isEnabledLobbyBanner(item) && matchesScene(item, DISPLAY_SCENE_H5),
+    )
+  }
   const clubOwned = visible.filter((item) => Number(item?.club_id) > 0)
   const platformOwned = visible.filter((item) => Number(item?.club_id) === 0)
   let selected = platformOwned
@@ -112,26 +151,30 @@ async function fetchSceneBannerUrls(
       limit: 50,
       offset: 0,
     })
-    if (Number(response.code) !== 0 || !response.data) {
-      return []
+    if (Number(response.code) === 0 && response.data) {
+      const data = response.data as Record<string, unknown>
+      const inner = data.data as Record<string, unknown> | null | undefined
+      const rawList = Array.isArray(data.list) ? data.list : inner?.list
+      const records = Array.isArray(rawList) ? (rawList as MiscBannerListBannerInfo[]) : []
+
+      const urls = records
+        .filter(
+          (item) =>
+            (item?.status === undefined || Number(item.status) === BANNER_STATUS_ENABLED) &&
+            Number(item?.club_id) === clubId,
+        )
+        .map((item) => (typeof item?.image_url === 'string' ? item.image_url.trim() : ''))
+        .filter((url) => !!url)
+
+      if (urls.length) return urls
     }
 
-    // 兼容 list 挂在 data 顶层或 data.data 内层两种返回结构。
-    const data = response.data as Record<string, unknown>
-    const inner = data.data as Record<string, unknown> | null | undefined
-    const rawList = Array.isArray(data.list) ? data.list : inner?.list
-    const records = Array.isArray(rawList) ? (rawList as MiscBannerListBannerInfo[]) : []
+    // Fallback to H5 display scene if Telegram scene returned no banners for the club
+    if (displayScene !== DISPLAY_SCENE_H5) {
+      return fetchSceneBannerUrls(lang, DISPLAY_SCENE_H5, clubId)
+    }
 
-    // lang / type / display_scene 已由服务端过滤；客户端再次校验 club_id，
-    // 避免服务端用平台 banner 兜底后被误认为俱乐部配置。
-    return records
-      .filter(
-        (item) =>
-          (item?.status === undefined || Number(item.status) === BANNER_STATUS_ENABLED) &&
-          Number(item?.club_id) === clubId,
-      )
-      .map((item) => (typeof item?.image_url === 'string' ? item.image_url.trim() : ''))
-      .filter((url) => !!url)
+    return []
   } catch {
     return []
   }
@@ -177,7 +220,7 @@ export function useLobbyBannerImages(): {
     ? DISPLAY_SCENE_TELEGRAM
     : DISPLAY_SCENE_H5
   const initialUserInfoStore = useUserInfoStore()
-  const initialIsChannelPackage = isChannelPackageHost()
+  const initialIsChannelPackage = isPrivateDomainMode()
   const initialChannelClubId = initialIsChannelPackage
     ? Math.floor(
         Number(
@@ -206,7 +249,7 @@ export function useLobbyBannerImages(): {
     const displayScene = isTelegramMiniAppEnv() ? DISPLAY_SCENE_TELEGRAM : DISPLAY_SCENE_H5
 
     const userInfoStore = useUserInfoStore()
-    const isChannelPackage = isChannelPackageHost()
+    const isChannelPackage = isPrivateDomainMode()
     let channelClubId = 0
     if (isChannelPackage) {
       const channelClub = await userInfoStore.ensureChannelDefaultClub()
@@ -271,3 +314,4 @@ export function useLobbyBannerImages(): {
 
   return { bannerImages, fetchLobbyBannerImages }
 }
+

@@ -12,6 +12,7 @@ import {
   postOrgClubApplyTribeListApi,
   postOrgClubCancleJoinTribeApi,
   postOrgMemberListApi,
+  postOrgClubUserInfoApi,
 } from '@/api/org'
 import type {
   OrgChangeClubDataRequest,
@@ -32,6 +33,7 @@ import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
 import {
+  buildChannelAgentInviteUrl,
   buildChannelClubInviteUrl,
   buildChannelRegisterUrl,
   isChannelPackageHost,
@@ -68,6 +70,7 @@ const router = useRouter()
 const userInfoStore = useUserInfoStore()
 
 const imgInviteQr = ref('')
+const agentInviteCode = ref('')
 
 const loading = ref(false)
 const clubDetail = ref<OrgClubSearchByIdResponseData | null>(null)
@@ -932,12 +935,18 @@ async function confirmDeleteClub(): Promise<void> {
 }
 
 async function generateInviteQrCode(): Promise<void> {
-  const inviteCode = String(userInfoStore.currentClub?.invitation_code || '').trim()
-  const finalLink = isChannelPackage
-    ? buildChannelClubInviteUrl()
-    : buildChannelRegisterUrl({ inviteCode })
+  const clubInviteCode = String(displayClub.value?.invitation_code || '').trim()
+  const finalLink = isAgent.value
+    ? buildChannelAgentInviteUrl(agentInviteCode.value, clubInviteCode)
+    : isChannelPackage
+      ? buildChannelClubInviteUrl(clubInviteCode)
+      : buildChannelRegisterUrl({ inviteCode: clubInviteCode })
 
-  if (!finalLink || (!isChannelPackage && !inviteCode)) {
+  if (
+    !finalLink ||
+    !clubInviteCode ||
+    (isAgent.value && !agentInviteCode.value)
+  ) {
     imgInviteQr.value = ''
     return
   }
@@ -949,8 +958,41 @@ async function generateInviteQrCode(): Promise<void> {
   }
 }
 
+async function fetchAgentInviteCode(): Promise<void> {
+  agentInviteCode.value = ''
+  if (!isAgent.value) {
+    return
+  }
+
+  const currentClub = displayClub.value
+  const clubId = Number(currentClub?.club_id || 0)
+  const userId = Number(currentClub?.user_id ?? userInfoStore.userInfo?.user?.id ?? 0)
+  if (!clubId) {
+    return
+  }
+
+  try {
+    const response = await postOrgClubUserInfoApi({
+      club_id: clubId,
+      user_id: Number.isFinite(userId) && userId > 0 ? userId : undefined,
+    })
+
+    if (Number(response.code) !== 0 || !response.data) {
+      console.error('fetchAgentInviteCode API error', response.msg)
+      return
+    }
+
+    agentInviteCode.value = String(
+      response.data.invite_code || response.data.invitation_code || '',
+    ).trim()
+  } catch (error) {
+    console.error('fetchAgentInviteCode error', error)
+  }
+}
+
 onMounted(async () => {
   await refreshClubDetail()
+  await fetchAgentInviteCode()
   await generateInviteQrCode()
 })
 </script>
@@ -964,185 +1006,192 @@ onMounted(async () => {
       <HeaderBack :title="t('UIClub_ClubManager')" />
 
       <div v-loading="loading" class="club-detail">
-      <section class="club-header-card">
-        <div class="club-header-main">
-          <ImageUploadSheet
-            v-if="isFounder"
-            v-model="clubAvatarUrl"
-            @update:model-value="onClubAvatarUploaded"
-            @error="onClubAvatarUploadError"
-          >
-            <template #default="{ open, imageUrl, uploading }">
-              <button
-                type="button"
-                class="club-avatar-trigger"
-                :disabled="savingClubLogo || uploading"
-                :aria-label="t('UIClub_ClubAvatar3')"
-                @click="open"
-              >
-                <img
-                  class="club-avatar"
-                  :src="imageUrl || imgClubCover"
-                  :alt="t('UIClub_ClubAvatar2')"
-                />
-                <span class="club-avatar-edit" aria-hidden="true">+</span>
-              </button>
-            </template>
-          </ImageUploadSheet>
-          <img
-            v-else
-            class="club-avatar"
-            :src="displayClub?.logo || imgClubCover"
-            :alt="t('UIClub_ClubAvatar2')"
-          />
-
-          <div class="club-summary">
-            <button type="button" class="club-name-edit">
-              <h1 class="club-name">{{ displayClub?.club_name || t('UIClub_Creat_2LvGNmS7') }}</h1>
-              <span
-                v-if="isFounder"
-                class="name-edit-icon"
-                aria-hidden="true"
-                @click="goEditName"
-              ></span>
-            </button>
-            <p class="club-id-row">
-              <span class="id-tag">ID</span>
-              <span class="id-text">{{ displayClub?.random_id || '--' }}</span>
-            </p>
-
-            <p class="metric-line">
-              <img :src="imgChips" alt="" aria-hidden="true" />
-              <span>{{ formatUC(currentClubGold) }}</span>
-            </p>
-            <p class="metric-line">
-              <img :src="imgBalance" alt="" aria-hidden="true" />
-              <span>{{ formatUC(currentClubCredit) }}</span>
-            </p>
-          </div>
-        </div>
-
-        <div class="club-size-pill" :aria-label="t('UIGuild_Member')">
-          <span class="size-text"> {{ clubMemberCount }}/{{ displayClub?.upper_limit }} </span>
-          <svg class="club-size-icon" viewBox="0 0 17 13" role="img" :aria-label="t('UIClub_Info_abuZSLsS')">
-            <path
-              d="M8.5 0c1.525 0 2.763 1.306 2.763 2.914S10.025 5.828 8.5 5.828 5.738 4.522 5.738 2.914 6.975 0 8.5 0ZM2.55 2.017c1.057 0 1.913.902 1.913 2.017S3.607 6.052 2.55 6.052.638 5.15.638 4.034s.855-2.017 1.912-2.017ZM0 11.207c0-1.981 1.522-3.586 3.4-3.586.34 0 .67.053.98.151-.874 1.031-1.405 2.392-1.405 3.883v.448c0 .32.064.622.178.897H.85a.87.87 0 0 1-.85-.897v-.896ZM13.847 13c.114-.275.178-.578.178-.897v-.448c0-1.49-.531-2.852-1.405-3.883.31-.098.64-.151.98-.151 1.878 0 3.4 1.605 3.4 3.586v.896a.87.87 0 0 1-.85.897h-2.303Zm-1.31-8.966c0-1.115.856-2.017 1.913-2.017s1.913.902 1.913 2.017-.856 2.018-1.913 2.018-1.913-.902-1.913-2.018ZM4.25 11.655c0-2.477 1.902-4.483 4.25-4.483s4.25 2.006 4.25 4.483v.448a.87.87 0 0 1-.85.897H5.1a.87.87 0 0 1-.85-.897v-.448Z"
-              fill="currentColor"
+        <section class="club-header-card">
+          <div class="club-header-main">
+            <ImageUploadSheet
+              v-if="isFounder"
+              v-model="clubAvatarUrl"
+              @update:model-value="onClubAvatarUploaded"
+              @error="onClubAvatarUploadError"
+            >
+              <template #default="{ open, imageUrl, uploading }">
+                <button
+                  type="button"
+                  class="club-avatar-trigger"
+                  :disabled="savingClubLogo || uploading"
+                  :aria-label="t('UIClub_ClubAvatar3')"
+                  @click="open"
+                >
+                  <img
+                    class="club-avatar"
+                    :src="imageUrl || imgClubCover"
+                    :alt="t('UIClub_ClubAvatar2')"
+                  />
+                  <span class="club-avatar-edit" aria-hidden="true">+</span>
+                </button>
+              </template>
+            </ImageUploadSheet>
+            <img
+              v-else
+              class="club-avatar"
+              :src="displayClub?.logo || imgClubCover"
+              :alt="t('UIClub_ClubAvatar2')"
             />
-          </svg>
-        </div>
-      </section>
 
-      <section v-if="quickActions.length > 0" class="quick-actions">
-        <button
-          v-for="item in quickActions"
-          :key="item.id"
-          type="button"
-          class="quick-card"
-          @click="onQuickAction(item.id)"
-        >
-          <span class="quick-image-wrap">
-            <img :src="item.cover" :alt="item.title" />
-          </span>
-          <span class="quick-title">{{ item.title }}</span>
-        </button>
-      </section>
+            <div class="club-summary">
+              <button type="button" class="club-name-edit">
+                <h1 class="club-name">
+                  {{ displayClub?.club_name || t('UIClub_Creat_2LvGNmS7') }}
+                </h1>
+                <span
+                  v-if="isFounder"
+                  class="name-edit-icon"
+                  aria-hidden="true"
+                  @click="goEditName"
+                ></span>
+              </button>
+              <p class="club-id-row">
+                <span class="id-tag">ID</span>
+                <span class="id-text">{{ displayClub?.random_id || '--' }}</span>
+              </p>
 
-      <section class="intro-card">
-        <span>{{ t('UIClub_Creat_ZizEgnjo') }}</span>
-        <button
-          v-if="isFounder"
-          type="button"
-          class="intro-edit"
-          :aria-label="t('UIClub_EditClubDescri')"
-          @click="goEditDescription"
-        >
-          <span class="edit-pen"></span>
-        </button>
-      </section>
-
-      <section class="settings-card">
-        <button
-          v-for="item in settings"
-          :key="item.id"
-          type="button"
-          class="settings-row"
-          :class="[
-            `settings-row--${item.kind}`,
-            {
-              'settings-row--clickable':
-                item.kind === 'arrow' ||
-                item.kind === 'level' ||
-                item.kind === 'copy' ||
-                (item.kind === 'tribe' && (!hasTribe || tribeApplying)),
-            },
-          ]"
-          @click="onSettingClick(item)"
-        >
-          <div class="label-wrap">
-            <span>{{ item.label }}</span>
-            <span v-if="item.kind === 'copy'" class="info-dot">i</span>
+              <p class="metric-line">
+                <img :src="imgChips" alt="" aria-hidden="true" />
+                <span>{{ formatUC(currentClubGold) }}</span>
+              </p>
+              <p class="metric-line">
+                <img :src="imgBalance" alt="" aria-hidden="true" />
+                <span>{{ formatUC(currentClubCredit) }}</span>
+              </p>
+            </div>
           </div>
 
-          <div class="right-wrap">
-            <template v-if="item.kind === 'founder'">
-              <span class="muted-text">{{ item.value }}</span>
-              <img
-                class="mini-avatar"
-                :src="displayClub?.club_creator_avatar || imgClubCover"
-                :alt="t('UIClub_FounderAvatar')"
+          <div class="club-size-pill" :aria-label="t('UIGuild_Member')">
+            <span class="size-text"> {{ clubMemberCount }}/{{ displayClub?.upper_limit }} </span>
+            <svg
+              class="club-size-icon"
+              viewBox="0 0 17 13"
+              role="img"
+              :aria-label="t('UIClub_Info_abuZSLsS')"
+            >
+              <path
+                d="M8.5 0c1.525 0 2.763 1.306 2.763 2.914S10.025 5.828 8.5 5.828 5.738 4.522 5.738 2.914 6.975 0 8.5 0ZM2.55 2.017c1.057 0 1.913.902 1.913 2.017S3.607 6.052 2.55 6.052.638 5.15.638 4.034s.855-2.017 1.912-2.017ZM0 11.207c0-1.981 1.522-3.586 3.4-3.586.34 0 .67.053.98.151-.874 1.031-1.405 2.392-1.405 3.883v.448c0 .32.064.622.178.897H.85a.87.87 0 0 1-.85-.897v-.896ZM13.847 13c.114-.275.178-.578.178-.897v-.448c0-1.49-.531-2.852-1.405-3.883.31-.098.64-.151.98-.151 1.878 0 3.4 1.605 3.4 3.586v.896a.87.87 0 0 1-.85.897h-2.303Zm-1.31-8.966c0-1.115.856-2.017 1.913-2.017s1.913.902 1.913 2.017-.856 2.018-1.913 2.018-1.913-.902-1.913-2.018ZM4.25 11.655c0-2.477 1.902-4.483 4.25-4.483s4.25 2.006 4.25 4.483v.448a.87.87 0 0 1-.85.897H5.1a.87.87 0 0 1-.85-.897v-.448Z"
+                fill="currentColor"
               />
-            </template>
+            </svg>
+          </div>
+        </section>
 
-            <template v-else-if="item.kind === 'text'">
-              <span class="muted-text">{{ item.value }}</span>
-            </template>
+        <section v-if="quickActions.length > 0" class="quick-actions">
+          <button
+            v-for="item in quickActions"
+            :key="item.id"
+            type="button"
+            class="quick-card"
+            @click="onQuickAction(item.id)"
+          >
+            <span class="quick-image-wrap">
+              <img :src="item.cover" :alt="item.title" />
+            </span>
+            <span class="quick-title">{{ item.title }}</span>
+          </button>
+        </section>
 
-            <template v-else-if="item.kind === 'tribe'">
-              <template v-if="hasTribe">
+        <section class="intro-card">
+          <span>{{ t('UIClub_Creat_ZizEgnjo') }}</span>
+          <button
+            v-if="isFounder"
+            type="button"
+            class="intro-edit"
+            :aria-label="t('UIClub_EditClubDescri')"
+            @click="goEditDescription"
+          >
+            <span class="edit-pen"></span>
+          </button>
+        </section>
+
+        <section class="settings-card">
+          <button
+            v-for="item in settings"
+            :key="item.id"
+            type="button"
+            class="settings-row"
+            :class="[
+              `settings-row--${item.kind}`,
+              {
+                'settings-row--clickable':
+                  item.kind === 'arrow' ||
+                  item.kind === 'level' ||
+                  item.kind === 'copy' ||
+                  (item.kind === 'tribe' && (!hasTribe || tribeApplying)),
+              },
+            ]"
+            @click="onSettingClick(item)"
+          >
+            <div class="label-wrap">
+              <span>{{ item.label }}</span>
+              <span v-if="item.kind === 'copy'" class="info-dot">i</span>
+            </div>
+
+            <div class="right-wrap">
+              <template v-if="item.kind === 'founder'">
+                <span class="muted-text">{{ item.value }}</span>
+                <img
+                  class="mini-avatar"
+                  :src="displayClub?.club_creator_avatar || imgClubCover"
+                  :alt="t('UIClub_FounderAvatar')"
+                />
+              </template>
+
+              <template v-else-if="item.kind === 'text'">
                 <span class="muted-text">{{ item.value }}</span>
               </template>
-              <template v-else>
-                <button
-                  v-if="isFounder"
-                  type="button"
-                  class="tribe-apply-btn"
-                  :class="{ 'tribe-apply-btn--pending': tribeApplying }"
-                  :disabled="tribeApplyStatusLoading"
-                  @click.stop="onTribeAction"
-                >
-                  {{ tribeApplying ? t('UIApplying') : t('UIGuild_ApplyJoin') }}
-                </button>
-                <span v-else class="muted-text">--</span>
+
+              <template v-else-if="item.kind === 'tribe'">
+                <template v-if="hasTribe">
+                  <span class="muted-text">{{ item.value }}</span>
+                </template>
+                <template v-else>
+                  <button
+                    v-if="isFounder"
+                    type="button"
+                    class="tribe-apply-btn"
+                    :class="{ 'tribe-apply-btn--pending': tribeApplying }"
+                    :disabled="tribeApplyStatusLoading"
+                    @click.stop="onTribeAction"
+                  >
+                    {{ tribeApplying ? t('UIApplying') : t('UIGuild_ApplyJoin') }}
+                  </button>
+                  <span v-else class="muted-text">--</span>
+                </template>
               </template>
-            </template>
 
-            <template v-else-if="item.kind === 'level'">
-              <span class="level-pill">{{ item.value }}</span>
-              <span class="chevron" aria-hidden="true"></span>
-            </template>
+              <template v-else-if="item.kind === 'level'">
+                <span class="level-pill">{{ item.value }}</span>
+                <span class="chevron" aria-hidden="true"></span>
+              </template>
 
-            <template v-else-if="item.kind === 'switch' && item.switchKey">
-              <button
-                type="button"
-                class="switch"
-                :class="{
-                  'switch--on':
-                    item.switchKey === 'allowSearch' ? allowSearch : joinWithoutApproval,
-                }"
-                :aria-label="item.label"
-                @click.stop="toggleSwitch(item.switchKey)"
-              >
-                <span class="switch-knob"></span>
-              </button>
-            </template>
+              <template v-else-if="item.kind === 'switch' && item.switchKey">
+                <button
+                  type="button"
+                  class="switch"
+                  :class="{
+                    'switch--on':
+                      item.switchKey === 'allowSearch' ? allowSearch : joinWithoutApproval,
+                  }"
+                  :aria-label="item.label"
+                  @click.stop="toggleSwitch(item.switchKey)"
+                >
+                  <span class="switch-knob"></span>
+                </button>
+              </template>
 
-            <template v-else>
-              <span class="chevron" aria-hidden="true"></span>
-            </template>
-          </div>
-        </button>
-      </section>
+              <template v-else>
+                <span class="chevron" aria-hidden="true"></span>
+              </template>
+            </div>
+          </button>
+        </section>
 
         <section v-if="isFounder" class="danger-zone">
           <button type="button" class="danger-btn" @click="onDeleteClub">
@@ -1211,7 +1260,7 @@ onMounted(async () => {
           :disabled="savingInviteShare || !imgInviteQr"
           @click="saveInviteShare"
         >
-          {{ savingInviteShare ? t('UIClub_Save3') + "..." : t('UIClub_Save4') }}
+          {{ savingInviteShare ? t('UIClub_Save3') + '...' : t('UIClub_Save4') }}
         </button>
       </section>
     </GameDialog>
@@ -1220,8 +1269,12 @@ onMounted(async () => {
       <section class="copy-modal" @click.stop>
         <p>{{ t('UIClub_ApplyCopyClub') }}，{{ t('UIClub_SubmitApply') }}</p>
         <div class="copy-modal__actions">
-          <button type="button" class="modal-secondary-btn" @click="closeCopyPopup">{{ t('adaptation10013') }}</button>
-          <button type="button" class="modal-primary-btn" @click="submitCopyRequest">{{ t('CommitOK') }}</button>
+          <button type="button" class="modal-secondary-btn" @click="closeCopyPopup">
+            {{ t('adaptation10013') }}
+          </button>
+          <button type="button" class="modal-primary-btn" @click="submitCopyRequest">
+            {{ t('CommitOK') }}
+          </button>
         </div>
       </section>
     </div>
@@ -1269,8 +1322,14 @@ onMounted(async () => {
       @cancel="closeTribeApplyPopup"
     >
       <div class="join-modal-card">
-        <img class="join-modal-logo" :src="searchedTribe?.logo || imgClubCover" :alt="t('UIClub_UnionAvatar')" />
-        <h3 class="join-modal-name">{{ searchedTribe?.name || t('UIClub_TribeCreat_0HvQpjkd') }}</h3>
+        <img
+          class="join-modal-logo"
+          :src="searchedTribe?.logo || imgClubCover"
+          :alt="t('UIClub_UnionAvatar')"
+        />
+        <h3 class="join-modal-name">
+          {{ searchedTribe?.name || t('UIClub_TribeCreat_0HvQpjkd') }}
+        </h3>
         <p class="join-modal-id-row">
           <span class="join-modal-id-tag">ID</span>
           <span>{{ searchedTribe?.randomId || '--' }}</span>
@@ -1307,7 +1366,9 @@ onMounted(async () => {
             :disabled="cancelTribeApplyLoading"
             @click="cancelTribeApply"
           >
-            {{ cancelTribeApplyLoading ? t('UIClub_Cancel') + "..." : t('UIGuild_CancleApplyJoin') }}
+            {{
+              cancelTribeApplyLoading ? t('UIClub_Cancel') + '...' : t('UIGuild_CancleApplyJoin')
+            }}
           </button>
         </div>
       </section>
@@ -1322,7 +1383,9 @@ onMounted(async () => {
       @confirm="confirmDeleteClub"
       @cancel="closeDeleteClubPopup"
     >
-      <div class="logout-confirm-text">{{ t('UIClub_DeleteClubNo') }}，{{ t('UIClub_ConfirmDelete2') }}？</div>
+      <div class="logout-confirm-text">
+        {{ t('UIClub_DeleteClubNo') }}，{{ t('UIClub_ConfirmDelete2') }}？
+      </div>
     </GameDialog>
 
     <NumericKeypad

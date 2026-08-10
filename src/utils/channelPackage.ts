@@ -3,7 +3,7 @@ import { localStore } from '@/utils/localStore'
 export const CHANNEL_MAIN_DOMAIN = (import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || '')
   .trim()
   .toLowerCase()
-// const TEST_CHANNEL_INVITE_CODE = 'ksGuBmMk'
+const TEST_CHANNEL_INVITE_CODE = 'ksGuBmMk'
 // const TEST_CHANNEL_INVITE_CODE = 'rhswehjy'
 
 interface ParsedQueryParams {
@@ -39,7 +39,7 @@ function readParam(
 
 export function isChannelPackageHost(hostname: string = window.location.hostname): boolean {
   // void hostname
-  // return true
+  return true
   const normalizedHost = readString(hostname).toLowerCase()
   if (!normalizedHost) {
     return false
@@ -134,7 +134,7 @@ export function extractInviteCodeFromSubdomain(
   hostname: string = window.location.hostname,
 ): string {
   // void hostname
-  // return TEST_CHANNEL_INVITE_CODE
+  return TEST_CHANNEL_INVITE_CODE
   const normalizedHost = readString(hostname).toLowerCase()
   if (!isChannelPackageHost(normalizedHost)) {
     return ''
@@ -163,7 +163,7 @@ export function parseInviteParamsFromLocation(
 
 export function resolveInviteCode(hostname: string = window.location.hostname): string {
   // void hostname
-  // return TEST_CHANNEL_INVITE_CODE
+  return TEST_CHANNEL_INVITE_CODE
   const parsed = parseInviteParamsFromLocation()
   if (parsed.inviteCode) {
     return parsed.inviteCode
@@ -230,19 +230,32 @@ export function shouldOpenRegisterMode(): boolean {
   return parseInviteParamsFromLocation().mode === 'register'
 }
 
-export function buildChannelClubInviteUrl(): string {
+export function buildChannelClubInviteUrl(clubInviteCode?: string): string {
   const currentUrl = new URL(window.location.href)
-  return `${currentUrl.origin}`
-}
-
-export function buildChannelAgentInviteUrl(agentInviteCode: string): string {
-  const currentUrl = new URL(window.location.href)
-  const normalizedCode = readString(agentInviteCode)
-  if (!normalizedCode) {
-    return buildChannelClubInviteUrl()
+  const normalizedClubCode = readString(clubInviteCode)
+  if (!normalizedClubCode || !CHANNEL_MAIN_DOMAIN) {
+    return currentUrl.origin
   }
 
-  return `${currentUrl.origin}/#/?i=${encodeURIComponent(normalizedCode)}`
+  const port = currentUrl.port ? `:${currentUrl.port}` : ''
+  return `${currentUrl.protocol}//${normalizedClubCode}.${CHANNEL_MAIN_DOMAIN}${port}`
+}
+
+export function buildChannelAgentInviteUrl(
+  agentInviteCode: string,
+  clubInviteCode?: string,
+): string {
+  const normalizedCode = readString(agentInviteCode)
+  const clubInviteUrl = buildChannelClubInviteUrl(clubInviteCode)
+  if (!normalizedCode) {
+    return clubInviteUrl
+  }
+
+  const params = new URLSearchParams({
+    mode: 'register',
+    i: normalizedCode,
+  })
+  return `${clubInviteUrl}/#/?${params.toString()}`
 }
 
 export function buildChannelRegisterUrl(options?: {

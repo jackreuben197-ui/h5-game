@@ -118,11 +118,16 @@ function easeInOutQuart(t: number): number {
   return 1 - Math.pow(-2 * t + 2, 4) / 2
 }
 
-const SVG_VIEWBOX_WIDTH = 360
-const SVG_VIEWBOX_HEIGHT = 84
+function getSvgSize(): { width: number; height: number } {
+  const rect = svgRef.value?.getBoundingClientRect()
+  return {
+    width: rect?.width && rect.width > 0 ? rect.width : 360,
+    height: rect?.height && rect.height > 0 ? rect.height : 84,
+  }
+}
 
 function indexToCenter(index: number): number {
-  const width = SVG_VIEWBOX_WIDTH
+  const { width } = getSvgSize()
   const inset = width * (TABBAR_SIDE_PADDING_REM / TABBAR_WIDTH_REM)
   const availableWidth = Math.max(width - inset * 2, 1)
   const tabWidth = availableWidth / Math.max(tabs.value.length, 1)
@@ -131,8 +136,7 @@ function indexToCenter(index: number): number {
 
 // 参考 tabbar-bump.html：构建“底板 + 顶部弧形凸起”的路径。
 function buildTabbarPath(bumpCenterX: number): string {
-  const width = SVG_VIEWBOX_WIDTH
-  const height = SVG_VIEWBOX_HEIGHT
+  const { width, height } = getSvgSize()
   const bumpHeight = height * (BUMP_HEIGHT_REM / TOTAL_HEIGHT_REM)
   const yOffset = height * (TABBAR_Y_OFFSET_REM / TOTAL_HEIGHT_REM)
   const apexY = yOffset
@@ -267,8 +271,6 @@ onBeforeUnmount(() => {
       ref="svgRef"
       class="tabbar-svg"
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 360 84"
-      preserveAspectRatio="none"
       aria-hidden="true"
     >
       <defs>

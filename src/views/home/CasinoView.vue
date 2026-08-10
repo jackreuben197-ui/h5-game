@@ -15,8 +15,10 @@ import { useLoginModalStore } from '@/stores/loginModal'
 import { useGameLaunchStore } from '@/stores/gameLaunch'
 import {
   reserveGameWindow,
-  navigateGameWindow,
+  launchGameUrl,
   releaseGameWindow,
+  beginGameLaunch,
+  usesTelegramGameLauncher,
   type ReservedGameWindow,
 } from '@/utils/externalGameWindow'
 import {
@@ -843,6 +845,7 @@ async function doJoinGame(
   clubId?: number,
   reserved: ReservedGameWindow = null,
 ): Promise<void> {
+  const finishLaunch = beginGameLaunch()
   try {
     const isDbRealName = isDbRealNameGame(item)
 
@@ -859,12 +862,17 @@ async function doJoinGame(
       },
       clubId,
     )
+    finishLaunch()
     if (res.code === 0 && res.data) {
       const gameUrl = res.data.url || res.data.game_url
       if (gameUrl) {
-        if (!navigateGameWindow(reserved, gameUrl, isDbRealName && deviceType === 1)) {
+        if (!launchGameUrl(reserved, gameUrl, isDbRealName && deviceType === 1)) {
           releaseGameWindow(reserved)
-          gameLaunchStore.openFallback(gameUrl)
+          if (usesTelegramGameLauncher()) {
+            showGameToast('游戏跳转失败，请稍后重试')
+          } else {
+            gameLaunchStore.openFallback(gameUrl)
+          }
         }
       } else {
         releaseGameWindow(reserved)
@@ -875,6 +883,7 @@ async function doJoinGame(
       showGameToast((res.msg as string) || '游戏跳转失败，请稍后重试')
     }
   } catch (error: any) {
+    finishLaunch()
     releaseGameWindow(reserved)
     showGameToast(error?.response?.data?.msg || '游戏跳转失败，请稍后重试')
   }

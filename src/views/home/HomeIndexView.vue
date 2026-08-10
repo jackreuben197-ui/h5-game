@@ -17,8 +17,10 @@ import { joinCasinoGame, getDeviceType } from '@/api/casino'
 import { useGameLaunchStore } from '@/stores/gameLaunch'
 import {
   reserveGameWindow,
-  navigateGameWindow,
+  launchGameUrl,
   releaseGameWindow,
+  beginGameLaunch,
+  usesTelegramGameLauncher,
   type ReservedGameWindow,
 } from '@/utils/externalGameWindow'
 import homeHeaderFallback from '@/assets/images/home_header_large.png'
@@ -233,6 +235,7 @@ const joinGame = async (
   clubId?: number,
   reserved: ReservedGameWindow = null,
 ) => {
+  const finishLaunch = beginGameLaunch()
   try {
     const isRealNameGame = apiType === 'real_name' || apiType === 'pa_live'
     const finalGameType = ''
@@ -249,13 +252,18 @@ const joinGame = async (
       },
       clubId,
     )
+    finishLaunch()
 
     if (res.code === 0 && res.data) {
       const gameUrl = res.data.url || res.data.game_url
       if (gameUrl) {
-        if (!navigateGameWindow(reserved, gameUrl, isRealNameGame && deviceType === 1)) {
+        if (!launchGameUrl(reserved, gameUrl, isRealNameGame && deviceType === 1)) {
           releaseGameWindow(reserved)
-          gameLaunchStore.openFallback(gameUrl)
+          if (usesTelegramGameLauncher()) {
+            showGameToast(t('UICasino_ClubNotEnabled'))
+          } else {
+            gameLaunchStore.openFallback(gameUrl)
+          }
         }
       } else {
         releaseGameWindow(reserved)
@@ -266,6 +274,7 @@ const joinGame = async (
       showGameToast((res.msg as string) || t('UICasino_ClubNotEnabled'))
     }
   } catch (error: any) {
+    finishLaunch()
     releaseGameWindow(reserved)
     showGameToast(error?.response?.data?.msg || t('UICasino_ClubNotEnabled'))
   }

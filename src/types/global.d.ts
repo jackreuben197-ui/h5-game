@@ -62,6 +62,7 @@ declare global {
         platform?: string
         ready?: () => void
         expand?: () => void
+        openLink?: (url: string, options?: { try_instant_view?: boolean; try_browser?: string }) => void
         isExpanded?: boolean
         viewportHeight?: number
         viewportStableHeight?: number

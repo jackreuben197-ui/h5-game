@@ -141,6 +141,7 @@ const bodyStyles = computed<StyleValue>(() => [
     所有透传属性走 v-bind="attrs"。
   -->
   <van-dialog
+    data-app-overlay
     :show="show"
     :show-confirm-button="false"
     :show-cancel-button="false"

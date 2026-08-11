@@ -115,8 +115,7 @@ VITE_API_BASE_URL=https://your-api-domain pnpm dev
 
 `@silenthill/h5-cc-bridge` 由 [独立仓库](https://github.com/soolary/h5-cc-bridge) 管理，本仓库通过 `package.json` 里的 git URL 依赖拉取。详细机制见 `src/bridge/README.md §0`。
 
-三个内部 git 依赖均固定到明确 commit，保证不同机器和 CI 安装结果可复现；升级时应显式修改 commit，
-执行 `pnpm install` 并提交 lockfile。
+内部 git 依赖的实际安装版本由 `pnpm-lock.yaml` 记录；升级分支版本后应执行 `pnpm install` 并提交 lockfile。
 
 其他运行开关：
 
@@ -983,11 +982,11 @@ sendMessage(
 - `h5Ready`：H5 宣告“我可接收消息”
 - `h5Ack` / `ccAck`：对方 ready 消息回执
 
-## 10. 多语言（TXT）用法
+## 10. 多语言用法
 
 当前多语言使用 `@silenthill/h5-cc-i18n` 共享包，不依赖 `vue-i18n`：
 
-- 单一来源：`@silenthill/h5-cc-i18n` 仓库；本项目依赖固定 commit。
+- 单一来源：`@silenthill/h5-cc-i18n` 仓库；实际安装版本由 `pnpm-lock.yaml` 固定。
 - H5 运行文件：`public/h5-cc-i18n.min.js`，在 Vue 入口前建立 `window.__H5_CC_I18N__`。
 - `predev`、`prebuild` 自动从依赖包复制安装产物；可手动执行 `pnpm sync:i18n`。
 - 当前运行包内含四种语言，切换语言不再额外请求 TXT 文件。
@@ -1504,6 +1503,7 @@ const show = ref(false)
 | `silent` | 全部静默 |
 
 开发环境默认 `debug`，生产环境默认 `warn`（可被 `VITE_DROP_CONSOLE=true` 在构建时彻底抹除）。
+内置可视化调试面板只在开发环境加载；生产排查时显式设置 `VITE_DEBUG_CONSOLE=true`。
 
 ### 12.2 在模块中使用
 
@@ -1590,7 +1590,7 @@ pnpm sync:protocol
 
 | 命令 | 触发方式 | 来源 | 产物是否提交 git |
 |------|---------|------|----------------|
-| `sync:i18n` | `predev` / `prebuild` 自动 | `pokerqueen/` 语言文件 | 否（仅运行时需要） |
+| `sync:i18n` | `predev` / `prebuild` 自动 | `@silenthill/h5-cc-i18n` 安装产物 | 否（复制到 `public/`） |
 | `sync:protocol` | 手动按需 | `agreement-web` 仓库 | 是（pb 文件已纳入版控） |
 
 **白名单维护**：`scripts/update_protocol.sh` 中的 `H5_RECV_FILES` 数组。H5 只同步大厅 / 全局通知（code < 1000），游戏内协议由 Cocos 自行管理，双方都从同一个 `agreement-web` 仓库拉取。

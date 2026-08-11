@@ -64,6 +64,7 @@ export default [
       'dist/**',
       'node_modules/**',
       'agreement-web/**',
+      'public/h5-cc-i18n.min.js',
       'components.d.ts',
       'src/bridge/ws/pb/**',
     ],

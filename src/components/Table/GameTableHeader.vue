@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import type { ColumnConfig, SelectOption, SortOrder } from './types'
 
-const props = defineProps<{
+defineProps<{
   columns: ColumnConfig[]
   sortProp: string
   sortOrder: SortOrder

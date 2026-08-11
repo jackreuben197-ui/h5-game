@@ -4,7 +4,7 @@ import { useWalletStore } from '@/stores/wallet'
 import { pinia } from '@/stores/pinia'
 import { createLogger } from '@/utils/logger'
 import { isChannelPackageHost } from '@/utils/channelPackage'
-import { syncMainLayout } from '@/utils/mainLayout'
+import { preloadMainLayoutStyles, syncMainLayout } from '@/utils/mainLayout'
 import { syncPostAuthData } from '@/session/postAuthSync'
 
 const log = createLogger('[router]')
@@ -630,6 +630,11 @@ router.beforeEach((to, from) => {
     return { name: 'guest-home' }
   }
 
+  return true
+})
+
+router.beforeResolve(async (to) => {
+  await preloadMainLayoutStyles(to.meta.desktopLayout)
   return true
 })
 

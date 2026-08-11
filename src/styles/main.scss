@@ -1,8 +1,7 @@
 // 全局样式入口：主题 -> 基础 -> 公共组件 -> 工具类 -> 钱包域样式。
+// 桌面页面族样式由 mainLayout.ts 在 >=600px 且路由声明布局时按需加载。
 @use './themes';
 @use './base';
 @use './components';
 @use './utilities';
 @use './wallet';
-@use './main_desktop';
-@use './content_desktop';

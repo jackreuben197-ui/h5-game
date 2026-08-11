@@ -25,6 +25,7 @@ type GlobalCustomerServiceChatListener = (
 ) => void
 
 const listeners = new Set<GlobalCustomerServiceChatListener>()
+let pendingPayload: OpenGlobalCustomerServiceChatPayload | null = null
 
 const OFFICIAL_IM_SERVICE_TYPE = 2
 const MATCH_ORDER_IM_SERVICE_TYPE = 4
@@ -83,6 +84,11 @@ export function openGlobalCustomerServiceChat(
   payload: OpenGlobalCustomerServiceChatPayload = {},
 ): void {
   const normalized = preprocessOpenPayload(payload)
+  if (!listeners.size) {
+    // 登录后客服组件是异步挂载的；保留最近一次打开请求，避免首击丢失。
+    pendingPayload = normalized
+    return
+  }
   listeners.forEach((listener) => {
     listener(normalized)
   })
@@ -92,6 +98,11 @@ export function subscribeGlobalCustomerServiceChat(
   listener: GlobalCustomerServiceChatListener,
 ): () => void {
   listeners.add(listener)
+  if (pendingPayload) {
+    const payload = pendingPayload
+    pendingPayload = null
+    listener(payload)
+  }
   return () => {
     listeners.delete(listener)
   }

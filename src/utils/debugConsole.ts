@@ -1,8 +1,13 @@
 import { resolvedThemeRef, setThemeMode, themeModeRef } from '@/utils/theme'
 import { isTelegramMiniAppEnv } from '@/utils/environment'
+import {
+  isDebugCaptureSuppressed,
+  setDebugCaptureSink,
+  type DebugConsoleLevel,
+  type DebugConsoleSource,
+} from '@/utils/debugCapture'
 
-export type DebugConsoleLevel = 'debug' | 'info' | 'warn' | 'error'
-export type DebugConsoleSource = 'logger' | 'console' | 'runtime'
+export type { DebugConsoleLevel, DebugConsoleSource } from '@/utils/debugCapture'
 
 export interface DebugConsoleEntry {
   id: number
@@ -25,7 +30,6 @@ const state: {
 let nextEntryId = 1
 let patched = false
 let domReady = false
-let suppressCaptureDepth = 0
 let originalConsole: {
   log: typeof console.log
   info: typeof console.info
@@ -617,25 +621,25 @@ function installConsolePatch(): void {
 
   const rawConsole = getOriginalConsole()
   console.log = (...args: unknown[]) => {
-    if (suppressCaptureDepth <= 0) {
+    if (!isDebugCaptureSuppressed()) {
       appendEntry('debug', 'console', args)
     }
     rawConsole.log(...args)
   }
   console.info = (...args: unknown[]) => {
-    if (suppressCaptureDepth <= 0) {
+    if (!isDebugCaptureSuppressed()) {
       appendEntry('info', 'console', args)
     }
     rawConsole.info(...args)
   }
   console.warn = (...args: unknown[]) => {
-    if (suppressCaptureDepth <= 0) {
+    if (!isDebugCaptureSuppressed()) {
       appendEntry('warn', 'console', args)
     }
     rawConsole.warn(...args)
   }
   console.error = (...args: unknown[]) => {
-    if (suppressCaptureDepth <= 0) {
+    if (!isDebugCaptureSuppressed()) {
       appendEntry('error', 'console', args)
     }
     rawConsole.error(...args)
@@ -663,6 +667,7 @@ function installConsolePatch(): void {
 }
 
 export function initDebugConsole(): void {
+  setDebugCaptureSink(appendEntry)
   installConsolePatch()
   ensureDebugConsoleDom()
 
@@ -676,29 +681,6 @@ export function initDebugConsole(): void {
     clear: clearDebugConsoleEntries,
     copy: getDebugConsoleText,
   }
-}
-
-export function withDebugConsoleCaptureSuppressed<T>(fn: () => T): T {
-  suppressCaptureDepth += 1
-  try {
-    return fn()
-  } finally {
-    suppressCaptureDepth = Math.max(0, suppressCaptureDepth - 1)
-  }
-}
-
-export function pushLoggerDebugEntry(level: DebugConsoleLevel, tag: string, args: unknown[]): void {
-  initDebugConsole()
-  appendEntry(level, 'logger', [tag, ...args])
-}
-
-export function recordDebugEvent(tag: string, message: string, detail?: unknown): void {
-  initDebugConsole()
-  if (typeof detail === 'undefined') {
-    appendEntry('info', 'runtime', [tag, message])
-    return
-  }
-  appendEntry('info', 'runtime', [tag, message, detail])
 }
 
 export function openDebugConsole(): void {

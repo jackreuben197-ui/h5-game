@@ -239,10 +239,6 @@ const matchInfo = computed(() => {
   const enterTimeLabel = m.enter_time
     ? `${formatDateTime(m.enter_time, 'DD/MM HH:mm')} (${t('UITexasReport_Text_BlindLevelTip')}${m.max_delay_apply_bl ?? '-'})`
     : '-'
-  const holdTimeLabel = m.force_close_time
-    ? `${Math.ceil(m.force_close_time / 60)}${t('UIClubData_Text_time')}`
-    : '-'
-
   let buyLimitLabel: string
   const bl = more.value?.bl ?? 0
   const maxDelayBl = m.max_delay_apply_bl ?? 0

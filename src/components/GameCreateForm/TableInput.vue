@@ -21,6 +21,8 @@ const props = withDefaults(defineProps<Props>(), {
   placeholder: '',
   numberOnly: false,
   decimalDigits: 0,
+  min: undefined,
+  max: undefined,
 })
 
 const emit = defineEmits<{

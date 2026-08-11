@@ -39,9 +39,9 @@ function readParam(
 
 export function isChannelPackageHost(hostname: string = window.location.hostname): boolean {
   // void hostname
-  return true
+  // return true
   const normalizedHost = readString(hostname).toLowerCase()
-  if (!normalizedHost) {
+  if (!normalizedHost || !CHANNEL_MAIN_DOMAIN) {
     return false
   }
 
@@ -68,7 +68,9 @@ export function copyStorageToMainDomain(): void {
   } catch (error) {
     console.warn('[channelPackage] failed to read localStorage:', error)
   }
-  localStorage.clear()
+  // 只清理由本次跳转迁移的登录数据，不能清空同源下 Cocos、Telegram
+  // 或其他业务写入的 localStorage。
+  Object.keys(items).forEach((key) => localStorage.removeItem(key))
   const currentUrl = new URL(window.location.href)
   const targetUrl = `${currentUrl.protocol}//${CHANNEL_MAIN_DOMAIN}/#/`
   // 将数据编码到 URL 参数中
@@ -134,7 +136,7 @@ export function extractInviteCodeFromSubdomain(
   hostname: string = window.location.hostname,
 ): string {
   // void hostname
-  return TEST_CHANNEL_INVITE_CODE
+  // return TEST_CHANNEL_INVITE_CODE
   const normalizedHost = readString(hostname).toLowerCase()
   if (!isChannelPackageHost(normalizedHost)) {
     return ''
@@ -163,7 +165,7 @@ export function parseInviteParamsFromLocation(
 
 export function resolveInviteCode(hostname: string = window.location.hostname): string {
   // void hostname
-  return TEST_CHANNEL_INVITE_CODE
+  // return TEST_CHANNEL_INVITE_CODE
   const parsed = parseInviteParamsFromLocation()
   if (parsed.inviteCode) {
     return parsed.inviteCode
@@ -201,16 +203,12 @@ export function resolveAgentInviteCode(): string {
  */
 export function cacheAgentInviteCodeIfPresent(): void {
   const parsed = parseInviteParamsFromLocation()
-  console.log('[channelPackage] cacheAgentInviteCodeIfPresent called, parsed:', parsed)
   if (parsed.agentInviteCode) {
     try {
       localStore.setItem(StorageKey.AGENT_INVITE_CODE, parsed.agentInviteCode)
-      console.log('[channelPackage] cached agentInviteCode:', parsed.agentInviteCode)
     } catch (error) {
       console.warn('[channelPackage] failed to cache agentInviteCode:', error)
     }
-  } else {
-    console.log('[channelPackage] no agentInviteCode in URL, skipping cache')
   }
 }
 

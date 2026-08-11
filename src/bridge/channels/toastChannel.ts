@@ -1,4 +1,3 @@
-import { showFailToast, showSuccessToast } from 'vant'
 import { subscribeCocosMessages } from '../core/cocosBridgeChannel'
 import { BRIDGE_ACTION, BRIDGE_MSG_TYPE, type BridgeMessage, type CocosToastPayload } from '@bridge-protocol'
 import { showGameToastOnTable } from '@/components/Toast'

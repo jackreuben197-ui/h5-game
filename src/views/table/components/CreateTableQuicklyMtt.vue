@@ -5,7 +5,6 @@ import {
   postOrggetTemplateApi,
   postOrgRoomBatchCreateApi,
   postOrgTemplateDeleteApi,
-  postCmsExtRoomUserBatchCreateApi,
 } from '@/api/cmsext'
 import { GameDialog } from '@/components/Dialog'
 import { showGameToast } from '@/components/Toast'

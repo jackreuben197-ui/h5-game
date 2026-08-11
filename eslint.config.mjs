@@ -60,7 +60,13 @@ const localPlugin = {
 
 export default [
   {
-    ignores: ['dist/**', 'node_modules/**', 'components.d.ts', 'src/bridge/ws/pb/**'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'agreement-web/**',
+      'components.d.ts',
+      'src/bridge/ws/pb/**',
+    ],
   },
   js.configs.recommended,
   {

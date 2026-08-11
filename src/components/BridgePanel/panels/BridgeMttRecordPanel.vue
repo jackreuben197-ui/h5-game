@@ -23,7 +23,6 @@ import type {
   RoomcenterMttHunterRanksData,
   RoomcenterMttRealPrize,
   RoomcenterMttRoomRecord,
-  RoomcenterMttBlindLevelDelay,
   RoomcenterMttPrize,
 } from '@/api/models/roomcenter'
 
@@ -158,7 +157,6 @@ const myRank = computed(() => {
   if (!record?.rank) return '-'
   return String(record.rank)
 })
-const sbVal = computed(() => more.value?.sb)
 const highestChips = computed(() => more.value?.max_chip ?? 0)
 const avgChips = computed(() => more.value?.avg_chip ?? 0)
 const lowestChips = computed(() => more.value?.min_chip ?? 0)
@@ -346,7 +344,6 @@ const rewardRows = computed<RewardRow[]>(() => {
 })
 
 const totalPrizePool = computed(() => fmtMoney(rewardData.value?.award ?? realPrize.value?.award))
-const paidPlaces = computed(() => fmtNum(rewardData.value?.award_num ?? realPrize.value?.award_num))
 const paidPlacesLabel = computed(() => {
   const num = rewardData.value?.award_num ?? realPrize.value?.award_num
   if (!num) return '-'
@@ -370,18 +367,6 @@ function formatBlindUnit(n: number | undefined | null): string {
   const rm = Math.trunc((value % 100000000) / 10000000)
   return rm !== 0 ? `${m}.${rm}M` : `${m}M`
 }
-
-const delayMap = computed(() => {
-  const map = new Map<number, number>()
-  const table = mtt.value?.blind_level_delay_time_table
-  if (!Array.isArray(table)) return map
-  table.forEach((item) => {
-    const record = item as RoomcenterMttBlindLevelDelay
-    const level = Number(record.level ?? 0)
-    if (level) map.set(level, Number(record.delay_times ?? 0))
-  })
-  return map
-})
 
 const durationText = computed(() => {
   const interval = Number(mtt.value?.upblind_interval ?? 0)
@@ -411,8 +396,6 @@ const blindRows = computed<BlindRow[]>(() => {
     }
   })
 })
-
-const blindLevelCount = computed(() => blindRows.value.length)
 
 // ── API ───────────────────────────────────────────────────────────────────────
 async function loadDetail(): Promise<void> {

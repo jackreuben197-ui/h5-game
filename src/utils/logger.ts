@@ -3,7 +3,7 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent'
 import {
   pushLoggerDebugEntry,
   withDebugConsoleCaptureSuppressed,
-} from './debugConsole'
+} from './debugCapture'
 
 const LEVEL_NUM: Record<LogLevel, number> = { debug: 0, info: 1, warn: 2, error: 3, silent: 4 }
 

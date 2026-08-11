@@ -1,5 +1,16 @@
 const KEY_PREFIX = 'dzpk_h5_'
 
+function clearPrefixedStorage(storage: Storage): void {
+  const keys: string[] = []
+  for (let index = 0; index < storage.length; index += 1) {
+    const key = storage.key(index)
+    if (key?.startsWith(KEY_PREFIX)) {
+      keys.push(key)
+    }
+  }
+  keys.forEach((key) => storage.removeItem(key))
+}
+
 export const localStore = {
   // 与 Cocos LocalStoreManager 一致的统一前缀。
   keyPre: KEY_PREFIX,
@@ -30,7 +41,7 @@ export const localStore = {
   },
 
   clear(): void {
-    window.localStorage.clear()
+    clearPrefixedStorage(window.localStorage)
   },
 }
 
@@ -42,7 +53,7 @@ export const dzpkPersistStorage: Storage = {
     return window.localStorage.length
   },
   clear(): void {
-    window.localStorage.clear()
+    clearPrefixedStorage(window.localStorage)
   },
   getItem(key: string): string | null {
     return window.localStorage.getItem(KEY_PREFIX + key)

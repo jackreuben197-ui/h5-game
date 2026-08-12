@@ -157,6 +157,12 @@ function formatAmount(value: number, withSign = false): string {
   return value > 0 ? `+${formatUC(value)}` : formatUC(value)
 }
 
+// 实际战绩以带出减带入计算。接口的 finally_game_results 当前返回的是带出金额，
+// 不能直接作为玩家的盈亏战绩展示。
+function getActualGameResult(user: Record<string, unknown>): number {
+  return toSafeNumber(user.bring_out) - toSafeNumber(user.bring_in)
+}
+
 function extractRoomId(): number {
   const raw = route.query.room_id ?? route.query.id ?? route.query.roomId
   const value = Number(raw)
@@ -173,17 +179,17 @@ function extractRoomId(): number {
 }
 
 // 参考客户端 UIRecordDetailStatistics.cs UpdateRankInfo：
-// MVP=净盈利最高(finally - bringIn 最大), 土豪=带入最高(bringIn 最大), 大鱼=净盈利最低。
+// MVP=实际战绩最高(bringOut - bringIn 最大), 土豪=带入最高(bringIn 最大), 大鱼=实际战绩最低。
 // DOM 顺序排为 [土豪左, MVP中, 大鱼右] 以对齐领奖台底图。
 function buildPodiumSeats(users: Record<string, unknown>[]): PodiumSeat[] {
   if (!users.length) return []
   let mvp = users[0]
   let tuhao = users[0]
   let fish = users[0]
-  let mvpNet = toSafeNumber(mvp.finally_game_results) - toSafeNumber(mvp.bring_in)
+  let mvpNet = getActualGameResult(mvp)
   let fishNet = mvpNet
   for (const user of users) {
-    const net = toSafeNumber(user.finally_game_results) - toSafeNumber(user.bring_in)
+    const net = getActualGameResult(user)
     if (toSafeNumber(user.bring_in) > toSafeNumber(tuhao.bring_in)) {
       tuhao = user
     }
@@ -223,7 +229,8 @@ function buildPodiumSeats(users: Record<string, unknown>[]): PodiumSeat[] {
 
 // ── 缓存（IndexedDB career）──────────────────────────────────────────────────
 // 详情数据按 room_id 缓存，命中则不再请求（同一房间的结算数据固定不变）。
-// key 形如 `detail-${roomId}`，与战绩首页 `${clubId}-${game}-${time}` 的 key 形式分隔。
+// key 形如 `detail-v2-${roomId}`，版本号用于淘汰使用旧战绩口径的缓存，
+// 并与战绩首页 `${clubId}-${game}-${time}` 的 key 形式分隔。
 interface RecordDetailCache {
   detailTitle: string
   detailSub: string
@@ -237,7 +244,7 @@ interface RecordDetailCache {
 
 // 房间结算数据按 room_id 全局唯一，不需要再加 source 前缀。
 function detailCacheKey(roomId: number): string {
-  return `detail-${roomId}`
+  return `detail-v2-${roomId}`
 }
 
 function detailCache() {
@@ -322,9 +329,8 @@ async function fetchRecordDetail(): Promise<void> {
     podiumSeats.value = buildPodiumSeats(userList)
 
     playerResults.value = userList.map((user, index) => {
-      const totalResults = toSafeNumber(user.finally_game_results ?? user.original_results)
       const bringIn = toSafeNumber(user.bring_in)
-      const result = totalResults - bringIn
+      const result = getActualGameResult(user)
       return {
         id: String(user.user_random_id ?? index + 1),
         name: String(user.nick_name ?? 'Player Name'),

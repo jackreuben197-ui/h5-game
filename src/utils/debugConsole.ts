@@ -231,20 +231,20 @@ function attachDebugConsoleDom(): void {
   style.textContent = `
     .h5-debug-console__toggle {
       position: fixed;
-      top: 3rem;
-      left: 0.24rem;
+      top: 112px;
+      left: 10px;
       z-index: 99999;
-      min-width: 0.8rem;
-      min-height: 0.72rem;
-      padding: 0.06rem 0.14rem;
+      min-width: 64px;
+      min-height: 52px;
+      padding: 8px 14px;
       border: 0;
-      border-radius: 999rem;
+      border-radius: 999px;
       background: rgba(12, 12, 12, 0.82);
       color: #fff;
-      font-size: 0.22rem;
+      font-size: 16px;
       font-weight: 700;
-      letter-spacing: 0.04rem;
-      box-shadow: 0 0.08rem 0.24rem rgba(0, 0, 0, 0.28);
+      letter-spacing: 1px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.28);
     }
 
     .h5-debug-console__toggle-telegram,
@@ -255,27 +255,29 @@ function attachDebugConsoleDom(): void {
     }
 
     .h5-debug-console__toggle-telegram {
-      margin-bottom: 0.04rem;
+      margin-bottom: 3px;
       color: #79e8b6;
-      font-size: 0.16rem;
+      font-size: 12px;
       font-weight: 600;
       letter-spacing: 0;
     }
 
     .h5-debug-console__panel {
       position: fixed;
-      inset: 0.2rem;
+      inset: 16px;
       z-index: 99999;
       display: none;
       flex-direction: column;
-      padding: 0.18rem;
-      border-radius: 0.18rem;
+      min-width: 0;
+      min-height: 0;
+      padding: 20px;
+      border-radius: 18px;
       background: rgba(8, 10, 16, 0.94);
       color: #f6f7fb;
-      backdrop-filter: blur(0.16rem);
-      -webkit-backdrop-filter: blur(0.16rem);
-      box-shadow: 0 0.24rem 0.56rem rgba(0, 0, 0, 0.32);
-      margin-top: 2.2rem; /* 避开 Telegram 顶部安全区留白 */
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
+      margin-top: 88px; /* 避开 Telegram 顶部安全区留白 */
     }
 
     .h5-debug-console__header,
@@ -283,57 +285,60 @@ function attachDebugConsoleDom(): void {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 0.12rem;
+      gap: 16px;
     }
 
     .h5-debug-console__title {
       display: flex;
       flex-direction: column;
-      gap: 0.06rem;
+      gap: 5px;
     }
 
     .h5-debug-console__title strong {
-      font-size: 0.24rem;
+      font-size: 22px;
+      line-height: 1.25;
     }
 
     .h5-debug-console__title span,
     .h5-debug-console__summary {
       color: rgba(255, 255, 255, 0.66);
-      font-size: 0.18rem;
-      line-height: 1.5;
+      font-size: 15px;
+      line-height: 1.6;
     }
 
     .h5-debug-console__actions {
       display: flex;
       align-items: center;
-      gap: 0.1rem;
+      gap: 10px;
     }
 
     .h5-debug-console__actions button {
-      min-width: 0.8rem;
-      height: 0.46rem;
+      min-width: 64px;
+      height: 46px;
+      padding: 0 16px;
       border: 0;
-      border-radius: 999rem;
+      border-radius: 999px;
       background: rgba(255, 255, 255, 0.14);
       color: #fff;
-      font-size: 0.18rem;
+      font-size: 16px;
+      font-weight: 600;
     }
 
     .h5-debug-console__summary {
-      margin-top: 0.16rem;
+      margin-top: 16px;
     }
 
     .h5-debug-console__theme {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 0.16rem;
-      margin-top: 0.14rem;
-      padding: 0.1rem 0.12rem;
-      border-radius: 0.12rem;
+      gap: 16px;
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
       background: rgba(255, 255, 255, 0.08);
       color: rgba(255, 255, 255, 0.76);
-      font-size: 0.19rem;
+      font-size: 16px;
     }
 
     .h5-debug-console__theme strong {
@@ -341,32 +346,36 @@ function attachDebugConsoleDom(): void {
     }
 
     .h5-debug-console__theme button {
-      height: 0.46rem;
-      padding: 0 0.18rem;
+      min-width: 104px;
+      height: 46px;
+      padding: 0 18px;
       border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 999rem;
+      border-radius: 999px;
       background: #252834;
       color: #fff;
-      font-size: 0.18rem;
+      font-size: 16px;
+      font-weight: 600;
     }
 
     .h5-debug-console__body {
       flex: 1;
-      margin-top: 0.16rem;
-      padding: 0.12rem;
+      min-height: 0;
+      margin-top: 16px;
+      padding: 14px;
       overflow: auto;
-      border-radius: 0.14rem;
+      border-radius: 14px;
       background: rgba(0, 0, 0, 0.34);
     }
 
     .h5-debug-console__entry {
       display: grid;
       grid-template-columns: auto auto 1fr;
-      gap: 0.12rem;
+      gap: 12px;
       align-items: start;
-      padding: 0.1rem 0;
+      padding: 12px 0;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      font-size: 0.18rem;
+      font-size: 16px;
+      line-height: 1.55;
     }
 
     .h5-debug-console__entry:last-child {
@@ -385,6 +394,98 @@ function attachDebugConsoleDom(): void {
       white-space: pre-wrap;
       word-break: break-word;
       font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+    }
+
+    @media (max-width: 640px) {
+      .h5-debug-console__toggle {
+        top: 96px;
+        left: 8px;
+        min-width: 60px;
+        min-height: 48px;
+        padding: 7px 12px;
+        font-size: 15px;
+      }
+
+      .h5-debug-console__panel {
+        inset: 8px;
+        margin-top: 72px;
+        padding: 14px;
+        border-radius: 16px;
+      }
+
+      .h5-debug-console__header {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .h5-debug-console__title {
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: space-between;
+      }
+
+      .h5-debug-console__title strong {
+        font-size: 20px;
+      }
+
+      .h5-debug-console__title span,
+      .h5-debug-console__summary {
+        font-size: 14px;
+      }
+
+      .h5-debug-console__actions {
+        width: 100%;
+        gap: 8px;
+      }
+
+      .h5-debug-console__actions button {
+        flex: 1;
+        min-width: 0;
+        height: 44px;
+        padding: 0 10px;
+        font-size: 15px;
+      }
+
+      .h5-debug-console__summary {
+        margin-top: 14px;
+      }
+
+      .h5-debug-console__theme {
+        gap: 10px;
+        margin-top: 12px;
+        padding: 10px 12px;
+        font-size: 15px;
+      }
+
+      .h5-debug-console__theme button {
+        min-width: 96px;
+        height: 44px;
+        padding: 0 14px;
+        font-size: 15px;
+      }
+
+      .h5-debug-console__body {
+        margin-top: 12px;
+        padding: 10px 12px;
+      }
+
+      .h5-debug-console__entry {
+        grid-template-columns: auto 1fr;
+        column-gap: 10px;
+        row-gap: 5px;
+        padding: 10px 0;
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .h5-debug-console__entry-source {
+        text-align: right;
+      }
+
+      .h5-debug-console__entry-text {
+        grid-column: 1 / -1;
+      }
     }
 
     .h5-debug-console__entry--debug {

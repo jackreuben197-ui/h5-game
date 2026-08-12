@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import FieldTip from './FieldTip.vue'
 import tumblerActive from '@/assets/icons/ic_tumbler_active.png'
 import tumblerEnd from '@/assets/icons/ic_tumbler.svg'
@@ -52,6 +52,12 @@ const emit = defineEmits<{
   'update:modelValue': [value: number | [number, number]]
   change: [value: number | [number, number]]
 }>()
+
+const sliderControlRef = ref<HTMLElement | null>(null)
+const isPointerDragging = ref(false)
+let activePointerId: number | null = null
+let activeRangeIndex = 0
+let pointerSliderValue: SliderValue = 0
 
 // ── options 模式 ──────────────────────────────────────────────────────────────
 
@@ -262,6 +268,72 @@ function thumbSrc(_currentValue: number | undefined): string {
   return (sliderValue.value as number) === sliderMax.value ? tumblerEnd : tumblerActive
 }
 
+function getPointerSliderValue(event: PointerEvent): number | null {
+  const slider = sliderControlRef.value?.querySelector<HTMLElement>('.van-slider')
+  if (!slider) return null
+
+  const rect = slider.getBoundingClientRect()
+  if (rect.width <= 0) return null
+
+  const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width))
+  const raw = sliderMin.value + ratio * (sliderMax.value - sliderMin.value)
+  const step = Math.max(Number(sliderStep.value) || 1, Number.EPSILON)
+  const stepped = sliderMin.value + Math.round((raw - sliderMin.value) / step) * step
+  return Math.min(sliderMax.value, Math.max(sliderMin.value, stepped))
+}
+
+function updatePointerSlider(event: PointerEvent): void {
+  if (event.pointerId !== activePointerId) return
+  const next = getPointerSliderValue(event)
+  if (next === null) return
+
+  if (Array.isArray(pointerSliderValue)) {
+    const rangeValue: [number, number] = [...pointerSliderValue]
+    rangeValue[activeRangeIndex] = next
+    pointerSliderValue = rangeValue
+    onChange(rangeValue)
+    return
+  }
+
+  pointerSliderValue = next
+  onChange(next)
+}
+
+function stopPointerSlider(event?: PointerEvent): void {
+  if (event && event.pointerId !== activePointerId) return
+  activePointerId = null
+  isPointerDragging.value = false
+  window.removeEventListener('pointermove', updatePointerSlider, true)
+  window.removeEventListener('pointerup', stopPointerSlider, true)
+  window.removeEventListener('pointercancel', stopPointerSlider, true)
+}
+
+function onPointerDown(event: PointerEvent): void {
+  if (event.pointerType === 'touch' || event.button !== 0 || props.disabled) return
+
+  const next = getPointerSliderValue(event)
+  if (next === null) return
+
+  event.preventDefault()
+  activePointerId = event.pointerId
+  isPointerDragging.value = true
+  pointerSliderValue = Array.isArray(sliderValue.value)
+    ? ([...sliderValue.value] as [number, number])
+    : sliderValue.value
+
+  if (Array.isArray(pointerSliderValue)) {
+    activeRangeIndex =
+      Math.abs(next - pointerSliderValue[0]) <= Math.abs(next - pointerSliderValue[1]) ? 0 : 1
+  }
+
+  window.addEventListener('pointermove', updatePointerSlider, true)
+  window.addEventListener('pointerup', stopPointerSlider, true)
+  window.addEventListener('pointercancel', stopPointerSlider, true)
+  updatePointerSlider(event)
+}
+
+onBeforeUnmount(() => stopPointerSlider())
+
 function clampOptionIndex(value: number, length: number): number {
   const int = Math.round(Number(value))
   if (!Number.isFinite(int)) return 0
@@ -281,19 +353,27 @@ function clampOptionIndex(value: number, length: number): number {
       <span class="table-slider__value">{{ displayValue }}</span>
     </div>
 
-    <VanSlider
-      :model-value="sliderValue"
-      :min="sliderMin"
-      :max="sliderMax"
-      :step="sliderStep"
-      :range="range"
-      :disabled="disabled"
-      @update:model-value="onChange"
+    <div
+      ref="sliderControlRef"
+      class="table-slider__control"
+      :class="{ 'table-slider__control--pointer-dragging': isPointerDragging }"
+      data-allow-drag="true"
+      @pointerdown="onPointerDown"
     >
-      <template #button="{ currentValue }">
-        <img class="slider-thumb" :src="thumbSrc(currentValue)" alt="" />
-      </template>
-    </VanSlider>
+      <VanSlider
+        :model-value="sliderValue"
+        :min="sliderMin"
+        :max="sliderMax"
+        :step="sliderStep"
+        :range="range"
+        :disabled="disabled"
+        @update:model-value="onChange"
+      >
+        <template #button="{ currentValue }">
+          <img class="slider-thumb" :src="thumbSrc(currentValue)" alt="" />
+        </template>
+      </VanSlider>
+    </div>
 
     <div v-if="markItems.length" class="table-slider__marks">
       <div
@@ -348,6 +428,16 @@ function clampOptionIndex(value: number, length: number): number {
 .table-slider__value {
   font-size: 0.44rem;
   color: rgba(255, 255, 255, 0.92);
+}
+
+.table-slider__control {
+  display: flow-root;
+  width: 100%;
+  cursor: pointer;
+}
+
+.table-slider__control--pointer-dragging :deep(.van-slider__bar) {
+  transition: none;
 }
 
 :deep(.van-slider) {

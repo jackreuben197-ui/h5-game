@@ -223,7 +223,6 @@ onUnmounted(() => {
   -webkit-backdrop-filter: blur(7.580729961395264px);
   pointer-events: none;
   z-index: 1;
-
 }
 
 .card::before {

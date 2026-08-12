@@ -1,7 +1,7 @@
 const DESIGN_WIDTH = 375
 const MAX_WIDTH = Infinity
 const BASE_REM_AT_DESIGN = 37.5
-// 一级主页面的桌面 / Pad 不再按整屏宽度放大 rem。固定 40px 保持正文可读，
+// 已迁移页面的桌面 / Pad 不再按整屏宽度放大 rem。固定 40px 保持正文可读，
 // 页面横向尺寸由响应式 Grid/Flex 负责。
 const DESKTOP_REM = 40
 const DESKTOP_BREAKPOINT = 600
@@ -39,7 +39,7 @@ function getViewportWidth(): number {
 
 function usesAdaptiveMainLayout(width: number): boolean {
   const root = document.documentElement
-  return width >= DESKTOP_BREAKPOINT && root.dataset.mainLayout === 'primary'
+  return width >= DESKTOP_BREAKPOINT && Boolean(root.dataset.mainLayout)
 }
 
 function refreshRem(): void {
@@ -50,7 +50,7 @@ function refreshRem(): void {
     : (Math.min(width, MAX_WIDTH) / DESIGN_WIDTH) * BASE_REM_AT_DESIGN
   const nextFontSize = `${rem}px`
 
-  // primary 桌面布局始终是 40px；窗口拖动时不重复写相同值，避免整页样式重算。
+  // 桌面布局始终是 40px；窗口拖动时不重复写相同值，避免整页样式重算。
   if (docEl.style.fontSize !== nextFontSize) {
     docEl.style.fontSize = nextFontSize
   }

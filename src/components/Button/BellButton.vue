@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { t } from '@/i18n'
 
-const props = defineProps<{
+defineProps<{
   count?: number
   showBadge?: boolean
 }>()
@@ -63,9 +63,9 @@ function onTouchEnd() {
     }"
     @touchstart="onTouchStart"
     @touchmove="onTouchMove"
-    @touchend="onTouchEnd"
+    @touchend.prevent="onTouchEnd"
   >
-    <button class="bell">
+    <button type="button" class="bell">
       <span class="bell__text">{{ t('GlobalFloat_InTransaction') }}</span>
       <div v-if="showBadge && count && count > 0" class="bell__badge">
         {{ count }}

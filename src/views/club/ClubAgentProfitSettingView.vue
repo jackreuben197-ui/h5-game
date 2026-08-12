@@ -185,7 +185,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell profit-bg" :style="backgroundStyle">
+  <div class="page-shell profit-bg agent-profit-desktop-page" :style="backgroundStyle">
     <HeaderBack :title="t('UIGuild_MemberDetails_ProxySetting')" />
 
     <section class="glass profile-card">

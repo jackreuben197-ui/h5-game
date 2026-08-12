@@ -183,8 +183,11 @@ async function onConfirm(): Promise<void> {
 </script>
 
 <template>
-  <div class="page-shell club-edit-name-bg" :style="backgroundStyle">
-    <div class="club-edit-name">
+  <div
+    class="page-shell room-list-page club-editor-page club-edit-name-page club-edit-name-bg"
+    :style="backgroundStyle"
+  >
+    <div class="room-list-stage club-editor-stage club-edit-name">
       <HeaderBack :title="t('UIClub_Name2')" />
 
       <section class="editor-block">

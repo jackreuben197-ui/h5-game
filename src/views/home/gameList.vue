@@ -415,6 +415,12 @@ function handleOpenCustomerService(): void {
   background-image: none;
 }
 
+.room-list-stage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
 .bg-overlay {
   position: absolute;
   inset: 0;

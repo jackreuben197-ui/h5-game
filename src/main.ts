@@ -47,6 +47,7 @@ let stopWsProxyBridgeChannel: (() => void) | null = null
 let stopH5VisibilityBridgeChannel: (() => void) | null = null
 let stopCcStorageProxy: (() => void) | null = null
 let stopNativeMenuGuard: (() => void) | null = null
+let stopNativeDragGuard: (() => void) | null = null
 let stopDailyH5DisplayPanel: (() => void) | null = null
 // 启动即接管主题：恢复持久化模式 + 监听系统明暗变化（首帧由 index.html 内联脚本防闪烁）。
 initTheme()
@@ -94,6 +95,27 @@ function setupNativeMenuGuard(): () => void {
   }
 }
 
+function setupNativeDragGuard(): () => void {
+  if (typeof document === 'undefined') {
+    return () => {}
+  }
+
+  const onDragStart = (event: DragEvent): void => {
+    const target = event.target
+    // 后续若确实存在拖拽交互，可在组件根节点显式声明 data-allow-drag="true"。
+    if (target instanceof Element && target.closest('[data-allow-drag="true"]')) {
+      return
+    }
+    event.preventDefault()
+  }
+
+  document.addEventListener('dragstart', onDragStart, { capture: true })
+
+  return () => {
+    document.removeEventListener('dragstart', onDragStart, { capture: true })
+  }
+}
+
 export function mountH5App(container: string | Element = '#app'): VueApp<Element> | null {
   if (typeof window === 'undefined') {
     return null
@@ -121,6 +143,7 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
 
   setupRem()
   stopNativeMenuGuard = setupNativeMenuGuard()
+  stopNativeDragGuard = setupNativeDragGuard()
 
   try {
     app = createApp(App)
@@ -191,6 +214,8 @@ export function unmountH5App(): void {
   stopCcStorageProxy = null
   stopNativeMenuGuard?.()
   stopNativeMenuGuard = null
+  stopNativeDragGuard?.()
+  stopNativeDragGuard = null
   stopDailyH5DisplayPanel?.()
   stopDailyH5DisplayPanel = null
   stopTokenRefreshLoop()

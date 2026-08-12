@@ -3,7 +3,6 @@ import { localStore } from '@/utils/localStore'
 import {
   isTelegramMiniAppEnv,
   resolveTelegramClubInviteCode,
-  resolveTelegramClubRandomId,
 } from '@/utils/telegramStartParam'
 
 // 渠道包 = 邀请子域名 <邀请码>.<部署主域名>。部署主域名形如 sub.brand.tld（3 段，
@@ -14,6 +13,10 @@ const DEPLOY_APEX_LABEL_COUNT = 3
 const RESERVED_SUBDOMAINS = new Set(['www'])
 // 与 index.html 的 TG_MINI_APP_PARAM 保持一致。
 const TG_MINI_APP_PARAM = 'tg_mini_app'
+
+export const CHANNEL_MAIN_DOMAIN = (import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || '')
+  .trim()
+  .toLowerCase()
 
 function getHostLabels(hostname: string): string[] {
   return readString(hostname).toLowerCase().split('.').filter(Boolean)
@@ -27,7 +30,6 @@ export function getChannelMainDomain(hostname: string = window.location.hostname
   }
   return labels.slice(labels.length - DEPLOY_APEX_LABEL_COUNT).join('.')
 }
-// const TEST_CHANNEL_INVITE_CODE = 'DYyhWokm'
 
 interface ParsedQueryParams {
   inviteCode: string
@@ -216,8 +218,6 @@ export function parseInviteParamsFromLocation(
 }
 
 export function resolveInviteCode(hostname: string = window.location.hostname): string {
-  // void hostname
-  // return TEST_CHANNEL_INVITE_CODE
   const parsed = parseInviteParamsFromLocation()
   if (parsed.inviteCode) {
     return parsed.inviteCode
@@ -293,8 +293,6 @@ export function shouldOpenRegisterMode(): boolean {
   return parseInviteParamsFromLocation().mode === 'register'
 }
 
-// channel 模式下，分享链接直接用当前页面 origin —— 邀请码已“内嵌”在当前 <邀请码>.<基础域名> 子域名里，
-// 接收端从子域名还原邀请码。无需拼域名，自动适配测试/正式环境。
 export function buildChannelClubInviteUrl(inviteCode?: string): string {
   const currentUrl = new URL(window.location.href)
   const code = readString(inviteCode)
@@ -302,9 +300,6 @@ export function buildChannelClubInviteUrl(inviteCode?: string): string {
     return `${currentUrl.origin}/#/guest/home`
   }
 
-  // 用「当前访问网站的域名」(window.location.hostname) 作为基准域名（可能每天变化，故动态读取，不写死/不取后端 API 域名）。
-  // 邀请码作为子域名前缀：https://<邀请码>.<当前网站域名>/#/guest/home（依赖泛域名解析）。
-  // 若当前已处于渠道子域名（host 带邀请码前缀），先去掉该前缀，避免二次拼接。
   let baseHost = currentUrl.hostname
   const mainDomain = getChannelMainDomain()
   if (mainDomain && isChannelPackageHost(currentUrl.hostname)) {
@@ -314,14 +309,22 @@ export function buildChannelClubInviteUrl(inviteCode?: string): string {
   return `${currentUrl.protocol}//${code}.${baseHost}${portSuffix}/#/guest/home`
 }
 
-export function buildChannelAgentInviteUrl(agentInviteCode: string): string {
-  const currentUrl = new URL(window.location.href)
+
+export function buildChannelAgentInviteUrl(
+  agentInviteCode: string,
+  clubInviteCode?: string,
+): string {
   const normalizedCode = readString(agentInviteCode)
+  const clubInviteUrl = buildChannelClubInviteUrl(clubInviteCode)
   if (!normalizedCode) {
-    return buildChannelClubInviteUrl()
+    return clubInviteUrl
   }
 
-  return `${currentUrl.origin}/#/?i=${encodeURIComponent(normalizedCode)}`
+  const params = new URLSearchParams({
+    mode: 'register',
+    i: normalizedCode,
+  })
+  return `${clubInviteUrl}/#/?${params.toString()}`
 }
 
 export function buildChannelRegisterUrl(options?: {

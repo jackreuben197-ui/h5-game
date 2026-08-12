@@ -7,6 +7,7 @@
     --main-content-max: 1360px;
     --main-page-gutter: clamp(28px, 2.7778vw, 40px);
     --main-page-top: clamp(23px, 2.2222vw, 32px);
+    --main-bottom-tab-offset: max(23px, calc((var(--app-full-height, 100dvh) - 1024px) / 2 + 23px));
     --app-max-width: 1360px;
     --app-side-padding: 0px;
     --app-top-padding: 0px;
@@ -88,6 +89,34 @@
     display: none;
   }
 
+  // 首页桌面悬浮操作以居中的 1440 × 1024 舞台为参照：开桌按钮对齐底栏中心，
+  // 俱乐部菜单停在舞台右下角，不再跟随浏览器外沿漂移。
+  html[data-main-layout='primary'] .home-page .floating-action-area {
+    left: 50%;
+    right: auto;
+    bottom: var(--main-bottom-tab-offset);
+    width: var(--main-stage-width);
+    height: 82px;
+    transform: translateX(-50%);
+    display: block;
+    pointer-events: none;
+  }
+
+  html[data-main-layout='primary'] .home-page .create-table-btn {
+    position: absolute;
+    left: 50%;
+    bottom: 90px;
+    transform: translateX(-50%);
+    pointer-events: auto;
+  }
+
+  html[data-main-layout='primary'] .home-page .floating-menu-btn {
+    position: absolute;
+    right: var(--main-page-gutter);
+    bottom: calc((82px - 0.86rem) / 2);
+    pointer-events: auto;
+  }
+
   html[data-main-layout='primary'] .home-header {
     border-radius: clamp(44px, 5.69vw, 82px);
   }
@@ -134,8 +163,8 @@
     height: clamp(60px, 5.9028vw, 85px);
     min-height: clamp(60px, 5.9028vw, 85px);
     margin-top: clamp(6px, 0.625vw, 9px);
-    padding: clamp(5px, 0.5556vw, 8px) clamp(19px, 1.875vw, 27px)
-      clamp(5px, 0.5556vw, 8px) clamp(24px, 2.3611vw, 34px);
+    padding: clamp(5px, 0.5556vw, 8px) clamp(19px, 1.875vw, 27px) clamp(5px, 0.5556vw, 8px)
+      clamp(24px, 2.3611vw, 34px);
     border-radius: 999px;
   }
 
@@ -235,8 +264,11 @@
   }
 
   html[data-main-layout='primary'] .game-scroll-card {
-    padding: clamp(12px, 1.32vw, 19px) clamp(10px, 1.11vw, 16px)
-      clamp(9px, 0.9vw, 13px);
+    padding: clamp(12px, 1.32vw, 19px) clamp(10px, 1.11vw, 16px) clamp(9px, 0.9vw, 13px);
+  }
+
+  html[data-main-layout='primary'] .desktop-only-game-card {
+    display: flex;
   }
 
   html[data-main-layout='primary'] .zone-lg-bg {
@@ -288,8 +320,8 @@
 
   html[data-main-layout='primary'] .club-index .search-shell {
     min-height: clamp(46px, 4.5139vw, 65px);
-    padding: clamp(6px, 0.5556vw, 8px) clamp(6px, 0.625vw, 9px)
-      clamp(6px, 0.5556vw, 8px) clamp(14px, 1.3889vw, 20px);
+    padding: clamp(6px, 0.5556vw, 8px) clamp(6px, 0.625vw, 9px) clamp(6px, 0.5556vw, 8px)
+      clamp(14px, 1.3889vw, 20px);
     border-radius: 999px;
   }
 
@@ -423,6 +455,7 @@
     width: 100%;
     height: 165cqw;
     background-size: 100% auto;
+    background: none;
   }
 
   html[data-main-layout='primary'] .friends-table-page .main-content .section {
@@ -525,9 +558,12 @@
   }
 
   // 列表最多 200 条，逐卡 backdrop-filter 会在窗口缩放时产生大量离屏合成层。
-  html[data-main-layout='primary'] .friends-table-page .table-card .type-card {
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+  html[data-main-layout='primary'] .friends-table-page .table-card {
+    height: 2.5rem;
+    .type-card {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
   }
 
   html[data-main-layout='primary'] .friends-table-page .empty-state {
@@ -574,16 +610,8 @@
 
   html[data-main-layout='primary'] .message-page .card-bg-highlight .card-bg-outter,
   html[data-main-layout='primary'] .mine-page .card-bg-highlight .card-bg-outter,
-  html[data-main-layout='primary']
-    .message-page
-    .card-bg-highlight
-    .card-bg-outter
-    .card-bg-innner,
-  html[data-main-layout='primary']
-    .mine-page
-    .card-bg-highlight
-    .card-bg-outter
-    .card-bg-innner {
+  html[data-main-layout='primary'] .message-page .card-bg-highlight .card-bg-outter .card-bg-innner,
+  html[data-main-layout='primary'] .mine-page .card-bg-highlight .card-bg-outter .card-bg-innner {
     position: relative;
     width: 100%;
     height: 100%;
@@ -845,11 +873,7 @@
   }
 
   // 登录态卡片比游客卡片多昵称、ID 与消息角标；只补充结构差异，不复制整套布局。
-  html[data-main-layout='primary']
-    .main-layout--authenticated
-    .mine-page
-    .card-line1
-    .right-box {
+  html[data-main-layout='primary'] .main-layout--authenticated .mine-page .card-line1 .right-box {
     margin-top: 2.65cqw;
     padding: 0;
     gap: 0.3rem;
@@ -939,7 +963,7 @@
 
   html[data-main-layout='primary'] .bottom-tab {
     // 高于 1024px 的浏览器中仍贴着内容舞台底部，而不是浏览器底部。
-    bottom: max(23px, calc((var(--app-full-height, 100dvh) - 1024px) / 2 + 23px));
+    bottom: var(--main-bottom-tab-offset);
     width: 360px;
     height: 82px;
   }
@@ -977,5 +1001,4 @@
   html[data-main-layout='primary'] .club-index .cards-divider {
     margin-top: 28px;
   }
-
 }

@@ -54,7 +54,7 @@ function handleOpenCustomerService() {
 </script>
 
 <template>
-  <div class="mtt-list-page themeType2" @back="handleBack">
+  <div class="mtt-list-page room-list-page themeType2" @back="handleBack">
     <div class="bg-overlay"></div>
 
     <HeaderBack :title="t('UIHomeMttArea')" extra-padding>

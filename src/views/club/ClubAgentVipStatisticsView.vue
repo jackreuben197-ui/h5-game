@@ -286,7 +286,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page-shell sub-bg" :style="backgroundStyle">
+  <div class="page-shell sub-bg agent-vip-statistics-page" :style="backgroundStyle">
     <HeaderBack :title="t('UIClub_AgentData')" />
 
     <section class="glass profile-card">

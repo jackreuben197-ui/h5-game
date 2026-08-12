@@ -736,7 +736,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell member-detail-bg" :style="backgroundStyle">
+  <div class="page-shell member-detail-desktop-page member-detail-bg" :style="backgroundStyle">
     <HeaderBack :title="t('UIClub_MlistInfo')" />
     <div class="member-detail-page">
       <section class="glass-card profile-card">
@@ -843,7 +843,7 @@ onMounted(() => {
         </article>
       </section>
 
-      <section v-if="showAgentActions" class="glass-card link-list">
+      <section v-if="showAgentActions" class="glass-card link-list link-list--agent">
         <button class="link-item" @click="onActionClick('offline')">
           <span class="link-item-main">
             <svg class="agent-link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -916,7 +916,7 @@ onMounted(() => {
         </button>
       </section>
 
-      <section v-if="showBindRow" class="glass-card link-list">
+      <section v-if="showBindRow" class="glass-card link-list link-list--single">
         <button class="link-item" @click="onActionClick('bind')">
           {{ t('UISetting_SecurityBindNo') }} <span>{{ t('UIGuild_MemberDetails_BindVip') }}</span>
         </button>
@@ -980,7 +980,7 @@ onMounted(() => {
       v-model:show="showRolePopup"
       round
       position="bottom"
-      class="sheet-popup"
+      class="sheet-popup member-role-sheet-popup"
       :overlay-style="{ background: 'rgba(12,12,12,0.6)' }"
     >
       <div class="sheet-body">

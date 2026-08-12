@@ -2712,6 +2712,8 @@ export interface OrgClubUserInfoData {
   club_id?: number // 俱乐部id
   create_time?: string // 创建时间
   agent_user_id?: number // 代理用户id
+  invite_code?: string // 代理邀请码
+  invitation_code?: string // 代理邀请码（兼容接口历史字段名）
   user_service_ratio?: number // 最大玩家普通桌返水比例
   user_mtt_ratio?: number // 最大玩家MTT返水比例
   remark_name?: string // 备注名称

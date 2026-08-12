@@ -652,4 +652,126 @@ function confirm(): void {
 .keypad-leave-to .kp__sheet {
   transform: translateY(100%);
 }
+
+// Pad / PC：键盘跟随浏览器宽度横向铺开，最大与桌面内容舞台一致。
+// 按键高度独立响应视口高度，避免宽屏下按固定宽高比被纵向放得过大。
+@media (min-width: 600px) {
+  .kp__sheet {
+    width: min(100%, 1440px);
+    max-width: 1440px;
+    max-height: 100vh;
+    max-height: 100dvh;
+    padding: clamp(12px, 2.5dvh, 26px) clamp(24px, 3.0556vw, 44px)
+      clamp(14px, 2.8dvh, 29px);
+    gap: clamp(8px, 1.8dvh, 18px);
+    border-top-left-radius: clamp(24px, 2.3611vw, 34px);
+    border-top-right-radius: clamp(24px, 2.3611vw, 34px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .kp__sheet::-webkit-scrollbar {
+    display: none;
+  }
+
+  .kp__header {
+    gap: clamp(6px, 1dvh, 10px);
+  }
+
+  .kp__title {
+    font-size: clamp(15px, 1.25vw, 18px);
+  }
+
+  .kp__input {
+    min-height: clamp(42px, 7dvh, 68px);
+    padding: clamp(8px, 1.4dvh, 14px) clamp(14px, 1.8056vw, 26px);
+    border-radius: clamp(20px, 2.0833vw, 30px);
+  }
+
+  .kp__placeholder,
+  .kp__value {
+    font-size: clamp(17px, 1.6667vw, 24px);
+  }
+
+  .kp__grid {
+    width: 100%;
+    column-gap: clamp(12px, 1.3889vw, 20px);
+    row-gap: clamp(6px, 1.2dvh, 14px);
+  }
+
+  .kp__key {
+    width: 100%;
+    height: clamp(36px, 7.5dvh, 68px);
+    aspect-ratio: auto;
+    border-radius: clamp(14px, 1.5278vw, 22px);
+    font-size: clamp(22px, 2.0833vw, 30px);
+  }
+
+  .kp__key--accent {
+    border-radius: 999px;
+  }
+
+  .kp__icon {
+    width: clamp(34px, 3.4722vw, 50px);
+    height: clamp(22px, 2.2222vw, 32px);
+  }
+
+  .kp__actions {
+    gap: clamp(12px, 1.3889vw, 20px);
+    padding: 0;
+    margin-top: 0;
+  }
+
+  .kp__cancel,
+  :deep(.kp__confirm) {
+    height: clamp(42px, 7dvh, 60px);
+  }
+
+  .kp__cancel,
+  :deep(.kp__confirm .primary-btn__text) {
+    font-size: clamp(16px, 1.3889vw, 20px);
+  }
+
+  // 数字密码页会让页面本身保持可交互；此状态仅由设置/验证数字密码复用。
+  // 将 Teleport 键盘限制在居中的内容舞台内，并按桌面稿固定九宫格几何尺寸。
+  .kp--passthrough {
+    inset: auto;
+    top: 50%;
+    left: 50%;
+    width: var(--content-stage-width, min(100%, 1440px));
+    height: var(--content-stage-height, min(100dvh, 1024px));
+    transform: translate(-50%, -50%);
+  }
+
+  .kp--passthrough .kp__sheet {
+    width: 100%;
+    max-width: none;
+    max-height: 100%;
+    padding: 25px 21px 26px;
+    gap: 8px;
+    border-top-left-radius: 34px;
+    border-top-right-radius: 34px;
+  }
+
+  .kp--passthrough .kp__grid {
+    column-gap: 6px;
+    row-gap: 8px;
+  }
+
+  .kp--passthrough .kp__key {
+    height: 53px;
+    border-radius: 15px;
+    font-size: 24px;
+  }
+
+  .kp--passthrough .kp__key--accent {
+    border-radius: 63px;
+  }
+
+  .kp--passthrough .kp__icon {
+    width: 34px;
+    height: 22px;
+  }
+}
 </style>

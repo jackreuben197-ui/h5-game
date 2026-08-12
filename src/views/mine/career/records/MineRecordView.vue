@@ -74,9 +74,9 @@ interface TabItem {
 }
 
 const gameTabs: TabItem[] = [
-  { label: 'NLH', key: 'nlh' },
-  { label: 'PLO', key: 'plo' },
-  { label: '6+', key: '6+' },
+  { label: t('GameType_0'), key: 'nlh' },
+  { label: t('adaptation10009'), key: 'plo' },
+  { label: t('PokerType_2'), key: '6+' },
 ]
 const timeTabs: TabItem[] = [
   { label: t('UIData_Today'), key: 'today' },
@@ -456,7 +456,7 @@ onBeforeUnmount(() => {
           :class="{ active: selectedGame === item.key }"
           @click="selectGame(item.key)"
         >
-          {{ item.label }}
+          <span class="plain-tab-label">{{ item.label }}</span>
         </button>
       </div>
 
@@ -577,7 +577,7 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 @use '@/styles/mixins' as *;
 
-.record-page {
+.career-record-page {
   position: relative;
   height: 100dvh;
   padding: 0 0 0.8rem;

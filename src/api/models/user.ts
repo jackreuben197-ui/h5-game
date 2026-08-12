@@ -559,6 +559,9 @@ export interface UserGoldChangeLogRecord {
   gold_after?: number // 变动后余额
   create_time?: string
   op_code?: string // 操作类型标识
+  src_type?: number // 来源：0普通 1德州牌桌 2-MTT 3牛仔
+  src_room_id?: number
+  src_match_id?: number
   name?: string // 牌局/来源名称
   gold_type?: number // 1-联盟币 2-USDT
   src_nick_name?: string

@@ -119,51 +119,46 @@ onMounted(() => {
 
 <template>
   <div class="page-shell club-table-create-page" :style="backgroundStyle">
-    <HeaderBack :title="t('UIGuild_CreateTable')" @back="handleBack">
-      <template #right>
-        <TopActionButton
-          v-if="showJackpot"
-          :name="t('jackpot')"
-          icon-alt="wallet"
-          large
-          @click="router.push('/club/jackpot')"
-        />
-      </template>
-    </HeaderBack>
     <div class="club-table-create-overlay"></div>
 
-    <section class="club-table-create-body">
-      <div class="title-wrap">
-        <h1>{{ t('UITable_Text') }}</h1>
-        <div class="title-divider" aria-hidden="true">
-          <span></span>
-          <span></span>
-        </div>
-        <p>{{ t('UITable_Text2') }}</p>
-      </div>
-
-      <div class="type-grid">
-        <button
-          v-for="item in gameTypes"
-          :key="item.key"
-          type="button"
-          class="type-card"
-          :class="{
-            'type-card--active': selectedKey === item.key,
-            'custom-card-icon': item.key === 'mtt',
-          }"
-          @click="onSelect(item)"
-        >
-          <img
-            class="type-card-icon"
-            :class="{ 'type-card-icon--light': isLightTheme }"
-            :src="resolveIcon(item)"
-            :alt="t(item.titleKey)"
+    <div class="room-list-stage club-table-create-stage">
+      <HeaderBack :title="t('UIGuild_CreateTable')" @back="handleBack">
+        <template #right>
+          <TopActionButton
+            v-if="showJackpot"
+            class="jackpot-action"
+            :name="t('jackpot')"
+            icon-alt="wallet"
+            large
+            @click="router.push('/club/jackpot')"
           />
-          <span v-if="isLightTheme" class="type-card-label">{{ t(item.titleKey) }}</span>
-        </button>
-      </div>
-    </section>
+        </template>
+      </HeaderBack>
+
+      <section class="club-table-create-body">
+        <div class="type-grid">
+          <button
+            v-for="item in gameTypes"
+            :key="item.key"
+            type="button"
+            class="type-card"
+            :class="{
+              'type-card--active': selectedKey === item.key,
+              'custom-card-icon': item.key === 'mtt',
+            }"
+            @click="onSelect(item)"
+          >
+            <img
+              class="type-card-icon"
+              :class="{ 'type-card-icon--light': isLightTheme }"
+              :src="resolveIcon(item)"
+              :alt="t(item.titleKey)"
+            />
+            <span v-if="isLightTheme" class="type-card-label">{{ t(item.titleKey) }}</span>
+          </button>
+        </div>
+      </section>
+    </div>
   </div>
 </template>
 

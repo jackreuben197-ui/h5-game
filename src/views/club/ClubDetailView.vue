@@ -12,6 +12,7 @@ import {
   postOrgClubApplyTribeListApi,
   postOrgClubCancleJoinTribeApi,
   postOrgMemberListApi,
+  postOrgClubUserInfoApi,
 } from '@/api/org'
 import type {
   OrgChangeClubDataRequest,
@@ -72,6 +73,7 @@ const router = useRouter()
 const userInfoStore = useUserInfoStore()
 
 const imgInviteQr = ref('')
+const agentInviteCode = ref('')
 
 const loading = ref(false)
 const clubDetail = ref<OrgClubSearchByIdResponseData | null>(null)
@@ -771,14 +773,68 @@ function closeCopyPopup(): void {
 
 async function downloadBlob(blob: Blob, fileName: string): Promise<void> {
   const objectUrl = URL.createObjectURL(blob)
-  try {
-    const link = document.createElement('a')
-    link.href = objectUrl
-    link.download = fileName
-    link.click()
-  } finally {
-    URL.revokeObjectURL(objectUrl)
-  }
+  const link = document.createElement('a')
+  link.href = objectUrl
+  link.download = fileName
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000)
+}
+
+function createInviteCaptureTarget(source: HTMLElement): {
+  host: HTMLDivElement
+  target: HTMLElement
+} {
+  const sourceRect = source.getBoundingClientRect()
+  const captureWidth = Math.max(1, Math.ceil(sourceRect.width))
+  const host = document.createElement('div')
+  const target = source.cloneNode(true) as HTMLElement
+
+  host.setAttribute('aria-hidden', 'true')
+  Object.assign(host.style, {
+    position: 'fixed',
+    top: '0',
+    left: '-10000px',
+    width: `${captureWidth}px`,
+    background: '#242424',
+    pointerEvents: 'none',
+  })
+
+  target.classList.add('invite-share-export')
+  target.style.width = '100%'
+  target.style.maxWidth = 'none'
+  target.style.height = 'auto'
+  target.style.transform = 'none'
+  target.querySelectorAll('[data-invite-export-ignore]').forEach((element) => element.remove())
+
+  host.appendChild(target)
+  document.body.appendChild(host)
+  return { host, target }
+}
+
+async function waitForInviteCaptureAssets(target: HTMLElement): Promise<void> {
+  const imageTasks = Array.from(target.querySelectorAll('img')).map(
+    (image) =>
+      new Promise<void>((resolve) => {
+        if (image.complete && image.naturalWidth > 0) {
+          resolve()
+          return
+        }
+
+        const finish = () => {
+          image.removeEventListener('load', finish)
+          image.removeEventListener('error', finish)
+          resolve()
+        }
+        image.addEventListener('load', finish, { once: true })
+        image.addEventListener('error', finish, { once: true })
+        window.setTimeout(finish, 5000)
+      }),
+  )
+
+  await Promise.all(imageTasks)
+  await document.fonts?.ready
 }
 
 async function saveInviteShare(): Promise<void> {
@@ -792,6 +848,7 @@ async function saveInviteShare(): Promise<void> {
   }
 
   savingInviteShare.value = true
+  let captureHost: HTMLDivElement | null = null
   try {
     await nextTick()
     const actionsEl = document.getElementById('invite-modal-actions')
@@ -801,24 +858,33 @@ async function saveInviteShare(): Promise<void> {
     const captureTarget =
       (inviteModalRef.value.closest('.game-dialog__card') as HTMLElement | null) ||
       inviteModalRef.value
-    const canvas = await html2canvas(captureTarget, {
+    const capture = createInviteCaptureTarget(captureTarget)
+    captureHost = capture.host
+    await waitForInviteCaptureAssets(capture.target)
+
+    const canvas = await html2canvas(capture.target, {
       useCORS: true,
-      backgroundColor: null,
+      allowTaint: false,
+      backgroundColor: '#242424',
       logging: false,
       scale: Math.min(window.devicePixelRatio || 1, 3),
+      foreignObjectRendering: false,
+      removeContainer: true,
     })
 
     const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob((result) => resolve(result), 'image/jpeg', 1)
+      canvas.toBlob((result) => resolve(result), 'image/jpeg', 0.96)
     })
 
     if (blob) {
       await downloadBlob(blob, `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`)
     } else {
       const link = document.createElement('a')
-      link.href = canvas.toDataURL('image/jpeg')
+      link.href = canvas.toDataURL('image/jpeg', 0.96)
       link.download = `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`
+      document.body.appendChild(link)
       link.click()
+      link.remove()
     }
 
     showSuccessToast(t('UIClub_DoneSave'))
@@ -827,6 +893,7 @@ async function saveInviteShare(): Promise<void> {
     console.error('saveInviteShare error', error)
     showFailToast(t('UIClub_SaveFail2'))
   } finally {
+    captureHost?.remove()
     savingInviteShare.value = false
   }
 }
@@ -971,8 +1038,6 @@ async function generateInviteQrCode(): Promise<void> {
       return
     }
 
-    // 始终用「邀请码 + 当前访问网站域名」生成子域名分享链接：
-    // https://<邀请码>.<当前域名>/#/guest/home（域名每天可能变化，故取 window.location.hostname）。
     const inviteCode = extractInvitationCode(response.data)
     const finalLink = buildChannelClubInviteUrl(inviteCode)
 
@@ -986,6 +1051,38 @@ async function generateInviteQrCode(): Promise<void> {
   }
 }
 
+async function fetchAgentInviteCode(): Promise<void> {
+  agentInviteCode.value = ''
+  if (!isAgent.value) {
+    return
+  }
+
+  const currentClub = displayClub.value
+  const clubId = Number(currentClub?.club_id || 0)
+  const userId = Number(currentClub?.user_id ?? userInfoStore.userInfo?.user?.id ?? 0)
+  if (!clubId) {
+    return
+  }
+
+  try {
+    const response = await postOrgClubUserInfoApi({
+      club_id: clubId,
+      user_id: Number.isFinite(userId) && userId > 0 ? userId : undefined,
+    })
+
+    if (Number(response.code) !== 0 || !response.data) {
+      console.error('fetchAgentInviteCode API error', response.msg)
+      return
+    }
+
+    agentInviteCode.value = String(
+      response.data.invite_code || response.data.invitation_code || '',
+    ).trim()
+  } catch (error) {
+    console.error('fetchAgentInviteCode error', error)
+  }
+}
+
 onMounted(async () => {
   await refreshClubDetail()
   await prefetchAgentInvitationLink()
@@ -994,8 +1091,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="page-shell club-detail-bg" :style="backgroundStyle">
-    <HeaderBack :title="t('UIClub_ClubManager')" />
+  <div
+    class="page-shell room-list-page club-management-page club-detail-bg"
+    :style="backgroundStyle"
+  >
+    <div class="room-list-stage club-management-stage">
+      <HeaderBack :title="t('UIClub_ClubManager')" />
 
     <div v-loading="loading" class="club-detail">
       <section class="club-header-card">
@@ -1063,134 +1164,122 @@ onMounted(async () => {
         </div>
       </section>
 
-      <section v-if="quickActions.length > 0" class="quick-actions">
-        <button
-          v-for="item in quickActions"
-          :key="item.id"
-          type="button"
-          class="quick-card"
-          @click="onQuickAction(item.id)"
-        >
-          <span class="quick-image-wrap" :class="['quick-image-wrap--' + item.id]">
-            <img :src="item.cover" :alt="item.title" />
-          </span>
-          <span class="quick-title">{{ item.title }}</span>
-        </button>
-      </section>
+        <section v-if="quickActions.length > 0" class="quick-actions">
+          <button
+            v-for="item in quickActions"
+            :key="item.id"
+            type="button"
+            class="quick-card"
+            @click="onQuickAction(item.id)"
+          >
+            <span class="quick-image-wrap">
+              <img :src="item.cover" :alt="item.title" />
+            </span>
+            <span class="quick-title">{{ item.title }}</span>
+          </button>
+        </section>
 
-      <section class="intro-card">
-        <span>{{ t('UIClub_Creat_ZizEgnjo') }}</span>
-        <button
-          v-if="isFounder"
-          type="button"
-          class="intro-edit"
-          :aria-label="t('UIClub_EditClubDescri')"
-          @click="goEditDescription"
-        >
-          <span class="edit-pen">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="11"
-              height="11"
-              viewBox="0 0 11 11"
-              fill="none"
-            >
-              <path
-                d="M7.1838 0.371378L6.22515 1.33003L8.80004 3.90492L9.75869 2.94627C10.2539 2.4511 10.2539 1.64892 9.75869 1.15375L8.9783 0.371378C8.48313 -0.123793 7.68095 -0.123793 7.18578 0.371378H7.1838ZM5.77751 1.77766L1.16054 6.39662C0.954552 6.60261 0.80402 6.85811 0.720831 7.13739L0.0196696 9.52015C-0.0298475 9.68851 0.0157082 9.86875 0.138511 9.99156C0.261313 10.1144 0.441555 10.1599 0.607932 10.1124L2.99069 9.41121C3.26997 9.32803 3.52548 9.17749 3.73147 8.9715L8.3524 4.35255L5.77751 1.77766Z"
-                fill="white"
-              />
-            </svg>
-          </span>
-        </button>
-      </section>
+        <section class="intro-card">
+          <span>{{ t('UIClub_Creat_ZizEgnjo') }}</span>
+          <button
+            v-if="isFounder"
+            type="button"
+            class="intro-edit"
+            :aria-label="t('UIClub_EditClubDescri')"
+            @click="goEditDescription"
+          >
+            <span class="edit-pen"></span>
+          </button>
+        </section>
 
-      <section class="settings-card">
-        <button
-          v-for="item in settings"
-          :key="item.id"
-          type="button"
-          class="settings-row"
-          :class="[
-            `settings-row--${item.kind}`,
-            {
-              'settings-row--clickable':
-                item.kind === 'arrow' ||
-                item.kind === 'level' ||
-                item.kind === 'copy' ||
-                (item.kind === 'tribe' && (!hasTribe || tribeApplying)),
-            },
-          ]"
-          @click="onSettingClick(item)"
-        >
-          <div class="label-wrap">
-            <span>{{ item.label }}</span>
-            <span v-if="item.kind === 'copy'" class="info-dot">i</span>
-          </div>
+        <section class="settings-card">
+          <button
+            v-for="item in settings"
+            :key="item.id"
+            type="button"
+            class="settings-row"
+            :class="[
+              `settings-row--${item.kind}`,
+              {
+                'settings-row--clickable':
+                  item.kind === 'arrow' ||
+                  item.kind === 'level' ||
+                  item.kind === 'copy' ||
+                  (item.kind === 'tribe' && (!hasTribe || tribeApplying)),
+              },
+            ]"
+            @click="onSettingClick(item)"
+          >
+            <div class="label-wrap">
+              <span>{{ item.label }}</span>
+              <span v-if="item.kind === 'copy'" class="info-dot">i</span>
+            </div>
 
-          <div class="right-wrap">
-            <template v-if="item.kind === 'founder'">
-              <span class="muted-text">{{ item.value }}</span>
-              <img
-                class="mini-avatar"
-                :src="displayClub?.club_creator_avatar || imgClubCover"
-                :alt="t('UIClub_FounderAvatar')"
-              />
-            </template>
+            <div class="right-wrap">
+              <template v-if="item.kind === 'founder'">
+                <span class="muted-text">{{ item.value }}</span>
+                <img
+                  class="mini-avatar"
+                  :src="displayClub?.club_creator_avatar || imgClubCover"
+                  :alt="t('UIClub_FounderAvatar')"
+                />
+              </template>
 
-            <template v-else-if="item.kind === 'text'">
-              <span class="muted-text">{{ item.value }}</span>
-            </template>
-
-            <template v-else-if="item.kind === 'tribe'">
-              <template v-if="hasTribe">
+              <template v-else-if="item.kind === 'text'">
                 <span class="muted-text">{{ item.value }}</span>
               </template>
-              <template v-else>
-                <button
-                  v-if="isFounder"
-                  type="button"
-                  class="tribe-apply-btn"
-                  :class="{ 'tribe-apply-btn--pending': tribeApplying }"
-                  :disabled="tribeApplyStatusLoading"
-                  @click.stop="onTribeAction"
-                >
-                  {{ tribeApplying ? t('UIApplying') : t('UIGuild_ApplyJoin') }}
-                </button>
-                <span v-else class="muted-text">--</span>
+
+              <template v-else-if="item.kind === 'tribe'">
+                <template v-if="hasTribe">
+                  <span class="muted-text">{{ item.value }}</span>
+                </template>
+                <template v-else>
+                  <button
+                    v-if="isFounder"
+                    type="button"
+                    class="tribe-apply-btn"
+                    :class="{ 'tribe-apply-btn--pending': tribeApplying }"
+                    :disabled="tribeApplyStatusLoading"
+                    @click.stop="onTribeAction"
+                  >
+                    {{ tribeApplying ? t('UIApplying') : t('UIGuild_ApplyJoin') }}
+                  </button>
+                  <span v-else class="muted-text">--</span>
+                </template>
               </template>
-            </template>
 
-            <template v-else-if="item.kind === 'level'">
-              <span class="level-pill">{{ item.value }}</span>
-              <span class="chevron" aria-hidden="true"></span>
-            </template>
+              <template v-else-if="item.kind === 'level'">
+                <span class="level-pill">{{ item.value }}</span>
+                <span class="chevron" aria-hidden="true"></span>
+              </template>
 
-            <template v-else-if="item.kind === 'switch' && item.switchKey">
-              <button
-                type="button"
-                class="switch"
-                :class="{
-                  'switch--on':
-                    item.switchKey === 'allowSearch' ? allowSearch : joinWithoutApproval,
-                }"
-                :aria-label="item.label"
-                @click.stop="toggleSwitch(item.switchKey)"
-              >
-                <span class="switch-knob"></span>
-              </button>
-            </template>
+              <template v-else-if="item.kind === 'switch' && item.switchKey">
+                <button
+                  type="button"
+                  class="switch"
+                  :class="{
+                    'switch--on':
+                      item.switchKey === 'allowSearch' ? allowSearch : joinWithoutApproval,
+                  }"
+                  :aria-label="item.label"
+                  @click.stop="toggleSwitch(item.switchKey)"
+                >
+                  <span class="switch-knob"></span>
+                </button>
+              </template>
 
-            <template v-else>
-              <span class="chevron" aria-hidden="true"></span>
-            </template>
-          </div>
-        </button>
-      </section>
+              <template v-else>
+                <span class="chevron" aria-hidden="true"></span>
+              </template>
+            </div>
+          </button>
+        </section>
 
       <section v-if="isFounder" class="danger-zone">
         <PrimaryButton :text="t('UIClub_DeleteClub')" class="danger-btn" @click="onDeleteClub" />
       </section>
     </div>
+  </div>
 
     <GameDialog
       v-model:show="showInvitePopup"
@@ -1207,6 +1296,7 @@ onMounted(async () => {
           <button
             type="button"
             class="invite-modal__close"
+            data-invite-export-ignore
             :aria-label="t('UIBackDialog_ticketsbtnClose')"
             @click="closeInvitePopup"
           >
@@ -2239,6 +2329,40 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 0.22rem;
+}
+
+:global(.invite-share-export) {
+  min-height: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  background: #242424 !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:global(.invite-share-export::before),
+:global(.invite-share-export::after) {
+  display: none !important;
+}
+
+:global(.invite-share-export *),
+:global(.invite-share-export *::before),
+:global(.invite-share-export *::after) {
+  animation: none !important;
+  transition: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:global(.invite-share-export .game-dialog__body) {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+:global(.invite-share-export .invite-modal__head h3) {
+  padding-left: 0 !important;
 }
 
 .invite-modal__head {

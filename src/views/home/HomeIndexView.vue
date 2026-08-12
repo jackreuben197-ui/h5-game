@@ -975,7 +975,11 @@ onBeforeUnmount(() => {
               </div>
 
               <div class="game-scroll-card poker-card" @click="goToGameList">
-                <img class="zone-lg-bg" src="@/assets/icons/game_zone_poker_lg.png" :alt="t('UIClub_Text15')" />
+                <img
+                  class="zone-lg-bg"
+                  src="@/assets/icons/game_zone_poker_lg.png"
+                  :alt="t('UIClub_Text15')"
+                />
                 <div class="poker-overlay"></div>
                 <div class="zone-info poker-info">
                   <div class="zone-header">
@@ -1006,7 +1010,11 @@ onBeforeUnmount(() => {
                 class="game-scroll-card game-card-mahjong"
                 @click="goToCasino"
               >
-                <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" :alt="t('Mahjong_Name')" />
+                <img
+                  class="zone-lg-bg"
+                  src="@/assets/icons/game_zone_mahjong_lg.png"
+                  :alt="t('Mahjong_Name')"
+                />
                 <div class="zone-info">
                   <div class="zone-header">
                     <span class="zone-title"> {{ localized('Casino', '娱乐场') }} </span>
@@ -1693,6 +1701,10 @@ onBeforeUnmount(() => {
 
 .coming-soon-card {
   padding: 0;
+}
+
+.desktop-only-game-card {
+  display: none;
 }
 
 .coming-soon-right {

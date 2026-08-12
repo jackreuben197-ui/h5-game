@@ -608,11 +608,19 @@ const createFeeTip = computed(() =>
   feeDetails.value
     .map((item) => {
       const unitPart = `${formatFeeCount(item.unitCurrent)} x ${item.multiple}`
-      if (item.totalCurrent <= 0) return (item.label) + ": " + t('UIChatFree')
+      if (item.totalCurrent <= 0) return item.label + ': ' + t('UIChatFree')
       if (item.isDiscount && item.totalOrigin > item.totalCurrent) {
-        return (item.label) + ": " + (unitPart) + " = " + (formatFeeCount(
-          item.totalCurrent,
-        )) + " (" + t('UIShoppingActiveNromal') + (formatFeeCount(item.totalOrigin)) + ")"
+        return (
+          item.label +
+          ': ' +
+          unitPart +
+          ' = ' +
+          formatFeeCount(item.totalCurrent) +
+          ' (' +
+          t('UIShoppingActiveNromal') +
+          formatFeeCount(item.totalOrigin) +
+          ')'
+        )
       }
       return `${item.label}: ${unitPart} = ${formatFeeCount(item.totalCurrent)}`
     })
@@ -704,7 +712,7 @@ function getGameTypeName(type: number): string {
       return t('PokerType_2')
     case 1:
     default:
-      return t('adaptation10022') + "\\n" + t('UIClub_Text15')
+      return t('adaptation10022') + '\n' + t('UIClub_Text15')
   }
 }
 
@@ -855,7 +863,10 @@ async function onDeleteConfirm() {
 
       <!-- 开关小卡片 -->
       <div class="quick-switches">
-        <QuickSwitchCard v-model:model-value="formState.fee_on" :label="t('UICommon_ActivityPoints')" />
+        <QuickSwitchCard
+          v-model:model-value="formState.fee_on"
+          :label="t('UICommon_ActivityPoints')"
+        />
         <QuickSwitchCard
           v-model:model-value="formState.insurance"
           :label="t('adaptation10179')"
@@ -910,7 +921,9 @@ async function onDeleteConfirm() {
 
     <!-- 模板列表 -->
     <div class="template-list">
-      <div v-if="loadingTemplates" class="template-list__placeholder">{{ t('UITable_Loading') }}...</div>
+      <div v-if="loadingTemplates" class="template-list__placeholder">
+        {{ t('UITable_Loading') }}...
+      </div>
       <div v-else-if="!filteredTemplates.length" class="template-list__placeholder">
         {{ t('UITable_NoCan') }}
       </div>
@@ -922,9 +935,7 @@ async function onDeleteConfirm() {
         @click="onSelectTemplate(item)"
       >
         <div class="template-card__left">
-          <div
-            class="template-card__badge"
-          >
+          <div class="template-card__badge">
             <span class="template-card__game-name">
               {{ getGameTypeName(item.game_play_type ?? 1) }}
             </span>
@@ -1189,10 +1200,14 @@ async function onDeleteConfirm() {
   font-size: 0.32rem;
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  box-shadow:
+    inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
+    inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
+
+  @include theme-light-own {
+    background: var(--c-brand);
+    box-shadow: none;
+  }
 }
 
 /* 模板列表 */
@@ -1257,6 +1272,13 @@ async function onDeleteConfirm() {
 }
 
 .template-card__left {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.template-card__badge-wrap {
   flex-shrink: 0;
   margin-right: 0.2rem;
   transform: translateX(-0.5rem);
@@ -1295,6 +1317,12 @@ async function onDeleteConfirm() {
   width: 2.2rem;
   flex-direction: column;
   transform: translateX(-0.4rem);
+}
+
+.template-card__middle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 .template-card__blinds {
@@ -1391,7 +1419,8 @@ async function onDeleteConfirm() {
   // box-shadow: 0px 0px 2.2px 1.47px rgba(242, 241, 241, 0.9) inset, 0.29px 0.29px 2.1px #000 inset,
   //   0px 0px 2.1px #000 inset, 0.84px 1.05px 1.68px rgba(0, 0, 0, 0.25);
   box-shadow:
-  /* 左上高光 */ inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.3),
+  /* 左上高光 */
+    inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.3),
     /* 右下高光 */ inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.3);
   display: flex;
   flex-direction: column;
@@ -1425,7 +1454,8 @@ async function onDeleteConfirm() {
   background: rgba(255, 255, 255, 0.2);
   background-blend-mode: hard-light;
   box-shadow:
-  /* */ 0 0 0.1rem 0.05rem rgba(255, 255, 255, 0.2) inset,
+  /* */
+    0 0 0.1rem 0.05rem rgba(255, 255, 255, 0.2) inset,
     /* 左上高光 */ inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.3),
     /* 右下高光 */ inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.3);
   color: #fff;

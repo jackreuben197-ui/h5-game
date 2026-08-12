@@ -268,12 +268,20 @@ const createFeeTip = computed<string>(() => {
   const lines = feeDetails.value.map((item) => {
     const unitPart = `${formatFeeCount(item.unitCurrent)} x ${item.multiple}`
     if (item.totalCurrent <= 0) {
-      return (item.label) + ": " + t('UIChatFree')
+      return item.label + ': ' + t('UIChatFree')
     }
     if (item.isDiscount && item.totalOrigin > item.totalCurrent) {
-      return (item.label) + ": " + (unitPart) + " = " + (formatFeeCount(
-        item.totalCurrent,
-      )) + " (" + t('UIShoppingActiveNromal') + (formatFeeCount(item.totalOrigin)) + ")"
+      return (
+        item.label +
+        ': ' +
+        unitPart +
+        ' = ' +
+        formatFeeCount(item.totalCurrent) +
+        ' (' +
+        t('UIShoppingActiveNromal') +
+        formatFeeCount(item.totalOrigin) +
+        ')'
+      )
     }
     return `${item.label}: ${unitPart} = ${formatFeeCount(item.totalCurrent)}`
   })
@@ -309,7 +317,7 @@ function syncRouteParamsToFormState(): void {
   if (!formState.name) {
     const nickname = gameStore.loginNickname || gameStore.loginAccount || ''
     if (nickname) {
-      formState.name = (nickname) + t('UITable_OfTable')
+      formState.name = nickname + t('UITable_OfTable')
     }
   }
 }
@@ -528,127 +536,131 @@ async function onCreateTable() {
     isSubmitting.value = false
   }
 }
+
+function handleBack(): void {
+  router.back()
+}
 </script>
 
 <template>
   <div class="create-table-page">
-    <!-- Header with tabs -->
-    <HeaderBack>
-      <div class="header-tabs">
-        <button
-          :class="['header-tab', { 'header-tab--active': activeTab === 'quick' }]"
-          @click="activeTab = 'quick'"
-        >
-          {{ t('UIQuickCreateTable') }}
-        </button>
-        <button
-          :class="['header-tab', { 'header-tab--active': activeTab === 'pro' }]"
-          @click="activeTab = 'pro'"
-        >
-          {{ t('UITable_Text3') }}
-        </button>
-      </div>
-    </HeaderBack>
-
-    <!-- Quick create tab -->
-    <div v-show="activeTab === 'quick'" class="quick-create-wrapper">
-      <QuickCreateView ref="quickCreateRef" @edit-template="onQuickEditTemplate" />
-    </div>
-
-    <!-- Pro params tab -->
-    <div v-show="activeTab === 'pro'" class="create-table-form">
-      <!-- Table name row -->
-      <div class="table-name-row">
-        <span class="table-name__label">{{ t('UIClub_RoomCreat_0HvQkjkd') }}</span>
-        <input
-          v-model="formState.name"
-          class="table-name__input"
-          type="text"
-          :placeholder="t('adaptation10022') + '/' + t('PokerType_2') + '/' + t('adaptation10009')"
-          :maxlength="20"
-        />
-        <span class="table-name__count">{{ formState.name.length }}/20</span>
-      </div>
-
-      <!-- Form sections -->
-      <div class="detail-form">
-        <template v-for="(section, index) in renderedSections" :key="index">
-          <div
-            v-if="section.length"
-            class="detail-form__section"
-            :class="{ 'detail-form__section--tab': section.some((f) => f.type === 'tab') }"
+    <div class="room-list-stage create-table-stage">
+      <!-- Header with tabs -->
+      <HeaderBack :extra-padding="true" @back="handleBack">
+        <div class="header-tabs">
+          <button
+            :class="['header-tab', { 'header-tab--active': activeTab === 'quick' }]"
+            @click="activeTab = 'quick'"
           >
-            <component
-              :is="componentMap[field.type]"
-              v-for="field in section"
-              :key="field.modelValue"
-              v-model:model-value="formStateMap[field.modelValue]"
-              class="detail-form__item"
-              :label="field.label"
-              :tip="field.tip"
-              :options="field.options"
-              :active-value="field.activeValue"
-              :inactive-value="field.inactiveValue"
-              :min="field.min"
-              :max="field.max"
-              :step="field.step"
-              :unit="field.unit"
-              :range="field.range"
-              :mark-mode="field.markMode"
-              :disabled="field.disabled"
-              :number-only="field.numberOnly"
-              :decimal-digits="field.decimalDigits"
-              :need-double="field.needDouble"
-              :icon="field.icon"
-              :tip2="
-                field.modelValue == 'squid' && formState.squid
-                  ? formState.squid_mode == 1
-                    ? t('UICreateTableSquidClassicTips')
-                    : t('UICreateTableSquidBattleTips')
-                  : ''
-              "
-              @change="onFieldChange(field, $event)"
-            />
-          </div>
-        </template>
+            {{ t('UIQuickCreateTable') }}
+          </button>
+          <button
+            :class="['header-tab', { 'header-tab--active': activeTab === 'pro' }]"
+            @click="activeTab = 'pro'"
+          >
+            {{ t('UITable_Text3') }}
+          </button>
+        </div>
+      </HeaderBack>
+
+      <!-- Quick create tab -->
+      <div v-show="activeTab === 'quick'" class="quick-create-wrapper">
+        <QuickCreateView ref="quickCreateRef" @edit-template="onQuickEditTemplate" />
       </div>
 
-      <!-- Bottom action bar -->
-      <div class="bottom-action-bar">
-        <div class="fee-info">
-          <div class="fee-row">
-            <span class="fee-label">{{ t('UIClub_FundRecharge_9jO4mlS6') }}:</span>
-            <div v-if="createFee.isDiscount" class="fee-value-wrap">
+      <!-- Pro params tab -->
+      <div v-show="activeTab === 'pro'" class="create-table-form">
+        <!-- Table name row -->
+        <div class="table-name-row">
+          <span class="table-name__label">{{ t('UIClub_RoomCreat_0HvQkjkd') }}</span>
+          <input
+            v-model="formState.name"
+            class="table-name__input"
+            type="text"
+            :placeholder="
+              t('adaptation10022') + '/' + t('PokerType_2') + '/' + t('adaptation10009')
+            "
+            :maxlength="20"
+          />
+          <span class="table-name__count">{{ formState.name.length }}/20</span>
+        </div>
+
+        <!-- Form sections -->
+        <div class="detail-form">
+          <template v-for="(section, index) in renderedSections" :key="index">
+            <div v-if="section.length" class="detail-form__section">
+              <component
+                :is="componentMap[field.type]"
+                v-for="field in section"
+                :key="field.modelValue"
+                v-model:model-value="formStateMap[field.modelValue]"
+                class="detail-form__item"
+                :label="field.label"
+                :tip="field.tip"
+                :options="field.options"
+                :active-value="field.activeValue"
+                :inactive-value="field.inactiveValue"
+                :min="field.min"
+                :max="field.max"
+                :step="field.step"
+                :unit="field.unit"
+                :range="field.range"
+                :mark-mode="field.markMode"
+                :disabled="field.disabled"
+                :number-only="field.numberOnly"
+                :decimal-digits="field.decimalDigits"
+                :need-double="field.needDouble"
+                :icon="field.icon"
+                :tip2="
+                  field.modelValue == 'squid' && formState.squid
+                    ? formState.squid_mode == 1
+                      ? t('UICreateTableSquidClassicTips')
+                      : t('UICreateTableSquidBattleTips')
+                    : ''
+                "
+                @change="onFieldChange(field, $event)"
+              />
+            </div>
+          </template>
+        </div>
+
+        <!-- Bottom action bar -->
+        <div class="bottom-action-bar">
+          <div class="fee-info">
+            <div class="fee-row">
+              <span class="fee-label">{{ t('UIClub_FundRecharge_9jO4mlS6') }}:</span>
+              <div v-if="createFee.isDiscount" class="fee-value-wrap">
+                <img :src="icDiamondBalance" class="fee-diamond-icon" alt="" />
+                <span class="fee-original">{{ createFee.originalPrice.toLocaleString() }}</span>
+              </div>
+            </div>
+            <div class="fee-row fee-row--current">
               <img :src="icDiamondBalance" class="fee-diamond-icon" alt="" />
-              <span class="fee-original">{{ createFee.originalPrice.toLocaleString() }}</span>
+              <span class="fee-current mr-4">{{ createFee.currentPrice.toLocaleString() }}</span>
+              <FieldTip :tip="createFeeTip" />
+            </div>
+            <div class="fee-row">
+              <span class="fee-label">{{ t('UIClub_CreateRoom31') }}:</span>
+              <img :src="icDiamondBalance" class="fee-diamond-icon" alt="" />
+              <span class="fee-balance">{{ clubDiamondBalance.toLocaleString() }}</span>
             </div>
           </div>
-          <div class="fee-row fee-row--current">
-            <img :src="icDiamondBalance" class="fee-diamond-icon" alt="" />
-            <span class="fee-current mr-4">{{ createFee.currentPrice.toLocaleString() }}</span>
-            <FieldTip :tip="createFeeTip" />
+          <div class="action-buttons">
+            <button
+              class="action-btn action-btn--save"
+              :disabled="isSubmitting"
+              @click="onSaveTemplate"
+            >
+              {{ t('UITable_Save') }}
+            </button>
+            <button
+              class="action-btn action-btn--create"
+              :disabled="isSubmitting"
+              @click="onCreateTable"
+            >
+              {{ t('UICreateNow') }}
+            </button>
           </div>
-          <div class="fee-row">
-            <span class="fee-label">{{ t('UIClub_CreateRoom31') }}:</span>
-            <img :src="icDiamondBalance" class="fee-diamond-icon" alt="" />
-            <span class="fee-balance">{{ clubDiamondBalance.toLocaleString() }}</span>
-          </div>
-        </div>
-        <div class="action-buttons">
-          <button
-            class="action-btn action-btn--save"
-            :disabled="isSubmitting"
-            @click="onSaveTemplate"
-          >
-            {{ t('UITable_Save') }}
-          </button>
-          <button
-            class="action-btn action-btn--create"
-            :disabled="isSubmitting"
-            @click="onCreateTable"
-          >
-            {{ t('UICreateNow') }}
-          </button>
         </div>
       </div>
     </div>

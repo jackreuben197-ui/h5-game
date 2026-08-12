@@ -22,6 +22,7 @@ import customerServiceIcon from '@/assets/icons/customerserviceicon.png'
 import avatarDefault from '@/assets/images/default_avatar.png'
 import {
   subscribeGlobalCustomerServiceChat,
+  type MatchSupportOrderMessagePayload,
   type OpenGlobalCustomerServiceChatPayload,
 } from './channel'
 import {
@@ -61,6 +62,7 @@ const officialServiceAvatar = ref('')
 
 const CLUB_IM_SERVICE_TYPE = 1
 const OFFICIAL_IM_SERVICE_TYPE = 2
+const MATCH_ORDER_IM_SERVICE_TYPE = 4
 
 const voiceMode = ref(false)
 const voicePressed = ref(false)
@@ -68,11 +70,20 @@ const voiceCancel = ref(false)
 const voiceSeconds = ref(0)
 const playingVoiceToken = ref<string>('')
 
-const chatContext = ref<Required<OpenGlobalCustomerServiceChatPayload>>({
+interface GlobalChatContext {
+  imServiceType: number
+  clubId: number
+  tribeId: number
+  supportUserId: number
+  orderMessage: MatchSupportOrderMessagePayload | null
+}
+
+const chatContext = ref<GlobalChatContext>({
   imServiceType: 0,
   clubId: 0,
   tribeId: 0,
   supportUserId: 0,
+  orderMessage: null,
 })
 
 let voiceTicker: number | null = null
@@ -84,6 +95,9 @@ let recordingChunks: Blob[] = []
 let recordStartMs = 0
 let playingAudio: HTMLAudioElement | null = null
 let startingRecord = false
+let voiceGestureActive = false
+let activeVoicePointerId: number | null = null
+let pendingVoiceStop: boolean | null = null
 
 const shouldShowFloat = computed(
   () => !!gameStore.sessionToken && !visible.value && hasUnread.value,
@@ -106,6 +120,9 @@ function resolveToUserId(channel: ChatSupportChannelListServiceData | null | und
   if (isCurrentUserSupportInChannel(channel)) {
     return Number(channel.user_id || 0) || 0
   }
+  if (resolveEffectiveImServiceType(channel) === MATCH_ORDER_IM_SERVICE_TYPE) {
+    return Number(channel.support_user_id || chatContext.value.supportUserId || 0) || 0
+  }
   return 0
 }
 
@@ -122,7 +139,9 @@ function resolveSenderName(
   channel: ChatSupportChannelListServiceData | null | undefined = activeChannel.value,
 ): string {
   if (isSelfMessage(message, channel)) return t('UILobby_Menu_menu_btn_my')
-  return isCurrentUserSupportInChannel(channel) ? t('UIMine_RecordItemMatch_2TZCjaqM') : t('UIMineMain01')
+  return isCurrentUserSupportInChannel(channel)
+    ? t('UIMine_RecordItemMatch_2TZCjaqM')
+    : t('UIMineMain01')
 }
 
 function resolveOutgoingMessageUserSend(
@@ -137,6 +156,12 @@ function isOfficialServiceType(type: unknown): boolean {
 
 function isOfficialChannel(channel: ChatSupportChannelListServiceData | null | undefined): boolean {
   return isOfficialServiceType(channel?.im_service_type)
+}
+
+function isMatchOrderChannel(
+  channel: ChatSupportChannelListServiceData | null | undefined,
+): boolean {
+  return Number(channel?.im_service_type || 0) === MATCH_ORDER_IM_SERVICE_TYPE
 }
 
 function createOfficialDisplayChannel(
@@ -162,6 +187,7 @@ function createOfficialDisplayChannel(
 
 function resolveChannelDisplayName(channel: ChatSupportChannelListServiceData): string {
   if (isOfficialChannel(channel)) return t('UIMatch_ServerHead')
+  if (isMatchOrderChannel(channel)) return t('UIClub_Creat_2LvGNmS7')
   return channel.user_id !== userInfoStore.userInfo?.user?.p_u_id
     ? channel.user_nickname || t('UIMine_RecordItemMatch_2TZCjaqM')
     : channel.club_name || t('UILobby_Menu_menu_btn_club')
@@ -170,6 +196,9 @@ function resolveChannelDisplayName(channel: ChatSupportChannelListServiceData): 
 function resolveChannelDisplayAvatar(channel: ChatSupportChannelListServiceData): string {
   if (isOfficialChannel(channel)) {
     return officialServiceAvatar.value
+  }
+  if (isMatchOrderChannel(channel)) {
+    return customerServiceIcon
   }
 
   return (
@@ -187,6 +216,10 @@ const availableChannels = computed(() => {
     return [createOfficialDisplayChannel(official || null)]
   }
 
+  if (contextType === MATCH_ORDER_IM_SERVICE_TYPE) {
+    return channels.value.filter((item) => isMatchOrderChannel(item))
+  }
+
   const existsClubIds = new Set<string>()
   const list = channels.value.filter((item) => {
     if (!item || typeof item !== 'object') return false
@@ -195,8 +228,10 @@ const availableChannels = computed(() => {
     const clubId = Number(item.club_id || 0)
     if (chatContext.value.clubId > 0 && clubId !== chatContext.value.clubId) return false
     const userId = Number(item.user_id || 0)
-    if (existsClubIds.has(`${clubId}-${userId}`)) return false
-    existsClubIds.add(`${clubId}-${userId}`)
+    const serviceType = Number(item.im_service_type || 0)
+    if (existsClubIds.has(`${serviceType}-${clubId}-${userId}`)) return false
+    existsClubIds.add(`${serviceType}-${clubId}-${userId}`)
+    if (isMatchOrderChannel(item)) return true
     const clubName = String(item.club_name || '').trim()
     return clubId > 0 && !!clubName
   })
@@ -215,7 +250,9 @@ const targetClubId = computed(() => {
   return Number(userInfoStore.currentClub?.club_id || 0)
 })
 
-const supportHintText = computed(() => (voiceCancel.value ? t('UIChatUndoCancel') : t('UIGlobalCustomerServiceChat_Text3')))
+const supportHintText = computed(() =>
+  voiceCancel.value ? t('UIChatUndoCancel') : t('UIGlobalCustomerServiceChat_Text3'),
+)
 const supportHintClass = computed(() =>
   voiceCancel.value ? 'voice-tip--cancel' : 'voice-tip--send',
 )
@@ -246,6 +283,7 @@ function applyContext(payload: OpenGlobalCustomerServiceChatPayload): void {
     clubId: toSafeInt(payload.clubId),
     tribeId: toSafeInt(payload.tribeId),
     supportUserId: toSafeInt(payload.supportUserId),
+    orderMessage: payload.orderMessage ? { ...payload.orderMessage } : null,
   }
 }
 
@@ -259,11 +297,12 @@ function resolveEffectiveImServiceType(
   return channelType > 0 ? channelType : undefined
 }
 
-// club_id 必须与 im_service_type 同源判断：仅俱乐部客服（type 1）允许携带 club_id，否则服务端要求为 0
+// club_id 必须与 im_service_type 同源判断：俱乐部客服与撮合订单客服沿用所属俱乐部。
 function resolveEffectiveClubId(
   channel: ChatSupportChannelListServiceData | null | undefined,
 ): number {
-  if (resolveEffectiveImServiceType(channel) !== CLUB_IM_SERVICE_TYPE) return 0
+  const serviceType = resolveEffectiveImServiceType(channel)
+  if (serviceType !== CLUB_IM_SERVICE_TYPE && serviceType !== MATCH_ORDER_IM_SERVICE_TYPE) return 0
   const clubId = Number(channel?.club_id || targetClubId.value || 0)
   return clubId > 0 ? clubId : 0
 }
@@ -460,7 +499,7 @@ async function fetchChannel(): Promise<void> {
     await ensureOfficialServiceProfileLoaded()
   }
 
-  const queryTypes = contextType > 0 ? [contextType] : undefined
+  const queryTypes = contextType > 0 ? [contextType] : [1, 2, 3, MATCH_ORDER_IM_SERVICE_TYPE]
   // 后台拉取客服会话列表：业务码非 0 静默处理，不弹错误提示（无客服服务时组件已自有兜底）。
   const response = await postChatSupportChannelListApi(
     {
@@ -487,8 +526,16 @@ async function fetchChannel(): Promise<void> {
       return isOfficialChannel(item)
     }
 
+    if (contextType === MATCH_ORDER_IM_SERVICE_TYPE) {
+      return isMatchOrderChannel(item)
+    }
+
     if (isOfficialChannel(item)) {
       return contextType === 0
+    }
+
+    if (contextType === 0 && isMatchOrderChannel(item)) {
+      return true
     }
 
     const clubId = Number(item.club_id || 0)
@@ -658,6 +705,7 @@ function openPanelByFloat(): void {
   chatContext.value.clubId = 0
   chatContext.value.tribeId = 0
   chatContext.value.supportUserId = 0
+  chatContext.value.orderMessage = null
   requestedClubMissing.value = false
   activeChannel.value = null
   void openPanel()
@@ -787,6 +835,83 @@ function parseMessageExtra(message: ChatSupportMessageListChatData): Record<stri
     return {}
   }
 }
+
+function formatOrderValue(value: unknown): string {
+  if (value === undefined || value === null || value === '') return '-'
+  return String(value)
+}
+
+function normalizeOrderTimestamp(value: unknown): number {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric) || numeric <= 0) return 0
+  return Math.floor(numeric > 1_000_000_000_000 ? numeric / 1000 : numeric)
+}
+
+function formatOrderTimestamp(value: unknown): string {
+  const timestamp = normalizeOrderTimestamp(value)
+  if (!timestamp) return '-'
+  return new Date(timestamp * 1000).toLocaleString()
+}
+
+function formatSupportOrderMessage(message: ChatSupportMessageListChatData): string {
+  const extra = parseMessageExtra(message)
+  const isRecharge = Number(message.sub_type || 1) === 1
+  const rows = isRecharge
+    ? [
+        [t('UIRechargeUCChatRecord1'), extra.user_info],
+        [t('UIGuild_MemberDetails_RechargeGold'), extra.amount],
+        [t('UITribeRechargeUSDTRecord_PayGold'), extra.pay_price],
+        [t('UIRechargeUCChatRecord2'), extra.type_name],
+        [t('uititleOreder001'), extra.order_no],
+        [t('UIMine_WalletFlow_SQSJ'), formatOrderTimestamp(extra.timestamp)],
+      ]
+    : [
+        [t('UIRechargeUCChatRecord3'), extra.user_info],
+        [t('UIGuildMgr_RecyclingUC'), extra.amount],
+        [t('UIClub_FundTake_Recycle'), extra.pay_price],
+        [t('UIRechargeUCChatRecord4'), extra.type_name],
+        [t('UITribeRechargeUSDTShopRemakeTip'), extra.address],
+        [t('uititleOreder001'), extra.order_no],
+        [t('UIMine_WalletFlow_SQSJ'), formatOrderTimestamp(extra.timestamp)],
+      ]
+
+  return rows.map(([label, value]) => `${label}：${formatOrderValue(value)}`).join('\n')
+}
+
+const displayMessages = computed<ChatSupportMessageListChatData[]>(() => {
+  const order = chatContext.value.orderMessage
+  if (!order) return messages.value
+
+  const orderNo = String(order.orderNo || '').trim()
+  const alreadyIncluded =
+    !!orderNo &&
+    messages.value.some(
+      (message) =>
+        Number(message.msg_type || 0) === 6 &&
+        String(parseMessageExtra(message).order_no || '').trim() === orderNo,
+    )
+  if (alreadyIncluded) return messages.value
+
+  const timestamp = normalizeOrderTimestamp(order.timestamp) || Math.floor(Date.now() / 1000)
+  const syntheticMessage: ChatSupportMessageListChatData = {
+    msg_type: 6,
+    sub_type: Number(order.subType || 1),
+    extra: JSON.stringify({
+      user_info: order.userInfo || '',
+      amount: order.amount ?? 0,
+      pay_price: order.payPrice ?? 0,
+      type_name: order.typeName || '',
+      order_no: order.orderNo || '',
+      timestamp,
+      address: order.address || '',
+    }),
+    user_send: true,
+    local_time: timestamp,
+    time_token: timestamp * 1000 + 6,
+  }
+
+  return [syntheticMessage, ...messages.value]
+})
 
 function resolveImageThumbUrl(message: ChatSupportMessageListChatData): string {
   const directThumb = String(message.thumb_url || '').trim()
@@ -925,6 +1050,9 @@ async function startVoiceRecord(): Promise<void> {
     triggerAudioUploadFallback()
     showFailToast(t('UIGlobalCustomerServiceChat_Current'))
     startingRecord = false
+    voiceGestureActive = false
+    activeVoicePointerId = null
+    pendingVoiceStop = null
     return
   }
 
@@ -933,7 +1061,6 @@ async function startVoiceRecord(): Promise<void> {
   mediaRecorder = recorder
   recordingChunks = []
   voicePressed.value = true
-  voiceCancel.value = false
   voiceSeconds.value = 0
   recordStartMs = Date.now()
 
@@ -951,6 +1078,12 @@ async function startVoiceRecord(): Promise<void> {
     voiceSeconds.value = Math.floor((Date.now() - recordStartMs) / 1000)
   }, 200)
   startingRecord = false
+
+  if (pendingVoiceStop !== null) {
+    const shouldSend = pendingVoiceStop
+    pendingVoiceStop = null
+    void stopVoiceRecord(shouldSend)
+  }
 }
 
 function stopVoiceTicker(): void {
@@ -1060,13 +1193,27 @@ async function uploadAndSendVoice(blob: Blob, duration: number): Promise<void> {
   showFailToast(sendResponse.message || t('UIGlobalCustomerServiceChat_Fail5'))
 }
 
-function onVoiceButtonDown(): void {
+function onVoiceButtonDown(event: PointerEvent): void {
+  if (voiceGestureActive || voicePressed.value || startingRecord) return
+
+  voiceGestureActive = true
+  activeVoicePointerId = event.pointerId
+  pendingVoiceStop = null
+  voiceCancel.value = false
+
+  const target = event.currentTarget as HTMLElement | null
+  if (target?.setPointerCapture) {
+    try {
+      target.setPointerCapture(event.pointerId)
+    } catch {
+      // 部分旧浏览器不支持在此时捕获，仍由后续边界坐标判断兜底。
+    }
+  }
+
   void startVoiceRecord()
 }
 
-function onVoiceButtonMove(event: PointerEvent): void {
-  if (!voicePressed.value) return
-
+function updateVoiceCancelState(event: PointerEvent): void {
   const target = event.currentTarget as HTMLElement | null
   if (!target) return
   const rect = target.getBoundingClientRect()
@@ -1075,14 +1222,45 @@ function onVoiceButtonMove(event: PointerEvent): void {
   voiceCancel.value = !(inX && inY)
 }
 
-function onVoiceButtonUp(): void {
-  if (!voicePressed.value) return
-  void stopVoiceRecord(true)
+function onVoiceButtonMove(event: PointerEvent): void {
+  if (!voiceGestureActive || event.pointerId !== activeVoicePointerId) return
+  updateVoiceCancelState(event)
+}
+
+function finishVoiceGesture(shouldSend: boolean): void {
+  if (!voiceGestureActive) return
+
+  voiceGestureActive = false
+  activeVoicePointerId = null
+
+  if (voicePressed.value) {
+    void stopVoiceRecord(shouldSend)
+    return
+  }
+
+  if (startingRecord) {
+    pendingVoiceStop = shouldSend
+    return
+  }
+
+  voiceCancel.value = false
+}
+
+function onVoiceButtonUp(event: PointerEvent): void {
+  if (!voiceGestureActive || event.pointerId !== activeVoicePointerId) return
+  updateVoiceCancelState(event)
+  finishVoiceGesture(!voiceCancel.value)
 }
 
 function onVoiceButtonLeave(): void {
-  if (!voicePressed.value) return
+  if (!voiceGestureActive) return
   voiceCancel.value = true
+}
+
+function onVoiceButtonCancel(event: PointerEvent): void {
+  if (!voiceGestureActive || event.pointerId !== activeVoicePointerId) return
+  voiceCancel.value = true
+  finishVoiceGesture(false)
 }
 
 function resolveVoiceUrl(message: ChatSupportMessageListChatData): string {
@@ -1416,7 +1594,7 @@ watch(
           >
             <div class="messages-inner">
               <div
-                v-for="(msg, idx) in messages"
+                v-for="(msg, idx) in displayMessages"
                 :key="String(msg.time_token ?? idx)"
                 class="message-row"
                 :class="{ 'message-row--self': isSelfMessage(msg) }"
@@ -1484,6 +1662,14 @@ watch(
                     </div>
                     <span class="voice-message-time">{{ formatVoiceDuration(msg.duration) }}</span>
                   </button>
+
+                  <div
+                    v-else-if="msg.msg_type === 6"
+                    class="text-bubble support-order-bubble"
+                    :class="{ 'text-bubble--self': isSelfMessage(msg) }"
+                  >
+                    {{ formatSupportOrderMessage(msg) }}
+                  </div>
 
                   <div
                     v-else
@@ -1567,7 +1753,7 @@ watch(
                 <svg width="22" height="21" viewBox="0 0 24 23" fill="none">
                   <path
                     d="M4.31042 5.23619C3.89719 5.10688 3.89323 4.89806 4.31833 4.76503L19.4289 0.0378811C19.8476 -0.0929126 20.0875 0.127059 19.9703 0.512008L15.6528 14.6957C15.5341 15.0888 15.2926 15.1022 15.1153 14.7291L12.2694 8.71783L17.0191 2.77266L10.6862 7.23153L4.31042 5.23619Z"
-                    fill="white"
+                    fill="currentColor"
                   />
                 </svg>
               </button>
@@ -1580,11 +1766,8 @@ watch(
                 @pointerdown.prevent="onVoiceButtonDown"
                 @pointermove.prevent="onVoiceButtonMove"
                 @pointerup.prevent="onVoiceButtonUp"
-                @pointercancel.prevent="onVoiceButtonLeave"
+                @pointercancel.prevent="onVoiceButtonCancel"
                 @pointerleave.prevent="onVoiceButtonLeave"
-                @touchstart.prevent="onVoiceButtonDown"
-                @touchend.prevent="onVoiceButtonUp"
-                @touchcancel.prevent="onVoiceButtonLeave"
               >
                 {{ t('UIChatPressDownSpeak') }}
               </button>
@@ -1685,7 +1868,9 @@ watch(
       <div class="no-service-card" @click.stop>
         <p class="no-service-title">{{ t('UIGlobalCustomerServiceChat_CurrentClubNot') }}～</p>
         <p class="no-service-desc">{{ t('UIGlobalCustomerServiceChat_AdminAgain') }}</p>
-        <button class="no-service-btn" type="button" @click="closeNoServicePopup">{{ t('adaptation10008') }}</button>
+        <button class="no-service-btn" type="button" @click="closeNoServicePopup">
+          {{ t('adaptation10008') }}
+        </button>
       </div>
     </div>
   </Teleport>
@@ -1744,8 +1929,24 @@ watch(
   left: 0;
   right: 0;
   /* 键盘覆盖页面时只抬升客服面板，牌桌与应用外壳尺寸保持不变。 */
-  bottom: var(--app-keyboard-inset, 0px);
   z-index: 200;
+}
+
+.chat-sheet-frost {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.84);
+  backdrop-filter: blur(0.2rem);
+
+  @include theme-light {
+    background: rgba(23, 23, 23, 0.84);
+  }
+}
+
+.chat-sheet-inner {
+  position: relative;
+  z-index: 1;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -2041,6 +2242,10 @@ watch(
   border-radius: 0.6255rem;
 }
 
+.support-order-bubble {
+  white-space: pre-line;
+}
+
 .image-bubble {
   border: none;
   border-radius: 0.16rem;
@@ -2332,6 +2537,7 @@ watch(
   background: rgba(255, 255, 255, 0.2);
   color: #f9f9f9;
   font-size: 0.34rem;
+  touch-action: none;
 
   @include theme-light {
     background: var(--c-brand);
@@ -2358,10 +2564,21 @@ watch(
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
+  @include theme-light {
+    background: var(--c-brand);
+    color: #fff;
+  }
 }
 
 .send-action-btn:disabled {
   background: rgba(255, 255, 255, 0.2);
+
+  @include theme-light {
+    background: var(--c-brand);
+    color: #fff;
+    opacity: 0.45;
+  }
 }
 
 .send-action-btn svg {

@@ -33,9 +33,10 @@ interface TabItem {
 }
 
 const gameTabs: TabItem[] = [
-  { label: 'NLH', key: 'nlh' },
-  { label: 'PLO', key: 'plo' },
+  { label: t('GameType_0'), key: 'nlh' },
+  { label: t('adaptation10009'), key: 'plo' },
   { label: '6+', key: '6+' },
+  // { label: t('Mahjong_Name'), key: 'mahjong' },
 ]
 const dateTabs: TabItem[] = [
   { label: t('UIData_Today'), key: 'today' },
@@ -134,13 +135,13 @@ const menuList: CareerMenuItem[] = [
   { key: 'mtt', label: 'MTT', icon: 'mtt', route: '/mine/career/club/mtt' },
   // {
   //   key: 'cowboy',
-  //   label: t('UINiuZaiRule_title'),
+  //   label: 'Cowboy',
   //   icon: 'cowboy',
   //   route: '/mine/career/club/cowboy',
   // },
   // {
   //   key: 'mahjong',
-  //   label: t('Mahjong_Name'),
+  //   label: 'Mahjong',
   //   icon: 'mahjong',
   //   route: '/mine/career/club/mahjong',
   // },
@@ -193,9 +194,10 @@ function selectCurrency(index: number): void {
 
 function handleMenuClick(item: CareerMenuItem): void {
   if (!item.route) {
+    showGameToast(t('UIClub_InDeve'))
     return
   }
-  if (item.key === 'cowboy' || item.key == 'mahjong') {
+  if (item.key === 'cowboy' || item.key === 'mahjong') {
     showGameToast(t('UIClub_InDeve'))
     return
   }
@@ -223,8 +225,10 @@ function toSafeNumber(value: unknown): number {
 function resolveRequestParams() {
   // game_types: 0-德州 1-OMAHA4 2-OMAHA5 3-OMAHA6 4-fantasy 5-牛仔 6-麻将 7-其他
   let gameTypes: number[]
-  if (selectedGameTab.value === t('adaptation10009')) {
+  if (selectedGameTab.value === 'plo') {
     gameTypes = [1, 2, 3]
+  } else if (selectedGameTab.value === 'mahjong') {
+    gameTypes = [6]
   } else {
     // 德州（默认）或短牌都传 [0]
     gameTypes = [0]
@@ -239,7 +243,7 @@ function resolveRequestParams() {
   return {
     filter_type: currencyTypes[selectedCurrencyIndex.value].value,
     game_types: gameTypes,
-    poker_types: selectedGameTab.value === t('PokerType_2') ? [2] : [0],
+    poker_types: selectedGameTab.value === '6+' ? [2] : [0],
     club_id: clubId,
   }
 }
@@ -292,7 +296,7 @@ function extractMetricsFromCache(): CareerMetric[] {
 
 // ── 缓存（IndexedDB career）──────────────────────────────────────────────────
 // store=USER_STORE_CAREER，key = `${clubId}_home_${currency}_${gameTab}`：
-//   clubId = 0(全部) / 俱乐部 id；currency = 1(UC)/3(记分牌)/4(钻石)；gameTab = nlh|plo|6+。
+//   clubId = 0(全部) / 俱乐部 id；currency = 1(UC)/3(记分牌)/4(钻石)；gameTab = nlh|plo|6+|mahjong。
 // 接口返回 one_day/week_day/mon_day 全部时间窗的数据，所以 date tab 不进 key。
 function homeCacheKey(): string {
   const clubId =
@@ -667,12 +671,20 @@ onMounted(() => {
 }
 
 .game-tab {
+  position: relative;
   border: 0;
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
   font-size: 0.42rem;
   line-height: 1.1;
   padding: 0.06rem 0;
+
+  // 扩大玩法切换的触发热区，但不改变文字与下划线的视觉位置。
+  &::before {
+    position: absolute;
+    inset: -0.28rem -0.56rem;
+    content: '';
+  }
 
   @include theme-light {
     color: rgba(0, 0, 0, 0.7);

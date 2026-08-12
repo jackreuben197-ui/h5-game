@@ -638,7 +638,9 @@ onMounted(() => {
 
 <template>
   <div class="page-shell jackpot-create-page">
-    <HeaderBack :title="isEditMode ? 'Edit Jackpot' : 'Jackpot'" />
+    <HeaderBack
+      :title="(isEditMode ? t('UIGuild_EditorTemplate') : t('UIGuild_CreateDes')) + 'Jackpot'"
+    />
 
     <section class="create-content">
       <div class="name-input-pill">

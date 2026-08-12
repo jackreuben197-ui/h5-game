@@ -146,7 +146,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell sub-bg" :style="backgroundStyle">
+  <div class="page-shell sub-bg bind-agent-desktop-page" :style="backgroundStyle">
     <HeaderBack :title="t('UIGuild_MemberDetails_BindVip')" />
     <div class="sub-page">
       <section class="cards">

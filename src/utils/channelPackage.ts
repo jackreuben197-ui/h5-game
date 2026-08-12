@@ -2,7 +2,9 @@ import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 import {
   isTelegramMiniAppEnv,
+  readTelegramStartParam,
   resolveTelegramClubInviteCode,
+  resolveTelegramClubRandomId,
 } from '@/utils/telegramStartParam'
 
 // 渠道包 = 邀请子域名 <邀请码>.<部署主域名>。部署主域名形如 sub.brand.tld（3 段，
@@ -78,10 +80,52 @@ export function isChannelPackageHost(hostname: string = window.location.hostname
   return true
 }
 
-// A Telegram Mini App opened through a club channel is a private-domain context — the same as
-// a channel-package subdomain.
+export function hasTelegramClubParam(): boolean {
+  if (!isTelegramMiniAppEnv()) {
+    return false
+  }
+
+  if (resolveTelegramClubInviteCode() || resolveTelegramClubRandomId()) {
+    return true
+  }
+
+  const startParam = readTelegramStartParam()
+  if (startParam && startParam.trim()) {
+    return true
+  }
+
+  const parsed = parseInviteParamsFromLocation()
+  if (parsed.inviteCode || parsed.agentInviteCode) {
+    return true
+  }
+
+  try {
+    const url = new URL(window.location.href)
+    const searchParams = url.searchParams
+    const hash = url.hash || ''
+    const queryIndex = hash.indexOf('?')
+    const hashParams =
+      queryIndex >= 0 ? new URLSearchParams(hash.slice(queryIndex + 1)) : new URLSearchParams()
+    const clubRandomId =
+      searchParams.get('club_random_id') ||
+      searchParams.get('clubRandomId') ||
+      hashParams.get('club_random_id') ||
+      hashParams.get('clubRandomId')
+    if (clubRandomId && clubRandomId.trim()) {
+      return true
+    }
+  } catch {
+    // malformed URL — ignore
+  }
+
+  return false
+}
+
+// A Telegram Mini App opened through a club channel (with club start_param / query params)
+// is a private-domain context (4 tabs). Opened directly without club parameters, it is the
+// Platform Version (5 tabs).
 export function isTelegramClubContext(): boolean {
-  return isTelegramMiniAppEnv()
+  return isTelegramMiniAppEnv() && hasTelegramClubParam()
 }
 
 // Private-domain mode = channel-package subdomain OR Telegram club context. This drives the

@@ -108,7 +108,7 @@ const casinoStore = useCasinoStore()
 const appConfigStore = useAppConfigStore()
 const gameStore = useGameStore()
 const gameLaunchStore = useGameLaunchStore()
-const isChannelPackage = isPrivateDomainMode()
+const isChannelPackage = computed(() => isPrivateDomainMode())
 
 const loading = ref(false)
 const balanceVisible = ref(true)
@@ -401,7 +401,7 @@ const mahjongPlayersText = 788
 const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
 const mttPlayersText = computed(() => `${homeRoomStats.value.mtt.players}`)
 const channelCasinoClubId = computed(() =>
-  isChannelPackage
+  isChannelPackage.value
     ? toSafeInt(currentClub.value?.club_id || userInfoStore.channelDefaultClub?.club_id)
     : 0,
 )
@@ -434,7 +434,7 @@ type HomeContentMode = 'zones' | 'mtt' | 'poker' | 'casino'
 const homeContentModeRaw = computed<HomeContentMode>(() => {
   const pokerTables = homeRoomStats.value.poker.tables
   const mttTables = homeRoomStats.value.mtt.tables
-  if (isChannelPackage) {
+  if (isChannelPackage.value) {
     if (channelSectionCount.value === 1) {
       if (channelSections.value.poker) {
         return 'poker'
@@ -458,9 +458,9 @@ const homeContentMode = ref<HomeContentMode>(homeContentModeRaw.value)
 
 // 专区入口只在 zones 模式渲染：赛事 / 扑克常驻（没内容也保留入口，点进去是空态），
 // 娱乐场没给俱乐部开通时隐藏——那里点进去只会报错。
-const showCasinoZoneCard = computed(() => !isChannelPackage || channelSections.value.casino)
+const showCasinoZoneCard = computed(() => !isChannelPackage.value || channelSections.value.casino)
 // 热门游戏整条都是娱乐场的游戏，没开娱乐场的俱乐部不该看到。
-const showHotGamesSection = computed(() => !isChannelPackage || channelSections.value.casino)
+const showHotGamesSection = computed(() => !isChannelPackage.value || channelSections.value.casino)
 
 const currentJoinedClub = computed(() => userInfoStore.currentJoinedClub)
 const channelUserLevel = computed(() => toSafeInt(currentJoinedClub.value?.user_level))

@@ -19,11 +19,12 @@ interface TabItem {
   icon: TabIconKey
 }
 
-const isChannelPackage = isPrivateDomainMode()
+const isChannelPackage = computed(() => isPrivateDomainMode())
 
 // 官方包保留 5 个入口；渠道包将俱乐部能力合并到首页，仅保留 4 个入口。
 const tabs = computed<TabItem[]>(() => {
-  const middleTab: TabItem = isChannelPackage
+  const isChannel = isChannelPackage.value
+  const middleTab: TabItem = isChannel
     ? {
         key: 'wallet',
         label: t('UIGuildFund_RechargeText'),
@@ -56,7 +57,7 @@ const tabs = computed<TabItem[]>(() => {
 
   return [
     homeTab,
-    ...(!isChannelPackage ? [clubTab] : []),
+    ...(!isChannel ? [clubTab] : []),
     middleTab,
     {
       key: 'message',

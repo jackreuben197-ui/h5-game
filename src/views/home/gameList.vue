@@ -62,7 +62,7 @@ const gameStore = useGameStore()
 const loginModalStore = useLoginModalStore()
 const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
-const isChannelPackage = isPrivateDomainMode()
+const isChannelPackage = computed(() => isPrivateDomainMode())
 
 // 顶部右侧切换风格开关：和旧版保持一致。
 const activeTab = ref<GameTypeTabName>('all')

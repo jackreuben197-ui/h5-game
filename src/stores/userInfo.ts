@@ -4,7 +4,7 @@ import type { OrgClubSearchInfoData, OrgClubData } from '@/api/models/org'
 import { postOrgClubDefaultApi } from '@/api/org'
 import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
-import { resolveInviteCode } from '@/utils/channelPackage'
+import { isPrivateDomainMode, resolveInviteCode } from '@/utils/channelPackage'
 import { copyStorageToMainDomain } from '@/utils/channelPackage'
 import { resolveTelegramClubRandomId } from '@/utils/telegramStartParam'
 
@@ -128,6 +128,9 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
           copyStorageToMainDomain()
           return
         }
+      } else if (!isPrivateDomainMode()) {
+        this.channelDefaultClub = null
+        channelDefaultClubLoaded = false
       }
 
       if (!normalized.length) {
@@ -149,6 +152,11 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       this.channelDefaultClub = club
     },
     async ensureChannelDefaultClub(): Promise<ClubInfo | null> {
+      if (!isPrivateDomainMode()) {
+        this.channelDefaultClub = null
+        channelDefaultClubLoaded = false
+        return null
+      }
       if (channelDefaultClubLoaded) {
         return this.channelDefaultClub
       }

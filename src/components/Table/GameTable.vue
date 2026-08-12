@@ -161,7 +161,7 @@ export default { name: 'GameTable' }
       <!-- 首行：自定义 summary slot 或 summaryData 汇总行 -->
       <template v-if="$slots.summary">
         <div class="game-table__summary">
-          <slot name="summary" />
+          <slot name="summary"></slot>
         </div>
       </template>
       <GameTableRow

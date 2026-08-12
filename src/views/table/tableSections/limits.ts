@@ -5,7 +5,6 @@ import {
   TOTAL_HAND_OPTIONS,
   CHAT_TYPE_OPTIONS,
   GAME_DELAY_TIMES_OPTIONS,
-  SAFE_ROOM_OPTIONS,
 } from './constants'
 
 export const limitsSection: TableFormFieldConfig[] = [

@@ -1,9 +1,9 @@
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { mountH5App, unmountH5App } from '../main'
-import { initDebugConsole, recordDebugEvent } from '../utils/debugConsole'
+import { initDebugConsole } from '../utils/debugConsole'
+import { recordDebugEvent } from '../utils/debugCapture'
 import { configReady } from '../utils/appConfig'
 
-initDebugConsole()
 recordDebugEvent('[boot]', 'cocos h5 entry loaded', {
   href: typeof window !== 'undefined' ? window.location.href : '',
 })

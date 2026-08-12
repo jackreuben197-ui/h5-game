@@ -17,7 +17,9 @@ const props = withDefaults(
   }>(),
   {
     flex: 1,
+    width: '',
     sortable: false,
+    select: () => [],
     align: 'center',
     fixed: false,
     formatter: (v: any) => v,

@@ -19,10 +19,6 @@ const props = defineProps<{
   loading: boolean
 }>()
 
-const emit = defineEmits<{
-  refresh: []
-}>()
-
 const mtt = computed(() => props.data?.mtt)
 const isDiamond = computed(() => (mtt.value?.gold_type ?? 1) === 4)
 const currencyIcon = computed(() => (isDiamond.value ? diamondIcon : chipIcon))

@@ -39,6 +39,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   tip: '',
+  options: () => [],
   min: 0,
   max: 100,
   step: 1,

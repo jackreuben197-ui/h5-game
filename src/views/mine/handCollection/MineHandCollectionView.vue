@@ -420,6 +420,8 @@ onMounted(() => {
                 size="0.82rem"
               />
             </div>
+            <!-- 标题包含服务端牌局描述的富文本样式，需要保留 HTML 渲染。 -->
+            <!-- eslint-disable-next-line vue/no-v-html -->
             <div class="title" v-html="card.title"></div>
           </div>
           <div class="line"></div>

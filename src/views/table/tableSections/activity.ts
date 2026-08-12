@@ -3,7 +3,6 @@ import type { TableFormFieldConfig } from '../template'
 import {
   TEXAS_SERVER_FEE_OPTIONS,
   PAYMENT_METHOD_OPTIONS,
-  SERVER_CAPPING_OPTIONS,
   CAP_BIGBLIND_OPTIONS,
 } from './constants'
 

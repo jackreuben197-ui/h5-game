@@ -456,13 +456,6 @@ const currentGamePlayType = computed<number>(() => {
   return Math.floor(toNumber(route.query.game_play_type, 0)) || 1
 })
 
-const activeTemplate = computed<TemplateItem | null>(() => {
-  if (!templates.value.length) return null
-  return (
-    templates.value.find((item) => item.id === activeTemplateId.value) || templates.value[0] || null
-  )
-})
-
 const filteredTemplates = computed<TemplateItem[]>(() => {
   const gpt = currentGamePlayType.value
   return templates.value.filter((item) => item.game_play_type === gpt)

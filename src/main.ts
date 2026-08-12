@@ -24,7 +24,7 @@ import {
 import './styles/main.scss'
 import { setupRem } from './utils/rem'
 import { initTheme } from './utils/theme'
-import { initDebugConsole, recordDebugEvent } from './utils/debugConsole'
+import { recordDebugEvent } from './utils/debugCapture'
 import { createLogger } from './utils/logger'
 import { clearMainLayout } from './utils/mainLayout'
 import { useGameStore } from './stores/game'
@@ -60,7 +60,14 @@ if (typeof document !== 'undefined' && isPrivateDomainMode()) {
   document.documentElement.setAttribute('data-channel-package', '1')
 }
 
-initDebugConsole()
+const debugConsoleEnabled =
+  import.meta.env.DEV || ['true', '1', 'yes', 'on'].includes(import.meta.env.VITE_DEBUG_CONSOLE || '')
+
+if (debugConsoleEnabled) {
+  void import('./utils/debugConsole')
+    .then(({ initDebugConsole }) => initDebugConsole())
+    .catch((error) => console.warn('[h5] debug console load failed:', error))
+}
 
 function setupNativeMenuGuard(): () => void {
   if (import.meta.env.VITE_NATIVE_MENU_GUARD === 'open') {

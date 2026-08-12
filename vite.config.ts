@@ -18,6 +18,7 @@ import { VantResolver } from '@vant/auto-import-resolver'
 function holdemPbInjectPlugin(): Plugin {
   const PKG_FILE = '@silenthill/agreement-web/dist/holdem-pb.js'
   const VIRTUAL_PATH = '/libs/holdem-pb.js'
+  const PUBLIC_PATH = './libs/holdem-pb.js'
   let resolvedFile = ''
 
   return {
@@ -53,9 +54,9 @@ function holdemPbInjectPlugin(): Plugin {
     transformIndexHtml: {
       order: 'pre',
       handler(html) {
-        const tag = `<script src="${VIRTUAL_PATH}" charset="utf-8"></script>`
+        const tag = `<script src="${PUBLIC_PATH}" charset="utf-8"></script>`
         // 已经手动插过就不重复加
-        if (html.includes(VIRTUAL_PATH)) return html
+        if (html.includes(PUBLIC_PATH)) return html
         return html.replace('</head>', `    ${tag}\n  </head>`)
       },
     },
@@ -307,6 +308,7 @@ export default defineConfig(({ mode, command }) => {
 
             if (
               normalizedId.includes('/vue/') ||
+              normalizedId.includes('/@vue/') ||
               normalizedId.includes('/vue-router/') ||
               normalizedId.includes('/pinia/')
             ) {
@@ -324,6 +326,20 @@ export default defineConfig(({ mode, command }) => {
               normalizedId.includes('/@vueuse/')
             ) {
               return 'vendor-utils'
+            }
+
+            // 这些依赖只在少数业务页面使用，必须保持独立分包；否则 catch-all
+            // vendor 会让首页也预加载海报导出、二维码和 Iconify runtime。
+            if (normalizedId.includes('/html2canvas/')) {
+              return 'vendor-html2canvas'
+            }
+
+            if (normalizedId.includes('/qrcode/') || normalizedId.includes('/dijkstrajs/')) {
+              return 'vendor-qrcode'
+            }
+
+            if (normalizedId.includes('/@iconify/')) {
+              return 'vendor-iconify'
             }
 
             return 'vendor-misc'

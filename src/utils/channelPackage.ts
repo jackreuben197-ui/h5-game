@@ -17,7 +17,6 @@ const TG_MINI_APP_PARAM = 'tg_mini_app'
 export const CHANNEL_MAIN_DOMAIN = (import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || '')
   .trim()
   .toLowerCase()
-
 function getHostLabels(hostname: string): string[] {
   return readString(hostname).toLowerCase().split('.').filter(Boolean)
 }
@@ -130,7 +129,9 @@ export function copyStorageToMainDomain(): void {
   } catch (error) {
     console.warn('[channelPackage] failed to read localStorage:', error)
   }
-  localStorage.clear()
+  // 只清理由本次跳转迁移的登录数据，不能清空同源下 Cocos、Telegram
+  // 或其他业务写入的 localStorage。
+  Object.keys(items).forEach((key) => localStorage.removeItem(key))
   const currentUrl = new URL(window.location.href)
   // 与 buildChannelClubInviteUrl 一致：保留端口，否则本地 / 非 80 端口部署会跳到打不开的地址。
   const portSuffix = currentUrl.port ? `:${currentUrl.port}` : ''
@@ -264,16 +265,12 @@ export function resolveAgentInviteCode(): string {
  */
 export function cacheAgentInviteCodeIfPresent(): void {
   const parsed = parseInviteParamsFromLocation()
-  console.log('[channelPackage] cacheAgentInviteCodeIfPresent called, parsed:', parsed)
   if (parsed.agentInviteCode) {
     try {
       localStore.setItem(StorageKey.AGENT_INVITE_CODE, parsed.agentInviteCode)
-      console.log('[channelPackage] cached agentInviteCode:', parsed.agentInviteCode)
     } catch (error) {
       console.warn('[channelPackage] failed to cache agentInviteCode:', error)
     }
-  } else {
-    console.log('[channelPackage] no agentInviteCode in URL, skipping cache')
   }
 }
 

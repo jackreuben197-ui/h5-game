@@ -11,14 +11,12 @@
 - Pinia + pinia-plugin-persistedstate
 - Axios
 - Dayjs
-- VueUse
 - @vitejs/plugin-legacy
 
 ## 2. 环境要求
 
-- Node.js `>=20.19`
-- 推荐 Node.js `24 LTS`
-- pnpm `10.x`（建议）
+- Node.js `20.20.0`（以 `.nvmrc` 为准；Vite 最低要求 `>=20.19`）
+- pnpm `11.18.0`（以 `package.json#packageManager` 为准）
 - macOS / Windows / Linux 均可
 
 检查命令：
@@ -36,23 +34,23 @@ pnpm -v
 
 ```bash
 
-# 安装 24
-nvm install 24
+# 安装 .nvmrc 声明的版本
+nvm install
 
-# 切换到 24
-nvm use 24
+# 切换到项目版本
+nvm use
 
 # 可选：设置默认版本（新终端自动生效）
-nvm alias default 24
+nvm alias default 20.20.0
 ```
 
-如果你看到 `N/A: version "v24" is not yet installed`，先执行 `nvm install 24` 再 `nvm use 22`。
+如果提示 `.nvmrc` 中的版本尚未安装，先执行 `nvm install`，再执行 `nvm use`。
 
 ### 3.2 启用 pnpm（corepack）
 
 ```bash
 corepack enable
-corepack prepare pnpm@latest --activate
+corepack prepare pnpm@11.18.0 --activate
 pnpm -v
 ```
 
@@ -70,7 +68,8 @@ pnpm install
 pnpm dev
 ```
 
-浏览器访问终端输出的地址（通常是 `http://localhost:5173`）。
+开发服务器固定使用 `80` 端口，浏览器访问终端输出的地址。若本机配置了 `h5.com` hosts，通常访问
+`http://h5.com`；否则访问 `http://localhost`。
 
 首次安装如果看到：
 
@@ -78,7 +77,7 @@ pnpm dev
 Ignored build scripts: @parcel/watcher, core-js
 ```
 
-这是 pnpm 10 的安全提示，当前项目可正常开发和构建；如需放开再按需执行 `pnpm approve-builds`。
+这是 pnpm 的依赖脚本安全提示，当前项目可正常开发和构建；如需放开再按需执行 `pnpm approve-builds`。
 
 ## 4. 环境变量
 
@@ -115,6 +114,15 @@ VITE_API_BASE_URL=https://your-api-domain pnpm dev
 | `h5-cc-game` | npm 包 `@silenthill/h5-cc-bridge`（h5-side 入口）| 对接新 cocos 项目 h5-cc-game，两端共用同一份类型 |
 
 `@silenthill/h5-cc-bridge` 由 [独立仓库](https://github.com/soolary/h5-cc-bridge) 管理，本仓库通过 `package.json` 里的 git URL 依赖拉取。详细机制见 `src/bridge/README.md §0`。
+
+内部 git 依赖的实际安装版本由 `pnpm-lock.yaml` 记录；升级分支版本后应执行 `pnpm install` 并提交 lockfile。
+
+其他运行开关：
+
+| 变量 | 默认值 | 用途 |
+| --- | --- | --- |
+| `VITE_DEBUG_CONSOLE` | 生产关闭、开发开启 | 生产环境需要内置调试面板时设为 `true` |
+| `VITE_DROP_CONSOLE` | `false` | 生产构建时彻底移除 `console.*` |
 
 切换后需重启 dev / 重新 build。两种模式下 h5-game 的传输层和业务层（`core/` `channels/` `sync/` `ws/`）都不变。
 
@@ -223,6 +231,9 @@ Pad 与桌面之间变化的尺寸，并且必须同时给出合理的最小值�
 
 公共样式的抽取标准：至少两个页面实际复用，并且结构语义一致。只出现一次的样式留在页面或页面族
 文件中，避免公共文件变成无法追踪的全局覆盖集合。
+
+两份桌面页面族样式不会进入移动端首包：路由声明 `desktopLayout` 且视口达到 `600px` 时，
+`mainLayout.ts` 会在导航确认前按 `primary/content` 加载对应 CSS；从手机宽度切到桌面宽度时也会自动补载。
 
 桌面页面族样式默认只负责尺寸、间距、定位、排列和滚动范围。颜色、背景、边框颜色、阴影、滤镜、
 字体和主题差异继续由原组件样式管理；除非产品明确要求桌面端采用另一套视觉资源，否则不要在
@@ -495,13 +506,21 @@ pnpm preview
 构建产物目录：`dist/`。
 把 `dist/` 内容放到 Cocos WebView 资源目录，再打 Cocos 最终包。
 
+`index.html` 同时是 Cocos 融合模板，会引用最终 Cocos 构建提供的 `src/settings.js`、`main.js`、
+`cocos2d-js*.js`。单独运行 `pnpm preview` 时这些请求返回 404 属于预期，H5 会跳过 Cocos 启动；
+验证最终融合包时必须确认这些文件由 Cocos 构建补齐。H5 自有资源全部使用相对路径，支持子目录和本地
+WebView 发布。
+
 ## 7. 目录结构（关键）
 
-- `src/views/auth/LoginView.vue`
-- `src/views/lobby/LobbyView.vue`
-- `src/views/debug/BridgeDebugView.vue`
-- `src/bridge/`：H5 与 Cocos 通信桥
-- `src/styles/`：tokens / mixins / reset / page-shell / app-components / vant-overrides / responsive
+- `src/main.ts`、`src/App.vue`：应用启动与全局宿主
+- `src/router/`：路由、鉴权与桌面布局元数据
+- `src/views/`：页面级组件（home / club / message / mine / wallet / mtt 等）
+- `src/components/`：跨页面公共组件与 Bridge 全局 Host
+- `src/bridge/`：H5 与 Cocos 通信桥、WS 代理和跨端同步
+- `src/session/`、`src/stores/`：登录会话、启动同步和 Pinia 状态
+- `src/utils/`：缓存、主题、布局、日志等公共能力
+- `src/styles/`：主题、基础样式、工具类及按路由加载的桌面页面族样式
 
 ## 8. 样式开发约定
 
@@ -1071,15 +1090,15 @@ sendMessage(
 - `h5Ready`：H5 宣告“我可接收消息”
 - `h5Ack` / `ccAck`：对方 ready 消息回执
 
-## 10. 多语言（TXT）用法
+## 10. 多语言用法
 
-当前多语言使用 Cocos 同源 `txt` 文件，不依赖 `vue-i18n`：
+当前多语言使用 `@silenthill/h5-cc-i18n` 共享包，不依赖 `vue-i18n`：
 
-- Cocos 源目录（单一来源）：`../pokerqueen/assets/resources/config/USER_*.txt`
-- H5 运行目录（同步产物）：`public/assets/resources/config/USER_*.txt`
-- 启动/打包前自动执行同步：`predev`、`prebuild`
-- 可手动执行：`pnpm sync:i18n`
-- 解析器：`src/i18n/parser.ts`（`key=value` + `\n` 转义 + `{0}` 占位符）
+- 单一来源：`@silenthill/h5-cc-i18n` 仓库；实际安装版本由 `pnpm-lock.yaml` 固定。
+- H5 运行文件：`public/h5-cc-i18n.min.js`，在 Vue 入口前建立 `window.__H5_CC_I18N__`。
+- `predev`、`prebuild` 自动从依赖包复制安装产物；可手动执行 `pnpm sync:i18n`。
+- 当前运行包内含四种语言，切换语言不再额外请求 TXT 文件。
+- 格式化器：`src/i18n/parser.ts`（处理 `\n` 转义和 `{0}` 占位符）
 - 核心模块：`src/i18n/index.ts`
 - 组合式 API：`src/i18n/useTextI18n.ts`
 
@@ -1109,7 +1128,7 @@ const text = t('Wallet_AddItem7', 100, 12)
 - 支持：`en | pt | zh | cn`
 - 优先读取 `localStorage(dzpk_Language)`
 - 无缓存时按浏览器语言推断
-- 语言文件按需加载（`fetch public/assets/resources/config/*.txt`），避免主包体积暴涨
+- 底层共享包语言码：`zh-CN | zh-TW | en | pt`；业务层继续使用 `cn | zh | en | pt`
 
 本地存储统一约定（与 Cocos 对齐）：
 
@@ -1592,6 +1611,7 @@ const show = ref(false)
 | `silent` | 全部静默 |
 
 开发环境默认 `debug`，生产环境默认 `warn`（可被 `VITE_DROP_CONSOLE=true` 在构建时彻底抹除）。
+内置可视化调试面板只在开发环境加载；生产排查时显式设置 `VITE_DEBUG_CONSOLE=true`。
 
 ### 12.2 在模块中使用
 
@@ -1678,7 +1698,7 @@ pnpm sync:protocol
 
 | 命令 | 触发方式 | 来源 | 产物是否提交 git |
 |------|---------|------|----------------|
-| `sync:i18n` | `predev` / `prebuild` 自动 | `pokerqueen/` 语言文件 | 否（仅运行时需要） |
+| `sync:i18n` | `predev` / `prebuild` 自动 | `@silenthill/h5-cc-i18n` 安装产物 | 否（复制到 `public/`） |
 | `sync:protocol` | 手动按需 | `agreement-web` 仓库 | 是（pb 文件已纳入版控） |
 
 **白名单维护**：`scripts/update_protocol.sh` 中的 `H5_RECV_FILES` 数组。H5 只同步大厅 / 全局通知（code < 1000），游戏内协议由 Cocos 自行管理，双方都从同一个 `agreement-web` 仓库拉取。

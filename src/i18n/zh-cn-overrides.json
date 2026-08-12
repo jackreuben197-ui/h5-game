@@ -26,5 +26,6 @@
   "H5Display_NoContent": "暂无内容",
   "H5Display_SaveUrl": "保存网址",
   "H5Display_UrlHint": "建议将以下网址保存至浏览器书签或手机备忘录，以便随时快速访问",
-  "UICasino_ClubNotEnabled": "当前俱乐部暂未开通娱乐场"
+  "UICasino_ClubNotEnabled": "当前俱乐部暂未开通娱乐场",
+  "Wallet_OrderUnderReview": "订单审核中，请稍后再试～"
 }

@@ -19,6 +19,7 @@ import UsdtPaymentPopup from '@/views/wallet/components/UsdtPaymentPopup.vue'
 import UnfinishedOrderPopup from '@/views/wallet/components/UnfinishedOrderPopup.vue'
 import UsdtPaymentDetailsPopup from '@/views/wallet/components/UsdtPaymentDetailsPopup.vue'
 import OnlinePaymentPopup from '@/views/wallet/components/OnlinePaymentPopup.vue'
+import CustomerServicePaymentPopup from '@/views/wallet/components/CustomerServicePaymentPopup.vue'
 import { openCsOrderChat } from '@/components/GlobalCsOrderFloat/channel'
 import FixedDepositPanel from '@/views/wallet/components/FixedDepositPanel.vue'
 import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
@@ -462,7 +463,6 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
 watch(
   walletClubId,
   (clubId) => {
-    walletStore.clearCsOrders()
     void walletStore.loadPriceList(clubId)
     void refreshPendingCsOrder()
   },
@@ -754,43 +754,26 @@ async function onCsSubmit() {
     if (res.code === 0 && res.data) {
       rechargeResult.value = res.data
 
-      const opened = await openMatchOrderChat(
+      walletStore.addOptimisticCsOrder(
         {
-          ...res.data,
-          gold_num: goldCount,
-          pay_price: apiPayPrice,
-        },
-        1,
+          order_no: String(res.data.order_no || res.data.order?.order_no || ''),
+          gold_num: Number(res.data.gold_num || res.data.amount || goldCount) || 0,
+          pay_price: Number(res.data.pay_price || apiPayPrice) || 0,
+          pay_type_name: String(res.data.usdt_address?.name || selectedPayType.name || '客服撮合'),
+          create_time: String(res.data.create_time || ''),
+          account_type: 0,
+        } as ClubFundOrderListOrderInfo,
+        'recharge',
       )
-      if (opened) {
-        await refreshPendingCsOrder()
-      } else {
-        walletStore.addOptimisticCsOrder(
-          {
-            order_no: String(res.data.order_no || res.data.order?.order_no || ''),
-            gold_num: Number(res.data.gold_num || res.data.amount || goldCount) || 0,
-            pay_price: Number(res.data.pay_price || apiPayPrice) || 0,
-            pay_type_name: String(res.data.usdt_address?.name || selectedPayType.name || '客服撮合'),
-            create_time: String(res.data.create_time || ''),
-            account_type: 0,
-          } as ClubFundOrderListOrderInfo,
-          'recharge',
-        )
 
-        try {
-          await refreshPendingCsOrder()
-        } catch (chatError) {
-          console.error('Failed to refresh pending CS order', chatError)
-        }
-        openCsOrderChat()
-      }
       openCsOrderChat()
+      void refreshPendingCsOrder()
 
       activePreset.value = 0
       customAmount.value = ''
     } else if (res.code === 20066 || res.code === 90016) {
-      // User has unfinished order: show unfinished order check dialog
-      void checkUnfinishedOrders()
+      showToast(t('Wallet_OrderUnderReview'))
+      await refreshPendingCsOrder()
     } else {
       alert(`Recharge failed: ${res.message}`)
     }

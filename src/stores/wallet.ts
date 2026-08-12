@@ -5,6 +5,7 @@ import type { PropGoldPriceListData } from '@/api/models/prop'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { postClubFundOrderListApi } from '@/api/order'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
 
 export const useWalletStore = defineStore('wallet', () => {
   const goldPriceData = ref<PropGoldPriceListData | null>(null)
@@ -178,12 +179,21 @@ export const useWalletStore = defineStore('wallet', () => {
               (o as any).api_type ??
               (o as any).type,
           )
+          const payId = (o as any).pay_id
+          const isCsPayId = goldPriceData.value?.pay_types?.some(
+            (pt) => pt.id != null && pt.id === payId && pt.type === 3,
+          )
           return (
             ot === 3 ||
+            isCsPayId ||
+            payId === 0 ||
             o.pay_type_name?.includes('撮合') ||
             o.pay_type_name?.includes('客服') ||
+            o.pay_type_name?.includes('充值') ||
             o.pay_type_name?.toLowerCase().includes('cs') ||
-            o.pay_type_name?.toLowerCase().includes('service')
+            o.pay_type_name?.toLowerCase().includes('service') ||
+            isPrivateDomainMode() ||
+            !!clubId
           )
         })
       } else {
@@ -219,7 +229,9 @@ export const useWalletStore = defineStore('wallet', () => {
             o.pay_type_name?.includes('撮合') ||
             o.pay_type_name?.includes('客服') ||
             o.pay_type_name?.toLowerCase().includes('cs') ||
-            o.pay_type_name?.toLowerCase().includes('service')
+            o.pay_type_name?.toLowerCase().includes('service') ||
+            isPrivateDomainMode() ||
+            !!clubId
           )
         })
       } else {

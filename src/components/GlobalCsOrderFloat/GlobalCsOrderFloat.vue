@@ -35,7 +35,12 @@ watch(activeCsOrder, (next, prev) => {
 
 async function openChat() {
   hasSeen.value = true
-  if (!walletStore.csChatOrders.length) return
+  if (!walletStore.csChatOrders.length) {
+    if (isLoggedIn.value) {
+      await walletStore.refreshPendingCsOrder()
+    }
+    if (!walletStore.csChatOrders.length) return
+  }
 
   try {
     const res = await postChatSupportChannelListApi({ im_service_types: [4], limit: 1, offset: 0 })

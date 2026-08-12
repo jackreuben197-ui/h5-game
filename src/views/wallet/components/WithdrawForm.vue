@@ -50,6 +50,7 @@ const paymentChannels: { id: ChannelId; image: string; label: string; key: strin
 ]
 
 const withdrawTypes = ref<OnlineWithdrawTypeItem[]>([])
+const loadingWithdrawTypes = ref(false)
 const selectedWithdrawType = ref<OnlineWithdrawTypeItem | null>(null)
 
 const withdrawAmount = ref('')
@@ -78,6 +79,14 @@ const csWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
 
 const filteredWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
   activeChannel.value === 'bankcard' ? bankWithdrawTypes.value : csWithdrawTypes.value,
+)
+
+const availablePaymentChannels = computed(() =>
+  paymentChannels.filter((ch) => {
+    if (ch.id === 'bankcard') return bankWithdrawTypes.value.length > 0
+    if (ch.id === 'customercare') return csWithdrawTypes.value.length > 0
+    return true
+  }),
 )
 
 const handlingFeeRate = 0.05
@@ -147,17 +156,30 @@ function assertClub(): { club_id: number } | null {
 async function fetchWithdrawTypes(): Promise<void> {
   const club = assertClub()
   if (!club) return
+  loadingWithdrawTypes.value = true
   try {
     const res = await postOnlineWithdrawTypeListApi({ club_id: club.club_id })
     if (res.code === 0 && res.data?.list) {
       withdrawTypes.value = res.data.list
         .filter((wt) => wt.status === 1)
         .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
+    } else {
+      withdrawTypes.value = []
     }
   } catch (e) {
     console.error('fetchWithdrawTypes failed', e)
+    withdrawTypes.value = []
+  } finally {
+    loadingWithdrawTypes.value = false
   }
-  applyChannel('bankcard')
+
+  if (bankWithdrawTypes.value.length > 0) {
+    applyChannel('bankcard')
+  } else if (csWithdrawTypes.value.length > 0) {
+    applyChannel('customercare')
+  } else {
+    selectedWithdrawType.value = null
+  }
 }
 
 async function fetchPaymentInfo(): Promise<void> {
@@ -287,61 +309,71 @@ watch(filteredWithdrawTypes, (list) => {
 
     <div class="wf__card">
 
-      <div class="wf__acct-header">
-        <span class="wf__acct-title">{{ isCustomerCare ? tx('Wallet_SelectMethod', '请选择提现方式') : tx('Wallet_SelectAccount', '请选择收款账户') }}</span>
-        <button v-if="!isCustomerCare" class="wf__add-card-btn" type="button" @click="router.push('/wallet/add-bank-card')">
-          {{ tx('Wallet_AddCard', '添加银行卡') }}
-        </button>
+      <div v-if="loadingWithdrawTypes" class="wf__acct-loading">
+        {{ tx('Wallet_Loading', '加载中…') }}
       </div>
 
-      <div class="wf__channels">
-        <div
-          v-for="ch in paymentChannels"
-          :key="ch.id"
-          class="wf__type-card"
-          :class="{ 'wf__type-card--active': activeChannel === ch.id }"
-          @click="applyChannel(ch.id)"
-        >
-          <img class="wf__type-card-icon" :src="ch.image" alt="" />
-          <div class="wf__type-card-label">
-            <div class="wf__type-card-text">
-              <span class="wf__type-card-name">{{ tx(ch.key, ch.label) }}</span>
+      <template v-else-if="withdrawTypes.length > 0">
+        <div class="wf__acct-header">
+          <span class="wf__acct-title">{{ isCustomerCare ? tx('Wallet_SelectMethod', '请选择提现方式') : tx('Wallet_SelectAccount', '请选择收款账户') }}</span>
+          <button v-if="!isCustomerCare" class="wf__add-card-btn" type="button" @click="router.push('/wallet/add-bank-card')">
+            {{ tx('Wallet_AddCard', '添加银行卡') }}
+          </button>
+        </div>
+
+        <div v-if="availablePaymentChannels.length > 0" class="wf__channels">
+          <div
+            v-for="ch in availablePaymentChannels"
+            :key="ch.id"
+            class="wf__type-card"
+            :class="{ 'wf__type-card--active': activeChannel === ch.id }"
+            @click="applyChannel(ch.id)"
+          >
+            <img class="wf__type-card-icon" :src="ch.image" alt="" />
+            <div class="wf__type-card-label">
+              <div class="wf__type-card-text">
+                <span class="wf__type-card-name">{{ tx(ch.key, ch.label) }}</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- 银行卡渠道：已绑定的收款账户 -->
-      <template v-if="!isCustomerCare">
-        <div v-if="loadingPaymentInfo" class="wf__acct-loading">
-          {{ tx('Wallet_Loading', '加载中…') }}
-        </div>
-        <template v-else-if="paymentInfoList.length > 0">
-          <div
-            v-for="info in paymentInfoList"
-            :key="info.id"
-            class="wf__acct-row"
-            :class="{ 'wf__acct-row--active': selectedPaymentAccount?.id === info.id }"
-            @click="selectedPaymentAccount = info"
-          >
-            <img :src="icBankcard" alt="" class="wf__acct-icon" />
-            <div class="wf__acct-details">
-              <div class="wf__acct-top">
-                <span class="wf__acct-name">{{ info.pix_name || info.bank_name || '—' }}</span>
-                <span class="wf__acct-last4">{{ info.account_no?.slice(-4) || '—' }}</span>
+        <!-- 银行卡渠道：已绑定的收款账户 -->
+        <template v-if="!isCustomerCare">
+          <div v-if="loadingPaymentInfo" class="wf__acct-loading">
+            {{ tx('Wallet_Loading', '加载中…') }}
+          </div>
+          <template v-else-if="paymentInfoList.length > 0">
+            <div
+              v-for="info in paymentInfoList"
+              :key="info.id"
+              class="wf__acct-row"
+              :class="{ 'wf__acct-row--active': selectedPaymentAccount?.id === info.id }"
+              @click="selectedPaymentAccount = info"
+            >
+              <img :src="icBankcard" alt="" class="wf__acct-icon" />
+              <div class="wf__acct-details">
+                <div class="wf__acct-top">
+                  <span class="wf__acct-name">{{ info.pix_name || info.bank_name || '—' }}</span>
+                  <span class="wf__acct-last4">{{ info.account_no?.slice(-4) || '—' }}</span>
+                </div>
+                <div class="wf__acct-no-pill">{{ formatAccountNumber(info.account_no) }}</div>
               </div>
-              <div class="wf__acct-no-pill">{{ formatAccountNumber(info.account_no) }}</div>
             </div>
+          </template>
+          <div v-else class="wf__acct-empty">
+            {{ tx('Wallet_NoCardBound', '暂无绑定银行卡') }}
           </div>
         </template>
-        <div v-else class="wf__acct-empty">
-          {{ tx('Wallet_NoCardBound', '暂无绑定银行卡') }}
-        </div>
       </template>
+
+      <div v-else class="wf__acct-empty">
+        {{ tx('Wallet_NoWithdrawMethod', '暂无可用提现方式') }}
+      </div>
 
     </div>
 
-    <div class="wf__methods">
+    <div v-if="withdrawTypes.length > 0" class="wf__methods">
       <div v-if="!isCustomerCare && bankWithdrawTypes.length > 0" class="wf__type-scroll">
         <div
           v-for="wt in bankWithdrawTypes"

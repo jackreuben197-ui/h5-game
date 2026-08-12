@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { t } from '@/i18n'
 import { useUserInfoStore, type ClubInfo } from '@/stores/userInfo'
+import { useWalletStore } from '@/stores/wallet'
 import { postRechargeGoldApi } from '@/api/order'
+import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 import { getUserInfoApi } from '@/api/user'
 
 import { isPrivateDomainMode } from '@/utils/channelPackage'
+import { openCsOrderChat } from '@/components/GlobalCsOrderFloat/channel'
 
 // ─── i18n helper: returns fallback when key not translated ────────────────────
 function tx(key: string, fallback: string): string {
@@ -24,6 +27,7 @@ const props = defineProps<{
 const router = useRouter()
 const route = useRoute()
 const userInfoStore = useUserInfoStore()
+const walletStore = useWalletStore()
 const isChannelPackage = isPrivateDomainMode()
 
 const activeClub = computed(() => props.club ?? userInfoStore.currentClub ?? null)
@@ -37,6 +41,10 @@ const clubName = computed(() => activeClub.value?.club_name ?? '')
 const clubId = computed(() => {
   const id = activeClub.value?.club_id
   return id != null ? Number(id) : undefined
+})
+
+onMounted(() => {
+  void walletStore.refreshPendingCsOrder(clubId.value)
 })
 
 const amountNumber = computed(() => Number(amount.value))
@@ -88,10 +96,26 @@ async function onConfirmRecharge(): Promise<void> {
     showConfirm.value = false
 
     if (res.code === 0) {
+      if (res.data) {
+        walletStore.addOptimisticCsOrder(
+          {
+            order_no: String(res.data.order_no || res.data.order?.order_no || ''),
+            gold_num: Number(res.data.gold_num || res.data.amount || amountNumber.value * 100) || 0,
+            pay_price: Number(res.data.pay_price || 0) || 0,
+            pay_type_name: String(res.data.usdt_address?.name || tx('Wallet_CsRecharge', '客服充值')),
+            create_time: String(res.data.create_time || ''),
+            account_type: 0,
+          } as ClubFundOrderListOrderInfo,
+          'recharge',
+        )
+      }
+      openCsOrderChat()
       showSuccess.value = true
       void refreshBalance()
-    } else if (res.code === 20066) {
-      showToast(tx('Wallet_OrderUnderReview', '订单审核中，请稍后再试'))
+      void walletStore.refreshPendingCsOrder(clubId.value)
+    } else if (res.code === 20066 || res.code === 90016) {
+      showToast(tx('Wallet_OrderUnderReview', '订单审核中，请稍后再试～'))
+      void walletStore.refreshPendingCsOrder(clubId.value)
     } else {
       showToast(res.message || tx('Wallet_DepositFailed', '充值申请失败'))
     }

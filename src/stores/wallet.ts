@@ -186,14 +186,10 @@ export const useWalletStore = defineStore('wallet', () => {
           return (
             ot === 3 ||
             isCsPayId ||
-            payId === 0 ||
             o.pay_type_name?.includes('撮合') ||
             o.pay_type_name?.includes('客服') ||
-            o.pay_type_name?.includes('充值') ||
             o.pay_type_name?.toLowerCase().includes('cs') ||
-            o.pay_type_name?.toLowerCase().includes('service') ||
-            isPrivateDomainMode() ||
-            !!clubId
+            o.pay_type_name?.toLowerCase().includes('service')
           )
         })
       } else {
@@ -229,9 +225,7 @@ export const useWalletStore = defineStore('wallet', () => {
             o.pay_type_name?.includes('撮合') ||
             o.pay_type_name?.includes('客服') ||
             o.pay_type_name?.toLowerCase().includes('cs') ||
-            o.pay_type_name?.toLowerCase().includes('service') ||
-            isPrivateDomainMode() ||
-            !!clubId
+            o.pay_type_name?.toLowerCase().includes('service')
           )
         })
       } else {

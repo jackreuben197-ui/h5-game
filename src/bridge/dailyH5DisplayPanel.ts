@@ -7,6 +7,7 @@ import type {
 import { openBridgePanel } from '@/bridge/channels/panelChannel'
 import { subscribeCocosMessages } from '@/bridge/core/cocosBridgeChannel'
 import StorageKey from '@/constants/storageKey'
+import { isTelegramClubContext } from '@/utils/channelPackage'
 import { BRIDGE_ACTION, BRIDGE_MSG_TYPE, type BridgeMessage } from '@bridge-protocol'
 import { t } from '@/i18n'
 import { localStore } from '@/utils/localStore'
@@ -48,8 +49,40 @@ function buildFallbackDisplay(): {
 
 const log = createLogger('[h5-display]')
 
+// 群组/频道的俱乐部深链（startapp=home_<roomId>_<clubRandomId> 等）进来的会话不弹下载推广。
+// 页内重载后 Telegram 不再把 tgWebAppStartParam 放回地址，start_param 随之消失，
+// 所以首次判定成功就在 sessionStorage 打标记，后续触点凭标记继续屏蔽。
+// 用 sessionStorage 而非 localStorage：origin 与普通站点相同，落到 localStorage 会连浏览器里也永久屏蔽。
+const TG_CLUB_ENTRY_SESSION_KEY = 'H5_DISPLAY_TG_CLUB_ENTRY'
+
+function isTelegramClubEntry(): boolean {
+  try {
+    if (window.sessionStorage.getItem(TG_CLUB_ENTRY_SESSION_KEY) === '1') {
+      return true
+    }
+  } catch {
+    // sessionStorage 不可用：退化为实时判定
+  }
+
+  if (!isTelegramClubContext()) {
+    return false
+  }
+
+  try {
+    window.sessionStorage.setItem(TG_CLUB_ENTRY_SESSION_KEY, '1')
+  } catch {
+    // 打标记失败不影响本次屏蔽
+  }
+  return true
+}
+
 // 每天首次进入 H5 自动弹出"H5 展示"通知面板：登录/未登录都触发，过 0 点后凭本地日期标记自动重置。
 export async function tryShowDailyH5DisplayPanel(): Promise<void> {
+  // 先于日期标记返回：否则俱乐部深链会吃掉当天的展示机会，同一天从主站进来就再也看不到。
+  if (isTelegramClubEntry()) {
+    return
+  }
+
   const today = getLocalDateKey()
   const lastShown = localStore.getItem<string | null>(
     StorageKey.H5_DISPLAY_LAST_SHOWN_DATE,

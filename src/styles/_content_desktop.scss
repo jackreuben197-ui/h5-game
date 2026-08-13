@@ -348,30 +348,52 @@
   }
 
   html[data-main-layout='content'] .club-lobby-page .mtt-group {
-    margin: 0;
-    padding: 24px 44.8px 20px;
+    width: min(calc(100% - 48px), 408.4px);
+    margin: 0 auto 16px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .mtt-group:first-child {
+    padding-top: 34px;
   }
 
   html[data-main-layout='content'] .club-lobby-page .mtt-group__header {
-    margin: 0 0 16px;
+    width: calc(100% - 31.2px);
+    min-height: 26px;
+    margin: 0 auto 16px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .mtt-group__title {
+    font-size: 21.5px;
+    line-height: 26px;
+  }
+
+  html[data-main-layout='content'] .club-lobby-page .mtt-group__toggle {
+    width: 96px;
+    min-height: 26px;
+    font-size: 14.1px;
+    line-height: 26px;
   }
 
   html[data-main-layout='content'] .club-lobby-page .mtt-grid--sm {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(3, 132.7px);
+    justify-content: center;
+    gap: 5.55px;
   }
 
   html[data-main-layout='content'] .club-lobby-page .mtt-grid--md {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(2, 201.4px);
+    justify-content: center;
+    gap: 5.55px;
   }
 
   html[data-main-layout='content'] .club-lobby-page .mtt-grid--lg {
-    width: 100%;
-    gap: 20px;
+    width: 408.4px;
+    gap: 5.55px;
   }
 
-  // 独立赛事专区与俱乐部赛事列表使用同一套 3 / 2 / 1 列满宽规则。
+  // 独立赛事专区与俱乐部赛事列表使用同一套固定卡片规格。
+  // 设计稿的赛事内容列仅 408.4px，不能随 1440px 舞台横向拉伸。
   html[data-main-layout='content'] .mtt-list-page .mtt-list-stage {
     position: relative;
     display: flex;
@@ -387,32 +409,348 @@
     min-height: 0;
     max-height: none;
     margin: 0;
-    padding: 24px 44.8px 50px;
+    padding: 34px 0 50px;
     overflow-x: hidden;
     overflow-y: auto;
   }
 
   html[data-main-layout='content'] .mtt-list-page .mtt-group {
-    margin: 0 0 24px;
+    width: min(calc(100% - 48px), 408.4px);
+    margin: 0 auto 16px;
+  }
+
+  html[data-main-layout='content'] .mtt-list-page .mtt-group:first-child {
+    padding-top: 0;
   }
 
   html[data-main-layout='content'] .mtt-list-page .mtt-group__header {
-    margin: 0 0 16px;
+    width: calc(100% - 31.2px);
+    min-height: 26px;
+    margin: 0 auto 16px;
+  }
+
+  html[data-main-layout='content'] .mtt-list-page .mtt-group__title {
+    font-size: 21.5px;
+    line-height: 26px;
+  }
+
+  html[data-main-layout='content'] .mtt-list-page .mtt-group__toggle {
+    width: 96px;
+    min-height: 26px;
+    font-size: 14.1px;
+    line-height: 26px;
   }
 
   html[data-main-layout='content'] .mtt-list-page .mtt-grid--sm {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(3, 132.7px);
+    justify-content: center;
+    gap: 5.55px;
   }
 
   html[data-main-layout='content'] .mtt-list-page .mtt-grid--md {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(2, 201.4px);
+    justify-content: center;
+    gap: 5.55px;
   }
 
   html[data-main-layout='content'] .mtt-list-page .mtt-grid--lg {
-    width: 100%;
-    gap: 20px;
+    width: 408.4px;
+    gap: 5.55px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--sm {
+    width: 132.7px;
+    height: 160.8px;
+    border-radius: 19px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--sm
+    .mtt-card__cover-wrap {
+    height: 160.8px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--sm
+    .mtt-card__footer {
+    height: 34.2px;
+    gap: 6px;
+    padding: 5.9px 9.2px 4.2px 13.9px;
+    border-bottom-right-radius: 19px;
+    border-bottom-left-radius: 19px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--sm
+    .mtt-card__title {
+    font-size: 9.5px;
+    line-height: 10px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--sm
+    .mtt-card__count {
+    gap: 4px;
+    font-size: 7px;
+    line-height: 12px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--sm
+    .count-dot {
+    width: 12px;
+    height: 9px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--sm
+    .action-btn {
+    width: 40.2px;
+    min-width: 40.2px;
+    max-width: 40.2px;
+    height: 19.4px;
+    padding: 0 4px;
+    border-radius: 15px;
+    font-size: 8.7px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--md {
+    width: 201.4px;
+    height: 244.1px;
+    border-radius: 34px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--md
+    .mtt-card__cover-wrap {
+    height: 244.1px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--md
+    .mtt-card__footer {
+    height: 60.5px;
+    gap: 8.2px;
+    padding: 6.9px 9px 6.9px 13.6px;
+    border-bottom-right-radius: 34px;
+    border-bottom-left-radius: 34px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--md
+    .mtt-card__icon-wrap,
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--md
+    .mtt-card__game-icon {
+    width: 42.7px;
+    height: 42.7px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--md
+    .mtt-card__title {
+    font-size: 14.4px;
+    line-height: 15px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--md
+    .mtt-card__count {
+    gap: 6.4px;
+    font-size: 10.5px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--md
+    .count-dot {
+    width: 15.2px;
+    height: 10.7px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--md
+    .action-btn {
+    width: 47.6px;
+    min-width: 47.6px;
+    max-width: 47.6px;
+    height: 29.5px;
+    padding: 0 4px;
+    border-radius: 23px;
+    font-size: 13.2px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--md
+    .status-tag {
+    top: 14px;
+    right: 16px;
+    min-width: 124px;
+    height: 33px;
+    padding: 0 10px;
+    border-radius: 23px;
+    font-size: 11px;
+    line-height: 33px;
+    text-align: center;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--lg {
+    width: 408.4px;
+    height: 229.7px;
+    border-radius: 34px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--lg
+    .mtt-card__cover-wrap {
+    height: 229.7px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--lg
+    .mtt-card__footer {
+    min-height: 59.4px;
+    gap: 10px;
+    padding: 8.6px 17.5px;
+    border-bottom-right-radius: 34px;
+    border-bottom-left-radius: 34px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--lg
+    .mtt-card__icon-wrap,
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--lg
+    .mtt-card__game-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--lg
+    .mtt-card__info {
+    gap: 2px;
+    margin-left: 0;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--lg
+    .mtt-card__title {
+    font-size: 14.4px;
+    line-height: 15px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--lg
+    .mtt-card__count {
+    gap: 3px;
+    font-size: 9px;
+    line-height: 10px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--lg
+    .mtt-card__count.mt-6 {
+    margin-top: 1px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--lg
+    .mtt-card__info
+    > .mtt-card__count:nth-of-type(1),
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--lg
+    .mtt-card__info
+    > .mtt-card__count:nth-of-type(3) {
+    display: none;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--lg
+    .mtt-card__info
+    > .mtt-card__count:nth-of-type(2)
+    > :nth-child(-n + 2) {
+    display: none;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--lg
+    .mtt-card__info
+    > .mtt-card__count:nth-of-type(2)
+    .count-dot {
+    width: 15.2px;
+    height: 10.7px;
+    margin-left: 0;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--lg
+    .mtt-card-info-icon {
+    width: 10px;
+    height: 10px;
+    margin-right: 2px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--lg
+    .action-btn {
+    width: 84.7px;
+    min-width: 84.7px;
+    max-width: 84.7px;
+    height: 29px;
+    padding: 0 8px;
+    border-radius: 23px;
+    font-size: 13.2px;
+  }
+
+  html[data-main-layout='content']
+    :is(.club-lobby-page, .mtt-list-page)
+    .mtt-card--lg
+    .status-tag {
+    top: 10px;
+    right: 17px;
+    min-width: 122px;
+    height: 33px;
+    padding: 0 10px;
+    border-radius: 23px;
+    font-size: 11px;
+    line-height: 33px;
+    text-align: center;
   }
 
   html[data-main-layout='content'] .club-lobby-page .floating-action-area {

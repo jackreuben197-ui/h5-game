@@ -71,6 +71,8 @@ const userInfoStore = useUserInfoStore()
 
 const imgInviteQr = ref('')
 const agentInviteCode = ref('')
+const agentShareNickname = ref('')
+const agentShareRandomId = ref('')
 
 const loading = ref(false)
 const clubDetail = ref<OrgClubSearchByIdResponseData | null>(null)
@@ -176,22 +178,26 @@ const tribeIdKeypadOpen = ref(false)
 const searchedTribe = ref<{ randomId: number; name: string; logo: string } | null>(null)
 const clubAvatarUrl = ref('')
 const inviteModalRef = ref<HTMLElement | null>(null)
-const { exporting: savingInviteShare, exportImage: exportInviteShare } = useInviteShareExport({
-  target: inviteModalRef,
-  fileName: () => `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`,
-  onSuccess: () => {
-    showSuccessToast(t('UIClub_DoneSave'))
-    closeInvitePopup()
-  },
-  onError: (error) => {
-    console.error('saveInviteShare error', error)
-    showFailToast(t('UIClub_SaveFail2'))
-  },
-})
+const inviteShareImage = ref('')
+let inviteShareGenerationId = 0
+const { exporting: generatingInviteShare, generateImage: generateInviteShare } =
+  useInviteShareExport({
+    target: inviteModalRef,
+    onError: (error) => {
+      console.error('generateInviteShare error', error)
+      showFailToast(t('UIClub_SaveFail2'))
+    },
+  })
 
 const clubName = computed(() => displayClub.value?.club_name || t('UIClub_Creat_2LvGNmS7'))
 const clubAlias = computed(() => displayClub.value?.tribe_name || 'XXXX')
 const clubId = computed(() => String(displayClub.value?.random_id || '--'))
+const shareAgentNickname = computed(() =>
+  String(agentShareNickname.value || userInfoStore.userInfo?.user?.nickname || '--'),
+)
+const shareAgentId = computed(() =>
+  String(agentShareRandomId.value || userInfoStore.userInfo?.user?.un_id || '--'),
+)
 const tribeName = computed(() => String(displayClub.value?.tribe_name || '').trim())
 const hasTribe = computed(() => tribeName.value.length > 0)
 
@@ -657,6 +663,7 @@ function onSettingClick(item: SettingItem): void {
   }
 
   if (item.label === t('UIClub_Invite')) {
+    inviteShareImage.value = ''
     showInvitePopup.value = true
     return
   }
@@ -757,6 +764,8 @@ async function onClubAvatarUploaded(url: string): Promise<void> {
 }
 
 function closeInvitePopup(): void {
+  inviteShareGenerationId += 1
+  inviteShareImage.value = ''
   showInvitePopup.value = false
 }
 
@@ -764,13 +773,38 @@ function closeCopyPopup(): void {
   showCopyPopup.value = false
 }
 
-async function saveInviteShare(): Promise<void> {
-  if (!inviteModalRef.value) {
-    showFailToast(t('UIClub_Not'))
+async function prepareInviteShareImage(): Promise<void> {
+  if (
+    !showInvitePopup.value ||
+    !imgInviteQr.value ||
+    inviteShareImage.value ||
+    generatingInviteShare.value
+  ) {
     return
   }
-  await exportInviteShare()
+
+  const generationId = ++inviteShareGenerationId
+  const imageUrl = await generateInviteShare()
+  if (generationId === inviteShareGenerationId && showInvitePopup.value && imageUrl) {
+    inviteShareImage.value = imageUrl
+  }
 }
+
+function downloadInviteShareImage(): void {
+  if (!inviteShareImage.value) return
+
+  const link = document.createElement('a')
+  link.href = inviteShareImage.value
+  link.download = `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  showSuccessToast(t('UIClub_DoneSave'))
+}
+
+watch([showInvitePopup, imgInviteQr], () => {
+  void prepareInviteShareImage()
+}, { flush: 'post' })
 
 async function submitCopyRequest(): Promise<void> {
   if (!isFounder.value) {
@@ -856,6 +890,8 @@ async function generateInviteQrCode(): Promise<void> {
 
 async function fetchAgentInviteCode(): Promise<void> {
   agentInviteCode.value = ''
+  agentShareNickname.value = ''
+  agentShareRandomId.value = ''
   if (!isAgent.value) {
     return
   }
@@ -881,6 +917,8 @@ async function fetchAgentInviteCode(): Promise<void> {
     agentInviteCode.value = String(
       response.data.invite_code || response.data.invitation_code || '',
     ).trim()
+    agentShareNickname.value = String(response.data.user_info?.nickname || '').trim()
+    agentShareRandomId.value = String(response.data.user_info?.random_id || '').trim()
   } catch (error) {
     console.error('fetchAgentInviteCode error', error)
   }
@@ -1121,43 +1159,75 @@ onMounted(async () => {
         </header>
       </template>
 
-      <section ref="inviteModalRef" class="invite-modal">
-        <div class="invite-modal__body">
-          <p class="invite-modal__subtitle">{{ t('UIClub_Of4') }}</p>
-          <div class="invite-modal__cover-wrap">
-            <img class="invite-modal__cover" :src="imgInviteCover" :alt="t('UIClub_Text102')" />
+      <section class="invite-modal">
+        <div ref="inviteModalRef" class="invite-modal__capture">
+          <div class="invite-modal__body">
+            <p class="invite-modal__subtitle">{{ t('UIClub_Of4') }}</p>
+            <div class="invite-modal__cover-wrap">
+              <img
+                class="invite-modal__cover"
+                :src="imgInviteCover"
+                :alt="t('UIClub_Text102')"
+              />
+            </div>
+            <div class="invite-modal__identity">
+              <template v-if="isAgent">
+                <div class="invite-modal__agent-info">
+                  <p class="invite-modal__agent-name">{{ shareAgentNickname }}</p>
+                  <p class="invite-modal__agent-id-row">
+                    <span class="invite-modal__id-tag">ID</span>
+                    <span>{{ shareAgentId }}</span>
+                  </p>
+                  <p class="invite-modal__club-name">{{ clubName }}</p>
+                </div>
+              </template>
+              <template v-else>
+                <p class="invite-modal__club-name">{{ clubName }}</p>
+                <p class="invite-modal__club-alias">{{ clubAlias }}</p>
+                <p class="invite-modal__id-row">
+                  <span class="invite-modal__id-tag">ID</span>
+                  <span>{{ clubId }}</span>
+                </p>
+              </template>
+            </div>
           </div>
-          <p class="invite-modal__club-name">{{ clubName }}</p>
-          <p class="invite-modal__club-alias">{{ clubAlias }}</p>
-          <p class="invite-modal__id-row">
-            <span class="invite-modal__id-tag">ID</span>
-            <span>{{ clubId }}</span>
-          </p>
-        </div>
 
-        <div class="invite-modal__qr-wrap">
+          <div class="invite-modal__qr-section">
+            <div class="invite-modal__qr-wrap">
+              <img
+                v-if="imgInviteQr"
+                class="invite-modal__qr"
+                :src="imgInviteQr"
+                :alt="t('UIClub_CodeJoinClub')"
+              />
+              <div v-else class="invite-modal__qr-placeholder" :aria-label="t('UIClub_Code9')">
+                <span></span>
+              </div>
+            </div>
+            <p class="invite-modal__qr-tip">
+              {{ t('UIClub_CodeJoin') }}，{{ t('UIClub_Text103') }}
+            </p>
+          </div>
           <img
-            v-if="imgInviteQr"
-            class="invite-modal__qr"
-            :src="imgInviteQr"
-            :alt="t('UIClub_CodeJoinClub')"
+            v-if="inviteShareImage"
+            class="invite-share-save-target"
+            data-invite-export-ignore
+            :src="inviteShareImage"
+            :alt="t('UIClub_Text102')"
           />
-          <div v-else class="invite-modal__qr-placeholder" :aria-label="t('UIClub_Code9')">
-            <span></span>
-          </div>
         </div>
-        <p class="invite-modal__qr-tip">{{ t('UIClub_CodeJoin') }}，{{ t('UIClub_Text103') }}</p>
-
         <button
-          id="save-invite-share"
           type="button"
           class="modal-primary-btn"
           data-invite-export-ignore
-          :disabled="savingInviteShare || !imgInviteQr"
-          @click="saveInviteShare"
+          :disabled="generatingInviteShare || !inviteShareImage"
+          @click="downloadInviteShareImage"
         >
-          {{ savingInviteShare ? t('UIClub_Save3') + '...' : t('UIClub_Save4') }}
+          {{ generatingInviteShare ? t('UIClub_Save3') + '...' : t('UIClub_Save4') }}
         </button>
+        <p class="invite-modal__save-tip" data-invite-export-ignore>
+          {{ t('UIClub_LongPressSaveToAlbum') }}
+        </p>
       </section>
     </GameDialog>
 
@@ -2011,11 +2081,47 @@ onMounted(async () => {
 }
 
 .invite-modal {
+  position: relative;
   width: 100%;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.22rem;
+  gap: 0.28rem;
+}
+
+.invite-modal__capture {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4831rem;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+}
+
+.invite-share-save-target {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.001;
+  -webkit-touch-callout: default !important;
+  -webkit-user-select: auto;
+  user-select: auto;
+  -webkit-user-drag: auto;
+}
+
+.invite-modal__save-tip {
+  margin: 0.08rem 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.3rem;
+  line-height: 1.4;
+  text-align: center;
+
+  @include theme-light {
+    color: rgba(255, 255, 255, 0.78);
+  }
 }
 
 :global(.invite-share-export) {
@@ -2027,6 +2133,7 @@ onMounted(async () => {
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  transform: none !important;
 }
 
 :global(.invite-share-export::before),
@@ -2052,26 +2159,37 @@ onMounted(async () => {
   padding-left: 0 !important;
 }
 
+:global(.invite-game-dialog .game-dialog__card) {
+  padding: 0.4187rem 0.4106rem 0.6038rem;
+  gap: 0.4831rem;
+}
+
+:global(.invite-game-dialog .game-dialog__body) {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
 .invite-modal__head {
   width: 100%;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1.0241rem 1fr 1.0241rem;
   align-items: center;
-  justify-content: space-between;
 }
 
 .invite-modal__head h3 {
+  grid-column: 2;
   margin: 0;
-  flex: 1;
   text-align: center;
   font-size: 0.41866rem;
   font-weight: 500;
   line-height: 1.4;
-  padding-left: 0.48rem;
+  padding: 0;
 }
 
 .invite-modal__close {
-  width: 0.96rem;
-  height: 0.96rem;
+  grid-column: 3;
+  width: 1.0241rem;
+  height: 1.0241rem;
   border: 0;
   background: transparent;
   padding: 0;
@@ -2087,13 +2205,13 @@ onMounted(async () => {
 }
 
 .invite-modal__body {
-  padding: 0.35rem 0.42rem 0.24rem;
+  padding: 0.3462rem 0.4187rem 0.1771rem;
   border-radius: 0.72464rem;
   background: linear-gradient(100deg, rgba(255, 255, 255, 0.08), rgba(230, 230, 230, 0.12));
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.08rem;
+  gap: 0.3382rem;
 }
 
 .invite-modal__subtitle {
@@ -2108,7 +2226,7 @@ onMounted(async () => {
   border-radius: 0.58rem;
   overflow: hidden;
   border: 0.01778rem solid rgba(255, 255, 255, 0.14);
-  margin-top: 0.06rem;
+  margin-top: 0;
 }
 
 .invite-modal__cover {
@@ -2118,9 +2236,43 @@ onMounted(async () => {
 }
 
 .invite-modal__club-name {
-  margin: 0.16rem 0 0;
+  margin: 0;
   font-size: 0.35565rem;
   line-height: 1.35;
+}
+
+.invite-modal__agent-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.06rem;
+  margin: 0;
+}
+
+.invite-modal__agent-name {
+  margin: 0;
+  font-size: 0.4rem;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.invite-modal__agent-id-row {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.09333rem;
+  font-size: 0.32293rem;
+  line-height: 1;
+  font-weight: 600;
+}
+
+.invite-modal__identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 0;
 }
 
 .invite-modal__club-alias {
@@ -2158,7 +2310,7 @@ onMounted(async () => {
   position: relative;
   width: 3.33333rem;
   height: 3.33333rem;
-  margin: 0.04rem auto 0;
+  margin: 0 auto;
   border-radius: 0.30747rem;
   background: #fff;
   padding: 0.10667rem;
@@ -2168,6 +2320,15 @@ onMounted(async () => {
   @include theme-light {
     border-color: var(--c-brand);
   }
+}
+
+.invite-modal__qr-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.0966rem;
+  width: 100%;
+  background: transparent;
 }
 
 .invite-modal__qr {
@@ -2227,6 +2388,7 @@ onMounted(async () => {
   font-size: 0.314rem;
   font-weight: 500;
   line-height: 1.3;
+  background: transparent;
 }
 
 .modal-primary-btn,

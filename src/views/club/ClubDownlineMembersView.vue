@@ -24,6 +24,7 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'
 import FundKeypad from '@/components/KeyBoard/FundKeypad.vue'
+import { useTheme } from '@/composables/useTheme'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   '--downline-bg-dark': `url(${mainBgUrl})`,
@@ -46,6 +47,7 @@ interface DownlineMemberItem {
 }
 
 const userInfoStore = useUserInfoStore()
+const { isDark } = useTheme()
 
 const loading = ref(false)
 const keyword = ref('')
@@ -472,7 +474,22 @@ onMounted(async () => {
       <div class="invite-row">
         <div class="invite-title-wrap">
           <span>{{ t('UIClub_InviteLink') }}</span>
-          <img :src="imgInfo" alt="" aria-hidden="true" />
+          <VanPopover
+            trigger="click"
+            placement="bottom-start"
+            :theme="isDark ? 'dark' : 'light'"
+          >
+            <template #reference>
+              <button
+                type="button"
+                class="invite-info-trigger"
+                :aria-label="t('UIClub_DownlineInviteLinkTip')"
+              >
+                <img :src="imgInfo" alt="" aria-hidden="true" />
+              </button>
+            </template>
+            <div class="invite-info-content">{{ t('UIClub_DownlineInviteLinkTip') }}</div>
+          </VanPopover>
         </div>
         <button type="button" class="qr-btn" @click="onSaveQrCode">{{ t('UIMine_PromotersBecome_rTPhmznj') }}</button>
       </div>
@@ -747,10 +764,31 @@ onMounted(async () => {
   gap: 0.08rem;
 }
 
-.invite-title-wrap img {
+.invite-info-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.42rem;
+  height: 0.42rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.invite-info-trigger img {
   width: 0.36rem;
   height: 0.36rem;
   object-fit: contain;
+}
+
+.invite-info-content {
+  max-width: 6.4rem;
+  padding: 0.2rem 0.24rem;
+  font-size: 0.28rem;
+  line-height: 1.45;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .qr-btn {

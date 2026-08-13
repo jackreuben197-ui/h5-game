@@ -2,20 +2,7 @@ import { nextTick, ref, type Ref } from 'vue'
 
 interface InviteShareExportOptions {
   target: Ref<HTMLElement | null>
-  fileName: () => string
-  onSuccess?: () => void
   onError?: (error: unknown) => void
-}
-
-async function downloadBlob(blob: Blob, fileName: string): Promise<void> {
-  const objectUrl = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = objectUrl
-  link.download = fileName
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000)
 }
 
 function createCaptureTarget(source: HTMLElement): { host: HTMLDivElement; target: HTMLElement } {
@@ -24,6 +11,7 @@ function createCaptureTarget(source: HTMLElement): { host: HTMLDivElement; targe
   const target = source.cloneNode(true) as HTMLElement
 
   host.setAttribute('aria-hidden', 'true')
+  host.classList.add('invite-game-dialog')
   Object.assign(host.style, {
     position: 'fixed',
     top: '0',
@@ -62,8 +50,8 @@ async function waitForAssets(target: HTMLElement): Promise<void> {
 export function useInviteShareExport(options: InviteShareExportOptions) {
   const exporting = ref(false)
 
-  async function exportImage(): Promise<void> {
-    if (exporting.value || !options.target.value) return
+  async function generateImage(): Promise<string | null> {
+    if (exporting.value || !options.target.value) return null
     exporting.value = true
     let captureHost: HTMLDivElement | null = null
 
@@ -85,25 +73,15 @@ export function useInviteShareExport(options: InviteShareExportOptions) {
         foreignObjectRendering: false,
         removeContainer: true,
       })
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, 'image/jpeg', 0.96),
-      )
-      const fileName = options.fileName()
-      if (blob) await downloadBlob(blob, fileName)
-      else {
-        const link = document.createElement('a')
-        link.href = canvas.toDataURL('image/jpeg', 0.96)
-        link.download = fileName
-        link.click()
-      }
-      options.onSuccess?.()
+      return canvas.toDataURL('image/jpeg', 0.96)
     } catch (error) {
       options.onError?.(error)
+      return null
     } finally {
       captureHost?.remove()
       exporting.value = false
     }
   }
 
-  return { exporting, exportImage }
+  return { exporting, generateImage }
 }

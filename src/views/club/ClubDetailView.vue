@@ -802,9 +802,13 @@ function downloadInviteShareImage(): void {
   showSuccessToast(t('UIClub_DoneSave'))
 }
 
-watch([showInvitePopup, imgInviteQr], () => {
-  void prepareInviteShareImage()
-}, { flush: 'post' })
+watch(
+  [showInvitePopup, imgInviteQr],
+  () => {
+    void prepareInviteShareImage()
+  },
+  { flush: 'post' },
+)
 
 async function submitCopyRequest(): Promise<void> {
   if (!isFounder.value) {
@@ -872,11 +876,7 @@ async function generateInviteQrCode(): Promise<void> {
       ? buildChannelClubInviteUrl(clubInviteCode)
       : buildChannelRegisterUrl({ inviteCode: clubInviteCode })
 
-  if (
-    !finalLink ||
-    !clubInviteCode ||
-    (isAgent.value && !agentInviteCode.value)
-  ) {
+  if (!finalLink || !clubInviteCode || (isAgent.value && !agentInviteCode.value)) {
     imgInviteQr.value = ''
     return
   }
@@ -1164,11 +1164,7 @@ onMounted(async () => {
           <div class="invite-modal__body">
             <p class="invite-modal__subtitle">{{ t('UIClub_Of4') }}</p>
             <div class="invite-modal__cover-wrap">
-              <img
-                class="invite-modal__cover"
-                :src="imgInviteCover"
-                :alt="t('UIClub_Text102')"
-              />
+              <img class="invite-modal__cover" :src="imgInviteCover" :alt="t('UIClub_Text102')" />
             </div>
             <div class="invite-modal__identity">
               <template v-if="isAgent">
@@ -1178,7 +1174,7 @@ onMounted(async () => {
                     <span class="invite-modal__id-tag">ID</span>
                     <span>{{ shareAgentId }}</span>
                   </p>
-                  <p class="invite-modal__club-name">{{ clubName }}</p>
+                  <!-- <p class="invite-modal__club-name">{{ clubName }}</p> -->
                 </div>
               </template>
               <template v-else>

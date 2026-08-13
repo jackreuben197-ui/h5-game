@@ -1,0 +1,825 @@
+// 留言板、账单与消息详情桌面样式。
+@media (min-width: 600px) {
+  // 留言板（Figma 11222:24389）：保持现有表单元素，仅调整为桌面内容舞台与固定底部提交区。
+  html[data-main-layout='content'] .board-page {
+    --board-gutter: clamp(24px, 2.7083vw, 39px);
+    --board-content-width: min(calc(100% - var(--board-gutter) * 2), 1362px);
+    --board-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .board-page > .page-back-header,
+  html[data-main-layout='content'] .board-page > .content-wrap {
+    position: absolute;
+    right: 0;
+    left: 0;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .board-page > .page-back-header {
+    top: var(--board-stage-top);
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 106px;
+    min-height: 106px;
+    padding: 45px var(--board-gutter) 13px;
+  }
+
+  html[data-main-layout='content'] .board-page .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .board-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .board-page .page-back-header .title {
+    overflow: hidden;
+    max-width: min(70vw, 960px);
+    font-size: 29px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .board-page > .content-wrap {
+    top: calc(var(--board-stage-top) + 106px);
+    z-index: 1;
+    width: var(--board-content-width);
+    height: calc(var(--content-stage-height) - 106px);
+    min-height: 0;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .board-page .tip {
+    height: 22px;
+    margin: 0;
+    font-size: 15px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .board-page .board-input {
+    display: block;
+    width: 100%;
+    height: 281px;
+    margin: 7px 0 0;
+    padding: 24px;
+    border-width: 1px;
+    border-radius: 32px;
+    font-size: 17px;
+    line-height: 24px;
+    backdrop-filter: blur(36px);
+  }
+
+  html[data-main-layout='content'] .board-page .submit-btn {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    width: 405px;
+    height: 65px;
+    margin: 0;
+    border-radius: 48px;
+    font-size: 23px;
+    line-height: 28px;
+    transform: translateX(-50%);
+  }
+
+  // 我的账单（Figma 11222:24413 / 24690）：四个账单类型共用同一时间线与汇总卡片。
+  html[data-main-layout='content'] .bill-page {
+    --bill-gutter: clamp(24px, 2.7083vw, 39px);
+    --bill-content-width: min(calc(100% - var(--bill-gutter) * 2), 1362px);
+    --bill-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .bill-page::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .bill-page > .page-back-header {
+    position: absolute;
+    top: var(--bill-stage-top);
+    right: 0;
+    left: 0;
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 106px;
+    min-height: 106px;
+    margin-right: auto;
+    margin-left: auto;
+    padding: 45px var(--bill-gutter) 13px;
+  }
+
+  html[data-main-layout='content'] .bill-page .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .bill-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .bill-page .page-back-header .title {
+    overflow: hidden;
+    max-width: min(70vw, 960px);
+    font-size: 29px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .bill-page > .content-wrap {
+    position: relative;
+    width: var(--bill-content-width);
+    min-height: var(--content-stage-height);
+    margin: 0 auto;
+    padding: calc(var(--bill-stage-top) + 106px) 0 28px;
+  }
+
+  html[data-main-layout='content'] .bill-page .hint {
+    height: 19px;
+    margin: 0;
+    font-size: 14px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .bill-page:has(.bill-tabs .tab:nth-child(4).active) .hint {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .bill-page .bill-tabs {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 31px;
+    margin: 10px 0 0;
+    padding: 0 11px;
+    overflow: visible;
+  }
+
+  html[data-main-layout='content'] .bill-page:has(.bill-tabs .tab:nth-child(4).active) .bill-tabs {
+    margin-top: 0;
+  }
+
+  html[data-main-layout='content'] .bill-page .tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 49px;
+    margin: -9px 0;
+    padding: 9px 0;
+    border-bottom-width: 0;
+    font-size: 17px;
+    line-height: 31px;
+    text-decoration-color: transparent;
+    text-decoration-line: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 7px;
+  }
+
+  html[data-main-layout='content'] .bill-page .tab.active {
+    border-bottom-width: 0;
+    text-decoration-color: currentColor;
+  }
+
+  html[data-main-layout='content'] .bill-page .glass-card {
+    border-width: 1px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .bill-page .total-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    min-height: 142px;
+    margin: 15px 0 0;
+    padding: 23px 26px 16px;
+    border-radius: 33px;
+  }
+
+  html[data-main-layout='content'] .bill-page .total-card .label {
+    font-size: 14px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .bill-page .total-card .amount-row {
+    height: 35px;
+    margin: -14px 0 0;
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .bill-page .total-card .amount-row img {
+    width: 32px;
+    max-height: 35px;
+    object-fit: contain;
+  }
+
+  html[data-main-layout='content'] .bill-page .total-card .amount-row strong {
+    font-size: 27px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .bill-page .divided {
+    width: 100%;
+    margin: 0;
+  }
+
+  html[data-main-layout='content'] .bill-page .detail-btn {
+    height: 19px;
+    margin: 0;
+    padding: 0;
+    gap: 12px;
+    font-size: 12px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .bill-page .detail-btn .arrow {
+    font-size: 11px;
+  }
+
+  html[data-main-layout='content'] .bill-page .diamond-income {
+    margin-top: -12px;
+    font-size: 17px;
+    line-height: 21px;
+  }
+
+  html[data-main-layout='content'] .bill-page .wallet-detail-list {
+    width: 100%;
+    margin: -3px 0 0;
+    padding: 18px 19px;
+    border-radius: 17px;
+  }
+
+  html[data-main-layout='content'] .bill-page .wallet-detail-list-diamond {
+    padding-bottom: 15px;
+  }
+
+  html[data-main-layout='content'] .bill-page .diamond-detail-title {
+    margin: 0;
+    font-size: 12px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .bill-page .diamond-detail-item {
+    min-height: 20px;
+    margin-top: 7px;
+  }
+
+  html[data-main-layout='content'] .bill-page .diamond-detail-item span {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .bill-page .diamond-detail-item img {
+    width: 14px;
+    height: 12px;
+    margin-left: 5px;
+  }
+
+  html[data-main-layout='content'] .bill-page .wallet-detail-row {
+    min-height: 24px;
+    padding: 2px 0;
+    font-size: 13px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .bill-page .wallet-detail-row .value {
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .bill-page .timeline {
+    width: 100%;
+  }
+
+  html[data-main-layout='content'] .bill-page .timeline--friend {
+    margin-top: 15px;
+  }
+
+  html[data-main-layout='content'] .bill-page .timeline-item {
+    grid-template-columns: 45px minmax(0, 1fr);
+    gap: 10px;
+    width: 100%;
+    margin: 0 0 20px;
+  }
+
+  html[data-main-layout='content'] .bill-page .timeline-item--top {
+    margin-top: 20px;
+  }
+
+  html[data-main-layout='content'] .bill-page .date-col {
+    width: 45px;
+    min-height: 82px;
+    padding-right: 16px;
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .bill-page .date-col::after {
+    top: 19px;
+    right: 0;
+    bottom: -20px;
+    width: 1px;
+  }
+
+  html[data-main-layout='content'] .bill-page .date-col.date-col--continued::after {
+    top: 0;
+  }
+
+  html[data-main-layout='content'] .bill-page .date-col.date-col--bottom::after {
+    bottom: 0;
+  }
+
+  html[data-main-layout='content'] .bill-page .date-col .date,
+  html[data-main-layout='content'] .bill-page .date-col .month {
+    margin-bottom: 5px;
+    font-size: 14px;
+    line-height: 8px;
+  }
+
+  html[data-main-layout='content'] .bill-page .date-col .date-icon {
+    top: 0;
+    right: -6px;
+    width: 12px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .bill-page .date-col.date-col--continued .date-icon {
+    top: 2px;
+  }
+
+  html[data-main-layout='content'] .bill-page .flow-card {
+    width: 100%;
+    min-height: 82px;
+    padding: 16px 20px;
+    border-radius: 34px;
+  }
+
+  html[data-main-layout='content'] .bill-page .bill-row {
+    gap: 8px;
+  }
+
+  html[data-main-layout='content'] .bill-page .bill-row-title {
+    min-height: 24px;
+    line-height: 24px;
+  }
+
+  html[data-main-layout='content'] .bill-page .bill-row-title .title-cell {
+    gap: 5px;
+  }
+
+  html[data-main-layout='content'] .bill-page .bill-row-title .name {
+    max-width: min(55vw, 760px);
+    font-size: 17px;
+    line-height: 24px;
+  }
+
+  html[data-main-layout='content'] .bill-page .bill-row-title .id-inline {
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .bill-page .bill-row-title .title-right {
+    gap: 8px;
+  }
+
+  html[data-main-layout='content'] .bill-page .bill-row-3,
+  html[data-main-layout='content'] .bill-page .bill-row-4 {
+    min-height: 18px;
+    margin-top: 2px;
+    font-size: 14px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .bill-page .balance-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  html[data-main-layout='content'] .bill-page .money {
+    font-size: 15px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .bill-page .club-divided {
+    margin-top: 14px;
+  }
+
+  html[data-main-layout='content'] .bill-page .flow-row {
+    min-height: 53px;
+    padding: 10px 0;
+    border-bottom-width: 1px;
+  }
+
+  html[data-main-layout='content'] .bill-page .flow-row .name {
+    font-size: 17px;
+    line-height: 24px;
+  }
+
+  html[data-main-layout='content'] .bill-page .flow-row .time {
+    font-size: 14px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .bill-page .list-status {
+    margin: 0;
+    padding: 12px 0;
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  // 消息详情（Figma 11222:24287 / 25026 / 24072 / 24199）：同一路由下的
+  // 普通消息、系统广播、买入申请和 UC 申请共用内容舞台，各类型只切换卡片形态。
+  html[data-main-layout='content'] .message-detail-page {
+    --message-detail-gutter: clamp(24px, 2.7083vw, 39px);
+    --message-detail-content-width: min(calc(100% - var(--message-detail-gutter) * 2), 1362px);
+    --message-detail-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .message-detail-page::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .message-detail-page > .page-back-header {
+    position: absolute;
+    top: var(--message-detail-stage-top);
+    right: 0;
+    left: 0;
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 113px;
+    min-height: 113px;
+    margin-right: auto;
+    margin-left: auto;
+    padding: 45px var(--message-detail-gutter) 20px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .page-back-header .title {
+    overflow: hidden;
+    max-width: min(70vw, 960px);
+    font-size: 29px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .message-detail-page > .content-wrap {
+    position: relative;
+    width: var(--message-detail-content-width);
+    min-height: var(--content-stage-height);
+    margin: 0 auto;
+    padding: calc(var(--message-detail-stage-top) + 113px) 0 28px;
+  }
+
+  html[data-main-layout='content']
+    .message-detail-page
+    :is(.system-list, .request-list, .other-list) {
+    width: 100%;
+    margin: 0;
+  }
+
+  // 平台广播。
+  html[data-main-layout='content'] .message-detail-page .system-list {
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .system-card {
+    flex: 0 0 172px;
+    width: 100%;
+    height: 172px;
+    min-height: 172px;
+    padding: 30px 43px;
+    border-width: 1px;
+    border-radius: 34px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .system-content {
+    max-width: 100%;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .system-time {
+    margin: 0;
+    font-size: 12px;
+    line-height: 17px;
+  }
+
+  // 买入申请与 UC 申请。
+  html[data-main-layout='content'] .message-detail-page .request-list {
+    gap: 20px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .request-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    min-height: 163px;
+    padding: 14px;
+    border-radius: 33px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .message-detail-page--uc .request-card {
+    min-height: 181px;
+    border-radius: 34px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .request-top {
+    flex: 0 0 21px;
+    width: 100%;
+    height: 21px;
+    gap: 8px;
+  }
+
+  html[data-main-layout='content']
+    .message-detail-page
+    :is(.meta-left, .meta-time, .meta-club span) {
+    font-size: 12px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .meta-club {
+    gap: 5px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .meta-club img {
+    width: 21px;
+    height: 21px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .request-body {
+    flex: 0 0 66px;
+    width: 100%;
+    height: 66px;
+    min-height: 66px;
+    margin: 0;
+    padding: 0 13px 0 0;
+    border-radius: 999px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page--uc .request-body {
+    flex-basis: 68px;
+    height: 68px;
+    min-height: 68px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .player-block {
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .player-avatar {
+    width: 66px;
+    height: 66px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page--uc .player-avatar {
+    width: 68px;
+    height: 68px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .player-name {
+    font-size: 19px;
+    line-height: 21px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .player-id {
+    margin-top: 2px;
+    font-size: 13px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .pending-actions {
+    gap: 20px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .action-btn {
+    width: 43px;
+    height: 43px;
+    border-width: 1px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .action-icon--ok {
+    width: 27px;
+    height: 27px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .action-icon--deny {
+    width: 37px;
+    height: 37px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .state-text {
+    margin-right: 10px;
+    font-size: 14px;
+    line-height: 16px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .approver-block {
+    width: 93px;
+    margin-right: 9px;
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .approver-line {
+    font-size: 12px;
+    line-height: 12px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .approver-block .state-text {
+    margin-right: 0;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .request-footer {
+    flex: 0 0 19px;
+    min-height: 19px;
+    margin: 0;
+    padding-left: 15px;
+    gap: 12px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .request-footer img {
+    width: 15px;
+    height: 15px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .request-footer p {
+    font-size: 16px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .request-footer--uc {
+    flex-basis: 33px;
+    min-height: 33px;
+    padding-left: 16px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .request-footer--uc img {
+    width: 33px;
+    height: 33px;
+  }
+
+  // 钱包、背包、俱乐部与联盟消息。
+  html[data-main-layout='content'] .message-detail-page .other-list {
+    gap: 10px;
+    margin-top: -7px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .other-item {
+    flex: 0 0 112px;
+    width: 100%;
+    height: 112px;
+    min-height: 112px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .other-banner {
+    left: 59px;
+    width: calc(100% - 59px);
+    height: 62px;
+    min-height: 62px;
+    padding: 10px 58px 10px 21px;
+    border-radius: 35px 55px 55px 0;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .other-banner--wrap {
+    height: 63px;
+    min-height: 63px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .other-banner-bg {
+    inset: -4px;
+    filter: blur(4px);
+  }
+
+  html[data-main-layout='content'] .message-detail-page .other-title {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .sender-btn {
+    right: 13px;
+    width: 40px;
+    height: 40px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .other-meta-row {
+    height: 57px;
+    margin-top: -7px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .other-meta-club {
+    gap: 11px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .other-meta-club img {
+    width: 57px;
+    height: 57px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .other-meta-club span {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .message-detail-page .other-time {
+    width: 117px;
+    font-size: 14px;
+    line-height: 18px;
+  }
+
+  // 消息验证悬浮入口（Figma 11222:23896）。内联拖动位置仅在移动端生效，桌面固定到内容舞台右上角。
+  html[data-main-layout='content'] .todo-float-wrap {
+    top: calc(
+      max(0px, calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)) + 100px
+    ) !important;
+    right: max(40px, calc((100vw - var(--content-stage-width)) / 2 + 40px));
+  }
+
+  html[data-main-layout='content'] .todo-float-btn {
+    width: 142px;
+    min-width: 142px;
+    height: 75px;
+    padding: 0 25px;
+    border-radius: 999px;
+    box-shadow: none;
+  }
+
+  html[data-main-layout='content'] .todo-float-text {
+    font-size: 25px;
+    line-height: 1;
+    text-shadow: 0 8px 8px rgba(0, 0, 0, 0.25);
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .todo-float-count {
+    top: -7px;
+    left: -8px;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 5px;
+    border: 2px solid #ff132b;
+    border-radius: 50%;
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+}

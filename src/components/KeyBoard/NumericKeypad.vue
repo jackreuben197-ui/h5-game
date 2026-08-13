@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { Icon } from '@iconify/vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import { t } from '@/i18n'
+import backspaceIcon from '@/assets/icons/backspace_figma.svg'
 
 interface Props {
   open?: boolean
@@ -232,7 +232,7 @@ function confirm(): void {
               @click="backspace"
               @dblclick.prevent
             >
-              <Icon icon="solar:backspace-bold" class="kp__icon" />
+              <img class="kp__icon" :src="backspaceIcon" alt="" aria-hidden="true" />
             </button>
           </div>
 

@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import html2canvas from 'html2canvas'
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   postOrgClubSearchByIdApi,
@@ -44,6 +43,7 @@ import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'
+import { useInviteShareExport } from '@/composables/useInviteShareExport'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   '--club-detail-bg-dark': `url(${mainBgUrl})`,
@@ -163,7 +163,6 @@ const showTribeSearchPopup = ref(false)
 const showTribeApplyPopup = ref(false)
 const showCancelTribeApplyPopup = ref(false)
 const showDeleteClubPopup = ref(false)
-const savingInviteShare = ref(false)
 const savingClubLogo = ref(false)
 const tribeApplySubmitting = ref(false)
 const tribeApplyStatusLoading = ref(false)
@@ -177,6 +176,18 @@ const tribeIdKeypadOpen = ref(false)
 const searchedTribe = ref<{ randomId: number; name: string; logo: string } | null>(null)
 const clubAvatarUrl = ref('')
 const inviteModalRef = ref<HTMLElement | null>(null)
+const { exporting: savingInviteShare, exportImage: exportInviteShare } = useInviteShareExport({
+  target: inviteModalRef,
+  fileName: () => `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`,
+  onSuccess: () => {
+    showSuccessToast(t('UIClub_DoneSave'))
+    closeInvitePopup()
+  },
+  onError: (error) => {
+    console.error('saveInviteShare error', error)
+    showFailToast(t('UIClub_SaveFail2'))
+  },
+})
 
 const clubName = computed(() => displayClub.value?.club_name || t('UIClub_Creat_2LvGNmS7'))
 const clubAlias = computed(() => displayClub.value?.tribe_name || 'XXXX')
@@ -753,127 +764,12 @@ function closeCopyPopup(): void {
   showCopyPopup.value = false
 }
 
-async function downloadBlob(blob: Blob, fileName: string): Promise<void> {
-  const objectUrl = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = objectUrl
-  link.download = fileName
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000)
-}
-
-function createInviteCaptureTarget(source: HTMLElement): {
-  host: HTMLDivElement
-  target: HTMLElement
-} {
-  const sourceRect = source.getBoundingClientRect()
-  const captureWidth = Math.max(1, Math.ceil(sourceRect.width))
-  const host = document.createElement('div')
-  const target = source.cloneNode(true) as HTMLElement
-
-  host.setAttribute('aria-hidden', 'true')
-  Object.assign(host.style, {
-    position: 'fixed',
-    top: '0',
-    left: '-10000px',
-    width: `${captureWidth}px`,
-    background: '#242424',
-    pointerEvents: 'none',
-  })
-
-  target.classList.add('invite-share-export')
-  target.style.width = '100%'
-  target.style.maxWidth = 'none'
-  target.style.height = 'auto'
-  target.style.transform = 'none'
-  target.querySelectorAll('[data-invite-export-ignore]').forEach((element) => element.remove())
-
-  host.appendChild(target)
-  document.body.appendChild(host)
-  return { host, target }
-}
-
-async function waitForInviteCaptureAssets(target: HTMLElement): Promise<void> {
-  const imageTasks = Array.from(target.querySelectorAll('img')).map(
-    (image) =>
-      new Promise<void>((resolve) => {
-        if (image.complete && image.naturalWidth > 0) {
-          resolve()
-          return
-        }
-
-        const finish = () => {
-          image.removeEventListener('load', finish)
-          image.removeEventListener('error', finish)
-          resolve()
-        }
-        image.addEventListener('load', finish, { once: true })
-        image.addEventListener('error', finish, { once: true })
-        window.setTimeout(finish, 5000)
-      }),
-  )
-
-  await Promise.all(imageTasks)
-  await document.fonts?.ready
-}
-
 async function saveInviteShare(): Promise<void> {
-  if (savingInviteShare.value) {
-    return
-  }
-
   if (!inviteModalRef.value) {
     showFailToast(t('UIClub_Not'))
     return
   }
-
-  savingInviteShare.value = true
-  let captureHost: HTMLDivElement | null = null
-  try {
-    await nextTick()
-    const sourceTarget =
-      (inviteModalRef.value.closest('.game-dialog__card') as HTMLElement | null) ||
-      inviteModalRef.value
-    const capture = createInviteCaptureTarget(sourceTarget)
-    captureHost = capture.host
-    await waitForInviteCaptureAssets(capture.target)
-
-    const canvas = await html2canvas(capture.target, {
-      useCORS: true,
-      allowTaint: false,
-      backgroundColor: '#242424',
-      logging: false,
-      scale: Math.min(window.devicePixelRatio || 1, 3),
-      foreignObjectRendering: false,
-      removeContainer: true,
-    })
-
-    const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob((result) => resolve(result), 'image/jpeg', 0.96)
-    })
-
-    if (blob) {
-      await downloadBlob(blob, `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`)
-    } else {
-      const link = document.createElement('a')
-      link.href = canvas.toDataURL('image/jpeg', 0.96)
-      link.download = `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-    }
-
-    showSuccessToast(t('UIClub_DoneSave'))
-    closeInvitePopup()
-  } catch (error) {
-    console.error('saveInviteShare error', error)
-    showFailToast(t('UIClub_SaveFail2'))
-  } finally {
-    captureHost?.remove()
-    savingInviteShare.value = false
-  }
+  await exportInviteShare()
 }
 
 async function submitCopyRequest(): Promise<void> {

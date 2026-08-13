@@ -1,0 +1,1326 @@
+// 背包、设置、资料与商城桌面样式。
+@media (min-width: 600px) {
+  // 背包、设置与切换语言（Figma 11222:24527 / 27426 / 27956）。
+  // 三页复用现有 DOM 和图标，仅在桌面内容布局下还原 1440 × 1024 舞台。
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .item-list),
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .section-card),
+  html[data-main-layout='content'] .settings-page--language {
+    --mine-settings-gutter: clamp(24px, 2.7083vw, 39px);
+    --mine-settings-content-width: min(calc(100% - var(--mine-settings-gutter) * 2), 1362px);
+    --mine-settings-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content']
+    .mine-glass-page:has(> .content-wrap > .item-list)::-webkit-scrollbar,
+  html[data-main-layout='content']
+    .mine-glass-page:has(> .content-wrap > .section-card)::-webkit-scrollbar,
+  html[data-main-layout='content'] .settings-page--language::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content']
+    :is(
+      .mine-glass-page:has(> .content-wrap > .item-list),
+      .mine-glass-page:has(> .content-wrap > .section-card),
+      .settings-page--language
+    )
+    > .page-back-header {
+    position: absolute;
+    top: var(--mine-settings-stage-top);
+    right: 0;
+    left: 0;
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 106px;
+    min-height: 106px;
+    margin-right: auto;
+    margin-left: auto;
+    padding: 45px var(--mine-settings-gutter) 13px;
+  }
+
+  html[data-main-layout='content']
+    :is(
+      .mine-glass-page:has(> .content-wrap > .item-list),
+      .mine-glass-page:has(> .content-wrap > .section-card),
+      .settings-page--language
+    )
+    .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content']
+    :is(
+      .mine-glass-page:has(> .content-wrap > .item-list),
+      .mine-glass-page:has(> .content-wrap > .section-card),
+      .settings-page--language
+    )
+    .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content']
+    :is(
+      .mine-glass-page:has(> .content-wrap > .item-list),
+      .mine-glass-page:has(> .content-wrap > .section-card),
+      .settings-page--language
+    )
+    .page-back-header
+    .title {
+    overflow: hidden;
+    max-width: min(70vw, 960px);
+    font-size: 29px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content']
+    :is(
+      .mine-glass-page:has(> .content-wrap > .item-list),
+      .mine-glass-page:has(> .content-wrap > .section-card),
+      .settings-page--language
+    )
+    > .content-wrap {
+    position: relative;
+    width: var(--mine-settings-content-width);
+    min-height: var(--content-stage-height);
+    margin: 0 auto;
+    padding: calc(var(--mine-settings-stage-top) + 106px) 0 28px;
+  }
+
+  // 背包：桌面端全宽胶囊卡片列表。
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .item-list) .item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    margin: 0;
+  }
+
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .item-list) .item-card {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 104px;
+    gap: 10px;
+    padding: 16px 20px;
+    border-width: 1px;
+    border-radius: 999px;
+    backdrop-filter: blur(0.2px);
+  }
+
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .item-list) .icon-wrap {
+    width: 69px;
+    height: 71px;
+    border-radius: 20px;
+  }
+
+  html[data-main-layout='content']
+    .mine-glass-page:has(> .content-wrap > .item-list)
+    .item-card
+    > div:last-child {
+    min-width: 0;
+  }
+
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .item-list) .name {
+    overflow: hidden;
+    font-size: 20px;
+    line-height: 22px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .item-list) .time {
+    gap: 6px;
+    margin-top: 0;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content']
+    .mine-glass-page:has(> .content-wrap > .item-list)
+    .calendar-icon {
+    width: 17px;
+    height: 17px;
+  }
+
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .item-list) .list-status {
+    padding: 24px 0;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  // 设置首页：三组卡片保留原有按钮结构，并将整行作为点击热区。
+  html[data-main-layout='content']
+    .mine-glass-page:has(> .content-wrap > .section-card)
+    > .content-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  html[data-main-layout='content']
+    .mine-glass-page:has(> .content-wrap > .section-card)
+    .section-card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin: 0;
+    padding: 16px 20px 16px 16px;
+    gap: 5px;
+    border: 1px solid rgba(249, 249, 249, 0.2);
+    border-radius: 19px;
+    backdrop-filter: blur(0.2px);
+  }
+
+  html[data-main-layout='content']
+    .mine-glass-page:has(> .content-wrap > .section-card)
+    .line-item {
+    position: relative;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    border-bottom: 0;
+    font-size: 18px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content']
+    .mine-glass-page:has(> .content-wrap > .section-card)
+    .line-item:last-child {
+    min-height: 40px;
+  }
+
+  html[data-main-layout='content']
+    .mine-glass-page:has(> .content-wrap > .section-card)
+    .line-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: -3px;
+    width: min(320px, calc(100% - 51px));
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  html[data-theme='light'][data-main-layout='content']
+    .mine-glass-page:has(> .content-wrap > .section-card)
+    .section-card,
+  html[data-theme='light'][data-main-layout='content'] .settings-page--account .account-card {
+    border-color: transparent;
+  }
+
+  html[data-theme='light'][data-main-layout='content']
+    .mine-glass-page:has(> .content-wrap > .section-card)
+    .line-item:not(:last-child)::after {
+    background: rgba(0, 0, 0, 0.12);
+  }
+
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .section-card) .left {
+    gap: 11px;
+  }
+
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .section-card) .icon-box {
+    width: 40px;
+    height: 40px;
+    filter: drop-shadow(0 0 6px rgba(151, 71, 255, 0.2));
+  }
+
+  html[data-main-layout='content']
+    .mine-glass-page:has(> .content-wrap > .section-card)
+    .icon-box
+    .setting-svg-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .section-card) .right {
+    width: 154px;
+    min-width: 154px;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .section-card) .light {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .section-card) .arrow {
+    width: 12px;
+    height: 22px;
+    font-size: 0;
+    line-height: 0;
+  }
+
+  html[data-main-layout='content'] .mine-glass-page:has(> .content-wrap > .section-card) .switch {
+    width: 53px;
+    height: 26px;
+    padding: 1px;
+    border-radius: 18px;
+  }
+
+  html[data-main-layout='content']
+    .mine-glass-page:has(> .content-wrap > .section-card)
+    .switch
+    .dot {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content']
+    .mine-glass-page:has(> .content-wrap > .section-card)
+    .switch.on
+    .dot {
+    transform: translateX(26px);
+  }
+
+  // 切换语言：仅呈现项目已支持的语言，行尺寸与设计稿保持一致。
+  html[data-main-layout='content'] .settings-page--language .language-card {
+    width: 100%;
+    margin: 0;
+    padding: 16px 19px;
+    border-radius: 19px;
+    backdrop-filter: blur(0.2px);
+  }
+
+  html[data-main-layout='content'] .settings-page--language .language-row {
+    min-height: 49px;
+    padding: 0;
+    border-bottom-width: 1px;
+  }
+
+  html[data-main-layout='content'] .settings-page--language .label {
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  html[data-main-layout='content'] .settings-page--language .radio-circle {
+    width: 22px;
+    height: 22px;
+    border-width: 1px;
+  }
+
+  html[data-main-layout='content'] .settings-page--language .radio-circle--checked {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--c-brand);
+    box-shadow: none;
+  }
+
+  html[data-main-layout='content'] .settings-page--language .radio-circle--checked::after {
+    width: 17px;
+    height: 17px;
+    border: 0;
+    background: var(--c-brand);
+  }
+
+  // 设置页族的账号、密码、注销账号与文档页面。
+  // 保留页面原有 DOM、主题和交互，只把移动端内容放进居中的 1440 × 1024 桌面舞台。
+  html[data-main-layout='content']
+    :is(.settings-page--account, .reset-password-page, .cancel-account-page, .settings-doc-page) {
+    --password-settings-gutter: clamp(24px, 2.7083vw, 39px);
+    --password-settings-content-width: min(
+      calc(100% - var(--password-settings-gutter) * 2),
+      1362px
+    );
+    --password-settings-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content']
+    :is(
+      .settings-page--account,
+      .reset-password-page,
+      .cancel-account-page,
+      .settings-doc-page
+    )::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content']
+    :is(.settings-page--account, .reset-password-page, .cancel-account-page, .settings-doc-page)
+    > .page-back-header {
+    position: absolute;
+    top: var(--password-settings-stage-top);
+    right: 0;
+    left: 0;
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 106px;
+    min-height: 106px;
+    margin-right: auto;
+    margin-left: auto;
+    padding: 45px var(--password-settings-gutter) 13px;
+  }
+
+  html[data-main-layout='content']
+    :is(.settings-page--account, .reset-password-page, .cancel-account-page, .settings-doc-page)
+    .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content']
+    :is(.settings-page--account, .reset-password-page, .cancel-account-page, .settings-doc-page)
+    .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content']
+    :is(.settings-page--account, .reset-password-page, .cancel-account-page, .settings-doc-page)
+    .page-back-header
+    .title {
+    overflow: hidden;
+    max-width: min(70vw, 960px);
+    font-size: 29px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content']
+    :is(.settings-page--account, .reset-password-page, .cancel-account-page, .settings-doc-page)
+    > .content-wrap {
+    position: relative;
+    width: var(--password-settings-content-width);
+    min-height: var(--content-stage-height);
+    margin: 0 auto;
+    padding: calc(var(--password-settings-stage-top) + 106px) 0 28px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .account-card {
+    width: 100%;
+    margin: 0;
+    padding: 16px 20px 16px 16px;
+    gap: 5px;
+    border: 1px solid rgba(249, 249, 249, 0.2);
+    border-radius: 19px;
+    backdrop-filter: blur(0.2px);
+  }
+
+  html[data-main-layout='content'] .settings-page--account .account-row {
+    height: 40px;
+    min-height: 40px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .account-row:not(:last-child)::after {
+    right: 0;
+    bottom: -3px;
+    left: auto;
+    width: min(320px, calc(100% - 51px));
+    height: 1px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .left-wrap {
+    gap: 11px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .right-wrap {
+    width: 154px;
+    min-width: 154px;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .label {
+    font-size: 18px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .row-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .row-icon .setting-svg-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .arrow {
+    width: 12px;
+    height: 22px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .switch {
+    width: 54px;
+    height: 26px;
+    padding: 1px;
+    border-radius: 33px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .dot {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .settings-page--account .switch.on .dot {
+    transform: translateX(26px);
+  }
+
+  html[data-main-layout='content'] .reset-password-page .tab-switch {
+    width: 100%;
+    height: 64px;
+    margin: 0;
+    border-radius: 35px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .tab-btn {
+    font-size: 18px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .form-stack {
+    margin-top: 10px;
+    gap: 13px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .form-row {
+    height: 63px;
+    padding-left: 18px;
+    border-radius: 75px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .row-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 7px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .row-icon img {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .row-main {
+    padding: 0 16px 0 23px;
+    border-radius: 75px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .account-row-main {
+    padding: 0 9px 0 18px;
+    gap: 15px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .password-row-main {
+    padding-right: 16px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .prefix {
+    min-width: 72px;
+    height: 42px;
+    padding: 0 12px;
+    border-radius: 56px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page :is(.account-value, .input-field) {
+    font-size: 17px;
+    line-height: 21px;
+  }
+
+  html[data-main-layout='content']
+    .reset-password-page
+    .password-input[type='password']:not(:placeholder-shown) {
+    font-size: 22px;
+    letter-spacing: 1px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .otp-btn {
+    min-width: 100px;
+    height: 42px;
+    padding: 0 12px;
+    border-radius: 56px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .eye-btn {
+    width: 25px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .eye-btn img {
+    width: 25px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .reset-password-page .submit-btn {
+    display: block;
+    width: min(100%, 400px);
+    height: 64px;
+    margin: 40px auto 0;
+    border-radius: 56px;
+    font-size: 18px;
+  }
+
+  // 注销账号（Figma 11222:27903）：两组表单固定在舞台顶部，确认按钮停靠舞台底部。
+  html[data-main-layout='content'] .cancel-account-page > .content-wrap {
+    position: absolute;
+    top: var(--password-settings-stage-top);
+    left: 50%;
+    width: var(--password-settings-content-width);
+    height: var(--content-stage-height);
+    min-height: 0;
+    padding: 106px 0 30px;
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .form-stack {
+    margin: 0;
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .field-group {
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .form-label {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .form-row {
+    height: 64px;
+    padding-left: 18px;
+    border-radius: 75px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .row-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 7px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .row-icon img {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .row-main {
+    padding: 0 16px 0 24px;
+    border-radius: 75px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .account-row-main {
+    padding: 0 9px 0 18px;
+    gap: 15px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .prefix {
+    min-width: 72px;
+    height: 42px;
+    padding: 0 12px;
+    border-radius: 56px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page :is(.account-value, .input-field) {
+    font-size: 17px;
+    line-height: 21px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .otp-btn {
+    min-width: 100px;
+    height: 42px;
+    padding: 0 12px;
+    border-radius: 56px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .cancel-account-page .submit-btn {
+    width: min(100%, 402px);
+    height: 65px;
+    margin: auto auto 0;
+    border-width: 1px;
+    border-radius: 48px;
+    font-size: 23px;
+  }
+
+  // 关于我们及同族文档页（Figma 11222:27881）。
+  html[data-main-layout='content'] .settings-doc-page .doc-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .settings-doc-page .doc-card p {
+    width: 100%;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  // 设置、验证、关闭和重置数字密码共用同一个沉浸式舞台（Figma 11222:28507）。
+  html[data-main-layout='content'] .security-password-page {
+    --security-password-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+    --security-password-panel-top: clamp(175px, calc(36.72dvh - 57px), 319px);
+
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .security-password-page .close-btn {
+    top: calc(var(--security-password-stage-top) + 23px);
+    left: calc((100% - var(--content-stage-width)) / 2 + 29px);
+    width: 58px;
+    height: 58px;
+    border-width: 0;
+  }
+
+  html[data-main-layout='content'] .security-password-page .close-btn span::before,
+  html[data-main-layout='content'] .security-password-page .close-btn span::after {
+    width: 24px;
+    height: 4px;
+  }
+
+  html[data-main-layout='content'] .security-password-page .password-panel {
+    padding-top: calc(var(--security-password-stage-top) + var(--security-password-panel-top));
+  }
+
+  html[data-main-layout='content'] .security-password-page .password-panel h1 {
+    font-size: 32px;
+    line-height: 39px;
+  }
+
+  html[data-main-layout='content'] .security-password-page .password-panel p {
+    margin-top: 7px;
+    font-size: 18px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .security-password-page .dot-row {
+    margin-top: 35px;
+    gap: 6px;
+  }
+
+  html[data-main-layout='content'] .security-password-page .dot-cell {
+    width: 48px;
+    height: 48px;
+    border-width: 1px;
+    border-radius: 45px;
+  }
+
+  html[data-main-layout='content'] .security-password-page .digit {
+    font-size: 34px;
+    line-height: 41px;
+  }
+
+  html[data-main-layout='content'] .security-password-page .submit-btn {
+    width: min(calc(100% - 48px), 400px);
+    height: 64px;
+    margin-top: 38px;
+    border-radius: 56px;
+    font-size: 18px;
+  }
+
+  // 编辑个人信息与修改昵称（Figma 11222:28579 / 11222:28945）。
+  // 两页共用同一套 1440 × 1024 舞台和导航尺寸，页面切换时只更新内容。
+  html[data-main-layout='content'] :is(.profile-edit-page, .nickname-page) {
+    --profile-settings-gutter: clamp(24px, 2.7083vw, 39px);
+    --profile-settings-content-width: min(
+      calc(100% - var(--profile-settings-gutter) * 2),
+      1361px
+    );
+    --profile-settings-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content']
+    :is(.profile-edit-page, .nickname-page)::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content']
+    :is(.profile-edit-page, .nickname-page)
+    > .page-back-header {
+    position: absolute;
+    top: var(--profile-settings-stage-top);
+    right: 0;
+    left: 0;
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 101px;
+    min-height: 101px;
+    margin-right: auto;
+    margin-left: auto;
+    padding: 45px var(--profile-settings-gutter) 14px;
+  }
+
+  html[data-main-layout='content']
+    :is(.profile-edit-page, .nickname-page)
+    .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content']
+    :is(.profile-edit-page, .nickname-page)
+    .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content']
+    :is(.profile-edit-page, .nickname-page)
+    .page-back-header
+    .title {
+    overflow: hidden;
+    max-width: min(70vw, 960px);
+    font-size: 29px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content']
+    :is(.profile-edit-page, .nickname-page)
+    > .content-wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: var(--profile-settings-content-width);
+    min-height: var(--content-stage-height);
+    margin: 0 auto;
+    padding: calc(var(--profile-settings-stage-top) + 101px) 0 28px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .profile-card {
+    width: 100%;
+    height: 177px;
+    min-height: 177px;
+    margin: 0;
+    padding: 1px;
+    border-radius: 45px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .profile-card__inner {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 32px 42px;
+    gap: 20px;
+    border-radius: 44px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .avatar-wrap {
+    width: 100px;
+    height: 103px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .avatar-wrap img {
+    width: 100px;
+    height: 103px;
+    border-radius: 63px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .edit-chip {
+    bottom: -8px;
+    min-width: 39px;
+    height: 23px;
+    border-radius: 47px;
+    font-size: 12px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .user-box {
+    gap: 11px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .user-name {
+    font-size: 26px;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .user-id-row {
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .id-tag {
+    min-width: 24px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 5px;
+    font-size: 9px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .id-value {
+    font-size: 11px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .gender-mark {
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .field-group {
+    margin-top: 36px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .glass-input,
+  html[data-main-layout='content'] .nickname-page .name-input-wrap {
+    width: 100%;
+    height: 76px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .glass-input,
+  html[data-main-layout='content'] .nickname-page .name-input {
+    border-radius: 68px;
+    font-size: 18px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .glass-input {
+    padding: 0 26px;
+  }
+
+  html[data-main-layout='content']
+    :is(.profile-edit-page, .nickname-page)
+    .input-hint {
+    margin-top: 10px;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .gender-select {
+    margin-top: 46px;
+    gap: 20px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .gender-option {
+    gap: 5px;
+    font-size: 20px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .radio {
+    width: 25px;
+    height: 25px;
+    border-width: 1px;
+  }
+
+  html[data-main-layout='content'] .profile-edit-page .radio.active::after {
+    inset: 4px;
+  }
+
+  html[data-main-layout='content'] .nickname-page .content-wrap {
+    margin-top: 0;
+  }
+
+  html[data-main-layout='content'] .nickname-page .nickname-content {
+    width: 100%;
+  }
+
+  html[data-main-layout='content'] .nickname-page .name-input {
+    padding: 0 64px 0 25px;
+  }
+
+  html[data-main-layout='content'] .nickname-page .name-input-count {
+    right: 25px;
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .nickname-page .cost-row {
+    margin-top: 35px;
+    gap: 7px;
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .nickname-page .balance-row {
+    margin-top: 5px;
+  }
+
+  html[data-main-layout='content'] .nickname-page .diamond {
+    width: 19px;
+    height: 15px;
+  }
+
+  html[data-main-layout='content'] .nickname-page .save-wrap {
+    width: 402px;
+    max-width: 100%;
+    margin: auto auto 0;
+    padding: 0 0 2px;
+  }
+
+  html[data-main-layout='content'] .nickname-page .save-btn {
+    width: 100%;
+    height: 64px;
+    border-radius: 56px;
+    font-size: 18px;
+  }
+
+  // 我的商城（Figma 11222:28740）：全宽账户卡片、居中的三列商品和纵向支付方式列表。
+  html[data-main-layout='content'] .mine-shop-page {
+    --mine-shop-gutter: clamp(24px, 2.7083vw, 39px);
+    --mine-shop-content-width: min(calc(100% - var(--mine-shop-gutter) * 2), 1361px);
+    --mine-shop-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page > .page-back-header {
+    position: absolute;
+    top: var(--mine-shop-stage-top);
+    right: 0;
+    left: 0;
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 101px;
+    min-height: 101px;
+    margin-right: auto;
+    margin-left: auto;
+    padding: 45px var(--mine-shop-gutter) 14px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .page-back-header .title {
+    overflow: hidden;
+    max-width: min(70vw, 960px);
+    font-size: 29px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page > .content-wrap {
+    position: relative;
+    box-sizing: border-box;
+    width: var(--mine-shop-content-width);
+    max-width: none;
+    min-height: var(--content-stage-height);
+    margin: 0 auto;
+    padding: calc(var(--mine-shop-stage-top) + 101px) 0 40px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .profile-card {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    height: 177px;
+    margin: 0;
+    padding: 20px 34px;
+    border-radius: 45px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .profile-main {
+    gap: 18px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .avatar-wrap {
+    width: 81px;
+    height: 81px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .profile-meta {
+    gap: 14px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .profile-meta .name {
+    overflow: hidden;
+    max-width: min(50vw, 720px);
+    font-size: 26px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-theme='light'][data-main-layout='content']
+    .mine-shop-page
+    :is(.profile-meta .name, .id-row, .balance-row) {
+    color: #202020;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .id-row {
+    gap: 4px;
+    font-size: 11px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .id-row .id-tag {
+    padding: 2px 5px;
+    border-radius: 5px;
+    font-size: 9px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .balance-row {
+    position: absolute;
+    right: 40px;
+    bottom: 16px;
+    margin: 0;
+    gap: 5px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .balance-row span {
+    font-size: 13px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .balance-row strong {
+    font-size: 19px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .balance-row img {
+    width: 33px;
+    height: 33px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .shop-grid {
+    grid-template-columns: repeat(3, 143px);
+    justify-content: center;
+    width: min(100%, 463px);
+    margin: 36px auto 0;
+    column-gap: 17px;
+    row-gap: 16px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .grid-status {
+    margin: 20px 0;
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .shop-card {
+    width: 143px;
+    height: 185px;
+    padding: 7px 12px 8px;
+    border-radius: 27px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .chest {
+    width: 78px;
+    height: 74px;
+    margin-top: 1px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .shop-card .title {
+    margin-top: 5px;
+    font-size: 22px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .shop-card .desc {
+    margin-top: 3px;
+    font-size: 17px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .price-pill {
+    width: 103px;
+    height: 31px;
+    padding: 0 4px 0 10px;
+    border-radius: 52px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .price-pill span {
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .price-pill img {
+    width: 25px;
+    height: 25px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .wholesale-tag {
+    top: -1px;
+    right: -1px;
+    padding: 0 13px;
+    font-size: 14px;
+    line-height: 24px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .rate-bar {
+    width: 100%;
+    min-height: 26px;
+    margin-top: 36px;
+    padding: 5px 12px;
+    border-radius: 27px;
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .pay-channel-list {
+    margin-top: 36px;
+    gap: 35px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .pay-channel {
+    min-height: 53px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .pay-channel .left {
+    gap: 9px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .pay-icon {
+    width: 53px;
+    height: 53px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .pay-texts {
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .line-1 {
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .line-1 .name {
+    font-size: 20px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .line-1 .plain {
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .line-2 {
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .tag {
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 40px;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .radio {
+    width: 19px;
+    height: 19px;
+    border-width: 1px;
+  }
+
+  html[data-main-layout='content'] .mine-shop-page .pay-now {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 411px;
+    max-width: 100%;
+    height: 65px;
+    min-height: 65px;
+    margin: 40px auto 0;
+    transform: none;
+    border-radius: 48px;
+    font-size: 18px;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  html[data-main-layout='content'] .shop-pay-popup.van-popup--center {
+    width: auto;
+    max-width: calc(100% - 48px);
+    max-height: min(calc(var(--content-stage-height) - 48px), calc(100dvh - 48px));
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  html[data-main-layout='content'] .shop-pay-popup .pay-card {
+    box-sizing: border-box;
+    width: 357px;
+    max-width: calc(100vw - 48px);
+    padding: 17px;
+    border-radius: 41px;
+  }
+
+  html[data-main-layout='content'] .trader-apply-popup.van-popup--center {
+    width: min(calc(100% - 48px), 520px);
+    max-height: min(calc(var(--content-stage-height) - 48px), calc(100dvh - 48px));
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  html[data-main-layout='content'] .trader-apply-popup .trader-apply-card {
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+    padding: 36px 24px 26px;
+    border-radius: 40px;
+  }
+
+}

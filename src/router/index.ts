@@ -634,7 +634,7 @@ router.beforeEach((to, from) => {
 })
 
 router.beforeResolve(async (to) => {
-  await preloadMainLayoutStyles(to.meta.desktopLayout)
+  await preloadMainLayoutStyles(to.meta.desktopLayout, to.path)
   return true
 })
 
@@ -650,7 +650,7 @@ router.afterEach((to, from, failure) => {
 
   // 导航确认后再切换布局，避免被取消或重定向的导航污染当前页面状态。
   // 这也是桌面布局的唯一运行时入口，不再在 index.html 维护第二份路径白名单。
-  syncMainLayout(to.meta.desktopLayout)
+  syncMainLayout(to.meta.desktopLayout, to.path)
 
   log.info('afterEach', {
     from: from.fullPath || '<init>',

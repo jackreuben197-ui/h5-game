@@ -1,0 +1,4478 @@
+// 俱乐部管理、成员、记录与 Jackpot 桌面样式。
+@media (min-width: 600px) {
+  // 创建俱乐部：按 1440 × 1024 设计稿排布，较矮窗口由舞台内部滚动承载。
+  html[data-main-layout='content'] .club-create-page {
+    --club-create-gutter: clamp(24px, 2.9861vw, 43px);
+  }
+
+  html[data-main-layout='content'] .club-create-page .club-create {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    padding-bottom: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .club-create-page .club-create::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .club-create-page .page-back-header {
+    flex: 0 0 112px;
+    height: 112px;
+    min-height: 112px;
+    padding: 50px var(--club-create-gutter) 25px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .back-trigger {
+    gap: 20px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-create-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .club-create-page .avatar-card {
+    flex: 0 0 144px;
+    width: calc(100% - var(--club-create-gutter) - var(--club-create-gutter));
+    min-height: 144px;
+    margin: 4px auto 0;
+    padding: 6px 26px;
+    border-radius: 47px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .avatar-trigger {
+    width: 80px;
+    height: 80px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .avatar-image {
+    border-width: 0.5px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .add-badge {
+    right: -4px;
+    bottom: -4px;
+    width: 32px;
+    height: 32px;
+    font-size: 28px;
+    line-height: 32px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .form-card {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 28px;
+    width: 100%;
+    min-height: 0;
+    padding: 20px var(--club-create-gutter) 0;
+  }
+
+  html[data-main-layout='content'] .club-create-page .field-block {
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .field-label {
+    font-size: 21px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .club-create-page .field-shell--single {
+    height: 74px;
+    padding: 0 25px;
+    border-radius: 66px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .field-shell--multi {
+    height: 281px;
+    min-height: 281px;
+    padding: 24px;
+    border-radius: 32px;
+  }
+
+  html[data-main-layout='content'] .club-create-page input,
+  html[data-main-layout='content'] .club-create-page textarea {
+    font-size: 17px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .club-create-page textarea {
+    min-height: 220px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .footer-actions {
+    flex: 0 0 auto;
+    gap: 13px;
+    margin-top: auto;
+    padding: 0 0 31px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .create-btn {
+    width: min(calc(100% - 48px), 396px);
+    height: 64px;
+    min-height: 64px;
+    border-radius: 47px;
+    font-size: 22px;
+  }
+
+  html[data-main-layout='content'] .club-create-page .cost-line {
+    gap: 7px;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .club-create-page .cost-line img {
+    width: 18px;
+    height: 14px;
+  }
+
+  // 俱乐部管理与资料编辑：共用内容边距和固定字号，颜色、阴影继续沿用移动端主题样式。
+  html[data-main-layout='content'] .club-management-page,
+  html[data-main-layout='content'] .club-editor-page {
+    --club-content-gutter: clamp(24px, 2.7778vw, 40px);
+  }
+
+  html[data-main-layout='content'] .club-management-stage,
+  html[data-main-layout='content'] .club-editor-stage {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  html[data-main-layout='content'] .club-management-page .page-back-header {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 3;
+    height: 92px;
+    min-height: 92px;
+    padding: 50px var(--club-content-gutter) 20px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .back-trigger,
+  html[data-main-layout='content'] .club-editor-page .back-trigger {
+    gap: 20px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-management-page .club-detail {
+    position: absolute;
+    inset: 92px 0 0;
+    z-index: 1;
+    display: flex;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    gap: 22px;
+    padding: 0 var(--club-content-gutter) 30px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .club-management-page .club-detail::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .club-management-page .club-header-card {
+    flex: 0 0 160px;
+    align-items: center;
+    width: 100%;
+    min-height: 160px;
+    padding: 6px 25px;
+    border-radius: 45px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .club-header-main {
+    position: static;
+    gap: 13px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .club-avatar-trigger,
+  html[data-main-layout='content'] .club-management-page .club-avatar {
+    width: 88px;
+    height: 88px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .club-avatar-edit {
+    right: -2px;
+    bottom: -2px;
+    width: 24px;
+    height: 24px;
+    font-size: 22px;
+    line-height: 24px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .club-summary {
+    justify-content: center;
+    min-height: 88px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .club-name-edit {
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .club-name {
+    font-size: 25px;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .club-management-page .name-edit-icon {
+    width: 27px;
+    height: 27px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .name-edit-icon::before {
+    top: 8px;
+    left: 4px;
+    width: 19px;
+    height: 8px;
+    border-width: 3px;
+    border-radius: 4px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .club-id-row {
+    gap: 3px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .id-tag {
+    min-width: 22px;
+    height: 13px;
+    border-radius: 5px;
+    font-size: 9px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .id-text {
+    font-size: 11px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .metric-line {
+    gap: 5px;
+    font-size: 16px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .club-management-page .metric-line img {
+    width: 18px;
+    height: 18px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .club-size-pill {
+    right: 25px;
+    bottom: 16px;
+    min-height: 37px;
+    padding: 0 13px;
+    gap: 3px;
+    border-radius: 32px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .size-text {
+    font-size: 21px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .club-size-icon {
+    width: 22px;
+    height: 17px;
+    margin-left: 4px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .quick-actions {
+    flex: 0 0 auto;
+    grid-template-columns: repeat(3, 124px);
+    justify-content: center;
+    gap: 13px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .quick-card {
+    width: 124px;
+    gap: 7px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .quick-image-wrap {
+    width: 124px;
+    height: 124px;
+    aspect-ratio: auto;
+    border-width: 1px;
+    border-radius: 33px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .quick-title {
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .club-management-page .intro-card {
+    flex: 0 0 68px;
+    width: 100%;
+    min-height: 68px;
+    padding: 15px 19px 15px 25px;
+    border-radius: 32px;
+    font-size: 18px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .intro-edit {
+    width: 30px;
+    height: 30px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .edit-pen {
+    width: 27px;
+    height: 27px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .edit-pen::before {
+    top: 9px;
+    left: 4px;
+    width: 19px;
+    height: 8px;
+    border-width: 3px;
+    border-radius: 4px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .settings-card {
+    flex: 0 0 auto;
+    width: 100%;
+    gap: 13px;
+    padding: 15px 19px;
+    border-radius: 32px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .settings-row {
+    min-height: 22px;
+    font-size: 18px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .label-wrap {
+    gap: 3px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .right-wrap {
+    min-width: 152px;
+    gap: 6px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .muted-text {
+    font-size: 18px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .mini-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .chevron {
+    width: 12px;
+    height: 12px;
+    border-width: 1px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .level-pill {
+    min-height: 22px;
+    padding: 0 6px;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .tribe-apply-btn {
+    min-height: 26px;
+    padding: 0 11px;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .switch {
+    width: 78px;
+    height: 37px;
+    padding: 2px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .switch-knob {
+    width: 33px;
+    height: 33px;
+  }
+
+  html[data-main-layout='content'] .club-management-page .danger-zone {
+    flex: 0 0 auto;
+    width: min(calc(100% - 48px), 446px);
+    margin: auto auto 0;
+    padding: 25px 29px 0;
+  }
+
+  html[data-main-layout='content'] .club-management-page .danger-btn {
+    width: 100%;
+    min-height: 64px;
+    border-radius: 47px;
+    font-size: 23px;
+  }
+
+  html[data-main-layout='content'] .club-editor-stage {
+    display: flex;
+    flex-direction: column;
+  }
+
+  html[data-main-layout='content'] .club-editor-page .page-back-header {
+    flex: 0 0 112px;
+    height: 112px;
+    min-height: 112px;
+    padding: 50px var(--club-content-gutter) 25px;
+  }
+
+  html[data-main-layout='content'] .club-editor-page .confirm-btn {
+    width: min(calc(100% - 48px), 396px);
+    height: 64px;
+    min-height: 64px;
+    border-radius: 47px;
+    font-size: 23px;
+  }
+
+  html[data-main-layout='content'] .club-edit-des-page .club-edit-des {
+    position: relative;
+    flex: 1 1 auto;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    gap: 0;
+    padding: 4px var(--club-content-gutter) 58px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .club-edit-des-page .club-edit-des::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .club-edit-des-page .editor-block {
+    flex: 0 0 auto;
+    gap: 19px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-edit-des-page .field-label {
+    font-size: 22px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .club-edit-des-page .field-shell {
+    width: 100%;
+    height: 286px;
+    min-height: 286px;
+    padding: 24px;
+    border-radius: 33px;
+  }
+
+  html[data-main-layout='content'] .club-edit-des-page textarea {
+    min-height: 230px;
+    font-size: 18px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .club-edit-des-page .footer-actions {
+    display: flex;
+    flex: 0 0 auto;
+    justify-content: center;
+    width: 100%;
+    margin-top: auto;
+    padding: 30px 0 0;
+  }
+
+  html[data-main-layout='content'] .club-edit-name-page .club-edit-name {
+    gap: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .club-edit-name-page .club-edit-name::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .club-edit-name-page .editor-block {
+    flex: 0 0 auto;
+    gap: 10px;
+    padding: 8px var(--club-content-gutter) 0;
+  }
+
+  html[data-main-layout='content'] .club-edit-name-page .hint-row {
+    width: min(100%, 345px);
+    min-height: 22px;
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .club-edit-name-page .hint-text {
+    overflow: hidden;
+    font-size: 16px;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .club-edit-name-page .count-text {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .club-edit-name-page .name-shell {
+    width: 100%;
+    height: 75px;
+    min-height: 75px;
+    padding: 0 25px;
+    border-radius: 67px;
+  }
+
+  html[data-main-layout='content'] .club-edit-name-page input {
+    font-size: 18px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .club-edit-name-page .wallet-row {
+    min-height: 27px;
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .club-edit-name-page .wallet-info {
+    gap: 6px;
+  }
+
+  html[data-main-layout='content'] .club-edit-name-page .wallet-info img,
+  html[data-main-layout='content'] .club-edit-name-page .cost-line img {
+    width: 18px;
+    height: 14px;
+  }
+
+  html[data-main-layout='content'] .club-edit-name-page .wallet-label,
+  html[data-main-layout='content'] .club-edit-name-page .wallet-value {
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .club-edit-name-page .recharge-btn {
+    min-height: 27px;
+    padding: 0 12px;
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .club-edit-name-page .footer-actions {
+    flex: 0 0 auto;
+    gap: 13px;
+    margin-top: auto;
+    padding: 30px 0 40px;
+  }
+
+  html[data-main-layout='content'] .club-edit-name-page .cost-line {
+    gap: 7px;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .club-edit-name-page .interval-line {
+    font-size: 13px;
+    line-height: 1.3;
+  }
+
+  // 下线成员：不改动现有元素与主题样式，仅在 1440 × 1024 内容舞台中重排。
+  html[data-main-layout='content'] .downline-desktop-page {
+    --downline-gutter: clamp(24px, 2.7778vw, 40px);
+    --downline-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page > .page-back-header,
+  html[data-main-layout='content'] .downline-desktop-page > .content {
+    position: absolute;
+    top: var(--downline-stage-top);
+    right: 0;
+    left: 0;
+    width: var(--content-stage-width);
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page > .page-back-header {
+    z-index: 3;
+    height: 84px;
+    min-height: 84px;
+    padding: 50px var(--downline-gutter) 0;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .back-trigger {
+    gap: 20px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page > .content {
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: var(--content-stage-height);
+    min-height: 0;
+    padding: 84px var(--downline-gutter) 30px;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .invite-row {
+    flex: 0 0 28px;
+    min-height: 28px;
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .invite-title-wrap {
+    gap: 7px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .invite-title-wrap img {
+    width: 15px;
+    height: 15px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .qr-btn {
+    min-width: 0;
+    height: 28px;
+    padding: 0 12px;
+    border-width: 0.5px;
+    font-size: 13px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .invite-link {
+    flex: 0 0 14px;
+    min-height: 14px;
+    max-height: 14px;
+    margin: 0;
+    font-size: 10px;
+    line-height: 14px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .search-box {
+    flex: 0 0 45px;
+    width: 100%;
+    height: 45px;
+    padding: 0 8px 0 19px;
+    gap: 10px;
+    border-radius: 44px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .search-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .search-input {
+    font-size: 17px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .total-row {
+    flex: 0 0 23px;
+    min-height: 23px;
+    margin-top: 14px;
+    gap: 8px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .total-title {
+    font-size: 16px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .total-value {
+    font-size: 18px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .members-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: 14px;
+    gap: 11px;
+    padding-bottom: 30px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .members-wrap::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .member-card {
+    flex: 0 0 103px;
+    width: 100%;
+    min-height: 103px;
+    gap: 7px;
+    padding: 7px 18px 12px;
+    border-radius: 44px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .member-head {
+    flex: 0 0 43px;
+    min-height: 43px;
+    gap: 13px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .member-avatar {
+    width: 43px;
+    height: 43px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .member-head-main {
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .member-name {
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .member-id-row {
+    gap: 3px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .member-id-tag {
+    min-width: 22px;
+    height: 13px;
+    padding: 0 5px;
+    border-radius: 5px;
+    font-size: 9px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .member-id {
+    font-size: 11px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .member-assets {
+    flex: 0 0 35px;
+    width: 100%;
+    min-height: 35px;
+    padding: 5px 24px;
+    gap: 0;
+    border-radius: 60px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .asset-item {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: 12px 12px;
+    align-content: center;
+    align-items: center;
+    justify-content: start;
+    justify-items: start;
+    justify-self: center;
+    gap: 2px 3px;
+    font-size: 11px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .asset-item:first-child {
+    justify-self: start;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .asset-item:last-child {
+    justify-self: end;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .asset-item img {
+    grid-row: 1;
+    grid-column: 1;
+    width: 12px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .asset-label {
+    grid-row: 1;
+    grid-column: 2;
+    font-size: 11px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .asset-value {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    font-size: 11px;
+  }
+
+  html[data-main-layout='content'] .downline-desktop-page .empty-box {
+    min-height: 103px;
+    padding: 36px 18px;
+    border-radius: 44px;
+    font-size: 14px;
+  }
+
+  // 代理成员的下线成员页：沿用下线成员的桌面规格，保留列表/编辑两种现有状态。
+  html[data-main-layout='content'] .agent-offline-players-page {
+    --offline-players-gutter: clamp(24px, 2.7778vw, 40px);
+    --offline-players-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page > .page-back-header,
+  html[data-main-layout='content'] .agent-offline-players-page > .member-detail-page {
+    position: absolute;
+    top: var(--offline-players-stage-top);
+    right: 0;
+    left: 0;
+    width: var(--content-stage-width);
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page > .page-back-header {
+    z-index: 3;
+    height: 84px;
+    min-height: 84px;
+    padding: 50px var(--offline-players-gutter) 0;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .back-trigger {
+    gap: 20px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page > .member-detail-page {
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: var(--content-stage-height);
+    min-height: 0;
+    padding: 84px var(--offline-players-gutter) 30px;
+    gap: 13px;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .tabs {
+    flex: 0 0 31px;
+    min-height: 31px;
+    margin: 0;
+    gap: 60px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .tabs button {
+    height: 31px;
+    padding: 0 8px;
+    font-size: 14px;
+    line-height: 30px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .search {
+    flex: 0 0 45px;
+    width: 100%;
+    min-height: 45px;
+    padding: 0 19px;
+    gap: 10px;
+    border-radius: 44px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .search-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .search-input {
+    min-width: 0;
+    font-size: 17px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .toggle-row {
+    flex: 0 0 24px;
+    min-height: 24px;
+    font-size: 16px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .toggle-row > span {
+    min-width: 0;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .toggle-row label {
+    min-height: 24px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .hidden-text {
+    padding-right: 8px;
+    font-size: 11px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .switch {
+    width: 45px;
+    height: 22px;
+    padding: 1px;
+    border-radius: 20px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .switch i {
+    width: 20px;
+    height: 20px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .cards {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding-bottom: 4px;
+    gap: 11px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .cards::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .member-card {
+    flex: 0 0 103px;
+    width: 100%;
+    min-height: 103px;
+    gap: 9px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .check-control {
+    width: 22px;
+    height: 22px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .radio-circle {
+    width: 18px;
+    height: 18px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .card {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    width: auto;
+    min-width: 0;
+    min-height: 103px;
+    padding: 7px 18px 12px;
+    gap: 7px;
+    border-radius: 44px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .member-main {
+    flex: 0 0 43px;
+    width: 100%;
+    min-height: 43px;
+    gap: 13px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .member-left {
+    gap: 13px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .member-avatar {
+    width: 43px;
+    height: 43px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .member-base {
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .member-name {
+    max-width: 600px;
+    overflow: hidden;
+    font-size: 13px;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .member-id-row {
+    gap: 3px;
+    font-size: 11px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .id-pill {
+    min-width: 22px;
+    height: 13px;
+    padding: 0 5px;
+    border-radius: 5px;
+    font-size: 9px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .member-data-strip {
+    flex: 0 0 35px;
+    width: 100%;
+    min-height: 35px;
+    margin: 0;
+    padding: 5px 24px;
+    gap: 0;
+    border-radius: 60px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .data-item {
+    display: grid;
+    grid-template-rows: 12px 12px;
+    align-content: center;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .data-item:first-child {
+    justify-content: start;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .data-item:last-child {
+    justify-content: end;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .data-label,
+  html[data-main-layout='content'] .agent-offline-players-page .data-value {
+    font-size: 11px;
+    line-height: 12px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .data-label {
+    gap: 3px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .data-label img {
+    width: 12px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .status {
+    flex: 0 0 auto;
+    padding: 36px 18px;
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .agent-offline-players-page .save {
+    flex: 0 0 45px;
+    width: min(400px, 100%);
+    height: 45px;
+    margin: 0 auto;
+    border-radius: 45px;
+    font-size: 17px;
+  }
+
+  // 牌局记录：设计画板为 1440 × 1320，桌面舞台保持最大 1024 高，记录列表内部滚动。
+  html[data-main-layout='content'] .club-room-history-page {
+    --history-gutter: clamp(24px, 2.7778vw, 40px);
+    --history-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page > .page-back-header,
+  html[data-main-layout='content'] .club-room-history-page > .club-room-history {
+    position: absolute;
+    top: var(--history-stage-top);
+    right: 0;
+    left: 0;
+    width: var(--content-stage-width);
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page > .page-back-header {
+    z-index: 3;
+    height: 78px;
+    min-height: 78px;
+    padding: 50px var(--history-gutter) 0;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .back-trigger {
+    gap: 20px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page > .club-room-history {
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: var(--content-stage-height);
+    min-height: 0;
+    gap: 0;
+    padding: 78px var(--history-gutter) 30px;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .coin-tabs {
+    flex: 0 0 30px;
+    align-items: center;
+    justify-content: space-between;
+    width: min(100%, 225px);
+    height: 30px;
+    margin: 0 auto;
+    padding: 0 34px;
+    gap: 0;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .coin-tab {
+    height: 30px;
+    padding: 0;
+    font-size: 16px;
+    line-height: 0.95;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .coin-tab--active {
+    padding-bottom: 0;
+    border-bottom-width: 1.5px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .summary-card {
+    flex: 0 0 221px;
+    width: 100%;
+    height: 221px;
+    margin-top: 17px;
+    gap: 10px;
+    padding: 16px 19px;
+    border-width: 1px;
+    border-radius: 33px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .date-range {
+    flex: 0 0 59px;
+    width: 100%;
+    height: 59px;
+    gap: 9px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .date-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 59px;
+    height: 59px;
+    padding: 0 25px;
+    gap: 10px;
+    border-radius: 46px;
+    font-size: 14px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .calendar-icon-inline {
+    width: 17px;
+    height: 17px;
+    border-width: 1.5px;
+    border-radius: 4px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .calendar-icon-inline::before,
+  html[data-main-layout='content'] .club-room-history-page .calendar-icon-inline::after {
+    top: -3px;
+    width: 2px;
+    height: 5px;
+    border-radius: 1px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .calendar-icon-inline::before {
+    left: 4px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .calendar-icon-inline::after {
+    right: 4px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .date-sep {
+    flex: 0 0 23px;
+    width: 23px;
+    height: 1px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .stats-row {
+    flex: 0 0 49px;
+    width: min(100%, 335px);
+    max-width: none;
+    height: 49px;
+    margin: 0 auto;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .stats-grid {
+    flex: 0 0 60px;
+    width: min(100%, 673px);
+    height: 60px;
+    margin: 0 auto;
+    padding-top: 10px;
+    border-top-width: 1px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .stats-item {
+    gap: 3px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .stats-row .stats-item,
+  html[data-main-layout='content'] .club-room-history-page .stats-grid .stats-item {
+    padding: 0 6px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .stats-row .stats-item + .stats-item,
+  html[data-main-layout='content'] .club-room-history-page .stats-grid .stats-item + .stats-item {
+    border-left-width: 1px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .stats-label {
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .stats-value {
+    font-size: 24px;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .timezone {
+    display: flex;
+    flex: 0 0 32px;
+    align-items: center;
+    justify-content: flex-end;
+    height: 32px;
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .record-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: 19px;
+    gap: 13px;
+    padding-bottom: 30px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .record-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .record-row {
+    min-height: 98px;
+    height: 98px;
+    padding-left: 14px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .game-badge {
+    top: 17px;
+    left: 2px;
+    width: 65px;
+    height: 65px;
+    border-width: 1px;
+    border-radius: 76px;
+    font-size: 16px;
+    line-height: 1.1;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .record-card {
+    width: 100%;
+    height: 98px;
+    min-height: 98px;
+    margin-left: 0;
+    padding: 18px 12px 18px 66px;
+    border-width: 1px;
+    border-radius: 91px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .record-main {
+    min-width: 0;
+    gap: 8px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .record-title {
+    font-size: 15px;
+    line-height: 0.83;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .record-meta {
+    gap: 5px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .meta-top {
+    gap: 29px;
+    font-size: 10px;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .meta-time {
+    gap: 0;
+    font-size: 12px;
+    line-height: 1;
+    letter-spacing: 0.5px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .meta-time img {
+    width: 16px;
+    height: 16px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .record-right {
+    flex: 0 0 auto;
+    gap: 8px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .fee-chip {
+    width: 77px;
+    min-width: 77px;
+    min-height: 36px;
+    padding: 6px 9px;
+    gap: 3px;
+    border-radius: 9px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .fee-line {
+    gap: 5px;
+    font-size: 9px;
+    line-height: 1;
+    letter-spacing: 0.4px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .chevron {
+    font-size: 32px;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .club-room-history-page .list-status {
+    padding: 8px 0 10px;
+    font-size: 13px;
+  }
+
+  // 数据详情：Figma 有效内容位于 1440 × 1320 画板前 955px，记录列表在 1024 高舞台内滚动。
+  html[data-main-layout='content'] .club-room-history-detail-page {
+    --history-detail-gutter: clamp(24px, 2.7778vw, 40px);
+    --history-detail-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page > .page-back-header,
+  html[data-main-layout='content'] .club-room-history-detail-page > .room-data-detail {
+    position: absolute;
+    top: var(--history-detail-stage-top);
+    right: 0;
+    left: 0;
+    width: var(--content-stage-width);
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page > .page-back-header {
+    z-index: 3;
+    height: 84px;
+    min-height: 84px;
+    padding: 50px var(--history-detail-gutter) 0;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .back-trigger {
+    gap: 20px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page > .room-data-detail {
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: var(--content-stage-height);
+    min-height: 0;
+    padding: 112px var(--history-detail-gutter) 30px;
+    gap: 19px;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .meta-panel {
+    flex: 0 0 43px;
+    min-height: 43px;
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .meta-title-row {
+    flex: 0 0 23px;
+    min-height: 23px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .meta-title,
+  html[data-main-layout='content'] .club-room-history-detail-page .meta-main-value {
+    font-size: 19px;
+    line-height: 23px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .meta-sub-row {
+    flex: 0 0 16px;
+    min-height: 16px;
+    font-size: 13px;
+    line-height: 16px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .creator-wrap {
+    gap: 9px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .id-pill-wrap {
+    gap: 3px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .id-pill {
+    min-width: 21px;
+    height: 13px;
+    padding: 0 5px;
+    border-radius: 5px;
+    font-size: 9px;
+    line-height: 13px;
+    text-align: center;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .id-number {
+    font-size: 11px;
+    line-height: 13px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .summary-card {
+    flex: 0 0 224px;
+    width: 100%;
+    height: 224px;
+    min-height: 224px;
+    padding: 16px 19px;
+    gap: 11px;
+    border-width: 1px;
+    border-radius: 34px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .summary-row {
+    flex: 0 0 49px;
+    min-height: 49px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .summary-row:first-child {
+    flex-basis: 50px;
+    min-height: 50px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .summary-row--three {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 80px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .summary-row--single {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .metric-item {
+    position: relative;
+    flex: 0 0 84px;
+    width: 84px;
+    gap: 3px;
+  }
+
+  html[data-main-layout='content']
+    .club-room-history-detail-page
+    .metric-item--with-divider
+    + .metric-item--with-divider {
+    border-left: 0;
+  }
+
+  html[data-main-layout='content']
+    .club-room-history-detail-page
+    .metric-item--with-divider
+    + .metric-item--with-divider::before {
+    position: absolute;
+    top: 50%;
+    left: -40px;
+    width: 1px;
+    height: 32px;
+    background: rgba(249, 249, 249, 0.16);
+    content: '';
+    transform: translate(-50%, -50%);
+  }
+
+  html[data-theme='light'][data-main-layout='content']
+    .club-room-history-detail-page
+    .metric-item--with-divider
+    + .metric-item--with-divider::before {
+    background: rgba(17, 17, 17, 0.12);
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .metric-label {
+    font-size: 15px;
+    line-height: 21px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .metric-value {
+    font-size: 24px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content']
+    .club-room-history-detail-page
+    .summary-row:first-child
+    .metric-item:first-child
+    .metric-value {
+    font-size: 19px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .metric-value + .metric-value {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .summary-divider {
+    flex: 0 0 1px;
+    width: 100%;
+    height: 1px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .record-board {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding-bottom: 0;
+    gap: 7px;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .board-head-wrap {
+    flex: 0 0 34px;
+    width: 100%;
+    height: 34px;
+    padding-top: 0;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .board-head-strip {
+    inset: 7px 7px auto 9px;
+    height: 21px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .board-head {
+    width: 100%;
+    height: 34px;
+    min-height: 34px;
+    padding: 0 12px;
+    border-width: 1px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .board-grid {
+    grid-template-columns: 72px repeat(6, minmax(0, 1fr));
+    column-gap: 2px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .head-cell {
+    font-size: 12px;
+    line-height: 15px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .head-cell--user {
+    padding-left: 0;
+    text-align: center;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .record-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 5px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .record-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .record-row {
+    flex: 0 0 51px;
+    width: 100%;
+    height: 51px;
+    min-height: 51px;
+    padding: 13px 9px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .user-cell {
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .user-avatar {
+    width: 22px;
+    height: 22px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .user-meta {
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .user-name,
+  html[data-main-layout='content'] .club-room-history-detail-page .value-cell {
+    font-size: 12px;
+    line-height: 15px;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .user-name {
+    max-width: 46px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .user-id {
+    max-width: 46px;
+    margin-top: 0;
+    overflow: hidden;
+    font-size: 8px;
+    line-height: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .club-room-history-detail-page .list-status {
+    padding: 12px 0;
+    font-size: 12px;
+  }
+
+  // 基金管理：账户页按 1440 × 1024 设计落位，账户/记录列表各自承担纵向滚动。
+  html[data-main-layout='content'] .club-members-desktop-page {
+    --club-members-gutter: clamp(24px, 2.7778vw, 40px);
+    --club-members-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page > .page-back-header,
+  html[data-main-layout='content'] .club-members-desktop-page > .club-members {
+    position: absolute;
+    top: var(--club-members-stage-top);
+    right: 0;
+    left: 0;
+    width: var(--content-stage-width);
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page > .page-back-header {
+    z-index: 3;
+    height: 84px;
+    min-height: 84px;
+    padding: 50px var(--club-members-gutter) 0;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .back-trigger {
+    gap: 20px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .member-total {
+    padding-left: 0;
+    font-size: 18px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page > .club-members {
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: var(--content-stage-height);
+    min-height: 0;
+    padding: 112px var(--club-members-gutter) 30px;
+    gap: 19px;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .member-tabs {
+    flex: 0 0 31px;
+    align-items: center;
+    justify-content: center;
+    width: min(100%, 397px);
+    min-height: 31px;
+    margin: 0 auto;
+    padding: 0 22px;
+    gap: 73px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .tab-btn {
+    height: 31px;
+    padding: 0;
+    font-size: 17px;
+    line-height: 30px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .tab-btn--active::after {
+    height: 1.5px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .summary-card {
+    flex: 0 0 178px;
+    width: 100%;
+    height: 178px;
+    min-height: 178px;
+    padding: 33px 20px;
+    justify-content: center;
+    gap: 18px;
+    border-radius: 48px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .summary-grid {
+    display: flex;
+    flex: 0 0 47px;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 47px;
+    gap: 116px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .summary-grid--bottom {
+    align-items: center;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .summary-item,
+  html[data-main-layout='content'] .club-members-desktop-page .income-btn {
+    flex: 0 0 93px;
+    width: 93px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .summary-item {
+    gap: 0;
+    text-align: left;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .summary-label {
+    width: 94px;
+    font-size: 14px;
+    line-height: 20px;
+    text-align: left;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .summary-value {
+    justify-content: flex-start;
+    gap: 2px;
+    font-size: 20px;
+    line-height: 27px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .summary-value img {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .income-btn {
+    height: 47px;
+    min-height: 47px;
+    border-radius: 109px;
+    gap: 1px;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .income-icon {
+    width: 14px;
+    height: 14px;
+    border-width: 1.5px;
+    border-radius: 2px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .income-icon::after {
+    top: -6px;
+    left: 2px;
+    width: 7px;
+    height: 6px;
+    border-width: 1.5px;
+    border-radius: 2px 2px 0 0;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .search-card {
+    flex: 0 0 40px;
+    width: 100%;
+    height: 40px;
+    min-height: 40px;
+    padding: 0 17px;
+    gap: 9px;
+    border-radius: 40px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .search-icon {
+    width: 18px;
+    height: 18px;
+    border-width: 2px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .search-icon::after {
+    right: -7px;
+    bottom: -2px;
+    width: 8px;
+    height: 2px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .search-card input {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .members-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: -12px;
+    padding: 12px 0 30px;
+    gap: 19px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .members-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .member-card {
+    flex: 0 0 112px;
+    width: 100%;
+    height: 112px;
+    min-height: 112px;
+    padding: 7px 20px 13px;
+    border-radius: 48px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .role-badge {
+    top: -12px;
+    left: 27px;
+    min-height: 20px;
+    padding: 0 7px;
+    border-radius: 12px;
+    font-size: 11px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .member-main {
+    width: 100%;
+    height: 47px;
+    min-height: 47px;
+    gap: 15px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .member-left {
+    gap: 15px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .member-avatar {
+    width: 47px;
+    height: 47px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .member-base {
+    width: 142px;
+    gap: 11px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .member-name {
+    width: 142px;
+    overflow: hidden;
+    font-size: 14px;
+    line-height: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .member-id-row {
+    gap: 3px;
+    font-size: 12px;
+    line-height: 14px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .id-pill {
+    min-width: 23px;
+    height: 14px;
+    padding: 0 6px;
+    border-radius: 5px;
+    font-size: 10px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .member-diamond {
+    gap: 8px;
+    font-size: 14px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .member-diamond img {
+    width: 24px;
+    height: 19px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .member-data-strip {
+    width: 100%;
+    height: 38px;
+    min-height: 38px;
+    margin-top: 7px;
+    padding: 5px 26px;
+    gap: 0;
+    border-radius: 65px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .data-item {
+    gap: 5px;
+    align-items: flex-start;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .data-item:nth-child(2) {
+    align-items: center;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .data-item:last-child {
+    align-items: flex-end;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .data-label,
+  html[data-main-layout='content'] .club-members-desktop-page .data-value {
+    font-size: 12px;
+    line-height: 10px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .data-label {
+    gap: 3px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .data-label img {
+    width: 13px;
+    height: 13px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .data-user-icon {
+    width: 11px;
+    height: 11px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .member-list-status {
+    padding: 12px 0;
+    font-size: 12px;
+  }
+
+  // 基金操作浮层：外层铺满 1440 舞台，信息区保持设计稿窄列，数字键盘横向展开。
+  html[data-main-layout='content'] .club-members-desktop-page .fund-sheet {
+    bottom: max(0px, calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2));
+    width: var(--content-stage-width);
+    max-height: var(--content-stage-height);
+    padding: 25px 21px 16px;
+    border-radius: 33px 33px 0 0;
+    gap: 17px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .fund-sheet::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .fund-tabs {
+    flex: 0 0 23px;
+    height: 23px;
+    gap: 59px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .fund-tab {
+    height: 23px;
+    font-size: 18px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .fund-tab--active {
+    border-bottom-width: 2px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .fund-action-switch {
+    flex: 0 0 63px;
+    width: 373px;
+    min-height: 63px;
+    padding: 0;
+    border-radius: 195px;
+    grid-template-columns: 181px 1fr;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .action-tab {
+    border-radius: 195px;
+    font-size: 19px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .sheet-meta {
+    align-self: center;
+    width: 345px;
+    gap: 16px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .sheet-row {
+    min-height: 28px;
+    gap: 20px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .sheet-row--top {
+    margin-top: 0;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .sheet-label,
+  html[data-main-layout='content'] .club-members-desktop-page .sheet-username,
+  html[data-main-layout='content'] .club-members-desktop-page .sheet-balance,
+  html[data-main-layout='content'] .club-members-desktop-page .quota-group-label {
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .sheet-username,
+  html[data-main-layout='content'] .club-members-desktop-page .sheet-balance {
+    gap: 8px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .sheet-id-tag {
+    min-width: 41px;
+    height: 26px;
+    padding: 0 11px;
+    border-radius: 9px;
+    font-size: 18px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .sheet-balance img {
+    width: 25px;
+    height: 25px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .quota-body {
+    align-self: center;
+    width: 373px;
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .quota-body > .sheet-row--top {
+    margin-bottom: 13px;
+  }
+
+  html[data-main-layout='content']
+    .club-members-desktop-page
+    .quota-body
+    > .sheet-row:not(.sheet-row--top) {
+    min-height: 56px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .quota-group-label {
+    min-width: 100px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .quota-actions {
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .quota-action {
+    width: 87px;
+    min-width: 87px;
+    height: 39px;
+    padding: 0 12px;
+    border-radius: 185px;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .quota-editor {
+    width: 367px;
+    min-height: 132px;
+    padding: 26px;
+    border-radius: 20px;
+    gap: 15px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .quota-mode-row {
+    min-height: 25px;
+    gap: 12px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .quota-mode {
+    gap: 4px;
+    padding: 0;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .quota-mode-radio {
+    width: 18px;
+    height: 18px;
+  }
+
+  html[data-main-layout='content']
+    .club-members-desktop-page
+    .quota-mode-radio.radio-circle--checked::after {
+    width: 11px;
+    height: 11px;
+    border-width: 2px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .quota-input-pill {
+    min-height: 40px;
+    padding: 11px 16px;
+    border-radius: 32px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .fund-keypad {
+    flex: 0 0 238px;
+    width: 100%;
+    height: 238px;
+    gap: 8px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .fund-keypad-row {
+    flex: 0 0 53px;
+    height: 53px;
+    gap: 6px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .keypad-btn {
+    min-height: 53px;
+    border-width: 1px;
+    border-radius: 15px;
+    font-size: 24px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .keypad-btn--accent {
+    border-radius: 63px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .keypad-btn--del {
+    font-size: 34px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .sheet-footer-actions {
+    flex: 0 0 64px;
+    align-self: center;
+    width: 446px;
+    height: 64px;
+    padding: 0 28px;
+    grid-template-columns: repeat(2, 189px);
+    gap: 11px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .sheet-footer-btn {
+    min-height: 64px;
+    border-radius: 47px;
+    font-size: 18px;
+  }
+
+  // 俱乐部级别：奖章与信息卡保持设计稿的居中窄版，背景仍铺满浏览器。
+  html[data-main-layout='content'] .club-level-page {
+    --club-level-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+    --club-level-gutter: clamp(24px, 2.7778vw, 40px);
+
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-level-content {
+    position: absolute;
+    top: var(--club-level-stage-top);
+    right: 0;
+    left: 0;
+    width: var(--content-stage-width);
+    height: var(--content-stage-height);
+    margin-right: auto;
+    margin-left: auto;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .club-level-page .page-back-header {
+    position: absolute;
+    z-index: 5;
+    top: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
+    height: 84px;
+    min-height: 84px;
+    padding: 50px var(--club-level-gutter) 0;
+  }
+
+  html[data-main-layout='content'] .club-level-page .back-trigger {
+    gap: 20px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-level-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-level-diamond {
+    min-height: 41px;
+    padding: 3px 9px;
+    gap: 7px;
+    border-radius: 23px;
+    font-size: 24px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-level-diamond img {
+    width: 26px;
+    height: 21px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-level-main {
+    position: absolute;
+    top: clamp(92px, 16.2109dvh, 166px);
+    right: 0;
+    bottom: 120px;
+    left: 0;
+    display: flex;
+    padding: 0 24px 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-level-main::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-medal {
+    flex: 0 0 auto;
+    width: clamp(180px, 26.6602dvh, 273px);
+    height: clamp(180px, 26.6602dvh, 273px);
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-medal__level-pill {
+    bottom: clamp(40px, 5.5664dvh, 57px);
+    min-width: clamp(150px, 19.6289dvh, 201px);
+    height: clamp(40px, 5.1758dvh, 53px);
+    padding: 0 12px;
+    border-radius: 94px;
+    font-size: clamp(22px, 2.9297dvh, 30px);
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-upgrade-card {
+    flex: 0 0 auto;
+    width: min(calc(100% - 48px), 398px);
+    height: clamp(210px, 23.6328dvh, 242px);
+    min-height: 210px;
+    margin-top: 8px;
+    padding: clamp(17px, 2.0508dvh, 21px);
+    border-radius: 49px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-upgrade-card__date {
+    font-size: 17px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-upgrade-progress {
+    height: 32px;
+    margin: clamp(10px, 1.8555dvh, 19px) 5px 0;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-upgrade-progress .van-slider {
+    height: 6px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-upgrade-progress .van-slider__button {
+    width: 32px;
+    height: 32px;
+    border-width: 1px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-upgrade-progress__dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-upgrade-cost {
+    min-height: 54px;
+    margin-top: 4px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-upgrade-cost p,
+  html[data-main-layout='content'] .club-level-page .club-upgrade-card__details p {
+    font-size: 14px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-upgrade-cost__value {
+    gap: 6px;
+    font-size: 24px;
+    line-height: 30px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-upgrade-cost__badge {
+    width: 28px;
+    height: 28px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-upgrade-cost__badge i {
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-upgrade-cost__value > img {
+    width: 24px;
+    height: 19px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-upgrade-card__details {
+    padding: 0 13px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-level-footer {
+    position: absolute;
+    right: 0;
+    bottom: clamp(20px, 3.9063dvh, 40px);
+    left: 0;
+    z-index: 3;
+    display: flex;
+    justify-content: center;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-level-footer > .primary-btn {
+    width: min(calc(100% - 48px), 398px);
+    height: 65px;
+    min-height: 65px;
+    border-radius: 48px;
+    font-size: 18px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-level-confirm {
+    width: min(calc(100% - 48px), 520px);
+    padding: 32px 26px 24px;
+    border-radius: 36px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-level-confirm p {
+    font-size: 18px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-level-confirm__actions {
+    margin-top: 24px;
+    gap: 12px;
+  }
+
+  html[data-main-layout='content'] .club-level-page .club-level-confirm__actions button {
+    height: 64px;
+    border-radius: 47px;
+    font-size: 18px;
+  }
+
+  // 底部抽屉由 Vant Teleport 到 body，横向限制在内容舞台内，纵向贴浏览器底边。
+  html[data-main-layout='content'] .sheet-popup.van-popup--bottom {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--content-stage-width);
+    max-width: 100%;
+    margin-right: auto;
+    margin-left: auto;
+    overflow: hidden;
+    border-top-left-radius: 34px !important;
+    border-top-right-radius: 34px !important;
+  }
+
+  html[data-main-layout='content'] .sheet-popup .sheet-body {
+    width: 100%;
+    padding: 26px clamp(24px, 2.7778vw, 40px) 32px;
+    border-top-left-radius: 34px;
+    border-top-right-radius: 34px;
+  }
+
+  html[data-main-layout='content'] .sheet-popup .sheet-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min(100%, 397px);
+    min-height: 54px;
+    margin-right: auto;
+    margin-left: auto;
+    font-size: 20px;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  html[data-main-layout='content'] .sheet-popup .sheet-divider {
+    width: min(100%, 397px);
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .sheet-popup .sheet-confirm {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min(100%, 397px);
+    height: 64px;
+    min-height: 64px;
+    margin: 14px auto 0;
+    border-radius: 47px;
+    font-size: 20px;
+    text-align: center;
+  }
+
+  // 玩家详情的角色选择沿用相同抽屉舞台，保留页面自己的内容间距。
+  html[data-main-layout='content'] .member-role-sheet-popup.van-popup--bottom {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--content-stage-width);
+    margin-right: auto;
+    margin-left: auto;
+    overflow: hidden;
+    border-top-left-radius: 34px !important;
+    border-top-right-radius: 34px !important;
+  }
+
+  html[data-main-layout='content'] .member-role-sheet-popup .sheet-body {
+    width: 100%;
+    padding: 26px var(--member-detail-gutter, 40px) 32px;
+    border-top-left-radius: 34px;
+    border-top-right-radius: 34px;
+  }
+
+  html[data-main-layout='content'] .member-role-sheet-popup .sheet-row {
+    display: flex;
+    width: min(100%, 397px);
+    min-height: 54px;
+    margin: 0 auto;
+    gap: 14px;
+    font-size: 20px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .member-role-sheet-popup .radio-circle {
+    width: 20px;
+    height: 20px;
+    border-width: 1px;
+  }
+
+  html[data-main-layout='content'] .member-role-sheet-popup .radio-circle--checked::after {
+    width: 12px;
+    height: 12px;
+    border-width: 2px;
+  }
+
+  html[data-main-layout='content'] .member-role-sheet-popup .sheet-confirm {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min(100%, 397px);
+    height: 64px;
+    min-height: 64px;
+    margin: 14px auto 0;
+    border-radius: 47px;
+    font-size: 20px;
+    text-align: center;
+  }
+
+  // 玩家详情：设计稿内容高度为 1398px，桌面舞台内纵向滚动，背景继续铺满浏览器。
+  html[data-main-layout='content'] .member-detail-desktop-page {
+    --member-detail-gutter: clamp(24px, 2.7778vw, 40px);
+    --member-detail-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page > .page-back-header,
+  html[data-main-layout='content'] .member-detail-desktop-page > .member-detail-page {
+    position: absolute;
+    top: var(--member-detail-stage-top);
+    right: 0;
+    left: 0;
+    width: var(--content-stage-width);
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page > .page-back-header {
+    z-index: 3;
+    height: 84px;
+    min-height: 84px;
+    padding: 50px var(--member-detail-gutter) 0;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .back-trigger {
+    gap: 20px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page > .member-detail-page {
+    z-index: 1;
+    display: flex;
+    height: var(--content-stage-height);
+    min-height: 0;
+    padding: 103px var(--member-detail-gutter) 37px;
+    gap: 19px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content']
+    .member-detail-desktop-page
+    > .member-detail-page::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .glass-card {
+    flex: 0 0 auto;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .profile-card {
+    width: 100%;
+    height: 155px;
+    min-height: 155px;
+    padding: 6px 26px;
+    border-radius: 47px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .profile-left {
+    gap: 17px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .profile-left > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 180px;
+    min-width: 0;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .avatar {
+    width: 79px;
+    height: 79px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .name {
+    max-width: 180px;
+    overflow: hidden;
+    font-size: 27px;
+    line-height: 1.05;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .uid-line {
+    min-height: 18px;
+    margin: 9px 0 0;
+    gap: 3px;
+    font-size: 11px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .uid-line span {
+    min-width: 26px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 5px;
+    font-size: 9px;
+    line-height: 18px;
+    text-align: center;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .badge {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .asset-stack {
+    gap: 2px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .asset-stack p {
+    gap: 6px;
+    font-size: 18px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .asset-stack img {
+    width: 24px;
+    height: 22px;
+    object-fit: contain;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .role-card {
+    width: 100%;
+    height: 68px;
+    min-height: 68px;
+    padding: 15px 21px;
+    border-radius: 30px;
+    font-size: 18px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .role-trigger {
+    gap: 5px;
+    padding: 0;
+    font-size: 18px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .role-arrow {
+    width: 8px;
+    height: 8px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .form-card {
+    width: 100%;
+    min-height: 218px;
+    padding: 17px 24px;
+    border-radius: 20px;
+    gap: 17px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .form-card label {
+    gap: 7px;
+    font-size: 18px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .form-card input {
+    width: 100%;
+    height: 50px;
+    min-height: 50px;
+    padding: 0 12px;
+    border-radius: 36px;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .remark-save-btn {
+    align-self: center;
+    width: 189px;
+    min-height: 50px;
+    margin-top: 0;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .stat-head-card {
+    width: 100%;
+    min-height: 141px;
+    padding: 17px 24px;
+    border-radius: 20px;
+    gap: 15px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .stat-head-top {
+    min-height: 27px;
+    font-size: 18px;
+    line-height: 27px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .stat-head-icon {
+    width: 27px;
+    height: 27px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .pill-tabs {
+    width: 100%;
+    height: 64px;
+    min-height: 64px;
+    padding: 0;
+    border-radius: 36px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .pill-tabs button {
+    height: 64px;
+    min-height: 64px;
+    padding: 0 21px;
+    border-radius: 62px;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .range-tabs {
+    flex: 0 0 64px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .stat-list {
+    flex: 0 0 auto;
+    width: 100%;
+    gap: 3px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .stats-loading {
+    padding: 0 20px;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .stat-row {
+    width: 100%;
+    height: 36px;
+    min-height: 36px;
+    padding: 0 20px;
+    border-radius: 34px;
+    font-size: 14px;
+    line-height: 36px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .stat-row span:last-child {
+    font-size: 18px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .link-list {
+    width: 100%;
+    border-radius: 19px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .link-list--agent {
+    display: grid;
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    height: 167px;
+    min-height: 167px;
+    padding: 21px 22px;
+    gap: 0;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .link-list--agent .link-item {
+    height: auto;
+    min-height: 0;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .link-list--single {
+    min-height: 64px;
+    padding: 10px 22px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .link-item {
+    flex: 0 0 24px;
+    width: 100%;
+    min-height: 24px;
+    padding: 0;
+    border-radius: 0;
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .link-item-main {
+    gap: 11px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .link-item-end {
+    gap: 6px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .agent-link-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .friend-total {
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .arrow {
+    width: 9px;
+    height: 9px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .bound-row-card {
+    width: 100%;
+    min-height: 94px;
+    border-radius: 19px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .bound-link-item {
+    min-height: 94px;
+    padding: 20px 22px;
+    border-radius: 19px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .bound-left {
+    gap: 11px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .bound-agent-avatar {
+    width: 46px;
+    height: 46px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .bound-agent-info {
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .bound-agent-info strong {
+    font-size: 18px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .bound-agent-id-tag {
+    min-width: 24px;
+    height: 15px;
+    padding: 0 6px;
+    border-radius: 5px;
+    font-size: 10px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .bound-agent-info small {
+    font-size: 12px;
+    line-height: 15px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .bound-agent-action {
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .bound-agent-arrow {
+    width: 12px;
+    height: 22px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .switch-list {
+    width: 100%;
+    min-height: 225px;
+    padding: 16px 22px;
+    border-radius: 19px;
+    gap: 11px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .switch-row {
+    flex: 0 0 30px;
+    min-height: 30px;
+    font-size: 18px;
+    line-height: 30px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .switch {
+    width: 53px;
+    height: 27px;
+    padding: 1px;
+    border-radius: 35px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .switch i {
+    width: 25px;
+    height: 25px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .bottom-actions {
+    flex: 0 0 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 64px;
+    margin-top: 0;
+    gap: 11px;
+  }
+
+  html[data-main-layout='content'] .member-detail-desktop-page .btn {
+    flex: 0 0 189px;
+    width: 189px;
+    min-height: 64px;
+    border-radius: 47px;
+    font-size: 23px;
+  }
+
+  // 会员二级页：共用 1440 × 1024 舞台、桌面页头和 40px 内容边距。
+  html[data-main-layout='content'] .agent-profit-desktop-page,
+  html[data-main-layout='content'] .agent-vip-statistics-page,
+  html[data-main-layout='content'] .bind-agent-desktop-page,
+  html[data-main-layout='content'] .unbind-agent-desktop-page {
+    --member-subpage-gutter: clamp(24px, 2.7778vw, 40px);
+    --member-subpage-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page > .page-back-header,
+  html[data-main-layout='content'] .agent-vip-statistics-page > .page-back-header,
+  html[data-main-layout='content'] .bind-agent-desktop-page > .page-back-header {
+    position: absolute;
+    z-index: 5;
+    top: var(--member-subpage-stage-top);
+    right: 0;
+    left: 0;
+    width: var(--content-stage-width);
+    height: 84px;
+    min-height: 84px;
+    margin-right: auto;
+    margin-left: auto;
+    padding: 50px var(--member-subpage-gutter) 0;
+  }
+
+  html[data-main-layout='content'] .unbind-agent-desktop-page .sub-page > .page-back-header {
+    position: absolute;
+    z-index: 5;
+    top: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
+    height: 84px;
+    min-height: 84px;
+    padding: 50px var(--member-subpage-gutter) 0;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page .back-trigger,
+  html[data-main-layout='content'] .agent-vip-statistics-page .back-trigger,
+  html[data-main-layout='content'] .bind-agent-desktop-page .back-trigger,
+  html[data-main-layout='content'] .unbind-agent-desktop-page .back-trigger {
+    gap: 20px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page .back-icon,
+  html[data-main-layout='content'] .agent-vip-statistics-page .back-icon,
+  html[data-main-layout='content'] .bind-agent-desktop-page .back-icon,
+  html[data-main-layout='content'] .unbind-agent-desktop-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page .page-back-header .title,
+  html[data-main-layout='content'] .agent-vip-statistics-page .page-back-header .title,
+  html[data-main-layout='content'] .bind-agent-desktop-page .page-back-header .title,
+  html[data-main-layout='content'] .unbind-agent-desktop-page .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  // 代理收益设置：资料卡和四个比例输入全宽，较矮窗口只滚动输入区。
+  html[data-main-layout='content'] .agent-profit-desktop-page > .profile-card,
+  html[data-main-layout='content'] .agent-profit-desktop-page > .form-list,
+  html[data-main-layout='content'] .agent-profit-desktop-page > .form-actions {
+    position: absolute;
+    right: 0;
+    left: 0;
+    width: calc(
+      var(--content-stage-width) - var(--member-subpage-gutter) - var(--member-subpage-gutter)
+    );
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page > .profile-card {
+    top: calc(var(--member-subpage-stage-top) + 109px);
+    height: 122px;
+    min-height: 122px;
+    padding: 6px 26px;
+    gap: 17px;
+    border-radius: 46px;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page .profile-card img {
+    width: 79px;
+    height: 79px;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page .name {
+    font-size: 27px;
+    line-height: 1.05;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page .uid {
+    margin-top: 9px;
+    gap: 3px;
+    font-size: 11px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page .uid span {
+    min-width: 26px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 5px;
+    font-size: 9px;
+    line-height: 18px;
+    text-align: center;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page > .form-list {
+    top: calc(var(--member-subpage-stage-top) + 258px);
+    bottom: calc(var(--member-subpage-stage-top) + 114px);
+    display: flex;
+    gap: 27px;
+    padding: 0 0 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page > .form-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page .form-item {
+    flex: 0 0 auto;
+    gap: 9px;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page .form-item p {
+    font-size: 17px;
+    line-height: 24px;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page .value {
+    width: 100%;
+    height: 72px;
+    min-height: 72px;
+    padding: 0 24px;
+    border-radius: 36px;
+    font-size: 18px;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page .value__number {
+    font-size: 20px;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page .value__unit {
+    font-size: 18px;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page > .form-actions {
+    bottom: calc(var(--member-subpage-stage-top) + 30px);
+    display: flex;
+    justify-content: center;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .agent-profit-desktop-page .save-btn {
+    flex: 0 0 387px;
+    width: 387px;
+    height: 64px;
+    min-height: 64px;
+    border-radius: 47px;
+    font-size: 23px;
+  }
+
+  // 代理统计：资料、汇总、筛选固定在上方，三张数据卡在剩余空间内滚动。
+  html[data-main-layout='content'] .agent-vip-statistics-page > .profile-card,
+  html[data-main-layout='content'] .agent-vip-statistics-page > .offline-head,
+  html[data-main-layout='content'] .agent-vip-statistics-page > .filter-bar,
+  html[data-main-layout='content'] .agent-vip-statistics-page > .cards {
+    position: absolute;
+    right: 0;
+    left: 0;
+    width: calc(
+      var(--content-stage-width) - var(--member-subpage-gutter) - var(--member-subpage-gutter)
+    );
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page > .profile-card {
+    top: calc(var(--member-subpage-stage-top) + 109px);
+    height: 156px;
+    min-height: 156px;
+    padding: 6px 26px;
+    gap: 17px;
+    border-radius: 47px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .avatar {
+    width: 79px;
+    height: 79px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .name-wrap {
+    min-width: 0;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .name {
+    max-width: 360px;
+    overflow: hidden;
+    font-size: 27px;
+    line-height: 1.05;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .uid {
+    font-size: 11px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .badge {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .coin {
+    gap: 2px;
+    font-size: 18px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .coin div {
+    gap: 6px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .coin-icon {
+    width: 24px;
+    height: 22px;
+    object-fit: contain;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page > .offline-head {
+    top: calc(var(--member-subpage-stage-top) + 280px);
+    height: 38px;
+    margin-top: 0;
+    font-size: 17px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .offline-head div p {
+    font-size: 17px;
+    line-height: 21px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .offline-head div strong {
+    font-size: 20px;
+    line-height: 24px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page > .filter-bar {
+    top: calc(var(--member-subpage-stage-top) + 333px);
+    height: 64px;
+    min-height: 64px;
+    margin-top: 0;
+    gap: 14px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .tabs-row {
+    height: 64px;
+    min-height: 64px;
+    padding: 2px;
+    border-radius: 36px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .tabs-row button {
+    height: 60px;
+    min-height: 60px;
+    border-radius: 34px;
+    font-size: 17px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .filter-select-wrap {
+    width: 90px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .filter-select-wrap svg {
+    right: 2px;
+    width: 16px;
+    height: 16px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .filter-select-trigger {
+    width: 90px;
+    min-height: 40px;
+    padding-right: 20px;
+    font-size: 17px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .filter-select-options {
+    top: calc(100% + 6px);
+    width: 110px;
+    padding: 6px;
+    border-radius: 14px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .filter-select-options button {
+    min-height: 38px;
+    padding: 0 10px;
+    border-radius: 10px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page > .cards {
+    top: calc(var(--member-subpage-stage-top) + 416px);
+    bottom: calc(var(--member-subpage-stage-top) + 28px);
+    gap: 8px;
+    margin-top: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page > .cards::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .stats-loading {
+    padding: 20px 0;
+    font-size: 13px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .stat-card {
+    flex: 0 0 86px;
+    width: 100%;
+    height: 86px;
+    min-height: 86px;
+    padding: 8px 24px;
+    grid-template-columns: 20% 30% 25% 25%;
+    border-radius: 43px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .left {
+    gap: 4px;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .left .stat-type-icon {
+    width: 45px;
+    height: 35px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .metric b {
+    font-size: 20px;
+    line-height: 24px;
+  }
+
+  html[data-main-layout='content'] .agent-vip-statistics-page .metric span {
+    font-size: 12px;
+    line-height: 17px;
+  }
+
+  // 绑定 / 解绑代理：列表全宽，内容区独立滚动，操作按钮锚定舞台底部。
+  html[data-main-layout='content'] .bind-agent-desktop-page > .sub-page,
+  html[data-main-layout='content'] .unbind-agent-desktop-page > .sub-page {
+    position: absolute;
+    top: var(--member-subpage-stage-top);
+    right: 0;
+    left: 0;
+    width: var(--content-stage-width);
+    height: var(--content-stage-height);
+    min-height: 0;
+    margin-right: auto;
+    margin-left: auto;
+    padding: 103px var(--member-subpage-gutter) 28px;
+    gap: 19px;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .bind-agent-desktop-page .cards {
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 7px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .bind-agent-desktop-page .cards::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .bind-agent-desktop-page .card {
+    flex: 0 0 84px;
+    width: 100%;
+    height: 84px;
+    min-height: 84px;
+    padding: 14px 17px;
+    gap: 11px;
+    border-radius: 42px;
+  }
+
+  html[data-main-layout='content'] .bind-agent-desktop-page .card img {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+  }
+
+  html[data-main-layout='content'] .bind-agent-desktop-page .meta p {
+    font-size: 18px;
+    line-height: 23px;
+  }
+
+  html[data-main-layout='content'] .bind-agent-desktop-page .meta small {
+    font-size: 11px;
+    line-height: 16px;
+  }
+
+  html[data-main-layout='content'] .bind-agent-desktop-page .dot {
+    width: 18px;
+    height: 18px;
+  }
+
+  html[data-main-layout='content'] .bind-agent-desktop-page .status {
+    padding: 20px 0;
+    font-size: 13px;
+  }
+
+  html[data-main-layout='content'] .bind-agent-desktop-page .confirm,
+  html[data-main-layout='content'] .unbind-agent-desktop-page .confirm {
+    flex: 0 0 397px;
+    align-self: center;
+    width: 397px;
+    height: 64px;
+    min-height: 64px;
+    margin: 0;
+    border-radius: 47px;
+    font-size: 23px;
+  }
+
+  html[data-main-layout='content'] .bind-agent-desktop-page .confirm {
+    flex-basis: 64px;
+  }
+
+  html[data-main-layout='content'] .unbind-agent-desktop-page .cards {
+    flex: 0 0 auto;
+    width: 100%;
+    margin: 0;
+    gap: 7px;
+  }
+
+  html[data-main-layout='content'] .unbind-agent-desktop-page .card {
+    width: 100%;
+    height: 84px;
+    min-height: 84px;
+    padding: 14px 17px;
+    gap: 11px;
+    border-radius: 42px;
+  }
+
+  html[data-main-layout='content'] .unbind-agent-desktop-page .avatar {
+    width: 56px;
+    height: 56px;
+  }
+
+  html[data-main-layout='content'] .unbind-agent-desktop-page .card-info {
+    gap: 2px;
+  }
+
+  html[data-main-layout='content'] .unbind-agent-desktop-page .card p {
+    font-size: 18px;
+    line-height: 23px;
+  }
+
+  html[data-main-layout='content'] .unbind-agent-desktop-page .uid-line {
+    gap: 3px;
+    font-size: 11px;
+    line-height: 16px;
+  }
+
+  html[data-main-layout='content'] .unbind-agent-desktop-page .uid-line em {
+    min-width: 26px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 5px;
+    font-size: 9px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .unbind-agent-desktop-page .agent-bind-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  html[data-main-layout='content'] .unbind-agent-desktop-page .link {
+    height: 30px;
+    margin: -4px 0;
+  }
+
+  html[data-main-layout='content'] .unbind-agent-desktop-page .link .link-icon {
+    width: 31px;
+    height: 31px;
+  }
+
+  html[data-main-layout='content'] .unbind-agent-desktop-page .hint {
+    margin: auto auto 0;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .unbind-agent-desktop-page .confirm {
+    flex-basis: 64px;
+  }
+
+  // “记录”暂未提供桌面稿，沿用同一舞台和固定字号，保证筛选与长列表可用。
+  html[data-main-layout='content'] .club-members-desktop-page .record-panel {
+    flex: 0 0 190px;
+    min-height: 190px;
+    margin: 0;
+    padding: 16px 20px;
+    gap: 10px;
+    border-radius: 34px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .record-head {
+    font-size: 11px;
+    line-height: 14px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .range-tabs {
+    min-height: 50px;
+    height: 50px;
+    border-radius: 30px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .range-tab {
+    padding: 0 12px;
+    border-radius: 30px;
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .record-stats {
+    flex: 1 1 auto;
+    min-height: 50px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .record-stat-item {
+    gap: 3px;
+  }
+
+  html[data-main-layout='content']
+    .club-members-desktop-page
+    .record-stat-item:not(:last-child)::after {
+    height: 32px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .record-stat-label {
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .record-stat-value {
+    font-size: 20px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .record-table-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin: 0;
+    gap: 7px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .record-table-head {
+    flex: 0 0 34px;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 17px;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .record-list {
+    gap: 5px;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .record-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .record-row {
+    min-height: 51px;
+    padding: 8px 0;
+    border-radius: 26px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .record-row--from {
+    min-height: 72px;
+    padding-top: 29px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .from-chip {
+    height: 21px;
+    padding: 0 12px;
+    border-radius: 26px 0 6px;
+    font-size: 11px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .record-main-grid {
+    padding: 0 12px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .record-main-grid p {
+    font-size: 11px;
+    line-height: 13px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .sub-line {
+    font-size: 9px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .type-dropdown {
+    top: 41px;
+    left: 19%;
+    width: 200px;
+    max-height: 410px;
+    padding: 14px 18px;
+    border-radius: 17px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .type-option {
+    padding: 6px 0;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .club-members-desktop-page .record-list-status {
+    padding: 12px 0;
+    font-size: 12px;
+  }
+
+  // Jackpot 列表：背景铺满浏览器，标题、列表和底部操作限制在 1440 × 1024 舞台内。
+  html[data-main-layout='content'] .club-jackpot-page {
+    --jackpot-stage-offset-y: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: var(--jackpot-stage-offset-y) 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .page-back-header {
+    position: sticky;
+    top: 0;
+    z-index: 7;
+    flex: 0 0 99px;
+    width: min(calc(100% - 80px), 1360px);
+    height: 99px;
+    min-height: 99px;
+    margin: 0 auto;
+    padding: 34px 0 20px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .back-trigger {
+    gap: 10px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .page-back-header .title {
+    font-size: 28.67px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .pool-trigger {
+    min-height: 41px;
+    padding: 8px 12px 8px 20px;
+    gap: 3px;
+    border-radius: 24.5px;
+    font-size: 20.88px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .trigger-caret {
+    width: 8px;
+    height: 8px;
+    margin-right: 1px;
+    border-right-width: 1.5px;
+    border-bottom-width: 1.5px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .jackpot-body {
+    position: relative;
+    flex: 1 0 auto;
+    width: min(calc(100% - 80px), 1360px);
+    min-height: calc(var(--content-stage-height) - 194px);
+    margin: 0 auto;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .jackpot-list {
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .jackpot-card {
+    width: 100%;
+    max-width: none;
+    height: 104px;
+    min-height: 104px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .card-bg {
+    top: 2px;
+    right: 0;
+    left: 18px;
+    height: 100px;
+    border-width: 1px;
+    border-radius: 50px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .jackpot-badge {
+    top: 14px;
+    left: 0;
+    width: 76px;
+    height: 76px;
+    border-width: 1px;
+    border-radius: 50%;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .jackpot-badge span {
+    font-size: 11px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .jackpot-info {
+    left: 92px;
+    max-width: calc(100% - 270px);
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .game-name {
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .tag-rows {
+    margin-top: 8px;
+    gap: 2px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .tag-row {
+    gap: 18px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .tag-item {
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .tag-icon {
+    width: 11px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .jackpot-right {
+    right: 23px;
+    left: auto;
+    width: 116px;
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .jp-badge {
+    width: 112px;
+    height: 27px;
+    border-radius: 14px;
+    font-size: 13px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .action-row {
+    gap: 9px;
+    margin-top: 2px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .action-btn {
+    width: 31px;
+    height: 31px;
+    padding: 3px 0 1px;
+    gap: 1px;
+    border-width: 0.5px;
+    border-radius: 50%;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .action-icon {
+    width: 10px;
+    height: 10px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .action-label {
+    font-size: 8.5px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .jackpot-empty {
+    min-height: calc(var(--content-stage-height) - 194px);
+    justify-content: center;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .empty-icon {
+    width: 50px;
+    height: 62px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .jackpot-empty p {
+    margin-top: 10px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .list-loading-more {
+    margin-top: 16px;
+    font-size: 13px;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .footer-action {
+    position: sticky;
+    right: auto;
+    bottom: 30px;
+    left: auto;
+    z-index: 8;
+    flex: 0 0 65px;
+    width: min(calc(100% - 80px), 417px);
+    max-width: none;
+    margin: 10px auto 30px;
+    transform: none;
+  }
+
+  html[data-main-layout='content'] .club-jackpot-page .create-btn {
+    height: 64.7px;
+    border-width: 0.6px;
+    border-radius: 47.6px;
+    font-size: 18px;
+  }
+
+  // Jackpot 模板：Figma 以 1360px 内容列和 417px 双操作按钮构成桌面舞台。
+  html[data-main-layout='content'] .jackpot-create-page {
+    --jackpot-stage-offset-y: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+    width: 100%;
+    max-width: none;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .page-back-header {
+    position: absolute;
+    top: var(--jackpot-stage-offset-y);
+    left: 50%;
+    z-index: 7;
+    width: min(calc(100% - 80px), 1360px);
+    height: 99px;
+    min-height: 99px;
+    padding: 34px 0 20px;
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .back-trigger {
+    gap: 10px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .page-back-header .title {
+    font-size: 28.67px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .create-content {
+    position: absolute;
+    top: calc(var(--jackpot-stage-offset-y) + 99px);
+    bottom: calc(var(--jackpot-stage-offset-y) + 105px);
+    left: 50%;
+    z-index: 2;
+    width: min(calc(100% - 80px), 1360px);
+    max-width: none;
+    min-height: 0;
+    margin: 0;
+    padding: 0 0 10px;
+    gap: 10px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .create-content::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .name-input-pill {
+    flex: 0 0 55.55px;
+    width: 100%;
+    height: 55.55px;
+    padding: 0 22.84px;
+    border-radius: 190px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .pill-label,
+  html[data-main-layout='content'] .jackpot-create-page .pill-count {
+    font-size: 16.82px;
+    line-height: 21.63px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .pill-input {
+    font-size: 18.27px;
+    line-height: 21.63px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .glass-card {
+    border-radius: 19.5px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .summary-card {
+    flex: 0 0 auto;
+    min-height: 89px;
+    padding: 16.77px 22.84px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .summary-title-row {
+    gap: 6px;
+    font-size: 14.42px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .summary-amount-input {
+    min-width: 0;
+    margin-top: 2px;
+    gap: 5px;
+    font-size: 24.04px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .recharge-btn {
+    height: 42px;
+    padding: 5px 18px;
+    border-radius: 50px;
+    font-size: 16.82px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .section-card {
+    flex: 0 0 auto;
+    width: 100%;
+    padding: 22.84px;
+    gap: 16.82px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .section-card--dense {
+    gap: 16.82px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .segment-row {
+    width: 100%;
+    height: 46.87px;
+    min-height: 46.87px;
+    padding: 0;
+    border-radius: 36.05px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .segment-btn {
+    padding: 5px 21.75px;
+    border-radius: 62.39px;
+    font-size: 16.31px;
+    line-height: 21.75px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .segment-btn--active {
+    border-width: 0.6px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .mode-switch-wrap {
+    gap: 6px 12px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .mode-switch-item,
+  html[data-main-layout='content'] .jackpot-create-page .blind-item {
+    gap: 4.57px;
+    min-height: 18px;
+    font-size: 18.27px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .mode-switch-checkbox,
+  html[data-main-layout='content'] .jackpot-create-page .blind-checkbox,
+  html[data-main-layout='content'] .jackpot-create-page .dot {
+    width: 18.03px;
+    height: 18.03px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .divider {
+    flex: 0 0 0.82px;
+    width: 100%;
+    height: 0.82px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .rows-wrap {
+    gap: 9.14px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .rows-wrap--gap-sm {
+    gap: 10.82px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .config-row {
+    gap: 9px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .config-row--stack {
+    gap: 9.14px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .row-label {
+    gap: 4.57px;
+    font-size: 18.27px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .row-label--small {
+    max-width: calc(100% - 184px);
+    font-size: 15.86px;
+    line-height: 1.3;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .value-input {
+    height: 41.87px;
+    min-height: 41.87px;
+    padding: 5.33px 13.7px;
+    gap: 8.75px;
+    border-radius: 69.94px;
+    font-size: 16.75px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .value-input--narrow {
+    // flex: 0 0 164.81px;
+    width: 164.81px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .title-line {
+    gap: 6px;
+    font-size: 14.42px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .blind-level-item {
+    gap: 10.82px;
+    padding: 5px 0;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .blind-level-item--expanded {
+    padding-bottom: 10.82px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .blind-config-panel {
+    gap: 16.82px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .pool-card {
+    flex: 0 0 auto;
+    width: 100%;
+    padding: 22.84px;
+    gap: 16.82px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .pool-card h3 {
+    font-size: 16.82px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .pool-row {
+    gap: 20px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .pool-left {
+    width: 140.63px;
+    gap: 9.61px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .hand-cards {
+    gap: 3.9px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .pool-right {
+    width: 164.81px;
+    gap: 3.61px;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .pool-right > span {
+    font-size: 13.46px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .bottom-actions {
+    position: absolute;
+    right: auto;
+    bottom: calc(var(--jackpot-stage-offset-y) + 30.3px);
+    left: 50%;
+    z-index: 8;
+    width: min(calc(100% - 80px), 417px);
+    max-width: none;
+    height: 64.7px;
+    gap: 11.42px;
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .jackpot-create-page .action-btn {
+    height: 64.7px;
+    border-radius: 47.58px;
+    font-size: 18.03px;
+    line-height: 1.2;
+  }
+
+  // Jackpot 获奖记录：按 1440 × 1024 设计稿固定标题、页签、1360px 列表和底部操作。
+  html[data-main-layout='content'] .pool-reward-page {
+    --pool-reward-stage-offset-y: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+    display: block;
+    width: 100%;
+    max-width: none;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: var(--pool-reward-stage-offset-y) 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .page-back-header {
+    position: sticky;
+    top: 0;
+    z-index: 7;
+    width: min(calc(100% - 80px), 1360.71px);
+    height: 82px;
+    min-height: 82px;
+    margin: 0 auto;
+    padding: 44px 0 4px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .back-trigger {
+    gap: 15px;
+    padding: 0 14px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .page-back-header .title {
+    font-size: 28.67px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .pool-body {
+    width: min(calc(100% - 80px), 1360.71px);
+    max-width: none;
+    min-height: calc(var(--content-stage-height) - 82px);
+    margin: 0 auto;
+    padding: 0 0 124px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .tab-switch {
+    width: 205.1px;
+    height: 23.27px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .tab-btn {
+    min-width: 72px;
+    height: 23.27px;
+    font-size: 18.03px;
+    line-height: 1;
+    border-bottom-width: 1.64px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .pool-list {
+    margin-top: 23.46px;
+    gap: 20px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .pool-card {
+    width: 100%;
+    height: 102px;
+    min-height: 102px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .card-bg {
+    top: 0;
+    right: 0;
+    left: 12.71px;
+    width: auto;
+    height: 102px;
+    border-width: 1.21px;
+    border-radius: 94.18px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .jackpot-badge {
+    top: 17.36px;
+    left: 0;
+    width: 67.26px;
+    height: 67.26px;
+    border-width: 1.14px;
+    border-radius: 50%;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .jackpot-badge span {
+    font-size: 10.35px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .pool-info {
+    left: 79.65px;
+    width: min(420px, calc(100% - 210px));
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .game-name {
+    font-size: 15.99px;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .pool-tags {
+    margin-top: 6.76px;
+    gap: 15.66px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .tag-item {
+    gap: 6.02px;
+    font-size: 13.25px;
+    letter-spacing: 0.53px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .tag-icon {
+    width: 10.84px;
+    height: 12.05px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .jp-badge {
+    top: 37.54px;
+    right: 37.33px;
+    left: auto;
+    width: 83.12px;
+    height: 21.48px;
+    border-radius: 10.07px;
+    font-size: 13.33px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .pool-empty {
+    min-height: calc(var(--content-stage-height) - 230px);
+    justify-content: center;
+    padding: 0 0 94px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .empty-icon,
+  html[data-main-layout='content'] .record-page .empty-icon {
+    width: 50px;
+    height: 62px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .pool-empty p,
+  html[data-main-layout='content'] .record-page .record-empty p {
+    margin-top: 10px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .pool-loading-more,
+  html[data-main-layout='content'] .record-page .pool-loading-more {
+    margin-top: 12px;
+    font-size: 13px;
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .footer-action {
+    position: fixed;
+    bottom: calc(var(--pool-reward-stage-offset-y) + 30.3px);
+    left: 50%;
+    z-index: 8;
+    width: min(calc(100% - 80px), 388.64px);
+    max-width: none;
+    height: 64px;
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .pool-reward-page .create-btn {
+    height: 64px;
+    border-width: 0.6px;
+    border-radius: 47.6px;
+    font-size: 18.03px;
+  }
+
+  // Jackpot 记录详情：表格尺寸沿用 RoomDataDetail 的桌面表头和数据行规范。
+  html[data-main-layout='content'] .record-page {
+    --jackpot-record-stage-offset-y: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+    display: block;
+    width: 100%;
+    max-width: none;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: var(--jackpot-record-stage-offset-y) 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .record-page::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .record-page .page-back-header {
+    position: sticky;
+    top: 0;
+    z-index: 7;
+    width: min(calc(100% - 80px), 1360px);
+    height: 99px;
+    min-height: 99px;
+    margin: 0 auto;
+    padding: 34px 0 20px;
+  }
+
+  html[data-main-layout='content'] .record-page .back-trigger {
+    gap: 10px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .record-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .record-page .page-back-header .title {
+    font-size: 28.67px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .record-page .record-table-wrap {
+    width: min(calc(100% - 80px), 1360px);
+    max-width: none;
+    min-height: calc(var(--content-stage-height) - 129px);
+    margin: 0 auto;
+    padding: 0 0 30px;
+    gap: 7px;
+  }
+
+  html[data-main-layout='content'] .record-page .record-header-wrap {
+    flex: 0 0 34px;
+    height: 34px;
+  }
+
+  html[data-main-layout='content'] .record-page .record-header-glow {
+    top: 7px;
+    right: 7px;
+    left: 9px;
+    width: auto;
+    height: 21px;
+    border-radius: 27px;
+  }
+
+  html[data-main-layout='content'] .record-page .record-header-pill {
+    width: 100%;
+    height: 34px;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 17px;
+    font-size: 12px;
+    line-height: 15px;
+  }
+
+  html[data-main-layout='content'] .record-page .record-rows {
+    gap: 5px;
+  }
+
+  html[data-main-layout='content'] .record-page .record-row-pill {
+    width: 100%;
+    height: 51px;
+    min-height: 51px;
+    padding: 0 12px;
+    border-radius: 26px;
+  }
+
+  html[data-main-layout='content'] .record-page .col-player {
+    flex: 0 0 20%;
+    width: auto;
+  }
+
+  html[data-main-layout='content'] .record-page .col-gameid {
+    flex: 0 0 23%;
+    width: auto;
+  }
+
+  html[data-main-layout='content'] .record-page .col-value {
+    flex: 0 0 17%;
+    width: auto;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .record-page .col-type {
+    flex: 0 0 14%;
+    width: auto;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .record-page .col-hand {
+    flex: 1 1 26%;
+    width: auto;
+    min-width: 0;
+    font-size: 12px;
+    line-height: 15px;
+  }
+
+  html[data-main-layout='content'] .record-page .record-row-pill .col-player,
+  html[data-main-layout='content'] .record-page .record-row-pill .col-gameid {
+    justify-content: center;
+  }
+
+  html[data-main-layout='content'] .record-page .cell-info {
+    width: 100%;
+    align-items: center;
+  }
+
+  html[data-main-layout='content'] .record-page .info-name {
+    max-width: calc(100% - 16px);
+    font-size: 12px;
+    line-height: 15px;
+  }
+
+  html[data-main-layout='content'] .record-page .info-sub {
+    max-width: calc(100% - 16px);
+    overflow: hidden;
+    font-size: 8px;
+    line-height: 10px;
+    text-overflow: ellipsis;
+  }
+
+  html[data-main-layout='content'] .record-page .cards-row {
+    gap: 3px;
+  }
+
+  html[data-main-layout='content'] .record-page .mini-card {
+    width: 18px;
+    height: 27px;
+    padding: 2px 2px 3px;
+    border-radius: 7px;
+  }
+
+  html[data-main-layout='content'] .record-page .mini-card__rank {
+    font-size: 7px;
+  }
+
+  html[data-main-layout='content'] .record-page .mini-card__suit {
+    font-size: 8px;
+  }
+
+  html[data-main-layout='content'] .record-page .record-empty {
+    min-height: calc(var(--content-stage-height) - 170px);
+    justify-content: center;
+    padding: 0;
+  }
+
+}

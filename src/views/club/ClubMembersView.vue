@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { Icon } from '@iconify/vue'
 import { useRouter } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
 import { formatUC } from '@/utils/roomVisibility'
@@ -20,6 +19,7 @@ import type {
   OrgMemberListRecord,
 } from '@/api/models/org'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import FundKeypad from '@/components/KeyBoard/FundKeypad.vue'
 import DateRangePicker from '@/components/DateRangePicker/DateRangePicker.vue'
 import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import imgAvatar from '@/assets/images/default_avatar.png'
@@ -199,13 +199,6 @@ function fundRecordsCacheKey(): string {
       : ''
   return `${fundClubId()}_fund_records_${activeRange.value}_${selectedRecordType.value}_${recordOrderType.value}${customRangeKey}`
 }
-
-const keypadRows = [
-  ['1', '2', '3'],
-  ['4', '5', '6'],
-  ['7', '8', '9'],
-  ['C', '0', 'DEL'],
-] as const
 
 const currentFundBalanceText = computed(() => {
   if (!activeMember.value) {
@@ -1951,24 +1944,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="fund-keypad">
-          <div v-for="(row, rowIndex) in keypadRows" :key="rowIndex" class="fund-keypad-row">
-            <button
-              v-for="key in row"
-              :key="key"
-              type="button"
-              class="keypad-btn"
-              :class="{
-                'keypad-btn--accent': key === 'C' || key === 'DEL',
-                'keypad-btn--del': key === 'DEL',
-              }"
-              @click="onKeypadPress(key)"
-            >
-              <span v-if="key !== 'DEL'">{{ key }}</span>
-              <Icon v-else icon="solar:backspace-bold" />
-            </button>
-          </div>
-        </div>
+        <FundKeypad @press="onKeypadPress" />
 
         <div class="sheet-footer-actions">
           <button type="button" class="sheet-footer-btn" @click="closeFundSheet">
@@ -2907,73 +2883,6 @@ onMounted(() => {
   align-items: center;
   color: rgba(249, 249, 249, 0.95);
   font-size: 0.325rem;
-}
-
-.fund-keypad {
-  display: flex;
-  flex-direction: column;
-  gap: 0.20587rem;
-}
-
-.fund-keypad-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.15261rem;
-}
-
-.keypad-btn {
-  min-height: 1.35393rem;
-  border: 0.01907rem solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.37751rem;
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
-  font-size: 0.61044rem;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.keypad-btn--accent {
-  background: rgba(4, 209, 157, 0.26);
-  border-color: transparent;
-}
-
-.keypad-btn--del {
-  font-size: 0.61044rem;
-}
-
-.del-icon {
-  width: 0.86rem;
-  height: 0.562rem;
-  border: 0.049rem solid rgba(255, 255, 255, 0.92);
-  border-left: 0;
-  border-radius: 0.113rem;
-  position: relative;
-}
-
-.del-icon::before {
-  content: '';
-  position: absolute;
-  left: -0.3rem;
-  top: 50%;
-  width: 0.3rem;
-  height: 0.3rem;
-  transform: translateY(-50%) rotate(45deg);
-  border-top: 0.049rem solid rgba(255, 255, 255, 0.92);
-  border-left: 0.049rem solid rgba(255, 255, 255, 0.92);
-}
-
-.del-icon::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  width: 0.22rem;
-  height: 0.22rem;
-  border-top: 0.045rem solid rgba(255, 255, 255, 0.92);
-  border-right: 0.045rem solid rgba(255, 255, 255, 0.92);
-  transform: rotate(135deg);
 }
 
 .sheet-footer-actions {

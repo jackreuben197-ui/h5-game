@@ -14,6 +14,7 @@ import {
   isIosNativeSafari,
   isIosThirdPartyBrowser,
 } from '@/utils/iosWebClip'
+import { sanitizeRichHtml } from '@/utils/safeHtml'
 
 const props = defineProps<{
   panelProps?: Record<string, unknown>
@@ -133,6 +134,8 @@ const currentPopupNotice = computed<PopupNoticeItem | null>(() => {
   const index = Math.max(0, Math.min(popupNoticeIndex.value, items.length - 1))
   return items[index] ?? null
 })
+
+const currentPopupNoticeHtml = computed(() => sanitizeRichHtml(currentPopupNotice.value?.content))
 
 // ==================== 关闭逻辑：在有数据的步骤间递进 ====================
 function onClose(): void {
@@ -361,7 +364,7 @@ async function onSecondaryAction(): Promise<void> {
           <div
             v-if="currentPopupNotice"
             class="notification-panel__rich-text"
-            v-html="currentPopupNotice.content"
+            v-html="currentPopupNoticeHtml"
           ></div>
           <!-- eslint-enable vue/no-v-html -->
           <div v-else class="notification-panel__empty">{{ t('UIClub_No10') }}</div>

@@ -1,0 +1,377 @@
+// 下载页与牌桌结算桌面样式。
+@media (min-width: 600px) {
+  // 下载页：宽屏左右分栏，背景铺满浏览器，操作按钮保持在内容舞台底部。
+  html[data-main-layout='content'] .landing {
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+  }
+
+  html[data-main-layout='content'] .landing__glow--top {
+    top: -140px;
+    right: -80px;
+    width: 420px;
+    height: 420px;
+  }
+
+  html[data-main-layout='content'] .landing__glow--bottom {
+    bottom: 80px;
+    left: -100px;
+    width: 460px;
+    height: 460px;
+  }
+
+  html[data-main-layout='content'] .landing__scroll {
+    display: grid;
+    grid-template-columns: minmax(300px, 0.9fr) minmax(400px, 1.1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    align-items: center;
+    column-gap: clamp(48px, 6vw, 96px);
+    width: min(calc(100% - 80px), 1120px);
+    margin: 0 auto;
+    padding: 40px 0 28px;
+  }
+
+  html[data-main-layout='content'] .landing__hero {
+    grid-row: 1 / span 2;
+    grid-column: 1;
+  }
+
+  html[data-main-layout='content'] .landing__icon-wrap {
+    margin-bottom: 16px;
+  }
+
+  html[data-main-layout='content'] .landing__icon {
+    width: 112px;
+    height: 112px;
+    border-radius: 28px;
+  }
+
+  html[data-main-layout='content'] .landing__icon--placeholder {
+    font-size: 44px;
+  }
+
+  html[data-main-layout='content'] .landing__badge {
+    bottom: -8px;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .landing__name {
+    margin: 18px 0 8px;
+    font-size: 34px;
+    letter-spacing: 1px;
+  }
+
+  html[data-main-layout='content'] .landing__slogan {
+    max-width: 380px;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+
+  html[data-main-layout='content'] .landing__stats {
+    gap: 18px;
+    margin-top: 30px;
+    padding: 16px 22px;
+    border-width: 1px;
+    border-radius: 20px;
+  }
+
+  html[data-main-layout='content'] .landing__stat {
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .landing__stat-num {
+    font-size: 21px;
+  }
+
+  html[data-main-layout='content'] .landing__stat-label {
+    font-size: 13px;
+  }
+
+  html[data-main-layout='content'] .landing__stat-divider {
+    width: 1px;
+    height: 30px;
+  }
+
+  html[data-main-layout='content'] .landing__features {
+    grid-row: 1;
+    grid-column: 2;
+    gap: 12px;
+    margin-top: 0;
+  }
+
+  html[data-main-layout='content'] .landing__feature {
+    gap: 14px;
+    padding: 17px 20px;
+    border-width: 1px;
+    border-radius: 18px;
+  }
+
+  html[data-main-layout='content'] .landing__feature-dot {
+    width: 9px;
+    height: 9px;
+    margin-top: 7px;
+  }
+
+  html[data-main-layout='content'] .landing__feature-title {
+    margin-bottom: 4px;
+    font-size: 19px;
+  }
+
+  html[data-main-layout='content'] .landing__feature-desc {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  html[data-main-layout='content'] .landing__tip {
+    grid-row: 2;
+    grid-column: 2;
+    margin: 16px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  html[data-main-layout='content'] .landing__actions {
+    justify-content: center;
+    width: min(calc(100% - 80px), 620px);
+    margin: 0 auto;
+    padding: 18px 0 max(20px, env(safe-area-inset-bottom));
+    gap: 14px;
+    background: transparent;
+  }
+
+  html[data-main-layout='content'] .landing__btn {
+    flex: 1 1 0;
+    height: 56px;
+    border-radius: 30px;
+    gap: 8px;
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .landing__btn img {
+    width: 22px;
+    height: 22px;
+  }
+
+  html[data-main-layout='content'] .landing__btn--secondary {
+    flex: 0 0 260px;
+    padding: 0 22px;
+    border-width: 1px;
+  }
+
+  // 牌桌结算：顶部汇总卡和玩家表格在桌面舞台内纵向排布并独立滚动。
+  html[data-main-layout='content'] .table-game-end {
+    --settle-page-gutter: clamp(24px, 2.7083vw, 39px);
+    --settle-page-content-width: min(calc(100% - var(--settle-page-gutter) * 2), 1362px);
+    --settle-page-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .table-game-end > .page-back-header {
+    position: absolute;
+    top: var(--settle-page-stage-top);
+    right: 0;
+    left: 0;
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 105px;
+    min-height: 105px;
+    margin: 0 auto;
+    padding: 50px var(--settle-page-gutter) 25px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .back-trigger {
+    height: 30px;
+    gap: 20px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .table-game-end .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .table-game-end .page-back-header .action-btn {
+    width: 110px;
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 24px;
+    font-size: 14px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .table-game-end > .settle-content {
+    position: absolute;
+    top: calc(var(--settle-page-stage-top) + 105px);
+    right: 0;
+    left: 0;
+    display: flex;
+    width: var(--settle-page-content-width);
+    height: calc(var(--content-stage-height) - 105px);
+    min-height: 0;
+    margin: 0 auto;
+    padding: 0 0 40px;
+    gap: 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .table-game-end > .settle-content::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .table-game-end .settle-loading {
+    flex: 1 1 auto;
+    min-height: 280px;
+    padding: 40px 0;
+    gap: 12px;
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .summary-card {
+    flex: 0 0 auto;
+    width: 100%;
+    padding: 24px 34px;
+    border-radius: 34px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .summary-top {
+    gap: 20px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .room-name {
+    font-size: 20px;
+  }
+
+  html[data-main-layout='content'] .table-game-end :is(.room-id, .room-meta) {
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .room-id__tag {
+    min-width: 22px;
+    padding: 1px 5px;
+    border-radius: 5px;
+    font-size: 10px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .summary-divider {
+    margin: 18px 0;
+  }
+
+  html[data-main-layout='content'] .table-game-end .summary-title {
+    font-size: 19px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .summary-stats {
+    justify-content: center;
+    gap: clamp(100px, 16vw, 230px);
+    margin-top: 16px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .summary-stat {
+    min-width: 160px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .summary-stat__value {
+    font-size: 29px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .summary-stat__label {
+    margin-top: 7px;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .players-card {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    padding: 20px 24px 12px;
+    border-radius: 28px;
+    overflow-x: auto;
+  }
+
+  html[data-main-layout='content'] .table-game-end .game-table {
+    min-width: 680px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .game-table__header {
+    margin: 0 0 8px;
+    padding: 4px;
+    border-radius: 26px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .game-table__header-inner {
+    border-radius: 22px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .game-table__header-cell {
+    min-height: 44px;
+    padding: 0 10px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .game-table__header-label {
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .game-table__body {
+    gap: 6px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content']
+    .table-game-end
+    :is(.game-table__row, .game-table__summary) {
+    min-height: 54px;
+    border-radius: 27px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .game-table__cell {
+    min-height: 54px;
+    padding: 6px 10px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .game-table__cell-text,
+  html[data-main-layout='content'] .table-game-end .table-text {
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .user-avatar {
+    width: 40px;
+    height: 40px;
+    margin-right: 8px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .insurance-summary {
+    margin: 0 14px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .insurance-summary img {
+    width: 28px;
+    height: 28px;
+  }
+
+  html[data-main-layout='content'] .table-game-end .extra-sub {
+    margin-top: 2px;
+    font-size: 12px;
+  }
+
+}

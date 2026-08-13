@@ -1,5 +1,6 @@
 import { t } from '@/i18n'
 import { getGameKindByRt, getWinRate } from '@/utils/texasEquity'
+import { cocosColorTextToSafeHtml } from '@/utils/safeHtml'
 
 export type ReplayActionTone = 'green' | 'red' | 'gray' | 'teal'
 export type ReplayMetricIcon = 'people' | 'chips' | 'mushroom'
@@ -499,7 +500,6 @@ export function GetWinDescRich(
 export function GetWinDesc(
   replay: StatsReplayData | null,
   replayFantasy: StatsReplayFantasyData | null,
-  anonymous = false,
   currentUserId?: number,
 ): string {
   let desc = GetWinDescRich(replay, replayFantasy, currentUserId)
@@ -528,11 +528,16 @@ export function GetWinDesc(
     }
   }
 
-  if (anonymous) {
-    return desc
-  }
-
   return desc
+}
+
+export function GetWinDescHtml(
+  replay: StatsReplayData | null,
+  replayFantasy: StatsReplayFantasyData | null,
+  currentUserId?: number,
+): string {
+  const raw = GetWinDescRich(replay, replayFantasy, currentUserId)
+  return cocosColorTextToSafeHtml(raw)
 }
 
 function cardListFromUnknown(value: unknown): CardItem[] {

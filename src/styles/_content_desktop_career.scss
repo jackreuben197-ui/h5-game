@@ -1,0 +1,1701 @@
+// 俱乐部生涯与战绩详情桌面样式。
+@media (min-width: 600px) {
+  // 俱乐部生涯：设计画板为 1440 × 1024，筛选、统计与入口列表共用内容舞台。
+  html[data-main-layout='content'] .career-page {
+    --club-career-gutter: clamp(24px, 2.7083vw, 39px);
+    --club-career-content-width: min(calc(100% - var(--club-career-gutter) * 2), 1362px);
+    --club-career-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .career-page > .page-top {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .career-page > .page-back-header,
+  html[data-main-layout='content'] .career-page > .content-wrap {
+    position: absolute;
+    right: 0;
+    left: 0;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .career-page > .page-back-header {
+    top: var(--club-career-stage-top);
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 113px;
+    min-height: 113px;
+    padding: 45px var(--club-career-gutter) 20px;
+  }
+
+  html[data-main-layout='content'] .career-page .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .career-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .career-page .page-back-header .title {
+    overflow: hidden;
+    max-width: min(55vw, 780px);
+    font-size: 29px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .career-page .action-wrap {
+    gap: 18px;
+  }
+
+  html[data-main-layout='content'] .career-page .action-btn {
+    width: 113px;
+    height: 41px;
+    padding: 0 5px 0 13px;
+    border-radius: 29px;
+    font-size: 16px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .career-page .club-action-btn .action-label {
+    max-width: 58px;
+  }
+
+  html[data-main-layout='content'] .career-page .club-action-btn .action-icon--slot {
+    width: 41px;
+    height: 41px;
+  }
+
+  html[data-main-layout='content'] .career-page .currency-action-btn {
+    padding-right: 6px;
+  }
+
+  html[data-main-layout='content'] .career-page .currency-action-btn .action-icon--slot {
+    width: 31px;
+    height: 31px;
+  }
+
+  html[data-main-layout='content'] .career-page .club-dropdown,
+  html[data-main-layout='content'] .career-page .currency-dropdown {
+    top: 49px;
+    width: 160px;
+    border-width: 1px;
+    border-radius: 17px;
+  }
+
+  html[data-main-layout='content'] .career-page .club-option,
+  html[data-main-layout='content'] .career-page .currency-option {
+    min-height: 40px;
+    padding: 8px 13px;
+    border-bottom-width: 1px;
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .career-page > .content-wrap {
+    top: calc(var(--club-career-stage-top) + 113px);
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: var(--club-career-content-width);
+    height: calc(var(--content-stage-height) - 113px);
+    min-height: 0;
+    padding: 0 0 30px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .career-page > .content-wrap::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .career-page .game-tabs {
+    flex: 0 0 30px;
+    width: 100%;
+    height: 30px;
+    margin: 0;
+    padding: 0 34px;
+    justify-content: space-between;
+  }
+
+  html[data-main-layout='content'] .career-page .game-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
+    padding: 0;
+    border-bottom-width: 0;
+    font-size: 16px;
+    line-height: 0.95;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .career-page .game-tab.active {
+    border-bottom-width: 1.5px;
+  }
+
+  html[data-main-layout='content'] .career-page .stats-card {
+    flex: 0 0 147px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    height: 147px;
+    margin: 0;
+    padding: 16px 20px;
+    border-radius: 34px;
+  }
+
+  html[data-main-layout='content'] .career-page .date-tabs {
+    flex: 0 0 60px;
+    width: 100%;
+    height: 60px;
+    gap: 3px;
+    border-radius: 34px;
+  }
+
+  html[data-main-layout='content'] .career-page .date-tab {
+    height: 60px;
+    padding: 0;
+    border-radius: 62px;
+    font-size: 18px;
+    line-height: 1.1;
+  }
+
+  html[data-main-layout='content'] .career-page .metric-row {
+    flex: 0 0 40px;
+    align-items: center;
+    width: min(100%, 923px);
+    height: 40px;
+    margin: 0 auto;
+    gap: 0;
+  }
+
+  html[data-main-layout='content'] .career-page .metric-item .value {
+    font-size: 24px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .career-page .metric-item .label {
+    font-size: 10px;
+    line-height: 15px;
+  }
+
+  html[data-main-layout='content'] .career-page .menu-card {
+    width: 100%;
+    margin: 0;
+    padding: 16px 19px 16px 16px;
+    border-radius: 19px;
+  }
+
+  html[data-main-layout='content'] .career-page .menu-item {
+    position: relative;
+    width: 100%;
+    height: 47.5px;
+    margin: 0;
+    padding: 0 8px;
+    border: 0;
+  }
+
+  html[data-main-layout='content'] .career-page .menu-item:not(:last-child)::after {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.16);
+    content: '';
+  }
+
+  html[data-theme='light'][data-main-layout='content']
+    .career-page
+    .menu-item:not(:last-child)::after {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  html[data-main-layout='content'] .career-page .menu-left {
+    gap: 11px;
+  }
+
+  html[data-main-layout='content'] .career-page .icon-box {
+    flex: 0 0 39px;
+    width: 39px;
+    height: 39px;
+    border-radius: 14px;
+  }
+
+  html[data-main-layout='content'] .career-page .menu-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .career-page .menu-label {
+    font-size: 18px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .career-page .menu-arrow {
+    width: 12px;
+    height: 21px;
+  }
+
+  // 普通战绩四级链路：列表、详情、牌谱列表与举报页共用 1440 × 1024 内容舞台。
+  html[data-main-layout='content'] .career-record-page,
+  html[data-main-layout='content'] .record-detail-page,
+  html[data-main-layout='content'] .record-hand-page,
+  html[data-main-layout='content'] .record-report-page {
+    --career-record-gutter: clamp(24px, 2.7083vw, 39px);
+    --career-record-content-width: min(calc(100% - var(--career-record-gutter) * 2), 1362px);
+    --career-record-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .career-record-page > .page-back-header,
+  html[data-main-layout='content'] .record-detail-page > .page-back-header,
+  html[data-main-layout='content'] .record-hand-page > .page-back-header,
+  html[data-main-layout='content'] .record-report-page > .page-back-header,
+  html[data-main-layout='content'] .career-record-page > .content-wrap,
+  html[data-main-layout='content'] .record-detail-page > .content-wrap,
+  html[data-main-layout='content'] .record-hand-page > .content-wrap,
+  html[data-main-layout='content'] .record-report-page > .content-wrap {
+    position: absolute;
+    right: 0;
+    left: 0;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .career-record-page > .page-back-header,
+  html[data-main-layout='content'] .record-detail-page > .page-back-header,
+  html[data-main-layout='content'] .record-hand-page > .page-back-header,
+  html[data-main-layout='content'] .record-report-page > .page-back-header {
+    top: var(--career-record-stage-top);
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 113px;
+    min-height: 113px;
+    padding: 45px var(--career-record-gutter) 20px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .back-trigger,
+  html[data-main-layout='content'] .record-detail-page .back-trigger,
+  html[data-main-layout='content'] .record-hand-page .back-trigger,
+  html[data-main-layout='content'] .record-report-page .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .career-record-page .back-icon,
+  html[data-main-layout='content'] .record-detail-page .back-icon,
+  html[data-main-layout='content'] .record-hand-page .back-icon,
+  html[data-main-layout='content'] .record-report-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .page-back-header .title,
+  html[data-main-layout='content'] .record-detail-page .page-back-header .title,
+  html[data-main-layout='content'] .record-hand-page .page-back-header .title,
+  html[data-main-layout='content'] .record-report-page .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .career-record-page > .content-wrap,
+  html[data-main-layout='content'] .record-detail-page > .content-wrap,
+  html[data-main-layout='content'] .record-hand-page > .content-wrap,
+  html[data-main-layout='content'] .record-report-page > .content-wrap {
+    top: calc(var(--career-record-stage-top) + 113px);
+    z-index: 1;
+    width: var(--career-record-content-width);
+    height: calc(var(--content-stage-height) - 113px);
+    min-height: 0;
+    padding: 0 0 28px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .career-record-page > .content-wrap::-webkit-scrollbar,
+  html[data-main-layout='content'] .record-detail-page > .content-wrap::-webkit-scrollbar,
+  html[data-main-layout='content'] .record-hand-page > .content-wrap::-webkit-scrollbar,
+  html[data-main-layout='content'] .record-report-page > .content-wrap::-webkit-scrollbar {
+    display: none;
+  }
+
+  // 普通战绩列表（Figma 10827:24685）。
+  html[data-main-layout='content'] .career-record-page .game-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    height: 31px;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+  }
+
+  html[data-main-layout='content'] .career-record-page .plain-tab {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 49px;
+    margin: -9px 0;
+    padding: 9px 0;
+    border-bottom-width: 0;
+    font-size: 17px;
+    line-height: 0.95;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .career-record-page .plain-tab:first-child {
+    justify-content: flex-start;
+    padding-left: 35px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .plain-tab:last-child {
+    justify-content: flex-end;
+    padding-right: 35px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .plain-tab-label {
+    display: flex;
+    align-items: center;
+    height: 31px;
+    border-bottom: 1.5px solid transparent;
+  }
+
+  html[data-main-layout='content'] .career-record-page .plain-tab.active .plain-tab-label {
+    border-bottom-color: currentColor;
+  }
+
+  html[data-main-layout='content'] .career-record-page .stats-card {
+    width: 100%;
+    height: 350px;
+    margin: 34px 0 0;
+    padding: 15px 27px;
+    border-width: 1px;
+    border-radius: 34px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .career-record-page .time-tabs {
+    width: 100%;
+    height: 61px;
+    gap: 3px;
+    border-radius: 34px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .time-tab {
+    height: 61px;
+    padding: 0;
+    border-radius: 63px;
+    font-size: 18px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .main-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: center;
+    width: 100%;
+    height: 113px;
+    margin: 18px 0 0;
+    gap: 8px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .metric-col {
+    align-items: flex-start;
+    justify-content: center;
+    height: 113px;
+    margin: 0;
+    gap: 18px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .metric-col.right {
+    align-items: flex-end;
+  }
+
+  html[data-main-layout='content'] .career-record-page .metric-item {
+    align-items: center;
+    width: 80px;
+    gap: 3px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .metric-item .metric-label {
+    font-size: 12px;
+    line-height: 17px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .metric-item .metric-value {
+    font-size: 16px;
+    line-height: 16px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .profit-box {
+    justify-self: center;
+    width: 100%;
+    height: 113px;
+    padding: 16px 20px;
+    border-radius: 26px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .profit-box .profit-title {
+    font-size: 15px;
+    line-height: 21px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .profit-box .profit-value {
+    margin-top: 16px;
+    font-size: 32px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .detail-grid {
+    width: 100%;
+    height: 110px;
+    margin: 18px 0 0;
+  }
+
+  html[data-main-layout='content'] .career-record-page .detail-row {
+    height: 46px;
+    gap: 8px;
+    align-items: center;
+  }
+
+  html[data-main-layout='content'] .career-record-page .detail-row .detail-cell:first-child {
+    justify-self: start;
+    width: 80px;
+    align-items: center;
+  }
+
+  html[data-main-layout='content'] .career-record-page .detail-row .detail-cell:last-child {
+    justify-self: end;
+    width: 80px;
+    align-items: center;
+  }
+
+  html[data-main-layout='content'] .career-record-page .detail-grid .line {
+    height: 1px;
+    margin: 8px 0;
+  }
+
+  html[data-main-layout='content'] .career-record-page .detail-cell {
+    align-items: center;
+  }
+
+  html[data-main-layout='content'] .career-record-page .detail-cell .label {
+    font-size: 12px;
+    line-height: 17px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .detail-cell .value {
+    margin-top: 3px;
+    font-size: 16px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .timeline {
+    width: 100%;
+    margin: 27px 0 0;
+    gap: 26px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .timeline-item,
+  html[data-main-layout='content'] .career-record-page .timeline-item--top {
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 0;
+    width: 100%;
+    min-height: 202px;
+    margin: 0;
+  }
+
+  html[data-main-layout='content'] .career-record-page .date-col {
+    width: 52px;
+    min-height: 202px;
+    padding-right: 18px;
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .date-col::after {
+    right: 7px;
+    top: 19px;
+    bottom: 0;
+    width: 1px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .date-col .date,
+  html[data-main-layout='content'] .career-record-page .date-col .month {
+    margin: 0;
+    font-size: 14px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .date-col .tx__time-icon {
+    top: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .record-card {
+    width: 100%;
+    height: 202px;
+    padding: 16px 20px;
+    border-width: 1px;
+    border-radius: 34px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .career-record-page .card-head {
+    height: 26px;
+    font-size: 18px;
+    line-height: 26px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .card-head .id {
+    font-size: 15px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .record-card .line-content .line {
+    width: 100%;
+    height: 1px;
+    margin: 0 auto;
+  }
+
+  html[data-main-layout='content'] .career-record-page .card-body {
+    height: 94px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .meta {
+    width: min(42%, 536px);
+    gap: 3px;
+    font-size: 14px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .meta div span:nth-child(2) {
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .career-record-page .profit {
+    font-size: 24px;
+    line-height: 34px;
+  }
+
+  // 普通战绩详情（Figma 10827:24828）。
+  html[data-main-layout='content'] .record-detail-page .sort-bar {
+    width: 100%;
+    height: 75px;
+    margin: 0;
+    padding: 27px 20px;
+    border-width: 1px;
+    border-radius: 35px;
+    font-size: 19px;
+    line-height: 21px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .sort-bar .arrow {
+    width: 21px;
+    height: 21px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .rank-section {
+    z-index: 2;
+    grid-template-columns: 69px 95px 69px;
+    align-items: end;
+    justify-content: center;
+    column-gap: 59px;
+    width: 100%;
+    height: 174px;
+    margin: 53px 0 0;
+    background-position: bottom center;
+    background-size: 453px 171px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .rank-seat {
+    justify-content: flex-end;
+    height: 147px;
+    padding: 0 0 25px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .rank-seat.rank-1 {
+    height: 174px;
+    padding: 0 0 42px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .rank-seat.rank-2,
+  html[data-main-layout='content'] .record-detail-page .rank-seat.rank-3 {
+    padding-bottom: 25px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .rank-seat .rank-tag {
+    min-height: 21px;
+    margin-bottom: -9px;
+    padding: 0 6px;
+    border-radius: 14px;
+    font-size: 12px;
+    line-height: 21px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .rank-seat .rank-tag span {
+    line-height: 21px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .rank-seat .icon-chips {
+    width: 21px;
+    height: 21px;
+    margin: 0 3px 0 0;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .rank-seat .avatar {
+    width: 60px;
+    height: 60px;
+    border-width: 1px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .rank-seat.rank-1 .avatar {
+    width: 96px;
+    height: 96px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .rank-seat .rank-info {
+    width: 69px;
+    min-height: 33px;
+    margin-top: -12px;
+    padding: 5px 4px;
+    gap: 2px;
+    border-radius: 8px;
+    font-size: 11px;
+    line-height: 10px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .rank-seat.rank-1 .rank-info {
+    width: 94px;
+    min-height: 44px;
+    margin-top: -15px;
+    line-height: 12px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .rank-seat .rank-info .name,
+  html[data-main-layout='content'] .record-detail-page .rank-seat .rank-info .value,
+  html[data-main-layout='content'] .record-detail-page .rank-seat.rank-1 .rank-info .value {
+    font-size: 11px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .table-section {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 214px;
+    margin: -37px 0 0;
+    padding: 40px 20px 20px;
+    border-width: 1px;
+    border-radius: 35px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .hand-summary {
+    height: 154px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .name-line {
+    height: 48px;
+    line-height: 24px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .name-line .title,
+  html[data-main-layout='content'] .record-detail-page .name-line .sub,
+  html[data-main-layout='content'] .record-detail-page .time {
+    font-size: 18px;
+    line-height: 24px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .time {
+    height: 24px;
+    margin-top: 10px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .summary-grid {
+    align-items: center;
+    width: 100%;
+    height: 57px;
+    margin-top: 10px;
+    padding: 4px 23px;
+    gap: 8px;
+    border-radius: 29px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .summary-item .label {
+    font-size: 12px;
+    line-height: 21px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .summary-item .value {
+    font-size: 20px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .result-section {
+    width: 100%;
+    margin-top: 20px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .insurance-bar {
+    height: 28px;
+    padding: 0;
+    font-size: 13px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .insurance-bar .left {
+    gap: 7px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .insurance-bar .icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .insurance-bar .right {
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .player-card {
+    width: 100%;
+    height: 116px;
+    margin-top: 10px;
+    padding: 11px 20px;
+    border-width: 1px;
+    border-radius: 35px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .player-card + .player-card {
+    margin-top: 10px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .result-row {
+    height: 52px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .left {
+    gap: 11px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .left .avatar.small {
+    width: 41px;
+    height: 41px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .left .name {
+    font-size: 18px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .left .sub {
+    font-size: 15px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .right .profit {
+    font-size: 20px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .sub-row {
+    height: 31px;
+    margin-top: 11px;
+    padding: 10px 0 0;
+    justify-content: space-between;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .sub-cell {
+    gap: 2px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .sub-cell .sub-title {
+    font-size: 13px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .record-detail-page .sub-cell .sub-value {
+    font-size: 15px;
+    line-height: 20px;
+  }
+
+  // 下一级牌谱列表：沿用详情页的内容宽度、卡片圆角与信息密度。
+  html[data-main-layout='content'] .record-hand-page .overview-card {
+    width: 100%;
+    min-height: 96px;
+    margin: 0;
+    padding: 18px 22px;
+    gap: 20px;
+    border-width: 1px;
+    border-radius: 30px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .record-hand-page .left-blind {
+    gap: 3px;
+  }
+
+  html[data-main-layout='content'] .record-hand-page .left-blind .label,
+  html[data-main-layout='content'] .record-hand-page .left-blind .hands,
+  html[data-main-layout='content'] .record-hand-page .right-info .sub {
+    margin: 0;
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .record-hand-page .left-blind .value,
+  html[data-main-layout='content'] .record-hand-page .right-info .title {
+    font-size: 18px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .record-hand-page .list-wrap {
+    width: 100%;
+    margin-top: 20px;
+    gap: 14px;
+  }
+
+  html[data-main-layout='content'] .record-hand-page .hand-card {
+    width: 100%;
+    min-height: 142px;
+    padding: 14px 20px;
+    border-width: 1px;
+    border-radius: 30px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .record-hand-page .top-row {
+    min-height: 58px;
+  }
+
+  html[data-main-layout='content'] .record-hand-page .poker-pair {
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .record-hand-page .title {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .record-hand-page .line {
+    height: 1px;
+    margin: 10px 0;
+  }
+
+  html[data-main-layout='content'] .record-hand-page .bottom-row {
+    min-height: 39px;
+  }
+
+  html[data-main-layout='content'] .record-hand-page .meta,
+  html[data-main-layout='content'] .record-hand-page .profit .hands-count {
+    font-size: 13px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .record-hand-page .profit .money {
+    font-size: 20px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .record-hand-page .action-sheet {
+    width: 180px;
+    padding: 5px 0;
+    border-radius: 18px;
+  }
+
+  html[data-main-layout='content'] .record-hand-page .action-item {
+    padding: 9px 0;
+    font-size: 14px;
+  }
+
+  // 下一级举报页：桌面内容卡片保持全宽，提交按钮限制为可操作的中心宽度。
+  html[data-main-layout='content'] .record-report-page > .content-wrap {
+    padding-bottom: 112px;
+  }
+
+  html[data-main-layout='content'] .record-report-page .option-card {
+    width: 100%;
+    margin: 0;
+    border-width: 1px;
+    border-radius: 30px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .record-report-page .option-row {
+    min-height: 58px;
+    padding: 14px 22px;
+    border-bottom-width: 1px;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .record-report-page .input-card {
+    width: 100%;
+    min-height: 218px;
+    margin-top: 20px;
+    padding: 18px 22px;
+    border-width: 1px;
+    border-radius: 30px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .record-report-page .input-title {
+    font-size: 15px;
+    line-height: 21px;
+  }
+
+  html[data-main-layout='content'] .record-report-page .reason-input {
+    min-height: 150px;
+    margin-top: 12px;
+    padding: 14px;
+    border-radius: 16px;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .record-report-page .submit-btn {
+    position: fixed;
+    right: 0;
+    bottom: max(
+      24px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2 + 24px)
+    );
+    left: 0;
+    width: min(calc(100% - 48px), 435px);
+    height: 64px;
+    margin: 0 auto;
+    border-radius: 47px;
+    font-size: 16px;
+  }
+
+  // MTT 战绩与详情：沿用生涯页 1440 × 1024 内容舞台和单层内部滚动。
+  html[data-main-layout='content'] .club-mtt-page,
+  html[data-main-layout='content'] .club-mtt-detail-page {
+    --career-mtt-gutter: clamp(24px, 2.7083vw, 39px);
+    --career-mtt-content-width: min(calc(100% - var(--career-mtt-gutter) * 2), 1362px);
+    --career-mtt-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page > .page-back-header,
+  html[data-main-layout='content'] .club-mtt-detail-page > .page-back-header,
+  html[data-main-layout='content'] .club-mtt-page > .content-wrap,
+  html[data-main-layout='content'] .club-mtt-detail-page > .content-wrap {
+    position: absolute;
+    right: 0;
+    left: 0;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page > .page-back-header,
+  html[data-main-layout='content'] .club-mtt-detail-page > .page-back-header {
+    top: var(--career-mtt-stage-top);
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 113px;
+    min-height: 113px;
+    padding: 45px var(--career-mtt-gutter) 20px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .back-trigger,
+  html[data-main-layout='content'] .club-mtt-detail-page .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .back-icon,
+  html[data-main-layout='content'] .club-mtt-detail-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .page-back-header .title,
+  html[data-main-layout='content'] .club-mtt-detail-page .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page > .content-wrap,
+  html[data-main-layout='content'] .club-mtt-detail-page > .content-wrap {
+    top: calc(var(--career-mtt-stage-top) + 113px);
+    z-index: 1;
+    width: var(--career-mtt-content-width);
+    height: calc(var(--content-stage-height) - 113px);
+    min-height: 0;
+    padding: 0 0 28px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page > .content-wrap::-webkit-scrollbar,
+  html[data-main-layout='content'] .club-mtt-detail-page > .content-wrap::-webkit-scrollbar {
+    display: none;
+  }
+
+  // MTT 战绩列表。
+  html[data-main-layout='content'] .club-mtt-page .game-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: center;
+    width: 100%;
+    height: 31px;
+    margin: 0;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .plain-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 49px;
+    margin: -9px 0;
+    padding: 9px 0;
+    border-bottom-width: 0;
+    font-size: 17px;
+    line-height: 0.95;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .plain-tab:first-child {
+    justify-content: flex-start;
+    padding-left: 35px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .plain-tab:last-child {
+    justify-content: flex-end;
+    padding-right: 35px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .plain-tab-label {
+    display: flex;
+    align-items: center;
+    height: 31px;
+    border-bottom: 1.5px solid transparent;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .plain-tab.active .plain-tab-label {
+    border-bottom-color: currentColor;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .summary-card {
+    width: 100%;
+    height: 177px;
+    margin: 34px 0 0;
+    padding: 15px 27px 18px;
+    border-width: 1px;
+    border-radius: 34px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .time-tabs {
+    width: 100%;
+    height: 61px;
+    gap: 3px;
+    border-radius: 34px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .time-tab {
+    height: 61px;
+    padding: 0;
+    border-radius: 63px;
+    font-size: 18px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .summary-row {
+    align-items: center;
+    width: 100%;
+    height: 65px;
+    margin: 18px 0 0;
+    gap: 8px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .summary-item .value {
+    font-size: 20px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .summary-item .label {
+    margin-top: 3px;
+    font-size: 12px;
+    line-height: 17px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .timeline {
+    width: 100%;
+    margin: 27px 0 0;
+    gap: 26px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .timeline-item,
+  html[data-main-layout='content'] .club-mtt-page .timeline-item--top {
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 0;
+    width: 100%;
+    min-height: 150px;
+    margin: 0;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .date-col {
+    width: 52px;
+    min-height: 150px;
+    padding-right: 18px;
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .date-col::after {
+    top: 19px;
+    right: 7px;
+    bottom: -26px;
+    width: 1px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .date-col--continued::after {
+    top: 0;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .date-col--bottom::after {
+    bottom: 0;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .date-col .date,
+  html[data-main-layout='content'] .club-mtt-page .date-col .month {
+    margin: 0;
+    font-size: 14px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .date-col .date-icon {
+    top: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .mtt-card {
+    width: 100%;
+    height: 150px;
+    padding: 16px 20px;
+    border-width: 1px;
+    border-radius: 34px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .row-top {
+    align-items: center;
+    min-height: 61px;
+    gap: 20px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .match-info .name {
+    max-width: none;
+    font-size: 18px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .match-info .sub,
+  html[data-main-layout='content'] .club-mtt-page .row-bottom,
+  html[data-main-layout='content'] .club-mtt-page .result .reward {
+    font-size: 15px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .result .reward img {
+    width: 20px;
+    height: 20px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .mtt-card > .line {
+    width: min(24%, 309px);
+    height: 1px;
+    margin: 10px auto;
+  }
+
+  html[data-main-layout='content'] .club-mtt-page .row-bottom {
+    align-items: center;
+    min-height: 37px;
+  }
+
+  // MTT 战绩详情。
+  html[data-main-layout='content'] .club-mtt-detail-page .top-card {
+    width: 100%;
+    height: 214px;
+    margin: 0;
+    padding: 20px;
+    border-width: 1px;
+    border-radius: 35px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .title-row {
+    align-items: flex-end;
+    height: 48px;
+    padding: 0;
+    gap: 20px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .title-row .title {
+    font-size: 18px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .title-row .sub {
+    margin-top: 0;
+    font-size: 15px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .title-row .time {
+    margin-top: 0;
+    font-size: 18px;
+    line-height: 24px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .metrics-row {
+    width: 100%;
+    min-height: 108px;
+    margin: 18px 0 0;
+    border-radius: 29px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .metric {
+    min-height: 90px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .metric.split::before {
+    top: 15px;
+    width: 1px;
+    height: 60px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .metric .label {
+    font-size: 12px;
+    line-height: 17px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .metric .value {
+    margin-top: 6px;
+    font-size: 20px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .list-wrap {
+    width: 100%;
+    margin-top: 20px;
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .rank-row {
+    width: 100%;
+    min-height: 116px;
+    padding: 11px 20px;
+    gap: 20px;
+    border-width: 1px;
+    border-radius: 35px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .left {
+    gap: 11px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .left .avatar {
+    width: 41px;
+    height: 41px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .left .name {
+    font-size: 18px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .left .sub {
+    margin-top: 0;
+    font-size: 15px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .right {
+    gap: 10px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .right .plus {
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .right .right-item {
+    min-width: 54px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .right .right-item img,
+  html[data-main-layout='content'] .club-mtt-detail-page .right .right-item .ticket-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  html[data-main-layout='content'] .club-mtt-detail-page .right .right-item span {
+    margin-top: 3px;
+    font-size: 15px;
+    line-height: 18px;
+  }
+
+  // 牌谱详情：Figma 内容节点为 1361.71 × 883.98，置于 1440 × 1024 内容舞台内。
+  html[data-main-layout='content'] .hand-detail-page {
+    --hand-detail-gutter: clamp(24px, 2.7083vw, 39px);
+    --hand-detail-content-width: min(calc(100% - var(--hand-detail-gutter) * 2), 1362px);
+    --hand-detail-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page > .page-back-header,
+  html[data-main-layout='content'] .hand-detail-page > .page-content {
+    position: absolute;
+    right: 0;
+    left: 0;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page > .page-back-header {
+    top: var(--hand-detail-stage-top);
+    z-index: 3;
+    width: var(--content-stage-width);
+    height: 113px;
+    min-height: 113px;
+    padding: 45px var(--hand-detail-gutter) 20px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page > .page-content {
+    top: calc(var(--hand-detail-stage-top) + 113px);
+    z-index: 1;
+    width: var(--hand-detail-content-width);
+    height: calc(var(--content-stage-height) - 113px);
+    padding: 0 0 27px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page > .page-content::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .summary-wrap {
+    height: 48px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .summary-title {
+    height: 17px;
+    overflow: hidden;
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 17px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .summary-meta {
+    height: 20px;
+    margin-top: 11px;
+    gap: 19px;
+    font-size: 15px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .meta-item {
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .meta-icon--blind {
+    width: 16px;
+    height: 14px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .meta-icon--clock {
+    width: 20px;
+    height: 20px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .hand-code {
+    font-weight: 400;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .street-card {
+    width: 100%;
+    margin: 21px 0 0;
+    padding: 11px 15px;
+    border-width: 1px;
+    border-radius: 24px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .street-head {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    min-height: 38px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .head-left {
+    display: contents;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .street-title {
+    grid-column: 1;
+    justify-self: start;
+    width: auto;
+    font-size: 16px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .street-sub,
+  html[data-main-layout='content'] .hand-detail-page .board-stack {
+    grid-column: 2;
+    justify-self: center;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .street-sub {
+    font-size: 16px;
+    line-height: 18px;
+    opacity: 1;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .board-stack {
+    gap: 3px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .board-cards {
+    gap: 2px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .head-right {
+    grid-column: 3;
+    justify-self: end;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .head-stat {
+    gap: 4px;
+    font-size: 17px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .head-stat + .head-stat {
+    margin-top: 0;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .head-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .divider {
+    height: 1px;
+    margin: 12px 0;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .rows-wrap {
+    gap: 0;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .action-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    height: 28px;
+    gap: 4px;
+    font-size: 17px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .name-part {
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .move-part {
+    justify-content: center;
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .move-part .move-amount {
+    width: auto;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .move-tag {
+    margin-right: 4px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .seat-tag,
+  html[data-main-layout='content'] .hand-detail-page .move-tag {
+    min-width: 29px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 5px;
+    font-size: 11px;
+    line-height: 14px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .player-name,
+  html[data-main-layout='content'] .hand-detail-page .move-amount,
+  html[data-main-layout='content'] .hand-detail-page .result-num {
+    font-size: 17px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .mush-gain {
+    gap: 3px;
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .mush-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .showdown-card {
+    margin-bottom: 0;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .showdown-list {
+    gap: 0;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .showdown-player-head {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    min-height: 56px;
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .showdown-player-head .showdown-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-self: start;
+    width: auto;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .showdown-card .seat-tag {
+    margin-top: 0;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .showdown-type {
+    margin: 2px 0 0;
+    font-size: 7px;
+    line-height: 8px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .showdown-player-head .showdown-mid {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    grid-column: 2;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .showdown-player-head .player-name {
+    font-size: 7px;
+    line-height: 8px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .showdown-cards {
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .cards-group {
+    gap: 2px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page .showdown-win {
+    grid-column: 3;
+    justify-self: end;
+    width: auto;
+    font-size: 17px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .hand-detail-page > .action-bar {
+    display: none;
+  }
+
+}

@@ -29,6 +29,7 @@ import {
   ensureOfficialServiceProfileCache,
   getOfficialServiceProfileCache,
 } from './officialServiceCache'
+import { useVoicePlayback } from './useVoicePlayback'
 import { t } from '@/i18n'
 
 interface ImGameConfig {
@@ -68,7 +69,6 @@ const voiceMode = ref(false)
 const voicePressed = ref(false)
 const voiceCancel = ref(false)
 const voiceSeconds = ref(0)
-const playingVoiceToken = ref<string>('')
 
 interface GlobalChatContext {
   imServiceType: number
@@ -93,7 +93,6 @@ let mediaRecorder: MediaRecorder | null = null
 let mediaStream: MediaStream | null = null
 let recordingChunks: Blob[] = []
 let recordStartMs = 0
-let playingAudio: HTMLAudioElement | null = null
 let startingRecord = false
 let voiceGestureActive = false
 let activeVoicePointerId: number | null = null
@@ -1293,53 +1292,12 @@ function resolveVoiceUrl(message: ChatSupportMessageListChatData): string {
   return String(parsed.fileUrl || parsed.url || parsed.voiceUrl || '').trim()
 }
 
-function resolveVoiceToken(message: ChatSupportMessageListChatData): string {
-  const token = String(message.time_token || '').trim()
-  if (token) return token
-  return resolveVoiceUrl(message)
-}
-
-function stopVoicePlayback(): void {
-  if (playingAudio) {
-    playingAudio.pause()
-    playingAudio = null
-  }
-  playingVoiceToken.value = ''
-}
-
-async function handleVoiceMessageClick(message: ChatSupportMessageListChatData): Promise<void> {
-  const url = resolveVoiceUrl(message)
-  if (!url) {
-    showFailToast(t('UIGlobalCustomerServiceChat_No3'))
-    return
-  }
-
-  const token = resolveVoiceToken(message) || url
-  if (playingVoiceToken.value === token && playingAudio) {
-    stopVoicePlayback()
-    return
-  }
-
-  stopVoicePlayback()
-
-  const audio = new Audio(url)
-  playingAudio = audio
-  playingVoiceToken.value = token
-  audio.onended = () => {
-    stopVoicePlayback()
-  }
-  audio.onerror = () => {
-    stopVoicePlayback()
-    showFailToast(t('UIGlobalCustomerServiceChat_Fail6'))
-  }
-
-  try {
-    await audio.play()
-  } catch {
-    stopVoicePlayback()
-    showFailToast(t('UIGlobalCustomerServiceChat_Fail6'))
-  }
-}
+const { playingVoiceToken, resolveVoiceToken, stopVoicePlayback, handleVoiceMessageClick } =
+  useVoicePlayback({
+    resolveUrl: resolveVoiceUrl,
+    onMissingUrl: () => showFailToast(t('UIGlobalCustomerServiceChat_No3')),
+    onPlaybackError: () => showFailToast(t('UIGlobalCustomerServiceChat_Fail6')),
+  })
 
 async function onFallbackAudioUpload(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement

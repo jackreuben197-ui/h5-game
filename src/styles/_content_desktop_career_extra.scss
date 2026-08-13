@@ -1,0 +1,1592 @@
+// 朋友桌生涯、牌谱与数据桌面样式。
+@media (min-width: 600px) {
+  // 朋友桌生涯（Figma 11222:23905 / 23994 / 23602）：首页、数据统计与数据列表
+  // 共用 1440 × 1024 内容舞台；业务元素与移动端保持一致，仅调整桌面尺寸和排布。
+  html[data-main-layout='content']
+    :is(.friends-career-page, .friends-data-page, .friends-record-page) {
+    --friends-career-gutter: clamp(24px, 2.7083vw, 39px);
+    --friends-career-content-width: min(calc(100% - var(--friends-career-gutter) * 2), 1362px);
+    --friends-career-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content']
+    :is(.friends-career-page, .friends-data-page, .friends-record-page)
+    > :is(.page-back-header, .content-wrap) {
+    position: absolute;
+    right: 0;
+    left: 0;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content']
+    :is(.friends-career-page, .friends-data-page, .friends-record-page)
+    > .page-back-header {
+    top: var(--friends-career-stage-top);
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 113px;
+    min-height: 113px;
+    padding: 45px var(--friends-career-gutter) 20px;
+  }
+
+  html[data-main-layout='content']
+    :is(.friends-career-page, .friends-data-page, .friends-record-page)
+    .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content']
+    :is(.friends-career-page, .friends-data-page, .friends-record-page)
+    .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content']
+    :is(.friends-career-page, .friends-data-page, .friends-record-page)
+    .page-back-header
+    .title {
+    overflow: hidden;
+    max-width: min(55vw, 780px);
+    font-size: 29px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content']
+    :is(.friends-career-page, .friends-data-page, .friends-record-page)
+    > .content-wrap {
+    top: calc(var(--friends-career-stage-top) + 113px);
+    z-index: 1;
+    width: var(--friends-career-content-width);
+    height: calc(var(--content-stage-height) - 113px);
+    min-height: 0;
+    padding: 0 0 28px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content']
+    :is(.friends-career-page, .friends-data-page, .friends-record-page)
+    > .content-wrap::-webkit-scrollbar {
+    display: none;
+  }
+
+  // 生涯列表页。
+  html[data-main-layout='content'] .friends-career-page .action-wrap {
+    display: flex;
+    align-items: center;
+  }
+
+  html[data-main-layout='content'] .friends-career-page .action-btn {
+    width: 113px;
+    height: 41px;
+    padding: 0 13px;
+    border-radius: 29px;
+    font-size: 16px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .friends-career-page > .content-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-bottom: 30px;
+  }
+
+  html[data-main-layout='content'] .friends-career-page .glass-card {
+    border-width: 1px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .friends-career-page .table-card {
+    flex: 0 0 272px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 272px;
+    margin: 0;
+    padding: 18px 22px 30px 24px;
+    border-radius: 34px;
+  }
+
+  html[data-main-layout='content'] .friends-career-page .table-head {
+    flex: 0 0 39px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 39px;
+    margin: 0 0 15px;
+    padding: 7px 8px;
+    border-radius: 20px;
+    font-size: 16px;
+    line-height: 1.1;
+    box-shadow:
+      0 0 24px 3px rgba(var(--c-brand-rgb), 0.72) inset,
+      inset 0.5px 0.5px 0 rgba(255, 255, 255, 0.85),
+      inset -0.5px -0.5px 0 rgba(255, 255, 255, 0.85);
+  }
+
+  html[data-main-layout='content'] .friends-career-page .table-head-inner {
+    width: 100%;
+    height: 23px;
+    border-radius: 15px;
+    font-size: 16px;
+    line-height: 23px;
+    box-shadow: 0 0 5px 2px rgba(var(--c-brand-rgb), 0.75);
+  }
+
+  html[data-main-layout='content'] .friends-career-page .table-row {
+    flex: 1 1 0;
+    min-height: 0;
+    padding: 0;
+    font-size: 15px;
+    line-height: 1.1;
+  }
+
+  html[data-main-layout='content'] .friends-career-page .game-type-label {
+    font-size: 18px;
+    line-height: 1.1;
+  }
+
+  html[data-main-layout='content'] .friends-career-page .table-status {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .friends-career-page .list-card {
+    flex: 0 0 auto;
+    width: 100%;
+    margin: 0;
+    padding: 16px 20px 16px 16px;
+    border-radius: 19px;
+  }
+
+  html[data-main-layout='content'] .friends-career-page .line-item {
+    position: relative;
+    width: 100%;
+    height: 48px;
+    margin: 0;
+    padding: 0 8px;
+    border: 0;
+    font-size: 18px;
+  }
+
+  html[data-main-layout='content'] .friends-career-page .line-item:not(:last-child)::after {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.16);
+    content: '';
+  }
+
+  html[data-theme='light'][data-main-layout='content']
+    .friends-career-page
+    .line-item:not(:last-child)::after {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  html[data-main-layout='content'] .friends-career-page .menu-left {
+    gap: 11px;
+  }
+
+  html[data-main-layout='content'] .friends-career-page .icon-box {
+    flex: 0 0 39px;
+    width: 39px;
+    height: 39px;
+  }
+
+  html[data-main-layout='content'] .friends-career-page .menu-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .friends-career-page .menu-label {
+    font-size: 18px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .friends-career-page .menu-arrow {
+    width: 12px;
+    height: 22px;
+  }
+
+  // 数据统计页。
+  html[data-main-layout='content'] .friends-data-page .game-tabs {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 31px;
+    margin: 0;
+    padding: 0 35px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .game-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 49px;
+    margin: -9px 0;
+    padding: 9px 0;
+    border-bottom: 0;
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 31px;
+    text-decoration-color: transparent;
+    text-decoration-line: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 7px;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .game-tab.active {
+    border-bottom: 0;
+    text-decoration-color: currentColor;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .summary-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    height: 166px;
+    margin: 20px 0 0;
+    padding: 17px 20px 16px;
+    border-radius: 35px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .date-range {
+    flex: 0 0 68px;
+    width: 100%;
+    height: 68px;
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .date-pill {
+    flex: 1 1 0;
+    width: auto;
+    height: 68px;
+    border-radius: 48px;
+    gap: 8px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .date-pill .date {
+    font-size: 15px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .date-pill .time-line {
+    gap: 10px;
+    font-size: 19px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .date-pill .time-icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .dash {
+    flex: 0 0 24px;
+    width: 24px;
+    font-size: 19px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .metrics {
+    flex: 0 0 49px;
+    align-items: center;
+    width: min(100%, 923px);
+    height: 49px;
+    margin: 0 auto;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .metric-label {
+    font-size: 15px;
+    line-height: 21px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .metric-value {
+    margin-top: 3px;
+    font-size: 24px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .metric-divider {
+    top: 50%;
+    width: 1px;
+    height: 33px;
+    transform: translateY(-50%);
+  }
+
+  html[data-main-layout='content'] .friends-data-page .list-head {
+    width: 100%;
+    margin: 20px 0 0;
+    padding: 0 20px;
+    font-size: 15px;
+    line-height: 21px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .player-list {
+    width: 100%;
+    margin: 15px 0 0;
+    gap: 15px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .player-card {
+    width: 100%;
+    height: 88px;
+    min-height: 88px;
+    padding: 12px 20px;
+    border-radius: 999px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .player-left {
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .avatar {
+    width: 63px;
+    height: 63px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .player-meta .name {
+    font-size: 20px;
+    line-height: 24px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .player-meta .id {
+    margin-top: 3px;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .player-right {
+    gap: 6px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .profit {
+    font-size: 19px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .chip {
+    width: 24px;
+    height: 24px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .player-list .list-status {
+    margin: 0;
+    padding: 12px 0;
+    font-size: 13px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .date-picker-mask {
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  html[data-main-layout='content'] .friends-data-page .date-picker-sheet {
+    width: min(100%, 520px);
+    max-height: calc(100dvh - 48px);
+    padding: 26px 22px 22px;
+    overflow-y: auto;
+    border-radius: 34px;
+  }
+
+  // 数据列表页。
+  html[data-main-layout='content'] .friends-record-page .summary-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    height: 156px;
+    margin: 0;
+    padding: 16px 20px;
+    border-radius: 35px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .filter-tabs {
+    flex: 0 0 62px;
+    width: 100%;
+    height: 62px;
+    margin: 0;
+    border-radius: 35px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .filter-tab {
+    height: 62px;
+    padding: 0 12px;
+    border-radius: 63px;
+    font-size: 18px;
+    line-height: 1.1;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .filter-tab.is-customize {
+    width: auto;
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .filter-tab.is-customize .cunstomize-date {
+    align-items: center;
+    justify-content: center;
+  }
+
+  html[data-main-layout='content']
+    .friends-record-page
+    .filter-tab.is-customize
+    .cunstomize-date
+    p {
+    margin: 2px 0;
+    font-size: 12px;
+    line-height: 14px;
+  }
+
+  html[data-main-layout='content']
+    .friends-record-page
+    .filter-tab.is-customize
+    .cunstomize-date
+    img {
+    width: 12px;
+    height: 12px;
+    margin: 0 0 0 5px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .metrics-row {
+    flex: 0 0 49px;
+    align-items: center;
+    width: min(100%, 923px);
+    height: 49px;
+    margin: 0 auto;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .metric-item .metric-label {
+    font-size: 15px;
+    line-height: 21px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .metric-item .metric-value {
+    margin-top: 3px;
+    font-size: 24px;
+    line-height: 25px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .metric-divider {
+    top: 50%;
+    width: 1px;
+    height: 33px;
+    transform: translateY(-50%);
+  }
+
+  html[data-main-layout='content'] .friends-record-page .timezone-text {
+    margin: 7px 20px 10px;
+    font-size: 10px;
+    line-height: 14px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .record-list {
+    width: 100%;
+    margin: 0;
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .record-row {
+    width: 100%;
+    height: 96px;
+    min-height: 96px;
+    padding: 0 0 0 11px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .game-badge {
+    left: 0;
+    top: 16px;
+    width: 65px;
+    height: 65px;
+    border-width: 1px;
+    border-radius: 50%;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .record-card {
+    width: calc(100% - 11px);
+    height: 96px;
+    min-height: 96px;
+    margin-left: 11px;
+    padding: 16px 23px 16px 54px;
+    border-width: 1px;
+    border-radius: 999px;
+    backdrop-filter: blur(18px);
+  }
+
+  html[data-main-layout='content'] .friends-record-page .record-main {
+    gap: 8px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .record-title {
+    font-size: 15px;
+    line-height: 17px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .record-meta {
+    gap: 6px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .meta-top {
+    gap: 30px;
+    font-size: 10px;
+    line-height: 12px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .meta-time {
+    gap: 4px;
+    font-size: 12px;
+    line-height: 14px;
+    letter-spacing: 0.5px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .meta-time .time-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .record-right {
+    flex: 0 0 auto;
+    gap: 8px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .fee-chip {
+    width: 80px;
+    min-width: 80px;
+    min-height: 38px;
+    padding: 7px 9px;
+    gap: 4px;
+    border-radius: 9px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .fee-line {
+    gap: 6px;
+    font-size: 9px;
+    line-height: 1;
+    letter-spacing: 0.4px;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .chevron {
+    font-size: 32px;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .friends-record-page .list-status {
+    margin: 0;
+    padding: 12px 0;
+    font-size: 13px;
+  }
+
+  // 牌谱列表（Figma 11222:25051）：双层筛选与牌谱卡片共用 1362px 内容舞台。
+  html[data-main-layout='content'] .hand-collection-page {
+    --hand-collection-gutter: clamp(24px, 2.7083vw, 39px);
+    --hand-collection-content-width: min(calc(100% - var(--hand-collection-gutter) * 2), 1362px);
+    --hand-collection-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page > .page-back-header,
+  html[data-main-layout='content'] .hand-collection-page > .content-wrap {
+    position: absolute;
+    right: 0;
+    left: 0;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page > .page-back-header {
+    top: var(--hand-collection-stage-top);
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 113px;
+    min-height: 113px;
+    padding: 45px var(--hand-collection-gutter) 20px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .page-back-header .title {
+    overflow: hidden;
+    max-width: min(55vw, 780px);
+    font-size: 29px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page > .content-wrap {
+    top: calc(var(--hand-collection-stage-top) + 113px);
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    width: var(--hand-collection-content-width);
+    height: calc(var(--content-stage-height) - 113px);
+    min-height: 0;
+    padding: 0 0 28px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page > .content-wrap::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .game-tabs {
+    flex: 0 0 31px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: center;
+    width: 100%;
+    height: 31px;
+    margin: 0;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .plain-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 49px;
+    margin: -9px 0;
+    padding: 9px 0;
+    border-bottom: 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 31px;
+    text-decoration-color: transparent;
+    text-decoration-line: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 7px;
+    white-space: nowrap;
+  }
+
+  html[data-theme='light'][data-main-layout='content'] .hand-collection-page .plain-tab {
+    color: rgba(0, 0, 0, 0.7);
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .plain-tab:first-child {
+    justify-content: flex-start;
+    padding-left: 35px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .plain-tab:last-child {
+    justify-content: flex-end;
+    padding-right: 35px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .plain-tab.active {
+    color: #fff;
+    text-decoration-color: currentColor;
+  }
+
+  html[data-theme='light'][data-main-layout='content'] .hand-collection-page .plain-tab.active {
+    color: var(--c-brand);
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .mode-tabs {
+    flex: 0 0 61px;
+    width: 100%;
+    height: 61px;
+    margin: 20px 0 0;
+    padding: 0;
+    gap: 3px;
+    border-radius: 34px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .capsule-tab {
+    height: 61px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 63px;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.1;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .capsule-tab.active {
+    border-color: #fff;
+    background: rgba(255, 255, 255, 0.2);
+    font-weight: 700;
+  }
+
+  html[data-theme='light'][data-main-layout='content'] .hand-collection-page .capsule-tab.active {
+    border-color: #fff;
+    background: #cfcfcf;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .list-wrap {
+    flex: 0 0 auto;
+    width: 100%;
+    margin: 20px 0 0;
+    gap: 10px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .hand-card {
+    box-sizing: border-box;
+    width: 100%;
+    height: 164px;
+    padding: 22px 24px;
+    border-width: 1px;
+    border-radius: 34px;
+    backdrop-filter: none;
+    cursor: pointer;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .top-row {
+    height: 57px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .poker-pair {
+    flex: 0 0 auto;
+    height: 57px;
+    gap: 8px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .poker-card {
+    width: 37px;
+    height: 57px;
+    margin: 0;
+    border-radius: 5px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .poker-card__rank {
+    top: 3px;
+    left: 3px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .poker-card__suit-sm {
+    top: 4px;
+    right: 3px;
+    width: 14px;
+    height: 14px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .poker-card__suit-lg {
+    bottom: 6px;
+    left: 3px;
+    width: 25px;
+    height: 25px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .top-row .title {
+    min-width: 0;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .top-row .title b {
+    font-size: 19px;
+    font-weight: 800;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .line {
+    width: 100%;
+    height: 1px;
+    margin: 10px 0;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .bottom-row {
+    height: 42px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .bottom-row .meta {
+    padding: 0;
+    font-size: 15px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .bottom-info {
+    height: 19px;
+    margin-top: 5px;
+    gap: 5px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .bottom-info .icon-sb,
+  html[data-main-layout='content'] .hand-collection-page .profit-hands .icon-sb {
+    width: 17px;
+    height: 17px;
+    margin: 0;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .bottom-info span {
+    margin: 0;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .bottom-info span:nth-of-type(2) {
+    margin-left: 15px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .profit {
+    font-size: 15px;
+    line-height: 19px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .profit .money {
+    font-size: 22px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .profit-hands {
+    height: 19px;
+    margin-top: 2px;
+    gap: 5px;
+    align-items: center;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .profit-hands span {
+    margin: 0;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .list-status {
+    margin: 0;
+    padding: 12px 0;
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  html[data-main-layout='content'] .hand-collection-page .list-sentinel {
+    height: 2px;
+  }
+
+  // 战绩数据页（Figma 11222:25617 / 25737 / 25789 / 25985 / 25887）。
+  // 数据页沿用内容页统一的桌面布局标记，避免在不支持 :has() 的运行环境中回落到移动尺寸。
+  html[data-main-layout='content'] {
+    --content-stage-width: min(100%, 1440px);
+    --content-stage-height: min(var(--app-full-height, 100dvh), 1024px);
+    --app-max-width: 1440px;
+    --app-side-padding: 0px;
+    --app-top-padding: 0px;
+
+    font-size: 40px !important;
+  }
+
+  html[data-main-layout='content'] .main-layout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+  }
+
+  html[data-main-layout='content'] .main-layout-content {
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .module-slot {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+
+  html[data-main-layout='content'] .bottom-tab {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .club-data-page {
+    --club-data-gutter: clamp(24px, 2.7083vw, 39px);
+    --club-data-content-width: min(calc(100% - var(--club-data-gutter) * 2), 1362px);
+    --club-data-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .club-data-page > .page-back-header,
+  html[data-main-layout='content'] .club-data-page > .content-wrap {
+    position: absolute;
+    right: 0;
+    left: 0;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .club-data-page > .page-back-header {
+    top: var(--club-data-stage-top);
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 113px;
+    min-height: 113px;
+    padding: 45px var(--club-data-gutter) 20px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-data-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .page-back-header .title {
+    overflow: hidden;
+    max-width: min(55vw, 780px);
+    font-size: 29px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .club-data-page > .content-wrap {
+    top: calc(var(--club-data-stage-top) + 113px);
+    z-index: 1;
+    width: var(--club-data-content-width);
+    height: calc(var(--content-stage-height) - 113px);
+    min-height: 0;
+    padding: 0 0 28px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .club-data-page > .content-wrap::-webkit-scrollbar {
+    display: none;
+  }
+
+  // 顶部四个主 Tab：按钮占满各自列并向上下扩展热区，下划线保持文字宽度。
+  html[data-main-layout='content'] .club-data-page .main-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: center;
+    width: 100%;
+    height: 31px;
+    margin: 0;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-data-page .main-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 49px;
+    margin: -9px 0;
+    padding: 9px 0;
+    border-bottom: 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 31px;
+    text-decoration-color: transparent;
+    text-decoration-line: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 7px;
+    white-space: nowrap;
+  }
+
+  html[data-theme='light'][data-main-layout='content'] .club-data-page .main-tab {
+    color: rgba(0, 0, 0, 0.7);
+  }
+
+  html[data-main-layout='content'] .club-data-page .main-tab:first-child {
+    justify-content: flex-start;
+    padding-left: 35px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .main-tab:last-child {
+    justify-content: flex-end;
+    padding-right: 35px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .main-tab.active {
+    color: #fff;
+    font-weight: 600;
+    text-decoration-color: currentColor;
+  }
+
+  html[data-theme='light'][data-main-layout='content'] .club-data-page .main-tab.active {
+    color: var(--c-brand);
+  }
+
+  // 个人、对手共用的三级筛选栏。
+  html[data-main-layout='content'] .club-data-page .sub-tab-wrap {
+    width: 100%;
+    height: 61px;
+    margin: 20px 0 0;
+  }
+
+  html[data-main-layout='content'] .club-data-page .sub-tab-wrap .filter-tabbar {
+    width: 100%;
+    height: 61px;
+    margin: 0;
+    gap: 3px;
+    border-radius: 34px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .sub-tab-wrap .filter-tab__item {
+    height: 61px;
+    padding: 0;
+    border-width: 1px;
+    border-radius: 63px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .sub-tab-wrap .inner-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  html[data-main-layout='content'] .club-data-page .sub-tab-wrap .filter-tab__text {
+    font-size: 18px;
+    line-height: 1.1;
+  }
+
+  html[data-theme='light'][data-main-layout='content']
+    .club-data-page
+    .sub-tab-wrap
+    .filter-tab__item--active {
+    border-color: #fff;
+    background: #fff;
+  }
+
+  // 个人。
+  html[data-main-layout='content'] .club-data-page .ring-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 89px);
+    grid-template-rows: repeat(2, 89px);
+    justify-content: center;
+    width: 397px;
+    height: 197px;
+    margin: 20px auto 0;
+    gap: 19px 65px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .ring-card {
+    width: 89px;
+    height: 89px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .ring-donut {
+    width: 89px !important;
+    height: 89px !important;
+    box-shadow:
+      0 3px 8px rgba(0, 0, 0, 0.2),
+      inset 0.2px 0.2px 0 rgba(255, 255, 255, 0.85);
+  }
+
+  html[data-main-layout='content'] .club-data-page .ring-inner {
+    width: 53px;
+    height: 53px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .ring-value {
+    font-size: 12px;
+    line-height: 1.1;
+  }
+
+  html[data-main-layout='content'] .club-data-page .ring-label {
+    margin-top: 2px;
+    font-size: 6px;
+    line-height: 1.1;
+  }
+
+  html[data-main-layout='content'] .club-data-page .title-pill {
+    box-sizing: border-box;
+    width: 100%;
+    height: 63px;
+    margin: 20px 0 0;
+    padding: 18px 26px 6px;
+    border-width: 1px;
+    border-radius: 48px;
+    font-size: 18px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .club-data-page .data-icon {
+    width: 27px;
+    height: 27px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .biggest-card {
+    box-sizing: border-box;
+    width: 100%;
+    height: 154px;
+    margin: 20px 0 0;
+    padding: 18px 26px 7px;
+    border-width: 1px;
+    border-radius: 48px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .biggest-title {
+    font-size: 17px;
+    line-height: 20px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .card-row {
+    height: 69px;
+    margin-top: 28px;
+    gap: 6px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .biggest-card .poker-card,
+  html[data-main-layout='content'] .club-data-page .card-back {
+    width: 46px;
+    height: 69px;
+    border-radius: 6px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .biggest-card .poker-card__rank {
+    top: 3px;
+    left: 3px;
+    font-size: 18px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .biggest-card .poker-card__suit-sm {
+    top: 4px;
+    right: 4px;
+    width: 17px;
+    height: 17px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .biggest-card .poker-card__suit-lg {
+    bottom: 7px;
+    left: 3px;
+    width: 30px;
+    height: 30px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .empty-wrap {
+    height: calc(var(--content-stage-height) - 286px);
+    min-height: 260px;
+    margin: 0;
+    justify-content: center;
+  }
+
+  html[data-main-layout='content'] .club-data-page .empty-icon {
+    width: 47px;
+    height: 59px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .empty-text {
+    margin-top: 9px;
+    font-size: 15px;
+    line-height: 1.2;
+  }
+
+  // 对手：标题、排序与有/无数据状态共用同一纵向节奏。
+  html[data-main-layout='content'] .club-data-page .title-row {
+    width: 100%;
+    height: 31px;
+    margin: 20px 0 0;
+  }
+
+  html[data-main-layout='content'] .club-data-page .title-text {
+    font-size: 19px;
+    line-height: 24px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .sort-btn {
+    height: 31px;
+    padding: 0 17px;
+    gap: 7px;
+    border-radius: 23px;
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .club-data-page .sort-arrow {
+    width: 18px;
+    height: 18px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .opponent-table-wrap,
+  html[data-main-layout='content'] .club-data-page .deck-table-wrap {
+    box-sizing: border-box;
+    width: 100%;
+    height: 502px;
+    margin: 20px 0 0;
+    padding: 22px 26px 16px;
+    border-width: 1px;
+    border-radius: 30px;
+    font-size: 13px;
+    backdrop-filter: none;
+  }
+
+  html[data-main-layout='content'] .club-data-page .game-table {
+    height: 100%;
+  }
+
+  html[data-main-layout='content'] .club-data-page .game-table__header {
+    flex: 0 0 51px;
+    height: 51px;
+    margin: 0 0 16px;
+    padding: 0;
+    border-radius: 35px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .game-table__header-inner {
+    height: 51px;
+    border-radius: 35px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .game-table__header-cell {
+    min-height: 51px;
+    padding: 0 10px;
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .game-table__header-label,
+  html[data-main-layout='content'] .club-data-page .game-table__cell,
+  html[data-main-layout='content'] .club-data-page .game-table__cell-text {
+    font-size: 13px !important;
+  }
+
+  html[data-main-layout='content'] .club-data-page .game-table__sort-icon {
+    font-size: 9px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .game-table__body {
+    flex: 1 1 auto;
+    height: auto !important;
+    min-height: 0;
+    padding: 0;
+    gap: 0;
+  }
+
+  html[data-main-layout='content'] .club-data-page .game-table__row {
+    min-height: 64px;
+    border-bottom-width: 1px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .game-table__cell {
+    min-height: 64px;
+    padding: 7px 10px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .game-table__status {
+    min-height: 24px;
+    padding: 6px 0;
+  }
+
+  html[data-main-layout='content'] .club-data-page .player-cell {
+    gap: 1px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .avatar {
+    width: 40px;
+    height: 40px;
+    border-width: 1px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .name {
+    font-size: 13px;
+    line-height: 15px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .opponent-table-wrap:has(.table-empty),
+  html[data-main-layout='content'] .club-data-page .deck-table-wrap:has(.table-empty) {
+    height: calc(var(--content-stage-height) - 276px);
+    min-height: 320px;
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
+    backdrop-filter: none;
+    overflow: visible;
+  }
+
+  html[data-main-layout='content']
+    .club-data-page
+    .opponent-table-wrap:has(.table-empty)
+    .game-table,
+  html[data-main-layout='content'] .club-data-page .deck-table-wrap:has(.table-empty) .game-table {
+    visibility: hidden;
+  }
+
+  html[data-main-layout='content'] .club-data-page .table-empty {
+    top: 0;
+    bottom: 0;
+    flex-direction: column;
+    gap: 9px;
+    font-size: 15px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .club-data-page .table-empty::before {
+    width: 47px;
+    height: 59px;
+    flex: 0 0 auto;
+    background: currentColor;
+    -webkit-mask: url('@/assets/icons/ic_no_data.svg') center / contain no-repeat;
+    mask: url('@/assets/icons/ic_no_data.svg') center / contain no-repeat;
+    content: '';
+  }
+
+  html[data-theme='light'][data-main-layout='content'] .club-data-page .table-empty {
+    color: var(--c-brand);
+  }
+
+  // 全下。
+  html[data-main-layout='content'] .club-data-page .allin-summary-card {
+    box-sizing: border-box;
+    width: 100%;
+    height: 354px;
+    margin: 20px 0 0;
+    padding: 22px 26px;
+    border-width: 1px;
+    border-radius: 30px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .allin-mode-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(2, 35px);
+    height: 86px;
+    gap: 16px 11px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .mode-chip {
+    min-height: 35px;
+    height: 35px;
+    padding: 0;
+    border-radius: 52px;
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .club-data-page .allin-summary-card .section-title {
+    height: 27px;
+    margin-top: 16px;
+    font-size: 15px;
+    line-height: 1.1;
+  }
+
+  html[data-main-layout='content'] .club-data-page .summary-list {
+    display: grid;
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+    height: 164px;
+    margin-top: 16px;
+    padding: 8px 0;
+  }
+
+  html[data-main-layout='content'] .club-data-page .summary-row {
+    min-height: 0;
+    font-size: 15px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .club-data-page .radar-card {
+    box-sizing: border-box;
+    width: 100%;
+    height: 418px;
+    margin: 20px 0 0;
+    padding: 22px 26px 20px;
+    border-width: 1px;
+    border-radius: 30px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .radar-card .section-title {
+    height: 27px;
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.1;
+  }
+
+  html[data-main-layout='content'] .club-data-page .allin-radar-wrap {
+    height: 337px;
+    margin-top: 12px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .radar-badge {
+    box-sizing: border-box;
+    min-height: 59px;
+    height: 59px;
+    padding: 8px 12px;
+    border-width: 2px;
+    border-radius: 17px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .badge-label {
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .badge-rate {
+    margin-top: 4px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .radar-badge-top {
+    top: 2px;
+    min-width: 69px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .radar-badge-left {
+    top: 128px;
+    left: calc(50% - 151px);
+    min-width: 81px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .radar-badge-right {
+    top: 128px;
+    right: calc(50% - 151px);
+    min-width: 100px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .radar-badge-bottom {
+    bottom: 0;
+    min-width: 87px;
+  }
+
+  // 牌桌：复用现有四项模式与表格，仅将其适配到桌面设计的筛选栏和内容卡。
+  html[data-main-layout='content'] .club-data-page .deck-tabs-card {
+    box-sizing: border-box;
+    width: 100%;
+    height: 61px;
+    margin: 20px 0 0;
+    padding: 0;
+    border-width: 0;
+    border-radius: 34px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: none;
+  }
+
+  html[data-theme='light'][data-main-layout='content'] .club-data-page .deck-tabs-card {
+    background: #e3e3e3;
+  }
+
+  html[data-main-layout='content'] .club-data-page .deck-tab-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: center;
+    width: 100%;
+    height: 61px;
+    gap: 3px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .deck-mode-chip {
+    width: 100%;
+    height: 61px;
+    border: 1px solid transparent;
+    border-radius: 63px;
+    background: transparent;
+    font-size: 18px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .deck-mode-chip.active {
+    border-color: #fff;
+    background: rgba(255, 255, 255, 0.17);
+  }
+
+  html[data-theme='light'][data-main-layout='content'] .club-data-page .deck-mode-chip.active {
+    border-color: #fff;
+    color: var(--c-text);
+    background: #fff;
+  }
+
+  html[data-main-layout='content'] .club-data-page .deck-title {
+    height: 31px;
+    margin-top: 20px;
+    font-size: 19px;
+    line-height: 31px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .deck-table-wrap {
+    margin-top: 20px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .deck-hand-cell {
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .deck-hand-cell .poker-card {
+    width: 29px;
+    height: 43px;
+    border-radius: 4px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .deck-hand-cell .poker-card__rank {
+    top: 2px;
+    left: 2px;
+    font-size: 11px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .deck-hand-cell .poker-card__suit-sm {
+    top: 2px;
+    right: 2px;
+    width: 11px;
+    height: 11px;
+  }
+
+  html[data-main-layout='content'] .club-data-page .deck-hand-cell .poker-card__suit-lg {
+    bottom: 4px;
+    left: 2px;
+    width: 19px;
+    height: 19px;
+  }
+
+}

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import bannerBgUrl from '@/assets/images/card_bg3.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
@@ -9,25 +9,45 @@ import iconChips from '@/assets/icons/icon_chip_red.png'
 import icIncome from '@/assets/icons/wallet/ic_income.svg'
 import icOutcome from '@/assets/icons/wallet/ic_outcome.svg'
 import icTime from '@/assets/icons/wallet/ic_time.svg'
-import { postUserGoldChangeLogApi } from '@/api/user'
+import { postUserBillApi } from '@/api/user'
+import { postClubUserWalletApi } from '@/api/org'
 
-import type { UserGoldChangeLogRecord } from '@/api/models/user'
+import type { UserBillWallet } from '@/api/models/user'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { resolveOpCodeText, resolveBillOpCodeText } from '@/utils/transText'
+import { formatDateTime } from '@/utils/time'
 import { getLocale, t } from '@/i18n'
 import {
   multiLanguageTemplateVersion,
   resolveTemplateTextByKey,
 } from '@/utils/multiLanguageTemplate'
 
+const UC_BILL_TAB = 1
+
 const userInfoStore = useUserInfoStore()
 const router = useRouter()
+const route = useRoute()
 const userInfo = computed(() => userInfoStore.userInfo?.user)
 
-const logs = ref<UserGoldChangeLogRecord[]>([])
+const logs = ref<UserBillWallet[]>([])
+const clubGold = ref<number | null>(null)
 
-function formatAmount(record: UserGoldChangeLogRecord): string {
+const walletClubId = computed(() => {
+  const raw = Array.isArray(route.query.clubId) ? route.query.clubId[0] : route.query.clubId
+  const fromQuery = Number(raw)
+  if (Number.isFinite(fromQuery) && fromQuery > 0) {
+    return fromQuery
+  }
+  const fallback = Number(
+    userInfoStore.currentClub?.club_id ?? userInfoStore.clubList[0]?.club_id ?? 0,
+  )
+  return Number.isFinite(fallback) && fallback > 0 ? fallback : 0
+})
+
+const balanceText = computed(() => formatUC(clubGold.value ?? Number(userInfo.value?.gold ?? 0)))
+
+function formatAmount(record: UserBillWallet): string {
   const val = record.gold_change ?? 0
   const abs = Math.abs(val / 100).toLocaleString()
   return val >= 0 ? `+${abs}` : `-${abs}`
@@ -40,17 +60,33 @@ function formatBalance(val?: number): string {
 
 function formatTime(raw?: string): string {
   if (!raw) return '-'
-  return raw.replace('T', ' ').slice(11, 16)
+  return formatDateTime(raw, 'HH:mm')
 }
 
-function getOpLabel(code?: string): string {
+function getOpLabel(record: UserBillWallet): string {
+  const code = String(record.op_code || '').trim()
   if (!code) return '-'
-  const text = resolveOpCodeText(code)
+  const billText = resolveBillOpCodeText(
+    {
+      opCode: code,
+      goldType: record.gold_type,
+      srcType: record.src_type,
+      roomName: String(record.name || ''),
+      roomInfo: {
+        originType: record.room_info?.origin_type,
+        shareTable: record.room_info?.share_table,
+        gameType: record.room_info?.game_type as number | undefined,
+        pokerType: record.room_info?.poker_type,
+      },
+    },
+    UC_BILL_TAB,
+  )
+  const text = billText || resolveOpCodeText(code)
   const label = text && text !== `OpCodeString_${code}` ? text : code
   return label.replace(/\bUC\b/g, '联盟币')
 }
 
-function isMttRecord(record: UserGoldChangeLogRecord): boolean {
+function isMttRecord(record: UserBillWallet): boolean {
   if (Number(record.src_type || 0) === 2) return true
   if (Number(record.src_match_id || 0) > 0) return true
   if (String(record.match_tribe_name || '').trim()) return true
@@ -59,7 +95,7 @@ function isMttRecord(record: UserGoldChangeLogRecord): boolean {
   return opCode.includes('MTT') || opCode.includes('SNG')
 }
 
-function formatRecordName(record: UserGoldChangeLogRecord): string {
+function formatRecordName(record: UserBillWallet): string {
   void multiLanguageTemplateVersion.value
   const rawName = String(record.name || '').trim()
   if (!rawName) return '-'
@@ -71,9 +107,42 @@ function goGiftUc(): void {
   void router.push('/wallet/gift-uc')
 }
 
-onMounted(async () => {
-  const res = await postUserGoldChangeLogApi({ limit: 20, offset: 0 })
-  logs.value = res.data?.list ?? []
+async function fetchLogs(): Promise<void> {
+  const res = await postUserBillApi({
+    club_id: walletClubId.value,
+    gold_type: 1,
+    origin_type: 0,
+    limit: 20,
+    offset: 0,
+    order_type: 2,
+  })
+  logs.value = res.code === 0 ? (res.data?.list ?? []) : []
+}
+
+async function fetchClubBalance(): Promise<void> {
+  const clubId = walletClubId.value
+  if (!clubId) {
+    clubGold.value = null
+    return
+  }
+  try {
+    const res = await postClubUserWalletApi({ club_id: clubId })
+    if (res.code === 0 && res.data) {
+      const data = res.data as Record<string, unknown>
+      const raw = data.user_gold ?? data.gold ?? data.golds ?? data.balance ?? 0
+      clubGold.value = Number(raw) || 0
+    } else {
+      clubGold.value = null
+    }
+  } catch (error) {
+    console.error('Failed to fetch club balance', error)
+    clubGold.value = null
+  }
+}
+
+onMounted(() => {
+  void fetchLogs()
+  void fetchClubBalance()
 })
 </script>
 
@@ -111,7 +180,7 @@ onMounted(async () => {
 
             <div class="balance-section">
               <span class="balance-label">Balance:</span>
-              <span class="balance-value">{{ formatUC(userInfo?.gold as number) ?? 0 }}</span>
+              <span class="balance-value">{{ balanceText }}</span>
               <img :src="iconChips" alt="chips" class="chip-icon" />
             </div>
           </div>
@@ -138,7 +207,7 @@ onMounted(async () => {
                 />
               </div>
               <div class="info">
-                <div :class="['category-badge', (item.gold_change ?? 0) >= 0 ? 'category-badge--in' : 'category-badge--out']">{{ getOpLabel(item.op_code) }}</div>
+                <div :class="['category-badge', (item.gold_change ?? 0) >= 0 ? 'category-badge--in' : 'category-badge--out']">{{ getOpLabel(item) }}</div>
                 <div class="title-row">
                   <span class="title">{{ formatRecordName(item) }}</span>
                   <div v-if="item.src_random_id" class="id-row">

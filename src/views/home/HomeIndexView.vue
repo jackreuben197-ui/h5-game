@@ -466,13 +466,13 @@ const currentJoinedClub = computed(() => userInfoStore.currentJoinedClub)
 const channelUserLevel = computed(() => toSafeInt(currentJoinedClub.value?.user_level))
 const canCreateChannelTable = computed(
   () =>
-    isChannelPackage &&
+    isChannelPackage.value &&
     Boolean(gameStore.sessionToken && currentJoinedClub.value) &&
     channelUserLevel.value >= 1 &&
     channelUserLevel.value <= 3,
 )
 const canManageChannelClub = computed(
-  () => isChannelPackage && Boolean(gameStore.sessionToken && currentJoinedClub.value),
+  () => isChannelPackage.value && Boolean(gameStore.sessionToken && currentJoinedClub.value),
 )
 const showChannelFloatingActions = computed(
   () => canCreateChannelTable.value || canManageChannelClub.value,
@@ -510,7 +510,7 @@ function goToMttList(): void {
 }
 function goToCasino(): void {
   // 渠道包只有一个俱乐部：娱乐场（含小游戏）按俱乐部维度取数，跟随后台的俱乐部开关。
-  if (isChannelPackage && channelCasinoClubId.value > 0) {
+  if (isChannelPackage.value && channelCasinoClubId.value > 0) {
     void router.push({ path: '/casino', query: { clubId: String(channelCasinoClubId.value) } })
     return
   }

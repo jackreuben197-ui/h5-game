@@ -183,6 +183,9 @@ export const useWalletStore = defineStore('wallet', () => {
           const isCsPayId = goldPriceData.value?.pay_types?.some(
             (pt) => pt.id != null && pt.id === payId && pt.type === 3,
           )
+          if ((!payId || payId === 0) && ot !== 3 && !o.pay_type_name?.includes('撮合')) {
+            return false
+          }
           return (
             ot === 3 ||
             isCsPayId ||

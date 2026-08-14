@@ -157,6 +157,20 @@ function formatAmount(value: number, withSign = false): string {
   return value > 0 ? `+${formatUC(value)}` : formatUC(value)
 }
 
+function getFontSizeStyle(value: string | number) {
+  const str = String(value)
+  const len = str.length
+  // 5 digits fit well at 0.53rem without overlapping
+  if (len > 5) {
+    const scale = 5 / len
+    return { 
+      transform: `scale(${scale})`,
+      transformOrigin: 'center center'
+    }
+  }
+  return {}
+}
+
 // 实际战绩以带出减带入计算。接口的 finally_game_results 当前返回的是带出金额，
 // 不能直接作为玩家的盈亏战绩展示。
 function getActualGameResult(user: Record<string, unknown>): number {
@@ -417,7 +431,7 @@ onMounted(() => {
           <div class="summary-grid">
             <div v-for="item in summaryItems" :key="item.label" class="summary-item">
               <span class="label">{{ item.label }}</span>
-              <span class="value">{{ item.value }}</span>
+              <span class="value" :style="getFontSizeStyle(item.value)">{{ item.value }}</span>
             </div>
           </div>
         </div>
@@ -671,19 +685,23 @@ onMounted(() => {
 }
 
 .summary-item {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
 
   .label {
     font-size: 0.31rem;
     line-height: 1.4;
     color: rgba(255, 255, 255, 0.72);
+    white-space: nowrap;
   }
 
   .value {
-    display: block;
     font-size: 0.53rem;
     line-height: 1.1;
     font-weight: 600;
+    white-space: nowrap;
   }
 }
 

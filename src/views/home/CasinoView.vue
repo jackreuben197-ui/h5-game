@@ -1121,6 +1121,22 @@ onActivated(async () => {
           </div>
         </div>
         <div class="game-card-grid-wrapper">
+          <button
+            v-if="block.key === 'hot-slot' && selectedCategory === 'hot'"
+            class="expand-btn-absolute"
+            type="button"
+            @click="toggleBlockExpand(block.key)"
+          >
+            <img :src="sideYellowBtn" alt="全部游戏" class="expand-btn-img" />
+          </button>
+          <button
+            v-if="block.key === 'hot-fish' && selectedCategory === 'hot'"
+            class="expand-btn-absolute"
+            type="button"
+            @click="toggleBlockExpand(block.key)"
+          >
+            <img :src="sideBlueBtn" alt="全部游戏" class="expand-btn-img" />
+          </button>
           <div
             class="game-card-grid"
             :class="{ wide: block.layout === 'wide' }"
@@ -1554,7 +1570,7 @@ onActivated(async () => {
 
 .expand-btn-absolute {
   position: absolute;
-  right: -30px;
+  right: -12px;
   top: 0;
   height: 100%;
   display: flex;
@@ -1766,7 +1782,7 @@ onActivated(async () => {
     font-size: 0.68rem;
   }
   .expand-btn-absolute {
-    right: -20px;
+    right: -8px;
   }
 }
 </style>

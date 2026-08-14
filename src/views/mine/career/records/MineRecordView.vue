@@ -980,7 +980,7 @@ onBeforeUnmount(() => {
   }
 
   .metric-label,
-  .detail-item .label,
+  .detail-cell .label,
   .profit-box .profit-title {
     color: rgba(15, 8, 8, 0.6);
   }
@@ -999,7 +999,7 @@ onBeforeUnmount(() => {
       background: rgba(0, 0, 0, 0.25);
     }
 
-    .date-icon {
+    .tx__time-icon {
       color: rgba(15, 8, 8, 0.85);
     }
   }

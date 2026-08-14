@@ -521,9 +521,15 @@ async function onSecondaryAction(): Promise<void> {
   color: #f9f9f9;
   font-family: 'HONOR Sans CN', 'PingFang SC', sans-serif;
   box-sizing: border-box;
-  border: 0.96px solid rgba(242, 242, 242, 0.04);
-  border-radius: clamp(28px, 10vw, 36.4px);
+  border: 0.956px solid rgba(242, 242, 242, 0.04);
+  border-radius: 0.485rem;
   overflow: hidden;
+  box-shadow:
+    inset 2.12px 4.24px 17.23px rgba(242, 242, 242, 0.1),
+    inset 0.5px 0.5px 0px 0px rgba(255, 255, 255, 0.45),
+    inset 2px 2px 0px -2px rgba(255, 255, 255, 0.3),
+    inset -0.5px -0.5px 0px 0px rgba(255, 255, 255, 0.45),
+    inset -2px -2px 0px -2px rgba(255, 255, 255, 0.3);
 
   &::after {
     content: '';
@@ -531,38 +537,11 @@ async function onSecondaryAction(): Promise<void> {
     inset: 0;
     border-radius: inherit;
     background: rgba(135, 134, 134, 0.032);
-    box-shadow:
-      0.0919rem 0.1149rem 0.1838rem rgba(0, 0, 0, 0.25),
-      0 0 0.2298rem #000 inset,
-      0.0566rem 0.1132rem 0.4596rem rgba(242, 242, 242, 0.7) inset;
+    box-shadow: 0 0 0.2298rem #000 inset;
     backdrop-filter: blur(0.58px);
     -webkit-backdrop-filter: blur(0.58px);
     pointer-events: none;
     z-index: 0;
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 0.0255rem;
-    background: linear-gradient(
-      180deg,
-      rgba(242, 242, 242, 0.4) 0%,
-      rgba(255, 255, 255, 0) 50%,
-      rgba(255, 255, 255, 0.5) 100%
-    );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-    z-index: 1;
   }
 }
 

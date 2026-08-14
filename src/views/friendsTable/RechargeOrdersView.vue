@@ -8,6 +8,7 @@ import { t } from '@/i18n'
 import { postClubFundOrderListApi, postClubPlayerOrderRecordApi } from '@/api/order'
 import type { ClubFundOrderListOrderInfo, ClubPlayerOrderRecordOrderInfo } from '@/api/models/order'
 import { useWalletStore } from '@/stores/wallet'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
 
 const walletStore = useWalletStore()
 
@@ -66,7 +67,7 @@ async function loadOrders(): Promise<void> {
     const limit = 20
     const offset = 0
     const tribeDirect = walletStore.goldPriceData?.from_tribe === true
-    if (tribeDirect) {
+    if (tribeDirect || isPrivateDomainMode()) {
       const clubRes = await postClubFundOrderListApi({
         my_order: true,
         order_type,

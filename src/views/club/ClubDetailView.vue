@@ -1208,6 +1208,7 @@ onMounted(async () => {
             v-if="inviteShareImage"
             class="invite-share-save-target"
             data-invite-export-ignore
+            data-allow-native-menu="true"
             :src="inviteShareImage"
             :alt="t('UIClub_Text102')"
           />

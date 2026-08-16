@@ -83,6 +83,11 @@ function setupNativeMenuGuard(): () => void {
       return
     }
 
+    // 分享图片需要使用浏览器原生长按菜单保存到相册。
+    if (target.closest('[data-allow-native-menu="true"]')) {
+      return
+    }
+
     // 在可编辑区域保留系统菜单，避免输入能力受影响。
     const editable = target.closest(
       'input, textarea, [contenteditable="true"], [contenteditable=""]',

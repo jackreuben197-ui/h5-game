@@ -836,22 +836,25 @@ async function uploadInviteShareImage(fileName: string): Promise<string> {
 
 async function requestTelegramInviteDownload(fileName: string): Promise<void> {
   const webApp = window.Telegram?.WebApp
-  if (!webApp || typeof webApp.downloadFile !== 'function') {
+  if (
+    !webApp ||
+    typeof webApp.downloadFile !== 'function' ||
+    typeof webApp.isVersionAtLeast !== 'function' ||
+    !webApp.isVersionAtLeast('8.0')
+  ) {
     throw new Error(t('UIClub_SaveFail2'))
   }
-  const downloadFile = webApp.downloadFile.bind(webApp)
 
   const url = await uploadInviteShareImage(fileName)
+  const downloadFile = webApp.downloadFile.bind(webApp)
+
   await new Promise<void>((resolve, reject) => {
-    const timeout = window.setTimeout(resolve, 30000)
     try {
       downloadFile({ url, file_name: fileName }, (accepted) => {
-        window.clearTimeout(timeout)
         if (accepted) showSuccessToast(t('UIClub_DoneSave'))
         resolve()
       })
     } catch (error) {
-      window.clearTimeout(timeout)
       reject(error)
     }
   })

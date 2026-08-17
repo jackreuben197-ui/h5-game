@@ -57,6 +57,7 @@ declare global {
         colorScheme?: 'light' | 'dark'
         ready?: () => void
         expand?: () => void
+        isVersionAtLeast?: (version: string) => boolean
         downloadFile?: (
           params: { url: string; file_name: string },
           callback?: (accepted: boolean) => void,

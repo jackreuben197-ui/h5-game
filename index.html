@@ -24,6 +24,22 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icon.png" />
 
+    <!-- Telegram SDK 必须在业务脚本前读取原始启动参数；普通浏览器不加载，避免阻塞首屏。 -->
+    <script>
+      ;(function () {
+        if (window.Telegram && window.Telegram.WebApp) {
+          return
+        }
+
+        var locationText = String(window.location.search || '') + String(window.location.hash || '')
+        if (!/(?:[?#&]|^)tgWebAppData=/.test(locationText)) {
+          return
+        }
+
+        document.write('<script src="https://telegram.org/js/telegram-web-app.js?63"><\/script>')
+      })()
+    </script>
+
     <!-- 主题首帧防闪烁：在样式生效前设好 html[data-theme]，
          正式逻辑（持久化/系统主题监听/meta 同步）由 src/utils/theme.ts 接管，
          默认值与 utils/theme.ts 的 DEFAULT_THEME_MODE 保持同步 -->
@@ -1238,47 +1254,11 @@
           return !!(window.Telegram && window.Telegram.WebApp)
         }
 
-        function loadTelegramWebAppSdk() {
-          if (!window.__H5_TG_MINI_APP__) {
-            return
-          }
-          if (hasTelegramWebApp()) {
-            initTelegramWebApp()
-            return
-          }
-          if (window.__H5_TG_SDK_LOADING__) {
-            return
-          }
-
-          window.__H5_TG_SDK_LOADING__ = true
-          var script = document.createElement('script')
-          script.id = 'telegram-web-app-sdk'
-          script.src = 'https://telegram.org/js/telegram-web-app.js'
-          script.async = true
-          script.crossOrigin = 'anonymous'
-          script.referrerPolicy = 'no-referrer'
-          script.onload = function () {
-            window.__H5_TG_SDK_LOADING__ = false
-            initTelegramWebApp()
-          }
-          script.onerror = function () {
-            window.__H5_TG_SDK_LOADING__ = false
-            console.warn('[telegram] sdk load failed, continue without telegram bridge')
-          }
-          document.head.appendChild(script)
-        }
-
         if (hasTelegramWebApp()) {
-          // Telegram 对象已由宿主注入时直接初始化，无需再次请求官方脚本。
+          // SDK 已在 head 中按 Telegram 官方要求优先加载，此处只初始化业务桥接。
           initTelegramWebApp()
         } else if (window.__H5_TG_MINI_APP__) {
-          // Cocos Creator 预览依赖 window.onload 才启动 quick_compile。
-          // 外部 async script 在 load 前插入仍会延迟该事件，因此等页面 load 后再请求 SDK。
-          if (document.readyState === 'complete') {
-            window.setTimeout(loadTelegramWebAppSdk, 0)
-          } else {
-            window.addEventListener('load', loadTelegramWebAppSdk, { once: true })
-          }
+          console.warn('[telegram] sdk load failed, continue without telegram bridge')
         }
         bindCocosViewportResize()
 

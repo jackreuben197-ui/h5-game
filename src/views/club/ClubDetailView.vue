@@ -44,6 +44,8 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'
 import { useInviteShareExport } from '@/composables/useInviteShareExport'
+import { postOssUploadImageApi } from '@/api/oss'
+import { isTelegramMiniAppEnv } from '@/utils/environment'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   '--club-detail-bg-dark': `url(${mainBgUrl})`,
@@ -179,7 +181,11 @@ const searchedTribe = ref<{ randomId: number; name: string; logo: string } | nul
 const clubAvatarUrl = ref('')
 const inviteModalRef = ref<HTMLElement | null>(null)
 const inviteShareImage = ref('')
+const savingInviteShare = ref(false)
 let inviteShareGenerationId = 0
+let telegramInviteShareUrl = ''
+let inviteLongPressTimer: number | null = null
+let inviteTouchStart: { x: number; y: number } | null = null
 const { exporting: generatingInviteShare, generateImage: generateInviteShare } =
   useInviteShareExport({
     target: inviteModalRef,
@@ -764,8 +770,10 @@ async function onClubAvatarUploaded(url: string): Promise<void> {
 }
 
 function closeInvitePopup(): void {
+  clearInviteLongPressTimer()
   inviteShareGenerationId += 1
   inviteShareImage.value = ''
+  telegramInviteShareUrl = ''
   showInvitePopup.value = false
 }
 
@@ -790,16 +798,121 @@ async function prepareInviteShareImage(): Promise<void> {
   }
 }
 
-function downloadInviteShareImage(): void {
+function resolveUploadedImageUrl(raw: unknown): string {
+  if (typeof raw === 'string') return raw.trim()
+  if (!raw || typeof raw !== 'object') return ''
+
+  const data = raw as Record<string, unknown>
+  const candidates = [data.url, data.file_url, data.fileUrl, data.path, data.data]
+  for (const candidate of candidates) {
+    const resolved = resolveUploadedImageUrl(candidate)
+    if (resolved) return resolved
+  }
+  return ''
+}
+
+async function uploadInviteShareImage(fileName: string): Promise<string> {
+  if (telegramInviteShareUrl) return telegramInviteShareUrl
+
+  const response = await fetch(inviteShareImage.value)
+  const blob = await response.blob()
+  const file = new File([blob], fileName, { type: blob.type || 'image/jpeg' })
+  const formData = new FormData()
+  formData.append('file', file, fileName)
+  const uploadResponse = await postOssUploadImageApi(
+    formData as unknown as Parameters<typeof postOssUploadImageApi>[0],
+  )
+  if (uploadResponse.code !== 0) {
+    throw new Error(uploadResponse.message || t('UIClub_SaveFail2'))
+  }
+
+  const uploadedUrl = resolveUploadedImageUrl(uploadResponse.data)
+  if (!uploadedUrl) throw new Error(t('UIClub_SaveFail2'))
+  const absoluteUrl = new URL(uploadedUrl, window.location.href).href
+  if (!absoluteUrl.startsWith('https://')) throw new Error(t('UIClub_SaveFail2'))
+  telegramInviteShareUrl = absoluteUrl
+  return absoluteUrl
+}
+
+async function requestTelegramInviteDownload(fileName: string): Promise<void> {
+  const webApp = window.Telegram?.WebApp
+  if (!webApp || typeof webApp.downloadFile !== 'function') {
+    throw new Error(t('UIClub_SaveFail2'))
+  }
+  const downloadFile = webApp.downloadFile.bind(webApp)
+
+  const url = await uploadInviteShareImage(fileName)
+  await new Promise<void>((resolve, reject) => {
+    const timeout = window.setTimeout(resolve, 30000)
+    try {
+      downloadFile({ url, file_name: fileName }, (accepted) => {
+        window.clearTimeout(timeout)
+        if (accepted) showSuccessToast(t('UIClub_DoneSave'))
+        resolve()
+      })
+    } catch (error) {
+      window.clearTimeout(timeout)
+      reject(error)
+    }
+  })
+}
+
+async function downloadInviteShareImage(): Promise<void> {
   if (!inviteShareImage.value) return
+
+  const fileName = `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`
+  if (isTelegramMiniAppEnv()) {
+    if (savingInviteShare.value) return
+    savingInviteShare.value = true
+    try {
+      await requestTelegramInviteDownload(fileName)
+    } catch (error) {
+      console.error('telegram invite image download failed', error)
+      showFailToast(error instanceof Error ? error.message : t('UIClub_SaveFail2'))
+    } finally {
+      savingInviteShare.value = false
+    }
+    return
+  }
 
   const link = document.createElement('a')
   link.href = inviteShareImage.value
-  link.download = `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`
+  link.download = fileName
   document.body.appendChild(link)
   link.click()
   link.remove()
   showSuccessToast(t('UIClub_DoneSave'))
+}
+
+function clearInviteLongPressTimer(): void {
+  if (inviteLongPressTimer !== null) {
+    window.clearTimeout(inviteLongPressTimer)
+    inviteLongPressTimer = null
+  }
+  inviteTouchStart = null
+}
+
+function onInviteShareTouchStart(event: TouchEvent): void {
+  if (!isTelegramMiniAppEnv() || event.touches.length !== 1) return
+  clearInviteLongPressTimer()
+  const touch = event.touches[0]
+  inviteTouchStart = { x: touch.clientX, y: touch.clientY }
+  inviteLongPressTimer = window.setTimeout(() => {
+    inviteLongPressTimer = null
+    inviteTouchStart = null
+    void downloadInviteShareImage()
+  }, 650)
+}
+
+function onInviteShareTouchMove(event: TouchEvent): void {
+  const touch = event.touches[0]
+  if (!touch || !inviteTouchStart) return
+  if (
+    Math.abs(touch.clientX - inviteTouchStart.x) > 10 ||
+    Math.abs(touch.clientY - inviteTouchStart.y) > 10
+  ) {
+    clearInviteLongPressTimer()
+  }
 }
 
 watch(
@@ -1211,16 +1324,24 @@ onMounted(async () => {
             data-allow-native-menu="true"
             :src="inviteShareImage"
             :alt="t('UIClub_Text102')"
+            @touchstart="onInviteShareTouchStart"
+            @touchmove="onInviteShareTouchMove"
+            @touchend="clearInviteLongPressTimer"
+            @touchcancel="clearInviteLongPressTimer"
           />
         </div>
         <button
           type="button"
           class="modal-primary-btn"
           data-invite-export-ignore
-          :disabled="generatingInviteShare || !inviteShareImage"
+          :disabled="generatingInviteShare || savingInviteShare || !inviteShareImage"
           @click="downloadInviteShareImage"
         >
-          {{ generatingInviteShare ? t('UIClub_Save3') + '...' : t('UIClub_Save4') }}
+          {{
+            generatingInviteShare || savingInviteShare
+              ? t('UIClub_Save3') + '...'
+              : t('UIClub_Save4')
+          }}
         </button>
         <p class="invite-modal__save-tip" data-invite-export-ignore>
           {{ t('UIClub_LongPressSaveToAlbum') }}

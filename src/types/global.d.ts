@@ -57,6 +57,10 @@ declare global {
         colorScheme?: 'light' | 'dark'
         ready?: () => void
         expand?: () => void
+        downloadFile?: (
+          params: { url: string; file_name: string },
+          callback?: (accepted: boolean) => void,
+        ) => void
         onEvent?: (eventType: string, callback: () => void) => void
         offEvent?: (eventType: string, callback: () => void) => void
       }

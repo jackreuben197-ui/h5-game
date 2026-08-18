@@ -7,6 +7,7 @@ import { dzpkPersistStorage } from '@/utils/localStore'
 import {
   CHANNEL_MAIN_DOMAIN,
   copyStorageToMainDomain,
+  extractInviteCodeFromSubdomain,
   resolveInviteCode,
 } from '@/utils/channelPackage'
 
@@ -171,8 +172,10 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
 
       const hostname =
         typeof window === 'undefined' ? '' : window.location.hostname.trim().toLowerCase()
-      const baseUrl = resolveSafariBaseUrl(hostname)
-      const inviteCode = baseUrl ? '' : resolveInviteCode()
+      // 旧渠道域名 xxx.{CHANNEL_MAIN_DOMAIN} 必须继续按邀请码查询，不能当成自定义域名。
+      const channelInviteCode = extractInviteCodeFromSubdomain(hostname)
+      const baseUrl = channelInviteCode ? '' : resolveSafariBaseUrl(hostname)
+      const inviteCode = channelInviteCode || (baseUrl ? '' : resolveInviteCode(hostname))
       const payload = baseUrl
         ? { base_url: baseUrl }
         : inviteCode

@@ -4,8 +4,11 @@ import type { OrgClubSearchInfoData, OrgClubData } from '@/api/models/org'
 import { postOrgClubDefaultApi } from '@/api/org'
 import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
-import { resolveInviteCode } from '@/utils/channelPackage'
-import { copyStorageToMainDomain } from '@/utils/channelPackage'
+import {
+  CHANNEL_MAIN_DOMAIN,
+  copyStorageToMainDomain,
+  resolveInviteCode,
+} from '@/utils/channelPackage'
 
 export type ClubInfo = OrgClubData
 
@@ -19,6 +22,14 @@ interface UserInfoState {
 
 function normalizeClubId(value: unknown): string {
   return value === undefined || value === null ? '' : String(value).trim()
+}
+
+function resolveSafariBaseUrl(hostname: string): string {
+  const normalizedHostname = hostname.trim().toLowerCase()
+  if (!normalizedHostname || normalizedHostname === CHANNEL_MAIN_DOMAIN) {
+    return ''
+  }
+  return normalizedHostname
 }
 
 function toSafeInt(value: unknown): number {
@@ -42,6 +53,9 @@ function normalizeDefaultClub(club: OrgClubSearchInfoData | undefined): ClubInfo
     club_id: clubId,
     club_name: String(club.club_name || ''),
     logo: String(club.logo || ''),
+    safari_icon_url: String(club.safari_icon_url || ''),
+    safari_label: String(club.safari_label || ''),
+    safari_base_url: String(club.safari_base_url || ''),
     banner: String(club.banner || ''),
     random_id: toSafeInt(club.random_id),
     support_im_rid: String(club.support_im_rid || ''),
@@ -155,8 +169,15 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
         return channelDefaultClubInFlight
       }
 
-      const inviteCode = resolveInviteCode()
-      const payload = inviteCode ? { invite_code: inviteCode } : {}
+      const hostname =
+        typeof window === 'undefined' ? '' : window.location.hostname.trim().toLowerCase()
+      const baseUrl = resolveSafariBaseUrl(hostname)
+      const inviteCode = baseUrl ? '' : resolveInviteCode()
+      const payload = baseUrl
+        ? { base_url: baseUrl }
+        : inviteCode
+          ? { invite_code: inviteCode }
+          : {}
 
       channelDefaultClubInFlight = (async () => {
         try {

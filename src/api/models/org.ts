@@ -1177,6 +1177,9 @@ export interface OrgClubSearchInfoData {
   club_id?: number // 俱乐部id
   club_name?: string // 俱乐部名称
   logo?: string // 俱乐部头像
+  safari_icon_url?: string // Safari 添加到主屏幕使用的图标
+  safari_label?: string // Safari 添加到主屏幕使用的名称
+  safari_base_url?: string // 自定义域名（仅 domain，不含协议）
   random_id?: number // 俱乐部随机id
   club_members?: number // 俱乐部成员人数
   user_status?: number // 请求用户状态 1 未申请 2 已申请 3 已加入
@@ -2481,6 +2484,9 @@ export interface OrgClubData {
   club_id?: number
   club_name?: string
   logo?: string
+  safari_icon_url?: string
+  safari_label?: string
+  safari_base_url?: string
   random_id?: number
   upper_limit?: number
   club_members?: number
@@ -2879,6 +2885,7 @@ export interface OrgClubCancleJoinTribeData {
 export interface OrgClubDefaultRequest {
   invite_code?: string // 俱乐部邀请码（优先级高于 random_id）
   random_id?: number // 俱乐部随机id
+  base_url?: string // 自定义域名（仅 domain，不含协议）
   [key: string]: unknown
 }
 export interface OrgClubDefaultResponseData extends OrgClubDefaultData{

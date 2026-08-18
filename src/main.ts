@@ -28,6 +28,8 @@ import { recordDebugEvent } from './utils/debugCapture'
 import { createLogger } from './utils/logger'
 import { clearMainLayout } from './utils/mainLayout'
 import { useGameStore } from './stores/game'
+import { useUserInfoStore } from './stores/userInfo'
+import { applySafariWebAppConfig } from './utils/safariWebApp'
 import {
   cacheAgentInviteCodeIfPresent,
   isChannelPackageHost,
@@ -54,6 +56,13 @@ initTheme()
 cacheAgentInviteCodeIfPresent()
 // 启动时从 URL 恢复可能的存储数据，子域名跳转主域名时使用。
 restoreStorageFromUrl()
+
+// Safari 保存到主屏幕前，按渠道子域名或自定义域名获取俱乐部配置并更新名称、图标。
+// 请求与页面内其他默认俱乐部调用共享 store 中的 in-flight promise，不会重复请求。
+void useUserInfoStore(pinia)
+  .ensureChannelDefaultClub()
+  .then((club) => applySafariWebAppConfig(club))
+  .catch((error) => console.warn('[safariWebApp] load config failed:', error))
 
 if (typeof document !== 'undefined' && isChannelPackageHost()) {
   document.documentElement.setAttribute('data-channel-package', '1')

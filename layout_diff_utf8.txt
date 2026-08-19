@@ -1,0 +1,2280 @@
+﻿diff --git a/src/App.vue b/src/App.vue
+index abbcdb6..1ef618c 100644
+--- a/src/App.vue
++++ b/src/App.vue
+@@ -1,8 +1,5 @@
+ <script setup lang="ts">
+ import { computed, defineAsyncComponent } from 'vue'
+-import GlobalCsOrderFloat from '@/components/GlobalCsOrderFloat/GlobalCsOrderFloat.vue'
+-import TelegramClubJoinModal from '@/components/Dialog/TelegramClubJoinModal.vue'
+-import GameLaunchFallbackModal from '@/components/Dialog/GameLaunchFallbackModal.vue'
+ import { useGameStore } from '@/stores/game'
+ 
+ const gameStore = useGameStore()
+@@ -21,14 +18,10 @@ const GlobalCustomerServiceChat = defineAsyncComponent(
+   <RouterView />
+   <GlobalBridgeDialogHost />
+   <GlobalBridgePanelHost />
+-  <TelegramClubJoinModal />
+-  <GameLaunchFallbackModal />
+   <Teleport v-if="hasSession" to="body">
+     <GlobalMessageTodoNotice />
+   </Teleport>
+   <Teleport v-if="hasSession" to="body">
+     <GlobalCustomerServiceChat />
+   </Teleport>
+-  <GlobalCsOrderFloat />
+ </template>
+-
+diff --git a/src/components/Tabbar/MainBottomTab.vue b/src/components/Tabbar/MainBottomTab.vue
+index 013794e..a5dadc4 100644
+--- a/src/components/Tabbar/MainBottomTab.vue
++++ b/src/components/Tabbar/MainBottomTab.vue
+@@ -5,7 +5,7 @@ import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
+ import { useGameStore } from '@/stores/game'
+ import { useLoginModalStore } from '@/stores/loginModal'
+ import { t } from '@/i18n'
+-import { isPrivateDomainMode } from '@/utils/channelPackage'
++import { isChannelPackageHost } from '@/utils/channelPackage'
+ 
+ type TabIconKey = 'home' | 'club' | 'wallet' | 'friendsTable' | 'message' | 'mine'
+ 
+@@ -19,12 +19,11 @@ interface TabItem {
+   icon: TabIconKey
+ }
+ 
+-const isChannelPackage = computed(() => isPrivateDomainMode())
++const isChannelPackage = isChannelPackageHost()
+ 
+ // σ«ÿµû╣σîàΣ┐¥τòÖ 5 Σ╕¬σàÑσÅú∩╝¢µ╕áΘüôσîàσ░åΣ┐▒Σ╣ÉΘâ¿Φâ╜σè¢σÉêσ╣╢σê░ΘªûΘí╡∩╝îΣ╗àΣ┐¥τòÖ 4 Σ╕¬σàÑσÅúπÇé
+ const tabs = computed<TabItem[]>(() => {
+-  const isChannel = isChannelPackage.value
+-  const middleTab: TabItem = isChannel
++  const middleTab: TabItem = isChannelPackage
+     ? {
+         key: 'wallet',
+         label: t('UIGuildFund_RechargeText'),
+@@ -57,7 +56,7 @@ const tabs = computed<TabItem[]>(() => {
+ 
+   return [
+     homeTab,
+-    ...(!isChannel ? [clubTab] : []),
++    ...(!isChannelPackage ? [clubTab] : []),
+     middleTab,
+     {
+       key: 'message',
+@@ -122,8 +121,8 @@ function easeInOutQuart(t: number): number {
+ function getSvgSize(): { width: number; height: number } {
+   const rect = svgRef.value?.getBoundingClientRect()
+   return {
+-    width: rect?.width && rect.width > 0 ? rect.width : 360,
+-    height: rect?.height && rect.height > 0 ? rect.height : 84,
++    width: rect?.width || 360,
++    height: rect?.height || 84,
+   }
+ }
+ 
+@@ -159,16 +158,14 @@ function buildTabbarPath(bumpCenterX: number): string {
+   const safeLeft = Math.max(cornerRadius, bumpLeft)
+   const safeRight = Math.min(width - cornerRadius, bumpRight)
+ 
+-  // Ensure control points are strictly monotonic to prevent self-intersecting Bezier loops that spill over the screen
+-  const c1x = Math.max(safeLeft, Math.min(clampedCenter, bumpLeft + sideControlOffset))
+-  const c2x = Math.max(c1x, Math.min(clampedCenter, clampedCenter - apexControlOffsetX))
+-  const c3x = Math.max(clampedCenter, Math.min(safeRight, clampedCenter + apexControlOffsetX))
+-  const c4x = Math.max(c3x, Math.min(safeRight, bumpRight - sideControlOffset))
+-
+   let d = `M ${cornerRadius} ${topY}`
+   d += ` L ${safeLeft} ${topY}`
+-  d += ` C ${c1x} ${topY}, ${c2x} ${apexY}, ${clampedCenter} ${apexY}`
+-  d += ` C ${c3x} ${apexY}, ${c4x} ${topY}, ${safeRight} ${topY}`
++  d += ` C ${bumpLeft + sideControlOffset} ${topY}, ${
++    clampedCenter - apexControlOffsetX
++  } ${apexY}, ${clampedCenter} ${apexY}`
++  d += ` C ${clampedCenter + apexControlOffsetX} ${apexY}, ${
++    bumpRight - sideControlOffset
++  } ${topY}, ${safeRight} ${topY}`
+   d += ` L ${width - cornerRadius} ${topY}`
+   d += ` A ${cornerRadius} ${cornerRadius} 0 0 1 ${width} ${topY + cornerRadius}`
+   d += ` L ${width} ${height - cornerRadius}`
+@@ -267,11 +264,12 @@ onBeforeUnmount(() => {
+ </script>
+ 
+ <template>
+-  <nav class="bottom-tab" data-app-overlay :aria-label="t('UITabbar_Text')">
++  <nav class="bottom-tab" :aria-label="t('UITabbar_Text')">
+     <svg
+       ref="svgRef"
+       class="tabbar-svg"
+       xmlns="http://www.w3.org/2000/svg"
++      preserveAspectRatio="none"
+       aria-hidden="true"
+     >
+       <defs>
+@@ -398,46 +396,53 @@ onBeforeUnmount(() => {
+ </template>
+ 
+ <style scoped lang="scss">
++@use '@/styles/mixins' as *;
++
+ .bottom-tab {
+   position: fixed;
+   left: 50%;
+-  bottom: calc(env(safe-area-inset-bottom) + 0.24rem);
++  bottom: calc(env(safe-area-inset-bottom) + 0.58rem);
+   transform: translateX(-50%);
+   z-index: 24;
+   width: 9rem;
+   height: 2.05rem;
+   overflow: visible;
+-  pointer-events: none;
+ }
+ 
+ .tabbar-svg {
+   position: absolute;
+-  left: 0;
+-  right: 0;
+-  bottom: 0;
++  inset: 0;
+   width: 100%;
+-  height: 2.05rem;
++  height: 100%;
+   overflow: visible;
+   pointer-events: none;
+   z-index: 0;
+ }
+ 
+ .tabbar-fill {
+-  fill: var(--tabbar-surface);
++  fill: rgba(253, 253, 253, 0.9);
++
++  @include theme-light {
++    fill: #222;
++  }
+ }
+ 
+ .tabbar-stroke {
+   fill: none;
+-  stroke: var(--tabbar-border);
++  stroke: rgba(0, 0, 0, 0.3);
+   stroke-width: 0.451px;
++
++  @include theme-light {
++    stroke: transparent;
++  }
+ }
+ 
+ .tabbar-fill-stop-start {
+-  stop-color: var(--tabbar-surface);
++  stop-color: var(--bg-new-nav-start, rgba(7, 17, 95, 0.4));
+ }
+ 
+ .tabbar-fill-stop-end {
+-  stop-color: var(--tabbar-surface);
++  stop-color: var(--bg-new-nav-end, rgba(18, 18, 18, 0.12));
+ }
+ 
+ .tabs-row {
+@@ -451,7 +456,6 @@ onBeforeUnmount(() => {
+   display: flex;
+   align-items: flex-end;
+   z-index: 1;
+-  pointer-events: auto;
+ }
+ 
+ .tab-button {
+@@ -466,15 +470,22 @@ onBeforeUnmount(() => {
+   align-items: center;
+   justify-content: flex-start;
+   gap: 0;
+-  color: var(--tabbar-item);
++  color: #7b7b7b;
+   padding: 0rem 0.06rem 0.08rem;
+   border-radius: 0.44rem;
+-  transition: color 0.22s ease;
+   -webkit-tap-highlight-color: transparent;
++
++  @include theme-light {
++    color: #a6a6a6;
++  }
+ }
+ 
+ .tab-button.is-active {
+-  color: var(--tabbar-item-active);
++  color: #000;
++
++  @include theme-light {
++    color: var(--c-brand);
++  }
+ }
+ 
+ .tab-icon {
+@@ -490,7 +501,7 @@ onBeforeUnmount(() => {
+ }
+ 
+ .tab-button.is-active .tab-icon {
+-  transform: scale(0.85);
++  transform: scale(1);
+ }
+ 
+ .tab-icon-svg {
+diff --git a/src/views/home/HomeIndexView.vue b/src/views/home/HomeIndexView.vue
+index 4d84d84..c033d81 100644
+--- a/src/views/home/HomeIndexView.vue
++++ b/src/views/home/HomeIndexView.vue
+@@ -1,114 +1,34 @@
+ <script setup lang="ts">
+ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
+-import iconService1Dark from '@/assets/icons/icon_service_1.svg'
+-import iconService1Light from '@/assets/icons/icon_service_1_light.svg'
+-import iconService2Dark from '@/assets/icons/icon_service_2.svg'
+-import iconService2Light from '@/assets/icons/icon_service_2_light.svg'
+-import iconService3Dark from '@/assets/icons/icon_service_3.svg'
+-import iconService3Light from '@/assets/icons/icon_service_3_light.svg'
+-import clubDetailButtonIconDark from '@/assets/icons/img_club_detail_button.png'
+-import clubDetailButtonIconLight from '@/assets/icons/img_club_detail_button_light.svg'
+-import { theme } from '@/utils/theme'
+ import { useRouter } from 'vue-router'
+ import { getUserClubApi } from '@/api/user'
++import { getCowboyRoomListApi } from '@/api/gc'
+ import type { RoomRecord } from '@/api/models/roomcenter'
+ import StorageKey from '@/constants/storageKey'
+-import { joinCasinoGame, getDeviceType } from '@/api/casino'
+-import { useGameLaunchStore } from '@/stores/gameLaunch'
+-import {
+-  reserveGameWindow,
+-  launchGameUrl,
+-  releaseGameWindow,
+-  beginGameLaunch,
+-  usesTelegramGameLauncher,
+-  type ReservedGameWindow,
+-} from '@/utils/externalGameWindow'
+-import homeHeaderFallback from '@/assets/images/home_header_large.png'
++import { useAppConfigStore } from '@/stores/appConfig'
+ import { useMttListStore } from '@/stores/mttList'
+ import { useRoomListStore } from '@/stores/roomList'
+ import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
+-import { useAppConfigStore } from '@/stores/appConfig'
+-import { t, getLocale, toServerLang } from '@/i18n'
++import { t } from '@/i18n'
+ import { localStore } from '@/utils/localStore'
+ import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
+ import { useHomeAnnouncement } from '@/composables/useHomeAnnouncement'
+ import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
+ import { filterVisibleMttRecords } from '@/utils/mttVisibility'
+ import { showGameToast } from '@/components/Toast'
+-import { useCasinoStore } from '@/stores/casino'
+-import GameClubSelector from '@/components/GameClubSelector.vue'
+-import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
+-import { openBridgePanel } from '@/bridge/channels'
+ import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
++import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
+ import { useGameStore } from '@/stores/game'
+-import { isPrivateDomainMode } from '@/utils/channelPackage'
++import { isChannelPackageHost } from '@/utils/channelPackage'
+ import PokerGameList from '@/views/home/gameList.vue'
+-import CasinoView from '@/views/home/CasinoView.vue'
+-
+-import imgPa from '@/assets/images/minigame-newui/pa.svg'
+-import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
+-import imgFb from '@/assets/images/minigame-newui/fb.svg'
+-import imgCowboy from '@/assets/images/minigame-newui/sg.svg'
+-
+-const isLightTheme = computed(() => theme.value === 'light')
+-const iconService1 = computed(() => (isLightTheme.value ? iconService1Light : iconService1Dark))
+-const iconService2 = computed(() => (isLightTheme.value ? iconService2Light : iconService2Dark))
+-const iconService3 = computed(() => (isLightTheme.value ? iconService3Light : iconService3Dark))
+-const clubDetailButtonIcon = computed(() =>
+-  isLightTheme.value ? clubDetailButtonIconLight : clubDetailButtonIconDark,
+-)
+-
+-const popularBannerGamesStatic = [
+-  {
+-    name: 'PAτ£ƒΣ║║',
+-    svg: imgPa,
+-    gameApiType: 'pa_live',
+-    title: 'τ£ƒΣ║║Φì╖σ«ÿ',
+-    titleEn: 'Live Dealer',
+-    subtitle: ['τ╛ÄσÑ│Φì╖σ«ÿσÅæτëî', 'µ▓ëµ╡╕τ£ƒΣ║║Σ╜ôΘ¬î'],
+-    subtitleEn: ['Real live dealers', 'Immersive experience'],
+-  },
+-  {
+-    name: 'Θ║╗σ░åΦâíΣ║å',
+-    svg: imgMahjong,
+-    gameApiType: 'mahjong',
+-    title: 'Θ║╗σ░åΦâíΣ║å',
+-    titleEn: 'Mahjong Ways',
+-    subtitle: ['τö╡σ¡ÉΘ║╗σ░åτòàτÄ⌐', 'ΦâíτëîΣ╣Éτ┐╗σñ⌐'],
+-    subtitleEn: ['Play video mahjong', 'Big wins await'],
+-  },
+-  {
+-    name: 'FBΣ╜ôΦé▓',
+-    svg: imgFb,
+-    gameApiType: 'fb_sports',
+-    title: 'Σ╜ôΦé▓τ½₧τî£',
+-    titleEn: 'Sports Betting',
+-    subtitle: ['σà¿τÉâΦ╡¢Σ║ïτ½₧τî£', 'µ┐ÇµâàΣ╕ÇΦºªσì│σÅæ'],
+-    subtitleEn: ['Global sports betting', 'Feel the excitement'],
+-  },
+-  {
+-    name: 'σ╛╖σ╖₧τë¢Σ╗ö',
+-    svg: imgCowboy,
+-    gameApiType: 'cow_boy',
+-    title: 'σ╛╖σ╖₧τë¢Σ╗ö',
+-    titleEn: 'Texas Cowboy',
+-    subtitle: [] as string[],
+-    subtitleEn: [] as string[],
+-  },
+-]
+ 
+ const router = useRouter()
+ const userInfoStore = useUserInfoStore()
+-
+-// Θâ¿σêåσìíτëçµûçµíêΣ╕║τí¼τ╝ûτáüΣ╕¡µûç∩╝Üen τö¿Φï▒µûç∩╝îσà╢Σ╜ÖΦ»¡Φ¿Çσ¢₧ΘÇÇΣ╕¡µûç∩╝êΣ╕Ä i18n ΦºäσêÖΣ╕ÇΦç┤∩╝ëπÇé
+-const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
+ const roomListStore = useRoomListStore()
+ const mttListStore = useMttListStore()
+-const casinoStore = useCasinoStore()
+ const appConfigStore = useAppConfigStore()
+ const gameStore = useGameStore()
+-const gameLaunchStore = useGameLaunchStore()
+-const isChannelPackage = computed(() => isPrivateDomainMode())
++const isChannelPackage = isChannelPackageHost()
+ 
+ const loading = ref(false)
+ const balanceVisible = ref(true)
+@@ -123,163 +43,6 @@ const NOTICE_GAP_PX = 48
+ 
+ let noticeResizeObserver: ResizeObserver | null = null
+ 
+-const showGameClubSelector = ref(false)
+-const pendingGameInfo = ref<{ apiType: string; gameType: string; roomId: number } | null>(null)
+-
+-const activeBannerGames = computed(() => {
+-  const apiGames = casinoStore.popularBannerGames || []
+-  // Σ╕┤µù╢ΘÜÉΦùÅτë¢Σ╗ö∩╝êσ╛╖σ╖₧τë¢Σ╗ö∩╝ëσàÑσÅúπÇé
+-  return popularBannerGamesStatic
+-    .filter((staticGame) => staticGame.gameApiType !== 'cow_boy')
+-    .map((staticGame) => {
+-      let matched = apiGames.find((g) => {
+-        if (staticGame.name === 'PAτ£ƒΣ║║') {
+-          return (
+-            g.game_name?.includes('PA') ||
+-            g.game_api_type === 'pa_live' ||
+-            g.game_name?.includes('DBΦºåΦ«»') ||
+-            g.game_name === 'DBτ£ƒΣ║║'
+-          )
+-        }
+-        if (staticGame.name === 'Θ║╗σ░åΦâíΣ║å') {
+-          return g.game_name === 'Θ║╗σ░åΦâíΣ║å' || g.game_api_type === 'slots_gpd'
+-        }
+-        if (staticGame.name === 'FBΣ╜ôΦé▓') {
+-          return g.game_api_type === 'fb_sports' || g.game_name === 'FBΣ╜ôΦé▓'
+-        }
+-        if (staticGame.name === 'σ╛╖σ╖₧τë¢Σ╗ö') {
+-          return (
+-            g.game_type === 'cow_boy' || g.game_api_type === 'cow_boy' || g.game_name === 'σ╛╖σ╖₧τë¢Σ╗ö'
+-          )
+-        }
+-        return false
+-      })
+-
+-      // If not found in popularBannerGames, try gameRecords as fallback
+-      if (!matched) {
+-        const allGames = casinoStore.gameRecords || []
+-        matched = allGames.find((g) => {
+-          if (staticGame.name === 'PAτ£ƒΣ║║')
+-            return (
+-              g.game_name?.includes('PA') ||
+-              g.game_api_type === 'pa_live' ||
+-              g.game_name?.includes('DBΦºåΦ«»') ||
+-              g.game_name === 'DBτ£ƒΣ║║'
+-            )
+-          if (staticGame.name === 'Θ║╗σ░åΦâíΣ║å')
+-            return g.game_name === 'Θ║╗σ░åΦâíΣ║å' || g.game_api_type === 'slots_gpd'
+-          if (staticGame.name === 'FBΣ╜ôΦé▓')
+-            return g.game_api_type === 'fb_sports' || g.game_name === 'FBΣ╜ôΦé▓'
+-          if (staticGame.name === 'σ╛╖σ╖₧τë¢Σ╗ö')
+-            return (
+-              g.game_type === 'cow_boy' ||
+-              g.game_api_type === 'cow_boy' ||
+-              g.game_name === 'σ╛╖σ╖₧τë¢Σ╗ö'
+-            )
+-          return false
+-        })
+-      }
+-
+-      return {
+-        ...staticGame,
+-        gameApiType: matched?.game_api_type || staticGame.gameApiType,
+-        roomId: matched?.id || matched?.game_room_id || 0,
+-      }
+-    })
+-})
+-
+-function handleBannerGameClick(game: any) {
+-  if (game.gameApiType === 'cow_boy') {
+-    showGameToast(t('UIMineClubCowboyDownloadTip') || 'Σ╕ïΦ╜╜τë¢Σ╗öµ╕╕µêÅ')
+-    return
+-  }
+-
+-  // σÉÄσÅ░µ▓íτ╗ÖΦ»ÑΣ┐▒Σ╣ÉΘâ¿σ╝Çσ¿▒Σ╣Éσ£║µù╢∩╝îµ╕╕µêÅσêùΦí¿Σ╕║τ⌐║∩╝îτ¢┤µÄÑµÅÉτñ║∩╝îΣ╕ìσåìσÅæΦ╡╖σ┐àτä╢σñ▒Φ┤ÑτÜäΦ┐¢µ╕╕µêÅΦ»╖µ▒éπÇé
+-  if (!hasCasinoAccess.value) {
+-    showGameToast(t('UICasino_ClubNotEnabled'))
+-    return
+-  }
+-
+-  pendingGameInfo.value = { apiType: game.gameApiType, gameType: '', roomId: game.roomId }
+-  showGameClubSelector.value = true
+-}
+-
+-function handleWalletConfirm(clubId?: number) {
+-  const reserved = pendingGameInfo.value
+-    ? reserveWindowForGame(pendingGameInfo.value.apiType)
+-    : null
+-  showGameClubSelector.value = false
+-  if (!pendingGameInfo.value) {
+-    releaseGameWindow(reserved)
+-    return
+-  }
+-  const { apiType, gameType, roomId } = pendingGameInfo.value
+-  joinGame(apiType, gameType, roomId, clubId, reserved)
+-  pendingGameInfo.value = null
+-}
+-
+-function reserveWindowForGame(apiType: string): ReservedGameWindow {
+-  const isRealNameGame = apiType === 'real_name' || apiType === 'pa_live'
+-  if (isRealNameGame && getDeviceType() === 1) {
+-    return reserveGameWindow(
+-      `width=${screen.width},height=${screen.height},scrollbars=yes,resizable=yes,location=yes`,
+-    )
+-  }
+-  return reserveGameWindow()
+-}
+-
+-const joinGame = async (
+-  apiType: string,
+-  gameType: string,
+-  roomId = 0,
+-  clubId?: number,
+-  reserved: ReservedGameWindow = null,
+-) => {
+-  const finishLaunch = beginGameLaunch()
+-  try {
+-    const isRealNameGame = apiType === 'real_name' || apiType === 'pa_live'
+-    const finalGameType = ''
+-    const deviceType = getDeviceType()
+-    const finalDeviceType = isRealNameGame ? 2 : deviceType
+-
+-    const res = await joinCasinoGame(
+-      {
+-        game_api_type: apiType,
+-        game_room_id: roomId,
+-        game_type: finalGameType,
+-        device_type: finalDeviceType,
+-        currency_type: 1,
+-      },
+-      clubId,
+-    )
+-    finishLaunch()
+-
+-    if (res.code === 0 && res.data) {
+-      const gameUrl = res.data.url || res.data.game_url
+-      if (gameUrl) {
+-        if (!launchGameUrl(reserved, gameUrl, isRealNameGame && deviceType === 1)) {
+-          releaseGameWindow(reserved)
+-          if (usesTelegramGameLauncher()) {
+-            showGameToast(t('UICasino_ClubNotEnabled'))
+-          } else {
+-            gameLaunchStore.openFallback(gameUrl)
+-          }
+-        }
+-      } else {
+-        releaseGameWindow(reserved)
+-        showGameToast(t('UICasino_ClubNotEnabled'))
+-      }
+-    } else {
+-      releaseGameWindow(reserved)
+-      showGameToast((res.msg as string) || t('UICasino_ClubNotEnabled'))
+-    }
+-  } catch (error: any) {
+-    finishLaunch()
+-    releaseGameWindow(reserved)
+-    showGameToast(error?.response?.data?.msg || t('UICasino_ClubNotEnabled'))
+-  }
+-}
+-
+ interface ZoneStats {
+   tables: number
+   players: number
+@@ -287,6 +50,7 @@ interface ZoneStats {
+ 
+ interface HomeZoneStats {
+   poker: ZoneStats
++  miniGame: ZoneStats
+   mahjong: ZoneStats
+   mtt: ZoneStats
+ }
+@@ -302,6 +66,7 @@ const HOME_ROOM_STATS_CACHE_VERSION = 1
+ function createEmptyZoneStats(): HomeZoneStats {
+   return {
+     poker: { tables: 0, players: 0 },
++    miniGame: { tables: 0, players: 0 },
+     mahjong: { tables: 0, players: 0 },
+     mtt: { tables: 0, players: 0 },
+   }
+@@ -321,6 +86,7 @@ function normalizeHomeZoneStats(raw: unknown): HomeZoneStats {
+   const data = (raw || {}) as Record<string, unknown>
+   return {
+     poker: normalizeZoneStats(data.poker),
++    miniGame: normalizeZoneStats(data.miniGame),
+     mahjong: normalizeZoneStats(data.mahjong),
+     mtt: normalizeZoneStats(data.mtt),
+   }
+@@ -375,11 +141,6 @@ const currentClub = computed<ClubInfo | null>(() => {
+ })
+ 
+ const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
+-// µùáσÉÄσÅ░Θàìτ╜«µù╢σ¢₧ΦÉ╜σê░σåàτ╜«σìòσ¢╛∩╝îσ╣╢σÅáσèá hero µûçµíêπÇé
+-const displayBannerImages = computed<string[]>(() =>
+-  bannerImages.value.length ? bannerImages.value : [homeHeaderFallback],
+-)
+-const isFallbackBanner = computed<boolean>(() => !bannerImages.value.length)
+ const { noticeText, ensureHomeAnnouncementConfig } = useHomeAnnouncement()
+ const noticeTrackStyle = computed<CSSProperties>(() => ({
+   '--notice-gap': `${NOTICE_GAP_PX}px`,
+@@ -387,68 +148,33 @@ const noticeTrackStyle = computed<CSSProperties>(() => ({
+   '--notice-duration': `${noticeDurationSec.value}s`,
+ }))
+ const clubNameText = computed(
+-  () =>
+-    toSafeString(currentClub.value?.club_name)
+-      .replace(/[(∩╝ê]\s*disband\s*[)∩╝ë]?/gi, '')
+-      .trim() || t('UILobby_Menu_menu_btn_club'),
++  () => toSafeString(currentClub.value?.club_name) || t('UILobby_Menu_menu_btn_club'),
+ )
+ 
+ const clubGoldText = computed(() => toSafeNumber(currentClub.value?.user_gold) / 100)
+ const pokerTablesText = computed(() => `${homeRoomStats.value.poker.tables}`)
+ const pokerPlayersText = computed(() => `${homeRoomStats.value.poker.players}`)
++// const miniGamePlayersText = computed(() => `${homeRoomStats.value.miniGame.players}`)
++const miniGamePlayersText = 0
++// const mahjongTablesText = computed(() => `${homeRoomStats.value.mahjong.tables}`)
++const mahjongTablesText = 0
+ // const mahjongPlayersText = computed(() => `${homeRoomStats.value.mahjong.players}`)
+-const mahjongPlayersText = 788
++const mahjongPlayersText = 0
+ const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
+ const mttPlayersText = computed(() => `${homeRoomStats.value.mtt.players}`)
+-const channelCasinoClubId = computed(() =>
+-  isChannelPackage.value
+-    ? toSafeInt(currentClub.value?.club_id || userInfoStore.channelDefaultClub?.club_id)
+-    : 0,
+-)
+-
+-// µ╕áΘüôσîàΣ╕ï casinoStore µîëΣ┐▒Σ╣ÉΘâ¿τ╗┤σ║ªσÅûµò░∩╝îΘ¥₧τ⌐║σì│Σ╗úΦí¿σÉÄσÅ░τ╗ÖΦ»ÑΣ┐▒Σ╣ÉΘâ¿σ╝ÇΣ║åσ¿▒Σ╣Éσ£║/σ░Åµ╕╕µêÅπÇé
+-const hasChannelCasinoGames = computed(
+-  () => channelCasinoClubId.value > 0 && casinoStore.gameRecords.length > 0,
+-)
+-
+-// τâ¡Θù¿µ╕╕µêÅΣ╕ëΣ╕¬σàÑσÅúΘâ╜µÿ»σ¿▒Σ╣Éσ£║∩╝êτ¼¼Σ╕ëµû╣∩╝ëµ╕╕µêÅ∩╝ÜΣ┐▒Σ╣ÉΘâ¿µ▓íσ╝ÇΘÇÜµù╢µ╕╕µêÅσêùΦí¿Σ╕║τ⌐║πÇé
+-// popularBannerGames σ╕ªµ£¼σ£░τ╝ôσ¡ÿ∩╝îσÅ»Φâ╜µÿ»Σ╕èΣ╕Çµ¼íσà¿σ▒Çµò░µì«τÜäµ«ïτòÖ∩╝îµòàσÅ¬Φ«ñσ«₧µù╢µïëσÅûτÜä gameRecordsπÇé
+-const hasCasinoAccess = computed(() => !initialized.value || casinoStore.gameRecords.length > 0)
+-
+-// τºüσƒƒτëêΘªûΘí╡Σ╕ëσ¥ùσåàσ«╣∩╝ÜΦ╡¢Σ║ï / µëæσàï / σ¿▒Σ╣Éσ£║πÇéΦ╡¢Σ║ïπÇüµëæσàïµîëπÇîµÿ»σÉªσê¢σ╗║Σ║åσåàσ«╣πÇìσêñµû¡∩╝î
+-// σ¿▒Σ╣Éσ£║µîëΣ┐▒Σ╣ÉΘâ¿τ╗┤σ║ªτÜäµ╕╕µêÅσêùΦí¿µÿ»σÉªΘ¥₧τ⌐║σêñµû¡∩╝êµ▓íσ╝Çµ¥âΘÖÉµù╢σÉÄσÅ░Φ┐öσ¢₧τ⌐║∩╝ëπÇé
+-const channelSections = computed(() => ({
+-  mtt: homeRoomStats.value.mtt.tables > 0,
+-  poker: homeRoomStats.value.poker.tables > 0,
+-  casino: hasChannelCasinoGames.value,
+-}))
++type HomeContentMode = 'zones' | 'mtt' | 'poker'
+ 
+-const channelSectionCount = computed(
+-  () => Object.values(channelSections.value).filter(Boolean).length,
+-)
+-
+-type HomeContentMode = 'zones' | 'mtt' | 'poker' | 'casino'
+-
+-// τºüσƒƒτëê∩╝ÜσÅ¬σ╝ÇΣ╕Çσ¥ùσåàσ«╣µù╢Σ╕ìτ╗ÖσàÑσÅú∩╝îτ¢┤µÄÑΘô║σêùΦí¿∩╝¢σ╝ÇΣ╕ñσ¥ùσÅèΣ╗ÑΣ╕è∩╝êΣ╗ÑσÅèΣ╕Çσ¥ùΘâ╜µ▓íµ£ë∩╝ëµù╢σ▒òτñ║Σ╕ôσî║σàÑσÅúπÇé
++// µ╕áΘüôσîàµèèΣ┐▒Σ╣ÉΘâ¿σåàσ«╣σÉêσ╣╢σê░ΘªûΘí╡∩╝ÜσìòΣ╕Çµò░µì«τ▒╗σ₧ïτ¢┤µÄÑσ▒òτñ║σêùΦí¿∩╝îΣ╕ñΦÇàΘâ╜µ£ëµù╢Σ┐¥τòÖΣ╕ôσî║σàÑσÅúπÇé
+ // σ«ÿµû╣σîàτ╗ºτ╗¡µ▓┐τö¿σÄƒµ£ëτÜäπÇîΣ╗àµ£ëΦ╡¢Σ║ïµù╢τ¢┤µÄÑσ▒òτñ║ MTTπÇìΦíîΣ╕║πÇé
+ const homeContentModeRaw = computed<HomeContentMode>(() => {
+   const pokerTables = homeRoomStats.value.poker.tables
+   const mttTables = homeRoomStats.value.mtt.tables
+-  if (isChannelPackage.value) {
+-    if (channelSectionCount.value === 1) {
+-      if (channelSections.value.poker) {
+-        return 'poker'
+-      }
+-      if (channelSections.value.mtt) {
+-        return 'mtt'
+-      }
+-      return 'casino'
+-    }
+-    return 'zones'
+-  }
+   if (mttTables > 0 && pokerTables === 0) {
+     return 'mtt'
+   }
++  if (isChannelPackage && pokerTables > 0 && mttTables === 0) {
++    return 'poker'
++  }
+   return 'zones'
+ })
+ // Θªûµ¼íΦ┐¢σàÑµù╢σàêµîëτ╝ôσ¡ÿµ╕▓µƒô∩╝îτ¡ë room/mtt Σ╕ñΣ╕¬ bootstrap Θâ╜σ«îµêÉσåìτí«σ«Üµ£Çτ╗êµ¿íσ╝Å∩╝î
+@@ -456,23 +182,17 @@ const homeContentModeRaw = computed<HomeContentMode>(() => {
+ const initialized = ref(false)
+ const homeContentMode = ref<HomeContentMode>(homeContentModeRaw.value)
+ 
+-// Σ╕ôσî║σàÑσÅúσÅ¬σ£¿ zones µ¿íσ╝Åµ╕▓µƒô∩╝ÜΦ╡¢Σ║ï / µëæσàïσ╕╕Θ⌐╗∩╝êµ▓íσåàσ«╣Σ╣ƒΣ┐¥τòÖσàÑσÅú∩╝îτé╣Φ┐¢σÄ╗µÿ»τ⌐║µÇü∩╝ë∩╝î
+-// σ¿▒Σ╣Éσ£║µ▓íτ╗ÖΣ┐▒Σ╣ÉΘâ¿σ╝ÇΘÇÜµù╢ΘÜÉΦùÅΓÇöΓÇöΘéúΘçîτé╣Φ┐¢σÄ╗σÅ¬Σ╝ÜµèÑΘöÖπÇé
+-const showCasinoZoneCard = computed(() => !isChannelPackage.value || channelSections.value.casino)
+-// τâ¡Θù¿µ╕╕µêÅµò┤µ¥íΘâ╜µÿ»σ¿▒Σ╣Éσ£║τÜäµ╕╕µêÅ∩╝îµ▓íσ╝Çσ¿▒Σ╣Éσ£║τÜäΣ┐▒Σ╣ÉΘâ¿Σ╕ìΦ»Ñτ£ïσê░πÇé
+-const showHotGamesSection = computed(() => !isChannelPackage.value || channelSections.value.casino)
+-
+ const currentJoinedClub = computed(() => userInfoStore.currentJoinedClub)
+ const channelUserLevel = computed(() => toSafeInt(currentJoinedClub.value?.user_level))
+ const canCreateChannelTable = computed(
+   () =>
+-    isChannelPackage.value &&
++    isChannelPackage &&
+     Boolean(gameStore.sessionToken && currentJoinedClub.value) &&
+     channelUserLevel.value >= 1 &&
+     channelUserLevel.value <= 3,
+ )
+ const canManageChannelClub = computed(
+-  () => isChannelPackage.value && Boolean(gameStore.sessionToken && currentJoinedClub.value),
++  () => isChannelPackage && Boolean(gameStore.sessionToken && currentJoinedClub.value),
+ )
+ const showChannelFloatingActions = computed(
+   () => canCreateChannelTable.value || canManageChannelClub.value,
+@@ -508,14 +228,6 @@ function goToGameList(): void {
+ function goToMttList(): void {
+   void router.push('/mttList')
+ }
+-function goToCasino(): void {
+-  // µ╕áΘüôσîàσÅ¬µ£ëΣ╕ÇΣ╕¬Σ┐▒Σ╣ÉΘâ¿∩╝Üσ¿▒Σ╣Éσ£║∩╝êσÉ½σ░Åµ╕╕µêÅ∩╝ëµîëΣ┐▒Σ╣ÉΘâ¿τ╗┤σ║ªσÅûµò░∩╝îΦ╖ƒΘÜÅσÉÄσÅ░τÜäΣ┐▒Σ╣ÉΘâ¿σ╝Çσà│πÇé
+-  if (isChannelPackage.value && channelCasinoClubId.value > 0) {
+-    void router.push({ path: '/casino', query: { clubId: String(channelCasinoClubId.value) } })
+-    return
+-  }
+-  void router.push('/casino')
+-}
+ 
+ function goToClubDetail(): void {
+   void router.push('/club/detail')
+@@ -681,6 +393,47 @@ function refreshHomePokerMahjongStatsFromStore(): void {
+   persistHomeRoomStatsCache(homeRoomStats.value)
+ }
+ 
++// Σ╗Äτë¢Σ╗öσêùΦí¿σôìσ║öΣ╕¡µÅÉσÅûσ£¿τ║┐Σ║║µò░∩╝ÜΣ╝ÿσàêΣ╜┐τö¿ data.online∩╝îσà╢µ¼íµ▒çµÇ╗ records[*].onlineπÇé
++function extractCowboyOnlineCount(raw: unknown): number {
++  if (!raw || typeof raw !== 'object') {
++    return 0
++  }
++  const data = raw as Record<string, unknown>
++  // µ£ìσèíτ½»τ¢┤µÄÑΦ┐öσ¢₧ online µù╢∩╝îΘªûΘí╡σÅ¬Σ╜┐τö¿Φ┐ÖΣ╕¬σ¡ùµ«╡πÇé
++  if ('online' in data) {
++    return toSafeNumber(data.online)
++  }
++
++  const records = Array.isArray(data.records) ? data.records : []
++  if (records.length) {
++    return records.reduce((total, item) => {
++      const record = item as Record<string, unknown>
++      return total + toSafeNumber(record.online)
++    }, 0)
++  }
++
++  // σà╝σ«╣ data.data τÜäσ╡îσÑùτ╗ôµ₧äπÇé
++  return extractCowboyOnlineCount(data.data)
++}
++
++// ΘªûΘí╡σ░Åµ╕╕µêÅτ╗ƒΦ«í∩╝ÜΣ╜┐τö¿ /api/gc/cowboy/room/list∩╝îΣ╗àσÅû online σ¡ùµ«╡πÇé
++async function fetchHomeMiniGameStats(): Promise<void> {
++  const response = await getCowboyRoomListApi({
++    limit: 100,
++    offset: 0,
++  })
++  const online = Number(response.code) === 0 ? extractCowboyOnlineCount(response.data) : 0
++
++  homeRoomStats.value = {
++    ...homeRoomStats.value,
++    miniGame: {
++      tables: 0,
++      players: online,
++    },
++  }
++  persistHomeRoomStatsCache(homeRoomStats.value)
++}
++
+ // ΘªûΘí╡ MTT τ╗ƒΦ«í∩╝ÜσÆî MttContent Φ╡░σÉîΣ╕ÇΣ╗╜Φ┐çµ╗ñσÅúσ╛ä∩╝êµÄÆΘ║╗σ░å + club/tribe σÅ»ΦºüµÇº∩╝ë∩╝î
+ // Σ┐¥Φ»üπÇîΘªûΘí╡µÿ╛τñ║ N µíî M Σ║║πÇìσÆîπÇîΦ┐¢σàÑ MTT σêùΦí¿σÉÄτ£ïσê░τÜäΦ╡¢Σ║ïµò░ / µèÑσÉìµÇ╗Σ║║µò░πÇìσ«îσà¿Σ╕ÇΦç┤πÇé
+ // tables = σÅ»ΦºüΦ╡¢Σ║ïµò░∩╝¢players = σÅ»ΦºüΦ╡¢Σ║ï participants Σ╣ïσÆîπÇé
+@@ -780,20 +533,16 @@ onMounted(() => {
+   const mttListReady = mttListStore.bootstrapMttList()
+   refreshHomePokerMahjongStatsFromStore()
+   refreshHomeMttStatsFromStore()
++  void fetchHomeMiniGameStats().catch((error) => {
++    console.warn('[home] fetch mini game stats failed:', error)
++  })
+   void fetchLobbyBannerImages().catch((error) => {
+     console.warn('[home] fetch lobby banner failed:', error)
+   })
+   void updateNoticeMarquee()
+ 
+-  const casinoClubId = channelCasinoClubId.value
+-  const casinoReady = casinoStore
+-    .preloadCasinoData(casinoClubId || undefined, casinoClubId <= 0)
+-    .catch((e) => {
+-      console.warn('[home] preload casino data failed:', e)
+-    })
+-
+-  // τ¡ë room + mtt + σ¿▒Σ╣Éσ£║ Θâ╜Φ┐öσ¢₧σÉÄσåìµò▓σ«Üµ£Çτ╗êσ╕âσ▒Ç∩╝îΘü┐σàìσê¥σºïσîûΘÿ╢µ«╡µ¥Ñσ¢₧Θù¬πÇé
+-  void Promise.allSettled([roomListReady, mttListReady, casinoReady]).then(() => {
++  // τ¡ë room + mtt Θâ╜Φ┐öσ¢₧σÉÄσåìµò▓σ«Üµ£Çτ╗êσ╕âσ▒Ç∩╝îΘü┐σàìσê¥σºïσîûΘÿ╢µ«╡µ¥Ñσ¢₧Θù¬πÇé
++  void Promise.allSettled([roomListReady, mttListReady]).then(() => {
+     homeContentMode.value = homeContentModeRaw.value
+     initialized.value = true
+   })
+@@ -817,24 +566,15 @@ onBeforeUnmount(() => {
+ </script>
+ 
+ <template>
+-  <div class="home-page" :class="{ 'home-page--fit': homeContentMode === 'zones' }">
++  <div class="home-page">
+     <!-- 0. Θí╢Θâ¿µáÅ∩╝ÜτÖ╗σ╜òµÇüΣ╗àΣ┐¥τòÖ POKER σôüτëî -->
+     <div class="top-bar">
+-      <div></div>
++      <span class="top-bar__logo">POKER</span>
+     </div>
+ 
+     <!-- 1. Θí╢Θâ¿Σ┐▒Σ╣ÉΘâ¿Σ╗ïτ╗ìΦ╜«µÆ¡σ¢╛ -->
+     <div class="home-header">
+-      <div class="home-header__inner">
+-        <HomeBannerSwiper :images="displayBannerImages" />
+-        <div v-if="isFallbackBanner" class="home-header__hero">
+-          <div class="home-header__text">
+-            <p class="home-header__title">σà¿µ░æΣ╗úτÉå</p>
+-            <p class="home-header__subtitle">Σ╕ÇΘö«σê¢σ╗║Σ╜áτÜäτ║┐Σ╕èΣ┐▒Σ╣ÉΘâ¿</p>
+-          </div>
+-          <span class="home-header__pill">xypk.com</span>
+-        </div>
+-      </div>
++      <HomeBannerSwiper :images="bannerImages" />
+     </div>
+ 
+     <!-- 2. σà¼σæèµáÅ -->
+@@ -873,7 +613,11 @@ onBeforeUnmount(() => {
+           />
+         </div>
+         <div class="club-balance-row">
+-          <img class="icon-sm" src="@/assets/icons/diamondicon.svg" :alt="t('UIClub_CreateRoom31')" />
++          <img
++            class="icon-sm"
++            src="@/assets/icons/icon_chips.png"
++            :alt="t('UIClub_CreateRoom31')"
++          />
+           <span v-if="loading" class="balance-amount">
+             <van-loading size="16" />
+           </span>
+@@ -900,16 +644,18 @@ onBeforeUnmount(() => {
+         </div>
+       </div>
+ 
+-      <div class="club-divider"></div>
+-
+       <!-- σÅ│Σ╛º∩╝ÜΦüöτ│╗µû╣σ╝Å -->
+       <div class="club-right">
+         <div class="contact-item" @click="handleOpenTelegram">
+-          <img class="contact-icon" :src="iconService1" alt="Telegram" />
++          <AppSvgIcon class="contact-icon" name="telegram" title="Telegram" />
+           <span class="contact-label"> @game </span>
+         </div>
+         <div class="contact-item" @click="handleOpenEmail">
+-          <img class="contact-icon" :src="iconService2" :alt="t('UISetting_SecurityBindEmailItem')" />
++          <AppSvgIcon
++            class="contact-icon"
++            name="contact-user"
++            :title="t('UISetting_SecurityBindEmailItem')"
++          />
+           <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
+         </div>
+         <div
+@@ -917,7 +663,11 @@ onBeforeUnmount(() => {
+           class="contact-item"
+           @click="handleOpenCustomerService"
+         >
+-          <img class="contact-icon" :src="iconService3" :alt="'IM' + t('UIMineMain01')" />
++          <AppSvgIcon
++            class="contact-icon"
++            name="customer-service"
++            :title="'IM' + t('UIMineMain01')"
++          />
+           <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
+         </div>
+       </div>
+@@ -935,13 +685,6 @@ onBeforeUnmount(() => {
+           embedded
+           class="home-poker-content home-swap-panel"
+         />
+-        <div
+-          v-else-if="homeContentMode === 'casino'"
+-          key="casino"
+-          class="home-casino-content home-swap-panel"
+-        >
+-          <CasinoView :hide-header="true" :club-id="channelCasinoClubId" />
+-        </div>
+         <div v-else key="default" class="home-default-sections home-swap-panel">
+           <!-- 4. µ╕╕µêÅµ¿íσ¥ù -->
+           <div class="section-header">
+@@ -949,6 +692,7 @@ onBeforeUnmount(() => {
+           </div>
+           <div class="game-center-scroll">
+             <div class="game-center-track">
++              <!-- MTTΦ╡¢Σ║ïΣ╕ôσî║ -->
+               <div class="game-scroll-card game-card-mtt" @click="goToMttList">
+                 <img class="zone-lg-bg" src="@/assets/icons/game_zone_mtt_lg.png" alt="MTT" />
+                 <div class="zone-info">
+@@ -974,6 +718,7 @@ onBeforeUnmount(() => {
+                 </div>
+               </div>
+ 
++              <!-- µëæσàïΣ╕ôσî║ -->
+               <div class="game-scroll-card poker-card" @click="goToGameList">
+                 <img
+                   class="zone-lg-bg"
+@@ -1005,10 +750,40 @@ onBeforeUnmount(() => {
+                 </div>
+               </div>
+ 
++              <!-- σ░Åµ╕╕µêÅΣ╕ôσî║ -->
+               <div
+-                v-if="showCasinoZoneCard"
++                v-if="false"
++                class="game-scroll-card game-card-minigame"
++                @click="openMiniGamePanel"
++              >
++                <img
++                  class="zone-lg-bg"
++                  src="@/assets/icons/game_zone_minigame_lg.png"
++                  :alt="t('UIClub_Text24')"
++                />
++                <div class="zone-info">
++                  <div class="zone-header">
++                    <span class="zone-title"> {{ t('UIHomeMinigameArea') }} </span>
++                    <img
++                      class="zone-mini-icon"
++                      src="@/assets/icons/game_zone_minigame_mini.png"
++                      alt=""
++                    />
++                  </div>
++                  <p class="zone-desc">{{ t('UIData_YGvXd5iXr_011') }}</p>
++                </div>
++                <div class="zone-online-bar">
++                  <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
++                  <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
++                  <span class="online-num"> {{ miniGamePlayersText }} </span>
++                </div>
++              </div>
++
++              <!-- Θ║╗σ░åΣ╕ôσî║ -->
++              <div
++                v-if="false"
+                 class="game-scroll-card game-card-mahjong"
+-                @click="goToCasino"
++                @click="showGameToast(t('UIClub_InDeve'))"
+               >
+                 <img
+                   class="zone-lg-bg"
+@@ -1017,54 +792,63 @@ onBeforeUnmount(() => {
+                 />
+                 <div class="zone-info">
+                   <div class="zone-header">
+-                    <span class="zone-title"> {{ localized('Casino', 'σ¿▒Σ╣Éσ£║') }} </span>
++                    <span class="zone-title"> {{ t('UIHomeMahjongArea') }} </span>
+                     <img
+                       class="zone-mini-icon"
+                       src="@/assets/icons/game_zone_mahjong_mini.png"
+                       alt=""
+                     />
+                   </div>
+-                  <div class="zone-desc casino-desc">
+-                    <p>{{ localized('Live, Slots, Sports', 'τ£ƒΣ║║ΦºåΦ«» τö╡σ¡Éσ¿▒Σ╣É Σ╜ôΦé▓τ½₧τî£') }}</p>
+-                    <p>{{ localized('Top Providers', 'σà¿τÉâΣ╕Çτ║┐σÄéσòå') }}</p>
++                  <div class="zone-desc">
++                    <div class="mr-4">{{ t('Mahjong_BloodFight') }}</div>
++                    <div class="mr-4">{{ t('Mahjong_BloodRiver') }}</div>
++                    <div class="mr-4">{{ t('Mahjong_Standard') }}</div>
+                   </div>
+                 </div>
+                 <div class="zone-online-bar">
+                   <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
++                  <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
++                  <span class="online-num"> {{ mahjongTablesText }} </span>
+                   <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
+                   <span class="online-num"> {{ mahjongPlayersText }} </span>
+                 </div>
+               </div>
++
++              <!-- σì│σ░åσ╝Çµö╛ -->
++              <div class="game-scroll-card coming-soon-card coming-soon-right">
++                <img
++                  class="zone-lg-bg"
++                  src="@/assets/icons/game_zone_comming_lg.png"
++                  :alt="t('UIHomeComingSoon')"
++                />
++                <div class="coming-soon-overlay"></div>
++                <span class="coming-soon-text"> {{ t('UIHomeComingSoon') }}</span>
++              </div>
++
++              <!-- µíîΘ¥óτ½»ΦíÑΘ╜Éτ¼¼σ¢¢σ╝áσìíτëç∩╝îτº╗σè¿τ½»τ╗┤µîüσÄƒµ¥ÑτÜäΣ╕ëσ╝áπÇé -->
++              <div
++                class="game-scroll-card coming-soon-card coming-soon-right desktop-only-game-card"
++              >
++                <img
++                  class="zone-lg-bg"
++                  src="@/assets/icons/game_zone_comming_lg.png"
++                  :alt="t('UIHomeComingSoon')"
++                />
++                <div class="coming-soon-overlay"></div>
++                <span class="coming-soon-text"> {{ t('UIHomeComingSoon') }}</span>
++              </div>
+             </div>
+           </div>
+ 
+-          <!-- 5. τâ¡Θù¿µ╕╕µêÅ -->
+-          <div v-if="showHotGamesSection" class="section-header">
++          <!-- 5. σì│σ░åσ╝Çµö╛µ¿¬σÉæµ╗Üσè¿ -->
++          <div class="section-header">
+             <span class="section-title">{{ t('UIHome_Text4') }}</span>
+           </div>
+-          <div v-if="showHotGamesSection" class="coming-soon-scroll">
++          <div class="coming-soon-scroll">
+             <div class="coming-soon-track">
+-              <div
+-                v-for="(game, index) in activeBannerGames"
+-                :key="index"
+-                class="coming-soon-scroll-card"
+-                @click="handleBannerGameClick(game)"
+-              >
+-                <img class="coming-soon-scroll-card__img" :src="game.svg" alt="" />
+-                <div class="coming-soon-scroll-card__label">
+-                  <span class="coming-soon-scroll-card__title">
+-                    {{ localized(game.titleEn, game.title || game.name) }}
+-                  </span>
+-                  <span
+-                    v-for="(line, i) in (getLocale() === 'en' ? game.subtitleEn : game.subtitle) ||
+-                    []"
+-                    :key="i"
+-                    class="coming-soon-scroll-card__subtitle"
+-                    :class="{ 'coming-soon-scroll-card__subtitle--first': i === 0 }"
+-                  >
+-                    {{ line }}
+-                  </span>
+-                </div>
++              <div v-for="i in 4" :key="i" class="coming-soon-scroll-card">
++                <div class="coming-soon-scroll-card__overlay"></div>
++                <span class="coming-soon-scroll-card__text">{{ t('UIHomeComingSoon') }}</span>
+               </div>
+             </div>
+           </div>
+@@ -1072,12 +856,6 @@ onBeforeUnmount(() => {
+       </Transition>
+     </div>
+ 
+-    <GameClubSelector
+-      v-model:show="showGameClubSelector"
+-      @confirm="handleWalletConfirm"
+-      @cancel="showGameClubSelector = false"
+-    />
+-
+     <div v-if="showChannelFloatingActions" class="floating-action-area">
+       <button
+         v-if="canCreateChannelTable"
+@@ -1094,7 +872,9 @@ onBeforeUnmount(() => {
+         :aria-label="t('UIClub_ClubManager')"
+         @click="goToClubDetail"
+       >
+-        <img :src="clubDetailButtonIcon" alt="" />
++        <span></span>
++        <span></span>
++        <span></span>
+       </button>
+     </div>
+   </div>
+@@ -1106,7 +886,7 @@ onBeforeUnmount(() => {
+ .home-page {
+   display: flex;
+   flex-direction: column;
+-  gap: 0.2rem;
++  gap: 0.24rem;
+   padding: 0 0.4rem 2.3rem;
+   background: transparent;
+   min-height: max-content;
+@@ -1118,39 +898,6 @@ onBeforeUnmount(() => {
+   }
+ }
+ 
+-.home-page--fit {
+-  height: 100%;
+-  min-height: 0;
+-  padding-bottom: 0;
+-  overflow: hidden;
+-}
+-
+-.home-page--fit .notice-bar,
+-.home-page--fit .club-panel {
+-  flex-shrink: 0;
+-}
+-
+-.home-page--fit .home-swap-container {
+-  flex: 1 0 auto;
+-  min-height: 0;
+-  display: flex;
+-  flex-direction: column;
+-}
+-
+-.home-page--fit .home-default-sections {
+-  flex: 1 0 auto;
+-  min-height: 0;
+-}
+-
+-.home-page--fit .game-center-scroll,
+-.home-page--fit .coming-soon-scroll {
+-  flex: 1 0 3.9rem;
+-  min-height: 0;
+-  // σìíτëçτ┤áµ¥É 444├ù587∩╝îσ«╜ 2.95rem µù╢σÄƒσºïΘ½ÿσ║ªσ░▒µÿ» 3.9remπÇéµ▓íµ£ëΦ┐ÖΣ╕¬Σ╕èΘÖÉµù╢∩╝î
+-  // σÅ¬σë⌐Σ╕ÇΦíîτÜäσ£║µÖ»∩╝êΣ┐▒Σ╣ÉΘâ¿µ▓íσ╝Çσ¿▒Σ╣Éσ£║ ΓåÆ τâ¡Θù¿µ╕╕µêÅµò┤µ¥íΘÜÉΦùÅ∩╝ëΣ╝Üµèèσìíτëçµïëµ╗íµò┤σ▒ÅπÇé
+-  max-height: 3.9rem;
+-}
+-
+ .top-bar {
+   display: flex;
+   align-items: center;
+@@ -1159,108 +906,24 @@ onBeforeUnmount(() => {
+   flex-shrink: 0;
+ }
+ 
++.top-bar__logo {
++  font-size: 0.54rem;
++  font-weight: 900;
++  color: #000;
++  text-shadow:
++    0.5px 0 0 currentColor,
++    -0.5px 0 0 currentColor,
++    0 0.5px 0 currentColor,
++    0 -0.5px 0 currentColor;
++  letter-spacing: 0.05rem;
++  font-family: 'HONOR Sans CN', sans-serif;
++}
++
+ .home-header {
+   width: 100%;
+   border-radius: 0.8rem;
+   overflow: hidden;
+-  flex: 1 1 3.68rem;
+-  min-height: 0;
+-  max-height: 5.5rem;
+-}
+-
+-.home-header__inner {
+-  position: relative;
+-  width: 100%;
+-  height: 100%;
+-  container-type: size;
+-}
+-
+-.home-header__hero {
+-  position: absolute;
+-  left: 0;
+-  right: 0;
+-  top: 0.56rem;
+-  top: min(15.2cqh, 0.56rem);
+-  display: flex;
+-  flex-direction: column;
+-  align-items: center;
+-  z-index: 1;
+-  pointer-events: none;
+-}
+-
+-.home-header__title,
+-.home-header__subtitle {
+-  margin: 0;
+-  font-family: 'HONOR Sans CN', sans-serif;
+-  font-weight: 700;
+-  font-size: 0.62rem;
+-  font-size: min(16.9cqh, 0.62rem);
+-  line-height: 1.2;
+-  letter-spacing: 0.01rem;
+-  color: #fff;
+-  text-align: center;
+-  white-space: nowrap;
+-}
+-
+-.home-header__pill {
+-  margin-top: 0.26rem;
+-  margin-top: min(7.1cqh, 0.26rem);
+-  display: inline-flex;
+-  align-items: center;
+-  justify-content: center;
+-  padding: 0.12rem 0.5rem;
+-  padding: min(3.3cqh, 0.12rem) min(13.6cqh, 0.5rem);
+-  border-radius: 999px;
+-  font-family: 'HONOR Sans CN', sans-serif;
+-  font-weight: 700;
+-  font-size: 0.6rem;
+-  font-size: min(16.3cqh, 0.6rem);
+-  color: #fff;
+-  white-space: nowrap;
+-  background: rgba(37, 37, 37, 0.49);
+-  backdrop-filter: blur(4px);
+-  -webkit-backdrop-filter: blur(4px);
+-}
+-
+-.home-header__text {
+-  display: flex;
+-  flex-direction: column;
+-  align-items: center;
+-}
+-
+-@container (max-height: 2.6rem) {
+-  .home-header__hero {
+-    top: 0;
+-    bottom: 0;
+-    flex-direction: row;
+-    align-items: center;
+-    justify-content: space-between;
+-    padding: 0 0.5rem;
+-  }
+-
+-  .home-header__text {
+-    align-items: flex-start;
+-  }
+-
+-  .home-header__title,
+-  .home-header__subtitle {
+-    font-size: 0.46rem;
+-    text-align: left;
+-  }
+-
+-  .home-header__pill {
+-    margin-top: 0;
+-    font-size: 0.4rem;
+-    padding: 0.1rem 0.4rem;
+-  }
+-}
+-
+-@container (min-height: 4rem) {
+-  .home-header__hero {
+-    top: 0;
+-    bottom: 0;
+-    justify-content: center;
+-  }
++  flex-shrink: 0;
+ }
+ 
+ .notice-bar {
+@@ -1268,21 +931,18 @@ onBeforeUnmount(() => {
+   align-items: center;
+   gap: 0.06rem;
+   padding: 0rem 0.18rem;
++  background-color: #fff;
++  border: 0.302px solid rgba(0, 0, 0, 0.16);
+   border-radius: 1rem;
+   height: 0.5rem;
+   min-height: 0.5rem;
+-  position: relative;
+-  background: rgba(170, 170, 170, 0.1);
+-  border: 0.02rem solid rgba(249, 249, 249, 0.1);
+-  backdrop-filter: blur(18.5px);
+-  -webkit-backdrop-filter: blur(18.5px);
++  box-sizing: border-box;
+ }
+ 
+ .notice-icon {
+   width: 0.43rem;
+   height: 0.43rem;
+   flex-shrink: 0;
+-  filter: brightness(0) invert(1);
+ }
+ 
+ .notice-marquee {
+@@ -1294,7 +954,7 @@ onBeforeUnmount(() => {
+ 
+ .notice-label {
+   font-size: 0.28rem;
+-  color: #f9f9f9;
++  color: #000;
+   white-space: nowrap;
+   flex-shrink: 0;
+ }
+@@ -1322,7 +982,7 @@ onBeforeUnmount(() => {
+ .notice-item {
+   font-size: 0.28rem;
+   line-height: 0.6rem;
+-  color: #f9f9f9;
++  color: #000;
+   font-weight: 400;
+   white-space: nowrap;
+ }
+@@ -1339,14 +999,16 @@ onBeforeUnmount(() => {
+ .club-panel {
+   display: flex;
+   align-items: center;
+-  background: rgba(76, 76, 76, 0.2);
++  background: #fff;
+   border-radius: 1rem;
+   padding: 0.1rem 0.6rem;
+   min-height: 1.54rem;
+   gap: 0;
+-  border: 0.02rem solid rgba(249, 249, 249, 0.1);
+-  backdrop-filter: blur(18.5px);
+-  -webkit-backdrop-filter: blur(18.5px);
++  border: 0.302px solid rgba(0, 0, 0, 0.16);
++  box-sizing: border-box;
++  box-shadow:
++    inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
++    inset -1px -1px 0px 0px rgba(255, 255, 255, 0.35);
+ }
+ 
+ .club-left {
+@@ -1364,13 +1026,7 @@ onBeforeUnmount(() => {
+ 
+ .service-label {
+   font-size: 0.3rem;
+-  color: #f9f9f9;
+-  flex: 0 1 auto;
+-  min-width: 0;
+-  max-width: 4rem;
+-  overflow: hidden;
+-  text-overflow: ellipsis;
+-  white-space: nowrap;
++  color: #000;
+ }
+ 
+ .club-balance-row {
+@@ -1397,7 +1053,7 @@ onBeforeUnmount(() => {
+ 
+ .balance-amount {
+   font-size: 0.38rem;
+-  color: #f9f9f9;
++  color: #000;
+   font-weight: 500;
+   text-align: center;
+   min-width: 0.5rem;
+@@ -1406,29 +1062,19 @@ onBeforeUnmount(() => {
+ .recharge-btn {
+   width: 1.3rem;
+   padding: 0.06rem 0rem;
+-  background: rgba(0, 0, 0, 0.5);
++  background: #e7e7e7;
+   border: none;
+   border-radius: 1rem;
+-  color: #f9f9f9;
++  color: #000;
+   font-size: 0.28rem;
+   cursor: pointer;
+   white-space: nowrap;
+ }
+ 
+-.club-divider {
+-  width: 1px;
+-  background: rgba(255, 255, 255, 0.2);
+-  flex-shrink: 0;
+-  align-self: stretch;
+-  margin: 6px 0.28rem;
+-}
+-
+ .club-right {
+   display: flex;
+   align-items: center;
+-  justify-content: flex-end;
+   gap: 0.28rem;
+-  flex: 1;
+ }
+ 
+ .contact-item {
+@@ -1453,25 +1099,37 @@ onBeforeUnmount(() => {
+ 
+ .contact-label {
+   font-size: 0.2rem;
+-  color: #f9f9f9;
++  color: #000;
+   text-align: center;
+   max-width: 1rem;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+ }
++.mtt-content {
++  :deep(.mtt-group) {
++    .mtt-group__title {
++      color: #000;
++    }
++    .mtt-group__toggle {
++      color: rgba(0, 0, 0, 0.77);
++    }
++  }
++}
++
+ // Σ┐¥µîüσÆî .home-page τÜäτ¢┤µÄÑσ¡Éτ║ºσÉîµá╖τÜäτ║╡σÉæσáåσÅá + Θù┤Φ╖¥πÇé
+ .home-default-sections {
+   display: flex;
+   flex-direction: column;
+-  gap: 0.2rem;
++  gap: 0.24rem;
+   padding: 0 0.4rem;
+ }
+ 
+-// Θ╗ÿΦ«ñµ¿íσ¥ù <=> MTT σêùΦí¿σêçµìóτö¿µ╖íσàÑµ╖íσç║∩╝Üµö╣τö¿ opacity∩╝îσÄ╗µÄë overflow:hidden∩╝î
+-// σÉªσêÖσ«╣σÖ¿Σ╝ÜΦúüµÄëµ╕╕µêÅΣ╕¡σ┐âµ¿¬σÉæµ╗Üσè¿σê░σ▒Åσ╣òΦ╛╣τ╝ÿτÜäΓÇ£σç║ΦíÇΦ╛╣ΓÇ¥∩╝êΣ╕Ä dev_merge_0624 Σ╕ÇΦç┤∩╝ëπÇé
++// Θ╗ÿΦ«ñµ¿íσ¥ù <=> MTT σêùΦí¿σêçµìóτÜäµ¿¬σÉæµÄ¿σàÑ∩╝êµû░Θ¥óµ¥┐Σ╗ÄσÅ│µ╗æσàÑ∩╝îµùºΘ¥óµ¥┐σÉæσ╖ªµ╗æσç║∩╝ëπÇé
+ .home-swap-container {
+   position: relative;
++  // overflow: hidden;
++  // width: 100%;
+   margin-left: -0.4rem;
+   margin-right: -0.4rem;
+   min-height: 5rem;
+@@ -1481,10 +1139,6 @@ onBeforeUnmount(() => {
+   width: 100%;
+ }
+ 
+-.home-casino-content {
+-  padding: 0 0.4rem 1.2rem;
+-}
+-
+ .home-poker-content {
+   :deep(.room-tabs) {
+     margin-right: 0;
+@@ -1497,8 +1151,8 @@ onBeforeUnmount(() => {
+ 
+ .home-swap-enter-active,
+ .home-swap-leave-active {
+-  transition: opacity 0.32s ease;
+-  will-change: opacity;
++  transition: transform 0.32s ease;
++  will-change: transform;
+ }
+ 
+ // σêçµìóµ£ƒΘù┤µùºΘ¥óµ¥┐Φä▒τª╗µ╡ü∩╝îΘü┐σàìµÆæΘ½ÿσ«╣σÖ¿∩╝¢µû░Θ¥óµ¥┐σ£¿µ╡üσåàσå│σ«Üσ«╣σÖ¿Θ½ÿσ║ªπÇé
+@@ -1510,16 +1164,16 @@ onBeforeUnmount(() => {
+ }
+ 
+ .home-swap-enter-from {
+-  opacity: 0;
++  transform: translateX(100%);
+ }
+ .home-swap-enter-to {
+-  opacity: 1;
++  transform: translateX(0);
+ }
+ .home-swap-leave-from {
+-  opacity: 1;
++  transform: translateX(0);
+ }
+ .home-swap-leave-to {
+-  opacity: 0;
++  transform: translateX(-100%);
+ }
+ 
+ .section-header {
+@@ -1528,15 +1182,13 @@ onBeforeUnmount(() => {
+     font-size: 0.38rem;
+     font-weight: 700;
+     margin-bottom: 0rem;
+-    color: #f9f9f9;
++    color: #000;
+     font-family: 'HONOR Sans CN', sans-serif;
+   }
+ }
+ 
+ .game-center-scroll {
+-  width: calc(100% + 0.8rem);
+-  margin-left: -0.4rem;
+-  margin-right: -0.4rem;
++  width: 100%;
+   overflow-x: auto;
+   scrollbar-width: none;
+   -ms-overflow-style: none;
+@@ -1548,23 +1200,20 @@ onBeforeUnmount(() => {
+ 
+ .game-center-track {
+   display: flex;
+-  height: 100%;
+   gap: 0.15rem;
+   width: max-content;
+-  padding-left: 0.4rem;
+-  padding-right: 0.4rem;
+ }
+ 
+ .game-scroll-card {
+   flex-shrink: 0;
+   width: 2.95rem;
+-  // σ¢║σ«ÜΘ½ÿσ║ª∩╝Üσ░Åσ▒ÅΣ╕ìσåìσÄïτ╝⌐σìíτëç∩╝îµö╣τö▒Θí╡Θ¥óσÉæΣ╕ïµ╗Üσè¿∩╝êσåàσ«╣σ╗╢Σ╝╕σê░ appbar Σ╕ïµû╣∩╝îτö¿µê╖µ╗Üσè¿µƒÑτ£ï∩╝ëπÇé
+-  height: 100%;
++  // σÉîµù╢σà£σ║òτ¬äΘ½ÿ(14PM 932)Σ╕Äτ¬äτƒ«(SE 667):τö¿ vh σüÜΘÖíσ│¡µû£τÄç,clamp σ£¿Σ╕ñτ½»σÉäΦç¬ΦÉ╜σê░ min/maxπÇé
++  height: clamp(2.8rem, calc(25vh - 65px), 3.91rem);
+   border-radius: 0.37rem;
+   overflow: hidden;
+   position: relative;
+   cursor: pointer;
+-  background: linear-gradient(135deg, #956eff 0%, #7447ef 100%);
++  background: #54b78d;
+   display: flex;
+   flex-direction: column;
+   justify-content: space-between;
+@@ -1576,29 +1225,6 @@ onBeforeUnmount(() => {
+   }
+ }
+ 
+-.poker-card {
+-  background: linear-gradient(135deg, #65a879 0%, #329147 100%);
+-}
+-
+-.game-card-mahjong {
+-  background: linear-gradient(135deg, #ff9cab 0%, #df2340 100%);
+-
+-  .zone-info {
+-    position: relative;
+-  }
+-
+-  .casino-desc {
+-    text-shadow: 0 0.02rem 0.06rem rgba(0, 0, 0, 0.3);
+-
+-    p {
+-      margin: 0;
+-      white-space: nowrap;
+-      font-size: 0.2rem;
+-      line-height: 1.5;
+-    }
+-  }
+-}
+-
+ .zone-lg-bg {
+   position: absolute;
+   inset: 0;
+@@ -1732,9 +1358,7 @@ onBeforeUnmount(() => {
+ }
+ 
+ .coming-soon-scroll {
+-  width: calc(100% + 0.8rem);
+-  margin-left: -0.4rem;
+-  margin-right: -0.4rem;
++  width: 100%;
+   overflow-x: auto;
+   scrollbar-width: none;
+   -ms-overflow-style: none;
+@@ -1746,72 +1370,43 @@ onBeforeUnmount(() => {
+ 
+ .coming-soon-track {
+   display: flex;
+-  height: 100%;
+   gap: 0.15rem;
+   padding-bottom: 0.1rem;
+-  padding-left: 0.4rem;
+-  padding-right: 0.4rem;
+   width: max-content;
+ }
+ 
+ .coming-soon-scroll-card {
+   flex-shrink: 0;
+   width: 2.95rem;
+-  // Σ╕Ä .game-scroll-card Σ╕ÇΦç┤∩╝Üσ¢║σ«ÜΘ½ÿσ║ª∩╝îΣ╕ìσåìΘÜÅσ▒Åσ╣òσÄïτ╝⌐∩╝îµö╣τö▒Θí╡Θ¥óµ╗Üσè¿σà£σ║òπÇé
+-  height: 100%;
++  height: clamp(2rem, calc(35vh - 158px), 3.91rem);
+   border-radius: 0.51rem;
+   overflow: hidden;
+   position: relative;
+   cursor: pointer;
+   border: 0.01rem solid rgba(249, 249, 249, 0.4);
++  display: flex;
++  align-items: center;
++  justify-content: center;
+ 
+   &:active {
+     opacity: 0.85;
+   }
+ }
+ 
+-.coming-soon-scroll-card__img {
+-  width: 100%;
+-  height: 100%;
+-  // σ¢╛τëçµùáσåàτ╜«µûçσ¡ù∩╝ÜΘ¥áΣ╕èσ»╣Θ╜ÉπÇüΦ╢àσç║Θâ¿σêåΣ╗Äσ║òΘâ¿ΦúüµÄë∩╝îσ║òΘâ¿τ╗ÖΣ╗úτáü label Φ«⌐Σ╜ìπÇé
+-  object-fit: cover;
+-  object-position: top center;
+-  display: block;
+-}
+-
+-// σÉìτº░/µÅÅΦ┐░µö╣Σ╕║Σ╗úτáüµ╕▓µƒô∩╝îτ╝⌐µö╛µù╢Σ╕ìΣ╝ÜσâÅσ¢╛τëçσåàµûçσ¡ùΘéúµá╖Φó½Φúüσêç/τ│èπÇé
+-.coming-soon-scroll-card__label {
++.coming-soon-scroll-card__overlay {
+   position: absolute;
+-  left: 0;
+-  right: 0;
+-  bottom: 0;
+-  display: flex;
+-  flex-direction: column;
+-  align-items: flex-start;
+-  gap: 0;
+-  padding: 0.36rem 0.24rem 0.16rem;
+-  color: #fff;
+-  text-align: left;
+-  background: linear-gradient(to top, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0) 100%);
+-  pointer-events: none;
+-}
+-
+-.coming-soon-scroll-card__title {
+-  font-size: 0.34rem;
+-  font-weight: 700;
+-  line-height: 1.15;
+-}
+-
+-.coming-soon-scroll-card__subtitle {
+-  font-size: 0.22rem;
+-  font-weight: 400;
+-  line-height: 1.25;
+-  color: rgba(255, 255, 255, 0.82);
++  inset: 0;
++  background: url('@/assets/images/home_comming_soon_2.png') center / cover no-repeat;
++  border-radius: inherit;
+ }
+ 
+-// σÅ¬σ£¿µáçΘóÿΣ╕Äσë»µáçΘóÿΣ╣ïΘù┤τòÖ 0.12rem∩╝îσë»µáçΘóÿσÉäΦíîΣ╗ìΘ¥á line-height τ┤ºσçæµÄÆσêùπÇé
+-.coming-soon-scroll-card__subtitle--first {
+-  margin-top: 0.12rem;
++.coming-soon-scroll-card__text {
++  position: relative;
++  z-index: 1;
++  font-size: 0.29rem;
++  font-weight: 500;
++  color: #fff;
++  font-family: 'HONOR Sans CN', sans-serif;
+ }
+ 
+ .floating-action-area {
+@@ -1826,45 +1421,42 @@ onBeforeUnmount(() => {
+ }
+ 
+ .create-table-btn {
+-  width: 4.2667rem;
+-  height: 1.28rem;
+-  border: 0.0177rem solid rgba(242, 242, 242, 0.8);
+-  border-radius: 0.8252rem;
+-  background-image: linear-gradient(158.98deg, #55f329 7.55%, #3ead06 71.92%);
+-  color: #f9f9f9;
+-  font-size: 0.4052rem;
++  width: 3.1rem;
++  height: 0.94rem;
++  border: 0.0133rem solid rgba(242, 242, 242, 0.8);
++  border-radius: 0.6rem;
++  background-image: linear-gradient(168deg, #05e7ae 7.55%, #027a5c 71.92%);
++  color: #fbfbfb;
++  font-size: 0.34rem;
+   font-weight: 500;
+-  line-height: 1.39;
+-  text-align: center;
+-  backdrop-filter: blur(0.6655rem);
+-  box-shadow:
+-    2.795rem 1.8988rem 0.9494rem rgba(15, 110, 2, 0.01),
+-    1.7923rem 1.2156rem 0.8695rem rgba(33, 87, 3, 0.04),
+-    1.0026rem 0.6832rem 0.7276rem rgba(17, 91, 2, 0.14),
+-    0.4437rem 0.3017rem 0.5413rem rgba(31, 101, 5, 0.24),
+-    0.1154rem 0.0799rem 0.3017rem rgba(40, 91, 4, 0.27);
+-
+-  @include theme-light-own {
+-    background-image: none;
+-    background-color: #05c297;
+-    box-shadow: none;
++  box-shadow: 0 0.12rem 0.26rem rgba(0, 0, 0, 0.22);
++
++  @include theme-light {
++    border-color: transparent;
++    background: var(--c-brand);
++    box-shadow: 0 0.12rem 0.28rem rgba(var(--c-brand-rgb), 0.25);
+   }
+ }
+ 
+ .floating-menu-btn {
+-  width: 1.4117rem;
+-  height: 1.4117rem;
++  width: 0.86rem;
++  height: 0.86rem;
+   padding: 0;
+   border: none;
+-  background: transparent;
++  border-radius: 50%;
++  background: radial-gradient(circle at 30% 25%, #056a57 0%, #01382f 75%);
+   display: inline-flex;
++  flex-direction: column;
+   align-items: center;
+   justify-content: center;
++  gap: 0.07rem;
++  box-shadow: 0 0.12rem 0.26rem rgba(0, 0, 0, 0.34);
+ }
+ 
+-.floating-menu-btn img {
+-  width: 100%;
+-  height: 100%;
+-  object-fit: contain;
++.floating-menu-btn span {
++  width: 0.23rem;
++  height: 0.055rem;
++  border-radius: 999px;
++  background: rgba(255, 255, 255, 0.95);
+ }
+ </style>
+diff --git a/src/views/home/gameList.vue b/src/views/home/gameList.vue
+index 0331e01..457bd65 100644
+--- a/src/views/home/gameList.vue
++++ b/src/views/home/gameList.vue
+@@ -8,20 +8,19 @@ import StorageKey from '@/constants/storageKey'
+ import LoginSession from '@/session/loginSession'
+ import type { RoomRecord } from '@/api/models/roomcenter'
+ import { useGameStore } from '@/stores/game'
+-import { useLoginModalStore } from '@/stores/loginModal'
+ import { useRoomListStore } from '@/stores/roomList'
+ import { useUserInfoStore } from '@/stores/userInfo'
+ import { localStore } from '@/utils/localStore'
+ import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
+ import serviceIcon from '@/assets/icons/icon_server.png'
+ import walletIcon from '@/assets/icons/icon_wallet.png'
+-import gameType6Plus from '@/assets/icons/game_type_6+.svg'
+-import gameTypeNlh from '@/assets/icons/game_type_nlh.svg'
+-import gameTypePlo from '@/assets/icons/game_type_plo.svg'
++import gameType6Plus from '@/assets/icons/game_type_6+.png'
++import gameTypeNlh from '@/assets/icons/game_type_nlh.png'
++import gameTypePlo from '@/assets/icons/game_type_plo.png'
+ import tabBg from '@/assets/icons/game_type_tab_bg.png'
+ import { t } from '@/i18n'
+ import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
+-import { isPrivateDomainMode } from '@/utils/channelPackage'
++import { isChannelPackageHost } from '@/utils/channelPackage'
+ import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
+ 
+ interface Props {
+@@ -59,10 +58,9 @@ const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
+ 
+ const router = useRouter()
+ const gameStore = useGameStore()
+-const loginModalStore = useLoginModalStore()
+ const roomListStore = useRoomListStore()
+ const userInfoStore = useUserInfoStore()
+-const isChannelPackage = computed(() => isPrivateDomainMode())
++const isChannelPackage = isChannelPackageHost()
+ 
+ // Θí╢Θâ¿σÅ│Σ╛ºσêçµìóΘúÄµá╝σ╝Çσà│∩╝ÜσÆîµùºτëêΣ┐¥µîüΣ╕ÇΦç┤πÇé
+ const activeTab = ref<GameTypeTabName>('all')
+@@ -198,7 +196,7 @@ function restoreRoomGroupExpandedCache(): void {
+ function syncExpandedMapWithRecords(records: RoomRecord[]): void {
+   const validGroupKeySet = new Set<string>()
+   records
+-    .filter((room) => Number(room.game_type) < 5)
++    .filter((room) => Number(room.game_type) < 6)
+     .forEach((room) => {
+       validGroupKeySet.add(buildGroupKey(room))
+     })
+@@ -219,7 +217,7 @@ function buildGroupKey(room: RoomRecord): string {
+ 
+ async function handleTableClick(room: RoomRecord): Promise<void> {
+   if (!gameStore.sessionToken) {
+-    loginModalStore.open()
++    showFailToast(t('tokenFail'))
+     return
+   }
+ 
+@@ -338,81 +336,97 @@ function handleOpenCustomerService(): void {
+ 
+ <template>
+   <div
+-    class="room-list-page poker-zone-page themeType2"
++    class="room-list-page themeType2"
+     :class="{ 'room-list-page--embedded': props.embedded }"
+     :style="pageStyle"
+   >
+     <div v-if="!props.embedded" class="bg-overlay"></div>
+-    <HeaderBack
+-      v-if="!props.embedded"
+-      :title="t('UIHomePokerArea')"
+-      extra-padding
+-      @back="handleBack"
+-    >
+-      <template #right>
+-        <div class="action-wrap">
+-          <TopActionButton
+-            :name="t('UIGuildFund_RechargeText')"
+-            :icon="walletIcon"
+-            icon-alt="wallet"
+-            @click="router.push('/wallet')"
+-          />
+-          <TopActionButton
+-            v-if="userInfoStore.currentClub?.support_im_rid"
+-            :name="t('UIMineMain01')"
+-            :icon="serviceIcon"
+-            icon-alt="service"
+-            @click="handleOpenCustomerService"
+-          />
+-        </div>
+-      </template>
+-    </HeaderBack>
+-    <ClubZoneQuickActions v-if="isChannelPackage && !props.embedded" />
+-    <GameTypeTabbar
+-      v-model="activeTab"
+-      :class="{ 'home-embedded-tabs': props.embedded }"
+-      :tabs="[
+-        { name: 'all', title: t('UIMatch_GtO8YEdb') },
+-        { name: 'texas', title: t('UITexasInfo_Texas') },
+-        { name: 'omaha', title: t('UITexasInfo_Omaha') },
+-        { name: 'sixPlus', title: t('6+') },
+-      ]"
+-    />
+-
+-    <section class="group-list">
+-      <PokerTableGroupCard
+-        v-for="group in groupedRecords"
+-        :key="group.groupKey"
+-        :group="group"
+-        :expanded="expandedMap[group.groupKey] === true"
++    <div class="room-list-stage">
++      <HeaderBack
++        v-if="!props.embedded"
++        :title="t('UIHomePokerArea')"
++        extra-padding
++        @back="handleBack"
++      >
++        <template #right>
++          <div class="action-wrap">
++            <TopActionButton
++              :name="t('UIGuildFund_RechargeText')"
++              :icon="walletIcon"
++              icon-alt="wallet"
++              @click="router.push('/wallet')"
++            />
++            <TopActionButton
++              v-if="userInfoStore.currentClub?.support_im_rid"
++              :name="t('UIMineMain01')"
++              :icon="serviceIcon"
++              icon-alt="service"
++              @click="handleOpenCustomerService"
++            />
++          </div>
++        </template>
++      </HeaderBack>
++      <ClubZoneQuickActions v-if="isChannelPackage && !props.embedded" />
++      <GameTypeTabbar
++        v-model="activeTab"
++        :class="{ 'home-embedded-tabs': props.embedded }"
+         :force-light="props.embedded"
+-        @toggle="handleToggleGroup"
+-        @table-click="handleTableClick"
++        :tabs="[
++          { name: 'all', title: t('UIMatch_GtO8YEdb') },
++          { name: 'texas', title: t('UITexasInfo_Texas') },
++          { name: 'omaha', title: t('UITexasInfo_Omaha') },
++          { name: 'sixPlus', title: t('6+') },
++        ]"
+       />
+ 
+-      <div v-if="!groupedRecords.length" class="empty-wrap">
+-        <VanIcon name="search" />
+-        <span>
+-          {{ t('UINoGameTip') }}
+-        </span>
+-      </div>
+-    </section>
++      <section class="group-list">
++        <PokerTableGroupCard
++          v-for="group in groupedRecords"
++          :key="group.groupKey"
++          :group="group"
++          :expanded="expandedMap[group.groupKey] === true"
++          :force-light="props.embedded"
++          @toggle="handleToggleGroup"
++          @table-click="handleTableClick"
++        />
++
++        <div v-if="!groupedRecords.length" class="empty-wrap">
++          <VanIcon name="search" />
++          <span>
++            {{ t('UINoGameTip') }}
++          </span>
++        </div>
++      </section>
++    </div>
+   </div>
+ </template>
+ 
+ <style scoped lang="scss">
++@use '@/styles/mixins' as *;
++
+ .room-list-page {
+   position: relative;
+   min-height: 100dvh;
+   color: #fff;
+   overflow: hidden;
+   background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
++
++  @include theme-light {
++    color: #222;
++    background-image: url('@/assets/images/main_bg_light.png');
++  }
+ }
+ 
+ .room-list-page--embedded {
+   min-height: 0;
+   overflow: visible;
++  color: #000;
+   background-image: none;
++
++  @include theme-light {
++    color: #000;
++    background-image: none;
++  }
+ }
+ 
+ .room-list-stage {
+@@ -429,30 +443,36 @@ function handleOpenCustomerService(): void {
+     radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
+     radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
+     radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
++
++  @include theme-light {
++    background:
++      radial-gradient(circle at 8% 4%, rgba(105, 190, 255, 0.2), transparent 30%),
++      radial-gradient(circle at 92% 9%, rgba(105, 190, 255, 0.14), transparent 26%);
++  }
+ }
+ 
+ .action-wrap {
+   display: flex;
+   align-items: center;
+   gap: 0.26rem;
+-  margin-right: 0.25rem;
+ }
+ 
+ .group-list {
+   position: relative;
+   z-index: 1;
+-  margin-top: -0.03rem;
++  margin-top: 0;
++  padding-top: 0;
+   max-height: calc(100dvh - 2rem);
+   overflow-y: auto;
+-  display: flex;
+-  flex-direction: column;
+-  align-items: stretch;
+-  gap: 0;
+-  align-self: stretch;
+-  border-radius: 0.533rem 0.533rem 0 0;
+-  padding: 0.2rem 0 0.8rem;
+-  background: rgba(34, 34, 34, 0.5);
+-  backdrop-filter: blur(0.2213rem);
++  padding-right: 0.38rem;
++  padding-bottom: 0.5333rem;
++  padding-left: 0.38rem;
++  background: rgba(255, 255, 255, 0.24);
++  backdrop-filter: blur(0.3533rem) saturate(1.04);
++
++  @include theme-light {
++    background: rgba(255, 255, 255, 0.72);
++  }
+ }
+ 
+ .room-list-page--embedded .group-list {
+@@ -461,6 +481,13 @@ function handleOpenCustomerService(): void {
+   padding-right: 0;
+   padding-bottom: 0.2rem;
+   padding-left: 0;
++  background: #fff;
++  backdrop-filter: none;
++
++  @include theme-light {
++    background: #fff;
++    backdrop-filter: none;
++  }
+ }
+ 
+ .room-list-page--embedded :deep(.home-embedded-tabs),
+@@ -472,6 +499,10 @@ function handleOpenCustomerService(): void {
+   backdrop-filter: none !important;
+ }
+ 
++.room-list-page--embedded .empty-wrap {
++  color: rgba(34, 34, 34, 0.58);
++}
++
+ .empty-wrap {
+   padding: 1.4933rem 0;
+   display: flex;
+@@ -480,100 +511,9 @@ function handleOpenCustomerService(): void {
+   gap: 0.2133rem;
+   font-size: 0.3467rem;
+   color: rgba(255, 255, 255, 0.82);
+-}
+-</style>
+-
+-<style lang="scss">
+-:root[data-theme='light'] .poker-zone-page {
+-  --c-brand: #05c297;
+-  --c-brand-rgb: 5, 194, 151;
+-
+-  color: rgba(0, 0, 0, 1);
+-  background-image: url('@/assets/images/main_bg_light.webp');
+-
+-  .back-trigger,
+-  .back-icon {
+-    color: rgba(0, 0, 0, 1);
+-  }
+-
+-  .title {
+-    text-shadow: none;
+-  }
+-
+-  .room-tabs {
+-    --tab-active-bg: url('@/assets/images/game_type_tab_active_bg_light.svg') !important;
+-    --van-tab-text-color: rgba(34, 34, 34, 0.72);
+-    --van-tab-active-text-color: #111;
+-
+-    .van-tab {
+-      color: rgba(34, 34, 34, 0.72) !important;
+-    }
+-
+-    .van-tab--active {
+-      color: #111 !important;
+-    }
+-  }
+-
+-  .group-list {
+-    background: rgba(255, 255, 255, 0.72);
+-
+-    .group-item {
+-      &::after {
+-        background: rgba(0, 0, 0, 0.12);
+-      }
+-
+-      .count-text {
+-        color: rgba(0, 0, 0, 0.72);
+-      }
+-
+-      .count-icon {
+-        filter: brightness(0);
+-        opacity: 0.72;
+-      }
+-
+-      .toggle-btn {
+-        background: rgba(34, 34, 34, 0.16);
+-      }
+-
+-      .toggle-icon {
+-        filter: brightness(0);
+-      }
+-    }
+-
+-    .table-main {
+-      background: rgba(34, 34, 34, 0.16);
+-      box-shadow: 0 0.08rem 0.2rem rgba(70, 79, 88, 0.08);
+-    }
+-
+-    .table-name {
+-      border-color: rgba(0, 0, 0, 0.06);
+-      background: rgba(0, 0, 0, 0.05);
+-      backdrop-filter: none;
+-      -webkit-backdrop-filter: none;
+-    }
+-
+-    .table-bg {
+-      background: rgba(49, 49, 49, 0.2);
+-      -webkit-mask: url('@/assets/images/game_list_card_table_bg.png') center / 100% 100% no-repeat;
+-      mask: url('@/assets/images/game_list_card_table_bg.png') center / 100% 100% no-repeat;
+-    }
+-
+-    .table-center {
+-      background: rgba(0, 0, 0, 0.22);
+-      color: #fff;
+-    }
+-
+-    .seat-name {
+-      color: #fff;
+-    }
+-
+-    .meta-icon[alt='time'] {
+-      filter: brightness(0);
+-    }
+-  }
+ 
+-  .empty-wrap {
+-    color: rgba(0, 0, 0, 0.6);
++  @include theme-light {
++    color: rgba(34, 34, 34, 0.58);
+   }
+ }
+ </style>
+diff --git a/src/views/main/MainLayoutView.vue b/src/views/main/MainLayoutView.vue
+index 230f073..948235e 100644
+--- a/src/views/main/MainLayoutView.vue
++++ b/src/views/main/MainLayoutView.vue
+@@ -1,149 +1,24 @@
+ <script setup lang="ts">
+-import { computed, onMounted, watch } from 'vue'
++import { computed, watch } from 'vue'
+ import { RouterView, useRoute } from 'vue-router'
+ import mainBgUrl from '@/assets/images/main_bg.webp'
+-import mainBg2Url from '@/assets/images/main_bg2.jpg'
+-import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
+-import { theme } from '@/utils/theme'
+-import { getUserClubApi, getUserInfoApi } from '@/api/user'
+-import { postDiamondConfigApi, postGlobalConfigApi } from '@/api/config'
+-import {
+-  forwardDiamondConfigToCocos,
+-  forwardGlobalConfigToCocos,
+-} from '@/bridge/sync/h5BusinessSync'
+-import { ensureMultiLanguageTemplateLoaded } from '@/utils/multiLanguageTemplate'
+-import LoginSession from '@/session/loginSession'
++import mainBgLightUrl from '@/assets/images/main_bg_light.png'
+ import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
+-import { useGameStore } from '@/stores/game'
+-import { useAppConfigStore } from '@/stores/appConfig'
+-import { useTextI18n } from '@/i18n/useTextI18n'
+-import StorageKey from '@/constants/storageKey'
+-import { localStore } from '@/utils/localStore'
+ import LoginModal from '@/views/login/LoginModal.vue'
+ 
+ const route = useRoute()
+-const gameStore = useGameStore()
+ const tabsStore = useMainTabsStore()
+-const appConfigStore = useAppConfigStore()
+-const { setLocale } = useTextI18n()
+ 
+-// Σ╕╗σ«╣σÖ¿ΦâîµÖ»σ¢╛∩╝Üσà¿Θí╡Θ¥óσà▒τö¿Σ╕Çσ╝áσ║òσ¢╛∩╝îΘªûΘí╡Σ╜┐τö¿ main_bg2.pngπÇé
+-const LIGHT_THEME_TABS: ReadonlyArray<MainTabKey> = [
+-  'message',
+-  'mine',
+-  'friendsTable',
+-  'club',
+-  'home',
+-]
++// ΦâîµÖ»τ┤áµ¥Éτö▒ CSS µá╣µì« data-theme ΘÇëµï⌐∩╝îσêçµìóΣ╕╗Θóÿµù╢µùáΘ£ÇΘçìσ╗║Θí╡Θ¥óπÇé
++const backgroundStyle = computed(() => ({
++  '--main-bg-dark': `url(${mainBgUrl})`,
++  '--main-bg-light': `url(${mainBgLightUrl})`,
++}))
+ 
+-const backgroundStyle = computed(() => {
+-  const tabKey = route.meta.tabKey as MainTabKey | undefined
+-  if (theme.value === 'light' && tabKey && LIGHT_THEME_TABS.includes(tabKey)) {
+-    return { backgroundImage: `url(${mainBgLightUrl})` }
+-  }
+-
+-  return {
+-    backgroundImage: route.meta.tabKey === 'home' ? `url(${mainBg2Url})` : `url(${mainBgUrl})`,
+-  }
+-})
+-
+-const isHome = computed(() => route.meta.tabKey === 'home')
+-const isGuestHome = computed(() => route.name === 'guest-home')
+-const isClub = computed(() => route.meta.tabKey === 'club')
+-const isMessage = computed(() => route.meta.tabKey === 'message')
+-const isMine = computed(() => route.meta.tabKey === 'mine')
+-const isFriendsTable = computed(() => route.meta.tabKey === 'friendsTable')
+ const isHomeRoute = computed(() => route.name === 'lobby' || route.name === 'guest-home')
+ const isPrimaryLayout = computed(() => route.meta.desktopLayout === 'primary')
+ const isGuestRoute = computed(() => String(route.name ?? '').startsWith('guest-'))
+ 
+-async function fetchUserInfoOnEnter(): Promise<void> {
+-  const token = gameStore.sessionToken.trim()
+-  if (!token) {
+-    return
+-  }
+-
+-  // σÉîΣ╕Ç token σ£¿σ╜ôσëìσ║öτö¿Σ╝ÜΦ»¥σåàσÅ¬σÉîµ¡ÑΣ╕Çµ¼í userinfo / clubπÇé
+-  if (gameStore.shouldSyncProfile(token)) {
+-    // σÉÄσÅ░Θ¥ÖΘ╗ÿσÉîµ¡Ñ∩╝ÜΣ╕ìΘÿ╗σí₧ΘªûΘí╡µ╕▓µƒô∩╝îΣ╕ìµëôµû¡τö¿µê╖µôìΣ╜£πÇé
+-    void getUserInfoApi()
+-      .then((userInfo) => {
+-        const user = userInfo.user as Record<string, unknown>
+-        const userId = String(user.p_u_id ?? user.pUid ?? user.userid ?? '')
+-        const userName = String(user.nickname ?? gameStore.loginAccount ?? '')
+-
+-        gameStore.setLoginUser({
+-          account: gameStore.loginAccount || userName,
+-          nickname: userName,
+-          userId,
+-        })
+-
+-        // Φ»╗σÅûσÉÄτ½»Φ»¡Φ¿Çσ¡ùµ«╡∩╝¢µ£¼σ£░σ╖▓µ£ëτö¿µê╖µÿÄτí«ΘÇëµï⌐τÜäΦ»¡Φ¿Çµù╢Σ╕ìΦªåτ¢û∩╝îΘü┐σàìτÖ╗σ╜òσÉÄΘçìτ╜«Σ╕║µ£ìσèíτ½»σÇ╝πÇé
+-        const languageCode = resolveLanguageCode(user)
+-        const localSavedLanguage = localStore.getItem<string>(StorageKey.Language, '')
+-        if (!localSavedLanguage) {
+-          setLocale(languageCode || 'en')
+-        }
+-      })
+-      .catch((error) => {
+-        console.warn('[main-layout] sync user info failed:', error)
+-      })
+-
+-    // Σ┐▒Σ╣ÉΘâ¿Σ┐íµü»Θ¥ÖΘ╗ÿσÉîµ¡Ñ∩╝îσñ▒Φ┤ÑΣ╗àΦ«░µùÑσ┐ùπÇé
+-    void getUserClubApi().catch((error) => {
+-      console.warn('[main-layout] sync user club failed:', error)
+-    })
+-
+-    // σà¿σ▒ÇΘàìτ╜«Θ¥ÖΘ╗ÿµïëσÅûσ╣╢τ╝ôσ¡ÿσê░ Pinia + localStorage∩╝êσ»╣Θ╜É Unity GameCache∩╝ëπÇé
+-    void postGlobalConfigApi({})
+-      .then((res) => {
+-        if (res.code === 0 && res.data) {
+-          appConfigStore.setGlobalConfig(res.data)
+-          forwardGlobalConfigToCocos(res.data)
+-        }
+-      })
+-      .catch((error) => {
+-        console.warn('[main-layout] sync global config failed:', error)
+-      })
+-
+-    // σà¿σ▒Çµö╢Φ┤╣Θàìτ╜«Θ¥ÖΘ╗ÿµïëσÅûσ╣╢τ╝ôσ¡ÿ∩╝îΘÜÅσÉÄσÉîµ¡Ñτ╗Ö CocosπÇé
+-    void postDiamondConfigApi({})
+-      .then((res) => {
+-        if (res.code === 0 && res.data) {
+-          appConfigStore.setDiamondConfig(res.data)
+-          forwardDiamondConfigToCocos(appConfigStore.diamondConfig)
+-        }
+-      })
+-      .catch((error) => {
+-        console.warn('[main-layout] sync diamond config failed:', error)
+-      })
+-
+-    // σñÜΦ»¡Φ¿Çµ¿íµ¥┐Θ¥ÖΘ╗ÿµïëσÅûσ╣╢τ╝ôσ¡ÿσê░ localStorage∩╝êµ¿íσ¥ùσê¥σºïσîûµù╢σ╖▓Σ╗Äτ╝ôσ¡ÿµüóσñì∩╝îµ¡ñσñäµ¢┤µû░∩╝ëπÇé
+-    void ensureMultiLanguageTemplateLoaded().catch((error) => {
+-      console.warn('[main-layout] sync multi-language template failed:', error)
+-    })
+-  }
+-
+-  void LoginSession.EnsureWS().catch((error) => {
+-    console.warn('[main-layout] ensure ws failed:', error)
+-  })
+-}
+-
+-function resolveLanguageCode(user: Record<string, unknown>): string {
+-  const languageKeys = ['language', 'client_language', 'system_language', 'lt']
+-  for (const key of languageKeys) {
+-    const value = user[key]
+-    if (typeof value === 'string' && value.trim()) {
+-      return value.trim()
+-    }
+-  }
+-  return ''
+-}
+-
+-onMounted(() => {
+-  void fetchUserInfoOnEnter()
+-})
+-
+ // Φ╖»τö▒σÅÿσîûµù╢σÉîµ¡Ñσ║òΘâ¿ Tab σà▒Σ║½τè╢µÇü∩╝îτí«Σ┐¥σ¡ÉΘí╡Θ¥óΣ╣ƒΦâ╜τ╗┤µîüµ¡úτí«Θ½ÿΣ║«πÇé
+ watch(
+   () => route.meta.tabKey,
+@@ -160,12 +35,6 @@ watch(
+   <div
+     class="main-layout"
+     :class="{
+-      'is-home': isHome,
+-      'is-guest-home': isGuestHome,
+-      'is-club': isClub,
+-      'is-message': isMessage,
+-      'is-mine': isMine,
+-      'is-friends-table': isFriendsTable,
+       'main-layout--home': isHomeRoute,
+       'main-layout--primary': isPrimaryLayout,
+       'main-layout--guest': isGuestRoute,
+@@ -186,58 +55,38 @@ watch(
+ </template>
+ 
+ <style scoped lang="scss">
++@use '@/styles/mixins' as *;
++
+ .main-layout {
+   position: relative;
+-  // σ¢║σ«ÜΘ½ÿσ║ª∩╝êborder-box∩╝ë∩╝ÜTelegram guard padding-top σÉâΦ┐¢Φç¬Φ║½Θ½ÿσ║ª∩╝î
+-  // σ¡Éσ▒éτö¿ height:100% Φç¬σè¿σ╛ùσê░πÇîσÅ»ΦºåΘ½ÿσ║ª ΓêÆ guardπÇì∩╝îσ║òΘâ¿Σ╕ìσåìΦó½Φúüσê░σ»╝Φê¬µáÅΣ╕ïπÇé
+-  height: var(--app-full-height, var(--app-viewport-height, 100dvh));
++  min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
++  background-image: var(--main-bg-dark);
+   background-size: cover;
+   background-position: center;
+   background-repeat: no-repeat;
+ 
+-  &.is-home,
+-  &.is-club,
+-  &.is-message,
+-  &.is-mine,
+-  &.is-friends-table {
+-    background-size: cover;
+-
+-    &::before {
+-      display: none;
+-    }
++  @include theme-light {
++    background-color: var(--c-page);
++    background-image: var(--main-bg-light);
+   }
+ }
+ 
+-:root[data-theme='light'] .main-layout.is-message::before,
+-:root[data-theme='light'] .main-layout.is-mine::before,
+-:root[data-theme='light'] .main-layout.is-friends-table::before,
+-:root[data-theme='light'] .main-layout.is-club::before,
+-:root[data-theme='light'] .main-layout.is-home::before {
+-  background-color: transparent;
+-  backdrop-filter: none;
+-}
+-
+-:root[data-theme='light'] .main-layout--home {
+-  background-color: transparent;
+-  background-image: url('@/assets/images/main_bg_light.webp') !important;
++// ΘªûΘí╡τÜäµ╖▒Φë▓µû╣µíêΣ╗ìΣ╜┐τö¿τÖ╜σ║ò∩╝¢µ╡àΦë▓µû╣µíêµëìσêçµìóσê░µ╡àΦë▓Σ╕╗ΘóÿΦâîµÖ»σ¢╛πÇé
++.main-layout--home {
++  background-color: #fff;
++  background-image: none;
+ 
+-  .main-layout-content {
+-    background: transparent;
++  @include theme-light {
++    background-color: var(--c-page);
++    background-image: var(--main-bg-light);
+   }
+ }
+ 
+-.main-layout--home {
+-  background-color: #222627;
+-  background-image: none !important;
+-}
+-
+ .main-layout-content {
+   position: relative;
+   z-index: 2;
+   // τ╗ƒΣ╕ÇΣ╜£Σ╕║ΓÇ£Θí╡Θ¥óµ╗Üσè¿σ«╣σÖ¿ΓÇ¥∩╝Üσ£¿ html/body fixed τÜäσ£║µÖ»Σ╕ïΣ╣ƒσÅ»τ¿│σ«Üµ╗Üσè¿πÇé
+-  // τê╢σ▒é .main-layout σ╖▓µîë --app-full-height σ«ÜΘ½ÿ∩╝îΦ┐ÖΘçîσ¢₧σê░ dev_light τÜä 100% τ╗ºµë┐∩╝î
+-  // Telegram guard padding Φç¬σè¿Σ╗ÄσÅ»τö¿Θ½ÿσ║ªΣ╕¡µëúΘÖñπÇé
+-  height: 100%;
++  height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+   box-sizing: border-box;
+   display: flex;
+   flex-direction: column;
+@@ -247,17 +96,7 @@ watch(
+   -webkit-overflow-scrolling: touch;
+   touch-action: pan-y;
+   overscroll-behavior-y: none;
+-  padding: calc(var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.2rem) 0rem calc(env(safe-area-inset-bottom) + 2.72rem);
+-}
+-
+-.main-layout--home .main-layout-content {
+-  background: #222627;
+-  padding-top: var(--app-content-safe-area-top, env(safe-area-inset-top));
+-  padding-bottom: calc(env(safe-area-inset-bottom) + 2rem);
+-}
+-
+-.main-layout.is-guest-home .main-layout-content {
+-  overflow-y: hidden;
++  padding: calc(var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.4rem) 0rem calc(env(safe-area-inset-bottom) + 2.72rem);
+ }
+ 
+ .module-slot {

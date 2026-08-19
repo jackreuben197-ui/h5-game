@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, onMounted, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
@@ -27,7 +27,7 @@ const tabsStore = useMainTabsStore()
 const appConfigStore = useAppConfigStore()
 const { setLocale } = useTextI18n()
 
-// 主容器背景图：全页面共用一张底图，首页使用 main_bg2.png。
+// Σ╕╗σ«╣σÖ¿ΦâîµÖ»σ¢╛∩╝Üσà¿Θí╡Θ¥óσà▒τö¿Σ╕Çσ╝áσ║òσ¢╛∩╝îΘªûΘí╡Σ╜┐τö¿ main_bg2.pngπÇé
 const LIGHT_THEME_TABS: ReadonlyArray<MainTabKey> = [
   'message',
   'mine',
@@ -63,9 +63,9 @@ async function fetchUserInfoOnEnter(): Promise<void> {
     return
   }
 
-  // 同一 token 在当前应用会话内只同步一次 userinfo / club。
+  // σÉîΣ╕Ç token σ£¿σ╜ôσëìσ║öτö¿Σ╝ÜΦ»¥σåàσÅ¬σÉîµ¡ÑΣ╕Çµ¼í userinfo / clubπÇé
   if (gameStore.shouldSyncProfile(token)) {
-    // 后台静默同步：不阻塞首页渲染，不打断用户操作。
+    // σÉÄσÅ░Θ¥ÖΘ╗ÿσÉîµ¡Ñ∩╝ÜΣ╕ìΘÿ╗σí₧ΘªûΘí╡µ╕▓µƒô∩╝îΣ╕ìµëôµû¡τö¿µê╖µôìΣ╜£πÇé
     void getUserInfoApi()
       .then((userInfo) => {
         const user = userInfo.user as Record<string, unknown>
@@ -78,7 +78,7 @@ async function fetchUserInfoOnEnter(): Promise<void> {
           userId,
         })
 
-        // 读取后端语言字段；本地已有用户明确选择的语言时不覆盖，避免登录后重置为服务端值。
+        // Φ»╗σÅûσÉÄτ½»Φ»¡Φ¿Çσ¡ùµ«╡∩╝¢µ£¼σ£░σ╖▓µ£ëτö¿µê╖µÿÄτí«ΘÇëµï⌐τÜäΦ»¡Φ¿Çµù╢Σ╕ìΦªåτ¢û∩╝îΘü┐σàìτÖ╗σ╜òσÉÄΘçìτ╜«Σ╕║µ£ìσèíτ½»σÇ╝πÇé
         const languageCode = resolveLanguageCode(user)
         const localSavedLanguage = localStore.getItem<string>(StorageKey.Language, '')
         if (!localSavedLanguage) {
@@ -89,12 +89,12 @@ async function fetchUserInfoOnEnter(): Promise<void> {
         console.warn('[main-layout] sync user info failed:', error)
       })
 
-    // 俱乐部信息静默同步，失败仅记日志。
+    // Σ┐▒Σ╣ÉΘâ¿Σ┐íµü»Θ¥ÖΘ╗ÿσÉîµ¡Ñ∩╝îσñ▒Φ┤ÑΣ╗àΦ«░µùÑσ┐ùπÇé
     void getUserClubApi().catch((error) => {
       console.warn('[main-layout] sync user club failed:', error)
     })
 
-    // 全局配置静默拉取并缓存到 Pinia + localStorage（对齐 Unity GameCache）。
+    // σà¿σ▒ÇΘàìτ╜«Θ¥ÖΘ╗ÿµïëσÅûσ╣╢τ╝ôσ¡ÿσê░ Pinia + localStorage∩╝êσ»╣Θ╜É Unity GameCache∩╝ëπÇé
     void postGlobalConfigApi({})
       .then((res) => {
         if (res.code === 0 && res.data) {
@@ -106,7 +106,7 @@ async function fetchUserInfoOnEnter(): Promise<void> {
         console.warn('[main-layout] sync global config failed:', error)
       })
 
-    // 全局收费配置静默拉取并缓存，随后同步给 Cocos。
+    // σà¿σ▒Çµö╢Φ┤╣Θàìτ╜«Θ¥ÖΘ╗ÿµïëσÅûσ╣╢τ╝ôσ¡ÿ∩╝îΘÜÅσÉÄσÉîµ¡Ñτ╗Ö CocosπÇé
     void postDiamondConfigApi({})
       .then((res) => {
         if (res.code === 0 && res.data) {
@@ -118,7 +118,7 @@ async function fetchUserInfoOnEnter(): Promise<void> {
         console.warn('[main-layout] sync diamond config failed:', error)
       })
 
-    // 多语言模板静默拉取并缓存到 localStorage（模块初始化时已从缓存恢复，此处更新）。
+    // σñÜΦ»¡Φ¿Çµ¿íµ¥┐Θ¥ÖΘ╗ÿµïëσÅûσ╣╢τ╝ôσ¡ÿσê░ localStorage∩╝êµ¿íσ¥ùσê¥σºïσîûµù╢σ╖▓Σ╗Äτ╝ôσ¡ÿµüóσñì∩╝îµ¡ñσñäµ¢┤µû░∩╝ëπÇé
     void ensureMultiLanguageTemplateLoaded().catch((error) => {
       console.warn('[main-layout] sync multi-language template failed:', error)
     })
@@ -144,7 +144,7 @@ onMounted(() => {
   void fetchUserInfoOnEnter()
 })
 
-// 路由变化时同步底部 Tab 共享状态，确保子页面也能维持正确高亮。
+// Φ╖»τö▒σÅÿσîûµù╢σÉîµ¡Ñσ║òΘâ¿ Tab σà▒Σ║½τè╢µÇü∩╝îτí«Σ┐¥σ¡ÉΘí╡Θ¥óΣ╣ƒΦâ╜τ╗┤µîüµ¡úτí«Θ½ÿΣ║«πÇé
 watch(
   () => route.meta.tabKey,
   (tabKey) => {
@@ -174,12 +174,12 @@ watch(
     :style="backgroundStyle"
   >
     <div class="main-layout-content">
-      <!-- 子模块页面内容区域：由路由子页面渲染。 -->
+      <!-- σ¡Éµ¿íσ¥ùΘí╡Θ¥óσåàσ«╣σî║σƒƒ∩╝Üτö▒Φ╖»τö▒σ¡ÉΘí╡Θ¥óµ╕▓µƒôπÇé -->
       <section class="module-slot">
         <RouterView />
       </section>
     </div>
-    <!-- 公共底部导航：跨模块复用。 -->
+    <!-- σà¼σà▒σ║òΘâ¿σ»╝Φê¬∩╝ÜΦ╖¿µ¿íσ¥ùσñìτö¿πÇé -->
     <MainBottomTab />
     <LoginModal />
   </div>
@@ -188,8 +188,9 @@ watch(
 <style scoped lang="scss">
 .main-layout {
   position: relative;
-  // 固定高度（border-box）：Telegram guard padding-top 吃进自身高度，
-  min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  // σ¢║σ«ÜΘ½ÿσ║ª∩╝êborder-box∩╝ë∩╝ÜTelegram guard padding-top σÉâΦ┐¢Φç¬Φ║½Θ½ÿσ║ª∩╝î
+  // σ¡Éσ▒éτö¿ height:100% Φç¬σè¿σ╛ùσê░πÇîσÅ»ΦºåΘ½ÿσ║ª ΓêÆ guardπÇì∩╝îσ║òΘâ¿Σ╕ìσåìΦó½Φúüσê░σ»╝Φê¬µáÅΣ╕ïπÇé
+  height: var(--app-full-height, var(--app-viewport-height, 100dvh));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -233,8 +234,10 @@ watch(
 .main-layout-content {
   position: relative;
   z-index: 2;
-  // 统一作为“页面滚动容器”：在 html/body fixed 的背景下也可稳定滚动。
-  height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  // τ╗ƒΣ╕ÇΣ╜£Σ╕║ΓÇ£Θí╡Θ¥óµ╗Üσè¿σ«╣σÖ¿ΓÇ¥∩╝Üσ£¿ html/body fixed τÜäσ£║µÖ»Σ╕ïΣ╣ƒσÅ»τ¿│σ«Üµ╗Üσè¿πÇé
+  // τê╢σ▒é .main-layout σ╖▓µîë --app-full-height σ«ÜΘ½ÿ∩╝îΦ┐ÖΘçîσ¢₧σê░ dev_light τÜä 100% τ╗ºµë┐∩╝î
+  // Telegram guard padding Φç¬σè¿Σ╗ÄσÅ»τö¿Θ½ÿσ║ªΣ╕¡µëúΘÖñπÇé
+  height: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -258,7 +261,7 @@ watch(
 }
 
 .module-slot {
-  // 子页面容器只负责承载内容，不再单独接管滚动。
+  // σ¡ÉΘí╡Θ¥óσ«╣σÖ¿σÅ¬Φ┤ƒΦ┤úµë┐Φ╜╜σåàσ«╣∩╝îΣ╕ìσåìσìòτï¼µÄÑτ«íµ╗Üσè¿πÇé
   flex: 1;
   min-height: 0;
 }

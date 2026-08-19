@@ -79,10 +79,14 @@
     margin-left: auto;
   }
 
+
   // 首页
   html[data-main-layout='primary'] .home-page {
     display: block;
     padding: 0 0 28px;
+    height: auto;
+    min-height: auto;
+    overflow: visible;
   }
 
   html[data-main-layout='primary'] .home-page .top-bar {
@@ -119,6 +123,10 @@
 
   html[data-main-layout='primary'] .home-header {
     border-radius: clamp(44px, 5.69vw, 82px);
+    aspect-ratio: 1360 / 270;
+    height: auto;
+    max-height: none;
+    flex: none;
   }
 
   html[data-main-layout='primary'] .home-banner,
@@ -239,8 +247,21 @@
     line-height: 1.35;
   }
 
+  html[data-main-layout='primary'] .home-swap-container {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  html[data-main-layout='primary'] .home-default-sections {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
   html[data-main-layout='primary'] .game-center-scroll,
   html[data-main-layout='primary'] .coming-soon-scroll {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
     margin-top: clamp(8px, 0.8333vw, 12px);
     overflow: visible;
   }

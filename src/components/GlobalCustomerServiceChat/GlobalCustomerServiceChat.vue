@@ -1928,6 +1928,9 @@ watch(
   top: 0;
   left: 0;
   right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
   /* 键盘覆盖页面时只抬升客服面板，牌桌与应用外壳尺寸保持不变。 */
   z-index: 200;
 }

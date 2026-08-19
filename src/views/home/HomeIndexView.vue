@@ -1852,19 +1852,45 @@ onBeforeUnmount(() => {
 }
 
 .floating-menu-btn {
-  width: 1.4117rem;
-  height: 1.4117rem;
+  width: 1.04rem;
+  height: 1.04rem;
   padding: 0;
   border: none;
   background: transparent;
-  display: inline-flex;
+  cursor: pointer;
+  display: flex;
   align-items: center;
   justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
 }
 
-.floating-menu-btn img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+// PC/Desktop Overrides from outsource layout
+@media (min-width: 600px) {
+  .home-page {
+    gap: 0.24rem;
+  }
+  .home-page--fit {
+    height: auto;
+    overflow: visible;
+  }
+  .home-page--fit .home-swap-container,
+  .home-page--fit .home-default-sections {
+    flex: none;
+  }
+  .home-page--fit .game-center-scroll,
+  .home-page--fit .coming-soon-scroll {
+    flex: none;
+    max-height: none;
+  }
+  .home-header {
+    flex: none;
+    flex-shrink: 0;
+    max-height: none;
+  }
 }
 </style>

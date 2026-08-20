@@ -23,7 +23,10 @@ import type { OrgClubUserInfoData, OrgMemberListRecord } from '@/api/models/org'
 import type { StatsClubDataStatsUserDetailTotalData } from '@/api/models/stats'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
-import { getMemberRouteContext, type MemberIdentity } from './clubMemberRoute'
+import {
+  getMemberRouteContext,
+  type MemberIdentity,
+} from '@/views/club/members/clubMemberRoute'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'

@@ -650,37 +650,37 @@ const categoryBlocks = computed<GameBlock[]>(() => {
   return [
     {
       key: 'hot-real',
-      title: '热门真人',
-      subtitle: '性感荷官 倾情演绎',
+      title: t('UICasino_HotLive'),
+      subtitle: t('UICasino_SubLive'),
       icon: img2,
       items: getBlockItems('hot-real', hotRealGames, 3),
     },
     {
       key: 'hot-slot',
-      title: '热门电子',
-      subtitle: '火爆游戏 轻松爆奖',
+      title: t('UICasino_HotSlots'),
+      subtitle: t('UICasino_SubSlots'),
       icon: img3,
       items: hotSlotGames,
     },
     {
       key: 'hot-fish',
-      title: '热门捕鱼',
-      subtitle: '经典捕鱼 轻松爆奖',
+      title: t('UICasino_HotFishing'),
+      subtitle: t('UICasino_SubFishing'),
       icon: img5,
       items: hotFishGames,
     },
     {
       key: 'hot-sports',
-      title: '热门体育',
-      subtitle: localized('SPORTS', '最全赛事 实时结算'),
+      title: t('UICasino_HotSports'),
+      subtitle: t('UICasino_SubSports'),
       icon: img4,
       items: getBlockItems('hot-sports', hotSportsGames, 3),
     },
     ...buildMinigameBlocks(hotMinigameGames, 'hot-minigame'),
     {
       key: 'hot-esports',
-      title: '热门电竞',
-      subtitle: localized('ESPORTS', '最全赛事 实时结算'),
+      title: t('UICasino_HotEsports'),
+      subtitle: t('UICasino_SubSports'),
       icon: img6,
       layout: 'wide',
       items:
@@ -703,8 +703,8 @@ const displayBlocks = computed<GameBlock[]>(() => {
         hotSportsGames.length > 0 ? hotSportsGames : [{ title: '', img: fbSportsSvg }]
       const sportsBlock = {
         key: 'hot-sports',
-        title: '热门体育',
-        subtitle: localized('SPORTS', '最全赛事 实时结算'),
+        title: t('UICasino_HotSports'),
+        subtitle: t('UICasino_SubSports'),
         icon: img4,
         items,
       }
@@ -715,8 +715,8 @@ const displayBlocks = computed<GameBlock[]>(() => {
       const hotEsportsGames = getPopularGamesForCategory('hot-esports')
       const esportsBlock = {
         key: 'hot-esports',
-        title: '热门电竞',
-        subtitle: localized('ESPORTS', '最全赛事 实时结算'),
+        title: t('UICasino_HotEsports'),
+        subtitle: t('UICasino_SubSports'),
         icon: img6,
         layout: 'wide',
         items:
@@ -734,11 +734,11 @@ const displayBlocks = computed<GameBlock[]>(() => {
     const catGames = getCategoryGames(selectedCategory.value)
     if (catGames.length > 0) {
       const categoryInfo: Record<string, any> = {
-        zhenren: { title: '真人', subtitle: '', icon: img2 },
-        dianzi: { title: '电子', subtitle: '', icon: img3 },
-        buyu: { title: '捕鱼', subtitle: '', icon: img5 },
-        board: { title: '棋牌', subtitle: '', icon: img7 },
-        lottery: { title: '彩票', subtitle: '', icon: img8 },
+        zhenren: { title: t('UICasino_TabLive'), subtitle: '', icon: img2 },
+        dianzi: { title: t('UICasino_TabSlots'), subtitle: '', icon: img3 },
+        buyu: { title: t('UICasino_TabFishing'), subtitle: '', icon: img5 },
+        board: { title: t('UICasino_TabCards'), subtitle: '', icon: img7 },
+        lottery: { title: t('UICasino_TabLottery'), subtitle: '', icon: img8 },
       }
       const info = categoryInfo[selectedCategory.value]
       if (info) {
@@ -787,15 +787,15 @@ const hasGames = computed(() => hasWheelData.value)
 
 // ─── Category icon definitions ────────────────────────────────────────────────
 const categoryTabs = computed(() => [
-  { key: 'hot'      as HotCategoryKey, label: '热门',  icon: '🔥' },
-  { key: 'zhenren'  as HotCategoryKey, label: '真人',  icon: '🎭' },
-  { key: 'dianzi'   as HotCategoryKey, label: '电子',  icon: '🎰' },
-  { key: 'tiyu'     as HotCategoryKey, label: '体育',  icon: '⚽' },
-  { key: 'buyu'     as HotCategoryKey, label: '捕鱼',  icon: '🎣' },
-  { key: 'dianjing' as HotCategoryKey, label: '电竞',  icon: '🎮' },
-  { key: 'board'    as HotCategoryKey, label: '棋牌',  icon: '♟️' },
-  { key: 'minigame' as HotCategoryKey, label: '小游戏', icon: '🕹️' },
-  { key: 'lottery'  as HotCategoryKey, label: '彩票',  icon: '🎱' },
+  { key: 'hot'      as HotCategoryKey, label: t('UICasino_TabHot'),       icon: '🔥' },
+  { key: 'zhenren'  as HotCategoryKey, label: t('UICasino_TabLive'),      icon: '🎭' },
+  { key: 'dianzi'   as HotCategoryKey, label: t('UICasino_TabSlots'),     icon: '🎰' },
+  { key: 'tiyu'     as HotCategoryKey, label: t('UICasino_TabSports'),    icon: '⚽' },
+  { key: 'buyu'     as HotCategoryKey, label: t('UICasino_TabFishing'),   icon: '🎣' },
+  { key: 'dianjing' as HotCategoryKey, label: t('UICasino_TabEsports'),   icon: '🎮' },
+  { key: 'board'    as HotCategoryKey, label: t('UICasino_TabCards'),     icon: '♟️' },
+  { key: 'minigame' as HotCategoryKey, label: t('UICasino_TabMinigames'), icon: '🕹️' },
+  { key: 'lottery'  as HotCategoryKey, label: t('UICasino_TabLottery'),   icon: '🎱' },
 ])
 
 // ─── Game click handler (Section 5) ───────────────────────────────────────────
@@ -810,7 +810,7 @@ async function handleGameClick(item: GameItem): Promise<void> {
 
   // Step A: Cowboy intercept → show download prompt
   if (gameType === 'cow_boy' || gameApiType === 'cow_boy') {
-    showGameToast('请下载客户端APP获取完整版本')
+    showGameToast(t('UICasino_DownloadAppTip'))
     return
   }
 
@@ -877,23 +877,23 @@ async function doJoinGame(
         if (!launchGameUrl(reserved, gameUrl, isDbRealName && deviceType === 1)) {
           releaseGameWindow(reserved)
           if (usesTelegramGameLauncher()) {
-            showGameToast('游戏跳转失败，请稍后重试')
+            showGameToast(t('UICasino_LaunchFail'))
           } else {
             gameLaunchStore.openFallback(gameUrl)
           }
         }
       } else {
         releaseGameWindow(reserved)
-        showGameToast('游戏跳转失败，请稍后重试')
+        showGameToast(t('UICasino_LaunchFail'))
       }
     } else {
       releaseGameWindow(reserved)
-      showGameToast((res.msg as string) || '游戏跳转失败，请稍后重试')
+      showGameToast((res.msg as string) || t('UICasino_LaunchFail'))
     }
   } catch (error: any) {
     finishLaunch()
     releaseGameWindow(reserved)
-    showGameToast(error?.response?.data?.msg || '游戏跳转失败，请稍后重试')
+    showGameToast(error?.response?.data?.msg || t('UICasino_LaunchFail'))
   }
 }
 
@@ -912,7 +912,7 @@ function handleCardImgError(event: Event, item: GameItem): void {
 
 // ─── Service handler ──────────────────────────────────────────────────────────
 function handleServiceClick(): void {
-  showGameToast(t('UIMineMain01') + '开发中')
+  showGameToast(t('UIClub_InDeve'))
 }
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
@@ -954,7 +954,7 @@ onActivated(async () => {
 
     <div class="room-list-stage">
       <!-- ── Header ─────────────────────────────────────────────────── -->
-      <HeaderBack v-if="!hideHeader" title="娱乐场" extra-padding @back="handleBack">
+      <HeaderBack v-if="!hideHeader" :title="t('UICasino_Title')" extra-padding @back="handleBack">
       <template #right>
         <div class="action-wrap">
           <TopActionButton
@@ -1018,8 +1018,8 @@ onActivated(async () => {
         type="button"
         @click="selectedCategory = 'hot'"
       >
-        <img :src="img1" alt="热门" class="icon-img" />
-        <span class="icon-label">热门</span>
+        <img :src="img1" :alt="t('UICasino_TabHot')" class="icon-img" />
+        <span class="icon-label">{{ t('UICasino_TabHot') }}</span>
       </button>
       <button
         class="icon-item"
@@ -1028,9 +1028,9 @@ onActivated(async () => {
         @click="selectedCategory = 'zhenren'"
       >
         <div class="icon-img-wrapper icon-img-wrapper-live">
-          <img :src="img2" alt="真人" class="icon-img" />
+          <img :src="img2" :alt="t('UICasino_TabLive')" class="icon-img" />
         </div>
-        <span class="icon-label">真人</span>
+        <span class="icon-label">{{ t('UICasino_TabLive') }}</span>
       </button>
       <button
         class="icon-item"
@@ -1038,8 +1038,8 @@ onActivated(async () => {
         type="button"
         @click="selectedCategory = 'dianzi'"
       >
-        <img :src="img3" alt="电子" class="icon-img" />
-        <span class="icon-label">电子</span>
+        <img :src="img3" :alt="t('UICasino_TabSlots')" class="icon-img" />
+        <span class="icon-label">{{ t('UICasino_TabSlots') }}</span>
       </button>
       <button
         class="icon-item"
@@ -1047,8 +1047,8 @@ onActivated(async () => {
         type="button"
         @click="selectedCategory = 'tiyu'"
       >
-        <img :src="img4" alt="体育" class="icon-img" />
-        <span class="icon-label">体育</span>
+        <img :src="img4" :alt="t('UICasino_TabSports')" class="icon-img" />
+        <span class="icon-label">{{ t('UICasino_TabSports') }}</span>
       </button>
       <button
         class="icon-item"
@@ -1056,8 +1056,8 @@ onActivated(async () => {
         type="button"
         @click="selectedCategory = 'buyu'"
       >
-        <img :src="img5" alt="捕鱼" class="icon-img" />
-        <span class="icon-label">捕鱼</span>
+        <img :src="img5" :alt="t('UICasino_TabFishing')" class="icon-img" />
+        <span class="icon-label">{{ t('UICasino_TabFishing') }}</span>
       </button>
       <button
         class="icon-item"
@@ -1065,8 +1065,8 @@ onActivated(async () => {
         type="button"
         @click="selectedCategory = 'dianjing'"
       >
-        <img :src="img6" alt="电竞" class="icon-img" />
-        <span class="icon-label">电竞</span>
+        <img :src="img6" :alt="t('UICasino_TabEsports')" class="icon-img" />
+        <span class="icon-label">{{ t('UICasino_TabEsports') }}</span>
       </button>
       <button
         class="icon-item"
@@ -1074,8 +1074,8 @@ onActivated(async () => {
         type="button"
         @click="selectedCategory = 'board'"
       >
-        <img :src="img7" alt="棋牌" class="icon-img" />
-        <span class="icon-label">棋牌</span>
+        <img :src="img7" :alt="t('UICasino_TabCards')" class="icon-img" />
+        <span class="icon-label">{{ t('UICasino_TabCards') }}</span>
       </button>
       <button
         class="icon-item"
@@ -1083,8 +1083,8 @@ onActivated(async () => {
         type="button"
         @click="selectedCategory = 'minigame'"
       >
-        <img :src="imgMinigame" alt="小游戏" class="icon-img" />
-        <span class="icon-label">小游戏</span>
+        <img :src="imgMinigame" :alt="t('UICasino_TabMinigames')" class="icon-img" />
+        <span class="icon-label">{{ t('UICasino_TabMinigames') }}</span>
       </button>
       <!-- 彩票 分类 暂时隐藏，后续可能恢复
       <button
@@ -1093,8 +1093,8 @@ onActivated(async () => {
         type="button"
         @click="selectedCategory = 'lottery'"
       >
-        <img :src="img8" alt="彩票" class="icon-img" />
-        <span class="icon-label">彩票</span>
+        <img :src="img8" :alt="t('UICasino_TabLottery')" class="icon-img" />
+        <span class="icon-label">{{ t('UICasino_TabLottery') }}</span>
       </button>
       -->
     </section>
@@ -1140,7 +1140,7 @@ onActivated(async () => {
             type="button"
             @click="toggleBlockExpand(block.key)"
           >
-            <img :src="sideYellowBtn" alt="全部游戏" class="expand-btn-img" />
+            <img :src="sideYellowBtn" :alt="t('UICasino_AllGames')" class="expand-btn-img" />
           </button>
           <button
             v-if="block.key === 'hot-fish' && selectedCategory === 'hot'"
@@ -1148,7 +1148,7 @@ onActivated(async () => {
             type="button"
             @click="toggleBlockExpand(block.key)"
           >
-            <img :src="sideBlueBtn" alt="全部游戏" class="expand-btn-img" />
+            <img :src="sideBlueBtn" :alt="t('UICasino_AllGames')" class="expand-btn-img" />
           </button>
           <div
             class="game-card-grid"
@@ -1206,7 +1206,7 @@ onActivated(async () => {
       class="empty-state"
     >
       <span class="empty-icon">🎮</span>
-      <p class="empty-text">暂无游戏</p>
+      <p class="empty-text">{{ t('UICasino_NoGames') }}</p>
     </div>
 
     </div> <!-- End casino-content -->

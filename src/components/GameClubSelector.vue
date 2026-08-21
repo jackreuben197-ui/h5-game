@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { t } from '@/i18n'
 import { postOrgClubGetApi } from '@/api/org'
 import type { OrgClubData } from '@/api/models/org'
 import iconChipRed from '@/assets/icons/icon_chip_red.png'
@@ -116,7 +117,7 @@ const formatGold = (gold?: number) => {
     <Transition name="popup-fade">
       <div v-if="show && clubs.length > 0" class="popup-overlay" @click.self="handleCancel">
         <div class="wallet-popup-glass">
-          <h3 class="popup-title">选择钱包</h3>
+          <h3 class="popup-title">{{ t('UICasino_SelectWallet') }}</h3>
 
           <div class="clubs-grid" v-if="!loading">
             <button
@@ -142,8 +143,8 @@ const formatGold = (gold?: number) => {
           </div>
 
           <div class="popup-actions">
-            <button class="btn-cancel" type="button" @click="handleCancel">取消</button>
-            <button class="btn-confirm" type="button" @click="handleConfirm">确认</button>
+            <button class="btn-cancel" type="button" @click="handleCancel">{{ t('UICommon_Cancel') }}</button>
+            <button class="btn-confirm" type="button" @click="handleConfirm">{{ t('UICommon_Confirm') }}</button>
           </div>
         </div>
       </div>

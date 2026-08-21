@@ -91,7 +91,7 @@ const searchedClub = ref<ClubInfo | null>(null)
 const fallbackBanners = [imgClubBannerFigma]
 const isChannelPackage = isPrivateDomainMode()
 
-const enterLabel = computed(() => (getLocale() === 'en' ? t('UIClub_Enter') : '进入'))
+const enterLabel = computed(() => t('UIClub_EnterClub'))
 
 const quickActions: QuickActionItem[] = [
   { id: 1, title: 'UIClub_CreateClub', kind: 'create-club' },

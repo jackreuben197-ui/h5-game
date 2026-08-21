@@ -337,7 +337,7 @@ const joinGame = async (
   <div class="minigame-page" :style="hideHeader ? {} : pageStyle" :class="{ 'is-embedded': hideHeader }">
     <div class="bg-overlay" aria-hidden="true" v-if="!hideHeader"></div>
 
-    <HeaderBack v-if="!hideHeader" title="小游戏专区" @back="handleBack">
+    <HeaderBack v-if="!hideHeader" :title="t('UIMiniGame_Title')" @back="handleBack">
       <template #right>
         <div class="action-wrap">
           <TopActionButton

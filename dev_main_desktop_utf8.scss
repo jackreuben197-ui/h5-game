@@ -1,5 +1,5 @@
-// 五个一级主页面（登录前 / 登录后）的桌面与 Pad 适配。
-// 背景占满浏览器；除背景外的页面内容统一收在居中的 1440 × 1024 舞台内。
+﻿// Σ║öΣ╕¬Σ╕Çτ║ºΣ╕╗Θí╡Θ¥ó∩╝êτÖ╗σ╜òσëì / τÖ╗σ╜òσÉÄ∩╝ëτÜäµíîΘ¥óΣ╕Ä Pad ΘÇéΘàìπÇé
+// ΦâîµÖ»σìáµ╗íµ╡ÅΦºêσÖ¿∩╝¢ΘÖñΦâîµÖ»σñûτÜäΘí╡Θ¥óσåàσ«╣τ╗ƒΣ╕Çµö╢σ£¿σ▒àΣ╕¡τÜä 1440 ├ù 1024 Φê₧σÅ░σåàπÇé
 @media (min-width: 600px) {
   html[data-main-layout='primary'] {
     --main-stage-width: min(100%, 1440px);
@@ -20,8 +20,8 @@
     min-height: var(--app-full-height, 100dvh);
   }
 
-  // 浅色背景原图为 375 × 812 的移动端素材。桌面端保留整张构图，
-  // 只做横向展开，避免 cover 从中间裁切后丢失顶部的蓝色渐变。
+  // µ╡àΦë▓ΦâîµÖ»σÄƒσ¢╛Σ╕║ 375 ├ù 812 τÜäτº╗σè¿τ½»τ┤áµ¥ÉπÇéµíîΘ¥óτ½»Σ┐¥τòÖµò┤σ╝áµ₧äσ¢╛∩╝î
+  // σÅ¬σüÜµ¿¬σÉæσ▒òσ╝Ç∩╝îΘü┐σàì cover Σ╗ÄΣ╕¡Θù┤ΦúüσêçσÉÄΣ╕óσñ▒Θí╢Θâ¿τÜäΦô¥Φë▓µ╕ÉσÅÿπÇé
   html[data-main-layout='primary'][data-theme='light'] .main-layout {
     background-position: center top;
     background-size: 100% 100%;
@@ -45,7 +45,7 @@
     width: 100%;
   }
 
-  // 一级页公共标题栏契约：页面模板只需组合 main-primary-header / currency。
+  // Σ╕Çτ║ºΘí╡σà¼σà▒µáçΘóÿµáÅσÑæτ║ª∩╝ÜΘí╡Θ¥óµ¿íµ¥┐σÅ¬Θ£Çτ╗äσÉê main-primary-header / currencyπÇé
   html[data-main-layout='primary'] .main-primary-header .title {
     font-size: clamp(28px, 2.6vw, 37.4px);
     line-height: 1.2;
@@ -79,22 +79,18 @@
     margin-left: auto;
   }
 
-
-  // 首页
+  // ΘªûΘí╡
   html[data-main-layout='primary'] .home-page {
     display: block;
-    padding: clamp(24px, 2.3611vw, 34px) 0 28px;
-    height: auto;
-    min-height: auto;
-    overflow: visible;
+    padding: 0 0 28px;
   }
 
   html[data-main-layout='primary'] .home-page .top-bar {
     display: none;
   }
 
-  // 首页桌面悬浮操作以居中的 1440 × 1024 舞台为参照：开桌按钮对齐底栏中心，
-  // 俱乐部菜单停在舞台右下角，不再跟随浏览器外沿漂移。
+  // ΘªûΘí╡µíîΘ¥óµé¼µ╡«µôìΣ╜£Σ╗Ñσ▒àΣ╕¡τÜä 1440 ├ù 1024 Φê₧σÅ░Σ╕║σÅéτàº∩╝Üσ╝ÇµíîµîëΘÆ«σ»╣Θ╜Éσ║òµáÅΣ╕¡σ┐â∩╝î
+  // Σ┐▒Σ╣ÉΘâ¿ΦÅ£σìòσü£σ£¿Φê₧σÅ░σÅ│Σ╕ïΦºÆ∩╝îΣ╕ìσåìΦ╖ƒΘÜÅµ╡ÅΦºêσÖ¿σñûµ▓┐µ╝éτº╗πÇé
   html[data-main-layout='primary'] .home-page .floating-action-area {
     left: 50%;
     right: auto;
@@ -123,10 +119,6 @@
 
   html[data-main-layout='primary'] .home-header {
     border-radius: clamp(44px, 5.69vw, 82px);
-    aspect-ratio: 1360 / 270;
-    height: auto;
-    max-height: none;
-    flex: none;
   }
 
   html[data-main-layout='primary'] .home-banner,
@@ -247,21 +239,8 @@
     line-height: 1.35;
   }
 
-  html[data-main-layout='primary'] .home-swap-container {
-    margin-left: 0;
-    margin-right: 0;
-  }
-
-  html[data-main-layout='primary'] .home-default-sections {
-    padding-left: 0;
-    padding-right: 0;
-  }
-
   html[data-main-layout='primary'] .game-center-scroll,
   html[data-main-layout='primary'] .coming-soon-scroll {
-    width: 100%;
-    margin-left: 0;
-    margin-right: 0;
     margin-top: clamp(8px, 0.8333vw, 12px);
     overflow: visible;
   }
@@ -332,7 +311,7 @@
     font-size: clamp(15px, 1.53vw, 22px);
   }
 
-  // 俱乐部
+  // Σ┐▒Σ╣ÉΘâ¿
   html[data-main-layout='primary'] .club-index {
     min-height: auto;
     padding: clamp(24px, 2.3611vw, 34px) 0 28px;
@@ -421,7 +400,7 @@
     gap: clamp(17px, 1.6667vw, 24px);
   }
 
-  // 朋友桌：首屏完整展示一张牌桌，牌桌列表顺着外层页面向下滚动。
+  // µ£ïσÅïµíî∩╝ÜΘªûσ▒Åσ«îµò┤σ▒òτñ║Σ╕Çσ╝áτëîµíî∩╝îτëîµíîσêùΦí¿Θí║τ¥Çσñûσ▒éΘí╡Θ¥óσÉæΣ╕ïµ╗Üσè¿πÇé
   html[data-main-layout='primary'] .friends-table-page {
     position: relative;
     display: block;
@@ -465,8 +444,8 @@
     left: -12.22cqw;
     width: 139.22cqw;
     height: 185.58cqw;
-    // Figma SVG 含大范围 backdrop-filter、fractalNoise 和位移滤镜，缩放时会持续重栅格化。
-    // 桌面端改用带透明通道的 2x 预栅格图，外观不变且浏览器只需做纹理缩放。
+    // Figma SVG σÉ½σñºΦîâσ¢┤ backdrop-filterπÇüfractalNoise σÆîΣ╜ìτº╗µ╗ñΘò£∩╝îτ╝⌐µö╛µù╢Σ╝Üµîüτ╗¡Θçìµáàµá╝σîûπÇé
+    // µíîΘ¥óτ½»µö╣τö¿σ╕ªΘÇÅµÿÄΘÇÜΘüôτÜä 2x Θóäµáàµá╝σ¢╛∩╝îσñûΦºéΣ╕ìσÅÿΣ╕öµ╡ÅΦºêσÖ¿σÅ¬Θ£ÇσüÜτ║╣τÉåτ╝⌐µö╛πÇé
     background-image: url('@/assets/images/friend_table_bg_desktop.webp');
     background-size: 100% 100%;
   }
@@ -578,7 +557,7 @@
     padding: 0 0 122px;
   }
 
-  // 列表最多 200 条，逐卡 backdrop-filter 会在窗口缩放时产生大量离屏合成层。
+  // σêùΦí¿µ£ÇσñÜ 200 µ¥í∩╝îΘÇÉσìí backdrop-filter Σ╝Üσ£¿τ¬ùσÅúτ╝⌐µö╛µù╢Σ║ºτöƒσñºΘçÅτª╗σ▒ÅσÉêµêÉσ▒éπÇé
   html[data-main-layout='primary'] .friends-table-page .table-card {
     height: 2.5rem;
     .type-card {
@@ -596,7 +575,7 @@
     font-size: clamp(15px, 1.25vw, 18px);
   }
 
-  // 消息 / 我的：复用移动端元素，按 1440 × 1024 设计稿重排。
+  // µ╢êµü» / µêæτÜä∩╝Üσñìτö¿τº╗σè¿τ½»σàâτ┤á∩╝îµîë 1440 ├ù 1024 Φ«╛Φ«íτ¿┐ΘçìµÄÆπÇé
   html[data-main-layout='primary'] .message-page,
   html[data-main-layout='primary'] .mine-page {
     display: flex;
@@ -604,8 +583,8 @@
     max-width: none;
     min-height: auto;
     margin: 0;
-    padding: 15px var(--main-page-gutter) 20px;
-    overflow: hidden;
+    padding: 15px var(--main-page-gutter) 28px;
+    overflow: visible;
   }
 
   html[data-main-layout='primary'] .message-page .title-bar,
@@ -615,19 +594,351 @@
     padding: 0;
   }
 
+  html[data-main-layout='primary'] .message-page .card-bg-highlight,
+  html[data-main-layout='primary'] .mine-page .card-bg-highlight {
+    container-type: inline-size;
+    position: relative;
+    flex: none;
+    width: min(100%, 1357px, 132.52vh);
+    height: auto;
+    margin-top: 13px;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 4.245cqw;
+    aspect-ratio: 1357 / 302;
+  }
+
+  html[data-main-layout='primary'] .message-page .card-bg-highlight .card-bg-outter,
+  html[data-main-layout='primary'] .mine-page .card-bg-highlight .card-bg-outter,
+  html[data-main-layout='primary'] .message-page .card-bg-highlight .card-bg-outter .card-bg-innner,
+  html[data-main-layout='primary'] .mine-page .card-bg-highlight .card-bg-outter .card-bg-innner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border-radius: inherit;
+  }
+
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line1 {
+    position: absolute;
+    inset: 0;
+    display: block;
+    padding: 0;
+  }
+
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line1
+    .left-text {
+    position: absolute;
+    top: 1.82cqw;
+    left: 3.76cqw;
+    // µíîΘ¥óτ½»µá╣σ¡ùσÅ╖σ¢║σ«ÜΣ╕║ 40px∩╝¢σìíτëçτ╝⌐µö╛µù╢µûçσ¡ùΣ╕ìσåìΦ╖ƒΘÜÅσ«╣σÖ¿σ«╜σ║ªτ╝⌐µö╛πÇé
+    font-size: 3rem;
+    line-height: 1;
+  }
+
+  html[data-main-layout='primary'][data-theme='light']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line1
+    .left-text {
+    color: rgba(15, 8, 8, 0.19) !important;
+  }
+
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line1
+    .right-icon {
+    position: absolute;
+    top: 2.54cqw;
+    right: 6.37cqw;
+    width: 13.93cqw;
+    height: 15.52cqw;
+  }
+
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2 {
+    position: absolute;
+    right: 2.03cqw;
+    bottom: 2.5cqw;
+    left: 3.65cqw;
+    padding: 0;
+  }
+
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .button {
+    flex: 0 0 auto;
+    min-width: 0;
+    height: 3.584cqw;
+    padding: 0.45cqw 0.17cqw 0.45cqw 1.72cqw;
+    gap: 0.625cqw;
+    border-radius: 1.69cqw;
+  }
+
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .button
+    .text {
+    font-size: 0.46rem;
+    line-height: 1;
+  }
+
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .button
+    .round-icon {
+    flex: none;
+    width: 3.18cqw;
+    height: 3.18cqw;
+    margin-left: 0;
+    font-size: 0.49rem;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line1 {
+    position: absolute;
+    top: 2.54cqw;
+    left: 2.97cqw;
+    display: flex;
+    gap: 2.06cqw;
+    padding: 0;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line1
+    .left-avatar {
+    width: 10.95cqw;
+    height: 10.95cqw;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line1
+    .right-box {
+    margin-top: 2.65cqw;
+    padding: 1.02cqw 1.72cqw;
+    border-radius: 999px;
+    font-size: 0.445rem;
+    line-height: 1;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2 {
+    position: absolute;
+    right: 2cqw;
+    bottom: 2.45cqw;
+    left: 3.2cqw;
+    padding: 0;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .left-board {
+    gap: 0.39cqw;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .left-board
+    .currency {
+    gap: 0.46cqw;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .left-board
+    .currency
+    .icon-currency {
+    width: 1.9cqw;
+    max-height: 2.2cqw;
+    object-fit: contain;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .left-board
+    .currency
+    .num {
+    font-size: 0.49rem;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .button {
+    height: 3.47cqw;
+    padding: 0.42cqw 0.16cqw 0.42cqw 1.67cqw;
+    border-radius: 1.64cqw;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .button
+    .text {
+    font-size: 0.445rem;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .button
+    .round-icon {
+    width: 3.47cqw;
+    height: 3.47cqw;
+    margin-left: 0.13cqw;
+  }
+
+  html[data-main-layout='primary']
+    .mine-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line2
+    .button
+    .round-icon
+    img {
+    width: 1.4cqw;
+  }
+
+  // τÖ╗σ╜òµÇüσìíτëçµ»öµ╕╕σ«óσìíτëçσñÜµÿ╡τº░πÇüID Σ╕Äµ╢êµü»ΦºÆµáç∩╝¢σÅ¬ΦíÑσààτ╗ôµ₧äσ╖«σ╝é∩╝îΣ╕ìσñìσê╢µò┤σÑùσ╕âσ▒ÇπÇé
+  html[data-main-layout='primary'] .main-layout--authenticated .mine-page .card-line1 .right-box {
+    margin-top: 2.65cqw;
+    padding: 0;
+    gap: 0.3rem;
+    border-radius: 0;
+  }
+
+  html[data-main-layout='primary']
+    .main-layout--authenticated
+    .mine-page
+    .card-line1
+    .right-box
+    .name {
+    margin-top: 0;
+    font-size: 0.6rem;
+  }
+
+  html[data-main-layout='primary']
+    .main-layout--authenticated
+    .mine-page
+    .card-line1
+    .right-box
+    .id-label {
+    font-size: 0.28rem;
+  }
+
+  html[data-main-layout='primary']
+    .main-layout--authenticated
+    .mine-page
+    .card-line1
+    .right-box
+    .id-value {
+    font-size: 0.3rem;
+  }
+
+  html[data-main-layout='primary']
+    .main-layout--authenticated
+    .message-page
+    .card-line1
+    .right-icon
+    .icon-ding {
+    position: absolute;
+    top: -0.15rem;
+    right: -0.15rem;
+    width: 0.9rem;
+    height: 0.9rem;
+    transform: none;
+  }
+
   html[data-main-layout='primary'] .message-page .box-gallery,
   html[data-main-layout='primary'] .mine-page .box-gallery {
-    --main-gallery-icon: clamp(68px, min(6.5vw, 9vh), 96px);
-    --main-gallery-column-gap: clamp(16px, 2.2vw, 32px);
+    --main-gallery-icon: clamp(68px, min(6.94vw, 9.77vh), 100px);
+    --main-gallery-column-gap: clamp(24px, 2.78vw, 40px);
     width: min(
-      calc(var(--main-gallery-icon) * 4 + var(--main-gallery-column-gap) * 3),
+      calc(
+        var(--main-gallery-icon) + var(--main-gallery-icon) + var(--main-gallery-icon) +
+          var(--main-gallery-icon) + var(--main-gallery-column-gap) +
+          var(--main-gallery-column-gap) + var(--main-gallery-column-gap)
+      ),
       calc(100% - 80px)
     );
-    margin-top: clamp(20px, 2.8vw, 38px);
+    margin-top: clamp(32px, min(4.31vw, 6.05vh), 62px);
     padding: 0;
     justify-content: center;
     align-items: flex-start;
-    gap: clamp(16px, 1.8vw, 24px) var(--main-gallery-column-gap);
+    gap: clamp(22px, 1.94vw, 28px) var(--main-gallery-column-gap);
   }
 
   html[data-main-layout='primary'] .message-page .box-gallery .box-item,
@@ -640,39 +951,34 @@
   html[data-main-layout='primary'] .mine-page .box-gallery .box-item .img {
     width: var(--main-gallery-icon);
     height: var(--main-gallery-icon);
-    margin-bottom: clamp(6px, 0.6vw, 10px);
+    margin-bottom: clamp(6px, 0.49vw, 7px);
   }
 
   html[data-main-layout='primary'] .message-page .box-gallery .box-item .text,
   html[data-main-layout='primary'] .mine-page .box-gallery .box-item .text {
-    font-size: clamp(13px, 1.2vw, 16px);
+    font-size: clamp(14px, 1.25vw, 18px);
     line-height: 1.25;
     white-space: nowrap;
-    text-align: center;
   }
 
-  html[data-main-layout='primary'] .message-page .card-bg-highlight,
-  html[data-main-layout='primary'] .mine-page .profile-card {
-    margin-top: clamp(16px, 1.8vw, 24px);
+  html[data-main-layout='primary'] .bottom-tab {
+    // Θ½ÿΣ║Ä 1024px τÜäµ╡ÅΦºêσÖ¿Σ╕¡Σ╗ìΦ┤┤τ¥Çσåàσ«╣Φê₧σÅ░σ║òΘâ¿∩╝îΦÇîΣ╕ìµÿ»µ╡ÅΦºêσÖ¿σ║òΘâ¿πÇé
+    bottom: var(--main-bottom-tab-offset);
+    width: 360px;
+    height: 82px;
   }
+}
 
-  html[data-main-layout='primary'] .message-page .card-bg-highlight .card-bg-outter .card-bg-innner .card-line1 .left-text,
-  :root[data-theme='light'] html[data-main-layout='primary'] .message-page .card-bg-highlight .card-bg-outter .card-bg-innner .card-line1 .left-text,
-  html[data-main-layout='primary'] .message-page .card-line1 .left-text {
-    width: 518.157px !important;
-    height: 74.508px !important;
-    transform: translateY(-10px) rotate(-0.292deg) !important;
-    color: rgba(15, 8, 8, 0.19) !important;
-    leading-trim: both;
-    text-edge: cap;
-    -webkit-text-stroke-width: 0.99px !important;
-    -webkit-text-stroke-color: rgba(15, 8, 8, 0.19) !important;
-    font-family: 'Afacad', sans-serif !important;
-    font-size: 120.612px !important;
-    font-style: normal !important;
-    font-weight: 700 !important;
-    line-height: 0.95 !important;
-    white-space: nowrap !important;
+@media (min-width: 600px) and (max-width: 899px) {
+  // Pad Σ╜┐τö¿σìòτï¼τÜäσ¢║σ«Üσ¡ùσÅ╖µíúΣ╜ì∩╝îΣ╕ìΘÜÅσ«╣σÖ¿Φ┐₧τ╗¡τ╝⌐µö╛∩╝îσÉîµù╢Θü┐σàìΣ╕ÄσÅ│Σ╛ºσ¢╛µáçΘçìσÅáπÇé
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line1
+    .left-text {
+    font-size: 1.8rem;
   }
 
   html[data-main-layout='primary'] .main-layout-content {

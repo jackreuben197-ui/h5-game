@@ -5,10 +5,6 @@ import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 import { formatTxtMessage, type FormatArg, type FormatArgs } from './parser'
 import { createLogger } from '@/utils/logger'
-import enOverrides from './en-overrides.json'
-import zhCnOverrides from './zh-cn-overrides.json'
-import zhTwOverrides from './zh-tw-overrides.json'
-import ptOverrides from './pt-overrides.json'
 
 const log = createLogger('[i18n]')
 
@@ -30,6 +26,9 @@ const LEGACY_TO_PACKAGE: Record<LocaleCode, string> = {
 
 const currentLocale = ref<LocaleCode>(resolveInitialLocale())
 
+// 初始化时把 package 的 locale 拉齐到外部 code，避免 i18n.get 在握手前取到默认值。
+applyPackageLocale(currentLocale.value)
+
 export function getLocale(): LocaleCode {
   return currentLocale.value
 }
@@ -38,6 +37,9 @@ export function setLocale(locale: string): void {
   const previousLocale = currentLocale.value
   const resolvedLocale = normalizeLocale(locale) ?? DEFAULT_LOCALE
 
+  // 先切换底层词典，再更新响应式状态。否则依赖 locale 的 computed 可能在
+  // 词典仍是旧语言时重新求值，并缓存旧文案。
+  applyPackageLocale(resolvedLocale)
   currentLocale.value = resolvedLocale
 
   // 语言持久化键与 Cocos 对齐：dzpk_Language。
@@ -45,50 +47,6 @@ export function setLocale(locale: string): void {
   if (previousLocale !== resolvedLocale) {
     notifyLocaleChangedToCocos(resolvedLocale)
   }
-}
-
-// 英文补全：包内 en 词条为空时用我们维护的英文覆盖（由 CN 翻译而来）。
-const EN_OVERRIDES = enOverrides as Record<string, string>
-
-// CN 覆盖：从 dev_merge_0624 维护的中文覆盖，优先于包内 cn 词条
-// （既补包内空缺，也可覆盖包内被 refactor 改动的措辞，如 账号登录/账号注册）。
-const CN_OVERRIDES = zhCnOverrides as Record<string, string>
-
-// 繁中 / 葡语覆盖：包内缺词时原本直接回退简中，这里先查我们自己维护的词条。
-const OVERRIDES_BY_LOCALE: Partial<Record<LocaleCode, Record<string, string>>> = {
-  zh: zhTwOverrides as Record<string, string>,
-  pt: ptOverrides as Record<string, string>,
-}
-
-// 词典实例（window.__H5_CC_I18N__）由 H5 与 Cocos 共用，且 CC 层在 ProcedureInit 里强制切到
-// zh-CN 并忽略 syncLanguage。故每次取词都临时切到目标语言，取完还原成调用前的值：H5 拿到自己的
-// 语言，CC 侧状态不被改动。
-function readPackageValue(key: string, locale: LocaleCode): string {
-  const target = LEGACY_TO_PACKAGE[locale]
-  if (!target) {
-    return ''
-  }
-
-  const previous = getPackageLocale()
-  if (previous !== target) {
-    setPackageLocale(target)
-  }
-  const value = i18n.get(key, '') || ''
-  if (previous && previous !== target) {
-    setPackageLocale(previous)
-  }
-  return value
-}
-
-// CN 值缓存：CN 词条运行时不变。
-const cnValueCache = new Map<string, string>()
-function getCnValue(key: string): string {
-  if (CN_OVERRIDES[key]) return CN_OVERRIDES[key]
-  const cached = cnValueCache.get(key)
-  if (cached !== undefined) return cached
-  const value = readPackageValue(key, 'cn')
-  cnValueCache.set(key, value)
-  return value
 }
 
 // 对外 LocaleCode -> 服务端 lang 字符串：服务端各接口统一接 zh_CN / zh_TW / en_US / pt_BR。
@@ -103,25 +61,11 @@ export function toServerLang(locale: LocaleCode = currentLocale.value): string {
 export function t(key: string, ...args: FormatArg[] | [FormatArgs]): string {
   // 读 ref 以便组件在 setLocale 时自动重渲染。
   const locale = currentLocale.value
-  // 英文优先用我们维护的覆盖词条：既补包内空缺，也可覆盖包内既有英文（如 Texas→Hold'em）。
-  if (locale === 'en' && EN_OVERRIDES[key]) {
-    return formatTxtMessage(EN_OVERRIDES[key], args)
-  }
-  // 简中优先用我们维护的覆盖词条（覆盖 refactor 改动的措辞）。
-  if (locale === 'cn' && CN_OVERRIDES[key]) {
-    return formatTxtMessage(CN_OVERRIDES[key], args).replace(/\bUC\b/g, '联盟币')
-  }
-  const override = OVERRIDES_BY_LOCALE[locale]?.[key]
-  if (override) {
-    return formatTxtMessage(override, args)
-  }
-  let message = readPackageValue(key, locale)
-  if (!message) {
-    // 其他语言缺失时复用 CN，最后兜底用 key。
-    message = getCnValue(key) || key
-  }
-  const formatted = formatTxtMessage(message, args)
-  return locale === 'cn' ? formatted.replace(/\bUC\b/g, '联盟币') : formatted
+  // H5 是语言状态来源；读取时保证页面级词典与 H5 当前状态一致，
+  // setLocale 产生的变化会通过 syncLanguage 同步给 Cocos。
+  applyPackageLocale(locale)
+  const message = i18n.get(key, key) || key
+  return formatTxtMessage(message, args)
 }
 
 export const SUPPORTED_LOCALES_OPTIONS = [
@@ -147,19 +91,11 @@ export const textI18nPlugin = {
   },
 }
 
-function getPackageLocale(): string {
-  try {
-    if (typeof i18n.getCurrentLocale === 'function') {
-      return i18n.getCurrentLocale() || ''
-    }
-    return typeof i18n.currentLocale === 'string' ? i18n.currentLocale : ''
-  } catch (error) {
-    log.warn('i18n.getCurrentLocale failed:', error)
-    return ''
+function applyPackageLocale(locale: LocaleCode): void {
+  const target = LEGACY_TO_PACKAGE[locale]
+  if (!target) {
+    return
   }
-}
-
-function setPackageLocale(target: string): void {
   try {
     i18n.setLocale(target)
   } catch (error) {

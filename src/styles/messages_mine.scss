@@ -137,7 +137,6 @@
 
     .card-bg-outter {
       width: 100%;
-      height: 5.48rem;
       border-radius: 1.42rem;
       overflow: hidden;
       background: url('@/assets/images/card_bg2.png') center/cover no-repeat;
@@ -147,11 +146,10 @@
       padding: 0.2rem;
       .card-bg-innner {
         width: 100%;
-        height: 100%;
         border-radius: 1.2rem;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        gap: 0.5rem;
         padding: 0.5rem 0;
         .card-line1 {
           display: flex;

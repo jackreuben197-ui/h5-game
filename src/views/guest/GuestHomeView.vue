@@ -98,19 +98,6 @@ function notifyNotLoginRegister(): void {
 
 const homeRootRef = ref<HTMLElement | null>(null)
 
-// 小屏内容超出视口时，把初始滚动位置放到底部：保证底部两块（游戏中心/热门游戏）
-// 完整可见，顶部的 banner/公告 上滑查看。大屏内容不溢出则无副作用。
-function anchorScrollToBottomOnSmall(): void {
-  void nextTick(() => {
-    requestAnimationFrame(() => {
-      const scroller = homeRootRef.value?.closest('.main-layout-content') as HTMLElement | null
-      if (scroller && scroller.scrollHeight - scroller.clientHeight > 4) {
-        scroller.scrollTop = scroller.scrollHeight
-      }
-    })
-  })
-}
-
 onMounted(() => {
   void userInfoStore.ensureChannelDefaultClub()
   void ensureHomeAnnouncementConfig().catch((error) => {
@@ -119,7 +106,6 @@ onMounted(() => {
   void fetchLobbyBannerImages().catch((error) => {
     console.warn('[guest-home] fetch lobby banner failed:', error)
   })
-  anchorScrollToBottomOnSmall()
 })
 </script>
 

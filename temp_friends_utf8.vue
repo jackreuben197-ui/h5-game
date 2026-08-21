@@ -1,50 +1,31 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { postRoomcenterFriendRoomsApi, postRoomcenterInvitationRoomApi } from '@/api/roomcenter'
 import type { RoomRecord, RoomcenterFriendRoomRecord } from '@/api/models/roomcenter'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
-import iconAddDark from '@/assets/icons/icon_add.svg'
-import iconAddLight from '@/assets/icons/icon_add_light.svg'
-import { theme } from '@/utils/theme'
-import iconAudioDark from '@/assets/icons/icon_audio.png'
-import iconAudioLight from '@/assets/icons/icon_audio_light.png'
-import iconVideoDark from '@/assets/icons/icon_video.png'
-import iconVideoLight from '@/assets/icons/icon_video_light.png'
-import iconPeopleDark from '@/assets/icons/icon_people.png'
-import iconPeopleLight from '@/assets/icons/icon_people_light.png'
-import iconTimeDark from '@/assets/icons/icon_time.png'
-import iconTimeLight from '@/assets/icons/icon_time_light.png'
-import iconNlh from '@/assets/icons/game_type_nlh.svg'
-import iconPlo from '@/assets/icons/game_type_plo.svg'
-import iconSixPlus from '@/assets/icons/game_type_6+.svg'
+import iconNlh from '@/assets/icons/game_type_nlh.png'
+import iconPlo from '@/assets/icons/game_type_plo.png'
+import iconSixPlus from '@/assets/icons/game_type_6+.png'
 import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
 import iconSquid from '@/assets/icons/table_icon_squid.png'
 import iconCritical from '@/assets/icons/table_icon_critical.png'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { showGameToast } from '@/components/Toast'
 import { t } from '@/i18n'
 import { enterTable } from '@/bridge/core'
 import type { EnterTablePayload } from '@bridge-protocol'
 import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
-import { useLoginModalStore } from '@/stores/loginModal'
 import { useRoomListStore } from '@/stores/roomList'
 import { ROOM_ORIGIN_TYPE } from '@/utils/roomVisibility'
 import { formatRoomLeftAndTotalByUnity } from '@/utils/time'
 
-const isLightTheme = computed(() => theme.value === 'light')
-const iconAdd = computed(() => (isLightTheme.value ? iconAddLight : iconAddDark))
-const iconAudio = computed(() => (isLightTheme.value ? iconAudioLight : iconAudioDark))
-const iconVideo = computed(() => (isLightTheme.value ? iconVideoLight : iconVideoDark))
-const iconPeople = computed(() => (isLightTheme.value ? iconPeopleLight : iconPeopleDark))
-const iconTime = computed(() => (isLightTheme.value ? iconTimeLight : iconTimeDark))
-
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
-const loginModalStore = useLoginModalStore()
 const roomListStore = useRoomListStore()
 
 const INVITE_CODE_LENGTH = 7
@@ -54,13 +35,12 @@ const inviteCodeValue = computed(() => inviteCode.value.join(''))
 const scrollContentRef = ref<HTMLElement | null>(null)
 
 const activeFilter = ref('all')
-
 const filters = [
   { key: 'all', label: t('UIMatch_GtO8YEdb') },
   { key: 'nlh', label: t('adaptation10022') },
   { key: 'plo', label: t('adaptation10009') },
   { key: 'short', label: '6+' },
-  // { key: 'mahjong', label: '麻将' },
+  // { key: 'mahjong', label: 'Θ║╗σ░å' },
 ]
 
 interface FriendRoomListItem {
@@ -154,7 +134,7 @@ function toSafeNumber(value: unknown, fallback = 0): number {
 
 function isShortPokerType(pokerType: unknown): boolean {
   const v = toSafeNumber(pokerType)
-  // 朋友桌口径：2=6+短牌，0=德州/奥马哈长牌。
+  // µ£ïσÅïµíîσÅúσ╛ä∩╝Ü2=6+τƒ¡τëî∩╝î0=σ╛╖σ╖₧/σÑÑΘ⌐¼σôêΘò┐τëîπÇé
   return v === 2
 }
 
@@ -294,7 +274,7 @@ async function joinByInvitationCode(code: string): Promise<void> {
   }
 
   if (!gameStore.sessionToken) {
-    loginModalStore.open()
+    showGameToast(t('tokenFail'))
     return
   }
 
@@ -310,13 +290,13 @@ async function joinByInvitationCode(code: string): Promise<void> {
     const sngRoom = invitationData.sng_data
     const mttRoom = invitationData.mtt_data
 
-    // 对齐 Unity JoinRoom：三者都为空视为邀请码无效。
+    // σ»╣Θ╜É Unity JoinRoom∩╝ÜΣ╕ëΦÇàΘâ╜Σ╕║τ⌐║ΦºåΣ╕║ΘéÇΦ»╖τáüµùáµòêπÇé
     if (!normalRoom && !sngRoom && !mttRoom) {
       showGameToast(t('UIFriendsTable_JoinRoomNumberWrong', code))
       return
     }
 
-    // 对齐当前 H5 能力：仅处理普通朋友桌；SNG/MTT 先给出提示。
+    // σ»╣Θ╜Éσ╜ôσëì H5 Φâ╜σè¢∩╝ÜΣ╗àσñäτÉåµÖ«ΘÇÜµ£ïσÅïµíî∩╝¢SNG/MTT σàêτ╗Öσç║µÅÉτñ║πÇé
     if (!normalRoom) {
       showGameToast(t('UIFriendsTable_Code') + " H5 " + t('UICopyFriendRoomEnterRoom'))
       return
@@ -395,7 +375,7 @@ async function onEnterRoom(room: FriendRoomListItem): Promise<void> {
 
 async function enterFriendRoom(roomInfo: unknown, roomId: number): Promise<void> {
   if (!gameStore.sessionToken) {
-    loginModalStore.open()
+    showGameToast(t('tokenFail'))
     return
   }
 
@@ -552,7 +532,7 @@ watch(
 
 <template>
   <div class="friends-table-page">
-    <!-- 顶部标题栏 -->
+    <!-- Θí╢Θâ¿µáçΘóÿµáÅ -->
     <div class="title-bar main-primary-header">
       <div class="title">{{ t('UIMessage_Default') }}</div>
       <div class="currency-info main-primary-currency" @click="goToMineShop">
@@ -561,18 +541,18 @@ watch(
         </div>
         <div class="num">{{ displayUser.diamond }}</div>
         <div class="icon-recharge">
-          <img :src="iconAdd" :alt="t('UIMine_WalletAdd_EjPOTlsz')" />
+          <AppSvgIcon class="icon-recharge-svg" name="plus-circle" :title="t('UIMine_WalletAdd_EjPOTlsz')" />
         </div>
       </div>
     </div>
 
-    <!-- 中间可滚动区域 -->
+    <!-- Σ╕¡Θù┤σÅ»µ╗Üσè¿σî║σƒƒ -->
     <div ref="scrollContentRef" class="scroll-content">
       <div class="main-content">
-        <!-- 加入牌局 -->
+        <!-- σèáσàÑτëîσ▒Ç -->
         <div class="section join-section">
           <div class="section-title">{{ t('UIFriendsTable_JoinTableGame') }}</div>
-          <div class="section-subtitle">{{ t('UIDialogInvitationCodeTitle') }}，{{ t('UIFriendsTable_And') }}</div>
+          <div class="section-subtitle">{{ t('UIDialogInvitationCodeTitle') }}∩╝î{{ t('UIFriendsTable_And') }}</div>
           <div class="invite-inputs" @click="onInputCode">
             <div v-for="(digit, index) in inviteCode" :key="index" class="invite-input-wrap">
               <span class="invite-digit">{{ digit }}</span>
@@ -585,14 +565,14 @@ watch(
           </button>
         </div>
 
-        <!-- 快速组局 -->
+        <!-- σ┐½ΘÇƒτ╗äσ▒Ç -->
         <div class="section create-section">
           <div class="section-title">{{ t('UIFriendsTable_Round') }}</div>
           <button class="action-btn" @click="onCreateRoom">{{ t('UIFriendsTable_Text') }}</button>
         </div>
       </div>
 
-      <!-- 当前牌桌 -->
+      <!-- σ╜ôσëìτëîµíî -->
       <div class="section table-section">
         <div class="table-header">
           <div class="table-header-line"></div>
@@ -603,7 +583,7 @@ watch(
           <div class="table-header-line"></div>
         </div>
 
-        <!-- 筛选标签 -->
+        <!-- τ¡¢ΘÇëµáçτ¡╛ -->
         <div class="filter-tabs">
           <div
             v-for="filter in filters"
@@ -616,7 +596,7 @@ watch(
           </div>
         </div>
 
-        <!-- 牌桌列表 -->
+        <!-- τëîµíîσêùΦí¿ -->
         <div class="table-list">
           <div
             v-for="room in filteredRooms"
@@ -624,7 +604,7 @@ watch(
             class="table-card"
             @click="onEnterRoom(room)"
           >
-            <!-- 左侧游戏图标 -->
+            <!-- σ╖ªΣ╛ºµ╕╕µêÅσ¢╛µáç -->
             <div class="table-card-left">
               <div class="type-card">
                 <img
@@ -633,25 +613,28 @@ watch(
                   alt=""
                 />
               </div>
+              <div class="type-card-title">
+                {{ getGameTypeName(Number(room.game_type), Number(room.poker_type)) }}
+              </div>
             </div>
 
-            <!-- 中间信息 -->
+            <!-- Σ╕¡Θù┤Σ┐íµü» -->
             <div class="table-card-info">
               <div class="info-row">
                 <span class="blinds">{{ getBlindLabel(room) }}</span>
                 <span class="room-name ml-2">{{ room.name }}</span>
               </div>
               <div class="info-row">
-                <!-- <span class="tag">{{ getRoomStateLabel(room) }}</span> -->
+                <span class="tag">{{ t('UIFriendsTable_Text2') }}</span>
               </div>
               <div class="info-row info-row-last">
                 <div class="duration">
-                  <img class="icon-time" :src="iconTime" alt="" />
+                  <AppSvgIcon class="icon-time" name="clock" />
                   <span>{{ getRoomDuration(room) }}</span>
                 </div>
                 <div class="media-icons">
-                  <img v-if="isAudioTable(room)" class="icon-media" :src="iconAudio" alt="" />
-                  <img v-if="isVideoTable(room)" class="icon-media" :src="iconVideo" alt="" />
+                  <AppSvgIcon v-if="isAudioTable(room)" class="icon-media" name="microphone" />
+                  <AppSvgIcon v-if="isVideoTable(room)" class="icon-media" name="video" />
                   <img
                     v-for="item in getFeatureIcons(room)"
                     :key="item.key"
@@ -664,16 +647,16 @@ watch(
               </div>
             </div>
 
-            <!-- 右侧人数 -->
+            <!-- σÅ│Σ╛ºΣ║║µò░ -->
             <div class="table-card-right">
               <div class="seat-ratio">
-                <img class="icon-people" :src="iconPeople" alt="" />
+                <AppSvgIcon class="room-users-icon" name="room-users" />
                 <span>{{ getRoomSeatRatio(room) }}</span>
               </div>
             </div>
           </div>
 
-          <!-- 空状态 -->
+          <!-- τ⌐║τè╢µÇü -->
           <div v-if="filteredRooms.length === 0 && !loading" class="empty-state">
             <div class="empty-text">{{ t('UIFriendsTable_NoTable') }}</div>
           </div>
@@ -687,6 +670,7 @@ watch(
       :allow-leading-zero="true"
       :show-input-area="false"
       :show-mask="false"
+      :show-background="true"
       :max="9999999"
       :confirm-text="t('UIClub_RoomJoin')"
       @close="keypadOpen = false"
@@ -721,12 +705,10 @@ watch(
     font-size: 0.65rem;
     font-weight: 510;
     line-height: 120%;
-    color: #fff;
     text-shadow: 0 0.22rem 0.5rem rgba(0, 0, 0, 0.35);
 
-    @include theme-light-own {
+    @include theme-light {
       text-shadow: none;
-      color: #000 !important;
     }
   }
   .currency-info {
@@ -740,7 +722,7 @@ watch(
     overflow: hidden;
     gap: 0.2rem;
 
-    @include theme-light-own {
+    @include theme-light {
       color: #000;
       background: #fff;
       box-shadow: 0 0.04rem 0.14rem rgba(34, 34, 34, 0.08);
@@ -770,7 +752,7 @@ watch(
 
       color: #dadada;
 
-      @include theme-light-own {
+      @include theme-light {
         color: var(--c-brand);
       }
     }
@@ -812,7 +794,7 @@ watch(
   opacity: 0.1;
   pointer-events: none;
 
-  @include theme-light-own {
+  @include theme-light {
     opacity: 1;
   }
 }
@@ -828,7 +810,7 @@ watch(
   opacity: 0.5;
   pointer-events: none;
 
-  @include theme-light-own {
+  @include theme-light {
     opacity: 0;
   }
 }
@@ -852,8 +834,8 @@ watch(
   line-height: 1;
   margin-bottom: 0.35rem;
 
-  @include theme-light-own {
-    color: #000 !important;
+  @include theme-light {
+    color: var(--c-text);
   }
 }
 
@@ -866,8 +848,8 @@ watch(
   line-height: 1;
   margin-bottom: 0.85rem;
 
-  @include theme-light-own {
-    color: rgba(0, 0, 0, 0.62) !important;
+  @include theme-light {
+    color: rgba(0, 0, 0, 0.62);
   }
 }
 
@@ -888,7 +870,7 @@ watch(
   cursor: pointer;
   white-space: nowrap;
 
-  @include theme-light-own {
+  @include theme-light {
     color: rgba(249, 249, 249, 0.9);
     background: var(--c-brand);
     box-shadow: none;
@@ -915,7 +897,7 @@ watch(
     align-items: center;
     justify-content: center;
 
-    @include theme-light-own {
+    @include theme-light {
       background: rgba(0, 0, 0, 0.13);
       border-color: rgba(255, 40, 40, 0.08);
     }
@@ -946,7 +928,7 @@ watch(
     color: #f9f9f9;
     line-height: 1;
 
-    @include theme-light-own {
+    @include theme-light {
       color: var(--c-text);
     }
   }
@@ -979,7 +961,7 @@ watch(
     margin-top: 0.2rem;
     background: rgba(249, 249, 249, 0.5);
 
-    @include theme-light-own {
+    @include theme-light {
       background: rgba(0, 0, 0, 0.16);
     }
   }
@@ -999,8 +981,8 @@ watch(
     text-align: center;
     line-height: 1;
 
-    @include theme-light-own {
-      color: #000 !important;
+    @include theme-light {
+      color: var(--c-text);
     }
   }
 
@@ -1013,8 +995,8 @@ watch(
     text-align: center;
     line-height: 1;
 
-    @include theme-light-own {
-      color: rgba(0, 0, 0, 0.62) !important;
+    @include theme-light {
+      color: rgba(0, 0, 0, 0.62);
     }
   }
 }
@@ -1046,7 +1028,7 @@ watch(
   border-bottom: 1.2px solid transparent;
   transition: all 0.2s;
 
-  @include theme-light-own {
+  @include theme-light {
     color: rgba(0, 0, 0, 0.54);
   }
 
@@ -1055,7 +1037,7 @@ watch(
     font-weight: 700;
     border-bottom-color: #eaeaea;
 
-    @include theme-light-own {
+    @include theme-light {
       color: var(--c-brand);
       border-bottom-color: var(--c-brand);
     }
@@ -1083,7 +1065,7 @@ watch(
   cursor: pointer;
   transition: opacity 0.2s;
 
-  @include theme-light-own {
+  @include theme-light {
     background: #fff;
     border-color: #000;
   }
@@ -1116,7 +1098,7 @@ watch(
     background: rgba($color: #fff, $alpha: 0.3);
     border: 0.5px solid rgba(255, 255, 255, 1);
 
-    @include theme-light-own {
+    @include theme-light {
       background: #fff;
       border-color: rgba(255, 255, 255, 0.78);
       box-shadow: 0 0.027rem 0.4rem rgba(0, 0, 0, 0.25);
@@ -1169,7 +1151,7 @@ watch(
   color: #f8f8f8;
   line-height: 1;
 
-  @include theme-light-own {
+  @include theme-light {
     color: #000;
   }
 }
@@ -1182,7 +1164,7 @@ watch(
   letter-spacing: 0.15px;
   line-height: 1;
 
-  @include theme-light-own {
+  @include theme-light {
     color: #000;
   }
 }
@@ -1195,7 +1177,7 @@ watch(
   letter-spacing: 0.47px;
   line-height: 1;
 
-  @include theme-light-own {
+  @include theme-light {
     color: #000;
   }
 }
@@ -1211,7 +1193,7 @@ watch(
   letter-spacing: 0.47px;
   line-height: 1;
 
-  @include theme-light-own {
+  @include theme-light {
     color: #000;
   }
 
@@ -1229,7 +1211,7 @@ watch(
   gap: 0.08rem;
   color: rgba(249, 249, 249, 0.65);
 
-  @include theme-light-own {
+  @include theme-light {
     color: rgba(0, 0, 0, 0.31);
   }
 }
@@ -1250,7 +1232,7 @@ watch(
   padding: 0.053rem 0.16rem;
   background-color: rgba($color: #000000, $alpha: 0.24);
 
-  @include theme-light-own {
+  @include theme-light {
     color: rgba(0, 0, 0, 0.62);
     background: rgba(0, 0, 0, 0.08);
   }
@@ -1292,7 +1274,7 @@ watch(
   color: #fff;
   line-height: 1;
 
-  @include theme-light-own {
+  @include theme-light {
     color: #000;
     background: rgba(97, 74, 246, 0.05);
     border-color: var(--c-brand);
@@ -1304,7 +1286,7 @@ watch(
     height: 0.317rem;
     color: currentColor;
 
-    @include theme-light-own {
+    @include theme-light {
       color: var(--c-brand);
     }
   }
@@ -1323,8 +1305,8 @@ watch(
   color: rgba(255, 255, 255, 0.5);
   text-align: center;
 
-  @include theme-light-own {
-    color: rgba(0, 0, 0, 0.4) !important;
+  @include theme-light {
+    color: var(--c-text-muted);
   }
 }
 </style>

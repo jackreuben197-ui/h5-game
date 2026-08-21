@@ -15,6 +15,10 @@ import {
   isIosThirdPartyBrowser,
 } from '@/utils/iosWebClip'
 import { sanitizeRichHtml } from '@/utils/safeHtml'
+import {
+  isExternalLinkIframeModeEnabled,
+  openExternalLinkFrame,
+} from '@/utils/externalLinkFrame'
 
 const props = defineProps<{
   panelProps?: Record<string, unknown>
@@ -165,6 +169,34 @@ function nextPopupNotice(): void {
   if (popupNoticeIndex.value < popupNoticeList.value.length - 1) {
     popupNoticeIndex.value++
   }
+}
+
+function onRichTextClick(event: MouseEvent): void {
+  const target = event.target
+  if (!(target instanceof Element)) return
+
+  const anchor = target.closest<HTMLAnchorElement>('a[href]')
+  const container = event.currentTarget
+  if (!anchor || !(container instanceof Element) || !container.contains(anchor)) return
+
+  const href = anchor.getAttribute('href') || ''
+  let url: URL
+  try {
+    url = new URL(href, window.location.href)
+  } catch {
+    return
+  }
+
+  if (!['http:', 'https:'].includes(url.protocol) || url.origin === window.location.origin) {
+    return
+  }
+
+  // 默认沿用链接自身的 target 跳转；仅调试开关开启时使用 iframe。
+  if (!isExternalLinkIframeModeEnabled()) return
+
+  event.preventDefault()
+  event.stopPropagation()
+  openExternalLinkFrame(url.href)
 }
 
 // ==================== 复制 ====================
@@ -364,6 +396,7 @@ async function onSecondaryAction(): Promise<void> {
           <div
             v-if="currentPopupNotice"
             class="notification-panel__rich-text"
+            @click="onRichTextClick"
             v-html="currentPopupNoticeHtml"
           ></div>
           <!-- eslint-enable vue/no-v-html -->

@@ -4,6 +4,10 @@ import {
   pushLoggerDebugEntry,
   withDebugConsoleCaptureSuppressed,
 } from './debugCapture'
+import {
+  isExternalLinkIframeModeEnabled,
+  setExternalLinkIframeMode,
+} from './externalLinkFrame'
 
 const LEVEL_NUM: Record<LogLevel, number> = { debug: 0, info: 1, warn: 2, error: 3, silent: 4 }
 
@@ -91,5 +95,7 @@ if (typeof window !== 'undefined') {
     setGlobalLevel: setGlobalLogLevel,
     setLevel: setLoggerLevel,
     list: listLoggers,
+    setIframeMode: setExternalLinkIframeMode,
+    getIframeMode: isExternalLinkIframeModeEnabled,
   }
 }

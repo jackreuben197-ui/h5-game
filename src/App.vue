@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent } from 'vue'
 import { useGameStore } from '@/stores/game'
+import ExternalLinkFrame from '@/components/ExternalLinkFrame/ExternalLinkFrame.vue'
 
 const gameStore = useGameStore()
 const hasSession = computed(() => Boolean(gameStore.sessionToken.trim()))
@@ -18,6 +19,7 @@ const GlobalCustomerServiceChat = defineAsyncComponent(
   <RouterView />
   <GlobalBridgeDialogHost />
   <GlobalBridgePanelHost />
+  <ExternalLinkFrame />
   <Teleport v-if="hasSession" to="body">
     <GlobalMessageTodoNotice />
   </Teleport>

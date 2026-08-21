@@ -6,11 +6,17 @@ import { BRIDGE_ACTION, BRIDGE_MSG_TYPE, type BridgeMessage } from '@bridge-prot
 import { localStore } from '@/utils/localStore'
 import { createLogger } from '@/utils/logger'
 import { getLocalDateKey } from '@/utils/time'
+import { isChannelPackageHost } from '@/utils/channelPackage'
 
 const log = createLogger('[h5-display]')
 
 // 每天首次进入 H5 自动弹出"H5 展示"通知面板：登录/未登录都触发，过 0 点后凭本地日期标记自动重置。
 export async function tryShowDailyH5DisplayPanel(): Promise<void> {
+  // 私域版本（渠道包）暂时不展示三级公告，也不请求公告数据。
+  if (isChannelPackageHost()) {
+    return
+  }
+
   const today = getLocalDateKey()
   const lastShown = localStore.getItem<string | null>(
     StorageKey.H5_DISPLAY_LAST_SHOWN_DATE,

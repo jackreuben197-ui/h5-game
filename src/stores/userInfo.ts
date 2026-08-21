@@ -173,6 +173,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
 
       const hostname =
         typeof window === 'undefined' ? '' : window.location.hostname.trim().toLowerCase()
+      if (hostname === 'localhost') return null
       // 旧渠道域名 xxx.{CHANNEL_MAIN_DOMAIN} 必须继续按邀请码查询，不能当成自定义域名。
       const channelInviteCode = extractInviteCodeFromSubdomain(hostname)
       const baseUrl = channelInviteCode ? '' : resolveSafariBaseUrl(hostname)

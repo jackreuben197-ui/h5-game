@@ -212,6 +212,7 @@ export async function getUserClubApi(): Promise<ApiResponse<unknown>> {
   const userInfoStore = useUserInfoStore(pinia)
   const clubList = extractClubList(body.data)
   userInfoStore.setClubList(clubList)
+  userInfoStore.$persist()
   // 落地到当前用户级 IndexedDB（user_cache_${userId}，H5/Cocos 共用），供下次启动秒开。
   const gameStore = useGameStore(pinia)
   if (gameStore.loginUserId) {

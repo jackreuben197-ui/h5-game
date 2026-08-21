@@ -3,6 +3,7 @@ import { getUserClubApi, getUserInfoApi } from '@/api/user'
 import {
   forwardDiamondConfigToCocos,
   forwardGlobalConfigToCocos,
+  forwardUserClubToCocos,
 } from '@/bridge/sync/h5BusinessSync'
 import StorageKey from '@/constants/storageKey'
 import { setLocale, type LocaleCode } from '@/i18n'
@@ -72,6 +73,7 @@ async function runPostAuthSync(token: string): Promise<void> {
       const cached = await readClubListCache(gameStore.loginUserId)
       if (cached.length && !userInfoStore.clubList.length) {
         userInfoStore.setClubList(cached)
+        forwardUserClubToCocos({ code: 0, message: '', data: cached })
       }
     } catch (error) {
       console.warn('[post-auth-sync] hydrate club list cache failed:', error)

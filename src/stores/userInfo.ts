@@ -57,6 +57,7 @@ function normalizeDefaultClub(club: OrgClubSearchInfoData | undefined): ClubInfo
     safari_icon_url: String(club.safari_icon_url || ''),
     safari_label: String(club.safari_label || ''),
     safari_base_url: String(club.safari_base_url || ''),
+    room_logo: String(club.room_logo || ''),
     banner: String(club.banner || ''),
     random_id: toSafeInt(club.random_id),
     support_im_rid: String(club.support_im_rid || ''),

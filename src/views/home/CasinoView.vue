@@ -90,6 +90,14 @@ const router = useRouter()
 const route = useRoute()
 const props = defineProps<{ hideHeader?: boolean; clubId?: number }>()
 
+function handleBack() {
+  if (window.history.state?.back) {
+    router.back()
+  } else {
+    void router.replace({ name: 'lobby' })
+  }
+}
+
 const casinoStore = useCasinoStore()
 const gameStore = useGameStore()
 const loginModalStore = useLoginModalStore()
@@ -937,11 +945,16 @@ onActivated(async () => {
 </script>
 
 <template>
-  <div class="casino-page" :style="hideHeader ? {} : pageStyle" :class="{ 'is-embedded': hideHeader }">
+  <div
+    class="casino-page room-list-page themeType2"
+    :style="hideHeader ? {} : pageStyle"
+    :class="{ 'is-embedded': hideHeader, 'room-list-page--embedded': hideHeader }"
+  >
     <div class="bg-overlay" aria-hidden="true" v-if="!hideHeader"></div>
 
-    <!-- ── Header ─────────────────────────────────────────────────── -->
-    <HeaderBack v-if="!hideHeader" title="娱乐场">
+    <div class="room-list-stage">
+      <!-- ── Header ─────────────────────────────────────────────────── -->
+      <HeaderBack v-if="!hideHeader" title="娱乐场" extra-padding @back="handleBack">
       <template #right>
         <div class="action-wrap">
           <TopActionButton
@@ -1197,6 +1210,7 @@ onActivated(async () => {
     </div>
 
     </div> <!-- End casino-content -->
+    </div> <!-- End room-list-stage -->
 
     <!-- ── Wallet Picker Popup ────────────────────────────────────── -->
     <GameClubSelector
@@ -1768,8 +1782,6 @@ onActivated(async () => {
 }
 
 /* ── Responsive adjustments ──────────────────────────────────────────────── */
-
-/* ── Responsive adjustments ──────────────────────────────────────────────── */
 @media (max-width: 375px) {
   .icon-row {
     gap: 1px;
@@ -1783,6 +1795,112 @@ onActivated(async () => {
   }
   .expand-btn-absolute {
     right: -8px;
+  }
+}
+
+@media (min-width: 600px) {
+  .casino-page:not(.is-embedded) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    min-height: 100dvh;
+  }
+
+  .casino-content {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    height: calc(var(--content-stage-height, 1024px) - 112px);
+    overflow-y: auto;
+  }
+
+  .popular-banner-section {
+    max-width: 480px;
+    margin: 16px auto 0;
+    padding: 0 4px;
+    gap: 6px;
+  }
+
+  .popular-indicator-wrapper {
+    margin-left: 0;
+  }
+
+  .popular-text-img {
+    width: 34px;
+    height: 46px;
+  }
+
+  .popular-games-scroll {
+    gap: 6px;
+  }
+
+  .popular-game-item {
+    width: 44px;
+    height: 48px;
+    border-radius: 10px;
+  }
+
+  .icon-row {
+    max-width: 480px;
+    gap: 4px;
+    padding: 14px 4px 0;
+    margin: 0 auto;
+    grid-template-columns: repeat(8, 1fr);
+  }
+
+  .icon-img {
+    width: 34px;
+    height: 34px;
+  }
+
+  .icon-label {
+    font-size: 11px;
+    margin-top: 3px;
+  }
+
+  .category-list {
+    max-width: 480px;
+    padding: 0 4px 40px;
+    margin: 14px auto 0;
+    gap: 12px;
+  }
+
+  .category-header {
+    margin-bottom: 8px;
+  }
+
+  .category-icon-img {
+    width: 24px;
+    height: 24px;
+  }
+
+  .category-title {
+    font-size: 17px;
+  }
+
+  .category-sub {
+    font-size: 11px;
+  }
+
+  .game-card-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .app-card-img-wrapper {
+    border-radius: 16px;
+    aspect-ratio: 140 / 140;
+  }
+
+  .loading-grid-wrapper {
+    max-width: 480px;
+    padding: 16px 4px;
+  }
+
+  .loading-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
   }
 }
 </style>

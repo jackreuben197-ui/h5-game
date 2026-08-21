@@ -535,14 +535,14 @@ const router = createRouter({
       name: 'casino',
       component: () => import('@/views/home/CasinoView.vue'),
       // 游客可预览娱乐场目录，进入具体游戏时再要求登录。
-      meta: { requiresAuth: false },
+      meta: { requiresAuth: false, desktopLayout: 'content' },
     },
     {
       path: '/minigame',
       name: 'minigame',
       component: () => import('@/views/home/MiniGameView.vue'),
       // 游客可预览小游戏专区目录，进入具体游戏时再要求登录。
-      meta: { requiresAuth: false },
+      meta: { requiresAuth: false, desktopLayout: 'content' },
     },
     {
       path: '/mttList',

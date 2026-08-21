@@ -135,4 +135,11 @@ watch(isLoggedIn, (val) => {
     position: relative;
   }
 }
+
+@media (min-width: 600px) {
+  .cs-order-float {
+    right: 24px;
+    top: 50%;
+  }
+}
 </style>

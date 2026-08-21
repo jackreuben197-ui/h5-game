@@ -122,4 +122,25 @@ function onTouchEnd() {
   font-family: Arial, sans-serif;
   z-index: 1;
 }
+
+@media (min-width: 600px) {
+  .bell {
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .bell__text {
+    font-size: 13px;
+  }
+
+  .bell__badge {
+    top: -3px;
+    right: -3px;
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+  }
+}
 </style>

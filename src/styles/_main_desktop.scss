@@ -675,6 +675,37 @@
     white-space: nowrap !important;
   }
 
+  html[data-main-layout='primary'] .room-list-page .toggle-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  html[data-main-layout='primary'] .room-list-page .toggle-icon {
+    width: 16px;
+    height: 16px;
+    margin-top: 0;
+  }
+
+  html[data-main-layout='primary'] .bottom-tab {
+    // 高于 1024px 的浏览器中仍贴着内容舞台底部，而不是浏览器底部。
+    bottom: var(--main-bottom-tab-offset);
+    width: 360px;
+    height: 82px;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+  // Pad 使用单独的固定字号档位，不随容器连续缩放，同时避免与右侧图标重叠。
+  html[data-main-layout='primary']
+    .message-page
+    .card-bg-highlight
+    .card-bg-outter
+    .card-bg-innner
+    .card-line1
+    .left-text {
+    font-size: 1.8rem;
+  }
+
   html[data-main-layout='primary'] .main-layout-content {
     padding-bottom: 104px;
   }

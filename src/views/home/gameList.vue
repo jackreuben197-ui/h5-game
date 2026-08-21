@@ -343,60 +343,64 @@ function handleOpenCustomerService(): void {
     :style="pageStyle"
   >
     <div v-if="!props.embedded" class="bg-overlay"></div>
-    <HeaderBack
-      v-if="!props.embedded"
-      :title="t('UIHomePokerArea')"
-      extra-padding
-      @back="handleBack"
-    >
-      <template #right>
-        <div class="action-wrap">
-          <TopActionButton
-            :name="t('UIGuildFund_RechargeText')"
-            :icon="walletIcon"
-            icon-alt="wallet"
-            @click="router.push('/wallet')"
-          />
-          <TopActionButton
-            v-if="userInfoStore.currentClub?.support_im_rid"
-            :name="t('UIMineMain01')"
-            :icon="serviceIcon"
-            icon-alt="service"
-            @click="handleOpenCustomerService"
-          />
-        </div>
-      </template>
-    </HeaderBack>
-    <ClubZoneQuickActions v-if="isChannelPackage && !props.embedded" />
-    <GameTypeTabbar
-      v-model="activeTab"
-      :class="{ 'home-embedded-tabs': props.embedded }"
-      :tabs="[
-        { name: 'all', title: t('UIMatch_GtO8YEdb') },
-        { name: 'texas', title: t('UITexasInfo_Texas') },
-        { name: 'omaha', title: t('UITexasInfo_Omaha') },
-        { name: 'sixPlus', title: t('6+') },
-      ]"
-    />
 
-    <section class="group-list">
-      <PokerTableGroupCard
-        v-for="group in groupedRecords"
-        :key="group.groupKey"
-        :group="group"
-        :expanded="expandedMap[group.groupKey] === true"
+    <div class="room-list-stage">
+      <HeaderBack
+        v-if="!props.embedded"
+        :title="t('UIHomePokerArea')"
+        extra-padding
+        @back="handleBack"
+      >
+        <template #right>
+          <div class="action-wrap">
+            <TopActionButton
+              :name="t('UIGuildFund_RechargeText')"
+              :icon="walletIcon"
+              icon-alt="wallet"
+              @click="router.push('/wallet')"
+            />
+            <TopActionButton
+              v-if="userInfoStore.currentClub?.support_im_rid"
+              :name="t('UIMineMain01')"
+              :icon="serviceIcon"
+              icon-alt="service"
+              @click="handleOpenCustomerService"
+            />
+          </div>
+        </template>
+      </HeaderBack>
+      <ClubZoneQuickActions v-if="isChannelPackage && !props.embedded" />
+      <GameTypeTabbar
+        v-model="activeTab"
+        :class="{ 'home-embedded-tabs': props.embedded }"
         :force-light="props.embedded"
-        @toggle="handleToggleGroup"
-        @table-click="handleTableClick"
+        :tabs="[
+          { name: 'all', title: t('UIMatch_GtO8YEdb') },
+          { name: 'texas', title: t('UITexasInfo_Texas') },
+          { name: 'omaha', title: t('UITexasInfo_Omaha') },
+          { name: 'sixPlus', title: t('6+') },
+        ]"
       />
 
-      <div v-if="!groupedRecords.length" class="empty-wrap">
-        <VanIcon name="search" />
-        <span>
-          {{ t('UINoGameTip') }}
-        </span>
-      </div>
-    </section>
+      <section class="group-list">
+        <PokerTableGroupCard
+          v-for="group in groupedRecords"
+          :key="group.groupKey"
+          :group="group"
+          :expanded="expandedMap[group.groupKey] === true"
+          :force-light="props.embedded"
+          @toggle="handleToggleGroup"
+          @table-click="handleTableClick"
+        />
+
+        <div v-if="!groupedRecords.length" class="empty-wrap">
+          <VanIcon name="search" />
+          <span>
+            {{ t('UINoGameTip') }}
+          </span>
+        </div>
+      </section>
+    </div>
   </div>
 </template>
 

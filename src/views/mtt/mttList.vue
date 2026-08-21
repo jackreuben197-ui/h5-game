@@ -57,27 +57,29 @@ function handleOpenCustomerService() {
   <div class="mtt-list-page room-list-page themeType2" @back="handleBack">
     <div class="bg-overlay"></div>
 
-    <HeaderBack :title="t('UIHomeMttArea')" extra-padding>
-      <template #right>
-        <div class="action-wrap">
-          <TopActionButton
-            :name="t('UIGuildFund_RechargeText')"
-            :icon="walletIcon"
-            icon-alt="wallet"
-            @click="router.push('/wallet')"
-          />
-          <TopActionButton
-            v-if="userInfoStore.currentClub?.support_im_rid"
-            :name="t('UIMineMain01')"
-            :icon="serviceIcon"
-            icon-alt="service"
-            @click="handleOpenCustomerService"
-          />
-        </div>
-      </template>
-    </HeaderBack>
-    <ClubZoneQuickActions v-if="isChannelPackage" />
-    <MttContent />
+    <div class="room-list-stage mtt-list-stage">
+      <HeaderBack :title="t('UIHomeMttArea')" extra-padding>
+        <template #right>
+          <div class="action-wrap">
+            <TopActionButton
+              :name="t('UIGuildFund_RechargeText')"
+              :icon="walletIcon"
+              icon-alt="wallet"
+              @click="router.push('/wallet')"
+            />
+            <TopActionButton
+              v-if="userInfoStore.currentClub?.support_im_rid"
+              :name="t('UIMineMain01')"
+              :icon="serviceIcon"
+              icon-alt="service"
+              @click="handleOpenCustomerService"
+            />
+          </div>
+        </template>
+      </HeaderBack>
+      <ClubZoneQuickActions v-if="isChannelPackage" />
+      <MttContent />
+    </div>
   </div>
 </template>
 

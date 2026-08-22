@@ -516,10 +516,10 @@ function persistLoginDraft() {
 }
 
 function localeToServerLang(locale: string): number {
-  if (locale === 'en') return 1
+  if (locale === 'cn') return 0
   if (locale === 'zh') return 2
   if (locale === 'pt') return 3
-  return 0
+  return 1
 }
 
 interface LoginPageStateSnapshot {
@@ -768,6 +768,7 @@ function consumePhoneAreaSelection(): void {
     :close-on-click-overlay="true"
     :card-style="{ paddingTop: '0.06rem', paddingBottom: '0.04rem' }"
     :body-style="{ textAlign: 'left' }"
+    body-max-height="60vh"
   >
     <div
       v-for="lang in SUPPORTED_LOCALES_OPTIONS"

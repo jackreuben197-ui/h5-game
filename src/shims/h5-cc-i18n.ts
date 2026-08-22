@@ -7,6 +7,16 @@ interface H5CCI18n {
   LANG_ZH_TW: string
   LANG_EN: string
   LANG_PT: string
+  LANG_DE: string
+  LANG_ES: string
+  LANG_FR: string
+  LANG_HI: string
+  LANG_IT: string
+  LANG_JA: string
+  LANG_KO: string
+  LANG_RU: string
+  LANG_TH: string
+  LANG_VI: string
   readonly currentLocale?: string
   getCurrentLocale?(): string
   setLocale(locale: string): void
@@ -18,6 +28,16 @@ const i18n: H5CCI18n = (window as any).__H5_CC_I18N__ ?? {
   LANG_ZH_TW: 'zh-TW',
   LANG_EN: 'en',
   LANG_PT: 'pt',
+  LANG_DE: 'de',
+  LANG_ES: 'es',
+  LANG_FR: 'fr',
+  LANG_HI: 'hi',
+  LANG_IT: 'it',
+  LANG_JA: 'ja',
+  LANG_KO: 'ko',
+  LANG_RU: 'ru',
+  LANG_TH: 'th',
+  LANG_VI: 'vi',
   currentLocale: '',
   getCurrentLocale() { return '' },
   setLocale() {},

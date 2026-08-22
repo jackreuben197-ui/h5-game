@@ -16,7 +16,7 @@ import icUserAgreement from '@/assets/icons/ic_user_agreement.svg'
 import icAppVersion from '@/assets/icons/ic_app_version.svg'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
-import { getLocale, t } from '@/i18n'
+import { SUPPORTED_LOCALES_OPTIONS, getLocale, t } from '@/i18n'
 import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
 
@@ -86,10 +86,7 @@ function languageLabel(): string {
   if (locale === 'zh') {
     return t('UIClub_Text72')
   }
-  if (locale === 'pt') {
-    return 'Português'
-  }
-  return 'English'
+  return SUPPORTED_LOCALES_OPTIONS.find((item) => item.value === locale)?.label ?? 'English'
 }
 
 async function onRowClick(item: SettingItem): Promise<void> {

@@ -4,7 +4,7 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { postMiscArtiCleInfoApi } from '@/api/misc'
 import type { MiscArtiCleInfoContentData } from '@/api/models/misc'
-import { getLocale, t, toServerLang } from '@/i18n'
+import { FALLBACK_SERVER_LANG, getLocale, t, toServerLang } from '@/i18n'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 
@@ -84,8 +84,9 @@ async function loadArticle(): Promise<void> {
   errorMessage.value = ''
 
   try {
-    const response = await postMiscArtiCleInfoApi({
-      lang: toServerLang(localeCode.value),
+    const serverLang = toServerLang(localeCode.value)
+    let response = await postMiscArtiCleInfoApi({
+      lang: serverLang,
       type: articleType.value,
     })
 
@@ -93,6 +94,19 @@ async function loadArticle(): Promise<void> {
       errorMessage.value = response.message || 'Load article failed'
       articleContent.value = ''
       return
+    }
+
+    // 服务端还没有该语言的条款时回落到英文，避免弹出空白协议页。
+    if (!response.data?.article?.content_ex?.length && serverLang !== FALLBACK_SERVER_LANG) {
+      response = await postMiscArtiCleInfoApi({
+        lang: FALLBACK_SERVER_LANG,
+        type: articleType.value,
+      })
+      if (response.code !== 0) {
+        errorMessage.value = response.message || 'Load article failed'
+        articleContent.value = ''
+        return
+      }
     }
 
     const contentEx = response.data?.article?.content_ex || []

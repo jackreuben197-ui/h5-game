@@ -24,9 +24,34 @@ const options: LanguageOption[] = [
   { key: 'zh', label: '繁體中文' },
   { key: 'en', label: 'English' },
   { key: 'pt', label: 'Português' },
+  { key: 'de', label: 'Deutsch' },
+  { key: 'es', label: 'Español' },
+  { key: 'fr', label: 'Français' },
+  { key: 'hi', label: 'हिन्दी' },
+  { key: 'it', label: 'Italiano' },
+  { key: 'ja', label: '日本語' },
+  { key: 'ko', label: '한국어' },
+  { key: 'ru', label: 'Русский' },
+  { key: 'th', label: 'ไทย' },
+  { key: 'vi', label: 'Tiếng Việt' },
 ]
 
-const SUPPORTED: string[] = ['cn', 'zh', 'en', 'pt']
+const SUPPORTED: string[] = [
+  'cn',
+  'zh',
+  'en',
+  'pt',
+  'de',
+  'es',
+  'fr',
+  'hi',
+  'it',
+  'ja',
+  'ko',
+  'ru',
+  'th',
+  'vi',
+]
 const activeLanguage = ref<string>(getLocale())
 
 function selectLanguage(key: string): void {
@@ -71,8 +96,9 @@ function selectLanguage(key: string): void {
 <style scoped lang="scss">
 .settings-page {
   height: 100dvh;
+  display: flex;
+  flex-direction: column;
   // padding-top: calc(env(safe-area-inset-top) + 0.48rem);
-  padding-bottom: 0.8rem;
   color: #f9f9f9;
   background-size: cover;
   background-position: center;
@@ -80,7 +106,11 @@ function selectLanguage(key: string): void {
 }
 
 .content-wrap {
-  padding: 0 0.4533rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 0.4533rem 0.8rem;
 }
 .header-placeholder {
   width: 0.72rem;

@@ -8,13 +8,42 @@ import { createLogger } from '@/utils/logger'
 
 const log = createLogger('[i18n]')
 
-// 对外仍沿用 Cocos 历史代码：cn(简中) / zh(繁中) / en / pt。
+// 对外仍沿用 Cocos 历史代码：cn(简中) / zh(繁中) / en / pt；新增语言的 code 与包内 locale 一致。
 // 持久化、桥协议、上层组件全部基于这套 code，切勿改动。
-export type LocaleCode = 'cn' | 'zh' | 'en' | 'pt'
+export type LocaleCode =
+  | 'cn'
+  | 'zh'
+  | 'en'
+  | 'pt'
+  | 'de'
+  | 'es'
+  | 'fr'
+  | 'hi'
+  | 'it'
+  | 'ja'
+  | 'ko'
+  | 'ru'
+  | 'th'
+  | 'vi'
 
 const DEFAULT_LOCALE: LocaleCode = 'cn'
 
-export const SUPPORTED_LOCALES: LocaleCode[] = ['en', 'pt', 'zh', 'cn']
+export const SUPPORTED_LOCALES: LocaleCode[] = [
+  'en',
+  'pt',
+  'zh',
+  'cn',
+  'de',
+  'es',
+  'fr',
+  'hi',
+  'it',
+  'ja',
+  'ko',
+  'ru',
+  'th',
+  'vi',
+]
 
 // 旧代码 → @silenthill/h5-cc-i18n 包内代码的双向映射。
 const LEGACY_TO_PACKAGE: Record<LocaleCode, string> = {
@@ -22,6 +51,16 @@ const LEGACY_TO_PACKAGE: Record<LocaleCode, string> = {
   zh: i18n.LANG_ZH_TW,
   en: i18n.LANG_EN,
   pt: i18n.LANG_PT,
+  de: i18n.LANG_DE,
+  es: i18n.LANG_ES,
+  fr: i18n.LANG_FR,
+  hi: i18n.LANG_HI,
+  it: i18n.LANG_IT,
+  ja: i18n.LANG_JA,
+  ko: i18n.LANG_KO,
+  ru: i18n.LANG_RU,
+  th: i18n.LANG_TH,
+  vi: i18n.LANG_VI,
 }
 
 const currentLocale = ref<LocaleCode>(resolveInitialLocale())
@@ -49,13 +88,29 @@ export function setLocale(locale: string): void {
   }
 }
 
-// 对外 LocaleCode -> 服务端 lang 字符串：服务端各接口统一接 zh_CN / zh_TW / en_US / pt_BR。
+// 对外 LocaleCode -> 服务端 lang 字符串（zh_CN / en_US / ru_RU ...）。
+const LOCALE_TO_SERVER_LANG: Record<LocaleCode, string> = {
+  cn: 'zh_CN',
+  zh: 'zh_TW',
+  en: 'en_US',
+  pt: 'pt_BR',
+  de: 'de_DE',
+  es: 'es_ES',
+  fr: 'fr_FR',
+  hi: 'hi_IN',
+  it: 'it_IT',
+  ja: 'ja_JP',
+  ko: 'ko_KR',
+  ru: 'ru_RU',
+  th: 'th_TH',
+  vi: 'vi_VN',
+}
+
+// 服务端还没有配置某个语言的内容时统一回落到英文。
+export const FALLBACK_SERVER_LANG = 'en_US'
+
 export function toServerLang(locale: LocaleCode = currentLocale.value): string {
-  if (locale === 'cn') return 'zh_CN'
-  if (locale === 'en') return 'en_US'
-  if (locale === 'zh') return 'zh_TW'
-  if (locale === 'pt') return 'pt_BR'
-  return 'zh_TW'
+  return LOCALE_TO_SERVER_LANG[locale] ?? 'zh_TW'
 }
 
 export function t(key: string, ...args: FormatArg[] | [FormatArgs]): string {
@@ -68,11 +123,21 @@ export function t(key: string, ...args: FormatArg[] | [FormatArgs]): string {
   return formatTxtMessage(message, args)
 }
 
-export const SUPPORTED_LOCALES_OPTIONS = [
+export const SUPPORTED_LOCALES_OPTIONS: { label: string; value: LocaleCode }[] = [
   { label: '简体中文', value: 'cn' },
   { label: '繁體中文', value: 'zh' },
   { label: 'English', value: 'en' },
   { label: 'Português', value: 'pt' },
+  { label: 'Deutsch', value: 'de' },
+  { label: 'Español', value: 'es' },
+  { label: 'Français', value: 'fr' },
+  { label: 'हिन्दी', value: 'hi' },
+  { label: 'Italiano', value: 'it' },
+  { label: '日本語', value: 'ja' },
+  { label: '한국어', value: 'ko' },
+  { label: 'Русский', value: 'ru' },
+  { label: 'ไทย', value: 'th' },
+  { label: 'Tiếng Việt', value: 'vi' },
 ]
 
 export const textI18n = {
@@ -153,6 +218,10 @@ function normalizeLocale(input: string | null | undefined): LocaleCode | null {
   }
   if (normalized === 'us' || normalized.startsWith('en')) {
     return 'en'
+  }
+  const primary = normalized.split('-')[0] as LocaleCode
+  if (SUPPORTED_LOCALES.includes(primary)) {
+    return primary
   }
   return null
 }

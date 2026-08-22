@@ -19,7 +19,7 @@ importers:
         version: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512
       '@silenthill/h5-cc-i18n':
         specifier: git+ssh://git@github.com/jackreuben197-ui/h5-cc-i18n.git#dev_i18n
-        version: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/7eba846321dceec395ac1a020f9b8599faaf8cc0
+        version: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/98099214c6dcbe6f45474cebb125d80f8e5a57d6
       '@vueuse/core':
         specifier: ^14.2.1
         version: 14.2.1(vue@3.5.32(typescript@6.0.2))
@@ -1067,8 +1067,8 @@ packages:
     resolution: {gitHosted: true, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512}
     version: 0.1.0
 
-  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/7eba846321dceec395ac1a020f9b8599faaf8cc0':
-    resolution: {gitHosted: true, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/7eba846321dceec395ac1a020f9b8599faaf8cc0}
+  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/98099214c6dcbe6f45474cebb125d80f8e5a57d6':
+    resolution: {gitHosted: true, integrity: sha512-0BmWvi5g6JFLqOqjLySJjaE7auurmj/nnHkzHYxMfVGk6J6q7kqcp+ogwBKU1a5uXcC69H/GegvdJPdBJe4+bg==, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/98099214c6dcbe6f45474cebb125d80f8e5a57d6}
     version: 1.0.0
 
   '@tybys/wasm-util@0.10.1':
@@ -3500,7 +3500,7 @@ snapshots:
 
   '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512': {}
 
-  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/7eba846321dceec395ac1a020f9b8599faaf8cc0': {}
+  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/98099214c6dcbe6f45474cebb125d80f8e5a57d6': {}
 
   '@tybys/wasm-util@0.10.1':
     dependencies:

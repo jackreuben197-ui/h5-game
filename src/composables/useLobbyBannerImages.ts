@@ -4,7 +4,7 @@ import { postMiscBannerListApi } from '@/api/misc'
 import type { MiscBannerListBannerInfo } from '@/api/models/misc'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { getLocale, toServerLang } from '@/i18n'
+import { FALLBACK_SERVER_LANG, getLocale, toServerLang } from '@/i18n'
 import { isTelegramMiniAppEnv } from '@/utils/environment'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
 import { readLobbyBannerListCache, writeLobbyBannerListCache } from '@/utils/lobbyBannerCache'
@@ -199,7 +199,11 @@ async function fetchCmsBannerUrls(
     }
     const records = extractBannerRecords(response.data)
     const urls = filterLobbyBannerUrls(records, lang, displayScene, scope)
-    return urls
+    if (urls.length || lang === FALLBACK_SERVER_LANG) {
+      return urls
+    }
+    // CMS 还没有该语言的轮播图时用英文兜底，避免整条轮播为空。
+    return filterLobbyBannerUrls(records, FALLBACK_SERVER_LANG, displayScene, scope)
   } catch {
     return null
   }

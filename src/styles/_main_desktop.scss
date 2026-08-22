@@ -383,16 +383,20 @@
     height: clamp(68px, 6.5972vw, 95px);
   }
 
-  html[data-main-layout='primary'] .club-index .action-icon img {
+  html[data-main-layout='primary'] .club-index .action-icon img,
+  html[data-main-layout='primary'] .club-index .action-icon .qa-img {
     width: clamp(68px, 6.5972vw, 95px);
     height: clamp(68px, 6.5972vw, 95px);
   }
 
   html[data-main-layout='primary'] .club-index .action-text {
     font-size: clamp(13px, 1.25vw, 18px);
+    white-space: nowrap;
+    text-align: center;
   }
 
   html[data-main-layout='primary'] .club-index .quick-item {
+    width: auto;
     gap: clamp(6px, 0.625vw, 9px);
   }
 

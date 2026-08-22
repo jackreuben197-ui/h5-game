@@ -59,6 +59,7 @@ interface ClubCardItem {
   tableCount: number
   memberCount: number
   cover: string
+  bannerBg: string
 }
 
 const isLightTheme = computed(() => theme.value === 'light')
@@ -101,6 +102,7 @@ const quickActions: QuickActionItem[] = [
 const clubList = computed<ClubCardItem[]>(() => {
   const records = roomListStore.records
   return userInfoStore.clubList.map((club, index) => {
+    const fallbackBanner = fallbackBanners[index % fallbackBanners.length]
     const displayId = normalizeClubId(club.random_id ?? club.club_id)
     const clubId = normalizeClubId(club.club_id)
     const key = `${clubId || displayId || index}`
@@ -111,12 +113,13 @@ const clubList = computed<ClubCardItem[]>(() => {
       source: club,
       name: toSafeString(club.club_name) || t('UIClub_UnnamedClub'),
       clubIdText: displayId || '--',
-      roleText: getMemberRoleText(club.user_level),
-      activeCount: toSafeNumber(club.user_gold),
-      chipsCount: toSafeNumber(club.user_credit),
+      roleText: stats.roleText,
+      activeCount: stats.activeCount,
+      chipsCount: stats.chipsCount,
       tableCount: stats.tables,
       memberCount: stats.players,
       cover: toSafeString(club.logo) || imgClubLogo,
+      bannerBg: fallbackBanner,
     }
   })
 })
@@ -183,16 +186,18 @@ function getRoomPlayers(room: RoomRecord): number {
   return Number(room.roomers) || (Array.isArray(room.users) ? room.users.length : 0)
 }
 
-// 与首页 pokerTablesText / pokerPlayersText 一致：按俱乐部/联盟过滤共享牌桌列表，
-// 只统计扑克玩法（game_type <= 4），保证列表与进入俱乐部后看到的数据一致。
 function computeClubRoomStats(
   club: ClubInfo,
   records: RoomRecord[],
-): { tables: number; players: number } {
+): { tables: number; players: number; activeCount: number; chipsCount: number; roleText: string } {
   const clubId = toSafeInt(club.club_id)
   const tribeId = toSafeInt((club as Record<string, unknown>).tribe_id)
   let tables = 0
   let players = 0
+  const activeCount = toSafeNumber(club.user_gold)
+  const chipsCount = toSafeNumber(club.user_credit)
+  const roleText = getMemberRoleText(club.user_level)
+
   records.forEach((room) => {
     if (!checkIsShowForClubAndTribe(room, clubId, tribeId)) {
       return
@@ -204,7 +209,7 @@ function computeClubRoomStats(
     tables += 1
     players += getRoomPlayers(room)
   })
-  return { tables, players }
+  return { tables, players, activeCount, chipsCount, roleText }
 }
 
 function getMemberRoleText(value: unknown): string {
@@ -284,7 +289,6 @@ async function loadMyClubList(force = false): Promise<void> {
   }
 
   const userId = gameStore.loginUserId
-  // 没有内存数据时优先用用户级 IndexedDB 缓存填充，避免空白等待。
   if (!userInfoStore.clubList.length && userId) {
     const cached = await readClubListCache(userId)
     if (cached.length && !userInfoStore.clubList.length) {
@@ -309,7 +313,6 @@ async function loadMyClubList(force = false): Promise<void> {
       void writeClubListCache(userId, list)
     }
   } catch (error) {
-    // 有缓存兜底时静默失败，避免在已有展示之上弹错。
     if (!hasInitialData) {
       const message = error instanceof Error ? error.message : t('UIClub_FetchClubFail')
       showFailToast(message)
@@ -322,6 +325,10 @@ async function loadMyClubList(force = false): Promise<void> {
 }
 
 async function onSearchClub(): Promise<void> {
+  if (isChannelPackage) {
+    return
+  }
+
   const keyword = searchKeyword.value.trim()
   if (!keyword) {
     showFailToast(t('tc_xDSyCM') + 'ID')
@@ -406,7 +413,6 @@ async function onJoinClub(): Promise<void> {
 
 onMounted(() => {
   void loadMyClubList(true)
-  // 与首页/俱乐部详情共用同一份牌桌列表，进入此页时启动共享数据流。
   roomListStore.bootstrapRoomList()
 })
 </script>
@@ -448,7 +454,7 @@ onMounted(() => {
         :class="[`quick-item--${item.kind}`, { 'quick-item--hidden': item.hidden }]"
         @click="onQuickAction(item.id)"
       >
-        <div class="qa-icon" :class="`qa-icon--${item.kind}`">
+        <span class="action-icon" :class="`action-icon--${item.kind}`">
           <template v-if="item.kind === 'create-club'">
             <img
               class="qa-img qa-img--cc-small"
@@ -476,7 +482,7 @@ onMounted(() => {
           <template v-else-if="item.kind === 'club-career'">
             <img class="qa-img icon-board-chart" :src="iconClubCareer" alt="" aria-hidden="true" />
           </template>
-        </div>
+        </span>
         <span class="action-text" :class="`action-text--${item.kind}`">{{ t(item.title) }}</span>
       </button>
     </section>
@@ -909,33 +915,25 @@ onMounted(() => {
 }
 
 .quick-actions {
-  padding: 0;
+  margin-top: 0.03rem;
+  padding-left: 0;
   display: flex;
   align-items: center;
-  gap: 0.633rem;
+  justify-content: flex-start;
+  gap: 0.475rem;
 }
 
 .quick-item {
-  flex-shrink: 0;
+  flex: 0 0 auto;
   border: 0;
   background: transparent;
   padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.118rem;
+  gap: 0.088rem;
+  color: var(--c-text, #fff);
   cursor: pointer;
-
-  &--create-club,
-  &--club-panel,
-  &--club-career {
-    width: 1.621rem;
-  }
-
-  &--create-union {
-    width: 1.692rem;
-    gap: 0.124rem;
-  }
 
   &--hidden {
     opacity: 0;
@@ -943,99 +941,54 @@ onMounted(() => {
   }
 }
 
-.qa-icon {
+.action-icon {
   position: relative;
+  width: 1.62rem;
+  height: 1.62rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   border-radius: 0.441rem;
-
-  &--create-club {
-    width: 1.621rem;
-    height: 1.621rem;
-  }
-
-  &--club-panel {
-    width: 1.621rem;
-    height: 1.621rem;
-  }
-
-  &--club-career {
-    width: 1.621rem;
-    height: 1.621rem;
-  }
-
-  &--create-union {
-    width: 1.692rem;
-    height: 1.692rem;
-  }
 }
 
+.action-icon img,
 .qa-img {
   position: absolute;
-  display: block;
-  max-width: none;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   pointer-events: none;
 }
 
-.qa-img--cc-small {
-  width: 100%;
-  height: 100%;
-  left: 0;
-  top: 0;
-  object-fit: contain;
-}
-
-.qa-img--cp-vec {
-  width: 100%;
-  height: 100%;
-  left: 0;
-  top: 0;
-  object-fit: contain;
-}
-
-.qa-img--cu-alliance {
-  width: 100%;
-  height: 100%;
-  left: 0;
-  top: 0;
-  object-fit: contain;
-}
-.icon-board-chart {
-  width: 100%;
-  height: 100%;
-  left: 0;
-  top: 0;
-  object-fit: contain;
-}
 .action-text {
+  width: 100%;
   font-family: 'SF Pro', 'PingFang SC', sans-serif;
-  font-size: 0.304rem;
-  font-weight: 510;
-  font-variation-settings: 'wdth' 100;
-  line-height: normal;
+  font-size: 0.28rem;
+  line-height: 1.2;
+  font-weight: 500;
+  color: var(--c-text, #fff);
   text-align: center;
-  color: #fff;
-  text-shadow: 0 0.034rem 0.422rem rgba(0, 0, 0, 0.6);
+  text-shadow: 0 0.025rem 0.317rem rgba(0, 0, 0, 0.6);
   white-space: nowrap;
-  min-width: 100%;
 
-  &--create-union {
-    font-size: 0.319rem;
-    text-shadow: 0 0.035rem 0.443rem rgba(0, 0, 0, 0.6);
+  @include theme-light-own {
+    color: #000;
+    text-shadow: none;
   }
 }
 
 .cards-divider {
+  margin-top: 0.02rem;
   display: flex;
   align-items: center;
-  gap: 0.177rem;
-  mix-blend-mode: plus-lighter;
-  opacity: 0.4;
+  gap: 0.14rem;
 }
 
 .divider-line {
   flex: 1;
-  height: 1px;
-  background: #f9f9f9;
+  height: 0.02rem;
+  background: var(--c-divider, rgba(255, 255, 255, 0.15));
 }
 
 .suit-icon {
@@ -1048,9 +1001,8 @@ onMounted(() => {
 .club-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding-bottom: 1rem;
-  padding-top: 0.3rem;
+  gap: 0.3rem;
+  padding-bottom: 0.44rem;
 }
 
 .club-empty-text {
@@ -1058,7 +1010,7 @@ onMounted(() => {
   padding: 0.24rem 0;
   text-align: center;
   font-size: 0.28rem;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--c-text-muted, rgba(255, 255, 255, 0.7));
 }
 
 .club-banner {
@@ -1086,6 +1038,27 @@ onMounted(() => {
       calc(50% - 2.845rem) 100%,
       0% 100%
     );
+  }
+
+  @include theme-light-own {
+    border-radius: 0.95rem;
+    background: #ffffff;
+    box-shadow: 0 0.04rem 0.14rem rgba(34, 34, 34, 0.08);
+
+    &::before {
+      content: '';
+      position: absolute;
+      z-index: 1;
+      inset: 0.16rem;
+      border: 0.02rem solid rgba(0, 0, 0, 0.08);
+      border-radius: 0.802rem;
+      pointer-events: none;
+      background: transparent !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      clip-path: none !important;
+      display: block !important;
+    }
   }
 }
 
@@ -1131,6 +1104,17 @@ onMounted(() => {
       0% 100%
     );
   }
+
+  @include theme-light-own {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0.357rem 0.385rem 1.125rem 0.339rem;
+
+    &::before {
+      display: none !important;
+    }
+  }
 }
 
 .club-banner-blur {
@@ -1138,13 +1122,18 @@ onMounted(() => {
   inset: 0;
   border-radius: inherit;
   backdrop-filter: blur(0.446rem);
-
   pointer-events: none;
+
+  @include theme-light-own {
+    display: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }
 
 .club-main {
   position: relative;
-  z-index: 1;
+  z-index: 10;
   width: 100%;
   display: flex;
   justify-content: space-between;
@@ -1165,6 +1154,11 @@ onMounted(() => {
   border-radius: 0.458rem;
   object-fit: cover;
   border: 0.01rem solid rgba(255, 255, 255, 0.28);
+
+  @include theme-light-own {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 0.08rem 0.22rem rgba(34, 34, 34, 0.08) !important;
+  }
 }
 
 .club-meta {
@@ -1181,6 +1175,10 @@ onMounted(() => {
   font-weight: 500;
   color: #fff;
   white-space: nowrap;
+
+  @include theme-light-own {
+    color: #000000 !important;
+  }
 }
 
 .club-id {
@@ -1200,12 +1198,21 @@ onMounted(() => {
   font-weight: 600;
   color: #444;
   background: rgba(255, 255, 255, 0.56);
+
+  @include theme-light-own {
+    background: rgba(0, 0, 0, 0.4);
+    color: #fff;
+  }
 }
 
 .club-id-value {
   font-size: 0.279rem;
   font-weight: 300;
   color: #fff;
+
+  @include theme-light-own {
+    color: #000000 !important;
+  }
 }
 
 .club-top-metrics {
@@ -1222,46 +1229,16 @@ onMounted(() => {
   font-size: 0.279rem;
   font-weight: 300;
   line-height: 1;
+
+  @include theme-light-own {
+    color: #000000 !important;
+  }
 }
 
 .top-metric-item img {
   width: 0.36rem;
   height: 0.4rem;
   object-fit: contain;
-}
-
-.stat-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.05rem;
-  font-size: 0.27rem;
-  line-height: 0.95;
-  color: rgba(251, 251, 251, 0.95);
-}
-
-.stat-item img {
-  width: 0.4rem;
-  height: 0.4rem;
-  object-fit: contain;
-}
-
-.stat-item--role {
-  gap: 0.04rem;
-}
-
-.stat-item--role img {
-  width: 0.437rem;
-  height: 0.437rem;
-}
-
-.stat-item span {
-  letter-spacing: 0.006rem;
-  white-space: nowrap;
-}
-
-.stat-item--role span {
-  letter-spacing: 0;
-  line-height: 1;
 }
 
 .enter-btn-wrapper {
@@ -1332,11 +1309,18 @@ onMounted(() => {
     mask-composite: exclude;
     pointer-events: none;
   }
-}
 
-.enter-btn-label {
-  position: relative;
-  z-index: 1;
+  @include theme-light-own {
+    color: #ffffff !important;
+    background: var(--c-brand, #05c297) !important;
+    border: none !important;
+    box-shadow: 0 0.04rem 0.14rem rgba(34, 34, 34, 0.08) !important;
+
+    &::before,
+    &::after {
+      display: none !important;
+    }
+  }
 }
 
 .club-stats-shell {
@@ -1372,6 +1356,19 @@ onMounted(() => {
     mask-composite: exclude;
     pointer-events: none;
   }
+
+  @include theme-light-own {
+    bottom: -0.06rem;
+    border-radius: 0.29rem 0.29rem 0.04rem 0.04rem;
+    border: 0.01rem solid rgba(0, 0, 0, 0.04);
+    background: linear-gradient(180deg, rgba(246, 250, 254, 0.98), rgba(238, 246, 252, 0.98)), #f3f8fd;
+    box-shadow: 0 0.06rem 0.12rem rgba(34, 34, 34, 0.08);
+
+    &::before,
+    &::after {
+      display: none;
+    }
+  }
 }
 
 .club-stats-inline {
@@ -1404,6 +1401,10 @@ onMounted(() => {
     height: 0.367rem;
     object-fit: contain;
   }
+
+  @include theme-light-own {
+    color: #000;
+  }
 }
 
 .stat-item--role {
@@ -1420,6 +1421,14 @@ onMounted(() => {
       drop-shadow(0.047rem 0.093rem 0.031rem rgba(0, 0, 0, 0.13))
       drop-shadow(0.083rem 0.165rem 0.037rem rgba(0, 0, 0, 0.04))
       drop-shadow(0.005rem 0.011rem 0.012rem rgba(0, 0, 0, 0.26));
+  }
+
+  @include theme-light-own {
+    color: #000;
+
+    img {
+      filter: none;
+    }
   }
 }
 

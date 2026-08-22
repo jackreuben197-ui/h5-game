@@ -5752,17 +5752,152 @@
     font-size: 10.41px;
   }
 
-  html[data-main-layout='content'] .wallet-screen .pay-cta {
+  html[data-main-layout='content'] .wallet-screen .pay-cta-wrapper,
+  html[data-main-layout='content'] .wallet-screen .wf__cta-wrapper,
+  html[data-main-layout='content'] .wallet-screen .club-deposit__cta-wrapper,
+  html[data-main-layout='content'] .deposit-screen .club-deposit__cta-wrapper,
+  html[data-main-layout='content'] .wallet-fixed-deposit-shell .club-deposit__cta-wrapper {
     position: fixed;
-    bottom: calc(var(--wallet-stage-offset-y) + 30.51px);
+    bottom: calc(var(--wallet-stage-offset-y, 0px) + 30.51px);
     right: 0;
     left: 0;
     z-index: 10;
     width: min(calc(100% - 80px), 387.8px);
     height: 62.49px;
     margin-inline: auto;
-    border-radius: 35.93px;
-    font-size: 22.06px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .pay-cta,
+  html[data-main-layout='content'] .deposit-screen .club-deposit__cta,
+  html[data-main-layout='content'] .wallet-fixed-deposit-shell .club-deposit__cta {
+    position: relative;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    border-radius: 35.93px !important;
+    font-size: 22.06px !important;
+  }
+
+  // 俱乐部充值/固定充值桌面版布局 (FixedDepositPanel & ClubDepositPanel)
+  html[data-main-layout='content'] .wallet-fixed-deposit-shell,
+  html[data-main-layout='content'] .deposit-screen {
+    --wallet-stage-offset-y: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: none;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .deposit-screen > .page-back-header {
+    position: absolute;
+    top: var(--wallet-stage-offset-y);
+    left: 50%;
+    z-index: 7;
+    width: min(calc(100% - 80px), 1357px);
+    height: 82px;
+    min-height: 82px;
+    padding: 40px 0 0;
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .deposit-screen .details-pill {
+    height: 38px;
+    padding: 0 20px;
+    border-radius: 19px;
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-scrollable {
+    position: absolute;
+    top: calc(var(--wallet-stage-offset-y) + 120px);
+    right: 0;
+    bottom: var(--wallet-stage-offset-y);
+    left: 0;
+    min-height: 0;
+    padding: 0 0 124px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-scrollable::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-content {
+    width: min(calc(100% - 80px), 1357px);
+    max-width: none;
+    margin: 0 auto;
+    padding: 0;
+    gap: 32px;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-banner.usercard,
+  html[data-main-layout='content'] .wallet-screen .deposit-banner.usercard {
+    position: relative;
+    top: auto;
+    flex: 0 0 auto;
+    width: min(100%, 340px);
+    margin: 0 auto;
+    padding: 16px 20px;
+    border-radius: 28px;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-banner.usercard .usercard__head {
+    gap: 12px;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-banner.usercard .usercard__avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-banner.usercard .usercard__name {
+    font-size: 20px;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-banner.usercard .usercard__id-value {
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-banner.usercard .usercard__gbal-value {
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-banner.usercard .usercard__gbal-chip {
+    width: 20px;
+    height: 20px;
+  }
+
+  html[data-main-layout='content'] .club-deposit {
+    width: 100%;
+    margin: 0 auto;
+    gap: 20px;
+    padding-bottom: 120px;
+  }
+
+  html[data-main-layout='content'] .club-deposit__card {
+    gap: 12px;
+  }
+
+  html[data-main-layout='content'] .club-deposit__label {
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .club-deposit__input {
+    width: 100%;
+    height: 56px;
+    border-radius: 28px;
+    padding: 0 24px;
+    font-size: 16px;
   }
 
   // 充值记录：设计稿在同一桌面舞台内使用 1361.7px 宽卡片列表并独立滚动。

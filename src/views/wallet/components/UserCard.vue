@@ -169,13 +169,13 @@ const bannerBg = `url(${bannerBgUrl})`
 
   @include theme-light-own {
     aspect-ratio: auto;
-    background: rgba(226, 226, 226, 0.7);
-    border: 1.252px solid #fff;
-    border-radius: 1.42rem;
-    opacity: 0.8;
-    backdrop-filter: blur(0.47px);
-    -webkit-backdrop-filter: blur(0.47px);
-    box-shadow: none;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 1.1rem;
+    box-shadow: 0 0.04rem 0.14rem rgba(34, 34, 34, 0.08);
+    opacity: 1;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     padding: 0.35rem 0.45rem;
 
     &::before {
@@ -194,14 +194,14 @@ const bannerBg = `url(${bannerBgUrl})`
     }
 
     .usercard__avatar {
-      width: 1.5rem;
-      height: 1.5rem;
+      width: 1.4rem;
+      height: 1.4rem;
     }
 
     .usercard__name {
       color: rgba(0, 0, 0, 1);
       font-weight: 700;
-      font-size: 0.44rem;
+      font-size: 0.4rem;
     }
 
     .usercard__id-value {
@@ -213,7 +213,7 @@ const bannerBg = `url(${bannerBgUrl})`
       position: relative;
       right: auto;
       bottom: auto;
-      margin-top: 0.2rem;
+      margin-top: 0.15rem;
       justify-content: flex-end;
     }
 

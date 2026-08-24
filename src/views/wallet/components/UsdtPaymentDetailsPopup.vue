@@ -175,23 +175,21 @@ onUnmounted(() => {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  // backdrop-filter: blur(34px);
-  // -webkit-backdrop-filter: blur(34px);
-  // background: rgba(12, 12, 12, 0.60);
 }
 
 .card {
   position: relative;
   z-index: 1;
   display: flex;
-  width: 317.029px;
-  padding: 15.7px 15.399px 15.399px 15.399px;
+  width: 324px;
+  max-width: calc(100vw - 24px);
+  padding: 16px 14px;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 18.116px;
+  gap: 16px;
   border: 0.96px solid rgba(242, 242, 242, 0.4);
-  border-radius: 36.4px;
+  border-radius: clamp(24px, 8vw, 32px);
   box-shadow:
     3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25),
     0 0 8.6px #000 inset,
@@ -214,15 +212,20 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  // background: rgba(0, 0, 0, 0.70);
   box-shadow:
     0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
     0 0 0.2298rem 0 #000 inset,
-    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.9) inset;
+    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.90) inset;
   backdrop-filter: blur(7.580729961395264px);
   -webkit-backdrop-filter: blur(7.580729961395264px);
   pointer-events: none;
   z-index: 1;
+
+  @include theme-light-own {
+    background: rgba(135, 134, 134, 0.032) !important;
+    backdrop-filter: blur(0.58px) !important;
+    -webkit-backdrop-filter: blur(0.58px) !important;
+  }
 }
 
 .card::before {
@@ -231,18 +234,9 @@ onUnmounted(() => {
   inset: 0;
   border-radius: inherit;
   padding: 0.0255rem;
-  background: linear-gradient(
-    180deg,
-    rgba(242, 242, 242, 0.4) 0%,
-    rgba(255, 255, 255, 0) 50%,
-    rgba(255, 255, 255, 0.5) 100%
-  );
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
+  background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -256,7 +250,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18.116px;
+  gap: 16px;
   width: 100%;
 }
 
@@ -264,41 +258,52 @@ onUnmounted(() => {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .header .header__title {
+  font-size: clamp(13px, 3.8vw, 15px);
+  line-height: 1.25;
+  text-align: left;
+  white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
   margin-right: auto;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.header .header__info {
-  white-space: nowrap;
 }
 
 .header__title {
   color: var(--c-text);
-  text-align: center;
   font-family: 'HONOR Sans CN';
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 78%;
-  letter-spacing: 0.32px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
   font-feature-settings:
     'liga' off,
     'clig' off;
-  margin: 0;
 }
 
 .header__info {
-  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  flex-shrink: 0;
+  max-width: 52%;
+  margin-right: 4px;
+}
+
+.header__info p {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
   color: var(--c-text);
   font-family: 'HONOR Sans CN';
-  font-size: 11px;
-  font-weight: 400;
-  line-height: 78%;
-  letter-spacing: 0.22px;
   font-feature-settings:
     'liga' off,
     'clig' off;

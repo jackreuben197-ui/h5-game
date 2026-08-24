@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { t } from '@/i18n'
@@ -29,10 +29,15 @@ function checkForm() {
 }
 
 // ─── Bank name picker (hardcoded list, no API) ────────────────────────────────
-const bankNameOptions: string[] = [
-  '中国银行',
-  '中国建设银行',
+const bankNameOptions = [
+  { key: 'Bank_BOC', name: '中国银行' },
+  { key: 'Bank_CCB', name: '中国建设银行' },
 ]
+const cardBankDisplay = computed(() => {
+  const option = bankNameOptions.find((b) => b.name === cardBank.value)
+  return option ? tx(option.key, option.name) : cardBank.value
+})
+
 const showBankNameModal = ref(false)
 const tempSelectedBank = ref('')
 
@@ -43,8 +48,8 @@ function openBankNameModal() {
 function closeBankNameModal() {
   showBankNameModal.value = false
 }
-function selectTempBank(bank: string) {
-  tempSelectedBank.value = bank
+function selectTempBank(bankName: string) {
+  tempSelectedBank.value = bankName
 }
 function confirmBankSelection() {
   if (tempSelectedBank.value) {
@@ -120,7 +125,7 @@ async function handleSave() {
         </label>
         <div class="abc-field__input-wrap abc-field__input-wrap--dark" @click="openBankNameModal">
           <input
-            v-model="cardBank"
+            :value="cardBankDisplay"
             type="text"
             class="abc-field__input"
             :placeholder="tx('Wallet_BankNameHint', '请选择银行名称')"
@@ -189,16 +194,16 @@ async function handleSave() {
         <div class="abc-modal__list">
           <button
             v-for="bank in bankNameOptions"
-            :key="bank"
+            :key="bank.key"
             type="button"
             class="abc-modal__item"
-            :class="{ 'abc-modal__item--active': tempSelectedBank === bank }"
-            @click="selectTempBank(bank)"
+            :class="{ 'abc-modal__item--active': tempSelectedBank === bank.name }"
+            @click="selectTempBank(bank.name)"
           >
-            <span class="abc-modal__item-name">{{ bank }}</span>
+            <span class="abc-modal__item-name">{{ tx(bank.key, bank.name) }}</span>
             <img
               class="abc-modal__check"
-              :src="tempSelectedBank === bank ? icCheckbox : icUncheckbox"
+              :src="tempSelectedBank === bank.name ? icCheckbox : icUncheckbox"
               alt=""
             />
           </button>

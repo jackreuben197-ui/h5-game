@@ -607,7 +607,7 @@ const displayPayAmount = computed(() => {
   return selectedAmount.value
 })
 
-const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
+const tabLabels = computed(() => [t('Wallet_Deposit'), t('Wallet_Withdraw')])
 
 function onPayClick() {
   const payTypes = filteredPayTypes.value

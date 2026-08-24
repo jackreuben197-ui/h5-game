@@ -124,14 +124,15 @@ const payPrice = computed(() =>
   position: relative;
   z-index: 1;
   display: flex;
-  width: 317.029px;
-  padding: 15.7px 15.399px 15.399px 15.399px;
+  width: 324px;
+  max-width: calc(100vw - 24px);
+  padding: 16px 14px;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 18.116px;
+  gap: 16px;
   border: 0.96px solid rgba(242, 242, 242, 0.4);
-  border-radius: clamp(28px, 10vw, 36.4px);
+  border-radius: clamp(24px, 8vw, 32px);
   box-shadow:
     3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25),
     0 0 8.6px #000 inset,
@@ -200,23 +201,28 @@ const payPrice = computed(() =>
   display: flex;
   flex-direction: column;
   align-self: stretch;
-  gap: 18.116px;
+  gap: 16px;
+  width: 100%;
 }
 
 .card__header {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  width: 100%;
 }
 
 .card__header .card__title {
+  font-size: clamp(13px, 3.8vw, 15px);
+  line-height: 1.25;
+  text-align: left;
+  white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
   margin-right: auto;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.card__header .card__header-info {
-  white-space: nowrap;
 }
 
 .card__title {
@@ -225,27 +231,29 @@ const payPrice = computed(() =>
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-family: var(--wallet-font-cn, 'HONOR Sans CN');
-  font-size: 16px;
   font-weight: 600;
-  line-height: 78%;
-  letter-spacing: 0.32px;
-  margin: 0;
+  letter-spacing: 0.2px;
 }
 
 .card__header-info {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 5px;
+  justify-content: center;
+  gap: 2px;
+  flex-shrink: 0;
+  max-width: 52%;
+  margin-right: 4px;
 }
 
 .card__header-info span {
   color: var(--c-text);
   font-family: var(--wallet-font-cn, 'HONOR Sans CN');
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 400;
-  line-height: 78%;
-  letter-spacing: 0.22px;
+  line-height: 1.25;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
 }
 
 .card__divider {

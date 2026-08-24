@@ -120,7 +120,7 @@ onUnmounted(() => {
 
           <!-- Notice -->
           <p class="card__notice">
-            {{ t('UIWallet_Success') }}，{{ t('UIWallet_Text13') }}<br />（{{ t('UIWallet_Text14') }}4{{ t('UIWallet_Text15') }}）{{ t('UIMineMallUSDTShopDiamondPayTip') }}。
+            {{ t('UIWallet_UsdtPayNotice') }}
           </p>
 
           <!-- Options -->
@@ -173,7 +173,7 @@ onUnmounted(() => {
                   :src="selectedOption === 1 ? icCheckbox : icUncheckbox"
                   alt=""
                 />
-                30{{ t('UIWallet_Text17') }}
+                30 {{ t('UIWallet_Text17') }}
               </div>
             </div>
           </div>
@@ -237,14 +237,15 @@ onUnmounted(() => {
   position: relative;
   z-index: 1;
   display: flex;
-  width: 317.029px;
-  padding: 15.7px 15.399px 15.399px 15.399px;
+  width: 324px;
+  max-width: calc(100vw - 24px);
+  padding: 16px 14px;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 18.116px;
+  gap: 16px;
   border: 0.96px solid rgba(242, 242, 242, 0.4);
-  border-radius: clamp(28px, 10vw, 36.4px);
+  border-radius: clamp(24px, 8vw, 32px);
   box-shadow:
     3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25),
     0 0 8.6px #000 inset,
@@ -312,63 +313,61 @@ onUnmounted(() => {
   z-index: 2;
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
 .card__header {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  width: 100%;
   margin-bottom: 0.2rem;
 }
 
 .card__header .card__title {
+  font-size: clamp(13px, 3.8vw, 15px);
+  line-height: 1.25;
+  text-align: left;
+  white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
   margin-right: auto;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.card__header .card__header-info {
-  white-space: nowrap;
 }
 
 .card__title {
   color: var(--c-text);
-  text-align: center;
   leading-trim: both;
   text-edge: cap;
   font-feature-settings:
     'liga' off,
     'clig' off;
   font-family: var(--wallet-font-cn, 'HONOR Sans CN');
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 78%; /* 12.48px */
-  letter-spacing: 0.32px;
-  margin: 0;
+  font-weight: 500;
+  letter-spacing: 0.2px;
 }
 
 .card__header-info {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 5px;
+  justify-content: center;
+  gap: 2px;
+  flex-shrink: 0;
+  max-width: 52%;
+  margin-right: 4px;
 }
 
 .card__header-info span {
   color: var(--c-text);
-  text-align: center;
-  leading-trim: both;
-  text-edge: cap;
-  font-feature-settings:
-    'liga' off,
-    'clig' off;
   font-family: var(--wallet-font-cn, 'HONOR Sans CN');
-  font-size: 11px;
-  font-style: normal;
+  font-size: 10px;
   font-weight: 400;
-  line-height: 78%; /* 8.58px */
-  letter-spacing: 0.22px;
+  line-height: 1.25;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
 }
 
 .card__divider {
@@ -376,42 +375,44 @@ onUnmounted(() => {
   height: 1px;
   background-image: linear-gradient(to right, var(--c-divider) 50%, transparent 50%);
   background-size: 10px 1px;
-  margin: 18.12px 0;
+  margin: 12px 0;
 }
 
 .card__notice {
   color: var(--c-text);
   text-align: center;
-  leading-trim: both;
-  text-edge: cap;
   font-feature-settings:
     'liga' off,
     'clig' off;
   font-family: var(--wallet-font-cn, 'HONOR Sans CN');
-  font-size: 15px;
+  font-size: 12px;
   font-style: normal;
   font-weight: 400;
-  // line-height: 78%;
-  letter-spacing: 0.32px;
-  margin: 0 0 18.12px 0;
+  line-height: 1.35;
+  letter-spacing: 0.15px;
+  margin: 0 0 14px 0;
+  padding: 0 4px;
+  word-break: break-word;
 }
 
 .options-container {
   display: flex;
-  gap: 0.3rem;
-  margin-bottom: 18.12px;
+  gap: 8px;
+  margin-bottom: 16px;
+  width: 100%;
 }
 
 .option-card {
   display: flex;
-  width: 131px;
-  height: 111px;
-  padding: 10.91px 12px 12.437px 12px;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 108px;
+  padding: 8px 6px 10px;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  border-radius: 27.928px;
+  gap: 4px;
+  border-radius: 20px;
   background: rgba(245, 245, 245, 0.1);
   background-blend-mode: plus-lighter;
   cursor: pointer;
@@ -447,6 +448,7 @@ onUnmounted(() => {
 .option-card__amount-row {
   display: flex;
   align-items: center;
+  gap: 2px;
   margin-top: 0;
   margin-bottom: 0;
   position: relative;
@@ -459,58 +461,66 @@ onUnmounted(() => {
     'liga' off,
     'clig' off;
   font-family: var(--wallet-font-num, 'SF Pro');
-  font-size: 17.317px;
+  font-size: 15px;
   font-style: normal;
   font-weight: 700;
-  line-height: 140%; /* 24.243px */
+  line-height: 1.2;
 }
 
 .option-card__coin {
-  width: 24px;
-  height: 25px;
-  aspect-ratio: 24/25;
+  width: 20px;
+  height: 20px;
+  aspect-ratio: 1;
 }
 
 .option-card__desc {
   color: var(--c-text);
-  text-align: right;
+  text-align: center;
   font-feature-settings:
     'liga' off,
     'clig' off;
   font-family: 'SF Pro';
-  font-size: 10.908px;
+  font-size: 10px;
   font-style: normal;
-  font-weight: 590;
-  line-height: 132%; /* 14.398px */
+  font-weight: 500;
+  line-height: 1.2;
   margin-bottom: 0;
   position: relative;
   z-index: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .option-card__badge {
   display: flex;
-  width: 101px;
-  padding: 6.072px 4.146px;
+  width: auto;
+  max-width: 100%;
+  padding: 4px 6px;
   justify-content: center;
   align-items: center;
-  gap: 1.641px;
-  border-radius: 27.601px;
+  gap: 3px;
+  border-radius: 20px;
   background: rgba(255, 255, 255, 0.12);
   margin-bottom: 0;
   color: var(--c-text);
-  text-align: right;
+  text-align: center;
   font-feature-settings:
     'liga' off,
     'clig' off;
   font-family: 'SF Pro';
-  font-size: 10.908px;
+  font-size: 9.5px;
   font-style: normal;
-  font-weight: 590;
-  line-height: 132%; /* 14.398px */
+  font-weight: 500;
+  line-height: 1.2;
   position: relative;
   z-index: 1;
   border: 1px solid transparent;
   box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .option-card__badge--active {
@@ -520,6 +530,7 @@ onUnmounted(() => {
   @include theme-light-own {
     background: var(--wallet-l-accent);
     color: var(--wallet-l-on-accent);
+    border-color: rgba(255, 255, 255, 0.2);
   }
 }
 

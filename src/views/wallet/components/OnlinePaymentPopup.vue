@@ -82,7 +82,7 @@ function startTimer() {
 
 function copyText(text: string) {
   if (!text) {
-    showToast({ message: '暂无收款账号', duration: 1200, position: 'bottom' })
+    showToast({ message: t('UIWallet_NoRecipientAccount'), duration: 1200, position: 'bottom' })
     return
   }
   if (navigator.clipboard) {
@@ -96,7 +96,7 @@ function copyText(text: string) {
 function getRecipientAccount() {
   const target = paymentUrl.value || payAddress.value
   if (!target) {
-    showToast({ message: '暂无收款账号', duration: 1200, position: 'bottom' })
+    showToast({ message: t('UIWallet_NoRecipientAccount'), duration: 1200, position: 'bottom' })
     return
   }
   if (/^https?:\/\//i.test(target)) {
@@ -174,11 +174,11 @@ async function handleRegister() {
     } else if (res.code === 20066 || res.code === 90016) {
       emit('unfinishedOrder')
     } else {
-      alert(res.message || '充值失败')
+      alert(res.message || t('UIWallet_DepositFailedRetry'))
     }
   } catch (e) {
     console.error('Failed to submit recharge', e)
-    alert('充值失败，请重试')
+    alert(t('UIWallet_DepositFailedRetry'))
   } finally {
     loading.value = false
   }
@@ -192,11 +192,11 @@ async function handleCancel() {
     if (res.code === 0) {
       emit('close')
     } else {
-      alert(res.message || '取消失败')
+      alert(res.message || t('UIWallet_CancelFailed'))
     }
   } catch (e) {
     console.error('Cancel order failed', e)
-    alert('取消失败，请重试')
+    alert(t('UIWallet_CancelFailedRetry'))
   } finally {
     loading.value = false
   }
@@ -230,10 +230,10 @@ onUnmounted(() => {
         <div class="card__inner">
           <!-- Header -->
           <div class="header">
-            <h2 class="header__title">确认付款</h2>
+            <h2 class="header__title">{{ t('UIMineMallUSDTShopPayDialogSurePay') }}</h2>
             <div class="header__info">
-              <p>手续费：{{ props.feeRate > 0 ? (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%' : '0' }}</p>
-              <p>当前参考单价: 1联盟币={{ props.rate || 1 }}</p>
+              <p>{{ t('UIMine_WalletPlatform_fee_s') }}：{{ props.feeRate > 0 ? (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%' : '0' }}</p>
+              <p>{{ t('UIWallet_Current') }}: 1{{ t('UC') }}={{ props.rate || 1 }}</p>
             </div>
             <PopupCloseButton @close="handleClose" />
           </div>
@@ -248,21 +248,21 @@ onUnmounted(() => {
               <span class="amount-val">{{ formattedPrice }}</span>
             </div>
 
-            <h3 class="phase-title">确认付款</h3>
+            <h3 class="phase-title">{{ t('UIMineMallUSDTShopPayDialogSurePay') }}</h3>
 
             <!-- Name Input Field -->
             <div class="input-section">
-              <label class="input-label">姓名 (必填)</label>
+              <label class="input-label">{{ t('UIWallet_NameRequired') }}</label>
               <div class="input-wrapper">
                 <input
                   v-model="userName"
                   type="text"
-                  placeholder="请输入真实名字"
+                  :placeholder="t('UIWallet_InputRealName')"
                   class="name-input"
                 />
               </div>
               <p class="input-tip">
-                提示：请填写与付款账户一致的账户名。如信息有误会导致交易失败
+                {{ t('UIWallet_NameTip') }}
               </p>
             </div>
 
@@ -273,7 +273,7 @@ onUnmounted(() => {
 
                 @click="handleRegister"
               >
-                {{ loading ? '提交中...' : '支付' }}
+                {{ loading ? t('UIWallet_Submitting') : t('UIMineMallUSDTShopDiamondPayTip') }}
               </button>
                <!-- :disabled="!userName.trim() || loading" -->
             </div>
@@ -286,15 +286,15 @@ onUnmounted(() => {
               <span class="amount-val">{{ formattedPrice }}</span>
             </div>
 
-            <h3 class="phase-title">付款金额</h3>
+            <h3 class="phase-title">{{ t('UIMineMallUSDTShopPayDialogPayGoldTip') }}</h3>
 
             <!-- Details list -->
             <div class="details-section">
               <!-- Order Number Row -->
               <div class="info-row">
                 <div class="info-row__left">
-                  <span class="info-row__label">订单号</span>
-                  <span class="info-row__tag">订单号</span>
+                  <span class="info-row__label">{{ t('uititleOreder001') }}</span>
+                  <span class="info-row__tag">{{ t('uititleOreder001') }}</span>
                 </div>
                 <div class="info-row__right" @click="copyText(orderNo)">
                   <span class="info-row__value">{{ orderNo }}</span>
@@ -304,7 +304,7 @@ onUnmounted(() => {
               <!-- QR Code & Scanner Row -->
               <div class="info-row info-row--qr" @click="getRecipientAccount">
                 <div class="info-row__left">
-                  <span class="info-row__label">收款账户（点击此处获取收款账号）</span>
+                  <span class="info-row__label">{{ t('UIWallet_RecipientAccountTip') }}</span>
                 </div>
                 <div class="info-row__right" @click.stop>
                   <img
@@ -319,7 +319,7 @@ onUnmounted(() => {
               </div>
 
               <p class="input-tip">
-                提示：请填写与付款账户一致的账户名。如信息有误会导致交易失败
+                {{ t('UIWallet_NameTip') }}
               </p>
             </div>
 
@@ -330,10 +330,10 @@ onUnmounted(() => {
                 :disabled="loading"
                 @click="handleCancel"
               >
-                取消订单
+                {{ t('UIWallet_Cancel') }}
               </button>
               <div class="action-btn action-btn--paying">
-                <span>支付中</span>
+                <span>{{ t('UIMineMallUSDTShopDiamondPay') }}</span>
                 <span class="paying-timer">{{ formattedTime }}</span>
               </div>
             </div>
@@ -346,7 +346,7 @@ onUnmounted(() => {
     <div v-if="showFullQr && qrCodeUrl" class="qr-zoom-overlay" @click="showFullQr = false">
       <div class="qr-zoom-card">
         <img :src="qrCodeUrl" alt="QR Code Full" class="qr-zoom-img" />
-        <p class="qr-zoom-tip">长按或扫码进行支付</p>
+        <p class="qr-zoom-tip">{{ t('UIWallet_QrPayTip') }}</p>
       </div>
     </div>
   </Teleport>
@@ -388,14 +388,15 @@ onUnmounted(() => {
   position: relative;
   z-index: 1;
   display: flex;
-  width: 317.029px;
-  padding: 15.7px 15.399px 15.399px 15.399px;
+  width: 324px;
+  max-width: calc(100vw - 24px);
+  padding: 16px 14px;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 18.116px;
+  gap: 16px;
   border: 0.96px solid rgba(242, 242, 242, 0.4);
-  border-radius: 36.4px;
+  border-radius: clamp(24px, 8vw, 32px);
   box-shadow:
     3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25),
     0 0 8.6px #000 inset,
@@ -456,7 +457,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18.116px;
+  gap: 16px;
   width: 100%;
 }
 
@@ -464,44 +465,51 @@ onUnmounted(() => {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .header .header__title {
+  font-size: clamp(13px, 3.8vw, 15px);
+  line-height: 1.25;
+  text-align: left;
+  white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
   margin-right: auto;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.header .header__info {
-  white-space: nowrap;
 }
 
 .header__title {
   color: #FFF;
-  text-align: center;
   font-family: "HONOR Sans CN";
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 78%;
-  letter-spacing: 0.32px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
   font-feature-settings: 'liga' off, 'clig' off;
-  margin: 0;
 }
 
 .header__info {
-  text-align: right;
-  color: #FFF;
-  font-family: "HONOR Sans CN";
-  font-size: 11px;
-  font-weight: 400;
-  line-height: 1.4;
-  letter-spacing: 0.22px;
-  font-feature-settings: 'liga' off, 'clig' off;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  flex-shrink: 0;
+  max-width: 52%;
+  margin-right: 4px;
 }
 
 .header__info p {
   margin: 0;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+  color: #FFF;
+  font-family: "HONOR Sans CN";
+  font-feature-settings: 'liga' off, 'clig' off;
 }
 
 .divider {

@@ -435,7 +435,7 @@ watch(filteredWithdrawTypes, (list) => {
           class="wf__amount-entered-input"
           :placeholder="tx('Wallet_InputPlaceholder', '输入需要回收的UC数量')"
         />
-        <span class="wf__amount-fee-tag">{{ tx('Wallet_ServiceFee', '手续费') }}：{{ (handlingFeeRate * 100).toFixed(0) }}%</span>
+        <span class="wf__amount-fee-tag">{{ t('UIMine_WalletPlatform_fee_s') }}：{{ (handlingFeeRate * 100).toFixed(0) }}%</span>
       </div>
     </div>
 

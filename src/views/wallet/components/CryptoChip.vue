@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n'
 import iconUsdt from '@/assets/icons/wallet/ic_usdt.svg'
 
 interface Props {
@@ -11,7 +12,7 @@ withDefaults(defineProps<Props>(), {})
 <template>
   <div class="chip">
     <!-- <img :src="iconUsdt" alt="" class="chip__icon" /> -->
-    <span class="chip__amount">需支付{{ amount }}</span>
+    <span class="chip__amount">{{ t('UIWallet_Text16') }} {{ amount }}</span>
   </div>
 </template>
 
@@ -41,13 +42,14 @@ withDefaults(defineProps<Props>(), {})
 }
 
 .chip__amount {
-color: #161616;
-text-align: right;
-font-feature-settings: 'liga' off, 'clig' off;
-font-family: "SF Pro";
-font-size: 9.398px;
-font-style: normal;
-font-weight: 590;
-line-height: 132%;
+  color: #161616;
+  text-align: right;
+  font-feature-settings: 'liga' off, 'clig' off;
+  font-family: "SF Pro";
+  font-size: clamp(8px, 2.5vw, 9.5px);
+  font-style: normal;
+  font-weight: 590;
+  line-height: 1.1;
+  white-space: nowrap;
 }
 </style>

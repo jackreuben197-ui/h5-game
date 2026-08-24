@@ -8184,6 +8184,10 @@
     min-width: 0;
   }
 
+  html[data-main-layout='content'] .mtt-detail-page .stats-col-divider {
+    display: none;
+  }
+
   html[data-main-layout='content'] .mtt-detail-page .stats-col--center {
     position: relative;
     display: flex;

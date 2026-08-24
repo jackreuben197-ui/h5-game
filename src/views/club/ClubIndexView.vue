@@ -1115,7 +1115,7 @@ function matchTabRoom(room: RoomRecord, tabName: GameTypeTabName): boolean {
 }
 
 function getGameName(gameType: number, pokerType: number): string {
-  if (gameType === 0 && pokerType === POKER_TYPE_SHORT) return '6+'
+  if (gameType === 0 && pokerType === POKER_TYPE_SHORT) return t('UIFriendsTable_Create_6P')
   if ([1, 2, 3].includes(gameType)) return t('adaptation10009')
   if (gameType === 0) return t('UIClub_Text19')
   return t('UIClub_Text15')

@@ -52,6 +52,7 @@ function handleTableClick(room: RoomRecord): void {
       <div class="summary-left">
         <div class="game-icon-wrap">
           <img class="game-icon-img" :src="group.iconImage" alt="game-type" />
+          <span class="icon-tag">{{ group.gameName }}</span>
         </div>
 
         <div class="summary-content">
@@ -142,8 +143,27 @@ function handleTableClick(room: RoomRecord): void {
 
 .game-icon-img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  display: block;
+}
+
+.icon-tag {
+  position: absolute;
+  bottom: 0.34rem;
+  left: 0;
+  right: 0;
+  padding: 0 0.06rem;
+  text-align: center;
+  font-size: 0.28rem;
+  font-weight: 500;
+  color: #ffffff;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  z-index: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 

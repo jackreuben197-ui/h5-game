@@ -154,7 +154,7 @@ onMounted(() => {
               :src="resolveIcon(item)"
               :alt="t(item.titleKey)"
             />
-            <span v-if="isLightTheme" class="type-card-label">{{ t(item.titleKey) }}</span>
+            <span class="type-card-label">{{ t(item.titleKey) }}</span>
           </button>
         </div>
       </section>
@@ -258,8 +258,8 @@ onMounted(() => {
 
 .type-card-icon {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
 }
 
 .type-card .type-card-icon--light {
@@ -272,14 +272,18 @@ onMounted(() => {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0.26rem;
-  padding: 0 0.16rem;
-  font-size: 0.42rem;
+  bottom: 0.22rem;
+  padding: 0 0.1rem;
+  font-size: 0.38rem;
   font-weight: 600;
   line-height: 1.15;
   color: #fff;
   text-align: center;
   pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 .custom-card-icon {
   overflow: hidden;

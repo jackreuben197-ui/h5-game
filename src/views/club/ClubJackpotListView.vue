@@ -833,7 +833,7 @@ function goPoolReward(): void {
   backdrop-filter: blur(0.0197rem); // 0.74px
 }
 
-/* Delete: green gradient #05E7AE → #027A5C + stroke */
+/* Delete: green gradient #05c297 → #027A5C + stroke */
 .delete-btn--confirm {
   border: 0.0267rem solid rgba(242, 242, 242, 0.8);
   background: linear-gradient(157.77deg, rgba(85, 243, 41, 1) 7.55%, rgba(62, 173, 6, 1) 71.92%);

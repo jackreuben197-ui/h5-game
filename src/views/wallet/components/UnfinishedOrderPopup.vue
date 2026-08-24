@@ -280,7 +280,7 @@ function onContinue(): void {
 
 .btn--continue {
   position: relative;
-  background: linear-gradient(128deg, #05E7AE 0%, #06C98E 100%);
+  background: linear-gradient(128deg, #05c297 0%, #06C98E 100%);
   backdrop-filter: blur(0.1584px);
   color: #fff;
 

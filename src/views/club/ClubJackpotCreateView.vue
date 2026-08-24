@@ -1160,7 +1160,7 @@ onMounted(() => {
   padding: 0.2rem 0.662rem;
   border-radius: 0.8rem;
   border: 0;
-  background: linear-gradient(157.77deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background: linear-gradient(157.77deg, #05c297 7.55%, #027a5c 71.92%);
   color: #fff;
   font-size: 0.4rem;
 
@@ -1560,7 +1560,7 @@ onMounted(() => {
 
 .action-btn--confirm {
   border: 0.0133rem solid rgba(242, 242, 242, 0.8);
-  background: linear-gradient(157.77deg, #05e7ae 7.55%, #027a5c 71.92%);
+  background: linear-gradient(157.77deg, #05c297 7.55%, #027a5c 71.92%);
 
   @include theme-light-own {
     border-color: transparent;

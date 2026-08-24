@@ -617,7 +617,7 @@ function openMiniGamePanel(): void {
   //         type: 2,
   //         title: '活動上線',
   //         content:
-  //           '<p>新春活動火熱進行中，登錄即送鑽石！</p><p><span style="color:#05E7AE">活动内容一：</span>参与指定牌局即可获得返水奖励，返水比例最高提升至 0.8%，上不封顶。</p>',
+  //           '<p>新春活動火熱進行中，登錄即送鑽石！</p><p><span style="color:#05c297">活动内容一：</span>参与指定牌局即可获得返水奖励，返水比例最高提升至 0.8%，上不封顶。</p>',
   //         weight: 80,
   //         status: 1,
   //         create_time: Math.floor(Date.now() / 1000) - 86400,

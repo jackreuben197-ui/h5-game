@@ -2392,7 +2392,7 @@ watch(
 }
 
 .voice-tip--send {
-  background: rgba(5, 231, 174, 0.18);
+  background: rgba(5, 194, 151, 0.18);
 }
 
 .voice-tip--cancel {

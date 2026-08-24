@@ -914,13 +914,13 @@ onBeforeUnmount(() => {
       <section class="trader-apply-card">
         <p class="apply-rules">
           1、{{ t('UIClub_Apply') }}
-          <span style="color: #05e7ae">{{ applyCostText }}</span>
+          <span style="color: #05c297">{{ applyCostText }}</span>
           {{ t('UIMine_VIP_diamond') }}，{{ t('UIClub_Text78') }}；<br />
           2、{{ t('UIClub_Apply2') }}，{{ t('UIClub_Text79') }}
-          <span style="color: #05e7ae">{{ traderExpireDayText }}</span>
+          <span style="color: #05c297">{{ traderExpireDayText }}</span>
           {{ t('UIClub_Text80') }}，{{ t('UIClub_Text81') }}；<br />
           3、{{ t('UIClub_Or') }}
-          <span style="color: #05e7ae">{{ applyCostText }}</span>
+          <span style="color: #05c297">{{ applyCostText }}</span>
           {{ t('UIClub_Apply3') }}；<br />
           4、{{ t('UIClub_Apply4') }}，{{ t('UIClub_Text82') }}，{{ t('UIClub_Text83') }}
         </p>

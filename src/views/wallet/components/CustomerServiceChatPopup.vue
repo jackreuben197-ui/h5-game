@@ -451,8 +451,8 @@ onUnmounted(() => {
                       <span>{{ formatTime(item.msg.local_time || item.msg.time_token) }}</span>
                       <template v-if="item.msg.user_send || item.msg.msg_type === 6">
                         <svg width="7.226" height="7.226" viewBox="0 0 8 8" fill="none">
-                          <ellipse cx="2.93052" cy="2.91963" rx="2.38865" ry="2.42647" stroke="#05E7AE" stroke-width="0.955458"/>
-                          <path d="M4.63672 4.65283L6.68413 6.73266" stroke="#05E7AE" stroke-width="0.955458" stroke-linecap="round"/>
+                          <ellipse cx="2.93052" cy="2.91963" rx="2.38865" ry="2.42647" stroke="#05c297" stroke-width="0.955458"/>
+                          <path d="M4.63672 4.65283L6.68413 6.73266" stroke="#05c297" stroke-width="0.955458" stroke-linecap="round"/>
                         </svg>
                         <span class="sender-name">{{ userInfoStore.userInfo?.user.nickname }}</span>
                       </template>

@@ -276,6 +276,8 @@ function formatCentAmount(value: number): string {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 /* ===========================
    公共基础样式
    =========================== */
@@ -593,6 +595,62 @@ function formatCentAmount(value: number): string {
     padding: 0 0.32rem;
     min-width: 2rem;
     max-width: 3rem;
+  }
+}
+
+/* ===========================
+   浅色主题
+   =========================== */
+.mtt-card {
+  @include theme-light-own {
+    .mtt-card__footer {
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: inset 0 0.5px 0 rgba(0, 0, 0, 0.08);
+    }
+
+    .mtt-card__title {
+      color: rgba(0, 0, 0, 0.9);
+    }
+
+    .mtt-card__count {
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    .count-dot {
+      background-image: url('@/assets/icons/icon_people_light.png');
+    }
+
+    .mtt-card-info-icon {
+      filter: brightness(0) opacity(0.55);
+    }
+
+    .mtt-card-prize-type {
+      background: rgba(0, 0, 0, 0.08);
+      color: rgba(0, 0, 0, 0.7);
+    }
+
+    .mtt-addon,
+    .mtt-rebuy {
+      border-color: rgba(0, 0, 0, 0.3);
+      color: rgba(0, 0, 0, 0.7);
+    }
+
+    .action-btn--register {
+      background: #05c297;
+      color: #fff;
+    }
+
+    .action-btn--join,
+    .action-btn--progress,
+    .action-btn--late {
+      background: #ffd900;
+      color: rgba(0, 0, 0, 0.85);
+    }
+
+    .action-btn--disabled {
+      background: rgba(0, 0, 0, 0.08);
+      color: rgba(0, 0, 0, 0.4);
+    }
   }
 }
 </style>

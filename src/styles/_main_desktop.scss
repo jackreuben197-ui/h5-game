@@ -83,14 +83,58 @@
   // 首页
   html[data-main-layout='primary'] .home-page {
     display: block;
-    padding: clamp(24px, 2.3611vw, 34px) 0 28px;
+    padding: 12px 0 28px;
     height: auto;
     min-height: auto;
     overflow: visible;
   }
 
   html[data-main-layout='primary'] .home-page .top-bar {
-    display: none;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    position: relative;
+    background: transparent !important;
+    border: none;
+    width: 100%;
+    height: auto;
+    padding: 0;
+    margin: 0 0 12px 0;
+    gap: 12px;
+    z-index: 30;
+
+    .top-bar__actions {
+      display: flex;
+      gap: 12px;
+      flex: none;
+      width: 250px;
+      justify-content: flex-end;
+    }
+
+    .top-bar__btn {
+      display: flex;
+      height: 38.718px;
+      padding: 9.439px 15.732px;
+      justify-content: center;
+      align-items: center;
+      gap: 3.146px;
+      flex: 1 0 0;
+      border-radius: 23.912px;
+      border: 0.565px solid rgba(255, 255, 255, 0.30);
+      box-shadow: 0.502px 0.599px 1.179px 0 rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(5.987382411956787px);
+      -webkit-backdrop-filter: blur(5.987382411956787px);
+      font-size: 14px;
+      color: #fff;
+    }
+
+    .top-bar__btn--register {
+      background: var(--secondadry-buttonn, linear-gradient(237deg, rgba(128, 128, 128, 0.52) -20.72%, rgba(71, 71, 71, 0.52) 73.67%)) !important;
+    }
+
+    .top-bar__btn--login {
+      background: #07c09d !important;
+    }
   }
 
   // 首页桌面悬浮操作以居中的 1440 × 1024 舞台为参照：开桌按钮对齐底栏中心，

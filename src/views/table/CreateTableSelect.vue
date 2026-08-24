@@ -118,7 +118,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-shell club-table-create-page" :style="backgroundStyle">
+  <div class="page-shell room-list-page club-table-create-page" :style="backgroundStyle">
     <div class="club-table-create-overlay"></div>
 
     <div class="room-list-stage club-table-create-stage">
@@ -169,7 +169,6 @@ onMounted(() => {
   padding: 0 0.32rem calc(0.44rem + env(safe-area-inset-bottom));
   overflow-x: hidden;
   overflow-y: auto;
-  overflow: hidden;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

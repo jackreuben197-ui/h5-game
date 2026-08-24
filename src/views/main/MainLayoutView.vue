@@ -253,9 +253,6 @@ watch(
   padding-bottom: calc(env(safe-area-inset-bottom) + 2rem);
 }
 
-.main-layout.is-guest-home .main-layout-content {
-  overflow-y: hidden;
-}
 
 .module-slot {
   // 子页面容器只负责承载内容，不再单独接管滚动。

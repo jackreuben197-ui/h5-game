@@ -543,7 +543,7 @@ function handleBack(): void {
 </script>
 
 <template>
-  <div class="create-table-page">
+  <div class="page-shell room-list-page create-table-page">
     <div class="room-list-stage create-table-stage">
       <!-- Header with tabs -->
       <HeaderBack :extra-padding="true" @back="handleBack">

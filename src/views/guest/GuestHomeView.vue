@@ -18,6 +18,9 @@ import { theme } from '@/utils/theme'
 import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
 import imgFb from '@/assets/images/minigame-newui/fb.svg'
+import imgPaPc from '@/assets/images/minigame-newui/pc_pa.png'
+import imgMahjongPc from '@/assets/images/minigame-newui/pc_ma.png'
+import imgFbPc from '@/assets/images/minigame-newui/pc_fb.png'
 
 const isLightTheme = computed(() => theme.value === 'light')
 const iconService1 = computed(() => (isLightTheme.value ? iconService1Light : iconService1Dark))
@@ -62,6 +65,7 @@ const activeBannerGames = [
   {
     name: 'PA真人',
     svg: imgPa,
+    svgPc: imgPaPc,
     title: '真人荷官',
     titleEn: 'Live Dealer',
     subtitle: ['美女荷官发牌', '沉浸真人体验'],
@@ -70,6 +74,7 @@ const activeBannerGames = [
   {
     name: '麻将胡了',
     svg: imgMahjong,
+    svgPc: imgMahjongPc,
     title: '麻将胡了',
     titleEn: 'Mahjong Ways',
     subtitle: ['电子麻将畅玩', '胡牌乐翻天'],
@@ -78,6 +83,7 @@ const activeBannerGames = [
   {
     name: 'FB体育',
     svg: imgFb,
+    svgPc: imgFbPc,
     title: '体育竞猜',
     titleEn: 'Sports Betting',
     subtitle: ['全球赛事竞猜', '激情一触即发'],
@@ -295,7 +301,10 @@ onMounted(() => {
           class="coming-soon-scroll-card"
           @click="notifyNotLogin"
         >
-          <img class="coming-soon-scroll-card__img" :src="game.svg" alt="" />
+          <picture class="coming-soon-scroll-card__picture">
+            <source v-if="game.svgPc" media="(min-width: 600px)" :srcset="game.svgPc" />
+            <img class="coming-soon-scroll-card__img" :src="game.svg" alt="" />
+          </picture>
           <div class="coming-soon-scroll-card__label">
             <span class="coming-soon-scroll-card__title">{{
               localized(game.titleEn, game.title || game.name)
@@ -951,6 +960,10 @@ onMounted(() => {
   &:active {
     opacity: 0.85;
   }
+}
+
+.coming-soon-scroll-card__picture {
+  display: contents;
 }
 
 .coming-soon-scroll-card__img {

@@ -49,6 +49,9 @@ import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
 import imgFb from '@/assets/images/minigame-newui/fb.svg'
 import imgCowboy from '@/assets/images/minigame-newui/sg.svg'
+import imgPaPc from '@/assets/images/minigame-newui/pc_pa.png'
+import imgMahjongPc from '@/assets/images/minigame-newui/pc_ma.png'
+import imgFbPc from '@/assets/images/minigame-newui/pc_fb.png'
 
 const isLightTheme = computed(() => theme.value === 'light')
 const iconService1 = computed(() => (isLightTheme.value ? iconService1Light : iconService1Dark))
@@ -62,6 +65,7 @@ const popularBannerGamesStatic = [
   {
     name: 'PA真人',
     svg: imgPa,
+    svgPc: imgPaPc,
     gameApiType: 'pa_live',
     title: '真人荷官',
     titleEn: 'Live Dealer',
@@ -71,6 +75,7 @@ const popularBannerGamesStatic = [
   {
     name: '麻将胡了',
     svg: imgMahjong,
+    svgPc: imgMahjongPc,
     gameApiType: 'mahjong',
     title: '麻将胡了',
     titleEn: 'Mahjong Ways',
@@ -80,6 +85,7 @@ const popularBannerGamesStatic = [
   {
     name: 'FB体育',
     svg: imgFb,
+    svgPc: imgFbPc,
     gameApiType: 'fb_sports',
     title: '体育竞猜',
     titleEn: 'Sports Betting',
@@ -89,6 +95,7 @@ const popularBannerGamesStatic = [
   {
     name: '德州牛仔',
     svg: imgCowboy,
+    svgPc: '',
     gameApiType: 'cow_boy',
     title: '德州牛仔',
     titleEn: 'Texas Cowboy',
@@ -1050,7 +1057,10 @@ onBeforeUnmount(() => {
                 class="coming-soon-scroll-card"
                 @click="handleBannerGameClick(game)"
               >
-                <img class="coming-soon-scroll-card__img" :src="game.svg" alt="" />
+                <picture class="coming-soon-scroll-card__picture">
+                  <source v-if="game.svgPc" media="(min-width: 600px)" :srcset="game.svgPc" />
+                  <img class="coming-soon-scroll-card__img" :src="game.svg" alt="" />
+                </picture>
                 <div class="coming-soon-scroll-card__label">
                   <span class="coming-soon-scroll-card__title">
                     {{ localized(game.titleEn, game.title || game.name) }}
@@ -1768,6 +1778,10 @@ onBeforeUnmount(() => {
   &:active {
     opacity: 0.85;
   }
+}
+
+.coming-soon-scroll-card__picture {
+  display: contents;
 }
 
 .coming-soon-scroll-card__img {

@@ -276,8 +276,6 @@ function formatCentAmount(value: number): string {
 </template>
 
 <style scoped lang="scss">
-@use '@/styles/mixins' as *;
-
 /* ===========================
    公共基础样式
    =========================== */
@@ -318,8 +316,7 @@ function formatCentAmount(value: number): string {
   display: flex;
   align-items: center;
   gap: 0.12rem;
-  background: rgba(237, 237, 237, 0.24);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.43);
   border-bottom-left-radius: inherit;
   border-bottom-right-radius: inherit;
   padding: 0.12rem 0.2rem;
@@ -451,13 +448,14 @@ function formatCentAmount(value: number): string {
   // white-space: nowrap;
 
   &--register {
-    background: rgba(0, 255, 43, 0.25);
+    background: #05c297;
   }
 
   &--join,
   &--progress,
   &--late {
-    background: rgba(255, 217, 0, 0.25);
+    background: #ffd900;
+    color: rgba(0, 0, 0, 0.85);
   }
 
   &--disabled {
@@ -501,7 +499,6 @@ function formatCentAmount(value: number): string {
   }
 
   .action-btn {
-    align-self: flex-end;
     font-size: 0.2rem;
     height: 0.44rem;
     padding: 0 0.16rem;
@@ -598,59 +595,4 @@ function formatCentAmount(value: number): string {
   }
 }
 
-/* ===========================
-   浅色主题
-   =========================== */
-.mtt-card {
-  @include theme-light-own {
-    .mtt-card__footer {
-      background: rgba(255, 255, 255, 0.92);
-      box-shadow: inset 0 0.5px 0 rgba(0, 0, 0, 0.08);
-    }
-
-    .mtt-card__title {
-      color: rgba(0, 0, 0, 0.9);
-    }
-
-    .mtt-card__count {
-      color: rgba(0, 0, 0, 0.6);
-    }
-
-    .count-dot {
-      background-image: url('@/assets/icons/icon_people_light.png');
-    }
-
-    .mtt-card-info-icon {
-      filter: brightness(0) opacity(0.55);
-    }
-
-    .mtt-card-prize-type {
-      background: rgba(0, 0, 0, 0.08);
-      color: rgba(0, 0, 0, 0.7);
-    }
-
-    .mtt-addon,
-    .mtt-rebuy {
-      border-color: rgba(0, 0, 0, 0.3);
-      color: rgba(0, 0, 0, 0.7);
-    }
-
-    .action-btn--register {
-      background: #05c297;
-      color: #fff;
-    }
-
-    .action-btn--join,
-    .action-btn--progress,
-    .action-btn--late {
-      background: #ffd900;
-      color: rgba(0, 0, 0, 0.85);
-    }
-
-    .action-btn--disabled {
-      background: rgba(0, 0, 0, 0.08);
-      color: rgba(0, 0, 0, 0.4);
-    }
-  }
-}
 </style>

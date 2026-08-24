@@ -125,6 +125,10 @@ export interface SyncUserClubPayload {
   response: unknown
 }
 
+export interface SyncCurrentClubPayload {
+  clubId: number
+}
+
 // H5 转发 rooms/list 请求与响应（通过 action=syncRoomsList 区分）。
 export interface SyncRoomsListPayload {
   request: unknown

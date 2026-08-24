@@ -14,6 +14,7 @@ import {
 } from './bridge/channels'
 import { setupWsProxyBridgeChannel } from './bridge/ws'
 import { installCcStorageProxy } from './bridge/sync/ccStorageProxy'
+import { initCurrentClubSync } from './bridge/sync/h5BusinessSync'
 import { setupDailyH5DisplayPanel } from './bridge/dailyH5DisplayPanel'
 import { syncPostAuthData } from './session/postAuthSync'
 import {
@@ -47,6 +48,7 @@ let stopBridgeToastChannel: (() => void) | null = null
 let stopWsProxyBridgeChannel: (() => void) | null = null
 let stopH5VisibilityBridgeChannel: (() => void) | null = null
 let stopCcStorageProxy: (() => void) | null = null
+let stopCurrentClubSync: (() => void) | null = null
 let stopNativeMenuGuard: (() => void) | null = null
 let stopNativeDragGuard: (() => void) | null = null
 let stopDailyH5DisplayPanel: (() => void) | null = null
@@ -161,6 +163,7 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
   try {
     app = createApp(App)
     app.use(pinia)
+    stopCurrentClubSync = initCurrentClubSync()
     // Safari 保存到主屏幕前，按渠道子域名或自定义域名获取俱乐部配置并更新名称、图标。
     void useUserInfoStore(pinia)
       .ensureChannelDefaultClub()
@@ -223,6 +226,8 @@ export function unmountH5App(): void {
   stopH5VisibilityBridgeChannel = null
   stopCcStorageProxy?.()
   stopCcStorageProxy = null
+  stopCurrentClubSync?.()
+  stopCurrentClubSync = null
   stopNativeMenuGuard?.()
   stopNativeMenuGuard = null
   stopNativeDragGuard?.()

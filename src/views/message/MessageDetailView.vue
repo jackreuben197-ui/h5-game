@@ -1325,7 +1325,7 @@ onBeforeUnmount(() => {
   background: rgba(var(--c-brand-rgb), 0.3);
 
   @include theme-light {
-    background: rgba(5, 231, 174, 0.3);
+    background: rgba(5, 194, 151, 0.3);
   }
 }
 

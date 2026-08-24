@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import homeHeaderFallback from '@/assets/images/home_header_large.png'
-import { t, getLocale } from '@/i18n'
+import { t, getLocale, textI18n } from '@/i18n'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
@@ -18,6 +18,9 @@ import { theme } from '@/utils/theme'
 import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
 import imgFb from '@/assets/images/minigame-newui/fb.svg'
+import imgPaPc from '@/assets/images/minigame-newui/pc_pa.png'
+import imgMahjongPc from '@/assets/images/minigame-newui/pc_ma.png'
+import imgFbPc from '@/assets/images/minigame-newui/pc_fb.png'
 
 const isLightTheme = computed(() => theme.value === 'light')
 const iconService1 = computed(() => (isLightTheme.value ? iconService1Light : iconService1Dark))
@@ -29,8 +32,21 @@ const iconService3 = computed(() => (isLightTheme.value ? iconService3Light : ic
 const loginModalStore = useLoginModalStore()
 const userInfoStore = useUserInfoStore()
 
-// 部分卡片文案为硬编码中文：en 用英文，其余语言回退中文（与 i18n 规则一致）。
-const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
+// Reactive locale — reading _locale.value forces Vue to track language
+// changes and recompute any computed that calls localized/multilang.
+const _locale = textI18n.locale
+
+const localized = (en: string, cn: string): string => {
+  return (_locale.value === 'cn' || _locale.value === 'zh') ? cn : en
+}
+
+function multilang(key: string, en: string, cn: string): string {
+  const translated = t(key)
+  if (translated && translated !== key) {
+    return translated
+  }
+  return ['cn', 'zh'].includes(_locale.value) ? cn : en
+}
 
 const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
 // 优先后台轮播图；没有配置时沿用渠道俱乐部自带 banner，最后才回落到内置单图 + hero 文案。
@@ -62,6 +78,7 @@ const activeBannerGames = [
   {
     name: 'PA真人',
     svg: imgPa,
+    svgPc: imgPaPc,
     title: '真人荷官',
     titleEn: 'Live Dealer',
     subtitle: ['美女荷官发牌', '沉浸真人体验'],
@@ -70,6 +87,7 @@ const activeBannerGames = [
   {
     name: '麻将胡了',
     svg: imgMahjong,
+    svgPc: imgMahjongPc,
     title: '麻将胡了',
     titleEn: 'Mahjong Ways',
     subtitle: ['电子麻将畅玩', '胡牌乐翻天'],
@@ -78,6 +96,7 @@ const activeBannerGames = [
   {
     name: 'FB体育',
     svg: imgFb,
+    svgPc: imgFbPc,
     title: '体育竞猜',
     titleEn: 'Sports Betting',
     subtitle: ['全球赛事竞猜', '激情一触即发'],
@@ -266,7 +285,7 @@ onMounted(() => {
           <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" :alt="t('Mahjong_Name')" />
           <div class="zone-info">
             <div class="zone-header">
-              <span class="zone-title"> {{ localized('Casino', '娱乐场') }} </span>
+            <span class="zone-title"> {{ localized('Casino', '娱乐场') }} </span>
               <img class="zone-mini-icon" src="@/assets/icons/game_zone_mahjong_mini.png" alt="" />
             </div>
             <div class="zone-desc casino-desc">
@@ -295,13 +314,16 @@ onMounted(() => {
           class="coming-soon-scroll-card"
           @click="notifyNotLogin"
         >
-          <img class="coming-soon-scroll-card__img" :src="game.svg" alt="" />
+          <picture class="coming-soon-scroll-card__picture">
+            <source v-if="game.svgPc" media="(min-width: 600px)" :srcset="game.svgPc" />
+            <img class="coming-soon-scroll-card__img" :src="game.svg" alt="" />
+          </picture>
           <div class="coming-soon-scroll-card__label">
             <span class="coming-soon-scroll-card__title">{{
-              localized(game.titleEn, game.title || game.name)
+              multilang(`UICasino_Game_${game.name}`, game.titleEn, game.title || game.name)
             }}</span>
             <span
-              v-for="(line, i) in (getLocale() === 'en' ? game.subtitleEn : game.subtitle) || []"
+              v-for="(line, i) in ((getLocale() === 'cn' || getLocale() === 'zh') ? game.subtitle : game.subtitleEn) || []"
               :key="i"
               class="coming-soon-scroll-card__subtitle"
               :class="{ 'coming-soon-scroll-card__subtitle--first': i === 0 }"
@@ -951,6 +973,10 @@ onMounted(() => {
   &:active {
     opacity: 0.85;
   }
+}
+
+.coming-soon-scroll-card__picture {
+  display: contents;
 }
 
 .coming-soon-scroll-card__img {

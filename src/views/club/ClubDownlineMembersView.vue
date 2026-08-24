@@ -1121,7 +1121,7 @@ onMounted(async () => {
 }
 
 .quota-action--primary {
-  background: rgba(5, 231, 174, 0.4);
+  background: rgba(5, 194, 151, 0.4);
   color: #fff;
 }
 

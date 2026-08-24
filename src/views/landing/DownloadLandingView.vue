@@ -201,7 +201,7 @@ async function onAddToHomeScreen(): Promise<void> {
   display: flex;
   flex-direction: column;
   background:
-    radial-gradient(120% 60% at 50% 0%, rgba(5, 231, 174, 0.14) 0%, rgba(5, 231, 174, 0) 60%),
+    radial-gradient(120% 60% at 50% 0%, rgba(5, 194, 151, 0.14) 0%, rgba(5, 194, 151, 0) 60%),
     linear-gradient(180deg, #0a1512 0%, #05100d 40%, #020807 100%);
   color: #f9f9f9;
   font-family: 'HONOR Sans CN', 'PingFang SC', sans-serif;
@@ -222,7 +222,7 @@ async function onAddToHomeScreen(): Promise<void> {
     right: -1.2rem;
     width: 4.8rem;
     height: 4.8rem;
-    background: rgba(5, 231, 174, 0.28);
+    background: rgba(5, 194, 151, 0.28);
   }
 
   &--bottom {
@@ -279,7 +279,7 @@ async function onAddToHomeScreen(): Promise<void> {
   background: rgba(255, 255, 255, 0.08);
   box-shadow:
     0 0.16rem 0.6rem rgba(0, 0, 0, 0.45),
-    0 0 0 0.02rem rgba(5, 231, 174, 0.3);
+    0 0 0 0.02rem rgba(5, 194, 151, 0.3);
 
   &--placeholder {
     display: flex;
@@ -287,8 +287,8 @@ async function onAddToHomeScreen(): Promise<void> {
     justify-content: center;
     font-size: 1rem;
     font-weight: 700;
-    color: #05e7ae;
-    background: linear-gradient(157deg, rgba(5, 231, 174, 0.22) 0%, rgba(2, 122, 92, 0.28) 100%);
+    color: #05c297;
+    background: linear-gradient(157deg, rgba(5, 194, 151, 0.22) 0%, rgba(2, 122, 92, 0.28) 100%);
   }
 }
 
@@ -303,8 +303,8 @@ async function onAddToHomeScreen(): Promise<void> {
   font-weight: 600;
   white-space: nowrap;
   color: #05100d;
-  background: linear-gradient(157deg, #05e7ae 0%, #4bf0c4 100%);
-  box-shadow: 0 0.06rem 0.2rem rgba(5, 231, 174, 0.4);
+  background: linear-gradient(157deg, #05c297 0%, #4bf0c4 100%);
+  box-shadow: 0 0.06rem 0.2rem rgba(5, 194, 151, 0.4);
 }
 
 .landing__name {
@@ -347,7 +347,7 @@ async function onAddToHomeScreen(): Promise<void> {
 .landing__stat-num {
   font-size: 0.44rem;
   font-weight: 700;
-  color: #05e7ae;
+  color: #05c297;
 }
 
 .landing__stat-label {
@@ -375,7 +375,7 @@ async function onAddToHomeScreen(): Promise<void> {
   gap: 0.28rem;
   padding: 0.36rem 0.4rem;
   border-radius: 0.36rem;
-  background: linear-gradient(100deg, rgba(5, 231, 174, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  background: linear-gradient(100deg, rgba(5, 194, 151, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
   border: 0.01rem solid rgba(255, 255, 255, 0.06);
 }
 
@@ -385,8 +385,8 @@ async function onAddToHomeScreen(): Promise<void> {
   height: 0.18rem;
   margin-top: 0.14rem;
   border-radius: 50%;
-  background: #05e7ae;
-  box-shadow: 0 0 0.16rem rgba(5, 231, 174, 0.8);
+  background: #05c297;
+  box-shadow: 0 0 0.16rem rgba(5, 194, 151, 0.8);
 }
 
 .landing__feature-title {
@@ -451,9 +451,9 @@ async function onAddToHomeScreen(): Promise<void> {
   }
 
   &--primary {
-    background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+    background: linear-gradient(157deg, #05c297 0%, #027a5c 100%);
     color: #05100d;
-    box-shadow: 0 0.12rem 0.4rem rgba(5, 231, 174, 0.35);
+    box-shadow: 0 0.12rem 0.4rem rgba(5, 194, 151, 0.35);
   }
 
   &:active {

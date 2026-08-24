@@ -7,7 +7,7 @@ import {
   watch,
 } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { t, getLocale } from '@/i18n'
+import { t, getLocale, textI18n } from '@/i18n'
 import { showGameToast } from '@/components/Toast'
 import { useCasinoStore } from '@/stores/casino'
 import { useGameStore } from '@/stores/game'
@@ -292,24 +292,24 @@ const getCategoryFromBlockKey = (blockKey: string): string | null => {
 const transformGameToItem = (game: any, preferSvg: boolean = false): GameItem => {
   const gameType = game.game_type || ''
   const gameApiType = game.game_api_type || ''
-  const gameName = game.game_name || ''
+  const gameName = getLocalizedGameName(game.game_name || '')
 
   let gameImage = game.game_icon || game.game_url_p || ''
 
   if (gameName === '德州牛仔' || gameType === 'cow_boy' || gameApiType === 'cow_boy') {
     gameImage = cowboyBlueSvg
-  } else if (gameName === 'DB真人' || (gameName && gameName.includes('DB视讯'))) {
+  } else if (gameName === 'DB真人' || gameName === 'DB Live' || (gameName && gameName.includes('DB视讯'))) {
     if (preferSvg) {
       gameImage = dbLiveSvg
     }
-  } else if ((gameName && gameName.includes('乐游')) || gameApiType === 'leg_poker') {
+  } else if ((gameName && gameName.includes('乐游')) || gameName === 'LEG Poker' || gameApiType === 'leg_poker') {
     gameImage = legPokerSvg
-  } else if ((gameName && gameName.includes('开元')) || gameApiType === 'ky_poker') {
+  } else if ((gameName && gameName.includes('开元')) || gameName === 'KY Poker' || gameApiType === 'ky_poker') {
      gameImage = kyPokerSvg
   }
 
   return {
-    title: game.game_name || '',
+    title: gameName,
     img: gameImage,
     gameId: game.id,
     gameApiType: game.game_api_type || '',
@@ -347,16 +347,44 @@ const buildMinigameBlocks = (games: GameItem[], keyPrefix: string): GameBlock[] 
     .sort(
       (a, b) => (MINIGAME_ORDER[a.gameApiType] ?? 999) - (MINIGAME_ORDER[b.gameApiType] ?? 999),
     )
-    .map((item, index) => ({
-      key: `${keyPrefix}-${index}`,
-      title: item.title || '',
-      subtitle: (item.originalGame as any)?.desc || item.title || '',
-      icon: minigameBlockIcon,
-      layout: 'wide',
-      items: [item],
-    }))
+    .map((item, index) => {
+      const isChinese = ['cn', 'zh'].includes(getLocale())
+      // For non-Chinese locales, use the already-localized title as subtitle
+      // to avoid showing raw Chinese server strings
+      const rawDesc = (item.originalGame as any)?.desc || ''
+      const subtitle = isChinese ? (rawDesc || item.title || '') : (item.title || '')
+      return {
+        key: `${keyPrefix}-${index}`,
+        title: item.title || '',
+        subtitle,
+        icon: minigameBlockIcon,
+        layout: 'wide',
+        items: [item],
+      }
+    })
 
-const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
+// Reactive locale — reading this ref inside computed() forces Vue to track
+// locale changes and recompute game names when the user switches language.
+const _locale = textI18n.locale
+
+const localized = (en: string, cn: string): string => ['cn', 'zh'].includes(_locale.value) ? cn : en
+
+function multilang(key: string, en: string, cn: string): string {
+  const translated = t(key)
+  if (translated && translated !== key) {
+    return translated
+  }
+  return ['cn', 'zh'].includes(_locale.value) ? cn : en
+}
+
+const getLocalizedGameName = (gameName: string): string => {
+  if (!gameName) return ''
+  if (gameName.includes('开元')) return multilang('UICasino_Game_KYPoker', 'KY Poker', gameName)
+  if (gameName.includes('乐游')) return multilang('UICasino_Game_LEGPoker', 'LEG Poker', gameName)
+  if (gameName.includes('T1 Game') || gameName.includes('区块链')) return multilang('UICasino_Game_T1Poker', 'T1 Game Blockchain', gameName)
+  if (gameName.includes('DB真人') || gameName.includes('DB视讯')) return multilang('UICasino_Game_DBLive', 'DB Live', gameName)
+  return gameName
+}
 
 const SPORTS_ORDER: Record<string, number> = {
   fb_sports: 0,

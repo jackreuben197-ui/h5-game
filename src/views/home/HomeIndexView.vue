@@ -28,7 +28,7 @@ import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
 import { useAppConfigStore } from '@/stores/appConfig'
-import { t, getLocale, toServerLang } from '@/i18n'
+import { t, getLocale, toServerLang, textI18n } from '@/i18n'
 import { localStore } from '@/utils/localStore'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
 import { useHomeAnnouncement } from '@/composables/useHomeAnnouncement'
@@ -49,6 +49,9 @@ import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
 import imgFb from '@/assets/images/minigame-newui/fb.svg'
 import imgCowboy from '@/assets/images/minigame-newui/sg.svg'
+import imgPaPc from '@/assets/images/minigame-newui/pc_pa.png'
+import imgMahjongPc from '@/assets/images/minigame-newui/pc_ma.png'
+import imgFbPc from '@/assets/images/minigame-newui/pc_fb.png'
 
 const isLightTheme = computed(() => theme.value === 'light')
 const iconService1 = computed(() => (isLightTheme.value ? iconService1Light : iconService1Dark))
@@ -62,6 +65,7 @@ const popularBannerGamesStatic = [
   {
     name: 'PA真人',
     svg: imgPa,
+    svgPc: imgPaPc,
     gameApiType: 'pa_live',
     title: '真人荷官',
     titleEn: 'Live Dealer',
@@ -71,6 +75,7 @@ const popularBannerGamesStatic = [
   {
     name: '麻将胡了',
     svg: imgMahjong,
+    svgPc: imgMahjongPc,
     gameApiType: 'mahjong',
     title: '麻将胡了',
     titleEn: 'Mahjong Ways',
@@ -80,6 +85,7 @@ const popularBannerGamesStatic = [
   {
     name: 'FB体育',
     svg: imgFb,
+    svgPc: imgFbPc,
     gameApiType: 'fb_sports',
     title: '体育竞猜',
     titleEn: 'Sports Betting',
@@ -89,6 +95,7 @@ const popularBannerGamesStatic = [
   {
     name: '德州牛仔',
     svg: imgCowboy,
+    svgPc: '',
     gameApiType: 'cow_boy',
     title: '德州牛仔',
     titleEn: 'Texas Cowboy',
@@ -100,8 +107,22 @@ const popularBannerGamesStatic = [
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 
-// 部分卡片文案为硬编码中文：en 用英文，其余语言回退中文（与 i18n 规则一致）。
-const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
+// Reactive locale ref — reading _locale.value in functions used inside
+// computed() forces Vue to track language changes and recompute automatically.
+const _locale = textI18n.locale
+
+function multilang(key: string, en: string, cn: string): string {
+  const translated = t(key)
+  if (translated && translated !== key) {
+    return translated
+  }
+  return ['cn', 'zh'].includes(_locale.value) ? cn : en
+}
+
+const localized = (en: string, cn: string): string => {
+  return ['cn', 'zh'].includes(_locale.value) ? cn : en
+}
+
 const roomListStore = useRoomListStore()
 const mttListStore = useMttListStore()
 const casinoStore = useCasinoStore()
@@ -580,64 +601,6 @@ function handleOpenCustomerService(): void {
 
 function openMiniGamePanel(): void {
   showGameToast(t('UIClub_InDeve'))
-  // openBridgePanel({
-  //   panelType: 'notification',
-  //   title: '', // GameDialog 标题，可留空
-  //   props: {
-  //     page1: {
-  //       id: 1001,
-  //       type: 1,
-  //       name: 'XXXX123.com',
-  //       icon: 'https://static.awanptest.com/pint-intl-test/image-normal/20250904131213-AUVNG.png',
-  //       title: '立即下載XPoker立即下載XPoker立即下載XPoker',
-  //       url: 'https://download.example.com/xpoker.apk',
-  //       status: 1,
-  //       create_time: Math.floor(Date.now() / 1000) - 3600,
-  //     },
-  //     page2: [
-  //       {
-  //         id: 2001,
-  //         type: 2,
-  //         title: '系統維護公告',
-  //         content:
-  //           '<p style="margin-top:200px">今晚 22:00-24:00 系統升級，請提前下牌。</p><p style="margin-top:200px">今晚 22:00-24:00 系統升級，請提前下牌。</p>',
-  //         weight: 100,
-  //         status: 1,
-  //         create_time: Math.floor(Date.now() / 1000) - 1800,
-  //       },
-  //       {
-  //         id: 2002,
-  //         type: 2,
-  //         title: '活動上線',
-  //         content:
-  //           '<p>新春活動火熱進行中，登錄即送鑽石！</p><p><span style="color:#05E7AE">活动内容一：</span>参与指定牌局即可获得返水奖励，返水比例最高提升至 0.8%，上不封顶。</p>',
-  //         weight: 80,
-  //         status: 1,
-  //         create_time: Math.floor(Date.now() / 1000) - 86400,
-  //       },
-  //     ],
-  //     page3: {
-  //       id: 3001,
-  //       type: 3,
-  //       title: 'USDT 充值地址',
-  //       content: 'TRC20 網絡，請勿轉錯TRC20 網絡，請勿轉錯TRC20 網絡，請勿轉錯',
-  //       urls: [
-  //         'TXxxxxxxxxxxx',
-  //         'TYyyyyyyyyyyyy',
-  //         'TYyyyyyyyyyyyy',
-  //         'TYyyyyyyyyyyyy',
-  //         'TYyyyyyyyyyyyy',
-  //         '1',
-  //         '1',
-  //         '1',
-  //         '1',
-  //         'www.www.www',
-  //       ],
-  //       status: 1,
-  //       create_time: Math.floor(Date.now() / 1000) - 5400,
-  //     },
-  //   },
-  // })
 }
 
 function getRoomPlayers(room: RoomRecord): number {
@@ -1050,13 +1013,16 @@ onBeforeUnmount(() => {
                 class="coming-soon-scroll-card"
                 @click="handleBannerGameClick(game)"
               >
-                <img class="coming-soon-scroll-card__img" :src="game.svg" alt="" />
+                <picture class="coming-soon-scroll-card__picture">
+                  <source v-if="game.svgPc" media="(min-width: 600px)" :srcset="game.svgPc" />
+                  <img class="coming-soon-scroll-card__img" :src="game.svg" alt="" />
+                </picture>
                 <div class="coming-soon-scroll-card__label">
                   <span class="coming-soon-scroll-card__title">
-                    {{ localized(game.titleEn, game.title || game.name) }}
+                    {{ multilang(`UICasino_Game_${game.name}`, game.titleEn, game.title || game.name) }}
                   </span>
                   <span
-                    v-for="(line, i) in (getLocale() === 'en' ? game.subtitleEn : game.subtitle) ||
+                    v-for="(line, i) in ((getLocale() === 'cn' || getLocale() === 'zh') ? game.subtitle : game.subtitleEn) ||
                     []"
                     :key="i"
                     class="coming-soon-scroll-card__subtitle"
@@ -1768,6 +1734,10 @@ onBeforeUnmount(() => {
   &:active {
     opacity: 0.85;
   }
+}
+
+.coming-soon-scroll-card__picture {
+  display: contents;
 }
 
 .coming-soon-scroll-card__img {

@@ -8,6 +8,16 @@
     --main-page-gutter: clamp(28px, 2.7778vw, 40px);
     --main-page-top: clamp(23px, 2.2222vw, 32px);
     --main-bottom-tab-offset: max(23px, calc((var(--app-full-height, 100dvh) - 1024px) / 2 + 23px));
+    --main-bottom-tab-height: 82px;
+    --main-bottom-tab-clearance: calc(
+      var(--main-bottom-tab-offset) + var(--main-bottom-tab-height) + 20px
+    );
+    --home-fixed-chrome: 458px;
+    --home-content-max: clamp(
+      600px,
+      calc((var(--app-full-height, 100dvh) - var(--home-fixed-chrome)) / 0.58081),
+      1360px
+    );
     --app-max-width: 1360px;
     --app-side-padding: 0px;
     --app-top-padding: 0px;
@@ -33,8 +43,17 @@
     min-height: 0;
     margin: auto;
     padding-top: var(--main-page-top);
-    padding-bottom: 122px;
+    padding-bottom: 0;
+    border-bottom: var(--main-bottom-tab-clearance) solid transparent;
     scrollbar-width: none;
+  }
+
+  html[data-main-layout='primary'] .main-layout--home .main-layout-content {
+    padding-bottom: 0;
+  }
+
+  html[data-main-layout='primary'] .main-layout.is-guest-home .main-layout-content {
+    overflow-y: auto;
   }
 
   html[data-main-layout='primary'] .main-layout-content::-webkit-scrollbar {
@@ -79,11 +98,23 @@
     margin-left: auto;
   }
 
+  html[data-main-layout='primary'] .home-page {
+    max-width: var(--home-content-max);
+  }
+
+  html[data-main-layout='primary'] .main-layout.is-guest-home .home-page {
+    --home-fixed-chrome: 497px;
+    --home-content-max: clamp(
+      600px,
+      calc((var(--app-full-height, 100dvh) - var(--home-fixed-chrome)) / 0.58081),
+      1360px
+    );
+  }
 
   // 首页
   html[data-main-layout='primary'] .home-page {
     display: block;
-    padding: 12px 0 28px;
+    padding: 12px 0 0;
     height: auto;
     min-height: auto;
     overflow: visible;
@@ -169,7 +200,7 @@
     border-radius: clamp(44px, 5.69vw, 82px);
     aspect-ratio: 1360 / 270;
     height: auto;
-    max-height: none;
+    max-height: clamp(150px, 24vh, 270px);
     flex: none;
   }
 
@@ -189,7 +220,8 @@
   }
 
   html[data-main-layout='primary'] .home-banner__theme-switch {
-    display: none;
+    top: clamp(14px, 1.39vw, 20px);
+    right: 50px;
   }
 
   html[data-main-layout='primary'] .notice-bar {
@@ -278,7 +310,7 @@
   }
 
   html[data-main-layout='primary'] .game-center-scroll + .section-header {
-    margin-top: clamp(16px, 1.5972vw, 23px);
+    margin-top: 26px;
   }
 
   html[data-main-layout='primary'] .section-header {
@@ -306,7 +338,7 @@
     width: 100%;
     margin-left: 0;
     margin-right: 0;
-    margin-top: clamp(8px, 0.8333vw, 12px);
+    margin-top: 13px;
     overflow: visible;
   }
 
@@ -314,9 +346,10 @@
   html[data-main-layout='primary'] .coming-soon-track {
     display: grid;
     width: 100%;
+    height: auto;
     padding: 0;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: clamp(12px, 1.39vw, 20px);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.97%;
   }
 
   html[data-main-layout='primary'] .game-scroll-card,
@@ -325,11 +358,12 @@
     height: auto;
     min-height: 0;
     aspect-ratio: 325 / 194;
-    border-radius: clamp(18px, 1.87vw, 27px);
+    border-radius: 8.289% / 13.887%;
+    container-type: inline-size;
   }
 
   html[data-main-layout='primary'] .game-scroll-card {
-    padding: clamp(12px, 1.32vw, 19px) clamp(10px, 1.11vw, 16px) clamp(9px, 0.9vw, 13px);
+    padding: 7.38% 7.69% 5.85%;
   }
 
   html[data-main-layout='primary'] .desktop-only-game-card {
@@ -342,38 +376,56 @@
   }
 
   html[data-main-layout='primary'] .zone-title {
-    margin-bottom: 5px;
-    font-size: clamp(14px, 1.53vw, 22px);
+    margin-bottom: 1.54cqi;
+    font-size: 6.74cqi;
   }
 
   html[data-main-layout='primary'] .zone-desc,
-  html[data-main-layout='primary'] .zone-sub-desc,
+  html[data-main-layout='primary'] .zone-sub-desc {
+    font-size: 4.36cqi;
+  }
+
   html[data-main-layout='primary'] .online-text,
   html[data-main-layout='primary'] .online-num {
-    font-size: clamp(10px, 0.9vw, 13px);
+    font-size: 3.77cqi;
   }
 
   html[data-main-layout='primary'] .zone-mini-icon {
-    width: clamp(18px, 1.81vw, 26px);
-    height: clamp(18px, 1.81vw, 26px);
+    width: 6.26cqi;
+    height: 6.26cqi;
   }
 
   html[data-main-layout='primary'] .zone-online-bar {
-    height: clamp(20px, 1.74vw, 25px);
-    margin-top: 8px;
-    padding: 2px 10px;
-    gap: 5px;
+    height: 7.08cqi;
+    margin-top: 2.46cqi;
+    padding: 0 2.36cqi;
+    gap: 2.36cqi;
   }
 
   html[data-main-layout='primary'] .online-icon {
-    width: 13px;
-    height: 13px;
-    margin-left: 4px;
+    width: 4cqi;
+    height: 4cqi;
+    margin-left: 1.23cqi;
   }
 
-  html[data-main-layout='primary'] .coming-soon-text,
-  html[data-main-layout='primary'] .coming-soon-scroll-card__text {
+  html[data-main-layout='primary'] .coming-soon-text {
     font-size: clamp(15px, 1.53vw, 22px);
+  }
+
+  html[data-main-layout='primary'] .coming-soon-scroll-card__label {
+    padding: 9.23cqi 7.69cqi 5.54cqi;
+  }
+
+  html[data-main-layout='primary'] .coming-soon-scroll-card__title {
+    font-size: 6.9cqi;
+  }
+
+  html[data-main-layout='primary'] .coming-soon-scroll-card__subtitle {
+    font-size: 4.46cqi;
+  }
+
+  html[data-main-layout='primary'] .coming-soon-scroll-card__subtitle--first {
+    margin-top: 2.46cqi;
   }
 
   // 俱乐部
@@ -752,10 +804,6 @@
     .card-line1
     .left-text {
     font-size: 1.8rem;
-  }
-
-  html[data-main-layout='primary'] .main-layout-content {
-    padding-bottom: 104px;
   }
 
   html[data-main-layout='primary'] .game-center-track,

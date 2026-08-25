@@ -190,7 +190,7 @@ function extractList(value: unknown, depth = 0): Record<string, unknown>[] {
 
 function getFormattedMonth(date: Date): string {
   const loc = getLocale()
-  const localeTag = (loc === 'zh' || loc === 'cn') ? 'zh-CN' : (loc === 'tw' ? 'zh-TW' : loc)
+  const localeTag = loc === 'cn' ? 'zh-CN' : (loc === 'zh' ? 'zh-TW' : loc)
   const formatted = date.toLocaleString(localeTag, { month: 'short' })
   return formatted.charAt(0).toUpperCase() + formatted.slice(1).replace(/\.$/, '')
 }

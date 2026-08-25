@@ -111,11 +111,11 @@ const personalBestHand = ref<(CardItem | null)[]>([])
 const opponentRows = ref<ProfitRow[]>([])
 const deckRows = ref<DeckRow[]>([])
 const allInSummary = ref([
-  { label: t('UICareer_totalWin'), value: '0', highlight: 'up' as const },
+  { label: 'UICareer_totalWin', value: '0', highlight: 'up' as const },
   { label: 'All in', value: '0' },
-  { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: '0' },
-  { label: t('UICareer_HuoWin'), value: '0' },
-  { label: t('UICareer_AllinLost'), value: '0' },
+  { label: 'UIMine_RecordItemsNormal_3RCUa3w8', value: '0' },
+  { label: 'UICareer_HuoWin', value: '0' },
+  { label: 'UICareer_AllinLost', value: '0' },
 ])
 const allInRateRows = ref([
   { key: 'active', label: t('UICareer_Zhudong'), rate: 0, color: '#50a7ec' },
@@ -343,11 +343,11 @@ function setAllInCache(mode: string, stats: Record<string, unknown>): void {
   const profit = toSafeNumber(stats.profit_total)
 
   const summary = [
-    { label: t('UICareer_totalWin'), value: formatSigned(profit), highlight: 'up' as const },
+    { label: 'UICareer_totalWin', value: formatSigned(profit), highlight: 'up' as const },
     { label: 'All in', value: winCount.toLocaleString('en-US') },
-    { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: handCount.toLocaleString('en-US') },
-    { label: t('UICareer_HuoWin'), value: winCount.toLocaleString('en-US') },
-    { label: t('UICareer_AllinLost'), value: loseCount.toLocaleString('en-US') },
+    { label: 'UIMine_RecordItemsNormal_3RCUa3w8', value: handCount.toLocaleString('en-US') },
+    { label: 'UICareer_HuoWin', value: winCount.toLocaleString('en-US') },
+    { label: 'UICareer_AllinLost', value: loseCount.toLocaleString('en-US') },
   ]
 
   const activeCount = toSafeNumber(stats.active_count)
@@ -527,11 +527,11 @@ function applyCurrentPersonal(): void {
 function applyCurrentAllIn(): void {
   const value = allInCache.get(selectedAllInMode.value)
   allInSummary.value = value?.summary ?? [
-    { label: t('UICareer_totalWin'), value: '0', highlight: 'up' as const },
+    { label: 'UICareer_totalWin', value: '0', highlight: 'up' as const },
     { label: 'All in', value: '0' },
-    { label: t('UIMine_RecordItemsNormal_3RCUa3w8'), value: '0' },
-    { label: t('UICareer_HuoWin'), value: '0' },
-    { label: t('UICareer_AllinLost'), value: '0' },
+    { label: 'UIMine_RecordItemsNormal_3RCUa3w8', value: '0' },
+    { label: 'UICareer_HuoWin', value: '0' },
+    { label: 'UICareer_AllinLost', value: '0' },
   ]
   allInRateRows.value = value?.rates ?? [
     { key: 'active', label: t('UICareer_Zhudong'), rate: 0, color: '#50a7ec' },
@@ -1171,7 +1171,7 @@ onBeforeUnmount(() => {
 
           <div class="summary-list">
             <div v-for="item in allInSummary" :key="item.label" class="summary-row">
-              <span>{{ item.label }}</span>
+              <span>{{ t(item.label) }}</span>
               <span :class="item.highlight === 'up' ? 'profit-up' : ''">{{ item.value }}</span>
             </div>
           </div>

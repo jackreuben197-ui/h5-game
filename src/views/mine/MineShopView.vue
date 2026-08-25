@@ -24,7 +24,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
 import { useAppConfigStore } from '@/stores/appConfig'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-import { t } from '@/i18n'
+import { getLocale, t } from '@/i18n'
 
 const title = computed(() => t('UIHappyShop_ActivityShop'))
 
@@ -178,7 +178,7 @@ const payNowText = computed(() => {
     }
     return t('UIClub_Apply5')
   }
-  return t('UIMineMallUSDTShop_PromptlyRechargeTip') + formatMoney(selectedPrice.value)
+  return t('UIMineMallUSDTShop_PromptlyRechargeTip') + ' ' + formatMoney(selectedPrice.value)
 })
 
 const selectedPayType = computed<PayTypeOption | null>(() => {
@@ -414,7 +414,10 @@ async function fetchShopList(options: RefreshOptions = {}): Promise<void> {
         productId: String(row.product_id ?? ''),
         title: `${row.gold_count}`,
         goldCount,
-        diamondsText: t('UIClub_Text90') + num + t('UIMine_VIP_diamond'),
+        diamondsText:
+          getLocale() === 'cn' || getLocale() === 'zh'
+            ? t('UIClub_Text90') + num + t('UIMine_VIP_diamond')
+            : `${t('UIClub_Text90')} ${num} ${t('UIMine_VIP_diamond')}`,
         diamondsValue: num,
         price,
         status,
@@ -784,7 +787,7 @@ onBeforeUnmount(() => {
           <p class="title">{{ item.title }}</p>
           <p v-if="item.diamondsValue > 0" class="desc">{{ item.diamondsText }}</p>
 
-          <div class="price-pill">
+          <div class="price-pill" :class="{ 'long-text': isItemAuditing(item) }">
             <span>
               {{ isItemAuditing(item) ? t('UIMatchChecking') : formatMoney(getDisplayPrice(item)) }}
             </span>
@@ -1126,19 +1129,23 @@ onBeforeUnmount(() => {
   background: #52c4ea;
   backdrop-filter: blur(0.78rem);
   border: 0.021rem solid rgba(242, 242, 242, 0.8);
-  font-size: 0.2666rem;
-  line-height: 0.4677rem;
-  padding: 0 0.24rem;
+  font-size: 0.24rem;
+  line-height: 0.42rem;
+  padding: 0 0.2rem;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &::after {
     content: '';
     display: inline-block;
     margin-left: 0.08rem;
-    width: 0.16rem;
-    height: 0.16rem;
+    width: 0.12rem;
+    height: 0.12rem;
     border-radius: 50%;
     background: rgba(249, 249, 249, 0.7);
-    vertical-align: middle;
+    flex-shrink: 0;
   }
 }
 
@@ -1160,8 +1167,11 @@ onBeforeUnmount(() => {
 .desc {
   margin: 0.0541rem 0 0;
   font-family: var(--font-family-SF);
-  font-size: 0.3375rem;
-  line-height: 1;
+  font-size: 0.28rem;
+  line-height: 1.1;
+  text-align: center;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .price-pill {
@@ -1193,6 +1203,16 @@ onBeforeUnmount(() => {
     height: 0.4764rem;
     object-fit: cover;
     border-radius: 50%;
+  }
+
+  &.long-text {
+    width: auto;
+    min-width: 1.9919rem;
+    padding: 0 0.2rem;
+    
+    span {
+      font-size: 0.24rem;
+    }
   }
 }
 

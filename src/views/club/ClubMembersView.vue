@@ -1599,7 +1599,7 @@ onMounted(() => {
               <div class="data-item">
                 <p class="data-label">
                   <img :src="imgChips" alt="" aria-hidden="true" />
-                  <span>联盟币</span>
+                  <span>{{ t('UIClubCreditLimit1') }}</span>
                 </p>
                 <p class="data-value">{{ formatUC(member.uc) }}</p>
               </div>
@@ -3307,5 +3307,9 @@ onMounted(() => {
   .record-main-grid p {
     font-size: 0.27rem;
   }
+}
+
+:deep(.page-back-header .title) {
+  font-size: 0.48rem !important;
 }
 </style>

@@ -177,11 +177,13 @@ export default { name: 'GameTableHeader' }
 }
 
 .game-table__header-label {
-  font-size: 0.36rem;
+  font-size: 0.30rem;
   // font-weight: 700;
   color: #fff;
-  white-space: nowrap;
-  line-height: 1;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.1;
+  text-align: center;
 }
 
 // ---- Sort icons (stacked up/down) ----

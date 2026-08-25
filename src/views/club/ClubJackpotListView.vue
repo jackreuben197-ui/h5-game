@@ -386,7 +386,7 @@ function goPoolReward(): void {
   min-height: 1.139rem;
   border-radius: 0.684rem;
   padding: 0.226rem 0.312rem 0.226rem 0.555rem;
-  font-size: 0.583rem;
+  font-size: 0.34rem;
   font-weight: 500;
   color: #fff;
   background: rgba(255, 255, 255, 0.21);

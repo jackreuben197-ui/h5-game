@@ -572,7 +572,7 @@ watch(
         <!-- 加入牌局 -->
         <div class="section join-section">
           <div class="section-title">{{ t('UIFriendsTable_JoinTableGame') }}</div>
-          <div class="section-subtitle">{{ t('UIDialogInvitationCodeTitle') }}，{{ t('UIFriendsTable_And') }}</div>
+          <div class="section-subtitle">{{ t('UIDialogInvitationCodeTitle') }}, {{ t('UIFriendsTable_And') }}</div>
           <div class="invite-inputs" @click="onInputCode">
             <div v-for="(digit, index) in inviteCode" :key="index" class="invite-input-wrap">
               <span class="invite-digit">{{ digit }}</span>
@@ -874,19 +874,23 @@ watch(
 .action-btn {
   width: 6.44rem;
   height: 1.42rem;
-  line-height: 1.42rem;
-  padding: 0 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.4rem;
   background: rgba(0, 0, 0, 0.3);
   border: none;
   border-radius: 1rem;
   color: rgba(249, 249, 249, 0.9);
-  box-shadow:
-  /* σ╖ªΣ╕èΘ½ÿσàë */ inset 0.4px 0.4px 0px 0px rgba(255, 255, 255, 1);
+  box-shadow: inset 0.4px 0.4px 0px 0px rgba(255, 255, 255, 1);
   font-size: 0.48rem;
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 500;
   cursor: pointer;
-  white-space: nowrap;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.1;
+  word-break: break-word;
 
   @include theme-light-own {
     color: rgba(249, 249, 249, 0.9);

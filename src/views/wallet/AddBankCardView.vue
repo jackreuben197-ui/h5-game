@@ -90,7 +90,11 @@ async function handleSave() {
 
     <!-- Header -->
     <div class="abc-header">
-      <button class="abc-header__back" type="button" @click="router.replace({ name: 'wallet', query: { tab: '1' } })">
+      <button
+        class="abc-header__back"
+        type="button"
+        @click="router.replace({ name: 'wallet', query: { tab: '1' } })"
+      >
         <img :src="icBack" alt="" class="abc-header__back-icon" />
       </button>
       <span class="abc-header__title">{{ tx('Wallet_AddCard', '银行卡') }}</span>
@@ -98,12 +102,13 @@ async function handleSave() {
 
     <!-- Form -->
     <div class="abc-form">
-
       <!-- 姓名 -->
       <div class="abc-field">
         <label class="abc-field__label">
           {{ tx('Wallet_CardHolder', '姓名') }}
-          <span class="abc-field__required">（{{ tx('Wallet_CardHolderNote', '请填写收款方式对应的真实姓名') }}）</span>
+          <span class="abc-field__required"
+            >（{{ tx('Wallet_CardHolderNote', '请填写收款方式对应的真实姓名') }}）</span
+          >
           <span class="abc-field__star">*</span>
         </label>
         <div class="abc-field__input-wrap">
@@ -170,7 +175,12 @@ async function handleSave() {
       </div>
 
       <p class="abc-disclaimer">
-        {{ tx('Wallet_CardDisclaimer', '请填写与转账/付款一致的支付信息，如信息有误，可能导致交易失败。') }}
+        {{
+          tx(
+            'Wallet_CardDisclaimer',
+            '请填写与转账/付款一致的支付信息，如信息有误，可能导致交易失败。',
+          )
+        }}
       </p>
     </div>
 
@@ -210,10 +220,18 @@ async function handleSave() {
         </div>
 
         <div class="abc-modal__actions">
-          <button type="button" class="abc-modal__btn abc-modal__btn--cancel" @click="closeBankNameModal">
+          <button
+            type="button"
+            class="abc-modal__btn abc-modal__btn--cancel"
+            @click="closeBankNameModal"
+          >
             {{ tx('Wallet_Cancel', '取消') }}
           </button>
-          <button type="button" class="abc-modal__btn abc-modal__btn--confirm" @click="confirmBankSelection">
+          <button
+            type="button"
+            class="abc-modal__btn abc-modal__btn--confirm"
+            @click="confirmBankSelection"
+          >
             {{ tx('Wallet_Ok', '确定') }}
           </button>
         </div>
@@ -242,8 +260,6 @@ async function handleSave() {
   }
 }
 
-
-
 .abc-page__blur {
   position: absolute;
   inset: 0;
@@ -269,7 +285,8 @@ async function handleSave() {
   display: flex;
   align-items: center;
   gap: 0.23rem;
-  padding: calc(var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.43rem) 0.34rem 0.33rem;
+  padding: calc(var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.43rem) 0.34rem
+    0.33rem;
 }
 
 .abc-header__back {
@@ -284,7 +301,9 @@ async function handleSave() {
   padding: 0;
   -webkit-tap-highlight-color: transparent;
 
-  &:active { opacity: 0.7; }
+  &:active {
+    opacity: 0.7;
+  }
 }
 
 .abc-header__back-icon {
@@ -323,7 +342,9 @@ async function handleSave() {
   flex-direction: column;
   gap: 0.44rem;
   scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .abc-field {
@@ -464,9 +485,18 @@ async function handleSave() {
     inset: 0;
     border-radius: inherit;
     padding: 1.34px;
-    background: linear-gradient(135deg, rgba(242, 242, 242, 0.8) 0%, rgba(255, 255, 255, 0) 44.5%, rgba(255, 255, 255, 0.5) 100%);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    background: linear-gradient(
+      135deg,
+      rgba(242, 242, 242, 0.8) 0%,
+      rgba(255, 255, 255, 0) 44.5%,
+      rgba(255, 255, 255, 0.5) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
@@ -554,7 +584,9 @@ async function handleSave() {
   max-height: 7rem;
   overflow-y: auto;
   scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .abc-modal__item {
@@ -573,8 +605,13 @@ async function handleSave() {
   }
   -webkit-tap-highlight-color: transparent;
 
-  &:active { opacity: 0.8; }
-  &--active .abc-modal__item-name { color: #fff; font-weight: 500; }
+  &:active {
+    opacity: 0.8;
+  }
+  &--active .abc-modal__item-name {
+    color: #fff;
+    font-weight: 500;
+  }
 }
 
 .abc-modal__item-name {
@@ -608,7 +645,9 @@ async function handleSave() {
   font-weight: 500;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  &:active { opacity: 0.85; }
+  &:active {
+    opacity: 0.85;
+  }
 }
 
 .abc-modal__btn--cancel {

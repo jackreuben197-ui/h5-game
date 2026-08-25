@@ -96,12 +96,12 @@ function persistSelectedClub(): void {
 }
 
 // 货币类型定义：1-联盟币 2-USDT 3-记分牌 4-钻石
-const currencyTypes = [
-  { label: '联盟币', value: 1 },
+const currencyTypes = computed(() => [
+  { label: t('UIClubCreditLimit1'), value: 1 },
   // { label: 'USDT', value: 2 },
   { label: t('UIGuild_CoinType1'), value: 3 },
   { label: t('UIMine_VIP_diamond'), value: 4 },
-] as const
+] as const)
 const selectedCurrencyIndex = ref(0)
 
 interface CareerMetric {
@@ -241,7 +241,7 @@ function resolveRequestParams() {
       : (userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id ?? 0)
 
   return {
-    filter_type: currencyTypes[selectedCurrencyIndex.value].value,
+    filter_type: currencyTypes.value[selectedCurrencyIndex.value].value,
     game_types: gameTypes,
     poker_types: selectedGameTab.value === '6+' ? [2] : [0],
     club_id: clubId,
@@ -303,7 +303,7 @@ function homeCacheKey(): string {
     selectedClubIndex.value === 0
       ? 0
       : (userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id ?? 0)
-  const currency = currencyTypes[selectedCurrencyIndex.value].value
+  const currency = currencyTypes.value[selectedCurrencyIndex.value].value
   return `${clubId}_home_${currency}_${selectedGameTab.value}`
 }
 

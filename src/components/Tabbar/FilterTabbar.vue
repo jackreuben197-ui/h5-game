@@ -104,7 +104,9 @@ export default { name: 'FilterTabbar' }
   border: none;
   background: none;
   cursor: pointer;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
+  padding: 0 0.1rem;
   -webkit-tap-highlight-color: transparent;
   transition:
     background 0.18s,

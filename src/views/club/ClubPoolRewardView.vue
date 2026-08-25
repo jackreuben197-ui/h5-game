@@ -218,7 +218,7 @@ onMounted(() => {
 
     <div class="footer-action">
       <button type="button" class="create-btn" @click="goCreateJackpot">
-        {{ t('UIClub_AddSomething') }}Jackpot{{ t('UIClub_Jackpot4') }}
+        {{ t('UIClub_AddJackpotTemplate_Btn') }}
       </button>
     </div>
   </div>
@@ -271,24 +271,30 @@ onMounted(() => {
 }
 
 .tab-switch {
-  width: 4.5514rem;
-  height: 0.5152rem;
+  width: max-content;
+  max-width: 100%;
+  height: auto;
+  min-height: 0.5152rem;
   margin: 0 auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 0.6rem;
 }
 
 .tab-btn {
   border: 0;
-  padding: 0;
-  min-width: 1.6rem;
-  height: 0.5152rem;
+  padding: 0 0.1rem;
+  min-width: unset;
+  height: auto;
+  min-height: 0.5152rem;
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.3991rem;
-  line-height: 0.95;
+  font-size: 0.36rem;
+  line-height: 1.1;
   border-bottom: 0.0363rem solid transparent;
+  white-space: normal;
+  text-align: center;
 
   @include theme-light-own {
     color: rgba(34, 34, 34, 0.72);
@@ -539,5 +545,9 @@ onMounted(() => {
   .footer-action {
     max-width: calc(100vw - 0.8533rem);
   }
+}
+
+:deep(.page-back-header .title) {
+  font-size: 0.48rem !important;
 }
 </style>

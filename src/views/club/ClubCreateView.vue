@@ -134,7 +134,7 @@ async function onCreateClub(): Promise<void> {
 
         <div class="card-info">
           <p class="club-name-preview">
-            {{ clubName || '联盟名称' }}
+            {{ clubName || t('UIClub_Creat_2LvGNmS7') }}
           </p>
           <div class="club-id-badge">
             <div class="id-label">

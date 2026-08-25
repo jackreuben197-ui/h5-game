@@ -96,6 +96,10 @@ function onTabChange(nextName: string): void {
         <span
           v-if="(tab as TabOption).title"
           class="table-tab__text"
+          :class="{
+            'table-tab__text--long': (tab as TabOption).title.length > 8,
+            'table-tab__text--very-long': (tab as TabOption).title.length > 12
+          }"
         >
           {{ (tab as TabOption).title }}
         </span>
@@ -138,11 +142,21 @@ function onTabChange(nextName: string): void {
 .table-tab__text {
   font-size: 0.4rem;
   font-weight: 400;
-  line-height: 1;
+  line-height: 1.1;
   color: rgba(255, 255, 255, 1);
+  text-align: center;
+  word-break: break-word;
 
   @include theme-light {
     color: var(--c-text);
+  }
+
+  &--long {
+    font-size: 0.35rem;
+  }
+
+  &--very-long {
+    font-size: 0.3rem;
   }
 }
 

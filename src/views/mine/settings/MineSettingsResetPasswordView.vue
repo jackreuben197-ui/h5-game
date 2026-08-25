@@ -40,8 +40,8 @@ let otpTimer: number | null = null
 const isFilledPreview = computed(() => otpCountdown.value > 0)
 // const headerTitle = computed(() => isPhone.value ? (isFilledPreview.value ? 'Forgot Password' : '修改密码') : 'Forgot Password')
 // const submitText = computed(() => isPhone.value ? '完成' : '注册')
-const headerTitle = computed(() => 'Forgot Password')
-const submitText = computed(() => '注册')
+const headerTitle = computed(() => t('ForgotPass_Title'))
+const submitText = computed(() => t('ForgotPass_Submit'))
 
 // function switchTab(nextTab: 'phone' | 'email'): void {
 //   if (nextTab === tab.value) return
@@ -55,7 +55,7 @@ function requestOtp(): void {
 
   const mail = email.value.trim()
   if (!mail) {
-    showFailToast('请输入邮箱')
+    showFailToast(t('UILogin_InputEmail'))
     return
   }
 
@@ -99,7 +99,7 @@ async function submitReset(): Promise<void> {
   const nextPassword = password.value.trim()
 
   if (!mail) {
-    showFailToast('请输入邮箱')
+    showFailToast(t('UILogin_InputEmail'))
     return
   }
   if (!code) {
@@ -165,7 +165,7 @@ onBeforeUnmount(() => {
               class="input-field"
               type="email"
               inputmode="email"
-              placeholder="电子邮箱"
+              :placeholder="t('ForgotPass_EmailPlaceholder')"
             />
             <button
               class="otp-btn"
@@ -174,7 +174,7 @@ onBeforeUnmount(() => {
               :disabled="requestingOtp || submitting"
               @click="requestOtp"
             >
-              {{ isFilledPreview ? `${otpCountdown}s` : '获取验证码' }}
+              {{ isFilledPreview ? `${otpCountdown}s` : t('ForgotPass_OTPButton') }}
             </button>
           </div>
         </div>
@@ -187,7 +187,7 @@ onBeforeUnmount(() => {
               class="input-field"
               type="text"
               inputmode="numeric"
-              placeholder="输入验证码"
+              :placeholder="t('ForgotPass_OTPPlaceholder')"
             />
           </div>
         </div>
@@ -199,7 +199,7 @@ onBeforeUnmount(() => {
               v-model="password"
               class="input-field"
               :type="showPassword ? 'text' : 'password'"
-              placeholder="输入密码"
+              :placeholder="t('ForgotPass_PasswordPlaceholder')"
             />
             <button class="eye" type="button" @click="showPassword = !showPassword">
               <img :src="icEye" alt="" aria-hidden="true" />
@@ -223,7 +223,7 @@ onBeforeUnmount(() => {
       </label> -->
 
       <button class="submit-btn" type="button" :disabled="submitting" @click="submitReset">
-        {{ submitting ? '提交中...' : submitText }}
+        {{ submitting ? t('ForgotPass_Submitting') : submitText }}
       </button>
     </div>
   </div>

@@ -39,7 +39,7 @@ const title = computed(() => t('UIMine_Bill'))
 
 const tabGoldTypes = [
   { label: t('UC'), value: 1 },
-  { label: '俱乐部' + t('UIClub_Text34'), value: 2 },
+  { label: t('UIMine_ClubChips'), value: 2 },
   { label: t('UIClub_Table'), value: 3 },
   { label: t('UIMine_VIP_diamond'), value: 4 },
 ] as const

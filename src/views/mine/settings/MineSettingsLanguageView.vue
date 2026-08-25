@@ -7,7 +7,7 @@ import icCheckbox from '@/assets/icons/ic_checkbox.png'
 import icUncheckbox from '@/assets/icons/ic_uncheckbox.png'
 import { getLocale, setLocale, t, type LocaleCode } from '@/i18n'
 
-const title = computed(() => 'Language')
+const title = computed(() => t('UISettings_Language'))
 
 interface LanguageOption {
   key: string
@@ -80,13 +80,16 @@ function selectLanguage(key: string): void {
           class="language-row"
           @click="selectLanguage(item.key)"
         >
-          <span class="label">{{ item.label }}</span>
-          <img
-            class="checkbox-icon"
-            :src="activeLanguage === item.key ? icCheckbox : icUncheckbox"
-            alt=""
-            aria-hidden="true"
-          />
+          <span v-fit-text="{ maxLines: 1 }" class="label">{{ t(`UILang_${item.key}`) }}</span>
+          <span class="row-right">
+            <span v-fit-text="{ maxLines: 1 }" class="endonym">{{ item.label }}</span>
+            <img
+              class="checkbox-icon"
+              :src="activeLanguage === item.key ? icCheckbox : icUncheckbox"
+              alt=""
+              aria-hidden="true"
+            />
+          </span>
         </button>
       </section>
     </div>
@@ -154,11 +157,33 @@ function selectLanguage(key: string): void {
 }
 
 .label {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
   font-family: var(--font-family-sans);
   font-size: 0.4357rem;
   font-weight: 400;
   line-height: 1.4;
   color: rgba(255, 255, 255, 0.94);
+}
+
+.row-right {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.24rem;
+  margin-left: 0.32rem;
+}
+
+.endonym {
+  min-width: 0;
+  text-align: right;
+  font-family: var(--font-family-sans);
+  font-size: 0.3733rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.58);
 }
 
 .checkbox-icon {

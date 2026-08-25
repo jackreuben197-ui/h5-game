@@ -148,7 +148,7 @@ onMounted(() => {
               type="button"
               @click="goToMessagePage('credit', t('PageMessageApplyForCreditLimit'))"
             >
-              <div class="text">{{ t('PageMessageApplyForCreditLimit') }}</div>
+              <div v-fit-text="{ maxLines: 1 }" class="text">{{ t('PageMessageApplyForCreditLimit') }}</div>
               <div class="round-icon">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -202,7 +202,7 @@ onMounted(() => {
               type="button"
               @click="goToMessagePage('uc', t('PageMessageApplyForUC'))"
             >
-              <div class="text">{{ t('PageMessageApplyForUC') }}</div>
+              <div v-fit-text="{ maxLines: 1 }" class="text">{{ t('PageMessageApplyForUC') }}</div>
               <div class="round-icon">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -263,7 +263,7 @@ onMounted(() => {
           <img :src="box.icon" alt="消息" />
           <span v-if="box.unreadCount > 0" class="unread-badge">{{ box.unreadCount }}</span>
         </div>
-        <div class="text">{{ t(box.text) }}</div>
+        <div v-fit-text class="text">{{ t(box.text) }}</div>
       </div>
     </div>
   </div>

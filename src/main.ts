@@ -38,6 +38,7 @@ import { ensureTelegramAutoLogin } from '@/api/http'
 const log = createLogger('[h5]')
 import { pinia } from './stores/pinia'
 import { textI18nPlugin } from './i18n'
+import { fitTextPlugin } from './directives/fitText'
 
 let app: VueApp<Element> | null = null
 let stopBridgeDialogChannel: (() => void) | null = null
@@ -156,6 +157,7 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
     app = createApp(App)
     app.use(pinia)
     app.use(textI18nPlugin)
+    app.use(fitTextPlugin)
     app.use(router)
     const gameStore = useGameStore(pinia)
     // 启动时若已有 token，则同步用户资料/配置/WS；任意路由刷新都不依赖首页布局。

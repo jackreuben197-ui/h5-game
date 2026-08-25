@@ -90,7 +90,7 @@ function goToLogin(): void {
               </div>
             </div>
             <button class="button" type="button" @click="notifyNotLogin">
-              <div class="text">{{ t('UIHappyShop_ActivityShop') }}</div>
+              <div v-fit-text="{ maxLines: 1 }" class="text">{{ t('UIHappyShop_ActivityShop') }}</div>
               <div class="round-icon">
                 <img :src="iconShop" :alt="t('UIHappyShop_ActivityShop')" />
               </div>
@@ -104,7 +104,7 @@ function goToLogin(): void {
         <div class="img">
           <img :src="box.icon" alt="消息" />
         </div>
-        <div class="text">{{ t(box.text) }}</div>
+        <div v-fit-text class="text">{{ t(box.text) }}</div>
       </div>
     </div>
   </div>

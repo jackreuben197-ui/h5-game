@@ -67,7 +67,7 @@ function notifyNotLogin(): void {
           </div>
           <div class="card-line2">
             <button class="button" type="button" @click="notifyNotLogin">
-              <div class="text">{{ t('PageMessageApplyForCreditLimit') }}</div>
+              <div v-fit-text="{ maxLines: 1 }" class="text">{{ t('PageMessageApplyForCreditLimit') }}</div>
               <div class="round-icon">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -117,7 +117,7 @@ function notifyNotLogin(): void {
               </div>
             </button>
             <button class="button" type="button" @click="notifyNotLogin">
-              <div class="text">{{ t('PageMessageApplyForUC') }}</div>
+              <div v-fit-text="{ maxLines: 1 }" class="text">{{ t('PageMessageApplyForUC') }}</div>
               <div class="round-icon">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -177,7 +177,7 @@ function notifyNotLogin(): void {
         <div class="img">
           <img :src="box.icon" alt="消息" />
         </div>
-        <div class="text">{{ t(box.text) }}</div>
+        <div v-fit-text class="text">{{ t(box.text) }}</div>
       </div>
     </div>
   </div>

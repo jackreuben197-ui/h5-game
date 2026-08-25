@@ -140,7 +140,7 @@ const displayUser = computed(() => {
           </div>
         </div>
         <button class="button" type="button" @click="goToMineShop">
-          <div class="text">{{ t('UIHappyShop_ActivityShop') }}</div>
+          <div v-fit-text="{ maxLines: 1 }" class="text">{{ t('UIHappyShop_ActivityShop') }}</div>
           <div class="round-icon">
             <img :src="iconShop" alt="我的商城" />
           </div>
@@ -152,7 +152,7 @@ const displayUser = computed(() => {
         <div class="img">
           <img :src="box.icon" :alt="box.text" />
         </div>
-        <div class="text">{{ t(box.text) }}</div>
+        <div v-fit-text class="text">{{ t(box.text) }}</div>
       </div>
     </div>
   </div>

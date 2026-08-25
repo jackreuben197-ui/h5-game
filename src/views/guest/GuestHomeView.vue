@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import homeHeaderFallback from '@/assets/images/home_header_large.png'
-import { t, getLocale, textI18n } from '@/i18n'
+import { t } from '@/i18n'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
@@ -31,22 +31,6 @@ const iconService3 = computed(() => (isLightTheme.value ? iconService3Light : ic
 
 const loginModalStore = useLoginModalStore()
 const userInfoStore = useUserInfoStore()
-
-// Reactive locale — reading _locale.value forces Vue to track language
-// changes and recompute any computed that calls localized/multilang.
-const _locale = textI18n.locale
-
-const localized = (en: string, cn: string): string => {
-  return (_locale.value === 'cn' || _locale.value === 'zh') ? cn : en
-}
-
-function multilang(key: string, en: string, cn: string): string {
-  const translated = t(key)
-  if (translated && translated !== key) {
-    return translated
-  }
-  return ['cn', 'zh'].includes(_locale.value) ? cn : en
-}
 
 const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
 // 优先后台轮播图；没有配置时沿用渠道俱乐部自带 banner，最后才回落到内置单图 + hero 文案。
@@ -79,31 +63,25 @@ const activeBannerGames = [
     name: 'PA真人',
     svg: imgPa,
     svgPc: imgPaPc,
-    title: '真人荷官',
-    titleEn: 'Live Dealer',
-    subtitle: ['美女荷官发牌', '沉浸真人体验'],
-    subtitleEn: ['Real live dealers', 'Immersive experience'],
+    titleKey: 'UICasino_Game_PALive',
+    subtitleKeys: ['UICasino_Game_PALiveTip1', 'UICasino_Game_PALiveTip2'],
   },
   {
     name: '麻将胡了',
     svg: imgMahjong,
     svgPc: imgMahjongPc,
-    title: '麻将胡了',
-    titleEn: 'Mahjong Ways',
-    subtitle: ['电子麻将畅玩', '胡牌乐翻天'],
-    subtitleEn: ['Play video mahjong', 'Big wins await'],
+    titleKey: 'UICasino_Game_Mahjong',
+    subtitleKeys: ['UICasino_Game_MahjongTip1', 'UICasino_Game_MahjongTip2'],
   },
   {
     name: 'FB体育',
     svg: imgFb,
     svgPc: imgFbPc,
-    title: '体育竞猜',
-    titleEn: 'Sports Betting',
-    subtitle: ['全球赛事竞猜', '激情一触即发'],
-    subtitleEn: ['Global sports betting', 'Feel the excitement'],
+    titleKey: 'UICasino_Game_FBSports',
+    subtitleKeys: ['UICasino_Game_FBSportsTip1', 'UICasino_Game_FBSportsTip2'],
   },
   // 临时隐藏牛仔（德州牛仔）入口，需要时取消注释即可恢复。
-  // { name: '德州牛仔', svg: imgCowboy, title: '德州牛仔', titleEn: 'Texas Cowboy', subtitle: [], subtitleEn: [] },
+  // { name: '德州牛仔', svg: imgCowboy, titleKey: 'UICasino_Game_Cowboy', subtitleKeys: [] },
 ]
 
 function notifyNotLogin(): void {
@@ -285,12 +263,12 @@ onMounted(() => {
           <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" :alt="t('Mahjong_Name')" />
           <div class="zone-info">
             <div class="zone-header">
-            <span class="zone-title"> {{ localized('Casino', '娱乐场') }} </span>
+            <span class="zone-title"> {{ t('UICasino_Title') }} </span>
               <img class="zone-mini-icon" src="@/assets/icons/game_zone_mahjong_mini.png" alt="" />
             </div>
             <div class="zone-desc casino-desc">
-              <p>{{ localized('Live, Slots, Sports', '真人视讯 电子娱乐 体育竞猜') }}</p>
-              <p>{{ localized('Top Providers', '全球一线厂商') }}</p>
+              <p>{{ t('UICasino_SubText') }}</p>
+              <p>{{ t('UICasino_TopProviders') }}</p>
             </div>
           </div>
           <div class="zone-online-bar">
@@ -319,16 +297,15 @@ onMounted(() => {
             <img class="coming-soon-scroll-card__img" :src="game.svg" alt="" />
           </picture>
           <div class="coming-soon-scroll-card__label">
-            <span class="coming-soon-scroll-card__title">{{
-              multilang(`UICasino_Game_${game.name}`, game.titleEn, game.title || game.name)
-            }}</span>
+            <span class="coming-soon-scroll-card__title">{{ t(game.titleKey) }}</span>
             <span
-              v-for="(line, i) in ((getLocale() === 'cn' || getLocale() === 'zh') ? game.subtitle : game.subtitleEn) || []"
+              v-for="(subtitleKey, i) in game.subtitleKeys"
               :key="i"
               class="coming-soon-scroll-card__subtitle"
               :class="{ 'coming-soon-scroll-card__subtitle--first': i === 0 }"
-              >{{ line }}</span
             >
+              {{ t(subtitleKey) }}
+            </span>
           </div>
         </div>
       </div>

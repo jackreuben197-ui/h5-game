@@ -28,7 +28,7 @@ import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
 import { useAppConfigStore } from '@/stores/appConfig'
-import { t, getLocale, toServerLang, textI18n } from '@/i18n'
+import { t } from '@/i18n'
 import { localStore } from '@/utils/localStore'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
 import { useHomeAnnouncement } from '@/composables/useHomeAnnouncement'
@@ -67,61 +67,37 @@ const popularBannerGamesStatic = [
     svg: imgPa,
     svgPc: imgPaPc,
     gameApiType: 'pa_live',
-    title: '真人荷官',
-    titleEn: 'Live Dealer',
-    subtitle: ['美女荷官发牌', '沉浸真人体验'],
-    subtitleEn: ['Real live dealers', 'Immersive experience'],
+    titleKey: 'UICasino_Game_PALive',
+    subtitleKeys: ['UICasino_Game_PALiveTip1', 'UICasino_Game_PALiveTip2'],
   },
   {
     name: '麻将胡了',
     svg: imgMahjong,
     svgPc: imgMahjongPc,
     gameApiType: 'mahjong',
-    title: '麻将胡了',
-    titleEn: 'Mahjong Ways',
-    subtitle: ['电子麻将畅玩', '胡牌乐翻天'],
-    subtitleEn: ['Play video mahjong', 'Big wins await'],
+    titleKey: 'UICasino_Game_Mahjong',
+    subtitleKeys: ['UICasino_Game_MahjongTip1', 'UICasino_Game_MahjongTip2'],
   },
   {
     name: 'FB体育',
     svg: imgFb,
     svgPc: imgFbPc,
     gameApiType: 'fb_sports',
-    title: '体育竞猜',
-    titleEn: 'Sports Betting',
-    subtitle: ['全球赛事竞猜', '激情一触即发'],
-    subtitleEn: ['Global sports betting', 'Feel the excitement'],
+    titleKey: 'UICasino_Game_FBSports',
+    subtitleKeys: ['UICasino_Game_FBSportsTip1', 'UICasino_Game_FBSportsTip2'],
   },
   {
     name: '德州牛仔',
     svg: imgCowboy,
     svgPc: '',
     gameApiType: 'cow_boy',
-    title: '德州牛仔',
-    titleEn: 'Texas Cowboy',
-    subtitle: [] as string[],
-    subtitleEn: [] as string[],
+    titleKey: 'UICasino_Game_Cowboy',
+    subtitleKeys: [] as string[],
   },
 ]
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
-
-// Reactive locale ref — reading _locale.value in functions used inside
-// computed() forces Vue to track language changes and recompute automatically.
-const _locale = textI18n.locale
-
-function multilang(key: string, en: string, cn: string): string {
-  const translated = t(key)
-  if (translated && translated !== key) {
-    return translated
-  }
-  return ['cn', 'zh'].includes(_locale.value) ? cn : en
-}
-
-const localized = (en: string, cn: string): string => {
-  return ['cn', 'zh'].includes(_locale.value) ? cn : en
-}
 
 const roomListStore = useRoomListStore()
 const mttListStore = useMttListStore()
@@ -980,7 +956,7 @@ onBeforeUnmount(() => {
                 />
                 <div class="zone-info">
                   <div class="zone-header">
-                    <span class="zone-title"> {{ localized('Casino', '娱乐场') }} </span>
+                    <span class="zone-title"> {{ t('UICasino_Title') }} </span>
                     <img
                       class="zone-mini-icon"
                       src="@/assets/icons/game_zone_mahjong_mini.png"
@@ -988,8 +964,8 @@ onBeforeUnmount(() => {
                     />
                   </div>
                   <div class="zone-desc casino-desc">
-                    <p>{{ localized('Live, Slots, Sports', '真人视讯 电子娱乐 体育竞猜') }}</p>
-                    <p>{{ localized('Top Providers', '全球一线厂商') }}</p>
+                    <p>{{ t('UICasino_SubText') }}</p>
+                    <p>{{ t('UICasino_TopProviders') }}</p>
                   </div>
                 </div>
                 <div class="zone-online-bar">
@@ -1019,16 +995,15 @@ onBeforeUnmount(() => {
                 </picture>
                 <div class="coming-soon-scroll-card__label">
                   <span class="coming-soon-scroll-card__title">
-                    {{ multilang(`UICasino_Game_${game.name}`, game.titleEn, game.title || game.name) }}
+                    {{ t(game.titleKey) }}
                   </span>
                   <span
-                    v-for="(line, i) in ((getLocale() === 'cn' || getLocale() === 'zh') ? game.subtitle : game.subtitleEn) ||
-                    []"
+                    v-for="(subtitleKey, i) in game.subtitleKeys"
                     :key="i"
                     class="coming-soon-scroll-card__subtitle"
                     :class="{ 'coming-soon-scroll-card__subtitle--first': i === 0 }"
                   >
-                    {{ line }}
+                    {{ t(subtitleKey) }}
                   </span>
                 </div>
               </div>

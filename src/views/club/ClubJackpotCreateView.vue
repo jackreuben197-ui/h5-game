@@ -639,7 +639,7 @@ onMounted(() => {
 <template>
   <div class="page-shell jackpot-create-page">
     <HeaderBack
-      :title="(isEditMode ? t('UIGuild_EditorTemplate') : t('UIGuild_CreateDes')) + 'Jackpot'"
+      :title="isEditMode ? t('UIClub_EditJackpotTemplate') : t('UIClub_CreateJackpotTemplate')"
     />
 
     <section class="create-content">

@@ -31,7 +31,7 @@ import { formatUC } from '@/utils/roomVisibility'
 import { getMemberRouteContext, type MemberIdentity } from './clubMemberRoute'
 import mainBgUrl from '@/assets/images/img_table_setting_bg.png'
 import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
-import { t } from '@/i18n'
+import { t, tJoin } from '@/i18n'
 
 const backgroundStyle = computed(() => ({
   '--member-detail-bg-dark': `url(${mainBgUrl})`,
@@ -828,10 +828,10 @@ onMounted(() => {
           {{ t('UIData_Today') }}
         </button>
         <button :class="{ active: rangeType === 'week' }" @click="switchRangeType('week')">
-          7{{ t('UIHappyShop_ActivityShopDay') }}
+          {{ tJoin(7, t('UIHappyShop_ActivityShopDay')) }}
         </button>
         <button :class="{ active: rangeType === 'month' }" @click="switchRangeType('month')">
-          30{{ t('UIHappyShop_ActivityShopDay') }}
+          {{ tJoin(30, t('UIHappyShop_ActivityShopDay')) }}
         </button>
       </section>
 

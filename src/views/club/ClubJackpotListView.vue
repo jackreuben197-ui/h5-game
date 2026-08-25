@@ -281,8 +281,8 @@ function goPoolReward(): void {
     </section>
 
     <div class="footer-action">
-      <button type="button" class="create-btn" @click="goCreateJackpot">
-        {{ t('UIClub_AddSomething') }}Jackpot{{ t('UIClub_Jackpot4') }}
+      <button v-fit-text="{ maxLines: 1 }" type="button" class="create-btn" @click="goCreateJackpot">
+        {{ t('UIClub_AddJackpotTemplate_Btn') }}
       </button>
     </div>
 
@@ -687,6 +687,7 @@ function goPoolReward(): void {
 
 .create-btn {
   width: 100%;
+  white-space: nowrap;
   height: 1.4716rem;
   border: 0.0267rem solid rgba(255, 255, 255, 0.15);
   border-radius: 1.082rem;

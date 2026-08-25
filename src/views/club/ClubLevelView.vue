@@ -203,7 +203,7 @@ onMounted(() => {
             <p>{{ levelDesc }}</p>
             <p>
               <span>{{ t('UIMineLimitTime') }}：</span
-              ><span class="club-upgrade-card__desc--value">{{ levelDuration }}{{ t('UIHappyShop_ActivityShopDay') }}</span>
+              ><span class="club-upgrade-card__desc--value">{{ tJoin(levelDuration, t('UIHappyShop_ActivityShopDay')) }}</span>
             </p>
           </div>
         </section>

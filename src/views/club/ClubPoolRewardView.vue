@@ -217,7 +217,7 @@ onMounted(() => {
     </section>
 
     <div class="footer-action">
-      <button type="button" class="create-btn" @click="goCreateJackpot">
+      <button v-fit-text="{ maxLines: 1 }" type="button" class="create-btn" @click="goCreateJackpot">
         {{ t('UIClub_AddJackpotTemplate_Btn') }}
       </button>
     </div>
@@ -507,6 +507,7 @@ onMounted(() => {
 
 .create-btn {
   width: 100%;
+  white-space: nowrap;
   height: 1.4716rem;
   border: 0;
   border-radius: 3.3333rem;

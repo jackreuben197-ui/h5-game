@@ -33,7 +33,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
 import { USER_STORE_CLUB_MANAGE } from '@/utils/indexedDB'
 import { toPlain, userCache } from '@/utils/userCache'
-import { t } from '@/i18n'
+import { t, tJoin } from '@/i18n'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 // 主容器背景图：全页面共用一张底图。
@@ -322,8 +322,8 @@ const summaryBottom = computed<SummaryItem[]>(() => [
 
 const recordRanges: RecordRangeItem[] = [
   { key: 'today', label: t('UIData_Today') },
-  { key: 'seven', label: '7' + t('UIHappyShop_ActivityShopDay') },
-  { key: 'thirty', label: '30' + t('UIHappyShop_ActivityShopDay') },
+  { key: 'seven', label: tJoin(7, t('UIHappyShop_ActivityShopDay')) },
+  { key: 'thirty', label: tJoin(30, t('UIHappyShop_ActivityShopDay')) },
   { key: 'custom', label: t('UIGuild_MemberDetailsTimeCustom') },
 ]
 

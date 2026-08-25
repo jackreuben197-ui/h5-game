@@ -562,7 +562,7 @@ onMounted(() => {
       <div v-if="showJoinModal" class="join-modal-mask" @click="closeJoinModal">
         <section class="join-modal" @click.stop>
           <div class="join-modal-card">
-            <img class="join-modal-logo" :src="searchedClubLogo" :alt="tl('Club avatar', '俱乐部头像')" />
+            <img class="join-modal-logo" :src="searchedClubLogo" :alt="t('UIMine_UserInfoSetting_btn_head')" />
             <h3 class="join-modal-name">{{ searchedClubName }}</h3>
             <p class="join-modal-id-row">
               <span class="join-modal-id-tag">ID</span>
@@ -583,12 +583,12 @@ onMounted(() => {
               {{ t('Wallet_Cancel') }}
             </button>
             <button
-              type="button"
               class="join-modal-btn join-modal-btn--confirm"
+              type="button"
               :disabled="joinLoading"
               @click="onJoinClub"
             >
-              {{ joinLoading ? tl('Submitting...', '提交中') : tl('Join', '加入') }}
+              {{ joinLoading ? t('UIWallet_Submitting') : t('UIClub_RoomJoin') }}
             </button>
           </div>
         </section>
@@ -603,7 +603,7 @@ onMounted(() => {
       :initial-value="searchKeyword"
       :show-input-area="true"
       :allow-leading-zero="true"
-      :title="tl('Search Club ID', '搜索俱乐部ID')"
+      :title="t('UIClub_SearchClubID')"
       :confirm-text="t('CommitOK')"
       @close="onSearchKeypadClose"
       @submit="onSearchKeypadSubmit"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { getLocale } from '@/i18n'
+import { t } from '@/i18n'
 
 const props = withDefaults(
   defineProps<{
@@ -19,9 +19,9 @@ defineEmits<{
 }>()
 
 const approveLabel = computed(
-  () => props.approveText || (getLocale() === 'en' ? 'Approve' : '同意'),
+  () => props.approveText || t('Page_Audit_Approve'),
 )
-const rejectLabel = computed(() => props.rejectText || (getLocale() === 'en' ? 'Reject' : '拒绝'))
+const rejectLabel = computed(() => props.rejectText || t('Page_Audit_Reject'))
 </script>
 
 <template>

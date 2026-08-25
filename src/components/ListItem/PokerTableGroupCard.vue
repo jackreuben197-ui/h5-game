@@ -58,7 +58,7 @@ function handleTableClick(room: RoomRecord): void {
         <div class="summary-content">
           <p class="blind-text">
             <span class="blind-label">
-              {{ t('UIMTT_Howtoplay_blind') }}
+              {{ group.pokerType === 2 ? t('UIClub_RoomCreat_gmo7laWj') : t('UIMTT_Howtoplay_blind') }}
             </span>
             <span>
               {{ group.blindText }}

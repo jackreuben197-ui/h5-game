@@ -430,7 +430,7 @@ onMounted(() => {
           <div class="time">{{ detailTime }}</div>
           <div class="summary-grid">
             <div v-for="item in summaryItems" :key="item.label" class="summary-item">
-              <span class="label">{{ item.label }}</span>
+              <span v-fit-text="{ maxLines: 1 }" class="label">{{ item.label }}</span>
               <span class="value" :style="getFontSizeStyle(item.value)">{{ item.value }}</span>
             </div>
           </div>
@@ -691,6 +691,8 @@ onMounted(() => {
   min-width: 0;
 
   .label {
+    width: 100%;
+    text-align: center;
     font-size: 0.31rem;
     line-height: 1.4;
     color: rgba(255, 255, 255, 0.72);

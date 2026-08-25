@@ -572,7 +572,7 @@ watch(
         <!-- 加入牌局 -->
         <div class="section join-section">
           <div v-fit-text="{ maxLines: 2 }" class="section-title">{{ t('UIFriendsTable_JoinTableGame') }}</div>
-          <div class="section-subtitle">{{ t('UIDialogInvitationCodeTitle') }}, {{ t('UIFriendsTable_And') }}</div>
+          <div v-fit-text="{ maxLines: 2 }" class="section-subtitle">{{ t('UIDialogInvitationCodeTitle') }}</div>
           <div class="invite-inputs" @click="onInputCode">
             <div v-for="(digit, index) in inviteCode" :key="index" class="invite-input-wrap">
               <span class="invite-digit">{{ digit }}</span>
@@ -581,14 +581,14 @@ watch(
 
           <button class="action-btn" @click="handleJoinTable">
             <van-loading v-if="joinLoading" />
-            <span v-else>{{ t('UIFriendsTable_Join') }}</span>
+            <span v-else v-fit-text="{ maxLines: 1 }">{{ t('UIFriendsTable_Join') }}</span>
           </button>
         </div>
 
         <!-- 快速组局 -->
         <div class="section create-section">
-          <div class="section-title">{{ t('UIFriendsTable_Round') }}</div>
-          <button class="action-btn" @click="onCreateRoom">{{ t('UIFriendsTable_Text') }}</button>
+          <div v-fit-text="{ maxLines: 2 }" class="section-title">{{ t('UIFriendsTable_Round') }}</div>
+          <button v-fit-text="{ maxLines: 1 }" class="action-btn" @click="onCreateRoom">{{ t('UIFriendsTable_Text') }}</button>
         </div>
       </div>
 
@@ -846,7 +846,9 @@ watch(
 }
 
 .section-title {
-  font-size: 0.72rem;
+  max-width: 78%;
+  margin-inline: auto;
+  font-size: 0.6rem;
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 600;
   color: #fff;
@@ -860,6 +862,8 @@ watch(
 }
 
 .section-subtitle {
+  max-width: 84%;
+  margin-inline: auto;
   font-size: 0.4rem;
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 400;

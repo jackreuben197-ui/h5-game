@@ -123,6 +123,16 @@ export function t(key: string, ...args: FormatArg[] | [FormatArgs]): string {
   return formatTxtMessage(message, args)
 }
 
+const NO_SEPARATOR_LOCALES = new Set<LocaleCode>(['cn', 'zh', 'ja'])
+
+export function tJoin(...parts: (string | number | null | undefined)[]): string {
+  const separator = NO_SEPARATOR_LOCALES.has(currentLocale.value) ? '' : ' '
+  return parts
+    .map((part) => (part === null || part === undefined ? '' : String(part).trim()))
+    .filter((part) => part.length > 0)
+    .join(separator)
+}
+
 export const SUPPORTED_LOCALES_OPTIONS: { label: string; value: LocaleCode }[] = [
   { label: '简体中文', value: 'cn' },
   { label: '繁體中文', value: 'zh' },
@@ -142,6 +152,7 @@ export const SUPPORTED_LOCALES_OPTIONS: { label: string; value: LocaleCode }[] =
 
 export const textI18n = {
   locale: currentLocale,
+  tJoin,
   supportedLocales: SUPPORTED_LOCALES,
   getLocale,
   setLocale,

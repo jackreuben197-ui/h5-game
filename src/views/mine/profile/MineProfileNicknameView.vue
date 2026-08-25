@@ -11,7 +11,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import icInfo from '@/assets/icons/ic_info.svg'
 import { resolveDiamondPriceValue } from '@/utils/diamondPriceConfig'
-import { t } from '@/i18n'
+import { t, tJoin } from '@/i18n'
 
 const router = useRouter()
 
@@ -127,10 +127,10 @@ function validateNickname(value: string): string | null {
   }
   const characterLength = getNicknameCharacterLength(value)
   if (characterLength < NICKNAME_MIN_LENGTH) {
-    return t('UIClub_Text62') + NICKNAME_MIN_LENGTH + t('UIClub_Text63')
+    return tJoin(t('UIClub_Text62'), NICKNAME_MIN_LENGTH, t('UIClub_Text63'))
   }
   if (characterLength > NICKNAME_MAX_LENGTH) {
-    return t('UIClub_Text64') + NICKNAME_MAX_LENGTH + t('UIClub_Text63')
+    return tJoin(t('UIClub_Text64'), NICKNAME_MAX_LENGTH, t('UIClub_Text63'))
   }
   return null
 }

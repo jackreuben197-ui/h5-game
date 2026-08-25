@@ -103,9 +103,9 @@ export const OP_DURATION_FANTASY_OPTIONS = [15, 30, 40, 50, 60, 90, 120, 150, 18
 // ── 游戏节奏 ───────────────────────────────────────────────────
 
 export const GAME_RHYTHM_OPTIONS = [
-  { text: "GG" + t('Mahjong_KnockdownMode'), value: 0 },
-  { text: "HH" + t('Mahjong_KnockdownMode'), value: 1 },
-  { text: "WPK" + t('Mahjong_KnockdownMode'), value: 2 },
+  { get text() { return "GG" + t('Mahjong_KnockdownMode') }, value: 0 },
+  { get text() { return "HH" + t('Mahjong_KnockdownMode') }, value: 1 },
+  { get text() { return "WPK" + t('Mahjong_KnockdownMode') }, value: 2 },
 ]
 
 // ── 牌局时长（小时 → 秒） ──────────────────────────────────────
@@ -132,7 +132,7 @@ export const MAX_WIN_RATE_SCORE_OPTIONS = [2, 4, 8, 16, 32].map((n) => ({
 }))
 export const MAX_WIN_RATE_EGG_OPTIONS = [
   ...[16, 32, 64, 128].map((n) => ({ text: String(n), value: n })),
-  { text: t('UIMTT_wuxianzhi'), value: 0 },
+  { get text() { return t('UIMTT_wuxianzhi') }, value: 0 },
 ]
 
 // ── Straddle ────────────────────────────────────────────────────
@@ -146,8 +146,8 @@ export const STRADDLE_OPTIONS = Array.from({ length: 14 }, (_, i) => ({
 // ── 补盲 ────────────────────────────────────────────────────────
 
 export const FILL_BLIND_OPTIONS = [
-  { text: t('UICreateRoomOptions5'), value: 0 },
-  { text: t('UITexas_addBlind'), value: 1 },
+  { get text() { return t('UICreateRoomOptions5') }, value: 0 },
+  { get text() { return t('UITexas_addBlind') }, value: 1 },
 ]
 
 // ── 带入相关 ────────────────────────────────────────────────────
@@ -167,22 +167,22 @@ export const ALLOWED_MIN_CHIPS_OPTIONS = [0, 5, 10].map((n) => ({
 // BRING_IN_LIMIT: 带入上限 (BB倍率), 0 = 无限制
 export const BRING_IN_LIMIT_OPTIONS = [
   ...[400, 600, 800, 1000, 1500].map((n) => ({ text: String(n) + 'BB', value: n })),
-  { text: t('UIMTT_wuxianzhi'), value: 0 },
+  { get text() { return t('UIMTT_wuxianzhi') }, value: 0 },
 ]
 
 // BRING_OUT / ChipsOut: 带出方式
 export const BRING_OUT_OPTIONS = [
-  { text: t('UIBackDialog_ticketsbtnClose'), value: 0 },
-  { text: t('UIClub_CreateRoom8'), value: 1 },
-  { text: t('UIClub_CreateRoom9'), value: 2 },
+  { get text() { return t('UIBackDialog_ticketsbtnClose') }, value: 0 },
+  { get text() { return t('UIClub_CreateRoom8') }, value: 1 },
+  { get text() { return t('UIClub_CreateRoom9') }, value: 2 },
 ]
 
 // ── 收费 ────────────────────────────────────────────────────────
 
 // PAYMENT_METHOD: 收费方式
 export const PAYMENT_METHOD_OPTIONS = [
-  { text: t('UICreateTalble_anBili'), value: 0 },
-  { text: t('UICreateTalble_gudingShoufei'), value: 1 },
+  { get text() { return t('UICreateTalble_anBili') }, value: 0 },
+  { get text() { return t('UICreateTalble_gudingShoufei') }, value: 1 },
 ]
 
 // SERVER_FEE: 服务费 0%–10% (步长 0.5%)
@@ -199,14 +199,14 @@ export const TEXAS_SERVER_FEE_OPTIONS = Array.from({ length: 11 }, (_, i) => {
 
 // PROFIT_SHARING_TYPE: 分润类型
 export const PROFIT_SHARING_OPTIONS = [
-  { text: t('UICreateTableShareProfitUpDownTip'), value: 0 },
-  { text: t('UICreateTableShareProfitAverageTip'), value: 1 },
+  { get text() { return t('UICreateTableShareProfitUpDownTip') }, value: 0 },
+  { get text() { return t('UICreateTableShareProfitAverageTip') }, value: 1 },
 ]
 
 // SERVER_CAPPING: 服务费封顶方式 (BB 或 按人数)
 export const SERVER_CAPPING_OPTIONS = [
   { text: 'BB', value: 0 },
-  { text: t('UIMatchFilter_5MWvUt'), value: 1 },
+  { get text() { return t('UIMatchFilter_5MWvUt') }, value: 1 },
 ]
 
 // CAP_BIGBLIND: 封顶（大盲倍数）0–10 (步长 0.5)
@@ -219,8 +219,8 @@ export const CAP_BIGBLIND_OPTIONS = Array.from({ length: 21 }, (_, i) => {
 
 // INSURANCE_MODE: 保险模式
 export const INSURANCE_MODE_OPTIONS = [
-  { text: t('UITable_Text12') + "OUTS", value: 0 },
-  { text: t('UITable_Text13') + "OUTS", value: 1 },
+  { get text() { return t('UITable_Text12') + "OUTS" }, value: 0 },
+  { get text() { return t('UITable_Text13') + "OUTS" }, value: 1 },
 ]
 
 // CLASSIC_INSURANCE_TURN: 经典保险转牌强制投保阈值 (胜率‰)
@@ -233,7 +233,7 @@ export const CLASSIC_INSURANCE_TURN_OPTIONS = [125, 200, 333, 500, 1000].map((n)
 
 // MIN_VPIP_LIMIT: 最低入池率限制, 0 = 无限制
 export const MIN_VPIP_OPTIONS = [
-  { text: t('UIMTT_wuxianzhi'), value: 0 },
+  { get text() { return t('UIMTT_wuxianzhi') }, value: 0 },
   ...[5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60].map((n) => ({ text: `${n}%`, value: n })),
 ]
 
@@ -243,14 +243,14 @@ export const TOTAL_HAND_OPTIONS = [
   { text: '100', value: 100 },
   { text: '300', value: 300 },
   { text: '1000', value: 1000 },
-  { text: t('UIMTT_wuxianzhi'), value: 0 },
+  { get text() { return t('UIMTT_wuxianzhi') }, value: 0 },
 ]
 
 // ── 安全屋 ──────────────────────────────────────────────────────
 
 export const SAFE_ROOM_OPTIONS = [
-  { text: t('UICreateRoomSafe2'), value: 1 },
-  { text: t('UICreateRoomSafe1'), value: 2 },
+  { get text() { return t('UICreateRoomSafe2') }, value: 1 },
+  { get text() { return t('UICreateRoomSafe1') }, value: 2 },
 ]
 
 // ── 麻将 ────────────────────────────────────────────────────────
@@ -297,13 +297,13 @@ export const CRIT_ROUNDS_OPTIONS = Array.from({ length: 10 }, (_, i) => ({
 
 // MUSHROOM_MODE: 两种押金模式
 export const MUSHROOM_MODE_OPTIONS = [
-  { text: t('UIMushMoneyMode1'), value: 1 },
-  { text: t('UIMushMoneyMode2'), value: 2 },
+  { get text() { return t('UIMushMoneyMode1') }, value: 1 },
+  { get text() { return t('UIMushMoneyMode2') }, value: 2 },
 ]
 export const CHAT_TYPE_OPTIONS = [
-  { text: t('UIBackDialog_ticketsbtnClose'), value: 0 },
-  { text: t('UICreateTablePlayer'), value: 1 },
-  { text: t('UICreateTablePlayerAndOther'), value: 2 },
+  { get text() { return t('UIBackDialog_ticketsbtnClose') }, value: 0 },
+  { get text() { return t('UICreateTablePlayer') }, value: 1 },
+  { get text() { return t('UICreateTablePlayerAndOther') }, value: 2 },
 ]
 export const GAME_DELAY_TIMES_OPTIONS = Array.from({ length: 5 }, (_, i) => ({
   text: String(i + 1),

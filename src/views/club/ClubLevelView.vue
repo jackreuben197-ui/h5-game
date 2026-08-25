@@ -11,7 +11,7 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { showFailToast, showSuccessToast } from 'vant'
-import { t } from '@/i18n'
+import { t, tJoin } from '@/i18n'
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -86,13 +86,15 @@ const progressPercent = computed(() => {
 const levelLabel = computed(() => `LEVEL ${currentLevel.value || 1}`)
 
 const levelDesc = computed(() => {
-  return t('UIClub_MemberPeople') + (memberLimit.value) + t('Common_People')
+  return tJoin(t('UIClub_MemberPeople'), memberLimit.value, t('Common_People'))
 })
 
 const diamondBalance = computed(() => Number(userInfoStore.currentClub?.user_gold || 0))
 
 const confirmText = computed(() => {
-  return t('UIClub_Confirm') + (upgradeCost.value) + t('UICommunityFundDiamondBuyType') + "Level " + (targetLevel.value) + "(" + (levelDuration.value) + t('UIHappyShop_ActivityShopDay') + ")?"
+  const cost = tJoin(t('UIClub_Confirm'), upgradeCost.value, t('UICommunityFundDiamondBuyType'))
+  const duration = tJoin(levelDuration.value, t('UIHappyShop_ActivityShopDay'))
+  return `${cost} Level ${targetLevel.value} (${duration})?`
 })
 
 async function loadLevelData(): Promise<void> {
@@ -186,7 +188,7 @@ onMounted(() => {
           </div>
 
           <div class="club-upgrade-cost">
-            <p>{{ t('UIClub_Text107') }}{{ targetLevel }}{{ t('UIClub_Club5') }}</p>
+            <p>{{ tJoin(t('UIClub_Text107'), targetLevel, t('UIClub_Club5')) }}</p>
             <div class="club-upgrade-cost__value">
               <span class="club-upgrade-cost__badge">
                 <img :src="imgLevelBadge" alt="" aria-hidden="true" />

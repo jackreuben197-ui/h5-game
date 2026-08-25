@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import { t } from '@/i18n'
@@ -33,12 +33,14 @@ const props = withDefaults(defineProps<Props>(), {
   showMask: true,
   showBackground: true,
   showInputArea: false,
-  confirmText: t('Wallet_Confirm'),
+  confirmText: '',
   allowDecimal: false,
   showCancel: true,
   showActions: true,
   allowPageInteraction: false,
 })
+
+const confirmLabel = computed(() => props.confirmText || t('Wallet_Confirm'))
 
 const emit = defineEmits<{
   close: []
@@ -253,7 +255,7 @@ function confirm(): void {
             >
               {{ t('Wallet_Cancel') }}
             </button>
-            <PrimaryButton :text="confirmText" :shadow="false" class="kp__confirm" @click="confirm" />
+            <PrimaryButton :text="confirmLabel" :shadow="false" class="kp__confirm" @click="confirm" />
           </div>
         </div>
       </div>

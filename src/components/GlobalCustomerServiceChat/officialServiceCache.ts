@@ -7,7 +7,6 @@ export interface OfficialServiceProfile {
 }
 
 const OFFICIAL_IM_SERVICE_TYPE = 2
-const OFFICIAL_SERVICE_NAME = t('UIMatch_ServerHead')
 
 let cachedOfficialProfile: OfficialServiceProfile | null = null
 let loadingPromise: Promise<OfficialServiceProfile> | null = null
@@ -27,7 +26,9 @@ function resolveAvatarFromList(data: unknown): string {
 function toProfile(avatar: string): OfficialServiceProfile {
   return {
     avatar: String(avatar || '').trim(),
-    name: OFFICIAL_SERVICE_NAME,
+    get name() {
+      return t('UIMatch_ServerHead')
+    },
   }
 }
 

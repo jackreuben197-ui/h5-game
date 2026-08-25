@@ -11,27 +11,27 @@ export const bringinSection: TableFormFieldConfig[] = [
   {
     // min_player_chip_rate: 允许最低筹码（BB倍数），0=不限
     type: 'select',
-    label: t('UITable_AllowCode'),
+    get label() { return t('UITable_AllowCode') },
     modelValue: 'min_player_chip_rate',
-    tip: t('UICreateTable_chipinMinChipTips'),
+    get tip() { return t('UICreateTable_chipinMinChipTips') },
     defaultValue: 0,
     options: ALLOWED_MIN_CHIPS_OPTIONS,
   },
   {
     // max_bringin_total_rate: 计分牌买入上限（BB倍数），0=无限制
     type: 'select',
-    label: t('UITable_BuyIn'),
+    get label() { return t('UITable_BuyIn') },
     modelValue: 'max_bringin_total_rate',
-    tip: t('UICreateTable_chipinMaxChipTips'),
+    get tip() { return t('UICreateTable_chipinMaxChipTips') },
     defaultValue: 0,
     options: BRING_IN_LIMIT_OPTIONS,
   },
   {
     // bringin_equal_leader: 追平Chipleader百分比（0–100%）
     type: 'select',
-    label: t('UITable_Text10') + "Chipleader",
+    get label() { return t('UITable_Text10') + "Chipleader" },
     modelValue: 'bringin_equal_leader',
-    tip: t('UICreateTable_chipinLeaderTips'),
+    get tip() { return t('UICreateTable_chipinLeaderTips') },
     defaultValue: 0,
     options: BRING_CHIPLEADER_OPTIONS,
   },
@@ -40,7 +40,7 @@ export const bringinSection: TableFormFieldConfig[] = [
     type: 'switch',
     label: 'AOF',
     modelValue: 'bettype_aof_on',
-    tip: t('UICreateTableAOFTip'),
+    get tip() { return t('UICreateTableAOFTip') },
     defaultValue: 0,
     activeValue: 1,
     inactiveValue: 0,
@@ -48,7 +48,7 @@ export const bringinSection: TableFormFieldConfig[] = [
   {
     // retain_type: 补撤计分牌方式，0=关闭 1=自动 2=手动
     type: 'select',
-    label: t('UITable_Text11'),
+    get label() { return t('UITable_Text11') },
     modelValue: 'retain_type',
     defaultValue: 0,
     options: BRING_OUT_OPTIONS,
@@ -56,7 +56,7 @@ export const bringinSection: TableFormFieldConfig[] = [
   {
     // retain_min_rate: 补撤最小保留筹码倍数（BB），自动+手动均展示
     type: 'input',
-    label: t('UITable_Code') + "(BB)",
+    get label() { return t('UITable_Code') + "(BB)" },
     modelValue: 'retain_min_rate',
     defaultValue: 0,
     numberOnly: true,
@@ -66,7 +66,7 @@ export const bringinSection: TableFormFieldConfig[] = [
   {
     // retain_max_rate: 补撤最大筹码倍数（BB），仅自动模式展示
     type: 'input',
-    label: t('UITable_Code2') + "(BB)",
+    get label() { return t('UITable_Code2') + "(BB)" },
     modelValue: 'retain_max_rate',
     defaultValue: 0,
     numberOnly: true,

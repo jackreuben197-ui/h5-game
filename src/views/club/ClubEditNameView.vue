@@ -8,7 +8,7 @@ import { useAppConfigStore } from '@/stores/appConfig'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import { t } from '@/i18n'
+import { t, tJoin } from '@/i18n'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -113,10 +113,10 @@ const canUpdateByInterval = computed(() => {
 const renameHintText = computed(() => {
   const price = renameRule.value.price
   const firstFreeText = renameRule.value.first_free === 1 ? t('UIClub_Text8') : t('UIClub_Text9')
-  const costText = t('UIClub_Text10') + price + t('UIMine_VIP_diamond')
+  const costText = tJoin(t('UIClub_Text10'), price, t('UIMine_VIP_diamond'))
   const intervalText =
     renameRule.value.interval > 0
-      ? '，' + t('UIClub_Text11') + renameRule.value.interval + t('UITimeHourTip')
+      ? '，' + tJoin(t('UIClub_Text11'), renameRule.value.interval, t('UITimeHourTip'))
       : ''
   return `*${firstFreeText}，${costText}${intervalText}`
 })
@@ -136,7 +136,7 @@ function goRecharge(): void {
 async function onConfirm(): Promise<void> {
   if (!canConfirm.value) {
     if (!canUpdateByInterval.value) {
-      showFailToast(t('UIClub_Text12') + remainingIntervalHours.value + t('UIClub_Again'))
+      showFailToast(tJoin(t('UIClub_Text12'), remainingIntervalHours.value, t('UIClub_Again')))
     }
     return
   }

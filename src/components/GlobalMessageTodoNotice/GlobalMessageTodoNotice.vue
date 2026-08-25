@@ -34,9 +34,9 @@ interface TodoSection {
 }
 
 const sectionDefs: TodoSection[] = [
-  { type: 'uc', title: t('UIUIMSG_PlayerRecharge') },
-  { type: 'bringIn', title: t('UIMessage_BuyInApply') },
-  { type: 'joinClub', title: t('UIMSG_JoinClub') },
+  { type: 'uc', get title() { return t('UIUIMSG_PlayerRecharge') } },
+  { type: 'bringIn', get title() { return t('UIMessage_BuyInApply') } },
+  { type: 'joinClub', get title() { return t('UIMSG_JoinClub') } },
 ]
 
 

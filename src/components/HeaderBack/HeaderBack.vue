@@ -61,7 +61,7 @@ function handleBack(event: MouseEvent): void {
           fill="currentColor"
         />
       </svg>
-      <span v-if="headerMode !== 'full-slot' && props.title" class="title">
+      <span v-if="headerMode !== 'full-slot' && props.title" v-fit-text="{ maxLines: 1 }" class="title">
         {{ props.title }}
       </span>
     </button>
@@ -120,6 +120,8 @@ function handleBack(event: MouseEvent): void {
 }
 
 .title {
+  min-width: 0;
+  white-space: nowrap;
   font-size: 0.65rem;
   line-height: 120%;
   text-shadow: 0 0.22rem 0.5rem rgba(0, 0, 0, 0.35);

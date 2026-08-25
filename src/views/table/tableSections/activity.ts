@@ -7,15 +7,15 @@ import {
 } from './constants'
 
 const SETTLEMENT_TYPE_OPTIONS = [
-  { text: t('UITable_Round'), value: 0 },
-  { text: t('UITable_Text8'), value: 1 },
+  { get text() { return t('UITable_Round') }, value: 0 },
+  { get text() { return t('UITable_Text8') }, value: 1 },
 ]
 
 export const activitySection: TableFormFieldConfig[] = [
   {
     // settlement_type: 0=局抽 1=把抽
     type: 'select',
-    label: t('UITable_Text9'),
+    get label() { return t('UITable_Text9') },
     modelValue: 'settlement_type',
     defaultValue: 0,
     options: SETTLEMENT_TYPE_OPTIONS,
@@ -23,7 +23,7 @@ export const activitySection: TableFormFieldConfig[] = [
   {
     // fee_permillage: 服务费千分比，0–500 对应 0–5%，步长 0.5%
     type: 'select',
-    label: t('UIMine_WalletPlatform_fee_f'),
+    get label() { return t('UIMine_WalletPlatform_fee_f') },
     modelValue: 'fee_permillage',
     defaultValue: 0,
     options: TEXAS_SERVER_FEE_OPTIONS,
@@ -34,7 +34,7 @@ export const activitySection: TableFormFieldConfig[] = [
   {
     // settle_profit_type: 收费方式，0=按比例 1=固定
     type: 'select',
-    label: t('UICreateTalble_winType'),
+    get label() { return t('UICreateTalble_winType') },
     modelValue: 'settle_profit_type',
     defaultValue: 0,
     options: PAYMENT_METHOD_OPTIONS,
@@ -46,8 +46,8 @@ export const activitySection: TableFormFieldConfig[] = [
   {
     // preflop_free: 翻前结束免服务费，1=开启 2=关闭
     type: 'switch',
-    label: t('UICreateTable_preFlopEndFree'),
-    tip: t('UICreateTable_preFlopEndFreeTips'),
+    get label() { return t('UICreateTable_preFlopEndFree') },
+    get tip() { return t('UICreateTable_preFlopEndFreeTips') },
     modelValue: 'preflop_free',
     defaultValue: 2,
     activeValue: 1,
@@ -60,8 +60,8 @@ export const activitySection: TableFormFieldConfig[] = [
   {
     // few_player_half_off: ≤3人时服务费5折，1=开启 2=关闭
     type: 'switch',
-    label: t('UICreateTable_threeFree'),
-    tip: t('UICreateTable_threeFreeTips'),
+    get label() { return t('UICreateTable_threeFree') },
+    get tip() { return t('UICreateTable_threeFreeTips') },
     modelValue: 'few_player_half_off',
     defaultValue: 2,
     activeValue: 1,
@@ -74,8 +74,8 @@ export const activitySection: TableFormFieldConfig[] = [
   {
     // free_pots_value: 底池低于此值免服务费（整数）；0=不限
     type: 'input',
-    label: t('UICreateTable_poolDownFree') + '(BB)',
-    tip: t('UICreateTable_poolDownFreeTips'),
+    get label() { return t('UICreateTable_poolDownFree') + '(BB)' },
+    get tip() { return t('UICreateTable_poolDownFreeTips') },
     modelValue: 'free_pots_value',
     defaultValue: '',
     numberOnly: true,
@@ -99,7 +99,7 @@ export const activitySection: TableFormFieldConfig[] = [
   {
     // cap_bigblind: 封顶大盲倍数（面值 0–10）；提交时 ×10 → max_per_hand
     type: 'select',
-    label: t('UICreateRoom_ServiceMaxWinRate') + "(BB)",
+    get label() { return t('UICreateRoom_ServiceMaxWinRate') + "(BB)" },
     modelValue: 'cap_bigblind',
     defaultValue: 0,
     options: CAP_BIGBLIND_OPTIONS,
@@ -115,7 +115,7 @@ export const activitySection: TableFormFieldConfig[] = [
   {
     // win_divide_value: 赢家阈值；提交时 ×100
     type: 'input',
-    label: t('UICreateTable_WinSplit'),
+    get label() { return t('UICreateTable_WinSplit') },
     modelValue: 'win_divide_value',
     defaultValue: '',
     numberOnly: true,
@@ -127,7 +127,7 @@ export const activitySection: TableFormFieldConfig[] = [
   {
     // below_divide_ratio: <阈值时收取的比例服务费；提交时 ×10 → ‰
     type: 'input',
-    label: t('UICreateTable_lessThanWin'),
+    get label() { return t('UICreateTable_lessThanWin') },
     modelValue: 'below_divide_ratio',
     defaultValue: '',
     numberOnly: true,
@@ -139,7 +139,7 @@ export const activitySection: TableFormFieldConfig[] = [
   {
     // above_divide_fee: ≥阈值时收取的固定服务费；提交时 ×100
     type: 'input',
-    label: t('UICreateTable_moreThanWin'),
+    get label() { return t('UICreateTable_moreThanWin') },
     modelValue: 'above_divide_fee',
     defaultValue: '',
     numberOnly: true,

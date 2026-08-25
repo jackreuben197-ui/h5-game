@@ -21,9 +21,11 @@ const props = withDefaults(defineProps<{
 }>(), {
   minDate: undefined,
   maxDate: undefined,
-  tipText: t('UIGuildtThreeMonthDataTip'),
+  tipText: '',
   initialTarget: 'start',
 })
+
+const tipLabel = computed(() => props.tipText || t('UIGuildtThreeMonthDataTip'))
 
 const emit = defineEmits<{
   (e: 'update:visible', value: boolean): void
@@ -222,7 +224,7 @@ function startOfDay(date: Date): Date {
   <div v-if="visible" class="date-picker-mask" @click="closePicker">
     <div class="date-picker-sheet" @click.stop>
       <header class="picker-tip">
-        <p>{{ tipText }}</p>
+        <p>{{ tipLabel }}</p>
         <button type="button" class="picker-close" @click="closePicker">×</button>
       </header>
 

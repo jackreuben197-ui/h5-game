@@ -10,7 +10,7 @@ import {
 export const baseSection: TableFormFieldConfig[] = [
   {
     type: 'select',
-    label: t('UICreateTable_HandsCardCount'),
+    get label() { return t('UICreateTable_HandsCardCount') },
     modelValue: 'plo_game_type',
     defaultValue: 4,
     options: PLO_CARD_OPTIONS,
@@ -18,35 +18,35 @@ export const baseSection: TableFormFieldConfig[] = [
   },
   {
     type: 'select',
-    label: t('UICreateTable_MaxSeatCount'),
+    get label() { return t('UICreateTable_MaxSeatCount') },
     modelValue: 'seat_count',
     defaultValue: 2,
     options: SEAT_COUNT_NLH_OPTIONS,
   },
   {
     type: 'select',
-    label: t('UICreateTable_AutoSeatCount'),
+    get label() { return t('UICreateTable_AutoSeatCount') },
     modelValue: 'autostart_min_players',
     defaultValue: 2,
     options: SEAT_COUNT_NLH_OPTIONS,
   },
   {
     type: 'select',
-    label: t('UIClub_RoomCreat_vCP1YSI0'),
+    get label() { return t('UIClub_RoomCreat_vCP1YSI0') },
     modelValue: 'op_duration',
     defaultValue: 15,
     options: OP_DURATION_OPTIONS,
   },
   {
     type: 'select',
-    label: t('UICreateRoomOptions4'),
+    get label() { return t('UICreateRoomOptions4') },
     modelValue: 'game_rhythm',
     defaultValue: 0,
     options: GAME_RHYTHM_OPTIONS,
   },
   {
     type: 'switch',
-    label: t('UIGuildVIPEmptyTableCloseTip'),
+    get label() { return t('UIGuildVIPEmptyTableCloseTip') },
     modelValue: 'auto_close',
     defaultValue: false,
   },
@@ -58,9 +58,9 @@ export const baseSection: TableFormFieldConfig[] = [
   },
   {
     type: 'switch',
-    label: t('UIAnteRandomJump1'),
+    get label() { return t('UIAnteRandomJump1') },
     modelValue: 'random_ante',
-    tip: t('UIAnteRandomJump6'),
+    get tip() { return t('UIAnteRandomJump6') },
     defaultValue: 0,
     activeValue: 1,
     inactiveValue: 0,
@@ -72,10 +72,10 @@ export const baseSection: TableFormFieldConfig[] = [
   },
   {
     type: 'input',
-    label: t('UIAnteRandomJump2'),
+    get label() { return t('UIAnteRandomJump2') },
     modelValue: 'min_ante',
     defaultValue: '',
-    placeholder: t('UIMine_PleaseEnter'),
+    get placeholder() { return t('UIMine_PleaseEnter') },
     numberOnly: true,
     decimalDigits: 1,
     visibleWhen: [
@@ -85,10 +85,10 @@ export const baseSection: TableFormFieldConfig[] = [
   },
   {
     type: 'input',
-    label: t('UIAnteRandomJump3'),
+    get label() { return t('UIAnteRandomJump3') },
     modelValue: 'max_ante',
     defaultValue: '',
-    placeholder: t('UIMine_PleaseEnter'),
+    get placeholder() { return t('UIMine_PleaseEnter') },
     numberOnly: true,
     decimalDigits: 1,
     visibleWhen: [
@@ -98,10 +98,10 @@ export const baseSection: TableFormFieldConfig[] = [
   },
   {
     type: 'input',
-    label: t('UIAnteRandomJump5'),
+    get label() { return t('UIAnteRandomJump5') },
     modelValue: 'ante_interval',
     defaultValue: '',
-    placeholder: t('UIMine_PleaseEnter'),
+    get placeholder() { return t('UIMine_PleaseEnter') },
     numberOnly: true,
     decimalDigits: 1,
     visibleWhen: [

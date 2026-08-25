@@ -10,31 +10,31 @@ import {
 export const limitsSection: TableFormFieldConfig[] = [
   {
     type: 'select',
-    label: t('pool_limit'),
-    tip: t('UICreateTable_poolRules'),
+    get label() { return t('pool_limit') },
+    get tip() { return t('UICreateTable_poolRules') },
     modelValue: 'limit_hc_pool_rate',
     defaultValue: 0,
     options: MIN_VPIP_OPTIONS,
   },
   {
     type: 'select',
-    label: t('UICreateRoomOptions13'),
-    tip: t('UITable_PlayerTableHandsNo'),
+    get label() { return t('UICreateRoomOptions13') },
+    get tip() { return t('UITable_PlayerTableHandsNo') },
     modelValue: 'limit_hc_total_hands',
     defaultValue: 0,
     options: TOTAL_HAND_OPTIONS,
   },
   {
     type: 'select',
-    label: t('UITableSetting_chat'),
+    get label() { return t('UITableSetting_chat') },
     modelValue: 'chat_type',
     defaultValue: 0,
     options: CHAT_TYPE_OPTIONS,
   },
   {
     type: 'switch',
-    label: t('UICreateLimitSeeHand'),
-    tip: t('UICreateLimitSeeHandTips'),
+    get label() { return t('UICreateLimitSeeHand') },
+    get tip() { return t('UICreateLimitSeeHandTips') },
     modelValue: 'limit_watch_hand',
     activeValue: 1,
     inactiveValue: 0,
@@ -42,7 +42,7 @@ export const limitsSection: TableFormFieldConfig[] = [
   },
   {
     type: 'input',
-    label: t('UICreateLimitSeeHand') + "(" + t('UIMine_RecordItemsNormal_3RCUa3w8') + ")",
+    get label() { return t('UICreateLimitSeeHand') + "(" + t('UIMine_RecordItemsNormal_3RCUa3w8') + ")" },
     modelValue: 'limit_hand_num',
     defaultValue: false,
     numberOnly: true,
@@ -50,8 +50,8 @@ export const limitsSection: TableFormFieldConfig[] = [
   },
   {
     type: 'switch',
-    label: t('UICreateRoom_ControlBringIn'),
-    tip: t('UICreateTable_BringIn_Tips'),
+    get label() { return t('UICreateRoom_ControlBringIn') },
+    get tip() { return t('UICreateTable_BringIn_Tips') },
     modelValue: 'limit_bring_in',
     activeValue: 1,
     inactiveValue: 0,
@@ -59,30 +59,30 @@ export const limitsSection: TableFormFieldConfig[] = [
   },
   {
     type: 'select',
-    label: t('UICreateTable_DelayTime'),
-    tip: t('UICreateTable_DelayTimeTips'),
+    get label() { return t('UICreateTable_DelayTime') },
+    get tip() { return t('UICreateTable_DelayTimeTips') },
     modelValue: 'game_delay_times',
     options: GAME_DELAY_TIMES_OPTIONS,
     defaultValue: 2,
   },
   {
     type: 'switch',
-    label: "IP" + t('adaptation20008'),
-    tip: t('UITable_Text15') + "，" + t('UITable_Text16') + "IP" + t('UITable_AllowNamePlayerTable'),
+    get label() { return "IP" + t('adaptation20008') },
+    get tip() { return t('UITable_Text15') + "，" + t('UITable_Text16') + "IP" + t('UITable_AllowNamePlayerTable') },
     modelValue: 'limit_ip',
     defaultValue: false,
   },
   {
     type: 'switch',
-    label: "GPS" + t('adaptation20008'),
-    tip: t('UITable_Text15') + "，" + t('UITable_OfPlayerTable'),
+    get label() { return "GPS" + t('adaptation20008') },
+    get tip() { return t('UITable_Text15') + "，" + t('UITable_OfPlayerTable') },
     modelValue: 'limit_gps',
     defaultValue: false,
   },
   {
     type: 'switch',
-    label: t('UIPersonal_Title'),
-    tip: t('UIPersonal_TitleTips'),
+    get label() { return t('UIPersonal_Title') },
+    get tip() { return t('UIPersonal_TitleTips') },
     modelValue: 'personal_type',
     activeValue: 1,
     inactiveValue: 2,
@@ -92,8 +92,8 @@ export const limitsSection: TableFormFieldConfig[] = [
   {
     // force_show_card: 每手结束时所有手牌自动亮出，1=开启 0=关闭
     type: 'switch',
-    label: t('UICreateTable_FouceShowCard'),
-    tip: t('UICreateTable_ForcedShowFand'),
+    get label() { return t('UICreateTable_FouceShowCard') },
+    get tip() { return t('UICreateTable_ForcedShowFand') },
     modelValue: 'force_show_card',
     defaultValue: 0,
     activeValue: 1,
@@ -102,8 +102,8 @@ export const limitsSection: TableFormFieldConfig[] = [
   {
     // random_seat: 空位≥2时随机安排座位，1=开启 0=关闭
     type: 'switch',
-    label: t('UICreateTable_randSeat'),
-    tip: t('UICreateTable_randSeatTips'),
+    get label() { return t('UICreateTable_randSeat') },
+    get tip() { return t('UICreateTable_randSeatTips') },
     modelValue: 'random_seat',
     defaultValue: 0,
     activeValue: 1,
@@ -112,8 +112,8 @@ export const limitsSection: TableFormFieldConfig[] = [
   {
     // only_ios: 私人房（仅iOS设备），1=开启 0=关闭
     type: 'switch',
-    label: t('UICreateTable_iosTitle'),
-    tip: t('UICreateTable_iosTitleTips'),
+    get label() { return t('UICreateTable_iosTitle') },
+    get tip() { return t('UICreateTable_iosTitleTips') },
     modelValue: 'only_ios',
     defaultValue: 0,
     activeValue: 1,
@@ -123,16 +123,16 @@ export const limitsSection: TableFormFieldConfig[] = [
   {
     // delay_view_card: 发牌后未轮到操作时手牌不可见
     type: 'switch',
-    label: t('UIClub_CreateRoom27'),
-    tip: t('UICreateTableDelayReadTip'),
+    get label() { return t('UIClub_CreateRoom27') },
+    get tip() { return t('UICreateTableDelayReadTip') },
     modelValue: 'delay_view_card',
     defaultValue: false,
   },
   {
     // encrypt_cards: 区块链加密洗切牌，1=开启 0=关闭
     type: 'switch',
-    label: t('UIBlockchain'),
-    tip: t('UIBlockchainTips1'),
+    get label() { return t('UIBlockchain') },
+    get tip() { return t('UIBlockchainTips1') },
     modelValue: 'encrypt_cards',
     defaultValue: 0,
     activeValue: 1,
@@ -150,8 +150,8 @@ export const limitsSection: TableFormFieldConfig[] = [
   {
     // all_in_mute: allin思考期间屏蔽其他玩家聊天，1=开启 2=关闭
     type: 'switch',
-    label: t('UIAllinBanChat'),
-    tip: t('UIAllinBanChatTips'),
+    get label() { return t('UIAllinBanChat') },
+    get tip() { return t('UIAllinBanChatTips') },
     modelValue: 'all_in_mute',
     defaultValue: 2,
     activeValue: 1,

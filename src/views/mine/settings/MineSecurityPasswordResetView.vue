@@ -6,7 +6,7 @@ import { postUserVerifyPasswordApi } from '@/api/user'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import icDeleteKeyboard from '@/assets/icons/ic_delete_keyboard.svg'
 import btnClose from '@/assets/icons/btn_close.png'
-import { t } from '@/i18n'
+import { t, tJoin } from '@/i18n'
 
 type OverlayType = 'none' | 'loading' | 'error-soft' | 'error-hard'
 
@@ -32,9 +32,18 @@ const keyRows = [
 
 const modalText = computed(() => {
   if (overlayType.value === 'error-hard') {
-    return t('UIClub_Code2') + "5" + t('UIHappyShop_Time') + "," + t('UIClub_No8') + "," + t('UIClub_Text67')
+    return (
+      tJoin(t('UIClub_Code2'), 5, t('UIHappyShop_Time')) + ',' + t('UIClub_No8') + ',' + t('UIClub_Text67')
+    )
   }
-  return t('UIClub_Code3') + "," + t('UIClub_Can3') + (Math.max(0, 5 - failedAttempts.value)) + t('UIHappyShop_Time') + "," + t('UIClub_Text68')
+  const attemptsLeft = Math.max(0, 5 - failedAttempts.value)
+  return (
+    t('UIClub_Code3') +
+    ',' +
+    tJoin(t('UIClub_Can3'), attemptsLeft, t('UIHappyShop_Time')) +
+    ',' +
+    t('UIClub_Text68')
+  )
 })
 
 function closePage(): void {

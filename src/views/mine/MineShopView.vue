@@ -24,7 +24,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
 import { useAppConfigStore } from '@/stores/appConfig'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-import { getLocale, t } from '@/i18n'
+import { t, tJoin } from '@/i18n'
 
 const title = computed(() => t('UIHappyShop_ActivityShop'))
 
@@ -414,10 +414,7 @@ async function fetchShopList(options: RefreshOptions = {}): Promise<void> {
         productId: String(row.product_id ?? ''),
         title: `${row.gold_count}`,
         goldCount,
-        diamondsText:
-          getLocale() === 'cn' || getLocale() === 'zh'
-            ? t('UIClub_Text90') + num + t('UIMine_VIP_diamond')
-            : `${t('UIClub_Text90')} ${num} ${t('UIMine_VIP_diamond')}`,
+        diamondsText: tJoin(t('UIClub_Text90'), num, t('UIMine_VIP_diamond')),
         diamondsValue: num,
         price,
         status,

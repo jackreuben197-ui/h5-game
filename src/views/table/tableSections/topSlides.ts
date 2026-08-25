@@ -20,7 +20,7 @@ export const ANTE_OPTIONS = BASE_SB_LIST.map((v) => ({
 export const blindsSection: TableFormFieldConfig[] = [
   {
     type: 'slider',
-    label: t('UISB') + "/" + t('UIBB'),
+    get label() { return t('UISB') + "/" + t('UIBB') },
     modelValue: 'sb',
     defaultValue: 1000,
     options: SB_OPTIONS,
@@ -128,7 +128,7 @@ function formatAmount(value: number): string {
 export const buyinSection: TableFormFieldConfig[] = [
   {
     type: 'slider',
-    label: t('UITable_Text18'),
+    get label() { return t('UITable_Text18') },
     modelValue: 'buyin_range',
     defaultValue: [50, 300],
     options: [],
@@ -149,7 +149,7 @@ export const buyinSection: TableFormFieldConfig[] = [
 export const durationSection: TableFormFieldConfig[] = [
   {
     type: 'slider',
-    label: t('UIClub_Text36') + " (h)",
+    get label() { return t('UIClub_Text36') + " (h)" },
     modelValue: 'play_duration',
     defaultValue: 1800,
     options: TABLE_TIME_OPTIONS,

@@ -905,7 +905,7 @@ onBeforeUnmount(() => {
                   <p class="zone-sub-desc">{{ t('UIHomeMttAreaTip') }}</p>
                 </div>
                 <div class="zone-online-bar">
-                  <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+                  <span v-fit-text="{ maxLines: 1 }" class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
                   <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
                   <span class="online-num"> {{ mttTablesText }} </span>
                   <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
@@ -936,7 +936,7 @@ onBeforeUnmount(() => {
                   </div>
                 </div>
                 <div class="zone-online-bar">
-                  <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+                  <span v-fit-text="{ maxLines: 1 }" class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
                   <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
                   <span class="online-num"> {{ pokerTablesText }} </span>
                   <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
@@ -969,7 +969,7 @@ onBeforeUnmount(() => {
                   </div>
                 </div>
                 <div class="zone-online-bar">
-                  <span class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+                  <span v-fit-text="{ maxLines: 1 }" class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
                   <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
                   <span class="online-num"> {{ mahjongPlayersText }} </span>
                 </div>
@@ -1607,6 +1607,8 @@ onBeforeUnmount(() => {
 }
 
 .online-text {
+  min-width: 0;
+  white-space: nowrap;
   font-size: 0.22rem;
   color: #fff;
 }

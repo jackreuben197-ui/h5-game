@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useTheme } from '@/composables/useTheme'
-import { t } from '@/i18n'
+import { t, tJoin } from '@/i18n'
 
 const { isDark, setModeAnimated } = useTheme()
 
@@ -19,8 +19,8 @@ function toggleTheme(): void {
     type="button"
     role="switch"
     :aria-checked="isDark"
-    :aria-label="t('UIComponent_Text8') + (targetThemeLabel) + t('UIGameplaySetting_DesktopSetting_Theme')"
-    :title="t('UIComponent_Text8') + (targetThemeLabel) + t('UIGameplaySetting_DesktopSetting_Theme')"
+    :aria-label="tJoin(t('UIComponent_Text8'), targetThemeLabel, t('UIGameplaySetting_DesktopSetting_Theme'))"
+    :title="tJoin(t('UIComponent_Text8'), targetThemeLabel, t('UIGameplaySetting_DesktopSetting_Theme'))"
     @click.stop="toggleTheme"
   >
     <span class="theme-quick-switch__thumb" aria-hidden="true"></span>

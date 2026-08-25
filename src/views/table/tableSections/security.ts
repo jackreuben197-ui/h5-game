@@ -3,9 +3,9 @@ import type { TableFormFieldConfig } from '../template'
 
 // anti_cheat_type: 1=关(NONE) 2=语音(AUDIO) 3=视频(VIDEO) 4=人脸识别(FACE_VERIFY)
 const ANTI_CHEAT_OPTIONS = [
-  { text: t('UITable_Table2'), value: 1, icon: 'icon_table' },
-  { text: t('UIRoom_RealVoice'), value: 2, icon: 'icon_audio' },
-  { text: t('UIRoom_RealVedio'), value: 3, icon: 'icon_video' },
+  { get text() { return t('UITable_Table2') }, value: 1, icon: 'icon_table' },
+  { get text() { return t('UIRoom_RealVoice') }, value: 2, icon: 'icon_audio' },
+  { get text() { return t('UIRoom_RealVedio') }, value: 3, icon: 'icon_video' },
   // { text: '人脸识别', value: 4 },
 ]
 
@@ -13,29 +13,29 @@ const ANTI_CHEAT_OPTIONS = [
 // 1=全时长(FULL_TIME) 2=随机(RANDOM) 3=麦序(SEQUENCE)
 // 5=特效模式(EFFECT) 6=真人模式(REAL)，5/6 的子配置由平台统一提供
 const VIDEO_MODE_OPTIONS = [
-  { text: t('UICreateRoomOptions14'), value: 1 },
-  { text: t('UICreateRoomOptions15'), value: 2 },
-  { text: t('UICreateRoomOptions16'), value: 3 },
-  { text: t('videoRealMode'), value: 6 },
-  { text: t('videoEffectMode'), value: 5 },
+  { get text() { return t('UICreateRoomOptions14') }, value: 1 },
+  { get text() { return t('UICreateRoomOptions15') }, value: 2 },
+  { get text() { return t('UICreateRoomOptions16') }, value: 3 },
+  { get text() { return t('videoRealMode') }, value: 6 },
+  { get text() { return t('videoEffectMode') }, value: 5 },
 ]
 
 // video_verify_type: 1=视频+麦克风 2=仅开启视频
 const VIDEO_VERIFY_OPTIONS = [
-  { text: t('VertifyVideoMicrophone'), value: 1 },
-  { text: t('VertifyVideo'), value: 2 },
+  { get text() { return t('VertifyVideoMicrophone') }, value: 1 },
+  { get text() { return t('VertifyVideo') }, value: 2 },
 ]
 
 // anti_cheat_order_mic_type: 1=可关闭 2=不可关闭
 const MIC_CLOSE_OPTIONS = [
-  { text: t('UIGuildRoomCreatmode_AudioModeMictipsClose'), value: 1 },
-  { text: t('UIGuildRoomCreatmode_AudioModeMictipsnoClose'), value: 2 },
+  { get text() { return t('UIGuildRoomCreatmode_AudioModeMictipsClose') }, value: 1 },
+  { get text() { return t('UIGuildRoomCreatmode_AudioModeMictipsnoClose') }, value: 2 },
 ]
 
 export const securityTabSection: TableFormFieldConfig[] = [
   {
     type: 'tab',
-    label: t('UITable_Text4'),
+    get label() { return t('UITable_Text4') },
     modelValue: 'anti_cheat_type',
     defaultValue: 1,
     options: ANTI_CHEAT_OPTIONS,
@@ -47,7 +47,7 @@ export const securitySection: TableFormFieldConfig[] = [
   {
     // anti_cheat_video_type: 全时长/随机/麦序
     type: 'select',
-    label: t('UITable_Text17'),
+    get label() { return t('UITable_Text17') },
     modelValue: 'anti_cheat_video_type',
     defaultValue: 1,
     options: VIDEO_MODE_OPTIONS,
@@ -59,8 +59,8 @@ export const securitySection: TableFormFieldConfig[] = [
   {
     // anti_cheat_order_type: 麦序模式下的音频模式，1=麦序音频 2=全程音频
     type: 'switch',
-    label: t('UIGuildRoomCreatmode_AudioMode'),
-    tip: t('UIGuildRoomCreatmode_AudioModeTips'),
+    get label() { return t('UIGuildRoomCreatmode_AudioMode') },
+    get tip() { return t('UIGuildRoomCreatmode_AudioModeTips') },
     modelValue: 'anti_cheat_order_type',
     defaultValue: 1,
     activeValue: 2,
@@ -73,7 +73,7 @@ export const securitySection: TableFormFieldConfig[] = [
   {
     // anti_cheat_order_mic_type: 全程音频时麦克风是否可关闭，1=可关闭 2=不可关闭
     type: 'select',
-    label: t('UIGuildRoomCreatmode_AudioModeMic'),
+    get label() { return t('UIGuildRoomCreatmode_AudioModeMic') },
     modelValue: 'anti_cheat_order_mic_type',
     defaultValue: 1,
     options: MIC_CLOSE_OPTIONS,
@@ -90,7 +90,7 @@ export const securitySection: TableFormFieldConfig[] = [
     // video_verify_type: 验证模式，1=视频+麦克风 2=仅开启视频
     // 真人模式和特效模式使用平台配置，不展示自定义子选项
     type: 'select',
-    label: t('VertifyOuts'),
+    get label() { return t('VertifyOuts') },
     modelValue: 'video_verify_type',
     defaultValue: 1,
     options: VIDEO_VERIFY_OPTIONS,
@@ -102,7 +102,7 @@ export const securitySection: TableFormFieldConfig[] = [
   {
     // video_effect_type: 视频特效桌，1=开启 2=关闭
     type: 'switch',
-    label: t('UIMineOnlineShopping_VideoEffects'),
+    get label() { return t('UIMineOnlineShopping_VideoEffects') },
     modelValue: 'video_effect_type',
     defaultValue: 2,
     activeValue: 1,
@@ -115,8 +115,8 @@ export const securitySection: TableFormFieldConfig[] = [
   {
     // power_saving: 节能模式，1=开启 2=关闭
     type: 'switch',
-    label: t('UICreateTable_PowerSaving'),
-    tip: t('UICreateTable_PowerSavingTips'),
+    get label() { return t('UICreateTable_PowerSaving') },
+    get tip() { return t('UICreateTable_PowerSavingTips') },
     modelValue: 'power_saving',
     defaultValue: 2,
     activeValue: 1,

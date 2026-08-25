@@ -35,7 +35,7 @@ function notifyNotLogin(): void {
 <template>
   <div class="friends-table-page">
     <div class="title-bar main-primary-header">
-      <div class="title">{{ t('UIMessage_Default') }}</div>
+      <div v-fit-text="{ maxLines: 1 }" class="title">{{ t('UIMessage_Default') }}</div>
       <div class="currency-info main-primary-currency" @click="notifyNotLogin">
         <div class="icon-diamond">
           <img :src="iconDiamond" :alt="t('UIMine_VIP_diamond')" />
@@ -50,7 +50,7 @@ function notifyNotLogin(): void {
     <div class="scroll-content">
       <div class="main-content">
         <div class="section join-section">
-          <div class="section-title">{{ t('UIGuest_JoinTableGame') }}</div>
+          <div v-fit-text="{ maxLines: 2 }" class="section-title">{{ t('UIGuest_JoinTableGame') }}</div>
           <div class="section-subtitle">{{ t('UIDialogInvitationCodeTitle') }}, {{ t('UIGuest_And') }}</div>
           <div class="invite-inputs" @click="notifyNotLogin">
             <div v-for="(digit, index) in inviteCode" :key="index" class="invite-input-wrap">
@@ -123,6 +123,8 @@ function notifyNotLogin(): void {
   align-items: center;
   padding: 0 0.78rem;
   .title {
+    min-width: 0;
+    white-space: nowrap;
     font-size: 0.65rem;
     font-weight: 510;
     line-height: 120%;

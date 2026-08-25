@@ -554,7 +554,7 @@ watch(
   <div class="friends-table-page">
     <!-- 顶部标题栏 -->
     <div class="title-bar main-primary-header">
-      <div class="title">{{ t('UIMessage_Default') }}</div>
+      <div v-fit-text="{ maxLines: 1 }" class="title">{{ t('UIMessage_Default') }}</div>
       <div class="currency-info main-primary-currency" @click="goToMineShop">
         <div class="icon-diamond">
           <img :src="iconDiamond" :alt="t('UIMine_VIP_diamond')" />
@@ -571,7 +571,7 @@ watch(
       <div class="main-content">
         <!-- 加入牌局 -->
         <div class="section join-section">
-          <div class="section-title">{{ t('UIFriendsTable_JoinTableGame') }}</div>
+          <div v-fit-text="{ maxLines: 2 }" class="section-title">{{ t('UIFriendsTable_JoinTableGame') }}</div>
           <div class="section-subtitle">{{ t('UIDialogInvitationCodeTitle') }}, {{ t('UIFriendsTable_And') }}</div>
           <div class="invite-inputs" @click="onInputCode">
             <div v-for="(digit, index) in inviteCode" :key="index" class="invite-input-wrap">
@@ -718,6 +718,8 @@ watch(
   align-items: center;
   padding: 0 0.78rem;
   .title {
+    min-width: 0;
+    white-space: nowrap;
     font-size: 0.65rem;
     font-weight: 510;
     line-height: 120%;

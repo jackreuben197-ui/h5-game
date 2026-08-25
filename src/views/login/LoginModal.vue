@@ -129,7 +129,7 @@ watch(
 const contactValue = computed(() => (contactType.value === 'account' ? form.account : form.email))
 
 const contactPlaceholder = computed(() =>
-  contactType.value === 'account' ? t('UILogin_Account', 'Please enter account ID') : t('UILogin_InputEmail'),
+  contactType.value === 'account' ? t('UILogin_Account') : t('UILogin_InputEmail'),
 )
 
 // const needAgreement = computed(() => pageMode.value !== 'forgot')
@@ -208,7 +208,7 @@ async function sendOtp() {
   otpSending.value = true
   try {
     if (contactType.value === 'account') {
-      showGameToast(t('UILogin_1010', 'Account login does not support OTP verification'))
+      showGameToast(t('UILogin_AccountNoOtp'))
       return
     } else {
       const check = await postUserCheckEmailApi({ email: target })
@@ -438,11 +438,11 @@ async function handleForgot(target: string) {
 
 function validateContactOnly(target: string): boolean {
   if (!target) {
-    showGameToast(contactType.value === 'account' ? t('UILogin_Account', 'Please enter account name') : t('UILogin_InputEmail'))
+    showGameToast(contactType.value === 'account' ? t('UILogin_Account') : t('UILogin_InputEmail'))
     return false
   }
   if (contactType.value === 'account' && target.length <= 3) {
-    showGameToast(t('UILogin_Account', 'Please enter account name'))
+    showGameToast(t('UILogin_Account'))
     return false
   }
   if (contactType.value === 'email' && !isEmail(target)) {

@@ -137,7 +137,7 @@ onMounted(() => {
       <div class="card-bg-outter">
         <div class="card-bg-innner">
           <div class="card-line1">
-            <div class="left-text">MESSAGES</div>
+            <div class="left-text">{{ t('UIMine_MsgSystemContent').toUpperCase() }}</div>
             <div class="right-icon">
               <img :src="iconMessages" :alt="t('UIMine_MsgSystemContent')" />
             </div>

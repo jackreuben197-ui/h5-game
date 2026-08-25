@@ -28,29 +28,10 @@ const title = computed(() => {
   return t('tc_YQAGnw3p')
 })
 
-const aboutContent: Record<string, { heading: string; body: string }> = {
-  en: {
-    heading: 'About the platform',
-    body: 'We have always strived to cultivate a community of poker lovers, to enable poker lovers to play in their desired casual pace on W poker. As the pioneer of friend hosted poker games and quick games, we have been approved by many poker players. W poker is proud to be a fair and trustworthy poker platform. Our shuffling algorithms and random number generators have been certified by Gaming Laboratories International (GLI), the leading independent certification agency in the industry, and is verified to be fair for poker and related games of chance. For a poker platform, fairness is key. Our random number generators decides our shuffling and dealing sequences, and our GLI certification proves that our fairness will in no scenario be compromised.',
-  },
-  cn: {
-    heading: '关于平台',
-    body: '我们一直致力于培育一个扑克爱好者社区，让玩家能够在W poker上以自己喜欢的节奏休闲娱乐。作为好友局和快速游戏的先驱，我们已获得众多扑克玩家的认可。W poker致力于成为一个公平、值得信赖的扑克平台。我们的洗牌算法和随机数生成器已通过业内领先的独立认证机构——国际游戏实验室（GLI）的认证，被验证为对扑克及相关博彩游戏公平公正。对于一个扑克平台而言，公平是核心。我们的随机数生成器决定洗牌和发牌顺序，GLI认证证明我们的公平性在任何情况下都不会妥协。',
-  },
-  zh: {
-    heading: '關於平台',
-    body: '我們一直致力於培育一個撲克愛好者社群，讓玩家能夠在W poker上以自己喜歡的節奏休閒娛樂。作為好友局和快速遊戲的先驅，我們已獲得眾多撲克玩家的認可。W poker致力於成為一個公平、值得信賴的撲克平台。我們的洗牌演算法和隨機數生成器已通過業內領先的獨立認證機構——國際遊戲實驗室（GLI）的認證，被驗證為對撲克及相關博彩遊戲公平公正。對於一個撲克平台而言，公平是核心。我們的隨機數生成器決定洗牌和發牌順序，GLI認證證明我們的公平性在任何情況下都不會妥協。',
-  },
-  pt: {
-    heading: 'Sobre a plataforma',
-    body: 'Sempre nos esforçamos para cultivar uma comunidade de amantes de poker, permitindo que os jogadores joguem no ritmo casual que desejam no W poker. Como pioneiro nos jogos entre amigos e partidas rápidas, fomos aprovados por muitos jogadores de poker. O W poker tem orgulho de ser uma plataforma de poker justa e confiável. Nossos algoritmos de embaralhamento e geradores de números aleatórios foram certificados pelo Gaming Laboratories International (GLI), a principal agência de certificação independente do setor, e verificados como justos para poker e jogos de azar relacionados. Para uma plataforma de poker, a justiça é fundamental. Nossos geradores de números aleatórios determinam nossas sequências de embaralhamento e distribuição, e nossa certificação GLI prova que nossa justiça não será comprometida em nenhum cenário.',
-  },
-}
-
-const aboutLocale = computed(() => {
-  const locale = getLocale()
-  return aboutContent[locale] ?? aboutContent['en']
-})
+const aboutLocale = computed(() => ({
+  heading: t('Page_AboutUs_Heading'),
+  body: t('Page_AboutUs_Body'),
+}))
 
 const loading = ref(false)
 const content = ref<string[]>([])

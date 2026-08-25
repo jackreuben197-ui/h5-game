@@ -188,6 +188,13 @@ function extractList(value: unknown, depth = 0): Record<string, unknown>[] {
   return []
 }
 
+function getFormattedMonth(date: Date): string {
+  const loc = getLocale()
+  const localeTag = (loc === 'zh' || loc === 'cn') ? 'zh-CN' : (loc === 'tw' ? 'zh-TW' : loc)
+  const formatted = date.toLocaleString(localeTag, { month: 'short' })
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1).replace(/\.$/, '')
+}
+
 function resolveDateParts(raw: unknown): {
   day: string
   month: string
@@ -204,7 +211,7 @@ function resolveDateParts(raw: unknown): {
       const day = String(candidate.getDate()).padStart(2, '0')
       return {
         day,
-        month: candidate.toLocaleString('en-US', { month: 'short' }),
+        month: getFormattedMonth(candidate),
         text: raw,
         dateKey: `${year}-${month}-${day}`,
       }
@@ -220,7 +227,7 @@ function resolveDateParts(raw: unknown): {
     const day = String(value.getDate()).padStart(2, '0')
     return {
       day,
-      month: value.toLocaleString('en-US', { month: 'short' }),
+      month: getFormattedMonth(value),
       text: value.toLocaleString('zh-CN', { hour12: false }),
       dateKey: `${year}-${month}-${day}`,
     }
@@ -724,7 +731,7 @@ onMounted(() => {
       </div>
 
       <section v-if="activeTab !== 3" class="glass-card total-card">
-        <div v-if="activeTab === 1" class="label">{{ t('UC') }}{{ t('UIClub_Text33') }}</div>
+        <div v-if="activeTab === 1" class="label">{{ t('Page_MineBill_UCTotalAmount') }}</div>
         <div v-else-if="activeTab === 2" class="label">{{ t('UIMineAllClub') }}</div>
         <div v-else-if="activeTab === 4" class="label">{{ t('UIMineAllDiamond') }}</div>
         <div class="amount-row">

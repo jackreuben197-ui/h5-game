@@ -1169,6 +1169,7 @@ onActivated(async () => {
             @click="toggleBlockExpand(block.key)"
           >
             <img :src="sideYellowBtn" :alt="t('UICasino_AllGames')" class="expand-btn-img" />
+            <span class="expand-btn-text">{{ t('UICasino_AllGames') }}</span>
           </button>
           <button
             v-if="block.key === 'hot-fish' && selectedCategory === 'hot'"
@@ -1177,6 +1178,7 @@ onActivated(async () => {
             @click="toggleBlockExpand(block.key)"
           >
             <img :src="sideBlueBtn" :alt="t('UICasino_AllGames')" class="expand-btn-img" />
+            <span class="expand-btn-text">{{ t('UICasino_AllGames') }}</span>
           </button>
           <div
             class="game-card-grid"
@@ -1628,6 +1630,19 @@ onActivated(async () => {
     transform: scale(0.95);
     opacity: 0.8;
   }
+}
+
+.expand-btn-text {
+  position: absolute;
+  color: #fff;
+  font-size: 0.24rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.02rem;
+  pointer-events: none;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  white-space: nowrap;
 }
 
 .expand-btn-img {

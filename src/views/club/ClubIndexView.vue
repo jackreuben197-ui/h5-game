@@ -798,16 +798,6 @@ function resolveNameByUnityRule(rawName: string): string {
   return rawName
 }
 
-const localized = (en: string, cn: string): string => ['cn', 'zh'].includes(getLocale()) ? cn : en
-
-function multilang(key: string, en: string, cn: string): string {
-  const translated = t(key)
-  if (translated && translated !== key) {
-    return translated
-  }
-  return ['cn', 'zh'].includes(getLocale()) ? cn : en
-}
-
 function handleMttCardAction(item: MttItem): void {
   if (isChannelPackage && !gameStore.sessionToken) {
     notifyNotLogin()
@@ -1258,7 +1248,7 @@ const handleBack = () => {
             type="button"
             @click="handleClubHeaderTabClick('casino')"
           >
-            {{ localized('Casino', '娱乐场') }}
+            {{ t('UICasino_Title') }}
           </button>
         </div>
 

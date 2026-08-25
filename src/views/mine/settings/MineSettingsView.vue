@@ -20,8 +20,6 @@ import { SUPPORTED_LOCALES_OPTIONS, getLocale, t } from '@/i18n'
 import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
 
-const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
-
 const title = computed(() => t('UIMine_btn_setting'))
 
 const router = useRouter()
@@ -130,7 +128,7 @@ async function onRowClick(item: SettingItem): Promise<void> {
   }
 
   if (item.key === 'line') {
-    showFailToast(localized('Line switching is under development', '线路切换功能开发中'))
+    showFailToast(t('UIClub_InDeve4'))
   }
 }
 
@@ -138,7 +136,7 @@ function onLogoutConfirm(): void {
   showLogoutDialog.value = false
   gameStore.clearLogin()
   LoginSession.ClearWS()
-  showSuccessToast(localized('Logged out', '已退出登录'))
+  showSuccessToast(t('UIClub_DoneExit'))
   void router.replace('/guest/home')
 }
 

@@ -14,7 +14,7 @@ import { theme } from '@/utils/theme'
 import imgQuickActionCreateShield from '@/assets/images/club_qa_create_club_shield.png'
 import imgQuickActionBoardChart from '@/assets/images/club_qa_data_board_chart.png'
 import { useLoginModalStore } from '@/stores/loginModal'
-import { getLocale, t } from '@/i18n'
+import { t } from '@/i18n'
 
 const loginModalStore = useLoginModalStore()
 
@@ -27,19 +27,16 @@ const imgPokerDiamond = computed(() =>
   isLightTheme.value ? imgPokerDiamondLight : imgPokerDiamondDark,
 )
 
-const localized = (en: string, cn: string): string => (getLocale() === 'en' ? en : cn)
-
 interface QuickActionItem {
   id: number
-  titleEn: string
-  titleCn: string
+  titleKey: string
   kind: 'create-club' | 'club-panel'
   hidden?: boolean
 }
 
 const quickActions: QuickActionItem[] = [
-  { id: 1, titleEn: 'Create Club', titleCn: '创建俱乐部', kind: 'create-club' },
-  { id: 2, titleEn: 'Create Club', titleCn: '创建俱乐部', kind: 'club-panel', hidden: true },
+  { id: 1, titleKey: 'UIClub_CreateClub', kind: 'create-club' },
+  { id: 2, titleKey: 'UIClub_CreateClub', kind: 'club-panel', hidden: true },
 ]
 
 function notifyNotLogin(): void {
@@ -50,7 +47,7 @@ function notifyNotLogin(): void {
 <template>
   <div class="page-shell club-index">
     <section class="search-row">
-      <div class="search-shell" :aria-label="localized('Club search', '俱乐部搜索')">
+      <div class="search-shell" :aria-label="t('UIClub_ClubSearch')">
         <label class="search-trigger" for="club-search-input">
           <img class="search-icon" :src="imgSearch" alt="" />
           <input
@@ -61,14 +58,14 @@ function notifyNotLogin(): void {
             autocomplete="off"
             maxlength="6"
             readonly
-            :placeholder="localized('Search Club ID', '搜索俱乐部ID')"
+            :placeholder="t('UIClub_SearchClubID')"
             @focus="notifyNotLogin"
             @click="notifyNotLogin"
           />
         </label>
         <button type="button" class="search-btn" @click="notifyNotLogin">
           <div class="search-btn-blur" aria-hidden="true" />
-          <span class="search-btn-label">{{ localized('Search', '搜索') }}</span>
+          <span class="search-btn-label">{{ t('search') }}</span>
           <div class="search-btn-inset" aria-hidden="true" />
         </button>
       </div>
@@ -101,7 +98,7 @@ function notifyNotLogin(): void {
             />
           </template>
         </div>
-        <span class="action-text" :class="`action-text--${item.kind}`">{{ localized(item.titleEn, item.titleCn) }}</span>
+        <span class="action-text" :class="`action-text--${item.kind}`">{{ t(item.titleKey) }}</span>
       </button>
     </section>
 

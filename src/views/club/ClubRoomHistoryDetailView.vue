@@ -53,18 +53,26 @@ const detailInfo = ref<DetailInfo>({
   roomIdText: '--',
   jackpot: '0',
   topMetrics: [
-    { label: '买入', value: '--' },
-    { label: '底分', value: '--' },
-    { label: '服务费', value: '--' },
+    { label: t('Page_DataDetails_Buyin'), value: '--' },
+    { label: t('Page_DataDetails_Blinds'), value: '--' },
+    { label: t('Page_DataDetails_Fee'), value: '--' },
   ],
   middleMetrics: [
-    { label: '总人数', value: '--' },
-    { label: '保险', value: '0' },
-    { label: '总服务费', value: '0' },
+    { label: t('Page_DataDetails_Players'), value: '--' },
+    { label: t('Page_DataDetails_Insurance'), value: '0' },
+    { label: t('Page_DataDetails_TotalFee'), value: '0' },
   ],
 })
 
-const tableHeaders = ['User', '赢', '服务费', '保险', '买入', '手数', 'JP']
+const tableHeaders = computed(() => [
+  'User',
+  t('Page_DataDetails_Win'),
+  t('Page_DataDetails_Fee'),
+  t('Page_DataDetails_Insurance'),
+  t('Page_DataDetails_Buyin'),
+  t('Page_DataDetails_Hands'),
+  'JP',
+])
 
 const records = ref<PlayerRecord[]>([])
 
@@ -126,14 +134,14 @@ function mapDetailInfo(payload: unknown): DetailInfo {
     roomIdText: String(roomId.value || '--'),
     jackpot: formatNumber(jackpot),
     topMetrics: [
-      { label: '买入', value: buyInValue },
-      { label: '底分', value: `${formatUC(sb)}/${formatUC(bb)}` },
-      { label: '服务费', value: feeRate > 0 ? `${feeRate / 10}%` : '--' },
+      { label: t('Page_DataDetails_Buyin'), value: buyInValue },
+      { label: t('Page_DataDetails_Blinds'), value: `${formatUC(sb)}/${formatUC(bb)}` },
+      { label: t('Page_DataDetails_Fee'), value: feeRate > 0 ? `${feeRate / 10}%` : '--' },
     ],
     middleMetrics: [
-      { label: '总人数', value: String(totalPlayer || '--') },
-      { label: '保险', value: formatUC(insurance) },
-      { label: '总服务费', value: formatUC(totalFee) },
+      { label: t('Page_DataDetails_Players'), value: String(totalPlayer || '--') },
+      { label: t('Page_DataDetails_Insurance'), value: formatUC(insurance) },
+      { label: t('Page_DataDetails_TotalFee'), value: formatUC(totalFee) },
     ],
   }
 }
@@ -228,13 +236,13 @@ onMounted(() => {
     <div class="club-room-history-detail">
       <section class="meta-panel">
         <div class="meta-title-row">
-          <span class="meta-title">完成的</span>
+          <span class="meta-title">{{ t('Page_DataDetails_Completed') }}</span>
           <strong class="meta-main-value">{{ detailInfo.roomName }}</strong>
         </div>
 
         <div class="meta-sub-row">
           <div class="creator-wrap">
-            <span class="meta-sub-label">创作者</span>
+            <span class="meta-sub-label">{{ t('Page_DataDetails_Creator') }}</span>
             <span class="meta-sub-value">{{ detailInfo.creator }}</span>
             <div class="id-pill-wrap">
               <span class="id-pill">ID</span>
@@ -315,8 +323,8 @@ onMounted(() => {
             <span class="value-cell">{{ row.hands }}</span>
             <span class="value-cell">{{ row.jp }}</span>
           </article>
-          <p v-if="!records.length && !loading" class="list-status">暂无玩家记录</p>
-          <p v-if="loading" class="list-status">加载中...</p>
+          <p v-if="!records.length && !loading" class="list-status">{{ t('Page_DataDetails_NoPlayerRecord') }}</p>
+          <p v-if="loading" class="list-status">{{ t('Page_DataDetails_Loading') }}</p>
         </div>
       </section>
     </div>

@@ -1358,12 +1358,12 @@ onMounted(async () => {
 
     <GameDialog
       v-model:show="showCopyPopup"
-      message="申请复制俱乐部需要等待审核，是否现在提交申请"
+      :message="t('UIClubCopyTips')"
       dialog-width="8.454rem"
       :show-cancel-button="true"
       :close-on-click-overlay="true"
-      cancel-button-text="取消"
-      confirm-button-text="确定"
+      :cancel-button-text="t('adaptation10013')"
+      :confirm-button-text="t('adaptation10012')"
       @confirm="submitCopyRequest"
       @cancel="closeCopyPopup"
     />

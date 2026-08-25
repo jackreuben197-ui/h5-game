@@ -516,7 +516,7 @@ onMounted(async () => {
           <div class="member-assets" @click="openFundSheet(member)">
             <p class="asset-item">
               <img :src="imgChips" alt="uc" />
-              <span class="asset-label">联盟币</span>
+              <span class="asset-label">{{ t('UIClubCreditLimit1') }}</span>
               <strong class="asset-value">{{ formatUC(member.uc) }}</strong>
             </p>
             <p class="asset-item">

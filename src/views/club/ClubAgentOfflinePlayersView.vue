@@ -336,7 +336,7 @@ onMounted(() => {
               <div class="data-item">
                 <p class="data-label">
                   <img :src="imgChips" alt="" aria-hidden="true" />
-                  <span>联盟币</span>
+                  <span>{{ t('UIClubCreditLimit1') }}</span>
                 </p>
                 <p class="data-value">{{ formatUC(row.uc) }}</p>
               </div>

@@ -83,7 +83,7 @@ function getOpLabel(record: UserBillWallet): string {
   )
   const text = billText || resolveOpCodeText(code)
   const label = text && text !== `OpCodeString_${code}` ? text : code
-  return label.replace(/\bUC\b/g, '联盟币')
+  return label.replace(/\bUC\b/g, t('UIClubCreditLimit1'))
 }
 
 function isMttRecord(record: UserBillWallet): boolean {

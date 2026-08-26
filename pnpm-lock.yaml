@@ -19,7 +19,7 @@ importers:
         version: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512
       '@silenthill/h5-cc-i18n':
         specifier: github:jackreuben197-ui/h5-cc-i18n#dev_i18n
-        version: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/d1dc134e5c672217c93bde1271074dba8ce67e2d
+        version: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/7333f5abec9b13e8c6801398a0ddf8ceca24dddc
       '@vueuse/core':
         specifier: ^14.2.1
         version: 14.2.1(vue@3.5.32(typescript@6.0.2))
@@ -1067,8 +1067,8 @@ packages:
     resolution: {gitHosted: true, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512}
     version: 0.1.0
 
-  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/d1dc134e5c672217c93bde1271074dba8ce67e2d':
-    resolution: {gitHosted: true, integrity: sha512-Pta80jr7CiQ5gtG2QjmK2b0yM/LSbm7if3PFspddUM3/WUBePUlVvqruD66MzcecNWjXKTruRmmy///J1Vmp7A==, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/d1dc134e5c672217c93bde1271074dba8ce67e2d}
+  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/7333f5abec9b13e8c6801398a0ddf8ceca24dddc':
+    resolution: {gitHosted: true, integrity: sha512-4SNoKKEBbFgYYIt1bDLbkCpPfzvOAFqZ7zo0dARL7QACe77m6U6wHhyJcrr4pjbQdDbl1PG2OP1845Ek1eWf0A==, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/7333f5abec9b13e8c6801398a0ddf8ceca24dddc}
     version: 1.0.0
 
   '@tybys/wasm-util@0.10.1':
@@ -3500,7 +3500,7 @@ snapshots:
 
   '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512': {}
 
-  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/d1dc134e5c672217c93bde1271074dba8ce67e2d': {}
+  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/7333f5abec9b13e8c6801398a0ddf8ceca24dddc': {}
 
   '@tybys/wasm-util@0.10.1':
     dependencies:

@@ -3,8 +3,12 @@ import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
+import clubDetailButtonIconDark from '@/assets/icons/img_club_detail_button.png'
+import clubDetailButtonIconLight from '@/assets/icons/img_club_detail_button_light.svg'
 import { useMttListStore } from '@/stores/mttList'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useGameStore } from '@/stores/game'
+import { theme } from '@/utils/theme'
 import { t } from '@/i18n'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import { showFailToast } from 'vant'
@@ -13,8 +17,18 @@ import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
 
 const mttListStore = useMttListStore()
 const userInfoStore = useUserInfoStore()
+const gameStore = useGameStore()
 const router = useRouter()
 const { isChannelPackage, isVersionB } = useChannelMenuVersion()
+
+const clubDetailButtonIcon = computed(() =>
+  theme.value === 'light' ? clubDetailButtonIconLight : clubDetailButtonIconDark,
+)
+const canManageChannelClub = computed(
+  () =>
+    isChannelPackage.value &&
+    Boolean(gameStore.sessionToken && userInfoStore.currentJoinedClub),
+)
 
 const selectedClubId = computed(() => toSafeInt(userInfoStore.currentClub?.club_id))
 const selectedTribeId = computed(() =>
@@ -38,6 +52,10 @@ function handleBack() {
   router.push('/home')
 }
 
+function goToClubDetail(): void {
+  void router.push('/club/detail')
+}
+
 function handleOpenCustomerService() {
   const clubId = selectedClubId.value
   if (clubId <= 0) {
@@ -58,7 +76,11 @@ function handleOpenCustomerService() {
     <div class="bg-overlay"></div>
 
     <div class="room-list-stage mtt-list-stage">
-      <HeaderBack :title="t('UIHomeMttArea')" :show-back="!isVersionB" extra-padding>
+      <HeaderBack
+        :title="isVersionB ? t('UITabbarTournaments') : t('UIHomeMttArea')"
+        :show-back="!isVersionB"
+        extra-padding
+      >
         <template #right>
           <div class="action-wrap">
             <TopActionButton
@@ -79,6 +101,20 @@ function handleOpenCustomerService() {
       </HeaderBack>
       <ClubZoneQuickActions v-if="isChannelPackage" />
       <MttContent />
+    </div>
+    <div
+      v-if="canManageChannelClub"
+      class="floating-action-area"
+      :class="{ 'floating-action-area--with-tabbar': isVersionB }"
+    >
+      <button
+        class="floating-menu-btn"
+        type="button"
+        :aria-label="t('UIClub_ClubManager')"
+        @click="goToClubDetail"
+      >
+        <img :src="clubDetailButtonIcon" alt="" />
+      </button>
     </div>
     <MainBottomTab v-if="isChannelPackage && isVersionB" />
   </div>
@@ -121,6 +157,38 @@ function handleOpenCustomerService() {
   align-items: center;
   gap: 0.26rem;
   margin-right: 0.25rem;
+}
+
+.floating-action-area {
+  position: fixed;
+  right: 0.48rem;
+  bottom: calc(0.6rem + env(safe-area-inset-bottom));
+  z-index: 23;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  &--with-tabbar {
+    bottom: calc(2.82rem + env(safe-area-inset-bottom));
+  }
+}
+
+.floating-menu-btn {
+  width: 1.04rem;
+  height: 1.04rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
 }
 
 .mtt-list-page :deep(.filter-tabbar) {

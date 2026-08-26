@@ -886,7 +886,12 @@ async function onUsdtSubmit(type: number) {
     :class="{ 'wallet-screen--channel': isChannelPackage }"
     :style="{ backgroundImage: `url(${mainBgUrl})` }"
   >
-    <HeaderBack :title="t('Wallet_Title')" extra-padding @back="handleWalletBack" />
+    <HeaderBack
+      :title="t('Wallet_Title')"
+      :show-back="!isChannelPackage"
+      extra-padding
+      @back="handleWalletBack"
+    />
 
     <div class="wallet-screen__content-top">
       <div class="tabs-row">

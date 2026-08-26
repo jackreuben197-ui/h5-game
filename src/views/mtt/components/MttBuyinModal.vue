@@ -835,129 +835,19 @@ function handleRecharge() {
   color: #fff;
 }
 
-:root[data-theme='light'] {
-  .buyin-modal {
-    --c-brand: #05c297;
-    --c-brand-rgb: 5, 194, 151;
+.buyin-modal {
+  .radio-circle {
+    border: 0;
+    box-shadow: none;
+    background: url('@/assets/icons/ic_uncheckbox.png') center / contain no-repeat;
 
-    .buyin-options,
-    .wallet-list {
-      background: rgba(0, 0, 0, 0.06);
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-    }
+    &--checked {
+      background-image: url('@/assets/icons/ic_checkbox.png');
 
-    .cost-refresh,
-    .cost-add {
-      filter: brightness(0);
-    }
-
-    .radio-circle {
-      border: 0;
-      box-shadow: none;
-      background: url('@/assets/icons/ic_uncheckbox.png') center / contain no-repeat;
-
-      &--checked {
-        background-image: url('@/assets/icons/ic_checkbox.png');
-
-        &::after {
-          display: none;
-        }
+      &::after {
+        display: none;
       }
     }
-  }
-
-  .buyin-option-row {
-    background: transparent;
-    border-color: transparent;
-
-    &--active {
-      background: transparent;
-      border-color: transparent;
-    }
-  }
-
-  .buyin-option-text {
-    color: #000;
-
-    &--none {
-      color: rgba(0, 0, 0, 0.4);
-    }
-  }
-
-  .free-badge {
-    background: #05c297;
-    color: #fff;
-  }
-
-  .ratio-btn {
-    background: rgba(0, 0, 0, 0.06);
-    color: rgba(0, 0, 0, 0.65);
-
-    &--active {
-      background: #05c297;
-      color: #fff;
-    }
-  }
-
-  .radio-circle {
-    border-color: rgba(34, 34, 34, 0.24);
-    box-shadow: none;
-
-    &--checked::after {
-      border-color: #05c297;
-    }
-  }
-
-  .wallet-title {
-    color: rgba(0, 0, 0, 0.65);
-  }
-
-  .wallet-item {
-    background: transparent;
-    border-color: transparent;
-
-    &--selected {
-      background: rgba(5, 194, 151, 0.12);
-      border-color: transparent;
-    }
-  }
-
-  .wallet-item-name,
-  .wallet-item-gold {
-    color: #000;
-  }
-
-  .cost-section {
-    background: rgba(255, 255, 255, 0.6);
-    border-color: rgba(0, 0, 0, 0.1);
-  }
-
-  .cost-balance-num,
-  .cost-item-value,
-  .record-final {
-    color: #000;
-  }
-
-  .cost-label,
-  .record-fee-label {
-    color: rgba(0, 0, 0, 0.65);
-  }
-
-  .record-original {
-    color: rgba(0, 0, 0, 0.4);
-  }
-
-  .record-fee-section {
-    background: rgba(0, 0, 0, 0.04);
-  }
-
-  .rebuy-timer {
-    color: #05c297;
-  }
-
-  .buyin-loading {
-    color: #000;
   }
 }
 </style>

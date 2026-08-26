@@ -633,7 +633,11 @@ function applyChannelInviteContext(): void {
       </div>
 
       <div class="bottom-area">
-        <div v-if="pageMode === 'register' && contactType === 'account'" class="register-tip">
+        <div
+          v-if="pageMode === 'register' && contactType === 'account'"
+          v-fit-text="{ maxLines: 3 }"
+          class="register-tip"
+        >
           {{ t('UILogin_AccountRegisterTip') }}
         </div>
         <div class="action-links">

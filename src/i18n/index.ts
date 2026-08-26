@@ -65,8 +65,16 @@ const LEGACY_TO_PACKAGE: Record<LocaleCode, string> = {
 
 const currentLocale = ref<LocaleCode>(resolveInitialLocale())
 
+// data-locale на <html> позволяет стилям зависеть от языка: у иероглифических
+// строк другая плотность, и им нередко нужен свой кегль.
+function applyDocumentLocale(locale: LocaleCode): void {
+  if (typeof document === 'undefined') return
+  document.documentElement.setAttribute('data-locale', locale)
+}
+
 // 初始化时把 package 的 locale 拉齐到外部 code，避免 i18n.get 在握手前取到默认值。
 applyPackageLocale(currentLocale.value)
+applyDocumentLocale(currentLocale.value)
 
 export function getLocale(): LocaleCode {
   return currentLocale.value
@@ -80,6 +88,7 @@ export function setLocale(locale: string): void {
   // 词典仍是旧语言时重新求值，并缓存旧文案。
   applyPackageLocale(resolvedLocale)
   currentLocale.value = resolvedLocale
+  applyDocumentLocale(resolvedLocale)
 
   // 语言持久化键与 Cocos 对齐：dzpk_Language。
   localStore.setItem(StorageKey.Language, resolvedLocale)

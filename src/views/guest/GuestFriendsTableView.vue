@@ -17,9 +17,9 @@ const inviteCode: string[] = Array(INVITE_CODE_LENGTH).fill('')
 
 const activeFilter = 'all'
 const filters = [
-  { key: 'all', label: t('UIMatch_GtO8YEdb') },
-  { key: 'nlh', label: t('adaptation10022') },
-  { key: 'plo', label: t('adaptation10009') },
+  { key: 'all', get label() { return t('UIMatch_GtO8YEdb') } },
+  { key: 'nlh', get label() { return t('UIFriendsTable_FilterNLH') } },
+  { key: 'plo', get label() { return t('adaptation10009') } },
   { key: 'short', label: '6+' },
 ]
 
@@ -740,6 +740,19 @@ function notifyNotLogin(): void {
 
   @include theme-light-own {
     color: rgba(0, 0, 0, 0.4) !important;
+  }
+}
+
+:root[data-locale='cn'],
+:root[data-locale='zh'] {
+  .action-btn {
+    font-size: 0.62rem;
+  }
+}
+
+:root[data-locale='en'] {
+  .action-btn {
+    font-size: 0.58rem;
   }
 }
 </style>

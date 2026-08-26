@@ -77,7 +77,7 @@ const email = computed(() => {
 const isPhone = computed(() => Boolean(phone.value) && /^\d+$/.test(phone.value))
 const isEmail = computed(() => !phone.value && Boolean(email.value))
 const firstContactPlaceholder = computed(() =>
-  isPhone.value ? '0000000000' : 'Enter your Mail Id',
+  isPhone.value ? '0000000000' : t('ForgotPass_EmailPlaceholder'),
 )
 const firstContactValue = computed(() => phone.value)
 const pageTitle = computed(() => (isPhone.value ? "6" + t('UIClub_Code8') : t('UIMine_DeleteAccount')))
@@ -259,7 +259,7 @@ onBeforeUnmount(() => {
               class="input-field"
               type="text"
               inputmode="numeric"
-              placeholder="Enter Passcode"
+              :placeholder="t('ForgotPass_OTPPlaceholder')"
             />
           </div>
         </div>

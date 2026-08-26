@@ -51,7 +51,7 @@ function notifyNotLogin(): void {
       <div class="main-content">
         <div class="section join-section">
           <div v-fit-text="{ maxLines: 2 }" class="section-title">{{ t('UIGuest_JoinTableGame') }}</div>
-          <div class="section-subtitle">{{ t('UIDialogInvitationCodeTitle') }}, {{ t('UIGuest_And') }}</div>
+          <div v-fit-text="{ maxLines: 2 }" class="section-subtitle">{{ t('UIDialogInvitationCodeTitle') }}</div>
           <div class="invite-inputs" @click="notifyNotLogin">
             <div v-for="(digit, index) in inviteCode" :key="index" class="invite-input-wrap">
               <span class="invite-digit">{{ digit }}</span>
@@ -64,8 +64,8 @@ function notifyNotLogin(): void {
         </div>
 
         <div class="section create-section">
-          <div class="section-title">{{ t('UIGuest_Round') }}</div>
-          <button class="action-btn" @click="notifyNotLogin">{{ t('UIGuest_Text') }}</button>
+          <div v-fit-text="{ maxLines: 2 }" class="section-title">{{ t('UIGuest_Round') }}</div>
+          <button v-fit-text="{ maxLines: 1 }" class="action-btn" @click="notifyNotLogin">{{ t('UIGuest_Text') }}</button>
         </div>
       </div>
 
@@ -251,7 +251,9 @@ function notifyNotLogin(): void {
 }
 
 .section-title {
-  font-size: 0.72rem;
+  max-width: 78%;
+  margin-inline: auto;
+  font-size: 0.6rem;
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 600;
   color: #fff;
@@ -265,6 +267,8 @@ function notifyNotLogin(): void {
 }
 
 .section-subtitle {
+  max-width: 84%;
+  margin-inline: auto;
   font-size: 0.4rem;
   font-family: 'HONOR Sans CN', sans-serif;
   font-weight: 400;

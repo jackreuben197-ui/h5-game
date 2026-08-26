@@ -373,7 +373,6 @@ function handleOpenCustomerService(): void {
       <GameTypeTabbar
         v-model="activeTab"
         :class="{ 'home-embedded-tabs': props.embedded }"
-        :force-light="props.embedded"
         :tabs="[
           { name: 'all', title: t('UIMatch_GtO8YEdb') },
           { name: 'texas', title: t('UITexasInfo_Texas') },

@@ -13,8 +13,7 @@ import { useCasinoStore } from '@/stores/casino'
 import { useGameStore } from '@/stores/game'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { useGameLaunchStore } from '@/stores/gameLaunch'
-import { useUserInfoStore } from '@/stores/userInfo'
-import { isPrivateDomainMode } from '@/utils/channelPackage'
+import { useChannelMenuVersion } from '@/composables/useChannelMenuVersion'
 import {
   reserveGameWindow,
   launchGameUrl,
@@ -104,19 +103,7 @@ const casinoStore = useCasinoStore()
 const gameStore = useGameStore()
 const loginModalStore = useLoginModalStore()
 const gameLaunchStore = useGameLaunchStore()
-const userInfoStore = useUserInfoStore()
-
-const isChannelPackage = computed(() => isPrivateDomainMode())
-const isVersionB = computed(() => {
-  if (!isChannelPackage.value) return false
-  const club = userInfoStore.currentClub ?? userInfoStore.channelDefaultClub
-  if (!club) return false
-  const h5Menu = club.h5_menu
-  if (h5Menu === undefined || h5Menu === null) {
-    return false
-  }
-  return Number(h5Menu) !== 2
-})
+const { isVersionB } = useChannelMenuVersion()
 
 const isGuest = computed(() => !gameStore.sessionToken)
 

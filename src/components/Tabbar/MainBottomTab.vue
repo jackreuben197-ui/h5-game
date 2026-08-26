@@ -7,10 +7,9 @@ import { useLoginModalStore } from '@/stores/loginModal'
 import { useRoomListStore } from '@/stores/roomList'
 import { useMttListStore } from '@/stores/mttList'
 import { useCasinoStore } from '@/stores/casino'
-import { useUserInfoStore } from '@/stores/userInfo'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { t } from '@/i18n'
-import { isPrivateDomainMode } from '@/utils/channelPackage'
+import { useChannelMenuVersion } from '@/composables/useChannelMenuVersion'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { filterVisibleMttRecords } from '@/utils/mttVisibility'
 
@@ -36,35 +35,16 @@ const route = useRoute()
 const tabsStore = useMainTabsStore()
 const gameStore = useGameStore()
 const loginModalStore = useLoginModalStore()
-const isChannelPackage = computed(() => isPrivateDomainMode())
+const { isChannelPackage, channelClub, isVersionB } = useChannelMenuVersion()
 
-const userInfoStore = useUserInfoStore()
 const roomListStore = useRoomListStore()
 const mttListStore = useMttListStore()
 const casinoStore = useCasinoStore()
 const appConfigStore = useAppConfigStore()
 
-const currentClub = computed(() => {
-  if (userInfoStore.currentClub) {
-    return userInfoStore.currentClub
-  }
-  return userInfoStore.channelDefaultClub
-})
-
-const isVersionB = computed(() => {
-  if (!isChannelPackage.value) return false
-  const club = currentClub.value
-  if (!club) return false
-  const h5Menu = club.h5_menu
-  if (h5Menu === undefined || h5Menu === null) {
-    return false
-  }
-  return Number(h5Menu) !== 2
-})
-
 const hasPokerData = computed(() => {
-  const clubId = toSafeInt(currentClub.value?.club_id)
-  const tribeId = toSafeInt(currentClub.value?.tribe_id)
+  const clubId = toSafeInt(channelClub.value?.club_id)
+  const tribeId = toSafeInt(channelClub.value?.tribe_id)
   const baseList = roomListStore.records.filter((room) => Number(room.game_type) < 5)
   const scopedList = baseList.filter((room) =>
     checkIsShowForClubAndTribe(room, clubId, tribeId)
@@ -73,8 +53,8 @@ const hasPokerData = computed(() => {
 })
 
 const hasMttData = computed(() => {
-  const clubId = toSafeInt(currentClub.value?.club_id)
-  const tribeId = toSafeInt(currentClub.value?.tribe_id)
+  const clubId = toSafeInt(channelClub.value?.club_id)
+  const tribeId = toSafeInt(channelClub.value?.tribe_id)
   const visibleRecords = filterVisibleMttRecords(
     mttListStore.records,
     mttListStore.mttIdMetaMap,
@@ -86,13 +66,13 @@ const hasMttData = computed(() => {
 })
 
 const hasCasinoData = computed(() => {
-  const clubId = toSafeInt(currentClub.value?.club_id)
+  const clubId = toSafeInt(channelClub.value?.club_id)
   return clubId > 0 && casinoStore.gameRecords.length > 0
 })
 
 async function loadVersionBTabsData() {
   if (!isChannelPackage.value || !isVersionB.value) return
-  const clubId = toSafeInt(currentClub.value?.club_id)
+  const clubId = toSafeInt(channelClub.value?.club_id)
   if (clubId <= 0) return
 
   if (!roomListStore.records.length) {
@@ -107,7 +87,7 @@ async function loadVersionBTabsData() {
 }
 
 watch(
-  currentClub,
+  channelClub,
   (newClub) => {
     if (newClub) {
       void loadVersionBTabsData()
@@ -162,7 +142,7 @@ const tabs = computed<TabItem[]>(() => {
     if (hasMttData.value) {
       list.push({
         key: 'mtt',
-        label: t('UIHomeMttArea'),
+        label: t('UITabbarTournaments'),
         path: '/mttList',
         guestPath: '/guest/home',
         icon: 'mtt',
@@ -525,19 +505,16 @@ onBeforeUnmount(() => {
             viewBox="0 0 20 20"
             fill="none"
           >
-            <path d="M12.5017 2.27975H7.39753C6.9683 2.25892 6.54817 2.40819 6.2283 2.69517C5.90843 2.98215 5.71464 3.38369 5.68896 3.81266V8.84805C5.70525 9.67624 5.94719 10.4843 6.38873 11.1851C6.83026 11.886 7.45466 12.4531 8.19465 12.8253C8.73525 13.1118 9.33778 13.2616 9.94962 13.2616C10.5615 13.2616 11.164 13.1118 11.7046 12.8253C12.4446 12.4531 13.069 11.886 13.5105 11.1851C13.952 10.4843 14.194 9.67624 14.2103 8.84805V3.81266C14.1846 3.38369 13.9908 2.98215 13.6709 2.69517C13.3511 2.40819 12.9309 2.25892 12.5017 2.27975Z" stroke="currentColor" stroke-width="1.42045" stroke-linecap="round"/>
-            <path d="M14.2124 3.81164H15.9144C16.3424 3.79282 16.7606 3.94299 17.0788 4.22977C17.3971 4.51654 17.5898 4.91693 17.6155 5.34454C17.6129 6.30552 17.3647 7.24989 16.8946 8.08803C16.4024 8.95457 15.715 9.69446 14.8869 10.249L14.2124 10.7089L13.5537 11.1074M5.69114 3.81164H3.9892C3.56122 3.79282 3.143 3.94299 2.82476 4.22977C2.50652 4.51654 2.31377 4.91693 2.28809 5.34454C2.29057 6.30552 2.53832 7.25032 3.00897 8.08803C3.50121 8.95457 4.18862 9.69446 5.01666 10.249L5.69114 10.7089L6.34988 11.1074M8.25068 15.3068V12.8467M11.6529 15.3068V12.8467M7.30856 15.3068H12.595C12.8074 15.3068 13.0177 15.3486 13.214 15.4299C13.4102 15.5112 13.5885 15.6303 13.7387 15.7805C13.8889 15.9307 14.008 16.109 14.0893 16.3052C14.1706 16.5015 14.2124 16.7118 14.2124 16.9242V17.2001C14.2124 17.3078 14.1697 17.4111 14.0935 17.4872C14.0174 17.5634 13.9141 17.6061 13.8064 17.6061H6.09715C5.98947 17.6061 5.8862 17.5634 5.81006 17.4872C5.73392 17.4111 5.69114 17.3078 5.69114 17.2001V16.9242C5.69114 16.4954 5.86143 16.0841 6.16458 15.7808C6.46773 15.4775 6.87891 15.307 7.30774 15.3068H7.30856Z" stroke="currentColor" stroke-width="1.42045" stroke-linecap="round"/>
+            <path d="M5.61134 0.00390543H14.3882C15.4266 0.00390543 16.2729 0.855302 16.2337 1.88635C16.2259 2.09334 16.218 2.30033 16.2063 2.50342H18.1497C19.1724 2.50342 20.0736 3.347 19.9952 4.44835C19.7014 8.49834 17.6247 10.7245 15.3717 11.8883C14.7526 12.2086 14.1218 12.4468 13.5223 12.6225C12.7308 13.7395 11.908 14.3292 11.2536 14.6456V17.5005H13.7613C14.4548 17.5005 15.0151 18.059 15.0151 18.7502C15.0151 19.4415 14.4548 20 13.7613 20H6.23826C5.54473 20 4.98442 19.4415 4.98442 18.7502C4.98442 18.059 5.54473 17.5005 6.23826 17.5005H8.74594V14.6456C8.11902 14.3449 7.33929 13.7864 6.57915 12.7592C5.85819 12.5718 5.07454 12.2867 4.31048 11.8571C2.19071 10.6737 0.278604 8.44366 0.00432649 4.44054C-0.0701203 3.3431 0.827159 2.49951 1.84982 2.49951H3.79327C3.78152 2.29643 3.77368 2.09334 3.76585 1.88244C3.72666 0.847491 4.57301 0 5.61134 0V0.00390543ZM3.93433 4.37805H1.88117C2.1241 7.686 3.6483 9.34193 5.21952 10.2207C4.65529 8.76391 4.18902 6.86194 3.93433 4.37805ZM14.8467 10.0332C16.4336 9.10369 17.8676 7.45167 18.1106 4.37805H16.0613C15.8184 6.75649 15.3795 8.60379 14.8467 10.0332Z" fill="currentColor" />
           </svg>
           <svg
             v-else-if="tab.icon === 'casino'"
             class="tab-icon-svg"
             xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
+            viewBox="0 0 20 20"
+            fill="none"
           >
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
-            <path d="M11 4h2v3h-2zm0 13h2v3h-2zm-7-6h3v2H4zm13 0h3v2h-3zM6.22 6.22l2.12 2.12-1.41 1.41-2.12-2.12zm9.19 9.19l2.12 2.12-1.41 1.41-2.12-2.12zm-9.19 6.36l-2.12-2.12 1.41-1.41 2.12 2.12zm10.6-2.12l2.12-2.12 1.41 1.41-2.12 2.12z" />
-            <circle cx="12" cy="12" r="3" />
+            <path d="M10 20C8.61667 20 7.31667 19.7373 6.1 19.212C4.88334 18.6867 3.825 17.9743 2.925 17.075C2.025 16.1757 1.31267 15.1173 0.788001 13.9C0.263335 12.6827 0.000667933 11.3827 1.26582e-06 10C-0.000665401 8.61733 0.262001 7.31733 0.788001 6.1C1.314 4.88267 2.02633 3.82433 2.925 2.925C3.82367 2.02567 4.882 1.31333 6.1 0.788C7.318 0.262667 8.618 0 10 0C11.382 0 12.682 0.262667 13.9 0.788C15.118 1.31333 16.1763 2.02567 17.075 2.925C17.9737 3.82433 18.6863 4.88267 19.213 6.1C19.7397 7.31733 20.002 8.61733 20 10C19.998 11.3827 19.7353 12.6827 19.212 13.9C18.6887 15.1173 17.9763 16.1757 17.075 17.075C16.1737 17.9743 15.1153 18.687 13.9 19.213C12.6847 19.739 11.3847 20.0013 10 20ZM9 17.925V16.925C8.41667 16.8417 7.85433 16.6833 7.313 16.45C6.77167 16.2167 6.26733 15.9333 5.8 15.6L5.1 16.325C5.65 16.7583 6.25433 17.1127 6.913 17.388C7.57167 17.6633 8.26733 17.8423 9 17.925ZM11 17.925C11.7333 17.8417 12.4293 17.6627 13.088 17.388C13.7467 17.1133 14.3507 16.759 14.9 16.325L14.2 15.6C13.7333 15.9333 13.2293 16.2167 12.688 16.45C12.1467 16.6833 11.584 16.8417 11 16.925V17.925ZM10 15C11.3833 15 12.5627 14.5123 13.538 13.537C14.5133 12.5617 15.0007 11.3827 15 10C14.9993 8.61733 14.5117 7.43833 13.537 6.463C12.5623 5.48767 11.3833 5 10 5C8.61667 5 7.43767 5.48767 6.463 6.463C5.48834 7.43833 5.00067 8.61733 5 10C4.99933 11.3827 5.487 12.562 6.463 13.538C7.439 14.514 8.618 15.0013 10 15ZM16.325 14.9C16.7583 14.35 17.1127 13.746 17.388 13.088C17.6633 12.43 17.8423 11.734 17.925 11H16.925C16.8417 11.5833 16.6833 12.146 16.45 12.688C16.2167 13.23 15.9333 13.734 15.6 14.2L16.325 14.9ZM3.675 14.9L4.4 14.175C4.06667 13.7083 3.78333 13.2083 3.55 12.675C3.31667 12.1417 3.15833 11.5833 3.075 11H2.075C2.15833 11.7333 2.33733 12.429 2.612 13.087C2.88667 13.745 3.241 14.3493 3.675 14.9ZM10 14L7 10L10 6L13 10L10 14ZM2.075 9H3.075C3.15833 8.41667 3.31667 7.85833 3.55 7.325C3.78333 6.79167 4.06667 6.29167 4.4 5.825L3.675 5.1C3.24167 5.65 2.88767 6.25433 2.613 6.913C2.33833 7.57167 2.159 8.26733 2.075 9ZM16.925 9H17.925C17.8417 8.26667 17.6583 7.571 17.375 6.913C17.0917 6.255 16.7333 5.65067 16.3 5.1L15.6 5.8C15.9333 6.26667 16.2167 6.771 16.45 7.313C16.6833 7.855 16.8417 8.41733 16.925 9ZM5.825 4.4C6.29167 4.06667 6.79167 3.78333 7.325 3.55C7.85833 3.31667 8.41667 3.15833 9 3.075V2.075C8.26667 2.15833 7.571 2.33767 6.913 2.613C6.255 2.88833 5.65067 3.24233 5.1 3.675L5.825 4.4ZM14.2 4.4L14.9 3.7C14.35 3.26667 13.746 2.90833 13.088 2.625C12.43 2.34167 11.734 2.15833 11 2.075V3.075C11.5833 3.15833 12.146 3.31667 12.688 3.55C13.23 3.78333 13.734 4.06667 14.2 4.4Z" fill="currentColor" />
           </svg>
           <svg
             v-else

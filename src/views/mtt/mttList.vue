@@ -8,24 +8,13 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import { showFailToast } from 'vant'
-import { isPrivateDomainMode } from '@/utils/channelPackage'
+import { useChannelMenuVersion } from '@/composables/useChannelMenuVersion'
 import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
 
 const mttListStore = useMttListStore()
 const userInfoStore = useUserInfoStore()
 const router = useRouter()
-const isChannelPackage = isPrivateDomainMode()
-
-const isVersionB = computed(() => {
-  if (!isChannelPackage) return false
-  const club = userInfoStore.currentClub ?? userInfoStore.channelDefaultClub
-  if (!club) return false
-  const h5Menu = club.h5_menu
-  if (h5Menu === undefined || h5Menu === null) {
-    return false
-  }
-  return Number(h5Menu) !== 2
-})
+const { isChannelPackage, isVersionB } = useChannelMenuVersion()
 
 const selectedClubId = computed(() => toSafeInt(userInfoStore.currentClub?.club_id))
 const selectedTribeId = computed(() =>

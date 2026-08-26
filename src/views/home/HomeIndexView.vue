@@ -41,7 +41,7 @@ import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
 import { openBridgePanel } from '@/bridge/channels'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import { useGameStore } from '@/stores/game'
-import { isPrivateDomainMode } from '@/utils/channelPackage'
+import { useChannelMenuVersion } from '@/composables/useChannelMenuVersion'
 import PokerGameList from '@/views/home/gameList.vue'
 import CasinoView from '@/views/home/CasinoView.vue'
 
@@ -105,7 +105,7 @@ const casinoStore = useCasinoStore()
 const appConfigStore = useAppConfigStore()
 const gameStore = useGameStore()
 const gameLaunchStore = useGameLaunchStore()
-const isChannelPackage = computed(() => isPrivateDomainMode())
+const { isChannelPackage, isVersionB } = useChannelMenuVersion()
 
 const loading = ref(false)
 const balanceVisible = ref(true)
@@ -423,17 +423,6 @@ const channelSections = computed(() => ({
 const channelSectionCount = computed(
   () => Object.values(channelSections.value).filter(Boolean).length,
 )
-
-const isVersionB = computed(() => {
-  if (!isChannelPackage.value) return false
-  const club = currentClub.value
-  if (!club) return false
-  const h5Menu = club.h5_menu
-  if (h5Menu === undefined || h5Menu === null) {
-    return false
-  }
-  return Number(h5Menu) !== 2
-})
 
 type HomeContentMode = 'zones' | 'mtt' | 'poker' | 'casino'
 

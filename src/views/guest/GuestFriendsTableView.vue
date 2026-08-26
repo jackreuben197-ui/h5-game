@@ -18,7 +18,7 @@ const inviteCode: string[] = Array(INVITE_CODE_LENGTH).fill('')
 const activeFilter = 'all'
 const filters = [
   { key: 'all', get label() { return t('UIMatch_GtO8YEdb') } },
-  { key: 'nlh', get label() { return t('UITexasInfo_Texas') } },
+  { key: 'nlh', get label() { return t('UIFriendsTable_FilterNLH') } },
   { key: 'plo', get label() { return t('adaptation10009') } },
   { key: 'short', label: '6+' },
 ]

@@ -1344,4 +1344,10 @@ watch(
     font-size: 0.62rem;
   }
 }
+
+:root[data-locale='en'] {
+  .action-btn {
+    font-size: 0.58rem;
+  }
+}
 </style>

@@ -11,7 +11,7 @@ import clubCoverAvatar from '@/assets/images/default_avatar.png'
 import iconSafetyGuard from '@/assets/icons/icon_safety_guard.png'
 import safetyGuardSprite from '@/assets/icons/safety_guard_sprite.png'
 import { formatDateTime } from '@/utils/time'
-import { t } from '@/i18n'
+import { t, tJoin } from '@/i18n'
 
 interface SafetyGuardBlacklistUser {
   id: number
@@ -38,21 +38,22 @@ const DEFAULT_PAGE_LIMIT = 100
 
 type SafetyTabName = 'overview' | 'blacklist'
 
-const CORE_SYSTEM_ITEMS = [
-  t('UIDialog_Text3'),
-  t('UITableCheck6'),
-  t('UIDialog_Data'),
-  t('UIDialog_People'),
-  "AI" + t('UIDialog_Text4'),
-  t('UIDialog_Text5'),
-  t('UINewSafeTip7'),
-  t('UINewSafeTip8'),
-  t('UIDialog_Round'),
-  "AI" + t('UIDialog_Text6'),
-  t('UIDialog_No'),
-  t('UIDialog_Text7'),
-  t('UIDialog_Text8'),
+const CORE_SYSTEM_KEYS = [
+  'UIDialog_Text3',
+  'UITableCheck6',
+  'UIDialog_Data',
+  'UIDialog_People',
+  'UIDialog_Text4',
+  'UIDialog_Text5',
+  'UINewSafeTip7',
+  'UINewSafeTip8',
+  'UIDialog_Round',
+  'UIDialog_Text6',
+  'UIDialog_No',
+  'UIDialog_Text7',
+  'UIDialog_Text8',
 ]
+const AI_PREFIXED_KEYS = new Set(['UIDialog_Text4', 'UIDialog_Text6'])
 const SAFETY_GUARD_SPRITE_WIDTH = 1171
 const SAFETY_GUARD_SPRITE_HEIGHT = 83
 const SAFETY_GUARD_ICON_SOURCE_SIZE = 69.55
@@ -97,8 +98,8 @@ const resolvedTribeId = computed(() => {
 })
 
 const coreSystemItems = computed<CoreSystemItem[]>(() =>
-  CORE_SYSTEM_ITEMS.map((label, iconIndex) => ({
-    label,
+  CORE_SYSTEM_KEYS.map((key, iconIndex) => ({
+    label: AI_PREFIXED_KEYS.has(key) ? tJoin('AI', t(key)) : t(key),
     iconIndex,
   })),
 )
@@ -359,14 +360,16 @@ function toSafeInt(value: unknown): number {
         <img :src="iconSafetyGuard" alt="" />
       </div>
 
-      <p class="safety-overview__sub-title">7*24{{ t('UIDialog_Text') }}AI{{ t('UIDialog_Done') }}</p>
+      <p class="safety-overview__sub-title">
+        {{ tJoin('7*24' + t('UIDialog_Text'), 'AI', t('UIDialog_Done')) }}
+      </p>
 
       <div class="safety-overview__stat-card">
         <p class="safety-overview__stat-value">{{ blockedTotal }}</p>
         <p class="safety-overview__stat-label">{{ t('UINewSafeTip3') }}</p>
       </div>
 
-      <p class="safety-overview__title">9{{ t('UIDialog_Text2') }}</p>
+      <p class="safety-overview__title">{{ tJoin(9, t('UIDialog_Text2')) }}</p>
 
       <div class="safety-overview__system-grid">
         <div

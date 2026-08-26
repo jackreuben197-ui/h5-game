@@ -56,9 +56,9 @@ const scrollContentRef = ref<HTMLElement | null>(null)
 const activeFilter = ref('all')
 
 const filters = [
-  { key: 'all', label: t('UIMatch_GtO8YEdb') },
-  { key: 'nlh', label: 'NLH' },
-  { key: 'plo', label: t('adaptation10009') },
+  { key: 'all', get label() { return t('UIMatch_GtO8YEdb') } },
+  { key: 'nlh', get label() { return t('UITexasInfo_Texas') } },
+  { key: 'plo', get label() { return t('adaptation10009') } },
   { key: 'short', label: '6+' },
   // { key: 'mahjong', label: '麻将' },
 ]
@@ -1335,6 +1335,13 @@ watch(
 
   @include theme-light-own {
     color: rgba(0, 0, 0, 0.4) !important;
+  }
+}
+
+:root[data-locale='cn'],
+:root[data-locale='zh'] {
+  .action-btn {
+    font-size: 0.62rem;
   }
 }
 </style>

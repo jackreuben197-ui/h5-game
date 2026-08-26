@@ -424,6 +424,17 @@ const channelSectionCount = computed(
   () => Object.values(channelSections.value).filter(Boolean).length,
 )
 
+const isVersionB = computed(() => {
+  if (!isChannelPackage.value) return false
+  const club = currentClub.value
+  if (!club) return false
+  const h5Menu = club.h5_menu
+  if (h5Menu === undefined || h5Menu === null) {
+    return false
+  }
+  return Number(h5Menu) !== 2
+})
+
 type HomeContentMode = 'zones' | 'mtt' | 'poker' | 'casino'
 
 // 私域版：只开一块内容时不给入口，直接铺列表；开两块及以上（以及一块都没有）时展示专区入口。
@@ -432,6 +443,11 @@ const homeContentModeRaw = computed<HomeContentMode>(() => {
   const pokerTables = homeRoomStats.value.poker.tables
   const mttTables = homeRoomStats.value.mtt.tables
   if (isChannelPackage.value) {
+    if (isVersionB.value) {
+      // In Version B, /home always directly displays poker if poker is enabled.
+      // If poker has no data, redirect to mttList or casino in watch() below.
+      return 'poker'
+    }
     if (channelSectionCount.value === 1) {
       if (channelSections.value.poker) {
         return 'poker'
@@ -449,7 +465,7 @@ const homeContentModeRaw = computed<HomeContentMode>(() => {
   return 'zones'
 })
 // 首次进入时先按缓存渲染，等 room/mtt 两个 bootstrap 都完成再确定最终模式，
-// 避免列表与专区入口在初始化中来回切换；初始化完成后跟随实时数据变化。
+// 避免列表与专区入口 in 初始化中来回切换；初始化完成后跟随实时数据变化。
 const initialized = ref(false)
 const homeContentMode = ref<HomeContentMode>(homeContentModeRaw.value)
 
@@ -676,6 +692,20 @@ watch(homeContentModeRaw, (val) => {
     homeContentMode.value = val
   }
 })
+
+watch(
+  [isVersionB, channelSections, initialized],
+  () => {
+    if (initialized.value && isVersionB.value && !channelSections.value.poker) {
+      if (channelSections.value.mtt) {
+        void router.replace('/mttList')
+      } else if (channelSections.value.casino) {
+        void router.replace('/casino')
+      }
+    }
+  },
+  { immediate: true }
+)
 
 watch(noticeText, () => {
   void updateNoticeMarquee()

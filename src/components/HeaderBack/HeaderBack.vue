@@ -65,6 +65,11 @@ function handleBack(event: MouseEvent): void {
         {{ props.title }}
       </span>
     </button>
+    <div v-else-if="headerMode !== 'full-slot' && props.title" class="back-trigger back-trigger--noback">
+      <span v-fit-text="{ maxLines: 1 }" class="title">
+        {{ props.title }}
+      </span>
+    </div>
 
     <div v-if="headerMode === 'full-slot'" class="full-slot-wrap">
       <slot></slot>

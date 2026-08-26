@@ -13,6 +13,8 @@ import { useCasinoStore } from '@/stores/casino'
 import { useGameStore } from '@/stores/game'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { useGameLaunchStore } from '@/stores/gameLaunch'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
 import {
   reserveGameWindow,
   launchGameUrl,
@@ -102,6 +104,19 @@ const casinoStore = useCasinoStore()
 const gameStore = useGameStore()
 const loginModalStore = useLoginModalStore()
 const gameLaunchStore = useGameLaunchStore()
+const userInfoStore = useUserInfoStore()
+
+const isChannelPackage = computed(() => isPrivateDomainMode())
+const isVersionB = computed(() => {
+  if (!isChannelPackage.value) return false
+  const club = userInfoStore.currentClub ?? userInfoStore.channelDefaultClub
+  if (!club) return false
+  const h5Menu = club.h5_menu
+  if (h5Menu === undefined || h5Menu === null) {
+    return false
+  }
+  return Number(h5Menu) !== 2
+})
 
 const isGuest = computed(() => !gameStore.sessionToken)
 
@@ -982,7 +997,7 @@ onActivated(async () => {
 
     <div class="room-list-stage">
       <!-- ── Header ─────────────────────────────────────────────────── -->
-      <HeaderBack v-if="!hideHeader" :title="t('UICasino_Title')" extra-padding @back="handleBack">
+      <HeaderBack v-if="!hideHeader" :title="t('UICasino_Title')" :show-back="!isVersionB" extra-padding @back="handleBack">
       <template #right>
         <div class="action-wrap">
           <TopActionButton
@@ -1248,6 +1263,7 @@ onActivated(async () => {
       @confirm="handleWalletConfirm"
       @cancel="pendingGame = null"
     />
+    <MainBottomTab v-if="!hideHeader && isVersionB" />
   </div>
 </template>
 

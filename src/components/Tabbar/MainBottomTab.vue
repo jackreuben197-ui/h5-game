@@ -1,13 +1,20 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
 import { useGameStore } from '@/stores/game'
 import { useLoginModalStore } from '@/stores/loginModal'
+import { useRoomListStore } from '@/stores/roomList'
+import { useMttListStore } from '@/stores/mttList'
+import { useCasinoStore } from '@/stores/casino'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { useAppConfigStore } from '@/stores/appConfig'
 import { t } from '@/i18n'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
+import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
+import { filterVisibleMttRecords } from '@/utils/mttVisibility'
 
-type TabIconKey = 'home' | 'club' | 'wallet' | 'friendsTable' | 'message' | 'mine'
+type TabIconKey = 'home' | 'club' | 'wallet' | 'friendsTable' | 'message' | 'mine' | 'mtt' | 'casino'
 
 interface TabItem {
   key: MainTabKey
@@ -19,19 +26,167 @@ interface TabItem {
   icon: TabIconKey
 }
 
+function toSafeInt(value: unknown): number {
+  const num = Number(value)
+  return Number.isFinite(num) ? Math.floor(num) : 0
+}
+
+const router = useRouter()
+const route = useRoute()
+const tabsStore = useMainTabsStore()
+const gameStore = useGameStore()
+const loginModalStore = useLoginModalStore()
 const isChannelPackage = computed(() => isPrivateDomainMode())
+
+const userInfoStore = useUserInfoStore()
+const roomListStore = useRoomListStore()
+const mttListStore = useMttListStore()
+const casinoStore = useCasinoStore()
+const appConfigStore = useAppConfigStore()
+
+const currentClub = computed(() => {
+  if (userInfoStore.currentClub) {
+    return userInfoStore.currentClub
+  }
+  return userInfoStore.channelDefaultClub
+})
+
+const isVersionB = computed(() => {
+  if (!isChannelPackage.value) return false
+  const club = currentClub.value
+  if (!club) return false
+  const h5Menu = club.h5_menu
+  if (h5Menu === undefined || h5Menu === null) {
+    return false
+  }
+  return Number(h5Menu) !== 2
+})
+
+const hasPokerData = computed(() => {
+  const clubId = toSafeInt(currentClub.value?.club_id)
+  const tribeId = toSafeInt(currentClub.value?.tribe_id)
+  const baseList = roomListStore.records.filter((room) => Number(room.game_type) < 5)
+  const scopedList = baseList.filter((room) =>
+    checkIsShowForClubAndTribe(room, clubId, tribeId)
+  )
+  return scopedList.length > 0
+})
+
+const hasMttData = computed(() => {
+  const clubId = toSafeInt(currentClub.value?.club_id)
+  const tribeId = toSafeInt(currentClub.value?.tribe_id)
+  const visibleRecords = filterVisibleMttRecords(
+    mttListStore.records,
+    mttListStore.mttIdMetaMap,
+    clubId,
+    tribeId,
+    appConfigStore.clubDisplayPlatformMtt,
+  )
+  return visibleRecords.length > 0
+})
+
+const hasCasinoData = computed(() => {
+  const clubId = toSafeInt(currentClub.value?.club_id)
+  return clubId > 0 && casinoStore.gameRecords.length > 0
+})
+
+async function loadVersionBTabsData() {
+  if (!isChannelPackage.value || !isVersionB.value) return
+  const clubId = toSafeInt(currentClub.value?.club_id)
+  if (clubId <= 0) return
+
+  if (!roomListStore.records.length) {
+    void roomListStore.bootstrapRoomList().catch(console.warn)
+  }
+  if (!mttListStore.records.length) {
+    void mttListStore.bootstrapMttList().catch(console.warn)
+  }
+  if (!casinoStore.gameRecords.length) {
+    void casinoStore.preloadCasinoData(clubId, false).catch(console.warn)
+  }
+}
+
+watch(
+  currentClub,
+  (newClub) => {
+    if (newClub) {
+      void loadVersionBTabsData()
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => route.meta.tabKey,
+  (tabKey) => {
+    if (typeof tabKey === 'string') {
+      tabsStore.setActiveTab(tabKey as MainTabKey)
+    }
+  },
+  { immediate: true },
+)
 
 // 官方包保留 5 个入口；渠道包将俱乐部能力合并到首页，仅保留 4 个入口。
 const tabs = computed<TabItem[]>(() => {
   const isChannel = isChannelPackage.value
+  const rechargeTab: TabItem = {
+    key: 'wallet',
+    label: t('UIGuildFund_RechargeText'),
+    path: '/wallet',
+    guestPath: '/guest/friendsTable',
+    icon: 'wallet',
+  }
+  const mineTab: TabItem = {
+    key: 'mine',
+    label: t('UIMine_title'),
+    path: '/mine',
+    guestPath: '/guest/mine',
+    icon: 'mine',
+  }
+
+  if (isChannel && isVersionB.value) {
+    const list: TabItem[] = []
+    
+    // Poker (Home)
+    if (hasPokerData.value) {
+      list.push({
+        key: 'home',
+        label: t('UITabbarHome'),
+        path: '/home',
+        guestPath: '/guest/home',
+        icon: 'home',
+      })
+    }
+
+    // Tournaments (mtt)
+    if (hasMttData.value) {
+      list.push({
+        key: 'mtt',
+        label: t('UIHomeMttArea'),
+        path: '/mttList',
+        guestPath: '/guest/home',
+        icon: 'mtt',
+      })
+    }
+
+    // Casino (casino)
+    if (hasCasinoData.value) {
+      list.push({
+        key: 'casino',
+        label: t('UICasino_Title'),
+        path: '/casino',
+        guestPath: '/guest/home',
+        icon: 'casino',
+      })
+    }
+
+    list.push(rechargeTab)
+    list.push(mineTab)
+    return list
+  }
+
   const middleTab: TabItem = isChannel
-    ? {
-        key: 'wallet',
-        label: t('UIGuildFund_RechargeText'),
-        path: '/wallet',
-        guestPath: '/guest/friendsTable',
-        icon: 'wallet',
-      }
+    ? rechargeTab
     : {
         key: 'friendsTable',
         label: t('UIMessage_Default'),
@@ -66,20 +221,11 @@ const tabs = computed<TabItem[]>(() => {
       guestPath: '/guest/message',
       icon: 'message',
     },
-    {
-      key: 'mine',
-      label: t('UIMine_title'),
-      path: '/mine',
-      guestPath: '/guest/mine',
-      icon: 'mine',
-    },
+    mineTab,
   ]
 })
 
-const router = useRouter()
-const tabsStore = useMainTabsStore()
-const gameStore = useGameStore()
-const loginModalStore = useLoginModalStore()
+
 
 function resolveTabPath(tab: TabItem): string {
   return gameStore.sessionToken ? tab.path : tab.guestPath
@@ -371,6 +517,27 @@ onBeforeUnmount(() => {
               d="M14.2285 14.8052C15.2538 15.4983 16.5082 15.7665 17.7273 15.5533L19.4532 15.2538L19.8487 17.5337C19.8487 17.5337 26.0996 15.2752 25.0824 9.41287C24.8651 8.16043 24.1592 7.04561 23.12 6.31358C22.0808 5.58159 20.7934 5.29231 19.5409 5.50947L18.2454 5.73426C18.4135 6.10123 18.5375 6.4958 18.6098 6.91259C19.1992 10.3092 17.2998 13.5627 14.2285 14.8052Z"
               fill="currentColor"
             />
+          </svg>
+          <svg
+            v-else-if="tab.icon === 'mtt'"
+            class="tab-icon-svg"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="none"
+          >
+            <path d="M12.5017 2.27975H7.39753C6.9683 2.25892 6.54817 2.40819 6.2283 2.69517C5.90843 2.98215 5.71464 3.38369 5.68896 3.81266V8.84805C5.70525 9.67624 5.94719 10.4843 6.38873 11.1851C6.83026 11.886 7.45466 12.4531 8.19465 12.8253C8.73525 13.1118 9.33778 13.2616 9.94962 13.2616C10.5615 13.2616 11.164 13.1118 11.7046 12.8253C12.4446 12.4531 13.069 11.886 13.5105 11.1851C13.952 10.4843 14.194 9.67624 14.2103 8.84805V3.81266C14.1846 3.38369 13.9908 2.98215 13.6709 2.69517C13.3511 2.40819 12.9309 2.25892 12.5017 2.27975Z" stroke="currentColor" stroke-width="1.42045" stroke-linecap="round"/>
+            <path d="M14.2124 3.81164H15.9144C16.3424 3.79282 16.7606 3.94299 17.0788 4.22977C17.3971 4.51654 17.5898 4.91693 17.6155 5.34454C17.6129 6.30552 17.3647 7.24989 16.8946 8.08803C16.4024 8.95457 15.715 9.69446 14.8869 10.249L14.2124 10.7089L13.5537 11.1074M5.69114 3.81164H3.9892C3.56122 3.79282 3.143 3.94299 2.82476 4.22977C2.50652 4.51654 2.31377 4.91693 2.28809 5.34454C2.29057 6.30552 2.53832 7.25032 3.00897 8.08803C3.50121 8.95457 4.18862 9.69446 5.01666 10.249L5.69114 10.7089L6.34988 11.1074M8.25068 15.3068V12.8467M11.6529 15.3068V12.8467M7.30856 15.3068H12.595C12.8074 15.3068 13.0177 15.3486 13.214 15.4299C13.4102 15.5112 13.5885 15.6303 13.7387 15.7805C13.8889 15.9307 14.008 16.109 14.0893 16.3052C14.1706 16.5015 14.2124 16.7118 14.2124 16.9242V17.2001C14.2124 17.3078 14.1697 17.4111 14.0935 17.4872C14.0174 17.5634 13.9141 17.6061 13.8064 17.6061H6.09715C5.98947 17.6061 5.8862 17.5634 5.81006 17.4872C5.73392 17.4111 5.69114 17.3078 5.69114 17.2001V16.9242C5.69114 16.4954 5.86143 16.0841 6.16458 15.7808C6.46773 15.4775 6.87891 15.307 7.30774 15.3068H7.30856Z" stroke="currentColor" stroke-width="1.42045" stroke-linecap="round"/>
+          </svg>
+          <svg
+            v-else-if="tab.icon === 'casino'"
+            class="tab-icon-svg"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
+            <path d="M11 4h2v3h-2zm0 13h2v3h-2zm-7-6h3v2H4zm13 0h3v2h-3zM6.22 6.22l2.12 2.12-1.41 1.41-2.12-2.12zm9.19 9.19l2.12 2.12-1.41 1.41-2.12-2.12zm-9.19 6.36l-2.12-2.12 1.41-1.41 2.12 2.12zm10.6-2.12l2.12-2.12 1.41 1.41-2.12 2.12z" />
+            <circle cx="12" cy="12" r="3" />
           </svg>
           <svg
             v-else

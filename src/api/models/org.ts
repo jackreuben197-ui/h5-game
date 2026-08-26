@@ -1182,6 +1182,7 @@ export interface OrgClubSearchInfoData {
   user_status?: number // 请求用户状态 1 未申请 2 已申请 3 已加入
   pretty_id?: number // 靓号 >0则是靓号 =0不是靓号
   club_subscription_id?: number // 会员id
+  h5_menu?: number // h5底部导航配置: 2为版本A，其他为版本B
 
   [key: string]: unknown
 }
@@ -2482,6 +2483,7 @@ export interface OrgClubData {
   club_name?: string
   logo?: string
   random_id?: number
+  h5_menu?: number
   upper_limit?: number
   club_members?: number
   area_id?: string

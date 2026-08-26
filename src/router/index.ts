@@ -528,14 +528,14 @@ const router = createRouter({
       path: '/gameList',
       name: 'game-list',
       component: () => import('@/views/home/gameList.vue'),
-      meta: { requiresAuth: true, desktopLayout: 'content' },
+      meta: { requiresAuth: true, tabKey: 'home', desktopLayout: 'content' },
     },
     {
       path: '/casino',
       name: 'casino',
       component: () => import('@/views/home/CasinoView.vue'),
       // 游客可预览娱乐场目录，进入具体游戏时再要求登录。
-      meta: { requiresAuth: false, desktopLayout: 'content' },
+      meta: { requiresAuth: false, tabKey: 'casino', desktopLayout: 'content' },
     },
     {
       path: '/minigame',
@@ -548,7 +548,7 @@ const router = createRouter({
       path: '/mttList',
       name: 'mtt-list',
       component: () => import('@/views/mtt/mttList.vue'),
-      meta: { requiresAuth: true, desktopLayout: 'content' },
+      meta: { requiresAuth: true, tabKey: 'mtt', desktopLayout: 'content' },
     },
     {
       path: '/mtt/detail',

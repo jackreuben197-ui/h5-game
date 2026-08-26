@@ -16,6 +16,17 @@ const userInfoStore = useUserInfoStore()
 const router = useRouter()
 const isChannelPackage = isPrivateDomainMode()
 
+const isVersionB = computed(() => {
+  if (!isChannelPackage) return false
+  const club = userInfoStore.currentClub ?? userInfoStore.channelDefaultClub
+  if (!club) return false
+  const h5Menu = club.h5_menu
+  if (h5Menu === undefined || h5Menu === null) {
+    return false
+  }
+  return Number(h5Menu) !== 2
+})
+
 const selectedClubId = computed(() => toSafeInt(userInfoStore.currentClub?.club_id))
 const selectedTribeId = computed(() =>
   toSafeInt((userInfoStore.currentClub as Record<string, unknown> | null)?.tribe_id),
@@ -58,7 +69,7 @@ function handleOpenCustomerService() {
     <div class="bg-overlay"></div>
 
     <div class="room-list-stage mtt-list-stage">
-      <HeaderBack :title="t('UIHomeMttArea')" extra-padding>
+      <HeaderBack :title="t('UIHomeMttArea')" :show-back="!isVersionB" extra-padding>
         <template #right>
           <div class="action-wrap">
             <TopActionButton
@@ -80,6 +91,7 @@ function handleOpenCustomerService() {
       <ClubZoneQuickActions v-if="isChannelPackage" />
       <MttContent />
     </div>
+    <MainBottomTab v-if="isChannelPackage && isVersionB" />
   </div>
 </template>
 

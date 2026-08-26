@@ -57,7 +57,7 @@ const activeFilter = ref('all')
 
 const filters = [
   { key: 'all', label: t('UIMatch_GtO8YEdb') },
-  { key: 'nlh', label: t('adaptation10022') },
+  { key: 'nlh', label: 'NLH' },
   { key: 'plo', label: t('adaptation10009') },
   { key: 'short', label: '6+' },
   // { key: 'mahjong', label: '麻将' },

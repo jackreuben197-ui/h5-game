@@ -160,7 +160,7 @@ const tabs = computed<TabItem[]>(() => {
     ? rechargeTab
     : {
         key: 'friendsTable',
-        label: t('UIMessage_Default'),
+        label: t('UITabbarGames'),
         path: '/friendsTable',
         guestPath: '/guest/friendsTable',
         icon: 'friendsTable',

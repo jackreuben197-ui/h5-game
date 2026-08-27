@@ -217,7 +217,7 @@ function seatStyle(index: number): CSSProperties {
 
 function shortName(name?: string): string {
   if (!name) {
-    return t('UISeatEmpty')
+    return t('UISeatEmptySlot')
   }
   return `${name}`.slice(0, 1)
 }
@@ -420,6 +420,12 @@ function shortName(name?: string): string {
 .seat-name {
   font-size: 0.3rem;
   color: #e5e4e427;
+}
+
+.seat-avatar.empty .seat-name {
+  font-size: 0.2rem;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 .table-footer {

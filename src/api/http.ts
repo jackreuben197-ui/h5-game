@@ -48,6 +48,12 @@ const PRE_LOGIN_PATHS = [
   '/roomcenter/guest/all/mtt/sng/ids',
   '/roomcenter/guest/mtt/sng/rooms/list',
   '/config/before/login/config',
+  '/extend/extend/game/record/list/popular/home',
+  '/extend/extend/game/record/list/popular',
+  '/extend/extend/game/record/list/popular/main/home',
+  '/extend/extend/game/record/list/popular/main',
+  '/extend/extend/game/record/list/home',
+  '/extend/extend/game/record/list',
 ]
 
 const TELEGRAM_LOGIN_LOADING_MESSAGE = '正在通过 Telegram 自动登录...'

@@ -2,6 +2,7 @@
 import { computed, onMounted, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBg2Url from '@/assets/images/main_bg2.jpg'
 import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import { theme } from '@/utils/theme'
 import { getUserClubApi, getUserInfoApi } from '@/api/user'
@@ -23,7 +24,6 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
 import { useChannelMenuVersion } from '@/composables/useChannelMenuVersion'
 
-
 const route = useRoute()
 const gameStore = useGameStore()
 const tabsStore = useMainTabsStore()
@@ -32,7 +32,7 @@ const userInfoStore = useUserInfoStore()
 const { setLocale } = useTextI18n()
 const { isVersionB } = useChannelMenuVersion()
 
-// 主容器背景图：全页面共用一张底图。
+// 主容器背景图：全页面共用一张底图，首页使用 main_bg2.png。
 const LIGHT_THEME_TABS: ReadonlyArray<MainTabKey> = [
   'message',
   'mine',
@@ -47,7 +47,9 @@ const backgroundStyle = computed(() => {
     return { backgroundImage: `url(${mainBgLightUrl})` }
   }
 
-  return { backgroundImage: `url(${mainBgUrl})` }
+  return {
+    backgroundImage: route.meta.tabKey === 'home' ? `url(${mainBg2Url})` : `url(${mainBgUrl})`,
+  }
 })
 
 const isHome = computed(() => route.meta.tabKey === 'home')
@@ -194,7 +196,6 @@ watch(
     }"
     :style="backgroundStyle"
   >
-
     <div class="main-layout-content">
       <!-- 子模块页面内容区域：由路由子页面渲染。 -->
       <section class="module-slot">
@@ -265,8 +266,6 @@ watch(
   }
 }
 
-
-
 .main-layout-content {
   position: relative;
   z-index: 2;
@@ -281,15 +280,15 @@ watch(
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   overscroll-behavior-y: none;
-  padding: calc(var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.2rem) 0rem calc(env(safe-area-inset-bottom) + 2.72rem);
+  padding: calc(var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.2rem) 0rem
+    calc(env(safe-area-inset-bottom) + 2.72rem);
 }
 
 .main-layout--home .main-layout-content {
-  background: transparent;
+  background: #222627;
   padding-top: var(--app-content-safe-area-top, env(safe-area-inset-top));
   padding-bottom: calc(env(safe-area-inset-bottom) + 2rem);
 }
-
 
 .module-slot {
   // 子页面容器只负责承载内容，不再单独接管滚动。

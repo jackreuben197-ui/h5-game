@@ -9,7 +9,7 @@ recordDebugEvent('[boot]', 'cocos h5 entry loaded', {
 })
 
 if (typeof document !== 'undefined' && document.documentElement) {
-  document.title = '小鱼扑克'
+  document.title = 'U POKER'
   document.documentElement.style.setProperty('--h5-main-bg-image', `url(${mainBgUrl})`)
 }
 

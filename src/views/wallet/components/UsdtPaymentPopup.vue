@@ -29,7 +29,7 @@ const exactGoldCount = computed(() => props.goldCount || 0)
 const roundedGoldCount = computed(() => Math.floor((props.goldCount || 0) / 100) * 100)
 
 const exactPriceData = computed(() =>
-  walletStore.calculateUsdtPrice(
+  walletStore.calculateRechargeUsdtPrice(
     exactGoldCount.value,
     props.rate || 0,
     props.feeRate || 0,
@@ -39,7 +39,7 @@ const exactPriceData = computed(() =>
 )
 
 const roundedPriceData = computed(() =>
-  walletStore.calculateUsdtPrice(
+  walletStore.calculateRechargeUsdtPrice(
     roundedGoldCount.value,
     props.rate || 0,
     props.feeRate || 0,
@@ -50,6 +50,14 @@ const roundedPriceData = computed(() =>
 
 const exactPrice = computed(() => exactPriceData.value.totalUiPrice)
 const roundedPrice = computed(() => roundedPriceData.value.totalUiPrice)
+
+function formatGoldCount(goldCount: number): string {
+  return (goldCount / 100).toLocaleString(undefined, {
+    useGrouping: false,
+    minimumFractionDigits: goldCount % 100 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+  })
+}
 
 function close(): void {
   emit('close')
@@ -91,7 +99,7 @@ onUnmounted(() => {
                     : '0'
                 }}
               </span>
-              <span>{{ t('UIWallet_Current') }}：1UC={{ props.rate || 1 }}USDT</span>
+              <span>{{ t('UIWallet_Current') }}：1USDT={{ props.rate || 1 }}UC</span>
             </div>
           </div>
 
@@ -112,7 +120,7 @@ onUnmounted(() => {
               @click="selectedOption = 0"
             >
               <div class="option-card__amount-row">
-                <span class="option-card__amount">{{ Math.floor(exactPrice) }}</span>
+                <span class="option-card__amount">{{ formatGoldCount(exactGoldCount) }}</span>
                 <img :src="icCoins" alt="" class="option-card__coin" />
               </div>
               <div class="option-card__desc">
@@ -169,7 +177,7 @@ onUnmounted(() => {
               @click="selectedOption = 1"
             >
               <div class="option-card__amount-row">
-                <span class="option-card__amount">{{ Math.floor(roundedPrice) }}</span>
+                <span class="option-card__amount">{{ formatGoldCount(roundedGoldCount) }}</span>
                 <img :src="icCoins" alt="" class="option-card__coin" />
               </div>
               <div class="option-card__desc">

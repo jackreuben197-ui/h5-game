@@ -59,9 +59,7 @@ const directedClubId = computed(() => {
 const walletClub = computed(() => {
   if (directedClubId.value) {
     return (
-      userInfoStore.clubList.find(
-        (club) => Number(club.club_id) === directedClubId.value,
-      ) ?? null
+      userInfoStore.clubList.find((club) => Number(club.club_id) === directedClubId.value) ?? null
     )
   }
   return userInfoStore.currentClub ?? userInfoStore.clubList[0] ?? null
@@ -98,6 +96,7 @@ const usdtPopupProps = ref({
   feeType: 0,
   discount: 0,
 })
+const usdtUniqueAmount = ref<{ amount: number; priceId: number } | null>(null)
 
 const unfinishedOrder = ref<ClubFundOrderListOrderInfo | null>(null)
 const showUnfinishedPopup = ref(false)
@@ -162,7 +161,9 @@ function buildMatchOrderMessage(
   const user = asRecord(userInfoStore.userInfo?.user)
   const nickname = String(user.nickname || '-').trim() || '-'
   const displayId = firstPresent(user.userid, user.un_id, user.unid, user.random_id)
-  const goldCents = toFiniteNumber(firstPresent(orderData.gold_num, order.gold_num, orderData.amount))
+  const goldCents = toFiniteNumber(
+    firstPresent(orderData.gold_num, order.gold_num, orderData.amount),
+  )
 
   return {
     subType,
@@ -172,15 +173,20 @@ function buildMatchOrderMessage(
       firstPresent(orderData.pay_price, order.pay_price, order.amount, orderData.amount),
     ),
     typeName: String(
-      firstPresent(addressInfo.name, orderData.pay_type_name, order.type_name) || t('UIWallet_Text3'),
+      firstPresent(addressInfo.name, orderData.pay_type_name, order.type_name) ||
+        t('UIWallet_Text3'),
     ),
     orderNo: String(firstPresent(orderData.order_no, order.order_no) || ''),
     timestamp: toOrderTimestamp(
       firstPresent(orderData.timestamp, order.timestamp, orderData.create_time, order.create_time),
     ),
     address: String(
-      firstPresent(orderData.address, addressInfo.address, order.address, orderData.pay_type_address) ||
-        '',
+      firstPresent(
+        orderData.address,
+        addressInfo.address,
+        order.address,
+        orderData.pay_type_address,
+      ) || '',
     ),
   }
 }
@@ -406,7 +412,7 @@ const presets = computed<Preset[]>(() => {
   if (selected && !hasPriceIds && !hasPriceList) {
     return []
   }
-  const list = hasPriceList ? selected!.price_list! : walletStore.goldPriceData?.list ?? []
+  const list = hasPriceList ? selected!.price_list! : (walletStore.goldPriceData?.list ?? [])
 
   const isUsdt = selected?.type === 1
   const rate = selected?.rate ?? 1
@@ -420,7 +426,8 @@ const presets = computed<Preset[]>(() => {
     let chipStr = (goldCount / 100).toLocaleString(undefined, { useGrouping: false })
     if (isUsdt) {
       chipStr = walletStore.formatUsdtPrice(
-        walletStore.calculateUsdtPrice(goldCount, rate, feeRate, feeType, discount).totalUiPrice,
+        walletStore.calculateRechargeUsdtPrice(goldCount, rate, feeRate, feeType, discount)
+          .totalUiPrice,
       )
     } else if (selected?.type === 3) {
       // Customer Service: show decimals
@@ -471,7 +478,8 @@ const displayPayAmount = computed(() => {
     const feeType = selected.fee_type ?? 0
     const discount = selected.discount ?? 0
     return walletStore.formatUsdtPrice(
-      walletStore.calculateUsdtPrice(goldCount, rate, feeRate, feeType, discount).totalUiPrice,
+      walletStore.calculateRechargeUsdtPrice(goldCount, rate, feeRate, feeType, discount)
+        .totalUiPrice,
     )
   }
 
@@ -494,13 +502,44 @@ const displayPayAmount = computed(() => {
 
 const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
 
-function onPayClick() {
+async function onPayClick() {
   const payTypes = filteredPayTypes.value
   const selectedPayType = payTypes[activeMethod.value]
 
   if (selectedPayType?.type === 1) {
+    let goldCount = Number(selectedAmount.value) * 100
+    usdtUniqueAmount.value = null
+
+    // Match the native client: obtain the server-generated tail before opening
+    // the confirmation dialog, so +0.01 and similar unique amounts are visible.
+    if ((selectedPayType.increase_interval ?? 0) > 0) {
+      try {
+        const res = await postOrderUserRechargeNoApi(
+          {
+            amount: goldCount,
+            pay_id: selectedPayType.id,
+          },
+          walletClubId.value,
+        )
+        if (res.code === 0 && res.data?.amount != null) {
+          goldCount = Number(res.data.amount)
+          usdtUniqueAmount.value = {
+            amount: goldCount,
+            priceId: Number(res.data.price_id ?? 0),
+          }
+        } else {
+          alert(res.message || 'Failed to get unique recharge amount')
+          return
+        }
+      } catch (e) {
+        console.error('Failed to get unique recharge amount', e)
+        alert('Failed to get unique recharge amount')
+        return
+      }
+    }
+
     usdtPopupProps.value = {
-      goldCount: Number(selectedAmount.value) * 100,
+      goldCount,
       rate: selectedPayType.rate ?? 1,
       feeRate: selectedPayType.fee_rate ?? 0,
       feeType: selectedPayType.fee_type ?? 0,
@@ -537,7 +576,7 @@ async function onCsSubmit() {
   const feeRate = selectedPayType.fee_rate ?? 0
   const feeType = selectedPayType.fee_type ?? 0
   const discount = selectedPayType.discount ?? 0
-  let priceId = activePreset.value === -1 ? 0 : presets.value[activePreset.value]?.id ?? 0
+  let priceId = activePreset.value === -1 ? 0 : (presets.value[activePreset.value]?.id ?? 0)
 
   // 1. Unique-amount channel: server adjusts amount with a tail for payment matching
   if ((selectedPayType.increase_interval ?? 0) > 0) {
@@ -560,13 +599,13 @@ async function onCsSubmit() {
 
   // pay_price rule: discount > 0 takes priority (discount removes fee from pay_price);
   // only when discount = 0 and fee_type = 2 is the fee added to pay_price.
-  const basePrice = (goldCount / 100) * rate
+  const basePrice = rate > 0 ? goldCount / 100 / rate : 0
   const apiPayPrice =
     discount > 0
       ? Number((basePrice * (1 - discount)).toFixed(4))
       : feeType === 2 && feeRate > 0
-      ? Number((basePrice * (1 + feeRate)).toFixed(4))
-      : Number(basePrice.toFixed(4))
+        ? Number((basePrice * (1 + feeRate)).toFixed(4))
+        : Number(basePrice.toFixed(4))
 
   try {
     const res = await postRechargeGoldApi(
@@ -632,29 +671,17 @@ async function onUsdtSubmit(type: number) {
       ? usdtPopupProps.value.goldCount
       : Math.floor(usdtPopupProps.value.goldCount / 100) * 100
 
-  let priceId = activePreset.value === -1 ? 0 : presets.value[activePreset.value]?.id ?? 0
+  let priceId = activePreset.value === -1 ? 0 : (presets.value[activePreset.value]?.id ?? 0)
 
-  // 1. Unique-amount channel: server adjusts amount with a tail for payment matching
-  if ((selectedPayType.increase_interval ?? 0) > 0) {
-    try {
-      const res = await postOrderUserRechargeNoApi(
-        {
-          amount: goldCount,
-          pay_id: selectedPayType.id,
-        },
-        clubId,
-      )
-      if (res.code === 0 && res.data) {
-        goldCount = res.data.amount ?? goldCount
-        priceId = res.data.price_id ?? 0
-      }
-    } catch (e) {
-      console.error('Failed to get unique recharge amount', e)
-    }
+  // The unique amount is fetched before the popup so the user can see its tail.
+  if (type === 0 && usdtUniqueAmount.value) {
+    goldCount = usdtUniqueAmount.value.amount
+    priceId = usdtUniqueAmount.value.priceId
   }
+  usdtPopupProps.value.goldCount = goldCount
 
   // 2. Calculate pay_price — fee only applied when fee_type === 2 (player pays)
-  const priceData = walletStore.calculateUsdtPrice(
+  const priceData = walletStore.calculateRechargeUsdtPrice(
     goldCount,
     selectedPayType.rate ?? 1,
     selectedPayType.fee_rate ?? 0,
@@ -778,7 +805,7 @@ async function onUsdtSubmit(type: number) {
           </div>
 
           <PrimaryButton
-            :text="t('UIMineMallUSDTShop_PromptlyRechargeTip') + ' ' + (displayPayAmount)"
+            :text="t('UIMineMallUSDTShop_PromptlyRechargeTip') + ' ' + displayPayAmount"
             class="pay-cta"
             @click="onPayClick"
           />
@@ -835,12 +862,14 @@ async function onUsdtSubmit(type: number) {
       v-if="usdtDetailsPopupOpen && rechargeResult"
       :order-data="rechargeResult"
       :rate="usdtPopupProps.rate"
+      :fee-rate="usdtPopupProps.feeRate"
+      :fee-type="usdtPopupProps.feeType"
       :price="
         walletStore.formatUsdtPrice(
           Number(rechargeResult.order?.amount) ||
             Number(rechargeResult.pay_price) ||
             Number(rechargeResult.amount) ||
-            walletStore.calculateUsdtPrice(
+            walletStore.calculateRechargeUsdtPrice(
               usdtPopupProps.goldCount,
               usdtPopupProps.rate,
               usdtPopupProps.feeRate,

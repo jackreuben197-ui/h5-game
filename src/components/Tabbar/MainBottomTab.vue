@@ -133,7 +133,7 @@ const tabs = computed<TabItem[]>(() => {
     if (hasMttData.value) {
       list.push({
         key: 'mtt',
-        label: t('UITabbarTournaments'),
+        label: t('UITabbarEvents'),
         path: '/mttList',
         guestPath: '/guest/home',
         icon: 'mtt',

@@ -2,7 +2,6 @@
 import { computed, onMounted, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import mainBg2Url from '@/assets/images/main_bg2.jpg'
 import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import { theme } from '@/utils/theme'
 import { getUserClubApi, getUserInfoApi } from '@/api/user'
@@ -27,7 +26,7 @@ const tabsStore = useMainTabsStore()
 const appConfigStore = useAppConfigStore()
 const { setLocale } = useTextI18n()
 
-// 主容器背景图：全页面共用一张底图，首页使用 main_bg2.png。
+// 主容器背景图：全页面共用一张底图。
 const LIGHT_THEME_TABS: ReadonlyArray<MainTabKey> = [
   'message',
   'mine',
@@ -42,9 +41,7 @@ const backgroundStyle = computed(() => {
     return { backgroundImage: `url(${mainBgLightUrl})` }
   }
 
-  return {
-    backgroundImage: route.meta.tabKey === 'home' ? `url(${mainBg2Url})` : `url(${mainBgUrl})`,
-  }
+  return { backgroundImage: `url(${mainBgUrl})` }
 })
 
 const isHome = computed(() => route.meta.tabKey === 'home')
@@ -173,6 +170,7 @@ watch(
     }"
     :style="backgroundStyle"
   >
+    <div v-if="isHomeRoute" class="main-layout-bg-overlay"></div>
     <div class="main-layout-content">
       <!-- 子模块页面内容区域：由路由子页面渲染。 -->
       <section class="module-slot">
@@ -225,9 +223,19 @@ watch(
   }
 }
 
-.main-layout--home {
-  background-color: #222627;
-  background-image: none !important;
+.main-layout-bg-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
+    radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
+    radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
+}
+
+:root[data-theme='light'] .main-layout-bg-overlay {
+  display: none;
 }
 
 .main-layout-content {
@@ -248,7 +256,7 @@ watch(
 }
 
 .main-layout--home .main-layout-content {
-  background: #222627;
+  background: transparent;
   padding-top: var(--app-content-safe-area-top, env(safe-area-inset-top));
   padding-bottom: calc(env(safe-area-inset-bottom) + 2rem);
 }

@@ -30,6 +30,12 @@ const headerMode = computed<'title' | 'title-right' | 'full-slot'>(() => {
   return 'title'
 })
 
+// Страница-вкладка (версия B): стрелки нет, заголовок выравнивается по контракту
+// первичных страниц .main-primary-header — тот же кегль, вес и отступы, что на 我的 / 消息.
+const isTitleOnly = computed(
+  () => !props.showBack && headerMode.value !== 'full-slot' && Boolean(props.title),
+)
+
 function handleBack(event: MouseEvent): void {
   // 若父组件有监听 @back，则交由父组件处理；否则默认执行路由返回。
   const vnodeProps = instance?.vnode.props ?? null
@@ -51,7 +57,10 @@ function handleBack(event: MouseEvent): void {
 </script>
 
 <template>
-  <div class="page-back-header" :class="{ 'extra-padding': props.extraPadding }">
+  <div
+    class="page-back-header"
+    :class="{ 'extra-padding': props.extraPadding, 'page-back-header--title-only': isTitleOnly }"
+  >
     <button v-if="props.showBack" class="back-trigger" type="button" @click="handleBack">
       <svg xmlns="http://www.w3.org/2000/svg" class="back-icon" viewBox="0 0 7 12" fill="none">
         <path
@@ -65,7 +74,7 @@ function handleBack(event: MouseEvent): void {
         {{ props.title }}
       </span>
     </button>
-    <div v-else-if="headerMode !== 'full-slot' && props.title" class="back-trigger back-trigger--noback">
+    <div v-else-if="isTitleOnly" class="back-trigger back-trigger--noback">
       <span v-fit-text="{ maxLines: 1 }" class="title">
         {{ props.title }}
       </span>
@@ -110,6 +119,18 @@ function handleBack(event: MouseEvent): void {
 
   @include theme-light {
     color: #000;
+  }
+}
+
+.page-back-header--title-only {
+  padding-top: calc(var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.2rem);
+}
+
+.back-trigger--noback {
+  padding-left: calc(0.78rem - var(--app-side-padding));
+
+  .title {
+    font-weight: 510;
   }
 }
 

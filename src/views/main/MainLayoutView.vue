@@ -21,6 +21,7 @@ import { localStore } from '@/utils/localStore'
 import LoginModal from '@/views/login/LoginModal.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
+import { useChannelMenuVersion } from '@/composables/useChannelMenuVersion'
 
 
 const route = useRoute()
@@ -29,6 +30,7 @@ const tabsStore = useMainTabsStore()
 const appConfigStore = useAppConfigStore()
 const userInfoStore = useUserInfoStore()
 const { setLocale } = useTextI18n()
+const { isVersionB } = useChannelMenuVersion()
 
 // 主容器背景图：全页面共用一张底图。
 const LIGHT_THEME_TABS: ReadonlyArray<MainTabKey> = [
@@ -55,6 +57,18 @@ const isMessage = computed(() => route.meta.tabKey === 'message')
 const isMine = computed(() => route.meta.tabKey === 'mine')
 const isFriendsTable = computed(() => route.meta.tabKey === 'friendsTable')
 const isHomeRoute = computed(() => route.name === 'lobby' || route.name === 'guest-home')
+const isHomeMenu = computed(() => {
+  if (route.name !== 'lobby' && route.name !== 'guest-home') {
+    return false
+  }
+  if (route.name === 'guest-home' && isVersionB.value) {
+    const queryTab = route.query.tab
+    if (queryTab === 'mtt' || queryTab === 'casino') {
+      return false
+    }
+  }
+  return true
+})
 const isPrimaryLayout = computed(() => route.meta.desktopLayout === 'primary')
 const isGuestRoute = computed(() => String(route.name ?? '').startsWith('guest-'))
 
@@ -150,9 +164,11 @@ onMounted(() => {
 
 // 路由变化时同步底部 Tab 共享状态，确保子页面也能维持正确高亮。
 watch(
-  () => route.meta.tabKey,
-  (tabKey) => {
-    if (typeof tabKey === 'string') {
+  () => [route.meta.tabKey, route.query.tab],
+  ([tabKey, queryTab]) => {
+    if (route.name === 'guest-home' && isVersionB.value && queryTab) {
+      tabsStore.setActiveTab(queryTab as MainTabKey)
+    } else if (typeof tabKey === 'string') {
       tabsStore.setActiveTab(tabKey as MainTabKey)
     }
   },
@@ -171,13 +187,14 @@ watch(
       'is-mine': isMine,
       'is-friends-table': isFriendsTable,
       'main-layout--home': isHomeRoute,
+      'main-layout--pure-black': isHomeMenu,
       'main-layout--primary': isPrimaryLayout,
       'main-layout--guest': isGuestRoute,
       'main-layout--authenticated': isPrimaryLayout && !isGuestRoute,
     }"
     :style="backgroundStyle"
   >
-    <div v-if="isHomeRoute" class="main-layout-bg-overlay"></div>
+
     <div class="main-layout-content">
       <!-- 子模块页面内容区域：由路由子页面渲染。 -->
       <section class="module-slot">
@@ -221,6 +238,24 @@ watch(
   backdrop-filter: none;
 }
 
+.main-layout--pure-black {
+  background-color: #222627;
+  background-image: none !important;
+
+  .main-layout-content {
+    background: #222627;
+  }
+}
+
+:root[data-theme='light'] .main-layout--pure-black {
+  background-color: transparent;
+  background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+  .main-layout-content {
+    background: transparent;
+  }
+}
+
 :root[data-theme='light'] .main-layout--home {
   background-color: transparent;
   background-image: url('@/assets/images/main_bg_light.webp') !important;
@@ -230,20 +265,7 @@ watch(
   }
 }
 
-.main-layout-bg-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
-    radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
-    radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
-}
 
-:root[data-theme='light'] .main-layout-bg-overlay {
-  display: none;
-}
 
 .main-layout-content {
   position: relative;

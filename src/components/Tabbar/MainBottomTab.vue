@@ -88,9 +88,11 @@ watch(
 )
 
 watch(
-  () => route.meta.tabKey,
-  (tabKey) => {
-    if (typeof tabKey === 'string') {
+  () => [route.meta.tabKey, route.query.tab],
+  ([tabKey, queryTab]) => {
+    if (route.name === 'guest-home' && isVersionB.value && queryTab) {
+      tabsStore.setActiveTab(queryTab as MainTabKey)
+    } else if (typeof tabKey === 'string') {
       tabsStore.setActiveTab(tabKey as MainTabKey)
     }
   },
@@ -197,7 +199,18 @@ const tabs = computed<TabItem[]>(() => {
 
 
 function resolveTabPath(tab: TabItem): string {
-  return gameStore.sessionToken ? tab.path : tab.guestPath
+  if (gameStore.sessionToken) {
+    return tab.path
+  }
+  if (isVersionB.value) {
+    if (tab.key === 'mtt') {
+      return '/guest/home?tab=mtt'
+    }
+    if (tab.key === 'casino') {
+      return '/guest/home?tab=casino'
+    }
+  }
+  return tab.guestPath
 }
 
 // 当前激活项索引：用于驱动顶部凸起在当前 tab 数量间平滑移动。

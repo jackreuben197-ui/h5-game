@@ -11,6 +11,8 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { getLocale, t } from '@/i18n'
 import { ROOM_ORIGIN_TYPE } from '@/utils/roomVisibility'
 import { isMttRecordVisible } from '@/utils/mttVisibility'
+import { useLoginModalStore } from '@/stores/loginModal'
+import { useGameStore } from '@/stores/game'
 import {
   multiLanguageTemplateVersion,
   resolveTemplateTextByKey,
@@ -66,6 +68,8 @@ const router = useRouter()
 const appConfigStore = useAppConfigStore()
 const mttListStore = useMttListStore()
 const userInfoStore = useUserInfoStore()
+const loginModalStore = useLoginModalStore()
+const gameStore = useGameStore()
 
 const expandedGroupMap = ref<Record<string, boolean>>({})
 const selectedClubId = computed(() => toSafeInt(userInfoStore.currentClub?.club_id))
@@ -142,10 +146,18 @@ const renderGroups = computed<MttRenderGroup[]>(() =>
 )
 
 function handleCardAction(item: MttItem): void {
+  if (!gameStore.sessionToken) {
+    loginModalStore.open()
+    return
+  }
   router.push({ name: 'mtt-detail', query: { id: String(item.id) } })
 }
 
 function handleCardClick(item: MttItem): void {
+  if (!gameStore.sessionToken) {
+    loginModalStore.open()
+    return
+  }
   router.push({ name: 'mtt-detail', query: { id: String(item.id) } })
 }
 

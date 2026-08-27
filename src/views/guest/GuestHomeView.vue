@@ -6,6 +6,10 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
 import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
 import { useHomeAnnouncement } from '@/composables/useHomeAnnouncement'
+import { useMainTabsStore } from '@/stores/mainTabs'
+import { useChannelMenuVersion } from '@/composables/useChannelMenuVersion'
+import PokerGameList from '@/views/home/gameList.vue'
+import CasinoView from '@/views/home/CasinoView.vue'
 import { computed, nextTick, onMounted, ref } from 'vue'
 import iconService1Dark from '@/assets/icons/icon_service_1.svg'
 import iconService1Light from '@/assets/icons/icon_service_1_light.svg'
@@ -31,6 +35,35 @@ const iconService3 = computed(() => (isLightTheme.value ? iconService3Light : ic
 
 const loginModalStore = useLoginModalStore()
 const userInfoStore = useUserInfoStore()
+const tabsStore = useMainTabsStore()
+const { isVersionB, isChannelPackage } = useChannelMenuVersion()
+
+function toSafeInt(value: unknown): number {
+  const num = Number(value)
+  return Number.isFinite(num) ? Math.floor(num) : 0
+}
+
+const channelCasinoClubId = computed(() =>
+  isChannelPackage.value
+    ? toSafeInt(userInfoStore.channelDefaultClub?.club_id)
+    : 0,
+)
+
+const guestContentMode = computed(() => {
+  if (!isChannelPackage.value || !isVersionB.value) {
+    return 'default'
+  }
+  if (tabsStore.activeTab === 'home') {
+    return 'poker'
+  }
+  if (tabsStore.activeTab === 'mtt') {
+    return 'mtt'
+  }
+  if (tabsStore.activeTab === 'casino') {
+    return 'casino'
+  }
+  return 'default'
+})
 
 const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
 // 优先后台轮播图；没有配置时沿用渠道俱乐部自带 banner，最后才回落到内置单图 + hero 文案。
@@ -107,7 +140,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div ref="homeRootRef" class="home-page">
+  <div
+    ref="homeRootRef"
+    class="home-page"
+    :class="{ 'home-page--fit': guestContentMode === 'default' }"
+  >
     <!-- 0. 顶部栏：POKER + 注册/登录 -->
     <div class="top-bar top-bar--guest">
       <!-- лого и текст временно скрыты
@@ -205,110 +242,132 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 4. 游戏模块 -->
-    <div class="section-header">
-      <span class="section-title">{{ t('UIGuest_Text4') }}</span>
-    </div>
-    <div class="game-center-scroll">
-      <div class="game-center-track">
-        <div class="game-scroll-card game-card-mtt" @click="notifyNotLogin">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_mtt_lg.png" alt="MTT" />
-          <div class="zone-info">
-            <div class="zone-header">
-              <span class="zone-title"> {{ t('UIHomeMttArea') }} </span>
-              <img class="zone-mini-icon" src="@/assets/icons/game_zone_mtt_mini.png" alt="" />
-            </div>
-            <div class="zone-desc">
-              <span>{{ t('UIHomeMttPokerTip') }}</span>
-            </div>
-            <p class="zone-sub-desc">{{ t('UIHomeMttAreaTip') }}</p>
-          </div>
-          <div class="zone-online-bar">
-            <span v-fit-text="{ maxLines: 1 }" class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
-            <span class="online-num"> {{ mttTablesText }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> {{ mttPlayersText }} </span>
-          </div>
+    <div class="home-swap-container">
+      <Transition name="home-swap">
+        <div v-if="guestContentMode === 'mtt'" key="mtt" class="home-swap-panel">
+          <MttContent class="home-mtt-content" />
         </div>
-
-        <div class="game-scroll-card poker-card" @click="notifyNotLogin">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_poker_lg.png" alt="扑克" />
-          <div class="poker-overlay"></div>
-          <div class="zone-info poker-info">
-            <div class="zone-header">
-              <span class="zone-title"> {{ t('UIHomePokerArea') }} </span>
-              <img
-                class="zone-mini-icon poker-mini"
-                src="@/assets/icons/game_zone_poker_mini.png"
-                alt=""
-              />
-            </div>
-            <div class="poker-desc-area">
-              <p class="zone-sub-desc">{{ t('UITexasRule_texas') }}</p>
-              <p class="zone-sub-desc">{{ t('UITexasRule_omaha') }}</p>
-              <p class="zone-sub-desc">{{ t('PokerType_2') }}</p>
-            </div>
-          </div>
-          <div class="zone-online-bar">
-            <span v-fit-text="{ maxLines: 1 }" class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
-            <span class="online-num"> {{ pokerTablesText }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> {{ pokerPlayersText }} </span>
-          </div>
-        </div>
-
-        <div class="game-scroll-card game-card-mahjong" @click="notifyNotLogin">
-          <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" :alt="t('Mahjong_Name')" />
-          <div class="zone-info">
-            <div class="zone-header">
-            <span class="zone-title"> {{ t('UICasino_Title') }} </span>
-              <img class="zone-mini-icon" src="@/assets/icons/game_zone_mahjong_mini.png" alt="" />
-            </div>
-            <div class="zone-desc casino-desc">
-              <p>{{ t('UICasino_SubText') }}</p>
-              <p>{{ t('UICasino_TopProviders') }}</p>
-            </div>
-          </div>
-          <div class="zone-online-bar">
-            <span v-fit-text="{ maxLines: 1 }" class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
-            <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
-            <span class="online-num"> {{ mahjongPlayersText }} </span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 5. 热门游戏 -->
-    <div class="section-header">
-      <span class="section-title">{{ t('UIGuest_Text5') }}</span>
-    </div>
-    <div class="coming-soon-scroll">
-      <div class="coming-soon-track">
+        <PokerGameList
+          v-else-if="guestContentMode === 'poker'"
+          key="poker"
+          embedded
+          class="home-poker-content home-swap-panel"
+        />
         <div
-          v-for="(game, index) in activeBannerGames"
-          :key="index"
-          class="coming-soon-scroll-card"
-          @click="notifyNotLogin"
+          v-else-if="guestContentMode === 'casino'"
+          key="casino"
+          class="home-casino-content home-swap-panel"
         >
-          <picture class="coming-soon-scroll-card__picture">
-            <source v-if="game.svgPc" media="(min-width: 600px)" :srcset="game.svgPc" />
-            <img class="coming-soon-scroll-card__img" :src="game.svg" alt="" />
-          </picture>
-          <div class="coming-soon-scroll-card__label">
-            <span class="coming-soon-scroll-card__title">{{ t(game.titleKey) }}</span>
-            <span
-              v-for="(subtitleKey, i) in game.subtitleKeys"
-              :key="i"
-              class="coming-soon-scroll-card__subtitle"
-              :class="{ 'coming-soon-scroll-card__subtitle--first': i === 0 }"
-            >
-              {{ t(subtitleKey) }}
-            </span>
+          <CasinoView :hide-header="true" :club-id="channelCasinoClubId" />
+        </div>
+        <div v-else key="default" class="home-default-sections home-swap-panel">
+          <!-- 4. 游戏模块 -->
+          <div class="section-header">
+            <span class="section-title">{{ t('UIGuest_Text4') }}</span>
+          </div>
+          <div class="game-center-scroll">
+            <div class="game-center-track">
+              <div class="game-scroll-card game-card-mtt" @click="notifyNotLogin">
+                <img class="zone-lg-bg" src="@/assets/icons/game_zone_mtt_lg.png" alt="MTT" />
+                <div class="zone-info">
+                  <div class="zone-header">
+                    <span class="zone-title"> {{ t('UIHomeMttArea') }} </span>
+                    <img class="zone-mini-icon" src="@/assets/icons/game_zone_mtt_mini.png" alt="" />
+                  </div>
+                  <div class="zone-desc">
+                    <span>{{ t('UIHomeMttPokerTip') }}</span>
+                  </div>
+                  <p class="zone-sub-desc">{{ t('UIHomeMttAreaTip') }}</p>
+                </div>
+                <div class="zone-online-bar">
+                  <span v-fit-text="{ maxLines: 1 }" class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
+                  <span class="online-num"> {{ mttTablesText }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
+                  <span class="online-num"> {{ mttPlayersText }} </span>
+                </div>
+              </div>
+
+              <div class="game-scroll-card poker-card" @click="notifyNotLogin">
+                <img class="zone-lg-bg" src="@/assets/icons/game_zone_poker_lg.png" alt="扑克" />
+                <div class="poker-overlay"></div>
+                <div class="zone-info poker-info">
+                  <div class="zone-header">
+                    <span class="zone-title"> {{ t('UIHomePokerArea') }} </span>
+                    <img
+                      class="zone-mini-icon poker-mini"
+                      src="@/assets/icons/game_zone_poker_mini.png"
+                      alt=""
+                    />
+                  </div>
+                  <div class="poker-desc-area">
+                    <p class="zone-sub-desc">{{ t('UITexasRule_texas') }}</p>
+                    <p class="zone-sub-desc">{{ t('UITexasRule_omaha') }}</p>
+                    <p class="zone-sub-desc">{{ t('PokerType_2') }}</p>
+                  </div>
+                </div>
+                <div class="zone-online-bar">
+                  <span v-fit-text="{ maxLines: 1 }" class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
+                  <span class="online-num"> {{ pokerTablesText }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
+                  <span class="online-num"> {{ pokerPlayersText }} </span>
+                </div>
+              </div>
+
+              <div class="game-scroll-card game-card-mahjong" @click="notifyNotLogin">
+                <img class="zone-lg-bg" src="@/assets/icons/game_zone_mahjong_lg.png" :alt="t('Mahjong_Name')" />
+                <div class="zone-info">
+                  <div class="zone-header">
+                  <span class="zone-title"> {{ t('UICasino_Title') }} </span>
+                    <img class="zone-mini-icon" src="@/assets/icons/game_zone_mahjong_mini.png" alt="" />
+                  </div>
+                  <div class="zone-desc casino-desc">
+                    <p>{{ t('UICasino_SubText') }}</p>
+                    <p>{{ t('UICasino_TopProviders') }}</p>
+                  </div>
+                </div>
+                <div class="zone-online-bar">
+                  <span v-fit-text="{ maxLines: 1 }" class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+                  <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
+                  <span class="online-num"> {{ mahjongPlayersText }} </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. 热门游戏 -->
+          <div class="section-header">
+            <span class="section-title">{{ t('UIGuest_Text5') }}</span>
+          </div>
+          <div class="coming-soon-scroll">
+            <div class="coming-soon-track">
+              <div
+                v-for="(game, index) in activeBannerGames"
+                :key="index"
+                class="coming-soon-scroll-card"
+                @click="notifyNotLogin"
+              >
+                <picture class="coming-soon-scroll-card__picture">
+                  <source v-if="game.svgPc" media="(min-width: 600px)" :srcset="game.svgPc" />
+                  <img class="coming-soon-scroll-card__img" :src="game.svg" alt="" />
+                </picture>
+                <div class="coming-soon-scroll-card__label">
+                  <span class="coming-soon-scroll-card__title">{{ t(game.titleKey) }}</span>
+                  <span
+                    v-for="(subtitleKey, i) in game.subtitleKeys"
+                    :key="i"
+                    class="coming-soon-scroll-card__subtitle"
+                    :class="{ 'coming-soon-scroll-card__subtitle--first': i === 0 }"
+                  >
+                    {{ t(subtitleKey) }}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </Transition>
     </div>
   </div>
 </template>
@@ -1000,5 +1059,94 @@ onMounted(() => {
 // 只在标题与副标题之间留 0.12rem，副标题各行仍靠 line-height 紧凑排列。
 .coming-soon-scroll-card__subtitle--first {
   margin-top: 0.12rem;
+}
+
+.home-page--fit {
+  height: 100%;
+  min-height: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
+.home-page--fit .notice-bar,
+.home-page--fit .club-panel {
+  flex-shrink: 0;
+}
+
+.home-page--fit .home-swap-container {
+  flex: 1 0 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-page--fit .home-default-sections {
+  flex: 1 0 auto;
+  min-height: 0;
+}
+
+.home-page--fit .game-center-scroll,
+.home-page--fit .coming-soon-scroll {
+  flex: 1 0 3.9rem;
+  min-height: 0;
+  max-height: 3.9rem;
+}
+
+.home-default-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0 0.4rem;
+}
+
+.home-swap-container {
+  position: relative;
+  margin-left: -0.4rem;
+  margin-right: -0.4rem;
+  min-height: 5rem;
+}
+
+.home-swap-panel {
+  width: 100%;
+}
+
+.home-casino-content {
+  padding: 0 0.4rem 1.2rem;
+}
+
+.home-poker-content {
+  :deep(.room-tabs) {
+    margin-right: 0;
+    margin-left: 0;
+  }
+  :deep(.group-list) {
+    padding: 0 0.2rem;
+  }
+}
+
+.home-swap-enter-active,
+.home-swap-leave-active {
+  transition: opacity 0.32s ease;
+  will-change: opacity;
+}
+
+.home-swap-leave-active {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.home-swap-enter-from {
+  opacity: 0;
+}
+.home-swap-enter-to {
+  opacity: 1;
+}
+.home-swap-leave-from {
+  opacity: 1;
+}
+.home-swap-leave-to {
+  opacity: 0;
 }
 </style>

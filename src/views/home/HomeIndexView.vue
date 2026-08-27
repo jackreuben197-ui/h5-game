@@ -433,8 +433,7 @@ const homeContentModeRaw = computed<HomeContentMode>(() => {
   const mttTables = homeRoomStats.value.mtt.tables
   if (isChannelPackage.value) {
     if (isVersionB.value) {
-      // In Version B, /home always directly displays poker if poker is enabled.
-      // If poker has no data, redirect to mttList or casino in watch() below.
+      // In Version B, /home always directly displays poker.
       return 'poker'
     }
     if (channelSectionCount.value === 1) {
@@ -681,20 +680,6 @@ watch(homeContentModeRaw, (val) => {
     homeContentMode.value = val
   }
 })
-
-watch(
-  [isVersionB, channelSections, initialized],
-  () => {
-    if (initialized.value && isVersionB.value && !channelSections.value.poker) {
-      if (channelSections.value.mtt) {
-        void router.replace('/mttList')
-      } else if (channelSections.value.casino) {
-        void router.replace('/casino')
-      }
-    }
-  },
-  { immediate: true }
-)
 
 watch(noticeText, () => {
   void updateNoticeMarquee()

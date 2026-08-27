@@ -19,11 +19,15 @@ import { useTextI18n } from '@/i18n/useTextI18n'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 import LoginModal from '@/views/login/LoginModal.vue'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
+
 
 const route = useRoute()
 const gameStore = useGameStore()
 const tabsStore = useMainTabsStore()
 const appConfigStore = useAppConfigStore()
+const userInfoStore = useUserInfoStore()
 const { setLocale } = useTextI18n()
 
 // 主容器背景图：全页面共用一张底图。
@@ -139,6 +143,9 @@ function resolveLanguageCode(user: Record<string, unknown>): string {
 
 onMounted(() => {
   void fetchUserInfoOnEnter()
+  if (isPrivateDomainMode() && !gameStore.sessionToken) {
+    void userInfoStore.ensureChannelDefaultClub()
+  }
 })
 
 // 路由变化时同步底部 Tab 共享状态，确保子页面也能维持正确高亮。

@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useGameStore } from '@/stores/game'
 import {
   type ExtendGameRecord,
   getDeviceType,
@@ -221,7 +222,10 @@ export const useCasinoStore = defineStore('casino', {
         this.fetchPopularGames(clubId, isGlobalMode),
         this.fetchPopularBannerGames(clubId, isGlobalMode),
       ])
-      this.setHasFetchedInitialData(true)
+      const gameStore = useGameStore()
+      if (gameStore.sessionToken) {
+        this.setHasFetchedInitialData(true)
+      }
     }
   },
 })

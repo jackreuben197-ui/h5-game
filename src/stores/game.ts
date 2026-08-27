@@ -5,6 +5,7 @@ import StorageKey from '@/constants/storageKey'
 import { pushTokenClearToCocos, pushTokenToCocos } from '@/bridge/sync/tokenSync'
 import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useCasinoStore } from '@/stores/casino'
 import { dzpkPersistStorage, localStore } from '@/utils/localStore'
 
 interface GameState {
@@ -97,6 +98,7 @@ export const useGameStore = defineStore(
         // 登录态清空时，同步清理全局共享缓存。
         const userInfoStore = useUserInfoStore()
         userInfoStore.clearInfo()
+        useCasinoStore().$reset()
         // 退出登录时同步清理 dzpk_TOKEN。
         localStore.removeItem(StorageKey.TOKEN)
         localStore.removeItem(StorageKey.TOKEN_EXPIREAT)

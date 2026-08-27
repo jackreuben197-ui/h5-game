@@ -42,15 +42,6 @@ const mttListStore = useMttListStore()
 const casinoStore = useCasinoStore()
 const appConfigStore = useAppConfigStore()
 
-const hasPokerData = computed(() => {
-  const clubId = toSafeInt(channelClub.value?.club_id)
-  const tribeId = toSafeInt(channelClub.value?.tribe_id)
-  const baseList = roomListStore.records.filter((room) => Number(room.game_type) < 5)
-  const scopedList = baseList.filter((room) =>
-    checkIsShowForClubAndTribe(room, clubId, tribeId)
-  )
-  return scopedList.length > 0
-})
 
 const hasMttData = computed(() => {
   const clubId = toSafeInt(channelClub.value?.club_id)
@@ -128,15 +119,13 @@ const tabs = computed<TabItem[]>(() => {
     const list: TabItem[] = []
     
     // Poker (Home)
-    if (hasPokerData.value) {
-      list.push({
-        key: 'home',
-        label: t('UITabbarHome'),
-        path: '/home',
-        guestPath: '/guest/home',
-        icon: 'home',
-      })
-    }
+    list.push({
+      key: 'home',
+      label: t('UITabbarHome'),
+      path: '/home',
+      guestPath: '/guest/home',
+      icon: 'home',
+    })
 
     // Tournaments (mtt)
     if (hasMttData.value) {
@@ -379,6 +368,17 @@ watch(activeIndex, (newIndex) => {
   if (!svgRef.value) return
   startPathAnimation(newIndex)
 })
+
+watch(
+  tabs,
+  () => {
+    nextTick(() => {
+      if (!svgRef.value) return
+      refreshPathByCurrentTab()
+    })
+  },
+  { deep: true }
+)
 
 onMounted(async () => {
   await nextTick()

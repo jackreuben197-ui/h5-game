@@ -2023,7 +2023,8 @@ watch(
 
 /* 内容置于磨砂底之上 */
 .messages-wrap,
-.bottom-nav {
+.bottom-nav,
+.attachment-panel {
   position: relative;
   z-index: 3;
 }

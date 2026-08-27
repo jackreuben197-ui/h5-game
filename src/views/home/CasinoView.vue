@@ -1278,10 +1278,7 @@ onActivated(async () => {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background:
-    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.22), transparent 34%),
-    radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.18), transparent 34%),
-    radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.06), transparent 48%);
+  background: none;
   z-index: 0;
 }
 

@@ -47,6 +47,13 @@ const backgroundStyle = computed(() => {
     return { backgroundImage: `url(${mainBgLightUrl})` }
   }
 
+  if (route.name === 'guest-home' && isVersionB.value) {
+    const queryTab = route.query.tab
+    if (queryTab === 'mtt' || queryTab === 'casino') {
+      return { backgroundImage: `url(${mainBgUrl})` }
+    }
+  }
+
   return {
     backgroundImage: route.meta.tabKey === 'home' ? `url(${mainBg2Url})` : `url(${mainBgUrl})`,
   }

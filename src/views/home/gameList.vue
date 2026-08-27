@@ -428,10 +428,7 @@ function handleOpenCustomerService(): void {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
-    radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
-    radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
+  background: none;
 }
 
 .action-wrap {

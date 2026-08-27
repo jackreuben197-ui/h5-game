@@ -199,6 +199,9 @@ http.interceptors.response.use(
 
     // 服务端返回 90010：token 失效，打开登录弹窗。
     if (businessCode === 90010) {
+      if (!useGameStore(pinia).sessionToken.trim()) {
+        return Promise.reject(new Error('该接口需要登录'))
+      }
       void forceToLogin()
       return Promise.reject(new Error('登录已失效，请重新登录'))
     }
@@ -212,6 +215,9 @@ http.interceptors.response.use(
   (error: AxiosError<{ message?: string; code?: number }>) => {
     const businessCode = error.response?.data?.code
     if (businessCode === 90010) {
+      if (!useGameStore(pinia).sessionToken.trim()) {
+        return Promise.reject(error)
+      }
       void forceToLogin()
       return Promise.reject(error)
     }

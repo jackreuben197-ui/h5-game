@@ -1688,7 +1688,7 @@ watch(
             </div>
           </div>
 
-          <div class="bottom-nav">
+          <div class="bottom-nav" :class="{ 'bottom-nav--panel-open': attachmentPanelVisible }">
             <button
               class="nav-icon-btn mic-btn"
               type="button"
@@ -2490,6 +2490,10 @@ watch(
   gap: 0.1rem;
 }
 
+.bottom-nav--panel-open {
+  padding-bottom: 0;
+}
+
 .nav-icon-btn {
   background: transparent;
   border: none;
@@ -2632,7 +2636,7 @@ watch(
 .attachment-panel {
   flex-shrink: 0;
   min-height: 1.4667rem;
-  padding: 0.4rem 0.48rem 0;
+  padding: 0.24rem 0.48rem calc(env(safe-area-inset-bottom) + 0.6rem);
   display: flex;
   align-items: flex-start;
 }

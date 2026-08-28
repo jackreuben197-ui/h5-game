@@ -89,7 +89,9 @@ const availablePaymentChannels = computed(() =>
   }),
 )
 
-const handlingFeeRate = 0.05
+const handlingFeeRate = computed(() => {
+  return selectedWithdrawType.value?.fee_rate ?? 0
+})
 const parsedAmount = computed(() => {
   const v = parseFloat(withdrawAmount.value.replace(',', '.').trim())
   return Number.isFinite(v) && v > 0 ? v : 0
@@ -97,7 +99,7 @@ const parsedAmount = computed(() => {
 
 const calculatedWithdrawAmountAfterFee = computed(() => {
   if (!parsedAmount.value) return 0
-  return parsedAmount.value * (1 - handlingFeeRate)
+  return parsedAmount.value * (1 - handlingFeeRate.value)
 })
 
 const withdrawRange = computed(() => {
@@ -188,15 +190,22 @@ async function fetchPaymentInfo(): Promise<void> {
   selectedPaymentAccount.value = null
   try {
     const userId =
-      userInfoStore.userInfo?.user?.p_u_id ??
-      Number(localStorage.getItem('user_p_u_id') ?? '0')
-    const res = await postPaymentInfoListApi({ user_id: userId, account_type: 1, limit: 50, offset: 0 })
+      userInfoStore.userInfo?.user?.p_u_id ?? Number(localStorage.getItem('user_p_u_id') ?? '0')
+    const res = await postPaymentInfoListApi({
+      user_id: userId,
+      account_type: 1,
+      limit: 50,
+      offset: 0,
+    })
     if (res.code === 0 && res.data?.list) {
       const seen = new Set<string>()
       const deduped: PaymentInfo[] = []
       for (const item of res.data.list) {
         const key = `${item.pix_name}|${item.account_no}|${item.bank_name}|${item.account_type}`
-        if (!seen.has(key)) { seen.add(key); deduped.push(item) }
+        if (!seen.has(key)) {
+          seen.add(key)
+          deduped.push(item)
+        }
       }
       paymentInfoList.value = deduped
       if (deduped.length > 0) selectedPaymentAccount.value = deduped[0]
@@ -306,17 +315,24 @@ watch(filteredWithdrawTypes, (list) => {
 
 <template>
   <div class="wf">
-
     <div class="wf__card">
-
       <div v-if="loadingWithdrawTypes" class="wf__acct-loading">
         {{ tx('Wallet_Loading', '加载中…') }}
       </div>
 
       <template v-else-if="withdrawTypes.length > 0">
         <div class="wf__acct-header">
-          <span class="wf__acct-title">{{ isCustomerCare ? tx('Wallet_SelectMethod', '请选择提现方式') : tx('Wallet_SelectAccount', '请选择收款账户') }}</span>
-          <button v-if="!isCustomerCare" class="wf__add-card-btn" type="button" @click="router.push('/wallet/add-bank-card')">
+          <span class="wf__acct-title">{{
+            isCustomerCare
+              ? tx('Wallet_SelectMethod', '请选择提现方式')
+              : tx('Wallet_SelectAccount', '请选择收款账户')
+          }}</span>
+          <button
+            v-if="!isCustomerCare"
+            class="wf__add-card-btn"
+            type="button"
+            @click="router.push('/wallet/add-bank-card')"
+          >
             {{ tx('Wallet_AddCard', '添加银行卡') }}
           </button>
         </div>
@@ -370,7 +386,6 @@ watch(filteredWithdrawTypes, (list) => {
       <div v-else class="wf__acct-empty">
         {{ tx('Wallet_NoWithdrawMethod', '暂无可用提现方式') }}
       </div>
-
     </div>
 
     <div v-if="withdrawTypes.length > 0" class="wf__methods">
@@ -385,7 +400,9 @@ watch(filteredWithdrawTypes, (list) => {
           <img class="wf__type-card-icon" :src="icBankcard" alt="" />
           <div class="wf__type-card-label">
             <div class="wf__type-card-text">
-              <span class="wf__type-card-name">{{ wt.name || tx('Wallet_BankCard', '银行卡') }}</span>
+              <span class="wf__type-card-name">{{
+                wt.name || tx('Wallet_BankCard', '银行卡')
+              }}</span>
               <span class="wf__type-card-sub">{{ tx('Wallet_Payment', '支付') }}</span>
             </div>
           </div>
@@ -404,7 +421,9 @@ watch(filteredWithdrawTypes, (list) => {
             <img :src="icSupportService" alt="" class="wf__type-card-icon" />
             <div class="wf__type-card-label">
               <div class="wf__type-card-text">
-                <span class="wf__type-card-name">{{ wt.name || tx('Wallet_CsWithdraw', '客服') }}</span>
+                <span class="wf__type-card-name">{{
+                  wt.name || tx('Wallet_CsWithdraw', '客服')
+                }}</span>
                 <span class="wf__type-card-sub">{{ tx('Wallet_Payment', '支付') }}</span>
               </div>
             </div>
@@ -435,17 +454,19 @@ watch(filteredWithdrawTypes, (list) => {
           class="wf__amount-entered-input"
           :placeholder="tx('Wallet_InputPlaceholder', '输入需要回收的联盟币数量')"
         />
-        <span class="wf__amount-fee-tag">{{ t('UIMine_WalletPlatform_fee_s') }}：{{ (handlingFeeRate * 100).toFixed(0) }}%</span>
+        <span class="wf__amount-fee-tag"
+          >{{ t('UIMine_WalletPlatform_fee_s') }}：{{ (handlingFeeRate * 100).toFixed(0) }}%</span
+        >
       </div>
     </div>
 
-
-    <div
-      class="wf__cta-wrapper"
-      :class="{ 'wf__cta-wrapper--channel': isChannelPackage }"
-    >
+    <div class="wf__cta-wrapper" :class="{ 'wf__cta-wrapper--channel': isChannelPackage }">
       <PrimaryButton
-        :text="isCustomerCare ? tx('Wallet_ContactCs', '联系客服') : tx('Wallet_SubmitWithdraw', '立即提现')"
+        :text="
+          isCustomerCare
+            ? tx('Wallet_ContactCs', '联系客服')
+            : tx('Wallet_SubmitWithdraw', '立即提现')
+        "
         :disabled="!canWithdraw || withdrawing"
         class="wf__cta"
         @click="handleWithdraw"
@@ -549,7 +570,12 @@ watch(filteredWithdrawTypes, (list) => {
     inset: 0;
     backdrop-filter: blur(16.6px);
     -webkit-backdrop-filter: blur(16.6px);
-    background: linear-gradient(107.6deg, rgba(249,249,249,0.18) 12.3%, rgba(249,249,249,0.24) 33.3%, rgba(147,147,147,0.3) 85.1%);
+    background: linear-gradient(
+      107.6deg,
+      rgba(249, 249, 249, 0.18) 12.3%,
+      rgba(249, 249, 249, 0.24) 33.3%,
+      rgba(147, 147, 147, 0.3) 85.1%
+    );
     mix-blend-mode: hard-light;
     pointer-events: none;
     border-radius: inherit;
@@ -563,13 +589,16 @@ watch(filteredWithdrawTypes, (list) => {
     pointer-events: none;
     border-radius: inherit;
     box-shadow:
-      inset 0 0 8.6px rgba(0,0,0,1),
-      inset 3.4px 2.6px 8.6px rgba(0,0,0,0.1),
-      inset 0 0 36.1px rgba(242,242,242,0.3);
+      inset 0 0 8.6px rgba(0, 0, 0, 1),
+      inset 3.4px 2.6px 8.6px rgba(0, 0, 0, 0.1),
+      inset 0 0 36.1px rgba(242, 242, 242, 0.3);
     z-index: 0;
   }
 
-  & > * { position: relative; z-index: 1; }
+  & > * {
+    position: relative;
+    z-index: 1;
+  }
 
   @include theme-light-own {
     border-color: var(--wallet-l-border);
@@ -621,7 +650,9 @@ watch(filteredWithdrawTypes, (list) => {
   cursor: pointer;
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
-  &:active { opacity: 0.85; }
+  &:active {
+    opacity: 0.85;
+  }
 
   @include theme-light-own {
     background: var(--wallet-l-accent);
@@ -651,7 +682,9 @@ watch(filteredWithdrawTypes, (list) => {
   overflow-x: auto;
   padding-bottom: 0.04rem;
   scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .wf__type-card {
@@ -692,9 +725,13 @@ watch(filteredWithdrawTypes, (list) => {
     inset: 0;
     border-radius: inherit;
     padding: 0.004rem;
-    background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(153,153,153,1) 100%);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(153, 153, 153, 1) 100%);
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
@@ -702,9 +739,11 @@ watch(filteredWithdrawTypes, (list) => {
 
   .wf__type-card--active & {
     border-radius: 0.26rem;
-    background: #EE3955;
+    background: #ee3955;
 
-    &::before { display: none; }
+    &::before {
+      display: none;
+    }
   }
 
   @include theme-light-own {
@@ -755,7 +794,6 @@ watch(filteredWithdrawTypes, (list) => {
   }
 }
 
-
 .wf__type-card-sub {
   font-family: var(--wallet-font-cn);
   font-size: 0.19rem;
@@ -779,7 +817,7 @@ watch(filteredWithdrawTypes, (list) => {
   text-align: center;
   font-family: var(--wallet-font-cn);
   font-size: 0.3rem;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255, 255, 255, 0.5);
   padding: 0.24rem 0;
 
   @include theme-light-own {
@@ -796,7 +834,9 @@ watch(filteredWithdrawTypes, (list) => {
   padding: 0.12rem 0.16rem;
   border-radius: 0.3rem;
   border: 0.016rem solid transparent;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 
   &--active {
     background: rgba(255, 255, 255, 0.18);
@@ -849,7 +889,7 @@ watch(filteredWithdrawTypes, (list) => {
 .wf__acct-last4 {
   font-family: var(--wallet-font-num);
   font-size: 0.3rem;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255, 255, 255, 0.8);
   white-space: nowrap;
 
   @include theme-light-own {
@@ -880,15 +920,13 @@ watch(filteredWithdrawTypes, (list) => {
   text-align: center;
   font-family: var(--wallet-font-cn);
   font-size: 0.3rem;
-  color: rgba(255,255,255,0.45);
+  color: rgba(255, 255, 255, 0.45);
   padding: 0.16rem 0;
 
   @include theme-light-own {
     color: var(--wallet-l-text-muted);
   }
 }
-
-
 
 // ── Amount card ───────────────────────────────────────────────────────────────
 .wf__amount-card {
@@ -905,17 +943,19 @@ watch(filteredWithdrawTypes, (list) => {
 .wf__amount-range {
   width: 100%;
   margin-top: 0.1rem;
-  padding: 0.08rem 0.5rem;
+  height: 1.2rem;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--wallet-font-cn);
   font-size: 0.28rem;
-  color: rgba(249,249,249,0.45);
+  color: rgba(249, 249, 249, 0.45);
   box-sizing: border-box;
 
   @include theme-light-own {
     color: var(--wallet-l-text-muted);
+    background: rgba(34, 34, 34, 0.13);
+    border-radius: 0.75rem;
   }
 }
 
@@ -926,15 +966,29 @@ watch(filteredWithdrawTypes, (list) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(170.7deg, rgb(54,54,54) 7.9%, rgb(23,23,23) 80.2%);
+  background: linear-gradient(170.7deg, rgb(54, 54, 54) 7.9%, rgb(23, 23, 23) 80.2%);
+
+  @include theme-light-own {
+    background: transparent;
+  }
 }
 
 .wf__amount-value {
   font-family: var(--wallet-font-num);
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.2);
+  color: rgba(255, 255, 255, 0.2);
   transition: color 0.2s;
-  &--active { color: #e80000; }
+  &--active {
+    color: #e80000;
+  }
+
+  @include theme-light-own {
+    color: rgba(0, 0, 0, 0.25);
+
+    &--active {
+      color: #e80000;
+    }
+  }
 }
 
 .wf__amount-footer {
@@ -945,15 +999,18 @@ watch(filteredWithdrawTypes, (list) => {
   padding: 0 0.5rem;
   margin: 0.4rem 0.42rem 0.4rem;
   border-radius: 0.75rem;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.04);
   opacity: 0;
   transition: opacity 0.2s;
-  &--visible { opacity: 1; background: rgba(255,255,255,0.9); }
+  &--visible {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.9);
+  }
 
   @include theme-light-own {
     &--visible {
-      background: var(--wallet-l-surface);
-      box-shadow: inset 0 0 0 0.5px var(--wallet-l-border);
+      background: rgba(34, 34, 34, 0.13);
+      box-shadow: none;
     }
   }
 }
@@ -971,7 +1028,7 @@ watch(filteredWithdrawTypes, (list) => {
   &::placeholder {
     font-family: var(--wallet-font-cn);
     font-size: 0.28rem;
-    color: rgba(0,0,0,0.4);
+    color: rgba(0, 0, 0, 0.4);
   }
 }
 
@@ -986,8 +1043,10 @@ watch(filteredWithdrawTypes, (list) => {
   text-align: center;
   font-family: var(--wallet-font-cn);
   font-size: 0.26rem;
-  color: rgba(255,255,255,0.5);
-  span { line-height: 1.4; }
+  color: rgba(255, 255, 255, 0.5);
+  span {
+    line-height: 1.4;
+  }
 
   @include theme-light-own {
     color: var(--wallet-l-text-muted);

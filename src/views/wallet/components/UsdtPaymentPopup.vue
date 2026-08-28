@@ -6,7 +6,7 @@ import icCheckbox from '@/assets/icons/ic_checkbox.png'
 import icUncheckbox from '@/assets/icons/ic_uncheckbox.png'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import PopupCloseButton from './PopupCloseButton.vue'
-import { t } from '@/i18n'
+import { t, ucLabel } from '@/i18n'
 
 const props = defineProps<{
   goldCount: number
@@ -104,7 +104,7 @@ onUnmounted(() => {
                     : '0'
                 }}
               </span>
-              <span>{{ t('UIWallet_Current') }}：1USDT={{ props.rate || 1 }}{{ t('UC') }}</span>
+              <span>{{ t('UIWallet_Current') }}：1USDT={{ props.rate || 1 }}{{ ucLabel() }}</span>
             </div>
             <PopupCloseButton @close="close" />
           </div>

@@ -114,7 +114,7 @@ const amountPlaceholder = computed(() => {
     return `${tx('Wallet_WithdrawRange', '联盟币回收限')} ${min.toLocaleString()}-${max.toLocaleString()}`
   }
   if (min > 0) return `${tx('Wallet_MinWithdraw', '最低')} ${min.toLocaleString()}`
-  return tx('Wallet_InputPlaceholder', '输入需要回收的UC数量')
+  return tx('Wallet_InputPlaceholder', '输入需要回收的联盟币数量')
 })
 
 const canWithdraw = computed(() => {
@@ -433,7 +433,7 @@ watch(filteredWithdrawTypes, (list) => {
           type="text"
           inputmode="decimal"
           class="wf__amount-entered-input"
-          :placeholder="tx('Wallet_InputPlaceholder', '输入需要回收的UC数量')"
+          :placeholder="tx('Wallet_InputPlaceholder', '输入需要回收的联盟币数量')"
         />
         <span class="wf__amount-fee-tag">{{ t('UIMine_WalletPlatform_fee_s') }}：{{ (handlingFeeRate * 100).toFixed(0) }}%</span>
       </div>

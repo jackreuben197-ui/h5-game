@@ -1,7 +1,7 @@
 // 文案转换：opcode → 文案；房间盲注/底分/前注 → 文案。
 // 对齐 cocos 客户端：UIClubProfitDetailStatistics.cs L99 起的判定逻辑、
 // UIMineBillComponent.SetItemDataInfo 和 UIMineBillComponentHelper 的 op_code 映射。
-import { getLocale, t } from '@/i18n'
+import { getLocale, t, ucLabel } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 
 const GAME_TYPE_HOLDEM = 0
@@ -126,7 +126,7 @@ function resolvePlaceholderArg(
 ): string {
   if (opCode === 'CLUBTOUSER') {
     if (activeTab === 4) return resolveTableLabel(ctx.roomInfo)
-    return activeTab === 1 ? 'UC' : 'GC'
+    return activeTab === 1 ? ucLabel() : 'GC'
   }
   if (OP_CODES_NEED_TABLE_LABEL.has(opCode)) {
     return resolveTableLabel(ctx.roomInfo)

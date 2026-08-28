@@ -142,6 +142,13 @@ export function tJoin(...parts: (string | number | null | undefined)[]): string 
     .join(separator)
 }
 
+export function ucLabel(): string {
+  const locale = currentLocale.value
+  if (locale === 'cn') return '联盟币'
+  if (locale === 'zh') return '聯盟幣'
+  return 'UC'
+}
+
 export const SUPPORTED_LOCALES_OPTIONS: { label: string; value: LocaleCode }[] = [
   { label: '简体中文', value: 'cn' },
   { label: '繁體中文', value: 'zh' },
@@ -162,6 +169,7 @@ export const SUPPORTED_LOCALES_OPTIONS: { label: string; value: LocaleCode }[] =
 export const textI18n = {
   locale: currentLocale,
   tJoin,
+  ucLabel,
   supportedLocales: SUPPORTED_LOCALES,
   getLocale,
   setLocale,

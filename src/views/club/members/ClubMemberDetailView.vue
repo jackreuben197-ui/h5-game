@@ -34,7 +34,7 @@ import {
 } from '@/views/club/members/clubMemberRoute'
 import mainBgUrl from '@/assets/images/img_table_setting_bg.png'
 import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
-import { t, tJoin } from '@/i18n'
+import { t, tJoin, ucLabel } from '@/i18n'
 
 const backgroundStyle = computed(() => ({
   '--member-detail-bg-dark': `url(${mainBgUrl})`,
@@ -173,11 +173,11 @@ const statRows = computed(() => [
   { label: t('UITexasInfo_games'), value: formatCount(statsData.value.game_num) },
   { label: t('UITexasGameEnding_allhand'), value: formatCount(statsData.value.hand_num) },
   {
-    label: t('UIClub_FundDetail_5iSXE2Uj') + 'UC',
+    label: tJoin(t('UIClub_FundDetail_5iSXE2Uj'), ucLabel()),
     value: formatAmount(statsData.value.grant_gold_amount),
   },
   {
-    label: t('UIClub_FundDetail_recycle') + 'UC',
+    label: tJoin(t('UIClub_FundDetail_recycle'), ucLabel()),
     value: formatAmount(statsData.value.recover_gold_amount),
   },
   { label: t('UIMine_Paipu_win'), value: formatAmount(statsData.value.profit) },

@@ -30,6 +30,8 @@ import icUncheckbox from '@/assets/icons/ic_uncheckbox.png'
 import imgTextLogo from '@/assets/images/img_text_logo.png'
 import imgFishLogo from '@/assets/images/img_fish_logo.png'
 import { showGameToast } from '@/components/Toast'
+import { ApiBusinessError } from '@/utils/apiError'
+import { LOGIN_FAILED_CODE, resolveLoginErrorText } from './loginErrorText'
 import { Loading } from 'vant'
 import { DEBUG_ACCOUNTS, type DebugAccount } from '@/constants/debugAccounts'
 
@@ -71,12 +73,19 @@ const errorVisible = ref(false)
 let errorTimer: ReturnType<typeof setTimeout> | null = null
 
 function showError(text: string) {
+  if (!text) return
   if (errorTimer) clearTimeout(errorTimer)
   errorText.value = text
   errorVisible.value = true
   errorTimer = setTimeout(() => {
     errorVisible.value = false
-  }, 3000)
+  }, 4000)
+}
+
+function hideError() {
+  if (errorTimer) clearTimeout(errorTimer)
+  errorTimer = null
+  errorVisible.value = false
 }
 
 const handleSelectLang = (lang: string) => {
@@ -215,7 +224,7 @@ async function sendOtp() {
         return
       }
       if (pageMode.value === 'register' && check.code !== 0) {
-        throw new Error(check.message || `error: ${check.code}`)
+        throw new ApiBusinessError(check.code, check.message)
       }
 
       const result = await postUserSendEmailCodeApi({
@@ -223,15 +232,14 @@ async function sendOtp() {
         email: target,
       })
       if (result.code !== 0) {
-        throw new Error(result.message || `error: ${result.code}`)
+        throw new ApiBusinessError(result.code, result.message)
       }
     }
     startOtpCountdown()
     showGameToast(t('UILogin_1007'))
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed'
-    console.log('sendOtp error', message)
-    message
+    console.warn('[login-new] sendOtp error:', error)
+    showError(resolveLoginErrorText(error, contactType.value))
   } finally {
     otpSending.value = false
   }
@@ -270,6 +278,7 @@ async function handleSubmit() {
 
 async function runSubmitFlow() {
   const target = contactValue.value.trim()
+  hideError()
   if (!validateBeforeSubmit(target)) return
   loading.value = true
   try {
@@ -281,9 +290,8 @@ async function runSubmitFlow() {
       await handleForgot(target)
     }
   } catch (error) {
-    console.log('[login-new] handleSubmit error:', error)
-    const message = error instanceof Error ? error.message : t('UILogin_LoginFailed')
-    showError(message)
+    console.warn('[login-new] handleSubmit error:', error)
+    showError(resolveLoginErrorText(error, contactType.value))
   } finally {
     loading.value = false
     // pendingAgreementSubmit.value = false
@@ -353,7 +361,7 @@ async function handleLogin(target: string) {
   }
   const token = String(res.token || '').trim()
   if (!token) {
-    throw new Error('登录接口返回缺少 token')
+    throw new ApiBusinessError(LOGIN_FAILED_CODE)
   }
 
   gameStore.setSessionToken(token)
@@ -406,7 +414,7 @@ async function handleRegister(target: string) {
     )
   }
   if (res.code !== 0) {
-    throw new Error(res.message || `error: ${res.code}`)
+    throw new ApiBusinessError(res.code, res.message)
   }
   await handleLogin(target)
 }
@@ -424,7 +432,7 @@ async function handleForgot(target: string) {
   }
   const res = await postUserModifyPasswordApi(payload)
   if (res.code !== 0) {
-    throw new Error(res.message || `error: ${res.code}`)
+    throw new ApiBusinessError(res.code, res.message)
   }
   showGameToast(t('UILogin_1009'))
   pageMode.value = 'login'
@@ -433,11 +441,11 @@ async function handleForgot(target: string) {
 
 function validateContactOnly(target: string): boolean {
   if (!target) {
-    showGameToast(contactType.value === 'account' ? t('UILogin_Account') : t('UILogin_InputEmail'))
+    showError(contactType.value === 'account' ? t('UILogin_Account') : t('UILogin_InputEmail'))
     return false
   }
   if (contactType.value === 'account' && target.length <= 3) {
-    showGameToast(t('UILogin_Account'))
+    showError(t('UILogin_Account'))
     return false
   }
   if (contactType.value === 'email' && !isEmail(target)) {

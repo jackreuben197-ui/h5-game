@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useWalletStore } from '@/stores/wallet'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import PopupCloseButton from './PopupCloseButton.vue'
-import { t } from '@/i18n'
+import { t, ucLabel } from '@/i18n'
 
 const props = defineProps<{
   goldCount: number
@@ -53,7 +53,7 @@ const payPrice = computed(() =>
             <h2 class="card__title">{{ t('UIMineMallUSDTShopPayDialogSurePay') }}</h2>
             <div class="card__header-info">
               <span>{{ t('UIMine_WalletPlatform_fee_s') }}：{{ feeDisplay }}</span>
-              <span>{{ t('UIWallet_Current') }}：1USDT={{ props.rate || 1 }}{{ t('UC') }}</span>
+              <span>{{ t('UIWallet_Current') }}：1USDT={{ props.rate || 1 }}{{ ucLabel() }}</span>
             </div>
             <PopupCloseButton @close="emit('close')" />
           </div>

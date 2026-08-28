@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { showToast } from 'vant'
-import { t } from '@/i18n'
+import { t, ucLabel } from '@/i18n'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import PopupCloseButton from './PopupCloseButton.vue'
 import type { RechargeGoldData } from '@/api/models/order'
@@ -100,7 +100,7 @@ onUnmounted(() => {
             <h2 class="header__title">{{ t('UIMineMallUSDTShopPayDialogSurePay') }}</h2>
             <div class="header__info">
               <p>{{ t('UIMine_WalletPlatform_fee_s') }}: {{ feeDisplay }}</p>
-              <p>{{ t('UIWallet_Current') }}: 1USDT={{ rate || 1 }}{{ t('UC') }}</p>
+              <p>{{ t('UIWallet_Current') }}: 1USDT={{ rate || 1 }}{{ ucLabel() }}</p>
             </div>
             <PopupCloseButton @close="emit('close')" />
           </div>

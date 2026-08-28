@@ -144,7 +144,7 @@ const pageTitle = computed(() => {
 
   if (pageType.value === 'system') return t('Msg3')
   if (pageType.value === 'credit') return t('UIClub_RoomSitApplyRecords_title')
-  if (pageType.value === 'uc') return "UC" + t('UIGuild_Fund_Apply')
+  if (pageType.value === 'uc') return t('PageMessageApplyForUC')
   return t('UIMine_MsgSystemContent')
 })
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { showToast } from 'vant'
-import { t } from '@/i18n'
+import { t, ucLabel } from '@/i18n'
 import { useWalletStore } from '@/stores/wallet'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { postRechargeGoldApi, postOrderUserClubOrderCancelApi } from '@/api/order'
@@ -233,7 +233,7 @@ onUnmounted(() => {
             <h2 class="header__title">{{ t('UIMineMallUSDTShopPayDialogSurePay') }}</h2>
             <div class="header__info">
               <p>{{ t('UIMine_WalletPlatform_fee_s') }}：{{ props.feeRate > 0 ? (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%' : '0' }}</p>
-              <p>{{ t('UIWallet_Current') }}: 1{{ t('UC') }}={{ props.rate || 1 }}</p>
+              <p>{{ t('UIWallet_Current') }}: 1{{ ucLabel() }}={{ props.rate || 1 }}</p>
             </div>
             <PopupCloseButton @close="handleClose" />
           </div>

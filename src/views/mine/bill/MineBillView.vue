@@ -17,7 +17,7 @@ import iconUc from '@/assets/icons/icon_chips.png'
 import iconCredit from '@/assets/icons/icon_credit_chip.png'
 import iconChipGreen from '@/assets/icons/icon_chip_green.png'
 import { formatUC } from '@/utils/roomVisibility'
-import { getLocale, t } from '@/i18n'
+import { getLocale, t, ucLabel } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import { resolveBillOpCodeText, resolveBillTitle } from '@/utils/transText'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -38,10 +38,30 @@ const backgroundStyle = computed(() => ({
 const title = computed(() => t('UIMine_Bill'))
 
 const tabGoldTypes = [
-  { label: t('UC'), value: 1 },
-  { label: t('UIMine_ClubChips'), value: 2 },
-  { label: t('UIClub_Table'), value: 3 },
-  { label: t('UIMine_VIP_diamond'), value: 4 },
+  {
+    get label() {
+      return ucLabel()
+    },
+    value: 1,
+  },
+  {
+    get label() {
+      return t('UIMine_ClubChips')
+    },
+    value: 2,
+  },
+  {
+    get label() {
+      return t('UIClub_Table')
+    },
+    value: 3,
+  },
+  {
+    get label() {
+      return t('UIMine_VIP_diamond')
+    },
+    value: 4,
+  },
 ] as const
 
 const activeTab = ref(1)

@@ -17,7 +17,7 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
-import { t } from '@/i18n'
+import { t, tJoin, ucLabel } from '@/i18n'
 
 const userInfoStore = useUserInfoStore()
 const route = useRoute()
@@ -42,13 +42,13 @@ const gameTypeTabs = computed(() => [
 ])
 
 const filterTypeOptions = computed(() => [
-  { value: 1, label: 'UC' },
+  { value: 1, label: ucLabel() },
   { value: 3, label: t('UIGuild_CoinType1') },
 ])
 const filterSelectRef = ref<HTMLElement | null>(null)
 const filterSelectOpen = ref(false)
 const selectedFilterLabel = computed(
-  () => filterTypeOptions.value.find((item) => item.value === filterType.value)?.label || 'UC',
+  () => filterTypeOptions.value.find((item) => item.value === filterType.value)?.label || ucLabel(),
 )
 
 // Player balance and profile from API (same as ClubMemberDetailView)
@@ -310,7 +310,7 @@ onBeforeUnmount(() => {
         <strong v-else>{{ offlineUserCount }}</strong>
       </div>
       <div>
-        <p>{{ t('UIClub_Text2') }}UC</p>
+        <p>{{ tJoin(t('UIClub_Text2'), ucLabel()) }}</p>
         <strong style="float: right">
           {{ displayBalance }} <img class="coin-icon" :src="imgChips" alt="" />
         </strong>

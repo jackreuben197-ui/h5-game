@@ -26,6 +26,8 @@ import icEye from '@/assets/icons/ic_eye.svg'
 import icGlobe from '@/assets/icons/ic_globe.svg'
 import icModalClose from '@/assets/icons/modal_close.svg'
 import { showGameToast } from '@/components/Toast'
+import { ApiBusinessError } from '@/utils/apiError'
+import { LOGIN_FAILED_CODE, resolveLoginErrorText } from './loginErrorText'
 import { Loading } from 'vant'
 import { DEBUG_ACCOUNTS, type DebugAccount } from '@/constants/debugAccounts'
 import {
@@ -79,6 +81,9 @@ const showDebugAccountDialog = ref(false)
 // const showProtocolPanel = ref(false)
 // const pendingAgreementSubmit = ref(false)
 const loading = ref(false)
+const errorText = ref('')
+const errorVisible = ref(false)
+let errorTimer: ReturnType<typeof setTimeout> | null = null
 const inviteCodeFromChannel = ref('')
 const traceHashFromChannel = ref('')
 
@@ -96,7 +101,25 @@ let otpTimer: ReturnType<typeof setInterval> | null = null
 
 onUnmounted(() => {
   if (otpTimer) clearInterval(otpTimer)
+  if (errorTimer) clearTimeout(errorTimer)
 })
+
+function showError(text: string) {
+  if (!text) return
+  if (errorTimer) clearTimeout(errorTimer)
+  errorText.value = text
+  errorVisible.value = true
+  errorTimer = setTimeout(() => {
+    errorVisible.value = false
+  }, 4000)
+}
+
+function clearError() {
+  if (errorTimer) clearTimeout(errorTimer)
+  errorTimer = null
+  errorVisible.value = false
+  errorText.value = ''
+}
 
 hydrateFormFromLocal()
 applyChannelInviteContext()
@@ -109,6 +132,7 @@ watch(
       showLanguageModal.value = false
       // showProtocolConfifm.value = false
       showDebugAccountDialog.value = false
+      clearError()
       // pendingAgreementSubmit.value = false
       // 关闭未登录态弹窗（含点击遮罩关闭）时清空残留的跳转目标，避免下次登录被错误带跳。
       loginModalStore.mode = ''
@@ -173,6 +197,7 @@ const quickDebugAccounts = computed(() => DEBUG_ACCOUNTS.slice(0, 20))
 
 function switchContact(type: ContactType) {
   if (contactType.value === type) return
+  clearError()
   resetOtpCountdown()
   form.code = ''
   if (type === 'account' && pageMode.value === 'forgot') {
@@ -189,6 +214,7 @@ function switchContact(type: ContactType) {
 
 function goMode(mode: PageMode) {
   if (pageMode.value === mode) return
+  clearError()
   resetOtpCountdown()
   form.code = ''
   pageMode.value = mode
@@ -214,11 +240,11 @@ async function sendOtp() {
       const check = await postUserCheckEmailApi({ email: target })
 
       if (pageMode.value === 'forgot' && check.code === 0) {
-        showGameToast(t('UILogin_EmaliNoRegister'))
+        showError(t('UILogin_EmaliNoRegister'))
         return
       }
       if (pageMode.value === 'register' && check.code !== 0) {
-        throw new Error(check.message || `error: ${check.code}`)
+        throw new ApiBusinessError(check.code, check.message)
       }
 
       const result = await postUserSendEmailCodeApi({
@@ -226,14 +252,14 @@ async function sendOtp() {
         email: target,
       })
       if (result.code !== 0) {
-        throw new Error(result.message || `error: ${result.code}`)
+        throw new ApiBusinessError(result.code, result.message)
       }
     }
     startOtpCountdown()
     showGameToast(t('UILogin_1007'))
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed'
-    console.log('sendOtp error', message)
+    console.warn('[login-modal] sendOtp error:', error)
+    showError(resolveLoginErrorText(error, contactType.value))
   } finally {
     otpSending.value = false
   }
@@ -272,6 +298,7 @@ async function handleSubmit() {
 
 async function runSubmitFlow() {
   const target = contactValue.value.trim()
+  clearError()
   if (!validateBeforeSubmit(target)) return
   loading.value = true
   try {
@@ -283,7 +310,8 @@ async function runSubmitFlow() {
       await handleForgot(target)
     }
   } catch (error) {
-    console.log('[login-modal] handleSubmit error:', error)
+    console.warn('[login-modal] handleSubmit error:', error)
+    showError(resolveLoginErrorText(error, contactType.value))
   } finally {
     loading.value = false
     // pendingAgreementSubmit.value = false
@@ -354,7 +382,7 @@ async function handleLogin(target: string) {
   }
   const token = String(res.token || '').trim()
   if (!token) {
-    throw new Error(t('UILogin_Text') + " token")
+    throw new ApiBusinessError(LOGIN_FAILED_CODE)
   }
 
   // 先写 TOKEN_EXPIREAT，再 setSessionToken：后者会把最新 expireAt 一并同步给 Cocos。
@@ -411,7 +439,7 @@ async function handleRegister(target: string) {
     )
   }
   if (res.code !== 0) {
-    throw new Error(res.message || `error: ${res.code}`)
+    throw new ApiBusinessError(res.code, res.message)
   }
   await handleLogin(target)
 }
@@ -429,7 +457,7 @@ async function handleForgot(target: string) {
   }
   const res = await postUserModifyPasswordApi(payload)
   if (res.code !== 0) {
-    throw new Error(res.message || `error: ${res.code}`)
+    throw new ApiBusinessError(res.code, res.message)
   }
   showGameToast(t('UILogin_1009'))
   pageMode.value = 'login'
@@ -438,15 +466,15 @@ async function handleForgot(target: string) {
 
 function validateContactOnly(target: string): boolean {
   if (!target) {
-    showGameToast(contactType.value === 'account' ? t('UILogin_Account') : t('UILogin_InputEmail'))
+    showError(contactType.value === 'account' ? t('UILogin_Account') : t('UILogin_InputEmail'))
     return false
   }
   if (contactType.value === 'account' && target.length <= 3) {
-    showGameToast(t('UILogin_Account'))
+    showError(t('UILogin_Account'))
     return false
   }
   if (contactType.value === 'email' && !isEmail(target)) {
-    showGameToast(t('UILogin_InputEmail'))
+    showError(t('UILogin_InputEmail'))
     return false
   }
   return true
@@ -455,17 +483,17 @@ function validateContactOnly(target: string): boolean {
 function validateBeforeSubmit(target: string): boolean {
   if (!validateContactOnly(target)) return false
   if (form.password.trim().length < 6) {
-    showGameToast(t('UILogin_1002'))
+    showError(t('UILogin_1002'))
     return false
   }
   if (pageMode.value !== 'login' && contactType.value === 'email') {
     const code = form.code.trim()
     if (!code) {
-      showGameToast(t('UILogin_1008'))
+      showError(t('UILogin_1008'))
       return false
     }
     if (code.length !== 4) {
-      showGameToast(t('error1001'))
+      showError(t('error1001'))
       return false
     }
   }
@@ -631,6 +659,10 @@ function applyChannelInviteContext(): void {
           </div>
         </div>
       </div>
+
+      <Transition name="snackbar">
+        <div v-if="errorVisible" class="error-snackbar">{{ errorText }}</div>
+      </Transition>
 
       <div class="bottom-area">
         <div
@@ -1015,6 +1047,33 @@ function applyChannelInviteContext(): void {
     width: 0.59rem;
     height: 0.56rem;
   }
+}
+
+.error-snackbar {
+  background: rgba(250, 43, 75, 0.18);
+  border-radius: 0.4rem;
+  padding: 0.2rem 0.36rem;
+  margin-top: 0.32rem;
+  font-size: 0.3rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: #fff;
+  text-align: center;
+  word-break: break-word;
+  box-shadow: inset 0 0 0 1px rgba(250, 43, 75, 0.45);
+}
+
+.snackbar-enter-active,
+.snackbar-leave-active {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.snackbar-enter-from,
+.snackbar-leave-to {
+  opacity: 0;
+  transform: translateY(-0.16rem);
 }
 
 .bottom-area {

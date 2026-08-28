@@ -127,7 +127,7 @@ onMounted(() => {
           <TopActionButton
             v-if="showJackpot"
             class="jackpot-action"
-            :name="t('jackpot')"
+            name="Jackpot"
             icon-alt="wallet"
             large
             @click="router.push('/club/jackpot')"

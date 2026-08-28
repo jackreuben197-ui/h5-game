@@ -6,7 +6,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { pinia } from '@/stores/pinia'
 import router from '@/router'
 import { showGameToast } from '@/components/Toast'
-import { t } from '@/i18n'
+import { resolveApiErrorText, translateBusinessCode } from '@/utils/apiError'
 import LoginSession from '@/session/loginSession'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
@@ -207,8 +207,7 @@ http.interceptors.response.use(
     }
     // 业务码非 0：弹出多语言错误提示。
     if (businessCode !== undefined && businessCode !== 0 && !suppressToast) {
-      const msg = t(`ServerErrorCode_${businessCode}`) || `error: ${businessCode}`
-      showGameToast(msg)
+      showGameToast(translateBusinessCode(Number(businessCode), response.data?.message))
     }
     return response
   },
@@ -222,11 +221,12 @@ http.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    let backendMessage = error.response?.data?.message
+    const backendMessage = error.response?.data?.message
     if (backendMessage && /user have apply/i.test(backendMessage)) {
-      backendMessage = '已提交加入申请，等待审核'
+      showFailToast('已提交加入申请，等待审核')
+      return Promise.reject(error)
     }
-    showFailToast(backendMessage || error.message || '请求失败，请稍后再试')
+    showFailToast(resolveApiErrorText(error))
     return Promise.reject(error)
   },
 )

@@ -80,6 +80,9 @@ import { useGameStore } from '@/stores/game'
 import { pinia } from '@/stores/pinia'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
 import { writeClubListCache } from '@/utils/userClubListCache'
+import { ApiBusinessError } from '@/utils/apiError'
+
+const LOGIN_FAILED_CODE = 20020
 
 interface ApiRequestExtOptions extends AxiosRequestConfig {
   suppressBusinessToast?: boolean
@@ -153,11 +156,11 @@ export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
   )
   const businessCode = res.data?.code
   if (businessCode !== undefined && businessCode !== 0) {
-    throw new Error(res.data?.message || `error: ${businessCode}`)
+    throw new ApiBusinessError(businessCode, res.data?.message)
   }
   const token = res.data?.data?.token ?? res.data?.token
   if (!token) {
-    throw new Error(res.data?.message || 'login failed')
+    throw new ApiBusinessError(LOGIN_FAILED_CODE, res.data?.message)
   }
 
   return { ...res.data?.data, ...res.data, token }
@@ -168,20 +171,20 @@ export async function loginV2Api(
   payload: LoginV2Request,
   config?: Partial<HttpRequestConfigExt>,
 ): Promise<LoginResponse> {
-  try {
-    const res = await http.post<{ data?: LoginResponse; token?: string; message?: string }>(
-      '/user/login2',
-      payload,
-      config as InternalAxiosRequestConfig,
-    )
-    const token = res.data?.data?.token ?? res.data?.token
-    if (!token) {
-      throw new Error(res.data?.message || '登录失败')
-    }
-    return { ...res.data?.data, ...res.data, token }
-  } catch (error) {
-    throw error
+  const res = await http.post<{ code?: number; data?: LoginResponse; token?: string; message?: string }>(
+    '/user/login2',
+    payload,
+    { suppressBusinessToast: true, ...config } as InternalAxiosRequestConfig,
+  )
+  const businessCode = res.data?.code
+  if (businessCode !== undefined && businessCode !== 0) {
+    throw new ApiBusinessError(businessCode, res.data?.message)
   }
+  const token = res.data?.data?.token ?? res.data?.token
+  if (!token) {
+    throw new ApiBusinessError(LOGIN_FAILED_CODE, res.data?.message)
+  }
+  return { ...res.data?.data, ...res.data, token }
 }
 
 // 用户信息：用于大厅初始化与用户态同步。

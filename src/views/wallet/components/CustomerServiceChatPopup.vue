@@ -3,9 +3,12 @@ import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { postChatSupportMessageListApi, postChatSupportMessageSendApi } from '@/api/chat'
 import { t } from '@/i18n'
 import { postClubFundOrderListApi } from '@/api/order'
-import { postOssUploadImageApi } from '@/api/oss'
+import { postImossGameClientUploadImageApi } from '@/api/imoss'
 import type { ChatSupportMessageListChatData } from '@/api/models/chat'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useAppConfigStore } from '@/stores/appConfig'
+import { md5 } from 'js-md5'
+import { showFailToast } from 'vant'
 import customerServiceIcon from '@/assets/icons/customerserviceicon.png'
 import micIcon from '@/assets/icons/wallet/ic_microphone_chat.png'
 import sendIcon from '@/assets/icons/wallet/ic_send_chat.png'
@@ -34,6 +37,52 @@ const emit = defineEmits<{
 }>()
 
 const userInfoStore = useUserInfoStore()
+const appConfigStore = useAppConfigStore()
+
+interface ImGameConfig {
+  oss_key: string
+  url: string
+}
+
+const imGameConfig = computed<ImGameConfig | null>(() => {
+  const raw = appConfigStore.globalConfig?.im_game_config
+  if (typeof raw !== 'string' || !raw.trim()) return null
+
+  try {
+    const parsed = JSON.parse(raw) as { oss_key?: unknown; url?: unknown }
+    const ossKey = typeof parsed.oss_key === 'string' ? parsed.oss_key.trim() : ''
+    const url = typeof parsed.url === 'string' ? parsed.url.trim() : ''
+    return { oss_key: ossKey, url }
+  } catch {
+    return null
+  }
+})
+
+async function resolveUploadRuntime() {
+  const config = imGameConfig.value
+  return {
+    oss_key: config?.oss_key || '',
+    base_url: config?.url || '',
+  }
+}
+
+function getResponseCode(response: Record<string, unknown> | null | undefined): number {
+  if (!response) return -1
+  if (Number.isFinite(Number(response.code))) return Number(response.code)
+  if (Number.isFinite(Number(response.status))) return Number(response.status)
+  return -1
+}
+
+function pickFileUrl(rawData: unknown): string {
+  if (!rawData || typeof rawData !== 'object') return ''
+  const data = rawData as Record<string, unknown>
+  const candidates = ['fileUrl', 'url', 'file_url']
+  for (const key of candidates) {
+    const value = data[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return ''
+}
 
 const chatClubId = computed<number | undefined>(() =>
   props.clubId != null
@@ -249,20 +298,39 @@ async function onImageUpload(e: Event) {
   if (!file) return
 
   try {
-    const res = await postOssUploadImageApi({ file })
-    if (res.code === 0 && res.data) {
-      const url = (res.data as any).url as string
-      await postChatSupportMessageSendApi({
-        tribe_id: props.tribeId,
-        club_id: chatClubId.value,
-        to_user_id: props.supportUserId,
-        im_service_type: 4,
-        msg_type: 2,
-        url: url,
-      })
-      await loadMessages()
-      scrollToBottom()
+    const runtime = await resolveUploadRuntime()
+    if (!runtime) return
+
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('fileType', '1')
+    formData.append('check_code', md5(await file.arrayBuffer()))
+
+    const uploadResponse = await postImossGameClientUploadImageApi(
+      formData as unknown as Parameters<typeof postImossGameClientUploadImageApi>[0],
+      runtime,
+    )
+    if (
+      getResponseCode(uploadResponse as unknown as Record<string, unknown>) !== 0 ||
+      !uploadResponse.data
+    ) {
+      showFailToast(uploadResponse.message || t('UIGlobalCustomerServiceChat_Fail2'))
+      return
     }
+
+    const url = pickFileUrl(uploadResponse.data)
+    if (!url) return
+
+    await postChatSupportMessageSendApi({
+      tribe_id: props.tribeId,
+      club_id: chatClubId.value,
+      to_user_id: props.supportUserId,
+      im_service_type: 4,
+      msg_type: 2,
+      url: url,
+    })
+    await loadMessages()
+    scrollToBottom()
   } catch (err) {
     console.error('Image upload failed', err)
   }

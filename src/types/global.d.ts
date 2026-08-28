@@ -66,8 +66,13 @@ declare global {
         isExpanded?: boolean
         viewportHeight?: number
         viewportStableHeight?: number
-        onEvent?: (event: string, handler: () => void) => void
-        offEvent?: (event: string, handler: () => void) => void
+        isVersionAtLeast?: (version: string) => boolean
+        downloadFile?: (
+          params: { url: string; file_name: string },
+          callback?: (accepted: boolean) => void,
+        ) => void
+        onEvent?: (eventType: string, callback: () => void) => void
+        offEvent?: (eventType: string, callback: () => void) => void
       }
     }
   }

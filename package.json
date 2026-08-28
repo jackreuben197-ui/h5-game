@@ -17,6 +17,7 @@
     "analyze:server": "pnpm build:analyze && webpack-bundle-analyzer dist/stats.json dist",
     "assets:compress": "node scripts/compress-assets.mjs",
     "preview": "vite preview",
+    "test": "node --test tests/*.test.ts",
     "lint": "eslint . --ext .vue,.ts,.tsx,.js,.jsx",
     "lint:fix": "eslint . --ext .vue,.ts,.tsx,.js,.jsx --fix"
   },
@@ -28,7 +29,6 @@
     "@vueuse/core": "^14.2.1",
     "axios": "^1.15.0",
     "dayjs": "^1.11.20",
-    "google-protobuf": "^3.21.4",
     "html2canvas": "^1.4.1",
     "js-md5": "^0.8.3",
     "pinia": "^3.0.4",

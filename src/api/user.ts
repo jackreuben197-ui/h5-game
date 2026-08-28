@@ -222,8 +222,8 @@ export async function getUserClubApi(): Promise<ApiResponse<unknown>> {
   if (gameStore.loginUserId) {
     void writeClubListCache(gameStore.loginUserId, clubList)
   }
-  // 把 club 接口响应转发到 Cocos（msgtype=1）。
-  forwardUserClubToCocos(body)
+  // 把已标准化的 club 列表转发到 Cocos，避免服务端包装层级差异影响牌桌配置。
+  forwardUserClubToCocos({ ...body, data: clubList })
   return body
 }
 

@@ -1,5 +1,3 @@
-import QRCode from 'qrcode'
-
 export interface SaveQrCodeOptions {
   fileName?: string
   size?: number
@@ -7,6 +5,7 @@ export interface SaveQrCodeOptions {
 }
 
 export async function generateQrCodeDataUrl(text: string, options: { width?: number, margin?: number } = {}): Promise<string> {
+  const { default: QRCode } = await import('qrcode')
   return await QRCode.toDataURL(text, {
     width: options.width ?? 200,
     margin: options.margin ?? 1,
@@ -19,6 +18,7 @@ export async function saveQrCodeImage(text: string, options: SaveQrCodeOptions =
     throw new Error('二维码内容不能为空')
   }
 
+  const { default: QRCode } = await import('qrcode')
   const dataUrl = await QRCode.toDataURL(content, {
     width: options.size ?? 720,
     margin: options.margin ?? 2,
@@ -37,6 +37,7 @@ export async function generateQrCodeUrl(text: string, options: SaveQrCodeOptions
     throw new Error('二维码内容不能为空')
   }
 
+  const { default: QRCode } = await import('qrcode')
   return QRCode.toDataURL(content, {
     width: options.size ?? 720,
     margin: options.margin ?? 2,

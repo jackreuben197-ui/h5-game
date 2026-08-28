@@ -9,6 +9,8 @@ import type { RechargeGoldData } from '@/api/models/order'
 const props = defineProps<{
   orderData: RechargeGoldData
   rate: number
+  feeRate?: number
+  feeType?: number
   price: string
 }>()
 
@@ -24,6 +26,11 @@ const formattedTime = computed(() => {
   const mins = Math.floor(timeLeft.value / 60)
   const secs = timeLeft.value % 60
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+})
+
+const feeDisplay = computed(() => {
+  if (props.feeType !== 2 || !props.feeRate) return '0'
+  return `${(props.feeRate * 100).toFixed(2).replace(/\.00$/, '')}%`
 })
 
 function startTimer() {
@@ -92,8 +99,8 @@ onUnmounted(() => {
           <div class="header">
             <h2 class="header__title">{{ t('UIMineMallUSDTShopPayDialogSurePay') }}</h2>
             <div class="header__info">
-              <p>{{ t('Wallet_Rate') }}: {{ (rate * 100).toFixed(0) }}%</p>
-              <p>{{ t('UIWallet_Current') }}: 1{{ t('UC') }}=1USDT</p>
+              <p>{{ t('UIMine_WalletPlatform_fee_s') }}: {{ feeDisplay }}</p>
+              <p>{{ t('UIWallet_Current') }}: 1USDT={{ rate || 1 }}{{ t('UC') }}</p>
             </div>
             <PopupCloseButton @close="emit('close')" />
           </div>

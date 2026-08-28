@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import html2canvas from 'html2canvas'
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   postOrgClubSearchByIdApi,
@@ -40,13 +39,21 @@ import imgAvatarAddLight from '@/assets/icons/avatar_add_badge_light.svg'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { buildChannelClubInviteUrl, isPrivateDomainMode } from '@/utils/channelPackage'
+import {
+  buildChannelAgentInviteUrl,
+  buildChannelClubInviteUrl,
+  buildChannelRegisterUrl,
+  isPrivateDomainMode,
+} from '@/utils/channelPackage'
 import { generateQrCodeUrl } from '@/utils/qrcode'
 import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import { t } from '@/i18n'
+import { useInviteShareExport } from '@/composables/useInviteShareExport'
+import { postOssUploadImageApi } from '@/api/oss'
+import { isTelegramMiniAppEnv } from '@/utils/environment'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   '--club-detail-bg-dark': `url(${mainBgUrl})`,
@@ -74,6 +81,8 @@ const userInfoStore = useUserInfoStore()
 
 const imgInviteQr = ref('')
 const agentInviteCode = ref('')
+const agentShareNickname = ref('')
+const agentShareRandomId = ref('')
 
 const loading = ref(false)
 const clubDetail = ref<OrgClubSearchByIdResponseData | null>(null)
@@ -166,8 +175,6 @@ const showTribeSearchPopup = ref(false)
 const showTribeApplyPopup = ref(false)
 const showCancelTribeApplyPopup = ref(false)
 const showDeleteClubPopup = ref(false)
-const savingInviteShare = ref(false)
-const savingInviteQr = ref(false)
 const savingClubLogo = ref(false)
 const tribeApplySubmitting = ref(false)
 const tribeApplyStatusLoading = ref(false)
@@ -181,10 +188,30 @@ const tribeIdKeypadOpen = ref(false)
 const searchedTribe = ref<{ randomId: number; name: string; logo: string } | null>(null)
 const clubAvatarUrl = ref('')
 const inviteModalRef = ref<HTMLElement | null>(null)
+const inviteShareImage = ref('')
+const savingInviteShare = ref(false)
+let inviteShareGenerationId = 0
+let telegramInviteShareUrl = ''
+let inviteLongPressTimer: number | null = null
+let inviteTouchStart: { x: number; y: number } | null = null
+const { exporting: generatingInviteShare, generateImage: generateInviteShare } =
+  useInviteShareExport({
+    target: inviteModalRef,
+    onError: (error) => {
+      console.error('generateInviteShare error', error)
+      showFailToast(t('UIClub_SaveFail2'))
+    },
+  })
 
 const clubName = computed(() => displayClub.value?.club_name || t('UIClub_Creat_2LvGNmS7'))
 const clubAlias = computed(() => displayClub.value?.tribe_name || 'XXXX')
 const clubId = computed(() => String(displayClub.value?.random_id || '--'))
+const shareAgentNickname = computed(() =>
+  String(agentShareNickname.value || userInfoStore.userInfo?.user?.nickname || '--'),
+)
+const shareAgentId = computed(() =>
+  String(agentShareRandomId.value || userInfoStore.userInfo?.user?.un_id || '--'),
+)
 const tribeName = computed(() => String(displayClub.value?.tribe_name || '').trim())
 const hasTribe = computed(() => tribeName.value.length > 0)
 
@@ -659,6 +686,7 @@ function onSettingClick(item: SettingItem): void {
   }
 
   if (item.label === t('UIClub_Invite')) {
+    inviteShareImage.value = ''
     showInvitePopup.value = true
     return
   }
@@ -764,6 +792,10 @@ async function updateClubLogo(newLogoUrl: string): Promise<void> {
 }
 
 function closeInvitePopup(): void {
+  clearInviteLongPressTimer()
+  inviteShareGenerationId += 1
+  inviteShareImage.value = ''
+  telegramInviteShareUrl = ''
   showInvitePopup.value = false
 }
 
@@ -771,153 +803,150 @@ function closeCopyPopup(): void {
   showCopyPopup.value = false
 }
 
-async function downloadBlob(blob: Blob, fileName: string): Promise<void> {
-  const objectUrl = URL.createObjectURL(blob)
+async function prepareInviteShareImage(): Promise<void> {
+  if (
+    !showInvitePopup.value ||
+    !imgInviteQr.value ||
+    inviteShareImage.value ||
+    generatingInviteShare.value
+  ) {
+    return
+  }
+
+  const generationId = ++inviteShareGenerationId
+  const imageUrl = await generateInviteShare()
+  if (generationId === inviteShareGenerationId && showInvitePopup.value && imageUrl) {
+    inviteShareImage.value = imageUrl
+  }
+}
+
+function resolveUploadedImageUrl(raw: unknown): string {
+  if (typeof raw === 'string') return raw.trim()
+  if (!raw || typeof raw !== 'object') return ''
+
+  const data = raw as Record<string, unknown>
+  const candidates = [data.url, data.file_url, data.fileUrl, data.path, data.data]
+  for (const candidate of candidates) {
+    const resolved = resolveUploadedImageUrl(candidate)
+    if (resolved) return resolved
+  }
+  return ''
+}
+
+async function uploadInviteShareImage(fileName: string): Promise<string> {
+  if (telegramInviteShareUrl) return telegramInviteShareUrl
+
+  const response = await fetch(inviteShareImage.value)
+  const blob = await response.blob()
+  const file = new File([blob], fileName, { type: blob.type || 'image/jpeg' })
+  const formData = new FormData()
+  formData.append('file', file, fileName)
+  const uploadResponse = await postOssUploadImageApi(
+    formData as unknown as Parameters<typeof postOssUploadImageApi>[0],
+  )
+  if (uploadResponse.code !== 0) {
+    throw new Error(uploadResponse.message || t('UIClub_SaveFail2'))
+  }
+
+  const uploadedUrl = resolveUploadedImageUrl(uploadResponse.data)
+  if (!uploadedUrl) throw new Error(t('UIClub_SaveFail2'))
+  const absoluteUrl = new URL(uploadedUrl, window.location.href).href
+  if (!absoluteUrl.startsWith('https://')) throw new Error(t('UIClub_SaveFail2'))
+  telegramInviteShareUrl = absoluteUrl
+  return absoluteUrl
+}
+
+async function requestTelegramInviteDownload(fileName: string): Promise<void> {
+  const webApp = window.Telegram?.WebApp
+  if (
+    !webApp ||
+    typeof webApp.downloadFile !== 'function' ||
+    typeof webApp.isVersionAtLeast !== 'function' ||
+    !webApp.isVersionAtLeast('8.0')
+  ) {
+    throw new Error(t('UIClub_SaveFail2'))
+  }
+
+  const url = await uploadInviteShareImage(fileName)
+  const downloadFile = webApp.downloadFile.bind(webApp)
+
+  await new Promise<void>((resolve, reject) => {
+    try {
+      downloadFile({ url, file_name: fileName }, (accepted) => {
+        if (accepted) showSuccessToast(t('UIClub_DoneSave'))
+        resolve()
+      })
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
+
+async function downloadInviteShareImage(): Promise<void> {
+  if (!inviteShareImage.value) return
+
+  const fileName = `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`
+  if (isTelegramMiniAppEnv()) {
+    if (savingInviteShare.value) return
+    savingInviteShare.value = true
+    try {
+      await requestTelegramInviteDownload(fileName)
+    } catch (error) {
+      console.error('telegram invite image download failed', error)
+      showFailToast(error instanceof Error ? error.message : t('UIClub_SaveFail2'))
+    } finally {
+      savingInviteShare.value = false
+    }
+    return
+  }
+
   const link = document.createElement('a')
-  link.href = objectUrl
+  link.href = inviteShareImage.value
   link.download = fileName
   document.body.appendChild(link)
   link.click()
   link.remove()
-  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000)
+  showSuccessToast(t('UIClub_DoneSave'))
 }
 
-function createInviteCaptureTarget(source: HTMLElement): {
-  host: HTMLDivElement
-  target: HTMLElement
-} {
-  const sourceRect = source.getBoundingClientRect()
-  const captureWidth = Math.max(1, Math.ceil(sourceRect.width))
-  const host = document.createElement('div')
-  const target = source.cloneNode(true) as HTMLElement
-
-  host.setAttribute('aria-hidden', 'true')
-  Object.assign(host.style, {
-    position: 'fixed',
-    top: '0',
-    left: '-10000px',
-    width: `${captureWidth}px`,
-    background: '#242424',
-    pointerEvents: 'none',
-  })
-
-  target.classList.add('invite-share-export')
-  target.style.width = '100%'
-  target.style.maxWidth = 'none'
-  target.style.height = 'auto'
-  target.style.transform = 'none'
-  target.querySelectorAll('[data-invite-export-ignore]').forEach((element) => element.remove())
-
-  host.appendChild(target)
-  document.body.appendChild(host)
-  return { host, target }
-}
-
-async function waitForInviteCaptureAssets(target: HTMLElement): Promise<void> {
-  const imageTasks = Array.from(target.querySelectorAll('img')).map(
-    (image) =>
-      new Promise<void>((resolve) => {
-        if (image.complete && image.naturalWidth > 0) {
-          resolve()
-          return
-        }
-
-        const finish = () => {
-          image.removeEventListener('load', finish)
-          image.removeEventListener('error', finish)
-          resolve()
-        }
-        image.addEventListener('load', finish, { once: true })
-        image.addEventListener('error', finish, { once: true })
-        window.setTimeout(finish, 5000)
-      }),
-  )
-
-  await Promise.all(imageTasks)
-  await document.fonts?.ready
-}
-
-async function saveInviteShare(): Promise<void> {
-  if (savingInviteShare.value) {
-    return
+function clearInviteLongPressTimer(): void {
+  if (inviteLongPressTimer !== null) {
+    window.clearTimeout(inviteLongPressTimer)
+    inviteLongPressTimer = null
   }
+  inviteTouchStart = null
+}
 
-  if (!inviteModalRef.value) {
-    showFailToast(t('UIClub_Not'))
-    return
-  }
+function onInviteShareTouchStart(event: TouchEvent): void {
+  if (!isTelegramMiniAppEnv() || event.touches.length !== 1) return
+  clearInviteLongPressTimer()
+  const touch = event.touches[0]
+  inviteTouchStart = { x: touch.clientX, y: touch.clientY }
+  inviteLongPressTimer = window.setTimeout(() => {
+    inviteLongPressTimer = null
+    inviteTouchStart = null
+    void downloadInviteShareImage()
+  }, 650)
+}
 
-  savingInviteShare.value = true
-  let captureHost: HTMLDivElement | null = null
-  try {
-    await nextTick()
-    const actionsEl = document.getElementById('invite-modal-actions')
-    if (actionsEl) {
-      actionsEl.style.display = 'none'
-    }
-    const captureTarget =
-      (inviteModalRef.value.closest('.game-dialog__card') as HTMLElement | null) ||
-      inviteModalRef.value
-    const capture = createInviteCaptureTarget(captureTarget)
-    captureHost = capture.host
-    await waitForInviteCaptureAssets(capture.target)
-
-    const canvas = await html2canvas(capture.target, {
-      useCORS: true,
-      allowTaint: false,
-      backgroundColor: '#242424',
-      logging: false,
-      scale: Math.min(window.devicePixelRatio || 1, 3),
-      foreignObjectRendering: false,
-      removeContainer: true,
-    })
-
-    const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob((result) => resolve(result), 'image/jpeg', 0.96)
-    })
-
-    if (blob) {
-      await downloadBlob(blob, `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`)
-    } else {
-      const link = document.createElement('a')
-      link.href = canvas.toDataURL('image/jpeg', 0.96)
-      link.download = `club-invite-${displayClub.value?.random_id || Date.now()}.jpg`
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-    }
-
-    showSuccessToast(t('UIClub_DoneSave'))
-    closeInvitePopup()
-  } catch (error) {
-    console.error('saveInviteShare error', error)
-    showFailToast(t('UIClub_SaveFail2'))
-  } finally {
-    captureHost?.remove()
-    savingInviteShare.value = false
+function onInviteShareTouchMove(event: TouchEvent): void {
+  const touch = event.touches[0]
+  if (!touch || !inviteTouchStart) return
+  if (
+    Math.abs(touch.clientX - inviteTouchStart.x) > 10 ||
+    Math.abs(touch.clientY - inviteTouchStart.y) > 10
+  ) {
+    clearInviteLongPressTimer()
   }
 }
 
-async function saveInviteQr(): Promise<void> {
-  if (savingInviteQr.value) return
-  const qrUrl = imgInviteQr.value
-  if (!qrUrl) {
-    showFailToast('二维码未生成')
-    return
-  }
-  savingInviteQr.value = true
-  try {
-    const response = await fetch(qrUrl)
-    const blob = await response.blob()
-    await downloadBlob(blob, `club-qr-${displayClub.value?.random_id || Date.now()}.png`)
-    showSuccessToast('已保存二维码')
-  } catch (error) {
-    console.error('saveInviteQr error', error)
-    showFailToast('保存二维码失败')
-  } finally {
-    savingInviteQr.value = false
-  }
-}
+watch(
+  [showInvitePopup, imgInviteQr],
+  () => {
+    void prepareInviteShareImage()
+  },
+  { flush: 'post' },
+)
 
 async function submitCopyRequest(): Promise<void> {
   if (!isFounder.value) {
@@ -1025,26 +1054,39 @@ async function prefetchAgentInvitationLink(): Promise<void> {
 async function generateInviteQrCode(): Promise<void> {
   const currentClub = displayClub.value
   if (!currentClub?.club_id) {
+    imgInviteQr.value = ''
+    return
+  }
+
+  let clubInviteCode = String(currentClub.invitation_code || '').trim()
+  if (!clubInviteCode) {
+    try {
+      const response = await postOrgClubInviTationApi({
+        club_id: currentClub.club_id,
+      })
+      if (response.code !== 0) {
+        console.error('generateInviteQrCode API error', response.msg)
+        return
+      }
+      clubInviteCode = extractInvitationCode(response.data)
+    } catch (error) {
+      console.error('generateInviteQrCode error', error)
+      return
+    }
+  }
+
+  const finalLink = isAgent.value
+    ? buildChannelAgentInviteUrl(agentInviteCode.value, clubInviteCode)
+    : isChannelPackage
+      ? buildChannelClubInviteUrl(clubInviteCode)
+      : buildChannelRegisterUrl({ inviteCode: clubInviteCode })
+
+  if (!finalLink || !clubInviteCode || (isAgent.value && !agentInviteCode.value)) {
+    imgInviteQr.value = ''
     return
   }
 
   try {
-    const response = await postOrgClubInviTationApi({
-      club_id: currentClub.club_id,
-    })
-
-    if (response.code !== 0) {
-      console.error('generateInviteQrCode API error', response.msg)
-      return
-    }
-
-    const inviteCode = extractInvitationCode(response.data)
-    const finalLink = buildChannelClubInviteUrl(inviteCode)
-
-    if (!finalLink) {
-      return
-    }
-
     imgInviteQr.value = await generateQrCodeUrl(finalLink, { size: 720, margin: 2 })
   } catch (error) {
     console.error('generateInviteQrCode error', error)
@@ -1053,6 +1095,8 @@ async function generateInviteQrCode(): Promise<void> {
 
 async function fetchAgentInviteCode(): Promise<void> {
   agentInviteCode.value = ''
+  agentShareNickname.value = ''
+  agentShareRandomId.value = ''
   if (!isAgent.value) {
     return
   }
@@ -1078,6 +1122,8 @@ async function fetchAgentInviteCode(): Promise<void> {
     agentInviteCode.value = String(
       response.data.invite_code || response.data.invitation_code || '',
     ).trim()
+    agentShareNickname.value = String(response.data.user_info?.nickname || '').trim()
+    agentShareRandomId.value = String(response.data.user_info?.random_id || '').trim()
   } catch (error) {
     console.error('fetchAgentInviteCode error', error)
   }
@@ -1305,54 +1351,80 @@ onMounted(async () => {
         </header>
       </template>
 
-      <section ref="inviteModalRef" class="invite-modal">
-        <div class="invite-modal__body">
-          <p class="invite-modal__subtitle">{{ t('UIClub_Of4') }}</p>
-          <div class="invite-modal__cover-wrap">
-            <img class="invite-modal__cover" :src="imgInviteCover" :alt="t('UIClub_Text102')" />
-            <!-- <img class="invite-modal__cover-subtract" :src="imgInviteSubtract" alt="" aria-hidden="true" /> -->
+      <section class="invite-modal">
+        <div ref="inviteModalRef" class="invite-modal__capture">
+          <div class="invite-modal__body">
+            <p class="invite-modal__subtitle">{{ t('UIClub_Of4') }}</p>
+            <div class="invite-modal__cover-wrap">
+              <img class="invite-modal__cover" :src="imgInviteCover" :alt="t('UIClub_Text102')" />
+            </div>
+            <div class="invite-modal__identity">
+              <template v-if="isAgent">
+                <div class="invite-modal__agent-info">
+                  <p class="invite-modal__agent-name">{{ shareAgentNickname }}</p>
+                  <p class="invite-modal__agent-id-row">
+                    <span class="invite-modal__id-tag">ID</span>
+                    <span>{{ shareAgentId }}</span>
+                  </p>
+                  <!-- <p class="invite-modal__club-name">{{ clubName }}</p> -->
+                </div>
+              </template>
+              <template v-else>
+                <p class="invite-modal__club-name">{{ clubName }}</p>
+                <p class="invite-modal__club-alias">{{ clubAlias }}</p>
+                <p class="invite-modal__id-row">
+                  <span class="invite-modal__id-tag">ID</span>
+                  <span>{{ clubId }}</span>
+                </p>
+              </template>
+            </div>
           </div>
-          <div class="invite-modal__club-info">
-            <p class="invite-modal__club-name">{{ clubName }}</p>
-            <p class="invite-modal__club-alias">{{ clubAlias }}</p>
-            <p class="invite-modal__id-row">
-              <span class="invite-modal__id-tag">ID</span>
-              <span>{{ clubId }}</span>
+
+          <div class="invite-modal__qr-section">
+            <div class="invite-modal__qr-wrap">
+              <img
+                v-if="imgInviteQr"
+                class="invite-modal__qr"
+                :src="imgInviteQr"
+                :alt="t('UIClub_CodeJoinClub')"
+              />
+              <div v-else class="invite-modal__qr-placeholder" :aria-label="t('UIClub_Code9')">
+                <span></span>
+              </div>
+            </div>
+            <p class="invite-modal__qr-tip">
+              {{ t('UIClub_CodeJoin') }}，{{ t('UIClub_Text103') }}
             </p>
           </div>
-        </div>
-
-        <div class="invite-modal__qr-wrap">
           <img
-            v-if="imgInviteQr"
-            class="invite-modal__qr"
-            :src="imgInviteQr"
-            :alt="t('UIClub_CodeJoinClub')"
+            v-if="inviteShareImage"
+            class="invite-share-save-target"
+            data-invite-export-ignore
+            data-allow-native-menu="true"
+            :src="inviteShareImage"
+            :alt="t('UIClub_Text102')"
+            @touchstart="onInviteShareTouchStart"
+            @touchmove="onInviteShareTouchMove"
+            @touchend="clearInviteLongPressTimer"
+            @touchcancel="clearInviteLongPressTimer"
           />
-          <div v-else class="invite-modal__qr-placeholder" :aria-label="t('UIClub_Code9')">
-            <span></span>
-          </div>
         </div>
-        <p class="invite-modal__qr-tip">{{ t('UIClub_CodeJoin') }}，{{ t('UIClub_Text103') }}</p>
-
-        <div id="invite-modal-actions" class="invite-modal__actions">
-          <button
-            type="button"
-            class="invite-modal__btn invite-modal__btn--secondary"
-            :disabled="savingInviteQr"
-            @click="saveInviteQr"
-          >
-            {{ savingInviteQr ? t('UIClub_Save3') + '...' : t('UIMine_Setting115') }}
-          </button>
-          <button
-            type="button"
-            class="invite-modal__btn invite-modal__btn--primary"
-            :disabled="savingInviteShare"
-            @click="saveInviteShare"
-          >
-            {{ savingInviteShare ? t('UIClub_Save3') + '...' : t('UIClub_Save4') }}
-          </button>
-        </div>
+        <button
+          type="button"
+          class="modal-primary-btn"
+          data-invite-export-ignore
+          :disabled="generatingInviteShare || savingInviteShare || !inviteShareImage"
+          @click="downloadInviteShareImage"
+        >
+          {{
+            generatingInviteShare || savingInviteShare
+              ? t('UIClub_Save3') + '...'
+              : t('UIClub_Save4')
+          }}
+        </button>
+        <p class="invite-modal__save-tip" data-invite-export-ignore>
+          {{ t('UIClub_LongPressSaveToAlbum') }}
+        </p>
       </section>
     </GameDialog>
 
@@ -2324,11 +2396,47 @@ onMounted(async () => {
 }
 
 .invite-modal {
+  position: relative;
   width: 100%;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.22rem;
+  gap: 0.28rem;
+}
+
+.invite-modal__capture {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4831rem;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+}
+
+.invite-share-save-target {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.001;
+  -webkit-touch-callout: default !important;
+  -webkit-user-select: auto;
+  user-select: auto;
+  -webkit-user-drag: auto;
+}
+
+.invite-modal__save-tip {
+  margin: 0.08rem 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.3rem;
+  line-height: 1.4;
+  text-align: center;
+
+  @include theme-light {
+    color: rgba(255, 255, 255, 0.78);
+  }
 }
 
 :global(.invite-share-export) {
@@ -2340,6 +2448,7 @@ onMounted(async () => {
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  transform: none !important;
 }
 
 :global(.invite-share-export::before),
@@ -2365,26 +2474,37 @@ onMounted(async () => {
   padding-left: 0 !important;
 }
 
+:global(.invite-game-dialog .game-dialog__card) {
+  padding: 0.4187rem 0.4106rem 0.6038rem;
+  gap: 0.4831rem;
+}
+
+:global(.invite-game-dialog .game-dialog__body) {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
 .invite-modal__head {
   width: 100%;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1.0241rem 1fr 1.0241rem;
   align-items: center;
-  justify-content: space-between;
 }
 
 .invite-modal__head h3 {
+  grid-column: 2;
   margin: 0;
-  flex: 1;
   text-align: center;
   font-size: 0.41866rem;
   font-weight: 500;
   line-height: 1.4;
-  padding-left: 0.48rem;
+  padding: 0;
 }
 
 .invite-modal__close {
-  width: 0.96rem;
-  height: 0.96rem;
+  grid-column: 3;
+  width: 1.0241rem;
+  height: 1.0241rem;
   border: 0;
   background: transparent;
   padding: 0;
@@ -2400,7 +2520,7 @@ onMounted(async () => {
 }
 
 .invite-modal__body {
-  padding: 0.347rem 0.42rem 0.178rem;
+  padding: 0.3462rem 0.4187rem 0.1771rem;
   border-radius: 0.72464rem;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -2408,7 +2528,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.3394rem;
+  gap: 0.3382rem;
 }
 
 .invite-modal__subtitle {
@@ -2453,6 +2573,40 @@ onMounted(async () => {
   line-height: 1.35;
 }
 
+.invite-modal__agent-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.06rem;
+  margin: 0;
+}
+
+.invite-modal__agent-name {
+  margin: 0;
+  font-size: 0.4rem;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.invite-modal__agent-id-row {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.09333rem;
+  font-size: 0.32293rem;
+  line-height: 1;
+  font-weight: 600;
+}
+
+.invite-modal__identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 0;
+}
+
 .invite-modal__club-alias {
   margin: 0;
   font-size: 0.48309rem;
@@ -2488,7 +2642,7 @@ onMounted(async () => {
   position: relative;
   width: 3.33333rem;
   height: 3.33333rem;
-  margin: 0.04rem auto 0;
+  margin: 0 auto;
   border-radius: 0.30747rem;
   background: #fff;
   padding: 0.10667rem;
@@ -2498,6 +2652,15 @@ onMounted(async () => {
   @include theme-light {
     border-color: var(--c-brand);
   }
+}
+
+.invite-modal__qr-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.0966rem;
+  width: 100%;
+  background: transparent;
 }
 
 .invite-modal__qr {
@@ -2557,6 +2720,7 @@ onMounted(async () => {
   font-size: 0.314rem;
   font-weight: 500;
   line-height: 1.3;
+  background: transparent;
 }
 
 .invite-modal__actions {

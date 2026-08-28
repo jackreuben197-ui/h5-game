@@ -133,7 +133,7 @@ export interface PropGoldPriceListPayType {
   id?: number // 唯一ID
   name?: string // 名称
   image?: string // 图标
-  rate?: number // 汇率（例如：0.0001 表示 1钻石/UC = 0.0001 货币，精确到4位小数）
+  rate?: number // 充值汇率：1 单位支付币可兑换的 UC 数量（例如 30 表示 1 USDT = 30 UC）
   discount?: number // 折扣优惠（例如：0.0001 表示总额减少 0.01%，精确到4位小数）
   type?: number // 类型：1-数字钱包，2-API 3-客服撮合
   fee_type?: number // 手续费类型：0-无手续费，1-俱乐部出，2-玩家出

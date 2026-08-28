@@ -1,0 +1,859 @@
+// 钱包充值、订单与流水桌面样式。
+@media (min-width: 600px) {
+  // 钱包充值：按 1440 × 1024 设计稿固定标题、页签、充值选项与底部支付操作。
+  html[data-main-layout='content'] .wallet-screen {
+    --wallet-stage-offset-y: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: none;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .wallet-screen > .page-back-header {
+    position: absolute;
+    top: var(--wallet-stage-offset-y);
+    left: 50%;
+    z-index: 7;
+    width: min(calc(100% - 80px), 1357px);
+    height: 82px;
+    min-height: 82px;
+    padding: 40px 0 0;
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .wallet-screen .back-trigger {
+    gap: 15px;
+    padding: 0 12px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .page-back-header .title {
+    font-size: 28.67px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .wallet-screen__content-top {
+    position: absolute;
+    top: calc(var(--wallet-stage-offset-y) + 106px);
+    left: 50%;
+    z-index: 6;
+    width: min(calc(100% - 80px), 1357px);
+    height: 38.28px;
+    margin: 0;
+    padding: 0;
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .wallet-screen .tabs-row {
+    width: 100%;
+    height: 38.28px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .seg {
+    width: 228.92px;
+    height: 38.28px;
+    padding: 0 26.94px;
+    gap: 90.22px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .seg__indicator {
+    height: 1.89px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .seg__label {
+    font-size: 20.8px;
+    line-height: 0.95;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .floating-bell {
+    top: calc(var(--wallet-stage-offset-y) + 106px);
+    right: max(40px, calc((100% - 1357px) / 2));
+  }
+
+  html[data-main-layout='content'] .wallet-screen .wallet-scrollable {
+    position: absolute;
+    top: calc(var(--wallet-stage-offset-y) + 163.28px);
+    right: 0;
+    bottom: var(--wallet-stage-offset-y);
+    left: 0;
+    min-height: 0;
+    padding: 0 0 124px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .wallet-scrollable::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .wallet-screen__content {
+    width: min(calc(100% - 80px), 1357px);
+    max-width: none;
+    margin: 0 auto;
+    padding: 0;
+    gap: 19px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .wallet-banner.usercard {
+    position: relative;
+    top: auto;
+    flex: 0 0 241px;
+    width: min(100%, 674px);
+    height: 241px;
+    min-height: 241px;
+    margin: 0 auto;
+    padding: 10.8px 12.96px;
+    border-radius: 32.22px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .wallet-banner .usercard__head {
+    gap: 11.81px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .wallet-banner .usercard__avatar {
+    width: 71.73px;
+    height: 70.85px;
+    margin-left: 0;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .wallet-banner .usercard__info {
+    flex: 0 1 auto;
+    width: 77.17px;
+    gap: 4.13px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .wallet-banner .usercard__name {
+    font-size: 21.94px;
+    line-height: 0.83;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .wallet-banner .usercard__id {
+    gap: 2.58px;
+    height: 16.61px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .wallet-banner .tagpill--id {
+    height: 14px;
+    padding: 0 5.15px;
+    border-radius: 4.42px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .wallet-banner .tagpill--id .tagpill__label {
+    font-size: 8.49px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .wallet-banner .usercard__id-value {
+    font-size: 10.09px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .wallet-banner .usercard__actions {
+    flex: 0 0 63.48px;
+    width: 63.48px;
+    margin: 7.88px 10.6px 0 auto;
+    gap: 10.3px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .wallet-banner .gb {
+    width: 63.48px;
+    height: 29.4px;
+    padding: 7.53px 16.85px;
+    border-radius: 18.54px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .wallet-banner .gb__label {
+    font-size: 14.83px;
+    line-height: 0.946;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .balance-row {
+    position: absolute;
+    top: 121px;
+    left: 59.13px;
+    width: 113.66px;
+    height: 53.54px;
+    margin: 0;
+    gap: 3.99px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .balance-chip {
+    height: 35.22px;
+    padding: 7.9px 7.9px 7.9px 13.6px;
+    gap: 6.14px;
+    border-radius: 16.61px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .balance-chip__value {
+    font-size: 17.64px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .balance-chip__icon {
+    width: 28.67px;
+    height: 28.67px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .balance-label {
+    font-size: 9.97px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .recharge-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-top: -64px;
+    padding: 0 0 132px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .presets-card {
+    flex: 0 0 280px;
+    width: 100%;
+    height: 280px;
+    margin: 0;
+    padding: 20.72px 18px 19.28px;
+    border-width: 0.63px;
+    border-radius: 37.36px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .presets-card .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(2, 114px);
+    width: 100%;
+    height: 240px;
+    gap: 12px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .presets-card .tile {
+    width: 100%;
+    height: 114px;
+    min-height: 114px;
+    padding: 9.4px 25.34px 10.72px;
+    gap: 19.6px;
+    border-radius: 24.06px;
+    aspect-ratio: auto;
+    justify-content: flex-end;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .presets-card .tile--active {
+    border-radius: 29.22px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .presets-card .tile__head {
+    margin-top: 0;
+    gap: 3.22px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .presets-card .tile__icon {
+    width: 20.77px;
+    height: 20.77px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .presets-card .tile__amount {
+    font-size: 18.23px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .presets-card .chip {
+    min-height: 28.1px;
+    padding: 5.23px 3.57px;
+    border-radius: 23.78px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .presets-card .chip__amount,
+  html[data-main-layout='content'] .wallet-screen .presets-card .tile__custom-label {
+    font-size: 13.4px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .strip {
+    grid-template-columns: repeat(5, 82.79px);
+    width: min(100%, 497.68px);
+    margin-top: 19px;
+    column-gap: 20.93px;
+    row-gap: 10px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .method {
+    width: 82.79px;
+    min-height: 109.97px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .method__coin {
+    width: 75.99px;
+    height: 75.99px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .method__label {
+    width: 82.79px;
+    height: 58.75px;
+    margin-top: -24.78px;
+    padding: 29.94px 9.17px 4px;
+    border-radius: 11.76px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .method__label-row {
+    gap: 3.17px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .method__label-primary {
+    margin-bottom: 3px;
+    font-size: 14.24px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .method__label-suffix {
+    font-size: 10.65px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .method__label-secondary {
+    font-size: 10.41px;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .pay-cta-wrapper,
+  html[data-main-layout='content'] .wallet-screen .wf__cta-wrapper,
+  html[data-main-layout='content'] .wallet-screen .club-deposit__cta-wrapper,
+  html[data-main-layout='content'] .deposit-screen .club-deposit__cta-wrapper,
+  html[data-main-layout='content'] .wallet-fixed-deposit-shell .club-deposit__cta-wrapper {
+    position: fixed;
+    bottom: calc(var(--wallet-stage-offset-y, 0px) + 30.51px);
+    right: 0;
+    left: 0;
+    z-index: 10;
+    width: min(calc(100% - 80px), 387.8px);
+    height: 62.49px;
+    margin-inline: auto;
+  }
+
+  html[data-main-layout='content'] .wallet-screen .pay-cta,
+  html[data-main-layout='content'] .deposit-screen .club-deposit__cta,
+  html[data-main-layout='content'] .wallet-fixed-deposit-shell .club-deposit__cta {
+    position: relative;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    border-radius: 35.93px !important;
+    font-size: 22.06px !important;
+  }
+
+  // 俱乐部充值/固定充值桌面版布局 (FixedDepositPanel & ClubDepositPanel)
+  html[data-main-layout='content'] .wallet-fixed-deposit-shell,
+  html[data-main-layout='content'] .deposit-screen {
+    --wallet-stage-offset-y: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: none;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .deposit-screen > .page-back-header {
+    position: absolute;
+    top: var(--wallet-stage-offset-y);
+    left: 50%;
+    z-index: 7;
+    width: min(calc(100% - 80px), 1357px);
+    height: 82px;
+    min-height: 82px;
+    padding: 40px 0 0;
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .deposit-screen .details-pill {
+    height: 38px;
+    padding: 0 20px;
+    border-radius: 19px;
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-scrollable {
+    position: absolute;
+    top: calc(var(--wallet-stage-offset-y) + 120px);
+    right: 0;
+    bottom: var(--wallet-stage-offset-y);
+    left: 0;
+    min-height: 0;
+    padding: 0 0 124px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-scrollable::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-content {
+    width: min(calc(100% - 80px), 1357px);
+    max-width: none;
+    margin: 0 auto;
+    padding: 0;
+    gap: 32px;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-banner.usercard,
+  html[data-main-layout='content'] .wallet-screen .deposit-banner.usercard {
+    position: relative;
+    top: auto;
+    flex: 0 0 auto;
+    width: min(100%, 340px);
+    margin: 0 auto;
+    padding: 16px 20px;
+    border-radius: 28px;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-banner.usercard .usercard__head {
+    gap: 12px;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-banner.usercard .usercard__avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-banner.usercard .usercard__name {
+    font-size: 20px;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-banner.usercard .usercard__id-value {
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-banner.usercard .usercard__gbal-value {
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .deposit-screen .deposit-banner.usercard .usercard__gbal-chip {
+    width: 20px;
+    height: 20px;
+  }
+
+  html[data-main-layout='content'] .club-deposit {
+    width: 100%;
+    margin: 0 auto;
+    gap: 20px;
+    padding-bottom: 120px;
+  }
+
+  html[data-main-layout='content'] .club-deposit__card {
+    gap: 12px;
+  }
+
+  html[data-main-layout='content'] .club-deposit__label {
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .club-deposit__input {
+    width: 100%;
+    height: 56px;
+    border-radius: 28px;
+    padding: 0 24px;
+    font-size: 16px;
+  }
+
+  // 充值记录：设计稿在同一桌面舞台内使用 1361.7px 宽卡片列表并独立滚动。
+  html[data-main-layout='content'] .wallet-orders-screen {
+    --wallet-orders-stage-offset-y: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: none;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .wallet-orders-screen > .page-back-header {
+    position: absolute;
+    top: var(--wallet-orders-stage-offset-y);
+    left: 50%;
+    z-index: 7;
+    width: min(calc(100% - 80px), 1357px);
+    height: 82px;
+    min-height: 82px;
+    padding: 40px 0 0;
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .wallet-orders-screen .back-trigger {
+    gap: 15px;
+    padding: 0 12px;
+  }
+
+  html[data-main-layout='content'] .wallet-orders-screen .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .wallet-orders-screen .page-back-header .title {
+    font-size: 28.67px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .wallet-orders-screen .tpg {
+    width: 210.36px;
+    gap: 10px;
+    justify-content: space-between;
+  }
+
+  html[data-main-layout='content'] .wallet-orders-screen .tpg__pill {
+    height: 41.19px;
+    padding: 0 26.48px;
+    border-radius: 40.85px;
+  }
+
+  html[data-main-layout='content'] .wallet-orders-screen .tpg__label {
+    font-size: 11.77px;
+  }
+
+  html[data-main-layout='content'] .wallet-orders-screen > .list {
+    position: absolute;
+    top: calc(var(--wallet-orders-stage-offset-y) + 112.99px);
+    bottom: var(--wallet-orders-stage-offset-y);
+    left: 50%;
+    width: min(calc(100% - 77.48px), 1361.71px);
+    margin: 0;
+    padding: 0 0 30px;
+    gap: 20px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .wallet-orders-screen > .list::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .wallet-orders-screen .record {
+    flex: 0 0 125.21px;
+    width: 100%;
+    height: 125.21px;
+    min-height: 125.21px;
+    padding: 17.4px 32.47px !important;
+    border-radius: 43.33px !important;
+  }
+
+  html[data-main-layout='content'] .wallet-orders-screen .record__col {
+    gap: 5.8px;
+  }
+
+  html[data-main-layout='content'] .wallet-orders-screen .record__label,
+  html[data-main-layout='content'] .wallet-orders-screen .record__value {
+    font-size: 13.03px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .wallet-orders-screen .record .tagpill {
+    min-height: 18.25px;
+    padding: 0 10.44px;
+    border-radius: 35.95px;
+  }
+
+  html[data-main-layout='content'] .wallet-orders-screen .record .tagpill__label {
+    font-size: 13.03px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .wallet-orders-screen > .wallet-orders-empty {
+    position: absolute;
+    top: calc(var(--wallet-orders-stage-offset-y) + 112.99px);
+    bottom: var(--wallet-orders-stage-offset-y);
+    left: 50%;
+    width: min(calc(100% - 80px), 1360px);
+    padding: 0 0 30px;
+    gap: 16px;
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .wallet-orders-screen .wallet-orders-empty .empty-icon {
+    width: 50px;
+    height: 62px;
+  }
+
+  // 钱包详情：顶部用户卡和流水列表按 1360.71px 内容列排布，列表在舞台内独立滚动。
+  html[data-main-layout='content'] .details-page {
+    --wallet-details-stage-offset-y: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: none;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .details-page > .page-back-header {
+    position: absolute;
+    top: var(--wallet-details-stage-offset-y);
+    left: 50%;
+    z-index: 7;
+    width: min(calc(100% - 80px), 1357px);
+    height: 82px;
+    min-height: 82px;
+    padding: 40px 0 0;
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .details-page .back-trigger {
+    gap: 15px;
+    padding: 0 12px;
+  }
+
+  html[data-main-layout='content'] .details-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .details-page .page-back-header .title {
+    font-size: 28.67px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .details-page .details-content {
+    position: absolute;
+    top: calc(var(--wallet-details-stage-offset-y) + 101px);
+    bottom: var(--wallet-details-stage-offset-y);
+    left: 50%;
+    z-index: 2;
+    width: min(calc(100% - 79.29px), 1360.71px);
+    min-height: 0;
+    margin: 0;
+    padding: 0 0 30px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    transform: translateX(-50%);
+  }
+
+  html[data-main-layout='content'] .details-page .details-content::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .details-page .user-card-wrapper {
+    flex: 0 0 177.38px;
+    width: 100%;
+    height: 177.38px;
+    min-height: 177.38px;
+    margin: 0 0 5.81px;
+  }
+
+  html[data-main-layout='content'] .details-page .user-card {
+    width: 100%;
+    height: 177.38px;
+    min-height: 177.38px;
+    padding: 0;
+    border-radius: 44.71px;
+  }
+
+  html[data-main-layout='content'] .details-page .user-card::before {
+    padding: 1.43px;
+  }
+
+  html[data-main-layout='content'] .details-page .user-card-inner {
+    height: 100%;
+  }
+
+  html[data-main-layout='content'] .details-page .user-info-section {
+    position: absolute;
+    top: 20px;
+    right: 34.02px;
+    left: 34.02px;
+    gap: 17.92px;
+  }
+
+  html[data-main-layout='content'] .details-page .avatar-box {
+    width: 81px;
+    height: 81px;
+    border-radius: 61.03px;
+  }
+
+  html[data-main-layout='content'] .details-page .user-text {
+    gap: 13.73px;
+  }
+
+  html[data-main-layout='content'] .details-page .user-name {
+    font-size: 25.63px;
+    line-height: 0.83;
+  }
+
+  html[data-main-layout='content'] .details-page .user-id-badge {
+    height: 17.24px;
+    gap: 2.67px;
+  }
+
+  html[data-main-layout='content'] .details-page .user-id-badge .tagpill--id {
+    height: 14.12px;
+    padding: 0 5.35px;
+    border-radius: 4.58px;
+  }
+
+  html[data-main-layout='content'] .details-page .user-id-badge .tagpill__label {
+    font-size: 8.81px;
+  }
+
+  html[data-main-layout='content'] .details-page .id-value {
+    font-size: 10.47px;
+  }
+
+  html[data-main-layout='content'] .details-page .gift-entry {
+    position: absolute;
+    top: 0;
+    right: 6.07px;
+    width: 163.9px;
+    height: 33.09px;
+  }
+
+  html[data-main-layout='content'] .details-page .balance-section {
+    position: absolute;
+    right: 40.09px;
+    bottom: 15.74px;
+    gap: 4.88px;
+    margin: 0;
+  }
+
+  html[data-main-layout='content'] .details-page .balance-label {
+    font-size: 12.97px;
+  }
+
+  html[data-main-layout='content'] .details-page .balance-value {
+    font-size: 18.69px;
+  }
+
+  html[data-main-layout='content'] .details-page .chip-icon {
+    width: 33.19px;
+    height: 33.19px;
+  }
+
+  html[data-main-layout='content'] .details-page .transactions-list {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    gap: 5.81px;
+  }
+
+  html[data-main-layout='content'] .details-page .transaction-card {
+    width: 100%;
+    padding: 17.17px 32.04px;
+    gap: 11.44px;
+    border-radius: 42.75px;
+  }
+
+  html[data-main-layout='content'] .details-page .transaction-card__top {
+    gap: 10.3px;
+  }
+
+  html[data-main-layout='content'] .details-page .transaction-card__left {
+    gap: 10.3px;
+  }
+
+  html[data-main-layout='content'] .details-page .icon-circle {
+    width: 29.01px;
+    height: 29.01px;
+    border-radius: 8px;
+  }
+
+  html[data-main-layout='content'] .details-page .info {
+    gap: 3.43px;
+  }
+
+  html[data-main-layout='content'] .details-page .category-badge {
+    min-height: 18.01px;
+    padding: 0 10.3px;
+    border-radius: 35.48px;
+    font-size: 12.86px;
+  }
+
+  html[data-main-layout='content'] .details-page .title {
+    font-size: 14.01px;
+  }
+
+  html[data-main-layout='content'] .details-page .id-row {
+    height: 17.24px;
+    gap: 2.67px;
+  }
+
+  html[data-main-layout='content'] .details-page .id-badge {
+    height: 14.12px;
+    padding: 0 5.35px;
+    border-radius: 4.58px;
+    font-size: 8.81px;
+  }
+
+  html[data-main-layout='content'] .details-page .id-number {
+    font-size: 10.47px;
+  }
+
+  html[data-main-layout='content'] .details-page .amount {
+    font-size: 18.31px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .details-page .divider {
+    align-self: flex-start;
+    width: 325.76px;
+    height: 0.57px;
+    margin: 0;
+  }
+
+  html[data-main-layout='content'] .details-page .transaction-card__bottom {
+    min-height: 34.33px;
+  }
+
+  html[data-main-layout='content'] .details-page .time {
+    flex: 0 0 138.77px;
+    width: 138.77px;
+    gap: 6.87px;
+  }
+
+  html[data-main-layout='content'] .details-page .clock-icon {
+    width: 22.89px;
+    height: 22.89px;
+  }
+
+  html[data-main-layout='content'] .details-page .time-text {
+    font-size: 13.73px;
+    line-height: 0.78;
+    letter-spacing: 0.27px;
+  }
+
+  html[data-main-layout='content'] .details-page .balance {
+    gap: 4.89px;
+  }
+
+  html[data-main-layout='content'] .details-page .balance-text {
+    font-size: 15.29px;
+  }
+
+  html[data-main-layout='content'] .details-page .icon-chip {
+    width: 34.33px;
+    height: 34.33px;
+  }
+
+}

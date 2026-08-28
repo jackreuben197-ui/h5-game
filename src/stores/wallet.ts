@@ -77,8 +77,35 @@ export const useWalletStore = defineStore('wallet', () => {
     return { apiPayPrice, totalUiPrice }
   }
 
+  /**
+   * Recharge pay_types.rate is the amount of UC received for 1 USDT.
+   * goldCount is stored in cents, so 300 UC at a rate of 30 costs 10 USDT.
+   */
+  function calculateRechargeUsdtPrice(
+    goldCount: number,
+    rate: number,
+    feeRate: number,
+    feeType = 0,
+    discount = 0,
+  ) {
+    const normalizedRate = Number(rate)
+    const base = normalizedRate > 0 ? goldCount / 100 / normalizedRate : 0
+    let priceAfterDiscount = base * (1 - discount)
+    priceAfterDiscount = Math.round(priceAfterDiscount * 10000) / 10000
+
+    let total = priceAfterDiscount
+    if (feeType === 2 && feeRate > 0) {
+      total = priceAfterDiscount + base * feeRate
+      total = Math.round(total * 10000) / 10000
+    }
+
+    const totalUiPrice = Number(total.toFixed(6))
+    return { apiPayPrice: totalUiPrice, totalUiPrice }
+  }
+
   function calculateCustomerServicePrice(goldCount: number, rate: number, feeRate: number, discount = 0) {
-    const base = (goldCount / 100) * rate
+    const normalizedRate = Number(rate)
+    const base = normalizedRate > 0 ? goldCount / 100 / normalizedRate : 0
     let final: number
     if (discount > 0) {
       final = base * (1 - discount)
@@ -278,6 +305,7 @@ export const useWalletStore = defineStore('wallet', () => {
     goldPriceData,
     loadPriceList,
     calculateUsdtPrice,
+    calculateRechargeUsdtPrice,
     formatUsdtPrice,
     calculateCustomerServicePrice,
     pendingCsRechargeOrders,

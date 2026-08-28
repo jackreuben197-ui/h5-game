@@ -29,9 +29,6 @@ importers:
       dayjs:
         specifier: ^1.11.20
         version: 1.11.20
-      google-protobuf:
-        specifier: ^3.21.4
-        version: 3.21.4
       html2canvas:
         specifier: ^1.4.1
         version: 1.4.1

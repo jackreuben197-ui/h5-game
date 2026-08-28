@@ -6,7 +6,7 @@ import { postClubAgentDelApi, postOrgClubUserInfoApi, postOrgMemberListApi } fro
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
-import { getMemberRouteContext } from './clubMemberRoute'
+import { getMemberRouteContext } from '@/views/club/members/clubMemberRoute'
 import imgAvatar from '@/assets/images/default_avatar_for_club.png'
 import imgAgentBind from '@/assets/icons/icon_agent_bind.png'
 import { useUserInfoStore } from '@/stores/userInfo'

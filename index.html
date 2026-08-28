@@ -27,6 +27,22 @@
     <link rel="apple-touch-icon" href="/icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
 
+    <!-- Telegram SDK 必须在业务脚本前读取原始启动参数；普通浏览器不加载，避免阻塞首屏。 -->
+    <script>
+      ;(function () {
+        if (window.Telegram && window.Telegram.WebApp) {
+          return
+        }
+
+        var locationText = String(window.location.search || '') + String(window.location.hash || '')
+        if (!/(?:[?#&]|^)tgWebAppData=/.test(locationText)) {
+          return
+        }
+
+        document.write('<script src="https://telegram.org/js/telegram-web-app.js?63"><\/script>')
+      })()
+    </script>
+
     <!-- 主题首帧防闪烁：在样式生效前设好 html[data-theme]，
          正式逻辑（持久化/系统主题监听/meta 同步）由 src/utils/theme.ts 接管，
          默认值与 utils/theme.ts 的 DEFAULT_THEME_MODE 保持同步 -->
@@ -1420,7 +1436,7 @@
         }
 
         if (hasTelegramWebApp()) {
-          // Telegram 对象已由宿主注入时直接初始化，无需再次请求官方脚本。
+          // SDK 已在 head 中按 Telegram 官方要求优先加载，此处只初始化业务桥接。
           initTelegramWebApp()
         } else if (window.__H5_TG_MINI_APP__) {
           // Cocos Creator 预览依赖 window.onload 才启动 quick_compile，外部 async script

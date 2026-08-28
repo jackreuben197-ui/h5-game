@@ -53,7 +53,7 @@ const payPrice = computed(() =>
             <h2 class="card__title">{{ t('UIMineMallUSDTShopPayDialogSurePay') }}</h2>
             <div class="card__header-info">
               <span>{{ t('UIMine_WalletPlatform_fee_s') }}：{{ feeDisplay }}</span>
-              <span>{{ t('UIWallet_Current') }}：1{{ t('UC') }}={{ props.rate || 1 }}USDT</span>
+              <span>{{ t('UIWallet_Current') }}：1USDT={{ props.rate || 1 }}{{ t('UC') }}</span>
             </div>
             <PopupCloseButton @close="emit('close')" />
           </div>

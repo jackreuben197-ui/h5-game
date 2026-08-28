@@ -14,6 +14,7 @@ import {
 } from './bridge/channels'
 import { setupWsProxyBridgeChannel } from './bridge/ws'
 import { installCcStorageProxy } from './bridge/sync/ccStorageProxy'
+import { initCurrentClubSync } from './bridge/sync/h5BusinessSync'
 import { setupDailyH5DisplayPanel } from './bridge/dailyH5DisplayPanel'
 import { syncPostAuthData } from './session/postAuthSync'
 import {
@@ -28,6 +29,8 @@ import { recordDebugEvent } from './utils/debugCapture'
 import { createLogger } from './utils/logger'
 import { clearMainLayout } from './utils/mainLayout'
 import { useGameStore } from './stores/game'
+import { useUserInfoStore } from './stores/userInfo'
+import { applySafariWebAppConfig } from './utils/safariWebApp'
 import {
   cacheAgentInviteCodeIfPresent,
   isPrivateDomainMode,
@@ -47,6 +50,7 @@ let stopBridgeToastChannel: (() => void) | null = null
 let stopWsProxyBridgeChannel: (() => void) | null = null
 let stopH5VisibilityBridgeChannel: (() => void) | null = null
 let stopCcStorageProxy: (() => void) | null = null
+let stopCurrentClubSync: (() => void) | null = null
 let stopNativeMenuGuard: (() => void) | null = null
 let stopNativeDragGuard: (() => void) | null = null
 let stopDailyH5DisplayPanel: (() => void) | null = null
@@ -82,6 +86,11 @@ function setupNativeMenuGuard(): () => void {
     const target = event.target
     if (!(target instanceof HTMLElement)) {
       event.preventDefault()
+      return
+    }
+
+    // 分享图片需要使用浏览器原生长按菜单保存到相册。
+    if (target.closest('[data-allow-native-menu="true"]')) {
       return
     }
 
@@ -156,6 +165,12 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
   try {
     app = createApp(App)
     app.use(pinia)
+    stopCurrentClubSync = initCurrentClubSync()
+    // Safari 保存到主屏幕前，按渠道子域名或自定义域名获取俱乐部配置并更新名称、图标。
+    void useUserInfoStore(pinia)
+      .ensureChannelDefaultClub()
+      .then((club) => applySafariWebAppConfig(club))
+      .catch((error) => console.warn('[safariWebApp] load config failed:', error))
     app.use(textI18nPlugin)
     app.use(fitTextPlugin)
     app.use(router)
@@ -221,6 +236,8 @@ export function unmountH5App(): void {
   stopH5VisibilityBridgeChannel = null
   stopCcStorageProxy?.()
   stopCcStorageProxy = null
+  stopCurrentClubSync?.()
+  stopCurrentClubSync = null
   stopNativeMenuGuard?.()
   stopNativeMenuGuard = null
   stopNativeDragGuard?.()

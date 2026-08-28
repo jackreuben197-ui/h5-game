@@ -1,0 +1,383 @@
+// MTT 详情桌面样式。
+@media (min-width: 600px) {
+  // MTT 详情：设计画板为 1440 × 1773，桌面舞台保持最大 1024 高，详情内容内部滚动。
+  html[data-main-layout='content'] .mtt-detail-page {
+    --mtt-detail-gutter: clamp(24px, 2.7083vw, 39px);
+    --mtt-detail-content-width: min(calc(100% - var(--mtt-detail-gutter) * 2), 1362px);
+    --mtt-detail-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page > .page-back-header,
+  html[data-main-layout='content'] .mtt-detail-page > .filter-bar,
+  html[data-main-layout='content'] .mtt-detail-page > .mtt-detail-content,
+  html[data-main-layout='content'] .mtt-detail-page > .detail-footer {
+    position: absolute;
+    right: 0;
+    left: 0;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page > .page-back-header {
+    top: var(--mtt-detail-stage-top);
+    z-index: 3;
+    width: var(--content-stage-width);
+    height: 111px;
+    min-height: 111px;
+    padding: 46px var(--mtt-detail-gutter) 20px;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .back-trigger {
+    height: 42px;
+    gap: 12px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .page-back-header .title {
+    overflow: hidden;
+    max-width: min(70vw, 940px);
+    font-size: 29px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page > .filter-bar {
+    top: calc(var(--mtt-detail-stage-top) + 111px);
+    z-index: 2;
+    width: var(--mtt-detail-content-width);
+    height: 55px;
+    margin-top: 0;
+    margin-bottom: 0;
+    border-radius: 999px;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .filter-tab__item {
+    height: 55px;
+    border-radius: 999px;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .filter-tab__text {
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content']
+    .mtt-detail-page
+    .filter-tabbar--pill
+    .filter-tab__item--active
+    .inner-content {
+    width: 94.86%;
+    height: 45px;
+    line-height: 45px;
+    border-radius: 999px;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page > .mtt-detail-content {
+    top: calc(var(--mtt-detail-stage-top) + 187px);
+    z-index: 1;
+    width: var(--mtt-detail-content-width);
+    height: calc(var(--content-stage-height) - 288px);
+    min-height: 0;
+    padding: 0 0 24px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page > .mtt-detail-content::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .mtt-status-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 21px;
+    width: 100%;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .game-banner {
+    flex: 0 0 auto;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    aspect-ratio: 1362 / 381;
+    margin: 0;
+    border-radius: 18px;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .game-banner__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .status-card {
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 83px;
+    margin: 0;
+    padding: 8px;
+    gap: 19px;
+    border-radius: 25px;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .status-badge {
+    flex: 0 0 81px;
+    width: 81px;
+    height: 66px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .status-meta {
+    gap: 6px;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .meta-row {
+    gap: 5px;
+    font-size: 15px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .meta-value-with-icon {
+    gap: 3px;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .meta-icon {
+    width: 17px;
+    height: 18px;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .stats-panel {
+    flex: 0 0 305px;
+    width: 100%;
+    height: 305px;
+    margin: 0;
+    padding: 14px 18px;
+    border-radius: 31px;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .stats-grid {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr) 76px;
+    align-items: stretch;
+    width: 100%;
+    height: 196px;
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .stats-col {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0;
+    min-width: 0;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .stats-col-divider {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .stats-col--center {
+    position: relative;
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+    padding: 0 22px;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .stats-col--center::before,
+  html[data-main-layout='content'] .mtt-detail-page .stats-col--center::after {
+    position: absolute;
+    top: 30px;
+    width: 1px;
+    height: 137px;
+    background: rgba(255, 255, 255, 0.2);
+    content: '';
+  }
+
+  html[data-theme='light'][data-main-layout='content'] .mtt-detail-page .stats-col--center::before,
+  html[data-theme='light'][data-main-layout='content'] .mtt-detail-page .stats-col--center::after {
+    background: rgba(0, 0, 0, 0.16);
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .stats-col--center::before {
+    left: 0;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .stats-col--center::after {
+    right: 0;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .stat-item,
+  html[data-main-layout='content'] .mtt-detail-page .blind-row {
+    min-width: 0;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .stat-label,
+  html[data-main-layout='content'] .mtt-detail-page .blind-label,
+  html[data-main-layout='content'] .mtt-detail-page .chip-label {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .stat-value,
+  html[data-main-layout='content'] .mtt-detail-page .blind-value,
+  html[data-main-layout='content'] .mtt-detail-page .chip-value {
+    height: auto;
+    font-size: 15px;
+    line-height: 1.05;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .level-card {
+    width: 100%;
+    height: 107px;
+    margin: 0;
+    padding: 4px 6px 7px;
+    border-radius: 31px;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .level-label {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .level-timer {
+    margin: 0;
+    font-size: 44px;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .level-break {
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .blind-info {
+    height: 82px;
+    justify-content: space-between;
+    gap: 0;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .stats-divider {
+    height: 1px;
+    margin: 4px 0;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .chips-row {
+    align-items: center;
+    height: 62px;
+    margin: 0;
+    gap: 0;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .chip-item {
+    min-width: 0;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .chip-bb {
+    font-size: 9px;
+    line-height: 1;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .event-desc {
+    flex: 0 0 auto;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .event-desc p {
+    margin: 0 15px;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .event-desc div {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 33px;
+    max-height: 66px;
+    margin: 8px 0 0;
+    padding: 7px 9px;
+    overflow: auto;
+    border-radius: 20px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .info-section {
+    flex: 0 0 auto;
+    gap: 3px;
+    width: 100%;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .info-row {
+    width: 100%;
+    min-height: 29px;
+    padding: 5px 18px;
+    border-radius: 30px;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .info-label,
+  html[data-main-layout='content'] .mtt-detail-page .info-value {
+    min-width: 0;
+    gap: 5px;
+    font-size: 13px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .info-label {
+    flex: 1 1 auto;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .info-tip {
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .info-icon {
+    flex: 0 0 auto;
+    width: 15px;
+    height: 15px;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page > .detail-footer {
+    top: calc(var(--mtt-detail-stage-top) + var(--content-stage-height) - 101px);
+    z-index: 4;
+    width: min(calc(100% - 48px), 435px);
+    height: 64px;
+    padding: 0 23px;
+  }
+
+  html[data-main-layout='content'] .mtt-detail-page .detail-footer .primary-btn {
+    width: 100%;
+    height: 64px;
+    border-radius: 47px;
+    font-size: 16px;
+  }
+
+}

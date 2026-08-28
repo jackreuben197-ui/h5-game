@@ -13,7 +13,7 @@ import type {
 } from '@/api/models/stats'
 import {
   decodeCard,
-  GetWinDesc,
+  GetWinDescHtml,
   parseHandRecordCards,
   parseReplayLike,
   type CardItem,
@@ -170,7 +170,7 @@ function buildDisplayCards(record: { data?: unknown }): CardItem[] {
 function buildCardTitle(record: StatsUserGameRecordListRecord): string {
   const replay = parseReplayLike<StatsReplayData>(record.replay)
   const replayFantasy = parseReplayLike<StatsReplayFantasyData>(record.replay_ft)
-  return GetWinDesc(replay, replayFantasy)
+  return GetWinDescHtml(replay, replayFantasy)
 }
 
 type HandCollectionRow = {
@@ -591,6 +591,10 @@ onMounted(() => {
   text-align: right;
   font-size: 0.34rem;
   font-weight: 600;
+
+  :deep(.replay-highlight) {
+    color: #f8c255;
+  }
 }
 
 .line {

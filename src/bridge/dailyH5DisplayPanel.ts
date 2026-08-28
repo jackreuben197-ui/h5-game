@@ -7,7 +7,7 @@ import type {
 import { openBridgePanel } from '@/bridge/channels/panelChannel'
 import { subscribeCocosMessages } from '@/bridge/core/cocosBridgeChannel'
 import StorageKey from '@/constants/storageKey'
-import { isTelegramClubContext } from '@/utils/channelPackage'
+import { isChannelPackageHost, isTelegramClubContext } from '@/utils/channelPackage'
 import { BRIDGE_ACTION, BRIDGE_MSG_TYPE, type BridgeMessage } from '@bridge-protocol'
 import { t } from '@/i18n'
 import { localStore } from '@/utils/localStore'
@@ -80,6 +80,11 @@ function isTelegramClubEntry(): boolean {
 export async function tryShowDailyH5DisplayPanel(): Promise<void> {
   // 先于日期标记返回：否则俱乐部深链会吃掉当天的展示机会，同一天从主站进来就再也看不到。
   if (isTelegramClubEntry()) {
+    return
+  }
+
+  // 私域版本（渠道包）暂时不展示三级公告，也不请求公告数据。
+  if (isChannelPackageHost()) {
     return
   }
 

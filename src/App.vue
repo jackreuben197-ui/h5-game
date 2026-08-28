@@ -4,6 +4,7 @@ import GlobalCsOrderFloat from '@/components/GlobalCsOrderFloat/GlobalCsOrderFlo
 import TelegramClubJoinModal from '@/components/Dialog/TelegramClubJoinModal.vue'
 import GameLaunchFallbackModal from '@/components/Dialog/GameLaunchFallbackModal.vue'
 import { useGameStore } from '@/stores/game'
+import ExternalLinkFrame from '@/components/ExternalLinkFrame/ExternalLinkFrame.vue'
 
 const gameStore = useGameStore()
 const hasSession = computed(() => Boolean(gameStore.sessionToken.trim()))
@@ -23,6 +24,7 @@ const GlobalCustomerServiceChat = defineAsyncComponent(
   <GlobalBridgePanelHost />
   <TelegramClubJoinModal />
   <GameLaunchFallbackModal />
+  <ExternalLinkFrame />
   <Teleport v-if="hasSession" to="body">
     <GlobalMessageTodoNotice />
   </Teleport>

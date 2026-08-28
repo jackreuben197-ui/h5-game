@@ -322,24 +322,19 @@ export default defineConfig(({ mode, command }) => {
             if (
               normalizedId.includes('/axios/') ||
               normalizedId.includes('/dayjs/') ||
-              normalizedId.includes('/js-md5/') ||
-              normalizedId.includes('/@vueuse/')
+              normalizedId.includes('/js-md5/')
             ) {
               return 'vendor-utils'
             }
 
             // 这些依赖只在少数业务页面使用，必须保持独立分包；否则 catch-all
-            // vendor 会让首页也预加载海报导出、二维码和 Iconify runtime。
+            // vendor 会让首页也预加载海报导出和二维码 runtime。
             if (normalizedId.includes('/html2canvas/')) {
               return 'vendor-html2canvas'
             }
 
             if (normalizedId.includes('/qrcode/') || normalizedId.includes('/dijkstrajs/')) {
               return 'vendor-qrcode'
-            }
-
-            if (normalizedId.includes('/@iconify/')) {
-              return 'vendor-iconify'
             }
 
             return 'vendor-misc'

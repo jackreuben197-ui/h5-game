@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { Icon } from '@iconify/vue'
 import {
   postClubAgentUserListApi,
   postOrgClubAgentCreditBalanceApi,
@@ -23,6 +22,8 @@ import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { t } from '@/i18n'
+import FundKeypad from '@/components/KeyBoard/FundKeypad.vue'
+import { useTheme } from '@/composables/useTheme'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -44,6 +45,7 @@ interface DownlineMemberItem {
 }
 
 const userInfoStore = useUserInfoStore()
+const { isDark } = useTheme()
 
 const loading = ref(false)
 const keyword = ref('')
@@ -60,13 +62,6 @@ const quotaInput = ref('')
 const disposableQuota = ref(0)
 const reviewQuota = ref(0)
 const submittingFund = ref(false)
-
-const keypadRows = [
-  ['1', '2', '3'],
-  ['4', '5', '6'],
-  ['7', '8', '9'],
-  ['C', '0', 'DEL'],
-] as const
 
 const totalText = computed(() => {
   const current = members.value.length
@@ -477,7 +472,22 @@ onMounted(async () => {
       <div class="invite-row">
         <div class="invite-title-wrap">
           <span>{{ t('UIClub_InviteLink') }}</span>
-          <img :src="imgInfo" alt="" aria-hidden="true" />
+          <VanPopover
+            trigger="click"
+            placement="bottom-start"
+            :theme="isDark ? 'dark' : 'light'"
+          >
+            <template #reference>
+              <button
+                type="button"
+                class="invite-info-trigger"
+                :aria-label="t('UIClub_DownlineInviteLinkTip')"
+              >
+                <img :src="imgInfo" alt="" aria-hidden="true" />
+              </button>
+            </template>
+            <div class="invite-info-content">{{ t('UIClub_DownlineInviteLinkTip') }}</div>
+          </VanPopover>
         </div>
         <button type="button" class="qr-btn" @click="onSaveQrCode">{{ t('UIMine_PromotersBecome_rTPhmznj') }}</button>
       </div>
@@ -690,24 +700,7 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="fund-keypad">
-          <div v-for="(row, rowIndex) in keypadRows" :key="rowIndex" class="fund-keypad-row">
-            <button
-              v-for="key in row"
-              :key="key"
-              type="button"
-              class="keypad-btn"
-              :class="{
-                'keypad-btn--accent': key === 'C' || key === 'DEL',
-                'keypad-btn--del': key === 'DEL',
-              }"
-              @click="onKeypadPress(key)"
-            >
-              <span v-if="key !== 'DEL'">{{ key }}</span>
-              <Icon v-else icon="solar:backspace-bold" />
-            </button>
-          </div>
-        </div>
+        <FundKeypad @press="onKeypadPress" />
 
         <div class="sheet-footer-actions">
           <button type="button" class="sheet-footer-btn" @click="closeFundSheet">{{ t('adaptation10013') }}</button>
@@ -761,10 +754,31 @@ onMounted(async () => {
   gap: 0.08rem;
 }
 
-.invite-title-wrap img {
+.invite-info-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.42rem;
+  height: 0.42rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.invite-info-trigger img {
   width: 0.36rem;
   height: 0.36rem;
   object-fit: contain;
+}
+
+.invite-info-content {
+  max-width: 6.4rem;
+  padding: 0.2rem 0.24rem;
+  font-size: 0.28rem;
+  line-height: 1.45;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .qr-btn {
@@ -1177,40 +1191,6 @@ onMounted(async () => {
   align-items: center;
   color: rgba(249, 249, 249, 0.95);
   font-size: 0.325rem;
-}
-
-.fund-keypad {
-  display: flex;
-  flex-direction: column;
-  gap: 0.20587rem;
-}
-
-.fund-keypad-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.15261rem;
-}
-
-.keypad-btn {
-  min-height: 1.35393rem;
-  border: 0.01907rem solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.37751rem;
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
-  font-size: 0.61044rem;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.keypad-btn--accent {
-  background: rgba(4, 209, 157, 0.26);
-  border-color: transparent;
-}
-
-.keypad-btn--del {
-  font-size: 0.61044rem;
 }
 
 .sheet-footer-actions {

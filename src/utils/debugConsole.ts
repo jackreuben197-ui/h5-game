@@ -6,6 +6,10 @@ import {
   type DebugConsoleLevel,
   type DebugConsoleSource,
 } from '@/utils/debugCapture'
+import {
+  isExternalLinkIframeModeEnabled,
+  setExternalLinkIframeMode,
+} from '@/utils/externalLinkFrame'
 
 export type { DebugConsoleLevel, DebugConsoleSource } from '@/utils/debugCapture'
 
@@ -43,6 +47,8 @@ let domRefs: {
   summary: HTMLDivElement | null
   themeCurrent: HTMLSpanElement | null
   themeButton: HTMLButtonElement | null
+  iframeCurrent: HTMLSpanElement | null
+  iframeButton: HTMLButtonElement | null
   body: HTMLDivElement | null
 } = {
   toggle: null,
@@ -51,6 +57,8 @@ let domRefs: {
   summary: null,
   themeCurrent: null,
   themeButton: null,
+  iframeCurrent: null,
+  iframeButton: null,
   body: null,
 }
 
@@ -161,6 +169,7 @@ function getSummaryLines(): string[] {
     `ccReady: ${window.__CC_READY__ === true ? 'true' : 'false'}`,
     `telegram: ${isTelegramMiniAppEnv() ? 'true' : 'false'}`,
     `theme: ${resolvedThemeRef.value} (${themeModeRef.value})`,
+    `iframeMode: ${isExternalLinkIframeModeEnabled() ? 'true' : 'false'}`,
     `build: ${typeof __APP_INFO__ !== 'undefined' ? __APP_INFO__.lastBuildTime : 'unknown'}`,
     `logs: ${state.entries.length}`,
   ]
@@ -171,8 +180,28 @@ function renderDebugConsoleDom(): void {
     return
   }
 
-  const { toggle, telegramStatus, panel, summary, themeCurrent, themeButton, body } = domRefs
-  if (!toggle || !telegramStatus || !panel || !summary || !themeCurrent || !themeButton || !body) {
+  const {
+    toggle,
+    telegramStatus,
+    panel,
+    summary,
+    themeCurrent,
+    themeButton,
+    iframeCurrent,
+    iframeButton,
+    body,
+  } = domRefs
+  if (
+    !toggle ||
+    !telegramStatus ||
+    !panel ||
+    !summary ||
+    !themeCurrent ||
+    !themeButton ||
+    !iframeCurrent ||
+    !iframeButton ||
+    !body
+  ) {
     return
   }
 
@@ -182,6 +211,10 @@ function renderDebugConsoleDom(): void {
     .map((line) => `<div>${escapeHtml(line)}</div>`)
     .join('')
   themeCurrent.textContent = resolvedThemeRef.value === 'light' ? '浅色' : '深色'
+  const iframeModeEnabled = isExternalLinkIframeModeEnabled()
+  iframeCurrent.textContent = iframeModeEnabled ? 'iframe 模式' : '默认跳转'
+  iframeButton.textContent = iframeModeEnabled ? '关闭 iframe' : '开启 iframe'
+  iframeButton.setAttribute('aria-pressed', String(iframeModeEnabled))
 
   const prevScrollTop = body.scrollTop
   const prevScrollHeight = body.scrollHeight
@@ -332,7 +365,7 @@ function attachDebugConsoleDom(): void {
       margin-top: 16px;
     }
 
-    .h5-debug-console__theme {
+    .h5-debug-console__setting {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -345,11 +378,11 @@ function attachDebugConsoleDom(): void {
       font-size: 16px;
     }
 
-    .h5-debug-console__theme strong {
+    .h5-debug-console__setting strong {
       color: #fff;
     }
 
-    .h5-debug-console__theme button {
+    .h5-debug-console__setting button {
       min-width: 104px;
       height: 46px;
       padding: 0 18px;
@@ -455,14 +488,14 @@ function attachDebugConsoleDom(): void {
         margin-top: 14px;
       }
 
-      .h5-debug-console__theme {
+      .h5-debug-console__setting {
         gap: 10px;
         margin-top: 12px;
         padding: 10px 12px;
         font-size: 15px;
       }
 
-      .h5-debug-console__theme button {
+      .h5-debug-console__setting button {
         min-width: 96px;
         height: 44px;
         padding: 0 14px;
@@ -536,9 +569,13 @@ function attachDebugConsoleDom(): void {
       </div>
     </div>
     <div class="h5-debug-console__summary"></div>
-    <div class="h5-debug-console__theme">
+    <div class="h5-debug-console__setting">
       <span>当前主题：<strong data-theme-current></strong></span>
       <button type="button" data-action="theme">切换主题</button>
+    </div>
+    <div class="h5-debug-console__setting">
+      <span>公告链接：<strong data-iframe-current></strong></span>
+      <button type="button" data-action="iframe"></button>
     </div>
     <div class="h5-debug-console__body"></div>
   `
@@ -546,6 +583,8 @@ function attachDebugConsoleDom(): void {
   const summary = panel.querySelector('.h5-debug-console__summary') as HTMLDivElement | null
   const themeCurrent = panel.querySelector('[data-theme-current]') as HTMLSpanElement | null
   const themeButton = panel.querySelector('[data-action="theme"]') as HTMLButtonElement | null
+  const iframeCurrent = panel.querySelector('[data-iframe-current]') as HTMLSpanElement | null
+  const iframeButton = panel.querySelector('[data-action="iframe"]') as HTMLButtonElement | null
   const body = panel.querySelector('.h5-debug-console__body') as HTMLDivElement | null
   const copyButton = panel.querySelector('[data-action="copy"]') as HTMLButtonElement | null
   const clearButton = panel.querySelector('[data-action="clear"]') as HTMLButtonElement | null
@@ -577,12 +616,27 @@ function attachDebugConsoleDom(): void {
     renderDebugConsoleDom()
     closeDebugConsole()
   })
+  iframeButton?.addEventListener('click', () => {
+    setExternalLinkIframeMode(!isExternalLinkIframeModeEnabled())
+    renderDebugConsoleDom()
+    closeDebugConsole()
+  })
 
   document.head.appendChild(style)
   document.body.appendChild(toggle)
   document.body.appendChild(panel)
 
-  domRefs = { toggle, telegramStatus, panel, summary, themeCurrent, themeButton, body }
+  domRefs = {
+    toggle,
+    telegramStatus,
+    panel,
+    summary,
+    themeCurrent,
+    themeButton,
+    iframeCurrent,
+    iframeButton,
+    body,
+  }
   domReady = true
   new MutationObserver(() => renderDebugConsoleDom()).observe(document.documentElement, {
     attributes: true,

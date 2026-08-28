@@ -28,7 +28,10 @@ import type { StatsClubDataStatsUserDetailTotalData } from '@/api/models/stats'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useTheme } from '@/composables/useTheme'
 import { formatUC } from '@/utils/roomVisibility'
-import { getMemberRouteContext, type MemberIdentity } from './clubMemberRoute'
+import {
+  getMemberRouteContext,
+  type MemberIdentity,
+} from '@/views/club/members/clubMemberRoute'
 import mainBgUrl from '@/assets/images/img_table_setting_bg.png'
 import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import { t, tJoin } from '@/i18n'

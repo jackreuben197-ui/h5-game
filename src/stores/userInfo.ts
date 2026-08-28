@@ -4,8 +4,13 @@ import type { OrgClubSearchInfoData, OrgClubData } from '@/api/models/org'
 import { postOrgClubDefaultApi } from '@/api/org'
 import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
-import { isPrivateDomainMode, resolveInviteCode } from '@/utils/channelPackage'
-import { copyStorageToMainDomain } from '@/utils/channelPackage'
+import {
+  CHANNEL_MAIN_DOMAIN,
+  copyStorageToMainDomain,
+  extractInviteCodeFromSubdomain,
+  isPrivateDomainMode,
+  resolveInviteCode,
+} from '@/utils/channelPackage'
 import { resolveTelegramClubRandomId } from '@/utils/telegramStartParam'
 
 export type ClubInfo = OrgClubData
@@ -20,6 +25,14 @@ interface UserInfoState {
 
 function normalizeClubId(value: unknown): string {
   return value === undefined || value === null ? '' : String(value).trim()
+}
+
+function resolveSafariBaseUrl(hostname: string): string {
+  const normalizedHostname = hostname.trim().toLowerCase()
+  if (!normalizedHostname || normalizedHostname === CHANNEL_MAIN_DOMAIN) {
+    return ''
+  }
+  return normalizedHostname
 }
 
 function toSafeInt(value: unknown): number {
@@ -43,6 +56,10 @@ function normalizeDefaultClub(club: OrgClubSearchInfoData | undefined): ClubInfo
     club_id: clubId,
     club_name: String(club.club_name || ''),
     logo: String(club.logo || ''),
+    safari_icon_url: String(club.safari_icon_url || ''),
+    safari_label: String(club.safari_label || ''),
+    safari_base_url: String(club.safari_base_url || ''),
+    room_logo: String(club.room_logo || ''),
     banner: String(club.banner || ''),
     random_id: toSafeInt(club.random_id),
     support_im_rid: String(club.support_im_rid || ''),
@@ -152,7 +169,18 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       this.channelDefaultClub = club
     },
     async ensureChannelDefaultClub(): Promise<ClubInfo | null> {
-      if (!isPrivateDomainMode()) {
+      const hostname =
+        typeof window === 'undefined' ? '' : window.location.hostname.trim().toLowerCase()
+      if (hostname === 'localhost') {
+        this.channelDefaultClub = null
+        channelDefaultClubLoaded = false
+        return null
+      }
+      // 旧渠道域名 xxx.{CHANNEL_MAIN_DOMAIN} 必须继续按邀请码查询，不能当成自定义域名。
+      const channelInviteCode = extractInviteCodeFromSubdomain(hostname)
+      const baseUrl = channelInviteCode ? '' : resolveSafariBaseUrl(hostname)
+      // 主域名既不是渠道子域名也解析不出自定义域名，不发默认俱乐部请求。
+      if (!isPrivateDomainMode() && !baseUrl) {
         this.channelDefaultClub = null
         channelDefaultClubLoaded = false
         return null
@@ -167,13 +195,15 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       // Channel subdomain / Telegram club_<code> links resolve to an invite_code; Telegram
       // game links (login_/home_<roomId>_<clubRandomId>) resolve to a club random id. Both
       // select the same private-domain club via /org/club/default.
-      const inviteCode = resolveInviteCode()
+      const inviteCode = channelInviteCode || (baseUrl ? '' : resolveInviteCode(hostname))
       const clubRandomId = Number(resolveTelegramClubRandomId())
-      const payload = inviteCode
-        ? { invite_code: inviteCode }
-        : clubRandomId
-          ? { random_id: clubRandomId }
-          : {}
+      const payload = baseUrl
+        ? { base_url: baseUrl }
+        : inviteCode
+          ? { invite_code: inviteCode }
+          : clubRandomId
+            ? { random_id: clubRandomId }
+            : {}
 
       channelDefaultClubInFlight = (async () => {
         try {

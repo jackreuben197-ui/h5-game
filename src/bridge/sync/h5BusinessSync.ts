@@ -9,10 +9,12 @@ import {
   type SyncDiamondConfigPayload,
   type SyncGlobalConfigPayload,
   type SyncLanguagePayload,
+  type SyncCurrentClubPayload,
   type SyncRoomsListPayload,
   type SyncUserClubPayload,
   type SyncUserPayload,
 } from '@bridge-protocol'
+import { watch } from 'vue'
 import { Code, subscribeH5WsCode } from '../ws/messageCenter'
 import { decodeUserDiamondChange, decodeUserGoldChange } from '../ws/userBalanceNotify'
 import { decodeUserTraderOrderNotify } from '../ws/traderOrderNotify'
@@ -21,6 +23,7 @@ import type { DiamondConfigMap, GlobalConfigData } from '@/api/models/config'
 import type { ApiResponse } from '@/api/models/common'
 import type { RoomDetailData, RoomDetailRequest } from '@/api/models/roomcenter'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { pinia } from '@/stores/pinia'
 
 const TRADER_ORDER_STATUS_APPROVED = 2
 
@@ -99,6 +102,21 @@ export function forwardUserClubToCocos(response: ApiResponse<unknown>): void {
     response,
   }
   queueSyncUntilHandshake(BRIDGE_ACTION.SYNC_USER_CLUB, payload)
+}
+
+export function initCurrentClubSync(): () => void {
+  const store = useUserInfoStore(pinia)
+  return watch(
+    () => store.currentClubId,
+    (rawClubId) => {
+      const clubId = Number(rawClubId)
+      const payload: SyncCurrentClubPayload = {
+        clubId: Number.isFinite(clubId) && clubId > 0 ? clubId : 0,
+      }
+      queueSyncUntilHandshake(BRIDGE_ACTION.SYNC_CURRENT_CLUB, payload)
+    },
+    { immediate: true, flush: 'sync' },
+  )
 }
 
 export function forwardRoomsListToCocos(

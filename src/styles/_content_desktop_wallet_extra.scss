@@ -1,0 +1,440 @@
+// 俱乐部钱包收支与赠送 UC 桌面样式。
+@media (min-width: 600px) {
+  // 俱乐部钱包收支：日期、资金概览和收支指标组成桌面数据面板。
+  html[data-main-layout='content'] .club-wallet-logs-bg {
+    --club-wallet-gutter: clamp(24px, 2.7083vw, 39px);
+    --club-wallet-content-width: min(calc(100% - var(--club-wallet-gutter) * 2), 1080px);
+    --club-wallet-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg > .page-back-header {
+    position: absolute;
+    top: var(--club-wallet-stage-top);
+    right: 0;
+    left: 0;
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 105px;
+    min-height: 105px;
+    margin: 0 auto;
+    padding: 50px var(--club-wallet-gutter) 25px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .back-trigger {
+    height: 30px;
+    gap: 20px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg > .wallet-logs-content {
+    position: absolute;
+    top: calc(var(--club-wallet-stage-top) + 105px);
+    right: 0;
+    left: 0;
+    display: flex;
+    width: var(--club-wallet-content-width);
+    height: calc(var(--content-stage-height) - 105px);
+    min-height: 0;
+    margin: 0 auto;
+    padding: 0 0 40px;
+    gap: 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content']
+    .club-wallet-logs-bg
+    > .wallet-logs-content::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg :is(.fund-card, .metrics-card) {
+    flex: 0 0 auto;
+    width: 100%;
+    border-width: 1px;
+    backdrop-filter: blur(9px);
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .fund-card {
+    display: grid;
+    grid-template-columns: minmax(360px, 0.9fr) minmax(400px, 1.1fr);
+    align-items: center;
+    gap: 42px;
+    min-height: 154px;
+    padding: 24px 30px;
+    border-radius: 32px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .date-range {
+    gap: 12px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .date-btn {
+    min-height: 52px;
+    padding: 0 18px;
+    gap: 8px;
+    border-width: 1px;
+    border-radius: 28px;
+    font-size: 15px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .date-separator {
+    width: 14px;
+    height: 1px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .date-btn .calendar-icon {
+    width: 16px;
+    height: 15px;
+    border-width: 1px;
+    border-radius: 3px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .date-btn .calendar-icon::before {
+    top: 4px;
+    right: -1px;
+    left: -1px;
+    border-top-width: 1px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .date-btn .calendar-icon::after {
+    top: -3px;
+    right: 3px;
+    left: 3px;
+    height: 4px;
+    border-right-width: 1px;
+    border-left-width: 1px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .fund-balances {
+    margin-top: 0;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .fund-balance-item {
+    min-height: 84px;
+    gap: 8px;
+  }
+
+  html[data-main-layout='content']
+    .club-wallet-logs-bg
+    .fund-balance-item
+    + .fund-balance-item::before {
+    top: 12px;
+    bottom: 12px;
+    width: 1px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .fund-label {
+    font-size: 14px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .fund-value {
+    font-size: 25px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .timezone {
+    margin: -4px 4px 0 0;
+    padding: 0;
+    font-size: 12px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .metrics-card {
+    padding: 12px 18px;
+    border-radius: 30px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .metrics-card--transfer {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .metrics-card--revenue {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .metric-item {
+    min-height: 92px;
+    padding: 10px 8px;
+    gap: 9px;
+  }
+
+  html[data-main-layout='content']
+    .club-wallet-logs-bg
+    .metrics-card--transfer
+    .metric-item
+    + .metric-item::before,
+  html[data-main-layout='content']
+    .club-wallet-logs-bg
+    .metrics-card--revenue
+    .metric-item:not(:first-child)::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 14px;
+    bottom: 14px;
+    width: 1px;
+    background: rgba(243, 243, 243, 0.18);
+  }
+
+  html[data-theme='light'][data-main-layout='content']
+    .club-wallet-logs-bg
+    .metric-item::before {
+    background: rgba(34, 34, 34, 0.14);
+  }
+
+  html[data-main-layout='content']
+    .club-wallet-logs-bg
+    .metrics-card--revenue
+    .metric-item:nth-child(n + 4)::after {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .metric-label {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .metric-value {
+    font-size: 20px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .loading-text {
+    margin: 0;
+    font-size: 13px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .date-picker-mask {
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  html[data-main-layout='content'] .club-wallet-logs-bg .date-picker-sheet {
+    width: min(100%, 520px);
+    max-height: calc(100dvh - 48px);
+    padding: 26px 22px 22px;
+    overflow-y: auto;
+    border-radius: 34px;
+  }
+
+  @media (max-width: 900px) {
+    html[data-main-layout='content'] .club-wallet-logs-bg .fund-card {
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+
+    html[data-main-layout='content'] .club-wallet-logs-bg .metrics-card--revenue {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    html[data-main-layout='content']
+      .club-wallet-logs-bg
+      .metrics-card--revenue
+      .metric-item:nth-child(4)::before {
+      display: none;
+    }
+
+    html[data-main-layout='content']
+      .club-wallet-logs-bg
+      .metrics-card--revenue
+      .metric-item:nth-child(n + 4)::after {
+      display: block;
+      left: 12px;
+      right: 12px;
+      top: 0;
+      height: 1px;
+    }
+  }
+
+  // 赠送 UC：金额输入、玩家列表和提交按钮共用 1360px 内容边界。
+  html[data-main-layout='content'] .gift-page {
+    --gift-page-gutter: clamp(24px, 2.7083vw, 39px);
+    --gift-page-content-width: min(calc(100% - var(--gift-page-gutter) * 2), 1362px);
+    --gift-page-stage-top: max(
+      0px,
+      calc((var(--app-full-height, 100dvh) - var(--content-stage-height)) / 2)
+    );
+
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .gift-page > .page-back-header {
+    position: absolute;
+    top: var(--gift-page-stage-top);
+    right: 0;
+    left: 0;
+    z-index: 4;
+    width: var(--content-stage-width);
+    height: 105px;
+    min-height: 105px;
+    margin: 0 auto;
+    padding: 50px var(--gift-page-gutter) 25px;
+  }
+
+  html[data-main-layout='content'] .gift-page .back-trigger {
+    height: 30px;
+    gap: 20px;
+    padding: 0;
+  }
+
+  html[data-main-layout='content'] .gift-page .back-icon {
+    width: 7px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .gift-page .page-back-header .title {
+    font-size: 29px;
+    line-height: 1.2;
+  }
+
+  html[data-main-layout='content'] .gift-page > .gift-content {
+    position: absolute;
+    top: calc(var(--gift-page-stage-top) + 105px);
+    right: 0;
+    left: 0;
+    display: flex;
+    width: var(--gift-page-content-width);
+    height: calc(var(--content-stage-height) - 105px);
+    min-height: 0;
+    margin: 0 auto;
+    padding: 0 0 40px;
+    overflow: hidden;
+  }
+
+  html[data-main-layout='content'] .gift-page .max-amount {
+    flex: 0 0 auto;
+    margin: 0 0 10px;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  html[data-main-layout='content'] .gift-page .amount-input {
+    flex: 0 0 64px;
+    width: 100%;
+    height: 64px;
+    padding: 0 22px;
+    gap: 12px;
+    border-radius: 32px;
+  }
+
+  html[data-main-layout='content'] .gift-page .amount-input__icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  html[data-main-layout='content'] .gift-page .amount-input__value {
+    font-size: 29px;
+  }
+
+  html[data-main-layout='content'] .gift-page .player-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: 16px;
+    padding-right: 2px;
+    gap: 10px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  html[data-main-layout='content'] .gift-page .player-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-main-layout='content'] .gift-page .player-item {
+    flex: 0 0 70px;
+    width: 100%;
+    min-height: 70px;
+    padding: 10px 20px;
+    border-radius: 35px;
+  }
+
+  html[data-main-layout='content'] .gift-page .player-item__main {
+    min-width: 0;
+    gap: 12px;
+  }
+
+  html[data-main-layout='content'] .gift-page .player-item__avatar {
+    width: 46px;
+    height: 46px;
+  }
+
+  html[data-main-layout='content'] .gift-page .player-item__meta {
+    min-width: 0;
+    gap: 4px;
+  }
+
+  html[data-main-layout='content'] .gift-page .player-item__name {
+    overflow: hidden;
+    max-width: min(70vw, 1000px);
+    font-size: 18px;
+    line-height: 22px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-main-layout='content'] .gift-page .player-item__id {
+    font-size: 12px;
+    line-height: 16px;
+  }
+
+  html[data-main-layout='content'] .gift-page .radio-circle {
+    width: 19px;
+    height: 19px;
+  }
+
+  html[data-main-layout='content'] .gift-page .radio-circle--checked::after {
+    width: 12px;
+    height: 12px;
+  }
+
+  html[data-main-layout='content'] .gift-page .list-state {
+    padding: 24px 0;
+    font-size: 16px;
+  }
+
+  html[data-main-layout='content'] .gift-page .submit-btn {
+    flex: 0 0 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min(100%, 417px);
+    height: 64px;
+    min-height: 64px;
+    margin: 16px auto 0;
+    border-radius: 47px;
+    font-size: 20px;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+}

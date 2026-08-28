@@ -1645,7 +1645,7 @@ log.error('致命错误:', error)
 
 ### 12.4 运行时动态控制
 
-项目在 `window.__log` 上暴露了三个方法，可直接在浏览器控制台调用：
+项目在 `window.__log` 上暴露了运行时调试方法，可直接在浏览器控制台调用：
 
 ```js
 // 查看所有 logger 及当前 level
@@ -1662,7 +1662,18 @@ __log.setLevel('[bridge][cc->h5]', 'silent')  // 关掉 Cocos→H5 消息
 
 // 恢复某个 logger 跟随全局
 __log.setLevel('[wsSend]', null)
+
+// 公告富文本外链默认使用浏览器跳转
+__log.getIframeMode()       // false
+
+// 开启 iframe 模式（仅影响公告富文本中的第三方链接）
+__log.setIframeMode(true)
+
+// 恢复默认浏览器跳转模式
+__log.setIframeMode(false)
 ```
+
+也可以在页面的 `LOG` 调试面板中，通过“公告链接”一栏的按钮直接切换。
 
 ### 12.5 在组件生命周期中临时调试
 

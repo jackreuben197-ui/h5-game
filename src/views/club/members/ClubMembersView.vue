@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { Icon } from '@iconify/vue'
 import { useRouter } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
 import { formatUC } from '@/utils/roomVisibility'
@@ -27,6 +26,7 @@ import imgChips from '@/assets/icons/icon_chips.png'
 import imgBalance from '@/assets/icons/icon_chip_green.png'
 import icTimeRefresh from '@/assets/icons/ic_time_refresh.png'
 import icSearch from '@/assets/icons/ic_search.svg'
+import backspaceIcon from '@/assets/icons/backspace_figma.svg'
 import icUserShadow from '@/assets/icons/ic_user_shadow.png'
 import icJackpotChecked from '@/assets/icons/ic_jackpot_checked.svg'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -1930,7 +1930,7 @@ onMounted(() => {
           <button class="keypad-btn keypad-btn--accent" @click="onKeypadPress('C')">C</button>
           <button class="keypad-btn" @click="onKeypadPress('0')">0</button>
           <button class="keypad-btn keypad-btn--accent" @click="onKeypadPress('DEL')">
-            <Icon icon="solar:backspace-bold" class="keypad-del-icon" />
+            <img class="keypad-del-icon" :src="backspaceIcon" alt="" aria-hidden="true" />
           </button>
         </div>
 

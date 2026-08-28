@@ -633,6 +633,9 @@ watch(
                   alt=""
                 />
               </div>
+              <span class="type-card-title">
+                {{ getGameTypeName(Number(room.game_type), Number(room.poker_type)) }}
+              </span>
             </div>
 
             <!-- 中间信息 -->
@@ -667,7 +670,7 @@ watch(
             <!-- 右侧人数 -->
             <div class="table-card-right">
               <div class="seat-ratio">
-                <img class="icon-people" :src="iconPeople" alt="" />
+                <img class="room-users-icon" :src="iconPeople" alt="" />
                 <span>{{ getRoomSeatRatio(room) }}</span>
               </div>
             </div>

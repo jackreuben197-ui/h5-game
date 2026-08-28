@@ -368,44 +368,14 @@ onBeforeUnmount(() => {
               fill="currentColor"
             />
           </svg>
-          <svg
+          <span
             v-else-if="tab.icon === 'mtt'"
-            class="tab-icon-svg"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 32 32"
-            fill="none"
-          >
-            <path d="M10 5.5h12v6.2c0 4.4-2.7 7.8-6 7.8s-6-3.4-6-7.8V5.5Z" fill="currentColor" />
-            <path
-              d="M10 8H6.5v2.1c0 3.7 2.2 6.2 5.6 6.9M22 8h3.5v2.1c0 3.7-2.2 6.2-5.6 6.9M16 19.5V24m-5 3h10"
-              stroke="currentColor"
-              stroke-width="2.4"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-            <path
-              d="m16 8.2 1 2 2.2.3-1.6 1.6.4 2.2-2-1-2 1 .4-2.2-1.6-1.6 2.2-.3 1-2Z"
-              fill="white"
-            />
-          </svg>
-          <svg
+            class="tab-icon-svg tab-icon-mask tab-icon-mask--mtt"
+          ></span>
+          <span
             v-else-if="tab.icon === 'miniGame'"
-            class="tab-icon-svg"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 32 32"
-            fill="none"
-          >
-            <path
-              d="M7.2 10.5h17.6c2 0 3.7 1.5 4 3.5l1 7.2c.4 3.1-3.2 5.1-5.6 3.1l-2.6-2.2H10.4l-2.6 2.2c-2.4 2-6-.1-5.6-3.1l1-7.2c.3-2 2-3.5 4-3.5Z"
-              fill="currentColor"
-            />
-            <path
-              d="M10 14v5m-2.5-2.5h5M22.5 15.2h.1m2.3 2.5h.1"
-              stroke="white"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
-          </svg>
+            class="tab-icon-svg tab-icon-mask tab-icon-mask--mini-game"
+          ></span>
           <svg
             v-else-if="tab.icon === 'club'"
             class="tab-icon-svg"
@@ -610,6 +580,20 @@ onBeforeUnmount(() => {
   height: 100%;
   display: block;
   color: inherit;
+}
+
+.tab-icon-mask {
+  background-color: currentColor;
+}
+
+.tab-icon-mask--mtt {
+  -webkit-mask: url('@/assets/icons/game_zone_mtt_mini.svg') center / contain no-repeat;
+  mask: url('@/assets/icons/game_zone_mtt_mini.svg') center / contain no-repeat;
+}
+
+.tab-icon-mask--mini-game {
+  -webkit-mask: url('@/assets/icons/game_zone_minigame_mini.svg') center / contain no-repeat;
+  mask: url('@/assets/icons/game_zone_minigame_mini.svg') center / contain no-repeat;
 }
 
 .tab-label {

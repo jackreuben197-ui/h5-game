@@ -12,11 +12,11 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(vue@3.5.32(typescript@6.0.2))
       '@silenthill/agreement-web':
-        specifier: git+ssh://git@github.com/jackreuben197-ui/agreement-web.git#dev_merge_0702
-        version: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/5e0a9435e3884b66ed8153179c643caa765181f2
+        specifier: git+ssh://git@github.com/jackreuben197-ui/agreement-web.git#dev_refactor_0827
+        version: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/7513d338fdb1f94cbd74f49536a198ccd56bafd2
       '@silenthill/h5-cc-bridge':
-        specifier: git+ssh://git@github.com/jackreuben197-ui/h5-cc-bridge.git#dev_refactor_0721
-        version: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512
+        specifier: git+ssh://git@github.com/jackreuben197-ui/h5-cc-bridge.git#dev_merge_0827
+        version: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/4fd791ba9f6d0821e2b2b5a18f140235a22f941d
       '@silenthill/h5-cc-i18n':
         specifier: github:jackreuben197-ui/h5-cc-i18n#dev_merge_0827
         version: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/f5079b975989411a489c3feb12f457ad566531f6
@@ -1056,12 +1056,12 @@ packages:
   '@rolldown/pluginutils@1.0.0-rc.2':
     resolution: {integrity: sha512-izyXV/v+cHiRfozX62W9htOAvwMo4/bXKDrQ+vom1L1qRuexPock/7VZDAhnpHCLNejd3NJ6hiab+tO0D44Rgw==}
 
-  '@silenthill/agreement-web@https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/5e0a9435e3884b66ed8153179c643caa765181f2':
-    resolution: {gitHosted: true, integrity: sha512-BFFAYPqYsbgfqrL5gYtYD8nSS/r2bpf5QSSkba3kBS4OxcJ9r52q/vEXdbVHbk2kikIE9RkzK4pAoTnFr9AP7A==, tarball: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/5e0a9435e3884b66ed8153179c643caa765181f2}
+  '@silenthill/agreement-web@https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/7513d338fdb1f94cbd74f49536a198ccd56bafd2':
+    resolution: {gitHosted: true, integrity: sha512-RDEyTfdzQ2/aeckeijnuAB4CSNUXtHuOMNvvZ244jGGaG3oVYK34301ptKHzHJOHYiTJR24QaMNH/qxxBFJ9hw==, tarball: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/7513d338fdb1f94cbd74f49536a198ccd56bafd2}
     version: 1.0.0
 
-  '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512':
-    resolution: {gitHosted: true, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512}
+  '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/4fd791ba9f6d0821e2b2b5a18f140235a22f941d':
+    resolution: {gitHosted: true, integrity: sha512-1af2z9xXUvVSPuojP7bnY2sTt1ecPj9cJOm9lmAP7Luhs77SGDqZQZ2Bw12AmqETFHx3Idp+jKStbDshrUsSAg==, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/4fd791ba9f6d0821e2b2b5a18f140235a22f941d}
     version: 0.1.0
 
   '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/f5079b975989411a489c3feb12f457ad566531f6':
@@ -3491,11 +3491,11 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.0-rc.2': {}
 
-  '@silenthill/agreement-web@https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/5e0a9435e3884b66ed8153179c643caa765181f2':
+  '@silenthill/agreement-web@https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/7513d338fdb1f94cbd74f49536a198ccd56bafd2':
     dependencies:
       google-protobuf: 3.21.4
 
-  '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/e3566d5a11f9cf33abf848e60da9351f3df9c512': {}
+  '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/4fd791ba9f6d0821e2b2b5a18f140235a22f941d': {}
 
   '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/f5079b975989411a489c3feb12f457ad566531f6': {}
 

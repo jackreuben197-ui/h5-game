@@ -139,29 +139,61 @@ const pageBackgroundStyle = computed(() => ({
 }))
 
 // 拖动相关状态
-const floatPosition = ref({ top: '40%' })
+const DRAG_TAP_THRESHOLD_PX = 4
+const floatWrapRef = ref<HTMLElement | null>(null)
+const floatTopPercent = ref<number | null>(null)
+const floatPosition = computed(() =>
+  floatTopPercent.value === null ? {} : { '--todo-float-top': `${floatTopPercent.value}%` },
+)
 let isDragging = false
+let hasMoved = false
 let startY = 0
 let startTop = 0
+let activePointerId: number | null = null
+
+function readCurrentTopPercent(): number {
+  if (floatTopPercent.value !== null) return floatTopPercent.value
+  const rect = floatWrapRef.value?.getBoundingClientRect()
+  if (rect && window.innerHeight > 0) {
+    return (rect.top / window.innerHeight) * 100
+  }
+  return 40
+}
+
+function releaseFloatPointer(target: EventTarget | null): void {
+  const element = target as HTMLElement | null
+  if (element && activePointerId !== null && element.hasPointerCapture?.(activePointerId)) {
+    element.releasePointerCapture(activePointerId)
+  }
+  activePointerId = null
+}
 
 function onFloatPointerDown(event: PointerEvent): void {
   isDragging = true
+  hasMoved = false
   startY = event.clientY
-  const computedTop = floatPosition.value.top
-  startTop = parseFloat(computedTop) || 40
+  startTop = readCurrentTopPercent()
+  activePointerId = event.pointerId
   ;(event.currentTarget as HTMLElement)?.setPointerCapture(event.pointerId)
 }
 
 function onFloatPointerMove(event: PointerEvent): void {
   if (!isDragging) return
   const deltaY = event.clientY - startY
+  if (Math.abs(deltaY) > DRAG_TAP_THRESHOLD_PX) {
+    hasMoved = true
+  }
   const percentageDelta = (deltaY / window.innerHeight) * 100
-  const newTop = Math.max(5, Math.min(95, startTop + percentageDelta))
-  floatPosition.value = { top: `${newTop}%` }
+  floatTopPercent.value = Math.max(5, Math.min(95, startTop + percentageDelta))
 }
 
-function onFloatPointerUp(): void {
+function onFloatPointerUp(event: PointerEvent): void {
+  if (!isDragging) return
   isDragging = false
+  releaseFloatPointer(event.currentTarget)
+  if (!hasMoved && event.type === 'pointerup') {
+    openPanel()
+  }
 }
 
 function formatTime(value: unknown): string {
@@ -306,8 +338,10 @@ function initTodoWsListener(): void {
 }
 
 onMounted(() => {
-  // 随机初始化垂直位置，避免多个悬浮窗重叠
-  floatPosition.value = { top: `${30 + Math.random() * 30}%` }
+  // 随机初始化垂直位置，避免多个悬浮窗重叠；桌面端保持锚定在内容舞台右上角。
+  if (!window.matchMedia('(min-width: 600px)').matches) {
+    floatTopPercent.value = 30 + Math.random() * 30
+  }
 
   initTodoWsListener()
   void fetchTodoAllInfo()
@@ -322,14 +356,16 @@ onBeforeUnmount(() => {
 <template>
   <div
     v-if="shouldShowFloat"
+    ref="floatWrapRef"
     class="todo-float-wrap"
     :style="floatPosition"
     @pointerdown="onFloatPointerDown"
     @pointermove="onFloatPointerMove"
     @pointerup="onFloatPointerUp"
+    @pointercancel="onFloatPointerUp"
     @pointerleave="onFloatPointerUp"
   >
-    <button class="todo-float-btn" type="button" @click.stop="openPanel">
+    <button class="todo-float-btn" type="button" @click.stop>
       <span class="todo-float-text">{{ t('UIGlobalMessageTodoNotice_Text') }}</span>
       <span v-if="totalCount > 0" class="todo-float-count">{{ totalCount }}</span>
     </button>
@@ -482,7 +518,7 @@ onBeforeUnmount(() => {
 .todo-float-wrap {
   position: fixed;
   right: -0.01rem;
-  top: 40%;
+  top: var(--todo-float-top, 40%);
   z-index: 120;
   touch-action: none;
   transition: top 0.15s ease-out;
@@ -548,7 +584,13 @@ onBeforeUnmount(() => {
   background-color: var(--c-page);
   background-image: var(--todo-panel-bg-dark);
 
-  @include theme-light {
+  @include theme-light-own {
+    --todo-text: rgba(15, 8, 8, 0.85);
+    --todo-text-muted: rgba(15, 8, 8, 0.45);
+    --todo-card-border: rgba(0, 0, 0, 0.08);
+    --todo-divider: rgba(0, 0, 0, 0.08);
+
+    background-color: #f9f9f9;
     background-image: var(--todo-panel-bg-light);
   }
 }
@@ -560,7 +602,7 @@ onBeforeUnmount(() => {
   backdrop-filter: blur(0.98rem);
   mix-blend-mode: luminosity;
 
-  @include theme-light {
+  @include theme-light-own {
     background: transparent;
     backdrop-filter: none;
     mix-blend-mode: normal;
@@ -589,8 +631,8 @@ onBeforeUnmount(() => {
     font-weight: 500;
     line-height: 1.2;
 
-    @include theme-light {
-      color: #000;
+    @include theme-light-own {
+      color: var(--todo-text);
     }
   }
 }
@@ -605,8 +647,8 @@ onBeforeUnmount(() => {
   line-height: 1;
   padding: 0;
 
-  @include theme-light {
-    color: #000;
+  @include theme-light-own {
+    color: var(--todo-text);
   }
 }
 
@@ -633,8 +675,8 @@ onBeforeUnmount(() => {
     color: #fff;
     font-weight: 500;
 
-    @include theme-light {
-      color: #000;
+    @include theme-light-own {
+      color: var(--todo-text);
     }
   }
 }
@@ -650,6 +692,12 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 0.32rem;
+
+  @include theme-light-own {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.08);
+  }
 }
 
 .todo-card::before {
@@ -668,6 +716,10 @@ onBeforeUnmount(() => {
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
+
+  @include theme-light-own {
+    background: var(--todo-card-border);
+  }
 }
 
 .card-header {
@@ -693,8 +745,8 @@ onBeforeUnmount(() => {
   line-height: 1.4;
   color: #f3f3f3;
 
-  @include theme-light {
-    color: #000;
+  @include theme-light-own {
+    color: var(--todo-text);
   }
 }
 
@@ -735,8 +787,8 @@ onBeforeUnmount(() => {
   line-height: 1.1;
   color: #f3f3f3;
 
-  @include theme-light {
-    color: #000;
+  @include theme-light-own {
+    color: var(--todo-text);
   }
 }
 
@@ -746,8 +798,8 @@ onBeforeUnmount(() => {
   line-height: 1;
   color: rgba(243, 243, 243, 0.5);
 
-  @include theme-light {
-    color: rgba(0, 0, 0, 0.5);
+  @include theme-light-own {
+    color: var(--todo-text-muted);
   }
 }
 
@@ -768,8 +820,8 @@ onBeforeUnmount(() => {
     line-height: 1.2;
     color: #f9f9f9;
 
-    @include theme-light {
-      color: #000;
+    @include theme-light-own {
+      color: var(--todo-text);
     }
   }
 
@@ -791,6 +843,10 @@ onBeforeUnmount(() => {
   height: 0.0267rem;
   margin: 0 0.32rem;
   background: #a3a3a333;
+
+  @include theme-light-own {
+    background: var(--todo-divider);
+  }
 }
 
 </style>

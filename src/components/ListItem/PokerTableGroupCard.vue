@@ -4,7 +4,7 @@ import iconTable from '@/assets/icons/icon_table.png'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconDropDown from '@/assets/icons/ic_arrow_drop.svg'
 import type { RoomRecord } from '@/api/models/roomcenter'
-import { t } from '@/i18n'
+import { t, tJoin } from '@/i18n'
 
 interface RoomGroupViewModel {
   groupKey: string
@@ -66,10 +66,10 @@ function handleTableClick(room: RoomRecord): void {
           </p>
           <p class="count-text">
             <span>
-              <img class="count-icon" :src="iconTable" alt="table" />{{ group.tableCount }}{{ t('UIClub_Table2') }}
+              <img class="count-icon" :src="iconTable" alt="table" />{{ tJoin(group.tableCount, t('UIClub_Table2')) }}
             </span>
             <span>
-              <img class="count-icon" :src="iconPeople" alt="people" />{{ group.playerCount }}{{ t('Common_People') }}
+              <img class="count-icon" :src="iconPeople" alt="people" />{{ tJoin(group.playerCount, t('Common_People')) }}
             </span>
           </p>
         </div>

@@ -19,6 +19,7 @@ import { createLogger } from '@/utils/logger'
 import { localStore } from '@/utils/localStore'
 import { showGameToast } from '@/components/Toast'
 import { showLocalBridgeDialog } from '../channels/dialogChannel'
+import { t } from '@/i18n'
 
 const log = createLogger('[bridge]')
 const logH5ToCC = createLogger('[bridge][h5->cc]')
@@ -357,10 +358,10 @@ function ensureCocosReadyForEnter(): boolean {
 
   const elapsed = h5ReadyTime > 0 ? Date.now() - h5ReadyTime : 0
   if (elapsed <= COCOS_READY_TIMEOUT_MS) {
-    showGameToast('游戏场景未就绪，请等待')
+    showGameToast(t('UIBridge_SceneNotReady'))
   } else {
     showLocalBridgeDialog({
-      message: '游戏场景加载失败，请刷新后重试',
+      message: t('UIBridge_SceneLoadFail'),
       showCancelButton: false,
       showConfirmButton: true,
       ensureVisible: false,

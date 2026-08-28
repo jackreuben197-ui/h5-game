@@ -10,7 +10,7 @@ import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
 import iconSquid from '@/assets/icons/table_icon_squid.png'
 import type { RoomRecord, RoomUser } from '@/api/models/roomcenter'
 import { formatRoomLeftAndTotalByUnity } from '@/utils/time'
-import { t } from '@/i18n'
+import { t, tJoin } from '@/i18n'
 
 interface Props {
   room: RoomRecord
@@ -117,7 +117,7 @@ const bringInText = computed(() => {
   if (!bringInValue) {
     return t('UIListItem_BuyIn')
   }
-  return (bringInValue) + t('MTT_xq_buy')
+  return tJoin(bringInValue, t('MTT_xq_buy'))
 })
 
 // 预设常见人数桌位坐标，保持和旧版一致。

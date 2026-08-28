@@ -38,6 +38,8 @@ const rejectLabel = computed(() => props.rejectText || t('Page_Audit_Reject'))
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .approve-reject {
   display: flex;
   gap: 0.32rem;
@@ -60,6 +62,11 @@ const rejectLabel = computed(() => props.rejectText || t('Page_Audit_Reject'))
   -webkit-appearance: none;
   background: transparent;
   box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
+
+  @include theme-light-own {
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.08);
+  }
 }
 
 .ar-btn::after {
@@ -72,6 +79,12 @@ const rejectLabel = computed(() => props.rejectText || t('Page_Audit_Reject'))
   -webkit-backdrop-filter: blur(8.5px);
   pointer-events: none;
   z-index: 0;
+
+  @include theme-light-own {
+    background: rgba(0, 0, 0, 0.05);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .ar-btn::before {
@@ -96,6 +109,10 @@ const rejectLabel = computed(() => props.rejectText || t('Page_Audit_Reject'))
   mask-composite: exclude;
   pointer-events: none;
   z-index: 1;
+
+  @include theme-light-own {
+    background: rgba(0, 0, 0, 0.08);
+  }
 }
 
 .ar-icon {
@@ -115,6 +132,10 @@ const rejectLabel = computed(() => props.rejectText || t('Page_Audit_Reject'))
 
 .ar-icon--approve {
   background-image: linear-gradient(180deg, #78e490 0%, #6cd283 100%);
+
+  @include theme-light-own {
+    background-image: linear-gradient(180deg, #05c297 0%, #04a882 100%);
+  }
 }
 
 .ar-icon--reject {
@@ -130,5 +151,9 @@ const rejectLabel = computed(() => props.rejectText || t('Page_Audit_Reject'))
   color: #fff;
   font-size: 0.42rem;
   line-height: 1.2;
+
+  @include theme-light-own {
+    color: rgba(15, 8, 8, 0.85);
+  }
 }
 </style>

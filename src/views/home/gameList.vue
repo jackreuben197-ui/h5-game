@@ -22,6 +22,8 @@ import { t } from '@/i18n'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
+import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
+import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 
 interface Props {
   embedded?: boolean
@@ -61,6 +63,7 @@ const gameStore = useGameStore()
 const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
 const isChannelPackage = isChannelPackageHost()
+const { isVersionB: isChannelMenuVersionB } = useChannelBottomMenu()
 
 // 顶部右侧切换风格开关：和旧版保持一致。
 const activeTab = ref<GameTypeTabName>('all')
@@ -227,7 +230,10 @@ async function handleTableClick(room: RoomRecord): Promise<void> {
       // 对齐 Cocos ProcedureEnterLobby：进入大厅阶段同步 websocket 端口。
       wsPort = await LoginSession.EnsureWS()
     } catch (error) {
-      const message = error instanceof Error ? error.message : t('UIClub_Fetch') + " websocket " + t('UIClub_Fail3')
+      const message =
+        error instanceof Error
+          ? error.message
+          : t('UIClub_Fetch') + ' websocket ' + t('UIClub_Fail3')
       showFailToast(message)
       return
     }
@@ -337,14 +343,18 @@ function handleOpenCustomerService(): void {
 <template>
   <div
     class="room-list-page themeType2"
-    :class="{ 'room-list-page--embedded': props.embedded }"
+    :class="{
+      'room-list-page--embedded': props.embedded,
+      'room-list-page--channel-menu-b': isChannelMenuVersionB && !props.embedded,
+    }"
     :style="pageStyle"
   >
     <div v-if="!props.embedded" class="bg-overlay"></div>
     <div class="room-list-stage">
       <HeaderBack
         v-if="!props.embedded"
-        :title="t('UIHomePokerArea')"
+        :title="isChannelMenuVersionB ? 'POKER' : t('UIHomePokerArea')"
+        :show-back="!isChannelMenuVersionB"
         extra-padding
         @back="handleBack"
       >
@@ -399,6 +409,7 @@ function handleOpenCustomerService(): void {
       </section>
     </div>
   </div>
+  <MainBottomTab v-if="isChannelMenuVersionB && !props.embedded" />
 </template>
 
 <style scoped lang="scss">
@@ -488,6 +499,10 @@ function handleOpenCustomerService(): void {
     background: #fff;
     backdrop-filter: none;
   }
+}
+
+.room-list-page--channel-menu-b .group-list {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 2.8rem);
 }
 
 .room-list-page--embedded :deep(.home-embedded-tabs),

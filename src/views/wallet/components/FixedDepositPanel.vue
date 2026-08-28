@@ -16,9 +16,15 @@ import { useUserInfoStore, type ClubInfo } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { postRechargeGoldApi } from '@/api/order'
 
-const props = defineProps<{
-  club: ClubInfo | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    club: ClubInfo | null
+    showBack?: boolean
+  }>(),
+  {
+    showBack: true,
+  },
+)
 const emit = defineEmits<{
   back: []
 }>()
@@ -112,7 +118,12 @@ function onSuccessConfirm(): void {
 
 <template>
   <div class="deposit-screen">
-    <HeaderBack :title="t('UIGuildFund_RechargeText')" extra-padding @back="emit('back')">
+    <HeaderBack
+      :title="t('UIGuildFund_RechargeText')"
+      :show-back="props.showBack"
+      extra-padding
+      @back="emit('back')"
+    >
       <template #right>
         <span class="details-btn">
           <GlassButton :label="t('Wallet_Details')" @click="goDetails" />

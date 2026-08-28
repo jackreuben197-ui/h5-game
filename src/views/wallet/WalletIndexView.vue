@@ -39,6 +39,7 @@ import {
 } from '@/api/order'
 import { postChatSupportChannelListApi } from '@/api/chat'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
+import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 
 const router = useRouter()
 const route = useRoute()
@@ -46,6 +47,7 @@ const walletStore = useWalletStore()
 const userInfoStore = useUserInfoStore()
 const tabsStore = useMainTabsStore()
 const isChannelPackage = isChannelPackageHost()
+const { isVersionB: isChannelMenuVersionB } = useChannelBottomMenu()
 
 if (isChannelPackage) {
   tabsStore.setActiveTab('wallet')
@@ -734,11 +736,20 @@ async function onUsdtSubmit(type: number) {
     class="wallet-fixed-deposit-shell"
     :class="{ 'wallet-fixed-deposit-shell--channel': isChannelPackage }"
   >
-    <FixedDepositPanel :club="walletClub" @back="handleWalletBack" />
+    <FixedDepositPanel
+      :club="walletClub"
+      :show-back="!isChannelMenuVersionB"
+      @back="handleWalletBack"
+    />
   </div>
 
   <div v-else class="wallet-screen" :class="{ 'wallet-screen--channel': isChannelPackage }">
-    <HeaderBack :title="t('Wallet_Title')" extra-padding @back="handleWalletBack" />
+    <HeaderBack
+      :title="t('Wallet_Title')"
+      :show-back="!isChannelMenuVersionB"
+      extra-padding
+      @back="handleWalletBack"
+    />
 
     <div class="wallet-screen__content-top">
       <div class="tabs-row">

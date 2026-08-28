@@ -62,6 +62,13 @@ function handleBack(event: MouseEvent): void {
       </span>
     </button>
 
+    <span
+      v-else-if="headerMode !== 'full-slot' && props.title"
+      class="title standalone-title"
+    >
+      {{ props.title }}
+    </span>
+
     <div v-if="headerMode === 'full-slot'" class="full-slot-wrap">
       <slot></slot>
     </div>
@@ -121,6 +128,10 @@ function handleBack(event: MouseEvent): void {
   @include theme-light {
     text-shadow: none;
   }
+}
+
+.standalone-title {
+  padding: 0 0.25rem;
 }
 
 .right-slot-wrap {

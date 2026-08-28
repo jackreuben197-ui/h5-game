@@ -21,6 +21,7 @@ import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { useGameStore } from '@/stores/game'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import PokerGameList from '@/views/home/gameList.vue'
+import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -29,6 +30,7 @@ const mttListStore = useMttListStore()
 const appConfigStore = useAppConfigStore()
 const gameStore = useGameStore()
 const isChannelPackage = isChannelPackageHost()
+const { isVersionB: isChannelMenuVersionB } = useChannelBottomMenu()
 
 const loading = ref(false)
 const balanceVisible = ref(true)
@@ -164,11 +166,14 @@ const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
 const mttPlayersText = computed(() => `${homeRoomStats.value.mtt.players}`)
 type HomeContentMode = 'zones' | 'mtt' | 'poker'
 
-// 渠道包把俱乐部内容合并到首页：单一数据类型直接展示列表，两者都有时保留专区入口。
-// 官方包继续沿用原有的「仅有赛事时直接展示 MTT」行为。
+// 渠道包版本 B 的首页固定保留首页信息区，底部嵌入扑克列表。
+// 版本 A 与官方包继续沿用现有的单类型 / 专区入口行为。
 const homeContentModeRaw = computed<HomeContentMode>(() => {
   const pokerTables = homeRoomStats.value.poker.tables
   const mttTables = homeRoomStats.value.mtt.tables
+  if (isChannelMenuVersionB.value) {
+    return 'poker'
+  }
   if (mttTables > 0 && pokerTables === 0) {
     return 'mtt'
   }
@@ -567,7 +572,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="home-page">
-    <!-- 0. 顶部栏：登录态仅保留 POKER 品牌 -->
+    <!-- 0. 首页顶部保留 POKER 品牌 -->
     <div class="top-bar">
       <span class="top-bar__logo">POKER</span>
     </div>

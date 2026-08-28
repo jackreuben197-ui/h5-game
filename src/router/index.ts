@@ -82,13 +82,13 @@ const router = createRouter({
       path: '/gameList',
       name: 'game-list',
       component: () => import('@/views/home/gameList.vue'),
-      meta: { requiresAuth: true, desktopLayout: 'content' },
+      meta: { requiresAuth: true, tabKey: 'poker', desktopLayout: 'content' },
     },
     {
       path: '/mttList',
       name: 'mtt-list',
       component: () => import('@/views/mtt/mttList.vue'),
-      meta: { requiresAuth: true, desktopLayout: 'content' },
+      meta: { requiresAuth: true, tabKey: 'mtt', desktopLayout: 'content' },
     },
     {
       path: '/mtt/detail',

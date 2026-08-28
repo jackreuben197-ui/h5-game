@@ -1,13 +1,22 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
 import { useGameStore } from '@/stores/game'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { t } from '@/i18n'
 import { isChannelPackageHost } from '@/utils/channelPackage'
+import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 
-type TabIconKey = 'home' | 'club' | 'wallet' | 'friendsTable' | 'message' | 'mine'
+type TabIconKey =
+  | 'home'
+  | 'mtt'
+  | 'miniGame'
+  | 'club'
+  | 'wallet'
+  | 'friendsTable'
+  | 'message'
+  | 'mine'
 
 interface TabItem {
   key: MainTabKey
@@ -20,8 +29,10 @@ interface TabItem {
 }
 
 const isChannelPackage = isChannelPackageHost()
+const { isVersionB, hasMtt, hasMiniGame } = useChannelBottomMenu()
 
-// 官方包保留 5 个入口；渠道包将俱乐部能力合并到首页，仅保留 4 个入口。
+// 版本 A：首页、充值、消息、我的。
+// 版本 B：首页、充值、我的始终展示，赛事 / 小游戏按可见数据动态展示。
 const tabs = computed<TabItem[]>(() => {
   const middleTab: TabItem = isChannelPackage
     ? {
@@ -54,6 +65,49 @@ const tabs = computed<TabItem[]>(() => {
     icon: 'club',
   }
 
+  if (isChannelPackage && isVersionB.value) {
+    return [
+      {
+        key: 'poker',
+        label: t('UITabbarHome'),
+        path: '/home',
+        guestPath: '/guest/home',
+        icon: 'home',
+      },
+      ...(hasMtt.value
+        ? [
+            {
+              key: 'mtt' as const,
+              label: t('UIClub_Text14'),
+              path: '/mttList',
+              guestPath: '/guest/home',
+              icon: 'mtt' as const,
+            },
+          ]
+        : []),
+      // 小游戏尚未接入，hasMiniGame 当前固定为 false。
+      ...(hasMiniGame.value
+        ? [
+            {
+              key: 'miniGame' as const,
+              label: t('UIHomeMinigameArea'),
+              path: '/home',
+              guestPath: '/guest/home',
+              icon: 'miniGame' as const,
+            },
+          ]
+        : []),
+      middleTab,
+      {
+        key: 'mine',
+        label: t('UIMine_title'),
+        path: '/mine',
+        guestPath: '/guest/mine',
+        icon: 'mine',
+      },
+    ]
+  }
+
   return [
     homeTab,
     ...(!isChannelPackage ? [clubTab] : []),
@@ -76,6 +130,7 @@ const tabs = computed<TabItem[]>(() => {
 })
 
 const router = useRouter()
+const route = useRoute()
 const tabsStore = useMainTabsStore()
 const gameStore = useGameStore()
 const loginModalStore = useLoginModalStore()
@@ -85,8 +140,16 @@ function resolveTabPath(tab: TabItem): string {
 }
 
 // 当前激活项索引：用于驱动顶部凸起在当前 tab 数量间平滑移动。
+const activeTabKey = computed<MainTabKey>(() => {
+  if (isVersionB.value && (route.name === 'lobby' || route.name === 'guest-home')) {
+    return 'poker'
+  }
+  const routeTabKey = route.meta.tabKey
+  return typeof routeTabKey === 'string' ? (routeTabKey as MainTabKey) : tabsStore.activeTab
+})
+
 const activeIndex = computed(() => {
-  const index = tabs.value.findIndex((item) => item.key === tabsStore.activeTab)
+  const index = tabs.value.findIndex((item) => item.key === activeTabKey.value)
   return index >= 0 ? index : 0
 })
 
@@ -246,7 +309,7 @@ function handleWindowResize(): void {
   refreshPathByCurrentTab()
 }
 
-watch(activeIndex, (newIndex) => {
+watch([activeIndex, () => tabs.value.length], ([newIndex]) => {
   if (!svgRef.value) return
   startPathAnimation(newIndex)
 })
@@ -289,7 +352,7 @@ onBeforeUnmount(() => {
         :key="tab.key"
         type="button"
         class="tab-button"
-        :class="{ 'is-active': tabsStore.activeTab === tab.key }"
+        :class="{ 'is-active': activeTabKey === tab.key }"
         @click="onTabClick(tab)"
       >
         <span class="tab-icon" aria-hidden="true">
@@ -303,6 +366,44 @@ onBeforeUnmount(() => {
             <path
               d="M28.5761 11.3549L26.0533 26.6236C25.883 27.6857 25.3482 28.6533 24.5427 29.3567C23.6849 30.0494 22.6193 30.4264 21.5213 30.4255H7.00376C5.94224 30.4161 4.91768 30.0303 4.10876 29.3355C3.29985 28.6407 2.75792 27.6809 2.57749 26.6236L0.0546733 11.3549C-0.0819515 10.4739 0.0388046 9.5718 0.402128 8.7592C0.765329 7.95078 1.35315 7.26648 2.09408 6.78953L11.8832 0.682044C12.5984 0.236141 13.4222 0 14.2625 0C15.1029 0 15.9266 0.236141 16.6418 0.682044L26.4159 6.78953C27.1818 7.24759 27.7921 7.9301 28.1683 8.74393C28.5551 9.55482 28.697 10.463 28.5761 11.3549Z"
               fill="currentColor"
+            />
+          </svg>
+          <svg
+            v-else-if="tab.icon === 'mtt'"
+            class="tab-icon-svg"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 32 32"
+            fill="none"
+          >
+            <path d="M10 5.5h12v6.2c0 4.4-2.7 7.8-6 7.8s-6-3.4-6-7.8V5.5Z" fill="currentColor" />
+            <path
+              d="M10 8H6.5v2.1c0 3.7 2.2 6.2 5.6 6.9M22 8h3.5v2.1c0 3.7-2.2 6.2-5.6 6.9M16 19.5V24m-5 3h10"
+              stroke="currentColor"
+              stroke-width="2.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="m16 8.2 1 2 2.2.3-1.6 1.6.4 2.2-2-1-2 1 .4-2.2-1.6-1.6 2.2-.3 1-2Z"
+              fill="white"
+            />
+          </svg>
+          <svg
+            v-else-if="tab.icon === 'miniGame'"
+            class="tab-icon-svg"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 32 32"
+            fill="none"
+          >
+            <path
+              d="M7.2 10.5h17.6c2 0 3.7 1.5 4 3.5l1 7.2c.4 3.1-3.2 5.1-5.6 3.1l-2.6-2.2H10.4l-2.6 2.2c-2.4 2-6-.1-5.6-3.1l1-7.2c.3-2 2-3.5 4-3.5Z"
+              fill="currentColor"
+            />
+            <path
+              d="M10 14v5m-2.5-2.5h5M22.5 15.2h.1m2.3 2.5h.1"
+              stroke="white"
+              stroke-width="2"
+              stroke-linecap="round"
             />
           </svg>
           <svg

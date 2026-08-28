@@ -11,6 +11,8 @@ import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServic
 import { showFailToast } from 'vant'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
+import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
+import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 
 type MttTabName = 'all' | 'poker' | 'mahjong'
 
@@ -19,6 +21,7 @@ const mttListStore = useMttListStore()
 const userInfoStore = useUserInfoStore()
 const router = useRouter()
 const isChannelPackage = isChannelPackageHost()
+const { isVersionB: isChannelMenuVersionB } = useChannelBottomMenu()
 
 const selectedClubId = computed(() => toSafeInt(userInfoStore.currentClub?.club_id))
 const selectedTribeId = computed(() =>
@@ -74,11 +77,19 @@ function handleOpenCustomerService() {
 </script>
 
 <template>
-  <div class="mtt-list-page room-list-page themeType2" @back="handleBack">
+  <div
+    class="mtt-list-page room-list-page themeType2"
+    :class="{ 'mtt-list-page--channel-menu-b': isChannelMenuVersionB }"
+    @back="handleBack"
+  >
     <div class="bg-overlay"></div>
 
     <div class="room-list-stage mtt-list-stage">
-      <HeaderBack :title="t('UIHomeMttArea')" extra-padding>
+      <HeaderBack
+        :title="isChannelMenuVersionB ? t('UIClub_Text14') : t('UIHomeMttArea')"
+        :show-back="!isChannelMenuVersionB"
+        extra-padding
+      >
         <template #right>
           <div class="action-wrap">
             <TopActionButton
@@ -102,6 +113,7 @@ function handleOpenCustomerService() {
       <MttContent :active-tab="activeTab" :class="{ 'mtt-content--no-tabs': !showMttTabs }" />
     </div>
   </div>
+  <MainBottomTab v-if="isChannelMenuVersionB" />
 </template>
 
 <style scoped lang="scss">
@@ -145,6 +157,10 @@ function handleOpenCustomerService() {
 // tab 隐藏时列表不再有 tabbar 的外边距，补一点与 header 的间距。
 .mtt-list-page :deep(.mtt-content--no-tabs) {
   margin-top: 0.3rem;
+}
+
+.mtt-list-page--channel-menu-b :deep(.mtt-content) {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 2.8rem);
 }
 
 .mtt-list-page :deep(.filter-tabbar) {

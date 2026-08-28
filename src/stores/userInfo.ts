@@ -191,6 +191,10 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
             throw new Error(String(response.msg || '渠道俱乐部加载失败'))
           }
           const club = normalizeDefaultClub(response.data?.club)
+          const responseH5Menu = Number(response.data?.h5_menu)
+          if (club && club.h5_menu === undefined && Number.isFinite(responseH5Menu)) {
+            club.h5_menu = responseH5Menu
+          }
           this.channelDefaultClub = club
           channelDefaultClubLoaded = true
           return club

@@ -144,6 +144,27 @@ function extractClubList(raw: unknown, depth = 0): ClubInfo[] {
   return []
 }
 
+function extractH5Menu(raw: unknown, depth = 0): number | undefined {
+  if (depth > 4 || !raw || typeof raw !== 'object') {
+    return undefined
+  }
+
+  const obj = raw as Record<string, unknown>
+  const menu = Number(obj.h5_menu)
+  if (Number.isFinite(menu)) {
+    return menu
+  }
+
+  const nestedValues = Array.isArray(raw) ? raw : Object.values(obj)
+  for (const value of nestedValues) {
+    const nested = extractH5Menu(value, depth + 1)
+    if (nested !== undefined) {
+      return nested
+    }
+  }
+  return undefined
+}
+
 // 登录：返回 token 等登录态信息。
 export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
   const res = await http.post<{ data?: LoginResponse; token?: string }>('/user/login', payload)
@@ -210,7 +231,12 @@ export async function getUserClubApi(): Promise<ApiResponse<unknown>> {
 
   // 每次请求都更新 clubList 全局缓存；currentClub 默认取第一条，可手动切换。
   const userInfoStore = useUserInfoStore(pinia)
-  const clubList = extractClubList(body.data)
+  const responseH5Menu = extractH5Menu(body.data)
+  const clubList = extractClubList(body.data).map((club) =>
+    club.h5_menu === undefined && responseH5Menu !== undefined
+      ? { ...club, h5_menu: responseH5Menu }
+      : club,
+  )
   userInfoStore.setClubList(clubList)
   // 落地到当前用户级 IndexedDB（user_cache_${userId}，H5/Cocos 共用），供下次启动秒开。
   const gameStore = useGameStore(pinia)

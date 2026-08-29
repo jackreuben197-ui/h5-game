@@ -1532,7 +1532,7 @@ onActivated(async () => {
 }
 
 .casino-content--with-tabbar {
-  padding-bottom: calc(2.6rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(3.0rem + env(safe-area-inset-bottom)) !important;
 }
 
 /* ── Category List ───────────────────────────────────────────────────────── */

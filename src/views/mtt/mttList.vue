@@ -230,7 +230,7 @@ function handleOpenCustomerService() {
 }
 
 :deep(.mtt-content--with-tabbar) {
-  padding-bottom: calc(2.3rem + env(safe-area-inset-bottom)) !important;
+  padding-bottom: calc(3.0rem + env(safe-area-inset-bottom)) !important;
 }
 </style>
 

@@ -200,6 +200,7 @@ watch(
       'main-layout--primary': isPrimaryLayout,
       'main-layout--guest': isGuestRoute,
       'main-layout--authenticated': isPrimaryLayout && !isGuestRoute,
+      'is-version-b': isVersionB,
     }"
     :style="backgroundStyle"
   >
@@ -295,6 +296,10 @@ watch(
   background: #222627;
   padding-top: var(--app-content-safe-area-top, env(safe-area-inset-top));
   padding-bottom: calc(env(safe-area-inset-bottom) + 2rem);
+}
+
+.main-layout.is-version-b .main-layout-content {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 3.0rem);
 }
 
 .module-slot {

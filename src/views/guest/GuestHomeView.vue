@@ -1109,10 +1109,15 @@ onMounted(() => {
 }
 
 .home-casino-content {
-  padding: 0 0.4rem 1.2rem;
+  padding: 0 0.4rem calc(3.0rem + env(safe-area-inset-bottom)) !important;
+}
+
+:deep(.home-mtt-content) {
+  padding-bottom: calc(3.0rem + env(safe-area-inset-bottom)) !important;
 }
 
 .home-poker-content {
+  padding-bottom: calc(3.0rem + env(safe-area-inset-bottom)) !important;
   :deep(.room-tabs) {
     margin-right: 0;
     margin-left: 0;

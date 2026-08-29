@@ -870,7 +870,7 @@ onBeforeUnmount(() => {
     <div class="home-swap-container">
       <Transition name="home-swap">
         <div v-if="homeContentMode === 'mtt'" key="mtt" class="home-swap-panel">
-          <MttContent class="home-mtt-content" />
+          <MttContent embedded class="home-mtt-content" />
         </div>
         <PokerGameList
           v-else-if="homeContentMode === 'poker'"
@@ -1052,7 +1052,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  padding: 0 0.4rem 2.3rem;
+  padding: 0 0.4rem calc(2.3rem + env(safe-area-inset-bottom));
   background: transparent;
   min-height: max-content;
   box-sizing: border-box;
@@ -1843,9 +1843,5 @@ onBeforeUnmount(() => {
     flex-shrink: 0;
     max-height: none;
   }
-}
-
-:deep(.home-mtt-content) {
-  padding-bottom: calc(2.3rem + env(safe-area-inset-bottom)) !important;
 }
 </style>

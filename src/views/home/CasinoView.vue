@@ -1003,7 +1003,10 @@ onActivated(async () => {
       </template>
     </HeaderBack>
 
-    <div class="casino-content" :class="{ 'is-embedded': hideHeader }">
+    <div
+      class="casino-content"
+      :class="{ 'is-embedded': hideHeader, 'casino-content--with-tabbar': !hideHeader && isVersionB }"
+    >
       <!-- ── Popular Banner (horizontal scroll) ─────────────────────── -->
       <!-- 热门游戏横向滚动条 暂时隐藏，后续可能恢复（删掉 v-if="false" 即可恢复） -->
       <section
@@ -1257,7 +1260,7 @@ onActivated(async () => {
 <style scoped lang="scss">
 /* ── Page shell ──────────────────────────────────────────────────────────── */
 .casino-page {
-  height: 100vh;
+  height: var(--app-full-height, 100dvh);
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -1526,6 +1529,10 @@ onActivated(async () => {
 
 .casino-content.is-embedded {
   overflow: visible;
+}
+
+.casino-content--with-tabbar {
+  padding-bottom: calc(2.6rem + env(safe-area-inset-bottom));
 }
 
 /* ── Category List ───────────────────────────────────────────────────────── */

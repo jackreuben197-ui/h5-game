@@ -136,6 +136,28 @@ function handleOpenCustomerService() {
   }
 }
 
+@media (max-width: 599px) {
+  .mtt-list-page {
+    display: flex;
+    flex-direction: column;
+    height: var(--app-full-height, 100dvh);
+    min-height: var(--app-full-height, 100dvh);
+  }
+
+  .mtt-list-stage {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .mtt-list-stage :deep(.mtt-content) {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+  }
+}
+
 .bg-overlay {
   position: absolute;
   inset: 0;

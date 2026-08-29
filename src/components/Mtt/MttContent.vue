@@ -58,10 +58,12 @@ interface MttRenderGroup extends MttGroup {
 
 interface Props {
   activeTab?: MttTabName
+  embedded?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   activeTab: 'all',
+  embedded: false,
 })
 
 const router = useRouter()
@@ -470,7 +472,7 @@ function getDefaultGameIcon(category: MttCategory): string {
 </script>
 
 <template>
-  <section class="mtt-content">
+  <section class="mtt-content" :class="{ 'mtt-content--embedded': props.embedded }">
     <template v-if="renderGroups.length">
       <div v-for="group in renderGroups" :key="group.groupId" class="mtt-group">
         <div v-if="group.title || group.showViewAll" class="mtt-group__header">
@@ -532,6 +534,11 @@ function getDefaultGameIcon(category: MttCategory): string {
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
   padding: 0.1rem 0.38rem 0.5rem;
+}
+
+.mtt-content--embedded {
+  max-height: none;
+  overflow: visible;
 }
 
 .mtt-group {

@@ -1844,4 +1844,8 @@ onBeforeUnmount(() => {
     max-height: none;
   }
 }
+
+:deep(.home-mtt-content) {
+  padding-bottom: calc(2.3rem + env(safe-area-inset-bottom)) !important;
+}
 </style>

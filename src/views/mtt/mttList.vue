@@ -100,7 +100,7 @@ function handleOpenCustomerService() {
         </template>
       </HeaderBack>
       <ClubZoneQuickActions v-if="isChannelPackage" />
-      <MttContent />
+      <MttContent :class="{ 'mtt-content--with-tabbar': isVersionB }" />
     </div>
     <div
       v-if="canManageChannelClub"
@@ -205,6 +205,10 @@ function handleOpenCustomerService() {
     border-color: #fff;
     background: #fff;
   }
+}
+
+:deep(.mtt-content--with-tabbar) {
+  padding-bottom: calc(2.3rem + env(safe-area-inset-bottom)) !important;
 }
 </style>
 

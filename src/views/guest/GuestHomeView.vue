@@ -379,12 +379,10 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  padding: 0 0.4rem 0;
+  padding: 0 0.4rem 2.3rem;
   background: transparent;
-  height: 100%;
-  min-height: 0;
+  min-height: max-content;
   box-sizing: border-box;
-  overflow: hidden;
   overscroll-behavior-y: none;
   scrollbar-width: none;
   &::-webkit-scrollbar {
@@ -1148,5 +1146,9 @@ onMounted(() => {
 }
 .home-swap-leave-to {
   opacity: 0;
+}
+
+:deep(.home-mtt-content) {
+  padding-bottom: calc(2.3rem + env(safe-area-inset-bottom)) !important;
 }
 </style>

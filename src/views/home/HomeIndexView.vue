@@ -760,7 +760,13 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="home-page" :class="{ 'home-page--fit': homeContentMode === 'zones' }">
+  <div
+    class="home-page"
+    :class="{
+      'home-page--fit': homeContentMode === 'zones',
+      'is-version-b': isVersionB
+    }"
+  >
     <!-- 0. 顶部栏：登录态仅保留 POKER 品牌 -->
     <div class="top-bar">
       <div></div>
@@ -1060,6 +1066,10 @@ onBeforeUnmount(() => {
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
+  }
+
+  &.is-version-b {
+    padding-bottom: calc(3.0rem + env(safe-area-inset-bottom));
   }
 }
 

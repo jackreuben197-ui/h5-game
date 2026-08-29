@@ -143,7 +143,10 @@ onMounted(() => {
   <div
     ref="homeRootRef"
     class="home-page"
-    :class="{ 'home-page--fit': guestContentMode === 'default' }"
+    :class="{
+      'home-page--fit': guestContentMode === 'default',
+      'is-version-b': isVersionB
+    }"
   >
     <!-- 0. 顶部栏：POKER + 注册/登录 -->
     <div class="top-bar top-bar--guest">
@@ -387,6 +390,10 @@ onMounted(() => {
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
+  }
+
+  &.is-version-b {
+    padding-bottom: calc(3.0rem + env(safe-area-inset-bottom));
   }
 }
 
